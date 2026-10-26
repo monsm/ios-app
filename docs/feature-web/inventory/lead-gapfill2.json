@@ -1,0 +1,203 @@
+{
+  "scout": "lead-gapfill",
+  "platform": "ios",
+  "scope": [
+    "App/UI/CredentialStudio.swift",
+    "App/Core/LockStats.swift",
+    "App/Core/VariantGrammar.swift",
+    "App/UI/DiagnosticsView.swift"
+  ],
+  "nodes": [
+    {
+      "platform": "ios",
+      "status": "implemented",
+      "details": [
+        "公式：remaining = max(0, totalSec - Int(now) % max(totalSec, 1)) —— 取余不是取整除，这是唯一实现",
+        "CredentialOrg 里曾有同公式的 totpRemaining，零调用已删，避免看着像两套口径",
+        "进度宽度 = remaining / totalSec × 可用宽，动画走 DS.Motion.exit",
+        "剩 ≤5 秒：胶囊转 DS.Palette.warn + DS.Haptics.tick 轻震（只在「跨过 5 秒」那一次触发，不是每秒震）",
+        "每秒 Timer.publish 驱动；无障碍标签读「<label> 剩约 N 秒」",
+        "注释写明口径差异：锁端 ZOTP 是分钟级，独立 TOTP 是秒级"
+      ],
+      "tags": [
+        "临时码",
+        "时窗"
+      ],
+      "level": 4,
+      "key": "credential.tempcode.windowbar",
+      "parentKey": "credential.tempcode",
+      "domain": "credential",
+      "kind": "action",
+      "name": "时窗倒计时细条（剩 N 秒，末 5 秒转橙并轻震）",
+      "summary": "临时码/OTP 卡上那条 4pt 进度细条：按「周期 - 当前秒 % 周期」逐秒重算，剩 ≤5 秒转 warn 色并震一下。",
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 315,
+          "symbol": "struct WindowBar",
+          "note": "时窗细条"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 322,
+          "symbol": "remaining(_:)",
+          "note": "周期 - epoch % 周期"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 350,
+          "symbol": "onReceive",
+          "note": "末 5 秒转橙 + 轻震"
+        }
+      ]
+    },
+    {
+      "platform": "ios",
+      "status": "implemented",
+      "details": [
+        "无手工顺序：默认锁置顶 → 其余按 pairedAt 绑定时间升序",
+        "有手工顺序：先按 orderMacs 排出 head，未列入的 rest 按 pairedAt 追加在后",
+        "**低电不置顶** —— 自动置顶会把用户明确排好的顺序挪走；低电改由状态图标行的橙点如实标出（电量升序是另一条明确开关）",
+        "「第一行就是启动默认锁」这条口径在设备管理页与设备页 271 兜底排序里讲的是同一件事，任何一处漏掉都会两页各说一套",
+        "分组：按 group(mac) 分桶，未分组固定排最后",
+        "setOrder 写侧会剪掉已解绑的 mac —— 顺序表是全局键，删设备删不到逐锁族，幽灵条目只会让读侧做无用查找"
+      ],
+      "tags": [
+        "多锁",
+        "排序分组"
+      ],
+      "level": 3,
+      "key": "device.home.order",
+      "parentKey": "device.home",
+      "domain": "device",
+      "kind": "service",
+      "name": "多锁排序与分组（手工顺序 / 默认锁置顶 / 幽灵条目剪除）",
+      "summary": "设备页与设备管理页共用同一套排序：有手工顺序就按它，没有就按绑定时间；两种情况启动默认锁都占首位；分组里「未分组」永远排最后。",
+      "evidence": [
+        {
+          "file": "App/Core/LockStats.swift",
+          "line": 144,
+          "symbol": "orderedDevices(_:)",
+          "note": "默认锁置顶 + 手工顺序"
+        },
+        {
+          "file": "App/Core/LockStats.swift",
+          "line": 160,
+          "symbol": "grouped(_:)",
+          "note": "未分组永远排最后"
+        },
+        {
+          "file": "App/Core/LockStats.swift",
+          "line": 176,
+          "symbol": "setOrder(_:)",
+          "note": "剪掉已解绑的 mac"
+        }
+      ]
+    },
+    {
+      "platform": "ios",
+      "status": "implemented",
+      "details": [
+        "PlateShape 四档：capsule（信息胶囊）/ tile（DS.Radius.tile）/ control（DS.Radius.control）/ iconBadge（DS.Space.s）",
+        "**故意不是 Shape 泛型**：调用点若还留 in: Capsule() 字面量，tools/uicoverage.js 的自绘容器预算（只认字面 token）就数不到这次迁移，迁移进度会看起来没动",
+        "描边必须单独一份 legacyEdge：strokeBorder 只长在 InsettableShape 上，AnyShape 把这个能力擦掉了",
+        "⚑ 漏掉 iconBadge 这个 case 不是「多写分支」而是**编译不过**（CI run 115 抓到 6 处）",
+        "variantPlate 只收「装饰性中性底衬」；带状态语义的（告警/成功/危险）走 variantCallout —— 那层洗色是信息，画的是状态",
+        "主/次按钮外观 primaryActionChrome / secondaryActionChrome 同族"
+      ],
+      "tags": [
+        "设计语法",
+        "像素回归"
+      ],
+      "level": 3,
+      "key": "data.design.variant-grammar",
+      "parentKey": "data.design",
+      "domain": "data",
+      "kind": "service",
+      "name": "变体语法层：底衬 / 提示块 / 主次按钮外观（像素不变迁移）",
+      "summary": "把 176 处自绘盒子收进语法件：variantPlate 逐字复刻改造前的 background(style,in:shape)，variantCallout 管带语义色的提示块，主次按钮外观各一套。",
+      "evidence": [
+        {
+          "file": "App/Core/VariantGrammar.swift",
+          "line": 193,
+          "symbol": "enum PlateShape",
+          "note": "四档形状令牌"
+        },
+        {
+          "file": "App/Core/VariantGrammar.swift",
+          "line": 214,
+          "symbol": "legacyEdge",
+          "note": "描边不能用 AnyShape"
+        },
+        {
+          "file": "App/Core/VariantGrammar.swift",
+          "line": 228,
+          "symbol": "variantPlate",
+          "note": "逐字复刻 background(style,in:)"
+        },
+        {
+          "file": "App/Core/VariantGrammar.swift",
+          "line": 236,
+          "symbol": "variantCallout",
+          "note": "语义色提示块"
+        }
+      ]
+    },
+    {
+      "platform": "ios",
+      "status": "implemented",
+      "details": [
+        "rawFrame 输出完整帧的十六进制（含头/长度/命令/KLV）",
+        "rcOf 从回包里取 rc（缺项按 -1 处理，与协议层同口径）",
+        "friendlyFailReason 把 rc 翻译成用户能懂的一句话，而不是只给错误码",
+        "highlighted 给关键字节/片段加高亮，便于肉眼定位",
+        "report 汇总成整段文本，供复制与诊断截图（截图带水印）"
+      ],
+      "tags": [
+        "诊断",
+        "现场取证"
+      ],
+      "level": 4,
+      "key": "diagnostic.report.render",
+      "parentKey": "diagnostic.report",
+      "domain": "diagnostic",
+      "kind": "diagnostic",
+      "name": "诊断报告正文：十六进制报文 + 失败人话 + 高亮",
+      "summary": "把一次失败现场拼成可复制/可截图的报告：原始帧十六进制、rc 解码、失败原因翻译、关键片段高亮。",
+      "evidence": [
+        {
+          "file": "App/UI/DiagnosticsView.swift",
+          "line": 1299,
+          "symbol": "rcOf",
+          "note": "取 rc"
+        },
+        {
+          "file": "App/UI/DiagnosticsView.swift",
+          "line": 1306,
+          "symbol": "rawFrame",
+          "note": "完整帧十六进制"
+        },
+        {
+          "file": "App/UI/DiagnosticsView.swift",
+          "line": 1344,
+          "symbol": "friendlyFailReason",
+          "note": "rc → 人话"
+        },
+        {
+          "file": "App/UI/DiagnosticsView.swift",
+          "line": 1354,
+          "symbol": "report",
+          "note": "汇总报告正文"
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    "App/Core/Store.swift:1015/1031/1048 toDict/fromDict —— Codable 手写编解码，无独立用户可感知功能，未单列（已有 data.schema 覆盖 Codable 容错口径）",
+    "App/UI/CredentialsView.swift:2517 topViewController —— 取顶层 VC 的 presenter 工具，无独立功能语义",
+    "App/UI/CredentialStudio.swift:359 CodeBigCard 已由 credential.pwd.detail.card 与 credential.tempcode.done 覆盖"
+  ],
+  "notes": [
+    "第二批补齐：符号级核验（symcoverage.js）查出 24 条未被 ±60 行覆盖的声明，其中 4 组有真实功能语义，已补；其余为 helper 或已被别的节点文字覆盖。"
+  ]
+}

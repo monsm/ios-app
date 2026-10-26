@@ -1,0 +1,5997 @@
+{
+  "scout": "ios-ui-records",
+  "platform": "ios",
+  "scope": [
+    "App/UI/RecordsView.swift",
+    "App/UI/RecordsTimeline.swift",
+    "App/UI/ExportShares.swift",
+    "App/UI/MemberCenterView.swift"
+  ],
+  "nodes": [
+    {
+      "key": "record.tab",
+      "parentKey": "record",
+      "domain": "record",
+      "level": 2,
+      "name": "记录 Tab（列表+时间线+检索+导出总入口）",
+      "kind": "screen",
+      "summary": "记录域主页面：从锁内翻页拉取门锁日志（cmd16 getLogs）并与手机侧失败/保养事件合并，按自然日分组渲染时间线，同时承载检索、筛选、告警入口、活跃凭证、越界开门与四种导出。",
+      "details": [
+        "入口：主 TabView 第 3 页 recordsTabContent，父层以 `RecordsView().id(app.currentMac)` 挂身份（切锁整页重建，避免 @State 残留旧锁行）",
+        "无当前锁时走 noLockPlaceholder：「还没有添加门锁 / 开门与操作记录存在门锁内」，动作按钮「去添加门锁」→ AddDeviceView sheet",
+        "页面级监听：onAppear、currentMac、pendingSearch/pendingRecordKey/pendingRecordsDay/pendingFlashKey/pendingRecordsFilter/pendingRecordsMember、scope、filters、reversed、searchText",
+        "列表区顺序固定：状态条 → 离线跳回行 → 范围行 → 搜索区 → 月份跳转 → 当天全景横幅 → 结果计数（有筛选/搜索才出）→ 筛选摘要 → 低频折叠区 → 读取中骨架 → 日组 → 继续加载 → 第一天结语",
+        "工具栏：读取中显示 ProgressView，否则「重新读取」按钮（⌘R）；「更多」菜单含 复制上周小结 / 选区导出 / 活跃凭证排序(约) / 越界开门清单(约)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 20,
+          "symbol": "struct RecordsView",
+          "note": "记录 Tab 主视图声明"
+        },
+        {
+          "file": "App/LockKeeperApp.swift",
+          "line": 842,
+          "symbol": "recordsTabContent",
+          "note": "父级：Tab 第 3 页 + RecordsView().id(app.currentMac)"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 178,
+          "symbol": "noLockPlaceholder",
+          "note": "无锁占位「去添加门锁」"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 233,
+          "symbol": "recordsToolbar",
+          "note": "右上工具栏与「更多」菜单"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 355,
+          "symbol": "recordsChrome",
+          "note": "NavigationStack + 全部 sheet/alert 挂载点"
+        }
+      ],
+      "tags": [
+        "记录",
+        "核心",
+        "入口"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.list",
+      "parentKey": "record.tab",
+      "domain": "record",
+      "level": 3,
+      "name": "记录列表（分页/骨架/空态/状态条/对账）",
+      "kind": "screen",
+      "summary": "记录的容器列表：负责加载态、空态、离线态、对账行、分页截断与「第一天」结语，日组内容由 record.timeline 渲染。",
+      "details": [
+        "列表 = List，`.scrollPosition(id:)` 绑定行 id（oid = mac#行键），供 583 定位滚动",
+        "分页口径：首次按行池量定档（≤600 全显，>600 显 600），之后每按一次 +600；footer 明确「分页只影响本页渲染，不改筛选/导出/统计口径」",
+        "读取中：三行骨架（不是整屏骨架），reduceMotion 下停止闪动并显示「减少动态效果下不闪动」",
+        "空态分两支：有筛选 → 0 条救援（可点成员名/「指纹」/「今天」，或「清掉全部过滤」）；无筛选 → 说明+3 条灰阶示例+「连接设备」真出路",
+        "顶部状态条三态：offline 缓存提示 / pullGap 未拉全 / 上次成功读取时间"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 188,
+          "symbol": "mainList",
+          "note": "List 结构与区块顺序"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 227,
+          "symbol": "scrollPosition(id:)",
+          "note": "行级滚动锚"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2676,
+          "symbol": "applyFilter",
+          "note": "filteredTotal 与 598 分档截断"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2008,
+          "symbol": "runningRow",
+          "note": "骨架屏三行 + reduceMotion 处理"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1941,
+          "symbol": "emptyHint",
+          "note": "两种空态"
+        }
+      ],
+      "tags": [
+        "记录",
+        "空态",
+        "分页"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.timeline",
+      "parentKey": "record.list",
+      "domain": "record",
+      "level": 3,
+      "name": "按天时间线（日组/月份大字/缺口行）",
+      "kind": "screen",
+      "summary": "把行池按归属日分组，输出可扫读的时间线：日组头吸顶、月界大字、凌晨归前一天、缺口与假期外出分隔行。",
+      "details": [
+        "分组只按首现顺序（行池已按锁端时刻倒序），不重排、不补空天",
+        "缺口行为独立极简行（key 前缀 gap-），不进 daySection，也不是「某天」",
+        "缺口 ≤7 天逐日一行「当日无开门记录」，>7 天只一行「其间 N 天无记录」，含节假日升级为「含X，假期外出？」",
+        "补缺口三个前提：未筛选、非正序回放、非「时间未知」组"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1297,
+          "symbol": "daySection",
+          "note": "日组渲染"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2685,
+          "symbol": "applyFilter",
+          "note": "按 dayKey 分桶 + order 保序"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2699,
+          "symbol": "applyFilter",
+          "note": "657/675 补缺口行条件"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2525,
+          "symbol": "gapRow",
+          "note": "缺口行文案"
+        }
+      ],
+      "tags": [
+        "记录",
+        "时间线"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.list.header",
+      "parentKey": "record.timeline",
+      "domain": "record",
+      "level": 4,
+      "name": "日组头信息带",
+      "kind": "state",
+      "summary": "一天的组头一次交代：日期、未处置告警蓝点、防撬/试错标记、日型色带、节假日与补班、含次日凌晨、开门/告警计数、农历、使用者数、条数。",
+      "details": [
+        "日期标签：__none→「时间未知」，今天/昨天，其余「M月d日」",
+        "蓝点（581）：该日有未处置告警才出现，口径 = disposition 为空，不另存「已读」位",
+        "「含防撬/试错」红字（596）：该日发生过 type 7/10/224，点按 = landDay 只看这一天",
+        "日型 4pt 竖条（594）：节假日橙 / 周末青绿 / 工作日靛蓝；调休补班日按工作日算并另挂「补班」小字（671）",
+        "计数徽标：`N 开` + 有告警时 `M 警`；有告警的日子徽标底色染 danger 10%",
+        "凌晨归属（649）：组内含 0:00–4:59 事件时标「含次日凌晨」",
+        "农历小字（681）由 Calendar(.chinese) 现算，失败静默隐藏；今天额外显示「约 N 位使用者」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1369,
+          "symbol": "daySection.header",
+          "note": "组头 HStack"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1373,
+          "symbol": "alarmDays.contains",
+          "note": "581 未处置蓝点"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1382,
+          "symbol": "damageDays.contains",
+          "note": "596 含防撬/试错"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1397,
+          "symbol": "g.dayKind",
+          "note": "594 日型色带"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1404,
+          "symbol": "g.holiday / isMakeupWorkday",
+          "note": "671 节假日与补班"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1453,
+          "symbol": "distinctUsers",
+          "note": "796 本日使用者"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 148,
+          "symbol": "DayGroup.dayKind",
+          "note": "日型判定（节假日/补班/周末）"
+        }
+      ],
+      "tags": [
+        "记录",
+        "组头",
+        "阈值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.list.night",
+      "parentKey": "record.timeline",
+      "domain": "record",
+      "level": 4,
+      "name": "凌晨归前一日（0:00–4:59）",
+      "kind": "data",
+      "summary": "锁端时刻串先按 5 点切界：0:00–4:59 的事件日键回退一天，归到前一晚的组里，组头注明「含次日凌晨」。",
+      "details": [
+        "判据：hh >= 0 && hh < 5 → dayKey 回退 1 天；跨年、跨月同样生效",
+        "时刻显示：今天只显 HH:mm，跨天显 MM-dd HH:mm，不足 16 位显「--:--」",
+        "日键不足 10 位记 __none（时间未知行不参与时段/周末/缺口推算）",
+        "同一算术只在 rowParts 一处：单锁 render 与全部锁 applyFilter 共用（避免两处漂一格）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2766,
+          "symbol": "rowParts",
+          "note": "唯一一份时刻/日键换算"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2769,
+          "symbol": "rowParts",
+          "note": "hh<5 回退一天"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 127,
+          "symbol": "DayGroup.hasNight",
+          "note": "组内 0–5 点判定"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1419,
+          "symbol": "g.hasNight",
+          "note": "「含次日凌晨」小字"
+        }
+      ],
+      "tags": [
+        "记录",
+        "日界",
+        "阈值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.list.gap",
+      "parentKey": "record.timeline",
+      "domain": "record",
+      "level": 4,
+      "name": "无记录日/假期外出分隔行",
+      "kind": "edge",
+      "summary": "时间线不补空天，而是用一条缺口行描述断档；含法定节假日的一档升级为「假期外出？」问句（不当成异常）。",
+      "details": [
+        "缺口跨度按就近取整算：`(newer - older + 43200) / 86400`，N 天相邻 ⇒ 1，避免旧写法恒定少算一天",
+        "missing = gap - 1；missing > 7 ⇒ 单行汇总，并在 1...min(missing,45) 内找一个节假日名做提示",
+        "missing ≤ 7 ⇒ 逐日一行，每行单独判断是否节假日",
+        "只在 activeFilterCount == 0 且非 reversed 时补，且跳过 __none 组"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2713,
+          "symbol": "applyFilter",
+          "note": "gap 就近取整"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2716,
+          "symbol": "applyFilter",
+          "note": ">7 天汇总 vs 逐日"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2529,
+          "symbol": "gapRow",
+          "note": "「其间 N 天无记录」"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2534,
+          "symbol": "gapRow",
+          "note": "675 假期外出？"
+        }
+      ],
+      "tags": [
+        "记录",
+        "缺口",
+        "边界"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.list.merged",
+      "parentKey": "record.timeline",
+      "domain": "record",
+      "level": 4,
+      "name": "连击合并行（同一分钟 ≥3 次）",
+      "kind": "state",
+      "summary": "同一凭证、同一显示分钟、同一天、非告警、≤3 条以上连续行折叠成「同一分钟内 N 次」，点按展开明细。",
+      "details": [
+        "折叠条件（flush 判定）：run.count >= 3，kind 非空，无 warn，credKey 非空，且全部同 dayKey/kind/credKey/time",
+        "窗口用「显示到分钟的时刻串相等」表达 ⇒ 真实间隔必 <60s，只会少合并不会多合并",
+        "展开后首行 + mergedTail 逐条按普通行渲染，折叠状态存 expandedMerged（内存态）",
+        "合并行文案「<标题> · 同一分钟内 N 次」；读屏「连续 N 次: …, 点按展开」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2348,
+          "symbol": "mergeConsecutive",
+          "note": "合并算法与判据"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1524,
+          "symbol": "mergedRow",
+          "note": "折叠行 UI 与展开动作"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1347,
+          "symbol": "daySection",
+          "note": "expandedMerged 展开态渲染"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2326,
+          "symbol": "render",
+          "note": "单锁路径也过合并"
+        }
+      ],
+      "tags": [
+        "记录",
+        "合并",
+        "阈值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.list.marks",
+      "parentKey": "record.timeline",
+      "domain": "record",
+      "level": 4,
+      "name": "行内注记（第 N 次/第 N 位/入库顺序/双行日期）",
+      "kind": "state",
+      "summary": "行上按需追加四类注记：本日第 N 次同人同类型、本日第 N 位使用者、同分钟「按入库顺序」、可选双行完整日期。",
+      "details": [
+        "591 次序键 = (whoId ?? '?') + '|' + type，本组内递增；第 1 次不写（写「第一次」等于没写）",
+        "796 使用者序号 = 本组内按首见次序编号，只有 ≥2 才写；与 183 同一由头（归属可证明）",
+        "680 同分钟歧义：相邻两行显示时刻串相同即标「按入库顺序」（协议日志只到分）",
+        "648 双行日期：TimeFormat.twoLine 开启时额外显示完整日期（跨年时可辨年份），默认关"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1324,
+          "symbol": "daySection",
+          "note": "seqByRow/userOrdByRow/dupMinute 预处理"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1604,
+          "symbol": "timelineRow",
+          "note": "今日第 N 次"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1612,
+          "symbol": "timelineRow",
+          "note": "本日第 N 位使用者"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1629,
+          "symbol": "timelineRow",
+          "note": "按入库顺序"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1622,
+          "symbol": "TimeFormat.twoLine",
+          "note": "648 双行日期"
+        }
+      ],
+      "tags": [
+        "记录",
+        "行注记"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.list.alarmStyle",
+      "parentKey": "record.timeline",
+      "domain": "record",
+      "level": 4,
+      "name": "告警行视觉（菱形点+左侧红条+浅红底）",
+      "kind": "state",
+      "summary": "告警行用形状+颜色双通道：时间轴圆点换成菱形、左侧 3pt danger 色条、整行 danger 8% 浅底，同日告警行置顶。",
+      "details": [
+        "菱形 10pt vs 圆点 8pt，不依赖颜色单独可辨",
+        "有告警的日组把 warn 行提前到组首，其余行保持原顺序（拆两段拼接而非 sorted，保证稳定性）",
+        "组头底色 danger 4%、计数徽标 danger 10%"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1563,
+          "symbol": "timelineRow",
+          "note": "菱形/圆点切换"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1858,
+          "symbol": "alarmBG",
+          "note": "浅底 + 3pt 左条"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1306,
+          "symbol": "daySection",
+          "note": "589 组内告警置顶"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1468,
+          "symbol": "daySection.header",
+          "note": "组头 hasAlarm 底色"
+        }
+      ],
+      "tags": [
+        "记录",
+        "告警",
+        "可访问性"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.list.kindIcon",
+      "parentKey": "record.timeline",
+      "domain": "record",
+      "level": 4,
+      "name": "开门方式图标与凭证深链键",
+      "kind": "data",
+      "summary": "行首按 kind 显示 SF 图标（fp 指纹 / pwd 数字键 / temp 一次性 / key 钥匙），并把同一 kind+归属换算成凭证深链键 pwd:N / fp:N。",
+      "details": [
+        "kindSymbol 只做映射（fp→fingerprint, pwd→number, temp→timer, key→key），空 kind 不占位",
+        "credNav 命中规则：pwd 取非 temp 且 owner 匹配；temp 取 temp 且 owner 匹配；fp 取 owner 相等或指纹名包含成员名",
+        "台账无命中则 credKey 留空 ⇒ 行上不出现「看凭证」动作（不深跳）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1873,
+          "symbol": "kindSymbol",
+          "note": "kind→SF Symbol"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2331,
+          "symbol": "credNav",
+          "note": "单锁凭证深链键"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2796,
+          "symbol": "recCredNav",
+          "note": "全部锁同一口径"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1598,
+          "symbol": "kindIcon",
+          "note": "行首图标"
+        }
+      ],
+      "tags": [
+        "记录",
+        "凭证",
+        "深链"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.list.memberDot",
+      "parentKey": "record.timeline",
+      "domain": "record",
+      "level": 4,
+      "name": "成员色点（可证明归属才显示）",
+      "kind": "data",
+      "summary": "行上 6pt 成员建档色圆点，只在 whoId 可解析到成员档案时出现；色值取成员 color hex，非法回退 accent。",
+      "details": [
+        "归属只算「可证明」：Attribution.classify 的结果 + 791 认领覆盖层（认领优先改写 whoId）",
+        "色值解析：去掉 # 后按 16 进制转 Color；失败回落 DS.Palette.accent",
+        "读屏补一句「成员 X 的色点」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1898,
+          "symbol": "memberDot",
+          "note": "6pt 圆点"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1908,
+          "symbol": "memberColor",
+          "note": "hex → Color 与回退"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2300,
+          "symbol": "render",
+          "note": "791 认领优先于推断"
+        }
+      ],
+      "tags": [
+        "记录",
+        "成员",
+        "归属"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.list.lockTag",
+      "parentKey": "record.timeline",
+      "domain": "record",
+      "level": 4,
+      "name": "全部锁模式的行首锁名标签",
+      "kind": "state",
+      "summary": "scope=全部锁时每行前挂锁名胶囊，且前置该锁档案的符号与色标（与 Hero 卡同一字段），最长 130pt。",
+      "details": [
+        "标签只在该行有 lockName 时出现（单锁模式为空）",
+        "符号/颜色来自 LockArchive.meta(mac) 的 symbolName 与 colorKey",
+        "读屏标签「锁 <名称>」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1573,
+          "symbol": "timelineRow",
+          "note": "lockName 胶囊 + 符号色标"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2568,
+          "symbol": "applyFilter",
+          "note": "全部锁池带 lockName/rowMac"
+        }
+      ],
+      "tags": [
+        "记录",
+        "多锁"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.list.flag",
+      "parentKey": "record.timeline",
+      "domain": "record",
+      "level": 4,
+      "name": "手动标旗（188 标为异常）",
+      "kind": "action",
+      "summary": "把某一行标为异常：写本机覆盖层，行首常显红旗；再点一次取消。不改锁端日志。",
+      "details": [
+        "入口三处：右滑「标旗」、详情卡「标为异常」开关、（读取后行首红旗常显）",
+        "写 RecordOverlay.toggleFlag(mac, key)，随后 applyFilter 让渲染期直读的覆盖层重建",
+        "toast：「已标为异常, 行首常显红旗」/「已取消标旗」；无二次确认（可逆、纯本机）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1779,
+          "symbol": "toggleRowFlag",
+          "note": "写入 + 重建 + toast"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1591,
+          "symbol": "RecordOverlay.isFlagged",
+          "note": "行首红旗"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1708,
+          "symbol": "swipeActions",
+          "note": "右滑「标旗」"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 587,
+          "symbol": "noteSection",
+          "note": "详情卡开关"
+        }
+      ],
+      "tags": [
+        "记录",
+        "本机覆盖层",
+        "动作"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.list.note",
+      "parentKey": "record.timeline",
+      "domain": "record",
+      "level": 4,
+      "name": "行备注 / 开门附言（186/990）",
+      "kind": "action",
+      "summary": "给一行写最多 60 字本机备注（也叫「开门附言」），行下灰字展示；只存在这台手机，不写进锁端日志。",
+      "details": [
+        "入口三处共用一只弹窗：后缘滑出「备注」、前缘滑出「备注」、详情卡 TextField + 保存备注",
+        "存储键 = mac#行键（与 oid 同一算术），写侧全仓只有 RecordOverlay.setNote 一处",
+        "alert 文案：「行备注 (最多 60 字)」/「备注跟着这一行 (锁 + 行标识) 走, 不写进锁端日志; 详情页里也能改。」",
+        "空内容保存 = 清空，toast「备注已清空」；备注与凭证标签一起进搜索面（551）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1762,
+          "symbol": "openRowNote",
+          "note": "预填现有备注"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1768,
+          "symbol": "saveRowNote",
+          "note": "保存与 toast"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 361,
+          "symbol": "recordsChrome",
+          "note": "行备注 alert 文案"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 576,
+          "symbol": "noteSection",
+          "note": "详情卡编辑面"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1639,
+          "symbol": "timelineRow",
+          "note": "行下灰字展示"
+        }
+      ],
+      "tags": [
+        "记录",
+        "本机覆盖层",
+        "搜索面"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.list.claim",
+      "parentKey": "record.timeline",
+      "domain": "record",
+      "level": 4,
+      "name": "未归属记录行内认领（791）",
+      "kind": "action",
+      "summary": "无法推断归属的行上出现「认领」胶囊，弹成员 actionSheet 选人，把结果写进本机认领覆盖层；锁端数据不动。",
+      "details": [
+        "可认领判据：whoId 为空、kind ≠ temp（temp 进 793 访客分组）、且认领表里还没有这一行",
+        "候选成员 = DB.members() 且未归档；标题「认领未归属记录」，正文回述「台账推断这条「<方式>开门」发生在 <时刻>」",
+        "写入 MemberHub.claim(mac, logKey, memberId) 后 loadFromCache 重算；toast「已认领给「X」(本机覆盖层)」",
+        "无二次确认（可再改；不改锁端）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1924,
+          "symbol": "claimRow",
+          "note": "actionSheet 列成员"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1652,
+          "symbol": "timelineRow",
+          "note": "行内「认领」按钮"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2316,
+          "symbol": "render",
+          "note": "claimable 判据"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1620,
+          "symbol": "UnclaimedClaimView",
+          "note": "另一入口：批量认领"
+        }
+      ],
+      "tags": [
+        "记录",
+        "认领",
+        "动作"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.list.monthBig",
+      "parentKey": "record.timeline",
+      "domain": "record",
+      "level": 4,
+      "name": "月界大字（595）",
+      "kind": "state",
+      "summary": "每个月的第一个有记录日组头多打一行「N 月」大字；只在静态处做了，滚动渐显那半没做。",
+      "details": [
+        "标记在分组阶段完成：逐组比 `key.prefix(7)`，变化即打 showMonthBig",
+        "缺口行跳过，否则「新的一月」会落在空日上",
+        "滚动驱动渐显未实现（需 scrollTarget/scrollPosition 类 API）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2735,
+          "symbol": "applyFilter",
+          "note": "月键变化打标"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1363,
+          "symbol": "daySection.header",
+          "note": "静态月大字"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 120,
+          "symbol": "DayGroup.showMonthBig",
+          "note": "字段注释（PART）"
+        }
+      ],
+      "tags": [
+        "记录",
+        "时间线",
+        "未完成"
+      ],
+      "status": "partial"
+    },
+    {
+      "key": "record.list.dayFooter",
+      "parentKey": "record.timeline",
+      "domain": "record",
+      "level": 4,
+      "name": "组尾「当日最晚 · 全天 N 条」口径",
+      "kind": "state",
+      "summary": "每天组尾交代这一天的最晚时刻与真实条数；两者都取自过滤与分页之前，若与当前显示数不一致会额外写「当前显示 N 条」。",
+      "details": [
+        "dayFullCount 连合并行的 mergedTail 一起数",
+        "dayLatest 取行池里该日第一次出现的时刻（行池已按锁端时刻倒序），避免跨年日组把「最晚」说成前一晚",
+        "isClockish 过滤「--:--」，未知时刻不参与最晚判定",
+        "只在 dayFull > 1 时显示（单条日子的「最晚」是噪音）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2580,
+          "symbol": "applyFilter",
+          "note": "dayCount/dayEndBy 计算"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1474,
+          "symbol": "daySection.footer",
+          "note": "文案拼接"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2782,
+          "symbol": "isClockish",
+          "note": "时刻判据"
+        }
+      ],
+      "tags": [
+        "记录",
+        "口径"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.list.loadMore",
+      "parentKey": "record.list",
+      "domain": "record",
+      "level": 4,
+      "name": "继续加载（598 分页截断）",
+      "kind": "state",
+      "summary": "显式「继续加载 (已读 N / 共 M 条)」按钮，每按一次上限 +600；footer 说明分页只影响渲染。",
+      "details": [
+        "shownCap 首次按池量定档（≤600 全显 / >600 显 600），不写死 1200（旧口径在 300 条级池子上永不触发）",
+        "不自动懒加载：避免 GeometryReader 锚点判断，且数量对用户可见",
+        "capped = filtered.count > shownCap，截断发生在分组之前（避免挂上千个 Section 掉帧）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1048,
+          "symbol": "loadMoreRow",
+          "note": "按钮与 footer"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2679,
+          "symbol": "applyFilter",
+          "note": "分档截断"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 62,
+          "symbol": "shownCap",
+          "note": "池量分档注释与阈值"
+        }
+      ],
+      "tags": [
+        "记录",
+        "分页",
+        "阈值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.list.skeleton",
+      "parentKey": "record.list",
+      "domain": "record",
+      "level": 4,
+      "name": "读取中骨架屏（19）",
+      "kind": "state",
+      "summary": "读取时显示三行像记录的骨架（左时刻胶囊 + 右两行文案），按 reduceMotion 决定是否闪动。",
+      "details": [
+        "动画 = .easeInOut(0.9).repeatForever(autoreverses)，opacity 1.0 ↔ 0.55",
+        "reduceMotion 下 opacity 恒 0.55 并追加说明「减少动态效果下不闪动，读好后整页自动替换」",
+        "中途关闭 reduceMotion 会立刻停（onChange 里 shimmer=false），不残留 repeatForever",
+        "骨架整体 accessibilityHidden，读屏只念「正在读取锁内记录」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2008,
+          "symbol": "runningRow",
+          "note": "三行骨架"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2038,
+          "symbol": "runningRow",
+          "note": "reduceMotion 文案"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2044,
+          "symbol": "runningRow",
+          "note": "onAppear/onChange 控制 shimmer"
+        }
+      ],
+      "tags": [
+        "记录",
+        "加载态",
+        "可访问性"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.list.empty",
+      "parentKey": "record.list",
+      "domain": "record",
+      "level": 4,
+      "name": "空态：0 条救援 与 首次示例",
+      "kind": "state",
+      "summary": "两种空态分开措辞：有筛选时说明「被过滤挡掉」并给三枚真实可点的示例；无筛选时说明 100 条拉取口径并给「连接设备」真出路。",
+      "details": [
+        "有筛选：「当前条件下 0 条 — 是过滤把它们挡掉了，不是这台锁没记录 (本机共 N 行可读)」",
+        "三枚试词全部取真实值：第一位成员名、Attribution.words[fp]、「今天」（仅当今天真有行）",
+        "一键「清掉全部过滤」= 清 sel + searchText + filters",
+        "无筛选：托盘图标 + variableColor 微动画（reduceMotion 关），文案「点右上角「重新读取」从锁内拉取最近 100 条」，下方示例条目与「连接设备」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1941,
+          "symbol": "emptyHint",
+          "note": "两种空态分支"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1953,
+          "symbol": "emptyHint",
+          "note": "真实成员名试词"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1966,
+          "symbol": "emptyHint",
+          "note": "清掉全部过滤"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1987,
+          "symbol": "emptyHint",
+          "note": "100 条口径文案 + 连接设备"
+        }
+      ],
+      "tags": [
+        "记录",
+        "空态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.list.status",
+      "parentKey": "record.list",
+      "domain": "record",
+      "level": 4,
+      "name": "顶部状态条三态",
+      "kind": "state",
+      "summary": "列表顶部按优先级显示三态之一：离线缓存提示、本次未拉全提示、上次成功读取时刻。",
+      "details": [
+        "offline = 从未成功读取过（lastSyncAt()==nil 且缓存为空时才为真），文案带读取时刻或「读取时间未知」",
+        "offline 时额外显示 jumpBackRow：一键跳设备页定位该锁（pendingJumpLock + requestRoute(.device)）",
+        "pullGap 非空 → 显示「锁端仍报剩余 N 条…属未拉全，不是记录缺失」",
+        "否则显示「上次成功读取：MM-dd HH:mm」，并附对账行（749 拍板 #28：拉全也要留凭据）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1217,
+          "symbol": "statusBanner",
+          "note": "三态分支"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1260,
+          "symbol": "cachedHint",
+          "note": "离线文案"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1267,
+          "symbol": "jumpBackRow",
+          "note": "跳回设备页"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2239,
+          "symbol": "fetch",
+          "note": "kf_logsync_ 写入时机"
+        }
+      ],
+      "tags": [
+        "记录",
+        "离线",
+        "状态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.list.recon",
+      "parentKey": "record.list",
+      "domain": "record",
+      "level": 4,
+      "name": "拉取完整性对账（749）",
+      "kind": "diagnostic",
+      "summary": "每次读取后给一行可复制的对账结论，三种结论都有对应措辞：拉全 / 未拉全（带剩余条数）/ 锁端未报剩余（不可判）。",
+      "details": [
+        "数据来源：lock.getLogs 返回的 KLV#04 surplus（本页剩余条数），记 lastSurplus 与 noSurplusReport",
+        "拉全：`锁 X · 本次拉取 N 条 · 锁端报告无剩余 · 本次会话内已拉全 · MM-dd HH:mm`",
+        "未拉全：`锁 X · 本次拉取 N 条 · 锁端报告剩余 M 条 · 未拉全 · 时刻`",
+        "不可判：`… · 锁端未报告剩余 · 对账不可判 · 时刻`（最容易被写成「已拉全」，这里明确不下结论）",
+        "「复制对账」走 UIPasteboard 纯文本（不含口令等敏感值），toast「本次对账结果已复制」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2226,
+          "symbol": "fetch",
+          "note": "三态 reconLine 生成"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 402,
+          "symbol": "reconRow",
+          "note": "展示 + 复制按钮"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2197,
+          "symbol": "fetch",
+          "note": "lastSurplus / noSurplusReport 变量"
+        }
+      ],
+      "tags": [
+        "记录",
+        "对账",
+        "诊断"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.list.rowMenu",
+      "parentKey": "record.timeline",
+      "domain": "record",
+      "level": 4,
+      "name": "行级滑出与长按菜单（复制/行标识/看凭证/备注/标旗）",
+      "kind": "action",
+      "summary": "一行上有三套动作面：右滑（看凭证/备注/标旗/复制）、前缘左滑（备注）、长按上下文菜单（复制为文本/复制行标识/定位来源凭证）；点行主体进详情。",
+      "details": [
+        "右滑 4 项都只在行本身已有能力时出现：「看凭证」仅当 credKey 非空；顺序 看凭证→备注→标旗→复制",
+        "复制文本格式：`[锁名] yyyy-MM-dd HH:mm:ss 标题`",
+        "761 复制行标识：`row=<key> · day=<dayKey> · mac=<mac>`，用于和诊断包日志逐条对账",
+        "点行：lookupRec 命中 → 打开 RecDetailSheet；未命中 → toast「本机台账里没有这一行对应的记录数据 — 点右上角重新读取后再试」",
+        "读屏整行合并为一句自然语（850 AXTerms.rowSentence），并加 .isButton 特征"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1695,
+          "symbol": "swipeActions(trailing)",
+          "note": "四项右滑动作"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1717,
+          "symbol": "swipeActions(leading)",
+          "note": "前缘备注"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1721,
+          "symbol": "contextMenu",
+          "note": "复制为文本 / 复制行标识 / 定位来源凭证"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1685,
+          "symbol": "timelineRow",
+          "note": "点行开详情与兜底 toast"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1753,
+          "symbol": "AXTerms.rowSentence",
+          "note": "整行自然语朗读"
+        }
+      ],
+      "tags": [
+        "记录",
+        "动作",
+        "剪贴板"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.search",
+      "parentKey": "record.tab",
+      "domain": "record",
+      "level": 3,
+      "name": "记录检索（关键词/加减词/时间词/自然语言）",
+      "kind": "screen",
+      "summary": "一条输入框同时做关键词、+必含/-排除、时间短语、告警词、凭证类型词、成员名匹配，边输入边过滤。",
+      "details": [
+        "占位文案即承诺：`搜索: 成员 / 凭证 / 昨晚 告警 / +指纹 -临时码`",
+        "搜索面 = 标题 + 锁名 + 成员名 + 凭证标签 + 本机备注（551 补齐，备注与凭证 310 别名都进搜索面）",
+        "正词全中（mustHit）、负词全不中（notHit）、成员名命中可单独放行（memberHit）",
+        "提交（键盘「搜索」键）才写历史，不随击键写"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 433,
+          "symbol": "searchBar",
+          "note": "占位文案与绑定"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2608,
+          "symbol": "applyFilter",
+          "note": "检索过滤块与搜索面组装"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2624,
+          "symbol": "RecordSearch.searchFace",
+          "note": "搜索面五段"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 345,
+          "symbol": "onChange(searchText)",
+          "note": "562 边输入边过滤"
+        }
+      ],
+      "tags": [
+        "记录",
+        "搜索",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.search.syntax",
+      "parentKey": "record.search",
+      "domain": "record",
+      "level": 4,
+      "name": "检索语法与解析规则",
+      "kind": "data",
+      "summary": "空格切词；`-x` 排除、`+x` 必含；时间短语（昨天/今天/昨晚/凌晨/上周/本周/上月…）转时间窗；「告警/异常」等价仅告警；类型词命中后按凭证类型过滤。",
+      "details": [
+        "解析结果 Query = must / not / member / range / alarmOnly / credKind / parsedTags",
+        "时间词命中后会从 must 中摘除，否则时间窗叠加字面词会恒定 0 条",
+        "凭证类型词表：指纹→fp、密码→pwd、临时码/一次性密码→temp、钥匙/NFC→key",
+        "「失败/未成功」只追加标签「失败(仅告警级)」，不改 credKind（锁端无逐次失败明细）",
+        "行级时间窗判定用「归属日 + 行显示时分」近似（rowDate）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 346,
+          "symbol": "RecordSearch.parse",
+          "note": "解析入口"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2629,
+          "symbol": "applyFilter",
+          "note": "mustHit/notHit/alarmOnly/credKind/range 逐项判定"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2750,
+          "symbol": "rowDate",
+          "note": "时间窗行级近似"
+        }
+      ],
+      "tags": [
+        "记录",
+        "搜索",
+        "语法"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.search.history",
+      "parentKey": "record.search",
+      "domain": "record",
+      "level": 4,
+      "name": "最近搜索（5 条，可单删/清空）",
+      "kind": "data",
+      "summary": "搜索历史最多 5 条、最新在前；点一条即回填并提到最前，可单条删除或「全部清空」。",
+      "details": [
+        "存储键 kf_rsearch_hist（RecordSearch），上限 historyCap = 5，界面不再另写上限",
+        "回填时同步刷新解析标签与高亮词，然后 applyFilter；再选用也 pushHistory（自带去重）",
+        "「全部清空」红字直接清库，无二次确认（本地偏好）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 482,
+          "symbol": "searchBar",
+          "note": "最近搜索区与全部清空"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 497,
+          "symbol": "searchBar",
+          "note": "点历史回填 + pushHistory"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 514,
+          "symbol": "searchBar",
+          "note": "单条删除"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 438,
+          "symbol": "onSubmit",
+          "note": "提交才入历史"
+        }
+      ],
+      "tags": [
+        "记录",
+        "搜索",
+        "本机偏好"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.search.namedViews",
+      "parentKey": "record.search",
+      "domain": "record",
+      "level": 4,
+      "name": "我的过滤（命名视图 另存/应用/删除）",
+      "kind": "action",
+      "summary": "把「搜索词 + 筛选组合 + 锁范围」存成命名视图长期复用；点击一次还原全部条件，可删除（带确认）。",
+      "details": [
+        "存储键 kf_rviews（RecordSearch.namedViews），每条含 name/text/filters/scopeAll",
+        "另存：搜索区 header 的下载图标 → alert「另存过滤视图」+ 输入名称，空名不保存",
+        "应用：写 searchText + filters + scope + reversed=false，然后 applyFilter",
+        "删除：走全局 confirmDestructive（标题「删除过滤「X」」，正文说明只删这条存好的过滤），确认后删除并重新 applyFilter（否则 chip 残留）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 528,
+          "symbol": "searchBar",
+          "note": "我的过滤列表"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 553,
+          "symbol": "searchBar",
+          "note": "删除走 confirmDestructive"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 597,
+          "symbol": "saveAsView",
+          "note": "另存 alert 与保存"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 584,
+          "symbol": "searchBar.header",
+          "note": "「另存当前组合」菜单"
+        }
+      ],
+      "tags": [
+        "记录",
+        "搜索",
+        "破坏性"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.search.suggest",
+      "parentKey": "record.search",
+      "domain": "record",
+      "level": 4,
+      "name": "搜索建议补全",
+      "kind": "state",
+      "summary": "输入 ≤6 字时给出最多 6 条候选：真实成员名、成员名+类型词组合、类型词本身；不生成查不到的词。",
+      "details": [
+        "候选只从 DB.members() 与 Attribution.words 取，全为空则不给建议",
+        "排序固定（成员按录入序、类型词按字面序），避免字典遍历顺序抖动",
+        "点一枚即写 searchText"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 685,
+          "symbol": "suggestions",
+          "note": "候选生成与上限 6"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 647,
+          "symbol": "resultCount",
+          "note": "建议横滚渲染"
+        }
+      ],
+      "tags": [
+        "记录",
+        "搜索"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.search.count",
+      "parentKey": "record.search",
+      "domain": "record",
+      "level": 4,
+      "name": "结果计数与条件数与重置",
+      "kind": "state",
+      "summary": "顶部实时显示「命中约 N 条 · 实时」，右侧显示已生效条件数并给「重置」一键回到空白起点。",
+      "details": [
+        "有搜索：「命中约 N 条 · 实时」；仅筛选：「筛选后约 N 条」；分页时附加「· 本页已加载 M」",
+        "activeFilterCount 计 7 项 + 成员选择 + 搜索词，刻意不含 scope（范围不是过滤条件）",
+        "「重置」清 sel/searchText/filters，联动靠既有 onChange 重算"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 620,
+          "symbol": "resultCount",
+          "note": "计数文案"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 667,
+          "symbol": "activeFilterCount",
+          "note": "条件数口径"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 637,
+          "symbol": "resultCount",
+          "note": "重置按钮"
+        }
+      ],
+      "tags": [
+        "记录",
+        "计数"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.filter",
+      "parentKey": "record.tab",
+      "domain": "record",
+      "level": 3,
+      "name": "筛选面板（一行摘要 + 可展开）",
+      "kind": "screen",
+      "summary": "默认只显示一行摘要（全部记录 / 时段·工作日·密码·仅告警 (4)），展开后是时段、工作日周末、凭证类型、告警四连、深夜区间五组。",
+      "details": [
+        "摘要行带生效项数徽标，点击展开/收起（带 DS.Motion.quick 动画与触感）",
+        "展开后按顺序：时段 5 档 → 工作日/周末 3 档 → 凭证类型 5 档 → 仅告警/告警类型/失败/正序回放 → 失败说明 → 深夜区间 → 复位",
+        "「复位」只清 filters 与 reversed，不动搜索词与成员选择"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 759,
+          "symbol": "filterChips",
+          "note": "摘要 + 展开面板"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 914,
+          "symbol": "filterSummary",
+          "note": "摘要文案"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 899,
+          "symbol": "filterChips",
+          "note": "复位按钮"
+        }
+      ],
+      "tags": [
+        "记录",
+        "筛选",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.filter.segment",
+      "parentKey": "record.filter",
+      "domain": "record",
+      "level": 4,
+      "name": "时段筛选（早/午/晚/深夜预设）",
+      "kind": "setting",
+      "summary": "五档：全部、早 6-9、午 10-14、晚 15-21、深夜预设（走可调的深夜区间判定）。",
+      "details": [
+        "判据用行的实际时刻 hour：1=(6...9)、2=(10...14)、3=(15...21)、4=isLateNight(hour, dayKey)",
+        "hour 未知（-1）的行在选了时段/深夜/工作日档时一律剔除（不猜时刻）",
+        "摘要显示名「早 6-9 / 午 10-14 / 晚 15-21 / 深夜」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 795,
+          "symbol": "chipRowSection",
+          "note": "五档 chip 定义"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2646,
+          "symbol": "applyFilter",
+          "note": "时段判据"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2659,
+          "symbol": "applyFilter",
+          "note": "时刻未知行剔除"
+        }
+      ],
+      "tags": [
+        "记录",
+        "筛选",
+        "阈值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.filter.dayKind",
+      "parentKey": "record.filter",
+      "domain": "record",
+      "level": 4,
+      "name": "工作日/周末筛选",
+      "kind": "setting",
+      "summary": "全部 / 仅工作日 / 仅周末；周末判定 = 公历 weekday 1 或 7。",
+      "details": [
+        "判据按行归属日的公历 weekday（1=周日、7=周六）",
+        "与时段/深夜档同属「需要 hour 已知」的分支，hour 未知行不进该口径",
+        "补班日不特殊处理（与组头 594 的日型色带是两个不同用途）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 799,
+          "symbol": "chipRowSection",
+          "note": "三档 chip"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2653,
+          "symbol": "applyFilter",
+          "note": "weekday 1/7 判周末"
+        }
+      ],
+      "tags": [
+        "记录",
+        "筛选"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.filter.kind",
+      "parentKey": "record.filter",
+      "domain": "record",
+      "level": 4,
+      "name": "凭证类型筛选（约）",
+      "kind": "setting",
+      "summary": "全部凭证 / 指纹 / 密码 / 临时码 / 数字钥匙 五档，按归属推断出的 kind 过滤，标题带「(约)」。",
+      "details": [
+        "kindOptions = [(\"全部凭证\",\"\"),(\"指纹\",\"fp\"),(\"密码\",\"pwd\"),(\"临时码\",\"temp\"),(\"数字钥匙\",\"key\")]",
+        "判定 r.kind == filters.kind；kind 为空的会事行不进任何具体档"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 744,
+          "symbol": "kindOptions",
+          "note": "五档定义"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 803,
+          "symbol": "filterChips",
+          "note": "chip 索引与写回"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2667,
+          "symbol": "applyFilter",
+          "note": "kind 过滤"
+        }
+      ],
+      "tags": [
+        "记录",
+        "筛选",
+        "凭证"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.filter.alarmKinds",
+      "parentKey": "record.filter",
+      "domain": "record",
+      "level": 4,
+      "name": "告警类型多选（565）",
+      "kind": "setting",
+      "summary": "点「告警类型」打开对勾多选面板，选中集写回 filters.alarmKinds；chip 上回显「告警类型 N 项」。",
+      "details": [
+        "选中集为空 = 不限类型；与「仅告警」可叠加取交集",
+        "判据 !filters.alarmKinds.contains(r.type) 即剔除（类型号来自真实告警 5 类 6/7/10/13/224）",
+        "面板见 record.alarmKinds"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 813,
+          "symbol": "filterChips",
+          "note": "chip 文案与回显项数"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2664,
+          "symbol": "applyFilter",
+          "note": "类型号过滤"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 374,
+          "symbol": "recordsChrome",
+          "note": "AlarmKindsSheet 挂载"
+        }
+      ],
+      "tags": [
+        "记录",
+        "筛选",
+        "告警"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.filter.failed",
+      "parentKey": "record.filter",
+      "domain": "record",
+      "level": 4,
+      "name": "失败筛选与清空本机失败标记（569/92）",
+      "kind": "setting",
+      "summary": "「失败 (锁端仅告警级)」只留告警级锁定/指纹告警与手机侧开锁失败行；勾选时额外给出「清空本机失败标记」入口（带确认）。",
+      "details": [
+        "判据：[10,13,224].contains(type) 或 (type == 0 && !care)（type 0 = 手机侧事件行哨兵）",
+        "说明文案：「失败筛选只收录告警级锁定/指纹告警与手机侧开锁失败, 锁端不上报逐次失败」",
+        "清空入口显示本机标记条数（跨所选锁求和），confirmDestructive 正文写全后果：只删本机标记、锁端日志不受影响、不解除冷却/挂起",
+        "清空后 loadFromCache + alarmTick+1，并写 SensitiveLedger().record(\"清空失败标记\") 与 lock.log(warn)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 816,
+          "symbol": "chipToggle",
+          "note": "失败筛选 chip"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 823,
+          "symbol": "filterChips",
+          "note": "口径说明文案"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 837,
+          "symbol": "confirmDestructive",
+          "note": "清空本机失败标记 + 后果说明"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2666,
+          "symbol": "applyFilter",
+          "note": "失败判据"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 845,
+          "symbol": "SensitiveLedger().record",
+          "note": "敏感流水留痕"
+        }
+      ],
+      "tags": [
+        "记录",
+        "筛选",
+        "破坏性",
+        "审计"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.filter.reversed",
+      "parentKey": "record.filter",
+      "domain": "record",
+      "level": 4,
+      "name": "正序回放（570）",
+      "kind": "setting",
+      "summary": "把整段结果反转，从最早一条开始回放；开启时 chip 文案变为「最早在前」。",
+      "details": [
+        "实现为 filtered.reversed()，在筛选之后、分页截断之前",
+        "开启时不补缺口行（回放叙事线不能被空行打断）",
+        "切范围（scope 变化）会强制 reversed = false"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 817,
+          "symbol": "chipToggle",
+          "note": "chip 与文案切换"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2672,
+          "symbol": "applyFilter",
+          "note": "整段反转"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2699,
+          "symbol": "applyFilter",
+          "note": "补缺口排除 reversed"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 339,
+          "symbol": "onChange(scope)",
+          "note": "切范围重置 reversed"
+        }
+      ],
+      "tags": [
+        "记录",
+        "筛选"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.filter.night",
+      "parentKey": "record.filter",
+      "domain": "record",
+      "level": 4,
+      "name": "深夜区间可调 + 节假日顺延（676/672）",
+      "kind": "setting",
+      "summary": "选「深夜预设」时出现起止小时两个 Picker（0–23 时）与「节假日当日顺延 2 小时」开关，并检测空区间。",
+      "details": [
+        "区间存储 kf_night_from / kf_night_to（默认 22 → 6，由 RecordSearch 提供），写入走 setNightFrom/setNightTo",
+        "起点 == 终点 ⇒ nightWindowDegenerate，界面显示「起点与终点相同 = 空区间, 这一档筛不出任何记录。」",
+        "节假日顺延只影响深夜档判定，不改归属日（凌晨仍归前一晚）",
+        "勾选后档位判定走 isLateNight(hour, dayKey)，顺延终点 = (nightTo + 2) % 24"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 861,
+          "symbol": "filterChips",
+          "note": "深夜区间两个 Picker"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 878,
+          "symbol": "nightWindowDegenerate",
+          "note": "空区间警示"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 883,
+          "symbol": "VariantToggle",
+          "note": "节假日当日顺延 2 小时"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2650,
+          "symbol": "applyFilter",
+          "note": "深夜档判定"
+        }
+      ],
+      "tags": [
+        "记录",
+        "筛选",
+        "阈值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.filter.secondary",
+      "parentKey": "record.filter",
+      "domain": "record",
+      "level": 4,
+      "name": "低频区折叠（成员筛选/掉电观察/去年今日）",
+      "kind": "state",
+      "summary": "把成员筛选 chip、掉电观察、去年今日三块收进一行「更多视图」，默认收起，展开后与原来逐字一致。",
+      "details": [
+        "折叠行摘要只列现在真有内容的块（有成员才写「成员筛选」），空的不占字",
+        "展开后顺序：memberChips → dropWatchSection → lastYearTodayRow",
+        "重构动机：原先列表前叠 14 个区，把记录推到屏幕外"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 937,
+          "symbol": "secondaryRowsDisclosure",
+          "note": "折叠入口"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 970,
+          "symbol": "secondaryRowsSummary",
+          "note": "摘要只列有内容的块"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 961,
+          "symbol": "secondaryRowsDisclosure",
+          "note": "展开后三块顺序"
+        }
+      ],
+      "tags": [
+        "记录",
+        "布局"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.scope",
+      "parentKey": "record.tab",
+      "domain": "record",
+      "level": 3,
+      "name": "搜索范围：当前锁 / 全部锁 + 换锁",
+      "kind": "setting",
+      "summary": "分段控件切换「当前锁 / 全部锁」；当前锁且存在多把锁时额外给「换锁」菜单，切锁走 AppState.select。",
+      "details": [
+        "scope=0 用本锁快照行池 allRows；scope=1 用 RecordSearch.buildRecs 跨锁现建行池（行首带锁名）",
+        "切换 scope 会清空 sel/searchText/parsedTags/highlightTokens/filters/reversed/expandedMerged 并重算",
+        "「换锁」菜单列出全部 keychain，当前项带 checkmark.circle.fill；动作 = app.select(mac)（清实时状态 + 重读快照）",
+        "无「全部锁」时（只有一把锁）换锁菜单不显示"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 707,
+          "symbol": "scopeRow",
+          "note": "分段控件 + 换锁菜单"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 333,
+          "symbol": "onChange(scope)",
+          "note": "切范围重置全部检索态"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 392,
+          "symbol": "macs",
+          "note": "范围 → 锁列表"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2556,
+          "symbol": "applyFilter",
+          "note": "两范围同一份 Rec 池"
+        }
+      ],
+      "tags": [
+        "记录",
+        "多锁",
+        "范围"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.monthJump",
+      "parentKey": "record.tab",
+      "domain": "record",
+      "level": 3,
+      "name": "按月份跳转（187/18）",
+      "kind": "action",
+      "summary": "月份菜单只列本机已有记录的月份（不造空月），选中即把显示收窄到该月，并给「清除」与当月条数。",
+      "details": [
+        "月份集合 = 非缺口组 key 前 7 位去重降序；只有 1 个月份时整行不出现",
+        "选中后菜单标题变「只看 yyyy-MM」，右侧显示当月条数 + 「清除」",
+        "实现为筛除而非滚动锚定（List 外的 ScrollViewReader 重构代价大）",
+        "与 586 当天全景（dayFocus）可叠加过滤"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2819,
+          "symbol": "monthJumpRow",
+          "note": "月份菜单与清除"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2822,
+          "symbol": "monthJumpRow",
+          "note": "跳过 gap-* 假月份"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 216,
+          "symbol": "mainList",
+          "note": "monthJump/dayFocus 双重收窄"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2849,
+          "symbol": "visibleRowCount",
+          "note": "当月条数"
+        }
+      ],
+      "tags": [
+        "记录",
+        "跳转"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.memberChips",
+      "parentKey": "record.tab",
+      "domain": "record",
+      "level": 3,
+      "name": "按成员筛选 chips（含访客/无法识别/保养虚拟分组）",
+      "kind": "action",
+      "summary": "横滚 chip：全部 / 有记录的成员（未归档，走别名开关）/ 访客（temp 且未归属）/ 无法识别·可认领 / 保养。",
+      "details": [
+        "只列出「当前结果里真有行」的成员 chip（rows.contains(whoId)），避免点进去空列表",
+        "访客用 MemberHub.visitorId 虚拟 id，仅本地展示层，不写锁端凭证表；判据 kind == temp && whoId == nil",
+        "「__unknown」= whoId 为空且 kind != temp；「__care」= 1028 保养/换电手机侧事件",
+        "点击写 sel + filters.member（两份状态同源，进页恢复用 192/566），header 显示「共 N 条」或「M/N 条」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2051,
+          "symbol": "memberChips",
+          "note": "chip 生成规则"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2078,
+          "symbol": "chip",
+          "note": "点击写 sel + filters.member"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2600,
+          "symbol": "applyFilter",
+          "note": "四类虚拟分组过滤"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2065,
+          "symbol": "chip(\"__care\")",
+          "note": "1028 保养分组"
+        }
+      ],
+      "tags": [
+        "记录",
+        "筛选",
+        "成员"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.alarmKinds",
+      "parentKey": "record.tab",
+      "domain": "record",
+      "level": 3,
+      "name": "告警类型多选面板（565）",
+      "kind": "sheet",
+      "summary": "对勾列表按锁端实际存在的 5 类告警渲染，选中集直接绑定 filters.alarmKinds，附「清空」与说明。",
+      "details": [
+        "行文案取 RecordVerbs.alarmVerb（6 低电量提醒 / 7 撬锁告警 / 10 多次密码失败已锁定 / 13 指纹模块告警 / 224 键盘被锁定），未收录回落类型号",
+        "header「只看选中的类型 · 已选 N 项」；footer 明确「不选 = 不限类型；协议无「胁迫」类告警, 不列」",
+        "工具栏：完成（dismiss）/ 清空（sel 为空时禁用）",
+        "选中写回 filters 后由 onChange(of: filters) → applyFilter 生效"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2871,
+          "symbol": "struct AlarmKindsSheet",
+          "note": "sheet 声明"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2878,
+          "symbol": "ForEach(StatsKit.alarmTypes)",
+          "note": "按真实类型渲染"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2903,
+          "symbol": "AlarmKindsSheet",
+          "note": "无胁迫类告警说明"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 374,
+          "symbol": "recordsChrome",
+          "note": "入口：filters.alarmKinds 绑定"
+        }
+      ],
+      "tags": [
+        "记录",
+        "告警",
+        "弹层"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.alarm",
+      "parentKey": "record.tab",
+      "domain": "record",
+      "level": 3,
+      "name": "告警标记与（未处置）状态口径",
+      "kind": "state",
+      "summary": "记录域不建告警中心页面，但把告警状态织进时间线：行级告警样式、日组未处置蓝点、含防撬标记、无处置记录才计数。",
+      "details": [
+        "告警类型只有真实 5 种（6/7/10/13/224），严重级由 AlarmMeta 分三档：紧急[7,224] / 严重[10,13] / 提示[其余]",
+        "「未处置」判据 = RecordSearch.disposition(key: mac#行键) == nil，与 735 角标、734 队列同一份 kf_rdispo",
+        "日界走 dayKeyOfNight，凌晨告警不会把蓝点点到错的一天",
+        "「这一天出过事」= damageTypes [7,10,224]，不看处置状态（与未处置是两个不同的读法）",
+        "处置与撤销在详情卡（record.detail.alarm）里完成；本页只有 alarmTick 触发重算"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1373,
+          "symbol": "alarmDays",
+          "note": "未处置蓝点"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1382,
+          "symbol": "damageDays",
+          "note": "含防撬/试错/键盘锁定"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2745,
+          "symbol": "applyFilter",
+          "note": "两个集合随分组一次算完"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2314,
+          "symbol": "render",
+          "note": "warn = StatsKit.alarmTypes.contains(type)"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 172,
+          "symbol": "RecordSearch.disposition",
+          "note": "处置口径读点"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 180,
+          "symbol": "AlarmMeta.levelName",
+          "note": "严重级在详情卡显示"
+        }
+      ],
+      "tags": [
+        "记录",
+        "告警",
+        "状态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.active",
+      "parentKey": "record.tab",
+      "domain": "record",
+      "level": 3,
+      "name": "活跃凭证排序（574，约）",
+      "kind": "sheet",
+      "summary": "按近 30 天开门日志的凭证计次排名，列出凭证词条、次数与 #序号；口径标注「台账推断，标约」。",
+      "details": [
+        "数据 = RecordSearch.activeCredentials(mac)：近 30 天、type→kind（1 key / 2 pwd / 3 fp / 4 temp）、按「kind#槽位」计次",
+        "词条 = 类型词 + #槽号 + 台账备注首行（超 12 字截断），无备注回落「类型 #槽位」",
+        "无当前锁时显示「还没有添加门锁。」",
+        "只读展示，没有下钻动作；footer「口径: 近 30 天开门日志按凭证类计次 (台账推断, 标「约」)。」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2925,
+          "symbol": "struct ActiveCredsSheet",
+          "note": "sheet 声明"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2937,
+          "symbol": "ActiveCredsSheet",
+          "note": "列表与排名"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2958,
+          "symbol": "ActiveCredsSheet",
+          "note": "口径说明"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 250,
+          "symbol": "recordsToolbar",
+          "note": "入口：更多菜单"
+        }
+      ],
+      "tags": [
+        "记录",
+        "统计",
+        "约"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.outwin",
+      "parentKey": "record.tab",
+      "domain": "record",
+      "level": 3,
+      "name": "越界开门清单（575，约）",
+      "kind": "sheet",
+      "summary": "找出「临时码窗口外仍产生开门」的记录：逐条列出锁名、时刻、窗口区间，并说明这是本地检测。",
+      "details": [
+        "数据 = RecordSearch.outOfWindow(macs：全部锁)：只临时码台账（temp）非空时检查 type == 4 的开门行",
+        "判据：开门时刻 epoch 早于 from 或晚于 to ⇒ 越界；窗口文案「约 MM-dd HH:mm – MM-dd HH:mm」",
+        "空态：「没有越界开门 — 临时码都在窗口内使用 (约)。」",
+        "行内同时把窗口小字写进时间线行（winText，仅全部锁模式）；只读，无处置动作"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2984,
+          "symbol": "struct OutWinSheet",
+          "note": "sheet 声明"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2991,
+          "symbol": "RecordSearch.outOfWindow",
+          "note": "数据源"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 3011,
+          "symbol": "OutWinSheet",
+          "note": "越界文案"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2565,
+          "symbol": "applyFilter",
+          "note": "行级 winText 注入"
+        }
+      ],
+      "tags": [
+        "记录",
+        "凭证",
+        "越界"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.rangePick",
+      "parentKey": "record.tab",
+      "domain": "record",
+      "level": 3,
+      "name": "选区导出（716，按天勾选 → CSV）",
+      "kind": "sheet",
+      "summary": "按自然日整组勾选，把选中那些天的行拼成 CSV 复制进剪贴板；不上传、不落盘。",
+      "details": [
+        "勾选单位是「天」而非单行（行级多选刻意不做）；每天一行「yyyy-MM-dd · N 条」开关",
+        "全选 / 清空 两个动作；「复制 CSV」在未选时禁用",
+        "CSV 列：日期,时间,内容,成员,锁；成员列取 DB.member(whoId)?.name，取不到写「未归属」；字段按需加引号转义",
+        "复制成功 toast「已复制 N 行 CSV」；选中天里没有行时 toast「选中的天里没有记录行」",
+        "footer 明确「CSV 走剪贴板, 不上传、不落盘」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1085,
+          "symbol": "rangePickSheet",
+          "note": "按天勾选 UI"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1123,
+          "symbol": "copyRangeCSV",
+          "note": "CSV 生成与转义"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1115,
+          "symbol": "copyRangeCSV",
+          "note": "复制按钮禁用条件"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 249,
+          "symbol": "recordsToolbar",
+          "note": "入口：更多菜单"
+        }
+      ],
+      "tags": [
+        "记录",
+        "导出",
+        "剪贴板"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.digest",
+      "parentKey": "record.tab",
+      "domain": "record",
+      "level": 3,
+      "name": "复制上周小结（698）",
+      "kind": "action",
+      "summary": "生成「上一个完整自然周（周一–周日）」的三句人话摘要 + CSV，一起复制进剪贴板。",
+      "details": [
+        "数据 = StatsKit.build(mac).lastWeekDigest()：lines（摘要句）+ csv",
+        "粘贴内容 = 摘要句换行拼接 + 空行 + CSV",
+        "toast「已复制上周小结: N 句摘要 + M 行 CSV」（行数从 CSV 行数减表头算）",
+        "无当前锁时整组菜单项不出现"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1140,
+          "symbol": "copyLastWeekDigest",
+          "note": "摘要 + CSV 拼接"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 248,
+          "symbol": "recordsToolbar",
+          "note": "入口：更多菜单"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1146,
+          "symbol": "copyLastWeekDigest",
+          "note": "toast 文案"
+        }
+      ],
+      "tags": [
+        "记录",
+        "统计",
+        "剪贴板"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.dropWatch",
+      "parentKey": "record.tab",
+      "domain": "record",
+      "level": 3,
+      "name": "掉电观察行（1040）",
+      "kind": "state",
+      "summary": "近 30 天内「同一本地日掉电 > 20 个百分点」的日子在低频区提示一行，并建议查门体卡阻/换电池。",
+      "details": [
+        "数据 = BatteryCare.bigDropDays(mac, days: 30)，取第一条为主提示，其余最多再列 3 个日期",
+        "文案：「<日期> 单日掉电约 N% (from% → to%) — 建议查一下门体是否被卡住、或电池是否该换」",
+        "无命中时整块不出现（不占位）",
+        "阈值 20% 与 30 天窗口写死在调用处与文案里"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1151,
+          "symbol": "dropWatchSection",
+          "note": "判定与文案"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1164,
+          "symbol": "dropWatchSection",
+          "note": "其余超阈值日"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 963,
+          "symbol": "secondaryRowsDisclosure",
+          "note": "落点：低频区"
+        }
+      ],
+      "tags": [
+        "记录",
+        "关怀",
+        "阈值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.lastYearToday",
+      "parentKey": "record.tab",
+      "domain": "record",
+      "level": 3,
+      "name": "去年今日（654）",
+      "kind": "state",
+      "summary": "本机缓存里去年同一月日有开门记录时，在低频区出一行「去年今日: N 条开门记录」。",
+      "details": [
+        "判据：取去年同日 MM-dd，与本锁缓存行的 lockTimeStr[5..10] 比较计数",
+        "数据源只有本机日志缓存（≤300 条），没读到就不出现，不假装",
+        "纯展示，无点击动作"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1176,
+          "symbol": "lastYearTodayRow",
+          "note": "展示行"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1191,
+          "symbol": "lastYearTodayCount",
+          "note": "MM-dd 命中计数"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 964,
+          "symbol": "secondaryRowsDisclosure",
+          "note": "落点：低频区"
+        }
+      ],
+      "tags": [
+        "记录",
+        "回忆"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.deeplink",
+      "parentKey": "record.tab",
+      "domain": "record",
+      "level": 3,
+      "name": "深链落地（搜索词/记录键/当天/闪框/过滤/成员）",
+      "kind": "flow",
+      "summary": "六个 pending 字段进页消费：带搜索词、按 mac#行键开详情、只看某天、滚动并闪一下、直接套成员过滤、套成员过滤并提示。",
+      "details": [
+        "pendingSearch → landSearch：只填词，靠 searchText 的既有 onChange 重算（不重复 applyFilter）",
+        "pendingRecordKey → landRecordKey：命中则开详情并记下 flashOnClose（详情关闭后才滚+闪）；未命中如实说三种可能",
+        "pendingRecordsDay → landDay：先确认该日真有行才收窄，否则 toast「那一天在本机台账里没有行…」",
+        "pendingFlashKey → landFlash → flashRow：滚动 + 高亮 1.2 秒后自动撤（FlashWash）；scrolledRow 绑 List scrollPosition",
+        "pendingRecordsFilter → sel 直写 + applyFilter；pendingRecordsMember → landMember（成员不在档时 toast，不静默回落全部）",
+        "onAppear 也按同样顺序消费一遍（冷启动/首次挂载）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 306,
+          "symbol": "onChange(pending*)",
+          "note": "六个深链入口"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2417,
+          "symbol": "landMember",
+          "note": "成员落地与未知成员提示"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2441,
+          "symbol": "landRecordKey",
+          "note": "记录键落地与三种失败可能"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2515,
+          "symbol": "landDay",
+          "note": "当天全景落地"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2486,
+          "symbol": "flashRow",
+          "note": "1.2 秒闪框"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2143,
+          "symbol": "onRecordsAppear",
+          "note": "进页消费顺序"
+        }
+      ],
+      "tags": [
+        "记录",
+        "深链",
+        "路由"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.fetch",
+      "parentKey": "record.tab",
+      "domain": "record",
+      "level": 3,
+      "name": "读取锁内日志（cmd16 翻页 + 失败回退）",
+      "kind": "service",
+      "summary": "重新读取按钮触发的拉取流程：先 ensureConnected，再按 5 条/页翻页最多 20 页、100 条，落缓存、写同步时间戳，失败则回退缓存并播报。",
+      "details": [
+        "前置：guard !running && app.current；ensureConnected(mac:) 把 GATT 链与 curMac 对齐，再 try? getStatus 刷新 status（失败不阻断）",
+        "翻页：getLogs(orderType: 0, startIdx:, pageSize: 5)，循环条件 page < 20 && events.count < 100",
+        "去重与回绕防护：seen 集合按 idxRaw 去重；游标按「本页最小序号 - 1」前进，lowest == 0 即到表尾；无新增即 break",
+        "每页 fresh 立即 DB.writeLogs + HotCache.invalidate（220）",
+        "surplus（KLV#04）为 nil ⇒ 记 noSurplusReport 并 break，toast「锁端未报告剩余条数, 已读 N 条」",
+        "成功后：写 kf_logsync_<mac>（毫秒字符串）、render、success 触感、有新条目时 newEntryHaptic（876 双震）",
+        "失败：AXTools.announceConnectFail(错误文案) 播报；有缓存 render(offline: true)，无缓存 toast「读取失败: …」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2181,
+          "symbol": "fetch",
+          "note": "拉取主流程"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2199,
+          "symbol": "while page < 20",
+          "note": "翻页上限 20 页 / 100 条"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2202,
+          "symbol": "fresh",
+          "note": "去重与游标回绕防护"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2215,
+          "symbol": "r.surplus",
+          "note": "KLV#04 缺失处理"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2244,
+          "symbol": "AXTools.announceConnectFail",
+          "note": "失败播报"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2254,
+          "symbol": "AXTools.newEntryHaptic",
+          "note": "876 新条目双震"
+        }
+      ],
+      "tags": [
+        "记录",
+        "协议",
+        "后台行为",
+        "可访问性"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.render",
+      "parentKey": "record.tab",
+      "domain": "record",
+      "level": 3,
+      "name": "行池构建（归属推断 + 失败行合并 + 动词化）",
+      "kind": "service",
+      "summary": "把锁日志与手机侧事件合并成 RowVM：归属推断、认领覆盖、动词化标题、告警判定、可认领判定、凭证深链键。",
+      "details": [
+        "手机侧失败事件（DB.failEvents）以 type 0 合入，行键用 f_ + Unix 秒（与 RecordSearch 侧同一族键），并按 lockTimeStr 重排",
+        "归属：Attribution.classify(logs:pwds:fps:status:)；791 认领覆盖层优先改写 whoId",
+        "标题：type 0 保留原貌（失败/保养/换电），其余走 RecordVerbs.line(type:who:kindWord:typeName:) 生成「谁 用 什么 开了门」",
+        "whoShow 三级回退：别名开关（919 relation）→ 「称呼（备注）」（MemberHub.doubleLine）→ 裸名",
+        "warn = StatsKit.alarmTypes.contains(type)；care = type 0 且 typeName 以「保养/更换电池」开头",
+        "行身份：锁日志 = String(idxRaw)，手机侧 = f_/c_ 前缀键，之后统一拼成 oid（mac#行键）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2257,
+          "symbol": "render",
+          "note": "行池构建主流程"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2269,
+          "symbol": "DB.failEvents",
+          "note": "手机侧失败行合并"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2283,
+          "symbol": "Attribution.classify",
+          "note": "归属推断"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2308,
+          "symbol": "RecordVerbs.line",
+          "note": "655 动词化文案"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2314,
+          "symbol": "StatsKit.alarmTypes",
+          "note": "告警判定"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2297,
+          "symbol": "rowKey",
+          "note": "行键两族"
+        }
+      ],
+      "tags": [
+        "记录",
+        "数据",
+        "归属"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.stats",
+      "parentKey": "record",
+      "domain": "record",
+      "level": 3,
+      "name": "记录统计（趋势/时段/排行/同比/图表）",
+      "kind": "deprecated",
+      "summary": "统计页已随删减波移除：记录域内不再有次数趋势、时段分布、排行、同比与图表页，只剩三处派生读数（上周小结、活跃凭证、成员活跃度）。",
+      "details": [
+        "代码注释明确：记录页重构后「统计页已随本轮删减移除」，pendingRecordsMember 只保留给其它来源做下钻",
+        "现存统计类读数：① copyLastWeekDigest（上一自然周摘要+CSV）② ActiveCredsSheet（近 30 天凭证计次排名）③ 成员中心/详情的活跃度（约，MemberHub.activity）",
+        "成员页 `import Charts` 但全文件无任何 Chart/BarMark 用法 ⇒ 当前无图表渲染",
+        "记录页的「N 开 / M 警」组头与「约 N 位使用者」属轻量计数，不是统计页"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 328,
+          "symbol": "onChange(pendingRecordsMember)",
+          "note": "统计页已随本轮删减移除"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1140,
+          "symbol": "copyLastWeekDigest",
+          "note": "仅存的上周汇总出口"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2925,
+          "symbol": "ActiveCredsSheet",
+          "note": "活跃凭证排行（约）"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 9,
+          "symbol": "import Charts",
+          "note": "引入但无图表用法"
+        }
+      ],
+      "tags": [
+        "记录",
+        "统计",
+        "缺失"
+      ],
+      "status": "deprecated"
+    },
+    {
+      "key": "record.detail",
+      "parentKey": "record",
+      "domain": "record",
+      "level": 2,
+      "name": "记录详情卡（全字段 + 告警处置 + 上下文 + 分享）",
+      "kind": "sheet",
+      "summary": "时间线行点开的详情 sheet：全字段、告警检查清单与处置、前后 10 分钟上下文、同成员邻近、引用链接、分享卡与三个跳转出口。",
+      "details": [
+        "入口：时间线行点击（lookupRec 命中）、585 深链落地（pendingRecordKey）、详情页自身翻页",
+        "内容顺序：时间线与归属 → 上下条 → 备注/标旗 → 告警段（仅 alarm）→ 前后上下文 → 同成员邻近 → 来源凭证 → 分享本条 → 引用链接 → 三个定位出口 → 低电诊断（仅低电告警）",
+        "rec 为计算属性：siblings 非空时取第 at 条（越界夹回），使翻页不改动其它读 rec 的代码",
+        "卡片图在 .task(id: rec.id) 里渲染一次存 @State（避免每帧重跑 ImageRenderer）",
+        "标题「记录详情」，左上「完成」关闭；onAppear tick+1"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 13,
+          "symbol": "struct RecDetailSheet",
+          "note": "sheet 声明与职责注释"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 22,
+          "symbol": "rec",
+          "note": "结果集内第 at 条 + 越界夹回"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 42,
+          "symbol": "body",
+          "note": "各段顺序"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 60,
+          "symbol": ".task(id: rec.id)",
+          "note": "分享卡渲染一次"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 376,
+          "symbol": "recordsChrome",
+          "note": "父级：sheet(item: $detailRec) 传 displayedRecs"
+        }
+      ],
+      "tags": [
+        "记录",
+        "详情",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.detail.fields",
+      "parentKey": "record.detail",
+      "domain": "record",
+      "level": 3,
+      "name": "全字段区（锁/类型/时刻/归属/凭证维度/行标识）",
+      "kind": "data",
+      "summary": "一次性列出这条记录的所有可核对字段：锁、类型(#号)、锁端时刻、时间来源、归属、开门方式、凭证维度、归属强度、失败原因、行标识与协议内部索引。",
+      "details": [
+        "锁名在单锁上下文追加「(当前锁)」；类型显示 typeName + (#type)",
+        "归属三级回退：别名 → whoName → 「未归属 (推断不出成员时如实显示)」",
+        "时间来源（650）：lockTime > 0 ⇒ 「锁内时钟 (03#04 协议秒)」绿点，否则「本机录入时刻 (锁端未回时刻)」灰点",
+        "归属强度：provable == unique ⇒ 「唯一凭证命中 (可证明)」，否则「推断 (约)」",
+        "失败原因只在 failMsg 非空时出现（手机侧开锁失败）",
+        "行标识 row = rec.key（备注/标旗/处置都按这枚键落账），协议内部索引 = idxRaw（手机侧行固定 0）",
+        "字段行统一 108pt 标签列 + 值列，整行合并读屏「键: 值」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 77,
+          "symbol": "fieldSection",
+          "note": "字段清单"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 88,
+          "symbol": "fieldSection",
+          "note": "650 时间来源 + 色点"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 116,
+          "symbol": "fieldSection",
+          "note": "凭证维度 (约)"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 131,
+          "symbol": "fieldSection",
+          "note": "归属强度"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 139,
+          "symbol": "fieldSection",
+          "note": "行标识与 idxRaw"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 145,
+          "symbol": "fieldRow",
+          "note": "字段行版式与读屏"
+        }
+      ],
+      "tags": [
+        "记录",
+        "详情",
+        "字段"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.detail.span",
+      "parentKey": "record.detail",
+      "domain": "record",
+      "level": 4,
+      "name": "与上一条相邻间隔（651）",
+      "kind": "data",
+      "summary": "两条都有协议秒时算出与上一条的间隔，用人话显示（秒/分/小时）；单边缺值直说「不可算」。",
+      "details": [
+        "前置 rec.lockTime > 0 才显示；上一条由 RecordSearch.context(...).before.last 提供",
+        "上一条 lockTime <= 0 ⇒ 「不可算 (上一条没有协议秒)」",
+        "差值为负 ⇒ 「不可算 (锁端时钟回拨)」，不取绝对值伪装",
+        "人话格式：<60s 秒；<60min 「M 分 R 秒」（整分省略秒）；否则「H 小时 M 分」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 92,
+          "symbol": "fieldSection",
+          "note": "相邻间隔判定"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 416,
+          "symbol": "span",
+          "note": "人话格式"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 93,
+          "symbol": "RecordSearch.context",
+          "note": "取上一条"
+        }
+      ],
+      "tags": [
+        "记录",
+        "详情",
+        "时间"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.detail.timeWords",
+      "parentKey": "record.detail",
+      "domain": "record",
+      "level": 4,
+      "name": "时段词与通勤标签（658/674）",
+      "kind": "data",
+      "summary": "从锁端时刻串解析出时段词（如「傍晚」）并在工作日 7-9 / 17-19 追加「通勤」标签；只进详情卡不进行内。",
+      "details": [
+        "解析走 DateFormatter(yyyy-MM-dd HH:mm:ss, en_US_POSIX, 当前时区)，不用 lockTime 数值（避免秒/毫秒口径差）",
+        "CommuteLabel.tag(date:hour:) 返回「通勤」时拼成「<时段词> · 通勤时段」",
+        "设计纪律：推断性修饰只进详情，时间线一页上千行不加字"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 103,
+          "symbol": "fieldSection",
+          "note": "时段（本机推断）行"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 528,
+          "symbol": "timeWords",
+          "note": "解析与拼装"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 535,
+          "symbol": "CommuteLabel.tag",
+          "note": "通勤标签拼接"
+        }
+      ],
+      "tags": [
+        "记录",
+        "详情",
+        "推断"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.detail.sameMinute",
+      "parentKey": "record.detail",
+      "domain": "record",
+      "level": 4,
+      "name": "同一分钟另有 N 条（917）",
+      "kind": "state",
+      "summary": "同一分钟内还有别的操作时，只在详情注明「N 条」，不把时间线行并行合并（条数必须等于真实事件数）。",
+      "details": [
+        "判据：同 mac、key 不同、timeStr 前 16 位相同，在 siblings 结果集内计数",
+        "文案强调「只在详情注明；时间线不并行，条数仍等于事件数」",
+        "与 592 连击合并是两件事：592 折行、917 只注明"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 109,
+          "symbol": "fieldSection",
+          "note": "同分钟计数"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 114,
+          "symbol": "fieldSection",
+          "note": "界面文案"
+        }
+      ],
+      "tags": [
+        "记录",
+        "详情",
+        "口径"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.detail.escort",
+      "parentKey": "record.detail",
+      "domain": "record",
+      "level": 4,
+      "name": "陪同进入（疑似，797）",
+      "kind": "edge",
+      "summary": "同一凭证（临时码/密码）5 分钟窗口内被不同成员使用时，后续行提示「陪同进入 (疑似)」；标注为短窗启发式。",
+      "details": [
+        "前置：rec.cred 非空且 rec.whoId 非空",
+        "判据：siblings 内同 mac、同 cred、不同 whoId、时间差 ≤ 300 秒",
+        "文案明写「短窗启发式, 只作提示」，不下结论"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 120,
+          "symbol": "fieldSection",
+          "note": "300 秒窗口判据"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 128,
+          "symbol": "fieldSection",
+          "note": "提示文案"
+        }
+      ],
+      "tags": [
+        "记录",
+        "详情",
+        "启发式"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.detail.alarm",
+      "parentKey": "record.detail",
+      "domain": "record",
+      "level": 3,
+      "name": "告警段（严重级 + 处置留痕 + 同类/试错/响应时长）",
+      "kind": "state",
+      "summary": "告警记录在详情卡单独一段：严重级+标题+已处置/未处置徽标，防撬清单、同类累计、今日试错、响应时长占位，以及标记已处置/撤销。",
+      "details": [
+        "标题行 = AlarmMeta.levelName(type)（紧急/严重/提示）+ RecordSearch.alarmTitle(rec)（优先 typeName）",
+        "徽标：disp != nil ⇒ 「已处置」绿、否则「未处置」红；底色取 toneColor(type) 8%",
+        "处置键 = RecordOverlay.oid(mac, key)，与备注/深链同一条行身份算术",
+        "「标记已处置」写 verdict「已处理」；已处置时出现「撤销」走 undoDisposition（739）",
+        "整段只在 rec.alarm 为真时出现"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 168,
+          "symbol": "alarmSection",
+          "note": "段结构与处置键"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 180,
+          "symbol": "AlarmMeta.levelName",
+          "note": "严重级"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 185,
+          "symbol": "alarmSection",
+          "note": "已处置/未处置徽标"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 48,
+          "symbol": "body",
+          "note": "if rec.alarm 才渲染"
+        }
+      ],
+      "tags": [
+        "记录",
+        "告警",
+        "详情"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.detail.alarmChecklist",
+      "parentKey": "record.detail.alarm",
+      "domain": "record",
+      "level": 4,
+      "name": "防撬检查清单（727，仅 type 7）",
+      "kind": "action",
+      "summary": "type == 7（撬锁告警）时给出 4 条可勾选检查项，勾选状态按行键存在本机。",
+      "details": [
+        "清单固定 4 项：确认门体与锁体完好 / 检查门框合页与螺丝 / 核对门扇是否被顶住 / 确认门锁未被拆卸",
+        "存储键 kf_rcheck_<oid>，缺省补全为等长 false 数组（长度按清单项数夹回）",
+        "每项是 VariantToggle，tint accent；无「全部完成」汇总按钮"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 196,
+          "symbol": "alarmSection",
+          "note": "type == 7 分支"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 202,
+          "symbol": "tamperChecks",
+          "note": "逐项开关"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 206,
+          "symbol": "RecordSearch.setCheck",
+          "note": "写入勾选状态"
+        }
+      ],
+      "tags": [
+        "记录",
+        "告警",
+        "检查清单"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.detail.alarmSame",
+      "parentKey": "record.detail.alarm",
+      "domain": "record",
+      "level": 4,
+      "name": "本锁同类累计与上次时刻（741）",
+      "kind": "data",
+      "summary": "显示本锁同类型告警累计次数与最近一次时刻，用于判断是惯犯还是偶发。",
+      "details": [
+        "数据 = RecordSearch.sameTypeCount(mac:type:exceptKey:)：total + lastStr",
+        "文案「本锁同类累计 N 次」或「… · 上次 <时刻>」（lastStr 为空时省略后半）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 173,
+          "symbol": "sameTypeCount",
+          "note": "数据源"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 224,
+          "symbol": "alarmSection",
+          "note": "展示文案"
+        }
+      ],
+      "tags": [
+        "记录",
+        "告警",
+        "统计"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.detail.alarmTrial",
+      "parentKey": "record.detail.alarm",
+      "domain": "record",
+      "level": 4,
+      "name": "今日试错累计？（737，语义不确定）",
+      "kind": "diagnostic",
+      "summary": "显示今日锁定类日志条数，标题带「?」表示 keyboardErrCount 语义不确定；并说明涉事凭证无法归属。",
+      "details": [
+        "数据 = RecordSearch.trialCountToday(macs:[rec.mac])：type == 10 且 lockTimeStr 前缀为今天的行数",
+        "文案「今日试错累计? 本锁 N 条锁定类日志」，warn 色 + questionmark 图标",
+        "N > 0 时追加说明：「涉事凭证无法归属: 锁端仅记录锁定级事件行, 不带凭证槽位 (依赖协议失败明细)。」",
+        "只数条数，不猜是哪个凭证/哪位成员"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 231,
+          "symbol": "trialCountToday",
+          "note": "计数"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 237,
+          "symbol": "alarmSection",
+          "note": "标题带问号"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 244,
+          "symbol": "alarmSection",
+          "note": "涉事凭证无法归属说明"
+        }
+      ],
+      "tags": [
+        "记录",
+        "告警",
+        "诊断",
+        "不确定"
+      ],
+      "status": "partial"
+    },
+    {
+      "key": "record.detail.alarmEta",
+      "parentKey": "record.detail.alarm",
+      "domain": "record",
+      "level": 4,
+      "name": "响应时长占位（742）",
+      "kind": "edge",
+      "summary": "「响应时长: 积累中 — 处置记录够多后自动出分布」，当前没有真实计算，只占位说明。",
+      "details": [
+        "无数据源、无计算，纯文案占位（依赖处置时间积累）",
+        "对所有告警类型都显示同一句"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 251,
+          "symbol": "alarmSection",
+          "note": "占位行"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 256,
+          "symbol": "alarmSection",
+          "note": "文案"
+        }
+      ],
+      "tags": [
+        "记录",
+        "告警",
+        "未实现"
+      ],
+      "status": "edge"
+    },
+    {
+      "key": "record.detail.alarmDisposition",
+      "parentKey": "record.detail.alarm",
+      "domain": "record",
+      "level": 4,
+      "name": "标记已处置 / 撤销（726/739）",
+      "kind": "action",
+      "summary": "一键把该行告警标为已处置（本机工单字段），已处置时可撤销回未处理；写入 kf_rdispo。",
+      "details": [
+        "按钮文案随状态变化：「标记已处置」或「已处置 · 更新」",
+        "写入 RecordSearch.markDisposition(key:verdict:\"已处理\")，随后 tick+1 触发重算",
+        "撤销：undoDisposition(key:) 删掉该键 ⇒ 回到未处置（也影响日组蓝点与 735 角标）",
+        "无二次确认（可撤销、纯本机）；处置历史不在此页展示（导出侧才含）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 263,
+          "symbol": "markDisposition",
+          "note": "标记已处置"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 277,
+          "symbol": "undoDisposition",
+          "note": "撤销"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 171,
+          "symbol": "RecordOverlay.oid",
+          "note": "处置键口径"
+        }
+      ],
+      "tags": [
+        "记录",
+        "告警",
+        "动作",
+        "本机覆盖层"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.detail.context",
+      "parentKey": "record.detail",
+      "domain": "record",
+      "level": 3,
+      "name": "前后 10 分钟上下文（736）",
+      "kind": "data",
+      "summary": "列出该行前后各 3 条（默认 10 分钟窗口）的记录，带「前/后」标签，帮助判断当时发生了什么。",
+      "details": [
+        "数据 = RecordSearch.context(mac:aroundKey:)（minutes 默认 10、n 默认 3）",
+        "每行：前/后标签 + 时刻 + 「类型名 · 成员称呼」",
+        "before 为空且 after 为空时整段不出现",
+        "与 584 同成员邻近的区别：这一节看「时间相近（跨成员）」，583 那一节看「同成员」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 298,
+          "symbol": "contextSection",
+          "note": "段结构"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 301,
+          "symbol": "contextSection",
+          "note": "Section 标题 前后 10 分钟上下文"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 311,
+          "symbol": "contextRow",
+          "note": "行版式"
+        }
+      ],
+      "tags": [
+        "记录",
+        "详情",
+        "上下文"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.detail.pager",
+      "parentKey": "record.detail",
+      "domain": "record",
+      "level": 3,
+      "name": "上一条/下一条翻看（580）",
+      "kind": "action",
+      "summary": "在「你刚才看到的那份结果集」里前后翻，显示「第 N / M 条」，越界按钮禁用。",
+      "details": [
+        "siblings.count > 1 才出现；atSafe 夹回合法下标，避免筛选变短后越界",
+        "顺序 = 记录页当前显示顺序（含月份收窄），不是锁端原始序号；被筛掉的行不会被翻出来",
+        "按钮「上一条」在 atSafe == 0 时 disabled，「下一条」在末条时 disabled",
+        "footer 明确这条纪律，并说明等于悄悄改筛选条件是不允许的"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 335,
+          "symbol": "navSection",
+          "note": "翻页控件"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 342,
+          "symbol": "navSection",
+          "note": "第 N / M 条"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 352,
+          "symbol": "navSection",
+          "note": "顺序纪律说明"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 379,
+          "symbol": "RecDetailSheet",
+          "note": "父级传 displayedRecs"
+        }
+      ],
+      "tags": [
+        "记录",
+        "详情",
+        "翻页"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.detail.nearby",
+      "parentKey": "record.detail",
+      "domain": "record",
+      "level": 3,
+      "name": "同成员邻近横滑（584）",
+      "kind": "action",
+      "summary": "结果集里「同归属」前后各最多 3 条做成 132pt 缩卡横滑，点即切到那一条详情。",
+      "details": [
+        "判据 siblings[i].whoName == rec.whoName；前 3 后 3，前段反序后拼接",
+        "缩卡内容：时刻（monospaced）+ 类型名（1 行）",
+        "无邻近时不出现；触达补到 44pt"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 363,
+          "symbol": "nearby",
+          "note": "同成员前后各 3 条"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 384,
+          "symbol": "nearbySection",
+          "note": "横滑缩卡与切换"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 388,
+          "symbol": "nearbySection",
+          "note": "点卡切换 at"
+        }
+      ],
+      "tags": [
+        "记录",
+        "详情",
+        "成员"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.detail.link",
+      "parentKey": "record.detail",
+      "domain": "record",
+      "level": 3,
+      "name": "记录引用链接（585，kf://records?k=）",
+      "kind": "action",
+      "summary": "复制 `kf://records?k=<mac#行键>` 引用链接，粘到备忘录点开即回到记录页并定位该行；链接不含口令/指纹/帧。",
+      "details": [
+        "链接只编码「哪把锁的哪一行」；行不在显示范围内时页面如实说明原因，不打开相邻的一条顶替",
+        "复制成功 toast「已复制本条引用链接」",
+        "落地端 = 记录页 pendingRecordKey → landRecordKey（命中则开详情 + 关闭后再滚/闪）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 424,
+          "symbol": "refLink",
+          "note": "链接格式"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 427,
+          "symbol": "linkSection",
+          "note": "复制动作与说明"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 436,
+          "symbol": "linkSection",
+          "note": "不含口令/指纹/帧的声明"
+        }
+      ],
+      "tags": [
+        "记录",
+        "深链",
+        "剪贴板"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.detail.share",
+      "parentKey": "record.detail",
+      "domain": "record",
+      "level": 3,
+      "name": "分享本条记录卡（718）",
+      "kind": "action",
+      "summary": "把这一条渲染成 360×640 的 PNG 记录卡，通过 ShareLink 分享；卡上只有时间、事件名、可证明归属与锁名。",
+      "details": [
+        "卡片在 .task(id: rec.id) 里渲染一次（ExportKit.recordCard，scale = 2），存 @State card",
+        "卡片未就绪时显示「卡片渲染中…」",
+        "文件名「锁管家_记录卡_<yyyy-MM-dd>.png」；SharePreview 标题「本条记录卡」",
+        "exportRow 只带可证明字段：member = rec.whoName ?? \"\"（不可证明留空）",
+        "说明文案：「卡上只有这一条: 时间、事件名、可证明的归属、锁名。不含口令、指纹数据与协议帧。」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 541,
+          "symbol": "exportRow",
+          "note": "Rec → ExportRecord 映射"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 547,
+          "symbol": "shareSection",
+          "note": "ShareLink 与占位"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 60,
+          "symbol": ".task(id: rec.id)",
+          "note": "一次渲染"
+        },
+        {
+          "file": "App/UI/ExportShares.swift",
+          "line": 66,
+          "symbol": "ExportKit.recordCard",
+          "note": "ImageRenderer 渲染"
+        }
+      ],
+      "tags": [
+        "记录",
+        "导出",
+        "分享"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.detail.credJump",
+      "parentKey": "record.detail",
+      "domain": "record",
+      "level": 3,
+      "name": "定位来源凭证（577）",
+      "kind": "action",
+      "summary": "按这条记录的 kind + 归属推断出对应凭证（pwd:N / fp:N），一键跳凭证 Tab 定位并高亮；台账无命中则不出入口。",
+      "details": [
+        "键规则：pwd 取非 temp 且 owner 匹配；temp 取 temp 且 owner 匹配；fp 取 owner 相等或指纹名包含成员名",
+        "跳转写 pendingCredNav + pendingCredNavMac（钉住本条记录的 mac，避免活读 app.current 打错锁），再 requestRoute(.credentials)（过访客闸）",
+        "成功后 dismiss 并 toast「已定位到来源凭证」",
+        "凭证 Tab 的定位是既有能力，本页只给键与路由"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 610,
+          "symbol": "credJumpSection",
+          "note": "入口与路由"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 631,
+          "symbol": "credNav",
+          "note": "键规则"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1697,
+          "symbol": "swipeActions",
+          "note": "同一键的行内「看凭证」入口"
+        }
+      ],
+      "tags": [
+        "记录",
+        "凭证",
+        "深链"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.detail.jump",
+      "parentKey": "record.detail",
+      "domain": "record",
+      "level": 3,
+      "name": "三个回到时间线的出口（583/563/586）",
+      "kind": "action",
+      "summary": "详情卡底部给三个出口：在时间线里定位这条（滚+闪）、搜这类记录（带类型词去搜索）、查看当天全部（显示范围收到那一天）。",
+      "details": [
+        "「在时间线里定位这条」= pendingFlashKey + dismiss；随后 flashRow 滚到行并高亮 1.2 秒",
+        "「搜这类记录」= pendingSearch = rec.typeName + requestRoute(.records) + dismiss",
+        "「查看当天全部」= pendingRecordsDay = anchorDayKey + dismiss；锚日与 applyFilter 同口径（0:00–4:59 归前一晚），时刻不可定位时 toast「这条记录的时刻无法定位到某一天」",
+        "说明文案：两个出口都不改筛选条件，页顶有「看全部日子」可以退回来"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 477,
+          "symbol": "jumpSection",
+          "note": "三个出口"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 467,
+          "symbol": "anchorDayKey",
+          "note": "586 锚日口径"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 502,
+          "symbol": "jumpSection",
+          "note": "无法定位日期的 toast"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2466,
+          "symbol": "dayFocusBanner",
+          "note": "落地端：只看这一天 + 看全部日子"
+        }
+      ],
+      "tags": [
+        "记录",
+        "跳转",
+        "路由"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.detail.diagJump",
+      "parentKey": "record.detail",
+      "domain": "record",
+      "level": 3,
+      "name": "低电告警 → 这台锁的诊断（587）",
+      "kind": "action",
+      "summary": "仅当告警且 typeName 含「低电」时出现「查看这台锁的诊断」，钉住本条记录的 mac 跳到设置 Tab 的诊断页。",
+      "details": [
+        "判据用 typeName.contains(\"低电\")，不硬写类型号（避免第二个真相源）",
+        "跳转前 pin mac：app.pendingDiag = rec.mac，再 requestRoute(.settings)（访客态不会落到看不见的 Tab）",
+        "先 dismiss 详情再跳"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 57,
+          "symbol": "body",
+          "note": "仅低电告警才挂这一段"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 447,
+          "symbol": "diagJumpSection",
+          "note": "跳转与 pin mac"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 450,
+          "symbol": "pendingDiag",
+          "note": "目标锁固定"
+        }
+      ],
+      "tags": [
+        "记录",
+        "诊断",
+        "跳转"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.detail.note",
+      "parentKey": "record.detail",
+      "domain": "record",
+      "level": 3,
+      "name": "详情卡备注/标旗编辑面（186/990/188）",
+      "kind": "action",
+      "summary": "详情卡内的备注输入框 + 保存按钮 + 「标为异常」开关；与时间线行共用同一份本机覆盖层。",
+      "details": [
+        "TextField 占位「开门附言 / 备注」，autocorrectionDisabled，onSubmit 即保存",
+        "保存走 RecordOverlay.setNote(rec.mac, rec.key)，tick+1 刷新，toast 复用「备注已保存/已清空」",
+        "旗标开关 set 时直接 toggleFlag；不显示二次确认",
+        "footer 写明：附言/旗标都是本机标注，不写入门锁、不进导出 CSV 之外的任何出口，删除设备会一并清除"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 574,
+          "symbol": "noteSection",
+          "note": "编辑面与开关"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 601,
+          "symbol": "saveNote",
+          "note": "保存动作"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 595,
+          "symbol": "noteSection",
+          "note": "本机标注边界说明"
+        }
+      ],
+      "tags": [
+        "记录",
+        "详情",
+        "本机覆盖层"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.export",
+      "parentKey": "record",
+      "domain": "record",
+      "level": 2,
+      "name": "记录导出载体（分享卡 + 名册导出）",
+      "kind": "service",
+      "summary": "从已移除的导出中心里保留下来的最小导出实现：单条记录卡（PNG）与成员名册（vCard 3.0），只服务记录详情与成员中心两处。",
+      "details": [
+        "原 ExportCenter.swift（CSV/JSON/PDF/邮件/二维码报告/口述卡/导出向导）已整体移除；本文件只保留两条仍在用的链",
+        "记录卡：ExportRecord 行模型 + RecordCardImage(Transferable) + RecordShareCardView + ExportKit.recordCard",
+        "名册：ExportKit.vcfEscape + ExportKit.writeRoster（vCard 3.0 文件落 Caches/exports）",
+        "不再有导出范围选择/预览/邮件出口"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/ExportShares.swift",
+          "line": 1,
+          "symbol": "文件头注释",
+          "note": "两条链的来源与移除说明"
+        },
+        {
+          "file": "App/UI/ExportShares.swift",
+          "line": 13,
+          "symbol": "struct ExportRecord",
+          "note": "导出行的最小字段集"
+        },
+        {
+          "file": "App/UI/ExportShares.swift",
+          "line": 63,
+          "symbol": "enum ExportKit",
+          "note": "两个导出入口"
+        }
+      ],
+      "tags": [
+        "记录",
+        "导出",
+        "成员"
+      ],
+      "status": "partial"
+    },
+    {
+      "key": "record.export.card",
+      "parentKey": "record.export",
+      "domain": "record",
+      "level": 3,
+      "name": "单条记录分享卡版式与 PNG 传输",
+      "kind": "service",
+      "summary": "360×640 固定尺寸卡：告警/普通图标 + 事件名 + 锁名·成员·时刻 + 「离线锁管家 · 单条记录 · 仅含本条数据」，用 ImageRenderer 出 PNG。",
+      "details": [
+        "背景 DS.heroGradientSafe + 圆角 DS.Radius.card；文字走 heroFg（含 0.85/0.7 两档透明度）",
+        "图标：isAlarm ? exclamationmark.triangle.fill : lock.open.fill",
+        "第三行：member 为空时只写锁名，否则「锁名 · 成员」；再拼「 · 时刻」",
+        "RecordCardImage 走 DataRepresentation(.png) + suggestedFileName（UIImage 不满足 Transferable）",
+        "渲染 scale = 2，输出 UIImage?"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/ExportShares.swift",
+          "line": 35,
+          "symbol": "struct RecordShareCardView",
+          "note": "卡版式与尺寸"
+        },
+        {
+          "file": "App/UI/ExportShares.swift",
+          "line": 40,
+          "symbol": "RecordShareCardView",
+          "note": "告警/普通图标"
+        },
+        {
+          "file": "App/UI/ExportShares.swift",
+          "line": 53,
+          "symbol": "RecordShareCardView",
+          "note": "仅含本条数据的落款"
+        },
+        {
+          "file": "App/UI/ExportShares.swift",
+          "line": 25,
+          "symbol": "struct RecordCardImage",
+          "note": "PNG Transferable"
+        },
+        {
+          "file": "App/UI/ExportShares.swift",
+          "line": 66,
+          "symbol": "ExportKit.recordCard",
+          "note": "ImageRenderer scale 2"
+        }
+      ],
+      "tags": [
+        "记录",
+        "导出",
+        "分享"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.export.fields",
+      "parentKey": "record.export",
+      "domain": "record",
+      "level": 3,
+      "name": "导出字段口径（归属只走可证明链）",
+      "kind": "data",
+      "summary": "ExportRecord 六个字段的取值纪律：时刻/类型名/成员/是否告警/协议帧 hex/日键，成员列不可证明就留空。",
+      "details": [
+        "time = yyyy-MM-dd HH:mm:ss，无时间戳为 \"\"",
+        "member = \"\" 表示「无法证明归属」，不允许猜",
+        "hex = 缓存层存了协议帧才原样带出，否则 \"\"",
+        "dayKey 未知写「未知」；key = 锁端行键（idxRaw），无 idx 留空",
+        "该模型只被 718 分享卡使用（导出中心移除后无 CSV/PDF 消费者）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/ExportShares.swift",
+          "line": 13,
+          "symbol": "ExportRecord",
+          "note": "六字段定义"
+        },
+        {
+          "file": "App/UI/ExportShares.swift",
+          "line": 16,
+          "symbol": "ExportRecord.member",
+          "note": "空 = 无法证明"
+        },
+        {
+          "file": "App/UI/ExportShares.swift",
+          "line": 20,
+          "symbol": "ExportRecord.key",
+          "note": "行键留空规则"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 541,
+          "symbol": "exportRow",
+          "note": "唯一生产点"
+        }
+      ],
+      "tags": [
+        "记录",
+        "导出",
+        "口径"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.center",
+      "parentKey": "member",
+      "domain": "member",
+      "level": 2,
+      "name": "成员中心（总表 / 排序 / 分组 / 访客 / 归档 / 家庭场景）",
+      "kind": "screen",
+      "summary": "家庭协作总表：成员列表（四档排序）、分组 chip 过滤、访客虚拟分组、归档入口、家庭场景（本周主责/便签）、家庭设置与名册导出。",
+      "details": [
+        "入口：设置 Tab → 成员管理（MembersView sheet）右上「成员中心 (家庭协作)」按钮 → sheet",
+        "列表七段：概览头 → 分组 chip → 成员列表 → 访客 → 归档入口 → 家庭场景 → 聚合视图（家庭设置）",
+        "右上菜单：排序 Picker（inline，四档）+ 分组标签 + 成员家庭设置 + 导出成员名册",
+        "写库后 .id(tick) 重建，List 直接重查 DB",
+        "空态：EmptyState「还没有成员 / 建档向导分三步: 称呼 → 角色 → 初始凭证」+ 「建档向导」按钮"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 12,
+          "symbol": "struct MemberCenterView",
+          "note": "页面声明与五块职责注释"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 42,
+          "symbol": "body",
+          "note": "七段列表顺序"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 56,
+          "symbol": "toolbar",
+          "note": "右上菜单四项"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1947,
+          "symbol": "MemberCenterView()",
+          "note": "父级：成员管理 sheet"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 134,
+          "symbol": ".id(tick)",
+          "note": "写库后重建"
+        }
+      ],
+      "tags": [
+        "成员",
+        "入口",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.list",
+      "parentKey": "member.center",
+      "domain": "member",
+      "level": 3,
+      "name": "成员列表（四档排序 + 概览头 + 左滑归档）",
+      "kind": "screen",
+      "summary": "未归档成员列表：可按添加时间/姓名/最近开门/近 30 天次数排序，行上显示角色、同名提示、副行摘要与活跃度，左滑归档。",
+      "details": [
+        "members = DB.members() 排除 archivedIDs()，再按 groupFilter 过滤 groupTag",
+        "排序四档（264/466）：0 添加时间 at 升序；1 姓名（MemberHub.display）；2 最近开门时间（acts.last 降序）；3 近 30 天开门次数（opens30 降序）",
+        "活跃度表 activityTable 一次算完全员（避免比较式里逐次重扫全锁日志）",
+        "section header「成员 (N)」；footer 说明「活跃度与摘录为台账推断 (约)」「久未用」判据",
+        "每行 NavigationLink → MemberDetail360View（onChanged 回调 tick+1）",
+        "左滑「归档」（ok 色）：置 ext.archived = true 并重建；不删除任何历史"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 205,
+          "symbol": "activeSection",
+          "note": "排序四档与列表"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 222,
+          "symbol": "NavigationLink",
+          "note": "进 360 详情"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 225,
+          "symbol": "swipeActions",
+          "note": "左滑归档"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 30,
+          "symbol": "members",
+          "note": "排除归档 + 分组过滤"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 245,
+          "symbol": "activityTable",
+          "note": "活跃度表一次算完"
+        }
+      ],
+      "tags": [
+        "成员",
+        "列表"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.list.header",
+      "parentKey": "member.list",
+      "domain": "member",
+      "level": 4,
+      "name": "概览头（N 位成员 · M 条凭证）",
+      "kind": "state",
+      "summary": "列表顶部一行：首位成员头像 + 「共 N 位成员 · M 条凭证」+「活跃度按台账推断 (约)」说明。",
+      "details": [
+        "M = Σ MemberHub.activity(id).owns（名下密码+指纹条数）",
+        "成员为空时用占位 Member(id:\"g\", name:\"家\") 画头像，避免空视图",
+        "整行合并为一个读屏元素"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 139,
+          "symbol": "headerStat",
+          "note": "抬头统计"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 151,
+          "symbol": "headerStat",
+          "note": "文案「共 N 位成员 · M 条凭证」"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 148,
+          "symbol": "MemberAvatar(member: Member(id: \"g\"…))",
+          "note": "空列表占位头像"
+        }
+      ],
+      "tags": [
+        "成员",
+        "统计"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.list.row",
+      "parentKey": "member.list",
+      "domain": "member",
+      "level": 4,
+      "name": "成员行（头像/角色/同名待合并/久未用）",
+      "kind": "data",
+      "summary": "每行：头像（emoji 或首字）+ 称呼（备注）+ 角色胶囊 + 同名待合并提示 + 副行（关系/备注/最近开门/名下条数）+ 右侧活跃度标记。",
+      "details": [
+        "角色胶囊：main→crown.fill + warn 色「主理人」；guest→person.badge.clock「访客」；其余 person.fill「成员」",
+        "同名判据：同 name 且非本行且未归档 ⇒ StatusPill「同名待合并」（warn）",
+        "副行四段按序拼接：relation / 「备注 X」/ 「最近开门约 yyyy-MM-dd」/ 「名下 N 条」；全空显示「暂无台账凭证」",
+        "久未用：opens30 == 0 ⇒ 右侧「久未用」灰字且副行整体 opacity 0.55；否则「活跃 (约)」ok 色"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 367,
+          "symbol": "struct MemberRow",
+          "note": "行声明"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 380,
+          "symbol": "MemberRow",
+          "note": "称呼（备注）双层文本"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 385,
+          "symbol": "MemberRow",
+          "note": "同名待合并"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 432,
+          "symbol": "subLine",
+          "note": "副行四段"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 448,
+          "symbol": "staleTag",
+          "note": "久未用/活跃 (约)"
+        }
+      ],
+      "tags": [
+        "成员",
+        "行",
+        "角色"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.list.dupMerge",
+      "parentKey": "member.list",
+      "domain": "member",
+      "level": 4,
+      "name": "同名成员长按并入（462 快捷合并）",
+      "kind": "action",
+      "summary": "行上长按上下文菜单除「归档」外，若有同名成员则出现「并入「X」」：迁移凭证归属、迁移认领、删除本档。",
+      "details": [
+        "迁移范围：遍历所有锁，把 owner == 本档的密码/指纹改指目标档（DB.setPwdOwner / setFpOwner）",
+        "再 MemberHub.reassignClaims(from:to:) 迁移 791 认领，最后 DB.removeMember(member.id)",
+        "无二次确认（长按菜单直接执行，破坏性但会迁走凭证）；详细合并流程见 member.merge",
+        "合并后 tick+1 重建行"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 404,
+          "symbol": "MemberRow.contextMenu",
+          "note": "「并入「X」」菜单项"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 412,
+          "symbol": "mergeInto",
+          "note": "迁移与删除"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 421,
+          "symbol": "MemberHub.reassignClaims",
+          "note": "认领迁移"
+        }
+      ],
+      "tags": [
+        "成员",
+        "合并",
+        "破坏性"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.group",
+      "parentKey": "member.center",
+      "domain": "member",
+      "level": 3,
+      "name": "分组标签（chip 过滤 + 批量编辑）",
+      "kind": "sheet",
+      "summary": "按 groupTag 过滤成员（家人/访客/服务人员…），并可在「分组标签」里给每位成员批量改标签，一次保存。",
+      "details": [
+        "chip 集合 = 全部成员 ext.groupTag 去空去重排序；胶囊样式，选中 accentText 14% 底",
+        "编辑 sheet 选项固定：无分组 / 家人 / 访客 / 服务人员（空串表示清空）",
+        "保存时只写有改动的成员（tags 字典），toast「分组已保存」并 dismiss",
+        "取消不写库；写库后 onSaved → tick+1 重建成员中心"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 167,
+          "symbol": "groupChipSection",
+          "note": "chip 过滤"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 36,
+          "symbol": "members",
+          "note": "groupTag 过滤生效点"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1420,
+          "symbol": "struct MemberGroupSheet",
+          "note": "分组编辑 sheet"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1426,
+          "symbol": "MemberGroupSheet.options",
+          "note": "四档选项"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1444,
+          "symbol": "MemberGroupSheet",
+          "note": "保存分组"
+        }
+      ],
+      "tags": [
+        "成员",
+        "分组",
+        "弹层"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.visitor",
+      "parentKey": "member.center",
+      "domain": "member",
+      "level": 3,
+      "name": "访客虚拟分组（793）",
+      "kind": "data",
+      "summary": "把「临时码且无归属」的开门聚成一个虚拟成员「访客」，显示未归属临时码记录数与名下临时码条数；点进记录页按该组成员过滤。",
+      "details": [
+        "id = MemberHub.visitorId（__visitor），只在本地展示层出现，绝不写入锁端凭证表（footer 明写）",
+        "两个读数：visitorOpenCount（跨全部锁 classify 后 isVisitorRow 计数）、visitorOwns（全部锁 temp 密码条数）",
+        "点击：app.pendingRecordsFilter = visitorId + requestRoute(.records) + dismiss ⇒ 记录页 sel 直写并过滤",
+        "头像用 person.badge.clock（不是首字）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 252,
+          "symbol": "visitorSection",
+          "note": "虚拟分组行"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 256,
+          "symbol": "pendingRecordsFilter",
+          "note": "跳记录页过滤"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 285,
+          "symbol": "visitorOpenCount",
+          "note": "未归属临时码计数"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 299,
+          "symbol": "visitorOwns",
+          "note": "名下临时码条数"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2603,
+          "symbol": "applyFilter",
+          "note": "记录页消费 visitorId"
+        }
+      ],
+      "tags": [
+        "成员",
+        "访客",
+        "跨页"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.archive",
+      "parentKey": "member.center",
+      "domain": "member",
+      "level": 3,
+      "name": "归档成员与恢复（460/795）",
+      "kind": "sheet",
+      "summary": "归档 = 只从成员列表与统计里收起，不删除任何历史；归档列表可逐个「恢复」。",
+      "details": [
+        "入口：成员中心「归档成员 (N) · 保留历史」（有归档才出现）→ MemberArchivedView sheet",
+        "恢复：ext.archived = false + 重建 + onRestored 回调",
+        "归档期间影响面（行内明写）：记录页仍能筛到 TA、凭证页仍列 TA 名下凭证 —— 「归档不许挡撤权入口」",
+        "空态：「归档列表为空 — 成员归档后历史不蒸发。」",
+        "归档动作本身无确认（可恢复、非破坏）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 304,
+          "symbol": "archivedSection",
+          "note": "归档入口（计数）"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1365,
+          "symbol": "struct MemberArchivedView",
+          "note": "归档列表 sheet"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1380,
+          "symbol": "MemberArchivedView",
+          "note": "恢复动作"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1395,
+          "symbol": "MemberArchivedView",
+          "note": "归档影响面说明"
+        }
+      ],
+      "tags": [
+        "成员",
+        "归档",
+        "弹层"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.scene",
+      "parentKey": "member.center",
+      "domain": "member",
+      "level": 3,
+      "name": "家庭场景（本周主责 / 便签）",
+      "kind": "data",
+      "summary": "成员中心底部集中家庭场景：本周主责是谁（未安排时提示去详情页设置），以及前 4 位成员的便签摘录。",
+      "details": [
+        "本周主责读 MemberHub.dutyThisWeek → DB.member 显示称呼，accentText；未安排时显示「本周主责: 未安排 — 在成员的详情页里设置」",
+        "便签只列 members.prefix(4) 中 ext.note 非空者，最多 2 行",
+        "设置入口在成员 360 详情的「家庭场景」段（设为本周主责开关）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 321,
+          "symbol": "sceneSection",
+          "note": "本周主责与便签"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 323,
+          "symbol": "dutyThisWeek",
+          "note": "主责读取"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 795,
+          "symbol": "VariantToggle",
+          "note": "设置落点：详情页开关"
+        }
+      ],
+      "tags": [
+        "成员",
+        "家庭场景"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.list.menu",
+      "parentKey": "member.center",
+      "domain": "member",
+      "level": 4,
+      "name": "成员中心右上菜单（排序/分组/家庭设置/导出名册）",
+      "kind": "action",
+      "summary": "ellipsis 菜单四项：排序 Picker（inline 四档）、分组标签、成员家庭设置、导出成员名册。",
+      "details": [
+        "排序 Picker 四档标签：「添加时间 / 姓名 / 最近开门时间 (约) / 近 30 天开门次数 (约)」",
+        "「成员家庭设置」按 sheet 弹出（不走切 Tab；它自带 NavigationStack + 保存），旧写法切 Tab 是空转",
+        "「导出成员名册」点击时先 ExportKit.writeRoster() 生成再开 sheet（ShareLink 需渲染期就有 URL）",
+        "按钮补 44pt 触达（自绘 label）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 56,
+          "symbol": "toolbar",
+          "note": "菜单四项"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 58,
+          "symbol": "Picker(\"排序\")",
+          "note": "四档标签"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 66,
+          "symbol": "showFamilySettings = true",
+          "note": "家庭设置 sheet 而非切 Tab"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 67,
+          "symbol": "ExportKit.writeRoster()",
+          "note": "按需生成名册"
+        }
+      ],
+      "tags": [
+        "成员",
+        "菜单"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.wizardEntry",
+      "parentKey": "member.center",
+      "domain": "member",
+      "level": 4,
+      "name": "建档向导入口（空态 + pendingMemberAdd 直达）",
+      "kind": "flow",
+      "summary": "两个入口：空态的「建档向导」按钮；以及其它页面置 pendingMemberAdd 后，成员中心一到达就自动弹向导（一次性消费）。",
+      "details": [
+        "空态按钮 actionTitle「建档向导」→ showWizard = true",
+        "pendingMemberAdd 在 onAppear 消费并置 false，用 DispatchQueue.main.async 再置 sheet（同步段开 sheet 首帧可能被吞）",
+        "向导完成后 onDone → tick+1 重建成员中心"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 216,
+          "symbol": "EmptyState",
+          "note": "空态建档向导按钮"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 89,
+          "symbol": "onAppear",
+          "note": "pendingMemberAdd 一次性消费"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 80,
+          "symbol": "sheet(isPresented: $showWizard)",
+          "note": "向导 sheet 挂载"
+        }
+      ],
+      "tags": [
+        "成员",
+        "入口",
+        "路由"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.roster",
+      "parentKey": "member",
+      "domain": "member",
+      "level": 2,
+      "name": "成员名册导出（415，vCard 3.0）",
+      "kind": "service",
+      "summary": "把成员档案写成 .vcf 文件（Caches/exports）并通过 ShareLink 分享；名册只含人与称呼，不含锁 MAC/凭证号/口令。",
+      "details": [
+        "每成员一张 VCARD：FN = MemberHub.display（超 6 字中段截断）；NICKNAME = 备注名；TEL;TYPE=CELL = 手机号；CATEGORIES = 分组标签",
+        "NOTE 行按需拼接：关系 X / 主管理员 / 已归档 / 代管中 / 紧急联系 X / 便签 X / 关怀 X（· 分隔）",
+        "转义：\\ ; , 换行 → 反斜杠转义（vcfEscape）",
+        "文件名「锁管家_成员名册_yyyy-MM-dd.vcf」；写盘失败返回 nil；无成员时返回 nil 且 UI 提示「本机还没有成员档案，名册是空的」",
+        "sheet 内说明：名册只用于家人线下核对，搬整套数据要走备份"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/ExportShares.swift",
+          "line": 84,
+          "symbol": "ExportKit.writeRoster",
+          "note": "vCard 生成与写盘"
+        },
+        {
+          "file": "App/UI/ExportShares.swift",
+          "line": 88,
+          "symbol": "writeRoster",
+          "note": "VCARD 字段顺序"
+        },
+        {
+          "file": "App/UI/ExportShares.swift",
+          "line": 94,
+          "symbol": "writeRoster",
+          "note": "NOTE 行拼接项"
+        },
+        {
+          "file": "App/UI/ExportShares.swift",
+          "line": 110,
+          "symbol": "writeRoster",
+          "note": "文件名与目录"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 99,
+          "symbol": "showRoster sheet",
+          "note": "结果 sheet 与空态"
+        }
+      ],
+      "tags": [
+        "成员",
+        "导出",
+        "隐私"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.detail",
+      "parentKey": "member",
+      "domain": "member",
+      "level": 2,
+      "name": "成员 360 详情（档案/凭证/摘录/动态/来源/场景/权限）",
+      "kind": "screen",
+      "summary": "单个成员的完整档案页：周小结、档案区、名下凭证与借用、最近开门摘录、停用动态、授权来源、家庭场景、权限矩阵与应急，以及补全/合并/删除三个动作。",
+      "details": [
+        "入口：成员中心列表行 NavigationLink；参数 memberID + onChanged 回调",
+        "段顺序：周小结（有才显示）→ 档案 → 名下凭证 → 最近开门（约）→ 凭证停用动态 → 授权来源 → 家庭场景 → 权限与应急",
+        "右上菜单三项：补全档案 / 重复合并 / 删除并级联提示（destructive）",
+        "成员不存在时显示 EmptyState「成员不存在 / 档案可能已被删除或合并。」",
+        "写库后 .id(tick) 重建；.sheet 承载 MergeMembersView 与 BorrowSheetView"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 511,
+          "symbol": "struct MemberDetail360View",
+          "note": "页面声明"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 526,
+          "symbol": "vkBody",
+          "note": "段顺序"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 547,
+          "symbol": "toolbar",
+          "note": "三个动作菜单"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 561,
+          "symbol": "EmptyState(\"成员不存在\")",
+          "note": "成员已被删/合并"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 558,
+          "symbol": "sheet(MergeMembersView)",
+          "note": "子 sheet 挂载"
+        }
+      ],
+      "tags": [
+        "成员",
+        "详情",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.detail.profile",
+      "parentKey": "member.detail",
+      "domain": "member",
+      "level": 3,
+      "name": "档案区（头像/称呼/角色/关系/紧急联系/常用锁/关怀语）",
+      "kind": "data",
+      "summary": "档案卡：44pt 头像 + 称呼 + 角色·关系 + 名下凭证数胶囊，再列紧急联系、常用锁、关怀语，以及顶部周小结一句人话。",
+      "details": [
+        "顶部周小结（799）：MemberHub.weekSentence 返回「X 近 7 天开门约 N 次, 工作日 H–H+1 点最活跃。」，样本不足时改口径，n=0 则整段不显示",
+        "紧急联系（465）：空显示「未填」，纯本地字段",
+        "常用锁（464）：把 e.commonLocks 的 mac 映射成锁显示名，顿号连接，1 行 + 最小缩放 0.8",
+        "关怀语（480）：e.careText（孩子码关怀文案，家长视角）非空才出现，accentText",
+        "名下 N 条胶囊 = MemberHub.activity.owns"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 570,
+          "symbol": "archiveSection",
+          "note": "档案区结构"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 529,
+          "symbol": "weekSentence",
+          "note": "周小结落点"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 590,
+          "symbol": "LabeledContent(\"紧急联系\")",
+          "note": "465 紧急联系"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 596,
+          "symbol": "commonLocks",
+          "note": "464 常用锁"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 607,
+          "symbol": "careText",
+          "note": "480 关怀语"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 587,
+          "symbol": "StatusPill",
+          "note": "名下 N 条"
+        }
+      ],
+      "tags": [
+        "成员",
+        "详情",
+        "档案"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.detail.creds",
+      "parentKey": "member.detail",
+      "domain": "member",
+      "level": 3,
+      "name": "名下凭证清单与借用中标记（261/472）",
+      "kind": "data",
+      "summary": "列出该成员名下全部密码与指纹（跨锁），借用中的单列并标「借用中」，另给「借用登记」入口。",
+      "details": [
+        "统计行：「密码 N 条 · 指纹 M 条 · 未归属转未分配不在此列」",
+        "清单逐条显示 CredentialOrg.displayPwd / 指纹名（1 行，最小缩放 0.8）",
+        "借用中的凭证不进普通清单（避免同一凭证出现两次），改为「借用中」胶囊 + 「<凭证> · 借给 X (还 yyyy-MM-dd)」",
+        "「借用登记」按钮 → BorrowSheetView（见 member.borrow）",
+        "全部锁遍历 kc.mac 非空的钥匙串"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 622,
+          "symbol": "credsSection",
+          "note": "清单与借用分流"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 645,
+          "symbol": "credsSection",
+          "note": "密码/指纹计数口径"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 656,
+          "symbol": "StatusPill(\"借用中\")",
+          "note": "借用中标记"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 667,
+          "symbol": "showBorrow = true",
+          "note": "借用登记入口"
+        }
+      ],
+      "tags": [
+        "成员",
+        "凭证",
+        "借用"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.detail.borrowInline",
+      "parentKey": "member.detail.creds",
+      "domain": "member",
+      "level": 4,
+      "name": "凭证借出横条（借用中 · 借给 · 还期）",
+      "kind": "state",
+      "summary": "每条款借出的凭证单独一行：warn 色「借用中」胶囊 + 「<凭证名> · 借给 <人> (还 <日期>)」。",
+      "details": [
+        "键规则：密码 = \"p\" + alias，指纹 = \"f\" + batch（与 BorrowSheetView.register 一致）",
+        "读 MemberHub.borrows(mac) 字典；销记在借用 sheet 里做（本段只读）",
+        "同一凭证不会同时出现在普通清单与本段"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 629,
+          "symbol": "credsSection",
+          "note": "p+alias 键查借用"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 637,
+          "symbol": "credsSection",
+          "note": "f+batch 键查借用"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 656,
+          "symbol": "credsSection",
+          "note": "横条渲染"
+        }
+      ],
+      "tags": [
+        "成员",
+        "借用"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.detail.excerpt",
+      "parentKey": "member.detail",
+      "domain": "member",
+      "level": 3,
+      "name": "最近开门摘录（约，459）",
+      "kind": "data",
+      "summary": "该成员最近 10 条可证明归属的开门记录（日期 + 文案 + 「约」），无记录时说明「台账积累中」。",
+      "details": [
+        "数据 = MemberHub.recentExcerpts(id, 10)，跨全部锁、只看 openTypes、归属可证明才进",
+        "每条右侧固定一枚「约」字，提示是推断口径",
+        "空态：「还没有可证明归属的开门记录 (台账积累中, 属正常)。」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 684,
+          "symbol": "excerptSection",
+          "note": "摘录列表"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 696,
+          "symbol": "excerptSection",
+          "note": "每条「约」标记"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 702,
+          "symbol": "excerptSection",
+          "note": "空态文案"
+        }
+      ],
+      "tags": [
+        "成员",
+        "记录",
+        "约"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.detail.feed",
+      "parentKey": "member.detail",
+      "domain": "member",
+      "level": 3,
+      "name": "凭证停用动态（367）",
+      "kind": "data",
+      "summary": "读敏感操作流水里归属该成员的停用条目（时刻/kinds/目标）；只有凭证停用时勾了「写入该成员动态」才会有。",
+      "details": [
+        "数据 = SensitiveLedger().memberItems(m.id)，不新建存储、不新建键",
+        "每条：时刻（monospaced）+ kind + target",
+        "空态解释机制：「停用凭证时勾「写入该成员动态」才会写进这里；不勾只在敏感操作流水里留一条汇总，不落到个人档案。」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 714,
+          "symbol": "feedSection",
+          "note": "动态列表"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 715,
+          "symbol": "SensitiveLedger().memberItems",
+          "note": "数据源"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 731,
+          "symbol": "feedSection",
+          "note": "空态与写入条件说明"
+        }
+      ],
+      "tags": [
+        "成员",
+        "审计",
+        "凭证"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.detail.source",
+      "parentKey": "member.detail",
+      "domain": "member",
+      "level": 3,
+      "name": "授权来源统计（473）",
+      "kind": "data",
+      "summary": "三格数字：创建 / 移交 / 恢复，说明该成员名下凭证是怎么来的。",
+      "details": [
+        "数据 = MemberHub.sourceCounts(id) → (created, moved, restored)",
+        "三格等宽，数字 title3 semibold accentText，标签 caption2",
+        "纯展示，无下钻"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 742,
+          "symbol": "sourceSection",
+          "note": "三格统计"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 746,
+          "symbol": "sourceCell",
+          "note": "创建/移交/恢复"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 755,
+          "symbol": "sourceCell",
+          "note": "格子版式"
+        }
+      ],
+      "tags": [
+        "成员",
+        "统计",
+        "凭证"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.detail.scene",
+      "parentKey": "member.detail",
+      "domain": "member",
+      "level": 3,
+      "name": "家庭场景（代管开关 / 本周主责 / 代管中说明）",
+      "kind": "setting",
+      "summary": "「由我代管」开关（受角色权限矩阵约束）、「设为本周主责」开关，以及代管中的解释文案。",
+      "details": [
+        "代管开关只在 MemberHub.permAllows(role, \"管凭证\") 时出现；否则就地写明「角色是「X」: 矩阵里「管凭证」为禁用, 所以这一档不给代管开关。」（不静默隐藏）",
+        "代管含义：TA 名下凭证被单条停用时，便签补一句「管理员代操作」；只落本机，锁端没有代操作位",
+        "本周主责是单值：打开即 setDuty(id)，关闭即 setDuty(nil)；当前主责额外显示「本周主责」胶囊",
+        "代管中的成员（MemberHub.proxyNames 包含）显示解释段落"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 772,
+          "symbol": "sceneSection",
+          "note": "段结构"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 777,
+          "symbol": "permAllows(role, \"管凭证\")",
+          "note": "代管开关受矩阵约束"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 787,
+          "symbol": "sceneSection",
+          "note": "禁用时就地说明"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 795,
+          "symbol": "VariantToggle(\"设为本周主责\")",
+          "note": "主责开关"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 802,
+          "symbol": "proxyNames",
+          "note": "代管中说明"
+        }
+      ],
+      "tags": [
+        "成员",
+        "家庭场景",
+        "权限"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.detail.perm",
+      "parentKey": "member.detail",
+      "domain": "member",
+      "level": 3,
+      "name": "角色三档与权限矩阵（470/843/469）",
+      "kind": "state",
+      "summary": "角色单选（主理人/成员/访客）+ 三档角色示例（能/不能由矩阵现算）+ 五行权限矩阵 + 紧急管理员点名。",
+      "details": [
+        "角色写 ext.role，取值 main/member/guest；改角色立刻影响矩阵与两枚开关（代管、紧急管理员）",
+        "矩阵五行：看记录 / 管凭证 / 导出 / 备份 / 成员管理；主理人全允许，成员允许看记录+管凭证，访客全禁",
+        "界面明确边界：矩阵只管本机 UI，锁端没有角色字段，备份包也不带角色；角色与代管会写进 vcf 备注行",
+        "紧急管理员：显示当前名单（未指定时灰字），按「成员管理」权限决定是否给「把 Ta 设为紧急管理员」开关",
+        "救援码说明目前不读这份名单（代码注释与文案都写明没有绑定关系）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 815,
+          "symbol": "permSection",
+          "note": "段结构与矩阵数据"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 824,
+          "symbol": "Picker(\"角色\")",
+          "note": "三档角色单选"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 836,
+          "symbol": "roleExample",
+          "note": "三档示例行"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 846,
+          "symbol": "permSection",
+          "note": "矩阵边界说明"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 855,
+          "symbol": "紧急管理员",
+          "note": "名单回显"
+        },
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 78,
+          "symbol": "permRows",
+          "note": "矩阵唯一定义（五行）"
+        }
+      ],
+      "tags": [
+        "成员",
+        "权限",
+        "角色"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.detail.permMatrix",
+      "parentKey": "member.detail.perm",
+      "domain": "member",
+      "level": 4,
+      "name": "权限矩阵行与「能/不能」示例文案",
+      "kind": "data",
+      "summary": "五行权限逐条以「允许/禁用」胶囊展示；三档角色示例行给出「能：… 不能：…」与一句场景话术。",
+      "details": [
+        "行数据 MemberHub.permRows(role)，每行 LabeledContent(row.name) + StatusPill（ok/neutral）",
+        "示例行「能：/不能：」由 permCan/permCannot 现算，只有场景句写死：主理人=房子主人；访客=名下仍可有临时码（锁端的事），本机不给代管与紧急管理员；成员=日常开门与补凭证够用，导出与备份不给",
+        "当前所选档标题追加「· 当前所选」并染 accentText"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 839,
+          "symbol": "ForEach(matrix)",
+          "note": "五行矩阵渲染"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 890,
+          "symbol": "roleExample",
+          "note": "能/不能 + 场景句"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 905,
+          "symbol": "roleExample",
+          "note": "当前所选标记"
+        }
+      ],
+      "tags": [
+        "成员",
+        "权限"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.detail.emergencyAdmin",
+      "parentKey": "member.detail.perm",
+      "domain": "member",
+      "level": 4,
+      "name": "紧急管理员点名（469）",
+      "kind": "setting",
+      "summary": "把某成员指成紧急管理员（本机点名档），名单在权限段回显；仅在「成员管理」允许时给开关。",
+      "details": [
+        "写 ext.emergencyAdmin，读 MemberHub.emergencyAdmins()（一次解表）",
+        "说明文案：作用是「把人点出来」，免得只剩一个人管钥匙；救援码本身仍在 设置-安全 生成，今天没有绑定关系",
+        "角色为访客/成员（矩阵「成员管理」禁用）时不给开关，并写明先把角色改成主理人"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 863,
+          "symbol": "permAllows(role, \"成员管理\")",
+          "note": "开关出现条件"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 864,
+          "symbol": "VariantToggle",
+          "note": "设为紧急管理员"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 872,
+          "symbol": "permSection",
+          "note": "作用与边界说明"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 878,
+          "symbol": "permSection",
+          "note": "禁用时就地说明"
+        }
+      ],
+      "tags": [
+        "成员",
+        "权限",
+        "应急"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.detail.edit",
+      "parentKey": "member.detail",
+      "domain": "member",
+      "level": 3,
+      "name": "补全档案（九字段 alert）",
+      "kind": "action",
+      "summary": "一个 alert 里改九个档案字段：关系、备注名、emoji 代号、紧急联系、关怀文案、家庭便签、访客欢迎语、分组标签、常用锁。",
+      "details": [
+        "字段与占位：与你的关系 / 备注名 / emoji 代号 / 紧急联系 姓名+电话 / 孩子码关怀文案 / 家庭便签 (如 周六换锁芯) / 访客欢迎语 / 分组标签 家人/访客/服务人员 / 常用锁 (mac 或名称, 逗号分隔)",
+        "角色刻意不在此处：alert 正文写「角色改到下方「权限与应急」里单选，这里不再填英文代码。」",
+        "常用锁按逗号切分并 trim、去空；其余直接写 ext",
+        "保存：MemberHub.saveExt + DB.setMemberInfo([\"relation\": …])，toast「档案已保存」；取消不写"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 922,
+          "symbol": "editProfile",
+          "note": "alert 与字段构造"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 926,
+          "symbol": "editProfile",
+          "note": "角色不在此处的说明"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 936,
+          "symbol": "field(...)",
+          "note": "九个字段占位"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 947,
+          "symbol": "UIAlertAction(\"保存\")",
+          "note": "保存写库"
+        }
+      ],
+      "tags": [
+        "成员",
+        "编辑",
+        "档案"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.detail.delete",
+      "parentKey": "member.detail",
+      "domain": "member",
+      "level": 3,
+      "name": "删除成员（只移除档案 / 连锁端一起收回）",
+      "kind": "action",
+      "summary": "删除前先列名下凭证预览，弹窗当场二选一：只移除档案（锁里凭证仍有效）或连锁端一起收回（排锁端删除队列）。",
+      "details": [
+        "预览 = CredentialOrg.memberCredentialPreview(id)：空时正文写「TA 名下没有台账凭证」，否则列前 5 条 + 省略号",
+        "选项一「只移除档案」：cascadeBinMember(mac, id) 后 removeMember —— 只动本机台账，锁里指纹/密码不会被收回，TA 仍能开门",
+        "选项二「连锁端一起收回」（destructive）：cascadeBinMember(revokeLocks: true)，并统计排入队列条数，toast「已删除并入回收站 · 已排 N 条锁端删除 (连接门锁后生效)」",
+        "共有的真代价写在正文：指纹一旦在锁端删掉无法远程补录，只能本人到锁前重录",
+        "取消 = 不动；本流程无二次鉴权（无 FaceID/密码校验），只有这一次选择"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 972,
+          "symbol": "confirmDelete",
+          "note": "预览 + 三选一弹窗"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 975,
+          "symbol": "confirmDelete",
+          "note": "正文写两个选项的后果"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 982,
+          "symbol": "只移除档案",
+          "note": "cascadeBinMember 不带 revoke"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 988,
+          "symbol": "连锁端一起收回",
+          "note": "revokeLocks + 队列条数"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 551,
+          "symbol": "删除并级联提示",
+          "note": "菜单入口（destructive）"
+        }
+      ],
+      "tags": [
+        "成员",
+        "破坏性",
+        "凭证"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.detail.deleteCascade",
+      "parentKey": "member.detail.delete",
+      "domain": "member",
+      "level": 4,
+      "name": "连锁端一起收回（排锁端删除队列）",
+      "kind": "action",
+      "summary": "删除成员时勾选收回：把名下凭证排入锁端删除队列（del_pwd/del_fp），到场连接后真正失效。",
+      "details": [
+        "实现 = CredentialOrg.cascadeBinMember(mac, id, revokeLocks: true)，返回排入条数并跨锁求和",
+        "凭证先进回收站（可整组还原），但锁端删除不可逆：还原后指纹只剩本机记录",
+        "toast 分两支：有排队「已排 N 条锁端删除 (连接门锁后生效)」；无排队「已删除并入回收站 (名下没有可收回的凭证)」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 990,
+          "symbol": "reduce(0)",
+          "note": "跨锁排队条数"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 995,
+          "symbol": "showToast",
+          "note": "两支 toast 文案"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 980,
+          "symbol": "confirmDelete",
+          "note": "不可远程补录的代价说明"
+        }
+      ],
+      "tags": [
+        "成员",
+        "破坏性",
+        "协议"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.detail.deleteLocal",
+      "parentKey": "member.detail.delete",
+      "domain": "member",
+      "level": 4,
+      "name": "只移除档案（不动锁端）",
+      "kind": "action",
+      "summary": "删除成员但保留锁端凭证：名下凭证据进回收站并可整组还原，锁里指纹/密码不受影响，TA 仍能开门。",
+      "details": [
+        "实现 = 逐锁 CredentialOrg.cascadeBinMember(kc.mac, m.id)（无 revoke），再 DB.removeMember",
+        "toast「已删除并入回收站」",
+        "与「连锁端收回」共用同一弹窗，默认（右侧 default）选项是本项"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 982,
+          "symbol": "只移除档案",
+          "note": "不带 revoke 的移除"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 978,
+          "symbol": "confirmDelete",
+          "note": "后果文案：TA 仍能开门"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 986,
+          "symbol": "showToast",
+          "note": "成功提示"
+        }
+      ],
+      "tags": [
+        "成员",
+        "破坏性"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.wizard",
+      "parentKey": "member",
+      "domain": "member",
+      "level": 2,
+      "name": "建档向导（称呼 → 角色 → 初始凭证）",
+      "kind": "flow",
+      "summary": "三步建档：填称呼与 emoji 代号 → 选角色（副标题按权限矩阵现算差集）与备注名 → 可选顺路建 10 分钟临时码或去录指纹。",
+      "details": [
+        "步骤标题「步骤 N/3 · 称呼与代号 / 角色与备注 / 初始凭证」",
+        "第一步即写库建成员（createMember），后续步骤失败不回滚（见 unresolved）",
+        "验证：姓名非空、≤20 字、仅字母/数字/汉字（与 rename 同口径，否则建出改不动的名字）；重名/空名 toast 并阻止推进",
+        "底部按钮：前两步「下一步」，末步 BusyButton「完成建档 / 处理中…」",
+        "左侧「取消」直接 dismiss（已建成员不会撤销）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1004,
+          "symbol": "struct MemberWizardView",
+          "note": "向导声明"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1018,
+          "symbol": "steps",
+          "note": "三步标题"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1019,
+          "symbol": "canNext",
+          "note": "逐步校验"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1086,
+          "symbol": "下一步",
+          "note": "推进时建成员并阻断失败"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1114,
+          "symbol": "navigationTitle(\"建档向导\")",
+          "note": "页面标题"
+        }
+      ],
+      "tags": [
+        "成员",
+        "向导",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.wizard.step1",
+      "parentKey": "member.wizard",
+      "domain": "member",
+      "level": 4,
+      "name": "第一步：称呼与 emoji 代号",
+      "kind": "state",
+      "summary": "输入称呼（汉字/英文/数字，上限 20）并从 8 个 emoji 里选一个代号（默认首字）。",
+      "details": [
+        "TextField 占位「称呼 (汉字/英文/数字, 上限 20)」，autocorrectionDisabled",
+        "emoji 选项：默认首字（空）+ 🐻 🐱 🐸 🐙 🦊 🐧 🐯（menu 样式）",
+        "空名不能下一步（canNext 检查 trim 后非空）",
+        "点「下一步」时才真正 DB.addMember；失败则停在本步"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1050,
+          "symbol": "TextField(\"称呼\")",
+          "note": "称呼输入与上限"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1052,
+          "symbol": "Picker(\"emoji 代号\")",
+          "note": "八选一 emoji"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1026,
+          "symbol": "pwdOK",
+          "note": "数字码校验（末步用）"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1123,
+          "symbol": "createMember",
+          "note": "写入与校验"
+        }
+      ],
+      "tags": [
+        "成员",
+        "向导"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.wizard.step2",
+      "parentKey": "member.wizard",
+      "domain": "member",
+      "level": 4,
+      "name": "第二步：角色与备注名",
+      "kind": "state",
+      "summary": "三档角色单选，每档副标题写「比成员多/少哪些能力」；再填备注名（记录里显示「称呼（备注）」）。",
+      "details": [
+        "角色行文案 = 角色名 + 「(差集提示)」；差集由 permRows(role) 与 permRows(\"member\") 现算（member 档直接列全部能力）",
+        "inline 选择器；默认 role = \"member\"",
+        "备注名占位「备注名 (记录条目显示 称呼（备注）)」，写 ext.remark"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1059,
+          "symbol": "Picker(\"角色\")",
+          "note": "三档角色"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1030,
+          "symbol": "rolePickHint",
+          "note": "差集副标题"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1066,
+          "symbol": "TextField(\"备注名\")",
+          "note": "备注名输入"
+        }
+      ],
+      "tags": [
+        "成员",
+        "向导",
+        "角色"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.wizard.step3",
+      "parentKey": "member.wizard",
+      "domain": "member",
+      "level": 4,
+      "name": "第三步：初始凭证（临时码 / 指纹）",
+      "kind": "state",
+      "summary": "可选「顺路建 10 分钟临时码」（要 6~8 位纯数字），或直接「录指纹后到凭证页指归属」；也可什么都不建。",
+      "details": [
+        "开关文案「顺路建 10 分钟临时码 (末步)」",
+        "开启后出现数字键盘输入框（6~8 位数字）与说明「归属自动记为 TA; 不建也行, 稍后在凭证页添加。」",
+        "指纹入口是 NavigationLink → StartAddFpView(embedded: true)",
+        "末步「完成建档」在勾了建码但码非法时也可点（canNext 要求 pwdOK），但 submit 内还会再判一次并如实说明未建码"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1069,
+          "symbol": "VariantToggle",
+          "note": "顺路建临时码开关"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1072,
+          "symbol": "TextField(\"6~8 位数字\")",
+          "note": "临时码输入"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1080,
+          "symbol": "StartAddFpView",
+          "note": "指纹录入入口"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1026,
+          "symbol": "pwdOK",
+          "note": "6~8 位纯数字规则"
+        }
+      ],
+      "tags": [
+        "成员",
+        "向导",
+        "凭证"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.wizard.tempcode",
+      "parentKey": "member.wizard",
+      "domain": "member",
+      "level": 4,
+      "name": "向导顺路建临时码（锁端 pwdAdd）",
+      "kind": "action",
+      "summary": "完成建档时若勾了临时码：连锁 → 下发 10 分钟有效的临时密码 → 记账到台账并快照，归属记为新成员。",
+      "details": [
+        "需要当前锁：无锁时 toast「已建档; 建码需先选一把锁」",
+        "时间窗 = 现在 ~ 现在+600 秒（yyyy-MM-dd HH:mm:ss）",
+        "调用 app.lock.pwdAdd(pwd:validFrom:validTo:) 拿到 alias，写 LedgerPwd(temp: true, owner: id, note: \"向导建码 · <名字>\")",
+        "再 CredentialOrg.snapshot(kind:\"pwd\", note:\"新增临时码\") 留快照；成功 toast「已建档并给 TA 建了 10 分钟临时码」",
+        "失败 toast「建档成功, 建码失败: <原因>」（成员保留）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1165,
+          "symbol": "ensureConnected",
+          "note": "连锁前置"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1170,
+          "symbol": "addingTimeInterval(600)",
+          "note": "10 分钟有效期"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1171,
+          "symbol": "app.lock.pwdAdd",
+          "note": "锁端建码"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1172,
+          "symbol": "LedgerPwd",
+          "note": "台账记账与 note"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1176,
+          "symbol": "CredentialOrg.snapshot",
+          "note": "快照留痕"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1149,
+          "symbol": "submit",
+          "note": "码非法时的如实提示"
+        }
+      ],
+      "tags": [
+        "成员",
+        "向导",
+        "凭证",
+        "协议"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.wizard.fp",
+      "parentKey": "member.wizard",
+      "domain": "member",
+      "level": 4,
+      "name": "向导内直达指纹录入（317 pendingFpOwner）",
+      "kind": "action",
+      "summary": "末步可跳指纹录入页（embedded），若之前有「录完指归属」请求，建完成员后把归属目标交回该成员。",
+      "details": [
+        "入口 NavigationLink「录指纹后到凭证页指归属」→ StartAddFpView(embedded: true)",
+        "pendingFpOwner == \"request\" 时，createMember 成功后把它置为新成员 id（317 建完交回）",
+        "指纹数据本身在凭证页完成，本页只负责建立归属目标"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1080,
+          "symbol": "NavigationLink(StartAddFpView)",
+          "note": "指纹录入入口"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1139,
+          "symbol": "pendingFpOwner",
+          "note": "317 归属交回"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1130,
+          "symbol": "DB.addMember",
+          "note": "建成员成功点"
+        }
+      ],
+      "tags": [
+        "成员",
+        "向导",
+        "凭证"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.wizard.create",
+      "parentKey": "member.wizard",
+      "domain": "member",
+      "level": 4,
+      "name": "建档写库与校验（createMember）",
+      "kind": "service",
+      "summary": "校验姓名（非空 / ≤20 字 / 仅字母数字汉字）后建成员，并写入 emoji、role、remark 三项扩展。",
+      "details": [
+        "失败提示：「姓名需为汉字/英文/数字, 上限 20 字」或「姓名为空或已存在 (可用合并把两个名字并成一个)」",
+        "成功：DB.addMember(name) → ext.emoji/role/remark 写 kf_member_ext",
+        "第一步建成功后在后续步骤里 newID 非空，不再重复建",
+        "完成时 onDone() + dismiss() 由 defer 统一执行（成功/失败都回调重建）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1123,
+          "symbol": "createMember",
+          "note": "校验与写入"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1126,
+          "symbol": "createMember",
+          "note": "三条件校验"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1134,
+          "symbol": "MemberHub.saveExt",
+          "note": "emoji/role/remark 落 kf_member_ext"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1143,
+          "symbol": "submit",
+          "note": "收尾与成功提示"
+        }
+      ],
+      "tags": [
+        "成员",
+        "向导",
+        "数据"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.merge",
+      "parentKey": "member",
+      "domain": "member",
+      "level": 2,
+      "name": "重复合并（同名检测 + 凭证迁移）",
+      "kind": "flow",
+      "summary": "以当前成员为主档，从同名成员里挑一个副档，把副档名下凭证归属与认领迁到主档后删除副档。",
+      "details": [
+        "入口：成员 360 详情右上菜单「重复合并」",
+        "主档区只读显示头像与称呼；副档候选 = 同名且 id 不同的成员，行内显示「名下 N 条」",
+        "候选为空时给替代建议：「没有同名成员。若只是称呼重复, 请在成员页重命名其一。」",
+        "「执行合并」在未选副档时 disabled；合并完成 toast「已合并, 迁移 N 条凭证至「主档名」」",
+        "无二次确认弹窗（点击即执行），迁移条数在 toast 里报出"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1186,
+          "symbol": "struct MergeMembersView",
+          "note": "合并页声明"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1193,
+          "symbol": "secondaryCandidates",
+          "note": "同名候选"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1218,
+          "symbol": "Picker",
+          "note": "无候选时的建议文案"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1243,
+          "symbol": "doMerge",
+          "note": "迁移与删除"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 550,
+          "symbol": "重复合并",
+          "note": "入口：详情菜单"
+        }
+      ],
+      "tags": [
+        "成员",
+        "合并",
+        "破坏性"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.merge.exec",
+      "parentKey": "member.merge",
+      "domain": "member",
+      "level": 4,
+      "name": "执行合并（凭证 + 认领迁移后删副档）",
+      "kind": "action",
+      "summary": "遍历全部锁把副档名下密码/指纹改指主档，迁移 791 认领，删除副档档案，并报出迁移条数。",
+      "details": [
+        "迁移：DB.setPwdOwner(mac, alias, primary.id) 与 DB.setFpOwner(mac, batch, primary.id)，moved 累计",
+        "MemberHub.reassignClaims(from: sid, to: primary.id) 迁移认领覆盖层",
+        "DB.removeMember(sid)；onDone + toast + dismiss",
+        "无二次确认、无撤销入口（与「删除成员」的三选一弹窗不对等）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1247,
+          "symbol": "doMerge",
+          "note": "密码归属迁移"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1250,
+          "symbol": "doMerge",
+          "note": "指纹归属迁移"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1254,
+          "symbol": "reassignClaims",
+          "note": "认领迁移"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1257,
+          "symbol": "showToast",
+          "note": "迁移条数"
+        }
+      ],
+      "tags": [
+        "成员",
+        "合并",
+        "破坏性"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.borrow",
+      "parentKey": "member",
+      "domain": "member",
+      "level": 2,
+      "name": "凭证借用登记与销记（472）",
+      "kind": "sheet",
+      "summary": "登记「谁借走了某成员的哪条凭证、什么时候还」，并在同一页列出进行中的借用，点「已归还」销记。",
+      "details": [
+        "入口：成员 360 详情「名下凭证」段 →「借用登记」",
+        "当前锁默认 DB.preferredMac()；借用表按锁维度 MemberHub.borrows(mac)",
+        "新建区：「借用人」+「归还日期 yyyy-MM-dd」两个输入，任一为空则「登记」禁用",
+        "进行中区：标题带条数「进行中 (N) · 点 已归还 销记」，逐行显示键名或「凭证明细见凭证页」+「借给 X · 还 yyyy-MM-dd」",
+        "空态「没有进行中的借用。」；销记 toast「已销记归还」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1264,
+          "symbol": "struct BorrowSheetView",
+          "note": "借用 sheet 声明"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1280,
+          "symbol": "borrowMap",
+          "note": "按锁读借用表"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1286,
+          "symbol": "新建借用",
+          "note": "登记区"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1302,
+          "symbol": "进行中",
+          "note": "进行中区与销记"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1333,
+          "symbol": "borrowMap.isEmpty",
+          "note": "空态"
+        }
+      ],
+      "tags": [
+        "成员",
+        "借用",
+        "弹层"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.borrow.register",
+      "parentKey": "member.borrow",
+      "domain": "member",
+      "level": 4,
+      "name": "登记借用（绑定到第一条凭证）",
+      "kind": "action",
+      "summary": "登记时把借用挂到该成员在当前锁名下的第一条凭证（密码优先、其次指纹）；都没有时用时间戳占位键。",
+      "details": [
+        "键选择顺序：p+alias（首个密码）→ f+batch（首个指纹）→ b+Unix 秒（占位）",
+        "写入 MemberBorrow(by: 借用人, due: 归还日期, at: 现在)，不做日期格式校验（字符串原样存）",
+        "成功后 toast「已登记: <借用人> · 还 <日期>」，并 onDone 让上层刷新",
+        "登记后该凭证在详情里改显「借用中」横条"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1349,
+          "symbol": "register",
+          "note": "键选择与写入"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1351,
+          "symbol": "register",
+          "note": "三档键回退"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1357,
+          "symbol": "MemberHub.saveBorrow",
+          "note": "写借用表"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1360,
+          "symbol": "showToast",
+          "note": "登记提示"
+        }
+      ],
+      "tags": [
+        "成员",
+        "借用"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.borrow.return",
+      "parentKey": "member.borrow",
+      "domain": "member",
+      "level": 4,
+      "name": "已归还销记",
+      "kind": "action",
+      "summary": "点「已归还」把该条借用从表里删除（saveBorrow(itemKey:nil)），并刷新详情。",
+      "details": [
+        "实现：MemberHub.saveBorrow(mac, itemKey: k, nil) + tick+1 + onDone",
+        "toast「已销记归还」",
+        "无二次确认（可重新登记）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1321,
+          "symbol": "Button(\"已归还\")",
+          "note": "销记按钮"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1322,
+          "symbol": "saveBorrow(nil)",
+          "note": "删除借用项"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1325,
+          "symbol": "showToast",
+          "note": "成功提示"
+        }
+      ],
+      "tags": [
+        "成员",
+        "借用"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.family",
+      "parentKey": "member",
+      "domain": "member",
+      "level": 2,
+      "name": "成员家庭设置（长辈模式 / 隐私浏览）",
+      "kind": "sheet",
+      "summary": "两个家庭级开关：长辈模式（凭证页大字高对比 + 临时码完成页口述卡）与隐私浏览（限时 10 分钟并回显剩余秒数）。",
+      "details": [
+        "入口两处：成员中心菜单「成员家庭设置」与「家庭设置」按钮；设置 Tab 也有同一 sheet",
+        "保存按钮写 MemberHub.setElderMode / setPrivacy 后 dismiss；只有保存才生效",
+        "onAppear 计算剩余秒数（privacyUntilSec - now，下限 0）",
+        "两段都有「这一档只动哪些页面」的边界说明，不做第二份实现"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1475,
+          "symbol": "struct MemberFamilySettingsView",
+          "note": "页面声明"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1488,
+          "symbol": "Section(\"长辈模式\")",
+          "note": "长辈模式段"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1507,
+          "symbol": "Section(\"隐私浏览\")",
+          "note": "隐私浏览段"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1524,
+          "symbol": "Button(\"保存\")",
+          "note": "保存写入两个开关"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 86,
+          "symbol": "showFamilySettings",
+          "note": "父级 sheet 挂载"
+        }
+      ],
+      "tags": [
+        "成员",
+        "家庭",
+        "可访问性",
+        "隐私"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.family.elder",
+      "parentKey": "member.family",
+      "domain": "member",
+      "level": 4,
+      "name": "长辈模式（479/486）",
+      "kind": "setting",
+      "summary": "开一档让凭证页变大字高对比（分段只留全部/密码/指纹、收起批量与导出），临时码完成页收成口述卡。",
+      "details": [
+        "写 kf_elder_mode（MemberHub.setElderMode）",
+        "生效面一：凭证页分段只留 全部/密码/指纹，批量与导出入口收起，组尾过期清理不出现；凭证行标题升标题级、副行升正文级并改主文本色",
+        "生效面二：临时码完成页只留大字号口述卡 + 一枚大「完成」，口令/首用回执/再发一张收起并就地说明，页标题切「口述卡」",
+        "明确「这一档只动凭证页与临时码完成页, 其它页面不跟着变」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1489,
+          "symbol": "VariantToggle(\"长辈模式\")",
+          "note": "开关与说明"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1492,
+          "symbol": "长辈模式说明",
+          "note": "凭证页生效细节"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1498,
+          "symbol": "长辈模式说明",
+          "note": "临时码完成页生效细节"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1526,
+          "symbol": "setElderMode",
+          "note": "保存写库"
+        }
+      ],
+      "tags": [
+        "成员",
+        "长辈模式",
+        "可访问性"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.family.privacy",
+      "parentKey": "member.family",
+      "domain": "member",
+      "level": 4,
+      "name": "隐私浏览（794，限时 10 分钟）",
+      "kind": "setting",
+      "summary": "开启后写一个 10 分钟后的时间戳，本页回显剩余秒数；当前只写标记与倒计时，不改统计口径、不做数据隐藏。",
+      "details": [
+        "写 kf_privacy_until = now + 600（关闭写 0），由 MemberHub.setPrivacy 完成",
+        "回显：「剩余 N 秒后自动关闭」或「开启后 10 分钟自动关闭; 当前只写隐私时段标记并在本页回显, 不改统计口径」",
+        "没有水印、没有按人过滤 —— 文案按实情收窄（原句两要素未接线）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1508,
+          "symbol": "VariantToggle(\"隐私浏览\")",
+          "note": "开关"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1511,
+          "symbol": "privacyLeft",
+          "note": "倒计时回显"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1532,
+          "symbol": "onAppear",
+          "note": "剩余秒数计算"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1527,
+          "symbol": "setPrivacy",
+          "note": "保存写时间戳"
+        }
+      ],
+      "tags": [
+        "成员",
+        "隐私",
+        "部分实现"
+      ],
+      "status": "partial"
+    },
+    {
+      "key": "member.unclaimed",
+      "parentKey": "member",
+      "domain": "member",
+      "level": 2,
+      "name": "认领未归属记录（791 批量页）",
+      "kind": "sheet",
+      "summary": "列出当前锁里归属推不出的开门行（最多 20 条），逐行选成员后一次性批量认领，写入本机覆盖层。",
+      "details": [
+        "入口：设置 Tab 的 UnclaimedClaimView sheet（成员中心与记录页另有行内/单条入口）",
+        "数据：当前锁 DB.readLogs 只取 openTypes → Attribution.classify → who == nil 的行，按时刻倒序",
+        "每行：时刻（前 16 位）+「<方式> (未归属, 台账推断)」+「待认领」胶囊 + 成员 Picker（排除归档）",
+        "底部「认领所选 (N)」按钮，未选时禁用",
+        "行数上限 20（prefix(20)），不提供分页"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1539,
+          "symbol": "struct UnclaimedClaimView",
+          "note": "页面声明"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1556,
+          "symbol": "unclaimed",
+          "note": "未归属行判定"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1584,
+          "symbol": "ForEach(unclaimed.prefix(20))",
+          "note": "上限 20 行"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 91,
+          "symbol": "sheet(isPresented: $showUnclaimed)",
+          "note": "父级入口：设置页"
+        }
+      ],
+      "tags": [
+        "成员",
+        "认领",
+        "弹层"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.unclaimed.pick",
+      "parentKey": "member.unclaimed",
+      "domain": "member",
+      "level": 4,
+      "name": "逐行选择归属成员",
+      "kind": "action",
+      "summary": "每行一个 menu Picker（列出未归档成员），选择只暂存在本地字典，未提交前不写库。",
+      "details": [
+        "选择态 `selMember[r.key] = memberId`，页面内暂存",
+        "成员列表在行循环外取一次 archivedIDs()，避免每行重复解整张 ext 表",
+        "Picker 默认空（无「不认领」选项，未选的行不会被提交）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1597,
+          "symbol": "Picker(\"认领给\")",
+          "note": "成员选择器"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1583,
+          "symbol": "claimArch",
+          "note": "归档集提到循环外"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1543,
+          "symbol": "selMember",
+          "note": "页面内暂存"
+        }
+      ],
+      "tags": [
+        "成员",
+        "认领"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.unclaimed.batch",
+      "parentKey": "member.unclaimed",
+      "domain": "member",
+      "level": 4,
+      "name": "批量提交认领",
+      "kind": "action",
+      "summary": "一次性把所选行写入本机认领覆盖层，toast 报条数并关闭页面；锁端数据不变。",
+      "details": [
+        "逐项 MemberHub.claim(mac, logKey: k, memberId: mid)，统计条数",
+        "toast「已认领 N 条 (本机覆盖层, 不改锁端数据)」，清空选择并 dismiss",
+        "无二次确认；认领结果可在记录页行内改（791 行内认领会覆盖同一键）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1617,
+          "symbol": "Button 认领所选",
+          "note": "提交循环"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1623,
+          "symbol": "showToast",
+          "note": "条数提示"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1627,
+          "symbol": "认领所选 (N)",
+          "note": "按钮文案与禁用"
+        }
+      ],
+      "tags": [
+        "成员",
+        "认领",
+        "本机覆盖层"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.member.ext",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 3,
+      "name": "成员档案扩展键（kf_member_ext / kf_duty_week / kf_elder_mode / kf_privacy_until）",
+      "kind": "data",
+      "summary": "成员域全部本机持久化键：一张 ext 表存角色/备注/emoji/归档/代管/紧急管理员/分组/便签/关怀/欢迎语/常用锁，另有本周主责、长辈模式、隐私截止时间三个独立键。",
+      "details": [
+        "kf_member_ext：`[memberId: MemberExt]`，是所有档案开关的唯一起点（archived/role/emoji/remark/emergency/emergencyAdmin/note/careText/welcome/groupTag/commonLocks/proxy）",
+        "kf_duty_week：本周主责（单值，写 nil 表示清空）",
+        "kf_elder_mode：长辈模式布尔",
+        "kf_privacy_until：隐私浏览截止 Unix 秒（关闭写 0）",
+        "写侧统一 MemberHub.saveExt（整表读-改-写）；成员中心/详情每次写后 .id(tick) 重建"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 228,
+          "symbol": "MemberHub.saveExt",
+          "note": "归档写入示例"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 960,
+          "symbol": "MemberHub.saveExt",
+          "note": "补全档案写 ext"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1526,
+          "symbol": "setElderMode",
+          "note": "长辈模式键"
+        },
+        {
+          "file": "App/UI/MemberCenterView.swift",
+          "line": 1527,
+          "symbol": "setPrivacy",
+          "note": "隐私截止键"
+        },
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 47,
+          "symbol": "extKey",
+          "note": "键名 kf_member_ext 定义"
+        }
+      ],
+      "tags": [
+        "数据",
+        "成员",
+        "持久化"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.record.overlay",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 3,
+      "name": "记录本机覆盖层（备注 / 旗标）",
+      "kind": "data",
+      "summary": "按「锁 + 行键」记录用户写的备注与旗标，不写锁端日志；删设备时按族清除。",
+      "details": [
+        "键 = RecordOverlay.oid(mac, rowKey) = mac#行键（全仓只这一处拼接）",
+        "读写在 RecordOverlay.note / setNote / isFlagged / toggleFlag / notes(mac)",
+        "同一份存储同时供：时间线行下灰字（186）、详情卡编辑面（990）、行备注 alert（597）、搜索面备注段（551）",
+        "手机侧行的行键是 f_/c_ 派生键，与锁日志 idxRaw 区分"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1764,
+          "symbol": "RecordOverlay.note",
+          "note": "读备注（行备注弹窗）"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1771,
+          "symbol": "RecordOverlay.setNote",
+          "note": "写备注"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1781,
+          "symbol": "RecordOverlay.toggleFlag",
+          "note": "旗标写入"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2619,
+          "symbol": "RecordOverlay.notes",
+          "note": "搜索面并表"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 579,
+          "symbol": "RecordOverlay.note",
+          "note": "详情卡读取"
+        }
+      ],
+      "tags": [
+        "数据",
+        "记录",
+        "本机覆盖层"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.record.disposition",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 3,
+      "name": "告警处置留痕（kf_rdispo）",
+      "kind": "data",
+      "summary": "按 mac#行键记录告警处置结论与时刻（kf_rdispo），是「未处置」判据、日组蓝点、735 角标、745 测试排除的共同数据源。",
+      "details": [
+        "结构 `[key: Disposition{at: Unix 秒, verdict: String}]`；verdict 取值含 已处理/误报/已处置/测试/已人工检查",
+        "读：dispositions() / disposition(key:)；写：markDisposition(key:verdict:)；撤销：undoDisposition(key:)",
+        "键口径 mac#idxRaw，与 RecordOverlay.oid 一致（告警中心与本页认同一枚键）",
+        "verdict == \"测试\" 的键同时是统计排除集（testMarkedKeys）——不另造「测试」状态"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 172,
+          "symbol": "RecordSearch.disposition",
+          "note": "读处置状态"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 265,
+          "symbol": "markDisposition",
+          "note": "写已处理"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 278,
+          "symbol": "undoDisposition",
+          "note": "撤销"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2745,
+          "symbol": "unhandledAlarmDays",
+          "note": "蓝点共用同一口径"
+        }
+      ],
+      "tags": [
+        "数据",
+        "告警",
+        "持久化"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.record.checklist",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 3,
+      "name": "防撬检查清单勾选（kf_rcheck_<oid>）",
+      "kind": "data",
+      "summary": "每条防撬告警一行独立的布尔数组，记录 4 项检查是否勾选；长度自动补/截到清单项数。",
+      "details": [
+        "键 = \"kf_rcheck_\" + oid（mac#行键），值为 [Bool]，缺省全 false",
+        "读 checkState(key) 会 append 补空位、prefix 截多余（按序号定位，不是留最新 N 条）",
+        "setCheck(key, index:on:) 写回；清单 4 项文案定义在 RecordSearch.tamperChecks",
+        "与处置结论（kf_rdispo）分开存储：勾选清单 ≠ 已处置"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 204,
+          "symbol": "RecordSearch.checkState",
+          "note": "读勾选且按项数夹回"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 205,
+          "symbol": "RecordSearch.setCheck",
+          "note": "写勾选"
+        },
+        {
+          "file": "App/UI/RecordsTimeline.swift",
+          "line": 202,
+          "symbol": "tamperChecks",
+          "note": "4 项清单来源"
+        }
+      ],
+      "tags": [
+        "数据",
+        "告警",
+        "持久化"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.record.filters",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 3,
+      "name": "筛选组合会话保留（QueryFilters）与命名视图（kf_rviews）",
+      "kind": "data",
+      "summary": "筛选组合按锁留存并在进页时恢复；命名视图（最多 20 条）存搜索词+筛选+范围，供长期复用。",
+      "details": [
+        "QueryFilters 字段：segment / dayKind / lateNight / alarmOnly / failedOnly / kind / alarmKinds / member",
+        "落盘时机：onChange(of: filters) 且与开场值不同才 save；全空时 remove（不留脏值）",
+        "进页重取：onRecordsAppear 里 filters = QueryFilters.load(mac: DB.preferredMac())（908 策略：全部/仅告警/空白三档）",
+        "kf_rviews 存 NamedView{id,name,text,filters,scopeAll}，插入在最前并 prefix(20)",
+        "删除命名视图走 confirmDestructive，无二次鉴权"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 44,
+          "symbol": "QueryFilters.load",
+          "note": "构造时按锁读"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 289,
+          "symbol": "onChange(filters)",
+          "note": "差异才落盘"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2148,
+          "symbol": "onRecordsAppear",
+          "note": "每次进页重取（908）"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 527,
+          "symbol": "RecordSearch.namedViews",
+          "note": "kf_rviews 读点"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 611,
+          "symbol": "saveNamedView",
+          "note": "命名视图写入"
+        }
+      ],
+      "tags": [
+        "数据",
+        "记录",
+        "持久化"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.record.logcache",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 3,
+      "name": "日志缓存与同步时间戳（kf_logcache_ / kf_logsync_）",
+      "kind": "data",
+      "summary": "每把锁一份日志缓存（合并上限 300 条）＋一份「上次成功读取」毫秒时间戳；首屏读热点缓存，读取后同步作废。",
+      "details": [
+        "kf_logcache_<mac>：DB.writeLogs 合并写入，merged.count >= 300 即截断（越早的行会被挤掉）",
+        "kf_logsync_<mac>：存「毫秒时间戳的字符串」（必须 set(String) 与 getString 同型，否则恒判离线）",
+        "首屏 loadFromCache 走 HotCache.recent(mac)（整份解码结果常驻，写入口作废，无陈旧窗）",
+        "拉取每页 fresh 后 DB.writeLogs + HotCache.invalidate（220）",
+        "300 条上限是「第一天」结语只在未触顶时才敢写的判据（190）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1212,
+          "symbol": "syncStampKey",
+          "note": "kf_logsync_ 键格式"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2239,
+          "symbol": "DB.store.set(syncStampKey, String(...))",
+          "note": "毫秒字符串写入"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2171,
+          "symbol": "loadFromCache",
+          "note": "HotCache 首屏读"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2210,
+          "symbol": "HotCache.invalidate",
+          "note": "拉取后作废"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 1071,
+          "symbol": "firstDayFooter",
+          "note": "300 条上限判据"
+        }
+      ],
+      "tags": [
+        "数据",
+        "记录",
+        "缓存"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.record.fevents",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 3,
+      "name": "手机侧失败事件（kf_fevents_）与合并规则",
+      "kind": "data",
+      "summary": "本机记录的开锁失败事件单独存一份，渲染时以 type 0 行合入时间线并可按锁清空；绝不混入锁日志缓存。",
+      "details": [
+        "存 DB.failEvents(mac)，字段 e.ts / e.msg；行键 f_ + Unix 秒（与 RecordSearch 侧同族）",
+        "合入后统一按 lockTimeStr 倒序重排，type 0 不属任何锁端类型 ⇒ 归属自然回落未归属",
+        "显示标题：「开锁失败」或「开锁失败 · <msg>」；时刻用 failTimeStr（yyyy-MM-dd HH:mm:ss，en_US_POSIX，本地时区）",
+        "清空入口在失败筛选下（confirmDestructive），跨当前范围所有锁求和",
+        "type 0 同时被保养/换电池（care）行复用 —— 失败与关怀共用一个哨兵类型"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2259,
+          "symbol": "render",
+          "note": "phone-side 行为 type 0、不混入缓存"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2271,
+          "symbol": "fails.enumerated()",
+          "note": "f_ 前缀行键与文案"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2281,
+          "symbol": "merged.sort",
+          "note": "合入后重排"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 2382,
+          "symbol": "failTimeStr",
+          "note": "时刻格式"
+        },
+        {
+          "file": "App/UI/RecordsView.swift",
+          "line": 842,
+          "symbol": "DB.clearFailEvents",
+          "note": "按锁清空"
+        }
+      ],
+      "tags": [
+        "数据",
+        "记录",
+        "失败"
+      ],
+      "status": "implemented"
+    }
+  ],
+  "unresolved": [
+    "App/UI/RecordsView.swift:1299 — `let bday = g.key.count == 10 ? String(g.key.suffix(5)) : \"\"` 计算后全函数无引用：653「生日组头」只算了「今日是 X 的生日」的原料但没有任何渲染分支，界面上不存在生日标签。",
+    "App/UI/RecordsView.swift:2104-2138 — `LaneDay` / `laneDays`（多锁 14 天「每锁每日开门/告警」矩阵）定义完整但全文件无任何视图引用，属未接线代码；不确定是留给哪个页面。",
+    "App/UI/MemberCenterView.swift:9 — `import Charts` 但全文件无 Chart/BarMark/LineMark 用法：成员页当前没有任何图表；「统计图表」需求在本域无实现（记录域统计页已移除，见 record.stats）。",
+    "App/UI/MemberCenterView.swift:1225-1233 / 1243-1259 — 「执行合并」按钮直接执行（无确认弹窗、无二次鉴权、无撤销），与「删除成员」的三选一确认不对等；是否为有意设计无法从代码判定。",
+    "App/UI/MemberCenterView.swift:1086-1092 — 向导第一步「下一步」即 DB.addMember 建成员，随后点「取消」或后续步骤失败都不回滚，会留下半成品档案；代码里没有删除回滚路径。",
+    "App/UI/MemberCenterView.swift:1511-1517 — 794 隐私浏览只写 kf_privacy_until 并回显倒计时，文案自述「不改统计口径、不隐藏数据」；原需求「只显示本人数据 + 水印」未接线（判定在 MemberHub，本页仅展示）。",
+    "App/UI/RecordsView.swift:2666 — 失败筛选判据 `r.type == 0 && !r.care`：手机侧失败行与保养/换电行共用 type 0 哨兵，靠 care 布尔区分；若后续新增 type 0 事件族会被误纳入失败口径。",
+    "App/UI/RecordsTimeline.swift:139-140 — 详情卡同时显示 `rec.key`（行标识）与 `rec.idxRaw`（协议内部索引）；手机侧 type 0 行的 idxRaw 是现编占位 0，两个字段在那一族行上语义不对等。",
+    "App/UI/RecordsView.swift:1153 — 掉电观察阈值（30 天 / >20 个百分点）与文案写死在调用处，`BatteryCare.bigDropDays` 的采样/判定实现不在本次四个文件内，无法核实采样频率与实际判据。",
+    "App/UI/RecordsView.swift:1924-1939 / App/UI/MemberCenterView.swift:1617-1624 — 认领（单条与批量）都无二次确认；认领会覆盖同一 mac#行键的旧认领结果，代码里没有冲突提示或撤销入口。",
+    "App/UI/RecordsView.swift:2348-2374 — 592 合并判据要求 credKey 非空，因此「无台账命中的 kind 行」与 type 0 行永不合并；这是有意收敛还是副作用，注释只说收严原因，未说明后者。",
+    "App/UI/RecordsTimeline.swift:33-40 — `RecDetailSheet.init` 用 siblings.firstIndex 定位 at；若 siblings 为空则.at 恒 0 且 rec 回落 initial，翻页区不显示，行为正确但调用方（RecordsView:379）传的是 computed displayedRecs，无法确认两者在同一帧内是否可能不一致。",
+    "App/UI/RecordsView.swift:328 — 注释称「统计页已随本轮删减移除」，但 `StatsKit` 仍提供 countLastWeek 等统计能力；统计能力是否在其它侦察兵的文件（如 StatsView/SettingsView）另有落点，需跨文件合并确认。",
+    "App/UI/MemberCenterView.swift:1086-1101 — 向导「下一步」只在 canNext 为真时推进，但 canNext 在 step1 恒为 true，角色/备注字段没有额外校验（例如备注超长）——是否会在别处截断未确认。",
+    "App/UI/RecordsView.swift:1298-1299 — 653 生日组头的判据也不清楚：注释说「该成员生日日（MM-dd 命中组头日期）」，但本页没有读取成员生日字段（Member 结构在本文件内无 birthday 引用），即使补渲染也缺数据源。",
+    "App/UI/MemberCenterView.swift:1186-1260 与 1384-1386 — 归档/恢复/合并/认领都直接写 kf_member_ext 后靠 .id(tick) 重建；并发或与其它 Tab 同时写整张 ext 表时为「整表读-改-写」，没有版本校验，是否会覆盖别处刚写入的字段无法在本文件判定。",
+    "App/UI/ExportShares.swift:1-7 — 注释记录 ExportCenter.swift（CSV/JSON/PDF/邮件/二维码报告/口述卡/导出向导）已被移除，仅保留两条链；「记录导出为文件/CSV 文件」类需求目前在 iOS 侧只有剪贴板 CSV（RecordsView:1123）与这条分享卡，需与其它平台合并确认是否算缺口。"
+  ],
+  "notes": [
+    "覆盖方式：四个文件逐行读完（RecordsView 3034 行、RecordsTimeline 651 行、ExportShares 115 行、MemberCenterView 1650 行），共 129 个节点。",
+    "刻意未展开：DS 令牌（颜色/间距/字号）、EmptyState/StatusPill/VariantToggle 等公共组件内部实现；这些不是记录/成员域功能点。",
+    "跨文件引用的实现（RecordSearch.parse、AlarmMeta、MemberHub.permRows/activity、RecordOverlay、CredentialOrg、SensitiveLedger、StatsKit）只作为判据说明引用，证据行号仍落在本侦察兵四个文件内；少数入口点（LockKeeperApp:842、Sheets:1947、SettingsView:91）为确认「父级是谁」而核对，已标注文件行号。",
+    "域归类：record 77 / member 45 / data 7；level 2 = 11、level 3 = 53、level 4 = 65。",
+    "所有「约」类推断口径（归属、活跃度、活跃凭证、越界窗口）在代码里都强制带「约」或「推断」字样，节点 details 已保留该措辞。"
+  ]
+}

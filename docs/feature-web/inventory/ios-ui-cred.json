@@ -1,0 +1,4952 @@
+{
+  "scout": "ios-ui-cred",
+  "platform": "ios",
+  "scope": [
+    "App/UI/CredentialsView.swift",
+    "App/UI/CredentialStudio.swift",
+    "App/UI/CredentialCenterView.swift"
+  ],
+  "nodes": [
+    {
+      "key": "credential.list",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "凭证 Tab 主屏",
+      "kind": "screen",
+      "summary": "当前门锁的密码/指纹/临时码总台账：搜索、类型分段、排序分组、批量整理，以及全部子流程（回收站/历史/队列/月历/整理/工坊）的入口。",
+      "details": [
+        "导航标题「凭证」，整页 .id(app.currentMac) 切锁即重建 (115)；导航栈内套 NavigationStack (71)",
+        "当前锁为 nil 时整页换成 EmptyState「还没有添加门锁」，主按钮「去添加门锁」把 showAdd 置真 (73-77)，sheet 呈现 AddDeviceView (187)",
+        "三条通知条互斥取一：借用横条 > 待下发横条 > 深链定位条，再下面才是 headerToolbar (88-95)",
+        "主体在 月历 / 编辑模式 / 主列表 三者间切换 (96-102)；底部 safeAreaInset 只有编辑模式才挂批量条 (104-109)",
+        "onAppear 刷新 tick 并依次消费 credJump / credPanel / credSelect 三个会话态 (116-121)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 16,
+          "symbol": "CredentialsView",
+          "note": "struct CredentialsView: View"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 69,
+          "symbol": "vkBody",
+          "note": "body = vkBody.destined(.credentials)"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 88,
+          "symbol": "vkBody",
+          "note": "三条通知条互斥取一"
+        }
+      ],
+      "tags": [
+        "核心",
+        "凭证"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.center",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "凭证中心",
+      "kind": "screen",
+      "summary": "四个二级入口的聚合页：回收站、版本历史、整理建议中心、待下发队列，每行带实时计数。",
+      "details": [
+        "回收站行副标题「N 条 · 保留 X 天」，X 取 CredentialOrg.reclaimDays() (22)",
+        "版本历史行副标题「保存自动快照 + 恢复即新版本」(25)",
+        "整理建议行副标题「N 条待办」，push 时为避免双层导航栏给 CredOrganizeView 传 embedded:true (28-34)",
+        "待下发队列行副标题「N 项 · 到场补发」(36)",
+        "自带 NavigationStack + 关闭按钮 dismiss (20, 43-45)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 13,
+          "symbol": "CredCenterView"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 22,
+          "symbol": "CredCenterView",
+          "note": "回收站入口行"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 36,
+          "symbol": "CredCenterView",
+          "note": "待下发队列入口行"
+        }
+      ],
+      "tags": [
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.bin",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "回收站",
+      "kind": "screen",
+      "summary": "已删凭证暂存区：来源过滤 + 搜索 + 剩余天数，支持一键恢复/恢复为副本/整组还原/彻底删除/清空。",
+      "details": [
+        "容量头行显示条数与「下次自动清理」日期 (102-116)",
+        "已删段头「已删 (N)」，空态文案带保留天数 (178-184)",
+        "支持从凭证页带着搜索词直接落地（init 里 State(initialValue:) 只交接一次）(92-96, 153-159)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 81,
+          "symbol": "CredBinView"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 98,
+          "symbol": "CredBinView",
+          "note": "vkBody 列表骨架"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 178,
+          "symbol": "CredBinView",
+          "note": "已删段头"
+        }
+      ],
+      "tags": [
+        "核心",
+        "破坏性"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.history",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "版本历史",
+      "kind": "screen",
+      "summary": "快照索引页 + 单凭证历史页：自动还原点、星标版、逐字段 diff、只读回看、恢复即生成新档。",
+      "details": [
+        "索引页只列历史非空的凭证，行尾「N 版」；没有快照时说明留档时机与配额 (417-459)",
+        "单凭证页 header「历史 (N, 保留 X 版)」，footer 写三条规则：自动还原点置顶、星标不受配额淘汰、恢复不覆盖 (496-500)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 411,
+          "symbol": "CredHistoryListView"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 469,
+          "symbol": "CredHistoryView"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 500,
+          "symbol": "CredHistoryView",
+          "note": "三条规则"
+        }
+      ],
+      "tags": [
+        "快照"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.calendar",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "月历到期视图",
+      "kind": "screen",
+      "summary": "按月查看每天到期条数，点某天列出当日到期凭证；上/下月切换。",
+      "details": [
+        "月份标题「YYYY 年 M 月」，两侧「‹」「›」切月 (654-668)",
+        "7 列网格 + 周表头（周起点跟随 WeekCal.calendar.firstWeekday）(669-675, 715-723)",
+        "进入时清空选中日 (712)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 640,
+          "symbol": "CredCalendarView"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 651,
+          "symbol": "CredCalendarView",
+          "note": "monthDeadlines 取当月到期"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 669,
+          "symbol": "CredCalendarView",
+          "note": "7 列网格"
+        }
+      ],
+      "tags": [
+        "到期"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.organize",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "整理建议中心",
+      "kind": "sheet",
+      "summary": "按台账推断出五类待整理项（过期/重复值/无归属/回收站/成员级到期），点按要么直达回收站，要么带预勾选回凭证列表。",
+      "details": [
+        "自带 NavigationStack，embedded=true 时把内容交给外层栈（避免双层导航栏）(786, 839-846)",
+        "「完成」同时调 onDone()（刷新）与 dismiss()（收页）(834)",
+        "页脚说明「回收站 N 条」直达回收站，其余点按带预勾选回列表多选 (817-825)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 778,
+          "symbol": "CredOrganizeView"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 795,
+          "symbol": "CredOrganizeView",
+          "note": "整理建议段"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 834,
+          "symbol": "CredOrganizeView",
+          "note": "完成按钮"
+        }
+      ],
+      "tags": [
+        "整理"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.queue",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "待下发队列",
+      "kind": "screen",
+      "summary": "锁端未连接时积压的删除/改期/重新下发任务清单，支持单条重试与按序全部重试，三步步条显示真实进度。",
+      "details": [
+        "段头「未完成 (N) · 目标锁 X · 到场连接后逐条重试」(944)；锁名取自 app.devices (1021-1023)",
+        "自带关闭按钮（本页补了导航容器，见 CredentialsView 的 sheet 包装）(1013-1018)",
+        "自绘 NavigationStack 内容由凭证页用 NavigationStack 包裹呈现 (CredentialsView 151-156)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 919,
+          "symbol": "CredQueueView"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 944,
+          "symbol": "CredQueueView",
+          "note": "队列段头"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 984,
+          "symbol": "CredQueueView",
+          "note": "全部重试"
+        }
+      ],
+      "tags": [
+        "锁端读写",
+        "容错"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.extend",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "统一延期",
+      "kind": "sheet",
+      "summary": "把选中的多条密码一次改成同一个新到期日，逐条列出「旧到期 → 新日期」，锁端改期记为待下发。",
+      "details": [
+        "段头「统一延期 (N 条)」；两个 DatePicker 只选日期 (1108-1109)",
+        "「变更清单」逐条显示 #alias 与新日期，原到期用 expiryLabel 读 (1115-1130)",
+        "主按钮「延期并登记待下发」，执行后 onDone() 回到凭证页 (1132-1155)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1094,
+          "symbol": "CredExtendView"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1107,
+          "symbol": "CredExtendView",
+          "note": "统一延期段"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1132,
+          "symbol": "CredExtendView",
+          "note": "延期并登记待下发"
+        }
+      ],
+      "tags": [
+        "批量"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.transfer",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "批量移交",
+      "kind": "sheet",
+      "summary": "把选中的密码与指纹批量改归属到某成员或解除归属；只改本机台账（锁端无归属字段）。",
+      "details": [
+        "Picker(inline) 首项「解除归属」tag nil，其后为全部成员 (1172-1179)",
+        "说明「批量改归属并各写一条本地记录; 锁端无归属字段, 移交只作用于本机台账」(1180)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1160,
+          "symbol": "CredTransferView"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1173,
+          "symbol": "CredTransferView",
+          "note": "移交给 Picker"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1180,
+          "symbol": "CredTransferView",
+          "note": "只作用于本机台账"
+        }
+      ],
+      "tags": [
+        "批量",
+        "归属"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.disable",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "批量停用确认页",
+      "kind": "sheet",
+      "summary": "停用前的摘要页：展示影响哪些成员、多少条密码/指纹、不可逆说明，必须选四项原因之一才能确认。",
+      "details": [
+        "段头「停用摘要」，成员头像列按名册顺序（不用 Set，避免每次启动顺序变）(1225-1232, 1247-1267)",
+        "不可逆说明用 danger 色：「停用后本机台账移除, 锁端删除记为「待下发」— 7 天内可一键恢复, 超期需重新录入/生成」(1288-1291)",
+        "两个出口：取消只 dismiss，确认才 onDone()+dismiss()（onDone 在凭证页=finishDisable 真正执行停用）(1327-1356, 1373-1376)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1209,
+          "symbol": "CredDisableSheet"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1247,
+          "symbol": "CredDisableSheet",
+          "note": "停用摘要"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1327,
+          "symbol": "CredDisableSheet",
+          "note": "确认停用按钮"
+        }
+      ],
+      "tags": [
+        "破坏性",
+        "批量"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.studio",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "凭证工坊",
+      "kind": "screen",
+      "summary": "三类凭证的扇出首页：密码（剪贴板即建/逐位回显/重复拦截/生成器）、临时码（五场景/重叠检测/批量）、指纹（归属先行/沉浸录入/删除双签）。",
+      "details": [
+        "列表 Section 标题「三类凭证」，三行分别开 PwdStudio / TempCodeStudio / FpStudio 的 sheet (495-503, 520-522)",
+        "说明段：密码与指纹需现场靠近门锁下发；临时码与 OTP 为本地台账管理，锁端语义未定义处按时间窗推断并标「约」(505-510)",
+        "embedded 决定是否自包 NavigationStack，非 embedded 才出「关闭」按钮 (477-491, 515-519)",
+        "凭证 Tab 的入口行由 CredStudioEntryView 提供（NavigationLink → StudioHome(embedded:true)）(2670-2702)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 474,
+          "symbol": "StudioHome"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 495,
+          "symbol": "StudioHome",
+          "note": "三类凭证段"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2670,
+          "symbol": "CredStudioEntryView"
+        }
+      ],
+      "tags": [
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.add",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "密码工坊（四步添加/改造）",
+      "kind": "flow",
+      "summary": "四步表单新增或改造密码：类型与归属 → 码值 → 有效期与备注 → 确认并二次输入，成功后下发锁端并留快照。",
+      "details": [
+        "步骤定义：0 类型与归属 / 1 码值 / 2 有效期 / 3 确认，顶部 StepDots 显示「第 n/4 步」与标签 (573, 616, 158-176)",
+        "表单容器：非 embedded 时自包 NavigationStack，标题「添加密码」/「改造密码 #N」(604-612, 627)",
+        "顶栏「关闭」先 saveDraft 再 dismiss；onDisappear 也 saveDraft（侧滑/push 退出留稿）(629-638)",
+        "整页状态只有 busy 一个闸，提交时按钮变 BusyButton (1065-1070, 1106)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 564,
+          "symbol": "PwdStudio"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 614,
+          "symbol": "PwdStudio",
+          "note": "form 容器"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 616,
+          "symbol": "PwdStudio",
+          "note": "StepDots 四步"
+        }
+      ],
+      "tags": [
+        "核心",
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.tempcode",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "临时码工坊",
+      "kind": "flow",
+      "summary": "单页表单发临时码：场景预设 → 码值 → 生效时段 → 归属备注 → 下发（可一次 1/2/3/5 张），完成后给大字口述卡。",
+      "details": [
+        "body 按 result 在 addForm 与 doneCard 之间切换 (1311-1318)",
+        "导航标题随长辈模式切换：完成页在长辈模式下叫「口述卡」(1315)",
+        "整页 ScrollView + axBottomAnchor，onAppear 读剪贴板 (1321-1533)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1286,
+          "symbol": "TempCodeStudio"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1311,
+          "symbol": "TempCodeStudio",
+          "note": "result 决定 addForm/doneCard"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1321,
+          "symbol": "TempCodeStudio",
+          "note": "addForm"
+        }
+      ],
+      "tags": [
+        "核心",
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.detail",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "密码详情",
+      "kind": "sheet",
+      "summary": "单条密码档案页：逐位打码揭示、复制/读出/分段转述、五档到期预警、提前失效滑杆、用量与开门数推断、口述卡与改造入口。",
+      "details": [
+        "读取 DB.getPwd(mac, alias)，取不到时给 EmptyState「凭证不存在」(1741, 2049-2051)",
+        "自带 NavigationStack + 关闭按钮 (1745, 2026-2028)",
+        "整页只读展示 + 少量本地设置，唯一会下发锁端的动作是「续期 7 天」(2057-2084)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1733,
+          "symbol": "PwdDetailStudio"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1746,
+          "symbol": "PwdDetailStudio",
+          "note": "List 骨架"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1783,
+          "symbol": "PwdDetailStudio",
+          "note": "码值段"
+        }
+      ],
+      "tags": [
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.fp.add",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "指纹工坊（四步录入）",
+      "kind": "flow",
+      "summary": "四步录指纹：归属必选 → 沉浸式 8 次按压 → 命名与备注（可勾选替换同成员旧指纹）→ 保存登记回执。",
+      "details": [
+        "步骤：0 归属 / 1 录入 / 2 命名 / 3 回执；0/2 步共用滚动表单，1 步单独沉浸页，3 步单独完成页 (2192-2211)",
+        "标题「录入指纹」+ 关闭按钮；onDisappear 取消 enrollTask（关页后不再代用户确认）(2212-2219)",
+        "进场消费 pendingFpOwner（成员页建完档带回）与 prefillOwner/prefillReplace（详情页重录）(2181-2190)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2152,
+          "symbol": "FpStudio"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2192,
+          "symbol": "FpStudio",
+          "note": "分步容器"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2216,
+          "symbol": "FpStudio",
+          "note": "onAppear 消费预选"
+        }
+      ],
+      "tags": [
+        "核心",
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.fp.detail",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "指纹详情",
+      "kind": "sheet",
+      "summary": "单枚指纹档案页：登记时间、近 30 天开门数与告警日志（整锁推断）、来源与预警标记、重录入口、彻底删除（含双签）。",
+      "details": [
+        "读取 DB.getFp(mac, batch)，取不到时 EmptyState「指纹不存在」(2541, 2614-2616)",
+        "自带 NavigationStack + 关闭按钮；sheet(isPresented:) 打开重录 (2545-2612)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2534,
+          "symbol": "FpDetailStudio"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2546,
+          "symbol": "FpDetailStudio",
+          "note": "List 骨架"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2615,
+          "symbol": "FpDetailStudio",
+          "note": "指纹不存在空态"
+        }
+      ],
+      "tags": [
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.header-menu",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "工具条与「⋯」菜单",
+      "kind": "action",
+      "summary": "页头只留「看/找/选」三件事：计数、选择按钮、以及把视图/筛选/整理/待处理全部收进溢出菜单。",
+      "details": [
+        "第一行：左「共 N 条」（小字号可压缩），右「选择」按钮 + ellipsis.circle 菜单 (377-447)",
+        "「选择」只在 非编辑态 且 非排序档 且 非长辈模式 时出现 (388-394)；点击进编辑模式并 tick 触感 (389-392)",
+        "菜单四组：视图（排序循环/月历/按成员）、筛选（默认+智能列表）、整理（整理建议/拖动排序）、待处理（仅队列非空）(396-445)",
+        "溢出菜单辅助标签「更多: 排序/视图/筛选/整理」(446)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 374,
+          "symbol": "headerToolbar"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 389,
+          "symbol": "headerToolbar",
+          "note": "选择按钮"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 396,
+          "symbol": "headerToolbar",
+          "note": "Menu 溢出"
+        }
+      ],
+      "tags": [
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.sort",
+      "parentKey": "credential.list.header-menu",
+      "domain": "credential",
+      "level": 4,
+      "name": "四维排序循环",
+      "kind": "setting",
+      "summary": "菜单里点一次「排序: X」就轮换到下一维并存盘，回执告知当前排序维度。",
+      "details": [
+        "轮换：CredSortKey(rawValue: (raw+1) % allCases.count)，随后 CredentialOrg.setSortKey，toast「按「X」排序」(398-402)",
+        "四维实现：名称按 displayPwd 本地化比较、类型先临时后永久、最近使用按 inferredLastUseMap（-1 哨兵表示无使用证据）、到期按 expiryDate 升序把无到期排最后 (893-919)",
+        "指纹段复用同一 sortKey：名称 / 告警指纹优先 / 默认录入时间降序 (1039-1046)",
+        "手动序 kf_cseq_ 存在时优先于排序维度（见 credential.list.sort-mode）(875-883, 1047-1055)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 399,
+          "symbol": "headerToolbar",
+          "note": "sortKey 轮换"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 400,
+          "symbol": "headerToolbar",
+          "note": "setSortKey 持久化"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 893,
+          "symbol": "orderPwds",
+          "note": "四维实现"
+        }
+      ],
+      "tags": [
+        "排序"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.calendar-toggle",
+      "parentKey": "credential.list.header-menu",
+      "domain": "credential",
+      "level": 4,
+      "name": "月历到期视图开关",
+      "kind": "setting",
+      "summary": "一键在「列表」和「月历」之间切换，进月历会自动退出拖动排序档。",
+      "details": [
+        "菜单项文案随状态变：「月历到期视图」/「退出月历」，图标 calendar / list.bullet (403-405)",
+        "切换时 sorting = false，避免两种行内控件同时占位 (403)",
+        "打开后主列表位置渲染 CredCalendarView(mac:onPick:) (96-97)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 403,
+          "symbol": "headerToolbar",
+          "note": "showCalendar.toggle()"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 96,
+          "symbol": "vkBody",
+          "note": "showCalendar 分支"
+        }
+      ],
+      "tags": [
+        "到期"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.group-mode",
+      "parentKey": "credential.list.header-menu",
+      "domain": "credential",
+      "level": 4,
+      "name": "按成员/按类型分组切换",
+      "kind": "setting",
+      "summary": "在「按类型」和「按成员」两种分组视图间切换，选择会被持久化。",
+      "details": [
+        "memberView.toggle() + CredentialOrg.setGroupMode(memberView ? .owner : .type) (406-411)",
+        "菜单项文案：「按成员分组」/「按类型分组」，图标 person.2 (409-410)",
+        "初始值来自 CredentialOrg.groupMode == .owner (31)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 31,
+          "symbol": "memberView",
+          "note": "初始值取 groupMode"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 406,
+          "symbol": "headerToolbar",
+          "note": "toggle + setGroupMode"
+        }
+      ],
+      "tags": [
+        "分组"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.smart-filter",
+      "parentKey": "credential.list.header-menu",
+      "domain": "credential",
+      "level": 4,
+      "name": "智能列表筛选",
+      "kind": "setting",
+      "summary": "「筛选」组列出「默认 (全部)」与保存下来的智能列表，选中即按成员/状态/标签过滤列表。",
+      "details": [
+        "「默认 (全部)」把 smartSel 清空 (414)",
+        "每条智能列表一个按钮，标签由 smartListLabel 拼：名称 + 成员名 + 状态中文（进行中/已排期/已过期）(415-417, 974-981)",
+        "过滤实现：kind!=fp 的列表作用于密码段，支持 owner 相等、stateString 相等、tag=stale（录入早于 365 天）、tag=noowner（owner 为空）(848-856)",
+        "kind==fp 的列表只作用于指纹段，支持 owner 与 noowner/stale（stale 用 LedgerFp.at 毫秒）(1016-1024)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 414,
+          "symbol": "headerToolbar",
+          "note": "默认(全部)"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 415,
+          "symbol": "headerToolbar",
+          "note": "smartLists 遍历"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 848,
+          "symbol": "segFilteredPwds",
+          "note": "筛选取值口径"
+        }
+      ],
+      "tags": [
+        "筛选"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.seg",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "类型分段（全部/密码/指纹/临时码）",
+      "kind": "setting",
+      "summary": "四枚分段芯片做类型筛选，各带计数；长辈模式降为三枚并隐藏临时码组。",
+      "details": [
+        "段数：长辈模式 3 枚、否则 4 枚 (449)",
+        "标签：全部/密码/指纹/临时码；长辈模式第 3 枚标签为空串（不显示临时码）(464)",
+        "计数：0=全部条数、1=密码数、2=指纹数、3=temp 为真的密码数 (492-499)",
+        "点击 seg=i 并 tick 触感；选中反色胶囊 + isSelected 无障碍特征 (467-490)",
+        "影响列表：seg==1/3 过滤 temp；seg==0 才显示指纹段与 OTP 段 (595-603, 845-846)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 449,
+          "symbol": "headerToolbar",
+          "note": "segCount"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 462,
+          "symbol": "segChip"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 492,
+          "symbol": "countForSeg"
+        }
+      ],
+      "tags": [
+        "筛选"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.search",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "搜索与兜底动作",
+      "kind": "action",
+      "summary": "常驻搜索框按名称/备注/明文/命名模板/归属名检索，空搜索时给最近搜索词，无结果时给两条能真正带着词走下去的兜底。",
+      "details": [
+        "TextField 占位「搜索名称 / 备注 / #别名」，Cmd+F 快捷键，提交（onSubmit）时写搜索历史 (691-697)",
+        "搜索命中范围：密码=alias/note/明文/命名模板/归属名；指纹=名称/备注/归属名 (714-723)",
+        "命中结果置顶条目排前，其余按 id 字典序 (725-728)",
+        "搜索结果行复用 credRow（与普通列表同一渲染），因此长按菜单/双击复制同样可用 (645-648)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 691,
+          "symbol": "searchSection",
+          "note": "搜索框"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 709,
+          "symbol": "filteredResults"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 686,
+          "symbol": "searchSection",
+          "note": "兜底两按钮所在块"
+        }
+      ],
+      "tags": [
+        "搜索"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.search.history",
+      "parentKey": "credential.list.search",
+      "domain": "credential",
+      "level": 4,
+      "name": "最近搜索词",
+      "kind": "data",
+      "summary": "空搜索时显示最近 5 条搜索词，点词回填、点叉删除该词。",
+      "details": [
+        "只展示 hist.prefix(5) (622)",
+        "点词按钮把 search 置为该词 (624)",
+        "xmark.circle 按钮调 CredentialOrg.removeSearchHistory(w)，补了 44pt 触达 (628-638)",
+        "组标题「最近搜索」(618)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 615,
+          "symbol": "searchSection",
+          "note": "searchHistory()"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 622,
+          "symbol": "searchSection",
+          "note": "prefix(5)"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 628,
+          "symbol": "searchSection",
+          "note": "removeSearchHistory"
+        }
+      ],
+      "tags": [
+        "搜索"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.search.no-result",
+      "parentKey": "credential.list.search",
+      "domain": "credential",
+      "level": 4,
+      "name": "无结果双兜底",
+      "kind": "state",
+      "summary": "搜不到时给「去回收站搜」与「按成员重搜」，两条都带着这次的意图继续，而不是只换个界面。",
+      "details": [
+        "文案「没有找到「词」」(654)",
+        "「去回收站搜」把去空白后的词写进 binQuery 再开回收站 sheet，回收站首屏即已过滤 (658-662, 165-166)",
+        "「按成员重搜」按名称/关系找到成员后，把搜索词替换成 ownerName(m.id)（别名显示档下那一格是称呼），写历史并 toast「已改用「X」重搜, 命中的是名称/备注/别名/归属」(667-677)",
+        "找不到成员时 toast「没有匹配的成员」(679)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 654,
+          "symbol": "searchSection",
+          "note": "无结果文案"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 658,
+          "symbol": "searchSection",
+          "note": "去回收站搜"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 667,
+          "symbol": "searchSection",
+          "note": "按成员重搜"
+        }
+      ],
+      "tags": [
+        "搜索",
+        "兜底"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.row",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "凭证行（状态/副行/命名模板）",
+      "kind": "state",
+      "summary": "一行说清「哪条、什么状态、归谁、用多久」，并在锁端忙碌时于行内显示进度。",
+      "details": [
+        "标题：密码显示 displayPwd、指纹显示 name (1349-1352)",
+        "标题右侧按优先级最多一枚状态胶囊：已过期 > 提前失效 > 已排期；指纹另有「预警指纹」；之后是归属徽章、置顶星、忙碌进度圈 (1245-1270)",
+        "副行拼接：一次性 / 添加于 MM-dd / 列表倒计时 / 备注 (1377-1397)",
+        "紧凑档 kf_row_h != tall 时整段隐藏副行与命名模板，只留名称与状态 (1236, 1272-1288, 1344-1345)",
+        "918 命名模板作为第二副行，与标题不同才显示，且对 VoiceOver 隐藏 (1281-1288)",
+        "VoiceOver：合并成一条，label=「凭证: 名称, 类型」、value=状态简写 (1290-1293, 1355-1375)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1229,
+          "symbol": "credRow"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1246,
+          "symbol": "credRow",
+          "note": "状态胶囊"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1272,
+          "symbol": "credRow",
+          "note": "副行"
+        }
+      ],
+      "tags": [
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.row.state-pills",
+      "parentKey": "credential.list.row",
+      "domain": "credential",
+      "level": 4,
+      "name": "状态胶囊与提前失效",
+      "kind": "state",
+      "summary": "过期/排期/进行时三态按时间窗推断，另有一条只在本机生效的「提前失效」提示。",
+      "details": [
+        "pwdState：to 已过 → 2 已过期（红）；from 未到 → 1 已排期（accent）；否则 0 进行中；一次性语义锁端未定义故不区分 (739-744)",
+        "「提前失效」：本机提前线已过但锁端未到期时显示橙色 hourglass 胶囊，明确只是提示（锁端照常开门）(1248-1250)",
+        "指纹 isAlarm == true 显示「预警指纹」bell.badge (1255-1257)",
+        "VoiceOver 状态串与胶囊同优先级：已过期 > 提前失效 > 已排期/可用 (1362-1374)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1246,
+          "symbol": "credRow",
+          "note": "pwdState == 2"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1248,
+          "symbol": "credRow",
+          "note": "isEarlyExpired"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1255,
+          "symbol": "credRow",
+          "note": "预警指纹"
+        }
+      ],
+      "tags": [
+        "状态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.row.copy",
+      "parentKey": "credential.list.row",
+      "domain": "credential",
+      "level": 4,
+      "name": "双击复制明文",
+      "kind": "action",
+      "summary": "非编辑态双击整行即把该条密码明文复制到剪贴板并提示「已复制」；VoiceOver 走转子动作。",
+      "details": [
+        "onTapGesture(count: 2) 内再判一次 !editMode，两种模式不抢手势 (1313-1319)",
+        "编辑态整行单击已归勾选，双击不再复制 (1308-1311)",
+        "VoiceOver 自定义动作「拷贝密码明文」走同一粘贴板 (1295-1301)",
+        "复制即剪贴板明文，未做自动清空（与 405 通路同源）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1314,
+          "symbol": "credRow",
+          "note": "双击复制"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1296,
+          "symbol": "credRow",
+          "note": "VoiceOver 拷贝动作"
+        }
+      ],
+      "tags": [
+        "安全",
+        "复制"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.menu.pwd",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "密码长按菜单",
+      "kind": "action",
+      "summary": "长按一条密码弹出全部单条操作：看/详情/改值/改期/备注/归属/预警/催办文本/置顶/归档/历史/停用/彻底删除。",
+      "details": [
+        "查看密码内容 → viewPwd；密码详情 → pwdDetailItem（开 PwdDetailStudio）(1412-1413)",
+        "修改密码内容 → modifyPwd；修改有效期 → resetPwdPeriod（内部二次确认）(1414-1415)",
+        "添加备注 → editNote；归属到成员 → 子菜单 ownerMenu (1416-1417)",
+        "「三档预警」→ toggleAlerts actionSheet (1419)",
+        "「生成延期提醒文本」只在「有到期时间且 7 天内到期」时出现，复制的是不含口令的礼貌催办语 (1420-1427)",
+        "置顶/取消置顶（CredentialOrg.toggleStar）；归档/移出归档（setArchived，toast 提示归档区可还原）(1428-1439)",
+        "历史 (N) → HistItem(kind:pwd) 开历史 sheet；停用（本地, 锁端待处理）；彻底删除（红字）(1440-1445)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1410,
+          "symbol": "credMenu"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1423,
+          "symbol": "credMenu",
+          "note": "催办文本"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1445,
+          "symbol": "credMenu",
+          "note": "彻底删除"
+        }
+      ],
+      "tags": [
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.menu.fp",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "指纹长按菜单",
+      "kind": "action",
+      "summary": "长按一枚指纹：详情/重命名/预警开关/备注/归属/历史/置顶/归档/停用/彻底删除。",
+      "details": [
+        "指纹详情 → fpDetailItem（开 FpDetailStudio）；重命名 → renameFp (1448-1449)",
+        "「设为预警指纹」/「取消预警指纹」调 DB.setFpAlarm 取反并 toast (1450-1453)",
+        "添加备注（同一 editNote 的指纹分支）、归属到成员、历史 (N) (1454-1458)",
+        "置顶、归档/移出归档、停用（本地, 锁端待处理）、彻底删除 (1459-1472)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1447,
+          "symbol": "credMenu",
+          "note": "指纹分支"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1450,
+          "symbol": "credMenu",
+          "note": "预警指纹"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1472,
+          "symbol": "credMenu",
+          "note": "彻底删除"
+        }
+      ],
+      "tags": [
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.swipe",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "行右滑动作",
+      "kind": "action",
+      "summary": "右滑出行内快捷动作：编辑态第 1 枚是勾选，非排序档下才出现停用/删除/改期。",
+      "details": [
+        "编辑态：第 1 枚「选 / 取消选」勾选动作 (1321-1326)",
+        "密码：停用、删除（均 destructive 角色）、改期（accent 色）(1330-1334)",
+        "指纹：停用、删除 (1335-1338)",
+        "sorting 为真时整组破坏性动作不渲染——排序档要拖的是行，不该把停用/删除摆在手边 (1327-1329)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1320,
+          "symbol": "credRow",
+          "note": "swipeActions"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1329,
+          "symbol": "credRow",
+          "note": "!sorting 才出破坏性"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1333,
+          "symbol": "credRow",
+          "note": "改期"
+        }
+      ],
+      "tags": [
+        "破坏性"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.view",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "查看密码明文",
+      "kind": "action",
+      "summary": "菜单里「查看密码内容」把明文以 toast 形式显示，但先过应用锁关卡。",
+      "details": [
+        "无留存明文时 toast「当时未留存明文」(2165)",
+        "设了应用锁且本次会话未解锁：toast「需先解锁应用锁」，不显示 (2166)",
+        "通过后 toast「密码 #N: 明文 (请勿外传)」(2167)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2164,
+          "symbol": "viewPwd"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2166,
+          "symbol": "viewPwd",
+          "note": "应用锁关卡"
+        }
+      ],
+      "tags": [
+        "安全",
+        "明文"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.edit",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "修改密码值（旧值即刻作废）",
+      "kind": "action",
+      "summary": "弹窗要求输入 6~8 位新码，确认按钮标红「作废旧密码」，锁端按 0A 改写并留一档快照。",
+      "details": [
+        "标题「修改密码 (#N)」，正文「修改后旧密码立即作废, 需使用新密码开锁。」(2172)",
+        "输入框占位「新密码 6~8 位数字」，numberPad；校验失败 toast「需 6~8 位数字」(2173, 2178)",
+        "确认动作先钉住 mac（空则「未选择门锁」），busyKey 置 pwd:alias (2180-2184)",
+        "pwdModify（0A：删旧槽 + 加新码）返回新别名；换槽时台账删旧号、写新号 (2187-2194)",
+        "改值成功留快照「修改了密码值」，toast「已修改, 旧密码已作废」(2198-2200)；失败 toast「修改失败: …」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2170,
+          "symbol": "modifyPwd"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2187,
+          "symbol": "modifyPwd",
+          "note": "pwdModify 下发"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2198,
+          "symbol": "modifyPwd",
+          "note": "snapshot"
+        }
+      ],
+      "tags": [
+        "锁端读写",
+        "破坏性"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.extend",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "单条改有效期（重发 0B）",
+      "kind": "action",
+      "summary": "按原有效期把这条密码重新下发到门锁，先确认后执行，成功写台账并留快照。",
+      "details": [
+        "confirmDestructive「修改有效期」，正文「将按原有效期重新下发到门锁 (到 X 失效 / 长期有效)」，确认按钮「重新下发」(2210, 2233-2236)",
+        "执行链：钉住 mac → ensureConnected → pwdExpire（只发 0B）→ 快照「修改了有效期」→ DB.setPwdPeriod (2220-2228)",
+        "成功 toast「已更新有效期」，失败 toast「更新失败: …」(2229-2230)",
+        "periodText 用 2118 前缀判「长期有效」，否则截到分钟显示 (2233-2236)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2207,
+          "symbol": "resetPwdPeriod"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2210,
+          "symbol": "resetPwdPeriod",
+          "note": "确认文案"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2226,
+          "symbol": "doResetPwdPeriod",
+          "note": "pwdExpire"
+        }
+      ],
+      "tags": [
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.disable",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "单条停用（本地移除+回收站+待下发）",
+      "kind": "flow",
+      "summary": "停用=本机台账移除并进回收站，锁端删除只入队等连上再发；7 天内可一键恢复。",
+      "details": [
+        "确认文案写明「7 天内可一键恢复, 超期需重新下发; 锁端删除记为「待下发」」(2249-2253)",
+        "执行顺序：addToBin → DB.delPwd → enqueue(kind: del_pwd) → markDisabled(label 未填, via 本机单条停用/管理员代操作) → armUndo(hard:false) (2254-2261)",
+        "回执「已停用, 7 天内可恢复」(2262)",
+        "指纹同构：enqueue(del_fp)，文案改为「超期需重新录入」(2265-2280)",
+        "单条停用没有 313 的四选一原因，便签如实记「未填」(2257-2258)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2249,
+          "symbol": "disablePwd"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2256,
+          "symbol": "disablePwd",
+          "note": "enqueue del_pwd"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2258,
+          "symbol": "disablePwd",
+          "note": "markDisabled 未填"
+        }
+      ],
+      "tags": [
+        "破坏性",
+        "回收站"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.delete",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "单条彻底删除（锁端直删）",
+      "kind": "flow",
+      "summary": "门锁在场时直接删锁内这条密码，本机先进回收站留档再删台账，5 秒内可撤销本机记录。",
+      "details": [
+        "确认文案含回收站天数与后果：「锁内立即失效, 本机台账移除 (回收站 X 天内可找回记录, 但密码值需重新生成下发才有效)」(2286-2289)",
+        "执行：钉住 mac → ensureConnected → pwdDelete（0A delAlias）→ addToBin（删前快照）→ DB.delPwd → armUndo(hard:true) (2294-2310)",
+        "回执「已彻底删除」，失败 toast「删除失败: …」(2311-2312)",
+        "指纹版文案更硬：「锁内立即失效且无法远程补录 — 需成员本人到锁前重新录入 8 次指压」(2317-2318)",
+        "指纹删除前做 batchU32 安全转换，越界直接中止并提示台账/备份可能损坏 (2330-2333)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2286,
+          "symbol": "deletePwd"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2302,
+          "symbol": "doDeletePwd",
+          "note": "pwdDelete 0A"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2317,
+          "symbol": "deleteFp",
+          "note": "指纹后果文案"
+        }
+      ],
+      "tags": [
+        "锁端读写",
+        "破坏性"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.fp.rename",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "指纹重命名",
+      "kind": "action",
+      "summary": "弹窗改指纹名，默认填当前名，改名先留一档快照再落库。",
+      "details": [
+        "alert 标题「重命名指纹」，输入框占位「如: 主人大拇指」且 text 预填 f.name (2349-2350)",
+        "空名（去空白后）直接 return，不写库 (2353-2354)",
+        "先 CredentialOrg.snapshot(note: 改了名称) 再 DB.renameFp，最后 refreshTick++ (2357-2359)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2348,
+          "symbol": "renameFp"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2357,
+          "symbol": "renameFp",
+          "note": "snapshot"
+        }
+      ],
+      "tags": [
+        "重命名"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.fp.alarm",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "预警指纹开关",
+      "kind": "setting",
+      "summary": "把一枚指纹标为「预警指纹」，行上出现橙色胶囊；再点一次取消。",
+      "details": [
+        "菜单项文案随 f.isAlarm 切换：「设为预警指纹」/「取消预警指纹」(1450)",
+        "DB.setFpAlarm(mac, batch, f.isAlarm != true) 后 toast「已设为预警指纹」/「已取消预警指纹」(1451-1452)",
+        "行渲染：isAlarm==true 显示「预警指纹」bell.badge 胶囊 (1255-1257)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1450,
+          "symbol": "credMenu",
+          "note": "setFpAlarm"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1256,
+          "symbol": "credRow",
+          "note": "预警胶囊"
+        }
+      ],
+      "tags": [
+        "预警"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.note",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "凭证备注（含清除）",
+      "kind": "action",
+      "summary": "给密码或指纹写一条本机备注（给谁·哪扇门·用多久），可保存或一键清除，两者都留快照。",
+      "details": [
+        "alert 标题「凭证备注」，正文「仅本机留存, 随全量备份换机」(2365)",
+        "三个动作：清除（destructive）、保存、取消 (2367-2396)",
+        "清除与保存都先 snapshot(note: 改了备注) 再 DB.setPwdNote / DB.setFpNote，并记 Milestones.recordOrganize (2370-2393)",
+        "备注会出现在行副行与详情「备注」行（空则显示「无」）(1385, 1984)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2364,
+          "symbol": "editNote"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2365,
+          "symbol": "editNote",
+          "note": "仅本机留存"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2385,
+          "symbol": "editNote",
+          "note": "snapshot + setPwdNote"
+        }
+      ],
+      "tags": [
+        "备注"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.owner",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "归属到成员 / 解除归属",
+      "kind": "action",
+      "summary": "把一条密码或指纹归到某个成员名下，或解除归属（变「未归属」）。",
+      "details": [
+        "子菜单逐条列出 DB.members()，点选后 DB.setPwdOwner / DB.setFpOwner(m.id) 并记里程碑 (2409-2415)",
+        "末项「解除归属」destructive，把 owner 置 nil (2416-2419)",
+        "归属影响：按成员视图分组、归属徽章、搜索命中范围、追责与代管标注"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2408,
+          "symbol": "ownerMenu"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2411,
+          "symbol": "ownerMenu",
+          "note": "setPwdOwner"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2416,
+          "symbol": "ownerMenu",
+          "note": "解除归属"
+        }
+      ],
+      "tags": [
+        "归属"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.bin.undo",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "误删撤销条（5 秒）",
+      "kind": "state",
+      "summary": "删除/停用后底部浮出 5 秒「已删除 · 撤销」，撤销按真实路径把本机记录（以及未下发的锁端删除）一并收回。",
+      "details": [
+        "文案由 undoHard 区分「已停用」/「已彻底删除」(2085)",
+        "计时器：DispatchSource.makeTimerSource(queue: .main)，5 秒后动画移除 undoEntry (2130-2147)",
+        "撤销调 CredentialOrg.undoRemove(mac, entry:hard:) 并把返回原文当回执显示 (2091-2094)",
+        "首次出现（HintOnce 833）追加说明：停用那条路会收回尚未发出的「锁端删除」与停用便签；彻底删除那条路锁端已经真删，只能取回本机记录，指纹只能本人重录 (2101-2109)",
+        "两条路径的措辞统一由 CredentialOrg.undoRemove 生成，界面不再各写一遍 (2077-2079)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2081,
+          "symbol": "undoBar"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2091,
+          "symbol": "undoBar",
+          "note": "undoRemove"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2138,
+          "symbol": "startUndoTimer",
+          "note": "5 秒"
+        }
+      ],
+      "tags": [
+        "容错",
+        "破坏性"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.borrow-banner",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "借用中横条",
+      "kind": "state",
+      "summary": "有凭证被借出时页顶显示「借用 X · 借给 Y (还 Z)」，点「已归还」销记。",
+      "details": [
+        "条件：MemberHub.borrows(mac) 非空；按 key 排序横向滚动 (198-207)",
+        "每条显示「借用 key · 借给 by (还 due)」+「已归还」按钮 (205-213)",
+        "点「已归还」→ MemberHub.saveBorrow(mac, itemKey, nil) + toast「已销记归还 X」+ 刷新 (210-212)",
+        "优先级最高：与待下发、深链条三选一时排第一 (88-94)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 197,
+          "symbol": "borrowBanner"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 205,
+          "symbol": "borrowBanner",
+          "note": "借用文案"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 209,
+          "symbol": "borrowBanner",
+          "note": "已归还"
+        }
+      ],
+      "tags": [
+        "借用"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.pending-bar",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "待下发横条与同步回执",
+      "kind": "state",
+      "summary": "BLE 下发失败的操作聚合成「待下发 N 项」横条，点开队列；补发清空后 2 分钟内显示「已同步 N 项变更」。",
+      "details": [
+        "待下发态：图标 tray.full + 「待下发 N 项 · 锁名」+ 「到场连接后自动补发, 或进清单逐项重试」，整块可点开队列 (308-337)",
+        "回执态：队列空且 LinkSense.lastReceipt > 0 且 receiptShownAt 距今 < 120 秒 → 绿色「已同步 N 项变更 — 队列已清空」(341-356)",
+        "只按当前锁计数（多锁各自队列不串台）(305-306, 538 注释)",
+        "锁名取 app.devices 里匹配 mac 的显示名，找不到则 MAC 前 6 位 (359-361)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 308,
+          "symbol": "pendingQueueBar"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 311,
+          "symbol": "pendingQueueBar",
+          "note": "点开队列"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 341,
+          "symbol": "pendingQueueBar",
+          "note": "2 分钟同步回执"
+        }
+      ],
+      "tags": [
+        "锁端读写",
+        "容错"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.jumpbar",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "记录→凭证深链定位",
+      "kind": "automation",
+      "summary": "从记录/告警详情跳「来源凭证」时，先切锁再打开对应密码或指纹详情，并挂一条定位说明条。",
+      "details": [
+        "消费 app.pendingCredNav：前缀 pwd: 或 fp:，带 pendingCredNavMac 时先 app.select(m) 跨锁切换 (259-265)",
+        "统一把 seg 置 0、memberView 置 false，再按类型打开 PwdDetailStudio / FpDetailStudio sheet (266-273)",
+        "只有真的弹出了详情才挂条（jumpBarOn = opened）；找不到不挂，不让说明条替没做到的事说话 (274-275)",
+        "条上「关闭」只关条 (243-245)；onChange 监听深链变化再次消费 (122)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 232,
+          "symbol": "credJumpBar"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 259,
+          "symbol": "consumeCredJump"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 275,
+          "symbol": "consumeCredJump",
+          "note": "jumpBarOn = opened"
+        }
+      ],
+      "tags": [
+        "深链"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.panel-route",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "通知/诊断面板落地路由",
+      "kind": "automation",
+      "summary": "本地通知或诊断页点按后按面板名打开回收站/队列/整理，未知名字只切到凭证页。",
+      "details": [
+        "词表：bin → 开回收站（不带词）；queue → 开队列；organize/expired → 开整理建议 (283-290)",
+        "未知名字 fail-closed：只 toast「已跳到凭证页」，不猜要开哪个面板 (289)",
+        "「去回收站搜」那条路带词，通知落地那条不带词 (285)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 280,
+          "symbol": "consumeCredPanel"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 283,
+          "symbol": "consumeCredPanel",
+          "note": "case bin"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 289,
+          "symbol": "consumeCredPanel",
+          "note": "默认 fail-closed"
+        }
+      ],
+      "tags": [
+        "通知"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.first-router",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "首录分流卡（806）",
+      "kind": "state",
+      "summary": "该锁一条凭证都没有时，在列表顶部放一张卡说清三类凭证的区别并给三个入口，可永久关掉。",
+      "details": [
+        "条件：!HintOnce.shown(806) 且 DB.listPwds 与 DB.listFps 都为空 (527-529)",
+        "三入口：长期密码（AddPwdView）、录指纹（StartAddFpView）、临时码（showTempCode → TempCodeStudio sheet）(533-546)",
+        "每行带场景说明：「自己与全家日常用 · 没有到期点」/「给固定的人 · 一次录入长期可用」/「给访客/租客 · 到点自动作废」(534-545)",
+        "「以后不再显示这张卡」写 HintOnce.mark(806) 并 toast 告知仍可从页内入口添加 (547-550)",
+        "footer「三类都是本机台账 + 一次下发到锁，全程离线。选错了也不会锁死人」(557)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 531,
+          "symbol": "firstCredRouter"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 533,
+          "symbol": "firstCredRouter",
+          "note": "长期密码入口"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 547,
+          "symbol": "firstCredRouter",
+          "note": "HintOnce.mark(806)"
+        }
+      ],
+      "tags": [
+        "首启"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.archived",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "归档区（收起不删）",
+      "kind": "state",
+      "summary": "归档只是从日常列表收起，顶部归档区可单条还原或全部还原；台账与锁端零改动。",
+      "details": [
+        "统计范围 CredentialOrg.archived(mac)：密码存 alias、指纹存 100000+batch (2017-2019, 1177)",
+        "DisclosureGroup 标题「归档区 · N 条 — 收起不删, 随时可还原」(2046)",
+        "单条「还原」→ setArchived(false) + toast「已还原到列表」(2026-2036)",
+        "「全部还原」→ unarchiveAll(mac) + toast「归档已全部还原」(2038-2042)",
+        "归档条目不进当前显示、不进选择集合、不进整理建议，但搜索仍能搜到（收得起才收得回）(863-865, 1556-1566)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2015,
+          "symbol": "archivedStrip"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2046,
+          "symbol": "archivedStrip",
+          "note": "归档区标题"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2038,
+          "symbol": "archivedStrip",
+          "note": "全部还原"
+        }
+      ],
+      "tags": [
+        "归档"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.due-banner",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "2 小时到期提醒行",
+      "kind": "state",
+      "summary": "开了 2 小时预警档且即将到期的密码，会在列表里插一条橙色提醒，点按直达最近到期那条的详情。",
+      "details": [
+        "条件：CredentialOrg.dueSoonPwds = h2 档开启且到期在 [now-1h, now+2h] 区间 (801-802)",
+        "文案「N 条密码 2 小时内到期 (已开 2 小时档预警)」+ chevron (812)",
+        "点按取「到期时间最小」的那条打开 PwdDetailStudio (806-807)",
+        "行高补到 44pt 可点区，背景 warn 6% (827-832)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 801,
+          "symbol": "dueSoonBanner"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 806,
+          "symbol": "dueSoonBanner",
+          "note": "取最近到期"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 812,
+          "symbol": "dueSoonBanner",
+          "note": "文案"
+        }
+      ],
+      "tags": [
+        "预警"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.queue-section",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "列表内待下发段",
+      "kind": "state",
+      "summary": "列表里直接列出前 4 条待下发项，可逐条重试；超过 4 条给「其余 N 项」入口进队列页。",
+      "details": [
+        "段头「待下发 (N)」，只渲染 q.prefix(4) (736-737)",
+        "每条：状态 pill + 标题 + 「重试」按钮（isBusy 时 disabled）(738-749)",
+        "状态口径：state 1 已下发(ok)、2 失败可重试(danger)、其他 待下发(warn) (765-778)",
+        "重试：busyKey=queue:id → ensureConnected → CredentialOrg.sendQueued → markQueue(done, note 含锁端确认) ；失败 markQueue(failed, 第 N 次失败) (779-796)",
+        "超过 4 条：「其余 N 项 →」打开队列页 (753-757)；脚注「锁端未连接时操作先记在这里…失败项不会丢」(758)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 733,
+          "symbol": "queueSection"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 745,
+          "symbol": "queueSection",
+          "note": "重试"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 789,
+          "symbol": "retryQueueItem",
+          "note": "sendQueued"
+        }
+      ],
+      "tags": [
+        "锁端读写",
+        "容错"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.empty",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "空态（无锁/无台账）",
+      "kind": "state",
+      "summary": "两种空态分开说：没加门锁时解释要先重置再添加；台账空时给「添加第一条密码」与演示入口。",
+      "details": [
+        "无锁：EmptyState 图标 lock.badge.plus，标题「还没有添加门锁」，说明要先在门锁键盘长按重置键恢复出厂再回来添加（需蓝牙），主按钮「去添加门锁」(73-77)",
+        "台账空：「本机还没有凭证台账。用「添加密码」或「录入指纹」开始。」+ 主按钮「添加第一条密码」+ 次按钮「看看它如何工作」(1945-1967)",
+        "全归档不算空：有归档区就不出「还没有台账」这句，避免导向重复建码 (604-608)",
+        "指纹段单独空态：「本机还没有指纹台账。录入后成员可用手指直接开锁。」(1139-1143)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1945,
+          "symbol": "emptyHint"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1954,
+          "symbol": "emptyHint",
+          "note": "添加第一条密码"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 73,
+          "symbol": "vkBody",
+          "note": "无锁空态"
+        }
+      ],
+      "tags": [
+        "空态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.empty.demo-unwired",
+      "parentKey": "credential.list.empty",
+      "domain": "credential",
+      "level": 4,
+      "name": "空态演示按钮未接线",
+      "kind": "edge",
+      "summary": "空态里的「看看它如何工作」只把 showDemo 置真，本文件没有任何 sheet/presenter 消费它，点按无可见结果。",
+      "details": [
+        "按钮动作只有 showDemo = true，并带无障碍提示「打开演示锁试玩, 不碰真实门锁」(1960-1966)",
+        "@State showDemo 声明于 56 行；全文件仅在 1960 行被写入，没有 .sheet(isPresented: $showDemo) 或其它读取点",
+        "结论：演示入口在凭证页这一侧未接线（登记为 edge，未当功能点）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 56,
+          "symbol": "showDemo",
+          "note": "声明"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1960,
+          "symbol": "emptyHint",
+          "note": "唯一写入点"
+        }
+      ],
+      "tags": [
+        "未接线"
+      ],
+      "status": "edge"
+    },
+    {
+      "key": "credential.otp",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "临时密码卡（ZOTP）",
+      "kind": "setting",
+      "summary": "开关式开通锁端临时密码（每 30 分钟一换的六位码），开通后可现场生成、复制、遮挡。",
+      "details": [
+        "段标题「临时密码 (ZOTP)」，第一行是 VariantToggle「开通临时密码」(1807-1808)",
+        "开关值读 DB.otpStatus(mac)?.on，切换时先 ensureConnected 再 setZotp(on)，成功才 DB.saveOtpStatus (1809-1830)",
+        "busyKey 用 otp，整卡在忙碌时禁用 (1815, 1831)",
+        "开通后追加生成行与说明「每 30 分钟更换一次; 生成前请先校准门锁时间 (偏差 >180 秒会导致锁侧校验失败)」(1832-1841)",
+        "未开通时整段只剩开关（无占位说明）(1842-1843)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1806,
+          "symbol": "otpSection"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1808,
+          "symbol": "otpSection",
+          "note": "开通临时密码"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1823,
+          "symbol": "otpSection",
+          "note": "setZotp"
+        }
+      ],
+      "tags": [
+        "锁端读写",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.otp.generate",
+      "parentKey": "credential.otp",
+      "domain": "credential",
+      "level": 4,
+      "name": "生成六位临时码",
+      "kind": "action",
+      "summary": "按锁端上报的时间窗与序号本地算出六位码，同一窗口最多 100 个，算不出码不许报成功。",
+      "details": [
+        "前置：app.current 的 skey 必须 32 字节，否则 toast「缺少该锁钥匙串」(1913)",
+        "窗口 = ZOTP.nextWindow()；同窗口 idx 累加，跨窗口归 0；idx > 99 时 toast「当前窗口已达 100 个上限, 请到下一个 30 分钟窗口再生成」+ error 震 (1914-1921)",
+        "周期取锁端上报的 zotpPeriod（分钟），<=0 才回落 30——写死会让页面码与锁端判错 (1922-1926)",
+        "ZOTP.generate 返回空串视为失败：toast「这把锁的 MAC 不是整 6 字节十六进制…」，且不写 otpIdx（不占窗口名额）(1932-1936)",
+        "成功：saveOtpIdx + otpPwd/otpWin 赋值 + 复制到剪贴板 + success 震 (1937-1942)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1911,
+          "symbol": "genOtp"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1917,
+          "symbol": "genOtp",
+          "note": "100 个上限"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1925,
+          "symbol": "genOtp",
+          "note": "zotpPeriod"
+        }
+      ],
+      "tags": [
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.otp.display",
+      "parentKey": "credential.otp",
+      "domain": "credential",
+      "level": 4,
+      "name": "码值遮挡、大字与复制",
+      "kind": "state",
+      "summary": "六位码默认显示、可双击切大字、可开磨砂挡片防偷看，一键复制；未生成时显示 ******。",
+      "details": [
+        "初始 otpPwd = 「******」(24)；字体走 monospacedDigit，kf_ax_bigotp 或 otpBig 为真时 largeTitle (1852-1854)",
+        "双击码值切换 otpBig（挡片上也挂同一份，否则开挡片时双击失灵）(1862, 1878)",
+        "SecKey.frostedOn 开启时叠 .ultraThinMaterial 挡片：长按 0.5s 显示、松手复位（默认关，避免「生成了但看不见」）(1870-1879)",
+        "「生成」borderedProminent 按钮（isBusy 时禁用）(1882-1889)；复制按钮在码值仍为 ****** 时 disabled (1890-1899)",
+        "底部「于 HH:mm 失效, 失效前仅可使用一次」(1903-1906)；换码走 contentTransition(.numericText()) (1858-1859)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1852,
+          "symbol": "otpGenRow"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1870,
+          "symbol": "otpGenRow",
+          "note": "磨砂挡片"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1899,
+          "symbol": "otpGenRow",
+          "note": "复制禁用条件"
+        }
+      ],
+      "tags": [
+        "安全",
+        "遮挡"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.otp.stock",
+      "parentKey": "credential.otp",
+      "domain": "credential",
+      "level": 4,
+      "name": "零库存「发第一张临时码」",
+      "kind": "state",
+      "summary": "已开通临时密码但一张临时码都没发过时，给一张「酒店前台门卡」比喻的首张入口，需锁在场。",
+      "details": [
+        "条件：DB.otpStatus(mac)?.on == true 且没有任何 temp 密码 (1979)",
+        "文案「临时码还没有发过一张 — 像酒店前台的门卡, 客人走一张, 就发下一张。」(1982)",
+        "按钮「发第一张临时码」→ genFirstOtp：先占 busyKey otp，ensureConnected 成功后把 busyKey 还回（否则 genOtp 被自己的闸挡下），再同步生成 (1986, 1997-2009)",
+        "成功 toast「第一张临时码已生成, 可让客人直接在锁键盘输入」；连不上 toast「需在场连接锁端: …」(2006-2008)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1978,
+          "symbol": "otpStockHint"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1986,
+          "symbol": "otpStockHint",
+          "note": "发第一张"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1997,
+          "symbol": "genFirstOtp"
+        }
+      ],
+      "tags": [
+        "首启"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.edit-mode",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "选择模式（全选循环/智能选取）",
+      "kind": "flow",
+      "summary": "进入多选后可逐条点选、行右滑选、一键循环全选/反选/清空，或按「已过期/同成员/同类型」一次选一把。",
+      "details": [
+        "入口：「选择」按钮（带 quick 动画 + tick）(388-393)；整理建议带预勾选也会就地进这一态 (295-302)",
+        "循环键三态标签：全选(N 条) → 已全选(N)/反选 → 已选 x/y — 反选；副行「下一步: …」预告下一次点击 (1568-1592)",
+        "「顺序」把当前全量显示序写进 kf_cseq_（p=alias、f=batch），toast「已记住当前组内顺序」(1510-1519)",
+        "「智能选取」三键：已过期 / 同成员 / 同类型 → CredentialOrg.smartSet，toast「已套用「X」N 条」(1527-1536, 1593-1599)",
+        "选择位面=浏览位面：归档条目不进任何选取集合（看不到的不会被批量停掉）(1556-1566)",
+        "行首选择圈 + 整行单击切换；「完成」退出并清空选择 (1304-1311, 1601-1622, 1634-1636)",
+        "未选中时列表里有一句三条路径说明：点按 / 右滑「选」/ 循环键与智能选取 (1545)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1489,
+          "symbol": "editList"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1510,
+          "symbol": "editList",
+          "note": "顺序"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1527,
+          "symbol": "editList",
+          "note": "智能选取"
+        }
+      ],
+      "tags": [
+        "批量",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.batch",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "批量工具条（7 键）",
+      "kind": "action",
+      "summary": "选中后底部出现两排共 7 个批量动作：置顶/延期/移交/前缀/导出，以及破坏性的停用/删除。",
+      "details": [
+        "第一排整理类：置顶、延期、移交、前缀、导出；第二排破坏类：停用、删除（分开是为了窄机不截字，破坏性离整理远一格手指）(1641-1684)",
+        "顶行「已选 N 条」+「完成」退出 (1628-1639)",
+        "「置顶」只对未置顶的条目写 setStar(true)，toast「已置顶 N 条」或「所选都已置顶」(1644-1651)",
+        "「延期」只作用于已选密码：密码为空时 toast「延期只作用于已选密码」并不开 sheet (1652-1656)",
+        "「移交」开 CredTransferView；「前缀」开 UIAlertController；「导出」走合包；「停用」开 CredDisableSheet (1657-1672)",
+        "未选中时每个键都先 toast「先选择凭证」并 return (1645, 1658, 1670, 1676)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1626,
+          "symbol": "batchBar"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1644,
+          "symbol": "batchBar",
+          "note": "置顶"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1664,
+          "symbol": "batchBar",
+          "note": "导出"
+        }
+      ],
+      "tags": [
+        "批量"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.batch.prefix",
+      "parentKey": "credential.list.batch",
+      "domain": "credential",
+      "level": 4,
+      "name": "前缀批量备注（357）",
+      "kind": "action",
+      "summary": "给所选条目的备注统一插入同一前缀，例如「2026春节-」。",
+      "details": [
+        "UIAlertController 标题「前缀批量备注」，说明「统一插入各备注开头, 如「2026春节-」」(1709)",
+        "输入框占位「前缀」；取消 / 应用两个动作 (1710-1711)",
+        "去空白后为空直接 return（不写库）；否则 CredentialOrg.batchPrefixNote 返回条数并 toast「已给 N 条加前缀」(1713-1716)",
+        "成功记 Milestones.recordOrganize 并刷新 (1717-1718)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1707,
+          "symbol": "showPrefixNote"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1709,
+          "symbol": "showPrefixNote",
+          "note": "alert 文案"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1715,
+          "symbol": "showPrefixNote",
+          "note": "batchPrefixNote"
+        }
+      ],
+      "tags": [
+        "批量"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.batch.export",
+      "parentKey": "credential.list.batch",
+      "domain": "credential",
+      "level": 4,
+      "name": "合包导出（351）",
+      "kind": "action",
+      "summary": "把所选凭证打成 AES 信封，口令单独生成、单独交付，密文复制并弹分享面板。",
+      "details": [
+        "KeyGen.randomDigits(8) 生成本次 8 位数字口令 (1726)",
+        "CredentialOrg.exportPackage 失败则 toast「导出失败」并 return (1727-1729)",
+        "密文文本复制到剪贴板（刻意不做 60 秒自清，因为要粘进聊天工具）并同时 present UIActivityViewController (1730-1736)",
+        "toast「已生成 N 条凭证包并复制到剪贴板。解密密口令「XXXXXXXX」请另行发送, 勿与凭证包同渠道。」(1737)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1724,
+          "symbol": "exportPackage"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1726,
+          "symbol": "exportPackage",
+          "note": "8 位口令"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1735,
+          "symbol": "exportPackage",
+          "note": "分享面板"
+        }
+      ],
+      "tags": [
+        "导出",
+        "安全"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.batch.disable",
+      "parentKey": "credential.list.batch",
+      "domain": "credential",
+      "level": 4,
+      "name": "批量停用（353）",
+      "kind": "flow",
+      "summary": "先开摘要确认页（选原因 + 二次确认），确认后统一停用、入回收站、锁端删除入队。",
+      "details": [
+        "「停用」把 showDisable 置真，sheet 呈现 CredDisableSheet (1669-1672, 146-150)",
+        "确认页回调 onDone = finishDisable：busyKey=batch → CredentialOrg.batchDisable 返回条数 → flashReceipt「已写入本机」→ toast「已停用 N 条, 收入回收站, 锁端删除待下发」(1741-1751)",
+        "0 条时 toast「所选凭证已不在台账」并刷新 (1752-1755)",
+        "结束时无论成败都退出编辑模式并清空选择 (1745)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1669,
+          "symbol": "batchBar",
+          "note": "停用按钮"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1741,
+          "symbol": "finishDisable"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1750,
+          "symbol": "finishDisable",
+          "note": "回执"
+        }
+      ],
+      "tags": [
+        "破坏性",
+        "批量"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.batch.delete",
+      "parentKey": "credential.list.batch",
+      "domain": "credential",
+      "level": 4,
+      "name": "批量彻底删除（922）",
+      "kind": "flow",
+      "summary": "确认后逐条真删锁内凭证；中途失败会如实报已删条数，不静默跳过。",
+      "details": [
+        "确认文案「删除后这些凭证在锁内立即失效 (需门锁在场直发); 本机记录进回收站 X 天内可找回, 值或开门能力要重新下发」(1678-1680)",
+        "batchDelete：逐条 ensureConnected → pwdDelete → addToBin → delPwd；指纹先 batchU32 转换，越界则跳过并 toast 说明 (1761-1790)",
+        "成功 toast「已删除 N 条」；异常时 toast「已删除 N 条后中断: …」或「删除失败: …」，N=0 时不谎报 (1791-1793)",
+        "结束时退出编辑模式并清空选择 (1769)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1675,
+          "symbol": "batchBar",
+          "note": "删除按钮"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1678,
+          "symbol": "batchBar",
+          "note": "确认文案"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1774,
+          "symbol": "batchDelete",
+          "note": "pwdDelete"
+        }
+      ],
+      "tags": [
+        "破坏性",
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.sort-mode",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "拖动排序档（组内先后）",
+      "kind": "flow",
+      "summary": "进入后每段出现系统排序把手，拖动只改本段先后，结果写进本机台账、跨启动保持。",
+      "details": [
+        "菜单「拖动排序」进入，与 editMode 互斥（进排序清空选择）(423-431)",
+        "实现方式：List 上挂 .environment(\\.editMode, .constant(sorting ? .active : .inactive))，由系统提供把手 (512)",
+        "排序说明行写清承诺：本段先后 + 写进 kf_cseq_ 跨启动 + 随全量备份走；类型视图各状态段各排各的，置顶段不参与；按成员视图排的是该成员段内密码与指纹各自的先后 (516-519)",
+        "提交：commitGroupMove 先在本段内 move，再把结果依次回写「整表里属于本段的那些位置」，别段位次不动；越界 IndexSet 先过滤防 trap (1059-1081)",
+        "回执「组内先后已记住, 跨启动保持」(1080)",
+        "本段回写基准是 seqBasePwds/seqBaseFps（全量显示序），不是被分段/筛选削过的那批 (838-841, 1010-1012)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 505,
+          "symbol": "mainList",
+          "note": "sortHintRow 插在最前"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 512,
+          "symbol": "mainList",
+          "note": "系统编辑态"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1064,
+          "symbol": "commitGroupMove"
+        }
+      ],
+      "tags": [
+        "排序"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.member-view",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "按成员分组视图",
+      "kind": "data",
+      "summary": "每个成员一段，列出其名下密码与指纹；没有归属的条目统一进「未归属」段。",
+      "details": [
+        "每段标题「(称呼 · )姓名 (N)」，N = 该成员密码数 + 指纹数；称呼只在别名显示开启且 relation 非空时加 (1187)",
+        "段内密码与指纹各自 ForEach 并各自 onMove，写同一张 kf_cseq_ (1188-1195)",
+        "归档成员与归档条目不出现（集合一次取，闭包内 Set 查，避免 O(N×M) 解码）(1174-1185)",
+        "末尾「未归属 (N)」段同样支持段内拖动 (1199-1211)",
+        "底部固定两条入口：添加密码 / 录入指纹 (1213-1216)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1170,
+          "symbol": "memberSections"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1187,
+          "symbol": "memberSections",
+          "note": "段标题"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1202,
+          "symbol": "memberSections",
+          "note": "未归属段"
+        }
+      ],
+      "tags": [
+        "分组",
+        "归属"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.pwd-sections",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "密码三段分组与组尾统计",
+      "kind": "data",
+      "summary": "密码按置顶/进行中/已排期/已过期分段，组尾给「近 30 天使用约 N 次」，过期组追加整组延期与批量清理。",
+      "details": [
+        "「置顶 (N)」段在前，星标条不参与组内拖动 (924-931, 938-939)",
+        "三态段头由 stateLabel + 组内条数组成 (933-937)",
+        "组尾统计「本组 N 条 · 近 30 天使用约 Y 次」：recentUseCount 按开门日志时间窗推断，返回 nil 则不出行 (947-951, 1080-1101)",
+        "已过期组： 「这一组统一延期」把该组 alias 送进 CredExtendView (953-959)",
+        "已过期组（非长辈模式）：「清理本组已过期 (N 条)」把该组选入 CredDisableSheet，走既有停用流而不是本机静默删除 (960-976)",
+        "段末固定入口：凭证工坊、添加密码、回收站(N)、版本历史与整理、凭证中心 (983-995)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 923,
+          "symbol": "pwdSections"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 937,
+          "symbol": "pwdSections",
+          "note": "三态组头"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 954,
+          "symbol": "pwdSections",
+          "note": "这一组统一延期"
+        }
+      ],
+      "tags": [
+        "分组"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.fp-section",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "指纹段（缺失/冗余提醒）",
+      "kind": "data",
+      "summary": "指纹单独成段，并在成员缺口或只剩一枚时给出补录提醒与直达入口。",
+      "details": [
+        "段头「指纹 (N)」(1099)",
+        "缺失提醒：名下无指纹且未归档的成员 → 「有 N 位成员还没有指纹」，「去录入」预填唯一成员归属 (1101-1121)",
+        "冗余提醒：全锁仅 1 枚 → 「只剩 1 枚可用指纹, 建议添加备用」，整行可点进录入页 (1123-1137)",
+        "段尾统计「本段 N 枚 · 近 30 天指纹开门约 X 次 · 告警约 Y 条」（整锁推断，告警为 0 时不显示后半句）(1154-1160)",
+        "底部「录入指纹」入口 (1161)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1098,
+          "symbol": "fpSection"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1106,
+          "symbol": "fpSection",
+          "note": "缺失提醒"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1123,
+          "symbol": "fpSection",
+          "note": "只剩 1 枚"
+        }
+      ],
+      "tags": [
+        "指纹",
+        "提醒"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.list.busy",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "整页忙碌闸（busyKey）",
+      "kind": "state",
+      "summary": "与门锁通信期间整页行禁用、所有命令入口先判 busyKey，杜绝滑动/菜单并发下发。",
+      "details": [
+        "busyKey 语义：「pwd:3」/「fp:12」/「otp」/「queue:<id>」/「batch」；nil=空闲 (22-23, 67)",
+        "行渲染末尾 .disabled(isBusy) (1346)；行内对应项显示 mini ProgressView (1268-1270)",
+        "各命令入口统一 guard busyKey == nil 后再动手（改值/改期/停用/删除/批量/OTP/队列重试/续期等）(2171, 2208, 2248, 2285, 1742, 1912)",
+        "OTP 开关与「生成」按钮在忙碌时 disabled (1831, 1889)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 23,
+          "symbol": "busyKey",
+          "note": "键语义"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 67,
+          "symbol": "isBusy"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1346,
+          "symbol": "credRow",
+          "note": "整行 disabled"
+        }
+      ],
+      "tags": [
+        "并发控制"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.access.gate",
+      "parentKey": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "明文查看与跨 Tab 跳转门槛",
+      "kind": "edge",
+      "summary": "明文只在解锁后显示；跨 Tab 跳到凭证页统一走 app.requestRoute，复用全仓的访客门禁入口。",
+      "details": [
+        "查看明文前：DB.hasPasscode() && !app.appUnlocked → toast「需先解锁应用锁」并中止 (2166)",
+        "重复值「查看」与临时码工坊的「查看」都先把 pendingCredNav/pendingCredNavMac 写好，再 app.requestRoute(.credentials)，代码注释明确这是「与全仓跨 Tab 跳转统一走 requestRoute (访客门禁那一口)」(843-845, 1419-1421)",
+        "本文件内没有其它只读/访客态分支：访客与权限不足的判定都在 requestRoute 与上层，不在这三个文件"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2166,
+          "symbol": "viewPwd",
+          "note": "应用锁门槛"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 844,
+          "symbol": "PwdStudio",
+          "note": "requestRoute 访客门禁"
+        }
+      ],
+      "tags": [
+        "安全",
+        "权限"
+      ],
+      "status": "partial"
+    },
+    {
+      "key": "credential.pwd.add.step0",
+      "parentKey": "credential.pwd.add",
+      "domain": "credential",
+      "level": 3,
+      "name": "第一步：类型与归属",
+      "kind": "setting",
+      "summary": "先选「长期密码」还是「临时码」，再指定归属成员；归属必选（有成员时）。",
+      "details": [
+        "两枚胶囊「长期密码 | 临时码」写 kind=0/1，并带无障碍 label「凭证类型: …」(675-680)",
+        "归属卡逐人单选，选中行尾 checkmark.circle.fill；无成员时提示「还没有成员。可先选「未归属」, 稍后在成员中心补归属。」(701-734)",
+        "未选归属的原因不同：DB.members() 非空才算错误，红字「归属必选: 先选成员; 没有成员可先去成员中心新建再返回」(735-737)",
+        "类型决定后续：kind==1 才在第三步出现有效期，提交时长期码写死 2010-01-01 ~ 2118-01-01 (869-871, 1228-1230)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 673,
+          "symbol": "step0"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 701,
+          "symbol": "ownerCard"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 736,
+          "symbol": "ownerCard",
+          "note": "归属必选红字"
+        }
+      ],
+      "tags": [
+        "归属"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.add.step1",
+      "parentKey": "credential.pwd.add",
+      "domain": "credential",
+      "level": 3,
+      "name": "第二步：码值输入与生成",
+      "kind": "setting",
+      "summary": "输入或本地生成 6~8 位数字码，已输入内容用大字打码回显，支持从剪贴板一键识别。",
+      "details": [
+        "校验 pwdOK = 6~8 位且全数字；输入框 numberPad、标题右侧提示「6~8 位数字」(602, 746-762)",
+        "已输入时上方渲染 MaskedDigits(big:true) 大字打码回显 (755-757)",
+        "剪贴板识别：onAppear 若剪贴板里数字串 6~8 位且 pwd 为空则自动填入并置 clipSource，显示「来自剪贴板 · 已识别为候选码」+「清除」(1165-1172, 768-787)",
+        "生成器三键「生成 6 位 / 7 位 / 8 位」，走 KeyGen.randomDigits 本地 CSPRNG 并清掉剪贴板标记 (789-799, 15-17)",
+        "输入变化会清掉 value 错误态，并（剪贴板来源时）给一次 tick 触感 (764-767)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 759,
+          "symbol": "step1",
+          "note": "码值输入框"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 768,
+          "symbol": "step1",
+          "note": "来自剪贴板"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 790,
+          "symbol": "step1",
+          "note": "生成 N 位"
+        }
+      ],
+      "tags": [
+        "码值",
+        "生成"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.add.step1.dups",
+      "parentKey": "credential.pwd.add.step1",
+      "domain": "credential",
+      "level": 4,
+      "name": "重复值与前缀冲突拦截",
+      "kind": "state",
+      "summary": "同值会同时查本锁与其它锁，前 4 位相同也提示口头混淆，并支持一键跳到那条同值凭证。",
+      "details": [
+        "本锁：CredentialOrg.duplicatePwdValues → 「本锁已有 N 条同值凭证」+「查看」(823, 834-856)",
+        "跨锁：CredentialOrg.duplicatePwdLockNames → 「其它 N 把锁上也有同值: 锁名 …」（最多列 3 个）(825-833)",
+        "「查看」真跳：pendingCredNav = pwd:alias、pendingCredNavMac = mac、requestRoute(.credentials)，非 embedded 时 dismiss (840-846)",
+        "前缀冲突：与已有密码前 4 位相同 → 「与「XXXXXXXX」前 4 位相同, 口头易混淆。」(857-862)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 823,
+          "symbol": "step1",
+          "note": "本锁重复值"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 826,
+          "symbol": "step1",
+          "note": "跨锁同值"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 858,
+          "symbol": "step1",
+          "note": "前 4 位冲突"
+        }
+      ],
+      "tags": [
+        "安全",
+        "去重"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.add.step1.strength",
+      "parentKey": "credential.pwd.add.step1",
+      "domain": "credential",
+      "level": 4,
+      "name": "强度三格条",
+      "kind": "state",
+      "summary": "本地推断密码强度：全同数字/顺子/位数偏短三类问题会降级并给出中文提示。",
+      "details": [
+        "算法：底分 1；不同数字 >=4 加 1；长度 >=8 加 1；顺子减 1；只有一种数字直接判 0 (19-29)",
+        "三格胶囊：score>1 用 ok 色，<=1 用 warn 色，未满格用 surfaceAlt (806-810)",
+        "提示文案四档：「全部同数字, 易被猜出」/「顺子 (如 123456), 建议避免」/「位数偏短」/「强度正常」(27)",
+        "顺子判定要求至少 4 位且相邻差恒等且差不为 0 (30-37)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 19,
+          "symbol": "StudioTools.pwdStrength"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 802,
+          "symbol": "step1",
+          "note": "强度条渲染"
+        }
+      ],
+      "tags": [
+        "安全"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.add.step2",
+      "parentKey": "credential.pwd.add",
+      "domain": "credential",
+      "level": 3,
+      "name": "第三步：有效期（临时码）",
+      "kind": "setting",
+      "summary": "临时码才有有效期：默认 1 小时，四枚快捷档一键套用，到期必须晚于生效，字段旁问号展开本表单真实遵守的四条口径。",
+      "details": [
+        "默认窗口：to 初值 = 现在 + 3600 秒（问号里承诺的默认值就是这一处）(583)",
+        "四枚快捷档「1 小时 / 今天 / 7 天 / 30 天」：点了同时把 from 重置为 now 并按秒数设 to（今天 = TimeFormat.dayEnd，且至少 60 秒）(912-917, 981-1004)",
+        "问号按钮（questionmark.circle）展开四条说明：默认 1 小时；四档是 1 小时/今天到 23:59/7 天/30 天；到期必须晚于生效；生效与到期是写给门锁的两个时刻、门锁用自己钟比对、改期要重新下发才生效 (880-911)",
+        "to <= from 时红字「到期需晚于生效: 点上面任一快捷档, 或把到期往后挪; 这一步不让过。」(923-925)",
+        "长期密码分支只有一句说明：无到期点，详情页「添加满 180 天」说的是这条加了多久，不是值多久没换 (929-937)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 869,
+          "symbol": "step2"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 880,
+          "symbol": "step2",
+          "note": "问号说明"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 923,
+          "symbol": "step2",
+          "note": "到期需晚于生效"
+        }
+      ],
+      "tags": [
+        "有效期"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.add.step2.note",
+      "parentKey": "credential.pwd.add.step2",
+      "domain": "credential",
+      "level": 4,
+      "name": "常用短语与命名模板开关",
+      "kind": "setting",
+      "summary": "备注可点常用短语追加，也可以让系统按「谁-哪里-何时」自动补一条模板备注。",
+      "details": [
+        "常用短语三枚「仅白天 / 勿外传 / 长期有效」：空备注直接填，非空用「 · 」追加 (943-965)",
+        "备注框占位「给谁 · 哪扇门 · 用多久」，示例「钟点工·大门·仅上午场」(966-970)",
+        "VariantToggle「备注自动补命名模板 (谁-哪里-何时)」常驻显示（关掉也不消失，否则本会话再也开不回来）(971-976)",
+        "模板生效条件：useTemplate 为真且备注为空，才用「归属名-大门-月.日-月.日 / 长期」生成 finalNote (1233-1237)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 943,
+          "symbol": "step2",
+          "note": "常用短语"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 966,
+          "symbol": "step2",
+          "note": "备注框"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 973,
+          "symbol": "step2",
+          "note": "模板开关"
+        }
+      ],
+      "tags": [
+        "备注"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.add.step3",
+      "parentKey": "credential.pwd.add",
+      "domain": "credential",
+      "level": 3,
+      "name": "第四步：确认与二次输入",
+      "kind": "flow",
+      "summary": "下发前把要做的事再摆一遍（类型/归属/码值/时段/改动位），并要求重输一遍码值才能提交。",
+      "details": [
+        "改造时先出「新旧对照 (上旧只读 / 下新)」PwdDiffView 与「改动位共 N 处」(1015-1028)",
+        "摘要卡：「即将添加/改造的凭证」+ 类型胶囊 + 归属 + MaskedDigits 大字 + 临时码再加生效窗口 + 备注 (1030-1064)",
+        "busy 时整块换成 ProgressView「正在下发到门锁…」(1065-1070)",
+        "二次输入确认：输入框「重输一遍码值」，不一致显示红叉、一致显示绿勾；按钮在 confirmPwd != pwd 时 disabled (1073-1087, 1106-1109)",
+        "底部提示「请将手机靠近门锁; 成功后登记到本机台账并留一档版本快照。」(1111)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1015,
+          "symbol": "step3"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1074,
+          "symbol": "step3",
+          "note": "重输一遍码值"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1109,
+          "symbol": "step3",
+          "note": "disabled(confirmPwd != pwd)"
+        }
+      ],
+      "tags": [
+        "二次确认"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.add.step3.last-apply",
+      "parentKey": "credential.pwd.add.step3",
+      "domain": "credential",
+      "level": 4,
+      "name": "上次成功下发时刻（541）",
+      "kind": "state",
+      "summary": "下发前提示这把锁上一次成功下发是本机台账里的什么时候，并说清「不是锁端真值」。",
+      "details": [
+        "有 lastApplyAt：「此锁上次成功下发: 今天 / N 天前 (本机台账时刻, 不是锁端真值; 若中途有别人动过这把锁, 以到场核对为准)」(1093-1099)",
+        "无记录：「本机台账里还没有这把锁的成功下发记录 —— 这条提示只说本机台账, 不代表锁端没被配过。」(1100-1105)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1093,
+          "symbol": "step3",
+          "note": "lastApplyAt"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1101,
+          "symbol": "step3",
+          "note": "无记录文案"
+        }
+      ],
+      "tags": [
+        "口径"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.add.nav",
+      "parentKey": "credential.pwd.add",
+      "domain": "credential",
+      "level": 3,
+      "name": "分步导航与步间硬拦",
+      "kind": "action",
+      "summary": "上一步/下一步切换四步表单，遇到坏值就停在本步并标红字段，绝不静默补值。",
+      "details": [
+        "「上一步」仅在 step>0 出现 (1121-1129)",
+        "「下一步」标签随步变化：「下一步: 码值」/「下一步: 有效期」/「下一步: 确认」(1132)",
+        "三处硬拦：step0 有成员但未选归属 → errorField=owner + toast「先选归属成员」；step1 码值不合规 → errorField=value + toast「码值需 6~8 位数字」；step2 临时码 to<=from → errorField=period + toast「到期要晚于生效, 请先点一枚快捷档」(1133-1153)",
+        "拦下时用 DS.Haptics.trigger 重触感，不前进也不改值（旧实现会悄悄把 to 补成 from+1h，已删）(1145-1153)",
+        "通过时先 saveDraft 再进下一步并清空 errorField (1154-1156)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1119,
+          "symbol": "navBar"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1132,
+          "symbol": "navBar",
+          "note": "下一步标签"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1148,
+          "symbol": "navBar",
+          "note": "到期硬拦"
+        }
+      ],
+      "tags": [
+        "校验"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.add.draft",
+      "parentKey": "credential.pwd.add",
+      "domain": "credential",
+      "level": 3,
+      "name": "草稿续填（518）",
+      "kind": "automation",
+      "summary": "填到一半退出（关闭/侧滑）会自动留稿，下次进来顶部问「上次填到第 N 步, 继续?」，可继续或丢弃。",
+      "details": [
+        "保存条件：未提交、是新增（editAlias==nil）、且 step>0 或已填码值 (1189-1196)",
+        "保存时机：顶栏「关闭」、「下一步」通过校验时、onDisappear（侧滑/push 退出）(629-638, 1154, 638)",
+        "横条：「上次填到第 N 步, 继续?」+「继续」/「丢弃」(642-669)",
+        "「继续」restoreDraft 回填 step/kind/pwd/note/useTemplate/owner 与时段，toast「已回填草稿」；「丢弃」clearDraft 并隐藏横条 (1174-1184, 653-655)",
+        "提交成功后 clearDraft + showDraftBar=false（518：提交成功不许回存废稿）(1262-1264)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 617,
+          "symbol": "form",
+          "note": "draftBar 入口"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 648,
+          "symbol": "draftBar",
+          "note": "继续"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1189,
+          "symbol": "saveDraft"
+        }
+      ],
+      "tags": [
+        "草稿"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.add.submit",
+      "parentKey": "credential.pwd.add",
+      "domain": "credential",
+      "level": 3,
+      "name": "提交下发（0A/0B + 快照）",
+      "kind": "service",
+      "summary": "按新增或改造两条分支调锁服务写密码，成功后写台账、留快照、清草稿并回收据。",
+      "details": [
+        "提交前再核一遍归属/码值/时段（草稿回填可把人直接放到第 4 步），不合格回跳对应步并写 errorField (1204-1224)",
+        "时段取值：临时码用所选窗口，长期码 from=2010-01-01 00:00:00、to=2118-01-01 00:00:00 (1228-1230)",
+        "新增分支：pwdAdd（锁端 0A 加密码 + 0B 设期）→ DB.addPwd → 快照「新增」/「新增临时码」(1256-1260)",
+        "改造分支：pwdModify（0A 删旧槽+加新码）→ 换槽则删旧号写新号，否则 rePwd+setPwdNote+setPwdOwner → 快照「改造 (保存前先做对照)」(1239-1254)",
+        "成功：clearDraft + flashReceipt「已写入本机」+ toast「临时码已下发」/「密码已下发 (别名 #N)」；非 embedded 时 dismiss (1262-1267)",
+        "失败：toast「下发失败: 「错误描述」」，页面停在第四步（不 dismiss、不清草稿）(1268-1270)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1199,
+          "symbol": "submit"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1240,
+          "symbol": "submit",
+          "note": "pwdModify 改造分支"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1256,
+          "symbol": "submit",
+          "note": "pwdAdd 新增分支"
+        }
+      ],
+      "tags": [
+        "锁端读写",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.add.edit",
+      "parentKey": "credential.pwd.add",
+      "domain": "credential",
+      "level": 3,
+      "name": "改造密码入口（详情页 push）",
+      "kind": "flow",
+      "summary": "密码详情里「改造密码 (分屏对照 · 逐位高亮)」进入同一个四步表单，只是带着 editAlias。",
+      "details": [
+        "NavigationLink 到 PwdStudio(embedded:true, editAlias: p.alias) (2005-2011)",
+        "标题变「改造密码 #N」(627)；第四步按钮文案「保存改造」(1106)",
+        "主标题副行「分屏对照 · 逐位高亮」即第四步的 PwdDiffView (307, 1015-1028)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2006,
+          "symbol": "PwdDetailStudio",
+          "note": "改造入口"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 627,
+          "symbol": "PwdStudio",
+          "note": "改造标题"
+        }
+      ],
+      "tags": [
+        "改造"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.tempcode.scene",
+      "parentKey": "credential.tempcode",
+      "domain": "credential",
+      "level": 3,
+      "name": "五场景预设",
+      "kind": "setting",
+      "summary": "搬家/维修/家政/访客/装修五个场景，点一下同时套默认时长与备注。",
+      "details": [
+        "五档定义：搬家 24h「搬家公司·大门·当天」、维修 6h、家政 4h、访客 8h、装修 720h「装修组·工地·整月」(146-152)",
+        "点选：scene=key、from=now、to=now+hours*3600，备注为空时填场景备注，tick 触感 (1536-1542)",
+        "芯片显示名称 + 提示（如「整月 · 长期工」），选中反色 (1543-1565)",
+        "装修场景额外黄条「长期工场景: 详情页挂「施工中」黄条, 建议 30 天内复查一次」(1476-1481)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 146,
+          "symbol": "StudioTools.scenes"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1536,
+          "symbol": "sceneChip"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1476,
+          "symbol": "addForm",
+          "note": "装修黄条"
+        }
+      ],
+      "tags": [
+        "场景"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.tempcode.value",
+      "parentKey": "credential.tempcode",
+      "domain": "credential",
+      "level": 3,
+      "name": "码值与批量张数",
+      "kind": "setting",
+      "summary": "输入或生成本地 6 位码，可一次下发 1/2/3/5 张，重复值同样查本锁与其它锁。",
+      "details": [
+        "段头「码值 (6~8 位数字)」右侧实时「✓ 位数合规」/「6~8 位数字」(1338-1348)",
+        "已输入时 MaskedDigits 大字回显；输入框 numberPad (1349-1356)；剪贴板识别与清除同密码工坊 (1357-1373)",
+        "「生成」= StudioTools.genDigits(6) 本地随机 (1375-1382)",
+        "「一次生成」1/2/3/5 四枚（锁端无批量命令，逐条 0A）(1386-1398)",
+        "重复值拦截：本锁同值 + 跨锁同值 + 「查看」跳转 (1399-1428)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1338,
+          "symbol": "addForm",
+          "note": "码值段"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1375,
+          "symbol": "addForm",
+          "note": "生成"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1390,
+          "symbol": "addForm",
+          "note": "批量张数"
+        }
+      ],
+      "tags": [
+        "码值",
+        "批量"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.tempcode.window",
+      "parentKey": "credential.tempcode",
+      "domain": "credential",
+      "level": 3,
+      "name": "生效时段与租期重叠",
+      "kind": "setting",
+      "summary": "四枚快捷档设定生效/到期，检测与同成员其它临时码的时间窗撞车并警告。",
+      "details": [
+        "快捷档「1 小时 / 今天内 / 7 天 / 30 天」，今天内用 TimeFormat.dayEnd()（当晚 23:59）(1437-1442)",
+        "页面没有逐分 DatePicker：from/to 只由快捷档与场景预设改写，当前值以「生效 … → 到期 …」只读展示 (1443-1458)",
+        "to<=from 时红字「到期需晚于生效」，并直接 disabled 下发按钮 (1459-1463, 1523)",
+        "租期重叠：CredentialOrg.overlapWindows → 「与本成员其它 N 张码时段撞车」(1307-1309, 1465-1474)",
+        "装修场景黄条（同 scene 节点）(1476-1481)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1437,
+          "symbol": "addForm",
+          "note": "四快捷档"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1459,
+          "symbol": "addForm",
+          "note": "到期需晚于生效"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1465,
+          "symbol": "addForm",
+          "note": "租期重叠"
+        }
+      ],
+      "tags": [
+        "有效期"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.tempcode.owner",
+      "parentKey": "credential.tempcode",
+      "domain": "credential",
+      "level": 3,
+      "name": "归属与备注",
+      "kind": "setting",
+      "summary": "选择归属成员，备注占位随所选场景变化，提示「给谁 · 哪扇门 · 用多久」。",
+      "details": [
+        "段头「归属与备注」，成员逐人单选并打勾 (1486-1510)",
+        "备注框占位在选场景后变成该场景备注（sceneNote），未选场景时用示例「如: 钟点工·大门·仅上午场」(1511-1512, 1303-1305)",
+        "没有成员时不显示空态说明（与密码工坊不同），仍可下发成「未归属」(1486-1517)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1486,
+          "symbol": "addForm"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1490,
+          "symbol": "addForm",
+          "note": "成员列表"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1511,
+          "symbol": "addForm",
+          "note": "备注占位"
+        }
+      ],
+      "tags": [
+        "归属"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.tempcode.submit",
+      "parentKey": "credential.tempcode",
+      "domain": "credential",
+      "level": 3,
+      "name": "下发临时码（错峰批量）",
+      "kind": "service",
+      "summary": "按张数逐条下发，每张时段顺移 30 分钟避免叠在同一窗口，失败逐条报并最后汇总。",
+      "details": [
+        "按钮文案随张数：「下发临时码」/「下发 N 张」，pwdOK 且 to>from 才可点 (1519-1523)",
+        "submitBatch 循环 max(batchCount,1) 次：第 i 张 from/to 各加 i*1800 秒（178 逐条错峰）(1697-1706)",
+        "每张：ensureConnected → pwdAdd（0A）→ DB.addPwd → 快照「新增临时码」→ toast「第 i/N 张已下发 (别名 #alias)」(1709-1716)",
+        "单张失败只计数并 toast「第 i 张下发失败: …」，继续下一张 (1717-1720)",
+        "结束：result=最后一张（切完成页）+ clearDraft(入口捕获的 mac) + 有失败时 toast「批量完成, N 张失败, 稍后可在凭证页重试」(1722-1728)",
+        "页脚「批量走既有 0A 逐条下发, 锁端无批量命令, 失败逐条报」(1524)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1697,
+          "symbol": "submitBatch"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1705,
+          "symbol": "submitBatch",
+          "note": "30 分钟错峰"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1710,
+          "symbol": "submitBatch",
+          "note": "pwdAdd 0A"
+        }
+      ],
+      "tags": [
+        "锁端读写",
+        "批量"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.tempcode.done",
+      "parentKey": "credential.tempcode",
+      "domain": "credential",
+      "level": 3,
+      "name": "完成页口述卡（172/329/333）",
+      "kind": "screen",
+      "summary": "下发成功后的口述卡：默认遮半码值、可完整显示/复制/分享，再给一句话口令与首次使用回执。",
+      "details": [
+        "CodeBigCard：标题「锁名 · 临时码」，窗口「生效 … ~ …」，默认 SecurityPolicy.halfMasked，「完整显示」才露全码，贴近面部自动复遮 (1589-1592, 359-444)",
+        "复制按当前真状态：遮半时复制遮半值并提示「完整值先点「完整显示」」；分享载荷同屏上状态 (404-416, 439-443)",
+        "长辈模式：完成页=口述卡 + 一枚大「完成」，标题也变「口述卡」(1593-1598, 1315)",
+        "一句话口令「密码是 XXXX，明天 18:00 下午前有效（锁名）」可复制/分享；时段判断按 12~18 点说「下午前有效」(1600-1639, 38-50)",
+        "首用回执：firstUse 有值 → 「约在 … 有人用它开过门」，否则「等待首次使用」（按时间窗推断，标「约」）(1641-1667)",
+        "「再发一张」清 result、换一枚新 6 位码、清备注 (1669-1675)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1586,
+          "symbol": "doneCard"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1589,
+          "symbol": "doneCard",
+          "note": "CodeBigCard"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1600,
+          "symbol": "doneCard",
+          "note": "一句话口令"
+        }
+      ],
+      "tags": [
+        "分享",
+        "安全"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.detail.masked",
+      "parentKey": "credential.pwd.detail",
+      "domain": "credential",
+      "level": 3,
+      "name": "逐位打码与揭示（MaskedDigits）",
+      "kind": "state",
+      "summary": "码值默认打码，可逐位点开；遮蔽样式三档，贴近面部或离开页面就复遮，首次揭示记一次敏感台账。",
+      "details": [
+        "遮蔽三档取 DB.store.getString(SecKey.maskStyle)：stars=全星、tail4=只留末四位、其余圆点 (210-220, 264-270)",
+        "逐位点按切换揭示/复遮；第一次揭示时 SensitiveLedger().record(查看, 密码) 只记一次（防点按刷屏）(224-230, 207-208)",
+        "双击数值区或位间缝 = 复制整条明文；VoiceOver 转子动作「拷整条明文」(245-262)",
+        "贴近复蔽：页面在屏期间开 UIDevice proximity 监听，面部贴近即清空已揭示位，移开不自动恢复 (182-197, 253-255)",
+        "字号随 big 参数：title3 或 title；等宽数字防跳 (222)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 202,
+          "symbol": "MaskedDigits"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 224,
+          "symbol": "MaskedDigits",
+          "note": "逐位揭示"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 253,
+          "symbol": "MaskedDigits",
+          "note": "proximityRemask"
+        }
+      ],
+      "tags": [
+        "安全",
+        "遮挡"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.detail.copy",
+      "parentKey": "credential.pwd.detail",
+      "domain": "credential",
+      "level": 3,
+      "name": "复制 / 读出 / 4 位分段转述",
+      "kind": "action",
+      "summary": "三种把码交出去的方式：整条复制（按钮会形变确认）、逐位语音读出、按 4 位分段只复制某一段。",
+      "details": [
+        "「复制」按下后 1.2 秒内按钮变「已复制 + 对勾」再复原 (1793-1809)",
+        "「读出」调 Speech.digits 逐位播报，无障碍提示「逐位语音播报, 便于电话转述」(1810-1814)",
+        "码值 >= 8 位时出现 4 位分段块（chunked(4)），点任一块只复制该段并 toast「已复制第 x~y 位」(1818-1834)",
+        "三段都直接写 UIPasteboard，明文不做二次确认（详情页本身已过打码/应用锁门槛）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1793,
+          "symbol": "PwdDetailStudio",
+          "note": "复制按钮"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1810,
+          "symbol": "PwdDetailStudio",
+          "note": "读出"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1820,
+          "symbol": "PwdDetailStudio",
+          "note": "4 位分段"
+        }
+      ],
+      "tags": [
+        "复制",
+        "转述"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.detail.alerts",
+      "parentKey": "credential.pwd.detail",
+      "domain": "credential",
+      "level": 3,
+      "name": "五档到期预警开关",
+      "kind": "setting",
+      "summary": "详情页五个开关分别控制 7/3/1 天与 24/2 小时本地通知；长期有效码整段显示不适用。",
+      "details": [
+        "无到期点（expiryDate == nil）：整段只写「长期有效密码无到期点, 三档预警不适用。」(1841-1847)",
+        "有到期点：5 个 VariantToggle，get 读 CredentialOrg.alert，set 写 saveAlert 并立即 scheduleAlerts 重排 (1849-1889)",
+        "说明「五档 (7/3/1 天 · 24/2 小时) 都排本地通知, 另有一条「到期时」通知自动跟着走; 2 小时档同时还在凭证列表插提醒行。近 7 天到期条数会显示在凭证 Tab 角标上。开关只存本机, 与锁端无关。」(1890-1895)",
+        "与列表侧同键 kf_calert_，读写都经 CredentialOrg，不另存 @State（防双源漂移）(1838-1840)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1849,
+          "symbol": "PwdDetailStudio",
+          "note": "到期预警段"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1850,
+          "symbol": "PwdDetailStudio",
+          "note": "7 天档"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1882,
+          "symbol": "PwdDetailStudio",
+          "note": "2 小时档"
+        }
+      ],
+      "tags": [
+        "预警",
+        "通知"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.detail.early-expire",
+      "parentKey": "credential.pwd.detail",
+      "domain": "credential",
+      "level": 3,
+      "name": "提前失效滑杆（本机提示）",
+      "kind": "setting",
+      "summary": "临时码可设 0~120 分钟（步进 5）的提前量，只影响本页提示，不改门锁到期时刻。",
+      "details": [
+        "仅 p.temp 出现；标题「提前 N 分钟失效」，右侧标注「只在本页提示, 不改锁端」(1900-1916)",
+        "Slider 范围 0...120、step 5，写入 CredentialOrg.setEarlyExpireMin，读取 earlyExpireMin (1917-1923, 1442-1447)",
+        "下方实话段：「这枚滑杆在本机只存一个分钟数 —— 列表行没有渐进色条, 门锁那侧的到期时刻一个字都没改。到点本页挂提醒条并在状态行标注, 要不要真停用仍由你决定。」(1924-1928)",
+        "到点表现：详情页顶部黄条「已过本机设定的提前失效时刻 … 门锁照样能开门」(1748-1756)；状态行追加「本机提前 N 分钟 (约 MM-dd HH:mm, 锁端未改)」(1981-1982)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1900,
+          "symbol": "PwdDetailStudio",
+          "note": "提前失效段"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1917,
+          "symbol": "PwdDetailStudio",
+          "note": "Slider 0...120 step 5"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1748,
+          "symbol": "PwdDetailStudio",
+          "note": "到点黄条"
+        }
+      ],
+      "tags": [
+        "本机推断"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.detail.stats",
+      "parentKey": "credential.pwd.detail",
+      "domain": "credential",
+      "level": 3,
+      "name": "详情信息区（用量/开门数/老旧巡检）",
+      "kind": "data",
+      "summary": "档案读数全部标「约」并写明推断口径：用量刻度、时间窗内开门次数、添加时长与是否查过改值留档、装修黄条。",
+      "details": [
+        "装修/工地备注 → 「施工中」角标 + 「长期工」pill，warn 8% 底色 (1933-1944)",
+        "用量段「用量 (约)」：8 格刻度 + 「约 N 条 (按本地开门日志时间窗推断, 锁端无计次字段)」，0 条时「无 (按本地开门日志时间窗推断)」(1946-1966)",
+        "305 老旧巡检：只说明「添加于约 N 天前」，并分两支——快照里查到过改值留档 / 没查到，都不说「多少天没换码」(1766-1782)",
+        "311「用它开过的门 (约)」：时间窗内约 N 次；无数据显示「暂无记录 (⚠ 按时间窗推断, 无数据不编造)」(1987-2003)",
+        "时段与归属：状态=stateLabel+倒计时+提前量标注；归属（空=未归属）；备注（空=无）(1979-1985)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1933,
+          "symbol": "PwdDetailStudio",
+          "note": "施工中"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1946,
+          "symbol": "PwdDetailStudio",
+          "note": "用量刻度"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1987,
+          "symbol": "PwdDetailStudio",
+          "note": "开门数推断"
+        }
+      ],
+      "tags": [
+        "推断",
+        "统计"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.detail.renew",
+      "parentKey": "credential.pwd.detail",
+      "domain": "credential",
+      "level": 3,
+      "name": "原码续期 7 天（332）",
+      "kind": "action",
+      "summary": "过期临时码可沿用原值再续 7 天；锁不在场时自动记入待下发队列，不新增协议。",
+      "details": [
+        "按钮只在「临时码 + 已过期 + 有明文」时出现：「续期 7 天 (原值沿用 · 锁端留存未确证)」(1968-1978)",
+        "renewExpired：ensureConnected → pwdModify（0A 原位改写）用原值改期 now → +7 天；换槽则删旧号写新号 (2057-2075)",
+        "成功：快照「原码续期 7 天」+ toast「已沿用原值续期 7 天」(2076-2077)",
+        "失败：enqueue(kind: period, newFrom/newTo) + toast「锁未连接, 续期已记入待下发队列」（用入口捕获的 mac，不用活读）(2078-2083)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1973,
+          "symbol": "PwdDetailStudio",
+          "note": "续期按钮"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2066,
+          "symbol": "renewExpired",
+          "note": "pwdModify"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2081,
+          "symbol": "renewExpired",
+          "note": "失败入队"
+        }
+      ],
+      "tags": [
+        "锁端读写",
+        "容错"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.detail.card",
+      "parentKey": "credential.pwd.detail",
+      "domain": "credential",
+      "level": 3,
+      "name": "口述卡 sheet",
+      "kind": "sheet",
+      "summary": "把这条密码做成大字口述卡：遮半/完整显示/复制/分享，适合对着锁键盘念或拍照。",
+      "details": [
+        "仅当有明文时出现「生成口述卡」(2012-2020)",
+        "sheet 内 CodeBigCard：「锁名 · 凭证名」，窗口=临时码时段或「长期有效」，附备注 (2029-2047)",
+        "卡内交互与凭证券同源：完整显示/再遮起来、复制（遮半态复制遮半值）、分享口述卡、贴近复遮 (359-444)",
+        "脚注默认为「大字号方便对准锁键盘输入; 本卡含密码, 拍照或分享后注意保管。」(422)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2013,
+          "symbol": "PwdDetailStudio",
+          "note": "生成口述卡"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2029,
+          "symbol": "PwdDetailStudio",
+          "note": "sheet"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2033,
+          "symbol": "PwdDetailStudio",
+          "note": "CodeBigCard"
+        }
+      ],
+      "tags": [
+        "分享"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.detail.missing",
+      "parentKey": "credential.pwd.detail",
+      "domain": "credential",
+      "level": 4,
+      "name": "凭证不存在空态",
+      "kind": "state",
+      "summary": "详情打开时这条已被删除或移入回收站，就显示「凭证不存在」而不是空白页。",
+      "details": [
+        "DB.getPwd(mac, alias) 为 nil → EmptyState 图标 key.slash，标题「凭证不存在」，说明「这条凭证可能已被删除或移入回收站。」(2049-2051)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2049,
+          "symbol": "PwdDetailStudio",
+          "note": "EmptyState 凭证不存在"
+        }
+      ],
+      "tags": [
+        "空态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.fp.add.owner",
+      "parentKey": "credential.fp.add",
+      "domain": "credential",
+      "level": 3,
+      "name": "第一步：归属先行",
+      "kind": "setting",
+      "summary": "录指纹前必须先指定归属成员；选择器自带「空态就地新建」，不用先跑去成员中心。",
+      "details": [
+        "全锁仅 1 枚指纹时顶部提示「这把锁只剩 1 枚可用指纹, 建议补一枚备用」(2226-2238)",
+        "FpOwnerPicker(mac:owner:) 负责选人，自带空态新建（317 归属先行）(2239-2241)",
+        "「下一步: 录入」时若已有成员但未选归属 → toast「先选归属成员」+ 重触感，不前进 (2427-2436)",
+        "预选来源：成员页建完档把 id 写进 app.pendingFpOwner，进场 consumePendingOwner 取走即预选 (2181-2185)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2224,
+          "symbol": "step0"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2240,
+          "symbol": "step0",
+          "note": "FpOwnerPicker"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2429,
+          "symbol": "navBar",
+          "note": "先选归属成员"
+        }
+      ],
+      "tags": [
+        "归属",
+        "指纹"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.fp.add.enroll",
+      "parentKey": "credential.fp.add",
+      "domain": "credential",
+      "level": 3,
+      "name": "第二步：沉浸式 8 次录入",
+      "kind": "flow",
+      "summary": "全屏 Hero 卡引导在门锁指纹头上按 8 次，屏幕 8 个点随每次有效按压亮起，可重置或取消。",
+      "details": [
+        "HeroCard 内：进度文案 + ProgressView(value: presses.count, total: 8) + 8 个圆点 (2245-2263)",
+        "节奏提示随次数升级：准备就绪 / 重复此步骤 (n/8) — 抬起后再按 / 第 n+1 次把手指边缘按上去换位置 / 再换一个角度（同位置连按会被锁判 rc=23 不计数）(2320-2328)",
+        "「重置进度」清空 presses 与 error (2280-2290)",
+        "「开始录入」起 enrollTask → fpStart(times: 8, onPress:) 每收一帧干净按压追加并 tick 触感；按钮在 busy 时变「录入中…」并 disabled (2291-2313, 2497-2501)",
+        "整页 onDisappear 取消 enrollTask；取消后不越过 fpConfirm 这个不可逆点 (2219, 2511-2516)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2245,
+          "symbol": "immersive"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2292,
+          "symbol": "immersive",
+          "note": "开始录入"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2497,
+          "symbol": "start",
+          "note": "fpStart(times: 8)"
+        }
+      ],
+      "tags": [
+        "锁端读写",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.fp.add.errors",
+      "parentKey": "credential.fp.add",
+      "domain": "credential",
+      "level": 4,
+      "name": "录入失败文案（rc 23/24 等）",
+      "kind": "state",
+      "summary": "每种失败都回真实原因：按压不足、拿不到批次号、锁端 rc 码、链路断，不吞成功。",
+      "details": [
+        "按压不足：「只收到 N/8 次按压, 未写入; 请重新录入并多按几次」并抛错进本页 error (2504-2507)",
+        "无批次：「未拿到有效指纹批次, 请重新录入」(2508-2510)",
+        "锁端 rc=24（两次按压间隔超过 15 秒）与其它 rc 中止由 fpStart 抛出，原文写进 error（含 rc 码与已收次数）(2527-2529)",
+        "链路断开或任务取消：fpStart 提前收尾并记 warn，本页不写入、不确认 (2219, 2497)",
+        "error 以警告图标 + 居中行显示在进度下方 (2269-2278)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2504,
+          "symbol": "start",
+          "note": "按压不足"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2508,
+          "symbol": "start",
+          "note": "无批次"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2528,
+          "symbol": "start",
+          "note": "错误进 error"
+        }
+      ],
+      "tags": [
+        "错误态",
+        "错误码"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.fp.add.name",
+      "parentKey": "credential.fp.add",
+      "domain": "credential",
+      "level": 3,
+      "name": "第三步：命名建议与备注",
+      "kind": "setting",
+      "summary": "录入成功后给三枚建议名（按该锁已有指纹数推导），也可自定义名称并写本机备注。",
+      "details": [
+        "建议名循环取 CredentialOrg.fpNameSuggestion(mac, owner, extra: 0..2) 并去重 (2380-2387)",
+        "建议芯片横向滚动，选中反色 + isSelected (2338-2361)",
+        "自定义名输入占位「如: 妈妈·左手食指」；备注占位「仅本机留存」(2363-2369)",
+        "保存时若没填名：用 fpNameSuggestion 兜底并 toast「已按建议命名「X」, 可重命名」(2457-2464)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2333,
+          "symbol": "step2"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2340,
+          "symbol": "step2",
+          "note": "建议名"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2363,
+          "symbol": "step2",
+          "note": "自定义名"
+        }
+      ],
+      "tags": [
+        "命名"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.fp.add.inherit",
+      "parentKey": "credential.fp.add",
+      "domain": "credential",
+      "level": 3,
+      "name": "重录继承（319）",
+      "kind": "setting",
+      "summary": "同成员已有指纹时可勾选「录完把旧指纹移入回收站」，保留原备注与归属。",
+      "details": [
+        "条件：sameOwnerFps 非空（排除本次新批次）(2177-2179, 2371)",
+        "Toggle 文案写全后果：「该成员已有 N 枚指纹, 录入成功后将旧指纹移入回收站 (重录继承, 保留原备注/归属)」(2372)",
+        "保存时逐条 addToBin(source: .rererecord) → DB.delFp → enqueue(kind: del_fp)，toast「旧指纹已移入回收站 (备注/归属保留)」(2465-2480)",
+        "此处不再二次弹窗：勾选那条 Toggle 的文案已把后果写全，且可逆（还原时会收回未发出的 del_fp）(2471-2474)",
+        "详情页「重录一枚替换它」带 prefillOwner + prefillReplace=true，进来就默认勾上 (2610-2612, 2187-2190)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2371,
+          "symbol": "step2",
+          "note": "重录继承 Toggle"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2469,
+          "symbol": "saveAndClose",
+          "note": "旧指纹入回收站"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2610,
+          "symbol": "FpDetailStudio",
+          "note": "prefillReplace"
+        }
+      ],
+      "tags": [
+        "回收站",
+        "指纹"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.fp.add.save",
+      "parentKey": "credential.fp.add",
+      "domain": "credential",
+      "level": 3,
+      "name": "保存登记（fail-closed）",
+      "kind": "service",
+      "summary": "把锁端批次号写进本机台账前先验「还是不是同一把锁」，锁变了就拒绝写入并让用户重录。",
+      "details": [
+        "fail-closed：enrolledMac 为空或与当前锁不同 → error「当前锁已改变，本次录入不写入台账，请关闭后重新录入」，直接 return (2449-2456)",
+        "DB.addFp(batch: Int(doneBatch), name: finalName, at: 毫秒, note, src: \"app\", owner, isAlarm:false) 后进第 4 步 (2460-2461, 2481)",
+        "留存口径：fpStart/fpConfirm 两步故意不写台账，命名与归属填完才落库；中途关页本机一条不留 (2493-2494, 2518-2519)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2449,
+          "symbol": "saveAndClose"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2453,
+          "symbol": "saveAndClose",
+          "note": "锁已改变"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2460,
+          "symbol": "saveAndClose",
+          "note": "DB.addFp"
+        }
+      ],
+      "tags": [
+        "锁端读写",
+        "容错"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.fp.add.done",
+      "parentKey": "credential.fp.add",
+      "domain": "credential",
+      "level": 4,
+      "name": "录入完成页",
+      "kind": "screen",
+      "summary": "回执显示登记名，提醒「请用新指纹开一次锁确认可用」，替换旧枚时补一句旧指纹已入回收站。",
+      "details": [
+        "绿色 checkmark.circle.fill + 「已登记为「名」」+ 「请用新指纹开一次锁, 确认可用。」(2389-2404)",
+        "替换旧枚时追加「旧指纹已移入回收站。」(2400)",
+        "「完成」dismiss 整页 (2405-2406)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2389,
+          "symbol": "doneCard"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2400,
+          "symbol": "doneCard",
+          "note": "旧指纹已入回收站"
+        }
+      ],
+      "tags": [
+        "回执"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.fp.detail.stats",
+      "parentKey": "credential.fp.detail",
+      "domain": "credential",
+      "level": 3,
+      "name": "档案统计（316/320）",
+      "kind": "data",
+      "summary": "指纹详情分三段：档案（登记时间/近 30 天开门/告警日志）、明细（名称/归属/备注/来源/预警）、操作。",
+      "details": [
+        "成员名下仅剩这枚 → 顶部「该成员名下仅剩 1 枚指纹, 建议补一枚备用」(2548-2554)",
+        "档案段：「登记于 …」或「已登记在门锁内」；近 30 天指纹开门约 N 次（日志无指纹身份字段, 整锁推断）；指纹告警日志约 N 条（type13, 语义待实测）(2557-2566)",
+        "明细段：名称、归属（空=未归属）、备注（空=无）、来源（本机录入 / 锁端发现）、预警（预警指纹/普通）(2567-2573)",
+        "全部读数标「档案 (约)」，不假装是锁端计数"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2548,
+          "symbol": "FpDetailStudio",
+          "note": "仅剩一枚"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2557,
+          "symbol": "FpDetailStudio",
+          "note": "档案段"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2564,
+          "symbol": "FpDetailStudio",
+          "note": "告警日志"
+        }
+      ],
+      "tags": [
+        "推断",
+        "统计"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.fp.detail.relink",
+      "parentKey": "credential.fp.detail",
+      "domain": "credential",
+      "level": 3,
+      "name": "重录一枚替换它",
+      "kind": "flow",
+      "summary": "从详情直接进录入工坊，归属与「替换旧枚」自动带过去，录完旧枚进回收站。",
+      "details": [
+        "按钮「重录一枚替换它」把 showRelink 置真 (2576-2581)",
+        "sheet 呈现 FpStudio(prefillOwner: f.owner, prefillReplace: true) (2610-2612)",
+        "FpStudio 进场 consumePrefill：归属预选 + replaceOld=true (2187-2190)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2576,
+          "symbol": "FpDetailStudio",
+          "note": "重录按钮"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2611,
+          "symbol": "FpDetailStudio",
+          "note": "sheet FpStudio"
+        }
+      ],
+      "tags": [
+        "指纹"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.fp.delete",
+      "parentKey": "credential.fp.detail",
+      "domain": "credential",
+      "level": 3,
+      "name": "彻底删除指纹（双签）",
+      "kind": "flow",
+      "summary": "删成员最后一枚指纹要先输入任一在用密码的前缀（双签）；非最后一枚也必须过一次确认，任何一枚都不是一按就删。",
+      "details": [
+        "双签条件：CredentialOrg.fpCountByOwner(mac, f.owner) == 1 且本机存在一条 state==0 且有明文的密码 (2109-2110)",
+        "前缀长度 = max(密码长度/2, 2)，弹窗标题「双签验证」，正文点名成员与被删的是最后一枚 (2126-2134)",
+        "输入 hasPrefix(mask) 才执行；不符弹「双签未通过 / 前缀不符, 删除已取消。」(2136-2146)；通过时顺手清空剪贴板 (2139)",
+        "非最后一枚、或最后一枚但本机没有可用密码 → 仍走 confirmDestructive（后者文案升级：删掉后此人两种凭证都没了）(2117-2124)",
+        "执行：batchU32 越界中止 → ensureConnected → fpDelete（15）→ addToBin → delFp → flashReceipt + toast「N 天内可找回的只是这条档案, 开门要本人到锁前重录」(2632-2653)",
+        "删除中显示「删除中…」并隐藏按钮 (2584-2588)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2104,
+          "symbol": "fpDoubleSignCheck"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2129,
+          "symbol": "fpDoubleSignCheck",
+          "note": "双签正文"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2643,
+          "symbol": "FpDetailStudio.delete",
+          "note": "fpDelete 15"
+        }
+      ],
+      "tags": [
+        "破坏性",
+        "安全"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.bin.header",
+      "parentKey": "credential.bin",
+      "domain": "credential",
+      "level": 3,
+      "name": "容量头行与下次自动清理",
+      "kind": "data",
+      "summary": "回收站顶部显示当前条数与「下次自动清理」日期，让保留期可预期。",
+      "details": [
+        "CredentialOrg.binHeader 返回 (count, nextClean)，nextClean = 最老条目时间 + 保留天数 (102-116)",
+        "显示「N 条」加粗 + 「下次自动清理 M月d日」小字，空间不足时缩字号 (105-115)",
+        "保留期默认 30 天；页脚说明「彻底删除不可找回。保留期可在 设置-家人与钥匙-凭证整理 调整。」(232)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 102, "symbol": "CredBinView", "note": "binHeader"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 110, "symbol": "CredBinView", "note": "下次自动清理"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 232, "symbol": "CredBinView", "note": "保留期可调"}
+      ],
+      "tags": ["回收站"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.bin.filter",
+      "parentKey": "credential.bin",
+      "domain": "credential",
+      "level": 3,
+      "name": "来源过滤与搜索",
+      "kind": "setting",
+      "summary": "按删除来源六档过滤（全部 + 五档来源，含「无主隔离」），并可搜索密码/指纹/备注。",
+      "details": [
+        "档名 = 「全部」+ CredBinSource.allCases 的 label，共 6 枚胶囊；容器用 FlowLayout 换行而不是横向滚动（后几枚不会被藏起来）(122-147)",
+        "点击 source = i-1（-1 = 全部）并 tick 触感 (130-133)",
+        "搜索框「搜索已删项」，按「密码 #alias」/ 指纹名 / 密码备注 匹配（大小写不敏感）(150, 262-272)",
+        "从凭证页带词进来时补一句「这词是从凭证页的搜索带进来的, 要改要清都在这里。」(153-159)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 122, "symbol": "CredBinView", "note": "六档来源"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 130, "symbol": "CredBinView", "note": "过滤点击"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 150, "symbol": "CredBinView", "note": "搜索框"}
+      ],
+      "tags": ["回收站", "筛选"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.bin.row",
+      "parentKey": "credential.bin",
+      "domain": "credential",
+      "level": 3,
+      "name": "已删行（剩余天数/停用便签）",
+      "kind": "state",
+      "summary": "每条显示标题、来源、剩余可恢复天数，并回显「当初为什么被停用」。",
+      "details": [
+        "标题 + 来源 StatusPill + 「剩 N 天」/「已过期」（剩余 ≤3 天转 warn 色）(289-300)",
+        "密码行追加「到期时间 · 归属 X（空=无）」」(301-305)",
+        "停用原因便签：disableMarkText 显示原因 + 时刻 + 来源路径；不是本 App 停用的条目不显示（不编造）(307-319)",
+        "剩余天数 = (e.at 秒 + 保留天数×86400 - now) / 86400 向下取整 (371-375)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 286, "symbol": "binRow"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 296, "symbol": "binRow", "note": "剩余天数"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 307, "symbol": "binRow", "note": "停用原因便签"}
+      ],
+      "tags": ["回收站"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.bin.restore",
+      "parentKey": "credential.bin",
+      "domain": "credential",
+      "level": 3,
+      "name": "一键恢复 / 恢复需重新下发 / 副本",
+      "kind": "action",
+      "summary": "7 天窗口内一键恢复原条；超期只能「恢复 (需重新下发)」且密码条禁用；另可恢复成副本。",
+      "details": [
+        "按钮文案由 withinRecoverWindow 决定：「一键恢复」或「恢复 (需重新下发)」，后者对密码条目 disabled（指纹无锁端窗口概念，始终可还原台账）(322-329)",
+        "恢复调 CredentialOrg.restoreBin(asCopy:false)，把其返回原文直接当回执（里面会说明是否排了重新下发）(377-383)",
+        "「副本」调 restoreBin(asCopy:true)，原条保留、复制出一条 (330-332)",
+        "恢复可能触发 504 重新下发排队；回执不写死「已恢复」，由数据层说清"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 322, "symbol": "binRow", "note": "恢复窗口判定"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 330, "symbol": "binRow", "note": "副本"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 382, "symbol": "restore", "note": "restoreBin 回执"}
+      ],
+      "tags": ["回收站", "恢复"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.bin.group-restore",
+      "parentKey": "credential.bin",
+      "domain": "credential",
+      "level": 3,
+      "name": "整组还原（按删除批次）",
+      "kind": "action",
+      "summary": "同一次级联删除（删成员/批量停用/离职清除）的条目带同一个 batchId，可一次整批还原，含被筛选隐藏的那些。",
+      "details": [
+        "只在 restoreGroup.count > 1 时出现「整组还原 N 条」(189-191)",
+        "作用域 = 当前列出条目所属 batchId 的全部回收站条目 + 无批次号的列出条目自身 (274-283)",
+        "逐条 restoreBin 后折叠重复回执并全部展示（有锁端补发排队、值已失效等分支都各自说清）(199-207)",
+        "当整批比当前列出的多，补一句「按删除批次归组: 上面筛选没列出的同批条目也会一并还原。」(213-218)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 191, "symbol": "CredBinView", "note": "整组还原"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 278, "symbol": "restoreGroup"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 200, "symbol": "CredBinView", "note": "restoreBin 逐条"}
+      ],
+      "tags": ["回收站", "批量"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.bin.purge",
+      "parentKey": "credential.bin",
+      "domain": "credential",
+      "level": 3,
+      "name": "彻底删除（生物识别门槛）",
+      "kind": "flow",
+      "summary": "回收站里彻底删除单条要过生物识别；设备没有或没通过则退回二次确认，绝不静默执行。",
+      "details": [
+        "入口：行内「彻底删除」按钮或右滑 xmark.bin，都设 pendingPurge 触发 confirmationDialog「彻底删除?」(336-346)",
+        "「验证后彻底删除」→ CredentialOrg.guardedPurge（LAContext + canEvaluatePolicy，与安全中心同一判据）(350-364)",
+        "不可用/失败 → onDeniedPresentFallback 弹 confirmDestructive「生物识别未通过，或这台设备没有可用的生物识别。仍要彻底删除这一条?」并要求再点一次 (356-360)",
+        "message 写明「彻底删除不可找回。若删的是指纹, 成员需到锁前重新录入。」(366-368)",
+        "成功回执「已彻底删除 (指纹无法再录入; 密码值可再生成)」(361)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 336, "symbol": "binRow", "note": "彻底删除按钮"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 346, "symbol": "binRow", "note": "confirmationDialog"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 354, "symbol": "binRow", "note": "guardedPurge"}
+      ],
+      "tags": ["破坏性", "安全"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.bin.clear",
+      "parentKey": "credential.bin",
+      "domain": "credential",
+      "level": 3,
+      "name": "清空回收站",
+      "kind": "action",
+      "summary": "一次清掉全部已删条目，同样先生物识别，失败退回二次确认；空回收站会明说而不是没反应。",
+      "details": [
+        "「清空回收站」destructive 按钮 (222-225)",
+        "空时 toast「回收站已经是空的」并 return（旧实现静默 return）(385-390)",
+        "非空：guardedPurge(ids: 全部, reason: 彻底删除回收站 N 条)，失败回退 confirmDestructive「彻底清空回收站 … 不可找回 (指纹需到锁前重新录入)」(395-401)",
+        "成功 toast「已清空回收站」+ 记 Milestones.recordOrganize (402-405)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 222, "symbol": "CredBinView", "note": "清空按钮"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 390, "symbol": "purgeAll", "note": "空态提示"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 395, "symbol": "purgeAll", "note": "guardedPurge"}
+      ],
+      "tags": ["破坏性", "安全"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.bin.resurrect",
+      "parentKey": "credential.bin",
+      "domain": "credential",
+      "level": 3,
+      "name": "删除后仍出现同类开门（362）",
+      "kind": "diagnostic",
+      "summary": "若删除之后锁日志里仍有同类凭证开门，给一条警告，并同屏说明这是类型级推断、不是锁内清单。",
+      "details": [
+        "RecordSearch.resurrectionHints(mac) 非空才出现段「删除后仍出现同类开门」(162-176)",
+        "每条：「「X」之后仍有 N 次密码/临时码/指纹开门」(166)",
+        "同屏写明局限：协议没有「读取锁内凭证清单」的命令，这是按凭证类型的推断；比较用锁自己记的时间，锁钟未校准时会有偏差；要确认请在锁键盘上试或逐条删除 (169)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 162, "symbol": "CredBinView", "note": "复活提示段"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 166, "symbol": "CredBinView", "note": "提示行文案"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 169, "symbol": "CredBinView", "note": "推断局限说明"}
+      ],
+      "tags": ["推断", "诊断"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.history.list",
+      "parentKey": "credential.history",
+      "domain": "credential",
+      "level": 3,
+      "name": "有快照凭证索引",
+      "kind": "data",
+      "summary": "只列有历史的密码与指纹，行尾标版本数；一条都没有时说明留档时机与配额。",
+      "details": [
+        "密码行显示 displayPwd +「N 版」；指纹行显示「指纹「名」」+「N 版」(417-451)",
+        "点行 push CredHistoryView(kind:key:) (421-423, 437-439)",
+        "空态「还没有快照。改动密码值 / 备注 / 归属 / 改期时会自动留档, 每凭证保留 X 版。」(452-459)",
+        "配额来自 CredentialOrg.quota(mac)，默认 10 版（设置里 3~30 可调）(496)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 419, "symbol": "CredHistoryListView", "note": "有快照段"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 429, "symbol": "CredHistoryListView", "note": "N 版"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 455, "symbol": "CredHistoryListView", "note": "空态"}
+      ],
+      "tags": ["快照"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.history.snap",
+      "parentKey": "credential.history",
+      "domain": "credential",
+      "level": 3,
+      "name": "版本行（自动还原点/星标/相对时间）",
+      "kind": "data",
+      "summary": "每版显示版本号、说明、相对时间与改动字段着色，自动还原点置顶，可星标保护。",
+      "details": [
+        "排序：auto 的排在前，其余按 version 降序 (510-517)",
+        "行首「自动还原点」pill（flag.fill）(523-525)",
+        "标题「vX · 说明」+ 相对时间 s.relTime (526-548)",
+        "星标按钮切换 s.starred 并 saveHistory 回写，storeTick 触发重算（否则看起来没生效）(531-544, 476-477)",
+        "footer 三条规则：自动还原点（批量操作前）置顶加标记；星标版不受配额淘汰；恢复不覆盖、生成「恢复自 vX」新档 (500)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 510, "symbol": "snaps", "note": "排序"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 523, "symbol": "snapRow", "note": "自动还原点"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 538, "symbol": "snapRow", "note": "星标"}
+      ],
+      "tags": ["快照"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.history.diff",
+      "parentKey": "credential.history",
+      "domain": "credential",
+      "level": 3,
+      "name": "看差异与对比基线",
+      "kind": "action",
+      "summary": "任选一版作为对比基线逐字段着色，再点同一颗取消基线回到「与上一版比」。",
+      "details": [
+        "按钮在「看差异」与「取消基线」之间切换；置空即回默认 (572-582)",
+        "基线钉在别版时，行上写「对比基线已钉在 vX」(550-554)",
+        "diff 着色：del 红 / add 绿 / 其它（修改）黄，文案「删去 X」「新增 X」「旧 → 新」(556-570, 605-611)",
+        "prevOf 在基线等于本行时退回上一版，避免 diff(自己,自己) 全 same 导致整块空白 (612-619)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 576, "symbol": "snapRow", "note": "看差异/取消基线"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 557, "symbol": "snapRow", "note": "逐字段 diff"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 616, "symbol": "prevOf", "note": "基线回退"}
+      ],
+      "tags": ["快照", "diff"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.history.preview",
+      "parentKey": "credential.history",
+      "domain": "credential",
+      "level": 3,
+      "name": "只读回看某版（493）",
+      "kind": "state",
+      "summary": "把某版内容以只读摘要段展示在顶部，不动数据。",
+      "details": [
+        "「回看此版」/「退出预览」切换 preview 版本 (583-585)",
+        "顶部插段「只读预览 vX」，内容为 CredentialOrg.summaryText(of:) (620-633)",
+        "同段补一句「顶栏「回到此版」= 按此版生成新档, 不覆盖历史。」(628)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 583, "symbol": "snapRow", "note": "回看此版"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 624, "symbol": "previewSection", "note": "只读预览"}
+      ],
+      "tags": ["快照"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.history.restore",
+      "parentKey": "credential.history",
+      "domain": "credential",
+      "level": 3,
+      "name": "恢复到 vX（生成新档）",
+      "kind": "action",
+      "summary": "按某版内容生成一个「恢复自 vX」的新版本，不覆盖历史；密码会顺带排一次重新下发。",
+      "details": [
+        "按钮「恢复到 vX」→ CredentialOrg.restore(mac, kind:key:from:) 返回附加说明 (589-596)",
+        "toast「已恢复 vX, 生成新版本」+ 附加说明（含「锁端那条要重新下发才生效」）(593-594)",
+        "恢复后 reloadTick 自增触发列表重查 (595, 635-636)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 589, "symbol": "snapRow", "note": "恢复到 vX"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 593, "symbol": "snapRow", "note": "CredentialOrg.restore"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 636, "symbol": "reloadCenter"}
+      ],
+      "tags": ["快照", "恢复"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.calendar.grid",
+      "parentKey": "credential.calendar",
+      "domain": "credential",
+      "level": 3,
+      "name": "月历网格与到期角标",
+      "kind": "data",
+      "summary": "7 列月历按周起点轮转表头，每个有到期的日子右上角标条数，今天与选中日另有高亮。",
+      "details": [
+        "表头顺序由 WeekCal.calendar.firstWeekday 轮转，与 monthCells 的 lead 计算同源（否则整体错一天）(715-723, 763)",
+        "前置空位 + 1...当月天数 + 补齐到整周 (760-771)",
+        "有到期：warn 实心胶囊显示条数，前景用 onSem (735-743)",
+        "今天用 accentText 高亮；选中日淡底圆角 (728-751)",
+        "点格切换 picked（再点取消）并回调 onPick (730-732)；进入页面清空 picked (712)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 651, "symbol": "CredCalendarView", "note": "monthDeadlines"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 735, "symbol": "dayCell", "note": "到期角标"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 720, "symbol": "weekdayHeaders", "note": "周起点同源"}
+      ],
+      "tags": ["到期", "月历"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.calendar.day",
+      "parentKey": "credential.calendar",
+      "domain": "credential",
+      "level": 3,
+      "name": "点日查看当日到期清单",
+      "kind": "action",
+      "summary": "选中某天后，下方列出当日到期凭证（名称 + 到期标签），并同时给一句 toast 汇总。",
+      "details": [
+        "段头「M月d日 到期 (N)」，逐条 displayPwd + expiryLabel (685-705)",
+        "onPick 在凭证页 pickDay 里 toast「当日到期 N 条: #a #b …」，超过 6 个用省略号 (1800-1803)",
+        "当天无到期则不显示清单段（只有角标为 0 的格子）(687)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 685, "symbol": "CredCalendarView", "note": "当日清单"},
+        {"file": "App/UI/CredentialsView.swift", "line": 1800, "symbol": "pickDay", "note": "toast 汇总"}
+      ],
+      "tags": ["到期"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.organize.advice",
+      "parentKey": "credential.organize",
+      "domain": "credential",
+      "level": 3,
+      "name": "建议类型与计数",
+      "kind": "data",
+      "summary": "五类建议按台账现算：过期、重复值、无归属、回收站可清、某成员临时码全部过期；空时显示台账干净。",
+      "details": [
+        "过期 N 条：pwdState==2 且未归档 (903-907)",
+        "重复值 N 组：同一明文出现 >1 次（未归档）(908-914)",
+        "无归属 N 条：owner 为空 (915-919)",
+        "回收站 N 条：bin(mac) 计数，副标题写「超过 X 天保留期将自动清除」(920-924)",
+        "成员级：某成员名下临时码全部已过期 → 「归属 X 的 N 张临时码已全部过期」，最多 3 条 (925-942)",
+        "空态「没有待整理的项, 台账很干净。」+ checkmark.seal (796-805)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 794, "symbol": "CredOrganizeView", "note": "advice 取数"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 806, "symbol": "CredOrganizeView", "note": "建议行遍历"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 796, "symbol": "CredOrganizeView", "note": "空态"}
+      ],
+      "tags": ["整理"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.organize.apply",
+      "parentKey": "credential.organize",
+      "domain": "credential",
+      "level": 3,
+      "name": "建议落地（预勾选 / 直接停用）",
+      "kind": "flow",
+      "summary": "成员级建议直接执行停用；其余按建议集合算出 alias 后带着预勾选回到凭证列表的多选态。",
+      "details": [
+        "「回收站 N 条」是 NavigationLink 直达回收站 (807-810)；其余是 Button 调 apply (812)",
+        "memberExpired → 过滤该成员「临时码 + 已过期 + 未归档」→ CredentialOrg.batchDisable → toast「已停用 N 张过期码并收进回收站」或「没有可停用的过期码」(876-885)",
+        "其余按 action 算集合：expired=pwdState 2；dups=同值组去重后的全员；noowner=owner 为空（均排除归档）(891-904)",
+        "集合为空 → toast「这条建议当前没有可勾选的条目」并 onDone (905-909)",
+        "有集合 → app.pendingCredSelect = ids、toast「已勾好 N 条, 回列表继续」、onDone()，再 onClose() 收整张 sheet 或 dismiss 回到上一层 (910-914)",
+        "凭证页 consumeCredSelect：关掉排序档、进编辑模式、把 ids 灌进 selPwds (295-302)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 872, "symbol": "CredOrganizeView", "note": "apply"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 910, "symbol": "CredOrganizeView", "note": "pendingCredSelect"},
+        {"file": "App/UI/CredentialsView.swift", "line": 295, "symbol": "consumeCredSelect", "note": "预勾选落地"}
+      ],
+      "tags": ["整理", "批量"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.queue.row",
+      "parentKey": "credential.queue",
+      "domain": "credential",
+      "level": 3,
+      "name": "队列行与三步步条",
+      "kind": "state",
+      "summary": "每条队列项显示状态、标题与「待下发 → 已下发 → 锁端确认」三段进度，失败可单条重试。",
+      "details": [
+        "状态 pill：已下发(ok)/失败(danger)/待下发(warn)；行内 busy 时显示 mini ProgressView (948-957, 1024-1037)",
+        "三步步条：只有 state==1 才把三档都画成完成绿；其余保持 灰/黄（旧实现取反导致「没发出去也绿」已修）(958-967, 1039-1049)",
+        "attempt>0 时显示「第 N 次尝试 · MM-dd HH:mm」(974-978)",
+        "空态：「没有待处理项。停用/删除/延期操作在锁端未连接时会自动记入这里。」(931-941)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 944, "symbol": "CredQueueView", "note": "段头"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 964, "symbol": "CredQueueView", "note": "三步步条"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 931, "symbol": "CredQueueView", "note": "空态"}
+      ],
+      "tags": ["容错"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.queue.retry",
+      "parentKey": "credential.queue",
+      "domain": "credential",
+      "level": 3,
+      "name": "单条重试",
+      "kind": "action",
+      "summary": "对一条队列项重新连锁并下发对应命令，成功标记完成并附锁端确认说明。",
+      "details": [
+        "入口先钉住 mac（空则「未选择门锁」），busy 互斥 (1050-1058)",
+        "ensureConnected → CredentialOrg.sendQueued（del_pwd→0A 删；del_fp→15；period→0B；restore→0A 加）(1062-1066)",
+        "成功 markQueue(done, note: 标题 + 锁端确认 + 归位提示)，toast「X 已下发」(1067-1068)",
+        "失败 markQueue(failed)，toast「重试失败: …」(1069-1072)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1050, "symbol": "retry"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1066, "symbol": "retry", "note": "sendQueued"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1070, "symbol": "retry", "note": "失败标记"}
+      ],
+      "tags": ["锁端读写", "容错"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.queue.retry-all",
+      "parentKey": "credential.queue",
+      "domain": "credential",
+      "level": 3,
+      "name": "全部重试（按序、互斥）",
+      "kind": "action",
+      "summary": "按队列顺序逐条重试全部项，互斥开关防止连点开出并发下发。",
+      "details": [
+        "retryAllRunning 自旋锁 + 按钮 disabled，避免多个 Task 对同一队列重复下发 (925, 984-988, 1006)",
+        "循环：busy=item.id → ensureConnected → applyItem（sendQueued）→ markQueue(done/failed)，每项单独错误处理 (989-1001)",
+        "结束 toast「已逐条重试 N 项」(1003)",
+        "applyItem 只是 sendQueued 的最小包装（旧注释里提到的 applyItem 曾全仓未定义）(1081-1083)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 984, "symbol": "CredQueueView", "note": "全部重试"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 986, "symbol": "CredQueueView", "note": "互斥"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1082, "symbol": "applyItem"}
+      ],
+      "tags": ["容错", "批量"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.extend.range",
+      "parentKey": "credential.extend",
+      "domain": "credential",
+      "level": 3,
+      "name": "延期区间与变更清单",
+      "kind": "setting",
+      "summary": "选生效日与新到期日（不早于生效），逐条预览每条会从哪个日期改到哪个日期。",
+      "details": [
+        "「生效」DatePicker 只到日粒度；「延期至」用 in: from... 保证不早于生效 (1108-1109)",
+        "说明「将一次性改写所选密码的过期字段并列出变更清单; 锁端改期记为「待下发」。」(1110)",
+        "「变更清单」段：每行 #alias + 「原到期 → 新日期」，原到期用 expiryLabel(verb:false) 读 (1115-1130)",
+        "默认区间 from=今天、to=今天+30 天 (1099-1100)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1108, "symbol": "CredExtendView", "note": "生效"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1109, "symbol": "CredExtendView", "note": "延期至 in: from..."},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1115, "symbol": "CredExtendView", "note": "变更清单"}
+      ],
+      "tags": ["批量"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.extend.apply",
+      "parentKey": "credential.extend",
+      "domain": "credential",
+      "level": 3,
+      "name": "执行统一延期",
+      "kind": "service",
+      "summary": "一次改写所选密码的本机到期时间并为每条排一条锁端改期（0B）待下发。",
+      "details": [
+        "「延期并登记待下发」→ CredentialOrg.batchExtend(mac, aliases, from, to)：逐条留自动还原点快照、DB.setPwdPeriod、enqueue(kind: period) (1151)",
+        "toast「已改写 N 条有效期, 锁端改期待下发」+ 记里程碑 + onDone() 回凭证页 (1153-1155)",
+        "真实生效应等队列补发（0B）；本机立即生效"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1132, "symbol": "CredExtendView", "note": "执行按钮"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1151, "symbol": "apply", "note": "batchExtend"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1153, "symbol": "apply", "note": "回执"}
+      ],
+      "tags": ["锁端读写", "批量"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.transfer.target",
+      "parentKey": "credential.transfer",
+      "domain": "credential",
+      "level": 3,
+      "name": "目标成员选择",
+      "kind": "setting",
+      "summary": "单选目标成员或「解除归属」，选项内联展开全部成员。",
+      "details": [
+        "段头「批量移交 (N 条)」，N = 密码数 + 指纹数 (1172)",
+        "Picker(inline)：首项「解除归属」tag nil，其后每人一条 (1173-1179)",
+        "说明「批量改归属并各写一条本地记录; 锁端无归属字段, 移交只作用于本机台账。」(1180)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1172, "symbol": "CredTransferView", "note": "段头"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1173, "symbol": "CredTransferView", "note": "Picker"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1180, "symbol": "CredTransferView", "note": "口径说明"}
+      ],
+      "tags": ["归属"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.transfer.apply",
+      "parentKey": "credential.transfer",
+      "domain": "credential",
+      "level": 3,
+      "name": "确认移交",
+      "kind": "action",
+      "summary": "执行批量改归属，回执写清条数与目标（成员名或「无归属」）。",
+      "details": [
+        "「确认移交」→ CredentialOrg.batchTransfer 返回条数 (1187)",
+        "toast「已移交 N 条 → 成员名 / → 无归属」+ 记里程碑 + onDone() (1188-1190)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1186, "symbol": "CredTransferView", "note": "确认按钮"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1187, "symbol": "CredTransferView", "note": "batchTransfer"}
+      ],
+      "tags": ["归属", "批量"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.disable.summary",
+      "parentKey": "credential.disable",
+      "domain": "credential",
+      "level": 3,
+      "name": "停用摘要（影响面）",
+      "kind": "state",
+      "summary": "确认页先算清影响：哪些成员、各多少条、密码与指纹清单，再加一句不可逆说明。",
+      "details": [
+        "「停用摘要」段：受影响成员头像列（名字首字）+「影响 N 位成员」(1247-1267)",
+        "「密码 X 条 · 指纹 Y 条」+ 逐条明细：密码「#alias · 倒计时」、指纹「「名」」，各取前 6 条 (1268-1285, 1380-1385)",
+        "ownerCounts 按名册顺序出（不用 Set，避免头像列左右跳）(1225-1232)",
+        "不可逆说明 danger 色：「停用后本机台账移除, 锁端删除记为「待下发」— 7 天内可一键恢复, 超期需重新录入/生成。」(1288-1291)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1247, "symbol": "CredDisableSheet", "note": "摘要段"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1263, "symbol": "CredDisableSheet", "note": "影响 N 位成员"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1288, "symbol": "CredDisableSheet", "note": "不可逆说明"}
+      ],
+      "tags": ["破坏性"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.disable.reason",
+      "parentKey": "credential.disable",
+      "domain": "credential",
+      "level": 3,
+      "name": "停用原因四选一（必填）",
+      "kind": "setting",
+      "summary": "必须选「疑似泄露/换码/人员变动/其他」之一才能确认停用；原因只写本机审计，不发给锁。",
+      "details": [
+        "四枚原因芯片，选中反色 + 加粗 (1220-1221, 1293-1311)",
+        "未选时提示「先选一个停用原因才能继续 — 原因只写进本机审计与运行日志，不会发给门锁。」(1314-1318)",
+        "确认按钮文案随状态变：「先选择停用原因」/「确认停用 (N 条)」，reason 为空时 disabled 且 opacity 0.45 (1357-1364)",
+        "无障碍提示区分两种状态（需先选原因 / 点按即执行）(1365-1367)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1294, "symbol": "CredDisableSheet", "note": "原因芯片"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1315, "symbol": "CredDisableSheet", "note": "未选提示"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1358, "symbol": "CredDisableSheet", "note": "按钮文案"}
+      ],
+      "tags": ["合规"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.disable.feed",
+      "parentKey": "credential.disable",
+      "domain": "credential",
+      "level": 3,
+      "name": "写入成员动态开关（367）",
+      "kind": "setting",
+      "summary": "可选把这次停用按归属分别写进各成员动态；默认关，避免未经确认往别人档案写东西。",
+      "details": [
+        "默认 writeToFeed=false (1219)；仅在存在可归属成员时出现 (1322-1325)",
+        "标签「写入该成员动态 (影响 N 位成员, 各写自己名下的条数)」，有无归属条目时追加「另有 N 条无归属, 不进任何人的动态」(1239-1242)",
+        "开：按成员各写一条 SensitiveLedger（target 记该成员名下条数）；关：写一条汇总流水；两种形态绝不双写（否则一次停用会被数成两次）(1319-1338)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1219, "symbol": "writeToFeed", "note": "默认关"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1323, "symbol": "CredDisableSheet", "note": "VariantToggle"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1334, "symbol": "CredDisableSheet", "note": "SensitiveLedger 按成员写"}
+      ],
+      "tags": ["审计"],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.disable.commit",
+      "parentKey": "credential.disable",
+      "domain": "credential",
+      "level": 3,
+      "name": "确认停用（日志/流水/便签）",
+      "kind": "service",
+      "summary": "确认后写运行日志、敏感流水与逐条停用便签，再交给凭证页执行真正的停用与入回收站。",
+      "details": [
+        "先 app.lock.log(info, 停用 N 条凭证 · 原因 X)：只记条数与原因，口令明文与指纹特征绝不进日志 (1331)",
+        "敏感流水按 writeToFeed 形态写 (1332-1338)",
+        "逐条 markDisabled 写 361 便签；属主在 MemberHub.proxyNames 里的条额外标「本机批量停用 · 管理员代操作」(1342-1354)",
+        "onDone() → 凭证页 finishDisable 执行 batchDisable，然后 dismiss 本页 (1355-1356)",
+        "「取消」只 dismiss，绝不触发 onDone（否则取消也会停用）(1373-1376)"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1331, "symbol": "CredDisableSheet", "note": "lock.log"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1347, "symbol": "CredDisableSheet", "note": "markDisabled"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1375, "symbol": "CredDisableSheet", "note": "取消只 dismiss"}
+      ],
+      "tags": ["审计", "破坏性"],
+      "status": "implemented"
+    },
+    {
+      "key": "protocol.cmd0a",
+      "parentKey": "protocol",
+      "domain": "protocol",
+      "level": 3,
+      "name": "0A 同步密码（加/删/改写同一帧）",
+      "kind": "protocol",
+      "summary": "密码类写入的唯一落点：0A 一帧同时表达「删哪个槽 + 加什么码 + 生效/到期」，本 App 的添加再补一条 0B 设期。",
+      "details": [
+        "调用链：UI 调 LockService.pwdAdd / pwdModify / pwdDelete → ZKCmdBuilder.cmd0ASyncPwd（0A）→ 响应 KLV#04 取 alias（LE 2 字节）",
+        "添加：pwdAdd 先发 0A（delAlias: 0 = 本次不删）拿别名，再补 0B 设有效期；0B 失败只记 warn，不影响添加成功（调用点：CredentialStudio 1256）",
+        "改写：pwdModify 用 delAlias = 原别名 + 新码，锁端若换槽返回新 alias，UI 随后删旧号写新号（调用点：CredentialsView 2187、CredentialStudio 1240/2066）",
+        "删除：pwdDelete 发 0A 且 delAlias = 目标别名；清空全部用 delAlias = 0xFFFF（LockService.pwdClear）",
+        "0 是「不指定」保留值：LockService 对 pwdDelete/pwdModify 收到 0 直接抛错，避免「回包成功但锁里没删」；本页 guard 见 protocol.cred-guard"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialsView.swift", "line": 2302, "symbol": "doDeletePwd", "note": "pwdDelete → 0A 删"},
+        {"file": "App/UI/CredentialsView.swift", "line": 2187, "symbol": "modifyPwd", "note": "pwdModify → 0A 改写"},
+        {"file": "App/UI/CredentialStudio.swift", "line": 1256, "symbol": "PwdStudio.submit", "note": "pwdAdd → 0A 加"}
+      ],
+      "tags": ["锁端读写", "协议"],
+      "status": "implemented"
+    },
+    {
+      "key": "protocol.cmd0b",
+      "parentKey": "protocol",
+      "domain": "protocol",
+      "level": 3,
+      "name": "0B 设置密码有效期",
+      "kind": "protocol",
+      "summary": "只改有效期不改值的一条命令；改期、统一延期、续期的真正生效都靠它。",
+      "details": [
+        "调用链：LockService.pwdExpire → ZKCmdBuilder.cmd0BSyncPwdExpire（0B），参数 alias + from + to",
+        "本页三个来源：单条改期（CredentialsView 2226）、统一延期失败入队后补发（kind=period）、原码续期失败入队后补发",
+        "添加链里 0B 是第二步，失败不阻断添加（LockService 内 catch 只记 warn）",
+        "长期码的 to 固定 2118-01-01 00:00:00（UI 侧 periodText 用 2118 前缀判长期）"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialsView.swift", "line": 2226, "symbol": "doResetPwdPeriod", "note": "pwdExpire → 0B"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1151, "symbol": "CredExtendView.apply", "note": "batchExtend 入队 period"},
+        {"file": "App/UI/CredentialStudio.swift", "line": 2081, "symbol": "renewExpired", "note": "续期失败入队 period"}
+      ],
+      "tags": ["锁端读写", "协议"],
+      "status": "implemented"
+    },
+    {
+      "key": "protocol.cmd13",
+      "parentKey": "protocol",
+      "domain": "protocol",
+      "level": 3,
+      "name": "13 录入指纹（一次请求多响应）",
+      "kind": "protocol",
+      "summary": "发一次 13，锁在每次有效按压时回一帧（序号/特征号/批次号/下一次超时），收满 8 次干净按压才继续。",
+      "details": [
+        "调用链：UI 「开始录入」→ LockService.fpStart(times: 8) → ZKCmdBuilder.cmd13AddFp（13），对外用 sessionToken 注入帧",
+        "帧字段：KLV 0x04 序号 / 0x05 特征号 / 0x06 批次号 / 0x07 下一次超时；rc=23 指纹模糊不计数、rc=24 录入超时锁已退出",
+        "判定：干净按压 = rc 为 0 或缺省且序号 > 0；只有收满 times 次才算完成，锁从不发「结束帧」",
+        "时间窗：首帧 8 秒、两次按压之间 16 秒（对齐锁端 15 秒按压窗口），总窗口 150 秒；超时如实报「锁已结束录入」",
+        "UI 的 8 个圆点由 onPress 回调逐帧点亮（不是等整次调用返回）"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialStudio.swift", "line": 2497, "symbol": "FpStudio.start", "note": "fpStart(times: 8)"},
+        {"file": "App/UI/CredentialStudio.swift", "line": 2500, "symbol": "FpStudio.start", "note": "onPress 逐帧点亮"},
+        {"file": "App/UI/CredentialStudio.swift", "line": 2504, "symbol": "FpStudio.start", "note": "不满 8 次不写入"}
+      ],
+      "tags": ["锁端读写", "协议"],
+      "status": "implemented"
+    },
+    {
+      "key": "protocol.cmd14",
+      "parentKey": "protocol",
+      "domain": "protocol",
+      "level": 3,
+      "name": "14 确认启用指纹批次",
+      "kind": "protocol",
+      "summary": "用 13 帧里拿到的批次号发 14，真正启用这批指纹并写入有效期，是不可逆点。",
+      "details": [
+        "调用链：LockService.fpConfirm(batchNumber, validFrom, validTo) → ZKCmdBuilder.cmd14FpConfirm（14）",
+        "本页写死有效期 2010-01-01 ~ 2118-01-01（长期）",
+        "不可逆：拿不到有效批次（batch <= 0）直接抛「未拿到有效指纹批次, 请重新录入」，不调 14",
+        "关页取消（enrollTask.cancel）后先判 Task.isCancelled，不越过这一步；台账也要到第 3 步命名归属后才写"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialStudio.swift", "line": 2517, "symbol": "FpStudio.start", "note": "fpConfirm → 14"},
+        {"file": "App/UI/CredentialStudio.swift", "line": 2508, "symbol": "FpStudio.start", "note": "无有效批次中止"},
+        {"file": "App/UI/CredentialStudio.swift", "line": 2513, "symbol": "FpStudio.start", "note": "取消不越过"}
+      ],
+      "tags": ["锁端读写", "协议"],
+      "status": "implemented"
+    },
+    {
+      "key": "protocol.cmd15",
+      "parentKey": "protocol",
+      "domain": "protocol",
+      "level": 3,
+      "name": "15 删除指纹",
+      "kind": "protocol",
+      "summary": "按批次号删除锁内一枚指纹；本机先做 UInt32 安全转换，越界一律中止而不是发帧。",
+      "details": [
+        "调用链：LockService.fpDelete(UInt32) → ZKCmdBuilder.cmd15DeleteFp（15），参数就是批次号",
+        "UI 侧三处：指纹详情删除、列表滑动删除、批量删除、重录继承的旧枚清理（入队后补发）",
+        "批次号来源不可信（导入备份可能带负数/超上界）⇒ UI 先 batchU32 转换，越界提示「批次号越界 … 台账或备份来源可能损坏」并中止",
+        "删除成功后本机只留档案，开门能力需本人到锁前重录"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialStudio.swift", "line": 2643, "symbol": "FpDetailStudio.delete", "note": "fpDelete → 15"},
+        {"file": "App/UI/CredentialsView.swift", "line": 2330, "symbol": "doDeleteFp", "note": "batchU32 越界中止"},
+        {"file": "App/UI/CredentialsView.swift", "line": 1785, "symbol": "batchDelete", "note": "批量分支同样转换"}
+      ],
+      "tags": ["锁端读写", "协议"],
+      "status": "implemented"
+    },
+    {
+      "key": "protocol.cmd19",
+      "parentKey": "protocol",
+      "domain": "protocol",
+      "level": 3,
+      "name": "19 开关锁端临时密码",
+      "kind": "protocol",
+      "summary": "打开/关闭锁的临时密码能力；必须先 ensureConnected 把目标钉住，成功才写本机状态。",
+      "details": [
+        "调用链：UI 开关 → ensureConnected(mac) → LockService.setZotp(on) → ZKCmdBuilder.cmd19OpenZotp（19）",
+        "顺序不可省：setZotp 本身不带 mac 参数，服务层按当前会话钥成帧；不先钉锁就会「点的是这把锁，命令发到上次连过的那把」",
+        "成功后 DB.saveOtpStatus 落盘；失败 toast「操作失败」并保持开关显示落盘值（不自欺）",
+        "busyKey=otp 期间开关与生成按钮都 disabled"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialsView.swift", "line": 1823, "symbol": "otpSection", "note": "setZotp → 19"},
+        {"file": "App/UI/CredentialsView.swift", "line": 1822, "symbol": "otpSection", "note": "先 ensureConnected 钉锁"},
+        {"file": "App/UI/CredentialsView.swift", "line": 1826, "symbol": "otpSection", "note": "失败分支"}
+      ],
+      "tags": ["锁端读写", "协议"],
+      "status": "implemented"
+    },
+    {
+      "key": "protocol.cmd03",
+      "parentKey": "protocol",
+      "domain": "protocol",
+      "level": 3,
+      "name": "03 读锁端状态（取 zotpPeriod）",
+      "kind": "protocol",
+      "summary": "生成临时码前读锁端状态快照取临时密码窗口周期；连接时也用它的 pid 做身份复核。",
+      "details": [
+        "UI：genOtp 读 DB.readStatus(kc.mac)?.zotpPeriod（分钟），>0 才用，否则回落 30——写死 30 会在锁端窗口不同时必被判错",
+        "底层：DB.readStatus 读的是 LockService.getStatus 的快照（03 状态帧，含 pid/zotpPeriod 等字段）",
+        "连接侧：ensureConnected 连上后先读一次 03 状态，用 pid 与钥匙串登记值比对，不符即断开且不写缓存（防伪造广播持久污染）",
+        "本页可见证据：OTP 生成处读 zotpPeriod；其余为调用 ensureConnected 的各命令入口"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialsView.swift", "line": 1925, "symbol": "genOtp", "note": "readStatus.zotpPeriod"},
+        {"file": "App/UI/CredentialsView.swift", "line": 1822, "symbol": "otpSection", "note": "ensureConnected 读状态"}
+      ],
+      "tags": ["锁端读写", "协议"],
+      "status": "implemented"
+    },
+    {
+      "key": "protocol.cred-guard",
+      "parentKey": "protocol",
+      "domain": "protocol",
+      "level": 4,
+      "name": "0 号槽位与缺字段保护",
+      "kind": "edge",
+      "summary": "别名 0 是「不指定」而不是某条凭证，任何按 alias 下发的路径都必须先拦住它，否则会删错人或静默无操作。",
+      "details": [
+        "pwdDelete/pwdModify 在服务层对 alias <= 0 直接抛错（0 = 协议里的不指定，发出去会回成功码但锁内无变化）",
+        "队列侧：sendQueued 对 del_pwd 缺别名、del_fp 批次越界、period 缺对象都抛错并中止，不再用 ?? 0 兜底（否则会「删 0 号槽」）",
+        "本页对应实现：doDeletePwd/doDeleteFp/batchDelete 都先取安全值再下发；队列重试入口先钉 mac 并校验非空",
+        "添加链的另一半：0A 响应缺 KLV#04 alias 时 pwdAdd 抛错，而不是返回 0（否则台账会记成 0 号并在以后「删除成功」却删不掉）"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialsView.swift", "line": 2302, "symbol": "doDeletePwd", "note": "别名下发前已取台账值"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1066, "symbol": "retry", "note": "sendQueued 统一把关"},
+        {"file": "App/UI/CredentialsView.swift", "line": 1767, "symbol": "batchDelete", "note": "对象已不在台账则中止"}
+      ],
+      "tags": ["协议", "防御"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.cred-seq",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 3,
+      "name": "kf_cseq_ 手动顺序表",
+      "kind": "data",
+      "summary": "每条锁一张手动顺序表，密码存 alias、指纹存 batch，拖动排序与「顺序」按钮都写它。",
+      "details": [
+        "键：CredentialOrg.seqKey(mac) = kf_cseq_ + mac；结构 seq[p] = [alias…]、seq[f] = [batch…]",
+        "写点：拖动排序 commitGroupMove、编辑模式「顺序」、按成员视图段内拖动",
+        "读点：orderedPwds/orderedFps 按位次升序，缺位默认 9999 排尾；置顶段始终在前不参与",
+        "坏表防御：手动序数组存在重复 alias 时用 uniquingKeysWith 取第一个位次，而不是 uniqueKeysWithValues（后者会 trap 整个凭证页）"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialsView.swift", "line": 875, "symbol": "orderedPwds", "note": "读 seq[p]"},
+        {"file": "App/UI/CredentialsView.swift", "line": 1076, "symbol": "commitGroupMove", "note": "写 seq"},
+        {"file": "App/UI/CredentialsView.swift", "line": 889, "symbol": "manualIndex", "note": "重复别名防 trap"}
+      ],
+      "tags": ["数据", "排序"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.cred-star-archive",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 3,
+      "name": "kf_cstar_ 置顶 / kf_carch_ 归档",
+      "kind": "data",
+      "summary": "星标与归档各一张整数集，指纹用 100000 + batch 偏移避免与密码别名撞号；两者都只影响展示层。",
+      "details": [
+        "键：kf_cstar_<mac>、kf_carch_<mac>；值：[Int]，密码存 alias、指纹存 100000 + batch",
+        "星标：toggleStar / setStar（批量置顶用 setStar(true) 而不是 toggle，避免把已置顶的翻下去）",
+        "归档：setArchived / unarchiveAll；归档条不参与当前显示、不进选择集合、不进整理建议，但搜索仍可见",
+        "两者都不改台账、不发锁端命令"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialsView.swift", "line": 871, "symbol": "orderedPwds", "note": "isStarred 分置顶段"},
+        {"file": "App/UI/CredentialsView.swift", "line": 1436, "symbol": "credMenu", "note": "setArchived"},
+        {"file": "App/UI/CredentialsView.swift", "line": 2019, "symbol": "archivedStrip", "note": "指纹 100000+batch"}
+      ],
+      "tags": ["数据"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.cred-bin",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 3,
+      "name": "kf_cbin_ 回收站与保留期",
+      "kind": "data",
+      "summary": "回收站条目存在 kf_cbin_<mac>，含来源枚举与级联批次号；保留期是独立可调键。",
+      "details": [
+        "键：kf_cbin_<mac>；条目字段含 pwd/fp 快照、source、at（秒）、batchId（级联批次）、text",
+        "保留期：kf_cbin_reclaim_days，默认 30，设置页 7~90 步进 7；启动时 sweepReclaim 按它清理",
+        "「7 天一键恢复窗口」是另一条写死的 7 × 86400（withinRecoverWindow），与保留期不是一个东西——UI 文案刻意分开写",
+        "写点：单条停用/彻底删除、批量停用/删除、成员级联、重录继承、诊断无主隔离"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialsView.swift", "line": 2254, "symbol": "disablePwd", "note": "addToBin"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 22, "symbol": "CredCenterView", "note": "bin 计数与保留天数"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 372, "symbol": "daysLeftOf", "note": "保留期换算"}
+      ],
+      "tags": ["数据", "回收站"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.cred-queue",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 3,
+      "name": "kf_cqueue_ 下发队列",
+      "kind": "data",
+      "summary": "离线时的锁端意图队列，逐项记录 kind/state/attempt/lastAt，按锁分开存放。",
+      "details": [
+        "键：kf_cqueue_<mac>；kind ∈ del_pwd / del_fp / period / restore",
+        "state：0 待下发 / 1 已完成 / 2 失败；pendingQueue 只返回 state != 1 的项",
+        "attempt 与 lastAt 支撑「第 N 次尝试 · MM-dd HH:mm」",
+        "多锁各存各的：横条计数与队列页都按当前 mac 取，不串台",
+        "写点：单条停用（del_pwd/del_fp）、统一延期（period）、续期失败（period）、恢复（restore）、重录继承清旧枚（del_fp）"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialsView.swift", "line": 2256, "symbol": "disablePwd", "note": "enqueue del_pwd"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 974, "symbol": "CredQueueView", "note": "attempt/lastAt 展示"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 996, "symbol": "CredQueueView", "note": "markQueue(done)"}
+      ],
+      "tags": ["数据", "容错"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.cred-history",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 3,
+      "name": "kf_chist_ 快照与配额",
+      "kind": "data",
+      "summary": "每凭证一张快照表，改值/改备注/归属/改期都留一档；配额与星标规则决定谁被淘汰。",
+      "details": [
+        "键：kf_chist_<mac>_<kind>_<key>；条目含 version/note/auto/starred/relTime 与内容摘要",
+        "auto=true：批量操作前的自动还原点，历史页置顶加标记",
+        "配额：kf_ccred_quota，默认 10，设置页 3~30 步进 1；星标版不受配额淘汰",
+        "恢复不覆盖：按选中版生成「恢复自 vX」新档",
+        "写点：改密码值、改价效期、改备注、改名（指纹）、改造、原码续期、批量延期"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialStudio.swift", "line": 2198, "symbol": "modifyPwd", "note": "snapshot 修改了密码值"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 496, "symbol": "CredHistoryView", "note": "quota 展示"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 500, "symbol": "CredHistoryView", "note": "三条规则"}
+      ],
+      "tags": ["数据", "快照"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.cred-alert",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 3,
+      "name": "kf_calert_ 五档预警设置",
+      "kind": "data",
+      "summary": "每条密码一套五档开关（7/3/1 天、24/2 小时），任改一档即重排「五档 + 到期时」共六条本地通知。",
+      "details": [
+        "键：kf_calert_<mac>_<kind>_<key>；字段 day/d3/d1/h24/h2",
+        "老包兼容：d3/d1 是后加的键，缺键需按默认值解码（不能直接抛错）",
+        "排程：任开一档就排「到期时」一条；天数档按日历日、小时档按时长，两种口径分开算",
+        "列表侧与详情侧读写同一张键（都走 CredentialOrg.alert/saveAlert），不双存",
+        "通知排期失败只写 os 日志，不假装成功"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialsView.swift", "line": 2434, "symbol": "toggleAlerts", "note": "saveAlert + scheduleAlerts"},
+        {"file": "App/UI/CredentialStudio.swift", "line": 1855, "symbol": "PwdDetailStudio", "note": "详情页同键读写"},
+        {"file": "App/UI/CredentialStudio.swift", "line": 1890, "symbol": "PwdDetailStudio", "note": "五档与到期时通知口径"}
+      ],
+      "tags": ["数据", "通知"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.cred-disable-mark",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 3,
+      "name": "kf_cdisrea_ 停用便签",
+      "kind": "data",
+      "summary": "台账里已经没有这条凭证了，停用原因/时刻/来源路径只能靠这张便签在回收站行回显。",
+      "details": [
+        "键：kf_cdisrea_<mac>；值 [kind:key → {label, at, via}]",
+        "只保留最近 200 条（回溯便签不是第二本台账）",
+        "回显点：回收站行 disableMarkText（台账已无此条，详情卡打不开）",
+        "via 只有本机几条真实路径：本机单条停用 / 本机单条停用 · 管理员代操作 / 本机批量停用（+ 代操作）",
+        "单条停用没有原因四选一，如实记「未填」而不是编一个默认原因"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialsView.swift", "line": 2258, "symbol": "disablePwd", "note": "markDisabled 未填"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 307, "symbol": "binRow", "note": "disableMarkText 回显"},
+        {"file": "App/UI/CredentialCenterView.swift", "line": 1350, "symbol": "CredDisableSheet", "note": "批量代管标注"}
+      ],
+      "tags": ["数据", "审计"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.cred-draft",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 3,
+      "name": "kf_cdraft_ 密码工坊草稿",
+      "kind": "data",
+      "summary": "四步表单的半成品存在本机，退出不丢；提交成功立刻清除。",
+      "details": [
+        "键：kf_cdraft_<mac>；结构 StudioDraft：step/kind/pwd/permanent/fromISO/toISO/owner/useTemplate/note/scene/batch/at",
+        "写点：关闭按钮、下一步通过校验、onDisappear（侧滑/push 退出）",
+        "清除：提交成功后 clearDraft；用户点「丢弃」也清",
+        "不保存的情况：已提交、或还在第 0 步且没填码值"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialStudio.swift", "line": 1191, "symbol": "saveDraft", "note": "StudioDraft 落盘"},
+        {"file": "App/UI/CredentialStudio.swift", "line": 1174, "symbol": "restoreDraft", "note": "回填"},
+        {"file": "App/UI/CredentialStudio.swift", "line": 638, "symbol": "PwdStudio", "note": "onDisappear 留稿"}
+      ],
+      "tags": ["数据", "草稿"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.cred-early-expire",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 3,
+      "name": "kf_cestudy_earlyexp_ 提前失效分钟数",
+      "kind": "data",
+      "summary": "每条临时码一个 0~120 的提前量，只影响本页提示与状态行标注，不改锁端到期。",
+      "details": [
+        "键：kf_cestudy_earlyexp_<mac>_<alias>；值 Int 分钟（Slider 0...120 step 5）",
+        "读取点：详情页提前失效段、状态行 earlyExpiryNote、列表行「提前失效」胶囊判定",
+        "默认 0 表示未设，earlyExpiryNote 返回空串而不是说空话",
+        "到点不做任何自动下发：只在本页挂提醒条 + 状态行标注"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialStudio.swift", "line": 1917, "symbol": "PwdDetailStudio", "note": "Slider 写值"},
+        {"file": "App/UI/CredentialStudio.swift", "line": 1904, "symbol": "PwdDetailStudio", "note": "读值"},
+        {"file": "App/UI/CredentialsView.swift", "line": 1248, "symbol": "credRow", "note": "提前失效胶囊"}
+      ],
+      "tags": ["数据", "本机推断"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.row-height-style",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 3,
+      "name": "凭证行高与临时码显示偏好键",
+      "kind": "data",
+      "summary": "四个显示偏好键决定凭证行长什么样：行高两档、临时码大字、磨砂挡片、遮蔽字符样式。",
+      "details": [
+        "kf_row_h：空=紧凑（行高 44，隐藏副行只留名称与状态）、tall=舒适（60，带副行）；在凭证行读取",
+        "kf_ax_bigotp：临时码大字（largeTitle + monospacedDigit），默认关",
+        "kf_speek_frost（SecKey.frostedOn）：临时码磨砂挡片，默认关；开时长按 0.5 秒才露码",
+        "kf_smask_style（SecKey.maskStyle）：stars 全星 / tail4 留末四位 / 其余圆点，作用于 MaskedDigits"
+      ],
+      "evidence": [
+        {"file": "App/UI/CredentialsView.swift", "line": 1236, "symbol": "credRow", "note": "kf_row_h"},
+        {"file": "App/UI/CredentialsView.swift", "line": 1854, "symbol": "otpGenRow", "note": "kf_ax_bigotp"},
+        {"file": "App/UI/CredentialsView.swift", "line": 1870, "symbol": "otpGenRow", "note": "frostedOn 挡片"}
+      ],
+      "tags": ["数据", "显示"],
+      "status": "implemented"
+    }
+  ],
+  "unresolved": [
+    "App/UI/CredentialsView.swift:56 与 :1960 — 空态「看看它如何工作」只把 showDemo 置真，本文件没有任何 .sheet(isPresented: $showDemo) 或其它呈现者（全文件仅这两处出现该状态），点了没有可见结果；已记为 edge 节点，待确认是漏接线还是演示入口另有承载。",
+    "App/UI/CredentialsView.swift:187 — 无锁空态的「去添加门锁」只把 showAdd 置真并 present AddDeviceView，添加流程本体在 Sheets.swift（不在本 scope），添加成功后的回跳与凭证页刷新无法在这三个文件里确认。",
+    "App/UI/CredentialStudio.swift:474-561 与 :2670 — StudioHome 与 CredStudioEntryView 只是入口；AddPwdView / StartAddFpView（Sheets.swift:594 / :781）与 FpOwnerPicker（FpOwnerPicker.swift:9）不在本侦察兵只读范围，相关弹层内容未展开，仅记录入口参数。",
+    "App/UI/CredentialStudio.swift:1-4 — 文件头注释写「四类凭证（密码/临时码/指纹/OTP）」，但 StudioHome 只列三类 + 说明段；OTP 独立口令（TOTP/静态备份码，数据层有 kf_cotp_t_ / kf_cotp_s_ 键）的 UI 在这三个文件里读不到，无法定性。",
+    "App/UI/CredentialStudio.swift:1030-1064 — 第四步确认卡又用 MaskedDigits 把明文交给组件做二次展示；是否算「明文二次暴露」属产品口径，本轮只记录不改。",
+    "App/UI/CredentialStudio.swift:1311-1534 — TempCodeStudio 的生效/到期只能由四枚快捷档与五场景预设改写，没有逐分的 DatePicker；若产品需要任意起止时刻，这里是缺口。",
+    "App/UI/CredentialsView.swift:1707-1721 — 前缀批量备注走 UIAlertController + UIApplication.topViewController() 呈现；在 sheet 已呈现时是否存在层级遮挡，源码内看不到规避，无法定性。",
+    "App/UI/CredentialStudio.swift:2126-2146 — 双签只比对「任一在用密码的前 max(长度/2, 2) 位」前缀，不校验完整密码；安全强度属产品定义，本轮按源码记录、不下结论。",
+    "App/UI/CredentialCenterView.swift:350-364 —「验证后彻底删除」的真实门槛是生物识别（guardedPurge → LAContext），按钮文案已改；但可用性判定与失败分支在 CredentialOrg.swift，本文件只能看到回退确认这一半。"
+  ],
+  "notes": [
+    "覆盖：三个文件逐行读完（CredentialsView 2523 行 / CredentialStudio 2704 行 / CredentialCenterView 1386 行）；所有证据行号均为本会话 read 实测，file 统一用 App/UI/...。",
+    "命令号来源：UI 调用点 → LockService.pwdAdd/pwdModify/pwdDelete/pwdExpire/fpStart/fpConfirm/fpDelete/setZotp → ZKCmdBuilder.cmd0A / cmd0B / cmd13 / cmd14 / cmd15 / cmd19；命令号在服务层核对，evidence 仍只引用 App/UI 行。",
+    "队列重发映射：del_pwd→0A 删、del_fp→15、period→0B、restore→0A 加；三份历史实现已收进 CredentialOrg.sendQueued 一处，两层 UI 都只是调用点。",
+    "刻意没展开：Sheets.swift 的 AddPwdView/StartAddFpView、FpOwnerPicker.swift、AddDeviceView，以及 CredentialOrg 内部算法；只取阈值/默认值（回收站保留期默认 30 天、快照配额默认 10 版、提前失效 0~120 分钟步进 5、批量张数 1/2/3/5、指纹 8 次按压）。",
+    "长辈模式（MemberHub.elderMode）影响：凭证页隐藏临时码分段与批量/导出/清理过期入口、完成页切口述卡、行字号升档；已在对应节点 details 标注。",
+    "状态覆盖：无锁、无台账、全归档、凭证/指纹不存在、锁未连接（入队 + toast）、整页忙碌、应用锁未解锁；访客/权限不足只体现在 requestRoute 与 viewPwd 两处，其余判定不在本 scope。",
+    "降级口径：源码头注释标注的 311/316/320/326/332/333/335/337 都属于「本地推断、文案带约」，已在对应节点写明推断方式，未当作锁端真值。"
+  ]
+}

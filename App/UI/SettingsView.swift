@@ -1077,7 +1077,7 @@ struct TailgateView: View {
         Form {
             Section {
                 Picker("等待时长", selection: $seconds) {
-                    ForEach(2...6, id: \.self) { Text("\($0) 秒").tag($0) }
+                    ForEach(2...7, id: \.self) { Text("\($0) 秒").tag($0) }
                 }
                 .pickerStyle(.inline)
             } header: {

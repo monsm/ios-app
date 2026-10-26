@@ -20,7 +20,8 @@ struct ShareToAndroidView: View {
         return stride(from: 0, to: 12, by: 2).map { String(m.dropFirst($0).prefix(2)) }.joined(separator: ":").uppercased()
     }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.shareToAndroid) }
+    var vkBody: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: DS.Space.l) {

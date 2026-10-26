@@ -1,0 +1,6223 @@
+{
+  "scout": "ios-core-data",
+  "platform": "ios",
+  "scope": [
+    "App/Core/Store.swift",
+    "App/Core/CredentialOrg.swift",
+    "App/Core/MemberHub.swift",
+    "App/Core/AuditChain.swift",
+    "App/Core/RecordSearch.swift",
+    "App/Core/LockStats.swift",
+    "App/Core/StatsKit.swift",
+    "App/Core/QuickPool.swift",
+    "App/Core/SettingsGroups.swift",
+    "App/Core/VariantGrammar.swift",
+    "App/Core/WeekCal.swift",
+    "App/Core/TimeFormat.swift",
+    "App/Core/SecretStore.swift",
+    "App/Core/LockGuard.swift",
+    "App/Core/Locked.swift",
+    "App/Core/DevModules.swift",
+    "App/Core/AccessibilityKit.swift",
+    "App/Core/SpeechKit.swift",
+    "App/Core/Milestones.swift",
+    "App/Core/HintOnce.swift"
+  ],
+  "nodes": [
+    {
+      "key": "data.store",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 2,
+      "name": "本地键值存储层（Store）",
+      "kind": "service",
+      "summary": "全 App 唯一的落盘通道：UserDefaults + JSON，所有键统一 kf. 前缀；读写失败不再静默，进诊断台账。",
+      "details": [
+        "单例 Store.shared，底层 UserDefaults.standard，键前缀固定 \"kf.\"（Store.swift:9）",
+        "键与小程序完全一致（kf_*），目的是全量备份可跨端互换（Store.swift:1-2）",
+        "公开 API：get/getDict/getString/getBool/getInt/set/setCodable/remove/has/keys/rawData/matchingKeys"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 6,
+          "symbol": "Store",
+          "note": "final class Store: @unchecked Sendable"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 9,
+          "symbol": "key(_:)",
+          "note": "\"kf.\" + k"
+        }
+      ],
+      "tags": [
+        "本地键值",
+        "持久化",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.store.namespace",
+      "parentKey": "data.store",
+      "domain": "data",
+      "level": 3,
+      "name": "键命名空间与枚举",
+      "kind": "data",
+      "summary": "keys() 只返回 kf. 前缀的键并去掉前缀；has() 用来区分「没这个键」和「有键但解不出」。",
+      "details": [
+        "keys() = dictionaryRepresentation 过滤 kf. 前缀 + dropFirst(3)（Store.swift:86-88）",
+        "has() 判 object(forKey:) 是否存在，供台账损坏判定用（Store.swift:85）",
+        "remove() 直接 removeObject，不做墓碑（Store.swift:83）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 86,
+          "symbol": "keys()"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 85,
+          "symbol": "has(_:)"
+        }
+      ],
+      "tags": [
+        "本地键值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.store.read-write",
+      "parentKey": "data.store",
+      "domain": "data",
+      "level": 3,
+      "name": "类型化读写与参数序反差",
+      "kind": "service",
+      "summary": "get<T>(类型, 键) 与 get<T>(键, 类型) 双序重载语义一致；set 走 JSONSerialization，setCodable 走 JSONEncoder。",
+      "details": [
+        "双参序重载是为了不批量改写 87 个既有调用点（Store.swift:10-13）",
+        "getDict 返回 [String: Any]，供 Map 结构的 kf_keychains/kf_members 等使用（Store.swift:25-28）",
+        "getString 先试 string(forKey:) 再试 JSON 解码，兼容早期直接写字符串的老数据（Store.swift:29-33）",
+        "setCodable(键, 值) 与 DB.setCodable(值, 键) 参数序相反，注释点名这是已踩过 5 次的坑（Store.swift:49-51）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 13,
+          "symbol": "get(_:_:)",
+          "note": "双参序兼容"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 51,
+          "symbol": "setCodable(_:_:)"
+        }
+      ],
+      "tags": [
+        "本地键值",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.store.read-write.fragments",
+      "parentKey": "data.store.read-write",
+      "domain": "data",
+      "level": 4,
+      "name": "顶层标量写入必须开 fragmentsAllowed",
+      "kind": "edge",
+      "summary": "不开 .fragmentsAllowed 时 String/Bool/Int/Double 顶层标量会让 JSONSerialization 抛错并被静默吞掉，整键从未落盘。",
+      "details": [
+        "失败本身仍不改返回值（改签名要动几百个调用点），只记台账（Store.swift:36-47）",
+        "症状：设置页所有开关/主题/救援码/免验窗口全部退回默认值（Store.swift:37-39）",
+        "第九十五批把「吞掉」改成「记一笔」，诊断页能看到假成功（Store.swift:40-41）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 43,
+          "symbol": "set(_:_:)",
+          "note": "options: [.fragmentsAllowed]"
+        }
+      ],
+      "tags": [
+        "边界",
+        "持久化",
+        "诊断"
+      ],
+      "status": "edge"
+    },
+    {
+      "key": "data.store.read-write.corrupt-guard",
+      "parentKey": "data.store.read-write",
+      "domain": "data",
+      "level": 4,
+      "name": "台账解码失败守卫（防空表覆盖）",
+      "kind": "edge",
+      "summary": "get 返回 nil 有两种语义：键不存在 vs 有键但解码抛错；后者打 markLedgerCorrupt，saveLedger 一律拒写。",
+      "details": [
+        "旧实现在解码失败时返回空 Ledger，调用方 addPwd 后 save 会把整表清空（Store.swift:502-505）",
+        "损坏集合用 Locked(Set<String>) 保护并发（Store.swift:497-499）",
+        "宁可界面显示陈旧数据，也不要把用户密码/指纹记录抹掉（Store.swift:508-509）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 498,
+          "symbol": "markLedgerCorrupt(_:)"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 509,
+          "symbol": "saveLedger(_:_:)",
+          "note": "guard !isLedgerCorrupt(mac)"
+        }
+      ],
+      "tags": [
+        "边界",
+        "数据损坏",
+        "持久化"
+      ],
+      "status": "edge"
+    },
+    {
+      "key": "data.store.failure-ledger",
+      "parentKey": "data.store",
+      "domain": "data",
+      "level": 3,
+      "name": "存取失败台账（kf.wf）",
+      "kind": "diagnostic",
+      "summary": "只记「键 ← 失败原因」、绝不记值；同键同因只记一次，供诊断页解释「我明明设了却没生效」。",
+      "details": [
+        "实际键名 kf.wf（failureKey = \"wf\"，经 kf. 前缀后落盘）（Store.swift:63）",
+        "走 defaults.array 不经 set/setCodable，避免自我递归（Store.swift:58,77）",
+        "不建内存静态量：进程重启就没了，而这类问题常常要下一次打开 App 才看得见（Store.swift:59-62）",
+        "只存键与原因，不存值（可能是口令或 2FA 种子）（Store.swift:61）",
+        "读改写由 failureLock（Locked<Bool>）串行化，只在失败路径上加锁（Store.swift:69-78）",
+        "刻意不提供清空口：删除动作只留核弹销毁按 keys() 全表清（Store.swift:81-82）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 63,
+          "symbol": "failureKey"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 70,
+          "symbol": "recordFailure(_:_:)"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 80,
+          "symbol": "failureLines()"
+        }
+      ],
+      "tags": [
+        "诊断",
+        "持久化",
+        "观测"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.store.failure-ledger.limits",
+      "parentKey": "data.store.failure-ledger",
+      "domain": "data",
+      "level": 4,
+      "name": "台账上限与去重规则",
+      "kind": "data",
+      "summary": "最多 40 条，新条目插首，摘要带 MMddHHmm 时间戳；尾串相同即视为重复。",
+      "details": [
+        "next.count > 40 → prefix(40)，热 getter 每帧失败也不会把 defaults 当日志刷（Store.swift:75-76）",
+        "重复判据 = 已有行 hasSuffix(键 + \" ← \" + 原因)（Store.swift:72-73）",
+        "时间前缀来自 DiagTime.mmddHHmm()（Store.swift:75）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 76,
+          "symbol": "prefix(40)",
+          "note": "if next.count > 40"
+        }
+      ],
+      "tags": [
+        "阈值",
+        "诊断"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.store.locked-mutex",
+      "parentKey": "data.store",
+      "domain": "data",
+      "level": 3,
+      "name": "互斥容器 Locked（并发安全原语）",
+      "kind": "service",
+      "summary": "一把 NSLock + 一个值，值只活在临界区内；用 withLock 读写，defer 保证异常路径也解锁。",
+      "details": [
+        "为什么不是 static var + 锁：Swift 6 把非隔离可变全局判为错误，必须让值由锁持有（Locked.swift:3-6）",
+        "为什么 NSLock 而不是 OSAllocatedLock：后者 iOS 16+ 在 CI 的 Xcode 27.2 / iOS 27.2 上实测 cannot find in scope（Locked.swift:7-9）",
+        "为什么可以 @unchecked Sendable：value 没有任何其他访问路径，临界区互斥，与系统库「内部锁 + @unchecked Sendable」同一形态（Locked.swift:11-15）",
+        "withLock 是 @discardableResult + rethrows，闭包抛错也保证解锁（Locked.swift:30-35）",
+        "本仓消费点：Store.failureLock（失败台账）、ledgerLock（损坏台账集合）、AccessibilityKit.reduceMotionBox、RecordSearch.mergedLock（节假日缓存）、Speech.synth（语音合成器）、MemberHub 的认领表读取"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Locked.swift",
+          "line": 23,
+          "symbol": "Locked",
+          "note": "final class Locked<Value>: @unchecked Sendable"
+        },
+        {
+          "file": "App/Core/Locked.swift",
+          "line": 31,
+          "symbol": "withLock",
+          "note": "lock.lock(); defer { lock.unlock() }"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 69,
+          "symbol": "failureLock",
+          "note": "消费点之一：Locked(false)"
+        }
+      ],
+      "tags": [
+        "并发",
+        "原语",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.store.raw-snapshot",
+      "parentKey": "data.store",
+      "domain": "data",
+      "level": 3,
+      "name": "字节不变快照与族前缀（421 回滚）",
+      "kind": "service",
+      "summary": "rawData/setRawData 原样搬运 defaults 里的 Data，不走重新编码；matchingKeys 按前缀族取键供回滚。",
+      "details": [
+        "快照要的是字节不变，重新编码会改写键序与可选字段（Store.swift:89-91）",
+        "matchingKeys(prefixes:) 用于只收「恢复会动到」的族，不把日志/遥测拖进快照（Store.swift:93-96）",
+        "clearAll() 已在第九十二批删除：全库零调用点，且比看起来危险（Store.swift:97-100）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 91,
+          "symbol": "rawData(_:)"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 94,
+          "symbol": "matchingKeys(prefixes:)"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 97,
+          "symbol": "clearAll",
+          "note": "已删除"
+        }
+      ],
+      "tags": [
+        "备份回滚",
+        "持久化"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.keys",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 2,
+      "name": "全部 kf_* 键清单",
+      "kind": "data",
+      "summary": "本侦察兵范围内出现的持久化键总表，按全局单键 / 每锁族 / 凭证组织族 / 检索偏好 / 外来族分组。",
+      "details": [
+        "另有失败台账 kf.wf 与无前缀的 otpStatus_<mac>/otpIdx_<mac> 两个例外",
+        "每锁族键都以 <mac> 结尾，由 DB.removeDevice 按族清理"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 439,
+          "symbol": "kf_ledger_",
+          "note": "族删前缀清单起点"
+        }
+      ],
+      "tags": [
+        "本地键值",
+        "索引"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.keys.global",
+      "parentKey": "data.keys",
+      "domain": "data",
+      "level": 3,
+      "name": "全局单键（不属于某把锁）",
+      "kind": "data",
+      "summary": "设备指针、注册表、门禁摘要、审计链、备份历史、计数器等整机唯一键及其类型与默认值。",
+      "details": [
+        "kf_current_mac — String，当前锁 MAC，空=未选（Store.swift:485-488）",
+        "kf_last_device — String，上次设备（Store.swift:489-492）",
+        "kf_default_mac — String，启动默认锁（LockStats.swift:104）",
+        "kf_lock_order — [String]，手工设备顺序；空=无手工序（LockStats.swift:119,174）",
+        "kf_keychains — [mac: Keychain 字典]，非密字段台账（Store.swift:315）",
+        "kf_members — [id: Member 字典]（Store.swift:722）",
+        "kf_member_ext — [成员 id: MemberExt]（MemberHub.swift:47）",
+        "kf_member_badge / kf_member_bday — 删成员时一并清（Store.swift:779）",
+        "kf_duty_week — [周键 yyyy-Www: 成员 id]（MemberHub.swift:282）",
+        "kf_keychain_dongles — [mac: Dongle 字典]（Store.swift:792）",
+        "kf_gateways — [mac: Gateway 字典]（Store.swift:824）",
+        "kf_passcode — [String: String] {s: 盐, d: 旧 FNV, d2: PBKDF2}（Store.swift:861,871-873）",
+        "kf_audit_events — [AuditEvent] 管理流水哈希链（AuditChain.swift:81）",
+        "kf_audit_sensitive — [SensitiveLedger.Item] 明文接触流水（AuditChain.swift:174）",
+        "kf_backup_hist — [Double] 备份时刻（毫秒，最多 60 条）（Milestones.swift:30）",
+        "kf_once — [String: Bool] 启动结算去重标记（Milestones.swift:17）",
+        "kf_unlock_count / kf_organize_count — Int 计数（Milestones.swift:50,56）",
+        "kf_privacy_until — Double 隐私浏览截止时刻（MemberHub.swift:311）",
+        "kf_elder_mode — Bool 长辈模式（MemberHub.swift:328）",
+        "kf.wf — [String] 存取失败台账（Store.swift:63）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 485,
+          "symbol": "currentMac"
+        },
+        {
+          "file": "App/Core/AuditChain.swift",
+          "line": 81,
+          "symbol": "key"
+        },
+        {
+          "file": "App/Core/Milestones.swift",
+          "line": 30,
+          "symbol": "recordBackup",
+          "note": "kf_backup_hist"
+        }
+      ],
+      "tags": [
+        "本地键值",
+        "索引"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.keys.per-lock",
+      "parentKey": "data.keys",
+      "domain": "data",
+      "level": 3,
+      "name": "每锁族键（<mac> 结尾）",
+      "kind": "data",
+      "summary": "以 MAC 结尾、随锁生灭的一族键：台账、快照、日志缓存、防御配置、失败留痕、档案、认领、借用、备注、过滤。",
+      "details": [
+        "kf_ledger_<mac> — Ledger{pwds,fps} 凭证台账（Store.swift:501）",
+        "kf_snap_<mac> — StatusSnapshot{at,status}（Store.swift:640）",
+        "kf_logcache_<mac> — LogCache{at,logs} 最多 300 条（Store.swift:651,660）",
+        "kf_defend_<mac> — DefendCfg{control,startSec,endSec,at}（Store.swift:701）",
+        "kf_tailgate_<mac> — TailgateCfg{interval,at}（Store.swift:703）",
+        "kf_synctime_<mac> — Double 上次校时（Store.swift:705）",
+        "kf_fevents_<mac> — [FailEvent] 手机侧开锁失败标记，封顶 50（Store.swift:916,922）",
+        "kf_lockmeta_<mac> — LockMeta 档案 10 字段（LockStats.swift:71）",
+        "kf_lock_hidden_<mac> — Bool 手动隐藏（LockStats.swift:101-102）",
+        "kf_macorder_<mac> — String 0x88 包络字节序观测值（Store.swift:332）",
+        "kf_pending_pair_<mac> — 未完成配网记录（Store.swift:402）",
+        "kf_mclaim_<mac> — [日志键: 成员 id] 791 认领映射（MemberHub.swift:293）",
+        "kf_mborrow_<mac> — [条目键: MemberBorrow] 472 借用登记（MemberHub.swift:265）",
+        "kf_rnote_<mac> / kf_rflag_<mac> — 记录备注与标旗本机覆盖层（RecordSearch.swift:25-26）",
+        "kf_rflt_<mac> — QueryFilters 过滤会话（RecordSearch.swift:191）",
+        "kf_cdisrea_<mac> — [\"kind:key\": DisableMark] 361 停用便签（CredentialOrg.swift:990）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 701,
+          "symbol": "defend(_:)"
+        },
+        {
+          "file": "App/Core/LockStats.swift",
+          "line": 71,
+          "symbol": "meta(_:)"
+        },
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 265,
+          "symbol": "borrows(_:)"
+        }
+      ],
+      "tags": [
+        "本地键值",
+        "索引"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.keys.cred-org",
+      "parentKey": "data.keys",
+      "domain": "data",
+      "level": 3,
+      "name": "凭证组织族键（包6）",
+      "kind": "data",
+      "summary": "版本历史、回收站、队列、星标、归档、预警、智能列表、拖拽序、草稿、提前失效等键与默认值。",
+      "details": [
+        "kf_chist_<mac>_<kind>_<key> — [CredSnapshot] 版本快照（CredentialOrg.swift:140）",
+        "kf_cbin_<mac> — [CredBinEntry] 回收站（:141）；kf_cqueue_<mac> — [CredQueueItem] 下发队列（:142）",
+        "kf_cstar_<mac> — [Int] 星标，指纹段偏移 100000（:143,756）；kf_carch_<mac> — [Int] 归档，同偏移（:150,791）",
+        "kf_calert_<mac>_<kind>_<key> — CredAlert 五档预警（:151）",
+        "kf_clists_<mac> — [CredSmartList]（:152）；kf_cseq_<mac> — [String:[Int]] 拖拽序（:153）",
+        "kf_cotp_t_<mac> / kf_cotp_s_<mac> — 341/346 遗留键，数据本体已删但备份白名单仍认（:145-148）",
+        "kf_cdraft_<mac> — StudioDraft 工坊草稿（:1465）",
+        "kf_cestudy_earlyexp_<mac>_<alias> — Int 本机提前失效分钟（:1443）",
+        "kf_ccred_prefs — Int 位掩码，bit0=分组模式（:1019）",
+        "kf_ccred_sort — Int 排序键，默认 3=到期（:1021）",
+        "kf_ccred_quota — Int 每凭证快照配额，默认 10（:177）",
+        "kf_calias_display — Bool 别名显示，默认 true（:1022）",
+        "kf_csearch_hist — [String] 最近搜索词（:1039）",
+        "kf_cbin_reclaim_days — Int 回收站保留天数，默认 30（:472）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 140,
+          "symbol": "histKey(_:_:_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 472,
+          "symbol": "reclaimDays()"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1021,
+          "symbol": "sortKey"
+        }
+      ],
+      "tags": [
+        "本地键值",
+        "凭证组织",
+        "索引"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.keys.record-settings",
+      "parentKey": "data.keys",
+      "domain": "data",
+      "level": 3,
+      "name": "检索告警与设置偏好键",
+      "kind": "data",
+      "summary": "搜索历史、命名视图、处置、检查清单、过滤会话、夜间时段、节假日顺延与全部时间/无障碍偏好键。",
+      "details": [
+        "kf_rsearch_hist — [String] 最近 5 条搜索词（RecordSearch.swift:737,745）",
+        "kf_rviews — [NamedView] 命名过滤视图，上限 20（:762,768）",
+        "kf_rdispo — [\"mac#idxRaw\": Disposition{at,verdict}]（:780）",
+        "kf_rcheck_<key> — [Bool] 防撬检查清单勾选（:800-803）",
+        "kf_filter_default — String 开场策略 \"\"/fresh/alarm（:193）",
+        "kf_night_from=22 / kf_night_to=6 — Int 夜间时段（:432-433）",
+        "kf_holiday_extend — Bool 假日顺延，默认 true（:436,527）",
+        "kf_week_start — String \"\"/mon/sun/sat（WeekCal.swift:48）",
+        "kf_time_style — String \"\"/24/12；kf_time_secs、kf_time_2ndline — Bool 默认 false（TimeFormat.swift:14,17,30）",
+        "kf_font_scale — String \"0.8/1.0/1.25/1.5/1.75\" 默认 1.0（AccessibilityKit.swift:46）",
+        "kf_hc — Bool 增强对比皮肤；kf_dbltap_guard — Bool 默认 true（:114,140）",
+        "kf_ax_hold — String 默认 \"0.9\"；kf_ax_captions/doublehaptic — Bool 默认 true（:143,147,149）",
+        "kf_onehand / kf_lefty / kf_bigtile / kf_form_bottom — Bool 默认 false（:151-157）",
+        "kf_ax_bigpreview / kf_ax_gray — Bool 诊断自检（:85,87）；kf_vo_announce — Bool 默认 true（:205）",
+        "kf_speek_guest — Bool 访客通道（旧入口已删，仍生效）（LockGuard.swift:51）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 737,
+          "symbol": "histKey"
+        },
+        {
+          "file": "App/Core/WeekCal.swift",
+          "line": 48,
+          "symbol": "key"
+        },
+        {
+          "file": "App/Core/TimeFormat.swift",
+          "line": 14,
+          "symbol": "styleKey"
+        }
+      ],
+      "tags": [
+        "本地键值",
+        "设置偏好",
+        "索引"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.keys.remove-families",
+      "parentKey": "data.keys",
+      "domain": "data",
+      "level": 3,
+      "name": "删设备的族清清单",
+      "kind": "data",
+      "summary": "removeDevice 用 43 个前缀族 + 按段前缀 + 兜底含 MAC 判定 + 指针剪枝，把一把锁的全部痕迹清干净。",
+      "details": [
+        "第一批 43 个前缀：kf_ledger_/kf_snap_/kf_logcache_/kf_defend_/kf_tailgate_/kf_synctime_/otpStatus_/otpIdx_/kf_fevents_/kf_lockmeta_/kf_migok_/kf_batt_/kf_batt_state_/kf_mevents_/kf_maint_/kf_fwsince_/kf_clock_notify_/kf_damp_last_/kf_fp_last_/kf_care_notify_/kf_cbin_/kf_cqueue_/kf_cstar_/kf_calert_/kf_clists_/kf_cseq_/kf_rnote_/kf_rflag_/kf_cdisrea_/kf_linkrssi_/kf_link_auto_/kf_macorder_ 等（Store.swift:439-446）",
+        "自动开锁三族：kf_autocal_ / kf_autoopen_audit_ / kf_autoopen_suspend_until_（Store.swift:450）",
+        "kf_chist_<mac>_ 带段前缀，按 hasPrefix 整族清（Store.swift:454-456）",
+        "指针类：kf_current_mac / kf_last_device / kf_default_mac 命中即删（Store.swift:464-467）",
+        "kf_lock_order 按元素剪掉该 mac；若删的正是默认锁，首位交棒给新首位（Store.swift:469-476）",
+        "注释明确：备注是用户自由文本（可能含人名/地址），必须随锁清除（Store.swift:442-443）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 435,
+          "symbol": "removeDevice(_:)"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 469,
+          "symbol": "ord",
+          "note": "kf_lock_order 剪枝"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 475,
+          "symbol": "set(\"kf_default_mac\", h)",
+          "note": "默认锁交棒"
+        }
+      ],
+      "tags": [
+        "数据销毁",
+        "持久化"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.keys.remove-families.mac-contains",
+      "parentKey": "data.keys.remove-families",
+      "domain": "data",
+      "level": 4,
+      "name": "兜底判据：键名含 MAC 即属该锁",
+      "kind": "edge",
+      "summary": "尾段带 MAC 再缀其它段的键用精确前缀删不掉，所以最后按「键名包含该 MAC（大小写不敏感）」整族扫。",
+      "details": [
+        "覆盖 kf_calert_<mac>_<kind>_<key>、kf_cestudy_earlyexp_<mac>_<alias>、kf_cotp_t_<mac>、kf_cdraft_<mac>、kf_logarch_<mac>、kf_mborrow_/kf_mclaim_/kf_mig_lockact_<mac>、kf_offboard_<member> 等（Store.swift:457-460）",
+        "实现：keys() 里 k.contains(m) 或 k.contains(m.uppercased()) 即 remove（Store.swift:461-462）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 462,
+          "symbol": "k.contains(m)",
+          "note": "for k in store.keys() where k.contains(m)"
+        }
+      ],
+      "tags": [
+        "边界",
+        "数据销毁"
+      ],
+      "status": "edge"
+    },
+    {
+      "key": "data.schema",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 2,
+      "name": "实体模型与 Codable 容错",
+      "kind": "data",
+      "summary": "21 个落盘实体的字段定义；关键是「合成 Codable 对带默认值的属性同样要求键存在」，所以关键结构全部手写 decodeIfPresent。",
+      "details": [
+        "手写容错解码的结构：Keychain、Dongle、LockMeta、CredAlert",
+        "其余结构依赖合成 Codable，缺键即整表解码失败（配 DB 的损坏守卫）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 120,
+          "symbol": "Codable",
+          "note": "合成 Codable 的坑写在注释里"
+        },
+        {
+          "file": "App/Core/LockStats.swift",
+          "line": 28,
+          "symbol": "Codable",
+          "note": "显式解码器是必需的"
+        }
+      ],
+      "tags": [
+        "数据模型",
+        "跨端兼容"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.schema.ledger",
+      "parentKey": "data.schema",
+      "domain": "data",
+      "level": 3,
+      "name": "LedgerPwd / LedgerFp / Ledger",
+      "kind": "data",
+      "summary": "凭证台账三结构：密码 8 字段、指纹 7 字段，同一个 Ledger 里按数组存。",
+      "details": [
+        "LedgerPwd：alias(槽号) / from / to / temp / at / pwd(可空) / owner(可空) / note（Store.swift:150-160）",
+        "LedgerFp：batch / name / at / note / src / owner / isAlarm（Store.swift:161-175）",
+        "Ledger：pwds + fps 两数组（Store.swift:176-179）",
+        "at 是 epoch 毫秒（添加时刻）；与 CredBinEntry.at / CredSnapshot.at 的秒口径混用会差一千倍（Store.swift:155,164）",
+        "pwd 可选：重新下发需要明文，没有明文的条目只能拒发（CredentialOrg.swift:624-625）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 150,
+          "symbol": "LedgerPwd"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 161,
+          "symbol": "LedgerFp"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 176,
+          "symbol": "Ledger"
+        }
+      ],
+      "tags": [
+        "数据模型",
+        "凭证"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.schema.keychain",
+      "parentKey": "data.schema",
+      "domain": "data",
+      "level": 3,
+      "name": "Keychain（锁钥匙串台账）",
+      "kind": "data",
+      "summary": "12 个字段的锁台账；密钥三件套不落 plist，只经 SecretStore 存取，fromDict 自动回填。",
+      "details": [
+        "字段：version=1 / mac / pid=0 / pidName / name / skey / bkey / pins / ekey / trackid / bleId / fw / pairedAt（Store.swift:104-118）",
+        "id = mac；全部 decodeIfPresent + 默认值，否则 canonical 备份省略空字段后「导出后导不回」（Store.swift:120-146）",
+        "toDict 只写非密字段，空串字段直接省略（Store.swift:971-981）",
+        "fromDict 里 secret() 优先读系统 Keychain，旧 plist 明文作兜底并顺手迁移（Store.swift:949-960）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 104,
+          "symbol": "Keychain"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 131,
+          "symbol": "init(from:)"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 949,
+          "symbol": "secret(_:_:)",
+          "note": "Keychain 优先 + 明文迁移"
+        }
+      ],
+      "tags": [
+        "数据模型",
+        "密钥"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.schema.snapshot",
+      "parentKey": "data.schema",
+      "domain": "data",
+      "level": 3,
+      "name": "StatusSnapshot / LogCache",
+      "kind": "data",
+      "summary": "锁状态快照（13 固定字段 + 4 可选）与日志缓存（5 字段一条）。",
+      "details": [
+        "StatusSnapshot{at(毫秒), status}；StatusSnapshotData：rc / powerLevel / firmware / lockTime / pinStock / pwdStock / fpStock / verifyMode / broadcastMode / tempPwdMode / securityLevel / sKeyStatus（Store.swift:194-210）",
+        "四个 Optional：zotpPeriod(临时码周期 03#05, 分钟)、pinCap / pwdCap / fpCap（协议容量 03 KLV 21/24/27），旧快照缺键解码为 nil，历史仍可读（Store.swift:211-217）",
+        "LogCache{at, logs}；CachedLog{type, typeName, idxRaw(UInt32), lockTime(Int64), lockTimeStr}（Store.swift:219-229）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 198,
+          "symbol": "StatusSnapshotData"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 223,
+          "symbol": "CachedLog"
+        }
+      ],
+      "tags": [
+        "数据模型",
+        "状态快照",
+        "日志"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.schema.cfg-hardware",
+      "parentKey": "data.schema",
+      "domain": "data",
+      "level": 3,
+      "name": "配置记忆与硬件台账结构",
+      "kind": "data",
+      "summary": "防拆/防尾随配置、临时码开关与索引、钥匙串硬件与网关两本台账的字段。",
+      "details": [
+        "DefendCfg{control, startSec, endSec, at}；TailgateCfg{interval, at}（Store.swift:290-299）",
+        "OtpStatus{on, at}；OtpIdx{idx, invalidTime}（Store.swift:300-307）",
+        "Dongle 8 字段 + DongleStat 7 字段（power/absPower/ekeyCount/ekeyAmount/firmware/pid/eCtrl，-1 = 未知）（Store.swift:232-269）",
+        "Gateway 13 字段（mac/name/pid/bleId/boundAt/wifimac/romVer/eCtrlVer/ssid/wifiIP/netState/lastWifi/provisionedAt，netState -1 = 未知）（Store.swift:272-287）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 290,
+          "symbol": "DefendCfg"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 261,
+          "symbol": "DongleStat"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 272,
+          "symbol": "Gateway"
+        }
+      ],
+      "tags": [
+        "数据模型",
+        "硬件"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.schema.cred-org",
+      "parentKey": "data.schema",
+      "domain": "data",
+      "level": 3,
+      "name": "凭证组织与成员扩展结构",
+      "kind": "data",
+      "summary": "版本快照、回收站、队列、预警、智能列表、成员档案扩展、借用、家政窗八类结构。",
+      "details": [
+        "CredSnapshot{version, at(秒), note, starred, auto, pwd?, fp?}，id=version（CredentialOrg.swift:25-35）",
+        "CredBinEntry{at(秒), source, pwd?, fp?, batchId?}，id 由 at 派生（:51-70）",
+        "CredQueueItem{id, kind, title, pwd?, fp?, newFrom, newTo, state, attempt, lastAt}（:76-87）",
+        "CredAlert{day, d3, d1, h24, h2} 五档全默认 false，显式解码缺键=该档关（:88-109）",
+        "CredSmartList{id, name, kind, owner, state, tag}（:111-118）",
+        "MemberExt 12 字段：role=\"member\"/emoji/remark/commonLocks/emergency/groupTag/archived/proxy/emergencyAdmin/careText/note/welcome（MemberHub.swift:9-22）",
+        "MemberBorrow{by, due, at}（:25-29）；HouseWin{from, to, label}（:32-36）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 25,
+          "symbol": "CredSnapshot"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 51,
+          "symbol": "CredBinEntry"
+        },
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 9,
+          "symbol": "MemberExt"
+        }
+      ],
+      "tags": [
+        "数据模型",
+        "凭证组织",
+        "成员"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.secret",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 2,
+      "name": "密钥材料与系统 Keychain",
+      "kind": "service",
+      "summary": "skey/bkey/ekey 从 plist 明文迁到系统 Keychain；另有一次性明文迁移、配网中断保护、门禁口令摘要。",
+      "details": [
+        "服务名固定 com.aapk.OfflineLock.secrets，账户名 = kc.<mac>.<field>（SecretStore.swift:17, Store.swift:347）",
+        "skey 泄露即可离线构造任意开锁帧，所以不能随偏好明文落盘（SecretStore.swift:1-6）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/SecretStore.swift",
+          "line": 16,
+          "symbol": "SecretStore"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 374,
+          "symbol": "saveKeychain",
+          "note": "密钥不再明文写 plist, 改存系统 Keychain"
+        }
+      ],
+      "tags": [
+        "密钥",
+        "安全",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.secret.keystore",
+      "parentKey": "data.secret",
+      "domain": "data",
+      "level": 3,
+      "name": "SecretStore 最小封装",
+      "kind": "service",
+      "summary": "按账户存一个字符串；set 先 SecItemUpdate 再 SecItemAdd，返回是否成功供上层决定能否抹明文。",
+      "details": [
+        "访问级别 kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly：锁屏后台任务可读（充电备份要读 skey 做回滚点），但不随 iCloud/iTunes 备份迁出（SecretStore.swift:10-12,37）",
+        "先 Update 再回退 Add，避免「先删后增」在 add 失败时把既有值也弄丢（SecretStore.swift:27）",
+        "get 走 kSecReturnData + kSecMatchLimitOne；remove 直接 SecItemDelete（SecretStore.swift:41-53）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/SecretStore.swift",
+          "line": 29,
+          "symbol": "set(_:for:)"
+        },
+        {
+          "file": "App/Core/SecretStore.swift",
+          "line": 37,
+          "symbol": "kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly",
+          "note": "kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly"
+        }
+      ],
+      "tags": [
+        "密钥",
+        "安全"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.secret.migrate",
+      "parentKey": "data.secret",
+      "domain": "data",
+      "level": 3,
+      "name": "明文密钥一次性迁移",
+      "kind": "automation",
+      "summary": "启动时把旧 plist 里的 skey/bkey/ekey 搬进 Keychain 并从 plist 抹掉；幂等，没有明文字段就不动。",
+      "details": [
+        "只有 Keychain 里确实有值（原本就有或本次写成功）才允许抹掉 plist 明文（Store.swift:358-364）",
+        "否则「写失败 + 抹明文 = 永久丢密钥，门锁再也开不开」（Store.swift:359-360）",
+        "迁移完成才回写 kf_keychains，避免无变化时反复写（Store.swift:366-368）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 350,
+          "symbol": "migrateSecretsToKeychain()"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 361,
+          "symbol": "stored",
+          "note": "stored || set 成功才 removeValue"
+        }
+      ],
+      "tags": [
+        "迁移",
+        "密钥",
+        "fail-closed"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.secret.save-remove",
+      "parentKey": "data.secret",
+      "domain": "data",
+      "level": 3,
+      "name": "钥匙串写入与删除边界",
+      "kind": "action",
+      "summary": "saveKeychain 空 skey 不覆盖既有值、空 bkey/ekey 删键；removeKeychain 只清钥匙串，removeDevice 连配网记录一起清。",
+      "details": [
+        "空 skey 不覆盖：Keychain 读失败回填 \"\" 时，一次无关 save 会把真密钥写成空（Store.swift:373）",
+        "skey 写失败不静默，MaintenanceLog.record 让诊断页可见（Store.swift:374-376）",
+        "map[normalizeMac] 归一化，防导入带冒号/大写 MAC 造成重复条目（Store.swift:382）",
+        "removeKeychain 刻意不动 kf_pending_pair_：配网尾链失败时 UI rollback 靠它续配（Store.swift:422-424）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 374,
+          "symbol": "saveKeychain(_:)"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 425,
+          "symbol": "removeKeychain(_:)"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 438,
+          "symbol": "removeDevice",
+          "note": "clearPendingPair"
+        }
+      ],
+      "tags": [
+        "密钥",
+        "边界"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.secret.pending-pair",
+      "parentKey": "data.secret",
+      "domain": "data",
+      "level": 3,
+      "name": "配网中断保护（防软砖）",
+      "kind": "state",
+      "summary": "05 换钥拿到 rc=0 后先落盘这套密钥，尾链断了可用它续配（跳过 05，不碰锁内密钥域）。",
+      "details": [
+        "两个落点：kf_pending_pair_<mac>（非密字段 + at 毫秒）+ pair.<mac>.<field> 四项 skey/bkey/ekey/pins（Store.swift:391-404）",
+        "savePendingPair 要求 skey 与 pins 都非空，任一 SecretStore 写失败返回 false（Store.swift:394-399）",
+        "pendingPair 只有 plist 标记、没有密钥材料时返回 nil，视为无用残片（Store.swift:414）",
+        "pins 以逗号串存，读出后 components(separatedBy: \",\")（Store.swift:412-413）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 391,
+          "symbol": "pendingPairAccount(_:_:)"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 393,
+          "symbol": "savePendingPair(_:)"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 405,
+          "symbol": "pendingPair(_:)"
+        }
+      ],
+      "tags": [
+        "配网",
+        "密钥",
+        "恢复"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.secret.passcode",
+      "parentKey": "data.secret",
+      "domain": "data",
+      "level": 3,
+      "name": "门禁口令摘要（PBKDF2 + 旧摘要兼容）",
+      "kind": "data",
+      "summary": "kf_passcode 同时写强摘要 d2 与旧 FNV 摘要 d；主验证走 PBKDF2-HMAC-SHA256 60000 轮，旧库验过即静默升级。",
+      "details": [
+        "记录形状 {s: 8 位盐, d: fnv1a32(salt+pw), d2: pbkdf2 32 字节 hex}（Store.swift:871-877）",
+        "旧版只有 32bit 零迭代摘要：4 位数字码 10^4 次即可穷举，2^32 空间也能生日碰撞伪造（Store.swift:889-890）",
+        "只有旧摘要的历史库按旧口径验，通过后 set 写回新记录（无感迁移，不会把老用户锁在外面）（Store.swift:894-897）",
+        "setPasscode(nil) 直接删键（Store.swift:899-901）；hasPasscode 只看键是否存在（Store.swift:860-862）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 864,
+          "symbol": "pcIter",
+          "note": "60_000 轮"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 886,
+          "symbol": "verifyPasscode(_:)"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 896,
+          "symbol": "passcodeRecord",
+          "note": "验过即静默升级"
+        }
+      ],
+      "tags": [
+        "门禁",
+        "安全",
+        "迁移"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.snapshot",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 2,
+      "name": "状态快照与日志缓存",
+      "kind": "service",
+      "summary": "kf_snap_ 存最后一次锁状态（断连时显示「缓存」），kf_logcache_ 存日志增量并去重封顶。",
+      "details": [
+        "两族键都由 removeDevice 按 <mac> 族清（Store.swift:439）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 630,
+          "symbol": "writeStatus(_:_:)"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 649,
+          "symbol": "writeLogs(_:_:)"
+        }
+      ],
+      "tags": [
+        "状态快照",
+        "日志"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.snapshot.status",
+      "parentKey": "data.snapshot",
+      "domain": "data",
+      "level": 3,
+      "name": "锁状态快照读写",
+      "kind": "data",
+      "summary": "writeStatus 把 LockStatus 压成 13 个字段 + 可选容量；zotpPeriod 为 0 时不写（解码回落协议默认 30）。",
+      "details": [
+        "信封 at = 当前毫秒，用于「数据截至 14:32 · 缓存」（Store.swift:640,646）",
+        "容量三值 >0 才写，未知时水位条降级为台账计数（Store.swift:637-639）",
+        "readStatus 只返回状态体，statusTime 返回信封时刻（Store.swift:642-648）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 636,
+          "symbol": "zotpPeriod",
+          "note": "zotpPeriod: st.zotpPeriod > 0 ? ... : nil"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 646,
+          "symbol": "statusTime(_:)"
+        }
+      ],
+      "tags": [
+        "状态快照"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.snapshot.logs-merge",
+      "parentKey": "data.snapshot",
+      "domain": "data",
+      "level": 3,
+      "name": "日志合并写入（去重 + 300 条封顶）",
+      "kind": "automation",
+      "summary": "writeLogs 把新抓的日志拼在旧缓存前，按 idxRaw 去重、满 300 条截断，并作废热点缓存；replaceLogs 则是替换写入。",
+      "details": [
+        "去重键 = String(idxRaw)，达 300 停止追加（Store.swift:656-661）",
+        "HotCache.invalidate(mac) 是 220 定的唯一失效点（Store.swift:664）",
+        "replaceLogs 语义是「把这几行从缓存移走」，用 writeLogs 会把「移入」变成「复制」，下一轮再归档一遍（Store.swift:669-685）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 655,
+          "symbol": "CachedLog",
+          "note": "新 + 旧缓存去重合并"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 672,
+          "symbol": "replaceLogs(_:_:)"
+        }
+      ],
+      "tags": [
+        "日志",
+        "缓存",
+        "自动化"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.snapshot.orphan-guard",
+      "parentKey": "data.snapshot",
+      "domain": "data",
+      "level": 3,
+      "name": "孤儿缓存闸（只为台账内的锁写）",
+      "kind": "edge",
+      "summary": "日志缓存写入前要求该 mac 仍在钥匙串台账里；不在就顺手删掉缓存，避免体检报「已删门锁的日志缓存残留」。",
+      "details": [
+        "首次配网的锁在 pair 末步才 saveKeychain，所以这道闸不会拦真实写入（Store.swift:690）",
+        "命中孤儿时 store.remove 当场清掉，否则体检会一直报（Store.swift:693-695）",
+        "真机报告 2026-10-17：演示数据的清除路径踩在这一处（Store.swift:688-689）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 691,
+          "symbol": "cacheWritable(_:)"
+        }
+      ],
+      "tags": [
+        "边界",
+        "数据健康",
+        "日志"
+      ],
+      "status": "edge"
+    },
+    {
+      "key": "data.member",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 2,
+      "name": "成员档案数据层",
+      "kind": "service",
+      "summary": "kf_members + kf_member_ext 双表：基础名册（id/称呼/电话/颜色）+ 扩展档案（角色/备注/分组/代管/紧急管理员等）。",
+      "details": [
+        "扩展字段刻意不进 Member 结构体，避免影响备份互通（MemberHub.swift:8）",
+        "活跃度一律台账推断，展示层强制带「约」（MemberHub.swift:5）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 38,
+          "symbol": "MemberHub"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 721,
+          "symbol": "members()"
+        }
+      ],
+      "tags": [
+        "成员",
+        "数据模型"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.member.registry",
+      "parentKey": "data.member",
+      "domain": "data",
+      "level": 3,
+      "name": "名册增删改与色板分配",
+      "kind": "action",
+      "summary": "addMember 去空白、拒重名、先挑未被占用的成员色；Member 6 字段含 relation/phone/color。",
+      "details": [
+        "Member{id, name, relation, phone, color=\"#3D8BFF\", at}（Store.swift:182-191）",
+        "id = UUID 前 8 位；at = 毫秒（Store.swift:739-741）",
+        "色板 6 色 #818CF8/#4ADE80/#F59E0B/#FB7185/#22D3EE/#94A3B8，用满才按人数轮转（Store.swift:729-738）",
+        "旧写法按 count % 6 取色，删成员后 count 回退会撞色（Store.swift:735-736）",
+        "renameMember / setMemberInfo 只改非空字段（Store.swift:747-759）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 732,
+          "symbol": "addMember(_:)"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 731,
+          "symbol": "memberPalette"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 182,
+          "symbol": "Member"
+        }
+      ],
+      "tags": [
+        "成员",
+        "数据模型"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.member.ext",
+      "parentKey": "data.member",
+      "domain": "data",
+      "level": 3,
+      "name": "成员档案扩展表（kf_member_ext）",
+      "kind": "data",
+      "summary": "按成员 id 存一份 MemberExt；archivedIDs/proxyNames 一次性解整表再筛，避免逐成员重复解析。",
+      "details": [
+        "12 字段逐项含义：role 三档角色、emoji 文字头像、remark 备注名、commonLocks 常用锁、emergency 紧急联系、groupTag 分组标签、archived 归档、proxy 代管、emergencyAdmin 紧急管理员、careText 关怀文案、note 家庭便签、welcome 访客欢迎语（MemberHub.swift:10-21）",
+        "saveExt 读整表 → 改一项 → 写回（MemberHub.swift:52-56）",
+        "isActive = !archived（MemberHub.swift:61）",
+        "emergencyAdmins 一次解表再筛名册（MemberHub.swift:103-107）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 47,
+          "symbol": "extKey"
+        },
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 48,
+          "symbol": "ext(_:)"
+        },
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 57,
+          "symbol": "archivedIDs()"
+        }
+      ],
+      "tags": [
+        "成员",
+        "数据模型"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.member.remove-cascade",
+      "parentKey": "data.member",
+      "domain": "data",
+      "level": 3,
+      "name": "删成员的级联清理",
+      "kind": "action",
+      "summary": "删成员会解绑全部台账归属（凭证保留）、删认领映射悬空项、清档案扩展/徽章/生日、修值班周表。",
+      "details": [
+        "owner 解绑：pwds/fps 里 owner == id 的置 nil，changed 才 saveLedger（Store.swift:765-770）",
+        "kf_mclaim_ 里指向该成员的条目必须删，否则 whoId 悬空且永远无法重新认领（Store.swift:771-776）",
+        "kf_member_ext / kf_member_badge / kf_member_bday 三表按 id 删键（Store.swift:779-782）",
+        "kf_duty_week 是 weekKey→memberId，必须按 value 过滤；上一版误按 key 过滤 → 恒不命中，值班记录成孤儿（Store.swift:783-787）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 760,
+          "symbol": "removeMember(_:)"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 786,
+          "symbol": "duty",
+          "note": "duty = duty.filter { $0.value != id }"
+        }
+      ],
+      "tags": [
+        "成员",
+        "数据销毁",
+        "边界"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.member.activity",
+      "parentKey": "data.member",
+      "domain": "data",
+      "level": 3,
+      "name": "成员活跃度推断",
+      "kind": "diagnostic",
+      "summary": "跨全部锁统计 30 天开门次数、本月次数、最近时刻、名下凭证数；归属走可证明链，判不出就不算。",
+      "details": [
+        "Activity{opens30, month, last, owns}，stale = 30 天 0 次（MemberHub.swift:138-145）",
+        "按 Attribution.classify 逐行判定 who == id，才计入（MemberHub.swift:153-163）",
+        "owns = 名下密码 + 指纹条数（MemberHub.swift:164-165）",
+        "weekSentence 另给「近 7 天约 N 次 + 工作日 X–X 点最活跃」，样本不足则如实说（MemberHub.swift:170-197）",
+        "sourceCounts 用最新版本快照的 note 前缀区分 创建/移交/恢复（MemberHub.swift:227-245）",
+        "recentExcerpts 只收可证明归属的行，输出「词 · 锁名」（MemberHub.swift:203-224）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 146,
+          "symbol": "activity(_:)"
+        },
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 170,
+          "symbol": "weekSentence(_:)"
+        },
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 227,
+          "symbol": "sourceCounts(_:)"
+        }
+      ],
+      "tags": [
+        "成员",
+        "统计口径",
+        "推断值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.hardware",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 2,
+      "name": "钥匙串硬件与网关台账",
+      "kind": "data",
+      "summary": "kf_keychain_dongles / kf_gateways 两本按 mac 索引的台账，保存时都是「空字段不覆盖旧值」合并语义。",
+      "details": [
+        "两者都在 removeDevice 之外单独 remove，与锁台账互不影响（Store.swift:816,853）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 791,
+          "symbol": "dongles()"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 823,
+          "symbol": "gateways()"
+        }
+      ],
+      "tags": [
+        "硬件",
+        "数据模型"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.dongle.registry",
+      "parentKey": "data.hardware",
+      "domain": "data",
+      "level": 3,
+      "name": "钥匙串硬件台账合并保存",
+      "kind": "data",
+      "summary": "saveDongle 对空串字段逐项回退旧值、stat 为 nil 时保留旧 stat，避免部分字段上报把档案抹空。",
+      "details": [
+        "字段：mac / name / bleId / boundAt / lastSeenAt / lastKeyLock / lastKeyAt / stat（Store.swift:232-260）",
+        "removeDongle 归一化 MAC 后删键（Store.swift:816-820）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 800,
+          "symbol": "saveDongle(_:)"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 804,
+          "symbol": "merged",
+          "note": "逐字段空值回退"
+        }
+      ],
+      "tags": [
+        "硬件",
+        "数据模型"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.gateway.registry",
+      "parentKey": "data.hardware",
+      "domain": "data",
+      "level": 3,
+      "name": "网关台账合并保存",
+      "kind": "data",
+      "summary": "saveGateway 同样空字段不覆盖，netState 只在 != -1 时更新（-1 是「未知」哨兵）。",
+      "details": [
+        "13 字段含 ssid / wifiIP / romVer / eCtrlVer / provisionedAt（Store.swift:272-287）",
+        "pid 用 != 0 判断是否覆盖（Store.swift:838）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 832,
+          "symbol": "saveGateway(_:)"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 846,
+          "symbol": "netState",
+          "note": "netState != -1 ? ... : old.netState"
+        }
+      ],
+      "tags": [
+        "硬件",
+        "网关"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.audit",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 2,
+      "name": "审计留痕与哈希链",
+      "kind": "service",
+      "summary": "kf_audit_events 单表：开门/管理双流水 + 字段 diff + 前序哈希链 + 保留期物理删除。",
+      "details": [
+        "HashKit 优先 CryptoKit SHA-256，不可用时退化为双轮 FNV 拼接（只要求「改一条即破链」）（AuditChain.swift:18-28）",
+        "管理流水封顶 500（AuditChain.swift:83）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/AuditChain.swift",
+          "line": 80,
+          "symbol": "AuditLog"
+        },
+        {
+          "file": "App/Core/AuditChain.swift",
+          "line": 17,
+          "symbol": "HashKit"
+        }
+      ],
+      "tags": [
+        "审计",
+        "安全",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.audit.chain",
+      "parentKey": "data.audit",
+      "domain": "data",
+      "level": 3,
+      "name": "事件结构与封链",
+      "kind": "data",
+      "summary": "AuditEvent 10 字段；seal 用「前序哈希 + 全字段」算本条 hash，起点是字符串 GENESIS。",
+      "details": [
+        "字段：id(毫秒序号) / ts(Unix 秒) / cat(door|admin) / action / target / diff / operator_ / duress / prevHash / hash（AuditChain.swift:46-58）",
+        "hashInput 拼接顺序：id#ts#cat#action#target#operator#duress#diffText#prev，diff 键排序后 join（AuditChain.swift:59-68）",
+        "operator_ 记会话验证方式（本机密码/面容/会话续期）；duress 只在操作日志里画橙标，不做全局可见边框（AuditChain.swift:54-55）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/AuditChain.swift",
+          "line": 46,
+          "symbol": "AuditEvent"
+        },
+        {
+          "file": "App/Core/AuditChain.swift",
+          "line": 59,
+          "symbol": "hashInput(_:)"
+        },
+        {
+          "file": "App/Core/AuditChain.swift",
+          "line": 72,
+          "symbol": "seal(prevHash:)"
+        }
+      ],
+      "tags": [
+        "审计",
+        "防篡改"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.audit.append",
+      "parentKey": "data.audit",
+      "domain": "data",
+      "level": 3,
+      "name": "追加、封顶与截断重锚",
+      "kind": "automation",
+      "summary": "append 串行加锁；到 cap 后截头并整段重封哈希链（GENESIS 重锚），id 单调递增防同刻碰撞与换序重放。",
+      "details": [
+        "旧实现截头不重封：被留首条的 prevHash 仍指向已丢弃条 ⇒ verifyChain 恒在下标 0 报断链（假阳性）（AuditChain.swift:95-96）",
+        "保留 cap-1 条 + 新事件（AuditChain.swift:98-99）",
+        "id = (last.id)+1（AuditChain.swift:108）",
+        "chainLock 用 NSLock，只在 load→改→save 这段临界区（AuditChain.swift:85,92-93）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/AuditChain.swift",
+          "line": 90,
+          "symbol": "append(_:_:target:diff:operator_:duress:)"
+        },
+        {
+          "file": "App/Core/AuditChain.swift",
+          "line": 103,
+          "symbol": "sha256Hex",
+          "note": "next[i].hash = sha256Hex(hashInput(prev))"
+        }
+      ],
+      "tags": [
+        "审计",
+        "防篡改",
+        "阈值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.audit.verify",
+      "parentKey": "data.audit",
+      "domain": "data",
+      "level": 3,
+      "name": "防篡改校验（三种断点）",
+      "kind": "diagnostic",
+      "summary": "逐链重算：-1 完好、-2 id 单调性被破坏、下标 N 表示该处断链；同时比对 prevHash 与重算 hash。",
+      "details": [
+        "只验每条自洽不够：删掉中间任意条（含胁迫打标）后逐条重算仍会显示「链完好」（AuditChain.swift:132-133）",
+        "先查 hash 非空，再查 id 单调，再查 prevHash == prev，最后重算本条 hash（AuditChain.swift:128-136）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/AuditChain.swift",
+          "line": 124,
+          "symbol": "verifyChain()"
+        },
+        {
+          "file": "App/Core/AuditChain.swift",
+          "line": 134,
+          "symbol": "prevHash",
+          "note": "if e.prevHash != prev"
+        }
+      ],
+      "tags": [
+        "审计",
+        "诊断",
+        "防篡改"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.audit.diff",
+      "parentKey": "data.audit",
+      "domain": "data",
+      "level": 3,
+      "name": "台账字段级 diff 与唯一漏斗",
+      "kind": "automation",
+      "summary": "saveLedger 是台账写入唯一漏斗，前后比对出字段级变更写入审计；口令只记指纹前 4 位，明文不落审计链。",
+      "details": [
+        "六类 diff：密码#N(新增/删除) / ·口令 / ·有效期 / ·备注 / ·归属；指纹#N / ·名称 / ·备注 / ·防拆（Store.swift:525-546）",
+        "口令 diff 写 HashKit.fingerprint 前 4 位（Store.swift:531）",
+        "duress 标记随唯一漏斗传下去，否则胁迫码进来的改密码记录不画橙条（Store.swift:517-521）",
+        "锁名走 LockArchive.displayName，保证审计里与界面同名（Store.swift:516）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 507,
+          "symbol": "saveLedger(_:_:)"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 531,
+          "symbol": "fingerprint",
+          "note": "fingerprint(o.pwd)"
+        },
+        {
+          "file": "App/Core/AuditChain.swift",
+          "line": 31,
+          "symbol": "fingerprint(_:)"
+        }
+      ],
+      "tags": [
+        "审计",
+        "凭证",
+        "脱敏"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.time",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 2,
+      "name": "时间与历法口径",
+      "kind": "service",
+      "summary": "三条时间轴（协议秒 / 本机 Unix / 已渲染本地串）+ 一个公历化的 Calendar；全仓日期 key 只有一个实现处。",
+      "details": [
+        "协议秒换算、日 key、周历、显示格式分别收在 data.time.* 四个节点"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/WeekCal.swift",
+          "line": 17,
+          "symbol": "WeekCal"
+        },
+        {
+          "file": "App/Core/TimeFormat.swift",
+          "line": 12,
+          "symbol": "TimeFormat"
+        }
+      ],
+      "tags": [
+        "时间",
+        "历法",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.time.proto-unix",
+      "parentKey": "data.time",
+      "domain": "data",
+      "level": 3,
+      "name": "协议秒与 lockTime=0 的语义",
+      "kind": "data",
+      "summary": "锁内时刻是基准 2010-01-01 的协议秒；lockTime == 0 表示「没读到时钟」，必须当作无日期而不是 2010-01-01。",
+      "details": [
+        "旧守卫写成 guard ms > 0，但 ms 实际是 Unix 秒（1.7e9 量级），lockTime=0 换算后是 2010-01-01 也 > 0 ⇒ 守卫恒真（StatsKit.swift:15-18）",
+        "后果：47 处调用把无时间戳记录当成 2010-01-01 在数，earliestDate 被钉死在 2010，coverageDays 约 6100 天（StatsKit.swift:17-19）",
+        "正确口径：没有锁端时刻 = 没有日期，返回 nil（StatsKit.swift:20-23）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/StatsKit.swift",
+          "line": 20,
+          "symbol": "dateOf(_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 775,
+          "symbol": "protoSecondsToUnix",
+          "note": "protoSecondsToUnix 消费点"
+        }
+      ],
+      "tags": [
+        "时间",
+        "边界",
+        "统计口径"
+      ],
+      "status": "edge"
+    },
+    {
+      "key": "data.time.day-key",
+      "parentKey": "data.time",
+      "domain": "data",
+      "level": 3,
+      "name": "日 key 唯一口径与凌晨归属",
+      "kind": "data",
+      "summary": "dayKey = yyyy-MM-dd + en_US_POSIX + 当前时区；凌晨 0:00–4:59 在时间线分组里归到前一晚。",
+      "details": [
+        "检索分组与统计柱共用 dayKey，避免改一处导致对不齐（RecordSearch.swift:413）",
+        "dayKeyOfNight：hour < 5 时取前一天，用于未处置蓝点与 damageDays（RecordSearch.swift:423-429）",
+        "dateFromKey 把 yyyy-MM-dd 解回本地 0 点（RecordSearch.swift:415-421）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/StatsKit.swift",
+          "line": 24,
+          "symbol": "dayKey(_:)"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 423,
+          "symbol": "dayKeyOfNight(_:)"
+        }
+      ],
+      "tags": [
+        "时间",
+        "统计口径"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.time.week-cal",
+      "parentKey": "data.time",
+      "domain": "data",
+      "level": 3,
+      "name": "周起始偏好（kf_week_start）",
+      "kind": "setting",
+      "summary": "三档显式周起始 mon/sun/sat → firstWeekday 2/1/7；并只把历法钉成公历，其余四个旋钮照抄系统。",
+      "details": [
+        "空串 = 跟随系统/地区（默认，老用户观感不变）（WeekCal.swift:34-37）",
+        "gregorian：全仓唯一一处 Calendar.current，取完立刻换 identifier = .gregorian，防佛历/民国历把 .year 变成 2569（WeekCal.swift:24-32）",
+        "shifted 是「加减日历日」的唯一出口，不用 ±86400s，避免夏令时那天落到前天 23:00（WeekCal.swift:39-46）",
+        "calendar 里一并钉 minimumDaysInFirstWeek = 4，否则跨年周号会错位（WeekCal.swift:57-59）",
+        "effectiveName 按 firstWeekday 取中文名，让「跟随系统」能回显当前实际是周几（WeekCal.swift:76-80）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/WeekCal.swift",
+          "line": 48,
+          "symbol": "key"
+        },
+        {
+          "file": "App/Core/WeekCal.swift",
+          "line": 51,
+          "symbol": "calendar"
+        },
+        {
+          "file": "App/Core/WeekCal.swift",
+          "line": 44,
+          "symbol": "shifted(_:days:)"
+        }
+      ],
+      "tags": [
+        "时间",
+        "设置偏好",
+        "历法"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.time.format",
+      "parentKey": "data.time",
+      "domain": "data",
+      "level": 3,
+      "name": "时间显示格式（12/24 制、秒、双行）",
+      "kind": "setting",
+      "summary": "只有 clock() 与 full 两个出口，页面不许自己拼 DateFormatter；12 制加「上午/下午」，秒位缺位不补。",
+      "details": [
+        "三键：kf_time_style(\"\"/24/12)、kf_time_secs(默认 false)、kf_time_2ndline(默认 false)（TimeFormat.swift:14,17,30）",
+        "hour24 跟随系统时用模板 \"j\" 判断含 a 还是 H/k（TimeFormat.swift:34-44）",
+        "clock 识别不出 HH:mm 段就原样返回，不做时区换算（换一次就与锁键盘上的数字不一致）（TimeFormat.swift:46-52）",
+        "12 制：mod == 0 → 12，并追加 上午/下午；24 制保留源串前导零（TimeFormat.swift:56-68）",
+        "range 同年省年、同月省月；dayEnd 给「今天内」23:59:00（TimeFormat.swift:82-103）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/TimeFormat.swift",
+          "line": 48,
+          "symbol": "clock(_:)"
+        },
+        {
+          "file": "App/Core/TimeFormat.swift",
+          "line": 65,
+          "symbol": "showSeconds",
+          "note": "showSeconds && hasSec 才补秒"
+        },
+        {
+          "file": "App/Core/TimeFormat.swift",
+          "line": 100,
+          "symbol": "dayEnd(_:)"
+        }
+      ],
+      "tags": [
+        "时间",
+        "设置偏好",
+        "显示"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.variant",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 2,
+      "name": "视觉语法层（Variant Grammar）",
+      "kind": "service",
+      "summary": "把「一组读数/一块入口/一条内嵌行」的样式收在唯一实现处；现行变体下逐字复用改造前代码，所以零像素改动。",
+      "details": [
+        "结构：VK 令牌与容器件 + Plate 底衬 + List/按钮外形 + Toggle 形状 + vkFont 排版"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/VariantGrammar.swift",
+          "line": 37,
+          "symbol": "VK"
+        },
+        {
+          "file": "App/Core/VariantGrammar.swift",
+          "line": 30,
+          "symbol": "ContainerKind"
+        }
+      ],
+      "tags": [
+        "设计系统",
+        "视觉语法"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.variant.grammar",
+      "parentKey": "data.variant",
+      "domain": "data",
+      "level": 3,
+      "name": "VK 令牌与三个容器件",
+      "kind": "service",
+      "summary": "容器只有四类语义（group/tile/inset/hero）；Card 53 处、SectionTitle 21 处、StatusPill 29 处都走这里。",
+      "details": [
+        "现行令牌全部转发 DS：accent=Palette.text、canvas=canvasBase、bezel=surfaceBase、hair=hairline、gutter=Space.gutter(16)、corner=Radius.card（跟随 kf_radius）（VariantGrammar.swift:44-70）",
+        "card 用 Optional tint 而不是与 .clear 比较相等，避免语义写法一变就判错（VariantGrammar.swift:81-83）",
+        "card 走 .axGlass，从而自带「降低透明度/增强对比」降实底退路（VariantGrammar.swift:88-90）",
+        "statusPill 保住「图标形状 + 颜色」双通道，且 fixedSize 防换行（VariantGrammar.swift:125-144）",
+        "destined(_:) 只是台账钉子，明确不许加视觉效果（VariantGrammar.swift:167-177）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/VariantGrammar.swift",
+          "line": 80,
+          "symbol": "card(tint:_:)"
+        },
+        {
+          "file": "App/Core/VariantGrammar.swift",
+          "line": 103,
+          "symbol": "sectionTitle(text:count:)"
+        },
+        {
+          "file": "App/Core/VariantGrammar.swift",
+          "line": 128,
+          "symbol": "statusPill(text:systemImage:tone:)"
+        }
+      ],
+      "tags": [
+        "设计系统",
+        "视觉语法"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.variant.toggle",
+      "parentKey": "data.variant",
+      "domain": "data",
+      "level": 3,
+      "name": "开关形状与三个重载",
+      "kind": "service",
+      "summary": "VariantToggleStyle 内层显式 .toggleStyle(.switch) 断开递归；VariantToggle 提供字面量/字符串/自定标签三种重载。",
+      "details": [
+        "120 处 Toggle 的颜色走缝里的 .tint，形状由这个 style 决定（VariantGrammar.swift:342-343）",
+        "自绘开关必须用 accessibilityRepresentation 换成真 Toggle，而不是手贴 .isToggle（漏一样就是「读得出、按不动」）（VariantGrammar.swift:353-356）",
+        "两个重载都保留：只留 LocalizedStringKey 会让标题是变量/三元式的 5 处推断失败（VariantGrammar.swift:376-379）",
+        "返回 AnyView 是为了被 uicoverage 的穷尽性检查扫到，改 some View 会静默逃检（VariantGrammar.swift:362-364）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/VariantGrammar.swift",
+          "line": 365,
+          "symbol": "VariantToggleStyle"
+        },
+        {
+          "file": "App/Core/VariantGrammar.swift",
+          "line": 381,
+          "symbol": "VariantToggle(_:isOn:)"
+        },
+        {
+          "file": "App/Core/VariantGrammar.swift",
+          "line": 391,
+          "symbol": "VariantToggle(isOn:label:)"
+        }
+      ],
+      "tags": [
+        "设计系统",
+        "无障碍"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.variant.typography",
+      "parentKey": "data.variant",
+      "domain": "data",
+      "level": 3,
+      "name": "行内排版唯一入口（vkFont）",
+      "kind": "service",
+      "summary": "收「基准 Font + 可选字重」，没写字重就一个修饰符都不加；1770 处文本 .font 都改成它。",
+      "details": [
+        "字体差只有一个实现处 VKTypography.font(base, weight:)，供 Canvas 里收 Text 的水印层复用（VariantGrammar.swift:413-420）",
+        "图标 .system(size:) 刻意写死，不参与 Dynamic Type、不跟变体换字重（VariantGrammar.swift:426-427）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/VariantGrammar.swift",
+          "line": 429,
+          "symbol": "vkFont(_:weight:)"
+        },
+        {
+          "file": "App/Core/VariantGrammar.swift",
+          "line": 417,
+          "symbol": "font(_:weight:)"
+        }
+      ],
+      "tags": [
+        "设计系统",
+        "排版"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.search-index",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 2,
+      "name": "检索持久化层",
+      "kind": "data",
+      "summary": "记录页的本机覆盖层（备注/标旗）、处置工单、检查清单、过滤会话与命名视图的落盘约定。",
+      "details": [
+        "覆盖层与锁日志严格分离，绝不写进锁端也不混入日志缓存（RecordSearch.swift:16-18）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 24,
+          "symbol": "RecordOverlay"
+        }
+      ],
+      "tags": [
+        "检索",
+        "本地键值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.search-index.overlay",
+      "parentKey": "data.search-index",
+      "domain": "data",
+      "level": 3,
+      "name": "记录备注与手动标旗（kf_rnote_ / kf_rflag_）",
+      "kind": "data",
+      "summary": "按 (锁, 行) 存用户写的自由文本与旗标；行身份用 mac#idxRaw 归一，手机侧行用 f_秒 / c_毫秒。",
+      "details": [
+        "备注 60 字上限（行下灰字一行放得下），空文本 = 删键，不留空壳（RecordSearch.swift:38-44）",
+        "oid 归一：多锁 RowVM.key 已带 mac 前缀，单锁路径没带，统一补成同一个键（RecordSearch.swift:28-30）",
+        "备注属敏感本地数据，删设备与销毁流程按族清（RecordSearch.swift:22-23）",
+        "toggleFlag 写回时 sorted 保证数组稳定（RecordSearch.swift:56）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 25,
+          "symbol": "noteKey(_:)"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 38,
+          "symbol": "setNote(_:_:_:)"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 52,
+          "symbol": "toggleFlag(_:_:)"
+        }
+      ],
+      "tags": [
+        "检索",
+        "本地键值",
+        "脱敏"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.search-index.dispo-check",
+      "parentKey": "data.search-index",
+      "domain": "data",
+      "level": 3,
+      "name": "处置留痕与检查清单",
+      "kind": "data",
+      "summary": "kf_rdispo 存「结论 + 时刻」，键 = mac#idxRaw；「测试」结论同时充当统计排除标记；kf_rcheck_ 存防撬清单勾选。",
+      "details": [
+        "verdict 取值：已处理 / 误报 / 已处置 / 测试 / 已人工检查（RecordSearch.swift:776-779）",
+        "undoDisposition 回退到未处理；testMarkedKeys 把 verdict == 测试 的键集给统计层排除（RecordSearch.swift:789-798）",
+        "检查清单固定 4 项，长度按序号夹回（多补 false、多截尾项）（RecordSearch.swift:801-807）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 783,
+          "symbol": "markDisposition(key:verdict:)"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 796,
+          "symbol": "testMarkedKeys"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 802,
+          "symbol": "checkState(_:)"
+        }
+      ],
+      "tags": [
+        "检索",
+        "处置",
+        "统计口径"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.search-index.filters",
+      "parentKey": "data.search-index",
+      "domain": "data",
+      "level": 3,
+      "name": "过滤会话与开场策略",
+      "kind": "setting",
+      "summary": "kf_rflt_<mac> 记住上次过滤组合；kf_filter_default 三档决定进页时「记住上次 / 每次空白 / 只看告警」。",
+      "details": [
+        "非默认策略下也照常保存，用户切回「记住上次」时上一次组合还在（RecordSearch.swift:210-211）",
+        "等于默认值就删键，不留空壳（RecordSearch.swift:214）",
+        "策略值走白名单，未知值一律当「记住上次」，不把脏数据留在偏好里（RecordSearch.swift:199-202）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 203,
+          "symbol": "load(mac:)"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 212,
+          "symbol": "save(mac:)"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 193,
+          "symbol": "policyKey"
+        }
+      ],
+      "tags": [
+        "检索",
+        "设置偏好"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.search-index.views-history",
+      "parentKey": "data.search-index",
+      "domain": "data",
+      "level": 3,
+      "name": "命名视图与搜索历史",
+      "kind": "data",
+      "summary": "kf_rviews 存 12 段文本 + 过滤 + 范围，上限 20 条；kf_rsearch_hist 存最近 5 条搜索词，最新在前。",
+      "details": [
+        "saveNamedView 同名先删再插首，保证唯一（RecordSearch.swift:764-769）",
+        "搜索历史上限 5，pushHistory 先去重再插首，取 prefix(5)；旧实现从尾部截 5 条留下全是最旧（RecordSearch.swift:742-753）",
+        "removeHistory / clearHistory 提供单删与清空（RecordSearch.swift:754-759）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 764,
+          "symbol": "saveNamedView(name:text:filters:scopeAll:)"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 746,
+          "symbol": "pushHistory(_:)"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 745,
+          "symbol": "historyCap"
+        }
+      ],
+      "tags": [
+        "检索",
+        "本地键值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.ops",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "凭证台账写入口",
+      "kind": "service",
+      "summary": "密码与指纹的增删改都走 DB 的薄封装，每次写入都经 saveLedger 这一个漏斗（连带审计 diff）。",
+      "details": [
+        "所有 add* 都是「先按主键去重再 append」，同 alias/batch 的旧记录被替换（Store.swift:553-558,584-588）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 553,
+          "symbol": "addPwd(_:_:)"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 584,
+          "symbol": "addFp(_:_:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "持久化"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.add",
+      "parentKey": "credential.ops",
+      "domain": "credential",
+      "level": 3,
+      "name": "新增/覆盖密码条目",
+      "kind": "action",
+      "summary": "addPwd 以 alias 为主键覆盖写入；列表读取按 at 倒序（最新在最上）。",
+      "details": [
+        "listPwds 排序 { $0.at > $1.at }，依赖 at 为毫秒时间戳（Store.swift:547-549）",
+        "at 是「添加时刻」；rePwd 改值与 setPwdPeriod 改期都不回写 at（CredentialOrg.swift:1206-1212）",
+        "所以「这条码多久没换」无法从台账证实，只能反查版本快照（CredentialOrg.swift:1283-1285）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 547,
+          "symbol": "listPwds(_:)"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 553,
+          "symbol": "addPwd(_:_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1270,
+          "symbol": "pwdAgeDays(_:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "边界"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.edit",
+      "parentKey": "credential.ops",
+      "domain": "credential",
+      "level": 3,
+      "name": "改值、改期、改备注",
+      "kind": "action",
+      "summary": "rePwd 改口令明文、setPwdPeriod 改有效期起止、setPwdNote 改备注，三者都只动指定 alias 并重写整表。",
+      "details": [
+        "rePwd 只替换 pwd 字段，不动 from/to/temp/at（Store.swift:564-568）",
+        "setPwdPeriod 同时改 from 与 to（Store.swift:569-573）",
+        "每次写入都触发 ledgerDiff → AuditLog.append（含口令指纹前 4 位）（Store.swift:510-521）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 564,
+          "symbol": "rePwd(_:_:_:)"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 569,
+          "symbol": "setPwdPeriod(_:_:_:_:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "审计"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.fp.write",
+      "parentKey": "credential.ops",
+      "domain": "credential",
+      "level": 3,
+      "name": "指纹批次写入与改名/备注/防拆",
+      "kind": "action",
+      "summary": "以 batch 为主键增删改；isAlarm 是「防拆预警指纹」标记，diff 里会单独记「防拆 开/关」。",
+      "details": [
+        "addFp/delFp/renameFp/setFpNote/setFpOwner/setFpAlarm 六个入口（Store.swift:584-614）",
+        "指纹的锁端身份只有模板，本机可改的只有名称/备注/归属/防拆（CredentialOrg.swift:210-211）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 595,
+          "symbol": "renameFp(_:_:_:)"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 610,
+          "symbol": "setFpAlarm(_:_:_:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "指纹"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.owner",
+      "parentKey": "credential.ops",
+      "domain": "credential",
+      "level": 3,
+      "name": "归属（owner）与代管补记",
+      "kind": "action",
+      "summary": "owner 是可空的成员 id；停用/移交时若原属主在代管名单里，快照备注补一句「管理员代操作」。",
+      "details": [
+        "setPwdOwner / setFpOwner 只改指定条（Store.swift:579-583,605-609）",
+        "成员被删时全部台账归属解绑，凭证本身保留（Store.swift:764-770）",
+        "proxySuffix 判据与单条停用 disableVia、批量停用共用同一张 MemberHub.proxyNames；无归属不猜（CredentialOrg.swift:695-698）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 579,
+          "symbol": "setPwdOwner(_:_:_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 695,
+          "symbol": "proxySuffix(_:)"
+        },
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 258,
+          "symbol": "proxyNames"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "成员",
+        "归属"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.history",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "版本历史（kf_chist_）",
+      "kind": "service",
+      "summary": "每条凭证的版本快照表：保存自动快照、删除前快照、批量前自动还原点、恢复即新版本，配额默认 10 版。",
+      "details": [
+        "键形如 kf_chist_<mac>_pwd_<alias> / _fp_<batch>（CredentialOrg.swift:140）",
+        "快照版本号单调递增，天然唯一，可当作 id（CredentialOrg.swift:33-34）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 174,
+          "symbol": "history(_:_:_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 180,
+          "symbol": "snapshot(_:kind:key:pwd:fp:note:starred:auto:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "版本历史"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.history.quota",
+      "parentKey": "credential.history",
+      "domain": "credential",
+      "level": 3,
+      "name": "配额淘汰：星标豁免 + 自动还原点 2 席",
+      "kind": "setting",
+      "summary": "kf_ccred_quota 默认 10；配额只算手动快照，星标版永不淘汰，auto 版单独保留最近 2 个。",
+      "details": [
+        "算法：kept = 星标集，room = max(cap - 星标数, 0)，plain 取 suffix(room)，最后拼 autosKeep（CredentialOrg.swift:190-197）",
+        "版本号取 max 而不是 list.last：auto 版被排到末尾后取 last 会重复版本号（CredentialOrg.swift:183）",
+        "auto 快照不计入配额，历史页置顶加标记（CredentialOrg.swift:178-179）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 177,
+          "symbol": "quota(_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 193,
+          "symbol": "room",
+          "note": "room = max(cap - kept.count, 0)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "阈值",
+        "版本历史"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.history.diff",
+      "parentKey": "credential.history",
+      "domain": "credential",
+      "level": 3,
+      "name": "修订着色 diff 与摘要句",
+      "kind": "diagnostic",
+      "summary": "两个快照逐字段对齐出 add/del/mod/same 四类行；摘要句把「临时密码 #N · 到 X」拼成一句人话。",
+      "details": [
+        "密码六行：密码值/有效期起/有效期止/类型/备注/归属；指纹四行：名称/备注/预警/归属（CredentialOrg.swift:240-265）",
+        "归属显示成员名，空则「未归属」（CredentialOrg.swift:253-255）",
+        "relTime 给「刚刚 · 绝对时刻 / N 分钟前 · 绝对时刻 / 绝对时刻」三档（CredentialOrg.swift:1557-1568）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 240,
+          "symbol": "diff(_:_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 266,
+          "symbol": "summaryText(of:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1558,
+          "symbol": "relTime"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "版本历史",
+        "显示"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.history.restore",
+      "parentKey": "credential.history",
+      "domain": "credential",
+      "level": 3,
+      "name": "恢复即新版本（改的是本机台账）",
+      "kind": "action",
+      "summary": "恢复不覆盖历史，而是把基线复制回台账并新增一条「恢复自 vN」；密码还会排一次重新下发。",
+      "details": [
+        "密码恢复 → queueRestore 入队；指纹恢复不排队（锁里存模板，本机字段改不了也不需要改）（CredentialOrg.swift:206-221）",
+        "文案必须说清「锁里那条不会自己变回来」，否则用户拿恢复后的码开门会吃闭门羹（CredentialOrg.swift:207-210）",
+        "删除前快照是双通道可找回（历史 + 回收站）的落点（CredentialOrg.swift:222-226）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 212,
+          "symbol": "restore(_:kind:key:from:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 223,
+          "symbol": "snapshotBeforeDelete(_:pwd:fp:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "版本历史",
+        "恢复"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.bin",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "凭证回收站（kf_cbin_）",
+      "kind": "service",
+      "summary": "删除先进回收站、按来源分档、保留期默认 30 天；支持整组还原、撤销停用、彻底删除（需生物识别）。",
+      "details": [
+        "键 kf_cbin_<mac>，条目按 at 倒序插首（CredentialOrg.swift:141,291）",
+        "上限未显式设，靠保留期清理与彻底删除控制体量"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 278,
+          "symbol": "bin(_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 288,
+          "symbol": "addToBin(_:pwd:fp:source:batchId:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "回收站",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.bin.add",
+      "parentKey": "credential.bin",
+      "domain": "credential",
+      "level": 3,
+      "name": "入回收站与来源五档",
+      "kind": "action",
+      "summary": "入站前必先落「删除前快照」；来源分手动删除/批量清理/过期清理/重录替代/无主隔离，级联动作共用一个 batchId。",
+      "details": [
+        "batchId 只由「一次动作产出多条」的级联调用点传入，单条删除留 nil ⇒ 不参与整组还原（CredentialOrg.swift:286-292）",
+        "id 由 at 派生，无 at 时退回 alias/batch/\"bin\"（CredentialOrg.swift:60-62）",
+        "行首文案：密码 #N（临时密码带「(一次性)」）/ 指纹「名」/ 凭证（CredentialOrg.swift:63-68）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 37,
+          "symbol": "CredBinSource"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 288,
+          "symbol": "addToBin"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 289,
+          "symbol": "addToBin",
+          "note": "snapshotBeforeDelete 先落"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "回收站"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.bin.restore",
+      "parentKey": "credential.bin",
+      "domain": "credential",
+      "level": 3,
+      "name": "还原 / 还原为副本 / 冲突加前缀",
+      "kind": "action",
+      "summary": "还原时若同 alias 已存在或用户选「作为副本」，备注或名称加「还原-」前缀；还原后必收回该条名下未发出的锁端删除。",
+      "details": [
+        "密码还原一律排一次重新下发（过期则不排，由返回值说明原因）（CredentialOrg.swift:391-405）",
+        "回收站那一格的 undoBin 只负责「从回收站取回」，别处的痕迹（365 待发删除、361 停用便签）要靠 reclaim 收（CredentialOrg.swift:294-298）",
+        "reclaim 收回 pending 的 del_pwd/del_fp 并清停用便签；已下发/失败的留着，不抹证据（CredentialOrg.swift:339-352,365-385）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 391,
+          "symbol": "restoreBin(_:entry:asCopy:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 365,
+          "symbol": "reclaim(_:entry:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 341,
+          "symbol": "cancelPendingDelete(_:entry:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "回收站",
+        "恢复"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.bin.undo",
+      "parentKey": "credential.bin",
+      "domain": "credential",
+      "level": 3,
+      "name": "撤销删除的完整语义",
+      "kind": "action",
+      "summary": "undoRemove 按 hard 分两路：软删除走 reclaim 收回队列与便签；硬删除如实说锁端已真删、只能重新下发，指纹无法远程补录。",
+      "details": [
+        "返回文案只在这里有一份，界面不再各写一遍（CredentialOrg.swift:319）",
+        "已不在回收站时统一回「可能已恢复、已清理，或本机刚换过锁」（CredentialOrg.swift:321-323）",
+        "四种结局文案：已排重新下发 / 已过有效期无处可恢复 / 指纹只能到锁前重录 / 仅本机放回（CredentialOrg.swift:325-336）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 320,
+          "symbol": "undoRemove(_:entry:hard:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 328,
+          "symbol": "q ?",
+          "note": "锁端那条已经真删了"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "回收站",
+        "边界"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.bin.purge",
+      "parentKey": "credential.bin",
+      "domain": "credential",
+      "level": 3,
+      "name": "彻底删除的统一门槛",
+      "kind": "action",
+      "summary": "单条与清空回收站走同一个 guardedPurge：有生物识别先刷、通过即执行；刷不了则把同一个 commit 交回 UI 二次确认。",
+      "details": [
+        "门槛与执行分离：purgeBin 是裸执行口，任何调用点不得绕过 guardedPurge（CredentialOrg.swift:419-424）",
+        "「没法刷脸」不等于放行，那一支必须过 UI 第二问（fail-closed）（CredentialOrg.swift:429-433）",
+        "canEvaluate 为真但带 biometryNotAvailable 的实测情形也按「没生物可刷」处理（CredentialOrg.swift:449-454）",
+        "purgeNow 单条与多条共用同一过滤口径，不另写第二套清空逻辑（CredentialOrg.swift:464-471）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 441,
+          "symbol": "guardedPurge(_:ids:reason:onDeniedPresentFallback:onDone:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 467,
+          "symbol": "purgeNow(_:ids:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 422,
+          "symbol": "purgeBin(_:id:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "回收站",
+        "安全",
+        "破坏性"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.bin.sweep",
+      "parentKey": "credential.bin",
+      "domain": "credential",
+      "level": 3,
+      "name": "保留期清理与容量头行",
+      "kind": "automation",
+      "summary": "kf_cbin_reclaim_days 默认 30 天，超过保留期的条目在启动巡检时自动清掉并返回清了几条。",
+      "details": [
+        "sweepReclaim: cut = now - days*86400，filter at >= cut，返回 before-after（CredentialOrg.swift:474-482）",
+        "launchTick 遍历全部锁并顺带幂等排程月度清理通知（CredentialOrg.swift:648-654）",
+        "binHeader 给「条数 + 最老条目到期的下次清理日期」（CredentialOrg.swift:484-488）",
+        "恢复窗口 7 天：withinRecoverWindow 判 entry.at 在 7*86400 内（单位是秒，不是毫秒）（CredentialOrg.swift:1075-1078）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 472,
+          "symbol": "reclaimDays()"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 474,
+          "symbol": "sweepReclaim(_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 649,
+          "symbol": "launchTick()"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "回收站",
+        "自动化",
+        "阈值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.queue",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "下发状态队列（kf_cqueue_）",
+      "kind": "service",
+      "summary": "本地容错队列：待下发 → 已下发 → 锁端确认；重试时复用既有 LockService 命令，不新增协议指令。",
+      "details": [
+        "键 kf_cqueue_<mac>，条目插首（CredentialOrg.swift:142,571-578）",
+        "kind 只有 del_pwd / del_fp / period / restore / copy 五种（CredentialOrg.swift:78）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 553,
+          "symbol": "queue(_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 76,
+          "symbol": "CredQueueItem"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "队列",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.queue.enqueue",
+      "parentKey": "credential.queue",
+      "domain": "credential",
+      "level": 3,
+      "name": "入队与自增 id",
+      "kind": "action",
+      "summary": "enqueue 用 nextQueueId（max+1）分配 id 并插到队首；payload 带整条 pwd/fp 供重试时重新下发。",
+      "details": [
+        "nextQueueId = (queue.map.id.max ?? 0) + 1（CredentialOrg.swift:568-570）",
+        "同一条 restore 已在队列里时不重复入队，返回「本来就在队列里」（CredentialOrg.swift:545）",
+        "已过期密码不入 restore 队列，返回「已过有效期，不排重新下发」（CredentialOrg.swift:543）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 571,
+          "symbol": "enqueue(_:kind:title:pwd:fp:newFrom:newTo:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 542,
+          "symbol": "queueRestore(_:_:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "队列"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.queue.state",
+      "parentKey": "credential.queue",
+      "domain": "credential",
+      "level": 3,
+      "name": "三态机与重试计数",
+      "kind": "state",
+      "summary": "pending(0)/done(1)/failed(2)；markQueue 每次调用 state 更新、attempt+1、lastAt=now、title 换成最新备注。",
+      "details": [
+        "pendingCount = pending + failed（顶部徽标口径）（CredentialOrg.swift:589-591）",
+        "pendingQueue = state != done（队列页「未完成」子集）（CredentialOrg.swift:644-646）",
+        "lastApplyAt 取 done 条目里最大 lastAt，只能证明「本机发过且锁端回过受理」（CredentialOrg.swift:563-567）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 72,
+          "symbol": "CredQueueState"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 579,
+          "symbol": "markQueue(_:id:state:note:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 563,
+          "symbol": "lastApplyAt(_:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "队列",
+        "状态机"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.queue.send",
+      "parentKey": "credential.queue",
+      "domain": "credential",
+      "level": 3,
+      "name": "唯一下发实现（四支防呆）",
+      "kind": "automation",
+      "summary": "sendQueued 是全仓唯一 switch：缺别名/缺批次号/缺改期对象/缺明文一律抛错中止，绝不向锁发 0 号槽。",
+      "details": [
+        "这条 switch 原抄了三份，两份没带「缺别名中止」修正 ⇒ ?? 0 会发「删 0 号槽」，删掉别人的密码还被标成「锁端确认」（CredentialOrg.swift:592-598）",
+        "返回一句补充提示，只在锁端把这条落到别的槽时有内容（CredentialOrg.swift:598）",
+        "period 支不改本机时段：batchExtend 入队时已改过（CredentialOrg.swift:620）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 599,
+          "symbol": "sendQueued(_:_:_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 603,
+          "symbol": "BLEErrorX",
+          "note": "队列项缺少密码别名，已中止下发"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "队列",
+        "边界",
+        "安全"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.queue.send.del-pwd",
+      "parentKey": "credential.queue.send",
+      "domain": "credential",
+      "level": 4,
+      "name": "删除类下发的别名守卫",
+      "kind": "edge",
+      "summary": "del_pwd 要求 pwd.alias != 0 且 payload 存在；del_fp 还要过 batchU32 边界转换，防负数批次 trap 崩进程。",
+      "details": [
+        "指纹原只判 batch != 0，而导入链不校验符号 ⇒ 构造备份即可让用户点删除时崩（CredentialOrg.swift:608-613）",
+        "留存口径：本机台账在停用那一刻已删，这一步只负责把命令发出去（CredentialOrg.swift:604-606）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 602,
+          "symbol": "sendQueued",
+          "note": "guard let p = item.pwd, p.alias != 0"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 611,
+          "symbol": "batchU32",
+          "note": "f.batchU32 安全转换"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "队列",
+        "边界",
+        "破坏性"
+      ],
+      "status": "edge"
+    },
+    {
+      "key": "credential.queue.send.restore",
+      "parentKey": "credential.queue.send",
+      "domain": "credential",
+      "level": 4,
+      "name": "重新下发落到别的槽位时改号",
+      "kind": "edge",
+      "summary": "pwdAdd 返回的 alias 与本地不同时，删旧号 + 用新号写回并留一档版本历史，避免两份真相。",
+      "details": [
+        "旧三份实现都把返回值扔掉（_ =），不归位就会「按旧别名去彻底删除/改期，动的却是同槽位的另一个凭证」（CredentialOrg.swift:629-635）",
+        "没有明文时拒绝下发并提示「需重新录入」（CredentialOrg.swift:624-625）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 627,
+          "symbol": "pwdAdd",
+          "note": "let alias = try await lock.pwdAdd(...)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 636,
+          "symbol": "snapshot",
+          "note": "snapshot 记「重新下发落到别名 #N」"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "队列",
+        "边界"
+      ],
+      "status": "edge"
+    },
+    {
+      "key": "credential.organize",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "视图组织层",
+      "kind": "service",
+      "summary": "凭证列表的分组、排序、星标、归档、拖拽序、别名显示、智能列表与整理建议中心。",
+      "details": [
+        "全部为纯本地展示层状态，不进备份包 schema（CredentialOrg.swift:2）",
+        "归档与停用/彻底删除是三个不同档：归档只碰展示层，台账与锁端零改动（CredentialOrg.swift:785）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 134,
+          "symbol": "CredentialOrg"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "组织",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.organize.group-sort",
+      "parentKey": "credential.organize",
+      "domain": "credential",
+      "level": 3,
+      "name": "分组模式与四维排序",
+      "kind": "setting",
+      "summary": "分组两档（按类型/按归属）与四维排序（名称/类型/最近使用/到期）；默认按到期排，偏好持久化。",
+      "details": [
+        "kf_ccred_prefs 只有 bit0 是分组模式，其余位留给后续偏好；读写都做位运算（CredentialOrg.swift:1016-1026）",
+        "kf_ccred_sort 默认 3 = expiry（CredentialOrg.swift:1021）",
+        "「最近使用(约)」标签自带「约」：锁端日志不记凭证身份，长期凭证只能按锁级推断（CredentialOrg.swift:126）",
+        "拖拽序 kf_cseq_ 按 \"p\"/\"f\" 两段存 index→元素数组（CredentialOrg.swift:1030-1035）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1018,
+          "symbol": "groupMode"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1021,
+          "symbol": "sortKey"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 120,
+          "symbol": "CredSortKey"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 131,
+          "symbol": "CredGroupMode"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "组织",
+        "设置偏好"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.organize.star",
+      "parentKey": "credential.organize",
+      "domain": "credential",
+      "level": 3,
+      "name": "置顶星标与高频推断（921）",
+      "kind": "action",
+      "summary": "星标用指纹段偏移 100000 与密码段共表但不相撞；另有「高频临时码」推断，供「再开一次」直达。",
+      "details": [
+        "toggleStar / setStar 两个写点：批量里用 toggle 会把已置顶的翻下去，故补 setStar（CredentialOrg.swift:753-758）",
+        "starSuggestion 只看未归档的临时码，按近 30 天开门日志（type 2/4）落在其时间窗内的命中次数取最大（CredentialOrg.swift:764-783）",
+        "结果形如 \"p<alias>\"，调用方需自解析（CredentialOrg.swift:781-782）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 747,
+          "symbol": "stars(_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 754,
+          "symbol": "setStar(_:_:_:_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 764,
+          "symbol": "starSuggestion(_:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "组织",
+        "推断值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.organize.archive",
+      "parentKey": "credential.organize",
+      "domain": "credential",
+      "level": 3,
+      "name": "归档区（收起不删）",
+      "kind": "action",
+      "summary": "kf_carch_ 记归档条目；归档条不参与整理建议、不计角标、不进「再开一次」候选，可一键全部还原。",
+      "details": [
+        "指纹段同样 +100000 偏移，与星标同一约定（CredentialOrg.swift:791）",
+        "unarchiveAll 一次写空数组，避免逐条 toggle 让并发读改写互相搅（CredentialOrg.swift:798-801）",
+        "「收起的东西不许被推荐」在三处判据里都写了（CredentialOrg.swift:765-766）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 786,
+          "symbol": "archived(_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 789,
+          "symbol": "setArchived(_:_:_:_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 799,
+          "symbol": "unarchiveAll(_:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "组织"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.organize.alias",
+      "parentKey": "credential.organize",
+      "domain": "credential",
+      "level": 3,
+      "name": "别名显示与显示名规则",
+      "kind": "setting",
+      "summary": "kf_calias_display 开时用成员 relation 作称呼（如「老妈」）；凭证显示名优先取备注首段（≤12 字）。",
+      "details": [
+        "ownerName：aliasDisplay 且 relation 非空则用 relation，否则回 name（CredentialOrg.swift:1476-1480）",
+        "displayPwd：备注按「·」切首段，非空且 ≤12 字才用；否则「X 的密码 #N」/「临时密码 #N」（CredentialOrg.swift:1481-1489）",
+        "只做显示替换，匹配与深链仍走裸名（MemberHub.swift:129-135）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1476,
+          "symbol": "ownerName(_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1481,
+          "symbol": "displayPwd(_:)"
+        },
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 131,
+          "symbol": "aliasName(_:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "组织",
+        "显示"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.organize.smartlist",
+      "parentKey": "credential.organize",
+      "domain": "credential",
+      "level": 3,
+      "name": "命名智能列表（kf_clists_）",
+      "kind": "setting",
+      "summary": "把常用筛选组合（类型/归属/状态/标签）存为具名快捷；只负责存取与标题拼装，过滤规则由界面内联实现。",
+      "details": [
+        "CredSmartList：name / kind(all|pwd|fp) / owner / state(active|scheduled|expired) / tag(stale|noowner)（CredentialOrg.swift:111-118）",
+        "smartListLabel 拼「名 · 成员 · 状态中文」（CredentialOrg.swift:974-981）",
+        "注释明确：全仓只有一处 inline 过滤实现，刻意不留第二份谓词（CredentialOrg.swift:969-973）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 966,
+          "symbol": "smartLists(_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 974,
+          "symbol": "smartListLabel(_:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "组织",
+        "智能列表"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.organize.advice",
+      "parentKey": "credential.organize",
+      "domain": "credential",
+      "level": 3,
+      "name": "整理建议中心与智能选取",
+      "kind": "action",
+      "summary": "五类建议（过期/重复值/无归属/回收站/成员临时码全过期）+ 三个智能选取按钮（已过期、同成员、同类型）。",
+      "details": [
+        "过期建议口径：pwdState == 2 且未归档（CredentialOrg.swift:903）",
+        "重复值按 pwd 明文分组，组内 >1 条才计（CredentialOrg.swift:908-914）",
+        "成员催收回：该成员名下临时码「全部」已过期才建议，按条数降序取前三（CredentialOrg.swift:925-942）",
+        "smartSet 三档都排除归档条目，选择位面与浏览位面同一份（CredentialOrg.swift:947-963）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 900,
+          "symbol": "advice(_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 947,
+          "symbol": "smartSet(_:set:base:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 938,
+          "symbol": "memberExpired",
+          "note": "memberExpired 建议"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "组织",
+        "建议"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.calendar",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "到期日历与提醒排程",
+      "kind": "service",
+      "summary": "月历日格到期计数、当日到期清单、五档到期预警、六条本地通知、近 7 天角标与月度清理提醒。",
+      "details": [
+        "所有判断共用 expiryDate 一把尺：2118 前缀视为永久有效返回 nil（CredentialOrg.swift:166-170）",
+        "台账时间串格式固定 yyyy-MM-dd HH:mm:ss + en_US_POSIX（CredentialOrg.swift:156-161）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 167,
+          "symbol": "expiryDate(_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1051,
+          "symbol": "monthDeadlines(_:year:month:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "日历",
+        "通知"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.calendar.month-day",
+      "parentKey": "credential.calendar",
+      "domain": "credential",
+      "level": 3,
+      "name": "月历到期格与当日清单",
+      "kind": "action",
+      "summary": "月历每格右上角显示当日到期条数；点某日给出当日到期凭证列表（按本地时区同一天判定）。",
+      "details": [
+        "monthDeadlines 按 year/month 过滤后落到当日 0 点做 key，只统计 to 落在该月的条目（CredentialOrg.swift:1051-1065）",
+        "dayDeadlines 用 cal.isDate(inSameDayAs:) 判同日，长期有效（2118）不参与（CredentialOrg.swift:1066-1072）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1051,
+          "symbol": "monthDeadlines(_:year:month:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1066,
+          "symbol": "dayDeadlines(_:_:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "日历"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.calendar.alerts",
+      "parentKey": "credential.calendar",
+      "domain": "credential",
+      "level": 3,
+      "name": "五档到期预警开关",
+      "kind": "setting",
+      "summary": "到期时 / 提前 7 天 / 3 天 / 1 天 / 24 小时 / 2 小时六档，逐条凭证存一份 CredAlert，默认全关。",
+      "details": [
+        "键 kf_calert_<mac>_pwd_<alias>；缺键时显式解码为「该档关」，不牵动别的档（CredentialOrg.swift:98-108）",
+        "旧包没有 d3/d1 键，用 ?? CredAlert() 会把整组吞成「全关」⇒ 所以必须显式解码（CredentialOrg.swift:98-100）",
+        "「到期时」不看单档开关：开了任何一档就发 t0（CredentialOrg.swift:821-822）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 88,
+          "symbol": "CredAlert"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 804,
+          "symbol": "alert(_:_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 101,
+          "symbol": "decodeIfPresent"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "通知",
+        "设置偏好"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.calendar.schedule",
+      "parentKey": "credential.calendar",
+      "domain": "credential",
+      "level": 3,
+      "name": "六条本地通知的排程与失败出口",
+      "kind": "automation",
+      "summary": "先按 id 前缀删旧排程，再按开关补 d7/d3/d1/h24/h2/t0；排期失败写 os 日志，不再静默显示「已排程」。",
+      "details": [
+        "id 形如 c6.alert.<mac>.p<alias>.d7 / .h24 / .t0（CredentialOrg.swift:816-845）",
+        "天数档是日历日（WeekCal.shifted），小时档是时长（-86400/-7200）；混用会让夏令时切换日多/少一小时（CredentialOrg.swift:825-826）",
+        "addCalendar 只排未来时刻，过期时刻直接跳过（CredentialOrg.swift:863-864）",
+        "排期失败由 CredentialOrg.notifyLog.error 记录（凭证到期预警是唯一提醒出口，静默失败等于没提醒）（CredentialOrg.swift:871-877）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 814,
+          "symbol": "scheduleAlerts(_:_:_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 829,
+          "symbol": "dayTier",
+          "note": "WeekCal.shifted(to, days: -k)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 844,
+          "symbol": "addCalendar",
+          "note": "t0 到期时"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "通知",
+        "自动化"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.calendar.badge",
+      "parentKey": "credential.calendar",
+      "domain": "credential",
+      "level": 3,
+      "name": "近 7 天到期角标与 2 小时提醒行",
+      "kind": "state",
+      "summary": "凭证 Tab 角标数 = 跨锁近 7 天到期且未归档的条数；2 小时档另有 App 内提醒行。",
+      "details": [
+        "expiringSoonCount 与月历格、dueSoonPwds 同源同一把尺（expiryDate），长期有效与归档不计（CredentialOrg.swift:848-862）",
+        "dueSoonPwds 条件：h2 开 且 to 在 [now-3600, now+7200]（允许刚过期一小时仍在列表）（CredentialOrg.swift:881-889）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 850,
+          "symbol": "expiringSoonCount(macs:within:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 881,
+          "symbol": "dueSoonPwds(_:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "通知",
+        "角标"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.calendar.monthly",
+      "parentKey": "credential.calendar",
+      "domain": "credential",
+      "level": 3,
+      "name": "月度清理提醒与通知点击落地",
+      "kind": "automation",
+      "summary": "每月 1 日 09:00 弹「月度凭证清理」；点通知进入凭证页并打开「整理」面板或定位到具体凭证。",
+      "details": [
+        "排程 c6.monthly 用 UNCalendarNotificationTrigger(repeats: true)（CredentialOrg.swift:1127-1140）",
+        "handleNotificationAction 只认真实排过的标识：c6.alert.<mac>.p<alias>.xx（5 段）与 c6.monthly；旧 c6.expired/c6.queue 等无生产者已删（CredentialOrg.swift:1143-1159）",
+        "applyNotification 走 app.requestRoute(.credentials) 而不是直写 tabSelection，访客通道开着时不会落到看不见的 Tab（CredentialOrg.swift:1164-1168）",
+        "陌生 MAC 不改当前锁，只挂 pendingCredNav（CredentialOrg.swift:1171）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1127,
+          "symbol": "scheduleMonthlySweep()"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1150,
+          "symbol": "handleNotificationAction(_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1162,
+          "symbol": "applyNotification(_:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "通知",
+        "深链"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.transfer",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "批量操作与流转",
+      "kind": "service",
+      "summary": "批量延期、移交、备注前缀、停用、删成员级联；本地改写 + 逐条入队，锁端动作到场后补发。",
+      "details": [
+        "共同纪律：先留快照/还原点，再改台账，最后 enqueue，界面文案标明「本地意图」（CredentialOrg.swift:656）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 658,
+          "symbol": "batchExtend(_:_:_:_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 672,
+          "symbol": "batchTransfer(_:pwdAliases:fpBatches:to:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "批量",
+        "流转"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.extend",
+      "parentKey": "credential.transfer",
+      "domain": "credential",
+      "level": 3,
+      "name": "统一延期（含自动还原点）",
+      "kind": "action",
+      "summary": "对所选 alias 写新起止时间并排 period 队列；每条改之前先落一个 auto 快照当还原点。",
+      "details": [
+        "auto 快照不计配额、保留最近 2 个，所以批量操作可整体回退（CredentialOrg.swift:662）",
+        "payload 只带 alias/from/to/temp/at/note，不带 pwd 明文（CredentialOrg.swift:664）",
+        "返回成功处理的 alias 列表，界面按实数报（CredentialOrg.swift:658-668）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 658,
+          "symbol": "batchExtend(_:_:_:_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 662,
+          "symbol": "auto: true",
+          "note": "auto: true 自动还原点"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "批量",
+        "恢复"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.transfer.batch",
+      "parentKey": "credential.transfer",
+      "domain": "credential",
+      "level": 3,
+      "name": "批量移交归属（含留痕）",
+      "kind": "action",
+      "summary": "批量改 owner 并逐条写版本快照「移交 → 使用人」；锁端无归属字段，所以只落本机。",
+      "details": [
+        "注释里的「各写一条本地记录」此前是空头支票，现已补上快照（CredentialOrg.swift:669-671）",
+        "to 为空表示「未指派」，快照备注写 toName（CredentialOrg.swift:674）",
+        "批量前缀备注 batchPrefixNote 是幂等的：已带该前缀不再重复加（CredentialOrg.swift:700-711）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 672,
+          "symbol": "batchTransfer(_:pwdAliases:fpBatches:to:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 700,
+          "symbol": "batchPrefixNote(_:pwdAliases:fpBatches:prefix:)"
+        },
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 250,
+          "symbol": "transferNotePrefix",
+          "note": "「移交 → 」落盘前缀"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "批量",
+        "流转"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.disable",
+      "parentKey": "credential.transfer",
+      "domain": "credential",
+      "level": 3,
+      "name": "停用（批量与单条）与停用原因便签",
+      "kind": "action",
+      "summary": "停用 = 本地移除 + 入回收站 + 排锁端删除，并写一条 361 便签记录「原因 + 时刻 + 来源路径」。",
+      "details": [
+        "来源分档：已过期进回收站标 expired，未过期的批量停用标 batch（CredentialOrg.swift:719-720）",
+        "便签键 kf_cdisrea_<mac>，value = DisableMark{label, at, via}，只留最近 200 条（CredentialOrg.swift:994-1005）",
+        "via 只写本机真实来源，不写「操作端」这类无法证实的值（CredentialOrg.swift:988）",
+        "回显文案「停用原因 X · MM-dd HH:mm · 来源」，无标记就不编造（CredentialOrg.swift:1006-1013）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 713,
+          "symbol": "batchDisable(_:pwdAliases:fpBatches:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 994,
+          "symbol": "markDisabled(_:kind:keys:label:via:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1000,
+          "symbol": "m.count",
+          "note": "m.count > 200 截断"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "停用",
+        "批量"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.transfer.cascade",
+      "parentKey": "credential.transfer",
+      "domain": "credential",
+      "level": 3,
+      "name": "删成员级联（可整组还原）",
+      "kind": "action",
+      "summary": "cascadeBinMember 把该成员名下凭证清 owner 后移入回收站，共用同一个 batchId；可选同时排锁端删除。",
+      "details": [
+        "revokeLocks=false：只动本机台账，整组可还原；锁里那些仍然有效（CredentialOrg.swift:489-492）",
+        "revokeLocks=true：逐条 enqueue del_pwd/del_fp，返回实际排上的条数，界面按实数报（CredentialOrg.swift:492-496,499-521）",
+        "memberCredentialPreview 给出跨锁预告清单，锁名走 LockArchive.displayName（CredentialOrg.swift:525-537）",
+        "指纹在锁端删掉就无法远程补录，这句话必须和选择同屏（CredentialOrg.swift:494-495）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 498,
+          "symbol": "cascadeBinMember(_:_:revokeLocks:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 525,
+          "symbol": "memberCredentialPreview(_:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "成员",
+        "批量",
+        "回收站"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.transfer.duplicate",
+      "parentKey": "credential.transfer",
+      "domain": "credential",
+      "level": 3,
+      "name": "四道保存前检查",
+      "kind": "diagnostic",
+      "summary": "同锁同值、跨锁同值、前 4 位前缀混淆、租期重叠——四类冲突在保存前拦一遍。",
+      "details": [
+        "duplicatePwdValues 同锁同值（排除自身 alias）（CredentialOrg.swift:1183-1185）",
+        "duplicatePwdLockNames 只报其它锁的显示名并去重，旧实现不带 mac 且把本锁其它别名也算了（CredentialOrg.swift:1186-1198）",
+        "prefixConflict 要求值 ≥4 位，同锁内前 4 位相同即口头易混淆（CredentialOrg.swift:1200-1204）",
+        "overlapWindows 区间相交判定 pf < t && f < pt，可按 owner 收窄（CredentialOrg.swift:1300-1310）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1183,
+          "symbol": "duplicatePwdValues(_:_:excluding:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1200,
+          "symbol": "prefixConflict(_:_:excluding:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1300,
+          "symbol": "overlapWindows(_:from:to:owner:excluding:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "校验",
+        "边界"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.stats",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "凭证统计与推断口径",
+      "kind": "diagnostic",
+      "summary": "次数统计、最近使用、首次使用、指纹使用与告警计数、风险体检、老旧巡检、倒计时——全部标「约」。",
+      "details": [
+        "根本限制：锁端日志每条只有 [type][len][idx][lockTime][body]，无 alias/无指纹批号，所以「谁开的门」只能拿凭证自己的时间窗去框（CredentialOrg.swift:1320-1326）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1328,
+          "symbol": "openCountInWindow(_:p:)",
+          "note": "台账推断统计族代表入口；本族注释点名全部标「约」"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1320,
+          "symbol": "约",
+          "note": "注释: 这一族的文案与数据源是同一份判据, 不许把「约」写成精确"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "统计口径",
+        "推断值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.stats.counts",
+      "parentKey": "credential.stats",
+      "domain": "credential",
+      "level": 3,
+      "name": "类型计数与三态",
+      "kind": "data",
+      "summary": "typeCounts 给 全部/密码/指纹/OTP 四个数；pwdState 按时间窗推断 进行中/已排期/已过期 三态。",
+      "details": [
+        "otp 位 = otpStatus.on == true ? 1 : 0（CredentialOrg.swift:737）",
+        "pwdState：to 已过 → 2；from 在未来 → 1；否则 0；一次性语义锁端未定义故不单列（CredentialOrg.swift:739-744）",
+        "stateLabel/stateString 分别给中文与机读串，供智能列表复用（CredentialOrg.swift:1539-1553）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 735,
+          "symbol": "typeCounts(_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 739,
+          "symbol": "pwdState(_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1547,
+          "symbol": "stateString(_:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "统计口径"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.stats.usage",
+      "parentKey": "credential.stats",
+      "domain": "credential",
+      "level": 3,
+      "name": "使用次数（三种口径）",
+      "kind": "data",
+      "summary": "usageCount 数 type4、openCountInWindow 数 type2/4、recentUseCount 取近 30 天；三者都是时间窗推断，不是锁报用量。",
+      "details": [
+        "长期码只在「锁内唯一且有归属」时才计一次开门，否则不给数（CredentialOrg.swift:1083-1101）",
+        "指纹只用 type3、告警 type13，且只能按锁整体推断（CredentialOrg.swift:1368-1378）",
+        "日志缺失返回 nil 而不是 0，界面不出行，避免把「没读数」说成「0 次」（CredentialOrg.swift:1087）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1382,
+          "symbol": "usageCount(_:_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1328,
+          "symbol": "openCountInWindow(_:p:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1083,
+          "symbol": "recentUseCount(_:pwdAlias:days:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "统计口径",
+        "推断值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.stats.last-first-use",
+      "parentKey": "credential.stats",
+      "domain": "credential",
+      "level": 3,
+      "name": "最近使用与首次使用",
+      "kind": "data",
+      "summary": "批量版 inferredLastUseMap 一次读日志算完全部凭证；firstUse 取窗口内最早一条，且必须同时滤上下界。",
+      "details": [
+        "临时码只算落在自己时间窗内的开门；长期码只能给「这把锁最近一次开门」，同锁各条数值相同（CredentialOrg.swift:1359-1366）",
+        "旧写法取数组首条当「最近使用」，而 writeLogs 是新抓的拼在前、数组序不等于时间序，故改取最大时间戳（CredentialOrg.swift:1336-1338）",
+        "firstUse 旧版只滤下界，窗口外的旧日志也会命中，完成页会指着早失效的码说「有人用过」（CredentialOrg.swift:1390-1393）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1343,
+          "symbol": "inferredLastUseMap(_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1394,
+          "symbol": "firstUse(_:_:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "统计口径",
+        "边界"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.stats.risk",
+      "parentKey": "credential.stats",
+      "domain": "credential",
+      "level": 3,
+      "name": "风险体检（9）三类判据",
+      "kind": "diagnostic",
+      "summary": "全库只读扫描：同值、超期（默认 180 天）、弱口令；判据写死在代码里，不编「强度评分」。",
+      "details": [
+        "同值：同串出现在 >1 条凭证上，且长度 ≥4（CredentialOrg.swift:1233-1243）",
+        "超期：pwdAgeDays > maxAgeDays（默认 180），量的是「添加至今」不是「未换值天数」（CredentialOrg.swift:1244-1247,1270-1278）",
+        "弱口令三条：少于 6 位 / 全部同一位 / 连续递增递减（≥3 位纯数字）（CredentialOrg.swift:1255-1268）",
+        "输出按锁名 + alias 定位，处置动作仍在凭证页改码（CredentialOrg.swift:1222-1226）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1226,
+          "symbol": "passwordRisks(maxAgeDays:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1255,
+          "symbol": "weakReason(_:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "风险体检",
+        "阈值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.stats.stale",
+      "parentKey": "credential.stats",
+      "domain": "credential",
+      "level": 3,
+      "name": "老旧巡检与「换没换过值」的可证边界",
+      "kind": "diagnostic",
+      "summary": "isStalePwd 阈值 180 天；换没换过值台账证不了，只能查版本快照里有没有「改造/重新下发」留档。",
+      "details": [
+        "pwdAgeDays 先 /1000 把毫秒换回秒再算天数（CredentialOrg.swift:1270-1274）",
+        "hasReRecordSnapshot 查 kf_chist_ 里的 note 前缀；查不到也不等于没换过（非本 App 改的值本机无痕）（CredentialOrg.swift:1279-1285）",
+        "UI 文案口径：添加于约 N 天前，台账无改值时刻（CredentialOrg.swift:1206-1212）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1276,
+          "symbol": "isStalePwd(_:days:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1283,
+          "symbol": "hasReRecordSnapshot(_:_:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "巡检",
+        "推断值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.stats.countdown",
+      "parentKey": "credential.stats",
+      "domain": "credential",
+      "level": 3,
+      "name": "到期倒计时与本机提前失效",
+      "kind": "state",
+      "summary": "倒计时胶囊显示「剩 N 天/小时/分钟」或「已过期 N 天」；设了本机提前量则改按提前线读数并标「(本机提前)」。",
+      "details": [
+        "countdown 对 2118 哨兵显示「长期有效」（CredentialOrg.swift:1511-1520）",
+        "expiryLabel 把 2118-01-01 这个内部哨兵翻成「长期有效」，不再把哨兵当事实印给用户（CredentialOrg.swift:1490-1497）",
+        "提前量键 kf_cestudy_earlyexp_<mac>_<alias>，单位分钟，0=不设（CredentialOrg.swift:1442-1447）",
+        "越线但锁端未到期时如实说「已过本机提前线 (锁端未到)」——提示不是指令（CredentialOrg.swift:1524-1538）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1511,
+          "symbol": "countdown(_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1524,
+          "symbol": "listCountdown(_:_:_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1442,
+          "symbol": "earlyExpireMin(_:_:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "倒计时",
+        "边界"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.share",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "合包导出与工坊草稿",
+      "kind": "service",
+      "summary": "只导出凭证分区的最小 AES 信封（口令由 UI 生成），另有凭证工坊的 12 字段草稿持久化。",
+      "details": [
+        "两者都不新增协议命令、不写备份包 schema（CredentialOrg.swift:1103,1449）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1113,
+          "symbol": "exportPackage(_:pwdAliases:fpBatches:password:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "导出"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.share.package",
+      "parentKey": "credential.share",
+      "domain": "credential",
+      "level": 3,
+      "name": "凭证合包信封",
+      "kind": "action",
+      "summary": "把选中密码/指纹打进 CredPackage{v,mac,lockName,pwds,fps,at}，JSON 后用口令加密，返回 (密文 Data, 条数)。",
+      "details": [
+        "空选择视为全选（pwdAliases 为空则导全部），两者都空返回 nil（CredentialOrg.swift:1113-1117）",
+        "lockName 走 LockArchive.displayName，缺钥匙串时用临时 Keychain(mac:skey:\"\") 兜底（CredentialOrg.swift:1118）",
+        "口令单独展示，不与凭证混排（CredentialOrg.swift:1112）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1104,
+          "symbol": "CredPackage"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1113,
+          "symbol": "exportPackage"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "导出",
+        "加密"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.draft",
+      "parentKey": "credential.share",
+      "domain": "credential",
+      "level": 3,
+      "name": "工坊草稿（kf_cdraft_）",
+      "kind": "data",
+      "summary": "凭证工坊分步表单的草稿：step/kind/pwd/permanent/fromISO/toISO/owner/useTemplate/note/scene/batch/at。",
+      "details": [
+        "clearDraft 必须用 store.remove：旧写法 set(_, Data()) 走 JSONSerialization 必抛，键从未清掉、draft() 仍返回旧草稿（CredentialOrg.swift:1470-1473）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1450,
+          "symbol": "StudioDraft"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1464,
+          "symbol": "draft(_:)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 1470,
+          "symbol": "clearDraft(_:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "草稿",
+        "边界"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.permission",
+      "parentKey": "member",
+      "domain": "member",
+      "level": 2,
+      "name": "角色与权限矩阵",
+      "kind": "service",
+      "summary": "三档角色（主理人/成员/访客）× 五项能力（看记录/管凭证/导出/备份/成员管理）的本地判据表。",
+      "details": [
+        "锁端没有角色字段，这一档不改任何发往锁端的字节，也不碰备份包 schema（MemberHub.swift:77）",
+        "矩阵此前只是画出来给人看，现在同时是判据：成员页两枚开关按它亮灭（MemberHub.swift:74-76）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 78,
+          "symbol": "permRows(_:)"
+        }
+      ],
+      "tags": [
+        "成员",
+        "权限",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.permission.roles",
+      "parentKey": "member.permission",
+      "domain": "member",
+      "level": 3,
+      "name": "三档角色与中文标签",
+      "kind": "data",
+      "summary": "role 取值 main / member / guest，默认 member；标签分别为主理人 / 成员 / 访客。",
+      "details": [
+        "角色存在 MemberExt.role，默认 \"member\"（MemberHub.swift:10）",
+        "roles 常量供选择器枚举（MemberHub.swift:64）",
+        "roleLabel 的 default 分支覆盖未知值，一律显示「成员」（MemberHub.swift:65-71）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 64,
+          "symbol": "roles"
+        },
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 65,
+          "symbol": "roleLabel(_:)"
+        }
+      ],
+      "tags": [
+        "成员",
+        "权限"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.permission.matrix",
+      "parentKey": "member.permission",
+      "domain": "member",
+      "level": 3,
+      "name": "五项能力矩阵与 fail-closed 判定",
+      "kind": "rule",
+      "summary": "main 全允许；member 允许看记录与管凭证；guest 全部不允许；查不到的项一律按不允许走。",
+      "details": [
+        "main：看记录/管凭证/导出/备份/成员管理 = true（MemberHub.swift:80-82）",
+        "member：只有看记录与管凭证为 true（MemberHub.swift:86-88）",
+        "guest：五项全 false（MemberHub.swift:83-85）",
+        "permAllows 用 first(where:)?.allowed ?? false，不做「默认放行」（MemberHub.swift:92-94）",
+        "permCan / permCannot 供示例卡与向导副标题现算（MemberHub.swift:96-97）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 78,
+          "symbol": "permRows(_:)"
+        },
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 92,
+          "symbol": "permAllows(_:_:)"
+        }
+      ],
+      "tags": [
+        "成员",
+        "权限",
+        "fail-closed"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.permission.emergency-admin",
+      "parentKey": "member.permission",
+      "domain": "member",
+      "level": 3,
+      "name": "紧急管理员（469 点名档）",
+      "kind": "setting",
+      "summary": "MemberExt.emergencyAdmin 标记的成员会出现在成员页点名与救援码「保管人」声明里；锁端与救援码本体都不读它。",
+      "details": [
+        "真读点三处：成员页点名（权限与应急段）、设置-安全救援码下的保管人声明（MemberHub.swift:100-102）",
+        "emergencyAdmins 先解一次 kf_member_ext 再筛名册，避免逐成员重复解整表（MemberHub.swift:103-107）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 103,
+          "symbol": "emergencyAdmins()"
+        },
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 18,
+          "symbol": "emergencyAdmin"
+        }
+      ],
+      "tags": [
+        "成员",
+        "权限",
+        "应急"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.family",
+      "parentKey": "member",
+      "domain": "member",
+      "level": 2,
+      "name": "家庭协作与成员状态",
+      "kind": "service",
+      "summary": "借用登记、本周轮值、隐私浏览、长辈模式、家政窗、归档与显示名兜底。",
+      "details": [
+        "全部纯本地，不动协议层与备份包 schema（MemberHub.swift:1-5）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 38,
+          "symbol": "MemberHub"
+        }
+      ],
+      "tags": [
+        "成员",
+        "家庭"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.borrow",
+      "parentKey": "member.family",
+      "domain": "member",
+      "level": 3,
+      "name": "借用登记（472，per-lock）",
+      "kind": "action",
+      "summary": "按 (锁, 条目键) 记「借用人 + 归还日 + 登记时刻」；传 nil 即删除该登记。",
+      "details": [
+        "MemberBorrow{by, due(\"yyyy-MM-dd\"), at}（MemberHub.swift:25-29）",
+        "saveBorrow 读整表 → set/remove → 写回（MemberHub.swift:267-271）",
+        "键 kf_mborrow_<mac>，随锁删（Store.swift:459）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 264,
+          "symbol": "borrows(_:)"
+        },
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 267,
+          "symbol": "saveBorrow(_:itemKey:_:)"
+        }
+      ],
+      "tags": [
+        "成员",
+        "借用"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.family.duty",
+      "parentKey": "member.family",
+      "domain": "member",
+      "level": 3,
+      "name": "本周轮值（481）",
+      "kind": "setting",
+      "summary": "kf_duty_week 是 周键 → 成员 id 的表；周键由 WeekCal.calendar 的 yearForWeekOfYear + weekOfYear 组成。",
+      "details": [
+        "周界必须与 Milestones/RecordSearch/月历同一个 Calendar，否则「本周轮值」和「本周整理数」在跨周那天各说一套（MemberHub.swift:275-280）",
+        "setDuty(nil) 删本周键（MemberHub.swift:285-289）",
+        "删成员时按 value 过滤该表（Store.swift:786）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 275,
+          "symbol": "weekKey(_:)"
+        },
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 281,
+          "symbol": "dutyThisWeek"
+        }
+      ],
+      "tags": [
+        "成员",
+        "家庭",
+        "时间"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.family.privacy-elder",
+      "parentKey": "member.family",
+      "domain": "member",
+      "level": 3,
+      "name": "隐私浏览与长辈模式",
+      "kind": "setting",
+      "summary": "隐私浏览只有 kf_privacy_until 一个时间戳（限时 10 分钟）；长辈模式改的是凭证页分段/批量入口/行内字号。",
+      "details": [
+        "794 原句的「只显示本人数据 + 水印」两要素未接线，文案已诚实化（MemberHub.swift:310-311）",
+        "setPrivacy(true) 写 now+600s，false 写 0（MemberHub.swift:316-318）",
+        "长辈模式 kf_elder_mode：保留 全部/密码/指纹 分段、隐藏批量与导出、字号走语义档（不写死 .system(size:)）（MemberHub.swift:320-329）",
+        "其余页面不跟这一档，开关说明不许承诺「全 App 大字」（MemberHub.swift:326-327）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 311,
+          "symbol": "privacyActive"
+        },
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 316,
+          "symbol": "setPrivacy(_:)"
+        },
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 328,
+          "symbol": "elderMode"
+        }
+      ],
+      "tags": [
+        "成员",
+        "设置偏好",
+        "无障碍"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.family.house-window",
+      "parentKey": "member.family",
+      "domain": "member",
+      "level": 3,
+      "name": "家政窗（483）与关怀结构",
+      "kind": "data",
+      "summary": "HouseWin{from, to, label} 只表示一整段起止窗（协议无循环时段）；CareDue 承载「名下临时码 N 天内到期」。",
+      "details": [
+        "483 是降级实现：协议没有循环时段，只做整段起止窗（MemberHub.swift:31）",
+        "CareDue{member, days} 供孩子码关怀卡（MemberHub.swift:332-335）",
+        "该结构目前无持久化键，随调用方即时计算（无 kf_ 落盘）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 32,
+          "symbol": "HouseWin"
+        },
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 332,
+          "symbol": "CareDue"
+        }
+      ],
+      "tags": [
+        "成员",
+        "家庭",
+        "降级"
+      ],
+      "status": "partial"
+    },
+    {
+      "key": "member.merge",
+      "parentKey": "member",
+      "domain": "member",
+      "level": 2,
+      "name": "合并、认领与未归属",
+      "kind": "service",
+      "summary": "成员合并要同步改判认领映射；记录页可对未归属行做本机认领（不改锁端日志）。",
+      "details": [
+        "认领键 = 日志 idxRaw，作为本机覆盖层（MemberHub.swift:291）",
+        "成员虚拟分组 __visitor 只存在于展示层，绝不写入锁端凭证表（MemberHub.swift:39-44）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 40,
+          "symbol": "visitorId"
+        },
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 42,
+          "symbol": "isVisitorRow(kind:whoId:)"
+        }
+      ],
+      "tags": [
+        "成员",
+        "合并",
+        "认领"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.merge.claims",
+      "parentKey": "member.merge",
+      "domain": "member",
+      "level": 3,
+      "name": "合并时改判认领（462）",
+      "kind": "action",
+      "summary": "reassignClaims 遍历所有锁，把 value == 旧 id 的认领改判给新 id，合并后记录不会挂在已不存在的 id 上。",
+      "details": [
+        "只迁凭证不迁认领 ⇒ 合并后记录显示「无法归属」（MemberHub.swift:300-301）",
+        "逐锁读改写，命中才 setCodable（MemberHub.swift:302-309）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 302,
+          "symbol": "reassignClaims(from:to:)"
+        }
+      ],
+      "tags": [
+        "成员",
+        "合并",
+        "边界"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.unclaimed",
+      "parentKey": "member.merge",
+      "domain": "member",
+      "level": 3,
+      "name": "未归属记录认领（791）",
+      "kind": "action",
+      "summary": "按 (锁, 日志键) 记「这条记录归谁」的本机覆盖层；claim 写入，读侧与可证明归属叠加。",
+      "details": [
+        "claim(mac, logKey, memberId) 写 kf_mclaim_<mac>[logKey] = memberId（MemberHub.swift:295-299）",
+        "删成员或合并时必须清理/改判，否则悬空引用永远无法重新认领（Store.swift:771-776）",
+        "认领只影响本机展示，锁端日志无身份字段（MemberHub.swift:5）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 292,
+          "symbol": "claims(_:)"
+        },
+        {
+          "file": "App/Core/MemberHub.swift",
+          "line": 295,
+          "symbol": "claim(_:logKey:memberId:)"
+        }
+      ],
+      "tags": [
+        "成员",
+        "认领",
+        "检索"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.search",
+      "parentKey": "record",
+      "domain": "record",
+      "level": 2,
+      "name": "记录检索（551/554/555/562）",
+      "kind": "service",
+      "summary": "全局搜索：自然语言时间短语、加减号正负词、成员名、凭证类型词、失败词都解析成一个 Query，再逐行匹配。",
+      "details": [
+        "搜索面（能被搜到的文字）只有一处定义：title + lockName + whoName + cred + note（RecordSearch.swift:730-734）",
+        "跨锁聚合与手机侧失败行合并成一条时间倒序流（RecordSearch.swift:254-292）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 543,
+          "symbol": "parse(_:)"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 730,
+          "symbol": "searchFace(title:lockName:whoName:cred:note:)"
+        }
+      ],
+      "tags": [
+        "记录",
+        "检索",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.search.nl",
+      "parentKey": "record.search",
+      "domain": "record",
+      "level": 3,
+      "name": "自然语言与加减号解析",
+      "kind": "automation",
+      "summary": "空格切词：-词 进 not、+词 进 must、裸词进 must；再抽时间窗、告警词、凭证类型词、失败词与成员名。",
+      "details": [
+        "命中的时间词会从 must 里摘除，否则去掉时间窗后它仍被当字面词，必然 0 条（RecordSearch.swift:564-571）",
+        "告警词（告警/异常）置 alarmOnly 并把这些词从 must 摘除（RecordSearch.swift:572-575,588）",
+        "凭证类型词表：指纹/密码/临时码/一次性密码/钥匙/NFC（CredentialOrg 侧同口径）（RecordSearch.swift:577-582）",
+        "失败词会清掉 credKind 并追加「失败(仅告警级)」标签（RecordSearch.swift:583-587）",
+        "成员名用 contains 匹配（≥1 字），最后命中者胜（RecordSearch.swift:589-595）",
+        "parsedTags 是给 UI 的预览标签（含时间窗的 MM-dd HH:mm 标签）（RecordSearch.swift:541,603-610）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 543,
+          "symbol": "parse(_:)"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 546,
+          "symbol": "parse",
+          "note": "+/- 前缀识别"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 590,
+          "symbol": "names",
+          "note": "成员名匹配"
+        }
+      ],
+      "tags": [
+        "记录",
+        "检索",
+        "自然语言"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.search.time-words",
+      "parentKey": "record.search",
+      "domain": "record",
+      "level": 3,
+      "name": "中文时间短语表（10 种）",
+      "kind": "rule",
+      "summary": "昨天/今天(今日)/昨晚/凌晨/上周/本周/上月/本月/最近N天/N月D日，各自映射成 [from, to) 区间。",
+      "details": [
+        "昨天优先于今天（else if 结构）；昨晚 = 昨天 0 点到 +4h；凌晨 = 今天 0 点到 +5h（RecordSearch.swift:620-630）",
+        "上周/本周走 WeekCal.calendar 的 weekOfYear 区间，本周止于 now（RecordSearch.swift:631-639）",
+        "最近 N 天 = startOfDay(now - N 天) 到 now（RecordSearch.swift:648-651）",
+        "N月D日 只认含「月」的那个词，避免「工作日」里的「日」误命中；当年已过则取去年（RecordSearch.swift:652-670）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 612,
+          "symbol": "timePhrases(joined:)"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 653,
+          "symbol": "tokensFirstContaining",
+          "note": "N月D日 分支"
+        }
+      ],
+      "tags": [
+        "记录",
+        "检索",
+        "时间"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.search.verbs",
+      "parentKey": "record.search",
+      "domain": "record",
+      "level": 3,
+      "name": "动词化日志文案",
+      "kind": "data",
+      "summary": "开门类、告警类、操作类三张动词表把「类型 + 成员 + 凭证词」拼成一句人话，例如「张三 用指纹开了门」。",
+      "details": [
+        "开门 5 种：数字钥匙/密码/指纹/一次性密码/NFC（RecordSearch.swift:150）",
+        "告警 5 种：低电量/撬锁/多次密码失败锁定/指纹模块告警/键盘锁定（RecordSearch.swift:151）",
+        "操作 13 种：重新上电/DFU 更新/校时/同步 PIN/同步密码/录入指纹/删除指纹/安全级别/状态广播/单双验/开通临时密码/音量/beacon 密钥（RecordSearch.swift:152-156）",
+        "有 kindWord 时优先「用 X 开门」，否则用表里的完整动词（RecordSearch.swift:158-167）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 149,
+          "symbol": "RecordVerbs"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 158,
+          "symbol": "line(type:who:kindWord:typeName:)"
+        }
+      ],
+      "tags": [
+        "记录",
+        "文案",
+        "显示"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.search.face",
+      "parentKey": "record.search",
+      "domain": "record",
+      "level": 3,
+      "name": "搜索面五段与凭证维度标签",
+      "kind": "rule",
+      "summary": "一行能被搜到的文字 = 动词化标题 + 锁名 + 成员名 + 凭证标签 + 本机备注；凭证标签用日志槽号匹配台账。",
+      "details": [
+        "备注此前不在搜索面上，而占位文案承诺它可搜（第一百八十九批补齐）（RecordSearch.swift:721-729）",
+        "凭证标签只取备注首段并截 12 字，匹配用 e.idx = 锁端槽号（与 alias/batch 同数，非推断）（RecordSearch.swift:300-321）",
+        "标签形式「指纹 · 张三 · 大门」；key 类型固定「数字钥匙」（RecordSearch.swift:309-320）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 730,
+          "symbol": "searchFace"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 300,
+          "symbol": "credLabel(kind:who:pws:fps:e:)"
+        }
+      ],
+      "tags": [
+        "记录",
+        "检索",
+        "凭证"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.search.build",
+      "parentKey": "record.search",
+      "domain": "record",
+      "level": 3,
+      "name": "跨锁聚合与合并最近开门",
+      "kind": "service",
+      "summary": "buildRecs 把多锁日志 + 手机侧失败行汇成 [Rec] 并做字符串时间倒序；mergedRecentOpens 另按「时间串 + 入库序」稳定排序。",
+      "details": [
+        "Rec 15 字段：key/mac/lockName/type/typeName/idxRaw/lockTime/timeStr/whoId/whoName/kind/provable/cred/alarm/care/failMsg，id = mac#key（RecordSearch.swift:62-79）",
+        "字符串序即时间倒序（同格式），空时间串自然沉底（RecordSearch.swift:291,888-893）",
+        "同分钟两行的先后是入库次序而非时间信息，所以用 offset 当 tiebreak（Swift sorted 不保证稳定）（RecordSearch.swift:891-899）",
+        "失败行 key 用 \"f_\" + Unix 秒，type=0，无归属（RecordSearch.swift:282-288）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 254,
+          "symbol": "buildRecs(macs:includeFails:includeCare:)"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 894,
+          "symbol": "mergedRecentOpens(macs:count:)"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 62,
+          "symbol": "Rec"
+        }
+      ],
+      "tags": [
+        "记录",
+        "聚合",
+        "检索"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.search.active-cred",
+      "parentKey": "record.search",
+      "domain": "record",
+      "level": 3,
+      "name": "活跃凭证 Top（574）与越界开门（575）",
+      "kind": "diagnostic",
+      "summary": "近 30 天按「类型 + 槽号」计次排行，槽号翻台账备注；另有临时码时间窗之外的开门检测。",
+      "details": [
+        "typeToKind：1 key / 2 pwd / 3 fp / 4 temp（RecordSearch.swift:374）",
+        "翻不到备注时回落「类型 #槽号」；备注首行截 12 字加省略号（RecordSearch.swift:376-387）",
+        "outOfWindow 只对 type4 判定，用台账 from/to 与日志时刻比较，返回「约 from – to」（RecordSearch.swift:335-354）",
+        "时间串解析固定按 UTC 读（与 JS 生态本地串同语义）（RecordSearch.swift:356-362）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 367,
+          "symbol": "activeCredentials(mac:)"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 335,
+          "symbol": "outOfWindow(macs:)"
+        }
+      ],
+      "tags": [
+        "记录",
+        "统计口径",
+        "推断值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.filter",
+      "parentKey": "record",
+      "domain": "record",
+      "level": 2,
+      "name": "记录过滤（564/565/567/568/569/571/572）",
+      "kind": "service",
+      "summary": "QueryFilters 一个结构承载时段、工作日/周末、深夜、仅告警、凭证维度、成员、仅失败、告警类型多选八种过滤。",
+      "details": [
+        "成员跟着这一份一起存，不另开键（分开存会出现「组合记住了、成员没记住」的半截行为）（RecordSearch.swift:177-180）",
+        "过滤状态按锁保存，另有开场策略覆盖（见 data.search-index.filters）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 171,
+          "symbol": "QueryFilters"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 191,
+          "symbol": "key(_:)"
+        }
+      ],
+      "tags": [
+        "记录",
+        "过滤"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.filter.fields",
+      "parentKey": "record.filter",
+      "domain": "record",
+      "level": 3,
+      "name": "八个过滤字段的取值与语义",
+      "kind": "data",
+      "summary": "segment 五档时段、dayKind 三档、lateNight、alarmOnly、kind、member、failedOnly、alarmKinds 集合。",
+      "details": [
+        "segment：0 全部 / 1 早(6-10) / 2 午(10-15) / 3 晚(15-22) / 4 深夜（RecordSearch.swift:172）",
+        "dayKind：0 全部 / 1 仅工作日 / 2 仅周末（RecordSearch.swift:173）",
+        "alarmKinds 为空 = 不限类型；与 alarmOnly 各自独立，都选中时取交集（RecordSearch.swift:182-185）",
+        "failedOnly 只对应锁端告警级 10/13/224 + 手机侧失败行（锁端无逐次失败明细）（RecordSearch.swift:181）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 172,
+          "symbol": "segment"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 185,
+          "symbol": "alarmKinds"
+        }
+      ],
+      "tags": [
+        "记录",
+        "过滤",
+        "数据模型"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.filter.night",
+      "parentKey": "record.filter",
+      "domain": "record",
+      "level": 3,
+      "name": "夜间时段配置与退化提示",
+      "kind": "setting",
+      "summary": "kf_night_from=22 / kf_night_to=6；写入夹到 0...23；起==止 视为空集并要界面如实提示。",
+      "details": [
+        "clamp23 在写入时做，判定函数不再静默纠错（手改/导入可能塞越界值）（RecordSearch.swift:430-437）",
+        "isLateNight 支持跨零点：a > b 时 hour >= a || hour < b（RecordSearch.swift:443-447）",
+        "起==止 ⇒ nightWindowDegenerate 为真，什么都筛不出，不能让用户对着空列表猜（RecordSearch.swift:438-439）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 432,
+          "symbol": "nightFrom"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 443,
+          "symbol": "isLateNight(_:dayKey:)"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 439,
+          "symbol": "nightWindowDegenerate"
+        }
+      ],
+      "tags": [
+        "记录",
+        "过滤",
+        "设置偏好",
+        "边界"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.filter.holiday",
+      "parentKey": "record.filter",
+      "domain": "record",
+      "level": 3,
+      "name": "节假日内置表与调休补班",
+      "kind": "data",
+      "summary": "2026 年按国务院公告逐日核对的内置表（含 off=false 的补班日）；2027 刻意不内置，等在线源。",
+      "details": [
+        "39 行 2026 数据：元旦/春节/清明/劳动节/端午/国庆/中秋，补班日 01-04、02-14、02-28、05-09、09-20、10-10（RecordSearch.swift:458-498）",
+        "生效表 = 内置表，合并结果只算一次并缓存（三个缓存 + 失效键一组，用 Locked 护住）（RecordSearch.swift:499-521）",
+        "holidayName 只含放假日（补班日不在此列）；isMakeupWorkday 单独判补班（RecordSearch.swift:522-525）",
+        "猜错节假日会让「假日顺延/色带/春节注记」整族静默失真，所以宁可空着（RecordSearch.swift:449-452）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 458,
+          "symbol": "builtinRows"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 523,
+          "symbol": "holidayName(_:)"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 525,
+          "symbol": "isMakeupWorkday(_:)"
+        }
+      ],
+      "tags": [
+        "记录",
+        "节假日",
+        "数据"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.filter.holiday-extend",
+      "parentKey": "record.filter",
+      "domain": "record",
+      "level": 3,
+      "name": "假日顺延（672）",
+      "kind": "rule",
+      "summary": "节假日当日把「异常时段」判定终点整体 +2 小时（默认开，可在设置关）；补班日不顺延。",
+      "details": [
+        "extendedEndHour = (nightTo + 2) % 24，仅当开关开且该日有节假日名（RecordSearch.swift:526-531）",
+        "此前 extendedEndHour / holidayExtendOn 组成一条没人走的链 = 设置形同虚设，现已接进 isLateNight（RecordSearch.swift:440-442）",
+        "dayKey 传空串 = 不做假日判定，与旧行为一致（RecordSearch.swift:442）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 527,
+          "symbol": "holidayExtendOn"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 528,
+          "symbol": "extendedEndHour(_:)"
+        }
+      ],
+      "tags": [
+        "记录",
+        "节假日",
+        "规则"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.stats",
+      "parentKey": "record",
+      "domain": "record",
+      "level": 2,
+      "name": "统计与设备档案聚合",
+      "kind": "service",
+      "summary": "StatsKit 提供图表数据源与上周摘要；LockStats 提供每锁一行聚合读数、待维护清单与告警判据。",
+      "details": [
+        "只读既有表、不新增采集、不碰协议；归属只走可证明链（StatsKit.swift:1-4）",
+        "两组类型集合只有 StatsKit 一份，LockStats 转发（LockStats.swift:264-268）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/StatsKit.swift",
+          "line": 8,
+          "symbol": "StatsKit"
+        },
+        {
+          "file": "App/Core/LockStats.swift",
+          "line": 263,
+          "symbol": "LockStats"
+        }
+      ],
+      "tags": [
+        "记录",
+        "统计",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.stats.types-window",
+      "parentKey": "record.stats",
+      "domain": "record",
+      "level": 3,
+      "name": "类型集合与 30 天窗口",
+      "kind": "rule",
+      "summary": "开门类 {1,2,3,4,5}、告警类 {6,7,10,13,224}；窗口固定 30 天，按协议秒换算后比较。",
+      "details": [
+        "开放类型：数字钥匙/密码/指纹/一次性密码/NFC（StatsKit.swift:9）",
+        "告警类型：6 低电 / 7 防撬 / 10 试错锁定 / 13 指纹告警 / 224 键盘锁定（StatsKit.swift:10）",
+        "StatsKit 与 LockStats 各抄一份会漂，故只留一份（LockStats.swift:264-268）",
+        "weekdayIndex = (weekday + 5) % 7 + 1，统一成 1=周一…7=周日，供周几分布与工作日判定共用（StatsKit.swift:34-39）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/StatsKit.swift",
+          "line": 9,
+          "symbol": "openTypes"
+        },
+        {
+          "file": "App/Core/StatsKit.swift",
+          "line": 10,
+          "symbol": "alarmTypes"
+        },
+        {
+          "file": "App/Core/LockStats.swift",
+          "line": 269,
+          "symbol": "windowDays"
+        }
+      ],
+      "tags": [
+        "统计口径",
+        "阈值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.stats.usage",
+      "parentKey": "record.stats",
+      "domain": "record",
+      "level": 3,
+      "name": "每锁聚合读数（LockUsage）",
+      "kind": "data",
+      "summary": "16 字段：30 天开门/告警数、最近开门、是否有缓存、电量、采样时刻、固件、密码/指纹用量与容量、沉睡、验证、绑定时间。",
+      "details": [
+        "logged 位把「0 次」与「没读到」分开：从未同步的锁各项天然是 0，界面要标「没有读数」而不是「没有告警」（LockStats.swift:245-248,304）",
+        "容量口径：优先锁侧真值 cap - stock = 已用；无容量时用台账计数兜底；-1 = 未知（LockStats.swift:309-322）",
+        "固件优先钥匙串的 fw，快照兜底（LockStats.swift:308）",
+        "沉睡 = 距最后连接 > 30 天；从未连接过不算沉睡（LockStats.swift:92-97）",
+        "验证 = 首次开锁成功即打「链路已验证」（LockStats.swift:83-91）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/LockStats.swift",
+          "line": 239,
+          "symbol": "LockUsage"
+        },
+        {
+          "file": "App/Core/LockStats.swift",
+          "line": 284,
+          "symbol": "usage()"
+        },
+        {
+          "file": "App/Core/LockStats.swift",
+          "line": 304,
+          "symbol": "logged",
+          "note": "logged = !logs.isEmpty"
+        }
+      ],
+      "tags": [
+        "统计",
+        "设备档案"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.stats.usage.alarm-rate",
+      "parentKey": "record.stats.usage",
+      "domain": "record",
+      "level": 4,
+      "name": "告警率公式",
+      "kind": "rule",
+      "summary": "alarmRate = 告警 / (告警 + 开门)，全告警也算 100%，分母为 0 时给 0。",
+      "details": [
+        "opens30d + alarms30d == 0 ? 0 : alarms30d / (opens30d + alarms30d)（LockStats.swift:258-259）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/LockStats.swift",
+          "line": 259,
+          "symbol": "alarmRate"
+        }
+      ],
+      "tags": [
+        "统计口径",
+        "阈值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.stats.maintenance",
+      "parentKey": "record.stats",
+      "domain": "record",
+      "level": 3,
+      "name": "待维护清单与告警图标行",
+      "kind": "diagnostic",
+      "summary": "768 待维护 = 低电 / 近 30 天有告警 / 密钥未绑定；764 图标行只读已有缓存，不主动连锁。",
+      "details": [
+        "MaintenanceItem 带 reasons 数组，逐条来自可读证据（LockStats.swift:331-336）",
+        "recentAlarmMacs 只收 alarms30d > 0 的锁；读不到日志的锁不在集合内，界面标「没有读数」而不是「没有告警」（LockStats.swift:338-346）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/LockStats.swift",
+          "line": 332,
+          "symbol": "MaintenanceItem"
+        },
+        {
+          "file": "App/Core/LockStats.swift",
+          "line": 341,
+          "symbol": "recentAlarmMacs(_:)"
+        }
+      ],
+      "tags": [
+        "诊断",
+        "维护"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.alarm",
+      "parentKey": "record",
+      "domain": "record",
+      "level": 2,
+      "name": "告警四级色标与处置",
+      "kind": "service",
+      "summary": "五种真实告警类的本地定级（提示/注意/严重/紧急）、未处置队列、处置留痕、前后上下文与同类计数。",
+      "details": [
+        "协议无胁迫类告警，不虚构（RecordSearch.swift:82-83）",
+        "颜色只走 DS 令牌，页面层用 .opacity 派生（RecordSearch.swift:10）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 84,
+          "symbol": "AlarmMeta"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 909,
+          "symbol": "toneColor(for:)"
+        }
+      ],
+      "tags": [
+        "记录",
+        "告警",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.alarm.levels",
+      "parentKey": "record.alarm",
+      "domain": "record",
+      "level": 3,
+      "name": "定级集合与日警示口径",
+      "kind": "rule",
+      "summary": "urgent {7,224}、serious {10,13}、其余提示；damageTypes {7,10,224} 表示「这一天出过事」。",
+      "details": [
+        "level：3 紧急 / 2 严重 / 1 提示；levelName 对应中文（RecordSearch.swift:91-103）",
+        "damageTypes 比 urgent 有意多收 10：试错锁定是「有人在试密码」的读数（RecordSearch.swift:87-90）",
+        "「出过事」与「还没人看过」分开：damageDays 不看处置，unhandledAlarmDays 才看（RecordSearch.swift:863-875）",
+        "toneColor：紧急 danger、严重 danger 0.72、提示 warn 或 textSub（RecordSearch.swift:909-916）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 85,
+          "symbol": "urgent"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 90,
+          "symbol": "damageTypes"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 91,
+          "symbol": "level(_:)"
+        }
+      ],
+      "tags": [
+        "告警",
+        "定级",
+        "阈值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.alarm.disposition",
+      "parentKey": "record.alarm",
+      "domain": "record",
+      "level": 3,
+      "name": "未处置队列与处置留痕（734/726/739/745）",
+      "kind": "action",
+      "summary": "Tab 角标数 = 未处置告警数；处置写结论与时刻，可回退；结论「测试」同时把该行排除出统计。",
+      "details": [
+        "unhandledAlarmCount 以 kf_rdispo 是否有该键为准，不另造「已读」状态（RecordSearch.swift:876-885）",
+        "unhandledAlarmDays 用 dayKeyOfNight 归日，否则凌晨告警会把蓝点点到错的那一天（RecordSearch.swift:847-861）",
+        "testMarkedKeys 被 StatsKit.build 与 LockStats.usage 共同消费，真正把测试数据排除出统计（RecordSearch.swift:794-798）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 876,
+          "symbol": "unhandledAlarmCount(macs:)"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 851,
+          "symbol": "unhandledAlarmDays(macs:)"
+        },
+        {
+          "file": "App/Core/StatsKit.swift",
+          "line": 98,
+          "symbol": "build(mac:)"
+        }
+      ],
+      "tags": [
+        "告警",
+        "处置",
+        "角标"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "record.alarm.context",
+      "parentKey": "record.alarm",
+      "domain": "record",
+      "level": 3,
+      "name": "前后上下文与同类计数（736/741/737）",
+      "kind": "diagnostic",
+      "summary": "告警前后 10 分钟各取 3 条同锁记录（时间正序返回）；同类告警给累计次数与上次时刻；另有今日试错计数。",
+      "details": [
+        "取极值方向踩过坑：recs 是倒序，前事件用 prefix、后事件用 suffix，两支都反转为正序（RecordSearch.swift:831-843）",
+        "sameTypeCount 的 total 含当前条（+1），lastStr 是除当前条外最近一条（RecordSearch.swift:819-823）",
+        "trialCountToday 只数 type10 且 lockTimeStr 前 10 位等于今日；标题由 UI 带「?」（keyboardErrCount 语义不确定）（RecordSearch.swift:390-398）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 826,
+          "symbol": "context(mac:aroundKey:minutes:n:)"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 819,
+          "symbol": "sameTypeCount(mac:type:exceptKey:)"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 396,
+          "symbol": "trialCountToday(macs:)"
+        }
+      ],
+      "tags": [
+        "告警",
+        "诊断"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "security.policy",
+      "parentKey": "security",
+      "domain": "security",
+      "level": 2,
+      "name": "安全中心开关的唯一判据口",
+      "kind": "service",
+      "summary": "LockAction + SecurityPolicy 把只读模式、访客通道、分享遮半、敏感成员隐藏收成唯读点，界面不许再摸 DB.store。",
+      "details": [
+        "此前这五枚开关只改自己的标签、全仓没有消费者，于是四句承诺一句没兑现（LockGuard.swift:5-7）",
+        "刻意不加 @MainActor：判据口要能被界面、DestroyKit 与静态上下文一律读到（LockGuard.swift:42-45）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/LockGuard.swift",
+          "line": 46,
+          "symbol": "SecurityPolicy"
+        },
+        {
+          "file": "App/Core/LockGuard.swift",
+          "line": 15,
+          "symbol": "LockAction"
+        }
+      ],
+      "tags": [
+        "安全",
+        "策略",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "security.policy.actions",
+      "parentKey": "security.policy",
+      "domain": "security",
+      "level": 3,
+      "name": "六类危险动作与逐条拒绝文案",
+      "kind": "rule",
+      "summary": "unlock / writeCredential / provision / dfu / destroy / importExport 六族，只读模式下全停，且各自有一句点名是哪个开关拦的实话。",
+      "details": [
+        "全族 blockedInReadOnly 都是 true；设置页自身的开关不在这一族（否则会把关掉只读模式的路也锁死）（LockGuard.swift:23-26）",
+        "denial 文案逐条不同：开锁已停用 / 凭证写入已停用 / 网关配网已停用 / 固件升级已停用 / 销毁与清空已停用 / 导入导出已停用（LockGuard.swift:29-38）",
+        "allows(action) = !(readOnly && action.blockedInReadOnly)（LockGuard.swift:61）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/LockGuard.swift",
+          "line": 15,
+          "symbol": "LockAction"
+        },
+        {
+          "file": "App/Core/LockGuard.swift",
+          "line": 61,
+          "symbol": "allows(_:)"
+        },
+        {
+          "file": "App/Core/LockGuard.swift",
+          "line": 55,
+          "symbol": "readOnly",
+          "note": "SecKey.safeModeOn"
+        }
+      ],
+      "tags": [
+        "安全",
+        "策略",
+        "只读"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "security.policy.guest",
+      "parentKey": "security.policy",
+      "domain": "security",
+      "level": 3,
+      "name": "访客通道与敏感成员隐藏",
+      "kind": "setting",
+      "summary": "guestActive 时主 TabView 只暴露设备/记录；另有 hideSensitiveInGuest 开关（本机没有成员敏感标记位）。",
+      "details": [
+        "kf_speek_guest 的开关 UI 已随安全中心子页删除，但老用户曾打开仍会生效，且已无入口再拨它（LockGuard.swift:48-51）",
+        "hideSensitiveInGuest 读 SecKey.sensitiveOnly（LockGuard.swift:53）",
+        "访客时凭证/设置两个 Tab 根本不进层级树，所以编程式跳转必须走 requestRoute 而不是直写 tabSelection（CredentialOrg.swift:1164-1168）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/LockGuard.swift",
+          "line": 51,
+          "symbol": "guestActive"
+        },
+        {
+          "file": "App/Core/LockGuard.swift",
+          "line": 53,
+          "symbol": "hideSensitiveInGuest"
+        }
+      ],
+      "tags": [
+        "安全",
+        "访客",
+        "设置偏好"
+      ],
+      "status": "partial"
+    },
+    {
+      "key": "security.policy.share-half",
+      "parentKey": "security.policy",
+      "domain": "security",
+      "level": 3,
+      "name": "遮下半段（376）",
+      "kind": "setting",
+      "summary": "shareHalf 默认开：前半原样、后半逐位换成 ●；两位以下原样返回，避免把口令吞掉却不给提示。",
+      "details": [
+        "keep = (n+1)/2，奇数时多出来的一位算上半段，遮到的位数永不超过看得见的（LockGuard.swift:66-74）",
+        "halfMasked 给渲染侧一行读法，调用点不必写三目（LockGuard.swift:76）",
+        "默认值 true：口述卡与导出预览默认遮码值下半段（LockGuard.swift:57）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/LockGuard.swift",
+          "line": 57,
+          "symbol": "shareHalf"
+        },
+        {
+          "file": "App/Core/LockGuard.swift",
+          "line": 69,
+          "symbol": "masked(_:)"
+        },
+        {
+          "file": "App/Core/LockGuard.swift",
+          "line": 76,
+          "symbol": "halfMasked(_:)"
+        }
+      ],
+      "tags": [
+        "安全",
+        "脱敏",
+        "显示"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "security.ledger",
+      "parentKey": "security",
+      "domain": "security",
+      "level": 2,
+      "name": "敏感操作流水（388）",
+      "kind": "service",
+      "summary": "kf_audit_sensitive 记录「接触过明文」的动作：查看 / 复制 / 导出 / 停用·原因，最多 100 条，最新在前。",
+      "details": [
+        "只记接触明文的子集，不混进管理流水（AuditChain.swift:172-174）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/AuditChain.swift",
+          "line": 173,
+          "symbol": "SensitiveLedger"
+        }
+      ],
+      "tags": [
+        "安全",
+        "审计",
+        "脱敏"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "security.ledger.sensitive",
+      "parentKey": "security.ledger",
+      "domain": "security",
+      "level": 3,
+      "name": "流水条目、成员维度与时刻格式",
+      "kind": "data",
+      "summary": "Item{id(毫秒), kind, target, member?}；member 是 367 归属维度，只有「写入该成员动态」勾上的条目才有值。",
+      "details": [
+        "suffix(100) 截断；record 加锁串行，避免复制（主线程）与导出（异步）并发丢条目（AuditChain.swift:185-193）",
+        "recent(limit:) 先倒序再前缀；memberItems 先按 member 过滤再倒序（AuditChain.swift:195-204）",
+        "stamp 用 WeekCal 输出 MM-dd HH:mm，id 是毫秒，故要 /1000（AuditChain.swift:205-212）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/AuditChain.swift",
+          "line": 187,
+          "symbol": "record(_:target:member:)"
+        },
+        {
+          "file": "App/Core/AuditChain.swift",
+          "line": 195,
+          "symbol": "recent(limit:)"
+        },
+        {
+          "file": "App/Core/AuditChain.swift",
+          "line": 207,
+          "symbol": "stamp(_:)"
+        }
+      ],
+      "tags": [
+        "安全",
+        "审计",
+        "隐私"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "security.destroy",
+      "parentKey": "security",
+      "domain": "security",
+      "level": 2,
+      "name": "数据销毁（401）",
+      "kind": "service",
+      "summary": "Store 底层是 UserDefaults plist，所以「覆写」= 随机字节重灌再删除；销毁前还有一道备份闸。",
+      "details": [
+        "DestroyKit 目前只实现备份闸这一支，覆写流程在核弹销毁入口（AuditChain.swift:216-228）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/AuditChain.swift",
+          "line": 217,
+          "symbol": "DestroyKit"
+        },
+        {
+          "file": "App/Core/AuditChain.swift",
+          "line": 216,
+          "symbol": "覆写收尾",
+          "note": "Store 底层 = UserDefaults plist"
+        }
+      ],
+      "tags": [
+        "安全",
+        "数据销毁"
+      ],
+      "status": "partial"
+    },
+    {
+      "key": "security.destroy.backup-gate",
+      "parentKey": "security.destroy",
+      "domain": "security",
+      "level": 3,
+      "name": "销毁前备份闸（7 天）",
+      "kind": "rule",
+      "summary": "7 天内没有备份文件就拦截销毁；备份时刻读既有 kf_backup_hist，不另造写点。",
+      "details": [
+        "历史写的是 epoch 毫秒，lastBackupAt 读时 /1000 换算成秒（AuditChain.swift:219-224）",
+        "backupGatePass = 有备份 且 now - last < 7*86400（AuditChain.swift:225-227）",
+        "kf_backup_hist 由 Milestones.recordBackup 写入，最多 60 条（Milestones.swift:29-36）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/AuditChain.swift",
+          "line": 221,
+          "symbol": "lastBackupAt"
+        },
+        {
+          "file": "App/Core/AuditChain.swift",
+          "line": 225,
+          "symbol": "backupGatePass"
+        }
+      ],
+      "tags": [
+        "安全",
+        "数据销毁",
+        "阈值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.a11y",
+      "parentKey": "settings",
+      "domain": "settings",
+      "level": 2,
+      "name": "无障碍与操作辅助（包15）",
+      "kind": "service",
+      "summary": "五块能力的单一读点：系统旗标（AXFlags）、App 偏好（AXPrefs）、词表（AXTerms）、主动播报/触感（AXTools）、生物验证（AuthKit）。",
+      "details": [
+        "降级纪律：所有降级分支只读这里的旗标与令牌，页面不各自查系统开关（AccessibilityKit.swift:2-6）",
+        "颜色只经 DS 令牌，hairline/textSub 已内置增强对比映射"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/AccessibilityKit.swift",
+          "line": 16,
+          "symbol": "AXFlags"
+        },
+        {
+          "file": "App/Core/AccessibilityKit.swift",
+          "line": 138,
+          "symbol": "AXPrefs"
+        }
+      ],
+      "tags": [
+        "无障碍",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.a11y.flags",
+      "parentKey": "settings.a11y",
+      "domain": "settings",
+      "level": 3,
+      "name": "六个系统辅助旗标",
+      "kind": "state",
+      "summary": "增强对比 isDarkerSystemColorsEnabled、反转 isInvertColorsEnabled、加粗 isBoldTextEnabled、减弱动态 isReduceMotionEnabled、降透明 isReduceTransparencyEnabled，加 App 内 kf_hc。",
+      "details": [
+        "全部是属性而不是方法：isInvertColorsEnabled() / isReduceTransparencyEnabled() 都是凭记忆写反过（AccessibilityKit.swift:23-26,36-39）",
+        "主 actor 隔离：整族住在主 actor 上，因为它们读的都是 UIKit 的 @MainActor 旗标（AccessibilityKit.swift:12-14）",
+        "reduceMotionBox（Locked<Bool>）给非隔离的动效令牌留最近一次读数，刷新点是启动 + 回前台（AccessibilityKit.swift:49-57）",
+        "HeroSurface.resolve 只读环境值而不读 UIAccessibility 全局，保证同一次渲染内所有令牌看到同一份环境（AccessibilityKit.swift:107-118）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/AccessibilityKit.swift",
+          "line": 22,
+          "symbol": "highContrast"
+        },
+        {
+          "file": "App/Core/AccessibilityKit.swift",
+          "line": 35,
+          "symbol": "reduceMotion"
+        },
+        {
+          "file": "App/Core/AccessibilityKit.swift",
+          "line": 106,
+          "symbol": "DS.HeroSurface"
+        }
+      ],
+      "tags": [
+        "无障碍",
+        "系统旗标"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.a11y.font-scale",
+      "parentKey": "settings.a11y",
+      "domain": "settings",
+      "level": 3,
+      "name": "App 字号五档与叠加语义",
+      "kind": "setting",
+      "summary": "kf_font_scale 取 0.8/1.0/1.25/1.5/1.75（默认 1.0），与系统 Dynamic Type 相乘后取最近档；系统更大时系统胜出。",
+      "details": [
+        "白名单外一律回落 1.0（AccessibilityKit.swift:45-48）",
+        "typeSize 表 11 档：0.625 xSmall … 5.0 accessibility5，取绝对差最小者（AccessibilityKit.swift:65-80）",
+        "axStackLayout = appFontScale >= 1.5，圆盘缩到 128pt；「Hero 指标纵向堆叠」那半未实现（AccessibilityKit.swift:81-83）",
+        "bigPreview 开启时按 200% 预览（仅自检用）（AccessibilityKit.swift:64-66,85）",
+        "grayPreview 全 App 去饱和渲染，检查渐变主题无色可读性（AccessibilityKit.swift:87）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/AccessibilityKit.swift",
+          "line": 45,
+          "symbol": "appFontScale"
+        },
+        {
+          "file": "App/Core/AccessibilityKit.swift",
+          "line": 65,
+          "symbol": "typeSize()"
+        },
+        {
+          "file": "App/Core/AccessibilityKit.swift",
+          "line": 83,
+          "symbol": "axStackLayout"
+        }
+      ],
+      "tags": [
+        "无障碍",
+        "字号",
+        "设置偏好"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.a11y.prefs",
+      "parentKey": "settings.a11y",
+      "domain": "settings",
+      "level": 3,
+      "name": "App 内操作辅助九开关",
+      "kind": "setting",
+      "summary": "防连点（默认开）、按住时长（0.4–1.6s，默认 0.9）、过程字幕（默认开）、双震（默认开）、单手下沉、左手模式、大格模式、底部对齐表单。",
+      "details": [
+        "dbltapGuard：高频按钮 300ms 内重复点击忽略，防双击误开门（AccessibilityKit.swift:139-140）",
+        "holdDuration 夹在 0.4…1.6；系统「按住持续时间」无读取 API，故做自定滑杆（AccessibilityKit.swift:142-145）",
+        "captions 开锁/连接过程底部三步文字字幕；doubleHaptic 新条目双震（间隔 220ms）（AccessibilityKit.swift:146-150,212-222）",
+        "onehand 圆盘下移入拇指区；lefty 工具栏与快捷格镜像；bigTile 快捷格 2 列大格；bottomForm 键盘弹起时表单贴底（AccessibilityKit.swift:151-157）",
+        "announce 默认开，UIAccessibility.post 即时朗读；关闭时连接失败播报也不发（AccessibilityKit.swift:203-210）",
+        "axGlass/axGlassCircle/axGlassCapsule 三形状共用 GlassModifier：降透明或高对比时落回实底 + hairlineStrong 描边（AccessibilityKit.swift:284-345）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/AccessibilityKit.swift",
+          "line": 140,
+          "symbol": "dbltapGuard"
+        },
+        {
+          "file": "App/Core/AccessibilityKit.swift",
+          "line": 142,
+          "symbol": "holdDuration"
+        },
+        {
+          "file": "App/Core/AccessibilityKit.swift",
+          "line": 204,
+          "symbol": "announce(_:)"
+        },
+        {
+          "file": "App/Core/AccessibilityKit.swift",
+          "line": 320,
+          "symbol": "body"
+        }
+      ],
+      "tags": [
+        "无障碍",
+        "设置偏好",
+        "触感"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.a11y.terms",
+      "parentKey": "settings.a11y",
+      "domain": "settings",
+      "level": 3,
+      "name": "朗读词表与盲文简写",
+      "kind": "data",
+      "summary": "统一术语（门锁/凭证/密码/指纹/临时码/电量/固件/锁钟…）与 accessibilityValue 盲文简写表。",
+      "details": [
+        "rowSentence 把字段拼成一句人话「今天 14:02, 张三用指纹开了门」，告警行前置「告警记录, 」（AccessibilityKit.swift:174-179）",
+        "br 简写表：% → \" pct\"、已连接 → conn、电量 → bat、今天 → 今、次 → 次/、已过期 → exp、已排期 → queued、预警指纹 → alarm-FP（AccessibilityKit.swift:182-197）",
+        "替换顺序有坑：「不可用」必须排在「可用」前面，否则被替换成「不ok」（AccessibilityKit.swift:192-193）",
+        "凭证状态五词（已过期/提前失效/已排期/可用/预警指纹）此前不在表里，缩写完全空转，现已补齐（AccessibilityKit.swift:184-186）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/AccessibilityKit.swift",
+          "line": 160,
+          "symbol": "AXTerms"
+        },
+        {
+          "file": "App/Core/AccessibilityKit.swift",
+          "line": 174,
+          "symbol": "rowSentence(...)"
+        },
+        {
+          "file": "App/Core/AccessibilityKit.swift",
+          "line": 182,
+          "symbol": "br(_:)"
+        }
+      ],
+      "tags": [
+        "无障碍",
+        "文案",
+        "VoiceOver"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.a11y.auth",
+      "parentKey": "settings.a11y",
+      "domain": "settings",
+      "level": 3,
+      "name": "生物识别降级验证（877/392）",
+      "kind": "service",
+      "summary": "AuthKit 判断设备有无生物硬件、把 LAError 翻成人话、并提供给 Intent await 的异步验证。",
+      "details": [
+        "biometricAvailable 同时判 canEvaluatePolicy 与 biometryNotAvailable（实测存在 canEvaluate 为真却不可用）（AccessibilityKit.swift:238-245）",
+        "reasonText：识别不匹配/用户取消/改用密码/系统中断/已锁停生物识别/未录入或不可用（AccessibilityKit.swift:249-260）",
+        "verifyBiometricAsync 通过时调 AutoOpenKit.noteFaceSuccess()，这是标准档下唯一拿到「最近刷过脸」的地方（AccessibilityKit.swift:262-276）",
+        "应用锁连败 3 次后的大字替代键走这一族（AccessibilityKit.swift:236）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/AccessibilityKit.swift",
+          "line": 239,
+          "symbol": "biometricAvailable"
+        },
+        {
+          "file": "App/Core/AccessibilityKit.swift",
+          "line": 249,
+          "symbol": "reasonText(_:)"
+        },
+        {
+          "file": "App/Core/AccessibilityKit.swift",
+          "line": 262,
+          "symbol": "verifyBiometricAsync(reason:)"
+        }
+      ],
+      "tags": [
+        "无障碍",
+        "生物识别",
+        "安全"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.speech",
+      "parentKey": "settings",
+      "domain": "settings",
+      "level": 2,
+      "name": "本地朗读（810/309）",
+      "kind": "service",
+      "summary": "全站唯一一份本地朗读出口：一个合成器实例、中文音色、开口前先停上一句；全程离线不联网不录音。",
+      "details": [
+        "必须只有一个实例：此前两份各自 new 的合成器会叠音，且「停掉上一句」在两份上各做一半（SpeechKit.swift:1-6）",
+        "AVSpeechSynthesizer 不是 Sendable，故由 Locked 持有（SpeechKit.swift:10-14）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/SpeechKit.swift",
+          "line": 9,
+          "symbol": "Speech"
+        },
+        {
+          "file": "App/Core/SpeechKit.swift",
+          "line": 14,
+          "symbol": "synth"
+        }
+      ],
+      "tags": [
+        "语音",
+        "无障碍"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.speech.tts",
+      "parentKey": "settings.speech",
+      "domain": "settings",
+      "level": 3,
+      "name": "中文朗读与打断策略",
+      "kind": "action",
+      "summary": "zh() 用 zh-CN 音色、rate 默认 0.5；说话前若正在说就 stopSpeaking(.immediate)，避免两串叠在一起。",
+      "details": [
+        "空文本直接返回 false（SpeechKit.swift:20-21）",
+        "rate 0.5 是「清楚但不赶」的一档；逐位报码要更慢（SpeechKit.swift:16-17）",
+        "「老人跟着抄一串叠音的密码，比不念更糟」——这是先 stop 的理由（SpeechKit.swift:17）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/SpeechKit.swift",
+          "line": 19,
+          "symbol": "zh(_:rate:)"
+        },
+        {
+          "file": "App/Core/SpeechKit.swift",
+          "line": 26,
+          "symbol": "zh",
+          "note": "if s.isSpeaking { stopSpeaking }"
+        }
+      ],
+      "tags": [
+        "语音",
+        "无障碍"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.speech.digits",
+      "parentKey": "settings.speech",
+      "domain": "settings",
+      "level": 3,
+      "name": "密码逐位报码",
+      "kind": "action",
+      "summary": "digits() 把每位数字换成中文（零…九），非数字字符直接跳过，最后以「密码逐位: N、N。」慢速念出。",
+      "details": [
+        "rate 固定 0.35，比普通朗读更慢（SpeechKit.swift:40）",
+        "跳过非数字而不是念成「某」：念错了比不念更难查（SpeechKit.swift:32）",
+        "一位数字都没有则不念（SpeechKit.swift:39）",
+        "用途是让对方面对面同步抄写（SpeechKit.swift:32）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/SpeechKit.swift",
+          "line": 33,
+          "symbol": "digits(_:)"
+        },
+        {
+          "file": "App/Core/SpeechKit.swift",
+          "line": 34,
+          "symbol": "zhDigits"
+        }
+      ],
+      "tags": [
+        "语音",
+        "凭证",
+        "无障碍"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.groups",
+      "parentKey": "settings",
+      "domain": "settings",
+      "level": 2,
+      "name": "设置页五组分区",
+      "kind": "service",
+      "summary": "把 17 个 Section、约 37 个一级入口按「用户此刻想干的事」收成五组，顶部一排筛选片；不改任何 section 内部。",
+      "details": [
+        "分组只是「这一屏先给你看哪几节」，页内搜索照常在片子上方工作（SettingsGroups.swift:3-7）",
+        "一个 Section 只进一组：允许同时出现在两组等于没收敛（SettingsGroups.swift:14-15）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/SettingsGroups.swift",
+          "line": 18,
+          "symbol": "SettingsGroup"
+        },
+        {
+          "file": "App/Core/SettingsGroups.swift",
+          "line": 49,
+          "symbol": "settingsSectionShown(_:_:)"
+        }
+      ],
+      "tags": [
+        "设置",
+        "分组",
+        "信息架构"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.groups.five",
+      "parentKey": "settings.groups",
+      "domain": "settings",
+      "level": 3,
+      "name": "五组名称、图标与筛选片",
+      "kind": "data",
+      "summary": "daily 开门日常 / keys 凭证与成员 / data 数据与安全 / look 外观与辅助 / help 帮助与关于；nil = 全部（默认态与原画面逐字一致）。",
+      "details": [
+        "图标：lock.open / key.horizontal / lock.shield / paintbrush / questionmark.circle（SettingsGroups.swift:37-45）",
+        "筛选片改用 FlowLayout 按宽度换行：横向 ScrollView 会把后两片藏在滚动区外（SettingsGroups.swift:58-63）",
+        "选中态写进调用方 @State，chip 只管画与切；点按有 tick 触感 + quick 动效（SettingsGroups.swift:54-95）",
+        "无障碍：整行 .accessibilityElement(children: .contain) + label「设置分区筛选，当前X」；选中片加 .isSelected（SettingsGroups.swift:70-94）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/SettingsGroups.swift",
+          "line": 19,
+          "symbol": "daily"
+        },
+        {
+          "file": "App/Core/SettingsGroups.swift",
+          "line": 27,
+          "symbol": "title"
+        },
+        {
+          "file": "App/Core/SettingsGroups.swift",
+          "line": 64,
+          "symbol": "FlowLayout"
+        }
+      ],
+      "tags": [
+        "设置",
+        "分组",
+        "无障碍"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.quick",
+      "parentKey": "settings",
+      "domain": "settings",
+      "level": 2,
+      "name": "快捷格池（905/1047/921）",
+      "kind": "service",
+      "summary": "设备页快捷操作格的「可选项 + 顺序 + 常用排前 + 再开一次」共用一份数据源，避免格子顺序与统计各说一套。",
+      "details": [
+        "池子里每一项都对应一个真视图，没有为凑数新造的假入口（QuickPool.swift:9-10）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/QuickPool.swift",
+          "line": 26,
+          "symbol": "QuickPool"
+        },
+        {
+          "file": "App/Core/QuickPool.swift",
+          "line": 96,
+          "symbol": "ordered()"
+        }
+      ],
+      "tags": [
+        "设置",
+        "快捷操作",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.quick.pool",
+      "parentKey": "settings.quick",
+      "domain": "settings",
+      "level": 3,
+      "name": "候选池与默认五格",
+      "kind": "setting",
+      "summary": "7 个候选 id；默认选中 addPwd/otp/syncTime/addFp/studio 五格（与旧版观感一致）；读取时白名单过滤 + 去重 + 保序。",
+      "details": [
+        "id 一旦发布就是存储值，改名会把用户已有的 kf_quick_ids 打空 ⇒ 只能加不能改（QuickPool.swift:27）",
+        "空选或全是不认识的 id → 回退默认五格（QuickPool.swift:49-55）",
+        "与默认等价就删键，不给备份/统计留等价副本（QuickPool.swift:56-63）",
+        "编辑面板里「一格都不留」会兜回默认六格常量（QuickPool.swift:168-169）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/QuickPool.swift",
+          "line": 29,
+          "symbol": "all"
+        },
+        {
+          "file": "App/Core/QuickPool.swift",
+          "line": 40,
+          "symbol": "defaultIds"
+        },
+        {
+          "file": "App/Core/QuickPool.swift",
+          "line": 49,
+          "symbol": "selected"
+        }
+      ],
+      "tags": [
+        "设置",
+        "快捷操作"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.quick.smart",
+      "parentKey": "settings.quick",
+      "domain": "settings",
+      "level": 3,
+      "name": "1047 常用排前与 30 天静默学习",
+      "kind": "automation",
+      "summary": "静默记点击次数；满 30 天且从未手动动过开关 → 首格自动推荐最常用；开关打开 = 全序按次数降序（平次保序）。",
+      "details": [
+        "recordingOn = 从未动过开关（!smartSet）或开关开着；手动关掉 = 硬退出（停止记录 + 清空计数 + 排序回手选）（QuickPool.swift:70-72,166-167）",
+        "reached30d 用 30*86400 秒，与仓内其它「30 天」一致（QuickPool.swift:73-77）",
+        "首次点击才写 kf_quick_since，学习起点是「第一次真的用了快捷格」（QuickPool.swift:81-85）",
+        "setSmartFirst 无论开关与否都写 kf_quick_smart_set = true，保证「关就是关」（QuickPool.swift:66-69）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/QuickPool.swift",
+          "line": 65,
+          "symbol": "smartFirst"
+        },
+        {
+          "file": "App/Core/QuickPool.swift",
+          "line": 96,
+          "symbol": "ordered()"
+        },
+        {
+          "file": "App/Core/QuickPool.swift",
+          "line": 74,
+          "symbol": "reached30d"
+        }
+      ],
+      "tags": [
+        "设置",
+        "快捷操作",
+        "自动化",
+        "阈值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.quick.repeat",
+      "parentKey": "settings.quick",
+      "domain": "settings",
+      "level": 3,
+      "name": "921「再开一次」目标选择",
+      "kind": "action",
+      "summary": "优先级：星标密码 > 星标指纹 > 高频推断的临时码（带「约」）；都没有则返回 nil，让 UI 给「先去点亮星标」空态。",
+      "details": [
+        "星标指纹判 stars.contains(100000 + batch)，与置顶用的偏移同源（QuickPool.swift:124）",
+        "已归档条目不再作为直达目标——收起的东西不许从快捷入口「复活」（QuickPool.swift:118）",
+        "推断支返回 payload \"p<alias>\" + 名字后缀「 (约)」（QuickPool.swift:127-131）",
+        "点按不推开新页，而是切凭证 Tab 并定位（走 577 深链同一套）（QuickPool.swift:8-9）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/QuickPool.swift",
+          "line": 119,
+          "symbol": "repeatTarget(_:)"
+        },
+        {
+          "file": "App/Core/QuickPool.swift",
+          "line": 148,
+          "symbol": "again",
+          "note": "again 不需要新页面"
+        }
+      ],
+      "tags": [
+        "设置",
+        "快捷操作",
+        "深链"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.lab",
+      "parentKey": "settings",
+      "domain": "settings",
+      "level": 2,
+      "name": "开发/实验模块显隐",
+      "kind": "setting",
+      "summary": "kf_dev_hidden 单键 CSV 记录被关掉的模块，白名单过滤 + 去重，认不出的 id 一律丢掉。",
+      "details": [
+        "五块刻意不进面板：设备切换器、176pt 开锁圆盘、三个可排序槽、异常卡 attentionCard、换机迁移向导（DevModules.swift:1-7）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/DevModules.swift",
+          "line": 42,
+          "symbol": "DevModuleStore"
+        },
+        {
+          "file": "App/Core/DevModules.swift",
+          "line": 43,
+          "symbol": "key"
+        }
+      ],
+      "tags": [
+        "设置",
+        "实验开关"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.lab.modules",
+      "parentKey": "settings.lab",
+      "domain": "settings",
+      "level": 3,
+      "name": "三个可隐藏模块与代价文案",
+      "kind": "setting",
+      "summary": "groupChips 按组切换 / statusIcons 多锁状态图标行 / linkSense 连接感知区；每项都写清「关掉会少什么」。",
+      "details": [
+        "cost 文案示例：少一排按组切换、胶囊排照常能换锁；少蓝牙直通条与同步回执，但自动回连与巡检照常跑（DevModules.swift:30-39）",
+        "与默认等价（一个都没关）就删键；reset 恢复全部显示（DevModules.swift:56-62）",
+        "与 QuickPool.idsKey 同一口径：改名或删模块都不会把用户已有的一整串设置打空（DevModules.swift:9-10）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/DevModules.swift",
+          "line": 13,
+          "symbol": "DevModule"
+        },
+        {
+          "file": "App/Core/DevModules.swift",
+          "line": 30,
+          "symbol": "cost"
+        },
+        {
+          "file": "App/Core/DevModules.swift",
+          "line": 53,
+          "symbol": "setHidden(_:_:)"
+        }
+      ],
+      "tags": [
+        "设置",
+        "实验开关",
+        "文案"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "care.milestone",
+      "parentKey": "care",
+      "domain": "care",
+      "level": 2,
+      "name": "账本型里程碑（工具层）",
+      "kind": "service",
+      "summary": "游戏化面（徽章/成就/庆祝/伙伴文案）已在 2026-10-25 整体剥离，只保留当数据账本用的四块：备份历史、一次性标记、日期工具、计数。",
+      "details": [
+        "外部引用已同步清理，Badge/MStats/BadgeRarity 与 evaluate/notifyAchievement 已删（Milestones.swift:2-6）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Milestones.swift",
+          "line": 10,
+          "symbol": "Milestones"
+        },
+        {
+          "file": "App/Core/Milestones.swift",
+          "line": 3,
+          "symbol": "2026-10-25 大删",
+          "note": "只保留被核心功能当账本使用的部分"
+        }
+      ],
+      "tags": [
+        "关怀",
+        "账本"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "care.milestone.backup-hist",
+      "parentKey": "care.milestone",
+      "domain": "care",
+      "level": 3,
+      "name": "备份历史（kf_backup_hist）",
+      "kind": "data",
+      "summary": "每次备份追加一个 epoch 毫秒时间戳，最多 60 条；备份页「距上次备份」、本月备份次数、销毁前备份闸都读它。",
+      "details": [
+        "recordBackup 同时调 BackupStudio.markBackupBaseline()：备份发生点 = 自检基线更新点（导出/上传/还原点全覆盖，自检本身绝不回写）（Milestones.swift:34-35）",
+        "backupThisMonth 用 monthKey 过滤本月条数（Milestones.swift:37-41）",
+        "lastBackupAt 取 max 并 /1000 换回秒，0 视为从未备份（Milestones.swift:42-47）",
+        "DestroyKit.backupGatePass 直接读这一份，不另造写点（AuditChain.swift:219-224）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Milestones.swift",
+          "line": 29,
+          "symbol": "recordBackup()"
+        },
+        {
+          "file": "App/Core/Milestones.swift",
+          "line": 32,
+          "symbol": "recordBackup",
+          "note": "h.count > 60 截断"
+        },
+        {
+          "file": "App/Core/Milestones.swift",
+          "line": 43,
+          "symbol": "lastBackupAt"
+        }
+      ],
+      "tags": [
+        "关怀",
+        "备份",
+        "阈值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "care.milestone.once",
+      "parentKey": "care.milestone",
+      "domain": "care",
+      "level": 3,
+      "name": "一次性标记与计数器",
+      "kind": "data",
+      "summary": "kf_once 是 [String: Bool] 的启动结算/审计去重键；kf_unlock_count、kf_organize_count 是 App 侧累计计数。",
+      "details": [
+        "onceDone/markOnce 读整表 → 判断/置位 → 写回（Milestones.swift:16-24）",
+        "unlockTotal 记 App 侧成功开锁次数，recordUnlockSuccess 自增（Milestones.swift:50-53）",
+        "organizeTotal 记整理次数，recordOrganize 自增并返回新值（Milestones.swift:56-60）",
+        "dayKey/monthKey 只是转发 StatsKit.dayKey，保证全仓日 key 只有一个口径（Milestones.swift:12-14）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Milestones.swift",
+          "line": 17,
+          "symbol": "onceDone(_:)"
+        },
+        {
+          "file": "App/Core/Milestones.swift",
+          "line": 50,
+          "symbol": "unlockTotal"
+        },
+        {
+          "file": "App/Core/Milestones.swift",
+          "line": 56,
+          "symbol": "organizeTotal"
+        }
+      ],
+      "tags": [
+        "关怀",
+        "计数",
+        "账本"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "care.hints",
+      "parentKey": "care",
+      "domain": "care",
+      "level": 2,
+      "name": "一次性提示打点",
+      "kind": "service",
+      "summary": "42 首用气泡引导族共用的「看过没」打点：每条提示一个键 kf_hint_<id>，不自动计时消失。",
+      "details": [
+        "不用「看过引导」总开关：那会让「看过这一条」变成「永远看不到别条」（HintOnce.swift:3-4）",
+        "气泡必须由用户自己关：自己飘走等于还没读就被判定已看过（HintOnce.swift:5）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/HintOnce.swift",
+          "line": 6,
+          "symbol": "HintOnce"
+        },
+        {
+          "file": "App/Core/HintOnce.swift",
+          "line": 7,
+          "symbol": "shown(_:)"
+        }
+      ],
+      "tags": [
+        "关怀",
+        "提示"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "care.hints.once",
+      "parentKey": "care.hints",
+      "domain": "care",
+      "level": 3,
+      "name": "键形与清除策略",
+      "kind": "rule",
+      "summary": "键 kf_hint_<id>（Bool）；刻意不提供单独 clear——那条口子会被当成「重置教程」，而且不需要销毁级权限就能碰。",
+      "details": [
+        "清除走核弹销毁的 keys() 全表清，kf_hint_* 前缀天然在内（HintOnce.swift:9-11）",
+        "mark 只写 true，不写 false（未看过 = 键不存在）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/HintOnce.swift",
+          "line": 8,
+          "symbol": "mark(_:)"
+        },
+        {
+          "file": "App/Core/HintOnce.swift",
+          "line": 9,
+          "symbol": "keys()"
+        }
+      ],
+      "tags": [
+        "关怀",
+        "提示",
+        "数据销毁"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.backup.envelope.pbkdf2",
+      "parentKey": "data.backup.envelope",
+      "domain": "data",
+      "level": 4,
+      "name": "60000 轮 PBKDF2 与旧摘要的无感升级",
+      "kind": "rule",
+      "summary": "d2 用 PBKDF2-HMAC-SHA256 / 60000 轮 / 32 字节；只有 d 没有 d2 的历史库按旧口径验，验过即写回新记录。",
+      "details": [
+        "pcIter = 60_000，盐为 8 位 UUID 前缀（Store.swift:864-867）",
+        "主路径：rec[\"d2\"] 非空则只比 d2，不回落旧摘要（Store.swift:891-893）",
+        "回落路径：rec[\"d\"] == fnv1a32(salt+pw) 通过后立即 set(passcodeRecord(...)) 升级，不把老用户锁在外面（Store.swift:894-897）",
+        "兼容动机：d 保留给跨端迁移与旧备份包（只带 s/d），不是主验证路径（Store.swift:869-870）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/Store.swift",
+          "line": 864,
+          "symbol": "pcIter"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 891,
+          "symbol": "d2",
+          "note": "d2 主路径"
+        },
+        {
+          "file": "App/Core/Store.swift",
+          "line": 896,
+          "symbol": "set(passcodeRecord",
+          "note": "验过即静默升级"
+        }
+      ],
+      "tags": [
+        "门禁",
+        "安全",
+        "迁移",
+        "阈值"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.audit.chain.input",
+      "parentKey": "data.audit.chain",
+      "domain": "data",
+      "level": 4,
+      "name": "哈希输入串的拼接顺序",
+      "kind": "rule",
+      "summary": "id#ts#cat#action#target#operator#duress#diffText#prev，用 # 分隔；diffText 按字段名排序后 join(\"|\")。",
+      "details": [
+        "duress 落成 \"d\" 或 \"-\"，避免布尔字面量顺序差异（AuditChain.swift:66）",
+        "排序保证同一组 diff 无论插入顺序都能算出同一个哈希（AuditChain.swift:60-63）",
+        "prev 由调用方传（GENESIS 或上一条 hash），seal 里同时回填 prevHash 与 hash（AuditChain.swift:72-76）",
+        "改一处历史字段或删一条中间事件都会使后续所有 hash 对不上（防篡改性质由此而来）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/AuditChain.swift",
+          "line": 66,
+          "symbol": "joined(separator: \"#\")",
+          "note": "joined(separator: \"#\")"
+        },
+        {
+          "file": "App/Core/AuditChain.swift",
+          "line": 74,
+          "symbol": "seal(prevHash:)"
+        }
+      ],
+      "tags": [
+        "审计",
+        "防篡改",
+        "边界"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.history.quota.starred",
+      "parentKey": "credential.history.quota",
+      "domain": "credential",
+      "level": 4,
+      "name": "配额域拆分：星标豁免 + auto 两席",
+      "kind": "rule",
+      "summary": "配额只作用于手动快照；星标版全部保留，剩余名额按最新补齐；auto 版完全在配额之外，另留最近 2 个。",
+      "details": [
+        "kept = manual.filter(starred)，plain = manual.filter(!starred)，room = max(cap - kept.count, 0)（CredentialOrg.swift:192-196）",
+        "autosKeep = Array(autos.suffix(2))，与手动集合不相交（CredentialOrg.swift:186-187）",
+        "最终 out = manual + autosKeep：auto 版排在末尾，故取最新版本必须用 max(version) 而不是 list.last（CredentialOrg.swift:183,197-198）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 194,
+          "symbol": "room",
+          "note": "room = max(cap - kept.count, 0)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 187,
+          "symbol": "autosKeep",
+          "note": "autosKeep = suffix(2)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "版本历史",
+        "阈值",
+        "边界"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.bin.purge.gate",
+      "parentKey": "credential.bin.purge",
+      "domain": "credential",
+      "level": 4,
+      "name": "fail-closed 双分支门槛",
+      "kind": "edge",
+      "summary": "有可用生物识别 → 刷脸/指纹，通过即 commit、失败交给 fallback；无生物或不可用 → 直接把同一个 commit 交 UI 二次确认，绝不直接执行。",
+      "details": [
+        "canEvaluatePolicy 为假、或 err.code == biometryNotAvailable ⇒ onDeniedPresentFallback(commit) 后立即 return（CredentialOrg.swift:451-455）",
+        "evaluatePolicy 回调里 ok ? commit() : onDeniedPresentFallback(commit)，即「刷失败」不等于放行（CredentialOrg.swift:456-462）",
+        "onDone 挂在 commit 内，避免刷脸成功那一路没有回执文案（两条支路同源）（CredentialOrg.swift:444-446）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 451,
+          "symbol": "canEvaluatePolicy",
+          "note": "guard ctx.canEvaluatePolicy(...)"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 460,
+          "symbol": "onDeniedPresentFallback",
+          "note": "if ok { commit() } else { onDeniedPresentFallback(commit) }"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "回收站",
+        "安全",
+        "fail-closed"
+      ],
+      "status": "edge"
+    },
+    {
+      "key": "credential.organize.star.offset",
+      "parentKey": "credential.organize.star",
+      "domain": "credential",
+      "level": 4,
+      "name": "指纹段偏移 100000",
+      "kind": "rule",
+      "summary": "星标/归档共用一个 [Int] 表：密码段直接用 alias，指纹段写 100000 + batch，避免两类条目的 id 相撞。",
+      "details": [
+        "写入：let id = kind == \"pwd\" ? key : 100000 + key（CredentialOrg.swift:756）",
+        "读取：isStarred 也按同一规则换算（CredentialOrg.swift:761）；归档同样（CredentialOrg.swift:791,796）",
+        "「再开一次」判定星标指纹时直接写 stars.contains(100000 + batch)（QuickPool.swift:124）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 756,
+          "symbol": "setStar(_:_:_:_:)",
+          "note": "100000 + key"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 791,
+          "symbol": "setArchived(_:_:_:_:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "组织",
+        "边界"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.transfer.cascade.fp",
+      "parentKey": "credential.transfer.cascade",
+      "domain": "credential",
+      "level": 4,
+      "name": "指纹不可远程补录这句必须同屏",
+      "kind": "edge",
+      "summary": "「连锁端一起收回」时可 restore 密码，但指纹在锁端删掉就只能本人到锁前重录，UI 两个弹窗都必须写这句。",
+      "details": [
+        "注释点名：这句话必须和选择写在同一屏（两处弹窗都是这么写的）（CredentialOrg.swift:494-495）",
+        "撤销/还原指纹时如实说「锁端这条有无被删过要连上锁才证实；若已删，指纹只能本人到锁前重录」（CredentialOrg.swift:380-383）",
+        "彻底删除后指纹分支只回「本机记录已放回原位…App 无法远程补录」（CredentialOrg.swift:331-333）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 494,
+          "symbol": "无法远程补录",
+          "note": "指纹在锁端删掉就无法远程补录"
+        },
+        {
+          "file": "App/Core/CredentialOrg.swift",
+          "line": 382,
+          "symbol": "重录",
+          "note": "指纹只能本人到锁前重录"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "指纹",
+        "边界",
+        "文案"
+      ],
+      "status": "edge"
+    },
+    {
+      "key": "record.filter.night.degenerate",
+      "parentKey": "record.filter.night",
+      "domain": "record",
+      "level": 4,
+      "name": "起==止 ⇒ 空集，界面必须提示",
+      "kind": "edge",
+      "summary": "nightFrom == nightTo 时区间为空集，任何 hour 都不命中；这不是「全天」而是「筛不出」，界面必须如实说。",
+      "details": [
+        "nightWindowDegenerate 专供 UI 提示（RecordSearch.swift:438-439）",
+        "isLateNight 在 a == b 时走 a > b ? ... : (hour >= a && hour < b) ⇒ 恒 false（RecordSearch.swift:443-447）",
+        "写入侧 clamp23 夹到 0...23，判定侧不再静默纠错（手改/导入可能塞越界值）（RecordSearch.swift:430-437）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 439,
+          "symbol": "nightWindowDegenerate"
+        },
+        {
+          "file": "App/Core/RecordSearch.swift",
+          "line": 446,
+          "symbol": "isLateNight",
+          "note": "a > b ? (hour >= a || hour < b) : (hour >= a && hour < b)"
+        }
+      ],
+      "tags": [
+        "记录",
+        "过滤",
+        "边界"
+      ],
+      "status": "edge"
+    },
+    {
+      "key": "settings.quick.smart.threshold",
+      "parentKey": "settings.quick.smart",
+      "domain": "settings",
+      "level": 4,
+      "name": "30 天门槛与「关就是关」",
+      "kind": "rule",
+      "summary": "reached30d 用 30*86400 秒；同时要求 kf_quick_smart_set 未置位（从未手动动过开关），否则自动首格永不介入。",
+      "details": [
+        "since 只在第一次真实点击时写入，没有 since 就恒 false（QuickPool.swift:74-77,83-85）",
+        "ordered() 的自动首格分支额外要求 top 的次数 > 0（一次都没点过不动顺序）（QuickPool.swift:108-113）",
+        "开关打开时全序按次数降序、平次按原 offset 保序，不做预测（QuickPool.swift:99-107）",
+        "手动关掉会调 clearCounts() 清空 kf_quick_freq，兑现「停止记录并清空计数」的承诺（QuickPool.swift:66-69,176-181）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/QuickPool.swift",
+          "line": 76,
+          "symbol": "reached30d",
+          "note": "30 * 86400"
+        },
+        {
+          "file": "App/Core/QuickPool.swift",
+          "line": 108,
+          "symbol": "reached30d",
+          "note": "guard !smartSetKey, reached30d, ..."
+        },
+        {
+          "file": "App/Core/QuickPool.swift",
+          "line": 90,
+          "symbol": "clearCounts()"
+        }
+      ],
+      "tags": [
+        "设置",
+        "快捷操作",
+        "阈值",
+        "自动化"
+      ],
+      "status": "implemented"
+    }
+  ],
+  "unresolved": [
+    "App/Core/LockGuard.swift:51-57 — 四个安全开关（kf_speek_guest / kf_speek_glast / kf_sdest_safemode / kf_speek_sharehalf）的真实键名由 SecKey 枚举给出，而 SecKey 定义在 App/UI/SecurityCenterView.swift（不在本侦察兵 scope），键名字符串与行号需另一名侦察兵核对。",
+    "App/Core/Locked.swift:23 — Locked<Value> 是通用互斥容器，本身不含业务语义；已知消费点（Store.failureLock / ledgerLock、AXFlags.reduceMotionBox、RecordSearch.mergedLock、Speech.synth）已写入节点 details，但没有全仓 grep 级清单（其余消费点在别的文件里）。",
+    "App/Core/MemberHub.swift:311 — 794 隐私浏览只有 kf_privacy_until 时间戳，注释自述「只显示本人数据 + 水印」两要素未接线；StatsKit/StatsView 零 privacy 消费，故按 partial 记。",
+    "App/Core/AuditChain.swift:217 — DestroyKit 只有备份闸实现（lastBackupAt / backupGatePass），覆写流程在核弹销毁入口，本文件内看不到实际覆写代码。",
+    "App/Core/Store.swift:439-446 — 族删清单里 kf_migok_ / kf_batt_ / kf_batt_state_ / kf_mevents_ / kf_maint_ / kf_fwsince_ / kf_clock_notify_ / kf_damp_last_ / kf_fp_last_ / kf_care_notify_ / kf_linkrssi_ / kf_link_auto_ / kf_autocal_ / kf_autoopen_audit_ / kf_autoopen_suspend_until_ 的写点不在本 scope（属 BatteryCare/DiagKit/LinkSenseKit/AutoOpen/Maintenance 等文件），键名与语义已列出但类型/默认值需对应侦察兵补齐。",
+    "App/Core/Store.swift:178 — Ledger 的 pwds/fps 数组无条数上限，也未在删除锁时做逐条审计；是否存在容量上限需看 BackupKit/导入链（不在本 scope）。",
+    "App/Core/RecordSearch.swift:499-521 — 注释提到 671 的「在线源」已随波 2 移除，节假日内置表暂只覆盖 2026；2027 及以后的表由谁填、是否走在线拉取，本 scope 内无实现。",
+    "App/Core/CredentialOrg.swift:145-148 — kf_cotp_t_ / kf_cotp_s_ 的数据本体已随 OtpStudio 删除，只剩备份白名单还要认这两个键；当前是否还有任何运行时读写点未确认（本文件内只见键名函数）。",
+    "App/Core/QuickPool.swift:36-38 — 注释说「四个是从本页其它位置也到达得到的真实页面」，但 all 里实际只列到 backup 一项（共 7 项），另外三项（告警中心/固件升级/家政与维保）未出现在池子里，注释与代码不一致，按实际列表记录。"
+  ],
+  "notes": [
+    "覆盖：Store/CredentialOrg/MemberHub/AuditChain/RecordSearch/LockStats/StatsKit/QuickPool/SettingsGroups/VariantGrammar/WeekCal/TimeFormat/SecretStore/LockGuard/Locked/DevModules/AccessibilityKit/SpeechKit/Milestones/HintOnce 共 20 个文件逐行读完；doku/README 一律未引用。",
+    "刻意没展开：具体 UI 页面（凭证列表/记录时间线/安全中心等）的按钮与空态由 ios-ui-* 侦察兵负责；本文件只锚定它们所依赖的数据层、规则与本地能力。",
+    "时间单位三套并存是本次核对的重点：LedgerPwd.at 毫秒、CredBinEntry.at / CredSnapshot.at 秒、SensitiveLedger.id 毫秒、kf_backup_hist 毫秒、协议 lockTime 为 2010 基准秒；在 details 里逐处标注。",
+    "「约」字纪律：凭证使用次数、最近使用、成员活跃度、高频建议等全部是台账时间窗推断（锁端日志无身份字段），凡推断值均在 details 里写明口径与限制，不写成精确值。"
+  ]
+}

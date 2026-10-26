@@ -26,7 +26,15 @@ const path = require('path');
 const crypto = require('crypto');
 
 const ROOT = path.resolve(__dirname, '..');
-const APK_MAIN = 'D:/aapk/apk_raw/assets/www/build/main.js';
+// 基线查找：优先用仓内自带的 vendor/apk-baseline（CI 也能跑），
+// 其次退回开发机上的 D:/aapk 反编译目录（那边文件更全，但不入库）。
+const VENDOR = path.join(ROOT, 'vendor/apk-baseline');
+function pick(rel, devRel) {
+  const inRepo = path.join(VENDOR, rel);
+  if (fs.existsSync(inRepo)) return inRepo;
+  return devRel;
+}
+const APK_MAIN = pick('www/build/main.js', 'D:/aapk/apk_raw/assets/www/build/main.js');
 const main = fs.readFileSync(APK_MAIN, 'utf8');
 
 // ---------- 从 APK 提取常量（不硬编码，避免抄错） ----------
@@ -234,7 +242,8 @@ check('cmd08 addCount/delCount 都按个数（APK 同）',
 //     · 真正的注入在 jzzns22561_out/.../LockCommBase.java:98
 //         this.mKLVList.add((byte) -18, ssToken);
 //       (byte)-18 = 0xEE ⇒ Swift 的 buildKLV(0xEE, tokenHex) 才是原版行为
-const JAVA_BASE = 'D:/aapk/jzzns22561_out/sources/cn/zelkova/ZKurlcsPlugin/lockprotocol/LockCommBase.java';
+const JAVA_BASE = pick('lockprotocol/LockCommBase.java',
+  'D:/aapk/jzzns22561_out/sources/cn/zelkova/ZKurlcsPlugin/lockprotocol/LockCommBase.java');
 let javaBase = '';
 try { javaBase = fs.readFileSync(JAVA_BASE, 'utf8').replace(/\r\n/g, '\n'); } catch (e) { /* 不在工作区时跳过 */ }
 check('Swift 令牌注入键 = 0xEE（对齐 Java (byte)-18）',
@@ -254,7 +263,8 @@ if (javaBase) {
 // 15) DFU：判据与状态码都要对齐原版（不是靠广播名）
 const dfuSwift = readSwift('App/Services/DFUKit.swift');
 const bleDfu = (() => {
-  try { return fs.readFileSync('D:/aapk/jzzns22561_out/sources/com/plugin/urlcsDfuPlugin/BleDfu.java', 'utf8').replace(/\r\n/g, '\n'); }
+  try { return fs.readFileSync(pick('dfu/BleDfu.java',
+    'D:/aapk/jzzns22561_out/sources/com/plugin/urlcsDfuPlugin/BleDfu.java'), 'utf8').replace(/\r\n/g, '\n'); }
   catch (e) { return ''; }
 })();
 if (bleDfu) {
@@ -270,7 +280,8 @@ if (bleDfu) {
 }
 // DFU 状态码：APK 插件把 Nordic 回调压成 0/1/2/4/5/6/7 + -1
 const dfuPlugin = (() => {
-  try { return fs.readFileSync('D:/aapk/jzzns22561_out/sources/com/plugin/urlcsDfuPlugin/URLCSDfuPlugin.java', 'utf8').replace(/\r\n/g, '\n'); }
+  try { return fs.readFileSync(pick('dfu/URLCSDfuPlugin.java',
+    'D:/aapk/jzzns22561_out/sources/com/plugin/urlcsDfuPlugin/URLCSDfuPlugin.java'), 'utf8').replace(/\r\n/g, '\n'); }
   catch (e) { return ''; }
 })();
 if (dfuPlugin) {
@@ -286,8 +297,8 @@ if (dfuPlugin) {
 
 // ---------- 输出 ----------
 console.log('APK 基线协议对照');
-console.log('  JS 基线: apk_raw/assets/www/build/main.js');
-console.log('  Java 基线: jzzns22561_out/.../lockprotocol/LockCommBase.java（令牌注入与帧头的生产链）\n');
+console.log('  JS 基线: ' + (APK_MAIN.startsWith(VENDOR) ? 'vendor/apk-baseline/www/build/main.js（仓内）' : 'D:/aapk/apk_raw/...（工作区）'));
+console.log('  Java 基线: ' + (JAVA_BASE.startsWith(VENDOR) ? 'vendor/apk-baseline/lockprotocol/LockCommBase.java（仓内）' : 'D:/aapk/jzzns22561_out/...（工作区）') + '\n');
 console.log('APK 命令枚举:');
 for (const [k, v] of Object.entries(CMD_ENUM)) if (v) console.log(`  ${k.padEnd(20)} ${v}`);
 console.log('\nAPK EKey 包络枚举:');

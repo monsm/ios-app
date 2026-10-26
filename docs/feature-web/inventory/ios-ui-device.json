@@ -1,0 +1,5817 @@
+{
+  "scout": "ios-ui-device",
+  "platform": "ios",
+  "scope": [
+    "App/UI/DeviceHomeView.swift",
+    "App/UI/UnlockDial.swift",
+    "App/UI/Sheets.swift",
+    "App/UI/SecurityCenterView.swift",
+    "App/UI/ShareToAndroidView.swift",
+    "App/UI/FpOwnerPicker.swift",
+    "App/UI/Mascot.swift",
+    "App/UI/SettingsView.swift"
+  ],
+  "nodes": [
+    {
+      "key": "device.home",
+      "parentKey": "device",
+      "domain": "device",
+      "level": 2,
+      "name": "设备 Tab 主控页",
+      "kind": "screen",
+      "summary": "全 App 最高频动作的落地页：锁身份 → 连接与电量 → 需要处理的异常 → 开锁圆盘 → 快捷操作 → 最近开门。",
+      "details": [
+        "页面结构固定为六段，顺序可由「模块排序」改写其中三个槽位（Hero / 快捷格 / 最近开门），状态图标行、异常卡、连接感知卡不走槽位",
+        "没有独立的「更多」菜单：工具栏只有刷新（Cmd/Control+R）与添加（plus）两颗按钮，锁切换/沉睡/隐藏/电量排序都在胶囊菜单里，模块显隐在页尾文字按钮「模块排序与显隐」",
+        "整页挂 5 个 sheet + 1 个 fullScreenCover：AddDeviceView / moduleOrderSheet / SettingsView / QuickTileEditorSheet / UnlockGateView，以及 FocusUnlockView",
+        "下拉刷新语义是「只扫不连」（rescanPull），与工具栏刷新（refresh → refreshStatusQuietly）是两条不同链路",
+        "访客通道下本页照常可达，但页内跳「设置」走 app.requestRoute(.settings) 而不是直写 tabSelection，避免落到不可见的 Tab"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 7,
+          "symbol": "struct DeviceHomeView",
+          "note": "// 设备 Tab — 门锁总控页"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 42,
+          "symbol": "body",
+          "note": "vkBody.destined(.deviceHome)"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 130,
+          "symbol": "sheet(isPresented: $showAdd)",
+          "note": "AddDeviceView()"
+        }
+      ],
+      "tags": [
+        "核心",
+        "状态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.hero",
+      "parentKey": "device.home",
+      "domain": "device",
+      "level": 3,
+      "name": "Hero 状态卡（身份 + 三读数）",
+      "kind": "state",
+      "summary": "当前锁的身份卡：符号/色标、昵称、场所副标题、欢迎语，加电量/固件/锁钟三个读数。",
+      "details": [
+        "符号与色标来自锁档案（LockArchive.symbolName / swatchColor），没有场所时副标题回落到型号行",
+        "电量永远显示且被强调（emphasized: true），固件与锁钟可被偏好关掉（DS.HeroStats.shows）",
+        "断连时整卡 saturation 0.55；≤20% 低电档再叠 brightness -0.06",
+        "非当前页（横滑预览页）不显示实时读数，只给「滑动到这页即连接」胶囊",
+        "VoiceOver 把整卡合成一个元素播报「锁: 已连接, 电量 xx%」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 695,
+          "symbol": "heroCard(for:isCurrent:)"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 793,
+          "symbol": "HeroStat(label: \"电量\")"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 846,
+          "symbol": ".saturation(connected ? 1 : 0.55)"
+        }
+      ],
+      "tags": [
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.hero.notice",
+      "parentKey": "device.home",
+      "domain": "device",
+      "level": 3,
+      "name": "Hero 条件提示单行（优先级）",
+      "kind": "state",
+      "summary": "同一时刻只显示最要紧的一条提示，优先级：严重低电 > 低电 > 链路未验证 > 低温季。",
+      "details": [
+        "严重低电：电量告急，尽快换电池（danger 色，仅当前锁）",
+        "低电：该喂电了（warn 色，任意页）",
+        "链路未验证：checkmark.seal「成功开一次锁即打标」",
+        "低温季：thermometer.snowflake「电池续航会缩短」，仅当前锁",
+        "构图预算写死在代码里：Hero 条件提示行 ≤1，四条判据不许并列显示"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 664,
+          "symbol": "heroNotice(kc:tier:isCurrent:)"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 670,
+          "symbol": "!LockArchive.isVerified(kc.mac)"
+        }
+      ],
+      "tags": [
+        "状态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.banner",
+      "parentKey": "device.home",
+      "domain": "device",
+      "level": 3,
+      "name": "备份状态角标",
+      "kind": "action",
+      "summary": "Hero 卡上两态角标「今日已备份 / 多日未备份」，点按打开设置页（通常落在备份入口）。",
+      "details": [
+        "绿点 = BackupStudio.badgeState == .fresh，其余为 heroFg 点",
+        "按钮动作只做 showSettings = true，不带 pendingSettingsFocus → 落在设置页根",
+        "仅当前锁显示"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 815,
+          "symbol": "let bs = BackupStudio.badgeState"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 816,
+          "symbol": "Button { showSettings = true }"
+        }
+      ],
+      "tags": [
+        "备份"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.linkpill",
+      "parentKey": "device.home",
+      "domain": "device",
+      "level": 3,
+      "name": "连接三态胶囊 + 信号格 + 连接耗时",
+      "kind": "state",
+      "summary": "Hero 卡右上角一组只读观测件：三态语义胶囊、RSSI 三格、连接耗时徽章、回连小点、专注入口。",
+      "details": [
+        "LinkPill 显示连接来源：sense.connectSource == 「即连」时写「即连」，否则写「已预热」",
+        "RSSIBars 三格，轻点弹 dBm 原始值；未读到时弹「未读到信号」",
+        "ConnectMsBadge 显示连接耗时（sense.connectMs）",
+        "长按该区域弹菜单「最近状态变化」，列出 LinkSense.history() 最近 5 笔三态切换",
+        "回连成功 3 秒内额外亮一枚绿点（reconnectDot）",
+        "蓝牙关或未连接时整组降级为 HeroPill「滑动到这页即连接」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 732,
+          "symbol": "LinkPill(state:connectMs:rssi:source:)"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 738,
+          "symbol": ".onTapGesture { if isCurrent { showRssi.toggle() } }"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 756,
+          "symbol": ".contextMenu { Menu(\"最近状态变化\") }"
+        }
+      ],
+      "tags": [
+        "状态",
+        "无障碍"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.switcher",
+      "parentKey": "device.home",
+      "domain": "device",
+      "level": 3,
+      "name": "多锁切换胶囊 + 页点",
+      "kind": "action",
+      "summary": "锁数 > 1 时出现：左侧胶囊显示当前锁名与色点，右侧页点直达某一页（当前页高亮、低电页橙色描边）。",
+      "details": [
+        "页点视觉 7pt、当前页 18pt 胶囊，命中区统一撑到 44pt",
+        "当前页切走需经 pageIndex 动画；切锁同时触发 syncPageOrder 与合并流重算",
+        "页点仅在 app.devices.count > 1 时渲染"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 460,
+          "symbol": "capsuleSwitcher"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 466,
+          "symbol": "ForEach(Array(pagedLocks.enumerated())"
+        }
+      ],
+      "tags": [
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.switcher.menu",
+      "parentKey": "device.home",
+      "domain": "device",
+      "level": 3,
+      "name": "切换胶囊菜单（分组 / 沉睡 / 已隐藏 / 电量排序）",
+      "kind": "action",
+      "summary": "胶囊展开后按组分区列锁，另单独列出「沉睡 (超 30 天未连接)」与「已隐藏 (n)」两段，末尾是电量排序开关。",
+      "details": [
+        "≥2 组时用 Section(组名) 分区，单组时只给一个「门锁」Section",
+        "沉睡锁带 moon.zzz.fill 图标，隐藏锁带 eye.slash 图标，两者都仍可点选为当前锁",
+        "电量排序项文案随结果变化：开启时显示「按电量升序 (先照顾最弱)」；关闭时若存在手工顺序写「恢复手工排序」，否则「恢复绑定先后排序」",
+        "点该菜单项写 kf_sort_batt 并立即 syncPageOrder"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 488,
+          "symbol": "capsuleMenu"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 506,
+          "symbol": "Section(\"沉睡 (超 30 天未连接)\")"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 545,
+          "symbol": "DB.store.set(\"kf_sort_batt\", ...)"
+        }
+      ],
+      "tags": [
+        "核心",
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.statusrow",
+      "parentKey": "device.home",
+      "domain": "device",
+      "level": 3,
+      "name": "多锁状态图标行",
+      "kind": "state",
+      "summary": "横向一排圆形锁图标，每个图标右下角一枚状态点，用于一眼看出「哪把锁有事」；点图标即切当前锁。",
+      "details": [
+        "点色优先级：红=近 30 天日志有告警 > 橙=低电 > 绿=本机已连接 > 空心圈=没读到读数",
+        "空心圈是刻意设计：实心灰点会被读成「查过了，它没事」",
+        "当前锁外圈 2.5pt 主题色描边，名称最宽 56pt 截断",
+        "行下方常驻一行图例文案解释四种点",
+        "图标行包含沉睡与隐藏锁（与横滑序列的过滤相反）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 368,
+          "symbol": "statusIconRow"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 377,
+          "symbol": "Text(\"红点=近 30 天日志里有告警 …\")"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 437,
+          "symbol": "private enum Dot"
+        }
+      ],
+      "tags": [
+        "状态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.groupchips",
+      "parentKey": "device.home",
+      "domain": "device",
+      "level": 3,
+      "name": "按组过滤胶囊条",
+      "kind": "filter",
+      "summary": "锁数 > 1 且存在 ≥2 个分组时出现：「全部」+ 各分组名，选择后同时过滤翻页序列、图标行与跨锁合并流。",
+      "details": [
+        "组名来源 LockArchive.grouped(orderedDevices)；「未分组」是一个保留标签，匹配组名为空的锁",
+        "切换时写 groupFilter、重算 pageOrder 与 mergedRecent，并给一记 tick 触感",
+        "组被改成空名/删除后，残留过滤值在 syncPageOrder 里自动回落「全部」",
+        "当前选中项加 .isSelected 无障碍特性"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 330,
+          "symbol": "groupChips"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 293,
+          "symbol": "inGroup(_:) "
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 347,
+          "symbol": "groupFilter = name; syncPageOrder()"
+        }
+      ],
+      "tags": [
+        "状态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.pager",
+      "parentKey": "device.home",
+      "domain": "device",
+      "level": 3,
+      "name": "Hero 卡横滑翻页",
+      "kind": "action",
+      "summary": "左右横滑在锁之间切换，Hero 卡随之上滚视差（约三分之一倍速）。",
+      "details": [
+        "TabView(.page, indexDisplayMode: .never) + scrollTransition，减少动效时偏移量归零",
+        "手势只挂在 Hero 区：圆盘纵向滑、下拉刷新、Tab 栏各自管自己的轴，不做手势仲裁",
+        "翻页落点即切当前锁（app.select），换锁后清掉与旧锁绑定的 confirmMac"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 605,
+          "symbol": "heroPager"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 618,
+          "symbol": ".scrollTransition(.interactive, axis: .vertical)"
+        }
+      ],
+      "tags": [
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.pager.default",
+      "parentKey": "device.home",
+      "domain": "device",
+      "level": 3,
+      "name": "上挑手势设为启动默认锁",
+      "kind": "action",
+      "summary": "在 Hero 区做「明显上挑」的斜向拖拽后，该锁被设为冷启动默认锁并置顶。",
+      "details": [
+        "触发门槛：translation.height < -60 且 |translation.width| > 60（纯横翻与纵向滚动都不触发）",
+        "成功时 LockArchive.setDefaultMac + trigger 触感 + toast「已设为启动默认锁」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 633,
+          "symbol": ".simultaneousGesture(DragGesture(minimumDistance: 24)"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 637,
+          "symbol": "LockArchive.setDefaultMac(kc.mac)"
+        }
+      ],
+      "tags": [
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.pager.confirm",
+      "parentKey": "device.home",
+      "domain": "device",
+      "level": 3,
+      "name": "横滑换锁后的开锁二次确认",
+      "kind": "edge",
+      "summary": "横滑换了锁之后，第一次点圆盘不执行开锁，只弹一枚放大的锁名胶囊提示「再点一次圆盘开始开锁」。",
+      "details": [
+        "只由横滑（pageIndex onChange）置位 confirmMac；胶囊菜单/联动切锁不设防",
+        "首点：tick 触感 + confirmPulse 显示 2.4 秒，不发任何指令",
+        "提示胶囊用 accent 1.5pt 描边表达「还没执行」，并整体 scale 1.12 入场",
+        "与 244 去重窗口、250 应用锁闸是三层不同的防误触保险"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 622,
+          "symbol": "// 267 换锁二次确认"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1142,
+          "symbol": "dialAction()"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1130,
+          "symbol": "Text(\"再点一次圆盘开始开锁\")"
+        }
+      ],
+      "tags": [
+        "防误触"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.attention",
+      "parentKey": "device.home",
+      "domain": "device",
+      "level": 3,
+      "name": "需要处理的异常卡",
+      "kind": "state",
+      "summary": "仅在有真问题时出现的 warn 色卡片，逐条列出可行动的问题。",
+      "details": [
+        "密钥未绑定：sKeyStatus != 0 → 「该门锁可能还没完成配网」",
+        "超过 30 天未校时：提示临时密码可能失效，指向快捷操作同步时间",
+        "低电横幅：电量 ≤ CareSchedule.battThreshold（默认 15%，可在维护提醒里改）",
+        "指纹头清洁：BatteryCare.fpCleanNeeded → 连续 3 次指纹识别告警后提示擦拭指纹头",
+        "列表为空时整卡不渲染，不占常驻版面"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 857,
+          "symbol": "attentionCard"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 879,
+          "symbol": "attentionItems"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 895,
+          "symbol": "BatteryCare.fpCleanNeeded(mac)"
+        }
+      ],
+      "tags": [
+        "状态",
+        "边界"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.linksense",
+      "parentKey": "device.home",
+      "domain": "device",
+      "level": 3,
+      "name": "连接感知卡（9 类只读行）",
+      "kind": "service",
+      "summary": "把 BLE 连接过程中的诊断事实翻译成人话：蓝牙关、回连节律、同步回执、会话重协商、唤醒失败归因、信号骤降、保持时长、变更暂存、最后已知状态。",
+      "details": [
+        "「已同步 N 项变更」回执只在 2 分钟内显示（sense.lastReceipt + receiptShownAt）",
+        "会话重协商行：sense.revalidating 为真时显示，完成即消，无手动入口",
+        "唤醒失败归因三类：蓝牙未开 / 占用类（含 LinkSense.occupationHint()）/ 不在广播范围（建议 1 米内）",
+        "连接保持 ≥30 分钟时提示「偏久, 可点刷新重连」",
+        "断连且有待下发凭证时提示「变更已暂存 — 回到锁旁会自动补发」",
+        "最后已知状态行标「缓存」并给数据截至 HH:mm；电量/固件读不到时用 -- / 未知"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 903,
+          "symbol": "linkSenseCard"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 948,
+          "symbol": "// 535 同步回执"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 978,
+          "symbol": "最后已知: 电量 … (缓存 …)"
+        }
+      ],
+      "tags": [
+        "诊断",
+        "状态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.linksense.reconnect",
+      "parentKey": "device.home.linksense",
+      "domain": "device",
+      "level": 4,
+      "name": "回连节律点阵与梯级提示",
+      "kind": "state",
+      "summary": "断连且已开始重连时，显示「第 N 轮 · 下一轮等 X 秒」并画出重连点阵。",
+      "details": [
+        "仅 state == .down 且 reconnectAttempt > 0 时出现",
+        "文案由 nextLadderText 生成，间隔来自 sense.nextLadderInterval() 的梯级退避",
+        "同一时刻若有待下发变更，额外显示「变更已暂存」行"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 930,
+          "symbol": "ReconnectDots(attempt:nextWait:)"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 983,
+          "symbol": "nextLadderText"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 985,
+          "symbol": "lastWakeFail"
+        }
+      ],
+      "tags": [
+        "状态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.rescan",
+      "parentKey": "device.home",
+      "domain": "device",
+      "level": 3,
+      "name": "下拉重扫（只扫不连）",
+      "kind": "action",
+      "summary": "下拉触发一次 4 秒定向扫描，把三种结果如实说出来，不假装刷新成功。",
+      "details": [
+        "系统蓝牙未开 → toast「系统蓝牙未开启 — 下拉重扫做不了」，直接返回",
+        "扫到 → 记录 RSSI 并 toast「已重扫: 信号 -xx dBm」",
+        "4 秒内没扫到 → toast「4 秒内没扫到这把锁的广播 — 走近一点再下拉」",
+        "扫描启动异常 → toast「扫描没能启动: 蓝牙栈忙或权限未就绪」",
+        "结束一律再走一次 refresh(manual: true)，静默排查档不拦手动动作"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 211,
+          "symbol": "rescanPull()"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 217,
+          "symbol": "sense.scan(mac:timeoutMs: 4000)"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 109,
+          "symbol": ".refreshable { await rescanPull() }"
+        }
+      ],
+      "tags": [
+        "诊断",
+        "错误态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.recent",
+      "parentKey": "device.home",
+      "domain": "device",
+      "level": 3,
+      "name": "最近开门卡片（当前锁）",
+      "kind": "screen",
+      "summary": "当前锁的最近开门事件列表，行内区分为告警/普通，整行可点跳到记录页对应条目。",
+      "details": [
+        "标题随范围切换：「最近开门」或「最近开门 · 全部锁」，并带条数",
+        "空态文案「还没有开门记录。门锁有新动静时会出现在这里。」",
+        "行图标：告警用 exclamationmark.triangle.fill（warn），普通用 person.crop.circle.fill",
+        "行尾 chevron 表示可跳转；被记录页过滤挡掉时由 RecordsView 回一句「不在当前显示范围里」",
+        "行上长按菜单「查这位成员的记录」只在 whoId 可证明（DB.member 存在）时出现"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1374,
+          "symbol": "recentCard"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1396,
+          "symbol": "Text(\"还没有开门记录。门锁有新动静时会出现在这里。\")"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1522,
+          "symbol": "provableMemberId(_:)"
+        }
+      ],
+      "tags": [
+        "记录"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.recent.range",
+      "parentKey": "device.home.recent",
+      "domain": "device",
+      "level": 4,
+      "name": "最近开门范围切换（当前锁 / 全部锁）",
+      "kind": "setting",
+      "summary": "锁数 > 1 时出现分段控件，选择「当前锁」或「全部锁」，选择结果跨会话保留。",
+      "details": [
+        "写盘键 kf_recent_all（与记录页筛选同一口径），进页时由 .task 读回",
+        "单锁时不渲染这一排（单锁没有「跨锁」可言）",
+        "切到全部锁后列表换成跨锁合并流（device.home.recent.merged）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1384,
+          "symbol": "Picker(\"最近开门范围\", selection:)"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 188,
+          "symbol": "recentAllLocks = DB.store.getBool(\"kf_recent_all\")"
+        }
+      ],
+      "tags": [
+        "设置",
+        "数据"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.recent.merged",
+      "parentKey": "device.home.recent",
+      "domain": "device",
+      "level": 4,
+      "name": "跨锁合并流",
+      "kind": "screen",
+      "summary": "把组内所有锁的开门记录合成一条时间流（最多 10 条），每行尾部标锁名。",
+      "details": [
+        "合并范围跟组过滤走（rowLocks），选了「仓库」不会串台到门口那把锁",
+        "行尾锁名标签最宽 82pt 截断，避免长名字吃掉正文",
+        "相邻两行时间到分相同（只到分钟）时追加说明「同一分钟内的两条不分先后」",
+        "空态文案「这些锁的本地缓存里还没有开门记录 — 连上一次锁、拉一次日志就会出现在这里。」",
+        "归属推不出时只报事件名，不显示「未知成员」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1448,
+          "symbol": "mergedRecentRows"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 315,
+          "symbol": "recomputeMerged()"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1497,
+          "symbol": "mergedHasSameMinute"
+        }
+      ],
+      "tags": [
+        "记录"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.recent.jump",
+      "parentKey": "device.home.recent",
+      "domain": "device",
+      "level": 4,
+      "name": "记录落地：条目定位与成员过滤",
+      "kind": "action",
+      "summary": "点行把 pendingRecordKey 交给记录 Tab 并高亮那一条；长按「查这位成员的记录」把成员过滤带过去。",
+      "details": [
+        "跳转统一走 app.requestRoute(.records)，Tab 序号从 Route 表派生而不是写死",
+        "成员过滤用 pendingRecordsMember，记录页消费后清空，不残留",
+        "两条路径都以「消费即清空」收尾"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1509,
+          "symbol": "landRecord(_:)"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1517,
+          "symbol": "openMemberRecords(_:)"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1431,
+          "symbol": ".contextMenu { Label(\"查这位成员的记录\") }"
+        }
+      ],
+      "tags": [
+        "记录"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.quick",
+      "parentKey": "device.home",
+      "domain": "device",
+      "level": 3,
+      "name": "快捷操作格",
+      "kind": "action",
+      "summary": "两列或三列网格，格子来自 QuickPool 池子；每格是一个 NavigationLink 到真实页面。",
+      "details": [
+        "列数由 AXPrefs.bigTile 决定：大格模式 2 列，常规 3 列（大格时图标 48pt、字号 callout）",
+        "池子当前实际只有 7 项：addPwd / otp / syncTime / addFp / studio / again / backup；默认 5 项",
+        "每格：图标坐进主题色 12% 圆角底座 + 文字，实底 + hairline 描边（不明层玻璃）",
+        "格子顺序由 QuickPool.ordered() 决定（常用排前 / 30 天首格推荐 / 用户手选）",
+        "点进目的地时记一次点击（onTap 挂在 destination 的 onAppear，不在 label 上抢手势）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1222,
+          "symbol": "quickActions"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1227,
+          "symbol": "let cols = AXPrefs.bigTile ? 2 : 3"
+        },
+        {
+          "file": "App/Core/QuickPool.swift",
+          "line": 29,
+          "symbol": "static let all",
+          "note": "只列到 backup 为止，共 7 项"
+        }
+      ],
+      "tags": [
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.quick.again",
+      "parentKey": "device.home.quick",
+      "domain": "device",
+      "level": 4,
+      "name": "「再开一次」格",
+      "kind": "action",
+      "summary": "点按不推新页，而是跳到凭证 Tab 并定位到最该复用的那条凭证（星标密码 > 星标指纹 > 高频推断）。",
+      "details": [
+        "目标来自 QuickPool.repeatTarget：星标密码优先，其次星标指纹（星标值 100000+batch），最后 CredentialOrg.starSuggestion 推断并标「(约)」",
+        "已归档条目不再作为目标",
+        "无目标时 toast「还没有星标凭证 —— 先在凭证页给最常用的那条点亮星标」，不猜一条",
+        "跳转同样走 app.requestRoute(.credentials)，访客态由 requestRoute 拉复核页"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1352,
+          "symbol": "againTile"
+        },
+        {
+          "file": "App/Core/QuickPool.swift",
+          "line": 119,
+          "symbol": "repeatTarget(_:)"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1362,
+          "symbol": "showToast(\"还没有星标凭证 …\")"
+        }
+      ],
+      "tags": [
+        "凭证"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.quick.pendingfp",
+      "parentKey": "device.home.quick",
+      "domain": "device",
+      "level": 4,
+      "name": "「待添加指纹」虚线格",
+      "kind": "edge",
+      "summary": "当前锁一枚指纹都没有时，格尾多一枚虚线待添加格，点它直接进真正的录指纹表单。",
+      "details": [
+        "判据 DB.listFps(app.currentMac).isEmpty",
+        "目的地就是 quickDestination(\"addFp\") = StartAddFpView(embedded: true)，不是第二份校验逻辑",
+        "无障碍标签「这把锁还没有指纹，轻点直接添加」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1268,
+          "symbol": "if DB.listFps(app.currentMac).isEmpty"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1270,
+          "symbol": "quickDestination(\"addFp\")"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "空态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.quick.editor",
+      "parentKey": "device.home.quick",
+      "domain": "device",
+      "level": 4,
+      "name": "长按编辑快捷操作格",
+      "kind": "action",
+      "summary": "长按任意格（含「再开一次」）弹系统菜单「编辑快捷操作格」，打开 QuickTileEditorSheet。",
+      "details": [
+        "走系统 contextMenu 而不是自挂长按手势，避免与 NavigationLink 点击冲突",
+        "编辑面板里 Toggle 每一项池子；全部关掉会兜回默认五格而不是让快捷区整体消失",
+        "面板内还含「常用动作排到前面」开关与计数清理，改动即时生效（bumpAppearanceForLayout）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1256,
+          "symbol": ".contextMenu { Button { showTileEdit = true } }"
+        },
+        {
+          "file": "App/Core/QuickPool.swift",
+          "line": 153,
+          "symbol": "struct QuickTileEditorSheet"
+        }
+      ],
+      "tags": [
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.modules",
+      "parentKey": "device.home",
+      "domain": "device",
+      "level": 3,
+      "name": "模块排序与显隐",
+      "kind": "setting",
+      "summary": "页尾文字按钮打开 sheet，可交换 Hero / 快捷格 / 最近开门三个槽位，并逐块开关次要模块。",
+      "details": [
+        "顺序存 kf_dev_order（逗号串，必须恰好包含 hero,quick,recent 三个 id，否则回落默认）",
+        "每个模块行给「上移 / 下移」两枚按钮（不做拖拽，避免与整页下拉/滚动长按手势抢），首尾对应按钮 disabled",
+        "显隐面板列出 DevModule.allCases，每项配一句「关掉会少什么」的代价文案",
+        "不能关的模块：设备切换器、开锁圆盘、三个可排序槽、异常卡（footer 明说）",
+        "底部「恢复默认」清 kf_dev_order + DevModuleStore.reset()"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 96,
+          "symbol": "Button { showModuleOrder = true }"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1596,
+          "symbol": "moduleOrderSheet"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1655,
+          "symbol": "Button(\"恢复默认\")"
+        }
+      ],
+      "tags": [
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.pinpick",
+      "parentKey": "device.home",
+      "domain": "device",
+      "level": 3,
+      "name": "本次用哪条 PIN 胶囊",
+      "kind": "setting",
+      "summary": "一把锁有多条 PIN 且还没签发 ekey 时，圆盘上方出现下拉，选择本次开锁用第几条 PIN。",
+      "details": [
+        "只显示序号（PIN #1/#2…），不显示 PIN 值，避免肩窥",
+        "选中结果以**下标**存 kf_pinpick_<mac>；「恢复默认 (第一条)」写 -1",
+        "有 ekey 时不出现（有 ekey 时开锁根本不用 PIN，给了是假选择）",
+        "选项文案未选中时写「本次用 PIN (默认第一条)」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1674,
+          "symbol": "pinPickCapsule(_:)"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 85,
+          "symbol": "if let kc = app.current, kc.ekey.isEmpty, kc.pins.count > 1"
+        },
+        {
+          "file": "App/LockKeeperApp.swift",
+          "line": 431,
+          "symbol": "chosenPinIndex(_:)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.empty",
+      "parentKey": "device.home",
+      "domain": "device",
+      "level": 3,
+      "name": "无锁空态与第二出口",
+      "kind": "state",
+      "summary": "台账里一把锁都没有时，只显示一张卡：说明先重置锁、需开蓝牙，并给「添加设备」与「从备份恢复」两个出口。",
+      "details": [
+        "主按钮「添加设备」→ showAdd = true",
+        "第二出口「从备份恢复」：写 pendingSettingsFocus = \"backup\" 后 app.requestRoute(.settings)，并 toast「到「备份与恢复」：可本地导入，或从坚果云恢复」",
+        "文案明确要求先在门锁键盘长按 RESET 恢复出厂",
+        "走 requestRoute 而非直写 tabSelection：访客态下设置 Tab 不进层级树，直写会落到看不见的 Tab"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 47,
+          "symbol": "if app.devices.isEmpty"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 59,
+          "symbol": "app.pendingSettingsFocus = \"backup\""
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 52,
+          "symbol": "actionTitle: \"添加设备\""
+        }
+      ],
+      "tags": [
+        "空态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.home.deepjump",
+      "parentKey": "device.home",
+      "domain": "device",
+      "level": 3,
+      "name": "跨页定位与待处理入口",
+      "kind": "action",
+      "summary": "记录/告警入口点「跳回设备页定位该锁」时切到那把锁并 toast；引导末卡的 pendingAddDevice 也在这里拉起添加页。",
+      "details": [
+        "pendingJumpLock 在 .task 与 onChange 两处消费，若目标不是当前锁则 app.select 后 toast「已定位到「锁名」」",
+        "app.pendingAddDevice 为真时自动 showAdd = true（引导退场后本页才挂载，只能由这里补）",
+        "换锁时同步 pageIndex；当前锁不在翻页序列时重建序列并落位"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 170,
+          "symbol": ".onChange(of: app.pendingJumpLock)"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 201,
+          "symbol": "if app.pendingAddDevice"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 148,
+          "symbol": ".onChange(of: app.currentMac)"
+        }
+      ],
+      "tags": [
+        "深链"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.add",
+      "parentKey": "device",
+      "domain": "device",
+      "level": 2,
+      "name": "添加设备 / 配网",
+      "kind": "sheet",
+      "summary": "四阶段流程（scan → pairing → naming → done），负责发现广播、校验可配网、7 步写锁链与命名落库。",
+      "details": [
+        "四步进度条固定为「发现 / 校验 / 初始化 / 命名」，配网链映射到校验(1-3)与初始化(4-7)",
+        "中途关闭（关闭按钮）也走 rollback 清理，不留半成品",
+        "整个过程需手机贴近门锁，页面提示「请勿断开蓝牙并将手机靠近门锁」",
+        "操作指引三步：从后面板下方打开板盖 → 长按左侧 RESET 到「嘀嘀嘀」三声后松开 → 保持页面等待完成",
+        "信号引导：RSSI ≥3 格写「信号已够，点下面列表里的锁即可开始」，否则提示再靠近；满格也不自动推进配对"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 13,
+          "symbol": "struct AddDeviceView"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 16,
+          "symbol": "private enum Flow { case scan, pairing, naming, done }"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 48,
+          "symbol": "if flow == .pairing { rollback(reason: \"\") }"
+        }
+      ],
+      "tags": [
+        "核心",
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.add.scan",
+      "parentKey": "device.add",
+      "domain": "device",
+      "level": 3,
+      "name": "发现列表（扫描与排序）",
+      "kind": "action",
+      "summary": "进页即扫（10 秒），列表按「广播可解析 + 服务 UUID + 名字关键字」评分排序，其次按 RSSI。",
+      "details": [
+        "startScan(allowDuplicates: true, timeoutMs: 10000)，循环每 400ms 刷新一次列表，到点 stopScan",
+        "评分：adv 可解析 +4，含 6E400001/FE90 服务 +2，名字命中 ZK|KX|JZ|JINGZAO|ZELKOVA|LOCK|SMART +2",
+        "不使用硬过滤 resetStatus：已配对未重置的锁也要显示（否则用户看到空列表）",
+        "扫描异常时 toast error.localizedDescription",
+        "空态卡「还没扫到设备」带「开始扫描」按钮"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 501,
+          "symbol": "private func scan() async"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 537,
+          "symbol": "scoreAdv(_:)"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 176,
+          "symbol": ".task { await scan() }"
+        }
+      ],
+      "tags": [
+        "状态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.add.row",
+      "parentKey": "device.add",
+      "domain": "device",
+      "level": 3,
+      "name": "设备行五种状态与可点性",
+      "kind": "state",
+      "summary": "每一行显示名称、dBm、MAC、型号，右侧状态胶囊区分：可配网 / 待续配 / 已配对 / 未识别 / 非门锁。",
+      "details": [
+        "可配网 = 广播 resetStatus==1 且 PidMap.isLock；待续配 = 是锁且 DB.pendingPair(mac) 有记录（不看 resetStatus）",
+        "已配对 = 不在重置态（提示「需先在键盘上物理重置」）",
+        "非门锁 = 型号不属于锁；未识别 = 广播解析失败",
+        "点不可配网的行给对应 toast：广播未识别 / 该锁不在重置态 / 未识别的设备型号",
+        "行内第二行文本最多两行，型号不截断（判断「是不是我的锁」的关键信息）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 218,
+          "symbol": "deviceRow(_:)"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 228,
+          "symbol": "let canResume = isLock && (pendMac.map { DB.pendingPair($0) != nil } ?? false)"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 232,
+          "symbol": "showToast(\"该锁不在重置态 — 请先做键盘物理重置\")"
+        }
+      ],
+      "tags": [
+        "状态",
+        "边界"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.add.manual",
+      "parentKey": "device.add",
+      "domain": "device",
+      "level": 3,
+      "name": "手输 MAC 定位（扫不到兜底）",
+      "kind": "action",
+      "summary": "输入 12 位十六进制 MAC 做 8 秒定向扫描，命中后走同一条配网链。",
+      "details": [
+        "归一化后必须 12 位十六进制（冒号可省略），否则 toast「MAC 需为 12 位十六进制 (冒号可省略)」",
+        "命中但不在重置态 → toast「找到了, 但该锁不在重置态 — 请先长按 RESET 重置」",
+        "扫到信号但广播不完整 → toast「已扫到信号但广播不完整, 请靠近门锁再试」",
+        "8 秒内未发现 → toast「8 秒内未发现该 MAC — 请确认锁已通电并靠近手机」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 327,
+          "symbol": "locateManual() async"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 337,
+          "symbol": "LockService.shared.scanForMAC(m, timeoutMs: 8000)"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 169,
+          "symbol": "Section(\"扫不到? 手动定位\")"
+        }
+      ],
+      "tags": [
+        "边界",
+        "错误态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.add.dup",
+      "parentKey": "device.add",
+      "domain": "device",
+      "level": 3,
+      "name": "重复绑定拦截",
+      "kind": "edge",
+      "summary": "本机台账已有该 MAC 时不进配网，弹确认框「这把锁已经添加过」，给「跳转到已有锁 / 取消」两个出口。",
+      "details": [
+        "文案说明重配会换掉锁内密钥、旧手机钥匙失效",
+        "「跳转到已有锁」执行 app.loadDevices + app.select + requestRoute(.device) 后关闭",
+        "拦截发生在 confirmPair 内（DB.keychain(mac) 命中即返回）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 303,
+          "symbol": "if let existing = DB.keychain(mac)"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 54,
+          "symbol": ".confirmationDialog(\"这把锁已经添加过\", isPresented:)"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 68,
+          "symbol": "重新配网会换掉门锁密钥"
+        }
+      ],
+      "tags": [
+        "错误态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.add.confirm",
+      "parentKey": "device.add",
+      "domain": "device",
+      "level": 3,
+      "name": "配网二次确认（添加 / 继续配网）",
+      "kind": "action",
+      "summary": "写锁前必须先确认：首次添加说明会生成密钥并写入锁密钥槽、App 内不可撤销；续配说明会跳过换钥直接写 PIN 池与 bkey。",
+      "details": [
+        "首次：「添加门锁」正文含名称/MAC/型号，确认按钮「开始添加」",
+        "续配：「继续配网」正文强调「不会再换钥, 也不必再做键盘重置」，确认按钮「继续配网」",
+        "MAC 取显示序 ZKProtocol.lockMac(fromAdv:)；用线上序会让锁回 rc=12「mac地址不正确」",
+        "确认后进入 pairing 阶段，step 置 1"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 296,
+          "symbol": "confirmPair(_:_:)"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 312,
+          "symbol": "confirmDestructive(\"继续配网\" …)"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 319,
+          "symbol": "confirmDestructive(\"添加门锁\" …)"
+        }
+      ],
+      "tags": [
+        "锁端读写",
+        "破坏性操作"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.add.progress",
+      "parentKey": "device.add",
+      "domain": "device",
+      "level": 3,
+      "name": "配网进度页与步骤流",
+      "kind": "state",
+      "summary": "配网中显示四步进度条 + 逐条浮现的步骤文本（限高 240pt 内滚），失败原因用 danger 色追加。",
+      "details": [
+        "步骤区固定 maxHeight 240，步骤再多不会把页面顶出屏幕",
+        "每条步骤带 checkmark 图标、ok 色，从上往下推进（.move(edge: .top)）",
+        "四步进度映射：progress 文本以「步骤 N」开头且 N>=4 时 step 置 2",
+        "文案「请勿断开蓝牙并将手机靠近门锁」常驻"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 377,
+          "symbol": "pairProgress"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 383,
+          "symbol": "stepBar(current: max(step, 1))"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 415,
+          "symbol": ".frame(maxHeight: 240)"
+        }
+      ],
+      "tags": [
+        "状态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.add.progress.chain",
+      "parentKey": "device.add.progress",
+      "domain": "device",
+      "level": 4,
+      "name": "7 步写锁链细节（cmd23→05→08×N→21→03）",
+      "kind": "protocol",
+      "summary": "配网真实帧序列：23 交换方式 → 生成 skey/bkey/64 PIN → 05 换钥 → 08 PIN 批（20/批）→ 21 bkey → 03 密文状态校验。",
+      "details": [
+        "05 必须带会话令牌（needToken: true），rc=13 通讯过期时只重开一次会话重发",
+        "05 rc=0 即锁已擦旧钥域，随后立即落 pendingPair 以便中断续配",
+        "08 每批 20 个 PIN，首批带 delPinSentinel 清空旧池；首批 rc=12 时换一种 MAC 字节序安全重发，rc=18 视为已写入",
+        "最终 21 写 bkey、03 密文回读校验，全部 rc=0 才 saveKeychain 并清 pendingPair",
+        "续配路径复用同一条尾链，跳过 23/05"
+      ],
+      "evidence": [
+        {
+          "file": "App/Services/LockService.swift",
+          "line": 800,
+          "symbol": "progress(\"步骤 1/7: 探测交换方式 (cmd 23)\")"
+        },
+        {
+          "file": "App/Services/LockService.swift",
+          "line": 828,
+          "symbol": "ZKCmdBuilder.cmd05Exchange(skey)"
+        },
+        {
+          "file": "App/Services/LockService.swift",
+          "line": 958,
+          "symbol": "progress(\"步骤 6/7: 设置 bkey (cmd 21)\")"
+        },
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 142,
+          "symbol": "cmd08SyncPinsBatch"
+        }
+      ],
+      "tags": [
+        "锁端读写",
+        "协议"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.add.rollback",
+      "parentKey": "device.add",
+      "domain": "device",
+      "level": 3,
+      "name": "配网失败回滚",
+      "kind": "edge",
+      "summary": "任一步失败立刻断开连接、清掉半成品台账与 lastDevice 指针，退回发现页并把原因常驻成横幅。",
+      "details": [
+        "清 DB.removeKeychain(pairTargetMac)、DB.lastDevice = \"\"、清空 pairSteps",
+        "错误横幅用 danger 色 + 图标，footer 给一句能当场做的事：确认锁已上电、蓝牙开着，再回设备页重连",
+        "配网成功但用户中途关闭页面同样走 rollback（关闭按钮里判 flow == .pairing）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 572,
+          "symbol": "rollback(reason:)"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 81,
+          "symbol": "if !pairError.isEmpty { Section { Label … } }"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 90,
+          "symbol": "配不上先别反复重试"
+        }
+      ],
+      "tags": [
+        "错误态",
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.add.naming",
+      "parentKey": "device.add",
+      "domain": "device",
+      "level": 3,
+      "name": "命名步（昵称 + 场所副标题）",
+      "kind": "action",
+      "summary": "配网成功后填昵称与场所副标题；昵称必填，保存后成为当前锁并进入完成页。",
+      "details": [
+        "默认昵称由 defaultName 生成：同型号已存在时自动编号「型号 · N」",
+        "「完成添加」在昵称为空时 disabled",
+        "保存写 Keychain.name + LockArchive.meta.place，随后 app.loadDevices + app.select(mac)",
+        "footer 提醒添加成功后立刻做一次全量备份并成功开一次锁打「链路已验证」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 426,
+          "symbol": "namingView"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 456,
+          "symbol": "saveNaming()"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 585,
+          "symbol": "defaultName(for:)"
+        }
+      ],
+      "tags": [
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.add.done",
+      "parentKey": "device.add",
+      "domain": "device",
+      "level": 3,
+      "name": "添加完成页与首连验证引导",
+      "kind": "state",
+      "summary": "成功页说明「已生成本机密钥并写入门锁，请立刻全量备份」，并引导到设备页成功开一次锁完成链路验证。",
+      "details": [
+        "成功时 UINotificationFeedbackGenerator 播 success",
+        "引导文案「下一步: 到设备页成功开一次锁, 完成「链路已验证」标记」",
+        "唯一出口「完成」dismiss"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 470,
+          "symbol": "doneView"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 486,
+          "symbol": "Label(\"下一步: 到设备页成功开一次锁 …\")"
+        }
+      ],
+      "tags": [
+        "引导"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.add.probe",
+      "parentKey": "device.add",
+      "domain": "device",
+      "level": 3,
+      "name": "长按连通探测（cmd12 回声）",
+      "kind": "diagnostic",
+      "summary": "长按任意设备行发一条免令牌明文回声，看这台设备答不答话；不改锁内任何东西、不写台账。",
+      "details": [
+        "成功：toast「回声往返 N ms · 回显 xxx」，回显与发出值 123456 不同则额外提示「不一定就是链路故障」",
+        "失败：toast「回声 rc=<rc>: <rcMessage>」",
+        "探测期间菜单项文案变「正在探测…」并禁用其他行",
+        "与该行点击（开始配对）刻意分成两种手势"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 359,
+          "symbol": "probeEcho(_:)"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 284,
+          "symbol": ".contextMenu { Button { probeEcho } }"
+        },
+        {
+          "file": "App/Services/LockService.swift",
+          "line": 457,
+          "symbol": "ZKCmdBuilder.cmd12Echo(valueHex)"
+        }
+      ],
+      "tags": [
+        "诊断",
+        "协议"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.synctime",
+      "parentKey": "device",
+      "domain": "device",
+      "level": 2,
+      "name": "同步时间（校时页）",
+      "kind": "screen",
+      "summary": "把手机时间写进锁内（cmd 0E），校准前先读锁钟并补偿偏差。",
+      "details": [
+        "页内显示锁钟与手机时间两行；无当前锁时提示「请先在设备页选择一把门锁」",
+        "footer 提示：请将手机靠近门锁、请确保手机时间准确",
+        "校时本身不在本机留存任何数据（时间戳来自锁端回包）",
+        "锁钟 / 手机时间两行对照：锁钟取 app.status.lockTime 经 ProtoTime.localStr，读不到显示「—」；无当前锁时整段提示「请先在设备页选择一把门锁」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1758,
+          "symbol": "struct SyncTimeView"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1771,
+          "symbol": "将手机时间同步到门锁内 (cmd 0E)"
+        }
+      ],
+      "tags": [
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.synctime.run",
+      "parentKey": "device.synctime",
+      "domain": "device",
+      "level": 3,
+      "name": "执行校时与错误分支",
+      "kind": "action",
+      "summary": "点「将手机时间同步到锁内」→ ensureConnected → syncTime()（0E），成功/失败都落一行结果。",
+      "details": [
+        "未选锁：toast「未选择门锁」并置 failed",
+        "成功：result「同步成功」+ toast「时间已同步」（ok 色 + checkmark）",
+        "失败：result「同步失败：<本地化原因>」（danger 色 + xmark.octagon）",
+        "本机不落地任何校时记录，避免造出第二个「现在是几点」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1803,
+          "symbol": "private func run() async"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1821,
+          "symbol": "try await app.lock.syncTime()"
+        },
+        {
+          "file": "App/Services/LockService.swift",
+          "line": 499,
+          "symbol": "ZKCmdBuilder.cmd0ESyncTime(m, sk, now)"
+        }
+      ],
+      "tags": [
+        "锁端读写",
+        "错误态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.info",
+      "parentKey": "device",
+      "domain": "device",
+      "level": 2,
+      "name": "锁信息名片",
+      "kind": "sheet",
+      "summary": "一页看全型号、固件（含 Boot/键盘版本）、MAC、绑定时间、链路验证、锁钟偏差、运行状态与容量水位。",
+      "details": [
+        "进页自动 reload：ensureConnected → getStatus（cmd 03）",
+        "底部两行：进入「锁档案」编辑、以及「重新读取」",
+        "footer 说明静音模式在设置页切换，安全模式切换要在锁键盘或联系管理员"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 964,
+          "symbol": "struct DeviceInfoView"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 982,
+          "symbol": "BusyButton(title: \"重新读取\")"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 986,
+          "symbol": "静音模式可在设置页切换"
+        }
+      ],
+      "tags": [
+        "核心",
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.info.card",
+      "parentKey": "device.info",
+      "domain": "device",
+      "level": 3,
+      "name": "身份信息行",
+      "kind": "state",
+      "summary": "符号/色标 + 昵称 + 场所副标题，下面是型号、固件版本、Boot 版本、键盘版本、固件服役天数、MAC、绑定于、链路验证、锁钟偏差。",
+      "details": [
+        "Boot 版本与键盘版本只在 status.verDFU / verKeyboard > 0 时出现，老固件不报就没有这一行（不拿 0 冒充版本号）",
+        "固件服役：从本机首次读到该版本起算天数，超过 365 天提示「已超一年, 建议读读发行说明」",
+        "链路验证：verifiedAt 为 0 时写「待验证 (成功开一次锁即打标)」",
+        "锁钟偏差：0 写「与手机一致」，正数带 +，读不到写「—」",
+        "电池档案：电池型号与上次换电日期两行可编辑按钮（UIAlertController，型号可清除/保存，换电日可清除/记为今天）",
+        "耗材提醒：电量 ≤25% 时提示「建议备一枚 <型号> 电池」，未记录型号写「对应型号」；档案仅本机台账"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1000,
+          "symbol": "infoCardSection"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1029,
+          "symbol": "if let v = status?.verDFU, v > 0"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1127,
+          "symbol": "driftText"
+        }
+      ],
+      "tags": [
+        "状态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.info.status",
+      "parentKey": "device.info",
+      "domain": "device",
+      "level": 3,
+      "name": "运行状态与容量水位",
+      "kind": "state",
+      "summary": "门锁电量（带采样时间与 90 天 sparkline）、安全模式 A/B、锁内时间、密码与指纹的容量/存量。",
+      "details": [
+        "电量 >80% 统一显示「>80%」，读不到显示「—」，不印 -1",
+        "采样 ≥2 个点才画 sparkline 并给「N 个采样点 · 跨 D 天 · 最低 x% / 最高 y%」；不足时退化为诚实占位「尚无采样 / 已积累 N 点，曲线待数据更满」",
+        "容量优先用锁侧真值（容量 - 剩余），容量未读时降级为台账计数并标「容量未读」",
+        "安全模式 verifyMode == 0 → A模式，否则 B模式"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1045,
+          "symbol": "statusSection"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1054,
+          "symbol": "BattSpark(samples: sp)"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1172,
+          "symbol": "capacityRow(title:used:cap:stock:)"
+        }
+      ],
+      "tags": [
+        "状态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.info.autosync",
+      "parentKey": "device.info",
+      "domain": "device",
+      "level": 3,
+      "name": "进页自动校时（偏差 > 2s 才写）",
+      "kind": "automation",
+      "summary": "读回状态时算锁钟与手机钟的偏差，|drift| > 2 秒才自动下发 0E，并回读校验。",
+      "details": [
+        "对齐原版 APK RominfoPage 进页 syncTime 的口径，但只在真漂移时写（APK 无条件写）",
+        "写日志：device info 页自动校时（偏差 Ns）+ 自动校时完成（校前/校后偏差）",
+        "校时后重读 status 与重新计算 clockDrift"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1205,
+          "symbol": "if let drift = clockDrift, abs(drift) > 2"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1207,
+          "symbol": "try? await app.lock.syncTime()"
+        },
+        {
+          "file": "App/Services/LockService.swift",
+          "line": 489,
+          "symbol": "func syncTime()"
+        }
+      ],
+      "tags": [
+        "自动化",
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.gateway",
+      "parentKey": "device",
+      "domain": "device",
+      "level": 2,
+      "name": "智能网关",
+      "kind": "sheet",
+      "summary": "两段式流程：先把网关重置到橙灯闪烁，再写 WiFi 名称与密码完成配网；下方是本机已记录网关列表。",
+      "details": [
+        "未确认橙灯时只显示「准备网关」段（含 Toggle「橙色灯闪烁中」）",
+        "确认后才出现 WiFi 表单与「开始配网」按钮",
+        "所有网关指令互斥：同一时间只允许一条在飞（running 变量）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1673,
+          "symbol": "struct GatewayView"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1691,
+          "symbol": "VariantToggle(\"橙色灯闪烁中\")"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1738,
+          "symbol": ".interactiveDismissDisabled(running)"
+        }
+      ],
+      "tags": [
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.gateway.wifi",
+      "parentKey": "device.gateway",
+      "domain": "device",
+      "level": 3,
+      "name": "WiFi 名称与密码输入",
+      "kind": "setting",
+      "summary": "TextField「WiFi 名称 (2.4GHz)」+ SecureField「WiFi 密码」，任一为空时「开始配网」禁用。",
+      "details": [
+        "只支持 2.4GHz（占位符已写明）",
+        "SSID 输入关闭自动大写与自动纠错"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1698,
+          "symbol": "TextField(\"WiFi 名称 (2.4GHz)\")"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1702,
+          "symbol": "SecureField(\"WiFi 密码\")"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1706,
+          "symbol": "disabled: ssid.isEmpty || pwd.isEmpty"
+        }
+      ],
+      "tags": [
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.gateway.provision",
+      "parentKey": "device.gateway",
+      "domain": "device",
+      "level": 3,
+      "name": "配网确认 / 进度 / 结果",
+      "kind": "action",
+      "summary": "确认后写 WiFi 凭据并重启网关，逐条回显进度；成功与被接受是两句话，联网状态要等网关自己上报。",
+      "details": [
+        "确认文案说明「写入过程网关会重启并清空原有网络配置，若网络不通需重新重置网关」",
+        "失败把 error 写进进度段（danger 色）",
+        "成功 toast：配网指令已被网关接受 · 正在用「SSID」重连, 联网状态稍后在下方列表复核",
+        "成功后清空表单并把 confirmed 复位",
+        "底层为 cmd31 写 WiFi（KLV#01/02/03/04/05）+ cmd35 重启"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1805,
+          "symbol": "confirmProvision()"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1832,
+          "symbol": "HardwareService.shared.provisionGateway"
+        },
+        {
+          "file": "App/Services/HardwareService.swift",
+          "line": 351,
+          "symbol": "ZKCmdBuilder.cmd31GWSetWifi"
+        },
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 268,
+          "symbol": "cmd31GWSetWifi"
+        }
+      ],
+      "tags": [
+        "锁端读写",
+        "协议"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.gateway.list",
+      "parentKey": "device.gateway",
+      "domain": "device",
+      "level": 3,
+      "name": "网关列表（状态 / 刷新 / 重启 / 删除）",
+      "kind": "screen",
+      "summary": "每个网关一行：名称、已联网/未联网胶囊、ROM 与 WiFi 两个指标块；左滑可删除或重启，长按可刷新或重启。",
+      "details": [
+        "空态卡「还没有添加网关 / 先在上方重置网关并勾选指示灯状态，再回来配网」",
+        "重启确认文案：网关会短暂离线，此期间无法远程开锁",
+        "删除只删本机记录（DB.removeGateway），硬件不受影响",
+        "刷新走 readGatewayState（cmd38），重启走 rebootGateway（cmd35）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1743,
+          "symbol": "gatewayList"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1778,
+          "symbol": ".swipeActions { … }"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1815,
+          "symbol": "confirmReboot(_:)"
+        },
+        {
+          "file": "App/Services/HardwareService.swift",
+          "line": 367,
+          "symbol": "cmd35GWReboot()"
+        }
+      ],
+      "tags": [
+        "状态",
+        "破坏性操作"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.keychain",
+      "parentKey": "device",
+      "domain": "device",
+      "level": 2,
+      "name": "蓝牙钥匙串硬件",
+      "kind": "sheet",
+      "summary": "搜索并管理随身蓝牙钥匙串：写入当前锁的钥匙、查询钥匙、删除本锁钥匙、删除本机记录。",
+      "details": [
+        "页首说明钥匙串是随身硬件，持有人靠近门锁即可开门，无需手机",
+        "无当前锁时显示 warn 行「尚未配对门锁 — 写入钥匙前需先配对门锁」",
+        "写/删期间关闭按钮变「写入中…」且禁用，并 interactiveDismissDisabled",
+        "行长按菜单三件维护：查询全部钥匙（cmd44，只 toast 数量）、删除本锁钥匙（cmd41 空 ekey）、删除本机记录（DB.removeDongle，硬件不受影响）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1465,
+          "symbol": "struct KeychainHWView"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1505,
+          "symbol": "if app.current == nil"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1522,
+          "symbol": ".interactiveDismissDisabled(busy)"
+        }
+      ],
+      "tags": [
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.keychain.list",
+      "parentKey": "device.keychain",
+      "domain": "device",
+      "level": 3,
+      "name": "钥匙串行（三读数 + 已配钥匙标记）",
+      "kind": "state",
+      "summary": "每行显示名称、MAC（按显示序重排）、以及电量 / 钥匙存量 / 固件三块指标；已写过钥匙时标「已配钥匙」。",
+      "details": [
+        "电量 <0 显示「—」，≤20% 变 warn 色",
+        "钥匙数量：count<0 → 「—」；amount<0 → 「count / —」（两侧独立解析，缺失不冒充读数）",
+        "固件为空显示「—」",
+        "空态卡「还没有钥匙串」带「搜索钥匙串」按钮",
+        "行状态来自 readDongleState（cmd43）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1526,
+          "symbol": "dongleRow(_:)"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1540,
+          "symbol": "if let st = d.stat"
+        },
+        {
+          "file": "App/Services/HardwareService.swift",
+          "line": 174,
+          "symbol": "cmd43KeychainStatus([])"
+        }
+      ],
+      "tags": [
+        "状态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.keychain.write",
+      "parentKey": "device.keychain",
+      "domain": "device",
+      "level": 3,
+      "name": "写入钥匙（不可撤销）",
+      "kind": "action",
+      "summary": "把当前锁的 ekey 写进钥匙串：先确认「写入后该钥匙串无需手机即可开这道门，且无法在 App 内撤销」，成功后回执。",
+      "details": [
+        "前置校验：必须有当前锁，且 skey 非空、pid != 0，否则 toast「请先配对门锁」",
+        "入口在行长按菜单「给当前门锁写入钥匙 → 写入…」",
+        "成功 toast：设置成功: 该钥匙串现已开启「锁名」",
+        "底层 cmd41（KLV#01 TargetMAC / #02 type / #03 pid / #04 ekey）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1588,
+          "symbol": "confirmWriteKey(_:)"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1635,
+          "symbol": "writeKey(_:)"
+        },
+        {
+          "file": "App/Services/HardwareService.swift",
+          "line": 238,
+          "symbol": "cmd41WriteEkey(lock.mac…)"
+        },
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 244,
+          "symbol": "cmd41WriteEkey"
+        }
+      ],
+      "tags": [
+        "锁端读写",
+        "破坏性操作"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "device.messages",
+      "parentKey": "device",
+      "domain": "device",
+      "level": 2,
+      "name": "动态（全锁日志汇总）",
+      "kind": "sheet",
+      "summary": "把本机缓存里所有锁的日志合成一个列表，按时间倒序，告警行加 warn 色与「告警：」前缀。",
+      "details": [
+        "数据源是 DB.keychains() × DB.readLogs(mac)，不联网不等锁",
+        "告警判定只认 StatsKit.alarmTypes（5 类），不在本页另写一份",
+        "行副标题为「锁内时间 · 设备名」，设备名缺失时用「型号 …后缀四位」",
+        "空态卡「还没有动态 / 连接门锁读取记录后，这里会汇总全部门锁的开门与告警事件」，主按钮「去添加门锁」直接在本 sheet 上再弹 AddDeviceView"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 2101,
+          "symbol": "struct MessagesView"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 2163,
+          "symbol": "private var rows: [Row]"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 2171,
+          "symbol": "StatsKit.alarmTypes.contains(l.type)"
+        }
+      ],
+      "tags": [
+        "记录"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.dial",
+      "parentKey": "unlock",
+      "domain": "unlock",
+      "level": 2,
+      "name": "开锁圆盘",
+      "kind": "screen",
+      "summary": "全 App 唯一高频动作的主控件：状态即颜色 + 图形 + 文字 + 角落状态点四通道表达，手势层叠加按住/上滑/连点/旋转四族。",
+      "details": [
+        "承载方有两处：设备页圆盘（DeviceHomeView.unlockDial）与专注开锁全屏（FocusUnlockView），二者共用同一份 UnlockDial",
+        "圆盘三档直径 160/176/200（设置-开锁可调），大字号降级 128pt",
+        "命中域在盘外沿再留 10pt；盘面双层材质（顶部内高光 + 外沿 ultraThinMaterial 磨砂环）",
+        "状态机的唯一动作出口是 action() = AppState.requestUnlock，动画与触感都不直接发指令"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 219,
+          "symbol": "struct UnlockDial"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1025,
+          "symbol": "UnlockDial(state:phase:connected:bleReady:…)"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 274,
+          "symbol": "dial = AXFlags.axStackLayout ? 128 : DS.Metric.dial"
+        }
+      ],
+      "tags": [
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.dial.state",
+      "parentKey": "unlock.dial",
+      "domain": "unlock",
+      "level": 3,
+      "name": "六态文案 / 图标 / 颜色 / 状态点",
+      "kind": "state",
+      "summary": "idle / connecting / opening / success / doubleVerify / failed 六种状态各自决定中心图标、标题、详情文案、盘面渐变与角落点颜色。",
+      "details": [
+        "idle：蓝牙关 → 天线斜杠 + 「蓝牙未开启」；未连接 → lock.fill + 「连接门锁」；已连接 → lock.open + 「按住开锁」（关按住确认则「点击开锁」）",
+        "connecting「正在连接 / 正在唤醒门锁…」、opening「正在开锁 / 请稍候 · 轻点圆盘可撤销」",
+        "success「已开锁 / 门已打开」；doubleVerify「需二次验证 / 请用指纹或密码开门」；failed 显示后端返回的人话原因",
+        "角落状态点：灰=未连接或蓝牙关，品牌色=握手中，绿=就绪",
+        "盘面：idle/connecting/opening 用品牌渐变，success=ok，doubleVerify=warn，failed=danger，蓝牙关整盘置灰"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 290,
+          "symbol": "iconName"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 302,
+          "symbol": "title"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 326,
+          "symbol": "dotColor"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 853,
+          "symbol": "dialFill"
+        }
+      ],
+      "tags": [
+        "状态",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.dial.hold",
+      "parentKey": "unlock.dial",
+      "domain": "unlock",
+      "level": 3,
+      "name": "按住确认（默认档）",
+      "kind": "action",
+      "summary": "按住圆盘，环形进度填满才发指令；松手提前取消有回弹，填满后自动触发。",
+      "details": [
+        "进度用 16ms 轮询按已按时长/目标时长算，目标 = AXPrefs.holdDuration（默认 0.9s，可调 0.4–1.6s）",
+        "进度环 trim 0→holdProgress，画在盘外沿 dial+20 处，线宽 4",
+        "关闭「按住确认开锁」后退回轻点直发（适合单手与 VoiceOver）",
+        "三连点/旋转充能档下不走这一支（按住环不填充）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 716,
+          "symbol": "beginHold()"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 398,
+          "symbol": "Circle().trim(from: 0, to: holdProgress)"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 257,
+          "symbol": "holdConfirmOn = DB.store.getBool(\"kf_hold_confirm\", true)"
+        }
+      ],
+      "tags": [
+        "核心",
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.dial.hold.mark",
+      "parentKey": "unlock.dial.hold",
+      "domain": "unlock",
+      "level": 4,
+      "name": "三成/六成刻度触感与双段确认",
+      "kind": "edge",
+      "summary": "按住时在 33% / 66% 各给一记 tick，填满时给 trigger 中触感作为「第二段确认」；落手时先给一记 tick 作为第一段。",
+      "details": [
+        "刻度判定：marks = Int(p / 0.33)，marks 增长且 p<1 时记一次 tick，回退不记",
+        "落手 tick 与确认 trigger 组成「双段触感」（idea 3/22）",
+        "触发成功时同时 set firedThisTouch，防止同一次触摸重复发指令"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 726,
+          "symbol": "let marks = Int(p / 0.33)"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 641,
+          "symbol": "DS.Haptics.tick.impactOccurred() // 第一段 (落手)"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 768,
+          "symbol": "DS.Haptics.trigger.impactOccurred() // 第二段 (确认)"
+        }
+      ],
+      "tags": [
+        "无障碍"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.dial.swipe",
+      "parentKey": "unlock.dial",
+      "domain": "unlock",
+      "level": 3,
+      "name": "上滑触发与「拉回取消」",
+      "kind": "action",
+      "summary": "在盘内上滑越过 -56pt 后松手即发指令；若手指拉回原点再松手，则视为取消并回弹进度环。",
+      "details": [
+        "上滑阈值 -56，松手再校验 translation < -30",
+        "拉回取消分支会复位 swipeReady，避免「轻扫一下就开锁」的阈值被降级",
+        "空 ekey 或蓝牙关时 fire() 前置 guard 直接 return，不发帧"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 648,
+          "symbol": "if swipePeakUp < -56, !swipeReady"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 690,
+          "symbol": "if swipeReady, g.translation.height < -30"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 702,
+          "symbol": "swipeReady = false // 取消分支复位"
+        }
+      ],
+      "tags": [
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.dial.fence",
+      "parentKey": "unlock.dial",
+      "domain": "unlock",
+      "level": 3,
+      "name": "起手围栏与误触围栏",
+      "kind": "edge",
+      "summary": "两层防误触：起手必须在盘内六成面积（半径 0.39×直径）；开启「误触围栏」后还需先从边缘拖入中心解锁，4 秒内有效。",
+      "details": [
+        "起手围栏：insideFence(p) 半径 ≤ dial×0.39，边缘起手整段忽略",
+        "误触围栏：fenceRequired 且未 armed 时，只有「从边缘起手、落点在中心」才置 armed 并给 tick，4 秒后自动失效",
+        "armed 时盘外圈画一圈 ok 色虚线提示环",
+        "围栏开启但未解锁时，圆盘下方常驻一句教学文案"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 279,
+          "symbol": "insideFence(_:)"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 609,
+          "symbol": "if fenceRequired, !armed {"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 455,
+          "symbol": "误触围栏开启中: 先从圆盘边缘拖到中心"
+        }
+      ],
+      "tags": [
+        "防误触"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.dial.tap",
+      "parentKey": "unlock.dial",
+      "domain": "unlock",
+      "level": 3,
+      "name": "三连点防误开与双击直开",
+      "kind": "action",
+      "summary": "三连点档要连点圆盘三下才发指令（前两下只有渐强触感）；「双击直开」在按住确认档下连点两下即发，且绕过按住确认。",
+      "details": [
+        "轻点判定：位移 < 12pt 且停留 < 0.25s；手停 0.7s 连点计数清零",
+        "tapsNeeded：三连点档 3 下，双击直开档 2 下",
+        "双击直开是防误触的减配，默认关，且只在 hold 档可开（设置里 mode≠hold 时 Toggle disabled）",
+        "围栏开启时仍必须先解锁围栏才计数（围栏优先级高于便捷性）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 550,
+          "symbol": "registerTap()"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 674,
+          "symbol": "if (gestureMode == \"triple\" || tapDirect), moved < 12, …"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 12,
+          "symbol": "tapDirect: DB.store.getBool(\"kf_tap_direct\") && mode == \"hold\""
+        }
+      ],
+      "tags": [
+        "防误触",
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.dial.charge",
+      "parentKey": "unlock.dial",
+      "domain": "unlock",
+      "level": 3,
+      "name": "旋转充能（沿外沿转满一圈）",
+      "kind": "action",
+      "summary": "按住并沿圆盘外沿转满约一圈（0.98 容差）才发指令；外沿 12 格刻度逐格点亮并逐格给触感。",
+      "details": [
+        "累计的是**带符号**转角：逆时针退回会抵消进度，防止来回抖动攒满一圈",
+        "跨 ±π 接缝不算位移",
+        "刻度 12 格 × 30°，每亮一格一记 tick，回退不记",
+        "松手未转满 = 整段作废，进度回零且不留残影"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 577,
+          "symbol": "stepCharge(_:)"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 583,
+          "symbol": "if chargeProgress >= 0.98"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 97,
+          "symbol": "private struct ChargeTicks"
+        }
+      ],
+      "tags": [
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.dial.progress",
+      "parentKey": "unlock.dial",
+      "domain": "unlock",
+      "level": 3,
+      "name": "三段进度条与握手超时取消",
+      "kind": "state",
+      "summary": "连接/开锁过程中画三段细条（握手/鉴权/执行），握手超 4 秒整条转橙并出现「取消等待」。",
+      "details": [
+        "phase 取值：0 无、1 握手、2 鉴权、3 执行；只在 isBusy 且 phase>0 时显示",
+        "4 秒定时器：仍是 .connecting 才置 slowConnect，转橙（warn 色）",
+        "slowConnect 时显示「取消等待」按钮，动作是 cancelAction（= app.cancelUnlock(notify: true)）",
+        "取消后 phase 归 0、状态回 idle，并 toast「已取消」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 176,
+          "symbol": "private struct PhaseBar"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 516,
+          "symbol": "slowTask = Task … sleep 4s → slowConnect = true"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 434,
+          "symbol": "Button(\"取消等待\", action: cancelAction)"
+        }
+      ],
+      "tags": [
+        "状态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.dial.retry",
+      "parentKey": "unlock.dial",
+      "domain": "unlock",
+      "level": 3,
+      "name": "自动重试退避与手动再试",
+      "kind": "action",
+      "summary": "失败默认自动重试（最多 3 次），退避 2 秒 / 5 秒并在盘下显示「第 N 次 · 等 X 秒」；终态失败后给「再试一次」按钮。",
+      "details": [
+        "重试次数由 kf_auto_retry 决定：开=3 次，关=1 次（只发一次）",
+        "超时类失败不自动重试（指令可能已生效，再发等于第二次开门）",
+        "wait 期间轻点圆盘 = 取消重试转手动（AppState 的 0.8s/retryWait 判定）",
+        "终态 .failed 时圆盘下方出现「再试一次」主按钮，点了重新走 dialAction"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 439,
+          "symbol": "if let retryText { Text(retryText) }"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1095,
+          "symbol": "if case .failed = app.unlockState { Button(\"再试一次\") }"
+        },
+        {
+          "file": "App/LockKeeperApp.swift",
+          "line": 476,
+          "symbol": "retryAttempt = attempt + 1 … 退避 2s/5s"
+        }
+      ],
+      "tags": [
+        "错误态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.dial.fail",
+      "parentKey": "unlock.dial",
+      "domain": "unlock",
+      "level": 3,
+      "name": "失败抖动与「搜索信号」动效",
+      "kind": "state",
+      "summary": "失败时盘体左右衰减摆动一次；连续失败 ≥2 次时中心图标换成信号搜索符号并循环变色彩。",
+      "details": [
+        "抖动序列：-12 / 12 / -8 / 8 / -4 / 4 / 0，每步 55ms；减少动效时不抖",
+        "连续失败 ≥2 时 iconName 换成 antenna.radiowaves.left.and.right，并配 variableColor.iterative 循环（减少动效时关闭）",
+        "状态触感：success → .success，doubleVerify → .warning，failed → .error"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 591,
+          "symbol": "shake()"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 299,
+          "symbol": "failStreak >= 2 ? \"antenna.radiowaves.left.and.right\" : \"exclamationmark.triangle.fill\""
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 481,
+          "symbol": ".sensoryFeedback(trigger: state)"
+        }
+      ],
+      "tags": [
+        "错误态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.dial.nudge",
+      "parentKey": "unlock.dial",
+      "domain": "unlock",
+      "level": 3,
+      "name": "极限距离暂缓（信号逼近下限）",
+      "kind": "edge",
+      "summary": "最近 RSSI 与信号围栏下限相差 ≤5 dBm 时，第一次手势只提示不发出，第二次确认才真开。",
+      "details": [
+        "判据：rssi > -127 且 rssi ≤ LinkSense.rssiFence + 5；无读数不判弱（不把「没扫到」读成「很远」）",
+        "提示文案两态：未暂缓过「信号偏弱, 走近一步再开更稳」；已暂缓「已暂缓这一次: 离门锁再走近一步, 然后重新按住圆盘」",
+        "暂缓时给一记 trigger 中触感并把 armed/holdProgress/swipeReady 全部复位",
+        "不做硬拦，第二次同轮手势即放行"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 742,
+          "symbol": "nearRssiLimit"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 751,
+          "symbol": "if nearRssiLimit && !weakNudge"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 464,
+          "symbol": "已暂缓这一次: 离门锁再走近一步"
+        }
+      ],
+      "tags": [
+        "边界"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.dial.drill",
+      "parentKey": "unlock.dial",
+      "domain": "unlock",
+      "level": 3,
+      "name": "首次手势演练层",
+      "kind": "state",
+      "summary": "从没完成过真实手势时，圆盘上浮现一次可跟随的上滑轨迹或档位提示语；做任意一次真手势后永久收起。",
+      "details": [
+        "hold 档画向上滑动的渐变轨迹 + chevron.up；三连点/旋转充能档改为一句静态提示（画向上轨迹会把人引到不生效的动作）",
+        "减少动效时退化为静态提示胶囊",
+        "收起时写 kf_dial_drill_seen = true，之后不再出现"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 136,
+          "symbol": "private struct DrillTrace"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 541,
+          "symbol": "dismissDrill()"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 544,
+          "symbol": "DB.store.set(\"kf_dial_drill_seen\", true)"
+        }
+      ],
+      "tags": [
+        "引导"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.dial.haptic",
+      "parentKey": "unlock.dial",
+      "domain": "unlock",
+      "level": 3,
+      "name": "触感族（就绪 / 心跳 / 结果 / 免打扰）",
+      "kind": "automation",
+      "summary": "四类触感：会话就绪一记轻触、握手期间心跳双轻触、结果态成功/警告/失败、以及静音时段的整段免打扰。",
+      "details": [
+        "就绪：connected false→true 时 .impact(light)，提示「可以按圆盘了」",
+        "心跳：.connecting 期间循环（tick 130ms → tick 950ms），取消时必须显式判 Task.isCancelled 再收尾",
+        "免打扰：CareSchedule.quietOn 且 isQuietHour() 时整段心跳不震",
+        "结果触感由 .sensoryFeedback(trigger: state) 统一给，跟随系统「减少触感」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 491,
+          "symbol": ".sensoryFeedback(trigger: connected)"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 496,
+          "symbol": ".task(id: state) 心跳循环"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 498,
+          "symbol": "CareSchedule.quietOn && CareSchedule.isQuietHour()"
+        }
+      ],
+      "tags": [
+        "无障碍",
+        "自动化"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.dial.vo",
+      "parentKey": "unlock.dial",
+      "domain": "unlock",
+      "level": 3,
+      "name": "VoiceOver 转子三维与 Cmd+U",
+      "kind": "action",
+      "summary": "圆盘是一个可调节元素：转子上下滑在「状态 / 电量 / 连接」三个维度间切换播报值；激活即开锁，Cmd+U 同效。",
+      "details": [
+        "accessibilityAdjustableAction 循环切换 voRotorIndex，并 AXTools.announce 播报新维度",
+        "播报值示例：「电量 82%」「已连接就绪, 可开锁」「未连接, 点击后自动唤醒门锁蓝牙」",
+        "hint 写明「轻点两下直接开锁, 无需按住」与按住时长可自定 0.4–1.6s",
+        "蓝牙关时 Button action 内 guard bleReady 直接 return（不弹错误）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 386,
+          "symbol": ".accessibilityAdjustableAction"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 878,
+          "symbol": "voValue"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 381,
+          "symbol": ".keyboardShortcut(\"u\", modifiers: .command)"
+        }
+      ],
+      "tags": [
+        "无障碍"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.dial.motion",
+      "parentKey": "unlock.dial",
+      "domain": "unlock",
+      "level": 3,
+      "name": "动效降级与装饰层",
+      "kind": "edge",
+      "summary": "减少动效时关掉呼吸光晕、成功冲击波、抖动与弹簧回弹，只保留信息型填充；夜间降亮度未生效。",
+      "details": [
+        "呼吸光晕 repeatForever 2.4s 只在 !reduceMotion 时启动",
+        "成功：pop 弹跳 + shock 冲击波（0.75s 扩散）均在 !reduceMotion 时播",
+        "静止外环、状态点、进度环保留（信息通道，不因减少动效消失）",
+        "`dim` 属性恒为 1：注释所述 248「22 点后装饰光效降峰值」没有实现"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 350,
+          "symbol": "guard !reduceMotion else { return }"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 523,
+          "symbol": "if case .failed = s, !reduceMotion { shake() }"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 284,
+          "symbol": "private var dim: CGFloat { 1 }"
+        }
+      ],
+      "tags": [
+        "无障碍",
+        "边界"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.gate",
+      "parentKey": "unlock",
+      "domain": "unlock",
+      "level": 2,
+      "name": "30 秒内二次开锁的本机密码闸",
+      "kind": "sheet",
+      "summary": "同一把锁 30 秒内再次开锁时，先要求输入本机密码；未设本机密码则没有这道闸。",
+      "details": [
+        "触发条件：DB.hasPasscode() 且距上次成功开锁 < 30 秒",
+        "以 medium detent 的半屏 sheet 呈现，图标 lock.shield + 标题「30 秒内再次开锁」",
+        "本闸在 requestUnlock 里判，早于 startUnlock；靠近自动开锁与闸放行后的重发都要再过 SecurityPolicy"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1917,
+          "symbol": "struct UnlockGateView"
+        },
+        {
+          "file": "App/LockKeeperApp.swift",
+          "line": 397,
+          "symbol": "if DB.hasPasscode(), let t = lastUnlockSuccessAt, now.timeIntervalSince(t) < 30"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1933,
+          "symbol": "Text(\"30 秒内再次开锁\")"
+        }
+      ],
+      "tags": [
+        "安全"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.gate.verify",
+      "parentKey": "unlock.gate",
+      "domain": "unlock",
+      "level": 3,
+      "name": "密码校验与放行",
+      "kind": "action",
+      "summary": "输入密码后「验证并继续开锁」：通过则播成功触感、关闭 sheet 并直接 startUnlock；密码框为空时按钮禁用。",
+      "details": [
+        "校验走 DB.verifyPasscode(pw)",
+        "成功：UINotificationFeedbackGenerator(.success) → dismiss → app.startUnlock()",
+        "失败：error 触感 + 输入框描边转 danger + 文案「密码错误, 请重新输入」+ 清空输入",
+        "键盘 submitLabel .go，回车等同点按钮；输入变化即清除错误态"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1979,
+          "symbol": "verify()"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1981,
+          "symbol": "if DB.verifyPasscode(pw)"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1963,
+          "symbol": "Button(\"验证并继续开锁\", action: verify)"
+        }
+      ],
+      "tags": [
+        "安全"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.gate.cancel",
+      "parentKey": "unlock.gate",
+      "domain": "unlock",
+      "level": 3,
+      "name": "取消与半屏呈现约束",
+      "kind": "edge",
+      "summary": "「取消」直接 dismiss，不开锁也不留状态；sheet 固定 medium 高度，出现与错误态都用 soft/quick 动效。",
+      "details": [
+        "无「忘记密码」出口，也无重试次数上限（由应用锁本身承担）",
+        "取消后 unlockState 保持 idle，不会残留 connecting/opening"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1967,
+          "symbol": "Button(\"取消\") { dismiss() }"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1975,
+          "symbol": ".presentationDetents([.medium])"
+        }
+      ],
+      "tags": [
+        "边界"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.focus",
+      "parentKey": "unlock",
+      "domain": "unlock",
+      "level": 2,
+      "name": "全屏专注开锁",
+      "kind": "screen",
+      "summary": "从 Hero 卡右下角进入的全屏页：只剩圆盘与状态文案，适合夜里在门口单手操作。",
+      "details": [
+        "入口是 Hero 卡上的 chevron.down.circle 按钮，accessibilityLabel「专注开锁」",
+        "以 fullScreenCover 呈现，页头显示锁名与「已就绪 · <手势提示>」或「靠近门锁, 等待就绪」",
+        "右上角 xmark.circle.fill 退出，标签「退出专注模式」",
+        "圆盘的电量读数与设备页同源（BatteryCare.facePct/faceText），避免同一块盘报两种状态"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1856,
+          "symbol": "struct FocusUnlockView"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 137,
+          "symbol": ".fullScreenCover(isPresented: $showFocus)"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1205,
+          "symbol": "focusButton"
+        }
+      ],
+      "tags": [
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.focus.entry",
+      "parentKey": "unlock.focus",
+      "domain": "unlock",
+      "level": 3,
+      "name": "页头状态与手势提示同步",
+      "kind": "state",
+      "summary": "页头第二行直接读 UnlockPrefs.gestureHint，保证三档手势下提示语与圆盘实际动作一致。",
+      "details": [
+        "hold 档：「可按住圆盘，也可上滑」；triple 档：「可连续轻点圆盘三下」；charge 档：「可按住圆盘, 沿外沿转满一圈」",
+        "linkReady = lockSvc.connectedMAC == app.currentMac，未就绪时整句换成「靠近门锁, 等待就绪」",
+        "聚焦页动作直接调 app.requestUnlock（不经确认胶囊，也就没有换锁二次确认）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1873,
+          "symbol": "Text(linkReady ? \"已就绪 · \" + UnlockPrefs.gestureHint : …)"
+        },
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 17,
+          "symbol": "static var gestureHint"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1901,
+          "symbol": "action: { app.requestUnlock() }"
+        }
+      ],
+      "tags": [
+        "状态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.feedback",
+      "parentKey": "unlock",
+      "domain": "unlock",
+      "level": 2,
+      "name": "开锁过程辅助反馈",
+      "kind": "service",
+      "summary": "围绕开锁的四类辅助信息：字幕式过程条、自动上锁倒计时、失败后的排查清单与临时码备援。",
+      "details": [
+        "全部挂在设备页圆盘下方，按状态/偏好出现，不占常驻版面",
+        "字幕条受 AXPrefs.captions 控制；清单在 failStreak ≥3 才出现",
+        "这些构件不发送任何协议指令，只读 AppState 状态与本地偏好"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1036,
+          "symbol": "if AXPrefs.captions { CaptionStepBar(…) }"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1041,
+          "symbol": "if let left = autoLockLeft { Label(\"约 \\(left) 秒后自动上锁 …\") }"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1067,
+          "symbol": "if app.failStreak > 0 { … }"
+        }
+      ],
+      "tags": [
+        "无障碍"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.feedback.caption",
+      "parentKey": "unlock.feedback",
+      "domain": "unlock",
+      "level": 3,
+      "name": "字幕式过程条（881）",
+      "kind": "state",
+      "summary": "把连接/开锁过程拆成「验证 → 执行 → 完成」三步文字字幕，给听障用户逐字跟读现在进行到哪一步。",
+      "details": [
+        "仅在 connecting / opening / success 三态显示，其余状态不占位",
+        "每步图标：已完成 checkmark.circle.fill（ok）、进行中 ellipsis.circle（accentText）、未开始 circle（textSub, 0.55 透明）",
+        "整条合成一个无障碍元素播报「过程字幕: 验证 执行, 进行中」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Mascot.swift",
+          "line": 19,
+          "symbol": "struct CaptionStepBar"
+        },
+        {
+          "file": "App/UI/Mascot.swift",
+          "line": 41,
+          "symbol": "let done = (phase > i + 1) || unlockState == .success"
+        },
+        {
+          "file": "App/UI/Mascot.swift",
+          "line": 54,
+          "symbol": "captionText"
+        }
+      ],
+      "tags": [
+        "无障碍"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.feedback.autolock",
+      "parentKey": "unlock.feedback",
+      "domain": "unlock",
+      "level": 3,
+      "name": "自动上锁倒计时提醒",
+      "kind": "automation",
+      "summary": "开锁成功后按本地布防记忆回放一个倒计时「约 N 秒后自动上锁 · 请确认门已关好」。",
+      "details": [
+        "秒数 = DB.tailgate(mac)?.interval ?? 5，再取 max(2, interval+1)（档位+1=秒）",
+        "每秒递减，期间若重新开锁/切锁则让位新的倒计时",
+        "结束时淡出，不做声音提示；文案反复强调请确认门已关好"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1157,
+          "symbol": "startAutoLockCountdown()"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 183,
+          "symbol": ".onChange(of: app.unlockState) → 成功即起秒"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1042,
+          "symbol": "Label(\"约 \\(left) 秒后自动上锁 · 请确认门已关好\")"
+        }
+      ],
+      "tags": [
+        "自动化"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.feedback.checklist",
+      "parentKey": "unlock.feedback",
+      "domain": "unlock",
+      "level": 3,
+      "name": "失败安慰语 / 排查清单 / 临时码备援",
+      "kind": "edge",
+      "summary": "一次失败轻声安慰，三次后给可逐项勾选的排查清单与「打开排查工具」入口；BLE 反复失败时提示可用临时码在锁键盘开门。",
+      "details": [
+        "failStreak 1–2：「再试一次, 别着急」；≥3：「连着几次没成, 逐项自查一遍:」",
+        "清单三项：手机蓝牙已开启 / 已靠近门锁 (1–2 米内) / 门锁电量充足 (低于 20% 先换电池)，可勾选（纯本地状态，不上报）",
+        "≥3 次时给 NavigationLink「打开排查工具」→ DiagnosticsView",
+        "failStreak ≥2 且该锁已开通临时码时，额外提示「已开通的临时码可直接在门锁键盘输入开门」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1069,
+          "symbol": "Text(app.failStreak < 3 ? \"再试一次, 别着急\" : \"连着几次没成, 逐项自查一遍:\")"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1196,
+          "symbol": "checkTexts"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1059,
+          "symbol": "if app.failStreak >= 2, DB.otpStatus(app.currentMac)?.on == true"
+        }
+      ],
+      "tags": [
+        "错误态",
+        "引导"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "添加门锁密码",
+      "kind": "sheet",
+      "summary": "给门锁添加 6~8 位数字密码，可选择永久有效或自定义生效/到期日期，并归属到某位成员。",
+      "details": [
+        "入口两处：快捷操作格「添加密码」（embedded: true）与凭证页 push；embedded 参数决定是否自包 NavigationStack",
+        "输入用 SecureField + 数字键盘，避免明文进系统文字替换缓存",
+        "写锁在飞时关闭按钮变「写入中…」且 disabled，并 interactiveDismissDisabled",
+        "成功后登记本机台账并写一档快照（CredentialOrg.snapshot note=新增）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 594,
+          "symbol": "struct AddPwdView"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 610,
+          "symbol": "pwdOK"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 680,
+          "symbol": "Button(busy ? \"写入中…\" : \"关闭\")…interactiveDismissDisabled(busy)"
+        }
+      ],
+      "tags": [
+        "核心",
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.add",
+      "parentKey": "credential.pwd",
+      "domain": "credential",
+      "level": 3,
+      "name": "永久密码写入流程",
+      "kind": "action",
+      "summary": "校验 6~8 位纯数字后 ensureConnected → cmd0A 写密码 → 落台账 → toast「添加成功 (别名 #N)」并关闭。",
+      "details": [
+        "永久档有效期写死 2010-01-01 ~ 2118-01-01（锁端不限）",
+        "校验失败 toast「请输入6~8位数字密码」；无当前锁 toast「请先选择门锁」（不再静默 return）",
+        "失败 toast「添加失败: <原因>」，不回滚台账（此时尚未写台账）",
+        "备注模板（默认开）拼「谁-场所-何时」，场所为空时省略该段而不是写死「大门」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 707,
+          "symbol": "submit(permanent:)"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 727,
+          "symbol": "let alias = try await app.lock.pwdAdd(…)"
+        },
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 155,
+          "symbol": "cmd0ASyncPwd"
+        }
+      ],
+      "tags": [
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.temp",
+      "parentKey": "credential.pwd",
+      "domain": "credential",
+      "level": 3,
+      "name": "10 分钟临时密码",
+      "kind": "action",
+      "summary": "「下发 10 分钟临时密码」：确认后以明文下发，锁端 10 分钟自动失效，本机记一条 temp 台账。",
+      "details": [
+        "确认文案用圆点显示密码长度，并说明「要提前收回，就在密码列表里删除这条」（删除会向锁端下发删除）",
+        "有效期 = 当前时刻 ~ +600 秒",
+        "成功 toast「临时密码已下发 (10 分钟有效)」，快照 note=新增临时码",
+        "失败 toast「下发失败: <原因>」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 694,
+          "symbol": "confirmTemp()"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 756,
+          "symbol": "let to = from.addingTimeInterval(600)"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 667,
+          "symbol": "Text(\"下发 10 分钟临时密码\")"
+        }
+      ],
+      "tags": [
+        "锁端读写",
+        "破坏性操作"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.pwd.validate",
+      "parentKey": "credential.pwd",
+      "domain": "credential",
+      "level": 3,
+      "name": "有效期 / 归属 / 命名模板控件",
+      "kind": "setting",
+      "summary": "有效期分段控件（永久有效 / 自定义）、两个日期选择器、归属成员内联 Picker、以及备注模板 Toggle。",
+      "details": [
+        "自定义档才显示「生效日期」「到期日期」；到期 ≤ 生效时 toast「失效时间需晚于生效时间」并中止",
+        "归属是**台账本地**概念（锁端无归属字段），选项含「未归属」+ DB.members()",
+        "「备注自动填命名模板 (谁-哪里-何时)」默认开且始终可见（不再自我隐藏）",
+        "toast 提醒「到期待用: 凭证页可开三档预警, 过期进「已过期」分组不消失」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 630,
+          "symbol": "Picker(\"类型\", selection: $permanent)"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 721,
+          "symbol": "if !permanent, toDate <= fromDate"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 657,
+          "symbol": "VariantToggle(\"备注自动填命名模板 (谁-哪里-何时)\")"
+        }
+      ],
+      "tags": [
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.fp",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "录入指纹",
+      "kind": "sheet",
+      "summary": "先选归属，再让用户在锁上重复按 8 次指纹头；满 8 次后 cmd14 确认启用并落台账，自动命名「指纹N」。",
+      "details": [
+        "页面同时显示归属选择卡（FpOwnerPicker）、0/8 进度条、8 个进度点与随次数变化的提示语",
+        "未选归属时「开始录入」禁用，并提示「先在上面选一位归属, 才开始录入」",
+        "录入期间禁止自动锁屏（keepingScreenAwake），避免屏黑后进程挂起断链",
+        "onDisappear 取消 enrollTask：关页后不会再偷偷完成锁端写入"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 781,
+          "symbol": "struct StartAddFpView"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 822,
+          "symbol": "FpOwnerPicker(mac: app.current?.mac ?? \"\", owner: $owner)"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 894,
+          "symbol": ".keepingScreenAwake(busy)"
+        }
+      ],
+      "tags": [
+        "核心",
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.fp.enroll",
+      "parentKey": "credential.fp",
+      "domain": "credential",
+      "level": 3,
+      "name": "8 次按压与随次数变化的提示语",
+      "kind": "action",
+      "summary": "cmd13 下发后逐帧收按压事件，进度条与提示语按 0 / 1–3 / 4–6 / 7+ 四段变化，指导用户换位置换角度。",
+      "details": [
+        "0 次：「请将手指按在指纹头上再抬起」",
+        "1–3 次：「重复此步骤 (n/8) — 抬起后再按」",
+        "4–6 次：「第 n/8 次: 把手指的边缘按上去, 换一个位置」",
+        "7 次以上：「再换一个角度」——同一位置连按会回 rc=23，那一下不计数，屏上会卡在 6/8 直到锁端 15s 窗口超时",
+        "每次按压给一记 tick 触感（手指在锁上时用户看不到屏幕）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 897,
+          "symbol": "progressText"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 923,
+          "symbol": "app.lock.fpStart(times: 8, onPress:)"
+        },
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 201,
+          "symbol": "cmd13AddFp(times: 8, timeout: 15)"
+        }
+      ],
+      "tags": [
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.fp.confirm",
+      "parentKey": "credential.fp",
+      "domain": "credential",
+      "level": 3,
+      "name": "批次确认与自动命名",
+      "kind": "action",
+      "summary": "满 8 次后校验 batchNumber，cmd14 以 2010–2118 有效期启用该批指纹，并写台账「指纹N」。",
+      "details": [
+        "按压 <8 次：抛「只收到 n/8 次按压, 未写入; 请重新录入并多按几次」",
+        "batchNumber 缺失或 ≤0：抛「未拿到有效指纹批次, 请重新录入」",
+        "Task 已取消（用户关页）：清空 presses 后直接返回，**不**越过 fpConfirm 这个不可逆点",
+        "命名取台账内已有「指纹N」最大编号 +1；成功播 success 触感并切到完成页"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 931,
+          "symbol": "guard presses.count >= 8"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 940,
+          "symbol": "if Task.isCancelled { presses = []; return }"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 944,
+          "symbol": "app.lock.fpConfirm(batch, validFrom:…)"
+        },
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 209,
+          "symbol": "cmd14FpConfirm"
+        }
+      ],
+      "tags": [
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.fp.errors",
+      "parentKey": "credential.fp",
+      "domain": "credential",
+      "level": 3,
+      "name": "录入错误分支与完成页",
+      "kind": "edge",
+      "summary": "失败原因以 danger 文案常驻在开始按钮上方；成功页切到「添加成功 / 请用新添加的指纹开一次锁」。",
+      "details": [
+        "常见锁端错误的人话：rc=23 取不到有效指纹图像、rc=24 两次按压间隔超 15 秒录入已结束",
+        "无当前锁 toast「请先选择门锁」；未选归属 error「请先选择归属再录入」",
+        "重试前必须清空 presses（onPress 是累加回填，不清会出现 9/8 读数）",
+        "完成页唯一出口「完成」dismiss，不再提供重录"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 849,
+          "symbol": "if !error.isEmpty { Label … }"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 802,
+          "symbol": "if doneBatch != nil { … Text(\"添加成功\") }"
+        },
+        {
+          "file": "App/Core/StatusParser.swift",
+          "line": 174,
+          "symbol": "case 23: 这一下没取到有效指纹图像"
+        }
+      ],
+      "tags": [
+        "错误态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.owner",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "指纹归属选择器",
+      "kind": "sheet",
+      "summary": "录指纹前先选归属：列出全部成员及各自在这把锁上的指纹数量，空态直接弹「新增归属」。",
+      "details": [
+        "两位消费方：StartAddFpView 与凭证工坊 FpStudio 第 0 步，共用同一份实现",
+        "归属按**锁**统计（同一成员在不同锁上各有几枚）",
+        "选中结果通过 @Binding owner 回传给调用方，不落盘",
+        "空态不再把人踢出页面：onAppear 检测到无成员且未选，自动弹新建弹窗"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/FpOwnerPicker.swift",
+          "line": 9,
+          "symbol": "struct FpOwnerPicker"
+        },
+        {
+          "file": "App/UI/FpOwnerPicker.swift",
+          "line": 45,
+          "symbol": ".onAppear { if members.isEmpty && owner == nil { adding = true } }"
+        },
+        {
+          "file": "App/UI/FpOwnerPicker.swift",
+          "line": 21,
+          "symbol": "Text(\"先选归属, 再录入\")"
+        }
+      ],
+      "tags": [
+        "凭证"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.owner.list",
+      "parentKey": "credential.owner",
+      "domain": "credential",
+      "level": 3,
+      "name": "成员行与指纹计数",
+      "kind": "state",
+      "summary": "每行：成员色点 + 姓名 + 「N 枚 / 无指纹」计数 + 选中勾；无指纹的成员计数用 warn 色提醒。",
+      "details": [
+        "计数来自 CredentialOrg.fpCountByOwner(mac, id)",
+        "成员色取自 m.color（#RRGGBB），解析失败回落次级文本色，不假装有颜色",
+        "选中行显示 checkmark.circle.fill，点击给 tick 触感",
+        "无障碍标签拼「归属 X N 枚, 已选」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/FpOwnerPicker.swift",
+          "line": 60,
+          "symbol": "row(_:)"
+        },
+        {
+          "file": "App/UI/FpOwnerPicker.swift",
+          "line": 61,
+          "symbol": "CredentialOrg.fpCountByOwner(mac, m.id)"
+        },
+        {
+          "file": "App/UI/FpOwnerPicker.swift",
+          "line": 96,
+          "symbol": "memberColor(_:)"
+        }
+      ],
+      "tags": [
+        "状态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.owner.create",
+      "parentKey": "credential.owner",
+      "domain": "credential",
+      "level": 3,
+      "name": "新增归属（就地建成员）",
+      "kind": "action",
+      "summary": "弹「新增归属」输入框，校验姓名后直接建成员并自动选中，不离开当前录入流程。",
+      "details": [
+        "校验：非空、≤20 字、只允许汉字/英文/数字，否则 toast「姓名需为汉字/英文/数字, 上限 20 字」",
+        "重名或空名：toast「姓名为空或已存在 (可用合并把两个名字并成一个)」",
+        "按钮文案随状态变化：无成员时「新增归属」，有成员时「新增一位成员」",
+        "创建成功写 owner = 新成员 id、清空输入、给 tick 触感"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/FpOwnerPicker.swift",
+          "line": 48,
+          "symbol": ".alert(\"新增归属\", isPresented: $adding)"
+        },
+        {
+          "file": "App/UI/FpOwnerPicker.swift",
+          "line": 101,
+          "symbol": "create()"
+        },
+        {
+          "file": "App/UI/FpOwnerPicker.swift",
+          "line": 104,
+          "symbol": "guard !n.isEmpty, n.count <= 20, n.allSatisfy(…)"
+        }
+      ],
+      "tags": [
+        "凭证"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.share",
+      "parentKey": "credential",
+      "domain": "credential",
+      "level": 2,
+      "name": "分享给安卓（扫码导入）",
+      "kind": "sheet",
+      "summary": "把当前锁的开锁凭证渲染成二维码，供安卓极简版 App 扫码导入，导入后不再需要手机配对。",
+      "details": [
+        "入口在设置页「门锁」节第一行「分享给安卓 (扫码开锁)」，只在有当前锁时出现",
+        "页内文案说明「在安卓 App 里点「扫码添加」扫这张码」，并警告这张码等于一把钥匙、只当面给自己人扫",
+        "生成在 onAppear 执行一次，失败原因常驻替代二维码"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/ShareToAndroidView.swift",
+          "line": 8,
+          "symbol": "struct ShareToAndroidView"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 283,
+          "symbol": "Button { shareLock = kc } label: { Label(\"分享给安卓 (扫码开锁)\") }"
+        },
+        {
+          "file": "App/UI/ShareToAndroidView.swift",
+          "line": 89,
+          "symbol": ".onAppear(perform: build)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "备份"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.share.qr",
+      "parentKey": "credential.share",
+      "domain": "credential",
+      "level": 3,
+      "name": "二维码渲染与分享",
+      "kind": "action",
+      "summary": "CIQRCodeGenerator（纠错档 M）+ 10 倍整数放大，白底无圆角；下方「分享二维码」走系统 ShareLink。",
+      "details": [
+        "图像用 .interpolation(.none) 硬边放大，避免模块糊掉；最大 260pt",
+        "背景强制白色、不加圆角：深色主题下也要能扫，圆角会切掉定位角静区",
+        "标题 = AndroidPair.displayName(kc)，副标题为按显示序重排的 MAC（AA:BB:…）",
+        "ShareLink 预览图与分享内容都是这张二维码图片"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/ShareToAndroidView.swift",
+          "line": 29,
+          "symbol": ".interpolation(.none)"
+        },
+        {
+          "file": "App/UI/ShareToAndroidView.swift",
+          "line": 66,
+          "symbol": "ShareLink(item: Image(uiImage: qr), …)"
+        },
+        {
+          "file": "App/UI/ShareToAndroidView.swift",
+          "line": 111,
+          "symbol": "filter.correctionLevel = \"M\""
+        }
+      ],
+      "tags": [
+        "凭证"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.share.payload",
+      "parentKey": "credential.share",
+      "domain": "credential",
+      "level": 3,
+      "name": "钥匙载荷与两种失败态",
+      "kind": "protocol",
+      "summary": "载荷由 AndroidPair.payload(kc) 生成；缺 ekey 与 PIN 时不生成假码，改为一句可行动的失败说明。",
+      "details": [
+        "缺凭证文案：「这把锁在本机没有可用的开锁凭证 (ekey 与 PIN 都缺), 无法分享。请先在本机开一次锁, 或重新配网。」",
+        "生成失败文案：「二维码生成失败 (文本过长或系统滤镜不可用), 请重试。」",
+        "生成中显示「正在生成…」，失败文案用 danger 色"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/ShareToAndroidView.swift",
+          "line": 94,
+          "symbol": "guard let p = AndroidPair.payload(kc)"
+        },
+        {
+          "file": "App/UI/ShareToAndroidView.swift",
+          "line": 96,
+          "symbol": "failed = \"这把锁在本机没有可用的开锁凭证 …\""
+        },
+        {
+          "file": "App/UI/ShareToAndroidView.swift",
+          "line": 76,
+          "symbol": "Text(failed.isEmpty ? \"正在生成…\" : failed)"
+        }
+      ],
+      "tags": [
+        "凭证",
+        "错误态",
+        "协议"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "credential.share.ekey",
+      "parentKey": "credential.share.payload",
+      "domain": "credential",
+      "level": 4,
+      "name": "ekey 组帧与空值闸（写锁侧同源）",
+      "kind": "protocol",
+      "summary": "ekey = AES(skey)(0x04 包络 + PIN LE4 + 00 00)；PIN 解析失败或 ekey 为空时整帧丢弃，绝不发 pin=0 的凭证。",
+      "details": [
+        "buildEkeyOpen：PIN 支持数字或 8 位 hex，解析失败返回空串 → cmd04Open 返回空 hex → LockService 空帧闸拦下",
+        "buildEkeyShare：随机 TrackId + 本地时区 2010-01-01 ~ 2118-01-01 窗口",
+        "cmd04 body：KLV#01 左补零 32 位 + KLV#02 凭证密文；空的 ekey 不组帧，避免锁端当异常包或误读成一次真实开锁",
+        "钥匙串写钥（cmd41）复用同一套 ekey，删钥时传空串"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 124,
+          "symbol": "buildEkeyOpen"
+        },
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 106,
+          "symbol": "cmd04Open"
+        },
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 133,
+          "symbol": "buildEkeyShare"
+        }
+      ],
+      "tags": [
+        "协议",
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.list",
+      "parentKey": "member",
+      "domain": "member",
+      "level": 2,
+      "name": "成员管理",
+      "kind": "sheet",
+      "summary": "成员台账页：添加成员、看成员列表、进入成员中心、删除成员（带级联预告）。",
+      "details": [
+        "页首说明「添加成员后，就可以给成员添加密码，指纹和手机钥匙」",
+        "工具栏左「完成」关闭，右 person.2.badge.gearshape 进成员中心（788 总表 / 360 详情 / 家庭场景）",
+        "空态卡「还没有成员」主按钮聚焦到姓名输入框"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1869,
+          "symbol": "struct MembersView"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1885,
+          "symbol": "Text(\"添加成员后，就可以给成员添加密码，指纹和手机钥匙\")"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1946,
+          "symbol": ".sheet(isPresented: $showCenter) { MemberCenterView() }"
+        }
+      ],
+      "tags": [
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.add",
+      "parentKey": "member.list",
+      "domain": "member",
+      "level": 3,
+      "name": "添加成员",
+      "kind": "action",
+      "summary": "输入姓名后点「添加」或回车：成功入台账并（理论上）弹欢迎卡；空名或重名给 toast。",
+      "details": [
+        "姓名为空时「添加」禁用；输入框占位「姓名 (仅限汉字, 英文和数字)」",
+        "成功：清空输入、收起键盘、重查列表、把新成员赋给 welcome（995 欢迎卡）",
+        "失败 toast「姓名为空或已存在」",
+        "注意：welcome 对应的 sheet 内容为空（见 unresolved），当前实际观感等于无提示"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 2021,
+          "symbol": "add()"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1895,
+          "symbol": "Button(\"添加\", action: add).disabled(newName.isEmpty)"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 2028,
+          "symbol": "app.showToast(\"姓名为空或已存在\")"
+        }
+      ],
+      "tags": [
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.row",
+      "parentKey": "member.list",
+      "domain": "member",
+      "level": 3,
+      "name": "成员行操作（呼叫 / 重命名 / 补全信息）",
+      "kind": "action",
+      "summary": "行显示姓名与「关系 · 电话」；长按菜单给三个动作：一键呼叫、重命名、补全信息；左滑删除。",
+      "details": [
+        "呼叫：号码先过滤成数字与 +，不足 3 位不给入口（tel:// 打开系统电话）",
+        "重命名：弹窗输入，必须非空且只含汉字/英文/数字，否则 toast「请输入仅含汉字/英文/数字的非空姓名」",
+        "补全信息：三个字段（关系 / 电话 phonePad / 生日 MM-dd），生日填了但不入库（只 reload）",
+        "行高统一撑到 44pt 命中区"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1962,
+          "symbol": "memberRow(_:)"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1956,
+          "symbol": "telURL(_:)"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 2007,
+          "symbol": "info(_:)"
+        }
+      ],
+      "tags": [
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.remove",
+      "parentKey": "member.list",
+      "domain": "member",
+      "level": 3,
+      "name": "删除成员（级联预告 / 两个方向）",
+      "kind": "action",
+      "summary": "删除前三按钮确认：取消 / 只移除档案 / 连锁端一起收回；正文列出名下凭证清单与两种后果。",
+      "details": [
+        "预览由 CredentialOrg.memberCredentialPreview(m.id) 生成，最多列 5 条，超出加「…」",
+        "「只移除档案」：名下凭证整组入回收站 + 移除成员 + 解除归属，锁端不动（TA 仍能开门）",
+        "「连锁端一起收回」：同上并把这些凭证排上锁端删除队列，到场连接后真正失效；提示「指纹一旦在锁端删掉就无法远程补录」",
+        "两分支都记一次 Milestones.recordOrganize()"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 2063,
+          "symbol": "confirmRemove(_:)"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 2071,
+          "symbol": "· 只移除档案: 只动本机台账 …"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 2083,
+          "symbol": "UIAlertAction(title: \"连锁端一起收回\", style: .destructive)"
+        }
+      ],
+      "tags": [
+        "破坏性操作",
+        "凭证"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "member.center",
+      "parentKey": "member.list",
+      "domain": "member",
+      "level": 3,
+      "name": "成员中心入口",
+      "kind": "action",
+      "summary": "工具栏右上按钮打开 MemberCenterView，承载成员总表、详情、家庭场景与聚合视图。",
+      "details": [
+        "无障碍标签「成员中心 (家庭协作)」",
+        "成员中心页自带 NavigationStack，所以用 sheet 而不是 push（避免双层导航栏）",
+        "成员中心内部功能不在本侦察兵范围"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1937,
+          "symbol": "ToolbarItem(placement: .navigationBarTrailing)"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1942,
+          "symbol": "accessibilityLabel(\"成员中心 (家庭协作)\")"
+        }
+      ],
+      "tags": [
+        "成员"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "security.center",
+      "parentKey": "security",
+      "domain": "security",
+      "level": 2,
+      "name": "安全中心",
+      "kind": "sheet",
+      "summary": "独立挂载的安全页，当前实际只有两块：凭证风险体检（只读扫描）与一个空标题「下发护栏」。",
+      "details": [
+        "设计意图是四分区（应用锁升级 / 防窥 / 审计留痕 / 数据销毁），但对应开关在现版本已无写入 UI",
+        "以 sheet 呈现且自带 NavigationStack，左上「关闭」是唯一显式出口",
+        "页面自带 kf_ 键常量族 SecKey（14 个）供其它页面读写同一批偏好"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SecurityCenterView.swift",
+          "line": 90,
+          "symbol": "struct SecurityCenterView"
+        },
+        {
+          "file": "App/UI/SecurityCenterView.swift",
+          "line": 157,
+          "symbol": ".navigationTitle(\"安全中心\")"
+        },
+        {
+          "file": "App/UI/SecurityCenterView.swift",
+          "line": 161,
+          "symbol": "ToolbarItem(placement: .navigationBarLeading) { Button(\"关闭\") }"
+        }
+      ],
+      "tags": [
+        "安全",
+        "核心"
+      ],
+      "status": "partial"
+    },
+    {
+      "key": "security.center.risks",
+      "parentKey": "security.center",
+      "domain": "security",
+      "level": 3,
+      "name": "凭证风险体检",
+      "kind": "state",
+      "summary": "只读扫描本机台账，列出同值 / 超期 / 弱口令三类风险；无风险时给一句「台账里的密码都还干净」。",
+      "details": [
+        "只列前 8 条，超出显示「另有 N 条 — 只列前 8 条, 共 M 条」（M 取真实总数）",
+        "每行：类型图标（同值 doc.on.doc / 超期 clock.badge.exclamationmark / 弱口令 exclamationmark.shield）+「类型 · 锁名 密码 #别名」+ 详情",
+        "弱口令用 danger 色，另两类用 warn 色",
+        "处置动作**不在本页**：footer 指向凭证 Tab 改码"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SecurityCenterView.swift",
+          "line": 103,
+          "symbol": "let risks = CredentialOrg.passwordRisks()"
+        },
+        {
+          "file": "App/UI/SecurityCenterView.swift",
+          "line": 111,
+          "symbol": "ForEach(risks.prefix(8))"
+        },
+        {
+          "file": "App/UI/SecurityCenterView.swift",
+          "line": 135,
+          "symbol": "另有 \\(risks.count - 8) 条"
+        }
+      ],
+      "tags": [
+        "安全",
+        "凭证"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "security.center.risks.rules",
+      "parentKey": "security.center.risks",
+      "domain": "security",
+      "level": 4,
+      "name": "三类判定口径（同值 / 180 天超期 / 弱口令）",
+      "kind": "edge",
+      "summary": "footer 明文写死判定：同值、添加超 180 天未改、弱口令（少于 6 位、全部同数字、连续序列）。",
+      "details": [
+        "只读扫描，不改台账、不写锁、不发任何协议帧",
+        "风险条目带 lockName 与 alias，方便回凭证页定位",
+        "空态与列表是同一 Section 的二选一分支，不并存"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SecurityCenterView.swift",
+          "line": 143,
+          "symbol": "只读扫描本机台账: 同值 / 添加超 180 天未改 / 弱口令 (少于 6 位、全部同数字、连续序列)"
+        },
+        {
+          "file": "App/UI/SecurityCenterView.swift",
+          "line": 106,
+          "symbol": "没有发现同值 / 超期 / 弱口令"
+        }
+      ],
+      "tags": [
+        "安全"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "security.center.watermark",
+      "parentKey": "security.center",
+      "domain": "security",
+      "level": 3,
+      "name": "常驻水印层（378）",
+      "kind": "state",
+      "summary": "开启后整页铺一层 -18° 半透明重复水印，文案取 kf_swmark_txt，空则用「离线锁管家 + 当天日期」。",
+      "details": [
+        "Canvas 平铺，tile 120，行距 tile/1.6，奇偶行错位半格",
+        "不透明度固定 0.05，只作潜意识层，不破正文对比度",
+        "allowsHitTesting(false) + accessibilityHidden(true)，不拦交互也不进读屏",
+        "阈值来自 DB.store.getBool(\"kf_swmark_on\", false)，但本页没有开关（见 unresolved）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SecurityCenterView.swift",
+          "line": 47,
+          "symbol": "struct SecurityWatermark"
+        },
+        {
+          "file": "App/UI/SecurityCenterView.swift",
+          "line": 56,
+          "symbol": "let stamp = seed.isEmpty ? \"离线锁管家 …\" : seed"
+        },
+        {
+          "file": "App/UI/SecurityCenterView.swift",
+          "line": 165,
+          "symbol": ".overlay { if DB.store.getBool(SecKey.watermarkOn, false) { SecurityWatermark(…) } }"
+        }
+      ],
+      "tags": [
+        "安全"
+      ],
+      "status": "partial"
+    },
+    {
+      "key": "security.center.guardrails",
+      "parentKey": "security.center",
+      "domain": "security",
+      "level": 3,
+      "name": "「下发护栏」空分区",
+      "kind": "edge",
+      "summary": "页面第二块只有一个 header「下发护栏」的 Section，内部没有任何行。",
+      "details": [
+        "Section 体为空，用户看到的是一个孤立标题",
+        "对应的护栏能力（递增冷却 / 失败留痕 / 审计保留期 / 只读安全模式）在 SecKey 里有键，但没有落到本页"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SecurityCenterView.swift",
+          "line": 150,
+          "symbol": "Section { } header: { Text(\"下发护栏\") }"
+        }
+      ],
+      "tags": [
+        "空态"
+      ],
+      "status": "edge"
+    },
+    {
+      "key": "security.center.shell",
+      "parentKey": "security.center",
+      "domain": "security",
+      "level": 3,
+      "name": "页面外壳（关闭 / 2 秒节拍 / 被盖住时的跳转）",
+      "kind": "edge",
+      "summary": "关闭按钮、每 2 秒 bump 一次 SecTickCenter、以及收到 pendingSettingsFocus 时自己收摊把位置让给设置页。",
+      "details": [
+        "pendingSettingsFocus 变化即 dismiss()：本页是盖在设置页上的 sheet，当场开第二个 sheet 不会显示，所以改成先退再让设置页 onDismiss 落地",
+        "2 秒定时器只 bump tick，当前 body 未消费该值",
+        "页面设有 dsScreenBackground + variantList 统一外观"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SecurityCenterView.swift",
+          "line": 171,
+          "symbol": ".onReceive(Timer.publish(every: 2, …))"
+        },
+        {
+          "file": "App/UI/SecurityCenterView.swift",
+          "line": 183,
+          "symbol": ".onChange(of: app.pendingSettingsFocus)"
+        },
+        {
+          "file": "App/UI/SecurityCenterView.swift",
+          "line": 162,
+          "symbol": "Button(\"关闭\") { dismiss() }"
+        }
+      ],
+      "tags": [
+        "边界"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "security.policy",
+      "parentKey": "security",
+      "domain": "security",
+      "level": 2,
+      "name": "门锁安全模式说明（A/B 双验）",
+      "kind": "screen",
+      "summary": "解释 A 模式（单验）与 B 模式（双验），并提供**只往更严方向**的切换入口（cmd20）。",
+      "details": [
+        "A：密码/指纹/手机任一通过即开；B：两种不同方式组合才开",
+        "本 App 只给 A→B，不提供 B→A（放宽验证会让既有保护一指之间消失）",
+        "当前模式在「锁信息名片」读取后显示；未读状态时提示先去设备页读一次锁信息",
+        "mode 为 otp 时同一页改为 ZOTP 介绍：6 位数字、每 30 分钟更换一次、同窗口最多 99 个；并强调生成前先校时（0E），否则时间窗不同步会导致密码不匹配",
+        "otp 档不显示安全模式切换按钮，标题变「临时密码介绍」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 1079,
+          "symbol": "struct SafemodeIntroView"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 1096,
+          "symbol": "A模式：只需要单一方式 …"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 1109,
+          "symbol": "else if app.status?.verifyMode == 1"
+        }
+      ],
+      "tags": [
+        "安全",
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "security.policy.switch",
+      "parentKey": "security.policy",
+      "domain": "security",
+      "level": 3,
+      "name": "切换到 B 模式（cmd20 + 回读校验）",
+      "kind": "action",
+      "summary": "确认后下发 cmd20，再强制回读状态：读到 verifyMode==1 才报成功，否则如实说「未生效」。",
+      "details": [
+        "确认文案写明「切换后请先实测一次组合方式能开锁」且不提供改回 A 模式",
+        "下发中按钮变「切换中…」并 disabled，防连点重复改锁端策略",
+        "回读走 refreshStatusQuietly(manual: true)，避免静默排查档把回读吞掉",
+        "三分支：已生效 log warn + toast 成功；未生效 log warn + toast「命令已下发，但回读显示未生效」；抛错 log warn + toast「切换失败：命令没有成功下发」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 1114,
+          "symbol": "Button(\"切换到 B 模式（双验，更严）(cmd 20)\")"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 1141,
+          "symbol": "try await app.lock.setValidationMode(true)"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 1147,
+          "symbol": "if app.status?.verifyMode == 1"
+        },
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 235,
+          "symbol": "cmd20ValidationMode"
+        }
+      ],
+      "tags": [
+        "安全",
+        "锁端读写",
+        "协议"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "security.tailgate",
+      "parentKey": "security",
+      "domain": "security",
+      "level": 2,
+      "name": "防尾随入室（等待时长）",
+      "kind": "screen",
+      "summary": "设置开锁后自动上锁的等待秒数（2–6 秒），防止坏人利用等待时间尾随进门。",
+      "details": [
+        "入口在设置页「门锁」节，仅当 PidMap.canTailgate(pid, fw) 为真时出现",
+        "档位 2…6 秒用 inline Picker；默认选中 6 秒",
+        "写入后本地留 TailgateCfg（interval=秒-1）供设备页倒计时回放"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 1036,
+          "symbol": "struct TailgateView"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 327,
+          "symbol": "if canTailgate { NavigationLink(\"防尾随入室\") }"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 353,
+          "symbol": "PidMap.canTailgate(app.current?.pid ?? 0, fw:)"
+        }
+      ],
+      "tags": [
+        "安全"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "security.tailgate.set",
+      "parentKey": "security.tailgate",
+      "domain": "security",
+      "level": 3,
+      "name": "下发等待时长（cmd24 档位）",
+      "kind": "action",
+      "summary": "点「设置」→ ensureConnected → setAutoLock(秒数-1)（cmd24）→ 写本地 TailgateCfg，成功/失败各一句 toast。",
+      "details": [
+        "cmd24 参数是档位（1–6），故发送 seconds-1",
+        "成功 toast「设置成功」；失败 toast「设置失败: <原因>」",
+        "失败时不写本地配置，避免本地与锁端不一致"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 1065,
+          "symbol": "private func run() async"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 1071,
+          "symbol": "try await app.lock.setAutoLock(seconds - 1)"
+        },
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 239,
+          "symbol": "cmd24AutoLock"
+        }
+      ],
+      "tags": [
+        "安全",
+        "锁端读写",
+        "协议"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.home",
+      "parentKey": "settings",
+      "domain": "settings",
+      "level": 2,
+      "name": "设置页",
+      "kind": "screen",
+      "summary": "按心智模型分节的设置总页：门锁 / 安全 / 开锁 / 时间显示 / 靠近自动开锁 / 家人与钥匙 / 工具 / 本机数据保护 / 外观 / 关于。",
+      "details": [
+        "每节挂稳定锚（SettingsAnchor），供页内搜索定位；分节渲染受五组筛选片控制",
+        "十二个 sheet 承载子页：成员、钥匙串、网关、锁信息、备份、动态、分享给安卓、添加设备、未归属认领、家庭设置、安全中心、诊断",
+        "三个落点消费器：pendingDiag（切锁后开诊断）、pendingCare（切锁后回设备页）、pendingSettingsFocus（backup/passcode/diag/members 四种）",
+        "所有破坏性动作统一走 confirmDestructive / confirmDestructiveTyped，本文件不自带弹窗实现"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 7,
+          "symbol": "struct SettingsView"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 60,
+          "symbol": "settingsList(_:)"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 134,
+          "symbol": "landPendingFocus(_:)"
+        }
+      ],
+      "tags": [
+        "核心",
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.home.search",
+      "parentKey": "settings.home",
+      "domain": "settings",
+      "level": 3,
+      "name": "页内搜索（16 条命中表）",
+      "kind": "action",
+      "summary": "顶部放大镜输入框实时匹配标题，结果区列出命中项；每条命中带图标并可直接落位。",
+      "details": [
+        "占位文案「搜索设置（如：固件 / 备份 / 主题）」",
+        "有输入时右侧出现「清空搜索」按钮（44pt 命中区）",
+        "命中表固定 16 条：锁档案/静音模式/校准门锁时间/门锁安全模式/开锁偏好/靠近自动开锁/成员管理/蓝牙钥匙串/智能网关/备份与恢复×2/动态消息/诊断与运行日志/本机数据保护/外观",
+        "匹配规则：标题 localizedCaseInsensitiveContains 或 id 以查询串结尾"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 170,
+          "symbol": "searchTextRow"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 225,
+          "symbol": "private var searchHits: [SearchHit]"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 254,
+          "symbol": "return all.filter { $0.title.localizedCaseInsensitiveContains(q) || $0.id.hasSuffix(q) }"
+        }
+      ],
+      "tags": [
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.home.search.jump",
+      "parentKey": "settings.home.search",
+      "domain": "settings",
+      "level": 4,
+      "name": "命中的两段落位（锚点滚动 / 直接开 sheet）",
+      "kind": "action",
+      "summary": "命中带 anchor 的先切到所属分组再 scrollTo 那一节；不带 anchor 的（不在本页的功能）直接开对应 sheet。",
+      "details": [
+        "必须先切组再滚：目标节若未渲染，scrollTo 会静默落空",
+        "切组后 DispatchQueue.main.async 再滚，等新 Section 进入布局",
+        "滚动动效用 DS.Motion.quick，落点 anchor .top",
+        "不认识的落点（pendingSettingsFocus 的 default 分支）**什么都不做**，代码注释承认这是设计软肋"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 262,
+          "symbol": "if let a = h.anchor { groupFilter = a.group; … scrollTo }"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 270,
+          "symbol": "h.go()"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 153,
+          "symbol": "default: break // 认不出的落点名不做任何事"
+        }
+      ],
+      "tags": [
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.home.groups",
+      "parentKey": "settings.home",
+      "domain": "settings",
+      "level": 3,
+      "name": "五组筛选片",
+      "kind": "filter",
+      "summary": "顶部一排「全部 + 开门日常 / 凭证与成员 / 数据与安全 / 外观与辅助 / 帮助与关于」，把 17 节先筛成 3–6 节。",
+      "details": [
+        "FlowLayout 自动换行铺开，六枚全在屏上（不做横向滚动，避免后两枚被藏在滚动区外）",
+        "默认 nil = 全部，与加这一批之前的画面逐字一致；选中态写进视图内 @State，不落盘",
+        "切换给 tick 触感，选中片用 accent 14% 底 + accentText 前景 + isSelected 特性",
+        "分节归属由 SettingsAnchor.group 决定；同一节只进一组"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 66,
+          "symbol": "SettingsGroupChips(selection: $groupFilter)"
+        },
+        {
+          "file": "App/Core/SettingsGroups.swift",
+          "line": 18,
+          "symbol": "enum SettingsGroup"
+        },
+        {
+          "file": "App/Core/SettingsGroups.swift",
+          "line": 49,
+          "symbol": "func settingsSectionShown(_:_:)"
+        }
+      ],
+      "tags": [
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.lock",
+      "parentKey": "settings",
+      "domain": "settings",
+      "level": 2,
+      "name": "设置 · 门锁节",
+      "kind": "setting",
+      "summary": "围绕这一把锁的全部设置：分享给安卓、锁档案、连接与预握手、锁信息名片、静音、校时、防尾随、清空密码、添加另一把、删除设备。",
+      "details": [
+        "无当前锁时整节换成 GuidedEmptyView 三步引导（连锁 → 录凭证 → 开门），step 1/3，主按钮「添加设备」",
+        "有锁时「添加另一把锁」与「删除设备」同处一节（一加一删成对）",
+        "每个入口配一句 note 小字，只写用户决策需要的那一句后果"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 278,
+          "symbol": "lockSection"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 287,
+          "symbol": "if app.current == nil { GuidedEmptyView(…) }"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 337,
+          "symbol": "Button { showAdd = true } label: { Label(\"添加另一把锁\") }"
+        }
+      ],
+      "tags": [
+        "核心",
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.lock.profile",
+      "parentKey": "settings.lock",
+      "domain": "settings",
+      "level": 3,
+      "name": "锁档案 / 连接预握手 / 锁信息入口",
+      "kind": "action",
+      "summary": "三行入口：锁档案（昵称/符号/色标/备注）、连接与预握手（自动预热/成功率）、锁信息名片（型号/固件/电量/绑定时间）。",
+      "details": [
+        "锁档案与连接偏好走 NavigationLink push；锁信息名片用 sheet（目标页自带 NavigationStack）",
+        "两行 note 分别解释「靠近时先连上，开锁少等一两秒；成功率只在本机统计」与「汇总卡」",
+        "连接偏好实际内容在 LinkPrefsView（本侦察兵未展开）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 299,
+          "symbol": "NavigationLink(\"锁档案 (昵称/符号/色标/备注)\") { LockProfileView() }"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 301,
+          "symbol": "NavigationLink(\"连接与预握手 (自动预热/成功率)\") { LinkPrefsView(mac: mac) }"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 303,
+          "symbol": "Button(\"锁信息名片\") { showDeviceInfo = true }"
+        }
+      ],
+      "tags": [
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.lock.mute",
+      "parentKey": "settings.lock",
+      "domain": "settings",
+      "level": 3,
+      "name": "静音模式（cmd18 音量）",
+      "kind": "setting",
+      "summary": "Toggle 控制门锁键盘提示音；写盘与写锁同一条链，失败则开关回弹并 toast 原因。",
+      "details": [
+        "写入前 settingMute 置真并 disabled 开关，防连点重复下发",
+        "先 ensureConnected → setSilent(silent)（cmd18，0=有声 1=静音）→ 成功才写 kf_mute_<mac>",
+        "成功 toast「已静音 / 已恢复提示音」；失败 toast「设置失败: <原因>」且 DB 不写 → 开关状态回退",
+        "note 说明「关掉门锁键盘的提示音；不影响本 App 的通知」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 305,
+          "symbol": "VariantToggle(\"静音模式\", isOn:)"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 314,
+          "symbol": "try await app.lock.setSilent(silent)"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 342,
+          "symbol": "muteStored"
+        },
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 227,
+          "symbol": "cmd18Volume"
+        }
+      ],
+      "tags": [
+        "设置",
+        "锁端读写",
+        "协议"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.lock.synctime",
+      "parentKey": "settings.lock",
+      "domain": "settings",
+      "level": 3,
+      "name": "校准门锁时间入口",
+      "kind": "action",
+      "summary": "一行 NavigationLink 到同步时间页（cmd0E），note 解释「锁端时钟不准时，临时码和有效期会失效」。",
+      "details": [
+        "目标页为 SyncTimeView（见 device.synctime）",
+        "同样在页内搜索命中表里以「校准门锁时间」出现"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 325,
+          "symbol": "NavigationLink(\"校准门锁时间\") { SyncTimeView() }"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 326,
+          "symbol": "note(\"锁端时钟不准时，临时码和有效期会失效。\")"
+        }
+      ],
+      "tags": [
+        "设置",
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.lock.clearpwd",
+      "parentKey": "settings.lock",
+      "domain": "settings",
+      "level": 3,
+      "name": "清空密码（不可逆）",
+      "kind": "action",
+      "summary": "确认后 ensureConnected → pwdClear()（cmd0A delAlias=0xFFFF）→ 清空本机密码台账（指纹保留）。",
+      "details": [
+        "按钮仅在 PidMap.canClearPwd(pid) 为真时出现，执行中 disabled",
+        "确认文案「会作废所有成员的密码，门锁需重新逐个添加」",
+        "执行前后都校验 clearingPwd 防重复；先固化 mac 再 await，避免中途切锁清错台账",
+        "空 mac toast「未选择门锁」；成功 toast「清空密码成功」；失败 toast「清空失败: <原因>」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 332,
+          "symbol": "Button(\"清空密码\", role: .destructive) { clearPwd() }"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 358,
+          "symbol": "confirmDestructive(\"清空密码\", …)"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 376,
+          "symbol": "DB.saveLedger(m, Ledger())"
+        },
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 155,
+          "symbol": "cmd0ASyncPwd(delAlias: 0xFFFF)"
+        }
+      ],
+      "tags": [
+        "破坏性操作",
+        "锁端读写",
+        "协议"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.lock.delete",
+      "parentKey": "settings.lock",
+      "domain": "settings",
+      "level": 3,
+      "name": "删除设备（键入锁名确认）",
+      "kind": "action",
+      "summary": "删除本机这把锁的全部本地数据（锁端密钥不变），必须先键入锁名才放行。",
+      "details": [
+        "后果逐类计数预告：密码台账 N 条 / 指纹台账 N 条 / 待下发 N 项 / 回收站 N 条 / 本机缓存开门记录 N 条",
+        "正文统一含「锁端密钥不变」「删除后若未做过备份将无法找回」",
+        "确认后 DB.removeDevice(mac) + app.loadDevices() + toast「已删除「锁名」」",
+        "删除不触发任何锁端协议命令"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 338,
+          "symbol": "Button(\"删除设备\", role: .destructive) { deleteDevice() }"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 381,
+          "symbol": "deleteDevice()"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 395,
+          "symbol": "confirmDestructiveTyped(\"删除设备\", … requireWord: name)"
+        }
+      ],
+      "tags": [
+        "破坏性操作",
+        "数据"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.lock.delete.typed",
+      "parentKey": "settings.lock.delete",
+      "domain": "settings",
+      "level": 4,
+      "name": "删除冷静期：键入锁名 + 逐类计数",
+      "kind": "edge",
+      "summary": "把「确定吗」升级为两道闸：先列出会被连带删除的每一类数据条数，再要求用户键入锁名原文。",
+      "details": [
+        "计数来源：DB.listPwds / DB.listFps / CredentialOrg.pendingCount / CredentialOrg.bin / DB.readLogs",
+        "requireWord = LockArchive.displayName(kc)，显示名而非 MAC（用户能核对的字面）",
+        "全为 0 时不追加连带清单，只保留「删除后若未做过备份将无法找回」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 384,
+          "symbol": "let pws = DB.listPwds(kc.mac).count"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 392,
+          "symbol": "连带删除: 密码台账 … 回收站 … 开门记录 …"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 395,
+          "symbol": "requireWord: name"
+        }
+      ],
+      "tags": [
+        "破坏性操作",
+        "边界"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.lockprofile",
+      "parentKey": "settings",
+      "domain": "settings",
+      "level": 2,
+      "name": "锁档案编辑",
+      "kind": "sheet",
+      "summary": "编辑这把锁的昵称、场所副标题、分组名、备注、符号、色标、隐藏开关与电池档案；全部只存本机。",
+      "details": [
+        "顶部有实时预览行（符号 + 昵称 + 场所），编辑即所见",
+        "昵称不能为空（保存按钮 disabled），保存后 app.loadDevices + toast「档案已保存」并 dismiss",
+        "footer 声明「档案只存本机, 不写入门锁」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1278,
+          "symbol": "struct LockProfileView"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1298,
+          "symbol": "预览 Section"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1423,
+          "symbol": "昵称不能为空。档案只存本机, 不写入门锁。"
+        }
+      ],
+      "tags": [
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.lockprofile.identity",
+      "parentKey": "settings.lockprofile",
+      "domain": "settings",
+      "level": 3,
+      "name": "身份四字段（昵称 / 场所 / 分组 / 备注）",
+      "kind": "setting",
+      "summary": "四个文本框：昵称、场所副标题、分组名、备注（3–6 行纵向）。",
+      "details": [
+        "场所副标题同时是 Hero 卡副标题与「全部锁总览」行副标题（Widget 读不到 App Groups，组件里只显示静态文案）",
+        "分组名与设备管理页写同一字段 kf_lockmeta_.grp，两处都能改、改完都生效；留空 = 未分组",
+        "备注是备忘录标题正文式多行输入（axis: .vertical, lineLimit 3...6）",
+        "保存时分组名走 LockArchive.normalizedGroup(grp)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1325,
+          "symbol": "Section(\"身份\")"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1337,
+          "symbol": "TextField(\"分组名 (如 家用 / 仓库 / 办公, 留空 = 未分组)\")"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1341,
+          "symbol": "TextField(\"备注 (换电历史/安装细节/门锁脾气…)\", axis: .vertical)"
+        }
+      ],
+      "tags": [
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.lockprofile.symbol",
+      "parentKey": "settings.lockprofile",
+      "domain": "settings",
+      "level": 3,
+      "name": "符号与色标选择",
+      "kind": "setting",
+      "summary": "4 列符号网格 + 一排色标圆点，选中项高亮并给 tick 触感；同步到 Hero 卡、切换胶囊与记录行时间线标签。",
+      "details": [
+        "符号列表来自 LockArchive.symbols，色标来自 LockArchive.swatches",
+        "色块视觉 34pt，命中区 44pt；选中色标外圈 2pt 文本色描边",
+        "符号选中项图标用 accentText + 12% 底圆"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1356,
+          "symbol": "Section(\"符号\")"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1383,
+          "symbol": "Section(\"色标\")"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1323,
+          "symbol": "符号与色标同步用于 Hero 卡、切换胶囊与记录行的时间线标签。"
+        }
+      ],
+      "tags": [
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.lockprofile.hide",
+      "parentKey": "settings.lockprofile",
+      "domain": "settings",
+      "level": 3,
+      "name": "在翻页里隐藏这把锁（108）",
+      "kind": "setting",
+      "summary": "Toggle 让该锁退出设备页左右横滑，只在切换胶囊的「已隐藏」区可达；随时可在此恢复。",
+      "details": [
+        "判据与「沉睡（超 30 天未连接）」刻意分开：隐藏是用户明确说过的，沉睡是推断的",
+        "只是本机视图设置：不写门锁，不影响凭证、日志与备份",
+        "写 LockArchive.setHidden(app.currentMac, on)"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1347,
+          "symbol": "VariantToggle(\"在翻页里隐藏这把锁\")"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1350,
+          "symbol": "隐藏后它退出左右横滑，只在切换胶囊的「已隐藏」区里可达"
+        }
+      ],
+      "tags": [
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.lockprofile.battery",
+      "parentKey": "settings.lockprofile",
+      "domain": "settings",
+      "level": 3,
+      "name": "电池档案与保存校验",
+      "kind": "setting",
+      "summary": "电池型号文本框 + 「记录换电日期」Toggle（打开才出现日期选择器），保存时整包写入 LockArchive。",
+      "details": [
+        "关闭记录换电日期会把 batteryChangedAt 归零",
+        "保存写 name/place/grp/note/symbol/colorKey/batteryModel/batteryChangedAt 八个字段",
+        "昵称为空时保存按钮 disabled，save() 里再兜一次 toast「昵称不能为空」"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1411,
+          "symbol": "Section(\"电池档案\")"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1419,
+          "symbol": "BusyButton(title: \"保存档案\", …, disabled: trimmed.isEmpty)"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1443,
+          "symbol": "save()"
+        }
+      ],
+      "tags": [
+        "设置",
+        "数据"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.unlock",
+      "parentKey": "settings",
+      "domain": "settings",
+      "level": 2,
+      "name": "设置 · 开锁偏好",
+      "kind": "setting",
+      "summary": "决定圆盘怎么算「确认」的全部偏好：按住确认、误触围栏、手势档、双击直开、失败自动重试、圆盘尺寸。",
+      "details": [
+        "所有写入都走 app.setUnlockOption(key, value)，由 AppState 统一重建偏好并刷新（prefSeed，不换视图身份）",
+        "非法/缺失值一律回落默认：hold / 176pt / 自动重试开",
+        "footer 汇总说明按住时长 0.4–1.6s 在「辅助功能」里自定（该页现版本不存在，见 unresolved）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 445,
+          "symbol": "unlockSection"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 492,
+          "symbol": "footer: 按住圆盘时长 (默认 0.9s …)"
+        },
+        {
+          "file": "App/LockKeeperApp.swift",
+          "line": 624,
+          "symbol": "func setUnlockOption(_ key: String, _ v: Any)"
+        }
+      ],
+      "tags": [
+        "设置",
+        "核心"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.unlock.toggles",
+      "parentKey": "settings.unlock",
+      "domain": "settings",
+      "level": 3,
+      "name": "按住确认 / 误触围栏 / 自动重试 三开关",
+      "kind": "setting",
+      "summary": "三枚 Toggle：按住确认开锁（默认开）、误触围栏（默认关）、失败自动重试（默认开）。",
+      "details": [
+        "kf_hold_confirm 关闭 → 圆盘退回轻点直开（单手/VoiceOver 降级路径）",
+        "kf_fence 开启 → 手势前必须先「从边缘拖入中心」解锁围栏，4 秒有效",
+        "kf_auto_retry 关闭 → AppState 只发一次（attempts=1），没有 2s/5s 退避"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 447,
+          "symbol": "VariantToggle(\"按住确认开锁\")"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 450,
+          "symbol": "VariantToggle(\"误触围栏\")"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 478,
+          "symbol": "VariantToggle(\"失败自动重试\")"
+        }
+      ],
+      "tags": [
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.unlock.gesture",
+      "parentKey": "settings.unlock",
+      "domain": "settings",
+      "level": 3,
+      "name": "手势三档 + 双击直开 + 圆盘尺寸",
+      "kind": "setting",
+      "summary": "开锁手势单选（hold / triple / charge）；「双击直开」只在 hold 档可开；圆盘尺寸三档 160/176/200。",
+      "details": [
+        "三档互斥：hold = 按住或上滑；triple = 连点三下；charge = 沿外沿转满一圈",
+        "mode≠hold 时「双击直开」Toggle disabled，并显示一句解释「三连点/旋转充能档已自带确认动作」",
+        "圆盘尺寸 Picker 用 menu 样式，tag 160/176/200，默认 176",
+        "双击直开标签自己写明「绕过按住确认」——减配必须明示"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 455,
+          "symbol": "Picker(\"开锁手势\", selection:)"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 469,
+          "symbol": "VariantToggle(\"双击直开 (绕过按住确认)\")"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 481,
+          "symbol": "Picker(\"圆盘尺寸\", selection:)"
+        }
+      ],
+      "tags": [
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.time",
+      "parentKey": "settings",
+      "domain": "settings",
+      "level": 2,
+      "name": "设置 · 时间显示",
+      "kind": "setting",
+      "summary": "全局时间制式（跟随系统 / 24 小时 / 12 小时）、显示秒、记录行加第二行完整日期。",
+      "details": [
+        "本节是时间线/详情卡/导出的**唯一**出口，不提供页面级覆盖，避免同一条记录三个样子",
+        "选「跟随系统」之外两档时，本 App 不再听系统 12/24 小时偏好（一个键管两件事）",
+        "footer 说明：秒只在日志原文真带秒时出现，缺位不补「:00」；制式不做时区换算"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 423,
+          "symbol": "timeSection"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 425,
+          "symbol": "Picker(\"时间制式\", selection:)"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 432,
+          "symbol": "VariantToggle(\"显示秒\", isOn:)"
+        }
+      ],
+      "tags": [
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.autoopen",
+      "parentKey": "settings",
+      "domain": "settings",
+      "level": 2,
+      "name": "设置 · 靠近自动开锁",
+      "kind": "setting",
+      "summary": "默认关的自动开门（fail-closed）：开启后可选面容确认档、做距离标定，并回看上一次没自动开的原因。",
+      "details": [
+        "仅在存在当前锁（mac 非空）时渲染本段",
+        "footer：仅 App 在前台且门不在布防时段生效；布防时段与防拆事件会自动关闭自动开锁",
+        "实际门控逻辑在 AutoOpen（另属 core-auto 侦察兵范围）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 501,
+          "symbol": "autoOpenSection"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 572,
+          "symbol": "struct AutoOpenSection"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 611,
+          "symbol": "仅 App 在前台且门不在布防时段生效"
+        }
+      ],
+      "tags": [
+        "设置",
+        "自动化"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.autoopen.toggle",
+      "parentKey": "settings.autoopen",
+      "domain": "settings",
+      "level": 3,
+      "name": "走近自动开门 / 面容确认 / 拒因回看",
+      "kind": "setting",
+      "summary": "主开关「走近自动开门」；开启后出现面容确认两档（免额外验证 / 严格每次必刷）、风险说明、距离标定入口与上次拒绝原因。",
+      "details": [
+        "面容确认：tag 0「免额外验证 (默认)」/ tag 1「严格 (每次必刷)」",
+        "风险说明用 warn 色常驻（AutoOpen.riskDisclosure）",
+        "「距离标定 (走近多近才算到)」push AutoCalView",
+        "上一次没自动开：显示 reason + 时间，两行 warn 文案，合成一个无障碍元素"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 576,
+          "symbol": "VariantToggle(\"走近自动开门\")"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 580,
+          "symbol": "Picker(\"面容确认\", selection:)"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 595,
+          "symbol": "if let r = AutoOpen.lastReject(mac)"
+        }
+      ],
+      "tags": [
+        "设置",
+        "自动化"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.family",
+      "parentKey": "settings",
+      "domain": "settings",
+      "level": 2,
+      "name": "设置 · 家人与钥匙",
+      "kind": "setting",
+      "summary": "谁能开门的一组入口：成员管理（含成员中心）、未归属记录认领、家庭设置（长辈模式/隐私浏览）、蓝牙钥匙串。",
+      "details": [
+        "footer 说明「访客」是本地虚拟分组，不占锁端槽位；活跃度与摘录均按台账推断（约）",
+        "未归属认领与家庭设置的目标页自带 NavigationStack，所以用 sheet 而不是 push",
+        "「添加另一把锁」已从本节移到门锁节（一加一删成对）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 508,
+          "symbol": "familySection"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 525,
+          "symbol": "Button { showMembers = true } label: { Label(\"成员管理（含成员中心）\") }"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 532,
+          "symbol": "Label(\"未归属记录认领\")"
+        }
+      ],
+      "tags": [
+        "设置",
+        "成员"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.family.credcare",
+      "parentKey": "settings.family",
+      "domain": "settings",
+      "level": 3,
+      "name": "凭证整理（历史版本配额 / 回收站保留 / 别名显示）",
+      "kind": "setting",
+      "summary": "三个控件：每凭证保留 3–30 个历史版本、回收站保留 7–90 天（步进 7）、成员别名显示开关。",
+      "details": [
+        "Stepper 范围写死在代码：版本 3...30 step 1；回收站 7...90 step 7",
+        "别名显示开 → 有备注名的成员优先显示备注（如「老妈」），否则显示称呼",
+        "footer 说明：版本快照与回收站只在本机留存；需锁端生效的操作保持「待下发」，到场连接后在凭证页队列补发"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 547,
+          "symbol": "Stepper(\"每个凭证保留 N 个历史版本\", in: 3...30, step: 1)"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 551,
+          "symbol": "Stepper(\"回收站保留 N 天\", in: 7...90, step: 7)"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 558,
+          "symbol": "VariantToggle(\"成员别名显示\")"
+        }
+      ],
+      "tags": [
+        "设置",
+        "凭证",
+        "数据"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.tools",
+      "parentKey": "settings",
+      "domain": "settings",
+      "level": 2,
+      "name": "设置 · 工具",
+      "kind": "setting",
+      "summary": "三行：备份与恢复（sheet）、动态消息（sheet）、诊断与运行日志（push）。",
+      "details": [
+        "动态消息只走 sheet：MessagesView 自带 NavigationStack，push 会套两层导航栏",
+        "原网关/固件/备份/诊断四个单行 Section 已合并为这一节（不再出现一节一行）",
+        "本侦察兵未展开 BackupView 与 DiagnosticsView 内部"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 573,
+          "symbol": "toolsSection"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 575,
+          "symbol": "Button { showBackup = true } label: { Label(\"备份与恢复\") }"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 578,
+          "symbol": "NavigationLink(\"诊断与运行日志\") { DiagnosticsView() }"
+        }
+      ],
+      "tags": [
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.applock",
+      "parentKey": "settings",
+      "domain": "settings",
+      "level": 2,
+      "name": "设置 · 本机数据保护（应用锁）",
+      "kind": "setting",
+      "summary": "设置 / 更改 / 关闭本机密码（4 位以上纯数字），它同时是查看密码明文与导出备份的前置屏障。",
+      "details": [
+        "未设密码：一行「设置本机密码」+ note「4 位以上数字。查看密码与导出备份前会要求输入」",
+        "已设密码：两行「更改本机密码」与「关闭本机密码」（destructive）",
+        "设置弹窗两输入框（isSecureTextEntry + numberPad），校验：两次一致、≥4 位、全数字，三条各自 toast"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 582,
+          "symbol": "applockSection"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 610,
+          "symbol": "alert message: 4 位以上纯数字 (随机键位需要数字键盘 …)"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 617,
+          "symbol": "guard !f1.isEmpty, f1 == f2 else { showToast(\"两次输入不一致\") }"
+        }
+      ],
+      "tags": [
+        "设置",
+        "安全"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.applock.disable",
+      "parentKey": "settings.applock",
+      "domain": "settings",
+      "level": 3,
+      "name": "关闭本机密码（二次确认）",
+      "kind": "action",
+      "summary": "确认后 DB.setPasscode(nil) + app.appUnlocked = true + toast「已关闭」。",
+      "details": [
+        "确认文案直白列出后果：关闭后查看密码内容与导出备份不再需要本机验证，任何拿到手机的人都能读明文",
+        "确认按钮文案「关闭保护」，属不可逆安全降级"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 586,
+          "symbol": "Button(\"关闭本机密码\", role: .destructive) { disablePasscode() }"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 599,
+          "symbol": "disablePasscode()"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 601,
+          "symbol": "关闭后，查看密码内容与导出备份不再需要本机验证"
+        }
+      ],
+      "tags": [
+        "安全",
+        "破坏性操作"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.appearance",
+      "parentKey": "settings",
+      "domain": "settings",
+      "level": 2,
+      "name": "设置 · 外观（大节）",
+      "kind": "setting",
+      "summary": "主题、品牌色、圆角、动效、密度、行高、行距、数字字体、指标位、素颜、条数、图标、自定义色、预设、记录页开场过滤、快捷格，以及恢复默认。",
+      "details": [
+        "所有档位都在本机生效、即时可见、不上传；多数写入后通过 bumpAppearanceForLayout / appearanceSeed 立刻重建外观",
+        "footer 汇总：高对比与系统「增加对比度」并联；系统「减弱动态效果」把动效强度压到克制档；素颜模式一键关闭庆祝与徽章动效；纯黑适合 OLED 夜间",
+        "本节还包含 9 款备选 App 图标（走 UIApplication.setAlternateIconName）",
+        "「恢复默认外观」只重置外观偏好，不动素颜模式与 App 图标，也不影响任何门锁数据"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 629,
+          "symbol": "appearanceSection"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 828,
+          "symbol": "footer: 主题、品牌色（六套）、密度、圆角 …"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 936,
+          "symbol": "resetAppearance()"
+        }
+      ],
+      "tags": [
+        "设置",
+        "外观"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.appearance.theme",
+      "parentKey": "settings.appearance",
+      "domain": "settings",
+      "level": 3,
+      "name": "主题 / 品牌色 / 圆角 / 自定义强调色",
+      "kind": "setting",
+      "summary": "四档主题（跟随系统 / 浅色 / 深色 / 纯黑 AMOLED）、七套品牌色、三档圆角，以及 ColorPicker 自定义强调色。",
+      "details": [
+        "主题键 kf_theme，tag \"\"/light/dark/black；纯黑为 OLED 省电与夜间极暗档",
+        "品牌色读 kf_accent，Picker 的 get 在空值时回落显示 indigo，而调色板 effectiveKey 在空值时取 brass（暖金）——两处默认不一致，新装用户会看到「靛蓝」被选中但实际配色是暖金；菜单项带 14pt 色块预览",
+        "圆角 kf_radius：标准 / 偏硬朗(小) / 偏柔和(大)，只影响卡片、控件、格子三档，胶囊不参与",
+        "自定义强调色存色相来源 kf_accent_custom，上屏前过亮度带压暗；启用后出现「取消自定义，回到六套预设」按钮与说明",
+        "实际是 7 套 preset（brass 暖金 / indigo 靛蓝 / forest 墨绿 / amber 琥珀 / graphite 石墨 / rose 玫瑰 / aurora 极光）+ 一条自定义；设置页按钮与 footer 仍写「六套」，是旧文案"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 632,
+          "symbol": "Picker(\"主题\", selection:)"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 642,
+          "symbol": "Picker(\"品牌色\", selection:)"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 661,
+          "symbol": "Picker(\"圆角\", selection:)"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 750,
+          "symbol": "ColorPicker(\"自定义强调色 (会盖过上面六套)\")"
+        }
+      ],
+      "tags": [
+        "设置",
+        "外观"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.appearance.layout",
+      "parentKey": "settings.appearance",
+      "domain": "settings",
+      "level": 3,
+      "name": "动效 / 密度 / 行高 / 行距 / 数字字体",
+      "kind": "setting",
+      "summary": "五档排版类偏好：动效强度三档、布局密度三档、凭证行高两档、时间线行距三档、主控读数数字字体两档。",
+      "details": [
+        "动效 kf_motion：calm / standard / lively，管全 App 动效令牌，不是只换 Tab 那一下",
+        "系统「减弱动态效果」开启时强制走克制档，并在下方显示一句解释",
+        "密度 kf_density：标准 / 紧凑 / 宽松，只缩放间距令牌，字号与按钮大小不变",
+        "凭证行高 kf_row_h：紧凑（只留名称与状态）/ 舒适（加高）；行距 kf_tl_gap：tight/标准/loose，与密度相乘",
+        "数字字体 kf_digit_font：圆体（默认）/ 系统默认体，射程只有 Hero 卡电量数字与指标块两处",
+        "中西文间距：短标签在汉字与拉丁/数字边界加 kerning，段内不拉开、不插 U+2005 等不可见字符（cjkSpaced，Mascot.swift:80）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 673,
+          "symbol": "Picker(\"动效强度\", selection:)"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 687,
+          "symbol": "Picker(\"布局密度\", selection:)"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 698,
+          "symbol": "Picker(\"凭证行高\", selection:)"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 706,
+          "symbol": "Picker(\"时间线行距\", selection:)"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 717,
+          "symbol": "Picker(\"主控读数数字字体\", selection:)"
+        }
+      ],
+      "tags": [
+        "设置",
+        "外观"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.appearance.herostats",
+      "parentKey": "settings.appearance",
+      "domain": "settings",
+      "level": 3,
+      "name": "主控卡指标位 / 素颜模式 / 最近开门条数",
+      "kind": "setting",
+      "summary": "两枚 Toggle 控制 Hero 卡上固件位与锁钟位（电量不给关）＋「素颜模式」＋最近开门条数三档。",
+      "details": [
+        "指标位写 DS.HeroStats，电量刻意没有开关（它决定还能不能开锁）",
+        "素颜模式 kf_plain：关掉空态插画与其它纯装饰层，功能与数据不受影响",
+        "最近开门条数 kf_recent_count：3 / 5 / 10，默认 5"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 726,
+          "symbol": "VariantToggle(\"主控卡显示固件位\")"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 734,
+          "symbol": "VariantToggle(\"素颜模式\")"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 739,
+          "symbol": "Picker(\"最近开门条数\", selection:)"
+        }
+      ],
+      "tags": [
+        "设置",
+        "外观"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.appearance.icon",
+      "parentKey": "settings.appearance",
+      "domain": "settings",
+      "level": 3,
+      "name": "备选 App 图标（9 款）",
+      "kind": "setting",
+      "summary": "自适应网格排列 9 款图标（默认/锁环/钥匙/盾牌/家门/警报/定位/门盾/心记），点按即换。",
+      "details": [
+        "先判 supportsAlternateIcons，不支持则 toast「当前系统不支持更换图标」而不是静默失败",
+        "切换走 setAlternateIconName，回调里回主 actor 写状态；失败 toast「更换失败: <原因>」",
+        "当前图标右下角标 checkmark.circle.fill，用 onSem/ok 双色保证深色档对比度",
+        "用 LazyVGrid(adaptive) 而不是横向滚动：九款要全部看得见"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 847,
+          "symbol": "iconOptions"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 872,
+          "symbol": "iconPickerRow"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 918,
+          "symbol": "setIcon(_:)"
+        }
+      ],
+      "tags": [
+        "设置",
+        "外观"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.appearance.quickpool",
+      "parentKey": "settings.appearance",
+      "domain": "settings",
+      "level": 3,
+      "name": "快捷格组成与「常用动作排到前面」",
+      "kind": "setting",
+      "summary": "逐个 Toggle 选择快捷操作池里的格子，并可用开关把最常用的一格排到最前，附点击计数回显。",
+      "details": [
+        "池子项（QuickPool.all）：添加密码 / 临时密码 / 校准时间 / 录指纹 / 凭证工坊 / 再开一次 / 备份与恢复",
+        "全部关掉会被兜回默认五格（addPwd/otp/syncTime/addFp/studio），不让快捷区整体消失",
+        "「常用动作排到前面」开=按点击次数降序（平次保序）；关=停止记录并清空计数 + toast",
+        "开启时显示已记录明细「添加密码 3 次 · …」，无记录时提示去设备页点几次",
+        "文案提醒：没动过开关时静默记点击，满 30 天后首格自动推荐最常用的一格"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 790,
+          "symbol": "ForEach(QuickPool.all) { a in VariantToggle(a.label, …) }"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 804,
+          "symbol": "VariantToggle(\"常用动作排到前面\")"
+        },
+        {
+          "file": "App/Core/QuickPool.swift",
+          "line": 96,
+          "symbol": "static func ordered()"
+        }
+      ],
+      "tags": [
+        "设置"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.appearance.preset",
+      "parentKey": "settings.appearance",
+      "domain": "settings",
+      "level": 3,
+      "name": "儿童友好预设 / 记录页开场过滤 / 恢复默认",
+      "kind": "action",
+      "summary": "一键套用「看得清、点得准、不闹」的外观组合；三档记录页开场过滤；以及带确认的恢复默认外观。",
+      "details": [
+        "预设只改外观不过滤内容，任何一档之后都能单独改回",
+        "记录页开场过滤 kf_query_policy：记住每把锁上次的过滤 / 每次从全部开始 / 每次默认只看告警；三种都不删已存会话过滤",
+        "恢复默认外观会重置主题、品牌色、密度、圆角、高对比、周起始日、行高/行距、指标位、纹理与每日一句话（素颜与图标不动）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 766,
+          "symbol": "Button(\"套用儿童友好外观预设\") { app.applyFriendlyPreset() }"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 775,
+          "symbol": "Picker(\"记录页开场过滤\", selection:)"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 936,
+          "symbol": "resetAppearance()"
+        }
+      ],
+      "tags": [
+        "设置",
+        "外观"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.about",
+      "parentKey": "settings",
+      "domain": "settings",
+      "level": 2,
+      "name": "设置 · 关于",
+      "kind": "setting",
+      "summary": "累计开锁机械计数器、构建与主题数、当前版本号，以及连点 10 次触发的版本彩蛋。",
+      "details": [
+        "累计开锁取自 Milestones.unlockTotal，用每位一格的等宽数字组件 MechCounter 呈现",
+        "构建行显示 build 号与主题套数「N 套主题」",
+        "版本行是一个按钮：连点满 10 次触发一次 success 触感并置 eggShown",
+        "彩蛋触发后追加两行只读信息「构建」与「遥测：无 · 全程离线」，footer 追加 Build 号",
+        "footer 主句：厂商已停服的智能锁离线管理端，数据全在本机，换机用「备份与恢复」转移，门锁无需重置"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 945,
+          "symbol": "aboutSection"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 969,
+          "symbol": "Button { versionTaps += 1; if versionTaps >= 10 … }"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 1003,
+          "symbol": "aboutFooterText"
+        }
+      ],
+      "tags": [
+        "设置",
+        "关于"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "settings.about.egg",
+      "parentKey": "settings.about",
+      "domain": "settings",
+      "level": 3,
+      "name": "版本彩蛋与离线声明",
+      "kind": "edge",
+      "summary": "连点版本号 10 次解锁构建信息与「遥测：无 · 全程离线」声明；不到 10 次没有任何反馈。",
+      "details": [
+        "计数只在本次页面生命周期内累加（@State versionTaps），退出重进归零",
+        "彩蛋只有一次触感，不弹窗、不跳页",
+        "对应注释提到的 1049「VoiceOver 致意」只有空 onAppear，没有实现"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 971,
+          "symbol": "if versionTaps >= 10, !eggShown { eggShown = true; … }"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 989,
+          "symbol": "LabeledRow(\"构建\", …)"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 990,
+          "symbol": "LabeledRow(\"遥测\", \"无 · 全程离线\")"
+        }
+      ],
+      "tags": [
+        "关于"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "protocol.cmds",
+      "parentKey": "protocol",
+      "domain": "protocol",
+      "level": 2,
+      "name": "本侦察兵触达的锁端命令族",
+      "kind": "protocol",
+      "summary": "上述界面最终落到这些命令字节（两位十六进制）：03/04/05/08/0A/0B/0E/12/13/14/18/19/20/21/23/24/31/35/38/41/43/44。",
+      "details": [
+        "明文面：01 会话令牌、03 状态(明文)、05 换钥、12 回声、23 交换方式",
+        "密文面：03 加密状态、04 开锁、08 PIN 批量、0A 同步密码、0B 密码有效期、0E 校时、13 录指纹、14 指纹确认、15 删指纹、16 日志、18 音量、19 ZOTP、20 验证模式、21 bkey、24 自动上锁",
+        "硬件面（87 帧明文 KLV）：41 钥匙串写钥、43 钥匙串状态、44 钥匙串查钥、30 网关名称、31 网关配网、32 网关 IoT、35 网关重启、38 网关状态",
+        "rc 语义：0 成功、22 需双验、12 MAC 地址不正确、13 通讯过期、18 不能设置重复值、3 指令过期、5 次数用完、6 凭证绑定别的设备、9 时间偏差过大、21 里面反锁、23 指纹图像无效、24 录入已结束、25 锁忙、27 布防中"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 63,
+          "symbol": "cmd01Session"
+        },
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 106,
+          "symbol": "cmd04Open"
+        },
+        {
+          "file": "App/Core/StatusParser.swift",
+          "line": 169,
+          "symbol": "rcHint 高频失败码人话"
+        }
+      ],
+      "tags": [
+        "协议"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "protocol.cmd04",
+      "parentKey": "protocol.cmds",
+      "domain": "protocol",
+      "level": 3,
+      "name": "cmd04 开锁（ekey 密文）",
+      "kind": "protocol",
+      "summary": "圆盘的唯一开锁帧：KLV#01 左补零 32 位 + KLV#02 ekey 密文，按 244/83 去重与重试策略发出。",
+      "details": [
+        "ekey 为空时组帧返回空 hex，由 LockService 空帧闸拦下，绝不发 KLV 长度为 0 的假帧",
+        "调用点：LockService.unlock(mac:pinDec:)，retries 2；pinDec 为 246 选中的 PIN",
+        "rc=0 成功、rc=22 转 doubleVerify、其余按 rcFriendly 报人话",
+        "超时类失败不进自动重试（避免第二次开门）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 106,
+          "symbol": "cmd04Open"
+        },
+        {
+          "file": "App/Services/LockService.swift",
+          "line": 465,
+          "symbol": "func unlock(mac:pinDec:)"
+        },
+        {
+          "file": "App/Services/LockService.swift",
+          "line": 477,
+          "symbol": "exec(ZKCmdBuilder.cmd04Open(cred, klv01Hex: \"0000\"), retries: 2)"
+        }
+      ],
+      "tags": [
+        "协议",
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "protocol.cmd03",
+      "parentKey": "protocol.cmds",
+      "domain": "protocol",
+      "level": 3,
+      "name": "cmd03 状态读取（明文 / 密文两式）",
+      "kind": "protocol",
+      "summary": "读锁状态的唯一入口：先试密文 03，skey 不可用则退回明文 03；返回电量、固件、锁钟、容量、验证模式等。",
+      "details": [
+        "密文式 KLV#01 = AES(skey)(0x03 包络)，KLV#02 空串；加密失败时返回空 hex 而不是假请求",
+        "明文式用于尚未配网/换钥前的探测",
+        "落地副作用：写快照、电量采样、固件观测三处（读一次即记录）",
+        "刷新链：refreshStatusQuietly → ensureConnected → getStatus → LockArchive.touchConnected"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 98,
+          "symbol": "cmd03StatusWrap"
+        },
+        {
+          "file": "App/Services/LockService.swift",
+          "line": 401,
+          "symbol": "func getStatus(mac:)"
+        },
+        {
+          "file": "App/Services/LockService.swift",
+          "line": 407,
+          "symbol": "r = try await exec(ZKCmdBuilder.cmd03StatusWrap(m, sk))"
+        }
+      ],
+      "tags": [
+        "协议",
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "protocol.cmd0a",
+      "parentKey": "protocol.cmds",
+      "domain": "protocol",
+      "level": 3,
+      "name": "cmd0A 同步密码 / cmd0B 密码有效期",
+      "kind": "protocol",
+      "summary": "密码增删与改期：0A 的 delAlias=0xFFFF 表示清空全部，0B 单独改某条的有效期。",
+      "details": [
+        "0A body：delAlias(2B LE) + addPwd(8B ASCII 右补零) + validFrom/To(4B LE)",
+        "密码最长 8 位（utf16 计数），超长直接抛「密码最长 8 位」不静默截断",
+        "有效期传入但解析不出时**中止**而不是回落「现在」（ISO8601/带 Z/秒/毫秒四种格式支持）",
+        "调用点：pwdAdd / pwdModify / pwdDelete / pwdClear（0xFFFF）/ pwdExpire(0B)"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 155,
+          "symbol": "cmd0ASyncPwd"
+        },
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 179,
+          "symbol": "cmd0BSyncPwdExpire"
+        },
+        {
+          "file": "App/Services/LockService.swift",
+          "line": 595,
+          "symbol": "func pwdClear() → cmd0A delAlias 0xFFFF"
+        }
+      ],
+      "tags": [
+        "协议",
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "protocol.cmd0e",
+      "parentKey": "protocol.cmds",
+      "domain": "protocol",
+      "level": 3,
+      "name": "cmd0E 时间同步",
+      "kind": "protocol",
+      "summary": "把手机时间（4B LE 协议秒）写入锁内；校时页手动触发、设备信息页漂移 >2s 自动触发。",
+      "details": [
+        "syncTime() 返回校前/校后偏差，供设备信息页日志",
+        "锁钟是所有有效期窗口（0A/0B/14）与临时码的判据",
+        "本机不落任何校时记录（时间戳本就来自锁端回包）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 196,
+          "symbol": "cmd0ESyncTime"
+        },
+        {
+          "file": "App/Services/LockService.swift",
+          "line": 489,
+          "symbol": "func syncTime()"
+        },
+        {
+          "file": "App/Services/LockService.swift",
+          "line": 499,
+          "symbol": "execOk(ZKCmdBuilder.cmd0ESyncTime(m, sk, now))"
+        }
+      ],
+      "tags": [
+        "协议",
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "protocol.cmd13",
+      "parentKey": "protocol.cmds",
+      "domain": "protocol",
+      "level": 3,
+      "name": "cmd13 录指纹 / cmd14 指纹确认",
+      "kind": "protocol",
+      "summary": "13 开启录入窗口（times=8、timeout=15s）逐帧回按压事件；14 用 batchNumber 真正启用并写有效期。",
+      "details": [
+        "13 body：times(1B) + timeout(1B)；timeout ≤0 回落 15",
+        "14 body：batchNumber(4B LE) + validFrom/To(4B LE)，本 App 传 2010–2118（长期）",
+        "按压事件 KLV：0x04 序号 / 0x05 特征号 / 0x06 批次 / 0x07 下一次超时 / 0x13 rc",
+        "窗口口径：首帧 8s、两次按压之间 16s"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 201,
+          "symbol": "cmd13AddFp"
+        },
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 209,
+          "symbol": "cmd14FpConfirm"
+        },
+        {
+          "file": "App/Services/LockService.swift",
+          "line": 626,
+          "symbol": "func fpStart(times:firstFrameMs:idleAfterPressMs:)"
+        }
+      ],
+      "tags": [
+        "协议",
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "protocol.cmd18",
+      "parentKey": "protocol.cmds",
+      "domain": "protocol",
+      "level": 3,
+      "name": "cmd18 音量 / cmd20 验证模式 / cmd24 自动上锁",
+      "kind": "protocol",
+      "summary": "三条单字节参数写命令：静音（0 有声 / 1 静音）、A/B 验证模式（0/1）、自动上锁档位（1–6）。",
+      "details": [
+        "18 由设置页「静音模式」下发，成功后写 kf_mute_<mac>",
+        "20 由安全模式页下发，参数 true=1=B 模式；下发后强制回读 verifyMode 确认",
+        "24 由防尾随页下发，参数 = 秒数-1；设备页倒计时按本地档位回放",
+        "19 ZOTP 开关（0/1）同族，本侦察兵界面未直接触达（快捷格「临时密码」只是说明页）"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 227,
+          "symbol": "cmd18Volume"
+        },
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 235,
+          "symbol": "cmd20ValidationMode"
+        },
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 239,
+          "symbol": "cmd24AutoLock"
+        }
+      ],
+      "tags": [
+        "协议",
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "protocol.cmd41",
+      "parentKey": "protocol.cmds",
+      "domain": "protocol",
+      "level": 3,
+      "name": "cmd41 / 43 / 44 钥匙串硬件命令",
+      "kind": "protocol",
+      "summary": "钥匙串三条命令：41 写钥（ekey 空串即删钥）、43 读状态、44 查钥匙列表。",
+      "details": [
+        "均为 87 帧明文 KLV、needToken=false，走独立 BLE 目标（钥匙串 MAC）",
+        "41 KLV：01 TargetMAC(反序) / 02 type / 03 pid(u16 LE) / 04 ekey",
+        "43 KLV#01 为目标锁 MAC 列表串；44 KLV#01 为空表示查全部",
+        "写钥前需当前锁 skey 非空且 pid≠0，否则 toast「请先配对门锁」"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 244,
+          "symbol": "cmd41WriteEkey"
+        },
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 252,
+          "symbol": "cmd44GetEkeyInfo"
+        },
+        {
+          "file": "App/Services/HardwareService.swift",
+          "line": 238,
+          "symbol": "send(ZKCmdBuilder.cmd41WriteEkey(…), target: dongleMac)"
+        }
+      ],
+      "tags": [
+        "协议",
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "protocol.cmd31",
+      "parentKey": "protocol.cmds",
+      "domain": "protocol",
+      "level": 3,
+      "name": "cmd31 / 35 / 38 网关命令",
+      "kind": "protocol",
+      "summary": "网关三条：31 写 WiFi、35 重启、38 读状态（另有 30 读名称、32 写 IoT 三件套）。",
+      "details": [
+        "31 KLV：01 SSID(utf8) / 02 密码(utf8) / 03 authMode(默认 8) / 04 encryptType(默认 0) / 05 \"00\"",
+        "配网流程为 31 写 WiFi → 35 重启，两步都成功才算被网关接受",
+        "38 读回 netState / romVer / ssid / wifiIP，供列表状态胶囊与指标块",
+        "全部走 FE90 服务、明文 KLV、needToken=false"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 268,
+          "symbol": "cmd31GWSetWifi"
+        },
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 280,
+          "symbol": "cmd35GWReboot"
+        },
+        {
+          "file": "App/Core/ZKCmdBuilder.swift",
+          "line": 265,
+          "symbol": "cmd38GWStatus"
+        }
+      ],
+      "tags": [
+        "协议",
+        "锁端读写"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "protocol.rc",
+      "parentKey": "protocol.cmds",
+      "domain": "protocol",
+      "level": 3,
+      "name": "rc 回执码的人话映射",
+      "kind": "protocol",
+      "summary": "把锁端 rc 翻译成「是什么」与「该怎么办」两层文案，圆盘失败态、配网失败、探测失败都读它。",
+      "details": [
+        "rcFriendly 先查 rcHint（可行动建议），未命中回落 rcMessage（「错误码 N」）",
+        "暗语表：3 先校准时间、5 次数用完、6 凭证绑定别的设备、9 时间偏差过大、21 门内反锁、23 换位置重按、24 重新录入、25 等两秒、27 先解除布防",
+        "开锁 rc=22 不走这套文案，直接转 doubleVerify 状态"
+      ],
+      "evidence": [
+        {
+          "file": "App/Core/StatusParser.swift",
+          "line": 162,
+          "symbol": "rcMessage(_:)"
+        },
+        {
+          "file": "App/Core/StatusParser.swift",
+          "line": 181,
+          "symbol": "rcFriendly(_:)"
+        },
+        {
+          "file": "App/LockKeeperApp.swift",
+          "line": 466,
+          "symbol": "lastMsg = StatusParser.rcFriendly(rc)"
+        }
+      ],
+      "tags": [
+        "协议",
+        "错误态"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.store.device-prefs",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 2,
+      "name": "设备页 / 开锁偏好落盘键",
+      "kind": "data",
+      "summary": "设备主页与圆盘读写的一批 kf_ 键：手势、围栏、圆盘尺寸、排序、模块顺序、最近开门范围、PIN 选择、演练标记。",
+      "details": [
+        "kf_gesture_mode（hold/triple/charge）、kf_tap_direct、kf_hold_confirm（默认 true）、kf_fence、kf_auto_retry（默认 true）、kf_dial_size（默认 176）",
+        "kf_sort_batt、kf_dev_order（\"hero,quick,recent\" 顺序串）、kf_recent_all、kf_pinpick_<mac>（下标，-1=默认第一条）",
+        "kf_dial_drill_seen（演练层只看一次）、kf_mute_<mac>（静音）",
+        "kf_quick_ids / kf_quick_freq / kf_quick_smart / kf_quick_since / kf_quick_smart_set（快捷格组成与学习）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/UnlockDial.swift",
+          "line": 8,
+          "symbol": "DB.store.getString(\"kf_gesture_mode\")"
+        },
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 1561,
+          "symbol": "DB.store.getString(\"kf_dev_order\")"
+        },
+        {
+          "file": "App/Core/QuickPool.swift",
+          "line": 42,
+          "symbol": "static let idsKey = \"kf_quick_ids\""
+        }
+      ],
+      "tags": [
+        "数据"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.store.settings-prefs",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 2,
+      "name": "设置页外观 / 维护偏好落盘键",
+      "kind": "data",
+      "summary": "主题、品牌色、圆角、动效、密度、行高、行距、数字字体、素颜、条数、图标、记录页过滤、凭证整理与外观重置面。",
+      "details": [
+        "kf_theme / kf_accent / kf_radius / kf_motion / kf_density / kf_row_h / kf_tl_gap / kf_digit_font / kf_plain / kf_recent_count",
+        "kf_ccred_quota（3–30）/ kf_cbin_reclaim_days（7–90，步进 7）/ kf_calias_display",
+        "表单类：kf_lockmeta_.place/grp/note/symbol/colorKey/batteryModel/batteryChangedAt、kf_tailgate_<mac>",
+        "删除设备会连带清掉该锁的台账、记录缓存、待下发与回收站条目"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 633,
+          "symbol": "DB.store.getString(\"kf_theme\")"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 549,
+          "symbol": "DB.store.set(\"kf_ccred_quota\", $0)"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1451,
+          "symbol": "m.grp = LockArchive.normalizedGroup(grp)"
+        }
+      ],
+      "tags": [
+        "数据"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "data.store.security-prefs",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 2,
+      "name": "安全中心偏好键族（SecKey）",
+      "kind": "data",
+      "summary": "安全中心声明的 14 个 kf_ 键：冷却、留痕、会话方式、掩码、后台糊化、限时可见、磨砂、分享遮半、访客隐藏敏感、水印、审计保留、只读安全模式、口令复用。",
+      "details": [
+        "kf_slock_coolon / kf_slock_streak / kf_strace_on / kf_strace_events / kf_sses_how / kf_smask_style",
+        "kf_speek_bgblur / kf_speek_timedsec / kf_speek_frost / kf_speek_sharehalf / kf_speek_glast / kf_speek_guest",
+        "kf_swmark_on / kf_swmark_txt / kf_saudit_months / kf_sdest_safemode / kf_sdest_reuseon",
+        "读侧真实生效的只有三处：kf_swmark_on（水印层，安全中心 + 根视图）、kf_sdest_safemode（LockGuard 只读模式）、kf_speek_sharehalf / kf_speek_glast（SecurityPolicy 分享遮半与访客隐藏敏感）"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/SecurityCenterView.swift",
+          "line": 16,
+          "symbol": "static let lockCoolOn = \"kf_slock_coolon\""
+        },
+        {
+          "file": "App/Core/LockGuard.swift",
+          "line": 55,
+          "symbol": "static var readOnly: Bool { DB.store.getBool(SecKey.safeModeOn, false) }"
+        },
+        {
+          "file": "App/LockKeeperApp.swift",
+          "line": 1092,
+          "symbol": "if DB.store.getBool(SecKey.watermarkOn, false)"
+        }
+      ],
+      "tags": [
+        "数据",
+        "安全"
+      ],
+      "status": "partial"
+    },
+    {
+      "key": "care.milestone",
+      "parentKey": "care",
+      "domain": "care",
+      "level": 2,
+      "name": "全家本月备份进度（997）",
+      "kind": "state",
+      "summary": "成员管理页里的一块关怀数据：本月全家一起备份几次（x/4）与进度条，鼓励每月备份 4 次。",
+      "details": [
+        "数值来自 Milestones.backupThisMonth，上限 4，进度条 tint 用 accent",
+        "footer 一句话「每月全家一起备份 4 次, 就不会丢东西」",
+        "不发送任何指令，纯本地统计"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1901,
+          "symbol": "Section { 全家本月备份 }"
+        },
+        {
+          "file": "App/UI/Sheets.swift",
+          "line": 1908,
+          "symbol": "Text(\"\\(Milestones.backupThisMonth) / 4 次\")"
+        }
+      ],
+      "tags": [
+        "关怀"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.center",
+      "parentKey": "backup",
+      "domain": "backup",
+      "level": 2,
+      "name": "备份与恢复（本屏入口）",
+      "kind": "action",
+      "summary": "本侦察兵范围内只负责把用户送进去：设备页空态第二出口、Hero 备份角标、设置页工具节三处。",
+      "details": [
+        "空态出口带明确落点：pendingSettingsFocus=\"backup\"，到设置页后直接开备份 sheet",
+        "Hero 角标与设置「工具」行只打开设置页/备份 sheet，不带落点",
+        "备份页内部功能（导出/恢复/WebDAV/迁移）属其他侦察兵范围"
+      ],
+      "evidence": [
+        {
+          "file": "App/UI/DeviceHomeView.swift",
+          "line": 59,
+          "symbol": "app.pendingSettingsFocus = \"backup\""
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 139,
+          "symbol": "case \"backup\": showBackup = true"
+        },
+        {
+          "file": "App/UI/SettingsView.swift",
+          "line": 575,
+          "symbol": "Button { showBackup = true } label: { Label(\"备份与恢复\") }"
+        }
+      ],
+      "tags": [
+        "备份"
+      ],
+      "status": "implemented"
+    }
+  ],
+  "unresolved": [
+    "App/UI/DeviceHomeView.swift:113-114 — `overlay(alignment: .top) {}` 是空闭包：54「摇一摇唤出迷你开锁面板」只剩挂载点，无任何内容，无法定性为已实现。",
+    "App/UI/UnlockDial.swift:68-82 — 「75 待机流光」「65 雷达波纹」两段只有注释（含 2026-10-15 走查修正说明），文件内没有对应 View 类型；是否为被删实现的残留无法确认。",
+    "App/UI/UnlockDial.swift:40-47 与 284 — `dim` 恒为 1（248 夜间降亮度未实现），period 公式在 rssi 为 nil 时回落 1.1s；夜间降峰值这一项只有声明没有行为。",
+    "App/UI/Sheets.swift:1949-1950 — `.sheet(item: $welcome) { m in }` 内容为空；995「入伙欢迎卡」只在 add() 里被赋值，界面无呈现。",
+    "App/UI/SettingsView.swift:668-671 — 「圆角」Picker 之后连着两个 `.pickerStyle(.menu)`，注释写着「Hero 卡纹理 (889)」，但纹理 Picker 本体不存在（疑似删除残留），与 footer 所述「纹理」不一致。",
+    "App/UI/SettingsView.swift:998-1000 — aboutSection 的 `.onAppear` 是空实现，`voLine` 全文件从未赋值；1049「VoiceOver 致意」无实现，aboutFooterText 末尾拼的永远是空串。",
+    "App/UI/SettingsView.swift:38-40 — 831「NEW 角标」只有注释与说明，代码里没有任何角标绘制或 kf_seen_ 消费点。",
+    "App/UI/SecurityCenterView.swift:15-32 — SecKey 共声明 16 个 kf_ 键（lockCoolOn/lockStreak/traceOn/traceEvents/sessionHow/maskStyle/bgBlurOn/timedReveal/frostedOn/shareHalfOn/sensitiveOnly/watermarkOn/watermarkTxt/auditRetention/safeModeOn/pwdReuseOn），其中除 watermarkOn/watermarkTxt 有水印读侧外，其余只有常量与（部分）读侧；grep 全仓找不到写入 UI，无法定位用户入口。",
+    "App/UI/SecurityCenterView.swift:150-153 — 「下发护栏」Section 是空体，只有 header 文案，无任何行。",
+    "App/UI/SecurityCenterView.swift:171-173 — 2 秒定时器只 bump SecTickCenter.shared.tick，而 body 未读取该值，节拍实际无消费者。",
+    "App/UI/Mascot.swift:4-6, 18, 62 — 文件头与本文件注释声称内含 DemoMascot / EmptyMascotHeader，全仓 grep 无这两个类型定义；实际只有 CaptionStepBar / cjkSpaced / ScreenAwakeWhile。",
+    "AXPrefs.lefty / bigTile / captions / holdDuration 只有读侧（App/UI/DeviceHomeView.swift:304、308、1036、1227、1320；App/UI/UnlockDial.swift:277；App/Core/DesignSystem.swift:870），AccessibilityView 已随大删波移除，全仓无 UI 写入点 → 「设置-辅助」页不存在，这些开关用户无法修改。",
+    "App/UI/DeviceHomeView.swift:838-843 — Hero 卡底部只画了一个空 HStack{Spacer}，注释提到的 790「最近活跃成员头像圈」在视图层没有实现。",
+    "App/UI/DeviceHomeView.swift:315-325 — recomputeMerged() 中 `mergedRecent = RecordSearch.mergedRecentOpens(...)` 之后紧跟 `.filter/.map/.filter/.sorted/.prefix/.map` 链，链上类型与赋值目标不一致（注释所述 790 头像圈逻辑被粘在这里）；实际合并流是否仍被正确赋值需编译验证。",
+    "App/UI/SettingsView.swift:828 — 外观 footer 提到「高对比、周起始日、节日色、每日一句话、Hero 卡纹理」等档位，但本文件对应 Section 内没有这些控件，无法定位入口。",
+    "App/UI/Sheets.swift:1171-1178 — capacityRow 的「容量未读」分支保留，但 pwdCap/fpCap 取自 app.snapshot，若快照未读则永远走存量分支；两种分支的实际触发条件需真机读数确认。",
+    "App/UI/SettingsView.swift:642-647 与 App/Core/DesignSystem.swift:385-389 — 品牌色默认值两处不一致：Picker 的 get 在 kf_accent 为空时显示 indigo，而 Palette.effectiveKey 在为空时取 brass（暖金）；新装用户会看到「靛蓝」被选中但界面实际是暖金，无法判定哪一处才是设计意图。"
+  ],
+  "notes": [
+    "覆盖：8 个文件逐行读完（DeviceHomeView 1991 行 / UnlockDial 902 行 / Sheets 2178 行 / SecurityCenterView 231 行 / ShareToAndroidView 118 行 / FpOwnerPicker 116 行 / Mascot 127 行 / SettingsView 1159 行），并顺着调用链读了 LockKeeperApp（requestUnlock/runUnlock/guest 通道）、LockService（pair/unlock/getStatus/pwd*/fp*/syncTime）、ZKCmdBuilder（全部 cmd 号）、HardwareService（网关/钥匙串）、QuickPool、SettingsGroups、AutoOpen、LockGuard 作为命令号与服务名证据。",
+    "命令号一律按源码里的两位十六进制字节记录（cmd03 状态 / cmd04 开锁 / cmd05 换钥 / cmd08 PIN 批量 / cmd0A 同步密码(含删除,0xFFFF 清空) / cmd0B 密码有效期 / cmd0E 校时 / cmd12 回声 / cmd13 录指纹 / cmd14 指纹确认 / cmd18 音量(静音) / cmd19 ZOTP / cmd20 验证模式 / cmd21 bkey / cmd23 交换方式 / cmd24 自动上锁 / cmd31 网关配网 / cmd35 网关重启 / cmd38 网关状态 / cmd41 钥匙串写钥 / cmd43 钥匙串状态 / cmd44 钥匙串查钥），对应 ZKCmdBuilder 的构造器行。",
+    "未展开：CredentialsView / RecordsView / DiagnosticsView / BackupView / MemberCenterView / AutoCalView / LinkPrefsView / UnclaimedClaimView / MemberFamilySettingsView 属其他侦察兵范围，本文件只在作为本屏目的地时点名，未枚举其内部功能点。",
+    "刻意没写：任何说明性文档里的规格编号与说法一律未采信；本文件出现的编号（如 244/250/296/377）只作为源码注释里的既有标识保留，结论均以 Swift 代码行为为准。",
+    "访客/只读限制的证据在 App/LockKeeperApp.swift:88/141-148/165-170 与 App/Core/LockGuard.swift:15-36/51-63：访客通道只拦凭证与设置两个 Tab（Route.guestBlockedTabs），只读安全模式（kf_sdest_safemode）在 requestUnlock/startUnlock 处统一拦开锁，并给出「只读安全模式已开: 开锁已停用…」文案；这两条对设备页/圆盘/快捷格/AutoIntent 全部生效。"
+  ]
+}

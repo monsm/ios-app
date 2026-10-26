@@ -82,7 +82,7 @@ struct MobileKeyView: View {
                 Text("请选择").tag("")
                 ForEach(members) { m in Text(m.name).tag(m.id) }
             }
-            Toggle("永久有效", isOn: $forever)
+            VariantToggle("永久有效", isOn: $forever)
             if !forever {
                 DatePicker("到期时间", selection: $validTo, in: Date()...,
                            displayedComponents: [.date, .hourAndMinute])

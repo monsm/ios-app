@@ -1,0 +1,3482 @@
+{
+  "scout": "ios-core-auto",
+  "platform": "ios",
+  "scope": [
+    "App/Core/AutoOpen.swift",
+    "App/Core/LinkSenseKit.swift",
+    "App/Core/BatteryCare.swift",
+    "App/Core/DiagKit.swift",
+    "App/Core/DesignSystem.swift",
+    "App/Services/BackupKit.swift",
+    "App/Services/BackupStudioKit.swift",
+    "App/Services/BackupCanonical.swift",
+    "App/Services/ZipKit.swift"
+  ],
+  "nodes": [
+    {
+      "key": "unlock.autoopen",
+      "parentKey": "unlock",
+      "domain": "unlock",
+      "level": 2,
+      "name": "靠近自动开锁模块",
+      "kind": "automation",
+      "summary": "按门控链 F0/F1/F3/F4/F5/F6 全绿才经既有 LockService 管线下发 cmd04 的巨大自动化特性；任一门不过 = 静默拒绝 + 审计落盘。",
+      "details": [
+        "默认全关、fail-closed：主开关未开时该特性绝不自动开锁（AutoOpen.on 默认 false）。",
+        "本文件尾部同时带 SwiftUI 视图：标定页 AutoCalView 与设置区 AutoOpenSection。",
+        "门控只加判定，不改协议帧与命令构造，仍走 LockService.unlock。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 13, "symbol": "enum AutoOpen", "note": "存储 accessor：kf_autoopen / kf_autoopen_face / 挂起 / 审计 / 标定"},
+        {"file": "App/Core/AutoOpen.swift", "line": 188, "symbol": "AutoOpenGate", "note": "门控矩阵与 Reject 枚举"},
+        {"file": "App/Core/AutoOpen.swift", "line": 288, "symbol": "AutoOpenController", "note": "@MainActor 单例状态机"},
+        {"file": "App/Core/AutoOpen.swift", "line": 497, "symbol": "AutoCalView"},
+        {"file": "App/Core/AutoOpen.swift", "line": 572, "symbol": "AutoOpenSection"}
+      ],
+      "tags": ["自动开锁", "核心"],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.autoopen.master-switch",
+      "parentKey": "unlock.autoopen",
+      "domain": "unlock",
+      "level": 3,
+      "name": "主开关 kf_autoopen",
+      "kind": "setting",
+      "summary": "设置页「走近自动开门」总开关，关闭时 RSSI 喂入/节拍/下发全部零开销早退。",
+      "details": [
+        "存储键 kf_autoopen，默认 false；feedRssi/tickDwell/attempt 入口都先 guard AutoOpen.on。",
+        "关闭后不仅不判定，连面容刷新与审计都不产生（onForeground 首行就 return）。",
+        "设置区 footer 明示：仅 App 前台且不在布防时段生效，布防时段与防拆事件会自动关闭。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 15, "symbol": "AutoOpen.on", "note": "getBool(\"kf_autoopen\", false)"},
+        {"file": "App/Core/AutoOpen.swift", "line": 576, "symbol": "VariantToggle", "note": "设置项「走近自动开门」"},
+        {"file": "App/Core/AutoOpen.swift", "line": 611, "symbol": "footer Text", "note": "仅前台/非布防生效"}
+      ],
+      "tags": ["开关", "默认关"],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.autoopen.face-tier",
+      "parentKey": "unlock.autoopen",
+      "domain": "unlock",
+      "level": 3,
+      "name": "面容确认双档",
+      "kind": "setting",
+      "summary": "kf_autoopen_face：0 免额外验证（默认）/ 1 严格（每次进前台必刷一次脸）。",
+      "details": [
+        "档位判据只有 isStrict(tier) = tier != 0 —— 任何未知/第三档值一律按严格档处理（宁可多刷脸，不静默掉进宽松档）。",
+        "0 档一次系统弹窗都不发起：机主在场由 F0（sceneActive && appUnlocked && !decoyMode）兜底。",
+        "严格档 = 0 窗口：弹窗在途可放行，否则必须是「本次进前台之后」刷成的脸（lastFace >= promptStartedAt）。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 23, "symbol": "AutoOpen.faceTier", "note": "kf_autoopen_face 默认 0"},
+        {"file": "App/Core/AutoOpen.swift", "line": 106, "symbol": "AutoOpenKit.isStrict", "note": "tier != 0"},
+        {"file": "App/Core/AutoOpen.swift", "line": 114, "symbol": "AutoOpenKit.faceFresh"},
+        {"file": "App/Core/AutoOpen.swift", "line": 580, "symbol": "Picker 面容确认", "note": "tag 0 免额外验证 / tag 1 严格"}
+      ],
+      "tags": ["面容", "档位"],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.autoopen.risk-disclosure",
+      "parentKey": "unlock.autoopen",
+      "domain": "unlock",
+      "level": 4,
+      "name": "风险披露文案（强制展示）",
+      "kind": "state",
+      "summary": "开关打开后必显示的警示：默认档只认「手机已解锁 + App 在前台」，别人拿已解锁手机走近门锁 6 秒后仍可能自动开门。",
+      "details": [
+        "文案为常量 riskDisclosure，用 DS.Palette.warn 染色、caption 字号、不截断。",
+        "刻意不提已不存在的「60 秒复用窗」——文案描述的是现在这道门。",
+        "介意者被引导切到严格档（每次进前台刷一次脸）。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 77, "symbol": "AutoOpen.riskDisclosure"},
+        {"file": "App/Core/AutoOpen.swift", "line": 587, "symbol": "Text(AutoOpen.riskDisclosure)"}
+      ],
+      "tags": ["安全披露", "文案"],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.autoopen.gate-chain",
+      "parentKey": "unlock.autoopen",
+      "domain": "unlock",
+      "level": 3,
+      "name": "门控矩阵与门序",
+      "kind": "automation",
+      "summary": "rejectReason 按固定门序返回拒因；只有 .none 才允许下发 04，任何一门不过都产出人话拒因。",
+      "details": [
+        "门序（顺序即优先级）：主开关 → rc=26 挂起 → F0 前台 → F1 面容（严格档先判生物识别可用性）→ F4 布防 → F3 信号武装 → F5 冷却 → F6 锁态。",
+        "Reject 九值：off/suspended/f0/f1face/f4defend/f3rssi/f5cool/f6busy/none。",
+        "rejectText 把拒因翻成人话（含门名），供审计与设置页回显。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 202, "symbol": "AutoOpenGate.Reject"},
+        {"file": "App/Core/AutoOpen.swift", "line": 215, "symbol": "rejectReason"},
+        {"file": "App/Core/AutoOpen.swift", "line": 244, "symbol": "rejectText"}
+      ],
+      "tags": ["门控", "核心"],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.autoopen.foreground-gate",
+      "parentKey": "unlock.autoopen.gate-chain",
+      "domain": "unlock",
+      "level": 4,
+      "name": "F0 前台门",
+      "kind": "state",
+      "summary": "LinkSense.sceneActive && appUnlocked && !decoyMode 三者同时成立才通过。",
+      "details": [
+        "App 在后台不放行；手机没解锁也进不到 App，故 0 档面容可依赖此门。",
+        "伪装会话同样 appUnlocked==true，因此 F0 通过 —— 伪装红线另设在指令入口（attempt 内 guard）。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 402, "symbol": "f0Foreground"},
+        {"file": "App/Core/AutoOpen.swift", "line": 222, "symbol": "guard f0Foreground"}
+      ],
+      "tags": ["F0", "前台"],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.autoopen.face-gate",
+      "parentKey": "unlock.autoopen.gate-chain",
+      "domain": "unlock",
+      "level": 4,
+      "name": "F1 面容门",
+      "kind": "state",
+      "summary": "严格档下要求本次进前台之后刷脸成功；生物识别可用性只在严格档是硬条件。",
+      "details": [
+        "严格档在途位 facePendingPrompt = promptStartedAt != nil 且 lastFace 尚未刷新（正在确认）。",
+        "默认档没有 Face ID / 关了生物识别的机器也能自动开（不发起任何验证）。",
+        "不满足统一返回 .f1face，文案「F1 面容未确认」。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 226, "symbol": "if AutoOpenKit.isStrict(faceTier)"},
+        {"file": "App/Core/AutoOpen.swift", "line": 229, "symbol": "guard AutoOpenKit.faceFresh"},
+        {"file": "App/Core/AutoOpen.swift", "line": 406, "symbol": "facePendingPrompt 计算"}
+      ],
+      "tags": ["F1", "面容"],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.autoopen.signal-gate",
+      "parentKey": "unlock.autoopen.gate-chain",
+      "domain": "unlock",
+      "level": 4,
+      "name": "F3 信号武装门",
+      "kind": "state",
+      "summary": "rssiArmed 必须为真才通过；武装态由回差滤波给出，未标定不再一票否决。",
+      "details": [
+        "未标定走 fallbackBase -40（与安卓 AutoOpenKit.BASE 同值），标定降级为可选精修。",
+        "不满足返回 .f3rssi，文案「F3 信号未达武装线」。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 237, "symbol": "guard rssiArmed"},
+        {"file": "App/Core/AutoOpen.swift", "line": 415, "symbol": "rssiArmed: armed"}
+      ],
+      "tags": ["F3", "RSSI"],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.autoopen.defend-gate",
+      "parentKey": "unlock.autoopen.gate-chain",
+      "domain": "unlock",
+      "level": 4,
+      "name": "F4 布防时段一票否决",
+      "kind": "state",
+      "summary": "用户配了布防（control==2）且当前时刻落在布防时段内时，直接否决自动开锁。",
+      "details": [
+        "control 仅 ==2 生效，0/1/3 一律不拒。",
+        "startSec/endSec 为日内秒（SETDEFENCE 协议口径，半秒分辨率：秒数×2 参与比较）。",
+        "start == end 按「全天布防」处理（fail-closed，不退化成空集）。",
+        "跨午夜 start > end 时段取 [start, 24h) ∪ [0, end)；本机从未存过布防记录时按 control 0 处理（不拒）。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 91, "symbol": "AutoOpenKit.defendActive"},
+        {"file": "App/Core/AutoOpen.swift", "line": 232, "symbol": "guard !defendActive"},
+        {"file": "App/Core/AutoOpen.swift", "line": 412, "symbol": "defendControl: d?.control ?? 0"}
+      ],
+      "tags": ["F4", "布防"],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.autoopen.cooldown-gate",
+      "parentKey": "unlock.autoopen.gate-chain",
+      "domain": "unlock",
+      "level": 4,
+      "name": "F5 冷却与一次性闩锁",
+      "kind": "state",
+      "summary": "同一次接近事件只发一次 04；上次下发后 6 秒内不再发。",
+      "details": [
+        "cooldownSeconds = 6；coolReady = lastDispatch == 0 或 now - lastDispatch > 6。",
+        "eventFired 集合按 mac 记录「本次接近已发过」，信号掉回解除线时 remove，进前台时 removeAll。",
+        "成功后 armed 复位，下次必须重新靠近才可能再发。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 163, "symbol": "cooldownSeconds = 6"},
+        {"file": "App/Core/AutoOpen.swift", "line": 164, "symbol": "AutoOpenKit.coolReady"},
+        {"file": "App/Core/AutoOpen.swift", "line": 378, "symbol": "if eventFired.contains(mac) { return }"},
+        {"file": "App/Core/AutoOpen.swift", "line": 431, "symbol": "eventFired.insert(mac)"}
+      ],
+      "tags": ["F5", "冷却", "去重"],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.autoopen.lockstate-gate",
+      "parentKey": "unlock.autoopen.gate-chain",
+      "domain": "unlock",
+      "level": 4,
+      "name": "F6 锁态门",
+      "kind": "state",
+      "summary": "必须有 03 状态快照且 rc 不是 25（忙）也不是 26（防拆），否则 fail-closed。",
+      "details": [
+        "无快照时旧写法会因 rc 默认 0 误判为绿，现在要求 snap != nil。",
+        "不满足返回 .f6busy，文案「F6 锁态未知或忙 (rc=25/无 03 回显)」。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 419, "symbol": "lockReady: snap != nil && snap?.rc != 25 && snap?.rc != 26"},
+        {"file": "App/Core/AutoOpen.swift", "line": 239, "symbol": "guard lockReady"}
+      ],
+      "tags": ["F6", "锁态"],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.autoopen.reject-audit",
+      "parentKey": "unlock.autoopen",
+      "domain": "unlock",
+      "level": 3,
+      "name": "拒开审计与「上一次没自动开」回显",
+      "kind": "diagnostic",
+      "summary": "每次拒开只记「哪道门拒了 / 哪把锁 / 何时」，并在设置区把最近一条原因显示给用户。",
+      "details": [
+        "存储 kf_autoopen_audit_<mac>，元素 {at: \"MM-dd HH:mm\", mac, reason}，只保留尾段 500 条。",
+        "永不记录 ekey/skey 明文，只记门名 + 拒因文案。",
+        "设置页渲染最近 1 条（lastReject），并以 accessibilityElement(children: .combine) 合并朗读。",
+        "删除设备时该键随每锁数据族被 DB.removeDevice 按前缀清理。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 41, "symbol": "struct AuditEntry"},
+        {"file": "App/Core/AutoOpen.swift", "line": 46, "symbol": "AutoOpen.audit", "note": "插入队首，>500 截断"},
+        {"file": "App/Core/AutoOpen.swift", "line": 55, "symbol": "lastReject"},
+        {"file": "App/Core/AutoOpen.swift", "line": 595, "symbol": "设置页最后一次拒因", "note": "VStack + accessibilityElement"}
+      ],
+      "tags": ["审计", "诊断", "透明度"],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.autoopen.suspend",
+      "parentKey": "unlock.autoopen",
+      "domain": "unlock",
+      "level": 3,
+      "name": "rc=26 防拆自动挂起 24 小时",
+      "kind": "state",
+      "summary": "锁上报防拆（rc=26）后立刻把该锁的自动开锁挂起 24 小时，期内不再判定、不刷脸。",
+      "details": [
+        "存储 kf_autoopen_suspend_until_<mac>，值为 epoch 毫秒；isSuspended 用当前时间比较。",
+        "挂起期 onForeground 直接写审计「拒开 rc=26 防拆挂起中, 面容不刷新」并 return。",
+        "下发侧遇 rc=26 写入 now+24h 并 toast「检测到防拆事件, 自动开锁已暂停 24 小时」。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 28, "symbol": "AutoOpen.suspendUntil"},
+        {"file": "App/Core/AutoOpen.swift", "line": 35, "symbol": "AutoOpen.isSuspended"},
+        {"file": "App/Core/AutoOpen.swift", "line": 457, "symbol": "setSuspendUntil(+24h)"},
+        {"file": "App/Core/AutoOpen.swift", "line": 307, "symbol": "onForeground 挂起分支"}
+      ],
+      "tags": ["防拆", "挂起"],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.autoopen.rssi-filter",
+      "parentKey": "unlock.autoopen",
+      "domain": "unlock",
+      "level": 3,
+      "name": "RSSI 回差滤波与武装/解除线",
+      "kind": "automation",
+      "summary": "在功率域换算回差：武装线 = 基准 P95，解除线 = 基准 + 10·log10(0.5)（约弱 3 dB），避免门口抖动逐样本翻转。",
+      "details": [
+        "armThreshold(base) = base；disarmThreshold(base) = round(base + 10*log10(0.5))，基准 -60 时约 -63。",
+        "已武装：rssi > disarm 才保持武装；未武装：rssi >= arm 才武装。",
+        "dBm 是对数单位，直接乘系数（旧 0.7×/0.5× 写法）会把方向算反，注释已写明该式作废。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 139, "symbol": "回差阈值换算注释"},
+        {"file": "App/Core/AutoOpen.swift", "line": 142, "symbol": "armThreshold"},
+        {"file": "App/Core/AutoOpen.swift", "line": 143, "symbol": "disarmThreshold"},
+        {"file": "App/Core/AutoOpen.swift", "line": 151, "symbol": "AutoOpenKit.rssiSample"}
+      ],
+      "tags": ["回差", "滤波", "核心"],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.autoopen.rssi-base",
+      "parentKey": "unlock.autoopen.rssi-filter",
+      "domain": "unlock",
+      "level": 4,
+      "name": "标定基准与 -40 回退",
+      "kind": "data",
+      "summary": "做过按锁标定用 P95，未标定退回固定 -40；存储键 kf_autocal_<mac>。",
+      "details": [
+        "AutoCal 结构 {rssiP95: Int, at: Double}；removeAutocal 供清除标定。",
+        "fallbackBase = -40，与安卓 AutoOpenKit.BASE 同值。",
+        "旧实现未标定返回 nil 会让 armed 永不置位，自动开锁对没标定过的用户永不触发。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 62, "symbol": "struct AutoCal"},
+        {"file": "App/Core/AutoOpen.swift", "line": 135, "symbol": "fallbackBase = -40"},
+        {"file": "App/Core/AutoOpen.swift", "line": 136, "symbol": "AutoOpenKit.rssiBase"}
+      ],
+      "tags": ["标定", "存储键"],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.autoopen.calibrate",
+      "parentKey": "unlock.autoopen",
+      "domain": "unlock",
+      "level": 3,
+      "name": "距离标定流程（30 秒采样）",
+      "kind": "flow",
+      "summary": "让用户静止走近门锁，30 秒内反复扫描采集 RSSI，取 P95 作为该锁基准并落盘。",
+      "details": [
+        "循环 30 秒：每次 scan(mac:timeoutMs:2500)，命中即记样本并 saveRssi，步进 sleep 500ms。",
+        "样本不足 5 个时 p95 返回 nil → toast「样本不足, 请走近门锁再试」，不覆盖原有标定。",
+        "成功 toast「标定完成: P95 RSSI <p>」并写 kf_autocal_<mac>（含 at 时间戳）。",
+        "采集中按钮标题变为「采集中 (N 样本)」且 isBusy 禁用。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 544, "symbol": "AutoCalView.run()"},
+        {"file": "App/Core/AutoOpen.swift", "line": 551, "symbol": "while < 30 秒"},
+        {"file": "App/Core/AutoOpen.swift", "line": 560, "symbol": "sleep 500ms"},
+        {"file": "App/Core/AutoOpen.swift", "line": 562, "symbol": "p95 落盘 / 样本不足提示"}
+      ],
+      "tags": ["标定", "流程"],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.autoopen.calibrate-page",
+      "parentKey": "unlock.autoopen",
+      "domain": "unlock",
+      "level": 3,
+      "name": "距离标定页与清除标定",
+      "kind": "screen",
+      "summary": "展示当前 P95 与武装/解除线，提供「重新标定」和带二次确认的「清除标定」。",
+      "details": [
+        "已标定显示「当前 P95 基准 RSSI n」与「武装线 / 解除线 (回差)」两行；未标定显示「当前基准 未标定 …」。",
+        "清除走 confirmDestructive(\"清除标定数据？\", …)，说明清掉后要重新走一遍才能恢复距离判断。",
+        "footer 解释回差意义（越过武装线才武装、掉回 0.5× 基准才解除）。",
+        "未标定分支文案仍写着「未标定则 F3 门不过」，与实际 -40 回退不一致（见 unresolved）。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 497, "symbol": "struct AutoCalView"},
+        {"file": "App/Core/AutoOpen.swift", "line": 507, "symbol": "当前 P95 / 武装线-解除线"},
+        {"file": "App/Core/AutoOpen.swift", "line": 512, "symbol": "未标定文案"},
+        {"file": "App/Core/AutoOpen.swift", "line": 530, "symbol": "清除标定（destructive + 确认）"},
+        {"file": "App/Core/AutoOpen.swift", "line": 539, "symbol": "navigationTitle 距离标定"}
+      ],
+      "tags": ["标定页", "破坏性操作"],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.autoopen.calibration-percentile",
+      "parentKey": "unlock.autoopen.calibrate",
+      "domain": "unlock",
+      "level": 4,
+      "name": "P95 取法（线性插值）",
+      "kind": "data",
+      "summary": "样本数 >= 5 时对升序序列按 (n-1)*0.95 定位并在相邻两点间线性插值取整。",
+      "details": [
+        "样本不足 5 直接返回 nil（标定判失败）。",
+        "lo==hi 时直接取该点，否则按小数部分插值后 rounded()。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 122, "symbol": "AutoOpenKit.p95"},
+        {"file": "App/Core/AutoOpen.swift", "line": 125, "symbol": "rank = (n-1)*0.95"}
+      ],
+      "tags": ["算法", "P95"],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.autoopen.face-service",
+      "parentKey": "unlock.autoopen",
+      "domain": "unlock",
+      "level": 3,
+      "name": "FaceService 抽象与 LAContext 实现",
+      "kind": "service",
+      "summary": "用协议把面容能力抽出以便注入 mock；生产实现走 LocalAuthentication。",
+      "details": [
+        "biometricAvailable 调 LAContext().canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics)。",
+        "promptFace 在 @MainActor 上发起 evaluatePolicy，localizedReason「确认是你, 才允许靠近自动开门」。",
+        "成功回调 noteFaceSuccess 记时刻；biometryNotAvailable 等失败静默不发。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 260, "symbol": "protocol FaceService"},
+        {"file": "App/Core/AutoOpen.swift", "line": 266, "symbol": "struct SystemFaceService"},
+        {"file": "App/Core/AutoOpen.swift", "line": 278, "symbol": "evaluatePolicy"}
+      ],
+      "tags": ["面容", "服务"],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.autoopen.face-clock",
+      "parentKey": "unlock.autoopen.face-service",
+      "domain": "unlock",
+      "level": 4,
+      "name": "面容成功时刻记账（进程内）",
+      "kind": "data",
+      "summary": "lastFace 用 Locked<Date?> 持有，进程重启即失效（fail-closed），退后台清在途基准。",
+      "details": [
+        "noteFaceSuccess / lastFace 都经 Locked.withLock，避免全局可变变量暴露给 Swift 6 并发检查。",
+        "onBackground 清 promptStartedAt 与 faceAtPrompt，回前台严格档重新发起弹窗。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 182, "symbol": "lastFaceLock = Locked<Date?>(nil)"},
+        {"file": "App/Core/AutoOpen.swift", "line": 183, "symbol": "noteFaceSuccess"},
+        {"file": "App/Core/AutoOpen.swift", "line": 324, "symbol": "onBackground 清在途位"}
+      ],
+      "tags": ["面容", "生命周期"],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.autoopen.foreground",
+      "parentKey": "unlock.autoopen",
+      "domain": "unlock",
+      "level": 3,
+      "name": "进前台 / 退后台生命周期",
+      "kind": "automation",
+      "summary": "进前台放开一次性的接近闩锁（严格档同时发起刷脸）；退后台清武装、闩锁与面容在途位。",
+      "details": [
+        "onForeground 先 guard 开关与 mac 非空，挂起期只写审计不刷脸。",
+        "严格档记录 promptStartedAt 与 faceAtPrompt 后调用 face.promptFace()。",
+        "onBackground 清 armed/eventFired/promptStartedAt/faceAtPrompt（不依赖开关当前值）。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 305, "symbol": "onForeground"},
+        {"file": "App/Core/AutoOpen.swift", "line": 312, "symbol": "严格档发起弹窗"},
+        {"file": "App/Core/AutoOpen.swift", "line": 318, "symbol": "onBackground"}
+      ],
+      "tags": ["前后台", "生命周期"],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.autoopen.attempt",
+      "parentKey": "unlock.autoopen",
+      "domain": "unlock",
+      "level": 3,
+      "name": "全门判定入口 attempt",
+      "kind": "automation",
+      "summary": "前置守卫（当前锁/空闲/非伪装/inFlight/一次性）→ 组门控上下文 → 全绿才起异步下发，否则写审计。",
+      "details": [
+        "要求 app.currentMac == mac、unlockState == .idle、非 decoyMode。",
+        "伪装会话期间单独写审计「拒开: 伪装会话期间禁止自动下发 04」（F0 本身拦不住伪装态）。",
+        "inFlight 防重入；不通过时审计拼接门名（doorName = 钥匙串名或 mac 前 6 位）。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 360, "symbol": "func attempt(mac:)"},
+        {"file": "App/Core/AutoOpen.swift", "line": 374, "symbol": "decoyMode 红线"},
+        {"file": "App/Core/AutoOpen.swift", "line": 381, "symbol": "rejectReason 调用"},
+        {"file": "App/Core/AutoOpen.swift", "line": 388, "symbol": "inFlight + Task dispatch"}
+      ],
+      "tags": ["判定", "安全"],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.autoopen.dispatch-result",
+      "parentKey": "unlock.autoopen",
+      "domain": "unlock",
+      "level": 3,
+      "name": "下发 cmd04 与返回码处置",
+      "kind": "flow",
+      "summary": "ensureConnected → unlock，按 rc 分别处理成功、命令过期自愈校时、次数用完、锁忙、防拆与未知码。",
+      "details": [
+        "rc=0：置一次性闩锁、复位 armed、getStatus 刷新 F6 快照；verifyMode==1 时提示「自动: 第一道已通过 — 请再用指纹或密码完成第二道」，否则 toast「自动开锁成功 — <锁名>」。",
+        "rc=3：走 0E 双确认校时；rc=5：提示凭证次数用完，不自动重签；rc=25：审计「锁正忙, 拒绝自动开锁」。",
+        "rc=26：写 24h 挂起 + 审计 + toast；其他码审计 rc + StatusParser.rcFriendly(rc)。",
+        "异常统一审计「下发异常 <localizedDescription>」，defer 复位 inFlight。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 423, "symbol": "private func dispatch"},
+        {"file": "App/Core/AutoOpen.swift", "line": 428, "symbol": "app.lock.unlock(mac:)"},
+        {"file": "App/Core/AutoOpen.swift", "line": 441, "symbol": "verifyMode==1 双验提示"},
+        {"file": "App/Core/AutoOpen.swift", "line": 453, "symbol": "rc=25 / rc=26 分支"}
+      ],
+      "tags": ["下发", "返回码", "cmd04"],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.autoopen.self-heal-time",
+      "parentKey": "unlock.autoopen.dispatch-result",
+      "domain": "unlock",
+      "level": 4,
+      "name": "rc=3 双确认自愈校时",
+      "kind": "protocol",
+      "summary": "读锁钟算偏差，只在 30s < |偏差| < 24h 时自动写；≥24h 仅 NTP 对表一致时放宽到 48h，避免把错手机时间写进锁。",
+      "details": [
+        "dualTimeSync 三个分支：<30s 不写；<24h 写；ntpConfirmed 且 <48h 写；其余拒。",
+        "生产调用 ntpConfirmed 传 false（无网络证据），所以 ≥24h 一律只 toast「为避免误写仅提示, 请手动校准」。",
+        "读锁钟失败写审计「rc=3 读锁钟失败, 未自动校时」。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 171, "symbol": "AutoOpenKit.dualTimeSync"},
+        {"file": "App/Core/AutoOpen.swift", "line": 469, "symbol": "selfHealTime"},
+        {"file": "App/Core/AutoOpen.swift", "line": 476, "symbol": "ntpConfirmed: false"}
+      ],
+      "tags": ["校时", "防自伤"],
+      "status": "implemented"
+    },
+    {
+      "key": "unlock.autoopen.multilock",
+      "parentKey": "unlock.autoopen",
+      "domain": "unlock",
+      "level": 3,
+      "name": "多锁状态隔离",
+      "kind": "state",
+      "summary": "武装位、冷却、一次性闩锁、挂起、标定、审计全部按 mac 分键；只有当前锁参与判定。",
+      "details": [
+        "armed 单值 + armedMac 记忆：切锁时 armed 复位并清该锁闩锁。",
+        "lastDispatch 是 [mac: TimeInterval] 字典，冷却按锁各算。",
+        "attempt 要求 mac == app.currentMac，非当前锁的 RSSI 只喂滤波不触发下发。"
+      ],
+      "evidence": [
+        {"file": "App/Core/AutoOpen.swift", "line": 293, "symbol": "armedMac"},
+        {"file": "App/Core/AutoOpen.swift", "line": 294, "symbol": "lastDispatch: [String: TimeInterval]"},
+        {"file": "App/Core/AutoOpen.swift", "line": 333, "symbol": "mac != armedMac 时复位"},
+        {"file": "App/Core/AutoOpen.swift", "line": 363, "symbol": "guard app.currentMac == mac"}
+      ],
+      "tags": ["多锁", "隔离"],
+      "status": "implemented"
+    },
+    {
+      "key": "device.link",
+      "parentKey": "device",
+      "domain": "device",
+      "level": 2,
+      "name": "连接感知与离线同步包装层",
+      "kind": "service",
+      "summary": "包装层只做连接管理、信号感知与 UI 组件；预握手/回连只到「就绪态」，绝不出手开锁、绝不主动下发新凭证。",
+      "details": [
+        "不改 BLEService 协议帧与命令构造器，复用 LockService.ensureConnected/getStatus 的既有自愈。",
+        "所有自动动作（自动连接/预热/补发/重连/冷启动/会话巡检）统一受 127 静默档管。",
+        "日志复用 DiagKit 事件流水（BleTelemetry/DiagOps）与 LockService 分级日志。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 28, "symbol": "final class LinkSense"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 13, "symbol": "enum LinkState"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 658, "symbol": "LinkPrefsView"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 705, "symbol": "RSSIBars"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 735, "symbol": "LinkPill"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 852, "symbol": "BLEStrip"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 923, "symbol": "BLEOffBanner"}
+      ],
+      "tags": ["连接", "核心"],
+      "status": "implemented"
+    },
+    {
+      "key": "device.link.state",
+      "parentKey": "device.link",
+      "domain": "device",
+      "level": 3,
+      "name": "链路三态判定",
+      "kind": "state",
+      "summary": "ready 仅当已连接的就是当前这把锁；unlockState 为 connecting/opening 时算握手中；其余一律 down。",
+      "details": [
+        "无当前 mac 直接 down（不显示上一把锁的状态）。",
+        "三态中文名：已连接 / 握手中 / 未连接。",
+        "holdMinutes 记录会话已保持分钟数，供异常久时提示重连。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 14, "symbol": "case ready, connecting, down"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 75, "symbol": "var linkState"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 591, "symbol": "holdMinutes"}
+      ],
+      "tags": ["状态机"],
+      "status": "implemented"
+    },
+    {
+      "key": "device.link.pill",
+      "parentKey": "device.link",
+      "domain": "device",
+      "level": 3,
+      "name": "三态链路胶囊 LinkPill",
+      "kind": "state",
+      "summary": "Hero 渐变上的链路状态胶囊：图标 + 语义冗余符号 + 文案 + 冷热连接来源标注，三通道表达状态。",
+      "details": [
+        "图标：link.circle.fill / arrow.triangle.2.circlepath / link.circle.dashed。",
+        "色觉冗余（228）：额外一枚 ✓ / ⏳ / ✗ 符号，并 accessibilityHidden 防止重复朗读。",
+        "文案（68 拟人）：门锁在线, 随时可开 / 正在敲门… / 未连接。",
+        "已连接时追加来源（预热·回连 显示「已预热」，用户触发显示「即连」）解释快慢差异。",
+        "底板用压暗黑纱 DS.heroPlate + 0.38 描边，accessibilityLabel 合并状态与信号档位。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 735, "symbol": "struct LinkPill"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 747, "symbol": "redundancyIcon"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 754, "symbol": "source 冷热标注"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 787, "symbol": "拟人状态文案"}
+      ],
+      "tags": ["Hero", "状态胶囊", "无障碍"],
+      "status": "implemented"
+    },
+    {
+      "key": "device.link.rssi-bars",
+      "parentKey": "device.link",
+      "domain": "device",
+      "level": 3,
+      "name": "四格信号条 RSSIBars",
+      "kind": "state",
+      "summary": "四根递增竖条表示信号强弱，形状与档位文字双通道，颜色不单独承载信息。",
+      "details": [
+        "档位阈值：>= -55 满(4) / >= -65 近(3) / >= -75 中(2) / >= -85 远(1) / 更弱 0 不可测。",
+        "条形宽 3pt、高 4…8pt、cornerRadius 1、间距 2pt；未达档位用 hairline。",
+        "accessibilityLabel「信号 + 档位名」。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 705, "symbol": "struct RSSIBars"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 721, "symbol": "rssiLevel 阈值"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 729, "symbol": "rssiLabel"}
+      ],
+      "tags": ["信号", "双通道"],
+      "status": "implemented"
+    },
+    {
+      "key": "device.link.weak-signal",
+      "parentKey": "device.link",
+      "domain": "device",
+      "level": 3,
+      "name": "弱信号与骤降提示",
+      "kind": "state",
+      "summary": "优先报「骤降」（与上次不同读数差 >=12 dB），否则绝对值低于 -75 时提示走近门锁。",
+      "details": [
+        "updateRssi 只在值变化时把旧值翻进 prevRssi，四处喂入共用同一份历史。",
+        "无读数返回 nil（不显示提示条）。",
+        "文案分别带 (旧 → 新) 数值与当前 RSSI。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 594, "symbol": "weakSignalHint"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 351, "symbol": "updateRssi / prevRssi"}
+      ],
+      "tags": ["信号", "提示"],
+      "status": "implemented"
+    },
+    {
+      "key": "device.link.connect-ms",
+      "parentKey": "device.link",
+      "domain": "device",
+      "level": 3,
+      "name": "握手耗时徽章 ConnectMsBadge",
+      "kind": "state",
+      "summary": "显示最近一次连接耗时毫秒；>=2000ms 变淡黄提醒偏慢。",
+      "details": [
+        "图标 stopwatch，文字 \"<n>ms\"；底色 heroPlate 胶囊。",
+        ">=2000ms 用 0xFFE9A8，否则 heroFg 0.85。",
+        "accessibilityLabel「最近一次连接耗时 n 毫秒」。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 807, "symbol": "struct ConnectMsBadge"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 814, "symbol": "ms >= 2000 变色"}
+      ],
+      "tags": ["耗时", "Hero"],
+      "status": "implemented"
+    },
+    {
+      "key": "device.link.reconnect-ladder",
+      "parentKey": "device.link",
+      "domain": "device",
+      "level": 3,
+      "name": "回连节律 5/15/30/60/90 秒",
+      "kind": "automation",
+      "summary": "2 秒一拍的后台节律；只有本机还有待下发变更的锁才自动回连，按五档梯度退避。",
+      "details": [
+        "ladderSeconds = [5, 15, 30, 60, 90]；nextLadderInterval 取 min(attempt, 4)。",
+        "前置：非静默、有当前 mac、sceneActive；已连接则改为取一次连接 RSSI 后 return。",
+        "还需 kf_link_auto_<mac> 为真且 CredentialOrg.pendingCount > 0（无变更不回连省电）。",
+        "成功：记遥测、非免扰时 success 触感、lastReconnectAt、kind>0 时 toast「回到锁身边」、connectSource=回连。",
+        "失败：attempt = min(kind+1, 5)，只记遥测不弹窗。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 258, "symbol": "ladderSeconds"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 290, "symbol": "autoReconnectTick"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 315, "symbol": "pendingCount > 0 才回连"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 338, "symbol": "失败 attempt 递增封顶"}
+      ],
+      "tags": ["重连", "退避", "省电"],
+      "status": "implemented"
+    },
+    {
+      "key": "device.link.reconnect-dots",
+      "parentKey": "device.link.reconnect-ladder",
+      "domain": "device",
+      "level": 4,
+      "name": "回连节律点阵 ReconnectDots",
+      "kind": "state",
+      "summary": "五个点表示五轮退避，已过轮次主色、当前轮次警告色，0 轮时整排灰 = 待命。",
+      "details": [
+        "点径 7pt；已过 accent、当前 warn、其余 hairline。",
+        "文案：「回连第 N 轮 · 下一轮等 X 秒」/「失联后自动回连 (5/15/30/60/90 秒)」。",
+        "整体合并为一个无障碍元素并朗读轮次。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 824, "symbol": "struct ReconnectDots"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 844, "symbol": "fill(_:)"}
+      ],
+      "tags": ["重连", "可视化"],
+      "status": "implemented"
+    },
+    {
+      "key": "device.link.preconnect",
+      "parentKey": "device.link",
+      "domain": "device",
+      "level": 3,
+      "name": "预握手（进页/回前台预热）",
+      "kind": "automation",
+      "summary": "扫描定位当前锁，信号过围栏才 ensureConnected 预热；只到就绪态，不开锁不下发。",
+      "details": [
+        "6 秒扫描；未发现 → 记遥测「未发现 (不在广播范围或锁未广播)」并 attempt+1。",
+        "RSSI 低于围栏 → 记「信号弱跳过」并 attempt+1，不浪费电量。",
+        "成功记录 connectMs 与 connectSource=预热，然后调 preconnectOthers 扫其余常用锁。",
+        "RSSI >= -55 且非免扰时段 → light 触感 + toast「锁就在附近, 已就绪」。",
+        "失败按 classifyFailure 分类记遥测与分级日志。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 135, "symbol": "func preconnect()"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 142, "symbol": "scan(timeoutMs: 6000)"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 152, "symbol": "信号围栏拦截"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 168, "symbol": "近场轻提醒"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 174, "symbol": "DiagOps.record 预握手"}
+      ],
+      "tags": ["预热", "围栏"],
+      "status": "implemented"
+    },
+    {
+      "key": "device.link.rssi-fence",
+      "parentKey": "device.link.preconnect",
+      "domain": "device",
+      "level": 4,
+      "name": "信号围栏 kf_rssi_fence",
+      "kind": "setting",
+      "summary": "自动预握手的启动门槛，默认 -70，可选 -60/-70/-80，-127 表示关闭围栏。",
+      "details": [
+        "判定式唯一读点 LinkSense.rssiFence（默认值只写这一处）。",
+        "-127 当「关」用：取 BLE 可达最弱下界等效不设限，读侧不再加分支。",
+        "只影响自动预握手；手动点圆盘与 AUTOOPEN 判定不受这一档约束（文案已写明）。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 68, "symbol": "static var rssiFence"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 151, "symbol": "fence 判定"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 673, "symbol": "Picker 信号围栏"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 685, "symbol": "只影响自动预握手"}
+      ],
+      "tags": ["设置", "围栏"],
+      "status": "implemented"
+    },
+    {
+      "key": "device.link.preconnect-others",
+      "parentKey": "device.link",
+      "domain": "device",
+      "level": 3,
+      "name": "多锁并行预连",
+      "kind": "automation",
+      "summary": "用一条扫描同时收下多把常用锁的广播（不是开两条扫描抢射频），只写 RSSI 档，不建连接。",
+      "details": [
+        "默认 limit 2（内部取 limit+1 后排除当前锁）；扫描窗口 3500ms、allowDuplicates。",
+        "命中即 saveRssi 并记 info 日志「多锁预连」；扫完 250ms 步进直到凑齐或超时。",
+        "扫描时长计入 ScanStats（285）。",
+        "常用锁 warmLocks 按本机日志行数降序取前 N 把（不是全扫）。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 95, "symbol": "preconnectOthers(limit:timeoutMs:)"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 117, "symbol": "saveRssi 只写信号档"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 127, "symbol": "warmLocks"}
+      ],
+      "tags": ["多锁", "预热"],
+      "status": "implemented"
+    },
+    {
+      "key": "device.link.refresh",
+      "parentKey": "device.link",
+      "domain": "device",
+      "level": 3,
+      "name": "进页/回前台静默刷新",
+      "kind": "automation",
+      "summary": "把 Hero 卡三态、信号格、耗时标签刷到最新；已连接时直接用缓存值，不重复握手。",
+      "details": [
+        "已连接 → markReady(ms: connectMs, rssi: lastRssi) 并返回。",
+        "未连接 → 6 秒扫描 + ensureConnected，成功记「进页预热 <ms>ms」遥测。",
+        "失败只记遥测与 attempt+1，不弹错误（静默）。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 185, "symbol": "func refresh()"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 189, "symbol": "已连接直接 markReady"}
+      ],
+      "tags": ["预热", "刷新"],
+      "status": "implemented"
+    },
+    {
+      "key": "device.link.cold-start",
+      "parentKey": "device.link",
+      "domain": "device",
+      "level": 3,
+      "name": "冷启动扫描与环境拥挤度",
+      "kind": "automation",
+      "summary": "App 启动扫一次广播把可见已配对锁的 RSSI 落档，并量出可见台数与首台耗时用于拥挤度结论。",
+      "details": [
+        "扫描参数跟随用户档位 BLEService.ScanProfile.current（默认 5s），窗口等满再读 allDiscovered。",
+        "只对 DB.keychain(m) 存在的锁 saveRssi；落 kf_link_env（台数）与 kf_link_envms（首台毫秒，-1=整窗未见）。",
+        "结论三档：0 台无数据 / >=20 拥挤 / >=8 中度 / 其余安静，均带台数与首台耗时。",
+        "时长计入 ScanStats（285）。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 537, "symbol": "coldStartScan()"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 567, "symbol": "kf_link_env / kf_link_envms"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 580, "symbol": "envConclusion()"}
+      ],
+      "tags": ["冷启动", "环境"],
+      "status": "implemented"
+    },
+    {
+      "key": "device.link.resync",
+      "parentKey": "device.link",
+      "domain": "device",
+      "level": 3,
+      "name": "到场自动补发与回执",
+      "kind": "automation",
+      "summary": "预握手完成/回前台且确有排队变更时，把 kf_cqueue_ 队列逐项补发到锁，并记录回执条数。",
+      "details": [
+        "仅当已连接当前锁且有 CredentialOrg.pendingQueue 才动手（96 边界：无队列绝不出手）。",
+        "每项走 CredentialOrg.sendQueued（唯一实现），成功 markQueue(.done) 失败 .failed 并累加 attempts。",
+        "有成功才写 lastReceipt/receiptShownAt，并写 MaintenanceLog「<来源>自动补发 N 项」+ BleTelemetry + DiagOps。",
+        "来源字符串为「到场」或「回前台」，用于日志与回执。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 213, "symbol": "onPreconnectDone()"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 221, "symbol": "resync(mac:from:)"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 242, "symbol": "lastReceipt"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 253, "symbol": "applyQueueItem → CredentialOrg.sendQueued"}
+      ],
+      "tags": ["补发", "回执"],
+      "status": "implemented"
+    },
+    {
+      "key": "device.link.deadwatch",
+      "parentKey": "device.link",
+      "domain": "device",
+      "level": 3,
+      "name": "会话巡检与假死重协商",
+      "kind": "automation",
+      "summary": "60 秒一拍检查连接是否久无有效会话；挂起超过 10 分钟且有待下发项时主动重协商一次。",
+      "details": [
+        "触发条件：idle > 600s 且距上次巡检 > 300s 且 pendingCount > 0。",
+        "先 getStatus 刷新 sessionSince；失败则 ensureConnected 并累加 kf_wd_heals（277 自恢复计数）。",
+        "revalidating 期间为真，完成后复位；成功/失败都记 BleTelemetry 事件。",
+        "无待办不打扰（省电 + 不打扰锁）。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 370, "symbol": "startDeadWatch()"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 380, "symbol": "deadbeatCheck()"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 385, "symbol": "idle > 600 && 间隔 > 300"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 404, "symbol": "kf_wd_heals + 1"}
+      ],
+      "tags": ["巡检", "自愈"],
+      "status": "implemented"
+    },
+    {
+      "key": "device.link.fail-classify",
+      "parentKey": "device.link",
+      "domain": "device",
+      "level": 3,
+      "name": "连接失败三分类与处置建议",
+      "kind": "diagnostic",
+      "summary": "把底层错误串归成蓝牙类 / 指令被拒 / 设备类 / 协议类四档，各带图标与人话建议。",
+      "details": [
+        "蓝牙类：含「蓝牙」/unauthorized/not powered → 检查系统开关与权限。",
+        "指令被拒：命中 StatusParser.rcMsg 中长度 >=4 的文案或「错误码 」前缀 → 去诊断页错误码表按码处置，可重试一次。",
+        "设备类：含未发现/扫描/超时 → 确认锁通电并靠近 1 米内。",
+        "其余归协议类 → 跑一键体检或重置重配该锁。",
+        "每类配 SF Symbol（425-433），名称取自仓内已在用符号。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 419, "symbol": "struct FailKind"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 425, "symbol": "icon 计算属性"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 435, "symbol": "classifyFailure"}
+      ],
+      "tags": ["失败分类", "提示"],
+      "status": "implemented"
+    },
+    {
+      "key": "device.link.occupation",
+      "parentKey": "device.link.fail-classify",
+      "domain": "device",
+      "level": 4,
+      "name": "占用类保守文案",
+      "kind": "edge",
+      "summary": "协议未确证「占用」细分码，只给保守提示「稍候 1–2 分钟再试」，不虚构错误码语义。",
+      "details": [
+        "静态文案，不判断具体 rc。",
+        "文案自述「占用细分未确证」以避免过度承诺。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 453, "symbol": "occupationHint()"}
+      ],
+      "tags": ["边界", "文案"],
+      "status": "partial"
+    },
+    {
+      "key": "device.link.success-rate",
+      "parentKey": "device.link",
+      "domain": "device",
+      "level": 3,
+      "name": "连接成功率（积累中占位）",
+      "kind": "diagnostic",
+      "summary": "按锁统计真实留存的连接尝试；样本不足 10 次只显示「积累中 (n/10)」，不编百分比。",
+      "details": [
+        "数据源 BleTelemetry.attempts 按 mac 过滤（全留存口径，不是滚动 30 天）。",
+        "达标后输出「成功率 X% (n 次)」。",
+        "展示在连接偏好页「连接统计」段。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 458, "symbol": "successRateText(mac:)"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 694, "symbol": "连接成功率行"}
+      ],
+      "tags": ["统计", "占位"],
+      "status": "implemented"
+    },
+    {
+      "key": "device.link.best-hour",
+      "parentKey": "device.link",
+      "domain": "device",
+      "level": 3,
+      "name": "高成功率时段建议",
+      "kind": "diagnostic",
+      "summary": "把连接尝试按小时分桶算成功率，样本够才给「成功率最高的时段」结论。",
+      "details": [
+        "总样本 <30 显示「时段统计积累中 (n/30)」。",
+        "单小时样本需 >=10 次才参与比较；并列时取样本更多的桶。",
+        "小时从「MM-dd HH:mm:ss」字符串第 6 位起截两位，不再过一次历法。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 469, "symbol": "bestHourHint()"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 479, "symbol": "每桶 >= 10"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 695, "symbol": "高成功率时段行"}
+      ],
+      "tags": ["统计", "建议"],
+      "status": "implemented"
+    },
+    {
+      "key": "device.link.bluetooth-off",
+      "parentKey": "device.link",
+      "domain": "device",
+      "level": 3,
+      "name": "蓝牙关闭 / 权限被拒横幅",
+      "kind": "state",
+      "summary": "把「系统蓝牙关着」和「本 App 没拿到权限」分成两条不同文案与图标，并把点按落到本 App 系统设置页。",
+      "details": [
+        "btOn 镜像 BLEService.isPoweredOn；btDenied = powerState == .unauthorized，两件事分开表达。",
+        "denied：exclamationmark.shield.fill +「本 App 没有蓝牙权限 — 到设置里允许后, 才能配对与开锁」。",
+        "未开：antenna.radiowaves.left.and.right.slash +「蓝牙已关闭 — 打开系统蓝牙后, 门锁才能被唤醒」。",
+        "iOS 无直达蓝牙面板的 App 级深链，只能 openSettingsURLString 跳本 App 设置页并记 BleTelemetry。",
+        "整体 44pt 触达 + 两条无障碍标签。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 39, "symbol": "btOn"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 43, "symbol": "btDenied"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 58, "symbol": "openBluetoothSettings()"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 923, "symbol": "struct BLEOffBanner"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 936, "symbol": "两条文案分支"}
+      ],
+      "tags": ["蓝牙", "错误态", "横幅"],
+      "status": "implemented"
+    },
+    {
+      "key": "device.link.bt-strip",
+      "parentKey": "device.link",
+      "domain": "device",
+      "level": 3,
+      "name": "跨页 BLE 状态细条",
+      "kind": "state",
+      "summary": "非设备 Tab 顶部一条 2pt 语义细线加状态行，点按可跳回设备页定位该锁。",
+      "details": [
+        "三态图标/色：checkmark.circle.fill+ok / arrow.triangle.2.circlepath+warn / antenna.radiowaves.left.and.right+textSub。",
+        "未连接刻意不用 wifi.slash：本 App 全程 BLE，带斜杠 Wi-Fi 图标会误导用户去连 Wi-Fi。",
+        "右侧按钮 minHeight 44，无障碍 hint「点按跳回设备页, 定位到该锁」。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 852, "symbol": "struct BLEStrip"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 895, "symbol": "stIcon 选择理由"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 887, "symbol": "底部 2pt 细线"}
+      ],
+      "tags": ["跨页", "状态条"],
+      "status": "implemented"
+    },
+    {
+      "key": "device.link.prefs",
+      "parentKey": "device.link",
+      "domain": "device",
+      "level": 3,
+      "name": "连接与预握手偏好页",
+      "kind": "screen",
+      "summary": "每锁的自动预握手开关、手动连接模式显示、信号围栏档位与连接统计。",
+      "details": [
+        "自动预握手开关读写 kf_link_auto_<mac>，默认 true。",
+        "「手动连接模式」为只读回显：自动 /「手动 — 点圆盘才连」。",
+        "信号围栏四档 Picker（严格 -60 / 标准 -70 / 宽松 -80 / 关闭 -127）。",
+        "「连接偏好记忆」回显：每锁 kf_link_auto_ 偏好 + rssiFor 实读，扫描强度档走全局。",
+        "连接统计段展示成功率与高成功率时段。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 658, "symbol": "struct LinkPrefsView"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 664, "symbol": "自动预握手 Toggle"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 667, "symbol": "手动连接模式回显"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 693, "symbol": "Section 连接统计"}
+      ],
+      "tags": ["设置页", "偏好"],
+      "status": "implemented"
+    },
+    {
+      "key": "device.link.state-history",
+      "parentKey": "device.link",
+      "domain": "device",
+      "level": 3,
+      "name": "链路三态切换历史",
+      "kind": "data",
+      "summary": "每次三态切换记一笔（时刻 + 新状态），只保留最近 5 条，供长按胶囊看时间线。",
+      "details": [
+        "存储 kf_link_hist，元素 {at: \"MM-dd HH:mm\", to: 状态名}，插入队首、超 5 条截断。",
+        "由 LinkPill 宿主的 onChange 调用 noteStateHop（本文件内只有写入实现）。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 605, "symbol": "struct StateHop"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 606, "symbol": "history()"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 610, "symbol": "noteStateHop"}
+      ],
+      "tags": ["历史", "存储键"],
+      "status": "implemented"
+    },
+    {
+      "key": "device.link.startup-preconnect",
+      "parentKey": "device.link",
+      "domain": "device",
+      "level": 3,
+      "name": "冷启动预连接",
+      "kind": "automation",
+      "summary": "在启动链路里立刻建链，不等首页渲染；与 enterPage 的区别只是发起时机。",
+      "details": [
+        "仍受 kf_link_auto_<mac> 管（用户选手动连接模式就不预热）。",
+        "最终汇到 preconnect()，行为/幂等/失败处理完全一致，并顺手 onPreconnectDone 补发。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 625, "symbol": "startupPreconnect(mac:)"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 636, "symbol": "enterPage()"}
+      ],
+      "tags": ["启动", "预热"],
+      "status": "implemented"
+    },
+    {
+      "key": "device.link.scan-rssi",
+      "parentKey": "device.link",
+      "domain": "device",
+      "level": 4,
+      "name": "扫描取 RSSI 与每锁记忆",
+      "kind": "service",
+      "summary": "带超时的扫描循环取目标锁广播 RSSI；结果写入 kf_linkrssi_<mac> 并同时喂给自动开锁滤波。",
+      "details": [
+        "默认 timeoutMs 6000，命中即返回；每 300ms 轮询一次 allDiscovered，含 Task.isCancelled 判据。",
+        "mac 匹配兼容原始串与去冒号显示串（大小写归一）。",
+        "saveRssi 写 kf_linkrssi_<mac>、更新 LinkSense.lastRssi 并以 @MainActor 喂 AutoOpenController.feedRssi。",
+        "noteScannedRssi 只更新最近信号，不动连接态（扫到广播 ≠ 已连接）。"
+      ],
+      "evidence": [
+        {"file": "App/Core/LinkSenseKit.swift", "line": 492, "symbol": "func scan(mac:timeoutMs:)"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 504, "symbol": "300ms 轮询 + 取消判据"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 519, "symbol": "noteScannedRssi"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 525, "symbol": "saveRssi / rssiFor"}
+      ],
+      "tags": ["扫描", "RSSI", "存储键"],
+      "status": "implemented"
+    },
+    {
+      "key": "care.battery",
+      "parentKey": "care",
+      "domain": "care",
+      "level": 2,
+      "name": "电量·维护·固件关怀引擎",
+      "kind": "service",
+      "summary": "本地电量采样、低电通知、启动关怀巡检与夜间免扰裁决的纯数据层（无 UI）。",
+      "details": [
+        "协议只给电量百分比，无电压、无充电位 —— 只做本地采样，不虚构电压/充电态/续航估算。",
+        "通知全部走 UNUserNotificationCenter 本地通知，免扰与白天送达统一在 notifyNow 裁决。",
+        "数据落盘族：kf_batt_ / kf_batt_state_ / kf_fwsince_ / kf_damp_last_ / kf_clock_notify_ / kf_fp_last_。"
+      ],
+      "evidence": [
+        {"file": "App/Core/BatteryCare.swift", "line": 20, "symbol": "enum BatteryCare"},
+        {"file": "App/Core/BatteryCare.swift", "line": 210, "symbol": "enum CareSchedule"},
+        {"file": "App/Core/BatteryCare.swift", "line": 3, "symbol": "存储键族头注"}
+      ],
+      "tags": ["电量", "关怀", "核心"],
+      "status": "implemented"
+    },
+    {
+      "key": "care.battery.tier",
+      "parentKey": "care.battery",
+      "domain": "care",
+      "level": 3,
+      "name": "五档电量映射",
+      "kind": "state",
+      "summary": "把百分比映射成图标 + 语义色 + 中文档位；<=20% 额外标记 severe 供全 App 视觉降级。",
+      "details": [
+        "<0 未知(neutral)；0–10 空(danger, severe)；11–20 低(warn, severe)；21–35 低(warn)；36–60 中(accent)；61–80 高(ok)；>80 满(ok)。",
+        "图标分别 battery.0/25/50/75/100percent。",
+        "档位表是「档位映射说明」的数据源，界面展示原值 + 映射，不标毫伏。"
+      ],
+      "evidence": [
+        {"file": "App/Core/BatteryCare.swift", "line": 24, "symbol": "struct Tier"},
+        {"file": "App/Core/BatteryCare.swift", "line": 30, "symbol": "tier(_:)"},
+        {"file": "App/Core/BatteryCare.swift", "line": 42, "symbol": "isLow(0...20)"}
+      ],
+      "tags": ["电量档位"],
+      "status": "implemented"
+    },
+    {
+      "key": "care.battery.low-visual",
+      "parentKey": "care.battery",
+      "domain": "care",
+      "level": 3,
+      "name": "低电全 App 视觉降级",
+      "kind": "state",
+      "summary": "当前锁电量 <=20% 时把全 App 动效令牌压到 calm（与系统「减弱动态」同优先级）。",
+      "details": [
+        "读取链：DB.preferredMac → displayPct(采样/快照取新)；无锁/无读数/-1 → false（判不出就不降级）。",
+        "缓存 (mac, low) 避免每次求值都解快照 JSON；sample() 无论是否落点都刷新低电缓存。",
+        "动效令牌 Motion.tier 里 BatteryCare.appLowBattery 直接返回 calm，用户显式 lively 也让路。"
+      ],
+      "evidence": [
+        {"file": "App/Core/BatteryCare.swift", "line": 53, "symbol": "appLowBattery"},
+        {"file": "App/Core/BatteryCare.swift", "line": 109, "symbol": "低电缓存刷新"},
+        {"file": "App/Core/DesignSystem.swift", "line": 240, "symbol": "低电 → calm"}
+      ],
+      "tags": ["低电", "动效降级"],
+      "status": "implemented"
+    },
+    {
+      "key": "care.battery.sample",
+      "parentKey": "care.battery",
+      "domain": "care",
+      "level": 3,
+      "name": "电量采样落盘",
+      "kind": "data",
+      "summary": "每次读 03 成功后追加采样点：变化必记、未变化每 1 小时记一次，保留 90 天 + 500 条封顶。",
+      "details": [
+        "存储 kf_batt_<mac>，元素 {t: Unix 毫秒, pct}。",
+        "mac 为空或 pct<0 直接拒（不产生假点）。",
+        "写入后调用 evaluateLowBattery 触发滞回通知判定。",
+        "返回 Bool 表示本次是否真的追加。"
+      ],
+      "evidence": [
+        {"file": "App/Core/BatteryCare.swift", "line": 11, "symbol": "struct BattSample"},
+        {"file": "App/Core/BatteryCare.swift", "line": 107, "symbol": "sample(_:pct:)"},
+        {"file": "App/Core/BatteryCare.swift", "line": 112, "symbol": "1 小时去重 + 90 天 + 500 条"}
+      ],
+      "tags": ["采样", "存储键"],
+      "status": "implemented"
+    },
+    {
+      "key": "care.battery.display",
+      "parentKey": "care.battery.sample",
+      "domain": "care",
+      "level": 4,
+      "name": "统一展示读数",
+      "kind": "data",
+      "summary": "采样最新值与锁侧快照取时间较新者作为展示电量；读数文案把 >80% 与未读到分开表述。",
+      "details": [
+        "displayPct：快照未知 → 用采样；都已知 → 谁更新用谁。",
+        "facePct(live:)：会话实时读数优先，别的锁必须传 -1，避免 A 锁电量安到 B 锁。",
+        "faceText：<0 → \"--\"；>80 → \">80%\"（锁侧该量本身是粗估档）；其余 \"N%\"。"
+      ],
+      "evidence": [
+        {"file": "App/Core/BatteryCare.swift", "line": 84, "symbol": "displayPct"},
+        {"file": "App/Core/BatteryCare.swift", "line": 94, "symbol": "facePct"},
+        {"file": "App/Core/BatteryCare.swift", "line": 98, "symbol": "faceText"}
+      ],
+      "tags": ["读数", "展示"],
+      "status": "implemented"
+    },
+    {
+      "key": "care.battery.notify",
+      "parentKey": "care.battery",
+      "domain": "care",
+      "level": 3,
+      "name": "低电通知两档滞回",
+      "kind": "action",
+      "summary": "<=20% 提醒「该喂电了」，<=10% 升级「电量告急」；回到 >30% 才重新武装，避免反复轰炸。",
+      "details": [
+        "状态键 kf_batt_state_<mac> 存 0/1/2；先记账再发送，免扰静默也不反复尝试。",
+        "档位只升不降（DB 值 < level 才发）。",
+        "通知 id m4.batt.<mac>，正文带锁名与当前百分比。",
+        "与可调横幅阈值 kf_batt_threshold（10/15/20）互相独立。"
+      ],
+      "evidence": [
+        {"file": "App/Core/BatteryCare.swift", "line": 151, "symbol": "evaluateLowBattery"},
+        {"file": "App/Core/BatteryCare.swift", "line": 154, "symbol": ">30 复位武装"},
+        {"file": "App/Core/BatteryCare.swift", "line": 168, "symbol": "notifyNow(id: m4.batt.)"}
+      ],
+      "tags": ["低电", "通知", "滞回"],
+      "status": "implemented"
+    },
+    {
+      "key": "care.battery.big-drop",
+      "parentKey": "care.battery",
+      "domain": "care",
+      "level": 3,
+      "name": "单日掉电观察",
+      "kind": "diagnostic",
+      "summary": "同一本地日内最早与最晚两个采样点的电量差超过阈值即记为异常掉电日，只做真实点位相减不拟合。",
+      "details": [
+        "默认窗口 30 天、阈值 drop > 20。",
+        "只对「当天至少读到两次」的日子成立（采样随读 03 落点）。",
+        "返回按日倒序的 (day, from, to, drop)，日期格式 yyyy-MM-dd（en_US_POSIX）。"
+      ],
+      "evidence": [
+        {"file": "App/Core/BatteryCare.swift", "line": 122, "symbol": "bigDropDays(_:days:threshold:)"},
+        {"file": "App/Core/BatteryCare.swift", "line": 146, "symbol": "drop > threshold 收集"}
+      ],
+      "tags": ["掉电", "诊断"],
+      "status": "implemented"
+    },
+    {
+      "key": "care.battery.threshold",
+      "parentKey": "care.battery.notify",
+      "domain": "care",
+      "level": 4,
+      "name": "低电横幅阈值档",
+      "kind": "setting",
+      "summary": "kf_batt_threshold 默认 15%，只允许 10/15/20，非法值回落 15。",
+      "details": [
+        "与 isLow(<=20%) 的推送门槛互相独立：一个管界面横幅，一个管通知。",
+        "读取时做白名单校验，避免脏值产生奇怪阈值。"
+      ],
+      "evidence": [
+        {"file": "App/Core/BatteryCare.swift", "line": 213, "symbol": "battThreshold"},
+        {"file": "App/Core/BatteryCare.swift", "line": 215, "symbol": "kf_batt_threshold 默认 15"}
+      ],
+      "tags": ["设置", "阈值"],
+      "status": "implemented"
+    },
+    {
+      "key": "care.battery.quiet",
+      "parentKey": "care.battery",
+      "domain": "care",
+      "level": 3,
+      "name": "夜间免扰",
+      "kind": "setting",
+      "summary": "kf_quiet_night 默认开；22:00–08:00 为免扰时段，即时通知静默丢弃（首页横幅仍在）。",
+      "details": [
+        "isQuietHour 用 WeekCal.gregorian 取小时：h >= 22 或 h < 8。",
+        "免扰判定同时被预握手近场提醒、回连成功触感、前台通知展示复用。"
+      ],
+      "evidence": [
+        {"file": "App/Core/BatteryCare.swift", "line": 211, "symbol": "quietOn"},
+        {"file": "App/Core/BatteryCare.swift", "line": 221, "symbol": "isQuietHour"},
+        {"file": "App/Core/BatteryCare.swift", "line": 233, "symbol": "免扰分支"}
+      ],
+      "tags": ["免扰", "设置"],
+      "status": "implemented"
+    },
+    {
+      "key": "care.battery.day-deliver",
+      "parentKey": "care.battery.quiet",
+      "domain": "care",
+      "level": 4,
+      "name": "白天送达（升级提醒）",
+      "kind": "automation",
+      "summary": "标记 dayDeliver 的通知在免扰时段不被丢弃，而是挂到下一个 08:00 用日历触发器送达。",
+      "details": [
+        "22 点之后触发时目标日顺延一天，再设 08:00。",
+        "使用 UNCalendarNotificationTrigger(repeats: false)，同一 id 覆盖式添加。",
+        "未标记 dayDeliver 的即时通知在免扰期直接 return。"
+      ],
+      "evidence": [
+        {"file": "App/Core/BatteryCare.swift", "line": 228, "symbol": "notifyNow(dayDeliver:)"},
+        {"file": "App/Core/BatteryCare.swift", "line": 236, "symbol": "目标日 08:00 计算"},
+        {"file": "App/Core/BatteryCare.swift", "line": 244, "symbol": "UNCalendarNotificationTrigger"}
+      ],
+      "tags": ["通知", "调度"],
+      "status": "implemented"
+    },
+    {
+      "key": "care.battery.launch-patrol",
+      "parentKey": "care.battery",
+      "domain": "care",
+      "level": 3,
+      "name": "启动关怀巡检",
+      "kind": "automation",
+      "summary": "启动时逐锁跑防潮、校时、指纹头三条关怀判定，各按自己的节流窗口发本地通知。",
+      "details": [
+        "无钥匙串或通知未授权直接返回。",
+        "每条判定各自维护 last 时间键，命中才发通知并更新时间。",
+        "通知 id 前缀 m4.damp. / m4.clock. / m4.fp. + mac。"
+      ],
+      "evidence": [
+        {"file": "App/Core/BatteryCare.swift", "line": 256, "symbol": "refreshOnLaunch()"},
+        {"file": "App/Core/BatteryCare.swift", "line": 258, "symbol": "空钥匙串 / 授权前置"},
+        {"file": "App/Core/BatteryCare.swift", "line": 263, "symbol": "逐锁循环"}
+      ],
+      "tags": ["巡检", "关怀"],
+      "status": "implemented"
+    },
+    {
+      "key": "care.battery.damp",
+      "parentKey": "care.battery.launch-patrol",
+      "domain": "care",
+      "level": 4,
+      "name": "梅雨防潮提醒",
+      "kind": "automation",
+      "summary": "安装场所含湿区关键词且当前是 6/7 月时，每 7 天提醒检查电池触点与锁体。",
+      "details": [
+        "关键词：浴室 / 户外 / 院 / 阳台 / 天台（place.contains 任一）。",
+        "节流键 kf_damp_last_<mac>，阈值 7 天。",
+        "文案点名锁名与「梅雨季湿气重」。"
+      ],
+      "evidence": [
+        {"file": "App/Core/BatteryCare.swift", "line": 265, "symbol": "防潮判定"},
+        {"file": "App/Core/BatteryCare.swift", "line": 267, "symbol": "湿区关键词表"},
+        {"file": "App/Core/BatteryCare.swift", "line": 273, "symbol": "通知 m4.damp."}
+      ],
+      "tags": ["防潮", "提醒"],
+      "status": "implemented"
+    },
+    {
+      "key": "care.battery.clock",
+      "parentKey": "care.battery.launch-patrol",
+      "domain": "care",
+      "level": 4,
+      "name": "校时关怀",
+      "kind": "automation",
+      "summary": "上次校时超过 30 天时提醒一次（30 天内不重复），因为临时密码与时间窗依赖锁钟。",
+      "details": [
+        "判据 DB.syncTime(mac) > 0 且 now - t > 30 天。",
+        "节流键 kf_clock_notify_<mac>，窗口 30 天。",
+        "文案「已超 30 天未校时, 临时密码可能失效」。"
+      ],
+      "evidence": [
+        {"file": "App/Core/BatteryCare.swift", "line": 277, "symbol": "校时关怀判定"},
+        {"file": "App/Core/BatteryCare.swift", "line": 280, "symbol": "kf_clock_notify_"},
+        {"file": "App/Core/BatteryCare.swift", "line": 283, "symbol": "通知 m4.clock."}
+      ],
+      "tags": ["校时", "提醒"],
+      "status": "implemented"
+    },
+    {
+      "key": "care.battery.fp-clean",
+      "parentKey": "care.battery",
+      "domain": "care",
+      "level": 3,
+      "name": "指纹头清洁判定",
+      "kind": "diagnostic",
+      "summary": "锁日志按锁端时间降序后最近 3 条全部是指纹告警（type 13）即判定指纹头可能脏了。",
+      "details": [
+        "必须先按 lockTime 降序再取前 3（缓存数组序 ≠ 时间序）。",
+        "不足 3 条返回 false（样本不够不下结论）。",
+        "通知节流 7 天，键 kf_fp_last_<mac>，id m4.fp.<mac>。"
+      ],
+      "evidence": [
+        {"file": "App/Core/BatteryCare.swift", "line": 188, "symbol": "fpCleanNeeded"},
+        {"file": "App/Core/BatteryCare.swift", "line": 190, "symbol": "按 lockTime 降序取 3"},
+        {"file": "App/Core/BatteryCare.swift", "line": 288, "symbol": "巡检内调用"}
+      ],
+      "tags": ["指纹", "诊断"],
+      "status": "implemented"
+    },
+    {
+      "key": "care.battery.fw",
+      "parentKey": "care.battery",
+      "domain": "care",
+      "level": 3,
+      "name": "固件服役天数与版本比较",
+      "kind": "data",
+      "summary": "从本机首次读到该固件版本起算服役时间（不猜锁端出厂时间），并提供三段版本比较。",
+      "details": [
+        "存储 kf_fwsince_<mac> = {fw, at 毫秒}；版本变化则重新起算。",
+        "versionLt 逐段按数字比较、缺段补 0，最多比三段。",
+        "本文件只保留判据，DFU 升级流程已删。"
+      ],
+      "evidence": [
+        {"file": "App/Core/BatteryCare.swift", "line": 176, "symbol": "struct FwSince / fwSince"},
+        {"file": "App/Core/BatteryCare.swift", "line": 197, "symbol": "versionLt"},
+        {"file": "App/Core/BatteryCare.swift", "line": 302, "symbol": "_FWVersion 三段校验"}
+      ],
+      "tags": ["固件", "版本"],
+      "status": "implemented"
+    },
+    {
+      "key": "care.battery.cold-season",
+      "parentKey": "care.battery.launch-patrol",
+      "domain": "care",
+      "level": 4,
+      "name": "低温季窗口",
+      "kind": "state",
+      "summary": "11 月–3 月判定为低温季（纯本地日期规则），供低温相关提示使用。",
+      "details": [
+        "用 WeekCal.gregorian 取月份：11/12/1/2/3 为真。",
+        "本文件内是公开只读判据，具体提示文案在其他页使用。"
+      ],
+      "evidence": [
+        {"file": "App/Core/BatteryCare.swift", "line": 66, "symbol": "isColdSeason"}
+      ],
+      "tags": ["季节", "判据"],
+      "status": "implemented"
+    },
+    {
+      "key": "care.battery.notify-auth",
+      "parentKey": "care.battery.launch-patrol",
+      "domain": "care",
+      "level": 4,
+      "name": "通知授权申请",
+      "kind": "action",
+      "summary": "申请 alert/sound/badge 三项授权，失败返回 false 并跳过本轮巡检。",
+      "details": [
+        "一次 requestAuthorization，失败不抛错只返回 false。",
+        "月度备份调度也复用同一入口。"
+      ],
+      "evidence": [
+        {"file": "App/Core/BatteryCare.swift", "line": 251, "symbol": "requestAuth()"}
+      ],
+      "tags": ["通知", "权限"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.kit",
+      "parentKey": "diagnostic",
+      "domain": "diagnostic",
+      "level": 2,
+      "name": "诊断·性能·运维数据层",
+      "kind": "service",
+      "summary": "全部本地、无 UI 的诊断数据层：操作流水、启动打点、缓存、日志台账、遥测、健康检查、对账与自检。",
+      "details": [
+        "本仓「数据库」是 UserDefaults + JSON 编码的语义封装，VACUUM/索引类创意按等价落地（整理 = 清空键 + 回环校验）。",
+        "已明确删除且不得再引用为已实现：217（SQLite 索引迁移）、218/221（写队列引擎）、277（Watchdog 零调用副本）。",
+        "多数能力是「数据 + 只读判据」，删除类动作只发生在显式按钮路径。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 1, "symbol": "文件头注"},
+        {"file": "App/Core/DiagKit.swift", "line": 21, "symbol": "enum DiagTime"},
+        {"file": "App/Core/DiagKit.swift", "line": 73, "symbol": "218/221 删因说明"}
+      ],
+      "tags": ["诊断", "核心"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.ops",
+      "parentKey": "diagnostic.kit",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "本次会话操作序列 DiagOps",
+      "kind": "data",
+      "summary": "记录本会话做过的诊断动作（label + 时刻），供崩溃档案与诊断页回看。",
+      "details": [
+        "开关键 kf_diag_ops_on，默认 true；关闭后 record 直接丢弃。",
+        "存储 kf_diag_ops，元素 {t: \"MM-dd HH:mm:ss\", label}，插入队首、封顶 50 条。",
+        "崩溃档案取其中最近 5 条作为「最后操作」。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 42, "symbol": "struct DiagOp"},
+        {"file": "App/Core/DiagKit.swift", "line": 48, "symbol": "kf_diag_ops_on"},
+        {"file": "App/Core/DiagKit.swift", "line": 52, "symbol": "record(_:)"}
+      ],
+      "tags": ["诊断", "流水"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.startup",
+      "parentKey": "diagnostic.kit",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "启动预算打点 StartupTrace",
+      "kind": "diagnostic",
+      "summary": "冷启动各阶段相对 t0 打点并换算毫秒，总耗时超 800ms 判超预算。",
+      "details": [
+        "mark(p) 记 CFAbsoluteTimeGetCurrent() - t0；ms(p) 返回毫秒（rounded）。",
+        "totalMs 为实时总耗时；overBudget = totalMs > 800。",
+        "打点表由 Locked 保护，可被多处并发写。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 63, "symbol": "StartupTrace"},
+        {"file": "App/Core/DiagKit.swift", "line": 66, "symbol": "mark(_:)"},
+        {"file": "App/Core/DiagKit.swift", "line": 70, "symbol": "overBudget > 800ms"}
+      ],
+      "tags": ["启动", "性能"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.cache",
+      "parentKey": "diagnostic.kit",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "热点缓存 HotCache",
+      "kind": "data",
+      "summary": "缓存每把锁的整份日志解码结果加速时间线首屏，写入口负责作废。",
+      "details": [
+        "内存态 {store: [mac: [CachedLog]], currentMac}，用 Locked 保护（写入口在 BLE 回调线程）。",
+        "invalidate(mac) 由 Store.writeLogs/replaceLogs 写完即调用，缓存最多比库旧一个写入动作。",
+        "recent(mac) 命中 currentMac 才复用，否则读盘并写入缓存。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 89, "symbol": "enum HotCache"},
+        {"file": "App/Core/DiagKit.swift", "line": 100, "symbol": "invalidate"},
+        {"file": "App/Core/DiagKit.swift", "line": 101, "symbol": "recent(_:)"}
+      ],
+      "tags": ["缓存", "性能"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.scan",
+      "parentKey": "diagnostic.kit",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "扫描时长统计与省电建议",
+      "kind": "diagnostic",
+      "summary": "按本地日累计 BLE 扫描秒数（只留 30 天），并按近 7 天日均给出真实用量的省电建议。",
+      "details": [
+        "存储 kf_scan_secs = [yyyy-MM-dd: 秒]；写入点只有冷启动扫描与按锁扫描。",
+        "recent(days:) 返回新在前的 (day, secs)。",
+        "建议三档：日均 <5s 已很省 / <30s 正常（带当前档位窗口 ms）/ >=30s 偏多，建议换省电档或关预握手。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 114, "symbol": "enum ScanStats"},
+        {"file": "App/Core/DiagKit.swift", "line": 122, "symbol": "record(seconds:)"},
+        {"file": "App/Core/DiagKit.swift", "line": 136, "symbol": "advice()"}
+      ],
+      "tags": ["扫描", "省电", "统计"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.prewarm",
+      "parentKey": "diagnostic.kit",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "启动并行预热 Prewarm",
+      "kind": "automation",
+      "summary": "冷启动一次并发读完三项互不依赖的数据，并预热热点缓存，后续零成本。",
+      "details": [
+        "只跑一次（done 标志，@MainActor）。",
+        "concurrentPerform(3)：DB.keychains() / DB.hasPasscode() / kf_theme 字符串。",
+        "回主线程执行 HotCache.recent(mac) 作为惰性预热。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 149, "symbol": "enum Prewarm"},
+        {"file": "App/Core/DiagKit.swift", "line": 151, "symbol": "run(mac:)"},
+        {"file": "App/Core/DiagKit.swift", "line": 158, "symbol": "concurrentPerform(3)"}
+      ],
+      "tags": ["启动", "预热"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.logs",
+      "parentKey": "diagnostic.kit",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "分级日志台账 DiagLogs",
+      "kind": "data",
+      "summary": "由 LockService 分级日志调用的持久台账：日期/时刻/级别/消息，按本地日分组并可导出与检索。",
+      "details": [
+        "存储 kf_diag_logs，元素 {date yyyy-MM-dd, time HH:mm:ss, level info/warn/error, msg}。",
+        "append 封顶 500 条，并按保留策略即时裁剪。",
+        "localDay 用 StatsKit.dayKey（本地时区），刻意不用 ISO8601（UTC 会让 00:00–08:00 拿到昨天）。",
+        "today() 返回当日条目；all() 返回按保留策略过滤后的全量。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 171, "symbol": "struct DiagLogEntry"},
+        {"file": "App/Core/DiagKit.swift", "line": 192, "symbol": "localDay"},
+        {"file": "App/Core/DiagKit.swift", "line": 229, "symbol": "append(_:_:date:time:)"},
+        {"file": "App/Core/DiagKit.swift", "line": 224, "symbol": "today()"}
+      ],
+      "tags": ["日志", "存储键"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.logs.retention",
+      "parentKey": "diagnostic.logs",
+      "domain": "diagnostic",
+      "level": 4,
+      "name": "日志保留策略与二次确认",
+      "kind": "setting",
+      "summary": "kf_diag_log_retention 三档（全部 / 365 天 / 90 天）；切换前先算将删条数，确认后立即生效。",
+      "details": [
+        "pruneCount(days:) 给出这一刀会删几条，作为二次确认第一行。",
+        "pruneNow() 立即应用并返回实际删除条数（旧实现要等下一次写入才生效）。",
+        "append 与 all 用同一口径（本地日字符串比较）。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 179, "symbol": "retentionKey"},
+        {"file": "App/Core/DiagKit.swift", "line": 207, "symbol": "pruneCount"},
+        {"file": "App/Core/DiagKit.swift", "line": 215, "symbol": "pruneNow"}
+      ],
+      "tags": ["保留策略", "破坏性操作"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.logs.entity",
+      "parentKey": "diagnostic.logs",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "日志实体识别与详情卡",
+      "kind": "diagnostic",
+      "summary": "从日志文本识别可深链引用（凭证号 / 指纹批次 / 成员名 / MAC），并给只含元数据的详情。",
+      "details": [
+        "正则词表与 LockService 实际写出的词一致：凭证#(\\d+)、指纹#(\\d+)、MAC=[0-9a-fA-F]{12}（负向前瞻防从长 hex 截段）。",
+        "成员按名字包含匹配；pwd/fp 类可跳凭证页（isCredential），成员/MAC 只出元数据卡。",
+        "entityDetail 绝不输出 pwd 字段明文；台账查不到时提示回收站或建议拉一次凭证清单。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 240, "symbol": "struct EntityRef"},
+        {"file": "App/Core/DiagKit.swift", "line": 268, "symbol": "entities(in:)"},
+        {"file": "App/Core/DiagKit.swift", "line": 296, "symbol": "entityDetail"}
+      ],
+      "tags": ["日志", "深链", "隐私"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.telemetry",
+      "parentKey": "diagnostic.kit",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "BLE 事件流水与连接遥测",
+      "kind": "diagnostic",
+      "summary": "两本环形账：BLE 事件（200 条）与连接尝试（300 条），供成功率、按日趋势与失败归类出图。",
+      "details": [
+        "kf_ble_events 元素 {at \"MM-dd HH:mm\", what, ok}，插入队首封顶 200。",
+        "kf_conn_attempts 元素 {t \"MM-dd HH:mm:ss\", mac, ok, reason}，封顶 300。",
+        "successRate() 为「全部留存」口径（不是滚动 30 天），界面不得写成近 30 天。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 330, "symbol": "struct BleEvent"},
+        {"file": "App/Core/DiagKit.swift", "line": 336, "symbol": "struct ConnAttempt"},
+        {"file": "App/Core/DiagKit.swift", "line": 343, "symbol": "recordEvent"},
+        {"file": "App/Core/DiagKit.swift", "line": 350, "symbol": "recordAttempt"},
+        {"file": "App/Core/DiagKit.swift", "line": 358, "symbol": "successRate()"}
+      ],
+      "tags": ["遥测", "统计"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.telemetry.daily",
+      "parentKey": "diagnostic.telemetry",
+      "domain": "diagnostic",
+      "level": 4,
+      "name": "按日成功率与失败归类",
+      "kind": "diagnostic",
+      "summary": "把连接尝试按 MM-dd 聚合成日成功率趋势，并把失败原因归成四类各给建议。",
+      "details": [
+        "dailyRates：按 t 前 5 位分桶后反转成时间正序，输出 day/n/ok/pct。",
+        "failClasses：超时 / 未发现设备 / 中途断开 / 其他，各带处置 hint，按次数降序。",
+        "冷启动无数据时返回空数组，界面显示「积累中」。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 367, "symbol": "struct DayRate"},
+        {"file": "App/Core/DiagKit.swift", "line": 374, "symbol": "dailyRates()"},
+        {"file": "App/Core/DiagKit.swift", "line": 393, "symbol": "failClasses()"}
+      ],
+      "tags": ["统计", "失败分析"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.silent",
+      "parentKey": "diagnostic.kit",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "静默排查模式（127）",
+      "kind": "setting",
+      "summary": "打开后暂停六处自动动作，便于干净复现问题：自动连接/预热刷新/到场补发/自动重连/会话巡检/冷启动扫描。",
+      "details": [
+        "存储键 kf_silent_trouble；DiagFlags.silent 为唯一读点。",
+        "消费点全在 LinkSenseKit（:96/:136/:186/:214/:291/:381/:541），本文件不实现行为只提供开关。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 424, "symbol": "127 静默模式说明"},
+        {"file": "App/Core/DiagKit.swift", "line": 427, "symbol": "enum DiagFlags"},
+        {"file": "App/Core/DiagKit.swift", "line": 428, "symbol": "kf_silent_trouble"}
+      ],
+      "tags": ["排查", "开关"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.crash",
+      "parentKey": "diagnostic.kit",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "异常退出档案 CrashGuard",
+      "kind": "diagnostic",
+      "summary": "用崩溃标记位判断上次是否正常退出，异常时记一条含上次会话时长与最后 5 条操作的档案。",
+      "details": [
+        "键：kf_crash_marker（正常退出置 false）、kf_last_session（秒）、kf_session_start、kf_crash_arch（最多 10 条）、kf_crash_arch_pending。",
+        "启动 checkAbnormalExit：首启只打标记；见标记仍为 true 即记异常并置 pending。",
+        "markCleanExit 进后台调用，记录会话时长并清标记；markSessionStart 记启动绝对时刻。",
+        "consumePending 读后即清（供 UI 一次性提示）。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 432, "symbol": "enum CrashGuard"},
+        {"file": "App/Core/DiagKit.swift", "line": 436, "symbol": "checkAbnormalExit"},
+        {"file": "App/Core/DiagKit.swift", "line": 455, "symbol": "markCleanExit"},
+        {"file": "App/Core/DiagKit.swift", "line": 467, "symbol": "consumePending"}
+      ],
+      "tags": ["崩溃", "档案"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.data-health",
+      "parentKey": "diagnostic.kit",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "数据体检 DataHealth",
+      "kind": "diagnostic",
+      "summary": "kf_ 键族体积估算、存储构成三切片与完整性检查（JSON 回环 + 台账计数 + 孤儿扫描）。",
+      "details": [
+        "families() 按前缀聚合字节（去掉 12/8 位 mac 后缀段），按体积降序。",
+        "bytesOf 口径：Data 取字节数、String 取 UTF-8 长度、其它按 16 字节估。",
+        "integrity() 必须带 .fragmentsAllowed —— 顶层标量编码是 JSON fragment，不带会把每个标量键误报为截断。",
+        "integrity 干净时也会返回一条「数据解析正常」，判 ok 必须按该前缀过滤。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 476, "symbol": "enum DataHealth"},
+        {"file": "App/Core/DiagKit.swift", "line": 488, "symbol": "families()"},
+        {"file": "App/Core/DiagKit.swift", "line": 529, "symbol": "integrity()"},
+        {"file": "App/Core/DiagKit.swift", "line": 541, "symbol": "fragmentsAllowed"}
+      ],
+      "tags": ["数据健康", "诊断"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.data-health.composition",
+      "parentKey": "diagnostic.data-health",
+      "domain": "diagnostic",
+      "level": 4,
+      "name": "存储构成三切片",
+      "kind": "diagnostic",
+      "summary": "把 kf_ 键分成「数据台账 / 日志与遥测 / 偏好设置」三段给出体积构成条。",
+      "details": [
+        "台账前缀含 keychains/ledger_/snap_/logcache_/members/cbin/cqueue 等；日志前缀含 diag_logs/ble_events/conn_attempts/crash_/wd_。",
+        "human() 用 1_000_000 与 1000 换算 MB/KB。",
+        "口径为键值长度估算，不是磁盘真实占用（必须与数字一起说明）。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 504, "symbol": "struct Slice"},
+        {"file": "App/Core/DiagKit.swift", "line": 509, "symbol": "composition()"},
+        {"file": "App/Core/DiagKit.swift", "line": 524, "symbol": "human(_:)"}
+      ],
+      "tags": ["存储", "可视化"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.data-health.vacuum",
+      "parentKey": "diagnostic.data-health",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "立即整理与孤儿隔离",
+      "kind": "action",
+      "summary": "显式按钮才执行的整理动作：清空串键、隔离已删锁的日志缓存、把无主凭证移入回收站。",
+      "details": [
+        "vacuum() 删除所有值为空字符串的 kf. 键，随后隔离孤儿日志缓存并重跑完整性，返回一行结果文案。",
+        "purgeOrphanLogCaches 把 kf_logcache_<mac> 转入 kf_logpark_<mac> 停放（不真删，避免删锁顺手烧证据）。",
+        "quarantineOrphanCredentials 把 owner 指向已删成员的凭证/指纹移入回收站（source .orphan）并清空 owner。",
+        "只读自检（integrity）里绝不删数据，清理动作全在显式路径。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 557, "symbol": "vacuum()"},
+        {"file": "App/Core/DiagKit.swift", "line": 573, "symbol": "purgeOrphanLogCaches"},
+        {"file": "App/Core/DiagKit.swift", "line": 589, "symbol": "quarantineOrphanCredentials"}
+      ],
+      "tags": ["整理", "破坏性操作"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.data-health.scan",
+      "parentKey": "diagnostic.data-health.vacuum",
+      "domain": "diagnostic",
+      "level": 4,
+      "name": "孤儿数据只读扫描",
+      "kind": "diagnostic",
+      "summary": "只报告不删除：owner 指向已删成员的凭证数、已删锁的日志缓存残留条数。",
+      "details": [
+        "被 integrity() 调用（诊断页进页即跑），因此绝不能在此删数据。",
+        "文案区分「留作无主记录」与「立即整理会隔离保留」。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 612, "symbol": "scanOrphans()"},
+        {"file": "App/Core/DiagKit.swift", "line": 628, "symbol": "此处不删的说明"}
+      ],
+      "tags": ["只读", "孤儿"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.data-health.gaps",
+      "parentKey": "diagnostic.data-health",
+      "domain": "diagnostic",
+      "level": 4,
+      "name": "空洞日期检测",
+      "kind": "diagnostic",
+      "summary": "近 14 天里整天没有任何日志条目的日期；只报两侧都有数据的空洞（首尾无数据不算缺口）。",
+      "details": [
+        "以 lockTimeStr 前 10 位为日 key，与 DiagLogs.localDay 同一本地口径。",
+        "last 与 first 之间的空洞才纳入，避免把「从未连过」误报成缺数据。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 636, "symbol": "gapDays(mac:days:)"},
+        {"file": "App/Core/DiagKit.swift", "line": 648, "symbol": "只报两侧都有数据的空洞"}
+      ],
+      "tags": ["空洞", "日志"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.data-health.archive",
+      "parentKey": "diagnostic.data-health",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "老数据归档",
+      "kind": "action",
+      "summary": "把超过一年的锁端日志缓存移入归档键，归档上限 400 条且按 idxRaw 去重。",
+      "details": [
+        "判据 lockTime < 一年前的协议秒；按 idxRaw 去重避免同一条多份。",
+        "必须用 replaceLogs 替换语义，否则 writeLogs 的去重合并会把旧行又并回缓存。",
+        "返回实际移动条数；archivedCount 读归档数量。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 656, "symbol": "archiveOldLogs()"},
+        {"file": "App/Core/DiagKit.swift", "line": 667, "symbol": "按 idxRaw 去重"},
+        {"file": "App/Core/DiagKit.swift", "line": 678, "symbol": "DB.replaceLogs"}
+      ],
+      "tags": ["归档", "日志"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.reconcile",
+      "parentKey": "diagnostic.kit",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "记录完整性对账 RecordReconcile",
+      "kind": "diagnostic",
+      "summary": "纯函数从本机日志数组推断待补拉的日期段与序号断档；因锁端不提供缺口清单，结果恒标「约」。",
+      "details": [
+        "两条信号分列且绝不相加：A 日期段缺失（那几天本机一条都没有）、B idx 不连续（可能没拉到，也可能被 300 行缓存上限挤掉）。",
+        "上限：idxGapCap 5000（超出只计 anomalies 不报号数）、segments 最多 8 段、idxGaps 最多 5 处、扫描跨度 366 天。",
+        "无有效时刻（lockTime 0 → 协议纪元占位）的行计入 clocklessRows 并排除出日期推断。",
+        "输出 PullGapReport：totalRows/clocklessRows/firstDay/lastDay/coveredDays/segments/segmentsHidden/missingDayTotal/windowed/tail/idxGaps/idxGapTotal/idxGapSkippedTotal/idxAnomalies。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 712, "symbol": "struct PullSegment"},
+        {"file": "App/Core/DiagKit.swift", "line": 736, "symbol": "struct PullGapReport"},
+        {"file": "App/Core/DiagKit.swift", "line": 755, "symbol": "enum RecordReconcile"},
+        {"file": "App/Core/DiagKit.swift", "line": 770, "symbol": "pendingPull(logs:…)"},
+        {"file": "App/Core/DiagKit.swift", "line": 758, "symbol": "idxGapCap = 5000"}
+      ],
+      "tags": ["对账", "纯函数"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.reconcile.segments",
+      "parentKey": "diagnostic.reconcile",
+      "domain": "diagnostic",
+      "level": 4,
+      "name": "待补拉日期段与尾段",
+      "kind": "diagnostic",
+      "summary": "中段空洞要求两侧都有本机数据；尾段只数到昨天并单列，不并入缺天合计之外的段列表。",
+      "details": [
+        "尾段：最后一行之后到昨天，闭区间天数 = 日差 + 1；今天不算整天。",
+        "中段：逐日走 daySet，连续缺的天并成段，按最近在前输出。",
+        "跨度超 maxSpanDays 时只扫最近一段，并把窗口左边钉在本机有日志的那一天（不破「两侧都有数据」口径）。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 810, "symbol": "尾段只数到昨天"},
+        {"file": "App/Core/DiagKit.swift", "line": 824, "symbol": "daySet >= 2 才推中段"},
+        {"file": "App/Core/DiagKit.swift", "line": 851, "symbol": "连续缺天并段"}
+      ],
+      "tags": ["缺口", "日期"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.reconcile.idx",
+      "parentKey": "diagnostic.reconcile",
+      "domain": "diagnostic",
+      "level": 4,
+      "name": "序号断档样本",
+      "kind": "diagnostic",
+      "summary": "对去重后的 idxRaw 排序求相邻差，差 >1 即记断档；差 >5000 只计数不报号数。",
+      "details": [
+        "skipped = 后 - 前 - 1；<=0 跳过。",
+        "游标边界（startIdx 从 0xFFFFFFFF 起）与锁端重排会算出上亿量级，报出来就是假数据，因此单列 anomalies。",
+        "used Int64 中转避免 0 附近截断语义。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 787, "symbol": "断档计算"},
+        {"file": "App/Core/DiagKit.swift", "line": 796, "symbol": "skipped > idxGapCap → anomalies"},
+        {"file": "App/Core/DiagKit.swift", "line": 728, "symbol": "struct IdxGap"}
+      ],
+      "tags": ["序号", "缺口"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.page-trace",
+      "parentKey": "diagnostic.kit",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "页面打开耗时 PageTrace",
+      "kind": "diagnostic",
+      "summary": "默认关闭的自统计：从切 Tab 到该页 onAppear 的墙钟时间，配不上对就丢弃。",
+      "details": [
+        "开关 kf_page_trace_on 默认 false（每次切页多两次 UserDefaults 读写）。",
+        "Tab 名映射四人：设备/凭证/记录/设置；越界返回空串并由调用方丢弃。",
+        "只收 0–3000ms；环形保留 10 条；一次切换只配一次。",
+        "口径是「下界型参考值」，不含 BLE/网络，界面不得称渲染耗时。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 898, "symbol": "struct PageOpen"},
+        {"file": "App/Core/DiagKit.swift", "line": 906, "symbol": "enum PageTrace"},
+        {"file": "App/Core/DiagKit.swift", "line": 931, "symbol": "markNav(to:)"},
+        {"file": "App/Core/DiagKit.swift", "line": 941, "symbol": "shown(_:)"},
+        {"file": "App/Core/DiagKit.swift", "line": 947, "symbol": "ms <= 3000 过滤"}
+      ],
+      "tags": ["性能", "自统计"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.recovery",
+      "parentKey": "diagnostic.kit",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "空间回收建议 Recovery",
+      "kind": "diagnostic",
+      "summary": "只读数并给建议、不删任何东西；每条建议指向已有的二次确认入口，没有入口就明说没有。",
+      "details": [
+        "六类建议：本机存取失败台账、运行日志（>=64KB 且保留策略为全部）、老数据归档、回滚快照（真实文件字节，不给清理入口）、异常退出档案、连接遥测（>=32KB）。",
+        "存取失败条目说明「某个设置没真落盘或读不出来，相关界面成功文案不可信」，只记键名不含值。",
+        "回收站/归档/保留策略的实际删除动作留在各节既有确认流程。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 965, "symbol": "struct RecoveryTip"},
+        {"file": "App/Core/DiagKit.swift", "line": 974, "symbol": "enum Recovery"},
+        {"file": "App/Core/DiagKit.swift", "line": 997, "symbol": "日志 >= 64KB 建议"},
+        {"file": "App/Core/DiagKit.swift", "line": 1022, "symbol": "回滚快照不给清理入口"}
+      ],
+      "tags": ["空间", "建议"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.maintenance",
+      "parentKey": "diagnostic.kit",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "维护回执 MaintenanceLog",
+      "kind": "data",
+      "summary": "把本会话做过的本机维护（真空清理/归档/自动补发/备份快照）记下来，下次启动在设备页 Hero 卡下回一行。",
+      "details": [
+        "存储 kf_maint_acts，元素 {at: 秒, label}，插入队首、封顶 8 条。",
+        "创意原文写「退出期间」，但本 App 唯一后台任务（充电备份）不做这三类维护，故按「上次会话」口径改写。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 1051, "symbol": "enum MaintenanceLog"},
+        {"file": "App/Core/DiagKit.swift", "line": 1053, "symbol": "kf_maint_acts"},
+        {"file": "App/Core/DiagKit.swift", "line": 1054, "symbol": "record(_:)"}
+      ],
+      "tags": ["维护", "回执"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.health",
+      "parentKey": "diagnostic.kit",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "一键体检 DiagHealth",
+      "kind": "diagnostic",
+      "summary": "十项体检（蓝牙/通知/本机密码/存储/备份新鲜度/备份文件可读/门锁连接/数据完整性/触感/面容），可单项复测并存档。",
+      "details": [
+        "每项满分 20、警告 10；总分 = Σ得分 × 100 / (项数 × 20)，全绿必 100。",
+        "runItem(id) 支持单项复测；saveArchive 存 kf_diag_arch（最多 30 条，含 at/score/lines）。",
+        "存储余量阈值 500MB；备份新鲜度阈值 30 天（kf_backup_hist 为 epoch 毫秒）。",
+        "备份文件可读性取导出目录最新 .enc：信封完整 / 明文包 checksum 通过 / 无法解析三态。",
+        "门锁连接：无配对记录算通过（未启用），有 lastConnectedAt 且非 sleeping 通过。",
+        "触感只按硬件能力（CHHapticEngine.capabilitiesForHardware）报，不谎报开关状态。",
+        "面容项无生物硬件不算故障，如实写「该能力走 DEFERRED」。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 1062, "symbol": "struct HealthCheckItem"},
+        {"file": "App/Core/DiagKit.swift", "line": 1075, "symbol": "enum DiagHealth"},
+        {"file": "App/Core/DiagKit.swift", "line": 1082, "symbol": "items 十项清单"},
+        {"file": "App/Core/DiagKit.swift", "line": 1102, "symbol": "percent"},
+        {"file": "App/Core/DiagKit.swift", "line": 1118, "symbol": "saveArchive"}
+      ],
+      "tags": ["体检", "核心"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.health.percent",
+      "parentKey": "diagnostic.health",
+      "domain": "diagnostic",
+      "level": 4,
+      "name": "总分口径唯一化",
+      "kind": "diagnostic",
+      "summary": "总分算术只写在 percent 一处，视图不另算；旧实现 raw/10 与 raw/2 两套导致「/100」是假数。",
+      "details": [
+        "full = list.count * 20；raw = Σ(ok ? 20 : 10)；score = raw*100/full。",
+        "全绿结果恒为 100。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 1099, "symbol": "149 总分口径"},
+        {"file": "App/Core/DiagKit.swift", "line": 1102, "symbol": "percent(_:)"}
+      ],
+      "tags": ["体检", "算法"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.health.ble",
+      "parentKey": "diagnostic.health",
+      "domain": "diagnostic",
+      "level": 4,
+      "name": "蓝牙权限项与不可判定态",
+      "kind": "diagnostic",
+      "summary": "先看 CBCentralManager.authorization 是否 denied，再按 BLEService 真实 powerState 六态给不同文案。",
+      "details": [
+        "poweredOn 通过；poweredOff 提示控制中心打开后重测；unsupported/unauthorized/resetting 各自文案。",
+        "unknown 明示「不等于蓝牙正常」，引导进门锁页后复测（旧实现自建无代理中心管理器导致恒红）。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 1132, "symbol": "checkBLE()"},
+        {"file": "App/Core/DiagKit.swift", "line": 1134, "symbol": "authorization == .denied"},
+        {"file": "App/Core/DiagKit.swift", "line": 1152, "symbol": "unknown / @unknown default"}
+      ],
+      "tags": ["体检", "蓝牙"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.qr",
+      "parentKey": "diagnostic.kit",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "诊断摘要二维码 DiagQR",
+      "kind": "diagnostic",
+      "summary": "本地 CoreImage 生成 %M 纠错二维码，扫码即得可读诊断文本（版本/系统/门锁/最近错误/日志摘要哈希）。",
+      "details": [
+        "输入 UTF-8 文本，纠错级别 M；直接渲染 outputImage（不裁 1×1）。",
+        "摘要含 App 版本与 build、系统名与版本、锁名/pid/固件（未配对写「门锁 未配对」）、最近错误与今日最后 30 条日志的 SHA256 前 6 字节。",
+        "图片只上屏给人扫，不过 CIContext、不落盘。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 1264, "symbol": "enum DiagQR"},
+        {"file": "App/Core/DiagKit.swift", "line": 1269, "symbol": "inputCorrectionLevel M"},
+        {"file": "App/Core/DiagKit.swift", "line": 1279, "symbol": "summaryText(app:)"}
+      ],
+      "tags": ["二维码", "分享"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.dict",
+      "parentKey": "diagnostic.kit",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "协议字段字典 ProtocolDict",
+      "kind": "diagnostic",
+      "summary": "内置 17 条状态/日志字段说明（键号 + 名称 + 含义），支持一键复制为纯文本。",
+      "details": [
+        "#01 sKeyStatus(1 清除态/2 ECDH)、#03 rc、#04 lockTime（协议秒，基准 2010-01-01，0 视为无效）、#05 zotpPeriod(分钟，默认 30)、#06 keyboardFreeze、#07 keyboardErrCount、#08 securityLevel 位域、#11 powerLevel、#14 soundVolumn(0 有声/1 静音)。",
+        "#21-23 PIN 池容量/剩余/绑定、#24-26 密码容量/剩余/最大长度、#27-29 指纹容量/剩余/批号。",
+        "#31 verFirmware 3B 反转直读、#34 pid、#35 eCtrlVer ASCII；16#04 surplus（只对当页成立）、16#05 logRec 结构。",
+        "copyable() 输出「键 名称 — 说明」逐行文本。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 1298, "symbol": "enum ProtocolDict"},
+        {"file": "App/Core/DiagKit.swift", "line": 1307, "symbol": "statusFields"},
+        {"file": "App/Core/DiagKit.swift", "line": 1329, "symbol": "copyable()"}
+      ],
+      "tags": ["协议", "字典"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.icons",
+      "parentKey": "diagnostic.kit",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "图标语义表 IconSemantics",
+      "kind": "data",
+      "summary": "16 条 SF Symbol → 用途映射，集中防漂移（同一符号不在不同页表示不同意思）。",
+      "details": [
+        "覆盖 fingerprint/keyboard/exclamationmark.triangle/shield.fill/lock.fill/key.horizontal.fill/list.bullet.rectangle.fill/gearshape.fill/bolt.fill/network/archivebox.fill/stethoscope/stop.circle.fill/chart.bar.fill/qrcode/doc.text.magnifyingglass。",
+        "每行 {icon, use}，id 即符号名。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 1335, "symbol": "enum IconSemantics"},
+        {"file": "App/Core/DiagKit.swift", "line": 1341, "symbol": "rows 表"}
+      ],
+      "tags": ["图标", "规范"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.query-templates",
+      "parentKey": "diagnostic.kit",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "白名单查询模板",
+      "kind": "action",
+      "summary": "四个只读下拉查询（最近 N 条日志 / 按类型 / 成员凭证用量 / 最近开锁失败），不开放自由输入。",
+      "details": [
+        "lastNLogs(n)：当前锁最近 n 条，行含时间前 16 字符 + typeName。",
+        "byType([Int])：把类型号翻成 StatusParser.logTypes 名称后过滤，最多 30 条。",
+        "memberUsage()：每个成员在当前锁的密码数与指纹数。",
+        "recentFails()：DB.failEvents 前 10 条，时间本地化格式化。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 1362, "symbol": "enum QueryTemplates"},
+        {"file": "App/Core/DiagKit.swift", "line": 1364, "symbol": "lastNLogs"},
+        {"file": "App/Core/DiagKit.swift", "line": 1377, "symbol": "memberUsage"},
+        {"file": "App/Core/DiagKit.swift", "line": 1386, "symbol": "recentFails"}
+      ],
+      "tags": ["查询", "只读"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.hex",
+      "parentKey": "diagnostic.kit",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "原始报文 hex dump",
+      "kind": "action",
+      "summary": "把一帧十六进制串按固定宽度换行展示，行首带十进制字符偏移。",
+      "details": [
+        "先 uppercase 再过滤非字母数字（容忍空格/冒号分隔）。",
+        "默认每行 32 个 hex 字符；偏移用 %08d 补零。",
+        "空数据显示「(无数据)」。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 1395, "symbol": "enum HexDump"},
+        {"file": "App/Core/DiagKit.swift", "line": 1396, "symbol": "dump(_:lineLen:)"}
+      ],
+      "tags": ["报文", "调试"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.fields",
+      "parentKey": "diagnostic.kit",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "帧字段解析 FrameFields",
+      "kind": "protocol",
+      "summary": "把响应帧的 KLV 表按协议字段字典翻成 (字段名, 值) 行，名源单一来自 ProtocolDict。",
+      "details": [
+        "parse 复用 ZKProtocol.parseResponse；ok 为假时返回 (0,0,[])。",
+        "16 号命令用「16#%02X」，其它用「#%02X」去字典取名；查不到回落「KLV XX」。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 1411, "symbol": "enum FrameFields"},
+        {"file": "App/Core/DiagKit.swift", "line": 1412, "symbol": "name(cmd:key:)"},
+        {"file": "App/Core/DiagKit.swift", "line": 1416, "symbol": "parse(_:)"}
+      ],
+      "tags": ["协议", "解析"],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.selfcheck",
+      "parentKey": "diagnostic.kit",
+      "domain": "diagnostic",
+      "level": 3,
+      "name": "本机库体自检 SelfCheck",
+      "kind": "diagnostic",
+      "summary": "三项只读自检：库体哈希是否与上次快照一致、审计链逐条重算、JSON 回环与台账计数核对。",
+      "details": [
+        "库体哈希走 BackupStudio.hashMismatch()，不一致时建议立即备份。",
+        "审计链 verifyChain 区分 brokenAt == -2（链序号异常：有条目被截断或换序重放）与具体断裂位置。",
+        "数据完整性按「不以 数据解析正常 开头」过滤，避免永远判异常。",
+        "summary 文案：全通过「本机自检三项全部通过」，否则「n 项异常 — 详情见下」。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DiagKit.swift", "line": 1429, "symbol": "struct SelfCheckLine"},
+        {"file": "App/Core/DiagKit.swift", "line": 1432, "symbol": "run()"},
+        {"file": "App/Core/DiagKit.swift", "line": 1450, "symbol": "summary(_:)"}
+      ],
+      "tags": ["自检", "只读"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.engine",
+      "parentKey": "backup",
+      "domain": "backup",
+      "level": 2,
+      "name": "备份·恢复·迁移引擎",
+      "kind": "service",
+      "summary": "四层协同：加密信封（CryptoBox）+ 包体模型（BackupBundle）+ 规范化校验和（BackupCanonical）+ 策略与远端（BackupStudio/CloudSync）。",
+      "details": [
+        "信封算法：PBKDF2-HMAC-SHA256(60000) → AES-128-CBC + HMAC-SHA256（encrypt-then-MAC）。",
+        "与小程序信封 JSON v1 互通；口令只在本机内存中使用，不上传任何非用户自配位置。",
+        "加解密语义不动，BackupStudio 只做外围策略（分区、保留、远端、回滚）。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupKit.swift", "line": 1, "symbol": "文件头注"},
+        {"file": "App/Services/BackupKit.swift", "line": 34, "symbol": "enum CryptoBox"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 20, "symbol": "enum BackupStudio"},
+        {"file": "App/Services/BackupCanonical.swift", "line": 52, "symbol": "enum BackupCanonical"}
+      ],
+      "tags": ["备份", "核心"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.envelope",
+      "parentKey": "backup.engine",
+      "domain": "backup",
+      "level": 3,
+      "name": "加密信封格式",
+      "kind": "protocol",
+      "summary": "把明文包加密成 {v,alg,kdf,ivHex,macHex,cHex,meta} 的 JSON 信封，mac 覆盖 IV + 密文。",
+      "details": [
+        "v=1；alg=\"aes-128-cbc+hmac-sha256\"；kdf={alg:\"pbkdf2-hmac-sha256\", iter, saltHex}。",
+        "salt 与 iv 各 16 随机字节（HexKit 十六进制编码）；meta={size: 明文字符数, at: epoch 毫秒}。",
+        "HMAC 输入 = iv ‖ 密文；AES 由 CommonCrypto 负责 PKCS7 填充（不再手动补位，缓冲 = 明文长度 + 一块）。",
+        "加密失败必须抛错，返回空数组会把「加密失败」误诊成「文件头损坏」。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupKit.swift", "line": 22, "symbol": "struct BackupEnvelope"},
+        {"file": "App/Services/BackupKit.swift", "line": 102, "symbol": "encryptText"},
+        {"file": "App/Services/BackupKit.swift", "line": 107, "symbol": "hmac(iv‖ct)"},
+        {"file": "App/Services/BackupKit.swift", "line": 78, "symbol": "PKCS7 双重填充修复"}
+      ],
+      "tags": ["加密", "信封"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.envelope.kdf",
+      "parentKey": "backup.envelope",
+      "domain": "backup",
+      "level": 4,
+      "name": "密钥派生与 iter 钳制",
+      "kind": "protocol",
+      "summary": "PBKDF2-HMAC-SHA256 派生 48 字节，前 16 作 AES 密钥、后 32 作 HMAC 密钥；iter 收敛到 1000–2000000 防远端 DoS。",
+      "details": [
+        "iter 来自不可信信封且在 HMAC 校验之前就被使用，越界值会让旧实现直接 trap。",
+        "越界一律收敛到安全区间，恶意包因此派生出错误密钥并被随后的 HMAC 正常拒绝。",
+        "defaultIter = 60000。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupKit.swift", "line": 35, "symbol": "defaultIter = 60000"},
+        {"file": "App/Services/BackupKit.swift", "line": 44, "symbol": "pbkdf2"},
+        {"file": "App/Services/BackupKit.swift", "line": 64, "symbol": "iterMin / iterMax"},
+        {"file": "App/Services/BackupKit.swift", "line": 66, "symbol": "deriveKey → (enc 16, mac 32)"}
+      ],
+      "tags": ["KDF", "安全"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.envelope.header",
+      "parentKey": "backup.envelope",
+      "domain": "backup",
+      "level": 4,
+      "name": "信封头长度校验",
+      "kind": "protocol",
+      "summary": "先验文件头声明的形状再碰密码学：IV 32 hex、HMAC 64 hex、盐 32 hex、密文是 32 的整数倍。",
+      "details": [
+        "形状不对报「文件头损坏: …」并点名是哪一段，不再拖到 MAC 层报「口令错误或数据被篡改」。",
+        "isHex 逐字符检查（HexKit.bytes 对坏输入是「尽力解」，不能当校验用）。",
+        "版本 v != 1 报「信封格式/版本不支持」。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupKit.swift", "line": 118, "symbol": "isHex(_:len:)"},
+        {"file": "App/Services/BackupKit.swift", "line": 132, "symbol": "IV / HMAC / 盐 / 密文长度校验"},
+        {"file": "App/Services/BackupKit.swift", "line": 126, "symbol": "e.v == 1"}
+      ],
+      "tags": ["校验", "错误分层"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.envelope.decrypt",
+      "parentKey": "backup.envelope",
+      "domain": "backup",
+      "level": 4,
+      "name": "解密与错误分层",
+      "kind": "protocol",
+      "summary": "校验和比对失败报「口令错误或数据被篡改」，AES 填充失败报「填充无效」，UTF-8 解不出退化为空串。",
+      "details": [
+        "MAC 用常量时间外的十六进制串比较（本仓口径），失败即抛错不继续解密。",
+        "解密成功后按 UTF-8 还原文本；非法字节返回空串（上层 JSON 层会再报不是备份）。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupKit.swift", "line": 123, "symbol": "decryptEnvelope"},
+        {"file": "App/Services/BackupKit.swift", "line": 141, "symbol": "MAC 比对"},
+        {"file": "App/Services/BackupKit.swift", "line": 96, "symbol": "填充无效"}
+      ],
+      "tags": ["解密", "错误分层"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.local",
+      "parentKey": "backup.engine",
+      "domain": "backup",
+      "level": 3,
+      "name": "本地导出目录与回滚目录隔离",
+      "kind": "action",
+      "summary": "备份文件放 Documents/lockkeeper-backups；含整库密钥材料的回滚快照移入 Application Support 并标记不进系统备份。",
+      "details": [
+        "rollbackDir 设 isExcludedFromBackup = true，且顺手删除旧的 Documents/lockkeeper-backups/rollback 明文目录。",
+        "两个目录都按需 createDirectory(withIntermediateDirectories: true)。",
+        "dir 与 rollbackDir 为 nonisolated，供 nonisolated 的快照函数使用。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupStudioKit.swift", "line": 24, "symbol": "static var dir"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 34, "symbol": "rollbackDir"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 39, "symbol": "isExcludedFromBackup"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 44, "symbol": "删除旧明文 rollback 目录"}
+      ],
+      "tags": ["文件布局", "安全"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.bundle",
+      "parentKey": "backup.engine",
+      "domain": "backup",
+      "level": 3,
+      "name": "备份包结构与 schema",
+      "kind": "data",
+      "summary": "type=kf-bundle、bundleVer=2、schema=5 的包体：devices[] + 可选 members/globals + 可选 checksum。",
+      "details": [
+        "Device = {mac, kc, ledger?, meta?}；meta 含 defend/tailgate/synctime/otpStatus/otpIdx。",
+        "currentSchema = 5，导入时拒绝更高 schema 的包（防字段被误读且无告警）。",
+        "ledger 为空（无密码且无指纹）时置 nil，避免包体塞空表。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupKit.swift", "line": 148, "symbol": "struct BackupBundle"},
+        {"file": "App/Services/BackupKit.swift", "line": 157, "symbol": "currentSchema = 5"},
+        {"file": "App/Services/BackupKit.swift", "line": 163, "symbol": "struct Device"},
+        {"file": "App/Services/BackupKit.swift", "line": 255, "symbol": "ledger 为空置 nil"}
+      ],
+      "tags": ["包体", "schema"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.bundle.globals",
+      "parentKey": "backup.bundle",
+      "domain": "backup",
+      "level": 3,
+      "name": "globals 全局段",
+      "kind": "data",
+      "summary": "跨设备内容：dongle 清单、gateway 清单、应用锁摘要、trace 记录档、OTP 密钥、外观档、设备组织。",
+      "details": [
+        "otpKeys 仅在用户勾选 kf_bk_otp 时收集（默认排除：独立口令组的密钥不该随手进备份文件）。",
+        "passcode 只存 {s,d}；强摘要 d2 不在 canonical 契约里，跨机恢复后首次输对密码会静默升级为 PBKDF2。",
+        "trace 落盘前行过 Redact.frameHex 脱敏（小程序 trace 行内含令牌/密钥 hex）。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupKit.swift", "line": 176, "symbol": "struct Globals"},
+        {"file": "App/Services/BackupKit.swift", "line": 267, "symbol": "kf_bk_otp 勾选才收 OTP"},
+        {"file": "App/Services/BackupKit.swift", "line": 444, "symbol": "passcode 只写 s/d"},
+        {"file": "App/Services/BackupKit.swift", "line": 469, "symbol": "trace 脱敏"}
+      ],
+      "tags": ["包体", "全局段"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.bundle.appearance",
+      "parentKey": "backup.bundle.globals",
+      "domain": "backup",
+      "level": 4,
+      "name": "外观档随备份（typed 白名单）",
+      "kind": "setting",
+      "summary": "14 个外观档 typed 字段随包迁移；缺字段 = 恢复时不动本机，非法值逐个跳过。",
+      "details": [
+        "字段：theme/accent/density/radius/hc/weekStart/rowH/tlGap/motion/heroTex/festive/plain/recentCount/heroStats。",
+        "用结构体而不是自由字典，避免重新开放「任意偏好键写入」；每值落地再过一遍档位白名单。",
+        "recentCount 的 JSON 键是 recent（CodingKeys 修正），旧写法会让带该字段的包 checksum 永远对不上。",
+        "heroStats 全选时不写、全空由 DS.HeroStats 回退全开。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupKit.swift", "line": 189, "symbol": "struct Appearance"},
+        {"file": "App/Services/BackupKit.swift", "line": 219, "symbol": "CodingKeys recentCount = \"recent\""},
+        {"file": "App/Services/BackupKit.swift", "line": 295, "symbol": "collectAppearance"},
+        {"file": "App/Services/BackupKit.swift", "line": 373, "symbol": "applyAppearance"}
+      ],
+      "tags": ["外观", "迁移"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.bundle.device-org",
+      "parentKey": "backup.bundle.globals",
+      "domain": "backup",
+      "level": 4,
+      "name": "设备组织随备份",
+      "kind": "setting",
+      "summary": "设备顺序、分组、分组折叠、隐藏四项随包走；用数组不用字典，且不升 schema（保小程序互通）。",
+      "details": [
+        "order = kf_lock_order 全序列；groups = kf_lockmeta_<mac>.grp；folded = kf_group_folded；hidden = kf_lock_hidden_<mac>。",
+        "四项全空则整段不带（缺字段 = 恢复时不动本机）。",
+        "落地只认本包内 mac ∩ 本机已有 mac；order 里本机已有但包内没有的锁按 pairedAt 垫在后面。",
+        "folded 只接受当前真存在的组名。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupKit.swift", "line": 233, "symbol": "var deviceOrg"},
+        {"file": "App/Services/BackupKit.swift", "line": 320, "symbol": "collectDeviceOrg"},
+        {"file": "App/Services/BackupKit.swift", "line": 343, "symbol": "applyGlobalsAppearanceAndOrg"},
+        {"file": "App/Services/BackupKit.swift", "line": 349, "symbol": "known = 包内 ∩ 本机"}
+      ],
+      "tags": ["设备组织", "迁移"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.export",
+      "parentKey": "backup.engine",
+      "domain": "backup",
+      "level": 3,
+      "name": "全量导出收集 collectAll",
+      "kind": "action",
+      "summary": "把钥匙串、台账、每锁 meta、成员、dongle、gateway、应用锁摘要、trace、可选 OTP 与外观/组织收进一个包。",
+      "details": [
+        "at 用 ISO8601；currentMac 记录导出时的当前锁。",
+        "synctime 为 0 时置 nil（没校过时不写假时间）。",
+        "members 为空时置 nil。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupKit.swift", "line": 249, "symbol": "collectAll()"},
+        {"file": "App/Services/BackupKit.swift", "line": 256, "symbol": "Device.Meta 逐项"},
+        {"file": "App/Services/BackupKit.swift", "line": 279, "symbol": "BackupBundle 组装"}
+      ],
+      "tags": ["导出"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.restore",
+      "parentKey": "backup.engine",
+      "domain": "backup",
+      "level": 3,
+      "name": "覆盖式恢复 restoreAll",
+      "kind": "action",
+      "summary": "整包写回本机：成员同名并入、mac 归一化、归属重映射、全局段按白名单落地，并统计新增/覆盖数。",
+      "details": [
+        "先按名字建成员 remap，再逐设备写 kc/ledger/meta；ml 要求 mac 6 字节且 skey 非空。",
+        "凭证/指纹 owner 先查 remap，再查本机成员是否存在，都不中就置 nil（不留悬空 owner）。",
+        "otpKeys 只接受本包内各锁的 totp/static 键位（否则等于把任意偏好键写入开放给可伪造 JSON）。",
+        "currentMac 只在本机确实存在该锁时才切换。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupKit.swift", "line": 397, "symbol": "restoreAll(_:)"},
+        {"file": "App/Services/BackupKit.swift", "line": 413, "symbol": "mac/skey 守卫"},
+        {"file": "App/Services/BackupKit.swift", "line": 422, "symbol": "owner 重映射 / 置 nil"},
+        {"file": "App/Services/BackupKit.swift", "line": 451, "symbol": "otpKeys 白名单"},
+        {"file": "App/Services/BackupKit.swift", "line": 479, "symbol": "currentMac 校验"}
+      ],
+      "tags": ["恢复", "白名单"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.zones",
+      "parentKey": "backup.engine",
+      "domain": "backup",
+      "level": 3,
+      "name": "四分区选择性导出/恢复",
+      "kind": "setting",
+      "summary": "设备 / 凭证 / 记录 / 设置四个开关；未勾分区在包内置空，恢复端按 nil 语义跳过。",
+      "details": [
+        "关 devices：devices = []。关 credentials：清每把锁的 ledger。关 records：清 globals.trace。",
+        "关 settings：清 members 与 dongle/gateway/passcode/otpKeys/appearance；若 globals 全空则整段置 nil。",
+        "导出/恢复/预演共用同一 prune 口径。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupStudioKit.swift", "line": 12, "symbol": "struct BZones"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 330, "symbol": "bundleFor(_:)"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 336, "symbol": "prune(_:_:)"}
+      ],
+      "tags": ["分区", "选择性"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.merge",
+      "parentKey": "backup.engine",
+      "domain": "backup",
+      "level": 3,
+      "name": "合并恢复 / 逐锁动作 / 冲突裁决",
+      "kind": "flow",
+      "summary": "merge 路径只增不删：逐锁可 merge/keep/skip，同 id 冲突默认保本机、仅用户裁决为「取备份」才覆盖。",
+      "details": [
+        "restore 先清 currentMac（避免指向另一台设备的锁），按 zones 裁剪，按需留回滚点。",
+        "lockActs[mac] 缺省 merge；keep = 只迁钥匙串与直连参数、保留本机台账；skip = 整锁跳过并计数。",
+        "冲突键格式 mac:p:别名 / mac:f:批次；未在 conflictTakeBackup 集合中的同 id 条目一律 continue（保本机）。",
+        "meta（防御/防尾随/校时/OTP）与 globals（外观/组织/dongle/gateway/passcode/otpKeys/trace）在合并路径也一律迁移。",
+        "返回 (imported, overwritten, skipped)。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupStudioKit.swift", "line": 504, "symbol": "restore(bundle:zones:lockActs:conflictTakeBackup:makeSnapshot:)"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 510, "symbol": "清 currentMac"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 532, "symbol": "act merge/keep/skip"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 557, "symbol": "冲突裁决 guard"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 613, "symbol": "返回三元组"}
+      ],
+      "tags": ["合并", "冲突", "迁移"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.preview",
+      "parentKey": "backup.engine",
+      "domain": "backup",
+      "level": 3,
+      "name": "恢复预演与解码",
+      "kind": "flow",
+      "summary": "导前预演：剥注释头 → 判别是否信封 → 解密 → schema 校验 → 内容哈希拦截 → 抽样 5 条 → 出预演卡。",
+      "details": [
+        "交接包前面可带 // 说明行，先 stripCommentHeader 再判机器部分，否则本 App 导出的交接包反而导不回来。",
+        "looksEncrypted 要求 cHex/ivHex/macHex/kdf 全在（只认两个片段会把含这些词的明文误拖进解密层）。",
+        "schema 高于本机直接抛「请先升级 App 再导入」；checksum mismatch 在写库前就拦下。",
+        "Preview 含来源（备份时间 + 来源锁名）、schema、分区统计文本、macs、密码/指纹/成员数、抽样命中数、trace 前 5 行、checksum 状态。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupStudioKit.swift", "line": 368, "symbol": "struct Preview"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 400, "symbol": "parsePreview"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 412, "symbol": "schema 上限拒绝"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 442, "symbol": "stripCommentHeader"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 456, "symbol": "looksEncrypted 全键判据"}
+      ],
+      "tags": ["预演", "导入"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.upgrade",
+      "parentKey": "backup.preview",
+      "domain": "backup",
+      "level": 4,
+      "name": "schema 升级链 v1→v5",
+      "kind": "data",
+      "summary": "按版本号逐级幂等迁移：v2 补 members、v3 归一化 mac、v4/v5 只推进版本号。",
+      "details": [
+        "v4 与 v5 的历史迁移动作当年是自赋值空操作，现在只推进版本号，不假装做了迁移。",
+        "每级判断读的是已推进的 s，因此可重复执行。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupStudioKit.swift", "line": 470, "symbol": "upgradeChain"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 474, "symbol": "v3 mac 归一化"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 481, "symbol": "v5 只推进版本号"}
+      ],
+      "tags": ["迁移", "schema"],
+      "status": "partial"
+    },
+    {
+      "key": "backup.canonical",
+      "parentKey": "backup.engine",
+      "domain": "backup",
+      "level": 3,
+      "name": "canonical JSON 序列化",
+      "kind": "data",
+      "summary": "与小程序 canonicalBundle 逐字节互通的确定性序列化：固定键序 + 排序 + 紧凑 JSON，并据此算校验和。",
+      "details": [
+        "顶层键序：type/bundleVer/schema/at/currentMac/devices/members(/globals)；devices 按 mac 排序、members 按 id 排序。",
+        "globals 内层按字母序，剔 null 与空数组；appearance/deviceOrg/otpKeys 都进校验和（不进则改包体不被发现）。",
+        "JValue.stringify 紧凑输出：非 ASCII 原样、控制符 \\uXXXX、整数值输出整数形态。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupCanonical.swift", "line": 8, "symbol": "enum JValue"},
+        {"file": "App/Services/BackupCanonical.swift", "line": 186, "symbol": "canonical(_:)"},
+        {"file": "App/Services/BackupCanonical.swift", "line": 203, "symbol": "members 按 id 排序"},
+        {"file": "App/Services/BackupCanonical.swift", "line": 286, "symbol": "exportText 追加 checksum"}
+      ],
+      "tags": ["canonical", "互通"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.canonical.fnv",
+      "parentKey": "backup.canonical",
+      "domain": "backup",
+      "level": 4,
+      "name": "fnv1a32 逐位复刻（含 legacy）",
+      "kind": "protocol",
+      "summary": "按 UTF-16 码元 &0xff 喂、^ 走有符号 int32、乘 16777619 走双精度、输出补零 8 位十六进制；旧语义版本仍被导入接受。",
+      "details": [
+        "JS 侧四条特征与教科书 FNV-1a 全不一致，旧实现（UTF-8 + 模乘 + 不补零）含纯 ASCII 也 100% 不匹配。",
+        "legacy 版本按 UTF-8 逐字节 + &* + 不补零 —— 只为认本仓此前写出的包，直接换掉会把用户已有备份判成篡改。",
+        "FNV 无密钥，只作意外损坏检测，不是防篡改（构造者可重算）。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupCanonical.swift", "line": 53, "symbol": "fnv1a32 算法说明"},
+        {"file": "App/Services/BackupCanonical.swift", "line": 61, "symbol": "fnv1a32Hex(_:)"},
+        {"file": "App/Services/BackupCanonical.swift", "line": 78, "symbol": "fnv1a32HexLegacy"}
+      ],
+      "tags": ["校验和", "互通"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.verify",
+      "parentKey": "backup.engine",
+      "domain": "backup",
+      "level": 3,
+      "name": "校验和判定与哈希短码",
+      "kind": "diagnostic",
+      "summary": "checksumState 返回 ok/mismatch/absent 三态（新旧两种语义都认）；短码用 SHA256 前 8 位。",
+      "details": [
+        "计算前先把 checksum 字段清空再 canonical，避免自我指涉。",
+        "mismatch 在 parsePreview 阶段就抛错「内容哈希不一致 — 已拦下, 未写任何数据」。",
+        "「旧语义只对旧 schema 放行」的收紧已撤回：会把用户已有包误判成篡改，且不增安全。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupStudioKit.swift", "line": 366, "symbol": "enum ChecksumState"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 381, "symbol": "checksumState"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 493, "symbol": "verifyChecksum"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 497, "symbol": "shortHash 8 位"}
+      ],
+      "tags": ["校验", "完整性"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.rollback",
+      "parentKey": "backup.engine",
+      "domain": "backup",
+      "level": 3,
+      "name": "恢复前回滚点（24h 可撤销）",
+      "kind": "action",
+      "summary": "每次恢复前自动留一份完整库体 JSON 快照，24 小时内可一键撤销；只保留最近 4 份。",
+      "details": [
+        "快照含 keychains / ledgers / dongles / gateways / passcode / members，外加 extras（分区外内容族原样 base64 字节）。",
+        "文件名 roll-<毫秒>.json（秒级会同一秒覆盖）；写盘后 pruneRollback(keep: 4) 用 dropFirst(min(keep,count)) 防越界崩。",
+        "canUndoLastRestore 以文件修改时间 < 86400 秒判定；undo 后清 kf_bk_rollback 并记 Milestones。",
+        "还原只写快照里已有的键，不删快照之后用户新攒的内容。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupStudioKit.swift", "line": 128, "symbol": "rollbackFamilies"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 148, "symbol": "struct RollbackBundle"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 159, "symbol": "makeRollbackPoint"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 190, "symbol": "canUndoLastRestore"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 208, "symbol": "restoreRollbackSnapshot"}
+      ],
+      "tags": ["回滚", "安全网"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.rollback.families",
+      "parentKey": "backup.rollback",
+      "domain": "backup",
+      "level": 4,
+      "name": "分区外内容族清单",
+      "kind": "data",
+      "summary": "回滚快照额外覆盖所有「恢复流程会改写、且是用户自己攒的内容」的键族，避免撤销后残留错包数据。",
+      "details": [
+        "成员扩展/生日/标旗、借出/认领/家庭记录/离职、记录备注/标旗/筛选视图。",
+        "凭证序号/星标/别名显示/回收站/停用原因/凭证清单/下发队列。",
+        "四族 TOTP/静态口令（otpStatus_/otpIdx_/kf_cotp_t_/kf_cotp_s_）与 kf_trace_persist_v1。",
+        "防御/防尾随/校时与设备组织（kf_lock_order/kf_lockmeta_/kf_lock_hidden_/kf_group_folded）。",
+        "刻意不收：日志与遥测（体积大且不是内容）、外观与开关（恢复不该动它们）。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupStudioKit.swift", "line": 121, "symbol": "判定标准两条"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 140, "symbol": "OTP 四族"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 145, "symbol": "meta 与设备组织族"}
+      ],
+      "tags": ["回滚", "键族"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.schedule",
+      "parentKey": "backup.engine",
+      "domain": "backup",
+      "level": 3,
+      "name": "备份节奏与月度备份日",
+      "kind": "automation",
+      "summary": "节奏三档（手动/每周/每月）只落地为本地提醒；可设每月固定日 9:00 通知，点按即生成还原点并跳到设置·备份。",
+      "details": [
+        "kf_bk_cadence = manual（默认）/weekly/monthly；不做后台静默写。",
+        "kf_bk_month_day 收敛 0–31，0 = 不设；通知 id 固定 kf.bk.monthly，重复日历触发器。",
+        "onMonthlyTap：先 makeRollbackPoint + Milestones.recordBackup，等 hostRef 最多 2 秒再路由（锁着/伪装态记 pendingRoute）。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupStudioKit.swift", "line": 53, "symbol": "cadence"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 72, "symbol": "monthlyDay"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 76, "symbol": "scheduleMonthlyBackup"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 99, "symbol": "onMonthlyTap"}
+      ],
+      "tags": ["调度", "通知"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.bgtask",
+      "parentKey": "backup.schedule",
+      "domain": "backup",
+      "level": 4,
+      "name": "充电后台备份（BGTask）",
+      "kind": "automation",
+      "summary": "注册 com.kf.chargebackup 后台任务，由系统在接电+闲置时择机执行一次回滚点快照。",
+      "details": [
+        "注册必须发生在启动窗口内且每进程一次（二次注册抛异常），用 Locked 标志去重。",
+        "earliestBeginDate = 6 小时后；用 submitTaskRequest(_:completionHandler:)，失败记 MaintenanceLog。",
+        "CompletionOnce 保证 expirationHandler 与工作体只有一个能 setTaskCompleted。",
+        "UI 文案只承诺「已交给系统，由系统择机执行」，不承诺接电即备。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupStudioKit.swift", "line": 274, "symbol": "chargeBackupTaskId"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 289, "symbol": "registerChargeBackup"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 313, "symbol": "rescheduleChargeBackup"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 324, "symbol": "chargeBackupNote"}
+      ],
+      "tags": ["后台任务", "诚实文案"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.retention",
+      "parentKey": "backup.engine",
+      "domain": "backup",
+      "level": 3,
+      "name": "新鲜度与备份状态角标",
+      "kind": "state",
+      "summary": "按上次导出时间算天数，给出「今日已备份 / 多日未备份 n 天 / 从未备份」三种角标态。",
+      "details": [
+        "lastExportMs 取 kf_backup_hist 最后一个元素（epoch 毫秒）；daysSinceLastExport 用日粒度相减，从未备份返回 -1。",
+        "badgeState：今日为 .fresh；否则 .stale(n)；无历史 .none。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupStudioKit.swift", "line": 62, "symbol": "429 新鲜度注释"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 63, "symbol": "lastExportMs"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 689, "symbol": "enum BadgeState"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 690, "symbol": "badgeState"}
+      ],
+      "tags": ["角标", "新鲜度"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.size",
+      "parentKey": "backup.engine",
+      "domain": "backup",
+      "level": 3,
+      "name": "体积预估与上次对比",
+      "kind": "diagnostic",
+      "summary": "用 canonical 字符数 ×2 估算加密后体积，并与上次实际导出大小和天数一起展示。",
+      "details": [
+        "estimateBytes = canonical.exportText(...).count * 2（hex 化膨胀约 1.75x 的保守取整）。",
+        "markExportSize 在三条导出路径写入 kf_bk_last_bytes；sizeText 输出「本次预计 ~X KB · 上次 Y KB (N 天前)」。",
+        "本文件另有过期临时凭证计数 expiredTemporaryCount（to 早于今天且非 2118-12-31），注释位置与实际语义错位（见 unresolved）。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupStudioKit.swift", "line": 617, "symbol": "193 体积预估注释"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 630, "symbol": "estimateBytes"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 637, "symbol": "markExportSize"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 638, "symbol": "sizeText"}
+      ],
+      "tags": ["体积", "预估"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.fingerprint",
+      "parentKey": "backup.engine",
+      "domain": "backup",
+      "level": 3,
+      "name": "库体指纹与启动自检",
+      "kind": "diagnostic",
+      "summary": "对每把锁的 skey 与 pins 内容取指纹（带算法版本前缀），与备份时写的基线对比，不一致出黄条。",
+      "details": [
+        "fpVersion = \"2:\"；旧基线（无前缀）不参与比对，避免升级后误报。",
+        "基线只在备份发生点由 markBackupBaseline 写入；自检 hashMismatch / runStartupSelfCheck 只比不改。",
+        "异常时置 kf_bk_selfwarn，UI 读 selfCheckWarning。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupStudioKit.swift", "line": 649, "symbol": "fpVersion"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 650, "symbol": "dbFingerprint"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 664, "symbol": "hashMismatch"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 675, "symbol": "runStartupSelfCheck"}
+      ],
+      "tags": ["自检", "指纹"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.events",
+      "parentKey": "backup.engine",
+      "domain": "backup",
+      "level": 3,
+      "name": "数据事件清单",
+      "kind": "data",
+      "summary": "记录导出/恢复/迁移等数据事件（带名字），展示最近 12 条，旧的无名格式兼容读成「未具名」。",
+      "details": [
+        "存储 kf_bk_events，元素 {at 毫秒, label}，超过 60 条移出最旧。",
+        "读侧若磁盘上是 [Double] 旧形态，映射成 BkEvent(label: \"未具名\")，不静默丢历史。",
+        "dataEvents 输出 yyyy-MM-dd HH:mm · label。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupStudioKit.swift", "line": 933, "symbol": "struct BkEvent"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 934, "symbol": "recordEvent"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 941, "symbol": "旧形态兼容"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 946, "symbol": "dataEvents"}
+      ],
+      "tags": ["事件", "历史"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.webdav",
+      "parentKey": "backup.engine",
+      "domain": "backup",
+      "level": 3,
+      "name": "WebDAV 云同步",
+      "kind": "service",
+      "summary": "把信封 PUT/GET 到用户自配 WebDAV（默认坚果云），Basic 认证用应用专属密码，按状态码给人话错误。",
+      "details": [
+        "默认端点 https://dav.jianguoyun.com/dav/我的坚果云/zklock-backup.enc；上传 Content-Type application/json。",
+        "超时 20 秒；401/403 →「账号或应用密码错误 (坚果云需应用专属密码)」；507/509 →「免费额度已满」；404 下载视为无文件。",
+        "basicAuth = base64(账号:应用密码) 作为 Authorization 头，运行时输入。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupKit.swift", "line": 486, "symbol": "enum CloudSync"},
+        {"file": "App/Services/BackupKit.swift", "line": 487, "symbol": "remoteURL"},
+        {"file": "App/Services/BackupKit.swift", "line": 492, "symbol": "push"},
+        {"file": "App/Services/BackupKit.swift", "line": 506, "symbol": "download"}
+      ],
+      "tags": ["云同步", "WebDAV"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.webdav.list",
+      "parentKey": "backup.webdav",
+      "domain": "backup",
+      "level": 3,
+      "name": "远端列表、连通测试与滚动保留",
+      "kind": "service",
+      "summary": "PROPFIND 列远端条目（etag/大小/时间），支持连通测试与按「份」清理旧备份。",
+      "details": [
+        "Depth 必须显式写 1：不写按 RFC 4918 默认 Infinity，滚动保留会看到整个子树并可能删到用户其它文件。",
+        "期望 207；非 UTF-8 正文直接拒；resourcename 做实体解码 + 名字长度 <=256 护栏防注入。",
+        "safeRemoteURL 拒绝对路径、含 :// 与 .. 段；只删「锁管家_*.enc」且不含斜杠的名字族。",
+        "volumeSet 从尾部剥 _卷N 把同一次导出合成一份；保留最近 N 份 + 每月再保 1 份（Time Machine 口径）。",
+        "清理后写审计「WebDAV 滚动保留: 清理远端 N 个文件」。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupStudioKit.swift", "line": 714, "symbol": "testWebdav"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 734, "symbol": "listRemote"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 745, "symbol": "Depth: 1"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 795, "symbol": "safeRemoteURL"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 827, "symbol": "pruneRemote"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 844, "symbol": "每月再保 1 份"}
+      ],
+      "tags": ["远端", "保留策略", "安全"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.cloud.rotate",
+      "parentKey": "backup.webdav",
+      "domain": "backup",
+      "level": 4,
+      "name": "演练恢复与密钥轮换",
+      "kind": "action",
+      "summary": "演练：远端下载后仅在内存解密、验哈希并抽样，不碰真库；轮换：用新口令重加密覆盖远端文件。",
+      "details": [
+        "dryRunRemote 返回「已验证 · 抽样 n 条可解析 · 哈希 xxxxxxxx」，哈希不一致只告警不入库。",
+        "rotateKey 旧口令解不开则直接失败且远端不动；新密文上传失败时远端仍为旧口令。",
+        "轮换目标是固定名 zklock-backup.enc；旧文件不另存历史副本（沿用固定名语义）。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupStudioKit.swift", "line": 860, "symbol": "dryRunRemote"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 876, "symbol": "rotateKey"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 896, "symbol": "上传失败保留旧口令"}
+      ],
+      "tags": ["演练", "轮换"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.notify",
+      "parentKey": "backup.engine",
+      "domain": "backup",
+      "level": 3,
+      "name": "通知点按分派与前台展示",
+      "kind": "action",
+      "summary": "统一在 UNDelegate 里把通知点按分派成路由动作（月度备份 / 保养到期 / 凭证族），并处理前台是否展示。",
+      "details": [
+        "kf.bk.monthly → onMonthlyTap（还原点 + 设置·备份）。",
+        "m4.care.<mac> → 等 hostRef 最多 2 秒，置 pendingCare 后请求设置页；锁着/伪装态记 pendingRoute。",
+        "凭证族走 CredentialOrg.handleNotificationAction / applyNotification（此前点按落到系统默认行为）。",
+        "前台展示：免扰时段 completion([])，否则 [.banner, .sound]。"
+      ],
+      "evidence": [
+        {"file": "App/Services/BackupStudioKit.swift", "line": 960, "symbol": "final class UNDelegate"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 964, "symbol": "didReceive response"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 979, "symbol": "m4.care. 分派"},
+        {"file": "App/Services/BackupStudioKit.swift", "line": 996, "symbol": "willPresent"}
+      ],
+      "tags": ["通知", "深链"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.zip",
+      "parentKey": "backup.engine",
+      "domain": "backup",
+      "level": 3,
+      "name": "ZIP 解析与 CRC / inflate",
+      "kind": "protocol",
+      "summary": "纯内存 ZIP 解析：尾部反查 EOCD、遍历中央目录、store/deflate 两法、逐条 CRC32 校验，带尺寸与条目数上限。",
+      "details": [
+        "maxEntrySize = 8MB、maxEntries = 64；EOCD 回看最多 65535 + 22 字节。",
+        "仅支持 method 0（store）与 8（deflate），其余抛「不支持的压缩方式」；空 deflate 条目直接拒。",
+        "解压长度必须等于 usize；crcOk = CRC32(内容) == 中央目录声明值。",
+        "inflate 用 compression_decode_buffer + COMPRESSION_ZLIB，声称输出超上限即判 zip 炸弹。"
+      ],
+      "evidence": [
+        {"file": "App/Services/ZipKit.swift", "line": 28, "symbol": "maxEntrySize / maxEntries"},
+        {"file": "App/Services/ZipKit.swift", "line": 36, "symbol": "inflate(_:expected:)"},
+        {"file": "App/Services/ZipKit.swift", "line": 50, "symbol": "parse(_:)"},
+        {"file": "App/Services/ZipKit.swift", "line": 105, "symbol": "crcOk 判定"}
+      ],
+      "tags": ["ZIP", "校验"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.zip.crc",
+      "parentKey": "backup.zip",
+      "domain": "backup",
+      "level": 4,
+      "name": "CRC32 表驱动实现",
+      "kind": "protocol",
+      "summary": "标准 IEEE 802.3 多项式 0xEDB88320 的 256 项查表法，初值与结果取反。",
+      "details": [
+        "表在首次访问时惰性构建（0..<256 逐位 8 次）。",
+        "crc32 从 0xFFFFFFFF 起算，末尾 ~ 取反。"
+      ],
+      "evidence": [
+        {"file": "App/Services/ZipKit.swift", "line": 6, "symbol": "enum CRC32"},
+        {"file": "App/Services/ZipKit.swift", "line": 14, "symbol": "crc32(_:)"}
+      ],
+      "tags": ["CRC", "算法"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.firmware",
+      "parentKey": "backup.engine",
+      "domain": "backup",
+      "level": 3,
+      "name": "固件包解析（不含 DFU 流程）",
+      "kind": "protocol",
+      "summary": "从 zip 解出 manifest.json 与 bin/dat 两个镜像，做 CRC、尺寸与结构校验后返回十六进制包内容。",
+      "details": [
+        "manifest 上限 4KB 且 CRC 必过；取 manifest 下的 application 或 bootloader 段。",
+        "文件名别名兼容：bin_file/binFilename、dat_file/data_file。",
+        "尺寸约束：bin 512B–8MB、dat 16B–4KB；bin/dat 的 CRC 必须通过。",
+        "包内没有任何签名/来源校验（manifest 与文件名可构造、CRC 可重算）——代码里明确写明未认证，不假装已校验。"
+      ],
+      "evidence": [
+        {"file": "App/Services/ZipKit.swift", "line": 120, "symbol": "struct FirmwarePackage"},
+        {"file": "App/Services/ZipKit.swift", "line": 130, "symbol": "limits"},
+        {"file": "App/Services/ZipKit.swift", "line": 131, "symbol": "FirmwareKit.parse"},
+        {"file": "App/Services/ZipKit.swift", "line": 152, "symbol": "无签名/来源校验的显式说明"}
+      ],
+      "tags": ["固件", "解析"],
+      "status": "implemented"
+    },
+    {
+      "key": "backup.firmware.version",
+      "parentKey": "backup.firmware",
+      "domain": "backup",
+      "level": 4,
+      "name": "版本提取、比较与 DFU MAC 启发",
+      "kind": "protocol",
+      "summary": "从文件名提取 a.b.c 版本（兼容无尾随下划线），提供三段比较与 DFU 模式 MAC（末字节 +1）。",
+      "details": [
+        "版本正则 _?V?(\\d+\\.\\d+\\.\\d+)(?:_|\\.|$)，剥尾部非数字。",
+        "versionLt 逐段数字比较、缺段补 0，最多三段。",
+        "nextMac：非 12 位直接返回；末字节 &+ 1（255→0 回绕）后拼回前缀。"
+      ],
+      "evidence": [
+        {"file": "App/Services/ZipKit.swift", "line": 166, "symbol": "versionFromFileName"},
+        {"file": "App/Services/ZipKit.swift", "line": 175, "symbol": "versionLt"},
+        {"file": "App/Services/ZipKit.swift", "line": 186, "symbol": "nextMac"}
+      ],
+      "tags": ["固件", "版本"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.design",
+      "parentKey": "data",
+      "domain": "data",
+      "level": 2,
+      "name": "设计系统令牌与可复用组件",
+      "kind": "service",
+      "summary": "全 App 唯一令牌来源：间距/圆角/触达/图标/动效/语义色/渐变 + 状态胶囊、指标块、主控卡、空态、按钮。",
+      "details": [
+        "界面只允许引用这里的令牌，不允许页面写死颜色与尺寸。",
+        "明暗双模走 UIColor 动态色自动跟随系统；主题/AMOLED/密度变更由 AppState.bumpAppearance 驱动 RootView .id 重建即时生效。",
+        "对比度由工具链机检（正文 ≥4.5:1、分隔线 ≥1.2:1），六套主题 + AMOLED 全表覆盖。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DesignSystem.swift", "line": 106, "symbol": "enum DS"},
+        {"file": "App/Core/DesignSystem.swift", "line": 1, "symbol": "文件头注"},
+        {"file": "App/Core/DesignSystem.swift", "line": 20, "symbol": "Color.adaptive"},
+        {"file": "App/Core/DesignSystem.swift", "line": 697, "symbol": "enum ToneColor"}
+      ],
+      "tags": ["设计系统", "核心"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.design.theme",
+      "parentKey": "data.design",
+      "domain": "data",
+      "level": 3,
+      "name": "品牌主题七套",
+      "kind": "setting",
+      "summary": "kf_accent 七套色板（暖金/靛蓝/墨绿/琥珀/石墨/玫瑰/极光），每套含明暗双端点与按钮渐变端点。",
+      "details": [
+        "每套含 accent/accentText/onAccent/heroA/heroB/btnA/btnB 七个角色；新装用户默认 brass（暖金）。",
+        "themed(role:key:) 在 UIColor provider 内按 trait 解析明暗，设置页色板小样显式传 key 以显示预设本色。",
+        "AccentTheme.preview 用 heroA→heroB 渐变作为色板小样，与 App 图标/主控卡同色。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DesignSystem.swift", "line": 337, "symbol": "themeTable"},
+        {"file": "App/Core/DesignSystem.swift", "line": 386, "symbol": "effectiveKey 默认 brass"},
+        {"file": "App/Core/DesignSystem.swift", "line": 393, "symbol": "themed(role:key:)"},
+        {"file": "App/Core/DesignSystem.swift", "line": 612, "symbol": "accentThemes"}
+      ],
+      "tags": ["主题", "外观"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.design.custom-accent",
+      "parentKey": "data.design",
+      "domain": "data",
+      "level": 3,
+      "name": "自定义强调色（WCAG 亮度带收敛）",
+      "kind": "setting",
+      "summary": "ColorPicker 选任意色，但只存色相来源；上屏前把每档拉进亮度带，保证白字/墨字对比度达标。",
+      "details": [
+        "kf_accent_custom 存 6 位 RGB（Int），0 = 未启用。",
+        "亮度约束：填充 ≤0.1833（白字带）、浅色文字 ≤0.154、深色文字 ≥0.40、onAccent 白字达 4.5 否则墨字（需 ≥0.198）。",
+        "darkenTo/lightenTo 用 24 次二分向黑/白插值；色彩空间先转 UIColor 再取分量（P3 会越界，夹回 0...1）。",
+        "仅在未显式指定主题 key 时生效，否则六个色板小样会被自定义色染成一样。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DesignSystem.swift", "line": 444, "symbol": "enum CustomAccent"},
+        {"file": "App/Core/DesignSystem.swift", "line": 485, "symbol": "darkenTo"},
+        {"file": "App/Core/DesignSystem.swift", "line": 513, "symbol": "derived 六档角色"},
+        {"file": "App/Core/DesignSystem.swift", "line": 397, "symbol": "key == nil 才用自定义色"}
+      ],
+      "tags": ["自定义色", "对比度"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.design.amoled",
+      "parentKey": "data.design",
+      "domain": "data",
+      "level": 3,
+      "name": "AMOLED 纯黑与高对比皮肤",
+      "kind": "setting",
+      "summary": "kf_theme==black 时画布降为纯黑、表面降为近黑；kf_hc 或系统对比度开启时分隔线加深一档。",
+      "details": [
+        "amoledOverride：canvas #000000 / surface #121009 / surfaceAlt #1A1610。",
+        "高对比 = AXFlags.highContrast 或 kf_hc 任一为真（与系统开关并联，不替代系统）。",
+        "hairlineStrong 在加强时改用 HChairline，页面继续引用 hairline/textSub 不感知。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DesignSystem.swift", "line": 287, "symbol": "isAMOLED"},
+        {"file": "App/Core/DesignSystem.swift", "line": 292, "symbol": "highContrast"},
+        {"file": "App/Core/DesignSystem.swift", "line": 381, "symbol": "amoledOverride"},
+        {"file": "App/Core/DesignSystem.swift", "line": 324, "symbol": "hairlineStrong"}
+      ],
+      "tags": ["AMOLED", "高对比"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.design.status-colors",
+      "parentKey": "data.design",
+      "domain": "data",
+      "level": 3,
+      "name": "语义色与反色前景",
+      "kind": "state",
+      "summary": "画布/卡片/次级块/分隔线/主次文本与 ok/warn/danger 语义色；填充上的文字按明暗切白字或墨字。",
+      "details": [
+        "语义色双档：浅档深色、深档浅色（如 danger 浅 B91C1C / 深 F87171）。",
+        "onSem 压在语义填充上（浅档白、深档近黑）；onFillWash 永远与 onAccent/onSem 反向，洗底只推高对比。",
+        "dayKindWorkday / dayKindWeekend 是固定语义色不随主题（避免与环境青绿/橙档撞色）。",
+        "ToneColor 五档（neutral/accent/ok/warn/danger）供状态胶囊与文案统一取色。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DesignSystem.swift", "line": 297, "symbol": "canvasBase / surfaceBase"},
+        {"file": "App/Core/DesignSystem.swift", "line": 303, "symbol": "ok / warn / danger"},
+        {"file": "App/Core/DesignSystem.swift", "line": 314, "symbol": "onSem / onFillWash"},
+        {"file": "App/Core/DesignSystem.swift", "line": 308, "symbol": "dayKind 三档固定色"},
+        {"file": "App/Core/DesignSystem.swift", "line": 697, "symbol": "ToneColor.color"}
+      ],
+      "tags": ["语义色", "明暗"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.design.density",
+      "parentKey": "data.design",
+      "domain": "data",
+      "level": 3,
+      "name": "布局密度三档",
+      "kind": "setting",
+      "summary": "kf_density 三档只缩放间距（紧凑 0.85 / 标准 1.0 / 宽松 1.18），字号、触达与图标不缩放。",
+      "details": [
+        "所有间距经 d(v) 缩放后吸附到 0.5pt，避免亚像素抖动。",
+        "gutter 固定 16（同样参与缩放），xxs…xxl 七档基础值 2/4/8/12/16/24/32。",
+        "变更由 AppState.bumpAppearance 驱动全局重建，即时生效。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DesignSystem.swift", "line": 110, "symbol": "enum Space"},
+        {"file": "App/Core/DesignSystem.swift", "line": 112, "symbol": "densityScale"},
+        {"file": "App/Core/DesignSystem.swift", "line": 120, "symbol": "d(v) 吸附 0.5pt"},
+        {"file": "App/Core/DesignSystem.swift", "line": 129, "symbol": "gutter"}
+      ],
+      "tags": ["密度", "布局"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.design.radius",
+      "parentKey": "data.design",
+      "domain": "data",
+      "level": 3,
+      "name": "圆角三档",
+      "kind": "setting",
+      "summary": "kf_radius 三档（小 0.62 / 标准 1.0 / 大 1.3）乘在 card 22 / control 16 / tile 18 三个基础值上。",
+      "details": [
+        "结果同样吸附 0.5pt；最大 card 约 28pt，仍明显小于半宽，不会圆到看不出是卡片。",
+        "原第四档 pill=999 已删除（全仓胶囊一律走 Capsule()，该值零读取）。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DesignSystem.swift", "line": 135, "symbol": "enum Radius"},
+        {"file": "App/Core/DesignSystem.swift", "line": 137, "symbol": "k 三档"},
+        {"file": "App/Core/DesignSystem.swift", "line": 144, "symbol": "card / control / tile"}
+      ],
+      "tags": ["圆角", "外观"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.design.metric",
+      "parentKey": "data.design",
+      "domain": "data",
+      "level": 3,
+      "name": "可调尺寸与排印档",
+      "kind": "setting",
+      "summary": "圆盘直径、凭证行高、时间线行距、数字字体、空态插画五个可独立调整的观感档。",
+      "details": [
+        "kf_dial_size 160/176/200（默认 176，非法回落 176）。",
+        "kf_row_h：\"\"=44 紧凑（隐藏副行）/\"tall\"=60 舒适（带副行）；只加高不压矮。",
+        "kf_tl_gap：tight 0.5 / 标准 1.0 / loose 2.0，刻意乘在 densityScale 之上（叠乘而非替代）。",
+        "kf_digit_font：\"plain\"=系统体 / 其余=圆体；只射 MetricTile 与 HeroStat 两处数字。",
+        "kf_plain 开启素颜模式时同时关掉空态插画（不再造第二个「关插画」开关）。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DesignSystem.swift", "line": 152, "symbol": "enum Metric"},
+        {"file": "App/Core/DesignSystem.swift", "line": 153, "symbol": "dial 三档"},
+        {"file": "App/Core/DesignSystem.swift", "line": 160, "symbol": "rowMinH 44/60"},
+        {"file": "App/Core/DesignSystem.swift", "line": 166, "symbol": "tlGap 叠乘"},
+        {"file": "App/Core/DesignSystem.swift", "line": 184, "symbol": "digitDesign"},
+        {"file": "App/Core/DesignSystem.swift", "line": 178, "symbol": "emptyMascot = !kf_plain"}
+      ],
+      "tags": ["尺寸", "排印"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.design.hero-stats",
+      "parentKey": "data.design.metric",
+      "domain": "data",
+      "level": 4,
+      "name": "Hero 指标显隐",
+      "kind": "setting",
+      "summary": "kf_hero_stats 选择 Hero 卡上显示固件与锁钟两枚参考读数；电量不可隐藏。",
+      "details": [
+        "白名单 all = [firmware, lockclock]，库外值一律丢弃。",
+        "两项全关时回退全开，不留一张没有指标的空板卡。",
+        "电量决定「还能不能开锁」，因此不在可选项里。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DesignSystem.swift", "line": 189, "symbol": "HeroStats 说明"},
+        {"file": "App/Core/DesignSystem.swift", "line": 192, "symbol": "enum HeroStats"},
+        {"file": "App/Core/DesignSystem.swift", "line": 194, "symbol": "visible 白名单与回退"}
+      ],
+      "tags": ["Hero", "显隐"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.design.friendly",
+      "parentKey": "data.design.metric",
+      "domain": "data",
+      "level": 4,
+      "name": "儿童友好预设",
+      "kind": "action",
+      "summary": "一键把五个外观档推到「看得清、点得准、不闹」，之后任何一档仍可单独改回。",
+      "details": [
+        "设置：kf_accent=aurora、kf_radius=plump、kf_density=relaxed、kf_row_h=tall、kf_motion=calm、kf_hero_tex=\"\"。",
+        "刻意不做「是否已套用」回显：预设是一次性动作，用户套完还会单独改某一档。",
+        "名字里不写「模式/空间/过滤」——本 App 没有内容分级机制，叫儿童模式就是虚假承诺。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DesignSystem.swift", "line": 418, "symbol": "895 命名理由"},
+        {"file": "App/Core/DesignSystem.swift", "line": 421, "symbol": "enum FriendlyPreset"},
+        {"file": "App/Core/DesignSystem.swift", "line": 422, "symbol": "apply 六键"}
+      ],
+      "tags": ["预设", "可访问性"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.design.motion",
+      "parentKey": "data.design",
+      "domain": "data",
+      "level": 3,
+      "name": "动效令牌三档与强制降级",
+      "kind": "state",
+      "summary": "kf_motion 三档（calm/standard/lively）配四组动画；系统减弱动态或锁电量 ≤20% 时强制 calm。",
+      "details": [
+        "tier 优先级：系统减弱动态 → 低电 → kf_motion 值（非法回落 standard）。",
+        "quick：calm .easeOut 0.10 / lively spring(0.22, 0.68) / 标准 spring(0.22, 0.9)。",
+        "standard：calm .easeInOut 0.16 / lively spring(0.45,0.68) / 标准 spring(0.4,0.85)；soft 与 exit 各三档。",
+        "Duration 另给纯时长令牌 0.15（quick）/0.25（standard），供只需时长的 withAnimation。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DesignSystem.swift", "line": 230, "symbol": "enum Motion"},
+        {"file": "App/Core/DesignSystem.swift", "line": 235, "symbol": "systemReduceMotion"},
+        {"file": "App/Core/DesignSystem.swift", "line": 240, "symbol": "appLowBattery → calm"},
+        {"file": "App/Core/DesignSystem.swift", "line": 246, "symbol": "quick"},
+        {"file": "App/Core/DesignSystem.swift", "line": 277, "symbol": "enum Duration"}
+      ],
+      "tags": ["动效", "降级"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.design.haptics",
+      "parentKey": "data.design",
+      "domain": "data",
+      "level": 3,
+      "name": "触感三档分级",
+      "kind": "state",
+      "summary": "全 App 只允许三档触感：tick（轻）、trigger（中）、结果档（success/warning/error）。",
+      "details": [
+        "tick = UIImpactFeedbackGenerator(style: .light)，用于围栏解锁/进度刻度/就绪轻震等过程反馈。",
+        "trigger = .medium，用于手势确认触发/断连提醒等动作反馈。",
+        "结果档只用 UINotificationFeedbackGenerator 的 success/warning/error。",
+        "整族标 @MainActor；唯一非 UI 调用点（预握手节律）显式跳主 actor。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DesignSystem.swift", "line": 204, "symbol": "触感分级说明"},
+        {"file": "App/Core/DesignSystem.swift", "line": 211, "symbol": "enum Haptics"},
+        {"file": "App/Core/DesignSystem.swift", "line": 212, "symbol": "tick / trigger"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 169, "symbol": "DS.Haptics.tick 调用点"},
+        {"file": "App/Core/LinkSenseKit.swift", "line": 327, "symbol": "success 结果触感"}
+      ],
+      "tags": ["触感", "分级"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.design.hit-icons",
+      "parentKey": "data.design",
+      "domain": "data",
+      "level": 4,
+      "name": "触达尺寸与图标尺寸令牌",
+      "kind": "setting",
+      "summary": "最小触达 44×44pt；图标尺寸只用五档 13/16/20/26/44，避免各页混用。",
+      "details": [
+        "Hit.min = 44；自绘 label 的按钮必须补 minHeight + contentShape(Rectangle())，否则命中高度可能只有约 16.5pt。",
+        "Icon.xs=13 / sm=16 / md=20 / lg=26 / xl=44。",
+        "BusyButton 是标准示例：菊花/图标 + 文字 + 44pt 触达 + busy/disabled 双闸。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DesignSystem.swift", "line": 149, "symbol": "enum Hit min = 44"},
+        {"file": "App/Core/DesignSystem.swift", "line": 216, "symbol": "enum Icon 五档"},
+        {"file": "App/Core/DesignSystem.swift", "line": 1086, "symbol": "BusyButton 补 44pt 触达"}
+      ],
+      "tags": ["触达", "图标"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.design.glass",
+      "parentKey": "data.design",
+      "domain": "data",
+      "level": 3,
+      "name": "玻璃/压暗底板与 Hero 主控卡",
+      "kind": "state",
+      "summary": "Hero 卡用品牌渐变 + 纹理 + 柔光 + 整幅薄黑纱四层叠出可读的玻璃感；所有前景文字压在压暗底板上。",
+      "details": [
+        "heroScrim 黑 0.20（整幅薄纱）、heroPlate 黑 0.22（胶囊/指标底板）、heroGlow 白 0.12（反转色模式换黑 0.10）。",
+        "柔光圆 170pt、blur 42、在 (46/-44)~(54/-51) 之间以 easeInOut 9 秒往复漂移；reduceMotion 时静止。",
+        "降透明时改为纯色底 + 1pt heroSolidStroke 描边找回卡片边界。",
+        "投影 accent 0.30 / radius 18 / y 10；卡片圆角走 DS.Radius.card。",
+        "heroTint(light) 在反转色模式下降级为 text，避免淡色压中性浅底消失。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DesignSystem.swift", "line": 731, "symbol": "heroScrim"},
+        {"file": "App/Core/DesignSystem.swift", "line": 736, "symbol": "heroPlate"},
+        {"file": "App/Core/DesignSystem.swift", "line": 734, "symbol": "heroGlow"},
+        {"file": "App/Core/DesignSystem.swift", "line": 859, "symbol": "struct HeroCard"},
+        {"file": "App/Core/DesignSystem.swift", "line": 889, "symbol": "漂移 ±8pt / 9s"},
+        {"file": "App/Core/DesignSystem.swift", "line": 900, "symbol": "降透明描边"}
+      ],
+      "tags": ["玻璃", "Hero"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.design.gradient",
+      "parentKey": "data.design",
+      "domain": "data",
+      "level": 3,
+      "name": "渐变与页面底",
+      "kind": "state",
+      "summary": "主控卡/主按钮用主题对角渐变；页面底默认 3×3 网格渐变，AMOLED/智能反转/降透明时回落线性渐变。",
+      "details": [
+        "hero = heroA→heroB 左上到右下（节日开关开启且当天命中时改用节日对）。",
+        "button = btnA→btnB，深色档走 accentText→accent 区间配近黑字（旧复用 hero 暗端只有约 2.4:1）。",
+        "dsScreenBackground 把渐变放进 .background，内容留前景；flat 条件 = AMOLED 或 invertColors 或 reduceTransparency。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DesignSystem.swift", "line": 556, "symbol": "Gradient.hero"},
+        {"file": "App/Core/DesignSystem.swift", "line": 572, "symbol": "screenMesh 3×3"},
+        {"file": "App/Core/DesignSystem.swift", "line": 593, "symbol": "Gradient.button"},
+        {"file": "App/Core/DesignSystem.swift", "line": 628, "symbol": "dsScreenBackground"},
+        {"file": "App/Core/DesignSystem.swift", "line": 642, "symbol": "flat 三档回落"}
+      ],
+      "tags": ["渐变", "背景"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.design.festive",
+      "parentKey": "data.design.gradient",
+      "domain": "data",
+      "level": 4,
+      "name": "节日限定色",
+      "kind": "setting",
+      "summary": "kf_festive 默认关；开启且当天是表中节日（且非补班日）时，Hero 渐变换成该节日的深色对。",
+      "details": [
+        "表内七项：春节/国庆/国庆节/中秋/劳动节/端午/元旦，每对的两端都满足纯白对比度 ≥7.4:1。",
+        "补班日必须排除，否则等于告诉用户今天休息；节日名与补班判定复用 RecordSearch。",
+        "表里没有的节日一律不染色（宁可少一个效果，不凭印象编节日常规色）。",
+        "注释称当前已无 UI 入口，isOn 恒 false。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DesignSystem.swift", "line": 530, "symbol": "enum Festive"},
+        {"file": "App/Core/DesignSystem.swift", "line": 533, "symbol": "pairs 七项"},
+        {"file": "App/Core/DesignSystem.swift", "line": 545, "symbol": "todayPair 补班日排除"},
+        {"file": "App/Core/DesignSystem.swift", "line": 559, "symbol": "hero 出口分支"}
+      ],
+      "tags": ["节日", "主题"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.design.empty",
+      "parentKey": "data.design",
+      "domain": "data",
+      "level": 3,
+      "name": "空态与引导空态组件",
+      "kind": "screen",
+      "summary": "标准空态（图标+说明+主动作）与引导空态（进度点+双按钮+演示链+便签）两套，避免用户停在无路可走的页面。",
+      "details": [
+        "EmptyState 复用系统 ContentUnavailableView，自动跟随深浅色与动态字体。",
+        "GuidedEmptyView 增：顶部「第 N/M 步」7pt 进度点、主/次按钮（borderedProminent / bordered, large）、「看看它如何工作 (30 秒演示)」文字链、便签位。",
+        "默认 mascot=true，但顶饰渲染块当前为空（见 unresolved）；showDemoLink 默认 true，由 demoAction 是否传入决定上屏。",
+        "演示链按钮补 44pt 触达与 accessibilityHint。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DesignSystem.swift", "line": 917, "symbol": "struct EmptyState"},
+        {"file": "App/Core/DesignSystem.swift", "line": 960, "symbol": "struct GuidedEmptyView"},
+        {"file": "App/Core/DesignSystem.swift", "line": 980, "symbol": "进度点 7pt"},
+        {"file": "App/Core/DesignSystem.swift", "line": 1013, "symbol": "30 秒演示链"},
+        {"file": "App/Core/DesignSystem.swift", "line": 995, "symbol": "mascot 空块"}
+      ],
+      "tags": ["空态", "引导"],
+      "status": "partial"
+    },
+    {
+      "key": "data.design.buttons",
+      "parentKey": "data.design",
+      "domain": "data",
+      "level": 3,
+      "name": "按钮样式四类",
+      "kind": "action",
+      "summary": "主行动（品牌渐变）、次级（描边）、破坏性（红字描边）、忙碌态（菊花+禁用）四种 Button 外观。",
+      "details": [
+        "PrimaryActionStyle 外形交给语法层 VK.current.primaryActionChrome，默认 fullWidth。",
+        "SecondaryActionStyle 可传 tint（默认 accentText），DestructiveActionStyle 红字描边。",
+        "BusyButton 忙时显示 ProgressView + 文案「处理中…」，并同时 disabled(isBusy || disabled)。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DesignSystem.swift", "line": 1030, "symbol": "PrimaryActionStyle"},
+        {"file": "App/Core/DesignSystem.swift", "line": 1043, "symbol": "SecondaryActionStyle"},
+        {"file": "App/Core/DesignSystem.swift", "line": 1056, "symbol": "DestructiveActionStyle"},
+        {"file": "App/Core/DesignSystem.swift", "line": 1066, "symbol": "BusyButton"}
+      ],
+      "tags": ["按钮", "组件"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.design.readout",
+      "parentKey": "data.design.buttons",
+      "domain": "data",
+      "level": 4,
+      "name": "读数排版与数字动效",
+      "kind": "data",
+      "summary": "指标块与 Hero 指标位用等宽数字 + 数字字体令牌 + numericText 过渡，读数变化时不抖也不硬跳。",
+      "details": [
+        "MetricTile：图标+标签+数值，tone 染色图标，emphasized 拉开层级，minimumScaleFactor 0.7。",
+        "monospacedDigit 防 9%→10% 宽度跳动；fontDesign 走 DS.Metric.digitDesign（圆体/默认体）。",
+        "contentTransition(.numericText()) 让电量变化逐位滚动。",
+        "accessibilityElement(children: .combine) + accessibilityLabel「标签 值」。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DesignSystem.swift", "line": 770, "symbol": "struct MetricTile"},
+        {"file": "App/Core/DesignSystem.swift", "line": 796, "symbol": "monospacedDigit"},
+        {"file": "App/Core/DesignSystem.swift", "line": 797, "symbol": "fontDesign 数字字体令牌"},
+        {"file": "App/Core/DesignSystem.swift", "line": 800, "symbol": "contentTransition numericText"},
+        {"file": "App/Core/DesignSystem.swift", "line": 817, "symbol": "struct HeroStat"}
+      ],
+      "tags": ["读数", "动效"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.design.text",
+      "parentKey": "data.design",
+      "domain": "data",
+      "level": 4,
+      "name": "富文本与换行流式布局",
+      "kind": "data",
+      "summary": "mdText 把字符串里的 **加粗** 真渲染成粗体；FlowLayout 让一排胶囊在放不下时换行而不被藏到滚动区外。",
+      "details": [
+        "mdText 按 ** 切段自建 AttributedString，不引入 CommonMark（否则 锁管家_ / demo_ 的下划线会被当强调符吃掉）。",
+        "只成对的 ** 生效，其它字符一字不动。",
+        "FlowLayout 保留子视图固有宽度（胶囊仍贴字），不像 LazyVGrid 那样把每格拉等宽。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DesignSystem.swift", "line": 40, "symbol": "mdText(_:)"},
+        {"file": "App/Core/DesignSystem.swift", "line": 46, "symbol": "stronglyEmphasized"},
+        {"file": "App/Core/DesignSystem.swift", "line": 63, "symbol": "struct FlowLayout"},
+        {"file": "App/Core/DesignSystem.swift", "line": 88, "symbol": "placeSubviews 换行"}
+      ],
+      "tags": ["文本", "布局"],
+      "status": "implemented"
+    },
+    {
+      "key": "data.design.accessibility",
+      "parentKey": "data.design",
+      "domain": "data",
+      "level": 3,
+      "name": "无障碍与降级通道",
+      "kind": "setting",
+      "summary": "系统的减弱动态/降低透明度/智能反转/增加对比度与 App 内左手、单手、高对比开关，各自映射到令牌级降级。",
+      "details": [
+        "reduceMotion → 动效强制 calm（硬约束，用户偏好让路）；Hero 柔光漂移停止；入场编排退化为纯淡入。",
+        "reduceTransparency → 页面底回线性渐变、Hero 改纯色+描边。",
+        "invertColors → heroGlow 换黑纱、heroTint 降级为 text（否则淡色压浅底消失）。",
+        "highContrast 或 kf_hc → hairline 加深一档。",
+        "AXPrefs.lefty → Hero 卡内 layoutDirection 翻成 rightToLeft；AXPrefs.onehand → 圆盘整体下移 48pt 落入拇指区。",
+        "系统旗标只经 AXFlags 一处读点（快照），避免各页自调 UIAccessibility。",
+        "字号不做全局总闸：本文件只在注里引用无障碍页的 kf_ax_bigotp（OTP 大字），字号放大实际走系统动态字体与 AX 系列（不在本文件），故此处不列字号令牌。"
+      ],
+      "evidence": [
+        {"file": "App/Core/DesignSystem.swift", "line": 235, "symbol": "reduceMotionSnapshot"},
+        {"file": "App/Core/DesignSystem.swift", "line": 292, "symbol": "highContrast"},
+        {"file": "App/Core/DesignSystem.swift", "line": 642, "symbol": "invertColors / reduceTransparency"},
+        {"file": "App/Core/DesignSystem.swift", "line": 159, "symbol": "kf_ax_bigotp 交叉引用"},
+        {"file": "App/Core/DesignSystem.swift", "line": 664, "symbol": "axOnehand dy 48"},
+        {"file": "App/Core/DesignSystem.swift", "line": 870, "symbol": "AXPrefs.lefty 镜像"},
+        {"file": "App/Core/DesignSystem.swift", "line": 908, "symbol": "reduceMotion 静止漂移"}
+      ],
+      "tags": ["无障碍", "降级"],
+      "status": "implemented"
+    }
+  ],
+  "unresolved": [
+    "App/Core/AutoOpen.swift:512 — 未标定分支文案仍写「未标定则 F3 门不过」，而同文件 AutoOpenKit.rssiBase(:136) 已在未标定时回退 fallbackBase -40。文案与实现相反，无法从代码判定哪个是期望行为（是文案漏改，还是打算恢复硬门槛）。",
+    "App/Core/AutoOpen.swift:102 — 注释仍写「F1 面容双档: 标准=60s 窗口静默复用」，但实现（faceFresh :114、AutoOpen:19-22 注释）已是「0 档一次弹窗都不发起」。属注释漂移，无法确认是否还有 60s 窗口逻辑残留在别处。",
+    "App/Core/AutoOpen.swift:199 — AutoOpenGate.coolReady 字段注释写「上一次下发距今 >60s」，实际 cooldownSeconds = 6（:163）。",
+    "App/Core/LinkSenseKit.swift:294 — autoReconnectTick 注释称 2s tick 顺带「F2' 停留判定 — RSSI 武装 + 静置满 3s」，但 tickDwell(:355-358) 与 attempt 中已无任何静置/停留时长判定（:353-354 明写「静置判定已删」）。无法判定 F2' 是随后要补还是彻底废弃。",
+    "App/Core/BatteryCare.swift:3 — 头注列出 kf_mevents_<mac>（维护事件）与 kf_maint_<mac>（保养状态 1012/1013/1025），但本文件与 DiagKit/BackupStudioKit 内均无对应读写实现；仅 Store.swift:440 的清理前缀表出现 kf_maint_。保养计划/换电计划落点不在本 scope 可确认。",
+    "App/Core/BatteryCare.swift:6 — 注释明示协议只给百分比、无电压无充电位，因此「充放电建议/续航估算/电压精确值」这类功能在本仓无数据来源；本次未据此造节点。",
+    "App/Core/DesignSystem.swift:877 — 注释描述「889 Hero 纹理三档 (kf_hero_tex)：纯矢量」，BackupKit:312/386 与 FriendlyPreset:428 也确实读写该键，但 HeroCard(:865-911) 内没有任何纹理渲染视图（只有渐变 + 柔光 + 黑纱）。纹理档位疑为无渲染点的半成品。",
+    "App/Core/DesignSystem.swift:995 — GuidedEmptyView 的 mascot 参数与 DS.Metric.emptyMascot 判定都在，但 `if mascot, DS.Metric.emptyMascot { }` 是空块，「小管家顶饰」实际未渲染。",
+    "App/Core/DesignSystem.swift:648 — staggered(_:) 已改成恒等实现（入场编排删除），但三处调用点仍在链尾；无法从本文件确认是否有意长期保留 No-op。",
+    "App/Services/BackupStudioKit.swift:617 — expiredTemporaryCount() 位于「193 体积预估」注释段下，实际语义是「已过期临时凭证计数」，与所在段主题不符（注释错位，不确定是否本应属于凭证到期提醒）。",
+    "App/Services/BackupKit.swift:487 — CloudSync.remoteURL 硬编码坚果云「我的坚果云/zklock-backup.enc」，而 BackupStudio.webdavRoot(:699) 允许用户自配根与任意 WebDAV。两套远端口径并存（旧 CloudSync 固定名 + 新 BackupStudio 根可配），无法判定 UI 实际走哪一条。",
+    "App/Services/BackupStudioKit.swift:481 — upgradeChain 的 v4/v5 分支注释自述当年迁移动作是自赋值空操作、现在只推进版本号；因此「v4/v5 真做了键位迁移」不可作为已实现能力记录。",
+    "App/Services/ZipKit.swift:31 — 注释引用旧文件行号「本文件的三处调用 :107/:348/:370」，当前文件只有 193 行且无这些位置（DFU 流程已删），属历史引用残留。",
+    "App/Services/BackupStudioKit.swift:875 — rotateKey 注释写「旧文件重命名留痕」，但实现是直接 PUT 覆盖同名 zklock-backup.enc，没有任何重命名/留痕动作。",
+    "App/Core/DiagKit.swift:414 — 注释提到 Watchdog 已删、自愈并入 275/131，但 LinkSenseKit:363-368 的注释同时引用「deadbeatCheck :309」等旧行号，两文件行号互指已漂移，无法按行核对历史实现。",
+    "App/Core/DesignSystem.swift:159 — 无障碍字号档（kf_ax_bigotp「OTP 大字」）只在本文件的对照注里被提及，字号放大与 AX 档位的读写实现不在 App/Core/DesignSystem.swift；本次按 scope 未展开，也无法确认该键当前是否有 UI 入口。"
+  ],
+  "notes": [
+    "覆盖范围：App/Core 五个文件（AutoOpen 617 行 / LinkSenseKit 959 行 / BatteryCare 306 行 / DiagKit 1462 行 / DesignSystem 1091 行）与 App/Services 四个文件（BackupKit 520 / BackupStudioKit 1004 / BackupCanonical 293 / ZipKit 193）逐行读过；行号均亲自核对。",
+    "设计系统按任务要求只提取「用户可感知的界面能力类别」（主题/语义色/密度/圆角/尺寸档/动效/触感/触达/玻璃/渐变/空态/按钮/无障碍），未逐 token 罗列色值与每一处调用点。",
+    "AutoOpen 的面容档位、标定、冷却等参数均来自代码常量；风险披露文案一致保留原文关键数字（6 秒）。",
+    "备份侧刻意不写「DFU 升级流程」：ZipKit/FirmwareKit 只保留解析与版本判据，DFU 流程已从本仓删除（ZipKit:1-2、:117-119 明示）。",
+    "诊断侧刻意不为已删能力建节点：217（SQLite 索引迁移）、218/221（写队列引擎）、277（Watchdog 副本）在 DiagKit:73-80、:413-423 明确标为删除。",
+    "「协议命令号」只在证据里引用 04（开锁）与 03（状态）/0E（校时）/16（取日志）等已出现在本 scope 代码中的编号；更细的 cmd 表不在本 scope。",
+    "未覆盖（不在本 scope）：LockService 内部实现、凭证中心（CredentialOrg）、CareSchedule 之外的保养页 UI、DFU 流程、以及所有页面视图（DeviceHomeView 等）中的具体接线点。"
+  ]
+}

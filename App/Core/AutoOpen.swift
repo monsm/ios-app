@@ -196,7 +196,7 @@ struct AutoOpenGate {
     var defendStartSec: Int
     var defendEndSec: Int
     var rssiArmed: Bool          // F3 滤波当前态
-    var coolReady: Bool          // F5 冷却: 上一次下发距今 >60s
+    var coolReady: Bool          // F5 冷却: 上一次下发距今 > cooldownSeconds(=6s)。曾误写 60s —— 60 是热链路上限, 不是冷却
     var lockReady: Bool          // F6: 非 busy(25) 且非防拆(26)
 
     enum Reject: Equatable {

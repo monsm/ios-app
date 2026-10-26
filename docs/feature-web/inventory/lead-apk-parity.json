@@ -1,0 +1,105 @@
+{
+  "scout": "lead-apk-parity",
+  "platform": "ios",
+  "scope": [
+    "tools/apkshadow.js",
+    "docs/APK-PROTOCOL-PARITY.md",
+    ".github/workflows/ios.yml",
+    "apk_raw/assets/www/build/main.js",
+    "jzzns22561_out/sources/cn/zelkova/ZKurlcsPlugin/lockprotocol/LockCommBase.java",
+    "jzzns22561_out/sources/com/plugin/urlcsDfuPlugin/BleDfu.java"
+  ],
+  "nodes": [
+    {
+      "key": "protocol.apk-parity",
+      "parentKey": "protocol",
+      "domain": "protocol",
+      "level": 3,
+      "kind": "diagnostic",
+      "platform": "ios",
+      "name": "APK 协议基线对照闸门（apkshadow，41 项断言）",
+      "summary": "以 apk_raw 的 main.js + Java LockCommBase 为权威重算协议，与 Swift 实现逐项比对；不用 vendor 移植稿做基线。",
+      "details": [
+        "帧头：87 + 00 + len16LE + cmd + 000000 + KLV（对齐 Java LockCommBase:100-107）",
+        "KLV：key(1B)+len(1B)+value，单值上限 255B；toSmallByteOrder 是逐字节全反转",
+        "EKey 包络：88+00+反转MAC+TrackId(4LE)+VF(4LE)+VT(4LE)+Cmd，共 21B",
+        "令牌注入键 = 0xEE（Java (byte)-18）；main.js 的 SESSIONTOKENKEY=\"F0\" 是从未使用的死常量",
+        "pin 编码：Swift genPin 直接产出 4B 小端 hex，故 addPins.joined() 与 APK toSmallByteOrder(…,4) 等价",
+        "DFU：判据是广播 pid + dfuState==1（BleDfu.java:56），不是广播名；状态码 0/-1/1/-1/2/4/5/-1/6/7",
+        "已进 CI：与 cmdsshadow 并列"
+      ],
+      "evidence": [
+        {
+          "file": "tools/apkshadow.js",
+          "line": 1,
+          "symbol": "apkshadow"
+        },
+        {
+          "file": "docs/APK-PROTOCOL-PARITY.md",
+          "line": 1,
+          "symbol": "APK-PROTOCOL-PARITY"
+        },
+        {
+          "file": ".github/workflows/ios.yml",
+          "line": 129,
+          "symbol": "apkshadow CI 步骤"
+        }
+      ],
+      "tags": [
+        "APK 基线",
+        "协议对齐",
+        "CI 闸门"
+      ],
+      "status": "implemented"
+    },
+    {
+      "key": "diagnostic.test-coverage",
+      "parentKey": "diagnostic",
+      "domain": "diagnostic",
+      "level": 3,
+      "kind": "diagnostic",
+      "platform": "ios",
+      "name": "单测覆盖（3 个新测试文件，441 行，CI build-for-testing 会编译）",
+      "summary": "布防三档与五条时段校验、手机钥匙 pin 分配与 Codable 容错、固件包解析与降级闸——均有表驱动单测；但从未在模拟器上执行过。",
+      "details": [
+        "DefendKitTests 167 行：三档 rawValue / 五条校验 / 跨午夜 / 半秒往返 / 与 F4 否决门同尺 / 全天 / 状态文案",
+        "MobileKeyServiceTests 103 行：pin 线性分配 / 池空返回 nil 不回落 / 空串跳过 / 有效期标签 / 缺字段 JSON 容错",
+        "FirmwareKitTests 171 行：手搓 ZIP 造合法包 + 六类畸形包（缺 manifest/缺 bin/bin 过小/dat 过小/CRC 错/manifest 形状错）/ 文件名版本矩阵 / 降级闸矩阵",
+        "project.yml 的 OfflineLockTests 按 path: Tests 自动收录，无需改工程文件",
+        "CI 的 xcodebuild build-for-testing 会**编译**测试目标（不执行）——能抓编译错误，抓不到断言失败",
+        "未执行：仓里没有 Mac，xcodebuild test 从未跑过"
+      ],
+      "evidence": [
+        {
+          "file": "Tests/DefendKitTests.swift",
+          "line": 1,
+          "symbol": "DefendKitTests"
+        },
+        {
+          "file": "Tests/MobileKeyServiceTests.swift",
+          "line": 1,
+          "symbol": "MobileKeyServiceTests"
+        },
+        {
+          "file": "Tests/FirmwareKitTests.swift",
+          "line": 1,
+          "symbol": "FirmwareKitTests"
+        },
+        {
+          "file": ".github/workflows/ios.yml",
+          "line": 218,
+          "symbol": "build-for-testing"
+        }
+      ],
+      "tags": [
+        "单测",
+        "CI 编译"
+      ],
+      "status": "partial"
+    }
+  ],
+  "unresolved": [],
+  "notes": [
+    "本轮把协议对齐的权威来源从 vendor 移植稿换成原版 APK（main.js + Java 生产链），并固化成一个 CI 闸门。"
+  ]
+}

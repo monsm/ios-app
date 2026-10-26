@@ -1,0 +1,303 @@
+{
+  "scout": "lead-gapfill",
+  "platform": "ios",
+  "scope": [
+    "App/Core/AndroidPair.swift",
+    "App/Core/QuickActions.swift",
+    "App/Core/Route.swift",
+    "App/Core/Destination.swift",
+    "android-app/app/src/main/java/com/aapk/kfkey/Theme.kt",
+    "android-app/app/src/main/res/**",
+    "android-app/*.gradle.kts"
+  ],
+  "nodes": [
+    {
+      "platform": "ios",
+      "status": "implemented",
+      "details": [
+        "前缀 \"KFA1:\" —— 只为「扫错码」时能立刻判掉，不是安全边界（真边界是 ekey 本身）",
+        "字段名压到 1 字母是为了二维码稀疏、暗光/斜角更好认，不是为了省字节：v=版本(1) / n=名称 / m=mac(小写) / p=pid / e=ekey(小写)",
+        "JSON 用 .sortedKeys 序列化，保证同样内容出同样的码",
+        "ekey 优先取配网时签好的 kc.ekey；没有就按 skey+PIN 现签一次（buildEkeyOpen，与 unlock() 同一算式、同一组默认有效期 ⇒ 与配网那次逐字节一致）",
+        "缺 PIN 或 skey 为空 ⇒ 返回 nil，宁可不给码也不发半截凭证",
+        "**刻意不带 skey**：04 开锁只需要 ekey，01 令牌是明文索取；带 skey 等于把母钥塞进二维码，截图外传就收不回；ekey 丢了可以换 PIN 重签，两者失窃后果不是一个量级",
+        "名称空时回落 LockArchive.displayName(kc)",
+        "入口常驻：安卓端存下这张码后本机不再需要它，但用户可能想再给第二台手机扫"
+      ],
+      "tags": [
+        "iOS 签发",
+        "Android 消费",
+        "凭证安全"
+      ],
+      "level": 4,
+      "key": "unlock.bind.qr.payload",
+      "parentKey": "unlock.bind.qr",
+      "domain": "unlock",
+      "kind": "protocol",
+      "name": "二维码正文格式 KFA1:{…}（iOS 侧签发端）",
+      "summary": "iOS 把「给安卓用的钥匙」压成 KFA1: 前缀 + 单字母键的 JSON：v/n/m/p/e 五个字段，只带开锁必需的 mac/pid/ekey。",
+      "evidence": [
+        {
+          "file": "App/Core/AndroidPair.swift",
+          "line": 11,
+          "symbol": "prefix",
+          "note": "static let prefix = \"KFA1:\""
+        },
+        {
+          "file": "App/Core/AndroidPair.swift",
+          "line": 15,
+          "symbol": "ekey(for:)",
+          "note": "优先 kc.ekey，否则 buildEkeyOpen 现签"
+        },
+        {
+          "file": "App/Core/AndroidPair.swift",
+          "line": 24,
+          "symbol": "payload(_:)",
+          "note": "v/n/m/p/e 五字段 + sortedKeys"
+        },
+        {
+          "file": "App/Core/AndroidPair.swift",
+          "line": 4,
+          "symbol": "注释",
+          "note": "刻意不带 skey 的理由"
+        }
+      ]
+    },
+    {
+      "platform": "ios",
+      "status": "implemented",
+      "details": [
+        "① BackupStudio.registerChargeBackup() —— BGTaskScheduler.register 必须在 applicationDidFinishLaunching 之前；晚于它会抛 NSInternalInconsistencyException **直接崩进程**，而 App 的 onLaunch() 挂在 .task 上可能多次调用 ⇒ 既有崩溃风险又有重复注册风险",
+        "注册无条件执行（很轻）；真正是否排期由开关决定",
+        "② DB.migrateSecretsToKeychain() —— 旧版明文存在 plist 里的密钥搬进系统 Keychain",
+        "③ DB.hydrateMacOrders() —— 0x88 包络的 MAC 字节序裁定灌回协议层，避免重启后按显示序误发",
+        "原 943「主屏长按快速操作」已删除（三项都只是跳转到已有页面），本文件只剩这一个 delegate"
+      ],
+      "tags": [
+        "启动链",
+        "系统契约"
+      ],
+      "level": 4,
+      "key": "settings.shell.launch.delegate",
+      "parentKey": "settings.shell.launch",
+      "domain": "settings",
+      "kind": "service",
+      "name": "启动期系统职责（UIApplicationDelegate，每进程恰好一次）",
+      "summary": "三件必须在「启动完成之前」做的事挂在 QuickActionDelegate 上，而不是 App 的 onLaunch()：注册充电备份 BGTask、把旧 plist 明文密钥搬进 Keychain、把已裁定的 MAC 字节序灌回协议层。",
+      "evidence": [
+        {
+          "file": "App/Core/QuickActions.swift",
+          "line": 17,
+          "symbol": "didFinishLaunchingWithOptions",
+          "note": "启动窗口内的一次性职责"
+        },
+        {
+          "file": "App/Core/QuickActions.swift",
+          "line": 20,
+          "symbol": "registerChargeBackup()",
+          "note": "BGTask 注册"
+        },
+        {
+          "file": "App/Core/QuickActions.swift",
+          "line": 21,
+          "symbol": "migrateSecretsToKeychain()",
+          "note": "明文密钥搬 Keychain"
+        },
+        {
+          "file": "App/Core/QuickActions.swift",
+          "line": 22,
+          "symbol": "hydrateMacOrders()",
+          "note": "MAC 字节序灌回协议层"
+        }
+      ]
+    },
+    {
+      "platform": "ios",
+      "status": "implemented",
+      "details": [
+        "顺序唯一声明 Route.byHost = [device, credentials, records, settings]；deepLinkHosts 与 legacy 的 Tab 号都从它推",
+        "访客受限 guestBlocked = 只有 credentials 与 settings 两页；记录页不含凭证本体，照常可看",
+        "guestBlockedTabs 由 guestBlocked 派生，不再手写 [1,3]",
+        "tabIndex 越界返回 -1 而不是崩溃 —— 调用方 markNav 本来就靠「拿不到就不记账」兜住脏值",
+        "曾有三处实证缺陷：RecordsView 被新变体用 sheet 端出来后，内部 requestTab(1)/tabSelection=0 会去切一个不存在的 Tab，而 sheet 还盖在上面",
+        "更危险的：访客门禁曾是「同一个量的双实现」，两处同时失去指称对象 ⇒ 访客模式静默失去对「应用锁/访客/伪装/销毁」整块的覆盖，不崩不报错"
+      ],
+      "tags": [
+        "导航",
+        "访客门禁"
+      ],
+      "level": 3,
+      "key": "settings.shell.route",
+      "parentKey": "settings.shell",
+      "domain": "settings",
+      "kind": "service",
+      "name": "Route：四 Tab 的身份与访客受限集（唯一声明）",
+      "summary": "Route 枚举把「Tab 顺序」「深链 host 表」「访客受限集」三处同源的东西收成一处声明，其它地方一律从它派生。",
+      "evidence": [
+        {
+          "file": "App/Core/Route.swift",
+          "line": 24,
+          "symbol": "enum Route",
+          "note": "四 Tab 身份"
+        },
+        {
+          "file": "App/Core/Route.swift",
+          "line": 33,
+          "symbol": "byHost",
+          "note": "唯一顺序声明"
+        },
+        {
+          "file": "App/Core/Route.swift",
+          "line": 47,
+          "symbol": "guestBlocked",
+          "note": "只有凭证/设置两页受限"
+        },
+        {
+          "file": "App/Core/Route.swift",
+          "line": 69,
+          "symbol": "guestBlockedTabs",
+          "note": "由 guestBlocked 派生"
+        }
+      ]
+    },
+    {
+      "platform": "ios",
+      "status": "implemented",
+      "details": [
+        "42 个 case，rawValue 是 View 类型名，供 tools/uicoverage.js 与本台账对账",
+        "生成时的目的地总数 = 42；改了界面呈现方式之后重新生成并核对 diff —— 少一条就是某套界面会缺一个页面而没人发现",
+        "覆盖：addDevice/addPwd/autoCal/backup/borrowSheet/credBin/credCenter/credentials/credExtend/credHistoryList/credHistory/credOrganize/credQueue/credTransfer/deviceHome/deviceInfo/diagnostics/diagReference/focusUnlock/gateway/keychainHW/linkPrefs/lockProfile/memberArchived/memberCenter/memberDetail360/memberFamilySettings/members/memberWizard/mergeMembers/messages/records/safemodeIntro/securityCenter/settings/shareToAndroid/startAddFp/syncTime/tailgate/unclaimedClaim/unlockGate/webDAVStudio"
+      ],
+      "tags": [
+        "目的地台账",
+        "闸门"
+      ],
+      "level": 3,
+      "key": "settings.shell.destinations",
+      "parentKey": "settings.shell",
+      "domain": "settings",
+      "kind": "data",
+      "name": "Destination：42 个目的地的机检台账",
+      "summary": "把界面里每一站登记成枚举（rawValue = View 类型名），供闸门与台账对账；文件由 tools/destmap.js 生成，禁止手改。",
+      "evidence": [
+        {
+          "file": "App/Core/Destination.swift",
+          "line": 8,
+          "symbol": "enum Destination",
+          "note": "42 个目的地台账"
+        },
+        {
+          "file": "App/Core/Destination.swift",
+          "line": 1,
+          "symbol": "生成说明",
+          "note": "由 destmap.js --emit 生成，不要手改"
+        }
+      ]
+    },
+    {
+      "platform": "ios",
+      "status": "implemented",
+      "details": [
+        "8 个值：BgTop #0A0C10 / BgBottom #141A22 / Surface #161C24 / Ink #F3F6FA / InkSub #8B96A8 / Accent #E8B45C / Ok #6EE7A8 / Bad #F87171",
+        "internal 而非 private：SignalArrow.kt 也要用同一套，顶层 private val 只在本文档可见",
+        "曾尝试改成 @Composable get() = LocalKfColors.current.xxx 以支持深浅双模 ⇒ **编译不过**：它们被用在 DrawScope 里（GearButton / SignalArrow 的 Canvas）与非 Composable 普通 fun 里（maybeAutoUnlock 拼状态色）",
+        "现在只留给非 Composable 的默认参数（SignalArrow 的 okColor/outlineColor）与 DrawScope 兜底",
+        "暖金 Accent 是钥匙/黄铜的联想，不是科技蓝紫"
+      ],
+      "tags": [
+        "Android 主题"
+      ],
+      "level": 4,
+      "key": "android.theme.constants",
+      "parentKey": "android.theme",
+      "domain": "settings",
+      "kind": "data",
+      "name": "8 个 internal 固定色只服务非 Composable 上下文",
+      "summary": "BgTop/BgBottom/Surface/Ink/InkSub/Accent/Ok/Bad 八个色值固定，只给 DrawScope 绘制与非 Composable 函数用；页面取色一律走 LocalKfColors。",
+      "evidence": [
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/Theme.kt",
+          "line": 21,
+          "symbol": "BgTop",
+          "note": "8 个 internal val 起点"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/Theme.kt",
+          "line": 26,
+          "symbol": "Accent",
+          "note": "暖金 #E8B45C"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/Theme.kt",
+          "line": 10,
+          "symbol": "注释",
+          "note": "未采纳的 @Composable 尝试与失败原因"
+        }
+      ]
+    },
+    {
+      "platform": "ios",
+      "status": "implemented",
+      "details": [
+        "strings.xml: app_name = 离线锁钥匙",
+        "colors.xml: ic_bg = #0A0C10（自适应图标底色，与 BgTop 同值）",
+        "ic_launcher.xml: adaptive-icon，background=@color/ic_bg，foreground=@drawable/ic_fg",
+        "ic_fg.xml: 108dp 矢量，两段 path —— 半径 13 的圆 + 梯形槽（h16 l4,24），fillColor #E8B45C",
+        "构建：AGP 8.7.3 / Kotlin 2.0.21 / compose 插件 2.0.21；settings.gradle.kts 强制 FAIL_ON_PROJECT_REPOS，仓库只允许 google + mavenCentral"
+      ],
+      "tags": [
+        "Android 资源",
+        "构建"
+      ],
+      "level": 4,
+      "key": "android.build.resources",
+      "parentKey": "android.build",
+      "domain": "settings",
+      "kind": "data",
+      "name": "应用名 / 图标 / 主题资源",
+      "summary": "App 名「离线锁钥匙」，自适应图标 = 深色底 #0A0C10 + 暖金钥匙孔前景，键位语言与界面圆盘同源。",
+      "evidence": [
+        {
+          "file": "android-app/app/src/main/res/values/strings.xml",
+          "line": 2,
+          "symbol": "app_name",
+          "note": "离线锁钥匙"
+        },
+        {
+          "file": "android-app/app/src/main/res/values/colors.xml",
+          "line": 2,
+          "symbol": "ic_bg",
+          "note": "#0A0C10"
+        },
+        {
+          "file": "android-app/app/src/main/res/drawable/ic_fg.xml",
+          "line": 7,
+          "symbol": "path",
+          "note": "钥匙孔圆 + 梯形槽"
+        },
+        {
+          "file": "android-app/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml",
+          "line": 3,
+          "symbol": "adaptive-icon",
+          "note": "底色 + 前景"
+        },
+        {
+          "file": "android-app/settings.gradle.kts",
+          "line": 8,
+          "symbol": "repositoriesMode",
+          "note": "FAIL_ON_PROJECT_REPOS"
+        },
+        {
+          "file": "android-app/build.gradle.kts",
+          "line": 4,
+          "symbol": "plugins",
+          "note": "AGP 8.7.3 / Kotlin 2.0.21"
+        }
+      ]
+    }
+  ],
+  "unresolved": [],
+  "notes": [
+    "补齐 coverage.js 查出的 11 个零引用源文件；其中 6 个是纯资源配置（mipmap/values/gradle），已并入 android.build.resources 与 android.theme.constants 两个节点，不再单列。"
+  ]
+}

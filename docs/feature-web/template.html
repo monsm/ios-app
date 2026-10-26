@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>离线锁管家 · 功能蜘蛛网</title>
+<style>
+:root{
+  --bg:#04060a; --panel:rgba(12,17,26,.88); --line:rgba(150,180,220,.13);
+  --ink:#e9eef7; --sub:#93a3ba; --faint:#5d6b80; --brass:#d9b26a;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;color:var(--ink);overflow:hidden;-webkit-font-smoothing:antialiased;
+  font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:radial-gradient(1200px 860px at 50% 44%,#0b1220 0%,#060910 52%,#03050a 100%);}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+.app{height:100%;display:grid;grid-template-rows:62px 1fr 32px;grid-template-columns:298px 1fr 372px;
+  grid-template-areas:"head head head" "left stage right" "foot foot foot"}
+.head{grid-area:head;display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(10,15,24,.94),rgba(8,12,20,.7));backdrop-filter:blur(14px);z-index:20}
+.brand{display:flex;align-items:center;gap:11px;min-width:288px}
+.mark{width:33px;height:33px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(217,178,106,.45);
+  background:radial-gradient(circle at 35% 30%,rgba(217,178,106,.26),rgba(90,169,255,.07) 62%,transparent 72%);
+  box-shadow:0 0 22px rgba(217,178,106,.12)}
+.mark svg{width:20px;height:20px}
+.brand h1{font-size:15.5px;font-weight:600;letter-spacing:.06em;margin:0}
+.brand p{margin:2px 0 0;font-size:10px;color:var(--faint);letter-spacing:.09em}
+.search{flex:1;max-width:520px;position:relative}
+.search input{width:100%;height:35px;border-radius:10px;border:1px solid var(--line);background:rgba(8,12,20,.72);
+  padding:0 34px 0 33px;outline:none;font-size:12.5px}
+.search input:focus{border-color:rgba(90,169,255,.5);box-shadow:0 0 0 3px rgba(90,169,255,.07)}
+.search .ico{position:absolute;left:11px;top:8px;color:var(--faint);font-size:14px}
+.search kbd{position:absolute;right:9px;top:8px;font-size:10px;color:var(--faint);border:1px solid var(--line);padding:2px 5px;border-radius:5px}
+.headstats{display:flex;gap:7px;align-items:center}
+.pill{display:flex;align-items:center;gap:6px;height:29px;padding:0 10px;border-radius:999px;border:1px solid var(--line);
+  background:rgba(11,16,25,.66);font-size:10.5px;color:var(--sub);white-space:nowrap}
+.pill b{color:var(--ink);font-weight:600;font-size:11.5px}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
+.hbtns{display:flex;gap:6px;margin-left:auto}
+.btn{height:31px;padding:0 12px;border-radius:9px;border:1px solid var(--line);background:rgba(16,22,33,.8);font-size:11.5px;transition:.16s}
+.btn:hover{border-color:rgba(217,178,106,.42);background:rgba(28,36,52,.9)}
+.btn.primary{border-color:rgba(217,178,106,.48);color:#f4e3c0;background:linear-gradient(180deg,rgba(217,178,106,.15),rgba(217,178,106,.04))}
+.left{grid-area:left;overflow:auto;border-right:1px solid var(--line);padding:13px 13px 30px;scrollbar-width:thin;
+  background:linear-gradient(180deg,rgba(9,13,21,.86),rgba(6,9,15,.92))}
+.right{grid-area:right;overflow:auto;border-left:1px solid var(--line);padding:13px;scrollbar-width:thin;
+  background:linear-gradient(180deg,rgba(9,13,21,.92),rgba(6,9,15,.95))}
+.stage{grid-area:stage;position:relative;overflow:hidden}
+svg#web{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+svg#web.dragging{cursor:grabbing}
+.foot{grid-area:foot;display:flex;align-items:center;gap:14px;padding:0 15px;border-top:1px solid var(--line);
+  font-size:10px;color:var(--faint);background:rgba(6,9,14,.94)}
+.foot b{color:var(--sub);font-weight:500}
+.sec{margin:0 0 12px;padding:10px 10px 11px;border:1px solid var(--line);border-radius:14px;
+  background:linear-gradient(180deg,rgba(16,22,33,.5),rgba(10,14,22,.36))}
+.sec h2{margin:0 0 8px;font-size:10px;letter-spacing:.17em;color:var(--faint);font-weight:600;display:flex;align-items:center;gap:7px}
+.sec h2::before{content:"";width:11px;height:1px;background:var(--brass);opacity:.75}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--sub);padding:3px 0}
+.row b{color:var(--ink);font-weight:500}
+.domlist{display:flex;flex-direction:column;gap:1px}
+.dom{display:flex;align-items:center;gap:8px;padding:5px 7px;border-radius:8px;cursor:pointer;border:1px solid transparent;transition:.14s}
+.dom:hover{background:rgba(255,255,255,.04)}
+.dom.on{background:rgba(217,178,106,.09);border-color:rgba(217,178,106,.24)}
+.dom .sw{width:8px;height:8px;border-radius:2px;flex:none}
+.dom .nm{font-size:11.5px;flex:1}
+.dom .ct{font-size:10px;color:var(--faint);font-variant-numeric:tabular-nums}
+.ctl{display:flex;gap:5px;flex-wrap:wrap}
+.chip{height:26px;padding:0 8px;border-radius:7px;border:1px solid var(--line);background:rgba(9,13,21,.7);
+  font-size:10.5px;color:var(--sub);display:flex;align-items:center;gap:5px}
+.chip.on{color:var(--ink);border-color:rgba(90,169,255,.42);background:rgba(90,169,255,.1)}
+.chip .p{width:6px;height:6px;border-radius:50%}
+input[type=range]{width:100%;accent-color:var(--brass);height:4px}
+select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);background:rgba(9,13,21,.82);
+  padding:0 8px;font-size:11px;outline:none}
+.hint{font-size:10px;line-height:1.7;color:var(--faint);margin:7px 0 0}
+.legend{display:grid;gap:3px;font-size:10px;color:var(--faint);line-height:1.6}
+.legend i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.results{max-height:250px;overflow:auto;display:flex;flex-direction:column;gap:1px}
+.res{display:flex;align-items:center;gap:7px;padding:4px 6px;border-radius:6px;cursor:pointer;font-size:11px;color:var(--sub)}
+.res:hover{background:rgba(255,255,255,.05);color:var(--ink)}
+.res .sw{width:6px;height:6px;border-radius:50%;flex:none}
+.res .p{font-size:9px;color:var(--faint);margin-left:auto;white-space:nowrap}
+.res b{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.radar{width:100%;height:auto;display:block;margin:3px auto 0}
+.tip{position:fixed;z-index:60;pointer-events:none;opacity:0;transform:translate(-50%,-112%);transition:opacity .1s;
+  max-width:330px;padding:8px 11px;border-radius:10px;border:1px solid rgba(217,178,106,.26);
+  background:rgba(9,13,21,.97);box-shadow:0 14px 34px rgba(0,0,0,.55);font-size:11px;line-height:1.55}
+.tip.show{opacity:1}
+.tip .t{font-size:12px;font-weight:600;color:#fff;margin-bottom:2px}
+.tip .p{color:var(--faint);font-size:9.5px;margin-bottom:4px}
+.tip .s{color:var(--sub)}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:9px;padding:1px 6px;border-radius:999px;border:1px solid var(--line);margin-right:4px;color:var(--sub)}
+.badge.ios{color:#8cc4ff;border-color:rgba(90,169,255,.4)}
+.badge.android{color:#7ce8bf;border-color:rgba(84,224,199,.4)}
+.badge.apk{color:#f0c47a;border-color:rgba(242,178,75,.4)}
+.badge.lv{color:#e8c56a;border-color:rgba(232,197,106,.35)}
+.ovh{padding:2px 0 0}
+.ovt{font-size:19px;font-weight:600;letter-spacing:.04em}
+.ovs{font-size:10px;color:var(--faint);letter-spacing:.16em;margin-top:3px}
+.ovn{font-size:11px;color:var(--sub);margin-top:8px}
+.ovn b{color:var(--brass);font-weight:600;font-size:13px}
+.rings{display:grid;gap:5px;font-size:11px;color:var(--sub)}
+.rings i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:0}
+.rings b{color:var(--ink);font-weight:500}
+.gaps{display:grid;gap:2px;font-size:10px}
+.gh,.gr{display:grid;grid-template-columns:1fr 26px 26px 26px 30px;align-items:center;gap:2px}
+.gh{color:var(--faint);font-size:9px;padding-bottom:3px;border-bottom:1px solid var(--line);margin-bottom:2px}
+.gh span:not(:first-child),.gv{text-align:center}
+.gn{color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gc{text-align:center;color:#2a3341;font-size:9px}
+.gc.on{color:#7ee0b0}
+.gc.ref{color:#b08a4a}
+.gv{color:var(--faint);font-variant-numeric:tabular-nums}
+.bars{display:grid;gap:4px}
+.bar{display:flex;align-items:center;gap:7px;font-size:10.5px;cursor:pointer;border-radius:5px;padding:1px 3px}
+.bar:hover{background:rgba(255,255,255,.05)}
+.bar .bl{width:76px;flex:none;color:var(--sub)}
+.bar .bt{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden}
+.bar .bt i{display:block;height:100%;border-radius:3px;opacity:.85}
+.bar .bn{width:30px;text-align:right;color:var(--faint);font-variant-numeric:tabular-nums}
+.detail h3{margin:2px 0 3px;font-size:16.5px;font-weight:600;line-height:1.35}
+.crumb{font-size:10px;color:var(--faint);line-height:1.6;margin-bottom:9px;word-break:break-all}
+.dsum{font-size:12px;line-height:1.75;color:#cdd8e8;padding:9px 10px;border-radius:10px;
+  border:1px solid var(--line);background:rgba(20,28,42,.42);margin:8px 0 11px}
+.dsec{margin:11px 0 0}
+.dsec h4{font-size:10px;letter-spacing:.13em;color:var(--faint);margin:0 0 6px;font-weight:600}
+.dsec ul{margin:0;padding-left:15px;font-size:11.5px;line-height:1.75;color:#c7d3e4}
+.ev{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;line-height:1.5;
+  padding:6px 8px;border-radius:7px;background:rgba(8,12,19,.82);border:1px solid var(--line);margin:3px 0;
+  cursor:pointer;word-break:break-all;transition:.14s}
+.ev:hover{border-color:rgba(90,169,255,.4);background:rgba(90,169,255,.06)}
+.ev .evh{margin-bottom:3px}
+.ev b{color:#9fc8ff;font-weight:500}
+.ev span{color:var(--faint)}
+.ev .src{display:block;white-space:pre-wrap;word-break:break-word;font-size:9.5px;line-height:1.5;
+  color:#8fa4bd;background:rgba(90,169,255,.05);border-left:2px solid rgba(90,169,255,.3);
+  padding:3px 6px;border-radius:0 5px 5px 0;margin:2px 0 0}
+.ev .note{font-size:9.5px;color:#7d8da6;margin-top:2px}
+.plathead{display:flex;align-items:center;gap:6px;margin:8px 0 2px;font-size:10.5px;color:var(--sub)}
+.chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.chips .c{font-size:9.5px;padding:2px 7px;border-radius:999px;border:1px solid var(--line);color:var(--sub);background:rgba(255,255,255,.02)}
+.kids{display:flex;flex-direction:column;gap:1px}
+.kid{display:flex;align-items:center;gap:7px;font-size:11px;padding:3px 6px;border-radius:6px;cursor:pointer;color:var(--sub)}
+.kid:hover{background:rgba(255,255,255,.05);color:var(--ink)}
+.kid .l{font-size:8.5px;color:var(--faint);border:1px solid var(--line);border-radius:4px;padding:0 4px;flex:none}
+.empty{font-size:11.5px;color:var(--faint);line-height:1.95;padding:6px 2px}
+.empty code{color:#9fc8ff;font-size:10.5px}
+.overlay{position:fixed;inset:0;z-index:80;background:rgba(3,5,9,.78);backdrop-filter:blur(8px);display:none}
+.overlay.on{display:flex;align-items:center;justify-content:center}
+.sheet{width:min(1080px,94vw);height:min(86vh,900px);border:1px solid var(--line);border-radius:18px;
+  background:linear-gradient(180deg,#0b101a,#06090f);display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 40px 120px rgba(0,0,0,.65)}
+.sheet header{display:flex;align-items:center;gap:12px;padding:13px 17px;border-bottom:1px solid var(--line)}
+.sheet header h3{margin:0;font-size:13.5px;font-weight:600}
+.sheet header .x{margin-left:auto}
+.list{overflow:auto;padding:6px 12px 40px}
+.grp{border:1px solid var(--line);border-radius:10px;margin:7px 0;background:rgba(15,21,32,.38);overflow:hidden}
+.grp>summary{padding:8px 11px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:8px;list-style:none}
+.grp>summary::-webkit-details-marker{display:none}
+.grp>summary .sw{width:8px;height:8px;border-radius:2px}
+.grp>summary .ct{margin-left:auto;font-size:10px;color:var(--faint)}
+.grp .body{padding:2px 7px 8px}
+.lrow{display:flex;align-items:center;gap:7px;padding:3px 7px;border-radius:6px;font-size:11px;cursor:pointer;color:var(--sub)}
+.lrow:hover{background:rgba(255,255,255,.045);color:var(--ink)}
+.lrow .lv{font-size:8px;color:var(--faint);width:20px;flex:none}
+.lrow .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pips{display:inline-flex;gap:2px;flex:none}
+.pip{width:5px;height:5px;border-radius:50%;display:inline-block}
+.pip.ios{background:#5aa9ff}.pip.android{background:#54e0c7}.pip.apk{background:#f2b24b}
+.toast{position:fixed;left:50%;bottom:50px;transform:translateX(-50%) translateY(10px);z-index:90;
+  padding:7px 14px;border-radius:999px;border:1px solid rgba(217,178,106,.4);background:rgba(9,13,21,.97);
+  font-size:11px;color:#f0dfbe;opacity:0;transition:.2s;pointer-events:none}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+#scene .node{cursor:pointer;transition:opacity .16s}
+#scene.has-hover .node:not(.hl){opacity:.13}
+#scene.has-hover .lnk:not(.hl){opacity:.04}
+#scene.has-hover .wedge{opacity:.008}
+#scene.has-hover .label:not(.hl){opacity:.1}
+@media (max-width:1300px){.app{grid-template-columns:270px 1fr 330px}}
+@media (max-width:1080px){
+  .app{grid-template-columns:250px 1fr;grid-template-areas:"head head" "left stage" "foot foot"}
+  .right{position:fixed;right:0;top:62px;bottom:32px;width:min(372px,92vw);z-index:40;transform:translateX(102%);
+    transition:.24s;box-shadow:-20px 0 60px rgba(0,0,0,.55)}
+  .right.open{transform:none}
+  .headstats{display:none}
+}
+@media (max-width:760px){
+  .app{grid-template-columns:1fr;grid-template-areas:"head" "stage" "foot"}
+  .left{position:fixed;left:0;top:62px;bottom:32px;width:280px;z-index:40;transform:translateX(-102%);transition:.24s}
+  .left.open{transform:none;box-shadow:20px 0 60px rgba(0,0,0,.55)}
+  .brand{min-width:0}.brand p{display:none}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="head">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#d9b26a" stroke-width="1.05">
+          <circle cx="12" cy="12" r="2.1"/><circle cx="12" cy="12" r="5.4" opacity=".72"/>
+          <circle cx="12" cy="12" r="8.9" opacity=".46"/><circle cx="12" cy="12" r="11.3" opacity=".26"/>
+          <path d="M12 1v22M1 12h22M4.3 4.3l15.4 15.4M19.7 4.3L4.3 19.7" opacity=".5"/>
+        </svg>
+      </div>
+      <div>
+        <h1>功能蜘蛛网</h1>
+        <p>OFFLINE LOCK · iOS × ANDROID · 源码级功能图谱</p>
+      </div>
+    </div>
+    <div class="search">
+      <span class="ico">⌕</span>
+      <input id="q" type="search" placeholder="搜功能点 / key / 命令，例如：临时码、cmd04、自动开锁" autocomplete="off">
+      <kbd>/</kbd>
+    </div>
+    <div class="headstats" id="headstats"></div>
+    <div class="hbtns">
+      <button class="btn" id="btnList">☰ 清单</button>
+      <button class="btn" id="btnPNG">↧ PNG</button>
+      <button class="btn primary" id="btnReset">重置视图</button>
+    </div>
+  </header>
+
+  <aside class="left" id="left">
+    <section class="sec">
+      <h2>统计</h2>
+      <div class="row"><span>功能节点</span><b id="sTotal">—</b></div>
+      <div class="row"><span>源码证据</span><b id="sEv">—</b></div>
+      <div class="row"><span>协议命令</span><b id="sCmd">—</b></div>
+      <div class="row"><span>生成</span><b id="sTime" style="font-size:9.5px;color:var(--faint)">—</b></div>
+    </section>
+
+    <section class="sec">
+      <h2>平台覆盖</h2>
+      <div class="ctl" id="platCtl">
+        <button class="chip on" data-p="ios"><span class="p" style="background:#5aa9ff"></span>iOS <b id="cIos">0</b></button>
+        <button class="chip on" data-p="android"><span class="p" style="background:#54e0c7"></span>Android <b id="cAnd">0</b></button>
+        <button class="chip on" data-p="apk"><span class="p" style="background:#f2b24b"></span>APK <b id="cApk">0</b></button>
+      </div>
+      <svg class="radar" id="radar" viewBox="0 0 232 216" aria-label="平台覆盖雷达"></svg>
+      <div class="hint">三个平台共用同一套域轴；节点下方的小圆点表示该功能在哪些端有源码证据。</div>
+    </section>
+
+    <section class="sec">
+      <h2>十二域</h2>
+      <div class="domlist" id="domlist"></div>
+    </section>
+
+    <section class="sec">
+      <h2>视图</h2>
+      <div class="row"><span>展开层级</span><b id="depthVal">4 · 细节</b></div>
+      <input id="depth" type="range" min="2" max="4" step="1" value="4">
+      <div class="row" style="margin-top:7px"><span>标签密度</span></div>
+      <select id="labels">
+        <option value="sparse">精简（只标域与少量模块）</option>
+        <option value="normal" selected>标准（域 + 模块；放大出功能点）</option>
+        <option value="dense">密集（尽量全标）</option>
+        <option value="none">无标签</option>
+      </select>
+      <div class="ctl" style="margin-top:8px">
+        <button class="chip on" id="crossBtn">⌁ 命令连线</button>
+        <button class="chip on" id="webBtn">◎ 蛛网底纹</button>
+      </div>
+      <div class="hint">滚轮缩放 · 拖拽平移 · 单击节点看证据 · 悬停高亮祖先链 · 双击空白复位。</div>
+    </section>
+
+    <section class="sec">
+      <h2>搜索结果</h2>
+      <div class="results" id="results"><div class="empty">输入关键词过滤，命中项会列在这里并高亮。</div></div>
+    </section>
+
+    <section class="sec">
+      <h2>图例</h2>
+      <div class="legend">
+        <div><i style="background:#5aa9ff"></i>iOS 原生（Swift）</div>
+        <div><i style="background:#54e0c7"></i>Android 原生（Kotlin）</div>
+        <div><i style="background:#f2b24b"></i>原版 APK 基线</div>
+        <div style="margin-top:4px">环 = 层级：域 → 模块 → 功能 → 细节</div>
+        <div>扇 = 域；扇宽 = 该域叶子数量</div>
+        <div>金虚线 = 功能 → 协议命令</div>
+      </div>
+    </section>
+  </aside>
+
+  <main class="stage" id="stage">
+    <svg id="web" viewBox="-790 -740 1580 1480" preserveAspectRatio="xMidYMid meet" role="application" aria-label="功能蜘蛛网">
+      <defs>
+        <filter id="glow" x="-90%" y="-90%" width="280%" height="280%">
+          <feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="soft" x="-140%" y="-140%" width="380%" height="380%">
+          <feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <radialGradient id="core" cx="36%" cy="30%">
+          <stop offset="0" stop-color="#fbecc8"/><stop offset=".42" stop-color="#d9b26a"/><stop offset="1" stop-color="#5f481e"/>
+        </radialGradient>
+      </defs>
+      <g id="scene"></g>
+    </svg>
+  </main>
+
+  <aside class="right" id="right">
+    <div id="detail" class="detail"></div>
+  </aside>
+
+  <footer class="foot">
+    <span><b>功能蜘蛛网</b> · 源码级取证</span>
+    <span id="fStats">—</span>
+    <span style="margin-left:auto">仅 Swift / Kotlin / Java / JS / XML 源码 · docs 零引用</span>
+  </footer>
+</div>
+
+<div class="tip" id="tip"></div>
+<div class="toast" id="toast"></div>
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <header>
+      <h3>全部功能点清单</h3>
+      <span class="pill" id="listCount">—</span>
+      <input id="lq" type="search" placeholder="清单内过滤…" style="height:28px;width:200px;border-radius:8px;border:1px solid var(--line);background:rgba(8,12,20,.8);padding:0 9px;font-size:11px;outline:none">
+      <button class="btn x" id="closeList">关闭</button>
+    </header>
+    <div class="list" id="listBody"></div>
+  </div>
+</div>
+
+<script>
+const DATA = __FEATURES_JSON__;
+const DOMAINS = DATA.domains;
+const NODES = DATA.nodes;
+const BY = new Map(NODES.map(n => [n.key, n]));
+const CH = new Map();
+for (const n of NODES) { if (!n.parent) continue; if (!CH.has(n.parent)) CH.set(n.parent, []); CH.get(n.parent).push(n); }
+for (const a of CH.values()) a.sort((x,y)=>x.level-y.level||y.weight-x.weight||x.name.localeCompare(y.name,'zh'));
+const DOM = new Map(DOMAINS.map(d => [d.key, d]));
+const PLAT_NAME = {ios:'iOS', android:'Android', apk:'APK 基线'};
+const PLAT_COLOR = {ios:'#5aa9ff', android:'#54e0c7', apk:'#f2b24b'};
+const LEVEL_NAME = {1:'域', 2:'模块', 3:'功能点', 4:'细节'};
+const R = {1:190, 2:300, 3:444, 4:578};
+const MAXR = 636;
+const state = { platforms:new Set(['ios','android','apk']), domain:null, depth:4, labels:'normal',
+  cross:true, web:true, query:'', selected:null, tf:{x:0,y:0,k:0.86} };
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const svg = $('#web'), scene = $('#scene');
+const NS = 'http://www.w3.org/2000/svg';
+const el = (tag, attrs={}, parent=scene) => { const e=document.createElementNS(NS,tag);
+  for (const [k,v] of Object.entries(attrs)) if (v!==undefined&&v!==null) e.setAttribute(k,v);
+  parent.appendChild(e); return e; };
+const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pts = (r,a) => [Math.cos(a)*r, Math.sin(a)*r];
+const wrap = a => { while(a<-Math.PI)a+=Math.PI*2; while(a>Math.PI)a-=Math.PI*2; return a; };
+
+/* layout */
+let angleMap = new Map();
+function layout(){
+  angleMap = new Map();
+  const total = DOMAINS.reduce((a,d)=>a+(BY.get(d.key)?.weight||1),0);
+  const gap = 0.045, avail = Math.PI*2 - gap*DOMAINS.length;
+  let a = -Math.PI/2;
+  for (const d of DOMAINS){
+    const dn = BY.get(d.key); if(!dn) continue;
+    const span = avail*((dn.weight||1)/total);
+    assign(dn, a, a+span, 1); a += span+gap;
+  }
+}
+function assign(n,a0,a1,level){
+  const ang=(a0+a1)/2, r=R[level]||R[4];
+  n.angle=ang; n.rad=r; n.x=Math.cos(ang)*r; n.y=Math.sin(ang)*r;
+  angleMap.set(n.key,{a0,a1,level});
+  const kids=(CH.get(n.key)||[]).filter(k=>!k.isDomain);
+  if(!kids.length) return;
+  const total=kids.reduce((a,k)=>a+(k.weight||1),0);
+  const pad=Math.min(0.005,(a1-a0)*0.025);
+  let x=a0+pad; const usable=(a1-a0)-pad*2;
+  for(const k of kids){ const span=usable*((k.weight||1)/total); assign(k,x,x+span,k.level); x+=span; }
+}
+
+/* visibility */
+function visible(n){
+  if(n.isDomain) return !state.domain || n.key===state.domain;
+  if(n.level>state.depth) return false;
+  if(state.domain && n.domain!==state.domain) return false;
+  const p=n.platforms||[];
+  if(p.length && !p.some(x=>state.platforms.has(x))) return false;
+  return true;
+}
+
+/* render */
+let nodeEls = new Map(), linkEls = new Map();
+function render(){
+  scene.innerHTML=''; nodeEls=new Map(); linkEls=new Map();
+  const vis = new Set(NODES.filter(visible).map(n=>n.key));
+  drawWedge();
+  if(state.web) drawWeb();
+  drawHub();
+  drawLinks(vis);
+  drawNodes(vis);
+  placeLabels(vis);
+  applyTf();
+  updateCounts();
+}
+
+function drawWedge(){
+  const g = el('g',{class:'wedges'});
+  for(const d of DOMAINS){
+    const am = angleMap.get(d.key); if(!am) continue;
+    const [x0,y0]=pts(MAXR,am.a0), [x1,y1]=pts(MAXR,am.a1);
+    const large=(am.a1-am.a0)>Math.PI?1:0;
+    const p = el('path',{
+      d:`M0 0 L${x0.toFixed(2)} ${y0.toFixed(2)} A${MAXR} ${MAXR} 0 ${large} 1 ${x1.toFixed(2)} ${y1.toFixed(2)} Z`,
+      fill:d.color, opacity: state.domain===d.key?0.075:0.016, stroke:'none', class:'wedge'
+    },g);
+    p.style.cursor='pointer';
+    p.addEventListener('mouseenter',()=>{ if(!state.domain) p.setAttribute('opacity','0.05'); });
+    p.addEventListener('mouseleave',()=>p.setAttribute('opacity', state.domain===d.key?'0.075':'0.016'));
+    p.addEventListener('click',e=>{e.stopPropagation(); isolateDomain(state.domain===d.key?null:d.key);});
+  }
+}
+
+function drawWeb(){
+  const g = el('g',{class:'web'});
+  const spokes = 48;
+  const rings = [46,86,126,164,196,232,268,304,338,372,408,442,474,506,540,568,MAXR];
+  for(const r of rings){
+    let d='';
+    for(let i=0;i<spokes;i++){
+      const a1=i/spokes*Math.PI*2-Math.PI/2, a2=(i+1)/spokes*Math.PI*2-Math.PI/2;
+      const p1=pts(r,a1), p2=pts(r,a2), c=pts(r*0.976,(a1+a2)/2);
+      d+=`M${p1[0].toFixed(1)} ${p1[1].toFixed(1)} Q${c[0].toFixed(1)} ${c[1].toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)} `;
+    }
+    el('path',{d,fill:'none',stroke:'#7fa7d8','stroke-width':r===MAXR?1.2:0.7,opacity:r===MAXR?0.22:0.105},g);
+  }
+  for(let i=0;i<spokes;i++){
+    const a=i/spokes*Math.PI*2-Math.PI/2, [x,y]=pts(MAXR,a);
+    el('line',{x1:0,y1:0,x2:x,y2:y,stroke:'#7fa7d8','stroke-width':i%4===0?0.9:0.5,opacity:i%4===0?0.17:0.07},g);
+  }
+}
+
+function drawHub(){
+  const g = el('g',{class:'hub'});
+  el('circle',{r:88,fill:'#04060a',opacity:.55},g);
+  el('circle',{r:70,fill:'none',stroke:'rgba(217,178,106,.14)','stroke-width':0.8},g);
+  el('circle',{r:52,fill:'url(#core)',opacity:.09,filter:'url(#soft)'},g);
+  el('circle',{r:44,fill:'rgba(7,10,17,.97)',stroke:'rgba(217,178,106,.55)','stroke-width':1.1},g);
+  el('circle',{r:37,fill:'none',stroke:'rgba(217,178,106,.18)','stroke-width':0.7},g);
+  const t1=el('text',{x:0,y:-4,'text-anchor':'middle',fill:'#f0dfbe','font-size':13.5,'font-weight':600,'letter-spacing':1.4},g);
+  t1.textContent='离线锁';
+  const t2=el('text',{x:0,y:11,'text-anchor':'middle',fill:'#8b744a','font-size':7.4,'letter-spacing':1.8},g);
+  t2.textContent='OFFLINE LOCK';
+  const t3=el('text',{x:0,y:26,'text-anchor':'middle',fill:'#6d7a8e','font-size':8.4,'letter-spacing':.6},g);
+  t3.textContent=NODES.length+' 个功能点';
+}
+
+function drawLinks(vis){
+  const g = el('g',{class:'links'});
+  for(const n of NODES){
+    if(!n.parent||!vis.has(n.key)||!vis.has(n.parent)) continue;
+    const p=BY.get(n.parent); if(!p||p.x===undefined) continue;
+    const d=DOM.get(n.domain)||{color:'#778'};
+    const mx=(p.x+n.x)/2,my=(p.y+n.y)/2,dx=n.x-p.x,dy=n.y-p.y;
+    const cx=mx-dy*0.10, cy=my+dx*0.10;
+    const e=el('path',{d:`M${p.x.toFixed(1)} ${p.y.toFixed(1)} Q${cx.toFixed(1)} ${cy.toFixed(1)} ${n.x.toFixed(1)} ${n.y.toFixed(1)}`,
+      fill:'none',stroke:d.color,'stroke-width':n.level>=4?0.55:n.level>=3?0.8:1.1,
+      opacity:n.level>=4?0.26:n.level>=3?0.5:0.7, class:'lnk','data-k':n.key},g);
+    linkEls.set(n.key,e);
+  }
+  if(state.cross){
+    for(const l of DATA.links){
+      if(l.type!=='cmd'||!vis.has(l.source)||!vis.has(l.target)) continue;
+      const a=BY.get(l.source),b=BY.get(l.target);
+      if(!a||!b||a.x===undefined||b.x===undefined) continue;
+      const mx=(a.x+b.x)/2,my=(a.y+b.y)/2,dx=b.x-a.x,dy=b.y-a.y;
+      const cx=mx-dy*0.18,cy=my+dx*0.18;
+      el('path',{d:`M${a.x.toFixed(1)} ${a.y.toFixed(1)} Q${cx.toFixed(1)} ${cy.toFixed(1)} ${b.x.toFixed(1)} ${b.y.toFixed(1)}`,
+        fill:'none',stroke:'#d9b26a','stroke-width':0.55,'stroke-dasharray':'2 3',opacity:0.22,class:'lnk'},g);
+    }
+  }
+}
+
+function drawNodes(vis){
+  const g = el('g',{class:'nodes'});
+  const order=[...NODES].filter(n=>vis.has(n.key)).sort((a,b)=>a.level-b.level);
+  for(const n of order){
+    const d=DOM.get(n.domain)||{color:'#889'};
+    const ng=el('g',{class:'node lv'+n.level,'data-key':n.key,tabindex:0,role:'button',transform:`translate(${n.x.toFixed(1)} ${n.y.toFixed(1)})`},g);
+    ng.setAttribute('aria-label',`${n.name}，${LEVEL_NAME[n.level]||''}，${(n.platforms||[]).map(p=>PLAT_NAME[p]).join(' / ')}`);
+    let r = n.level===1?27 : n.level===2?(n.childCount?7.4:5) : n.level===3?(n.childCount?4.6:3.2) : 2.1;
+    if(/^protocol\.cmd/.test(n.key)) r=Math.max(r,4.6);
+    if(n.level<=2) el('circle',{r:r+11,fill:d.color,opacity:0.05,class:'halo'},ng);
+    el('circle',{r, fill:n.level===1?'rgba(8,12,19,.97)':d.color,
+      'fill-opacity':n.level===1?1:(n.level===2?.9:n.level===3?.82:.6),
+      stroke:n.level===1?d.color:(n.level<=2?'rgba(255,255,255,.5)':'none'),
+      'stroke-width':n.level===1?1.5:0.75},ng);
+    if(n.level===1){
+      const ic=el('text',{x:0,y:6,'text-anchor':'middle','font-size':17,fill:d.color,opacity:.95},ng);
+      ic.textContent=d.icon||'◆';
+    }
+    if(n.level<=3 && n.platforms.length>1){
+      const ps=n.platforms, gap=5;
+      ps.forEach((p,i)=>{ el('circle',{cx:(i-(ps.length-1)/2)*gap, cy:r+5.4, r:1.45, fill:PLAT_COLOR[p]||'#888', opacity:.95},ng); });
+    }
+    const hit=el('circle',{r:Math.max(r+7,n.level<=2?16:8),fill:'transparent'},ng);
+    hit.addEventListener('pointerenter',e=>{showTip(n,e); highlightPath(n.key);});
+    hit.addEventListener('pointermove',moveTip);
+    hit.addEventListener('pointerleave',()=>{hideTip(); clearHighlight();});
+    ng.addEventListener('click',e=>{e.stopPropagation(); select(n.key);});
+    ng.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select(n.key);}});
+    if(state.selected===n.key) el('circle',{r:r+5.5,fill:'none',stroke:'#fff','stroke-width':1.1,opacity:.9,filter:'url(#glow)'},ng);
+    nodeEls.set(n.key,ng);
+  }
+}
+
+/* collision-aware labels */
+const CJK = /[\u2e80-\u9fff\uf900-\ufaff\uff00-\uffef\u3000-\u303f]/;
+function textW(str,fs){ let w=0; for(const ch of str) w += CJK.test(ch)?fs:fs*0.56; return w; }
+function placeLabels(vis){
+  const mode = state.labels;
+  if(mode==='none') return;
+  const fsz = {2:12.4, 3:11, 4:9.8};
+  const groups = {1:[],2:[],3:[],4:[]};
+  for(const n of NODES){ if(vis.has(n.key)) groups[n.level]?.push(n); }
+
+  // 域标签：沿外环，左半右对齐 / 右半左对齐
+  for(const n of (groups[1]||[])){
+    const d = DOM.get(n.domain) || {};
+    const name = d.name || n.name;
+    const r = MAXR + 16;
+    const [lx, ly] = pts(r, n.angle);
+    const cosv = Math.cos(n.angle);
+    const anchor = cosv > 0.34 ? 'start' : (cosv < -0.34 ? 'end' : 'middle');
+    const t = el('text', {x:0, y:0, 'text-anchor':anchor, 'font-size':15,
+      fill:d.color || '#dce6f5', 'font-weight':600, 'letter-spacing':1,
+      'paint-order':'stroke', stroke:'#04060a', 'stroke-width':5.5, 'stroke-linejoin':'round',
+      class:'label', 'data-lv':1, 'data-k':n.key}, scene);
+    t.textContent = name;
+    const dy = Math.abs(Math.sin(n.angle)) > 0.9 ? (Math.sin(n.angle) > 0 ? 14 : -8) : 5;
+    t.setAttribute('transform', 'translate(' + lx.toFixed(1) + ',' + (ly+dy).toFixed(1) + ')');
+    const [dx, dy2] = pts(MAXR + 6, n.angle);
+    el('circle', {cx:dx.toFixed(1), cy:dy2.toFixed(1), r:2.6, fill:d.color||'#889', opacity:.9}, scene);
+  }
+
+  // 2/3/4 级：二维矩形碰撞检测，逐圈向外找空位
+  const boxes = [];
+  for(const n of (groups[1]||[])){
+    const [x,y] = pts(R[1], n.angle);
+    boxes.push({x0:x-34,y0:y-34,x1:x+34,y1:y+34});
+  }
+  const ptsAll = [];
+  for(const lv of [2,3,4]) for(const n of (groups[lv]||[])) ptsAll.push({x:n.x, y:n.y});
+  const hit = b => {
+    for(const o of boxes) if(b.x0<o.x1 && b.x1>o.x0 && b.y0<o.y1 && b.y1>o.y0) return true;
+    for(const p of ptsAll) if(p.x>b.x0-3 && p.x<b.x1+3 && p.y>b.y0-3 && p.y<b.y1+3) return true;
+    return false;
+  };
+  const place = (n, lv) => {
+    const f = fsz[lv] || 10;
+    let name = n.name.replace(/（[^）]*）/g,'').replace(/\([^)]*\)/g,'');
+    name = name.replace(/^[\d\s.]+/,'').replace(/[·、，,]+$/,'');
+    const w = textW(name, f), h = f * 1.18;
+    const dists = lv===2 ? [9,26,46,70,96,126,160,196]
+                : lv===3 ? [7,22,40,62,88,118,150]
+                :          [6,18,34,54,78,106];
+    for(const d of dists){
+      for(const side of [0,-1,1]){
+        const a = n.angle + side*0.05;
+        const r = n.rad + d;
+        const [cx,cy] = pts(r,a);
+        const cosv = Math.cos(a);
+        const anchor = cosv > 0.28 ? 'start' : (cosv < -0.28 ? 'end' : 'middle');
+        let x0,x1;
+        if(anchor==='start'){ x0=cx; x1=cx+w; }
+        else if(anchor==='end'){ x0=cx-w; x1=cx; }
+        else { x0=cx-w/2; x1=cx+w/2; }
+        const b = {x0, y0:cy-h/2, x1, y1:cy+h/2};
+        if(hit(b)) continue;
+        boxes.push(b);
+        const t = el('text', {x:0,y:0,'text-anchor':anchor,'font-size':f,
+          fill: lv===2?'#cbd7e8':'#8496ad','font-weight':lv===2?500:400,
+          'paint-order':'stroke', stroke:'#04060a','stroke-width':3.4,'stroke-linejoin':'round',
+          class:'label','data-lv':lv,'data-k':n.key}, scene);
+        t.textContent = name;
+        const deg = a*180/Math.PI;
+        t.setAttribute('transform','translate('+cx.toFixed(1)+','+cy.toFixed(1)+') rotate('+(cosv<0?deg+180:deg).toFixed(1)+')');
+        const [ax,ay] = pts(n.rad + (lv===2?7:4), n.angle);
+        el('line',{x1:ax.toFixed(1),y1:ay.toFixed(1),x2:cx.toFixed(1),y2:cy.toFixed(1),
+          stroke:'#7fa7d8','stroke-width':0.4,opacity:0.22}, scene);
+        return true;
+      }
+    }
+    return false;
+  };
+  const k = state.tf.k;
+  const caps = mode==='dense'
+    ? { 2: 200, 3: 420, 4: 360 }
+    : mode==='sparse'
+      ? { 2: 70, 3: 0, 4: 0 }
+      : { 2: 140, 3: (k >= 1.3 ? 220 : 0), 4: (k >= 1.95 ? 300 : 0) };
+  for(const lv of [2,3,4]){
+    if(!caps[lv]) continue;
+    const arr = (groups[lv]||[]).slice().sort((a,b)=>(b.childCount?1:0)-(a.childCount?1:0)||b.weight-a.weight);
+    let c = 0;
+    for(const n of arr){ if(c>=caps[lv]) break; if(place(n,lv)) c++; }
+  }
+}
+
+function applyTf(){ const {x,y,k}=state.tf; scene.setAttribute('transform',`translate(${x} ${y}) scale(${k})`); }
+function highlightPath(key){
+  scene.classList.add('has-hover');
+  const chain=[]; let cur=BY.get(key), g=0;
+  while(cur&&g++<20){ chain.push(cur.key); cur=cur.parent?BY.get(cur.parent):null; }
+  for(const k of chain){
+    nodeEls.get(k)?.classList.add('hl');
+    const l=linkEls.get(k); if(l&&k!==key){ l.classList.add('hl'); l.setAttribute('opacity','0.85'); }
+  }
+  $$('#scene .label').forEach(t=>{ if(chain.includes(t.dataset.k)) t.classList.add('hl'); });
+}
+function clearHighlight(){
+  scene.classList.remove('has-hover');
+  for(const g of nodeEls.values()) g.classList.remove('hl');
+  for(const [k,l] of linkEls){ l.classList.remove('hl');
+    const n=BY.get(k); l.setAttribute('opacity', n.level>=4?0.26:n.level>=3?0.5:0.7); }
+  $$('#scene .label').forEach(t=>t.classList.remove('hl'));
+}
+
+function updateCounts(){
+  $('#sTotal').textContent=NODES.length;
+  $('#sEv').textContent=(DATA.stats.evidence||0).toLocaleString();
+  $('#sCmd').textContent=DATA.stats.commands;
+  const c={ios:0,android:0,apk:0};
+  for(const n of NODES) for(const p of n.platforms) c[p]++;
+  $('#cIos').textContent=c.ios; $('#cAnd').textContent=c.android; $('#cApk').textContent=c.apk;
+  $('#fStats').textContent=`${NODES.length} 节点 · ${DATA.stats.modules} 模块 · ${DATA.stats.features} 功能点 · ${DATA.stats.details} 细节 · ${DATA.stats.evidence} 条证据`;
+}
+
+/* interactions */
+function select(key){
+  const n=BY.get(key); if(!n) return;
+  state.selected=key; renderDetail(n);
+  try{ history.replaceState(null,'','#k='+encodeURIComponent(key)); }catch(e){}
+  if(window.innerWidth<=1080) $('#right').classList.add('open');
+  render();
+}
+function focusNode(key,k=2.2){
+  const n=BY.get(key); if(!n||n.x===undefined) return;
+  state.tf={x:-n.x*k,y:-n.y*k,k}; applyTf();
+}
+function isolateDomain(key){
+  state.domain=key; renderDomList(); render();
+  if(key){ const am=angleMap.get(key); const [x,y]=pts(R[3]*0.72,(am.a0+am.a1)/2);
+    state.tf={x:-x*1.15,y:-y*1.15,k:1.15}; }
+  else { state.tf={x:0,y:0,k:0.86}; }
+  applyTf();
+}
+function resetView(){
+  state.platforms=new Set(['ios','android','apk']); state.domain=null; state.depth=4;
+  state.labels='normal'; state.cross=true; state.web=true; state.query=''; state.selected=null;
+  state.tf={x:0,y:0,k:0.86};
+  $('#q').value=''; $('#depth').value=4; $('#labels').value='normal';
+  $$('#platCtl .chip').forEach(b=>b.classList.add('on'));
+  $('#crossBtn').classList.add('on'); $('#webBtn').classList.add('on');
+  $('#depthVal').textContent='4 · 细节';
+  renderDomList(); renderResults(); render(); renderOverview();
+}
+
+let drag=null;
+svg.addEventListener('pointerdown',e=>{ if(e.button!==0)return;
+  drag={x:e.clientX,y:e.clientY,tx:state.tf.x,ty:state.tf.y,moved:false};
+  svg.classList.add('dragging'); svg.setPointerCapture(e.pointerId); });
+svg.addEventListener('pointermove',e=>{ if(!drag)return;
+  const dx=e.clientX-drag.x, dy=e.clientY-drag.y;
+  if(Math.abs(dx)+Math.abs(dy)>3) drag.moved=true;
+  state.tf.x=drag.tx+dx; state.tf.y=drag.ty+dy; applyTf(); });
+svg.addEventListener('pointerup',()=>{ if(!drag)return; drag=null; svg.classList.remove('dragging'); });
+svg.addEventListener('dblclick',e=>{ if(e.target===svg) resetView(); });
+svg.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const rect=svg.getBoundingClientRect(), cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+  const px=(e.clientX-cx)/state.tf.k, py=(e.clientY-cy)/state.tf.k;
+  const nk=Math.min(7,Math.max(0.55,state.tf.k*(e.deltaY<0?1.13:0.885)));
+  const crossed=(state.tf.k<1.3)!==(nk<1.3) || (state.tf.k<1.95)!==(nk<1.95);
+  state.tf.x-=px*(nk-state.tf.k); state.tf.y-=py*(nk-state.tf.k); state.tf.k=nk;
+  if(crossed) render(); else applyTf();
+},{passive:false});
+
+function showTip(n,e){
+  const t=$('#tip'), d=DOM.get(n.domain);
+  t.innerHTML=`<div class="t">${esc(n.name)}</div>
+    <div class="p">${esc(d?d.name:'')} · ${LEVEL_NAME[n.level]||''}${n.childCount?` · ${n.childCount} 子项`:''}</div>
+    <div class="s">${esc((n.summary||'').slice(0,150))}</div>
+    <div style="margin-top:5px">${(n.platforms||[]).map(p=>`<span class="badge ${p}">${PLAT_NAME[p]||p}</span>`).join('')}${n.commands?.length?`<span class="badge lv">${n.commands.map(c=>'cmd'+c).join(' ')}</span>`:''}</div>`;
+  t.classList.add('show'); moveTip(e);
+}
+function moveTip(e){ const t=$('#tip'); t.style.left=Math.min(window.innerWidth-170,Math.max(170,e.clientX))+'px'; t.style.top=(e.clientY-8)+'px'; }
+function hideTip(){ $('#tip').classList.remove('show'); }
+
+/* detail */
+function renderDetail(n){
+  const d=DOM.get(n.domain), ev=n.evidence||[];
+  const byPlat={ios:[],android:[],apk:[]};
+  for(const e of ev) (byPlat[e.platform]||(byPlat[e.platform]=[])).push(e);
+  const kids=(CH.get(n.key)||[]).filter(k=>!k.isDomain).slice(0,18);
+  const html=`
+    <div class="chips" style="margin:0 0 7px">
+      <span class="c" style="border-color:${d?d.color+'66':'#333'};color:${d?d.color:'#aaa'}">${esc(d?d.name:'')}</span>
+      <span class="c">${LEVEL_NAME[n.level]||''}</span>
+      ${(n.platforms||[]).map(p=>`<span class="badge ${p}">${PLAT_NAME[p]||p}</span>`).join('')}
+    </div>
+    <h3>${esc(n.name)}</h3>
+    <div class="crumb">${esc(n.path)}</div>
+    ${n.summary?`<div class="dsum">${esc(n.summary)}</div>`:''}
+    ${n.details?.length?`<div class="dsec"><h4>细节 / 分支 / 参数</h4><ul>${n.details.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}
+    ${n.commands?.length?`<div class="dsec"><h4>关联协议命令</h4><div class="chips">${n.commands.map(c=>`<span class="c" style="color:#e8c56a">cmd${c}</span>`).join('')}</div></div>`:''}
+    <div class="dsec"><h4>源码证据（点一下复制 file:line）</h4>
+      ${ev.length?['ios','android','apk'].filter(p=>byPlat[p]?.length).map(p=>`
+        <div class="plathead"><span class="badge ${p}">${PLAT_NAME[p]}</span> ${byPlat[p].length} 处</div>
+        ${byPlat[p].map(e=>`<div class="ev" data-copy="${esc(e.file+':'+e.line)}"><div class="evh"><b>${esc(e.file)}:${e.line}</b>${e.symbol?` <span>· ${esc(e.symbol)}</span>`:''}</div>${e.text?`<code class="src">${esc(e.text)}</code>`:''}${e.note?`<div class="note">${esc(e.note)}</div>`:''}</div>`).join('')}
+      `).join(''):'<div class="empty">该节点是合并层，证据见其子节点。</div>'}
+    </div>
+    ${kids.length?`<div class="dsec"><h4>子功能（${n.childCount}）</h4><div class="kids">${kids.map(k=>`<div class="kid" data-key="${esc(k.key)}"><span class="l">${LEVEL_NAME[k.level]}</span><span>${esc(k.name)}</span></div>`).join('')}</div></div>`:''}
+    ${n.tags?.length?`<div class="dsec"><h4>标签</h4><div class="chips">${n.tags.map(x=>`<span class="c">${esc(x)}</span>`).join('')}</div></div>`:''}
+  `;
+  const box=$('#detail'); box.innerHTML=html;
+  box.querySelectorAll('.kid').forEach(x=>x.addEventListener('click',()=>{ select(x.dataset.key); focusNode(x.dataset.key); }));
+  box.querySelectorAll('.ev').forEach(x=>x.addEventListener('click',()=>copy(x.dataset.copy)));
+}
+
+/* overview */
+function renderOverview(){
+  const d = DATA.domains.map(x=>({...x, n:NODES.filter(k=>k.domain===x.key&&!k.isDomain).length}));
+  const maxN = Math.max(...d.map(x=>x.n));
+  const platSets = DATA.stats.platSets || {};
+  const SETL = {'ios':'仅 iOS','android':'仅 Android','apk':'仅 APK','ios+android':'iOS + Android',
+    'ios+apk':'iOS + APK','android+apk':'Android + APK','ios+android+apk':'三端都有'};
+  const PL = p => p==='ios'?'iOS':p==='android'?'Android':'APK';
+  const deep = NODES.filter(n=>n.level===4).slice(0,10);
+  const html = `
+    <div class="ovh">
+      <div class="ovt">离线锁管家</div>
+      <div class="ovs">功能蜘蛛网 · 源码级取证</div>
+      <div class="ovn"><b>${NODES.length}</b> 个功能节点 · <b>${DATA.stats.evidence}</b> 条 <code>file:line</code> 证据</div>
+    </div>
+    <div class="dsum" style="margin-top:10px">
+      这张图从<strong>源码本体</strong>逐行提取：iOS 原生 Swift、Android 原生 Kotlin，外加作为对照的厂商原版 APK。
+      <b>README 与 docs 未参与取证</b>——每一条结论都能点开看到对应源码行。
+    </div>
+    <div class="dsec"><h4>四环含义</h4>
+      <div class="rings">
+        <div><i style="background:rgba(217,178,106,.9)"></i>第 1 环 · <b>域</b>（12 个功能域，扇宽 = 功能数量）</div>
+        <div><i style="background:rgba(90,169,255,.9)"></i>第 2 环 · <b>模块</b>（页面 / 服务 / 弹层）</div>
+        <div><i style="background:rgba(84,224,199,.9)"></i>第 3 环 · <b>功能点</b>（用户能做的事）</div>
+        <div><i style="background:rgba(255,107,107,.9)"></i>第 4 环 · <b>细节</b>（阈值 / 状态 / 错误码 / 边界）</div>
+      </div>
+    </div>
+    <div class="dsec"><h4>十二域分布</h4>
+      <div class="bars">${d.map(x=>`
+        <div class="bar" data-key="${x.key}">
+          <span class="bl" style="color:${x.color}">${x.name}</span>
+          <span class="bt"><i style="width:${(x.n/maxN*100).toFixed(0)}%;background:${x.color}"></i></span>
+          <span class="bn">${x.n}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="dsec"><h4>跨端能力对照（同一功能簇在哪些端有源码证据）</h4>
+      <div class="gaps">
+        <div class="gh"><span>能力</span><span>iOS</span><span>And</span><span title="厂商原版基线，仅供参考">APK*</span><span>节点</span></div>
+        ${(DATA.stats.gaps||[]).map(g=>{
+          const has = p => g.platforms.includes(p);
+          const peer = p => (g.peers||[]).includes(p);
+          return `<div class="gr"><span class="gn">${esc(g.name)}</span>
+            <span class="gc ${peer('ios')?'on':''}">${peer('ios')?'●':(has('ios')?'○':'—')}</span>
+            <span class="gc ${peer('android')?'on':''}">${peer('android')?'●':(has('android')?'○':'—')}</span>
+            <span class="gc ${has('apk')?'ref':''}">${has('apk')?'○':'—'}</span>
+            <span class="gv">${g.count}</span></div>`;
+        }).join('')}
+      </div>
+      <div class="hint" style="margin-top:6px">● = 该原生端有源码证据；○ = 只有原版 APK 有；APK* 是参考层（厂商原版，不是本仓代码）。Android 原生刻意做成「单锁 + 开锁」极简版：有查找箭头 / AirTag 层 / 扫码绑定 / 解绑 / 设置抽屉，但没有凭证台账、记录、成员、备份、安全中心与诊断。</div>
+    </div>
+    <div class="dsec"><h4>节点数对照（按平台归属）</h4>
+      <div class="bars">
+        ${Object.entries(platSets).sort((a,b)=>b[1].length-a[1].length).map(([k,v])=>`
+          <div class="bar"><span class="bl">${SETL[k]||k}</span>
+            <span class="bt"><i style="width:${(v.length/NODES.length*100*3).toFixed(0)}%;background:${
+              k==='ios'?'#5aa9ff':k==='android'?'#54e0c7':k==='apk'?'#f2b24b':'#a98bff'}"></i></span>
+            <span class="bn">${v.length}</span></div>`).join('')}
+      </div>
+      <div class="hint" style="margin-top:6px">iOS 是完整协议级移植；Android 原生只有「单锁 + 开锁」三条命令；APK 是厂商原版基线。</div>
+    </div>
+    <div class="dsec"><h4>随便点开一个（最深的一层）</h4>
+      <div class="kids">${deep.map(n=>`<div class="kid" data-key="${esc(n.key)}"><span class="l">细节</span><span>${esc(n.name)}</span></div>`).join('')}</div>
+    </div>
+    <div class="dsec"><h4>怎么用</h4>
+      <ul>
+        <li>滚轮缩放：<b>放大到 1.75 倍</b>会出现第 4 环的细节标签</li>
+        <li>悬停任意节点：高亮它的整条祖先链</li>
+        <li>单击节点：右侧展开完整细节 + 源码行</li>
+        <li>点左侧某个域：只保留该域，其余淡出</li>
+        <li>顶部搜索：功能名 / key / <code>cmd04</code> 都能搜</li>
+      </ul>
+    </div>`;
+  const box=$('#detail'); box.innerHTML=html;
+  box.querySelectorAll('.kid').forEach(x=>x.addEventListener('click',()=>{ select(x.dataset.key); focusNode(x.dataset.key); }));
+  box.querySelectorAll('.bar').forEach(x=>x.addEventListener('click',()=>{ if(x.dataset.key) isolateDomain(x.dataset.key); }));
+}
+
+/* search */
+let sTimer=null;
+$('#q').addEventListener('input',e=>{ state.query=e.target.value.trim().toLowerCase();
+  clearTimeout(sTimer); sTimer=setTimeout(()=>{renderResults(); render();},130); });
+function match(n){ if(!state.query) return false; const q=state.query;
+  return (n.name+' '+n.key+' '+n.summary+' '+(n.tags||[]).join(' ')+' '+(n.commands||[]).map(c=>'cmd'+c).join(' ')).toLowerCase().includes(q); }
+function renderResults(){
+  const box=$('#results');
+  if(!state.query){ box.innerHTML='<div class="empty">输入关键词过滤，命中项会列在这里并高亮。</div>'; return; }
+  const hits=NODES.filter(match).sort((a,b)=>a.level-b.level||b.weight-a.weight);
+  box.innerHTML = hits.length ? hits.slice(0,60).map(n=>{ const d=DOM.get(n.domain);
+    return `<div class="res" data-key="${esc(n.key)}"><span class="sw" style="background:${d?d.color:'#888'}"></span><b>${esc(n.name)}</b><span class="p">${LEVEL_NAME[n.level]}</span></div>`;
+  }).join('')+(hits.length>60?`<div class="empty">还有 ${hits.length-60} 条…</div>`:'')
+  : '<div class="empty">没有命中。试试“临时码”“网关”“cmd04”。</div>';
+  box.querySelectorAll('.res').forEach(x=>x.addEventListener('click',()=>{ select(x.dataset.key); focusNode(x.dataset.key); }));
+}
+
+function renderDomList(){
+  const box=$('#domlist'); box.innerHTML='';
+  for(const d of DOMAINS){
+    const c=NODES.filter(n=>n.domain===d.key&&!n.isDomain).length;
+    const row=document.createElement('div');
+    row.className='dom'+(state.domain===d.key?' on':'');
+    row.innerHTML=`<span class="sw" style="background:${d.color}"></span><span class="nm">${esc(d.name)}</span><span class="ct">${c}</span>`;
+    row.addEventListener('click',()=>isolateDomain(state.domain===d.key?null:d.key));
+    box.appendChild(row);
+  }
+}
+
+function renderRadar(){
+  const s=$('#radar'); s.innerHTML='';
+  const cx=116,cy=104,R0=66, axes=DOMAINS;
+  const val=(d,p)=>NODES.filter(n=>n.domain===d.key&&n.platforms.includes(p)).length;
+  const maxLog=Math.max(...axes.map(d=>Math.log(1+Math.max(...['ios','android','apk'].map(p=>val(d,p))))));
+  for(const f of [0.25,0.5,0.75,1]){
+    const pa=axes.map((d,i)=>{const a=-Math.PI/2+i/axes.length*Math.PI*2;return [cx+Math.cos(a)*R0*f,cy+Math.sin(a)*R0*f];});
+    s.insertAdjacentHTML('beforeend',`<polygon points="${pa.map(q=>q.join(',')).join(' ')}" fill="none" stroke="rgba(150,180,220,.11)" stroke-width=".65"/>`);
+  }
+  axes.forEach((d,i)=>{
+    const a=-Math.PI/2+i/axes.length*Math.PI*2;
+    s.insertAdjacentHTML('beforeend',`<line x1="${cx}" y1="${cy}" x2="${cx+Math.cos(a)*R0}" y2="${cy+Math.sin(a)*R0}" stroke="rgba(150,180,220,.07)"/>`);
+    s.insertAdjacentHTML('beforeend',`<text x="${cx+Math.cos(a)*(R0+14)}" y="${cy+Math.sin(a)*(R0+14)+3}" text-anchor="middle" font-size="8.2" fill="#7d8da6">${d.short}</text>`);
+  });
+  for(const p of ['ios','android','apk']){
+    const pa=axes.map((d,i)=>{ const f=maxLog?Math.log(1+val(d,p))/maxLog:0; const a=-Math.PI/2+i/axes.length*Math.PI*2;
+      return [cx+Math.cos(a)*R0*f,cy+Math.sin(a)*R0*f]; });
+    s.insertAdjacentHTML('beforeend',`<polygon points="${pa.map(q=>q.join(',')).join(' ')}" fill="${PLAT_COLOR[p]}" fill-opacity=".085" stroke="${PLAT_COLOR[p]}" stroke-width="1.05" stroke-opacity=".85"/>`);
+  }
+}
+
+function openList(){
+  const body=$('#listBody'); body.innerHTML=''; $('#listCount').textContent=`${NODES.length} 节点`;
+  for(const d of DOMAINS){
+    const list=NODES.filter(n=>n.domain===d.key);
+    const det=document.createElement('details'); det.className='grp'; det.open=list.length<45;
+    const sum=document.createElement('summary');
+    sum.innerHTML=`<span class="sw" style="background:${d.color}"></span>${esc(d.name)}<span class="ct">${list.length}</span>`;
+    det.appendChild(sum);
+    const b=document.createElement('div'); b.className='body';
+    for(const n of list.slice().sort((a,b)=>a.level-b.level||a.name.localeCompare(b.name,'zh'))){
+      const row=document.createElement('div'); row.className='lrow'; row.dataset.k=(n.name+' '+n.key+' '+n.summary).toLowerCase();
+      row.innerHTML=`<span class="lv">${LEVEL_NAME[n.level]}</span><span class="nm" style="padding-left:${(n.level-1)*9}px">${esc(n.name)}</span><span class="pips">${(n.platforms||[]).map(p=>`<i class="pip ${p}"></i>`).join('')}</span>`;
+      row.addEventListener('click',()=>{ closeList(); select(n.key); focusNode(n.key); });
+      b.appendChild(row);
+    }
+    det.appendChild(b); body.appendChild(det);
+  }
+  $('#overlay').classList.add('on');
+}
+function closeList(){ $('#overlay').classList.remove('on'); }
+$('#lq').addEventListener('input',e=>{
+  const q=e.target.value.trim().toLowerCase();
+  $$('#listBody .lrow').forEach(r=>{ r.style.display = !q||r.dataset.k.includes(q) ? '' : 'none'; });
+});
+
+function copy(t){ navigator.clipboard?.writeText(t).then(()=>toast('已复制 '+t)).catch(()=>toast(t)); }
+let tTimer=null;
+function toast(t){ const x=$('#toast'); x.textContent=t; x.classList.add('on'); clearTimeout(tTimer); tTimer=setTimeout(()=>x.classList.remove('on'),1700); }
+function exportPNG(){
+  const clone=svg.cloneNode(true);
+  clone.setAttribute('width',3160); clone.setAttribute('height',2960); clone.setAttribute('viewBox','-790 -740 1580 1480');
+  const bg=document.createElementNS(NS,'rect'); bg.setAttribute('width',1580); bg.setAttribute('height',1480); bg.setAttribute('x',-790); bg.setAttribute('y',-740); bg.setAttribute('fill','#04060a');
+  clone.insertBefore(bg,clone.firstChild);
+  const st=document.createElementNS(NS,'style');
+  st.textContent='text{font-family:"PingFang SC","Microsoft YaHei",sans-serif}';
+  clone.insertBefore(st,clone.firstChild);
+  const xml=new XMLSerializer().serializeToString(clone);
+  const img=new Image();
+  img.onload=()=>{ const cv=document.createElement('canvas'); cv.width=3160; cv.height=2960;
+    const ctx=cv.getContext('2d'); ctx.fillStyle='#04060a'; ctx.fillRect(0,0,3160,2960);
+    ctx.drawImage(img,0,0,3160,2960);
+    cv.toBlob(bl=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(bl);
+      a.download='offline-lock-feature-web.png'; a.click(); URL.revokeObjectURL(a.href); toast('PNG 已导出'); },'image/png'); };
+  img.onerror=()=>toast('导出失败：浏览器阻止了 SVG 栅格化');
+  img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(xml);
+}
+
+$('#depth').addEventListener('input',e=>{ state.depth=Number(e.target.value);
+  $('#depthVal').textContent=state.depth+' · '+LEVEL_NAME[state.depth]; render(); });
+$('#labels').addEventListener('change',e=>{ state.labels=e.target.value; render(); });
+$('#crossBtn').addEventListener('click',e=>{ state.cross=!state.cross; e.currentTarget.classList.toggle('on',state.cross); render(); });
+$('#webBtn').addEventListener('click',e=>{ state.web=!state.web; e.currentTarget.classList.toggle('on',state.web); render(); });
+$('#platCtl').addEventListener('click',e=>{
+  const b=e.target.closest('.chip'); if(!b)return; const p=b.dataset.p;
+  if(state.platforms.has(p)) state.platforms.delete(p); else state.platforms.add(p);
+  if(!state.platforms.size) state.platforms=new Set(['ios','android','apk']);
+  $$('#platCtl .chip').forEach(x=>x.classList.toggle('on',state.platforms.has(x.dataset.p)));
+  render();
+});
+$('#btnPNG').addEventListener('click',exportPNG);
+$('#btnReset').addEventListener('click',resetView);
+$('#btnList').addEventListener('click',openList);
+$('#closeList').addEventListener('click',closeList);
+$('#overlay').addEventListener('click',e=>{ if(e.target===$('#overlay')) closeList(); });
+document.addEventListener('keydown',e=>{
+  if(e.key==='/'&&document.activeElement!==$('#q')){e.preventDefault();$('#q').focus();}
+  if(e.key==='Escape'){closeList();hideTip();$('#right').classList.remove('open');}
+  if(e.key==='+'||e.key==='='){state.tf.k=Math.min(7,state.tf.k*1.15);applyTf();}
+  if(e.key==='-'){state.tf.k=Math.max(.55,state.tf.k/1.15);applyTf();}
+  if(e.key==='0'){resetView();}
+});
+
+layout(); renderDomList(); renderResults(); renderRadar(); render(); renderOverview();
+(function bootDeepLink(){
+  const m = location.hash.match(/k=([^&]+)/);
+  if (m) { const k = decodeURIComponent(m[1]); if (BY.has(k)) { select(k); focusNode(k, 2.0); } }
+})();
+window.addEventListener('hashchange', ()=>{
+  const m = location.hash.match(/k=([^&]+)/);
+  if (m) { const k = decodeURIComponent(m[1]); if (BY.has(k)) { select(k); focusNode(k, 2.0); } }
+});
+$('#sTime').textContent=(DATA.meta.generated||'').slice(0,10);
+const cI=NODES.filter(n=>n.platforms.includes('ios')).length,
+      cA=NODES.filter(n=>n.platforms.includes('android')).length,
+      cP=NODES.filter(n=>n.platforms.includes('apk')).length;
+$('#headstats').innerHTML=
+  `<span class="pill"><span class="dot" style="color:#5aa9ff"></span>iOS <b>${cI}</b></span>
+   <span class="pill"><span class="dot" style="color:#54e0c7"></span>Android <b>${cA}</b></span>
+   <span class="pill"><span class="dot" style="color:#f2b24b"></span>APK <b>${cP}</b></span>`;
+</script>
+</body>
+</html>

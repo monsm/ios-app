@@ -1,0 +1,180 @@
+{
+  "scout": "lead-implement",
+  "platform": "ios",
+  "scope": [
+    "App/Core/DefendKit.swift",
+    "App/Services/DefendService.swift",
+    "App/UI/DefendView.swift",
+    "App/Services/MobileKeyService.swift",
+    "App/UI/MobileKeyView.swift",
+    "App/Services/DFUKit.swift",
+    "App/UI/DFUView.swift",
+    "App/Services/LockService.swift",
+    "App/Services/ZipKit.swift",
+    "App/Core/Destination.swift",
+    "App/UI/SettingsView.swift"
+  ],
+  "nodes": [
+    {
+      "platform": "ios",
+      "status": "implemented",
+      "details": [
+        "control: 0 撤防 / 1 不定期 / 2 时段（3=readonly 本代不发）",
+        "时段用协议半秒（DefendKit.protoSec：秒×2），与 AutoOpenKit.defendActive 的 ×2 口径唯一对齐",
+        "三条校验与 APK 逐字一致：结束>开始、结束>当前、结束≠开始",
+        "失败不写本地：F4 读本地配置，写早了会让自动开锁被误否决",
+        "下发后回读一次锁状态确认链路（锁端状态帧不带布防字段，不宣称读到布防）",
+        "门禁 PidMap.canDefend（KX / V1_Pro / 未知 pid）"
+      ],
+      "tags": [
+        "补齐",
+        "cmd25",
+        "F4 联动"
+      ],
+      "level": 3,
+      "key": "security.defense",
+      "parentKey": "security",
+      "domain": "security",
+      "kind": "flow",
+      "name": "一键布防（cmd25，iOS 侧已补齐）",
+      "summary": "三档：撤防 / 不定期布防 / 时段布防。下发 cmd25 后落 kf_defend_<mac>，并驱动自动开锁的 F4 否决门。",
+      "evidence": [
+        {
+          "file": "App/Core/DefendKit.swift",
+          "line": 44,
+          "symbol": "enum DefendKit"
+        },
+        {
+          "file": "App/Services/DefendService.swift",
+          "line": 22,
+          "symbol": "apply"
+        },
+        {
+          "file": "App/UI/DefendView.swift",
+          "line": 14,
+          "symbol": "struct DefendView"
+        },
+        {
+          "file": "App/Services/LockService.swift",
+          "line": 534,
+          "symbol": "setDefence"
+        }
+      ]
+    },
+    {
+      "platform": "ios",
+      "status": "implemented",
+      "details": [
+        "与「蓝牙钥匙串」的区别：钥匙串是随身硬件（41/43/44），手机钥匙是成员手机里的 ekey",
+        "pin 分配：本机离线只能看到\"自己发过的\"，用锁端 pinInfoBinding(KLV#23) 做交叉提示差额",
+        "永久档对齐 APK：2010-01-01 ~ 2118-01-01；自定义档用 UI 时间",
+        "撤销必须发 cmd08 delPins —— 只删本地记录的话，旧 pin 签出的 ekey 仍能开门",
+        "ekey 用 buildEkeyShare（随机 TrackId）+ buildEkeyOpen 同算式"
+      ],
+      "tags": [
+        "补齐",
+        "41/43/44",
+        "pin 分配"
+      ],
+      "level": 3,
+      "key": "device.keychain.write.blekey",
+      "parentKey": "device.keychain",
+      "domain": "device",
+      "kind": "flow",
+      "name": "给成员发手机钥匙（iOS 侧已补齐）",
+      "summary": "从锁 PIN 池挑未占用 pin → 签 ekey → 落 kf_mkey_<mac> → 成员可用手机开门；撤销时同时删锁内 pin。",
+      "evidence": [
+        {
+          "file": "App/Services/MobileKeyService.swift",
+          "line": 15,
+          "symbol": "struct MobileKey"
+        },
+        {
+          "file": "App/Services/MobileKeyService.swift",
+          "line": 96,
+          "symbol": "issue"
+        },
+        {
+          "file": "App/Services/MobileKeyService.swift",
+          "line": 124,
+          "symbol": "revoke"
+        },
+        {
+          "file": "App/UI/MobileKeyView.swift",
+          "line": 10,
+          "symbol": "struct MobileKeyView"
+        },
+        {
+          "file": "App/Services/LockService.swift",
+          "line": 618,
+          "symbol": "deletePins"
+        }
+      ]
+    },
+    {
+      "platform": "ios",
+      "status": "implemented",
+      "details": [
+        "Secure DFU：PRN=12 → Create Object(1=init/2=数据) → 流式写 → CRC → Execute",
+        "Legacy DFU：start packet → init packet → 数据 → validate",
+        "状态码 0/1/2/4/5/6/7 + -1 占位，与 APK URLCSDfuPlugin 的 11 个回调压缩后同构",
+        "降级闸 FirmwareKit.downgradeBlocked：包内版本 < 锁内版本即拒（这条闸此前注释提到但从未实现）",
+        "**无固件签名校验**：锁内没有公钥，界面上明写\"请自行确认包来源\"",
+        "传输层自己写：本仓零外部依赖，不引 NordicDFU 库"
+      ],
+      "tags": [
+        "补齐",
+        "cmd22",
+        "Nordic DFU"
+      ],
+      "level": 4,
+      "key": "apk.firmware.dfu-chain",
+      "parentKey": "apk.firmware",
+      "domain": "device",
+      "kind": "flow",
+      "name": "固件升级 DFU（iOS 侧已补齐，Secure + Legacy 双协议）",
+      "summary": "选包 → 校验 CRC/尺寸 → 降级闸 → cmd22 进 DFU → 连 ZkDFU 广播 → Nordic Secure/Legacy 传输 → 回读版本。",
+      "evidence": [
+        {
+          "file": "App/Services/DFUKit.swift",
+          "line": 85,
+          "symbol": "final class DFUSession"
+        },
+        {
+          "file": "App/Services/DFUKit.swift",
+          "line": 44,
+          "symbol": "enum DFUTransportError"
+        },
+        {
+          "file": "App/Services/DFUKit.swift",
+          "line": 220,
+          "symbol": "secureTransfer"
+        },
+        {
+          "file": "App/Services/DFUKit.swift",
+          "line": 290,
+          "symbol": "legacyTransfer"
+        },
+        {
+          "file": "App/UI/DFUView.swift",
+          "line": 14,
+          "symbol": "struct DFUView"
+        },
+        {
+          "file": "App/Services/LockService.swift",
+          "line": 543,
+          "symbol": "enableDfu"
+        },
+        {
+          "file": "App/Services/ZipKit.swift",
+          "line": 196,
+          "symbol": "downgradeBlocked"
+        }
+      ]
+    }
+  ],
+  "unresolved": [],
+  "notes": [
+    "本轮把三项「APK 有、iOS 无」的锁相关功能补齐为真实实现，不再是图谱缺口。"
+  ]
+}

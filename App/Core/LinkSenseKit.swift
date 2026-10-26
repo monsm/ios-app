@@ -291,7 +291,9 @@ final class LinkSense: ObservableObject {
         guard !DiagFlags.silent else { return }
         let app = self.app
         guard let mac = app?.currentMac, !mac.isEmpty, sceneActive else { return }
-        // 靠近自动开锁 (AUTOOPEN): 2s tick 顺带 F2' 停留判定 — RSSI 武装 + 静置满 3s 才走全门判定;
+        // 靠近自动开锁 (AUTOOPEN): 2s tick 驱动 F3 滤波与全门判定。
+        // 注意: 早期写过的「静置满 3s」(F2' 停留判定) **已从实现删除** —— 现在只按 RSSI 回差武装,
+        // 不再要求停留时长; tickDwell 只做推进与超时, 不做静置门。
         // 全门不过 = 静默拒绝 + 审计 (绝不自动开锁, 96 铁律由 AutoOpenController 内部门控兜底)
         AutoOpenController.shared.tickDwell(mac: mac)
         // 已连上这把锁: 门锁一旦连接就**停止广播**, didDiscover 那一侧不再产生样本 ——

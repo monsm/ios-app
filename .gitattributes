@@ -1,0 +1,44 @@
+# 行尾统一：把 CRLF 钉成仓库内的 LF。
+#
+# 为什么必须钉：CI 检出是 LF、Windows 工作区是 CRLF。仓里有若干闸门会做
+# `split("\n")` + 逐行匹配（uicoverage / swiftshape / constscan 等），
+# 同一份代码在两边会给出**不同结论**。README 里记过两次真实事故：
+#   · uicoverage 在 Windows 报"1 处绕过漏斗的裸写换页"，实际那行在行尾注释里；
+#   · kotlinshadow 在 CI 报"A8 冷路径没先吃缓存句柄"，本机全绿。
+#
+# 另外 fixtures/ 下若干 .swift 是闸门的**自检样本**（正控/反控），
+# 只改了行尾就显示为已修改，会让 diff 噪音掩盖真实改动。
+* text=auto eol=lf
+
+# 二进制：不要做任何行尾转换
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.p12 binary
+*.zip binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.gif binary
+*.mp3 binary
+*.pdf binary
+*.dex binary
+*.apk binary
+
+# Swift / Kotlin / JS / JSON / Markdown 明确按文本 + LF 处理
+*.swift text eol=lf
+*.kt text eol=lf
+*.kts text eol=lf
+*.java text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+*.xml text eol=lf
+*.gradle text eol=lf
+*.sh text eol=lf
+*.csv text eol=lf
+
+# 固件/金标夹具：内容已被逐字节断言，不能因行尾变化而漂
+fixtures/** text eol=lf

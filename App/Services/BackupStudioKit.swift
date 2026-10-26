@@ -872,7 +872,9 @@ enum BackupStudio {
             return "已验证 · 抽样 \(sampled) 条可解析 · 哈希 " + shortHash(body)
         } catch { return "下载失败: \(error.localizedDescription)" }
     }
-    /// 237 密钥轮换: 新口令重加密替换远端旧备份 (旧文件重命名留痕)
+    /// 237 密钥轮换: 新口令重加密后**直接覆盖**远端同一文件（`zklock-backup.enc`）。
+    /// ⚠ 注释曾写「旧文件重命名留痕」—— 实现里没有任何重命名/留档分支, 轮换即覆盖,
+    ///   旧密文不可恢复。要留痕得先加一份 `.bak` 上传, 那是未实现的设计意图。
     @discardableResult
     static func rotateKey(acct: String, appPw: String, root: String, oldPw: String, newPw: String) async -> String {
         guard let url = URL(string: root + "/zklock-backup.enc") else { return "地址非法" }
