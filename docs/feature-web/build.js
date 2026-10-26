@@ -279,7 +279,13 @@ function merge(all) {
     dOrder.get(a.domain) - dOrder.get(b.domain) ||
     a.level - b.level ||
     b.weight - a.weight ||
-    a.name.localeCompare(b.name, 'zh'));
+    // 2026-10-26: 这里原来是 a.name.localeCompare(b.name, 'zh') —— 中文排序依赖 ICU 数据，
+    // Node 24 (ICU 75) 与 Node 25 (ICU 77) 结果不同 ⇒ 同一份 inventory 在两个环境产出不同的
+    // features.json 节点顺序，CI 的 featurewebcheck 因此必红（本地却永远绿）。
+    // 改为按 key 排（纯 ASCII，与环境无关），再按 name 的码位序兜底 —— 顺序确定即可，
+    // 这一层排序只是让产物稳定可 diff，不影响任何语义。
+    (a.key < b.key ? -1 : a.key > b.key ? 1 : 0) ||
+    (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
 
   // 跨域/命令连线
   const links = [];
