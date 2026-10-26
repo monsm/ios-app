@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-26T08:21:54.431Z",
+    "generated": "2026-10-26T08:27:05.577Z",
     "sources": [
       {
         "scout": "android-native",
@@ -59948,7 +59948,7 @@
           "line": 210,
           "symbol": "enum CareSchedule",
           "note": "",
-          "text": "}"
+          "text": "static func isQuietHour(_ d: Date = Date()) -> Bool {"
         },
         {
           "platform": "ios",
@@ -60194,7 +60194,7 @@
           "line": 256,
           "symbol": "refreshOnLaunch()",
           "note": "",
-          "text": ""
+          "text": "if damp, month == 6 || month == 7 {"
         },
         {
           "platform": "ios",
@@ -60202,7 +60202,7 @@
           "line": 258,
           "symbol": "空钥匙串 / 授权前置",
           "note": "",
-          "text": "static func refreshOnLaunch() async {"
+          "text": "if now - last > 7 * 86400 * 1000 {"
         },
         {
           "platform": "ios",
@@ -60210,7 +60210,7 @@
           "line": 263,
           "symbol": "逐锁循环",
           "note": "",
-          "text": "let name = LockArchive.displayName(kc)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -60364,7 +60364,7 @@
           "line": 122,
           "symbol": "bigDropDays(_:days:threshold:)",
           "note": "",
-          "text": "return true"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -60372,7 +60372,7 @@
           "line": 146,
           "symbol": "drop > threshold 收集",
           "note": "",
-          "text": "for (key, f) in firstOfDay {"
+          "text": "let drop = f.pct - l.pct"
         }
       ],
       "platformEvidence": {
@@ -60434,7 +60434,7 @@
           "line": 53,
           "symbol": "appLowBattery",
           "note": "",
-          "text": "/// 不走 kf_last_device: 它存的是 BLE 外设 id (LockService.connect 写入), 拿它查 kf_batt_/kf_snap_"
+          "text": "/// 无锁 / 无读数 / 未知(-1) → false: 判不出就不降级, 不瞎猜。"
         },
         {
           "platform": "ios",
@@ -60450,7 +60450,7 @@
           "line": 109,
           "symbol": "低电缓存刷新",
           "note": "",
-          "text": "@discardableResult"
+          "text": "guard !mac.isEmpty, pct >= 0 else { return false }"
         }
       ],
       "platformEvidence": {
@@ -60519,7 +60519,7 @@
           "line": 151,
           "symbol": "evaluateLowBattery",
           "note": "",
-          "text": "return out.sorted { $0.day > $1.day }"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -60527,7 +60527,7 @@
           "line": 154,
           "symbol": ">30 复位武装",
           "note": "",
-          "text": "// ---------- 1004 低电本地通知 (滞回: ≤20% 提醒 / ≤10% 升级, 恢复 >30% 重新武装) ----------"
+          "text": "let key = \"kf_batt_state_\" + mac"
         },
         {
           "platform": "ios",
@@ -60535,7 +60535,7 @@
           "line": 168,
           "symbol": "notifyNow(id: m4.batt.)",
           "note": "",
-          "text": "let body = level == 2"
+          "text": ": \"「\\(name)」电量 \\(pct)%, 建议备好电池择日更换\""
         }
       ],
       "platformEvidence": {
@@ -60605,7 +60605,7 @@
           "line": 11,
           "symbol": "struct BattSample",
           "note": "",
-          "text": "import Foundation"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -60613,7 +60613,7 @@
           "line": 107,
           "symbol": "sample(_:pct:)",
           "note": "",
-          "text": "/// 追加策略: 电量变化必记; 未变化时距上点 ≥1h 记一次 — 日粒度足够趋势拟合且量小。"
+          "text": "@discardableResult"
         },
         {
           "platform": "ios",
@@ -60621,7 +60621,7 @@
           "line": 112,
           "symbol": "1 小时去重 + 90 天 + 500 条",
           "note": "",
-          "text": "lowCacheLock.withLock { $0 = (mac, isLow(pct)) }   // 120: 无论是否落点都刷新低电缓存"
+          "text": "let now = Date().timeIntervalSince1970 * 1000"
         }
       ],
       "platformEvidence": {
@@ -60697,7 +60697,7 @@
           "line": 197,
           "symbol": "versionLt",
           "note": "",
-          "text": ""
+          "text": "// 本文件那份零调用，已删；版本比较统一走 `FirmwareKit.versionLt`（4 个调用点 + 两组表驱动测试）。"
         }
       ],
       "platformEvidence": {
@@ -60829,7 +60829,7 @@
           "line": 24,
           "symbol": "struct Tier",
           "note": "",
-          "text": "// ============ 122/113 五档电量 (满/高/中/低/空) ============"
+          "text": "// 这一档表就是\"档位映射说明\"的数据源，界面上展示原值 + 映射，**不标毫伏**，不虚构精度。"
         },
         {
           "platform": "ios",
@@ -60837,7 +60837,7 @@
           "line": 30,
           "symbol": "tier(_:)",
           "note": "",
-          "text": "let label: String"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -60845,7 +60845,7 @@
           "line": 42,
           "symbol": "isLow(0...20)",
           "note": "",
-          "text": "}"
+          "text": "/// 1004 喂电提醒判定 (≤20%; 与 287 的可调横幅阈值互相独立)"
         }
       ],
       "platformEvidence": {
@@ -60911,7 +60911,7 @@
           "line": 211,
           "symbol": "quietOn",
           "note": "",
-          "text": ""
+          "text": "let h = WeekCal.gregorian.component(.hour, from: d)"
         },
         {
           "platform": "ios",
@@ -60919,7 +60919,7 @@
           "line": 221,
           "symbol": "isQuietHour",
           "note": "",
-          "text": ""
+          "text": "c.sound = .default"
         },
         {
           "platform": "ios",
@@ -60927,7 +60927,7 @@
           "line": 233,
           "symbol": "免扰分支",
           "note": "",
-          "text": "c.sound = .default"
+          "text": "trigger: UNCalendarNotificationTrigger(dateMatching: comp, repeats: false)))"
         }
       ],
       "platformEvidence": {
@@ -61081,7 +61081,7 @@
           "line": 188,
           "symbol": "fpCleanNeeded",
           "note": "",
-          "text": ""
+          "text": "// ============ 1023 指纹头清洁: 锁日志最近 3 条连续为指纹告警 (type 13) ============"
         },
         {
           "platform": "ios",
@@ -61089,7 +61089,7 @@
           "line": 190,
           "symbol": "按 lockTime 降序取 3",
           "note": "",
-          "text": "// ============ 1023 指纹头清洁: 锁日志最近 3 条连续为指纹告警 (type 13) ============"
+          "text": "// 1023: 缓存数组序≠时间序 (新抓的拼在旧缓存前), 先按锁端时间戳降序再取前 3"
         },
         {
           "platform": "ios",
@@ -61097,7 +61097,7 @@
           "line": 288,
           "symbol": "巡检内调用",
           "note": "",
-          "text": "let last = DB.store.get(Double.self, \"kf_fp_last_\" + kc.mac) ?? 0"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -61165,7 +61165,7 @@
           "line": 228,
           "symbol": "notifyNow(dayDeliver:)",
           "note": "",
-          "text": "/// dayDeliver=true 的升级提醒 (1038): 夜间不丢, 挂到下一个 08:00 白天送达"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -61173,7 +61173,7 @@
           "line": 236,
           "symbol": "目标日 08:00 计算",
           "note": "",
-          "text": "let cal = WeekCal.gregorian"
+          "text": "try? await UNUserNotificationCenter.current()"
         },
         {
           "platform": "ios",
@@ -61181,7 +61181,7 @@
           "line": 244,
           "symbol": "UNCalendarNotificationTrigger",
           "note": "",
-          "text": ".add(UNNotificationRequest(identifier: id, content: c,"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -61248,7 +61248,7 @@
           "line": 213,
           "symbol": "battThreshold",
           "note": "",
-          "text": "enum CareSchedule {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -61256,7 +61256,7 @@
           "line": 215,
           "symbol": "kf_batt_threshold 默认 15",
           "note": "",
-          "text": "static var quietOn: Bool { DB.store.getBool(\"kf_quiet_night\", true) }"
+          "text": "/// 即时本地通知 (1004/1023/校时/146/1013 到期/1024 防潮): 免扰时段静默丢弃 (1031)"
         }
       ],
       "platformEvidence": {
@@ -61317,7 +61317,7 @@
           "line": 66,
           "symbol": "isColdSeason",
           "note": "",
-          "text": "lowCacheLock.withLock { $0 = (mac, low) }"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -61373,7 +61373,7 @@
           "line": 265,
           "symbol": "防潮判定",
           "note": "",
-          "text": "let place = LockArchive.meta(kc.mac).place"
+          "text": "let t = DB.syncTime(kc.mac)"
         },
         {
           "platform": "ios",
@@ -61381,7 +61381,7 @@
           "line": 267,
           "symbol": "湿区关键词表",
           "note": "",
-          "text": "let month = WeekCal.gregorian.component(.month, from: Date())"
+          "text": "let lastN = DB.store.get(Double.self, \"kf_clock_notify_\" + kc.mac) ?? 0"
         },
         {
           "platform": "ios",
@@ -61389,7 +61389,7 @@
           "line": 273,
           "symbol": "通知 m4.damp.",
           "note": "",
-          "text": "body: \"梅雨季湿气重, 「\\(name)」装在湿区, 记得检查电池触点与锁体。\")"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -61456,7 +61456,7 @@
           "line": 251,
           "symbol": "requestAuth()",
           "note": "",
-          "text": ""
+          "text": "let name = LockArchive.displayName(kc)"
         }
       ],
       "platformEvidence": {
@@ -61512,7 +61512,7 @@
           "line": 84,
           "symbol": "displayPct",
           "note": "",
-          "text": "/// 都缺则 -1 未知。调用方另有采样时间标注 (291), 陈旧值由标注兜底, 不在此处猜。"
+          "text": "/// 而下面的代码既没有 90 天也没有 7 天闸门 —— 它只比\"谁更新\"。留着那段就是在指一条不存在的规则, 删掉。"
         },
         {
           "platform": "ios",
@@ -61520,7 +61520,7 @@
           "line": 94,
           "symbol": "facePct",
           "note": "",
-          "text": "/// 界面上的那一格电量: 会话实时读数优先, 无则走 displayPct 的采样/快照口径。"
+          "text": "/// 否则 A 锁的电量会被安到 B 锁头上 (设备页那侧的同名判据)。"
         },
         {
           "platform": "ios",
@@ -61528,7 +61528,7 @@
           "line": 98,
           "symbol": "faceText",
           "note": "",
-          "text": "live >= 0 ? live : displayPct(mac, snapshot: DB.readStatus(mac)?.powerLevel ?? -1)"
+          "text": "/// 电量的界面写法 (<0 未读到 → \"--\"; >80 只报 \">80%\", 锁侧这个量本身就是粗估档)。"
         }
       ],
       "platformEvidence": {
@@ -61596,7 +61596,7 @@
           "line": 277,
           "symbol": "校时关怀判定",
           "note": "",
-          "text": "let t = DB.syncTime(kc.mac)"
+          "text": "if now - last > 7 * 86400 * 1000 {"
         },
         {
           "platform": "ios",
@@ -61604,7 +61604,7 @@
           "line": 280,
           "symbol": "kf_clock_notify_",
           "note": "",
-          "text": "if now - lastN > 30 * 86400 * 1000 {"
+          "text": "body: \"「\\(name)」连续 3 次指纹识别告警 — 指纹头可能脏了或手指太干。\")"
         },
         {
           "platform": "ios",
@@ -61612,7 +61612,7 @@
           "line": 283,
           "symbol": "通知 m4.clock.",
           "note": "",
-          "text": "body: \"「\\(name)」已超 30 天未校时, 临时密码可能失效。\")"
+          "text": "}"
         }
       ],
       "platformEvidence": {

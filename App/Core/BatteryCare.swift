@@ -4,8 +4,6 @@
 //         kf_batt_state_<mac> 低电通知武装位 (1004 滞回)
 // ⚠ 未实现: kf_mevents_<mac> 维护事件与 kf_maint_<mac> 保养状态 —— 头注曾列为已实现,
 //   但本文件与全仓**没有读写点**, 保养计划（换电/保养提醒）也从未建过 UI。留在这里当待办, 不是既有能力。
-//         kf_fwlib 固件包清单 (513/145) · kf_dfu_hist 升级历史 (147) · kf_fwsince_<mac> 固件服役起点 (1019)
-//         kf_care_marks 保养月历打点 (1030) · kf_batt_state_<mac> 低电通知武装位 (1004 滞回)
 // 协议约束 (CAPABILITY §2/§6): 电量仅百分比、无电压无充电位 — 只做本地采样, 不虚构电压/充电态/续航估算。
 // 通知全部本地通知 (UNUserNotificationCenter); 夜间免扰 (1031) 与白天送达 (1038) 在此统一裁决。
 import Foundation
@@ -195,18 +193,8 @@ enum BatteryCare {
         return logs.allSatisfy { $0.type == 13 }
     }
 
-    /// 版本串比较 (a < b): 逐段按数字比, 缺段补 0。原住 DFUKit.FirmwareKit,
-    /// 那个文件的 DFU 升级逻辑已删, 这条判据被固件提醒留着。
-    static func versionLt(_ a: String, _ b: String) -> Bool {
-        let pa = a.split(separator: ".").map { Int($0) ?? 0 }
-        let pb = b.split(separator: ".").map { Int($0) ?? 0 }
-        for i in 0..<3 {
-            let x = i < pa.count ? pa[i] : 0
-            let y = i < pb.count ? pb[i] : 0
-            if x != y { return x < y }
-        }
-        return false
-    }
+    // 2026-10-26: 这里原有 `versionLt`（版本串逐段比较），与 ZipKit/FirmwareKit 里的那份**逐字相同**。
+    // 本文件那份零调用，已删；版本比较统一走 `FirmwareKit.versionLt`（4 个调用点 + 两组表驱动测试）。
 }
 
 // ================= 包4 关怀提醒调度 (本地通知; 1031 夜间免扰 / 1038 白天送达) =================
