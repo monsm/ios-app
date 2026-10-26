@@ -40,6 +40,18 @@ enum Theme {
 
 @MainActor
 final class AppState: ObservableObject {
+    let lock = LockService.shared
+    let hw = HardwareService.shared
+
+    /// 2026-10-27 三轮恢复：`UnlockState` 在删 Moment 队列时被连带删掉 ——
+    /// 它是开锁状态机（AutoOpen / Mascot / UnlockDial 都在用），不在删除清单里。
+    enum UnlockState: Equatable {
+        case idle, connecting, opening, success, doubleVerify, failed(String)
+        var isFailed: Bool {
+            if case .failed = self { return true }
+            return false
+        }
+    }
     @Published var devices: [Keychain] = []
     @Published var currentMac: String = ""
     @Published var status: LockStatus?
