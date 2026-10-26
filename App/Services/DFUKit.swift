@@ -157,9 +157,9 @@ final class DFUSession: NSObject, @unchecked Sendable {
                                            options: [CBCentralManagerScanOptionAllowDuplicatesKey: true])
             // 10 秒窗口：与 APK BleDfu.doScan 的 handler.postDelayed(…, 10000) 同值
             DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
-                self?.finishScan(.failure(DFUTransportError.ble(
+                self?.finishScanFailure(DFUTransportError.ble(
                     "10 秒内没发现升级模式设备。请确认门锁已通电、靠近手机，"
-                    + "且已下发 22 进 DFU（广播里 dfuState 位为 1）。")))
+                    + "且已下发 22 进 DFU（广播里 dfuState 位为 1）。"))
             }
             self.scanHandler = { [weak self] p, adv in
                 guard let self else { return }
@@ -168,26 +168,37 @@ final class DFUSession: NSObject, @unchecked Sendable {
                     let hex = HexKit.hex([UInt8](mf))
                     if let a = ZKProtocol.parseAdv(hex), a.dfuState == 1,
                        wantPid == 0 || a.pid == wantPid {
-                        self.finishScan(.success(p))
+                        self.finishScanSuccess(p)
                         return
                     }
                 }
                 // ② 兜底：名字命中 ZkDFU（部分固件不带厂商段）
                 let name = (adv[CBAdvertisementDataLocalNameKey] as? String)?.uppercased() ?? ""
-                if name.contains("ZKDFU") { self.finishScan(.success(p)) }
+                if name.contains("ZKDFU") { self.finishScanSuccess(p) }
             }
         }
     }
 
     private var scanCont: CheckedContinuation<CBPeripheral, Error>?
     private var scanDone = false
-    private func finishScan(_ r: Result<CBPeripheral, Error>) {
+    /// 2026-10-26: 原为 `finishScan(_ r: Result<CBPeripheral, Error>)`。
+    /// CBPeripheral 不是 Sendable，把它塞进 Result 再跨隔离传递会被 Swift 6 判
+    /// "sending 'r' risks causing data races"。拆成成功/失败两个专用方法就绕开了这一步。
+    private func finishScanSuccess(_ p: CBPeripheral) {
         guard !scanDone, let c = scanCont else { return }
         scanDone = true
         scanCont = nil
         scanHandler = nil
         central.stopScan()
-        c.resume(with: r)
+        c.resume(returning: p)
+    }
+    private func finishScanFailure(_ err: Error) {
+        guard !scanDone, let c = scanCont else { return }
+        scanDone = true
+        scanCont = nil
+        scanHandler = nil
+        central.stopScan()
+        c.resume(throwing: err)
     }
     private var scanHandler: ((CBPeripheral, [String: Any]) -> Void)?
 
