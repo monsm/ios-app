@@ -812,53 +812,6 @@
       "status": "implemented"
     },
     {
-      "key": "backup.webdav.empty",
-      "parentKey": "backup.webdav",
-      "domain": "backup",
-      "level": 4,
-      "name": "未配置引导空态",
-      "kind": "state",
-      "summary": "没配账号时先讲清云端能带来什么，并给改服务器根路径的直达入口。",
-      "details": [
-        "cloudAcct.isEmpty 时显示三条 Label：换机/锁重置唯一退路、本机先加密服务器只见密文、不配也能用本地导出与导入",
-        "「服务器根路径默认内置坚果云，点这里可改」→ showWebDAV = true（sheet，不 push）",
-        "整块 combine + fixedSize(vertical:false) 允许换行",
-        "入口只给「改根路径」，不在本页假装一个服务器地址输入框"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/BackupView.swift",
-          "line": 216,
-          "symbol": "816 引导空态"
-        },
-        {
-          "file": "App/UI/BackupView.swift",
-          "line": 219,
-          "symbol": "if cloudAcct.isEmpty"
-        },
-        {
-          "file": "App/UI/BackupView.swift",
-          "line": 221,
-          "symbol": "三条 Label"
-        },
-        {
-          "file": "App/UI/BackupView.swift",
-          "line": 227,
-          "symbol": "showWebDAV = true"
-        },
-        {
-          "file": "App/UI/BackupView.swift",
-          "line": 228,
-          "symbol": "服务器根路径默认内置坚果云"
-        }
-      ],
-      "tags": [
-        "云同步",
-        "空态"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "backup.webdav.ready",
       "parentKey": "backup.webdav",
       "domain": "backup",
@@ -1053,54 +1006,6 @@
       "tags": [
         "云同步",
         "恢复"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "backup.webdav.pending",
-      "parentKey": "backup.webdav",
-      "domain": "backup",
-      "level": 4,
-      "name": "待确认恢复包",
-      "kind": "state",
-      "summary": "下载解密后的包先不落库：确认才覆盖，取消即丢弃。",
-      "details": [
-        "pendingRestore: BackupBundle?（nil = 无待确认）；binding set(false) 清空",
-        "confirmationDialog「从云端恢复」，titleVisibility: .visible",
-        "按钮「覆盖本机 N 台设备」（destructive，N = DB.keychains().count）/ 「取消」",
-        "message：云端包里有 M 台门锁（pendingRestore?.devices.count），恢复后同名设备被覆盖、本机改动丢失",
-        "确认/取消都清空 pendingRestore，防重复触发"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/BackupView.swift",
-          "line": 30,
-          "symbol": "@State pendingRestore"
-        },
-        {
-          "file": "App/UI/BackupView.swift",
-          "line": 68,
-          "symbol": "confirmationDialog 从云端恢复"
-        },
-        {
-          "file": "App/UI/BackupView.swift",
-          "line": 69,
-          "symbol": "覆盖本机 N 台设备"
-        },
-        {
-          "file": "App/UI/BackupView.swift",
-          "line": 72,
-          "symbol": "message 同名设备会被覆盖"
-        },
-        {
-          "file": "App/UI/BackupView.swift",
-          "line": 107,
-          "symbol": "pendingRestoreBinding"
-        }
-      ],
-      "tags": [
-        "云同步",
-        "确认"
       ],
       "status": "implemented"
     },
@@ -1546,64 +1451,6 @@
       "status": "implemented"
     },
     {
-      "key": "backup.webdav.retention",
-      "parentKey": "backup.webdav.list",
-      "domain": "backup",
-      "level": 4,
-      "name": "滚动保留策略（最近 N 份 + 每月 1 份）",
-      "kind": "setting",
-      "summary": "远端只留最近 N 份，最近 N 之外每月再保最新 1 份；只删本 App 的备份名族。",
-      "details": [
-        "BackupStudio.rollingKeep = 键 kf_bk_keep，默认 0（不限）；>0 才清理",
-        "只在「刷新列表」与「上传」后触发；下载/恢复口不受影响",
-        "只删「锁管家_*.enc」且不含 / 的条目；分卷按尾部 _卷N 归组成一份，不拆半套",
-        "之外每月保最新一份（Time Machine 口径）；无日期组只按 N 计数",
-        "删除用 DELETE + Basic Auth，失败静默跳过"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 199,
-          "symbol": "BackupStudio.rollingKeep"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 202,
-          "symbol": "pruneRemote(keep:)"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 223,
-          "symbol": "上传后清理"
-        },
-        {
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 57,
-          "symbol": "static var rollingKeep"
-        },
-        {
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 58,
-          "symbol": "kf_bk_keep"
-        },
-        {
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 805,
-          "symbol": "isOurBackup"
-        },
-        {
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 839,
-          "symbol": "每月 1 份"
-        }
-      ],
-      "tags": [
-        "云同步",
-        "保留"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "backup.webdav.upload",
       "parentKey": "backup.webdav.studio",
       "domain": "backup",
@@ -1871,43 +1718,6 @@
       "status": "implemented"
     },
     {
-      "key": "backup.webdav.rotate-guard",
-      "parentKey": "backup.webdav.rotate",
-      "domain": "backup",
-      "level": 4,
-      "name": "轮换前置校验",
-      "kind": "edge",
-      "summary": "【口径】轮换的三重前置：旧口令非空、新口令非空、两者不同。",
-      "details": [
-        "guard !encPw.isEmpty, !rotPw.isEmpty, encPw != rotPw",
-        "失败只 toast，不发起网络请求；按钮另有一层禁用（rotPw 空不可点）",
-        "轮换直接影响远端可解密性（旧口令失效），但只用 confirmationDialog，无二次输入",
-        "轮换成功后远端所有备份需用新口令访问"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 278,
-          "symbol": "guard 三个条件"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 279,
-          "symbol": "需填旧口令(加密口令)与新口令"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 138,
-          "symbol": "按钮禁用条件"
-        }
-      ],
-      "tags": [
-        "云同步",
-        "边界"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "backup.doc",
       "parentKey": "backup",
       "domain": "backup",
@@ -2050,58 +1860,6 @@
       "tags": [
         "诊断",
         "导航"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.monthly-clean",
-      "parentKey": "diagnostic.center",
-      "domain": "diagnostic",
-      "level": 3,
-      "name": "月度清理任务行",
-      "kind": "automation",
-      "summary": "每月 1 日若有过期临时凭证，页顶出一条任务行，点按进凭证页整理面板。",
-      "details": [
-        "条件：WeekCal.gregorian 的 day == 1 且 BackupStudio.expiredTemporaryCount() > 0",
-        "行文案「过期凭证 N 条待处理」+「每月 1 日提醒 · 点按进凭证页整理面板」+ chevron",
-        "动作：app.requestRoute(.credentials) → app.pendingCredPanel = \"organize\" → dismiss()",
-        "过期口径与 431 清理同源（expiredTemporaryCount），不另算"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 121,
-          "symbol": "366 月度清理注释"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 123,
-          "symbol": "monthlyExpired"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 124,
-          "symbol": "day == 1 条件"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 130,
-          "symbol": "requestRoute(.credentials)"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 131,
-          "symbol": "pendingCredPanel = organize"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 136,
-          "symbol": "dismiss()"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "自动化"
       ],
       "status": "implemented"
     },
@@ -2386,70 +2144,6 @@
       "tags": [
         "诊断",
         "存储"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.retention",
-      "parentKey": "diagnostic.center",
-      "domain": "diagnostic",
-      "level": 3,
-      "name": "运行日志保留策略",
-      "kind": "setting",
-      "summary": "三档保留期（全部 / 365 天 / 90 天），切短档先报将删条数再确认。",
-      "details": [
-        "Picker 绑定 DB.store.getString(DiagLogs.retentionKey)（kf_diag_log_retention：\"\" / \"365\" / \"90\"）",
-        "set 时先 DiagLogs.pruneCount(days:)：0 条 → 直接落键并 toast「没有日志需要删除」；否则 retentionAsk = (v, n)",
-        "alert「切换日志保留策略？」：「删除并切换」(destructive) / 「取消」；message 明示将立即删除 N 条且不可恢复",
-        "确认后 DB.store.set + DiagLogs.pruneNow()，toast「已按新保留期删除 N 条日志」",
-        "选「全部保留」不删任何东西；选值未落键前 Picker 自会回弹"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 362,
-          "symbol": "Picker 运行日志保留"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 367,
-          "symbol": "let days = v.isEmpty ? nil"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 368,
-          "symbol": "pruneCount"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 374,
-          "symbol": "retentionAsk"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 381,
-          "symbol": "alert 切换日志保留策略"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 384,
-          "symbol": "删除并切换"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 387,
-          "symbol": "pruneNow"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 393,
-          "symbol": "将立即删除 N 条"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "保留",
-        "破坏性"
       ],
       "status": "implemented"
     },
@@ -2851,100 +2545,6 @@
       "status": "implemented"
     },
     {
-      "key": "diagnostic.data-events",
-      "parentKey": "diagnostic.center",
-      "domain": "diagnostic",
-      "level": 3,
-      "name": "数据事件台账",
-      "kind": "state",
-      "summary": "展示最近 12 个导出/恢复/迁移节点，与备份页同源。",
-      "details": [
-        "BackupStudio.dataEvents() 为空则整节不渲染（只在做过备份类操作后出现）",
-        "逐行 caption 显示",
-        "尾部说明「最近 12 个导出 / 恢复 / 迁移节点, 与备份页同源 (kf_bk_events)」",
-        "本页不提供清理或删除入口"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 554,
-          "symbol": "511 数据事件注释"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 555,
-          "symbol": "BackupStudio.dataEvents()"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 557,
-          "symbol": "Section 数据事件"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 561,
-          "symbol": "kf_bk_events 说明"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "备份"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.recovery",
-      "parentKey": "diagnostic.center",
-      "domain": "diagnostic",
-      "level": 3,
-      "name": "空间回收建议",
-      "kind": "diagnostic",
-      "summary": "只读数据、只给建议，删除动作留在既有二次确认里。",
-      "details": [
-        "Recovery.tips() 空 → 「没有值得回收的项 —— 各键族都在阈值以下，或对应数据本来就是空的。」",
-        "每条：title + detail（走 mdText 解析粗体，避免显示 **）+ 非空时「去处: <goto>」",
-        "体积口径注明：「回滚快照」是真实文件大小，其余按 kf_* 键值长度估算",
-        "本页不给删除按钮（删除在存储与数据/安全中心）"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 567,
-          "symbol": "284 空间回收建议注释"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 568,
-          "symbol": "Section 空间回收建议"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 569,
-          "symbol": "Recovery.tips()"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 580,
-          "symbol": "mdText(t.detail)"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 584,
-          "symbol": "去处"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 590,
-          "symbol": "体积口径"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "建议"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "diagnostic.trace",
       "parentKey": "diagnostic.center",
       "domain": "diagnostic",
@@ -3065,137 +2665,6 @@
       "status": "implemented"
     },
     {
-      "key": "diagnostic.flags",
-      "parentKey": "diagnostic.center",
-      "domain": "diagnostic",
-      "level": 3,
-      "name": "排障开关（hex / 静默）",
-      "kind": "setting",
-      "summary": "两条影响全局行为的排障开关：记录原始收发 hex、静默排查模式。",
-      "details": [
-        "「记录原始收发 hex」直写 kf_debug_raw（@State debugRaw 仅镜像）",
-        "「静默排查模式」直写 kf_silent_trouble；开启 toast「已静默: 不再自动回连、预握手与靠近自动开锁; 手动圆盘照常」，关闭 toast「已恢复自动连接与自动开锁」",
-        "footer：协议联调时才开 hex；静默只停「自动」那部分，手动开锁/读取/告警照常",
-        "注释：silent 有 6 个消费方全在 LinkSenseKit；此开关是长期缺失的写入方"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 627,
-          "symbol": "Section 开关组"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 628,
-          "symbol": "VariantToggle 记录原始收发 hex"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 636,
-          "symbol": "VariantToggle 静默排查模式"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 638,
-          "symbol": "toast 文案"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 642,
-          "symbol": "footer 说明"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "开关"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.flags.hex",
-      "parentKey": "diagnostic.flags",
-      "domain": "diagnostic",
-      "level": 4,
-      "name": "hex 记录的落点与影响",
-      "kind": "state",
-      "summary": "开启后日志行才带 hex 残片，原始报文入口才可用；完整帧仍不写盘。",
-      "details": [
-        "键 kf_debug_raw（Bool）",
-        "开启后日志行才带 hex= 残片；诊断页「查看原始报文」入口才可用（hexOf 取不到即禁用）",
-        "完整帧只在内存 LockService.recentFrames 里，不写盘、不进报告/导出",
-        "指令流水说明：开启后落盘行也只剩帧头 4 位并标注隐去位数"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 628,
-          "symbol": "hex 开关"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1072,
-          "symbol": "disabled(Self.hexOf(row.line).isEmpty)"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1115,
-          "symbol": "rawFrame 优先"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 778,
-          "symbol": "帧头 4 位说明"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "隐私"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.flags.silent",
-      "parentKey": "diagnostic.flags",
-      "domain": "diagnostic",
-      "level": 4,
-      "name": "静默排查模式的边界",
-      "kind": "state",
-      "summary": "只停自动动作，手动开锁/读取/告警不受影响。",
-      "details": [
-        "键 kf_silent_trouble，读 DiagFlags.silent",
-        "停：自动回连、预握手、靠近自动开锁、自动状态刷新",
-        "不停：手动圆盘开锁、读取、告警、手动刷新",
-        "注释：曾长期无写入方导致模式打不开，本开关把它接真"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 631,
-          "symbol": "127 静默排查注释"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 636,
-          "symbol": "VariantToggle"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 637,
-          "symbol": "DiagFlags.silent"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 642,
-          "symbol": "footer 边界说明"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "开关"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "diagnostic.scan",
       "parentKey": "diagnostic.center",
       "domain": "diagnostic",
@@ -3281,58 +2750,6 @@
       "tags": [
         "诊断",
         "设置"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.telemetry",
-      "parentKey": "diagnostic.center",
-      "domain": "diagnostic",
-      "level": 3,
-      "name": "断连与失败（人话翻译）",
-      "kind": "diagnostic",
-      "summary": "最近 20 条 BLE 断连/握手失败事件，错误翻译成本地人话。",
-      "details": [
-        "空态「暂无断连事件 — 连接全程顺畅。」",
-        "每条 LabeledRow(ev.what, ev.ok ? \"成功\" : friendlyFailReason(ev.what))，取 BleTelemetry.events.prefix(20)",
-        "friendlyFailReason 本地词表：超时→握手超时+占用提示；蓝牙→权限缺失指引；未发现→走近 1 米；信号弱→RSSI 低于围栏跳过预热；回连→5/15/30/60/90 秒节律；重协商→会话重协商",
-        "兜底「失败 — 详见运行日志与失败三分类」"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 666,
-          "symbol": "包2/72 断连原因行注释"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 667,
-          "symbol": "Section 断连与失败"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 668,
-          "symbol": "BleTelemetry.events.isEmpty"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 673,
-          "symbol": "prefix(20)"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 674,
-          "symbol": "friendlyFailReason"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1344,
-          "symbol": "friendlyFailReason 词表"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "遥测"
       ],
       "status": "implemented"
     },
@@ -3452,52 +2869,6 @@
       "status": "implemented"
     },
     {
-      "key": "diagnostic.a11y",
-      "parentKey": "diagnostic.center",
-      "domain": "diagnostic",
-      "level": 3,
-      "name": "渲染自检",
-      "kind": "setting",
-      "summary": "200% 字号预览开关与全局命中域口径。",
-      "details": [
-        "VariantToggle「极限字号自检 (以 200% 字号预览)」读写 kf_ax_bigpreview，走 app.setUnlockOption（同一状态单通道）",
-        "「命中域」：可点控件下限 44pt（DS.Hit.min）；时间线认领区加余量到 60pt；圆盘外沿再留 10pt",
-        "footer：自测开关，检查后请关回；溢出控件无枚举 API，只能逐页目检"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 703,
-          "symbol": "866 极限字号自检注释"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 705,
-          "symbol": "VariantToggle 极限字号"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 707,
-          "symbol": "走查注释 setUnlockOption"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 712,
-          "symbol": "命中域"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 716,
-          "symbol": "footer 目检"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "无障碍"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "diagnostic.ble-rescue",
       "parentKey": "diagnostic.center",
       "domain": "diagnostic",
@@ -3598,69 +2969,6 @@
       "tags": [
         "诊断",
         "开锁"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.cmd-trace",
-      "parentKey": "diagnostic.center",
-      "domain": "diagnostic",
-      "level": 3,
-      "name": "指令流水",
-      "kind": "diagnostic",
-      "summary": "本次会话日志里的「命令名 -> rc=N」行，rc≠0 标红，可跳错误码表。",
-      "details": [
-        "标题动态「指令流水 (最近 min(count,20) 条)」；空态「本次会话还没有指令结果 — 做一次开锁/读取后这里才有内容。」",
-        "数据源就是内存日志过滤 contains(\"-> rc=\")，不另建流水",
-        "每行等宽、可选中；cmdTone 解析 rc 数值，非 0 → danger 色",
-        "每行尾部书图标 NavigationLink → DiagReferenceView(highlightRC: rcOf(line))",
-        "说明：开启 hex 后落盘行也只留帧头 4 位并标注隐去位数；完整帧只在内存"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 749,
-          "symbol": "455 指令重放摘要注释"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 751,
-          "symbol": "Section 指令流水"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 752,
-          "symbol": "cmdTrace.isEmpty"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 757,
-          "symbol": "ForEach prefix(20)"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 762,
-          "symbol": "cmdTone"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 768,
-          "symbol": "NavigationLink DiagReferenceView(highlightRC:)"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 778,
-          "symbol": "帧头 4 位说明"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1294,
-          "symbol": "cmdTrace 来源"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "协议"
       ],
       "status": "implemented"
     },
