@@ -131,33 +131,24 @@ final class DFUSession: NSObject, @unchecked Sendable {
 
     // MARK: - 扫描
 
-    /// 找 DFU 设备。判据按**原版 APK 的 BleDfu.java:56**：
-    ///
-    /// ```java
-    /// BLEAdData curAdData = BLEAdData.parse(device.getAddress(), scanRecord);
-    /// if (curAdData.getPid() == zkBleBlock.pid && curAdData.getDfuState() == 1) { … }
-    /// ```
-    ///
-    /// 也就是「广播里的 pid 等于目标锁 pid」+「frameCtrl 的 bit5（dfuState）为 1」，
+    /// 扫描 DFU 设备：判据是「广播里的 pid 等于目标锁 pid」+「frameCtrl bit5 (dfuState) == 1」，
     /// **不是**靠广播名匹配。名字只作为附加兜底（少数固件在 DFU 态仍带 ZkDFU 前缀）。
-    /// Swift 侧的 `ZKProtocol.parseAdv` 已经解出同样的字段（dfuState = frameCtrl & 0x20），直接复用。
-    /// 扫描 DFU 设备：判据是「广播 pid == 目标 pid」+「frameCtrl bit5 (dfuState) == 1」，
-    /// 也就是「广播里的 pid 等于目标锁 pid」+「frameCtrl 的 bit5（dfuState）为 1」，
-    /// **不是**靠广播名匹配。名字只作为附加兜底（少数固件在 DFU 态仍带 ZkDFU 前缀）。
+    ///
+    /// 并发注记（第 5 轮改法）：`CBPeripheral` **不是 Sendable**，任何把它当参数传过隔离边界的
+    /// 写法都会被 Swift 6 判为 sending risks data races（前四轮分别栽在 Result 容器、专用方法、
+    /// 局部变量被逃逸闭包捕获）。正解是**根本不算传** —— 闭包原地就知道 peripheral，
+    /// 因此这里只把「认领续体」这一步收成方法，resume 在闭包里当场做。
     private func scanForDFUDevice() async throws -> CBPeripheral {
         let wantPid = targetPid
         return try await withCheckedThrowingContinuation { (cont: CheckedContinuation<CBPeripheral, Error>) in
-            // 2026-10-26: 原先这里用嵌套函数 + 局部 var done / let mgr，被 asyncAfter 与
-            // scanHandler 两个逃逸闭包捕获 ⇒ Swift 6 报 sending risks data races。
-            // 改为把续体与一次性闸挂到 self 上（本类已是 @unchecked Sendable），
-            // 闭包只捕获 self，不再捕获局部可变状态。
             self.scanCont = cont
             self.scanDone = false
             self.central.scanForPeripherals(withServices: nil,
                                            options: [CBCentralManagerScanOptionAllowDuplicatesKey: true])
             // 10 秒窗口：与 APK BleDfu.doScan 的 handler.postDelayed(…, 10000) 同值
             DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
-                self?.finishScanFailure(DFUTransportError.ble(
+                guard let c = self?.claimScanContinuation() else { return }
+                c.resume(throwing: DFUTransportError.ble(
                     "10 秒内没发现升级模式设备。请确认门锁已通电、靠近手机，"
                     + "且已下发 22 进 DFU（广播里 dfuState 位为 1）。"))
             }
@@ -168,37 +159,34 @@ final class DFUSession: NSObject, @unchecked Sendable {
                     let hex = HexKit.hex([UInt8](mf))
                     if let a = ZKProtocol.parseAdv(hex), a.dfuState == 1,
                        wantPid == 0 || a.pid == wantPid {
-                        self.finishScanSuccess(p)
+                        if let c = self.claimScanContinuation() { c.resume(returning: p) }
                         return
                     }
                 }
                 // ② 兜底：名字命中 ZkDFU（部分固件不带厂商段）
                 let name = (adv[CBAdvertisementDataLocalNameKey] as? String)?.uppercased() ?? ""
-                if name.contains("ZKDFU") { self.finishScanSuccess(p) }
+                if name.contains("ZKDFU") {
+                    if let c = self.claimScanContinuation() { c.resume(returning: p) }
+                }
             }
         }
     }
 
     private var scanCont: CheckedContinuation<CBPeripheral, Error>?
     private var scanDone = false
-    /// 2026-10-26: 原为 `finishScan(_ r: Result<CBPeripheral, Error>)`。
-    /// CBPeripheral 不是 Sendable，把它塞进 Result 再跨隔离传递会被 Swift 6 判
-    /// "sending 'r' risks causing data races"。拆成成功/失败两个专用方法就绕开了这一步。
-    private func finishScanSuccess(_ p: CBPeripheral) {
-        guard !scanDone, let c = scanCont else { return }
+    /// 2026-10-26（第 5 轮）: 这一族方法改了三次才找对方向 ——
+    ///   v1 `finishScan(_ r: Result<CBPeripheral, Error>)` ⇒ sending 'r'
+    ///   v2 拆成 success/failure 两个方法 ⇒ sending 'p'
+    /// 根子在于：**CBPeripheral 不是 Sendable，任何把它当参数传过隔离边界的写法都报错**。
+    /// 正解是不传 —— 闭包原地就知道 peripheral，直接 resume 续体即可。
+    /// 本方法只负责「认领一次性闸 + 取走续体 + 停扫描」，不碰任何 CBPeripheral。
+    private func claimScanContinuation() -> CheckedContinuation<CBPeripheral, Error>? {
+        guard !scanDone, let c = scanCont else { return nil }
         scanDone = true
         scanCont = nil
         scanHandler = nil
         central.stopScan()
-        c.resume(returning: p)
-    }
-    private func finishScanFailure(_ err: Error) {
-        guard !scanDone, let c = scanCont else { return }
-        scanDone = true
-        scanCont = nil
-        scanHandler = nil
-        central.stopScan()
-        c.resume(throwing: err)
+        return c
     }
     private var scanHandler: ((CBPeripheral, [String: Any]) -> Void)?
 
