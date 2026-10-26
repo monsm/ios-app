@@ -32,7 +32,7 @@ struct CredentialsView: View {
     @State private var smartSel: String = "" // 527 智能列表选中 id ("" = 默认)
     @State private var showCalendar = false  // 363 月历
     @State private var search = ""
-    @State private var sortKey: CredSortKey = CredentialOrg.sortKey   // 914 排序
+    @State private var sortKey: CredentialOrg.CredSortKey = CredentialOrg.sortKey   // 914 排序
     /// 2026-10-26 恢复：`isBusy` 在清理四件套时被误删（它读 busyKey，是主流程状态）。
     private var isBusy: Bool { busyKey != nil }
     // 2026-10-26 恢复：这些 @State 在清理四件套时被连带删掉，但它们是主流程状态。

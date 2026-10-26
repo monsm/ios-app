@@ -400,7 +400,6 @@ enum CredentialOrg {
         CredSortKey(rawValue: DB.store.getInt("kf_ccred_sort", 0)) ?? .name
     }
     static func setSortKey(_ k: CredSortKey) { DB.store.set("kf_ccred_sort", k.rawValue) }
-    static func setSortKey(_ k: CredSortKey) { DB.store.set("kf_ccred_sort", k.rawValue) }
 
     static var groupMode: CredGroupMode {
         CredGroupMode(rawValue: DB.store.getInt("kf_ccred_prefs", 0) & 1) ?? .type

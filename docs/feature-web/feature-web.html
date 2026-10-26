@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-26T14:38:13.221Z",
+    "generated": "2026-10-26T14:42:41.836Z",
     "sources": [
       {
         "scout": "android-native",
@@ -20981,7 +20981,7 @@ const DATA = {
           "line": 658,
           "symbol": "batchExtend(_:_:_:_:)",
           "note": "",
-          "text": "(owner == nil || p.owner == owner) &&"
+          "text": "{"
         },
         {
           "platform": "ios",
@@ -20997,7 +20997,7 @@ const DATA = {
           "line": 672,
           "symbol": "batchTransfer(_:pwdAliases:fpBatches:to:)",
           "note": "",
-          "text": "static func fpCountTotal(_ mac: String) -> Int { DB.listFps(mac).count }"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -21710,7 +21710,7 @@ const DATA = {
           "line": 695,
           "symbol": "proxySuffix(_:)",
           "note": "",
-          "text": "/// 单条版全仓零调用点，留着一份更慢的入口只会让人误调用它。"
+          "text": "/// 316/914 批量版: 一次读日志算完全部凭证。"
         },
         {
           "platform": "ios",
@@ -22711,7 +22711,7 @@ const DATA = {
           "line": 804,
           "symbol": "alert(_:_:)",
           "note": "",
-          "text": "struct StudioDraft: Codable {"
+          "text": "var step: Int"
         },
         {
           "platform": "ios",
@@ -22787,7 +22787,7 @@ const DATA = {
           "line": 850,
           "symbol": "expiringSoonCount(macs:within:)",
           "note": "",
-          "text": "return verb && !to.hasPrefix(\"2118\") ? \"到 \" + head : head"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -22795,7 +22795,7 @@ const DATA = {
           "line": 881,
           "symbol": "dueSoonPwds(_:)",
           "note": "",
-          "text": "}"
+          "text": "let d = e.timeIntervalSince(now)"
         }
       ],
       "platformEvidence": {
@@ -23169,7 +23169,7 @@ const DATA = {
           "line": 814,
           "symbol": "scheduleAlerts(_:_:_:)",
           "note": "",
-          "text": "var scene: String"
+          "text": "var batch: Int"
         },
         {
           "platform": "ios",
@@ -23177,7 +23177,7 @@ const DATA = {
           "line": 829,
           "symbol": "dayTier",
           "note": "WeekCal.shifted(to, days: -k)",
-          "text": "// ---------- 显示层辅助 (919 别名显示切换: 成员\"别名\"字段 = relation 备注, 空则回退真名) ----------"
+          "text": "static func ownerName(_ id: String?) -> String {"
         },
         {
           "platform": "ios",
@@ -23185,7 +23185,7 @@ const DATA = {
           "line": 844,
           "symbol": "addCalendar",
           "note": "t0 到期时",
-          "text": "/// 到期时刻的界面读法。`2118-01-01 00:00` 是**\"永不到期\"的哨兵值** (写库与 363/331 那两条判据都用它),"
+          "text": "/// 直接印出来就是\"到 2118-01-01\"这种把内部哨兵当事实报给用户的话。"
         }
       ],
       "platformEvidence": {
@@ -28443,7 +28443,7 @@ const DATA = {
           "line": 713,
           "symbol": "batchDisable(_:pwdAliases:fpBatches:)",
           "note": "",
-          "text": "private static func lastUse(of p: LedgerPwd, opens: [Double]) -> Double? {"
+          "text": "if p.temp {"
         },
         {
           "platform": "ios",
@@ -28711,7 +28711,7 @@ const DATA = {
           "line": 658,
           "symbol": "batchExtend(_:_:_:_:)",
           "note": "",
-          "text": "(owner == nil || p.owner == owner) &&"
+          "text": "{"
         },
         {
           "platform": "ios",
@@ -28727,7 +28727,7 @@ const DATA = {
           "line": 662,
           "symbol": "auto: true",
           "note": "auto: true 自动还原点",
-          "text": "}()"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -29391,7 +29391,7 @@ const DATA = {
           "line": 735,
           "symbol": "typeCounts(_:)",
           "note": "",
-          "text": "/// (CAPABILITY §3: 日志无凭证身份字段)。UI 小字与这句同一口径: 按本地开门日志时间窗推断。"
+          "text": "static func usageCount(_ mac: String, p: LedgerPwd) -> Int {"
         },
         {
           "platform": "ios",
@@ -29399,7 +29399,7 @@ const DATA = {
           "line": 739,
           "symbol": "pwdState(_:)",
           "note": "",
-          "text": "guard log.type == 4 else { return false }"
+          "text": "let t = ZKProtocol.protoSecondsToUnix(Int64(log.lockTime))"
         },
         {
           "platform": "ios",
@@ -30355,7 +30355,7 @@ const DATA = {
           "line": 672,
           "symbol": "batchTransfer(_:pwdAliases:fpBatches:to:)",
           "note": "",
-          "text": "static func fpCountTotal(_ mac: String) -> Int { DB.listFps(mac).count }"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -30371,7 +30371,7 @@ const DATA = {
           "line": 700,
           "symbol": "batchPrefixNote(_:pwdAliases:fpBatches:prefix:)",
           "note": "",
-          "text": "var out: [Int: Double] = [:]"
+          "text": "for p in DB.ledger(mac).pwds {"
         }
       ],
       "platformEvidence": {
@@ -30441,7 +30441,7 @@ const DATA = {
           "line": 498,
           "symbol": "cascadeBinMember(_:_:revokeLocks:)",
           "note": "",
-          "text": "let enc = try? CryptoBox.encryptText(text, password: password) else { return nil }"
+          "text": "return (Data(enc.utf8), pwds.count + fps.count)"
         },
         {
           "platform": "ios",
@@ -30449,7 +30449,7 @@ const DATA = {
           "line": 525,
           "symbol": "memberCredentialPreview(_:)",
           "note": "",
-          "text": "// 2026-10-13 对抗式点击审计: 原写直写 `app.tabSelection = 1`, **绕过 377 访客门禁**。"
+          "text": "// 全仓其他编程式跳转 (深链 / 自检黄条 / 粘贴建议条 / 逃生) 走的都是 requestTab ——"
         }
       ],
       "platformEvidence": {
@@ -30682,7 +30682,7 @@ const DATA = {
           "line": 451,
           "symbol": "canEvaluatePolicy",
           "note": "guard ctx.canEvaluatePolicy(...)",
-          "text": "return cal.isDate(to, inSameDayAs: date)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -30690,7 +30690,7 @@ const DATA = {
           "line": 460,
           "symbol": "onDeniedPresentFallback",
           "note": "if ok { commit() } else { onDeniedPresentFallback(commit) }",
-          "text": "let p = DB.ledger(mac).pwds.first { $0.alias == pwdAlias }"
+          "text": "guard let p else { return nil }"
         }
       ],
       "platformEvidence": {
@@ -32993,7 +32993,7 @@ const DATA = {
           "line": 494,
           "symbol": "无法远程补录",
           "note": "指纹在锁端删掉就无法远程补录",
-          "text": "let pkg = CredPackage(v: 1, mac: mac, lockName: LockArchive.displayName(DB.keychain(mac) ?? Keychain(mac: mac, skey: \"\")),"
+          "text": "pwds: pwds, fps: fps, at: nowSec)"
         },
         {
           "platform": "ios",
@@ -89928,7 +89928,7 @@ const DATA = {
           "line": 472,
           "symbol": "reclaimDays()",
           "note": "",
-          "text": "let owned = DB.ledger(mac).pwds.filter { !$0.temp && $0.owner != nil }"
+          "text": "if owned.count == 1 { n += 1 }"
         },
         {
           "platform": "ios",
@@ -93698,7 +93698,7 @@ const DATA = {
           "line": 775,
           "symbol": "protoSecondsToUnix",
           "note": "protoSecondsToUnix 消费点",
-          "text": "/// 331 本地提前失效时刻; 滑杆为 0 时就等于锁端到期时刻, 长期有效 (2118) 无到期点 ⇒ nil。"
+          "text": "static func effectiveExpiry(_ mac: String, _ p: LedgerPwd) -> Date? {"
         }
       ],
       "platformEvidence": {
