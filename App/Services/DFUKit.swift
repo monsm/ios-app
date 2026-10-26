@@ -82,6 +82,7 @@ enum DFUMode {
 ///
 /// 使用方式（DFUView 里）：
 ///   1. `let session = DFUSession(...)` 2. `try await session.run()` 3. 看 `onState` / `onProgress`
+@MainActor
 final class DFUSession: NSObject {
     /// 状态回调（主线程）
     var onState: ((DFUState, String) -> Void)?

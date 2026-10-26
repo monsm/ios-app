@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-26T09:55:29.697Z",
+    "generated": "2026-10-26T10:00:36.385Z",
     "sources": [
       {
         "scout": "android-native",
@@ -109741,7 +109741,7 @@
           "line": 85,
           "symbol": "final class DFUSession",
           "note": "",
-          "text": "final class DFUSession: NSObject {"
+          "text": "@MainActor"
         },
         {
           "platform": "ios",

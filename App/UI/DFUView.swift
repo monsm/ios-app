@@ -210,6 +210,7 @@ struct DFUView: View {
         }
     }
 
+    @MainActor
     private func run(_ p: FirmwarePackage, kc: Keychain) async {
         phase = .running
         progress = 0
