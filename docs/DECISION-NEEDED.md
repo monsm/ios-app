@@ -216,6 +216,13 @@
 >   两处旧文案（DeviceManageView 页脚 / SettingsView 设备管理段）与 `LockStats` 头注释同步改到同一现实。
 >   真机项见 `VERIFY-CHECKLIST` ㉔。
 > **2026-10-11 拍板**：D-137 保留现名（已落地）—— `ZOTP.generate(periodSec:)` 不改名：Swift 侧本就有换算注释，
+> **2026-10-26 推翻（用户明确选择）**：Swift 侧已改名 `periodSec → periodMin`，并加 `assert(1...120)` 单位断言。
+>   **vendor 侧仍保留原名** —— 这一半沿用了原拍板的理由（基线资产改名会让金标 fixture 语义漂移）。
+>   于是现状是：Swift 侧叫 `periodMin`，JS 基线叫 `periodSec`，两边名字不同但**各自内部一致**，
+>   且 Swift 的文档注释里写清了"为什么两边不同"。金标 fixture（`v30_*` / `v60_0`）未动，
+>   `zotpshadow.js` 仍 7/7 通过。
+>   **为什么不彻底改名到 vendor**：那要重烘金标并改影子对拍端口，风险大于收益；
+>   而"读代码的人误以为 30 是秒"这个问题，加断言 + 改名已经解决。
 >   本批在 vendor 基线（`vendor/app/utils/zotp.js`，与 `miniprogram-app/utils/zotp.js` 逐字一致）补同一段
 >   「单位是分钟 + 为什么保留」。改名要连 JS 基线 + 金标 fixture 重生成 + 影子对拍端口一起动，为一次命名不值。
 > **2026-10-11 拍板**：D-150a 方案①（已落地）—— 829 失败面 = 页内常驻横幅 + 「看三步排查」直达说明书症状树

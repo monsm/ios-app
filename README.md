@@ -25,10 +25,16 @@ App/Services
   BLEService    CoreBluetooth: 扫描/连接/服务发现/20B 分片写/notify
   LockService   会话令牌生命周期 / 命令执行 / rc=3 自愈 / 配网编排 (23→05→01→08×4→21→03)
   HardwareService 蓝牙钥匙串 (cmd 41/43/44) + 网关 (cmd 30/31/35/38)
-  DFUKit        ZIP 解析 + 原生 inflate + Nordic DFU (Secure FE59 / Legacy 1530) + cmd22 编排
+  DFUKit        ZIP 解析 + 原生 inflate + Nordic DFU 传输层 (Secure FE59 / Legacy 1530) + cmd22 编排
+  DefendKit     布防三档 + 时段校验 + 半秒换算 (cmd25 的唯一换算出口)
+  DefendService 布防下发 → 落盘 → 回读 (失败不写本地, 免得 F4 误否决自动开锁)
+  MobileKeyService 手机钥匙: 从锁 PIN 池取未占用 pin → 签 ekey → 撤销时发 cmd08 delPins
+  HeroTexture   Hero 卡三档纹理 (纯矢量 Canvas 自绘, 零位图)
+  TrialGuard    只读试验模式 (kf_trial_guard) 的读写口 + 顶部常驻红条
+  BackupPassphrase 备份口令的会话级共享 (一次输入两页通用, 不落盘)
   Attribution   开门归属推断 (R1 临时码窗口 / R2 唯一凭证+实时背书)
   BackupKit     全量备份包 + PBKDF2/AES-CBC/HMAC 信封 + 坚果云 WebDAV
-App/UI        SwiftUI: 设备 / 凭证 / 记录 / 设置 4 Tab + 13 个功能页
+App/UI        SwiftUI: 设备 / 凭证 / 记录 / 设置 4 Tab + 45 个目的地 (枚举见 App/Core/Destination.swift)
 Tests         XCTest 差分回归 — 与 fixtures/golden.json 逐字节断言
 tools         golden.js — 用已验证的 JS 核心生成差分金标
 vendor/app    已验证的 JS 业务核心 (仅用于生成金标, 不参与 App 构建)

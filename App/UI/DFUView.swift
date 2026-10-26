@@ -38,6 +38,8 @@ struct DFUView: View {
                 Section {
                     Text(error).vkFont(.footnote).foregroundStyle(DS.Palette.danger)
                         .fixedSize(horizontal: false, vertical: true)
+                        // 失败文案用 .danger 色单独表达，VoiceOver 读不出"这是错误" —— 加标签补上这一层。
+                        .accessibilityLabel("升级失败：\(error)")
                 }
             }
         }
@@ -139,6 +141,12 @@ struct DFUView: View {
                         .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                 }
                 .frame(minHeight: DS.Hit.min)
+                // 2026-10-26: DFU 是本次新增三页里唯一零无障碍标注的 —— 而它恰恰是
+                // 最需要"不靠看屏幕也知道进度"的一页（全程要盯着锁，手机可能不在手上）。
+                // 进度条本身对 VoiceOver 只是个无意义滑块，合并成一个可朗读的整体更实用。
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("固件升级进度")
+                .accessibilityValue("\(Int(progress * 100))%，\(stateText)")
             } else {
                 BusyButton(title: phase == .done ? "再次升级" : "开始升级",
                            systemImage: "arrow.up.circle",
@@ -146,6 +154,9 @@ struct DFUView: View {
                     confirmStart()
                 }
                 .disabled(pkg == nil)
+                .accessibilityHint(pkg == nil
+                    ? "请先在上方选择固件包"
+                    : "会先下发命令让门锁重启进入 DFU 模式，期间会断开蓝牙，属正常")
             }
             if phase == .done {
                 Text("升级完成。请回到设备页读一次锁信息，确认版本已变化。")

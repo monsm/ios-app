@@ -237,6 +237,17 @@ struct SettingsView: View {
             SearchHit(id: "s.lockprofile", title: "锁档案 (昵称/符号/色标)", icon: "lock", anchor: .lock),
             SearchHit(id: "s.mute", title: "静音模式", icon: "speaker.slash", anchor: .lock),
             SearchHit(id: "s.synctime", title: "校准门锁时间", icon: "clock.arrow.circlepath", anchor: .lock),
+            // 2026-10-26: 今日新增的四项补进搜索索引 —— 入口在门锁段/工具段里，但索引此前没登记，
+            // 于是搜「布防」「手机钥匙」「固件升级」「只读」都是零结果。
+            //
+            // ⚠ 这四个页面是 NavigationLink push 进去的，SearchHit 只能"滚动定位"到某一节，
+            //    没有程序化 push 的入口（设置页用的是 NavigationLink 声明式，不是 path 栈）。
+            //    所以这里只给 anchor（保证滚到对应段，用户看到那一行再点），
+            //    **不给 go** —— 给一个空的 go 会让人以为点搜索就直接进页面，实际只滚动。
+            SearchHit(id: "s.defend", title: "布防 (时段内否决自动开锁)", icon: "shield.lefthalf.filled", anchor: .lock),
+            SearchHit(id: "s.mobilekey", title: "手机钥匙 (给成员发数字钥匙)", icon: "iphone.gen3.badge.key", anchor: .family),
+            SearchHit(id: "s.dfu", title: "固件升级 (Nordic DFU, 在「家人与钥匙」段)", icon: "arrow.up.circle", anchor: .family),
+            SearchHit(id: "s.trialguard", title: "只读试验模式 (真机排障只看不改)", icon: "eye.slash", anchor: .tools),
             SearchHit(id: "s.safemode", title: "门锁安全模式", icon: "shield.lefthalf.filled", anchor: .security),
             SearchHit(id: "s.unlockopt", title: "开锁偏好 (按住确认/围栏/圆盘尺寸)", icon: "hand.draw", anchor: .unlock),
             SearchHit(id: "s.autoopen", title: "靠近自动开锁 (走近自动开门/距离标定)", icon: "person.walk", anchor: .autoOpen),
@@ -547,7 +558,7 @@ struct SettingsView: View {
         // 作者当时的处理就是改用 sheet —— 这里照同一条做法。成员活跃结构 (MemberStackedView)
         // 没有自带栈, 仍走 push, 不动。
         Button { showUnclaimed = true } label: { Label("未归属记录认领", systemImage: "questionmark.circle") }   // 791 未归属记录认领
-        Button { showFamilySettings = true } label: { Label("家庭设置：长辈模式/隐私浏览", systemImage: "hand.raised.fill") }   // 479/794 家庭设置
+        Button { showFamilySettings = true } label: { Label("家庭设置：长辈模式", systemImage: "hand.raised.fill") }   // 479 家庭设置（794 隐私浏览已于 2026-10-26 删除）
         Button { showKeychainHW = true } label: { Label("蓝牙钥匙串", systemImage: "key.horizontal") }
         // 包9 固件升级 (cmd22 + Nordic DFU): 原版 APK 有完整 OTA, iOS 此前把 DFU 逻辑整体删掉只剩包解析。
         // 门禁用 canDeviceUpgrade (与 APK 同源), 防网关/钥匙串误入。
