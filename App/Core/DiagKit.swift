@@ -562,28 +562,12 @@ enum DataHealth {
                 UserDefaults.standard.removeObject(forKey: k); removed += 1
             }
         }
-        let purged = purgeOrphanLogCaches()
         let issues = integrity().filter { !$0.hasPrefix("数据解析正常") }
         return (issues.isEmpty ? "整理完成: 数据解析正常" : "整理完成, 仍待处理: " + issues.joined(separator: "; "))
-            + " · 清理 \(removed) 个残留键" + (purged > 0 ? " · 隔离 \(purged) 把已删锁的日志缓存" : "")
-    }
-    /// 452 孤儿日志缓存隔离 (仅由显式「立即整理」调用): 台账/钥匙串一律不碰;
-    /// 缓存转入 kf_logpark_<mac> 键位停放不真删 —— 删锁是常规操作, 直接清历史等于顺手烧掉证据。
-    @discardableResult
-    static func purgeOrphanLogCaches() -> Int {
-        let kcs = Set(DB.keychains().map { $0.mac })
-        var n = 0
-        for k in DB.store.keys() where k.hasPrefix("kf_logcache_") {
-            let mac = String(k.dropFirst("kf_logcache_".count))
-            if !kcs.contains(mac) {
-                if let c = DB.store.get(LogCache.self, k) { DB.store.set("kf_logpark_" + mac, c) }
-                DB.store.remove(k); n += 1
-            }
-        }
-        return n
+            + " · 清理 \(removed) 个残留键"
     }
     /// 452 无主凭证隔离: owner 指向已删成员的密码/指纹移入回收站 (kf_cbin_), owner 清空。
-    /// 与 purgeOrphanLogCaches 同纪律 —— 只由诊断页显式按钮调用, 只读自检 (integrity) 里绝不删数据;
+    /// 只由诊断页显式按钮调用, 只读自检 (integrity) 里绝不删数据;
     /// 入回收站而非真删 (reclaimDays 内可 365/504 取回), 所以这一支不套 752 的备份闸。
     @discardableResult
     static func quarantineOrphanCredentials() -> Int {

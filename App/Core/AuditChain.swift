@@ -136,32 +136,10 @@ final class AuditLog {
         return (evs.count, -1)
     }
 
-    /// 385 保留期策略: 0=永久 / 3/6/12 月, 到期物理删除并留一条清理记录
-    func purgeExpired(months: Int) {
-        guard months > 0 else { return }
-        AuditLog.chainLock.lock()
-        defer { AuditLog.chainLock.unlock() }
-        let evs = load()
-        let cutoff = Date().timeIntervalSince1970 - Double(months) * 30.44 * 86400
-        var kept = evs.filter { $0.ts >= cutoff }
-        let n = evs.count - kept.count
-        if n > 0 {
-            // 386 截断重锚: 诚实截断后整段重封 — 旧哈希是挂在被截断链上的, 逐条重算否则 verifyChain 必报断链
-            var prev = "GENESIS"
-            for i in kept.indices {
-                kept[i].prevHash = prev
-                kept[i].hash = HashKit.sha256Hex(kept[i].hashInput(prev))
-                prev = kept[i].hash
-            }
-            var rec = AuditEvent(id: (kept.last?.id ?? 0) + 1,
-                                  ts: Date().timeIntervalSince1970,
-                                  cat: .admin, action: "清", target: "自动保留期 \(months) 月, 移除 \(n) 条 (链头重锚 GENESIS)",
-                                  operator_: "自动")
-            rec.seal(prevHash: kept.last?.hash ?? "GENESIS")
-            kept.append(rec)
-            DB.store.setCodable(AuditLog.key, kept)
-        }
-    }
+    // 2026-10-26: 「385 保留期策略」purgeExpired(months:) 已删 ——
+    // 它读的 SecKey.auditRetention 从来没有写点（设置页无保留期选项）⇒ 唯一调用点永不进入，
+    // 上批删掉那个自动调用后本函数零调用。审计记录的核对/校验能力（verifyChain）不受影响。
+
 
 
     func clear() { DB.store.remove(AuditLog.key) }

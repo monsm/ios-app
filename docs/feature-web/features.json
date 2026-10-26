@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-26T08:06:39.809Z",
+    "generated": "2026-10-26T08:10:37.606Z",
     "sources": [
       {
         "scout": "android-native",
@@ -51040,7 +51040,7 @@
           "line": 173,
           "symbol": "SensitiveLedger",
           "note": "",
-          "text": "struct Item: Codable, Identifiable {"
+          "text": ".reversed().prefix(limit))"
         }
       ],
       "platformEvidence": {
@@ -51095,7 +51095,7 @@
           "line": 217,
           "symbol": "DestroyKit",
           "note": "",
-          "text": "/// 备份时间戳读 Sheets 既有 kf_backup_hist ([Double] 时间线), 不另造写点。"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -51103,7 +51103,7 @@
           "line": 216,
           "symbol": "覆写收尾",
           "note": "Store 底层 = UserDefaults plist",
-          "text": "/// 400 销毁前备份闸: 7 天内无备份文件即拦截。"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -51596,7 +51596,7 @@
           "line": 187,
           "symbol": "record(_:target:member:)",
           "note": "",
-          "text": "var items = DB.store.get([Item].self, SensitiveLedger.key) ?? []"
+          "text": "c.component(.hour, from: d), c.component(.minute, from: d))"
         },
         {
           "platform": "ios",
@@ -51604,7 +51604,7 @@
           "line": 195,
           "symbol": "recent(limit:)",
           "note": "",
-          "text": ".reversed().prefix(limit))"
+          "text": "/// 备份时间戳读 Sheets 既有 kf_backup_hist ([Double] 时间线), 不另造写点。"
         },
         {
           "platform": "ios",
@@ -51612,7 +51612,7 @@
           "line": 207,
           "symbol": "stamp(_:)",
           "note": "",
-          "text": "let d = Date(timeIntervalSince1970: Double(item.id) / 1000)"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -52040,7 +52040,7 @@
           "line": 221,
           "symbol": "lastBackupAt",
           "note": "",
-          "text": "return (hist.last ?? 0) / 1000"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -52048,7 +52048,7 @@
           "line": 225,
           "symbol": "backupGatePass",
           "note": "",
-          "text": "}"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -62682,7 +62682,7 @@
           "line": 712,
           "symbol": "struct PullSegment",
           "note": "",
-          "text": "struct PullSegment: Identifiable {"
+          "text": "struct IdxGap: Identifiable {"
         },
         {
           "platform": "ios",
@@ -62698,7 +62698,7 @@
           "line": 736,
           "symbol": "struct PullGapReport",
           "note": "",
-          "text": "struct PullGapReport {"
+          "text": "var singleDay: Bool { coveredDays <= 1 }"
         },
         {
           "platform": "ios",
@@ -62706,7 +62706,7 @@
           "line": 755,
           "symbol": "enum RecordReconcile",
           "note": "",
-          "text": "enum RecordReconcile {"
+          "text": "maxSegments: Int = 8, maxGaps: Int = 5) -> PullGapReport {"
         },
         {
           "platform": "ios",
@@ -62714,7 +62714,7 @@
           "line": 770,
           "symbol": "pendingPull(logs:…)",
           "note": "",
-          "text": "static func pendingPull(logs: [CachedLog], maxSpanDays: Int = RecordReconcile.defaultMaxSpanDays,"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -62859,7 +62859,7 @@
           "line": 1062,
           "symbol": "struct HealthCheckItem",
           "note": "",
-          "text": "struct HealthCheckItem: Identifiable {"
+          "text": "let name: String"
         },
         {
           "platform": "ios",
@@ -62875,7 +62875,7 @@
           "line": 1075,
           "symbol": "enum DiagHealth",
           "note": "",
-          "text": "enum DiagHealth {"
+          "text": "ItemDef(id: \"haptic\", name: \"触感反馈\") { checkHaptic() },"
         },
         {
           "platform": "ios",
@@ -62883,7 +62883,7 @@
           "line": 1082,
           "symbol": "items 十项清单",
           "note": "",
-          "text": "static var items: [ItemDef] {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -62891,7 +62891,7 @@
           "line": 1102,
           "symbol": "percent",
           "note": "",
-          "text": "static func percent(_ list: [HealthCheckItem]) -> Int {"
+          "text": "static func saveArchive(_ r: (score: Int, items: [HealthCheckItem])) {"
         }
       ],
       "platformEvidence": {
@@ -63261,7 +63261,7 @@
           "line": 1362,
           "symbol": "enum QueryTemplates",
           "note": "",
-          "text": "enum QueryTemplates {"
+          "text": "let l = DB.ledger(DB.currentMac)"
         },
         {
           "platform": "ios",
@@ -63269,7 +63269,7 @@
           "line": 1364,
           "symbol": "lastNLogs",
           "note": "",
-          "text": "static func lastNLogs(_ n: Int) -> Result {"
+          "text": "let p = l.pwds.filter { $0.owner == m.id }.count"
         },
         {
           "platform": "ios",
@@ -63277,7 +63277,7 @@
           "line": 1377,
           "symbol": "memberUsage",
           "note": "",
-          "text": "static func memberUsage() -> Result {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -63285,7 +63285,7 @@
           "line": 1386,
           "symbol": "recentFails",
           "note": "",
-          "text": "static func recentFails() -> Result {"
+          "text": "let n = min(lineLen, s.distance(from: start, to: s.endIndex))"
         }
       ],
       "platformEvidence": {
@@ -63506,7 +63506,7 @@
           "line": 1429,
           "symbol": "struct SelfCheckLine",
           "note": "",
-          "text": "struct SelfCheckLine { let name: String; let ok: Bool; let detail: String }"
+          "text": "out.append(SelfCheckLine(name: \"数据完整性\", ok: issues.isEmpty,"
         },
         {
           "platform": "ios",
@@ -63522,7 +63522,7 @@
           "line": 1432,
           "symbol": "run()",
           "note": "",
-          "text": "static func run() -> [SelfCheckLine] {"
+          "text": "return out"
         },
         {
           "platform": "ios",
@@ -63530,7 +63530,7 @@
           "line": 1450,
           "symbol": "summary(_:)",
           "note": "",
-          "text": "static func summary(_ lines: [SelfCheckLine]) -> String {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -64076,7 +64076,7 @@
           "line": 965,
           "symbol": "struct RecoveryTip",
           "note": "",
-          "text": "struct RecoveryTip: Identifiable {"
+          "text": "let fam = DataHealth.families()"
         },
         {
           "platform": "ios",
@@ -64092,7 +64092,7 @@
           "line": 974,
           "symbol": "enum Recovery",
           "note": "",
-          "text": "enum Recovery {"
+          "text": "detail: \"最近: \" + fails.prefix(3).joined(separator: \" · \")"
         },
         {
           "platform": "ios",
@@ -64100,7 +64100,7 @@
           "line": 997,
           "symbol": "日志 >= 64KB 建议",
           "note": "",
-          "text": "if logBytes >= 64_000 && retention.isEmpty {"
+          "text": "at: BackupStudio.rollbackDir, includingPropertiesForKeys: [.fileSizeKey]) {"
         },
         {
           "platform": "ios",
@@ -64108,7 +64108,7 @@
           "line": 1022,
           "symbol": "回滚快照不给清理入口",
           "note": "",
-          "text": "out.append(RecoveryTip(id: \"rollback\","
+          "text": "title: \"连接遥测与事件流水约 \\(DataHealth.human(telemetry))\","
         }
       ],
       "platformEvidence": {
@@ -64345,7 +64345,7 @@
           "line": 656,
           "symbol": "archiveOldLogs()",
           "note": "",
-          "text": "static func archiveOldLogs() -> Int {"
+          "text": "let ids = Set(old.map { $0.idxRaw })"
         },
         {
           "platform": "ios",
@@ -64353,7 +64353,7 @@
           "line": 667,
           "symbol": "按 idxRaw 去重",
           "note": "",
-          "text": "let archived = Set(arch.map { $0.idxRaw })"
+          "text": "DB.store.get([CachedLog].self, \"kf_logarch_\" + mac)?.count ?? 0"
         },
         {
           "platform": "ios",
@@ -64361,7 +64361,7 @@
           "line": 678,
           "symbol": "DB.replaceLogs",
           "note": "",
-          "text": "DB.replaceLogs(kc.mac, kept)"
+          "text": "//     \"逐段核对日志行数 vs 锁内上报总数\"缺一个可核对的锁端被测量, 所以界面上不出现任何\"锁内共 N 条\"这类数字。"
         }
       ],
       "platformEvidence": {
@@ -64438,7 +64438,7 @@
           "line": 573,
           "symbol": "purgeOrphanLogCaches",
           "note": "",
-          "text": "static func purgeOrphanLogCaches() -> Int {"
+          "text": "static func quarantineOrphanCredentials() -> Int {"
         },
         {
           "platform": "ios",
@@ -64446,7 +64446,7 @@
           "line": 589,
           "symbol": "quarantineOrphanCredentials",
           "note": "",
-          "text": "static func quarantineOrphanCredentials() -> Int {"
+          "text": "CredentialOrg.addToBin(mac, fp: cf, source: .orphan)"
         }
       ],
       "platformEvidence": {
@@ -65421,7 +65421,7 @@
           "line": 1335,
           "symbol": "enum IconSemantics",
           "note": "",
-          "text": "enum IconSemantics {"
+          "text": "Row(icon: \"network\", use: \"BLE 连接状态\"),"
         },
         {
           "platform": "ios",
@@ -65429,7 +65429,7 @@
           "line": 1341,
           "symbol": "rows 表",
           "note": "",
-          "text": "static let rows: [Row] = ["
+          "text": "Row(icon: \"doc.text.magnifyingglass\", use: \"日志检索\")"
         }
       ],
       "platformEvidence": {
@@ -65490,7 +65490,7 @@
           "line": 1051,
           "symbol": "enum MaintenanceLog",
           "note": "",
-          "text": "enum MaintenanceLog {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -65498,7 +65498,7 @@
           "line": 1053,
           "symbol": "kf_maint_acts",
           "note": "",
-          "text": "static let key = \"kf_maint_acts\""
+          "text": "var id = UUID().uuidString"
         },
         {
           "platform": "ios",
@@ -65506,7 +65506,7 @@
           "line": 1054,
           "symbol": "record(_:)",
           "note": "",
-          "text": "static func record(_ label: String) {"
+          "text": "var at: String"
         }
       ],
       "platformEvidence": {
@@ -65579,7 +65579,7 @@
           "line": 1298,
           "symbol": "enum ProtocolDict",
           "note": "",
-          "text": "enum ProtocolDict {"
+          "text": ".init(k: \"#08\", name: \"securityLevel\", desc: \"位域: bit0 单双验 / bit1 状态广播 / bit2 临时码开通\"),"
         },
         {
           "platform": "ios",
@@ -65595,7 +65595,7 @@
           "line": 1307,
           "symbol": "statusFields",
           "note": "",
-          "text": "static let statusFields: [Field] = ["
+          "text": ".init(k: \"16#04\", name: \"surplus\", desc: \"GETLOG 本次游标之后还剩的日志条数 (只对当页成立, 不是锁内总条数; 会话内对账依此)\"),"
         },
         {
           "platform": "ios",
@@ -65603,7 +65603,7 @@
           "line": 1329,
           "symbol": "copyable()",
           "note": "",
-          "text": "static func copyable() -> String {"
+          "text": "Row(icon: \"shield.fill\", use: \"防撬 / 布防 / 安全中心\"),"
         },
         {
           "platform": "ios",
@@ -65968,7 +65968,7 @@
           "line": 898,
           "symbol": "struct PageOpen",
           "note": "",
-          "text": "struct PageOpen: Codable, Identifiable {"
+          "text": "static func setOn(_ v: Bool) {"
         },
         {
           "platform": "ios",
@@ -65976,7 +65976,7 @@
           "line": 906,
           "symbol": "enum PageTrace",
           "note": "",
-          "text": "enum PageTrace {"
+          "text": "switch tab {"
         },
         {
           "platform": "ios",
@@ -65984,7 +65984,7 @@
           "line": 931,
           "symbol": "markNav(to:)",
           "note": "",
-          "text": "static func markNav(to tab: Int) {"
+          "text": "guard ms >= 0, ms <= 3000 else { return }"
         },
         {
           "platform": "ios",
@@ -65992,7 +65992,7 @@
           "line": 941,
           "symbol": "shown(_:)",
           "note": "",
-          "text": "static func shown(_ name: String) {"
+          "text": "static func clock(_ epochMs: Double) -> String {"
         },
         {
           "platform": "ios",
@@ -66000,7 +66000,7 @@
           "line": 947,
           "symbol": "ms <= 3000 过滤",
           "note": "",
-          "text": "guard ms >= 0, ms <= 3000 else { return }"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -66246,7 +66246,7 @@
           "line": 1395,
           "symbol": "enum HexDump",
           "note": "",
-          "text": "enum HexDump {"
+          "text": "enum FrameFields {"
         },
         {
           "platform": "ios",
@@ -66262,7 +66262,7 @@
           "line": 1396,
           "symbol": "dump(_:lineLen:)",
           "note": "",
-          "text": "static func dump(_ hex: String, lineLen: Int = 32) -> String {"
+          "text": "static func name(cmd: UInt8, key: Int) -> String {"
         },
         {
           "platform": "ios",
@@ -66646,7 +66646,7 @@
           "line": 1411,
           "symbol": "enum FrameFields",
           "note": "",
-          "text": "enum FrameFields {"
+          "text": "/// 三项都只读、不写盘、不碰 BLE：① 库体哈希（只读比对，见 `BackupStudio.hashMismatch` 的注释）"
         },
         {
           "platform": "ios",
@@ -66662,7 +66662,7 @@
           "line": 1412,
           "symbol": "name(cmd:key:)",
           "note": "",
-          "text": "static func name(cmd: UInt8, key: Int) -> String {"
+          "text": "/// ② 审计链逐条重算 ③ JSON 回环 + 台账计数核对 (750)。"
         },
         {
           "platform": "ios",
@@ -66670,7 +66670,7 @@
           "line": 1416,
           "symbol": "parse(_:)",
           "note": "",
-          "text": "static func parse(_ hex: String) -> (header: Int, cmd: UInt8, rows: [(String, String)]) {"
+          "text": "static func run() -> [SelfCheckLine] {"
         },
         {
           "platform": "ios",
@@ -66788,7 +66788,7 @@
           "line": 1264,
           "symbol": "enum DiagQR",
           "note": "",
-          "text": "enum DiagQR {"
+          "text": "var t = \"【诊断摘要】\\n\""
         },
         {
           "platform": "ios",
@@ -66804,7 +66804,7 @@
           "line": 1269,
           "symbol": "inputCorrectionLevel M",
           "note": "",
-          "text": "input.setValue(\"M\", forKey: \"inputCorrectionLevel\")"
+          "text": "t += \"门锁 \" + app.displayName + \" pid=\" + String(kc.pid) + \" 固件 \" + (kc.fw.isEmpty ? \"未知\" : kc.fw) + \"\\n\""
         },
         {
           "platform": "ios",
@@ -66812,7 +66812,7 @@
           "line": 1279,
           "symbol": "summaryText(app:)",
           "note": "",
-          "text": "static func summaryText(app: AppState) -> String {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -67636,7 +67636,7 @@
           "line": 810,
           "symbol": "尾段只数到昨天",
           "note": "",
-          "text": "// 749 尾段: 只数到\"昨天\" —— 今天还没过完, 算成整天会凭空多出一格。"
+          "text": "var cur = firstDayDate"
         },
         {
           "platform": "ios",
@@ -67644,7 +67644,7 @@
           "line": 824,
           "symbol": "daySet >= 2 才推中段",
           "note": "",
-          "text": "if daySet.count >= 2 {"
+          "text": "var days: [String] = []"
         },
         {
           "platform": "ios",
@@ -67652,7 +67652,7 @@
           "line": 851,
           "symbol": "连续缺天并段",
           "note": "",
-          "text": "while i < days.count {"
+          "text": "coveredDays: daySet.count,"
         }
       ],
       "platformEvidence": {
@@ -67719,7 +67719,7 @@
           "line": 612,
           "symbol": "scanOrphans()",
           "note": "",
-          "text": "static func scanOrphans() -> [String] {"
+          "text": "// 此处**不删**: scanOrphans 被只读的 integrity() 调用 (诊断页进页即跑),"
         },
         {
           "platform": "ios",
@@ -67727,7 +67727,7 @@
           "line": 628,
           "symbol": "此处不删的说明",
           "note": "",
-          "text": "// 此处**不删**: scanOrphans 被只读的 integrity() 调用 (诊断页进页即跑),"
+          "text": "guard let d = cal.date(byAdding: .day, value: -i, to: today) else { continue }"
         }
       ],
       "platformEvidence": {
@@ -67923,7 +67923,7 @@
           "line": 636,
           "symbol": "gapDays(mac:days:)",
           "note": "",
-          "text": "static func gapDays(mac: String, days: Int = 14) -> [String] {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -67939,7 +67939,7 @@
           "line": 648,
           "symbol": "只报两侧都有数据的空洞",
           "note": "",
-          "text": "// 只报\"两侧都有数据\"的空洞 (首尾无数据不算缺口)"
+          "text": "// 223 归档侧也要按 idxRaw 去重: 原来每次运行都把\"缓存里所有超一年的行\"整批 insert 进去,"
         },
         {
           "platform": "ios",
@@ -68147,7 +68147,7 @@
           "line": 1132,
           "symbol": "checkBLE()",
           "note": "",
-          "text": "static func checkBLE() -> HealthCheckItem {"
+          "text": "case .unauthorized:"
         },
         {
           "platform": "ios",
@@ -68155,7 +68155,7 @@
           "line": 1134,
           "symbol": "authorization == .denied",
           "note": "",
-          "text": "if auth == .denied {"
+          "text": "case .resetting:"
         },
         {
           "platform": "ios",
@@ -68163,7 +68163,7 @@
           "line": 1152,
           "symbol": "unknown / @unknown default",
           "note": "",
-          "text": "case .unknown, nil:"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -69476,7 +69476,7 @@
           "line": 787,
           "symbol": "断档计算",
           "note": "",
-          "text": "// 749 信号 B: 序号断档与有没有时刻无关, 所以无时钟的行也照样参与 (行本身已按 idxRaw 去重)。"
+          "text": "var segs: [PullSegment] = []"
         },
         {
           "platform": "ios",
@@ -69492,7 +69492,7 @@
           "line": 796,
           "symbol": "skipped > idxGapCap → anomalies",
           "note": "",
-          "text": "if skipped > idxGapCap { anomalies += 1; continue }"
+          "text": "// 那种情形下\"此后到今天之前本机没数据\"恰恰是最该看得见的一条。"
         },
         {
           "platform": "ios",
@@ -69500,7 +69500,7 @@
           "line": 728,
           "symbol": "struct IdxGap",
           "note": "",
-          "text": "struct IdxGap: Identifiable {"
+          "text": "let missingDayTotal: Int    // 全部段的缺天合计 (本机天, 不是锁端条数)"
         },
         {
           "platform": "ios",
@@ -69930,7 +69930,7 @@
           "line": 1099,
           "symbol": "149 总分口径",
           "note": "",
-          "text": "/// 149 总分口径 (唯一算术, 视图不另算): 每项满分 20, 总分 = Σ得分 × 100 / 满分。"
+          "text": "items.first(where: { $0.id == id })?.run()"
         },
         {
           "platform": "ios",
@@ -69938,7 +69938,7 @@
           "line": 1102,
           "symbol": "percent(_:)",
           "note": "",
-          "text": "static func percent(_ list: [HealthCheckItem]) -> Int {"
+          "text": "static func saveArchive(_ r: (score: Int, items: [HealthCheckItem])) {"
         }
       ],
       "platformEvidence": {
