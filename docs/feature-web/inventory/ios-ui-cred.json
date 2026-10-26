@@ -1894,9 +1894,9 @@
       "parentKey": "credential.list.empty",
       "domain": "credential",
       "level": 4,
-      "name": "空态演示按钮未接线",
+      "name": "空态演示按钮（已删）",
       "kind": "edge",
-      "summary": "空态里的「看看它如何工作」只把 showDemo 置真，本文件没有任何 sheet/presenter 消费它，点按无可见结果。",
+      "summary": "**2026-10-26 已删**：空态里的「看看它如何工作」只把 `showDemo` 置真，全文件没有任何 sheet/presenter 消费它，点按无可见结果。批一把按钮与 `@State showDemo` 一起删除，这条\"未接线\"线索随之消失。",
       "details": [
         "按钮动作只有 showDemo = true，并带无障碍提示「打开演示锁试玩, 不碰真实门锁」(1960-1966)",
         "@State showDemo 声明于 56 行；全文件仅在 1960 行被写入，没有 .sheet(isPresented: $showDemo) 或其它读取点",
@@ -1919,7 +1919,7 @@
       "tags": [
         "未接线"
       ],
-      "status": "edge"
+      "status": "removed"
     },
     {
       "key": "credential.otp",

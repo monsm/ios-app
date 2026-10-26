@@ -5676,9 +5676,9 @@
       "parentKey": "protocol.gateway",
       "domain": "protocol",
       "level": 3,
-      "name": "IoT 凭据下发（cmd32 无入口）",
+      "name": "IoT 凭据下发（cmd32，构造器已删）",
       "kind": "protocol",
-      "summary": "构造器存在但 App 内无调用点；IoT 云对接在本 scope 内没有采集或落盘路径。",
+      "summary": "**2026-10-26 已删**：`ZKCmdBuilder.cmd32GWSetIot` 构造器与它的金标断言一起删除。它本来就 App 内零调用（IoT 云对接在本 scope 没有采集或落盘路径），留着只是一个永不发出的命令。",
       "details": [
         "三个 KLV（#05 iotpKey / #06 iotdSec / #07 devAccToken）在 HardwareService 里从未被构造",
         "网关配网链只有 38→31→35，不含 32",
@@ -5702,7 +5702,7 @@
         "网关",
         "死代码"
       ],
-      "status": "deprecated"
+      "status": "removed"
     },
     {
       "key": "protocol.dfu",

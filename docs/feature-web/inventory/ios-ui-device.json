@@ -5666,9 +5666,9 @@
       "parentKey": "data",
       "domain": "data",
       "level": 2,
-      "name": "安全中心偏好键族（SecKey）",
+      "name": "安全偏好键族（SecKey 已删，剩两个键直读）",
       "kind": "data",
-      "summary": "安全中心声明的 14 个 kf_ 键：冷却、留痕、会话方式、掩码、后台糊化、限时可见、磨砂、分享遮半、访客隐藏敏感、水印、审计保留、只读安全模式、口令复用。",
+      "summary": "**2026-10-26 精简后只剩两个仍然生效的安全偏好键**：`kf_speek_guest`（377 访客通道，默认关）与 `kf_speek_sharehalf`（376 分享遮半，默认开）。原 14 个 kf_ 键里其余 12 个（冷却/留痕/会话方式/掩码/后台糊化/限时可见/磨砂/访客隐藏敏感/水印/审计保留/只读/口令复用）**都没有写点** ⇒ 恒等于默认值，连同 `SecKey` 常量组一起删除。",
       "details": [
         "kf_slock_coolon / kf_slock_streak / kf_strace_on / kf_strace_events / kf_sses_how / kf_smask_style",
         "kf_speek_bgblur / kf_speek_timedsec / kf_speek_frost / kf_speek_sharehalf / kf_speek_glast / kf_speek_guest",
