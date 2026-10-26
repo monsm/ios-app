@@ -18,11 +18,6 @@ struct MemberCenterView: View {
     @State private var showWizard = false
     @State private var showArchived = false
     @State private var showGroups = false
-    // 2026-10-15 走查: 菜单里的「成员家庭设置」原先写 `app.tabSelection = 3` —— 而本页就是设置 Tab
-    // 下弹出来的 sheet, 切 Tab 是**空转**, 点了什么都不发生。它要去的 MemberFamilySettingsView
-    // 自带 NavigationStack + leading「保存」+ dismiss, 本来就是**按 sheet 设计的页** —— 所以这里
-    // 按同菜单 showGroups 的既有写法弹出来, 而不是再 push 一层。
-    @State private var showFamilySettings = false
     // 415 名册导出: ShareLink 要在渲染期就有 URL, 所以点菜单时先按需生成再开面板 (不在 body 里写盘)
     @State private var rosterURL: URL?
     @State private var showRoster = false
@@ -63,7 +58,6 @@ struct MemberCenterView: View {
                         }
                         .pickerStyle(.inline)
                         Button("分组标签") { showGroups = true }   // 630 分组标签
-                        Button("成员家庭设置") { showFamilySettings = true }   // 479/794 成员家庭设置
                         Button("导出成员名册") {   // 415 导出成员名册
                             rosterURL = ExportKit.writeRoster()
                             showRoster = true
@@ -80,10 +74,6 @@ struct MemberCenterView: View {
             .sheet(isPresented: $showWizard) { MemberWizardView(onDone: { tick += 1 }) }
             .sheet(isPresented: $showArchived) { MemberArchivedView(onRestored: { tick += 1 }) }
             .sheet(isPresented: $showGroups) { MemberGroupSheet(onSaved: { tick += 1 }) }
-            // 2026-10-15: 菜单「成员家庭设置」的落点。这一页自带 NavigationStack 与 leading「保存」,
-            // 是 sheet 形态 —— 这里弹出来正好。navSection 的「家庭设置」与设置页那条入口同批改成 sheet,
-            // 不再 push (push 会把内层 NavigationStack 套进外层 ⇒ 两层导航栏)。
-            .sheet(isPresented: $showFamilySettings) { MemberFamilySettingsView() }
             // 817c 记录页"添加成员"示例位跳过来时直接弹向导; 标记一次性消费。
             // 下一轮 runloop 再置 sheet: onAppear 同步段里开 sheet 在首帧可能因视图未入窗被吞掉。
             .onAppear {
@@ -356,7 +346,6 @@ struct MemberCenterView: View {
 
     private var navSection: some View {
         Section {
-            Button("家庭设置") { showFamilySettings = true }   // 479/794 家庭设置
         } header: {
             Text("聚合视图")
         }
@@ -514,7 +503,6 @@ struct MemberDetail360View: View {
     @EnvironmentObject var app: AppState
     @State private var tick = 0
     @State private var showMerge = false
-    @State private var showBorrow = false
 
     private var member: Member? { DB.member(memberID) }
 
@@ -531,14 +519,9 @@ struct MemberDetail360View: View {
                         .vkFont(.footnote).foregroundStyle(DS.Palette.text)
                         .fixedSize(horizontal: false, vertical: true) }
                 }
-                archiveSection(m)
                 // 467「待确认移交」区已撤 (2026-10-09 拍板): 移交实际由凭证页 `CredentialOrg.batchTransfer`
                 // 直接改本机台账, 队列没有发起方 → 这个区永远只显示"暂无"。留着就是假开关那一族。
                 credsSection(m)
-                excerptSection(m)
-                feedSection(m)
-                sourceSection(m)
-                sceneSection(m)
                 permSection(m)
             }
             .navigationTitle(MemberHub.display(m))
@@ -556,7 +539,6 @@ struct MemberDetail360View: View {
                 }
             } }
             .sheet(isPresented: $showMerge) { MergeMembersView(primary: m) { tick += 1; onChanged() } }
-            .sheet(isPresented: $showBorrow) { BorrowSheetView(memberID: m.id, onDone: { tick += 1 }) }
             .id(tick)
         } else {
             EmptyState(systemImage: "person.slash",
@@ -566,57 +548,6 @@ struct MemberDetail360View: View {
         }
     }
 
-    // ---------- 档案区 (457/458/916/265/461/464/465/485/1017/653/480) ----------
-    private func archiveSection(_ m: Member) -> some View {
-        let e = MemberHub.ext(m.id)
-        let a = MemberHub.activity(m.id)
-        // 整句一行写完 (单行字面量不许跨行), 入口措辞照 Sheets.swift 成员管理列表的真实菜单项写。
-        return Section {
-            VStack(alignment: .leading, spacing: DS.Space.s) {
-                HStack(spacing: DS.Space.s) {
-                    MemberAvatar(member: m, size: 44)
-                    VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                        Text(MemberHub.display(m))
-                            .vkFont(.title3, weight: .semibold)
-                            .foregroundStyle(DS.Palette.text)
-                        Text(MemberHub.roleLabel(e.role) + (m.relation.isEmpty ? "" : " · " + m.relation))
-                            .vkFont(.caption)
-                            .foregroundStyle(DS.Palette.textSub)
-                    }
-                    Spacer(minLength: 0)
-                    StatusPill(text: "名下 \(a.owns) 条", systemImage: "key.fill", tone: .accent)
-                }
-                // 465 紧急联系行 (纯本地)
-                LabeledContent("紧急联系") {   // 465 紧急联系
-                    Text(e.emergency.isEmpty ? "未填" : e.emergency)
-                        .vkFont(.subheadline)
-                        .foregroundStyle(DS.Palette.textSub)
-                }
-                // 464 常用锁
-                if !e.commonLocks.isEmpty {
-                    LabeledContent("常用锁") {   // 464 常用锁
-                        let names = e.commonLocks.map { LockArchive.displayName(DB.keychain($0) ?? Keychain(mac: $0, skey: "")) }
-                        Text(names.joined(separator: "、"))
-                            .vkFont(.subheadline)
-                            .foregroundStyle(DS.Palette.textSub)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                    }
-                }
-                // 480 孩子码关怀文案 (家长视角)
-                if !e.careText.isEmpty {
-                    LabeledContent("关怀语") {   // 480 关怀语
-                        Text(e.careText)
-                            .vkFont(.subheadline)
-                            .foregroundStyle(DS.Palette.accentText)
-                    }
-                }
-            }
-            .accessibilityElement(children: .combine)
-        } header: {
-            Text("档案")
-        }
-    }
 
     // ---------- 261/472 名下凭证 (含借用横条) ----------
     private func credsSection(_ m: Member) -> some View {
@@ -664,15 +595,7 @@ struct MemberDetail360View: View {
                     Spacer(minLength: 0)
                 }
             }
-            Button {
-                showBorrow = true
-            } label: {
-                Label("借用登记", systemImage: "person.2.badge.plus")   // 472 借用登记
-                    .vkFont(.subheadline)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .frame(minHeight: DS.Hit.min)
-                    .contentShape(Rectangle())
-            }
+                    // 2026-10-26 精简：借用登记入口已删。
             .buttonStyle(PlainButtonStyle())
             .foregroundStyle(DS.Palette.accentText)
         } header: {
@@ -680,78 +603,8 @@ struct MemberDetail360View: View {
         }
     }
 
-    // ---------- 459 最近开门摘录 (⚠台账推断, 带"约") ----------
-    private func excerptSection(_ m: Member) -> some View {
-        let rows = MemberHub.recentExcerpts(m.id, 10)
-        return Section {
-            ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
-                HStack(spacing: DS.Space.s) {
-                    Text(String(r.time.prefix(10)))
-                        .vkFont(.caption.monospacedDigit())
-                        .foregroundStyle(DS.Palette.textSub)
-                    Text(r.text)
-                        .vkFont(.subheadline)
-                        .foregroundStyle(DS.Palette.text)
-                    Spacer(minLength: 0)
-                    Text("约")
-                        .vkFont(.caption2)
-                        .foregroundStyle(DS.Palette.textSub)
-                }
-                .accessibilityElement(children: .combine)
-            }
-            if rows.isEmpty {
-                Text("还没有可证明归属的开门记录 (台账积累中, 属正常)。")
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        } header: {
-            Text("最近开门 (约)")
-        }
-    }
 
-    // ---------- 367 停用动态 (读敏感流水里归属本成员的那几条; 不新建存储、不新建键) ----------
-    private func feedSection(_ m: Member) -> some View {
-        let rows = SensitiveLedger().memberItems(m.id)
-        return Section {
-            ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
-                HStack(spacing: DS.Space.s) {
-                    Text(SensitiveLedger.stamp(r))
-                        .vkFont(.caption.monospacedDigit())
-                        .foregroundStyle(DS.Palette.textSub)
-                    VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                        Text(r.kind).vkFont(.subheadline)
-                        Text(r.target).vkFont(.caption).foregroundStyle(DS.Palette.textSub)
-                    }
-                    Spacer(minLength: 0)
-                }
-                .accessibilityElement(children: .combine)
-            }
-            if rows.isEmpty {
-                Text("还没有停用记录。停用凭证时勾「写入该成员动态」才会写进这里；不勾只在敏感操作流水里留一条汇总，不落到个人档案。")   // 367 还没有停用记录
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        } header: {
-            Text("凭证停用动态")   // 367 凭证停用动态
-        }
-    }
 
-    // ---------- 473 授权来源统计 ----------
-    private func sourceSection(_ m: Member) -> some View {
-        let s = MemberHub.sourceCounts(m.id)
-        return Section {
-            HStack(spacing: DS.Space.m) {
-                sourceCell("创建", s.created)
-                sourceCell("移交", s.moved)
-                sourceCell("恢复", s.restored)
-            }
-            .accessibilityElement(children: .combine)
-        } header: {
-            Text("授权来源")   // 473 授权来源
-        }
-    }
     private func sourceCell(_ label: String, _ n: Int) -> some View {
         VStack(spacing: DS.Space.xs) {
             Text(String(n))
@@ -768,48 +621,6 @@ struct MemberDetail360View: View {
     }
 
 
-    // ---------- 家庭场景 (481/468/469/480/484/475) ----------
-    private func sceneSection(_ m: Member) -> some View {
-        let role = MemberHub.ext(m.id).role
-        return Section {
-            // 470 这一档真收 UI 的地方之一: 「管凭证」为禁用的角色 (访客) 不出现这枚代管开关,
-            // 并且把"为什么这里少了一枚"写在原地 —— 收起来却不说明, 就是本仓反复犯的无声忽略。
-            if MemberHub.permAllows(role, "管凭证") {
-                VariantToggle("由我代管 (TA 名下凭证被单条停用时, 便签补一句 管理员代操作)", isOn: Binding(
-                    get: { MemberHub.ext(m.id).proxy },
-                    set: { v in
-                        var ext = MemberHub.ext(m.id); ext.proxy = v
-                        MemberHub.saveExt(m.id, ext)
-                        onChanged()
-                    }))
-                .fixedSize(horizontal: false, vertical: true)
-            } else {
-                Text("角色是「" + MemberHub.roleLabel(role) + "」: 矩阵里「管凭证」为禁用, 所以这一档不给代管开关。")   // 468/470 矩阵里
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            if MemberHub.dutyThisWeek == m.id {
-                StatusPill(text: "本周主责", systemImage: "calendar.badge.clock", tone: .accent)
-            }
-            VariantToggle("设为本周主责", isOn: Binding(   // 481 设为本周主责
-                get: { MemberHub.dutyThisWeek == m.id },
-                set: { v in
-                    MemberHub.setDuty(v ? m.id : nil)
-                    onChanged()
-                }))
-            .fixedSize(horizontal: false, vertical: true)
-            if MemberHub.proxyNames.contains(m.id) {
-                Text("代管中: 在凭证页对 TA 名下凭证做单条停用时, 那一行的停用便签会写上 管理员代操作; "   // 468 代管中
-                     + "锁端没有代操作这一位, 这句标注只落本机。")
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        } header: {
-            Text("家庭场景")
-        }
-    }
 
     // ---------- 470 权限矩阵 + 469 紧急管理员 + 843 角色与示例内嵌 ----------
     private func permSection(_ m: Member) -> some View {
@@ -1259,106 +1070,6 @@ struct MergeMembersView: View {
 }
 
 
-// ================= 472 借用登记 (凭证页顶横条的销记) =================
-struct BorrowSheetView: View {
-    @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
-    let memberID: String
-    var onDone: () -> Void = {}
-    @State private var mac: String
-    @State private var by = ""
-    @State private var due = ""
-    @State private var tick = 0
-
-    init(memberID: String, onDone: @escaping () -> Void) {
-        self.memberID = memberID
-        self.onDone = onDone
-        _mac = State(initialValue: DB.preferredMac())
-    }
-
-    private var borrowMap: [String: MemberBorrow] { MemberHub.borrows(mac) }
-
-    var body: some View { vkBody.destined(.borrowSheet) }
-    var vkBody: some View {
-        NavigationStack {
-            List {
-                Section("新建借用 (归属 " + (DB.member(memberID)?.name ?? "成员") + ")") {   // 472 新建借用
-                    TextField("借用人", text: $by)
-                        .autocorrectionDisabled()
-                    TextField("归还日期 yyyy-MM-dd", text: $due)
-                        .autocorrectionDisabled()
-                    Button { register() } label: {
-                        Label("登记", systemImage: "person.2.badge.plus")
-                            .vkFont(.subheadline)
-                            .foregroundStyle(DS.Palette.accentText)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .frame(minHeight: DS.Hit.min)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .disabled(by.isEmpty || due.isEmpty)
-                }
-                Section("进行中 (\(borrowMap.count)) · 点 已归还 销记") {
-                    ForEach(Array(borrowMap.keys.sorted()), id: \.self) { k in
-                        // 2026-10-13 对抗式点击审计: 原写 `let b = borrowMap[k]!` —— borrowMap 是
-                        // **计算属性** (每次重新查 DB), ForEach 的 key 集合与闭包求值来自两次独立调用,
-                        // 中间任何一次删除/销记都会让 k 在新 map 里消失 ⇒ 强解包 trap。
-                        // 同一帧同线程数据不变所以当前不可达, 但这是"计算属性 + 下标强解包"的教科书款。
-                        // 2026-10-13 修 CI: 上面那版写成了 `guard let b = borrowMap[k] else { continue }` ——
-                        // ViewBuilder 闭包里 `continue` 找不到所属循环 (这不是 for 循环, 是逐元素的 builder 闭包),
-                        // 编译错被级联到 ForEach 的初始化器上 ("no exact matches in call to initializer")。
-                        // builder 语境的等价写法就是 if let: 键不在新 map 里就安静跳过, 语义一致。
-                        if let b = borrowMap[k] {
-                        HStack(spacing: DS.Space.s) {
-                            Text(k.hasPrefix("b") ? "凭证明细见凭证页" : k)
-                                .vkFont(.caption)
-                                .foregroundStyle(DS.Palette.textSub)
-                            Text("借给 " + b.by + " · 还 " + b.due)
-                                .vkFont(.subheadline)
-                                .foregroundStyle(DS.Palette.text)
-                            Spacer(minLength: 0)
-                            Button("已归还") {
-                                MemberHub.saveBorrow(mac, itemKey: k, nil)
-                                tick += 1
-                                onDone()
-                                app.showToast("已销记归还")
-                            }
-                            .buttonStyle(SecondaryActionStyle(fullWidth: false))
-                            .frame(minHeight: DS.Hit.min)
-                            .contentShape(Rectangle())
-                        }
-                        }
-                    }
-                    if borrowMap.isEmpty {
-                        Text("没有进行中的借用。")
-                            .vkFont(.footnote)
-                            .foregroundStyle(DS.Palette.textSub)
-                    }
-                }
-            }
-            .navigationTitle("借用登记")   // 472 借用登记
-            .navigationBarTitleDisplayMode(.inline)
-            .variantList()
-            .dsScreenBackground()
-            .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
-            .id(tick)
-        }
-    }
-
-    private func register() {
-        // 登记在当前锁该成员名下第一条凭证上; 无凭证时用时间戳键占位
-        var key = "b" + String(Int(Date().timeIntervalSince1970))
-        if let p = DB.listPwds(mac).first(where: { $0.owner == memberID }) {
-            key = "p" + String(p.alias)
-        } else if let f = DB.listFps(mac).first(where: { $0.owner == memberID }) {
-            key = "f" + String(f.batch)
-        }
-        MemberHub.saveBorrow(mac, itemKey: key, MemberBorrow(by: by, due: due, at: Date().timeIntervalSince1970))
-        tick += 1
-        onDone()
-        app.showToast("已登记: " + by + " · 还 " + due)
-    }
-}
 
 // ================= 460/795 归档成员列表 (恢复入口) =================
 struct MemberArchivedView: View {
@@ -1467,162 +1178,7 @@ struct MemberGroupSheet: View {
     }
 }
 
-// ================= 479/794 家庭设置 (长辈模式) =================
-// 486 (长辈模式下临时码完成页默认进口述卡) 已接: 落地点在 CredentialStudio 的 TempCodeStudio.doneCard,
-// 那边读 MemberHub.elderMode —— 完成页收成 口述卡 + 一枚大「完成」, 常规那几段 (329/333/再发一张) 就地说明后收起。
-// 这一页只负责把话说明白 (见下面 elder 那一节), 不做第二份实现。
-struct MemberFamilySettingsView: View {
-    @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
-    @State private var elder = MemberHub.elderMode
 
-    var body: some View { vkBody.destined(.memberFamilySettings) }
-    var vkBody: some View {
-        NavigationStack {
-            Form {
-                // 479/486 长辈模式的两个落点都写在下面那段话里: 479 = 凭证页大字高对比 (凭证页行上),
-                // 486 = 临时码完成页收成口述卡 (CredentialStudio.doneCard)。开关本身只写 MemberHub.elderMode。
-                Section("长辈模式") {   // 479/486 长辈模式
-                    VariantToggle("长辈模式 (凭证页大字高对比、只留密码/指纹两组 · 临时码完成页收成口述卡)", isOn: $elder)
-                        .fixedSize(horizontal: false, vertical: true)
-                    if elder {
-                        Text("凭证页: 分段只留 全部/密码/指纹, 批量与导出入口收起, 组尾那条过期清理也不出现; "
-                             + "凭证行标题升到标题级、副行升到正文档, 副行文字改用主文本色 —— 大字与高对比就落在这两处。"   // 479 凭证行标题升到标题级
-                             + "这一档只动凭证页与临时码完成页, 其它页面不跟着变。")
-                            .vkFont(.caption)
-                            .foregroundStyle(DS.Palette.textSub)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Text("临时码完成页: 开这一档后完成页只留大字号口述卡 + 一枚大「完成」, "   // 486 临时码完成页
-                             // 329 一句话口令
-                             // 333 一句话口令
-                             + "一句话口令 / 首用回执 / 再发一张 那几段收起并在原地说明; 页标题也切到「口述卡」。")
-                            .vkFont(.caption)
-                            .foregroundStyle(DS.Palette.textSub)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-            }
-            .navigationTitle("家庭设置")
-            .variantList()
-            .dsScreenBackground()
-            .toolbar { ToolbarItem(placement: .navigationBarLeading) {
-                Button("保存") {
-                    MemberHub.setElderMode(elder)
-                    dismiss()
-                }
-            } }
-        }
-    }
-}
-
-// ================= 791 未归属记录认领 (记录页跳来, 本机覆盖层不改锁端) =================
-struct UnclaimedClaimView: View {
-    @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
-    @State private var mac: String
-    @State private var selMember: [String: String] = [:]
-
-    init() {
-        _mac = State(initialValue: DB.preferredMac())
-    }
-
-    private struct Row: Identifiable {
-        var key: String
-        var time: String
-        var kindWord: String
-        var id: String { key }
-    }
-    /// 未归属行 = 归属推不出 (who 为空); 793 判定里 temp 类进访客分组, 其余进认领
-    private var unclaimed: [Row] {
-        var out = [Row]()
-        for kc in DB.keychains() where kc.mac == mac {
-            let logs = DB.readLogs(kc.mac).filter { StatsKit.openTypes.contains($0.type) }
-            let status = DB.readStatus(kc.mac)
-            let rows = Attribution.classify(
-                logs: logs.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,
-                                          lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") },
-                pwds: DB.listPwds(kc.mac), fps: DB.listFps(kc.mac),
-                status: status.map { ($0.fpStock, $0.pwdStock, $0.lockTime) })
-            for (i, r) in rows.enumerated() where r.who == nil {
-                let word = r.kind.map { Attribution.words[$0] ?? "记录" } ?? "记录"
-                // 认领键与记录页 RowVM.key 对齐 (String(idxRaw)), 覆盖层才能生效
-                out.append(Row(key: String(logs[i].idxRaw),
-                                time: logs[i].lockTimeStr, kindWord: word))
-            }
-        }
-        return out.sorted { $0.time > $1.time }
-    }
-
-    var body: some View { vkBody.destined(.unclaimedClaim) }
-    var vkBody: some View {
-        NavigationStack {
-            List {
-                Section {
-                    // 2026-10-15 走查 (性能): 认领 Picker 数据源在行内, 每行各取一次成员归档集
-                    // (≤20 行 × M 成员的 ext 解码) — 提到行循环外只取一次, 行为不变。
-                    let claimArch = MemberHub.archivedIDs()
-                    ForEach(unclaimed.prefix(20)) { r in
-                        VStack(alignment: .leading, spacing: DS.Space.xs) {
-                            HStack(spacing: DS.Space.s) {
-                                Text(String(r.time.prefix(16)))
-                                    .vkFont(.caption.monospacedDigit())
-                                    .foregroundStyle(DS.Palette.textSub)
-                                Text(r.kindWord + " (未归属, 台账推断)")
-                                    .vkFont(.subheadline)
-                                    .foregroundStyle(DS.Palette.textSub)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                Spacer(minLength: 0)
-                                StatusPill(text: "待认领", systemImage: "questionmark.circle", tone: .neutral)
-                            }
-                            Picker("认领给", selection: Binding(
-                                get: { selMember[r.key] ?? "" },
-                                set: { selMember[r.key] = $0 })
-                            ) {
-                                ForEach(DB.members().filter { !claimArch.contains($0.id) }) { m in
-                                    Text(MemberHub.display(m)).tag(m.id)
-                                }
-                            }
-                            .pickerStyle(.menu)
-                        }
-                    }
-                    if unclaimed.isEmpty {
-                        Text("没有未归属的开门记录 (归属只算可证明的, 推不出就进这里认领)。")
-                            .vkFont(.footnote)
-                            .foregroundStyle(DS.Palette.textSub)
-                    }
-                } header: {
-                    Text("未归属记录认领")   // 791 未归属记录认领
-                }
-                Section {
-                    Button {
-                        var n = 0
-                        for (k, mid) in selMember {
-                            MemberHub.claim(mac, logKey: k, memberId: mid)
-                            n += 1
-                        }
-                        app.showToast("已认领 \(n) 条 (本机覆盖层, 不改锁端数据)")
-                        selMember = [:]
-                        dismiss()
-                    } label: {
-                        Label("认领所选 (\(selMember.count))", systemImage: "checkmark.seal")
-                            .vkFont(.subheadline)
-                            .foregroundStyle(DS.Palette.accentText)
-                            .frame(maxWidth: .infinity)
-                            .frame(minHeight: DS.Hit.min)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .disabled(selMember.isEmpty)
-                }
-            }
-            .navigationTitle("认领未归属")   // 791 认领未归属
-            .navigationBarTitleDisplayMode(.inline)
-            .variantList()
-            .dsScreenBackground()
-            .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
-        }
-    }
-}
 
 
 

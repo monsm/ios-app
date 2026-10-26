@@ -16,9 +16,6 @@ struct SettingsView: View {
     /// 2026-10-17 安卓版: 把当前锁的开锁凭证渲染成二维码 (扫码导入, 之后不再需要)
     @State private var shareLock: Keychain?
     @State private var showDiag = false   // 587: 记录详情低电告警带 mac 过来 → 切锁并推诊断页
-    // 2026-10-15 走查: 两枚"目标页自带 NavigationStack"的入口改用 sheet 呈现 (见 memberFamilyRows 注释)
-    @State private var showUnclaimed = false
-    @State private var showFamilySettings = false
     // 2026-10-15 走查: 这两个目标页也自带 NavigationStack, 同样只能走 sheet
     // 包14: 27 设置内搜索 — 顶部搜索框过滤全部设置项
     @State private var query = ""
@@ -85,9 +82,6 @@ struct SettingsView: View {
         .sheet(isPresented: $showMessages) { MessagesView() }
         .sheet(item: $shareLock) { ShareToAndroidView(kc: $0) }
         .sheet(isPresented: $showAdd) { AddDeviceView() }
-        // 2026-10-15 走查: 与上面那批 sheet 同款 —— 目标页自带 NavigationStack, 只能走 sheet
-        .sheet(isPresented: $showUnclaimed) { UnclaimedClaimView() }
-        .sheet(isPresented: $showFamilySettings) { MemberFamilySettingsView() }
         // 为什么不用 navigationDestination(isPresented:): 全仓无先例, 而 sheet+NavigationStack 与
         // 与 showDiag 那一段逐字同构 —— 无编译器的机器上, 复用已验证的写法是唯一稳的取向。
         .sheet(isPresented: $showDiag) {
@@ -542,14 +536,7 @@ struct SettingsView: View {
     @ViewBuilder
     private var memberFamilyRows: some View {
         Button { showMembers = true } label: { Label("成员管理（含成员中心）", systemImage: "person.2") }
-        // 2026-10-15 走查: 下面两行原为 NavigationLink, 而它们的目标页**自带 NavigationStack**
-        // (UnclaimedClaimView / MemberFamilySettingsView 都是 leading「完成」「保存」+ dismiss 的
-        // sheet 形态) —— push 进去就是内层栈套外层, 两层导航栏。这正是本文件 620 行那条判据
-        // (「MessagesView 自带 NavigationStack, 用 NavigationLink 会嵌套两层导航栏」) 说的形状,
-        // 作者当时的处理就是改用 sheet —— 这里照同一条做法。成员活跃结构 (MemberStackedView)
-        // 没有自带栈, 仍走 push, 不动。
-        Button { showUnclaimed = true } label: { Label("未归属记录认领", systemImage: "questionmark.circle") }   // 791 未归属记录认领
-        Button { showFamilySettings = true } label: { Label("家庭设置：长辈模式", systemImage: "hand.raised.fill") }   // 479 家庭设置（794 隐私浏览已于 2026-10-26 删除）
+                // 2026-10-26 精简：该入口已删。
         Button { showKeychainHW = true } label: { Label("蓝牙钥匙串", systemImage: "key.horizontal") }
         // 包9 固件升级 (cmd22 + Nordic DFU): 原版 APK 有完整 OTA, iOS 此前把 DFU 逻辑整体删掉只剩包解析。
         // 门禁用 canDeviceUpgrade (与 APK 同源), 防网关/钥匙串误入。

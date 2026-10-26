@@ -83,6 +83,9 @@ const SYS_NAMES = new Set([
   //   · `map.values` —— Dictionary 内置属性（Store.swift 里 5 处）
   //   · `CBCentralManager(delegate:queue:)` 的参数标签（BLEService / DFUKit）
   "values", "queue",
+  // 2026-10-26: `BGTaskScheduler.shared.register(forTaskWithIdentifier:using:launchHandler:)`
+  // 的系统方法名。删掉本项目里同名的 `register`（成员借用登记）后会被误判。
+  "register",
 ]);
 
 function stripCode(line) {
