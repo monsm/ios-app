@@ -76,8 +76,30 @@ try {
   run('build.js');
   const rebuilt = normalizeJson(fs.readFileSync(path.join(FW, 'features.json'), 'utf8'));
   fs.writeFileSync(path.join(FW, 'features.json'), tmpBefore);   // 还原，避免校验动作本身产生 diff
-  check('features.json 与 inventory 一致', committed === rebuilt,
-    committed === rebuilt ? '' : 'inventory 改了但没重建（跑 node tools/featurewebcheck.js --rebuild）');
+  const same = committed === rebuilt;
+  check('features.json 与 inventory 一致', same,
+    same ? '' : 'inventory 改了但没重建（跑 node tools/featurewebcheck.js --rebuild）');
+
+  // 2026-10-26: 本闸门在 CI 上连红而本地永远绿，日志里只有一句「不一致」没法定位。
+  // 把第一处差异与两侧上下文打出来 —— 有这条输出，下一次不用再猜。
+  if (!same) {
+    let k = 0;
+    while (k < Math.min(committed.length, rebuilt.length) && committed[k] === rebuilt[k]) k++;
+    console.log('\n  —— 差异定位 ——');
+    console.log('  首个差异位置: ' + k + ' / committed=' + committed.length + ' rebuilt=' + rebuilt.length);
+    console.log('  committed: ' + JSON.stringify(committed.slice(Math.max(0, k - 120), k + 160)));
+    console.log('  rebuilt  : ' + JSON.stringify(rebuilt.slice(Math.max(0, k - 120), k + 160)));
+    try {
+      const A2 = JSON.parse(tmpBefore);
+      const B2 = JSON.parse(fs.readFileSync(path.join(FW, 'features.json'), 'utf8'));
+      for (const key of Object.keys(A2)) {
+        if (key === 'meta') continue;
+        const sa = stableStringify(A2[key]);
+        const sb = stableStringify(B2[key]);
+        if (sa !== sb) console.log('  差异字段: ' + key + '  committed=' + sa.length + ' rebuilt=' + sb.length);
+      }
+    } catch (e2) { console.log('  字段级诊断失败: ' + e2.message); }
+  }
 } catch (e) {
   check('features.json 可校验', false, e.message.split('\n')[0]);
 }
