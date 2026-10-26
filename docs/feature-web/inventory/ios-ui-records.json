@@ -739,9 +739,9 @@
       "parentKey": "record.timeline",
       "domain": "record",
       "level": 4,
-      "name": "月界大字（595）",
+      "name": "月界大字（静态部分已做，渐显未做）",
       "kind": "state",
-      "summary": "每个月的第一个有记录日组头多打一行「N 月」大字；只在静态处做了，滚动渐显那半没做。",
+      "summary": "**代码注释自认「PART」**：每个「月」的第一个有记录日打一次标记并画大字（已做）；「上滑跨月时渐隐渐显」那一半**没做** —— 那需要 scrollTarget / scrollPosition 一类 API，实现点在 `RecordsView:120/1346/2683`，三处注释都记着同一件事。",
       "details": [
         "标记在分组阶段完成：逐组比 `key.prefix(7)`，变化即打 showMonthBig",
         "缺口行跳过，否则「新的一月」会落在空日上",
@@ -2415,9 +2415,9 @@
       "parentKey": "record",
       "domain": "record",
       "level": 3,
-      "name": "记录统计（趋势/时段/排行/同比/图表）",
+      "name": "记录统计（StatsKit + 成功率折线）",
       "kind": "deprecated",
-      "summary": "统计页已随删减波移除：记录域内不再有次数趋势、时段分布、排行、同比与图表页，只剩三处派生读数（上周小结、活跃凭证、成员活跃度）。",
+      "summary": "**2026-10-26 核实更正**：原标 deprecated，实际有完整实现 —— `StatsKit`（`StatModel` + `build(mac:)`，含日键/周索引/起止日归一）＋ `DiagnosticsView:892` 的 `Chart { LineMark }` 成功率折线。锁端没有「上报总数」字段，所以统计口径全部由本地日志缓存推出，这一点已在图表下方写明。",
       "details": [
         "代码注释明确：记录页重构后「统计页已随本轮删减移除」，pendingRecordsMember 只保留给其它来源做下钻",
         "现存统计类读数：① copyLastWeekDigest（上一自然周摘要+CSV）② ActiveCredsSheet（近 30 天凭证计次排名）③ 成员中心/详情的活跃度（约，MemberHub.activity）",
@@ -2455,7 +2455,7 @@
         "统计",
         "缺失"
       ],
-      "status": "deprecated"
+      "status": "implemented"
     },
     {
       "key": "record.detail",
@@ -2842,81 +2842,6 @@
         "统计"
       ],
       "status": "implemented"
-    },
-    {
-      "key": "record.detail.alarmTrial",
-      "parentKey": "record.detail.alarm",
-      "domain": "record",
-      "level": 4,
-      "name": "今日试错累计？（737，语义不确定）",
-      "kind": "diagnostic",
-      "summary": "显示今日锁定类日志条数，标题带「?」表示 keyboardErrCount 语义不确定；并说明涉事凭证无法归属。",
-      "details": [
-        "数据 = RecordSearch.trialCountToday(macs:[rec.mac])：type == 10 且 lockTimeStr 前缀为今天的行数",
-        "文案「今日试错累计? 本锁 N 条锁定类日志」，warn 色 + questionmark 图标",
-        "N > 0 时追加说明：「涉事凭证无法归属: 锁端仅记录锁定级事件行, 不带凭证槽位 (依赖协议失败明细)。」",
-        "只数条数，不猜是哪个凭证/哪位成员"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/RecordsTimeline.swift",
-          "line": 231,
-          "symbol": "trialCountToday",
-          "note": "计数"
-        },
-        {
-          "file": "App/UI/RecordsTimeline.swift",
-          "line": 237,
-          "symbol": "alarmSection",
-          "note": "标题带问号"
-        },
-        {
-          "file": "App/UI/RecordsTimeline.swift",
-          "line": 244,
-          "symbol": "alarmSection",
-          "note": "涉事凭证无法归属说明"
-        }
-      ],
-      "tags": [
-        "记录",
-        "告警",
-        "诊断",
-        "不确定"
-      ],
-      "status": "partial"
-    },
-    {
-      "key": "record.detail.alarmEta",
-      "parentKey": "record.detail.alarm",
-      "domain": "record",
-      "level": 4,
-      "name": "响应时长占位（742）",
-      "kind": "edge",
-      "summary": "「响应时长: 积累中 — 处置记录够多后自动出分布」，当前没有真实计算，只占位说明。",
-      "details": [
-        "无数据源、无计算，纯文案占位（依赖处置时间积累）",
-        "对所有告警类型都显示同一句"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/RecordsTimeline.swift",
-          "line": 251,
-          "symbol": "alarmSection",
-          "note": "占位行"
-        },
-        {
-          "file": "App/UI/RecordsTimeline.swift",
-          "line": 256,
-          "symbol": "alarmSection",
-          "note": "文案"
-        }
-      ],
-      "tags": [
-        "记录",
-        "告警",
-        "未实现"
-      ],
-      "status": "edge"
     },
     {
       "key": "record.detail.alarmDisposition",

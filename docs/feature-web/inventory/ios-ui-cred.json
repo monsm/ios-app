@@ -2520,7 +2520,7 @@
       "level": 3,
       "name": "明文查看与跨 Tab 跳转门槛",
       "kind": "edge",
-      "summary": "明文只在解锁后显示；跨 Tab 跳到凭证页统一走 app.requestRoute，复用全仓的访客门禁入口。",
+      "summary": "**2026-10-26 核实更正**：原标 partial，实际实现完整 —— ① 明文只在解锁后显示；② 跨 Tab 跳凭证页统一走 `app.requestRoute`（全仓 40+ 处调用，是唯一漏斗；`requestTab(Int)` 已退化成兼容适配器），访客态在 `LockKeeperApp:134` 被拦。",
       "details": [
         "查看明文前：DB.hasPasscode() && !app.appUnlocked → toast「需先解锁应用锁」并中止 (2166)",
         "重复值「查看」与临时码工坊的「查看」都先把 pendingCredNav/pendingCredNavMac 写好，再 app.requestRoute(.credentials)，代码注释明确这是「与全仓跨 Tab 跳转统一走 requestRoute (访客门禁那一口)」(843-845, 1419-1421)",
@@ -2544,7 +2544,7 @@
         "安全",
         "权限"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "key": "credential.pwd.add.step0",

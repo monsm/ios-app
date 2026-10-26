@@ -681,7 +681,7 @@
       "level": 4,
       "name": "导入失败分支",
       "kind": "edge",
-      "summary": "解析/校验失败只 toast，不写任何键，也不提供「忽略继续」。",
+      "summary": "【口径】解析/校验失败只 toast，不写任何键，也不提供「忽略继续」。",
       "details": [
         "catch 分支唯一动作：toast「导入被拦下: <localizedDescription>」",
         "覆盖三类：口令错误、内容被改过（哈希不过）、不是备份",
@@ -709,7 +709,7 @@
         "恢复",
         "错误"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "backup.migrate",
@@ -1924,7 +1924,7 @@
       "level": 4,
       "name": "轮换前置校验",
       "kind": "edge",
-      "summary": "轮换的三重前置：旧口令非空、新口令非空、两者不同。",
+      "summary": "【口径】轮换的三重前置：旧口令非空、新口令非空、两者不同。",
       "details": [
         "guard !encPw.isEmpty, !rotPw.isEmpty, encPw != rotPw",
         "失败只 toast，不发起网络请求；按钮另有一层禁用（rotPw 空不可点）",
@@ -1952,7 +1952,7 @@
         "云同步",
         "边界"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "backup.doc",
@@ -2856,7 +2856,7 @@
       "level": 4,
       "name": "无数据三态与协议上限",
       "kind": "edge",
-      "summary": "推不出日期段时如实说明三种原因；并解释协议没有「锁内上报总数」字段。",
+      "summary": "【口径】推不出日期段时如实说明三种原因；并解释协议没有「锁内上报总数」字段。",
       "details": [
         "无日志 → 「待补拉清单要连着锁拉过一次日志才推得出来…没有数就不画数」",
         "全是占位时刻（lockTime 0 换算为协议纪元 2010-01-01）→ 明说按既有判据排除，宁可空着不画假日期",
@@ -2895,7 +2895,7 @@
         "诊断",
         "边界"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "diagnostic.data-events",
@@ -3551,7 +3551,7 @@
       "level": 3,
       "name": "蓝牙急救",
       "kind": "edge",
-      "summary": "近 20 条断连事件里失败 ≥3 时出现三步急救指引。",
+      "summary": "【口径】近 20 条断连事件里失败 ≥3 时出现三步急救指引。",
       "details": [
         "触发：failsInLast20 >= 3（BleTelemetry.events.prefix(20) 里 !ok 的条数）",
         "三步：控制中心关开蓝牙等 10 秒回设备页 / 设置→蓝牙关闭 App 后台后重开 / 重启手机",
@@ -3599,7 +3599,7 @@
         "诊断",
         "急救"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "diagnostic.autoopen-audit",
@@ -6260,7 +6260,7 @@
       "level": 4,
       "name": "?k= 行内定位键",
       "kind": "edge",
-      "summary": "只有 ?k= 一个参数被认，其余 query 一律丢；值只是\"到那页找哪条\"。",
+      "summary": "【口径】只有 ?k= 一个参数被认，其余 query 一律丢；值只是\"到那页找哪条\"。",
       "details": [
         "读第一个 name == \"k\" 且非空的值 → pendingRecordKey",
         "值找不到时由消费方如实说「不在本机台账里」",
@@ -6298,7 +6298,7 @@
         "深链",
         "边界"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "settings.deeplink.mac",

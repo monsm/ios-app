@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-26T08:33:49.264Z",
+    "generated": "2026-10-26T08:37:28.784Z",
     "sources": [
       {
         "scout": "android-native",
@@ -49,7 +49,7 @@
         "scout": "ios-ui-records",
         "platform": "ios",
         "file": "ios-ui-records.json",
-        "nodes": 128
+        "nodes": 126
       },
       {
         "scout": "ios-ui-system",
@@ -10147,7 +10147,7 @@
       "level": 4,
       "name": "占用类保守文案",
       "kind": "edge",
-      "summary": "协议未确证「占用」细分码，只给保守提示「稍候 1–2 分钟再试」，不虚构错误码语义。",
+      "summary": "协议未确证「占用」的细分码，所以只给保守提示「稍候 1–2 分钟再试」，**不虚构错误码语义** —— 这是诚实的保守处理，不是半成品。原标 partial 属误判。",
       "details": [
         "静态文案，不判断具体 rc。",
         "文案自述「占用细分未确证」以避免过度承诺。"
@@ -10183,7 +10183,7 @@
         "文案"
       ],
       "status": {
-        "ios": "partial"
+        "ios": "implemented"
       },
       "commands": [],
       "sources": [
@@ -27762,7 +27762,7 @@
       "level": 3,
       "name": "明文查看与跨 Tab 跳转门槛",
       "kind": "edge",
-      "summary": "明文只在解锁后显示；跨 Tab 跳到凭证页统一走 app.requestRoute，复用全仓的访客门禁入口。",
+      "summary": "**2026-10-26 核实更正**：原标 partial，实际实现完整 —— ① 明文只在解锁后显示；② 跨 Tab 跳凭证页统一走 `app.requestRoute`（全仓 40+ 处调用，是唯一漏斗；`requestTab(Int)` 已退化成兼容适配器），访客态在 `LockKeeperApp:134` 被拦。",
       "details": [
         "查看明文前：DB.hasPasscode() && !app.appUnlocked → toast「需先解锁应用锁」并中止 (2166)",
         "重复值「查看」与临时码工坊的「查看」都先把 pendingCredNav/pendingCredNavMac 写好，再 app.requestRoute(.credentials)，代码注释明确这是「与全仓跨 Tab 跳转统一走 requestRoute (访客门禁那一口)」(843-845, 1419-1421)",
@@ -27813,7 +27813,7 @@
         "权限"
       ],
       "status": {
-        "ios": "partial"
+        "ios": "implemented"
       },
       "commands": [],
       "sources": [
@@ -34687,7 +34687,7 @@
       "level": 4,
       "name": "删除类下发的别名守卫",
       "kind": "edge",
-      "summary": "del_pwd 要求 pwd.alias != 0 且 payload 存在；del_fp 还要过 batchU32 边界转换，防负数批次 trap 崩进程。",
+      "summary": "【口径】del_pwd 要求 pwd.alias != 0 且 payload 存在；del_fp 还要过 batchU32 边界转换，防负数批次 trap 崩进程。",
       "details": [
         "指纹原只判 batch != 0，而导入链不校验符号 ⇒ 构造备份即可让用户点删除时崩（CredentialOrg.swift:608-613）",
         "留存口径：本机台账在停用那一刻已删，这一步只负责把命令发出去（CredentialOrg.swift:604-606）"
@@ -34739,7 +34739,7 @@
         "破坏性"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [],
       "sources": [
@@ -35383,7 +35383,7 @@
       "level": 4,
       "name": "指纹不可远程补录这句必须同屏",
       "kind": "edge",
-      "summary": "「连锁端一起收回」时可 restore 密码，但指纹在锁端删掉就只能本人到锁前重录，UI 两个弹窗都必须写这句。",
+      "summary": "【口径】「连锁端一起收回」时可 restore 密码，但指纹在锁端删掉就只能本人到锁前重录，UI 两个弹窗都必须写这句。",
       "details": [
         "注释点名：这句话必须和选择写在同一屏（两处弹窗都是这么写的）（CredentialOrg.swift:494-495）",
         "撤销/还原指纹时如实说「锁端这条有无被删过要连上锁才证实；若已删，指纹只能本人到锁前重录」（CredentialOrg.swift:380-383）",
@@ -35436,7 +35436,7 @@
         "文案"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [],
       "sources": [
@@ -35695,7 +35695,7 @@
       "level": 4,
       "name": "重新下发落到别的槽位时改号",
       "kind": "edge",
-      "summary": "pwdAdd 返回的 alias 与本地不同时，删旧号 + 用新号写回并留一档版本历史，避免两份真相。",
+      "summary": "【口径】pwdAdd 返回的 alias 与本地不同时，删旧号 + 用新号写回并留一档版本历史，避免两份真相。",
       "details": [
         "旧三份实现都把返回值扔掉（_ =），不归位就会「按旧别名去彻底删除/改期，动的却是同槽位的另一个凭证」（CredentialOrg.swift:629-635）",
         "没有明文时拒绝下发并提示「需重新录入」（CredentialOrg.swift:624-625）"
@@ -35746,7 +35746,7 @@
         "边界"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [],
       "sources": [
@@ -36021,7 +36021,7 @@
       "level": 4,
       "name": "fail-closed 双分支门槛",
       "kind": "edge",
-      "summary": "有可用生物识别 → 刷脸/指纹，通过即 commit、失败交给 fallback；无生物或不可用 → 直接把同一个 commit 交 UI 二次确认，绝不直接执行。",
+      "summary": "【口径】有可用生物识别 → 刷脸/指纹，通过即 commit、失败交给 fallback；无生物或不可用 → 直接把同一个 commit 交 UI 二次确认，绝不直接执行。",
       "details": [
         "canEvaluatePolicy 为假、或 err.code == biometryNotAvailable ⇒ onDeniedPresentFallback(commit) 后立即 return（CredentialOrg.swift:451-455）",
         "evaluatePolicy 回调里 ok ? commit() : onDeniedPresentFallback(commit)，即「刷失败」不等于放行（CredentialOrg.swift:456-462）",
@@ -36074,7 +36074,7 @@
         "fail-closed"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [],
       "sources": [
@@ -41878,7 +41878,7 @@
       ],
       "childCount": 15,
       "isDomain": false,
-      "weight": 19,
+      "weight": 17,
       "path": "记录与统计 › 记录详情卡（全字段 + 告警处置 + 上下文 + 分享）"
     },
     {
@@ -42488,7 +42488,7 @@
         "缺失"
       ],
       "status": {
-        "ios": "deprecated"
+        "ios": "implemented"
       },
       "commands": [],
       "sources": [
@@ -42921,9 +42921,9 @@
       "sources": [
         "ios-ui-records"
       ],
-      "childCount": 5,
+      "childCount": 3,
       "isDomain": false,
-      "weight": 5,
+      "weight": 3,
       "path": "记录与统计 › 记录详情卡（全字段 + 告警处置 + 上下文 + 分享） › 告警段（严重级 + 处置留痕 + 同类/试错/响应时长）"
     },
     {
@@ -47883,93 +47883,6 @@
       "path": "记录与统计 › 记录检索（关键词/加减词/时间词/自然语言） › 结果计数与条件数与重置"
     },
     {
-      "id": "record.detail.alarmTrial",
-      "key": "record.detail.alarmTrial",
-      "parent": "record.detail.alarm",
-      "domain": "record",
-      "level": 4,
-      "name": "今日试错累计？（737，语义不确定）",
-      "kind": "diagnostic",
-      "summary": "显示今日锁定类日志条数，标题带「?」表示 keyboardErrCount 语义不确定；并说明涉事凭证无法归属。",
-      "details": [
-        "数据 = RecordSearch.trialCountToday(macs:[rec.mac])：type == 10 且 lockTimeStr 前缀为今天的行数",
-        "文案「今日试错累计? 本锁 N 条锁定类日志」，warn 色 + questionmark 图标",
-        "N > 0 时追加说明：「涉事凭证无法归属: 锁端仅记录锁定级事件行, 不带凭证槽位 (依赖协议失败明细)。」",
-        "只数条数，不猜是哪个凭证/哪位成员"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/RecordsTimeline.swift",
-          "line": 231,
-          "symbol": "trialCountToday",
-          "note": "计数",
-          "text": "let trials = RecordSearch.trialCountToday(macs: [rec.mac])"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/RecordsTimeline.swift",
-          "line": 237,
-          "symbol": "alarmSection",
-          "note": "标题带问号",
-          "text": "Text(\"今日试错累计? 本锁 \" + String(trials) + \" 条锁定类日志\")   // 737 今日试错累计"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/RecordsTimeline.swift",
-          "line": 244,
-          "symbol": "alarmSection",
-          "note": "涉事凭证无法归属说明",
-          "text": "Text(\"涉事凭证无法归属: 锁端仅记录锁定级事件行, 不带凭证槽位 (依赖协议失败明细)。\")"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/RecordsTimeline.swift",
-            "line": 231,
-            "symbol": "trialCountToday",
-            "note": "计数"
-          },
-          {
-            "file": "App/UI/RecordsTimeline.swift",
-            "line": 237,
-            "symbol": "alarmSection",
-            "note": "标题带问号"
-          },
-          {
-            "file": "App/UI/RecordsTimeline.swift",
-            "line": 244,
-            "symbol": "alarmSection",
-            "note": "涉事凭证无法归属说明"
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "记录",
-        "告警",
-        "诊断",
-        "不确定"
-      ],
-      "status": {
-        "ios": "partial"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-records"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "记录与统计 › 记录详情卡（全字段 + 告警处置 + 上下文 + 分享） › 告警段（严重级 + 处置留痕 + 同类/试错/响应时长） › 今日试错累计？（737，语义不确定）"
-    },
-    {
       "id": "record.list.kindIcon",
       "key": "record.list.kindIcon",
       "parent": "record.timeline",
@@ -48617,7 +48530,7 @@
       "level": 4,
       "name": "起==止 ⇒ 空集，界面必须提示",
       "kind": "edge",
-      "summary": "nightFrom == nightTo 时区间为空集，任何 hour 都不命中；这不是「全天」而是「筛不出」，界面必须如实说。",
+      "summary": "【口径】nightFrom == nightTo 时区间为空集，任何 hour 都不命中；这不是「全天」而是「筛不出」，界面必须如实说。",
       "details": [
         "nightWindowDegenerate 专供 UI 提示（RecordSearch.swift:438-439）",
         "isLateNight 在 a == b 时走 a > b ? ... : (hour >= a && hour < b) ⇒ 恒 false（RecordSearch.swift:443-447）",
@@ -48669,7 +48582,7 @@
         "边界"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [],
       "sources": [
@@ -49705,76 +49618,6 @@
       "path": "记录与统计 › 记录列表（分页/骨架/空态/状态条/对账） › 按天时间线（日组/月份大字/缺口行） › 无记录日/假期外出分隔行"
     },
     {
-      "id": "record.detail.alarmEta",
-      "key": "record.detail.alarmEta",
-      "parent": "record.detail.alarm",
-      "domain": "record",
-      "level": 4,
-      "name": "响应时长占位（742）",
-      "kind": "edge",
-      "summary": "「响应时长: 积累中 — 处置记录够多后自动出分布」，当前没有真实计算，只占位说明。",
-      "details": [
-        "无数据源、无计算，纯文案占位（依赖处置时间积累）",
-        "对所有告警类型都显示同一句"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/RecordsTimeline.swift",
-          "line": 251,
-          "symbol": "alarmSection",
-          "note": "占位行",
-          "text": "HStack(spacing: DS.Space.s) {"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/RecordsTimeline.swift",
-          "line": 256,
-          "symbol": "alarmSection",
-          "note": "文案",
-          "text": "Text(\"响应时长: 积累中 — 处置记录够多后自动出分布\")   // 742 响应时长"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/RecordsTimeline.swift",
-            "line": 251,
-            "symbol": "alarmSection",
-            "note": "占位行"
-          },
-          {
-            "file": "App/UI/RecordsTimeline.swift",
-            "line": 256,
-            "symbol": "alarmSection",
-            "note": "文案"
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "记录",
-        "告警",
-        "未实现"
-      ],
-      "status": {
-        "ios": "edge"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-records"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "记录与统计 › 记录详情卡（全字段 + 告警处置 + 上下文 + 分享） › 告警段（严重级 + 处置留痕 + 同类/试错/响应时长） › 响应时长占位（742）"
-    },
-    {
       "id": "record.list.note",
       "key": "record.list.note",
       "parent": "record.timeline",
@@ -50208,9 +50051,9 @@
       "parent": "record.timeline",
       "domain": "record",
       "level": 4,
-      "name": "月界大字（595）",
+      "name": "月界大字（静态部分已做，渐显未做）",
       "kind": "state",
-      "summary": "每个月的第一个有记录日组头多打一行「N 月」大字；只在静态处做了，滚动渐显那半没做。",
+      "summary": "**代码注释自认「PART」**：每个「月」的第一个有记录日打一次标记并画大字（已做）；「上滑跨月时渐隐渐显」那一半**没做** —— 那需要 scrollTarget / scrollPosition 一类 API，实现点在 `RecordsView:120/1346/2683`，三处注释都记着同一件事。",
       "details": [
         "标记在分组阶段完成：逐组比 `key.prefix(7)`，变化即打 showMonthBig",
         "缺口行跳过，否则「新的一月」会落在空日上",
@@ -50285,7 +50128,7 @@
       "childCount": 0,
       "isDomain": false,
       "weight": 1,
-      "path": "记录与统计 › 记录列表（分页/骨架/空态/状态条/对账） › 按天时间线（日组/月份大字/缺口行） › 月界大字（595）"
+      "path": "记录与统计 › 记录列表（分页/骨架/空态/状态条/对账） › 按天时间线（日组/月份大字/缺口行） › 月界大字（静态部分已做，渐显未做）"
     },
     {
       "id": "record.filter.reversed",
@@ -50723,7 +50566,7 @@
       "level": 2,
       "name": "安全中心",
       "kind": "sheet",
-      "summary": "独立安全页。**2026-10-26 精简后只剩两块**：凭证风险体检（只读扫描）与本机库体自检；原来的常驻水印层、「下发护栏」空分区、`SecKey` 常量组都随对应开关一起删除。",
+      "summary": "**2026-10-26 精简后只剩两块**：凭证风险体检（只读扫描）与本机库体自检；原来的常驻水印层、「下发护栏」空分区、`SecKey` 常量组都随对应开关一起删除。标 partial 是因为「安全中心」这个页面本身还在，但**原设计的十余个安全开关只剩两条生效**。",
       "details": [
         "设计意图是四分区（应用锁升级 / 防窥 / 审计留痕 / 数据销毁），但对应开关在现版本已无写入 UI",
         "以 sheet 呈现且自带 NavigationStack，左上「关闭」是唯一显式出口",
@@ -51191,9 +51034,9 @@
       "parent": "security.center",
       "domain": "security",
       "level": 3,
-      "name": "常驻水印层（378）",
+      "name": "常驻水印层（已删）",
       "kind": "state",
-      "summary": "开启后整页铺一层 -18° 半透明重复水印，文案取 kf_swmark_txt，空则用「离线锁管家 + 当天日期」。",
+      "summary": "**2026-10-26 已删**：`SecurityWatermark` 视图 + 两层调用（全局 rootChrome 与安全中心页内）＋ `SecKey.watermarkOn` / `watermarkTxt` 两个常量全部删除。成因：水印开关从来没有写点 ⇒ 恒 false ⇒ 水印永远不显示，三层读点只是噪音。",
       "details": [
         "Canvas 平铺，tile 120，行距 tile/1.6，奇偶行错位半格",
         "不透明度固定 0.05，只作潜意识层，不破正文对比度",
@@ -51258,7 +51101,7 @@
         "安全"
       ],
       "status": {
-        "ios": "partial"
+        "ios": "removed"
       },
       "commands": [],
       "sources": [
@@ -51267,7 +51110,7 @@
       "childCount": 0,
       "isDomain": false,
       "weight": 1,
-      "path": "安全与防御 › 安全中心 › 常驻水印层（378）"
+      "path": "安全与防御 › 安全中心 › 常驻水印层（已删）"
     },
     {
       "id": "security.policy.guest",
@@ -51277,7 +51120,7 @@
       "level": 3,
       "name": "访客通道与敏感成员隐藏",
       "kind": "setting",
-      "summary": "`guestActive` 时主 TabView 只暴露设备/记录，进凭证/设置要先过口令。原描述里提到的 `hideSensitiveInGuest`（敏感成员隐藏）已随 2026-10-26 精简删除。",
+      "summary": "`guestActive` 时主 TabView 只暴露设备/记录，进凭证/设置要先过口令。`kf_speek_guest` 默认关、且**已无开关 UI 能拨它** —— 老用户若曾打开过仍生效。原描述里提到的 `hideSensitiveInGuest` 已随 2026-10-26 精简删除（本机没有成员敏感标记位）。",
       "details": [
         "kf_speek_guest 的开关 UI 已随安全中心子页删除，但老用户曾打开仍会生效，且已无入口再拨它（LockGuard.swift:48-51）",
         "hideSensitiveInGuest 读 SecKey.sensitiveOnly（LockGuard.swift:53）",
@@ -53495,7 +53338,7 @@
       "level": 3,
       "name": "备份分区模型（UI 未暴露）",
       "kind": "setting",
-      "summary": "设备 / 凭证 / 记录 / 设置四个分区开关。分区模型与恢复端的 nil 语义都完整，只是**UI 没有暴露这四个开关**（调用方恒传\"全选\"）。需要时把开关接出来即可，不必改数据层。2026-10-26 起「设置」分区不再含 OTP 密钥段。",
+      "summary": "设备 / 凭证 / 记录 / 设置四个分区开关。分区模型与恢复端 nil 语义都完整，但**UI 没有暴露这四个开关**（调用方恒传\"全选\"）⇒ 用户无法选择只备份一部分。需要时把开关接出来即可，不必改数据层。2026-10-26 起「设置」分区不再含 OTP 密钥段。",
       "details": [
         "关 devices：devices = []。关 credentials：清每把锁的 ledger。关 records：清 globals.trace。",
         "关 settings：清 members 与 dongle/gateway/passcode/otpKeys/appearance；若 globals 全空则整段置 nil。",
@@ -56844,7 +56687,7 @@
       "level": 4,
       "name": "导入失败分支",
       "kind": "edge",
-      "summary": "解析/校验失败只 toast，不写任何键，也不提供「忽略继续」。",
+      "summary": "【口径】解析/校验失败只 toast，不写任何键，也不提供「忽略继续」。",
       "details": [
         "catch 分支唯一动作：toast「导入被拦下: <localizedDescription>」",
         "覆盖三类：口令错误、内容被改过（哈希不过）、不是备份",
@@ -56910,7 +56753,7 @@
         "错误"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [],
       "sources": [
@@ -57456,7 +57299,7 @@
       "level": 4,
       "name": "轮换前置校验",
       "kind": "edge",
-      "summary": "轮换的三重前置：旧口令非空、新口令非空、两者不同。",
+      "summary": "【口径】轮换的三重前置：旧口令非空、新口令非空、两者不同。",
       "details": [
         "guard !encPw.isEmpty, !rotPw.isEmpty, encPw != rotPw",
         "失败只 toast，不发起网络请求；按钮另有一层禁用（rotPw 空不可点）",
@@ -57522,7 +57365,7 @@
         "边界"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [],
       "sources": [
@@ -63568,7 +63411,7 @@
       "level": 3,
       "name": "蓝牙急救",
       "kind": "edge",
-      "summary": "近 20 条断连事件里失败 ≥3 时出现三步急救指引。",
+      "summary": "【口径】近 20 条断连事件里失败 ≥3 时出现三步急救指引。",
       "details": [
         "触发：failsInLast20 >= 3（BleTelemetry.events.prefix(20) 里 !ok 的条数）",
         "三步：控制中心关开蓝牙等 10 秒回设备页 / 设置→蓝牙关闭 App 后台后重开 / 重启手机",
@@ -63674,7 +63517,7 @@
         "急救"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [],
       "sources": [
@@ -68581,7 +68424,7 @@
       "level": 4,
       "name": "无数据三态与协议上限",
       "kind": "edge",
-      "summary": "推不出日期段时如实说明三种原因；并解释协议没有「锁内上报总数」字段。",
+      "summary": "【口径】推不出日期段时如实说明三种原因；并解释协议没有「锁内上报总数」字段。",
       "details": [
         "无日志 → 「待补拉清单要连着锁拉过一次日志才推得出来…没有数就不画数」",
         "全是占位时刻（lockTime 0 换算为协议纪元 2010-01-01）→ 明说按既有判据排除，宁可空着不画假日期",
@@ -68676,7 +68519,7 @@
         "边界"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [],
       "sources": [
@@ -75085,7 +74928,7 @@
       "level": 4,
       "name": "?k= 行内定位键",
       "kind": "edge",
-      "summary": "只有 ?k= 一个参数被认，其余 query 一律丢；值只是\"到那页找哪条\"。",
+      "summary": "【口径】只有 ?k= 一个参数被认，其余 query 一律丢；值只是\"到那页找哪条\"。",
       "details": [
         "读第一个 name == \"k\" 且非空的值 → pendingRecordKey",
         "值找不到时由消费方如实说「不在本机台账里」",
@@ -75179,7 +75022,7 @@
         "边界"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [],
       "sources": [
@@ -84160,9 +84003,9 @@
       "parent": "protocol",
       "domain": "protocol",
       "level": 3,
-      "name": "30 网关设备名（仅构造器）",
+      "name": "30 网关设备名（构造器已删）",
       "kind": "protocol",
-      "summary": "网关配网时先读网关自己的设备名，把它当作 wifiMac 去云端查是否已绑定；jo 无体构造，needToken=false。",
+      "summary": "**2026-10-26 已删**：`ZKCmdBuilder.cmd30GWDeviceName` 构造器与它的金标断言一起删除。它本来就 App 内零调用 —— 网关配网时「读网关自己的设备名再查云端绑定」这一步从未实现。原版 APK 有这个命令（见 apk-baseline 同名节点，状态 implemented）。",
       "details": [
         "构造：new jo()，needToken=false",
         "响应 Lo.getDeviceName() 作为 wifiMac",
@@ -84221,7 +84064,7 @@
       ],
       "status": {
         "apk": "implemented",
-        "ios": "deprecated"
+        "ios": "removed"
       },
       "commands": [
         "30"
@@ -84233,7 +84076,7 @@
       "childCount": 0,
       "isDomain": false,
       "weight": 1,
-      "path": "协议与命令 › 30 网关设备名（仅构造器）"
+      "path": "协议与命令 › 30 网关设备名（构造器已删）"
     },
     {
       "id": "protocol.cmd32",
@@ -84241,9 +84084,9 @@
       "parent": "protocol",
       "domain": "protocol",
       "level": 3,
-      "name": "32 网关 IoT 凭据（仅构造器）",
+      "name": "32 网关 IoT 凭据（构造器已删）",
       "kind": "protocol",
-      "summary": "把云端下发的 iotpKey/iotdSec/devAccToken 写进网关：Do 构造 KLV 05/06/…，needToken=false；成功后立刻 cmd35 重启。",
+      "summary": "**2026-10-26 已删**：`ZKCmdBuilder.cmd32GWSetIot` 构造器与金标断言一起删除。它本来就 App 内零调用（IoT 云对接在本 scope 没有采集或落盘路径），留着只是一个永不发出的命令。原版 APK 有这个命令（见 apk-baseline 同名节点）。",
       "details": [
         "构造：new Do(iotpKey, iotdSec, devAccToken) → KLV 05/06/…",
         "三元组来自 op=addGateway 的返回 data.iotpKey/iotdSec/devAccToken",
@@ -84316,10 +84159,9 @@
       ],
       "status": {
         "apk": "implemented",
-        "ios": "deprecated"
+        "ios": "removed"
       },
       "commands": [
-        "35",
         "32"
       ],
       "sources": [
@@ -84329,7 +84171,7 @@
       "childCount": 0,
       "isDomain": false,
       "weight": 1,
-      "path": "协议与命令 › 32 网关 IoT 凭据（仅构造器）"
+      "path": "协议与命令 › 32 网关 IoT 凭据（构造器已删）"
     },
     {
       "id": "protocol.cmd35",
@@ -86812,7 +86654,7 @@
       "level": 3,
       "name": "两套应答码制不可混用",
       "kind": "edge",
-      "summary": "网关写命令用 KLV#01 当 errCode，钥匙串用 KLV#03 当 rc；38 的 KLV#01 是 wifimac，误用会把 MAC 首字节当错误码。",
+      "summary": "【口径】网关写命令用 KLV#01 当 errCode，钥匙串用 KLV#03 当 rc；38 的 KLV#01 是 wifimac，误用会把 MAC 首字节当错误码。",
       "details": [
         "errCodeOf 只允许用在 31/35 的回包上",
         "钥匙串侧统一走 rcOf（KLV#03）",
@@ -86879,7 +86721,7 @@
         "边界"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [],
       "sources": [
@@ -92611,7 +92453,7 @@
       "level": 4,
       "name": "「空 ekey = 删除」与缺 PIN 拒签",
       "kind": "edge",
-      "summary": "同一条 41 用 KLV#04 空串表示删除；签发侧缺 PIN 池时直接拒绝，绝不回落默认 PIN。",
+      "summary": "【口径】同一条 41 用 KLV#04 空串表示删除；签发侧缺 PIN 池时直接拒绝，绝不回落默认 PIN。",
       "details": [
         "旧写法 `lock.pins.first ?? \"1\"` 会写进一条人人猜得到的凭证，而流程仍显示成功",
         "ekey 签发失败（skey 非法/PIN 不可解析 → 空串）也拒绝下发",
@@ -92692,7 +92534,7 @@
         "fail-closed"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [
         "41"
@@ -92798,7 +92640,7 @@
       "level": 4,
       "name": "01 缺令牌的失败分支",
       "kind": "edge",
-      "summary": "回包没有 KLV#02 时不降级、不猜测，直接抛出带「回包形状」的可排障错误。",
+      "summary": "【口径】回包没有 KLV#02 时不降级、不猜测，直接抛出带「回包形状」的可排障错误。",
       "details": [
         "错误文案含 klvShape（只键与长度，不含值）与「请在门锁键盘上重置后立即重试」的处置",
         "不检查安全类型字节，避免把「固件没回 KLV#01」的正常锁判成失败",
@@ -92864,7 +92706,7 @@
         "fail-closed"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [
         "01"
@@ -92885,7 +92727,7 @@
       "level": 4,
       "name": "05 的 rc=13 重试与回显校验",
       "kind": "edge",
-      "summary": "rc=13 时只重开会话重发一次；rc=0 后必须比对 KLV#02 回显，不一致就判「锁内密钥不可读」并要求键盘重置。",
+      "summary": "【口径】rc=13 时只重开会话重发一次；rc=0 后必须比对 KLV#02 回显，不一致就判「锁内密钥不可读」并要求键盘重置。",
       "details": [
         "rc=13 可安全重试的前提：rc≠0 表示锁没执行换钥",
         "rc=0 之后再发同一帧会二次擦写密钥域，所以绝不重发",
@@ -92952,7 +92794,7 @@
         "fail-closed"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [
         "05"
@@ -92973,7 +92815,7 @@
       "level": 4,
       "name": "08 批次 1 的 MAC 字节序裁定",
       "kind": "edge",
-      "summary": "只有第一批的 rc=12 会被当作字节序判据：换序重发，rc=0 记下顺序，rc=18 视为已写入。",
+      "summary": "【口径】只有第一批的 rc=12 会被当作字节序判据：换序重发，rc=0 记下顺序，rc=18 视为已写入。",
       "details": [
         "换序 rc=0 → DB.setMacOrder 落盘，此后本机对这把锁一律按新顺序成帧",
         "换序 rc=18 → 说明原顺序有效且这批已进锁，rc 归一成 0 继续",
@@ -93055,7 +92897,7 @@
         "核心"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [
         "08"
@@ -93076,7 +92918,7 @@
       "level": 4,
       "name": "43 读数解析与「不用坏数据覆盖好数据」",
       "kind": "edge",
-      "summary": "rc 非 0 时整份读数丢弃，保留上一次的好数据与 lastSeenAt；不把失败说成「各项都是空」。",
+      "summary": "【口径】rc 非 0 时整份读数丢弃，保留上一次的好数据与 lastSeenAt；不把失败说成「各项都是空」。",
       "details": [
         "parseKCStatus 只做映射，不判 rc（DongleStat 没有 rc 字段）",
         "dotted3 对非 3 字节版本回空串，而不是把 reverse 后的 hex 当版本号显示",
@@ -93157,7 +92999,7 @@
         "边界"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [
         "43"
@@ -93454,7 +93296,7 @@
       "level": 4,
       "name": "分页参数与截断计数的协同",
       "kind": "edge",
-      "summary": "每页条数由 App 决定（默认 5），锁用 KLV#04 告知剩余；截断条数只在这一页内统计。",
+      "summary": "【口径】每页条数由 App 决定（默认 5），锁用 KLV#04 告知剩余；截断条数只在这一页内统计。",
       "details": [
         "surplus 缺省为 nil（不是 0），调用方据此判断「还有没有下一页」",
         "声明长度校验在分页拉取处执行，因为只有这里知道「这一页本该有多少条」",
@@ -93520,7 +93362,7 @@
         "边界"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [
         "16"
@@ -93541,7 +93383,7 @@
       "level": 4,
       "name": "干净按压判据与提前收尾禁令",
       "kind": "edge",
-      "summary": "只有 rc 为 0/-1 且 orderIdx>0 才算一次有效按压；锁没有「结束帧」，判收尾只认收满 times 次。",
+      "summary": "【口径】只有 rc 为 0/-1 且 orderIdx>0 才算一次有效按压；锁没有「结束帧」，判收尾只认收满 times 次。",
       "details": [
         "模糊帧（rc=23）与超时帧（rc=24）都不点亮进度，否则会出现「屏上 4/8、锁里 3 次」",
         "旧判据把「收过按压后出现的 orderIdx==0」当收尾，导致第一下就被判结束、后续按压全被锁当普通验证",
@@ -93609,7 +93451,7 @@
         "核心"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [
         "13"
@@ -93816,7 +93658,7 @@
       "level": 4,
       "name": "加密 03 的空密文退化",
       "kind": "edge",
-      "summary": "skey 非法或 CCCrypt 失败时构造函数返回空 hex，绝不组出「KLV#01 长度为 0」的假请求。",
+      "summary": "【口径】skey 非法或 CCCrypt 失败时构造函数返回空 hex，绝不组出「KLV#01 长度为 0」的假请求。",
       "details": [
         "旧写法会把空密文包成完整帧，于是 hex.isEmpty 永不成立，写命令照样发给锁",
         "空帧由 request 的 hex.isEmpty 闸抛出「帧构造失败 (密钥或参数无效), 已中止下发」",
@@ -93867,7 +93709,7 @@
         "fail-closed"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [
         "03"
@@ -94299,7 +94141,7 @@
       "level": 4,
       "name": "临时链路探测（probeEcho）",
       "kind": "edge",
-      "summary": "为一次 echo 建临时连接，结束后无条件拆链并清干净假连接态，不写 lastDevice。",
+      "summary": "【口径】为一次 echo 建临时连接，结束后无条件拆链并清干净假连接态，不写 lastDevice。",
       "details": [
         "不走 connect(deviceId:)，避免把未配对设备记进 DB.lastDevice 与 connectedMAC",
         "defer 里 rejectWaiter + ble.disconnect + 清 connectedDeviceId/connectedMAC/令牌/ttl",
@@ -94366,7 +94208,7 @@
         "边界"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [
         "12"
@@ -94474,7 +94316,7 @@
       "level": 4,
       "name": "清掉 MAC 顺序相反的幽灵台账",
       "kind": "edge",
-      "summary": "配网成功时顺手删除「把广播线上序当 MAC 落库」留下的那条从未通过话的记录。",
+      "summary": "【口径】配网成功时顺手删除「把广播线上序当 MAC 落库」留下的那条从未通过话的记录。",
       "details": [
         "只在配对确实成功时执行，所以不会误删正在用的台账",
         "判据：reversePairs(mac) != mac 且该 MAC 在库中存在",
@@ -94526,7 +94368,7 @@
         "数据治理"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [],
       "sources": [
@@ -95046,7 +94888,7 @@
       "level": 4,
       "name": "alias 缺号 / 0 号的 fail-closed",
       "kind": "edge",
-      "summary": "0A 没回 KLV#04 编号、或台账里编号为 0 时，全部拒绝而不是给默认值。",
+      "summary": "【口径】0A 没回 KLV#04 编号、或台账里编号为 0 时，全部拒绝而不是给默认值。",
       "details": [
         "pwdAdd 缺 KLV#04 → 抛「锁已接受写入，但没有回凭证编号」，不登记这条密码",
         "pwdModify / pwdDelete 收到 alias=0 → 直接拒绝，因为 0 在协议里是「不指定」：改写会多出一条、删除会删不掉",
@@ -95113,7 +94955,7 @@
         "fail-closed"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [
         "0A"
@@ -98407,7 +98249,7 @@
       "level": 3,
       "name": "孤儿缓存闸（只为台账内的锁写）",
       "kind": "edge",
-      "summary": "日志缓存写入前要求该 mac 仍在钥匙串台账里；不在就顺手删掉缓存，避免体检报「已删门锁的日志缓存残留」。",
+      "summary": "【口径】日志缓存写入前要求该 mac 仍在钥匙串台账里；不在就顺手删掉缓存，避免体检报「已删门锁的日志缓存残留」。",
       "details": [
         "首次配网的锁在 pair 末步才 saveKeychain，所以这道闸不会拦真实写入（Store.swift:690）",
         "命中孤儿时 store.remove 当场清掉，否则体检会一直报（Store.swift:693-695）",
@@ -98445,7 +98287,7 @@
         "日志"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [],
       "sources": [
@@ -101361,7 +101203,7 @@
       "level": 3,
       "name": "协议秒与 lockTime=0 的语义",
       "kind": "data",
-      "summary": "锁内时刻是基准 2010-01-01 的协议秒；lockTime == 0 表示「没读到时钟」，必须当作无日期而不是 2010-01-01。",
+      "summary": "【口径】锁内时刻是基准 2010-01-01 的协议秒；lockTime == 0 表示「没读到时钟」，必须当作无日期而不是 2010-01-01。",
       "details": [
         "旧守卫写成 guard ms > 0，但 ms 实际是 Unix 秒（1.7e9 量级），lockTime=0 换算后是 2010-01-01 也 > 0 ⇒ 守卫恒真（StatsKit.swift:15-18）",
         "后果：47 处调用把无时间戳记录当成 2010-01-01 在数，earliestDate 被钉死在 2010，coverageDays 约 6100 天（StatsKit.swift:17-19）",
@@ -101413,7 +101255,7 @@
         "统计口径"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [],
       "sources": [
@@ -103416,7 +103258,7 @@
       "level": 3,
       "name": "kf_trial_guard（只读试验护栏，无写入点）",
       "kind": "setting",
-      "summary": "读到时只允许只读命令通过，写/危险命令一律抛错；但全仓没有任何地方写这个键。",
+      "summary": "【口径】读到时只允许只读命令通过，写/危险命令一律抛错；但全仓没有任何地方写这个键。",
       "details": [
         "readonlyCmds 白名单：01/02/03/12/16/23/30/38",
         "writeCmdsBlocked 黑名单 24 条（含 04 开门、05 换钥、08 同步 PIN、31 写 WiFi）",
@@ -103483,7 +103325,7 @@
         "死开关"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [],
       "sources": [
@@ -104195,7 +104037,7 @@
       "level": 4,
       "name": "顶层标量写入必须开 fragmentsAllowed",
       "kind": "edge",
-      "summary": "不开 .fragmentsAllowed 时 String/Bool/Int/Double 顶层标量会让 JSONSerialization 抛错并被静默吞掉，整键从未落盘。",
+      "summary": "【口径】不开 .fragmentsAllowed 时 String/Bool/Int/Double 顶层标量会让 JSONSerialization 抛错并被静默吞掉，整键从未落盘。",
       "details": [
         "失败本身仍不改返回值（改签名要动几百个调用点），只记台账（Store.swift:36-47）",
         "症状：设置页所有开关/主题/救援码/免验窗口全部退回默认值（Store.swift:37-39）",
@@ -104233,7 +104075,7 @@
         "诊断"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [],
       "sources": [
@@ -104252,7 +104094,7 @@
       "level": 4,
       "name": "兜底判据：键名含 MAC 即属该锁",
       "kind": "edge",
-      "summary": "尾段带 MAC 再缀其它段的键用精确前缀删不掉，所以最后按「键名包含该 MAC（大小写不敏感）」整族扫。",
+      "summary": "【口径】尾段带 MAC 再缀其它段的键用精确前缀删不掉，所以最后按「键名包含该 MAC（大小写不敏感）」整族扫。",
       "details": [
         "覆盖 kf_calert_<mac>_<kind>_<key>、kf_cestudy_earlyexp_<mac>_<alias>、kf_cotp_t_<mac>、kf_cdraft_<mac>、kf_logarch_<mac>、kf_mborrow_/kf_mclaim_/kf_mig_lockact_<mac>、kf_offboard_<member> 等（Store.swift:457-460）",
         "实现：keys() 里 k.contains(m) 或 k.contains(m.uppercased()) 即 remove（Store.swift:461-462）"
@@ -104288,7 +104130,7 @@
         "数据销毁"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [],
       "sources": [
@@ -105052,7 +104894,7 @@
       "level": 4,
       "name": "台账解码失败守卫（防空表覆盖）",
       "kind": "edge",
-      "summary": "get 返回 nil 有两种语义：键不存在 vs 有键但解码抛错；后者打 markLedgerCorrupt，saveLedger 一律拒写。",
+      "summary": "【口径】get 返回 nil 有两种语义：键不存在 vs 有键但解码抛错；后者打 markLedgerCorrupt，saveLedger 一律拒写。",
       "details": [
         "旧实现在解码失败时返回空 Ledger，调用方 addPwd 后 save 会把整表清空（Store.swift:502-505）",
         "损坏集合用 Locked(Set<String>) 保护并发（Store.swift:497-499）",
@@ -105104,7 +104946,7 @@
         "持久化"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [],
       "sources": [
@@ -113703,11 +113545,6 @@
       "type": "tree"
     },
     {
-      "source": "record.detail.alarm",
-      "target": "record.detail.alarmTrial",
-      "type": "tree"
-    },
-    {
       "source": "record.timeline",
       "target": "record.list.kindIcon",
       "type": "tree"
@@ -113800,11 +113637,6 @@
     {
       "source": "record.timeline",
       "target": "record.list.gap",
-      "type": "tree"
-    },
-    {
-      "source": "record.detail.alarm",
-      "target": "record.detail.alarmEta",
       "type": "tree"
     },
     {
@@ -116999,6 +116831,11 @@
     },
     {
       "source": "device.gateway.provision",
+      "target": "protocol.cmd32",
+      "type": "cmd"
+    },
+    {
+      "source": "device.gateway.provision",
       "target": "protocol.cmd35",
       "type": "cmd"
     },
@@ -117045,6 +116882,11 @@
     {
       "source": "device.reset.beacon",
       "target": "protocol.cmd21",
+      "type": "cmd"
+    },
+    {
+      "source": "device.gateway.iot",
+      "target": "protocol.cmd32",
       "type": "cmd"
     },
     {
@@ -117224,13 +117066,13 @@
     }
   ],
   "stats": {
-    "nodes": 1184,
+    "nodes": 1182,
     "domains": 13,
     "modules": 130,
     "features": 704,
-    "details": 337,
+    "details": 335,
     "byPlatform": {
-      "ios": 1031,
+      "ios": 1029,
       "android": 91,
       "apk": 163
     },
@@ -117239,7 +117081,7 @@
       "unlock": 99,
       "credential": 188,
       "member": 59,
-      "record": 95,
+      "record": 93,
       "security": 18,
       "backup": 71,
       "care": 23,
@@ -117249,7 +117091,7 @@
       "data": 113,
       "apk": 66
     },
-    "evidence": 3971,
+    "evidence": 3966,
     "commands": 45,
     "platSets": {
       "ios+android+apk": [
@@ -117683,7 +117525,6 @@
         "record.list.loadMore",
         "record.search.syntax",
         "record.search.count",
-        "record.detail.alarmTrial",
         "record.list.kindIcon",
         "record.list.empty",
         "record.list.recon",
@@ -117703,7 +117544,6 @@
         "record.list.claim",
         "record.search.namedViews",
         "record.list.gap",
-        "record.detail.alarmEta",
         "record.list.note",
         "record.list.rowMenu",
         "record.list.marks",
@@ -118554,7 +118394,7 @@
       {
         "id": "record",
         "name": "记录与日志",
-        "count": 94,
+        "count": 92,
         "platforms": [
           "apk",
           "ios"

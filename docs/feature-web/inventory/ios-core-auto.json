@@ -1599,7 +1599,7 @@
       "level": 4,
       "name": "占用类保守文案",
       "kind": "edge",
-      "summary": "协议未确证「占用」细分码，只给保守提示「稍候 1–2 分钟再试」，不虚构错误码语义。",
+      "summary": "协议未确证「占用」的细分码，所以只给保守提示「稍候 1–2 分钟再试」，**不虚构错误码语义** —— 这是诚实的保守处理，不是半成品。原标 partial 属误判。",
       "details": [
         "静态文案，不判断具体 rc。",
         "文案自述「占用细分未确证」以避免过度承诺。"
@@ -1615,7 +1615,7 @@
         "边界",
         "文案"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "key": "device.link.success-rate",
@@ -4292,9 +4292,9 @@
       "parentKey": "backup.engine",
       "domain": "backup",
       "level": 3,
-      "name": "四分区选择性导出/恢复",
+      "name": "备份分区模型（UI 未暴露）",
       "kind": "setting",
-      "summary": "设备 / 凭证 / 记录 / 设置四个分区开关。分区模型与恢复端的 nil 语义都完整，只是**UI 没有暴露这四个开关**（调用方恒传\"全选\"）。需要时把开关接出来即可，不必改数据层。2026-10-26 起「设置」分区不再含 OTP 密钥段。",
+      "summary": "设备 / 凭证 / 记录 / 设置四个分区开关。分区模型与恢复端 nil 语义都完整，但**UI 没有暴露这四个开关**（调用方恒传\"全选\"）⇒ 用户无法选择只备份一部分。需要时把开关接出来即可，不必改数据层。2026-10-26 起「设置」分区不再含 OTP 密钥段。",
       "details": [
         "关 devices：devices = []。关 credentials：清每把锁的 ledger。关 records：清 globals.trace。",
         "关 settings：清 members 与 dongle/gateway/passcode/otpKeys/appearance；若 globals 全空则整段置 nil。",
@@ -4321,7 +4321,7 @@
         "分区",
         "选择性"
       ],
-      "status": "implemented"
+      "status": "partial"
     },
     {
       "key": "backup.merge",

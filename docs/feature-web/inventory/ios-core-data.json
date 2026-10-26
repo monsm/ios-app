@@ -128,7 +128,7 @@
       "level": 4,
       "name": "顶层标量写入必须开 fragmentsAllowed",
       "kind": "edge",
-      "summary": "不开 .fragmentsAllowed 时 String/Bool/Int/Double 顶层标量会让 JSONSerialization 抛错并被静默吞掉，整键从未落盘。",
+      "summary": "【口径】不开 .fragmentsAllowed 时 String/Bool/Int/Double 顶层标量会让 JSONSerialization 抛错并被静默吞掉，整键从未落盘。",
       "details": [
         "失败本身仍不改返回值（改签名要动几百个调用点），只记台账（Store.swift:36-47）",
         "症状：设置页所有开关/主题/救援码/免验窗口全部退回默认值（Store.swift:37-39）",
@@ -147,7 +147,7 @@
         "持久化",
         "诊断"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "data.store.read-write.corrupt-guard",
@@ -156,7 +156,7 @@
       "level": 4,
       "name": "台账解码失败守卫（防空表覆盖）",
       "kind": "edge",
-      "summary": "get 返回 nil 有两种语义：键不存在 vs 有键但解码抛错；后者打 markLedgerCorrupt，saveLedger 一律拒写。",
+      "summary": "【口径】get 返回 nil 有两种语义：键不存在 vs 有键但解码抛错；后者打 markLedgerCorrupt，saveLedger 一律拒写。",
       "details": [
         "旧实现在解码失败时返回空 Ledger，调用方 addPwd 后 save 会把整表清空（Store.swift:502-505）",
         "损坏集合用 Locked(Set<String>) 保护并发（Store.swift:497-499）",
@@ -180,7 +180,7 @@
         "数据损坏",
         "持久化"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "data.store.failure-ledger",
@@ -602,7 +602,7 @@
       "level": 4,
       "name": "兜底判据：键名含 MAC 即属该锁",
       "kind": "edge",
-      "summary": "尾段带 MAC 再缀其它段的键用精确前缀删不掉，所以最后按「键名包含该 MAC（大小写不敏感）」整族扫。",
+      "summary": "【口径】尾段带 MAC 再缀其它段的键用精确前缀删不掉，所以最后按「键名包含该 MAC（大小写不敏感）」整族扫。",
       "details": [
         "覆盖 kf_calert_<mac>_<kind>_<key>、kf_cestudy_earlyexp_<mac>_<alias>、kf_cotp_t_<mac>、kf_cdraft_<mac>、kf_logarch_<mac>、kf_mborrow_/kf_mclaim_/kf_mig_lockact_<mac>、kf_offboard_<member> 等（Store.swift:457-460）",
         "实现：keys() 里 k.contains(m) 或 k.contains(m.uppercased()) 即 remove（Store.swift:461-462）"
@@ -619,7 +619,7 @@
         "边界",
         "数据销毁"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "data.schema",
@@ -1152,7 +1152,7 @@
       "level": 3,
       "name": "孤儿缓存闸（只为台账内的锁写）",
       "kind": "edge",
-      "summary": "日志缓存写入前要求该 mac 仍在钥匙串台账里；不在就顺手删掉缓存，避免体检报「已删门锁的日志缓存残留」。",
+      "summary": "【口径】日志缓存写入前要求该 mac 仍在钥匙串台账里；不在就顺手删掉缓存，避免体检报「已删门锁的日志缓存残留」。",
       "details": [
         "首次配网的锁在 pair 末步才 saveKeychain，所以这道闸不会拦真实写入（Store.swift:690）",
         "命中孤儿时 store.remove 当场清掉，否则体检会一直报（Store.swift:693-695）",
@@ -1170,7 +1170,7 @@
         "数据健康",
         "日志"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "data.member",
@@ -1651,7 +1651,7 @@
       "level": 3,
       "name": "协议秒与 lockTime=0 的语义",
       "kind": "data",
-      "summary": "锁内时刻是基准 2010-01-01 的协议秒；lockTime == 0 表示「没读到时钟」，必须当作无日期而不是 2010-01-01。",
+      "summary": "【口径】锁内时刻是基准 2010-01-01 的协议秒；lockTime == 0 表示「没读到时钟」，必须当作无日期而不是 2010-01-01。",
       "details": [
         "旧守卫写成 guard ms > 0，但 ms 实际是 Unix 秒（1.7e9 量级），lockTime=0 换算后是 2010-01-01 也 > 0 ⇒ 守卫恒真（StatsKit.swift:15-18）",
         "后果：47 处调用把无时间戳记录当成 2010-01-01 在数，earliestDate 被钉死在 2010，coverageDays 约 6100 天（StatsKit.swift:17-19）",
@@ -1675,7 +1675,7 @@
         "边界",
         "统计口径"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "data.time.day-key",
@@ -2743,7 +2743,7 @@
       "level": 4,
       "name": "删除类下发的别名守卫",
       "kind": "edge",
-      "summary": "del_pwd 要求 pwd.alias != 0 且 payload 存在；del_fp 还要过 batchU32 边界转换，防负数批次 trap 崩进程。",
+      "summary": "【口径】del_pwd 要求 pwd.alias != 0 且 payload 存在；del_fp 还要过 batchU32 边界转换，防负数批次 trap 崩进程。",
       "details": [
         "指纹原只判 batch != 0，而导入链不校验符号 ⇒ 构造备份即可让用户点删除时崩（CredentialOrg.swift:608-613）",
         "留存口径：本机台账在停用那一刻已删，这一步只负责把命令发出去（CredentialOrg.swift:604-606）"
@@ -2768,7 +2768,7 @@
         "边界",
         "破坏性"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "credential.queue.send.restore",
@@ -2777,7 +2777,7 @@
       "level": 4,
       "name": "重新下发落到别的槽位时改号",
       "kind": "edge",
-      "summary": "pwdAdd 返回的 alias 与本地不同时，删旧号 + 用新号写回并留一档版本历史，避免两份真相。",
+      "summary": "【口径】pwdAdd 返回的 alias 与本地不同时，删旧号 + 用新号写回并留一档版本历史，避免两份真相。",
       "details": [
         "旧三份实现都把返回值扔掉（_ =），不归位就会「按旧别名去彻底删除/改期，动的却是同槽位的另一个凭证」（CredentialOrg.swift:629-635）",
         "没有明文时拒绝下发并提示「需重新录入」（CredentialOrg.swift:624-625）"
@@ -2801,7 +2801,7 @@
         "队列",
         "边界"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "credential.organize",
@@ -4921,7 +4921,7 @@
       "level": 3,
       "name": "访客通道与敏感成员隐藏",
       "kind": "setting",
-      "summary": "`guestActive` 时主 TabView 只暴露设备/记录，进凭证/设置要先过口令。原描述里提到的 `hideSensitiveInGuest`（敏感成员隐藏）已随 2026-10-26 精简删除。",
+      "summary": "`guestActive` 时主 TabView 只暴露设备/记录，进凭证/设置要先过口令。`kf_speek_guest` 默认关、且**已无开关 UI 能拨它** —— 老用户若曾打开过仍生效。原描述里提到的 `hideSensitiveInGuest` 已随 2026-10-26 精简删除（本机没有成员敏感标记位）。",
       "details": [
         "kf_speek_guest 的开关 UI 已随安全中心子页删除，但老用户曾打开仍会生效，且已无入口再拨它（LockGuard.swift:48-51）",
         "hideSensitiveInGuest 读 SecKey.sensitiveOnly（LockGuard.swift:53）",
@@ -5922,7 +5922,7 @@
       "level": 4,
       "name": "fail-closed 双分支门槛",
       "kind": "edge",
-      "summary": "有可用生物识别 → 刷脸/指纹，通过即 commit、失败交给 fallback；无生物或不可用 → 直接把同一个 commit 交 UI 二次确认，绝不直接执行。",
+      "summary": "【口径】有可用生物识别 → 刷脸/指纹，通过即 commit、失败交给 fallback；无生物或不可用 → 直接把同一个 commit 交 UI 二次确认，绝不直接执行。",
       "details": [
         "canEvaluatePolicy 为假、或 err.code == biometryNotAvailable ⇒ onDeniedPresentFallback(commit) 后立即 return（CredentialOrg.swift:451-455）",
         "evaluatePolicy 回调里 ok ? commit() : onDeniedPresentFallback(commit)，即「刷失败」不等于放行（CredentialOrg.swift:456-462）",
@@ -5948,7 +5948,7 @@
         "安全",
         "fail-closed"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "credential.organize.star.offset",
@@ -5990,7 +5990,7 @@
       "level": 4,
       "name": "指纹不可远程补录这句必须同屏",
       "kind": "edge",
-      "summary": "「连锁端一起收回」时可 restore 密码，但指纹在锁端删掉就只能本人到锁前重录，UI 两个弹窗都必须写这句。",
+      "summary": "【口径】「连锁端一起收回」时可 restore 密码，但指纹在锁端删掉就只能本人到锁前重录，UI 两个弹窗都必须写这句。",
       "details": [
         "注释点名：这句话必须和选择写在同一屏（两处弹窗都是这么写的）（CredentialOrg.swift:494-495）",
         "撤销/还原指纹时如实说「锁端这条有无被删过要连上锁才证实；若已删，指纹只能本人到锁前重录」（CredentialOrg.swift:380-383）",
@@ -6016,7 +6016,7 @@
         "边界",
         "文案"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "record.filter.night.degenerate",
@@ -6025,7 +6025,7 @@
       "level": 4,
       "name": "起==止 ⇒ 空集，界面必须提示",
       "kind": "edge",
-      "summary": "nightFrom == nightTo 时区间为空集，任何 hour 都不命中；这不是「全天」而是「筛不出」，界面必须如实说。",
+      "summary": "【口径】nightFrom == nightTo 时区间为空集，任何 hour 都不命中；这不是「全天」而是「筛不出」，界面必须如实说。",
       "details": [
         "nightWindowDegenerate 专供 UI 提示（RecordSearch.swift:438-439）",
         "isLateNight 在 a == b 时走 a > b ? ... : (hour >= a && hour < b) ⇒ 恒 false（RecordSearch.swift:443-447）",
@@ -6049,7 +6049,7 @@
         "过滤",
         "边界"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "settings.quick.smart.threshold",

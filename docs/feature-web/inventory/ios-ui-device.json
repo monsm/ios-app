@@ -3583,7 +3583,7 @@
       "level": 2,
       "name": "安全中心",
       "kind": "sheet",
-      "summary": "独立安全页。**2026-10-26 精简后只剩两块**：凭证风险体检（只读扫描）与本机库体自检；原来的常驻水印层、「下发护栏」空分区、`SecKey` 常量组都随对应开关一起删除。",
+      "summary": "**2026-10-26 精简后只剩两块**：凭证风险体检（只读扫描）与本机库体自检；原来的常驻水印层、「下发护栏」空分区、`SecKey` 常量组都随对应开关一起删除。标 partial 是因为「安全中心」这个页面本身还在，但**原设计的十余个安全开关只剩两条生效**。",
       "details": [
         "设计意图是四分区（应用锁升级 / 防窥 / 审计留痕 / 数据销毁），但对应开关在现版本已无写入 UI",
         "以 sheet 呈现且自带 NavigationStack，左上「关闭」是唯一显式出口",
@@ -3684,9 +3684,9 @@
       "parentKey": "security.center",
       "domain": "security",
       "level": 3,
-      "name": "常驻水印层（378）",
+      "name": "常驻水印层（已删）",
       "kind": "state",
-      "summary": "开启后整页铺一层 -18° 半透明重复水印，文案取 kf_swmark_txt，空则用「离线锁管家 + 当天日期」。",
+      "summary": "**2026-10-26 已删**：`SecurityWatermark` 视图 + 两层调用（全局 rootChrome 与安全中心页内）＋ `SecKey.watermarkOn` / `watermarkTxt` 两个常量全部删除。成因：水印开关从来没有写点 ⇒ 恒 false ⇒ 水印永远不显示，三层读点只是噪音。",
       "details": [
         "Canvas 平铺，tile 120，行距 tile/1.6，奇偶行错位半格",
         "不透明度固定 0.05，只作潜意识层，不破正文对比度",
@@ -3713,7 +3713,7 @@
       "tags": [
         "安全"
       ],
-      "status": "partial"
+      "status": "removed"
     },
     {
       "key": "security.center.shell",

@@ -2721,7 +2721,7 @@
       "level": 4,
       "name": "01 缺令牌的失败分支",
       "kind": "edge",
-      "summary": "回包没有 KLV#02 时不降级、不猜测，直接抛出带「回包形状」的可排障错误。",
+      "summary": "【口径】回包没有 KLV#02 时不降级、不猜测，直接抛出带「回包形状」的可排障错误。",
       "details": [
         "错误文案含 klvShape（只键与长度，不含值）与「请在门锁键盘上重置后立即重试」的处置",
         "不检查安全类型字节，避免把「固件没回 KLV#01」的正常锁判成失败",
@@ -2750,7 +2750,7 @@
         "会话",
         "fail-closed"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "protocol.cmd02",
@@ -2839,7 +2839,7 @@
       "level": 4,
       "name": "加密 03 的空密文退化",
       "kind": "edge",
-      "summary": "skey 非法或 CCCrypt 失败时构造函数返回空 hex，绝不组出「KLV#01 长度为 0」的假请求。",
+      "summary": "【口径】skey 非法或 CCCrypt 失败时构造函数返回空 hex，绝不组出「KLV#01 长度为 0」的假请求。",
       "details": [
         "旧写法会把空密文包成完整帧，于是 hex.isEmpty 永不成立，写命令照样发给锁",
         "空帧由 request 的 hex.isEmpty 闸抛出「帧构造失败 (密钥或参数无效), 已中止下发」",
@@ -2863,7 +2863,7 @@
         "协议",
         "fail-closed"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "protocol.cmd04",
@@ -3013,7 +3013,7 @@
       "level": 4,
       "name": "05 的 rc=13 重试与回显校验",
       "kind": "edge",
-      "summary": "rc=13 时只重开会话重发一次；rc=0 后必须比对 KLV#02 回显，不一致就判「锁内密钥不可读」并要求键盘重置。",
+      "summary": "【口径】rc=13 时只重开会话重发一次；rc=0 后必须比对 KLV#02 回显，不一致就判「锁内密钥不可读」并要求键盘重置。",
       "details": [
         "rc=13 可安全重试的前提：rc≠0 表示锁没执行换钥",
         "rc=0 之后再发同一帧会二次擦写密钥域，所以绝不重发",
@@ -3045,7 +3045,7 @@
         "配网",
         "fail-closed"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "protocol.cmd08",
@@ -3102,7 +3102,7 @@
       "level": 4,
       "name": "08 批次 1 的 MAC 字节序裁定",
       "kind": "edge",
-      "summary": "只有第一批的 rc=12 会被当作字节序判据：换序重发，rc=0 记下顺序，rc=18 视为已写入。",
+      "summary": "【口径】只有第一批的 rc=12 会被当作字节序判据：换序重发，rc=0 记下顺序，rc=18 视为已写入。",
       "details": [
         "换序 rc=0 → DB.setMacOrder 落盘，此后本机对这把锁一律按新顺序成帧",
         "换序 rc=18 → 说明原顺序有效且这批已进锁，rc 归一成 0 继续",
@@ -3141,7 +3141,7 @@
         "自愈",
         "核心"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "protocol.cmd0a",
@@ -3197,7 +3197,7 @@
       "level": 4,
       "name": "alias 缺号 / 0 号的 fail-closed",
       "kind": "edge",
-      "summary": "0A 没回 KLV#04 编号、或台账里编号为 0 时，全部拒绝而不是给默认值。",
+      "summary": "【口径】0A 没回 KLV#04 编号、或台账里编号为 0 时，全部拒绝而不是给默认值。",
       "details": [
         "pwdAdd 缺 KLV#04 → 抛「锁已接受写入，但没有回凭证编号」，不登记这条密码",
         "pwdModify / pwdDelete 收到 alias=0 → 直接拒绝，因为 0 在协议里是「不指定」：改写会多出一条、删除会删不掉",
@@ -3229,7 +3229,7 @@
         "密码",
         "fail-closed"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "protocol.cmd0b",
@@ -3425,7 +3425,7 @@
       "level": 4,
       "name": "临时链路探测（probeEcho）",
       "kind": "edge",
-      "summary": "为一次 echo 建临时连接，结束后无条件拆链并清干净假连接态，不写 lastDevice。",
+      "summary": "【口径】为一次 echo 建临时连接，结束后无条件拆链并清干净假连接态，不写 lastDevice。",
       "details": [
         "不走 connect(deviceId:)，避免把未配对设备记进 DB.lastDevice 与 connectedMAC",
         "defer 里 rejectWaiter + ble.disconnect + 清 connectedDeviceId/connectedMAC/令牌/ttl",
@@ -3456,7 +3456,7 @@
         "探测",
         "边界"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "protocol.cmd13",
@@ -3506,7 +3506,7 @@
       "level": 4,
       "name": "干净按压判据与提前收尾禁令",
       "kind": "edge",
-      "summary": "只有 rc 为 0/-1 且 orderIdx>0 才算一次有效按压；锁没有「结束帧」，判收尾只认收满 times 次。",
+      "summary": "【口径】只有 rc 为 0/-1 且 orderIdx>0 才算一次有效按压；锁没有「结束帧」，判收尾只认收满 times 次。",
       "details": [
         "模糊帧（rc=23）与超时帧（rc=24）都不点亮进度，否则会出现「屏上 4/8、锁里 3 次」",
         "旧判据把「收过按压后出现的 orderIdx==0」当收尾，导致第一下就被判结束、后续按压全被锁当普通验证",
@@ -3539,7 +3539,7 @@
         "边界",
         "核心"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "protocol.cmd13.windows",
@@ -3704,7 +3704,7 @@
       "level": 4,
       "name": "分页参数与截断计数的协同",
       "kind": "edge",
-      "summary": "每页条数由 App 决定（默认 5），锁用 KLV#04 告知剩余；截断条数只在这一页内统计。",
+      "summary": "【口径】每页条数由 App 决定（默认 5），锁用 KLV#04 告知剩余；截断条数只在这一页内统计。",
       "details": [
         "surplus 缺省为 nil（不是 0），调用方据此判断「还有没有下一页」",
         "声明长度校验在分页拉取处执行，因为只有这里知道「这一页本该有多少条」",
@@ -3735,7 +3735,7 @@
         "日志",
         "边界"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "protocol.cmd18",
@@ -4023,9 +4023,9 @@
       "parentKey": "protocol.cmds",
       "domain": "protocol",
       "level": 3,
-      "name": "30 网关设备名（仅构造器）",
+      "name": "30 网关设备名（构造器已删）",
       "kind": "protocol",
-      "summary": "裸 87 帧、无 KLV；App 内无调用点，只有金标测试用。",
+      "summary": "**2026-10-26 已删**：`ZKCmdBuilder.cmd30GWDeviceName` 构造器与它的金标断言一起删除。它本来就 App 内零调用 —— 网关配网时「读网关自己的设备名再查云端绑定」这一步从未实现。原版 APK 有这个命令（见 apk-baseline 同名节点，状态 implemented）。",
       "details": [
         "构造：buildFrame(0x30, '', header: 8)",
         "HardwareService 的网关六页等价实现里没有用到它（只有 31/35/38）",
@@ -4045,7 +4045,7 @@
         "网关",
         "死代码"
       ],
-      "status": "deprecated"
+      "status": "removed"
     },
     {
       "key": "protocol.cmd31",
@@ -4093,9 +4093,9 @@
       "parentKey": "protocol.cmds",
       "domain": "protocol",
       "level": 3,
-      "name": "32 网关 IoT 凭据（仅构造器）",
+      "name": "32 网关 IoT 凭据（构造器已删）",
       "kind": "protocol",
-      "summary": "KLV#05 iotpKey / #06 iotdSec / #07 devAccToken，明文帧；App 内无调用点。",
+      "summary": "**2026-10-26 已删**：`ZKCmdBuilder.cmd32GWSetIot` 构造器与金标断言一起删除。它本来就 App 内零调用（IoT 云对接在本 scope 没有采集或落盘路径），留着只是一个永不发出的命令。原版 APK 有这个命令（见 apk-baseline 同名节点）。",
       "details": [
         "三个参数都是原样 hex 串拼进 KLV，构造器不做格式校验",
         "全仓检索只有 GoldenDiffTests 调用",
@@ -4120,7 +4120,7 @@
         "网关",
         "死代码"
       ],
-      "status": "deprecated"
+      "status": "removed"
     },
     {
       "key": "protocol.cmd35",
@@ -4247,7 +4247,7 @@
       "level": 4,
       "name": "「空 ekey = 删除」与缺 PIN 拒签",
       "kind": "edge",
-      "summary": "同一条 41 用 KLV#04 空串表示删除；签发侧缺 PIN 池时直接拒绝，绝不回落默认 PIN。",
+      "summary": "【口径】同一条 41 用 KLV#04 空串表示删除；签发侧缺 PIN 池时直接拒绝，绝不回落默认 PIN。",
       "details": [
         "旧写法 `lock.pins.first ?? \"1\"` 会写进一条人人猜得到的凭证，而流程仍显示成功",
         "ekey 签发失败（skey 非法/PIN 不可解析 → 空串）也拒绝下发",
@@ -4285,7 +4285,7 @@
         "钥匙串",
         "fail-closed"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "protocol.cmd43",
@@ -4335,7 +4335,7 @@
       "level": 4,
       "name": "43 读数解析与「不用坏数据覆盖好数据」",
       "kind": "edge",
-      "summary": "rc 非 0 时整份读数丢弃，保留上一次的好数据与 lastSeenAt；不把失败说成「各项都是空」。",
+      "summary": "【口径】rc 非 0 时整份读数丢弃，保留上一次的好数据与 lastSeenAt；不把失败说成「各项都是空」。",
       "details": [
         "parseKCStatus 只做映射，不判 rc（DongleStat 没有 rc 字段）",
         "dotted3 对非 3 字节版本回空串，而不是把 reverse 后的 hex 当版本号显示",
@@ -4371,7 +4371,7 @@
         "钥匙串",
         "边界"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "protocol.cmd44",
@@ -5199,7 +5199,7 @@
       "level": 4,
       "name": "清掉 MAC 顺序相反的幽灵台账",
       "kind": "edge",
-      "summary": "配网成功时顺手删除「把广播线上序当 MAC 落库」留下的那条从未通过话的记录。",
+      "summary": "【口径】配网成功时顺手删除「把广播线上序当 MAC 落库」留下的那条从未通过话的记录。",
       "details": [
         "只在配对确实成功时执行，所以不会误删正在用的台账",
         "判据：reversePairs(mac) != mac 且该 MAC 在库中存在",
@@ -5223,7 +5223,7 @@
         "配网",
         "数据治理"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "protocol.chain.echo",
@@ -5639,7 +5639,7 @@
       "level": 3,
       "name": "两套应答码制不可混用",
       "kind": "edge",
-      "summary": "网关写命令用 KLV#01 当 errCode，钥匙串用 KLV#03 当 rc；38 的 KLV#01 是 wifimac，误用会把 MAC 首字节当错误码。",
+      "summary": "【口径】网关写命令用 KLV#01 当 errCode，钥匙串用 KLV#03 当 rc；38 的 KLV#01 是 wifimac，误用会把 MAC 首字节当错误码。",
       "details": [
         "errCodeOf 只允许用在 31/35 的回包上",
         "钥匙串侧统一走 rcOf（KLV#03）",
@@ -5669,7 +5669,7 @@
         "错误码",
         "边界"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "protocol.gateway.iot",
@@ -6060,7 +6060,7 @@
       "level": 3,
       "name": "kf_trial_guard（只读试验护栏，无写入点）",
       "kind": "setting",
-      "summary": "读到时只允许只读命令通过，写/危险命令一律抛错；但全仓没有任何地方写这个键。",
+      "summary": "【口径】读到时只允许只读命令通过，写/危险命令一律抛错；但全仓没有任何地方写这个键。",
       "details": [
         "readonlyCmds 白名单：01/02/03/12/16/23/30/38",
         "writeCmdsBlocked 黑名单 24 条（含 04 开门、05 换钥、08 同步 PIN、31 写 WiFi）",
@@ -6090,7 +6090,7 @@
         "安全",
         "死开关"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "data.store.scan-profile",
