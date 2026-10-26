@@ -78,6 +78,11 @@ const SYS_NAMES = new Set([
   // 2026-10-26: UIColor.getRed(_:green:blue:alpha:) 的系统参数标签。
   // 它不是本项目定义；删掉带 alpha 参数的辅助函数后会被误判成悬空引用。
   "alpha", "green", "blue", "red",
+  // 2026-10-26: 两处系统 API 的成员/参数名 —— 删掉 `CredentialOrg.queue()` 与
+  // `CredentialOrg.values()` 之后这两处会被误判成悬空引用：
+  //   · `map.values` —— Dictionary 内置属性（Store.swift 里 5 处）
+  //   · `CBCentralManager(delegate:queue:)` 的参数标签（BLEService / DFUKit）
+  "values", "queue",
 ]);
 
 function stripCode(line) {

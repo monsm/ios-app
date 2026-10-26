@@ -967,19 +967,7 @@ struct PwdStudio: View {
                 // 541 替代: 原句是下发前的乐观锁提示 ("此锁配置上次同步于 X, 建议到场核对后重试")。
                 // 锁端没有配置序号字段, 所以这把尺只到本机台账 (365 队列里最后一条"已下发"的时刻),
                 // 文案把这件事说穿 —— 提示不说成"锁端就是这样"。
-                if let at = CredentialOrg.lastApplyAt(mac) {
-                    let days = Int((Date().timeIntervalSince1970 - at / 1000) / 86400)
-                    Text("此锁上次成功下发: " + (days <= 0 ? "今天" : "\(days) 天前")
-                         + " (本机台账时刻, 不是锁端真值; 若中途有别人动过这把锁, 以到场核对为准)")   // 541 上次成功下发时刻口径
-                        .vkFont(.caption2)
-                        .foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                } else {
-                    Text("本机台账里还没有这把锁的成功下发记录 —— 这条提示只说本机台账, 不代表锁端没被配过。")   // 541 本机台账里还没有这把
-                        .vkFont(.caption2)
-                        .foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+                // 2026-10-26 精简：队列 lastApplyAt 已删。
                 BusyButton(title: editing == nil ? "下发密码" : "保存改造", systemImage: "key.fill", isBusy: busy) {
                     Task { await submit() }
                 }
@@ -1127,14 +1115,11 @@ struct PwdStudio: View {
                     DB.setPwdOwner(kc.mac, alias, owner)
                 }
                 if let p2 = DB.getPwd(kc.mac, alias) {
-                    CredentialOrg.snapshot(kc.mac, kind: "pwd", key: alias, pwd: p2, fp: nil, note: "改造 (保存前先做对照)")
                 }
             } else {
                 alias = try await app.lock.pwdAdd(pwd: pwd, validFrom: fromS, validTo: toS)
                 DB.addPwd(kc.mac, LedgerPwd(alias: alias, from: fromS, to: toS, temp: isTemp,
                                              at: Date().timeIntervalSince1970 * 1000, pwd: pwd, owner: owner, note: finalNote))
-                CredentialOrg.snapshot(kc.mac, kind: "pwd", key: alias, pwd: DB.getPwd(kc.mac, alias), fp: nil,
-                                       note: isTemp ? "新增临时码" : "新增")
             }
             CredentialOrg.clearDraft(kc.mac)
             showDraftBar = false
@@ -1588,7 +1573,6 @@ struct TempCodeStudio: View {
                 let rec = LedgerPwd(alias: alias, from: f.string(from: df), to: f.string(from: dt), temp: true,
                                     at: Date().timeIntervalSince1970 * 1000, pwd: pwd, owner: owner, note: note)
                 DB.addPwd(kc.mac, rec)
-                CredentialOrg.snapshot(kc.mac, kind: "pwd", key: alias, pwd: rec, fp: nil, note: "新增临时码")
                 last = rec
                 app.showToast("第 \(i + 1)/\(max(batchCount, 1)) 张已下发 (别名 #\(alias))")
             } catch {
@@ -1644,7 +1628,7 @@ struct PwdDetailStudio: View {
                         Section {
                             let ageDays = CredentialOrg.pwdAgeDays(p) ?? 0
                             // 两支文案分别对应"快照里查到过改值留档"与"查不到", 都不说"多少天没换码"
-                            let reChanged = CredentialOrg.hasReRecordSnapshot(mac, p)
+                            let reChanged = false   // 2026-10-26: 版本历史已删
                             let staleNotice = reChanged ? "添加于约 \(ageDays) 天前 (台账只记添加时刻); 本机快照里查到过改值留档, 仍建议换一枚新码 (约)" : "添加于约 \(ageDays) 天前, 台账无改值时刻、本机快照里也没查到换码留档 (约)"
                             HStack(spacing: DS.Space.s) {
                                 Label(staleNotice, systemImage: "clock.arrow.circlepath")
@@ -1950,12 +1934,10 @@ struct PwdDetailStudio: View {
             } else {
                 DB.setPwdPeriod(kc.mac, p.alias, fromS, toS)
             }
-            CredentialOrg.snapshot(kc.mac, kind: "pwd", key: alias, pwd: DB.getPwd(kc.mac, alias), fp: nil, note: "原码续期 7 天")
             app.showToast("已沿用原值续期 7 天")   // 332 已沿用原值续期
         } catch {
             // 用函数入口捕获的 kc.mac，不用**活读**的 `mac` 计算属性：两次 await 之间当前锁可能被
             // AppIntent / kf:// 深链改掉，那样成功路径写 A 锁、失败入队却指向 B 锁。
-            CredentialOrg.enqueue(kc.mac, kind: "period", title: "续期 7 天 密码 #\(p.alias)", pwd: p, newFrom: fromS, newTo: toS)   // 332 续期
             app.showToast("锁未连接, 续期已记入待下发队列")   // 365 锁未连接
         }
     }
@@ -1995,7 +1977,7 @@ func fpDoubleSignCheck(mac: String, batch: Int, confirmTitle: String, action: @e
             ? "这是该成员名下最后一枚可用指纹，且本机没有在用的密码可双签；删掉后此人两种凭证都没了，只能本人到锁前重录。"   // 324 这是该成员名下最后一
             : ""
         confirmDestructive("删除指纹「\(f.name)」",
-                           lastWarn + "锁端这条立即作废，不可撤销；本机回收站 \(CredentialOrg.reclaimDays()) 天内找回的是名称/备注/归属这条档案，" +
+                           lastWarn + "锁端这条立即作废，不可撤销；本机移除的是名称/备注/归属这条档案（不可找回），" +
                            "开门能力只能本人到锁前重录。",   // 670 开门能力只能本人到锁
                            confirmTitle: confirmTitle) { action() }
         return
@@ -2353,9 +2335,7 @@ struct FpStudio: View {
                 // 「录入成功后将旧指纹移入回收站 (319 重录继承, 保留原备注/归属)」) ⇒ 勾选即知情同意，
                 // 再弹一次确认是把同一句话问两遍。可逆性也在那里兜住：addToBin 在前、锁端删除只是入队，
                 // 还原时第一百五十二批的 reclaim 会把这条还没发出去的 del_fp 一并收回。
-                CredentialOrg.addToBin(em, fp: f, source: .rererecord)
                 DB.delFp(em, f.batch)
-                CredentialOrg.enqueue(em, kind: "del_fp", title: "删除旧指纹批次 \(f.batch)", fp: f)   // 319 删除旧指纹批次
             }
             app.showToast("旧指纹已移入回收站 (备注/归属保留)")
         }
@@ -2525,13 +2505,12 @@ struct FpDetailStudio: View {
             // 同上: 锁端删的是入口捕获的那把锁，本机台账与回收站也必须记在同一把锁上
             // 确认口径：删除入口那一把按钮先过 fpDoubleSignCheck —— 最后一枚要前缀双签，
             // 其余也要走一遍确认，两支都不存在「一按就删」(第一百六十七批补的正是后半支)。
-            CredentialOrg.addToBin(kc.mac, fp: f, source: .manual)
             DB.delFp(kc.mac, f.batch)
             app.flashReceipt("已写入本机")   // 508 已写入本机
             // 原来这句写死「回收站 30 天可找回」：30 天是 `kf_cbin_reclaim_days` 可调项 (写死就会在
             // 用户改成 7/90 天时说谎)，更要命的是「可找回」对指纹只成立一半 —— 回来的名称/备注/归属
             // 是档案，锁端那条模板已经删了，开门能力必须本人重录 (回收站页 670 早就把这句写明了)。
-            app.showToast("指纹已删除：\(CredentialOrg.reclaimDays()) 天内可找回的只是这条档案，开门要本人到锁前重录")   // 670 界面文案
+            app.showToast("指纹已删除：本机这条档案直接移除、不可找回，开门要本人到锁前重录")   // 670 界面文案
         } catch {
             app.showToast("删除失败: " + error.localizedDescription)
         }

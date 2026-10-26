@@ -377,7 +377,7 @@ struct DiagnosticsView: View {
                     Button("隔离无主凭证") {   // 452 隔离无主凭证
                         let n = DataHealth.quarantineOrphanCredentials()
                         app.showToast(n > 0
-                            ? "已隔离 \(n) 条无主凭证 (移入回收站, \(CredentialOrg.reclaimDays()) 天内可取回)"
+                            ? "已隔离 \(n) 条无主凭证 (直接移除，不可取回)"
                             : "没有指向已删成员的无主凭证")
                     }
                         .vkFont(.footnote).foregroundStyle(DS.Palette.accentText)

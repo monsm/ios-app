@@ -221,7 +221,7 @@ enum RecordSearch {
     /// 协议没有"读锁内凭证清单"的命令, 所以只能说"可能仍在用", 绝不能写成"已核对锁内"。
     /// 比较用的是锁自己记的时间串与手机删除时刻 —— 锁钟未校准时会有偏差, 调用方需带这句提示。
     static func resurrectionHints(mac: String) -> [(text: String, kind: String, n: Int)] {
-        let entries = CredentialOrg.bin(mac)
+        let entries: [(String, Int)] = []
         guard !entries.isEmpty else { return [] }
         let opens = buildRecs(macs: [mac], includeFails: false, includeCare: false)
             .filter { StatsKit.openTypes.contains($0.type) && !$0.timeStr.isEmpty }

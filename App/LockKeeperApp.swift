@@ -642,8 +642,6 @@ final class AppState: ObservableObject {
         let year = cal.component(.year, from: now)
         // 包4: 关怀提醒巡检 (1013 保养到期/1023 指纹头/校时 30 天/1024 防潮/146 固件, 全部本地通知)
         Task { await CareSchedule.refreshOnLaunch() }
-        // 包6: 凭证流转巡检 — 回收站 30 天自动清 (497) + 月度清理任务排程 (366, 幂等)
-        Task { _ = CredentialOrg.launchTick() }
         // 包8: 448 启动自检 (库体哈希 vs 上次快照, 异常挂黄条) + 1018 月度备份日排程
         //       + 428 充电备份 BGTask 注册 (系统择机执行, 不承诺接电即备) + 445 中断迁移检测
         Task { @MainActor in

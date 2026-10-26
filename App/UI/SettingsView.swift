@@ -407,8 +407,8 @@ struct SettingsView: View {
         // 109 删除冷静期: 后果要可核对 (逐类计数), 且必须键入锁名才放行 —— 旧写法只有一次"确定吗"
         let pws = DB.listPwds(kc.mac).count
         let fps = DB.listFps(kc.mac).count
-        let pend = CredentialOrg.pendingCount(kc.mac)
-        let bin = CredentialOrg.bin(kc.mac).count
+        let pend = 0
+        let bin = 0   // 2026-10-26: 回收站已删
         let recs = DB.readLogs(kc.mac).count   // 109: 记录缓存 (kf_logcache_) 也随设备删除, 计数一并预告
         let name = LockArchive.displayName(kc)
         var consequence = "将删除本机的钥匙串与该门锁全部本地数据 (锁端密钥不变)。"
@@ -583,10 +583,7 @@ struct SettingsView: View {
                 get: { CredentialOrg.quota(mac) },
                 set: { DB.store.set("kf_ccred_quota", $0) }), in: 3...30, step: 1)
                 .fixedSize(horizontal: false, vertical: true)
-            Stepper("回收站保留 \(CredentialOrg.reclaimDays()) 天", value: Binding(   // 497 回收站保留
-                get: { CredentialOrg.reclaimDays() },
-                set: { DB.store.set("kf_cbin_reclaim_days", $0) }), in: 7...90, step: 7)
-                .fixedSize(horizontal: false, vertical: true)
+            // 2026-10-26 精简：回收站保留天数设置已删（回收站整套移除）。
             // 2026-10-14: 去掉标签里的内部规格编号 "(919: …)"。它把一行标签撑成两行、把右侧开关挤到
             // 第二行居中，而用户看到的是一串跟自己无关的编号 —— 本仓"乱源治理"清过 1037 处同类，这一处漏了。
             // 语义说明挪进本节 footer，标签回归一行 (截图里折行撑歪开关就是这条)。

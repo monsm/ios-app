@@ -214,44 +214,9 @@ final class LinkSense: ObservableObject {
         guard !DiagFlags.silent else { return }
         let app = self.app
         guard let mac = app?.currentMac, lockSvc.connectedMAC == mac,
-              CredentialOrg.pendingCount(mac) > 0 else { return }
-        Task { @MainActor [weak self] in await self?.resync(mac: mac, from: "到场") }
     }
-    /// 回前台即刷新 (135): 已连接且有排队 → 补发; 完成后记 535 回执。
-    func resync(mac: String, from: String) async {
-        guard lockSvc.connectedMAC == mac else { return }
-        let q = CredentialOrg.pendingQueue(mac)
-        guard !q.isEmpty else { return }
-        var done = 0, failed = 0
-        for item in q {
-            do {
-                try await lockSvc.ensureConnected(mac: mac)
-                let extra = try await Self.applyQueueItem(mac: mac, item: item, lock: lockSvc)
-                CredentialOrg.markQueue(mac, id: item.id, state: .done, note: item.title + " · 锁端确认" + extra)
-                done += 1
-            } catch {
-                CredentialOrg.markQueue(mac, id: item.id, state: .failed,
-                                        note: item.title + " · 第 \(item.attempt + 1) 次失败: \(error.localizedDescription)")
-                failed += 1
-            }
-        }
-        guard done > 0 else {
-            lockSvc.log("warn", "\(from)补发 \(failed) 项未成功")
-            return
-        }
-        lastReceipt = done
-        receiptShownAt = Date()
-        lockSvc.log("info", "\(from)自动补发 \(done) 项变更" + (failed > 0 ? ", 失败 \(failed) 项" : ""))
-        BleTelemetry.recordEvent("补发成功 \(done) 项", ok: true)
-        DiagOps.record("\(from)补发 \(done) 项")
-    }
+    // 2026-10-26 精简：resync（到场/回前台自动补发队列）已删 —— 队列功能整套移除。
 
-    /// 队列项走既有 LockService 命令。**实现只有 CredentialOrg.sendQueued 一份** (第一百五十四批) ——
-    /// 这里原来是第三份 switch，而它走的正是"到场/回前台自动补发"那条**没人盯着**的路：
-    /// 缺载荷时 `?? 0` 会静悄悄地向锁发"删 0 号槽"，本机随后还把这条记成"锁端确认"。
-    static func applyQueueItem(mac: String, item: CredQueueItem, lock: LockService) async throws -> String {
-        try await CredentialOrg.sendQueued(mac, lock, item)
-    }
 
     // ---------- 126 回连节律: 5/15/30/60/90 秒梯度, 仅有排队变更的锁才自动回连 ----------
     static let ladderSeconds: [Double] = [5, 15, 30, 60, 90]
@@ -313,7 +278,6 @@ final class LinkSense: ObservableObject {
             return
         }
         guard DB.store.getBool("kf_link_auto_" + mac, true) else { return }
-        guard CredentialOrg.pendingCount(mac) > 0 else { return }   // 无变更不回连, 省电 (93 同源原则)
         if Date().timeIntervalSince(lastLadderAt) < nextLadderInterval() { return }
         lastLadderAt = Date()
         let kind = reconnectAttempt
@@ -384,7 +348,6 @@ final class LinkSense: ObservableObject {
         guard !mac.isEmpty, lockSvc.connectedMAC == mac else { return }
         let idle = sessionSince.map { Date().timeIntervalSince($0) } ?? 0
         guard idle > 600, Date().timeIntervalSince(lastDeadlockAt) > 300 else { return }
-        guard CredentialOrg.pendingCount(mac) > 0 else { return }   // 无待办不打扰
         lastDeadlockAt = Date()
         revalidating = true
         lockSvc.log("info", "会话巡检: 连接已挂 \(Int(idle / 60)) 分钟, 重新校验会话")   // 275/131 会话巡检

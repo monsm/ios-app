@@ -738,7 +738,6 @@ struct AddPwdView: View {
             let rec = LedgerPwd(alias: alias, from: from, to: to, temp: false,
                                 at: Date().timeIntervalSince1970 * 1000, pwd: pwd, owner: owner, note: note)
             DB.addPwd(kc.mac, rec)
-            CredentialOrg.snapshot(kc.mac, kind: "pwd", key: alias, pwd: rec, fp: nil, note: "新增")   // 487 首档快照
             app.showToast("添加成功 (别名 #\(alias))")
             dismiss()
         } catch {
@@ -768,7 +767,6 @@ struct AddPwdView: View {
             let rec = LedgerPwd(alias: alias, from: f.string(from: from), to: f.string(from: to), temp: true,
                                 at: Date().timeIntervalSince1970 * 1000, pwd: pwd, owner: owner, note: note)
             DB.addPwd(kc.mac, rec)
-            CredentialOrg.snapshot(kc.mac, kind: "pwd", key: alias, pwd: rec, fp: nil, note: "新增临时码")   // 487 首档
             app.showToast("临时密码已下发 (10 分钟有效)")
             dismiss()
         } catch {

@@ -117,18 +117,7 @@ enum QuickPool {
     /// 返回 (显示名, 深链载荷); 一个都没有 = nil —— 调用方给"先去点亮星标"的空态, 不替用户猜一条。
     /// 354: 已归档的条目不再作为直达目标 —— 收起的东西不许从快捷入口"复活"
     static func repeatTarget(_ mac: String) -> (name: String, nav: String)? {
-        let stars = CredentialOrg.stars(mac)
-        if let p = DB.listPwds(mac).first(where: { stars.contains($0.alias) && !CredentialOrg.isArchived(mac, "pwd", $0.alias) }) {
-            return (CredentialOrg.displayPwd(p), "pwd:" + String(p.alias))
-        }
-        if let f = DB.listFps(mac).first(where: { stars.contains(100000 + $0.batch) && !CredentialOrg.isArchived(mac, "fp", $0.batch) }) {
-            return (f.name.isEmpty ? "指纹 #" + String(f.batch) : f.name, "fp:" + String(f.batch))
-        }
-        if let s = CredentialOrg.starSuggestion(mac), s.hasPrefix("p"),
-           let alias = Int(s.dropFirst()),
-           let p = DB.listPwds(mac).first(where: { $0.alias == alias && !CredentialOrg.isArchived(mac, "pwd", $0.alias) }) {
-            return (CredentialOrg.displayPwd(p) + " (约)", s)
-        }
+        let stars: Set<Int> = []   // 2026-10-26: 星标已删
         return nil
     }
 }

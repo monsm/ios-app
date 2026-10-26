@@ -302,18 +302,12 @@ enum DiagLogs {
                     + " · 属主 " + (p.owner.flatMap { DB.member($0)?.name } ?? "未指派")
                     + " · 有效期 \(p.from) ~ \(p.to)"
             }
-            if CredentialOrg.binPwd(mac, alias) != nil {
-                return "台账内已无此凭证, 但回收站有 (可恢复, 见凭证中心 → 回收站)"
-            }
             return "本机台账没有该凭证 —— 可能是锁端自行添加或其它 App 写入, 建议拉一次凭证清单"   // 734 本机台账没有该凭证
         case .fp(let batch):
             if let f = DB.ledger(mac).fps.first(where: { $0.batch == batch }) {
                 return "台账内 · 名称 \(f.name.isEmpty ? "(未命名)" : f.name)"
                     + " · 属主 " + (f.owner.flatMap { DB.member($0)?.name } ?? "未指派")
                     + (f.isAlarm == true ? " · 告警指纹" : "")
-            }
-            if CredentialOrg.binFp(mac, batch) != nil {
-                return "台账内已无此指纹, 但回收站有 (可恢复, 见凭证中心 → 回收站)"
             }
             return "本机台账没有该指纹批次 —— 建议拉一次凭证清单"   // 734 本机台账没有该指纹批
         case .member(let id):
@@ -579,14 +573,12 @@ enum DataHealth {
                 var cp = p
                 cp.owner = nil
                 DB.delPwd(mac, p.alias)
-                CredentialOrg.addToBin(mac, pwd: cp, source: .orphan)
                 n += 1
             }
             for f in DB.listFps(mac) where (f.owner.map { !memberIds.contains($0) } ?? false) {
                 var cf = f
                 cf.owner = nil
                 DB.delFp(mac, f.batch)
-                CredentialOrg.addToBin(mac, fp: cf, source: .orphan)
                 n += 1
             }
         }

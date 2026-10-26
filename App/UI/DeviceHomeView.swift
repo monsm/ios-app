@@ -944,9 +944,6 @@ struct DeviceHomeView: View {
         if !btReady {
             rows.append(("系统蓝牙已关闭 — 打开后会自动重连", "antenna.radiowaves.left.and.right.slash", "warn", false))   // 69 系统蓝牙已关闭
         }
-        if state == .down, sense.reconnectAttempt > 0, CredentialOrg.pendingCount(app.currentMac) > 0 {
-            rows.append(("回连节律: " + nextLadderText, "arrow.clockwise", "accent", false))
-        }
         // 535 同步回执: 最近一次补发 N 项, 2 分钟内淡出
         if sense.lastReceipt > 0, Date().timeIntervalSince(sense.receiptShownAt) < 120 {
             rows.append(("已同步 \(sense.lastReceipt) 项变更", "checkmark.circle.fill", "ok", false))
@@ -968,9 +965,6 @@ struct DeviceHomeView: View {
             rows.append(("连接已保持 \(sense.holdMinutes) 分钟 — 偏久, 可点刷新重连", "timer", "sub", false))   // 272 连接已保持
         }
         // 273 意图暂存: 断连且有排队变更时, 明示"已暂存, 回连续作"
-        if state == .down, CredentialOrg.pendingCount(app.currentMac) > 0 {
-            rows.append(("变更已暂存 — 回到锁旁会自动补发", "tray.full", "sub", false))   // 273 变更已暂存
-        }
         // 125 最后已知状态: 断连时展示最后一次读到的电量/固件并标注"缓存"
         if state == .down, let snap = DB.readStatus(app.currentMac) {
             let at = DB.statusTime(app.currentMac)

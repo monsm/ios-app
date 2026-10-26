@@ -1173,7 +1173,6 @@ struct MemberWizardView: View {
                                      at: Date().timeIntervalSince1970 * 1000, pwd: pwd, owner: id,
                                      note: "向导建码 · " + name)
                 DB.addPwd(kc.mac, rec)
-                CredentialOrg.snapshot(kc.mac, kind: "pwd", key: alias, pwd: rec, fp: nil, note: "新增临时码")
                 app.showToast("已建档并给 TA 建了 10 分钟临时码")
             } catch {
                 app.showToast("建档成功, 建码失败: " + error.localizedDescription)

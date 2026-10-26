@@ -1,5 +1,5 @@
 // 本文件由 `node tools/destmap.js --emit` 生成，**不要手改**。
-// 生成时的目的地总数 = 42。改了界面呈现方式之后重新生成，
+// 生成时的目的地总数 = 37。改了界面呈现方式之后重新生成，
 // 并核对 diff —— 少一条就是某套界面会缺一个页面而没人发现。
 import SwiftUI
 
@@ -11,19 +11,13 @@ enum Destination: String, CaseIterable, Identifiable {
     case autoCal = "AutoCalView"
     case backup = "BackupView"
     case borrowSheet = "BorrowSheetView"
-    case credBin = "CredBinView"
-    case credCenter = "CredCenterView"
     case credentials = "CredentialsView"
     case credExtend = "CredExtendView"
-    case credHistoryList = "CredHistoryListView"
-    case credHistory = "CredHistoryView"
-    case credOrganize = "CredOrganizeView"
-    case credQueue = "CredQueueView"
     case credTransfer = "CredTransferView"
     case defend = "DefendView"
     case deviceHome = "DeviceHomeView"
-    case dfu = "DFUView"
     case deviceInfo = "DeviceInfoView"
+    case dFU = "DFUView"
     case diagnostics = "DiagnosticsView"
     case focusUnlock = "FocusUnlockView"
     case gateway = "GatewayView"

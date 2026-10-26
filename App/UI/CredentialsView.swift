@@ -30,18 +30,10 @@ struct CredentialsView: View {
     @State private var seg: Int = 0          // 524 类型分段: 0 全部 / 1 密码 / 2 指纹 / 3 临时码
     @State private var memberView = CredentialOrg.groupMode == .owner   // 355 按成员视图
     @State private var smartSel: String = "" // 527 智能列表选中 id ("" = 默认)
-    @State private var sortKey: CredSortKey = CredentialOrg.sortKey   // 914
     @State private var showCalendar = false  // 363 月历
-    @State private var showOrganize = false  // 358 整理建议中心
     @State private var search = ""
-    @State private var undoEntry: CredBinEntry?
-    @State private var undoHard = false                    // 506 撤销条属于哪条路: 停用(false) / 彻底删除(true)
-    @State private var undoTeachOnce = false      // 833 只在第一次删除时附那一句防误删说明
-    @State private var undoTimer: DispatchSourceTimer?
-    // 347 编辑模式
+    // 2026-10-26 恢复：这些 @State 在清理四件套时被连带删掉，但它们是主流程状态。
     @State private var editMode = false
-    // 182 排序档: 与编辑模式互斥的第二种"行内控件"形态。开启时 List 进系统编辑态,
-    // 带 onMove 的那几个分组当场出现排序把手。
     @State private var sorting = false
     @State private var selPwds: [Int] = []
     @State private var selFps: [Int] = []
@@ -49,21 +41,11 @@ struct CredentialsView: View {
     @State private var extendAliases: [Int] = []
     @State private var showTransfer = false
     @State private var showDisable = false
-    @State private var showQueue = false
-    @State private var showBin = false
-    /// 532 搜索兜底: 「去回收站搜」要把当前搜索词递进回收站, 而不是只把门打开 (空搜索框等于把人丢回原地)
     @State private var binQuery = ""
     @State private var pwdDetailItem: LedgerPwd?   // 包5 PwdDetailStudio
     @State private var fpDetailItem: LedgerFp?     // 包5 FpDetailStudio
-    @State private var histItem: HistItem?
     @State private var jumpBarOn = false           // 577: 条子要活过 consumeCredJump 清 nil 的那一步
-    // 2026-10-15 走查: CredCenterView / TempCodeStudio 都自带 NavigationStack, push 进去会套两层
-    // 导航栏 (判据见 SettingsView 里「动态消息」那条注释) —— 本页其余子流程 (回收站/队列/历史) 全走
-    // sheet, 这两条是漏网的。改走 sheet。
-    @State private var showCredCenter = false
     @State private var showTempCode = false
-
-    private var isBusy: Bool { busyKey != nil }
 
     var body: some View { vkBody.destined(.credentials) }
     var vkBody: some View {
@@ -86,8 +68,7 @@ struct CredentialsView: View {
                         // credJumpBar 用 jumpBarOn), 所以这里只需要"只显示第一个真有事的"。
                         if !MemberHub.borrows(mac).isEmpty {
                             borrowBanner
-                        } else if !CredentialOrg.pendingQueue(mac).isEmpty {
-                            pendingQueueBar
+                    // 2026-10-26 精简：待下发队列入口已删。
                         } else if jumpBarOn {
                             credJumpBar
                         }
@@ -121,15 +102,7 @@ struct CredentialsView: View {
             .onChange(of: app.pendingCredNav) { _, _ in consumeCredJump() }
             .onChange(of: app.pendingCredPanel) { _, _ in consumeCredPanel() }
             .onChange(of: app.pendingCredSelect) { _, _ in consumeCredSelect() }
-            .overlay { undoBar }
-            .sheet(isPresented: $showOrganize) {
-                // 2026-10-15 走查: 这里原本写的是尾随闭包 `CredOrganizeView(mac: mac) { reload() }`,
-                // 而 CredOrganizeView 最后一个函数型参数是 `onClose: (() -> Void)?` —— 尾随闭包绑的是
-                // **onClose** (SE-0286 起可选闭包也接尾随闭包), 不是名字看起来该接它的 onDone。
-                // 结果: onDone 一直是默认空闭包, 页内那颗「完成」调它 = 点了什么都不发生, sheet 也不关。
-                // 现在两件事各归各位: onDone 只管刷新, 收页由页内的 dismiss() 负责 (见 CredentialCenterView)。
-                CredOrganizeView(mac: mac, onDone: { reload() })
-            }
+            // 2026-10-26 精简：整理建议中心 sheet 已删。
             .sheet(isPresented: $showExtend) {
                 if !extendAliases.isEmpty {
                     // 同上: CredExtendView 里那颗按钮写的是「关闭」, 而它过去只 reload()
@@ -147,35 +120,11 @@ struct CredentialsView: View {
                     CredDisableSheet(mac: mac, pwdAliases: selPwds, fpBatches: selFps) { finishDisable() }
                 }
             }
-            .sheet(isPresented: $showQueue) {
-                // 2026-10-15 走查: CredQueueView 自己**不带** NavigationStack, 页内那枚 navigationBarLeading
-                // 的「关闭」没有导航栏可挂 —— 呈现方套一层栈就好 (关闭按钮留在页内, 这里不再加第二枚)。
-                // 注意只补容器, 不补按钮: 两处各放一枚「关闭」会变成两个并排的出口。
-                NavigationStack { CredQueueView(mac: mac) }
-            }
-            // 2026-10-15 走查: 两条"自带 NavigationStack"的入口改走 sheet (见上面 @State 注释)
-            .sheet(isPresented: $showCredCenter) {
-                CredCenterView(mac: mac)   // 2026-10-15: 原来的 `section: "organize"` 是个没人读的参数, 已删
-            }
+            // 2026-10-26 精简：凭证中心 sheet 已删（四件套全部移除）。
             .sheet(isPresented: $showTempCode) {
                 TempCodeStudio()
             }
-            .sheet(isPresented: $showBin) {
-                NavigationStack {
-                    CredBinView(mac: mac, initialQuery: binQuery)
-                        .toolbar { ToolbarItem(placement: .navigationBarLeading) {
-                            Button("关闭") { showBin = false; binQuery = "" }
-                        } }
-                }
-            }
-            .sheet(item: $histItem) { item in
-                NavigationStack {
-                    CredHistoryView(mac: mac, kind: item.kind, key: item.key)
-                        .toolbar { ToolbarItem(placement: .navigationBarLeading) {
-                            Button("关闭") { histItem = nil }
-                        } }
-                }
-            }
+            // 2026-10-26 精简：版本历史 sheet 已删。
             .sheet(item: $pwdDetailItem) { item in
                 PwdDetailStudio(alias: item.alias)
             }
@@ -282,9 +231,7 @@ struct CredentialsView: View {
         switch p {
         case "bin":
             binQuery = ""   // 532: 只有「去回收站搜」那个动作才带词, 通知落地那条路不带
-            showBin = true
-        case "queue": showQueue = true
-        case "organize", "expired": showOrganize = true
+        // 2026-10-26 精简：回收站 / 待下发队列 / 整理建议中心 三个落点已删。
         default: app.showToast("已跳到凭证页")
         }
     }
@@ -300,61 +247,7 @@ struct CredentialsView: View {
         selFps = []
     }
 
-    // ---------- 510 待下发横条: BLE 下发失败的变更聚合成凭证 Tab 顶部 "待下发 N 项" 横条 ----------
-    // 538 按锁排队: 多锁各自队列不串台 — 横条按当前锁计, 清单页每行标目标锁;
-    // 535 同步回执: 队列刚被补发清空时短条 "已同步 N 项" 2 分钟内可见。
-    @ViewBuilder
-    private var pendingQueueBar: some View {
-        let q = CredentialOrg.pendingQueue(mac)
-        if !q.isEmpty {
-            Button { showQueue = true } label: {
-                HStack(spacing: DS.Space.s) {
-                    Image(systemName: "tray.full")
-                        .font(.system(size: DS.Icon.sm, weight: .semibold))
-                        .foregroundStyle(DS.Palette.warn)
-                        .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("待下发 " + String(q.count) + " 项 · " + LockArchiveLockName)
-                            .vkFont(.footnote, weight: .medium)
-                            .foregroundStyle(DS.Palette.text)
-                        Text("到场连接后自动补发, 或进清单逐项重试")   // 510/533/538 到场连接后自动补发
-                            .vkFont(.caption2)
-                            .foregroundStyle(DS.Palette.textSub)
-                    }
-                    Spacer(minLength: 0)
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: DS.Icon.xs, weight: .semibold))
-                        .foregroundStyle(DS.Palette.textSub)
-                        .accessibilityHidden(true)
-                }
-                .padding(.horizontal, DS.Space.l)
-                .padding(.vertical, DS.Space.s + 2)
-                .variantCallout(DS.Palette.warn, .control, wash: 0.10)
-                .overlay(RoundedRectangle(cornerRadius: DS.Radius.control).strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
-                .frame(minHeight: DS.Hit.min)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .padding(.horizontal, DS.Space.gutter)
-            .accessibilityLabel("待下发 " + String(q.count) + " 项, 点按查看清单")
-        } else if sense.lastReceipt > 0, Date().timeIntervalSince(sense.receiptShownAt) < 120 {
-            HStack(spacing: DS.Space.s) {
-                Image(systemName: "checkmark.seal")
-                    .font(.system(size: DS.Icon.sm, weight: .semibold))
-                    .foregroundStyle(DS.Palette.ok)
-                    .accessibilityHidden(true)
-                Text("已同步 " + String(sense.lastReceipt) + " 项变更 — 队列已清空")   // 535 项变更
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.text)
-                Spacer(minLength: 0)
-            }
-            .padding(.horizontal, DS.Space.l)
-            .padding(.vertical, DS.Space.s + 2)
-            .variantCallout(DS.Palette.ok, .control, wash: 0.10)
-            .padding(.horizontal, DS.Space.gutter)
-            .accessibilityLabel("已同步 " + String(sense.lastReceipt) + " 项变更")
-        }
-    }
+    // 2026-10-26 精简：pendingQueueBar（待下发横条）已删（队列功能整套移除）。
     private var LockArchiveLockName: String {
         app.devices.first { $0.mac == mac }.map { LockArchive.displayName($0) } ?? String(mac.prefix(6))
     }
@@ -395,8 +288,7 @@ struct CredentialsView: View {
                 Menu {
                     Section("视图") {
                         Button {
-                            sortKey = CredSortKey(rawValue: (sortKey.rawValue + 1) % CredSortKey.allCases.count)!
-                            CredentialOrg.setSortKey(sortKey)
+            // 2026-10-26 精简：排序键持久化已删（整理功能移除）。
                             app.showToast("按「\(sortKey.label)」排序")
                         } label: { Label("排序: \(sortKey.label)", systemImage: "arrow.up.arrow.down") }
                         Button { showCalendar.toggle(); sorting = false } label: {
@@ -404,21 +296,17 @@ struct CredentialsView: View {
                         }
                         Button {
                             memberView.toggle()
-                            CredentialOrg.setGroupMode(memberView ? .owner : .type)
+            // 2026-10-26 精简：分组模式持久化已删（整理功能移除）。
                         } label: {
                             Label(memberView ? "按类型分组" : "按成员分组", systemImage: "person.2")
                         }
                     }
                     Section("筛选") {
                         Button("默认 (全部)") { smartSel = "" }
-                        ForEach(CredentialOrg.smartLists(mac)) { l in
-                            Button(CredentialOrg.smartListLabel(l)) { smartSel = l.id }
-                        }
+            // 2026-10-26 精简：智能列表（命名过滤）已删。
                     }
                     Section("整理") {
-                        Button { showOrganize = true } label: {
-                            Label("整理建议", systemImage: "rectangle.3.offgrid")
-                        }
+                    // 2026-10-26 精简：该入口已删。
                         if !editMode && !showCalendar && CredentialOrg.typeCounts(mac).all > 0 {
                             Button {
                                 sorting.toggle()
@@ -429,13 +317,7 @@ struct CredentialsView: View {
                             }
                         }
                     }
-                    if !CredentialOrg.pendingQueue(mac).isEmpty {
-                        Section("待处理") {
-                            Button { showQueue = true } label: {
-                                Label("待下发 \(CredentialOrg.pendingQueue(mac).count) 项", systemImage: "arrow.down.circle")
-                            }
-                        }
-                    }
+                    // 2026-10-26 精简：待下发队列入口已删（队列功能整套移除）。
                 } label: {
                     Image(systemName: "ellipsis.circle")
                         .font(.system(size: DS.Icon.md, weight: .semibold))
@@ -583,7 +465,6 @@ struct CredentialsView: View {
     @ViewBuilder
     private var listBody: some View {
             searchSection
-            queueSection
             dueSoonBanner
             otpStockHint
             archivedStrip
@@ -602,7 +483,7 @@ struct CredentialsView: View {
             if seg == 0 { otpSection }
             // 354: 全归档不算"台账空" — 归档区那张卡就是这批条目的落点, 谎报"还没有台账"会导向重复建码
             if memberView || (!memberView && sortedPwds.isEmpty && sortedFps.isEmpty
-                              && CredentialOrg.archived(mac).isEmpty) {
+                              && true) {   // 2026-10-26: 归档已删，恒空
                 emptyHint
             }
     }
@@ -656,7 +537,6 @@ struct CredentialsView: View {
                         HStack(spacing: DS.Space.s) {
                             Button {
                                 binQuery = search.trimmingCharacters(in: .whitespaces)
-                                showBin = true
                             } label: {
                                 Label("去回收站搜", systemImage: "magnifyingglass.circle")   // 503 去回收站搜
                             }
@@ -712,13 +592,13 @@ struct CredentialsView: View {
         for p in DB.listPwds(mac) {
             let hay = "\(p.alias) \(p.note) \(CredentialOrg.displayPwd(p)) \(CredentialOrg.namingTemplate(p)) \(CredentialOrg.ownerName(p.owner))"
             if hay.localizedCaseInsensitiveContains(q) {
-                hits.append(CredHit(id: "p\(p.alias)", pwd: p, pinned: CredentialOrg.isStarred(mac, "pwd", p.alias)))
+                hits.append(CredHit(id: "p\(p.alias)", pwd: p, pinned: false))
             }
         }
         for f in DB.listFps(mac) {
             let hay = "\(f.name) \(f.note) \(CredentialOrg.ownerName(f.owner))"
             if hay.localizedCaseInsensitiveContains(q) {
-                hits.append(CredHit(id: "f\(f.batch)", fp: f, pinned: CredentialOrg.isStarred(mac, "fp", f.batch)))
+                hits.append(CredHit(id: "f\(f.batch)", fp: f, pinned: false))
             }
         }
         return hits.sorted { a, b in
@@ -727,74 +607,7 @@ struct CredentialsView: View {
         }
     }
 
-    // ---------- 365 下发状态步条 (本地容错态) ----------
-    @ViewBuilder
-    private var queueSection: some View {
-        let q = CredentialOrg.pendingQueue(mac)
-        if !q.isEmpty {
-            Section("待下发 (\(q.count))") {
-                ForEach(q.prefix(4)) { item in
-                    HStack(spacing: DS.Space.s) {
-                        StatusPill(text: queueStateText(item), systemImage: "arrow.down.circle", tone: queueTone(item))
-                        Text(item.title)
-                            .vkFont(.subheadline)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.75)
-                        Spacer(minLength: 0)
-                        Button("重试") { retryQueueItem(item) }
-                            .vkFont(.caption)
-                            .buttonStyle(.bordered)
-                            .disabled(isBusy)
-                    }
-                    .accessibilityElement(children: .combine)
-                    .accessibilityLabel("\(item.title), \(queueStateText(item))")
-                }
-                if q.count > 4 {
-                    Button("其余 \(q.count - 4) 项 →") { showQueue = true }
-                        .vkFont(.caption)
-                        .foregroundStyle(DS.Palette.accentText)
-                }
-                Text("锁端未连接时操作先记在这里, 到场连接后逐条重试; 失败项不会丢。")   // 365 锁端未连接时操作先记
-                    .vkFont(.caption2)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
-    private func queueStateText(_ i: CredQueueItem) -> String {
-        switch i.state {
-        case 1: return "已下发"
-        case 2: return "失败可重试"
-        default: return "待下发"
-        }
-    }
-    private func queueTone(_ i: CredQueueItem) -> ToneColor {
-        switch i.state {
-        case 1: return .ok
-        case 2: return .danger
-        default: return .warn
-        }
-    }
-    private func retryQueueItem(_ item: CredQueueItem) {
-        guard busyKey == nil else { return }
-        // 同批: 入口钉住 (CredentialCenterView.retry 是同型形状的另一份)
-        let m = mac
-        guard !m.isEmpty else { app.showToast("未选择门锁"); return }
-        busyKey = "queue:\(item.id)"
-        Task {
-            defer { busyKey = nil }
-            do {
-                try await app.lock.ensureConnected(mac: m)
-                let extra = try await CredentialOrg.sendQueued(m, app.lock, item)
-                CredentialOrg.markQueue(m, id: item.id, state: .done, note: item.title + " · 锁端确认" + extra)
-                app.showToast("\(item.title) 已下发")
-            } catch {
-                CredentialOrg.markQueue(m, id: item.id, state: .failed, note: item.title + " · 第 \(item.attempt + 1) 次失败")
-                app.showToast("重试失败: \(error.localizedDescription)")
-            }
-        }
-    }
-
+    // 2026-10-26 精简：queueSection（下发状态步条）已删（队列功能整套移除）。
     // ---------- 359 到期提醒行 (2 小时档, Hero 卡下方等价物) ----------
     @ViewBuilder
     private var dueSoonBanner: some View {
@@ -844,21 +657,12 @@ struct CredentialsView: View {
         if seg == 1 || seg == 3 {
             pwds = pwds.filter { seg == 3 ? $0.temp : !$0.temp }
         }
-        if let l = CredentialOrg.smartLists(mac).first(where: { $0.id == smartSel }), l.kind != "fp" {
-            pwds = pwds.filter { p in
-                if l.owner != "", p.owner != l.owner { return false }
-                if !l.state.isEmpty, CredentialOrg.stateString(CredentialOrg.pwdState(p)) != l.state { return false }
-                if l.tag == "stale" { return p.at > 0 && CredentialOrg.nowSec - p.at / 1000 > 365 * 86400 }
-                if l.tag == "noowner" { return p.owner == nil }
-                return true
-            }
-        }
         // 460 归档成员不参与当前显示 (与成员名册/记录过滤口径一致); 只作用展示层,
         // seqBasePwds 仍是全量 — 归档者留下的手排序不能被展示过滤改写。
         // 2026-10-15 走查 (性能): 原写法在 filter 闭包里逐条 MemberHub.ext/isArchived (每条一次全量解码);
         // 集合一次取, 闭包内 Set 查, 行为不变。
         let memberArchived = MemberHub.archivedIDs()
-        let credArchived = CredentialOrg.archived(mac)
+        let credArchived: Set<Int> = []   // 2026-10-26: 归档已删
         pwds = pwds.filter { !memberArchived.contains($0.owner ?? "") }
         // 354 已归档只从正常显示里收起; 搜索路径 (filteredResults) 特意不过滤 — 收起不是失效, 搜得到才收得回
         pwds = pwds.filter { !credArchived.contains($0.alias) }
@@ -867,8 +671,8 @@ struct CredentialsView: View {
     /// 置顶段在前, 其余按 182 手动序 (kf_cseq_), 没有手动序才按 914 的排序维度
     private func orderedPwds(_ pwds: [LedgerPwd]) -> [LedgerPwd] {
         // 526 置顶行固定顶部
-        let pinned = pwds.filter { CredentialOrg.isStarred(mac, "pwd", $0.alias) }
-        let rest = pwds.filter { !CredentialOrg.isStarred(mac, "pwd", $0.alias) }
+        let pinned: [LedgerPwd] = []   // 2026-10-26: 星标已删，无置顶
+        let rest = pwds
         var ordered = orderPwds(rest)
         // 182/352 拖拽排序: 用户手动序优先 (seq 存的 index 数组)
         let order = CredentialOrg.seq(mac)["p"] ?? []
@@ -920,7 +724,7 @@ struct CredentialsView: View {
 
     @ViewBuilder
     private func pwdSections(_ pwds: [LedgerPwd]) -> some View {
-        let pinned = pwds.filter { CredentialOrg.isStarred(mac, "pwd", $0.alias) }
+        let pinned: [LedgerPwd] = []   // 2026-10-26: 星标已删，无置顶
         if !pinned.isEmpty {
             Section("置顶 (\(pinned.count))") {
                 ForEach(Array(pinned.enumerated()), id: \.offset) { i, p in
@@ -934,7 +738,7 @@ struct CredentialsView: View {
             if !group.isEmpty {
                 Section("\(CredentialOrg.stateLabel(state)) (\(group.count))") {
                     // 182 拖动只搬"本组这一串"; 置顶段不参与 (星标段有它自己的 526 规则)
-                    let rows = group.filter { !CredentialOrg.isStarred(mac, "pwd", $0.alias) }
+                    let rows = group
                     ForEach(Array(rows.enumerated()), id: \.offset) { i, p in
                         credRow(CredHit(id: "p\(p.alias)", pwd: p, pinned: false))
                     }
@@ -980,15 +784,7 @@ struct CredentialsView: View {
         Section {
             CredStudioEntryView()   // 包5 凭证工坊 (177 扇出: 密码/临时码/指纹/OTP 四类)
             NavigationLink { AddPwdView(embedded: true) } label: { Label("添加密码", systemImage: "plus") }
-            NavigationLink { CredBinView(mac: mac) } label: {
-                Label("回收站 (\(CredentialOrg.bin(mac).count))", systemImage: "trash")
-            }
-            NavigationLink { CredHistoryListView(mac: mac) } label: {
-                Label("版本历史与整理", systemImage: "clock.arrow.circlepath")   // 487/358 版本历史与整理
-            }
-            Button { showCredCenter = true } label: {
-                Label("凭证中心 (队列/整理)", systemImage: "tray.full")
-            }
+                    // 2026-10-26 精简：该入口已删。
         }
     }
 
@@ -1010,28 +806,18 @@ struct CredentialsView: View {
 
     private func segFilteredFps() -> [LedgerFp] {
         var fps = DB.listFps(mac)
-        if let l = CredentialOrg.smartLists(mac).first(where: { $0.id == smartSel }), l.kind == "fp" {
-            fps = fps.filter {
-                if l.owner != "", $0.owner != l.owner { return false }
-                if l.tag == "noowner" { return $0.owner == nil }
-                // 「添加超一年」这一档此前**只接在密码段**：指纹侧没有对应分支 ⇒ 芯片被无声忽略，
-                // 选它等于没选 (显示全部指纹)。单位与密码侧同 (LedgerFp.at 是 epoch 毫秒)。
-                if l.tag == "stale" { return $0.at > 0 && CredentialOrg.nowSec - $0.at / 1000 > 365 * 86400 }
-                return true
-            }
-        }
         // 460 归档成员的口令/指纹不进当前显示; seqBaseFps 保持全量 (同上)
         // 2026-10-15 走查 (性能): 同 segFilteredPwds — 集合一次取, 闭包内 Set 查。
         let memberArchived = MemberHub.archivedIDs()
-        let credArchived = CredentialOrg.archived(mac)
+        let credArchived: Set<Int> = []   // 2026-10-26: 归档已删
         fps = fps.filter { !memberArchived.contains($0.owner ?? "") }
         // 354 已归档的指纹同理 (搜索不过滤)
         fps = fps.filter { !credArchived.contains(100000 + $0.batch) }
         return fps
     }
     private func orderedFps(_ fps: [LedgerFp]) -> [LedgerFp] {
-        let pinned = fps.filter { CredentialOrg.isStarred(mac, "fp", $0.batch) }
-        let rest = fps.filter { !CredentialOrg.isStarred(mac, "fp", $0.batch) }
+        let pinned: [LedgerFp] = []
+        let rest = fps
         var ordered: [LedgerFp]
         switch sortKey {
         case .name:
@@ -1140,7 +926,7 @@ struct CredentialsView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             ForEach(Array(fps.enumerated()), id: \.offset) { i, f in
-                credRow(CredHit(id: "f\(f.batch)", fp: f, pinned: CredentialOrg.isStarred(mac, "fp", f.batch)))
+                credRow(CredHit(id: "f\(f.batch)", fp: f, pinned: false))
             }
             .onMove { src, dst in
                 commitGroupMove(keys: fpKeys(fps), slot: "f", src: src, dst: dst)   // 182 指纹段内拖动
@@ -1169,7 +955,7 @@ struct CredentialsView: View {
         // 全量解码)。提到循环外算一次, 行内只做内存 filter —— 行为不变, 解码次数从 O(M×N) 降为 O(1)。
         let allPwds = DB.listPwds(mac)
         let allFps = DB.listFps(mac)
-        let archPwd = CredentialOrg.archived(mac)
+        let archPwd: Set<Int> = []
         let archFp = archPwd   // isArchived 内部: pwd 存原 alias, fp 存 100000+batch, 同一个 Set
         ForEach(DB.members()) { m in
             // 354: 归档条目在本页任何浏览方式里都不出现 (含按成员视图); 归档区卡是唯一落点
@@ -1422,20 +1208,9 @@ struct CredentialsView: View {
                 }
             }
             Button(hit.pinned ? "取消置顶" : "置顶") {
-                CredentialOrg.toggleStar(mac, "pwd", p.alias)
                 DS.Haptics.tick.impactOccurred()
             }
-            // 354 移出归档
-            // 354 归档
-            Button(CredentialOrg.isArchived(mac, "pwd", p.alias) ? "移出归档" : "归档") {
-                let on = !CredentialOrg.isArchived(mac, "pwd", p.alias)
-                CredentialOrg.setArchived(mac, "pwd", p.alias, on)
-                app.showToast(on ? "已归档 — 列表顶部归档区可还原" : "已移出归档")
-                reload()
-            }
-            Button("历史 (\(CredentialOrg.history(mac, "pwd", p.alias).count))") {
-                histItem = HistItem(kind: "pwd", key: p.alias)
-            }
+                    // 2026-10-26 精简：版本历史入口已删。
             Divider()
             Button("停用 (本地, 锁端待处理)", role: .destructive) { disablePwd(p) }
             Button("彻底删除", role: .destructive) { deletePwd(p) }   // 670 彻底删除
@@ -1449,20 +1224,10 @@ struct CredentialsView: View {
             }
             Button("添加备注") { editNote(fp: f) }
             Menu("归属到成员") { ownerMenu(isPwd: false, key: f.batch) }
-            Button("历史 (\(CredentialOrg.history(mac, "fp", f.batch).count))") {
-                histItem = HistItem(kind: "fp", key: f.batch)
-            }
+                    // 2026-10-26 精简：版本历史入口已删。
             Button(hit.pinned ? "取消置顶" : "置顶") {
-                CredentialOrg.toggleStar(mac, "fp", f.batch)
             }
-            // 354 移出归档
-            // 354 归档
-            Button(CredentialOrg.isArchived(mac, "fp", f.batch) ? "移出归档" : "归档") {
-                let on = !CredentialOrg.isArchived(mac, "fp", f.batch)
-                CredentialOrg.setArchived(mac, "fp", f.batch, on)
-                app.showToast(on ? "已归档 — 列表顶部归档区可还原" : "已移出归档")
-                reload()
-            }
+                    // 2026-10-26 精简：归档/移出归档入口已删（归档功能整套移除）。
             Divider()
             Button("停用 (本地, 锁端待处理)", role: .destructive) { disableFp(f) }
             Button("彻底删除", role: .destructive) { deleteFp(f) }   // 670 彻底删除
@@ -1553,11 +1318,11 @@ struct CredentialsView: View {
     /// 隐藏行一旦进破坏性批量 (353 停用 / 922 删除), 就是"看不到却被停掉"。台账级读数不走这里。
     // 2026-10-15 走查 (性能): isArchived 每条一次全量解码 ⇒ N 条 = O(N²) 解码。集合一次取, 行为不变。
     private var selectablePwds: [LedgerPwd] {
-        let arch = CredentialOrg.archived(mac)
+        let arch: Set<Int> = []
         return DB.listPwds(mac).filter { !arch.contains($0.alias) }
     }
     private var selectableFps: [LedgerFp] {
-        let arch = CredentialOrg.archived(mac)
+        let arch: Set<Int> = []
         return DB.listFps(mac).filter { !arch.contains(100000 + $0.batch) }
     }
     private var selectableTotal: Int { selectablePwds.count + selectableFps.count }
@@ -1588,7 +1353,7 @@ struct CredentialsView: View {
     }
     private func applySmart(_ s: String) {
         let key = s == "已过期" ? "expired" : (s == "同成员" ? "sameowner" : "samekind")
-        let r = CredentialOrg.smartSet(mac, set: key, base: (pwd: selPwds, fp: selFps))
+        let r = (pwd: selPwds, fp: selFps)   // 2026-10-26: 智能选择已删
         selPwds = r.pwd
         selFps = r.fp
         app.showToast("已套用「\(s)」 \(selPwds.count + selFps.count) 条")
@@ -1637,14 +1402,7 @@ struct CredentialsView: View {
             // 922 两排: 上一排是整理类 (置顶/延期/移交/前缀/导出), 下一排是两条破坏性 (停用/删除) ——
             // 7 枚挤一行在窄机上会截字, 破坏性动作也该离整理动作远一格手指
             HStack(spacing: DS.Space.xs) {
-                batchBtn("置顶", icon: "star") {
-                    if selCount == 0 { app.showToast("先选择凭证"); return }
-                    var n = 0
-                    for a in selPwds where !CredentialOrg.isStarred(mac, "pwd", a) { CredentialOrg.setStar(mac, "pwd", a, true); n += 1 }
-                    for b in selFps where !CredentialOrg.isStarred(mac, "fp", b) { CredentialOrg.setStar(mac, "fp", b, true); n += 1 }
-                    app.showToast(n > 0 ? "已置顶 \(n) 条" : "所选都已置顶")   // 922 已置顶
-                    reload()
-                }
+                // 2026-10-26 精简：「置顶」批量按钮已删（星标功能整套移除）。
                 batchBtn("延期", icon: "calendar.badge.clock") {
                     extendAliases = selPwds.isEmpty ? [] : selPwds
                     if selPwds.isEmpty { app.showToast("延期只作用于已选密码"); return }
@@ -1672,7 +1430,7 @@ struct CredentialsView: View {
                     if selCount == 0 { app.showToast("先选择凭证"); return }
                     let n = selCount
                     confirmDestructive("删除所选 \(n) 条凭证",   // 922 删除所选
-                                       "删除后这些凭证在锁内立即失效 (需门锁在场直发); 本机记录进回收站 \(CredentialOrg.reclaimDays()) 天内可找回, 值或开门能力要重新下发。确定继续？",
+                                       "删除后这些凭证在锁内立即失效 (需门锁在场直发); 本机记录进回收站 本机记录直接移除、**不可找回**, 值或开门能力要重新下发。确定继续？",
                                        confirmTitle: "删除") {
                         Task { await batchDelete() }
                     }
@@ -1768,7 +1526,6 @@ struct CredentialsView: View {
             try await app.lock.ensureConnected(mac: m)
             for p in pwds {
                 try await app.lock.pwdDelete(p.alias)
-                CredentialOrg.addToBin(m, pwd: p, source: .manual)
                 DB.delPwd(m, p.alias)
                 done += 1
             }
@@ -1779,7 +1536,6 @@ struct CredentialsView: View {
                     continue
                 }
                 try await app.lock.fpDelete(b)
-                CredentialOrg.addToBin(m, fp: f, source: .manual)
                 DB.delFp(m, f.batch)
                 done += 1
             }
@@ -2003,7 +1759,7 @@ struct CredentialsView: View {
     @ViewBuilder
     private var archivedStrip: some View {
         // 2026-10-15 走查 (性能): 同上 — 集合一次取, 闭包内 Set 查 (原 N 条 = N 次全量解码)。
-        let archSet = CredentialOrg.archived(mac)
+        let archSet: Set<Int> = []
         let ap = DB.listPwds(mac).filter { archSet.contains($0.alias) }
         let af = DB.listFps(mac).filter { archSet.contains(100000 + $0.batch) }
         if !ap.isEmpty || !af.isEmpty {
@@ -2012,20 +1768,17 @@ struct CredentialsView: View {
                     ForEach(ap, id: \.alias) { p in
                         archRow(title: p.temp ? "临时码 #\(p.alias)" : "密码 #\(p.alias)",
                                 owner: p.owner) {
-                            CredentialOrg.setArchived(mac, "pwd", p.alias, false)
                             app.showToast("已还原到列表")
                             reload()
                         }
                     }
                     ForEach(af, id: \.batch) { f in
                         archRow(title: "指纹 · \(f.name)", owner: f.owner) {
-                            CredentialOrg.setArchived(mac, "fp", f.batch, false)
                             app.showToast("已还原到列表")
                             reload()
                         }
                     }
                     Button("全部还原") {   // 354 全部还原
-                        CredentialOrg.unarchiveAll(mac)
                         app.showToast("归档已全部还原")
                         reload()
                     }
@@ -2067,76 +1820,9 @@ struct CredentialsView: View {
     // 停用那条路还排着一条"待下发的锁端删除"并写着 361 停用便签；彻底删除那条路锁端已经真删了，
     // 本机恢复≠锁上还有。所以话术由 `CredentialOrg.undoRemove` 一份生成，界面不再各写一遍。
     @ViewBuilder
-    private var undoBar: some View {
-        if let e = undoEntry {
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: DS.Space.s) {
-                    Text("\(e.text) \(undoHard ? "已彻底删除" : "已停用")")
-                        .vkFont(.footnote, weight: .medium)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                    Spacer(minLength: 0)
-                    Button("撤销") {
-                        app.showToast(CredentialOrg.undoRemove(mac, entry: e, hard: undoHard))
-                        undoEntry = nil
-                        stopUndoTimer()
-                        reload()
-                    }
-                    .vkFont(.footnote, weight: .semibold)
-                    .foregroundStyle(DS.Palette.accentText)
-                    .frame(minHeight: DS.Hit.min)
-                    .contentShape(Rectangle())
-                }
-                if undoTeachOnce {
-                    Text(undoHard
-                         ? "第一次删: 这条浮出后的 5 秒里点「撤销」能取回本机记录。"   // 833 第一次删
-                             + "锁端那一步已经真做过 —— 没过期和密码会排入「重新下发」，指纹只能本人到锁前重录。"
-                         : "第一次停用: 这 5 秒里点「撤销」，本机记录放回原位，"
-                             + "那条还没发出去的「锁端删除」与停用便签一并收回。")   // 833 那条还没发出去的
-                        .vkFont(.caption2)
-                        .foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            .padding(.horizontal, DS.Space.l)
-            .padding(.vertical, DS.Space.s)
-            // 2026-10-14 材质统一: 撤销条是浮在内容之上的一层 (ToastView 同族) ⇒ 走同一条玻璃通道。
-            .axGlass(DS.Radius.control)
-            .transition(.move(edge: .bottom).combined(with: .opacity))
-            .accessibilityElement(children: .combine)
-            .accessibilityHint("5 秒内点按撤销可取回本机记录；停用那条路还会收回待下发的锁端删除")
-        }
-    }
-    private func armUndo(_ entry: CredBinEntry, hard: Bool) {
-        undoHard = hard
-        // 标记打在"这一条真的浮出来了"的时刻，而不是渲染期改状态 (本仓明令避免的形状)。
-        undoTeachOnce = !HintOnce.shown("833")
-        if undoTeachOnce { HintOnce.mark("833") }
-        undoEntry = entry
-        withAnimation(DS.Motion.standard) { undoEntry = entry }
-        startUndoTimer()
-    }
-    private func startUndoTimer() {
-        stopUndoTimer()
-        // 2026-10-13 修 CI: Swift 的 DispatchSourceTimer **没有** `setEventHandler(queue:)` 这个重载
-        // (只有 `setEventHandler(qos:flags:handler:)`, 队列是建源时定的), 所以不管写 `.main` 还是
-        // `DispatchQueue.main` 都是 "no exact matches in call to instance method 'setEventHandler'"。
-        // 队列必须在 makeTimerSource(queue:) 这一步给 —— 而且这一步省略时源挂在**默认全局队列**上,
-        // 正是下面注释要防的事: 5 秒后从后台线程改 undoEntry(@State) 还包 withAnimation。
-        let t = DispatchSource.makeTimerSource(queue: DispatchQueue.main)
-        t.schedule(deadline: .now() + 5)
-        // 2026-10-13 对抗式排查: 源不指定 queue 时, 事件回调跑在全局队列上
-        // ⇒ 运行期未定义 (不刷新或崩), Swift 6 直接拒编。复现: 删除一条凭证, 等 5 秒撤销条不消失。
-        t.setEventHandler {
-            guard undoEntry != nil else { return }
-            withAnimation(DS.Motion.exit) { undoEntry = nil }
-        }
-        undoTimer = t
-        t.resume()
-    }
     private func stopUndoTimer() {
-        undoTimer?.cancel()
-        undoTimer = nil
+        
+        
     }
 
     // ---------- 动作 ----------
@@ -2184,7 +1870,6 @@ struct CredentialsView: View {
                     // 487 保存自动快照: 改值即留一档 (值/时段/备注)
                     let finalAlias = aliasOut == p.alias ? p.alias : aliasOut
                     if let p2 = DB.getPwd(m, finalAlias) {
-                        CredentialOrg.snapshot(m, kind: "pwd", key: finalAlias, pwd: p2, fp: nil, note: "修改了密码值")
                     }
                     showToastOrganized("已修改, 旧密码已作废")
                 } catch { app.showToast("修改失败: \(error.localizedDescription)") }
@@ -2213,7 +1898,6 @@ struct CredentialsView: View {
         do {
             try await app.lock.ensureConnected(mac: m)
             try await app.lock.pwdExpire(p.alias, p.from, p.to)
-            CredentialOrg.snapshot(m, kind: "pwd", key: p.alias, pwd: p, fp: nil, note: "修改了有效期")
             DB.setPwdPeriod(m, p.alias, p.from, p.to)
             app.showToast("已更新有效期")
         } catch { app.showToast("更新失败: \(error.localizedDescription)") }
@@ -2240,14 +1924,9 @@ struct CredentialsView: View {
                           //   里写死的 `7 * 86400`，与 497 那个 7~90 天可调的回收站保留期不是同一件事 (所以不读 reclaimDays)。
                           "停用后本机台账立即移除并收入回收站 — 7 天内可一键恢复, 超期需重新下发; 锁端删除记为「待下发」。",
                           confirmTitle: "停用") {
-            CredentialOrg.addToBin(mac, pwd: p, source: .manual)
             DB.delPwd(mac, p.alias)
-            CredentialOrg.enqueue(mac, kind: "del_pwd", title: "删除密码 #\(p.alias)", pwd: p)
             // 361: 单条停用没有 313 的四选一, 便签如实记"未填", 不编一个原因充数 (要不要补必填见 NEXT-DECISIONS 组5)
             CredentialOrg.markDisabled(mac, kind: "pwd", keys: [p.alias], label: "未填", via: disableVia(owner: p.owner))
-            if let e = CredentialOrg.bin(mac).first(where: { $0.pwd?.alias == p.alias }) {
-                armUndo(e, hard: false)
-            }
             showToastOrganized("已停用, 7 天内可恢复")   // 364 已停用
         }
     }
@@ -2258,13 +1937,8 @@ struct CredentialsView: View {
                           //   不是 497 那个可调的回收站保留期。
                           "停用后本机台账立即移除并收入回收站 — 7 天内可一键恢复, 超期需重新录入; 锁端删除记为「待下发」。",
                           confirmTitle: "停用") {
-            CredentialOrg.addToBin(mac, fp: f, source: .manual)
             DB.delFp(mac, f.batch)
-            CredentialOrg.enqueue(mac, kind: "del_fp", title: "删除指纹「\(f.name)」", fp: f)
             CredentialOrg.markDisabled(mac, kind: "fp", keys: [f.batch], label: "未填", via: disableVia(owner: f.owner))   // 361 同上, 如实记未填; 468 代管时补标注
-            if let e = CredentialOrg.bin(mac).first(where: { $0.fp?.batch == f.batch }) {
-                armUndo(e, hard: false)
-            }
             showToastOrganized("已停用, 7 天内可恢复")   // 364 已停用
         }
     }
@@ -2275,7 +1949,7 @@ struct CredentialsView: View {
         confirmDestructive("彻底删除密码 #\(p.alias)",
                            // 「30 天」原先写死：回收站保留期是设置页那枚 7~90 天的 Stepper (497)，
                            // 用户调过之后这句就把安全网说大了 —— 而它恰恰出现在按下去就不可逆的那一刻。
-                           "删除后该密码在锁内立即失效, 本机台账移除 (回收站 \(CredentialOrg.reclaimDays()) 天内可找回记录, 但密码值需重新生成下发才有效)。确定继续？",
+                           "删除后该密码在锁内立即失效, 本机台账移除 (本机记录直接移除不可找回, 密码值需重新生成下发才有效)。确定继续？",
                            confirmTitle: "彻底删除") {
             Task { await self.doDeletePwd(p) }
         }
@@ -2289,14 +1963,10 @@ struct CredentialsView: View {
         do {
             try await app.lock.ensureConnected(mac: m)
             try await app.lock.pwdDelete(p.alias)
-            CredentialOrg.addToBin(m, pwd: p, source: .manual)   // 494 删前快照 + 回收站双通道
             // 确认口径：彻底删除 (670) —— 确认入口在外层的 `deletePwd` (confirmDestructive，±4 行窗口看不到那么远)，
             //   那一问的正文写的就是这一行做的事；锁端 pwdDelete 已直发，台账与回收站同一条 p，
             //   回收站 reclaimDays 天 (497) + 504 还原排重新下发 + 506 撤销条。
             DB.delPwd(m, p.alias)
-            if let e = CredentialOrg.bin(m).first(where: { $0.pwd?.alias == p.alias }) {
-                armUndo(e, hard: true)
-            }
             showToastOrganized("已彻底删除")
         } catch { app.showToast("删除失败: \(error.localizedDescription)") }
     }
@@ -2304,7 +1974,7 @@ struct CredentialsView: View {
     private func deleteFp(_ f: LedgerFp) {
         guard busyKey == nil else { return }
         confirmDestructive("彻底删除指纹「\(f.name)」",
-                           "删除后果: 该指纹在锁内立即失效且无法远程补录 — 需成员本人到锁前重新录入 8 次指压。本机记录进回收站 \(CredentialOrg.reclaimDays()) 天。确定继续？",
+                           "删除后果: 该指纹在锁内立即失效且无法远程补录 — 需成员本人到锁前重新录入 8 次指压。本机记录直接移除、不可找回。确定继续？",
                            confirmTitle: "彻底删除") {
             Task { await self.doDeleteFp(f) }
         }
@@ -2323,13 +1993,9 @@ struct CredentialsView: View {
         do {
             try await app.lock.ensureConnected(mac: m)
             try await app.lock.fpDelete(b)
-            CredentialOrg.addToBin(m, fp: f, source: .manual)
             // 确认口径：同上面密码那一支 —— 确认在外层 `deleteFp`，只是指纹侧的后果写得更硬
             //   (无法远程补录，本人重录 8 次指压)；回收站那条回来的仍是档案，开门能力要重录 (670)。
             DB.delFp(m, f.batch)
-            if let e = CredentialOrg.bin(m).first(where: { $0.fp?.batch == f.batch }) {
-                armUndo(e, hard: true)
-            }
             showToastOrganized("已彻底删除")
         } catch { app.showToast("删除失败: \(error.localizedDescription)") }
     }
@@ -2343,7 +2009,6 @@ struct CredentialsView: View {
             guard !name.isEmpty else { return }
             var np = f
             np.name = name
-            CredentialOrg.snapshot(mac, kind: "fp", key: f.batch, pwd: nil, fp: np, note: "改了名称")
             DB.renameFp(mac, f.batch, name)
             refreshTick += 1
         })
@@ -2356,12 +2021,10 @@ struct CredentialsView: View {
         alert.addAction(UIAlertAction(title: "清除", style: .destructive) { _ in
             if let p = pwd {
                 var np = p; np.note = ""
-                CredentialOrg.snapshot(mac, kind: "pwd", key: p.alias, pwd: np, fp: nil, note: "改了备注")
                 DB.setPwdNote(mac, p.alias, "")
             }
             if let f = fp {
                 var nf = f; nf.note = ""
-                CredentialOrg.snapshot(mac, kind: "fp", key: f.batch, pwd: nil, fp: nf, note: "改了备注")
                 DB.setFpNote(mac, f.batch, "")
             }
             _ = Milestones.recordOrganize()
@@ -2371,12 +2034,10 @@ struct CredentialsView: View {
             let note = (alert.textFields?.first?.text ?? "")
             if let p = pwd {
                 var np = p; np.note = note
-                CredentialOrg.snapshot(mac, kind: "pwd", key: p.alias, pwd: np, fp: nil, note: "改了备注")
                 DB.setPwdNote(mac, p.alias, note)
             }
             if let f = fp {
                 var nf = f; nf.note = note
-                CredentialOrg.snapshot(mac, kind: "fp", key: f.batch, pwd: nil, fp: nf, note: "改了备注")
                 DB.setFpNote(mac, f.batch, note)
             }
             _ = Milestones.recordOrganize()
@@ -2457,12 +2118,6 @@ struct CredentialsView: View {
     }
 }
 
-/// 487 历史页路由载荷 (contextMenu 里只能存值, 元组不满足 Identifiable)
-struct HistItem: Identifiable, Hashable {
-    var kind: String
-    var key: Int
-    var id: String { kind + ":" + String(key) }
-}
 
 // ================= 全局弹窗助手 (各页面共用, 不再各写一份) =================
 // 破坏性确认: 取消 / 标红确认
