@@ -127,54 +127,9 @@ enum BackupStudio {
         for f in sorted.dropFirst(min(keep, sorted.count)) { try? FileManager.default.removeItem(at: f) }
     }
 
-    // ---------- 428 ⚠ 充电自动备份: BGTask 注册 + 诚实文案 (执行时机由系统择机) ----------
-    static let chargeBackupTaskId = "com.kf.chargebackup"
     /// 2026-10-14: register 每进程只能一次 (二次注册抛 NSInternalInconsistencyException)。
     /// 启动注册 + 设置开关 setter 都会调本函数, 用标志去重。
     private static let registeredLock = Locked(false)
-    /// 单次完成闸 (跨线程): expirationHandler 与工作体都可能完成, 只允许第一个生效。
-    private final class CompletionOnce: @unchecked Sendable {
-        private let lock = NSLock()
-        private var done = false
-        func finish(_ task: BGTask, success: Bool) {
-            lock.lock(); defer { lock.unlock() }
-            guard !done else { return }
-            done = true
-            task.setTaskCompleted(success: success)
-        }
-    }
-    static func registerChargeBackup() {
-        // 2026-10-13 run 63: 原写 `BGTaskScheduler.shared.supports([BGTaskType.appRefresh])` + 把
-        // launchHandler 当 submit 的尾随闭包 —— 两处都不是真 API (`BGTaskScheduler` 无 supports,
-        // 无 BGTaskType, submit 也不收尾随闭包) ⇒ 一次报 3 条。真 API 是:
-        //   register(forTaskWithIdentifier:using:launchHandler:) 注册处理块;
-        //   submit(_:) 单独排期。
-        // 2026-10-14: 启动时**无条件**调用本函数 —— 注册必须在启动窗口内完成 (晚于 didFinishLaunching
-        // 会抛 NSInternalInconsistencyException 崩进程); 开关只闸住末尾的排期。
-        // 设置里改开关只调 rescheduleChargeBackup(), 不再走这里 (那条路是"启动之后才 register"的崩因)。
-        guard !registeredLock.withLock({ $0 }) else { return }
-        registeredLock.withLock { $0 = true }
-        BGTaskScheduler.shared.register(forTaskWithIdentifier: chargeBackupTaskId, using: nil) { task in
-            // 2026-10-14: 旧实现 expirationHandler 与工作体都会 setTaskCompleted —— 对同一 BGTask
-            // 二次完成抛 NSInternalInconsistencyException。改用单次完成闸。
-            let once = CompletionOnce()
-            task.expirationHandler = { once.finish(task, success: false) }
-            let ok = makeRollbackPoint()
-            once.finish(task, success: ok)   // 成败如实上报, 不再无条件记成功
-        }
-        rescheduleChargeBackup()   // 2026-10-26: 原受 kf_bk_bgtask 闸控，而该键无写点（永远 false）⇒ 后台备份从未排期。现无条件排期。
-    }
-    /// 排期: 由系统择机执行 (接电+闲置), 最早 6 小时后。
-    /// 2026-10-14: 排期失败原先 `try?` 静默吞掉, 而 UI 文案却称"已交给系统" —— 改为记维护回执。
-    static func rescheduleChargeBackup() {
-        let req = BGAppRefreshTaskRequest(identifier: chargeBackupTaskId)
-        req.earliestBeginDate = Date(timeIntervalSinceNow: 6 * 3600)
-        // iOS 27 起 submit(_:) 弃用, 编译器点名换 submitTaskRequest(_:completionHandler:)。
-        // 换完仍然要留痕: 排期失败被吞掉, UI 那句"已交给系统"就成了假话 (2026-10-14 就是为这个改的)。
-        BGTaskScheduler.shared.submitTaskRequest(req) { err in
-            guard let err else { return }
-        }
-    }
 
     /// 分区裁剪的统一口径 (导出 / 恢复 / 预演共用, 427 分区选择性恢复)
     /// 组包 + 分区裁剪: 未勾分区在包内置空 (恢复端按 nil 语义跳过)
@@ -441,11 +396,6 @@ enum BackupStudio {
         return n
     }
 
-    static func estimateBytes() -> Int? {
-        let plain = BackupCanonical.exportText(bundleFor())
-        guard !plain.isEmpty else { return nil }
-        return plain.count * 2
-    }
 
 
     // ================= 完整性与信任感 (448-454 / 507-512) =================
@@ -604,49 +554,10 @@ enum BackupStudio {
         return String(name[r])
     }
     @discardableResult
-    static func dryRunRemote(acct: String, appPw: String, root: String, name: String, password: String) async -> String {
-        guard let url = safeRemoteURL(root: root, name: name) else { return "地址非法 (远端条目名被护栏拒绝)" }
-        var req = URLRequest(url: url)
-        req.setValue(CloudSync.basicAuth(acct, appPw), forHTTPHeaderField: "Authorization")
-        do {
-            let (data, _) = try await URLSession.shared.data(for: req)
-            let raw = String(data: data, encoding: .utf8) ?? ""
-            let body = (try? decryptAny(raw, password: password)) ?? raw
-            guard verifyChecksum(body) else { return "哈希不一致 — 仅告警, 不入库" }   // 423 哈希不一致
-            // 436: 抽样数是 parsePreview 实抽出来的, 不再写死 "5 条"
-            let sampled = (try? parsePreview(text: body, password: nil).preview.sampleOk) ?? 0
-            return "已验证 · 抽样 \(sampled) 条可解析 · 哈希 " + shortHash(body)
-        } catch { return "下载失败: \(error.localizedDescription)" }
-    }
     /// 237 密钥轮换: 新口令重加密后**直接覆盖**远端同一文件（`zklock-backup.enc`）。
     /// ⚠ 注释曾写「旧文件重命名留痕」—— 实现里没有任何重命名/留档分支, 轮换即覆盖,
     ///   旧密文不可恢复。要留痕得先加一份 `.bak` 上传, 那是未实现的设计意图。
     @discardableResult
-    static func rotateKey(acct: String, appPw: String, root: String, oldPw: String, newPw: String) async -> String {
-        guard let url = URL(string: root + "/zklock-backup.enc") else { return "地址非法" }
-        var req = URLRequest(url: url)
-        req.setValue(CloudSync.basicAuth(acct, appPw), forHTTPHeaderField: "Authorization")
-        do {
-            let (data, _) = try await URLSession.shared.data(for: req)
-            let raw = String(data: data, encoding: .utf8) ?? ""
-            guard let plain = try? decryptAny(raw, password: oldPw) else {
-                return "旧口令解不开, 轮换失败"   // 453 旧口令解不开
-            }
-            guard let newEnc = try? CryptoBox.encryptText(plain, password: newPw) else {
-                return "新口令加密失败, 远端未动"
-            }
-            var put = URLRequest(url: url)
-            put.httpMethod = "PUT"
-            put.setValue(CloudSync.basicAuth(acct, appPw), forHTTPHeaderField: "Authorization")
-            put.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            put.httpBody = Data(newEnc.utf8)
-            let (_, resp) = try await URLSession.shared.data(for: put)
-            guard let http = resp as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-                return "上传新密文失败, 远端仍为旧口令"   // 237 上传新密文失败
-            }
-            return "已轮换 — 旧口令失效, 请用新口令访问"   // 237 已轮换
-        } catch { return "轮换中断: \(error.localizedDescription)" }
-    }
 
     private static func jsonStr(_ s: String, _ marker: String) -> String? {
         guard let r = s.firstRange(of: marker) else { return nil }

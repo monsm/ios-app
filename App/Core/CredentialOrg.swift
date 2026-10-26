@@ -563,54 +563,6 @@ enum CredentialOrg {
         return DB.listPwds(mac).filter { $0.alias != excluding && $0.pwd?.hasPrefix(pre) == true }
     }
 
-    // ---------- 305 老旧巡检: 台账只记**添加**时刻, 标"约" ----------
-    /// ⚠ 数据源实况 (逐行读过 Store.swift 的三条写口): `addPwd` 落 `at`, 而 `rePwd` (改值) 与
-    ///   `setPwdPeriod` (改期) **都不回写 `at`** —— 所以这里的"天数"是"这条台账添加至今"的天数,
-    ///   不是"这个码值有多久没换"。锁端也没有最后修改字段 (CAPABILITY §3: 日志无凭证身份、无修改时刻),
-    ///   本机又没留改值时刻的字段, 于是换没换过值只能反查 487 版本快照那条路, 不在本函数口径内。
-    ///   因此不新增持久化字段 (避开 swiftshape R3 的合成 Codable 雷区), UI 侧文案照这里的口径写:
-    ///   添加于约 N 天前, 台账无改值时刻、这段时间没留下换码记录。
-    // ---------- 9 凭证风险体检 (安全审计卡) ----------
-    struct PwdRisk: Identifiable {
-        var id: String { kind + "|" + mac + "|" + String(alias) }
-        let kind: String        // 同值 / 超期 / 弱口令
-        let mac: String
-        let alias: Int
-        let lockName: String
-        let detail: String
-    }
-    /// 9 安全审计: 全库密码风险清单 (**只读扫描**, 不写任何东西)。
-    /// 三类判据都写死在代码里, 不编"强度评分": 同值 (同一串值出现在多条凭证上)、
-    /// 超期 (添加至今 > maxAgeDays)、弱口令 (少于 6 位 / 全部同数字 / 连续递增递减)。
-    /// 归属与锁名走既有口径 (769 LockArchive.displayName), 处置动作仍在凭证 Tab 的改码 (305/306)。
-    static func passwordRisks(maxAgeDays: Int = 180) -> [PwdRisk] {
-        var byValue: [String: [(mac: String, alias: Int, lock: String)]] = [:]
-        var all: [(mac: String, lock: String, p: LedgerPwd)] = []
-        for kc in DB.keychains() {
-            let lock = LockArchive.displayName(kc)
-            for p in DB.listPwds(kc.mac) {
-                all.append((kc.mac, lock, p))
-                let v = (p.pwd ?? "").trimmingCharacters(in: .whitespaces)
-                if v.count >= 4 { byValue[v, default: []].append((kc.mac, p.alias, lock)) }
-            }
-        }
-        var out: [PwdRisk] = []
-        for (mac, lock, p) in all {
-            let v = (p.pwd ?? "").trimmingCharacters(in: .whitespaces)
-            if v.count >= 4, let dup = byValue[v], dup.count > 1 {
-                out.append(PwdRisk(kind: "同值", mac: mac, alias: p.alias, lockName: lock,
-                                   detail: "与另外 \(dup.count - 1) 条凭证同值"))
-            }
-            if let age = pwdAgeDays(p), age > maxAgeDays {
-                out.append(PwdRisk(kind: "超期", mac: mac, alias: p.alias, lockName: lock,
-                                   detail: "添加至今 \(age) 天未改"))
-            }
-            if let why = weakReason(v) {
-                out.append(PwdRisk(kind: "弱口令", mac: mac, alias: p.alias, lockName: lock, detail: why))
-            }
-        }
-        return out
-    }
     /// 弱口令三条判据 (都可证伪; 不评"强度分"): 少于 6 位 / 全部同一位 / 连续递增递减
     static func weakReason(_ v: String) -> String? {
         guard !v.isEmpty else { return nil }
@@ -631,10 +583,6 @@ enum CredentialOrg {
         guard p.at > 0 else { return nil }
         // 单位口径：毫秒 —— LedgerPwd.at 写的是 `timeIntervalSince1970 * 1000` (见 CredentialStudio 提交那两处)，先除回秒再算天数。
         return Int(max(0, (nowSec - p.at / 1000)) / 86400)
-    }
-    /// 305 超阈值建议换码: 阈值量的是**添加至今** (见上面 pwdAgeDays 的数据源实况), 不是"未换值天数"。
-    static func isStalePwd(_ p: LedgerPwd, days: Int = 180) -> Bool {
-        (pwdAgeDays(p) ?? 0) > days
     }
 
     // ---------- 307 保存前逐位 diff: 改动位集合 (1 起; 长度变化补 "·" 对齐) ----------
@@ -706,17 +654,6 @@ enum CredentialOrg {
         DB.readLogs(mac).filter { $0.type == 2 || $0.type == 4 }
             .map { ZKProtocol.protoSecondsToUnix(Int64($0.lockTime)) }
     }
-    /// 临时凭证: 只算落在它自己时间窗内的开门 (时间窗就是它唯一的归属依据)。
-    /// 长期凭证: 日志无法指认是哪条密码开的门, 只能给"这把锁最近一次开门" —— 同锁各条数值相同,
-    /// 所以调用方拿到它只能当锁级参考, 不能当成"这条凭证被用过"。
-    private static func lastUse(of p: LedgerPwd, opens: [Double]) -> Double? {
-        if p.temp {
-            guard let f = parseLocal(p.from), let to = parseLocal(p.to) else { return nil }
-            let lo = f.timeIntervalSince1970, hi = to.timeIntervalSince1970
-            return opens.filter { $0 >= lo && $0 <= hi }.max()
-        }
-        return opens.max()
-    }
     /// 316 指纹档案统计: 近 30 天 type3 (指纹开门) 日志条数 — ⚠ 日志无指纹身份字段, 只能按锁整体推断, 标"约"
     static func fpUseCount30d(_ mac: String) -> Int {
         let cut = nowSec - 30 * 86400
@@ -739,22 +676,6 @@ enum CredentialOrg {
             let t = ZKProtocol.protoSecondsToUnix(Int64(log.lockTime))
             return f.timeIntervalSince1970 <= t && t <= to.timeIntervalSince1970
         }.count
-    }
-    /// 333 首用回执: 时间窗内**最早**一条开门日志 (⚠ 无 alias 字段, 按时间推断, 标"约")。
-    /// 上界必须一起滤: 原写法只滤了下界 `t >= from`, 于是窗口外(到期之后)的旧日志也会命中,
-    /// 完成页就会指着一条早就失效的码说"约在某时有人用它开过门"。同一族的 311/326/335
-    /// 两个界都滤 (openCountInWindow / usageCount), 这里补齐后才谈得上"同源"。
-    static func firstUse(_ mac: String, p: LedgerPwd) -> Double? {
-        guard let f = parseLocal(p.from), let hi = parseLocal(p.to) else { return nil }
-        let lo = f.timeIntervalSince1970
-        let upper = hi.timeIntervalSince1970
-        var hit: Double? = nil
-        for l in DB.readLogs(mac) where l.type == 2 || l.type == 4 {
-            let t = ZKProtocol.protoSecondsToUnix(Int64(l.lockTime))
-            guard t >= lo, t <= upper else { continue }
-            hit = hit == nil ? t : min(hit!, t)
-        }
-        return hit
     }
 
     // ---------- 315/174 指纹命名建议轮播 ----------

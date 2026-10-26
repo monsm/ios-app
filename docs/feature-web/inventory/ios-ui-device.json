@@ -4866,43 +4866,6 @@
       "status": "implemented"
     },
     {
-      "key": "settings.appearance.icon",
-      "parentKey": "settings.appearance",
-      "domain": "settings",
-      "level": 3,
-      "name": "备选 App 图标（9 款）",
-      "kind": "setting",
-      "summary": "自适应网格排列 9 款图标（默认/锁环/钥匙/盾牌/家门/警报/定位/门盾/心记），点按即换。",
-      "details": [
-        "先判 supportsAlternateIcons，不支持则 toast「当前系统不支持更换图标」而不是静默失败",
-        "切换走 setAlternateIconName，回调里回主 actor 写状态；失败 toast「更换失败: <原因>」",
-        "当前图标右下角标 checkmark.circle.fill，用 onSem/ok 双色保证深色档对比度",
-        "用 LazyVGrid(adaptive) 而不是横向滚动：九款要全部看得见"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 847,
-          "symbol": "iconOptions"
-        },
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 872,
-          "symbol": "iconPickerRow"
-        },
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 918,
-          "symbol": "setIcon(_:)"
-        }
-      ],
-      "tags": [
-        "设置",
-        "外观"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "settings.appearance.quickpool",
       "parentKey": "settings.appearance",
       "domain": "settings",

@@ -64,11 +64,6 @@ enum BatteryCare {
         lowCacheLock.withLock { $0 = (mac, low) }
         return low
     }
-    /// 121 低温季提示窗口: 11 月–3 月 (纯本地日期规则)
-    static var isColdSeason: Bool {
-        let m = WeekCal.gregorian.component(.month, from: Date())
-        return m == 11 || m == 12 || m <= 3
-    }
 
 
     // ============ 电量采样 (idea 45 的数据地基) ============
@@ -120,34 +115,6 @@ enum BatteryCare {
         return true
     }
 
-    /// 1040 单日掉电观察: 采样表里同一个**本地日**内, 最早与最晚两个采样点的电量差 > threshold。
-    /// 只用真实量到的两个点相减 —— 不拟合、不外推 (与 1029/1032 同一纪律: 本仓不虚构电压/续航)。
-    /// 采样表本身是"读 03 时落点"(BatteryCare.sample), 所以这条只对"当天至少读到过两次"的日子成立。
-    static func bigDropDays(_ mac: String, days: Int = 30, threshold: Int = 20)
-        -> [(day: String, from: Int, to: Int, drop: Int)] {
-        let list = samples(mac)
-        guard list.count >= 2 else { return [] }
-        let fmt = DateFormatter()
-        fmt.locale = Locale(identifier: "en_US_POSIX")
-        fmt.dateFormat = "yyyy-MM-dd"
-        let since = Date().addingTimeInterval(-Double(days) * 86400)
-        var firstOfDay: [String: BattSample] = [:]
-        var lastOfDay: [String: BattSample] = [:]
-        for s in list {
-            let d = Date(timeIntervalSince1970: s.t / 1000)
-            guard d >= since else { continue }
-            let key = fmt.string(from: d)
-            if let f = firstOfDay[key] { if s.t < f.t { firstOfDay[key] = s } } else { firstOfDay[key] = s }
-            if let l = lastOfDay[key] { if s.t > l.t { lastOfDay[key] = s } } else { lastOfDay[key] = s }
-        }
-        var out: [(day: String, from: Int, to: Int, drop: Int)] = []
-        for (key, f) in firstOfDay {
-            guard let l = lastOfDay[key] else { continue }
-            let drop = f.pct - l.pct
-            if drop > threshold { out.append((key, f.pct, l.pct, drop)) }
-        }
-        return out.sorted { $0.day > $1.day }
-    }
 
     // ---------- 1004 低电本地通知 (滞回: ≤20% 提醒 / ≤10% 升级, 恢复 >30% 重新武装) ----------
     private static func evaluateLowBattery(_ mac: String, pct: Int) {
@@ -185,13 +152,6 @@ enum BatteryCare {
     }
 
 
-    // ============ 1023 指纹头清洁: 锁日志最近 3 条连续为指纹告警 (type 13) ============
-    static func fpCleanNeeded(_ mac: String) -> Bool {
-        // 1023: 缓存数组序≠时间序 (新抓的拼在旧缓存前), 先按锁端时间戳降序再取前 3
-        let logs = DB.readLogs(mac).sorted { $0.lockTime > $1.lockTime }.prefix(3)
-        guard logs.count == 3 else { return false }
-        return logs.allSatisfy { $0.type == 13 }
-    }
 
     // 2026-10-26: 这里原有 `versionLt`（版本串逐段比较），与 ZipKit/FirmwareKit 里的那份**逐字相同**。
     // 本文件那份零调用，已删；版本比较统一走 `FirmwareKit.versionLt`（4 个调用点 + 两组表驱动测试）。
@@ -242,45 +202,5 @@ enum CareSchedule {
             .requestAuthorization(options: [.alert, .sound, .badge])) ?? false
     }
 
-    /// 启动巡检 (app.onLaunch 调用): 1023 指纹头 / 校时 30 天 / 1024 防潮
-    static func refreshOnLaunch() async {
-        guard !DB.keychains().isEmpty else { return }
-        guard await requestAuth() else { return }
-        let now = Date().timeIntervalSince1970 * 1000
-        for kc in DB.keychains() {
-            let name = LockArchive.displayName(kc)
-            // 1024 潮湿位: 场所含湿区关键词 ∧ 6–7 月梅雨 → 每 7 天一条
-            let place = LockArchive.meta(kc.mac).place
-            let damp = ["浴室", "户外", "院", "阳台", "天台"].contains { place.contains($0) }
-            let month = WeekCal.gregorian.component(.month, from: Date())
-            if damp, month == 6 || month == 7 {
-                let last = DB.store.get(Double.self, "kf_damp_last_" + kc.mac) ?? 0
-                if now - last > 7 * 86400 * 1000 {
-                    DB.store.set("kf_damp_last_" + kc.mac, now)
-                    await notifyNow(id: "m4.damp." + kc.mac, title: "防潮提醒",
-                                    body: "梅雨季湿气重, 「\(name)」装在湿区, 记得检查电池触点与锁体。")
-                }
-            }
-            // 校时关怀: 超 30 天未校时, 30 天内只提醒一次 (ZOTP 与时间窗凭证依赖锁钟)
-            let t = DB.syncTime(kc.mac)
-            if t > 0, now - t > 30 * 86400 * 1000 {
-                let lastN = DB.store.get(Double.self, "kf_clock_notify_" + kc.mac) ?? 0
-                if now - lastN > 30 * 86400 * 1000 {
-                    DB.store.set("kf_clock_notify_" + kc.mac, now)
-                    await notifyNow(id: "m4.clock." + kc.mac, title: "该校时了",
-                                    body: "「\(name)」已超 30 天未校时, 临时密码可能失效。")
-                }
-            }
-            // 1023 指纹头清洁: 连续 3 次指纹告警, 7 天一条
-            if BatteryCare.fpCleanNeeded(kc.mac) {
-                let last = DB.store.get(Double.self, "kf_fp_last_" + kc.mac) ?? 0
-                if now - last > 7 * 86400 * 1000 {
-                    DB.store.set("kf_fp_last_" + kc.mac, now)
-                    await notifyNow(id: "m4.fp." + kc.mac, title: "擦擦指纹头",
-                                    body: "「\(name)」连续 3 次指纹识别告警 — 指纹头可能脏了或手指太干。")
-                }
-            }
-        }
-    }
 
 }

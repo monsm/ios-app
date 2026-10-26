@@ -86,6 +86,13 @@ const SYS_NAMES = new Set([
   // 2026-10-26: `BGTaskScheduler.shared.register(forTaskWithIdentifier:using:launchHandler:)`
   // 的系统方法名。删掉本项目里同名的 `register`（成员借用登记）后会被误判。
   "register",
+  // 2026-10-27 二轮: `Result` 是 Swift 标准库的枚举（BLEService 的回调、备份/固件的
+  // 文件导入 handler 都在用）。删掉本项目里同名的 `Recovery`/`DiagOps` 等后不影响它，
+  // 但若某个被删类型里定义过名为 Result 的嵌套类型，这里会被误判。
+  "Result",
+  // 2026-10-27 二轮: 通用参数名与 Foundation 方法 —— 删掉本项目同名定义后会被误判：
+  //   marker（jsonStr/tokensFirstContaining 的参数）· invalidate（Timer.scanTimer?.invalidate()）
+  "marker", "invalidate",
 ]);
 
 function stripCode(line) {

@@ -59,16 +59,6 @@ enum DiagOps {
     static func list() -> [DiagOp] { DB.store.get([DiagOp].self, "kf_diag_ops") ?? [] }
 }
 
-// ---------- 215 启动预算: 冷启动各阶段打点 (本地自统计, 预算 800ms) ----------
-enum StartupTrace {
-    static let t0 = CFAbsoluteTimeGetCurrent()
-    private static let marksLock = Locked([String: Double]())
-    static func mark(_ p: String) { marksLock.withLock { $0[p] = CFAbsoluteTimeGetCurrent() - t0 } }
-    /// 各阶段耗时 (ms)
-    static func ms(_ p: String) -> Double? { marksLock.withLock { $0[p] }.map { ($0 * 1000).rounded() } }
-    static var totalMs: Double { (CFAbsoluteTimeGetCurrent() - t0) * 1000 }
-    static var overBudget: Bool { totalMs > 800 }
-}
 
 // ---------- 218 / 221 写入合并队列 —— 第九十二批整引擎已删 (原本就是个空转的壳) ----------
 // 原 `enum WriteQueue` (入队 + 1s 合并 + flush) 的 `enqueue` 全库**零写入方**，
@@ -79,93 +69,9 @@ enum StartupTrace {
 // 把 set 改成 1s 合并会直接造出读后写陈旧；那不是一个"性能优化"，是拿正确性换没测过的收益。
 // 结论：218/221 从 DONE 退回 MISS，要真做批量落盘得先给 Store 加"读穿透"，单独立项。
 
-// ---------- 220 热点缓存: 时间线首屏加速 (217 索引迁移未做, 它想解决的"热数据前置"由本缓存对应) ----------
-// 2026-10-13 接线: 读取口 `recent` 此前全库零调用 (一份没人读的缓存常驻内存), 现在时间线首屏走它。
-// 旧注释留的问题"要接得先定失效策略 (TTL? 拉完日志? 切锁?)"就定在**唯一写入口**:
-// Store.writeLogs / replaceLogs 写完即作废 —— 缓存只可能比库旧一个写入动作, 而写入方自己会作废它,
-// 所以不存在"比直连 defaults 更容易出陈旧"的窗口。
-// 缓存整份解码结果而不是只留 50 条: 原句要的"最近 50 条加速首屏"目的已达到; 而只留 50 条时,
-// 时间线的其余行仍要再读一次盘, 等于把一次解码变成两次。
-enum HotCache {
-    /// 读写可能跨线程 (写入口 Store.writeLogs 在 BLE 回调线程上), 所以自己带锁 ——
-    /// 旧注释把线程安全推给调用方 ("刻意留主线程"), 加锁后失效点才能落在写入口上。
-    // 原生互斥: Locked (NSLock + 值在临界区内) —— withLock 保证 unlock 一定执行,
-    // 比手写 lock()/defer unlock 少一类"提前 return 忘了解锁"的错误。
-    private static let lock = Locked(HotState())
-    private struct HotState: Sendable {
-        var store: [String: [CachedLog]] = [:]
-        var currentMac: String = ""
-    }
-    /// 日志写入后作废 (惰性: 下一次 recent 重读) —— 比"写完立刻重读一遍"少一次解码。
-    static func invalidate(_ mac: String) { lock.withLock { $0.store[mac] = nil } }
-    static func recent(_ mac: String) -> [CachedLog] {
-        lock.withLock { h -> [CachedLog] in
-            if mac == h.currentMac, let v = h.store[mac] { return v }
-            let v = DB.readLogs(mac)
-            h.store[mac] = v
-            return v
-        }
-    }
-}
 
-// ---------- 285 扫描时长自查: 按本地日累计 BLE 扫描秒数 (原句"诊断页统计每日扫描时长趋势并给省电建议") ----------
-/// 写入点只有两个, 都在 LinkSenseKit: 冷启动扫描 (134) 与按锁扫描 (63/71)。
-/// 建议句基于**真实累计**给, 不是档位科普 (285 的缺就是"只有档位说明, 没有基于用量的推算")。
-enum ScanStats {
-    private static let key = "kf_scan_secs"
-    private static let fmt: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
-    static func record(seconds: Double) {
-        guard seconds > 0 else { return }
-        var m = DB.store.get([String: Double].self, key) ?? [:]
-        m[fmt.string(from: Date()), default: 0] += seconds
-        // 只留 30 天, 免得这个键无限长大
-        if m.count > 30 { for k in m.keys.sorted().dropLast(30) { m.removeValue(forKey: k) } }
-        DB.store.setCodable(key, m)
-    }
-    /// 近 N 天的 (日, 秒), 新在前
-    static func recent(days: Int = 7) -> [(day: String, secs: Double)] {
-        let m = DB.store.get([String: Double].self, key) ?? [:]
-        return m.keys.sorted(by: >).prefix(days).map { ($0, m[$0] ?? 0) }
-    }
-    /// 省电建议: 按近 7 天日均扫描秒数说一句话 (含当前档位的单次窗口, 都是真实读数)
-    static func advice() -> String {
-        let r = recent(days: 7)
-        guard !r.isEmpty else { return "还没有扫描时长记录 — 冷启动与连接/开锁时才会扫, 攒几天再看趋势。" }
-        let avg = r.reduce(0.0) { $0 + $1.secs } / Double(r.count)
-        let win = BLEService.ScanProfile.current.timeoutMs
-        if avg < 5 { return "近 \(r.count) 天日均扫描 \(Int(avg)) 秒 — 已经很省 (当前档位单次窗口 \(win)ms)。" }
-        if avg < 30 { return "近 \(r.count) 天日均扫描 \(Int(avg)) 秒 — 正常范围 (单次窗口 \(win)ms); 想更省可换「省电」档。" }   // 123 天日均扫描
-        return "近 \(r.count) 天日均扫描 \(Int(avg)) 秒 — 偏多; 不需要即连的话换「省电」档, 或关掉预握手。"   // 97/123 天日均扫描
-    }
-}
 
 // ---------- 224 启动并行预热 (冷启动一次完成, 后续零成本) ----------
-@MainActor
-enum Prewarm {
-    static var done = false
-    static func run(mac: String) {
-        guard !done else { return }
-        done = true
-        // 224: 三项互不依赖的读取改为**并发** (原先串行顺序占启动线程), 读点只走 UserDefaults;
-        // 缓存收口 (HotCache) 仍回主线程 —— 那份字典缓存不是线程安全的, 不能跟着并行。
-        // (原句里的 "SQLite 连接" 在本移植版没有对应物 —— 本仓零 SQLite, 按 UserDefaults 口径如实。)
-        DispatchQueue.global(qos: .utility).async {
-            DispatchQueue.concurrentPerform(iterations: 3) { i in
-                switch i {
-                case 0: _ = DB.keychains()
-                case 1: _ = DB.hasPasscode()
-                default: _ = DB.store.getString("kf_theme")
-                }
-            }
-            DispatchQueue.main.async { _ = HotCache.recent(mac) }   // 惰性重读即预热 (load 已并入 recent)
-        }
-    }
-}
 
 // ---------- 日志分级台账 (153/154/283/542/543/751 的解析与留档) ----------
 struct DiagLogEntry: Codable, Identifiable {
@@ -422,49 +328,6 @@ enum DiagFlags {
     static var silent: Bool { DB.store.getBool("kf_silent_trouble") }
 }
 
-// ---------- 547/758 异常退出档案 (崩溃标记位 + 上次会话时长) ----------
-enum CrashGuard {
-    static let marker = "kf_crash_marker"
-    static let lastDur = "kf_last_session"
-    /// 启动调用: 若上次没走正常退出路径 (进后台未被杀死时标记应为 false), 记异常档案
-    static func checkAbnormalExit() {
-        let flagged = DB.store.getBool(marker)
-        if !flagged {
-            DB.store.set(marker, true)   // 本次会话开始打标记
-            return
-        }
-        let prevDur = DB.store.get(lastDur, Double.self) ?? 0
-        let lastDurTxt = prevDur > 0 ? String(format: "上次会话 %.1f 分钟", prevDur / 60) : "上次会话时长未记录"
-        let ops = (DB.store.get([DiagOp].self, "kf_diag_ops") ?? []).prefix(5)
-        let summary = ops.map { $0.t + " " + $0.label }.joined(separator: "\n")
-        var arch = DB.store.get([String].self, "kf_crash_arch") ?? []
-        arch.insert("异常退出于 " + DiagTime.full() + " · " + lastDurTxt
-            + "\n最后操作:\n" + (summary.isEmpty ? "(无记录)" : summary), at: 0)
-        if arch.count > 10 { arch = Array(arch.prefix(10)) }
-        DB.store.setCodable("kf_crash_arch", arch)
-        DB.store.set("kf_crash_arch_pending", true)   // 让 UI 显示"上次异常退出"入口
-        DB.store.set(marker, true)                    // 本次会话继续挂标记
-    }
-    /// 进后台调用 (221 收尾): 记录会话时长并清标记 (正常路径)
-    static func markCleanExit() {
-        let started = DB.store.get("kf_session_start", Double.self) ?? 0
-        if started > 0 {
-            let dur = CFAbsoluteTimeGetCurrent() - started
-            if dur > 1 { DB.store.set(lastDur, dur) }
-        }
-        DB.store.set(marker, false)
-    }
-    /// 会话开始: 记下启动绝对时刻
-    static func markSessionStart() {
-        DB.store.set("kf_session_start", CFAbsoluteTimeGetCurrent())
-    }
-    static func consumePending() -> Bool {
-        defer { DB.store.remove("kf_crash_arch_pending") }
-        return DB.store.getBool("kf_crash_arch_pending")
-    }
-    static var pendingAbnormal: Bool { DB.store.getBool("kf_crash_arch_pending") }
-    static func archList() -> [String] { DB.store.get([String].self, "kf_crash_arch") ?? [] }
-}
 
 // ---------- 750/546/152 数据库体检·表级体积·存储构成 (UserDefaults 等价实现) ----------
 enum DataHealth {
@@ -879,63 +742,6 @@ struct PageOpen: Codable, Identifiable {
 }
 
 @MainActor
-enum PageTrace {
-    static let onKey = "kf_page_trace_on"
-    static let listKey = "kf_page_opens"
-    static var isOn: Bool { DB.store.getBool(onKey, false) }
-    // 起点只活在进程内：跨启动的"打开耗时"没有意义 (冷启动有它自己的 215 打点)
-    private static var navAt: CFAbsoluteTime?
-    private static var navName: String?
-
-    static func setOn(_ v: Bool) {
-        DB.store.set(onKey, v)
-        navAt = nil
-        navName = nil
-    }
-
-    /// RootView 只有四个 Tab，越界不可能是用户切页 → 返回空串让调用方丢弃
-    static func name(forTab tab: Int) -> String {
-        switch tab {
-        case 0: return "设备"
-        case 1: return "凭证"
-        case 2: return "记录"
-        case 3: return "设置"
-        default: return ""
-        }
-    }
-
-    static func markNav(to tab: Int) {
-        guard isOn else { return }
-        let n = name(forTab: tab)
-        guard !n.isEmpty else { navAt = nil; navName = nil; return }
-        navName = n
-        navAt = CFAbsoluteTimeGetCurrent()
-    }
-
-    /// 终点。**配不上对就丢弃，不猜**：冷启动首屏、后台回前台重放 onAppear、
-    /// 以及"切页时页面本来就已在屏上"都会走到这里，此时报出来的数字一定不是打开耗时。
-    static func shown(_ name: String) {
-        guard isOn, let t = navAt, let from = navName else { return }
-        navAt = nil
-        navName = nil                       // 一次切换只配一次，重复 onAppear 不重复计数
-        guard from == name else { return }
-        let ms = ((CFAbsoluteTimeGetCurrent() - t) * 1000).rounded()
-        guard ms >= 0, ms <= 3000 else { return }
-        var list = DB.store.get([PageOpen].self, listKey) ?? []
-        list.append(PageOpen(name: name, ms: Int(ms), at: Date().timeIntervalSince1970 * 1000))
-        if list.count > 10 { list = Array(list.suffix(10)) }
-        DB.store.setCodable(listKey, list)
-    }
-
-    static func entries() -> [PageOpen] { DB.store.get([PageOpen].self, listKey) ?? [] }
-    static func clear() { DB.store.remove(listKey) }
-    /// 采样时刻的时分秒。环形只留 10 条，必然是最近几分钟到几小时内的事，不带日期。
-    static func clock(_ epochMs: Double) -> String {
-        let f = DateFormatter()
-        f.dateFormat = "HH:mm:ss"
-        return f.string(from: Date(timeIntervalSince1970: epochMs / 1000))
-    }
-}
 
 
 
@@ -1142,165 +948,11 @@ enum DiagHealth {
     }
 }
 
-// ---------- 753 诊断摘要二维码 (CoreImage 本地生成, 扫码即得本机可读文本) ----------
-enum DiagQR {
-    static func image(for text: String) -> UIImage? {
-        let filter: CIFilter! = CIFilter(name: "CIQRCodeGenerator")
-        guard let input = filter, let data = text.data(using: .utf8) else { return nil }
-        input.setValue(data, forKey: "inputMessage")
-        input.setValue("M", forKey: "inputCorrectionLevel")
-        guard let raw = input.outputImage else { return nil }
-        // 753 修正 (2026-10-13): CIImage 没有 imageRepresentation 这个成员 (全仓无扩展定义,
-        // 旧写法 `big.imageRepresentation` 编译不过); 顺带修掉语义bug —— 旧代码把
-        // outputImage cropped 成 1x1 再 scale 480, 等于把一个像素抻成一张图, 码根本扫不出来。
-        // CIQRCodeGenerator 的 extent 就是有效码区, 直接渲染; 此图只上屏给人扫, 不过 CIContext。
-        return UIImage(ciImage: raw)
-    }
-    /// 摘要文本: 版本 + 固件 + 最近错误 + 日志摘要哈希 (SHA256 前 6 字节, 12 hex)
-    @MainActor
-    static func summaryText(app: AppState) -> String {
-        var t = "【诊断摘要】\n"
-        t += "App " + (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")
-            + " (\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"))\n"
-        t += "系统 " + UIDevice.current.systemName + " " + UIDevice.current.systemVersion + "\n"
-        if let kc = app.current {
-            t += "门锁 " + app.displayName + " pid=" + String(kc.pid) + " 固件 " + (kc.fw.isEmpty ? "未知" : kc.fw) + "\n"
-        } else {
-            t += "门锁 未配对\n"
-        }
-        if !app.lock.lastError.isEmpty { t += "最近错误 " + app.lock.lastError + "\n" }
-        let tail = DiagLogs.today().suffix(30).map { $0.time + "[" + $0.level + "] " + $0.msg }.joined(separator: "\n")
-        let hash = SHA256.hash(data: Data(tail.utf8)).prefix(6).map { String(format: "%02x", $0) }.joined()
-        t += "日志摘要 " + hash
-        return t
-    }
-}
 
-// ---------- 754 协议字段字典 (CAPABILITY.md 内容内置, 可查可复制) ----------
-enum ProtocolDict {
-    struct Field: Identifiable {
-        let k: String
-        let name: String
-        let desc: String
-        var id: String { k + name }
-    }
-    // 659 错误码人话表 = 下面这张 statusFields 的 rc 行 + StatusParser 的 rc 文案表 (单一来源)。
-    // 之所以在数据侧标注: "人话表"如果只写在界面上，诊断页与开锁失败提示会各译一套错误码。
-    static let statusFields: [Field] = [
-        .init(k: "#01", name: "sKeyStatus", desc: "密钥状态 (1=清除态 / 2=ECDH)"),
-        .init(k: "#03", name: "rc", desc: "总返回码, 0 成功; 1-27 锁端错误码 (对照错误码人话表)"),
-        .init(k: "#04", name: "lockTime", desc: "锁内时钟, 协议秒 (基准 2010-01-01), 0 视为无效"),
-        .init(k: "#05", name: "zotpPeriod", desc: "临时码周期, 单位分钟, 默认 30"),
-        .init(k: "#06", name: "keyboardFreeze", desc: "键盘冻结标志"),
-        .init(k: "#07", name: "keyboardErrCount", desc: "密码连续错误次数"),
-        .init(k: "#08", name: "securityLevel", desc: "位域: bit0 单双验 / bit1 状态广播 / bit2 临时码开通"),
-        .init(k: "#11", name: "powerLevel", desc: "电量百分比"),
-        .init(k: "#14", name: "soundVolumn", desc: "音量, 0=有声 / 1=静音"),
-        .init(k: "#21-23", name: "pinInfo", desc: "PIN 池 容量/剩余/绑定数"),
-        .init(k: "#24-26", name: "pwdInfo", desc: "密码 容量/剩余/最大长度"),
-        .init(k: "#27-29", name: "fpInfo", desc: "指纹 容量/剩余/批号"),
-        .init(k: "#31", name: "verFirmware", desc: "固件 3B 反转直读 a.b.c"),
-        .init(k: "#34", name: "pid", desc: "型号号, 映射见诊断页型号映射"),   // 661 型号号
-        .init(k: "#35", name: "eCtrlVer", desc: "电控板版本, ASCII"),
-        .init(k: "16#04", name: "surplus", desc: "GETLOG 本次游标之后还剩的日志条数 (只对当页成立, 不是锁内总条数; 会话内对账依此)"),
-        .init(k: "16#05", name: "logRec", desc: "日志条目: type 1B + len 1B + idx 4B LE + lockTime 4B LE")
-    ]
-    // 原 `static let logTypes` (把 StatusParser.logTypes 排好序再暴露一份) 第九十三批删除：
-    // 全仓零读取 —— 用到的地方 (`DiagKit:990` 与 StatusParser 自己) 都直连 `StatusParser.logTypes`。
-    // 这种"同一份表在隔壁再抄一遍导出"的别名最容易在表更新时只改一处而悄悄分叉，所以不留。
-    static func copyable() -> String {
-        statusFields.map { $0.k + " " + $0.name + " — " + $0.desc }.joined(separator: "\n")
-    }
-}
 
-// ---------- 662 图标语义表 (SF Symbols 集中映射, 防漂移) ----------
-enum IconSemantics {
-    struct Row: Identifiable {
-        let icon: String
-        let use: String
-        var id: String { icon }
-    }
-    static let rows: [Row] = [
-        Row(icon: "fingerprint", use: "指纹凭证 / 录指纹"),
-        Row(icon: "keyboard", use: "密码凭证 / 键盘输入"),
-        Row(icon: "exclamationmark.triangle", use: "胁迫码 / 告警提示"),
-        Row(icon: "shield.fill", use: "防撬 / 布防 / 安全中心"),
-        Row(icon: "lock.fill", use: "门锁主体 / 设备 Tab"),
-        Row(icon: "key.horizontal.fill", use: "凭证 Tab / 密码开门"),
-        Row(icon: "list.bullet.rectangle.fill", use: "记录 Tab"),
-        Row(icon: "gearshape.fill", use: "设置 Tab"),
-        Row(icon: "bolt.fill", use: "电量 / 低电告警"),
-        Row(icon: "network", use: "BLE 连接状态"),
-        Row(icon: "archivebox.fill", use: "备份 / 归档"),
-        Row(icon: "stethoscope", use: "诊断 / 体检"),
-        Row(icon: "stop.circle.fill", use: "静默排查模式"),
-        Row(icon: "chart.bar.fill", use: "统计 / 成功率"),
-        Row(icon: "qrcode", use: "诊断摘要二维码"),
-        Row(icon: "doc.text.magnifyingglass", use: "日志检索")
-    ]
-}
 
-// ---------- 762 白名单查询模板 (只读下拉, 不开放自由输入) ----------
-enum QueryTemplates {
-    struct Result { let title: String; let lines: [String] }
-    static func lastNLogs(_ n: Int) -> Result {
-        let mac = DB.currentMac
-        let logs = DB.readLogs(mac).prefix(n)
-        return Result(title: "「\(mac.prefix(6))」最近 \(n) 条日志",
-                      lines: logs.map { String($0.lockTimeStr.prefix(16)) + " " + $0.typeName })
-    }
-    static func byType(_ types: [Int]) -> Result {
-        let mac = DB.currentMac
-        let names = Set(types.map { StatusParser.logTypes[$0] ?? "未知(\($0))" })
-        let logs = DB.readLogs(mac).filter { names.contains($0.typeName) }
-        return Result(title: "按类型: " + types.map { String($0) }.joined(separator: "/"),
-                      lines: logs.prefix(30).map { String($0.lockTimeStr.prefix(16)) + " " + $0.typeName })
-    }
-    static func memberUsage() -> Result {
-        let l = DB.ledger(DB.currentMac)
-        let rows = DB.members().map { m in
-            let p = l.pwds.filter { $0.owner == m.id }.count
-            let f = l.fps.filter { $0.owner == m.id }.count
-            return "\(m.name): 密码 \(p) · 指纹 \(f)"
-        }
-        return Result(title: "成员凭证用量 (当前锁)", lines: rows)
-    }
-    static func recentFails() -> Result {
-        let ev = DB.failEvents(DB.currentMac).prefix(10)
-        return Result(title: "最近开锁失败", lines: ev.map {
-            Date(timeIntervalSince1970: $0.ts).formatted(.dateTime.month().day().hour().minute()) + " " + $0.msg
-        })
-    }
-}
 
-// ---------- 740 原始报文查看 (hex dump, 常开入口; Debug 友好) ----------
-enum HexDump {
-    static func dump(_ hex: String, lineLen: Int = 32) -> String {
-        var out: [String] = []
-        let s = String(hex.uppercased()).filter { $0.isLetter || $0.isNumber }
-        var i = 0
-        while i < s.count {
-            let start = s.index(s.startIndex, offsetBy: i)
-            let n = min(lineLen, s.distance(from: start, to: s.endIndex))
-            out.append(String(format: "%08d", i) + "  " + String(s[start..<s.index(start, offsetBy: n)]))
-            i += lineLen
-        }
-        return out.isEmpty ? "(无数据)" : out.joined(separator: "\n")
-    }
-}
 
-// ---------- 740 字段解析表: 帧 KLV → 字段名 (名源单一 = 754 协议字段字典) ----------
-enum FrameFields {
-    static func name(cmd: UInt8, key: Int) -> String {
-        let k = cmd == 0x16 ? String(format: "16#%02X", key) : String(format: "#%02X", key)
-        return ProtocolDict.statusFields.first { $0.k == k }?.name ?? String(format: "KLV %02X", key)
-    }
-    static func parse(_ hex: String) -> (header: Int, cmd: UInt8, rows: [(String, String)]) {
-        let f = ZKProtocol.parseResponse(hex)
-        guard f.ok else { return (0, 0, []) }
-        return (f.header, f.cmd, f.klvs.map { (name(cmd: f.cmd, key: $0.key), $0.val) })
-    }
-}
 
 
 // ---------- 397 本机库体自检 ----------

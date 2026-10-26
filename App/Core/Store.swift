@@ -658,7 +658,6 @@ enum DB {
         }
         cache.logs = merged
         set(cache, "kf_logcache_" + mac)
-        HotCache.invalidate(mac)   // 220: 唯一写入口失效热点缓存 (DiagKit 里那句"要接得先定失效策略"定在这)
     }
     static func readLogs(_ mac: String) -> [CachedLog] {
         get(LogCache.self, "kf_logcache_" + mac)?.logs ?? []
@@ -678,7 +677,6 @@ enum DB {
             if kept.count >= 300 { break }
         }
         set(LogCache(at: Date().timeIntervalSince1970 * 1000, logs: kept), "kf_logcache_" + mac)
-        HotCache.invalidate(mac)   // 220: 替换写入同属写入口, 一样作废
     }
 
     /// 日志缓存只为**还在台账里的锁**而写。为什么要在写入口拦一道: 删除设备会按族清掉 kf_logcache_<mac>,

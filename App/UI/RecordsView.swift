@@ -729,7 +729,6 @@ struct RecordsView: View {
 
             if secondaryRowsExpanded {
                 memberChips
-                dropWatchSection
                 lastYearTodayRow
             }
         }
@@ -906,27 +905,7 @@ struct RecordsView: View {
 
     /// 1040 掉电观察行: 采样表里"同一本地日掉电 > 20 个百分点"的日子, 在时间线顶部插一行提示。
     /// 数据只有采样表 (读 03 时落点), 口径 = 本机量到的两个点之差, 不拟合不外推; 无命中时整块不出现。
-    @ViewBuilder
-    private var dropWatchSection: some View {
-        let drops = BatteryCare.bigDropDays(mac, days: 30)
-        if let d = drops.first {
-            Section {
-                Label {
-                    Text("\(d.day) 单日掉电约 \(d.drop)% (\(d.from)% → \(d.to)%) — 建议查一下门体是否被卡住、或电池是否该换")   // 1040 单日掉电约
-                        .fixedSize(horizontal: false, vertical: true)
-                } icon: {
-                    Image(systemName: "battery.25percent").accessibilityHidden(true)
-                }
-                .vkFont(.caption)
-                .foregroundStyle(DS.Palette.warn)
-                if drops.count > 1 {
-                    Text("近 30 天还有 \(drops.count - 1) 天也超过 20%: "
-                         + drops.dropFirst().prefix(3).map { $0.day }.joined(separator: ", "))
-                        .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
-                }
-            }
-        }
-    }
+    // 2026-10-27 二轮精简：dropWatchSection（掉电观察行）已删（bigDropDays 移除）。
 
     /// 654 去年今日: 时间线顶部的偶发入口 —— 同一月日在去年有开门记录时出一行。
     /// 数据源就是本机日志缓存 (≤300 条), 所以只有"这一年里本机读到过"才可能出现; 没读到就不出现, 不假装。
@@ -1886,7 +1865,6 @@ struct RecordsView: View {
     private func loadFromCache() {
         // 220: 首屏走热点缓存 (整份解码结果常驻, 免每次重解 UserDefaults JSON);
         // 缓存由唯一写入口 Store.writeLogs/replaceLogs 作废, 不存在陈旧窗。
-        let cached = HotCache.recent(mac)
         guard !cached.isEmpty else { return }
         // 有过成功读取记录 = 缓存可信, 不再报"未连接"; 从没成功读过才算离线
         render(cached.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw, lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") },
@@ -1922,7 +1900,6 @@ struct RecordsView: View {
                 fresh.forEach { seen.insert($0.idxRaw) }
                 events.append(contentsOf: fresh)
                 DB.writeLogs(kc.mac, fresh)
-                HotCache.invalidate(kc.mac)   // 220: 拉完日志同步热点缓存, 别让预热留着旧数据
                 let lowest = fresh.map { $0.idxRaw }.min() ?? 0
                 guard lowest > 0 else { break }
                 startIdx = lowest - 1

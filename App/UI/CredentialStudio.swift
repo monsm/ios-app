@@ -1499,34 +1499,6 @@ struct TempCodeStudio: View {
                     .padding(.horizontal, DS.Space.gutter)
                     .accessibilityLabel("分享一句话口令")   // 329 分享一句话口令
                 }
-                // 333 首用回执 (⚠ 无 alias 字段, 按时间推断, 标"约")
-                if let r = result, !MemberHub.elderMode, let t = CredentialOrg.firstUse(mac, p: r) {
-                    Label {
-                        Text("约在 \(isoShort(Date(timeIntervalSince1970: t))) 有人用它开过门")   // 333 约在
-                            .fixedSize(horizontal: false, vertical: true)
-                    } icon: {
-                        Image(systemName: "checkmark.seal.fill")
-                    }
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.ok)
-                    .frame(maxWidth: .infinity)
-                    .padding(DS.Space.s)
-                    .variantCallout(DS.Palette.ok, .control, wash: 0.08)
-                    .padding(.horizontal, DS.Space.gutter)
-                } else if result != nil, !MemberHub.elderMode {   // 原来绑了 r 却从没读过
-                    Label {
-                        Text("等待首次使用")   // 333 等待首次使用
-                            .fixedSize(horizontal: false, vertical: true)
-                    } icon: {
-                        Image(systemName: "hourglass")
-                    }
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .frame(maxWidth: .infinity)
-                    .padding(DS.Space.s)
-                    .variantPlate(DS.Palette.surfaceAlt, .control)
-                    .padding(.horizontal, DS.Space.gutter)
-                }
                 if !MemberHub.elderMode {
                     Button("再发一张") {
                         result = nil
@@ -1614,27 +1586,6 @@ struct PwdDetailStudio: View {
                                     .fixedSize(horizontal: false, vertical: true)
                             } icon: {
                                 Image(systemName: "bell.z.fill")
-                            }
-                            .vkFont(.caption)
-                            .foregroundStyle(DS.Palette.warn)
-                        }
-                        .listRowBackground(DS.Palette.warn.opacity(0.06))
-                    }
-                    // 305 老旧巡检: 台账只有**添加**时刻 (Store.rePwd / setPwdPeriod 都不回写 at),
-                    // 所以这句只能说"这条加了多久"; "换没换过值"改查 487 快照有没有改值留档 (见
-                    // CredentialOrg.hasReRecordSnapshot), 两支各说各的实话, 不写成"多少天没换码"。
-                    // 不新增持久化字段去记改值时刻 (swiftshape R3 的合成 Codable 雷区)。
-                    if CredentialOrg.isStalePwd(p) {
-                        Section {
-                            let ageDays = CredentialOrg.pwdAgeDays(p) ?? 0
-                            // 两支文案分别对应"快照里查到过改值留档"与"查不到", 都不说"多少天没换码"
-                            let reChanged = false   // 2026-10-26: 版本历史已删
-                            let staleNotice = reChanged ? "添加于约 \(ageDays) 天前 (台账只记添加时刻); 本机快照里查到过改值留档, 仍建议换一枚新码 (约)" : "添加于约 \(ageDays) 天前, 台账无改值时刻、本机快照里也没查到换码留档 (约)"
-                            HStack(spacing: DS.Space.s) {
-                                Label(staleNotice, systemImage: "clock.arrow.circlepath")
-                                    .fixedSize(horizontal: false, vertical: true)
-                                    .accessibilityLabel(staleNotice)
-                                Spacer(minLength: 0)
                             }
                             .vkFont(.caption)
                             .foregroundStyle(DS.Palette.warn)

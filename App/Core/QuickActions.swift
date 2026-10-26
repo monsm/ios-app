@@ -16,8 +16,6 @@ final class QuickActionDelegate: NSObject, UIApplicationDelegate {
     /// 既有崩溃风险又有重复注册风险。挪到这里: 每进程恰好一次, 且在启动窗口内。
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // 2026-10-14: 无条件注册 (注册须在启动窗口内且很轻); 排期由开关决定, 见 registerChargeBackup。
-        BackupStudio.registerChargeBackup()
         DB.migrateSecretsToKeychain()
         DB.hydrateMacOrders()   // 0x88 包络 MAC 字节序: 把已裁定的顺序灌回协议层 (2026-10-17)
         return true

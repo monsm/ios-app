@@ -619,13 +619,6 @@ final class AppState: ObservableObject {
     func onLaunch() {
         // 758 启动提示: 上次异常退出时先给一张时刻卡 —— 此前只有走进诊断页才看得到那条标签,
         // "启动时提示"这一半不存在。防重键带档案首行 (含检测时刻), 同一次异常只弹一次。
-        if CrashGuard.pendingAbnormal, let top = CrashGuard.archList().first,
-           !Milestones.onceDone("crash758_" + top) {
-            Milestones.markOnce("crash758_" + top)
-            enqueueMoment(Moment(id: "crash758", icon: "exclamationmark.triangle",
-                                 title: "上次是异常退出",
-                                 subtitle: "时长与最后操作存在诊断页「异常退出档案」里, 进去可以核对。"))   // 758 时长与最后操作存在诊
-        }
         // 2026-10-26: 「保留期到了但先不删」这段已删 —— 它读 SecKey.auditRetention（385 保留期），
         // 而那个键**从来没有写点**（设置页没有保留期选项）⇒ retention 恒 0 ⇒ 整个 if 永不进入。
         // AuditLog().purgeExpired(months:) 因此从未被自动调用过；手动清理入口仍在诊断页，不受影响。
@@ -636,8 +629,6 @@ final class AppState: ObservableObject {
         let cal = WeekCal.gregorian
         let now = Date()
         let year = cal.component(.year, from: now)
-        // 包4: 关怀提醒巡检 (1013 保养到期/1023 指纹头/校时 30 天/1024 防潮/146 固件, 全部本地通知)
-        Task { await CareSchedule.refreshOnLaunch() }
         // 包8: 448 启动自检 (库体哈希 vs 上次快照, 异常挂黄条) + 1018 月度备份日排程
         //       + 428 充电备份 BGTask 注册 (系统择机执行, 不承诺接电即备) + 445 中断迁移检测
         Task { @MainActor in
@@ -733,7 +724,6 @@ struct RootView: View {
     ///   'keyboardShortcut'"), 要挂在 Tab 的**内容视图**上; 只有 `.badge` 才是 Tab 自己的成员。
     @ViewBuilder private var deviceTabContent: some View {
         DeviceHomeView()
-            .onAppear { PageTrace.shown("设备") }
             .keyboardShortcut("1", modifiers: .command)
     }
     @ViewBuilder private var credentialsTabContent: some View {
@@ -742,7 +732,6 @@ struct RootView: View {
         // selPwds/selFps/otpPwd 仍是上一把锁的值, 批量停用会打到错锁。
         CredentialsView().id(app.currentMac)
             .safeAreaInset(edge: .top, spacing: 0) { bleStatusStrip(app: app, sense: sense) }
-            .onAppear { PageTrace.shown("凭证") }
             .keyboardShortcut("2", modifiers: .command)
     }
     @ViewBuilder private var recordsTabContent: some View {
@@ -751,13 +740,11 @@ struct RootView: View {
         // 不触发 → groups/allRows 仍是旧锁行, :1187 的认领会把旧锁 idxRaw 记到新锁键下。
         RecordsView().id(app.currentMac)
             .safeAreaInset(edge: .top, spacing: 0) { bleStatusStrip(app: app, sense: sense) }
-            .onAppear { PageTrace.shown("记录") }
             .keyboardShortcut("3", modifiers: .command)
     }
     @ViewBuilder private var settingsTabContent: some View {
         SettingsView()
             .safeAreaInset(edge: .top, spacing: 0) { bleStatusStrip(app: app, sense: sense) }
-            .onAppear { PageTrace.shown("设置") }
             .keyboardShortcut("4", modifiers: .command)
     }
 
@@ -913,13 +900,9 @@ struct RootView: View {
         app.launchBootstrapped = true
         // 547/758 异常退出档案: 这四个函数此前全库零调用, 整条链路从未跑过。
         // 顺序要紧: 先按上次的标记判定异常退出, 再为本次会话打点。
-        CrashGuard.checkAbnormalExit()
-        CrashGuard.markSessionStart()
         app.onLaunch()
         // 215 启动预算 / 224 启动预热: 两个引擎此前全库零调用。
         // Prewarm 只做本地键位与热点缓存读取, 不碰 BLE —— 不会在启动时偷偷发起连接。
-        StartupTrace.mark("onLaunch 结束")
-        Prewarm.run(mac: app.currentMac)
         // 2026-10-26: 两件事从已失效的 .onChange(of: app.appUnlocked) 搬来这里。
         // 冷启动必跑（原入口的触发条件"appUnlocked 变为 true"在删掉启动门禁后永不成立）。
         app.restoreLastTab()          // 161: 回到上次停留的 Tab（内部见 pendingRoute 就避让）
@@ -927,9 +910,6 @@ struct RootView: View {
         let selfCheckBad = app.runSelfCheck397()
         if selfCheckBad > 0 {
             app.showToast("本机自检发现 \(selfCheckBad) 项异常，详见「设置-诊断」")   // 397 本机自检发现
-        }
-        if StartupTrace.overBudget {
-            app.lock.log("warn", "启动耗时 \(Int(StartupTrace.totalMs))ms, 超 800ms 预算")   // 215 启动耗时
         }
         RootView.registerHost(app)   // 包2: LinkSense 宿主注册 + 回连/巡检循环
         LinkSense.shared.coldStartScan()   // 包2/134 冷启动先扫描 (定位可见锁, 不连接)
@@ -990,7 +970,6 @@ struct RootView: View {
         .onChange(of: app.tabSelection) { _, new in
             // 280 起点: 只在采集开着时记时间戳 (关着就等于零成本)。深链/意图造成的切换同样会记一次,
             // 因为对用户而言那也是一次"页面打开"。
-            PageTrace.markNav(to: new)
         }
         // 2026-10-26: 这里原本是 `.onChange(of: app.appUnlocked)`，承接三件事：
         //   · 解锁后 restoreLastTab() —— 回到上次停留的 Tab
@@ -1091,7 +1070,6 @@ struct RootView: View {
             // 来电、Face ID 系统弹窗) 也当退后台 —— 会误记锁定到期时刻 (反复下拉可无限顺延宽限),
             // 还会提前清掉崩溃标记 (随后真崩溃被判成"正常退出")。.inactive 只收起过期的快捷条。
             // 221 退后台收尾: 记会话时长并清崩溃标记 (CrashGuard 的判定就依赖这一步)
-            CrashGuard.markCleanExit()
             AutoOpenController.shared.onBackground()
             // 2026-10-26: 访客区/临时授权在这里收回。
             // 原来由 .onChange(of: app.appUnlocked) 在"锁落下"时收 —— 但启动门禁删掉后
@@ -1103,7 +1081,6 @@ struct RootView: View {
             // .inactive: 只收起过期的快捷条, **不**记锁定到期时刻 (否则反复下拉通知中心可无限顺延宽限)。
             // 但崩溃标记仍要清 —— 从任务切换器强退时进程多在 .inactive 被 SIGKILL,
             // 只在 .background 清会把正常强退误报成"异常退出"。
-            CrashGuard.markCleanExit()
             // 2026-10-14: .inactive 也要停自动开锁的武装态与加速度计 (下拉通知中心/来电/系统弹窗期间
             // AUTOOPEN 不该继续武装并喂传感器); 锁定计时与崩溃标记的取舍见上。
             AutoOpenController.shared.onBackground()

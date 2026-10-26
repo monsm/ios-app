@@ -670,7 +670,6 @@ struct DeviceHomeView: View {
             heroNoticeRow(icon: "battery.25percent", text: "该喂电了, 别让它饿着", tint: DS.Palette.warn)
         } else if !LockArchive.isVerified(kc.mac) {
             heroNoticeRow(icon: "checkmark.seal", text: "链路待验证 · 成功开一次锁即打标", tint: DS.heroFg)
-        } else if isCurrent, BatteryCare.isColdSeason {
             heroNoticeRow(icon: "thermometer.snowflake", text: "低温季: 电池续航会缩短, 多留意电量", tint: DS.heroFg)
         }
     }
@@ -877,9 +876,6 @@ struct DeviceHomeView: View {
             }
         }
         // 1023 指纹头清洁: 连续 3 次指纹识别告警
-        if let mac = app.current?.mac, BatteryCare.fpCleanNeeded(mac) {
-            out.append(("连续 3 次指纹识别告警 — 指纹头可能脏了, 擦拭后再试", "drop.fill", .warn))
-        }
         return out
     }
 

@@ -107,12 +107,6 @@ struct RecDetailSheet: View {
             // 592 已经会把"同日同类型连续 ≥3 条"折成一行；917 原句还要把同一分钟的多次并成 "+2"，
             // 那会让界面条数不再等于真实事件数 —— 与 749 刚定的"记录完整性对账"直接冲突，所以只在详情注一句。
             let stamp = String(rec.timeStr.prefix(16))
-            let sameMinute = rec.timeStr.count >= 16 ? siblings.filter { o in
-                o.mac == rec.mac && o.key != rec.key && String(o.timeStr.prefix(16)) == stamp
-            }.count : 0
-            if sameMinute > 0 {
-                fieldRow("同一分钟另有", "\(sameMinute) 条 (只在详情注明；时间线不并行，条数仍等于事件数)")
-            }
             if !rec.cred.isEmpty { fieldRow("凭证维度", rec.cred + " (约)") }
             // 797 陪同进入疑似: 同一凭证 (临时码/密码) 在 5 分钟窗口内被**不同成员**用过的后续行。
             // 只看行上已算好的可证明归属 (whoId) 与凭证维度 —— 短窗是启发式, 所以文案带"疑似";

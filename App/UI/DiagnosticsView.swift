@@ -12,13 +12,11 @@ struct DiagnosticsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var debugRaw = DB.store.getBool("kf_debug_raw")
     @State private var copied = false
-    @State private var dumpedLine: LogLine?   // 740 原始报文 hex dump 的当前行
     @State private var results: [HealthCheckItem] = []   // 149 体检结果
     @State private var score = 0
     @State private var integrityReport: [String] = []    // 750 完整性自查输出
     // 397 的结果不放本页 @State: 解锁时跑的那一次存在 AppState, 手动按钮也写同一处, 避免两份状态各说各话
     @State private var logLevelFilter = ""               // 153 级别过滤: "" / info / warn / error
-    @State private var pageTraceOn = PageTrace.isOn      // 280 采集开关 (默认关)
     @State private var logQuery = ""                     // 154 关键词高亮
     // 542 时间窗刷选: 拖动选中的小时段 (nil = 不筛); winDragging 区分"按下起点"与"拖到终点"
     @State private var winFrom: Int? = nil
@@ -523,37 +521,7 @@ struct DiagnosticsView: View {
 
             // 2026-10-26 精简：「空间回收建议」整节已删（用户确认）。
 
-            // 280 性能面板 (自统计, 默认关) + 215 冷启动打点
-            Section("性能面板") {   // 215/280 性能面板
-                VariantToggle("采集页面打开耗时", isOn: Binding(
-                    get: { pageTraceOn },
-                    set: { PageTrace.setOn($0); pageTraceOn = $0 }))
-                Text("口径: 从切 Tab 到该页出现之间走过的墙钟时间。只是参考下界 —— SwiftUI 的布局与绘制不完全落在这两点之间, 也不含蓝牙。")
-                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-                let rows = PageTrace.entries()
-                if pageTraceOn && rows.isEmpty {
-                    Text("还没攒到样本：切一次页再回来看。配不上起点、或超过 3 秒的样本一律直接丢弃，不猜数。")
-                        .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                ForEach(rows.reversed()) { r in
-                    LabeledRow(r.name, "\(r.ms) ms · \(PageTrace.clock(r.at))")
-                }
-                if !rows.isEmpty {
-                    Button("清空样本") { PageTrace.clear() }
-                        .vkFont(.footnote).foregroundStyle(DS.Palette.accentText)
-                }
-                // 215 全仓只有这一处打点, 所以标题不写成"各阶段"
-                if let launch = StartupTrace.ms("onLaunch 结束") {
-                    LabeledRow("冷启动到 onLaunch 排完",
-                               "\(Int(launch)) ms" + (StartupTrace.overBudget ? " · 超 800ms 预算" : " · 在 800ms 预算内"))
-                } else {
-                    Text("本次启动没记录到 onLaunch 结束打点，没有数就不编数。")   // 215 本次启动没记录到
-                        .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
+            // 2026-10-27 二轮精简：性能面板区已删（PageTrace/StartupTrace/ScanStats）。
 
             Section {
                 VariantToggle("记录原始收发 hex", isOn: Binding(
@@ -683,54 +651,7 @@ struct DiagnosticsView: View {
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            // 748 连接成功率 + 756 失败原因分类: 数据源是 BleTelemetry 已留存的真实尝试 (上限 300 条)。
-            // 无记录就明说"尚无", 不画 100% 假基线; 口径写"已留存 N 次"而不是滚动天数。
-            // 86 失败快照 + 277 看门狗自恢复累计 (同一节, 都是"异常留痕"的读数)
-            // 86 失败快照
-            // 277 失败快照
-            // 285 失败快照
-            Section("失败快照 · 会话自恢复 · 扫描时长") {
-                // 285 扫描时长自查: 近 7 天每日扫描秒数 + 基于真实累计的省电建议
-                let scans = ScanStats.recent(days: 7)
-                if !scans.isEmpty {
-                    // 2026-10-13 run 63: 原来把 map/joined 全内联进 Text 的字符串拼接, 报 type-check 超时。
-                    // 先算好字符串再拼。
-                    let scanText = scans.map { s in
-                        String(s.day.suffix(5)) + " " + String(Int(s.secs)) + "s"
-                    }.joined(separator: " · ")
-                    Text("扫描时长: " + scanText)
-                        .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Text(ScanStats.advice())
-                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-                LabeledRow("会话自恢复", "\(DB.store.getInt("kf_wd_heals", 0)) 次")   // 277 会话自恢复
-                Text("会话假死被巡检判定并重新握手成功的累计次数; 明细在运行日志的「会话重协商」行。")   // 275/131 会话假死被巡检判定并
-                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-                let snaps = DB.failEvents(app.currentMac).prefix(10)
-                if snaps.isEmpty {
-                    Text("还没有失败留痕 — 每次开锁失败会在这里留下信号/电量/错误码 (早先的旧记录只有原因文案)。")
-                        .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                } else {
-                    ForEach(Array(snaps.enumerated()), id: \.offset) { _, s in
-                        VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                            Text(Date(timeIntervalSince1970: s.ts).formatted(date: .abbreviated, time: .shortened)
-                                 + " · " + s.msg)
-                                .vkFont(.caption).foregroundStyle(DS.Palette.text)
-                                .fixedSize(horizontal: false, vertical: true)
-                            let bits = [s.rssi.map { "RSSI \($0) dBm" },
-                                        s.pct.map { "电量 \($0)%" },
-                                        s.rc.map { "rc \($0)" }].compactMap { $0 }
-                            Text(bits.isEmpty ? "该条为旧记录, 当时未留信号/电量/错误码" : bits.joined(separator: " · "))
-                                .vkFont(.caption2)
-                                .foregroundStyle(bits.isEmpty ? DS.Palette.textSub : DS.Palette.warn)
-                        }
-                    }
-                }
-            }
+            // 2026-10-27 二轮精简：性能面板区已删（PageTrace/StartupTrace/ScanStats）。
             Section("连接成功率") {   // 748 连接成功率
                 if let rate = BleTelemetry.successRate() {
                     HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
@@ -925,20 +846,6 @@ struct DiagnosticsView: View {
                             .vkFont(.caption.monospaced())
                             .textSelection(.enabled)
                             .fixedSize(horizontal: false, vertical: true)
-                            // 740 原始报文查看: HexDump 此前全库无消费者, 这里接成长按入口 (用菜单而非点击,
-                            // 不与 textSelection 抢手势)
-                            .contextMenu {
-                                Button { dumpedLine = row } label: {
-                                    Label("查看原始报文", systemImage: "text.alignleft")
-                                }
-                                .disabled(Self.hexOf(row.line).isEmpty)
-                                if !Self.hexOf(row.line).isEmpty {
-                                    // 有完整帧就按完整帧报字节数; 只报脱敏残片会让人以为帧只有 2 字节
-                                    Text("该行帧约 \(max(Self.hexOf(rawFrame(of: row.line)), Self.hexOf(row.line)).count / 2) 字节"
-                                        + (rawFrame(of: row.line).isEmpty ? " (仅帧头留存)" : ""))
-                                        .vkFont(.caption2)
-                                }
-                            }
                         if !ents.isEmpty {
                             HStack(spacing: DS.Space.xs) {
                                 ForEach(ents) { e in
@@ -966,46 +873,7 @@ struct DiagnosticsView: View {
                 }
             }
         }
-        .sheet(item: $dumpedLine) { row in
-            VStack(alignment: .leading, spacing: DS.Space.s) {
-                Text("原始报文").vkFont(.headline).foregroundStyle(DS.Palette.text)   // 740 原始报文
-                Text(row.line).vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
-                    .lineLimit(2).fixedSize(horizontal: false, vertical: true)
-                ScrollView {
-                    // 优先展示内存里的完整帧 (此前这里只会 dump 日志行的脱敏残片 = 帧头 4 位,
-                    // 一个 40+ 字节的帧只剩 2 字节, "查看原始报文"名不副实)
-                    let hx = rawFrame(of: row.line).isEmpty ? Self.hexOf(row.line) : rawFrame(of: row.line)
-                    let pf = FrameFields.parse(hx)   // 740 字段解析
-                    VStack(alignment: .leading, spacing: DS.Space.s) {
-                        // 完整帧 (含 skey/ekey/PIN 明文): 录屏遮罩已随本轮删减移除,
-                        // 这条 374 防护不再有 —— 界面照常显示, 但复制走仍是刻意禁止的 (见下)。
-                        Text(HexDump.dump(hx))
-                            .vkFont(.caption.monospaced())
-                            .foregroundStyle(DS.Palette.text)
-                            // 刻意不给 textSelection: 完整帧里带 skey/ekey/PIN 明文, 可以看不可以复制走
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        if !pf.rows.isEmpty {
-                            Text(String(format: "字段解析 — 帧头 %dB · cmd 0x%02X", pf.header, pf.cmd))   // 740 字段解析
-                                .vkFont(.footnote).foregroundStyle(DS.Palette.textSub)
-                            ForEach(Array(pf.rows.enumerated()), id: \.offset) { _, f in
-                                LabeledRow(f.0, f.1)
-                            }
-                        }
-                    }
-                    .padding(DS.Space.m)
-                }
-                Text(rawFrame(of: row.line).isEmpty
-                     ? "这一行没有可还原的完整帧 (只留了脱敏后的帧头)。"
-                     : "完整帧含密钥与口令明文：只在屏幕显示，不能选中复制，也不写进任何报告或导出。请别截图外传。")
-                    .vkFont(.caption2)
-                    .foregroundStyle(rawFrame(of: row.line).isEmpty ? DS.Palette.textSub : DS.Palette.warn)
-                    .fixedSize(horizontal: false, vertical: true)
-                Button("完成") { dumpedLine = nil }
-                    .buttonStyle(PrimaryActionStyle())
-            }
-            .padding(DS.Space.l)
-            .presentationDetents([.medium, .large])
-        }
+        // 2026-10-26 二轮精简：原始报文 hex dump sheet 已删（diagnostic.hex）。
         // 543 实体跳转: 弹出本机台账元数据。LedgerPwd.pwd 存的是口令明文, 只读备注/属主/有效期这些元数据字段
         .sheet(item: $entityRef) { ref in
             VStack(alignment: .leading, spacing: DS.Space.s) {
@@ -1099,15 +967,6 @@ struct DiagnosticsView: View {
         if line.contains("[warn]") { return DS.Palette.warn }
         return DS.Palette.text
     }
-    // 2026-10-26 精简：cmdTone 已删（「指令流水」整节移除后无消费者）。
-    private static func hexOf(_ line: String) -> String {
-        guard let r = line.range(of: "hex=") else { return "" }
-        var out = ""
-        for c in line[r.upperBound...] {
-            if c.isHexDigit { out.append(c) } else { break }
-        }
-        return out
-    }
 
     private struct LogLine: Identifiable {
         let id: String
@@ -1151,16 +1010,6 @@ struct DiagnosticsView: View {
         return Int(line[r.upperBound...].prefix { $0.isNumber })
     }
 
-    /// 740: 完整帧只存在于 LockService.recentFrames (内存环形, 不写盘)。
-    /// 日志行是脱敏后的版本 (`hex=ABCD(n 位已隐去)`), 所以用"脱敏后是否等于该行"反查原帧 —— 这是精确匹配, 不靠时间猜。
-    ///
-    /// 2026-10-26 补两条边界（不写清会让排障的人以为"帧丢了"是 bug）：
-    ///   · **容量 60 条**（`LockService.recentFrames` 的 removeFirst 那一行），超出后最早的被丢弃；
-    ///   · **重启 App 后全部丢失** —— 之后只能看脱敏帧头，永远点不开完整帧。
-    /// 这是刻意取舍：完整帧带 skey/ekey/PIN 明文，落盘等于把密钥写在磁盘上。
-    private func rawFrame(of line: String) -> String {
-        app.lock.recentFrames.first { Redact.frameHex($0) == line } ?? ""
-    }
 
     /// 543: 可见行里含实体引用的行数 (与 logRows 同一份过滤结果, 不用全库计数骗眼睛)
     private var entityRows: Int {

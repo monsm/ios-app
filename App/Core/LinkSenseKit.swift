@@ -104,7 +104,6 @@ final class LinkSense: ObservableObject {
             try await ble.startScan(allowDuplicates: true, timeoutMs: timeoutMs)
             defer {
                 ble.stopScan()
-                ScanStats.record(seconds: Date().timeIntervalSince(t0))   // 285: 也计入扫描时长
             }
             let deadline = Date().addingTimeInterval(Double(timeoutMs) / 1000.0)
             var hits = Set<String>()
@@ -452,7 +451,6 @@ final class LinkSense: ObservableObject {
         try await ble.startScan(timeoutMs: timeoutMs)
         defer {
             ble.stopScan()
-            ScanStats.record(seconds: Date().timeIntervalSince(scanT0))   // 285
         }
         let target = mac.lowercased()
         let deadline = Date().addingTimeInterval(Double(timeoutMs) / 1000.0)
@@ -510,7 +508,6 @@ final class LinkSense: ObservableObject {
                 let p = BLEService.ScanProfile.current
                 let t0 = Date()
                 try await ble.startScan(allowDuplicates: p.allowDuplicates, timeoutMs: p.timeoutMs)
-                defer { ScanStats.record(seconds: Date().timeIntervalSince(t0)) }   // 285: 冷启动扫描也计入
                 // 128 修正: startScan 是"启动即返回"的窗口式 API, 旧写法紧接着读 allDiscovered() 恒读到 ~0 台
                 // (委托回调还没进来) ⇒ 拥挤度结论一直在说"未见 BLE 设备"。这里把窗口等满再读数,
                 // 顺带量出"首台可见耗时" —— 首次发现越晚, 说明 2.4G 侦听窗口被挤得越厉害, 这才是拥挤度那一半。

@@ -333,8 +333,10 @@ for (const im2 of svSrc.matchAll(reIconBg)) {
   push('both', 'white', `图标预览 ${label}.B`, 4.5, '预览块上的白符号压写死渐变暗端', 0xFFFFFF, parseInt(im2[2], 16));
 }
 if (iconHits === 0) {
-  console.error('✗ 没从 SettingsView.swift 解析到图标预览底色 — 预览块与白符号的搭配失去机检');
-  process.exit(1);
+  // 2026-10-27 二轮: 备选 App 图标选择区已删（settings.appearance.icon），预览块不存在了。
+  // 与节日色同一条纪律 —— 检查休眠而非移除：若将来 IconOption 预览块被加回来，
+  // 上面的 matchAll 会重新命中，无需改代码。
+  console.log('图标预览: 功能已移除 (SettingsView 无 IconOption 预览块), 本条检查休眠');
 }
 
 // ---------- 求值 ----------

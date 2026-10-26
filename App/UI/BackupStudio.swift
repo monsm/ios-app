@@ -23,9 +23,7 @@ struct WebDAVStudioView: View {
     }
     @State private var entries: [BackupStudio.RemoteEntry] = []
     @State private var testResult = ""
-    @State private var dryRunResult = ""
     @State private var hint830 = false          // 830 首次连通成功的一次性加密说明条
-    @State private var rotateMsg = ""
     @State private var rotPw = ""
     @State private var busy = false
     @State private var showRotate = false
@@ -110,7 +108,7 @@ struct WebDAVStudioView: View {
                                         .vkFont(.caption)
                                         .foregroundStyle(DS.Palette.accentText)
                                         .frame(minHeight: DS.Hit.min)
-                                    Button("演练") { dryRun(e) }   // 436 演练
+                        // 2026-10-27 二轮精简：该入口已删。
                                         .vkFont(.caption)
                                         .foregroundStyle(DS.Palette.warn)
                                         .frame(minHeight: DS.Hit.min)
@@ -127,9 +125,7 @@ struct WebDAVStudioView: View {
                     Button("刷新列表") { Task { await refresh() } }
                         .vkFont(.subheadline)
                         .foregroundStyle(DS.Palette.accentText)
-                    if !dryRunResult.isEmpty {
-                        Text(dryRunResult).vkFont(.caption).foregroundStyle(DS.Palette.warn)
-                    }
+                // 2026-10-27 二轮精简：该提示行已删（对应功能整套移除）。
                 }
                 Section("策略与密钥") {
                     Button("上传当前备份 (含口令加密)") { upload() }
@@ -142,9 +138,7 @@ struct WebDAVStudioView: View {
                         .foregroundStyle(DS.Palette.warn)
                         .frame(minHeight: DS.Hit.min)
                         .disabled(rotPw.isEmpty)
-                    if !rotateMsg.isEmpty {
-                        Text(rotateMsg).vkFont(.caption).foregroundStyle(DS.Palette.textSub)
-                    }
+                // 2026-10-27 二轮精简：该提示行已删（对应功能整套移除）。
                     Text("口令每次输入不落盘; 轮换后旧口令即失效, 请用新口令访问。")   // 237 口令每次输入不落盘
                         .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
@@ -167,7 +161,7 @@ struct WebDAVStudioView: View {
                 appPw = DB.store.getString("kf_cloudcfg_app")
             }
             .confirmationDialog("密钥轮换", isPresented: $showRotate) {   // 237 密钥轮换
-                Button("轮换") { rotate() }
+                        // 2026-10-27 二轮精简：该入口已删。
                 Button("取消", role: .cancel) { }
             } message: {
                 Text("将用新口令重新加密远端备份并替换。旧口令随即失效。")
@@ -269,25 +263,7 @@ struct WebDAVStudioView: View {
         app.showToast("恢复完成: 新增 \(r.imported), 覆盖 \(r.overwritten)")
         pendingDL = nil
     }
-    private func dryRun(_ e: BackupStudio.RemoteEntry) {
-        busy = true
-        Task {
-            dryRunResult = await BackupStudio.dryRunRemote(acct: acct, appPw: appPw,
-                                                          root: root, name: e.name, password: BackupPassphrase.current)
-            busy = false
-        }
-    }
-    private func rotate() {
-        guard !BackupPassphrase.current.isEmpty, !rotPw.isEmpty, BackupPassphrase.current != rotPw else {
-            app.showToast("需填旧口令(加密口令)与新口令"); return   // 237 需填旧口令
-        }
-        busy = true
-        Task {
-            rotateMsg = await BackupStudio.rotateKey(acct: acct, appPw: appPw,
-                                                     root: root, oldPw: BackupPassphrase.current, newPw: rotPw)
-            busy = false
-        }
-    }
+            // 2026-10-27 二轮精简：密钥轮换按钮已删（rotateKey/dryRunRemote 整套移除）。
 }
 
 struct UIImageShareItem: Transferable {
