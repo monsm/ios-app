@@ -10,6 +10,10 @@ import XCTest
 import Foundation
 @testable import OfflineLock
 
+/// 2026-10-26: 本类测的 MobileKeyService / DefendService / BackupPassphrase / TrialGuard
+/// 都是 @MainActor 隔离的（它们直接读写 AppState 与 SwiftUI 状态），
+/// 而 XCTestCase 子类默认非隔离 ⇒ 加 @MainActor 让测试方法与被测对象在同一隔离域。
+@MainActor
 final class NewModulesTests: XCTestCase {
 
     override func setUp() {
