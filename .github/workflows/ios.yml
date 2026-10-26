@@ -150,6 +150,9 @@ jobs:
       - name: 'Swift 语法形状机检 (判失败: S1 for-in 头逗号 / S2 带标签尾随闭包后接非花括号 / S3 裸美元符 / S4 参数名后属性缺冒号; 正控 fixtures/swiftsyn)'
         run: node tools/swiftsyn.js
 
+      - name: '顶层成员闸门 (判失败: 成员必须在类型内部 —— 括号平衡抓不到这一半)'
+        run: node tools/toplevel.js
+
       - name: '更新说明对账 (43/44: 每条必须能查到实现证据, 否则判失败)'
         run: node tools/changelogcheck.js
 

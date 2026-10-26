@@ -79,24 +79,6 @@ enum AXFlags {
     /// 866 极限字号自检: 诊断开关, 以 200% 字号预览关键页 (仅自检用)
     static var bigPreview: Bool { DB.store.getBool("kf_ax_bigpreview") }
 }
-    static let notConnected = "未连接"
-    static let records = "开门记录"
-
-    /// 850 时间线自然语: "今天 14:02, 张三用指纹开了门" — 字段不堆叠, 拼成一句人话
-    static func rowSentence(dayKey: String, time: String, title: String,
-    /// 850 时间线自然语: "今天 14:02, 张三用指纹开了门" — 字段不堆叠, 拼成一句人话
-    static func rowSentence(dayKey: String, time: String, title: String,
-                           warn: Bool, isToday: Bool, dayLabel: String) -> String {
-        let when = isToday ? "今天 \(time)" : "\(dayLabel) \(time)"
-        let s = when + ", " + title
-        return warn ? "告警记录, " + s : s
-    }
-                           warn: Bool, isToday: Bool, dayLabel: String) -> String {
-        let when = isToday ? "今天 \(time)" : "\(dayLabel) \(time)"
-        let s = when + ", " + title
-        return warn ? "告警记录, " + s : s
-    }
-
 // ---------- 863 反转保护色: 降级底走中性色, 避免品牌渐变成"负片" ----------
 // 第八十三批实测更正: 原实现把两端写死成"近白 0xF5F7FB → 近黑 0x0B0F18", 而前景 heroFg 取随明暗的
 // Palette.text, 于是浅色档下 ink 压近黑端 = 1.06:1, 深色档下近白字压近白端 = 1.01:1 ——
@@ -145,6 +127,18 @@ enum AXTerms {
     static let otp = "临时码"
     static let battery = "电量"
     static let firmware = "固件"
+    static let lockClock = "锁钟"
+    static let connected = "已连接"
+    static let notConnected = "未连接"
+    static let records = "开门记录"
+
+    /// 850 时间线自然语: "今天 14:02, 张三用指纹开了门" — 字段不堆叠, 拼成一句人话
+    static func rowSentence(dayKey: String, time: String, title: String,
+                           warn: Bool, isToday: Bool, dayLabel: String) -> String {
+        let when = isToday ? "今天 \(time)" : "\(dayLabel) \(time)"
+        let s = when + ", " + title
+        return warn ? "告警记录, " + s : s
+    }
 
     /// 856 盲文简写表: 数值/状态类控件的 accessibilityValue 走简写, 降低盲文转译音节
     static func br(_ s: String) -> String {

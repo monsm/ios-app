@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-26T09:25:34.239Z",
+    "generated": "2026-10-26T09:33:02.879Z",
     "sources": [
       {
         "scout": "android-native",
@@ -5021,7 +5021,7 @@ const DATA = {
           "line": 144,
           "symbol": "orderedDevices(_:)",
           "note": "默认锁置顶 + 手工顺序",
-          "text": "let o = orderMacs"
+          "text": "let def = defaultMac"
         },
         {
           "platform": "ios",
@@ -5029,7 +5029,7 @@ const DATA = {
           "line": 160,
           "symbol": "grouped(_:)",
           "note": "未分组永远排最后",
-          "text": "var names = [String]()"
+          "text": "for kc in devices {"
         },
         {
           "platform": "ios",
@@ -5037,7 +5037,7 @@ const DATA = {
           "line": 176,
           "symbol": "setOrder(_:)",
           "note": "剪掉已解绑的 mac",
-          "text": "// 写侧剪掉已解绑的 mac: 顺序表是全局键, 删设备那一步 (Store.removeDevice) 删不到按键名含 mac 的"
+          "text": "let alive = Set(DB.keychains().map { $0.mac })"
         }
       ],
       "platformEvidence": {
@@ -42736,7 +42736,7 @@ const DATA = {
           "line": 263,
           "symbol": "LockStats",
           "note": "",
-          "text": "/// (`recentRecords` 曾自己写了 `7||13||224`，漏掉 6 低电量与 10 试错锁定)。口径只留 StatsKit 一份。"
+          "text": "static var alarmTypes: Set\u003cInt> { StatsKit.alarmTypes }"
         },
         {
           "platform": "ios",
@@ -46829,7 +46829,7 @@ const DATA = {
           "line": 332,
           "symbol": "MaintenanceItem",
           "note": "",
-          "text": "var set = Set\u003cString>()"
+          "text": "return set"
         },
         {
           "platform": "ios",
@@ -46837,7 +46837,7 @@ const DATA = {
           "line": 330,
           "symbol": "recentAlarmMacs(_:)",
           "note": "",
-          "text": "static func recentAlarmMacs(_ usages: [LockUsage]? = nil) -> Set\u003cString> {"
+          "text": "var set = Set\u003cString>()"
         }
       ],
       "platformEvidence": {
@@ -46908,7 +46908,7 @@ const DATA = {
           "line": 269,
           "symbol": "windowDays",
           "note": "",
-          "text": "static func snapAt(_ mac: String) -> Double {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -46986,7 +46986,7 @@ const DATA = {
           "line": 239,
           "symbol": "LockUsage",
           "note": "",
-          "text": "var mac: String"
+          "text": "var opens30d: Int = 0        // 开门类 (type 1-5)"
         },
         {
           "platform": "ios",
@@ -46994,7 +46994,7 @@ const DATA = {
           "line": 284,
           "symbol": "usage()",
           "note": "",
-          "text": "let testKeys = RecordSearch.testMarkedKeys"
+          "text": "var u = LockUsage(mac: kc.mac, name: LockArchive.displayName(kc))"
         },
         {
           "platform": "ios",
@@ -47002,7 +47002,7 @@ const DATA = {
           "line": 304,
           "symbol": "logged",
           "note": "logged = !logs.isEmpty",
-          "text": "u.snapAt = snapAt(kc.mac)"
+          "text": "// 773: 优先锁侧真值 (容量-剩余=已用), 台账计数兜底"
         }
       ],
       "platformEvidence": {
@@ -50620,7 +50620,7 @@ const DATA = {
           "line": 259,
           "symbol": "alarmRate",
           "note": "",
-          "text": "@MainActor"
+          "text": "/// 第一百五十七批：这两组类型集合原本在 `StatsKit.swift:9-10` 与这里各抄一份 (值相同)。"
         }
       ],
       "platformEvidence": {
@@ -69332,7 +69332,7 @@ const DATA = {
           "line": 138,
           "symbol": "AXPrefs",
           "note": "",
-          "text": "}"
+          "text": "let when = isToday ? \"今天 \\(time)\" : \"\\(dayLabel) \\(time)\""
         }
       ],
       "platformEvidence": {
@@ -71186,7 +71186,7 @@ const DATA = {
           "line": 239,
           "symbol": "biometricAvailable",
           "note": "",
-          "text": "/// 圆形玻璃 (AppLock/门禁盾) 的降级通道"
+          "text": "/// 而不是就地再写一份 glassEffect —— 胶囊没有半径参数，塞进 axGlass(_:) 只能瞎猜一个 r，"
         },
         {
           "platform": "ios",
@@ -71194,7 +71194,7 @@ const DATA = {
           "line": 249,
           "symbol": "reasonText(_:)",
           "note": "",
-          "text": "}"
+          "text": "case circle"
         },
         {
           "platform": "ios",
@@ -71202,7 +71202,7 @@ const DATA = {
           "line": 262,
           "symbol": "verifyBiometricAsync(reason:)",
           "note": "",
-          "text": "@Environment(\\.colorScheme) private var scheme"
+          "text": "// 这条在 Swift 里做不干净 (stackoverflow 上问了很多年)，所以几何映射写两遍、材质判据只留一处:"
         }
       ],
       "platformEvidence": {
@@ -71288,7 +71288,7 @@ const DATA = {
           "line": 106,
           "symbol": "DS.HeroSurface",
           "note": "",
-          "text": "static let invHeroTop    = Color.adaptive(0xF5F7FB, 0x11161F)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -71374,7 +71374,7 @@ const DATA = {
           "line": 83,
           "symbol": "axStackLayout",
           "note": "",
-          "text": "static let records = \"开门记录\""
+          "text": "// 第八十三批实测更正: 原实现把两端写死成\"近白 0xF5F7FB → 近黑 0x0B0F18\", 而前景 heroFg 取随明暗的"
         }
       ],
       "platformEvidence": {
@@ -71446,7 +71446,7 @@ const DATA = {
           "line": 140,
           "symbol": "dbltapGuard",
           "note": "",
-          "text": "enum AXTerms {"
+          "text": "return warn ? \"告警记录, \" + s : s"
         },
         {
           "platform": "ios",
@@ -71454,7 +71454,7 @@ const DATA = {
           "line": 142,
           "symbol": "holdDuration",
           "note": "",
-          "text": "static let credential = \"凭证\"          // 不混用\"密钥/口令\""
+          "text": ""
         },
         {
           "platform": "ios",
@@ -71462,7 +71462,7 @@ const DATA = {
           "line": 204,
           "symbol": "announce(_:)",
           "note": "",
-          "text": "/// 设备是否可用 Face ID / Touch ID 验证本机门禁 (无生物硬件 = false, 该项走 DEFERRED)"
+          "text": "return true"
         },
         {
           "platform": "ios",
@@ -71546,7 +71546,7 @@ const DATA = {
           "line": 160,
           "symbol": "AXTerms",
           "note": "",
-          "text": "// \"不可用\"必须排在\"可用\"前面: 它是\"可用\"的超串, 顺序反了会被替换成\"不ok\""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -71554,7 +71554,7 @@ const DATA = {
           "line": 174,
           "symbol": "rowSentence(...)",
           "note": "",
-          "text": "}"
+          "text": "/// App 内恒开（AXPrefs.doubleHaptic 已于 2026-10-26 删除）; 设备级\"减少触感/振动\"由系统直接拦截, 天然遵循"
         },
         {
           "platform": "ios",
@@ -71562,7 +71562,7 @@ const DATA = {
           "line": 182,
           "symbol": "br(_:)",
           "note": "",
-          "text": "let g = UINotificationFeedbackGenerator()"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -99486,7 +99486,7 @@ const DATA = {
           "line": 71,
           "symbol": "meta(_:)",
           "note": "",
-          "text": "let name: String"
+          "text": "}"
         },
         {
           "platform": "ios",

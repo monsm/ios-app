@@ -57,14 +57,6 @@ struct LockMeta: Codable {
         skin = try c.decodeIfPresent(String.self, forKey: .skin) ?? ""
     }
 }
-    private static let orderKey = "kf_lock_order"
-
-    static func group(_ mac: String) -> String { meta(mac).grp }
-    static let ungroupedLabel = "未分组"
-    private static let orderKey = "kf_lock_order"
-
-    static func group(_ mac: String) -> String { meta(mac).grp }
-
 // ---------- 104/767 分组 ----------
 /// 一组成员: 组名 + 按总顺序排好的锁。Identifiable 用组名当 id (组名在设备管理里就是它的身份)。
 struct LockGroup: Identifiable {
@@ -77,6 +69,12 @@ enum LockArchive {
     static func meta(_ mac: String) -> LockMeta {
         DB.get(LockMeta.self, "kf_lockmeta_" + mac) ?? LockMeta()
     }
+    // ---------- 分组与手工排序的键位 ----------
+    private static let orderKey = "kf_lock_order"
+    /// 未分组锁的显示名（设备页分组筛选用它当哨兵值）
+    static let ungroupedLabel = "未分组"
+    /// 该锁所属分组（空串 = 未分组）
+    static func group(_ mac: String) -> String { meta(mac).grp }
     static func save(_ mac: String, _ m: LockMeta) {
         DB.store.setCodable("kf_lockmeta_" + mac, m)
     }
