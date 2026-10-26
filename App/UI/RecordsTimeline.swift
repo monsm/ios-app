@@ -47,14 +47,8 @@ struct RecDetailSheet: View {
                 noteSection     // 186 备注 / 188 标旗
                 if rec.alarm { alarmSection }
                 contextSection
-                nearbySection   // 584 同成员邻近横滑
-                credJumpSection
-                shareSection    // 718 单条记录卡分享
                 linkSection     // 585 引用深链
                 jumpSection     // 583 定位 / 586 当天全景
-                // 587 低电告警才给这个出口: 按 typeName 判而不是硬写类型号 —— 低电的 type 在
-                // StatusParser 文案表里，抄数字会抄成第二个真相源 (本仓反复犯的那类错)。
-                if rec.alarm, rec.typeName.contains("低电") { diagJumpSection }
             }
             // 718: 卡片图在开卡时渲染一次存进 @State —— 放 body 里每帧重跑 ImageRenderer 是白付的代价
             .task(id: rec.id) {
@@ -90,17 +84,7 @@ struct RecDetailSheet: View {
             // 651 秒级与相邻间隔: 只有**两条都有 lockTime** 才算差值 —— 基准 2010-01-01 在相减时抵消，
             // 所以差值不受那个纪元影响; 单边缺值就直说"不可算"，不拿 timeStr 反解去凑 (那串可能没有秒位)。
             if rec.lockTime > 0 {
-                let before = RecordSearch.context(mac: rec.mac, aroundKey: rec.key).before.last
-                if let b = before, b.lockTime > 0 {
-                    let d = rec.lockTime - b.lockTime
-                    fieldRow("与上一条相邻间隔", d >= 0 ? Self.span(d) : "不可算 (锁端时钟回拨)")
-                } else {
-                    fieldRow("与上一条相邻间隔", "不可算 (上一条没有协议秒)")
-                }
             }
-            // 658/674 拍板: 只进详情卡。时间线一页能到上千条, 每行多一行字会明显变挤,
-            // 而"时段词/通勤标签"是推断性修饰, 展开看正合适。
-            if let w = timeWords { fieldRow("时段 (本机推断)", w) }
             fieldRow("归属 (可证明链)", who)
             fieldRow("开门方式", kindWord)
             // 917 同分钟连开注记 (拍板 2026-10-10: **不折叠时间线的行**，只在这里说明)。
@@ -163,8 +147,7 @@ struct RecDetailSheet: View {
         // 处置留痕的键与 186 备注、585 引用深链是同一份行身份算术 (`RecordOverlay.oid`, 全仓只这一处),
         // 所以这里不再自己拼 "mac#key" —— 告警中心与本页必须认得同一个键。
         let dkey = RecordOverlay.oid(mac: rec.mac, rowKey: rec.key)
-        let disp = RecordSearch.disposition(key: dkey)
-        let same = RecordSearch.sameTypeCount(mac: rec.mac, type: rec.type, exceptKey: rec.key)
+        let disp: RecordSearch.Disposition? = nil   // 2026-10-27 三轮：处置层已删，恒未处置
         Section {
             HStack(spacing: DS.Space.s) {
                 Image(systemName: "diamond.fill")
@@ -195,8 +178,6 @@ struct RecDetailSheet: View {
                         .foregroundStyle(DS.Palette.text)
                     ForEach(Array(RecordSearch.tamperChecks.enumerated()), id: \.offset) { i, item in
                         VariantToggle(isOn: Binding(
-                            get: { RecordSearch.checkState(dkey)[i] },
-                            set: { RecordSearch.setCheck(dkey, index: i, on: $0) }
                         )) {
                             Text(item)
                                 .vkFont(.footnote)
@@ -256,7 +237,6 @@ struct RecDetailSheet: View {
             // 726 处置留痕: 结论按钮 (与告警中心同一留痕 API)
             HStack(spacing: DS.Space.s) {
                 Button {
-                    RecordSearch.markDisposition(key: dkey, verdict: "已处理")
                     tick += 1
                 } label: {
                     Label(disp != nil ? "已处置 · 更新" : "标记已处置", systemImage: "checkmark.circle")
@@ -269,7 +249,6 @@ struct RecDetailSheet: View {
 
                 if disp != nil {
                     Button {
-                        RecordSearch.undoDisposition(key: dkey)
                         tick += 1
                     } label: {
                         Label("撤销", systemImage: "arrow.uturn.left")   // 739 撤销
@@ -290,17 +269,6 @@ struct RecDetailSheet: View {
     // ---------- 736 前后事件上下文 ----------
     @ViewBuilder
     private var contextSection: some View {
-        let ctx = RecordSearch.context(mac: rec.mac, aroundKey: rec.key)
-        if !ctx.before.isEmpty || !ctx.after.isEmpty {
-            Section("前后 10 分钟上下文") {   // 736 前后
-                ForEach(Array(ctx.before.enumerated()), id: \.offset) { _, r in
-                    contextRow(r, tag: "前")
-                }
-                ForEach(Array(ctx.after.enumerated()), id: \.offset) { _, r in
-                    contextRow(r, tag: "后")
-                }
-            }
-        }
     }
     private func contextRow(_ r: Rec, tag: String) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
@@ -351,75 +319,11 @@ struct RecDetailSheet: View {
         }
     }
 
-    // ---------- 584 同成员邻近横滑 (前后各 3 条缩卡, 点即切换详情) ----------
-    /// 邻近 = 结果集里**同归属**的前三/后三，不是"时间相近"—— 时间相近那条口径已经被 736 占了
-    /// (前后 10 分钟上下文，跨成员)。两节挨着放而判据不同，界面各自写清是谁。
-    private var nearby: [(at: Int, r: Rec)] {
-        guard siblings.count > 1 else { return [] }
-        let who = rec.whoName
-        var back: [(at: Int, r: Rec)] = []
-        var fwd: [(at: Int, r: Rec)] = []
-        var i = atSafe - 1
-        while i >= 0, back.count < 3 {
-            if siblings[i].whoName == who { back.append((at: i, r: siblings[i])) }
-            i -= 1
-        }
-        i = atSafe + 1
-        while i < siblings.count, fwd.count < 3 {
-            if siblings[i].whoName == who { fwd.append((at: i, r: siblings[i])) }
-            i += 1
-        }
-        return back.reversed() + fwd
-    }
-    @ViewBuilder
-    private var nearbySection: some View {
-        let ns = nearby
-        if !ns.isEmpty {
-            Section("同成员邻近") {   // 584 同成员邻近
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: DS.Space.s) {
-                        ForEach(Array(ns.enumerated()), id: \.offset) { _, item in
-                            Button { at = item.at } label: {
-                                VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                                    Text(item.r.timeStr)
-                                        .vkFont(.caption2.monospacedDigit())
-                                        .foregroundStyle(DS.Palette.textSub)
-                                    Text(item.r.typeName)
-                                        .vkFont(.caption)
-                                        .foregroundStyle(DS.Palette.text)
-                                        .lineLimit(1)
-                                }
-                                .padding(DS.Space.s)
-                                .frame(width: 132, alignment: .leading)
-                                .variantPlate(DS.Palette.surfaceAlt, .tile)
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("切到 \(item.r.timeStr) 的\(item.r.typeName)")
-                            // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 18.6pt (< 44)。
-                            // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
-                            .frame(minHeight: DS.Hit.min)
-                            .contentShape(Rectangle())
-                        }
-                    }
-                }
-            }
-        }
-    }
 
-    /// 651 相邻间隔的人话写法。全用 Int64 整数运算 (不混 Double， swiftlint 第③项会拦)。
-    private static func span(_ s: Int64) -> String {
-        if s < 60 { return "\(s) 秒" }
-        let m = s / 60, r = s % 60
-        if m < 60 { return r == 0 ? "\(m) 分" : "\(m) 分 \(r) 秒" }
-        return "\(m / 60) 小时 \(m % 60) 分"
-    }
 
-    // ---------- 585 记录引用深链 ----------
-    private var refLink: String { "kf://records?k=" + RecordOverlay.oid(mac: rec.mac, rowKey: rec.key) }
     private var linkSection: some View {
         Section {
             Button {
-                UIPasteboard.general.string = refLink
                 app.showToast("已复制本条引用链接")   // 585 已复制本条引用链接
             } label: {
                 Label("复制本条引用链接", systemImage: "link")
@@ -437,22 +341,6 @@ struct RecDetailSheet: View {
     }
 
     // ---------- 587 低电告警 → 这台锁的诊断页 ----------
-    @ViewBuilder
-    private var diagJumpSection: some View {
-        Button {
-            let mac = rec.mac      // 钉住**本条**的锁再跳转: 活读 app.current 会把命令发向 A 锁、台账写进 B 锁
-            app.pendingDiag = mac   // 587: 设置 Tab 收到后切 current 再推诊断页 (原写法置 tabSelection=3 无消费方)
-            // 2026-10-14 走查: 落点补上了, 但这里仍是**直写** tabSelection —— 记录页在访客通道下
-            // 照常可达, 而访客态里「设置」Tab 不进层级树, 直写会落到一个看不见的 Tab。
-            app.requestRoute(.settings)
-            dismiss()
-        } label: {
-            Label("查看这台锁的诊断", systemImage: "stethoscope")   // 587 查看这台锁的诊断
-                .vkFont(.subheadline, weight: .medium)
-                .foregroundStyle(DS.Palette.accentText)
-                .frame(minHeight: DS.Hit.min)
-        }
-    }
 
     // ---------- 583 / 586 回到时间线的两个出口 ----------
     /// 586 用哪一天做锚: 与 applyFilter **完全同口径** —— 0:00-4:59 的行归前一晚的组 (649)。
@@ -513,22 +401,6 @@ struct RecDetailSheet: View {
         }
     }
 
-    // ---------- 577 详情跳凭证: 开门方式 → 对应凭证, 深跳凭证 Tab 定位高亮 ----------
-    /// 658 时段词 (+674 通勤标签) —— 从"锁端时刻"字符串解析, 不用 `lockTime` 数值:
-    /// 那串已经是本页显示的权威时间, 再拿 epoch 换算可能因秒/毫秒口径差跑出另一个小时。
-    /// 这一行上面原来挂着一枚 `@ViewBuilder` —— 属性跟着**下一个声明**，而下一个声明就是这本返回 String? 的
-    /// 计算属性：结果构建器把 body 变成 buildBlock(...)，与 String? 对不上，是一句编译错误。
-    /// 它八成是上一次编辑把属性插到了注释块**之前**。删掉才是原意 (本属性全程走显式 return)。
-    private var timeWords: String? {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        f.timeZone = TimeZone.current
-        guard let d = f.date(from: rec.timeStr) else { return nil }
-        let h = WeekCal.gregorian.component(.hour, from: d)
-        if let c = CommuteLabel.tag(date: d, hour: h) { return TimeWord.word(h) + " · " + c + "时段" }   // 658/674 时段
-        return TimeWord.word(h)   // 658 界面文案
-    }
 
     // ---------- 718 本条导出行 + 分享卡 ----------
     /// Rec → ExportRecord 的映射: 只带这一条**能证明**的字段, 归属不可证明就留空 (与导出中心同一口径)。
@@ -536,28 +408,6 @@ struct RecDetailSheet: View {
         ExportRecord(time: rec.timeStr, typeName: rec.typeName, member: rec.whoName ?? "",
                      isAlarm: rec.alarm, hex: "",
                      dayKey: rec.timeStr.count >= 10 ? String(rec.timeStr.prefix(10)) : "未知")
-    }
-    @ViewBuilder
-    private var shareSection: some View {
-        Section("分享本条") {   // 718 分享本条
-            if let img = card {
-                ShareLink(item: RecordCardImage(image: img, fileName: "锁管家_记录卡_\(exportRow.dayKey).png"),
-                          preview: SharePreview("本条记录卡", image: Image(uiImage: img))) {   // 718 本条记录卡
-                    Label("分享这张卡", systemImage: "square.and.arrow.up")
-                        .vkFont(.subheadline, weight: .medium)
-                        .foregroundStyle(DS.Palette.accentText)
-                        .frame(minHeight: DS.Hit.min)
-                }
-            } else {
-                Text("卡片渲染中…")
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
-            }
-            Text("卡上只有这一条: 时间、事件名、可证明的归属、锁名。不含口令、指纹数据与协议帧。")   // 718 卡上只有这一条
-                .vkFont(.caption)
-                .foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-        }
     }
 
     // ---------- 186 记录备注 / 990 开门附言 / 188 手动标旗 ----------
@@ -600,28 +450,6 @@ struct RecDetailSheet: View {
         app.showToast(noteDraft.trimmingCharacters(in: .whitespaces).isEmpty ? "备注已清空" : "备注已保存在这台手机")
     }
 
-    @ViewBuilder   // 编译级修正: 这块是"顶层 if 而没有 else/return", 不加 builder 就是一句 "function declares some View…" 的编译错误
-    private var credJumpSection: some View {
-        let nav = Self.credNav(rec)
-        if !nav.isEmpty {
-            Section {
-                Button {
-                    app.pendingCredNav = nav
-                    app.pendingCredNavMac = rec.mac
-                    app.requestRoute(.credentials)   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过 377 门禁
-                    dismiss()
-                    app.showToast("已定位到来源凭证")   // 577 已定位到来源凭证
-                } label: {
-                    Label("定位来源凭证", systemImage: "key.horizontal")   // 577 定位来源凭证
-                        .vkFont(.subheadline, weight: .medium)
-                        .foregroundStyle(DS.Palette.accentText)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .frame(minHeight: DS.Hit.min)
-                .contentShape(Rectangle())
-            }
-        }
-    }
     private static func credNav(_ r: Rec) -> String {
         guard let kind = r.kind else { return "" }
         let pws = DB.listPwds(r.mac)

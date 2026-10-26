@@ -695,11 +695,6 @@ struct SettingsView: View {
                 Text("活泼").tag("lively")
             }
             .pickerStyle(.menu)
-            if AXFlags.reduceMotion {
-                Text("系统「减弱动态效果」已开启，当前强制走克制档，上面的选择暂不生效。")
-                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
             // 布局密度 (包16): 只缩放间距令牌, 字号与触达不动
             Picker("布局密度", selection: Binding(
                 get: { DB.store.getString("kf_density") },

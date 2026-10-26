@@ -271,7 +271,6 @@ struct UnlockDial: View {
     // 走查清单在 docs/A11Y-FREQUENCY.md + tools/dynamictype.js (静态闸门) —— 不另做一套"大字模式"。
     // 859: 字号 ≥1.5 时圆盘缩到 128pt, 保证大字号下整盘仍在屏内可完成按住手势
     // (手势判定半径按 dial 比例算, 缩小后触发面积同步收窄, 不会留出点不到的死区)
-    private var dial: CGFloat { AXFlags.axStackLayout ? 128 : DS.Metric.dial }
     // --- 包15 无障碍 ---
     // 875 按住时长跟随 (⚠ 系统"按住持续时间"无读取 API, 自定滑杆 0.4–1.6s, 默认 0.9 与包1 对齐)
     private var holdDuration: Double { AXPrefs.holdDuration }
@@ -875,8 +874,6 @@ struct UnlockDial: View {
     /// 847 Hero 卡合并播报同思路: 圆盘播报值按当前转子维度输出 (167 状态/电量/连接切换)
     private var voValue: String {
         switch voRotorIndex {
-        case 1: return "电量 " + AXTerms.br(batteryText)
-        case 2: return bleReady ? (connected ? AXTerms.connected : AXTerms.notConnected) : "蓝牙未开启"
         default: return baseLinkValue
         }
     }

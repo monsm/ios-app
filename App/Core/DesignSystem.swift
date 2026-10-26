@@ -228,7 +228,7 @@ enum DS {
         /// 读 AXFlags 而不是自己调 UIAccessibility：本仓的系统旗标只有一个读点。
         /// 这里用的是**快照**而不是 @MainActor 的那个属性: 令牌会被 ButtonStyle/ToggleStyle 的
         /// makeBody (非隔离) 求值, 而系统旗标本身是主 actor 的 —— 快照由 AXFlags 在回前台时刷新。
-        private static var systemReduceMotion: Bool { AXFlags.reduceMotionSnapshot }
+        private static var systemReduceMotion: Bool { false }   // 2026-10-27 三轮：无障碍层已删，恒 false
         private static var tier: String {
             if systemReduceMotion { return "calm" }
             // 120 低电视觉降级: 锁电量 ≤20% 时全 App 动效也压到 calm —— 与系统减弱动态同优先级,
@@ -285,7 +285,7 @@ enum DS {
         /// 为什么要 App 内这一个: 系统的对比度开关是全局的，很多人不愿为这一个 App 改整机;
         /// 而"我就是想在看锁的时候字更硬"是 App 内可以满足的。加强项三组 (分隔线/次级文本加深 +
         /// 862 玻璃卡降实底)，不引入新颜色 —— 用的就是原本给系统高对比准备的那对令牌。
-        @MainActor static var highContrast: Bool { AXFlags.highContrast || DB.store.getBool("kf_hc") }
+        @MainActor static var highContrast: Bool { DB.store.getBool("kf_hc") }
     }
 
     enum Palette {
@@ -604,7 +604,7 @@ extension View {
         //
         // 2026-10-16 晚：两套新界面（「一枚锁核」「近场仪表」）已删，
         // 这里回到唯一那套底色 —— 与 226/863/AMOLED 三条降级纪律逐字一致。
-        let flat = DS.Appearance.isAMOLED || AXFlags.invertColors || AXFlags.reduceTransparency
+        let flat = DS.Appearance.isAMOLED   // 2026-10-27 三轮：AXFlags 已删，反转色/降透明不再降级
         return self.background {
             if flat { DS.Gradient.screen.ignoresSafeArea() }
             else { DS.Gradient.screenMesh.ignoresSafeArea() }
@@ -670,12 +670,12 @@ extension DS {
     static var heroScrim: Color { Color.black.opacity(0.20) }
     /// 右上那团"光源": 常规是白纱 (压暗纱之下, 机检 E4 已把它算进叠层), 863 反转档换成黑纱,
     /// 否则白纱落在中性浅底上等于什么都没画。
-        @MainActor static var heroGlow: Color { AXFlags.invertColors ? Color.black.opacity(0.10) : Color.white.opacity(0.12) }
+        @MainActor static var heroGlow: Color { Color.white.opacity(0.12) }
     /// hero 面上的玻璃底板 (HeroStat / HeroPill / 节日胶囊 / 状态胶囊 / 耗时标签共用)
     static var heroPlate: Color { Color.black.opacity(0.22) }
     /// hero 面上的淡色状态字 (在线绿 / 超时黄): 常规是淡色压深渐变 (机检 ≥5.7:1),
     /// 863 反转档与 heroFg 同源降级为 text —— 淡色压中性浅底只有 1 点几比, 会整个消失。
-        @MainActor static func heroTint(_ light: Color) -> Color { AXFlags.invertColors ? Palette.text : light }
+        @MainActor static func heroTint(_ light: Color) -> Color { light }
 }
 
 /// 玻璃胶囊 (hero 渐变上的专属变体): 压暗底板 + heroFg 字。

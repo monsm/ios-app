@@ -15,7 +15,6 @@ struct DeviceHomeView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showAdd = false
     @State private var refreshing = false
-    @State private var showFocus = false      // 81 全屏专注开锁
     @State private var reconnectDot = false   // 91 回连静默小点
     @State private var checks = [false, false, false]   // 87 排查清单勾选态
     // 包3 多锁导航: 101/763 横滑翻页 / 102 胶囊切换器 / 267 换锁二次确认 / 271 上滑默认 / 39 倒计时 / 112 换机向导
@@ -129,8 +128,6 @@ struct DeviceHomeView: View {
             .sheet(isPresented: $showTileEdit) { QuickTileEditorSheet() }   // 905 长按快捷格进编辑
             // 250 二次开锁应用锁闸
             .sheet(isPresented: $app.showGate) { UnlockGateView() }
-            // 81 全屏专注开锁
-            .fullScreenCover(isPresented: $showFocus) { FocusUnlockView() }
             // 91 回连静默小点: 回连成功不打扰, 胶囊旁亮一枚小点 3 秒
             .onChange(of: lockSvc.connectedMAC) { _, new in
                 guard new == app.currentMac, !new.isEmpty else { return }
@@ -717,13 +714,6 @@ struct DeviceHomeView: View {
                                 .foregroundStyle(DS.heroFg.opacity(0.9))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
-                            // 1000 晚归欢迎语 / 1001 节气问候 (只属于当前锁的活页面)
-                            if isCurrent, let m = heroMomentText {
-                                Text(m)
-                                    .vkFont(.footnote)
-                                    .foregroundStyle(DS.heroFg.opacity(0.9))
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
                         }
                     }
                     Spacer(minLength: 0)
@@ -774,23 +764,15 @@ struct DeviceHomeView: View {
                                     .transition(.opacity)
                                     .accessibilityHidden(true)
                             }
-                            // 81 专注开锁入口 (原案"Hero 卡下拉"与纵向滚动手势冲突, 收敛为明确入口)
-                            focusButton
                         } else {
                             HeroPill(text: "滑动到这页即连接", systemImage: "arrow.left.arrow.right",
                                      tint: DS.heroFg.opacity(0.75))
                         }
                     }
                 }
-                // 859 AX 档降级布局: 字号 >=1.5 (AXFlags.axStackLayout) 时三个指标改纵向堆叠 ——
-                // 特大字号下横排会被压成三行小字/截断; 圆盘缩 128pt 那半在 UnlockDial:321。
-                // 用 AnyLayout 而不是复制两份 HeroStat: 指标与显隐逻辑只有一个出处。
-                let statsLayout = AXFlags.axStackLayout
-                    ? AnyLayout(VStackLayout(alignment: .leading, spacing: DS.Space.s))
-                    : AnyLayout(HStackLayout(spacing: DS.Space.s))
-                statsLayout {
                     // 电量是一级读数(它决定你还能不能开锁), 固件/锁钟是三级参考信息 —
                     // 三者同级会让人看不出重点
+                    HStack(spacing: DS.Space.s) {
                     HeroStat(systemImage: battTier(for: kc).icon,
                              label: "电量",
                              value: batteryText(for: kc),
@@ -810,7 +792,7 @@ struct DeviceHomeView: View {
                                  value: lockClockText(for: kc),
                                  emphasized: false)
                     }
-                }
+}   // 2026-10-27 三轮：原 statsLayout 降级布局已删，恒横排
                 // 2026-10-26 精简：备份状态角标已删（badgeState 随备份策略类一起移除）。
                 // 2026-10-18 构图预算 (MASTER.md §3.1: Hero 条件提示行 ≤1):
                 // 原来这里有四条独立提示行 (未验证 / 低电 / 严重低电 / 冷季),
@@ -831,7 +813,6 @@ struct DeviceHomeView: View {
         .brightness(tier.severe ? -0.06 : 0)   // 120 低电视觉降级
         // 847 Hero 卡合并播报: 单元素合读 连接态+电量 (盲文简写 856)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(AXTerms.lock + ": " + AXTerms.br((connected ? AXTerms.connected : AXTerms.notConnected) + ", " + AXTerms.battery + " " + batteryText(for: kc)))
     }
 
 
@@ -1174,20 +1155,7 @@ struct DeviceHomeView: View {
         return "第 \(app.retryAttempt) 次 · 等 \(w) 秒"
     }
 
-    // 81 专注开锁: 全屏只剩圆盘与状态文案
-    private var focusButton: some View {
-        Button { showFocus = true } label: {
-            Image(systemName: "chevron.down.circle")
-                .font(.system(size: DS.Icon.md, weight: .semibold))
-                // 入口画在 hero 卡面上, 前景必须走 heroFg (与 HeroStat/HeroPill 同源), 写死白在 863 降级下会被吃掉
-                .foregroundStyle(DS.heroFg)
-                .frame(width: DS.Hit.min, height: DS.Hit.min)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(PressableButtonStyle())
-        .accessibilityLabel("专注开锁")
-        .accessibilityHint("进入全屏, 只显示开锁圆盘与状态")
-    }
+    // 2026-10-27 三轮精简：focusButton（专注开锁入口）已删。
 
     // ---------- 快捷操作 ----------
 // 液态玻璃: 相邻玻璃元素必须放进同一个 GlassEffectContainer 才能融成一体,
@@ -1681,11 +1649,6 @@ struct DeviceHomeView: View {
         guard kc.mac == app.currentMac else { return .down }
         return sense.linkState
     }
-    // 1000 晚归欢迎语优先; 其次节气问候 (1001, 纯本地寿星公式); 再其次今天的启动一句话 (898)
-    private var heroMomentText: String? {
-        if let m = app.homeMoment { return m }
-        return nil
-    }
     // 1004/114 低电判定 (0~20, 判定逻辑收敛到 BatteryCare)
     private func isLow(_ kc: Keychain) -> Bool { BatteryCare.isLow(batteryPct(for: kc)) }
     // 113 五档电量档位
@@ -1824,66 +1787,6 @@ struct LabeledRow: View {
     }
 }
 
-// ================= 81 全屏专注开锁 =================
-// 只剩圆盘与状态文案的覆盖层, 手势/反馈与设备页完全同一份 UnlockDial。
-struct FocusUnlockView: View {
-    @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
-    @ObservedObject private var lockSvc = LockService.shared
-    @ObservedObject private var bleSvc = BLEService.shared
-
-    var body: some View { vkBody.destined(.focusUnlock) }
-    var vkBody: some View {
-        ZStack {
-            DS.Gradient.screen.ignoresSafeArea()
-            VStack(spacing: DS.Space.l) {
-                HStack(spacing: DS.Space.m) {
-                    VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                        Text(app.displayName)
-                            .vkFont(.headline)
-                            .foregroundStyle(DS.Palette.text)
-                            .lineLimit(1)
-                        Text(linkReady ? "已就绪 · " + UnlockPrefs.gestureHint : "靠近门锁, 等待就绪")
-                            .vkFont(.footnote)
-                            .foregroundStyle(DS.Palette.textSub)
-                    }
-                    Spacer(minLength: 0)
-                    Button { dismiss() } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: DS.Icon.lg, weight: .medium))
-                            .foregroundStyle(DS.Palette.textSub)
-                            .frame(width: DS.Hit.min, height: DS.Hit.min)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(PressableButtonStyle())
-                    .accessibilityLabel("退出专注模式")
-                }
-                Spacer(minLength: 0)
-                UnlockDial(state: app.unlockState,
-                           phase: app.phase,
-                           connected: linkReady,
-                           bleReady: bleSvc.isPoweredOn,
-                           failStreak: app.failStreak,
-                           retryText: retryText,
-                           // 与设备页那台圆盘同一个读数口径: 少了这一行, VO 转子切到「电量」档时只会念"未知",
-                           // 而本机明明读得到 —— 同一块盘在两个界面报两种状态里的一种。
-                           batteryText: app.current.map {
-                               BatteryCare.faceText(BatteryCare.facePct($0.mac, live: app.status?.powerLevel ?? -1))
-                           } ?? "未知",
-                           rssi: LinkSense.rssiFor(app.currentMac),
-                           action: { app.requestUnlock() },
-                           cancelAction: { app.cancelUnlock(notify: true) })
-                Spacer(minLength: 0)
-            }
-            .padding(DS.Space.l)
-        }
-    }
-    private var linkReady: Bool { lockSvc.connectedMAC == app.currentMac }
-    private var retryText: String? {
-        guard let w = app.retryWait else { return nil }
-        return "第 \(app.retryAttempt) 次 · 等 \(w) 秒"
-    }
-}
 
 // ================= 250 二次开锁应用锁闸 =================
 // 同一锁 30 秒内再次开锁需先验证本机密码 (未设密码则无此闸)。

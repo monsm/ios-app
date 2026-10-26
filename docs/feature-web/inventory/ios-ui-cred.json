@@ -88,43 +88,6 @@
       "status": "implemented"
     },
     {
-      "key": "credential.calendar",
-      "parentKey": "credential",
-      "domain": "credential",
-      "level": 2,
-      "name": "月历到期视图",
-      "kind": "screen",
-      "summary": "按月查看每天到期条数，点某天列出当日到期凭证；上/下月切换。",
-      "details": [
-        "月份标题「YYYY 年 M 月」，两侧「‹」「›」切月 (654-668)",
-        "7 列网格 + 周表头（周起点跟随 WeekCal.calendar.firstWeekday）(669-675, 715-723)",
-        "进入时清空选中日 (712)"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialCenterView.swift",
-          "line": 640,
-          "symbol": "CredCalendarView"
-        },
-        {
-          "file": "App/UI/CredentialCenterView.swift",
-          "line": 651,
-          "symbol": "CredCalendarView",
-          "note": "monthDeadlines 取当月到期"
-        },
-        {
-          "file": "App/UI/CredentialCenterView.swift",
-          "line": 669,
-          "symbol": "CredCalendarView",
-          "note": "7 列网格"
-        }
-      ],
-      "tags": [
-        "到期"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "credential.extend",
       "parentKey": "credential",
       "domain": "credential",
@@ -158,43 +121,6 @@
       ],
       "tags": [
         "批量"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "credential.transfer",
-      "parentKey": "credential",
-      "domain": "credential",
-      "level": 2,
-      "name": "批量移交",
-      "kind": "sheet",
-      "summary": "把选中的密码与指纹批量改归属到某成员或解除归属；只改本机台账（锁端无归属字段）。",
-      "details": [
-        "Picker(inline) 首项「解除归属」tag nil，其后为全部成员 (1172-1179)",
-        "说明「批量改归属并各写一条本地记录; 锁端无归属字段, 移交只作用于本机台账」(1180)"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialCenterView.swift",
-          "line": 1160,
-          "symbol": "CredTransferView"
-        },
-        {
-          "file": "App/UI/CredentialCenterView.swift",
-          "line": 1173,
-          "symbol": "CredTransferView",
-          "note": "移交给 Picker"
-        },
-        {
-          "file": "App/UI/CredentialCenterView.swift",
-          "line": 1180,
-          "symbol": "CredTransferView",
-          "note": "只作用于本机台账"
-        }
-      ],
-      "tags": [
-        "批量",
-        "归属"
       ],
       "status": "implemented"
     },
@@ -496,45 +422,6 @@
       ],
       "tags": [
         "核心"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "credential.list.sort",
-      "parentKey": "credential.list.header-menu",
-      "domain": "credential",
-      "level": 4,
-      "name": "四维排序循环",
-      "kind": "setting",
-      "summary": "菜单里点一次「排序: X」就轮换到下一维并存盘，回执告知当前排序维度。",
-      "details": [
-        "轮换：CredSortKey(rawValue: (raw+1) % allCases.count)，随后 CredentialOrg.setSortKey，toast「按「X」排序」(398-402)",
-        "四维实现：名称按 displayPwd 本地化比较、类型先临时后永久、最近使用按 inferredLastUseMap（-1 哨兵表示无使用证据）、到期按 expiryDate 升序把无到期排最后 (893-919)",
-        "指纹段复用同一 sortKey：名称 / 告警指纹优先 / 默认录入时间降序 (1039-1046)",
-        "手动序 kf_cseq_ 存在时优先于排序维度（见 credential.list.sort-mode）(875-883, 1047-1055)"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 399,
-          "symbol": "headerToolbar",
-          "note": "sortKey 轮换"
-        },
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 400,
-          "symbol": "headerToolbar",
-          "note": "setSortKey 持久化"
-        },
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 893,
-          "symbol": "orderPwds",
-          "note": "四维实现"
-        }
-      ],
-      "tags": [
-        "排序"
       ],
       "status": "implemented"
     },
@@ -3729,79 +3616,6 @@
       "status": "implemented"
     },
     {
-      "key": "credential.calendar.grid",
-      "parentKey": "credential.calendar",
-      "domain": "credential",
-      "level": 3,
-      "name": "月历网格与到期角标",
-      "kind": "data",
-      "summary": "7 列月历按周起点轮转表头，每个有到期的日子右上角标条数，今天与选中日另有高亮。",
-      "details": [
-        "表头顺序由 WeekCal.calendar.firstWeekday 轮转，与 monthCells 的 lead 计算同源（否则整体错一天）(715-723, 763)",
-        "前置空位 + 1...当月天数 + 补齐到整周 (760-771)",
-        "有到期：warn 实心胶囊显示条数，前景用 onSem (735-743)",
-        "今天用 accentText 高亮；选中日淡底圆角 (728-751)",
-        "点格切换 picked（再点取消）并回调 onPick (730-732)；进入页面清空 picked (712)"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialCenterView.swift",
-          "line": 651,
-          "symbol": "CredCalendarView",
-          "note": "monthDeadlines"
-        },
-        {
-          "file": "App/UI/CredentialCenterView.swift",
-          "line": 735,
-          "symbol": "dayCell",
-          "note": "到期角标"
-        },
-        {
-          "file": "App/UI/CredentialCenterView.swift",
-          "line": 720,
-          "symbol": "weekdayHeaders",
-          "note": "周起点同源"
-        }
-      ],
-      "tags": [
-        "到期",
-        "月历"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "credential.calendar.day",
-      "parentKey": "credential.calendar",
-      "domain": "credential",
-      "level": 3,
-      "name": "点日查看当日到期清单",
-      "kind": "action",
-      "summary": "选中某天后，下方列出当日到期凭证（名称 + 到期标签），并同时给一句 toast 汇总。",
-      "details": [
-        "段头「M月d日 到期 (N)」，逐条 displayPwd + expiryLabel (685-705)",
-        "onPick 在凭证页 pickDay 里 toast「当日到期 N 条: #a #b …」，超过 6 个用省略号 (1800-1803)",
-        "当天无到期则不显示清单段（只有角标为 0 的格子）(687)"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialCenterView.swift",
-          "line": 685,
-          "symbol": "CredCalendarView",
-          "note": "当日清单"
-        },
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1800,
-          "symbol": "pickDay",
-          "note": "toast 汇总"
-        }
-      ],
-      "tags": [
-        "到期"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "credential.extend.range",
       "parentKey": "credential.extend",
       "domain": "credential",
@@ -3875,76 +3689,6 @@
       ],
       "tags": [
         "锁端读写",
-        "批量"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "credential.transfer.target",
-      "parentKey": "credential.transfer",
-      "domain": "credential",
-      "level": 3,
-      "name": "目标成员选择",
-      "kind": "setting",
-      "summary": "单选目标成员或「解除归属」，选项内联展开全部成员。",
-      "details": [
-        "段头「批量移交 (N 条)」，N = 密码数 + 指纹数 (1172)",
-        "Picker(inline)：首项「解除归属」tag nil，其后每人一条 (1173-1179)",
-        "说明「批量改归属并各写一条本地记录; 锁端无归属字段, 移交只作用于本机台账。」(1180)"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialCenterView.swift",
-          "line": 1172,
-          "symbol": "CredTransferView",
-          "note": "段头"
-        },
-        {
-          "file": "App/UI/CredentialCenterView.swift",
-          "line": 1173,
-          "symbol": "CredTransferView",
-          "note": "Picker"
-        },
-        {
-          "file": "App/UI/CredentialCenterView.swift",
-          "line": 1180,
-          "symbol": "CredTransferView",
-          "note": "口径说明"
-        }
-      ],
-      "tags": [
-        "归属"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "credential.transfer.apply",
-      "parentKey": "credential.transfer",
-      "domain": "credential",
-      "level": 3,
-      "name": "确认移交",
-      "kind": "action",
-      "summary": "执行批量改归属，回执写清条数与目标（成员名或「无归属」）。",
-      "details": [
-        "「确认移交」→ CredentialOrg.batchTransfer 返回条数 (1187)",
-        "toast「已移交 N 条 → 成员名 / → 无归属」+ 记里程碑 + onDone() (1188-1190)"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialCenterView.swift",
-          "line": 1186,
-          "symbol": "CredTransferView",
-          "note": "确认按钮"
-        },
-        {
-          "file": "App/UI/CredentialCenterView.swift",
-          "line": 1187,
-          "symbol": "CredTransferView",
-          "note": "batchTransfer"
-        }
-      ],
-      "tags": [
-        "归属",
         "批量"
       ],
       "status": "implemented"

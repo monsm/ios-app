@@ -20,7 +20,6 @@ import UIKit
 struct RecordsView: View {
     @EnvironmentObject var app: AppState
     @State private var groups: [DayGroup] = []
-    @State private var alarmDays: Set<String> = []   // 581 含未处置告警的自然日
     @State private var damageDays: Set<String> = []  // 596 含防撬/试错锁定/键盘锁定的自然日
     @State private var rows: [RowVM] = []
     @State private var allRows: [RowVM] = []
@@ -53,8 +52,6 @@ struct RecordsView: View {
     // 否则会把你"点了一次跳转"写成"你设了一个过滤"。
     @State private var dayFocus = ""
     @State private var flashKey = ""
-    /// 19 骨架屏的闪动位 (减少动态效果时恒为 false ⇒ 三行骨架静止显示，不再排队动画)
-    @State private var shimmer = false
     /// 598 大数据量分页: 一次参与渲染的行数上限与"是否还有下一批"。
     /// 1200 不是凑数: 一天最忙的家也有几十条，1200 条够铺满几十个日组，
     /// 再往下滚就已经越过"人能在一次会话里读完"的量。
@@ -1097,12 +1094,6 @@ struct RecordsView: View {
                     Text(dayLabel(g.key))
                         .vkFont(.headline)
                     // 581 未处置告警蓝点: 该日有未处置告警才出现, 口径与 735 角标同一条 (不另存"已读"位)
-                    if alarmDays.contains(g.key) {
-                        Circle()
-                            .fill(DS.Palette.accent)
-                            .frame(width: 7, height: 7)
-                            .accessibilityLabel("该日有未处置告警")
-                    }
                     // 596 替代: 原句是组头红字"含胁迫" —— 胁迫类协议不存在 (§5), 改挂真实存在的三类
                     // (防撬 7 / 试错锁定 10 / 键盘锁定 224)。点按落 586 既有的"当天全景"(landDay),
                     // 与"直接过滤到当日"同一件事; 与上面那枚蓝点**不互相替代**: 蓝点看未处置, 这条看这一天出过事。
@@ -1476,13 +1467,7 @@ struct RecordsView: View {
             }
         }
         .accessibilityElement(children: .combine)
-        // 850 时间线自然语朗读: "今天 14:02, 张三用指纹开了门" 而非字段堆叠
-        .accessibilityLabel(AXTerms.rowSentence(dayKey: r.dayKey,
-                                                 time: r.time,
-                                                 title: r.title,
-                                                 warn: r.warn,
-                                                 isToday: r.dayKey == todayKey,
-                                                 dayLabel: dayLabel(r.dayKey)))
+        .accessibilityLabel(r.title + ", " + r.time)
         .accessibilityAddTraits([.isButton])
     }
     /// 185/597 共用: 行备注弹窗的打开与保存 (目标行装进 noteTarget, 草稿预填现有备注)
@@ -1705,10 +1690,6 @@ struct RecordsView: View {
                         Image(systemName: "tray")
                             .font(.system(size: DS.Icon.lg))
                             .foregroundStyle(DS.Palette.accentText)
-                            // 20 空态图标微动画: 让"这里还没有东西"看起来是页面在等你，而不是一张死图。
-                            // reduceMotion (走 AXFlags 唯一读点) 下整个效果不挂 —— 装饰性动效不给需要静止画面的人。
-                            .symbolEffect(.variableColor.iterative, options: .repeating,
-                                          isActive: !AXFlags.reduceMotion)
                             .accessibilityHidden(true)
                         Text("还没有记录。点右上角「重新读取」从锁内拉取最近 100 条开门/操作记录。")
                             .vkFont(.footnote)
@@ -1756,21 +1737,10 @@ struct RecordsView: View {
                     }
                     Spacer(minLength: 0)
                 }
-                .opacity(shimmer ? 1.0 : 0.55)
-                .animation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: shimmer)
                 // 骨架不是内容: 读屏念它只会念出一串"空"，反而盖过那句"正在读取"
                 .accessibilityHidden(true)
             }
-            if AXFlags.reduceMotion {
-                Text("减少动态效果下不闪动，读好后整页自动替换")   // 19 减少动态效果下不闪动
-                    .vkFont(.caption2)
-                    .foregroundStyle(DS.Palette.textSub)
-            }
         }
-        .onAppear { shimmer = !AXFlags.reduceMotion }
-        // 系统开关中途被关掉时要立刻停: 只让 onAppear 那一处判过的话，
-        // 已经排队的 repeatForever 还会继续跑 (装饰性动效不许在用户要求静止后赖着)
-        .onChange(of: AXFlags.reduceMotion) { _, off in if off { shimmer = false } }
     }
 
     // ---------- 成员过滤 (保留既有 793 访客虚拟分组 / 791 可认领 / 1028 保养) ----------
@@ -2410,8 +2380,6 @@ struct RecordsView: View {
             }
             groups = filled
         }
-        // 581 蓝点集合随本次分组一并算一次 (逐行渲染时再读全量日志是白烧 IO)
-        alarmDays = RecordSearch.unhandledAlarmDays(macs: macs)
         // 596 同日一并算一次 (同一次 applyFilter 内的同一份日志缓存, 不另起一遍 IO)
         damageDays = RecordSearch.damageDays(macs: macs)
     }

@@ -5935,46 +5935,6 @@
       "status": "implemented"
     },
     {
-      "key": "protocol.redact",
-      "parentKey": "protocol",
-      "domain": "protocol",
-      "level": 2,
-      "name": "帧日志脱敏与环形缓冲",
-      "kind": "service",
-      "summary": "原始帧十六进制只进内存环形数组（60 条），进日志/落盘/剪贴板前一律脱敏成「前 4 位 + 位数」。",
-      "details": [
-        "帧内可能含 skey/ekey/PIN 明文（05 换钥、0A 写密码、13 录指纹）",
-        "Redact.frameHex 保留长度与前 4 hex 供排障对位，其余隐去",
-        "logs 上限 200 条、recentFrames 上限 60 条",
-        "HardwareService 用同一份脱敏（网关帧含 WiFi SSID+口令）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Services/LockService.swift",
-          "line": 36,
-          "symbol": "log",
-          "note": "原始帧只进内存"
-        },
-        {
-          "file": "App/Services/LockService.swift",
-          "line": 988,
-          "symbol": "Redact.frameHex"
-        },
-        {
-          "file": "App/Services/HardwareService.swift",
-          "line": 46,
-          "symbol": "log",
-          "note": "同一口径脱敏"
-        }
-      ],
-      "tags": [
-        "安全",
-        "日志",
-        "核心"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "protocol.redact.buffer",
       "parentKey": "protocol.redact",
       "domain": "protocol",

@@ -169,28 +169,6 @@ enum CredentialOrg {
         }
         return out
     }
-    /// 349 批量移交: 批量改归属 (本地台账), 各写一条本地记录 (锁端无归属字段)
-    /// 注释里的"各写一条本地记录"此前是**空头支票** —— 两个循环只调了 setPwdOwner/setFpOwner, 没有任何快照落盘,
-    /// 改完归属查不到是谁改的。撤掉 467 待接受区后这条路径就是唯一移交入口, 留痕更不能少, 所以补齐而不是删注释。
-    static func batchTransfer(_ mac: String, pwdAliases: [Int], fpBatches: [Int], to: String?) -> Int {
-        var n = 0
-        let toName = to.flatMap { DB.member($0)?.name } ?? "未指派"
-        for a in pwdAliases {
-            guard let old = DB.ledger(mac).pwds.first(where: { $0.alias == a }) else { continue }
-            DB.setPwdOwner(mac, a, to)
-            if let p = DB.listPwds(mac).first(where: { $0.alias == a }) {
-            }
-            n += 1
-        }
-        for b in fpBatches {
-            guard let old = DB.ledger(mac).fps.first(where: { $0.batch == b }) else { continue }
-            DB.setFpOwner(mac, b, to)
-            if let f = DB.listFps(mac).first(where: { $0.batch == b }) {
-            }
-            n += 1
-        }
-        return n
-    }
     /// 468 代管补记: 条目**改动前**的属主被点名「由我代管」时, 快照补一句 管理员代操作。
     /// 判据与单条停用 disableVia、批量停用拆分同一张 proxyNames; 无归属不猜。
     private static func proxySuffix(_ owner: String?) -> String {
@@ -382,24 +360,6 @@ enum CredentialOrg {
         case owner = 1    // 按成员分组
     }
 
-    /// 2026-10-26 恢复：`CredSortKey` 在清理四件套时被误删 —— 但「排序」不在删除清单里，
-    /// 它是凭证列表的保留功能。`sortKey` 状态与两处 switch 都还依赖它。
-    /// case 名与 `orderPwds` / `orderFps` 里的 switch 一致（name / type / recent / expiry）。
-    enum CredSortKey: Int, CaseIterable {
-        case name = 0, type, recent, expiry
-        var label: String {
-            switch self {
-            case .name: return "名称"
-            case .type: return "类型"
-            case .recent: return "最近使用(约)"   // 锁端日志不记凭证身份, 长期凭证只能按锁级推断 → 按本仓纪律带"约"
-            case .expiry: return "到期"
-            }
-        }
-    }
-    static var sortKey: CredSortKey {
-        CredSortKey(rawValue: DB.store.getInt("kf_ccred_sort", 0)) ?? .name
-    }
-    static func setSortKey(_ k: CredSortKey) { DB.store.set("kf_ccred_sort", k.rawValue) }
 
     static var groupMode: CredGroupMode {
         CredGroupMode(rawValue: DB.store.getInt("kf_ccred_prefs", 0) & 1) ?? .type

@@ -711,23 +711,14 @@ enum RecordSearch {
         var verdict: String   // "已处理" / "误报" / "已处置" / "测试" / "已人工检查"
     }
     private static let dispKey = "kf_rdispo"
-    static func dispositions() -> [String: Disposition] { DB.store.get([String: Disposition].self, dispKey) ?? [:] }
-    static func disposition(key: String) -> Disposition? { dispositions()[key] }
-    static func markDisposition(key: String, verdict: String) {
-        var all = dispositions()
-        all[key] = Disposition(at: Date().timeIntervalSince1970, verdict: verdict)
-        DB.store.setCodable(dispKey, all)
-    }
-    /// 739 处置回退: 恢复未处理
-    static func undoDisposition(key: String) {
-        var all = dispositions()
-        all.removeValue(forKey: key)
-        DB.store.setCodable(dispKey, all)
-    }
     /// 745 测试标记的键集 (统计口径排除用, 键 = mac#idxRaw): 与处置留痕同一份 kf_rdispo,
     /// 不另造"测试"状态 —— 标记本身就是一条处置结论。此前这个查询零调用, 统计层并未真排除。
+    /// 745 测试标记的键集 (统计口径排除用, 键 = mac#idxRaw): 直读 kf_rdispo，
+    /// 不另造"测试"状态 —— 标记本身就是一条处置结论。处置写入口已随告警处置层移除，
+    /// 这里读的是历史数据 (卸载前可能残留)。
     static var testMarkedKeys: Set<String> {
-        Set(dispositions().filter { $0.value.verdict == "测试" }.map(\.key))
+        let all = DB.store.get([String: Disposition].self, dispKey) ?? [:]
+        return Set(all.filter { $0.value.verdict == "测试" }.map(\.key))
     }
 
     // ---------- 727 防撬检查清单 (勾选状态复用处置字段, 存 kf_rcheck_<key>) ----------
@@ -777,21 +768,6 @@ enum RecordSearch {
     }
 
 
-    /// 735 Tab 未读角标数据源: 未处置告警数 (734 未处理队列)
-    /// 581 未处置告警落在哪些自然日: 与 735 角标、734 队列同一 `dispositions` 口径 (不另造"已读"状态)。
-    /// 日界走 `dayKeyOfNight` —— 时间线分组把 0:00–4:59 归到前一晚 (649)，
-    /// 若这里直接取 lockTimeStr 前 10 位，凌晨告警会把蓝点点到**错的那一天**。
-    static func unhandledAlarmDays(macs: [String]) -> Set<String> {
-        let disp = dispositions()
-        var days = Set<String>()
-        for mac in macs {
-            for l in DB.readLogs(mac) where StatsKit.alarmTypes.contains(l.type) {
-                guard disp[mac + "#" + String(l.idxRaw)] == nil, let d = dateOf(l) else { continue }
-                days.insert(dayKeyOfNight(d))
-            }
-        }
-        return days
-    }
 
     /// 596 替代: 该日发生过防撬 (7) / 试错锁定 (10) / 键盘锁定 (224) 的日键集合。
     /// 与 `unhandledAlarmDays` 同一份 IO 形状 (各锁缓存日志) 但**不看处置** ——
@@ -805,16 +781,6 @@ enum RecordSearch {
             }
         }
         return days
-    }
-    static func unhandledAlarmCount(macs: [String]) -> Int {
-        let disp = dispositions()
-        var n = 0
-        for mac in macs {
-            for l in DB.readLogs(mac) where StatsKit.alarmTypes.contains(l.type) {
-                if disp[mac + "#" + String(l.idxRaw)] == nil { n += 1 }
-            }
-        }
-        return n
     }
 
     /// 765 跨锁合并"最近开门": 各锁日志按时间并成一条流 (行尾的锁名标签由 UI 用 Rec.lockName 打)。

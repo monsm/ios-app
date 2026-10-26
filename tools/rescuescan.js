@@ -93,6 +93,9 @@ const SYS_NAMES = new Set([
   // 2026-10-27 二轮: 通用参数名与 Foundation 方法 —— 删掉本项目同名定义后会被误判：
   //   marker（jsonStr/tokensFirstContaining 的参数）· invalidate（Timer.scanTimer?.invalidate()）
   "marker", "invalidate",
+  // 2026-10-27 三轮: `UnlockState` 是 AppState 的嵌套枚举（unlockState 状态机，
+  // Mascot/UnlockDial 都在用）。删掉本项目同名定义后会被误判。
+  "UnlockState", "isFailed",
 ]);
 
 function stripCode(line) {

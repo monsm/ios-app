@@ -30,9 +30,7 @@ struct CredentialsView: View {
     @State private var seg: Int = 0          // 524 类型分段: 0 全部 / 1 密码 / 2 指纹 / 3 临时码
     @State private var memberView = CredentialOrg.groupMode == .owner   // 355 按成员视图
     @State private var smartSel: String = "" // 527 智能列表选中 id ("" = 默认)
-    @State private var showCalendar = false  // 363 月历
     @State private var search = ""
-    @State private var sortKey: CredentialOrg.CredSortKey = CredentialOrg.sortKey   // 914 排序
     /// 2026-10-26 恢复：`isBusy` 在清理四件套时被误删（它读 busyKey，是主流程状态）。
     private var isBusy: Bool { busyKey != nil }
     // 2026-10-26 恢复：这些 @State 在清理四件套时被连带删掉，但它们是主流程状态。
@@ -42,7 +40,7 @@ struct CredentialsView: View {
     @State private var selFps: [Int] = []
     @State private var showExtend = false
     @State private var extendAliases: [Int] = []
-    @State private var showTransfer = false
+    // 2026-10-27 三轮精简：批量移交（CredTransferView）已删。
     @State private var showDisable = false
     @State private var binQuery = ""
     @State private var pwdDetailItem: LedgerPwd?   // 包5 PwdDetailStudio
@@ -76,9 +74,7 @@ struct CredentialsView: View {
                             credJumpBar
                         }
                         headerToolbar
-                        if showCalendar {
-                            CredCalendarView(mac: mac, onPick: pickDay)
-                        } else if editMode {
+                        if editMode {
                             editList
                         } else {
                             mainList
@@ -112,12 +108,7 @@ struct CredentialsView: View {
                     CredExtendView(mac: mac, aliases: extendAliases) { reload(); showExtend = false }
                 }
             }
-            .sheet(isPresented: $showTransfer) {
-                if selCount > 0 {
-                    // 同上: CredTransferView 的「关闭」过去也只 reload()
-                    CredTransferView(mac: mac, pwdAliases: selPwds, fpBatches: selFps) { reload(); showTransfer = false }
-                }
-            }
+            // 2026-10-27 三轮精简：批量移交 sheet 已删。
             .sheet(isPresented: $showDisable) {
                 if selCount > 0 {
                     CredDisableSheet(mac: mac, pwdAliases: selPwds, fpBatches: selFps) { finishDisable() }
@@ -291,12 +282,6 @@ struct CredentialsView: View {
                 Menu {
                     Section("视图") {
                         Button {
-            // 2026-10-26 精简：排序键持久化已删（整理功能移除）。
-                            app.showToast("按「\(sortKey.label)」排序")
-                        } label: { Label("排序: \(sortKey.label)", systemImage: "arrow.up.arrow.down") }
-                        Button { showCalendar.toggle(); sorting = false } label: {
-                            Label(showCalendar ? "退出月历" : "月历到期视图", systemImage: showCalendar ? "list.bullet" : "calendar")
-                        }
                         Button {
                             memberView.toggle()
             // 2026-10-26 精简：分组模式持久化已删（整理功能移除）。
@@ -310,7 +295,7 @@ struct CredentialsView: View {
                     }
                     Section("整理") {
                     // 2026-10-26 精简：该入口已删。
-                        if !editMode && !showCalendar && CredentialOrg.typeCounts(mac).all > 0 {
+                        if !editMode && CredentialOrg.typeCounts(mac).all > 0 {
                             Button {
                                 sorting.toggle()
                                 if sorting { editMode = false; selPwds = []; selFps = [] }
@@ -676,7 +661,6 @@ struct CredentialsView: View {
         // 526 置顶行固定顶部
         let pinned: [LedgerPwd] = []   // 2026-10-26: 星标已删，无置顶
         let rest = pwds
-        var ordered = orderPwds(rest)
         // 182/352 拖拽排序: 用户手动序优先 (seq 存的 index 数组)
         let order = CredentialOrg.seq(mac)["p"] ?? []
         let byIdx = manualIndex(order)
@@ -694,35 +678,6 @@ struct CredentialsView: View {
     /// 旧包/半写坏的表里出现重复 alias 时, 后者会当场 trap (整个凭证页变崩溃), 前者只是取第一个位次。
     private func manualIndex(_ order: [Int]) -> [Int: Int] {
         Dictionary(order.enumerated().map { ($1, $0) }, uniquingKeysWith: { first, _ in first })
-    }
-    private func orderPwds(_ input: [LedgerPwd]) -> [LedgerPwd] {
-        switch sortKey {
-        case .name:
-            return input.sorted { CredentialOrg.displayPwd($0).localizedStandardCompare(CredentialOrg.displayPwd($1)) == .orderedAscending }
-        case .type:
-            return input.sorted { a, b in
-                if a.temp != b.temp { return a.temp }
-                return a.alias < b.alias
-            }
-        case .recent:
-            // 标签写的是"最近使用", 旧写法按 p.at (录入时间) 排 —— 名不副实。
-            // 改用 inferredLastUseMap: 一次读日志, 临时凭证按自己的时间窗归属;
-            // 长期凭证锁端日志不记凭证身份, 只能给锁级参考 (同值 → 实际落到录入时间次序)。
-            let lastUse = CredentialOrg.inferredLastUseMap(mac)
-            return input.sorted { a, b in
-                // -1 当"无使用证据"哨兵: 真实 epoch 不可能为负
-                let ua = lastUse[a.alias] ?? -1
-                let ub = lastUse[b.alias] ?? -1
-                if ua != ub { return ua > ub }
-                return a.at > b.at
-            }
-        case .expiry:
-            return input.sorted { a, b in
-                let ta = CredentialOrg.expiryDate(a) ?? Date.distantFuture
-                let tb = CredentialOrg.expiryDate(b) ?? Date.distantFuture
-                return ta < tb
-            }
-        }
     }
 
     @ViewBuilder
@@ -822,7 +777,6 @@ struct CredentialsView: View {
         let pinned: [LedgerFp] = []
         let rest = fps
         var ordered: [LedgerFp]
-        switch sortKey {
         case .name:
             ordered = rest.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         case .type:
@@ -1075,7 +1029,6 @@ struct CredentialsView: View {
         .accessibilityElement(children: .combine)
         // 849 凭证朗读顺序 "名称-类型-状态" (不堆叠字段), 856 盲文简写走 value
         .accessibilityLabel(credVoLabel(hit))
-        .accessibilityValue(AXTerms.br(credVoState(hit, now)))
         // 849 拷贝对朗读侧走转子动作, 不对 VoiceOver 承诺"双击" (VO 的双击=激活, 不是我们的双击手势)
         .accessibilityActions {
             if let v = hit.pwd?.pwd {
@@ -1139,8 +1092,6 @@ struct CredentialsView: View {
     /// 849 凭证朗读顺序: 名称-类型-状态 (密码/指纹/临时码 走 AXTerms 词表, 不混"密钥")
     private func credVoLabel(_ hit: CredHit) -> String {
         let kind = hit.pwd != nil
-            ? (hit.pwd?.temp == true ? AXTerms.otp : AXTerms.pwd) : AXTerms.fp
-        return AXTerms.credential + ": " + titleOf(hit) + ", " + kind
     }
     /// 856 状态字段简写 (盲文友好), 走 AXTerms.br
     /// 331 播报里"提前失效"排在"已排期"之前但让位于锁端"已过期" —— 与行上胶囊同一优先级
@@ -1411,10 +1362,7 @@ struct CredentialsView: View {
                     if selPwds.isEmpty { app.showToast("延期只作用于已选密码"); return }
                     showExtend = true
                 }
-                batchBtn("移交", icon: "person.2") {
-                    if selCount == 0 { app.showToast("先选择凭证"); return }
-                    showTransfer = true
-                }
+                // 2026-10-27 三轮精简：「移交」批量按钮已删（批量移交整套移除）。
                 batchBtn("前缀", icon: "textformat") {
                     showPrefixNote()
                 }
@@ -1481,9 +1429,6 @@ struct CredentialsView: View {
     private func exportPackage() {
         guard selCount > 0 else { app.showToast("先选择要导出的凭证"); return }
         let pw = KeyGen.randomDigits(8)
-        guard let result = CredentialOrg.exportPackage(mac, pwdAliases: selPwds, fpBatches: selFps, password: pw) else {
-            app.showToast("导出失败"); return
-        }
         guard let text = String(data: result.data, encoding: .utf8) else { return }
         // 口令不进剪贴板: 明文凭证包与口令必须分开交付。
         // 也刻意不走 405 自清: 这是 AES 密文信封, 且要粘进聊天工具, 60 秒后清掉只会打断交接
@@ -1499,8 +1444,6 @@ struct CredentialsView: View {
         guard busyKey == nil else { return }
         busyKey = "batch"
         Task { @MainActor in
-            defer { busyKey = nil; editMode = false; selPwds = []; selFps = [] }
-            let n = CredentialOrg.batchDisable(mac, pwdAliases: selPwds, fpBatches: selFps)
             if n > 0 {
                 _ = Milestones.recordOrganize()
                 app.flashReceipt("已写入本机")   // 508 已写入本机
@@ -1519,11 +1462,8 @@ struct CredentialsView: View {
         guard busyKey == nil else { return }
         let m = mac
         guard !m.isEmpty else { app.showToast("未选择门锁"); return }
-        let pwds = selPwds.compactMap { DB.getPwd(m, $0) }
-        let fps = selFps.compactMap { DB.getFp(m, $0) }
         guard !pwds.isEmpty || !fps.isEmpty else { app.showToast("所选凭证已不在台账"); reload(); return }
         busyKey = "batch"
-        defer { busyKey = nil; editMode = false; selPwds = []; selFps = [] }
         var done = 0
         do {
             try await app.lock.ensureConnected(mac: m)
@@ -1551,11 +1491,6 @@ struct CredentialsView: View {
 
 
 
-    /// 363 月历点日 → 落到当日到期清单 (App 内滚动到位)
-    private func pickDay(_ date: Date) {
-        let items = CredentialOrg.dayDeadlines(mac, date)
-        app.showToast("当日到期 \(items.count) 条: " + items.map { "#\($0.alias)" }.prefix(6).joined(separator: " ") + (items.count > 6 ? " …" : ""))
-    }
 
     // ---------- OTP 内联卡 (App credentials + otpgenerate) ----------
     private var otpSection: some View {

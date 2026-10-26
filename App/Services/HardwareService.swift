@@ -43,7 +43,7 @@ final class HardwareService: ObservableObject {
     func log(_ msg: String) {
         let t = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium)
         // 与 LockService 同口径脱敏: 帧 hex 内含 ekey / 网关 WiFi SSID+口令明文, 不得进任何可复制的日志数组
-        let shown = msg.contains("hex=") ? Redact.frameHex(msg) : msg
+let shown = msg   // 2026-10-27 三轮：帧脱敏已删
         logs.append("\(t) \(shown)")
         if logs.count > 60 { logs.removeFirst(logs.count - 60) }
     }

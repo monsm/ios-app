@@ -40,7 +40,7 @@ final class LockService: ObservableObject {
             recentFrames.append(msg)
             if recentFrames.count > 60 { recentFrames.removeFirst(recentFrames.count - 60) }
         }
-        let shown = rawFrame ? Redact.frameHex(msg) : msg
+let shown = msg   // 2026-10-27 三轮：帧脱敏已删（用户确认，日志将含帧明文）
         logs.append("\(t) [\(level)] \(shown)")
         if logs.count > 200 { logs.removeFirst(logs.count - 200) }
         if level == "warn" || level == "error" { lastError = shown }
@@ -1027,17 +1027,3 @@ final class LockService: ObservableObject {
     }
 }
 
-/// 帧 hex 脱敏: 保留长度与前 4 位供排障对位, 密钥材料不落盘、不外传。
-/// 放在文件作用域而非 LockService 内: 该类是 @MainActor, 嵌套类型会继承隔离域,
-/// 导致非隔离上下文 (BackupKit.restoreAll / 日志工具) 无法复用同一份脱敏实现。
-enum Redact {
-    static func frameHex(_ s: String) -> String {
-        guard let r = s.range(of: "hex=") else { return s }
-        let tail = s[r.upperBound...]
-        var taken = ""
-        for c in tail { if c.isHexDigit { taken.append(c) } else { break } }
-        guard taken.count >= 8 else { return s }
-        let head = String(taken.prefix(4))
-        return String(s[..<r.upperBound]) + head + "(\(taken.count) 位已隐去)" + String(tail.dropFirst(taken.count))
-    }
-}

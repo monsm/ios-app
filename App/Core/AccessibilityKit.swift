@@ -119,45 +119,6 @@ enum AXPrefs {
     static var bigTile: Bool { DB.store.getBool("kf_bigtile") }
 }
 
-enum AXTerms {
-    static let lock = "门锁"
-    static let credential = "凭证"          // 不混用"密钥/口令"
-    static let pwd = "密码"
-    static let fp = "指纹"
-    static let otp = "临时码"
-    static let battery = "电量"
-    static let firmware = "固件"
-    static let lockClock = "锁钟"
-    static let connected = "已连接"
-    static let notConnected = "未连接"
-    static let records = "开门记录"
-
-    /// 850 时间线自然语: "今天 14:02, 张三用指纹开了门" — 字段不堆叠, 拼成一句人话
-    static func rowSentence(dayKey: String, time: String, title: String,
-                           warn: Bool, isToday: Bool, dayLabel: String) -> String {
-        let when = isToday ? "今天 \(time)" : "\(dayLabel) \(time)"
-        let s = when + ", " + title
-        return warn ? "告警记录, " + s : s
-    }
-
-    /// 856 盲文简写表: 数值/状态类控件的 accessibilityValue 走简写, 降低盲文转译音节
-    static func br(_ s: String) -> String {
-        var v = s
-        // 凭证状态那五个词原先不在表里 —— credVoState(CredentialsView:1393) 吐的正是
-        // "已过期/提前失效/已排期/可用/预警指纹", 于是凭证行的 .accessibilityValue(AXTerms.br(...))
-        // 一直是"喂进去什么出来什么", 缩写对它们完全空转。这里补齐, 口径与上面同源 (短、不歧义)。
-        for (k, a) in [("%", " pct"), ("已连接", "conn"), ("未连接", "no-conn"),
-                       ("电量", "bat"), ("固件", "FW"), ("锁钟", "clk"),
-                       ("今天", "今"), ("次", "次/"),
-                       ("提前失效", "early-exp"), ("已过期", "exp"), ("已排期", "queued"),
-                       ("预警指纹", "alarm-FP"),
-                       // "不可用"必须排在"可用"前面: 它是"可用"的超串, 顺序反了会被替换成"不ok"
-                       ("不可用", "no-use"), ("可用", "ok")] {
-            v = v.replacingOccurrences(of: k, with: a)
-        }
-        return v
-    }
-}
 
 // ---------- 主动播报 / 触感 / 焦点巡检 / 对比度 (852/876/855/883) ----------
 @MainActor

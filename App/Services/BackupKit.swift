@@ -440,7 +440,7 @@ enum BackupKit {
             if let tr = globals.trace, let lines = tr.lines, !lines.isEmpty {
                 // 小程序 trace 行内含令牌/密钥 hex (vendor/app/utils/trace.js:5 自述), 原样落本机就会
                 // 进系统备份与导出中心。保留行数/时间语义供"记录"分区预览, 但先过同口径 hex 脱敏。
-                let safe = lines.map { Redact.frameHex($0) }
+let safe = lines   // 2026-10-27 三轮：帧脱敏已删，导出将含帧明文
                 DB.store.set("kf_trace_persist_v1", [
                     "savedAt": tr.savedAt ?? 0, "count": safe.count,
                     "chars": tr.chars ?? 0, "lines": safe,

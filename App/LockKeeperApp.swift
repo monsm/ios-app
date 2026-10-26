@@ -37,15 +37,6 @@ enum Theme {
     }
 }
 
-// ---------- 全局状态 ----------
-/// 一张时刻卡的数据 (队列元素)。原本住在 MomentLayer.swift, 该文件随本轮删减移除,
-/// 但异常退出 (758) 与保留期到期 (752) 两类提醒仍靠它排队 —— 数据形状留在这里。
-struct Moment: Identifiable, Equatable {
-    let id: String
-    let icon: String
-    let title: String
-    let subtitle: String
-}
 
 @MainActor
 final class AppState: ObservableObject {
@@ -179,10 +170,7 @@ final class AppState: ObservableObject {
         // 2026-10-26: 原「上次停在受限区就不恢复」已删（guestAreaLocked 恒 false）⇒ 直接恢复。
         tabSelection = t
     }
-    // 包18: Hero 一句话 (1000 晚归) / 连续失败 (1003) / 一次性时刻卡队列 (24/992/1010/1021/1050)
-    @Published var homeMoment: String?
     @Published var failStreak = 0
-    @Published var moment: Moment?
     @Published var writeReceipt: String?   // 包8/508 写入回执: 凭证保存成功后"已写入本机"对勾浮出
     // 包1: 开锁过程态 — 80 三段进度 / 85 重试节奏 / 250 二次开锁应用锁闸
     @Published var phase = 0            // 0 空闲 · 1 握手 · 2 鉴权 · 3 执行
@@ -241,17 +229,6 @@ final class AppState: ObservableObject {
     private var lastDispatch = Date.distantPast   // 244 指令去重
     private var dispatchAt = Date.distantPast     // 56 撤销窗口计时基准
     private var lastUnlockSuccessAt: Date?        // 250 30 秒内二次开锁判定
-    private var momentQueue: [Moment] = []
-    let lock = LockService.shared
-    let hw = HardwareService.shared
-
-    enum UnlockState: Equatable {
-        case idle, connecting, opening, success, doubleVerify, failed(String)
-        var isFailed: Bool {
-            if case .failed = self { return true }
-            return false
-        }
-    }
 
     init() {
         // 2026-10-17 拍板 A: 删掉启动门禁 —— 打开 App 不再需要本机密码/FaceID。
@@ -605,16 +582,6 @@ final class AppState: ObservableObject {
         }
     }
 
-    // ---------- 包18: 庆祝与成就 ----------
-    /// 一次性时刻队列: 去重入队, 逐张呈现 (MomentCardView 见 Celebration.swift)
-    func enqueueMoment(_ m: Moment) {
-        guard !momentQueue.contains(where: { $0.id == m.id }), moment?.id != m.id else { return }
-        momentQueue.append(m)
-        if moment == nil { advanceMoment() }
-    }
-    func advanceMoment() {
-        withAnimation(DS.Motion.soft) { moment = momentQueue.isEmpty ? nil : momentQueue.removeFirst() }
-    }
     /// 启动结算: 异常退出卡(758) / 保留期到期卡(752) / 自动归档(223) / 关怀与凭证巡检 / 启动自检与月度备份排程
     func onLaunch() {
         // 758 启动提示: 上次异常退出时先给一张时刻卡 —— 此前只有走进诊断页才看得到那条标签,
@@ -664,15 +631,6 @@ final class AppState: ObservableObject {
         // 成功反馈: 触感 + 圆盘回待机 (提示音已随波 1 移除)
         Milestones.recordUnlockSuccess()
         let hour = WeekCal.gregorian.component(.hour, from: Date())
-        if hour >= 22 { publishHomeMoment("欢迎回家, 辛苦了") }
-    }
-    /// Hero 卡一句话 (1000 晚归欢迎语), 8 秒后自行淡出
-    private func publishHomeMoment(_ text: String) {
-        withAnimation(DS.Motion.soft) { homeMoment = text }
-        Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 8_000_000_000)
-            if homeMoment == text { withAnimation(DS.Motion.exit) { homeMoment = nil } }
-        }
     }
 
     // 最近开门 (attribution R1/R2); 条数偏好见 idea 910 (kf_recent_count, 默认 5)
@@ -790,8 +748,6 @@ struct RootView: View {
             Tab("凭证", systemImage: "key.horizontal.fill", value: 1) { credentialsTabContent }
                 .badge(CredentialOrg.expiringSoonCount(macs: DB.keychains().map { $0.mac }))
             Tab("记录", systemImage: "list.bullet.rectangle.fill", value: 2) { recordsTabContent }
-                // 735 Tab 角标: 口径与记录页铃铛同源 (RecordSearch.unhandledAlarmCount); 0 时系统自动隐藏
-                .badge(RecordSearch.unhandledAlarmCount(macs: DB.keychains().map { $0.mac }))
             Tab("设置", systemImage: "gearshape.fill", value: 3) { settingsTabContent }
         }
     }
@@ -948,13 +904,6 @@ struct RootView: View {
         // 2026-10-18 门面改造: 启动/回前台按策略决定是否展示门面。
         // 冷启动展示; 回前台 < 300s 不重演; 深链进入时一律不展示。
         .id(app.appearanceSeed)
-        // 包15: App 字号五档 × 系统 Dynamic Type 叠加 (858, 含 866 极限字号自检 200% 预览)
-        .dynamicTypeSize(AXFlags.typeSize())
-        // 包15: 灰度预览自检 (879) — 全 App 去饱和, 检查渐变主题无色可读性
-        // 861 系统加粗跟随: 读系统"加粗文本"开关, 在根上设 legibilityWeight ——
-        // 显式字重的文本 (凭证名/开关标签) 才跟着加粗。关档时给 .regular 而不是留空:
-        // 两档都显式, 不依赖系统默认推断 (LegibilityWeight.bold 的官方语义就是 "force Accessibility Bold")。
-        .environment(\.legibilityWeight, AXFlags.boldText ? .bold : .regular)
         .animation(DS.Motion.soft, value: app.appUnlocked)
     }
 
@@ -1055,8 +1004,6 @@ struct RootView: View {
     private func handleScenePhase(_ phase: ScenePhase) {
         LinkSense.shared.setSceneActive(phase == .active)
         if phase == .active {
-            // 动效令牌的非隔离读点: 系统"减弱动态效果"只能在设置里改, 改完回来必然经过这里。
-            AXFlags.refreshSnapshots()
             // 2026-10-17 拍板 A: 「到点自动落锁」随启动门禁一起删 —— 现在没有锁屏页可回,
             // 留着它只会把 appUnlocked 置 false, 让深链/落点/回连那些 guard 静默失效。
             if app.appUnlocked {
