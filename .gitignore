@@ -2,6 +2,10 @@
 *.xcodeproj
 *.xcworkspace
 build/
+
+# 例外: 原版 APK 的基线文件就放在 www/build/ 下, build/ 规则会把它一起吃掉 ——
+# apkshadow 闸门在 CI 上因此读不到基线直接崩 (本地有文件所以一直没暴露)。
+!vendor/apk-baseline/www/build/
 DerivedData/
 xcuserdata/
 *.ipa

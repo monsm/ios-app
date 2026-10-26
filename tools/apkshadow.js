@@ -35,6 +35,17 @@ function pick(rel, devRel) {
   return devRel;
 }
 const APK_MAIN = pick('www/build/main.js', 'D:/aapk/apk_raw/assets/www/build/main.js');
+
+// 2026-10-26: 基线缺失时给出可执行的说明而不是裸 ENOENT 堆栈。
+// 这个坑真实发生过 —— `.gitignore` 的 `build/` 规则把 vendor/apk-baseline/www/build/main.js
+// 一起忽略了，于是本地有文件时一直通过、CI 上却直接崩。现在我已在 .gitignore 里加了例外，
+// 并在这里显式报错：缺基线时宁可红得明白，也不要红成一坨栈。
+if (!fs.existsSync(APK_MAIN)) {
+  console.error('✗ 找不到 APK 基线 main.js:' + APK_MAIN);
+  console.error('  它应该在 vendor/apk-baseline/www/build/main.js (已提交进仓)。');
+  console.error('  若本地被 .gitignore 忽略，用 git add -f 强制加入，并检查 .gitignore 的 build/ 例外。');
+  process.exit(1);
+}
 const main = fs.readFileSync(APK_MAIN, 'utf8');
 
 // ---------- 从 APK 提取常量（不硬编码，避免抄错） ----------
