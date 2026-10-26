@@ -382,6 +382,26 @@ enum CredentialOrg {
         case owner = 1    // 按成员分组
     }
 
+    /// 2026-10-26 恢复：`CredSortKey` 在清理四件套时被误删 —— 但「排序」不在删除清单里，
+    /// 它是凭证列表的保留功能。`sortKey` 状态与两处 switch 都还依赖它。
+    /// case 名与 `orderPwds` / `orderFps` 里的 switch 一致（name / type / recent / expiry）。
+    enum CredSortKey: Int, CaseIterable {
+        case name = 0, type, recent, expiry
+        var label: String {
+            switch self {
+            case .name: return "名称"
+            case .type: return "类型"
+            case .recent: return "最近使用(约)"   // 锁端日志不记凭证身份, 长期凭证只能按锁级推断 → 按本仓纪律带"约"
+            case .expiry: return "到期"
+            }
+        }
+    }
+    static var sortKey: CredSortKey {
+        CredSortKey(rawValue: DB.store.getInt("kf_ccred_sort", 0)) ?? .name
+    }
+    static func setSortKey(_ k: CredSortKey) { DB.store.set("kf_ccred_sort", k.rawValue) }
+    static func setSortKey(_ k: CredSortKey) { DB.store.set("kf_ccred_sort", k.rawValue) }
+
     static var groupMode: CredGroupMode {
         CredGroupMode(rawValue: DB.store.getInt("kf_ccred_prefs", 0) & 1) ?? .type
     }

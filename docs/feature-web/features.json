@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-26T14:32:55.798Z",
+    "generated": "2026-10-26T14:38:13.221Z",
     "sources": [
       {
         "scout": "android-native",
@@ -20006,7 +20006,7 @@
           "line": 69,
           "symbol": "vkBody",
           "note": "body = vkBody.destined(.credentials)",
-          "text": "if !MemberHub.borrows(mac).isEmpty {"
+          "text": "// 三条通知条**互斥取一**(优先级 借出 > 待下发 > 跳转定位)。"
         },
         {
           "platform": "ios",
@@ -20014,7 +20014,7 @@
           "line": 88,
           "symbol": "vkBody",
           "note": "三条通知条互斥取一",
-          "text": "if editMode { batchBar }"
+          "text": "// 29 上下文工具栏 (Photos 式): 选中态才出现的这条 batchBar 就是它——"
         }
       ],
       "platformEvidence": {
@@ -20653,7 +20653,7 @@
           "line": 658,
           "symbol": "batchExtend(_:_:_:_:)",
           "note": "",
-          "text": "// 约族核对结论: 311/316/320/332 四处 UI 小字与下面这几个函数的口径本就对齐, 本轮不动;"
+          "text": "(owner == nil || p.owner == owner) &&"
         },
         {
           "platform": "ios",
@@ -20669,7 +20669,7 @@
           "line": 672,
           "symbol": "batchTransfer(_:pwdAliases:fpBatches:to:)",
           "note": "",
-          "text": "/// 跨多次拉取合并后更不保证; 一律改成取最大时间戳。"
+          "text": "static func fpCountTotal(_ mac: String) -> Int { DB.listFps(mac).count }"
         },
         {
           "platform": "ios",
@@ -21382,7 +21382,7 @@
           "line": 695,
           "symbol": "proxySuffix(_:)",
           "note": "",
-          "text": "guard let f = parseLocal(p.from), let to = parseLocal(p.to) else { return nil }"
+          "text": "/// 单条版全仓零调用点，留着一份更慢的入口只会让人误调用它。"
         },
         {
           "platform": "ios",
@@ -21770,7 +21770,7 @@
           "line": 1626,
           "symbol": "batchBar",
           "note": "",
-          "text": "if !p { withAnimation(DS.Motion.standard) { otpPeek = false } }"
+          "text": "RoundedRectangle(cornerRadius: DS.Radius.control)"
         },
         {
           "platform": "ios",
@@ -21778,7 +21778,7 @@
           "line": 1644,
           "symbol": "batchBar",
           "note": "置顶",
-          "text": "app.showToast(\"已复制\")"
+          "text": ".disabled(isBusy)"
         },
         {
           "platform": "ios",
@@ -21786,7 +21786,7 @@
           "line": 1664,
           "symbol": "batchBar",
           "note": "导出",
-          "text": "guard busyKey == nil else { return false }"
+          "text": "/// 返回值 = 是否真生成 (首张按钮拿它决定回执; 各失败支自己弹原因, 不静默)。"
         }
       ],
       "platformEvidence": {
@@ -21854,7 +21854,7 @@
           "line": 374,
           "symbol": "headerToolbar",
           "note": "",
-          "text": "let t = CredentialOrg.typeCounts(mac)"
+          "text": ".accessibilityAddTraits(on ? [.isSelected] : [])"
         },
         {
           "platform": "ios",
@@ -21862,7 +21862,7 @@
           "line": 389,
           "symbol": "headerToolbar",
           "note": "选择按钮",
-          "text": "}"
+          "text": "if sorting { sortHintRow }         // 182: 处在排序档就把规则写在同一屏, 不让人猜拖了会怎样"
         },
         {
           "platform": "ios",
@@ -21870,7 +21870,7 @@
           "line": 396,
           "symbol": "headerToolbar",
           "note": "Menu 溢出",
-          "text": "@ViewBuilder"
+          "text": ".environment(\\.editMode, .constant(sorting ? .active : .inactive))"
         }
       ],
       "platformEvidence": {
@@ -21945,7 +21945,7 @@
           "line": 1806,
           "symbol": "otpSection",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": "if let o = owner, !o.isEmpty {"
         },
         {
           "platform": "apk",
@@ -21961,7 +21961,7 @@
           "line": 1808,
           "symbol": "otpSection",
           "note": "开通临时密码",
-          "text": "}"
+          "text": ".vkFont(.caption2)"
         },
         {
           "platform": "ios",
@@ -21969,7 +21969,7 @@
           "line": 1823,
           "symbol": "otpSection",
           "note": "setZotp",
-          "text": "private func stopUndoTimer() {"
+          "text": "// 停用那条路还排着一条\"待下发的锁端删除\"并写着 361 停用便签；彻底删除那条路锁端已经真删了，"
         }
       ],
       "platformEvidence": {
@@ -22052,7 +22052,7 @@
           "line": 1229,
           "symbol": "credRow",
           "note": "",
-          "text": "}"
+          "text": "Menu(\"归属到成员\") { ownerMenu(isPwd: false, key: f.batch) }"
         },
         {
           "platform": "ios",
@@ -22060,7 +22060,7 @@
           "line": 1246,
           "symbol": "credRow",
           "note": "状态胶囊",
-          "text": ""
+          "text": ".padding(.horizontal, DS.Space.s).padding(.vertical, DS.Space.xxs)"
         },
         {
           "platform": "ios",
@@ -22068,7 +22068,7 @@
           "line": 1272,
           "symbol": "credRow",
           "note": "副行",
-          "text": "// 182/352: 记住当前组内顺序 (置顶段单独记, 避免拖动段误伤置顶)。"
+          "text": ".frame(minHeight: DS.Hit.min)"
         }
       ],
       "platformEvidence": {
@@ -22136,7 +22136,7 @@
           "line": 691,
           "symbol": "searchSection",
           "note": "搜索框",
-          "text": "/// 旧包/半写坏的表里出现重复 alias 时, 后者会当场 trap (整个凭证页变崩溃), 前者只是取第一个位次。"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -22144,7 +22144,7 @@
           "line": 709,
           "symbol": "filteredResults",
           "note": "",
-          "text": "return input.sorted { a, b in"
+          "text": "// 改用 inferredLastUseMap: 一次读日志, 临时凭证按自己的时间窗归属;"
         },
         {
           "platform": "ios",
@@ -22152,7 +22152,7 @@
           "line": 686,
           "symbol": "searchSection",
           "note": "兜底两按钮所在块",
-          "text": "}"
+          "text": "let ib = byIdx[b.alias, default: 9999]"
         }
       ],
       "platformEvidence": {
@@ -22305,7 +22305,7 @@
           "line": 2166,
           "symbol": "viewPwd",
           "note": "应用锁门槛",
-          "text": "}"
+          "text": "var vc = scene?.keyWindow?.rootViewController"
         },
         {
           "platform": "ios",
@@ -22383,7 +22383,7 @@
           "line": 804,
           "symbol": "alert(_:_:)",
           "note": "",
-          "text": "static func clearDraft(_ mac: String) {"
+          "text": "struct StudioDraft: Codable {"
         },
         {
           "platform": "ios",
@@ -22459,7 +22459,7 @@
           "line": 850,
           "symbol": "expiringSoonCount(macs:within:)",
           "note": "",
-          "text": "if day >= 1 { return \"剩 \\(day) 天\" }"
+          "text": "return verb && !to.hasPrefix(\"2118\") ? \"到 \" + head : head"
         },
         {
           "platform": "ios",
@@ -22467,7 +22467,7 @@
           "line": 881,
           "symbol": "dueSoonPwds(_:)",
           "note": "",
-          "text": "static func stateString(_ s: Int) -> String {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -22538,7 +22538,7 @@
           "line": 1800,
           "symbol": "pickDay",
           "note": "toast 汇总",
-          "text": "Text(title)"
+          "text": "private func archRow(title: String, owner: String?, restore: @escaping () -> Void) -> some View {"
         }
       ],
       "platformEvidence": {
@@ -22841,7 +22841,7 @@
           "line": 814,
           "symbol": "scheduleAlerts(_:_:_:)",
           "note": "",
-          "text": "}"
+          "text": "var scene: String"
         },
         {
           "platform": "ios",
@@ -22849,7 +22849,7 @@
           "line": 829,
           "symbol": "dayTier",
           "note": "WeekCal.shifted(to, days: -k)",
-          "text": "let head = to.hasPrefix(\"2118\") ? \"长期有效\" : String(to.prefix(prefix))"
+          "text": "// ---------- 显示层辅助 (919 别名显示切换: 成员\"别名\"字段 = relation 备注, 空则回退真名) ----------"
         },
         {
           "platform": "ios",
@@ -22857,7 +22857,7 @@
           "line": 844,
           "symbol": "addCalendar",
           "note": "t0 到期时",
-          "text": "/// 12 到期倒计时胶囊 (长期显示 \"长期有效\")"
+          "text": "/// 到期时刻的界面读法。`2118-01-01 00:00` 是**\"永不到期\"的哨兵值** (写库与 363/331 那两条判据都用它),"
         }
       ],
       "platformEvidence": {
@@ -23939,7 +23939,7 @@
           "line": 1450,
           "symbol": "credMenu",
           "note": "setFpAlarm",
-          "text": "Text(t).vkFont(.caption2)"
+          "text": "VStack(spacing: 2) {"
         },
         {
           "platform": "ios",
@@ -23947,7 +23947,7 @@
           "line": 1256,
           "symbol": "credRow",
           "note": "预警胶囊",
-          "text": "DS.Haptics.tick.impactOccurred()"
+          "text": "HStack(spacing: DS.Space.s) {"
         }
       ],
       "platformEvidence": {
@@ -24683,7 +24683,7 @@
           "line": 2015,
           "symbol": "archivedStrip",
           "note": "",
-          "text": "UIApplication.topViewController()?.present(alert, animated: true)"
+          "text": "DB.renameFp(mac, f.batch, name)"
         },
         {
           "platform": "ios",
@@ -24691,7 +24691,7 @@
           "line": 2046,
           "symbol": "archivedStrip",
           "note": "归档区标题",
-          "text": "alert.addAction(UIAlertAction(title: \"取消\", style: .cancel))"
+          "text": "_ = Milestones.recordOrganize()"
         },
         {
           "platform": "ios",
@@ -24699,7 +24699,7 @@
           "line": 2038,
           "symbol": "archivedStrip",
           "note": "全部还原",
-          "text": "}"
+          "text": "if let p = pwd {"
         }
       ],
       "platformEvidence": {
@@ -24767,7 +24767,7 @@
           "line": 197,
           "symbol": "borrowBanner",
           "note": "",
-          "text": ".contentShape(Rectangle())"
+          "text": ".vkFont(.caption, weight: .medium)"
         },
         {
           "platform": "ios",
@@ -24775,7 +24775,7 @@
           "line": 205,
           "symbol": "borrowBanner",
           "note": "借用文案",
-          "text": "}"
+          "text": ".overlay(RoundedRectangle(cornerRadius: DS.Radius.control).strokeBorder(DS.Palette.hairline, lineWidth: 0.5))"
         },
         {
           "platform": "ios",
@@ -24783,7 +24783,7 @@
           "line": 209,
           "symbol": "borrowBanner",
           "note": "已归还",
-          "text": "if let m = app.pendingCredNavMac, m != mac {"
+          "text": "/// 消费深链: pwd:<alias> → 密码段 + 打开详情; fp:<batch> → 指纹段。跨锁时先切锁。"
         }
       ],
       "platformEvidence": {
@@ -24859,7 +24859,7 @@
           "line": 67,
           "symbol": "isBusy",
           "note": "",
-          "text": "// 每条自己已有空判 (borrowBanner 里 if !bs.isEmpty / pendingQueueBar 同 /"
+          "text": "// 现在: 三条通知条**互斥取一**(优先级 借出 > 待下发 > 跳转定位),"
         },
         {
           "platform": "ios",
@@ -24867,7 +24867,7 @@
           "line": 1346,
           "symbol": "credRow",
           "note": "整行 disabled",
-          "text": "selPwds = allP; selFps = allF"
+          "text": "let allF = selectableFps.map { $0.batch }"
         }
       ],
       "platformEvidence": {
@@ -24935,7 +24935,7 @@
           "line": 801,
           "symbol": "dueSoonBanner",
           "note": "",
-          "text": ""
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         },
         {
           "platform": "ios",
@@ -24943,7 +24943,7 @@
           "line": 806,
           "symbol": "dueSoonBanner",
           "note": "取最近到期",
-          "text": ""
+          "text": "private var sortedFps: [LedgerFp] { orderedFps(segFilteredFps()) }"
         },
         {
           "platform": "ios",
@@ -24951,7 +24951,7 @@
           "line": 812,
           "symbol": "dueSoonBanner",
           "note": "文案",
-          "text": "let credArchived: Set<Int> = []   // 2026-10-26: 归档已删"
+          "text": "// 460 归档成员的口令/指纹不进当前显示; seqBaseFps 保持全量 (同上)"
         }
       ],
       "platformEvidence": {
@@ -25022,7 +25022,7 @@
           "line": 1489,
           "symbol": "editList",
           "note": "",
-          "text": "let av = UIActivityViewController(activityItems: [text], applicationActivities: nil)"
+          "text": "// 也刻意不走 405 自清: 这是 AES 密文信封, 且要粘进聊天工具, 60 秒后清掉只会打断交接"
         },
         {
           "platform": "ios",
@@ -25030,7 +25030,7 @@
           "line": 1510,
           "symbol": "editList",
           "note": "顺序",
-          "text": "}"
+          "text": "app.showToast(\"所选凭证已不在台账\")"
         },
         {
           "platform": "ios",
@@ -25038,7 +25038,7 @@
           "line": 1527,
           "symbol": "editList",
           "note": "智能选取",
-          "text": "for p in pwds {"
+          "text": "var done = 0"
         }
       ],
       "platformEvidence": {
@@ -25107,7 +25107,7 @@
           "line": 1945,
           "symbol": "emptyHint",
           "note": "",
-          "text": ""
+          "text": "showToastOrganized(\"已停用, 7 天内可恢复\")   // 364 已停用"
         },
         {
           "platform": "ios",
@@ -25115,7 +25115,7 @@
           "line": 1954,
           "symbol": "emptyHint",
           "note": "添加第一条密码",
-          "text": "Task { await self.doDeletePwd(p) }"
+          "text": "// 用户调过之后这句就把安全网说大了 —— 而它恰恰出现在按下去就不可逆的那一刻。"
         },
         {
           "platform": "ios",
@@ -25123,7 +25123,7 @@
           "line": 73,
           "symbol": "vkBody",
           "note": "无锁空态",
-          "text": "credJumpBar"
+          "text": "borrowBanner"
         }
       ],
       "platformEvidence": {
@@ -25192,7 +25192,7 @@
           "line": 531,
           "symbol": "firstCredRouter",
           "note": "",
-          "text": "// 原先「去回收站搜」只开弹窗不带词 (空搜索框 = 把人丢回原地), 「按成员重搜」只切分组视图"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -25200,7 +25200,7 @@
           "line": 533,
           "symbol": "firstCredRouter",
           "note": "长期密码入口",
-          "text": "VStack(alignment: .leading, spacing: DS.Space.xs) {"
+          "text": "// 532 搜索兜底动作: 两个入口都要把\"当前这次搜索的意图\"真递过去, 不能只换个面。"
         },
         {
           "platform": "ios",
@@ -25208,7 +25208,7 @@
           "line": 547,
           "symbol": "firstCredRouter",
           "note": "HintOnce.mark(806)",
-          "text": "let q = search.trimmingCharacters(in: .whitespaces)"
+          "text": ".buttonStyle(.bordered)"
         }
       ],
       "platformEvidence": {
@@ -25277,7 +25277,7 @@
           "line": 1098,
           "symbol": "fpSection",
           "note": "",
-          "text": "UIPasteboard.general.string = v"
+          "text": "// 编辑态整行单击已归勾选, 双击里再判一次 editMode, 两种模式不抢手势"
         },
         {
           "platform": "ios",
@@ -25285,7 +25285,7 @@
           "line": 1106,
           "symbol": "fpSection",
           "note": "缺失提醒",
-          "text": "}"
+          "text": "if editMode {"
         },
         {
           "platform": "ios",
@@ -25293,7 +25293,7 @@
           "line": 1123,
           "symbol": "fpSection",
           "note": "只剩 1 枚",
-          "text": "// 182 原先这里挂着一枚 onLongPressGesture, 弹的是「长按可停用/删除; 编辑模式里用顺序按钮调整组内先后」——"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -25362,7 +25362,7 @@
           "line": 232,
           "symbol": "credJumpBar",
           "note": "",
-          "text": "case \"bin\":"
+          "text": "guard let p = app.pendingCredPanel else { return }"
         },
         {
           "platform": "ios",
@@ -25378,7 +25378,7 @@
           "line": 275,
           "symbol": "consumeCredJump",
           "note": "jumpBarOn = opened",
-          "text": "Spacer(minLength: 0)"
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         }
       ],
       "platformEvidence": {
@@ -25447,7 +25447,7 @@
           "line": 1170,
           "symbol": "memberSections",
           "note": "",
-          "text": "if let f = hit.fp {"
+          "text": "!p.note.isEmpty ? \"备注 \\(p.note)\" : \"\""
         },
         {
           "platform": "ios",
@@ -25455,7 +25455,7 @@
           "line": 1187,
           "symbol": "memberSections",
           "note": "段标题",
-          "text": "return \"\\(greet)，您那条进门凭证将在 \\(day) \\(hour) 到期。\""
+          "text": "let greet = who.isEmpty ? \"您好\" : \"您好，\\(who)\""
         },
         {
           "platform": "ios",
@@ -25463,7 +25463,7 @@
           "line": 1202,
           "symbol": "memberSections",
           "note": "未归属段",
-          "text": "// 368 延期催办文本: 只对\"有到期时间且 7 天内到期\"的条目出现, 产出可直接发给住客的礼貌催办语。"
+          "text": "Menu(\"归属到成员\") { ownerMenu(isPwd: true, key: p.alias) }"
         }
       ],
       "platformEvidence": {
@@ -25532,7 +25532,7 @@
           "line": 1447,
           "symbol": "credMenu",
           "note": "指纹分支",
-          "text": "VStack(spacing: 2) {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -25540,7 +25540,7 @@
           "line": 1450,
           "symbol": "credMenu",
           "note": "预警指纹",
-          "text": "Text(t).vkFont(.caption2)"
+          "text": "VStack(spacing: 2) {"
         },
         {
           "platform": "ios",
@@ -25548,7 +25548,7 @@
           "line": 1472,
           "symbol": "credMenu",
           "note": "彻底删除",
-          "text": "reload()"
+          "text": "let n = CredentialOrg.batchPrefixNote(mac, pwdAliases: selPwds, fpBatches: selFps, prefix: s)"
         }
       ],
       "platformEvidence": {
@@ -25619,7 +25619,7 @@
           "line": 1410,
           "symbol": "credMenu",
           "note": "",
-          "text": "}"
+          "text": "extendAliases = selPwds.isEmpty ? [] : selPwds"
         },
         {
           "platform": "ios",
@@ -25627,7 +25627,7 @@
           "line": 1423,
           "symbol": "credMenu",
           "note": "催办文本",
-          "text": "batchBtn(\"停用\", icon: \"pause.circle\", destructive: true) {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -25635,7 +25635,7 @@
           "line": 1445,
           "symbol": "credMenu",
           "note": "彻底删除",
-          "text": "private func batchBtn(_ t: String, icon: String, destructive: Bool = false, _ a: @escaping () -> Void) -> some View {"
+          "text": ".background(.bar)"
         }
       ],
       "platformEvidence": {
@@ -25702,7 +25702,7 @@
           "line": 280,
           "symbol": "consumeCredPanel",
           "note": "",
-          "text": "if !editMode && !sorting && !MemberHub.elderMode {"
+          "text": "// 2026-10-18 重构备注: 原稿在这里加了一枚 search 图标, 但 showSearch 这个状态"
         },
         {
           "platform": "ios",
@@ -25710,7 +25710,7 @@
           "line": 283,
           "symbol": "consumeCredPanel",
           "note": "case bin",
-          "text": "DS.Haptics.tick.impactOccurred()"
+          "text": "if !editMode && !sorting && !MemberHub.elderMode {"
         },
         {
           "platform": "ios",
@@ -25718,7 +25718,7 @@
           "line": 289,
           "symbol": "consumeCredPanel",
           "note": "默认 fail-closed",
-          "text": "Section(\"视图\") {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -25786,7 +25786,7 @@
           "line": 308,
           "symbol": "pendingQueueBar",
           "note": "",
-          "text": "Section(\"整理\") {"
+          "text": "Button(\"默认 (全部)\") { smartSel = \"\" }"
         },
         {
           "platform": "ios",
@@ -25794,7 +25794,7 @@
           "line": 311,
           "symbol": "pendingQueueBar",
           "note": "点开队列",
-          "text": "Button {"
+          "text": "Section(\"整理\") {"
         },
         {
           "platform": "ios",
@@ -25802,7 +25802,7 @@
           "line": 341,
           "symbol": "pendingQueueBar",
           "note": "2 分钟同步回执",
-          "text": "}"
+          "text": ".padding(.horizontal, DS.Space.gutter)"
         }
       ],
       "platformEvidence": {
@@ -25873,7 +25873,7 @@
           "line": 923,
           "symbol": "pwdSections",
           "note": "",
-          "text": "Text(\"本机还没有指纹台账。录入后成员可用手指直接开锁。\")"
+          "text": ".accessibilityLabel(\"冗余横条: 添加备用指纹\")   // 324 冗余横条"
         },
         {
           "platform": "ios",
@@ -25881,7 +25881,7 @@
           "line": 937,
           "symbol": "pwdSections",
           "note": "三态组头",
-          "text": "let opens = CredentialOrg.fpUseCount30d(mac)"
+          "text": "// 529 指纹段尾统计: 指纹没有\"逐枚使用次数\"这个读数 (日志无指纹身份字段), 数的是该锁"
         },
         {
           "platform": "ios",
@@ -25889,7 +25889,7 @@
           "line": 954,
           "symbol": "pwdSections",
           "note": "这一组统一延期",
-          "text": "// (M 成员 = M+1 次全量 JSON 解码) 且每条凭证行各调一次 isArchived (每次都 archived(mac)"
+          "text": "@ViewBuilder"
         }
       ],
       "platformEvidence": {
@@ -25958,7 +25958,7 @@
           "line": 733,
           "symbol": "queueSection",
           "note": "",
-          "text": "}"
+          "text": "ForEach(Array(pinned.enumerated()), id: \\.offset) { i, p in"
         },
         {
           "platform": "ios",
@@ -25966,7 +25966,7 @@
           "line": 745,
           "symbol": "queueSection",
           "note": "重试",
-          "text": ".onMove { src, dst in"
+          "text": "ForEach(Array(rows.enumerated()), id: \\.offset) { i, p in"
         },
         {
           "platform": "ios",
@@ -25974,7 +25974,7 @@
           "line": 789,
           "symbol": "retryQueueItem",
           "note": "sendQueued",
-          "text": "}"
+          "text": "NavigationLink { AddPwdView(embedded: true) } label: { Label(\"添加密码\", systemImage: \"plus\") }"
         }
       ],
       "platformEvidence": {
@@ -26044,7 +26044,7 @@
           "line": 449,
           "symbol": "headerToolbar",
           "note": "segCount",
-          "text": "VStack(alignment: .leading, spacing: DS.Space.xxs) {"
+          "text": ".foregroundStyle(DS.Palette.accentText)"
         },
         {
           "platform": "ios",
@@ -26060,7 +26060,7 @@
           "line": 492,
           "symbol": "countForSeg",
           "note": "",
-          "text": "private var searchSection: some View {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -26130,7 +26130,7 @@
           "line": 505,
           "symbol": "mainList",
           "note": "sortHintRow 插在最前",
-          "text": ".vkFont(.caption)"
+          "text": "ForEach(hist.prefix(5), id: \\.self) { w in"
         },
         {
           "platform": "ios",
@@ -26138,7 +26138,7 @@
           "line": 512,
           "symbol": "mainList",
           "note": "系统编辑态",
-          "text": ".contentShape(Rectangle())"
+          "text": "Image(systemName: \"xmark.circle\")"
         },
         {
           "platform": "ios",
@@ -26146,7 +26146,7 @@
           "line": 1064,
           "symbol": "commitGroupMove",
           "note": "",
-          "text": "Text(CredentialOrg.namingTemplate(p))"
+          "text": "// 918 命名模板: 主标题下挂 \"谁-哪里-何时\" 推断名 (锁端无名称字段, 本地展示);"
         }
       ],
       "platformEvidence": {
@@ -26214,7 +26214,7 @@
           "line": 1320,
           "symbol": "credRow",
           "note": "swipeActions",
-          "text": "private var selectablePwds: [LedgerPwd] {"
+          "text": "/// 354 选择位面 = 浏览位面: 归档条目既看不见, 也不许被\"全选/反选/智能选取\"选中 —"
         },
         {
           "platform": "ios",
@@ -26222,7 +26222,7 @@
           "line": 1329,
           "symbol": "credRow",
           "note": "!sorting 才出破坏性",
-          "text": "private var cycleLabel: String {"
+          "text": "return DB.listFps(mac).filter { !arch.contains(100000 + $0.batch) }"
         },
         {
           "platform": "ios",
@@ -26230,7 +26230,7 @@
           "line": 1333,
           "symbol": "credRow",
           "note": "改期",
-          "text": "return \"已选 \\(selCount) / \\(total) — 反选\""
+          "text": "let total = selectableTotal"
         }
       ],
       "platformEvidence": {
@@ -26380,7 +26380,7 @@
           "line": 1808,
           "symbol": "同一 VariantToggle",
           "note": "",
-          "text": "}"
+          "text": ".vkFont(.caption2)"
         },
         {
           "platform": "apk",
@@ -26458,7 +26458,7 @@
           "line": 1808,
           "symbol": "VariantToggle 开通临时密码",
           "note": "",
-          "text": "}"
+          "text": ".vkFont(.caption2)"
         },
         {
           "platform": "apk",
@@ -26474,7 +26474,7 @@
           "line": 1823,
           "symbol": "setZotp",
           "note": "",
-          "text": "private func stopUndoTimer() {"
+          "text": "// 停用那条路还排着一条\"待下发的锁端删除\"并写着 361 停用便签；彻底删除那条路锁端已经真删了，"
         }
       ],
       "platformEvidence": {
@@ -28115,7 +28115,7 @@
           "line": 713,
           "symbol": "batchDisable(_:pwdAliases:fpBatches:)",
           "note": "",
-          "text": "/// 326/335 计次退役与用量刻度: 锁端**无计次字段**, 所以这里数的是\"这条凭证自己的时间窗里"
+          "text": "private static func lastUse(of p: LedgerPwd, opens: [Double]) -> Double? {"
         },
         {
           "platform": "ios",
@@ -28253,7 +28253,7 @@
           "line": 2170,
           "symbol": "modifyPwd",
           "note": "",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -28383,7 +28383,7 @@
           "line": 658,
           "symbol": "batchExtend(_:_:_:_:)",
           "note": "",
-          "text": "// 约族核对结论: 311/316/320/332 四处 UI 小字与下面这几个函数的口径本就对齐, 本轮不动;"
+          "text": "(owner == nil || p.owner == owner) &&"
         },
         {
           "platform": "ios",
@@ -28399,7 +28399,7 @@
           "line": 662,
           "symbol": "auto: true",
           "note": "auto: true 自动还原点",
-          "text": "static func openCountInWindow(_ mac: String, p: LedgerPwd) -> Int {"
+          "text": "}()"
         },
         {
           "platform": "ios",
@@ -28667,7 +28667,7 @@
           "line": 2164,
           "symbol": "viewPwd",
           "note": "",
-          "text": "while let presented = vc?.presentedViewController { vc = presented }"
+          "text": "static func topViewController() -> UIViewController? {"
         },
         {
           "platform": "ios",
@@ -28675,7 +28675,7 @@
           "line": 2166,
           "symbol": "viewPwd",
           "note": "应用锁关卡",
-          "text": "}"
+          "text": "var vc = scene?.keyWindow?.rootViewController"
         }
       ],
       "platformEvidence": {
@@ -29063,7 +29063,7 @@
           "line": 735,
           "symbol": "typeCounts(_:)",
           "note": "",
-          "text": "guard t >= lo, t <= upper else { continue }"
+          "text": "/// (CAPABILITY §3: 日志无凭证身份字段)。UI 小字与这句同一口径: 按本地开门日志时间窗推断。"
         },
         {
           "platform": "ios",
@@ -29071,7 +29071,7 @@
           "line": 739,
           "symbol": "pwdState(_:)",
           "note": "",
-          "text": "}"
+          "text": "guard log.type == 4 else { return false }"
         },
         {
           "platform": "ios",
@@ -30027,7 +30027,7 @@
           "line": 672,
           "symbol": "batchTransfer(_:pwdAliases:fpBatches:to:)",
           "note": "",
-          "text": "/// 跨多次拉取合并后更不保证; 一律改成取最大时间戳。"
+          "text": "static func fpCountTotal(_ mac: String) -> Int { DB.listFps(mac).count }"
         },
         {
           "platform": "ios",
@@ -30043,7 +30043,7 @@
           "line": 700,
           "symbol": "batchPrefixNote(_:pwdAliases:fpBatches:prefix:)",
           "note": "",
-          "text": "}"
+          "text": "var out: [Int: Double] = [:]"
         }
       ],
       "platformEvidence": {
@@ -30113,7 +30113,7 @@
           "line": 498,
           "symbol": "cascadeBinMember(_:_:revokeLocks:)",
           "note": "",
-          "text": "if id == \"c6.monthly\" { return .panel(\"organize\") }   // 文案就写着\"到「凭证」点「整理」\""
+          "text": "let enc = try? CryptoBox.encryptText(text, password: password) else { return nil }"
         },
         {
           "platform": "ios",
@@ -30121,7 +30121,7 @@
           "line": 525,
           "symbol": "memberCredentialPreview(_:)",
           "note": "",
-          "text": "DB.listPwds(mac).filter { $0.pwd == value && $0.alias != excluding }"
+          "text": "// 2026-10-13 对抗式点击审计: 原写直写 `app.tabSelection = 1`, **绕过 377 访客门禁**。"
         }
       ],
       "platformEvidence": {
@@ -30354,7 +30354,7 @@
           "line": 451,
           "symbol": "canEvaluatePolicy",
           "note": "guard ctx.canEvaluatePolicy(...)",
-          "text": "} else if p.owner != nil, l.type == 2 {"
+          "text": "return cal.isDate(to, inSameDayAs: date)"
         },
         {
           "platform": "ios",
@@ -30362,7 +30362,7 @@
           "line": 460,
           "symbol": "onDeniedPresentFallback",
           "note": "if ok { commit() } else { onDeniedPresentFallback(commit) }",
-          "text": "struct CredPackage: Codable {"
+          "text": "let p = DB.ledger(mac).pwds.first { $0.alias == pwdAlias }"
         }
       ],
       "platformEvidence": {
@@ -30582,7 +30582,7 @@
           "line": 1675,
           "symbol": "batchBar",
           "note": "删除按钮",
-          "text": "// 2026-10-17 对拍发现: 这里写死 30, 而锁端若是别的窗口, 页面算出的六位码锁端必判错"
+          "text": "return false"
         },
         {
           "platform": "ios",
@@ -30590,7 +30590,7 @@
           "line": 1678,
           "symbol": "batchBar",
           "note": "确认文案",
-          "text": "let period = pRaw > 0 ? pRaw : 30"
+          "text": "// 2026-10-17 对拍发现: 这里写死 30, 而锁端若是别的窗口, 页面算出的六位码锁端必判错"
         },
         {
           "platform": "ios",
@@ -30598,7 +30598,7 @@
           "line": 1774,
           "symbol": "batchDelete",
           "note": "pwdDelete",
-          "text": "}"
+          "text": "app.showToast(\"已还原到列表\")"
         }
       ],
       "platformEvidence": {
@@ -30667,7 +30667,7 @@
           "line": 1669,
           "symbol": "batchBar",
           "note": "停用按钮",
-          "text": "if idx > 99 {"
+          "text": "let win = ZOTP.nextWindow()"
         },
         {
           "platform": "ios",
@@ -30675,7 +30675,7 @@
           "line": 1741,
           "symbol": "finishDisable",
           "note": "",
-          "text": "/// (原先连完直接调 genOtp, 被自己的占用挡下, 回执却报成功)。"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -30683,7 +30683,7 @@
           "line": 1750,
           "symbol": "finishDisable",
           "note": "回执",
-          "text": "if genOtp() {"
+          "text": "do {"
         }
       ],
       "platformEvidence": {
@@ -30752,7 +30752,7 @@
           "line": 1724,
           "symbol": "exportPackage",
           "note": "",
-          "text": "if DB.otpStatus(mac)?.on == true, DB.listPwds(mac).filter({ $0.temp }).isEmpty {"
+          "text": "/// 提出来挂列表固定位 (listBody), 空台账时也只由这一块渲染一次。"
         },
         {
           "platform": "ios",
@@ -30760,7 +30760,7 @@
           "line": 1726,
           "symbol": "exportPackage",
           "note": "8 位口令",
-          "text": "VStack(alignment: .leading, spacing: DS.Space.xs) {"
+          "text": "private var otpStockHint: some View {"
         },
         {
           "platform": "ios",
@@ -30768,7 +30768,7 @@
           "line": 1735,
           "symbol": "exportPackage",
           "note": "分享面板",
-          "text": ".padding(.vertical, 2)"
+          "text": ".buttonStyle(SecondaryActionStyle(fullWidth: false))"
         }
       ],
       "platformEvidence": {
@@ -30837,7 +30837,7 @@
           "line": 1707,
           "symbol": "showPrefixNote",
           "note": "",
-          "text": "Text(\"添加第一条密码\")"
+          "text": "// 包14/815 空态双按钮: 主\"添加密码\" + 次\"看看它如何工作\""
         },
         {
           "platform": "ios",
@@ -30845,7 +30845,7 @@
           "line": 1709,
           "symbol": "showPrefixNote",
           "note": "alert 文案",
-          "text": ".frame(maxWidth: .infinity)"
+          "text": "NavigationLink { AddPwdView(embedded: true) } label: {"
         },
         {
           "platform": "ios",
@@ -30853,7 +30853,7 @@
           "line": 1715,
           "symbol": "showPrefixNote",
           "note": "batchPrefixNote",
-          "text": ".padding(.vertical, 2)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -30920,7 +30920,7 @@
           "line": 403,
           "symbol": "headerToolbar",
           "note": "showCalendar.toggle()",
-          "text": "// ---------- 806 凭证首录分流 (1Password 那一形态) ----------"
+          "text": ".listRowBackground(DS.Palette.accentText.opacity(0.06))"
         },
         {
           "platform": "ios",
@@ -30928,7 +30928,7 @@
           "line": 96,
           "symbol": "vkBody",
           "note": "showCalendar 分支",
-          "text": ".onAppear {"
+          "text": ".variantList()"
         }
       ],
       "platformEvidence": {
@@ -30989,7 +30989,7 @@
           "line": 56,
           "symbol": "showDemo",
           "note": "声明",
-          "text": "title: \"还没有添加门锁\","
+          "text": "Group {"
         },
         {
           "platform": "ios",
@@ -30997,7 +30997,7 @@
           "line": 1960,
           "symbol": "emptyHint",
           "note": "唯一写入点",
-          "text": "guard !m.isEmpty else { app.showToast(\"未选择门锁\"); return }"
+          "text": "private func doDeletePwd(_ p: LedgerPwd) async {"
         }
       ],
       "platformEvidence": {
@@ -31066,7 +31066,7 @@
           "line": 406,
           "symbol": "headerToolbar",
           "note": "toggle + setGroupMode",
-          "text": "// 本来就是页面里已有的那三个 —— 收进 List 第一行既说清了区别，也不抢走焦点。"
+          "text": "// ---------- 806 凭证首录分流 (1Password 那一形态) ----------"
         }
       ],
       "platformEvidence": {
@@ -31128,7 +31128,7 @@
           "line": 1314,
           "symbol": "credRow",
           "note": "双击复制",
-          "text": ".listRowSpacing(DS.Space.xs)"
+          "text": "listBody"
         },
         {
           "platform": "ios",
@@ -31136,7 +31136,7 @@
           "line": 1296,
           "symbol": "credRow",
           "note": "VoiceOver 拷贝动作",
-          "text": "}"
+          "text": ".vkFont(.caption, weight: .medium)"
         }
       ],
       "platformEvidence": {
@@ -31199,7 +31199,7 @@
           "line": 1246,
           "symbol": "credRow",
           "note": "pwdState == 2",
-          "text": ""
+          "text": ".padding(.horizontal, DS.Space.s).padding(.vertical, DS.Space.xxs)"
         },
         {
           "platform": "ios",
@@ -31207,7 +31207,7 @@
           "line": 1248,
           "symbol": "credRow",
           "note": "isEarlyExpired",
-          "text": "private var selCount: Int { selPwds.count + selFps.count }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -31215,7 +31215,7 @@
           "line": 1255,
           "symbol": "credRow",
           "note": "预警指纹",
-          "text": "cycleSelect()"
+          "text": "Section {"
         }
       ],
       "platformEvidence": {
@@ -31283,7 +31283,7 @@
           "line": 615,
           "symbol": "searchSection",
           "note": "searchHistory()",
-          "text": "if !due.isEmpty {"
+          "text": "@ViewBuilder"
         },
         {
           "platform": "ios",
@@ -31291,7 +31291,7 @@
           "line": 622,
           "symbol": "searchSection",
           "note": "prefix(5)",
-          "text": "HStack(spacing: DS.Space.xs) {"
+          "text": "pwdDetailItem = next"
         },
         {
           "platform": "ios",
@@ -31299,7 +31299,7 @@
           "line": 628,
           "symbol": "searchSection",
           "note": "removeSearchHistory",
-          "text": ".accessibilityHidden(true)"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         }
       ],
       "platformEvidence": {
@@ -31367,7 +31367,7 @@
           "line": 654,
           "symbol": "searchSection",
           "note": "无结果文案",
-          "text": ""
+          "text": "/// 182 拖动排序的回写基准 = **全量**显示序 (不扣分段、不套智能筛选)。"
         },
         {
           "platform": "ios",
@@ -31375,7 +31375,7 @@
           "line": 658,
           "symbol": "searchSection",
           "note": "去回收站搜",
-          "text": "pwds = pwds.filter { seg == 3 ? $0.temp : !$0.temp }"
+          "text": "private func segFilteredPwds() -> [LedgerPwd] {"
         },
         {
           "platform": "ios",
@@ -31383,7 +31383,7 @@
           "line": 667,
           "symbol": "searchSection",
           "note": "按成员重搜",
-          "text": "// 354 已归档只从正常显示里收起; 搜索路径 (filteredResults) 特意不过滤 — 收起不是失效, 搜得到才收得回"
+          "text": "let memberArchived = MemberHub.archivedIDs()"
         }
       ],
       "platformEvidence": {
@@ -31452,7 +31452,7 @@
           "line": 414,
           "symbol": "headerToolbar",
           "note": "默认(全部)",
-          "text": "NavigationLink { AddPwdView(embedded: true) } label: {"
+          "text": "@ViewBuilder"
         },
         {
           "platform": "ios",
@@ -31460,7 +31460,7 @@
           "line": 415,
           "symbol": "headerToolbar",
           "note": "smartLists 遍历",
-          "text": "routerRow(\"lock.open.rotation\", \"长期密码\","
+          "text": "private var firstCredRouter: some View {"
         },
         {
           "platform": "ios",
@@ -31468,7 +31468,7 @@
           "line": 848,
           "symbol": "segFilteredPwds",
           "note": "筛选取值口径",
-          "text": "let within = IndexSet(src.filter { $0 >= 0 && $0 < keys.count })"
+          "text": "/// 别段的位次一格不动, 段内先后就落进了 kf_cseq_。"
         }
       ],
       "platformEvidence": {
@@ -31536,7 +31536,7 @@
           "line": 399,
           "symbol": "headerToolbar",
           "note": "sortKey 轮换",
-          "text": "+ \"类型视图里各状态段各排各的, 置顶段不参与; 按成员视图里排的是这个成员段内 密码 与 指纹 各自的先后。\")"
+          "text": "@ViewBuilder"
         },
         {
           "platform": "ios",
@@ -31544,7 +31544,7 @@
           "line": 400,
           "symbol": "headerToolbar",
           "note": "setSortKey 持久化",
-          "text": ".listRowBackground(DS.Palette.accentText.opacity(0.06))"
+          "text": "private var sortHintRow: some View {"
         },
         {
           "platform": "ios",
@@ -31552,7 +31552,7 @@
           "line": 893,
           "symbol": "orderPwds",
           "note": "四维实现",
-          "text": "} label: {"
+          "text": "Spacer(minLength: 0)"
         }
       ],
       "platformEvidence": {
@@ -31621,7 +31621,7 @@
           "line": 1852,
           "symbol": "otpGenRow",
           "note": "",
-          "text": "let np = alert.textFields?.first?.text ?? \"\""
+          "text": "alert.addAction(UIAlertAction(title: \"取消\", style: .cancel))"
         },
         {
           "platform": "ios",
@@ -31629,7 +31629,7 @@
           "line": 1870,
           "symbol": "otpGenRow",
           "note": "磨砂挡片",
-          "text": "// 487 保存自动快照: 改值即留一档 (值/时段/备注)"
+          "text": "//   锁端返回新槽号后旧槽已不存在，addPwd 紧跟着把台账补到新槽 ⇒ 无删除后果可预告。"
         },
         {
           "platform": "ios",
@@ -31637,7 +31637,7 @@
           "line": 1899,
           "symbol": "otpGenRow",
           "note": "复制禁用条件",
-          "text": "try await app.lock.ensureConnected(mac: m)"
+          "text": "busyKey = \"pwd:\\(p.alias)\""
         }
       ],
       "platformEvidence": {
@@ -31707,7 +31707,7 @@
           "line": 1911,
           "symbol": "genOtp",
           "note": "",
-          "text": "/// 468 代管: 这条凭证的属主在成员档案上被标了「由我代管」时, 361 的停用便签补一句 管理员代操作。"
+          "text": "return \"到 \\(p.to.prefix(16).replacingOccurrences(of: \"T\", with: \" \")) 失效\""
         },
         {
           "platform": "ios",
@@ -31715,7 +31715,7 @@
           "line": 1917,
           "symbol": "genOtp",
           "note": "100 个上限",
-          "text": "}"
+          "text": "private func disableVia(owner: String?) -> String {"
         },
         {
           "platform": "ios",
@@ -31723,7 +31723,7 @@
           "line": 1925,
           "symbol": "genOtp",
           "note": "zotpPeriod",
-          "text": "\"停用后本机台账立即移除并收入回收站 — 7 天内可一键恢复, 超期需重新下发; 锁端删除记为「待下发」。\","
+          "text": "confirmDestructive(\"停用密码 #\\(p.alias)\","
         }
       ],
       "platformEvidence": {
@@ -31791,7 +31791,7 @@
           "line": 1978,
           "symbol": "otpStockHint",
           "note": "",
-          "text": "confirmTitle: \"彻底删除\") {"
+          "text": "guard busyKey == nil else { return }"
         },
         {
           "platform": "ios",
@@ -31799,7 +31799,7 @@
           "line": 1986,
           "symbol": "otpStockHint",
           "note": "发第一张",
-          "text": "busyKey = \"fp:\\(f.batch)\""
+          "text": "guard busyKey == nil else { return }"
         },
         {
           "platform": "ios",
@@ -31807,7 +31807,7 @@
           "line": 1997,
           "symbol": "genFirstOtp",
           "note": "",
-          "text": "//   (无法远程补录，本人重录 8 次指压)；回收站那条回来的仍是档案，开门能力要重录 (670)。"
+          "text": "try await app.lock.ensureConnected(mac: m)"
         }
       ],
       "platformEvidence": {
@@ -32665,7 +32665,7 @@
           "line": 494,
           "symbol": "无法远程补录",
           "note": "指纹在锁端删掉就无法远程补录",
-          "text": "if parts.count == 5, parts[0] == \"c6\", parts[1] == \"alert\", parts[3].hasPrefix(\"p\"),"
+          "text": "let pkg = CredPackage(v: 1, mac: mac, lockName: LockArchive.displayName(DB.keychain(mac) ?? Keychain(mac: mac, skey: \"\")),"
         },
         {
           "platform": "ios",
@@ -74373,7 +74373,7 @@
           "line": 1925,
           "symbol": "genOtp",
           "note": "readStatus.zotpPeriod",
-          "text": "\"停用后本机台账立即移除并收入回收站 — 7 天内可一键恢复, 超期需重新下发; 锁端删除记为「待下发」。\","
+          "text": "confirmDestructive(\"停用密码 #\\(p.alias)\","
         },
         {
           "platform": "android",
@@ -75985,7 +75985,7 @@
           "line": 1785,
           "symbol": "batchDelete",
           "note": "批量分支同样转换",
-          "text": ".vkFont(.footnote)"
+          "text": "app.showToast(\"归档已全部还原\")"
         }
       ],
       "platformEvidence": {
@@ -76342,7 +76342,7 @@
           "line": 1823,
           "symbol": "otpSection",
           "note": "setZotp → 19",
-          "text": "private func stopUndoTimer() {"
+          "text": "// 停用那条路还排着一条\"待下发的锁端删除\"并写着 361 停用便签；彻底删除那条路锁端已经真删了，"
         },
         {
           "platform": "apk",
@@ -76358,7 +76358,7 @@
           "line": 1822,
           "symbol": "otpSection",
           "note": "先 ensureConnected 钉锁",
-          "text": "@ViewBuilder"
+          "text": "// 第一百五十二批把这片的措辞改成**跟着真实路径走**：撤销要收回的东西不止回收站那一格 ——"
         },
         {
           "platform": "ios",
@@ -76366,7 +76366,7 @@
           "line": 1826,
           "symbol": "otpSection",
           "note": "失败分支",
-          "text": "}"
+          "text": "private func stopUndoTimer() {"
         }
       ],
       "platformEvidence": {
@@ -84087,7 +84087,7 @@
           "line": 1767,
           "symbol": "batchDelete",
           "note": "对象已不在台账则中止",
-          "text": "DisclosureGroup {"
+          "text": "let af = DB.listFps(mac).filter { archSet.contains(100000 + $0.batch) }"
         }
       ],
       "platformEvidence": {
@@ -87652,7 +87652,7 @@
           "line": 1248,
           "symbol": "credRow",
           "note": "提前失效胶囊",
-          "text": "private var selCount: Int { selPwds.count + selFps.count }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -87901,7 +87901,7 @@
           "line": 875,
           "symbol": "orderedPwds",
           "note": "读 seq[p]",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": "private func segStatRow(_ text: String) -> some View {"
         },
         {
           "platform": "ios",
@@ -87909,7 +87909,7 @@
           "line": 1076,
           "symbol": "commitGroupMove",
           "note": "写 seq",
-          "text": "// 849 拷贝对朗读侧走转子动作, 不对 VoiceOver 承诺\"双击\" (VO 的双击=激活, 不是我们的双击手势)"
+          "text": "// 849 凭证朗读顺序 \"名称-类型-状态\" (不堆叠字段), 856 盲文简写走 value"
         },
         {
           "platform": "ios",
@@ -87917,7 +87917,7 @@
           "line": 889,
           "symbol": "manualIndex",
           "note": "重复别名防 trap",
-          "text": "Label(\"有 \\(missing.count) 位成员还没有指纹\", systemImage: \"person.badge.shield.slash\")   // 322 位成员还没有指纹"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -87986,7 +87986,7 @@
           "line": 871,
           "symbol": "orderedPwds",
           "note": "isStarred 分置顶段",
-          "text": "/// 所以只共用样式, 话各说各的 —— 不拿同一句糊过去。"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -87994,7 +87994,7 @@
           "line": 1436,
           "symbol": "credMenu",
           "note": "setArchived",
-          "text": "}"
+          "text": "\"删除后这些凭证在锁内立即失效 (需门锁在场直发); 本机记录进回收站 本机记录直接移除、**不可找回**, 值或开门能力要重新下发。确定继续？\","
         },
         {
           "platform": "ios",
@@ -88002,7 +88002,7 @@
           "line": 2019,
           "symbol": "archivedStrip",
           "note": "指纹 100000+batch",
-          "text": "let alert = UIAlertController(title: \"凭证备注\", message: \"仅本机留存, 随全量备份换机\", preferredStyle: .alert)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -89600,7 +89600,7 @@
           "line": 472,
           "symbol": "reclaimDays()",
           "note": "",
-          "text": "let fps = l.fps.filter { fpBatches.isEmpty || fpBatches.contains($0.batch) }"
+          "text": "let owned = DB.ledger(mac).pwds.filter { !$0.temp && $0.owner != nil }"
         },
         {
           "platform": "ios",
@@ -91154,7 +91154,7 @@
           "line": 1236,
           "symbol": "credRow",
           "note": "kf_row_h",
-          "text": ""
+          "text": "Button(\"彻底删除\", role: .destructive) { deleteFp(f) }   // 670 彻底删除"
         },
         {
           "platform": "ios",
@@ -91162,7 +91162,7 @@
           "line": 1854,
           "symbol": "otpGenRow",
           "note": "kf_ax_bigotp",
-          "text": "// 在用户按下\"作废旧密码\"的那一刻就把目标锁钉住 (含非空校验)，Task 里一律用 m"
+          "text": "alert.addAction(UIAlertAction(title: \"作废旧密码\", style: .destructive) { _ in"
         },
         {
           "platform": "ios",
@@ -91170,7 +91170,7 @@
           "line": 1870,
           "symbol": "otpGenRow",
           "note": "frostedOn 挡片",
-          "text": "// 487 保存自动快照: 改值即留一档 (值/时段/备注)"
+          "text": "//   锁端返回新槽号后旧槽已不存在，addPwd 紧跟着把台账补到新槽 ⇒ 无删除后果可预告。"
         }
       ],
       "platformEvidence": {
@@ -93370,7 +93370,7 @@
           "line": 775,
           "symbol": "protoSecondsToUnix",
           "note": "protoSecondsToUnix 消费点",
-          "text": "}"
+          "text": "/// 331 本地提前失效时刻; 滑杆为 0 时就等于锁端到期时刻, 长期有效 (2118) 无到期点 ⇒ nil。"
         }
       ],
       "platformEvidence": {
