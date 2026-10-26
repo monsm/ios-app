@@ -122,39 +122,7 @@ struct DiagnosticsView: View {
             // 点按走通知落地同一条路 —— 切凭证 Tab 并开整理面板 (pendingCredPanel 词表内的 organize)。
             let monthlyExpired = BackupStudio.expiredTemporaryCount()
             if WeekCal.gregorian.component(.day, from: Date()) == 1, monthlyExpired > 0 {
-                Section("月度清理") {   // 366 月度清理
-                    Button {
-                        // 2026-10-14 走查: 本页不止从设置页进 —— 设备页「打开排查工具」也推它
-                        // (DeviceHomeView 的 failStreak≥3 卡), 而设备页在访客通道下照常可达。
-                        // 直写 tabSelection=1 会落到一个不进层级树的 Tab, 走 requestTab 才过 377 门禁。
-                        app.requestRoute(.credentials)
-                        app.pendingCredPanel = "organize"
-                        // 2026-10-15 走查: requestTab 管的是**访客门禁**，管不到"这一层盖在 TabView 上"——
-                        // 本页从设置页是以 sheet 进来的 (`showDiag`)，不收掉这层，切过去的凭证 Tab 就在 sheet 底下 (§7.3 那一族)。
-                        // 与 `CredentialStudio` 三枚「查看」的形状一致（那边有 embedded，所以写 `if !embedded { dismiss() }`；
-                        // 本页三条来路——设备页 push、设置页 push、设置页 sheet——**都该退一层**，所以不收在条件里）。
-                        dismiss()
-                    } label: {
-                        HStack(spacing: DS.Space.s) {
-                            Image(systemName: "calendar.badge.exclamationmark")
-                                .foregroundStyle(DS.Palette.warn)
-                                .accessibilityHidden(true)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("过期凭证 \(monthlyExpired) 条待处理")   // 366 过期凭证
-                                    .vkFont(.subheadline, weight: .medium)
-                                    .foregroundStyle(DS.Palette.text)
-                                Text("每月 1 日提醒 · 点按进凭证页整理面板")
-                                    .vkFont(.caption2)
-                                    .foregroundStyle(DS.Palette.textSub)
-                            }
-                            Spacer(minLength: 0)
-                            Image(systemName: "chevron.right")
-                                .vkFont(.caption)
-                                .foregroundStyle(DS.Palette.textSub)
-                        }
-                        .frame(minHeight: DS.Hit.min)
-                    }
-                }
+            // 2026-10-26 精简：「月度清理」整节已删（它指向的整理面板 organize 也已删）。
             }
             Section("诊断报告") {
                 Button {
@@ -206,10 +174,8 @@ struct DiagnosticsView: View {
                         .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                // 包11 查阅表: 错误码/型号/字段/图标语义/二维码/崩溃档案, 全部只读
-                NavigationLink { DiagReferenceView().environmentObject(app) } label: {
-                    Label("诊断查阅", systemImage: "text.book.closed")   // 159/661/662/753/754/758 诊断查阅
-                }
+        // 2026-10-26 精简：原「诊断查阅」入口（DiagReferenceView）已删 ——
+        // 它整页是协议字典 / 图标语义表 / rc 码对照的只读查阅，属于协议工程师工具。
                 .vkFont(.footnote)
             }
             // 149/150/160/158/151 一键体检: 引擎 (DiagHealth) 一直在, 此前**全库没有任何界面调用它** →
@@ -398,13 +364,11 @@ struct DiagnosticsView: View {
                 HStack(spacing: DS.Space.s) {
                     Button("清理空值键位") { guardOrBackup {
                         let r = DataHealth.vacuum()
-                        MaintenanceLog.record("清理空值键位")   // 387
                         app.showToast(r)
                     } }
                         .vkFont(.footnote).foregroundStyle(DS.Palette.accentText)
                     Button("归档一年以上日志") { guardOrBackup {
                         let n = DataHealth.archiveOldLogs()
-                        if n > 0 { MaintenanceLog.record("归档旧日志 \(n) 条") }   // 387
                         app.showToast("已归档 \(n) 条")
                     } }
                         .vkFont(.footnote).foregroundStyle(DS.Palette.accentText)
@@ -412,7 +376,6 @@ struct DiagnosticsView: View {
                     // 不套 guardOrBackup: 动作是入回收站 (reclaimDays 内可 365/504 取回), 不是删除。
                     Button("隔离无主凭证") {   // 452 隔离无主凭证
                         let n = DataHealth.quarantineOrphanCredentials()
-                        if n > 0 { MaintenanceLog.record("隔离无主凭证 \(n) 条") }   // 387
                         app.showToast(n > 0
                             ? "已隔离 \(n) 条无主凭证 (移入回收站, \(CredentialOrg.reclaimDays()) 天内可取回)"
                             : "没有指向已删成员的无主凭证")
@@ -554,43 +517,10 @@ struct DiagnosticsView: View {
             // 511 数据事件: 与备份页同一份 kf_bk_events 台账 (导出/恢复/迁移节点), 清理现场也看得见
             let bkEvents511 = BackupStudio.dataEvents()
             if !bkEvents511.isEmpty {
-                Section("数据事件") {   // 511 数据事件
-                    ForEach(bkEvents511, id: \.self) { s in
-                        Text(s).vkFont(.caption).foregroundStyle(DS.Palette.textSub)
-                    }
-                    Text("最近 12 个导出 / 恢复 / 迁移节点, 与备份页同源 (kf_bk_events); 只在做过备份类操作后出现。")
-                        .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+            // 2026-10-26 精简：「数据事件」整节已删（用户确认）。
             }
 
-            // 284 空间回收建议: 只读数、只给建议。删除动作全部留在上面那一节的既有二次确认里。
-            Section("空间回收建议") {   // 284 空间回收建议
-                let tips = Recovery.tips()
-                if tips.isEmpty {
-                    Text("没有值得回收的项 —— 各键族都在阈值以下，或对应数据本来就是空的。")
-                        .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                ForEach(tips) { t in
-                    VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                        Text(t.title).vkFont(.subheadline).foregroundStyle(DS.Palette.text)
-                        // 2026-10-14 走查: RecoveryTip.detail 是 String 变量, 有几条带 `**…**`
-                        // (DiagKit 的 storefail / rollback 两条), Text 不解析 Markdown ⇒ 会显示两颗星。
-                        mdText(t.detail)
-                            .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
-                            .fixedSize(horizontal: false, vertical: true)
-                        if !t.goto.isEmpty {
-                            Text("去处: \(t.goto)")
-                                .vkFont(.caption2).foregroundStyle(DS.Palette.accentText)
-                        }
-                    }
-                    .accessibilityElement(children: .combine)
-                }
-                Text("体积口径: 「回滚快照」那一条是真实文件大小；其余按 kf_* 键值长度估算，不等于磁盘真实占用。")
-                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+            // 2026-10-26 精简：「空间回收建议」整节已删（用户确认）。
 
             // 280 性能面板 (自统计, 默认关) + 215 冷启动打点
             Section("性能面板") {   // 215/280 性能面板
@@ -700,28 +630,7 @@ struct DiagnosticsView: View {
                 Text("只留最近 \(DiagOps.maxCount) 条；关掉上面这枚开关即不再记。")   // 156 只留最近
                     .vkFont(.caption)
             }
-            // 866 极限字号自检: 原句要求入口在诊断页; 溢出控件无枚举 API, 如实定位为目检
-            Section {
-                VariantToggle("极限字号自检 (以 200% 字号预览)", isOn: Binding(
-                    get: { AXFlags.bigPreview },
-                    // 2026-10-15 走查: 这里原先是 `DB.store.set("kf_ax_bigpreview", $0)` 直接落盘 ——
-                    // 同一个键在无障碍页走的是 `app.setUnlockOption` (那一条会 bump 种子)，这第二条什么都不推
-                    // ⇒ 在这页拨完，根上那枚 `.dynamicTypeSize` 要等下一次别的重建才跟上，看着就是"拨了没作用"。
-                    // 同一状态两个通道必已不一致 (本仓反复实撞那一族)，这里统一走 setUnlockOption 那一个口。
-                    set: { app.setUnlockOption("kf_ax_bigpreview", $0) }))
-                // 2026-10-26: `kf_ax_bigotp`（OTP 大字）此前**只有读点**（CredentialsView 的临时码字体），
-                // 全仓没有任何写点 ⇒ 那个键永远是 false，用户只能靠双击临时码卡临时放大。
-                // 挂在同一段、走同一个 setUnlockOption 口（与上面 bigPreview 同一条纪律：同一键只有一个写通道）。
-                VariantToggle("临时码大字 (OTP 数字放大)", isOn: Binding(
-                    get: { DB.store.getBool("kf_ax_bigotp") },
-                    set: { app.setUnlockOption("kf_ax_bigotp", $0) }))
-                LabeledRow("命中域", "可点控件全 App 下限 44pt (DS.Hit.min); 时间线认领区加余量到 60pt; 圆盘外沿再留 10pt")   // 871 命中域
-            } header: {
-                Text("渲染自检")   // 866 渲染自检
-            } footer: {
-                Text("自测开关, 检查后请关回 (与无障碍页同一键位)。溢出控件无法程序枚举, 请开启后逐页目检大字下是否截断/换行。")
-                    .vkFont(.caption)
-            }
+            // 2026-10-26 精简：「渲染自检」整节已删（用户确认）。
             // 133 蓝牙堆栈急救: 连续 GATT/连接失败后给出 关开蓝牙/重启手机 分步指引
             if failsInLast20 >= 3 {
                 Section {
@@ -772,8 +681,7 @@ struct DiagnosticsView: View {
                             // 159 跳转出口: 每行 rc 一点就落到错误码对照表; 抠到 rc 值就聚焦那一行。
                             // 不用整行 NavigationLink 是因为会吃掉上面 textSelection 的复制手势 —— 两个能力都留。
                             NavigationLink {
-                                DiagReferenceView(highlightRC: Self.rcOf(line)).environmentObject(app)
-                            } label: {
+                                        // 2026-10-26 精简：rc 码跳转查阅入口已删（DiagReferenceView 整个删除）。
                                 Image(systemName: "text.book.closed")
                                     .vkFont(.footnote)
                                     .foregroundStyle(DS.Palette.accentText)

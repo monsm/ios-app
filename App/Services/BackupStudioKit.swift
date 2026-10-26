@@ -225,7 +225,6 @@ enum BackupStudio {
             let once = CompletionOnce()
             task.expirationHandler = { once.finish(task, success: false) }
             let ok = makeRollbackPoint()
-            if ok { MaintenanceLog.record("充电备份快照") }   // 387: 记账才能进设备页"上次会话本机完成 N 项维护"回执
             once.finish(task, success: ok)   // 成败如实上报, 不再无条件记成功
         }
         rescheduleChargeBackup()   // 2026-10-26: 原受 kf_bk_bgtask 闸控，而该键无写点（永远 false）⇒ 后台备份从未排期。现无条件排期。
@@ -239,7 +238,6 @@ enum BackupStudio {
         // 换完仍然要留痕: 排期失败被吞掉, UI 那句"已交给系统"就成了假话 (2026-10-14 就是为这个改的)。
         BGTaskScheduler.shared.submitTaskRequest(req) { err in
             guard let err else { return }
-            MaintenanceLog.record("后台备份排期失败: " + err.localizedDescription)
         }
     }
 

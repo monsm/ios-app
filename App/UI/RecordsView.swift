@@ -384,7 +384,6 @@ struct RecordsView: View {
     private var macs: [String] { scope == 1 ? DB.keychains().map { $0.mac } : [mac] }
     private var activeFilters: Bool {
         filters.segment != 0 || filters.dayKind != 0 || filters.lateNight || filters.alarmOnly
-            || filters.failedOnly || !filters.kind.isEmpty || !filters.alarmKinds.isEmpty
     }
 
     /// 749 对账结果导出一行 (拍板 #28)。只说本次会话内的事实, 而且**三种结论都要有对应措辞**:
@@ -425,9 +424,6 @@ struct RecordsView: View {
                     TextField("搜索: 成员 / 凭证 / 昨晚 告警 / +指纹 -临时码", text: $searchText)   // 551/554/555 搜索
                         .vkFont(.subheadline)
                         .foregroundStyle(DS.Palette.text)
-                        // 553: "最近搜索"区此前永远是空的 —— 读侧 (history/clearHistory) 接好了,
-                        // 写侧 pushHistory 全仓零调用。键盘"搜索"键提交时才入历史, 不随每次击键写。
-                        .onSubmit { RecordSearch.pushHistory(searchText) }
                     if !searchText.isEmpty {
                         Button {
                             searchText = ""
@@ -470,110 +466,13 @@ struct RecordsView: View {
                         .padding(.vertical, DS.Space.xxs)
                     }
                 }
-                // 553 搜索历史下拉 (条数只有一个数：`RecordSearch.historyCap`，界面不再另写一个上限)
-                if !RecordSearch.history().isEmpty {
-                    VStack(alignment: .leading, spacing: 0) {
-                        HStack(spacing: DS.Space.s) {
-                            Text("最近搜索")   // 553 最近搜索
-                                .vkFont(.caption)
-                                .foregroundStyle(DS.Palette.textSub)
-                            Spacer(minLength: 0)
-                            Button("全部清空") { RecordSearch.clearHistory() }
-                                .vkFont(.caption)
-                                .foregroundStyle(DS.Palette.danger)
-                                .frame(minWidth: 88, minHeight: DS.Hit.min)
-                                .contentShape(Rectangle())
-                        }
-                        ForEach(Array(RecordSearch.history().prefix(RecordSearch.historyCap)), id: \.self) { h in
-                            HStack(spacing: DS.Space.s) {
-                                Button {
-                                    searchText = h
-                                    parsedTags = RecordSearch.parse(h).parsedTags
-                                    highlightTokens = RecordSearch.parse(h).must
-                                    applyFilter()
-                                    RecordSearch.pushHistory(h)   // 再次选用要把这条提到最前 (pushHistory 自带去重)
-                                } label: {
-                                    Text(h)
-                                        .vkFont(.footnote)
-                                        .lineLimit(1)
-                                        .foregroundStyle(DS.Palette.text)
-                                }
-                                .buttonStyle(PlainButtonStyle())
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .frame(minHeight: DS.Hit.min)
-                                .contentShape(Rectangle())
-                                .accessibilityLabel("搜索 " + h)
-                                Button { RecordSearch.removeHistory(h) } label: {
-                                    Image(systemName: "xmark")
-                                        .font(.system(size: DS.Icon.xs))
-                                        .foregroundStyle(DS.Palette.textSub)
-                                }
-                                .accessibilityLabel("删除这条历史")
-                                .frame(minHeight: DS.Hit.min)
-                                .contentShape(Rectangle())
-                            }
-                        }
-                    }
-                    .padding(.top, DS.Space.xs)
-                }
-                // 560 命名过滤视图: 应用 / 删除 (kf_rviews, 与当前组合同源)
-                if !RecordSearch.namedViews().isEmpty {
-                    VStack(alignment: .leading, spacing: DS.Space.xs) {
-                        Text("我的过滤")   // 560 我的过滤
-                            .vkFont(.caption)
-                            .foregroundStyle(DS.Palette.textSub)
-                        ForEach(RecordSearch.namedViews()) { v in
-                            HStack(spacing: DS.Space.s) {
-                                Button {
-                                    searchText = v.text
-                                    parsedTags = RecordSearch.parse(v.text).parsedTags
-                                    highlightTokens = RecordSearch.parse(v.text).must
-                                    filters = v.filters
-                                    scope = v.scopeAll ? 1 : 0
-                                    reversed = false
-                                    applyFilter()
-                                } label: {
-                                    Label(v.name, systemImage: "bookmark")
-                                        .vkFont(.footnote, weight: .medium)
-                                        .foregroundStyle(DS.Palette.accentText)
-                                }
-                                .buttonStyle(PlainButtonStyle())
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .frame(minHeight: DS.Hit.min)
-                                .contentShape(Rectangle())
-                                .accessibilityLabel("应用过滤 " + v.name)
-                                Button {
-                                    // 存下来的过滤条件是用户自己勾出来的组合，删了没有「再点一次撤销」，
-                                    // 所以这一刀走全仓那一个确认入口 (原状是一按就删, 第一百六十七批补)。
-                                    confirmDestructive("删除过滤「\(v.name)」",
-                                                       "只删这条存好的过滤本身, 记录与本机等其它设置都不受影响; 删掉后要重新勾一遍条件。",
-                                                       confirmTitle: "删除") {
-                                        RecordSearch.deleteNamedView(v.name)
-                                        // 必须再走一次 applyFilter：chips 是 ForEach(RecordSearch.namedViews()) 现读存储的，
-                                        // 而 deleteNamedView 只动 UserDefaults，不碰任何 @State ⇒ 不重算就不重渲，
-                                        // 刚删的那一枚会一直挂在屏幕上 (看上去像没删掉)。
-                                        applyFilter()
-                                    }
-                                } label: {
-                                    Image(systemName: "trash")
-                                        .font(.system(size: DS.Icon.xs))
-                                        .foregroundStyle(DS.Palette.danger)
-                                }
-                                .accessibilityLabel("删除过滤 " + v.name)
-                                .frame(minHeight: DS.Hit.min)
-                                .contentShape(Rectangle())
-                            }
-                        }
-                    }
-                    .padding(.top, DS.Space.xs)
-                }
+                // 2026-10-26 精简：「我的过滤」（命名视图）已删（用户确认）。
             }
         } header: {
             HStack(spacing: DS.Space.s) {
                 Text("搜索")   // 551 搜索
                 Spacer(minLength: DS.Space.s)
                 Menu {
-                    Button { saveAsView() } label: { Label("另存当前组合", systemImage: "square.and.arrow.down") }   // 560 另存当前组合
                 } label: {
                     Image(systemName: "square.and.arrow.down")
                         .font(.system(size: DS.Icon.sm))
@@ -585,27 +484,7 @@ struct RecordsView: View {
             }
         }
     }
-    /// 560 把当前 文本+过滤+范围 另存为命名过滤视图 (长期复用)
-    private func saveAsView() {
-        let alert = UIAlertController(title: "另存过滤视图",   // 560 另存过滤视图
-                                      message: "把当前搜索词与筛选组合存为命名视图, 收进「我的过滤」长期复用。",
-                                      preferredStyle: .alert)
-        alert.addTextField { tf in
-            tf.placeholder = "名称, 例如: 晚间的告警"
-        }
-        alert.addAction(UIAlertAction(title: "保存", style: .default) { _ in
-            // 2026-10-13 run 63: 原写 `alert.textFields?.first?.value ?? ""` —— `.value` 解析到
-            // NSObject.value(forKey:) 那个方法 (类型 ((String) -> Any?)?), `?? ""` 报
-            // "binary operator '??' cannot be applied to operands of type '((String) -> Any?)?' and 'String'"。
-            // 取输入框文字要用 `.text`。
-            let name = alert.textFields?.first?.text ?? ""
-            guard !name.isEmpty else { return }
-            RecordSearch.saveNamedView(name: name, text: searchText, filters: filters, scopeAll: scope == 1)
-            app.showToast("已保存过滤视图「" + name + "」")
-        })
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        UIApplication.topViewController()?.present(alert, animated: true)
-    }
+    // 2026-10-26 精简：命名视图保存（saveAsView）已删（用户确认）。
 
     /// 562 实时计数 "约 N 条" (归属口径标"约", 边输入边更新)
     @ViewBuilder
@@ -635,22 +514,7 @@ struct RecordsView: View {
                     .foregroundStyle(DS.Palette.accentText)
                 }
             }
-            // 552 搜索建议补全: 输入"指"就该给"指纹/密码"这类组合，而不是等用户想起筛选怎么点。
-            if !suggestions.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: DS.Space.xs) {
-                        ForEach(suggestions, id: \.self) { s in
-                            Button(s) { searchText = s }
-                                .vkFont(.caption)
-                                .foregroundStyle(DS.Palette.accentText)
-                                .padding(.horizontal, DS.Space.s)
-                                .padding(.vertical, DS.Space.xs)
-                                .variantPlate(DS.Palette.surfaceAlt, .capsule)
-                                .frame(minHeight: DS.Hit.min)
-                        }
-                    }
-                }
-            }
+                // 2026-10-26 精简：搜索建议下拉已删（suggestions 已移除）。
         }
     }
 
@@ -664,35 +528,13 @@ struct RecordsView: View {
         if filters.alarmOnly { n += 1 }
         if !filters.alarmKinds.isEmpty { n += 1 }
         if !filters.kind.isEmpty { n += 1 }
-        if filters.failedOnly { n += 1 }
+            // 2026-10-26 精简：「失败筛选」说明与「清空本机失败标记」已删（用户确认）。
         if !sel.isEmpty { n += 1 }
         if !searchText.isEmpty { n += 1 }
         return n
     }
 
-    /// 552 候选只从**真实存在**的成员名与既有动词表取 (Attribution.words 四类开门方式)。
-    /// 排序固定 (成员名按录入序、类型词按字面序) —— Swift 的字典遍历顺序不稳定，
-    /// 直接 `for (_, w) in words` 会让同样的输入每次给出不同的建议。
-    /// 不生成"可能存在的词": 建议一个查不到的词，比不给建议更浪费人。
-    private var suggestions: [String] {
-        let q = searchText.trimmingCharacters(in: .whitespaces)
-        guard !q.isEmpty, q.count <= 6 else { return [] }
-        var out: [String] = []
-        for m in DB.members() where out.count < 6 {
-            if m.name.contains(q), m.name != q { out.append(m.name) }
-        }
-        // 552 组合候选: 成员名+类型词整串 (两条词都能被搜索面命中才真搜得到行)
-        for m in DB.members() where out.count < 6 {
-            for w in Attribution.words.values.sorted() where out.count < 6 {
-                let c = m.name + " " + w
-                if c.contains(q), !out.contains(c) { out.append(c) }
-            }
-        }
-        for w in Attribution.words.values.sorted() where out.count < 6 {
-            if w.contains(q), !out.contains(w) { out.append(w) }
-        }
-        return out
-    }
+    // 2026-10-26 精简：搜索建议补全（suggestions）已删（用户确认）。
 
     /// 561/770 跨锁范围切换: 单锁/全部锁; 全部锁时行首带锁名小标签 (770)
     @ViewBuilder
@@ -782,72 +624,8 @@ struct RecordsView: View {
             .accessibilityLabel("筛选: \(filterSummary), 点按\(filtersExpanded ? "收起" : "展开")全部筛选项")
 
             if filtersExpanded {
-            // 564 时段
-            // 572 深夜预设
-            chipRowSection("时段", selected: filters.segment, items: [("全部", 0), ("早 6-9", 1), ("午 10-14", 2), ("晚 15-21", 3), ("深夜预设", 4)]) { name, i in
-                _ = name
-                filters.segment = i
-            }
-            chipRowSection("工作日/周末", selected: filters.dayKind, items: [("全部", 0), ("仅工作日", 1), ("仅周末", 2)]) { name, i in   // 571 工作日
-                _ = name
-                filters.dayKind = i
-            }
-            let kindIdx = Self.kindOptions.firstIndex(where: { $0.1 == filters.kind }) ?? 0
-            chipRowSection("凭证 (约)", selected: kindIdx, items: Self.kindOptions.enumerated().map { i, t in (t.0, i) }) { name, _ in
-                filters.kind = Self.kindOptions.first(where: { $0.0 == name })?.1 ?? ""
-            }
-            // 这一行挂上 565 的 chip 后共四个, 窄屏一行放不下 —— 与上面三行同一交互改横滚,
-            // 不再让 lineLimit(1) 把文案截成省略号 (静默截断在本仓是缺陷不是风格)。
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: DS.Space.s) {
-                    chipToggle("仅告警", on: $filters.alarmOnly)   // 567 仅告警
-                    // 565: 点开对勾多选面板, 选中数回显在本 chip 上 (空 = 不限类型)
-                    miniChip(filters.alarmKinds.isEmpty ? "告警类型"   // 565 告警类型
-                             : "告警类型 \(filters.alarmKinds.count) 项",   // 565 告警类型
-                             on: !filters.alarmKinds.isEmpty) { showAlarmKinds = true }
-                    chipToggle("失败 (锁端仅告警级)", on: $filters.failedOnly)
-                    chipToggle(reversed ? "最早在前" : "正序回放", on: $reversed)   // 570 正序回放
-                }
-                .padding(.vertical, DS.Space.xxs)
-            }
-            if filters.failedOnly {
-                // ⚠569: 锁端仅记录告警级 (10/13/224), 无逐次失败明细 — 文案已标注
-                Text("注: 失败筛选只收录告警级锁定/指纹告警与手机侧开锁失败, 锁端不上报逐次失败")
-                    .vkFont(.caption2)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-                // 拍板 #5 (2026-10-09): 给「清空本机失败标记」一个带二次确认的入口。
-                // 后果必须写全: 这些标记会以「失败」行混进时间线 (92), 清掉=那些行消失;
-                // 但**不动锁端日志、也不解除任何冷却/挂起** —— 不写清就会被当成"解锁失败的保险开关"。
-                let failN = macs.reduce(0) { $0 + DB.failEvents($1).count }
-                HStack(spacing: DS.Space.s) {
-                    Text("本机失败标记 \(failN) 条")   // 92 本机失败标记
-                        .vkFont(.caption2)
-                        .foregroundStyle(DS.Palette.textSub)
-                    Spacer(minLength: 0)
-                    if failN > 0 {
-                        Button("清空本机失败标记") {
-                            confirmDestructive("清空本机失败标记",
-                                "将删除本机记录的 \(failN) 条开锁失败标记。它们会以「失败」行混在时间线里, "   // 92 将删除本机记录的
-                                + "清掉后这些行就消失; 锁端日志不受影响, 也不会因此解除任何冷却或挂起。",
-                                confirmTitle: "清空") {
-                                for m in macs { DB.clearFailEvents(m) }
-                                loadFromCache()
-                                alarmTick += 1
-                                SensitiveLedger().record("清空失败标记", target: "\(failN) 条")
-                                app.lock.log("warn", "清空本机开锁失败标记 \(failN) 条")   // 92 清空本机开锁失败标记
-                                app.showToast("已清空本机失败标记 (\(failN) 条)")
-                            }
-                        }
-                        .vkFont(.caption, weight: .medium)
-                        .foregroundStyle(DS.Palette.warn)
-                        .frame(minHeight: DS.Hit.min)
-                        .contentShape(Rectangle())
-                    }
-                }
-                .frame(minHeight: DS.Hit.min)
-                .contentShape(Rectangle())
-            }
+            // 2026-10-26 精简：仅告警 / 告警类型多选 / 失败筛选 / 正序回放 四枚 chip 已删（用户确认）。
+            // 2026-10-26 精简：「失败筛选」整块（含清空失败标记）已删（用户确认）。
             // 676/672: 深夜区间的"可调"此前只写在注释里, 界面上没有任何入口 (两个键只有读没有写)。
             // 只在选了"深夜预设"这一档时出现 —— 它是这档的定义, 不该常驻在筛选行里。
             if filters.segment == 4 {
@@ -915,7 +693,6 @@ struct RecordsView: View {
         }
         if filters.alarmOnly { parts.append("仅告警") }
         if !filters.alarmKinds.isEmpty { parts.append("告警 \(filters.alarmKinds.count) 类") }
-        if filters.failedOnly { parts.append("失败") }
         if reversed { parts.append("最早在前") }
         return parts.isEmpty ? "全部记录" : parts.joined(separator: " · ")
     }
@@ -2601,7 +2378,6 @@ struct RecordsView: View {
                 // 565 类型多选: 只留选中的告警类型 (选中集全是告警类, 天然只出告警行; 与 567 可叠加取交集)
                 if !filters.alarmKinds.isEmpty, !filters.alarmKinds.contains(r.type) { return false }
                 // ⚠569: 锁端仅记录告警级 (10/13/224) + 手机侧失败行, 无逐次失败明细
-                if filters.failedOnly, !([10, 13, 224].contains(r.type) || (r.type == 0 && !r.care)) { return false }
                 if !filters.kind.isEmpty, r.kind != filters.kind { return false }
                 return true
             }

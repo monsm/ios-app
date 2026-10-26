@@ -636,7 +636,6 @@ final class AppState: ObservableObject {
         // 223 启动自动归档: 诊断页那枚开关开着才动手 (默认关), 走与手动按钮同一引擎; 条数进维护回执 (387)
         if DB.store.getBool("kf_diag_autoarchive") {
             let archived = DataHealth.archiveOldLogs()
-            if archived > 0 { MaintenanceLog.record("归档旧日志 \(archived) 条") }
         }
         let cal = WeekCal.gregorian
         let now = Date()

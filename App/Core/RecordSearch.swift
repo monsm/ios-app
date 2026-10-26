@@ -215,14 +215,6 @@ extension QueryFilters {
     }
 }
 
-/// 560 命名过滤视图 (kf_rviews): 文本 + 过滤 + 范围长期复用
-struct NamedView: Codable, Identifiable {
-    var id: String
-    var name: String
-    var text: String
-    var filters: QueryFilters
-    var scopeAll: Bool
-}
 
 enum RecordSearch {
     /// 362 复活检测（**仅本机类型级推断**）: 回收站条目删除之后, 是否仍出现同凭证类型的开门事件。
@@ -536,6 +528,20 @@ enum RecordSearch {
         var member: String?    // 551 成员名
         var range: (from: Date, to: Date)?   // 554 时间短语
         var alarmOnly: Bool    // "告警" 关键词
+    /// 551 搜索面 = 一行「能被搜到的文字」, 全仓只有这一份定义。
+    /// 搜索框占位文案承诺了「成员 / 凭证 / 备注」三段 (RecordsView 的 searchBar), 那三段就得真在串里:
+    ///   · title —— 655 动词化的行标题 (行上显示的那句话, 含成员名与类型词)
+    ///   · lockName —— 770 锁名
+    ///   · whoName —— 可证明归属的成员名
+    ///   · cred —— 568 凭证维度标签 (含 310 那条凭证别名)
+    ///   · note —— 186 本机备注 (RecordOverlay, 用户自己写的字)
+    /// 备注此前完全不在搜索面上, 而界面上写着它可搜 = 承诺了一个搜不到的热区 (第一百八十九批)。
+    /// 备注要按 (锁, 行) 去查本机覆盖层, 只有拿着行的 UI 给得起这个数, 所以它是个参数而不是在这里自己读表。
+    static func searchFace(title: String, lockName: String, whoName: String, cred: String, note: String) -> String {
+        var s = title + " " + lockName + " " + whoName + " " + cred
+        if !note.isEmpty { s += " " + note }
+        return s
+    }
         var credKind: String?  // 凭证类词 (指纹/密码/临时码/NFC/钥匙)
         var parsedTags: [String]   // 555 预览标签
     }
@@ -599,14 +605,6 @@ enum RecordSearch {
         }
         return q
     }
-    private static func rangeLabel(_ r: (from: Date, to: Date)?) -> String {
-        guard let r = r else { return "" }
-        let f = DateFormatter()
-        f.dateFormat = "MM-dd HH:mm"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone.current
-        return f.string(from: r.from) + " – " + f.string(from: r.to)
-    }
     /// 554 中文时间短语表 (今天/昨天/昨晚/本周/上周/本月/上月/最近N天/N月D日)
     static func timePhrases(joined: String) -> [(String, (from: Date, to: Date)?)] {
         let now = Date()
@@ -669,6 +667,14 @@ enum RecordSearch {
         }
         return out
     }
+    private static func rangeLabel(_ r: (from: Date, to: Date)?) -> String {
+        guard let r = r else { return "" }
+        let f = DateFormatter()
+        f.dateFormat = "MM-dd HH:mm"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone.current
+        return f.string(from: r.from) + " – " + f.string(from: r.to)
+    }
     /// "当年 N月D日" → 一个合法 Date; 解不出 (2月30日 之类) 返 nil
     /// 2026-10-13 对抗式点击审计: 从 inline 的 `cal.date(from: c)!` 抽出来 —— 那两处强解包就是
     /// 搜索框敲「13月1日」即崩的根因。
@@ -717,58 +723,8 @@ enum RecordSearch {
         return nil
     }
 
-    /// 551 搜索面 = 一行「能被搜到的文字」, 全仓只有这一份定义。
-    /// 搜索框占位文案承诺了「成员 / 凭证 / 备注」三段 (RecordsView 的 searchBar), 那三段就得真在串里:
-    ///   · title —— 655 动词化的行标题 (行上显示的那句话, 含成员名与类型词)
-    ///   · lockName —— 770 锁名
-    ///   · whoName —— 可证明归属的成员名
-    ///   · cred —— 568 凭证维度标签 (含 310 那条凭证别名)
-    ///   · note —— 186 本机备注 (RecordOverlay, 用户自己写的字)
-    /// 备注此前完全不在搜索面上, 而界面上写着它可搜 = 承诺了一个搜不到的热区 (第一百八十九批)。
-    /// 备注要按 (锁, 行) 去查本机覆盖层, 只有拿着行的 UI 给得起这个数, 所以它是个参数而不是在这里自己读表。
-    static func searchFace(title: String, lockName: String, whoName: String, cred: String, note: String) -> String {
-        var s = title + " " + lockName + " " + whoName + " " + cred
-        if !note.isEmpty { s += " " + note }
-        return s
-    }
 
-    /// 553 搜索历史 (本地偏好, 最近 5 条, 可单删)
-    private static let histKey = "kf_rsearch_hist"
-    /// 553 搜索历史的存储约定 = **最新在前** (`pushHistory` 用 `insert(at: 0)`)，读数就按同一顺序给。
-    /// 原先这里是 `.reversed()`：界面旁边写着"再次选用要把这条提到最前"，看到的却是最旧的排第一
-    /// —— 存的时候按最新在前，读的时候又倒过来，两头各自成立、合起来正好反 (第一百六十四批 §10.36)。
-    static func history() -> [String] { DB.store.get([String].self, histKey) ?? [] }
-    /// 留几条 = 553 原句"展示最近 5 条搜索词"。**真正的缺陷不是条数**：
-    /// 原本截的是 `Array(h.suffix(5))` —— 从"最新在前"的列表**尾部**截 5 条，
-    /// 于是第 6 个新词一进去就被挤掉，留下的全是最旧的 (界面上还写着"再次选用要把这条提到最前")。
-    static let historyCap = 5
-    static func pushHistory(_ q: String) {
-        var h = DB.store.get([String].self, histKey) ?? []
-        let t = q.trimmingCharacters(in: .whitespaces)
-        guard !t.isEmpty else { return }
-        h.removeAll { $0 == t }
-        h.insert(t, at: 0)
-        DB.store.setCodable(histKey, Array(h.prefix(historyCap)))
-    }
-    static func removeHistory(_ q: String) {
-        var h = DB.store.get([String].self, histKey) ?? []
-        h.removeAll { $0 == q }
-        DB.store.setCodable(histKey, h)
-    }
-    static func clearHistory() { DB.store.remove(histKey) }
 
-    /// 560 命名过滤视图 (kf_rviews)
-    private static let viewsKey = "kf_rviews"
-    static func namedViews() -> [NamedView] { DB.store.get([NamedView].self, viewsKey) ?? [] }
-    static func saveNamedView(name: String, text: String, filters: QueryFilters, scopeAll: Bool) {
-        var v = namedViews()
-        v.removeAll { $0.name == name }
-        v.insert(NamedView(id: UUID().uuidString.prefix(8).description, name: name, text: text, filters: filters, scopeAll: scopeAll), at: 0)
-        DB.store.setCodable(viewsKey, Array(v.prefix(20)))
-    }
-    static func deleteNamedView(_ name: String) {
-        DB.store.setCodable(viewsKey, namedViews().filter { $0.name != name })
-    }
 
     // ---------- 726 处置留痕 (本地工单字段, 导出含处置历史) ----------
     /// 处置: key = mac#idxRaw → 结论 + 时刻; 745 测试标记存结论 "测试"

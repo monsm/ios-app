@@ -371,7 +371,6 @@ enum DB {
         // plist 只留非密字段 (mac/名称/pid/pins…)。读侧 fromDict 自动回填。
         // 空 skey 不覆盖既有值 (Keychain 读失败回填 "" 时, 一次无关的 saveKeychain 会把真密钥写成空)。
         if !kc.skey.isEmpty, !SecretStore.set(kc.skey, for: secretAccount(kc.mac, "skey")) {
-            MaintenanceLog.record("密钥写入系统 Keychain 失败 (skey, \(kc.mac))")   // 不静默: 诊断页可见
         }
         if kc.bkey.isEmpty { SecretStore.remove(secretAccount(kc.mac, "bkey")) }
         else { SecretStore.set(kc.bkey, for: secretAccount(kc.mac, "bkey")) }

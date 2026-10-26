@@ -242,7 +242,6 @@ final class LinkSense: ObservableObject {
         lastReceipt = done
         receiptShownAt = Date()
         lockSvc.log("info", "\(from)自动补发 \(done) 项变更" + (failed > 0 ? ", 失败 \(failed) 项" : ""))
-        if done > 0 { MaintenanceLog.record("\(from)自动补发 \(done) 项") }   // 387 维护回执
         BleTelemetry.recordEvent("补发成功 \(done) 项", ok: true)
         DiagOps.record("\(from)补发 \(done) 项")
     }
