@@ -64,7 +64,8 @@ enum ZKCmdBuilder {
         ZKCmd(name: "01 会话令牌", cmd: 0x01, hex: ZKProtocol.buildFrame(0x01, "", header: 8))
     }
     // 22/25 两条命令的**帧构造**保留: GoldenDiffTests 拿它们与 vendor JS 做字节对拍 (金标资产)。
-    // App 侧的调用封装 (LockService.enableDfu / setDefence) 已随 DFU 与布防入口删除。
+    // 25 的 App 侧链路**在**（LockService.setDefence → DefendService → DefendView → 设置页入口），
+    // 22 的 App 侧入口**没有**（DFU 现在走 Nordic DFU 的独立通道，不经 cmd22 使能）。
     static func cmd22EnableDfu(_ macHex: String, _ skeyHex: String, _ param: Int = 0) -> ZKCmd {
         ZKCmd(name: "22 DFU", cmd: 0x22, hex: ZKProtocol.wrapFrame(0x22, macHex, skeyHex, HexKit.hexPair(UInt32(param & 0xff)), 0x02))
     }

@@ -4055,9 +4055,9 @@
       "parentKey": "member.family",
       "domain": "member",
       "level": 3,
-      "name": "家政窗（483）与关怀结构",
+      "name": "家政窗与孩子码关怀（结构已删）",
       "kind": "data",
-      "summary": "HouseWin{from, to, label} 只表示一整段起止窗（协议无循环时段）；CareDue 承载「名下临时码 N 天内到期」。",
+      "summary": "**2026-10-26 已删**：`HouseWin`（483 家政周期预设）与 `CareDue`（480 孩子码关怀到期）两个数据结构零引用，批一删除。协议本身没有循环时段概念，所以「家政周期」只能做整段起止窗；而承载它的 UI 从未建过。",
       "details": [
         "483 是降级实现：协议没有循环时段，只做整段起止窗（MemberHub.swift:31）",
         "CareDue{member, days} 供孩子码关怀卡（MemberHub.swift:332-335）",
@@ -4075,7 +4075,7 @@
         "家庭",
         "降级"
       ],
-      "status": "partial"
+      "status": "removed"
     },
     {
       "key": "member.merge",
@@ -4585,9 +4585,9 @@
       "parentKey": "record",
       "domain": "record",
       "level": 2,
-      "name": "统计与设备档案聚合",
+      "name": "记录统计（StatsKit + 成功率折线）",
       "kind": "service",
-      "summary": "StatsKit 提供图表数据源与上周摘要；LockStats 提供每锁一行聚合读数、待维护清单与告警判据。",
+      "summary": "**2026-10-26 核实更正**：原标 deprecated，实际有完整实现 —— `StatsKit`（`StatModel` + `build(mac:)`，含日键/周索引/起止日归一）＋ `DiagnosticsView:892` 的 `Chart { LineMark }` 成功率折线。锁端没有「上报总数」字段，所以统计口径全部由本地日志缓存推出，这一点已在图表下方写明。",
       "details": [
         "只读既有表、不新增采集、不碰协议；归属只走可证明链（StatsKit.swift:1-4）",
         "两组类型集合只有 StatsKit 一份，LockStats 转发（LockStats.swift:264-268）"

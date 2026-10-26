@@ -718,7 +718,7 @@
       "level": 3,
       "name": "换机迁移验证向导",
       "kind": "flow",
-      "summary": "恢复出新增/覆盖后立起验证向导：设备 Tab 逐锁点按验证连接，全部通过后自动收起。",
+      "summary": "换机恢复后立起验证向导：设备 Tab 逐锁点按验证连接，全部通过后自动收起。实现点：`BackupView:312`（立起）+ `DeviceHomeView:237`（全通过后清旗标）。标 partial 是因为「全部通过」的判据只认本机成功连过一次，尚无跨设备实测覆盖。",
       "details": [
         "guard r.imported + r.overwritten > 0，无变化不启动",
         "先对每把锁 DB.store.remove(\"kf_migok_\" + kc.mac) 清旧验证标记",
@@ -1200,7 +1200,7 @@
       "level": 4,
       "name": "备份分区模型（UI 未暴露）",
       "kind": "edge",
-      "summary": "设备 / 凭证 / 记录 / 设置四个开关；未勾分区在包内置空，恢复端按 nil 语义跳过。2026-10-26 起「设置」分区不再含 OTP 密钥段。",
+      "summary": "设备 / 凭证 / 记录 / 设置四个分区开关。分区模型与恢复端的 nil 语义都完整，只是**UI 没有暴露这四个开关**（调用方恒传\"全选\"）。需要时把开关接出来即可，不必改数据层。2026-10-26 起「设置」分区不再含 OTP 密钥段。",
       "details": [
         "BZones 四档：devices（门锁钥匙串 + BLE 直连参数）/ credentials（密码与指纹台账）/ records（锁端日志缓存 + 全局事件）/ settings（成员 / 应用锁摘要 / dongle / gateway），默认全 true",
         "工作室上传 bundleFor(BZones())、入库 restore(dl.b, zones: BZones()) 都是全选",
@@ -1953,48 +1953,6 @@
         "边界"
       ],
       "status": "edge"
-    },
-    {
-      "key": "backup.studio.removed",
-      "parentKey": "backup",
-      "domain": "backup",
-      "level": 3,
-      "name": "已移除的备份向导族",
-      "kind": "data",
-      "summary": "备份工作室只剩 WebDAV 页与图片分享包装；导出/恢复/迁移向导已删除。",
-      "details": [
-        "头注释列出已移除：ExportWizard / RestoreWizard / MigrationWizard / LocalFiles / MigrationPromptCard",
-        "保留 WebDAVStudioView（坚果云真实入口）与 UIImageShareItem（DiagnosticsView 分享截图）",
-        "备份本体改由 BackupView「存到 iCloud 云盘 / 从文件选择」承担",
-        "残留影响：工作室空态仍指向「导出向导」（见 unresolved）"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 1,
-          "symbol": "备份工作室仅存两块"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 4,
-          "symbol": "WebDAVStudioView 留下理由"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 6,
-          "symbol": "UIImageShareItem"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 7,
-          "symbol": "已删除的向导流程"
-        }
-      ],
-      "tags": [
-        "备份",
-        "历史"
-      ],
-      "status": "deprecated"
     },
     {
       "key": "backup.doc",

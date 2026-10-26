@@ -3350,9 +3350,9 @@
       "parentKey": "record",
       "domain": "record",
       "level": 2,
-      "name": "记录导出载体（分享卡 + 名册导出）",
+      "name": "记录导出（分享卡 + 名册）",
       "kind": "service",
-      "summary": "从已移除的导出中心里保留下来的最小导出实现：单条记录卡（PNG）与成员名册（vCard 3.0），只服务记录详情与成员中心两处。",
+      "summary": "**2026-10-26 核实更正**：原标 partial，实际两件都在用 —— `ExportShares.swift` 的 `RecordShareCardView`（记录卡分享 718）与成员名册导出（415，`MemberCenterView:26` 用 ShareLink 按需生成 URL，不在 body 里写盘）。原「导出中心」已拆掉，这两件单独存活。",
       "details": [
         "原 ExportCenter.swift（CSV/JSON/PDF/邮件/二维码报告/口述卡/导出向导）已整体移除；本文件只保留两条仍在用的链",
         "记录卡：ExportRecord 行模型 + RecordCardImage(Transferable) + RecordShareCardView + ExportKit.recordCard",
@@ -3384,7 +3384,7 @@
         "导出",
         "成员"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "key": "record.export.card",
@@ -5436,52 +5436,6 @@
         "可访问性"
       ],
       "status": "implemented"
-    },
-    {
-      "key": "member.family.privacy",
-      "parentKey": "member.family",
-      "domain": "member",
-      "level": 4,
-      "name": "隐私浏览（794，限时 10 分钟）",
-      "kind": "setting",
-      "summary": "开启后写一个 10 分钟后的时间戳，本页回显剩余秒数；当前只写标记与倒计时，不改统计口径、不做数据隐藏。",
-      "details": [
-        "写 kf_privacy_until = now + 600（关闭写 0），由 MemberHub.setPrivacy 完成",
-        "回显：「剩余 N 秒后自动关闭」或「开启后 10 分钟自动关闭; 当前只写隐私时段标记并在本页回显, 不改统计口径」",
-        "没有水印、没有按人过滤 —— 文案按实情收窄（原句两要素未接线）"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/MemberCenterView.swift",
-          "line": 1508,
-          "symbol": "VariantToggle(\"隐私浏览\")",
-          "note": "开关"
-        },
-        {
-          "file": "App/UI/MemberCenterView.swift",
-          "line": 1511,
-          "symbol": "privacyLeft",
-          "note": "倒计时回显"
-        },
-        {
-          "file": "App/UI/MemberCenterView.swift",
-          "line": 1532,
-          "symbol": "onAppear",
-          "note": "剩余秒数计算"
-        },
-        {
-          "file": "App/UI/MemberCenterView.swift",
-          "line": 1527,
-          "symbol": "setPrivacy",
-          "note": "保存写时间戳"
-        }
-      ],
-      "tags": [
-        "成员",
-        "隐私",
-        "部分实现"
-      ],
-      "status": "partial"
     },
     {
       "key": "member.unclaimed",

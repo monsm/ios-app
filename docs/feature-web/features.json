@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-26T08:27:05.577Z",
+    "generated": "2026-10-26T08:33:49.264Z",
     "sources": [
       {
         "scout": "android-native",
@@ -19,7 +19,7 @@
         "scout": "ios-core-auto",
         "platform": "ios",
         "file": "ios-core-auto.json",
-        "nodes": 158
+        "nodes": 157
       },
       {
         "scout": "ios-core-data",
@@ -49,19 +49,19 @@
         "scout": "ios-ui-records",
         "platform": "ios",
         "file": "ios-ui-records.json",
-        "nodes": 129
+        "nodes": 128
       },
       {
         "scout": "ios-ui-system",
         "platform": "ios",
         "file": "ios-ui-system.json",
-        "nodes": 135
+        "nodes": 134
       },
       {
         "scout": "lead-apk-parity",
         "platform": "ios",
         "file": "lead-apk-parity.json",
-        "nodes": 2
+        "nodes": 1
       },
       {
         "scout": "lead-gapfill",
@@ -5314,7 +5314,7 @@
           "line": 268,
           "symbol": "cmd31GWSetWifi",
           "note": "",
-          "text": "static func cmd31GWSetWifi(_ ssid: String, _ password: String, authMode: Int = 8, encryptType: Int = 0) -> ZKCmd {"
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -6983,7 +6983,7 @@
           "line": 244,
           "symbol": "cmd41WriteEkey",
           "note": "",
-          "text": "static func cmd41WriteEkey(_ lockMacHex: String, _ pid: Int, _ ekeyHex: String, type: Int = 1) -> ZKCmd {"
+          "text": "// ---- 钥匙串硬件 (ZKBBV1 pid=16289; 87 帧明文 KLV, needToken=false) ----"
         },
         {
           "platform": "apk",
@@ -8554,7 +8554,7 @@
           "line": 142,
           "symbol": "cmd08SyncPinsBatch",
           "note": "",
-          "text": "static func cmd08SyncPinsBatch(_ macHex: String, _ skeyHex: String, _ addPins: [String], delPins: [String] = []) -> ZKCmd? {"
+          "text": "// cmd 08: addCount(1B)+delCount(1B)+addPins(4B LE×N)+delPins(4B LE×M)"
         },
         {
           "platform": "ios",
@@ -10584,7 +10584,7 @@
           "line": 276,
           "symbol": "cmd32GWSetIot",
           "note": "",
-          "text": "static func cmd35GWReboot() -> ZKCmd {"
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -10740,7 +10740,7 @@
           "line": 268,
           "symbol": "cmd31GWSetWifi 默认参数",
           "note": "",
-          "text": "static func cmd31GWSetWifi(_ ssid: String, _ password: String, authMode: Int = 8, encryptType: Int = 0) -> ZKCmd {"
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -20127,7 +20127,7 @@
           "line": 155,
           "symbol": "cmd0ASyncPwd",
           "note": "",
-          "text": "static func cmd0ASyncPwd(_ macHex: String, _ skeyHex: String, delAlias: Int = 0, addPwd: String = \"\", validFrom: String? = nil, validTo: String? = nil) throws -> ZKCmd {"
+          "text": "// cmd 0A: delAlias(2B LE, 0xFFFF=清空) + addPwd(8B ASCII 右补零) + validFrom/To(4B LE)"
         },
         {
           "platform": "apk",
@@ -23009,7 +23009,7 @@
           "line": 201,
           "symbol": "cmd13AddFp(times: 8, timeout: 15)",
           "note": "",
-          "text": "static func cmd13AddFp(_ macHex: String, _ skeyHex: String, _ times: Int = 8, _ timeout: Int = 15) -> ZKCmd {"
+          "text": "// cmd 13: times(1B) + timeout(1B)"
         },
         {
           "platform": "ios",
@@ -28079,7 +28079,7 @@
           "line": 209,
           "symbol": "cmd14FpConfirm",
           "note": "",
-          "text": "static func cmd14FpConfirm(_ macHex: String, _ skeyHex: String, _ batchNumber: UInt32, _ validFrom: String?, _ validTo: String?) -> ZKCmd {"
+          "text": "// cmd 14: batchNumber(4B LE) + validFrom/To"
         },
         {
           "platform": "ios",
@@ -35947,7 +35947,7 @@
           "line": 124,
           "symbol": "buildEkeyOpen",
           "note": "",
-          "text": "static func buildEkeyOpen(_ skeyHex: String, _ macHex: String, _ pin: String,"
+          "text": "// ekey (开锁凭证) = AES(skey)($t 包络); JS buildEkeyOpen/buildEkeyShare"
         },
         {
           "platform": "ios",
@@ -35955,7 +35955,7 @@
           "line": 106,
           "symbol": "cmd04Open",
           "note": "",
-          "text": "static func cmd04Open(_ ekeyHex: String, klv01Hex: String = \"0000\") -> ZKCmd {"
+          "text": "// cmd 04 OPEN: KLV#01 = 左补零 32; KLV#02 = 凭证密文"
         },
         {
           "platform": "ios",
@@ -35963,7 +35963,7 @@
           "line": 133,
           "symbol": "buildEkeyShare",
           "note": "",
-          "text": "static func buildEkeyShare(_ skeyHex: String, _ macHex: String, _ pin: String,"
+          "text": "// App generateEkey (分享/写钥匙串): 随机 TrackId + 本地时区 2010~2118 窗口"
         }
       ],
       "platformEvidence": {
@@ -36617,9 +36617,9 @@
         "ios-core-data",
         "ios-ui-records"
       ],
-      "childCount": 6,
+      "childCount": 5,
       "isDomain": false,
-      "weight": 7,
+      "weight": 6,
       "path": "成员与家庭 › 成员家庭设置（长辈模式 / 隐私浏览）"
     },
     {
@@ -38739,9 +38739,9 @@
       "parent": "member.family",
       "domain": "member",
       "level": 3,
-      "name": "家政窗（483）与关怀结构",
+      "name": "家政窗与孩子码关怀（结构已删）",
       "kind": "data",
-      "summary": "HouseWin{from, to, label} 只表示一整段起止窗（协议无循环时段）；CareDue 承载「名下临时码 N 天内到期」。",
+      "summary": "**2026-10-26 已删**：`HouseWin`（483 家政周期预设）与 `CareDue`（480 孩子码关怀到期）两个数据结构零引用，批一删除。协议本身没有循环时段概念，所以「家政周期」只能做整段起止窗；而承载它的 UI 从未建过。",
       "details": [
         "483 是降级实现：协议没有循环时段，只做整段起止窗（MemberHub.swift:31）",
         "CareDue{member, days} 供孩子码关怀卡（MemberHub.swift:332-335）",
@@ -38779,7 +38779,7 @@
         "降级"
       ],
       "status": {
-        "ios": "partial"
+        "ios": "removed"
       },
       "commands": [],
       "sources": [
@@ -38788,7 +38788,7 @@
       "childCount": 0,
       "isDomain": false,
       "weight": 1,
-      "path": "成员与家庭 › 成员家庭设置（长辈模式 / 隐私浏览） › 家政窗（483）与关怀结构"
+      "path": "成员与家庭 › 成员家庭设置（长辈模式 / 隐私浏览） › 家政窗与孩子码关怀（结构已删）"
     },
     {
       "id": "member.permission.emergency-admin",
@@ -41372,105 +41372,6 @@
       "path": "成员与家庭 › 成员家庭设置（长辈模式 / 隐私浏览） › 借用登记（472，per-lock） › 已归还销记"
     },
     {
-      "id": "member.family.privacy",
-      "key": "member.family.privacy",
-      "parent": "member.family",
-      "domain": "member",
-      "level": 4,
-      "name": "隐私浏览（794，限时 10 分钟）",
-      "kind": "setting",
-      "summary": "开启后写一个 10 分钟后的时间戳，本页回显剩余秒数；当前只写标记与倒计时，不改统计口径、不做数据隐藏。",
-      "details": [
-        "写 kf_privacy_until = now + 600（关闭写 0），由 MemberHub.setPrivacy 完成",
-        "回显：「剩余 N 秒后自动关闭」或「开启后 10 分钟自动关闭; 当前只写隐私时段标记并在本页回显, 不改统计口径」",
-        "没有水印、没有按人过滤 —— 文案按实情收窄（原句两要素未接线）"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/MemberCenterView.swift",
-          "line": 1508,
-          "symbol": "VariantToggle(\"隐私浏览\")",
-          "note": "开关",
-          "text": ".dsScreenBackground()"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/MemberCenterView.swift",
-          "line": 1511,
-          "symbol": "privacyLeft",
-          "note": "倒计时回显",
-          "text": "MemberHub.setElderMode(elder)"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/MemberCenterView.swift",
-          "line": 1532,
-          "symbol": "onAppear",
-          "note": "剩余秒数计算",
-          "text": "var time: String"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/MemberCenterView.swift",
-          "line": 1527,
-          "symbol": "setPrivacy",
-          "note": "保存写时间戳",
-          "text": "_mac = State(initialValue: DB.preferredMac())"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/MemberCenterView.swift",
-            "line": 1508,
-            "symbol": "VariantToggle(\"隐私浏览\")",
-            "note": "开关"
-          },
-          {
-            "file": "App/UI/MemberCenterView.swift",
-            "line": 1511,
-            "symbol": "privacyLeft",
-            "note": "倒计时回显"
-          },
-          {
-            "file": "App/UI/MemberCenterView.swift",
-            "line": 1532,
-            "symbol": "onAppear",
-            "note": "剩余秒数计算"
-          },
-          {
-            "file": "App/UI/MemberCenterView.swift",
-            "line": 1527,
-            "symbol": "setPrivacy",
-            "note": "保存写时间戳"
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "成员",
-        "隐私",
-        "部分实现"
-      ],
-      "status": {
-        "ios": "partial"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-records"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "成员与家庭 › 成员家庭设置（长辈模式 / 隐私浏览） › 隐私浏览（794，限时 10 分钟）"
-    },
-    {
       "id": "member.family.elder",
       "key": "member.family.elder",
       "parent": "member.family",
@@ -42481,9 +42382,9 @@
       "parent": "record",
       "domain": "record",
       "level": 2,
-      "name": "记录统计（趋势/时段/排行/同比/图表）",
+      "name": "记录统计（StatsKit + 成功率折线）",
       "kind": "service",
-      "summary": "统计页已随删减波移除：记录域内不再有次数趋势、时段分布、排行、同比与图表页，只剩三处派生读数（上周小结、活跃凭证、成员活跃度）。",
+      "summary": "**2026-10-26 核实更正**：原标 deprecated，实际有完整实现 —— `StatsKit`（`StatModel` + `build(mac:)`，含日键/周索引/起止日归一）＋ `DiagnosticsView:892` 的 `Chart { LineMark }` 成功率折线。锁端没有「上报总数」字段，所以统计口径全部由本地日志缓存推出，这一点已在图表下方写明。",
       "details": [
         "只读既有表、不新增采集、不碰协议；归属只走可证明链（StatsKit.swift:1-4）",
         "两组类型集合只有 StatsKit 一份，LockStats 转发（LockStats.swift:264-268）",
@@ -42597,7 +42498,7 @@
       "childCount": 3,
       "isDomain": false,
       "weight": 3,
-      "path": "记录与统计 › 记录统计（趋势/时段/排行/同比/图表）"
+      "path": "记录与统计 › 记录统计（StatsKit + 成功率折线）"
     },
     {
       "id": "record.export",
@@ -42605,9 +42506,9 @@
       "parent": "record",
       "domain": "record",
       "level": 2,
-      "name": "记录导出载体（分享卡 + 名册导出）",
+      "name": "记录导出（分享卡 + 名册）",
       "kind": "service",
-      "summary": "从已移除的导出中心里保留下来的最小导出实现：单条记录卡（PNG）与成员名册（vCard 3.0），只服务记录详情与成员中心两处。",
+      "summary": "**2026-10-26 核实更正**：原标 partial，实际两件都在用 —— `ExportShares.swift` 的 `RecordShareCardView`（记录卡分享 718）与成员名册导出（415，`MemberCenterView:26` 用 ShareLink 按需生成 URL，不在 body 里写盘）。原「导出中心」已拆掉，这两件单独存活。",
       "details": [
         "原 ExportCenter.swift（CSV/JSON/PDF/邮件/二维码报告/口述卡/导出向导）已整体移除；本文件只保留两条仍在用的链",
         "记录卡：ExportRecord 行模型 + RecordCardImage(Transferable) + RecordShareCardView + ExportKit.recordCard",
@@ -42674,7 +42575,7 @@
         "成员"
       ],
       "status": {
-        "ios": "partial"
+        "ios": "implemented"
       },
       "commands": [],
       "sources": [
@@ -42683,7 +42584,7 @@
       "childCount": 2,
       "isDomain": false,
       "weight": 2,
-      "path": "记录与统计 › 记录导出载体（分享卡 + 名册导出）"
+      "path": "记录与统计 › 记录导出（分享卡 + 名册）"
     },
     {
       "id": "record.list",
@@ -43363,7 +43264,7 @@
       "childCount": 0,
       "isDomain": false,
       "weight": 1,
-      "path": "记录与统计 › 记录统计（趋势/时段/排行/同比/图表） › 待维护清单与告警图标行"
+      "path": "记录与统计 › 记录统计（StatsKit + 成功率折线） › 待维护清单与告警图标行"
     },
     {
       "id": "record.export.card",
@@ -43478,7 +43379,7 @@
       "childCount": 0,
       "isDomain": false,
       "weight": 1,
-      "path": "记录与统计 › 记录导出载体（分享卡 + 名册导出） › 单条记录分享卡版式与 PNG 传输"
+      "path": "记录与统计 › 记录导出（分享卡 + 名册） › 单条记录分享卡版式与 PNG 传输"
     },
     {
       "id": "record.export.fields",
@@ -43579,7 +43480,7 @@
       "childCount": 0,
       "isDomain": false,
       "weight": 1,
-      "path": "记录与统计 › 记录导出载体（分享卡 + 名册导出） › 导出字段口径（归属只走可证明链）"
+      "path": "记录与统计 › 记录导出（分享卡 + 名册） › 导出字段口径（归属只走可证明链）"
     },
     {
       "id": "record.detail.diagJump",
@@ -44990,7 +44891,7 @@
       "childCount": 0,
       "isDomain": false,
       "weight": 1,
-      "path": "记录与统计 › 记录统计（趋势/时段/排行/同比/图表） › 类型集合与 30 天窗口"
+      "path": "记录与统计 › 记录统计（StatsKit + 成功率折线） › 类型集合与 30 天窗口"
     },
     {
       "id": "record.stats.usage",
@@ -45076,7 +44977,7 @@
       "childCount": 1,
       "isDomain": false,
       "weight": 1,
-      "path": "记录与统计 › 记录统计（趋势/时段/排行/同比/图表） › 每锁聚合读数（LockUsage）"
+      "path": "记录与统计 › 记录统计（StatsKit + 成功率折线） › 每锁聚合读数（LockUsage）"
     },
     {
       "id": "record.detail.context",
@@ -47554,7 +47455,7 @@
       "childCount": 0,
       "isDomain": false,
       "weight": 1,
-      "path": "记录与统计 › 记录统计（趋势/时段/排行/同比/图表） › 每锁聚合读数（LockUsage） › 告警率公式"
+      "path": "记录与统计 › 记录统计（StatsKit + 成功率折线） › 每锁聚合读数（LockUsage） › 告警率公式"
     },
     {
       "id": "record.list.alarmStyle",
@@ -51625,7 +51526,7 @@
           "line": 235,
           "symbol": "cmd20ValidationMode",
           "note": "",
-          "text": "static func cmd20ValidationMode(_ macHex: String, _ skeyHex: String, _ bMode: Bool) -> ZKCmd {"
+          "text": "// cmd 20: mode(1B 0=A单验/1=B双验)"
         },
         {
           "platform": "ios",
@@ -51726,7 +51627,7 @@
           "line": 239,
           "symbol": "cmd24AutoLock",
           "note": "",
-          "text": "static func cmd24AutoLock(_ macHex: String, _ skeyHex: String, _ interval: Int) -> ZKCmd {"
+          "text": "// cmd 24: interval(1B 档位 1-6)"
         },
         {
           "platform": "ios",
@@ -52198,7 +52099,7 @@
       "status": {},
       "commands": [],
       "sources": [],
-      "childCount": 5,
+      "childCount": 4,
       "isDomain": true,
       "weight": 1,
       "path": "备份与迁移"
@@ -53594,7 +53495,7 @@
       "level": 3,
       "name": "备份分区模型（UI 未暴露）",
       "kind": "setting",
-      "summary": "设备 / 凭证 / 记录 / 设置四个开关；未勾分区在包内置空，恢复端按 nil 语义跳过。2026-10-26 起「设置」分区不再含 OTP 密钥段。",
+      "summary": "设备 / 凭证 / 记录 / 设置四个分区开关。分区模型与恢复端的 nil 语义都完整，只是**UI 没有暴露这四个开关**（调用方恒传\"全选\"）。需要时把开关接出来即可，不必改数据层。2026-10-26 起「设置」分区不再含 OTP 密钥段。",
       "details": [
         "关 devices：devices = []。关 credentials：清每把锁的 ledger。关 records：清 globals.trace。",
         "关 settings：清 members 与 dongle/gateway/passcode/otpKeys/appearance；若 globals 全空则整段置 nil。",
@@ -54504,7 +54405,7 @@
       "level": 3,
       "name": "换机迁移验证向导",
       "kind": "flow",
-      "summary": "恢复出新增/覆盖后立起验证向导：设备 Tab 逐锁点按验证连接，全部通过后自动收起。",
+      "summary": "换机恢复后立起验证向导：设备 Tab 逐锁点按验证连接，全部通过后自动收起。实现点：`BackupView:312`（立起）+ `DeviceHomeView:237`（全通过后清旗标）。标 partial 是因为「全部通过」的判据只认本机成功连过一次，尚无跨设备实测覆盖。",
       "details": [
         "guard r.imported + r.overwritten > 0，无变化不启动",
         "先对每把锁 DB.store.remove(\"kf_migok_\" + kc.mac) 清旧验证标记",
@@ -55645,105 +55546,6 @@
       "isDomain": false,
       "weight": 1,
       "path": "备份与迁移 › 备份·恢复·迁移引擎 › 新鲜度与备份状态角标"
-    },
-    {
-      "id": "backup.studio.removed",
-      "key": "backup.studio.removed",
-      "parent": "backup",
-      "domain": "backup",
-      "level": 3,
-      "name": "已移除的备份向导族",
-      "kind": "data",
-      "summary": "备份工作室只剩 WebDAV 页与图片分享包装；导出/恢复/迁移向导已删除。",
-      "details": [
-        "头注释列出已移除：ExportWizard / RestoreWizard / MigrationWizard / LocalFiles / MigrationPromptCard",
-        "保留 WebDAVStudioView（坚果云真实入口）与 UIImageShareItem（DiagnosticsView 分享截图）",
-        "备份本体改由 BackupView「存到 iCloud 云盘 / 从文件选择」承担",
-        "残留影响：工作室空态仍指向「导出向导」（见 unresolved）"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupStudio.swift",
-          "line": 1,
-          "symbol": "备份工作室仅存两块",
-          "note": "",
-          "text": "// 备份工作室仅存的两块 —— 其余 (导出向导/恢复向导/换机迁移/本地文件/迁移提示卡) 已随大删波4移除。"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupStudio.swift",
-          "line": 4,
-          "symbol": "WebDAVStudioView 留下理由",
-          "note": "",
-          "text": "//   · WebDAVStudioView — 坚果云同步的真实入口 (BackupView 经 sheet 打开), 用户自己填服务器与账号,"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupStudio.swift",
-          "line": 6,
-          "symbol": "UIImageShareItem",
-          "note": "",
-          "text": "//   · UIImageShareItem — DiagnosticsView 分享诊断截图用的 Transferable 包装。"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupStudio.swift",
-          "line": 7,
-          "symbol": "已删除的向导流程",
-          "note": "",
-          "text": "// 删掉的是**向导流程** (ExportWizard/RestoreWizard/MigrationWizard/LocalFiles/MigrationPromptCard),"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 1,
-            "symbol": "备份工作室仅存两块",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 4,
-            "symbol": "WebDAVStudioView 留下理由",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 6,
-            "symbol": "UIImageShareItem",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 7,
-            "symbol": "已删除的向导流程",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "备份",
-        "历史"
-      ],
-      "status": {
-        "ios": "deprecated"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-system"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "备份与迁移 › 已移除的备份向导族"
     },
     {
       "id": "backup.canonical",
@@ -59718,7 +59520,7 @@
       "level": 4,
       "name": "schema 升级链 v1→v5",
       "kind": "data",
-      "summary": "按版本号逐级幂等迁移：v2 补 members、v3 归一化 mac、v4/v5 只推进版本号。",
+      "summary": "schema 升级链 v1→v5：按版本号逐级幂等迁移（v2 补 members、v3 归一化 mac、v4/v5 只推进版本号）。**这是向后兼容机制，本身不是缺陷** —— 原标 partial 属误判。真正的缺口只在于：还没有跨 v1→v5 的端到端回归用例（现有测试只覆盖单级）。",
       "details": [
         "v4 与 v5 的历史迁移动作当年是自赋值空操作，现在只推进版本号，不假装做了迁移。",
         "每级判断读的是已推进的 s，因此可重复执行。"
@@ -59782,7 +59584,7 @@
         "schema"
       ],
       "status": {
-        "ios": "partial"
+        "ios": "implemented"
       },
       "commands": [],
       "sources": [
@@ -61681,7 +61483,7 @@
       "status": {},
       "commands": [],
       "sources": [],
-      "childCount": 9,
+      "childCount": 8,
       "isDomain": true,
       "weight": 1,
       "path": "诊断与工具"
@@ -63282,107 +63084,6 @@
       "isDomain": false,
       "weight": 1,
       "path": "诊断与工具 › 诊断·性能·运维数据层 › 本机库体自检 SelfCheck"
-    },
-    {
-      "id": "diagnostic.test-coverage",
-      "key": "diagnostic.test-coverage",
-      "parent": "diagnostic",
-      "domain": "diagnostic",
-      "level": 3,
-      "name": "单测覆盖（3 个新测试文件，441 行，CI build-for-testing 会编译）",
-      "kind": "diagnostic",
-      "summary": "布防三档与五条时段校验、手机钥匙 pin 分配与 Codable 容错、固件包解析与降级闸——均有表驱动单测；但从未在模拟器上执行过。",
-      "details": [
-        "DefendKitTests 167 行：三档 rawValue / 五条校验 / 跨午夜 / 半秒往返 / 与 F4 否决门同尺 / 全天 / 状态文案",
-        "MobileKeyServiceTests 103 行：pin 线性分配 / 池空返回 nil 不回落 / 空串跳过 / 有效期标签 / 缺字段 JSON 容错",
-        "FirmwareKitTests 171 行：手搓 ZIP 造合法包 + 六类畸形包（缺 manifest/缺 bin/bin 过小/dat 过小/CRC 错/manifest 形状错）/ 文件名版本矩阵 / 降级闸矩阵",
-        "project.yml 的 OfflineLockTests 按 path: Tests 自动收录，无需改工程文件",
-        "CI 的 xcodebuild build-for-testing 会**编译**测试目标（不执行）——能抓编译错误，抓不到断言失败",
-        "未执行：仓里没有 Mac，xcodebuild test 从未跑过"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "Tests/DefendKitTests.swift",
-          "line": 1,
-          "symbol": "DefendKitTests",
-          "note": "",
-          "text": "// 包9 布防（cmd25）纯逻辑单测 —— 不依赖真机 BLE。"
-        },
-        {
-          "platform": "ios",
-          "file": "Tests/MobileKeyServiceTests.swift",
-          "line": 1,
-          "symbol": "MobileKeyServiceTests",
-          "note": "",
-          "text": "// 手机钥匙（pk 池分配 / 有效期 / 撤销语义）纯逻辑单测 —— 不依赖真机 BLE。"
-        },
-        {
-          "platform": "ios",
-          "file": "Tests/FirmwareKitTests.swift",
-          "line": 1,
-          "symbol": "FirmwareKitTests",
-          "note": "",
-          "text": "// 固件包解析与降级闸单测 —— 纯逻辑，不依赖真机 DFU。"
-        },
-        {
-          "platform": "ios",
-          "file": ".github/workflows/ios.yml",
-          "line": 218,
-          "symbol": "build-for-testing",
-          "note": "",
-          "text": "# (先前试过 SWIFT_ENABLE_BATCH_MODE=NO, 不够 —— xcodebuild 仍会在首个失败后停派新任务。)"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "Tests/DefendKitTests.swift",
-            "line": 1,
-            "symbol": "DefendKitTests",
-            "note": ""
-          },
-          {
-            "file": "Tests/MobileKeyServiceTests.swift",
-            "line": 1,
-            "symbol": "MobileKeyServiceTests",
-            "note": ""
-          },
-          {
-            "file": "Tests/FirmwareKitTests.swift",
-            "line": 1,
-            "symbol": "FirmwareKitTests",
-            "note": ""
-          },
-          {
-            "file": ".github/workflows/ios.yml",
-            "line": 218,
-            "symbol": "build-for-testing",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "单测",
-        "CI 编译"
-      ],
-      "status": {
-        "ios": "partial"
-      },
-      "commands": [],
-      "sources": [
-        "lead-apk-parity"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "诊断与工具 › 单测覆盖（3 个新测试文件，441 行，CI build-for-testing 会编译）"
     },
     {
       "id": "diagnostic.families",
@@ -73064,7 +72765,7 @@
           "line": 227,
           "symbol": "cmd18Volume",
           "note": "",
-          "text": "static func cmd18Volume(_ macHex: String, _ skeyHex: String, _ silent: Bool) -> ZKCmd {"
+          "text": "// cmd 18: vol(1B) — App setSilentMode 语义: 0=有声 1=静音"
         },
         {
           "platform": "ios",
@@ -73579,7 +73280,7 @@
           "line": 155,
           "symbol": "cmd0ASyncPwd(delAlias: 0xFFFF)",
           "note": "",
-          "text": "static func cmd0ASyncPwd(_ macHex: String, _ skeyHex: String, delAlias: Int = 0, addPwd: String = \"\", validFrom: String? = nil, validTo: String? = nil) throws -> ZKCmd {"
+          "text": "// cmd 0A: delAlias(2B LE, 0xFFFF=清空) + addPwd(8B ASCII 右补零) + validFrom/To(4B LE)"
         },
         {
           "platform": "ios",
@@ -80958,7 +80659,7 @@
           "line": 106,
           "symbol": "cmd04Open",
           "note": "",
-          "text": "static func cmd04Open(_ ekeyHex: String, klv01Hex: String = \"0000\") -> ZKCmd {"
+          "text": "// cmd 04 OPEN: KLV#01 = 左补零 32; KLV#02 = 凭证密文"
         }
       ],
       "platformEvidence": {
@@ -81050,7 +80751,7 @@
       "level": 2,
       "name": "布防与尾随能力",
       "kind": "protocol",
-      "summary": "布防命令（25）只有构造器无调用点；「能不能布防/尾随」由 PidMap 的能力谓词决定。",
+      "summary": "布防（25）的 App 链路**完整**（见 protocol.cmd25）；这里标 partial 是因为「这台锁能不能布防 / 有没有尾随能力」由 `PidMap` 的能力谓词按型号决定，而各型号的实测结论尚未在真机上覆盖全部 pid —— 属**待真机验证**，不是代码缺失。",
       "details": [
         "能力口径：仅 KX / V1_Pro / 未知 pid 可布防；网关一律不可",
         "尾随（自动上锁）再叠加 V1_Pro 固件 >= 1.0.3 的下限",
@@ -81063,7 +80764,7 @@
           "line": 71,
           "symbol": "cmd25Defence",
           "note": "",
-          "text": "static func cmd25Defence(_ macHex: String, _ skeyHex: String, _ control: Int, _ startSec: Int, _ endSec: Int) -> ZKCmd {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -81118,7 +80819,9 @@
       "status": {
         "ios": "partial"
       },
-      "commands": [],
+      "commands": [
+        "25"
+      ],
       "sources": [
         "ios-core-proto"
       ],
@@ -81466,9 +81169,9 @@
       "parent": "protocol",
       "domain": "protocol",
       "level": 2,
-      "name": "DFU 入口与残留",
+      "name": "DFU 固件升级（Nordic DFU）",
       "kind": "protocol",
-      "summary": "固件升级在 iOS 侧只剩常量与一个仅金标使用的 cmd22 构造器；App 内没有可触发的入口。",
+      "summary": "**2026-10-26 更正**：本节点原标 deprecated「只剩常量与 cmd22 构造器，App 内无入口」——该判断已过时。iOS 侧现已实现完整 DFU：`DFUKit`（425 行，Nordic Secure FE59 / Legacy 1530 双传输）＋`DFUView`（247 行 UI）。扫描判据是「广播 pid + dfuState==1」而非广播名。cmd22 使能构造器仍无调用（DFU 走 Nordic 独立通道，不经它）。",
       "details": [
         "BLEService 定义了 Nordic Secure（FE59 + 8EC9xxxx）与 Legacy（1530/1531/1532）两套 UUID，但全仓无引用",
         "ZKCmdBuilder.cmd22EnableDfu 保留，注释写明 App 侧封装已删除",
@@ -81534,7 +81237,7 @@
         "死代码"
       ],
       "status": {
-        "ios": "deprecated"
+        "ios": "implemented"
       },
       "commands": [
         "22"
@@ -81545,7 +81248,7 @@
       "childCount": 0,
       "isDomain": false,
       "weight": 1,
-      "path": "协议与命令 › DFU 入口与残留"
+      "path": "协议与命令 › DFU 固件升级（Nordic DFU）"
     },
     {
       "id": "protocol.link",
@@ -81812,7 +81515,7 @@
           "line": 201,
           "symbol": "cmd13AddFp",
           "note": "",
-          "text": "static func cmd13AddFp(_ macHex: String, _ skeyHex: String, _ times: Int = 8, _ timeout: Int = 15) -> ZKCmd {"
+          "text": "// cmd 13: times(1B) + timeout(1B)"
         },
         {
           "platform": "ios",
@@ -82094,7 +81797,7 @@
           "line": 82,
           "symbol": "cmd03StatusPlain",
           "note": "",
-          "text": "static func cmd03StatusPlain(_ macHex: String) -> ZKCmd {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -82142,7 +81845,7 @@
           "line": 98,
           "symbol": "cmd03StatusWrap",
           "note": "",
-          "text": "static func cmd03StatusWrap(_ macHex: String, _ skeyHex: String, order: ZKProtocol.MacOrder? = nil) -> ZKCmd {"
+          "text": "/// 其余调用点一律 nil = 按本机对这把锁已裁定的顺序 (默认原版 APK 语义)。"
         },
         {
           "platform": "ios",
@@ -82317,7 +82020,7 @@
           "line": 86,
           "symbol": "cmd05Exchange",
           "note": "",
-          "text": "static func cmd05Exchange(_ skeyHex: String, timeSec: Int64? = nil) -> ZKCmd {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -82444,7 +82147,7 @@
           "line": 142,
           "symbol": "cmd08SyncPinsBatch",
           "note": "",
-          "text": "static func cmd08SyncPinsBatch(_ macHex: String, _ skeyHex: String, _ addPins: [String], delPins: [String] = []) -> ZKCmd? {"
+          "text": "// cmd 08: addCount(1B)+delCount(1B)+addPins(4B LE×N)+delPins(4B LE×M)"
         },
         {
           "platform": "ios",
@@ -82468,7 +82171,7 @@
           "line": 144,
           "symbol": "cmd08SyncPinsBatch",
           "note": "body 布局",
-          "text": "var body = HexKit.hexPair(UInt32(addPins.count)) + HexKit.hexPair(UInt32(delPins.count))"
+          "text": "if addPins.count > 20 { return nil }"
         },
         {
           "platform": "ios",
@@ -82573,7 +82276,7 @@
           "line": 179,
           "symbol": "cmd0BSyncPwdExpire",
           "note": "",
-          "text": "static func cmd0BSyncPwdExpire(_ macHex: String, _ skeyHex: String, _ alias: Int, _ validFrom: String?, _ validTo: String?) -> ZKCmd {"
+          "text": "// cmd 0B: alias(2B LE) + validFrom/To"
         },
         {
           "platform": "ios",
@@ -82919,7 +82622,7 @@
           "line": 196,
           "symbol": "cmd0ESyncTime",
           "note": "",
-          "text": "static func cmd0ESyncTime(_ macHex: String, _ skeyHex: String, _ timeSec: Int64) -> ZKCmd {"
+          "text": "// cmd 0E: syncTime(4B LE 协议秒)"
         },
         {
           "platform": "ios",
@@ -83032,7 +82735,7 @@
           "line": 79,
           "symbol": "cmd12Echo",
           "note": "",
-          "text": "static func cmd12Echo(_ valHex: String = \"123456\") -> ZKCmd {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -83145,7 +82848,7 @@
           "line": 209,
           "symbol": "cmd14FpConfirm",
           "note": "",
-          "text": "static func cmd14FpConfirm(_ macHex: String, _ skeyHex: String, _ batchNumber: UInt32, _ validFrom: String?, _ validTo: String?) -> ZKCmd {"
+          "text": "// cmd 14: batchNumber(4B LE) + validFrom/To"
         },
         {
           "platform": "ios",
@@ -83177,7 +82880,7 @@
           "line": 212,
           "symbol": "cmd14FpConfirm",
           "note": "protoSecU32 收口",
-          "text": "+ HexKit.u32leHex(protoSecU32(validTo))"
+          "text": "+ HexKit.u32leHex(protoSecU32(validFrom))"
         },
         {
           "platform": "ios",
@@ -83293,7 +82996,7 @@
           "line": 216,
           "symbol": "cmd15DeleteFp",
           "note": "",
-          "text": "static func cmd15DeleteFp(_ macHex: String, _ skeyHex: String, _ batchNumber: UInt32) -> ZKCmd {"
+          "text": "// cmd 15: batchNumber(4B LE)"
         },
         {
           "platform": "ios",
@@ -83433,7 +83136,7 @@
           "line": 220,
           "symbol": "cmd16GetLog",
           "note": "",
-          "text": "static func cmd16GetLog(_ macHex: String, _ skeyHex: String, orderType: Int = 0, startIdx: UInt32 = 0, pageSize: Int = 20) -> ZKCmd {"
+          "text": "// cmd 16: orderType(1B) + startIdx(4B LE) + pageSize(1B)"
         },
         {
           "platform": "ios",
@@ -83546,7 +83249,7 @@
           "line": 231,
           "symbol": "cmd19OpenZotp",
           "note": "",
-          "text": "static func cmd19OpenZotp(_ macHex: String, _ skeyHex: String, _ on: Bool) -> ZKCmd {"
+          "text": "// cmd 19: status(1B 0=关/1=开)"
         },
         {
           "platform": "ios",
@@ -83687,7 +83390,7 @@
           "line": 235,
           "symbol": "cmd20ValidationMode",
           "note": "",
-          "text": "static func cmd20ValidationMode(_ macHex: String, _ skeyHex: String, _ bMode: Bool) -> ZKCmd {"
+          "text": "// cmd 20: mode(1B 0=A单验/1=B双验)"
         },
         {
           "platform": "ios",
@@ -83896,7 +83599,7 @@
           "line": 150,
           "symbol": "cmd21SetBkey",
           "note": "",
-          "text": "static func cmd21SetBkey(_ macHex: String, _ skeyHex: String, _ bkeyHex: String) -> ZKCmd {"
+          "text": "// cmd 21: skeyLen(1B=0x10)+bkey(16B)"
         },
         {
           "platform": "ios",
@@ -83920,7 +83623,7 @@
           "line": 151,
           "symbol": "cmd21SetBkey",
           "note": "body = \"10\" + bkeyHex",
-          "text": "let body = \"10\" + bkeyHex"
+          "text": "static func cmd21SetBkey(_ macHex: String, _ skeyHex: String, _ bkeyHex: String) -> ZKCmd {"
         }
       ],
       "platformEvidence": {
@@ -83987,9 +83690,9 @@
       "parent": "protocol",
       "domain": "protocol",
       "level": 3,
-      "name": "22 DFU 使能（构造器保留，App 入口已删）",
+      "name": "22 DFU 使能（DFU 第一步，链路完整）",
       "kind": "protocol",
-      "summary": "OTA 前置：Be 构造 KLV 02=模块号，needToken=true；成功后锁重启进 bootloader，再起 Nordic DFU 推包。",
+      "summary": "**2026-10-26 核实更正**：原标 deprecated「构造器保留，App 入口已删」——错了，它非零调用。完整链路：DFUView.run → \u0007pp.lock.enableDfu() → LockService.enableDfu → ZKCmdBuilder.cmd22EnableDfu。锁收到 22 后会以 ZkDFU + MAC 后 8 位重新广播，随后断链属预期（不是失败）。param=0 = 重启进 bootloader。有金标逐字节对拍。",
       "details": [
         "构造：new Oe(0, mac) → new Be(cipher) → KLV 02（模块号 0）",
         "文案「正在重启设备」→ 失败「重启设备失败」",
@@ -84022,7 +83725,7 @@
           "line": 68,
           "symbol": "cmd22EnableDfu",
           "note": "",
-          "text": "static func cmd22EnableDfu(_ macHex: String, _ skeyHex: String, _ param: Int = 0) -> ZKCmd {"
+          "text": "// 22 的 App 侧入口**没有**（DFU 现在走 Nordic DFU 的独立通道，不经 cmd22 使能）。"
         }
       ],
       "platformEvidence": {
@@ -84064,7 +83767,7 @@
       ],
       "status": {
         "apk": "implemented",
-        "ios": "deprecated"
+        "ios": "implemented"
       },
       "commands": [
         "22"
@@ -84076,7 +83779,7 @@
       "childCount": 0,
       "isDomain": false,
       "weight": 1,
-      "path": "协议与命令 › 22 DFU 使能（构造器保留，App 入口已删）"
+      "path": "协议与命令 › 22 DFU 使能（DFU 第一步，链路完整）"
     },
     {
       "id": "protocol.cmd23",
@@ -84102,7 +83805,7 @@
           "line": 76,
           "symbol": "cmd23ExKeyWay",
           "note": "",
-          "text": "static func cmd23ExKeyWay() -> ZKCmd {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -84212,7 +83915,7 @@
           "line": 239,
           "symbol": "cmd24AutoLock",
           "note": "",
-          "text": "static func cmd24AutoLock(_ macHex: String, _ skeyHex: String, _ interval: Int) -> ZKCmd {"
+          "text": "// cmd 24: interval(1B 档位 1-6)"
         },
         {
           "platform": "ios",
@@ -84289,9 +83992,9 @@
       "parent": "protocol",
       "domain": "protocol",
       "level": 3,
-      "name": "25 布防（构造器保留，App 入口已删）",
+      "name": "25 布防（SETDEFENCE，链路完整）",
       "kind": "protocol",
-      "summary": "布防命令：Qi 组装 controlHexStr + startTimeHexStr + endTimeHexStr + TargetMAC，nu 构造 KLV 01，needToken=true；control 0=撤防 1=外出 2=在家。",
+      "summary": "**2026-10-26 核实更正**：本节点原标 deprecated「构造器保留，App 入口已删」——已过时。完整链路在：`ZKCmdBuilder.cmd25Defence` → `LockService.setDefence` → `DefendService` → `DefendView` → 设置页入口。control 0=撤防/1=单次/2=周期；start/end 是**半秒刻度**的 4B LE，越界夹住不回绕。有表驱动单测 + 金标逐字节对拍。",
       "details": [
         "bt 枚举：readonly / aperiodic=1 / period=2 / colse=0",
         "构造：new Qi(control, startSec, endSec, mac) → new nu(cipher) → KLV 01",
@@ -84310,7 +84013,7 @@
           "line": 71,
           "symbol": "cmd25Defence",
           "note": "",
-          "text": "static func cmd25Defence(_ macHex: String, _ skeyHex: String, _ control: Int, _ startSec: Int, _ endSec: Int) -> ZKCmd {"
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -84326,7 +84029,7 @@
           "line": 67,
           "symbol": "cmd25Defence",
           "note": "注释：setDefence 已删除",
-          "text": "// App 侧的调用封装 (LockService.enableDfu / setDefence) 已随 DFU 与布防入口删除。"
+          "text": "// 25 的 App 侧链路**在**（LockService.setDefence → DefendService → DefendView → 设置页入口），"
         }
       ],
       "platformEvidence": {
@@ -84367,7 +84070,7 @@
       ],
       "status": {
         "apk": "implemented",
-        "ios": "deprecated"
+        "ios": "implemented"
       },
       "commands": [
         "25"
@@ -84379,7 +84082,7 @@
       "childCount": 0,
       "isDomain": false,
       "weight": 1,
-      "path": "协议与命令 › 25 布防（构造器保留，App 入口已删）"
+      "path": "协议与命令 › 25 布防（SETDEFENCE，链路完整）"
     },
     {
       "id": "protocol.otp.window",
@@ -84556,7 +84259,7 @@
           "line": 276,
           "symbol": "cmd32GWSetIot",
           "note": "",
-          "text": "static func cmd35GWReboot() -> ZKCmd {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -84653,7 +84356,7 @@
           "line": 280,
           "symbol": "cmd35GWReboot",
           "note": "",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -84762,7 +84465,7 @@
           "line": 265,
           "symbol": "cmd38GWStatus",
           "note": "",
-          "text": "static func cmd38GWStatus() -> ZKCmd {"
+          "text": "// ---- 网关 (FE90 服务; 87 帧明文 KLV, needToken=false) ----"
         },
         {
           "platform": "ios",
@@ -84873,7 +84576,7 @@
           "line": 258,
           "symbol": "cmd43KeychainStatus",
           "note": "",
-          "text": "static func cmd43KeychainStatus(_ lockMacList: [String]) -> ZKCmd {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -84983,7 +84686,7 @@
           "line": 252,
           "symbol": "cmd44GetEkeyInfo",
           "note": "",
-          "text": "static func cmd44GetEkeyInfo(_ lockMacHex: String?) -> ZKCmd {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -86691,7 +86394,7 @@
           "line": 246,
           "symbol": "cmd41WriteEkey",
           "note": "先 targetMac 再 reversePairs",
-          "text": "let klv = ZKProtocol.buildKLV(0x01, HexKit.reversePairs(ZKProtocol.targetMac(lockMacHex)))"
+          "text": "// 2026-10-14: 与 cmd43 / buildEkey 同口径先剥冒号, 否则带冒号 MAC 使 reversePairs 返回空串。"
         },
         {
           "platform": "ios",
@@ -86699,7 +86402,7 @@
           "line": 254,
           "symbol": "cmd44GetEkeyInfo",
           "note": "先剥冒号小写",
-          "text": "let m = (lockMacHex ?? \"\").replacingOccurrences(of: \":\", with: \"\").lowercased()"
+          "text": "// 2026-10-14: 去掉强解包 (空 = 查全部钥匙, 与旧口径一致), 并把剥冒号/小写收在前一行。"
         }
       ],
       "platformEvidence": {
@@ -87675,7 +87378,7 @@
           "line": 138,
           "symbol": "buildEkeyShare",
           "note": "",
-          "text": "let vt = protoSecU32(\"2118-01-01 00:00:00\")"
+          "text": "let vf = protoSecU32(\"2010-01-01 00:00:00\")"
         },
         {
           "platform": "ios",
@@ -87928,7 +87631,7 @@
           "line": 154,
           "symbol": "cmd0ASyncPwd",
           "note": "delAlias 0xFFFF=清空",
-          "text": "// cmd 0A: delAlias(2B LE, 0xFFFF=清空) + addPwd(8B ASCII 右补零) + validFrom/To(4B LE)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -90465,7 +90168,7 @@
           "line": 150,
           "symbol": "cmd21SetBkey",
           "note": "",
-          "text": "static func cmd21SetBkey(_ macHex: String, _ skeyHex: String, _ bkeyHex: String) -> ZKCmd {"
+          "text": "// cmd 21: skeyLen(1B=0x10)+bkey(16B)"
         },
         {
           "platform": "ios",
@@ -91013,7 +90716,7 @@
           "line": 106,
           "symbol": "cmd04Open",
           "note": "",
-          "text": "static func cmd04Open(_ ekeyHex: String, klv01Hex: String = \"0000\") -> ZKCmd {"
+          "text": "// cmd 04 OPEN: KLV#01 = 左补零 32; KLV#02 = 凭证密文"
         },
         {
           "platform": "ios",
@@ -91053,7 +90756,7 @@
           "line": 110,
           "symbol": "cmd04Open",
           "note": "KLV#01 左补零 32 + KLV#02 ekey",
-          "text": "let klv = ZKProtocol.buildKLV(0x01, HexKit.fillZeroLeft(klv01Hex, 32)) + ZKProtocol.buildKLV(0x02, ekeyHex)"
+          "text": "if ekeyHex.isEmpty { return ZKCmd(name: \"04 开锁\", cmd: 0x04, hex: \"\") }"
         },
         {
           "platform": "ios",
@@ -91225,7 +90928,7 @@
           "line": 155,
           "symbol": "cmd0ASyncPwd",
           "note": "",
-          "text": "static func cmd0ASyncPwd(_ macHex: String, _ skeyHex: String, delAlias: Int = 0, addPwd: String = \"\", validFrom: String? = nil, validTo: String? = nil) throws -> ZKCmd {"
+          "text": "// cmd 0A: delAlias(2B LE, 0xFFFF=清空) + addPwd(8B ASCII 右补零) + validFrom/To(4B LE)"
         },
         {
           "platform": "ios",
@@ -91265,7 +90968,7 @@
           "line": 172,
           "symbol": "cmd0ASyncPwd",
           "note": "body 布局",
-          "text": "let body = u16leHex(delAlias)"
+          "text": "else { throw BLEErrorX.msg(\"密码有效期无法解析: \\(validTo ?? \"\") (支持 ISO8601/带 Z、'yyyy-MM-dd HH:mm:ss'、秒/毫秒) — 已中止下发\") }"
         }
       ],
       "platformEvidence": {
@@ -91394,7 +91097,7 @@
           "line": 227,
           "symbol": "cmd18Volume",
           "note": "",
-          "text": "static func cmd18Volume(_ macHex: String, _ skeyHex: String, _ silent: Bool) -> ZKCmd {"
+          "text": "// cmd 18: vol(1B) — App setSilentMode 语义: 0=有声 1=静音"
         },
         {
           "platform": "ios",
@@ -91418,7 +91121,7 @@
           "line": 235,
           "symbol": "cmd20ValidationMode",
           "note": "",
-          "text": "static func cmd20ValidationMode(_ macHex: String, _ skeyHex: String, _ bMode: Bool) -> ZKCmd {"
+          "text": "// cmd 20: mode(1B 0=A单验/1=B双验)"
         },
         {
           "platform": "ios",
@@ -91426,7 +91129,7 @@
           "line": 239,
           "symbol": "cmd24AutoLock",
           "note": "",
-          "text": "static func cmd24AutoLock(_ macHex: String, _ skeyHex: String, _ interval: Int) -> ZKCmd {"
+          "text": "// cmd 24: interval(1B 档位 1-6)"
         }
       ],
       "platformEvidence": {
@@ -91525,7 +91228,7 @@
           "line": 268,
           "symbol": "cmd31GWSetWifi",
           "note": "",
-          "text": "static func cmd31GWSetWifi(_ ssid: String, _ password: String, authMode: Int = 8, encryptType: Int = 0) -> ZKCmd {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -91557,7 +91260,7 @@
           "line": 280,
           "symbol": "cmd35GWReboot",
           "note": "",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -91565,7 +91268,7 @@
           "line": 265,
           "symbol": "cmd38GWStatus",
           "note": "",
-          "text": "static func cmd38GWStatus() -> ZKCmd {"
+          "text": "// ---- 网关 (FE90 服务; 87 帧明文 KLV, needToken=false) ----"
         }
       ],
       "platformEvidence": {
@@ -91669,7 +91372,7 @@
           "line": 244,
           "symbol": "cmd41WriteEkey",
           "note": "",
-          "text": "static func cmd41WriteEkey(_ lockMacHex: String, _ pid: Int, _ ekeyHex: String, type: Int = 1) -> ZKCmd {"
+          "text": "// ---- 钥匙串硬件 (ZKBBV1 pid=16289; 87 帧明文 KLV, needToken=false) ----"
         },
         {
           "platform": "ios",
@@ -91701,7 +91404,7 @@
           "line": 252,
           "symbol": "cmd44GetEkeyInfo",
           "note": "",
-          "text": "static func cmd44GetEkeyInfo(_ lockMacHex: String?) -> ZKCmd {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -91799,7 +91502,7 @@
           "line": 128,
           "symbol": "buildEkeyOpen",
           "note": "EKey(0x04) + pinLE + 0000",
-          "text": "let env = ZKProtocol.buildEkey(0x04, macHex, validFromSec: validFromSec, validToSec: validToSec, trackIdVal: trackId)"
+          "text": "guard let pinLE = pinToLEOrNil(pin) else { return \"\" }"
         }
       ],
       "platformEvidence": {
@@ -91945,7 +91648,7 @@
           "line": 276,
           "symbol": "cmd32GWSetIot",
           "note": "",
-          "text": "static func cmd35GWReboot() -> ZKCmd {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -92003,7 +91706,7 @@
       "level": 3,
       "name": "KLV 打包（key/len/val）",
       "kind": "protocol",
-      "summary": "hexPair(key) + hexPair(len 低 8 位) + val；长度字段只有 1 字节，值长度上限 255。",
+      "summary": "KLV 打包：hexPair(key) + hexPair(len 低 8 位) + val。**长度字段只有 1 字节 ⇒ 单条值上限 255 字节**，这是锁端协议的硬约束（不是本实现的缺陷）。原标 edge 是误判，已改 implemented。",
       "details": [
         "长度取 hexPair(UInt32(len))，hexPair 只保留 & 0xff ⇒ 单值超过 255 字节会写出回绕后的长度",
         "App 内最长载荷：08 的 AES 密文（82+16 明文补零到 112）未越界；43/44 的 MAC 拼接列表随台数线性增长，是唯一可能撞上限的入口（单帧最多 42 台）",
@@ -92054,7 +91757,7 @@
         "边界"
       ],
       "status": {
-        "ios": "edge"
+        "ios": "implemented"
       },
       "commands": [],
       "sources": [
@@ -92088,7 +91791,7 @@
           "line": 102,
           "symbol": "cmd03StatusWrap",
           "note": "KLV#01 密文 + KLV#02 空",
-          "text": "let klv = ZKProtocol.buildKLV(0x01, enc) + ZKProtocol.buildKLV(0x02, \"\")"
+          "text": "if enc.isEmpty { return ZKCmd(name: \"03 加密状态\", cmd: 0x03, hex: \"\") }"
         },
         {
           "platform": "ios",
@@ -92112,7 +91815,7 @@
           "line": 110,
           "symbol": "buildEkeyOpen",
           "note": "KLV#02 承载凭证密文",
-          "text": "let klv = ZKProtocol.buildKLV(0x01, HexKit.fillZeroLeft(klv01Hex, 32)) + ZKProtocol.buildKLV(0x02, ekeyHex)"
+          "text": "if ekeyHex.isEmpty { return ZKCmd(name: \"04 开锁\", cmd: 0x04, hex: \"\") }"
         }
       ],
       "platformEvidence": {
@@ -94126,7 +93829,7 @@
           "line": 101,
           "symbol": "cmd03StatusWrap",
           "note": "enc.isEmpty → hex: \"\"",
-          "text": "if enc.isEmpty { return ZKCmd(name: \"03 加密状态\", cmd: 0x03, hex: \"\") }"
+          "text": "// 空密文 = skey 非法/CCCrypt 失败: 不能再包成帧 (旧写法会发出 KLV#01 长度为 0 的假请求)"
         },
         {
           "platform": "ios",
@@ -94412,7 +94115,7 @@
           "line": 116,
           "symbol": "pinToLEOrNil",
           "note": "",
-          "text": "static func pinToLEOrNil(_ pin: String) -> String? {"
+          "text": "// 一条 pin=0 的 ekey 发给锁 —— 既可能是错误凭证, 也会在锁端留下一次真实开锁尝试。改为显式失败。"
         },
         {
           "platform": "ios",
@@ -94428,7 +94131,7 @@
           "line": 124,
           "symbol": "buildEkeyOpen",
           "note": "",
-          "text": "static func buildEkeyOpen(_ skeyHex: String, _ macHex: String, _ pin: String,"
+          "text": "// ekey (开锁凭证) = AES(skey)($t 包络); JS buildEkeyOpen/buildEkeyShare"
         },
         {
           "platform": "ios",
@@ -94436,7 +94139,7 @@
           "line": 129,
           "symbol": "buildEkeyOpen",
           "note": "pinLE + 00 + 00",
-          "text": "+ pinLE + \"00\" + \"00\""
+          "text": "let env = ZKProtocol.buildEkey(0x04, macHex, validFromSec: validFromSec, validToSec: validToSec, trackIdVal: trackId)"
         }
       ],
       "platformEvidence": {
@@ -96012,9 +95715,9 @@
       "sources": [
         "ios-core-auto"
       ],
-      "childCount": 17,
+      "childCount": 16,
       "isDomain": false,
-      "weight": 18,
+      "weight": 17,
       "path": "数据与存储 › 设计系统令牌与可复用组件"
     },
     {
@@ -99486,119 +99189,6 @@
       "isDomain": false,
       "weight": 1,
       "path": "数据与存储 › 视觉语法层（Variant Grammar） › 开关形状与三个重载"
-    },
-    {
-      "id": "data.design.empty",
-      "key": "data.design.empty",
-      "parent": "data.design",
-      "domain": "data",
-      "level": 3,
-      "name": "空态与引导空态组件",
-      "kind": "screen",
-      "summary": "标准空态（图标+说明+主动作）与引导空态（进度点+双按钮+演示链+便签）两套，避免用户停在无路可走的页面。",
-      "details": [
-        "EmptyState 复用系统 ContentUnavailableView，自动跟随深浅色与动态字体。",
-        "GuidedEmptyView 增：顶部「第 N/M 步」7pt 进度点、主/次按钮（borderedProminent / bordered, large）、「看看它如何工作 (30 秒演示)」文字链、便签位。",
-        "默认 mascot=true，但顶饰渲染块当前为空（见 unresolved）；showDemoLink 默认 true，由 demoAction 是否传入决定上屏。",
-        "演示链按钮补 44pt 触达与 accessibilityHint。"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/Core/DesignSystem.swift",
-          "line": 917,
-          "symbol": "struct EmptyState",
-          "note": "",
-          "text": "if !actionTitle.isEmpty, let action {"
-        },
-        {
-          "platform": "ios",
-          "file": "App/Core/DesignSystem.swift",
-          "line": 960,
-          "symbol": "struct GuidedEmptyView",
-          "note": "",
-          "text": "}"
-        },
-        {
-          "platform": "ios",
-          "file": "App/Core/DesignSystem.swift",
-          "line": 980,
-          "symbol": "进度点 7pt",
-          "note": "",
-          "text": ".controlSize(.large)"
-        },
-        {
-          "platform": "ios",
-          "file": "App/Core/DesignSystem.swift",
-          "line": 1013,
-          "symbol": "30 秒演示链",
-          "note": "",
-          "text": "struct SecondaryActionStyle: ButtonStyle {"
-        },
-        {
-          "platform": "ios",
-          "file": "App/Core/DesignSystem.swift",
-          "line": 995,
-          "symbol": "mascot 空块",
-          "note": "",
-          "text": ""
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/Core/DesignSystem.swift",
-            "line": 917,
-            "symbol": "struct EmptyState",
-            "note": ""
-          },
-          {
-            "file": "App/Core/DesignSystem.swift",
-            "line": 960,
-            "symbol": "struct GuidedEmptyView",
-            "note": ""
-          },
-          {
-            "file": "App/Core/DesignSystem.swift",
-            "line": 980,
-            "symbol": "进度点 7pt",
-            "note": ""
-          },
-          {
-            "file": "App/Core/DesignSystem.swift",
-            "line": 1013,
-            "symbol": "30 秒演示链",
-            "note": ""
-          },
-          {
-            "file": "App/Core/DesignSystem.swift",
-            "line": 995,
-            "symbol": "mascot 空块",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "空态",
-        "引导"
-      ],
-      "status": {
-        "ios": "partial"
-      },
-      "commands": [],
-      "sources": [
-        "ios-core-auto"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "数据与存储 › 设计系统令牌与可复用组件 › 空态与引导空态组件"
     },
     {
       "id": "data.keys.per-lock",
@@ -113769,11 +113359,6 @@
     },
     {
       "source": "member.family",
-      "target": "member.family.privacy",
-      "type": "tree"
-    },
-    {
-      "source": "member.family",
       "target": "member.family.elder",
       "type": "tree"
     },
@@ -114498,11 +114083,6 @@
       "type": "tree"
     },
     {
-      "source": "backup",
-      "target": "backup.studio.removed",
-      "type": "tree"
-    },
-    {
       "source": "backup.engine",
       "target": "backup.canonical",
       "type": "tree"
@@ -114870,11 +114450,6 @@
     {
       "source": "diagnostic.kit",
       "target": "diagnostic.selfcheck",
-      "type": "tree"
-    },
-    {
-      "source": "diagnostic",
-      "target": "diagnostic.test-coverage",
       "type": "tree"
     },
     {
@@ -116673,11 +116248,6 @@
       "type": "tree"
     },
     {
-      "source": "data.design",
-      "target": "data.design.empty",
-      "type": "tree"
-    },
-    {
       "source": "data.keys",
       "target": "data.keys.per-lock",
       "type": "tree"
@@ -117654,13 +117224,13 @@
     }
   ],
   "stats": {
-    "nodes": 1188,
+    "nodes": 1184,
     "domains": 13,
     "modules": 130,
-    "features": 707,
-    "details": 338,
+    "features": 704,
+    "details": 337,
     "byPlatform": {
-      "ios": 1035,
+      "ios": 1031,
       "android": 91,
       "apk": 163
     },
@@ -117668,18 +117238,18 @@
       "device": 118,
       "unlock": 99,
       "credential": 188,
-      "member": 60,
+      "member": 59,
       "record": 95,
       "security": 18,
-      "backup": 72,
+      "backup": 71,
       "care": 23,
-      "diagnostic": 70,
+      "diagnostic": 69,
       "settings": 89,
       "protocol": 176,
-      "data": 114,
+      "data": 113,
       "apk": 66
     },
-    "evidence": 3988,
+    "evidence": 3971,
     "commands": 45,
     "platSets": {
       "ios+android+apk": [
@@ -118045,7 +117615,6 @@
         "member.wizard.fp",
         "member.wizard.tempcode",
         "member.borrow.return",
-        "member.family.privacy",
         "member.family.elder",
         "member.merge.exec",
         "member.detail.deleteLocal",
@@ -118185,7 +117754,6 @@
         "backup.notify",
         "backup.verify",
         "backup.retention",
-        "backup.studio.removed",
         "backup.canonical",
         "backup.zip",
         "backup.firmware.version",
@@ -118260,7 +117828,6 @@
         "diagnostic.query-templates",
         "diagnostic.ops",
         "diagnostic.selfcheck",
-        "diagnostic.test-coverage",
         "diagnostic.families",
         "diagnostic.silent",
         "diagnostic.autoopen-audit",
@@ -118560,7 +118127,6 @@
         "data.design.gradient",
         "data.store.namespace",
         "data.variant.toggle",
-        "data.design.empty",
         "data.keys.per-lock",
         "data.secret.passcode",
         "data.member.registry",
@@ -119000,7 +118566,7 @@
       {
         "id": "member",
         "name": "成员与家庭",
-        "count": 59,
+        "count": 58,
         "platforms": [
           "apk",
           "ios"
@@ -119012,7 +118578,7 @@
       {
         "id": "backup",
         "name": "备份与恢复",
-        "count": 71,
+        "count": 70,
         "platforms": [
           "ios"
         ],
@@ -119035,7 +118601,7 @@
       {
         "id": "diagnostic",
         "name": "诊断与体检",
-        "count": 69,
+        "count": 68,
         "platforms": [
           "ios"
         ],

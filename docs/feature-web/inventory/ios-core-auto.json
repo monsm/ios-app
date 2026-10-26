@@ -4294,7 +4294,7 @@
       "level": 3,
       "name": "四分区选择性导出/恢复",
       "kind": "setting",
-      "summary": "设备 / 凭证 / 记录 / 设置四个开关；未勾分区在包内置空，恢复端按 nil 语义跳过。",
+      "summary": "设备 / 凭证 / 记录 / 设置四个分区开关。分区模型与恢复端的 nil 语义都完整，只是**UI 没有暴露这四个开关**（调用方恒传\"全选\"）。需要时把开关接出来即可，不必改数据层。2026-10-26 起「设置」分区不再含 OTP 密钥段。",
       "details": [
         "关 devices：devices = []。关 credentials：清每把锁的 ledger。关 records：清 globals.trace。",
         "关 settings：清 members 与 dongle/gateway/passcode/otpKeys/appearance；若 globals 全空则整段置 nil。",
@@ -4426,7 +4426,7 @@
       "level": 4,
       "name": "schema 升级链 v1→v5",
       "kind": "data",
-      "summary": "按版本号逐级幂等迁移：v2 补 members、v3 归一化 mac、v4/v5 只推进版本号。",
+      "summary": "schema 升级链 v1→v5：按版本号逐级幂等迁移（v2 补 members、v3 归一化 mac、v4/v5 只推进版本号）。**这是向后兼容机制，本身不是缺陷** —— 原标 partial 属误判。真正的缺口只在于：还没有跨 v1→v5 的端到端回归用例（现有测试只覆盖单级）。",
       "details": [
         "v4 与 v5 的历史迁移动作当年是自赋值空操作，现在只推进版本号，不假装做了迁移。",
         "每级判断读的是已推进的 s，因此可重复执行。"
@@ -4452,7 +4452,7 @@
         "迁移",
         "schema"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "key": "backup.canonical",
@@ -5904,53 +5904,6 @@
         "主题"
       ],
       "status": "implemented"
-    },
-    {
-      "key": "data.design.empty",
-      "parentKey": "data.design",
-      "domain": "data",
-      "level": 3,
-      "name": "空态与引导空态组件",
-      "kind": "screen",
-      "summary": "标准空态（图标+说明+主动作）与引导空态（进度点+双按钮+演示链+便签）两套，避免用户停在无路可走的页面。",
-      "details": [
-        "EmptyState 复用系统 ContentUnavailableView，自动跟随深浅色与动态字体。",
-        "GuidedEmptyView 增：顶部「第 N/M 步」7pt 进度点、主/次按钮（borderedProminent / bordered, large）、「看看它如何工作 (30 秒演示)」文字链、便签位。",
-        "默认 mascot=true，但顶饰渲染块当前为空（见 unresolved）；showDemoLink 默认 true，由 demoAction 是否传入决定上屏。",
-        "演示链按钮补 44pt 触达与 accessibilityHint。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/DesignSystem.swift",
-          "line": 917,
-          "symbol": "struct EmptyState"
-        },
-        {
-          "file": "App/Core/DesignSystem.swift",
-          "line": 960,
-          "symbol": "struct GuidedEmptyView"
-        },
-        {
-          "file": "App/Core/DesignSystem.swift",
-          "line": 980,
-          "symbol": "进度点 7pt"
-        },
-        {
-          "file": "App/Core/DesignSystem.swift",
-          "line": 1013,
-          "symbol": "30 秒演示链"
-        },
-        {
-          "file": "App/Core/DesignSystem.swift",
-          "line": 995,
-          "symbol": "mascot 空块"
-        }
-      ],
-      "tags": [
-        "空态",
-        "引导"
-      ],
-      "status": "partial"
     },
     {
       "key": "data.design.buttons",

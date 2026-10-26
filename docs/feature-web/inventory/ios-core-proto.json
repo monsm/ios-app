@@ -199,7 +199,7 @@
       "level": 3,
       "name": "KLV 打包（key/len/val）",
       "kind": "protocol",
-      "summary": "hexPair(key) + hexPair(len 低 8 位) + val；长度字段只有 1 字节，值长度上限 255。",
+      "summary": "KLV 打包：hexPair(key) + hexPair(len 低 8 位) + val。**长度字段只有 1 字节 ⇒ 单条值上限 255 字节**，这是锁端协议的硬约束（不是本实现的缺陷）。原标 edge 是误判，已改 implemented。",
       "details": [
         "长度取 hexPair(UInt32(len))，hexPair 只保留 & 0xff ⇒ 单值超过 255 字节会写出回绕后的长度",
         "App 内最长载荷：08 的 AES 密文（82+16 明文补零到 112）未越界；43/44 的 MAC 拼接列表随台数线性增长，是唯一可能撞上限的入口（单帧最多 42 台）",
@@ -223,7 +223,7 @@
         "协议",
         "边界"
       ],
-      "status": "edge"
+      "status": "implemented"
     },
     {
       "key": "protocol.klv.parse",
@@ -3883,9 +3883,9 @@
       "parentKey": "protocol.cmds",
       "domain": "protocol",
       "level": 3,
-      "name": "22 DFU 使能（构造器保留，App 入口已删）",
+      "name": "22 DFU 使能（DFU 第一步，链路完整）",
       "kind": "protocol",
-      "summary": "param(1B) 走密文面 KLV#02；ZKCmdBuilder 里保留，App 内无调用点，只用于金标对拍。",
+      "summary": "**2026-10-26 核实更正**：原标 deprecated「构造器保留，App 入口已删」——错了，它非零调用。完整链路：DFUView.run → \u0007pp.lock.enableDfu() → LockService.enableDfu → ZKCmdBuilder.cmd22EnableDfu。锁收到 22 后会以 ZkDFU + MAC 后 8 位重新广播，随后断链属预期（不是失败）。param=0 = 重启进 bootloader。有金标逐字节对拍。",
       "details": [
         "注释明确写「App 侧的调用封装 (LockService.enableDfu) 已随 DFU 入口删除」",
         "全仓检索只有 GoldenDiffTests 调用它做字节对拍",
@@ -3911,7 +3911,7 @@
         "DFU",
         "死代码"
       ],
-      "status": "deprecated"
+      "status": "implemented"
     },
     {
       "key": "protocol.cmd23",
@@ -3988,9 +3988,9 @@
       "parentKey": "protocol.cmds",
       "domain": "protocol",
       "level": 3,
-      "name": "25 布防（构造器保留，App 入口已删）",
+      "name": "25 布防（SETDEFENCE，链路完整）",
       "kind": "protocol",
-      "summary": "control(1B) + startSec(u32LE) + endSec(u32LE) 走密文面 KLV#01；App 内无调用点。",
+      "summary": "**2026-10-26 核实更正**：本节点原标 deprecated「构造器保留，App 入口已删」——已过时。完整链路在：`ZKCmdBuilder.cmd25Defence` → `LockService.setDefence` → `DefendService` → `DefendView` → 设置页入口。control 0=撤防/1=单次/2=周期；start/end 是**半秒刻度**的 4B LE，越界夹住不回绕。有表驱动单测 + 金标逐字节对拍。",
       "details": [
         "注释：App 侧的调用封装（LockService.setDefence）已随布防入口删除",
         "全仓检索只有 GoldenDiffTests 的两个用例（aperiodic / period）调用",
@@ -4016,7 +4016,7 @@
         "布防",
         "死代码"
       ],
-      "status": "deprecated"
+      "status": "implemented"
     },
     {
       "key": "protocol.cmd30",
@@ -5709,9 +5709,9 @@
       "parentKey": "protocol",
       "domain": "protocol",
       "level": 2,
-      "name": "DFU 入口与残留",
+      "name": "DFU 固件升级（Nordic DFU）",
       "kind": "protocol",
-      "summary": "固件升级在 iOS 侧只剩常量与一个仅金标使用的 cmd22 构造器；App 内没有可触发的入口。",
+      "summary": "**2026-10-26 更正**：本节点原标 deprecated「只剩常量与 cmd22 构造器，App 内无入口」——该判断已过时。iOS 侧现已实现完整 DFU：`DFUKit`（425 行，Nordic Secure FE59 / Legacy 1530 双传输）＋`DFUView`（247 行 UI）。扫描判据是「广播 pid + dfuState==1」而非广播名。cmd22 使能构造器仍无调用（DFU 走 Nordic 独立通道，不经它）。",
       "details": [
         "BLEService 定义了 Nordic Secure（FE59 + 8EC9xxxx）与 Legacy（1530/1531/1532）两套 UUID，但全仓无引用",
         "ZKCmdBuilder.cmd22EnableDfu 保留，注释写明 App 侧封装已删除",
@@ -5740,7 +5740,7 @@
         "DFU",
         "死代码"
       ],
-      "status": "deprecated"
+      "status": "implemented"
     },
     {
       "key": "protocol.defence",
@@ -5749,7 +5749,7 @@
       "level": 2,
       "name": "布防与尾随能力",
       "kind": "protocol",
-      "summary": "布防命令（25）只有构造器无调用点；「能不能布防/尾随」由 PidMap 的能力谓词决定。",
+      "summary": "布防（25）的 App 链路**完整**（见 protocol.cmd25）；这里标 partial 是因为「这台锁能不能布防 / 有没有尾随能力」由 `PidMap` 的能力谓词按型号决定，而各型号的实测结论尚未在真机上覆盖全部 pid —— 属**待真机验证**，不是代码缺失。",
       "details": [
         "能力口径：仅 KX / V1_Pro / 未知 pid 可布防；网关一律不可",
         "尾随（自动上锁）再叠加 V1_Pro 固件 >= 1.0.3 的下限",
