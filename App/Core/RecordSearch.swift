@@ -710,30 +710,16 @@ enum RecordSearch {
         var at: Double        // 处置时刻 (Unix 秒)
         var verdict: String   // "已处理" / "误报" / "已处置" / "测试" / "已人工检查"
     }
-    private static let dispKey = "kf_rdispo"
     /// 745 测试标记的键集 (统计口径排除用, 键 = mac#idxRaw): 与处置留痕同一份 kf_rdispo,
     /// 不另造"测试"状态 —— 标记本身就是一条处置结论。此前这个查询零调用, 统计层并未真排除。
     /// 745 测试标记的键集 (统计口径排除用, 键 = mac#idxRaw): 直读 kf_rdispo，
     /// 不另造"测试"状态 —— 标记本身就是一条处置结论。处置写入口已随告警处置层移除，
     /// 这里读的是历史数据 (卸载前可能残留)。
     static var testMarkedKeys: Set<String> {
-        let all = DB.store.get([String: Disposition].self, dispKey) ?? [:]
+        let all = DB.store.get([String: Disposition].self, "kf_rdispo") ?? [:]
         return Set(all.filter { $0.value.verdict == "测试" }.map(\.key))
     }
 
-    // ---------- 727 防撬检查清单 (勾选状态复用处置字段, 存 kf_rcheck_<key>) ----------
-    static let tamperChecks = ["确认门体与锁体完好", "检查门框合页与螺丝", "核对门扇是否被顶住", "确认门锁未被拆卸"]
-    static func checkState(_ key: String) -> [Bool] {
-        let saved = DB.store.get([Bool].self, "kf_rcheck_" + key) ?? [Bool](repeating: false, count: tamperChecks.count)
-        var s = saved
-        while s.count < tamperChecks.count { s.append(false) }
-        return Array(s.prefix(tamperChecks.count))   // 方向口径：这里不是"留最新 N 条"，是**按序号**把长度夹回清单项数 (append 是补空位、prefix 是截多出来的尾项)
-    }
-    static func setCheck(_ key: String, index: Int, on: Bool) {
-        var s = checkState(key)
-        if index < s.count { s[index] = on }
-        DB.store.setCodable("kf_rcheck_" + key, s)
-    }
 
     /// 741 同类告警计数: 该锁同类型累计次数 + 上次时刻 (只读既有日志, 可证明)
     struct SameCount {

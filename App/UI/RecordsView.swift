@@ -174,7 +174,6 @@ struct RecordsView: View {
     @ViewBuilder
     private var mainList: some View {
         List {
-            statusBanner
             if offline { jumpBackRow }
             // ─────────────────────────────────────────────────────────────
             // 2026-10-18 重构: 列表前方原来叠了 **14 个区** ——
@@ -196,7 +195,6 @@ struct RecordsView: View {
             filterChips          // 已折叠为一行摘要 + 可展开面板 (见 filterChips 注释)
             // 低频区: 收进一行"更多"之后, 不再占首屏
             secondaryRowsDisclosure
-            if running { runningRow }
             // 187 按月跳转 (等价实现): 选月即只看该月, 顶部有清除口。
             // 原设计的"月份滚轮 + scrollTo"需把 List 包进 ScrollViewReader 并移动整条修饰符链,
             // 在这个从未编译过的工程里做结构性改动的风险不对等 → 记入需编译器清单, 这里先给可用能力。
@@ -204,8 +202,6 @@ struct RecordsView: View {
                 // 657: 缺口行走独立的极简一行，不冒充一天的组头 (它没有"当天 N 条"可说)
                 if g.isGap { gapRow(g) } else { daySection(g) }
             }
-            if capped { loadMoreRow }   // 598
-            firstDayFooter
         }
         // 583 定位滚动: iOS 18+ 的 List 行锚位。绑的是**行 id** (oid = mac#行键)，
         // 所以"滚到那一天的附近"与"滚到那一行"在 API 层面不是同一件事 ——
@@ -347,7 +343,6 @@ struct RecordsView: View {
             set: { if !$0 { noteTarget = nil } }
         )) {
             TextField("只存这台手机", text: $noteDraft)
-            Button("保存") { saveRowNote() }
             Button("取消", role: .cancel) { noteTarget = nil }
         } message: {
             Text("备注跟着这一行 (锁 + 行标识) 走, 不写进锁端日志; 详情页里也能改。")   // 576 备注跟着这一行
@@ -381,27 +376,6 @@ struct RecordsView: View {
     /// 749 对账结果导出一行 (拍板 #28)。只说本次会话内的事实, 而且**三种结论都要有对应措辞**:
     /// 拉全 / 未拉全 (带剩余条数) / 锁端没报告剩余所以不可判 —— 最后一种最容易被写成"已拉全"。
     /// 复制走 UIPasteboard 的普通文本路径 (不含口令等敏感值)。
-    @ViewBuilder
-    private var reconRow: some View {
-        if !reconLine.isEmpty {
-            HStack(spacing: DS.Space.s) {
-                Text(reconLine)
-                    .vkFont(.caption2)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-                Spacer(minLength: DS.Space.xs)
-                Button("复制对账") {
-                    UIPasteboard.general.string = reconLine
-                    app.showToast("本次对账结果已复制")   // 749 本次对账结果已复制
-                }
-                .vkFont(.caption, weight: .medium)
-                .foregroundStyle(DS.Palette.accentText)
-                .frame(minHeight: DS.Hit.min)
-            }
-        }
-    }
-
-    // ---------- 包9: 检索 (551/553/554/555/557/560/562) ----------
     @ViewBuilder
     private var searchBar: some View {
         Section {
@@ -791,43 +765,8 @@ struct RecordsView: View {
 
     /// 190 第一扇门纪念: 滚到最早记录的结语行
     @ViewBuilder
-    /// 598 「继续加载」而不是自动懒加载: 自动加载要在滚动里挂 GeometryReader + 锚点判断，
-    /// 那是只有首编译与真机才兜得住的改动；一个明确按钮同样解决"上千条一次渲染卡"，
-    /// 而且**数量可见** —— 用户知道还有多少没读出来，不会以为列表就这么多。
-    private var loadMoreRow: some View {
-        Section {
-            Button {
-                shownCap += 600   // 598: 续一页 600; 池就 300 级 ⇒ 通常按一次就到"已全部加载", 不假装有第 N 页
-                applyFilter()
-            } label: {
-                Text("继续加载 (已读 \(rows.count) / 共 \(filteredTotal) 条)")
-                    .vkFont(.subheadline, weight: .medium)
-                    .foregroundStyle(DS.Palette.accentText)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .frame(minHeight: DS.Hit.min)
-            }
-        } footer: {
-            Text("分页只影响本页渲染，不改筛选条件、不改导出与统计的口径 (它们读的是全量缓存)。")
-                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
-        }
-    }
 
     @ViewBuilder   // 编译级修正: 这块是"顶层 if 而没有 else/return", 不加 builder 就是一句 "function declares some View…" 的编译错误
-    private var firstDayFooter: some View {
-        // 190 口径: "第一天"只在日志缓存未触顶时可证 —— Store.writeLogs 合并到 300 条即截断,
-        // 更早的行会被挤掉 (merged.count >= 300 break); 触顶时 min() 只是"还剩的最早",
-        // 不是与这把锁真正的第一天。未触顶才允许写这句结语。
-        if let first = firstLogDay, !groups.isEmpty, DB.readLogs(mac).count < 300 {
-            Section {
-                Text("—— 这里是与这把锁的第一天 · \(chineseDay(first)) ——")
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, DS.Space.m)
-                    .accessibilityLabel("这里是与这把锁的第一天, " + chineseDay(first))
-            }
-        }
-    }
     /// 716 选区导出: 按**天**整组勾选 → 合并成一份 CSV (进剪贴板, 与 698 同一通路)。
     /// 行级多选刻意不做: 时间线一页上千行, 逐行勾选的手势成本远高于"按天勾"这种整组选择 (原句的"整组"正是这一档);
     /// 凭证 Tab 那套多选 (1518) 是"列表行 + 批量动作", 与这里"导出选区"不是同一件事, 不硬搬。
@@ -943,49 +882,6 @@ struct RecordsView: View {
     private var todayKey: String { Self.dayKey(Date()) }
 
     // ---------- 顶部状态条 ----------
-    @ViewBuilder
-    private var statusBanner: some View {
-        if offline {
-            Section {
-                Label {
-                    Text(cachedHint)
-                        .fixedSize(horizontal: false, vertical: true)
-                } icon: {
-                    // 2026-10-14 走查: 与 LinkSense 三态条同一处口径 —— 门锁走 BLE, 不是 Wi-Fi,
-                    // 这里说的是"没连上门锁", 不是"没网"。带斜杠的 Wi-Fi 图标会误导。
-                    Image(systemName: "antenna.radiowaves.left.and.right").accessibilityHidden(true)
-                }
-                .vkFont(.caption)
-                .foregroundStyle(DS.Palette.warn)
-            }
-        } else if let g = pullGap {
-            // 749: 本次翻页上限内没取完 —— 说清"未拉全"与原因, 不伪装成"锁内日志已完整"
-            Section {
-                Label {
-                    Text(g)
-                        .fixedSize(horizontal: false, vertical: true)
-                } icon: {
-                    Image(systemName: "arrow.triangle.2.circlepath").accessibilityHidden(true)
-                }
-                .vkFont(.caption)
-                .foregroundStyle(DS.Palette.warn)
-                reconRow
-            }
-        } else if let at = lastSyncAt() {
-            Section {
-                Label {
-                    Text("上次成功读取：" + Self.stamp.string(from: at))
-                        .fixedSize(horizontal: false, vertical: true)
-                } icon: {
-                    Image(systemName: "clock.arrow.circlepath").accessibilityHidden(true)
-                }
-                // 749: 拉全时也要能留一行凭据 (拍板 #28), 否则"完整"只存在于口头
-                reconRow
-                .vkFont(.caption)
-                .foregroundStyle(DS.Palette.textSub)
-            }
-        }
-    }
     private var cachedHint: String {
         if let at = lastSyncAt() {
             return "未连接门锁 — 以下为本地缓存（读取于 " + Self.stamp.string(from: at) + "）。连接锁后点「重新读取」刷新。"
@@ -1247,7 +1143,6 @@ struct RecordsView: View {
                         .accessibilityLabel("已标旗")
                 }
                 // 184 开门方式图标: fp 指纹 / pwd 数字 / temp 一次性 / key 钥匙
-                kindIcon(r)
                 rowTitle(r)
                     .padding(.top, 1)
                 // 591 行内次序注释: 只在第 2 次及以后写 —— "今天第一次"是废话，天天写等于没写。
@@ -1297,20 +1192,6 @@ struct RecordsView: View {
                             .accessibilityLabel("开门附言 " + nt)   // 990: 与 186 备注同一份存储, 读屏也用同一句话
                     }
                 }
-                if r.claim {
-                    // 791 未归属记录认领: 行内直达, 写入本机覆盖层 (不改锁端数据)
-                    Button { claimRow(r) } label: {
-                        Text("认领")
-                            .vkFont(.caption, weight: .medium)
-                            .foregroundStyle(DS.Palette.accentText)
-                            .padding(.horizontal, DS.Space.s)
-                            .padding(.vertical, DS.Space.xs)
-                            .variantPlate(DS.Palette.accentText.opacity(0.10), .capsule)
-                            .frame(minHeight: DS.Hit.min + 16)
-                            .contentShape(Capsule())
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                }
                 // 575 越界小字 (约): 临时码窗口外仍开门
                 if !r.winText.isEmpty {
                     Text(r.winText)
@@ -1326,7 +1207,7 @@ struct RecordsView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         // 738 告警行: 左侧 3pt 色条 + 浅红底 (danger 派生, 形状冗余)
-        .background(alarmBG(r))
+        .background(Color.clear)
         .listRowSeparator(.hidden)
         .listRowInsets(EdgeInsets(top: 0, leading: DS.Space.l, bottom: 0, trailing: DS.Space.l))
         .contentShape(Rectangle())
@@ -1353,9 +1234,7 @@ struct RecordsView: View {
                 }
                 .tint(DS.Palette.warn)
             }
-            Button("备注") { openRowNote(r) }
                 .tint(DS.Palette.accent)
-            Button("标旗") { toggleRowFlag(r) }
                 .tint(DS.Palette.danger)
             Button("复制") {
                 UIPasteboard.general.string = "[" + (r.lockName.isEmpty ? app.displayName : r.lockName) + "] " + r.time + " " + r.title
@@ -1365,7 +1244,6 @@ struct RecordsView: View {
         }
         // 597 前缘滑出: 只放备注这一枚 (与后缘同一只弹窗; 前缘是左滑最顺手的位置)
         .swipeActions(edge: .leading, allowsFullSwipe: false) {
-            Button("备注") { openRowNote(r) }
                 .tint(DS.Palette.accent)
         }
         .contextMenu {
@@ -1402,32 +1280,8 @@ struct RecordsView: View {
         .accessibilityLabel(r.title + ", " + r.time)
         .accessibilityAddTraits([.isButton])
     }
-    /// 185/597 共用: 行备注弹窗的打开与保存 (目标行装进 noteTarget, 草稿预填现有备注)
-    private func openRowNote(_ r: RowVM) {
-        let m = r.rowMac.isEmpty ? mac : r.rowMac
-        noteDraft = RecordOverlay.note(m, r.key)
-        noteTarget = r
-    }
 
-    private func saveRowNote() {
-        guard let t = noteTarget else { return }
-        let m = t.rowMac.isEmpty ? mac : t.rowMac
-        RecordOverlay.setNote(m, t.key, noteDraft)
-        noteTarget = nil
-        applyFilter()
-        // 186 备注已清空
-        // 186 备注已保存在这台手机
-        app.showToast(noteDraft.trimmingCharacters(in: .whitespaces).isEmpty ? "备注已清空" : "备注已保存在这台手机")
-    }
 
-    private func toggleRowFlag(_ r: RowVM) {
-        let m = r.rowMac.isEmpty ? mac : r.rowMac
-        let on = RecordOverlay.toggleFlag(m, r.key)
-        applyFilter()   // 行首红旗是渲染期直读覆盖层, 必须踢一次重建
-        // 188 已标为异常
-        // 188 已取消标旗
-        app.showToast(on ? "已标为异常, 行首常显红旗" : "已取消标旗")
-    }
 
     /// 557 命中词高亮: 搜索词在行文案中染 accentText 浅底 (分段 Text, 换行跟随整体流)
     @ViewBuilder
@@ -1498,47 +1352,7 @@ struct RecordsView: View {
         }
         return segs
     }
-    /// 738 告警行背景: danger 8% 浅底 + 左侧 3pt 色条
-    private func alarmBG(_ r: RowVM) -> some View {
-        Rectangle()
-            .fill(r.warn ? DS.Palette.danger.opacity(0.08) : Color.clear)
-            .overlay(alignment: .leading) {
-                if r.warn {
-                    RoundedRectangle(cornerRadius: 1.5)
-                        .fill(DS.Palette.danger)
-                        .frame(width: 3)
-                        .padding(.vertical, 6)
-                }
-            }
-    }
-    /// 184 开门方式图标: kind → SF 符号 (fp 指纹 / pwd 数字键盘 / temp 一次性 / key 钥匙)
-    /// kind → SF 符号名 (非视图计算, 从 @ViewBuilder 里拆出来:
-    /// @ViewBuilder 的 switch 分支必须是视图, 而这里是纯赋值 ⇒ "type '()' cannot conform to 'View'")
-    private func kindSymbol(_ r: RowVM) -> String {
-        switch r.kind {
-        case "fp": return "fingerprint"
-        case "pwd": return "number"
-        case "temp": return "timer"
-        case "key": return "key"
-        default: return ""
-        }
-    }
-    @ViewBuilder
-    private func kindIcon(_ r: RowVM) -> some View {
-        // 2026-10-13 run 63: 原写 `let sym: String` + `switch { case: sym = … }` —— @ViewBuilder 把
-        // switch 当视图构造, 分支体是赋值 (`()`) ⇒ "type '()' cannot conform to 'View'"。
-        // 计算拆到 kindSymbol, 这里只留 if。
-        let sym = kindSymbol(r)
-        if !sym.isEmpty {
-            Image(systemName: sym)
-                .font(.system(size: DS.Icon.xs))
-                .foregroundStyle(DS.Palette.accentText)
-                .padding(.top, 3)
-                .accessibilityHidden(true)
-        }
-    }
     /// 183 成员色点: 可证明归属才显示 (成员档案色, 6pt 圆点)
-    @ViewBuilder
     /// 183 成员色 (走成员档案 hex, 与安全中心同一纪律（该页已删，纪律沿用）)
     private func memberColor(_ m: Member) -> Color {
         var s = m.color
@@ -1555,22 +1369,6 @@ struct RecordsView: View {
         recPool.first { RecordOverlay.oid(mac: $0.mac, rowKey: $0.key) == r.id }
     }
 
-    /// 791 认领: 列成员选择, 写入 MemberHub.claims 覆盖层 (本机, 锁端数据不动)
-    private func claimRow(_ r: RowVM) {
-        let kindWord = r.whoKind.map { Attribution.words[$0] ?? "记录" } ?? "记录"
-        let alert = UIAlertController(title: "认领未归属记录",   // 791 认领未归属记录
-                                      message: "台账推断这条「" + kindWord + "开门」发生在 " + r.time
-                                              + ", 认领给哪位成员?",
-                                      preferredStyle: .actionSheet)
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        for m in DB.members().filter({ !MemberHub.ext($0.id).archived }) {
-            alert.addAction(UIAlertAction(title: m.name, style: .default) { _ in
-                MemberHub.claim(mac, logKey: r.key, memberId: m.id)
-                app.showToast("已认领给「" + m.name + "」(本机覆盖层)")
-            })
-        }
-        UIApplication.topViewController()?.present(alert, animated: true)
-    }
 
     private var emptyHint: some View {
         Section {
@@ -1635,36 +1433,6 @@ struct RecordsView: View {
         }
     }
 
-    private var runningRow: some View {
-        // 19 骨架屏 shimmer: 读取中显示三行"像行的东西"，而不是只有一个转圈。
-        // 为什么值得换: ProgressView 只说"在忙"，骨架屏说的是**忙完长什么样** (左时刻、右两行文案)，
-        // 首屏等待时人对后者的焦虑明显更低。三行是刻意的小数 —— 铺满屏幕的骨架会在数据回来时
-        // 造成整页重排，那笔代价比它省下的等待感更贵。
-        Section {
-            HStack(spacing: DS.Space.s) {
-                ProgressView()
-                Text("正在读取锁内记录…")
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.textSub)
-            }
-            .padding(.vertical, DS.Space.s)
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("正在读取锁内记录")
-            ForEach(0..<3, id: \.self) { i in
-                HStack(spacing: DS.Space.m) {
-                    Capsule().fill(DS.Palette.surfaceAlt).frame(width: 42, height: 10)
-                    VStack(alignment: .leading, spacing: DS.Space.xs) {
-                        Capsule().fill(DS.Palette.surfaceAlt)
-                            .frame(width: 150 - CGFloat(i) * 22, height: 12)
-                        Capsule().fill(DS.Palette.hairline.opacity(0.6)).frame(width: 92, height: 8)
-                    }
-                    Spacer(minLength: 0)
-                }
-                // 骨架不是内容: 读屏念它只会念出一串"空"，反而盖过那句"正在读取"
-                .accessibilityHidden(true)
-            }
-        }
-    }
 
     // ---------- 成员过滤 (保留既有 793 访客虚拟分组 / 791 可认领 / 1028 保养) ----------
     private var memberChips: some View {

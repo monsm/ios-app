@@ -50,7 +50,6 @@ enum CredentialOrg {
     /// 凭证到期预警是这条链唯一的提醒出口, 静默失败 = "说要提醒但没人提醒"。
     static let notifyLog = Logger(subsystem: "com.aapk.OfflineLock", category: "credentialNotify")
 
-    static func archKey(_ mac: String) -> String { "kf_carch_" + mac }
     static func alertKey(_ mac: String, _ kind: String, _ key: Int) -> String { "kf_calert_\(mac)_\(kind)_\(key)" }
     static func seqKey(_ mac: String) -> String { "kf_cseq_" + mac }
 
@@ -326,6 +325,8 @@ enum CredentialOrg {
         var at: Double
         var via: String      // 真实来源只有本机这几条路径, 不写"操作端"这种无法证实的值
     }
+    /// 2026-10-27 七轮：`kf_cdisrea_` 停用便签**保留** —— 它是停用功能的一部分，
+    /// 不是死键（disableMark / disableMarks / setDisableMark 三处都在用）。
     static func disReasonKey(_ mac: String) -> String { "kf_cdisrea_" + mac }
     static func disableMark(_ mac: String, kind: String, key: Int) -> DisableMark? {
         (DB.store.get([String: DisableMark].self, disReasonKey(mac)) ?? [:])["\(kind):\(key)"]
