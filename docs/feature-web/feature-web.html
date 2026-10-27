@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T22:40:40.777Z",
+    "generated": "2026-10-27T22:45:04.235Z",
     "sources": [
       {
         "scout": "android-native",
@@ -2090,7 +2090,7 @@ const DATA = {
           "line": 1222,
           "symbol": "quickActions",
           "note": "",
-          "text": "try await app.lock.ensureConnected(mac: m)"
+          "text": "// 与手机钟无关；把它抄一份进本机反而造出第二个\"现在是几点\"。AutoOpen 那条自动校时走 audit (0E 双确认)。"
         },
         {
           "platform": "ios",
@@ -2106,7 +2106,7 @@ const DATA = {
           "line": 1227,
           "symbol": "let cols = AXPrefs.bigTile ? 2 : 3",
           "note": "",
-          "text": "app.showToast(\"时间已同步\")"
+          "text": "failed = true"
         }
       ],
       "platformEvidence": {
@@ -3305,7 +3305,7 @@ const DATA = {
           "line": 857,
           "symbol": "attentionCard",
           "note": "",
-          "text": ".minimumScaleFactor(0.8)"
+          "text": ".frame(maxWidth: .infinity)"
         },
         {
           "platform": "ios",
@@ -3313,7 +3313,7 @@ const DATA = {
           "line": 879,
           "symbol": "attentionItems",
           "note": "",
-          "text": "private func quickLink\u003cContent: View>(icon: String, label: String,"
+          "text": "@ViewBuilder content: () -> Content) -> some View {"
         },
         {
           "platform": "ios",
@@ -3321,7 +3321,7 @@ const DATA = {
           "line": 895,
           "symbol": "BatteryCare.fpCleanNeeded(mac)",
           "note": "",
-          "text": "@ViewBuilder"
+          "text": "let big = AXPrefs.bigTile   // 230 大格: 图标与字号随加大"
         }
       ],
       "platformEvidence": {
@@ -3681,7 +3681,7 @@ const DATA = {
           "line": 846,
           "symbol": ".saturation(connected ? 1 : 0.55)",
           "note": "",
-          "text": "NavigationLink {"
+          "text": "} label: {"
         }
       ],
       "platformEvidence": {
@@ -3838,7 +3838,7 @@ const DATA = {
           "line": 903,
           "symbol": "linkSenseCard",
           "note": "",
-          "text": ".frame(width: big ? 48 : 40, height: big ? 48 : 40)"
+          "text": "in: RoundedRectangle(cornerRadius: 13, style: .continuous))"
         },
         {
           "platform": "ios",
@@ -3854,7 +3854,7 @@ const DATA = {
           "line": 978,
           "symbol": "最后已知: 电量 … (缓存 …)",
           "note": "",
-          "text": "/// 826 聚光教练标: nil = 不显示; 0/1/2 = 当前焦点序号 (只在首进设备 Tab 时出现一次)"
+          "text": "@State private var showModuleOrder = false"
         }
       ],
       "platformEvidence": {
@@ -7357,7 +7357,7 @@ const DATA = {
           "line": 1268,
           "symbol": "if DB.listFps(app.currentMac).isEmpty",
           "note": "",
-          "text": ""
+          "text": "var vkBody: some View {"
         },
         {
           "platform": "ios",
@@ -7365,7 +7365,7 @@ const DATA = {
           "line": 1270,
           "symbol": "quickDestination(\"addFp\")",
           "note": "",
-          "text": "var vkBody: some View {"
+          "text": "Image(systemName: \"lock.shield\")"
         }
       ],
       "platformEvidence": {
@@ -8152,7 +8152,7 @@ const DATA = {
           "line": 1025,
           "symbol": "UnlockDial(state:phase:connected:bleReady:…)",
           "note": "",
-          "text": "ForEach(Array(devOrder.enumerated()), id: \\.offset) { i, id in"
+          "text": "Text(moduleName(id))"
         },
         {
           "platform": "android",

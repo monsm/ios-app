@@ -811,7 +811,6 @@ struct DeviceHomeView: View {
                                         DS.Haptics.tick.impactOccurred()
                                         showModuleOrder = true
                                     } label: {
-                                    } label: {
                                         Label("编辑快捷操作格", systemImage: "square.grid.2x2")   // 905 编辑快捷操作格
                                     }
                                 }
@@ -832,7 +831,6 @@ struct DeviceHomeView: View {
                                 Button {
                                     DS.Haptics.tick.impactOccurred()
                                     showModuleOrder = true
-                                } label: {
                                 } label: {
                                     Label("编辑快捷操作格", systemImage: "square.grid.2x2")   // 905 编辑快捷操作格
                                 }
