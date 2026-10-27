@@ -369,10 +369,14 @@ const RB = parseInt(BASE_M[1], 10);   // 真实武装线
   for (let t = 0; t < 10; t++) { armedB = sample(armedB, -34, RB); if (armedB && !firedB) { firedB = true; firesB++; } }
   if (firesB !== 1) bad('C 走开再靠近没有再触发 (=' + firesB + '), 应恰好 1 次');
   else good('C 离开后重新靠近可再触发一次');
+  // 2026-10-27 审核修复 (AUDIT-C A2)：原先错误消息把「-40..-38」写死了 ——
+  // 那是 RB=-38 时代的旧值。而 RB 现在从 AutoOpenKit.kt 实际读取（= -40），
+  // 解除线 = RB + 10·log10(0.5) ≈ -43.01 → roundToInt = -43。
+  // 消息写死旧区间会让这条断言红时把人引到错误的数字上。现在全部用 RB/disarm(RB) 推导。
   // 回差带内来回抖动不翻转
   let a = true;
   for (const r of [-40, RB, -40, -39, -40]) a = sample(a, r, RB);
-  if (!a) bad('C 回差失效: -40..-38 抖动把武装位翻掉了 (解除线应≈ ' + disarm(RB) + ')');
+  if (!a) bad('C 回差失效: [' + disarm(RB) + ',' + RB + '] 抖动把武装位翻掉了 (解除线应≈ ' + disarm(RB) + ')');
   else good('C 回差带 [' + (disarm(RB) + 1) + ',' + RB + '] 内抖动不翻转');
 }
 console.log('--- C 公式校验: BASE=' + RB + ' 武装线=' + arm(RB) + ' 解除线=' + disarm(RB) + ' ---');

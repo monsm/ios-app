@@ -295,24 +295,43 @@ enum BackupKit {
     }
     /// 894 收集外观档。只收**枚举过的档位值**，读到没见过的值就当没这项 (nil)，
     /// 免得把一台机器上的脏数据搬到另一台去。
+    /// 外观档的白名单 —— **唯一一份**。
+    ///
+    /// 2026-10-27 审核修复 (AUDIT-C F6)：原先 `collectAppearance` 与 `applyAppearance`
+    /// 各自内联一套**逐字相同**的数组（9 组）。加一个新档位要改两处，
+    /// 漏改一处就会出现「能导出但导不回」或反过来的静默丢数据。
+    /// 现在两处都读这张表；新增档位只改这里。
+    private static let appearanceAllow: [String: [String]] = [
+        "kf_theme":      ["", "light", "dark", "black"],
+        "kf_accent":     ["", "indigo", "forest", "amber", "graphite", "rose", "aurora"],
+        "kf_density":    ["", "compact", "relaxed"],
+        "kf_radius":     ["", "soft", "plump"],
+        "kf_week_start": ["", "mon", "sun", "sat"],
+        "kf_row_h":      ["", "tall"],
+        "kf_tl_gap":     ["", "tight", "loose"],
+        "kf_motion":     ["", "calm", "standard", "lively"],
+        "kf_hero_tex":   ["", "grid", "grain"],
+    ]
+
     static func collectAppearance() -> BackupBundle.Globals.Appearance {
-        func enumVal(_ key: String, _ allowed: [String]) -> String? {
+        func enumVal(_ key: String) -> String? {
             let v = DB.store.getString(key)
+            guard let allowed = Self.appearanceAllow[key] else { return nil }
             return allowed.contains(v) ? v : nil
         }
         let stats = DS.HeroStats.visible
         let recent = DB.store.getInt("kf_recent_count", 5)
         return BackupBundle.Globals.Appearance(
-            theme: enumVal("kf_theme", ["", "light", "dark", "black"]),
-            accent: enumVal("kf_accent", ["", "indigo", "forest", "amber", "graphite", "rose", "aurora"]),
-            density: enumVal("kf_density", ["", "compact", "relaxed"]),
-            radius: enumVal("kf_radius", ["", "soft", "plump"]),
+            theme: enumVal("kf_theme"),
+            accent: enumVal("kf_accent"),
+            density: enumVal("kf_density"),
+            radius: enumVal("kf_radius"),
             hc: DB.store.has("kf_hc") ? DB.store.getBool("kf_hc") : nil,
-            weekStart: enumVal("kf_week_start", ["", "mon", "sun", "sat"]),
-            rowH: enumVal("kf_row_h", ["", "tall"]),
-            tlGap: enumVal("kf_tl_gap", ["", "tight", "loose"]),
-            motion: enumVal("kf_motion", ["", "calm", "standard", "lively"]),
-            heroTex: enumVal("kf_hero_tex", ["", "grid", "grain"]),
+            weekStart: enumVal("kf_week_start"),
+            rowH: enumVal("kf_row_h"),
+            tlGap: enumVal("kf_tl_gap"),
+            motion: enumVal("kf_motion"),
+            heroTex: enumVal("kf_hero_tex"),
             plain: DB.store.has("kf_plain") ? DB.store.getBool("kf_plain") : nil,
             recentCount: [3, 5, 10].contains(recent) ? recent : nil,
             heroStats: stats.count == DS.HeroStats.all.count ? nil : Array(stats).sorted())
@@ -373,19 +392,19 @@ enum BackupKit {
         }
     }
     static func applyAppearance(_ a: BackupBundle.Globals.Appearance) {
-        func set(_ key: String, _ v: String?, _ allowed: [String]) {
-            guard let v, allowed.contains(v) else { return }
+        func set(_ key: String, _ v: String?) {
+            guard let v, let allowed = Self.appearanceAllow[key], allowed.contains(v) else { return }
             DB.store.set(key, v)
         }
-        set("kf_theme", a.theme, ["", "light", "dark", "black"])
-        set("kf_accent", a.accent, ["", "indigo", "forest", "amber", "graphite", "rose", "aurora"])
-        set("kf_density", a.density, ["", "compact", "relaxed"])
-        set("kf_radius", a.radius, ["", "soft", "plump"])
-        set("kf_week_start", a.weekStart, ["", "mon", "sun", "sat"])
-        set("kf_row_h", a.rowH, ["", "tall"])
-        set("kf_tl_gap", a.tlGap, ["", "tight", "loose"])
-        set("kf_motion", a.motion, ["", "calm", "standard", "lively"])
-        set("kf_hero_tex", a.heroTex, ["", "grid", "grain"])
+        set("kf_theme", a.theme)
+        set("kf_accent", a.accent)
+        set("kf_density", a.density)
+        set("kf_radius", a.radius)
+        set("kf_week_start", a.weekStart)
+        set("kf_row_h", a.rowH)
+        set("kf_tl_gap", a.tlGap)
+        set("kf_motion", a.motion)
+        set("kf_hero_tex", a.heroTex)
         if let v = a.hc { DB.store.set("kf_hc", v) }
         if let v = a.plain { DB.store.set("kf_plain", v) }
         if let n = a.recentCount, [3, 5, 10].contains(n) { DB.store.set("kf_recent_count", n) }

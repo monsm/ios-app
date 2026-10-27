@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T10:39:32.740Z",
+    "generated": "2026-10-27T10:43:22.242Z",
     "sources": [
       {
         "scout": "android-native",
@@ -29444,7 +29444,7 @@
           "line": 397,
           "symbol": "restoreAll(_:)",
           "note": "",
-          "text": "@discardableResult"
+          "text": "DB.store.set(key, v)"
         },
         {
           "platform": "ios",
@@ -29460,7 +29460,7 @@
           "line": 413,
           "symbol": "mac/skey 守卫",
           "note": "",
-          "text": "for d in bundle.devices {"
+          "text": "DB.store.set(\"kf_hero_stats\", DS.HeroStats.all.filter { stats.contains($0) })"
         },
         {
           "platform": "ios",
@@ -29468,7 +29468,7 @@
           "line": 422,
           "symbol": "owner 重映射 / 置 nil",
           "note": "",
-          "text": "if let l = d.ledger {"
+          "text": "if let hit = DB.members().first(where: { $0.name == m.name }) {"
         },
         {
           "platform": "ios",
@@ -29476,7 +29476,7 @@
           "line": 451,
           "symbol": "otpKeys 白名单",
           "note": "",
-          "text": "// 2026-10-14: 这里**刻意**只写 s/d。强摘要 d2 不在 canonical 里 (canonical 是与小程序"
+          "text": "fixed.fps[i].owner = remap[o] ?? (DB.member(o) != nil ? o : nil)"
         }
       ],
       "platformEvidence": {
@@ -29696,7 +29696,7 @@
           "line": 444,
           "symbol": "passcode 只写 s/d",
           "note": "",
-          "text": "}"
+          "text": "// 否则留下指向不存在成员的悬空 owner (记录页显示不出人, 且永远无法再认领)。"
         },
         {
           "platform": "ios",
@@ -30691,7 +30691,7 @@
           "line": 373,
           "symbol": "applyAppearance",
           "note": "",
-          "text": "}"
+          "text": "let keep = order.map { DB.normalizeMac($0) }.filter { known.contains($0) }"
         }
       ],
       "platformEvidence": {
@@ -30774,7 +30774,7 @@
           "line": 320,
           "symbol": "collectDeviceOrg",
           "note": "",
-          "text": "/// D-36 收集设备组织 (顺序 / 分组 / 分组折叠 / 隐藏)。"
+          "text": "return allowed.contains(v) ? v : nil"
         },
         {
           "platform": "ios",
@@ -30782,7 +30782,7 @@
           "line": 343,
           "symbol": "applyGlobalsAppearanceAndOrg",
           "note": "",
-          "text": "/// ⇒ 外观与设备顺序/分组/折叠/隐藏整类进不来。抽成一处, 三条路同口径。"
+          "text": "let groups = DB.keychains()"
         },
         {
           "platform": "ios",
@@ -30790,7 +30790,7 @@
           "line": 349,
           "symbol": "known = 包内 ∩ 本机",
           "note": "",
-          "text": "// 不取交集会给不存在的锁写 kf_lockmeta_/kf_lock_hidden_ 孤儿键。两侧都归一化, 免得"
+          "text": "let hidden = DB.keychains().map { $0.mac }.filter { LockArchive.isHidden($0) }.sorted()"
         }
       ],
       "platformEvidence": {
