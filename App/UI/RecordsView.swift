@@ -1143,8 +1143,8 @@ struct RecordsView: View {
             // 761 溯源: 复制本机缓存行标识 (锁日志序号 idx, 或手机侧事件的 f_/c_ 前缀键) + 日期 + 锁 MAC,
             // 便于和诊断包里的日志逐条对上。不假装能查锁端数据库。
             Button {
-                Clip.set("row=" + r.key + " · day=" + r.dayKey)
-                    + " · mac=" + (r.rowMac.isEmpty ? mac : r.rowMac)
+                let idLine = "row=" + r.key + " · day=" + r.dayKey + " · mac=" + (r.rowMac.isEmpty ? mac : r.rowMac)
+                Clip.set(idLine)
                 app.showToast("已复制行标识")   // 761 已复制行标识
             } label: {
                 Label("复制行标识", systemImage: "number")   // 761 复制行标识

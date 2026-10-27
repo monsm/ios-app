@@ -14,6 +14,9 @@ import UIKit
 enum BackgroundGuard {
     /// 用 `withBackgroundGuard { ... }` 包住长操作。
     /// 结束时（含抛错）自动 endBackgroundTask —— 忘了 end 会被系统强杀。
+    /// 2026-10-27 修编译：UIApplication.shared 是 main actor 隔离的，所以本函数必须 @MainActor。
+    /// 调用点（配网/DFU）本来就在主 actor 上，加这个标注不改变任何调用方式。
+    @MainActor
     static func run<T>(_ name: String, _ body: () async throws -> T) async rethrows -> T {
         let app = UIApplication.shared
         var taskId: UIBackgroundTaskIdentifier = .invalid

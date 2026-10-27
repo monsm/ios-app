@@ -162,7 +162,8 @@ enum FirmwareKit {
         //      调用方见 `DFUKit.downgradeBlocked(current:pkg:)`。
         return FirmwarePackage(binHex: HexKit.hex(binE.data), datHex: HexKit.hex(datE.data),
                                binSize: binE.data.count, datSize: datE.data.count,
-                               version: versionFromManifest(app) ?? versionFromFileName(fileName))
+                               version: versionFromManifest(app) ?? versionFromFileName(fileName),
+                               sourceName: fileName)
     }
 
     /// 从 manifest 里读固件版本 —— **优先于文件名**。

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T08:52:10.348Z",
+    "generated": "2026-10-27T08:57:35.987Z",
     "sources": [
       {
         "scout": "android-native",
@@ -26675,7 +26675,7 @@
           "line": 1146,
           "symbol": "copyLastWeekDigest",
           "note": "toast 文案",
-          "text": "Clip.set(\"row=\" + r.key + \" · day=\" + r.dayKey)"
+          "text": "let idLine = \"row=\" + r.key + \" · day=\" + r.dayKey + \" · mac=\" + (r.rowMac.isEmpty ? mac : r.rowMac)"
         }
       ],
       "platformEvidence": {
@@ -31263,7 +31263,7 @@
           "line": 166,
           "symbol": "versionFromFileName",
           "note": "",
-          "text": "}"
+          "text": "sourceName: fileName)"
         },
         {
           "platform": "ios",
@@ -31271,7 +31271,7 @@
           "line": 175,
           "symbol": "versionLt",
           "note": "",
-          "text": "for key in [\"application_version\", \"version\", \"fw_version\", \"firmware_version\"] {"
+          "text": "static func versionFromManifest(_ app: [String: Any]) -> String? {"
         },
         {
           "platform": "ios",
@@ -31279,7 +31279,7 @@
           "line": 186,
           "symbol": "nextMac",
           "note": "",
-          "text": "// 版本对比与降级判据整体静默失效。尾随改 `(_|\\.|$)`。"
+          "text": "// 2026-10-14: 旧式强制尾随 `_`, 遇 \"KX_V5.2.9.zip\" / \"KX_V5.2.9\" 匹配失败 => version=nil =>"
         }
       ],
       "platformEvidence": {
@@ -69031,7 +69031,7 @@
           "line": 196,
           "symbol": "downgradeBlocked",
           "note": "",
-          "text": "for i in 0..<3 {"
+          "text": "let pb = b.split(separator: \".\").map { Int($0) ?? 0 }"
         },
         {
           "platform": "apk",
