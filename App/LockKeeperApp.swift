@@ -890,6 +890,18 @@ struct RootView: View {
         // 冷启动展示; 回前台 < 300s 不重演; 深链进入时一律不展示。
         .id(app.appearanceSeed)
         .animation(DS.Motion.soft, value: app.appUnlocked)
+        // 2026-10-27 审核修复 (AUDIT-B 2.6)：**接回两项系统无障碍支持**。
+        // `AXTools.boldText` 与 `AXTools.typeSize()` 的实现一直都在（读系统开关），
+        // 但它们唯一的消费点（根视图这两个修饰符）在早前精简里被删了 ——
+        // 于是「设置→辅助功能→显示与文字大小」里的加粗文本与字号对 App 完全无效。
+        //
+        //   · `dynamicTypeSize`：把 App 档 × 系统相对倍率映射到最近的 DynamicTypeSize 预设
+        //   · `legibilityWeight`：显式字重的文本（凭证名/开关标签）跟着系统加粗
+        //
+        // 为什么挂在 rootCore（而不是每个页面各挂一次）：这两项是**整树生效**的环境值，
+        // 挂一处就够；分散挂会漏页面，且改口径要改几十处。
+        .dynamicTypeSize(AXTools.typeSize())
+        .environment(\.legibilityWeight, AXTools.boldText ? .bold : .regular)
     }
 
     /// 后台隐私幕/深链/Tab 与解锁状态钩子/触感/配色 —— 同上

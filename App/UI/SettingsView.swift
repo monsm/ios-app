@@ -81,12 +81,29 @@ struct SettingsView: View {
         // 与 showDiag 那一段逐字同构 —— 无编译器的机器上, 复用已验证的写法是唯一稳的取向。
         .task { landPendingCare(app.pendingCare) }              // 1013: 与上两行同构
         .onChange(of: app.pendingCare) { _, m in landPendingCare(m) }
+        // 2026-10-27 审核修复 (AUDIT-B 2.4)：`pendingDiag` 原先 1 处写、0 处读 ——
+        // 长按菜单的「这台锁的诊断」点了没反应。与上面 pendingCare 同一条路由形态。
+        .task { landPendingDiag(app.pendingDiag) }
+        .onChange(of: app.pendingDiag) { _, m in landPendingDiag(m) }
         // 2026-10-15: 设置 Tab 栈内子页 (安全中心 → 本机密码 / 销毁) 的"去设置…"落点, 同一条形态
         .task { landPendingFocus(app.pendingSettingsFocus) }
         .onChange(of: app.pendingSettingsFocus) { _, f in landPendingFocus(f) }
     }
 
-    /// 587 落点: 切到本条记录所属锁, 再推诊断页 —— "查看这台锁的诊断"里的"这台锁"要真生效。
+    /// 587 落点: 切到本条记录所属锁。
+    ///
+    /// 2026-10-27 审核修复 (AUDIT-B 2.4)：这里原有一行注释「再推诊断页」，
+    /// 而**诊断页已随十三轮精简整族删除**，那个落点函数也一起没了 ——
+    /// 于是 `pendingDiag` 只剩写入、没有消费者，长按菜单那颗按钮点了没反应。
+    /// 现在如实落到**设备页该锁**（电量、状态、快捷操作都在那里），
+    /// 与 `landPendingCare` 同构；不再假装能跳到已不存在的页面。
+    private func landPendingDiag(_ m: String?) {
+        guard let m, !m.isEmpty else { return }
+        app.pendingDiag = nil
+        if m != app.currentMac { app.select(m) }
+        app.requestRoute(.device)
+    }
+
 
     /// 1013 落点: 切到通知里那台锁。
     /// 维护与保养页已随大删波4移除, 所以落到**设备页该锁** —— 电量、低电横幅、换电指引都在那里,
