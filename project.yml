@@ -64,6 +64,11 @@ targets:
         # App Store 会因「声明未使用能力」问询；真接线时再加回来并写明消费方。
         NSFaceIDUsageDescription: 用面容确认这一步是本人在操作：毁灭级操作前的复核、访客模式放开凭证与设置前的复核、靠近自动开锁的严格档。
         NSPhotoLibraryAddUsageDescription: 将成就分享卡保存到相册 (完全本地生成, 不上传)。
+        # 2026-10-27 审核核对 (AUDIT-E 8.4)：剩下的 4 条权限**都有真实消费方** ——
+        #   · Bluetooth ×2 → BLEService 全程（扫描/连接/开锁/DFU）
+        #   · FaceID      → AuthKit / AutoOpen 严格档 / CredentialCenterView 四处 evaluatePolicy
+        #   · PhotoLibraryAdd → 成就分享卡存相册（ExportShares）
+        # 原先还有定位与相机两条，已在本批删除（全仓 0 处 CLLocationManager / AVCaptureDevice）。
         ITSAppUsesNonExemptEncryption: false
         # 备选 App 图标 (包16/idea 896): 键名 = setAlternateIconName 入参, 与 Assets.xcassets 的 appiconset 同名
         # 896 由 4 款扩到 9 款 (2026-10-12 拍板"造位图"): 新增五款的位图由 _audit1012/mkicon.js 按

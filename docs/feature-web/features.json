@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T10:18:01.700Z",
+    "generated": "2026-10-27T10:22:52.099Z",
     "sources": [
       {
         "scout": "android-native",
@@ -7714,7 +7714,7 @@
           "line": 497,
           "symbol": "AutoCalView",
           "note": "",
-          "text": ""
+          "text": "// 失败也要复位武装: 否则 armed 一直 true，RSSI 稍动就再触发一轮判定"
         },
         {
           "platform": "ios",
@@ -8766,7 +8766,7 @@
           "line": 423,
           "symbol": "private func dispatch",
           "note": "",
-          "text": "return AutoOpenGate("
+          "text": "private func makeContext(mac: String, app: AppState) -> AutoOpenGate {"
         },
         {
           "platform": "ios",
@@ -8774,7 +8774,7 @@
           "line": 428,
           "symbol": "app.lock.unlock(mac:)",
           "note": "",
-          "text": "// 2026-10-27 审核修复：原判据是 `promptStartedAt != nil && lastFace() == faceAtPrompt`，"
+          "text": "return AutoOpenGate("
         },
         {
           "platform": "ios",
@@ -8782,7 +8782,7 @@
           "line": 441,
           "symbol": "verifyMode==1 双验提示",
           "note": "",
-          "text": "rssiArmed: armed,"
+          "text": "// \"全天布防\" —— 那等于从没进过布防页的人被永久否决。按用户口径改 ?? 0 (没配 = 没布防)。"
         },
         {
           "platform": "ios",
@@ -8790,7 +8790,7 @@
           "line": 453,
           "symbol": "rc=25 / rc=26 分支",
           "note": "",
-          "text": "// 2026-10-27 审核修复：闩锁与冷却必须在**下发之前**落，否则异常/超时路径"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -9055,7 +9055,7 @@
           "line": 312,
           "symbol": "严格档发起弹窗",
           "note": "",
-          "text": ""
+          "text": "/// `.inactive`（来电横幅、下拉控制中心、任务切换器预览）也会触发 `.active`，"
         },
         {
           "platform": "ios",
@@ -9063,7 +9063,7 @@
           "line": 318,
           "symbol": "onBackground",
           "note": "",
-          "text": "func onForeground(mac: String) {"
+          "text": "init(face: FaceService = SystemFaceService()) {"
         }
       ],
       "platformEvidence": {
@@ -9217,7 +9217,7 @@
           "line": 333,
           "symbol": "mac != armedMac 时复位",
           "note": "",
-          "text": "}"
+          "text": "// \"本次进前台必刷脸\"的窗口无限延长，面容门形同虚设。"
         },
         {
           "platform": "ios",
@@ -9225,7 +9225,7 @@
           "line": 363,
           "symbol": "guard app.currentMac == mac",
           "note": "",
-          "text": "// 原本这里按 `FindArrowPower.intensive` 分档 —— 那个开关属于「精确查找箭头界面」，"
+          "text": "// 于是退半步再进一步就能再开一次。改用独立的「走远」判据：信号掉到解除线**以下再 3dB**"
         }
       ],
       "platformEvidence": {
@@ -9514,7 +9514,7 @@
           "line": 457,
           "symbol": "setSuspendUntil(+24h)",
           "note": "",
-          "text": "lastDispatch[mac] = Date().timeIntervalSince1970"
+          "text": "try await app.lock.ensureConnected(mac: mac)"
         },
         {
           "platform": "ios",
@@ -11221,7 +11221,7 @@
           "line": 378,
           "symbol": "if eventFired.contains(mac) { return }",
           "note": "",
-          "text": "guard AutoOpen.on, armed else { return }"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -11229,7 +11229,7 @@
           "line": 431,
           "symbol": "eventFired.insert(mac)",
           "note": "",
-          "text": "// 现改为纯时间窗判定：发起过弹窗、距发起 < 30s、且这次还没成功。"
+          "text": "lastFace: AutoOpenKit.lastFace(),"
         }
       ],
       "platformEvidence": {
@@ -11321,7 +11321,7 @@
           "line": 412,
           "symbol": "defendControl: d?.control ?? 0",
           "note": "",
-          "text": "default:"
+          "text": ")"
         }
       ],
       "platformEvidence": {
@@ -11404,7 +11404,7 @@
           "line": 324,
           "symbol": "onBackground 清在途位",
           "note": "",
-          "text": "eventFired.removeAll()          // 新的一次\"进前台 + 接近\"事件, 放开一次性闩锁"
+          "text": "guard AutoOpen.on, !mac.isEmpty else { return }"
         }
       ],
       "platformEvidence": {
@@ -11488,7 +11488,7 @@
           "line": 406,
           "symbol": "facePendingPrompt 计算",
           "note": "",
-          "text": "faceAvailable: face.biometricAvailable"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -11555,7 +11555,7 @@
           "line": 402,
           "symbol": "f0Foreground",
           "note": "",
-          "text": "let ctx = makeContext(mac: mac, app: app)"
+          "text": "AutoOpen.audit(mac, \"拒开: 伪装会话期间禁止自动下发 04\")"
         },
         {
           "platform": "ios",
@@ -11624,7 +11624,7 @@
           "line": 419,
           "symbol": "lockReady: snap != nil && snap?.rc != 25 && snap?.rc != 26",
           "note": "",
-          "text": "let d = DB.defend(mac)"
+          "text": "AutoOpen.audit(mac, \"拒开 \" + AutoOpenGate.rejectText(rej) + \" · \" + door)"
         },
         {
           "platform": "ios",
@@ -11856,7 +11856,7 @@
           "line": 469,
           "symbol": "selfHealTime",
           "note": "",
-          "text": "if app.status?.verifyMode == 1 {"
+          "text": "// 先刷新锁态快照再报成功: 双验模式 (verifyMode==1) 下 rc=0 只是第一道过了,"
         },
         {
           "platform": "ios",
@@ -11864,7 +11864,7 @@
           "line": 476,
           "symbol": "ntpConfirmed: false",
           "note": "",
-          "text": "await selfHealTime(mac: mac)"
+          "text": "} else {"
         }
       ],
       "platformEvidence": {
@@ -11939,7 +11939,7 @@
           "line": 415,
           "symbol": "rssiArmed: armed",
           "note": "",
-          "text": "}"
+          "text": "inFlight = true"
         }
       ],
       "platformEvidence": {
