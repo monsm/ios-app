@@ -10,26 +10,6 @@ struct BackupView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var exportText = ""
     @State private var importText = ""
-    /// 云盘账号与应用密码**只有本机存储这一份真相**：这里刻意不拍 `@State` 快照。
-    /// 原先是 `@State … = DB.store.getString(...)` + `.onDisappear { persistCloudConfig() }`，
-    /// 而本页与工坊 (`WebDAVStudioView`，经 NavigationLink/sheet 打开) 写的是同一对键 ——
-    /// 在工坊里改完账号回到本页再关掉，`onDisappear` 就把**进页时那份旧快照**写回去，
-    /// 刚改的凭据被静默覆盖 (第一百六十六批 §10.38)。读写穿透后没有"旧快照"这个东西。
-    private var cloudAcct: String { DB.store.getString("kf_cloudcfg_acct") }
-    private var cloudApp: String { DB.store.getString("kf_cloudcfg_app") }
-    /// 加密口令**不入库**，所以它仍是 `@State`（每次输入、用完即弃）。
-    /// 2026-10-26: 与另一页共用 BackupPassphrase（同一份 zklock-backup.enc 的加密口令）。
-    /// 原来是各自一个 @State，用户在工作室传上去、到这一页恢复还要再输一遍，且没人说明是同一个口令。
-    private var cloudPw: Binding<String> {
-        Binding(get: { BackupPassphrase.current }, set: { BackupPassphrase.current = $0 })
-    }
-    /// 输入框直写本机存储：与工坊那页共用一份真相，谁改完另一页立刻读到新值。
-    private var cloudAcctField: Binding<String> {
-        Binding(get: { cloudAcct }, set: { DB.store.set("kf_cloudcfg_acct", $0) })
-    }
-    private var cloudAppField: Binding<String> {
-        Binding(get: { cloudApp }, set: { DB.store.set("kf_cloudcfg_app", $0) })
-    }
     @State private var busy = false
     /// 导出文件选择器（存到 iCloud 云盘 / 我的 iPhone）
     /// 与导入对称: 导入能选文件, 导出也该能存文件 —— 原来只有「复制/分享文本」这一条路,
@@ -41,9 +21,6 @@ struct BackupView: View {
     /// (两层模态套着)。所以先存这里, 等选择器真正收起后再问。
     @State private var pendingFileText: String?
 
-    @State private var showWebDAV = false      // WebDAV 策略页，同上
-
-private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !BackupPassphrase.current.isEmpty }
 
     /// 内容是否已经嵌在外部导航容器里。2026-10-15 走查 §7.4-16: 这一页**自带 NavigationStack**,
     /// 有两个呈现点 —— 设置页的 sheet (要自己那层栏) 和设备页快捷格的 `quickDestination` push
@@ -55,7 +32,6 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !Backu
         List {
             exportSection
             importSection
-            cloudSection
         }
         .navigationTitle("备份与恢复")
         .variantList()
@@ -195,58 +171,8 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !Backu
         }
     }
 
-    // ---------- 坚果云同步 ----------
-    private var cloudSection: some View {
-        Section("坚果云同步") {
-            // 816 引导空态: 没配账号时先说"配了多什么"，再给**直达填写的入口**。
-            // 三行只写这里真做得到的小事: 手动上传/手动恢复/先本机加密 —— 不写"自动同步"这种没实现的能力。
-            // 原句要的"填服务器地址"确实在另一页 (WebDAVStudioView 改根路径)，所以这里给链接而不是假装一个输入框。
-            if cloudAcct.isEmpty {
-                VStack(alignment: .leading, spacing: DS.Space.xs) {
-                    Label("换手机或锁被重置时，云端那份是唯一的退路", systemImage: "arrow.left.arrow.right.circle")
-                    Label("文件先在本机加密，服务器只拿到密文", systemImage: "lock.rectangle.stack")
-                    Label("不配也能用：本页的文本导出与本地导入是完整可用的", systemImage: "square.and.arrow.down")
-                    // 2026-10-15 走查: WebDAVStudioView 自带 NavigationStack, 而本页是 sheet ——
-                    // push 进去就是内层栈套外层 (两层导航栏)。本页已有 `showWebDAV` 走 sheet 的先例,
-                    // 这一条照同款改。
-                    Button { showWebDAV = true } label: {
-                        Text("服务器根路径默认内置坚果云，点这里可改")   // 816 服务器根路径默认内置
-                            .vkFont(.caption2, weight: .medium)
-                            .foregroundStyle(DS.Palette.accentText)
-                    }
-                    .frame(minHeight: DS.Hit.min)
-                }
-                .vkFont(.caption)
-                .foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityElement(children: .contain)
-            }
-            TextField("坚果云账号", text: cloudAcctField)
-                .keyboardType(.emailAddress)
-                .textContentType(.username)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .disabled(busy)
-            SecureField("应用专属密码 (非登录密码)", text: cloudAppField)
-                .disabled(busy)
-            SecureField("加密口令 (不落盘)", text: cloudPw)
-                .disabled(busy)
-            BusyButton(title: "上传备份到坚果云", systemImage: "icloud.and.arrow.up", isBusy: busy && cloudMode == .push) {
-                Task { await push() }
-            }
-            .disabled(!cloudReady)
-            BusyButton(title: "从坚果云恢复", systemImage: "icloud.and.arrow.down", isBusy: busy && cloudMode == .pull) {
-                Task { await pull() }
-            }
-            .disabled(!cloudReady)
-            Text("账号与应用密码保存在本机 (可在坚果云网页撤销); 加密口令每次输入, 不落盘。")
-                .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
+    // 2026-10-27 六轮精简：坚果云同步整节已删（WebDAV 一族移除）。
 
-    private enum CloudMode { case push, pull }
-    @State private var cloudMode: CloudMode = .push
 
     // ---------- 本地导入 ----------
     private func confirmImport() {

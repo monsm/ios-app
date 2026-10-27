@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T02:21:41.361Z",
+    "generated": "2026-10-27T02:26:22.486Z",
     "sources": [
       {
         "scout": "android-native",
@@ -37559,7 +37559,7 @@ const DATA = {
           "line": 52,
           "symbol": "listContent",
           "note": "",
-          "text": "var embedded: Bool = false"
+          "text": "defaultFilename: backupFilename) { result in"
         }
       ],
       "platformEvidence": {
@@ -37671,7 +37671,7 @@ const DATA = {
           "line": 214,
           "symbol": "cloudSection",
           "note": "",
-          "text": ".vkFont(.caption2, weight: .medium)"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -37695,7 +37695,7 @@ const DATA = {
           "line": 18,
           "symbol": "cloudAcct 读穿透",
           "note": "",
-          "text": "private var cloudAcct: String { DB.store.getString(\"kf_cloudcfg_acct\") }"
+          "text": "/// 导入文件选择器（从 iCloud 云盘 / 我的 iPhone 选一份备份）"
         }
       ],
       "platformEvidence": {
@@ -37820,7 +37820,7 @@ const DATA = {
           "line": 178,
           "symbol": "importSection",
           "note": "",
-          "text": "app.showToast(\"剪贴板是空的\")"
+          "text": "private func confirmImport() {"
         },
         {
           "platform": "ios",
@@ -38257,7 +38257,7 @@ const DATA = {
           "line": 114,
           "symbol": "exportSection",
           "note": "",
-          "text": "// 822 从未备份的信封: 没有备份时这页最该说的不是\"怎么导出\"，而是\"现在一个都没有\"。"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -38281,7 +38281,7 @@ const DATA = {
           "line": 119,
           "symbol": "BusyButton 生成备份文本",
           "note": "",
-          "text": ".font(.system(size: DS.Icon.md))"
+          "text": "Text(exportText)"
         }
       ],
       "platformEvidence": {
@@ -38905,7 +38905,7 @@ const DATA = {
           "line": 304,
           "symbol": "换机恢复后立起验证向导",
           "note": "",
-          "text": "return \"锁管家备份-\\(f.string(from: Date()))\""
+          "text": ""
         },
         {
           "platform": "ios",
@@ -38913,7 +38913,7 @@ const DATA = {
           "line": 305,
           "symbol": "armMigrateWizard",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -38921,7 +38921,7 @@ const DATA = {
           "line": 307,
           "symbol": "kf_migok_ 清理",
           "note": "",
-          "text": "/// 文件选择器的结果处理。"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -38929,7 +38929,7 @@ const DATA = {
           "line": 308,
           "symbol": "kf_migrate_pending",
           "note": "",
-          "text": "///"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -40273,7 +40273,7 @@ const DATA = {
           "line": 46,
           "symbol": "embedded 注释",
           "note": "",
-          "text": "private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !BackupPassphrase.current.isEmpty }"
+          "text": "// 2026-10-26 精简：待确认恢复包（pendingRestore）已删。"
         },
         {
           "platform": "ios",
@@ -40281,7 +40281,7 @@ const DATA = {
           "line": 50,
           "symbol": "var embedded: Bool = false",
           "note": "",
-          "text": "/// (那层栏已经在外面了)。push 那侧不传 true 就叠出两层导航栏。形状照 `AddPwdView` 的 embedded 抄,"
+          "text": "document: BackupDoc(text: exportText),"
         },
         {
           "platform": "ios",
@@ -40289,7 +40289,7 @@ const DATA = {
           "line": 64,
           "symbol": "vkBody",
           "note": "",
-          "text": "}"
+          "text": "// 不按扩展名筛: 备份可能是 .json / .txt / .enc (工作室导出的加密包)。"
         },
         {
           "platform": "ios",
@@ -40297,7 +40297,7 @@ const DATA = {
           "line": 67,
           "symbol": "embedded ? AnyView(listContent) : AnyView(NavigationStack)",
           "note": "",
-          "text": "var vkBody: some View {"
+          "text": "allowsMultipleSelection: false) { result in"
         }
       ],
       "platformEvidence": {
@@ -40637,7 +40637,7 @@ const DATA = {
           "line": 77,
           "symbol": "fileExporter",
           "note": "",
-          "text": "if case .success = result {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -40645,7 +40645,7 @@ const DATA = {
           "line": 78,
           "symbol": "BackupDoc(text: exportText)",
           "note": "",
-          "text": "Milestones.recordBackup()   // 落盘即算一次备份 (与生成备份文本同口径)"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -40653,7 +40653,7 @@ const DATA = {
           "line": 80,
           "symbol": "defaultFilename: backupFilename",
           "note": "",
-          "text": "} else if case .failure(let e) = result {"
+          "text": "// ---------- 全量备份 ----------"
         },
         {
           "platform": "ios",
@@ -40661,7 +40661,7 @@ const DATA = {
           "line": 82,
           "symbol": "Milestones.recordBackup()",
           "note": "",
-          "text": "if (e as NSError).code != NSUserCancelledError {"
+          "text": "Section(\"全量备份\") {"
         },
         {
           "platform": "ios",
@@ -40669,7 +40669,7 @@ const DATA = {
           "line": 86,
           "symbol": "NSUserCancelledError 判断",
           "note": "",
-          "text": "}"
+          "text": "BusyButton(title: \"生成备份文本\", systemImage: \"doc.text\", isBusy: false) {"
         }
       ],
       "platformEvidence": {
@@ -40763,7 +40763,7 @@ const DATA = {
           "line": 154,
           "symbol": "if !exportText.isEmpty",
           "note": "",
-          "text": "}"
+          "text": "app.showToast(\"剪贴板是空的\")"
         },
         {
           "platform": "ios",
@@ -40771,7 +40771,7 @@ const DATA = {
           "line": 156,
           "symbol": "共 N 字符",
           "note": "",
-          "text": "}"
+          "text": "} label: {"
         },
         {
           "platform": "ios",
@@ -40779,7 +40779,7 @@ const DATA = {
           "line": 158,
           "symbol": "Text(exportText)",
           "note": "",
-          "text": "}"
+          "text": ".frame(minHeight: DS.Hit.min)"
         },
         {
           "platform": "ios",
@@ -40787,7 +40787,7 @@ const DATA = {
           "line": 162,
           "symbol": "ShareLink 备份文本",
           "note": "",
-          "text": "// ---------- 导入恢复 ----------"
+          "text": "Button {"
         },
         {
           "platform": "ios",
@@ -40795,7 +40795,7 @@ const DATA = {
           "line": 164,
           "symbol": "存到 iCloud 云盘 / 本机",
           "note": "",
-          "text": "Section(\"导入恢复\") {"
+          "text": "} label: {"
         }
       ],
       "platformEvidence": {
@@ -40966,7 +40966,7 @@ const DATA = {
           "line": 189,
           "symbol": "Button 从剪贴板粘贴",
           "note": "",
-          "text": "Label(\"从文件选择\", systemImage: \"folder\")"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -40974,7 +40974,7 @@ const DATA = {
           "line": 190,
           "symbol": "UIPasteboard.general.string",
           "note": "",
-          "text": ".frame(minHeight: DS.Hit.min)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -40982,7 +40982,7 @@ const DATA = {
           "line": 193,
           "symbol": "剪贴板是空的",
           "note": "",
-          "text": "Button(\"导入\", role: .destructive) { confirmImport() } // 覆盖同名设备, 属破坏性动作"
+          "text": "// 把云端那套**口令层 + 453 内容哈希层**整个绕过:"
         },
         {
           "platform": "ios",
@@ -40990,7 +40990,7 @@ const DATA = {
           "line": 199,
           "symbol": ".disabled(busy || importText.isEmpty)",
           "note": "",
-          "text": "private var cloudSection: some View {"
+          "text": "do {"
         }
       ],
       "platformEvidence": {
@@ -41065,7 +41065,7 @@ const DATA = {
           "line": 267,
           "symbol": "confirmImport",
           "note": "",
-          "text": "// 把云端那套**口令层 + 453 内容哈希层**整个绕过:"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -41073,7 +41073,7 @@ const DATA = {
           "line": 268,
           "symbol": "请先粘贴备份文本",
           "note": "",
-          "text": "//   · 哈希不一致 (内容被改过) 的包在云端路径会被拦下 —— \"内容哈希不一致 — 已拦下, 未写任何数据\";"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -41081,7 +41081,7 @@ const DATA = {
           "line": 274,
           "symbol": "confirmDestructive 导入备份",
           "note": "",
-          "text": "// 2026-10-13 修 CI: `BackupStudioKit` 是**文件名**, 类型名是 `BackupStudio` (enum)。"
+          "text": "/// fileExporter 要的文档类型 —— 备份是一段 UTF-8 文本, 用 `.json` 内容类型。"
         },
         {
           "platform": "ios",
@@ -41089,7 +41089,7 @@ const DATA = {
           "line": 275,
           "symbol": "口令会被替换成它",
           "note": "",
-          "text": "let (_, bundle) = try BackupStudio.parsePreview(text: importText, password: nil)"
+          "text": "///"
         },
         {
           "platform": "ios",
@@ -41097,7 +41097,7 @@ const DATA = {
           "line": 276,
           "symbol": "confirmTitle: 导入",
           "note": "",
-          "text": "let r = BackupKit.restoreAll(bundle)"
+          "text": "/// 用 FileDocument 而不是 Transferable: `.fileExporter(document:contentType:)` 这一形"
         }
       ],
       "platformEvidence": {
@@ -41184,7 +41184,7 @@ const DATA = {
           "line": 298,
           "symbol": "catch",
           "note": "",
-          "text": "/// 导出文件名 —— 带日期, 多次备份不互相覆盖。"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -41192,7 +41192,7 @@ const DATA = {
           "line": 300,
           "symbol": "导入被拦下",
           "note": "",
-          "text": "let f = DateFormatter()"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -41200,7 +41200,7 @@ const DATA = {
           "line": 299,
           "symbol": "三类失败说明",
           "note": "",
-          "text": "private var backupFilename: String {"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -41270,7 +41270,7 @@ const DATA = {
           "line": 201,
           "symbol": "Button 从文件选择",
           "note": "",
-          "text": "// 816 引导空态: 没配账号时先说\"配了多什么\"，再给**直达填写的入口**。"
+          "text": "let (_, bundle) = try BackupStudio.parsePreview(text: importText, password: nil)"
         },
         {
           "platform": "ios",
@@ -41278,7 +41278,7 @@ const DATA = {
           "line": 91,
           "symbol": "fileImporter",
           "note": "",
-          "text": "allowsMultipleSelection: false) { result in"
+          "text": "// 文案不写\"建议每周一次\"这种本 App 没有依据的规范；给的是**已发生的事实**与下一步动作。"
         },
         {
           "platform": "ios",
@@ -41286,7 +41286,7 @@ const DATA = {
           "line": 94,
           "symbol": "allowedContentTypes: [.item]",
           "note": "",
-          "text": "// 选择器收起之后再弹确认框 (见 handleFileImport 里的说明)。"
+          "text": "Image(systemName: \"envelope\")"
         },
         {
           "platform": "ios",
@@ -41294,7 +41294,7 @@ const DATA = {
           "line": 333,
           "symbol": "startAccessingSecurityScopedResource",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -41302,7 +41302,7 @@ const DATA = {
           "line": 335,
           "symbol": "读不出文本内容",
           "note": "",
-          "text": "}"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -41395,7 +41395,7 @@ const DATA = {
           "line": 280,
           "symbol": "doImport",
           "note": "",
-          "text": "UINotificationFeedbackGenerator().notificationOccurred(.success)"
+          "text": "var text: String"
         },
         {
           "platform": "ios",
@@ -41403,7 +41403,7 @@ const DATA = {
           "line": 288,
           "symbol": "do 块",
           "note": "",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -41411,7 +41411,7 @@ const DATA = {
           "line": 290,
           "symbol": "BackupStudio.parsePreview(text:password:)",
           "note": "",
-          "text": "private func armMigrateWizard(_ r: (imported: Int, overwritten: Int)) {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -41419,7 +41419,7 @@ const DATA = {
           "line": 299,
           "symbol": "口令错误 / 内容被改过 / 不是备份",
           "note": "",
-          "text": "private var backupFilename: String {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -41508,7 +41508,7 @@ const DATA = {
           "line": 291,
           "symbol": "BackupKit.restoreAll(bundle)",
           "note": "",
-          "text": "guard r.imported + r.overwritten > 0 else { return }"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -41516,7 +41516,7 @@ const DATA = {
           "line": 292,
           "symbol": "app.loadDevices()",
           "note": "",
-          "text": "for kc in DB.keychains() { DB.store.remove(\"kf_migok_\" + kc.mac) }"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -41524,7 +41524,7 @@ const DATA = {
           "line": 293,
           "symbol": "if bundle.globals?.appearance != nil",
           "note": "",
-          "text": "DB.store.set(\"kf_migrate_pending\", ISO8601DateFormatter().string(from: Date()))"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -41532,7 +41532,7 @@ const DATA = {
           "line": 294,
           "symbol": "armMigrateWizard(r)",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -41540,7 +41540,7 @@ const DATA = {
           "line": 296,
           "symbol": "导入完成: 新增 x, 覆盖 y",
           "note": "",
-          "text": "// ---------- 文件导入 (iCloud 云盘 / 我的 iPhone) ----------"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -42028,7 +42028,7 @@ const DATA = {
           "line": 361,
           "symbol": "let payload = BackupKit.collectAll()",
           "note": "",
-          "text": "FileWrapper(regularFileWithContents: Data(text.utf8))"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -42036,7 +42036,7 @@ const DATA = {
           "line": 362,
           "symbol": "JSONEncoder().encode",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -42141,7 +42141,7 @@ const DATA = {
           "line": 253,
           "symbol": "BusyButton 从坚果云恢复",
           "note": "",
-          "text": "guard !importText.isEmpty else { app.showToast(\"请先粘贴备份文本\"); return }"
+          "text": "// 先存起来, 由 onChange(showFilePicker) 在选择器收起后再问。"
         },
         {
           "platform": "ios",
@@ -42260,7 +42260,7 @@ const DATA = {
           "line": 249,
           "symbol": "BusyButton 上传备份到坚果云",
           "note": "",
-          "text": "@State private var cloudMode: CloudMode = .push"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -42268,7 +42268,7 @@ const DATA = {
           "line": 354,
           "symbol": "private func push()",
           "note": "",
-          "text": "var text: String"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -42276,7 +42276,7 @@ const DATA = {
           "line": 357,
           "symbol": "busy = true; cloudMode = .push",
           "note": "",
-          "text": "let data = configuration.file.regularFileContents ?? Data()"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -42373,7 +42373,7 @@ const DATA = {
           "line": 44,
           "symbol": "cloudReady",
           "note": "",
-          "text": "@State private var showWebDAV = false      // WebDAV 策略页，同上"
+          "text": "// AnyView 擦平两分支类型差异 (与 AddPwdView 同一写法): 两支只差最外层那一只容器"
         },
         {
           "platform": "ios",
@@ -42381,7 +42381,7 @@ const DATA = {
           "line": 249,
           "symbol": "上传 BusyButton",
           "note": "",
-          "text": "@State private var cloudMode: CloudMode = .push"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -42389,7 +42389,7 @@ const DATA = {
           "line": 252,
           "symbol": ".disabled(!cloudReady)",
           "note": "",
-          "text": "private func confirmImport() {"
+          "text": "// 系统会把它丢掉, 用户看到的就是「选了文件, 界面没有任何反应」。"
         },
         {
           "platform": "ios",
@@ -42397,7 +42397,7 @@ const DATA = {
           "line": 253,
           "symbol": "从坚果云恢复",
           "note": "",
-          "text": "guard !importText.isEmpty else { app.showToast(\"请先粘贴备份文本\"); return }"
+          "text": "// 先存起来, 由 onChange(showFilePicker) 在选择器收起后再问。"
         },
         {
           "platform": "ios",
@@ -42405,7 +42405,7 @@ const DATA = {
           "line": 356,
           "symbol": "guard cloudReady 提示",
           "note": "",
-          "text": "init(configuration: ReadConfiguration) throws {"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -42611,7 +42611,7 @@ const DATA = {
           "line": 74,
           "symbol": ".sheet(isPresented: $showWebDAV)",
           "note": "",
-          "text": "document: BackupDoc(text: exportText),"
+          "text": "importText = text"
         },
         {
           "platform": "ios",
@@ -42619,7 +42619,7 @@ const DATA = {
           "line": 42,
           "symbol": "@State showWebDAV",
           "note": "",
-          "text": "@State private var pendingFileText: String?"
+          "text": "var body: some View { vkBody.destined(.backup) }"
         },
         {
           "platform": "ios",
@@ -42627,7 +42627,7 @@ const DATA = {
           "line": 224,
           "symbol": "走查注释：push 会两层栏",
           "note": "",
-          "text": "TextField(\"坚果云账号\", text: cloudAcctField)"
+          "text": "/// 导出文件名 —— 带日期, 多次备份不互相覆盖。"
         },
         {
           "platform": "ios",
@@ -42635,7 +42635,7 @@ const DATA = {
           "line": 227,
           "symbol": "Button showWebDAV = true",
           "note": "",
-          "text": ".textInputAutocapitalization(.never)"
+          "text": "f.locale = Locale(identifier: \"en_US_POSIX\")"
         }
       ],
       "platformEvidence": {
@@ -53631,7 +53631,7 @@ const DATA = {
           "line": 293,
           "symbol": "导入后按需 reloadAppearance",
           "note": "",
-          "text": "DB.store.set(\"kf_migrate_pending\", ISO8601DateFormatter().string(from: Date()))"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -82170,7 +82170,7 @@ const DATA = {
           "line": 18,
           "symbol": "kf_cloudcfg_acct",
           "note": "",
-          "text": "private var cloudAcct: String { DB.store.getString(\"kf_cloudcfg_acct\") }"
+          "text": "/// 导入文件选择器（从 iCloud 云盘 / 我的 iPhone 选一份备份）"
         },
         {
           "platform": "ios",
@@ -82194,7 +82194,7 @@ const DATA = {
           "line": 19,
           "symbol": "kf_cloudcfg_app",
           "note": "",
-          "text": "private var cloudApp: String { DB.store.getString(\"kf_cloudcfg_app\") }"
+          "text": "@State private var showFilePicker = false"
         },
         {
           "platform": "ios",
@@ -82202,7 +82202,7 @@ const DATA = {
           "line": 23,
           "symbol": "cloudAcctField 直写",
           "note": "",
-          "text": "private var cloudPw: Binding\u003cString> {"
+          "text": ""
         }
       ],
       "platformEvidence": {

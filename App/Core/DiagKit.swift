@@ -935,13 +935,9 @@ enum DiagHealth {
 struct SelfCheckLine { let name: String; let ok: Bool; let detail: String }
 @MainActor
 enum SelfCheck {
-    static func run() -> [SelfCheckLine] {
-        var out: [SelfCheckLine] = []
-        let bad = lines.filter { !$0.ok }
-        // 397 本机自检三项全部通过
-        // 397 本机自检
-        return bad.isEmpty ? "本机自检三项全部通过" : "本机自检 \(bad.count) 项异常 — 详情见下"
-    }
+    /// 2026-10-27 六轮精简：本机自检三项已删（哈希比对 / 审计链 / JSON 回环
+    /// 三个依赖随 WebDAV 一族与 AuditLog 一起移除），只留空实现保证调用点不炸。
+    static func run() -> [SelfCheckLine] { [] }
 }
 
 /// 1170 同步读取通知授权状态的载体。
