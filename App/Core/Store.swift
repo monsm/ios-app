@@ -403,6 +403,14 @@ enum DB {
         else if !SecretStore.set(kc.bkey, for: secretAccount(kc.mac, "bkey")) { failed.append("bkey") }
         if kc.ekey.isEmpty { SecretStore.remove(secretAccount(kc.mac, "ekey")) }
         else if !SecretStore.set(kc.ekey, for: secretAccount(kc.mac, "ekey")) { failed.append("ekey") }
+        // 2026-10-27 审核修复 (AUDIT-D D-06)：pins 也进 Keychain。
+        // 原先 pins（最多 64 个）明文落 plist，而 skey/bkey/ekey 走 Keychain ——
+        // 等于钥匙劈两半：`buildEkeyOpen(skey, mac, pin)` 要两件才签得出开锁凭据，
+        // 一半锁保险箱、一半贴冰箱。现在与其它密钥同一套。
+        // 空 pins 时清掉（与 bkey/ekey 同款语义），否则留着一份过期的 pin 池更危险。
+        let pinsJoined = kc.pins.joined(separator: ",")
+        if pinsJoined.isEmpty { SecretStore.remove(secretAccount(kc.mac, "pins")) }
+        else if !SecretStore.set(pinsJoined, for: secretAccount(kc.mac, "pins")) { failed.append("pins") }
         if !failed.isEmpty {
             BleTelemetry.recordEvent("Keychain 写入失败: " + failed.joined(separator: "/")
                                      + " @ " + String(kc.mac.prefix(6)), ok: false)
@@ -456,6 +464,8 @@ enum DB {
         SecretStore.remove(secretAccount(m, "skey"))
         SecretStore.remove(secretAccount(m, "bkey"))
         SecretStore.remove(secretAccount(m, "ekey"))
+        // 2026-10-27 (D-06)：pins 已进 Keychain，删除时一并清（否则删设备后 pin 池残留）。
+        SecretStore.remove(secretAccount(m, "pins"))
         var map = store.getDict("kf_keychains")
         map.removeValue(forKey: m)
         store.set("kf_keychains", map)
@@ -910,10 +920,14 @@ enum DB {
         }
         // 只有旧摘要的历史库: 按旧口径验, 验过即静默升级 (无感迁移, 不会把老用户锁在外面)
         guard rec["d"] == fnv1a32(salt + pw) else { return false }
+        // 2026-10-27 (D-10)：升级成强摘要后清掉「弱保护」标记。
+        store.remove("kf_passcode_weak")
         set(passcodeRecord(pw, salt: salt), "kf_passcode")
         return true
     }
     static func setPasscode(_ pw: String?) {
+        // 2026-10-27 (D-10)：新设/改设密码一律是强摘要，清掉弱标记。
+        store.remove("kf_passcode_weak")
         if let pw { set(passcodeDigest(pw), "kf_passcode") } else { store.remove("kf_passcode") }
     }
 
@@ -952,7 +966,9 @@ extension Keychain {
         self.pid = d["pid"] as? Int ?? 0
         self.pidName = d["pidName"] as? String ?? ""
         self.name = d["name"] as? String ?? ""
-        self.pins = d["pins"] as? [String] ?? []
+        // pins 与 skey/bkey/ekey 同路径：优先 Keychain，旧 plist 明文作兜底并迁移。
+        let pinStr = secret("pins", (d["pins"] as? [String])?.joined(separator: ","))
+        self.pins = pinStr.isEmpty ? [] : pinStr.components(separatedBy: ",")
         self.trackid = d["trackid"] as? String ?? ""
         self.bleId = d["bleId"] as? String ?? ""
         self.fw = d["fw"] as? String ?? ""
@@ -962,7 +978,11 @@ extension Keychain {
         // 2026-10-14: skey/bkey/ekey 不落 plist (见 SecretStore); 这里只写非密字段。
         var d: [String: Any] = ["version": version, "mac": mac, "pid": pid, "pidName": pidName]
         if !name.isEmpty { d["name"] = name }
-        if !pins.isEmpty { d["pins"] = pins }
+        // 2026-10-27 审核修复 (AUDIT-D D-06)：**pins 不再写 plist**。
+        // 原先 skey/bkey/ekey 走 Keychain 而 pins 明文落 plist —— 等于钥匙劈两半：
+        // `buildEkeyOpen(skey, mac, pin)` 需要 **skey + pin 两件**才能签出开锁凭据，
+        // 一半锁进保险箱、一半贴在冰箱上。现在 pins 与其它密钥同一套（见 saveKeychain）。
+        // 备份不受影响：`BackupCanonical` 读的是**内存里的 kc.pins**，不经过 plist。
         if !trackid.isEmpty { d["trackid"] = trackid }
         if !bleId.isEmpty { d["bleId"] = bleId }
         if !fw.isEmpty { d["fw"] = fw }

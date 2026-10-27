@@ -435,7 +435,13 @@ enum BackupKit {
                 // 共享的校验和契约, 加字段会让两侧 checksum 分叉), 所以导出的包体根本没有 d2 ——
                 // 上一版"补回 d2"是死逻辑, 已撤。跨机恢复后应用锁先按 32bit FNV 校验, 用户首次输对
                 // 即由 verifyPasscode 静默升级为 PBKDF2 强摘要 (无感迁移), 不把人锁在外面。
-                DB.store.set("kf_passcode", ["s": pc.s, "d": pc.d]) // 应用锁摘要跨端迁移
+                // 2026-10-27 审核修复 (AUDIT-D D-10)：恢复后**明确标记**这是一份弱摘要。
+                // 原先这里只写 s/d，而 d 是 32-bit 零迭代 FNV —— 4 位数字码 10^4 次即可穷举，
+                // 2^32 空间也能生日碰撞伪造。用户下次输对时 verifyPasscode 会静默升级成 PBKDF2，
+                // 但在那之前这份库是「弱保护」，而界面从未告知。
+                // 现在：写一个标记键，设置页读它显示「本机密码当前为弱保护，请输入一次以升级」。
+                DB.store.set("kf_passcode", ["s": pc.s, "d": pc.d])
+                DB.store.set("kf_passcode_weak", true)   // 弱摘要标记，verifyPasscode 升级后清掉
             }
             // 894 外观随备份走: 逐值白名单复核后才落盘 (见 applyAppearance)。
             // 恢复完由调用方走一次外观重建通道，否则"备份里是深色、屏幕上还是浅色"要等到下次冷启动。

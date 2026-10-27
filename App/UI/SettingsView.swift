@@ -583,16 +583,50 @@ struct SettingsView: View {
     }
 
     /// 关闭本机密码 = 撤掉「设置」页的入口屏障（它不拦查看明文/导出，见上方说明）
+    /// 关闭本机密码 —— **必须先验证原密码**。
+    /// 2026-10-27 审核修复 (AUDIT-D D-08)：原先只要点两下（确认框 + 确定）就能永久移除应用锁，
+    /// 不需要知道原密码 —— 拿到解锁手机的人可以直接把保护关掉。
     private func disablePasscode() {
-        confirmDestructive("关闭本机密码",
-                          "关闭后，设置页不再有入口屏障。注意：查看密码明文与导出备份本来就不受本机密码约束 —— 任何拿到这台手机的人都能直接读取。确定要关闭吗？",
-                          confirmTitle: "关闭保护") {
-            DB.setPasscode(nil)
-            app.showToast("已关闭")
+        promptOldPasscode { ok in
+            guard ok else { return }
+            confirmDestructive("关闭本机密码",
+                              "关闭后，设置页不再有入口屏障。注意：查看密码明文与导出备份本来就不受本机密码约束 —— 任何拿到这台手机的人都能直接读取。确定要关闭吗？",
+                              confirmTitle: "关闭保护") {
+                DB.setPasscode(nil)
+                app.showToast("已关闭")
+            }
         }
     }
 
+    /// 验证原密码。取消/输错都不执行后续动作。
+    private func promptOldPasscode(_ then: @escaping (Bool) -> Void) {
+        let alert = UIAlertController(title: "验证原密码",
+                                      message: "修改或关闭本机密码前需要先验证。",
+                                      preferredStyle: .alert)
+        alert.addTextField { $0.isSecureTextEntry = true; $0.keyboardType = .numberPad }
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel) { _ in then(false) })
+        alert.addAction(UIAlertAction(title: "验证", style: .default) { _ in
+            let pw = alert.textFields?[0].text ?? ""
+            if DB.verifyPasscode(pw) { then(true) }
+            else { app.showToast("原密码不正确"); then(false) }
+        })
+        UIApplication.topViewController()?.present(alert, animated: true)
+    }
+
     private func setPasscode() {
+        // 2026-10-27 审核修复 (AUDIT-D D-09)：**已有密码时改密码必须先验原密码**。
+        // 否则拿到解锁手机的人可以直接改成一个自己知道的密码，等于接管保护。
+        if DB.hasPasscode() {
+            promptOldPasscode { ok in
+                guard ok else { return }
+                presentSetPasscodeAlert()
+            }
+            return
+        }
+        presentSetPasscodeAlert()
+    }
+
+    private func presentSetPasscodeAlert() {
         let alert = UIAlertController(title: "设置本机密码", message: "4 位以上纯数字 (随机键位需要数字键盘, 含字母会失去该保护)", preferredStyle: .alert)
         alert.addTextField { $0.isSecureTextEntry = true; $0.keyboardType = .numberPad }
         alert.addTextField { $0.isSecureTextEntry = true; $0.placeholder = "再次输入"; $0.keyboardType = .numberPad }

@@ -111,7 +111,10 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     private var notifyChar: CBCharacteristic?
     private var connectCompletion: ((Result<Void, Error>) -> Void)?
     private var connectTimeoutWork: DispatchWorkItem?
-    private var writeAckCont: CheckedContinuation<Void, Error>?
+    // 2026-10-27 审核修复 (AUDIT-D D-17)：这个槽被主队列（CB 回调 / disconnect 清理）
+    // 与协作线程（写入方）同时读写，原先没有任何同步。后果：ack 丢失 →
+    // 每片写的 continuation 悬空 → 配网 cmd08 批撞上软砖窗口。现用 Locked 包裹。
+    private let writeAckLock = Locked(CheckedContinuation<Void, Error>?.none)
     /// 连接层测距的单槽回调。只在主线程读写: CBCentralManager 建在 queue: .main (见 init),
     /// 于是 didReadRSSI 与调用点 (LinkSense 的 @MainActor tick) 都在主线程, 不需要再加锁。
     private var rssiCompletion: ((Int?) -> Void)?
@@ -279,8 +282,9 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
             connectCompletion = nil
             c(.failure(BLEErrorX.msg("连接已取消")))
         }
-        if let w = writeAckCont {
-            writeAckCont = nil
+        if let w = writeAckLock.withLock({ c -> CheckedContinuation<Void, Error>? in
+            let old = c; c = nil; return old
+        }) {
             w.resume(throwing: BLEErrorX.msg("连接已断开"))
         }
         // 写槽随连接一起复位: 断链时若有调用方在 acquireWriteSlot 的队列里等槽,
@@ -418,12 +422,12 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
         defer { ackTimer?.cancel() }
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
             let work = DispatchWorkItem { [weak self] in
-                guard let self, self.writeAckCont != nil else { return }
-                self.writeAckCont = nil
+                guard let self, self.writeAckLock.withLock({ $0 != nil }) else { return }
+                self.writeAckLock.withLock { $0 = nil }
                 cont.resume(throwing: BLEErrorX.code(.writeFailed))
             }
             ackTimer = work
-            self.writeAckCont = cont
+            self.writeAckLock.withLock { $0 = cont }
             device.writeValue(data, for: ch, type: .withResponse)
             // 每片写确认的超时 = 8s: APK Java 侧同一处是 `BLE_TIMEOUT` (8000ms, BleLockConnector.
             // writeRXCharacteristic 里每片 writeCharacteristic 后等 onCharacteristicWrite)。
@@ -482,8 +486,9 @@ extension BLEService: CBCentralManagerDelegate {
             readyCont = nil
             r.resume()
         }
-        if let w = writeAckCont {
-            writeAckCont = nil
+        if let w = writeAckLock.withLock({ c -> CheckedContinuation<Void, Error>? in
+            let old = c; c = nil; return old
+        }) {
             w.resume(throwing: BLEErrorX.msg("连接已断开"))
         }
         if let cb = connectCompletion {
@@ -560,8 +565,9 @@ extension BLEService: CBPeripheralDelegate {
         for f in frames { emit(f) }
     }
     public func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
-        if let w = writeAckCont {
-            writeAckCont = nil
+        if let w = writeAckLock.withLock({ c -> CheckedContinuation<Void, Error>? in
+            let old = c; c = nil; return old
+        }) {
             if error != nil { w.resume(throwing: BLEErrorX.code(.writeFailed)) } else { w.resume() }
             return
         }
