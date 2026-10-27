@@ -162,7 +162,23 @@ enum FirmwareKit {
         //      调用方见 `DFUKit.downgradeBlocked(current:pkg:)`。
         return FirmwarePackage(binHex: HexKit.hex(binE.data), datHex: HexKit.hex(datE.data),
                                binSize: binE.data.count, datSize: datE.data.count,
-                               version: versionFromFileName(fileName), sourceName: fileName)
+                               version: versionFromManifest(app) ?? versionFromFileName(fileName))
+    }
+
+    /// 从 manifest 里读固件版本 —— **优先于文件名**。
+    /// 2026-10-27 审核修复 (AUDIT-D D-46)：原先版本号只从**文件名**取，
+    /// 于是把旧固件改个名字（如 `KX_V9.9.9.zip`）就能绕过降级闸。
+    /// manifest 里的版本字段是包内自述（虽然仍可构造，但比文件名难改 ——
+    /// 改它要重算 CRC，而 CRC 校验在这条链上是真做了的）。
+    /// 常见字段名：manifest.application.application_version / version / fw_version。
+    static func versionFromManifest(_ app: [String: Any]) -> String? {
+        for key in ["application_version", "version", "fw_version", "firmware_version"] {
+            if let s = app[key] as? String, !s.isEmpty {
+                // 只接受 x.y.z 形态（与 versionLt 的解析口径一致）
+                if s.range(of: "^\\d+\\.\\d+\\.\\d+$", options: .regularExpression) != nil { return s }
+            }
+        }
+        return nil
     }
 
     static func versionFromFileName(_ name: String) -> String? {

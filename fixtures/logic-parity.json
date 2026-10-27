@@ -237,7 +237,7 @@
     {
       "id": "L10-rc3-refresh-once",
       "kind": "parity",
-      "title": "rc=3 (命令过期) → 刷令牌重试一次, 仍 3 则不无限重试",
+      "title": "rc=3/13 (命令/会话过期) → 刷令牌重试一次, 仍不成功则不无限重试",
       "apk": [
         {
           "file": "vendor/app/services/lock.js",
@@ -248,7 +248,7 @@
       "impl": [
         {
           "file": "App/Services/LockService.swift",
-          "re": "if rc == 3 && needToken",
+          "re": "(?:if rc == 3 && needToken|if \\(rc == 3 \\|\\| rc == 13\\), needToken)",
           "note": "refresh 后 retries: 1"
         },
         {

@@ -64,7 +64,40 @@ final class HardwareService: ObservableObject {
         let deviceId = try await scanForPID(pid: pidFor(mac), resetRequired: false, timeoutMs: timeoutMs)
         try await ble.connect(deviceId: deviceId, timeoutMs: timeoutMs)
         connectedTargetId = deviceId
+        // 2026-10-27 审核修复 (AUDIT-D D-45)：连接成立后**复核设备身份**。
+        // 门锁那条路 (LockService.ensureConnected:97-121) 早就修过这个洞，而钥匙串/网关这条没修 ——
+        // 后果：伪造一份含目标 MAC 的广播并暴露 6E400001 服务，App 就会连到他，
+        // 之后把 ekey 与家里 WiFi 口令发过去。
+        // 复核口径与门锁一致：读一次状态帧，用**设备自己的响应**对 pid（响应比广播难伪造得多）。
+        do {
+            let st = try await readStatusFrame()
+            let knownPid = pidFor(mac) ?? 0
+            if knownPid > 0, st.pid > 0, st.pid != knownPid {
+                ble.disconnect()
+                connectedTargetId = ""
+                log("连接后身份不符: 设备 pid=\(st.pid) 与登记的 \(knownPid) 不一致 → 已断开")
+                throw BLEErrorX.msg("连到的设备与目标不是同一个 (pid 不符)，已断开。附近可能有伪造广播。")
+            }
+            if knownPid <= 0 { log("未登记 pid, 跳过连接后身份复核 (老记录)") }
+        } catch let e as BLEErrorX {
+            throw e
+        } catch {
+            ble.disconnect()
+            connectedTargetId = ""
+            log("连接后读状态失败 (\(error.localizedDescription)) → 断开")
+            throw BLEErrorX.msg("连上后读不到设备状态，已断开重来")
+        }
     }
+    /// 读一次设备状态帧（cmd03），用于连接后的身份复核。
+    /// 2026-10-27 审核新增 (AUDIT-D D-45)：与 LockService 的 `getStatus` 同口径 ——
+    /// 用设备自己的响应去对 pid，而不是只信广播里的字段（广播谁都能伪造）。
+    private func readStatusFrame() async throws -> (pid: Int) {
+        let target = connectedTargetId
+        guard !target.isEmpty else { throw BLEErrorX.msg("内部错误: 复核时没有连接目标") }
+        let f = try await send(ZKCmdBuilder.cmd03StatusPlain(""), target: target, timeoutMs: 8000)
+        return (pid: StatusParser.parseStatus(f.klvs).pid)
+    }
+
     private func dongleRecord(_ mac: String) -> Dongle? { DB.dongle(mac) }
     private func gatewayRecord(_ mac: String) -> Gateway? { DB.gateway(mac) }
     private func pidFor(_ mac: String) -> Int? {

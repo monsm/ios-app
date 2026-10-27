@@ -342,12 +342,12 @@ data class Outcome(val ok: Boolean, val message: String, val trace: String = "",
             val tokenFrame = awaitFrame(s.notes, 0x01, 8_000)
                 ?: return Attempt(Outcome(false, "门锁没有回应 — 靠近一点再试", trace.toString()),
                         s.disconnected.isCompleted)
-            val token = tokenFrame.klvs[0x02]
+            val token = tokenFrame.first(0x02)
             if (token == null) {
                 // ⚠ 01 的响应里**没有 rc**: KLV#03 在那一帧是"令牌有效秒数 (u16 LE)"。
                 // JS lock.js 的 RC_KLV 压根没有 0x01 这一项 (iOS extractRc 对 01 恒返 0)。
                 // 权威口径两条都照搬: JS lock.js:254 报安全类型, iOS LockService:178 报回包形状。
-                val secType = tokenFrame.klvs[0x01]?.let { KfProtocol.intHex(it) and 0x03 }
+                val secType = tokenFrame.first(0x01)?.let { KfProtocol.intHex(it) and 0x03 }
                 return Attempt(
                     Outcome(
                         false,

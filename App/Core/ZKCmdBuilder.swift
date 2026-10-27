@@ -242,9 +242,13 @@ enum ZKCmdBuilder {
     }
 
     // ---- 钥匙串硬件 (ZKBBV1 pid=16289; 87 帧明文 KLV, needToken=false) ----
+    // 2026-10-27 审核修复 (AUDIT-A F-39)：41/43/44 是**明文帧**，原先却调 `ZKProtocol.targetMac()`,
+    // 而那个函数读的是 0x88 包络的 MAC 字节序注册表。若某把锁被 rc=12 自愈裁定成 `.raw`，
+    // 之后写进硬件钥匙串的 MAC 就永久是反的 —— 归属写错、查不到、状态读错。
+    // 明文帧的 MAC 字段一律用显示序（`reversePairs` 后再送，与 APK 一致）。
     static func cmd41WriteEkey(_ lockMacHex: String, _ pid: Int, _ ekeyHex: String, type: Int = 1) -> ZKCmd {
         // 2026-10-14: 与 cmd43 / buildEkey 同口径先剥冒号, 否则带冒号 MAC 使 reversePairs 返回空串。
-        let klv = ZKProtocol.buildKLV(0x01, HexKit.reversePairs(ZKProtocol.targetMac(lockMacHex)))
+        let klv = ZKProtocol.buildKLV(0x01, HexKit.reversePairs(lockMacHex.replacingOccurrences(of: ":", with: "").lowercased()))
             + ZKProtocol.buildKLV(0x02, HexKit.hexPair(UInt32(truncatingIfNeeded: type)))
             + ZKProtocol.buildKLV(0x03, u16leHex(pid))
             + ZKProtocol.buildKLV(0x04, ekeyHex)
@@ -253,12 +257,12 @@ enum ZKCmdBuilder {
     static func cmd44GetEkeyInfo(_ lockMacHex: String?) -> ZKCmd {
         // 2026-10-14: 去掉强解包 (空 = 查全部钥匙, 与旧口径一致), 并把剥冒号/小写收在前一行。
         let m = (lockMacHex ?? "").replacingOccurrences(of: ":", with: "").lowercased()
-        let v = m.isEmpty ? "" : HexKit.reversePairs(ZKProtocol.targetMac(m))
+        let v = m.isEmpty ? "" : HexKit.reversePairs(m)
         return ZKCmd(name: "44 钥匙串查钥", cmd: 0x44, hex: ZKProtocol.buildFrame(0x44, ZKProtocol.buildKLV(0x01, v), header: 8))
     }
     static func cmd43KeychainStatus(_ lockMacList: [String]) -> ZKCmd {
         var v = ""
-        for m in lockMacList { v += HexKit.reversePairs(ZKProtocol.targetMac(m)) }
+        for m in lockMacList { v += HexKit.reversePairs(m.replacingOccurrences(of: ":", with: "").lowercased()) }
         return ZKCmd(name: "43 钥匙串状态", cmd: 0x43, hex: ZKProtocol.buildFrame(0x43, ZKProtocol.buildKLV(0x01, v), header: 8))
     }
 

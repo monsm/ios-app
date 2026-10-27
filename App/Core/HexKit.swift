@@ -3,6 +3,30 @@
 import Foundation
 
 enum HexKit {
+    /// **严格版** hex → bytes：任何非 hex 字符或奇数长度都返回 nil。
+    /// 2026-10-27 审核新增 (AUDIT-C A12)：`bytes()` 的宽容语义是**为 JS 差分服务的**
+    /// （复刻 `parseInt(pair,16)`：首字符非 hex → 0，次字符非 hex → 只取首位），
+    /// 于是收到含噪声的帧时 iOS 会「成功」解析出一个垃圾帧，而 Android 那版直接抛异常。
+    /// 协议解析路径应当用这个严格版：坏输入就该显式失败，不能读成合法帧。
+    static func strictBytes(_ hex: String) -> [UInt8]? {
+        guard hex.count % 2 == 0 else { return nil }
+        var out = [UInt8]()
+        out.reserveCapacity(hex.count / 2)
+        var hi: UInt8? = nil
+        for ch in hex {
+            guard let a = ch.asciiValue else { return nil }
+            let v: UInt8
+            switch a {
+            case 0x30...0x39: v = a - 0x30
+            case 0x61...0x66: v = a - 0x61 + 10
+            case 0x41...0x46: v = a - 0x41 + 10
+            default: return nil
+            }
+            if let h = hi { out.append(h << 4 | v); hi = nil } else { hi = v }
+        }
+        return hi == nil ? out : nil
+    }
+
     static func bytes(_ hex: String) -> [UInt8] {
         // 非 hex 字符按 JS hexToBytes 语义落 0x00 且保持长度 (NaN→Uint8Array 强转 0),
         // 否则流会缩短、后续所有偏移错位

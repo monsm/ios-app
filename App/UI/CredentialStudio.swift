@@ -162,7 +162,7 @@ struct MaskedDigits: View {
 
     /// 849 双击/转子动作: 拷贝整条明文 (与详情页「复制」同一条 405 通路)
     private func copyAll() {
-        UIPasteboard.general.string = value
+        Clip.set(value)
         app.showToast("已复制")
     }
 
@@ -250,7 +250,7 @@ struct CodeBigCard: View {
             }
             HStack(spacing: DS.Space.s) {
                 Button {
-                    UIPasteboard.general.string = code   // 405
+                    Clip.set(code)   // 405
                     app.showToast("码值已复制")
                 } label: {
                     Label("复制", systemImage: "doc.on.doc")
@@ -1367,7 +1367,7 @@ struct TempCodeStudio: View {
                 if let r = result, !MemberHub.elderMode {
                     let text = StudioTools.oneLine(p: r, lockName: lockName, value: r.pwd)
                     Button {
-                        UIPasteboard.general.string = text   // 405 含口令明文
+                        Clip.set(text)   // 405 含口令明文
                         app.showToast("一句话口令已复制")   // 329 一句话口令已复制
                     } label: {
                         VStack(spacing: DS.Space.xs) {
@@ -1508,7 +1508,7 @@ struct PwdDetailStudio: View {
                         if let v = p.pwd {
                             HStack(spacing: DS.Space.xs) {
                                 Button {
-                                    UIPasteboard.general.string = v   // 405
+                                    Clip.set(v)   // 405
                                     app.showToast("已复制")
                                     // 11 形变: 按下 1.2 秒内按钮变成"已复制 + 对勾", 给一次按下确认
                                     withAnimation(DS.Motion.standard) { copiedFlash = true }
@@ -1534,7 +1534,7 @@ struct PwdDetailStudio: View {
                                 HStack(spacing: DS.Space.s) {
                                     ForEach(Array(v.chunked(4).enumerated()), id: \.offset) { i, c in
                                         Button {
-                                            UIPasteboard.general.string = c   // 405 分段也是口令明文的一部分
+                                            Clip.set(c)   // 405 分段也是口令明文的一部分
                                             app.showToast("已复制第 \(i * 4 + 1)~\(min(i * 4 + 4, v.count)) 位")
                                         } label: {
                                             Text(c)
@@ -1804,7 +1804,7 @@ func fpDoubleSignCheck(mac: String, batch: Int, confirmTitle: String, action: @e
         let input = alert.textFields?.first?.text ?? ""
         // 全量比对（常量时间无所谓：这是本机 UI，不在网络上）
         if input == v {
-            UIPasteboard.general.string = ""
+            Clip.set("")
             action()
         } else {
             let fail = UIAlertController(title: "双签未通过", message: "密码不符, 删除已取消。", preferredStyle: .alert)   // 323 密码不符

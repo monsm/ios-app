@@ -68,7 +68,16 @@ object KfProtocol {
     }
 
     /** raw = 这一帧自己占的 hex (不含缓冲区里它后面那半截), 调用方据此把流里剩下的字节留着。 */
-    data class Frame(val cmd: Int, val klvs: Map<Int, String>, val raw: String)
+data class Frame(val cmd: Int, val klvs: List<Pair<Int, String>>, val raw: String) {
+    // 2026-10-27 审核修复 (AUDIT-C A5)：KLV 容器从 `Map<Int, String>` 改成保序列表。
+    // 原实现 `out[key] = ...` 让**重复键被后者覆盖** —— 而锁端所有「每项一个 KLV」的帧
+    // （0x16 日志每页 N 条 KLV#05、0x13 录指纹多帧、0x43/0x44 MAC 列表）在安卓侧只留最后一条。
+    // 现在只发 01/03/04 恰好都是单值帧所以没炸，但这是个「看起来通用」的解析器，
+    // 下一个接 16 日志的人会直接踩进去（iOS 的 StatusParser 已把 0x05 当数组用）。
+
+    /** 取首个匹配值（原 `klvs[key]` 的语义）—— 单值帧的调用方用这个。 */
+    fun first(key: Int): String? = klvs.firstOrNull { it.first == key }?.second
+
 
     /**
      * 响应解析: 长度同样是 LE16, 帧头有三种历史形状 (8/7/10 字节), 但 cmd 恒在字节 4。
@@ -91,16 +100,16 @@ object KfProtocol {
         return null
     }
 
-    private fun parseKlv(hex: String): Map<Int, String>? {
+    private fun parseKlv(hex: String): List<Pair<Int, String>>? {
         val b = bytes(hex)
-        val out = LinkedHashMap<Int, String>()
+        val out = ArrayList<Pair<Int, String>>()
         var off = 0
         while (off < b.size) {
             if (off + 2 > b.size) return null
             val key = b[off].toInt() and 0xff
             val len = b[off + 1].toInt() and 0xff
             if (off + 2 + len > b.size) return null
-            out[key] = hex.substring((off + 2) * 2, (off + 2 + len) * 2)
+            out.add(key to hex.substring((off + 2) * 2, (off + 2 + len) * 2))
             off += 2 + len
         }
         return out
@@ -133,10 +142,10 @@ object KfProtocol {
      */
     fun klvShape(f: Frame): String =
         if (f.klvs.isEmpty()) "(无 KLV)"
-        else f.klvs.entries.joinToString(" ") { "#" + String.format("%02x", it.key) + "=" + (it.value.length / 2) + "B" }
+        else f.klvs.joinToString(" ") { "#" + String.format("%02x", it.first) + "=" + (it.second.length / 2) + "B" }
 
     /** rc 在 KLV#03 (JS lock.js RC_KLV: 0x03/0x04 → 3); **整项缺失**才 -1 (= 回包里没有结果码)。 */
-    fun rc(f: Frame): Int = f.klvs[0x03]?.let { intHex(it) } ?: -1
+    fun rc(f: Frame): Int = f.first(0x03)?.let { intHex(it) } ?: -1
 
     /** 锁端结果码 (JS lock.js RC_MSG / StatusParser.swift rcMsg 原文, 逐字搬过来, 不自造语义)。 */
     private val RC_NAME = mapOf(
@@ -205,7 +214,7 @@ object KfProtocol {
      * 16289 就不是一个口径), 而二维码里的 p 抄的是 status 那一套 (iOS AndroidPair 写 kc.pid
      * ← LockService 配网时的 st.pid)。所以核身份只能拿锁端响应比, 拿广播比会误杀真锁。
      */
-    fun pidOf(f: Frame): Int = f.klvs[0x34]?.let { u32le(it) } ?: 0
+    fun pidOf(f: Frame): Int = f.first(0x34)?.let { u32le(it) } ?: 0
 
     /**
      * 广播解析: 厂商段 98ED 之后 10 字节 = [fc, b3, pidLo, pidHi, mac(6)]。

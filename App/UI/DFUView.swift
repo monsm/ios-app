@@ -230,7 +230,8 @@ struct DFUView: View {
                 if st == .aborted { error = msg }
             }
             session.onProgress = { v in progress = v }
-            try await session.run()
+            // 2026-10-27 审核 (AUDIT-D D-22)：刷机中途切后台会被系统挂起，锁留在半完成态。
+        try await BackgroundGuard.run("固件刷写") { try await session.run() }
 
             progress = 1
             phase = .done

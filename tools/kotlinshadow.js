@@ -84,7 +84,7 @@ if (!ktRc.has(13)) bad('A2 rc=13 (通讯过期) 不在表里 —— 这次事故
 
 // A3: rc 必须从 KLV#03 读 (RC_KLV: 0x03/0x04 → 3), 且缺项才是 -1
 const rcFn = kf.slice(kf.indexOf('fun rc(f: Frame)'), kf.indexOf('/** 锁端结果码 (JS'));
-if (!/klvs\[0x03\]/.test(rcFn)) bad('A3 rc 没有从 KLV#03 读');
+if (!/(?:klvs\[0x03\]|first\(0x03\))/.test(rcFn)) bad('A3 rc 没有从 KLV#03 读');
 else if (!/\?: -1/.test(rcFn)) bad('A3 rc 缺项没有回落 -1');
 else good('A3 rc@KLV#03, 整项缺失 = -1');
 

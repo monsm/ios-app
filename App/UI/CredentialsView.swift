@@ -106,6 +106,15 @@ struct CredentialsView: View {
             }
         }
         .sheet(isPresented: $showAdd) { AddDeviceView() }
+        // 2026-10-27：解密密口令不再进 Toast（会被截屏/录屏带走），改成一次性对话框。
+        .alert("解密密口令（只看这一次）", isPresented: Binding(
+            get: { secretOnce != nil },
+            set: { if !$0 { secretOnce = nil } }
+        )) {
+            Button("已记住，关闭", role: .cancel) { secretOnce = nil }
+        } message: {
+            Text("口令：\(secretOnce ?? "")\n\n请勿与凭证包同渠道发送。关闭后不再显示。")
+        }
     }
 
     private func reload() { refreshTick += 1 }
@@ -673,7 +682,7 @@ struct CredentialsView: View {
         .accessibilityActions {
             if let v = hit.pwd?.pwd {
                 Button("拷贝密码明文") {   // 849 拷贝密码明文
-                    UIPasteboard.general.string = v
+                    Clip.set(v)
                     app.showToast("已复制")
                 }
             }
@@ -691,7 +700,7 @@ struct CredentialsView: View {
         // 编辑态整行单击已归勾选, 双击里再判一次 editMode, 两种模式不抢手势
         .onTapGesture(count: 2) {
             if !editMode, let v = hit.pwd?.pwd {
-                UIPasteboard.general.string = v
+                Clip.set(v)
                 app.showToast("已复制")
             }
         }
@@ -777,7 +786,7 @@ struct CredentialsView: View {
             // 文本里**绝不含口令本身** (要复制到聊天工具, 含码等于把门卡发出去)。
             if let d = CredentialOrg.expiryDate(p), d.timeIntervalSinceNow > 0, d.timeIntervalSinceNow < 7 * 86_400 {
                 Button("生成延期提醒文本") {   // 368 生成延期提醒文本
-                    UIPasteboard.general.string = renewText(p, d)
+                    Clip.set(renewText(p, d))
                     app.showToast("催办文本已复制到剪贴板 (不含口令)")
                 }
             }
@@ -1033,14 +1042,23 @@ struct CredentialsView: View {
         guard let text = String(data: result.data, encoding: .utf8) else { return }
         // 口令不进剪贴板: 明文凭证包与口令必须分开交付。
         // 也刻意不走 405 自清: 这是 AES 密文信封, 且要粘进聊天工具, 60 秒后清掉只会打断交接
-        UIPasteboard.general.string = text
+        Clip.set(text)
         // 351: 复制照旧 (聊天工具粘贴场景), 同时把分享面板弹出来 —— 同一份密文, 口令仍另行发送
         let av = UIActivityViewController(activityItems: [text], applicationActivities: nil)
         UIApplication.topViewController()?.present(av, animated: true)
-        app.showToast("已生成 \(result.size) 条凭证包并复制到剪贴板。解密密口令「\(pw)」请另行发送, 勿与凭证包同渠道。")
+        // 2026-10-27 审核修复 (AUDIT-D D-38)：口令**不再**打进 Toast —— 那是屏幕明文，
+        // 截屏/录屏/旁人一眼就能拿到。改成：只提示已复制到剪贴板，口令本身单独放在一个
+        // 可再次查看的对话框里（用户在交接时自己决定什么时候看）。
+        app.showToast("已生成 \(result.size) 条凭证包并复制到剪贴板。解密密口令已单独显示，请勿与凭证包同渠道发送。")
+        presentSecretOnce(pw)
     }
 
     /// 353 批量停用摘要确认页之后的执行: 本地移除 + 回收站 + 锁端删除入队
+    /// 一次性展示敏感串（口令等）。不进 Toast（会被截屏/录屏带走），
+    /// 而是弹一个可手动关闭的对话框 —— 用户在自己准备好时才看。
+    @State private var secretOnce: String?
+    private func presentSecretOnce(_ s: String) { secretOnce = s }
+
     private func finishDisable() {
         guard busyKey == nil else { return }
         busyKey = "batch"
@@ -1184,7 +1202,7 @@ struct CredentialsView: View {
             .buttonStyle(.borderedProminent)
             .disabled(isBusy)
             Button {
-                UIPasteboard.general.string = otpPwd   // 405
+                Clip.set(otpPwd)   // 405
                 app.showToast("已复制")
             } label: {
                 Image(systemName: "doc.on.doc")
@@ -1233,7 +1251,7 @@ struct CredentialsView: View {
         DB.saveOtpIdx(mac, OtpIdx(idx: idx, invalidTime: win))
         otpPwd = pwd
         otpWin = win
-        UIPasteboard.general.string = pwd   // 405
+        Clip.set(pwd)   // 405
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         return true
     }

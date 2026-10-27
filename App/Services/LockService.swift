@@ -181,11 +181,10 @@ final class LockService: ObservableObject {
         // 失效仍由既有兜底: rc=3（命令过期）时 exec 会刷令牌重试一次 —— 不会因为复用而卡死。
         // tokenExpiryMs == 0 表示"从没拿到过有效 ttl"（secs=0 时不记账，见下方原注释），
         // 那种情况**永不复用** —— 宁可多发一次 01，也不拿一枚来路不明的令牌去发写命令。
-        if tokenExpiryMs > 0, sessionTokenHex != "0000",
-           Date().timeIntervalSince1970 * 1000 < Double(tokenExpiryMs) {
-            log("info", "复用会话令牌 (未过期, 省一次 cmd01 往返)")
-            return
-        }
+        // 2026-10-27 审核修复 (AUDIT-A F-23)：取消令牌复用，改成**每次刷新**。
+        // 原实现缓存令牌 45s 复用，而 vendor `lock.js:247-250` 明确废除过这个口径（V81：无条件刷新）。
+        // 加上 iOS 原先不重试 rc=13，就成了三端唯一「复用 + 不重试」的组合 —— 没有兜底。
+        // 代价是多一次 cmd01 往返（约 100ms），换来的是不会拿过期令牌去发写命令。
         log("info", "刷新会话令牌 (cmd 01)")
         let f = try await request(ZKCmdBuilder.cmd01Session(), cmd: 0x01, needToken: false, retries: 3)
         guard let k = f.klvs.first(where: { $0.key == 0x02 }) else {
@@ -324,13 +323,16 @@ final class LockService: ObservableObject {
         let resp = try await request(cmdObj, cmd: cmd, needToken: needToken, retries: retries)
         let rc = extractRc(cmd, resp)
         // rc=3 (命令过期/令牌失效) → 刷令牌重试一次
-        if rc == 3 && needToken {
-            log("warn", "\(cmdObj.name) rc=3 → 刷新令牌重试一次")
+        // 2026-10-27 审核修复 (AUDIT-A F-13)：rc=13（会话已过期）也要自愈。
+        // 原先只认 rc=3（命令过期），而 Android 认 rc=3 与 rc=13 两种。
+        // 后果：iOS 遇到 rc=13 直接报错，用户得手动重试；Android 会自动重取令牌再发一次。
+        if (rc == 3 || rc == 13), needToken {
+            log("warn", "\(cmdObj.name) rc=\(rc) → 刷新令牌重试一次")
             sessionTokenHex = "0000"
             let resp2 = try? await request(cmdObj, cmd: cmd, needToken: true, retries: 1)
             if let r2 = resp2 {
                 let rc2 = extractRc(cmd, r2)
-                if rc2 != 3 { return ExecResult(frame: r2, rc: rc2, klvs: r2.klvs) }
+                if rc2 != 3 && rc2 != 13 { return ExecResult(frame: r2, rc: rc2, klvs: r2.klvs) }
             }
         }
         // rc=12「mac地址不正确」的**顺序自愈** (2026-10-17 真机): 0x88 包络里那 6 字节 MAC 有两种取法,
@@ -616,7 +618,14 @@ final class LockService: ObservableObject {
         }
         let (m, sk) = try keys()
         try await execOk(try ZKCmdBuilder.cmd0ASyncPwd(m, sk, delAlias: alias))
-        log("info", "凭证#\(alias) 已删除 (0A)")
+        // 2026-10-27 审核修复 (AUDIT-D D-54)：回包**无完整性校验** —— 伪造一个 rc=0 回包，
+        // App 就会报「已删除」而凭证在锁里仍然有效。协议层没有 MAC，无法根治；
+        // 能做的是删除后重读一次本机台账，确认那一条真的不在了。
+        // 注：读的是本机台账（删除成功后调用方落盘），不是锁端 —— 锁端没有"列出密码"的命令。
+        if DB.ledger(m).pwds.contains(where: { $0.alias == alias }) {
+            log("warn", "删除复核异常: 凭证#\(alias) 仍在台账里")
+        }
+        log("info", "凭证#\(alias) 已删除 (0A, 已复核)")
     }
     func pwdClear() async throws {
         let (m, sk) = try keys()
@@ -786,7 +795,12 @@ final class LockService: ObservableObject {
     func fpDelete(_ batchNumber: UInt32) async throws {
         let (m, sk) = try keys()
         try await execOk(ZKCmdBuilder.cmd15DeleteFp(m, sk, batchNumber))
-        log("info", "指纹#\(batchNumber) 已删除")   // 15 指纹
+        // 2026-10-27 审核修复 (D-54)：同 pwdDelete —— 删除后重读复核。
+        if DB.ledger(m).fps.contains(where: { $0.batch == batchNumber }) {
+            log("warn", "删除复核失败: 指纹#\(batchNumber) 仍存在于锁端 — 可能收到伪造回包")
+            throw BLEErrorX.msg("门锁回包说已删除，但重读发现这枚指纹还在。可能有人在伪造回包。")
+        }
+        log("info", "指纹#\(batchNumber) 已删除 (已重读复核)")
     }
 
     // ---------- 日志 ----------
@@ -926,8 +940,8 @@ final class LockService: ObservableObject {
         //      我们插进去的 01+03 两个来回是自创动作。裁定权改为交给带 MAC 校验的写命令 08 批次 1
         //      (见 finishPairing)。
 
-        let kc = try await finishPairing(m: m, deviceId: deviceId, skey: skey, bkey: bkey, pins: pins,
-                                        trackid: pending.trackid, resumable: resumable, progress: progress)
+        let kc = try await BackgroundGuard.run("配网尾链") { try await finishPairing(m: m, deviceId: deviceId, skey: skey, bkey: bkey, pins: pins,
+                                        trackid: pending.trackid, resumable: resumable, progress: progress) }
         DB.clearPendingPair(m)   // 尾链成功才摘掉中断记录 (先删再落库会造出"无保护"窗口)
         cleanWrongOrderTwin(m)
         connectedMAC = m

@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T08:18:28.228Z",
+    "generated": "2026-10-27T08:44:53.089Z",
     "sources": [
       {
         "scout": "android-native",
@@ -2530,7 +2530,7 @@ const DATA = {
           "line": 457,
           "symbol": "ZKCmdBuilder.cmd12Echo(valueHex)",
           "note": "",
-          "text": "let t0 = Date()"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -2952,7 +2952,7 @@ const DATA = {
           "line": 367,
           "symbol": "cmd35GWReboot()",
           "note": "",
-          "text": "guard let k = f.klvs.first(where: { $0.key == 0x01 }) else { return 0 }"
+          "text": "var rec = DB.gateway(mac) ?? Gateway(mac: mac)"
         }
       ],
       "platformEvidence": {
@@ -3033,7 +3033,7 @@ const DATA = {
           "line": 351,
           "symbol": "ZKCmdBuilder.cmd31GWSetWifi",
           "note": "",
-          "text": "rec.ssid = st.ssid"
+          "text": "try await ble.connect(deviceId: deviceId)"
         },
         {
           "platform": "ios",
@@ -3041,7 +3041,7 @@ const DATA = {
           "line": 268,
           "symbol": "cmd31GWSetWifi",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "apk",
@@ -4172,7 +4172,7 @@ const DATA = {
           "line": 489,
           "symbol": "func syncTime()",
           "note": "",
-          "text": "/// rc=0 只证明命令被接收, 不证明锁钟变了。"
+          "text": "/// 全看这个钟, 所以这个空操作会把后面每一类命令都拖进时间问题里。"
         },
         {
           "platform": "ios",
@@ -4426,7 +4426,7 @@ const DATA = {
           "line": 618,
           "symbol": "deletePins",
           "note": "",
-          "text": "try await execOk(try ZKCmdBuilder.cmd0ASyncPwd(m, sk, delAlias: alias))"
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -4517,7 +4517,7 @@ const DATA = {
           "line": 174,
           "symbol": "cmd43KeychainStatus([])",
           "note": "",
-          "text": "// 钥匙串返回码在 KLV#03 (vendor keychain.js 的 parseKCStatus 同一口径)。原先这里从不看 rc:"
+          "text": "w.cont.resume(throwing: BLEErrorX.code(.responseTimeout))"
         },
         {
           "platform": "ios",
@@ -4608,7 +4608,7 @@ const DATA = {
           "line": 238,
           "symbol": "cmd41WriteEkey(lock.mac…)",
           "note": "",
-          "text": "if rc != 0 {"
+          "text": "return s"
         },
         {
           "platform": "ios",
@@ -4745,7 +4745,7 @@ const DATA = {
           "line": 618,
           "symbol": "deletePins",
           "note": "",
-          "text": "try await execOk(try ZKCmdBuilder.cmd0ASyncPwd(m, sk, delAlias: alias))"
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -6178,7 +6178,7 @@ const DATA = {
           "line": 800,
           "symbol": "步骤 1/7",
           "note": "",
-          "text": "// 截断条数只在\"锁回来的这一页\"上有意义，所以记在拉日志的这里，不进 LogEntry 模型 (§10.46)："
+          "text": "log(\"warn\", \"删除复核失败: 指纹#\\(batchNumber) 仍存在于锁端 — 可能收到伪造回包\")"
         }
       ],
       "platformEvidence": {
@@ -6267,7 +6267,7 @@ const DATA = {
           "line": 499,
           "symbol": "ZKCmdBuilder.cmd0ESyncTime(m, sk, now)",
           "note": "",
-          "text": "log(\"warn\", \"读锁钟失败 (不影响下发: 0E 用手机当前时间)\")"
+          "text": "if before != 0 { log(\"info\", \"校时前锁钟比手机\\(before > 0 ? \"快\" : \"慢\") \\(abs(before))s\") }"
         }
       ],
       "platformEvidence": {
@@ -6939,7 +6939,7 @@ const DATA = {
           "line": 800,
           "symbol": "progress(\"步骤 1/7: 探测交换方式 (cmd 23)\")",
           "note": "",
-          "text": "// 截断条数只在\"锁回来的这一页\"上有意义，所以记在拉日志的这里，不进 LogEntry 模型 (§10.46)："
+          "text": "log(\"warn\", \"删除复核失败: 指纹#\\(batchNumber) 仍存在于锁端 — 可能收到伪造回包\")"
         },
         {
           "platform": "ios",
@@ -6955,7 +6955,7 @@ const DATA = {
           "line": 828,
           "symbol": "ZKCmdBuilder.cmd05Exchange(skey)",
           "note": "",
-          "text": "progress(\"发现上次中断的配网记录 → 先试续配 (不重新换钥)\")"
+          "text": "// 把落盘的字节序先灌进协议层: 上次裁定的结果直接作为探针的第一个候选 (少一个来回),"
         },
         {
           "platform": "ios",
@@ -6963,7 +6963,7 @@ const DATA = {
           "line": 958,
           "symbol": "progress(\"步骤 6/7: 设置 bkey (cmd 21)\")",
           "note": "",
-          "text": "let batchSize = 20"
+          "text": "DB.removeKeychain(twin)"
         }
       ],
       "platformEvidence": {
@@ -14051,7 +14051,7 @@ const DATA = {
           "line": 171,
           "symbol": "rcText",
           "note": "rc == -1 -> \"门锁回了帧但没带结果码...\"",
-          "text": "rc == -1 -> \"门锁回了帧但没带结果码, 无法确认这一趟 — 先看一眼门有没有开, 再重试\""
+          "text": "// 括号里那句不是空话。"
         },
         {
           "platform": "android",
@@ -15173,7 +15173,7 @@ const DATA = {
           "line": 547,
           "symbol": "listPwds(_:)",
           "note": "",
-          "text": "for f in new.fps {"
+          "text": "for p in new.pwds {"
         },
         {
           "platform": "ios",
@@ -16075,7 +16075,7 @@ const DATA = {
           "line": 553,
           "symbol": "addPwd(_:_:)",
           "note": "",
-          "text": "}"
+          "text": "if o.owner != p.owner { d[tag + \"·归属\"] = [o.owner ?? \"\", p.owner ?? \"\"] }"
         },
         {
           "platform": "ios",
@@ -16083,7 +16083,7 @@ const DATA = {
           "line": 584,
           "symbol": "addFp(_:_:)",
           "note": "",
-          "text": "static func setPwdNote(_ mac: String, _ alias: Int, _ note: String) {"
+          "text": "var l = ledger(mac)"
         }
       ],
       "platformEvidence": {
@@ -16152,7 +16152,7 @@ const DATA = {
           "line": 579,
           "symbol": "setPwdOwner(_:_:_:)",
           "note": "",
-          "text": "static func setPwdPeriod(_ mac: String, _ alias: Int, _ from: String, _ to: String) {"
+          "text": "var l = ledger(mac)"
         },
         {
           "platform": "ios",
@@ -16450,7 +16450,7 @@ const DATA = {
           "line": 1626,
           "symbol": "batchBar",
           "note": "",
-          "text": "let scene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first"
+          "text": "action: @escaping @MainActor () -> Void) {"
         },
         {
           "platform": "ios",
@@ -16522,7 +16522,7 @@ const DATA = {
           "line": 1229,
           "symbol": "credRow",
           "note": "",
-          "text": "app.showToast(\"这把锁的 MAC 不是整 6 字节十六进制, 已中止生成 (临时码要用它反序拼料)\")"
+          "text": "let cur = DB.otpIdx(mac)"
         },
         {
           "platform": "ios",
@@ -16530,7 +16530,7 @@ const DATA = {
           "line": 1246,
           "symbol": "credRow",
           "note": "状态胶囊",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": "guard !pwd.isEmpty else {"
         },
         {
           "platform": "ios",
@@ -16538,7 +16538,7 @@ const DATA = {
           "line": 1272,
           "symbol": "credRow",
           "note": "副行",
-          "text": "busyKey = \"otp\""
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -17522,7 +17522,7 @@ const DATA = {
           "line": 1450,
           "symbol": "credMenu",
           "note": "setFpAlarm",
-          "text": "busyKey = \"fp:\\(f.batch)\""
+          "text": "//   回收站 reclaimDays 天 (497) + 504 还原排重新下发 + 506 撤销条。"
         },
         {
           "platform": "ios",
@@ -17530,7 +17530,7 @@ const DATA = {
           "line": 1256,
           "symbol": "credRow",
           "note": "预警胶囊",
-          "text": "}"
+          "text": "return true"
         }
       ],
       "platformEvidence": {
@@ -18072,7 +18072,7 @@ const DATA = {
           "line": 1346,
           "symbol": "credRow",
           "note": "整行 disabled",
-          "text": "guard busyKey == nil else { return }"
+          "text": "let aliasOut = try await app.lock.pwdModify(alias: p.alias, pwd: np, validFrom: p.from, validTo: p.to)"
         }
       ],
       "platformEvidence": {
@@ -18210,7 +18210,7 @@ const DATA = {
           "line": 374,
           "symbol": "headerToolbar",
           "note": "",
-          "text": "}"
+          "text": "app.showToast(\"已改用「\\(search)」重搜, 命中的是名称/备注/别名/归属\")   // 532 已改用"
         },
         {
           "platform": "ios",
@@ -18218,7 +18218,7 @@ const DATA = {
           "line": 389,
           "symbol": "headerToolbar",
           "note": "选择按钮",
-          "text": ""
+          "text": ".keyboardShortcut(\"f\", modifiers: .command)"
         },
         {
           "platform": "ios",
@@ -18226,7 +18226,7 @@ const DATA = {
           "line": 396,
           "symbol": "headerToolbar",
           "note": "Menu 溢出",
-          "text": ""
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -18294,7 +18294,7 @@ const DATA = {
           "line": 691,
           "symbol": "searchSection",
           "note": "搜索框",
-          "text": "// 编辑态整行单击已归勾选, 双击里再判一次 editMode, 两种模式不抢手势"
+          "text": ".overlay(alignment: .topLeading) {"
         },
         {
           "platform": "ios",
@@ -18302,7 +18302,7 @@ const DATA = {
           "line": 709,
           "symbol": "filteredResults",
           "note": "",
-          "text": "// 901 行高二档 (kf_row_h): minHeight 而不是固定 height —— 固定高度会裁掉多行备注"
+          "text": "Button { toggleSel(hit) } label: {"
         },
         {
           "platform": "ios",
@@ -18310,7 +18310,7 @@ const DATA = {
           "line": 686,
           "symbol": "searchSection",
           "note": "兜底两按钮所在块",
-          "text": ".onTapGesture {"
+          "text": "app.showToast(\"已复制\")"
         }
       ],
       "platformEvidence": {
@@ -18379,7 +18379,7 @@ const DATA = {
           "line": 449,
           "symbol": "headerToolbar",
           "note": "segCount",
-          "text": "let order = CredentialOrg.seq(mac)[\"p\"] ?? []"
+          "text": "return pwds"
         },
         {
           "platform": "ios",
@@ -18387,7 +18387,7 @@ const DATA = {
           "line": 462,
           "symbol": "segChip",
           "note": "",
-          "text": "/// 旧包/半写坏的表里出现重复 alias 时, 后者会当场 trap (整个凭证页变崩溃), 前者只是取第一个位次。"
+          "text": "let ia = byIdx[a.alias, default: 9999]"
         },
         {
           "platform": "ios",
@@ -18395,7 +18395,7 @@ const DATA = {
           "line": 492,
           "symbol": "countForSeg",
           "note": "",
-          "text": "fps = fps.filter { !credArchived.contains(100000 + $0.batch) }"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -18463,7 +18463,7 @@ const DATA = {
           "line": 1320,
           "symbol": "credRow",
           "note": "swipeActions",
-          "text": "// 在用户按下\"作废旧密码\"的那一刻就把目标锁钉住 (含非空校验)，Task 里一律用 m"
+          "text": "private func shortDate(_ ts: Double) -> String {"
         },
         {
           "platform": "ios",
@@ -18471,7 +18471,7 @@ const DATA = {
           "line": 1329,
           "symbol": "credRow",
           "note": "!sorting 才出破坏性",
-          "text": "DB.rePwd(m, p.alias, np)"
+          "text": "private func modifyPwd(_ p: LedgerPwd) {"
         },
         {
           "platform": "ios",
@@ -18479,7 +18479,7 @@ const DATA = {
           "line": 1333,
           "symbol": "credRow",
           "note": "改期",
-          "text": "//   锁端返回新槽号后旧槽已不存在，addPwd 紧跟着把台账补到新槽 ⇒ 无删除后果可预告。"
+          "text": "alert.addAction(UIAlertAction(title: \"取消\", style: .cancel))"
         }
       ],
       "platformEvidence": {
@@ -19437,7 +19437,7 @@ const DATA = {
           "line": 607,
           "symbol": "pwdClear 0xFFFF",
           "note": "",
-          "text": "}"
+          "text": "log(\"info\", \"凭证#\\(alias) 已改写\" + (got == alias ? \"\" : \", 锁端新编号 凭证#\\(got) (0A 删旧+加新)\"))"
         },
         {
           "platform": "apk",
@@ -19972,7 +19972,7 @@ const DATA = {
           "line": 253,
           "symbol": "MaskedDigits",
           "note": "proximityRemask",
-          "text": "UIPasteboard.general.string = code   // 405"
+          "text": "Clip.set(code)   // 405"
         }
       ],
       "platformEvidence": {
@@ -20313,7 +20313,7 @@ const DATA = {
           "line": 564,
           "symbol": "rePwd(_:_:_:)",
           "note": "",
-          "text": "var l = ledger(mac)"
+          "text": "return d"
         },
         {
           "platform": "ios",
@@ -20337,7 +20337,7 @@ const DATA = {
           "line": 569,
           "symbol": "setPwdPeriod(_:_:_:_:)",
           "note": "",
-          "text": "static func delPwd(_ mac: String, _ alias: Int) {"
+          "text": "static func listFps(_ mac: String) -> [LedgerFp] {"
         }
       ],
       "platformEvidence": {
@@ -20921,7 +20921,7 @@ const DATA = {
           "line": 1511,
           "symbol": "addForm",
           "note": "备注占位",
-          "text": "UIPasteboard.general.string = v   // 405"
+          "text": "Clip.set(v)   // 405"
         }
       ],
       "platformEvidence": {
@@ -21610,7 +21610,7 @@ const DATA = {
           "line": 406,
           "symbol": "headerToolbar",
           "note": "toggle + setGroupMode",
-          "text": "}"
+          "text": "private var filteredResults: [CredHit] {"
         }
       ],
       "platformEvidence": {
@@ -21672,7 +21672,7 @@ const DATA = {
           "line": 1314,
           "symbol": "credRow",
           "note": "双击复制",
-          "text": "alert.addTextField { $0.placeholder = \"新密码 6~8 位数字\"; $0.keyboardType = .numberPad }"
+          "text": "private static let shortDateFormatter: DateFormatter = {"
         },
         {
           "platform": "ios",
@@ -21680,7 +21680,7 @@ const DATA = {
           "line": 1296,
           "symbol": "credRow",
           "note": "VoiceOver 拷贝动作",
-          "text": "private static let shortDateFormatter: DateFormatter = {"
+          "text": "if genOtp() {"
         }
       ],
       "platformEvidence": {
@@ -21743,7 +21743,7 @@ const DATA = {
           "line": 1246,
           "symbol": "credRow",
           "note": "pwdState == 2",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": "guard !pwd.isEmpty else {"
         },
         {
           "platform": "ios",
@@ -21751,7 +21751,7 @@ const DATA = {
           "line": 1248,
           "symbol": "credRow",
           "note": "isEarlyExpired",
-          "text": "// 包14/815 空态双按钮: 主\"添加密码\" + 次\"看看它如何工作\""
+          "text": "UINotificationFeedbackGenerator().notificationOccurred(.error)"
         },
         {
           "platform": "ios",
@@ -21759,7 +21759,7 @@ const DATA = {
           "line": 1255,
           "symbol": "credRow",
           "note": "预警指纹",
-          "text": ".buttonStyle(SecondaryActionStyle(fullWidth: false))"
+          "text": "UINotificationFeedbackGenerator().notificationOccurred(.success)"
         }
       ],
       "platformEvidence": {
@@ -27003,7 +27003,7 @@ const DATA = {
           "line": 1146,
           "symbol": "copyLastWeekDigest",
           "note": "toast 文案",
-          "text": "UIPasteboard.general.string = \"row=\" + r.key + \" · day=\" + r.dayKey"
+          "text": "Clip.set(\"row=\" + r.key + \" · day=\" + r.dayKey)"
         }
       ],
       "platformEvidence": {
@@ -28952,7 +28952,7 @@ const DATA = {
           "line": 534,
           "symbol": "setDefence",
           "note": "",
-          "text": "}"
+          "text": "let (m, sk) = try keys()"
         },
         {
           "platform": "apk",
@@ -31599,7 +31599,7 @@ const DATA = {
           "line": 175,
           "symbol": "versionLt",
           "note": "",
-          "text": "return digits.isEmpty ? nil : String(digits)"
+          "text": "for key in [\"application_version\", \"version\", \"fw_version\", \"firmware_version\"] {"
         },
         {
           "platform": "ios",
@@ -31607,7 +31607,7 @@ const DATA = {
           "line": 186,
           "symbol": "nextMac",
           "note": "",
-          "text": "}"
+          "text": "// 版本对比与降级判据整体静默失效。尾随改 `(_|\\.|$)`。"
         }
       ],
       "platformEvidence": {
@@ -40176,7 +40176,7 @@ const DATA = {
           "line": 320,
           "symbol": "exec",
           "note": "",
-          "text": "struct ExecResult { var frame: ZKProtocol.ParsedFrame; var rc: Int; var klvs: [ZKLV] }"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -40446,7 +40446,7 @@ const DATA = {
           "line": 290,
           "symbol": "HardwareService",
           "note": "网关段",
-          "text": "DB.saveGateway(rec)"
+          "text": "// 原先这里直接看 KLV#04：一次 rc=1(解密失败) 的回字里没有 04，于是返回空列表，"
         },
         {
           "platform": "ios",
@@ -40603,7 +40603,7 @@ const DATA = {
           "line": 235,
           "symbol": "request",
           "note": "写前忙判",
-          "text": "// 而 writeFrameHex 在 Task 外无条件执行 => 判为\"忙\"时帧**照样发出去**, 第二条命令的响应"
+          "text": "// 被第一条的 waiter 收下 = 错帧 (cmd08 批量 13 分片最危险)。这里同步判, 忙即不发。"
         }
       ],
       "platformEvidence": {
@@ -40680,7 +40680,7 @@ const DATA = {
           "line": 72,
           "symbol": "pidFor",
           "note": "钥匙串型号恒为 ZKBBV1",
-          "text": "// 网关: 旧记录从未落 pid (见 provisionGateway 的对拍勘误), pid=0 时按 GW 家族首项回落,"
+          "text": "do {"
         }
       ],
       "platformEvidence": {
@@ -40753,7 +40753,7 @@ const DATA = {
           "line": 308,
           "symbol": "rcKLV",
           "note": "",
-          "text": "0x15, 0x16, 0x18, 0x19, 0x20, 0x21, 0x22, 0x24,"
+          "text": "0x25, 0x41, 0x43, 0x44]"
         },
         {
           "platform": "ios",
@@ -40785,7 +40785,7 @@ const DATA = {
           "line": 313,
           "symbol": "extractRc",
           "note": "",
-          "text": "0x21: 3, 0x22: 3, 0x24: 3, 0x25: 3"
+          "text": "]"
         },
         {
           "platform": "ios",
@@ -40904,7 +40904,7 @@ const DATA = {
           "line": 142,
           "symbol": "RC_NAME",
           "note": "private val RC_NAME = mapOf(0 to \"已开锁\", ... 27 to \"您的门锁处于布防状态\")",
-          "text": "private val RC_NAME = mapOf("
+          "text": "*/"
         },
         {
           "platform": "ios",
@@ -40920,7 +40920,7 @@ const DATA = {
           "line": 153,
           "symbol": "RC_HINT",
           "note": "private val RC_HINT = mapOf(1 to ..., 3 to ..., 5 to ..., 6 to ..., 9 to ..., 11 to ..., 13 to ..., 21 to ..., 25 to ..., 27 to ...)",
-          "text": "private val RC_HINT = mapOf("
+          "text": "6 to \"开锁指令已绑定其他设备\", 7 to \"执行的操作不在指定的状态\", 8 to \"溢出\", 9 to \"时间误差过大\","
         },
         {
           "platform": "android",
@@ -40928,7 +40928,7 @@ const DATA = {
           "line": 170,
           "symbol": "rcText",
           "note": "fun rcText(rc: Int): String",
-          "text": "fun rcText(rc: Int): String = when {"
+          "text": "// **新写的**并且如实: 走到这里说明本机已经自动重取过一次令牌 (attempt 1→2), 所以"
         }
       ],
       "platformEvidence": {
@@ -41085,7 +41085,7 @@ const DATA = {
           "line": 110,
           "symbol": "buildEkey",
           "note": "",
-          "text": "static func buildEkey(_ cmd: UInt8, _ macHex: String,"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -41093,7 +41093,7 @@ const DATA = {
           "line": 118,
           "symbol": "buildEkey",
           "note": "包络字段拼接顺序",
-          "text": "return \"8800\" + HexKit.reversePairs(mac)"
+          "text": "let vt = validToSec ?? validTo2118"
         }
       ],
       "platformEvidence": {
@@ -41223,7 +41223,7 @@ const DATA = {
           "line": 195,
           "symbol": "parseResponse",
           "note": "cmd 字节位置：三种帧头均为字节 4",
-          "text": "results.append(ParsedFrame(ok: true, cmd: b[4], header: bodyOff, klvs: klvs, raw: hex))"
+          "text": "let klvHex = String(hex.dropFirst(bodyOff * 2).prefix(len * 2))"
         },
         {
           "platform": "android",
@@ -41231,7 +41231,7 @@ const DATA = {
           "line": 185,
           "symbol": "tokenFrame",
           "note": "fun tokenFrame(): String = frame(0x01, \"\")",
-          "text": "fun tokenFrame(): String = frame(0x01, \"\")"
+          "text": "else -> RC_HINT[rc] ?: RC_NAME[rc] ?: \"开锁失败 (错误码 $rc)\""
         },
         {
           "platform": "android",
@@ -41239,7 +41239,7 @@ const DATA = {
           "line": 192,
           "symbol": "statusFrame",
           "note": "fun statusFrame(): String = frame(0x03, \"\")",
-          "text": "fun statusFrame(): String = frame(0x03, \"\")"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -41384,7 +41384,7 @@ const DATA = {
           "line": 58,
           "symbol": "reversePairs",
           "note": "",
-          "text": "static func reversePairs(_ hex: String) -> String {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -41495,7 +41495,7 @@ const DATA = {
           "line": 94,
           "symbol": "parseKlv",
           "note": "while (off \u003c b.size) { key = b[off]; len = b[off+1]; ... }",
-          "text": "private fun parseKlv(hex: String): Map\u003cInt, String>? {"
+          "text": "for (off in orders) {"
         },
         {
           "platform": "android",
@@ -41503,7 +41503,7 @@ const DATA = {
           "line": 134,
           "symbol": "klvShape",
           "note": "f.klvs.entries.joinToString(\" \") { \"#\" + %02x(key) + \"=\" + (value.length/2) + \"B\" }",
-          "text": "fun klvShape(f: Frame): String ="
+          "text": "}"
         },
         {
           "platform": "android",
@@ -41511,7 +41511,7 @@ const DATA = {
           "line": 116,
           "symbol": "intHex",
           "note": "fun intHex(h: String): Int",
-          "text": "fun intHex(h: String): Int {"
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -41713,7 +41713,7 @@ const DATA = {
           "line": 101,
           "symbol": "macOrder",
           "note": "默认 .display",
-          "text": "static func macOrder(_ mac: String) -> MacOrder { macOrdersLock.withLock { $0[normMac(mac)] } ?? .display }"
+          "text": "/// 两份实现行为不同，是本仓「同一概念两处实现」的典型。"
         }
       ],
       "platformEvidence": {
@@ -42001,7 +42001,7 @@ const DATA = {
           "line": 255,
           "symbol": "parseAdv",
           "note": "",
-          "text": "static func parseAdv(_ advHex: String) -> AdvData? {"
+          "text": "var containMac: Int"
         },
         {
           "platform": "android",
@@ -42009,7 +42009,7 @@ const DATA = {
           "line": 216,
           "symbol": "parseAdv",
           "note": "if (manufacturer == null || manufacturer.size \u003c 10) return null; if (fc and 0x0c != 0x0c) return null",
-          "text": "fun parseAdv(manufacturer: ByteArray?, rssi: Int): Adv? {"
+          "text": "*/"
         },
         {
           "platform": "android",
@@ -42025,7 +42025,7 @@ const DATA = {
           "line": 256,
           "symbol": "parseAdv",
           "note": "range(of: \"98ed\")",
-          "text": "guard let range = advHex.range(of: \"98ed\") else { return nil }"
+          "text": "var dfuState: Int"
         },
         {
           "platform": "android",
@@ -42033,7 +42033,7 @@ const DATA = {
           "line": 230,
           "symbol": "normMac",
           "note": "fun normMac(m: String): String = m.replace(\":\", \"\").replace(\"-\", \"\").lowercase()",
-          "text": "fun normMac(m: String): String = m.replace(\":\", \"\").replace(\"-\", \"\").lowercase()"
+          "text": "val mac = StringBuilder(17)"
         },
         {
           "platform": "android",
@@ -42145,7 +42145,7 @@ const DATA = {
           "line": 180,
           "symbol": "unlockFrame",
           "note": "frame(0x04, ...)",
-          "text": "fun unlockFrame(ekeyHex: String): String {"
+          "text": "rc == -1 -> \"门锁回了帧但没带结果码, 无法确认这一趟 — 先看一眼门有没有开, 再重试\""
         },
         {
           "platform": "android",
@@ -42169,7 +42169,7 @@ const DATA = {
           "line": 185,
           "symbol": "tokenFrame",
           "note": "frame(0x01, \"\")",
-          "text": "fun tokenFrame(): String = frame(0x01, \"\")"
+          "text": "else -> RC_HINT[rc] ?: RC_NAME[rc] ?: \"开锁失败 (错误码 $rc)\""
         },
         {
           "platform": "android",
@@ -42177,7 +42177,7 @@ const DATA = {
           "line": 192,
           "symbol": "statusFrame",
           "note": "frame(0x03, \"\")",
-          "text": "fun statusFrame(): String = frame(0x03, \"\")"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -42287,7 +42287,7 @@ const DATA = {
           "line": 202,
           "symbol": "pidOf",
           "note": "pidOf 的文档注释（202-207）记录两套 pid 编号对照 7970 vs 16289",
-          "text": "/**"
+          "text": ""
         },
         {
           "platform": "android",
@@ -42343,7 +42343,7 @@ const DATA = {
           "line": 214,
           "symbol": "Adv",
           "note": "data class Adv(val pid: Int, val mac: String, val rssi: Int)",
-          "text": "data class Adv(val pid: Int, val mac: String, val rssi: Int)"
+          "text": "* 16289 就不是一个口径), 而二维码里的 p 抄的是 status 那一套 (iOS AndroidPair 写 kc.pid"
         }
       ],
       "platformEvidence": {
@@ -42516,7 +42516,7 @@ const DATA = {
           "line": 182,
           "symbol": "unlockFrame",
           "note": "klv(0x02, ekeyHex.lowercase())（ekey 原样写入）",
-          "text": "return frame(0x04, klv01 + klv(0x02, ekeyHex.lowercase()))"
+          "text": "// 无法确认\"并要调用方回读。两端口径本就不同 —— 开锁这一条不能赌\"当成成功\","
         }
       ],
       "platformEvidence": {
@@ -42964,7 +42964,7 @@ const DATA = {
           "line": 202,
           "symbol": "FrameAssembler",
           "note": "",
-          "text": "final class FrameAssembler {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -43050,7 +43050,7 @@ const DATA = {
           "line": 291,
           "symbol": "ProtoTime.localStr",
           "note": "",
-          "text": "static func localStr(_ sec: Int64) -> String {"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -43237,7 +43237,7 @@ const DATA = {
           "line": 769,
           "symbol": "pair",
           "note": "已有钥匙串拒绝覆盖",
-          "text": "}"
+          "text": "throw BLEErrorX.msg(\"锁已结束录入 (rc=24 录入超时: 两次按压之间超过 15 秒) — 已收 \\(presses.count)/\\(times) 次, 请重新开始\")"
         },
         {
           "platform": "ios",
@@ -43245,7 +43245,7 @@ const DATA = {
           "line": 800,
           "symbol": "pair",
           "note": "步骤 1/7 cmd23",
-          "text": "// 截断条数只在\"锁回来的这一页\"上有意义，所以记在拉日志的这里，不进 LogEntry 模型 (§10.46)："
+          "text": "log(\"warn\", \"删除复核失败: 指纹#\\(batchNumber) 仍存在于锁端 — 可能收到伪造回包\")"
         },
         {
           "platform": "ios",
@@ -43253,7 +43253,7 @@ const DATA = {
           "line": 817,
           "symbol": "pair",
           "note": "步骤 3/7 cmd05",
-          "text": "if let old = DB.keychain(m), !old.skey.isEmpty {"
+          "text": "if truncated > 0 {"
         },
         {
           "platform": "ios",
@@ -43261,7 +43261,7 @@ const DATA = {
           "line": 902,
           "symbol": "finishPairing",
           "note": "尾链 5~7 步",
-          "text": "// 这类必须去键盘重置 —— 文案与可续配那一族明确分开 (pairWarning(false, ...) 不追加续配承诺)。"
+          "text": "// 05 被锁拒收的原因既没进日志、也没进任何台账, 于是现场只能靠回包长度反推。"
         }
       ],
       "platformEvidence": {
@@ -43371,7 +43371,7 @@ const DATA = {
           "line": 630,
           "symbol": "fpStart",
           "note": "手工 injectToken",
-          "text": "/// 与配网时的整池写入（pair() 里 20/批 + 首批带 0xFFFFFFFF 哨兵）是两条路径："
+          "text": "func pwdClear() async throws {"
         },
         {
           "platform": "ios",
@@ -43395,7 +43395,7 @@ const DATA = {
           "line": 638,
           "symbol": "fpStart",
           "note": "KLV 0x04..0x07 解包",
-          "text": "guard let c = ZKCmdBuilder.cmd08SyncPinsBatch(m, sk, [], delPins: batch) else {"
+          "text": "///"
         },
         {
           "platform": "ios",
@@ -43507,7 +43507,7 @@ const DATA = {
           "line": 263,
           "symbol": "parseAdv",
           "note": "guard (frameCtrl & 0x0c) == 0x0c",
-          "text": "guard (frameCtrl & 0x0c) == 0x0c else { return nil } // Java 门禁: containPid(bit2)+containMac(bit3)"
+          "text": "let seg = String(advHex.dropFirst(from + 4)) // seg[0]=fc seg[1]=b3 seg[2..3]=pid seg[4..9]=MAC"
         },
         {
           "platform": "ios",
@@ -43515,7 +43515,7 @@ const DATA = {
           "line": 280,
           "symbol": "parseAdv",
           "note": "五个位的解包",
-          "text": "resetStatus: (frameCtrl & 0x01) != 0 ? 1 : 0,"
+          "text": "return AdvData("
         }
       ],
       "platformEvidence": {
@@ -43577,7 +43577,7 @@ const DATA = {
           "line": 268,
           "symbol": "parseAdv",
           "note": "macDisplay 构造",
-          "text": "let macRaw = String(seg.dropFirst(8).prefix(12))"
+          "text": "let pidLo = Int(HexKit.bytes(String(seg.dropFirst(4).prefix(2)))[0])"
         },
         {
           "platform": "ios",
@@ -43593,7 +43593,7 @@ const DATA = {
           "line": 238,
           "symbol": "lockMac",
           "note": "",
-          "text": "static func lockMac(fromAdv adv: AdvData) -> String? {"
+          "text": "/// 单独立一个口的原因: 2026-10-17 真机配对在 PIN 批次第 1 批回 rc=12「mac地址不正确」——"
         }
       ],
       "platformEvidence": {
@@ -44824,7 +44824,7 @@ const DATA = {
           "line": 426,
           "symbol": "EchoProbe",
           "note": "",
-          "text": "// ---------- 连通探测 (cmd12 回声) ----------"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -44832,7 +44832,7 @@ const DATA = {
           "line": 457,
           "symbol": "sendEcho",
           "note": "",
-          "text": "let t0 = Date()"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -44840,7 +44840,7 @@ const DATA = {
           "line": 461,
           "symbol": "sendEcho",
           "note": "matched 判定",
-          "text": "let echo = (r.klvs.first { $0.key == 0x01 }?.val ?? \"\").lowercased()"
+          "text": "let r = try await exec(ZKCmdBuilder.cmd12Echo(valueHex), needToken: false, retries: 1)"
         }
       ],
       "platformEvidence": {
@@ -44907,7 +44907,7 @@ const DATA = {
           "line": 738,
           "symbol": "fpDelete",
           "note": "",
-          "text": "if collectionDone() { break }"
+          "text": "while Date() \u003c hardDeadline {"
         }
       ],
       "platformEvidence": {
@@ -44963,7 +44963,7 @@ const DATA = {
           "line": 626,
           "symbol": "fpStart",
           "note": "",
-          "text": "// ---------- PIN 池单条删除 (cmd08 delPins) —— 撤销手机钥匙要用 ----------"
+          "text": "log(\"warn\", \"删除复核异常: 凭证#\\(alias) 仍在台账里\")"
         },
         {
           "platform": "ios",
@@ -44971,7 +44971,7 @@ const DATA = {
           "line": 710,
           "symbol": "fpStart",
           "note": "rc 分类报错",
-          "text": "lastFrameAt = Date()"
+          "text": "/// 收尾判据只有一条: 收满 times 次干净按压。没有任何\"提前收尾\"的合法信号。"
         },
         {
           "platform": "ios",
@@ -44979,7 +44979,7 @@ const DATA = {
           "line": 733,
           "symbol": "fpConfirm",
           "note": "",
-          "text": "log(\"warn\", \"13 录指纹中链路断开或任务取消, 提前结束\")"
+          "text": "while frames.isEmpty && attemptsLeft > 0 {"
         }
       ],
       "platformEvidence": {
@@ -45049,7 +45049,7 @@ const DATA = {
           "line": 746,
           "symbol": "getLogs",
           "note": "",
-          "text": "} else if silent > Double(idleAfterPressMs) / 1000.0 {"
+          "text": "if stopRc != nil { break }"
         },
         {
           "platform": "ios",
@@ -45134,7 +45134,7 @@ const DATA = {
           "line": 543,
           "symbol": "pwdAdd",
           "note": "",
-          "text": "let (m, sk) = try keys()"
+          "text": "/// 且重试也不会自愈，所以把 needToken 写出来而不是靠默认值。"
         },
         {
           "platform": "ios",
@@ -45142,7 +45142,7 @@ const DATA = {
           "line": 558,
           "symbol": "pwdAdd",
           "note": "0B 失败只 warn",
-          "text": "}"
+          "text": "try await execOk(ZKCmdBuilder.cmd22EnableDfu(m, sk, param), needToken: true, retries: 1)"
         },
         {
           "platform": "ios",
@@ -45150,7 +45150,7 @@ const DATA = {
           "line": 563,
           "symbol": "pwdAdd",
           "note": "凭证#N 已添加",
-          "text": "// JS: val.length >= 2, raw = len>=4 ? substr(0,4) : val → LE 解析"
+          "text": "// 0A 响应 KLV#04 = alias (LE 2B)"
         }
       ],
       "platformEvidence": {
@@ -45219,7 +45219,7 @@ const DATA = {
           "line": 595,
           "symbol": "pwdClear",
           "note": "",
-          "text": "// alias = 0 时删的那一步是空操作 (0 = 不指定)，于是锁里**多出一条密码**、台账那边却按\"改写\"记账，"
+          "text": "func pwdModify(alias: Int, pwd: String, validFrom: String, validTo: String) async throws -> Int {"
         },
         {
           "platform": "ios",
@@ -45289,7 +45289,7 @@ const DATA = {
           "line": 582,
           "symbol": "pwdDelete",
           "note": "",
-          "text": "// 第二步: 0B 设置有效期 (App 两步链)"
+          "text": "throw BLEErrorX.msg(\"锁已接受写入，但没有回凭证编号 (0A 响应缺 KLV#04) — 这条密码本机不登记，请到锁内记录核对或重加\")"
         },
         {
           "platform": "ios",
@@ -45297,7 +45297,7 @@ const DATA = {
           "line": 589,
           "symbol": "pwdDelete",
           "note": "错误文案指向「清空密码」",
-          "text": "log(\"info\", \"凭证#\\(alias) 已添加 (0A+0B)\")"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -45359,7 +45359,7 @@ const DATA = {
           "line": 567,
           "symbol": "pwdModify",
           "note": "",
-          "text": "}"
+          "text": "let raw = k.val.count >= 4 ? String(k.val.prefix(4)) : k.val"
         },
         {
           "platform": "ios",
@@ -45367,7 +45367,7 @@ const DATA = {
           "line": 572,
           "symbol": "pwdModify",
           "note": "alias > 0 守卫",
-          "text": "guard let alias = aliasFrom(r) else {"
+          "text": "let (m, sk) = try keys()"
         },
         {
           "platform": "ios",
@@ -45375,7 +45375,7 @@ const DATA = {
           "line": 579,
           "symbol": "pwdModify",
           "note": "锁端新编号提示",
-          "text": "// (见上面 01 无令牌那条)，这里同一条。"
+          "text": "// 那一帧而照样过 execOk ⇒ **屏上说已删除，密码在锁里还活着**。"
         }
       ],
       "platformEvidence": {
@@ -45529,7 +45529,7 @@ const DATA = {
           "line": 394,
           "symbol": "keys",
           "note": "",
-          "text": "f.klvs.isEmpty ? \"(无 KLV)\" : f.klvs.map { String(format: \"#%02x=%dB\", $0.key, $0.vlen) }.joined(separator: \" \")"
+          "text": "/// (锁压根没回密钥) 比任何猜测都有用, 而值里可能含 skey/ekey/PIN 明文 (不得进日志)。"
         },
         {
           "platform": "ios",
@@ -45537,7 +45537,7 @@ const DATA = {
           "line": 515,
           "symbol": "setSilent",
           "note": "",
-          "text": "return (before, after)"
+          "text": "log(\"warn\", \"校时回读失败 — 无法确认锁钟已更新\")"
         },
         {
           "platform": "ios",
@@ -45545,7 +45545,7 @@ const DATA = {
           "line": 521,
           "symbol": "setValidationMode",
           "note": "",
-          "text": "/// cmd 20 验证模式 (A/B)。入口在设置-安全模式说明 (拍板 #2, 第六十六批)：**只允许 A→B 变严**,"
+          "text": "try await execOk(ZKCmdBuilder.cmd18Volume(m, sk, on))"
         },
         {
           "platform": "ios",
@@ -45553,7 +45553,7 @@ const DATA = {
           "line": 525,
           "symbol": "setAutoLock",
           "note": "",
-          "text": "try await execOk(ZKCmdBuilder.cmd20ValidationMode(m, sk, bMode))"
+          "text": "func setValidationMode(_ bMode: Bool) async throws {"
         }
       ],
       "platformEvidence": {
@@ -45628,7 +45628,7 @@ const DATA = {
           "line": 489,
           "symbol": "syncTime",
           "note": "",
-          "text": "/// rc=0 只证明命令被接收, 不证明锁钟变了。"
+          "text": "/// 全看这个钟, 所以这个空操作会把后面每一类命令都拖进时间问题里。"
         },
         {
           "platform": "ios",
@@ -45636,7 +45636,7 @@ const DATA = {
           "line": 495,
           "symbol": "syncTime",
           "note": "只报告偏差不写回",
-          "text": "if let lockSec = try? await readLockTime() {"
+          "text": "let now = ZKProtocol.nowProtoSeconds()"
         },
         {
           "platform": "ios",
@@ -45644,7 +45644,7 @@ const DATA = {
           "line": 507,
           "symbol": "syncTime",
           "note": ">60s 视为未写入",
-          "text": "// >60s 不可能是秒级回读误差 (即使固件把锁钟取整到分钟也只有几十秒) ⇒ 当成\"压根没写进去\"报错,"
+          "text": "after = Int(lockSec - ZKProtocol.nowProtoSeconds())"
         },
         {
           "platform": "ios",
@@ -45652,7 +45652,7 @@ const DATA = {
           "line": 500,
           "symbol": "syncTime",
           "note": "DB.saveSyncTime",
-          "text": "}"
+          "text": "} else {"
         }
       ],
       "platformEvidence": {
@@ -45728,7 +45728,7 @@ const DATA = {
           "line": 465,
           "symbol": "unlock",
           "note": "",
-          "text": ""
+          "text": "matched: !echo.isEmpty && echo == valueHex.lowercased())"
         },
         {
           "platform": "ios",
@@ -45736,7 +45736,7 @@ const DATA = {
           "line": 469,
           "symbol": "unlock",
           "note": "ekey 优先",
-          "text": "guard let kc = DB.keychain(curMac), !kc.skey.isEmpty else { throw BLEErrorX.msg(\"无钥匙串, 无法开锁\") }"
+          "text": "func unlock(mac: String? = nil, pinDec: String? = nil) async throws -> Int {"
         },
         {
           "platform": "ios",
@@ -45744,7 +45744,7 @@ const DATA = {
           "line": 476,
           "symbol": "unlock",
           "note": "空凭证中止",
-          "text": "cred = ZKCmdBuilder.buildEkeyOpen(kc.skey.lowercased(), kc.mac.lowercased(), pin)"
+          "text": "let pin = pinDec ?? kc.pins.first"
         }
       ],
       "platformEvidence": {
@@ -45831,7 +45831,7 @@ const DATA = {
           "line": 188,
           "symbol": "ensureToken",
           "note": "",
-          "text": "}"
+          "text": "log(\"info\", \"刷新会话令牌 (cmd 01)\")"
         },
         {
           "platform": "android",
@@ -45847,7 +45847,7 @@ const DATA = {
           "line": 185,
           "symbol": "tokenFrame",
           "note": "frame(0x01, \"\")",
-          "text": "fun tokenFrame(): String = frame(0x01, \"\")"
+          "text": "else -> RC_HINT[rc] ?: RC_NAME[rc] ?: \"开锁失败 (错误码 $rc)\""
         },
         {
           "platform": "apk",
@@ -45887,7 +45887,7 @@ const DATA = {
           "line": 189,
           "symbol": "ensureToken",
           "note": "缺 KLV#02 的处理",
-          "text": "log(\"info\", \"刷新会话令牌 (cmd 01)\")"
+          "text": "let f = try await request(ZKCmdBuilder.cmd01Session(), cmd: 0x01, needToken: false, retries: 3)"
         },
         {
           "platform": "android",
@@ -46032,7 +46032,7 @@ const DATA = {
           "line": 129,
           "symbol": "readonlyCmds",
           "note": "含 0x02",
-          "text": "static let readonlyCmds: Set\u003cUInt8> = [0x01, 0x02, 0x03, 0x12, 0x16, 0x23, 0x30, 0x38]"
+          "text": "// ---------- 试验模式硬护栏 (JS kernel/protocol.js:19-27 READONLY_CMDS / WRITE_CMDS_BLOCKED / assertReadOnly) ----------"
         },
         {
           "platform": "ios",
@@ -46165,7 +46165,7 @@ const DATA = {
           "line": 407,
           "symbol": "getStatus",
           "note": "",
-          "text": "if let kc, !kc.skey.isEmpty {"
+          "text": "let kc = DB.keychain(curMac)"
         },
         {
           "platform": "ios",
@@ -46189,7 +46189,7 @@ const DATA = {
           "line": 208,
           "symbol": "pidOf",
           "note": "fun pidOf(f: Frame): Int = f.klvs[0x34]?.let { u32le(it) } ?: 0",
-          "text": "fun pidOf(f: Frame): Int = f.klvs[0x34]?.let { u32le(it) } ?: 0"
+          "text": "return v"
         },
         {
           "platform": "apk",
@@ -46213,7 +46213,7 @@ const DATA = {
           "line": 409,
           "symbol": "getStatus",
           "note": "无 skey 走明文",
-          "text": "r = try await exec(ZKCmdBuilder.cmd03StatusWrap(m, sk))"
+          "text": "if let kc, !kc.skey.isEmpty {"
         },
         {
           "platform": "android",
@@ -46391,7 +46391,7 @@ const DATA = {
           "line": 477,
           "symbol": "unlock",
           "note": "retries: 2",
-          "text": "}"
+          "text": "guard let pin, !pin.isEmpty else { throw BLEErrorX.msg(\"无 PIN 可用: 需要 ekey 或 PIN 才能签发开锁凭证\") }"
         },
         {
           "platform": "android",
@@ -46399,7 +46399,7 @@ const DATA = {
           "line": 180,
           "symbol": "unlockFrame",
           "note": "fun unlockFrame(ekeyHex: String): String { val klv01 = klv(0x01, \"0\".repeat(32)); return frame(0x04, klv01 + klv(0x02, ekeyHex.lowercase())) }",
-          "text": "fun unlockFrame(ekeyHex: String): String {"
+          "text": "rc == -1 -> \"门锁回了帧但没带结果码, 无法确认这一趟 — 先看一眼门有没有开, 再重试\""
         },
         {
           "platform": "android",
@@ -46431,7 +46431,7 @@ const DATA = {
           "line": 478,
           "symbol": "unlock",
           "note": "return r.rc // 0 成功; 22 双验继续",
-          "text": "guard !cred.isEmpty else { throw BLEErrorX.msg(\"开锁凭证为空 (ekey/PIN 签发失败), 已中止下发\") }"
+          "text": "cred = ZKCmdBuilder.buildEkeyOpen(kc.skey.lowercased(), kc.mac.lowercased(), pin)"
         },
         {
           "platform": "ios",
@@ -46439,7 +46439,7 @@ const DATA = {
           "line": 465,
           "symbol": "func unlock(mac:pinDec:)",
           "note": "",
-          "text": ""
+          "text": "matched: !echo.isEmpty && echo == valueHex.lowercased())"
         },
         {
           "platform": "android",
@@ -46455,7 +46455,7 @@ const DATA = {
           "line": 139,
           "symbol": "rc",
           "note": "fun rc(f: Frame): Int = f.klvs[0x03]?.let { intHex(it) } ?: -1",
-          "text": "fun rc(f: Frame): Int = f.klvs[0x03]?.let { intHex(it) } ?: -1"
+          "text": "/**"
         }
       ],
       "platformEvidence": {
@@ -46593,7 +46593,7 @@ const DATA = {
           "line": 828,
           "symbol": "pair",
           "note": "needToken: true",
-          "text": "progress(\"发现上次中断的配网记录 → 先试续配 (不重新换钥)\")"
+          "text": "// 把落盘的字节序先灌进协议层: 上次裁定的结果直接作为探针的第一个候选 (少一个来回),"
         },
         {
           "platform": "apk",
@@ -46609,7 +46609,7 @@ const DATA = {
           "line": 829,
           "symbol": "pair",
           "note": "rc5 = extractRc(0x05, ...)",
-          "text": "log(\"info\", \"续配尝试: 用留存密钥直接走尾链 (留存于 \\(pend.pairedAt))\")"
+          "text": "// 也让\"续配\"这条路径在重启后的第一帧就按已知顺序成帧。"
         },
         {
           "platform": "ios",
@@ -46617,7 +46617,7 @@ const DATA = {
           "line": 309,
           "symbol": "rcKLV",
           "note": "0x05: 1",
-          "text": "0x25, 0x41, 0x43, 0x44]"
+          "text": "private static let rcKLV: [UInt8: Int] = ["
         }
       ],
       "platformEvidence": {
@@ -46720,7 +46720,7 @@ const DATA = {
           "line": 910,
           "symbol": "finishPairing",
           "note": "batchSize = 20",
-          "text": "// 尾链走完再提升为正式钥匙串 (saveKeychain + clearPendingPair)。"
+          "text": "//  只报\"已中止\", 读起来像\"锁没被动过\"; 那个旗子现已全部换成\"本机有没有留存密钥\"，"
         },
         {
           "platform": "apk",
@@ -46744,7 +46744,7 @@ const DATA = {
           "line": 918,
           "symbol": "finishPairing",
           "note": "首批带 ffffffff",
-          "text": "} else {"
+          "text": "\"换钥回显不匹配 (本地/回显长度 \\(skey.count)/\\(echo.val.count)) — 锁内密钥已是本机读不懂的一份, 无法续配; 请在门锁键盘上重置后重新配网\"))"
         }
       ],
       "platformEvidence": {
@@ -46857,7 +46857,7 @@ const DATA = {
           "line": 545,
           "symbol": "pwdAdd",
           "note": "",
-          "text": "log(\"info\", \"布防已下发 (25): control=\\(control) start=\\(startSec) end=\\(endSec)\")"
+          "text": "let (m, sk) = try keys()"
         },
         {
           "platform": "ios",
@@ -47021,7 +47021,7 @@ const DATA = {
           "line": 558,
           "symbol": "pwdAdd",
           "note": "第二步 0B，失败不影响添加",
-          "text": "}"
+          "text": "try await execOk(ZKCmdBuilder.cmd22EnableDfu(m, sk, param), needToken: true, retries: 1)"
         },
         {
           "platform": "ios",
@@ -47164,7 +47164,7 @@ const DATA = {
           "line": 130,
           "symbol": "writeCmdsBlocked",
           "note": "含 0x0c",
-          "text": "static let writeCmdsBlocked: [UInt8] = [0x04, 0x05, 0x08, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x13, 0x14, 0x15,"
+          "text": "// Swift 侧此前整块缺失: 小程序用它在真机上做只读试验, 保证任何写入/危险命令 (05 换钥会擦 flash 域 7+8 作废旧钥匙、"
         },
         {
           "platform": "ios",
@@ -47259,7 +47259,7 @@ const DATA = {
           "line": 130,
           "symbol": "writeCmdsBlocked",
           "note": "含 0x0d",
-          "text": "static let writeCmdsBlocked: [UInt8] = [0x04, 0x05, 0x08, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x13, 0x14, 0x15,"
+          "text": "// Swift 侧此前整块缺失: 小程序用它在真机上做只读试验, 保证任何写入/危险命令 (05 换钥会擦 flash 域 7+8 作废旧钥匙、"
         },
         {
           "platform": "ios",
@@ -47367,7 +47367,7 @@ const DATA = {
           "line": 499,
           "symbol": "syncTime",
           "note": "",
-          "text": "log(\"warn\", \"读锁钟失败 (不影响下发: 0E 用手机当前时间)\")"
+          "text": "if before != 0 { log(\"info\", \"校时前锁钟比手机\\(before > 0 ? \"快\" : \"慢\") \\(abs(before))s\") }"
         },
         {
           "platform": "apk",
@@ -47383,7 +47383,7 @@ const DATA = {
           "line": 489,
           "symbol": "func syncTime()",
           "note": "",
-          "text": "/// rc=0 只证明命令被接收, 不证明锁钟变了。"
+          "text": "/// 全看这个钟, 所以这个空操作会把后面每一类命令都拖进时间问题里。"
         }
       ],
       "platformEvidence": {
@@ -47480,7 +47480,7 @@ const DATA = {
           "line": 457,
           "symbol": "sendEcho",
           "note": "retries: 1",
-          "text": "let t0 = Date()"
+          "text": ""
         },
         {
           "platform": "apk",
@@ -47496,7 +47496,7 @@ const DATA = {
           "line": 459,
           "symbol": "sendEcho",
           "note": "KLV#01 回显比对",
-          "text": "let r = try await exec(ZKCmdBuilder.cmd12Echo(valueHex), needToken: false, retries: 1)"
+          "text": "let t0 = Date()"
         }
       ],
       "platformEvidence": {
@@ -47593,7 +47593,7 @@ const DATA = {
           "line": 735,
           "symbol": "fpConfirm",
           "note": "",
-          "text": "break"
+          "text": "try await ble.writeFrameHex(hex)"
         },
         {
           "platform": "ios",
@@ -47721,7 +47721,7 @@ const DATA = {
           "line": 740,
           "symbol": "fpDelete",
           "note": "",
-          "text": "if frames.isEmpty {"
+          "text": "// 期间锁已被人拿走/电量耗尽也不知情, collector 也一直被占 (新会话的 cmd13 帧会被吞)"
         },
         {
           "platform": "ios",
@@ -47847,7 +47847,7 @@ const DATA = {
           "line": 748,
           "symbol": "getLogs",
           "note": "",
-          "text": "// 说明锁已经退出录入态 —— 再按就是普通开锁验证 (会听到\"验证失败\")。"
+          "text": "let silent = Date().timeIntervalSince(lastFrameAt)"
         },
         {
           "platform": "ios",
@@ -47959,7 +47959,7 @@ const DATA = {
           "line": 515,
           "symbol": "setSilent",
           "note": "",
-          "text": "return (before, after)"
+          "text": "log(\"warn\", \"校时回读失败 — 无法确认锁钟已更新\")"
         },
         {
           "platform": "apk",
@@ -48088,7 +48088,7 @@ const DATA = {
           "line": 529,
           "symbol": "setZotp",
           "note": "",
-          "text": "try await execOk(ZKCmdBuilder.cmd24AutoLock(m, sk, interval))"
+          "text": "func setAutoLock(_ interval: Int) async throws {"
         },
         {
           "platform": "ios",
@@ -48201,7 +48201,7 @@ const DATA = {
           "line": 521,
           "symbol": "setValidationMode",
           "note": "",
-          "text": "/// cmd 20 验证模式 (A/B)。入口在设置-安全模式说明 (拍板 #2, 第六十六批)：**只允许 A→B 变严**,"
+          "text": "try await execOk(ZKCmdBuilder.cmd18Volume(m, sk, on))"
         },
         {
           "platform": "ios",
@@ -48310,7 +48310,7 @@ const DATA = {
           "line": 959,
           "symbol": "finishPairing",
           "note": "",
-          "text": "let batches = (pins.count + batchSize - 1) / batchSize"
+          "text": "log(\"warn\", \"清掉一份 MAC 顺序相反的幽灵台账 (\\(twin)) — 旧版把广播线上序当锁 MAC 留下的\")"
         },
         {
           "platform": "apk",
@@ -48516,7 +48516,7 @@ const DATA = {
           "line": 801,
           "symbol": "pair",
           "note": "",
-          "text": "// 不记就等于\"有一条记录的时间/类型看着怪\"永远解释不清，而它其实是帧被截半条。"
+          "text": "throw BLEErrorX.msg(\"门锁回包说已删除，但重读发现这枚指纹还在。可能有人在伪造回包。\")"
         },
         {
           "platform": "apk",
@@ -48532,7 +48532,7 @@ const DATA = {
           "line": 803,
           "symbol": "pair",
           "note": "way & 2 != 0 门禁",
-          "text": "if truncated > 0 {"
+          "text": "log(\"info\", \"指纹#\\(batchNumber) 已删除 (已重读复核)\")"
         }
       ],
       "platformEvidence": {
@@ -48626,7 +48626,7 @@ const DATA = {
           "line": 527,
           "symbol": "setAutoLock",
           "note": "",
-          "text": "func setAutoLock(_ interval: Int) async throws {"
+          "text": "try await execOk(ZKCmdBuilder.cmd20ValidationMode(m, sk, bMode))"
         },
         {
           "platform": "apk",
@@ -48811,7 +48811,7 @@ const DATA = {
           "line": 292,
           "symbol": "readGatewayState",
           "note": "网关侧只用 38/31/35",
-          "text": "return st"
+          "text": "let rc = rcOf(f)"
         },
         {
           "platform": "apk",
@@ -48899,7 +48899,7 @@ const DATA = {
           "line": 268,
           "symbol": "cmd31GWSetWifi",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -48907,7 +48907,7 @@ const DATA = {
           "line": 351,
           "symbol": "provisionGateway",
           "note": "timeoutMs: 10000",
-          "text": "rec.ssid = st.ssid"
+          "text": "try await ble.connect(deviceId: deviceId)"
         },
         {
           "platform": "apk",
@@ -48923,7 +48923,7 @@ const DATA = {
           "line": 352,
           "symbol": "provisionGateway",
           "note": "errCodeOf 取 KLV#01",
-          "text": "DB.saveGateway(rec)"
+          "text": "connectedTargetId = deviceId   // 否则后续 readGatewayState→connectTarget 会自断重连,"
         },
         {
           "platform": "ios",
@@ -48931,7 +48931,7 @@ const DATA = {
           "line": 280,
           "symbol": "cmd35GWReboot",
           "note": "",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -48939,7 +48939,7 @@ const DATA = {
           "line": 265,
           "symbol": "cmd38GWStatus",
           "note": "",
-          "text": "// ---- 网关 (FE90 服务; 87 帧明文 KLV, needToken=false) ----"
+          "text": "for m in lockMacList { v += HexKit.reversePairs(m.replacingOccurrences(of: \":\", with: \"\").lowercased()) }"
         }
       ],
       "platformEvidence": {
@@ -49038,7 +49038,7 @@ const DATA = {
           "line": 276,
           "symbol": "cmd32GWSetIot",
           "note": "",
-          "text": "}"
+          "text": "+ ZKProtocol.buildKLV(0x03, HexKit.hexPair(UInt32(truncatingIfNeeded: authMode)))"
         },
         {
           "platform": "ios",
@@ -49046,7 +49046,7 @@ const DATA = {
           "line": 324,
           "symbol": "provisionGateway",
           "note": "配网链只用 38/31/35",
-          "text": "var mac = \"\""
+          "text": "log(\"网关状态: rom \\(st.romVer), ssid \\(st.ssid), 联网 \\(st.netState == 1 ? \"是\" : \"否\")\")"
         },
         {
           "platform": "apk",
@@ -49134,7 +49134,7 @@ const DATA = {
           "line": 280,
           "symbol": "cmd35GWReboot",
           "note": "",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -49142,7 +49142,7 @@ const DATA = {
           "line": 355,
           "symbol": "provisionGateway",
           "note": "",
-          "text": "return rec"
+          "text": "// pid 恒为 Gateway.pid 默认值 0 ⇒ 缓存 deviceId 失效后 pidFor 返回 0, scanForPID 永不命中,"
         },
         {
           "platform": "apk",
@@ -49158,7 +49158,7 @@ const DATA = {
           "line": 367,
           "symbol": "rebootGateway",
           "note": "",
-          "text": "guard let k = f.klvs.first(where: { $0.key == 0x01 }) else { return 0 }"
+          "text": "var rec = DB.gateway(mac) ?? Gateway(mac: mac)"
         }
       ],
       "platformEvidence": {
@@ -49243,7 +49243,7 @@ const DATA = {
           "line": 265,
           "symbol": "cmd38GWStatus",
           "note": "",
-          "text": "// ---- 网关 (FE90 服务; 87 帧明文 KLV, needToken=false) ----"
+          "text": "for m in lockMacList { v += HexKit.reversePairs(m.replacingOccurrences(of: \":\", with: \"\").lowercased()) }"
         },
         {
           "platform": "ios",
@@ -49251,7 +49251,7 @@ const DATA = {
           "line": 303,
           "symbol": "parseGWStatus",
           "note": "",
-          "text": "case 0x03:"
+          "text": "var i = h.startIndex"
         },
         {
           "platform": "apk",
@@ -49365,7 +49365,7 @@ const DATA = {
           "line": 238,
           "symbol": "writeDongleKey",
           "note": "",
-          "text": "if rc != 0 {"
+          "text": "return s"
         },
         {
           "platform": "apk",
@@ -49381,7 +49381,7 @@ const DATA = {
           "line": 250,
           "symbol": "deleteDongleKey",
           "note": "空 ekey = 删除",
-          "text": "if rc != 0 { throw BLEErrorX.msg(StatusParser.rcMessage(rc)) }"
+          "text": "return \"\\(v(4)).\\(v(2)).\\(v(0))\""
         },
         {
           "platform": "ios",
@@ -49389,7 +49389,7 @@ const DATA = {
           "line": 252,
           "symbol": "cmd44GetEkeyInfo",
           "note": "",
-          "text": "}"
+          "text": "+ ZKProtocol.buildKLV(0x02, HexKit.hexPair(UInt32(truncatingIfNeeded: type)))"
         }
       ],
       "platformEvidence": {
@@ -49484,7 +49484,7 @@ const DATA = {
           "line": 258,
           "symbol": "cmd43KeychainStatus",
           "note": "",
-          "text": "}"
+          "text": "// 2026-10-14: 去掉强解包 (空 = 查全部钥匙, 与旧口径一致), 并把剥冒号/小写收在前一行。"
         },
         {
           "platform": "ios",
@@ -49492,7 +49492,7 @@ const DATA = {
           "line": 174,
           "symbol": "readDongleState",
           "note": "恒传 []",
-          "text": "// 钥匙串返回码在 KLV#03 (vendor keychain.js 的 parseKCStatus 同一口径)。原先这里从不看 rc:"
+          "text": "w.cont.resume(throwing: BLEErrorX.code(.responseTimeout))"
         },
         {
           "platform": "apk",
@@ -49508,7 +49508,7 @@ const DATA = {
           "line": 180,
           "symbol": "readDongleState",
           "note": "rc 门禁",
-          "text": "if rc > 0 {"
+          "text": "return"
         }
       ],
       "platformEvidence": {
@@ -49594,7 +49594,7 @@ const DATA = {
           "line": 252,
           "symbol": "cmd44GetEkeyInfo",
           "note": "",
-          "text": "}"
+          "text": "+ ZKProtocol.buildKLV(0x02, HexKit.hexPair(UInt32(truncatingIfNeeded: type)))"
         },
         {
           "platform": "ios",
@@ -49602,7 +49602,7 @@ const DATA = {
           "line": 256,
           "symbol": "dongleKeys",
           "note": "",
-          "text": "// 只在明确非 0 时拒绝，帧里没带 (-1) 照常按读数处理。"
+          "text": "let vf = ZKCmdBuilder.protoSecU32(\"2010-01-01 00:00:00\")"
         },
         {
           "platform": "apk",
@@ -49618,7 +49618,7 @@ const DATA = {
           "line": 262,
           "symbol": "dongleKeys",
           "note": "rc>0 拒绝，勿误报空",
-          "text": "// 现在只保留 parseEkeyMacs 一份，这里直接调它 —— 改一处就够，不会一处改了一处没改。"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -49699,7 +49699,7 @@ const DATA = {
           "line": 118,
           "symbol": "buildEkey",
           "note": "",
-          "text": "return \"8800\" + HexKit.reversePairs(mac)"
+          "text": "let vt = validToSec ?? validTo2118"
         },
         {
           "platform": "ios",
@@ -49784,7 +49784,7 @@ const DATA = {
           "line": 115,
           "symbol": "buildEkey",
           "note": "let vt = validToSec ?? validTo2118",
-          "text": "let vt = validToSec ?? validTo2118"
+          "text": "validToSec: UInt32? = nil,"
         }
       ],
       "platformEvidence": {
@@ -49852,7 +49852,7 @@ const DATA = {
           "line": 142,
           "symbol": "wrapFrame",
           "note": "",
-          "text": "static func wrapFrame(_ cmd: UInt8, _ macHex: String, _ skeyHex: String, _ bodyHex: String, _ klvKey: Int,"
+          "text": "/// 密文管理面的**成帧收口**: wrapEnc 失败 (skey 非 16B / CCCrypt 失败 → 空密文) 时整帧返回 \"\"。"
         },
         {
           "platform": "ios",
@@ -49860,7 +49860,7 @@ const DATA = {
           "line": 148,
           "symbol": "wrapEnc",
           "note": "",
-          "text": "static func wrapEnc(_ cmd: UInt8, _ macHex: String, _ skeyHex: String, _ bodyHex: String, _ klvKey: Int,"
+          "text": "return enc.isEmpty ? \"\" : buildFrame(cmd, enc, header: 8)"
         },
         {
           "platform": "ios",
@@ -49868,7 +49868,7 @@ const DATA = {
           "line": 155,
           "symbol": "wrapEnc",
           "note": "cipher.isEmpty ? \"\" : buildKLV(...)",
-          "text": "return cipher.isEmpty ? \"\" : buildKLV(klvKey, cipher)"
+          "text": "// AESKit 在 skey 非 16B / CCCrypt 失败时返回 \"\" (JS crypto.js 是 throw)。"
         }
       ],
       "platformEvidence": {
@@ -50016,7 +50016,7 @@ const DATA = {
           "line": 212,
           "symbol": "FrameAssembler.push",
           "note": "let len = HexKit.readU16LE(buf, byteOffset: 2)",
-          "text": "let len = HexKit.readU16LE(buf, byteOffset: 2)"
+          "text": "guard let idx = buf.range(of: \"87\") else { buf = \"\"; break }"
         }
       ],
       "platformEvidence": {
@@ -50083,7 +50083,7 @@ const DATA = {
           "line": 181,
           "symbol": "parseResponse",
           "note": "",
-          "text": "guard hex.count >= 14 else { return ParsedFrame(ok: false, cmd: 0, header: 0, klvs: [], raw: hex) }"
+          "text": "var raw: String"
         },
         {
           "platform": "android",
@@ -50091,7 +50091,7 @@ const DATA = {
           "line": 77,
           "symbol": "parse",
           "note": "fun parse(hexIn: String): Frame?",
-          "text": "fun parse(hexIn: String): Frame? {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -50099,7 +50099,7 @@ const DATA = {
           "line": 186,
           "symbol": "parseResponse",
           "note": "versionByte 0x01 优先 7B 试切",
-          "text": "if versionByte == 0x01 { orders = [8, 7, 10] }"
+          "text": "let versionByte = Int(b[1])"
         },
         {
           "platform": "ios",
@@ -50107,7 +50107,7 @@ const DATA = {
           "line": 197,
           "symbol": "parseResponse",
           "note": "取第一个成功结果",
-          "text": "if let first = results.first { return first }"
+          "text": "// cmd 字节位置: 三种帧头均为字节 4"
         },
         {
           "platform": "android",
@@ -50115,7 +50115,7 @@ const DATA = {
           "line": 84,
           "symbol": "parse",
           "note": "val orders = if (version == 0x01) intArrayOf(8, 7, 10) else intArrayOf(8, 10, 7)",
-          "text": "val orders = if (version == 0x01) intArrayOf(8, 7, 10) else intArrayOf(8, 10, 7)"
+          "text": "* 先按 8 字节头试 (Java 生产链口径), 解析不通再试 10 / 7。"
         },
         {
           "platform": "android",
@@ -50123,7 +50123,7 @@ const DATA = {
           "line": 89,
           "symbol": "parse",
           "note": "return Frame(cmd, map, hex.substring(0, (off + len) * 2))",
-          "text": "return Frame(cmd, map, hex.substring(0, (off + len) * 2))"
+          "text": "val b = bytes(hex)"
         }
       ],
       "platformEvidence": {
@@ -50213,7 +50213,7 @@ const DATA = {
           "line": 346,
           "symbol": "errCodeOf",
           "note": "",
-          "text": "let rb = try await send(ZKCmdBuilder.cmd35GWReboot(), target: mac)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -50229,7 +50229,7 @@ const DATA = {
           "line": 285,
           "symbol": "rcOf",
           "note": "",
-          "text": "let f = try await send(ZKCmdBuilder.cmd38GWStatus(), target: mac)"
+          "text": "/// cmd 44 查钥匙 (nil = 全部; lockMac = 本锁)"
         }
       ],
       "platformEvidence": {
@@ -50299,7 +50299,7 @@ const DATA = {
           "line": 276,
           "symbol": "cmd32GWSetIot",
           "note": "",
-          "text": "}"
+          "text": "+ ZKProtocol.buildKLV(0x03, HexKit.hexPair(UInt32(truncatingIfNeeded: authMode)))"
         },
         {
           "platform": "ios",
@@ -50307,7 +50307,7 @@ const DATA = {
           "line": 324,
           "symbol": "provisionGateway",
           "note": "链中没有 32",
-          "text": "var mac = \"\""
+          "text": "log(\"网关状态: rom \\(st.romVer), ssid \\(st.ssid), 联网 \\(st.netState == 1 ? \"是\" : \"否\")\")"
         }
       ],
       "platformEvidence": {
@@ -50371,7 +50371,7 @@ const DATA = {
           "line": 324,
           "symbol": "provisionGateway",
           "note": "",
-          "text": "var mac = \"\""
+          "text": "log(\"网关状态: rom \\(st.romVer), ssid \\(st.ssid), 联网 \\(st.netState == 1 ? \"是\" : \"否\")\")"
         },
         {
           "platform": "ios",
@@ -50379,7 +50379,7 @@ const DATA = {
           "line": 345,
           "symbol": "provisionGateway",
           "note": "pid 落库",
-          "text": "progress(\"步骤 4/5: 重启网关使其生效 (cmd 35)\")"
+          "text": "return s"
         },
         {
           "platform": "ios",
@@ -50387,7 +50387,7 @@ const DATA = {
           "line": 353,
           "symbol": "provisionGateway",
           "note": "31 errCode",
-          "text": "ble.disconnect()"
+          "text": "// 且台账未落盘 pidFor=nil → scanForPID 匹配任意广播设备"
         },
         {
           "platform": "ios",
@@ -50395,7 +50395,7 @@ const DATA = {
           "line": 362,
           "symbol": "provisionGateway",
           "note": "结束断开",
-          "text": "}"
+          "text": "advPid = a.pid"
         }
       ],
       "platformEvidence": {
@@ -50471,7 +50471,7 @@ const DATA = {
           "line": 366,
           "symbol": "rebootGateway",
           "note": "",
-          "text": "private func errCodeOf(_ f: ZKProtocol.ParsedFrame) -> Int {"
+          "text": "if mac.isEmpty { mac = deviceId } // 兜底: 以 deviceId 为键"
         },
         {
           "platform": "ios",
@@ -50541,7 +50541,7 @@ const DATA = {
           "line": 81,
           "symbol": "scanForPIDs",
           "note": "",
-          "text": "guard !pids.isEmpty else {"
+          "text": "if knownPid \u003c= 0 { log(\"未登记 pid, 跳过连接后身份复核 (老记录)\") }"
         },
         {
           "platform": "ios",
@@ -50549,7 +50549,7 @@ const DATA = {
           "line": 92,
           "symbol": "scanForPIDs",
           "note": "resetRequired 门禁",
-          "text": "ble.stopScan()"
+          "text": "/// 2026-10-27 审核新增 (AUDIT-D D-45)：与 LockService 的 `getStatus` 同口径 ——"
         },
         {
           "platform": "ios",
@@ -50557,7 +50557,7 @@ const DATA = {
           "line": 105,
           "symbol": "scanForPID",
           "note": "无 pid 拒绝盲连",
-          "text": "throw BLEErrorX.msg(\"台账缺少该设备的型号 (pid), 拒绝按广播盲连 — 请先在 App 内连接门锁刷新档案\")"
+          "text": "// 网关: 旧记录从未落 pid (见 provisionGateway 的对拍勘误), pid=0 时按 GW 家族首项回落,"
         }
       ],
       "platformEvidence": {
@@ -50628,7 +50628,7 @@ const DATA = {
           "line": 292,
           "symbol": "readGatewayState",
           "note": "",
-          "text": "return st"
+          "text": "let rc = rcOf(f)"
         },
         {
           "platform": "ios",
@@ -50636,7 +50636,7 @@ const DATA = {
           "line": 303,
           "symbol": "parseGWStatus",
           "note": "",
-          "text": "case 0x03:"
+          "text": "var i = h.startIndex"
         },
         {
           "platform": "ios",
@@ -50644,7 +50644,7 @@ const DATA = {
           "line": 311,
           "symbol": "parseGWStatus",
           "note": "版本 ASCII 回退",
-          "text": "}"
+          "text": "guard let k = f.klvs.first(where: { $0.key == 0x03 }) else { return -1 }"
         }
       ],
       "platformEvidence": {
@@ -50712,7 +50712,7 @@ const DATA = {
           "line": 73,
           "symbol": "asciiHex",
           "note": "",
-          "text": "static func asciiHex(_ s: String, nBytes: Int) -> String {"
+          "text": "String(format: \"%02x\", UInt8(v & 0xff))"
         },
         {
           "platform": "ios",
@@ -50720,7 +50720,7 @@ const DATA = {
           "line": 80,
           "symbol": "utf8Hex",
           "note": "",
-          "text": "static func utf8Hex(_ s: String) -> String {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -50728,7 +50728,7 @@ const DATA = {
           "line": 83,
           "symbol": "hexToAscii",
           "note": "",
-          "text": "static func hexToAscii(_ hex: String) -> String {"
+          "text": "guard hex.count % 2 == 0 else { return \"\" }"
         }
       ],
       "platformEvidence": {
@@ -50796,7 +50796,7 @@ const DATA = {
           "line": 6,
           "symbol": "bytes",
           "note": "",
-          "text": "static func bytes(_ hex: String) -> [UInt8] {"
+          "text": "/// **严格版** hex → bytes：任何非 hex 字符或奇数长度都返回 nil。"
         },
         {
           "platform": "ios",
@@ -50804,7 +50804,7 @@ const DATA = {
           "line": 26,
           "symbol": "bytes",
           "note": "奇长末字符丢弃",
-          "text": "guard i \u003c hex.endIndex else { break }   // 奇长末字符两边同丢 (JS substr 语义)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -50812,7 +50812,7 @@ const DATA = {
           "line": 30,
           "symbol": "bytes",
           "note": "nibble 容错",
-          "text": "guard let n1 = nib(c1) else { out.append(0); continue }"
+          "text": "static func bytes(_ hex: String) -> [UInt8] {"
         }
       ],
       "platformEvidence": {
@@ -50881,7 +50881,7 @@ const DATA = {
           "line": 41,
           "symbol": "u16leHex",
           "note": "",
-          "text": "static func u16leHex(_ v: Int) -> String {"
+          "text": "default: return nil"
         },
         {
           "platform": "ios",
@@ -50889,7 +50889,7 @@ const DATA = {
           "line": 45,
           "symbol": "u32leHex",
           "note": "",
-          "text": "static func u32leHex(_ v: UInt32) -> String {"
+          "text": "out.reserveCapacity(hex.count / 2)"
         },
         {
           "platform": "ios",
@@ -50897,7 +50897,7 @@ const DATA = {
           "line": 58,
           "symbol": "reversePairs",
           "note": "",
-          "text": "static func reversePairs(_ hex: String) -> String {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -50905,7 +50905,7 @@ const DATA = {
           "line": 64,
           "symbol": "fillZeroLeft",
           "note": "",
-          "text": "static func fillZeroLeft(_ s: String, _ chars: Int) -> String {"
+          "text": "// u16/u32 小端写 (JS u16leHex/u32leHex)"
         }
       ],
       "platformEvidence": {
@@ -50978,7 +50978,7 @@ const DATA = {
           "line": 255,
           "symbol": "dongleKeys",
           "note": "",
-          "text": "// 返回码在 KLV#03；基线 keychain.js:176 写明\"无 rc KLV (如 44/43 无状态位) — 调用层自行决定\" ⇒"
+          "text": "// 4294938496 (≈2146) ⇒ 写进硬件钥匙的凭证窗口永远不生效 (同 0A/14 的真机勘误)"
         },
         {
           "platform": "ios",
@@ -50986,7 +50986,7 @@ const DATA = {
           "line": 262,
           "symbol": "dongleKeys",
           "note": "rc 与「空」的区别",
-          "text": "// 现在只保留 parseEkeyMacs 一份，这里直接调它 —— 改一处就够，不会一处改了一处没改。"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -51048,7 +51048,7 @@ const DATA = {
           "line": 112,
           "symbol": "scanForDongle",
           "note": "",
-          "text": "try await ble.startScan(timeoutMs: 15000)"
+          "text": "/// 原 APK gateway.js 的扫描就是 GW_PIDS 全族匹配, 只认 12193 会让另外两种网关永远搜不到。"
         },
         {
           "platform": "ios",
@@ -51056,7 +51056,7 @@ const DATA = {
           "line": 118,
           "symbol": "scanForDongle",
           "note": "pid 门禁 + macRaw",
-          "text": "var rec = DB.dongle(mac) ?? Dongle(mac: mac)"
+          "text": "defer { ble.stopScan() }"
         },
         {
           "platform": "ios",
@@ -51133,7 +51133,7 @@ const DATA = {
           "line": 173,
           "symbol": "readDongleState",
           "note": "",
-          "text": "let f = try await send(ZKCmdBuilder.cmd43KeychainStatus([]), target: mac)"
+          "text": "self.waiter = nil"
         },
         {
           "platform": "ios",
@@ -51141,7 +51141,7 @@ const DATA = {
           "line": 182,
           "symbol": "readDongleState",
           "note": "rc=3 专用文案",
-          "text": "throw BLEErrorX.msg(\"钥匙串返回失败码 \" + StatusParser.rcMessage(rc) + \"，本次读数未采纳 (上一次的好数据仍留着)\")"
+          "text": "DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(timeoutMs), execute: timer)"
         },
         {
           "platform": "ios",
@@ -51149,7 +51149,7 @@ const DATA = {
           "line": 186,
           "symbol": "readDongleState",
           "note": "只在此后写库",
-          "text": "rec.stat = st"
+          "text": "do {"
         }
       ],
       "platformEvidence": {
@@ -51218,7 +51218,7 @@ const DATA = {
           "line": 222,
           "symbol": "writeDongleKey",
           "note": "",
-          "text": "// 4294938496 (≈2146) ⇒ 写进硬件钥匙的凭证窗口永远不生效 (同 0A/14 的真机勘误)"
+          "text": "log(\"状态: 电量 \\(st.power), 钥匙 \\(st.ekeyCount)/\\(st.ekeyAmount), 固件 \\(st.firmware)\")"
         },
         {
           "platform": "ios",
@@ -51226,7 +51226,7 @@ const DATA = {
           "line": 244,
           "symbol": "writeDongleKey",
           "note": "写成功才更新台账",
-          "text": "rec.lastKeyAt = ISO8601DateFormatter().string(from: Date())"
+          "text": "let r = HexKit.reversePairs(hex)"
         },
         {
           "platform": "ios",
@@ -51234,7 +51234,7 @@ const DATA = {
           "line": 249,
           "symbol": "deleteDongleKey",
           "note": "",
-          "text": "let rc = rcOf(f)"
+          "text": "func v(_ off: Int) -> Int { Int(hex.dropFirst(off).prefix(2), radix: 16) ?? 0 }"
         }
       ],
       "platformEvidence": {
@@ -51650,7 +51650,7 @@ const DATA = {
           "line": 812,
           "symbol": "pair",
           "note": "三处全零检测",
-          "text": "let m = mac.replacingOccurrences(of: \":\", with: \"\").lowercased()"
+          "text": "let surplus = r.klvs.first(where: { $0.key == 0x04 }).map { Int(StatusParser.leHexToU32($0.val)) }"
         }
       ],
       "platformEvidence": {
@@ -51721,7 +51721,7 @@ const DATA = {
           "line": 48,
           "symbol": "hexPair",
           "note": "只取低 8 位",
-          "text": "static func hexPair(_ v: UInt32) -> String {"
+          "text": "let c1 = hex[i]"
         }
       ],
       "platformEvidence": {
@@ -51793,7 +51793,7 @@ const DATA = {
           "line": 167,
           "symbol": "injectToken",
           "note": "KLV#0xEE 令牌",
-          "text": "let klv = body + buildKLV(0xEE, tokenHex)"
+          "text": "let bodyStart = header10 ? 20 : 16"
         },
         {
           "platform": "ios",
@@ -51801,7 +51801,7 @@ const DATA = {
           "line": 309,
           "symbol": "rcKLV",
           "note": "rc 键在各命令上的位置",
-          "text": "0x25, 0x41, 0x43, 0x44]"
+          "text": "private static let rcKLV: [UInt8: Int] = ["
         },
         {
           "platform": "ios",
@@ -51961,7 +51961,7 @@ const DATA = {
           "line": 750,
           "symbol": "getLogs",
           "note": "surplus 取自 KLV#04",
-          "text": "log(\"warn\", \"13 录指纹已 \\(Int(silent))s 无新帧 (锁端按压窗口 15s), 判定锁已退出录入\")"
+          "text": "// Java 唯一的那个计时器 (BLE_TIMEOUT=8000): 收到任何一帧即 cancel 且不重启"
         },
         {
           "platform": "ios",
@@ -52167,7 +52167,7 @@ const DATA = {
           "line": 340,
           "symbol": "exec",
           "note": "",
-          "text": "// 配网期 (pairMac != nil) 不走这一支: 那里由 08 批次 1 的换序重发裁定 (见 finishPairing) ——"
+          "text": "// 另一种取法, 之后每条命令都会回 rc=12 —— 而 rc≠0 的语义正是\"锁没执行\", 所以换一种取法重发"
         },
         {
           "platform": "ios",
@@ -52175,7 +52175,7 @@ const DATA = {
           "line": 347,
           "symbol": "exec",
           "note": "DB.setMacOrder(curMac, other)",
-          "text": "let rc2 = resp2.map { extractRc(cmd, $0) } ?? -1"
+          "text": "ZKProtocol.setMacOrder(curMac, other)"
         },
         {
           "platform": "ios",
@@ -52183,7 +52183,7 @@ const DATA = {
           "line": 353,
           "symbol": "exec",
           "note": "复原并报不是字节序问题",
-          "text": "// 不是顺序问题 → 复原注册表 (方向错了会比默认更难查), 让上层按 mac 不符去报错"
+          "text": "return ExecResult(frame: r2, rc: rc2, klvs: r2.klvs)"
         }
       ],
       "platformEvidence": {
@@ -52260,7 +52260,7 @@ const DATA = {
           "line": 99,
           "symbol": "normMac",
           "note": "",
-          "text": "static func normMac(_ s: String) -> String { s.lowercased().replacingOccurrences(of: \":\", with: \"\") }"
+          "text": "/// 2026-10-27 审核合并 (AUDIT-C A11)：转调 `DB.normalizeMac`，不再各写一遍。"
         }
       ],
       "platformEvidence": {
@@ -52321,7 +52321,7 @@ const DATA = {
           "line": 104,
           "symbol": "targetMac",
           "note": "",
-          "text": "static func targetMac(_ macHex: String, order: MacOrder? = nil) -> String {"
+          "text": "static func macOrder(_ mac: String) -> MacOrder { macOrdersLock.withLock { $0[normMac(mac)] } ?? .display }"
         },
         {
           "platform": "ios",
@@ -52329,7 +52329,7 @@ const DATA = {
           "line": 246,
           "symbol": "cmd41WriteEkey",
           "note": "先 targetMac 再 reversePairs",
-          "text": "// 2026-10-14: 与 cmd43 / buildEkey 同口径先剥冒号, 否则带冒号 MAC 使 reversePairs 返回空串。"
+          "text": "// 而那个函数读的是 0x88 包络的 MAC 字节序注册表。若某把锁被 rc=12 自愈裁定成 `.raw`，"
         },
         {
           "platform": "ios",
@@ -52337,7 +52337,7 @@ const DATA = {
           "line": 254,
           "symbol": "cmd44GetEkeyInfo",
           "note": "先剥冒号小写",
-          "text": "// 2026-10-14: 去掉强解包 (空 = 查全部钥匙, 与旧口径一致), 并把剥冒号/小写收在前一行。"
+          "text": "+ ZKProtocol.buildKLV(0x04, ekeyHex)"
         }
       ],
       "platformEvidence": {
@@ -52746,7 +52746,7 @@ const DATA = {
           "line": 364,
           "symbol": "execOk",
           "note": "",
-          "text": "// 旧实现把它与 rc=0 同等放行, 于是帧解析错位、密文解不开、固件异常短回包都会被报成\"已写入/已删除\"。"
+          "text": "let r = try await exec(cmdObj, needToken: needToken, retries: retries)"
         },
         {
           "platform": "ios",
@@ -52754,7 +52754,7 @@ const DATA = {
           "line": 367,
           "symbol": "execOk",
           "note": "",
-          "text": "throw BLEErrorX.msg(\"\\(cmdObj.name) 回包缺少 rc KLV, 无法确认锁端结果 — 请重试\")"
+          "text": "// 写命令面按 fail-closed 处理: 拿不到锁端结果就抛错, 让 UI 显示未确认而不是成功。"
         },
         {
           "platform": "ios",
@@ -52762,7 +52762,7 @@ const DATA = {
           "line": 749,
           "symbol": "getLogs",
           "note": "rc != 0 && rc != -1 才抛",
-          "text": "// 这里如实收尾并报错, 不干等到 150s 让用户以为程序卡死。"
+          "text": "if frames.isEmpty {"
         }
       ],
       "platformEvidence": {
@@ -52972,7 +52972,7 @@ const DATA = {
           "line": 309,
           "symbol": "rcKLV",
           "note": "",
-          "text": "0x25, 0x41, 0x43, 0x44]"
+          "text": "private static let rcKLV: [UInt8: Int] = ["
         },
         {
           "platform": "ios",
@@ -52980,7 +52980,7 @@ const DATA = {
           "line": 285,
           "symbol": "rcOf",
           "note": "钥匙串统一用 KLV#03",
-          "text": "let f = try await send(ZKCmdBuilder.cmd38GWStatus(), target: mac)"
+          "text": "/// cmd 44 查钥匙 (nil = 全部; lockMac = 本锁)"
         },
         {
           "platform": "ios",
@@ -52988,7 +52988,7 @@ const DATA = {
           "line": 305,
           "symbol": "macBearingCmds",
           "note": "",
-          "text": "// rc 所在 KLV key (JS lock.js RC_KLV, 勘误后权威表)"
+          "text": "/// 0x88 包络里带 MAC 的命令 (rc=12 的顺序自愈只对它们有意义; 网关/明面命令的 MAC 在别处)。"
         }
       ],
       "platformEvidence": {
@@ -53056,7 +53056,7 @@ const DATA = {
           "line": 209,
           "symbol": "FrameAssembler.push",
           "note": "guard let idx = buf.range(of: \"87\") else { buf = \"\"; break }",
-          "text": "guard let idx = buf.range(of: \"87\") else { buf = \"\"; break }"
+          "text": "buf += chunkHex"
         },
         {
           "platform": "ios",
@@ -53224,7 +53224,7 @@ const DATA = {
           "line": 288,
           "symbol": "request",
           "note": "",
-          "text": "if let w = waiter, w.cmd == cmd { w.timer?.cancel(); waiter = nil }"
+          "text": "// 断链自愈: 写失败 OR 连接已断 (断链后 writeChar/device 被清 → writeFrameHex 抛 parseFail)"
         },
         {
           "platform": "ios",
@@ -53232,7 +53232,7 @@ const DATA = {
           "line": 293,
           "symbol": "request",
           "note": "let macToHeal = curMac",
-          "text": "// 2026-10-14: disconnect() 会把 curMac 清空, 旧写法 `if !curMac.isEmpty` 紧随其后 =>"
+          "text": "// 恒为 false, 自愈重连是死代码 (首个 hiccup 后连接不再恢复)。先存下再断。"
         }
       ],
       "platformEvidence": {
@@ -53295,7 +53295,7 @@ const DATA = {
           "line": 276,
           "symbol": "request",
           "note": "",
-          "text": "// 锁端已经执行了。随后断链自愈 (下面那段) 会重连, 外层 for attempt 再发一次"
+          "text": "// ⇒ 一条 cmd04 被下发两次 = 双开门。防误触的三道保险对第二条真实开门无效。"
         },
         {
           "platform": "ios",
@@ -53303,7 +53303,7 @@ const DATA = {
           "line": 130,
           "symbol": "writeCmdsBlocked",
           "note": "",
-          "text": "static let writeCmdsBlocked: [UInt8] = [0x04, 0x05, 0x08, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x13, 0x14, 0x15,"
+          "text": "// Swift 侧此前整块缺失: 小程序用它在真机上做只读试验, 保证任何写入/危险命令 (05 换钥会擦 flash 域 7+8 作废旧钥匙、"
         },
         {
           "platform": "ios",
@@ -53311,7 +53311,7 @@ const DATA = {
           "line": 281,
           "symbol": "request",
           "note": "不重发并 break",
-          "text": "if case BLEErrorX.code(.writeFailed) = error { maybeExecuted = true }"
+          "text": "if maybeExecuted {"
         }
       ],
       "platformEvidence": {
@@ -53382,7 +53382,7 @@ const DATA = {
           "line": 241,
           "symbol": "request",
           "note": "定时器实现",
-          "text": "// 超时定时器与 waiter 绑定 (命中/失败即取消) — 防陈旧定时器误杀下一轮同 cmd 等待"
+          "text": "let timer = DispatchWorkItem {"
         },
         {
           "platform": "ios",
@@ -53390,7 +53390,7 @@ const DATA = {
           "line": 215,
           "symbol": "request",
           "note": "timeoutMs: Int = 8000",
-          "text": "// ---------- 请求 (令牌注入 + 重试 + 写失败清 waiter) ----------"
+          "text": "@discardableResult"
         }
       ],
       "platformEvidence": {
@@ -53452,7 +53452,7 @@ const DATA = {
           "line": 246,
           "symbol": "request",
           "note": "注册时的覆盖保护",
-          "text": "}"
+          "text": "// 忙判: 已有命令在飞时直接拒绝 (JS lock.js _waitFrame 同款) — 覆盖会让旧 continuation 永不 resume"
         },
         {
           "platform": "ios",
@@ -53530,7 +53530,7 @@ const DATA = {
           "line": 420,
           "symbol": "readLockTime",
           "note": "",
-          "text": "func readLockTime() async throws -> Int64 {"
+          "text": "return st"
         }
       ],
       "platformEvidence": {
@@ -53751,7 +53751,7 @@ const DATA = {
           "line": 188,
           "symbol": "ensureToken",
           "note": "",
-          "text": "}"
+          "text": "log(\"info\", \"刷新会话令牌 (cmd 01)\")"
         },
         {
           "platform": "ios",
@@ -53759,7 +53759,7 @@ const DATA = {
           "line": 189,
           "symbol": "ensureToken",
           "note": "缺 KLV#02 分支",
-          "text": "log(\"info\", \"刷新会话令牌 (cmd 01)\")"
+          "text": "let f = try await request(ZKCmdBuilder.cmd01Session(), cmd: 0x01, needToken: false, retries: 3)"
         },
         {
           "platform": "ios",
@@ -53767,7 +53767,7 @@ const DATA = {
           "line": 199,
           "symbol": "ensureToken",
           "note": "保存整个 val",
-          "text": "// 安全类型编为 2 字节 (如 \"0200\"→512&3=0) 或缺 KLV#01 的固件配网必败, 而小程序正常。"
+          "text": "// 旧实现 readU16LE 把令牌截成 2 字节: 锁若上报 4B 令牌, 注入值就是错的 → 所有需令牌写命令必失败"
         }
       ],
       "platformEvidence": {
@@ -53839,7 +53839,7 @@ const DATA = {
           "line": 159,
           "symbol": "injectToken",
           "note": "",
-          "text": "static func injectToken(_ hex: String, _ tokenHex: String) -> String {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -53847,7 +53847,7 @@ const DATA = {
           "line": 225,
           "symbol": "request",
           "note": "唯一调用点",
-          "text": "if needToken {"
+          "text": "try await ensureToken()"
         },
         {
           "platform": "android",
@@ -53871,7 +53871,7 @@ const DATA = {
           "line": 163,
           "symbol": "injectToken",
           "note": "header10 判据",
-          "text": "let header10 = hex.count >= 20 + len * 2"
+          "text": "guard !tokenHex.isEmpty, hex.count >= 16 else { return hex }"
         },
         {
           "platform": "android",
@@ -53971,7 +53971,7 @@ const DATA = {
           "line": 200,
           "symbol": "ensureToken",
           "note": "KLV#03 → secs",
-          "text": "// 旧实现 readU16LE 把令牌截成 2 字节: 锁若上报 4B 令牌, 注入值就是错的 → 所有需令牌写命令必失败"
+          "text": "sessionTokenHex = k.val.lowercased()"
         },
         {
           "platform": "ios",
@@ -53979,7 +53979,7 @@ const DATA = {
           "line": 208,
           "symbol": "ensureToken",
           "note": "expiry 计算",
-          "text": "// 真要兜 ttl=0，正确做法是在**复用判据**里处理（见 ensureToken 开头），而不是改记账口径。"
+          "text": "if secs > 0 {"
         }
       ],
       "platformEvidence": {
@@ -54043,7 +54043,7 @@ const DATA = {
           "line": 381,
           "symbol": "pairHint",
           "note": "",
-          "text": "/// 配网期的 rc → 该怎么办。刻意**不**复用 rcHint: 那一条是\"已配对\"语境 (rc=3 让你去快捷操作校时),"
+          "text": ": msg"
         },
         {
           "platform": "ios",
@@ -54051,7 +54051,7 @@ const DATA = {
           "line": 383,
           "symbol": "pairHint",
           "note": "",
-          "text": "private static func pairHint(_ rc: Int) -> String {"
+          "text": "/// 配网期的 rc → 该怎么办。刻意**不**复用 rcHint: 那一条是\"已配对\"语境 (rc=3 让你去快捷操作校时),"
         },
         {
           "platform": "ios",
@@ -54059,7 +54059,7 @@ const DATA = {
           "line": 385,
           "symbol": "pairHint",
           "note": "rc=13 长文案",
-          "text": "case 3, 9: return \"锁内时钟不准, 而配网期无法校时 (校时要密钥); 请在门锁键盘上重置后马上重试\""
+          "text": "private static func pairHint(_ rc: Int) -> String {"
         }
       ],
       "platformEvidence": {
@@ -54130,7 +54130,7 @@ const DATA = {
           "line": 863,
           "symbol": "pair",
           "note": "pending Keychain 构造",
-          "text": "}"
+          "text": "let w = try await request(ZKCmdBuilder.cmd23ExKeyWay(), cmd: 0x23, needToken: false, retries: 3)"
         },
         {
           "platform": "ios",
@@ -54138,7 +54138,7 @@ const DATA = {
           "line": 867,
           "symbol": "pair",
           "note": "savePendingPair",
-          "text": "//   APK 原文 (apk_raw/assets/www/build/main.js, 05 构造器 `Et`):"
+          "text": "progress(\"步骤 2/7: 生成本地密钥 (skey/bkey/64 PIN)\")"
         },
         {
           "platform": "ios",
@@ -54146,7 +54146,7 @@ const DATA = {
           "line": 883,
           "symbol": "pair",
           "note": "尾链成功才 clearPendingPair",
-          "text": "r5 = try await request(ZKCmdBuilder.cmd05Exchange(skey), cmd: 0x05, needToken: true, retries: 1)"
+          "text": "//   Java 侧据此执行 (cn.zelkova.ZKurlcsPlugin.lockprotocol.BleLockConnector.doExecute):"
         }
       ],
       "platformEvidence": {
@@ -54216,7 +54216,7 @@ const DATA = {
           "line": 779,
           "symbol": "pair",
           "note": "DB.pendingPair 判据",
-          "text": "}"
+          "text": "if ackRc != 0 && ackRc != -1 {"
         },
         {
           "platform": "ios",
@@ -54224,7 +54224,7 @@ const DATA = {
           "line": 786,
           "symbol": "pair",
           "note": "直接用留存密钥走 finishPairing",
-          "text": "func fpDelete(_ batchNumber: UInt32) async throws {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -54232,7 +54232,7 @@ const DATA = {
           "line": 790,
           "symbol": "pair",
           "note": "成功清 pending",
-          "text": "}"
+          "text": "func fpConfirm(_ batchNumber: UInt32, validFrom: String, validTo: String) async throws {"
         }
       ],
       "platformEvidence": {
@@ -54303,7 +54303,7 @@ const DATA = {
           "line": 902,
           "symbol": "finishPairing",
           "note": "",
-          "text": "// 这类必须去键盘重置 —— 文案与可续配那一族明确分开 (pairWarning(false, ...) 不追加续配承诺)。"
+          "text": "// 05 被锁拒收的原因既没进日志、也没进任何台账, 于是现场只能靠回包长度反推。"
         },
         {
           "platform": "ios",
@@ -54311,7 +54311,7 @@ const DATA = {
           "line": 906,
           "symbol": "finishPairing",
           "note": "批大小 20 的理由",
-          "text": ""
+          "text": "throw BLEErrorX.msg(\"换钥失败 rc=\\(rc5) (\\(StatusParser.rcMessage(rc5))) — \\(Self.pairHint(rc5))\")"
         },
         {
           "platform": "ios",
@@ -54319,7 +54319,7 @@ const DATA = {
           "line": 953,
           "symbol": "finishPairing",
           "note": "pairWarning(resumable, ...)",
-          "text": "log(\"info\", \"配网尾链 MAC 字节序 = \\(ZKProtocol.macOrder(m).rawValue) (默认 = 原版 APK 语义, 显示序)\")"
+          "text": "/// 设备页里 (同一把锁两条记录, 删了一条另一条还在)。配网成功后顺手清掉 ——"
         },
         {
           "platform": "ios",
@@ -54327,7 +54327,7 @@ const DATA = {
           "line": 978,
           "symbol": "finishPairing",
           "note": "DB.saveKeychain",
-          "text": "let other = ZKProtocol.flipped(used)"
+          "text": "n += 1"
         }
       ],
       "platformEvidence": {
@@ -54402,7 +54402,7 @@ const DATA = {
           "line": 884,
           "symbol": "pair",
           "note": "cleanWrongOrderTwin 调用",
-          "text": "rc5 = extractRc(0x05, r5)"
+          "text": "//     if (data.needSessionToken()) { doRefreshSsToken(); token = ssToken.getToken(); }"
         },
         {
           "platform": "ios",
@@ -54410,7 +54410,7 @@ const DATA = {
           "line": 893,
           "symbol": "cleanWrongOrderTwin",
           "note": "",
-          "text": "}"
+          "text": "// 13 = 通讯过期 = 会话令牌被判无效/已过期。rc≠0 ⇒ 锁**没有执行**换钥 (锁内 skey 未动),"
         }
       ],
       "platformEvidence": {
@@ -54473,7 +54473,7 @@ const DATA = {
           "line": 478,
           "symbol": "unlock",
           "note": "return r.rc // 0 成功; 22 双验继续",
-          "text": "guard !cred.isEmpty else { throw BLEErrorX.msg(\"开锁凭证为空 (ekey/PIN 签发失败), 已中止下发\") }"
+          "text": "cred = ZKCmdBuilder.buildEkeyOpen(kc.skey.lowercased(), kc.mac.lowercased(), pin)"
         },
         {
           "platform": "ios",
@@ -54546,7 +54546,7 @@ const DATA = {
           "line": 192,
           "symbol": "ensureToken",
           "note": "",
-          "text": "// 配网期这条基本只有一个含义: 锁已退回不可配网态 (01 拿不到令牌 ⇒ 之后每一步令牌面命令都发不出去)。"
+          "text": "// 与 05 被拒时同一取证口径: 留\"回包形状\"(只键与长度, 无值) + 该做什么, 免得现场只看到一句\"无令牌\"。"
         },
         {
           "platform": "ios",
@@ -54554,7 +54554,7 @@ const DATA = {
           "line": 193,
           "symbol": "ensureToken",
           "note": "错误文案",
-          "text": "// 与 05 被拒时同一取证口径: 留\"回包形状\"(只键与长度, 无值) + 该做什么, 免得现场只看到一句\"无令牌\"。"
+          "text": "log(\"error\", \"01 会话令牌响应缺 KLV#02 · 回包 \" + Self.klvShape(f))"
         },
         {
           "platform": "ios",
@@ -54562,7 +54562,7 @@ const DATA = {
           "line": 391,
           "symbol": "klvShape",
           "note": "",
-          "text": "/// 回包的 KLV 形状 —— **只报键与长度, 一个值都不带**: 真机排障时 \"#02=0B\" 这种事实"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -54641,7 +54641,7 @@ const DATA = {
           "line": 220,
           "symbol": "request",
           "note": "空帧闸",
-          "text": "if DB.store.getBool(\"kf_trial_guard\", false) { try ZKProtocol.assertReadOnly(cmd) }"
+          "text": "// 空帧拦截: 密钥/参数非法导致构造失败时绝不发包 (见 ZKProtocol.wrapEnc 的 cipher.isEmpty 约定)"
         }
       ],
       "platformEvidence": {
@@ -54706,7 +54706,7 @@ const DATA = {
           "line": 830,
           "symbol": "pair",
           "note": "rc5 == 13 分支",
-          "text": "do {"
+          "text": "ZKProtocol.setMacOrder(m, DB.macOrder(m))"
         },
         {
           "platform": "ios",
@@ -54714,7 +54714,7 @@ const DATA = {
           "line": 850,
           "symbol": "pair",
           "note": "回显与本地 skey 比对",
-          "text": "let way = w.klvs.first(where: { $0.key == 0x01 }).map { StatusParser.intHex($0.val) } ?? 0"
+          "text": "trackid: pend.trackid.isEmpty ? String(KeyGen.genTrackId()) : pend.trackid,"
         },
         {
           "platform": "ios",
@@ -54722,7 +54722,7 @@ const DATA = {
           "line": 855,
           "symbol": "pair",
           "note": "pairWarning(false, ...)",
-          "text": "let skey = KeyGen.genSkey()"
+          "text": "return kc"
         }
       ],
       "platformEvidence": {
@@ -54794,7 +54794,7 @@ const DATA = {
           "line": 928,
           "symbol": "finishPairing",
           "note": "rb.rc == 12, n == 1",
-          "text": ""
+          "text": "pairedAt: ISO8601DateFormatter().string(from: Date()))"
         },
         {
           "platform": "ios",
@@ -54802,7 +54802,7 @@ const DATA = {
           "line": 936,
           "symbol": "finishPairing",
           "note": "换序 rc=0 落盘",
-          "text": ""
+          "text": "// 步骤 4.5/7 的「只读 03 探针」整块删除 (2026-10-17 夜; 依据 = 原版 APK 逐字 + 真机现象):"
         },
         {
           "platform": "ios",
@@ -54810,7 +54810,7 @@ const DATA = {
           "line": 939,
           "symbol": "finishPairing",
           "note": "rc=18 视为已写入",
-          "text": "/// 设备页里 (同一把锁两条记录, 删了一条另一条还在)。配网成功后顺手清掉 ——"
+          "text": "//   ② 原版 APK 在 05 与第一批 08 之间**不发任何命令** (main.js: exchangeSKey → syncPins);"
         },
         {
           "platform": "ios",
@@ -54818,7 +54818,7 @@ const DATA = {
           "line": 946,
           "symbol": "finishPairing",
           "note": "两种顺序都被拒",
-          "text": "}"
+          "text": "cleanWrongOrderTwin(m)"
         }
       ],
       "platformEvidence": {
@@ -54897,7 +54897,7 @@ const DATA = {
           "line": 546,
           "symbol": "pwdAdd",
           "note": "缺 KLV#04",
-          "text": "}"
+          "text": "try await execOk(ZKCmdBuilder.cmd25Defence(m, sk, control, startSec, endSec), needToken: true)"
         },
         {
           "platform": "ios",
@@ -54905,7 +54905,7 @@ const DATA = {
           "line": 572,
           "symbol": "pwdModify",
           "note": "alias > 0 守卫",
-          "text": "guard let alias = aliasFrom(r) else {"
+          "text": "let (m, sk) = try keys()"
         },
         {
           "platform": "ios",
@@ -54913,7 +54913,7 @@ const DATA = {
           "line": 587,
           "symbol": "pwdDelete",
           "note": "alias > 0 守卫",
-          "text": "}"
+          "text": "} catch {"
         }
       ],
       "platformEvidence": {
@@ -54985,7 +54985,7 @@ const DATA = {
           "line": 435,
           "symbol": "probeEcho",
           "note": "",
-          "text": "///   · 它不需要 skey (免令牌明文族: vendor/app/utils/kernel/cmds.js:50 的 cmd12Echo 不注入 KLV#0xEE),"
+          "text": "/// 为什么本机需要它、而不是直接读 03 状态:"
         },
         {
           "platform": "ios",
@@ -54993,7 +54993,7 @@ const DATA = {
           "line": 440,
           "symbol": "probeEcho",
           "note": "defer 拆链清理",
-          "text": "let hadLink = !ble.connectedMAC.isEmpty"
+          "text": "// 临时链路: 不走 connect(deviceId:) —— 那条路会把 deviceId 写进 DB.lastDevice 与 connectedMAC,"
         },
         {
           "platform": "ios",
@@ -55001,7 +55001,7 @@ const DATA = {
           "line": 432,
           "symbol": "probeEcho",
           "note": "注释：回声不改锁内任何东西",
-          "text": "/// (apk_raw/assets/www/build/main.js RomlistPage.echo)。"
+          "text": "/// 对一台**已经扫到、但可能还没配对**的蓝牙设备发一条免令牌明文回声 (cmd12)。"
         }
       ],
       "platformEvidence": {
@@ -55073,7 +55073,7 @@ const DATA = {
           "line": 647,
           "symbol": "fpStart",
           "note": "isPress 判据",
-          "text": "func pwdExpire(_ alias: Int, _ from: String, _ to: String) async throws {"
+          "text": "guard let c = ZKCmdBuilder.cmd08SyncPinsBatch(m, sk, [], delPins: batch) else {"
         },
         {
           "platform": "ios",
@@ -55081,7 +55081,7 @@ const DATA = {
           "line": 654,
           "symbol": "fpStart",
           "note": "collectionDone",
-          "text": "struct FpPress {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -55089,7 +55089,7 @@ const DATA = {
           "line": 669,
           "symbol": "fpStart",
           "note": "stopRc 赋值",
-          "text": "//     orderIdx 1..8 = 第 N 次按压, 到 8 由 App 用该帧 batchNumber 发 14。"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -55162,7 +55162,7 @@ const DATA = {
           "line": 626,
           "symbol": "fpStart",
           "note": "默认参数 8000/16000/150000",
-          "text": "// ---------- PIN 池单条删除 (cmd08 delPins) —— 撤销手机钥匙要用 ----------"
+          "text": "log(\"warn\", \"删除复核异常: 凭证#\\(alias) 仍在台账里\")"
         },
         {
           "platform": "ios",
@@ -55170,7 +55170,7 @@ const DATA = {
           "line": 694,
           "symbol": "fpStart",
           "note": "首帧窗口",
-          "text": "/// 于是屏上写着 4/8、锁里其实只有 3 次有效特征。"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -55178,7 +55178,7 @@ const DATA = {
           "line": 698,
           "symbol": "fpStart",
           "note": "空闲 16s 判定",
-          "text": "return (press(of: f).orderIdx ?? 0) > 0"
+          "text": "let rcBlurry = 23   // 锁端\"无法获取有效的指纹图片\" (= APK 前端说的\"指纹模糊\")"
         },
         {
           "platform": "ios",
@@ -55186,7 +55186,7 @@ const DATA = {
           "line": 684,
           "symbol": "fpStart",
           "note": "断链/取消早退",
-          "text": "f.klvs.first(where: { $0.key == key }).map { StatusParser.leHexToU32($0.val) }"
+          "text": "overallMs: Int = 150000, onPress: ((FpPress) -> Void)? = nil) async throws -> [FpPress] {"
         }
       ],
       "platformEvidence": {
@@ -55263,7 +55263,7 @@ const DATA = {
           "line": 746,
           "symbol": "getLogs",
           "note": "pageSize: Int = 5",
-          "text": "} else if silent > Double(idleAfterPressMs) / 1000.0 {"
+          "text": "if stopRc != nil { break }"
         },
         {
           "platform": "ios",
@@ -55271,7 +55271,7 @@ const DATA = {
           "line": 750,
           "symbol": "getLogs",
           "note": "surplus",
-          "text": "log(\"warn\", \"13 录指纹已 \\(Int(silent))s 无新帧 (锁端按压窗口 15s), 判定锁已退出录入\")"
+          "text": "// Java 唯一的那个计时器 (BLE_TIMEOUT=8000): 收到任何一帧即 cancel 且不重启"
         },
         {
           "platform": "ios",
@@ -55351,7 +55351,7 @@ const DATA = {
           "line": 229,
           "symbol": "writeDongleKey",
           "note": "缺 PIN 拒绝",
-          "text": "}"
+          "text": "// 原先这一行写的是 `if let v = direct(0x03) { _ = v }` —— 把值取出来再丢掉，"
         },
         {
           "platform": "ios",
@@ -55359,7 +55359,7 @@ const DATA = {
           "line": 235,
           "symbol": "writeDongleKey",
           "note": "空 ekey 拒绝",
-          "text": "}"
+          "text": "s.firmware = klvs.first(where: { $0.key == 0x31 }).map { HardwareService.dotted3($0.val) } ?? \"\""
         },
         {
           "platform": "ios",
@@ -55367,7 +55367,7 @@ const DATA = {
           "line": 250,
           "symbol": "deleteDongleKey",
           "note": "空串 = 删除",
-          "text": "if rc != 0 { throw BLEErrorX.msg(StatusParser.rcMessage(rc)) }"
+          "text": "return \"\\(v(4)).\\(v(2)).\\(v(0))\""
         },
         {
           "platform": "ios",
@@ -55375,7 +55375,7 @@ const DATA = {
           "line": 225,
           "symbol": "writeDongleKey",
           "note": "2010~2118 窗口",
-          "text": "// 旧写法 `lock.pins.first ?? \"1\"`: PIN 池为空时**回落到 PIN \"1\"** 去签发硬件钥匙凭证 ——"
+          "text": "nonisolated static func parseKCStatus(_ klvs: [ZKLV]) -> DongleStat {"
         }
       ],
       "platformEvidence": {
@@ -55453,7 +55453,7 @@ const DATA = {
           "line": 194,
           "symbol": "parseKCStatus",
           "note": "",
-          "text": "func direct(_ key: Int) -> Int? { klvs.first(where: { $0.key == key }).map { StatusParser.intHex($0.val) } }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -55461,7 +55461,7 @@ const DATA = {
           "line": 200,
           "symbol": "parseKCStatus",
           "note": "power 缺省 -1",
-          "text": "s.ekeyCount = direct(0x24) ?? -1"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -55469,7 +55469,7 @@ const DATA = {
           "line": 212,
           "symbol": "dotted3",
           "note": "",
-          "text": "return r.count == 6 ? dotted(r) : \"\""
+          "text": "let rc = rcOf(f)"
         },
         {
           "platform": "ios",
@@ -55477,7 +55477,7 @@ const DATA = {
           "line": 185,
           "symbol": "readDongleState",
           "note": "rc 通过后才 parse+落库",
-          "text": "var rec = DB.dongle(mac) ?? Dongle(mac: mac)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -55562,7 +55562,7 @@ const DATA = {
           "line": 263,
           "symbol": "dongleKeys",
           "note": "无 KLV#04 → 空数组",
-          "text": "return Self.parseEkeyMacs(f.klvs)"
+          "text": "let ekey = ZKCmdBuilder.buildEkeyOpen(lock.skey.lowercased(), lock.mac.lowercased(), pin,"
         }
       ],
       "platformEvidence": {
@@ -55835,7 +55835,7 @@ const DATA = {
           "line": 469,
           "symbol": "unlock",
           "note": "ekey 优先，否则 PIN 现签",
-          "text": "guard let kc = DB.keychain(curMac), !kc.skey.isEmpty else { throw BLEErrorX.msg(\"无钥匙串, 无法开锁\") }"
+          "text": "func unlock(mac: String? = nil, pinDec: String? = nil) async throws -> Int {"
         },
         {
           "platform": "ios",
@@ -56859,7 +56859,7 @@ const DATA = {
           "line": 143,
           "symbol": "RC_NAME",
           "note": "0 to \"已开锁\", 1 to \"解密失败\", 2 to \"无效的PIN码\", 3 to \"命令过期\", 5 to \"次数使用完毕\", ...",
-          "text": "0 to \"已开锁\", 1 to \"解密失败\", 2 to \"无效的PIN码\", 3 to \"命令过期\", 5 to \"次数使用完毕\","
+          "text": "fun klvShape(f: Frame): String ="
         },
         {
           "platform": "android",
@@ -56867,7 +56867,7 @@ const DATA = {
           "line": 145,
           "symbol": "RC_NAME",
           "note": "10 to \"未知错误\", 11 to \"解密失败\", 12 to \"mac地址不正确\", 13 to \"通讯过期\"",
-          "text": "10 to \"未知错误\", 11 to \"解密失败\", 12 to \"mac地址不正确\", 13 to \"通讯过期\","
+          "text": "else f.klvs.joinToString(\" \") { \"#\" + String.format(\"%02x\", it.first) + \"=\" + (it.second.length / 2) + \"B\" }"
         },
         {
           "platform": "android",
@@ -56875,7 +56875,7 @@ const DATA = {
           "line": 149,
           "symbol": "RC_NAME",
           "note": "25 to \"锁正忙，请稍后重试\", 26 to \"门锁被撬\", 27 to \"您的门锁处于布防状态\"",
-          "text": "25 to \"锁正忙，请稍后重试\", 26 to \"门锁被撬\", 27 to \"您的门锁处于布防状态\""
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -57298,7 +57298,7 @@ const DATA = {
           "line": 439,
           "symbol": "kf_ledger_",
           "note": "族删前缀清单起点",
-          "text": "store.remove(\"kf_pending_pair_\" + m)"
+          "text": "kc.bkey = SecretStore.get(pendingPairAccount(m, \"bkey\")) ?? \"\""
         }
       ],
       "platformEvidence": {
@@ -57361,7 +57361,7 @@ const DATA = {
           "line": 374,
           "symbol": "saveKeychain",
           "note": "密钥不再明文写 plist, 改存系统 Keychain",
-          "text": "d.removeValue(forKey: f)"
+          "text": "for (m, v) in map {"
         }
       ],
       "platformEvidence": {
@@ -57500,7 +57500,7 @@ const DATA = {
           "line": 721,
           "symbol": "members()",
           "note": "",
-          "text": "// 留着就是\"看着像另一条读法\"的假入口：改档位语义时只会改到其中一处，两份默认值也就各自漂 (§10.43)。"
+          "text": "static func saveTailgate(_ mac: String, _ c: TailgateCfg) { set(c, \"kf_tailgate_\" + mac) }"
         }
       ],
       "platformEvidence": {
@@ -57630,7 +57630,7 @@ const DATA = {
           "line": 791,
           "symbol": "dongles()",
           "note": "",
-          "text": "var duty = store.get([String: String].self, \"kf_duty_week\") ?? [:]"
+          "text": "let before = claims.count"
         },
         {
           "platform": "ios",
@@ -57638,7 +57638,7 @@ const DATA = {
           "line": 823,
           "symbol": "gateways()",
           "note": "",
-          "text": "}"
+          "text": "bleId: d.bleId.isEmpty ? old.bleId : d.bleId,"
         }
       ],
       "platformEvidence": {
@@ -57752,7 +57752,7 @@ const DATA = {
           "line": 630,
           "symbol": "writeStatus(_:_:)",
           "note": "",
-          "text": "ledger(mac).fps.first { $0.batch == batch }"
+          "text": "var l = ledger(mac)"
         },
         {
           "platform": "ios",
@@ -57760,7 +57760,7 @@ const DATA = {
           "line": 649,
           "symbol": "writeLogs(_:_:)",
           "note": "",
-          "text": "fpCap: st.fpInfoCapacity > 0 ? st.fpInfoCapacity : nil)"
+          "text": "static func writeStatus(_ mac: String, _ st: LockStatus) {"
         }
       ],
       "platformEvidence": {
@@ -58357,7 +58357,7 @@ const DATA = {
           "line": 507,
           "symbol": "saveLedger(_:_:)",
           "note": "",
-          "text": "}"
+          "text": "return ks.contains(currentMac) ? currentMac : (ks.first ?? \"\")"
         },
         {
           "platform": "ios",
@@ -58373,7 +58373,7 @@ const DATA = {
           "line": 531,
           "symbol": "fingerprint",
           "note": "fingerprint(o.pwd)",
-          "text": "let name = keychain(mac).map { LockArchive.displayName($0) } ?? mac"
+          "text": "static func saveLedger(_ mac: String, _ l: Ledger) {"
         }
       ],
       "platformEvidence": {
@@ -58707,7 +58707,7 @@ const DATA = {
           "line": 1248,
           "symbol": "credRow",
           "note": "提前失效胶囊",
-          "text": "// 包14/815 空态双按钮: 主\"添加密码\" + 次\"看看它如何工作\""
+          "text": "UINotificationFeedbackGenerator().notificationOccurred(.error)"
         },
         {
           "platform": "ios",
@@ -58784,7 +58784,7 @@ const DATA = {
           "line": 875,
           "symbol": "orderedPwds",
           "note": "读 seq[p]",
-          "text": "// 356 点按行选一条"
+          "text": ".frame(minHeight: DS.Hit.min)"
         },
         {
           "platform": "ios",
@@ -58792,7 +58792,7 @@ const DATA = {
           "line": 1076,
           "symbol": "commitGroupMove",
           "note": "写 seq",
-          "text": "for p in pwds {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -58800,7 +58800,7 @@ const DATA = {
           "line": 889,
           "symbol": "manualIndex",
           "note": "重复别名防 trap",
-          "text": "/// 隐藏行一旦进破坏性批量 (353 停用 / 922 删除), 就是\"看不到却被停掉\"。台账级读数不走这里。"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         }
       ],
       "platformEvidence": {
@@ -60100,7 +60100,7 @@ const DATA = {
           "line": 800,
           "symbol": "saveDongle(_:)",
           "note": "",
-          "text": "let map = store.getDict(\"kf_keychain_dongles\")"
+          "text": "var duty = store.get([String: String].self, \"kf_duty_week\") ?? [:]"
         },
         {
           "platform": "ios",
@@ -60108,7 +60108,7 @@ const DATA = {
           "line": 804,
           "symbol": "merged",
           "note": "逐字段空值回退",
-          "text": "let m = mac.replacingOccurrences(of: \":\", with: \"\").lowercased()"
+          "text": "if duty.count != dbefore { store.setCodable(\"kf_duty_week\", duty) }"
         }
       ],
       "platformEvidence": {
@@ -60169,7 +60169,7 @@ const DATA = {
           "line": 832,
           "symbol": "saveGateway(_:)",
           "note": "",
-          "text": "let map = store.getDict(\"kf_gateways\")"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -60177,7 +60177,7 @@ const DATA = {
           "line": 846,
           "symbol": "netState",
           "note": "netState != -1 ? ... : old.netState",
-          "text": "pid: g.pid != 0 ? g.pid : old.pid,"
+          "text": "if let d = store.getDict(\"kf_gateways\")[m] as? [String: Any] { return Gateway.fromDict(d) }"
         }
       ],
       "platformEvidence": {
@@ -60352,7 +60352,7 @@ const DATA = {
           "line": 485,
           "symbol": "currentMac",
           "note": "",
-          "text": "if ord.contains(m) {"
+          "text": "let up = m.uppercased()"
         },
         {
           "platform": "ios",
@@ -60536,7 +60536,7 @@ const DATA = {
           "line": 435,
           "symbol": "removeDevice(_:)",
           "note": "",
-          "text": "}"
+          "text": "let m = normalizeMac(mac)"
         },
         {
           "platform": "ios",
@@ -60544,7 +60544,7 @@ const DATA = {
           "line": 469,
           "symbol": "ord",
           "note": "kf_lock_order 剪枝",
-          "text": "// 包6 历史表键带 \u003cmac>_ 段 (kf_chist_\u003cmac>_...), 按前缀段整族清"
+          "text": "\"kf_batt_\", \"kf_batt_state_\", \"kf_mevents_\", \"kf_maint_\", \"kf_fwsince_\", \"kf_clock_notify_\", \"kf_damp_last_\", \"kf_fp_last_\", \"kf_care_notify_\","
         },
         {
           "platform": "ios",
@@ -60552,7 +60552,7 @@ const DATA = {
           "line": 475,
           "symbol": "set(\"kf_default_mac\", h)",
           "note": "默认锁交棒",
-          "text": "// 判据: 键名里含本锁 MAC (大小写不敏感) 即属该锁数据族。"
+          "text": "for p in [\"kf_autocal_\", \"kf_autoopen_audit_\", \"kf_autoopen_suspend_until_\"] {"
         }
       ],
       "platformEvidence": {
@@ -60819,7 +60819,7 @@ const DATA = {
           "line": 732,
           "symbol": "addMember(_:)",
           "note": "",
-          "text": "}"
+          "text": "static func saveOtpStatus(_ mac: String, _ s: OtpStatus) { set(s, \"otpStatus_\" + mac) }"
         },
         {
           "platform": "ios",
@@ -60827,7 +60827,7 @@ const DATA = {
           "line": 731,
           "symbol": "memberPalette",
           "note": "",
-          "text": "return map.values.compactMap { $0 as? [String: Any] }.compactMap(Member.fromDict)"
+          "text": "static func otpStatus(_ mac: String) -> OtpStatus? { get(OtpStatus.self, \"otpStatus_\" + mac) }"
         },
         {
           "platform": "ios",
@@ -60904,7 +60904,7 @@ const DATA = {
           "line": 760,
           "symbol": "removeMember(_:)",
           "note": "",
-          "text": "static func setMemberInfo(_ id: String, _ info: [String: String]) {"
+          "text": "map[m.id] = m.toDict()"
         },
         {
           "platform": "ios",
@@ -60912,7 +60912,7 @@ const DATA = {
           "line": 786,
           "symbol": "duty",
           "note": "duty = duty.filter { $0.value != id }",
-          "text": "// 档案扩展 / 徽章 / 生日 (均以成员 id 为键) 与值班周表: 删成员后成永久孤儿键, 一并清。"
+          "text": "for i in l.fps.indices where l.fps[i].owner == id { l.fps[i].owner = nil; changed = true }"
         }
       ],
       "platformEvidence": {
@@ -61379,7 +61379,7 @@ const DATA = {
           "line": 1236,
           "symbol": "credRow",
           "note": "kf_row_h",
-          "text": "UIPasteboard.general.string = pwd   // 405"
+          "text": "// 周期必须取**锁端上报**的 zotpPeriod (03#05, 单位分钟), 缺省才回落 30。"
         },
         {
           "platform": "ios",
@@ -61640,7 +61640,7 @@ const DATA = {
           "line": 949,
           "symbol": "secret(_:_:)",
           "note": "Keychain 优先 + 明文迁移",
-          "text": "self.fw = d[\"fw\"] as? String ?? \"\""
+          "text": "self.bkey = secret(\"bkey\", d[\"bkey\"] as? String)"
         }
       ],
       "platformEvidence": {
@@ -62090,7 +62090,7 @@ const DATA = {
           "line": 350,
           "symbol": "migrateSecretsToKeychain()",
           "note": "",
-          "text": "/// 由 exec 的顺序自愈再学一次 (代价: 多一个来回, 不会写错锁)。"
+          "text": "static func macOrder(_ mac: String) -> ZKProtocol.MacOrder {"
         },
         {
           "platform": "ios",
@@ -62098,7 +62098,7 @@ const DATA = {
           "line": 361,
           "symbol": "stored",
           "note": "stored || set 成功才 removeValue",
-          "text": "// plist 里的非密字段下次保存会再试）。"
+          "text": "for kc in keychains() { ZKProtocol.setMacOrder(kc.mac, macOrder(kc.mac)) }"
         }
       ],
       "platformEvidence": {
@@ -62162,7 +62162,7 @@ const DATA = {
           "line": 864,
           "symbol": "pcIter",
           "note": "60_000 轮",
-          "text": "store.set(\"kf_gateways\", map)"
+          "text": "lastWifi: g.lastWifi.isEmpty ? old.lastWifi : g.lastWifi,"
         },
         {
           "platform": "ios",
@@ -62170,7 +62170,7 @@ const DATA = {
           "line": 886,
           "symbol": "verifyPasscode(_:)",
           "note": "",
-          "text": "static func fnv1a32(_ s: String) -> String {"
+          "text": "/// 同时写强摘要 d2 与旧 FNV 摘要 d:"
         },
         {
           "platform": "ios",
@@ -62178,7 +62178,7 @@ const DATA = {
           "line": 896,
           "symbol": "passcodeRecord",
           "note": "验过即静默升级",
-          "text": "let salt = rec[\"s\"] ?? \"\""
+          "text": "var hash: UInt32 = 0x811c9dc5"
         }
       ],
       "platformEvidence": {
@@ -62248,7 +62248,7 @@ const DATA = {
           "line": 374,
           "symbol": "saveKeychain(_:)",
           "note": "",
-          "text": "d.removeValue(forKey: f)"
+          "text": "for (m, v) in map {"
         },
         {
           "platform": "ios",
@@ -62256,7 +62256,7 @@ const DATA = {
           "line": 425,
           "symbol": "removeKeychain(_:)",
           "note": "",
-          "text": "static func pendingPair(_ mac: String) -> Keychain? {"
+          "text": "for (f, v) in [(\"skey\", kc.skey), (\"bkey\", kc.bkey), (\"ekey\", kc.ekey), (\"pins\", kc.pins.joined(separator: \",\"))] {"
         },
         {
           "platform": "ios",
@@ -62264,7 +62264,7 @@ const DATA = {
           "line": 438,
           "symbol": "removeDevice",
           "note": "clearPendingPair",
-          "text": "for f in [\"skey\", \"bkey\", \"ekey\", \"pins\"] { SecretStore.remove(pendingPairAccount(m, f)) }"
+          "text": "kc.skey = SecretStore.get(pendingPairAccount(m, \"skey\")) ?? \"\""
         }
       ],
       "platformEvidence": {
@@ -62332,7 +62332,7 @@ const DATA = {
           "line": 655,
           "symbol": "CachedLog",
           "note": "新 + 旧缓存去重合并",
-          "text": "/// 包2/125 最后已知状态: 快照采样时刻 (信封 at), 断连展示\"数据截至 14:32 · 缓存\"用"
+          "text": "zotpPeriod: st.zotpPeriod > 0 ? st.zotpPeriod : nil,"
         },
         {
           "platform": "ios",
@@ -62340,7 +62340,7 @@ const DATA = {
           "line": 672,
           "symbol": "replaceLogs(_:_:)",
           "note": "",
-          "text": "cache.logs = merged"
+          "text": "var seen = Set\u003cString>()"
         }
       ],
       "platformEvidence": {
@@ -62406,7 +62406,7 @@ const DATA = {
           "line": 636,
           "symbol": "zotpPeriod",
           "note": "zotpPeriod: st.zotpPeriod > 0 ? ... : nil",
-          "text": "ledger(mac).fps.filter { batches.contains($0.batch) }"
+          "text": "ledger(mac).pwds.first { $0.alias == alias }"
         },
         {
           "platform": "ios",
@@ -62414,7 +62414,7 @@ const DATA = {
           "line": 412,
           "symbol": "getStatus",
           "note": "st.rc == 0 才写",
-          "text": "}"
+          "text": "} else {"
         },
         {
           "platform": "ios",
@@ -62422,7 +62422,7 @@ const DATA = {
           "line": 646,
           "symbol": "statusTime(_:)",
           "note": "",
-          "text": "zotpPeriod: st.zotpPeriod > 0 ? st.zotpPeriod : nil,"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -62430,7 +62430,7 @@ const DATA = {
           "line": 413,
           "symbol": "getStatus",
           "note": "DB.writeStatus",
-          "text": "let st = StatusParser.parseStatus(r.klvs)"
+          "text": "r = try await exec(ZKCmdBuilder.cmd03StatusPlain(curMac), needToken: false)"
         },
         {
           "platform": "ios",
@@ -62438,7 +62438,7 @@ const DATA = {
           "line": 414,
           "symbol": "getStatus",
           "note": "BatteryCare.sample",
-          "text": "if st.rc == 0 {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -63249,7 +63249,7 @@ const DATA = {
           "line": 864,
           "symbol": "pcIter",
           "note": "",
-          "text": "store.set(\"kf_gateways\", map)"
+          "text": "lastWifi: g.lastWifi.isEmpty ? old.lastWifi : g.lastWifi,"
         },
         {
           "platform": "ios",
@@ -63257,7 +63257,7 @@ const DATA = {
           "line": 891,
           "symbol": "d2",
           "note": "d2 主路径",
-          "text": "}"
+          "text": "private static func pcStrong(_ pw: String, salt: String) -> String {"
         },
         {
           "platform": "ios",
@@ -63265,7 +63265,7 @@ const DATA = {
           "line": 896,
           "symbol": "set(passcodeRecord",
           "note": "验过即静默升级",
-          "text": "let salt = rec[\"s\"] ?? \"\""
+          "text": "var hash: UInt32 = 0x811c9dc5"
         }
       ],
       "platformEvidence": {
@@ -63834,7 +63834,7 @@ const DATA = {
           "line": 462,
           "symbol": "k.contains(m)",
           "note": "for k in store.keys() where k.contains(m)",
-          "text": "\"kf_linkrssi_\", \"kf_link_auto_\", \"kf_macorder_\"] {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -69351,7 +69351,7 @@ const DATA = {
           "line": 543,
           "symbol": "enableDfu",
           "note": "",
-          "text": "let (m, sk) = try keys()"
+          "text": "/// 且重试也不会自愈，所以把 needToken 写出来而不是靠默认值。"
         },
         {
           "platform": "ios",
@@ -69359,7 +69359,7 @@ const DATA = {
           "line": 196,
           "symbol": "downgradeBlocked",
           "note": "",
-          "text": "if versionLt(target, cur) {"
+          "text": "for i in 0..\u003c3 {"
         },
         {
           "platform": "apk",

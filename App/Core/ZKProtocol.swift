@@ -96,7 +96,10 @@ enum ZKProtocol {
     /// 内存注册表: 只有 DB 的落盘口与配网探针会写它 (协议层不读库, 免得 Core 里绕成环)。
     /// 进程重启后由 `DB.hydrateMacOrders()` 在启动窗口补上, 补不上的锁会走一次 rc=12 自愈再学习。
     private static let macOrdersLock = Locked([String: MacOrder]())
-    static func normMac(_ s: String) -> String { s.lowercased().replacingOccurrences(of: ":", with: "") }
+    /// 2026-10-27 审核合并 (AUDIT-C A11)：转调 `DB.normalizeMac`，不再各写一遍。
+    /// 原先这里是 `lowercased() + 去冒号`（顺序与 DB 那版相反，且不去连字符）——
+    /// 两份实现行为不同，是本仓「同一概念两处实现」的典型。
+    static func normMac(_ s: String) -> String { DB.normalizeMac(s) }
     static func setMacOrder(_ mac: String, _ o: MacOrder) { macOrdersLock.withLock { $0[normMac(mac)] = o } }
     static func macOrder(_ mac: String) -> MacOrder { macOrdersLock.withLock { $0[normMac(mac)] } ?? .display }
     static func flipped(_ o: MacOrder) -> MacOrder { o == .display ? .raw : .display }

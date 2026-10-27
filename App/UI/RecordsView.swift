@@ -805,7 +805,7 @@ struct RecordsView: View {
             let who = r.whoId.flatMap { DB.member($0)?.name } ?? "未归属"
             out.append([esc(r.dayKey), esc(r.time), esc(r.title), esc(who), esc(r.lockName)].joined(separator: ","))
         }
-        UIPasteboard.general.string = out.joined(separator: "\n")
+        Clip.set(out.joined(separator: "\n"))
         app.showToast("已复制 \(rows.count) 行 CSV")   // 716 已复制
     }
 
@@ -815,7 +815,7 @@ struct RecordsView: View {
         let m = StatsKit.build(mac: app.currentMac)
         let d = m.lastWeekDigest()
         let text = d.lines.joined(separator: "\n") + "\n\n" + d.csv
-        UIPasteboard.general.string = text
+        Clip.set(text)
         let rows = max(d.csv.split(separator: "\n").count - 1, 0)
         app.showToast("已复制上周小结: \(d.lines.count) 句摘要 + \(rows) 行 CSV")   // 698 已复制上周小结
     }
@@ -1127,7 +1127,7 @@ struct RecordsView: View {
                 .tint(DS.Palette.warn)
             }
             Button("复制") {
-                UIPasteboard.general.string = "[" + (r.lockName.isEmpty ? app.displayName : r.lockName) + "] " + r.time + " " + r.title
+                Clip.set("[" + (r.lockName.isEmpty ? app.displayName : r.lockName) + "] " + r.time + " " + r.title)
                 app.showToast("已复制本条记录")
             }
             .tint(DS.Palette.accent)
@@ -1135,7 +1135,7 @@ struct RecordsView: View {
         .contextMenu {
             // 714 复制为完整文本: 粘贴即有锁名+时间+归属的完整上下文
             Button {
-                UIPasteboard.general.string = "[" + (r.lockName.isEmpty ? app.displayName : r.lockName) + "] " + r.time + " " + r.title
+                Clip.set("[" + (r.lockName.isEmpty ? app.displayName : r.lockName) + "] " + r.time + " " + r.title)
                 app.showToast("已复制本条记录")
             } label: {
                 Label("复制为文本", systemImage: "doc.on.doc")   // 714 复制为文本
@@ -1143,7 +1143,7 @@ struct RecordsView: View {
             // 761 溯源: 复制本机缓存行标识 (锁日志序号 idx, 或手机侧事件的 f_/c_ 前缀键) + 日期 + 锁 MAC,
             // 便于和诊断包里的日志逐条对上。不假装能查锁端数据库。
             Button {
-                UIPasteboard.general.string = "row=" + r.key + " · day=" + r.dayKey
+                Clip.set("row=" + r.key + " · day=" + r.dayKey)
                     + " · mac=" + (r.rowMac.isEmpty ? mac : r.rowMac)
                 app.showToast("已复制行标识")   // 761 已复制行标识
             } label: {

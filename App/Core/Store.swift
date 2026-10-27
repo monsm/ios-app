@@ -331,7 +331,16 @@ enum DB {
         if let d = map[m] as? [String: Any] { return Keychain.fromDict(d) }
         return nil
     }
-    static func normalizeMac(_ m: String) -> String { m.replacingOccurrences(of: ":", with: "").lowercased() }
+    /// MAC 归一化 —— **全仓唯一入口**（2026-10-27 审核合并，AUDIT-C A11）。
+    /// 去冒号 + 去连字符 + 小写。
+    /// 补「去连字符」的理由：`BluetoothDevice.getAddress()` 在部分机型/厂商 SDK 上带连字符，
+    /// 而 Android 版早就去掉了（`KfProtocol.kt:230`）—— iOS 没去，于是同一份带连字符的 MAC
+    /// 从备份/二维码进来会建出**两个不同的台账键**。Android 那版是对的，这里对齐它。
+    static func normalizeMac(_ m: String) -> String {
+        m.replacingOccurrences(of: ":", with: "")
+            .replacingOccurrences(of: "-", with: "")
+            .lowercased()
+    }
 
     // ---------- 0x88 包络 MAC 字节序 (per MAC, 2026-10-17) ----------
     /// 顺序是"这台手机跟这把锁谈过话"的**观测结果**, 不是密钥材料, 所以刻意**不进 `Keychain`**:
