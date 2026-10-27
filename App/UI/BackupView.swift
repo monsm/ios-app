@@ -109,7 +109,7 @@ struct BackupView: View {
                 let plain = BackupCanonical.exportText(BackupKit.collectAll())
                 if encryptExport {
                     // 用已有信封加密（与 351 凭证合包同一套算法）。解不开时的错误由导入侧统一报。
-                    exportText = CryptoBox.encryptText(plain, password: exportPw)
+                    exportText = (try? CryptoBox.encryptText(plain, password: exportPw)) ?? ""
                     if exportText.isEmpty {
                         app.showToast("加密失败 — 请检查密码后重试")
                         return

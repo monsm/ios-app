@@ -92,7 +92,10 @@ enum AutoOpenKit {
         guard control == 2 else { return false }
         guard startSec != endSec else { return true }
         let comps = cal.dateComponents([.hour, .minute, .second], from: now)
-        let secOfDay = ((comps.hour ?? 0) * 3600 + (comps.minute ?? 0) * 60 + (comps.second ?? 0)) * 2
+        // 2026-10-27 审核修复：startSec/endSec 是协议值（一天内秒数 / 2），
+        // 原实现在这里拿「当前秒数」直接与它比 ⇒ 全天错位（如 22:00 存成 39600，
+        // 而当前 22:00 的时刻秒数是 79200，永远比不过）。当前时刻也 /2 后才同口径。
+        let secOfDay = ((comps.hour ?? 0) * 3600 + (comps.minute ?? 0) * 60 + (comps.second ?? 0)) / 2
         if startSec < endSec {
             return secOfDay >= startSec && secOfDay < endSec
         }

@@ -4,7 +4,21 @@ import android.content.Context
 import org.json.JSONObject
 
 /** 一把锁的全部信息 —— 就是二维码里那五个字段, 不多不少。 */
-data class LockInfo(val name: String, val mac: String, val pid: Int, val ekey: String) {
+data class LockInfo(
+    val name: String,
+    val mac: String,
+    val pid: Int,
+    val ekey: String,
+    // 2026-10-27 审核补齐：iOS 有 F4 布防门 / F6 锁态门，Android 原先没有这两个数据源，
+    // 导致「在 iPhone 上开布防 → Android 手机照常自动开锁」。
+    //   defendOn      本机侧布防否决（极简版不下发 cmd25，只做本机拦）
+    //   defendStart/EndHour  布防时段（跨零点时 start > end）
+    //   lastRc        上一次开锁/状态回包的 rc，用于 F6（25 锁忙 / 26 被撬 → 拒绝）
+    val defendOn: Boolean = false,
+    val defendStartHour: Int = 22,
+    val defendEndHour: Int = 7,
+    val lastRc: Int = 0,
+) {
     val macText: String
         get() = mac.chunked(2).joinToString(":").uppercase()
 }
@@ -27,6 +41,10 @@ object LockStore {
                 mac = o.optString("m"),
                 pid = o.optInt("p"),
                 ekey = o.optString("e"),
+                defendOn = o.optBoolean("do", false),
+                defendStartHour = o.optInt("ds", 22),
+                defendEndHour = o.optInt("de", 7),
+                lastRc = o.optInt("lr", 0),
             )
         }.getOrNull()?.takeIf { it.mac.length == 12 && it.ekey.isNotEmpty() }
     }
@@ -37,6 +55,10 @@ object LockStore {
             .put("m", lock.mac)
             .put("p", lock.pid)
             .put("e", lock.ekey)
+            .put("do", lock.defendOn)
+            .put("ds", lock.defendStartHour)
+            .put("de", lock.defendEndHour)
+            .put("lr", lock.lastRc)
         ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit().putString(KEY, o.toString()).apply()
     }
 

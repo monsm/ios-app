@@ -37,13 +37,16 @@ enum DefendMode: Int, CaseIterable, Identifiable {
 }
 
 enum DefendKit {
-    /// 一天的半秒数 —— 协议时间字段的单位。AutoOpenKit.defendActive 内部把秒数 ×2 后与它比较。
+    /// 一天的协议时间值上限（86600/2 = 43200；留双倍余量给脏数据钳制）。
     static let halfDay = 172_800
     /// 一天的秒数（用于 UI 与校验）。
     static let daySeconds = 86_400
 
     /// 时段校验。返回 nil 表示通过，否则是**原样展示给用户的那句话**。
-    /// 三条判据对齐 APK：结束 > 开始、结束 > 当前、结束 ≠ 开始。
+    /// 判据对齐 APK 的 period 分支：**只校验 start ≠ end**（允许跨午夜，22:00–07:00 合法）。
+    /// 2026-10-27 审核修复：原实现额外加了「结束必须大于开始」和「结束必须晚于当前」两条，
+    /// 而默认值就是 22:00–07:00（跨午夜）⇒ 校验必失败 ⇒ 布防页主按钮永远灰着。
+    /// 且同文件 autoOpen 的 defendActive 已正确支持跨午夜 —— 引擎支持、校验器禁止。
     /// 时间入参用**秒**（UI 直觉），内部换成半秒对齐协议。
     static func validate(mode: DefendMode, startSec: Int, endSec: Int, now: Date = Date()) -> String? {
         switch mode {
@@ -53,8 +56,6 @@ enum DefendKit {
             if startSec < 0 || startSec >= daySeconds { return "开始时间不在一天之内" }
             if endSec < 0 || endSec > daySeconds { return "结束时间不在一天之内" }
             if endSec == startSec { return "结束时间不能等于开始时间" }
-            if endSec < startSec { return "结束时间必须大于开始时间" }
-            if endSec <= secondsOfDay(now) { return "结束时间必须大于当前时间" }
             return nil
         }
     }
@@ -65,11 +66,15 @@ enum DefendKit {
         return (c.hour ?? 0) * 3600 + (c.minute ?? 0) * 60 + (c.second ?? 0)
     }
 
-    /// 秒 → 协议半秒值。**这是唯一的换算出口**：cmd25 收的是半秒，AutoOpenKit 比的也是半秒。
-    static func protoSec(_ sec: Int) -> Int { max(0, min(daySeconds, sec)) * 2 }
+    /// 秒 → 协议时间字段值。**唯一的换算出口**。
+    /// ⚠ 2026-10-27 审核修复：原实现是 `× 2`（当成"半秒"），而 APK 原文是
+    /// `getSeconHMS(t)/2`（`getSeconHMS` 返回一天内**秒数**，除以 2 才是协议值）。
+    /// iOS 内部原本自洽（存储/比较都用 ×2），但**发给锁端的是 4 倍值** —— 锁端布防时段
+    /// 与 App 的 F4 否决门分叉（锁在布防 / App 以为没布防）。现改为 / 2 与 APK 一致。
+    static func protoSec(_ sec: Int) -> Int { max(0, min(daySeconds, sec)) / 2 }
 
     /// 协议半秒值 → 秒（读回历史配置时用）。
-    static func secFromProto(_ proto: Int) -> Int { max(0, min(halfDay, proto)) / 2 }
+    static func secFromProto(_ proto: Int) -> Int { max(0, min(halfDay, proto)) * 2 }
 
     /// 「时:分」→ 日内秒。
     static func seconds(hour: Int, minute: Int) -> Int { hour * 3600 + minute * 60 }
