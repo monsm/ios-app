@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T00:59:27.876Z",
+    "generated": "2026-10-27T01:31:24.424Z",
     "sources": [
       {
         "scout": "android-native",
@@ -37,13 +37,13 @@
         "scout": "ios-ui-cred",
         "platform": "ios",
         "file": "ios-ui-cred.json",
-        "nodes": 117
+        "nodes": 103
       },
       {
         "scout": "ios-ui-device",
         "platform": "ios",
         "file": "ios-ui-device.json",
-        "nodes": 147
+        "nodes": 130
       },
       {
         "scout": "ios-ui-records",
@@ -73,7 +73,7 @@
         "scout": "lead-gapfill",
         "platform": "ios",
         "file": "lead-gapfill2.json",
-        "nodes": 3
+        "nodes": 2
       },
       {
         "scout": "lead-implement",
@@ -473,7 +473,7 @@
           "line": 42,
           "symbol": "body",
           "note": "vkBody.destined(.deviceHome)",
-          "text": "var vkBody: some View {"
+          "text": "ScrollView {"
         },
         {
           "platform": "ios",
@@ -481,7 +481,7 @@
           "line": 130,
           "symbol": "sheet(isPresented: $showAdd)",
           "note": "AddDeviceView()",
-          "text": ".sheet(isPresented: $app.showGate) { UnlockGateView() }"
+          "text": "reconnectDot = true"
         },
         {
           "platform": "android",
@@ -579,9 +579,9 @@
         "apk-baseline",
         "ios-ui-device"
       ],
-      "childCount": 23,
+      "childCount": 14,
       "isDomain": false,
-      "weight": 27,
+      "weight": 16,
       "path": "设备与连接 › 首页壳（标题/背景/齿轮）"
     },
     {
@@ -1262,7 +1262,7 @@
           "line": 1758,
           "symbol": "struct SyncTimeView",
           "note": "",
-          "text": "busy = false"
+          "text": ""
         },
         {
           "platform": "apk",
@@ -1278,7 +1278,7 @@
           "line": 1771,
           "symbol": "将手机时间同步到门锁内 (cmd 0E)",
           "note": "",
-          "text": "Spacer(minLength: DS.Space.m)"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -1552,7 +1552,7 @@
           "line": 1222,
           "symbol": "quickActions",
           "note": "",
-          "text": "style: StrokeStyle(lineWidth: 1, dash: [4, 4]))"
+          "text": "var vkBody: some View {"
         },
         {
           "platform": "ios",
@@ -1568,7 +1568,7 @@
           "line": 1227,
           "symbol": "let cols = AXPrefs.bigTile ? 2 : 3",
           "note": "",
-          "text": ".buttonStyle(PressableButtonStyle())"
+          "text": ".vkFont(.footnote)"
         }
       ],
       "platformEvidence": {
@@ -1613,91 +1613,6 @@
       "isDomain": false,
       "weight": 3,
       "path": "设备与连接 › 首页壳（标题/背景/齿轮） › 快捷操作格"
-    },
-    {
-      "id": "device.home.recent",
-      "key": "device.home.recent",
-      "parent": "device.home",
-      "domain": "device",
-      "level": 3,
-      "name": "最近开门卡片（当前锁）",
-      "kind": "screen",
-      "summary": "当前锁的最近开门事件列表，行内区分为告警/普通，整行可点跳到记录页对应条目。",
-      "details": [
-        "标题随范围切换：「最近开门」或「最近开门 · 全部锁」，并带条数",
-        "空态文案「还没有开门记录。门锁有新动静时会出现在这里。」",
-        "行图标：告警用 exclamationmark.triangle.fill（warn），普通用 person.crop.circle.fill",
-        "行尾 chevron 表示可跳转；被记录页过滤挡掉时由 RecordsView 回一句「不在当前显示范围里」",
-        "行上长按菜单「查这位成员的记录」只在 whoId 可证明（DB.member 存在）时出现"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 1374,
-          "symbol": "recentCard",
-          "note": "",
-          "text": "}"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 1396,
-          "symbol": "Text(\"还没有开门记录。门锁有新动静时会出现在这里。\")",
-          "note": "",
-          "text": ".font(.system(size: DS.Icon.sm))"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 1522,
-          "symbol": "provableMemberId(_:)",
-          "note": "",
-          "text": ".accessibilityLabel(\"快捷操作格组\")   // 868 快捷操作格组"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 1374,
-            "symbol": "recentCard",
-            "note": ""
-          },
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 1396,
-            "symbol": "Text(\"还没有开门记录。门锁有新动静时会出现在这里。\")",
-            "note": ""
-          },
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 1522,
-            "symbol": "provableMemberId(_:)",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "记录"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-device"
-      ],
-      "childCount": 3,
-      "isDomain": false,
-      "weight": 3,
-      "path": "设备与连接 › 首页壳（标题/背景/齿轮） › 最近开门卡片（当前锁）"
     },
     {
       "id": "android.build",
@@ -3848,7 +3763,7 @@
           "line": 857,
           "symbol": "attentionCard",
           "note": "",
-          "text": "}"
+          "text": "Label(\"编辑快捷操作格\", systemImage: \"square.grid.2x2\")   // 905 编辑快捷操作格"
         },
         {
           "platform": "ios",
@@ -3856,7 +3771,7 @@
           "line": 879,
           "symbol": "attentionItems",
           "note": "",
-          "text": ".fixedSize(horizontal: false, vertical: true)"
+          "text": "// 点它直接开真正的录入表单 (quickDestination addFp = 与\"添加指纹\"大格同一个"
         },
         {
           "platform": "ios",
@@ -3864,7 +3779,7 @@
           "line": 895,
           "symbol": "BatteryCare.fpCleanNeeded(mac)",
           "note": "",
-          "text": "}"
+          "text": ".frame(maxWidth: .infinity)"
         }
       ],
       "platformEvidence": {
@@ -3912,75 +3827,6 @@
       "path": "设备与连接 › 首页壳（标题/背景/齿轮） › 需要处理的异常卡"
     },
     {
-      "id": "device.home.banner",
-      "key": "device.home.banner",
-      "parent": "device.home",
-      "domain": "device",
-      "level": 3,
-      "name": "备份状态角标",
-      "kind": "action",
-      "summary": "Hero 卡上两态角标「今日已备份 / 多日未备份」，点按打开设置页（通常落在备份入口）。",
-      "details": [
-        "绿点 = BackupStudio.badgeState == .fresh，其余为 heroFg 点",
-        "按钮动作只做 showSettings = true，不带 pendingSettingsFocus → 落在设置页根",
-        "仅当前锁显示"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 815,
-          "symbol": "let bs = BackupStudio.badgeState",
-          "note": "",
-          "text": "}"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 816,
-          "symbol": "Button { showSettings = true }",
-          "note": "",
-          "text": ""
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 815,
-            "symbol": "let bs = BackupStudio.badgeState",
-            "note": ""
-          },
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 816,
-            "symbol": "Button { showSettings = true }",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "备份"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-device"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "设备与连接 › 首页壳（标题/背景/齿轮） › 备份状态角标"
-    },
-    {
       "id": "device.home.deepjump",
       "key": "device.home.deepjump",
       "parent": "device.home",
@@ -4001,7 +3847,7 @@
           "line": 170,
           "symbol": ".onChange(of: app.pendingJumpLock)",
           "note": "",
-          "text": "guard let m else { return }"
+          "text": "// 243 断连触感: 已连接 → 断开瞬间一次中触感 (Hero 卡同步灰化见 statusCard)"
         },
         {
           "platform": "ios",
@@ -4009,7 +3855,7 @@
           "line": 201,
           "symbol": "if app.pendingAddDevice",
           "note": "",
-          "text": "app.pendingAddDevice = false"
+          "text": "private func rescanPull() async {"
         },
         {
           "platform": "ios",
@@ -4017,7 +3863,7 @@
           "line": 148,
           "symbol": ".onChange(of: app.currentMac)",
           "note": "",
-          "text": "if confirmMac != new { confirmMac = nil }   // 菜单/联动切锁不设防, 只有横滑才设"
+          "text": "// 当前锁不在翻页序列 (如沉睡锁从胶囊选中) → 重建序列并落位"
         }
       ],
       "platformEvidence": {
@@ -4089,7 +3935,7 @@
           "line": 47,
           "symbol": "if app.devices.isEmpty",
           "note": "",
-          "text": "Card {"
+          "text": "title: \"还没有添加门锁\","
         },
         {
           "platform": "apk",
@@ -4105,7 +3951,7 @@
           "line": 59,
           "symbol": "app.pendingSettingsFocus = \"backup\"",
           "note": "",
-          "text": "app.requestRoute(.settings)"
+          "text": "} label: {"
         },
         {
           "platform": "ios",
@@ -4113,7 +3959,7 @@
           "line": 52,
           "symbol": "actionTitle: \"添加设备\"",
           "note": "",
-          "text": "// 824 第二出口: 只有\"再扫一次\"不够 —— 换机或误删之后用户手上拿的是"
+          "text": "Button {"
         }
       ],
       "platformEvidence": {
@@ -4192,7 +4038,7 @@
           "line": 330,
           "symbol": "groupChips",
           "note": "",
-          "text": "let names = groupNameList"
+          "text": "guard isCurrent else { return nil }"
         },
         {
           "platform": "ios",
@@ -4200,7 +4046,7 @@
           "line": 293,
           "symbol": "inGroup(_:) ",
           "note": "",
-          "text": "if groupFilter.isEmpty { return true }"
+          "text": ".accessibilityAddTraits(on ? [.isSelected] : [])"
         },
         {
           "platform": "ios",
@@ -4208,7 +4054,7 @@
           "line": 347,
           "symbol": "groupFilter = name; syncPageOrder()",
           "note": "",
-          "text": "recomputeMerged()"
+          "text": "heroNoticeRow(icon: \"checkmark.seal\", text: \"链路待验证 · 成功开一次锁即打标\", tint: DS.heroFg)"
         }
       ],
       "platformEvidence": {
@@ -4277,7 +4123,7 @@
           "line": 695,
           "symbol": "heroCard(for:isCurrent:)",
           "note": "",
-          "text": "// 113 五档电量 / 120: 低电降级档 (≤20%) 关流光边并压亮度, 动效令牌同步降 calm"
+          "text": "Text(app.failStreak < 3 ? \"再试一次, 别着急\" : \"连着几次没成, 逐项自查一遍:\")"
         },
         {
           "platform": "ios",
@@ -4285,7 +4131,7 @@
           "line": 793,
           "symbol": "HeroStat(label: \"电量\")",
           "note": "",
-          "text": "}"
+          "text": "withAnimation(DS.Motion.exit) { autoLockLeft = nil }"
         },
         {
           "platform": "ios",
@@ -4293,7 +4139,7 @@
           "line": 846,
           "symbol": ".saturation(connected ? 1 : 0.55)",
           "note": "",
-          "text": "out.append((\"密钥尚未绑定，该门锁可能还没完成配网\", \"exclamationmark.triangle.fill\", .warn))"
+          "text": "//        从未手动调整过且满 30 天 → 只把最常用的一格提到首格, 其余保序。"
         }
       ],
       "platformEvidence": {
@@ -4362,7 +4208,7 @@
           "line": 664,
           "symbol": "heroNotice(kc:tier:isCurrent:)",
           "note": "",
-          "text": "if isCurrent, tier.severe {"
+          "text": "CaptionStepBar(phase: app.phase, unlockState: app.unlockState)"
         },
         {
           "platform": "ios",
@@ -4370,7 +4216,7 @@
           "line": 670,
           "symbol": "!LockArchive.isVerified(kc.mac)",
           "note": "",
-          "text": "heroNoticeRow(icon: \"thermometer.snowflake\", text: \"低温季: 电池续航会缩短, 多留意电量\", tint: DS.heroFg)"
+          "text": ".foregroundStyle(DS.Palette.accentText)"
         }
       ],
       "platformEvidence": {
@@ -4434,7 +4280,7 @@
           "line": 732,
           "symbol": "LinkPill(state:connectMs:rssi:source:)",
           "note": "",
-          "text": "Text(sense.lastRssi.map { \"\\($0) dBm\" } ?? \"未读到信号\")"
+          "text": "// (挂在整个圆盘区 VStack 上 —— 原先误挂在一个条件分支后（if AXPrefs.captions，该开关已于 2026-10-26 删除）,"
         },
         {
           "platform": "ios",
@@ -4442,7 +4288,7 @@
           "line": 738,
           "symbol": ".onTapGesture { if isCurrent { showRssi.toggle() } }",
           "note": "",
-          "text": ".offset(y: -18)"
+          "text": ".overlay {"
         },
         {
           "platform": "ios",
@@ -4450,7 +4296,7 @@
           "line": 756,
           "symbol": ".contextMenu { Menu(\"最近状态变化\") }",
           "note": "",
-          "text": "}"
+          "text": "Text(\"再点一次圆盘开始开锁\")"
         }
       ],
       "platformEvidence": {
@@ -4521,7 +4367,7 @@
           "line": 903,
           "symbol": "linkSenseCard",
           "note": "",
-          "text": "rows.append((\"系统蓝牙已关闭 — 打开后会自动重连\", \"antenna.radiowaves.left.and.right.slash\", \"warn\", false))   // 69 系统蓝牙已关闭"
+          "text": ".contentShape(Rectangle())"
         },
         {
           "platform": "ios",
@@ -4529,7 +4375,7 @@
           "line": 948,
           "symbol": "// 535 同步回执",
           "note": "",
-          "text": "if ev.what.contains(\"协议类\") || ev.what.contains(\"会话重协商失败\") {"
+          "text": ".frame(maxWidth: .infinity)"
         },
         {
           "platform": "ios",
@@ -4537,7 +4383,7 @@
           "line": 978,
           "symbol": "最后已知: 电量 … (缓存 …)",
           "note": "",
-          "text": "bleReady: btReady,"
+          "text": "quickTileBody(icon: \"arrow.counterclockwise\", label: \"再开一次\")"
         }
       ],
       "platformEvidence": {
@@ -4579,7 +4425,7 @@
       "sources": [
         "ios-ui-device"
       ],
-      "childCount": 1,
+      "childCount": 0,
       "isDomain": false,
       "weight": 1,
       "path": "设备与连接 › 首页壳（标题/背景/齿轮） › 连接感知卡（9 类只读行）"
@@ -4607,7 +4453,7 @@
           "line": 96,
           "symbol": "Button { showModuleOrder = true }",
           "note": "",
-          "text": "Label(\"模块排序与显隐\", systemImage: \"arrow.up.arrow.down\")   // 904 模块排序"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -4615,7 +4461,7 @@
           "line": 1596,
           "symbol": "moduleOrderSheet",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -4623,7 +4469,7 @@
           "line": 1655,
           "symbol": "Button(\"恢复默认\")",
           "note": "",
-          "text": "}"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -4670,314 +4516,6 @@
       "path": "设备与连接 › 首页壳（标题/背景/齿轮） › 模块排序与显隐"
     },
     {
-      "id": "device.home.order",
-      "key": "device.home.order",
-      "parent": "device.home",
-      "domain": "device",
-      "level": 3,
-      "name": "多锁排序与分组（手工顺序 / 默认锁置顶 / 幽灵条目剪除）",
-      "kind": "service",
-      "summary": "设备页与设备管理页共用同一套排序：有手工顺序就按它，没有就按绑定时间；两种情况启动默认锁都占首位；分组里「未分组」永远排最后。",
-      "details": [
-        "无手工顺序：默认锁置顶 → 其余按 pairedAt 绑定时间升序",
-        "有手工顺序：先按 orderMacs 排出 head，未列入的 rest 按 pairedAt 追加在后",
-        "**低电不置顶** —— 自动置顶会把用户明确排好的顺序挪走；低电改由状态图标行的橙点如实标出（电量升序是另一条明确开关）",
-        "「第一行就是启动默认锁」这条口径在设备管理页与设备页 271 兜底排序里讲的是同一件事，任何一处漏掉都会两页各说一套",
-        "分组：按 group(mac) 分桶，未分组固定排最后",
-        "setOrder 写侧会剪掉已解绑的 mac —— 顺序表是全局键，删设备删不到逐锁族，幽灵条目只会让读侧做无用查找"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/Core/LockStats.swift",
-          "line": 144,
-          "symbol": "orderedDevices(_:)",
-          "note": "默认锁置顶 + 手工顺序",
-          "text": "let def = defaultMac"
-        },
-        {
-          "platform": "ios",
-          "file": "App/Core/LockStats.swift",
-          "line": 160,
-          "symbol": "grouped(_:)",
-          "note": "未分组永远排最后",
-          "text": "for kc in devices {"
-        },
-        {
-          "platform": "ios",
-          "file": "App/Core/LockStats.swift",
-          "line": 176,
-          "symbol": "setOrder(_:)",
-          "note": "剪掉已解绑的 mac",
-          "text": "let alive = Set(DB.keychains().map { $0.mac })"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/Core/LockStats.swift",
-            "line": 144,
-            "symbol": "orderedDevices(_:)",
-            "note": "默认锁置顶 + 手工顺序"
-          },
-          {
-            "file": "App/Core/LockStats.swift",
-            "line": 160,
-            "symbol": "grouped(_:)",
-            "note": "未分组永远排最后"
-          },
-          {
-            "file": "App/Core/LockStats.swift",
-            "line": 176,
-            "symbol": "setOrder(_:)",
-            "note": "剪掉已解绑的 mac"
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "多锁",
-        "排序分组"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "lead-gapfill"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "设备与连接 › 首页壳（标题/背景/齿轮） › 多锁排序与分组（手工顺序 / 默认锁置顶 / 幽灵条目剪除）"
-    },
-    {
-      "id": "device.home.pager",
-      "key": "device.home.pager",
-      "parent": "device.home",
-      "domain": "device",
-      "level": 3,
-      "name": "Hero 卡横滑翻页",
-      "kind": "action",
-      "summary": "左右横滑在锁之间切换，Hero 卡随之上滚视差（约三分之一倍速）。",
-      "details": [
-        "TabView(.page, indexDisplayMode: .never) + scrollTransition，减少动效时偏移量归零",
-        "手势只挂在 Hero 区：圆盘纵向滑、下拉刷新、Tab 栏各自管自己的轴，不做手势仲裁",
-        "翻页落点即切当前锁（app.select），换锁后清掉与旧锁绑定的 confirmMac"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 605,
-          "symbol": "heroPager",
-          "note": "",
-          "text": "// 环境值先取出来: scrollTransition 的闭包是 @Sendable, 里面不能直接读主 actor 的 @Environment。"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 618,
-          "symbol": ".scrollTransition(.interactive, axis: .vertical)",
-          "note": "",
-          "text": "content.offset(y: stillMotion ? 0 : phase.value * 36)"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 605,
-            "symbol": "heroPager",
-            "note": ""
-          },
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 618,
-            "symbol": ".scrollTransition(.interactive, axis: .vertical)",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "核心"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-device"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "设备与连接 › 首页壳（标题/背景/齿轮） › Hero 卡横滑翻页"
-    },
-    {
-      "id": "device.home.pager.confirm",
-      "key": "device.home.pager.confirm",
-      "parent": "device.home",
-      "domain": "device",
-      "level": 3,
-      "name": "横滑换锁后的开锁二次确认",
-      "kind": "edge",
-      "summary": "横滑换了锁之后，第一次点圆盘不执行开锁，只弹一枚放大的锁名胶囊提示「再点一次圆盘开始开锁」。",
-      "details": [
-        "只由横滑（pageIndex onChange）置位 confirmMac；胶囊菜单/联动切锁不设防",
-        "首点：tick 触感 + confirmPulse 显示 2.4 秒，不发任何指令",
-        "提示胶囊用 accent 1.5pt 描边表达「还没执行」，并整体 scale 1.12 入场",
-        "与 244 去重窗口、250 应用锁闸是三层不同的防误触保险"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 622,
-          "symbol": "// 267 换锁二次确认",
-          "note": "",
-          "text": ".onChange(of: pageIndex) { _, i in"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 1142,
-          "symbol": "dialAction()",
-          "note": "",
-          "text": "}"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 1130,
-          "symbol": "Text(\"再点一次圆盘开始开锁\")",
-          "note": "",
-          "text": ".foregroundStyle(DS.Palette.text)"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 622,
-            "symbol": "// 267 换锁二次确认",
-            "note": ""
-          },
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 1142,
-            "symbol": "dialAction()",
-            "note": ""
-          },
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 1130,
-            "symbol": "Text(\"再点一次圆盘开始开锁\")",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "防误触"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-device"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "设备与连接 › 首页壳（标题/背景/齿轮） › 横滑换锁后的开锁二次确认"
-    },
-    {
-      "id": "device.home.pager.default",
-      "key": "device.home.pager.default",
-      "parent": "device.home",
-      "domain": "device",
-      "level": 3,
-      "name": "上挑手势设为启动默认锁",
-      "kind": "action",
-      "summary": "在 Hero 区做「明显上挑」的斜向拖拽后，该锁被设为冷启动默认锁并置顶。",
-      "details": [
-        "触发门槛：translation.height < -60 且 |translation.width| > 60（纯横翻与纵向滚动都不触发）",
-        "成功时 LockArchive.setDefaultMac + trigger 触感 + toast「已设为启动默认锁」"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 633,
-          "symbol": ".simultaneousGesture(DragGesture(minimumDistance: 24)",
-          "note": "",
-          "text": "DragGesture(minimumDistance: 24).onEnded { g in"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 637,
-          "symbol": "LockArchive.setDefaultMac(kc.mac)",
-          "note": "",
-          "text": "DS.Haptics.trigger.impactOccurred()"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 633,
-            "symbol": ".simultaneousGesture(DragGesture(minimumDistance: 24)",
-            "note": ""
-          },
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 637,
-            "symbol": "LockArchive.setDefaultMac(kc.mac)",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "设置"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-device"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "设备与连接 › 首页壳（标题/背景/齿轮） › 上挑手势设为启动默认锁"
-    },
-    {
       "id": "device.home.pinpick",
       "key": "device.home.pinpick",
       "parent": "device.home",
@@ -4999,7 +4537,7 @@
           "line": 1674,
           "symbol": "pinPickCapsule(_:)",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -5015,7 +4553,7 @@
           "line": 85,
           "symbol": "if let kc = app.current, kc.ekey.isEmpty, kc.pins.count > 1",
           "note": "",
-          "text": "pinPickCapsule(kc)"
+          "text": ".accessibilityLabel(\"开锁圆盘组\")   // 868 开锁圆盘组"
         }
       ],
       "platformEvidence": {
@@ -5085,7 +4623,7 @@
           "line": 211,
           "symbol": "rescanPull()",
           "note": "",
-          "text": "guard sense.btOn else {"
+          "text": "app.showToast(\"4 秒内没扫到这把锁的广播 — 走近一点再下拉\")   // 537 秒内没扫到这把锁的广"
         },
         {
           "platform": "ios",
@@ -5093,7 +4631,7 @@
           "line": 217,
           "symbol": "sense.scan(mac:timeoutMs: 4000)",
           "note": "",
-          "text": "sense.noteScannedRssi(dev.rssi)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -5101,7 +4639,7 @@
           "line": 109,
           "symbol": ".refreshable { await rescanPull() }",
           "note": "",
-          "text": ".dsScreenBackground()"
+          "text": "Button { Task { await refresh(manual: true) } } label: {"
         }
       ],
       "platformEvidence": {
@@ -5147,245 +4685,6 @@
       "isDomain": false,
       "weight": 1,
       "path": "设备与连接 › 首页壳（标题/背景/齿轮） › 下拉重扫（只扫不连）"
-    },
-    {
-      "id": "device.home.statusrow",
-      "key": "device.home.statusrow",
-      "parent": "device.home",
-      "domain": "device",
-      "level": 3,
-      "name": "多锁状态图标行",
-      "kind": "state",
-      "summary": "横向一排圆形锁图标，每个图标右下角一枚状态点，用于一眼看出「哪把锁有事」；点图标即切当前锁。",
-      "details": [
-        "点色优先级：红=近 30 天日志有告警 > 橙=低电 > 绿=本机已连接 > 空心圈=没读到读数",
-        "空心圈是刻意设计：实心灰点会被读成「查过了，它没事」",
-        "当前锁外圈 2.5pt 主题色描边，名称最宽 56pt 截断",
-        "行下方常驻一行图例文案解释四种点",
-        "图标行包含沉睡与隐藏锁（与横滑序列的过滤相反）"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 368,
-          "symbol": "statusIconRow",
-          "note": "",
-          "text": "let locks = rowLocks"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 377,
-          "symbol": "Text(\"红点=近 30 天日志里有告警 …\")",
-          "note": "",
-          "text": ".vkFont(.caption2)"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 437,
-          "symbol": "private enum Dot",
-          "note": "",
-          "text": "case alarm, low, linked, none"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 368,
-            "symbol": "statusIconRow",
-            "note": ""
-          },
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 377,
-            "symbol": "Text(\"红点=近 30 天日志里有告警 …\")",
-            "note": ""
-          },
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 437,
-            "symbol": "private enum Dot",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "状态"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-device"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "设备与连接 › 首页壳（标题/背景/齿轮） › 多锁状态图标行"
-    },
-    {
-      "id": "device.home.switcher",
-      "key": "device.home.switcher",
-      "parent": "device.home",
-      "domain": "device",
-      "level": 3,
-      "name": "多锁切换胶囊 + 页点",
-      "kind": "action",
-      "summary": "锁数 > 1 时出现：左侧胶囊显示当前锁名与色点，右侧页点直达某一页（当前页高亮、低电页橙色描边）。",
-      "details": [
-        "页点视觉 7pt、当前页 18pt 胶囊，命中区统一撑到 44pt",
-        "当前页切走需经 pageIndex 动画；切锁同时触发 syncPageOrder 与合并流重算",
-        "页点仅在 app.devices.count > 1 时渲染"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 460,
-          "symbol": "capsuleSwitcher",
-          "note": "",
-          "text": "HStack(spacing: DS.Space.s) {"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 466,
-          "symbol": "ForEach(Array(pagedLocks.enumerated())",
-          "note": "",
-          "text": "Button { withAnimation(DS.Motion.soft) { pageIndex = i } } label: {"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 460,
-            "symbol": "capsuleSwitcher",
-            "note": ""
-          },
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 466,
-            "symbol": "ForEach(Array(pagedLocks.enumerated())",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "核心"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-device"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "设备与连接 › 首页壳（标题/背景/齿轮） › 多锁切换胶囊 + 页点"
-    },
-    {
-      "id": "device.home.switcher.menu",
-      "key": "device.home.switcher.menu",
-      "parent": "device.home",
-      "domain": "device",
-      "level": 3,
-      "name": "切换胶囊菜单（分组 / 沉睡 / 已隐藏 / 电量排序）",
-      "kind": "action",
-      "summary": "胶囊展开后按组分区列锁，另单独列出「沉睡 (超 30 天未连接)」与「已隐藏 (n)」两段，末尾是电量排序开关。",
-      "details": [
-        "≥2 组时用 Section(组名) 分区，单组时只给一个「门锁」Section",
-        "沉睡锁带 moon.zzz.fill 图标，隐藏锁带 eye.slash 图标，两者都仍可点选为当前锁",
-        "电量排序项文案随结果变化：开启时显示「按电量升序 (先照顾最弱)」；关闭时若存在手工顺序写「恢复手工排序」，否则「恢复绑定先后排序」",
-        "点该菜单项写 kf_sort_batt 并立即 syncPageOrder"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 488,
-          "symbol": "capsuleMenu",
-          "note": "",
-          "text": "Menu {"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 506,
-          "symbol": "Section(\"沉睡 (超 30 天未连接)\")",
-          "note": "",
-          "text": "ForEach(sleepers) { kc in"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 545,
-          "symbol": "DB.store.set(\"kf_sort_batt\", ...)",
-          "note": "",
-          "text": "DB.store.set(\"kf_sort_batt\", !DB.store.getBool(\"kf_sort_batt\"))"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 488,
-            "symbol": "capsuleMenu",
-            "note": ""
-          },
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 506,
-            "symbol": "Section(\"沉睡 (超 30 天未连接)\")",
-            "note": ""
-          },
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 545,
-            "symbol": "DB.store.set(\"kf_sort_batt\", ...)",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "核心",
-        "设置"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-device"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "设备与连接 › 首页壳（标题/背景/齿轮） › 切换胶囊菜单（分组 / 沉睡 / 已隐藏 / 电量排序）"
     },
     {
       "id": "device.info.autosync",
@@ -7573,7 +6872,7 @@
           "line": 50,
           "symbol": "空态标题",
           "note": "",
-          "text": "message: \"请先在门锁键盘上长按重置键恢复出厂，再回到这里添加设备（需要开启蓝牙）\","
+          "text": "// 824 第二出口: 只有\"再扫一次\"不够 —— 换机或误删之后用户手上拿的是"
         },
         {
           "platform": "apk",
@@ -7589,7 +6888,7 @@
           "line": 54,
           "symbol": "备份恢复入口",
           "note": "",
-          "text": "Button {"
+          "text": "// 下照常可达, 而访客态里「设置」Tab 不进层级树, 直写会落到一个看不见的"
         }
       ],
       "platformEvidence": {
@@ -7836,7 +7135,7 @@
           "line": 1803,
           "symbol": "private func run() async",
           "note": "",
-          "text": "Text(\"30 秒内再次开锁\")"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -7852,7 +7151,7 @@
           "line": 1821,
           "symbol": "try await app.lock.syncTime()",
           "note": "",
-          "text": "RoundedRectangle(cornerRadius: DS.Radius.control)"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -9016,89 +8315,6 @@
       "path": "设备与连接 › 首页壳（标题/背景/齿轮） › 标题区（锁名 + MAC）"
     },
     {
-      "id": "device.home.linksense.reconnect",
-      "key": "device.home.linksense.reconnect",
-      "parent": "device.home.linksense",
-      "domain": "device",
-      "level": 4,
-      "name": "回连节律点阵与梯级提示",
-      "kind": "state",
-      "summary": "断连且已开始重连时，显示「第 N 轮 · 下一轮等 X 秒」并画出重连点阵。",
-      "details": [
-        "仅 state == .down 且 reconnectAttempt > 0 时出现",
-        "文案由 nextLadderText 生成，间隔来自 sense.nextLadderInterval() 的梯级退避",
-        "同一时刻若有待下发变更，额外显示「变更已暂存」行"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 930,
-          "symbol": "ReconnectDots(attempt:nextWait:)",
-          "note": "",
-          "text": "\"clock.arrow.circlepath\", \"sub\", true))"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 983,
-          "symbol": "nextLadderText",
-          "note": "",
-          "text": "action: { dialAction() },"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 985,
-          "symbol": "lastWakeFail",
-          "note": "",
-          "text": "// 包15 字幕式过程条 (881): 连接/开锁过程逐字文案条给听障用户 (设置-辅助可关)"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 930,
-            "symbol": "ReconnectDots(attempt:nextWait:)",
-            "note": ""
-          },
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 983,
-            "symbol": "nextLadderText",
-            "note": ""
-          },
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 985,
-            "symbol": "lastWakeFail",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "状态"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-device"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "设备与连接 › 首页壳（标题/背景/齿轮） › 连接感知卡（9 类只读行） › 回连节律点阵与梯级提示"
-    },
-    {
       "id": "device.home.quick.again",
       "key": "device.home.quick.again",
       "parent": "device.home.quick",
@@ -9120,7 +8336,7 @@
           "line": 1352,
           "symbol": "againTile",
           "note": "",
-          "text": ".font(.system(size: DS.Icon.xs))"
+          "text": "if failed {"
         },
         {
           "platform": "ios",
@@ -9136,7 +8352,7 @@
           "line": 1362,
           "symbol": "showToast(\"还没有星标凭证 …\")",
           "note": "",
-          "text": "// 559: 原句是「行左滑查记录」—— 本区是卡片不是 List, SwiftUI 的 swipeActions"
+          "text": "Button(\"取消\") { dismiss() }"
         }
       ],
       "platformEvidence": {
@@ -9203,7 +8419,7 @@
           "line": 1256,
           "symbol": ".contextMenu { Button { showTileEdit = true } }",
           "note": "",
-          "text": "VStack(spacing: DS.Space.s) {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -9272,7 +8488,7 @@
           "line": 1268,
           "symbol": "if DB.listFps(app.currentMac).isEmpty",
           "note": "",
-          "text": ".minimumScaleFactor(0.85)"
+          "text": "result = \"未选择门锁\""
         },
         {
           "platform": "ios",
@@ -9280,7 +8496,7 @@
           "line": 1270,
           "symbol": "quickDestination(\"addFp\")",
           "note": "",
-          "text": ".frame(maxWidth: .infinity)"
+          "text": "return"
         }
       ],
       "platformEvidence": {
@@ -9320,244 +8536,6 @@
       "isDomain": false,
       "weight": 1,
       "path": "设备与连接 › 首页壳（标题/背景/齿轮） › 快捷操作格 › 「待添加指纹」虚线格"
-    },
-    {
-      "id": "device.home.recent.jump",
-      "key": "device.home.recent.jump",
-      "parent": "device.home.recent",
-      "domain": "device",
-      "level": 4,
-      "name": "记录落地：条目定位与成员过滤",
-      "kind": "action",
-      "summary": "点行把 pendingRecordKey 交给记录 Tab 并高亮那一条；长按「查这位成员的记录」把成员过滤带过去。",
-      "details": [
-        "跳转统一走 app.requestRoute(.records)，Tab 序号从 Route 表派生而不是写死",
-        "成员过滤用 pendingRecordsMember，记录页消费后清空，不残留",
-        "两条路径都以「消费即清空」收尾"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 1509,
-          "symbol": "landRecord(_:)",
-          "note": "",
-          "text": "let j = i + d"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 1517,
-          "symbol": "openMemberRecords(_:)",
-          "note": "",
-          "text": "private func moduleSlot(_ id: String, delay: Int) -> some View {"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 1431,
-          "symbol": ".contextMenu { Label(\"查这位成员的记录\") }",
-          "note": "",
-          "text": "}"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 1509,
-            "symbol": "landRecord(_:)",
-            "note": ""
-          },
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 1517,
-            "symbol": "openMemberRecords(_:)",
-            "note": ""
-          },
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 1431,
-            "symbol": ".contextMenu { Label(\"查这位成员的记录\") }",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "记录"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-device"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "设备与连接 › 首页壳（标题/背景/齿轮） › 最近开门卡片（当前锁） › 记录落地：条目定位与成员过滤"
-    },
-    {
-      "id": "device.home.recent.merged",
-      "key": "device.home.recent.merged",
-      "parent": "device.home.recent",
-      "domain": "device",
-      "level": 4,
-      "name": "跨锁合并流",
-      "kind": "screen",
-      "summary": "把组内所有锁的开门记录合成一条时间流（最多 10 条），每行尾部标锁名。",
-      "details": [
-        "合并范围跟组过滤走（rowLocks），选了「仓库」不会串台到门口那把锁",
-        "行尾锁名标签最宽 82pt 截断，避免长名字吃掉正文",
-        "相邻两行时间到分相同（只到分钟）时追加说明「同一分钟内的两条不分先后」",
-        "空态文案「这些锁的本地缓存里还没有开门记录 — 连上一次锁、拉一次日志就会出现在这里。」",
-        "归属推不出时只报事件名，不显示「未知成员」"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 1448,
-          "symbol": "mergedRecentRows",
-          "note": "",
-          "text": "}"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 315,
-          "symbol": "recomputeMerged()",
-          "note": "",
-          "text": "mergedRecent = RecordSearch.mergedRecentOpens(macs: rowLocks.map { $0.mac }, count: 10)"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 1497,
-          "symbol": "mergedHasSameMinute",
-          "note": "",
-          "text": "let ids = raw.isEmpty ? [] : raw.split(separator: \",\").map(String.init)"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 1448,
-            "symbol": "mergedRecentRows",
-            "note": ""
-          },
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 315,
-            "symbol": "recomputeMerged()",
-            "note": ""
-          },
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 1497,
-            "symbol": "mergedHasSameMinute",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "记录"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-device"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "设备与连接 › 首页壳（标题/背景/齿轮） › 最近开门卡片（当前锁） › 跨锁合并流"
-    },
-    {
-      "id": "device.home.recent.range",
-      "key": "device.home.recent.range",
-      "parent": "device.home.recent",
-      "domain": "device",
-      "level": 4,
-      "name": "最近开门范围切换（当前锁 / 全部锁）",
-      "kind": "setting",
-      "summary": "锁数 > 1 时出现分段控件，选择「当前锁」或「全部锁」，选择结果跨会话保留。",
-      "details": [
-        "写盘键 kf_recent_all（与记录页筛选同一口径），进页时由 .task 读回",
-        "单锁时不渲染这一排（单锁没有「跨锁」可言）",
-        "切到全部锁后列表换成跨锁合并流（device.home.recent.merged）"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 1384,
-          "symbol": "Picker(\"最近开门范围\", selection:)",
-          "note": "",
-          "text": "if mergedRecent.isEmpty {"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 188,
-          "symbol": "recentAllLocks = DB.store.getBool(\"kf_recent_all\")",
-          "note": "",
-          "text": "syncPageOrder()"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 1384,
-            "symbol": "Picker(\"最近开门范围\", selection:)",
-            "note": ""
-          },
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 188,
-            "symbol": "recentAllLocks = DB.store.getBool(\"kf_recent_all\")",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "设置",
-        "数据"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-device"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "设备与连接 › 首页壳（标题/背景/齿轮） › 最近开门卡片（当前锁） › 最近开门范围切换（当前锁 / 全部锁）"
     },
     {
       "id": "device.keychain.pin-alloc",
@@ -10468,7 +9446,7 @@
           "line": 219,
           "symbol": "struct UnlockDial",
           "note": "",
-          "text": "struct UnlockDial: View {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -10476,7 +9454,7 @@
           "line": 1025,
           "symbol": "UnlockDial(state:phase:connected:bleReady:…)",
           "note": "",
-          "text": "DiagnosticsView()"
+          "text": "return (ids.count == 3 && Set(ids) == Set([\"hero\", \"quick\", \"recent\"])) ? ids : [\"hero\", \"quick\", \"recent\"]"
         },
         {
           "platform": "android",
@@ -10500,7 +9478,7 @@
           "line": 274,
           "symbol": "dial = AXFlags.axStackLayout ? 128 : DS.Metric.dial",
           "note": "",
-          "text": "// --- 包15 无障碍 ---"
+          "text": ".accessibilityHint(voHint)"
         },
         {
           "platform": "android",
@@ -10618,9 +9596,9 @@
         "apk-baseline",
         "ios-ui-device"
       ],
-      "childCount": 17,
+      "childCount": 12,
       "isDomain": false,
-      "weight": 17,
+      "weight": 12,
       "path": "开锁与鉴权 › 开锁圆盘主界面"
     },
     {
@@ -10804,7 +9782,7 @@
           "line": 1036,
           "symbol": "if AXPrefs.captions { CaptionStepBar(…) }",
           "note": "",
-          "text": ".buttonStyle(PressableButtonStyle())"
+          "text": "let j = i + d"
         },
         {
           "platform": "android",
@@ -10828,7 +9806,7 @@
           "line": 1041,
           "symbol": "if let left = autoLockLeft { Label(\"约 \\(left) 秒后自动上锁 …\") }",
           "note": "",
-          "text": "// 83: 自动重试 (2s/5s) 用尽进入终态失败 → 圆盘下方主按钮手动再试"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -10836,7 +9814,7 @@
           "line": 1067,
           "symbol": "if app.failStreak > 0 { … }",
           "note": "",
-          "text": ".vkFont(.headline)"
+          "text": ".disabled(i == 0)"
         },
         {
           "platform": "android",
@@ -12840,173 +11818,6 @@
       "path": "开锁与鉴权 › 靠近自动开锁模块 › rc=26 防拆自动挂起 24 小时"
     },
     {
-      "id": "unlock.dial.charge",
-      "key": "unlock.dial.charge",
-      "parent": "unlock.dial",
-      "domain": "unlock",
-      "level": 3,
-      "name": "旋转充能（沿外沿转满一圈）",
-      "kind": "action",
-      "summary": "按住并沿圆盘外沿转满约一圈（0.98 容差）才发指令；外沿 12 格刻度逐格点亮并逐格给触感。",
-      "details": [
-        "累计的是**带符号**转角：逆时针退回会抵消进度，防止来回抖动攒满一圈",
-        "跨 ±π 接缝不算位移",
-        "刻度 12 格 × 30°，每亮一格一记 tick，回退不记",
-        "松手未转满 = 整段作废，进度回零且不留残影"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/UnlockDial.swift",
-          "line": 577,
-          "symbol": "stepCharge(_:)",
-          "note": "",
-          "text": "var d = a - chargeAngle"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/UnlockDial.swift",
-          "line": 583,
-          "symbol": "if chargeProgress >= 0.98",
-          "note": "",
-          "text": "pressing = false"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/UnlockDial.swift",
-          "line": 97,
-          "symbol": "private struct ChargeTicks",
-          "note": "",
-          "text": "private struct ChargeTicks: View {"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/UnlockDial.swift",
-            "line": 577,
-            "symbol": "stepCharge(_:)",
-            "note": ""
-          },
-          {
-            "file": "App/UI/UnlockDial.swift",
-            "line": 583,
-            "symbol": "if chargeProgress >= 0.98",
-            "note": ""
-          },
-          {
-            "file": "App/UI/UnlockDial.swift",
-            "line": 97,
-            "symbol": "private struct ChargeTicks",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "设置"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-device"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "开锁与鉴权 › 开锁圆盘主界面 › 旋转充能（沿外沿转满一圈）"
-    },
-    {
-      "id": "unlock.dial.drill",
-      "key": "unlock.dial.drill",
-      "parent": "unlock.dial",
-      "domain": "unlock",
-      "level": 3,
-      "name": "首次手势演练层",
-      "kind": "state",
-      "summary": "从没完成过真实手势时，圆盘上浮现一次可跟随的上滑轨迹或档位提示语；做任意一次真手势后永久收起。",
-      "details": [
-        "hold 档画向上滑动的渐变轨迹 + chevron.up；三连点/旋转充能档改为一句静态提示（画向上轨迹会把人引到不生效的动作）",
-        "减少动效时退化为静态提示胶囊",
-        "收起时写 kf_dial_drill_seen = true，之后不再出现"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/UnlockDial.swift",
-          "line": 136,
-          "symbol": "private struct DrillTrace",
-          "note": "",
-          "text": "private struct DrillTrace: View {"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/UnlockDial.swift",
-          "line": 541,
-          "symbol": "dismissDrill()",
-          "note": "",
-          "text": "drill = false"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/UnlockDial.swift",
-          "line": 544,
-          "symbol": "DB.store.set(\"kf_dial_drill_seen\", true)",
-          "note": "",
-          "text": ""
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/UnlockDial.swift",
-            "line": 136,
-            "symbol": "private struct DrillTrace",
-            "note": ""
-          },
-          {
-            "file": "App/UI/UnlockDial.swift",
-            "line": 541,
-            "symbol": "dismissDrill()",
-            "note": ""
-          },
-          {
-            "file": "App/UI/UnlockDial.swift",
-            "line": 544,
-            "symbol": "DB.store.set(\"kf_dial_drill_seen\", true)",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "引导"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-device"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "开锁与鉴权 › 开锁圆盘主界面 › 首次手势演练层"
-    },
-    {
       "id": "unlock.dial.fail",
       "key": "unlock.dial.fail",
       "parent": "unlock.dial",
@@ -13027,7 +11838,7 @@
           "line": 591,
           "symbol": "shake()",
           "note": "",
-          "text": "for x in [CGFloat(-12), 12, -8, 8, -4, 4, 0] {"
+          "text": "case .success: return DS.Palette.ok"
         },
         {
           "platform": "ios",
@@ -13035,7 +11846,7 @@
           "line": 299,
           "symbol": "failStreak >= 2 ? \"antenna.radiowaves.left.and.right\" : \"exclamationmark.triangle.fill\"",
           "note": "",
-          "text": "}"
+          "text": ".overlay(Circle().strokeBorder(DS.heroFg.opacity(0.65), lineWidth: 1))"
         },
         {
           "platform": "ios",
@@ -13043,7 +11854,7 @@
           "line": 481,
           "symbol": ".sensoryFeedback(trigger: state)",
           "note": "",
-          "text": "case .success: return .success"
+          "text": "// 三连点档**不许**在这里单发 —— 否则\"数满三下\"被这行偷走，等于没做。"
         }
       ],
       "platformEvidence": {
@@ -13111,7 +11922,7 @@
           "line": 279,
           "symbol": "insideFence(_:)",
           "note": "",
-          "text": "private func insideFence(_ p: CGPoint) -> Bool {"
+          "text": ".trim(from: 0, to: holdProgress)"
         },
         {
           "platform": "ios",
@@ -13119,7 +11930,7 @@
           "line": 609,
           "symbol": "if fenceRequired, !armed {",
           "note": "",
-          "text": "armed = true"
+          "text": ".contentTransition(.symbolEffect(.replace))"
         },
         {
           "platform": "ios",
@@ -13127,7 +11938,7 @@
           "line": 455,
           "symbol": "误触围栏开启中: 先从圆盘边缘拖到中心",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": "DS.Haptics.tick.impactOccurred()   // 3 双段触感 · 第一段 (落手)"
         }
       ],
       "platformEvidence": {
@@ -13195,7 +12006,7 @@
           "line": 491,
           "symbol": ".sensoryFeedback(trigger: connected)",
           "note": "",
-          "text": "}"
+          "text": "// 上滑越过 :441 阈值后 holdProgress 被锁存为 1; 用户把手指收回原点再松手是**取消意图**,"
         },
         {
           "platform": "ios",
@@ -13203,7 +12014,7 @@
           "line": 496,
           "symbol": ".task(id: state) 心跳循环",
           "note": "",
-          "text": "guard !(CareSchedule.quietOn && CareSchedule.isQuietHour()) else { return }"
+          "text": "// 2026-10-13 对抗式点击审计: 补 `swipeReady = false`。原实现在取消分支只复位"
         },
         {
           "platform": "ios",
@@ -13211,7 +12022,7 @@
           "line": 498,
           "symbol": "CareSchedule.quietOn && CareSchedule.isQuietHour()",
           "note": "",
-          "text": "DS.Haptics.tick.impactOccurred()"
+          "text": "// swipeReady 残留 true。后果两个: ① 上滑预填捷径失效; ② 上面的阈值判断"
         }
       ],
       "platformEvidence": {
@@ -13280,7 +12091,7 @@
           "line": 716,
           "symbol": "beginHold()",
           "note": "",
-          "text": "holdTask?.cancel()"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -13288,7 +12099,7 @@
           "line": 398,
           "symbol": "Circle().trim(from: 0, to: holdProgress)",
           "note": "",
-          "text": ".stroke(DS.Palette.accentText.opacity(0.9),"
+          "text": "if case .failed = s, !reduceMotion {"
         },
         {
           "platform": "ios",
@@ -13296,7 +12107,7 @@
           "line": 257,
           "symbol": "holdConfirmOn = DB.store.getBool(\"kf_hold_confirm\", true)",
           "note": "",
-          "text": "private var holdConfirmOn: Bool { DB.store.getBool(\"kf_hold_confirm\", true) }"
+          "text": "Circle()"
         }
       ],
       "platformEvidence": {
@@ -13365,7 +12176,7 @@
           "line": 350,
           "symbol": "guard !reduceMotion else { return }",
           "note": "",
-          "text": "withAnimation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true)) { breathe = true }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -13373,7 +12184,7 @@
           "line": 523,
           "symbol": "if case .failed = s, !reduceMotion { shake() }",
           "note": "",
-          "text": "}"
+          "text": "if marks > ticked, p < 1 {"
         },
         {
           "platform": "ios",
@@ -13381,7 +12192,7 @@
           "line": 284,
           "symbol": "private var dim: CGFloat { 1 }",
           "note": "",
-          "text": "private var isBusy: Bool {"
+          "text": ".opacity(holdProgress > 0.001 ? 0.95 : 0)"
         }
       ],
       "platformEvidence": {
@@ -13450,7 +12261,7 @@
           "line": 742,
           "symbol": "nearRssiLimit",
           "note": "",
-          "text": "return r <= LinkSense.rssiFence + 5"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -13458,7 +12269,7 @@
           "line": 751,
           "symbol": "if nearRssiLimit && !weakNudge",
           "note": "",
-          "text": "pressing = false"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -13466,7 +12277,7 @@
           "line": 464,
           "symbol": "已暂缓这一次: 离门锁再走近一步",
           "note": "",
-          "text": ": \"信号偏弱, 走近一步再开更稳\")   // 129 信号偏弱"
+          "text": "holdProgress = 1"
         }
       ],
       "platformEvidence": {
@@ -13534,7 +12345,7 @@
           "line": 176,
           "symbol": "private struct PhaseBar",
           "note": "",
-          "text": "private struct PhaseBar: View {"
+          "text": "private var dial: CGFloat { DS.Metric.dial }"
         },
         {
           "platform": "ios",
@@ -13542,7 +12353,7 @@
           "line": 516,
           "symbol": "slowTask = Task … sleep 4s → slowConnect = true",
           "note": "",
-          "text": "try? await Task.sleep(for: .seconds(4))"
+          "text": "holdTask?.cancel()"
         },
         {
           "platform": "ios",
@@ -13550,7 +12361,7 @@
           "line": 434,
           "symbol": "Button(\"取消等待\", action: cancelAction)",
           "note": "",
-          "text": ".transition(.opacity)"
+          "text": "touchMoved = abs(g.translation.width) + abs(g.translation.height)"
         }
       ],
       "platformEvidence": {
@@ -13618,7 +12429,7 @@
           "line": 439,
           "symbol": "if let retryText { Text(retryText) }",
           "note": "",
-          "text": ".vkFont(.footnote, weight: .medium)"
+          "text": "if !startInside, insideFence(g.location) {"
         },
         {
           "platform": "ios",
@@ -13626,7 +12437,7 @@
           "line": 1095,
           "symbol": "if case .failed = app.unlockState { Button(\"再试一次\") }",
           "note": "",
-          "text": "withAnimation(DS.Motion.standard) { confirmPulse = true }"
+          "text": "devHidden = DevModuleStore.hidden   // 写盘之外还要即时生效 (UserDefaults 不是可观察源)"
         },
         {
           "platform": "ios",
@@ -13703,7 +12514,7 @@
           "line": 290,
           "symbol": "iconName",
           "note": "",
-          "text": "case .idle:"
+          "text": "style: StrokeStyle(lineWidth: 2, dash: [4, 4]))"
         },
         {
           "platform": "ios",
@@ -13711,7 +12522,7 @@
           "line": 302,
           "symbol": "title",
           "note": "",
-          "text": "case .idle:"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -13719,7 +12530,7 @@
           "line": 326,
           "symbol": "dotColor",
           "note": "",
-          "text": "if connected { return DS.Palette.ok }"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         },
         {
           "platform": "ios",
@@ -13727,7 +12538,7 @@
           "line": 853,
           "symbol": "dialFill",
           "note": "",
-          "text": "// guard 挡着不动, 灰面让\"不可用\"先于点按可见。无专门 disabled 灰度令牌, 用现有两色组合。"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -13779,258 +12590,6 @@
       "isDomain": false,
       "weight": 1,
       "path": "开锁与鉴权 › 开锁圆盘主界面 › 六态文案 / 图标 / 颜色 / 状态点"
-    },
-    {
-      "id": "unlock.dial.swipe",
-      "key": "unlock.dial.swipe",
-      "parent": "unlock.dial",
-      "domain": "unlock",
-      "level": 3,
-      "name": "上滑触发与「拉回取消」",
-      "kind": "action",
-      "summary": "在盘内上滑越过 -56pt 后松手即发指令；若手指拉回原点再松手，则视为取消并回弹进度环。",
-      "details": [
-        "上滑阈值 -56，松手再校验 translation < -30",
-        "拉回取消分支会复位 swipeReady，避免「轻扫一下就开锁」的阈值被降级",
-        "空 ekey 或蓝牙关时 fire() 前置 guard 直接 return，不发帧"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/UnlockDial.swift",
-          "line": 648,
-          "symbol": "if swipePeakUp < -56, !swipeReady",
-          "note": "",
-          "text": "holdProgress = 1"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/UnlockDial.swift",
-          "line": 690,
-          "symbol": "if swipeReady, g.translation.height < -30",
-          "note": "",
-          "text": "} else if holdProgress >= 1, !swipeReady {"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/UnlockDial.swift",
-          "line": 702,
-          "symbol": "swipeReady = false // 取消分支复位",
-          "note": "",
-          "text": "pressing = false"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/UnlockDial.swift",
-            "line": 648,
-            "symbol": "if swipePeakUp < -56, !swipeReady",
-            "note": ""
-          },
-          {
-            "file": "App/UI/UnlockDial.swift",
-            "line": 690,
-            "symbol": "if swipeReady, g.translation.height < -30",
-            "note": ""
-          },
-          {
-            "file": "App/UI/UnlockDial.swift",
-            "line": 702,
-            "symbol": "swipeReady = false // 取消分支复位",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "核心"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-device"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "开锁与鉴权 › 开锁圆盘主界面 › 上滑触发与「拉回取消」"
-    },
-    {
-      "id": "unlock.dial.tap",
-      "key": "unlock.dial.tap",
-      "parent": "unlock.dial",
-      "domain": "unlock",
-      "level": 3,
-      "name": "三连点防误开与双击直开",
-      "kind": "action",
-      "summary": "三连点档要连点圆盘三下才发指令（前两下只有渐强触感）；「双击直开」在按住确认档下连点两下即发，且绕过按住确认。",
-      "details": [
-        "轻点判定：位移 < 12pt 且停留 < 0.25s；手停 0.7s 连点计数清零",
-        "tapsNeeded：三连点档 3 下，双击直开档 2 下",
-        "双击直开是防误触的减配，默认关，且只在 hold 档可开（设置里 mode≠hold 时 Toggle disabled）",
-        "围栏开启时仍必须先解锁围栏才计数（围栏优先级高于便捷性）"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/UnlockDial.swift",
-          "line": 550,
-          "symbol": "registerTap()",
-          "note": "",
-          "text": "tapStreak += 1"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/UnlockDial.swift",
-          "line": 674,
-          "symbol": "if (gestureMode == \"triple\" || tapDirect), moved < 12, …",
-          "note": "",
-          "text": "pressing = false"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/UnlockDial.swift",
-          "line": 12,
-          "symbol": "tapDirect: DB.store.getBool(\"kf_tap_direct\") && mode == \"hold\"",
-          "note": "",
-          "text": "static var tapDirect: Bool { DB.store.getBool(\"kf_tap_direct\") && mode == \"hold\" }"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/UnlockDial.swift",
-            "line": 550,
-            "symbol": "registerTap()",
-            "note": ""
-          },
-          {
-            "file": "App/UI/UnlockDial.swift",
-            "line": 674,
-            "symbol": "if (gestureMode == \"triple\" || tapDirect), moved < 12, …",
-            "note": ""
-          },
-          {
-            "file": "App/UI/UnlockDial.swift",
-            "line": 12,
-            "symbol": "tapDirect: DB.store.getBool(\"kf_tap_direct\") && mode == \"hold\"",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "防误触",
-        "设置"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-device"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "开锁与鉴权 › 开锁圆盘主界面 › 三连点防误开与双击直开"
-    },
-    {
-      "id": "unlock.dial.vo",
-      "key": "unlock.dial.vo",
-      "parent": "unlock.dial",
-      "domain": "unlock",
-      "level": 3,
-      "name": "VoiceOver 转子三维与 Cmd+U",
-      "kind": "action",
-      "summary": "圆盘是一个可调节元素：转子上下滑在「状态 / 电量 / 连接」三个维度间切换播报值；激活即开锁，Cmd+U 同效。",
-      "details": [
-        "accessibilityAdjustableAction 循环切换 voRotorIndex，并 AXTools.announce 播报新维度",
-        "播报值示例：「电量 82%」「已连接就绪, 可开锁」「未连接, 点击后自动唤醒门锁蓝牙」",
-        "hint 写明「轻点两下直接开锁, 无需按住」与按住时长可自定 0.4–1.6s",
-        "蓝牙关时 Button action 内 guard bleReady 直接 return（不弹错误）"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/UnlockDial.swift",
-          "line": 386,
-          "symbol": ".accessibilityAdjustableAction",
-          "note": "",
-          "text": "case .increment: voRotorIndex = (voRotorIndex + 1) % 3"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/UnlockDial.swift",
-          "line": 878,
-          "symbol": "voValue",
-          "note": "",
-          "text": "default: return baseLinkValue"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/UnlockDial.swift",
-          "line": 381,
-          "symbol": ".keyboardShortcut(\"u\", modifiers: .command)",
-          "note": "",
-          "text": ".accessibilityValue(voValue)"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/UnlockDial.swift",
-            "line": 386,
-            "symbol": ".accessibilityAdjustableAction",
-            "note": ""
-          },
-          {
-            "file": "App/UI/UnlockDial.swift",
-            "line": 878,
-            "symbol": "voValue",
-            "note": ""
-          },
-          {
-            "file": "App/UI/UnlockDial.swift",
-            "line": 381,
-            "symbol": ".keyboardShortcut(\"u\", modifiers: .command)",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "无障碍"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-device"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "开锁与鉴权 › 开锁圆盘主界面 › VoiceOver 转子三维与 Cmd+U"
     },
     {
       "id": "unlock.gate.cancel",
@@ -16590,7 +15149,7 @@
           "line": 726,
           "symbol": "let marks = Int(p / 0.33)",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -16598,7 +15157,7 @@
           "line": 641,
           "symbol": "DS.Haptics.tick.impactOccurred() // 第一段 (落手)",
           "note": "",
-          "text": "}"
+          "text": "Circle()"
         },
         {
           "platform": "ios",
@@ -16606,7 +15165,7 @@
           "line": 768,
           "symbol": "DS.Haptics.trigger.impactOccurred() // 第二段 (确认)",
           "note": "",
-          "text": "}"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -19086,7 +17645,7 @@
           "line": 69,
           "symbol": "vkBody",
           "note": "body = vkBody.destined(.credentials)",
-          "text": "borrowBanner"
+          "text": "if editMode {"
         },
         {
           "platform": "ios",
@@ -19094,7 +17653,7 @@
           "line": 88,
           "symbol": "vkBody",
           "note": "三条通知条互斥取一",
-          "text": "}"
+          "text": "refreshTick += 1"
         }
       ],
       "platformEvidence": {
@@ -19136,9 +17695,9 @@
       "sources": [
         "ios-ui-cred"
       ],
-      "childCount": 27,
+      "childCount": 16,
       "isDomain": false,
-      "weight": 34,
+      "weight": 21,
       "path": "凭证 › 凭证 Tab 主屏"
     },
     {
@@ -20595,92 +19154,6 @@
       "path": "凭证 › 凭证工坊"
     },
     {
-      "id": "credential.list.batch",
-      "key": "credential.list.batch",
-      "parent": "credential.list",
-      "domain": "credential",
-      "level": 3,
-      "name": "批量工具条（7 键）",
-      "kind": "action",
-      "summary": "选中后底部出现两排共 7 个批量动作：置顶/延期/移交/前缀/导出，以及破坏性的停用/删除。",
-      "details": [
-        "第一排整理类：置顶、延期、移交、前缀、导出；第二排破坏类：停用、删除（分开是为了窄机不截字，破坏性离整理远一格手指）(1641-1684)",
-        "顶行「已选 N 条」+「完成」退出 (1628-1639)",
-        "「置顶」只对未置顶的条目写 setStar(true)，toast「已置顶 N 条」或「所选都已置顶」(1644-1651)",
-        "「延期」只作用于已选密码：密码为空时 toast「延期只作用于已选密码」并不开 sheet (1652-1656)",
-        "「移交」开 CredTransferView；「前缀」开 UIAlertController；「导出」走合包；「停用」开 CredDisableSheet (1657-1672)",
-        "未选中时每个键都先 toast「先选择凭证」并 return (1645, 1658, 1670, 1676)"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1626,
-          "symbol": "batchBar",
-          "note": "",
-          "text": "private var emptyHint: some View {"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1644,
-          "symbol": "batchBar",
-          "note": "置顶",
-          "text": ".padding(.vertical, 2)"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1664,
-          "symbol": "batchBar",
-          "note": "导出",
-          "text": ".padding(.vertical, 2)"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 1626,
-            "symbol": "batchBar",
-            "note": ""
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 1644,
-            "symbol": "batchBar",
-            "note": "置顶"
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 1664,
-            "symbol": "batchBar",
-            "note": "导出"
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "批量"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-cred"
-      ],
-      "childCount": 4,
-      "isDomain": false,
-      "weight": 4,
-      "path": "凭证 › 凭证 Tab 主屏 › 批量工具条（7 键）"
-    },
-    {
       "id": "credential.otp",
       "key": "credential.otp",
       "parent": "credential",
@@ -20709,7 +19182,7 @@
           "line": 1806,
           "symbol": "otpSection",
           "note": "",
-          "text": "private func resetPwdPeriod(_ p: LedgerPwd) {"
+          "text": ""
         },
         {
           "platform": "apk",
@@ -20725,7 +19198,7 @@
           "line": 1808,
           "symbol": "otpSection",
           "note": "开通临时密码",
-          "text": "// 重发 0B 会覆盖锁内有效期, 与「删除」同级别, 先知会再执行"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -20733,7 +19206,7 @@
           "line": 1823,
           "symbol": "otpSection",
           "note": "setZotp",
-          "text": "do {"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -20793,6 +19266,92 @@
       "path": "凭证 › 临时密码卡（ZOTP）"
     },
     {
+      "id": "credential.list.batch",
+      "key": "credential.list.batch",
+      "parent": "credential.list",
+      "domain": "credential",
+      "level": 3,
+      "name": "批量工具条（7 键）",
+      "kind": "action",
+      "summary": "选中后底部出现两排共 7 个批量动作：置顶/延期/移交/前缀/导出，以及破坏性的停用/删除。",
+      "details": [
+        "第一排整理类：置顶、延期、移交、前缀、导出；第二排破坏类：停用、删除（分开是为了窄机不截字，破坏性离整理远一格手指）(1641-1684)",
+        "顶行「已选 N 条」+「完成」退出 (1628-1639)",
+        "「置顶」只对未置顶的条目写 setStar(true)，toast「已置顶 N 条」或「所选都已置顶」(1644-1651)",
+        "「延期」只作用于已选密码：密码为空时 toast「延期只作用于已选密码」并不开 sheet (1652-1656)",
+        "「移交」开 CredTransferView；「前缀」开 UIAlertController；「导出」走合包；「停用」开 CredDisableSheet (1657-1672)",
+        "未选中时每个键都先 toast「先选择凭证」并 return (1645, 1658, 1670, 1676)"
+      ],
+      "evidence": [
+        {
+          "platform": "ios",
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1626,
+          "symbol": "batchBar",
+          "note": "",
+          "text": "let off = UIAlertAction(title: \"了解\", style: .cancel)"
+        },
+        {
+          "platform": "ios",
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1644,
+          "symbol": "batchBar",
+          "note": "置顶",
+          "text": "let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)"
+        },
+        {
+          "platform": "ios",
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1664,
+          "symbol": "batchBar",
+          "note": "导出",
+          "text": "ok.isEnabled = false"
+        }
+      ],
+      "platformEvidence": {
+        "ios": [
+          {
+            "file": "App/UI/CredentialsView.swift",
+            "line": 1626,
+            "symbol": "batchBar",
+            "note": ""
+          },
+          {
+            "file": "App/UI/CredentialsView.swift",
+            "line": 1644,
+            "symbol": "batchBar",
+            "note": "置顶"
+          },
+          {
+            "file": "App/UI/CredentialsView.swift",
+            "line": 1664,
+            "symbol": "batchBar",
+            "note": "导出"
+          }
+        ],
+        "android": [],
+        "apk": []
+      },
+      "platforms": [
+        "ios"
+      ],
+      "platformCount": 1,
+      "tags": [
+        "批量"
+      ],
+      "status": {
+        "ios": "implemented"
+      },
+      "commands": [],
+      "sources": [
+        "ios-ui-cred"
+      ],
+      "childCount": 3,
+      "isDomain": false,
+      "weight": 3,
+      "path": "凭证 › 凭证 Tab 主屏 › 批量工具条（7 键）"
+    },
+    {
       "id": "credential.list.header-menu",
       "key": "credential.list.header-menu",
       "parent": "credential.list",
@@ -20814,7 +19373,7 @@
           "line": 374,
           "symbol": "headerToolbar",
           "note": "",
-          "text": "}"
+          "text": "Label(\"去回收站搜\", systemImage: \"magnifyingglass.circle\")   // 503 去回收站搜"
         },
         {
           "platform": "ios",
@@ -20822,7 +19381,7 @@
           "line": 389,
           "symbol": "headerToolbar",
           "note": "选择按钮",
-          "text": "// 原句是\"首次添加凭证**弹**三选一卡\"。这里做成列表顶部的常驻分流卡而不是自动弹窗："
+          "text": "app.showToast(\"已改用「\\(search)」重搜, 命中的是名称/备注/别名/归属\")   // 532 已改用"
         },
         {
           "platform": "ios",
@@ -20830,7 +19389,7 @@
           "line": 396,
           "symbol": "headerToolbar",
           "note": "Menu 溢出",
-          "text": "@ViewBuilder"
+          "text": ".vkFont(.caption)"
         }
       ],
       "platformEvidence": {
@@ -20900,7 +19459,7 @@
           "line": 1229,
           "symbol": "credRow",
           "note": "",
-          "text": "Button(s) { applySmart(s) }"
+          "text": "if !otpWin.isEmpty {"
         },
         {
           "platform": "ios",
@@ -20908,7 +19467,7 @@
           "line": 1246,
           "symbol": "credRow",
           "note": "状态胶囊",
-          "text": ".fixedSize(horizontal: false, vertical: true)"
+          "text": "return false"
         },
         {
           "platform": "ios",
@@ -20916,7 +19475,7 @@
           "line": 1272,
           "symbol": "credRow",
           "note": "副行",
-          "text": "private var cycleNextLabel: String {"
+          "text": "Section {"
         }
       ],
       "platformEvidence": {
@@ -20961,90 +19520,6 @@
       "isDomain": false,
       "weight": 2,
       "path": "凭证 › 凭证 Tab 主屏 › 凭证行（状态/副行/命名模板）"
-    },
-    {
-      "id": "credential.list.search",
-      "key": "credential.list.search",
-      "parent": "credential.list",
-      "domain": "credential",
-      "level": 3,
-      "name": "搜索与兜底动作",
-      "kind": "action",
-      "summary": "常驻搜索框按名称/备注/明文/命名模板/归属名检索，空搜索时给最近搜索词，无结果时给两条能真正带着词走下去的兜底。",
-      "details": [
-        "TextField 占位「搜索名称 / 备注 / #别名」，Cmd+F 快捷键，提交（onSubmit）时写搜索历史 (691-697)",
-        "搜索命中范围：密码=alias/note/明文/命名模板/归属名；指纹=名称/备注/归属名 (714-723)",
-        "命中结果置顶条目排前，其余按 id 字典序 (725-728)",
-        "搜索结果行复用 credRow（与普通列表同一渲染），因此长按菜单/双击复制同样可用 (645-648)"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 691,
-          "symbol": "searchSection",
-          "note": "搜索框",
-          "text": "// 528 进行中/已排期/已过期三态分组头, 组头带计数"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 709,
-          "symbol": "filteredResults",
-          "note": "",
-          "text": "if state == 2 {"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 686,
-          "symbol": "searchSection",
-          "note": "兜底两按钮所在块",
-          "text": "ForEach(Array(pinned.enumerated()), id: \\.offset) { i, p in"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 691,
-            "symbol": "searchSection",
-            "note": "搜索框"
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 709,
-            "symbol": "filteredResults",
-            "note": ""
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 686,
-            "symbol": "searchSection",
-            "note": "兜底两按钮所在块"
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "搜索"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-cred"
-      ],
-      "childCount": 2,
-      "isDomain": false,
-      "weight": 2,
-      "path": "凭证 › 凭证 Tab 主屏 › 搜索与兜底动作"
     },
     {
       "id": "credential.pwd.add.step1",
@@ -22236,7 +20711,7 @@
           "line": 1450,
           "symbol": "credMenu",
           "note": "setFpAlarm",
-          "text": "guard busyKey == nil else { return }"
+          "text": "//   不是 497 那个可调的回收站保留期。"
         },
         {
           "platform": "ios",
@@ -22244,7 +20719,7 @@
           "line": 1256,
           "symbol": "credRow",
           "note": "预警胶囊",
-          "text": "// 2026-10-15 走查 (性能): isArchived 每条一次全量解码 ⇒ N 条 = O(N²) 解码。集合一次取, 行为不变。"
+          "text": "// 屏幕上是一个看不见的码，而 idx 也已经被记进窗口 —— 用户只知道「没开门」。"
         }
       ],
       "platformEvidence": {
@@ -22958,175 +21433,6 @@
       "path": "凭证 › 凭证台账写入口 › 指纹批次写入与改名/备注/防拆"
     },
     {
-      "id": "credential.list.archived",
-      "key": "credential.list.archived",
-      "parent": "credential.list",
-      "domain": "credential",
-      "level": 3,
-      "name": "归档区（收起不删）",
-      "kind": "state",
-      "summary": "归档只是从日常列表收起，顶部归档区可单条还原或全部还原；台账与锁端零改动。",
-      "details": [
-        "统计范围 CredentialOrg.archived(mac)：密码存 alias、指纹存 100000+batch (2017-2019, 1177)",
-        "DisclosureGroup 标题「归档区 · N 条 — 收起不删, 随时可还原」(2046)",
-        "单条「还原」→ setArchived(false) + toast「已还原到列表」(2026-2036)",
-        "「全部还原」→ unarchiveAll(mac) + toast「归档已全部还原」(2038-2042)",
-        "归档条目不进当前显示、不进选择集合、不进整理建议，但搜索仍能搜到（收得起才收得回）(863-865, 1556-1566)"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 2015,
-          "symbol": "archivedStrip",
-          "note": "",
-          "text": "CredentialOrg.saveAlert(mac, p, n)"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 2046,
-          "symbol": "archivedStrip",
-          "note": "归档区标题",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 2038,
-          "symbol": "archivedStrip",
-          "note": "全部还原",
-          "text": "let off = UIAlertAction(title: \"了解\", style: .cancel)"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 2015,
-            "symbol": "archivedStrip",
-            "note": ""
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 2046,
-            "symbol": "archivedStrip",
-            "note": "归档区标题"
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 2038,
-            "symbol": "archivedStrip",
-            "note": "全部还原"
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "归档"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-cred"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "凭证 › 凭证 Tab 主屏 › 归档区（收起不删）"
-    },
-    {
-      "id": "credential.list.borrow-banner",
-      "key": "credential.list.borrow-banner",
-      "parent": "credential.list",
-      "domain": "credential",
-      "level": 3,
-      "name": "借用中横条",
-      "kind": "state",
-      "summary": "有凭证被借出时页顶显示「借用 X · 借给 Y (还 Z)」，点「已归还」销记。",
-      "details": [
-        "条件：MemberHub.borrows(mac) 非空；按 key 排序横向滚动 (198-207)",
-        "每条显示「借用 key · 借给 by (还 due)」+「已归还」按钮 (205-213)",
-        "点「已归还」→ MemberHub.saveBorrow(mac, itemKey, nil) + toast「已销记归还 X」+ 刷新 (210-212)",
-        "优先级最高：与待下发、深链条三选一时排第一 (88-94)"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 197,
-          "symbol": "borrowBanner",
-          "note": "",
-          "text": "}"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 205,
-          "symbol": "borrowBanner",
-          "note": "借用文案",
-          "text": "app.pendingCredNavMac = nil"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 209,
-          "symbol": "borrowBanner",
-          "note": "已归还",
-          "text": "if nav.hasPrefix(\"pwd:\"), let a = Int(nav.dropFirst(4)), DB.getPwd(mac, a) != nil {"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 197,
-            "symbol": "borrowBanner",
-            "note": ""
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 205,
-            "symbol": "borrowBanner",
-            "note": "借用文案"
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 209,
-            "symbol": "borrowBanner",
-            "note": "已归还"
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "借用"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-cred"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "凭证 › 凭证 Tab 主屏 › 借用中横条"
-    },
-    {
       "id": "credential.list.busy",
       "key": "credential.list.busy",
       "parent": "credential.list",
@@ -23156,7 +21462,7 @@
           "line": 67,
           "symbol": "isBusy",
           "note": "",
-          "text": "// credJumpBar 用 jumpBarOn), 所以这里只需要\"只显示第一个真有事的\"。"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -23164,7 +21470,7 @@
           "line": 1346,
           "symbol": "credRow",
           "note": "整行 disabled",
-          "text": "showExtend = true"
+          "text": "return f"
         }
       ],
       "platformEvidence": {
@@ -23211,90 +21517,6 @@
       "path": "凭证 › 凭证 Tab 主屏 › 整页忙碌闸（busyKey）"
     },
     {
-      "id": "credential.list.due-banner",
-      "key": "credential.list.due-banner",
-      "parent": "credential.list",
-      "domain": "credential",
-      "level": 3,
-      "name": "2 小时到期提醒行",
-      "kind": "state",
-      "summary": "开了 2 小时预警档且即将到期的密码，会在列表里插一条橙色提醒，点按直达最近到期那条的详情。",
-      "details": [
-        "条件：CredentialOrg.dueSoonPwds = h2 档开启且到期在 [now-1h, now+2h] 区间 (801-802)",
-        "文案「N 条密码 2 小时内到期 (已开 2 小时档预警)」+ chevron (812)",
-        "点按取「到期时间最小」的那条打开 PwdDetailStudio (806-807)",
-        "行高补到 44pt 可点区，背景 warn 6% (827-832)"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 801,
-          "symbol": "dueSoonBanner",
-          "note": "",
-          "text": "let mine = Set(keys)"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 806,
-          "symbol": "dueSoonBanner",
-          "note": "取最近到期",
-          "text": "if mine.contains(base[i]) { base[i] = q.removeFirst() }"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 812,
-          "symbol": "dueSoonBanner",
-          "note": "文案",
-          "text": "app.showToast(\"组内先后已记住, 跨启动保持\")   // 182 组内先后已记住"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 801,
-            "symbol": "dueSoonBanner",
-            "note": ""
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 806,
-            "symbol": "dueSoonBanner",
-            "note": "取最近到期"
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 812,
-            "symbol": "dueSoonBanner",
-            "note": "文案"
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "预警"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-cred"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "凭证 › 凭证 Tab 主屏 › 2 小时到期提醒行"
-    },
-    {
       "id": "credential.list.edit-mode",
       "key": "credential.list.edit-mode",
       "parent": "credential.list",
@@ -23319,7 +21541,7 @@
           "line": 1489,
           "symbol": "editList",
           "note": "",
-          "text": "VariantToggle(\"开通临时密码\", isOn: Binding("
+          "text": "confirmDestructive(\"彻底删除指纹「\\(f.name)」\","
         },
         {
           "platform": "ios",
@@ -23327,7 +21549,7 @@
           "line": 1510,
           "symbol": "editList",
           "note": "顺序",
-          "text": "}"
+          "text": "//   (无法远程补录，本人重录 8 次指压)；回收站那条回来的仍是档案，开门能力要重录 (670)。"
         },
         {
           "platform": "ios",
@@ -23335,7 +21557,7 @@
           "line": 1527,
           "symbol": "editList",
           "note": "智能选取",
-          "text": ""
+          "text": "})"
         }
       ],
       "platformEvidence": {
@@ -23404,7 +21626,7 @@
           "line": 1945,
           "symbol": "emptyHint",
           "note": "",
-          "text": "alert.addTextField { $0.text = pwd?.note ?? fp?.note ?? \"\" }"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -23412,7 +21634,7 @@
           "line": 1954,
           "symbol": "emptyHint",
           "note": "添加第一条密码",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -23467,261 +21689,6 @@
       "path": "凭证 › 凭证 Tab 主屏 › 空态（无锁/无台账）"
     },
     {
-      "id": "credential.list.first-router",
-      "key": "credential.list.first-router",
-      "parent": "credential.list",
-      "domain": "credential",
-      "level": 3,
-      "name": "首录分流卡（806）",
-      "kind": "state",
-      "summary": "该锁一条凭证都没有时，在列表顶部放一张卡说清三类凭证的区别并给三个入口，可永久关掉。",
-      "details": [
-        "条件：!HintOnce.shown(806) 且 DB.listPwds 与 DB.listFps 都为空 (527-529)",
-        "三入口：长期密码（AddPwdView）、录指纹（StartAddFpView）、临时码（showTempCode → TempCodeStudio sheet）(533-546)",
-        "每行带场景说明：「自己与全家日常用 · 没有到期点」/「给固定的人 · 一次录入长期可用」/「给访客/租客 · 到点自动作废」(534-545)",
-        "「以后不再显示这张卡」写 HintOnce.mark(806) 并 toast 告知仍可从页内入口添加 (547-550)",
-        "footer「三类都是本机台账 + 一次下发到锁，全程离线。选错了也不会锁死人」(557)"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 531,
-          "symbol": "firstCredRouter",
-          "note": "",
-          "text": "Button {"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 533,
-          "symbol": "firstCredRouter",
-          "note": "长期密码入口",
-          "text": "let m = DB.members().first { $0.name.localizedCaseInsensitiveContains(q) || $0.relation.localizedCaseInsensitiveContains(q) }"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 547,
-          "symbol": "firstCredRouter",
-          "note": "HintOnce.mark(806)",
-          "text": "}"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 531,
-            "symbol": "firstCredRouter",
-            "note": ""
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 533,
-            "symbol": "firstCredRouter",
-            "note": "长期密码入口"
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 547,
-            "symbol": "firstCredRouter",
-            "note": "HintOnce.mark(806)"
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "首启"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-cred"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "凭证 › 凭证 Tab 主屏 › 首录分流卡（806）"
-    },
-    {
-      "id": "credential.list.fp-section",
-      "key": "credential.list.fp-section",
-      "parent": "credential.list",
-      "domain": "credential",
-      "level": 3,
-      "name": "指纹段（缺失/冗余提醒）",
-      "kind": "data",
-      "summary": "指纹单独成段，并在成员缺口或只剩一枚时给出补录提醒与直达入口。",
-      "details": [
-        "段头「指纹 (N)」(1099)",
-        "缺失提醒：名下无指纹且未归档的成员 → 「有 N 位成员还没有指纹」，「去录入」预填唯一成员归属 (1101-1121)",
-        "冗余提醒：全锁仅 1 枚 → 「只剩 1 枚可用指纹, 建议添加备用」，整行可点进录入页 (1123-1137)",
-        "段尾统计「本段 N 枚 · 近 30 天指纹开门约 X 次 · 告警约 Y 条」（整锁推断，告警为 0 时不显示后半句）(1154-1160)",
-        "底部「录入指纹」入口 (1161)"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1098,
-          "symbol": "fpSection",
-          "note": "",
-          "text": "private func subOf(_ hit: CredHit, _ now: Date) -> String {"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1106,
-          "symbol": "fpSection",
-          "note": "缺失提醒",
-          "text": "}"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1123,
-          "symbol": "fpSection",
-          "note": "只剩 1 枚",
-          "text": "let hour = to.formatted(.dateTime.hour().minute())"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 1098,
-            "symbol": "fpSection",
-            "note": ""
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 1106,
-            "symbol": "fpSection",
-            "note": "缺失提醒"
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 1123,
-            "symbol": "fpSection",
-            "note": "只剩 1 枚"
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "指纹",
-        "提醒"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-cred"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "凭证 › 凭证 Tab 主屏 › 指纹段（缺失/冗余提醒）"
-    },
-    {
-      "id": "credential.list.jumpbar",
-      "key": "credential.list.jumpbar",
-      "parent": "credential.list",
-      "domain": "credential",
-      "level": 3,
-      "name": "记录→凭证深链定位",
-      "kind": "automation",
-      "summary": "从记录/告警详情跳「来源凭证」时，先切锁再打开对应密码或指纹详情，并挂一条定位说明条。",
-      "details": [
-        "消费 app.pendingCredNav：前缀 pwd: 或 fp:，带 pendingCredNavMac 时先 app.select(m) 跨锁切换 (259-265)",
-        "统一把 seg 置 0、memberView 置 false，再按类型打开 PwdDetailStudio / FpDetailStudio sheet (266-273)",
-        "只有真的弹出了详情才挂条（jumpBarOn = opened）；找不到不挂，不让说明条替没做到的事说话 (274-275)",
-        "条上「关闭」只关条 (243-245)；onChange 监听深链变化再次消费 (122)"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 232,
-          "symbol": "credJumpBar",
-          "note": "",
-          "text": "/// (editMode/selPwds/selFps), 不另造一套选中集; 排序档互斥照 :379 的口径先关掉再进。"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 259,
-          "symbol": "consumeCredJump",
-          "note": "",
-          "text": "VStack(spacing: DS.Space.xs) {"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 275,
-          "symbol": "consumeCredJump",
-          "note": "jumpBarOn = opened",
-          "text": "DS.Haptics.tick.impactOccurred()"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 232,
-            "symbol": "credJumpBar",
-            "note": ""
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 259,
-            "symbol": "consumeCredJump",
-            "note": ""
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 275,
-            "symbol": "consumeCredJump",
-            "note": "jumpBarOn = opened"
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "深链"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-cred"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "凭证 › 凭证 Tab 主屏 › 记录→凭证深链定位"
-    },
-    {
       "id": "credential.list.member-view",
       "key": "credential.list.member-view",
       "parent": "credential.list",
@@ -23744,7 +21711,7 @@
           "line": 1170,
           "symbol": "memberSections",
           "note": "",
-          "text": "Button(\"彻底删除\", role: .destructive) { deleteFp(f) }   // 670 彻底删除"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -23752,7 +21719,7 @@
           "line": 1187,
           "symbol": "memberSections",
           "note": "段标题",
-          "text": "private var editList: some View {"
+          "text": ".textSelection(.enabled)"
         },
         {
           "platform": "ios",
@@ -23760,7 +21727,7 @@
           "line": 1202,
           "symbol": "memberSections",
           "note": "未归属段",
-          "text": ".frame(maxWidth: .infinity, alignment: .leading)"
+          "text": "withAnimation(DS.Motion.standard) { otpPeek = true }"
         }
       ],
       "platformEvidence": {
@@ -23829,7 +21796,7 @@
           "line": 1447,
           "symbol": "credMenu",
           "note": "指纹分支",
-          "text": "/// 922 批量删除: 逐条复用单条「彻底删除」那一支 (锁内直删 + 回收站留档), 不做物理删;"
+          "text": "guard busyKey == nil else { return }"
         },
         {
           "platform": "ios",
@@ -23837,7 +21804,7 @@
           "line": 1450,
           "symbol": "credMenu",
           "note": "预警指纹",
-          "text": "guard busyKey == nil else { return }"
+          "text": "//   不是 497 那个可调的回收站保留期。"
         },
         {
           "platform": "ios",
@@ -23845,7 +21812,7 @@
           "line": 1472,
           "symbol": "credMenu",
           "note": "彻底删除",
-          "text": "try await app.lock.fpDelete(b)"
+          "text": "let m = mac"
         }
       ],
       "platformEvidence": {
@@ -23916,7 +21883,7 @@
           "line": 1410,
           "symbol": "credMenu",
           "note": "",
-          "text": ""
+          "text": "defer { busyKey = nil }"
         },
         {
           "platform": "ios",
@@ -23924,7 +21891,7 @@
           "line": 1423,
           "symbol": "credMenu",
           "note": "催办文本",
-          "text": "let av = UIActivityViewController(activityItems: [text], applicationActivities: nil)"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -23979,64 +21946,65 @@
       "path": "凭证 › 凭证 Tab 主屏 › 密码长按菜单"
     },
     {
-      "id": "credential.list.panel-route",
-      "key": "credential.list.panel-route",
+      "id": "credential.list.search",
+      "key": "credential.list.search",
       "parent": "credential.list",
       "domain": "credential",
       "level": 3,
-      "name": "通知/诊断面板落地路由",
-      "kind": "automation",
-      "summary": "本地通知或诊断页点按后按面板名打开回收站/队列/整理，未知名字只切到凭证页。",
+      "name": "搜索与兜底动作",
+      "kind": "action",
+      "summary": "常驻搜索框按名称/备注/明文/命名模板/归属名检索，空搜索时给最近搜索词，无结果时给两条能真正带着词走下去的兜底。",
       "details": [
-        "词表：bin → 开回收站（不带词）；queue → 开队列；organize/expired → 开整理建议 (283-290)",
-        "未知名字 fail-closed：只 toast「已跳到凭证页」，不猜要开哪个面板 (289)",
-        "「去回收站搜」那条路带词，通知落地那条不带词 (285)"
+        "TextField 占位「搜索名称 / 备注 / #别名」，Cmd+F 快捷键，提交（onSubmit）时写搜索历史 (691-697)",
+        "搜索命中范围：密码=alias/note/明文/命名模板/归属名；指纹=名称/备注/归属名 (714-723)",
+        "命中结果置顶条目排前，其余按 id 字典序 (725-728)",
+        "搜索结果行复用 credRow（与普通列表同一渲染），因此长按菜单/双击复制同样可用 (645-648)"
       ],
       "evidence": [
         {
           "platform": "ios",
           "file": "App/UI/CredentialsView.swift",
-          "line": 280,
-          "symbol": "consumeCredPanel",
+          "line": 691,
+          "symbol": "searchSection",
+          "note": "搜索框",
+          "text": ".minimumScaleFactor(0.7)"
+        },
+        {
+          "platform": "ios",
+          "file": "App/UI/CredentialsView.swift",
+          "line": 709,
+          "symbol": "filteredResults",
           "note": "",
-          "text": "Menu {"
+          "text": ".contentShape(Rectangle())"
         },
         {
           "platform": "ios",
           "file": "App/UI/CredentialsView.swift",
-          "line": 283,
-          "symbol": "consumeCredPanel",
-          "note": "case bin",
-          "text": "Button {"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 289,
-          "symbol": "consumeCredPanel",
-          "note": "默认 fail-closed",
-          "text": "}"
+          "line": 686,
+          "symbol": "searchSection",
+          "note": "兜底两按钮所在块",
+          "text": "if !compactRow, let p, CredentialOrg.aliasDisplay, CredentialOrg.namingTemplate(p) != titleOf(hit) {"
         }
       ],
       "platformEvidence": {
         "ios": [
           {
             "file": "App/UI/CredentialsView.swift",
-            "line": 280,
-            "symbol": "consumeCredPanel",
+            "line": 691,
+            "symbol": "searchSection",
+            "note": "搜索框"
+          },
+          {
+            "file": "App/UI/CredentialsView.swift",
+            "line": 709,
+            "symbol": "filteredResults",
             "note": ""
           },
           {
             "file": "App/UI/CredentialsView.swift",
-            "line": 283,
-            "symbol": "consumeCredPanel",
-            "note": "case bin"
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 289,
-            "symbol": "consumeCredPanel",
-            "note": "默认 fail-closed"
+            "line": 686,
+            "symbol": "searchSection",
+            "note": "兜底两按钮所在块"
           }
         ],
         "android": [],
@@ -24047,7 +22015,7 @@
       ],
       "platformCount": 1,
       "tags": [
-        "通知"
+        "搜索"
       ],
       "status": {
         "ios": "implemented"
@@ -24059,264 +22027,7 @@
       "childCount": 0,
       "isDomain": false,
       "weight": 1,
-      "path": "凭证 › 凭证 Tab 主屏 › 通知/诊断面板落地路由"
-    },
-    {
-      "id": "credential.list.pending-bar",
-      "key": "credential.list.pending-bar",
-      "parent": "credential.list",
-      "domain": "credential",
-      "level": 3,
-      "name": "待下发横条与同步回执",
-      "kind": "state",
-      "summary": "BLE 下发失败的操作聚合成「待下发 N 项」横条，点开队列；补发清空后 2 分钟内显示「已同步 N 项变更」。",
-      "details": [
-        "待下发态：图标 tray.full + 「待下发 N 项 · 锁名」+ 「到场连接后自动补发, 或进清单逐项重试」，整块可点开队列 (308-337)",
-        "回执态：队列空且 LinkSense.lastReceipt > 0 且 receiptShownAt 距今 < 120 秒 → 绿色「已同步 N 项变更 — 队列已清空」(341-356)",
-        "只按当前锁计数（多锁各自队列不串台）(305-306, 538 注释)",
-        "锁名取 app.devices 里匹配 mac 的显示名，找不到则 MAC 前 6 位 (359-361)"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 308,
-          "symbol": "pendingQueueBar",
-          "note": "",
-          "text": ".font(.system(size: DS.Icon.md, weight: .semibold))"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 311,
-          "symbol": "pendingQueueBar",
-          "note": "点开队列",
-          "text": "}"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 341,
-          "symbol": "pendingQueueBar",
-          "note": "2 分钟同步回执",
-          "text": ".vkFont(elderOn ? .body.weight(.semibold) : .caption2.weight(.semibold))"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 308,
-            "symbol": "pendingQueueBar",
-            "note": ""
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 311,
-            "symbol": "pendingQueueBar",
-            "note": "点开队列"
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 341,
-            "symbol": "pendingQueueBar",
-            "note": "2 分钟同步回执"
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "锁端读写",
-        "容错"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-cred"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "凭证 › 凭证 Tab 主屏 › 待下发横条与同步回执"
-    },
-    {
-      "id": "credential.list.pwd-sections",
-      "key": "credential.list.pwd-sections",
-      "parent": "credential.list",
-      "domain": "credential",
-      "level": 3,
-      "name": "密码三段分组与组尾统计",
-      "kind": "data",
-      "summary": "密码按置顶/进行中/已排期/已过期分段，组尾给「近 30 天使用约 N 次」，过期组追加整组延期与批量清理。",
-      "details": [
-        "「置顶 (N)」段在前，星标条不参与组内拖动 (924-931, 938-939)",
-        "三态段头由 stateLabel + 组内条数组成 (933-937)",
-        "组尾统计「本组 N 条 · 近 30 天使用约 Y 次」：recentUseCount 按开门日志时间窗推断，返回 nil 则不出行 (947-951, 1080-1101)",
-        "已过期组： 「这一组统一延期」把该组 alias 送进 CredExtendView (953-959)",
-        "已过期组（非长辈模式）：「清理本组已过期 (N 条)」把该组选入 CredDisableSheet，走既有停用流而不是本机静默删除 (960-976)",
-        "段末固定入口：凭证工坊、添加密码、回收站(N)、版本历史与整理、凭证中心 (983-995)"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 923,
-          "symbol": "pwdSections",
-          "note": "",
-          "text": "ForEach(fps) { f in credRow(CredHit(id: \"f\\(f.batch)\", fp: f)) }"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 937,
-          "symbol": "pwdSections",
-          "note": "三态组头",
-          "text": "}"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 954,
-          "symbol": "pwdSections",
-          "note": "这一组统一延期",
-          "text": "private var elderOn: Bool { MemberHub.elderMode }"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 923,
-            "symbol": "pwdSections",
-            "note": ""
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 937,
-            "symbol": "pwdSections",
-            "note": "三态组头"
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 954,
-            "symbol": "pwdSections",
-            "note": "这一组统一延期"
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "分组"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-cred"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "凭证 › 凭证 Tab 主屏 › 密码三段分组与组尾统计"
-    },
-    {
-      "id": "credential.list.queue-section",
-      "key": "credential.list.queue-section",
-      "parent": "credential.list",
-      "domain": "credential",
-      "level": 3,
-      "name": "列表内待下发段",
-      "kind": "state",
-      "summary": "列表里直接列出前 4 条待下发项，可逐条重试；超过 4 条给「其余 N 项」入口进队列页。",
-      "details": [
-        "段头「待下发 (N)」，只渲染 q.prefix(4) (736-737)",
-        "每条：状态 pill + 标题 + 「重试」按钮（isBusy 时 disabled）(738-749)",
-        "状态口径：state 1 已下发(ok)、2 失败可重试(danger)、其他 待下发(warn) (765-778)",
-        "重试：busyKey=queue:id → ensureConnected → CredentialOrg.sendQueued → markQueue(done, note 含锁端确认) ；失败 markQueue(failed, 第 N 次失败) (779-796)",
-        "超过 4 条：「其余 N 项 →」打开队列页 (753-757)；脚注「锁端未连接时操作先记在这里…失败项不会丢」(758)"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 733,
-          "symbol": "queueSection",
-          "note": "",
-          "text": "}"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 745,
-          "symbol": "queueSection",
-          "note": "重试",
-          "text": "}"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 789,
-          "symbol": "retryQueueItem",
-          "note": "sendQueued",
-          "text": "}"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 733,
-            "symbol": "queueSection",
-            "note": ""
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 745,
-            "symbol": "queueSection",
-            "note": "重试"
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 789,
-            "symbol": "retryQueueItem",
-            "note": "sendQueued"
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "锁端读写",
-        "容错"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-cred"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "凭证 › 凭证 Tab 主屏 › 列表内待下发段"
+      "path": "凭证 › 凭证 Tab 主屏 › 搜索与兜底动作"
     },
     {
       "id": "credential.list.seg",
@@ -24341,7 +22052,7 @@
           "line": 449,
           "symbol": "headerToolbar",
           "note": "segCount",
-          "text": "/// 列表内容抽成 ViewBuilder: 编辑模式与正常模式共用, 避免嵌套两个 List"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -24349,7 +22060,7 @@
           "line": 462,
           "symbol": "segChip",
           "note": "",
-          "text": "}"
+          "text": "// 354 已归档只从正常显示里收起; 搜索路径 (filteredResults) 特意不过滤 — 收起不是失效, 搜得到才收得回"
         },
         {
           "platform": "ios",
@@ -24357,7 +22068,7 @@
           "line": 492,
           "symbol": "countForSeg",
           "note": "",
-          "text": ".accessibilityLabel(\"搜索 \\(w)\")"
+          "text": "/// 行内小提示行 (装饰, 不参与 VoiceOver 合并)"
         }
       ],
       "platformEvidence": {
@@ -24404,92 +22115,6 @@
       "path": "凭证 › 凭证 Tab 主屏 › 类型分段（全部/密码/指纹/临时码）"
     },
     {
-      "id": "credential.list.sort-mode",
-      "key": "credential.list.sort-mode",
-      "parent": "credential.list",
-      "domain": "credential",
-      "level": 3,
-      "name": "拖动排序档（组内先后）",
-      "kind": "flow",
-      "summary": "进入后每段出现系统排序把手，拖动只改本段先后，结果写进本机台账、跨启动保持。",
-      "details": [
-        "菜单「拖动排序」进入，与 editMode 互斥（进排序清空选择）(423-431)",
-        "实现方式：List 上挂 .environment(\\.editMode, .constant(sorting ? .active : .inactive))，由系统提供把手 (512)",
-        "排序说明行写清承诺：本段先后 + 写进 kf_cseq_ 跨启动 + 随全量备份走；类型视图各状态段各排各的，置顶段不参与；按成员视图排的是该成员段内密码与指纹各自的先后 (516-519)",
-        "提交：commitGroupMove 先在本段内 move，再把结果依次回写「整表里属于本段的那些位置」，别段位次不动；越界 IndexSet 先过滤防 trap (1059-1081)",
-        "回执「组内先后已记住, 跨启动保持」(1080)",
-        "本段回写基准是 seqBasePwds/seqBaseFps（全量显示序），不是被分段/筛选削过的那批 (838-841, 1010-1012)"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 505,
-          "symbol": "mainList",
-          "note": "sortHintRow 插在最前",
-          "text": "}"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 512,
-          "symbol": "mainList",
-          "note": "系统编辑态",
-          "text": "credRow(hit)"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1064,
-          "symbol": "commitGroupMove",
-          "note": "",
-          "text": "Button(role: .destructive) { disableFp(f) } label: { Label(\"停用\", systemImage: \"pause.circle\") }"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 505,
-            "symbol": "mainList",
-            "note": "sortHintRow 插在最前"
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 512,
-            "symbol": "mainList",
-            "note": "系统编辑态"
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 1064,
-            "symbol": "commitGroupMove",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "排序"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-cred"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "凭证 › 凭证 Tab 主屏 › 拖动排序档（组内先后）"
-    },
-    {
       "id": "credential.list.swipe",
       "key": "credential.list.swipe",
       "parent": "credential.list",
@@ -24511,7 +22136,7 @@
           "line": 1320,
           "symbol": "credRow",
           "note": "swipeActions",
-          "text": "}"
+          "text": "defer { busyKey = nil }"
         },
         {
           "platform": "ios",
@@ -24519,7 +22144,7 @@
           "line": 1329,
           "symbol": "credRow",
           "note": "!sorting 才出破坏性",
-          "text": ".lineLimit(1)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -24527,7 +22152,7 @@
           "line": 1333,
           "symbol": "credRow",
           "note": "改期",
-          "text": "withAnimation(DS.Motion.quick) { editMode = false; selPwds = []; selFps = [] }"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -24677,7 +22302,7 @@
           "line": 1808,
           "symbol": "同一 VariantToggle",
           "note": "",
-          "text": "// 重发 0B 会覆盖锁内有效期, 与「删除」同级别, 先知会再执行"
+          "text": ""
         },
         {
           "platform": "apk",
@@ -24755,7 +22380,7 @@
           "line": 1808,
           "symbol": "VariantToggle 开通临时密码",
           "note": "",
-          "text": "// 重发 0B 会覆盖锁内有效期, 与「删除」同级别, 先知会再执行"
+          "text": ""
         },
         {
           "platform": "apk",
@@ -24771,7 +22396,7 @@
           "line": 1823,
           "symbol": "setZotp",
           "note": "",
-          "text": "do {"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -27843,7 +25468,7 @@
           "line": 1675,
           "symbol": "batchBar",
           "note": "删除按钮",
-          "text": "defer { busyKey = nil }"
+          "text": "let scene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first"
         },
         {
           "platform": "ios",
@@ -27851,7 +25476,7 @@
           "line": 1678,
           "symbol": "batchBar",
           "note": "确认文案",
-          "text": "busyKey = nil   // 还回连接占用再生成; genOtp 同步完成, 生成段无需再占"
+          "text": "return vc"
         },
         {
           "platform": "ios",
@@ -27859,7 +25484,7 @@
           "line": 1774,
           "symbol": "batchDelete",
           "note": "pwdDelete",
-          "text": "alert.addAction(UIAlertAction(title: \"取消\", style: .cancel))"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -27928,7 +25553,7 @@
           "line": 1669,
           "symbol": "batchBar",
           "note": "停用按钮",
-          "text": "/// busyKey 只占\"连接中\"这一段 —— genOtp 自带 busyKey==nil 门槛, 不先还回去第一张永远不生成"
+          "text": "}, for: .editingChanged)"
         },
         {
           "platform": "ios",
@@ -27936,7 +25561,7 @@
           "line": 1741,
           "symbol": "finishDisable",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.accentText)"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -27944,7 +25569,7 @@
           "line": 1750,
           "symbol": "finishDisable",
           "note": "回执",
-          "text": "// 本机恢复≠锁上还有。所以话术由 `CredentialOrg.undoRemove` 一份生成，界面不再各写一遍。"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -28013,7 +25638,7 @@
           "line": 1724,
           "symbol": "exportPackage",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -28021,7 +25646,7 @@
           "line": 1726,
           "symbol": "exportPackage",
           "note": "8 位口令",
-          "text": "private func archRow(title: String, owner: String?, restore: @escaping () -> Void) -> some View {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -28029,7 +25654,7 @@
           "line": 1735,
           "symbol": "exportPackage",
           "note": "分享面板",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -28077,90 +25702,6 @@
       "path": "凭证 › 凭证 Tab 主屏 › 批量工具条（7 键） › 合包导出（351）"
     },
     {
-      "id": "credential.list.batch.prefix",
-      "key": "credential.list.batch.prefix",
-      "parent": "credential.list.batch",
-      "domain": "credential",
-      "level": 4,
-      "name": "前缀批量备注（357）",
-      "kind": "action",
-      "summary": "给所选条目的备注统一插入同一前缀，例如「2026春节-」。",
-      "details": [
-        "UIAlertController 标题「前缀批量备注」，说明「统一插入各备注开头, 如「2026春节-」」(1709)",
-        "输入框占位「前缀」；取消 / 应用两个动作 (1710-1711)",
-        "去空白后为空直接 return（不写库）；否则 CredentialOrg.batchPrefixNote 返回条数并 toast「已给 N 条加前缀」(1713-1716)",
-        "成功记 Milestones.recordOrganize 并刷新 (1717-1718)"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1707,
-          "symbol": "showPrefixNote",
-          "note": "",
-          "text": "reload()"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1709,
-          "symbol": "showPrefixNote",
-          "note": "alert 文案",
-          "text": "}"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1715,
-          "symbol": "showPrefixNote",
-          "note": "batchPrefixNote",
-          "text": ".buttonStyle(.borderless)"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 1707,
-            "symbol": "showPrefixNote",
-            "note": ""
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 1709,
-            "symbol": "showPrefixNote",
-            "note": "alert 文案"
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 1715,
-            "symbol": "showPrefixNote",
-            "note": "batchPrefixNote"
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "批量"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-cred"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "凭证 › 凭证 Tab 主屏 › 批量工具条（7 键） › 前缀批量备注（357）"
-    },
-    {
       "id": "credential.list.calendar-toggle",
       "key": "credential.list.calendar-toggle",
       "parent": "credential.list.header-menu",
@@ -28181,7 +25722,7 @@
           "line": 403,
           "symbol": "headerToolbar",
           "note": "showCalendar.toggle()",
-          "text": "NavigationLink { StartAddFpView(embedded: true) } label: {"
+          "text": "TextField(\"搜索名称 / 备注 / #别名\", text: $search)   // 531 搜索名称"
         },
         {
           "platform": "ios",
@@ -28189,7 +25730,7 @@
           "line": 96,
           "symbol": "vkBody",
           "note": "showCalendar 分支",
-          "text": "consumeCredPanel()  // 366/1013: 本地通知点按要打开的面板"
+          "text": "if !extendAliases.isEmpty {"
         }
       ],
       "platformEvidence": {
@@ -28250,7 +25791,7 @@
           "line": 56,
           "symbol": "showDemo",
           "note": "声明",
-          "text": "message: \"凭证台账要绑定到具体门锁。请先在门锁键盘上长按重置键恢复出厂，再回来添加设备（需要开启蓝牙）。\","
+          "text": "} else {"
         },
         {
           "platform": "ios",
@@ -28258,7 +25799,7 @@
           "line": 1960,
           "symbol": "emptyHint",
           "note": "唯一写入点",
-          "text": "if let p = pwd {"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -28327,7 +25868,7 @@
           "line": 406,
           "symbol": "headerToolbar",
           "note": "toggle + setGroupMode",
-          "text": "}"
+          "text": ".autocorrectionDisabled()"
         }
       ],
       "platformEvidence": {
@@ -28389,7 +25930,7 @@
           "line": 1314,
           "symbol": "credRow",
           "note": "双击复制",
-          "text": "private func toggleSel(_ hit: CredHit) {"
+          "text": "/// busyKey 只占\"连接中\"这一段 —— genOtp 自带 busyKey==nil 门槛, 不先还回去第一张永远不生成"
         },
         {
           "platform": "ios",
@@ -28397,7 +25938,7 @@
           "line": 1296,
           "symbol": "credRow",
           "note": "VoiceOver 拷贝动作",
-          "text": "app.showToast(\"已套用「\\(s)」 \\(selPwds.count + selFps.count) 条\")"
+          "text": "@ViewBuilder"
         }
       ],
       "platformEvidence": {
@@ -28460,7 +26001,7 @@
           "line": 1246,
           "symbol": "credRow",
           "note": "pwdState == 2",
-          "text": ".fixedSize(horizontal: false, vertical: true)"
+          "text": "return false"
         },
         {
           "platform": "ios",
@@ -28468,7 +26009,7 @@
           "line": 1248,
           "symbol": "credRow",
           "note": "isEarlyExpired",
-          "text": "listBody"
+          "text": "// 周期必须取**锁端上报**的 zotpPeriod (03#05, 单位分钟), 缺省才回落 30。"
         },
         {
           "platform": "ios",
@@ -28476,7 +26017,7 @@
           "line": 1255,
           "symbol": "credRow",
           "note": "预警指纹",
-          "text": "/// 隐藏行一旦进破坏性批量 (353 停用 / 922 删除), 就是\"看不到却被停掉\"。台账级读数不走这里。"
+          "text": "// 空串不许当「生成成功」：原先会一路把空值写进 otpPwd、复制进剪贴板、再震一下「成功」，"
         }
       ],
       "platformEvidence": {
@@ -28523,175 +26064,6 @@
       "path": "凭证 › 凭证 Tab 主屏 › 凭证行（状态/副行/命名模板） › 状态胶囊与提前失效"
     },
     {
-      "id": "credential.list.search.history",
-      "key": "credential.list.search.history",
-      "parent": "credential.list.search",
-      "domain": "credential",
-      "level": 4,
-      "name": "最近搜索词",
-      "kind": "data",
-      "summary": "空搜索时显示最近 5 条搜索词，点词回填、点叉删除该词。",
-      "details": [
-        "只展示 hist.prefix(5) (622)",
-        "点词按钮把 search 置为该词 (624)",
-        "xmark.circle 按钮调 CredentialOrg.removeSearchHistory(w)，补了 44pt 触达 (628-638)",
-        "组标题「最近搜索」(618)"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 615,
-          "symbol": "searchSection",
-          "note": "searchHistory()",
-          "text": "Spacer(minLength: 0)"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 622,
-          "symbol": "searchSection",
-          "note": "prefix(5)",
-          "text": ".vkFont(.caption)"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 628,
-          "symbol": "searchSection",
-          "note": "removeSearchHistory",
-          "text": ".frame(minHeight: DS.Hit.min)"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 615,
-            "symbol": "searchSection",
-            "note": "searchHistory()"
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 622,
-            "symbol": "searchSection",
-            "note": "prefix(5)"
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 628,
-            "symbol": "searchSection",
-            "note": "removeSearchHistory"
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "搜索"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-cred"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "凭证 › 凭证 Tab 主屏 › 搜索与兜底动作 › 最近搜索词"
-    },
-    {
-      "id": "credential.list.search.no-result",
-      "key": "credential.list.search.no-result",
-      "parent": "credential.list.search",
-      "domain": "credential",
-      "level": 4,
-      "name": "无结果双兜底",
-      "kind": "state",
-      "summary": "搜不到时给「去回收站搜」与「按成员重搜」，两条都带着这次的意图继续，而不是只换个界面。",
-      "details": [
-        "文案「没有找到「词」」(654)",
-        "「去回收站搜」把去空白后的词写进 binQuery 再开回收站 sheet，回收站首屏即已过滤 (658-662, 165-166)",
-        "「按成员重搜」按名称/关系找到成员后，把搜索词替换成 ownerName(m.id)（别名显示档下那一格是称呼），写历史并 toast「已改用「X」重搜, 命中的是名称/备注/别名/归属」(667-677)",
-        "找不到成员时 toast「没有匹配的成员」(679)"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 654,
-          "symbol": "searchSection",
-          "note": "无结果文案",
-          "text": "return pwds"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 658,
-          "symbol": "searchSection",
-          "note": "去回收站搜",
-          "text": "// 526 置顶行固定顶部"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 667,
-          "symbol": "searchSection",
-          "note": "按成员重搜",
-          "text": "let ia = byIdx[a.alias, default: 9999]"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 654,
-            "symbol": "searchSection",
-            "note": "无结果文案"
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 658,
-            "symbol": "searchSection",
-            "note": "去回收站搜"
-          },
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 667,
-            "symbol": "searchSection",
-            "note": "按成员重搜"
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "搜索",
-        "兜底"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-cred"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "凭证 › 凭证 Tab 主屏 › 搜索与兜底动作 › 无结果双兜底"
-    },
-    {
       "id": "credential.list.smart-filter",
       "key": "credential.list.smart-filter",
       "parent": "credential.list.header-menu",
@@ -28713,7 +26085,7 @@
           "line": 414,
           "symbol": "headerToolbar",
           "note": "默认(全部)",
-          "text": "HintOnce.mark(\"806\")"
+          "text": "struct CredHit: Identifiable {"
         },
         {
           "platform": "ios",
@@ -28721,7 +26093,7 @@
           "line": 415,
           "symbol": "headerToolbar",
           "note": "smartLists 遍历",
-          "text": "app.showToast(\"这张分流卡不会再出现 (可在页里的入口随时添加)\")"
+          "text": "var id: String"
         },
         {
           "platform": "ios",
@@ -28729,7 +26101,7 @@
           "line": 848,
           "symbol": "segFilteredPwds",
           "note": "筛选取值口径",
-          "text": "}"
+          "text": "private var editList: some View {"
         }
       ],
       "platformEvidence": {
@@ -28798,7 +26170,7 @@
           "line": 1852,
           "symbol": "otpGenRow",
           "note": "",
-          "text": "DB.delPwd(mac, p.alias)"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -28814,7 +26186,7 @@
           "line": 1899,
           "symbol": "otpGenRow",
           "note": "复制禁用条件",
-          "text": "private func deleteFp(_ f: LedgerFp) {"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -28884,7 +26256,7 @@
           "line": 1911,
           "symbol": "genOtp",
           "note": "",
-          "text": "busyKey = \"fp:\\(f.batch)\""
+          "text": ""
         },
         {
           "platform": "ios",
@@ -28892,7 +26264,7 @@
           "line": 1917,
           "symbol": "genOtp",
           "note": "100 个上限",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -28900,7 +26272,7 @@
           "line": 1925,
           "symbol": "genOtp",
           "note": "zotpPeriod",
-          "text": "} catch { app.showToast(\"删除失败: \\(error.localizedDescription)\") }"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -28968,7 +26340,7 @@
           "line": 1978,
           "symbol": "otpStockHint",
           "note": "",
-          "text": "Milestones.recordOrganize()"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -28976,7 +26348,7 @@
           "line": 1986,
           "symbol": "otpStockHint",
           "note": "发第一张",
-          "text": "if isPwd { DB.setPwdOwner(mac, key, m.id) } else { DB.setFpOwner(mac, key, m.id) }"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -28984,7 +26356,7 @@
           "line": 1997,
           "symbol": "genFirstOtp",
           "note": "",
-          "text": "/// 359/930 到期预警五档: 7 / 3 / 1 天 + 24 / 2 小时**全部排本地通知** (930 替代落地后"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -39827,7 +37199,7 @@
           "line": 59,
           "symbol": "app.pendingSettingsFocus = \"backup\"",
           "note": "",
-          "text": "app.requestRoute(.settings)"
+          "text": "} label: {"
         },
         {
           "platform": "ios",
@@ -64458,7 +61830,7 @@
           "line": 1925,
           "symbol": "genOtp",
           "note": "readStatus.zotpPeriod",
-          "text": "} catch { app.showToast(\"删除失败: \\(error.localizedDescription)\") }"
+          "text": ""
         },
         {
           "platform": "android",
@@ -66070,7 +63442,7 @@
           "line": 1785,
           "symbol": "batchDelete",
           "note": "批量分支同样转换",
-          "text": "do {"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -66427,7 +63799,7 @@
           "line": 1823,
           "symbol": "otpSection",
           "note": "setZotp → 19",
-          "text": "do {"
+          "text": ""
         },
         {
           "platform": "apk",
@@ -66443,7 +63815,7 @@
           "line": 1822,
           "symbol": "otpSection",
           "note": "先 ensureConnected 钉锁",
-          "text": "defer { busyKey = nil }"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -66451,7 +63823,7 @@
           "line": 1826,
           "symbol": "otpSection",
           "note": "失败分支",
-          "text": "DB.setPwdPeriod(m, p.alias, p.from, p.to)"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -74172,7 +71544,7 @@
           "line": 1767,
           "symbol": "batchDelete",
           "note": "对象已不在台账则中止",
-          "text": "app.showToast(\"密码 #\\(p.alias): \\(pwd) (请勿外传)\")"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -76519,7 +73891,7 @@
           "line": 1561,
           "symbol": "DB.store.getString(\"kf_dev_order\")",
           "note": "",
-          "text": "// 乱源治理第 3 批: 显隐面板。默认全开 (一块都不隐), 这一节给的是\"能不能关\"，不是新默认值。"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -77737,7 +75109,7 @@
           "line": 1248,
           "symbol": "credRow",
           "note": "提前失效胶囊",
-          "text": "listBody"
+          "text": "// 周期必须取**锁端上报**的 zotpPeriod (03#05, 单位分钟), 缺省才回落 30。"
         },
         {
           "platform": "ios",
@@ -77986,7 +75358,7 @@
           "line": 875,
           "symbol": "orderedPwds",
           "note": "读 seq[p]",
-          "text": ".fixedSize(horizontal: false, vertical: true)"
+          "text": "seq[\"p\"] = seqBasePwds.map { $0.alias }"
         },
         {
           "platform": "ios",
@@ -77994,7 +75366,7 @@
           "line": 1076,
           "symbol": "commitGroupMove",
           "note": "写 seq",
-          "text": ""
+          "text": "busyKey = \"batch\""
         },
         {
           "platform": "ios",
@@ -78002,7 +75374,7 @@
           "line": 889,
           "symbol": "manualIndex",
           "note": "重复别名防 trap",
-          "text": "? \"本段 \\(fps.count) 枚 · 近 30 天指纹开门约 \\(opens) 次 · 告警约 \\(alarms) 条\""
+          "text": "ForEach([\"已过期\", \"同成员\", \"同类型\"], id: \\.self) { s in"
         }
       ],
       "platformEvidence": {
@@ -78071,7 +75443,7 @@
           "line": 871,
           "symbol": "orderedPwds",
           "note": "isStarred 分置顶段",
-          "text": "if fps.isEmpty {"
+          "text": "// 拖动排序 (上方排序档) 与这一枚写的是同一张 kf_cseq_, 不是两套顺序。"
         },
         {
           "platform": "ios",
@@ -78079,7 +75451,7 @@
           "line": 1436,
           "symbol": "credMenu",
           "note": "setArchived",
-          "text": "_ = Milestones.recordOrganize()"
+          "text": "// 天数口径：这个 7 天是 **364 的一键恢复窗口**，出处 `CredentialOrg.withinRecoverWindow`"
         },
         {
           "platform": "ios",
@@ -78087,7 +75459,7 @@
           "line": 2019,
           "symbol": "archivedStrip",
           "note": "指纹 100000+batch",
-          "text": "addTier(\"到期前 1 天提醒\", current: a.d1) {"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -81239,7 +78611,7 @@
           "line": 1236,
           "symbol": "credRow",
           "note": "kf_row_h",
-          "text": "}"
+          "text": "@discardableResult"
         },
         {
           "platform": "ios",
@@ -81247,7 +78619,7 @@
           "line": 1854,
           "symbol": "otpGenRow",
           "note": "kf_ax_bigotp",
-          "text": "CredentialOrg.markDisabled(mac, kind: \"pwd\", keys: [p.alias], label: \"未填\", via: disableVia(owner: p.owner))"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -90981,11 +88353,6 @@
       "type": "tree"
     },
     {
-      "source": "device.home",
-      "target": "device.home.recent",
-      "type": "tree"
-    },
-    {
       "source": "settings",
       "target": "android.build",
       "type": "tree"
@@ -91107,11 +88474,6 @@
     },
     {
       "source": "device.home",
-      "target": "device.home.banner",
-      "type": "tree"
-    },
-    {
-      "source": "device.home",
       "target": "device.home.deepjump",
       "type": "tree"
     },
@@ -91152,47 +88514,12 @@
     },
     {
       "source": "device.home",
-      "target": "device.home.order",
-      "type": "tree"
-    },
-    {
-      "source": "device.home",
-      "target": "device.home.pager",
-      "type": "tree"
-    },
-    {
-      "source": "device.home",
-      "target": "device.home.pager.confirm",
-      "type": "tree"
-    },
-    {
-      "source": "device.home",
-      "target": "device.home.pager.default",
-      "type": "tree"
-    },
-    {
-      "source": "device.home",
       "target": "device.home.pinpick",
       "type": "tree"
     },
     {
       "source": "device.home",
       "target": "device.home.rescan",
-      "type": "tree"
-    },
-    {
-      "source": "device.home",
-      "target": "device.home.statusrow",
-      "type": "tree"
-    },
-    {
-      "source": "device.home",
-      "target": "device.home.switcher",
-      "type": "tree"
-    },
-    {
-      "source": "device.home",
-      "target": "device.home.switcher.menu",
       "type": "tree"
     },
     {
@@ -91396,11 +88723,6 @@
       "type": "tree"
     },
     {
-      "source": "device.home.linksense",
-      "target": "device.home.linksense.reconnect",
-      "type": "tree"
-    },
-    {
       "source": "device.home.quick",
       "target": "device.home.quick.again",
       "type": "tree"
@@ -91413,21 +88735,6 @@
     {
       "source": "device.home.quick",
       "target": "device.home.quick.pendingfp",
-      "type": "tree"
-    },
-    {
-      "source": "device.home.recent",
-      "target": "device.home.recent.jump",
-      "type": "tree"
-    },
-    {
-      "source": "device.home.recent",
-      "target": "device.home.recent.merged",
-      "type": "tree"
-    },
-    {
-      "source": "device.home.recent",
-      "target": "device.home.recent.range",
       "type": "tree"
     },
     {
@@ -91597,16 +88904,6 @@
     },
     {
       "source": "unlock.dial",
-      "target": "unlock.dial.charge",
-      "type": "tree"
-    },
-    {
-      "source": "unlock.dial",
-      "target": "unlock.dial.drill",
-      "type": "tree"
-    },
-    {
-      "source": "unlock.dial",
       "target": "unlock.dial.fail",
       "type": "tree"
     },
@@ -91648,21 +88945,6 @@
     {
       "source": "unlock.dial",
       "target": "unlock.dial.state",
-      "type": "tree"
-    },
-    {
-      "source": "unlock.dial",
-      "target": "unlock.dial.swipe",
-      "type": "tree"
-    },
-    {
-      "source": "unlock.dial",
-      "target": "unlock.dial.tap",
-      "type": "tree"
-    },
-    {
-      "source": "unlock.dial",
-      "target": "unlock.dial.vo",
       "type": "tree"
     },
     {
@@ -92021,13 +89303,13 @@
       "type": "tree"
     },
     {
-      "source": "credential.list",
-      "target": "credential.list.batch",
+      "source": "credential",
+      "target": "credential.otp",
       "type": "tree"
     },
     {
-      "source": "credential",
-      "target": "credential.otp",
+      "source": "credential.list",
+      "target": "credential.list.batch",
       "type": "tree"
     },
     {
@@ -92038,11 +89320,6 @@
     {
       "source": "credential.list",
       "target": "credential.list.row",
-      "type": "tree"
-    },
-    {
-      "source": "credential.list",
-      "target": "credential.list.search",
       "type": "tree"
     },
     {
@@ -92162,22 +89439,7 @@
     },
     {
       "source": "credential.list",
-      "target": "credential.list.archived",
-      "type": "tree"
-    },
-    {
-      "source": "credential.list",
-      "target": "credential.list.borrow-banner",
-      "type": "tree"
-    },
-    {
-      "source": "credential.list",
       "target": "credential.list.busy",
-      "type": "tree"
-    },
-    {
-      "source": "credential.list",
-      "target": "credential.list.due-banner",
       "type": "tree"
     },
     {
@@ -92188,21 +89450,6 @@
     {
       "source": "credential.list",
       "target": "credential.list.empty",
-      "type": "tree"
-    },
-    {
-      "source": "credential.list",
-      "target": "credential.list.first-router",
-      "type": "tree"
-    },
-    {
-      "source": "credential.list",
-      "target": "credential.list.fp-section",
-      "type": "tree"
-    },
-    {
-      "source": "credential.list",
-      "target": "credential.list.jumpbar",
       "type": "tree"
     },
     {
@@ -92222,32 +89469,12 @@
     },
     {
       "source": "credential.list",
-      "target": "credential.list.panel-route",
-      "type": "tree"
-    },
-    {
-      "source": "credential.list",
-      "target": "credential.list.pending-bar",
-      "type": "tree"
-    },
-    {
-      "source": "credential.list",
-      "target": "credential.list.pwd-sections",
-      "type": "tree"
-    },
-    {
-      "source": "credential.list",
-      "target": "credential.list.queue-section",
+      "target": "credential.list.search",
       "type": "tree"
     },
     {
       "source": "credential.list",
       "target": "credential.list.seg",
-      "type": "tree"
-    },
-    {
-      "source": "credential.list",
-      "target": "credential.list.sort-mode",
       "type": "tree"
     },
     {
@@ -92456,11 +89683,6 @@
       "type": "tree"
     },
     {
-      "source": "credential.list.batch",
-      "target": "credential.list.batch.prefix",
-      "type": "tree"
-    },
-    {
       "source": "credential.list.header-menu",
       "target": "credential.list.calendar-toggle",
       "type": "tree"
@@ -92483,16 +89705,6 @@
     {
       "source": "credential.list.row",
       "target": "credential.list.row.state-pills",
-      "type": "tree"
-    },
-    {
-      "source": "credential.list.search",
-      "target": "credential.list.search.history",
-      "type": "tree"
-    },
-    {
-      "source": "credential.list.search",
-      "target": "credential.list.search.no-result",
       "type": "tree"
     },
     {
@@ -95997,20 +93209,20 @@
     }
   ],
   "stats": {
-    "nodes": 967,
+    "nodes": 935,
     "domains": 13,
     "modules": 114,
-    "features": 570,
-    "details": 270,
+    "features": 545,
+    "details": 263,
     "byPlatform": {
-      "ios": 814,
+      "ios": 782,
       "android": 91,
       "apk": 163
     },
     "byDomain": {
-      "device": 111,
-      "unlock": 94,
-      "credential": 125,
+      "device": 98,
+      "unlock": 89,
+      "credential": 111,
       "member": 40,
       "record": 50,
       "security": 13,
@@ -96022,7 +93234,7 @@
       "data": 112,
       "apk": 66
     },
-    "evidence": 3243,
+    "evidence": 3152,
     "commands": 45,
     "platSets": {
       "ios+android+apk": [
@@ -96043,7 +93255,6 @@
         "device.keychain",
         "device.messages",
         "device.home.quick",
-        "device.home.recent",
         "device.add.confirm",
         "device.add.done",
         "device.add.dup",
@@ -96056,7 +93267,6 @@
         "device.add.scan",
         "device.gateway.list",
         "device.home.attention",
-        "device.home.banner",
         "device.home.deepjump",
         "device.home.groupchips",
         "device.home.hero",
@@ -96064,15 +93274,8 @@
         "device.home.linkpill",
         "device.home.linksense",
         "device.home.modules",
-        "device.home.order",
-        "device.home.pager",
-        "device.home.pager.confirm",
-        "device.home.pager.default",
         "device.home.pinpick",
         "device.home.rescan",
-        "device.home.statusrow",
-        "device.home.switcher",
-        "device.home.switcher.menu",
         "device.info.autosync",
         "device.info.card",
         "device.info.status",
@@ -96094,13 +93297,9 @@
         "device.link.state",
         "device.synctime.run",
         "device.add.progress.chain",
-        "device.home.linksense.reconnect",
         "device.home.quick.again",
         "device.home.quick.editor",
         "device.home.quick.pendingfp",
-        "device.home.recent.jump",
-        "device.home.recent.merged",
-        "device.home.recent.range",
         "device.link.rssi-fence",
         "device.link.scan-rssi",
         "unlock.autoopen",
@@ -96119,8 +93318,6 @@
         "unlock.autoopen.reject-audit",
         "unlock.autoopen.rssi-filter",
         "unlock.autoopen.suspend",
-        "unlock.dial.charge",
-        "unlock.dial.drill",
         "unlock.dial.fail",
         "unlock.dial.fence",
         "unlock.dial.haptic",
@@ -96130,9 +93327,6 @@
         "unlock.dial.progress",
         "unlock.dial.retry",
         "unlock.dial.state",
-        "unlock.dial.swipe",
-        "unlock.dial.tap",
-        "unlock.dial.vo",
         "unlock.gate.cancel",
         "unlock.gate.verify",
         "unlock.guest.gate",
@@ -96170,7 +93364,6 @@
         "credential.list.batch",
         "credential.list.header-menu",
         "credential.list.row",
-        "credential.list.search",
         "credential.pwd.add.step1",
         "credential.access.gate",
         "credential.disable.commit",
@@ -96193,24 +93386,14 @@
         "credential.fp.enroll",
         "credential.fp.errors",
         "credential.fp.write",
-        "credential.list.archived",
-        "credential.list.borrow-banner",
         "credential.list.busy",
-        "credential.list.due-banner",
         "credential.list.edit-mode",
         "credential.list.empty",
-        "credential.list.first-router",
-        "credential.list.fp-section",
-        "credential.list.jumpbar",
         "credential.list.member-view",
         "credential.list.menu.fp",
         "credential.list.menu.pwd",
-        "credential.list.panel-route",
-        "credential.list.pending-bar",
-        "credential.list.pwd-sections",
-        "credential.list.queue-section",
+        "credential.list.search",
         "credential.list.seg",
-        "credential.list.sort-mode",
         "credential.list.swipe",
         "credential.note",
         "credential.owner.create",
@@ -96247,14 +93430,11 @@
         "credential.list.batch.delete",
         "credential.list.batch.disable",
         "credential.list.batch.export",
-        "credential.list.batch.prefix",
         "credential.list.calendar-toggle",
         "credential.list.empty.demo-unwired",
         "credential.list.group-mode",
         "credential.list.row.copy",
         "credential.list.row.state-pills",
-        "credential.list.search.history",
-        "credential.list.search.no-result",
         "credential.list.smart-filter",
         "credential.otp.display",
         "credential.otp.generate",
@@ -97084,7 +94264,7 @@
       {
         "id": "unlock.dial",
         "name": "开锁圆盘",
-        "count": 19,
+        "count": 14,
         "platforms": [
           "android",
           "apk",
@@ -97098,7 +94278,7 @@
       {
         "id": "credential",
         "name": "凭证管理（密码/指纹/临时码）",
-        "count": 94,
+        "count": 80,
         "platforms": [
           "apk",
           "ios"

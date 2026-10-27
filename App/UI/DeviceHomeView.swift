@@ -24,8 +24,6 @@ struct DeviceHomeView: View {
     @State private var groupFilter = ""
     // 764 图标行的红点判据 + 765 跨锁合并流: 都在进页/刷新时算一次, 不在 body 里遍历各锁日志 (与 437 同一条理由)
     @State private var alarmMacs: Set<String> = []
-    @State private var mergedRecent: [Rec] = []
-    @State private var recentAllLocks = false   // 765 当前锁 / 全部锁 (持久化 kf_recent_all, 与 566 同一口径)
     @State private var confirmMac: String?
     @State private var confirmPulse = false
     @State private var autoLockLeft: Int?
@@ -68,12 +66,10 @@ struct DeviceHomeView: View {
                             // 1044 家庭公告板: 空态里的一张便签
                         }
                     } else {
-                        if app.devices.count > 1 { capsuleSwitcher }
                         // 767 按组切换 + 764 多锁状态图标行: 都放在 Hero 卡上方 ——
                         // 先一眼看清"哪把锁有事", 再落到当前锁的主控卡。
                         if app.devices.count > 1 {
                             if shown(.groupChips) { groupChips }
-                            if shown(.statusIcons) { statusIconRow }
                         }
                         // 868 扫描组划分: 状态卡 / 圆盘 / 快捷格各自成组 (children: .contain),
                         // 外接开关与"切换控制"可以按组逐项聚焦, 不用在整页里一个个划过去。
@@ -150,16 +146,13 @@ struct DeviceHomeView: View {
                     if i != pageIndex { pageIndex = i }
                 } else {
                     // 当前锁不在翻页序列 (如沉睡锁从胶囊选中) → 重建序列并落位
-                    syncPageOrder()
                     if let i = pageOrder.firstIndex(of: new) { pageIndex = i }
                 }
             }
             .onChange(of: app.devices.count) { _, _ in
-                syncPageOrder()
                 // 绑定/删除之后合并流与告警点位都会留下上一批锁的行: 立刻按新台账重算,
                 // 不等用户手动刷新 (否则解绑那把锁的"最近开门"会继续挂在列表里)。
                 alarmMacs = LockStats.recentAlarmMacs(LockStats.usage())
-                recomputeMerged()
             }
             // 268 状态变化历史: 三态切换记最近 5 笔 (长按胶囊可回看)
             .onChange(of: sense.linkState) { _, new in
@@ -184,8 +177,6 @@ struct DeviceHomeView: View {
         startAutoLockCountdown()
     }
             .task {
-                recentAllLocks = DB.store.getBool("kf_recent_all")   // 765 上次选的范围 (与 566 同一口径: 筛选跨会话保留)
-                syncPageOrder()
                 await refresh()
                 sense.enterPage()   // 95 进页预热: 静默 ensureConnected + 93 信号围栏 + 96 只预热不执行
                 // 包2/136 补充 跨页跳回: 记录/告警入口点"跳回设备页定位该锁"
@@ -236,7 +227,6 @@ struct DeviceHomeView: View {
         // 都走本地缓存, 不主动连锁 —— 下拉刷新已经把 03 快照发出去了, 这里不再叠一轮 IO。
         let us = LockStats.usage()
         alarmMacs = LockStats.recentAlarmMacs(us)
-        recomputeMerged()
         // 112: 迁移验证全部通过后清掉向导旗标 (下次恢复备份会重新立起)
         let flag = DB.store.getString("kf_migrate_pending")
         if !flag.isEmpty, !app.devices.isEmpty,
@@ -245,48 +235,6 @@ struct DeviceHomeView: View {
         }
     }
 
-    // ---------- 设备切换 (包3: 102 胶囊 + 101/763 横滑翻页 + 114 低电置顶 + 292 沉睡跳过 + 766 手工顺序 + 767 按组) ----------
-    /// 三档顺序, 互斥而不是叠加 (叠加就会出现"我明明排好了它又自己跑掉"):
-    ///   1. 1041 电量升序 (胶囊菜单里的明确开关) → 低电置顶 + 电量升序;
-    ///   2. 766 手工顺序 (设备管理里拖过/置顶过) → 完全照用户排的次序, 低电只标橙点不再挪位置 (764);
-    ///   3. 都没设 → 271 默认锁首位 + 114 低电置顶 + 绑定先后。
-    /// 沉睡锁 (292) 与隐藏锁 (108) 在三档里都退出横滑序列, 只从胶囊可达 — 判据与入口各自独立。
-    private func syncPageOrder() {
-        // 组名可能被改名或整个清空 (在设备管理里), 残留的过滤值会把翻页序列压成只剩当前锁一页。
-        // 这一句的作用域只在"重算序列"时: 组没了就回到"全部", 而不是让用户面对一排空的胶囊。
-        if !groupFilter.isEmpty, !groupNameList.contains(groupFilter) { groupFilter = "" }
-        let byBatt = DB.store.getBool("kf_sort_batt")   // 1041 电量升序开关
-        let manual = LockArchive.hasManualOrder         // 766
-        let def = LockArchive.defaultMac
-        let base = manual ? LockArchive.orderedDevices(app.devices) : app.devices
-        let seq: [Keychain]
-        if manual, !byBatt {
-            // 手工顺序**不再比较**: orderedDevices 返回的就是用户排好的全序, 再排一次等于把它撤销。
-            seq = base
-        } else {
-            seq = base.sorted { a, b in
-                if byBatt {
-                    let la = isLow(a), lb = isLow(b)
-                    if la != lb { return la }
-                    let pa = batteryPct(for: a), pb = batteryPct(for: b)
-                    if pa != pb { return pa < pb }
-                } else {
-                    if a.mac == def { return true }
-                    if b.mac == def { return false }
-                    let la = isLow(a), lb = isLow(b)
-                    if la != lb { return la }   // 114 低电置顶
-                }
-                return a.pairedAt < b.pairedAt
-            }
-        }
-        pageOrder = seq.filter { inGroup($0) && !LockArchive.isSleeping($0.mac) && !LockArchive.isHidden($0.mac) }
-            .map { $0.mac }
-        // 当前锁若已沉睡/被隐藏/不在所选组, 保留一页让它可见 (从胶囊或图标行选中的落点)
-        if let cur = app.current, !pageOrder.contains(cur.mac) {
-            pageOrder.append(cur.mac)
-        }
-        if let cur = app.current, let i = pageOrder.firstIndex(of: cur.mac) { pageIndex = i }
-    }
     /// 767 组过滤: "" = 全部; "未分组" = 档案里组名为空的那些。
     /// 图标行与翻页共用这一条判据, 免得出现"chip 选了家用, 图标行还亮着仓库"的两套答案。
     private func inGroup(_ kc: Keychain) -> Bool {
@@ -307,21 +255,6 @@ struct DeviceHomeView: View {
         return o
     }
 
-    private var rowLocks: [Keychain] {
-        LockArchive.orderedDevices(app.devices).filter { inGroup($0) }
-    }
-    /// 765 合并流跟着组过滤走: 选了"仓库"却在流里看到家门口的记录, 那不是"跨锁", 那是串台。
-    private func recomputeMerged() {
-        mergedRecent = RecordSearch.mergedRecentOpens(macs: rowLocks.map { $0.mac }, count: 10)
-        // 790 最近活跃头像圈借同一刷新时机重算 —— Hero 卡每帧现算 = 成员数 × 全量日志各解一遍,
-        // 那是这个文件里最贵的操作; 跟着 onAppear/换锁/换组走足够 (活跃度本来就是"约"级信息)。
-            .filter { !MemberHub.ext($0.id).archived }
-            .map { ($0, MemberHub.activity($0.id).last) }
-            .filter { !$0.1.isEmpty }
-            .sorted { $0.1 > $1.1 }
-            .prefix(3)
-            .map(\.0)
-    }
     private var groupNameList: [String] {
         LockArchive.grouped(LockArchive.orderedDevices(app.devices)).map { $0.name }
     }
@@ -343,8 +276,6 @@ struct DeviceHomeView: View {
         let on = groupFilter == name
         return Button {
             groupFilter = name
-            syncPageOrder()
-            recomputeMerged()
             DS.Haptics.tick.impactOccurred()
         } label: {
             Text(label)
@@ -362,72 +293,6 @@ struct DeviceHomeView: View {
         .accessibilityAddTraits(on ? [.isSelected] : [])
     }
 
-    // ---------- 764 多锁状态图标行 (家庭 App 房间行) ----------
-    // 点图标 = 切当前锁; 当前锁加一圈主题色描边 (原句"靛蓝描边"= 品牌主色, 六套主题下都跟着变)。
-    private var statusIconRow: some View {
-        let locks = rowLocks
-        return VStack(alignment: .leading, spacing: DS.Space.xs) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: DS.Space.s) {
-                    ForEach(locks) { kc in statusTile(kc) }
-                }
-                .padding(.horizontal, DS.Space.gutter)
-            }
-            Text("红点=近 30 天日志里有告警 · 橙点=低电 · 绿点=本机已连接 · 空心圈=没读到读数 (不代表门锁正常)")
-                .vkFont(.caption2)
-                .foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, DS.Space.gutter)
-        }
-    }
-    private func statusTile(_ kc: Keychain) -> some View {
-        let isCur = kc.mac == app.currentMac
-        let m = LockArchive.meta(kc.mac)
-        let name = LockArchive.displayName(kc)
-        let sleeping = LockArchive.isSleeping(kc.mac)
-        let dot: Dot = alarmMacs.contains(kc.mac) ? .alarm
-            : (isLow(kc) ? .low : (lockSvc.connectedMAC == kc.mac ? .linked : .none))
-        return Button {
-            if kc.mac != app.currentMac { app.select(kc.mac) }
-        } label: {
-            VStack(spacing: DS.Space.xxs) {
-                ZStack(alignment: .bottomTrailing) {
-                    Image(systemName: LockArchive.symbolName(m))
-                        .font(.system(size: DS.Icon.md, weight: .medium))
-                        .foregroundStyle(LockArchive.swatchColor(m.colorKey))
-                        .frame(width: 46, height: 46)
-                        .background(DS.Palette.surfaceAlt, in: Circle())
-                    // `.none` 画空心圈: 实心灰点会被读成"查过了, 它没事", 而那正是没查过的样子
-                    if dot == .none {
-                        Circle()
-                            .strokeBorder(DS.Palette.hairlineStrong, lineWidth: 1.5)
-                            .frame(width: 11, height: 11)
-                            .padding(2)
-                    } else {
-                        Circle().fill(dot.color)
-                            .frame(width: 11, height: 11)
-                            .overlay(Circle().strokeBorder(DS.Palette.surface, lineWidth: 1.5))
-                            .padding(2)
-                    }
-                }
-                .overlay {
-                    if isCur { Circle().strokeBorder(DS.Palette.accent, lineWidth: 2.5) }
-                }
-                // 44pt 是命中区, 文字块另给宽度: 名字长就截断, 完整名走 a11y 标签
-                Text(name)
-                    .vkFont(.caption2)
-                    .foregroundStyle(isCur ? DS.Palette.text : DS.Palette.textSub)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .frame(width: 56)
-            }
-            .frame(minHeight: DS.Hit.min)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(PressableButtonStyle())
-        .accessibilityLabel("\(name), \(dot.word)\(sleeping ? ", 沉睡" : "")\(isCur ? ", 当前锁" : ""), 点按切换")
-        .accessibilityAddTraits(isCur ? [.isSelected] : [])
-    }
     /// 764 的四种状态: 优先级 告警 > 低电 > 已连接 > 无读数。
     /// `.none` 在图标上是**空心圈**而不是灰点 —— 灰点会被读成"我查过了, 它没事", 而那正是没查过的样子。
     /// 嵌套类型**不继承**外层 View 的主 actor 隔离, 而这里的色板走 DS.Palette 的高对比令牌 (主 actor)
@@ -451,193 +316,6 @@ struct DeviceHomeView: View {
             case .none: return "没读到读数"
             }
         }
-    }
-    private var pagedLocks: [Keychain] {
-        let byMac = Dictionary(app.devices.map { ($0.mac, $0) }, uniquingKeysWith: { a, _ in a })
-        return pageOrder.compactMap { byMac[$0] }
-    }
-    private var capsuleSwitcher: some View {
-        HStack(spacing: DS.Space.s) {
-            capsuleMenu
-            Spacer(minLength: 0)
-            // 763 页点: 当前页高亮, 低电锁橙色描边 (114), 点击直达
-            HStack(spacing: DS.Space.xs) {
-                ForEach(Array(pagedLocks.enumerated()), id: \.offset) { i, kc in
-                    Button { withAnimation(DS.Motion.soft) { pageIndex = i } } label: {
-                        Capsule()
-                            .fill(i == pageIndex ? DS.Palette.accent : DS.Palette.hairline)
-                            .frame(width: i == pageIndex ? 18 : 7, height: 7)
-                            .overlay {
-                                if isLow(kc), i != pageIndex {
-                                    Capsule().strokeBorder(DS.Palette.warn, lineWidth: 1.5)
-                                }
-                            }
-                            // 视觉小点 + 44pt 命中区分离 (触达纪律)
-                            .frame(width: DS.Hit.min, height: DS.Hit.min)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(PressableButtonStyle())
-                    .accessibilityLabel("第 \(i + 1) 页 \(LockArchive.displayName(kc))\(isLow(kc) ? ", 低电量" : "")")
-                }
-            }
-            .accessibilityElement(children: .contain)
-        }
-        .padding(.horizontal, DS.Space.gutter)
-    }
-    private var capsuleMenu: some View {
-        Menu {
-            // 767 胶囊里也按组分区: 十几把锁时"一长条"和"按空间分组"是两种找法, 这里跟着图标行的过滤走。
-            // 只有真出现 ≥2 组才分区 —— 单组时套一层组名标题纯属噪音。
-            let gs = LockArchive.grouped(pagedLocks)
-            if gs.count > 1 {
-                ForEach(gs) { g in
-                    Section(g.name) {
-                        ForEach(g.locks) { kc in lockMenuItem(kc) }
-                    }
-                }
-            } else {
-                Section("门锁") {
-                    ForEach(pagedLocks) { kc in lockMenuItem(kc) }
-                }
-            }
-            let sleepers = app.devices.filter { LockArchive.isSleeping($0.mac) }
-            if !sleepers.isEmpty {
-                Section("沉睡 (超 30 天未连接)") {
-                    ForEach(sleepers) { kc in
-                        Button {
-                            app.select(kc.mac)
-                        } label: {
-                            HStack(spacing: DS.Space.s) {
-                                Circle().fill(LockArchive.swatchColor(LockArchive.meta(kc.mac).colorKey))
-                                    .frame(width: 8, height: 8)
-                                Text(LockArchive.displayName(kc))
-                                Image(systemName: "moon.zzz.fill").foregroundStyle(DS.Palette.textSub)
-                            }
-                            .frame(minHeight: DS.Hit.min)   // 2026-10-18 设计审核: chip 原来只有 ContentIG 高度
-                            .contentShape(Rectangle())
-                        }
-                    }
-                }
-            }
-            let hiddenLocks = app.devices.filter { LockArchive.isHidden($0.mac) }
-            if !hiddenLocks.isEmpty {
-                // 108: 隐藏的锁**不会消失**，只是退出横滑序列。这里就是它的可达面与恢复入口
-                // (恢复开关在"锁档案"里，与隐藏动作同一个地方，免得两个方向各找一个页面)。
-                Section("已隐藏 (\(hiddenLocks.count))") {
-                    ForEach(hiddenLocks) { kc in
-                        Button {
-                            app.select(kc.mac)
-                        } label: {
-                            HStack(spacing: DS.Space.s) {
-                                Circle().fill(LockArchive.swatchColor(LockArchive.meta(kc.mac).colorKey))
-                                    .frame(width: 8, height: 8)
-                                Text(LockArchive.displayName(kc))
-                                Image(systemName: "eye.slash").foregroundStyle(DS.Palette.textSub)
-                            }
-                            .frame(minHeight: DS.Hit.min)   // 2026-10-18 设计审核: chip 原来只有 ContentIG 高度
-                            .contentShape(Rectangle())
-                        }
-                    }
-                }
-            }
-            Divider()
-            Button {
-                DB.store.set("kf_sort_batt", !DB.store.getBool("kf_sort_batt"))
-                DS.Haptics.tick.impactOccurred()
-                syncPageOrder()
-            } label: {
-                // 关掉电量档之后回到哪一档, 取决于有没有手工顺序 (766) —— 文案跟着实际结果走,
-                // 不能一直写"恢复绑定先后": 排过序的用户按下去看到的是自己的顺序回来了, 那句就成了假话。
-                Label(DB.store.getBool("kf_sort_batt")
-                      ? (LockArchive.hasManualOrder ? "恢复手工排序" : "恢复绑定先后排序")   // 766 恢复手工排序
-                      : "按电量升序 (先照顾最弱)",
-                      systemImage: "arrow.up.arrow.down")
-            }
-            .frame(minHeight: DS.Hit.min)   // 2026-10-18: 菜单项在窄屏上原来只有文字行高
-            Divider()
-        } label: {
-            HStack(spacing: DS.Space.xs) {
-                Circle().fill(LockArchive.swatchColor(LockArchive.meta(app.currentMac).colorKey))
-                    .frame(width: 8, height: 8)
-                Text(app.displayName)
-                    .vkFont(.footnote, weight: .medium)
-                    .foregroundStyle(DS.Palette.text)
-                    .lineLimit(1)
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.system(size: DS.Icon.xs, weight: .semibold))
-                    .foregroundStyle(DS.Palette.textSub)
-            }
-            .padding(.horizontal, DS.Space.m)
-            .padding(.vertical, DS.Space.xs + 2)
-            // 2026-10-18 表面预算 (MASTER.md §3.1: 同屏玻璃面 ≤3):
-            // 设备页同屏已经有 圆盘卡 + 快捷格 两组玻璃面, 这枚换锁 chip 再上玻璃就超预算。
-            // 它是个**操作控件**不是内容容器, 实底反而更清楚; 44pt 命中区不受影响。
-            .variantPlate(DS.Palette.surfaceAlt, .capsule)
-            // 视觉紧凑胶囊 + 44pt 命中区分离: 胶囊本身不必撑高
-            .frame(minHeight: DS.Hit.min)
-            .contentShape(Rectangle())
-        }
-        .accessibilityLabel("切换门锁, 当前 \(app.displayName)")
-    }
-    private func lockMenuItem(_ kc: Keychain) -> some View {
-        Button {
-            if kc.mac != app.currentMac { app.select(kc.mac) }
-        } label: {
-            HStack(spacing: DS.Space.s) {
-                Circle().fill(LockArchive.swatchColor(LockArchive.meta(kc.mac).colorKey))
-                    .frame(width: 8, height: 8)
-                Text(LockArchive.displayName(kc))
-                if isLow(kc) { Image(systemName: "battery.25percent").foregroundStyle(DS.Palette.warn) }
-                if LockArchive.isSleeping(kc.mac) { Image(systemName: "moon.zzz.fill").foregroundStyle(DS.Palette.textSub) }
-            }
-            .frame(minHeight: DS.Hit.min)   // 2026-10-18: 同上
-            .contentShape(Rectangle())
-        }
-        // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。
-        // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
-        .frame(minHeight: DS.Hit.min)
-        .contentShape(Rectangle())
-    }
-    // 101/763/771/786: Hero 卡横滑翻页 — 圆盘与状态文本随卡片平行滑动交接 (TabView 原生平移)。
-    // 786 "只有 Hero 区响应翻锁": 手势就挂在这个 TabView 上, 页面别处 (圆盘纵向滑、下拉刷新、Tab 栏) 各管各的轴,
-    // 所以不需要任何 gesture 仲裁 —— 两套手势抢同一条轴的写法才是这里要避免的。
-    private var heroPager: some View {
-        // 环境值先取出来: scrollTransition 的闭包是 @Sendable, 里面不能直接读主 actor 的 @Environment。
-        let stillMotion = reduceMotion
-        return TabView(selection: $pageIndex) {
-            ForEach(Array(pagedLocks.enumerated()), id: \.offset) { i, kc in
-                statusCard(for: kc)
-                    .padding(.horizontal, DS.Space.xs)
-                    .tag(i)
-            }
-        }
-        .tabViewStyle(.page(indexDisplayMode: .never))
-        // 23 HeroCard 滚动视差 (Halide): 身份卡随页面上滚以约三分之一倍速跟手, 制造"卡片浮在内容上"的层次。
-        // 只动位移; 翻面 (78)/低电触感 (113/120)/reduceMotion 退化全部不动。
-        .scrollTransition(.interactive, axis: .vertical) { content, phase in
-            content.offset(y: stillMotion ? 0 : phase.value * 36)
-        }
-        .animation(DS.Motion.soft, value: pageIndex)
-        // 267 换锁二次确认: 横滑落点换锁后, 首次点圆盘只弹锁名胶囊, 再点才执行
-        .onChange(of: pageIndex) { _, i in
-            guard pagedLocks.indices.contains(i) else { return }
-            let kc = pagedLocks[i]
-            if kc.mac != app.currentMac {
-                confirmMac = kc.mac
-                app.select(kc.mac)
-            }
-        }
-        // 271 上滑设默认: 横滑翻页时带明显上挑分量 → 该锁固定为冷启动默认并置顶。
-        // 门槛 |w|>60 ∧ h<-60: 纯横翻 (h≈0) 与纵向滚动 (|w| 小) 都不触发, 只认斜上挑。
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 24).onEnded { g in
-                guard g.translation.height < -60, abs(g.translation.width) > 60,
-                      let kc = app.current else { return }
-                LockArchive.setDefaultMac(kc.mac)
-                DS.Haptics.trigger.impactOccurred()
-                syncPageOrder()
-                app.showToast("「\(LockArchive.displayName(kc))」已设为启动默认锁")
-            })
     }
 
     // ---------- 状态卡: 身份 + 连接 + 三个关键读数 ----------
@@ -1304,148 +982,9 @@ struct DeviceHomeView: View {
         .accessibilityHint(target.map { "跳到凭证页定位 " + $0.name } ?? "还没有星标凭证, 先去凭证页点亮星标")
     }
 
-    // ---------- 最近开门 ----------
-    // ---------- 最近开门 (765: 当前锁 / 全部锁跨锁合并, 行尾带锁名标签) ----------
-    private var recentCard: some View {
-        let rows = app.recentRecords()
-        return Card {
-            VStack(alignment: .leading, spacing: DS.Space.s) {
-                SectionTitle(text: recentAllLocks ? "最近开门 · 全部锁" : "最近开门",
-                             count: recentAllLocks ? mergedRecent.count : rows.count)
-                // 只有一把锁时不出现这排: 单锁没有"跨锁"可言, 放上去等于给一个恒真的选项。
-                if app.devices.count > 1 {
-                    // @layout-allow 触达托管 Picker: 控件本体高度由系统渲染, 我们撑 frame 只会多出一片点不动的死区。
-                    // 上机复测: 用拇指点这一行的上下边缘, 看打不打得开 (打得开=系统已给够 44, 这条可以销)
-                    Picker("最近开门范围", selection: Binding(   // 765 最近开门范围
-                        get: { recentAllLocks },
-                        set: { recentAllLocks = $0; DB.store.set("kf_recent_all", $0) })) {
-                        Text("当前锁").tag(false)
-                        Text("全部锁").tag(true)
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                }
-                if recentAllLocks {
-                    mergedRecentRows
-                } else if rows.isEmpty {
-                    Text("还没有开门记录。门锁有新动静时会出现在这里。")
-                        .vkFont(.footnote)
-                        .foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                } else {
-                    VStack(spacing: DS.Space.s) {
-                        ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
-                            // 170: 整行可点 → 记录 Tab 落到那一条并高亮 (key 格式与 585 引用链接同一个出口;
-                            // 被筛选挡掉的行由 RecordsView 自己回一句"不在当前显示范围里", 这里不假装成功)
-                            Button { landRecord(r.key) } label: {
-                                HStack(alignment: .top, spacing: DS.Space.s) {
-                                    Image(systemName: r.warn ? "exclamationmark.triangle.fill" : "person.crop.circle.fill")
-                                        .font(.system(size: DS.Icon.sm))
-                                        .foregroundStyle(r.warn ? DS.Palette.warn : DS.Palette.textSub)
-                                        .accessibilityHidden(true)
-                                    Text(r.text)
-                                        .vkFont(.footnote)
-                                        .foregroundStyle(DS.Palette.text)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                    Spacer(minLength: 0)
-                                    Image(systemName: "chevron.right")
-                                        .font(.system(size: DS.Icon.xs))
-                                        .foregroundStyle(DS.Palette.textSub)
-                                        .accessibilityHidden(true)
-                                }
-                                .frame(minHeight: DS.Hit.min)
-                                .contentShape(Rectangle())
-                            }
-                            .buttonStyle(PressableButtonStyle())
-                            .accessibilityElement(children: .combine)
-                            .accessibilityHint("点按跳到记录页这条并高亮")   // 170 点按跳到记录页这条并
-                            // 559: 原句是「行左滑查记录」—— 本区是卡片不是 List, SwiftUI 的 swipeActions
-                            // 只对 List 行生效, 左滑在这里拉不出动作; 替代口径 = 行上长按菜单 (与记录页行
-                            // 714/761 同一交互档)。跳转并填入成员过滤是真行为, 文案不写"左滑"。
-                            // 成员不可证明的行 whoId 为 nil ⇒ 菜单内容为空, 系统不弹空菜单。
-                            .contextMenu {
-                                if let mid = r.whoId {
-                                    Button {
-                                        openMemberRecords(mid)
-                                    } label: {
-                                        Label("查这位成员的记录", systemImage: "magnifyingglass")   // 559 查这位成员的记录
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     @ViewBuilder
-    private var mergedRecentRows: some View {
-        if mergedRecent.isEmpty {
-            Text("这些锁的本地缓存里还没有开门记录 — 连上一次锁、拉一次日志就会出现在这里。")
-                .vkFont(.footnote)
-                .foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-        } else {
-            VStack(spacing: DS.Space.s) {
-                ForEach(mergedRecent) { r in
-                    // 170 的另一半: 跨锁合并流里的行同样可点 (Rec.id 就是 mac#key, 与落地格式同源)
-                    Button { landRecord(r.id) } label: {
-                        HStack(alignment: .top, spacing: DS.Space.s) {
-                            Image(systemName: r.alarm ? "exclamationmark.triangle.fill" : "person.crop.circle.fill")
-                                .font(.system(size: DS.Icon.sm))
-                                .foregroundStyle(r.alarm ? DS.Palette.warn : DS.Palette.textSub)
-                                .accessibilityHidden(true)
-                            Text(mergedLine(r))
-                                .vkFont(.footnote)
-                                .foregroundStyle(DS.Palette.text)
-                                .fixedSize(horizontal: false, vertical: true)
-                            Spacer(minLength: DS.Space.xs)
-                            // 765 要求的行尾锁名标签: 合并流里"哪把锁"必须一眼可见, 不然跨锁就没有意义
-                            Text(r.lockName)
-                                .vkFont(.caption2, weight: .medium)
-                                .lineLimit(1)
-                                .foregroundStyle(DS.Palette.textSub)
-                                .padding(.horizontal, DS.Space.s)
-                                .padding(.vertical, 2)
-                                .variantPlate(DS.Palette.surfaceAlt, .capsule)
-                                .frame(maxWidth: 82)
-                        }
-                        .frame(minHeight: DS.Hit.min)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(PressableButtonStyle())
-                    .accessibilityElement(children: .combine)
-                    .accessibilityHint("点按跳到记录页这条并高亮")   // 170 点按跳到记录页这条并
-                    // 559: 与单锁行同一口径 (说明见上面那段); 判据换 Rec 的可证明归属。
-                    .contextMenu {
-                        if let mid = provableMemberId(r) {
-                            Button {
-                                openMemberRecords(mid)
-                            } label: {
-                                Label("查这位成员的记录", systemImage: "magnifyingglass")   // 559 查这位成员的记录
-                            }
-                        }
-                    }
-                }
-            }
-            if mergedHasSameMinute {
-                Text("同一分钟内的两条不分先后: 日志只到分钟, 这里的次序是入库次序。")
-                    .vkFont(.caption2)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
 
-    /// 170 落地：把行身份交给记录 Tab 的同一个入口 (pendingRecordKey → landRecordKey)。
-    /// Tab 序号取自 deepLinkHosts 那张表 (device0/credentials1/records2/settings3)：
-    /// 再写一份 0/1/2/3 的字面量就会在两处各数各的。
-    private func landRecord(_ key: String) {
-        guard !key.isEmpty else { return }
-        app.pendingRecordKey = key
-        app.requestRoute(.records)
-    }
 
     /// 559 落地: 「最近开门」行上可证明的成员 → 记录 Tab 并按该成员过滤。
     /// 复用 582 的 pendingRecordsMember → landMember 链路 (记录页消费后清空, 不残留过滤)。
@@ -1470,18 +1009,6 @@ struct DeviceHomeView: View {
             what = r.typeName
         }
         return t.isEmpty ? what : t + " · " + what
-    }
-    /// 跨锁同分钟检测: 相邻两行的"到分"前缀相同即存在歧义 (与 680 同一判据)。
-    private var mergedHasSameMinute: Bool {
-        guard mergedRecent.count > 1 else { return false }
-        var prev = ""
-        for r in mergedRecent {
-            let m = String(r.timeStr.prefix(16))
-            if m.isEmpty { continue }
-            if m == prev { return true }
-            prev = m
-        }
-        return false
     }
 
     // ---------- 派生数据 (包3: 参数化到任意锁 — 当前页吃实时, 其余页读快照) ----------
@@ -1520,10 +1047,8 @@ struct DeviceHomeView: View {
             quickActions
                 .accessibilityElement(children: .contain)
                 .accessibilityLabel("快捷操作格组")   // 868 快捷操作格组
-        case "recent":
-            recentCard
         default:
-            heroPager
+            if let kc = app.current { heroCard(for: kc, isCurrent: true) }
                 .accessibilityElement(children: .contain)
                 .accessibilityLabel("状态卡组")   // 868 状态卡组
         }

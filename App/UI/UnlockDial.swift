@@ -3,21 +3,17 @@
 /// 不各写各的默认值 —— 否则"设置说自己是三连点、圆盘按 hold 生效"这类分叉又得靠人读抓。
 /// 非法/空值一律回落 hold (与拍板前的行为逐字一致)。
 enum UnlockPrefs {
-    static let modes = ["hold", "triple", "charge"]
+    static let modes = ["hold"]
     static var mode: String {
         let v = DB.store.getString("kf_gesture_mode")
         return modes.contains(v) ? v : "hold"
     }
-    /// 53 双击直开只在 hold 档生效 (另两档自带确认动作，叠加会出现"两把钥匙都能开门")。
-    static var tapDirect: Bool { DB.store.getBool("kf_tap_direct") && mode == "hold" }
     /// 当前档位"这一盘该做什么"的一句原文。圆盘演练层 (59) 与专注模式页头都读这一句 ——
     /// 这句话在两个界面各写一份时, 改档位口径必漏一处; 而漏掉的那处不是"写得不好", 是把人引到
     /// 一个**在该档位根本不会开锁**的动作上 (2026-10-15 走查在专注页头抓到原样一份)。
     /// 句式统一带"可"字, 因为页头那侧是拼在「已就绪 · 」后面的。
     static var gestureHint: String {
         switch mode {
-        case "triple": return "可连续轻点圆盘三下"
-        case "charge": return "可按住圆盘, 沿外沿转满一圈"
         default: return "可按住圆盘，也可上滑"
         }
     }
@@ -90,86 +86,7 @@ private struct UnlockPulseRing: View {
 // `shock` 不是同一个东西: shock 是 `.success`(开门**结果**回来)后的绿圈冲击波。两者时刻不同、
 // 语义不同 (发出指令已确认 vs 锁真的开了)，所以各留各的: 这里走靛蓝、只在 .opening 触发一次。
 
-// ================= 52 旋转充能刻度 (原案"数码表冠") =================
-// iPhone 没有数码表冠 —— 这条按 IDEA-BANK 描述的**行为**落地: "沿圆盘外沿刻度旋转一圈完成充能才发指令，
-// 旋转进度逐格点亮刻度"。12 格刻度 = 每格 30°，点亮格数由调用方给的 progress 决定。
-// 台账里那条"旋钮充能"的**名字**不许在界面上写成"表冠" (DEVICE_FAMILY=1，本 App 无 watchOS target)。
-private struct ChargeTicks: View {
-    var diameter: CGFloat
-    var progress: CGFloat        // 0…1，一圈 = 1
-    @State private var lit: Int = 0
 
-    private let ticks = 12
-    private var count: Int { min(ticks, Int(progress * CGFloat(ticks))) }
-
-    var body: some View {
-        ZStack {
-            ForEach(0..<ticks, id: \.self) { i in
-                Capsule()
-                    .fill(i < count ? DS.Palette.accentText : DS.Palette.hairline)
-                    .frame(width: 2.5, height: 9)
-                    .offset(y: -(diameter / 2 + 15))
-                    .rotationEffect(.degrees(Double(i) * 360 / Double(ticks)))
-            }
-        }
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
-        .animation(DS.Motion.quick, value: count)
-        .onChange(of: count) { _, c in
-            // 逐格点亮配逐格触感: 只在"多亮一格"时记，回退不记 (旋转过头再退回来不该啪啪响)。
-            // 触感只用 DS.Haptics 现成的两档 (tick/trigger)，不新造生成器类型。
-            if c > lit { DS.Haptics.tick.impactOccurred() }
-            lit = c
-        }
-    }
-}
-
-// ================= 59 手势演练层 (系统新功能引导) =================
-// 首次进设备 Tab 时在圆盘上浮现一条**可跟随**的上滑轨迹，完成任意一次真实手势即消失并永久记档。
-// 为什么用"轨迹"而不是箭头: 本盘的既有主交互是按住与上滑两条 (idea 1/51)，箭头会把用户指到
-// 其中一条上去，而跟滑动效两条都能看懂。reduceMotion 下退化为一句静态提示 —— 看不见动效时
-// 至少要看得见"这里能做手势"。
-// 2026-10-15 走查: 这条轨迹**只对 hold 档成立**。上滑与按住两条动线在 `dragGesture` 里都挂在
-// `guard holdConfirmOn, gestureMode == "hold"` 之后 (:708 那道), 三连点/旋转充能档里照着一根向上的箭头滑是**不会开锁的**;
-// 而演练层偏偏只在"从没完成过一次真手势"时浮现 —— 也就是正好发给那两个档里还没摸对门路的人。
-// 所以提示语与轨迹都按档位分叉: 非 hold 档不画那条会把人带错的轨迹。
-private struct DrillTrace: View {
-    var diameter: CGFloat
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var slide = false
-
-    /// 只有 hold 档的手势是"往上"的; 另两档画向上轨迹 = 把人引到一个不会生效的动作。
-    private var swipeTrace: Bool { UnlockPrefs.mode == "hold" && !reduceMotion }
-
-    var body: some View {
-        ZStack {
-            if !swipeTrace {
-                Text(UnlockPrefs.gestureHint)
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .padding(DS.Space.s)
-                    .variantPlate(DS.Palette.surfaceAlt, .capsule)
-            } else {
-                Capsule()
-                    .fill(LinearGradient(colors: [DS.Palette.accentText.opacity(0.75), .clear],
-                                         startPoint: .bottom, endPoint: .top))
-                    .frame(width: 8, height: diameter * 0.42)
-                    .offset(y: slide ? -diameter * 0.26 : diameter * 0.16)
-                    .opacity(slide ? 0.2 : 1)
-                    .onAppear {
-                        slide = false
-                        withAnimation(.easeInOut(duration: 1.15).repeatForever(autoreverses: true)) { slide = true }
-                    }
-                Image(systemName: "chevron.up")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(DS.Palette.accentText.opacity(0.85))
-                    .offset(y: -diameter * 0.3)
-            }
-        }
-        .allowsHitTesting(false)
-        .transition(.opacity)
-    }
-}
 
 // ================= 三段进度细条 (idea 80/89) =================
 // 握手 / 鉴权 / 执行 三段填充; 握手超 4 秒由靛蓝转橙 (idea 89)。
@@ -242,31 +159,12 @@ struct UnlockDial: View {
     @State private var armed = false           // 62 误触围栏已解锁
     @State private var weakNudge = false        // 129 已因信号偏弱暂缓过一次
     @State private var holdTask: Task<Void, Never>? = nil
-    @State private var voRotorIndex = 0        // 846/167 VO 转子: 0 状态 / 1 电量 / 2 连接
-    // --- 52/53/58/59/65/73 手势与动效族 ---
-    @State private var chargeProgress: CGFloat = 0   // 52 旋转充能进度 (0…1 圈)
-    @State private var chargeAngle: Double = 0       // 上一帧的极角，用于累计**带符号**转角
-    @State private var tapStreak = 0                 // 53/58 连点计数
-    @State private var tapReset: Task<Void, Never>? = nil
-    @State private var pressStart = Date()           // 判"轻点"用的按下时长起点
-    @State private var drill = false                 // 59 手势演练层是否浮现
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // ---------- 偏好 (设置-开锁, 经 AppState.setUnlockOption 重建生效) ----------
     private var holdConfirmOn: Bool { DB.store.getBool("kf_hold_confirm", true) }
     private var fenceRequired: Bool { DB.store.getBool("kf_fence") }
-    /// 52/58 手势模式: hold(默认 = 现状按住确认) / triple(58 三连点防误开) / charge(52 旋转充能)。
-    /// **三档互斥、同一时刻只有一档生效** —— `docs/DEFERRED.md:36-41` 记着原委: 三连点/旋转充能/双击直开
-    /// 都在抢同一个圆盘，叠着生效会让"哪种手势算数"变成未定义行为。2026-10-10 拍板"手势族全做"，
-    /// 落地方式就是把它做成**同一把单选**，且默认档 hold 与既有行为逐字一致 (老用户升级后观感不变)。
-    private var gestureMode: String { UnlockPrefs.mode }
-    /// 53 双击直开: 默认**关**。开着 = 圆盘连点两下直接发指令，**绕过按住确认** —— 这是防误触的减配，
-    /// 所以①只在 hold 档生效 (另两档各自已有确认手势)，②设置那条自己写明"绕过确认"，③不跟 62 围栏抢:
-    /// 围栏开启时仍必须先拖入中心解锁才计数。
-    private var tapDirect: Bool { UnlockPrefs.tapDirect }
-    /// 一次手势里要数满几下才发指令: 三连点档 3 下，双击直开档 2 下。
-    private var tapsNeeded: Int { gestureMode == "triple" ? 3 : 2 }
     // 225 最大字号走查 (设备 Tab 这一屏) = 下面这条 859 的字号联动: 圆盘与状态文案同档缩放，
     // 走查清单在 docs/A11Y-FREQUENCY.md + tools/dynamictype.js (静态闸门) —— 不另做一套"大字模式"。
     // 859: 字号 ≥1.5 时圆盘缩到 128pt, 保证大字号下整盘仍在屏内可完成按住手势
@@ -365,10 +263,6 @@ struct UnlockDial: View {
                 }
                 // 呼吸环独立成视图并切断隐式动画继承, 见 UnlockPulseRing 的注释
                 if isBusy { UnlockPulseRing(diameter: dial, rssi: rssi) }
-                // 52 旋转充能刻度: 只在 charge 档挂 (hold 档画一圈死刻度会让人以为可以转)
-                if gestureMode == "charge", !isBusy, bleReady {
-                    ChargeTicks(diameter: dial, progress: chargeProgress)
-                }
                 Button {
                     // VO/开关控制/转子激活直达: 绕过按住确认 (替代按钮降级), 蓝牙关时给出失败解释
                     guard bleReady else { return }
@@ -376,20 +270,8 @@ struct UnlockDial: View {
                 } label: { dialButtonLabel() }
                 .buttonStyle(PressableButtonStyle())
                 // 164 Cmd+U 开锁 (与 Cmd+1..4 同族); 蓝牙关的 guard 在 Button action 里, 照常挡
-                .keyboardShortcut("u", modifiers: .command)
                 .accessibilityLabel("开锁")
-                .accessibilityValue(voValue)
                 .accessibilityHint(voHint)
-                // 846/167 圆盘转子调节: VO 转子上下滑 = 在 状态/电量/连接 间切换播报值
-                .accessibilityAdjustableAction { direction in
-                    switch direction {
-                    case .increment: voRotorIndex = (voRotorIndex + 1) % 3
-                    case .decrement: voRotorIndex = (voRotorIndex + 2) % 3
-                    default: voRotorIndex = 0
-                    }
-                    // 播报切换后的值 (转子切维度的即时反馈)
-                    AXTools.announce(voValue + " — " + voRotorName())
-                }
                 // 手势层: 按住确认 + 上滑 + 双围栏 ( sighted 用户路径, VO 激活不走这里 )
                 .highPriorityGesture(dragGesture)
                 // 2 环形进度: 按住时在盘外沿填充
@@ -417,9 +299,6 @@ struct UnlockDial: View {
                     .overlay(Circle().strokeBorder(DS.heroFg.opacity(0.65), lineWidth: 1))
                     .offset(x: dial * 0.44, y: -dial * 0.44)
                     .accessibilityHidden(true)
-                // 59 手势演练层: 首进设备 Tab 浮现，任何一次真实手势即永久收起。
-                // 提示语不从这里传: 层内自读 UnlockPrefs.gestureHint, 与专注页头同一份口径。
-                if drill, state == .idle, !isBusy { DrillTrace(diameter: dial) }
             }
             .offset(x: shakeX)
             // 80 三段进度细条
@@ -472,9 +351,7 @@ struct UnlockDial: View {
         .animation(DS.Motion.standard, value: state)
         .animation(DS.Motion.soft, value: armed)
         .animation(DS.Motion.soft, value: weakNudge)
-        .animation(DS.Motion.soft, value: drill)
         // 59 演练层只在"从没真手势过"时浮现一次
-        .onAppear { drill = !DB.store.getBool("kf_dial_drill_seen") }
         // 系统级触觉反馈: 跟随"减少触感"系统开关, 也省掉手动生成器
         .sensoryFeedback(trigger: state) { _, newState in
             switch newState {
@@ -535,55 +412,9 @@ struct UnlockDial: View {
 
     @State private var slowTask: Task<Void, Never>? = nil
 
-    /// 59 演练层收起: 只在**真的动过手指**之后收，收完永久记档不再出现 (原句"完成一次真实手势后消失")。
-    private func dismissDrill() {
-        guard drill else { return }
-        drill = false
-        DB.store.set("kf_dial_drill_seen", true)
-    }
 
-    /// 52/58 连点计数: 数满 tapsNeeded 下才发指令。
-    /// 渐强触感按 IDEA-BANK 原句 —— 前若干下只给"收到"的轻触，最后一下单换中档 (`DS.Haptics.trigger`)，
-    /// 让"还差几下"在手指上可数，而不是在屏幕上多写一行字。
-    private func registerTap() {
-        tapReset?.cancel()
-        tapStreak += 1
-        dismissDrill()
-        if tapStreak >= tapsNeeded {
-            tapStreak = 0
-            DS.Haptics.trigger.impactOccurred()
-            fire()
-            return
-        }
-        DS.Haptics.tick.impactOccurred()
-        tapReset = Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(700))
-            guard !Task.isCancelled else { return }
-            tapStreak = 0        // 手停 0.7s 就没在连点，从头数 (不把"隔了三秒的两下"算成连点)
-        }
-    }
 
-    /// 52 圆盘极角 (手势坐标系的 local 就是 dial×dial 的 Button，圆心即 dial/2)
-    private func polarAngle(_ p: CGPoint) -> Double {
-        let c = Double(dial / 2)
-        return atan2(Double(p.y) - c, Double(p.x) - c)
-    }
 
-    /// 52 旋转充能: 累计**带符号**转角，满一圈 (0.98 容差) 才发指令。
-    /// 为什么带符号: 只取绝对值的话，来回抖动 30°×20 次也能"充能"成功 —— 那正是一条假确认。
-    /// 逆时针退回来会抵消进度，所以只有真的转过去才算数。
-    private func stepCharge(_ p: CGPoint) {
-        let a = polarAngle(p)
-        var d = a - chargeAngle
-        if d > .pi { d -= 2 * .pi } else if d < -.pi { d += 2 * .pi }   // 跨 ±π 接缝不算位移
-        chargeAngle = a
-        chargeProgress = max(0, min(1, chargeProgress + CGFloat(d / (2 * .pi))))
-        if chargeProgress >= 0.98 {
-            chargeProgress = 0
-            pressing = false
-            fire()
-        }
-    }
 
     /// 74 失败抖动: 左右衰减摆动, 不打断下方原因文案
     private func shake() {
@@ -616,31 +447,16 @@ struct UnlockDial: View {
                     return
                 }
                 guard startInside else { return }   // 61: 边缘起手忽略
-                dismissDrill()                      // 59: 起手就是一次真实手势，演练层随即退场
-                // 52 旋转充能档: 这档不进入按住/上滑，转角自成一局 (按住环不填充，免得两套进度同时动)
-                if gestureMode == "charge" {
-                    if !pressing {
-                        pressing = true
-                        firedThisTouch = false
-                        chargeProgress = 0
-                        chargeAngle = polarAngle(g.location)
-                        DS.Haptics.tick.impactOccurred()
-                    } else {
-                        stepCharge(g.location)
-                    }
-                    return
-                }
                 if !pressing {
                     pressing = true
                     firedThisTouch = false
                     swipePeakUp = 0
-                    pressStart = Date()
-                    if holdConfirmOn, gestureMode == "hold" {
+                    if holdConfirmOn {
                         DS.Haptics.tick.impactOccurred()   // 3 双段触感 · 第一段 (落手)
                         beginHold()
                     }
                 }
-                guard holdConfirmOn, gestureMode == "hold" else { return }
+                guard holdConfirmOn else { return }
                 swipePeakUp = min(swipePeakUp, g.translation.height)
                 // 51 上滑: 越过阈值后进度环预填满, 松手触发
                 if swipePeakUp < -56, !swipeReady {
@@ -661,27 +477,11 @@ struct UnlockDial: View {
                     return
                 }
                 guard bleReady else { return }
-                // 52 松手没转满 = 充能整段作废 (进度回零，不留"看着像充了一半"的假象)
-                if gestureMode == "charge" {
-                    pressing = false
-                    withAnimation(DS.Motion.soft) { chargeProgress = 0 }
-                    return
-                }
-                // 53/58 连点档: 位移 <12pt 且停留 <0.25s 算一下轻点，数满 tapsNeeded 才发；
-                // 围栏开启时仍必须先拖入中心才计数 (62 优先级高于便捷性)。
-                if (gestureMode == "triple" || tapDirect),
-                   moved < 12, Date().timeIntervalSince(pressStart) < 0.25, (!fenceRequired || armed) {
-                    pressing = false
-                    stopHold()
-                    holdProgress = 0
-                    registerTap()
-                    return
-                }
                 // 设置关闭按住确认 (单手/VO 降级): 轻点直发, 围栏开启时仍需已解锁。
                 // 三连点档**不许**在这里单发 —— 否则"数满三下"被这行偷走，等于没做。
                 if !holdConfirmOn {
                     pressing = false
-                    if moved < 12, (!fenceRequired || armed), gestureMode == "hold" { fire() }
+                    if moved < 12, (!fenceRequired || armed) { fire() }
                     return
                 }
                 if firedThisTouch { return }
@@ -872,12 +672,6 @@ struct UnlockDial: View {
                                             startPoint: .topLeading, endPoint: .bottomTrailing))
     }
 
-    /// 847 Hero 卡合并播报同思路: 圆盘播报值按当前转子维度输出 (167 状态/电量/连接切换)
-    private var voValue: String {
-        switch voRotorIndex {
-        default: return baseLinkValue
-        }
-    }
     private var baseLinkValue: String {
         let link = !bleReady ? "蓝牙未开启" : (connected ? "已连接就绪" : "未连接")
         switch state {
@@ -887,9 +681,6 @@ struct UnlockDial: View {
         case .doubleVerify: return "需要指纹或密码二次验证"
         case .failed(let msg): return msg
         }
-    }
-    private func voRotorName() -> String {
-        switch voRotorIndex { case 1: return "电量" case 2: return "连接" default: return "状态" }
     }
     private var voHint: String {
         "轻点两下直接开锁, 无需按住. 转子上下滑可切换 状态/电量/连接 播报. "

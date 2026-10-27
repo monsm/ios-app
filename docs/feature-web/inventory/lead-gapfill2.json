@@ -12,49 +12,6 @@
       "platform": "ios",
       "status": "implemented",
       "details": [
-        "无手工顺序：默认锁置顶 → 其余按 pairedAt 绑定时间升序",
-        "有手工顺序：先按 orderMacs 排出 head，未列入的 rest 按 pairedAt 追加在后",
-        "**低电不置顶** —— 自动置顶会把用户明确排好的顺序挪走；低电改由状态图标行的橙点如实标出（电量升序是另一条明确开关）",
-        "「第一行就是启动默认锁」这条口径在设备管理页与设备页 271 兜底排序里讲的是同一件事，任何一处漏掉都会两页各说一套",
-        "分组：按 group(mac) 分桶，未分组固定排最后",
-        "setOrder 写侧会剪掉已解绑的 mac —— 顺序表是全局键，删设备删不到逐锁族，幽灵条目只会让读侧做无用查找"
-      ],
-      "tags": [
-        "多锁",
-        "排序分组"
-      ],
-      "level": 3,
-      "key": "device.home.order",
-      "parentKey": "device.home",
-      "domain": "device",
-      "kind": "service",
-      "name": "多锁排序与分组（手工顺序 / 默认锁置顶 / 幽灵条目剪除）",
-      "summary": "设备页与设备管理页共用同一套排序：有手工顺序就按它，没有就按绑定时间；两种情况启动默认锁都占首位；分组里「未分组」永远排最后。",
-      "evidence": [
-        {
-          "file": "App/Core/LockStats.swift",
-          "line": 144,
-          "symbol": "orderedDevices(_:)",
-          "note": "默认锁置顶 + 手工顺序"
-        },
-        {
-          "file": "App/Core/LockStats.swift",
-          "line": 160,
-          "symbol": "grouped(_:)",
-          "note": "未分组永远排最后"
-        },
-        {
-          "file": "App/Core/LockStats.swift",
-          "line": 176,
-          "symbol": "setOrder(_:)",
-          "note": "剪掉已解绑的 mac"
-        }
-      ]
-    },
-    {
-      "platform": "ios",
-      "status": "implemented",
-      "details": [
         "PlateShape 四档：capsule（信息胶囊）/ tile（DS.Radius.tile）/ control（DS.Radius.control）/ iconBadge（DS.Space.s）",
         "**故意不是 Shape 泛型**：调用点若还留 in: Capsule() 字面量，tools/uicoverage.js 的自绘容器预算（只认字面 token）就数不到这次迁移，迁移进度会看起来没动",
         "描边必须单独一份 legacyEdge：strokeBorder 只长在 InsettableShape 上，AnyShape 把这个能力擦掉了",

@@ -34,7 +34,6 @@ struct CredentialsView: View {
     private var isBusy: Bool { busyKey != nil }
     // 2026-10-26 恢复：这些 @State 在清理四件套时被连带删掉，但它们是主流程状态。
     @State private var editMode = false
-    @State private var sorting = false
     @State private var selPwds: [Int] = []
     @State private var selFps: [Int] = []
     @State private var showExtend = false
@@ -43,7 +42,6 @@ struct CredentialsView: View {
     @State private var binQuery = ""
     @State private var pwdDetailItem: LedgerPwd?   // 包5 PwdDetailStudio
     @State private var fpDetailItem: LedgerFp?     // 包5 FpDetailStudio
-    @State private var jumpBarOn = false           // 577: 条子要活过 consumeCredJump 清 nil 的那一步
     @State private var showTempCode = false
 
     var body: some View { vkBody.destined(.credentials) }
@@ -66,10 +64,6 @@ struct CredentialsView: View {
                         // 每条自己已有空判 (borrowBanner 里 if !bs.isEmpty / pendingQueueBar 同 /
                         // credJumpBar 用 jumpBarOn), 所以这里只需要"只显示第一个真有事的"。
                         if !MemberHub.borrows(mac).isEmpty {
-                            borrowBanner
-                    // 2026-10-26 精简：待下发队列入口已删。
-                        } else if jumpBarOn {
-                            credJumpBar
                         }
                         headerToolbar
                         if editMode {
@@ -93,11 +87,9 @@ struct CredentialsView: View {
             .onAppear {
                 refreshTick += 1
                 consumeCredJump()   // 包9/577: 记录/告警详情"来源凭证"深链
-                consumeCredPanel()  // 366/1013: 本地通知点按要打开的面板
                 consumeCredSelect() // 358: 整理建议带回的多选预勾选
             }
             .onChange(of: app.pendingCredNav) { _, _ in consumeCredJump() }
-            .onChange(of: app.pendingCredPanel) { _, _ in consumeCredPanel() }
             .onChange(of: app.pendingCredSelect) { _, _ in consumeCredSelect() }
             // 2026-10-26 精简：整理建议中心 sheet 已删。
             .sheet(isPresented: $showExtend) {
@@ -133,68 +125,7 @@ struct CredentialsView: View {
 
     // ---------- 顶部工具条 (524 分段计数 / 914 四维排序器 / 363 月历 / 358 整理 / 347 选择) ----------
     // 472 借用横条: 页顶显示进行中借用, 点 已归还 销记
-    @ViewBuilder
-    private var borrowBanner: some View {
-        let bs = MemberHub.borrows(mac)
-        if !bs.isEmpty {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: DS.Space.xs) {
-                    ForEach(Array(bs.keys.sorted()), id: \.self) { k in
-                        let b = bs[k]!
-                        HStack(spacing: DS.Space.xs) {
-                            Text("借用 \(k) · 借给 \(b.by) (还 \(b.due))")
-                                .vkFont(.caption)
-                                .foregroundStyle(DS.Palette.text)
-                                .lineLimit(1)
-                            Button("已归还") {
-                                MemberHub.saveBorrow(mac, itemKey: k, nil)
-                                refreshTick += 1
-                                app.showToast("已销记归还 " + k)
-                            }
-                            .vkFont(.caption, weight: .medium)
-                            .foregroundStyle(DS.Palette.accentText)
-                            .frame(minHeight: DS.Hit.min)
-                            .contentShape(Capsule())
-                        }
-                        .padding(.horizontal, DS.Space.s)
-                        .padding(.vertical, DS.Space.xs)
-                        .variantCallout(DS.Palette.warn, .capsule, wash: 0.12)
-                        .overlay(Capsule().strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
-                    }
-                }
-                .padding(.horizontal, DS.Space.gutter)
-            }
-        }
-    }
-
     // ---------- 577 详情跳凭证定位 (包9): 记录/告警详情"来源凭证"深链 → 高亮条 + 打开对应详情 ----------
-    @ViewBuilder
-    private var credJumpBar: some View {
-        if jumpBarOn {
-            HStack(spacing: DS.Space.s) {
-                Image(systemName: "location.fill")
-                    .font(.system(size: DS.Icon.sm))
-                    .foregroundStyle(DS.Palette.accentText)
-                    .accessibilityHidden(true)
-                Text("已从记录定位到该凭证")   // 577 已从记录定位到该凭证
-                    .vkFont(.footnote, weight: .medium)
-                    .foregroundStyle(DS.Palette.text)
-                Spacer(minLength: 0)
-                Button("关闭") {
-                    jumpBarOn = false
-                }
-                .vkFont(.caption, weight: .medium)
-                .foregroundStyle(DS.Palette.accentText)
-                .frame(minHeight: DS.Hit.min)
-                .contentShape(Rectangle())
-            }
-            .padding(.horizontal, DS.Space.l)
-            .padding(.vertical, DS.Space.xs + 2)
-            .variantCallout(DS.Palette.accentText, .control, wash: 0.09)
-            .overlay(RoundedRectangle(cornerRadius: DS.Radius.control).strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
-            .padding(.horizontal, DS.Space.gutter)
-        }
-    }
     /// 消费深链: pwd:<alias> → 密码段 + 打开详情; fp:<batch> → 指纹段。跨锁时先切锁。
     private func consumeCredJump() {
         guard let nav = app.pendingCredNav else { return }
@@ -211,29 +142,14 @@ struct CredentialsView: View {
         } else if nav.hasPrefix("fp:"), let b = Int(nav.dropFirst(3)), DB.getFp(mac, b) != nil {
             fpDetailItem = DB.getFp(mac, b); opened = true
         }
-        // 577: 真弹出详情才挂条; 找不到不挂, 别让条替没做到的事说话 (旧 toast 无差别弹, 已并进本判定)
-        jumpBarOn = opened
     }
 
-    /// 366/1013: 通知面板落地。面板名由 CredentialOrg.applyNotification 写入;
-    /// 未知名字只切到本 Tab 不猜要开哪个面板 (与 handleNotificationAction 的 fail-closed 口径一致)。
-    private func consumeCredPanel() {
-        guard let p = app.pendingCredPanel else { return }
-        app.pendingCredPanel = nil
-        switch p {
-        case "bin":
-            binQuery = ""   // 532: 只有「去回收站搜」那个动作才带词, 通知落地那条路不带
-        // 2026-10-26 精简：回收站 / 待下发队列 / 整理建议中心 三个落点已删。
-        default: app.showToast("已跳到凭证页")
-        }
-    }
 
     /// 358: 整理建议行点按带回的多选预勾选。就地进编辑模式并勾好 —— 与「选择」按钮同一条状态机
     /// (editMode/selPwds/selFps), 不另造一套选中集; 排序档互斥照 :379 的口径先关掉再进。
     private func consumeCredSelect() {
         guard let ids = app.pendingCredSelect else { return }
         app.pendingCredSelect = nil
-        sorting = false
         withAnimation(DS.Motion.quick) { editMode = true }
         selPwds = ids
         selFps = []
@@ -265,17 +181,6 @@ struct CredentialsView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 Spacer(minLength: 0)
-                // 搜索框是**常驻**的 (mainList 里那颗 TextField), 工具栏不再放第二枚搜索图标 ——
-                // 2026-10-18 重构备注: 原稿在这里加了一枚 search 图标, 但 showSearch 这个状态
-                // 从来不存于本文件 (搜索是常驻 TextField, 不是可展开的)。重复入口 = 又一个乱源。
-                // 次级 ②: 选择 (批量整理)
-                if !editMode && !sorting && !MemberHub.elderMode {
-                    Button("选择") {
-                        withAnimation(DS.Motion.quick) { editMode = true }
-                        DS.Haptics.tick.impactOccurred()
-                    }
-                    .frame(minHeight: DS.Hit.min)
-                }
                 // 溢出: 其余全部按语义分组进这里
                 Menu {
                     Section("视图") {
@@ -294,11 +199,8 @@ struct CredentialsView: View {
                     // 2026-10-26 精简：该入口已删。
                         if !editMode && CredentialOrg.typeCounts(mac).all > 0 {
                             Button {
-                                sorting.toggle()
-                                if sorting { editMode = false; selPwds = []; selFps = [] }
                                 DS.Haptics.tick.impactOccurred()
                             } label: {
-                                Label(sorting ? "结束拖动排序" : "拖动排序", systemImage: "line.3.horizontal")
                             }
                         }
                     }
@@ -368,62 +270,12 @@ struct CredentialsView: View {
     // ---------- 主列表 ----------
     private var mainList: some View {
         List {
-            if sorting { sortHintRow }         // 182: 处在排序档就把规则写在同一屏, 不让人猜拖了会怎样
-            if showFirstCredRouter { firstCredRouter }   // 806 首录分流
             listBody
         }
         .listRowSpacing(DS.Space.xs)   // 批量操作行距保持宽松 (纪律: 批量行距)
-        // 182: 排序把手由系统编辑态提供 —— 这一句是本仓第二处 onMove, 第一处 (设备页 766) 就是这么进的。
-        // 用 .constant 而不是让系统自己切: 这一页的 editMode (347 多选) 是另一套行内控件, 两者必须各管各的。
-        .environment(\.editMode, .constant(sorting ? .active : .inactive))
     }
     /// 182 排序档的说明行: 只承诺这一档真做得到的事 (段内先后 + 落 kf_cseq_ 跨启动)。
     @ViewBuilder
-    private var sortHintRow: some View {
-        HintRow(text: "拖动行尾的排序把手调整本段先后。先后写进本机台账: 跨启动保持, 并随全量备份一起走。"   // 182 拖动行尾的排序把手调
-                + "类型视图里各状态段各排各的, 置顶段不参与; 按成员视图里排的是这个成员段内 密码 与 指纹 各自的先后。")
-            .listRowBackground(DS.Palette.accentText.opacity(0.06))
-    }
-
-    // ---------- 806 凭证首录分流 (1Password 那一形态) ----------
-    // 原句是"首次添加凭证**弹**三选一卡"。这里做成列表顶部的常驻分流卡而不是自动弹窗：
-    // 首启刚走完就叠第二层弹窗是"关不掉的第二层"，而这张卡上的三个入口
-    // 本来就是页面里已有的那三个 —— 收进 List 第一行既说清了区别，也不抢走焦点。
-    // 只在**这把锁一条凭证都没有**时出现，录进第一条或用户自己关掉之后就不再挡路 (HintOnce)。
-    private var showFirstCredRouter: Bool {
-        !HintOnce.shown("806") && DB.listPwds(mac).isEmpty && DB.listFps(mac).isEmpty
-    }
-    @ViewBuilder
-    private var firstCredRouter: some View {
-        Section {
-            NavigationLink { AddPwdView(embedded: true) } label: {
-                routerRow("lock.open.rotation", "长期密码",
-                          "自己与全家日常用 · 没有到期点，可随时改或删")
-            }
-            NavigationLink { StartAddFpView(embedded: true) } label: {
-                routerRow("hand.raised.fill", "录指纹",
-                          "给固定的人 (家人/钟点工) · 一次录入长期可用")
-            }
-            Button {
-                showTempCode = true
-            } label: {
-                routerRow("person.2.arrow.trajectory.circle", "临时码",
-                          "给访客/租客 · 定好生效与到期，到点自动作废")
-            }
-            Button("以后不再显示这张卡") {
-                HintOnce.mark("806")
-                app.showToast("这张分流卡不会再出现 (可在页里的入口随时添加)")
-            }
-            .vkFont(.footnote)
-            .foregroundStyle(DS.Palette.textSub)
-            .frame(minHeight: DS.Hit.min)
-        } header: {
-            Text("先说清你要哪一种")   // 806 先说清你要哪一种
-        } footer: {
-            Text("三类都是本机台账 + 一次下发到锁，全程离线。选错了也不会锁死人：随时能改或删。")
-                .vkFont(.caption2)
-        }
-    }
     private func routerRow(_ symbol: String, _ title: String, _ scene: String) -> some View {
         HStack(spacing: DS.Space.s) {
             Image(systemName: symbol)
@@ -450,19 +302,15 @@ struct CredentialsView: View {
     @ViewBuilder
     private var listBody: some View {
             searchSection
-            dueSoonBanner
             otpStockHint
-            archivedStrip
             if memberView {
                 memberSections
             } else {
                 let pwds = sortedPwds
                 if !pwds.isEmpty {
-                    pwdSections(pwds)
                 }
                 let fps = sortedFps
                 if seg == 0 || seg == 2, !fps.isEmpty {
-                    fpSection(fps)
                 }
             }
             if seg == 0 { otpSection }
@@ -593,44 +441,6 @@ struct CredentialsView: View {
     }
 
     // 2026-10-26 精简：queueSection（下发状态步条）已删（队列功能整套移除）。
-    // ---------- 359 到期提醒行 (2 小时档, Hero 卡下方等价物) ----------
-    @ViewBuilder
-    private var dueSoonBanner: some View {
-        let due = CredentialOrg.dueSoonPwds(mac)
-        if !due.isEmpty {
-            Button {
-                // 359: 点按落**最近一条**到期 (与行内名单同一个 filter 的结果, 不另算一份)
-                if let next = due.min(by: { (CredentialOrg.expiryDate($0) ?? .distantFuture) < (CredentialOrg.expiryDate($1) ?? .distantFuture) }) {
-                    pwdDetailItem = next
-                }
-            } label: {
-                HStack(spacing: DS.Space.xs) {
-                    Label {
-                        Text("\(due.count) 条密码 2 小时内到期 (已开 2 小时档预警)")
-                            .fixedSize(horizontal: false, vertical: true)
-                    } icon: {
-                        Image(systemName: "exclamationmark.circle.fill")
-                            .accessibilityHidden(true)
-                    }
-                    Spacer(minLength: 0)
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: DS.Icon.xs, weight: .semibold))
-                        .accessibilityHidden(true)
-                }
-            }
-            .buttonStyle(.plain)
-            .vkFont(.caption)
-            .foregroundStyle(DS.Palette.warn)
-            .listRowBackground(DS.Palette.warn.opacity(0.06))
-            .accessibilityLabel("\(due.count) 条密码 2 小时内到期, 点按查看最近到期的一条详情")   // 359 条密码
-            // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.5pt (< 44)。
-            // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
-            .frame(minHeight: DS.Hit.min)
-            .contentShape(Rectangle())
-        }
-    }
-
-
     // ---------- 524/526/527/914/182 密码段 (三态分组头 528 + 置顶 + 组尾统计 529) ----------
     private var sortedPwds: [LedgerPwd] { orderedPwds(segFilteredPwds()) }
     /// 182 拖动排序的回写基准 = **全量**显示序 (不扣分段、不套智能筛选)。
@@ -678,71 +488,6 @@ struct CredentialsView: View {
         Dictionary(order.enumerated().map { ($1, $0) }, uniquingKeysWith: { first, _ in first })
     }
 
-    @ViewBuilder
-    private func pwdSections(_ pwds: [LedgerPwd]) -> some View {
-        let pinned: [LedgerPwd] = []   // 2026-10-26: 星标已删，无置顶
-        if !pinned.isEmpty {
-            Section("置顶 (\(pinned.count))") {
-                ForEach(Array(pinned.enumerated()), id: \.offset) { i, p in
-                    credRow(CredHit(id: "p\(p.alias)", pwd: p, pinned: true))
-                }
-            }
-        }
-        // 528 进行中/已排期/已过期三态分组头, 组头带计数
-        ForEach([0, 1, 2], id: \.self) { state in
-            let group = pwds.filter { CredentialOrg.pwdState($0) == state }
-            if !group.isEmpty {
-                Section("\(CredentialOrg.stateLabel(state)) (\(group.count))") {
-                    // 182 拖动只搬"本组这一串"; 置顶段不参与 (星标段有它自己的 526 规则)
-                    let rows = group
-                    ForEach(Array(rows.enumerated()), id: \.offset) { i, p in
-                        credRow(CredHit(id: "p\(p.alias)", pwd: p, pinned: false))
-                    }
-                    .onMove { src, dst in
-                        commitGroupMove(keys: pwdKeys(rows), slot: "p", src: src, dst: dst)
-                    }
-                    // 529 组尾统计行: "本组 X 条 · 近 30 天使用约 Y 次" (台账推断, 带"约")
-                    let uses = group.compactMap { CredentialOrg.recentUseCount(mac, pwdAlias: $0.alias) }.reduce(0, +)
-                    if uses > 0 {
-                        segStatRow("本组 \(group.count) 条 · 近 30 天使用约 \(uses) 次")
-                    }
-                    if state == 2 {
-                        // 360 过期即归档 + 348 统一延期快捷
-                        Button("这一组统一延期") {
-                            extendAliases = group.map { $0.alias }
-                            showExtend = true
-                        }
-                        .vkFont(.caption, weight: .medium)
-                        .foregroundStyle(DS.Palette.accentText)
-                        // 334 过期打包清理: 不新造"本机静默删除", 而是把这组选中后交给现有停用流
-                        // (摘要 + 313 必填原因 + 回收站 364 + 锁端删除记待下发), 免得台账与锁端分叉
-                        if !MemberHub.elderMode {
-                            Button("清理本组已过期 (\(group.count) 条)") {
-                                selPwds = group.map { $0.alias }
-                                selFps = []
-                                showDisable = true
-                            }
-                            .vkFont(.caption, weight: .medium)
-                            .foregroundStyle(DS.Palette.danger)
-                            .frame(minHeight: DS.Hit.min - DS.Space.xs)
-                            .accessibilityHint("先把本组全部过期凭证选入停用确认页, 在确认页还要再点一次并填原因")
-                            // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。
-                            // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
-                            .frame(minHeight: DS.Hit.min)
-                            .contentShape(Rectangle())
-                        }
-                    }
-                }
-            }
-        }
-        // 182 组内排序的说明不再挂在这里: 原先这句 (「长按行拖动可调整组内顺序」) 底下没有任何拖动实现,
-        // 是一处假热区。现在拖动真做了, 规则写在排序档自己那一行 (见 sortHintRow), 不开排序档就不出现。
-        Section {
-            CredStudioEntryView()   // 包5 凭证工坊 (177 扇出: 密码/临时码/指纹/OTP 四类)
-            NavigationLink { AddPwdView(embedded: true) } label: { Label("添加密码", systemImage: "plus") }
-                    // 2026-10-26 精简：该入口已删。
-        }
-    }
 
     /// 行内小提示行 (装饰, 不参与 VoiceOver 合并)
     private struct HintRow: View {
@@ -826,77 +571,6 @@ struct CredentialsView: View {
             .accessibilityHidden(true)
     }
 
-    @ViewBuilder
-    private func fpSection(_ fps: [LedgerFp]) -> some View {
-        Section("指纹 (\(fps.count))") {
-            // 322 缺失提醒行: 名下无指纹的成员 → 预填直达添加
-            let missing = DB.members().filter { m in
-                !MemberHub.ext(m.id).archived && !DB.listFps(mac).contains(where: { $0.owner == m.id })
-            }
-            if !missing.isEmpty {
-                HStack(spacing: DS.Space.s) {
-                    Label("有 \(missing.count) 位成员还没有指纹", systemImage: "person.badge.shield.slash")   // 322 位成员还没有指纹
-                    Spacer(minLength: 0)
-                    NavigationLink {
-                        StartAddFpView(embedded: true, prefillOwner: missing.count == 1 ? missing.first?.id : nil)
-                    } label: {
-                        Text("去录入")
-                            .vkFont(.caption, weight: .medium)
-                            .foregroundStyle(DS.Palette.accentText)
-                            .frame(minHeight: DS.Hit.min)
-                            .contentShape(Rectangle())
-                    }
-                }
-                .vkFont(.caption)
-                .foregroundStyle(DS.Palette.warn)
-                .accessibilityElement(children: .combine)
-            }
-            // 324 冗余横条: 该锁仅剩 1 枚可用指纹 → 直达添加
-            if fps.count == 1 {
-                NavigationLink {
-                    StartAddFpView(embedded: true)
-                } label: {
-                    HStack(spacing: DS.Space.s) {
-                        Label("只剩 1 枚可用指纹, 建议添加备用", systemImage: "bell.badge")   // 324 只剩
-                        Spacer(minLength: 0)
-                    }
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.warn)
-                    .frame(minHeight: DS.Hit.min)
-                    .contentShape(Rectangle())
-                }
-                .listRowBackground(DS.Palette.warn.opacity(0.06))
-                .accessibilityLabel("冗余横条: 添加备用指纹")   // 324 冗余横条
-            }
-            if fps.isEmpty {
-                Text("本机还没有指纹台账。录入后成员可用手指直接开锁。")
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            ForEach(Array(fps.enumerated()), id: \.offset) { i, f in
-                credRow(CredHit(id: "f\(f.batch)", fp: f, pinned: false))
-            }
-            .onMove { src, dst in
-                commitGroupMove(keys: fpKeys(fps), slot: "f", src: src, dst: dst)   // 182 指纹段内拖动
-            }
-            // 529 指纹段尾统计: 指纹没有"逐枚使用次数"这个读数 (日志无指纹身份字段), 数的是该锁
-            // 近 30 天指纹开门 (type3) 与指纹告警 (type13) 条数, 都标"约" —— 与密码段那句不是一个读数
-            if !fps.isEmpty {
-                let opens = CredentialOrg.fpUseCount30d(mac)
-                let alarms = CredentialOrg.fpAlarmLogCount(mac)
-                segStatRow(alarms > 0
-                    ? "本段 \(fps.count) 枚 · 近 30 天指纹开门约 \(opens) 次 · 告警约 \(alarms) 条"
-                    : "本段 \(fps.count) 枚 · 近 30 天指纹开门约 \(opens) 次")
-            }
-            NavigationLink { StartAddFpView(embedded: true) } label: { Label("录入指纹", systemImage: "plus") }
-        }
-    }
-
-    // ---------- 355 成员视图 (未归属独立成段) ----------
-    // 182: 这一视图里每个段都有 密码 / 指纹 两串, 拖动各自的段内先后 (一次 onMove 只管它挂的那个 ForEach)。
-    // 段内先后同样走 orderedPwds/orderedFps —— 原先这里直接拿台账原始序, 手动序 (kf_cseq_) 与 526 置顶
-    // 在按成员视图里一概不生效, 于是"切到按成员, 刚排好的顺序没了"。
     @ViewBuilder
     private var memberSections: some View {
         // 2026-10-15 走查 (性能): 原写法在 ForEach(DB.members()) 行内逐成员调 DB.listPwds/listFps
@@ -1051,19 +725,6 @@ struct CredentialsView: View {
                     Label(isSelected(hit) ? "取消选" : "选", systemImage: isSelected(hit) ? "xmark.circle" : "checkmark.circle")
                 }
                 .tint(DS.Palette.accent)
-            }
-            // 182 排序档开着时把破坏性的两枚收掉: 这一档要拖的是行, 不该同时把「停用/彻底删除」摆在手边。
-            // 确认门槛本身没变 (§10.39 不许同一动作分叉), 这里只是不出现那两枚按钮。
-            if !sorting {
-                if let p {
-                    Button(role: .destructive) { disablePwd(p) } label: { Label("停用", systemImage: "pause.circle") }
-                    Button(role: .destructive) { deletePwd(p) } label: { Label("删除", systemImage: "trash") }
-                    Button { Task { resetPwdPeriod(p) } } label: { Label("改期", systemImage: "calendar") }.tint(DS.Palette.accent)
-                }
-                if let f {
-                    Button(role: .destructive) { disableFp(f) } label: { Label("停用", systemImage: "pause.circle") }
-                    Button(role: .destructive) { deleteFp(f) } label: { Label("删除", systemImage: "trash") }
-                }
             }
         }
         // 182 原先这里挂着一枚 onLongPressGesture, 弹的是「长按可停用/删除; 编辑模式里用顺序按钮调整组内先后」——
@@ -1347,7 +1008,6 @@ struct CredentialsView: View {
                 }
                 // 2026-10-27 三轮精简：「移交」批量按钮已删。
                 batchBtn("前缀", icon: "textformat") {
-                    showPrefixNote()
                 }
                 batchBtn("导出", icon: "square.and.arrow.up") {
                     exportPackage()
@@ -1392,21 +1052,6 @@ struct CredentialsView: View {
         .accessibilityLabel("\(t), 作用于已选 \(selCount) 条")
     }
 
-    private func showPrefixNote() {
-        guard selCount > 0 else { app.showToast("先选择凭证"); return }
-        let alert = UIAlertController(title: "前缀批量备注", message: "统一插入各备注开头, 如「2026春节-」", preferredStyle: .alert)   // 357 前缀批量备注
-        alert.addTextField { $0.placeholder = "前缀" }
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        alert.addAction(UIAlertAction(title: "应用", style: .default) { _ in
-            let s = (alert.textFields?.first?.text ?? "").trimmingCharacters(in: .whitespaces)
-            guard !s.isEmpty else { return }
-            let n = CredentialOrg.batchPrefixNote(mac, pwdAliases: selPwds, fpBatches: selFps, prefix: s)
-            app.showToast("已给 \(n) 条加前缀")
-            _ = Milestones.recordOrganize()
-            reload()
-        })
-        UIApplication.topViewController()?.present(alert, animated: true)
-    }
 
     /// 351 合包导出: 仅凭证分区的 AES 信封, 8 位数字口令单列生成 (不与凭证混发), 走分享面板
     private func exportPackage() {
@@ -1685,63 +1330,6 @@ struct CredentialsView: View {
 
     /// 354 归档区: 归档 = 收起不删 — 与停用 (锁端待处理) / 彻底删除 (670) 是三个不同档, 这里只碰展示层。
     /// 单条与全部两种还原都在这里; 搜索路径里归档条目仍可见, 它的还原入口在条目长按菜单的「移出归档」。
-    @ViewBuilder
-    private var archivedStrip: some View {
-        // 2026-10-15 走查 (性能): 同上 — 集合一次取, 闭包内 Set 查 (原 N 条 = N 次全量解码)。
-        let archSet: Set<Int> = []
-        let ap = DB.listPwds(mac).filter { archSet.contains($0.alias) }
-        let af = DB.listFps(mac).filter { archSet.contains(100000 + $0.batch) }
-        if !ap.isEmpty || !af.isEmpty {
-            Section {
-                DisclosureGroup {
-                    ForEach(ap, id: \.alias) { p in
-                        archRow(title: p.temp ? "临时码 #\(p.alias)" : "密码 #\(p.alias)",
-                                owner: p.owner) {
-                            app.showToast("已还原到列表")
-                            reload()
-                        }
-                    }
-                    ForEach(af, id: \.batch) { f in
-                        archRow(title: "指纹 · \(f.name)", owner: f.owner) {
-                            app.showToast("已还原到列表")
-                            reload()
-                        }
-                    }
-                    Button("全部还原") {   // 354 全部还原
-                        app.showToast("归档已全部还原")
-                        reload()
-                    }
-                    .vkFont(.footnote)
-                    .buttonStyle(.borderless)
-                } label: {
-                    Text("归档区 · \(ap.count + af.count) 条 — 收起不删, 随时可还原")   // 354 归档区
-                        .vkFont(.footnote)
-                        .foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-        }
-    }
-    @ViewBuilder
-    private func archRow(title: String, owner: String?, restore: @escaping () -> Void) -> some View {
-        HStack(spacing: DS.Space.s) {
-            VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                Text(title)
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.text)
-                if let o = owner, !o.isEmpty {
-                    Text("归属 " + o)
-                        .vkFont(.caption2)
-                        .foregroundStyle(DS.Palette.textSub)
-                }
-            }
-            Spacer(minLength: DS.Space.s)
-            Button("还原", action: restore)
-                .vkFont(.footnote, weight: .medium)
-                .foregroundStyle(DS.Palette.accentText)
-                .buttonStyle(.borderless)
-        }
-    }
 
     // ---------- 506 误删撤销条: 删除后底部浮出 5 秒 "已删除 · 撤销", 撤销则原位还原不入回收站 ----------
     // 833: 第一次浮出时多附一句防误删说明 (HintOnce 之后不再出现)。

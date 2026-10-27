@@ -96,6 +96,12 @@ const SYS_NAMES = new Set([
   // 2026-10-27 三轮: `UnlockState` 是 AppState 的嵌套枚举（unlockState 状态机，
   // Mascot/UnlockDial 都在用）。删掉本项目同名定义后会被误判。
   "UnlockState", "isFailed",
+  // 2026-10-27 五轮: `drill` 是 SettingsView 里 SettingsSection 枚举的一个 case
+  // （`.drill` 分组）。删掉开锁圆盘的「手势演练层」后同名，会被误判成悬空引用。
+  "drill",
+  // 2026-10-27 五轮: `manual` 是 refreshStatusQuietly(manual:) 的参数名，
+  // 删掉 DeviceHomeView 里同名局部后会被误判。
+  "manual",
 ]);
 
 function stripCode(line) {
