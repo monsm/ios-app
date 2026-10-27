@@ -88,7 +88,11 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     //   (didUpdateState / didDisconnect) 本来就落在主线程，保持不变。
     @Published private(set) var isPoweredOn = false
     @Published private(set) var scanning = false
-    @Published private(set) var connectedMAC: String = ""
+    // 2026-10-27 审核改名 (AUDIT-C 4.1)：原名 `connectedMAC` 装的其实是 **CBPeripheral 的 UUID 字符串**，
+    // 而 `LockService.connectedMAC` 装的是**真正的 MAC**（"fbb993c5cc95"）—— 两个同名属性两种标识符，
+    // 靠"它们恰好都被维护"来工作。任何一次赋值漏掉（如 disconnect 只清了一个）就变成"以为还连着"。
+    // 现改成 `connectedPeripheralId`，名字与内容一致。
+    @Published private(set) var connectedPeripheralId: String = ""
 
     /// 非主线程也能安全写 @Published: 已在主线程就直接写，否则跳回主线程写 (为什么要跳见上方那段)。
     // @Sendable: 这个闭包要交给 DispatchQueue.main.async (@Sendable 参数)。三个调用点都是
@@ -230,7 +234,7 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     // ---------- 连接 ----------
     func connect(deviceId: String, timeoutMs: Int = 20000) async throws {
         try await waitReady()
-        if connectedMAC == deviceId, device?.state == .connected { return }
+        if connectedPeripheralId == deviceId, device?.state == .connected { return }
         disconnect()
         guard let devUUID = UUID(uuidString: deviceId) else { throw BLEErrorX.code(.notFound) }
         guard let target = manager.retrievePeripherals(withIdentifiers: [devUUID]).first
@@ -265,7 +269,7 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
             throw error
         }
         // connect() 是非隔离 async 函数 ⇒ 续体在 cooperative 线程上恢复, 这行绝不能直写 (见类头那段)
-        publishOnMain { [weak self] in self?.connectedMAC = deviceId }
+        publishOnMain { [weak self] in self?.connectedPeripheralId = deviceId }
         assembler.reset()
     }
     func disconnect() {
@@ -294,7 +298,7 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
         writeChar = nil
         notifyChar = nil
         // 与 connect() 同理: disconnect() 是同步非隔离函数, 可能从任意线程进来
-        publishOnMain { [weak self] in self?.connectedMAC = "" }
+        publishOnMain { [weak self] in self?.connectedPeripheralId = "" }
         assembler.reset()
     }
 
@@ -468,7 +472,7 @@ extension BLEService: CBCentralManagerDelegate {
         guard peripheral === device else { return } // 陈旧设备的迟到回调: 不影响新一轮连接
         writeChar = nil
         notifyChar = nil
-        connectedMAC = ""
+        connectedPeripheralId = ""
         assembler.reset()
         // 断开后系统不会再发 ready 回调: 等在 readyCont 上的那一路必须放行, 否则 continuation 就悬着
         // (waitWriteReady 的兜底超时也会救它, 但那是 0.12s 的无谓等待 —— 两个机制都留着才稳)。

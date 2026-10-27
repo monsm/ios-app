@@ -77,6 +77,7 @@ data class Frame(val cmd: Int, val klvs: List<Pair<Int, String>>, val raw: Strin
 
     /** 取首个匹配值（原 `klvs[key]` 的语义）—— 单值帧的调用方用这个。 */
     fun first(key: Int): String? = klvs.firstOrNull { it.first == key }?.second
+}
 
 
     /**

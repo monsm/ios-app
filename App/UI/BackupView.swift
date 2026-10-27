@@ -229,12 +229,18 @@ struct BackupView: View {
         do {
             // 2026-10-13 修 CI: `BackupStudioKit` 是**文件名**, 类型名是 `BackupStudio` (enum)。
             let (_, bundle) = try BackupStudio.parsePreview(text: importText, password: nil)
-            let r = BackupKit.restoreAll(bundle)
+            // 2026-10-27 审核修复 (AUDIT-C F1)：改用 `BackupStudio.restore` —— **合并导入**。
+            // 原先走 `BackupKit.restoreAll`，它对同设备台账是 `DB.saveLedger` **整表替换**，
+            // 于是界面承诺「其它设备保留」而本机在备份之后新加的凭证会丢 —— 正是
+            // `BackupStudioKit:297-298` 注释里描述的那个 bug。修复版一直写在隔壁（带 merge/keep/skip、
+            // 冲突裁决、421 回滚点），但**零调用**。现在接上。
+            // 默认行为 merge = 只增不删；冲突项默认取本机（conflictTakeBackup 为空）。
+            let r = BackupStudio.restore(bundle, makeSnapshot: true)
             app.loadDevices()
             if bundle.globals?.appearance != nil { app.reloadAppearance() }   // 894 带外观段才刷, 免得白重建一次全树
             armMigrateWizard(r)
             UINotificationFeedbackGenerator().notificationOccurred(.success)
-            app.showToast("导入完成: 新增 \(r.imported), 覆盖 \(r.overwritten)")
+            app.showToast("导入完成: 新增 \(r.imported), 合并 \(r.overwritten)" + (r.skipped > 0 ? ", 跳过 \(r.skipped)" : ""))
             importText = ""
         } catch {
             // 口令错误 / 内容被改过 (453) / 不是备份 —— 一律不写库
@@ -243,7 +249,7 @@ struct BackupView: View {
     }
 
     // 包3/idea 112: 换机恢复后立起验证向导 — 设备 Tab 逐锁点按验证连接, 全部通过后自动收起
-    private func armMigrateWizard(_ r: (imported: Int, overwritten: Int)) {
+    private func armMigrateWizard(_ r: (imported: Int, overwritten: Int, skipped: Int)) {
         guard r.imported + r.overwritten > 0 else { return }
         for kc in DB.keychains() { DB.store.remove("kf_migok_" + kc.mac) }
         DB.store.set("kf_migrate_pending", ISO8601DateFormatter().string(from: Date()))

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T08:44:53.089Z",
+    "generated": "2026-10-27T08:52:10.348Z",
     "sources": [
       {
         "scout": "android-native",
@@ -13723,7 +13723,7 @@
           "line": 171,
           "symbol": "rcText",
           "note": "rc == -1 -> \"门锁回了帧但没带结果码...\"",
-          "text": "// 括号里那句不是空话。"
+          "text": "// **新写的**并且如实: 走到这里说明本机已经自动重取过一次令牌 (attempt 1→2), 所以"
         },
         {
           "platform": "android",
@@ -30566,7 +30566,7 @@
           "line": 239,
           "symbol": "TextField 坚果云账号",
           "note": "",
-          "text": "} catch {"
+          "text": "app.loadDevices()"
         }
       ],
       "platformEvidence": {
@@ -31447,7 +31447,7 @@
           "line": 267,
           "symbol": "confirmImport",
           "note": "",
-          "text": "///     否则 read 会失败 (这是 iOS 沙盒规则, 不是可选步骤)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -31455,7 +31455,7 @@
           "line": 268,
           "symbol": "请先粘贴备份文本",
           "note": "",
-          "text": "///   · 读出来的文本走与「粘贴导入」**同一个入口** (parsePreview), 不另写一套解析"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -31463,7 +31463,7 @@
           "line": 274,
           "symbol": "confirmDestructive 导入备份",
           "note": "",
-          "text": "let scoped = url.startAccessingSecurityScopedResource()"
+          "text": "///   · 读出来的文本走与「粘贴导入」**同一个入口** (parsePreview), 不另写一套解析"
         },
         {
           "platform": "ios",
@@ -31471,7 +31471,7 @@
           "line": 275,
           "symbol": "口令会被替换成它",
           "note": "",
-          "text": "defer { if scoped { url.stopAccessingSecurityScopedResource() } }"
+          "text": "///   · 任何失败都给 toast, 不静默"
         },
         {
           "platform": "ios",
@@ -31479,7 +31479,7 @@
           "line": 276,
           "symbol": "confirmTitle: 导入",
           "note": "",
-          "text": "guard let text = try? String(contentsOf: url, encoding: .utf8), !text.isEmpty else {"
+          "text": "private func handleFileImport(_ result: Result<[URL], Error>) {"
         }
       ],
       "platformEvidence": {
@@ -31737,7 +31737,7 @@
           "line": 280,
           "symbol": "doImport",
           "note": "",
-          "text": "// 不在这个回调里直接弹确认框: 它发生在**系统文件选择器还在关闭**的过程中,"
+          "text": "let scoped = url.startAccessingSecurityScopedResource()"
         },
         {
           "platform": "ios",
@@ -31745,7 +31745,7 @@
           "line": 288,
           "symbol": "do 块",
           "note": "",
-          "text": "app.showToast(\"没能打开文件\")"
+          "text": "// 系统会把它丢掉, 用户看到的就是「选了文件, 界面没有任何反应」。"
         },
         {
           "platform": "ios",
@@ -39942,7 +39942,7 @@
           "line": 538,
           "symbol": "didUpdateNotificationState",
           "note": "",
-          "text": "let cb = connectCompletion"
+          "text": "notifyChar = nc"
         },
         {
           "platform": "ios",
@@ -39950,7 +39950,7 @@
           "line": 92,
           "symbol": "publishOnMain",
           "note": "",
-          "text": ""
+          "text": "// 而 `LockService.connectedMAC` 装的是**真正的 MAC**（\"fbb993c5cc95\"）—— 两个同名属性两种标识符，"
         },
         {
           "platform": "apk",
@@ -40576,7 +40576,7 @@
           "line": 142,
           "symbol": "RC_NAME",
           "note": "private val RC_NAME = mapOf(0 to \"已开锁\", ... 27 to \"您的门锁处于布防状态\")",
-          "text": "*/"
+          "text": "* 形如 \"#01=1B #03=2B\" —— 只有键和字节数, 不含值本身 (令牌/ekey 的字节不进用户可见文案)。"
         },
         {
           "platform": "ios",
@@ -40592,7 +40592,7 @@
           "line": 153,
           "symbol": "RC_HINT",
           "note": "private val RC_HINT = mapOf(1 to ..., 3 to ..., 5 to ..., 6 to ..., 9 to ..., 11 to ..., 13 to ..., 21 to ..., 25 to ..., 27 to ...)",
-          "text": "6 to \"开锁指令已绑定其他设备\", 7 to \"执行的操作不在指定的状态\", 8 to \"溢出\", 9 to \"时间误差过大\","
+          "text": "0 to \"已开锁\", 1 to \"解密失败\", 2 to \"无效的PIN码\", 3 to \"命令过期\", 5 to \"次数使用完毕\","
         },
         {
           "platform": "android",
@@ -40600,7 +40600,7 @@
           "line": 170,
           "symbol": "rcText",
           "note": "fun rcText(rc: Int): String",
-          "text": "// **新写的**并且如实: 走到这里说明本机已经自动重取过一次令牌 (attempt 1→2), 所以"
+          "text": "// rc=13 权威表 (StatusParser.rcHint) 没有对应档, 回落原文\"通讯过期\"。安卓端这一条是"
         }
       ],
       "platformEvidence": {
@@ -40903,7 +40903,7 @@
           "line": 185,
           "symbol": "tokenFrame",
           "note": "fun tokenFrame(): String = frame(0x01, \"\")",
-          "text": "else -> RC_HINT[rc] ?: RC_NAME[rc] ?: \"开锁失败 (错误码 $rc)\""
+          "text": "rc > 27 || rc < -1 -> \"开锁失败 (错误码 $rc)\""
         },
         {
           "platform": "android",
@@ -40911,7 +40911,7 @@
           "line": 192,
           "symbol": "statusFrame",
           "note": "fun statusFrame(): String = frame(0x03, \"\")",
-          "text": "}"
+          "text": "return frame(0x04, klv01 + klv(0x02, ekeyHex.lowercase()))"
         }
       ],
       "platformEvidence": {
@@ -41167,7 +41167,7 @@
           "line": 94,
           "symbol": "parseKlv",
           "note": "while (off < b.size) { key = b[off]; len = b[off+1]; ... }",
-          "text": "for (off in orders) {"
+          "text": "val orders = if (version == 0x01) intArrayOf(8, 7, 10) else intArrayOf(8, 10, 7)"
         },
         {
           "platform": "android",
@@ -41175,7 +41175,7 @@
           "line": 134,
           "symbol": "klvShape",
           "note": "f.klvs.entries.joinToString(\" \") { \"#\" + %02x(key) + \"=\" + (value.length/2) + \"B\" }",
-          "text": "}"
+          "text": "if (v > 0xFFFFFFFFL) v = 0xFFFFFFFFL   // 饱和: 反正超出 rc 表 (0..27)"
         },
         {
           "platform": "android",
@@ -41183,7 +41183,7 @@
           "line": 116,
           "symbol": "intHex",
           "note": "fun intHex(h: String): Int",
-          "text": "}"
+          "text": "return out"
         },
         {
           "platform": "apk",
@@ -41681,7 +41681,7 @@
           "line": 216,
           "symbol": "parseAdv",
           "note": "if (manufacturer == null || manufacturer.size < 10) return null; if (fc and 0x0c != 0x0c) return null",
-          "text": "*/"
+          "text": "* ← LockService 配网时的 st.pid)。所以核身份只能拿锁端响应比, 拿广播比会误杀真锁。"
         },
         {
           "platform": "android",
@@ -41705,7 +41705,7 @@
           "line": 230,
           "symbol": "normMac",
           "note": "fun normMac(m: String): String = m.replace(\":\", \"\").replace(\"-\", \"\").lowercase()",
-          "text": "val mac = StringBuilder(17)"
+          "text": "val pid = (manufacturer[2].toInt() and 0xff) or ((manufacturer[3].toInt() and 0xff) shl 8)"
         },
         {
           "platform": "android",
@@ -41817,7 +41817,7 @@
           "line": 180,
           "symbol": "unlockFrame",
           "note": "frame(0x04, ...)",
-          "text": "rc == -1 -> \"门锁回了帧但没带结果码, 无法确认这一趟 — 先看一眼门有没有开, 再重试\""
+          "text": "fun rcText(rc: Int): String = when {"
         },
         {
           "platform": "android",
@@ -41841,7 +41841,7 @@
           "line": 185,
           "symbol": "tokenFrame",
           "note": "frame(0x01, \"\")",
-          "text": "else -> RC_HINT[rc] ?: RC_NAME[rc] ?: \"开锁失败 (错误码 $rc)\""
+          "text": "rc > 27 || rc < -1 -> \"开锁失败 (错误码 $rc)\""
         },
         {
           "platform": "android",
@@ -41849,7 +41849,7 @@
           "line": 192,
           "symbol": "statusFrame",
           "note": "frame(0x03, \"\")",
-          "text": "}"
+          "text": "return frame(0x04, klv01 + klv(0x02, ekeyHex.lowercase()))"
         }
       ],
       "platformEvidence": {
@@ -41959,7 +41959,7 @@
           "line": 202,
           "symbol": "pidOf",
           "note": "pidOf 的文档注释（202-207）记录两套 pid 编号对照 7970 vs 16289",
-          "text": ""
+          "text": "fun statusFrame(): String = frame(0x03, \"\")"
         },
         {
           "platform": "android",
@@ -42015,7 +42015,7 @@
           "line": 214,
           "symbol": "Adv",
           "note": "data class Adv(val pid: Int, val mac: String, val rssi: Int)",
-          "text": "* 16289 就不是一个口径), 而二维码里的 p 抄的是 status 那一套 (iOS AndroidPair 写 kc.pid"
+          "text": "* 广播厂商段里那个 pid 是**另一套编号** (golden: parseAdv 的 pid=7970 vs status 的"
         }
       ],
       "platformEvidence": {
@@ -42188,7 +42188,7 @@
           "line": 182,
           "symbol": "unlockFrame",
           "note": "klv(0x02, ekeyHex.lowercase())（ekey 原样写入）",
-          "text": "// 无法确认\"并要调用方回读。两端口径本就不同 —— 开锁这一条不能赌\"当成成功\","
+          "text": "// JS lock.js:290 把 rc=-1 当成功放行, iOS StatusParser/LockService:345 判\"回包缺少 rc KLV,"
         }
       ],
       "platformEvidence": {
@@ -42644,7 +42644,7 @@
           "line": 126,
           "symbol": "assembler",
           "note": "",
-          "text": "private var readyCont: CheckedContinuation<Void, Never>?"
+          "text": "/// 会双双看到 busy=false 而同时进入临界区, 后者的 continuation 覆盖前者 ⇒ 前者永不 resume"
         }
       ],
       "platformEvidence": {
@@ -43605,7 +43605,7 @@
           "line": 227,
           "symbol": "connect",
           "note": "",
-          "text": "// 曾另有 advDevice(_ deviceId:) 按 deviceId 单查: 全仓零调用 (连接走 CB 的"
+          "text": "publishOnMain { [weak self] in self?.scanning = false }"
         },
         {
           "platform": "ios",
@@ -43613,7 +43613,7 @@
           "line": 249,
           "symbol": "connect",
           "note": "超时工作项",
-          "text": "case .failure(let e): cont.resume(throwing: e)"
+          "text": "self.connectTimeoutWork?.cancel()"
         },
         {
           "platform": "ios",
@@ -43621,7 +43621,7 @@
           "line": 497,
           "symbol": "didDiscoverServices",
           "note": "NUS 优先 / FE90 回退",
-          "text": "cb?(.failure(BLEErrorX.code(.parseFail)))"
+          "text": "extension BLEService: CBPeripheralDelegate {"
         },
         {
           "platform": "ios",
@@ -43629,7 +43629,7 @@
           "line": 150,
           "symbol": "readyMessage",
           "note": "",
-          "text": "if Date() > deadline { throw BLEErrorX.msg(readyMessage()) }"
+          "text": "/// 仿 DFUKit 的就绪等待, 超时后按真实 state 给可操作文案 (权限/开关/不支持分开)。"
         }
       ],
       "platformEvidence": {
@@ -43705,7 +43705,7 @@
           "line": 267,
           "symbol": "disconnect",
           "note": "",
-          "text": "// connect() 是非隔离 async 函数 ⇒ 续体在 cooperative 线程上恢复, 这行绝不能直写 (见类头那段)"
+          "text": "} catch {"
         },
         {
           "platform": "ios",
@@ -43713,7 +43713,7 @@
           "line": 463,
           "symbol": "didDisconnectPeripheral",
           "note": "",
-          "text": "let cb = connectCompletion"
+          "text": "peripheral.delegate = self"
         },
         {
           "platform": "ios",
@@ -43721,7 +43721,7 @@
           "line": 477,
           "symbol": "didDisconnectPeripheral",
           "note": "写确认与连接等待被唤醒",
-          "text": "if let r = readyCont {"
+          "text": "// 断开后系统不会再发 ready 回调: 等在 readyCont 上的那一路必须放行, 否则 continuation 就悬着"
         }
       ],
       "platformEvidence": {
@@ -43826,7 +43826,7 @@
           "line": 415,
           "symbol": "writeChunk",
           "note": "超时抛 writeFailed",
-          "text": "try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in"
+          "text": "// 以 .writeFailed 抛掉别人的 continuation → LockService 误判断链 → disconnect + 静默重连"
         },
         {
           "platform": "apk",
@@ -43943,7 +43943,7 @@
           "line": 549,
           "symbol": "didUpdateValueFor",
           "note": "",
-          "text": "}"
+          "text": "let cb = connectCompletion"
         },
         {
           "platform": "ios",
@@ -43951,7 +43951,7 @@
           "line": 160,
           "symbol": "onFrame",
           "note": "",
-          "text": "}"
+          "text": "case .poweredOff: return \"蓝牙未开启: 请到系统设置打开蓝牙后重试\""
         },
         {
           "platform": "ios",
@@ -43959,7 +43959,7 @@
           "line": 538,
           "symbol": "didUpdateNotificationState",
           "note": "",
-          "text": "let cb = connectCompletion"
+          "text": "notifyChar = nc"
         }
       ],
       "platformEvidence": {
@@ -44027,7 +44027,7 @@
           "line": 306,
           "symbol": "readLinkRSSI",
           "note": "",
-          "text": "/// iOS 此前从没调过 readRSSI (本轮查实), 安卓对应的是 BleUnlocker.observeSignal 里的"
+          "text": "///"
         },
         {
           "platform": "ios",
@@ -44035,7 +44035,7 @@
           "line": 577,
           "symbol": "didReadRSSI",
           "note": "",
-          "text": "c.resume()"
+          "text": "readyTimer?.cancel()"
         },
         {
           "platform": "ios",
@@ -44043,7 +44043,7 @@
           "line": 299,
           "symbol": "readLinkRSSI",
           "note": "注释：连上后门锁停止广播",
-          "text": "}"
+          "text": "notifyChar = nil"
         }
       ],
       "platformEvidence": {
@@ -44112,7 +44112,7 @@
           "line": 200,
           "symbol": "startScan",
           "note": "",
-          "text": "//      ⇒ 超时回调永不触发 ⇒ 扫描窗口永不自动关, scanning 卡 true, 射频空转到下一次 startScan。"
+          "text": "// 2026-10-13 对抗式排查: 补 @MainActor。原写是非隔离 async func, 而**非隔离 async 函数被"
         },
         {
           "platform": "ios",
@@ -44120,7 +44120,7 @@
           "line": 170,
           "symbol": "ScanProfile",
           "note": "",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -44128,7 +44128,7 @@
           "line": 209,
           "symbol": "startScan",
           "note": "到点 stopScanInternal 的定时器",
-          "text": "scanning = true"
+          "text": "func startScan(allowDuplicates: Bool = false, intervalMs: Int = 500, timeoutMs: Int = 10000) async throws {"
         }
       ],
       "platformEvidence": {
@@ -44196,7 +44196,7 @@
           "line": 120,
           "symbol": "writeSlot",
           "note": "",
-          "text": "/// 为什么不能再用裸 Bool: 取槽是\"检查并占用\"的复合动作, 而 writeFrameHex 是非隔离 async"
+          "text": "// 写槽串行化: writeAckCont 是单一槽位, 并发写时后者会覆盖前者的 continuation"
         },
         {
           "platform": "ios",
@@ -44204,7 +44204,7 @@
           "line": 344,
           "symbol": "acquireWriteSlot",
           "note": "",
-          "text": "}"
+          "text": "// onCharacteristicWrite 才发下一片 (BLE_TIMEOUT=8s), 没有固定间隔 —— 我们这里的"
         },
         {
           "platform": "ios",
@@ -44212,7 +44212,7 @@
           "line": 362,
           "symbol": "releaseWriteSlot",
           "note": "",
-          "text": "}"
+          "text": "let raced = writeSlot.withLock { s -> Bool in"
         },
         {
           "platform": "ios",
@@ -44295,7 +44295,7 @@
           "line": 326,
           "symbol": "writeFrameHex",
           "note": "",
-          "text": "}"
+          "text": "// 与超时回收互斥于 rssiGeneration), 于是跨闭包边界的只有 self 与 myGen。"
         },
         {
           "platform": "ios",
@@ -44303,7 +44303,7 @@
           "line": 339,
           "symbol": "writeFrameHex",
           "note": "逐片 await writeChunk",
-          "text": "// 分片之间**不加** sleep: APK Java `writeRXCharacteristic` 是每片 write 后等"
+          "text": "while i < bytes.count {"
         },
         {
           "platform": "ios",
@@ -44311,7 +44311,7 @@
           "line": 423,
           "symbol": "writeChunk",
           "note": "8.0 秒 ack 超时",
-          "text": "device.writeValue(data, for: ch, type: .withResponse)"
+          "text": "cont.resume(throwing: BLEErrorX.code(.writeFailed))"
         },
         {
           "platform": "ios",
@@ -44319,7 +44319,7 @@
           "line": 396,
           "symbol": "writeChunk",
           "note": "withoutResponse 回退",
-          "text": "// 之前 withoutResponse + 20ms 假 ack — CoreBluetooth 无响应队列满时会静默丢包, 锁收到残帧"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -45519,7 +45519,7 @@
           "line": 185,
           "symbol": "tokenFrame",
           "note": "frame(0x01, \"\")",
-          "text": "else -> RC_HINT[rc] ?: RC_NAME[rc] ?: \"开锁失败 (错误码 $rc)\""
+          "text": "rc > 27 || rc < -1 -> \"开锁失败 (错误码 $rc)\""
         },
         {
           "platform": "apk",
@@ -45861,7 +45861,7 @@
           "line": 208,
           "symbol": "pidOf",
           "note": "fun pidOf(f: Frame): Int = f.klvs[0x34]?.let { u32le(it) } ?: 0",
-          "text": "return v"
+          "text": "for (i in 0 until minOf(4, b.size)) v = v or ((b[i].toInt() and 0xff) shl (i * 8))"
         },
         {
           "platform": "apk",
@@ -46071,7 +46071,7 @@
           "line": 180,
           "symbol": "unlockFrame",
           "note": "fun unlockFrame(ekeyHex: String): String { val klv01 = klv(0x01, \"0\".repeat(32)); return frame(0x04, klv01 + klv(0x02, ekeyHex.lowercase())) }",
-          "text": "rc == -1 -> \"门锁回了帧但没带结果码, 无法确认这一趟 — 先看一眼门有没有开, 再重试\""
+          "text": "fun rcText(rc: Int): String = when {"
         },
         {
           "platform": "android",
@@ -46127,7 +46127,7 @@
           "line": 139,
           "symbol": "rc",
           "note": "fun rc(f: Frame): Int = f.klvs[0x03]?.let { intHex(it) } ?: -1",
-          "text": "/**"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -49787,7 +49787,7 @@
           "line": 84,
           "symbol": "parse",
           "note": "val orders = if (version == 0x01) intArrayOf(8, 7, 10) else intArrayOf(8, 10, 7)",
-          "text": "* 先按 8 字节头试 (Java 生产链口径), 解析不通再试 10 / 7。"
+          "text": "* 响应解析: 长度同样是 LE16, 帧头有三种历史形状 (8/7/10 字节), 但 cmd 恒在字节 4。"
         },
         {
           "platform": "android",
@@ -49795,7 +49795,7 @@
           "line": 89,
           "symbol": "parse",
           "note": "return Frame(cmd, map, hex.substring(0, (off + len) * 2))",
-          "text": "val b = bytes(hex)"
+          "text": "if (hex.length < 14) return null"
         }
       ],
       "platformEvidence": {
@@ -52744,7 +52744,7 @@
           "line": 265,
           "symbol": "connect",
           "note": "连接成功后 assembler.reset()",
-          "text": "throw error"
+          "text": "DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(timeoutMs), execute: work)"
         }
       ],
       "platformEvidence": {
@@ -56531,7 +56531,7 @@
           "line": 143,
           "symbol": "RC_NAME",
           "note": "0 to \"已开锁\", 1 to \"解密失败\", 2 to \"无效的PIN码\", 3 to \"命令过期\", 5 to \"次数使用完毕\", ...",
-          "text": "fun klvShape(f: Frame): String ="
+          "text": "*/"
         },
         {
           "platform": "android",
@@ -56539,7 +56539,7 @@
           "line": 145,
           "symbol": "RC_NAME",
           "note": "10 to \"未知错误\", 11 to \"解密失败\", 12 to \"mac地址不正确\", 13 to \"通讯过期\"",
-          "text": "else f.klvs.joinToString(\" \") { \"#\" + String.format(\"%02x\", it.first) + \"=\" + (it.second.length / 2) + \"B\" }"
+          "text": "if (f.klvs.isEmpty()) \"(无 KLV)\""
         },
         {
           "platform": "android",
@@ -56547,7 +56547,7 @@
           "line": 149,
           "symbol": "RC_NAME",
           "note": "25 to \"锁正忙，请稍后重试\", 26 to \"门锁被撬\", 27 to \"您的门锁处于布防状态\"",
-          "text": ""
+          "text": "fun rc(f: Frame): Int = f.first(0x03)?.let { intHex(it) } ?: -1"
         }
       ],
       "platformEvidence": {

@@ -49,7 +49,7 @@ final class HardwareService: ObservableObject {
 
     // ---------- 通用: 连到目标并执行一条命令 ----------
     private func connectTarget(_ mac: String, timeoutMs: Int = 20000) async throws {
-        if ble.connectedMAC == connectedTargetId, !connectedTargetId.isEmpty { return }
+        if ble.connectedPeripheralId == connectedTargetId, !connectedTargetId.isEmpty { return }
         ble.disconnect()
         let cachedId: String? = dongleRecord(mac)?.bleId ?? gatewayRecord(mac)?.bleId
         if let cachedId, !cachedId.isEmpty {
@@ -70,12 +70,12 @@ final class HardwareService: ObservableObject {
         // 之后把 ekey 与家里 WiFi 口令发过去。
         // 复核口径与门锁一致：读一次状态帧，用**设备自己的响应**对 pid（响应比广播难伪造得多）。
         do {
-            let st = try await readStatusFrame()
+            let remotePid = try await readStatusFrame()
             let knownPid = pidFor(mac) ?? 0
-            if knownPid > 0, st.pid > 0, st.pid != knownPid {
+            if knownPid > 0, remotePid > 0, remotePid != knownPid {
                 ble.disconnect()
                 connectedTargetId = ""
-                log("连接后身份不符: 设备 pid=\(st.pid) 与登记的 \(knownPid) 不一致 → 已断开")
+                log("连接后身份不符: 设备 pid=\(remotePid) 与登记的 \(knownPid) 不一致 → 已断开")
                 throw BLEErrorX.msg("连到的设备与目标不是同一个 (pid 不符)，已断开。附近可能有伪造广播。")
             }
             if knownPid <= 0 { log("未登记 pid, 跳过连接后身份复核 (老记录)") }
@@ -91,11 +91,11 @@ final class HardwareService: ObservableObject {
     /// 读一次设备状态帧（cmd03），用于连接后的身份复核。
     /// 2026-10-27 审核新增 (AUDIT-D D-45)：与 LockService 的 `getStatus` 同口径 ——
     /// 用设备自己的响应去对 pid，而不是只信广播里的字段（广播谁都能伪造）。
-    private func readStatusFrame() async throws -> (pid: Int) {
+    private func readStatusFrame() async throws -> Int {
         let target = connectedTargetId
         guard !target.isEmpty else { throw BLEErrorX.msg("内部错误: 复核时没有连接目标") }
         let f = try await send(ZKCmdBuilder.cmd03StatusPlain(""), target: target, timeoutMs: 8000)
-        return (pid: StatusParser.parseStatus(f.klvs).pid)
+        return StatusParser.parseStatus(f.klvs).pid
     }
 
     private func dongleRecord(_ mac: String) -> Dongle? { DB.dongle(mac) }

@@ -74,7 +74,7 @@ final class LockService: ObservableObject {
     func ensureConnected(mac: String) async throws {
         let m = mac.lowercased()
         guard !m.isEmpty else { throw BLEErrorX.msg("未选择门锁 (缺少 MAC)") }
-        if connectedMAC == m, ble.connectedMAC == connectedDeviceId, !connectedDeviceId.isEmpty {
+        if connectedMAC == m, ble.connectedPeripheralId == connectedDeviceId, !connectedDeviceId.isEmpty {
             // 已在目标锁上也要绑 curMac: 否则紧随其后的无 mac 参数命令 (setZotp/readLockTime…) 会用
             // **上一次会话留下的另一把锁**的 skey 成帧 —— 第三条成功出口 (扫描解析) 一直是绑的，这两条漏了。
             curMac = m
@@ -286,7 +286,7 @@ final class LockService: ObservableObject {
                 // 只清自己 cmd 的 waiter (JS lock.js 按 ww.cmd === cmd 清理), 不误杀并发中的其他请求
                 if let w = waiter, w.cmd == cmd { w.timer?.cancel(); waiter = nil }
                 // 断链自愈: 写失败 OR 连接已断 (断链后 writeChar/device 被清 → writeFrameHex 抛 parseFail)
-                var brokenLink = ble.connectedMAC.isEmpty || connectedDeviceId.isEmpty
+                var brokenLink = ble.connectedPeripheralId.isEmpty || connectedDeviceId.isEmpty
                 if case BLEErrorX.code(.writeFailed) = error { brokenLink = true }
                 if brokenLink {
                     // 2026-10-14: disconnect() 会把 curMac 清空, 旧写法 `if !curMac.isEmpty` 紧随其后 =>
@@ -439,7 +439,7 @@ final class LockService: ObservableObject {
     func probeEcho(deviceId: String, valueHex: String = "123456") async throws -> EchoProbe {
         // 临时链路: 不走 connect(deviceId:) —— 那条路会把 deviceId 写进 DB.lastDevice 与 connectedMAC,
         // 等于让本机记住一台没有钥匙的设备 (下次冷启动会去连它)。
-        let hadLink = !ble.connectedMAC.isEmpty
+        let hadLink = !ble.connectedPeripheralId.isEmpty
         try await ble.connect(deviceId: deviceId)
         defer {
             // 拆掉临时链路, 并把探测期间假装出来的连接态清干净 —— 留着会骗过 ensureConnected
@@ -738,7 +738,7 @@ final class LockService: ObservableObject {
             while Date() < hardDeadline {
                 // 断链/取消早退: 旧写法会一直转到窗口到点才抛"未收到任何按压响应",
                 // 期间锁已被人拿走/电量耗尽也不知情, collector 也一直被占 (新会话的 cmd13 帧会被吞)
-                if Task.isCancelled || ble.connectedMAC.isEmpty || connectedDeviceId.isEmpty {
+                if Task.isCancelled || ble.connectedPeripheralId.isEmpty || connectedDeviceId.isEmpty {
                     log("warn", "13 录指纹中链路断开或任务取消, 提前结束")
                     broken = true
                     break
