@@ -168,6 +168,37 @@ struct RecordsView: View {
                    actionTitle: "去添加门锁") { showAdd = true }
     }
 
+
+    /// 749 完整性对账行 —— 本次拉取多少条、锁端报剩余多少、是否拉全。
+    /// 可复制（发给管理员/记进工单）。
+    /// 2026-10-27 新增（AUDIT-B 2.5）：原先 `reconLine` 算完就丢，用户永远看不到。
+    @ViewBuilder
+    private var reconRow: some View {
+        Section {
+            VStack(alignment: .leading, spacing: DS.Space.xs) {
+                Text(reconLine)
+                    .vkFont(.caption)
+                    .foregroundStyle(DS.Palette.textSub)
+                    .textSelection(.enabled)
+                if let gap = pullGap {
+                    Label(gap, systemImage: "exclamationmark.triangle")
+                        .vkFont(.caption)
+                        .foregroundStyle(DS.Palette.warn)
+                }
+            }
+            Button {
+                Clip.set(reconLine)
+                app.showToast("对账结果已复制")
+            } label: {
+                Label("复制对账结果", systemImage: "doc.on.doc")
+            }
+            .vkFont(.caption)
+            .frame(minHeight: DS.Hit.min)
+        } header: {
+            Text("本次拉取对账")
+        }
+    }
+
     /// 记录页主体列表 —— 2026-10-13 run 63 从 body 的 Group else 分支抽出:
     /// 整个 body 表达式报 type-check 超时。
     @ViewBuilder
@@ -194,6 +225,11 @@ struct RecordsView: View {
             filterChips          // 已折叠为一行摘要 + 可展开面板 (见 filterChips 注释)
             // 低频区: 收进一行"更多"之后, 不再占首屏
             secondaryRowsDisclosure
+            // 2026-10-27 审核修复 (AUDIT-B 2.5)：749 完整性对账**算完就丢** ——
+            // `reconLine` / `pullGap` 各 3 处写、0 处读，用户永远看不到对账结果。
+            // 而这段文字是「本次拉了多少条 / 锁端还报剩余多少 / 是否拉全」的唯一如实说明，
+            // 正是防「把未拉全说成已拉全」那个假安慰的。现在接上显示。
+            if !reconLine.isEmpty { reconRow }
             // 187 按月跳转 (等价实现): 选月即只看该月, 顶部有清除口。
             // 原设计的"月份滚轮 + scrollTo"需把 List 包进 ScrollViewReader 并移动整条修饰符链,
             // 在这个从未编译过的工程里做结构性改动的风险不对等 → 记入需编译器清单, 这里先给可用能力。

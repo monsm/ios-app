@@ -114,7 +114,9 @@ extension DS {
     @MainActor static var heroFg: Color { AXFlags.invertColors ? Palette.text : .white }
 }
 
-// ---------- 朗读词表 (880): accessibilityLabel 统一走这里, 审计口径 = 本文件 ----------
+// 2026-10-27 审核删除 (AUDIT-B 3.3)：这里原有一行「朗读词表 (880): AXTerms」的注释标题，
+// 而 AXTerms 枚举体早已不存在（全仓 0 命中）。下一行的 AXPrefs 与它无关 ——
+// 留一个指向不存在类型的标题，会让读者去找一个永远找不到的类型。
 // ---------- App 偏好读点 (包15 全 App 开关集中于此, 页面不直接查 DB) ----------
 enum AXPrefs {
     /// 872 防连点开关: 高频按钮 300ms 内重复点击忽略 (默认开, 防双击误开门)
