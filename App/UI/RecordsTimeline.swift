@@ -171,36 +171,10 @@ struct RecDetailSheet: View {
             .background(rec.alarm ? RecordSearch.toneColor(for: rec.type).opacity(0.08) : Color.clear)
 
             if rec.type == 7 {
-                // 727 防撬检查清单 (勾选状态复用处置字段 kf_rcheck_<key>)
-                VStack(alignment: .leading, spacing: DS.Space.s) {
-                    Text("防撬检查清单")   // 727 防撬检查清单
-                        .vkFont(.footnote, weight: .medium)
-                        .foregroundStyle(DS.Palette.text)
-                    ForEach(Array(RecordSearch.tamperChecks.enumerated()), id: \.offset) { i, item in
-                        VariantToggle(isOn: Binding(
-                        )) {
-                            Text(item)
-                                .vkFont(.footnote)
-                                .foregroundStyle(DS.Palette.text)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        .tint(DS.Palette.accent)
-                    }
-                }
+            // 2026-10-27 三轮精简：防撬检查清单已删（告警处置层移除）。
                 .padding(.vertical, DS.Space.xs)
             }
 
-            // 741 同类告警计数
-            HStack(spacing: DS.Space.s) {
-                Image(systemName: "list.number")
-                    .font(.system(size: DS.Icon.sm))
-                    .foregroundStyle(DS.Palette.textSub)
-                    .accessibilityHidden(true)
-                Text("本锁同类累计 " + String(same.total) + " 次" + (same.lastStr.isEmpty ? "" : " · 上次 " + same.lastStr))
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
 
             // ⚠737 今日试错累计 (keyboardErrCount 语义不确定, 标题带"?", 只数日志条数)
             let trials = RecordSearch.trialCountToday(macs: [rec.mac])

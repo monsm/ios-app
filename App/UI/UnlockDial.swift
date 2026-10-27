@@ -276,6 +276,9 @@ struct UnlockDial: View {
     private var holdDuration: Double { AXPrefs.holdDuration }
     /// 61 起手围栏: 圆盘内部六成面积 (r = √0.6·R ≈ 0.39·直径)
     private func insideFence(_ p: CGPoint) -> Bool {
+    /// 2026-10-27 三轮恢复：原 `dial = AXFlags.axStackLayout ? 128 : DS.Metric.dial`，
+    /// 无障碍降级层删除后恒取标准尺寸。
+    private var dial: CGFloat { DS.Metric.dial }
         let c = CGPoint(x: dial / 2, y: dial / 2)
         return hypot(p.x - c.x, p.y - c.y) <= dial * 0.39
     }
