@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T03:28:46.360Z",
+    "generated": "2026-10-27T03:36:39.037Z",
     "sources": [
       {
         "scout": "android-native",
@@ -23115,7 +23115,7 @@ const DATA = {
           "line": 253,
           "symbol": "MaskedDigits",
           "note": "proximityRemask",
-          "text": "UIPasteboard.general.string = revealed ? code : SecurityPolicy.halfMasked(code)   // 405"
+          "text": "UIPasteboard.general.string = code   // 405"
         }
       ],
       "platformEvidence": {
@@ -31320,7 +31320,7 @@ const DATA = {
           "line": 1146,
           "symbol": "copyLastWeekDigest",
           "note": "toast 文案",
-          "text": "UIPasteboard.general.string = \"[\" + (r.lockName.isEmpty ? app.displayName : r.lockName) + \"] \" + r.time + \" \" + r.title"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -31390,7 +31390,7 @@ const DATA = {
           "line": 1151,
           "symbol": "dropWatchSection",
           "note": "判定与文案",
-          "text": "// 597 前缘滑出: 只放备注这一枚 (与后缘同一只弹窗; 前缘是左滑最顺手的位置)"
+          "text": "Button {"
         },
         {
           "platform": "ios",
@@ -31398,7 +31398,7 @@ const DATA = {
           "line": 1164,
           "symbol": "dropWatchSection",
           "note": "其余超阈值日",
-          "text": "// 便于和诊断包里的日志逐条对上。不假装能查锁端数据库。"
+          "text": "Label(\"复制行标识\", systemImage: \"number\")   // 761 复制行标识"
         },
         {
           "platform": "ios",
@@ -31695,7 +31695,7 @@ const DATA = {
           "line": 2181,
           "symbol": "fetch",
           "note": "拉取主流程",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": ".vkFont(.caption2, weight: .medium)"
         },
         {
           "platform": "ios",
@@ -31703,7 +31703,7 @@ const DATA = {
           "line": 2199,
           "symbol": "while page \u003c 20",
           "note": "翻页上限 20 页 / 100 条",
-          "text": ".foregroundStyle(DS.Palette.warn)"
+          "text": "} header: {"
         },
         {
           "platform": "ios",
@@ -31711,7 +31711,7 @@ const DATA = {
           "line": 2202,
           "symbol": "fresh",
           "note": "去重与游标回绕防护",
-          "text": ".padding(.vertical, 2)"
+          "text": "Text(\"口径: 临时码台账生效区间之外仍出现一次性密码开门 (本地检测, 时刻为锁端时间)。\")"
         },
         {
           "platform": "ios",
@@ -31719,7 +31719,7 @@ const DATA = {
           "line": 2215,
           "symbol": "r.surplus",
           "note": "KLV#04 缺失处理",
-          "text": ".dsScreenBackground()"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -31887,7 +31887,7 @@ const DATA = {
           "line": 1176,
           "symbol": "lastYearTodayRow",
           "note": "展示行",
-          "text": "app.requestRoute(.credentials)   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过 377 门禁"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -31895,7 +31895,7 @@ const DATA = {
           "line": 1191,
           "symbol": "lastYearTodayCount",
           "note": "MM-dd 命中计数",
-          "text": ""
+          "text": ".vkFont(.subheadline)"
         },
         {
           "platform": "ios",
@@ -32011,7 +32011,7 @@ const DATA = {
           "line": 2008,
           "symbol": "runningRow",
           "note": "骨架屏三行 + reduceMotion 处理",
-          "text": "let months = Array(Set(groups.filter { !$0.isGap }.map { String($0.key.prefix(7)) })).sorted(by: >)"
+          "text": "Button(m) { monthJump = m }"
         },
         {
           "platform": "ios",
@@ -32019,7 +32019,7 @@ const DATA = {
           "line": 1941,
           "symbol": "emptyHint",
           "note": "两种空态",
-          "text": "if r.time.count >= 5, let h = Int(r.time.prefix(2)) {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -32112,7 +32112,7 @@ const DATA = {
           "line": 2051,
           "symbol": "memberChips",
           "note": "chip 生成规则",
-          "text": "}"
+          "text": "struct AlarmKindsSheet: View {"
         },
         {
           "platform": "ios",
@@ -32120,7 +32120,7 @@ const DATA = {
           "line": 2078,
           "symbol": "chip",
           "note": "点击写 sel + filters.member",
-          "text": "}"
+          "text": ".accessibilityAddTraits(sel.contains(t) ? .isSelected : [])"
         },
         {
           "platform": "ios",
@@ -32136,7 +32136,7 @@ const DATA = {
           "line": 2065,
           "symbol": "chip(\"__care\")",
           "note": "1028 保养分组",
-          "text": "Button {"
+          "text": ".vkFont(.subheadline)"
         }
       ],
       "platformEvidence": {
@@ -32806,7 +32806,7 @@ const DATA = {
           "line": 1297,
           "symbol": "daySection",
           "note": "日组渲染",
-          "text": "// 558 日期那枚: 只在今天真有行时才给 (时间短语经 554 成窗, must 摘除修在 RecordSearch.parse)"
+          "text": ".foregroundStyle(DS.Palette.accentText)"
         },
         {
           "platform": "ios",
@@ -32979,7 +32979,7 @@ const DATA = {
           "line": 1369,
           "symbol": "daySection.header",
           "note": "组头 HStack",
-          "text": "}"
+          "text": "// 566: 同步写进会话保留的那一份 (见 QueryFilters.member) —— 点\"全部\"时 member 归空,"
         },
         {
           "platform": "ios",
@@ -32987,7 +32987,7 @@ const DATA = {
           "line": 1373,
           "symbol": "alarmDays.contains",
           "note": "581 未处置蓝点",
-          "text": "return Button {"
+          "text": "} label: {"
         },
         {
           "platform": "ios",
@@ -32995,7 +32995,7 @@ const DATA = {
           "line": 1382,
           "symbol": "damageDays.contains",
           "note": "596 含防撬/试错",
-          "text": ".vkFont(.subheadline, weight: .medium)"
+          "text": ".foregroundStyle(on ? DS.Palette.onAccent : DS.Palette.text)"
         },
         {
           "platform": "ios",
@@ -33003,7 +33003,7 @@ const DATA = {
           "line": 1397,
           "symbol": "g.dayKind",
           "note": "594 日型色带",
-          "text": ""
+          "text": "// 长期存活, `filters` 是构造时读的 @State, 之后每次进记录页都不会重读, 于是"
         },
         {
           "platform": "ios",
@@ -33011,7 +33011,7 @@ const DATA = {
           "line": 1404,
           "symbol": "g.holiday / isMakeupWorkday",
           "note": "671 节假日与补班",
-          "text": "// 「每次都从全部开始 / 每次默认只看告警」这两档从第二次进场起就形同虚设"
+          "text": "if sel.isEmpty, !filters.member.isEmpty {"
         }
       ],
       "platformEvidence": {
@@ -72301,7 +72301,7 @@ const DATA = {
           "line": 2148,
           "symbol": "onRecordsAppear",
           "note": "每次进页重取（908）",
-          "text": "}"
+          "text": ".variantList()"
         },
         {
           "platform": "ios",
@@ -72400,7 +72400,7 @@ const DATA = {
           "line": 1212,
           "symbol": "syncStampKey",
           "note": "kf_logsync_ 键格式",
-          "text": "// @layout-allow VK豁免 刻度点: 时间轴上的命中段，是刻度不是容器"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -72416,7 +72416,7 @@ const DATA = {
           "line": 2171,
           "symbol": "loadFromCache",
           "note": "HotCache 首屏读",
-          "text": "@EnvironmentObject var app: AppState"
+          "text": "let wins = RecordSearch.outOfWindow(macs: DB.keychains().map { $0.mac })"
         },
         {
           "platform": "ios",
@@ -72424,7 +72424,7 @@ const DATA = {
           "line": 2210,
           "symbol": "HotCache.invalidate",
           "note": "拉取后作废",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": ".toolbar { ToolbarItem(placement: .navigationBarLeading) { Button(\"完成\") { dismiss() } } }"
         },
         {
           "platform": "ios",
@@ -72514,7 +72514,7 @@ const DATA = {
           "line": 1764,
           "symbol": "RecordOverlay.note",
           "note": "读备注（行备注弹窗）",
-          "text": "} else {"
+          "text": "let p = Self.rowParts(r.timeStr, todayKey: todayKey)"
         },
         {
           "platform": "ios",
@@ -72530,7 +72530,7 @@ const DATA = {
           "line": 1771,
           "symbol": "RecordOverlay.setNote",
           "note": "写备注",
-          "text": "return RowVM(key: RecordOverlay.oid(mac: r.mac, rowKey: r.key), time: p.time, dayKey: p.dayKey,"
+          "text": "warn: r.alarm, claim: false, care: r.care)"
         },
         {
           "platform": "ios",
@@ -72538,7 +72538,7 @@ const DATA = {
           "line": 1781,
           "symbol": "RecordOverlay.toggleFlag",
           "note": "旗标写入",
-          "text": "// 组尾那句原文是「当日最晚 23:47 · 全天 N 条」—— 它说的是这一天, 不是\"这一天还剩几行给我看\"。"
+          "text": "dayCount[r.dayKey, default: 0] += 1"
         },
         {
           "platform": "ios",

@@ -1140,17 +1140,11 @@ struct RecordsView: View {
                 }
                 .tint(DS.Palette.warn)
             }
-                .tint(DS.Palette.accent)
-                .tint(DS.Palette.danger)
             Button("复制") {
                 UIPasteboard.general.string = "[" + (r.lockName.isEmpty ? app.displayName : r.lockName) + "] " + r.time + " " + r.title
                 app.showToast("已复制本条记录")
             }
             .tint(DS.Palette.accent)
-        }
-        // 597 前缘滑出: 只放备注这一枚 (与后缘同一只弹窗; 前缘是左滑最顺手的位置)
-        .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                .tint(DS.Palette.accent)
         }
         .contextMenu {
             // 714 复制为完整文本: 粘贴即有锁名+时间+归属的完整上下文

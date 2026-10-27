@@ -250,8 +250,8 @@ struct CodeBigCard: View {
             }
             HStack(spacing: DS.Space.s) {
                 Button {
-                    UIPasteboard.general.string = revealed ? code : SecurityPolicy.halfMasked(code)   // 405
-                    app.showToast(revealed ? "码值已复制" : "已复制遮半码值 (完整值先点「完整显示」)")
+                    UIPasteboard.general.string = code   // 405
+                    app.showToast("码值已复制")
                 } label: {
                     Label("复制", systemImage: "doc.on.doc")
                 }
