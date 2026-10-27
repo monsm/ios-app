@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T10:11:01.435Z",
+    "generated": "2026-10-27T10:14:51.650Z",
     "sources": [
       {
         "scout": "android-native",
@@ -16160,7 +16160,7 @@ const DATA = {
           "line": 695,
           "symbol": "proxySuffix(_:)",
           "note": "",
-          "text": "var pwd: String"
+          "text": "var fromISO: String"
         },
         {
           "platform": "ios",
@@ -20217,7 +20217,7 @@ const DATA = {
           "line": 713,
           "symbol": "batchDisable(_:pwdAliases:fpBatches:)",
           "note": "",
-          "text": "DB.store.remove(\"kf_cdraft_\" + mac)"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -20423,7 +20423,7 @@ const DATA = {
           "line": 658,
           "symbol": "batchExtend(_:_:_:_:)",
           "note": "",
-          "text": "return who.isEmpty ? \"指纹·\" + base : who + \"·\" + base"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -20439,7 +20439,7 @@ const DATA = {
           "line": 662,
           "symbol": "auto: true",
           "note": "auto: true 自动还原点",
-          "text": "/// 同帧同判据), 不留隐式 Date() —— 隐式取时刻会让同一屏里两条结论各自漂。没设提前量恒 false。"
+          "text": "static func effectiveExpiry(_ mac: String, _ p: LedgerPwd) -> Date? {"
         }
       ],
       "platformEvidence": {
@@ -21246,7 +21246,7 @@ const DATA = {
           "line": 451,
           "symbol": "canEvaluatePolicy",
           "note": "guard ctx.canEvaluatePolicy(...)",
-          "text": "if p.temp {"
+          "text": "f.timeIntervalSince1970 \u003c= t, t \u003c= to.timeIntervalSince1970 { n += 1 }"
         },
         {
           "platform": "ios",
@@ -21254,7 +21254,7 @@ const DATA = {
           "line": 460,
           "symbol": "onDeniedPresentFallback",
           "note": "if ok { commit() } else { onDeniedPresentFallback(commit) }",
-          "text": "}"
+          "text": "// ---------- 351 合包导出: 仅凭证分区的最小 AES 信封 (口令由 UI 生成, 不走全量 schema) ----------"
         }
       ],
       "platformEvidence": {
@@ -60250,7 +60250,7 @@ const DATA = {
           "line": 140,
           "symbol": "histKey(_:_:_:)",
           "note": "",
-          "text": "}"
+          "text": "/// 501/263 删除成员预告: 名下将入回收站的凭证清单 (跨锁合计)。"
         },
         {
           "platform": "ios",
@@ -60258,7 +60258,7 @@ const DATA = {
           "line": 472,
           "symbol": "reclaimDays()",
           "note": "",
-          "text": "static func exportPackage(_ mac: String, pwdAliases: [Int], fpBatches: [Int], password: String) -> (data: Data, size: Int)? {"
+          "text": "let pwds = l.pwds.filter { pwdAliases.isEmpty || pwdAliases.contains($0.alias) }"
         },
         {
           "platform": "ios",
