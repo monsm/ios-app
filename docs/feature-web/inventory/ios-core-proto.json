@@ -5866,42 +5866,6 @@
       "status": "implemented"
     },
     {
-      "key": "data.store.scan-profile",
-      "parentKey": "data",
-      "domain": "data",
-      "level": 3,
-      "name": "kf_scan_profile（扫描强度三档）",
-      "kind": "setting",
-      "summary": "eco / balanced / fast 三档，分别对应 2.5s / 5s / 10s 扫描窗口与是否收重复广播。",
-      "details": [
-        "取值非法或缺省时回落 balanced",
-        "只影响发现型扫描，不改连接与 AUTOOPEN 时序",
-        "fast 档开 allowDuplicates，代价是 CPU 与耗电"
-      ],
-      "evidence": [
-        {
-          "file": "App/Services/BLEService.swift",
-          "line": 172,
-          "symbol": "ScanProfile.storeKey"
-        },
-        {
-          "file": "App/Services/BLEService.swift",
-          "line": 174,
-          "symbol": "ScanProfile.timeoutMs"
-        },
-        {
-          "file": "App/Services/BLEService.swift",
-          "line": 182,
-          "symbol": "ScanProfile.allowDuplicates"
-        }
-      ],
-      "tags": [
-        "数据",
-        "扫描"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "data.snapshot.status",
       "parentKey": "data",
       "domain": "data",

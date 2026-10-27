@@ -582,48 +582,6 @@
       "status": "implemented"
     },
     {
-      "key": "unlock.autoopen.calibrate",
-      "parentKey": "unlock.autoopen",
-      "domain": "unlock",
-      "level": 3,
-      "name": "距离标定流程（30 秒采样）",
-      "kind": "flow",
-      "summary": "让用户静止走近门锁，30 秒内反复扫描采集 RSSI，取 P95 作为该锁基准并落盘。",
-      "details": [
-        "循环 30 秒：每次 scan(mac:timeoutMs:2500)，命中即记样本并 saveRssi，步进 sleep 500ms。",
-        "样本不足 5 个时 p95 返回 nil → toast「样本不足, 请走近门锁再试」，不覆盖原有标定。",
-        "成功 toast「标定完成: P95 RSSI <p>」并写 kf_autocal_<mac>（含 at 时间戳）。",
-        "采集中按钮标题变为「采集中 (N 样本)」且 isBusy 禁用。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/AutoOpen.swift",
-          "line": 544,
-          "symbol": "AutoCalView.run()"
-        },
-        {
-          "file": "App/Core/AutoOpen.swift",
-          "line": 551,
-          "symbol": "while < 30 秒"
-        },
-        {
-          "file": "App/Core/AutoOpen.swift",
-          "line": 560,
-          "symbol": "sleep 500ms"
-        },
-        {
-          "file": "App/Core/AutoOpen.swift",
-          "line": 562,
-          "symbol": "p95 落盘 / 样本不足提示"
-        }
-      ],
-      "tags": [
-        "标定",
-        "流程"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "unlock.autoopen.face-service",
       "parentKey": "unlock.autoopen",
       "domain": "unlock",
@@ -1783,31 +1741,6 @@
       "status": "implemented"
     },
     {
-      "key": "care.battery.notify-auth",
-      "parentKey": "care.battery.launch-patrol",
-      "domain": "care",
-      "level": 4,
-      "name": "通知授权申请",
-      "kind": "action",
-      "summary": "申请 alert/sound/badge 三项授权，失败返回 false 并跳过本轮巡检。",
-      "details": [
-        "一次 requestAuthorization，失败不抛错只返回 false。",
-        "月度备份调度也复用同一入口。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/BatteryCare.swift",
-          "line": 251,
-          "symbol": "requestAuth()"
-        }
-      ],
-      "tags": [
-        "通知",
-        "权限"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "diagnostic.kit",
       "parentKey": "diagnostic",
       "domain": "diagnostic",
@@ -2670,48 +2603,6 @@
       "tags": [
         "云同步",
         "WebDAV"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "backup.zip",
-      "parentKey": "backup.engine",
-      "domain": "backup",
-      "level": 3,
-      "name": "ZIP 解析与 CRC / inflate",
-      "kind": "protocol",
-      "summary": "纯内存 ZIP 解析：尾部反查 EOCD、遍历中央目录、store/deflate 两法、逐条 CRC32 校验，带尺寸与条目数上限。",
-      "details": [
-        "maxEntrySize = 8MB、maxEntries = 64；EOCD 回看最多 65535 + 22 字节。",
-        "仅支持 method 0（store）与 8（deflate），其余抛「不支持的压缩方式」；空 deflate 条目直接拒。",
-        "解压长度必须等于 usize；crcOk = CRC32(内容) == 中央目录声明值。",
-        "inflate 用 compression_decode_buffer + COMPRESSION_ZLIB，声称输出超上限即判 zip 炸弹。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Services/ZipKit.swift",
-          "line": 28,
-          "symbol": "maxEntrySize / maxEntries"
-        },
-        {
-          "file": "App/Services/ZipKit.swift",
-          "line": 36,
-          "symbol": "inflate(_:expected:)"
-        },
-        {
-          "file": "App/Services/ZipKit.swift",
-          "line": 50,
-          "symbol": "parse(_:)"
-        },
-        {
-          "file": "App/Services/ZipKit.swift",
-          "line": 105,
-          "symbol": "crcOk 判定"
-        }
-      ],
-      "tags": [
-        "ZIP",
-        "校验"
       ],
       "status": "implemented"
     },

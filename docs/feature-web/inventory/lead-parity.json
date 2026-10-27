@@ -70,33 +70,6 @@
       "platform": "ios"
     },
     {
-      "key": "device.keychain.status",
-      "parentKey": "device.keychain",
-      "domain": "device",
-      "level": 3,
-      "kind": "action",
-      "name": "钥匙串详情（iOS：我的钥匙串 + 三读数）",
-      "summary": "iOS 钥匙串页列出已发现设备与三读数（电量/钥匙数/固件），并标记已配钥匙。",
-      "details": [],
-      "evidence": [
-        {
-          "file": "App/UI/Sheets.swift",
-          "line": 1465,
-          "symbol": "struct KeychainHWView"
-        },
-        {
-          "file": "App/UI/Sheets.swift",
-          "line": 1476,
-          "symbol": "钥匙串说明"
-        }
-      ],
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": "implemented",
-      "platform": "ios"
-    },
-    {
       "key": "device.keychain.delete",
       "parentKey": "device.keychain",
       "domain": "device",

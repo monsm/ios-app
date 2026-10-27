@@ -685,73 +685,6 @@
       "status": "implemented"
     },
     {
-      "key": "backup.webdav.list",
-      "parentKey": "backup.webdav.studio",
-      "domain": "backup",
-      "level": 3,
-      "name": "远端备份列表",
-      "kind": "state",
-      "summary": "列出远端条目：名称、大小、etag、修改时间，每行可下载或演练。",
-      "details": [
-        "每行：e.name、e.size / 1024 KB、etag 前 8 位、modified 非空时 humanDate",
-        "两枚动作「下载恢复」（accentText）与「演练」（warn 色），都带 44pt 命中高",
-        "空列表显示「暂无远端备份 — 先在导出向导生成并上传, 或点下方「上传」」（向导已删，文案残留）",
-        "列表下方固定「刷新列表」按钮 + dryRunResult 文本（warn 色）"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 87,
-          "symbol": "Section 远端备份"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 89,
-          "symbol": "ForEach(entries)"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 93,
-          "symbol": "KB 大小"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 94,
-          "symbol": "etag 前 8 位"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 99,
-          "symbol": "humanDate(modified)"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 105,
-          "symbol": "下载恢复"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 109,
-          "symbol": "演练"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 117,
-          "symbol": "暂无远端备份"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 121,
-          "symbol": "刷新列表"
-        }
-      ],
-      "tags": [
-        "云同步",
-        "列表"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "backup.webdav.upload",
       "parentKey": "backup.webdav.studio",
       "domain": "backup",
@@ -1066,64 +999,6 @@
       "status": "implemented"
     },
     {
-      "key": "diagnostic.report.screenshot",
-      "parentKey": "diagnostic.report",
-      "domain": "diagnostic",
-      "level": 4,
-      "name": "诊断截图渲染（720pt / 水印）",
-      "kind": "state",
-      "summary": "把整份报告画成 720pt 宽浅色卡片，右下叠 -18° 时间水印，2x 输出 PNG。",
-      "details": [
-        "ImageRenderer，r.scale = 2；卡片 frame(width: 720, alignment: .leading)、白底、16pt padding",
-        "水印「离线锁管家 <日期 时间>」黑 0.32、rotationEffect(-18°)、bottomTrailing、padding xxl",
-        "强制 .environment(\\.colorScheme, .light) 且挂最外层（否则水印层漏掉）",
-        "渲染不出时只保留文本分享，不静默失败",
-        "报告本身已脱敏，截图不含 ekey/skey/PIN"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 185,
-          "symbol": "239 截图注释"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1194,
-          "symbol": "renderDiagShot"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1207,
-          "symbol": "frame(width: 720)"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1210,
-          "symbol": "时间水印"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1213,
-          "symbol": "rotationEffect(-18)"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1221,
-          "symbol": "colorScheme light"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1223,
-          "symbol": "r.scale = 2"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "导出"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "diagnostic.health",
       "parentKey": "diagnostic.center",
       "domain": "diagnostic",
@@ -1239,53 +1114,6 @@
       "status": "implemented"
     },
     {
-      "key": "diagnostic.data-health.gaps",
-      "parentKey": "diagnostic.data-health",
-      "domain": "diagnostic",
-      "level": 4,
-      "name": "近 14 天整天空洞",
-      "kind": "diagnostic",
-      "summary": "只报两侧都有数据的整天，首尾未拉取不算缺口。",
-      "details": [
-        "DataHealth.gapDays(mac:)；空 → 「近 14 天日志覆盖没有整天空洞」",
-        "非空 → 「近 14 天有 N 天整天没有日志: <日期列表>」（warn 色）",
-        "附解释：空洞通常意味着那几天没连过锁（日志只在读取/操作时产生），不等于数据丢了",
-        "与「待补拉日期段」是两套口径，数值不相加"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 434,
-          "symbol": "451 空洞日期注释"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 436,
-          "symbol": "DataHealth.gapDays"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 438,
-          "symbol": "没有整天空洞"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 442,
-          "symbol": "有 N 天整天没有日志"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 445,
-          "symbol": "不等于数据丢了"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "日志"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "diagnostic.reconcile",
       "parentKey": "diagnostic.center",
       "domain": "diagnostic",
@@ -1346,63 +1174,6 @@
           "file": "App/UI/DiagnosticsView.swift",
           "line": 538,
           "symbol": "补拉要到场"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "对账"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.reconcile.idx",
-      "parentKey": "diagnostic.reconcile",
-      "domain": "diagnostic",
-      "level": 4,
-      "name": "序号断档信号 B",
-      "kind": "state",
-      "summary": "本机相邻日志行的序号断档单独成线，不与日期缺口相加。",
-      "details": [
-        "三种态：序号连续（无空号）/ 差值全超报号上限（一个号数都不报）/ 有断档逐行列出",
-        "文案明确「只是本机序号的算术」，可能是没拉到，也可能是缓存 300 行上限挤掉旧行，不等于锁内少了几条",
-        "跳变超过 RecordReconcile.idxGapCap 的异常只计数不报号数（r.idxAnomalies）",
-        "r.clocklessRows > 0 时另报「日期推断已排除 N 行没有有效锁端时刻的日志」"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 497,
-          "symbol": "信号 B 注释"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 498,
-          "symbol": "idxGapTotal == 0 && idxAnomalies == 0"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 499,
-          "symbol": "序号连续"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 507,
-          "symbol": "ForEach(r.idxGaps)"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 510,
-          "symbol": "序号这条线与日期是两回事"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 515,
-          "symbol": "idxGapCap 计数"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 519,
-          "symbol": "clocklessRows"
         }
       ],
       "tags": [
@@ -1532,53 +1303,6 @@
       "status": "implemented"
     },
     {
-      "key": "diagnostic.autoopen-audit",
-      "parentKey": "diagnostic.center",
-      "domain": "diagnostic",
-      "level": 3,
-      "name": "靠近自动开锁拒开审计",
-      "kind": "diagnostic",
-      "summary": "显示上次拒开原因与更早记录，只记门与时刻。",
-      "details": [
-        "条件：AutoOpen.lastReject(app.currentMac) 有值且 currentMac 非空",
-        "「上次拒开原因」+ 当 audits>1 时「更早拒开」列出最近 3 条去掉首条后的「时刻 + 原因」",
-        "footer：审计只记「哪道门拒了」与时刻，永不落 ekey/skey 明文；尾段 500 条",
-        "切锁后内容随 currentMac 变化"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 732,
-          "symbol": "AUTOOPEN 注释"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 733,
-          "symbol": "if let last = AutoOpen.lastReject"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 735,
-          "symbol": "上次拒开原因"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 737,
-          "symbol": "更早拒开"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 743,
-          "symbol": "永不落明文"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "开锁"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "diagnostic.selfcheck",
       "parentKey": "diagnostic.center",
       "domain": "diagnostic",
@@ -1691,69 +1415,6 @@
       "tags": [
         "诊断",
         "日志"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.logs.entity",
-      "parentKey": "diagnostic.logs",
-      "domain": "diagnostic",
-      "level": 4,
-      "name": "日志实体引用跳转",
-      "kind": "action",
-      "summary": "日志行里的凭证/指纹引用可点，弹出本机台账元数据并可跳到凭证页定位。",
-      "details": [
-        "DiagLogs.entities(in: row.line) 解析引用；「当前视图有 N 行含可跳转的凭证/指纹引用」只统计可见行",
-        "胶囊按钮 e.text；点击 entityRef = e + 触感，弹 sheet",
-        "sheet 内容：DiagLogs.entityDetail(ref, mac:)；只显示备注/属主/有效期等元数据，口令、指纹特征与密钥不出现",
-        "ref.isCredential 时给「到凭证页查看」：按 kind 设 pendingCredNav = \"pwd:<alias>\" / \"fp:<batch>\"，pendingCredNavMac = currentMac，requestRoute(.credentials)，再 dismiss"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1054,
-          "symbol": "entityRows 计数"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1080,
-          "symbol": "ents 胶囊按钮"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1148,
-          "symbol": ".sheet(item: $entityRef)"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1151,
-          "symbol": "entityDetail"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1155,
-          "symbol": "只显示台账元数据"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1164,
-          "symbol": "到凭证页查看"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1167,
-          "symbol": "pendingCredNav pwd"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1168,
-          "symbol": "pendingCredNav fp"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "日志",
-        "导航"
       ],
       "status": "implemented"
     },
