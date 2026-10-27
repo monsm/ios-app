@@ -103,6 +103,12 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
 
     private var manager: CBCentralManager!
     private var scanTimer: Timer?
+    // 2026-10-27 审核修复 (AUDIT-D D-25)：扫描引用计数。
+    // 原先 `startScan` 先 `stopScanInternal()` 再开、`stopScan` 直接停 ——
+    // 两个 Task 各自 defer stopScan 时，先结束的那个会把还在用的扫描停掉：
+    // 冷启动扫描（2.5–10s）与 startupPreconnect 并发时，预连接偶发"扫不到锁"
+    // （表现为冷启动后第一次开锁慢一拍）。现在只有计数归零才真停。
+    private let scanRefLock = Locked(0)
     private var discovered = [String: BLEAdvDevice]()
 
     // 当前连接
@@ -211,7 +217,8 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     @MainActor
     func startScan(allowDuplicates: Bool = false, intervalMs: Int = 500, timeoutMs: Int = 10000) async throws {
         try await waitReady()
-        stopScanInternal()
+        // 引用计数 +1；内部先无条件重置物理扫描（新一次扫描要清空 discovered）
+        scanRefLock.withLock { $0 += 1 }
         discovered.removeAll()
         scanning = true
         manager.scanForPeripherals(withServices: nil,
@@ -221,7 +228,14 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
             self?.stopScanInternal()
         }
     }
-    func stopScan() { stopScanInternal() }
+    func stopScan() {
+        // 引用计数减到 0 才真停 —— 见 scanRefLock 的注释
+        let left = scanRefLock.withLock { n -> Int in
+            n = max(0, n - 1)
+            return n
+        }
+        if left == 0 { stopScanInternal() }
+    }
     private func stopScanInternal() {
         guard manager != nil else { return }
         if manager.isScanning { manager.stopScan() }

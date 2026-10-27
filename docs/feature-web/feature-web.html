@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T09:49:31.164Z",
+    "generated": "2026-10-27T09:51:39.131Z",
     "sources": [
       {
         "scout": "android-native",
@@ -30870,7 +30870,7 @@ const DATA = {
           "line": 214,
           "symbol": "cloudSection",
           "note": "",
-          "text": "// 這件事不能默默发生, 至少在破坏性确认里说清楚。"
+          "text": "// 现在先 parsePreview（它本身就是导入的必经入口：解密 → 校验哈希 → 升级链），"
         },
         {
           "platform": "ios",
@@ -30894,7 +30894,7 @@ const DATA = {
           "line": 239,
           "symbol": "TextField 坚果云账号",
           "note": "",
-          "text": "app.loadDevices()"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -31783,7 +31783,7 @@ const DATA = {
           "line": 268,
           "symbol": "请先粘贴备份文本",
           "note": "",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -31791,7 +31791,7 @@ const DATA = {
           "line": 274,
           "symbol": "confirmDestructive 导入备份",
           "note": "",
-          "text": "///   · 读出来的文本走与「粘贴导入」**同一个入口** (parsePreview), 不另写一套解析"
+          "text": "DB.store.set(\"kf_migrate_pending\", ISO8601DateFormatter().string(from: Date()))"
         },
         {
           "platform": "ios",
@@ -31799,7 +31799,7 @@ const DATA = {
           "line": 275,
           "symbol": "口令会被替换成它",
           "note": "",
-          "text": "///   · 任何失败都给 toast, 不静默"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -31807,7 +31807,7 @@ const DATA = {
           "line": 276,
           "symbol": "confirmTitle: 导入",
           "note": "",
-          "text": "private func handleFileImport(_ result: Result\u003c[URL], Error>) {"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -32065,7 +32065,7 @@ const DATA = {
           "line": 280,
           "symbol": "doImport",
           "note": "",
-          "text": "let scoped = url.startAccessingSecurityScopedResource()"
+          "text": "private var backupFilename: String {"
         },
         {
           "platform": "ios",
@@ -32073,7 +32073,7 @@ const DATA = {
           "line": 288,
           "symbol": "do 块",
           "note": "",
-          "text": "// 系统会把它丢掉, 用户看到的就是「选了文件, 界面没有任何反应」。"
+          "text": "/// 文件选择器的结果处理。"
         },
         {
           "platform": "ios",
@@ -40270,7 +40270,7 @@ const DATA = {
           "line": 538,
           "symbol": "didUpdateNotificationState",
           "note": "",
-          "text": "connectCompletion = nil"
+          "text": "return"
         },
         {
           "platform": "ios",
@@ -42972,7 +42972,7 @@ const DATA = {
           "line": 126,
           "symbol": "assembler",
           "note": "",
-          "text": "/// 写槽 = 「忙标志 + FIFO 等待队列」, 由一把锁保护。"
+          "text": "private var rssiCompletion: ((Int?) -> Void)?"
         }
       ],
       "platformEvidence": {
@@ -43933,7 +43933,7 @@ const DATA = {
           "line": 227,
           "symbol": "connect",
           "note": "",
-          "text": "if manager.isScanning { manager.stopScan() }"
+          "text": "scanTimer = Timer.scheduledTimer(withTimeInterval: Double(timeoutMs) / 1000.0, repeats: false) { [weak self] _ in"
         },
         {
           "platform": "ios",
@@ -43941,7 +43941,7 @@ const DATA = {
           "line": 249,
           "symbol": "connect",
           "note": "超时工作项",
-          "text": "do {"
+          "text": "// retrievePeripherals(withIdentifiers:), 不用这个表), 删。"
         },
         {
           "platform": "ios",
@@ -43949,7 +43949,7 @@ const DATA = {
           "line": 497,
           "symbol": "didDiscoverServices",
           "note": "NUS 优先 / FE90 回退",
-          "text": "}"
+          "text": "readyTimer?.cancel()"
         },
         {
           "platform": "ios",
@@ -43957,7 +43957,7 @@ const DATA = {
           "line": 150,
           "symbol": "readyMessage",
           "note": "",
-          "text": "/// 诊断侧不要自己 `CBCentralManager()`: 无代理的实例永远停在 .unknown, 会把\"蓝牙正常\"判成\"蓝牙未开启\"。"
+          "text": "func bootstrap() {"
         }
       ],
       "platformEvidence": {
@@ -44033,7 +44033,7 @@ const DATA = {
           "line": 267,
           "symbol": "disconnect",
           "note": "",
-          "text": "manager.connect(target, options: [CBConnectPeripheralOptionNotifyOnDisconnectionKey: true])"
+          "text": "self.connectTimeoutWork = nil"
         },
         {
           "platform": "ios",
@@ -44041,7 +44041,7 @@ const DATA = {
           "line": 463,
           "symbol": "didDisconnectPeripheral",
           "note": "",
-          "text": "advertisHex: mfgHex.isEmpty ? svcDataHex : mfgHex,"
+          "text": "DispatchQueue.main.async {"
         },
         {
           "platform": "ios",
@@ -44049,7 +44049,7 @@ const DATA = {
           "line": 477,
           "symbol": "didDisconnectPeripheral",
           "note": "写确认与连接等待被唤醒",
-          "text": "writeChar = nil"
+          "text": "advertisHex: mfgHex.isEmpty ? svcDataHex : mfgHex,"
         }
       ],
       "platformEvidence": {
@@ -44154,7 +44154,7 @@ const DATA = {
           "line": 415,
           "symbol": "writeChunk",
           "note": "超时抛 writeFailed",
-          "text": "await acquireWriteSlot()"
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -44271,7 +44271,7 @@ const DATA = {
           "line": 549,
           "symbol": "didUpdateValueFor",
           "note": "",
-          "text": "cb?(.success(()))"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -44279,7 +44279,7 @@ const DATA = {
           "line": 160,
           "symbol": "onFrame",
           "note": "",
-          "text": "}"
+          "text": "func waitReady(timeoutMs: Int = 3000) async throws {"
         },
         {
           "platform": "ios",
@@ -44287,7 +44287,7 @@ const DATA = {
           "line": 538,
           "symbol": "didUpdateNotificationState",
           "note": "",
-          "text": "connectCompletion = nil"
+          "text": "return"
         }
       ],
       "platformEvidence": {
@@ -44355,7 +44355,7 @@ const DATA = {
           "line": 306,
           "symbol": "readLinkRSSI",
           "note": "",
-          "text": "assembler.reset()"
+          "text": "// 被唤醒者随后会撞上 writeFrameHex 的 `guard let device` 而快速失败, 不会误发。"
         },
         {
           "platform": "ios",
@@ -44363,7 +44363,7 @@ const DATA = {
           "line": 577,
           "symbol": "didReadRSSI",
           "note": "",
-          "text": "}"
+          "text": "guard let data = characteristic.value, error == nil else { return }"
         },
         {
           "platform": "ios",
@@ -44371,7 +44371,7 @@ const DATA = {
           "line": 299,
           "symbol": "readLinkRSSI",
           "note": "注释：连上后门锁停止广播",
-          "text": "for c in queued { c.resume() }"
+          "text": "if let w = writeAckLock.withLock({ c -> CheckedContinuation\u003cVoid, Error>? in"
         }
       ],
       "platformEvidence": {
@@ -44440,7 +44440,7 @@ const DATA = {
           "line": 200,
           "symbol": "startScan",
           "note": "",
-          "text": "}"
+          "text": "var label: String {"
         },
         {
           "platform": "ios",
@@ -44448,7 +44448,7 @@ const DATA = {
           "line": 170,
           "symbol": "ScanProfile",
           "note": "",
-          "text": "// ---------- 帧订阅 ----------"
+          "text": "case .unauthorized: return \"未获得蓝牙权限: 请在系统设置 → 隐私与安全性 → 蓝牙 中允许本 App\""
         },
         {
           "platform": "ios",
@@ -44456,7 +44456,7 @@ const DATA = {
           "line": 209,
           "symbol": "startScan",
           "note": "到点 stopScanInternal 的定时器",
-          "text": "// 全部调用点 (LinkSenseKit/DFUKit/HardwareService/LockService/Sheets) 本就 `await` 它,"
+          "text": "// 2026-10-13 对抗式排查: 补 @MainActor。原写是非隔离 async func, 而**非隔离 async 函数被"
         }
       ],
       "platformEvidence": {
@@ -44524,7 +44524,7 @@ const DATA = {
           "line": 120,
           "symbol": "writeSlot",
           "note": "",
-          "text": "private var rssiCompletion: ((Int?) -> Void)?"
+          "text": "// 2026-10-27 审核修复 (AUDIT-D D-17)：这个槽被主队列（CB 回调 / disconnect 清理）"
         },
         {
           "platform": "ios",
@@ -44532,7 +44532,7 @@ const DATA = {
           "line": 344,
           "symbol": "acquireWriteSlot",
           "note": "",
-          "text": "if device.state != .connected { throw BLEErrorX.code(.writeFailed) }"
+          "text": "// 与超时回收互斥于 rssiGeneration), 于是跨闭包边界的只有 self 与 myGen。"
         },
         {
           "platform": "ios",
@@ -44540,7 +44540,7 @@ const DATA = {
           "line": 362,
           "symbol": "releaseWriteSlot",
           "note": "",
-          "text": "}"
+          "text": "// onCharacteristicWrite 才发下一片 (BLE_TIMEOUT=8s), 没有固定间隔 —— 我们这里的"
         },
         {
           "platform": "ios",
@@ -44548,7 +44548,7 @@ const DATA = {
           "line": 281,
           "symbol": "disconnect",
           "note": "唤醒队列",
-          "text": "if let c = connectCompletion {"
+          "text": "manager.connect(target, options: [CBConnectPeripheralOptionNotifyOnDisconnectionKey: true])"
         }
       ],
       "platformEvidence": {
@@ -44623,7 +44623,7 @@ const DATA = {
           "line": 326,
           "symbol": "writeFrameHex",
           "note": "",
-          "text": "// cannot check reference equality of functions), 所以用整数代次判断新一轮是否已开始。"
+          "text": "/// 再也不产生样本。靠近自动开锁的武装位 (AutoOpen.feedRssi) 因此永远收不到新数,"
         },
         {
           "platform": "ios",
@@ -44631,7 +44631,7 @@ const DATA = {
           "line": 339,
           "symbol": "writeFrameHex",
           "note": "逐片 await writeChunk",
-          "text": "guard let device, let ch = writeChar else { throw BLEErrorX.code(.parseFail) }"
+          "text": "// 只回收\"还是我这一次\"的等待。Swift 不允许对闭包用 === 比引用 (run 179 的 error:"
         },
         {
           "platform": "ios",
@@ -44639,7 +44639,7 @@ const DATA = {
           "line": 423,
           "symbol": "writeChunk",
           "note": "8.0 秒 ack 超时",
-          "text": "try await withCheckedThrowingContinuation { (cont: CheckedContinuation\u003cVoid, Error>) in"
+          "text": "// 拍板 #1 (第六十五批): 用系统就绪信号替代原来的 20ms 盲 sleep。"
         },
         {
           "platform": "ios",
@@ -44647,7 +44647,7 @@ const DATA = {
           "line": 396,
           "symbol": "writeChunk",
           "note": "withoutResponse 回退",
-          "text": "c.resume()"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -53072,7 +53072,7 @@ const DATA = {
           "line": 265,
           "symbol": "connect",
           "note": "连接成功后 assembler.reset()",
-          "text": "}"
+          "text": "self.connectCompletion = { result in"
         }
       ],
       "platformEvidence": {
@@ -61640,7 +61640,7 @@ const DATA = {
           "line": 949,
           "symbol": "secret(_:_:)",
           "note": "Keychain 优先 + 明文迁移",
-          "text": "}"
+          "text": "hash ^= UInt32(ch)"
         }
       ],
       "platformEvidence": {

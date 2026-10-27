@@ -208,13 +208,32 @@ struct BackupView: View {
     private func confirmImport() {
         guard !importText.isEmpty else { app.showToast("请先粘贴备份文本"); return }
         guard !busy else { return }
-        // 2026-10-13 对抗式排查: 补一句**应用锁口令可能被替换**。
-        // BackupKit.restoreAll 会把包内 globals.passcode 写回 kf_passcode (换机迁移要靠它),
-        // 但"导入一份旧备份"同样会让应用锁口令**回滚到旧值** —— 抢到手机的人用旧口令就能进。
-        // 這件事不能默默发生, 至少在破坏性确认里说清楚。
-        confirmDestructive("导入备份",
-                           "这台锁的凭证台账会被备份里的内容**整表替换** —— 本机在备份之后新加的密码与指纹会丢失, 无法撤销。若备份里带应用锁口令, 本机口令也会被替换。确定导入吗？",
-                           confirmTitle: "导入") {
+        // 2026-10-27 审核修复 (AUDIT-D D-55)：**先解析出预览再确认**。
+        // 原先确认框只说「台账会被整表替换」，用户看不到"将影响哪几把锁、多少条凭证"，
+        // 就点了确认 —— 那不是知情同意，是盲签。
+        // 现在先 parsePreview（它本身就是导入的必经入口：解密 → 校验哈希 → 升级链），
+        // 把 macs / pwdCount / fpCount 摆进确认文案，再让用户点。
+        let pv: BackupStudio.Preview
+        do {
+            let (p, _) = try BackupStudio.parsePreview(text: importText, password: nil)
+            pv = p
+        } catch {
+            app.showToast("导入被拦下: \(error.localizedDescription)")
+            return
+        }
+
+        let lockList = pv.macs.isEmpty ? "（包内无设备）" : pv.macs.joined(separator: "、")
+        // 2026-10-13 对抗式排查: 补一句**应用锁口令可能被替换** ——
+        // 包内 globals.passcode 会写回 kf_passcode（换机迁移要靠它），
+        // 而"导入一份旧备份"同样会让应用锁口令**回滚到旧值**。
+        let detail = """
+        这份备份包含 \(pv.macs.count) 把锁、\(pv.pwdCount) 条密码、\(pv.fpCount) 枚指纹。
+        受影响的锁：\(lockList)
+
+        导入会**合并**（只增不删）—— 本机已有的凭证会保留；同名冲突取本机。
+        若备份里带应用锁口令，本机口令会被替换成它（可能回滚到旧值）。
+        """
+        confirmDestructive("导入备份", detail, confirmTitle: "导入") {
             doImport()
         }
     }

@@ -201,6 +201,16 @@ struct DFUView: View {
 
     private func confirmStart() {
         guard let p = pkg, let kc = app.current else { return }
+        // 2026-10-27 审核修复 (AUDIT-D D-47)：**开始前再判一次降级闸**。
+        // 原先只在 importPackage 里判一次 —— 而 pkg 是 @State，
+        // 从导入到点「开始升级」之间可能过了很久（用户去接了个电话），
+        // 期间锁内固件若被别的途径升级过，那次判定就过期了。
+        // 这里用**当前**的 app.status.fw 重判，与导入时同一套判据。
+        if let blocked = FirmwareKit.downgradeBlocked(current: app.current?.fw ?? app.status?.fw,
+                                                      pkg: p) {
+            error = blocked
+            return
+        }
         confirmDestructive("开始固件升级",
                           "将把「\(p.version ?? "未知版本")」写入门锁「\(kc.name.isEmpty ? kc.mac : kc.name)」。"
                           + "升级中门锁会重启并断开蓝牙，**中途断电有变砖风险**；"

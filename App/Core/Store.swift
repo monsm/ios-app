@@ -913,8 +913,20 @@ enum DB {
     }
 
     // 门禁 (utils/passcode.js)
+    /// 是否设了本机密码。
+    ///
+    /// 2026-10-27 审核修复 (AUDIT-D D-59)：原先只看键**存在**，不看内容 ——
+    /// 一个 `{}` 或残缺记录（如只有 salt 没有摘要）也会被当成"有密码"，
+    /// 于是：① 应用锁界面出现，但任何输入都验不过 → 用户被永久锁在外面；
+    /// ② `verifyPasscode` 的 `guard rec["d"] == ...` 在 `d` 缺失时永远 false。
+    /// 现在要求：「salt 非空」且「至少有一种摘要（d2 或 d）」。
     static func hasPasscode() -> Bool {
-        get([String: String].self, "kf_passcode") != nil
+        guard let rec = get([String: String].self, "kf_passcode") else { return false }
+        let salt = rec["s"] ?? ""
+        guard !salt.isEmpty else { return false }
+        let hasStrong = !(rec["d2"] ?? "").isEmpty
+        let hasLegacy = !(rec["d"] ?? "").isEmpty
+        return hasStrong || hasLegacy
     }
     /// 门禁口令摘要轮数 (PBKDF2-HMAC-SHA256)
     static let pcIter = 60_000
