@@ -248,8 +248,6 @@ enum RecordSearch {
                                provable: c.provable, cred: cred,
                                alarm: StatsKit.alarmTypes.contains(e.type), care: false, failMsg: ""))
             }
-            if includeFails {
-            }
         }
         out.sort { $0.timeStr > $1.timeStr }   // 字符串序 = 时间倒序 (同格式)
         return out

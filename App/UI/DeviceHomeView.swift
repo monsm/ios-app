@@ -22,8 +22,6 @@ struct DeviceHomeView: View {
     @State private var pageOrder: [String] = []
     // 767 设备 Tab 按组切换: "" = 全部组。只影响"这一屏看得见哪些锁", 不动档案也不动数据。
     @State private var groupFilter = ""
-    // 764 图标行的红点判据 + 765 跨锁合并流: 都在进页/刷新时算一次, 不在 body 里遍历各锁日志 (与 437 同一条理由)
-    @State private var alarmMacs: Set<String> = []
     @State private var confirmMac: String?
     @State private var confirmPulse = false
     @State private var autoLockLeft: Int?
@@ -147,9 +145,6 @@ struct DeviceHomeView: View {
                 }
             }
             .onChange(of: app.devices.count) { _, _ in
-                // 绑定/删除之后合并流与告警点位都会留下上一批锁的行: 立刻按新台账重算,
-                // 不等用户手动刷新 (否则解绑那把锁的"最近开门"会继续挂在列表里)。
-                alarmMacs = LockStats.recentAlarmMacs(LockStats.usage())
             }
             // 268 状态变化历史: 三态切换记最近 5 笔 (长按胶囊可回看)
             .onChange(of: sense.linkState) { _, new in
@@ -223,7 +218,6 @@ struct DeviceHomeView: View {
         // 764 图标行的红点 + 765 跨锁合并流: 同一批"要遍历各锁日志"的聚合放在一起算一次。
         // 都走本地缓存, 不主动连锁 —— 下拉刷新已经把 03 快照发出去了, 这里不再叠一轮 IO。
         let us = LockStats.usage()
-        alarmMacs = LockStats.recentAlarmMacs(us)
         // 112: 迁移验证全部通过后清掉向导旗标 (下次恢复备份会重新立起)
         let flag = DB.store.getString("kf_migrate_pending")
         if !flag.isEmpty, !app.devices.isEmpty,
@@ -520,9 +514,6 @@ struct DeviceHomeView: View {
                             }
                             Spacer(minLength: 0)
                         }
-                    }
-                    // 126 回连节律点阵 (仅在有回连轮次时出现)
-                    if state == .down, sense.reconnectAttempt > 0 {
                     }
                 }
             }

@@ -6,8 +6,6 @@ import Combine
 @MainActor
 final class HardwareService: ObservableObject {
     static let shared = HardwareService()
-    @Published private(set) var dongleState: DongleStat?
-    @Published private(set) var gatewayState: GatewayState?
     @Published private(set) var busy = false
     @Published var logs: [String] = []
 
@@ -187,7 +185,6 @@ let shown = msg   // 2026-10-27 三轮：帧脱敏已删
         rec.stat = st
         rec.lastSeenAt = ISO8601DateFormatter().string(from: Date())
         DB.saveDongle(rec)
-        dongleState = st
         log("状态: 电量 \(st.power), 钥匙 \(st.ekeyCount)/\(st.ekeyAmount), 固件 \(st.firmware)")
         return st
     }
@@ -286,7 +283,6 @@ let shown = msg   // 2026-10-27 三轮：帧脱敏已删
     func readGatewayState(mac: String) async throws -> GatewayState {
         let f = try await send(ZKCmdBuilder.cmd38GWStatus(), target: mac)
         let st = HardwareService.parseGWStatus(f.klvs)
-        gatewayState = st
         var rec = DB.gateway(mac) ?? Gateway(mac: mac)
         rec.wifimac = st.wifimac; rec.romVer = st.romVer; rec.eCtrlVer = st.eCtrlVer
         rec.ssid = st.ssid; rec.wifiIP = st.wifiIP; rec.netState = st.netState

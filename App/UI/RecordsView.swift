@@ -71,7 +71,6 @@ struct RecordsView: View {
     @State private var noteDraft = ""
     @State private var showActiveCreds = false  // 574 活跃凭证排序
     @State private var showOutWin = false      // 575 越界开门清单
-    @State private var alarmTick = 0          // 735 角标刷新 (从告警中心返回时重算)
     @State private var showAlarmKinds = false // 565 告警类型多选面板
     @State private var recPool: [Rec] = []    // 跨锁/单锁 Rec 池 (576 详情查找 + 770 行映射 + 580/584 翻页源)
     /// 593 组尾「全天 N 条 / 当日最晚」的可核口径: 取本次**过滤与分页截断之前**的行池按归属日算一次。
@@ -357,7 +356,6 @@ struct RecordsView: View {
             // 580/584: 把**当前显示顺序**交给详情卡，上下条与邻近横滑才走在用户刚才看到的那份结果里
             RecDetailSheet(rec: rec, siblings: displayedRecs, scopeAll: scope == 1)
                 .onDisappear {
-                    alarmTick += 1
                     // 583: 详情关了才滚+闪 (见 flashOnClose)
                     if !flashOnClose.isEmpty {
                         let k = flashOnClose

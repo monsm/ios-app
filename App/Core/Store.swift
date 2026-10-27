@@ -370,12 +370,21 @@ enum DB {
         // 2026-10-14: 门锁密钥不再随偏好明文写进 plist (越狱/iTunes 备份即可读走), 改存系统 Keychain;
         // plist 只留非密字段 (mac/名称/pid/pins…)。读侧 fromDict 自动回填。
         // 空 skey 不覆盖既有值 (Keychain 读失败回填 "" 时, 一次无关的 saveKeychain 会把真密钥写成空)。
+        // 2026-10-27 审核修复：三把密钥写 Keychain 的返回值原先全部被丢弃 ——
+        // 写入失败时用户看不到任何异常，下次开锁才莫名失败（且查不出原因）。
+        // 现在失败一律记一条遥测（诊断页已删，但记录仍在 kf_ble_events 里可导出）。
+        var failed: [String] = []
         if !kc.skey.isEmpty, !SecretStore.set(kc.skey, for: secretAccount(kc.mac, "skey")) {
+            failed.append("skey")
         }
         if kc.bkey.isEmpty { SecretStore.remove(secretAccount(kc.mac, "bkey")) }
-        else { SecretStore.set(kc.bkey, for: secretAccount(kc.mac, "bkey")) }
+        else if !SecretStore.set(kc.bkey, for: secretAccount(kc.mac, "bkey")) { failed.append("bkey") }
         if kc.ekey.isEmpty { SecretStore.remove(secretAccount(kc.mac, "ekey")) }
-        else { SecretStore.set(kc.ekey, for: secretAccount(kc.mac, "ekey")) }
+        else if !SecretStore.set(kc.ekey, for: secretAccount(kc.mac, "ekey")) { failed.append("ekey") }
+        if !failed.isEmpty {
+            BleTelemetry.recordEvent("Keychain 写入失败: " + failed.joined(separator: "/")
+                                     + " @ " + String(kc.mac.prefix(6)), ok: false)
+        }
         var map = store.getDict("kf_keychains")
         map[normalizeMac(kc.mac)] = kc.toDict()   // 归一化: 防导入冒号/大写 MAC 造成重复条目
         store.set("kf_keychains", map)

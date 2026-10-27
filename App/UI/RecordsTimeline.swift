@@ -81,10 +81,6 @@ struct RecDetailSheet: View {
             // 650 色点: 绿点=锁内时钟 (权威), 灰点=本机录入 (补的墙钟), 一行内区分。
             fieldRow("时间来源", rec.lockTime > 0 ? "锁内时钟 (03#04 协议秒)" : "本机录入时刻 (锁端未回时刻)",
                      dot: rec.lockTime > 0 ? DS.Palette.ok : DS.Palette.textSub)
-            // 651 秒级与相邻间隔: 只有**两条都有 lockTime** 才算差值 —— 基准 2010-01-01 在相减时抵消，
-            // 所以差值不受那个纪元影响; 单边缺值就直说"不可算"，不拿 timeStr 反解去凑 (那串可能没有秒位)。
-            if rec.lockTime > 0 {
-            }
             fieldRow("归属 (可证明链)", who)
             fieldRow("开门方式", kindWord)
             // 917 同分钟连开注记 (拍板 2026-10-10: **不折叠时间线的行**，只在这里说明)。

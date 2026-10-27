@@ -39,7 +39,6 @@ struct CredentialsView: View {
     @State private var showExtend = false
     @State private var extendAliases: [Int] = []
     @State private var showDisable = false
-    @State private var binQuery = ""
     @State private var pwdDetailItem: LedgerPwd?   // 包5 PwdDetailStudio
     @State private var fpDetailItem: LedgerFp?     // 包5 FpDetailStudio
     @State private var showTempCode = false
@@ -55,16 +54,6 @@ struct CredentialsView: View {
                                actionTitle: "去添加门锁") { showAdd = true }
                 } else {
                     VStack(spacing: 0) {
-                        // 2026-10-18 重构: 四条横条原来**无条件全叠**在顶部
-                        // (borrowBanner / pendingQueueBar / credJumpBar / headerToolbar),
-                        // 首屏被横条吃掉一大块 —— 这才是"凭证页很乱"的真正来源。
-                        // 现在: 三条通知条**互斥取一**(优先级 借出 > 待下发 > 跳转定位),
-                        // 且都只在真有事时出现; headerToolbar 永远最下面那条。
-                        // 三条通知条**互斥取一**(优先级 借出 > 待下发 > 跳转定位)。
-                        // 每条自己已有空判 (borrowBanner 里 if !bs.isEmpty / pendingQueueBar 同 /
-                        // credJumpBar 用 jumpBarOn), 所以这里只需要"只显示第一个真有事的"。
-                        if !MemberHub.borrows(mac).isEmpty {
-                        }
                         headerToolbar
                         if editMode {
                             editList
@@ -306,11 +295,7 @@ struct CredentialsView: View {
                 memberSections
             } else {
                 let pwds = sortedPwds
-                if !pwds.isEmpty {
-                }
                 let fps = sortedFps
-                if seg == 0 || seg == 2, !fps.isEmpty {
-                }
             }
             if seg == 0 { otpSection }
             // 354: 全归档不算"台账空" — 归档区那张卡就是这批条目的落点, 谎报"还没有台账"会导向重复建码
@@ -368,7 +353,6 @@ struct CredentialsView: View {
                             .foregroundStyle(DS.Palette.textSub)
                         HStack(spacing: DS.Space.s) {
                             Button {
-                                binQuery = search.trimmingCharacters(in: .whitespaces)
                             } label: {
                                 Label("去回收站搜", systemImage: "magnifyingglass.circle")   // 503 去回收站搜
                             }

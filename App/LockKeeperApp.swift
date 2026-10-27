@@ -579,16 +579,6 @@ final class AppState: ObservableObject {
 
     /// 启动结算: 异常退出卡(758) / 保留期到期卡(752) / 自动归档(223) / 关怀与凭证巡检 / 启动自检与月度备份排程
     func onLaunch() {
-        // 758 启动提示: 上次异常退出时先给一张时刻卡 —— 此前只有走进诊断页才看得到那条标签,
-        // "启动时提示"这一半不存在。防重键带档案首行 (含检测时刻), 同一次异常只弹一次。
-        // 2026-10-26: 「保留期到了但先不删」这段已删 —— 它读 SecKey.auditRetention（385 保留期），
-        // 而那个键**从来没有写点**（设置页没有保留期选项）⇒ retention 恒 0 ⇒ 整个 if 永不进入。
-        // AuditLog().purgeExpired(months:) 因此从未被自动调用过；手动清理入口仍在诊断页，不受影响。
-        // 223 启动自动归档: 诊断页那枚开关开着才动手 (默认关), 走与手动按钮同一引擎; 条数进维护回执 (387)
-        if DB.store.getBool("kf_diag_autoarchive") {
-            // 428: BGTask 注册已移到 QuickActionDelegate.didFinishLaunchingWithOptions ——
-            // 必须早于启动完成 (Apple 契约), 且每进程只注册一次 (onLaunch 可能被多次调用)。
-        }
     }
     /// 开锁成功后的里程碑结算 (24/992/1005/1010/1000); 凌晨静默态(1002)只计数不播时刻
     private func settleUnlockSuccess() {

@@ -169,7 +169,6 @@ enum LockArchive {
     }
 
     static var orderMacs: [String] { DB.store.get([String].self, orderKey) ?? [] }
-    static var hasManualOrder: Bool { !orderMacs.isEmpty }
     static func setOrder(_ macs: [String]) {
         // 写侧剪掉已解绑的 mac: 顺序表是全局键, 删设备那一步 (Store.removeDevice) 删不到按键名含 mac 的
         // 逐锁族, 但表里的幽灵条目只会让读侧多做无用的查找, 直接剪掉。

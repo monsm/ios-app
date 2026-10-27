@@ -1073,8 +1073,6 @@ struct PwdStudio: View {
                     DB.setPwdNote(kc.mac, alias, finalNote)
                     DB.setPwdOwner(kc.mac, alias, owner)
                 }
-                if let p2 = DB.getPwd(kc.mac, alias) {
-                }
             } else {
                 alias = try await app.lock.pwdAdd(pwd: pwd, validFrom: fromS, validTo: toS)
                 DB.addPwd(kc.mac, LedgerPwd(alias: alias, from: fromS, to: toS, temp: isTemp,

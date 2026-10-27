@@ -47,16 +47,3 @@ enum HashKit {
 
 
 
-
-enum DestroyKit {
-    /// 400 销毁前备份闸: 7 天内无备份文件即拦截。
-    /// 备份时间戳读 Sheets 既有 kf_backup_hist ([Double] 时间线), 不另造写点。
-    /// 这本历史写的是 epoch **毫秒** (Milestones.recordBackup: *1000), 读数处统一换算成秒。
-    static var lastBackupAt: Double {
-        let hist = DB.store.get([Double].self, "kf_backup_hist") ?? []
-        return (hist.last ?? 0) / 1000
-    }
-    static var backupGatePass: Bool {
-        lastBackupAt > 0 && Date().timeIntervalSince1970 - lastBackupAt < 7 * 86400
-    }
-}
