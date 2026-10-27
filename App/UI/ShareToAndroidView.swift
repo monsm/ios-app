@@ -83,6 +83,10 @@ struct ShareToAndroidView: View {
                 }
                 .padding(DS.Space.l)
             }
+            // 2026-10-27 审核修复 (AUDIT-D D-40)：ekey 二维码 = 一把能开门的钥匙，
+            // 一旦截图外传就再也收不回来（AndroidPair.swift:3-6 自己写了这句话）。
+            // 检测到录屏/截图时整块遮住，停止后自动恢复。
+            .captureShield("这张二维码是开锁钥匙\n屏幕正在被录制或截图，已遮挡")
             .navigationTitle("分享给安卓")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }

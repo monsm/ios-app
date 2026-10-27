@@ -276,6 +276,9 @@ struct CodeBigCard: View {
         .shadow(color: DS.Palette.accent.opacity(0.14), radius: 10, y: 5)
         .padding(.horizontal, DS.Space.gutter)
         .accessibilityElement(children: .combine)
+        // 2026-10-27 审核修复 (AUDIT-D D-40)：这张卡含密码/动态码，可被截图外传。
+        // 检测到录屏/截图时遮住（停止后自动恢复）。
+        .captureShield("本卡含密码\n屏幕正在被录制或截图，已遮挡")
     }
 }
 

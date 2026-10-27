@@ -73,6 +73,8 @@ const SYS_NAMES = new Set(['AreaMark','LineMark','PointMark','RuleMark','BarMark
 // WidgetKit (927 哑按钮扩展 target): 这些系统 API 在仓库里各只出现 1–2 次, 正好落进本检查的误报形态。
 // 加白名单**不等于**证明我写的 WidgetKit 用法正确 —— 那只有编译器能定论, 见 docs/VERIFY-CHECKLIST.md 的 927 条。
 'Timeline', 'TimelineEntry', 'TimelineProvider', 'StaticConfiguration', 'WidgetConfiguration', 'WidgetBundle', 'WidgetFamily',
+// 2026-10-27: ProjectionTransform 是 SwiftUI `GeometryEffect` 协议要求返回的类型（锁屏输错抖动用）。
+  'ProjectionTransform', 'GeometryEffect',
 // 585 记录引用深链要读 `kf://records?k=<行键>` 的查询参数。URLComponents 是 Foundation 自带的 URL 解析器
 // (iOS 7 起)，加白的理由是**替代方案更差**: 自己 split("?"/"&") 就等于手写一个不处理 % 转义、
 // 不处理重复键、不处理 `#fragment` 的解析器 —— 而这条路径是深链入口，写错的代价是"链接能开门却定位错行"。

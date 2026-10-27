@@ -648,6 +648,8 @@ final class AppState: ObservableObject {
 struct RootView: View {
     @EnvironmentObject var app: AppState
     @ObservedObject private var sense = LinkSense.shared
+    /// 2026-10-27：应用锁（冷启动门禁 + 伪装码）
+    @ObservedObject private var lock = AppLock.shared
     // 162 握手可离开: 圆盘握手在别的 Tab 完成 → 设备 Tab 亮角标; 回到设备页清零
     @State private var handshakeDoneAway = false
     @Environment(\.scenePhase) private var scenePhase
@@ -861,7 +863,23 @@ struct RootView: View {
     /// 主界面。首启引导已随本轮删减移除, 启动不再分形态 —— 这里只返回主界面本体。
     @ViewBuilder
     private var rootGroup: some View {
-        mainTabsChrome
+        // 2026-10-27 新增（AUDIT-D D-01 + D-48）：应用锁门禁。
+        // 用户决策：**只在冷启动**要求输密码（不打断日常切前台）。
+        // 未解锁 → LockScreen；解锁后 → 主界面。
+        // 伪装码在 LockScreen 里识别：输胁迫码同样进主界面，但 decoy = true（空壳模式）。
+        ZStack {
+            if lock.unlocked {
+                mainTabsChrome
+            } else {
+                LockScreen()
+            }
+        }
+        // 伪装态同步到 AppState：全仓 12 处 decoyMode 判据靠它生效
+        .onChange(of: lock.decoy) { _, d in app.decoyMode = d }
+        .onChange(of: lock.unlocked) { _, u in
+            app.appUnlocked = u
+            if u, !lock.decoy { restoreLastTab() }
+        }
     }
 
     /// 摇一摇/外观种子/字号/灰度/加粗/动效/水印层 —— 继续拆 (原表达式报 type-check 超时)

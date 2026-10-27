@@ -42,6 +42,9 @@ final class Store: @unchecked Sendable {
     }
     func getBool(_ k: String, _ def: Bool = false) -> Bool { get(k, Bool.self) ?? def }
     func getInt(_ k: String, _ def: Int = 0) -> Int { get(k, Int.self) ?? def }
+    func getDouble(_ k: String, _ def: Double = 0) -> Double { get(k, Double.self) ?? def }
+    func setInt(_ k: String, _ v: Int) { set(k, v) }
+    func setDouble(_ k: String, _ v: Double) { set(k, v) }
     func set(_ k: String, _ v: Any) {
         // 顶层标量 (String/Bool/Int/Double) 是 JSON fragment: 不开 .fragmentsAllowed 时
         // JSONSerialization 直接抛错, 被 try? + if let 静默吞掉 → 该键从未落盘,

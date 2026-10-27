@@ -570,15 +570,51 @@ struct SettingsView: View {
         Section {
             if DB.hasPasscode() {
                 Button("更改本机密码") { setPasscode() }
+                Button(DB.hasDuressCode() ? "更改胁迫码" : "设置胁迫码") { setDuressCode() }
                 Button("关闭本机密码", role: .destructive) { disablePasscode() }
             } else {
                 Button("设置本机密码") { setPasscode() }
-                note("4 位以上数字。⚠ 本机密码当前只保护「设置」页本身，不拦查看密码明文与导出备份（应用锁未实现）。")
+                note("4 位以上数字。设置后，**冷启动** App 需要输入它才能进入。")
             }
         } header: {
-            Text("本机数据保护")
+            Text("应用锁")
         } footer: {
-            Text("本机密码保护设置页入口。查看密码明文与导出备份不受它约束 —— 拿到手机的人可直接看。")
+            Text(DB.hasDuressCode()
+                 ? "冷启动需输密码。胁迫码已设置：被胁迫时输入它会进入空壳模式 —— 门能开，但凭证与记录显示为空。"
+                 : "冷启动需输密码。可另设一个胁迫码：被胁迫时输入它，App 进入空壳模式（门能开、数据看不见），不报警不暴露。")
+        }
+    }
+
+    /// 设置胁迫码。已有密码时先验证原密码（与改密码同一纪律）。
+    private func setDuressCode() {
+        promptOldPasscode { ok in
+            guard ok else { return }
+            let alert = UIAlertController(
+                title: DB.hasDuressCode() ? "更改胁迫码" : "设置胁迫码",
+                message: "被胁迫时输入这个码，App 进入空壳模式：门能开，但凭证与记录显示为空。\n\n⚠ 必须与正常密码不同 —— 相同就等于把正常密码当胁迫码用。",
+                preferredStyle: .alert)
+            alert.addTextField { $0.isSecureTextEntry = true; $0.keyboardType = .numberPad; $0.placeholder = "4 位以上数字" }
+            alert.addTextField { $0.isSecureTextEntry = true; $0.keyboardType = .numberPad; $0.placeholder = "再次输入" }
+            alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+            if DB.hasDuressCode() {
+                alert.addAction(UIAlertAction(title: "清除胁迫码", style: .destructive) { _ in
+                    DB.clearDuressCode()
+                    app.showToast("胁迫码已清除")
+                })
+            }
+            alert.addAction(UIAlertAction(title: "确定", style: .default) { _ in
+                let f1 = alert.textFields?[0].text ?? ""
+                let f2 = alert.textFields?[1].text ?? ""
+                guard !f1.isEmpty, f1 == f2 else { app.showToast("两次输入不一致"); return }
+                guard f1.count >= 4 else { app.showToast("需 4 位以上"); return }
+                guard f1.allSatisfy({ $0.isNumber }) else { app.showToast("只能使用数字"); return }
+                if DB.setDuressCode(f1) {
+                    app.showToast("胁迫码已设置")
+                } else {
+                    app.showToast("设置失败：胁迫码不能与正常密码相同")
+                }
+            })
+            UIApplication.topViewController()?.present(alert, animated: true)
         }
     }
 

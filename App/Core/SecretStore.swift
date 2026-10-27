@@ -7,9 +7,12 @@
 // 只做"按账户存一个字符串"的最小封装, 不动 Keychain 模型与所有 `kc.skey` 调用点:
 // Store.saveKeychain 写这里、Keychain.init(fromDict:) 读这里, 对上层完全透明。
 //
-// 访问级别 AfterFirstUnlockThisDeviceOnly:
-//   · AfterFirstUnlock —— 首次解锁后即可读, 覆盖锁屏下的后台任务 (428 充电备份要读 skey 做回滚点);
-//   · ThisDeviceOnly    —— 不随 iCloud/iTunes 备份迁出本机 (跨机迁移走 App 自己的加密备份, 不走系统备份)。
+// 访问级别 WhenUnlockedThisDeviceOnly（2026-10-27 审核收紧，AUDIT-D D-12）：
+//   · WhenUnlocked —— **仅设备解锁时可读**。原先用 AfterFirstUnlock，理由是
+//     「覆盖锁屏下的后台任务（428 充电备份要读 skey 做回滚点）」—— 而那条功能已删，
+//     全仓 0 处 beginBackgroundTask、0 处 BGTaskScheduler.register ⇒ 这个前提不存在了。
+//     收紧后：设备锁屏状态下即使被物理接触（越狱/取证/恶意描述文件）也读不到密钥。
+//   · ThisDeviceOnly —— 不随 iCloud/iTunes 备份迁出本机（跨机迁移走 App 自己的加密备份）。
 import Foundation
 import Security
 
@@ -29,12 +32,15 @@ enum SecretStore {
     static func set(_ value: String, for account: String) -> Bool {
         let data = Data(value.utf8)
         let st = SecItemUpdate(baseQuery(account) as CFDictionary,
-                               [kSecValueData as String: data] as CFDictionary)
+                               [kSecValueData as String: data,
+                                // 2026-10-27 (D-12)：更新时顺带把 accessible 属性迁移到新值。
+                                // 历史条目的属性不会被 SecItemAdd 纠正（它只在新建时生效），必须走 Update。
+                                kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly] as CFDictionary)
         if st == errSecSuccess { return true }
         guard st == errSecItemNotFound else { return false }
         var q = baseQuery(account)
         q[kSecValueData as String] = data
-        q[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        q[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         return SecItemAdd(q as CFDictionary, nil) == errSecSuccess
     }
 
