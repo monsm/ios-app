@@ -1,5 +1,11 @@
 # PART 2 · 导航与信息架构（iOS）
 
+
+> ⚠ **本档是历史台账，不是当前代码的说明书。**
+> 里面的 `文件:行号` 指针记录的是**写档当时**的位置；后续精简/重构后部分文件已删或行号已移，
+> 那些失效指针是台账的**正常内容**（它记的就是"某批删了什么"），不是错误。
+> 想知道某个功能现在还在不在，请看 `docs/feature-web/features.json`（那份由工具从 inventory 重算）。
+
 > 作者：sp-nav（共享任务 task-4；Lead 骨架 + 实测数据合稿）· 唯一产出文件。
 > 前置：`DECISIONS.md` 的 **D1 / D7 / D8 / D11 / D13** + `PART0-OVERVIEW.md` + `MASTER-PLAN.md` + `PART1-LOCKFACE.md` + `PART7-ACCEPTANCE.md`。
 > 本文行号均为**实测**（2026-10-18，D:\aapk 工作副本）；拿不准的一律标「未证实」。路径相对 `ios-app/`（闸门必须在 `ios-app/` 下跑）。
