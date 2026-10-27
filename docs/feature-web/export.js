@@ -2,11 +2,11 @@ const fs=require('fs');
 const D=JSON.parse(fs.readFileSync('features.json','utf8'));
 const NODES=D.nodes, DOM=D.domains, ST=D.stats;
 const esc=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
-const rows=[['domain','level','key','name','kind','platforms','status','commands','path','summary','evidence1','evidence2','details'].map(esc).join(',')];
+const rows=[['domain','level','key','name','kind','platforms','status','cmds','path','summary','evidence1','evidence2','details'].map(esc).join(',')];
 for(const n of NODES){ if(n.isDomain) continue;
   const ev=n.evidence.map(e=>`${e.platform}:${e.file}:${e.line}`);
   rows.push([n.domain,n.level,n.key,n.name,n.kind,n.platforms.join('+'),
-    Object.entries(n.status).map(([k,v])=>k+'='+v).join(';'),n.commands.join('+'),n.path,n.summary,
+    Object.entries(n.status).map(([k,v])=>k+'='+v).join(';'),n.cmds.join('+'),n.path,n.summary,
     ev[0]||'',ev[1]||'',n.details.slice(0,6).join(' | ')].map(esc).join(','));
 }
 fs.writeFileSync('功能点清单.csv','\ufeff'+rows.join('\r\n'),'utf8');
@@ -26,7 +26,7 @@ const DESC={device:'首页 / 连接 / 配网 / 信息 / 网关 / 钥匙串 / 校
 const L=[];
 L.push('# 离线锁管家 · 功能蜘蛛网');
 L.push('');
-L.push(`> 生成 ${D.meta.generated} ｜ 节点 **${ST.nodes}** ｜ 源码证据 **${ST.evidence}** 条 ｜ 协议命令 **${ST.commands}** 条`);
+L.push(`> 生成 ${D.meta.generated} ｜ 节点 **${ST.nodes}** ｜ 源码证据 **${ST.evidence}** 条 ｜ 协议命令 **${ST.cmds}** 条`);
 L.push('>');
 L.push('> 全部结论来自**源码本体**（Swift / Kotlin / Java / JS / XML）。README 与 docs 未参与取证，每条结论都可回到 `file:line` 核对。');
 L.push('');
@@ -65,7 +65,7 @@ for(const d of DOM){
   const list=NODES.filter(n=>n.domain===d.key&&!n.isDomain).sort((a,b)=>a.level-b.level||a.path.localeCompare(b.path,'zh'));
   for(const n of list){
     const pad='  '.repeat(Math.max(0,n.level-2));
-    const cmds=n.commands.length?` · ${n.commands.map(c=>'cmd'+c).join(' ')}`:'';
+    const cmds=n.cmds.length?` · ${n.cmds.map(c=>'cmd'+c).join(' ')}`:'';
     L.push(`${pad}- **${n.name}** \`${n.key}\` · ${n.platforms.map(PL).join(' / ')}${cmds}`);
     if(n.summary) L.push(`${pad}  - ${n.summary}`);
     for(const dt of n.details.slice(0,8)) L.push(`${pad}  - · ${dt}`);

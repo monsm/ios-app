@@ -627,7 +627,7 @@ function clearHighlight(){
 function updateCounts(){
   $('#sTotal').textContent=NODES.length;
   $('#sEv').textContent=(DATA.stats.evidence||0).toLocaleString();
-  $('#sCmd').textContent=DATA.stats.commands;
+  $('#sCmd').textContent=DATA.stats.cmds;
   const c={ios:0,android:0,apk:0};
   for(const n of NODES) for(const p of n.platforms) c[p]++;
   $('#cIos').textContent=c.ios; $('#cAnd').textContent=c.android; $('#cApk').textContent=c.apk;
@@ -689,7 +689,7 @@ function showTip(n,e){
   t.innerHTML=`<div class="t">${esc(n.name)}</div>
     <div class="p">${esc(d?d.name:'')} · ${LEVEL_NAME[n.level]||''}${n.childCount?` · ${n.childCount} 子项`:''}</div>
     <div class="s">${esc((n.summary||'').slice(0,150))}</div>
-    <div style="margin-top:5px">${(n.platforms||[]).map(p=>`<span class="badge ${p}">${PLAT_NAME[p]||p}</span>`).join('')}${n.commands?.length?`<span class="badge lv">${n.commands.map(c=>'cmd'+c).join(' ')}</span>`:''}</div>`;
+    <div style="margin-top:5px">${(n.platforms||[]).map(p=>`<span class="badge ${p}">${PLAT_NAME[p]||p}</span>`).join('')}${n.cmds?.length?`<span class="badge lv">${n.cmds.map(c=>'cmd'+c).join(' ')}</span>`:''}</div>`;
   t.classList.add('show'); moveTip(e);
 }
 function moveTip(e){ const t=$('#tip'); t.style.left=Math.min(window.innerWidth-170,Math.max(170,e.clientX))+'px'; t.style.top=(e.clientY-8)+'px'; }
@@ -711,7 +711,7 @@ function renderDetail(n){
     <div class="crumb">${esc(n.path)}</div>
     ${n.summary?`<div class="dsum">${esc(n.summary)}</div>`:''}
     ${n.details?.length?`<div class="dsec"><h4>细节 / 分支 / 参数</h4><ul>${n.details.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}
-    ${n.commands?.length?`<div class="dsec"><h4>关联协议命令</h4><div class="chips">${n.commands.map(c=>`<span class="c" style="color:#e8c56a">cmd${c}</span>`).join('')}</div></div>`:''}
+    ${n.cmds?.length?`<div class="dsec"><h4>关联协议命令</h4><div class="chips">${n.cmds.map(c=>`<span class="c" style="color:#e8c56a">cmd${c}</span>`).join('')}</div></div>`:''}
     <div class="dsec"><h4>源码证据（点一下复制 file:line）</h4>
       ${ev.length?['ios','android','apk'].filter(p=>byPlat[p]?.length).map(p=>`
         <div class="plathead"><span class="badge ${p}">${PLAT_NAME[p]}</span> ${byPlat[p].length} 处</div>
@@ -809,7 +809,7 @@ let sTimer=null;
 $('#q').addEventListener('input',e=>{ state.query=e.target.value.trim().toLowerCase();
   clearTimeout(sTimer); sTimer=setTimeout(()=>{renderResults(); render();},130); });
 function match(n){ if(!state.query) return false; const q=state.query;
-  return (n.name+' '+n.key+' '+n.summary+' '+(n.tags||[]).join(' ')+' '+(n.commands||[]).map(c=>'cmd'+c).join(' ')).toLowerCase().includes(q); }
+  return (n.name+' '+n.key+' '+n.summary+' '+(n.tags||[]).join(' ')+' '+(n.cmds||[]).map(c=>'cmd'+c).join(' ')).toLowerCase().includes(q); }
 function renderResults(){
   const box=$('#results');
   if(!state.query){ box.innerHTML='<div class="empty">输入关键词过滤，命中项会列在这里并高亮。</div>'; return; }

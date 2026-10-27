@@ -210,7 +210,7 @@ function merge(all) {
       if (t.platforms[plat].length) platMap[plat] = t.platforms[plat].length;
     }
     const detailText = t.details.join(' ') + ' ' + t.summary + ' ' + k;
-    const commands = [...new Set((detailText.match(/cmd\s?0?([0-9A-Fa-f]{2})\b/g) || [])
+    const cmds = [...new Set((detailText.match(/cmd\s?0?([0-9A-Fa-f]{2})\b/g) || [])
       .map(x => x.replace(/cmd\s?/i, '').toUpperCase())
       .filter(x => /^[0-9A-F]{2}$/.test(x)))];
     nodes.push({
@@ -239,7 +239,7 @@ function merge(all) {
         return out.slice(0, 14);
       })(), platformEvidence: t.platforms,
       platforms: Object.keys(platMap), platformCount: Object.keys(platMap).length,
-      tags: [...t.tags], status: t.statuses, commands,
+      tags: [...t.tags], status: t.statuses, cmds,
       sources: [...t.sources],
       childCount: childCount.get(k) || 0,
       isDomain: !!t.isDomain,
@@ -290,10 +290,10 @@ function merge(all) {
   // 跨域/命令连线
   const links = [];
   for (const n of nodes) if (n.parent) links.push({ source: n.parent, target: n.key, type: 'tree' });
-  const cmdNodes = new Map(nodes.filter(n => /^protocol\.cmd[0-9A-F]{2}$/i.test(n.key)).map(n => [n.commands[0] || n.key.slice(-2).toUpperCase(), n.key]));
+  const cmdNodes = new Map(nodes.filter(n => /^protocol\.cmd[0-9A-F]{2}$/i.test(n.key)).map(n => [n.cmds[0] || n.key.slice(-2).toUpperCase(), n.key]));
   for (const n of nodes) {
     if (n.domain === 'protocol' || n.isDomain) continue;
-    for (const c of n.commands) {
+    for (const c of n.cmds) {
       const target = cmdNodes.get(c);
       if (target) links.push({ source: n.key, target, type: 'cmd' });
     }
@@ -354,7 +354,7 @@ function merge(all) {
     },
     byDomain: Object.fromEntries(DOMAINS.map(d => [d.key, nodes.filter(n => n.domain === d.key).length])),
     evidence: nodes.reduce((a, n) => a + n.evidence.length, 0),
-    commands: nodes.filter(n => /^protocol\.cmd/.test(n.key)).length,
+    cmds: nodes.filter(n => /^protocol\.cmd/.test(n.key)).length,
     platSets,
     gaps,
   };
@@ -405,5 +405,5 @@ fs.writeFileSync(OUT, JSON.stringify(out, null, 2));
 console.log(`✓ ${OUT}`);
 console.log(`  节点 ${out.stats.nodes} = 域 ${out.stats.domains} / 模块 ${out.stats.modules} / 功能 ${out.stats.features} / 细节 ${out.stats.details}`);
 console.log(`  平台：iOS ${out.stats.byPlatform.ios} · Android ${out.stats.byPlatform.android} · APK ${out.stats.byPlatform.apk}`);
-console.log(`  证据 ${out.stats.evidence} 条；命令节点 ${out.stats.commands}`);
+console.log(`  证据 ${out.stats.evidence} 条；命令节点 ${out.stats.cmds}`);
 for (const d of out.domains) console.log(`  ${d.short}: ${out.stats.byDomain[d.key]}`);
