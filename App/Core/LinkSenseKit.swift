@@ -572,51 +572,6 @@ extension AppState {
 
 // ================= UI 组件 (颜色只经 DS 令牌, hero 渐变白字用既有半透明变体) =================
 
-/// 包2 连接偏好页 (70/97/100/539): 每锁自动预握手开关 + 成功率积累占位 + 信号围栏记忆。
-/// 落点 设置-门锁 "连接与预握手"; 全部本地偏好键, 不碰协议。
-struct LinkPrefsView: View {
-    var mac: String
-    var body: some View { vkBody.destined(.linkPrefs) }
-    var vkBody: some View {
-        Form {
-            Section("自动预握手") {
-                VariantToggle("进页/回前台自动预热连接", isOn: Binding(   // 95/135 进页
-                    get: { DB.store.getBool("kf_link_auto_" + mac, true) },
-                    set: { DB.store.set("kf_link_auto_" + mac, $0) }))
-                LabeledRow("手动连接模式",   // 100 手动连接模式
-                           DB.store.getBool("kf_link_auto_" + mac, true) ? "自动" : "手动 — 点圆盘才连")
-                // 93 信号围栏: 原先这一行只是 LabeledRow 把常量 -70 显示出来，全仓没有任何写入方
-                // (LinkSenseKit 的预握手判定读的就是这个键) ⇒ "围栏"是个不可调的装饰值。补成真实档位。
-                // -127 当"关"用: 判定式是 `dev.rssi < fence`，取 BLE 可达的最弱下界就等效不设限，
-                // 不必在读侧再加一条 `fence == .off` 分支 (读侧已经在线，改动越少越不容易把拦阻逻辑带歪)。
-                Picker(selection: Binding(
-                    get: { LinkSense.rssiFence },
-                    set: { DB.store.set("kf_rssi_fence", $0) })) {
-                    Text("严格 (≥ -60)").tag(-60)
-                    Text("标准 (≥ -70)").tag(-70)
-                    Text("宽松 (≥ -80)").tag(-80)
-                    Text("关闭围栏").tag(-127)
-                } label: {
-                    Text("信号围栏")   // 93 信号围栏
-                }
-                .pickerStyle(.menu)
-                .tint(DS.Palette.accentText)
-                Text("RSSI 达标才预热, 低信号不浪费电量。只影响自动预握手的启动门槛；手动点圆盘、靠近自动开锁 (AUTOOPEN) 的判定不受这一档约束。")
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-                // 97 连接偏好记忆
-                // 123 每锁
-                LabeledRow("连接偏好记忆", "每锁 kf_link_auto_ 偏好 + rssiFor 实读; 扫描强度档走全局")
-            }
-            Section("连接统计") {
-            }
-        }
-        .navigationTitle("连接与预握手")
-        .variantList()
-        .dsScreenBackground()
-    }
-}
 
 /// 63/71 RSSI 四格信号条 (形状 + 档位文字双通道, 颜色不单独承载信息)。
 struct RSSIBars: View {
@@ -722,76 +677,6 @@ struct LinkPill: View {
 
 
 
-/// 136 跨页全局 BLE 状态细条: 非设备 Tab 顶部 2pt 语义细线 + 状态行, 点按跳回设备页。
-struct BLEStrip: View {
-    var title: String
-    var state: LinkState
-    var detail: String?
-    var action: () -> Void
-    var body: some View {
-        HStack(spacing: DS.Space.xs) {
-            Image(systemName: stIcon)
-                .font(.system(size: DS.Icon.xs, weight: .semibold))
-                .foregroundStyle(stTint)
-                .accessibilityHidden(true)
-            Text(stText)
-                .vkFont(.caption2, weight: .medium)
-                .foregroundStyle(DS.Palette.textSub)
-                .lineLimit(1)
-            if let detail {
-                Text(detail)
-                    .vkFont(.caption2)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .lineLimit(1)
-            }
-            Spacer(minLength: 0)
-            Button(action: action) {
-                Label(title, systemImage: "lock.fill")
-                    .vkFont(.caption2, weight: .medium)
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(DS.Palette.accentText)
-            .frame(minHeight: DS.Hit.min)
-            .contentShape(Rectangle())
-        }
-        .padding(.horizontal, DS.Space.gutter)
-        .padding(.top, DS.Space.xs)
-        .frame(minHeight: 28)
-        .background(DS.Palette.surfaceAlt.opacity(0.6))
-        .overlay(alignment: .bottom) {
-            Rectangle().fill(stTint).frame(height: 2)
-                .accessibilityHidden(true)
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(stText + " " + title)
-        .accessibilityHint("点按跳回设备页, 定位到该锁")
-    }
-    private var stIcon: String {
-        switch state {
-        case .ready: return "checkmark.circle.fill"
-        case .connecting: return "arrow.triangle.2.circlepath"
-        // 2026-10-14 走查: 原来是 `wifi.slash` —— 这把锁走的是 BLE, 全 App 不碰网络。
-        // 用带斜杠的 Wi-Fi 图标会让用户以为"要连 Wi-Fi 才能开锁", 而真正该开的是蓝牙。
-        // 换成无线电波图标 (不带斜杠 = 链路空闲, 不是"被关掉"); 「蓝牙已关闭」那条
-        // (BLEOffBanner) 仍用带斜杠的同一族, 两者形状与配色都不同, 不会看混。
-        default: return "antenna.radiowaves.left.and.right"
-        }
-    }
-    private var stTint: Color {
-        switch state {
-        case .ready: return DS.Palette.ok
-        case .connecting: return DS.Palette.warn
-        default: return DS.Palette.textSub
-        }
-    }
-    private var stText: String {
-        switch state {
-        case .ready: return "门锁已连接"
-        case .connecting: return "正在握手"
-        default: return "未连接"
-        }
-    }
-}
 
 /// 69 蓝牙直通条: 系统蓝牙关闭时全 App 顶部引导条 (深链不可用 → 系统设置指引文案)。
 struct BLEOffBanner: View {

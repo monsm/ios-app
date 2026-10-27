@@ -689,7 +689,6 @@ struct RootView: View {
         // 在其 body 内部写 .id(app.currentMac) 不会重建该 struct → 切锁后
         // selPwds/selFps/otpPwd 仍是上一把锁的值, 批量停用会打到错锁。
         CredentialsView().id(app.currentMac)
-            .safeAreaInset(edge: .top, spacing: 0) { bleStatusStrip(app: app, sense: sense) }
             .keyboardShortcut("2", modifiers: .command)
     }
     @ViewBuilder private var recordsTabContent: some View {
@@ -697,12 +696,10 @@ struct RootView: View {
         // RecordsView 只有 :178 onAppear→loadFromCache, 编程式切锁 (跳回/意图改 currentMac)
         // 不触发 → groups/allRows 仍是旧锁行, :1187 的认领会把旧锁 idxRaw 记到新锁键下。
         RecordsView().id(app.currentMac)
-            .safeAreaInset(edge: .top, spacing: 0) { bleStatusStrip(app: app, sense: sense) }
             .keyboardShortcut("3", modifiers: .command)
     }
     @ViewBuilder private var settingsTabContent: some View {
         SettingsView()
-            .safeAreaInset(edge: .top, spacing: 0) { bleStatusStrip(app: app, sense: sense) }
             .keyboardShortcut("4", modifiers: .command)
     }
 
@@ -1033,13 +1030,6 @@ struct RootView: View {
     // 包2/136 跨页状态细条: 非设备 Tab 顶部一条 BLE 状态细线 (2pt 语义色 + 状态行),
     // 点按跳回设备 Tab 并定位当前锁; 135 scenePhase .active 时静默刷新, 退后台暂停回连。
     @ViewBuilder
-    private func bleStatusStrip(app: AppState, sense: LinkSense) -> some View {
-        BLEStrip(title: "跳回设备页", state: sense.linkState,
-                 detail: sense.lastRssi.map { "RSSI \($0)" }) {
-            app.requestRoute(.device)
-            app.pendingJumpLock = app.currentMac
-        }
-    }
 }
 
 // LinkSense 宿主注册 (RootView 首次挂载时): 包装层只读协作, 不建循环依赖

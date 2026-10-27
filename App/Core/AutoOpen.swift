@@ -493,83 +493,6 @@ final class AutoOpenController {
     }
 }
 
-// ================= 标定页 (F3): 静止走近一次采集 RSSI P95 → 存 kf_autocal_<mac> =================
-struct AutoCalView: View {
-    var mac: String
-    @EnvironmentObject var app: AppState
-    @State private var calibrating = false
-    @State private var collected = 0
-
-    var body: some View { vkBody.destined(.autoCal) }
-    var vkBody: some View {
-        Form {
-            Section {
-                if let c = AutoOpen.autocal(mac) {
-                    LabeledRow("当前 P95 基准", "RSSI \(c.rssiP95)")
-                    LabeledRow("武装线 / 解除线 (回差)",
-                               "\(AutoOpenKit.armThreshold(base: c.rssiP95)) / \(AutoOpenKit.disarmThreshold(base: c.rssiP95))")
-                } else {
-                    // 2026-10-26 勘误: 原写"未标定则 F3 门不过"与实现相反。
-                    // AutoOpenKit.rssiBase 在未标定时回退 fallbackBase = -40（与安卓 AutoOpenKit.BASE 同值），
-                    // 所以未标定**能开**，只是用通用基准、不按这把锁的实际摆放位置调。
-                    LabeledRow("当前基准", "未标定 — 用通用基准 \(AutoOpenKit.fallbackBase)，建议标定以提高准确度")
-                }
-                BusyButton(title: calibrating ? "采集中 (\(collected) 样本)" : "重新标定",
-                           systemImage: "dot.radiowaves.left.and.right",
-                           isBusy: calibrating) {
-                    Task { await run() }
-                }
-            } header: {
-                Text("距离标定 (F3)")
-            } footer: {
-                Text("静止走近门锁一次, 采 30 秒 RSSI 取 P95 作为武装基准。回差: 越过武装线才武装, 掉回 0.5×基准才解除, 防门口抖动误触发。")
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Section("标定数据") {
-                // 2026-10-23：原来一键直接清 —— 而标定是用户**拿着手机在门边来回走**才采出来的，清掉要重采。
-                // 破坏性动作必须问一句，并说清后果。
-                Button("清除标定", role: .destructive) {
-                    confirmDestructive("清除标定数据？",
-                                       "标定是你在门边实测采出来的样本，清掉之后要重新走一遍才能恢复自动开锁的距离判断。",
-                                       confirmTitle: "清除标定") {
-                        AutoOpen.removeAutocal(mac)
-                    }
-                }
-            }
-        }
-        .navigationTitle("距离标定")
-        .variantList()
-        .dsScreenBackground()
-    }
-
-    private func run() async {
-        guard !calibrating else { return }
-        calibrating = true
-        collected = 0
-        defer { calibrating = false }
-        var samples: [Int] = []
-        let t0 = Date()
-        while Date().timeIntervalSince(t0) < 30 {
-            do {
-                let dev = try await LinkSense.shared.scan(mac: mac, timeoutMs: 2500)
-                if let r = dev?.rssi {
-                    samples.append(r)
-                    collected = samples.count
-                    LinkSense.saveRssi(mac: mac, rssi: r)
-                }
-            } catch {}
-            try? await Task.sleep(for: .milliseconds(500))
-        }
-        if let p = AutoOpenKit.p95(samples) {
-            AutoOpen.saveAutocal(mac, AutoOpen.AutoCal(rssiP95: p, at: Date().timeIntervalSince1970))
-            app.showToast("标定完成: P95 RSSI \(p)")
-        } else {
-            app.showToast("样本不足, 请走近门锁再试")
-        }
-    }
-}
 
 // ================= 设置 Section (§4 原文 + §3.4 强制风险披露) =================
 struct AutoOpenSection: View {
@@ -591,7 +514,6 @@ struct AutoOpenSection: View {
                     .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.warn)
                     .fixedSize(horizontal: false, vertical: true)
-                NavigationLink("距离标定 (走近多近才算到)") { AutoCalView(mac: mac) }
                 // 门是 fail-closed 的, 拒开又是静默的 —— 用户在门口等半天只知道"没开"。
                 // 拒因**早就落进审计**了 (AutoOpen.audit / lastReject), 这里只是把它显示出来,
                 // 既不新增门也不放宽门: 看得见原因才知道下一步该做什么 (标定 / 布防时段 / 刷脸)。

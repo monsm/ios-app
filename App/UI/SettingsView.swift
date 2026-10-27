@@ -7,11 +7,9 @@ import UIKit
 struct SettingsView: View {
     @EnvironmentObject var app: AppState
     @State private var showMembers = false
-    @State private var showKeychainHW = false
     @State private var showGateway = false
     @State private var showDeviceInfo = false
     @State private var showBackup = false
-    @State private var showMessages = false
     @State private var showAdd = false
     /// 2026-10-17 安卓版: 把当前锁的开锁凭证渲染成二维码 (扫码导入, 之后不再需要)
     @State private var shareLock: Keychain?
@@ -75,11 +73,9 @@ struct SettingsView: View {
         .variantList()
         .dsScreenBackground()
         .sheet(isPresented: $showMembers) { MembersView() }
-        .sheet(isPresented: $showKeychainHW) { KeychainHWView() }
         .sheet(isPresented: $showGateway) { GatewayView() }
         .sheet(isPresented: $showDeviceInfo) { DeviceInfoView() }
         .sheet(isPresented: $showBackup) { BackupView() }
-        .sheet(isPresented: $showMessages) { MessagesView() }
         .sheet(item: $shareLock) { ShareToAndroidView(kc: $0) }
         .sheet(isPresented: $showAdd) { AddDeviceView() }
         // 为什么不用 navigationDestination(isPresented:): 全仓无先例, 而 sheet+NavigationStack 与
@@ -242,11 +238,9 @@ struct SettingsView: View {
             SearchHit(id: "s.unlockopt", title: "开锁偏好 (按住确认/围栏/圆盘尺寸)", icon: "hand.draw", anchor: .unlock),
             SearchHit(id: "s.autoopen", title: "靠近自动开锁 (走近自动开门/距离标定)", icon: "person.walk", anchor: .autoOpen),
             SearchHit(id: "s.members", title: "成员管理", icon: "person.2") { showMembers = true },
-            SearchHit(id: "s.keychainhw", title: "蓝牙钥匙串", icon: "key.horizontal") { showKeychainHW = true },
             SearchHit(id: "s.gateway", title: "智能网关", icon: "antenna.radiowaves.left.and.right") { showGateway = true },
             SearchHit(id: "s.backup", title: "备份与恢复", icon: "externaldrive") { showBackup = true },
             SearchHit(id: "s.backupstudio", title: "备份与恢复", icon: "wrench.and.scissors") { showBackup = true },
-            SearchHit(id: "s.messages", title: "动态消息", icon: "bell") { showMessages = true },
             SearchHit(id: "s.logs", title: "诊断与运行日志", icon: "list.bullet.rectangle") { showDiag = true },
             SearchHit(id: "s.applock", title: "本机数据保护 (应用锁)", icon: "lock.shield", anchor: .applock),
             SearchHit(id: "s.appearance", title: "外观 (主题/品牌色/密度)", icon: "paintbrush", anchor: .appearance),
@@ -297,8 +291,6 @@ struct SettingsView: View {
                     .listRowInsets(EdgeInsets())
             } else {
                 NavigationLink("锁档案 (昵称/符号/色标/备注)") { LockProfileView() }
-                // 包2 连接与预握手偏好 (70/97/100): 自动预握手开关 / 成功率积累占位 / 信号围栏记忆
-                NavigationLink("连接与预握手 (自动预热/成功率)") { LinkPrefsView(mac: mac) }
                 note("靠近时先连上，开锁少等一两秒；成功率只在本机统计。")
                 Button("锁信息名片") { showDeviceInfo = true }
                 note("型号、固件、电量与绑定时间的汇总卡。")
@@ -535,8 +527,6 @@ struct SettingsView: View {
     @ViewBuilder
     private var memberFamilyRows: some View {
         Button { showMembers = true } label: { Label("成员管理（含成员中心）", systemImage: "person.2") }
-                // 2026-10-26 精简：该入口已删。
-        Button { showKeychainHW = true } label: { Label("蓝牙钥匙串", systemImage: "key.horizontal") }
         // 包9 固件升级 (cmd22 + Nordic DFU): 原版 APK 有完整 OTA, iOS 此前把 DFU 逻辑整体删掉只剩包解析。
         // 门禁用 canDeviceUpgrade (与 APK 同源), 防网关/钥匙串误入。
         if PidMap.canDeviceUpgrade(app.current?.pid ?? 0) {
@@ -591,8 +581,6 @@ struct SettingsView: View {
     private var toolsSection: some View {
         Section("工具") {
             Button { showBackup = true } label: { Label("备份与恢复", systemImage: "externaldrive") }
-            // 动态消息只走 sheet: MessagesView 自带 NavigationStack, 用 NavigationLink 会嵌套两层导航栏
-            Button { showMessages = true } label: { Label("动态消息", systemImage: "bell") }
             NavigationLink("诊断与运行日志") { DiagnosticsView() }
         }
     }

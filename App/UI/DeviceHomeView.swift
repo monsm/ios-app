@@ -28,7 +28,6 @@ struct DeviceHomeView: View {
     @State private var confirmPulse = false
     @State private var autoLockLeft: Int?
     @State private var showSettings = false   // 包8/507 备份角标跳转
-    @State private var showTileEdit = false   // 905 长按快捷格 → 编辑面板
     // 同屏提醒要按预算排位，视图层的 @State 预算读不到。判据一字未改，只是换了存放处。
     @State private var showRssi = false   // 63 点信号格弹出 dBm 数值 (格数看不出 1 格还是 2 格时看数字化)
     // 乱源治理第 3 批: 设备页模块显隐。默认空集 = 一块都不隐 (拍板口径), 面板只给能力不给默认。
@@ -120,7 +119,6 @@ struct DeviceHomeView: View {
             .sheet(isPresented: $showAdd) { AddDeviceView() }
             .sheet(isPresented: $showModuleOrder) { moduleOrderSheet }
             .sheet(isPresented: $showSettings) { SettingsView() }
-            .sheet(isPresented: $showTileEdit) { QuickTileEditorSheet() }   // 905 长按快捷格进编辑
             // 250 二次开锁应用锁闸
             .sheet(isPresented: $app.showGate) { UnlockGateView() }
             // 91 回连静默小点: 回连成功不打扰, 胶囊旁亮一枚小点 3 秒
@@ -810,7 +808,6 @@ struct DeviceHomeView: View {
                             againTile
                                 .contextMenu {
                                     Button {
-                                        showTileEdit = true
                                     } label: {
                                         Label("编辑快捷操作格", systemImage: "square.grid.2x2")   // 905 编辑快捷操作格
                                     }
@@ -826,7 +823,6 @@ struct DeviceHomeView: View {
                             // 与 NavigationLink 的点击零冲突 (同 740 "长按走菜单"的先例), 面板内改动即时生效。
                             .contextMenu {
                                 Button {
-                                    showTileEdit = true
                                 } label: {
                                     Label("编辑快捷操作格", systemImage: "square.grid.2x2")   // 905 编辑快捷操作格
                                 }
