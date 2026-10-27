@@ -70,6 +70,8 @@ enum BatteryCare {
     static func samples(_ mac: String) -> [BattSample] {
         DB.store.get([BattSample].self, "kf_batt_" + mac) ?? []
     }
+    /// 采样表里最新一条（displayPct 与档案页共用）。
+    static func latest(_ mac: String) -> BattSample? { samples(mac).last }
 
     /// 统一展示读数 (ROADMAP 包4): Hero 卡/总览条带/档案页共用一个来源 —
     /// 采样表最新值与锁侧快照取时间较新的那个 (采样随读 03 落库, 通常不比快照旧);

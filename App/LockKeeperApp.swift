@@ -153,10 +153,9 @@ final class AppState: ObservableObject {
     @discardableResult
 
     func runSelfCheck397() -> Int {
-        if let first = bad.first {
-            lock.log("warn", "本机自检 \(bad.count) 项异常: \(first.name) — \(first.detail)")   // 397 本机自检
-        }
-        return bad.count
+        // 2026-10-27 十三轮：SelfCheck 三项检查（库体哈希/审计链/JSON 回环）已随诊断族移除。
+        // 保留这个入口是为了让解锁路径的调用点与黄条判定不炸；恒返回 0 = 无异常。
+        return 0
     }
 
     /// 应用锁验证通过后的落地。

@@ -203,7 +203,7 @@ enum BleTelemetry {
         }
         return order.reversed().map { d in
             let v = bucket[d] ?? (0, 0)
-            return DayRate(day: d, n: v.n, ok: v.ok, pct: v.n > 0 ? v.ok * 100 / v.n : 0)
+            return DayRate(day: d, n: v.n, ok: v.ok, pct: v.n > 0 ? Double(v.ok * 100) / Double(v.n) : 0)
         }
     }
     static func failClasses() -> [FailClass] {
@@ -243,20 +243,6 @@ enum BleTelemetry {
 enum DiagFlags {
     static var silent: Bool { DB.store.getBool("kf_silent_trouble") }
 }
-
-
-
-
-
-
-@MainActor
-
-
-
-
-@MainActor
-
-
 
 
 
