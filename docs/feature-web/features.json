@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T01:31:24.424Z",
+    "generated": "2026-10-27T01:39:09.722Z",
     "sources": [
       {
         "scout": "android-native",
@@ -1552,7 +1552,7 @@
           "line": 1222,
           "symbol": "quickActions",
           "note": "",
-          "text": "var vkBody: some View {"
+          "text": "var body: some View { vkBody.destined(.syncTime) }"
         },
         {
           "platform": "ios",
@@ -1568,7 +1568,7 @@
           "line": 1227,
           "symbol": "let cols = AXPrefs.bigTile ? 2 : 3",
           "note": "",
-          "text": ".vkFont(.footnote)"
+          "text": "Text(\"将手机时间同步到门锁内 (cmd 0E)。校准前会先读锁钟并补偿偏差。\")"
         }
       ],
       "platformEvidence": {
@@ -8336,7 +8336,7 @@
           "line": 1352,
           "symbol": "againTile",
           "note": "",
-          "text": "if failed {"
+          "text": ".onSubmit(verify)"
         },
         {
           "platform": "ios",
@@ -8352,7 +8352,7 @@
           "line": 1362,
           "symbol": "showToast(\"还没有星标凭证 …\")",
           "note": "",
-          "text": "Button(\"取消\") { dismiss() }"
+          "text": ".disabled(pw.isEmpty)"
         }
       ],
       "platformEvidence": {
@@ -8419,7 +8419,7 @@
           "line": 1256,
           "symbol": ".contextMenu { Button { showTileEdit = true } }",
           "note": "",
-          "text": "}"
+          "text": ".dsScreenBackground()"
         },
         {
           "platform": "ios",
@@ -8488,7 +8488,7 @@
           "line": 1268,
           "symbol": "if DB.listFps(app.currentMac).isEmpty",
           "note": "",
-          "text": "result = \"未选择门锁\""
+          "text": "failed = true"
         },
         {
           "platform": "ios",
@@ -8496,7 +8496,7 @@
           "line": 1270,
           "symbol": "quickDestination(\"addFp\")",
           "note": "",
-          "text": "return"
+          "text": "app.showToast(\"未选择门锁\")"
         }
       ],
       "platformEvidence": {
@@ -9454,7 +9454,7 @@
           "line": 1025,
           "symbol": "UnlockDial(state:phase:connected:bleReady:…)",
           "note": "",
-          "text": "return (ids.count == 3 && Set(ids) == Set([\"hero\", \"quick\", \"recent\"])) ? ids : [\"hero\", \"quick\", \"recent\"]"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -9782,7 +9782,7 @@
           "line": 1036,
           "symbol": "if AXPrefs.captions { CaptionStepBar(…) }",
           "note": "",
-          "text": "let j = i + d"
+          "text": "guard o.indices.contains(i), o.indices.contains(j) else { return }"
         },
         {
           "platform": "android",
@@ -9806,7 +9806,7 @@
           "line": 1041,
           "symbol": "if let left = autoLockLeft { Label(\"约 \\(left) 秒后自动上锁 …\") }",
           "note": "",
-          "text": "}"
+          "text": "/// 904: 把模块放进某个槽位 (868 的扫描组标签随模块走, 不因换槽丢掉)"
         },
         {
           "platform": "ios",
@@ -9814,7 +9814,7 @@
           "line": 1067,
           "symbol": "if app.failStreak > 0 { … }",
           "note": "",
-          "text": ".disabled(i == 0)"
+          "text": "Button { moveModule(i, -1) } label: { Image(systemName: \"arrow.up\") }"
         },
         {
           "platform": "android",
@@ -12437,7 +12437,7 @@
           "line": 1095,
           "symbol": "if case .failed = app.unlockState { Button(\"再试一次\") }",
           "note": "",
-          "text": "devHidden = DevModuleStore.hidden   // 写盘之外还要即时生效 (UserDefaults 不是可观察源)"
+          "text": "DevModuleStore.setHidden(m, !on)"
         },
         {
           "platform": "ios",
@@ -17895,7 +17895,7 @@
           "line": 1733,
           "symbol": "PwdDetailStudio",
           "note": "",
-          "text": "}"
+          "text": "EmptyState(systemImage: \"key.slash\", title: \"凭证不存在\", message: \"这条凭证可能已被删除或移入回收站。\")"
         },
         {
           "platform": "ios",
@@ -17903,7 +17903,7 @@
           "line": 1746,
           "symbol": "PwdDetailStudio",
           "note": "List 骨架",
-          "text": "private func isoText(_ s: String) -> String {"
+          "text": "let toS = f.string(from: Date().addingTimeInterval(7 * 86400))"
         },
         {
           "platform": "ios",
@@ -17911,7 +17911,7 @@
           "line": 1783,
           "symbol": "PwdDetailStudio",
           "note": "码值段",
-          "text": ".vkFont(.subheadline)"
+          "text": "// 这一枚是 UI 入口 (内部要弹 UIAlertController + 走 confirmDestructive), 所以整条下沉主 actor。"
         }
       ],
       "platformEvidence": {
@@ -17983,7 +17983,7 @@
           "line": 2152,
           "symbol": "FpStudio",
           "note": "",
-          "text": "let finalName = name.isEmpty ? CredentialOrg.fpNameSuggestion(em, owner: owner) : name"
+          "text": "// 先把待清旧的筛成局部量再遍历: 原写法把 filter 的尾随闭包贴在 for 语句后面,"
         },
         {
           "platform": "apk",
@@ -17999,7 +17999,7 @@
           "line": 2192,
           "symbol": "FpStudio",
           "note": "分步容器",
-          "text": "self.presses.append(p)"
+          "text": "throw NSError(domain: \"fp\", code: 1, userInfo: [NSLocalizedDescriptionKey: \"未拿到有效指纹批次, 请重新录入\"])"
         },
         {
           "platform": "ios",
@@ -18007,7 +18007,7 @@
           "line": 2216,
           "symbol": "FpStudio",
           "note": "onAppear 消费预选",
-          "text": "name = CredentialOrg.fpNameSuggestion(kc.mac, owner: owner)"
+          "text": "// ================= 指纹详情 (316/320 ⚠ 台账推断; 323 双签; 324 冗余) ================="
         }
       ],
       "platformEvidence": {
@@ -18369,7 +18369,7 @@
           "line": 1311,
           "symbol": "TempCodeStudio",
           "note": "result 决定 addForm/doneCard",
-          "text": "Button {"
+          "text": ".foregroundStyle(DS.Palette.text)"
         },
         {
           "platform": "ios",
@@ -18377,7 +18377,7 @@
           "line": 1321,
           "symbol": "TempCodeStudio",
           "note": "addForm",
-          "text": ".font(.system(size: DS.Icon.sm, weight: .medium))"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -20288,7 +20288,7 @@
           "line": 2245,
           "symbol": "immersive",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.warn)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -20296,7 +20296,7 @@
           "line": 2292,
           "symbol": "immersive",
           "note": "开始录入",
-          "text": "Label(\"彻底删除\", systemImage: \"xmark.bin\")   // 323 彻底删除"
+          "text": ".toolbar { ToolbarItem(placement: .navigationBarLeading) { Button(\"关闭\") { dismiss() } } }"
         },
         {
           "platform": "ios",
@@ -20374,7 +20374,7 @@
           "line": 2371,
           "symbol": "step2",
           "note": "重录继承 Toggle",
-          "text": ".frame(width: DS.Icon.md + 8, height: DS.Icon.md + 8)"
+          "text": ".lineLimit(1)"
         },
         {
           "platform": "ios",
@@ -20459,7 +20459,7 @@
           "line": 2333,
           "symbol": "step2",
           "note": "",
-          "text": "defer { busy = false }"
+          "text": "// 用户改成 7/90 天时说谎)，更要命的是「可找回」对指纹只成立一半 —— 回来的名称/备注/归属"
         },
         {
           "platform": "ios",
@@ -20467,7 +20467,7 @@
           "line": 2340,
           "symbol": "step2",
           "note": "建议名",
-          "text": "DB.delFp(kc.mac, f.batch)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -20475,7 +20475,7 @@
           "line": 2363,
           "symbol": "step2",
           "note": "自定义名",
-          "text": "var body: some View {"
+          "text": ".accessibilityHidden(true)"
         }
       ],
       "platformEvidence": {
@@ -20543,7 +20543,7 @@
           "line": 2224,
           "symbol": "step0",
           "note": "",
-          "text": "}"
+          "text": "private var f: LedgerFp? { DB.getFp(mac, batch) }"
         },
         {
           "platform": "ios",
@@ -20551,7 +20551,7 @@
           "line": 2240,
           "symbol": "step0",
           "note": "FpOwnerPicker",
-          "text": "// 324 冗余横条: 该成员名下仅剩此枚 → 提示补备用"
+          "text": "Section(\"档案 (约)\") {"
         },
         {
           "platform": "ios",
@@ -20883,7 +20883,7 @@
           "line": 2104,
           "symbol": "fpDoubleSignCheck",
           "note": "",
-          "text": ".padding(DS.Space.l)"
+          "text": "withAnimation(DS.Motion.quick) { step -= 1 }"
         },
         {
           "platform": "ios",
@@ -20891,7 +20891,7 @@
           "line": 2129,
           "symbol": "fpDoubleSignCheck",
           "note": "双签正文",
-          "text": "withAnimation(DS.Motion.quick) { step = 1 }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -22725,7 +22725,7 @@
           "line": 2006,
           "symbol": "PwdDetailStudio",
           "note": "改造入口",
-          "text": "}"
+          "text": "// 与 StartAddFpView 同一套提示节奏 (APK 第 4 下起要求换到手指边缘):"
         },
         {
           "platform": "ios",
@@ -23437,7 +23437,7 @@
           "line": 1849,
           "symbol": "PwdDetailStudio",
           "note": "到期预警段",
-          "text": "@Environment(\\.dismiss) private var dismiss"
+          "text": "@State private var doneBatch: UInt32?"
         },
         {
           "platform": "ios",
@@ -23445,7 +23445,7 @@
           "line": 1850,
           "symbol": "PwdDetailStudio",
           "note": "7 天档",
-          "text": "// 515 分步: 0 归属 (317 必选) / 1 沉浸录入 (41) / 2 命名备注 (315/319) / 3 回执"
+          "text": "// 第八十七批: 录入实际发生在**哪一把锁**上必须记下来。`mac` 是 `app.current?.mac ?? \"\"` 的计算属性，"
         },
         {
           "platform": "ios",
@@ -23453,7 +23453,7 @@
           "line": 1882,
           "symbol": "PwdDetailStudio",
           "note": "2 小时档",
-          "text": "private func consumePrefill() {"
+          "text": "immersive"
         }
       ],
       "platformEvidence": {
@@ -23522,7 +23522,7 @@
           "line": 2013,
           "symbol": "PwdDetailStudio",
           "note": "生成口述卡",
-          "text": ".animation(DS.Motion.standard, value: presses.count)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -23530,7 +23530,7 @@
           "line": 2029,
           "symbol": "PwdDetailStudio",
           "note": "sheet",
-          "text": "VStack(alignment: .leading, spacing: DS.Space.xs) {"
+          "text": "} label: {"
         },
         {
           "platform": "ios",
@@ -23538,7 +23538,7 @@
           "line": 2033,
           "symbol": "PwdDetailStudio",
           "note": "CodeBigCard",
-          "text": "ScrollView(.horizontal, showsIndicators: false) {"
+          "text": ".minimumScaleFactor(0.8)"
         }
       ],
       "platformEvidence": {
@@ -23606,7 +23606,7 @@
           "line": 1793,
           "symbol": "PwdDetailStudio",
           "note": "复制按钮",
-          "text": "// 这一枚是 UI 入口 (内部要弹 UIAlertController + 走 confirmDestructive), 所以整条下沉主 actor。"
+          "text": "// 同一个按钮，「最后一枚」那一支要输入在用密码前缀才肯删，「不止最后一枚」这一支却一按就把锁端"
         },
         {
           "platform": "ios",
@@ -23614,7 +23614,7 @@
           "line": 1810,
           "symbol": "PwdDetailStudio",
           "note": "读出",
-          "text": ": \"\""
+          "text": "let maskLen = v.count"
         },
         {
           "platform": "ios",
@@ -23622,7 +23622,7 @@
           "line": 1820,
           "symbol": "PwdDetailStudio",
           "note": "4 位分段",
-          "text": "let maskLen = v.count"
+          "text": "alert.addAction(UIAlertAction(title: confirmTitle, style: .destructive) { _ in"
         }
       ],
       "platformEvidence": {
@@ -23691,7 +23691,7 @@
           "line": 1900,
           "symbol": "PwdDetailStudio",
           "note": "提前失效段",
-          "text": "}"
+          "text": "// 317/319: 进场取走带回的预选值 (成员页建完档 / 详情页重录)"
         },
         {
           "platform": "ios",
@@ -23699,7 +23699,7 @@
           "line": 1917,
           "symbol": "PwdDetailStudio",
           "note": "Slider 0...120 step 5",
-          "text": "// ---------- 324 冗余横条 + 322 缺失提醒 + 317 归属先行必选 ----------"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -23707,7 +23707,7 @@
           "line": 1748,
           "symbol": "PwdDetailStudio",
           "note": "到点黄条",
-          "text": "}"
+          "text": "try await app.lock.ensureConnected(mac: kc.mac)"
         }
       ],
       "platformEvidence": {
@@ -23861,7 +23861,7 @@
           "line": 1973,
           "symbol": "PwdDetailStudio",
           "note": "续期按钮",
-          "text": "}"
+          "text": ".contentShape(Rectangle())"
         },
         {
           "platform": "ios",
@@ -23869,7 +23869,7 @@
           "line": 2066,
           "symbol": "renewExpired",
           "note": "pwdModify",
-          "text": "if !sameOwnerFps.isEmpty {"
+          "text": "var out: [String] = []"
         },
         {
           "platform": "ios",
@@ -23877,7 +23877,7 @@
           "line": 2081,
           "symbol": "renewExpired",
           "note": "失败入队",
-          "text": "return out"
+          "text": ".vkFont(.headline)"
         }
       ],
       "platformEvidence": {
@@ -23947,7 +23947,7 @@
           "line": 1933,
           "symbol": "PwdDetailStudio",
           "note": "施工中",
-          "text": "}"
+          "text": "Text(progressText)"
         },
         {
           "platform": "ios",
@@ -23955,7 +23955,7 @@
           "line": 1946,
           "symbol": "PwdDetailStudio",
           "note": "用量刻度",
-          "text": "VStack(spacing: DS.Space.s) {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -23963,7 +23963,7 @@
           "line": 1987,
           "symbol": "PwdDetailStudio",
           "note": "开门数推断",
-          "text": "enrollTask = Task { await start() }"
+          "text": "Text(busy ? \"录入中…\" : \"开始录入\")"
         }
       ],
       "platformEvidence": {
@@ -24899,7 +24899,7 @@
           "line": 1486,
           "symbol": "addForm",
           "note": "",
-          "text": "CredentialOrg.clearDraft(kc.mac)"
+          "text": "// ================= 密码详情 (305/308/309/311/306; 打码默认延续包7) ================="
         },
         {
           "platform": "ios",
@@ -24907,7 +24907,7 @@
           "line": 1490,
           "symbol": "addForm",
           "note": "成员列表",
-          "text": "}"
+          "text": "let alias: Int"
         },
         {
           "platform": "ios",
@@ -24915,7 +24915,7 @@
           "line": 1511,
           "symbol": "addForm",
           "note": "备注占位",
-          "text": "+ \"门锁在它自己那份到期时刻之前照样能开门。要真停用, 得走列表里的停用或改期。\")"
+          "text": ".foregroundStyle(DS.Palette.warn)"
         }
       ],
       "platformEvidence": {
@@ -24985,7 +24985,7 @@
           "line": 1697,
           "symbol": "submitBatch",
           "note": "",
-          "text": "// 331: 状态行同步标注本机的提前失效档 (没设提前量时 earlyExpiryNote 回空串, 不说空话)"
+          "text": "Section(\"用它开过的门 (约)\") {"
         },
         {
           "platform": "ios",
@@ -24993,7 +24993,7 @@
           "line": 1705,
           "symbol": "submitBatch",
           "note": "30 分钟错峰",
-          "text": "if n > 0 {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -25001,7 +25001,7 @@
           "line": 1710,
           "symbol": "submitBatch",
           "note": "pwdAdd 0A",
-          "text": "Image(systemName: \"door.left.hand.open\")"
+          "text": ".vkFont(.caption)"
         }
       ],
       "platformEvidence": {
@@ -25071,7 +25071,7 @@
           "line": 1338,
           "symbol": "addForm",
           "note": "码值段",
-          "text": ""
+          "text": "Text(\"请将手机靠近门锁; 批量走既有 0A 逐条下发, 锁端无批量命令, 失败逐条报。\")   // 178 请将手机靠近门锁"
         },
         {
           "platform": "ios",
@@ -25079,7 +25079,7 @@
           "line": 1375,
           "symbol": "addForm",
           "note": "生成",
-          "text": "private var doneCard: some View {"
+          "text": "extraFoot: batchCount > 1 ? \"批量共 \\(batchCount) 张, 其余已逐张下发\" : \"\")"
         },
         {
           "platform": "ios",
@@ -25087,7 +25087,7 @@
           "line": 1390,
           "symbol": "addForm",
           "note": "批量张数",
-          "text": "let text = StudioTools.oneLine(p: r, lockName: lockName, value: r.pwd)"
+          "text": "Text(\"生成一句话口令\")   // 329 生成一句话口令"
         }
       ],
       "platformEvidence": {
@@ -25157,7 +25157,7 @@
           "line": 1437,
           "symbol": "addForm",
           "note": "四快捷档",
-          "text": "}"
+          "text": "private func checkClipboard() {"
         },
         {
           "platform": "ios",
@@ -25165,7 +25165,7 @@
           "line": 1459,
           "symbol": "addForm",
           "note": "到期需晚于生效",
-          "text": "guard let kc = app.current, !busy, pwdOK else { return }"
+          "text": "// 178 逐条错峰: 每张码时段顺移 30 分钟, 锁端无批量命令"
         },
         {
           "platform": "ios",
@@ -25173,7 +25173,7 @@
           "line": 1465,
           "symbol": "addForm",
           "note": "租期重叠",
-          "text": "// 178 逐条错峰: 每张码时段顺移 30 分钟, 锁端无批量命令"
+          "text": "let alias = try await app.lock.pwdAdd(pwd: pwd, validFrom: f.string(from: df), validTo: f.string(from: dt))"
         }
       ],
       "platformEvidence": {
@@ -25312,7 +25312,7 @@
           "line": 2389,
           "symbol": "doneCard",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -26984,7 +26984,7 @@
           "line": 2049,
           "symbol": "PwdDetailStudio",
           "note": "EmptyState 凭证不存在",
-          "text": ".contentShape(Rectangle())"
+          "text": ".vkFont(.subheadline)"
         }
       ],
       "platformEvidence": {
@@ -62714,7 +62714,7 @@
           "line": 2081,
           "symbol": "renewExpired",
           "note": "续期失败入队 period",
-          "text": "return out"
+          "text": ".vkFont(.headline)"
         },
         {
           "platform": "apk",
@@ -74768,7 +74768,7 @@
           "line": 1855,
           "symbol": "PwdDetailStudio",
           "note": "详情页同键读写",
-          "text": "// 旧写法是裸 `Task { await start() }`：关页后 fpStart 仍转满 30 秒，然后照样 fpConfirm + 记账 + 弹提示。"
+          "text": "@State private var note = \"\""
         },
         {
           "platform": "ios",
@@ -74776,7 +74776,7 @@
           "line": 1890,
           "symbol": "PwdDetailStudio",
           "note": "五档与到期时通知口径",
-          "text": "doneCard"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -75101,7 +75101,7 @@
           "line": 1917,
           "symbol": "PwdDetailStudio",
           "note": "Slider 写值",
-          "text": "// ---------- 324 冗余横条 + 322 缺失提醒 + 317 归属先行必选 ----------"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -75117,7 +75117,7 @@
           "line": 1904,
           "symbol": "PwdDetailStudio",
           "note": "读值",
-          "text": ".axBottomAnchor()   // 870"
+          "text": ".onDisappear { enrollTask?.cancel() }"
         }
       ],
       "platformEvidence": {
@@ -75187,7 +75187,7 @@
           "line": 2198,
           "symbol": "modifyPwd",
           "note": "snapshot 修改了密码值",
-          "text": "throw NSError(domain: \"fp\", code: 2,"
+          "text": "return"
         },
         {
           "platform": "ios",
