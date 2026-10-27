@@ -225,7 +225,6 @@ struct CodeBigCard: View {
     var extraFoot: String = ""
     @EnvironmentObject var app: AppState
     /// 376 分享遮半: 默认遮下半段, 「完整显示」后露出全码; 每次进卡片 (完成页/sheet 重建) 都回默认遮, 不跨次保留。
-    @State private var revealed = false
     var body: some View {
         VStack(spacing: DS.Space.s) {
             Text(title)
@@ -250,10 +249,6 @@ struct CodeBigCard: View {
                     .lineLimit(2)
             }
             HStack(spacing: DS.Space.s) {
-                .buttonStyle(.bordered)
-                .vkFont(.caption)
-                .frame(minHeight: DS.Hit.min)
-                .accessibilityLabel(revealed ? "重新遮挡码值" : "完整显示码值")
                 Button {
                     UIPasteboard.general.string = revealed ? code : SecurityPolicy.halfMasked(code)   // 405
                     app.showToast(revealed ? "码值已复制" : "已复制遮半码值 (完整值先点「完整显示」)")

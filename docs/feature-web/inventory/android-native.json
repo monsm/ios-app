@@ -39,14 +39,47 @@
         "无外圈、无图标库依赖：全部用 Canvas 画，注释写明刻意不借现成图标"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 544, "symbol": "UnlockDial", "note": "private fun UnlockDial(busy: Boolean, onClick: () -> Unit)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 558, "symbol": "UnlockDial", "note": "Canvas(Modifier.size(300.dp)) 外圈柔光"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 568, "symbol": "UnlockDial", "note": "Box .size(232.dp).clip(CircleShape).clickable(...)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 583, "symbol": "UnlockDial", "note": "第 1 层 金属倒角 Brush.sweepGradient"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 610, "symbol": "UnlockDial", "note": "第 3 层 斜向镜面高光 drawArc"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 371, "symbol": "KfApp", "note": "UnlockDial(busy = busy, onClick = { doUnlock(auto = false) })"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 544,
+          "symbol": "UnlockDial",
+          "note": "private fun UnlockDial(busy: Boolean, onClick: () -> Unit)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 558,
+          "symbol": "UnlockDial",
+          "note": "Canvas(Modifier.size(300.dp)) 外圈柔光"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 568,
+          "symbol": "UnlockDial",
+          "note": "Box .size(232.dp).clip(CircleShape).clickable(...)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 583,
+          "symbol": "UnlockDial",
+          "note": "第 1 层 金属倒角 Brush.sweepGradient"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 610,
+          "symbol": "UnlockDial",
+          "note": "第 3 层 斜向镜面高光 drawArc"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 371,
+          "symbol": "KfApp",
+          "note": "UnlockDial(busy = busy, onClick = { doUnlock(auto = false) })"
+        }
       ],
-      "tags": ["核心", "开锁"],
+      "tags": [
+        "核心",
+        "开锁"
+      ],
       "status": "implemented"
     },
     {
@@ -63,11 +96,28 @@
         "用空 indication 的 clickable，去掉 Material 水波纹"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 547, "symbol": "UnlockDial", "note": "val pressed by interaction.collectIsPressedAsState()"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 550, "symbol": "UnlockDial", "note": "animateFloatAsState(0.972f, tween(100, CubicBezierEasing(0.42f,0f,0.58f,1f)))"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/Tokens.kt", "line": 68, "symbol": "KfTokens.Curve.soft", "note": "floatArrayOf(0.42f, 0f, 0.58f, 1f)"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 547,
+          "symbol": "UnlockDial",
+          "note": "val pressed by interaction.collectIsPressedAsState()"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 550,
+          "symbol": "UnlockDial",
+          "note": "animateFloatAsState(0.972f, tween(100, CubicBezierEasing(0.42f,0f,0.58f,1f)))"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/Tokens.kt",
+          "line": 68,
+          "symbol": "KfTokens.Curve.soft",
+          "note": "floatArrayOf(0.42f, 0f, 0.58f, 1f)"
+        }
       ],
-      "tags": ["动效"],
+      "tags": [
+        "动效"
+      ],
       "status": "implemented"
     },
     {
@@ -85,12 +135,34 @@
         "busy 同时是撤下 RSSI 监测流与禁止自动开锁的闸"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 573, "symbol": "UnlockDial", "note": "clickable(interactionSource = interaction, indication = null, enabled = !busy)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 637, "symbol": "UnlockDial", "note": "if (busy) drawArc(startAngle = -90f, sweepAngle = 300f)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt", "line": 171, "symbol": "SignalArrow", "note": "alpha = if (busy) 0.55f else 1f"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 119, "symbol": "KfApp", "note": "var busy by remember { mutableStateOf(false) }"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 573,
+          "symbol": "UnlockDial",
+          "note": "clickable(interactionSource = interaction, indication = null, enabled = !busy)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 637,
+          "symbol": "UnlockDial",
+          "note": "if (busy) drawArc(startAngle = -90f, sweepAngle = 300f)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt",
+          "line": 171,
+          "symbol": "SignalArrow",
+          "note": "alpha = if (busy) 0.55f else 1f"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 119,
+          "symbol": "KfApp",
+          "note": "var busy by remember { mutableStateOf(false) }"
+        }
       ],
-      "tags": ["状态"],
+      "tags": [
+        "状态"
+      ],
       "status": "implemented"
     },
     {
@@ -109,12 +181,35 @@
         "无“重试”按钮：重来的方式就是再点一次圆盘（内部对 rc=3/13 才自动重取令牌）"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 182, "symbol": "doUnlock", "note": "fun doUnlock(auto: Boolean)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 186, "symbol": "doUnlock", "note": "say(if (auto) \"已靠近, 正在开锁…\" else \"正在开锁…\")"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 193, "symbol": "doUnlock", "note": "say(if (r.ok) (if (auto) \"自动开锁成功 — \" else \"手动开锁成功 — \") + r.message else r.message, !r.ok)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 371, "symbol": "KfApp", "note": "onClick = { doUnlock(auto = false) }"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 182,
+          "symbol": "doUnlock",
+          "note": "fun doUnlock(auto: Boolean)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 186,
+          "symbol": "doUnlock",
+          "note": "say(if (auto) \"已靠近, 正在开锁…\" else \"正在开锁…\")"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 193,
+          "symbol": "doUnlock",
+          "note": "say(if (r.ok) (if (auto) \"自动开锁成功 — \" else \"手动开锁成功 — \") + r.message else r.message, !r.ok)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 371,
+          "symbol": "KfApp",
+          "note": "onClick = { doUnlock(auto = false) }"
+        }
       ],
-      "tags": ["核心", "开锁"],
+      "tags": [
+        "核心",
+        "开锁"
+      ],
       "status": "implemented"
     },
     {
@@ -131,11 +226,29 @@
         "协程结束后 busy = false（先解锁再写结果文案，文案期间圆盘已恢复可点）"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 184, "symbol": "doUnlock", "note": "if (busy) return"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 185, "symbol": "doUnlock", "note": "busy = true"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 189, "symbol": "doUnlock", "note": "busy = false"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 184,
+          "symbol": "doUnlock",
+          "note": "if (busy) return"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 185,
+          "symbol": "doUnlock",
+          "note": "busy = true"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 189,
+          "symbol": "doUnlock",
+          "note": "busy = false"
+        }
       ],
-      "tags": ["状态", "并发"],
+      "tags": [
+        "状态",
+        "并发"
+      ],
       "status": "implemented"
     },
     {
@@ -153,38 +266,35 @@
         "回执超时/写入中断都明确写“门锁可能已执行, 先看一眼门”"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 193, "symbol": "doUnlock", "note": "say(... !r.ok)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 61, "symbol": "BleUnlocker.Outcome", "note": "data class Outcome(val ok: Boolean, val message: String, val trace: String = \"\")"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 211, "symbol": "unlock", "note": "\"开锁没有回执 — 门锁可能已执行, 先看一眼门\""},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 171, "symbol": "rcText", "note": "rc == -1 -> \"门锁回了帧但没带结果码...\""}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 193,
+          "symbol": "doUnlock",
+          "note": "say(... !r.ok)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 61,
+          "symbol": "BleUnlocker.Outcome",
+          "note": "data class Outcome(val ok: Boolean, val message: String, val trace: String = \"\")"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 211,
+          "symbol": "unlock",
+          "note": "\"开锁没有回执 — 门锁可能已执行, 先看一眼门\""
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 171,
+          "symbol": "rcText",
+          "note": "rc == -1 -> \"门锁回了帧但没带结果码...\""
+        }
       ],
-      "tags": ["状态", "错误态"],
-      "status": "implemented"
-    },
-    {
-      "key": "unlock.feedback",
-      "parentKey": "unlock",
-      "domain": "unlock",
-      "level": 3,
-      "name": "开锁反馈（来源/触觉/留痕/配色）",
-      "kind": "state",
-      "summary": "开完必须能回答“谁把我门开了”：成功文案冠手动/自动来源，结果配确定的三档触觉，失败附令牌前缀与 rc 留痕。",
-      "details": [
-        "来源标注：auto ⇒ “自动开锁成功 — ”，手动 ⇒ “手动开锁成功 — ”；只在成功时加前缀",
-        "触觉：成功 KfHaptics.ok（12ms / 振幅 90），失败 KfHaptics.fail（35ms / 振幅 180）；原先失败是静默的",
-        "留痕 detail：形如 “warm 03→pid=… 01→a1b2c3d4 04→rc=13 (会话过期, 重取令牌再试)”，只在失败展示、成功清空",
-        "配色：statusBad ⇒ bad；含“成功”或以“已开锁”开头 ⇒ ok；其余 inkSub",
-        "所有震动 runCatching 包裹：触觉永远不能把开锁流程打断"
+      "tags": [
+        "状态",
+        "错误态"
       ],
-      "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 190, "symbol": "doUnlock", "note": "注释：开完要能说清是自动开的还是自己点的"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 194, "symbol": "doUnlock", "note": "detail = if (r.ok || r.trace.isEmpty()) \"\" else r.trace"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 197, "symbol": "doUnlock", "note": "if (r.ok) KfHaptics.ok(ctx) else KfHaptics.fail(ctx)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 378, "symbol": "KfApp", "note": "配色四档 375-380：statusBad→bad / 含“成功”或以“已开锁”开头→ok / 其余→inkSub"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 395, "symbol": "KfApp", "note": "if (!detail.isEmpty()) Text(text = detail, fontSize = 11.sp, monospace)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/Haptics.kt", "line": 30, "symbol": "KfHaptics.ok", "note": "fun ok(ctx: Context) = buzz(ctx, 12, 90)"}
-      ],
-      "tags": ["反馈", "跨端对齐", "留痕"],
       "status": "implemented"
     },
     {
@@ -202,11 +312,29 @@
         "已有绑定时不覆盖，转入 pending 走二次确认流"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 202, "symbol": "scan", "note": "val scan = rememberLauncherForActivityResult(ScanContract())"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 222, "symbol": "launchScan", "note": "setPrompt(\"对准 iOS 上的钥匙二维码\")（218-226 整段 ScanOptions 配置）"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 72, "symbol": "parseQr", "note": "fun parseQr(text: String): LockInfo?"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 202,
+          "symbol": "scan",
+          "note": "val scan = rememberLauncherForActivityResult(ScanContract())"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 222,
+          "symbol": "launchScan",
+          "note": "setPrompt(\"对准 iOS 上的钥匙二维码\")（218-226 整段 ScanOptions 配置）"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 72,
+          "symbol": "parseQr",
+          "note": "fun parseQr(text: String): LockInfo?"
+        }
       ],
-      "tags": ["绑定", "核心"],
+      "tags": [
+        "绑定",
+        "核心"
+      ],
       "status": "implemented"
     },
     {
@@ -224,11 +352,28 @@
         "ekey 是 AES 包络 hex（iOS 侧恒 32B = 64 个 hex 字符），本机只做搬运不解析"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 73, "symbol": "parseQr", "note": "val body = text.trim().removePrefix(\"KFA1:\").trim()"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 74, "symbol": "parseQr", "note": "if (!body.startsWith(\"{\")) return null"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 76, "symbol": "parseQr", "note": "val o = JSONObject(body)"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 73,
+          "symbol": "parseQr",
+          "note": "val body = text.trim().removePrefix(\"KFA1:\").trim()"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 74,
+          "symbol": "parseQr",
+          "note": "if (!body.startsWith(\"{\")) return null"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 76,
+          "symbol": "parseQr",
+          "note": "val o = JSONObject(body)"
+        }
       ],
-      "tags": ["数据结构"],
+      "tags": [
+        "数据结构"
+      ],
       "status": "implemented"
     },
     {
@@ -247,13 +392,41 @@
         "任一条不满足 → runCatching 内 return null → 整张码判为不可用，绝不存半截凭证"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 77, "symbol": "parseQr", "note": "if (o.optInt(\"v\", 0) != 1) return null"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 80, "symbol": "parseQr", "note": "if (mac.length != 12 || mac.any { it !in \"0123456789abcdef\" }) return null"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 86, "symbol": "parseQr", "note": "if (ekey.length < 16 || ekey.length % 2 != 0 || ekey.length > 510) return null"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 89, "symbol": "parseQr", "note": "val name = o.optString(\"n\").ifBlank { \"门锁\" }.take(40)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 93, "symbol": "parseQr", "note": "pid = o.optInt(\"p\", 0)"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 77,
+          "symbol": "parseQr",
+          "note": "if (o.optInt(\"v\", 0) != 1) return null"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 80,
+          "symbol": "parseQr",
+          "note": "if (mac.length != 12 || mac.any { it !in \"0123456789abcdef\" }) return null"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 86,
+          "symbol": "parseQr",
+          "note": "if (ekey.length < 16 || ekey.length % 2 != 0 || ekey.length > 510) return null"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 89,
+          "symbol": "parseQr",
+          "note": "val name = o.optString(\"n\").ifBlank { \"门锁\" }.take(40)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 93,
+          "symbol": "parseQr",
+          "note": "pid = o.optInt(\"p\", 0)"
+        }
       ],
-      "tags": ["校验", "边界"],
+      "tags": [
+        "校验",
+        "边界"
+      ],
       "status": "implemented"
     },
     {
@@ -270,10 +443,22 @@
         "措辞把责任指回生成端（iOS），不暗示本机可修复"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 203, "symbol": "scan", "note": "val text = result.contents ?: return@rememberLauncherForActivityResult"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 205, "symbol": "scan", "note": "say(\"这不是本 App 的钥匙码 — 请让 iOS 端重新生成\", true)"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 203,
+          "symbol": "scan",
+          "note": "val text = result.contents ?: return@rememberLauncherForActivityResult"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 205,
+          "symbol": "scan",
+          "note": "say(\"这不是本 App 的钥匙码 — 请让 iOS 端重新生成\", true)"
+        }
       ],
-      "tags": ["错误态"],
+      "tags": [
+        "错误态"
+      ],
       "status": "implemented"
     },
     {
@@ -290,10 +475,22 @@
         "绑定后不必再扫码：后续开锁只用本机存储的 mac/pid/ekey"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 209, "symbol": "scan", "note": "if (lock == null) { LockStore.save(ctx, parsed); lock = parsed; say(\"已绑定「${parsed.name}」\") }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 34, "symbol": "save", "note": "fun save(ctx: Context, lock: LockInfo)"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 209,
+          "symbol": "scan",
+          "note": "if (lock == null) { LockStore.save(ctx, parsed); lock = parsed; say(\"已绑定「${parsed.name}」\") }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 34,
+          "symbol": "save",
+          "note": "fun save(ctx: Context, lock: LockInfo)"
+        }
       ],
-      "tags": ["绑定"],
+      "tags": [
+        "绑定"
+      ],
       "status": "implemented"
     },
     {
@@ -310,11 +507,28 @@
         "已绑定时空态按钮不存在，因此不会出现两条并行的扫码路径"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 679, "symbol": "EmptyState", "note": "PillButton(\"扫码添加门锁\", onScan)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 440, "symbol": "ProximityCard", "note": "onRescan = { showSettings = false; launchScan() }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 742, "symbol": "ProximityCard", "note": "Text(\"重新扫码绑定\", ... .clickable { onRescan() })"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 679,
+          "symbol": "EmptyState",
+          "note": "PillButton(\"扫码添加门锁\", onScan)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 440,
+          "symbol": "ProximityCard",
+          "note": "onRescan = { showSettings = false; launchScan() }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 742,
+          "symbol": "ProximityCard",
+          "note": "Text(\"重新扫码绑定\", ... .clickable { onRescan() })"
+        }
       ],
-      "tags": ["入口"],
+      "tags": [
+        "入口"
+      ],
       "status": "implemented"
     },
     {
@@ -332,11 +546,29 @@
         "点外部或返回一样走 onDismissRequest → pending = null（绑定不变）"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 462, "symbol": "KfApp", "note": "val same = p.mac == lock?.mac"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 463, "symbol": "KfApp", "note": "AlertDialog(onDismissRequest = { pending = null }, ...)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 482, "symbol": "KfApp", "note": "Text(if (same) \"覆盖\" else \"换绑\", color = colors.accent)"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 462,
+          "symbol": "KfApp",
+          "note": "val same = p.mac == lock?.mac"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 463,
+          "symbol": "KfApp",
+          "note": "AlertDialog(onDismissRequest = { pending = null }, ...)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 482,
+          "symbol": "KfApp",
+          "note": "Text(if (same) \"覆盖\" else \"换绑\", color = colors.accent)"
+        }
       ],
-      "tags": ["绑定", "确认弹窗"],
+      "tags": [
+        "绑定",
+        "确认弹窗"
+      ],
       "status": "implemented"
     },
     {
@@ -353,10 +585,22 @@
         "没有“保留旧凭证”的分支（本机只存一把锁）"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 468, "symbol": "KfApp", "note": "Text(if (same) \"更新这把锁的凭证?\" else \"换一把锁?\")"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 471, "symbol": "KfApp", "note": "if (same) \"本机已绑定「${p.name}」。用新扫到的凭证覆盖它?\""}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 468,
+          "symbol": "KfApp",
+          "note": "Text(if (same) \"更新这把锁的凭证?\" else \"换一把锁?\")"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 471,
+          "symbol": "KfApp",
+          "note": "if (same) \"本机已绑定「${p.name}」。用新扫到的凭证覆盖它?\""
+        }
       ],
-      "tags": ["确认弹窗"],
+      "tags": [
+        "确认弹窗"
+      ],
       "status": "implemented"
     },
     {
@@ -373,10 +617,23 @@
         "取消后仍可继续使用旧锁开锁"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 472, "symbol": "KfApp", "note": "\"本机现在绑定的是「${lock?.name ?: \"\"}」(${lock?.macText ?: \"\"})。\\n\" + \"换成「${p.name}」(${p.macText}) 之后, 原来那把锁要从这台手机重新扫码才能再用。\""},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 478, "symbol": "KfApp", "note": "LockStore.save(ctx, p); lock = p; pending = null; say(\"已绑定「${p.name}」\")"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 472,
+          "symbol": "KfApp",
+          "note": "\"本机现在绑定的是「${lock?.name ?: \"\"}」(${lock?.macText ?: \"\"})。\\n\" + \"换成「${p.name}」(${p.macText}) 之后, 原来那把锁要从这台手机重新扫码才能再用。\""
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 478,
+          "symbol": "KfApp",
+          "note": "LockStore.save(ctx, p); lock = p; pending = null; say(\"已绑定「${p.name}」\")"
+        }
       ],
-      "tags": ["确认弹窗", "边界"],
+      "tags": [
+        "确认弹窗",
+        "边界"
+      ],
       "status": "implemented"
     },
     {
@@ -394,11 +651,28 @@
         "清后回到空态（EmptyState 的扫码按钮）"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 444, "symbol": "ProximityCard", "note": "onUnbind = { LockStore.clear(ctx); lock = null; proximity = false; showSettings = false; ... say(\"已解绑\") }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 451, "symbol": "ProximityCard", "note": "scope.launch { unlocker.release() }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 750, "symbol": "ProximityCard", "note": "Text(\"解绑\", ... .clickable { onUnbind() })"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 444,
+          "symbol": "ProximityCard",
+          "note": "onUnbind = { LockStore.clear(ctx); lock = null; proximity = false; showSettings = false; ... say(\"已解绑\") }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 451,
+          "symbol": "ProximityCard",
+          "note": "scope.launch { unlocker.release() }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 750,
+          "symbol": "ProximityCard",
+          "note": "Text(\"解绑\", ... .clickable { onUnbind() })"
+        }
       ],
-      "tags": ["破坏性操作"],
+      "tags": [
+        "破坏性操作"
+      ],
       "status": "implemented"
     },
     {
@@ -415,10 +689,23 @@
         "内存态（proximity=false）与落盘态必须一起改，不能只改一个"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 61, "symbol": "clear", "note": "edit().remove(KEY).remove(KEY_PROX).apply()"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 55, "symbol": "clear", "note": "注释：解绑 = 把这把锁的全部本机状态一起清掉"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 61,
+          "symbol": "clear",
+          "note": "edit().remove(KEY).remove(KEY_PROX).apply()"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 55,
+          "symbol": "clear",
+          "note": "注释：解绑 = 把这把锁的全部本机状态一起清掉"
+        }
       ],
-      "tags": ["落盘", "边界"],
+      "tags": [
+        "落盘",
+        "边界"
+      ],
       "status": "implemented"
     },
     {
@@ -437,12 +724,35 @@
         "开关关闭时清 rssi/armed/fired/prewarmStarted/peakRssi/peakAz/airTagDismissed"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 271, "symbol": "maybeAutoUnlock", "note": "fun maybeAutoUnlock(r: Int)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 317, "symbol": "KfApp", "note": "unlocker.observeSignal(l).collect { r -> rssi = r; ...; maybeAutoUnlock(r) }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 301, "symbol": "maybeAutoUnlock", "note": "doUnlock(auto = true)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 311, "symbol": "KfApp", "note": "if (!proximity) { rssi = null; armed = false; fired = false; prewarmStarted = false; peakRssi = null; peakAz = null; airTagDismissed = false }"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 271,
+          "symbol": "maybeAutoUnlock",
+          "note": "fun maybeAutoUnlock(r: Int)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 317,
+          "symbol": "KfApp",
+          "note": "unlocker.observeSignal(l).collect { r -> rssi = r; ...; maybeAutoUnlock(r) }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 301,
+          "symbol": "maybeAutoUnlock",
+          "note": "doUnlock(auto = true)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 311,
+          "symbol": "KfApp",
+          "note": "if (!proximity) { rssi = null; armed = false; fired = false; prewarmStarted = false; peakRssi = null; peakAz = null; airTagDismissed = false }"
+        }
       ],
-      "tags": ["核心", "自动化"],
+      "tags": [
+        "核心",
+        "自动化"
+      ],
       "status": "implemented"
     },
     {
@@ -460,12 +770,35 @@
         "界面文案里的数值一律从 AutoOpenKit 取，避免文案与阈值脱钩"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/AutoOpenKit.kt", "line": 19, "symbol": "AutoOpenKit.BASE", "note": "const val BASE = -40"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/AutoOpenKit.kt", "line": 26, "symbol": "armThreshold", "note": "fun armThreshold(base: Int = BASE): Int = base"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/AutoOpenKit.kt", "line": 28, "symbol": "disarmThreshold", "note": "(base + 10 * log10(0.5)).roundToInt()"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 707, "symbol": "ProximityCard", "note": "\"开着它: 手机解了锁、App 在前台时, 靠近到 \" + AutoOpenKit.BASE + \" dBm 以内会自动开一次。\""}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/AutoOpenKit.kt",
+          "line": 19,
+          "symbol": "AutoOpenKit.BASE",
+          "note": "const val BASE = -40"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/AutoOpenKit.kt",
+          "line": 26,
+          "symbol": "armThreshold",
+          "note": "fun armThreshold(base: Int = BASE): Int = base"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/AutoOpenKit.kt",
+          "line": 28,
+          "symbol": "disarmThreshold",
+          "note": "(base + 10 * log10(0.5)).roundToInt()"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 707,
+          "symbol": "ProximityCard",
+          "note": "\"开着它: 手机解了锁、App 在前台时, 靠近到 \" + AutoOpenKit.BASE + \" dBm 以内会自动开一次。\""
+        }
       ],
-      "tags": ["阈值", "跨端对齐"],
+      "tags": [
+        "阈值",
+        "跨端对齐"
+      ],
       "status": "implemented"
     },
     {
@@ -483,11 +816,29 @@
         "关掉靠近开关同样清 armed"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/AutoOpenKit.kt", "line": 32, "symbol": "rssiSample", "note": "return if (prevArmed) rssi > disarm else rssi >= arm"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 293, "symbol": "maybeAutoUnlock", "note": "armed = AutoOpenKit.rssiSample(prevArmed = armed, rssi = r)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 244, "symbol": "KfApp", "note": "Lifecycle.Event.ON_PAUSE -> { foreground = false; armed = false; ... }"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/AutoOpenKit.kt",
+          "line": 32,
+          "symbol": "rssiSample",
+          "note": "return if (prevArmed) rssi > disarm else rssi >= arm"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 293,
+          "symbol": "maybeAutoUnlock",
+          "note": "armed = AutoOpenKit.rssiSample(prevArmed = armed, rssi = r)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 244,
+          "symbol": "KfApp",
+          "note": "Lifecycle.Event.ON_PAUSE -> { foreground = false; armed = false; ... }"
+        }
       ],
-      "tags": ["状态", "防抖"],
+      "tags": [
+        "状态",
+        "防抖"
+      ],
       "status": "implemented"
     },
     {
@@ -505,12 +856,35 @@
         "理由（代码注释）：04 驱动执行器，反复下发会让电机反复试，还可能把锁拖进 rc=25「锁正忙」"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 295, "symbol": "maybeAutoUnlock", "note": "if (!armed) { fired = false; prewarmStarted = false }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 296, "symbol": "maybeAutoUnlock", "note": "if (!armed || fired) return"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 299, "symbol": "maybeAutoUnlock", "note": "fired = true; lastAuto = now"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 126, "symbol": "KfApp", "note": "var fired by remember { mutableStateOf(false) }"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 295,
+          "symbol": "maybeAutoUnlock",
+          "note": "if (!armed) { fired = false; prewarmStarted = false }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 296,
+          "symbol": "maybeAutoUnlock",
+          "note": "if (!armed || fired) return"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 299,
+          "symbol": "maybeAutoUnlock",
+          "note": "fired = true; lastAuto = now"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 126,
+          "symbol": "KfApp",
+          "note": "var fired by remember { mutableStateOf(false) }"
+        }
       ],
-      "tags": ["时序", "防双开"],
+      "tags": [
+        "时序",
+        "防双开"
+      ],
       "status": "implemented"
     },
     {
@@ -528,12 +902,34 @@
         "60 秒那条是热链路可信上限 warmStaleMs（BleUnlocker），与自动开锁冷却无关"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/AutoOpenKit.kt", "line": 48, "symbol": "AutoOpenKit.COOLDOWN_MS", "note": "const val COOLDOWN_MS = 6_000L"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/AutoOpenKit.kt", "line": 50, "symbol": "coolReady", "note": "lastDispatchMs == 0L || nowMs - lastDispatchMs > COOLDOWN_MS"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 297, "symbol": "maybeAutoUnlock", "note": "if (!AutoOpenKit.coolReady(lastAuto, now)) return"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 712, "symbol": "ProximityCard", "note": "\"一次靠近只开一次: 要走开让信号掉到 \" + AutoOpenKit.disarmThreshold() + \" dBm 以下, 隔 6 秒后再靠近才会再开。\""}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/AutoOpenKit.kt",
+          "line": 48,
+          "symbol": "AutoOpenKit.COOLDOWN_MS",
+          "note": "const val COOLDOWN_MS = 6_000L"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/AutoOpenKit.kt",
+          "line": 50,
+          "symbol": "coolReady",
+          "note": "lastDispatchMs == 0L || nowMs - lastDispatchMs > COOLDOWN_MS"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 297,
+          "symbol": "maybeAutoUnlock",
+          "note": "if (!AutoOpenKit.coolReady(lastAuto, now)) return"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 712,
+          "symbol": "ProximityCard",
+          "note": "\"一次靠近只开一次: 要走开让信号掉到 \" + AutoOpenKit.disarmThreshold() + \" dBm 以下, 隔 6 秒后再靠近才会再开。\""
+        }
       ],
-      "tags": ["时序"],
+      "tags": [
+        "时序"
+      ],
       "status": "implemented"
     },
     {
@@ -549,10 +945,22 @@
         "只用于触发 prewarm，不影响开锁判据（武装线仍是 -40）"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 269, "symbol": "KfApp", "note": "val prewarmLineDbm = AutoOpenKit.BASE - 24"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 276, "symbol": "maybeAutoUnlock", "note": "if (!prewarmStarted && !busy && !warming && r >= prewarmLineDbm && lock != null)"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 269,
+          "symbol": "KfApp",
+          "note": "val prewarmLineDbm = AutoOpenKit.BASE - 24"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 276,
+          "symbol": "maybeAutoUnlock",
+          "note": "if (!prewarmStarted && !busy && !warming && r >= prewarmLineDbm && lock != null)"
+        }
       ],
-      "tags": ["阈值"],
+      "tags": [
+        "阈值"
+      ],
       "status": "implemented"
     },
     {
@@ -571,13 +979,41 @@
         "身份复核（03）刻意不在预热做，留给真正开锁那一次（省一个往返）"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 276, "symbol": "maybeAutoUnlock", "note": "if (!prewarmStarted && !busy && !warming && r >= prewarmLineDbm && lock != null)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 283, "symbol": "maybeAutoUnlock", "note": "warming = true; delay(220); try { unlocker.prewarm(target) } finally { warming = false }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 292, "symbol": "prewarm", "note": "suspend fun prewarm(lock: LockInfo)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 304, "symbol": "prewarm", "note": "val device = freshSeen(lock.mac) ?: return@withLock"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 305, "symbol": "prewarm", "note": "seen.remove(lock.mac)   // 一次性"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 276,
+          "symbol": "maybeAutoUnlock",
+          "note": "if (!prewarmStarted && !busy && !warming && r >= prewarmLineDbm && lock != null)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 283,
+          "symbol": "maybeAutoUnlock",
+          "note": "warming = true; delay(220); try { unlocker.prewarm(target) } finally { warming = false }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 292,
+          "symbol": "prewarm",
+          "note": "suspend fun prewarm(lock: LockInfo)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 304,
+          "symbol": "prewarm",
+          "note": "val device = freshSeen(lock.mac) ?: return@withLock"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 305,
+          "symbol": "prewarm",
+          "note": "seen.remove(lock.mac)   // 一次性"
+        }
       ],
-      "tags": ["性能", "时序"],
+      "tags": [
+        "性能",
+        "时序"
+      ],
       "status": "implemented"
     },
     {
@@ -595,11 +1031,29 @@
         "回前台由 ON_RESUME 置 foreground = true，监测流自动重挂，且不另起扫描（安卓同时只跑一路扫描）"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 275, "symbol": "maybeAutoUnlock", "note": "if (!foreground) return   // 后台不预热"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 314, "symbol": "KfApp", "note": "if (!proximity || busy || warming || !foreground) return@LaunchedEffect"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 309, "symbol": "KfApp", "note": "LaunchedEffect(proximity, lock?.mac, busy, warming, foreground)"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 275,
+          "symbol": "maybeAutoUnlock",
+          "note": "if (!foreground) return   // 后台不预热"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 314,
+          "symbol": "KfApp",
+          "note": "if (!proximity || busy || warming || !foreground) return@LaunchedEffect"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 309,
+          "symbol": "KfApp",
+          "note": "LaunchedEffect(proximity, lock?.mac, busy, warming, foreground)"
+        }
       ],
-      "tags": ["生命周期", "省电"],
+      "tags": [
+        "生命周期",
+        "省电"
+      ],
       "status": "implemented"
     },
     {
@@ -617,11 +1071,29 @@
         "后台/前台切换不清这个开关：它是用户长期选择"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 435, "symbol": "ProximityCard", "note": "onToggle = { proximity = it; LockStore.saveProximity(ctx, it); if (!it) rssi = null }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 121, "symbol": "KfApp", "note": "var proximity by remember { mutableStateOf(LockStore.loadProximity(ctx)) }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 47, "symbol": "loadProximity", "note": "getBoolean(KEY_PROX, false)"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 435,
+          "symbol": "ProximityCard",
+          "note": "onToggle = { proximity = it; LockStore.saveProximity(ctx, it); if (!it) rssi = null }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 121,
+          "symbol": "KfApp",
+          "note": "var proximity by remember { mutableStateOf(LockStore.loadProximity(ctx)) }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 47,
+          "symbol": "loadProximity",
+          "note": "getBoolean(KEY_PROX, false)"
+        }
       ],
-      "tags": ["开关", "落盘"],
+      "tags": [
+        "开关",
+        "落盘"
+      ],
       "status": "implemented"
     },
     {
@@ -639,11 +1111,29 @@
         "颜色由调用方从 LocalKfColors 传入（DrawScope 不是 Composable，读不到 CompositionLocal）"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt", "line": 129, "symbol": "SignalArrow", "note": "fun SignalArrow(azimuthDeg, peakDeg, rssi, armed, busy, pitchDeg, rollDeg, sizeDp, okColor, outlineColor, modifier)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 357, "symbol": "KfApp", "note": "AnimatedVisibility(visible = proximity && !airTagShowing) { SignalArrow(...) }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt", "line": 46, "symbol": "SignalArrow 头注", "note": "诚实边界：没有 UWB/AoA，箭头由“手机姿态 + 峰值方位”两件真数据拼成"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt",
+          "line": 129,
+          "symbol": "SignalArrow",
+          "note": "fun SignalArrow(azimuthDeg, peakDeg, rssi, armed, busy, pitchDeg, rollDeg, sizeDp, okColor, outlineColor, modifier)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 357,
+          "symbol": "KfApp",
+          "note": "AnimatedVisibility(visible = proximity && !airTagShowing) { SignalArrow(...) }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt",
+          "line": 46,
+          "symbol": "SignalArrow 头注",
+          "note": "诚实边界：没有 UWB/AoA，箭头由“手机姿态 + 峰值方位”两件真数据拼成"
+        }
       ],
-      "tags": ["查找", "跨端对齐"],
+      "tags": [
+        "查找",
+        "跨端对齐"
+      ],
       "status": "implemented"
     },
     {
@@ -661,12 +1151,35 @@
         "3D 视差：rotationX = pitch*0.22、rotationY = roll*0.22，各自夹 ±12°；cameraDistance = 40*density"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt", "line": 152, "symbol": "SignalArrow", "note": "val bearing = raw.coerceIn(-30f, 30f)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt", "line": 154, "symbol": "SignalArrow", "note": "val sweep = if (reduceMotion || peakDeg != null || busy) 0f else rememberInfiniteTransition...(-8f, 8f)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt", "line": 167, "symbol": "SignalArrow", "note": "rotationZ = bearing + sweep; rotationX = (pitchDeg * 0.22f).coerceIn(-12f, 12f)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt", "line": 145, "symbol": "SignalArrow", "note": "Settings.Global.getFloat(... ANIMATOR_DURATION_SCALE, 1f) == 0f"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt",
+          "line": 152,
+          "symbol": "SignalArrow",
+          "note": "val bearing = raw.coerceIn(-30f, 30f)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt",
+          "line": 154,
+          "symbol": "SignalArrow",
+          "note": "val sweep = if (reduceMotion || peakDeg != null || busy) 0f else rememberInfiniteTransition...(-8f, 8f)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt",
+          "line": 167,
+          "symbol": "SignalArrow",
+          "note": "rotationZ = bearing + sweep; rotationX = (pitchDeg * 0.22f).coerceIn(-12f, 12f)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt",
+          "line": 145,
+          "symbol": "SignalArrow",
+          "note": "Settings.Global.getFloat(... ANIMATOR_DURATION_SCALE, 1f) == 0f"
+        }
       ],
-      "tags": ["动效", "无障碍"],
+      "tags": [
+        "动效",
+        "无障碍"
+      ],
       "status": "implemented"
     },
     {
@@ -684,11 +1197,28 @@
         "关掉靠近开关时 peakRssi/peakAz 一起清空"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt", "line": 74, "symbol": "peakUpdate", "note": "if (bestRssi == null || rssi > bestRssi + 1) return Triple(rssi, azimuthDeg, true)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 319, "symbol": "KfApp", "note": "val (br, bp, changed) = peakUpdate(peakRssi, peakAz, r, azimuth); if (changed) { peakRssi = br; peakAz = bp }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt", "line": 65, "symbol": "relativeBearing", "note": "val p = peakDeg ?: return 0f"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt",
+          "line": 74,
+          "symbol": "peakUpdate",
+          "note": "if (bestRssi == null || rssi > bestRssi + 1) return Triple(rssi, azimuthDeg, true)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 319,
+          "symbol": "KfApp",
+          "note": "val (br, bp, changed) = peakUpdate(peakRssi, peakAz, r, azimuth); if (changed) { peakRssi = br; peakAz = bp }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt",
+          "line": 65,
+          "symbol": "relativeBearing",
+          "note": "val p = peakDeg ?: return 0f"
+        }
       ],
-      "tags": ["状态"],
+      "tags": [
+        "状态"
+      ],
       "status": "implemented"
     },
     {
@@ -706,10 +1236,22 @@
         "同一个 fill 还驱动 AirTag 层的提示音分档"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt", "line": 56, "symbol": "signalFill", "note": "fun signalFill(rssi: Int?, armDbm: Int = AutoOpenKit.BASE, farDbm: Int = -95): Float"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt", "line": 208, "symbol": "drawAirTagArrow", "note": "if (fill > 0.001f) { clipRect(...) drawPath(arrow, Color(0xFF0B6B33)) }"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt",
+          "line": 56,
+          "symbol": "signalFill",
+          "note": "fun signalFill(rssi: Int?, armDbm: Int = AutoOpenKit.BASE, farDbm: Int = -95): Float"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt",
+          "line": 208,
+          "symbol": "drawAirTagArrow",
+          "note": "if (fill > 0.001f) { clipRect(...) drawPath(arrow, Color(0xFF0B6B33)) }"
+        }
       ],
-      "tags": ["可视化"],
+      "tags": [
+        "可视化"
+      ],
       "status": "implemented"
     },
     {
@@ -727,10 +1269,23 @@
         "代码注释写明这是估计值不是测距（RSSI 抖动 ±6dB），只给远近体感"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt", "line": 84, "symbol": "distanceMeters", "note": "fun distanceMeters(rssi: Int?, at1m: Float = -59f, n: Float = 2.5f): Float"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 828, "symbol": "AirTagLayer", "note": "val distText = when { dist < 0f -> \"测距中…\"; dist < 1f -> 厘米; else -> 米 }"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt",
+          "line": 84,
+          "symbol": "distanceMeters",
+          "note": "fun distanceMeters(rssi: Int?, at1m: Float = -59f, n: Float = 2.5f): Float"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 828,
+          "symbol": "AirTagLayer",
+          "note": "val distText = when { dist < 0f -> \"测距中…\"; dist < 1f -> 厘米; else -> 米 }"
+        }
       ],
-      "tags": ["测距", "估计值"],
+      "tags": [
+        "测距",
+        "估计值"
+      ],
       "status": "implemented"
     },
     {
@@ -747,11 +1302,28 @@
         "主界面不显示方向文案，只有 AirTag 全屏层显示（26sp SemiBold）"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt", "line": 65, "symbol": "relativeBearing", "note": "var d = (p - azimuthDeg) % 360f; if (d > 180f) d -= 360f; if (d < -180f) d += 360f"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt", "line": 91, "symbol": "directionLabel", "note": "if (bearingClamped < -dead) \"左前方\" else if (bearingClamped > dead) \"右前方\" else \"前方\""},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 863, "symbol": "AirTagLayer", "note": "Text(directionLabel(bearing), fontSize = 26.sp)"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt",
+          "line": 65,
+          "symbol": "relativeBearing",
+          "note": "var d = (p - azimuthDeg) % 360f; if (d > 180f) d -= 360f; if (d < -180f) d += 360f"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt",
+          "line": 91,
+          "symbol": "directionLabel",
+          "note": "if (bearingClamped < -dead) \"左前方\" else if (bearingClamped > dead) \"右前方\" else \"前方\""
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 863,
+          "symbol": "AirTagLayer",
+          "note": "Text(directionLabel(bearing), fontSize = 26.sp)"
+        }
       ],
-      "tags": ["文案"],
+      "tags": [
+        "文案"
+      ],
       "status": "implemented"
     },
     {
@@ -770,12 +1342,34 @@
         "awaitClose 里 unregisterListener，避免泄漏"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt", "line": 96, "symbol": "HeadingSense.attitude", "note": "fun attitude(ctx: Context): Flow<FloatArray> = callbackFlow { ... }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt", "line": 108, "symbol": "HeadingSense", "note": "SensorManager.getRotationMatrixFromVector(R, e.values); SensorManager.getOrientation(R, out)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt", "line": 117, "symbol": "HeadingSense", "note": "sm.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_GAME)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 326, "symbol": "KfApp", "note": "LaunchedEffect(foreground) { if (!foreground) return@LaunchedEffect; HeadingSense.attitude(ctx).collect { ... } }"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt",
+          "line": 96,
+          "symbol": "HeadingSense.attitude",
+          "note": "fun attitude(ctx: Context): Flow<FloatArray> = callbackFlow { ... }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt",
+          "line": 108,
+          "symbol": "HeadingSense",
+          "note": "SensorManager.getRotationMatrixFromVector(R, e.values); SensorManager.getOrientation(R, out)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/SignalArrow.kt",
+          "line": 117,
+          "symbol": "HeadingSense",
+          "note": "sm.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_GAME)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 326,
+          "symbol": "KfApp",
+          "note": "LaunchedEffect(foreground) { if (!foreground) return@LaunchedEffect; HeadingSense.attitude(ctx).collect { ... } }"
+        }
       ],
-      "tags": ["传感器"],
+      "tags": [
+        "传感器"
+      ],
       "status": "implemented"
     },
     {
@@ -793,11 +1387,29 @@
         "全屏层不拦截返回键以外的输入，返回键收起（airTagDismissed）"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 493, "symbol": "KfApp", "note": "AnimatedVisibility(visible = airTagShowing, enter = fadeIn(180)+slideInVertically(260))"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 811, "symbol": "AirTagLayer", "note": "private fun AirTagLayer(name, rssi, armed, busy, azimuthDeg, peakDeg, pitch, roll, soundOn, foreground, onToggleSound, onClose)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 839, "symbol": "AirTagLayer", "note": ".background(if (armed) Color(0xFF0E7A42) else Color(0xFF0B6B3A))"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 493,
+          "symbol": "KfApp",
+          "note": "AnimatedVisibility(visible = airTagShowing, enter = fadeIn(180)+slideInVertically(260))"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 811,
+          "symbol": "AirTagLayer",
+          "note": "private fun AirTagLayer(name, rssi, armed, busy, azimuthDeg, peakDeg, pitch, roll, soundOn, foreground, onToggleSound, onClose)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 839,
+          "symbol": "AirTagLayer",
+          "note": ".background(if (armed) Color(0xFF0E7A42) else Color(0xFF0B6B3A))"
+        }
       ],
-      "tags": ["查找", "iOS 对照"],
+      "tags": [
+        "查找",
+        "iOS 对照"
+      ],
       "status": "implemented"
     },
     {
@@ -814,10 +1426,22 @@
         "进出场动画：fade 180/150 + 垂直滑入/滑出 260/220ms"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 332, "symbol": "KfApp", "note": "val airTagShowing = proximity && rssi != null && !airTagDismissed"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 149, "symbol": "KfApp", "note": "val airTagLayerUp = proximity && rssi != null && !airTagDismissed（返回键判据）"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 332,
+          "symbol": "KfApp",
+          "note": "val airTagShowing = proximity && rssi != null && !airTagDismissed"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 149,
+          "symbol": "KfApp",
+          "note": "val airTagLayerUp = proximity && rssi != null && !airTagDismissed（返回键判据）"
+        }
       ],
-      "tags": ["状态"],
+      "tags": [
+        "状态"
+      ],
       "status": "implemented"
     },
     {
@@ -835,12 +1459,34 @@
         "背景色随 armed 切换，形成“满绿即可开”的颜色反馈"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 842, "symbol": "AirTagLayer", "note": "Text(\"正在查找\") + Text(name, 30.sp, Bold)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 866, "symbol": "AirTagLayer", "note": "CircleIconButton(label = \"✕\", onClick = onClose)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 871, "symbol": "AirTagLayer", "note": "CircleIconButton(label = if (soundOn) \"🔊\" else \"🔇\", onClick = onToggleSound)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 141, "symbol": "KfApp", "note": "var findSound by remember { mutableStateOf(true) }"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 842,
+          "symbol": "AirTagLayer",
+          "note": "Text(\"正在查找\") + Text(name, 30.sp, Bold)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 866,
+          "symbol": "AirTagLayer",
+          "note": "CircleIconButton(label = \"✕\", onClick = onClose)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 871,
+          "symbol": "AirTagLayer",
+          "note": "CircleIconButton(label = if (soundOn) \"🔊\" else \"🔇\", onClick = onToggleSound)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 141,
+          "symbol": "KfApp",
+          "note": "var findSound by remember { mutableStateOf(true) }"
+        }
       ],
-      "tags": ["设置项"],
+      "tags": [
+        "设置项"
+      ],
       "status": "implemented"
     },
     {
@@ -859,12 +1505,35 @@
         "finally 里 tg.release()，离开全屏层即停"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 893, "symbol": "ProximityBeep", "note": "private fun ProximityBeep(active, fill, soundOn, foreground)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 894, "symbol": "ProximityBeep", "note": "val level = when { fill > 0.85f -> 3; fill > 0.6f -> 2; fill > 0.3f -> 1; fill > 0.05f -> 0; else -> -1 }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 901, "symbol": "ProximityBeep", "note": "LaunchedEffect(active, soundOn, level, foreground) { if (!active || !soundOn || level < 0 || !foreground) return }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 904, "symbol": "ProximityBeep", "note": "val period = when (level) { 3 -> 240L; 2 -> 420L; 1 -> 700L; else -> 1100L }"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 893,
+          "symbol": "ProximityBeep",
+          "note": "private fun ProximityBeep(active, fill, soundOn, foreground)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 894,
+          "symbol": "ProximityBeep",
+          "note": "val level = when { fill > 0.85f -> 3; fill > 0.6f -> 2; fill > 0.3f -> 1; fill > 0.05f -> 0; else -> -1 }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 901,
+          "symbol": "ProximityBeep",
+          "note": "LaunchedEffect(active, soundOn, level, foreground) { if (!active || !soundOn || level < 0 || !foreground) return }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 904,
+          "symbol": "ProximityBeep",
+          "note": "val period = when (level) { 3 -> 240L; 2 -> 420L; 1 -> 700L; else -> 1100L }"
+        }
       ],
-      "tags": ["音效", "时序"],
+      "tags": [
+        "音效",
+        "时序"
+      ],
       "status": "implemented"
     },
     {
@@ -881,11 +1550,29 @@
         "收起后箭头仍显示在主界面（proximity && !airTagShowing）"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 512, "symbol": "KfApp", "note": "onClose = { airTagDismissed = true }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 150, "symbol": "KfApp", "note": "BackHandler(enabled = airTagLayerUp || showSettings) { if (airTagLayerUp) airTagDismissed = true else if (showSettings) showSettings = false }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 240, "symbol": "KfApp", "note": "ON_RESUME -> { ... airTagDismissed = false }"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 512,
+          "symbol": "KfApp",
+          "note": "onClose = { airTagDismissed = true }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 150,
+          "symbol": "KfApp",
+          "note": "BackHandler(enabled = airTagLayerUp || showSettings) { if (airTagLayerUp) airTagDismissed = true else if (showSettings) showSettings = false }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 240,
+          "symbol": "KfApp",
+          "note": "ON_RESUME -> { ... airTagDismissed = false }"
+        }
       ],
-      "tags": ["状态", "返回键"],
+      "tags": [
+        "状态",
+        "返回键"
+      ],
       "status": "implemented"
     },
     {
@@ -903,12 +1590,34 @@
         "Manifest 固定 portrait、exported=true、单 Activity，无其它页面/导航栈"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 338, "symbol": "KfApp", "note": "Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(colors.bgTop, colors.bgBottom))))"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 343, "symbol": "KfApp", "note": "Column(fillMaxSize().padding(horizontal = 24.dp, vertical = 28.dp), CenterHorizontally)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 411, "symbol": "KfApp", "note": "if (lock != null) GearButton(Modifier.align(Alignment.BottomEnd).padding(24.dp))"},
-        {"file": "android-app/app/src/main/AndroidManifest.xml", "line": 27, "symbol": "MainActivity", "note": "android:screenOrientation=\"portrait\""}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 338,
+          "symbol": "KfApp",
+          "note": "Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(colors.bgTop, colors.bgBottom))))"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 343,
+          "symbol": "KfApp",
+          "note": "Column(fillMaxSize().padding(horizontal = 24.dp, vertical = 28.dp), CenterHorizontally)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 411,
+          "symbol": "KfApp",
+          "note": "if (lock != null) GearButton(Modifier.align(Alignment.BottomEnd).padding(24.dp))"
+        },
+        {
+          "file": "android-app/app/src/main/AndroidManifest.xml",
+          "line": 27,
+          "symbol": "MainActivity",
+          "note": "android:screenOrientation=\"portrait\""
+        }
       ],
-      "tags": ["界面"],
+      "tags": [
+        "界面"
+      ],
       "status": "implemented"
     },
     {
@@ -925,11 +1634,28 @@
         "pid 不在界面展示（只用于身份复核）"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 522, "symbol": "Header", "note": "Text(text = lock?.name ?: \"离线锁钥匙\", fontSize = if (lock == null) 22.sp else 26.sp, Light)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 529, "symbol": "Header", "note": "if (lock != null) { ... Text(text = lock.macText, monospace, letterSpacing = 1.5.sp) }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 8, "symbol": "LockInfo.macText", "note": "mac.chunked(2).joinToString(\":\").uppercase()"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 522,
+          "symbol": "Header",
+          "note": "Text(text = lock?.name ?: \"离线锁钥匙\", fontSize = if (lock == null) 22.sp else 26.sp, Light)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 529,
+          "symbol": "Header",
+          "note": "if (lock != null) { ... Text(text = lock.macText, monospace, letterSpacing = 1.5.sp) }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 8,
+          "symbol": "LockInfo.macText",
+          "note": "mac.chunked(2).joinToString(\":\").uppercase()"
+        }
       ],
-      "tags": ["展示"],
+      "tags": [
+        "展示"
+      ],
       "status": "implemented"
     },
     {
@@ -946,11 +1672,28 @@
         "无涟漪/无图标资源依赖，与圆盘、空态二维码框同一套自绘语言"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 764, "symbol": "GearButton", "note": "private fun GearButton(modifier: Modifier = Modifier, onClick: () -> Unit)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 768, "symbol": "GearButton", "note": ".size(56.dp).clip(CircleShape).background(colors.surface.copy(alpha = 0.92f)).clickable { onClick() }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 778, "symbol": "GearButton", "note": "for (k in 0 until 8) { val a = Math.toRadians((k * 45).toDouble()) ... }"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 764,
+          "symbol": "GearButton",
+          "note": "private fun GearButton(modifier: Modifier = Modifier, onClick: () -> Unit)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 768,
+          "symbol": "GearButton",
+          "note": ".size(56.dp).clip(CircleShape).background(colors.surface.copy(alpha = 0.92f)).clickable { onClick() }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 778,
+          "symbol": "GearButton",
+          "note": "for (k in 0 until 8) { val a = Math.toRadians((k * 45).toDouble()) ... }"
+        }
       ],
-      "tags": ["入口"],
+      "tags": [
+        "入口"
+      ],
       "status": "implemented"
     },
     {
@@ -969,11 +1712,29 @@
         "只有 lock != null 才渲染（解绑后立刻消失）"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 417, "symbol": "KfApp", "note": "AnimatedVisibility(visible = showSettings && lock != null, enter = fadeIn(160)+slideInVertically(220) { it/3 }, exit = fadeOut(140)+slideOutVertically(200) { it/3 })"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 684, "symbol": "ProximityCard", "note": "private fun ProximityCard(on, onToggle, onRescan, onUnbind, onClose)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 693, "symbol": "ProximityCard", "note": "clip(RoundedCornerShape(KfTokens.Radius.card)).background(colors.surface).padding(KfTokens.Space.l)"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 417,
+          "symbol": "KfApp",
+          "note": "AnimatedVisibility(visible = showSettings && lock != null, enter = fadeIn(160)+slideInVertically(220) { it/3 }, exit = fadeOut(140)+slideOutVertically(200) { it/3 })"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 684,
+          "symbol": "ProximityCard",
+          "note": "private fun ProximityCard(on, onToggle, onRescan, onUnbind, onClose)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 693,
+          "symbol": "ProximityCard",
+          "note": "clip(RoundedCornerShape(KfTokens.Radius.card)).background(colors.surface).padding(KfTokens.Space.l)"
+        }
       ],
-      "tags": ["设置", "跨端对齐"],
+      "tags": [
+        "设置",
+        "跨端对齐"
+      ],
       "status": "implemented"
     },
     {
@@ -990,11 +1751,28 @@
         "抽屉内容底部对齐（Arrangement.Bottom），卡片贴底"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 425, "symbol": "KfApp", "note": ".background(Color(0xB3050709))"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 427, "symbol": "KfApp", "note": ".clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { showSettings = false }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 454, "symbol": "ProximityCard", "note": "onClose = { showSettings = false }（“完成”按钮）"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 425,
+          "symbol": "KfApp",
+          "note": ".background(Color(0xB3050709))"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 427,
+          "symbol": "KfApp",
+          "note": ".clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { showSettings = false }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 454,
+          "symbol": "ProximityCard",
+          "note": "onClose = { showSettings = false }（“完成”按钮）"
+        }
       ],
-      "tags": ["动效"],
+      "tags": [
+        "动效"
+      ],
       "status": "implemented"
     },
     {
@@ -1011,10 +1789,22 @@
         "文案两行：武装线 -40 与解除线 -43 + “隔 6 秒”"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 717, "symbol": "ProximityCard", "note": "Switch(checked = on, onCheckedChange = onToggle, colors = SwitchDefaults.colors(...))"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 720, "symbol": "ProximityCard", "note": "checkedThumbColor = colors.bgTop, checkedTrackColor = colors.accent, uncheckedTrackColor = colors.inkSub.copy(alpha = 0.30f)"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 717,
+          "symbol": "ProximityCard",
+          "note": "Switch(checked = on, onCheckedChange = onToggle, colors = SwitchDefaults.colors(...))"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 720,
+          "symbol": "ProximityCard",
+          "note": "checkedThumbColor = colors.bgTop, checkedTrackColor = colors.accent, uncheckedTrackColor = colors.inkSub.copy(alpha = 0.30f)"
+        }
       ],
-      "tags": ["开关"],
+      "tags": [
+        "开关"
+      ],
       "status": "implemented"
     },
     {
@@ -1030,10 +1820,22 @@
         "不会先清旧绑定：旧凭证在用户确认换绑前仍然有效"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 440, "symbol": "ProximityCard", "note": "onRescan = { showSettings = false; launchScan() }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 742, "symbol": "ProximityCard", "note": "Text(\"重新扫码绑定\", color = colors.accent.copy(alpha = 0.9f), ... .clickable { onRescan() })"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 440,
+          "symbol": "ProximityCard",
+          "note": "onRescan = { showSettings = false; launchScan() }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 742,
+          "symbol": "ProximityCard",
+          "note": "Text(\"重新扫码绑定\", color = colors.accent.copy(alpha = 0.9f), ... .clickable { onRescan() })"
+        }
       ],
-      "tags": ["绑定"],
+      "tags": [
+        "绑定"
+      ],
       "status": "implemented"
     },
     {
@@ -1050,10 +1852,23 @@
         "此前全仓零 BackHandler，按返回会直接 finish 整个 App"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 149, "symbol": "KfApp", "note": "val airTagLayerUp = proximity && rssi != null && !airTagDismissed"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 150, "symbol": "KfApp", "note": "BackHandler(enabled = airTagLayerUp || showSettings) { if (airTagLayerUp) { airTagDismissed = true } else if (showSettings) { showSettings = false } }"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 149,
+          "symbol": "KfApp",
+          "note": "val airTagLayerUp = proximity && rssi != null && !airTagDismissed"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 150,
+          "symbol": "KfApp",
+          "note": "BackHandler(enabled = airTagLayerUp || showSettings) { if (airTagLayerUp) { airTagDismissed = true } else if (showSettings) { showSettings = false } }"
+        }
       ],
-      "tags": ["返回键", "层级"],
+      "tags": [
+        "返回键",
+        "层级"
+      ],
       "status": "implemented"
     },
     {
@@ -1071,11 +1886,29 @@
         "没有网络权限 ⇒ 不存在云端/OTA/同步类设备能力"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 12, "symbol": "LockStore", "note": "注释：本机存储: 只存一把锁"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 17, "symbol": "LockStore", "note": "private const val PREF = \"kf_key_v1\"; KEY = \"lock\"; KEY_PROX = \"proximity\""},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 103, "symbol": "BleUnlocker.warm", "note": "private var warm: Session? = null（单条热链路）"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 12,
+          "symbol": "LockStore",
+          "note": "注释：本机存储: 只存一把锁"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 17,
+          "symbol": "LockStore",
+          "note": "private const val PREF = \"kf_key_v1\"; KEY = \"lock\"; KEY_PROX = \"proximity\""
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 103,
+          "symbol": "BleUnlocker.warm",
+          "note": "private var warm: Session? = null（单条热链路）"
+        }
       ],
-      "tags": ["边界", "范围"],
+      "tags": [
+        "边界",
+        "范围"
+      ],
       "status": "edge"
     },
     {
@@ -1092,11 +1925,29 @@
         "空态给“还没有绑定门锁”+ 两行引导 + 大按钮；没有“导入/手动输入/蓝牙搜索”这类旁路"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 114, "symbol": "KfApp", "note": "var lock by remember { mutableStateOf(LockStore.load(ctx)) }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 21, "symbol": "load", "note": "runCatching { JSONObject(raw) ... }.getOrNull()?.takeIf { it.mac.length == 12 && it.ekey.isNotEmpty() }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 351, "symbol": "KfApp", "note": "if (lock == null) { EmptyState(onScan = { launchScan() }) } else { ... }"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 114,
+          "symbol": "KfApp",
+          "note": "var lock by remember { mutableStateOf(LockStore.load(ctx)) }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 21,
+          "symbol": "load",
+          "note": "runCatching { JSONObject(raw) ... }.getOrNull()?.takeIf { it.mac.length == 12 && it.ekey.isNotEmpty() }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 351,
+          "symbol": "KfApp",
+          "note": "if (lock == null) { EmptyState(onScan = { launchScan() }) } else { ... }"
+        }
       ],
-      "tags": ["空态", "冷启动"],
+      "tags": [
+        "空态",
+        "冷启动"
+      ],
       "status": "implemented"
     },
     {
@@ -1114,11 +1965,28 @@
         "没有加载态/重试态：未绑定时界面是静态的"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 654, "symbol": "EmptyState", "note": "private fun EmptyState(onScan: () -> Unit)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 658, "symbol": "EmptyState", "note": "Canvas(Modifier.size(120.dp)) { ... 四个角 corner(...) }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 674, "symbol": "EmptyState", "note": "Text(\"在 iOS 端「设置 → 门锁 → 分享给安卓」生成二维码,\\n扫一次即可。之后开锁不再需要它。\")"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 654,
+          "symbol": "EmptyState",
+          "note": "private fun EmptyState(onScan: () -> Unit)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 658,
+          "symbol": "EmptyState",
+          "note": "Canvas(Modifier.size(120.dp)) { ... 四个角 corner(...) }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 674,
+          "symbol": "EmptyState",
+          "note": "Text(\"在 iOS 端「设置 → 门锁 → 分享给安卓」生成二维码,\\n扫一次即可。之后开锁不再需要它。\")"
+        }
       ],
-      "tags": ["空态"],
+      "tags": [
+        "空态"
+      ],
       "status": "implemented"
     },
     {
@@ -1136,11 +2004,29 @@
         "长度字节只 1 字节的 KLV 限制反过来约束了二维码 ekey 长度上限 510 hex"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 36, "symbol": "frame", "note": "fun frame(cmd: Int, klvHex: String): String"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 185, "symbol": "tokenFrame", "note": "fun tokenFrame(): String = frame(0x01, \"\")"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 192, "symbol": "statusFrame", "note": "fun statusFrame(): String = frame(0x03, \"\")"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 36,
+          "symbol": "frame",
+          "note": "fun frame(cmd: Int, klvHex: String): String"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 185,
+          "symbol": "tokenFrame",
+          "note": "fun tokenFrame(): String = frame(0x01, \"\")"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 192,
+          "symbol": "statusFrame",
+          "note": "fun statusFrame(): String = frame(0x03, \"\")"
+        }
       ],
-      "tags": ["协议", "组帧"],
+      "tags": [
+        "协议",
+        "组帧"
+      ],
       "status": "implemented"
     },
     {
@@ -1159,11 +2045,29 @@
         "同时把 KLV 解析成 Map<Int, String>（LinkedHashMap 保序）"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 77, "symbol": "parse", "note": "fun parse(hexIn: String): Frame?"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 84, "symbol": "parse", "note": "val orders = if (version == 0x01) intArrayOf(8, 7, 10) else intArrayOf(8, 10, 7)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 89, "symbol": "parse", "note": "return Frame(cmd, map, hex.substring(0, (off + len) * 2))"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 77,
+          "symbol": "parse",
+          "note": "fun parse(hexIn: String): Frame?"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 84,
+          "symbol": "parse",
+          "note": "val orders = if (version == 0x01) intArrayOf(8, 7, 10) else intArrayOf(8, 10, 7)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 89,
+          "symbol": "parse",
+          "note": "return Frame(cmd, map, hex.substring(0, (off + len) * 2))"
+        }
       ],
-      "tags": ["协议", "兼容"],
+      "tags": [
+        "协议",
+        "兼容"
+      ],
       "status": "implemented"
     },
     {
@@ -1181,12 +2085,34 @@
         "intHex：取前缀 hex（遇非 hex 停），空串返回 0，超 0xFFFFFFFF 饱和 —— 与 JS parseInt 口径一致"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 28, "symbol": "klv", "note": "fun klv(key: Int, valHex: String): String"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 94, "symbol": "parseKlv", "note": "while (off < b.size) { key = b[off]; len = b[off+1]; ... }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 134, "symbol": "klvShape", "note": "f.klvs.entries.joinToString(\" \") { \"#\" + %02x(key) + \"=\" + (value.length/2) + \"B\" }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 116, "symbol": "intHex", "note": "fun intHex(h: String): Int"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 28,
+          "symbol": "klv",
+          "note": "fun klv(key: Int, valHex: String): String"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 94,
+          "symbol": "parseKlv",
+          "note": "while (off < b.size) { key = b[off]; len = b[off+1]; ... }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 134,
+          "symbol": "klvShape",
+          "note": "f.klvs.entries.joinToString(\" \") { \"#\" + %02x(key) + \"=\" + (value.length/2) + \"B\" }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 116,
+          "symbol": "intHex",
+          "note": "fun intHex(h: String): Int"
+        }
       ],
-      "tags": ["协议"],
+      "tags": [
+        "协议"
+      ],
       "status": "implemented"
     },
     {
@@ -1205,11 +2131,29 @@
         "令牌明文传输（本端无 skey），所以不需要任何加密实现"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 52, "symbol": "injectToken", "note": "fun injectToken(frameHex: String, tokenHex: String): String"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 59, "symbol": "injectToken", "note": "val header10 = f.length >= 20 + len * 2"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 356, "symbol": "runUnlock", "note": "val tokKlv = KfProtocol.klv(0xEE, token).uppercase(); if (!hex.endsWith(tokKlv)) ..."}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 52,
+          "symbol": "injectToken",
+          "note": "fun injectToken(frameHex: String, tokenHex: String): String"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 59,
+          "symbol": "injectToken",
+          "note": "val header10 = f.length >= 20 + len * 2"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 356,
+          "symbol": "runUnlock",
+          "note": "val tokKlv = KfProtocol.klv(0xEE, token).uppercase(); if (!hex.endsWith(tokKlv)) ..."
+        }
       ],
-      "tags": ["协议", "令牌"],
+      "tags": [
+        "协议",
+        "令牌"
+      ],
       "status": "implemented"
     },
     {
@@ -1226,11 +2170,29 @@
         "token 为空或帧短于 16 hex 时原样返回（不注入）"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 354, "symbol": "runUnlock", "note": "val hex = KfProtocol.injectToken(KfProtocol.unlockFrame(lock.ekey), token)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 357, "symbol": "runUnlock", "note": "if (!hex.endsWith(tokKlv)) return Attempt(Outcome(false, \"内部错误: 会话令牌没能装进开锁帧\", ...))"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 63, "symbol": "injectToken", "note": "val klv = body + klv(0xEE, tokenHex)"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 354,
+          "symbol": "runUnlock",
+          "note": "val hex = KfProtocol.injectToken(KfProtocol.unlockFrame(lock.ekey), token)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 357,
+          "symbol": "runUnlock",
+          "note": "if (!hex.endsWith(tokKlv)) return Attempt(Outcome(false, \"内部错误: 会话令牌没能装进开锁帧\", ...))"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 63,
+          "symbol": "injectToken",
+          "note": "val klv = body + klv(0xEE, tokenHex)"
+        }
       ],
-      "tags": ["协议", "护栏"],
+      "tags": [
+        "协议",
+        "护栏"
+      ],
       "status": "implemented"
     },
     {
@@ -1249,12 +2211,35 @@
         "01 的响应没有 rc：既不能当成功也不能当失败判据"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 331, "symbol": "runUnlock", "note": "writeChunked(g, write, KfProtocol.bytes(KfProtocol.tokenFrame()), s)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 335, "symbol": "runUnlock", "note": "val tokenFrame = awaitFrame(s.notes, 0x01, 4_000)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 338, "symbol": "runUnlock", "note": "val token = tokenFrame.klvs[0x02]"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 185, "symbol": "tokenFrame", "note": "frame(0x01, \"\")"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 331,
+          "symbol": "runUnlock",
+          "note": "writeChunked(g, write, KfProtocol.bytes(KfProtocol.tokenFrame()), s)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 335,
+          "symbol": "runUnlock",
+          "note": "val tokenFrame = awaitFrame(s.notes, 0x01, 4_000)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 338,
+          "symbol": "runUnlock",
+          "note": "val token = tokenFrame.klvs[0x02]"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 185,
+          "symbol": "tokenFrame",
+          "note": "frame(0x01, \"\")"
+        }
       ],
-      "tags": ["协议", "命令"],
+      "tags": [
+        "协议",
+        "命令"
+      ],
       "status": "implemented"
     },
     {
@@ -1273,13 +2258,41 @@
         "pid 取 KLV#34 的 u32 小端"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 453, "symbol": "verifyIdentity", "note": "private suspend fun verifyIdentity(s, lock, trace): Outcome?"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 461, "symbol": "verifyIdentity", "note": "writeChunked(g, write, KfProtocol.bytes(KfProtocol.statusFrame()), s)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 465, "symbol": "verifyIdentity", "note": "val st = awaitFrame(s.notes, 0x03, 3_000)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 471, "symbol": "verifyIdentity", "note": "Outcome(false, \"连到的设备与「\" + lock.name + \"」不是同一把锁 (pid 不符) — ...\")"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 208, "symbol": "pidOf", "note": "fun pidOf(f: Frame): Int = f.klvs[0x34]?.let { u32le(it) } ?: 0"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 453,
+          "symbol": "verifyIdentity",
+          "note": "private suspend fun verifyIdentity(s, lock, trace): Outcome?"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 461,
+          "symbol": "verifyIdentity",
+          "note": "writeChunked(g, write, KfProtocol.bytes(KfProtocol.statusFrame()), s)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 465,
+          "symbol": "verifyIdentity",
+          "note": "val st = awaitFrame(s.notes, 0x03, 3_000)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 471,
+          "symbol": "verifyIdentity",
+          "note": "Outcome(false, \"连到的设备与「\" + lock.name + \"」不是同一把锁 (pid 不符) — ...\")"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 208,
+          "symbol": "pidOf",
+          "note": "fun pidOf(f: Frame): Int = f.klvs[0x34]?.let { u32le(it) } ?: 0"
+        }
       ],
-      "tags": ["协议", "安全"],
+      "tags": [
+        "协议",
+        "安全"
+      ],
       "status": "implemented"
     },
     {
@@ -1297,12 +2310,36 @@
         "rc==0 才算成功；rc 3/13 在 attempt==1 时允许重取令牌再试一次"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 180, "symbol": "unlockFrame", "note": "fun unlockFrame(ekeyHex: String): String { val klv01 = klv(0x01, \"0\".repeat(32)); return frame(0x04, klv01 + klv(0x02, ekeyHex.lowercase())) }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 368, "symbol": "runUnlock", "note": "val res = awaitFrame(s.notes, 0x04, 3_000)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 373, "symbol": "runUnlock", "note": "rc = KfProtocol.rc(res); trace.append(\"04→rc=\" + rc + \" \")"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 139, "symbol": "rc", "note": "fun rc(f: Frame): Int = f.klvs[0x03]?.let { intHex(it) } ?: -1"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 180,
+          "symbol": "unlockFrame",
+          "note": "fun unlockFrame(ekeyHex: String): String { val klv01 = klv(0x01, \"0\".repeat(32)); return frame(0x04, klv01 + klv(0x02, ekeyHex.lowercase())) }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 368,
+          "symbol": "runUnlock",
+          "note": "val res = awaitFrame(s.notes, 0x04, 3_000)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 373,
+          "symbol": "runUnlock",
+          "note": "rc = KfProtocol.rc(res); trace.append(\"04→rc=\" + rc + \" \")"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 139,
+          "symbol": "rc",
+          "note": "fun rc(f: Frame): Int = f.klvs[0x03]?.let { intHex(it) } ?: -1"
+        }
       ],
-      "tags": ["协议", "命令", "核心"],
+      "tags": [
+        "协议",
+        "命令",
+        "核心"
+      ],
       "status": "implemented"
     },
     {
@@ -1320,11 +2357,30 @@
         "码表按 JS/StatusParser 原文逐字搬运，不自行解释语义"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 142, "symbol": "RC_NAME", "note": "private val RC_NAME = mapOf(0 to \"已开锁\", ... 27 to \"您的门锁处于布防状态\")"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 153, "symbol": "RC_HINT", "note": "private val RC_HINT = mapOf(1 to ..., 3 to ..., 5 to ..., 6 to ..., 9 to ..., 11 to ..., 13 to ..., 21 to ..., 25 to ..., 27 to ...)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 170, "symbol": "rcText", "note": "fun rcText(rc: Int): String"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 142,
+          "symbol": "RC_NAME",
+          "note": "private val RC_NAME = mapOf(0 to \"已开锁\", ... 27 to \"您的门锁处于布防状态\")"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 153,
+          "symbol": "RC_HINT",
+          "note": "private val RC_HINT = mapOf(1 to ..., 3 to ..., 5 to ..., 6 to ..., 9 to ..., 11 to ..., 13 to ..., 21 to ..., 25 to ..., 27 to ...)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 170,
+          "symbol": "rcText",
+          "note": "fun rcText(rc: Int): String"
+        }
       ],
-      "tags": ["协议", "错误码", "跨端对齐"],
+      "tags": [
+        "协议",
+        "错误码",
+        "跨端对齐"
+      ],
       "status": "implemented"
     },
     {
@@ -1341,11 +2397,29 @@
         "13 通讯过期与 3 命令过期是两条不同码"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 143, "symbol": "RC_NAME", "note": "0 to \"已开锁\", 1 to \"解密失败\", 2 to \"无效的PIN码\", 3 to \"命令过期\", 5 to \"次数使用完毕\", ..."},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 145, "symbol": "RC_NAME", "note": "10 to \"未知错误\", 11 to \"解密失败\", 12 to \"mac地址不正确\", 13 to \"通讯过期\""},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 149, "symbol": "RC_NAME", "note": "25 to \"锁正忙，请稍后重试\", 26 to \"门锁被撬\", 27 to \"您的门锁处于布防状态\""}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 143,
+          "symbol": "RC_NAME",
+          "note": "0 to \"已开锁\", 1 to \"解密失败\", 2 to \"无效的PIN码\", 3 to \"命令过期\", 5 to \"次数使用完毕\", ..."
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 145,
+          "symbol": "RC_NAME",
+          "note": "10 to \"未知错误\", 11 to \"解密失败\", 12 to \"mac地址不正确\", 13 to \"通讯过期\""
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 149,
+          "symbol": "RC_NAME",
+          "note": "25 to \"锁正忙，请稍后重试\", 26 to \"门锁被撬\", 27 to \"您的门锁处于布防状态\""
+        }
       ],
-      "tags": ["错误码", "数据"],
+      "tags": [
+        "错误码",
+        "数据"
+      ],
       "status": "implemented"
     },
     {
@@ -1362,11 +2436,29 @@
         "少一份密钥材料 = 少一份可泄漏的东西；换来的代价是本机无法自行生成凭证"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 4, "symbol": "KfProtocol 头注", "note": "协议层——从 iOS 端逐字节搬过来的最小子集；本文件只有帧头 + KLV + 令牌注入 + 响应解析"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 63, "symbol": "injectToken", "note": "val klv = body + klv(0xEE, tokenHex)（令牌明文拼接）"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 182, "symbol": "unlockFrame", "note": "klv(0x02, ekeyHex.lowercase())（ekey 原样写入）"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 4,
+          "symbol": "KfProtocol 头注",
+          "note": "协议层——从 iOS 端逐字节搬过来的最小子集；本文件只有帧头 + KLV + 令牌注入 + 响应解析"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 63,
+          "symbol": "injectToken",
+          "note": "val klv = body + klv(0xEE, tokenHex)（令牌明文拼接）"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 182,
+          "symbol": "unlockFrame",
+          "note": "klv(0x02, ekeyHex.lowercase())（ekey 原样写入）"
+        }
       ],
-      "tags": ["边界", "安全"],
+      "tags": [
+        "边界",
+        "安全"
+      ],
       "status": "edge"
     },
     {
@@ -1384,12 +2476,35 @@
         "凭证有效期、次数（rc=5/6）由锁端判定，本机不参与"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 180, "symbol": "unlockFrame", "note": "frame(0x04, ...)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 185, "symbol": "tokenFrame", "note": "frame(0x01, \"\")"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 192, "symbol": "statusFrame", "note": "frame(0x03, \"\")"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 326, "symbol": "runUnlock", "note": "开锁链只有 tokenFrame(01) 与 unlockFrame(04)，identity 走 statusFrame(03)"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 180,
+          "symbol": "unlockFrame",
+          "note": "frame(0x04, ...)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 185,
+          "symbol": "tokenFrame",
+          "note": "frame(0x01, \"\")"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 192,
+          "symbol": "statusFrame",
+          "note": "frame(0x03, \"\")"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 326,
+          "symbol": "runUnlock",
+          "note": "开锁链只有 tokenFrame(01) 与 unlockFrame(04)，identity 走 statusFrame(03)"
+        }
       ],
-      "tags": ["边界", "范围"],
+      "tags": [
+        "边界",
+        "范围"
+      ],
       "status": "edge"
     },
     {
@@ -1407,12 +2522,35 @@
         "parseAdv 仍会解析广播 pid（Adv.pid），但只用于识别广播身份段，不参与开锁判定"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 202, "symbol": "pidOf", "note": "pidOf 的文档注释（202-207）记录两套 pid 编号对照 7970 vs 16289"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 549, "symbol": "observeRssi", "note": "广播只取 normMac(adv.mac) 比对，adv.pid 全程未参与身份判定"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 457, "symbol": "verifyIdentity", "note": "注释：为什么不在扫描那一跳比广播 pid"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 214, "symbol": "Adv", "note": "data class Adv(val pid: Int, val mac: String, val rssi: Int)"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 202,
+          "symbol": "pidOf",
+          "note": "pidOf 的文档注释（202-207）记录两套 pid 编号对照 7970 vs 16289"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 549,
+          "symbol": "observeRssi",
+          "note": "广播只取 normMac(adv.mac) 比对，adv.pid 全程未参与身份判定"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 457,
+          "symbol": "verifyIdentity",
+          "note": "注释：为什么不在扫描那一跳比广播 pid"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 214,
+          "symbol": "Adv",
+          "note": "data class Adv(val pid: Int, val mac: String, val rssi: Int)"
+        }
       ],
-      "tags": ["协议", "身份"],
+      "tags": [
+        "协议",
+        "身份"
+      ],
       "status": "implemented"
     },
     {
@@ -1430,12 +2568,35 @@
         "normMac：去冒号/横线转小写；台账存无冒号小写，广播是大写带冒号，统一到前者再比"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 216, "symbol": "parseAdv", "note": "if (manufacturer == null || manufacturer.size < 10) return null; if (fc and 0x0c != 0x0c) return null"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 230, "symbol": "normMac", "note": "fun normMac(m: String): String = m.replace(\":\", \"\").replace(\"-\", \"\").lowercase()"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 651, "symbol": "advOf", "note": "先 parseAdv(p)，失败再 indexOfCompanyId 跳 2 字节重试"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 664, "symbol": "indexOfCompanyId", "note": "找 0x98、0xED 两字节"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 216,
+          "symbol": "parseAdv",
+          "note": "if (manufacturer == null || manufacturer.size < 10) return null; if (fc and 0x0c != 0x0c) return null"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 230,
+          "symbol": "normMac",
+          "note": "fun normMac(m: String): String = m.replace(\":\", \"\").replace(\"-\", \"\").lowercase()"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 651,
+          "symbol": "advOf",
+          "note": "先 parseAdv(p)，失败再 indexOfCompanyId 跳 2 字节重试"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 664,
+          "symbol": "indexOfCompanyId",
+          "note": "找 0x98、0xED 两字节"
+        }
       ],
-      "tags": ["协议", "广播"],
+      "tags": [
+        "协议",
+        "广播"
+      ],
       "status": "implemented"
     },
     {
@@ -1455,13 +2616,41 @@
         "开锁成功后不拆链：下一次靠近只剩 01+04 两个往返"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 53, "symbol": "BleUnlocker", "note": "class BleUnlocker(private val ctx: Context)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 57, "symbol": "BleUnlocker.mutex", "note": "private val mutex = Mutex()"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 73, "symbol": "Session", "note": "private class Session(val mac: String) { notes/connected/servicesOk/notifyOn/disconnected ... }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 94, "symbol": "Session.onLinkDown", "note": "disconnected.complete(true); connected/servicesOk/notifyOn.complete(false); writeDone?.complete(false)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt", "line": 11, "symbol": "KfProtocol.SVC", "note": "6E400001-B5A3-F393-E0A9-E50E24DCCA9E / CHR_WRITE 6E400002 / CHR_NOTIFY 6E400003"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 53,
+          "symbol": "BleUnlocker",
+          "note": "class BleUnlocker(private val ctx: Context)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 57,
+          "symbol": "BleUnlocker.mutex",
+          "note": "private val mutex = Mutex()"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 73,
+          "symbol": "Session",
+          "note": "private class Session(val mac: String) { notes/connected/servicesOk/notifyOn/disconnected ... }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 94,
+          "symbol": "Session.onLinkDown",
+          "note": "disconnected.complete(true); connected/servicesOk/notifyOn.complete(false); writeDone?.complete(false)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
+          "line": 11,
+          "symbol": "KfProtocol.SVC",
+          "note": "6E400001-B5A3-F393-E0A9-E50E24DCCA9E / CHR_WRITE 6E400002 / CHR_NOTIFY 6E400003"
+        }
       ],
-      "tags": ["链路", "核心"],
+      "tags": [
+        "链路",
+        "核心"
+      ],
       "status": "implemented"
     },
     {
@@ -1481,12 +2670,34 @@
         "awaitClose 里 stopScan"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 535, "symbol": "observeRssi", "note": "fun observeRssi(lock: LockInfo): Flow<Int> = callbackFlow { ... }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 539, "symbol": "observeRssi", "note": ".setScanMode(SCAN_MODE_LOW_LATENCY).setCallbackType(CALLBACK_TYPE_ALL_MATCHES)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 551, "symbol": "observeRssi", "note": "seen[lock.mac] = result.device to System.currentTimeMillis(); trySend(result.rssi)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 561, "symbol": "observeRssi", "note": "if (runCatching { scanner.startScan(null, settings, cb) }.isFailure) { close(); return@callbackFlow }"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 535,
+          "symbol": "observeRssi",
+          "note": "fun observeRssi(lock: LockInfo): Flow<Int> = callbackFlow { ... }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 539,
+          "symbol": "observeRssi",
+          "note": ".setScanMode(SCAN_MODE_LOW_LATENCY).setCallbackType(CALLBACK_TYPE_ALL_MATCHES)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 551,
+          "symbol": "observeRssi",
+          "note": "seen[lock.mac] = result.device to System.currentTimeMillis(); trySend(result.rssi)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 561,
+          "symbol": "observeRssi",
+          "note": "if (runCatching { scanner.startScan(null, settings, cb) }.isFailure) { close(); return@callbackFlow }"
+        }
       ],
-      "tags": ["扫描"],
+      "tags": [
+        "扫描"
+      ],
       "status": "implemented"
     },
     {
@@ -1506,14 +2717,47 @@
         "建链成功写 lastUsedAt"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 386, "symbol": "buildLink", "note": "private suspend fun buildLink(s: Session, device: BluetoothDevice): Boolean"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 424, "symbol": "buildLink", "note": "delay(80)   // 停扫后仍需 settle 一拍再连（边扫边连 = 133 头号成因）"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 427, "symbol": "buildLink", "note": "if (withTimeoutOrNull(3_000) { s.connected.await() } != true) return false; if (withTimeoutOrNull(2_000) { s.servicesOk.await() } != true) return false"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 441, "symbol": "buildLink", "note": "if (req == BluetoothStatusCodes.SUCCESS) withTimeoutOrNull(4_000) { s.notifyOn.await() }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 445, "symbol": "buildLink", "note": "runCatching { g.requestMtu(256) }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 279, "symbol": "linkFailMessage", "note": "两档失败文案"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 386,
+          "symbol": "buildLink",
+          "note": "private suspend fun buildLink(s: Session, device: BluetoothDevice): Boolean"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 424,
+          "symbol": "buildLink",
+          "note": "delay(80)   // 停扫后仍需 settle 一拍再连（边扫边连 = 133 头号成因）"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 427,
+          "symbol": "buildLink",
+          "note": "if (withTimeoutOrNull(3_000) { s.connected.await() } != true) return false; if (withTimeoutOrNull(2_000) { s.servicesOk.await() } != true) return false"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 441,
+          "symbol": "buildLink",
+          "note": "if (req == BluetoothStatusCodes.SUCCESS) withTimeoutOrNull(4_000) { s.notifyOn.await() }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 445,
+          "symbol": "buildLink",
+          "note": "runCatching { g.requestMtu(256) }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 279,
+          "symbol": "linkFailMessage",
+          "note": "两档失败文案"
+        }
       ],
-      "tags": ["连接", "超时"],
+      "tags": [
+        "连接",
+        "超时"
+      ],
       "status": "implemented"
     },
     {
@@ -1531,12 +2775,34 @@
         "超时（4s）或 status 失败 ⇒ false ⇒ 上层按“可能已到锁端”处理（绝不原地重发 04）"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 587, "symbol": "writeChunked", "note": "private suspend fun writeChunked(gatt, chr, data, s): Boolean"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 595, "symbol": "writeChunked", "note": "val n = minOf(20, data.size - off)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 601, "symbol": "writeChunked", "note": "gatt.writeCharacteristic(chr, chunk, WRITE_TYPE_DEFAULT)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 604, "symbol": "writeChunked", "note": "val ok = withTimeoutOrNull(4_000) { done.await() } ?: return false"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 587,
+          "symbol": "writeChunked",
+          "note": "private suspend fun writeChunked(gatt, chr, data, s): Boolean"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 595,
+          "symbol": "writeChunked",
+          "note": "val n = minOf(20, data.size - off)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 601,
+          "symbol": "writeChunked",
+          "note": "gatt.writeCharacteristic(chr, chunk, WRITE_TYPE_DEFAULT)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 604,
+          "symbol": "writeChunked",
+          "note": "val ok = withTimeoutOrNull(4_000) { done.await() } ?: return false"
+        }
       ],
-      "tags": ["写入"],
+      "tags": [
+        "写入"
+      ],
       "status": "implemented"
     },
     {
@@ -1555,13 +2821,41 @@
         "等包期间链路被关 ⇒ 捕获非取消异常返回 null（不报成“锁没回应”）"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 611, "symbol": "awaitFrame", "note": "private suspend fun awaitFrame(ch: ReceiveChannel<ByteArray>, cmd: Int, timeoutMs: Long): KfProtocol.Frame?"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 633, "symbol": "awaitFrame", "note": "val start = buf.indexOf(\"87\"); if (start < 0) { buf.setLength(0); break }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 637, "symbol": "awaitFrame", "note": "val rest = buf.substring(minOf(fr.raw.length, buf.length)); buf.setLength(0); buf.append(rest)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 640, "symbol": "awaitFrame", "note": "if (fr.cmd == cmd) return fr"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 410, "symbol": "buildLink", "note": "onCharacteristicChanged(...) { s.notes.trySend(value) }"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 611,
+          "symbol": "awaitFrame",
+          "note": "private suspend fun awaitFrame(ch: ReceiveChannel<ByteArray>, cmd: Int, timeoutMs: Long): KfProtocol.Frame?"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 633,
+          "symbol": "awaitFrame",
+          "note": "val start = buf.indexOf(\"87\"); if (start < 0) { buf.setLength(0); break }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 637,
+          "symbol": "awaitFrame",
+          "note": "val rest = buf.substring(minOf(fr.raw.length, buf.length)); buf.setLength(0); buf.append(rest)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 640,
+          "symbol": "awaitFrame",
+          "note": "if (fr.cmd == cmd) return fr"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 410,
+          "symbol": "buildLink",
+          "note": "onCharacteristicChanged(...) { s.notes.trySend(value) }"
+        }
       ],
-      "tags": ["收包", "组帧"],
+      "tags": [
+        "收包",
+        "组帧"
+      ],
       "status": "implemented"
     },
     {
@@ -1580,13 +2874,41 @@
         "句柄缓存：seen[mac] 带时刻，超 10s 视为过期走扫描兜底；closeWarm 时一并移除该 mac"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 221, "symbol": "pickWarm", "note": "private fun pickWarm(lock: LockInfo): Session?"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 218, "symbol": "warmStaleMs", "note": "private val warmStaleMs = 60_000L"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 226, "symbol": "pickWarm", "note": "if (System.currentTimeMillis() - w.lastUsedAt > warmStaleMs) return null"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 119, "symbol": "seen", "note": "private val seen = ConcurrentHashMap<String, Pair<BluetoothDevice, Long>>(); seenTtlMs = 10_000L"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 239, "symbol": "freshSeen", "note": "TTL 内返回 device，过期则 remove 并返回 null"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 221,
+          "symbol": "pickWarm",
+          "note": "private fun pickWarm(lock: LockInfo): Session?"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 218,
+          "symbol": "warmStaleMs",
+          "note": "private val warmStaleMs = 60_000L"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 226,
+          "symbol": "pickWarm",
+          "note": "if (System.currentTimeMillis() - w.lastUsedAt > warmStaleMs) return null"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 119,
+          "symbol": "seen",
+          "note": "private val seen = ConcurrentHashMap<String, Pair<BluetoothDevice, Long>>(); seenTtlMs = 10_000L"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 239,
+          "symbol": "freshSeen",
+          "note": "TTL 内返回 device，过期则 remove 并返回 null"
+        }
       ],
-      "tags": ["性能", "缓存"],
+      "tags": [
+        "性能",
+        "缓存"
+      ],
       "status": "implemented"
     },
     {
@@ -1605,12 +2927,35 @@
         "红线：重发 04 = 电机连触发 = 双开"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 330, "symbol": "runUnlock", "note": "for (attempt in 1..2) {"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 376, "symbol": "runUnlock", "note": "if ((rc == 3 || rc == 13) && attempt == 1) { trace.append(\"(会话过期, 重取令牌再试) \"); continue }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 364, "symbol": "runUnlock", "note": "Outcome(false, \"开锁写入中断 — 门锁可能已执行, 先看一眼门\", ...)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 370, "symbol": "runUnlock", "note": "回执超时 -> linkBroken=false, 绝不重建重发"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 330,
+          "symbol": "runUnlock",
+          "note": "for (attempt in 1..2) {"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 376,
+          "symbol": "runUnlock",
+          "note": "if ((rc == 3 || rc == 13) && attempt == 1) { trace.append(\"(会话过期, 重取令牌再试) \"); continue }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 364,
+          "symbol": "runUnlock",
+          "note": "Outcome(false, \"开锁写入中断 — 门锁可能已执行, 先看一眼门\", ...)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 370,
+          "symbol": "runUnlock",
+          "note": "回执超时 -> linkBroken=false, 绝不重建重发"
+        }
       ],
-      "tags": ["重试", "防双开"],
+      "tags": [
+        "重试",
+        "防双开"
+      ],
       "status": "implemented"
     },
     {
@@ -1628,12 +2973,34 @@
         "不符文案明确提示“附近可能有同名或伪造广播”，并在 trace 里附登记 pid"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 453, "symbol": "verifyIdentity", "note": "private suspend fun verifyIdentity(s: Session, lock: LockInfo, trace: StringBuilder): Outcome?"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 454, "symbol": "verifyIdentity", "note": "if (lock.pid <= 0 || s.identityVerified) return null"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 467, "symbol": "verifyIdentity", "note": "val selfPid = KfProtocol.pidOf(st)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 476, "symbol": "verifyIdentity", "note": "s.identityVerified = true"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 453,
+          "symbol": "verifyIdentity",
+          "note": "private suspend fun verifyIdentity(s: Session, lock: LockInfo, trace: StringBuilder): Outcome?"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 454,
+          "symbol": "verifyIdentity",
+          "note": "if (lock.pid <= 0 || s.identityVerified) return null"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 467,
+          "symbol": "verifyIdentity",
+          "note": "val selfPid = KfProtocol.pidOf(st)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 476,
+          "symbol": "verifyIdentity",
+          "note": "s.identityVerified = true"
+        }
       ],
-      "tags": ["安全"],
+      "tags": [
+        "安全"
+      ],
       "status": "implemented"
     },
     {
@@ -1652,13 +3019,41 @@
         "onReadRemoteRssi 的 status 带错时返回 null：不把“读不到”硬编成某个 dBm"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 501, "symbol": "observeSignal", "note": "fun observeSignal(lock: LockInfo): Flow<Int> = channelFlow { ... }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 509, "symbol": "observeSignal", "note": "delay(200)  // 连接层测距轮询"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 513, "symbol": "observeSignal", "note": "withTimeoutOrNull(3_000) { observeRssi(lock).collect { send(it) } }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 521, "symbol": "readLinkedRssi", "note": "g.readRemoteRssi(); withTimeoutOrNull(1_500) { d.await() }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 415, "symbol": "buildLink", "note": "s.rssiRead?.complete(if (status == GATT_SUCCESS) rssi else null)"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 501,
+          "symbol": "observeSignal",
+          "note": "fun observeSignal(lock: LockInfo): Flow<Int> = channelFlow { ... }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 509,
+          "symbol": "observeSignal",
+          "note": "delay(200)  // 连接层测距轮询"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 513,
+          "symbol": "observeSignal",
+          "note": "withTimeoutOrNull(3_000) { observeRssi(lock).collect { send(it) } }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 521,
+          "symbol": "readLinkedRssi",
+          "note": "g.readRemoteRssi(); withTimeoutOrNull(1_500) { d.await() }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 415,
+          "symbol": "buildLink",
+          "note": "s.rssiRead?.complete(if (status == GATT_SUCCESS) rssi else null)"
+        }
       ],
-      "tags": ["信号", "性能"],
+      "tags": [
+        "信号",
+        "性能"
+      ],
       "status": "implemented"
     },
     {
@@ -1677,13 +3072,41 @@
         "linkFailMessage 两档（服务缺失 / 连不上），用 connected 是否完成来区分"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 675, "symbol": "humanBle", "note": "private fun humanBle(e: Throwable): String = when (e) { is SecurityException -> ...; else -> e.message ?: \"未知错误\" }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 132, "symbol": "unlock", "note": "Outcome(false, \"这台手机没有蓝牙\") / \"蓝牙未开启\""},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 182, "symbol": "unlock", "note": "Outcome(false, \"没找到这把锁 — 靠近门锁, 或确认门锁有电\")"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 192, "symbol": "unlock", "note": "Outcome(false, \"蓝牙权限被收回了 — 到系统设置里重新允许后重试\")"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 280, "symbol": "linkFailMessage", "note": "if (connected) \"连上了但读不到开锁通道 ...\" else \"连不上这把锁 ...\""}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 675,
+          "symbol": "humanBle",
+          "note": "private fun humanBle(e: Throwable): String = when (e) { is SecurityException -> ...; else -> e.message ?: \"未知错误\" }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 132,
+          "symbol": "unlock",
+          "note": "Outcome(false, \"这台手机没有蓝牙\") / \"蓝牙未开启\""
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 182,
+          "symbol": "unlock",
+          "note": "Outcome(false, \"没找到这把锁 — 靠近门锁, 或确认门锁有电\")"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 192,
+          "symbol": "unlock",
+          "note": "Outcome(false, \"蓝牙权限被收回了 — 到系统设置里重新允许后重试\")"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 280,
+          "symbol": "linkFailMessage",
+          "note": "if (connected) \"连上了但读不到开锁通道 ...\" else \"连不上这把锁 ...\""
+        }
       ],
-      "tags": ["错误态", "诊断"],
+      "tags": [
+        "错误态",
+        "诊断"
+      ],
       "status": "implemented"
     },
     {
@@ -1701,11 +3124,28 @@
         "不存令牌、不存 trace、不存信号历史：只有凭证与一个开关"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 16, "symbol": "LockStore", "note": "object LockStore"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 17, "symbol": "LockStore.PREF", "note": "private const val PREF = \"kf_key_v1\""},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 40, "symbol": "save", "note": "getSharedPreferences(PREF, MODE_PRIVATE).edit().putString(KEY, o.toString()).apply()"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 16,
+          "symbol": "LockStore",
+          "note": "object LockStore"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 17,
+          "symbol": "LockStore.PREF",
+          "note": "private const val PREF = \"kf_key_v1\""
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 40,
+          "symbol": "save",
+          "note": "getSharedPreferences(PREF, MODE_PRIVATE).edit().putString(KEY, o.toString()).apply()"
+        }
       ],
-      "tags": ["落盘"],
+      "tags": [
+        "落盘"
+      ],
       "status": "implemented"
     },
     {
@@ -1723,11 +3163,29 @@
         "没有任何以 kf_ 前缀散落在其他文件里的键"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 17, "symbol": "LockStore", "note": "PREF / KEY = \"lock\" / KEY_PROX = \"proximity\""},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 47, "symbol": "loadProximity", "note": "getBoolean(KEY_PROX, false)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 50, "symbol": "saveProximity", "note": "edit().putBoolean(KEY_PROX, on).apply()"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 17,
+          "symbol": "LockStore",
+          "note": "PREF / KEY = \"lock\" / KEY_PROX = \"proximity\""
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 47,
+          "symbol": "loadProximity",
+          "note": "getBoolean(KEY_PROX, false)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 50,
+          "symbol": "saveProximity",
+          "note": "edit().putBoolean(KEY_PROX, on).apply()"
+        }
       ],
-      "tags": ["键", "默认值"],
+      "tags": [
+        "键",
+        "默认值"
+      ],
       "status": "implemented"
     },
     {
@@ -1745,11 +3203,28 @@
         "mac 存的是 normMac 后的小写无冒号形式（12 字符），展示时再格式化"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 36, "symbol": "save", "note": "36-39 连续 put(\"n\")/put(\"m\")/put(\"p\")/put(\"e\") 构造 JSON"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 25, "symbol": "load", "note": "25-30 逐字段 opt：name=optString(\"n\") / mac=optString(\"m\") / pid=optInt(\"p\") / ekey=optString(\"e\")"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 31, "symbol": "load", "note": ".takeIf { it.mac.length == 12 && it.ekey.isNotEmpty() }"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 36,
+          "symbol": "save",
+          "note": "36-39 连续 put(\"n\")/put(\"m\")/put(\"p\")/put(\"e\") 构造 JSON"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 25,
+          "symbol": "load",
+          "note": "25-30 逐字段 opt：name=optString(\"n\") / mac=optString(\"m\") / pid=optInt(\"p\") / ekey=optString(\"e\")"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 31,
+          "symbol": "load",
+          "note": ".takeIf { it.mac.length == 12 && it.ekey.isNotEmpty() }"
+        }
       ],
-      "tags": ["数据结构"],
+      "tags": [
+        "数据结构"
+      ],
       "status": "implemented"
     },
     {
@@ -1765,10 +3240,22 @@
         "没有“只清凭证保留开关”的入口"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 61, "symbol": "clear", "note": "fun clear(ctx: Context) { edit().remove(KEY).remove(KEY_PROX).apply() }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 445, "symbol": "ProximityCard", "note": "onUnbind 首行 LockStore.clear(ctx)"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 61,
+          "symbol": "clear",
+          "note": "fun clear(ctx: Context) { edit().remove(KEY).remove(KEY_PROX).apply() }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 445,
+          "symbol": "ProximityCard",
+          "note": "onUnbind 首行 LockStore.clear(ctx)"
+        }
       ],
-      "tags": ["破坏性操作"],
+      "tags": [
+        "破坏性操作"
+      ],
       "status": "implemented"
     },
     {
@@ -1786,10 +3273,22 @@
         "v 字段只用于校验（必须 == 1），不进 LockInfo"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 7, "symbol": "LockInfo", "note": "data class LockInfo(val name: String, val mac: String, val pid: Int, val ekey: String)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt", "line": 8, "symbol": "LockInfo.macText", "note": "get() = mac.chunked(2).joinToString(\":\").uppercase()"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 7,
+          "symbol": "LockInfo",
+          "note": "data class LockInfo(val name: String, val mac: String, val pid: Int, val ekey: String)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/LockStore.kt",
+          "line": 8,
+          "symbol": "LockInfo.macText",
+          "note": "get() = mac.chunked(2).joinToString(\":\").uppercase()"
+        }
       ],
-      "tags": ["数据结构"],
+      "tags": [
+        "数据结构"
+      ],
       "status": "implemented"
     },
     {
@@ -1807,13 +3306,40 @@
         "uses-feature：bluetooth_le required=true、camera required=false"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 159, "symbol": "KfApp", "note": "注释：minSdk=33 ⇒ 三项都是运行时权限, 没有版本分支"},
-        {"file": "android-app/app/src/main/AndroidManifest.xml", "line": 5, "symbol": "BLUETOOTH_SCAN", "note": "android:usesPermissionFlags=\"neverForLocation\""},
-        {"file": "android-app/app/src/main/AndroidManifest.xml", "line": 8, "symbol": "BLUETOOTH_CONNECT", "note": "<uses-permission android:name=\"android.permission.BLUETOOTH_CONNECT\" />"},
-        {"file": "android-app/app/src/main/AndroidManifest.xml", "line": 11, "symbol": "VIBRATE", "note": "<uses-permission android:name=\"android.permission.VIBRATE\" />"},
-        {"file": "android-app/app/src/main/AndroidManifest.xml", "line": 14, "symbol": "uses-feature", "note": "android.hardware.bluetooth_le required=true / camera required=false"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 159,
+          "symbol": "KfApp",
+          "note": "注释：minSdk=33 ⇒ 三项都是运行时权限, 没有版本分支"
+        },
+        {
+          "file": "android-app/app/src/main/AndroidManifest.xml",
+          "line": 5,
+          "symbol": "BLUETOOTH_SCAN",
+          "note": "android:usesPermissionFlags=\"neverForLocation\""
+        },
+        {
+          "file": "android-app/app/src/main/AndroidManifest.xml",
+          "line": 8,
+          "symbol": "BLUETOOTH_CONNECT",
+          "note": "<uses-permission android:name=\"android.permission.BLUETOOTH_CONNECT\" />"
+        },
+        {
+          "file": "android-app/app/src/main/AndroidManifest.xml",
+          "line": 11,
+          "symbol": "VIBRATE",
+          "note": "<uses-permission android:name=\"android.permission.VIBRATE\" />"
+        },
+        {
+          "file": "android-app/app/src/main/AndroidManifest.xml",
+          "line": 14,
+          "symbol": "uses-feature",
+          "note": "android.hardware.bluetooth_le required=true / camera required=false"
+        }
       ],
-      "tags": ["权限"],
+      "tags": [
+        "权限"
+      ],
       "status": "implemented"
     },
     {
@@ -1830,10 +3356,22 @@
         "蓝牙权限被永久拒绝时，后续扫描/连接会走 SecurityException 兜底文案"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 173, "symbol": "KfApp", "note": "LaunchedEffect(Unit) { perms.launch(listOf(BLUETOOTH_SCAN, BLUETOOTH_CONNECT, CAMERA).toTypedArray()) }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 166, "symbol": "KfApp", "note": "rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions())"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 173,
+          "symbol": "KfApp",
+          "note": "LaunchedEffect(Unit) { perms.launch(listOf(BLUETOOTH_SCAN, BLUETOOTH_CONNECT, CAMERA).toTypedArray()) }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 166,
+          "symbol": "KfApp",
+          "note": "rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions())"
+        }
       ],
-      "tags": ["权限"],
+      "tags": [
+        "权限"
+      ],
       "status": "implemented"
     },
     {
@@ -1850,10 +3388,23 @@
         "被拒不会阻止界面渲染，也不会重试请求"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 161, "symbol": "KfApp", "note": "val permNames = mapOf(BLUETOOTH_SCAN to \"蓝牙扫描\", BLUETOOTH_CONNECT to \"蓝牙连接\", CAMERA to \"相机\")"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 167, "symbol": "KfApp", "note": "val denied = result.filterValues { !it }.keys; if (denied.isNotEmpty()) { ... say(\"缺少权限: \" + names.joinToString(\"、\") + \" — 扫码与开锁会失败, 请到系统设置里允许\", true) }"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 161,
+          "symbol": "KfApp",
+          "note": "val permNames = mapOf(BLUETOOTH_SCAN to \"蓝牙扫描\", BLUETOOTH_CONNECT to \"蓝牙连接\", CAMERA to \"相机\")"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 167,
+          "symbol": "KfApp",
+          "note": "val denied = result.filterValues { !it }.keys; if (denied.isNotEmpty()) { ... say(\"缺少权限: \" + names.joinToString(\"、\") + \" — 扫码与开锁会失败, 请到系统设置里允许\", true) }"
+        }
       ],
-      "tags": ["权限", "错误态"],
+      "tags": [
+        "权限",
+        "错误态"
+      ],
       "status": "implemented"
     },
     {
@@ -1872,11 +3423,29 @@
         "DisposableEffect(lifecycleOwner) 负责注册/注销 LifecycleEventObserver"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 85, "symbol": "MainActivity.unlocker", "note": "private val unlocker by lazy { BleUnlocker(this) }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 93, "symbol": "MainActivity.onDestroy", "note": "onDestroy() { val u = unlocker; Thread { runBlocking { u.release() } }.start() }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 230, "symbol": "KfApp", "note": "DisposableEffect(lifecycleOwner) { val obs = LifecycleEventObserver { _, ev -> when (ev) { ON_RESUME -> ...; ON_PAUSE -> ... } }; onDispose { removeObserver(obs) } }"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 85,
+          "symbol": "MainActivity.unlocker",
+          "note": "private val unlocker by lazy { BleUnlocker(this) }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 93,
+          "symbol": "MainActivity.onDestroy",
+          "note": "onDestroy() { val u = unlocker; Thread { runBlocking { u.release() } }.start() }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 230,
+          "symbol": "KfApp",
+          "note": "DisposableEffect(lifecycleOwner) { val obs = LifecycleEventObserver { _, ev -> when (ev) { ON_RESUME -> ...; ON_PAUSE -> ... } }; onDispose { removeObserver(obs) } }"
+        }
       ],
-      "tags": ["生命周期", "核心"],
+      "tags": [
+        "生命周期",
+        "核心"
+      ],
       "status": "implemented"
     },
     {
@@ -1893,11 +3462,28 @@
         "不拆的后果（注释）：锁那侧挂着“对端已消失但仍连着”的链路，下次靠近反而连不上"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 85, "symbol": "MainActivity.unlocker", "note": "private val unlocker by lazy { BleUnlocker(this) }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 96, "symbol": "MainActivity.onDestroy", "note": "val u = unlocker; Thread { try { runBlocking { u.release() } } catch (_: Exception) {} }.start()"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt", "line": 250, "symbol": "release", "note": "suspend fun release() = mutex.withLock { warm = null; seen.clear(); if (w != null) teardown(w) }"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 85,
+          "symbol": "MainActivity.unlocker",
+          "note": "private val unlocker by lazy { BleUnlocker(this) }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 96,
+          "symbol": "MainActivity.onDestroy",
+          "note": "val u = unlocker; Thread { try { runBlocking { u.release() } } catch (_: Exception) {} }.start()"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/BleUnlocker.kt",
+          "line": 250,
+          "symbol": "release",
+          "note": "suspend fun release() = mutex.withLock { warm = null; seen.clear(); if (w != null) teardown(w) }"
+        }
       ],
-      "tags": ["释放"],
+      "tags": [
+        "释放"
+      ],
       "status": "implemented"
     },
     {
@@ -1915,11 +3501,28 @@
         "提示音随 !foreground 静默"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 242, "symbol": "KfApp", "note": "Lifecycle.Event.ON_PAUSE -> { foreground = false; armed = false; prewarmStarted = false; scope.launch { unlocker.release() } }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 246, "symbol": "KfApp", "note": "scope.launch { unlocker.release() }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 902, "symbol": "ProximityBeep", "note": "if (!active || !soundOn || level < 0 || !foreground) return@LaunchedEffect"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 242,
+          "symbol": "KfApp",
+          "note": "Lifecycle.Event.ON_PAUSE -> { foreground = false; armed = false; prewarmStarted = false; scope.launch { unlocker.release() } }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 246,
+          "symbol": "KfApp",
+          "note": "scope.launch { unlocker.release() }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 902,
+          "symbol": "ProximityBeep",
+          "note": "if (!active || !soundOn || level < 0 || !foreground) return@LaunchedEffect"
+        }
       ],
-      "tags": ["生命周期"],
+      "tags": [
+        "生命周期"
+      ],
       "status": "implemented"
     },
     {
@@ -1937,11 +3540,29 @@
         "监测流的 key：proximity、lock?.mac、busy、warming、foreground；busy/warming 变更时会临时撤下监测（避免边扫边连导致 GATT 133）"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 233, "symbol": "KfApp", "note": "Lifecycle.Event.ON_RESUME -> { foreground = true; prewarmStarted = false; fired = false; airTagDismissed = false }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 309, "symbol": "KfApp", "note": "LaunchedEffect(proximity, lock?.mac, busy, warming, foreground) { ... observeSignal(l).collect { ... } }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 312, "symbol": "KfApp", "note": "开锁在途或预热在途都撤下监测；撤下后 rssi 保持最后读数不抹成 null"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 233,
+          "symbol": "KfApp",
+          "note": "Lifecycle.Event.ON_RESUME -> { foreground = true; prewarmStarted = false; fired = false; airTagDismissed = false }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 309,
+          "symbol": "KfApp",
+          "note": "LaunchedEffect(proximity, lock?.mac, busy, warming, foreground) { ... observeSignal(l).collect { ... } }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 312,
+          "symbol": "KfApp",
+          "note": "开锁在途或预热在途都撤下监测；撤下后 rssi 保持最后读数不抹成 null"
+        }
       ],
-      "tags": ["生命周期", "重挂"],
+      "tags": [
+        "生命周期",
+        "重挂"
+      ],
       "status": "implemented"
     },
     {
@@ -1959,12 +3580,35 @@
         "需要与 iOS DS 对齐的只有几何/间距/圆角/字号/时长/曲线（Tokens.kt），色板各端保留"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfTheme.kt", "line": 22, "symbol": "KfColors", "note": "internal data class KfColors(bgTop, bgBottom, surface, ink, inkSub, accent, onAccent, ok, bad)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfTheme.kt", "line": 36, "symbol": "KfDarkColors", "note": "bgTop = 0xFF0A0C10 ... accent = 0xFFE8B45C"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfTheme.kt", "line": 54, "symbol": "KfLightColors", "note": "bgTop = 0xFFF7F5F1 ... accent = 0xFF8F6119"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfTheme.kt", "line": 73, "symbol": "KfTheme", "note": "internal fun KfTheme(dark: Boolean = isSystemInDarkTheme(), content)"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfTheme.kt",
+          "line": 22,
+          "symbol": "KfColors",
+          "note": "internal data class KfColors(bgTop, bgBottom, surface, ink, inkSub, accent, onAccent, ok, bad)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfTheme.kt",
+          "line": 36,
+          "symbol": "KfDarkColors",
+          "note": "bgTop = 0xFF0A0C10 ... accent = 0xFFE8B45C"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfTheme.kt",
+          "line": 54,
+          "symbol": "KfLightColors",
+          "note": "bgTop = 0xFFF7F5F1 ... accent = 0xFF8F6119"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfTheme.kt",
+          "line": 73,
+          "symbol": "KfTheme",
+          "note": "internal fun KfTheme(dark: Boolean = isSystemInDarkTheme(), content)"
+        }
       ],
-      "tags": ["主题", "跨端对齐"],
+      "tags": [
+        "主题",
+        "跨端对齐"
+      ],
       "status": "implemented"
     },
     {
@@ -1982,13 +3626,41 @@
         "启动窗口固定暗色 ⇒ 浅色模式下可能看到一次暗底闪（代码可证，未做 values-night 变体）"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/KfTheme.kt", "line": 66, "symbol": "LocalKfColors", "note": "internal val LocalKfColors = staticCompositionLocalOf { KfDarkColors }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 90, "symbol": "MainActivity.onCreate", "note": "setContent { KfTheme { KfApp(unlocker) } }"},
-        {"file": "android-app/app/src/main/res/values/themes.xml", "line": 3, "symbol": "Theme.KfKey", "note": "<style name=\"Theme.KfKey\" parent=\"android:Theme.Material.NoActionBar\">"},
-        {"file": "android-app/app/src/main/res/values/themes.xml", "line": 4, "symbol": "Theme.KfKey", "note": "android:windowBackground = #0A0C10（无 values-night 变体）"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/Theme.kt", "line": 21, "symbol": "BgTop", "note": "internal val BgTop = Color(0xFF0A0C10) 等 8 个固定值，仅作兜底/默认参数"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/KfTheme.kt",
+          "line": 66,
+          "symbol": "LocalKfColors",
+          "note": "internal val LocalKfColors = staticCompositionLocalOf { KfDarkColors }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 90,
+          "symbol": "MainActivity.onCreate",
+          "note": "setContent { KfTheme { KfApp(unlocker) } }"
+        },
+        {
+          "file": "android-app/app/src/main/res/values/themes.xml",
+          "line": 3,
+          "symbol": "Theme.KfKey",
+          "note": "<style name=\"Theme.KfKey\" parent=\"android:Theme.Material.NoActionBar\">"
+        },
+        {
+          "file": "android-app/app/src/main/res/values/themes.xml",
+          "line": 4,
+          "symbol": "Theme.KfKey",
+          "note": "android:windowBackground = #0A0C10（无 values-night 变体）"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/Theme.kt",
+          "line": 21,
+          "symbol": "BgTop",
+          "note": "internal val BgTop = Color(0xFF0A0C10) 等 8 个固定值，仅作兜底/默认参数"
+        }
       ],
-      "tags": ["主题", "窗口"],
+      "tags": [
+        "主题",
+        "窗口"
+      ],
       "status": "partial"
     },
     {
@@ -2007,14 +3679,47 @@
         "另有 rememberKfHaptics / KfTick / KfConfirm 三个 Compose 侧入口，全仓无调用"
       ],
       "evidence": [
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/Haptics.kt", "line": 21, "symbol": "KfHaptics", "note": "internal object KfHaptics"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/Haptics.kt", "line": 24, "symbol": "KfHaptics.tick", "note": "fun tick(ctx: Context) = buzz(ctx, 8, 60)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/Haptics.kt", "line": 27, "symbol": "KfHaptics.trigger", "note": "fun trigger(ctx: Context) = buzz(ctx, 20, 120)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/Haptics.kt", "line": 39, "symbol": "KfHaptics.buzz", "note": "runCatching { v.vibrate(VibrationEffect.createOneShot(ms, amplitude.coerceIn(1, 255))) }"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt", "line": 197, "symbol": "doUnlock", "note": "if (r.ok) KfHaptics.ok(ctx) else KfHaptics.fail(ctx)"},
-        {"file": "android-app/app/src/main/java/com/aapk/kfkey/Haptics.kt", "line": 67, "symbol": "rememberKfHaptics", "note": "internal fun rememberKfHaptics(): HapticFeedback（无调用点）"}
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/Haptics.kt",
+          "line": 21,
+          "symbol": "KfHaptics",
+          "note": "internal object KfHaptics"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/Haptics.kt",
+          "line": 24,
+          "symbol": "KfHaptics.tick",
+          "note": "fun tick(ctx: Context) = buzz(ctx, 8, 60)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/Haptics.kt",
+          "line": 27,
+          "symbol": "KfHaptics.trigger",
+          "note": "fun trigger(ctx: Context) = buzz(ctx, 20, 120)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/Haptics.kt",
+          "line": 39,
+          "symbol": "KfHaptics.buzz",
+          "note": "runCatching { v.vibrate(VibrationEffect.createOneShot(ms, amplitude.coerceIn(1, 255))) }"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/MainActivity.kt",
+          "line": 197,
+          "symbol": "doUnlock",
+          "note": "if (r.ok) KfHaptics.ok(ctx) else KfHaptics.fail(ctx)"
+        },
+        {
+          "file": "android-app/app/src/main/java/com/aapk/kfkey/Haptics.kt",
+          "line": 67,
+          "symbol": "rememberKfHaptics",
+          "note": "internal fun rememberKfHaptics(): HapticFeedback（无调用点）"
+        }
       ],
-      "tags": ["触觉", "接线缺口"],
+      "tags": [
+        "触觉",
+        "接线缺口"
+      ],
       "status": "partial"
     },
     {
@@ -2033,15 +3738,52 @@
         "Manifest：allowBackup=false，无 Service/Receiver/Provider/前台服务，只有 MainActivity"
       ],
       "evidence": [
-        {"file": "android-app/app/build.gradle.kts", "line": 52, "symbol": "android", "note": "namespace = \"com.aapk.kfkey\""},
-        {"file": "android-app/app/build.gradle.kts", "line": 54, "symbol": "android", "note": "compileSdk = 35"},
-        {"file": "android-app/app/build.gradle.kts", "line": 57, "symbol": "defaultConfig", "note": "applicationId = \"com.aapk.kfkey\""},
-        {"file": "android-app/app/build.gradle.kts", "line": 59, "symbol": "defaultConfig", "note": "minSdk = 33"},
-        {"file": "android-app/app/build.gradle.kts", "line": 60, "symbol": "defaultConfig", "note": "targetSdk = 34   // 刻意停在 34: 35 会强制 edge-to-edge"},
-        {"file": "android-app/app/build.gradle.kts", "line": 114, "symbol": "dependencies", "note": "compose-bom 2024.10.01 / material3 / activity-compose / coroutines / zxing-android-embedded 4.3.0"},
-        {"file": "android-app/app/src/main/AndroidManifest.xml", "line": 18, "symbol": "application", "note": "android:allowBackup=\"false\""}
+        {
+          "file": "android-app/app/build.gradle.kts",
+          "line": 52,
+          "symbol": "android",
+          "note": "namespace = \"com.aapk.kfkey\""
+        },
+        {
+          "file": "android-app/app/build.gradle.kts",
+          "line": 54,
+          "symbol": "android",
+          "note": "compileSdk = 35"
+        },
+        {
+          "file": "android-app/app/build.gradle.kts",
+          "line": 57,
+          "symbol": "defaultConfig",
+          "note": "applicationId = \"com.aapk.kfkey\""
+        },
+        {
+          "file": "android-app/app/build.gradle.kts",
+          "line": 59,
+          "symbol": "defaultConfig",
+          "note": "minSdk = 33"
+        },
+        {
+          "file": "android-app/app/build.gradle.kts",
+          "line": 60,
+          "symbol": "defaultConfig",
+          "note": "targetSdk = 34   // 刻意停在 34: 35 会强制 edge-to-edge"
+        },
+        {
+          "file": "android-app/app/build.gradle.kts",
+          "line": 114,
+          "symbol": "dependencies",
+          "note": "compose-bom 2024.10.01 / material3 / activity-compose / coroutines / zxing-android-embedded 4.3.0"
+        },
+        {
+          "file": "android-app/app/src/main/AndroidManifest.xml",
+          "line": 18,
+          "symbol": "application",
+          "note": "android:allowBackup=\"false\""
+        }
       ],
-      "tags": ["构建"],
+      "tags": [
+        "构建"
+      ],
       "status": "implemented"
     },
     {
@@ -2060,14 +3802,47 @@
         "gradle.properties：jvmargs -Xmx2048m、useAndroidX、nonTransitiveRClass"
       ],
       "evidence": [
-        {"file": "android-app/app/build.gradle.kts", "line": 24, "symbol": "buildBaseSec", "note": "ZonedDateTime.of(2026, 1, 1, 0, 0, 0, 0, buildZone).toEpochSecond()"},
-        {"file": "android-app/app/build.gradle.kts", "line": 32, "symbol": "kfBuildTsRaw", "note": "project.providers.environmentVariable(\"KF_BUILD_TS\")"},
-        {"file": "android-app/app/build.gradle.kts", "line": 71, "symbol": "versionName", "note": "versionName = \"1.0.$kfStampText\""},
-        {"file": "android-app/app/build.gradle.kts", "line": 79, "symbol": "signingConfigs.kf", "note": "storeFile = file(\"keystore/kfkey.p12\"); storeType = \"PKCS12\"; keyAlias = \"kfkey\""},
-        {"file": "android-app/app/build.gradle.kts", "line": 95, "symbol": "buildTypes.release", "note": "isMinifyEnabled = false"},
-        {"file": "android-app/app/build.gradle.kts", "line": 66, "symbol": "versionCode", "note": "if (diff > Int.MAX_VALUE - 1L) throw GradleException(...)"}
+        {
+          "file": "android-app/app/build.gradle.kts",
+          "line": 24,
+          "symbol": "buildBaseSec",
+          "note": "ZonedDateTime.of(2026, 1, 1, 0, 0, 0, 0, buildZone).toEpochSecond()"
+        },
+        {
+          "file": "android-app/app/build.gradle.kts",
+          "line": 32,
+          "symbol": "kfBuildTsRaw",
+          "note": "project.providers.environmentVariable(\"KF_BUILD_TS\")"
+        },
+        {
+          "file": "android-app/app/build.gradle.kts",
+          "line": 71,
+          "symbol": "versionName",
+          "note": "versionName = \"1.0.$kfStampText\""
+        },
+        {
+          "file": "android-app/app/build.gradle.kts",
+          "line": 79,
+          "symbol": "signingConfigs.kf",
+          "note": "storeFile = file(\"keystore/kfkey.p12\"); storeType = \"PKCS12\"; keyAlias = \"kfkey\""
+        },
+        {
+          "file": "android-app/app/build.gradle.kts",
+          "line": 95,
+          "symbol": "buildTypes.release",
+          "note": "isMinifyEnabled = false"
+        },
+        {
+          "file": "android-app/app/build.gradle.kts",
+          "line": 66,
+          "symbol": "versionCode",
+          "note": "if (diff > Int.MAX_VALUE - 1L) throw GradleException(...)"
+        }
       ],
-      "tags": ["构建", "版本"],
+      "tags": [
+        "构建",
+        "版本"
+      ],
       "status": "implemented"
     }
   ],

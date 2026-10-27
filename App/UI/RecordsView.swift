@@ -940,34 +940,12 @@ struct RecordsView: View {
         // 不摊开会写出"全天 5 条 · 当前显示 1 条"这种看着像少读了 4 条的话, 而那 4 条就在那一行里。
         let shownEvents = g.rows.count
         let dayFull = dayFullCount[g.key] ?? shownEvents
-        // 591 行内次序注 + 680 同分钟歧义注: 一次扫过本组算出两张表，而不是每行各数一遍
-        // (一千条的日子那样是 O(n²))。
-        //   591 的键 = (归属, 日志类型) —— "今日第 3 次用指纹"问的是"这个人今天第几回"，
-        //        归属推不出来时用 "?" 占位而不是隐藏整条: 隐藏会让"次数"这一列凭空少几行，比标错更难查。
-        //   680 的判据 = 相邻两行的时刻字符串相同。协议日志只到分，同分钟内两行的先后
-        //        **不是时间信息，而是入库次序** —— 不写这句，用户会以为 12:03 那行一定早于 12:03 那行。
-        var seqByRow: [String: Int] = [:]
-        var seqCount: [String: Int] = [:]
-        var dupMinute = Set<String>()
-        var userOrdByRow: [String: Int] = [:]   // 796: 本组内按首见次序数人
-        var userSeen: [String] = []
-        var prevTime = ""
-        for r in ordered {
-            let sk = (r.whoId ?? "?") + "|" + String(r.type)
-            seqCount[sk, default: 0] += 1
-            seqByRow[r.id] = seqCount[sk] ?? 1
-            if let w = r.whoId {
-                if !userSeen.contains(w) { userSeen.append(w) }
-                userOrdByRow[r.id] = (userSeen.firstIndex(of: w) ?? 0) + 1
-            }
-            if r.time.count >= 5, r.time == prevTime { dupMinute.insert(r.id) }
-            prevTime = r.time
-        }
+            // 2026-10-27 八轮精简：行内注记六张表已删（对应 UI 块一并移除）。
         return Section {
             ForEach(ordered) { r in
                 // 583: 整行包一层 Group 才能挂 listRowBackground (ViewBuilder 的 if/else 分支不是同一个类型)。
                 Group {
-                    timelineRow(r, seq: seqByRow[r.id] ?? 0, dupMinute: dupMinute.contains(r.id), userOrd: userOrdByRow[r.id] ?? 0)
+                    timelineRow(r)
                 }
                 .listRowBackground(FlashWash(on: flashKey == r.id))
             }
@@ -1090,7 +1068,7 @@ struct RecordsView: View {
     /// 单条: 左时间列 + 时间轴(圆点与连线) + 事件文案
     /// 738 告警行: 左侧 3pt danger 色条 + danger 8% 浅底 (菱形警示点形状冗余);
     /// 184 开门方式图标 / 183 成员色点 (可证明归属才显) / 770 锁名小标签 / 557 命中高亮
-    private func timelineRow(_ r: RowVM, seq: Int = 0, dupMinute: Bool = false, userOrd: Int = 0) -> some View {
+    private func timelineRow(_ r: RowVM) -> some View {
         HStack(alignment: .top, spacing: DS.Space.m) {
             // 911/647: 主时间线行也必须走 TimeFormat.clock 这一个出口。此前只有合并行 (:1612) 走了,
             // 这一行是裸切片 (rowParts 的 "yyyy-MM-dd HH:mm:ss" 中段), 于是选了"12 小时"后
@@ -1117,24 +1095,6 @@ struct RecordsView: View {
             .accessibilityHidden(true)
 
             HStack(spacing: DS.Space.s) {
-                // 770 全部锁时行首带锁名小标签; 105: 标签前挂该锁档案的符号与色标 (与 Hero 卡/胶囊同一字段)
-                if !r.lockName.isEmpty {
-                    let rowLockMac = r.rowMac.isEmpty ? mac : r.rowMac
-                    HStack(spacing: DS.Space.xs) {
-                        Image(systemName: LockArchive.symbolName(LockArchive.meta(rowLockMac)))
-                            .font(.system(size: DS.Icon.xs, weight: .semibold))
-                            .foregroundStyle(LockArchive.swatchColor(LockArchive.meta(rowLockMac).colorKey))
-                        Text(r.lockName)
-                            .vkFont(.caption2, weight: .medium)
-                            .lineLimit(1)
-                            .foregroundStyle(DS.Palette.accentText)
-                    }
-                    .padding(.horizontal, DS.Space.s)
-                    .padding(.vertical, 2)
-                    .variantPlate(DS.Palette.accentText.opacity(0.10), .capsule)
-                    .frame(maxWidth: 130)
-                    .accessibilityLabel("锁 " + r.lockName)
-                }
                 // 188 手动标旗: 旗标行左侧常显 (形状+颜色双通道, 不只靠颜色)
                 if RecordOverlay.isFlagged(r.rowMac.isEmpty ? mac : r.rowMac, r.key) {
                     Image(systemName: "flag.fill")
@@ -1145,60 +1105,6 @@ struct RecordsView: View {
                 // 184 开门方式图标: fp 指纹 / pwd 数字 / temp 一次性 / key 钥匙
                 rowTitle(r)
                     .padding(.top, 1)
-                // 591 行内次序注释: 只在第 2 次及以后写 —— "今天第一次"是废话，天天写等于没写。
-                if seq >= 2 {
-                    Text("今日第 \(seq) 次")
-                        .vkFont(.caption2)
-                        .foregroundStyle(DS.Palette.textSub)
-                        .lineLimit(1)
-                        .accessibilityLabel("本日第 \(seq) 次")
-                }
-                // 796 行级第 N 位使用者: 与 183 同一由头 (归属可证明才算), 第 1 位不写
-                if userOrd >= 2 {
-                    Text("本日第 \(userOrd) 位使用者")
-                        .vkFont(.caption2)
-                        .foregroundStyle(DS.Palette.textSub)
-                        .lineLimit(1)
-                        .accessibilityLabel("本日第 \(userOrd) 位使用者")
-                }
-                // 648 双行时间标注 (默认关，设置-时间显示里开): 跨年时"10月7日"说不清是哪一年。
-                // 开关而不是默认: 一页上千行时，每行多一行字是整页密度的变化，
-                // 不该由一个新功能单方面替所有用户决定 (组头已经把日期写在每组第一行了)。
-                if TimeFormat.twoLine, let dd = RecordSearch.dateFromKey(r.dayKey) {
-                    Text(dd.formatted(date: .complete, time: .omitted))
-                        .vkFont(.caption2)
-                        .foregroundStyle(DS.Palette.textSub)
-                        .lineLimit(1)
-                }
-                // 680 同分钟歧义注: 时间轴上挨着的两行如果时刻字符串相同，先后的来源是入库顺序而不是时间。
-                if dupMinute {
-                    Text("按入库顺序")
-                        .vkFont(.caption2)
-                        .foregroundStyle(DS.Palette.textSub)
-                        .lineLimit(1)
-                        .accessibilityLabel("与上一行同一分钟，按入库顺序排列")
-                }
-                // 186 记录备注: 用户自己写的本机文字, 行下方灰字 (在详情卡里编辑)
-                // 597 行级备注 = 同一件事 (IDEA-BANK 那两条一个说"右滑添加"、一个说"日志表加列")。
-                // 不重做: 右滑新增一个编辑面 = 同一数据两个入口，而 186 的写侧只有 RecordOverlay 一处 (删设备按族清才干净)。
-                Group {
-                    let nt = RecordOverlay.note(r.rowMac.isEmpty ? mac : r.rowMac, r.key)
-                    if !nt.isEmpty {
-                        Text(nt)
-                            .vkFont(.caption2)
-                            .foregroundStyle(DS.Palette.textSub)
-                            .lineLimit(2)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .accessibilityLabel("开门附言 " + nt)   // 990: 与 186 备注同一份存储, 读屏也用同一句话
-                    }
-                }
-                // 575 越界小字 (约): 临时码窗口外仍开门
-                if !r.winText.isEmpty {
-                    Text(r.winText)
-                        .vkFont(.caption2)
-                        .lineLimit(1)
-                        .foregroundStyle(DS.Palette.warn)
-                }
                 Spacer(minLength: 0)
             }
             // 907 时间线行距三档 (kf_tl_gap, 叠在 kf_density 之上): 竖列越密越难扫,

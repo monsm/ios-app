@@ -122,67 +122,6 @@
       "status": "implemented"
     },
     {
-      "key": "data.store.read-write.fragments",
-      "parentKey": "data.store.read-write",
-      "domain": "data",
-      "level": 4,
-      "name": "顶层标量写入必须开 fragmentsAllowed",
-      "kind": "edge",
-      "summary": "【口径】不开 .fragmentsAllowed 时 String/Bool/Int/Double 顶层标量会让 JSONSerialization 抛错并被静默吞掉，整键从未落盘。",
-      "details": [
-        "失败本身仍不改返回值（改签名要动几百个调用点），只记台账（Store.swift:36-47）",
-        "症状：设置页所有开关/主题/救援码/免验窗口全部退回默认值（Store.swift:37-39）",
-        "第九十五批把「吞掉」改成「记一笔」，诊断页能看到假成功（Store.swift:40-41）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/Store.swift",
-          "line": 43,
-          "symbol": "set(_:_:)",
-          "note": "options: [.fragmentsAllowed]"
-        }
-      ],
-      "tags": [
-        "边界",
-        "持久化",
-        "诊断"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "data.store.read-write.corrupt-guard",
-      "parentKey": "data.store.read-write",
-      "domain": "data",
-      "level": 4,
-      "name": "台账解码失败守卫（防空表覆盖）",
-      "kind": "edge",
-      "summary": "【口径】get 返回 nil 有两种语义：键不存在 vs 有键但解码抛错；后者打 markLedgerCorrupt，saveLedger 一律拒写。",
-      "details": [
-        "旧实现在解码失败时返回空 Ledger，调用方 addPwd 后 save 会把整表清空（Store.swift:502-505）",
-        "损坏集合用 Locked(Set<String>) 保护并发（Store.swift:497-499）",
-        "宁可界面显示陈旧数据，也不要把用户密码/指纹记录抹掉（Store.swift:508-509）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/Store.swift",
-          "line": 498,
-          "symbol": "markLedgerCorrupt(_:)"
-        },
-        {
-          "file": "App/Core/Store.swift",
-          "line": 509,
-          "symbol": "saveLedger(_:_:)",
-          "note": "guard !isLedgerCorrupt(mac)"
-        }
-      ],
-      "tags": [
-        "边界",
-        "数据损坏",
-        "持久化"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "data.store.failure-ledger",
       "parentKey": "data.store",
       "domain": "data",
@@ -400,55 +339,6 @@
           "line": 30,
           "symbol": "recordBackup",
           "note": "kf_backup_hist"
-        }
-      ],
-      "tags": [
-        "本地键值",
-        "索引"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "data.keys.per-lock",
-      "parentKey": "data.keys",
-      "domain": "data",
-      "level": 3,
-      "name": "每锁族键（<mac> 结尾）",
-      "kind": "data",
-      "summary": "以 MAC 结尾、随锁生灭的一族键：台账、快照、日志缓存、防御配置、失败留痕、档案、认领、借用、备注、过滤。",
-      "details": [
-        "kf_ledger_<mac> — Ledger{pwds,fps} 凭证台账（Store.swift:501）",
-        "kf_snap_<mac> — StatusSnapshot{at,status}（Store.swift:640）",
-        "kf_logcache_<mac> — LogCache{at,logs} 最多 300 条（Store.swift:651,660）",
-        "kf_defend_<mac> — DefendCfg{control,startSec,endSec,at}（Store.swift:701）",
-        "kf_tailgate_<mac> — TailgateCfg{interval,at}（Store.swift:703）",
-        "kf_synctime_<mac> — Double 上次校时（Store.swift:705）",
-        "kf_fevents_<mac> — [FailEvent] 手机侧开锁失败标记，封顶 50（Store.swift:916,922）",
-        "kf_lockmeta_<mac> — LockMeta 档案 10 字段（LockStats.swift:71）",
-        "kf_lock_hidden_<mac> — Bool 手动隐藏（LockStats.swift:101-102）",
-        "kf_macorder_<mac> — String 0x88 包络字节序观测值（Store.swift:332）",
-        "kf_pending_pair_<mac> — 未完成配网记录（Store.swift:402）",
-        "kf_mclaim_<mac> — [日志键: 成员 id] 791 认领映射（MemberHub.swift:293）",
-        "kf_mborrow_<mac> — [条目键: MemberBorrow] 472 借用登记（MemberHub.swift:265）",
-        "kf_rnote_<mac> / kf_rflag_<mac> — 记录备注与标旗本机覆盖层（RecordSearch.swift:25-26）",
-        "kf_rflt_<mac> — QueryFilters 过滤会话（RecordSearch.swift:191）",
-        "kf_cdisrea_<mac> — [\"kind:key\": DisableMark] 361 停用便签（CredentialOrg.swift:990）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/Store.swift",
-          "line": 701,
-          "symbol": "defend(_:)"
-        },
-        {
-          "file": "App/Core/LockStats.swift",
-          "line": 71,
-          "symbol": "meta(_:)"
-        },
-        {
-          "file": "App/Core/MemberHub.swift",
-          "line": 265,
-          "symbol": "borrows(_:)"
         }
       ],
       "tags": [
@@ -975,44 +865,6 @@
       "status": "implemented"
     },
     {
-      "key": "data.secret.pending-pair",
-      "parentKey": "data.secret",
-      "domain": "data",
-      "level": 3,
-      "name": "配网中断保护（防软砖）",
-      "kind": "state",
-      "summary": "05 换钥拿到 rc=0 后先落盘这套密钥，尾链断了可用它续配（跳过 05，不碰锁内密钥域）。",
-      "details": [
-        "两个落点：kf_pending_pair_<mac>（非密字段 + at 毫秒）+ pair.<mac>.<field> 四项 skey/bkey/ekey/pins（Store.swift:391-404）",
-        "savePendingPair 要求 skey 与 pins 都非空，任一 SecretStore 写失败返回 false（Store.swift:394-399）",
-        "pendingPair 只有 plist 标记、没有密钥材料时返回 nil，视为无用残片（Store.swift:414）",
-        "pins 以逗号串存，读出后 components(separatedBy: \",\")（Store.swift:412-413）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/Store.swift",
-          "line": 391,
-          "symbol": "pendingPairAccount(_:_:)"
-        },
-        {
-          "file": "App/Core/Store.swift",
-          "line": 393,
-          "symbol": "savePendingPair(_:)"
-        },
-        {
-          "file": "App/Core/Store.swift",
-          "line": 405,
-          "symbol": "pendingPair(_:)"
-        }
-      ],
-      "tags": [
-        "配网",
-        "密钥",
-        "恢复"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "data.secret.passcode",
       "parentKey": "data.secret",
       "domain": "data",
@@ -1142,33 +994,6 @@
         "日志",
         "缓存",
         "自动化"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "data.snapshot.orphan-guard",
-      "parentKey": "data.snapshot",
-      "domain": "data",
-      "level": 3,
-      "name": "孤儿缓存闸（只为台账内的锁写）",
-      "kind": "edge",
-      "summary": "【口径】日志缓存写入前要求该 mac 仍在钥匙串台账里；不在就顺手删掉缓存，避免体检报「已删门锁的日志缓存残留」。",
-      "details": [
-        "首次配网的锁在 pair 末步才 saveKeychain，所以这道闸不会拦真实写入（Store.swift:690）",
-        "命中孤儿时 store.remove 当场清掉，否则体检会一直报（Store.swift:693-695）",
-        "真机报告 2026-10-17：演示数据的清除路径踩在这一处（Store.swift:688-689）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/Store.swift",
-          "line": 691,
-          "symbol": "cacheWritable(_:)"
-        }
-      ],
-      "tags": [
-        "边界",
-        "数据健康",
-        "日志"
       ],
       "status": "implemented"
     },
@@ -1308,46 +1133,6 @@
         "成员",
         "数据销毁",
         "边界"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "data.member.activity",
-      "parentKey": "data.member",
-      "domain": "data",
-      "level": 3,
-      "name": "成员活跃度推断",
-      "kind": "diagnostic",
-      "summary": "跨全部锁统计 30 天开门次数、本月次数、最近时刻、名下凭证数；归属走可证明链，判不出就不算。",
-      "details": [
-        "Activity{opens30, month, last, owns}，stale = 30 天 0 次（MemberHub.swift:138-145）",
-        "按 Attribution.classify 逐行判定 who == id，才计入（MemberHub.swift:153-163）",
-        "owns = 名下密码 + 指纹条数（MemberHub.swift:164-165）",
-        "weekSentence 另给「近 7 天约 N 次 + 工作日 X–X 点最活跃」，样本不足则如实说（MemberHub.swift:170-197）",
-        "sourceCounts 用最新版本快照的 note 前缀区分 创建/移交/恢复（MemberHub.swift:227-245）",
-        "recentExcerpts 只收可证明归属的行，输出「词 · 锁名」（MemberHub.swift:203-224）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/MemberHub.swift",
-          "line": 146,
-          "symbol": "activity(_:)"
-        },
-        {
-          "file": "App/Core/MemberHub.swift",
-          "line": 170,
-          "symbol": "weekSentence(_:)"
-        },
-        {
-          "file": "App/Core/MemberHub.swift",
-          "line": 227,
-          "symbol": "sourceCounts(_:)"
-        }
-      ],
-      "tags": [
-        "成员",
-        "统计口径",
-        "推断值"
       ],
       "status": "implemented"
     },
@@ -1540,38 +1325,6 @@
         "审计",
         "防篡改",
         "阈值"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "data.audit.verify",
-      "parentKey": "data.audit",
-      "domain": "data",
-      "level": 3,
-      "name": "防篡改校验（三种断点）",
-      "kind": "diagnostic",
-      "summary": "逐链重算：-1 完好、-2 id 单调性被破坏、下标 N 表示该处断链；同时比对 prevHash 与重算 hash。",
-      "details": [
-        "只验每条自洽不够：删掉中间任意条（含胁迫打标）后逐条重算仍会显示「链完好」（AuditChain.swift:132-133）",
-        "先查 hash 非空，再查 id 单调，再查 prevHash == prev，最后重算本条 hash（AuditChain.swift:128-136）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/AuditChain.swift",
-          "line": 124,
-          "symbol": "verifyChain()"
-        },
-        {
-          "file": "App/Core/AuditChain.swift",
-          "line": 134,
-          "symbol": "prevHash",
-          "note": "if e.prevHash != prev"
-        }
-      ],
-      "tags": [
-        "审计",
-        "诊断",
-        "防篡改"
       ],
       "status": "implemented"
     },
@@ -1817,44 +1570,6 @@
       "status": "implemented"
     },
     {
-      "key": "data.variant.grammar",
-      "parentKey": "data.variant",
-      "domain": "data",
-      "level": 3,
-      "name": "VK 令牌与三个容器件",
-      "kind": "service",
-      "summary": "容器只有四类语义（group/tile/inset/hero）；Card 53 处、SectionTitle 21 处、StatusPill 29 处都走这里。",
-      "details": [
-        "现行令牌全部转发 DS：accent=Palette.text、canvas=canvasBase、bezel=surfaceBase、hair=hairline、gutter=Space.gutter(16)、corner=Radius.card（跟随 kf_radius）（VariantGrammar.swift:44-70）",
-        "card 用 Optional tint 而不是与 .clear 比较相等，避免语义写法一变就判错（VariantGrammar.swift:81-83）",
-        "card 走 .axGlass，从而自带「降低透明度/增强对比」降实底退路（VariantGrammar.swift:88-90）",
-        "statusPill 保住「图标形状 + 颜色」双通道，且 fixedSize 防换行（VariantGrammar.swift:125-144）",
-        "destined(_:) 只是台账钉子，明确不许加视觉效果（VariantGrammar.swift:167-177）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/VariantGrammar.swift",
-          "line": 80,
-          "symbol": "card(tint:_:)"
-        },
-        {
-          "file": "App/Core/VariantGrammar.swift",
-          "line": 103,
-          "symbol": "sectionTitle(text:count:)"
-        },
-        {
-          "file": "App/Core/VariantGrammar.swift",
-          "line": 128,
-          "symbol": "statusPill(text:systemImage:tone:)"
-        }
-      ],
-      "tags": [
-        "设计系统",
-        "视觉语法"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "data.variant.toggle",
       "parentKey": "data.variant",
       "domain": "data",
@@ -1892,36 +1607,6 @@
       "status": "implemented"
     },
     {
-      "key": "data.variant.typography",
-      "parentKey": "data.variant",
-      "domain": "data",
-      "level": 3,
-      "name": "行内排版唯一入口（vkFont）",
-      "kind": "service",
-      "summary": "收「基准 Font + 可选字重」，没写字重就一个修饰符都不加；1770 处文本 .font 都改成它。",
-      "details": [
-        "字体差只有一个实现处 VKTypography.font(base, weight:)，供 Canvas 里收 Text 的水印层复用（VariantGrammar.swift:413-420）",
-        "图标 .system(size:) 刻意写死，不参与 Dynamic Type、不跟变体换字重（VariantGrammar.swift:426-427）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/VariantGrammar.swift",
-          "line": 408,
-          "symbol": "vkFont(_:weight:)"
-        },
-        {
-          "file": "App/Core/VariantGrammar.swift",
-          "line": 90,
-          "symbol": "font(_:weight:)"
-        }
-      ],
-      "tags": [
-        "设计系统",
-        "排版"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "data.search-index",
       "parentKey": "data",
       "domain": "data",
@@ -1942,44 +1627,6 @@
       "tags": [
         "检索",
         "本地键值"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "data.search-index.overlay",
-      "parentKey": "data.search-index",
-      "domain": "data",
-      "level": 3,
-      "name": "记录备注与手动标旗（kf_rnote_ / kf_rflag_）",
-      "kind": "data",
-      "summary": "按 (锁, 行) 存用户写的自由文本与旗标；行身份用 mac#idxRaw 归一，手机侧行用 f_秒 / c_毫秒。",
-      "details": [
-        "备注 60 字上限（行下灰字一行放得下），空文本 = 删键，不留空壳（RecordSearch.swift:38-44）",
-        "oid 归一：多锁 RowVM.key 已带 mac 前缀，单锁路径没带，统一补成同一个键（RecordSearch.swift:28-30）",
-        "备注属敏感本地数据，删设备与销毁流程按族清（RecordSearch.swift:22-23）",
-        "toggleFlag 写回时 sorted 保证数组稳定（RecordSearch.swift:56）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/RecordSearch.swift",
-          "line": 25,
-          "symbol": "noteKey(_:)"
-        },
-        {
-          "file": "App/Core/RecordSearch.swift",
-          "line": 38,
-          "symbol": "setNote(_:_:_:)"
-        },
-        {
-          "file": "App/Core/RecordSearch.swift",
-          "line": 52,
-          "symbol": "toggleFlag(_:_:)"
-        }
-      ],
-      "tags": [
-        "检索",
-        "本地键值",
-        "脱敏"
       ],
       "status": "implemented"
     },
@@ -2053,42 +1700,6 @@
       "tags": [
         "检索",
         "设置偏好"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "data.search-index.views-history",
-      "parentKey": "data.search-index",
-      "domain": "data",
-      "level": 3,
-      "name": "命名视图与搜索历史",
-      "kind": "data",
-      "summary": "kf_rviews 存 12 段文本 + 过滤 + 范围，上限 20 条；kf_rsearch_hist 存最近 5 条搜索词，最新在前。",
-      "details": [
-        "saveNamedView 同名先删再插首，保证唯一（RecordSearch.swift:764-769）",
-        "搜索历史上限 5，pushHistory 先去重再插首，取 prefix(5)；旧实现从尾部截 5 条留下全是最旧（RecordSearch.swift:742-753）",
-        "removeHistory / clearHistory 提供单删与清空（RecordSearch.swift:754-759）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/RecordSearch.swift",
-          "line": 764,
-          "symbol": "saveNamedView(name:text:filters:scopeAll:)"
-        },
-        {
-          "file": "App/Core/RecordSearch.swift",
-          "line": 746,
-          "symbol": "pushHistory(_:)"
-        },
-        {
-          "file": "App/Core/RecordSearch.swift",
-          "line": 745,
-          "symbol": "historyCap"
-        }
-      ],
-      "tags": [
-        "检索",
-        "本地键值"
       ],
       "status": "implemented"
     },
@@ -2185,36 +1796,6 @@
       "tags": [
         "凭证",
         "审计"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "credential.fp.write",
-      "parentKey": "credential.ops",
-      "domain": "credential",
-      "level": 3,
-      "name": "指纹批次写入与改名/备注/防拆",
-      "kind": "action",
-      "summary": "以 batch 为主键增删改；isAlarm 是「防拆预警指纹」标记，diff 里会单独记「防拆 开/关」。",
-      "details": [
-        "addFp/delFp/renameFp/setFpNote/setFpOwner/setFpAlarm 六个入口（Store.swift:584-614）",
-        "指纹的锁端身份只有模板，本机可改的只有名称/备注/归属/防拆（CredentialOrg.swift:210-211）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/Store.swift",
-          "line": 595,
-          "symbol": "renameFp(_:_:_:)"
-        },
-        {
-          "file": "App/Core/Store.swift",
-          "line": 610,
-          "symbol": "setFpAlarm(_:_:_:)"
-        }
-      ],
-      "tags": [
-        "凭证",
-        "指纹"
       ],
       "status": "implemented"
     },
@@ -2324,38 +1905,6 @@
         "凭证",
         "停用",
         "批量"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "credential.stats",
-      "parentKey": "credential",
-      "domain": "credential",
-      "level": 2,
-      "name": "凭证统计与推断口径",
-      "kind": "diagnostic",
-      "summary": "次数统计、最近使用、首次使用、指纹使用与告警计数、风险体检、老旧巡检、倒计时——全部标「约」。",
-      "details": [
-        "根本限制：锁端日志每条只有 [type][len][idx][lockTime][body]，无 alias/无指纹批号，所以「谁开的门」只能拿凭证自己的时间窗去框（CredentialOrg.swift:1320-1326）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/CredentialOrg.swift",
-          "line": 1328,
-          "symbol": "openCountInWindow(_:p:)",
-          "note": "台账推断统计族代表入口；本族注释点名全部标「约」"
-        },
-        {
-          "file": "App/Core/CredentialOrg.swift",
-          "line": 1320,
-          "symbol": "约",
-          "note": "注释: 这一族的文案与数据源是同一份判据, 不许把「约」写成精确"
-        }
-      ],
-      "tags": [
-        "凭证",
-        "统计口径",
-        "推断值"
       ],
       "status": "implemented"
     },
@@ -2508,40 +2057,6 @@
       "status": "implemented"
     },
     {
-      "key": "member.permission.matrix",
-      "parentKey": "member.permission",
-      "domain": "member",
-      "level": 3,
-      "name": "五项能力矩阵与 fail-closed 判定",
-      "kind": "rule",
-      "summary": "main 全允许；member 允许看记录与管凭证；guest 全部不允许；查不到的项一律按不允许走。",
-      "details": [
-        "main：看记录/管凭证/导出/备份/成员管理 = true（MemberHub.swift:80-82）",
-        "member：只有看记录与管凭证为 true（MemberHub.swift:86-88）",
-        "guest：五项全 false（MemberHub.swift:83-85）",
-        "permAllows 用 first(where:)?.allowed ?? false，不做「默认放行」（MemberHub.swift:92-94）",
-        "permCan / permCannot 供示例卡与向导副标题现算（MemberHub.swift:96-97）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/MemberHub.swift",
-          "line": 78,
-          "symbol": "permRows(_:)"
-        },
-        {
-          "file": "App/Core/MemberHub.swift",
-          "line": 92,
-          "symbol": "permAllows(_:_:)"
-        }
-      ],
-      "tags": [
-        "成员",
-        "权限",
-        "fail-closed"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "member.permission.emergency-admin",
       "parentKey": "member.permission",
       "domain": "member",
@@ -2628,32 +2143,6 @@
       "status": "implemented"
     },
     {
-      "key": "member.merge.claims",
-      "parentKey": "member.merge",
-      "domain": "member",
-      "level": 3,
-      "name": "合并时改判认领（462）",
-      "kind": "action",
-      "summary": "reassignClaims 遍历所有锁，把 value == 旧 id 的认领改判给新 id，合并后记录不会挂在已不存在的 id 上。",
-      "details": [
-        "只迁凭证不迁认领 ⇒ 合并后记录显示「无法归属」（MemberHub.swift:300-301）",
-        "逐锁读改写，命中才 setCodable（MemberHub.swift:302-309）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/MemberHub.swift",
-          "line": 302,
-          "symbol": "reassignClaims(from:to:)"
-        }
-      ],
-      "tags": [
-        "成员",
-        "合并",
-        "边界"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "record.search",
       "parentKey": "record",
       "domain": "record",
@@ -2715,77 +2204,6 @@
         "记录",
         "检索",
         "时间"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "record.search.build",
-      "parentKey": "record.search",
-      "domain": "record",
-      "level": 3,
-      "name": "跨锁聚合与合并最近开门",
-      "kind": "service",
-      "summary": "buildRecs 把多锁日志 + 手机侧失败行汇成 [Rec] 并做字符串时间倒序；mergedRecentOpens 另按「时间串 + 入库序」稳定排序。",
-      "details": [
-        "Rec 15 字段：key/mac/lockName/type/typeName/idxRaw/lockTime/timeStr/whoId/whoName/kind/provable/cred/alarm/care/failMsg，id = mac#key（RecordSearch.swift:62-79）",
-        "字符串序即时间倒序（同格式），空时间串自然沉底（RecordSearch.swift:291,888-893）",
-        "同分钟两行的先后是入库次序而非时间信息，所以用 offset 当 tiebreak（Swift sorted 不保证稳定）（RecordSearch.swift:891-899）",
-        "失败行 key 用 \"f_\" + Unix 秒，type=0，无归属（RecordSearch.swift:282-288）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/RecordSearch.swift",
-          "line": 254,
-          "symbol": "buildRecs(macs:includeFails:includeCare:)"
-        },
-        {
-          "file": "App/Core/RecordSearch.swift",
-          "line": 894,
-          "symbol": "mergedRecentOpens(macs:count:)"
-        },
-        {
-          "file": "App/Core/RecordSearch.swift",
-          "line": 62,
-          "symbol": "Rec"
-        }
-      ],
-      "tags": [
-        "记录",
-        "聚合",
-        "检索"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "record.search.active-cred",
-      "parentKey": "record.search",
-      "domain": "record",
-      "level": 3,
-      "name": "活跃凭证 Top（574）与越界开门（575）",
-      "kind": "diagnostic",
-      "summary": "近 30 天按「类型 + 槽号」计次排行，槽号翻台账备注；另有临时码时间窗之外的开门检测。",
-      "details": [
-        "typeToKind：1 key / 2 pwd / 3 fp / 4 temp（RecordSearch.swift:374）",
-        "翻不到备注时回落「类型 #槽号」；备注首行截 12 字加省略号（RecordSearch.swift:376-387）",
-        "outOfWindow 只对 type4 判定，用台账 from/to 与日志时刻比较，返回「约 from – to」（RecordSearch.swift:335-354）",
-        "时间串解析固定按 UTC 读（与 JS 生态本地串同语义）（RecordSearch.swift:356-362）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/RecordSearch.swift",
-          "line": 367,
-          "symbol": "activeCredentials(mac:)"
-        },
-        {
-          "file": "App/Core/RecordSearch.swift",
-          "line": 335,
-          "symbol": "outOfWindow(macs:)"
-        }
-      ],
-      "tags": [
-        "记录",
-        "统计口径",
-        "推断值"
       ],
       "status": "implemented"
     },
@@ -2973,43 +2391,6 @@
       "status": "implemented"
     },
     {
-      "key": "security.ledger.sensitive",
-      "parentKey": "security.ledger",
-      "domain": "security",
-      "level": 3,
-      "name": "流水条目、成员维度与时刻格式",
-      "kind": "data",
-      "summary": "Item{id(毫秒), kind, target, member?}；member 是 367 归属维度，只有「写入该成员动态」勾上的条目才有值。",
-      "details": [
-        "suffix(100) 截断；record 加锁串行，避免复制（主线程）与导出（异步）并发丢条目（AuditChain.swift:185-193）",
-        "recent(limit:) 先倒序再前缀；memberItems 先按 member 过滤再倒序（AuditChain.swift:195-204）",
-        "stamp 用 WeekCal 输出 MM-dd HH:mm，id 是毫秒，故要 /1000（AuditChain.swift:205-212）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/AuditChain.swift",
-          "line": 187,
-          "symbol": "record(_:target:member:)"
-        },
-        {
-          "file": "App/Core/AuditChain.swift",
-          "line": 195,
-          "symbol": "recent(limit:)"
-        },
-        {
-          "file": "App/Core/AuditChain.swift",
-          "line": 183,
-          "symbol": "stamp(_:)"
-        }
-      ],
-      "tags": [
-        "安全",
-        "审计",
-        "隐私"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "settings.speech",
       "parentKey": "settings",
       "domain": "settings",
@@ -3035,71 +2416,6 @@
       ],
       "tags": [
         "语音",
-        "无障碍"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "settings.speech.tts",
-      "parentKey": "settings.speech",
-      "domain": "settings",
-      "level": 3,
-      "name": "中文朗读与打断策略",
-      "kind": "action",
-      "summary": "zh() 用 zh-CN 音色、rate 默认 0.5；说话前若正在说就 stopSpeaking(.immediate)，避免两串叠在一起。",
-      "details": [
-        "空文本直接返回 false（SpeechKit.swift:20-21）",
-        "rate 0.5 是「清楚但不赶」的一档；逐位报码要更慢（SpeechKit.swift:16-17）",
-        "「老人跟着抄一串叠音的密码，比不念更糟」——这是先 stop 的理由（SpeechKit.swift:17）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/SpeechKit.swift",
-          "line": 19,
-          "symbol": "zh(_:rate:)"
-        },
-        {
-          "file": "App/Core/SpeechKit.swift",
-          "line": 26,
-          "symbol": "zh",
-          "note": "if s.isSpeaking { stopSpeaking }"
-        }
-      ],
-      "tags": [
-        "语音",
-        "无障碍"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "settings.speech.digits",
-      "parentKey": "settings.speech",
-      "domain": "settings",
-      "level": 3,
-      "name": "密码逐位报码",
-      "kind": "action",
-      "summary": "digits() 把每位数字换成中文（零…九），非数字字符直接跳过，最后以「密码逐位: N、N。」慢速念出。",
-      "details": [
-        "rate 固定 0.35，比普通朗读更慢（SpeechKit.swift:40）",
-        "跳过非数字而不是念成「某」：念错了比不念更难查（SpeechKit.swift:32）",
-        "一位数字都没有则不念（SpeechKit.swift:39）",
-        "用途是让对方面对面同步抄写（SpeechKit.swift:32）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/SpeechKit.swift",
-          "line": 33,
-          "symbol": "digits(_:)"
-        },
-        {
-          "file": "App/Core/SpeechKit.swift",
-          "line": 34,
-          "symbol": "zhDigits"
-        }
-      ],
-      "tags": [
-        "语音",
-        "凭证",
         "无障碍"
       ],
       "status": "implemented"
@@ -3516,40 +2832,6 @@
         "安全",
         "迁移",
         "阈值"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "data.audit.chain.input",
-      "parentKey": "data.audit.chain",
-      "domain": "data",
-      "level": 4,
-      "name": "哈希输入串的拼接顺序",
-      "kind": "rule",
-      "summary": "id#ts#cat#action#target#operator#duress#diffText#prev，用 # 分隔；diffText 按字段名排序后 join(\"|\")。",
-      "details": [
-        "duress 落成 \"d\" 或 \"-\"，避免布尔字面量顺序差异（AuditChain.swift:66）",
-        "排序保证同一组 diff 无论插入顺序都能算出同一个哈希（AuditChain.swift:60-63）",
-        "prev 由调用方传（GENESIS 或上一条 hash），seal 里同时回填 prevHash 与 hash（AuditChain.swift:72-76）",
-        "改一处历史字段或删一条中间事件都会使后续所有 hash 对不上（防篡改性质由此而来）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/AuditChain.swift",
-          "line": 66,
-          "symbol": "joined(separator: \"#\")",
-          "note": "joined(separator: \"#\")"
-        },
-        {
-          "file": "App/Core/AuditChain.swift",
-          "line": 74,
-          "symbol": "seal(prevHash:)"
-        }
-      ],
-      "tags": [
-        "审计",
-        "防篡改",
-        "边界"
       ],
       "status": "implemented"
     },

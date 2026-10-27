@@ -428,39 +428,6 @@
       "status": "implemented"
     },
     {
-      "key": "device.list",
-      "parentKey": "device",
-      "domain": "device",
-      "level": 3,
-      "kind": "screen",
-      "name": "设备清单数据面（retrieveDeviceInfo + 空态）",
-      "summary": "page-devicelist 与 page-message 共用的设备清单查询：op=retrieveDeviceInfo，withdetail=1、offset=0、limit=9999，返回 devInfoList 后按 pid 映射图标与昵称。",
-      "details": [
-        "字段：devInfoList[i].dname / pid / dState / mac / skey / pins / doid / createTime / expireTime",
-        "GW(12193) 在消息页的设备选择器里被 continue 跳过，只能选门锁",
-        "deviceData.pid_number 由 parseInt(pid) 得到，用于 canDefend/canTailgate/canClearPwd/canDeviceInfo/canDeviceUpgrade 的能力开关"
-      ],
-      "evidence": [
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "tt.prototype.getDeviceList",
-          "note": "@354396 op=zn.retrieveDeviceInfo, withdetail=1, limit=9999"
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "zn.canDefend/canTailgate/canClearPwd",
-          "note": "@339242 按 pid 白名单决定功能可见性"
-        }
-      ],
-      "tags": [
-        "列表",
-        "数据"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "apk.login",
       "parentKey": "member",
       "domain": "apk",
@@ -1161,39 +1128,6 @@
       "status": "implemented"
     },
     {
-      "key": "credential.otp.close",
-      "parentKey": "credential",
-      "domain": "credential",
-      "level": 3,
-      "kind": "screen",
-      "name": "关闭临时开锁密码（page-otpclose）",
-      "summary": "关掉锁内 ZOTP 状态位：cmd19 传 0 → 成功提示「关闭成功」→ 服务端 otp_status=0、otp_idx=-1、otp_invalid_time 清空。",
-      "details": [
-        "clearOtpStorage 会打印「开始存储OTP状态」并把三件套写回 setDeviceSetting",
-        "失败「关闭失败」+ resultCode 文案"
-      ],
-      "evidence": [
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "ao",
-          "note": "page-otpclose @649980 — closeOtp/clearOtpStorage"
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "ao.prototype.closeOtp",
-          "note": "@559262 OTP_STATUS_CLOSE=0 → cmd19 → 服务端归零"
-        }
-      ],
-      "tags": [
-        "凭证",
-        "临时密码",
-        "写锁"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "device.keychain.write",
       "parentKey": "device",
       "domain": "device",
@@ -1378,44 +1312,6 @@
       "tags": [
         "配网",
         "核心"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "device.add.type",
-      "parentKey": "device.add",
-      "domain": "device",
-      "level": 3,
-      "kind": "screen",
-      "name": "选择设备类型（page-devicetypelist）",
-      "summary": "从云端 getProductList 拉可选型号，按 pid 分流：KX/V1/V1_Pro/JZ → page-adddevice（门锁），GW → page-addgw（网关）。",
-      "details": [
-        "本地兜底 zn.smartDeviceType 硬编码 3 项（KX/V1/GW），云端返回后 dealDeviceTypeList 覆盖",
-        "GW 在 jz 变体下显示为「京造智能网关」",
-        "空列表/失败：「获取失败」"
-      ],
-      "evidence": [
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "Uo",
-          "note": "page-devicetypelist @651333 — getDeviceTypeList/itemTaped/dealDeviceTypeList"
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "Uo.prototype.getDeviceTypeList",
-          "note": "@621897 op=zn.getProductList"
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "Uo.prototype.itemTaped",
-          "note": "@621554 pid 分流 push mo / push Ko"
-        }
-      ],
-      "tags": [
-        "配网"
       ],
       "status": "implemented"
     },
@@ -1918,64 +1814,6 @@
       "tags": [
         "诊断",
         "工厂"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "device.gateway.add",
-      "parentKey": "device.gateway",
-      "domain": "device",
-      "level": 3,
-      "kind": "screen",
-      "name": "添加网关·勾选确认（page-addgw）",
-      "summary": "网关添加第一步：一个可勾选的设备图 + 说明，勾选后才能「下一步」进 page-gwresetexplain。",
-      "details": [
-        "choose 布尔驱动 icon_choose_not/did 两张图",
-        "未勾选时底部提示（bottomPrompt）",
-        "gwExplain 跳 page-gwresetexplain"
-      ],
-      "evidence": [
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "Ko",
-          "note": "page-addgw @652708 — chooseClick/sureClick/gwExplain"
-        }
-      ],
-      "tags": [
-        "网关",
-        "配网"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "device.gateway.reset-hint",
-      "parentKey": "device.gateway",
-      "domain": "device",
-      "level": 3,
-      "kind": "screen",
-      "name": "重置网关说明（page-gwresetexplain）",
-      "summary": "图文说明如何重置网关：长捅重置孔约 5s 到指示灯变橙，点「确定」回上一步继续。",
-      "details": [
-        "文案「长捅网关的重置孔，保持5s左右，至指示灯变为橙色，即重置成功」",
-        "sureClick 只 pop，不做任何 IO"
-      ],
-      "evidence": [
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "_o",
-          "note": "page-gwresetexplain @652447 — sureClick/pop"
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "_o.title",
-          "note": "@596538 \"重置网关\""
-        }
-      ],
-      "tags": [
-        "网关"
       ],
       "status": "implemented"
     },
@@ -6512,85 +6350,6 @@
       "status": "implemented"
     },
     {
-      "key": "credential.pwd.add.validate",
-      "parentKey": "credential.pwd.add",
-      "domain": "credential",
-      "level": 4,
-      "kind": "state",
-      "name": "密码长度 6~8 位且必须纯数字",
-      "summary": "pwdCheck 两道闸：长度 <6 或 >8 报「请输入6~8位密码」，非 /^\\d+$/ 报「密码必须是数字类型」；空值报「请输入密码」。",
-      "details": [
-        "长度区间 [6,8]，不是固定 6 位（与页面上「请输入密码（6-8位）」一致）",
-        "正则 /^\\d+$/ 拒绝小数点与负号",
-        "校验在 addLockPwd 之前同步执行，不通过不发 BLE"
-      ],
-      "evidence": [
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "gu.prototype.pwdCheck",
-          "note": "@495863 this.lockPwd.length<6||>8 → 「请输入6~8位密码」；!/^\\d+$/ → 「密码必须是数字类型」"
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "hu.prototype.pwdCheck",
-          "note": "@495974 同一套校验与文案"
-        }
-      ],
-      "tags": [
-        "校验",
-        "凭证"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "credential.pwd.add.window",
-      "parentKey": "credential.pwd.add",
-      "domain": "credential",
-      "level": 4,
-      "kind": "data",
-      "name": "两个有效期常量：永久 vs 临时 10 分钟",
-      "summary": "新增密码默认写死「2010-01-01 00:00:01 ~ 2118-01-01 00:00:00」表示永久；走临时分支时用 initPwdTempPeriod 取 now ~ now+600000ms。",
-      "details": [
-        "pwdValidFrom=\"2010-01-01 00:00:01\"、pwdValidTo=\"2118-01-01 00:00:00\"（页面字段初始值）",
-        "initPwdTempPeriod：pwdTempFrom=formatDateToString(now)，pwdTempTo=formatDateToString(now+6e5)",
-        "formatDateToString 手写补零成 \"YYYY-MM-DD HH:mm:ss\"",
-        "永久与临时的区分不是布尔位，而是靠 2118 这个哨兵年份"
-      ],
-      "evidence": [
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "hu 字段初始化",
-          "note": "@494715 pwdValidFrom=\"2010-01-01 00:00:01\" / pwdValidTo=\"2118-01-01 00:00:00\""
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "hu.prototype.initPwdTempPeriod",
-          "note": "@495100 new Date(l.getTime()+6e5) 即 10 分钟窗口"
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "hu.prototype.formatDateToString",
-          "note": "@494715 手写补零"
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "zn.keyValidOfPermanent",
-          "note": "@341081 \"2118-01-01 00:00:00\""
-        }
-      ],
-      "tags": [
-        "有效期",
-        "凭证"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "credential.otp.window",
       "parentKey": "credential.otp",
       "domain": "credential",
@@ -6634,46 +6393,6 @@
       "tags": [
         "临时密码",
         "阈值"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "security.tailgate.seconds",
-      "parentKey": "security.tailgate",
-      "domain": "security",
-      "level": 4,
-      "kind": "setting",
-      "name": "等待时长 2~7 秒，默认选中 6 秒",
-      "summary": "chooseBtnImgStrs 是 6 个圆点，索引 2..7 映射秒数，初始第 6 个为 checkmark-circle，即默认 6 秒；未选则提示「请选择设置等待时长」。",
-      "details": [
-        "数组长度为 8（索引 0/1 空串占位），有效索引 2..7",
-        "getCurrentChooseSecond 从索引 2 起找 checkmark-circle，找不到返回 -1",
-        "chooseBtnClick 互斥：选中一个就清掉其它",
-        "默认 6 秒与文案「等待6秒后会自动上锁」一致"
-      ],
-      "evidence": [
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "$i 字段 chooseBtnImgStrs",
-          "note": "@467097 [\"\",\"\",\"radio-button-off\"…,\"checkmark-circle\"]，第 6 个默认选中"
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "$i.prototype.getCurrentChooseSecond",
-          "note": "@467907 从索引 2 起找选中项"
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "$i.prototype.setTailgate",
-          "note": "@468465 未选 → 「请选择设置等待时长」"
-        }
-      ],
-      "tags": [
-        "防尾随",
-        "默认值"
       ],
       "status": "implemented"
     },
@@ -6741,45 +6460,6 @@
       "tags": [
         "成员",
         "阈值"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "protocol.rc.expired",
-      "parentKey": "protocol.rc",
-      "domain": "protocol",
-      "level": 4,
-      "kind": "state",
-      "name": "resultCode 3「命令不在有效期」的统一处理",
-      "summary": "所有写锁命令都把 3 单独拎出来提示「命令不在有效期，请将手机时间同步到锁内」——这是锁内时钟漂移的唯一可观测信号，解法是走 cmd0E 授时。",
-      "details": [
-        "出现位置：清密码、加/改/删密码、指纹、布防、防尾随、静音、安全模式、钥匙串、固件等所有写命令的成功回调里",
-        "文案固定，不带 resultCodeToMessage[3] 的「命令过期」四字",
-        "同步入口：page-deviceinfo → page-synctime，或设备页「建议同步」角标"
-      ],
-      "evidence": [
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "resultCode 3 统一文案",
-          "note": "@415404 「命令不在有效期，请将手机时间同步到锁内」"
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "Se.prototype.getDInfoPre",
-          "note": "@411070 读取后给「建议同步」角标"
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "zn.resultCodeToMessage",
-          "note": "@341758 3:\"命令过期\""
-        }
-      ],
-      "tags": [
-        "错误码",
-        "授时"
       ],
       "status": "implemented"
     },
@@ -6957,81 +6637,6 @@
       "status": "implemented"
     },
     {
-      "key": "device.reset.pinpool",
-      "parentKey": "device.reset",
-      "domain": "device",
-      "level": 4,
-      "kind": "data",
-      "name": "绑定时 64 个 PIN 的 4 批下发与 0xFFFFFFFF 哨兵",
-      "summary": "syncPins 一次生成 64 个随机 pin；syncPins20 每批 20 个、末批按余量；第 0 批额外带 [4294967295] 作为清空标记，全部走 cmd08。",
-      "details": [
-        "随机源：En.generateRandomNumbers(64)（Math.random 派生）",
-        "批大小 20，四批即 0..20/20..40/40..60/60..64",
-        "e==0 时 u=[4294967295]（0xFFFFFFFF）表示先清空锁内 pin 池",
-        "每批独立 AES-ECB + sendData，成功才递归下一批",
-        "失败即 fail(\"同步pins失败\")，不回滚已写入的批次"
-      ],
-      "evidence": [
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "fo.prototype.syncPins",
-          "note": "@586943 generateRandomNumbers(64)"
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "fo.prototype.syncPins20",
-          "note": "@586954 e>=64 结束；0==e 时 u=[4294967295]；每批 20"
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "En.generateRandomNumbers",
-          "note": "@335345 随机数生成器"
-        }
-      ],
-      "tags": [
-        "绑定",
-        "PIN 池"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "device.reset.beacon",
-      "parentKey": "device.reset",
-      "domain": "device",
-      "level": 4,
-      "kind": "data",
-      "name": "beacon key 的「相邻差 ≤2 就 +6」抖动",
-      "summary": "写 beacon key 前先做抖动：4 个随机数转小端拼串后逐字节比较，若 |a-r|<=2 则 a+=6，a>255 则回落 6，避免相邻字节过于接近导致广播可预测。",
-      "details": [
-        "输入：4 个随机数各 toSmallByteOrder(…,4) 拼成 16 字节 hex 串",
-        "规则：r 初始为第 1 字节；对后续每字节 a，若 Math.abs(a-r)<=2 则 a+=6，若 a>255 则 a=6，然后 r=a",
-        "输出作为 cmd21 的 KLV 02",
-        "失败「设置BKey失败」"
-      ],
-      "evidence": [
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "fo.prototype.setBeacomKey",
-          "note": "@587773 |a-r|<=2 → a+=6；a>255 → a=6"
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "ne",
-          "note": "@395304 cmd21 构造 KLV 02"
-        }
-      ],
-      "tags": [
-        "绑定",
-        "beacon"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "device.keychain.pin-alloc",
       "parentKey": "device.keychain.write.blekey",
       "domain": "device",
@@ -7072,93 +6677,6 @@
       "status": "implemented"
     },
     {
-      "key": "device.gateway.wifi.params",
-      "parentKey": "device.gateway.wifi",
-      "domain": "device",
-      "level": 4,
-      "kind": "data",
-      "name": "WiFi 参数写死的认证/加密方式与 5 个 KLV 键",
-      "summary": "cmd31 的五个键固定为：01=SSID、02=密码、03=认证方式(WPA_PSK_WPA2_PSK)、04=加密方式(WEP_ENABLED=0)、05=索引(0)——用户无法在 App 里选加密类型。",
-      "details": [
-        "认证枚举 yo：WIFI_AUTH_MODE_OPEN=0 … WIFI_AUTH_MODE_WPA_PSK_WPA2_PSK（实际只用后者）",
-        "加密枚举 bo：WEP_ENABLED=0 / WEP_DISABLED=1 / TKIP_ENABLED=4 / AES_ENABLED=6 / TKIP_AES_MIX=8",
-        "实际调用 new ko(ssid, pwd, WIFI_AUTH_MODE_WPA_PSK_WPA2_PSK, WIFI_ENCRYPT_TYPE_WEP_ENABLED, 0)",
-        "SSID/密码来自页面输入，SSID 预填自 WifiNamePlugin（密码永远空）",
-        "失败「设置wifi失败」"
-      ],
-      "evidence": [
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "ko",
-          "note": "@597913 cmd31 构造 KLV 01..05"
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "yo/bo 枚举",
-          "note": "@597173 WIFI_AUTH_MODE_* / WIFI_ENCRYPT_TYPE_*"
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "Eo.prototype.setWifi",
-          "note": "@612158 new ko(ssid,pwd,WPA_PSK_WPA2_PSK,WEP_ENABLED,0)"
-        }
-      ],
-      "tags": [
-        "网关",
-        "WiFi"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "device.gateway.iot",
-      "parentKey": "device.gateway.provision",
-      "domain": "device",
-      "level": 4,
-      "kind": "data",
-      "name": "IoT 三元组下发与重启收尾",
-      "summary": "云端 addGateway 返回 iotpKey/iotdSec/devAccToken/doid，App 用 cmd32 把前三者写进网关，再 cmd35 重启，最后 getNewDeviceDetail(doid) 落库。",
-      "details": [
-        "addGateway 提交：pid、did=wifiMac、mac=bleMac、wifimac、firmware=romVer、hardware=eCtrlVer、uid",
-        "cmd32 的 KLV 05/06/… 分别承载三元组（Utf8.parse 后按字节写）",
-        "cmd35 无体，needToken=false",
-        "失败分支会先 disconnectDevice 再提示，避免网关停在半配状态"
-      ],
-      "evidence": [
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "Eo.prototype.getIoTProfile",
-          "note": "@613642 op=zn.addGateway → iotpKey/iotdSec/devAccToken/doid"
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "Eo.prototype.setIoTProfile",
-          "note": "@614402 cmd32 → rebootGW"
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "Eo.prototype.rebootGW",
-          "note": "@614927 cmd35 → success → getNewDeviceDetail"
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "Do",
-          "note": "@599570 cmd32 构造 KLV 05/06"
-        }
-      ],
-      "tags": [
-        "网关",
-        "IoT"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "device.home.empty",
       "parentKey": "device.home",
       "domain": "device",
@@ -7195,53 +6713,6 @@
       "tags": [
         "空态",
         "错误态"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "unlock.dial.states",
-      "parentKey": "unlock.dial",
-      "domain": "unlock",
-      "level": 4,
-      "kind": "state",
-      "name": "开锁按钮五态与 7 秒回落",
-      "summary": "openPromptText 走「点击开锁 → 正在开锁 → 已开锁/开锁失败」；成功态 7 秒后自动回落，失败态保持到下次点击；颜色类 openPromptPrimary/Success/Fail 三套。",
-      "details": [
-        "初始：openPromptText=\"点击开锁\"，openPromptTextClass=\"openPrompt openPromptPrimary\"，openImgSrc=open_nor.png",
-        "进行中：openPromptText=\"正在开锁\"，openBGImgClass=\"openBtnBgImg Rotation\"，canOpen=false 防重入",
-        "成功：openImgSrc=open_suc.png +「已开锁」+ openPromptSuccess，setTimeout 7e3 后回落",
-        "失败：openImgSrc=open_fail.png + 具体文案 + openPromptFail，canOpen 保持 false 直到用户再点",
-        "dState==2 时直接「手机钥匙已失效」并灰图，按钮禁用"
-      ],
-      "evidence": [
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "go 字段初始态",
-          "note": "@568689 openPromptText=\"点击开锁\" / openImgSrc=open_nor.png"
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "go.prototype.openSuc",
-          "note": "@577533 setTimeout 7e3 回落「点击开锁」"
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "go.prototype.openFail",
-          "note": "@578106 open_fail.png + openPromptFail"
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "go.prototype.ionViewDidLoad",
-          "note": "@570951 dState==2 → 「手机钥匙已失效」+ alert"
-        }
-      ],
-      "tags": [
-        "状态机",
-        "开锁"
       ],
       "status": "implemented"
     },

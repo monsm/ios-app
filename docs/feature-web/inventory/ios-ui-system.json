@@ -822,58 +822,6 @@
       "status": "implemented"
     },
     {
-      "key": "backup.webdav.pull",
-      "parentKey": "backup.webdav",
-      "domain": "backup",
-      "level": 4,
-      "name": "从坚果云恢复（下载→解密→待确认）",
-      "kind": "action",
-      "summary": "先从云端取回并解密出包，但不落盘，交给确认弹窗决定是否覆盖。",
-      "details": [
-        "guard cloudReady → toast；CloudSync.download 返回 nil → toast「云端暂无备份」并 return",
-        "信封走 BackupStudio.parsePreview(text: envelope, password: cloudPw)，不自己 decrypt+decode，避免绕过哈希闸",
-        "成功后 pendingRestore = bundle（不写库）",
-        "把包交给 confirmationDialog，用户确认后才 applyPendingRestore"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/BackupView.swift",
-          "line": 253,
-          "symbol": "BusyButton 从坚果云恢复"
-        },
-        {
-          "file": "App/UI/BackupView.swift",
-          "line": 375,
-          "symbol": "private func pull()"
-        },
-        {
-          "file": "App/UI/BackupView.swift",
-          "line": 382,
-          "symbol": "CloudSync.download"
-        },
-        {
-          "file": "App/UI/BackupView.swift",
-          "line": 383,
-          "symbol": "云端暂无备份"
-        },
-        {
-          "file": "App/UI/BackupView.swift",
-          "line": 387,
-          "symbol": "BackupStudio.parsePreview(text:password: cloudPw)"
-        },
-        {
-          "file": "App/UI/BackupView.swift",
-          "line": 389,
-          "symbol": "pendingRestore = bundle"
-        }
-      ],
-      "tags": [
-        "云同步",
-        "恢复"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "backup.webdav.apply",
       "parentKey": "backup.webdav",
       "domain": "backup",
@@ -917,48 +865,6 @@
       "tags": [
         "云同步",
         "恢复"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "backup.webdav.sheet",
-      "parentKey": "backup.webdav",
-      "domain": "backup",
-      "level": 4,
-      "name": "WebDAV 工作室入口",
-      "kind": "action",
-      "summary": "工作室以 sheet 打开（页面自带 NavigationStack，push 会两层导航栏）。",
-      "details": [
-        ".sheet(isPresented: $showWebDAV) { WebDAVStudioView() }",
-        "入口在本页空态里的「服务器根路径…」按钮；注释记录本页已有 showWebDAV 走 sheet 的先例",
-        "与 fileExporter / fileImporter 三个模态并存，互不嵌套触发",
-        "sheet 关闭后回本页，不自动刷新云端状态"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/BackupView.swift",
-          "line": 74,
-          "symbol": ".sheet(isPresented: $showWebDAV)"
-        },
-        {
-          "file": "App/UI/BackupView.swift",
-          "line": 42,
-          "symbol": "@State showWebDAV"
-        },
-        {
-          "file": "App/UI/BackupView.swift",
-          "line": 224,
-          "symbol": "走查注释：push 会两层栏"
-        },
-        {
-          "file": "App/UI/BackupView.swift",
-          "line": 227,
-          "symbol": "Button showWebDAV = true"
-        }
-      ],
-      "tags": [
-        "云同步",
-        "导航"
       ],
       "status": "implemented"
     },
@@ -1025,63 +931,6 @@
       "status": "implemented"
     },
     {
-      "key": "backup.webdav.config",
-      "parentKey": "backup.webdav.studio",
-      "domain": "backup",
-      "level": 3,
-      "name": "端点与账号配置",
-      "kind": "setting",
-      "summary": "根地址/账号/应用密码的输入，以及落盘时机。",
-      "details": [
-        "root 输入框以 BackupStudio.webdavRoot 作 prompt（默认坚果云 dav 根），账号关闭自动大写与纠错",
-        "persist() 写 kf_webdav_root / kf_cloudcfg_acct / kf_cloudcfg_app",
-        "persist() 只在 test() 与 upload() 调用：只改不测就关页 → 不落盘（与备份页输入框直写不同）",
-        "ready 只看 root/acct/appPw，不含加密口令（口令在动作里单独校验）"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 37,
-          "symbol": "TextField 根地址 prompt"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 39,
-          "symbol": "TextField 账号"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 42,
-          "symbol": "SecureField 应用专属密码"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 175,
-          "symbol": "persist()"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 176,
-          "symbol": "kf_webdav_root 写入"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 184,
-          "symbol": "test 后 persist"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 220,
-          "symbol": "upload 后 persist"
-        }
-      ],
-      "tags": [
-        "云同步",
-        "设置"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "backup.webdav.test",
       "parentKey": "backup.webdav.studio",
       "domain": "backup",
@@ -1135,63 +984,6 @@
       "tags": [
         "云同步",
         "测试"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "backup.webdav.test-hint",
-      "parentKey": "backup.webdav.test",
-      "domain": "backup",
-      "level": 4,
-      "name": "首次连通成功的一次性加密说明条",
-      "kind": "state",
-      "summary": "第一次测试连通后弹一条「备份将加密后上传」的情境条，只出现一次，由用户点 X 关闭。",
-      "details": [
-        "条件：testResult.hasPrefix(\"连通\") 且 !HintOnce.shown(\"830enc\")",
-        "命中后 HintOnce.mark(\"830enc\") + withAnimation(soft) 显示 hint830",
-        "文案「备份将加密后上传 · 加密在本机完成, 远端只见密文」，lock.shield 图标",
-        "不自动计时消失（全仓纪律：提示不自飘），关闭按钮 44pt 命中"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 23,
-          "symbol": "@State hint830"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 52,
-          "symbol": "830 注释"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 55,
-          "symbol": "if hint830"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 61,
-          "symbol": "备份将加密后上传"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 66,
-          "symbol": "Button 关闭"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 188,
-          "symbol": "HintOnce 判定"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 190,
-          "symbol": "mark + 显示"
-        }
-      ],
-      "tags": [
-        "云同步",
-        "提示"
       ],
       "status": "implemented"
     },
@@ -1421,63 +1213,6 @@
       "tags": [
         "云同步",
         "下载"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "backup.webdav.commit",
-      "parentKey": "backup.webdav.download",
-      "domain": "backup",
-      "level": 4,
-      "name": "预演门确认入库",
-      "kind": "action",
-      "summary": "预演通过后才真正写库，并记录入库统计。原 `markImported()`（写 kf_bk_last_import 时间戳）只写不读，2026-10-26 删除。",
-      "details": [
-        "confirmationDialog 标题取 pendingDL.line，message「预演不动真库」",
-        "按钮「确认恢复入库」→ restore(dl.b, zones: BZones()) + 按需 reloadAppearance + loadDevices + markImported",
-        "成功 toast「恢复完成: 新增 x, 覆盖 y」；成功后清 pendingDL",
-        "「取消」清 pendingDL，数据完全不动"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 163,
-          "symbol": "422 恢复预演门注释"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 164,
-          "symbol": "confirmationDialog pendingDL"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 167,
-          "symbol": "确认恢复入库"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 170,
-          "symbol": "预演不动真库"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 260,
-          "symbol": "private func commitDL"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 262,
-          "symbol": "restore(dl.b, zones: BZones())"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 266,
-          "symbol": "恢复完成"
-        }
-      ],
-      "tags": [
-        "云同步",
-        "确认"
       ],
       "status": "implemented"
     },
@@ -2528,69 +2263,6 @@
       "status": "implemented"
     },
     {
-      "key": "diagnostic.fail-snapshot",
-      "parentKey": "diagnostic.center",
-      "domain": "diagnostic",
-      "level": 3,
-      "name": "失败快照 / 会话自恢复 / 扫描时长",
-      "kind": "diagnostic",
-      "summary": "三块异常留痕读数：失败当时信号电量错误码、会话假死自恢复次数、近 7 天扫描秒数。",
-      "details": [
-        "扫描时长：ScanStats.recent(days: 7) 有数据则「扫描时长: <日> <秒>s · …」；再跟 ScanStats.advice()",
-        "「会话自恢复」读 kf_wd_heals 累计次数，说明为巡检判定假死后重新握手成功的次数（明细在运行日志「会话重协商」行）",
-        "失败快照：DB.failEvents(app.currentMac).prefix(10)，每行「时间 · msg」+「RSSI x dBm · 电量 y% · rc z」",
-        "旧记录无信号/电量/rc 时如实说明「该条为旧记录, 当时未留信号/电量/错误码」",
-        "无快照时给空态说明（每次开锁失败会留信号/电量/错误码）"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 823,
-          "symbol": "86/277/285 注释"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 829,
-          "symbol": "Section 失败快照"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 831,
-          "symbol": "ScanStats.recent(days:7)"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 842,
-          "symbol": "ScanStats.advice()"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 845,
-          "symbol": "会话自恢复 kf_wd_heals"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 849,
-          "symbol": "failEvents prefix(10)"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 861,
-          "symbol": "RSSI/电量/rc bits"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 864,
-          "symbol": "旧记录说明"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "遥测"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "diagnostic.logs",
       "parentKey": "diagnostic.center",
       "domain": "diagnostic",
@@ -2646,68 +2318,6 @@
           "file": "App/UI/DiagnosticsView.swift",
           "line": 1013,
           "symbol": "彻底空态"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "日志"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.logs.filter",
-      "parentKey": "diagnostic.logs",
-      "domain": "diagnostic",
-      "level": 4,
-      "name": "级别过滤与关键词高亮",
-      "kind": "action",
-      "summary": "四档级别胶囊 + 搜索框，着色与高亮同源。",
-      "details": [
-        "四枚胶囊按钮（全部/info/warn/error），选中态 accent 底 + onAccent 字；点击触发触感 tick",
-        "级别判据是日志行自带的 [level] 文本，不靠猜；着色同源：error→danger，warn→warn，其余正文",
-        "搜索框「搜索日志」，非空时给「清空」；匹配大小写不敏感，只高亮首个命中段",
-        "高亮用 AttributedString 逐段上色（颜色必须写在 run 上，外层 foregroundStyle 会覆盖强调色）"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 918,
-          "symbol": "153 注释"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 920,
-          "symbol": "ForEach 级别"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 922,
-          "symbol": "Button 级别"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 943,
-          "symbol": "TextField 搜索日志"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 947,
-          "symbol": "清空"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1235,
-          "symbol": "logTone"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1316,
-          "symbol": "highlighted"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1331,
-          "symbol": "AttributedString 逐段着色"
         }
       ],
       "tags": [
@@ -4547,48 +4157,6 @@
       "tags": [
         "访客",
         "门禁"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "unlock.guest.locked",
-      "parentKey": "unlock.guest",
-      "domain": "unlock",
-      "level": 4,
-      "name": "锁定态摘除而非禁用",
-      "kind": "state",
-      "summary": "凭证/设置两页连同内容一起不挂载。",
-      "details": [
-        "两个 if !app.guestAreaLocked { Tab(...) } 包住 value 1 与 3",
-        "注释：不是禁点、不是遮罩——那两页连同里面的口令与成员名都不该挂在屏上",
-        "记录页照常可看（不含凭证本体）",
-        "设置页同样收起：里面是本机密码、备份与销毁这些不该给访客看的东西"
-      ],
-      "evidence": [
-        {
-          "file": "App/LockKeeperApp.swift",
-          "line": 889,
-          "symbol": "凭证 Tab 摘除注释"
-        },
-        {
-          "file": "App/LockKeeperApp.swift",
-          "line": 891,
-          "symbol": "if !app.guestAreaLocked"
-        },
-        {
-          "file": "App/LockKeeperApp.swift",
-          "line": 904,
-          "symbol": "设置 Tab 同样收起"
-        },
-        {
-          "file": "App/LockKeeperApp.swift",
-          "line": 902,
-          "symbol": "设置页收起理由"
-        }
-      ],
-      "tags": [
-        "访客",
-        "状态"
       ],
       "status": "implemented"
     },

@@ -49,45 +49,6 @@
       "status": "implemented"
     },
     {
-      "key": "credential.center",
-      "parentKey": "credential",
-      "domain": "credential",
-      "level": 2,
-      "name": "凭证中心",
-      "kind": "screen",
-      "summary": "四个二级入口的聚合页：回收站、版本历史、整理建议中心、待下发队列，每行带实时计数。",
-      "details": [
-        "回收站行副标题「N 条 · 保留 X 天」，X 取 CredentialOrg.reclaimDays() (22)",
-        "版本历史行副标题「保存自动快照 + 恢复即新版本」(25)",
-        "整理建议行副标题「N 条待办」，push 时为避免双层导航栏给 CredOrganizeView 传 embedded:true (28-34)",
-        "待下发队列行副标题「N 项 · 到场补发」(36)",
-        "自带 NavigationStack + 关闭按钮 dismiss (20, 43-45)"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialCenterView.swift",
-          "line": 13,
-          "symbol": "CredCenterView"
-        },
-        {
-          "file": "App/UI/CredentialCenterView.swift",
-          "line": 22,
-          "symbol": "CredCenterView",
-          "note": "回收站入口行"
-        },
-        {
-          "file": "App/UI/CredentialCenterView.swift",
-          "line": 36,
-          "symbol": "CredCenterView",
-          "note": "待下发队列入口行"
-        }
-      ],
-      "tags": [
-        "核心"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "credential.extend",
       "parentKey": "credential",
       "domain": "credential",

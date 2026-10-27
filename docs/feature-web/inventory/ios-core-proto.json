@@ -612,39 +612,6 @@
       "status": "implemented"
     },
     {
-      "key": "protocol.reassembler.assemble",
-      "parentKey": "protocol.reassembler",
-      "domain": "protocol",
-      "level": 3,
-      "name": "按头型试切整帧",
-      "kind": "protocol",
-      "summary": "按 versionByte 选 [8,7,10] 或 [8,10,7] 三种总长（头+len），哪个能解析出 KLV 就切哪个。",
-      "details": [
-        "vb==0x01 时优先 8+len 再 7+len 再 10+len，注释说明这是为了避免 8B 帧被 7B 试切提前截断",
-        "cut==0（三种都不成）就 break，等更多数据",
-        "切成功后 dropFirst(cut*2) 继续循环，支持一包多帧"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/ZKProtocol.swift",
-          "line": 215,
-          "symbol": "FrameAssembler.push",
-          "note": "prefs 顺序"
-        },
-        {
-          "file": "App/Core/ZKProtocol.swift",
-          "line": 219,
-          "symbol": "FrameAssembler.push",
-          "note": "parseResponse 校验后切帧"
-        }
-      ],
-      "tags": [
-        "协议",
-        "核心"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "protocol.reassembler.resync",
       "parentKey": "protocol.reassembler",
       "domain": "protocol",
@@ -2282,42 +2249,6 @@
       "tags": [
         "BLE",
         "核心"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "protocol.ble.uuid",
-      "parentKey": "protocol.ble",
-      "domain": "protocol",
-      "level": 3,
-      "name": "服务/特征 UUID 表",
-      "kind": "data",
-      "summary": "门锁 NUS（6E400001/2/3）、网关 FE90（FE90/FE92 写/FE91 通知）、DFU（FE59 + 8EC9xxxx、1530 系列）。",
-      "details": [
-        "锁与网关用两套特征：写用 chrWrite / chrGWWrite，通知用 chrNotify / chrGWNotify",
-        "注释说明按连接目标选对 UUID，规避 Java GateWayConnector 覆盖静态 UUID 导致锁/网关不可共存的问题",
-        "DFU 常量与 6E401001（蓝牙钥匙串）只在常量区出现，本 scope 内无使用者"
-      ],
-      "evidence": [
-        {
-          "file": "App/Services/BLEService.swift",
-          "line": 13,
-          "symbol": "svcMain/chrWrite/chrNotify"
-        },
-        {
-          "file": "App/Services/BLEService.swift",
-          "line": 16,
-          "symbol": "svcGW/chrGWWrite/chrGWNotify"
-        },
-        {
-          "file": "App/Services/BLEService.swift",
-          "line": 20,
-          "symbol": "svcDfuSecure/dfuSecureControl/dfuSecurePacket"
-        }
-      ],
-      "tags": [
-        "BLE",
-        "数据字典"
       ],
       "status": "implemented"
     },

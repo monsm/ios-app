@@ -808,47 +808,6 @@
       "status": "implemented"
     },
     {
-      "key": "unlock.autoopen.attempt",
-      "parentKey": "unlock.autoopen",
-      "domain": "unlock",
-      "level": 3,
-      "name": "全门判定入口 attempt",
-      "kind": "automation",
-      "summary": "前置守卫（当前锁/空闲/非伪装/inFlight/一次性）→ 组门控上下文 → 全绿才起异步下发，否则写审计。",
-      "details": [
-        "要求 app.currentMac == mac、unlockState == .idle、非 decoyMode。",
-        "伪装会话期间单独写审计「拒开: 伪装会话期间禁止自动下发 04」（F0 本身拦不住伪装态）。",
-        "inFlight 防重入；不通过时审计拼接门名（doorName = 钥匙串名或 mac 前 6 位）。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/AutoOpen.swift",
-          "line": 360,
-          "symbol": "func attempt(mac:)"
-        },
-        {
-          "file": "App/Core/AutoOpen.swift",
-          "line": 374,
-          "symbol": "decoyMode 红线"
-        },
-        {
-          "file": "App/Core/AutoOpen.swift",
-          "line": 381,
-          "symbol": "rejectReason 调用"
-        },
-        {
-          "file": "App/Core/AutoOpen.swift",
-          "line": 388,
-          "symbol": "inFlight + Task dispatch"
-        }
-      ],
-      "tags": [
-        "判定",
-        "安全"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "unlock.autoopen.dispatch-result",
       "parentKey": "unlock.autoopen",
       "domain": "unlock",
@@ -2451,42 +2410,6 @@
       "status": "implemented"
     },
     {
-      "key": "diagnostic.reconcile.segments",
-      "parentKey": "diagnostic.reconcile",
-      "domain": "diagnostic",
-      "level": 4,
-      "name": "待补拉日期段与尾段",
-      "kind": "diagnostic",
-      "summary": "中段空洞要求两侧都有本机数据；尾段只数到昨天并单列，不并入缺天合计之外的段列表。",
-      "details": [
-        "尾段：最后一行之后到昨天，闭区间天数 = 日差 + 1；今天不算整天。",
-        "中段：逐日走 daySet，连续缺的天并成段，按最近在前输出。",
-        "跨度超 maxSpanDays 时只扫最近一段，并把窗口左边钉在本机有日志的那一天（不破「两侧都有数据」口径）。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 810,
-          "symbol": "尾段只数到昨天"
-        },
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 824,
-          "symbol": "daySet >= 2 才推中段"
-        },
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 851,
-          "symbol": "连续缺天并段"
-        }
-      ],
-      "tags": [
-        "缺口",
-        "日期"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "diagnostic.reconcile.idx",
       "parentKey": "diagnostic.reconcile",
       "domain": "diagnostic",
@@ -3856,53 +3779,6 @@
       "status": "implemented"
     },
     {
-      "key": "data.design.status-colors",
-      "parentKey": "data.design",
-      "domain": "data",
-      "level": 3,
-      "name": "语义色与反色前景",
-      "kind": "state",
-      "summary": "画布/卡片/次级块/分隔线/主次文本与 ok/warn/danger 语义色；填充上的文字按明暗切白字或墨字。",
-      "details": [
-        "语义色双档：浅档深色、深档浅色（如 danger 浅 B91C1C / 深 F87171）。",
-        "onSem 压在语义填充上（浅档白、深档近黑）；onFillWash 永远与 onAccent/onSem 反向，洗底只推高对比。",
-        "dayKindWorkday / dayKindWeekend 是固定语义色不随主题（避免与环境青绿/橙档撞色）。",
-        "ToneColor 五档（neutral/accent/ok/warn/danger）供状态胶囊与文案统一取色。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/DesignSystem.swift",
-          "line": 297,
-          "symbol": "canvasBase / surfaceBase"
-        },
-        {
-          "file": "App/Core/DesignSystem.swift",
-          "line": 303,
-          "symbol": "ok / warn / danger"
-        },
-        {
-          "file": "App/Core/DesignSystem.swift",
-          "line": 314,
-          "symbol": "onSem / onFillWash"
-        },
-        {
-          "file": "App/Core/DesignSystem.swift",
-          "line": 308,
-          "symbol": "dayKind 三档固定色"
-        },
-        {
-          "file": "App/Core/DesignSystem.swift",
-          "line": 697,
-          "symbol": "ToneColor.color"
-        }
-      ],
-      "tags": [
-        "语义色",
-        "明暗"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "data.design.density",
       "parentKey": "data.design",
       "domain": "data",
@@ -4194,42 +4070,6 @@
       "tags": [
         "触感",
         "分级"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "data.design.hit-icons",
-      "parentKey": "data.design",
-      "domain": "data",
-      "level": 4,
-      "name": "触达尺寸与图标尺寸令牌",
-      "kind": "setting",
-      "summary": "最小触达 44×44pt；图标尺寸只用五档 13/16/20/26/44，避免各页混用。",
-      "details": [
-        "Hit.min = 44；自绘 label 的按钮必须补 minHeight + contentShape(Rectangle())，否则命中高度可能只有约 16.5pt。",
-        "Icon.xs=13 / sm=16 / md=20 / lg=26 / xl=44。",
-        "BusyButton 是标准示例：菊花/图标 + 文字 + 44pt 触达 + busy/disabled 双闸。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/DesignSystem.swift",
-          "line": 149,
-          "symbol": "enum Hit min = 44"
-        },
-        {
-          "file": "App/Core/DesignSystem.swift",
-          "line": 216,
-          "symbol": "enum Icon 五档"
-        },
-        {
-          "file": "App/Core/DesignSystem.swift",
-          "line": 1036,
-          "symbol": "BusyButton 补 44pt 触达"
-        }
-      ],
-      "tags": [
-        "触达",
-        "图标"
       ],
       "status": "implemented"
     },

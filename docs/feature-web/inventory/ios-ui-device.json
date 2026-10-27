@@ -778,43 +778,6 @@
       "status": "implemented"
     },
     {
-      "key": "device.add.confirm",
-      "parentKey": "device.add",
-      "domain": "device",
-      "level": 3,
-      "name": "配网二次确认（添加 / 继续配网）",
-      "kind": "action",
-      "summary": "写锁前必须先确认：首次添加说明会生成密钥并写入锁密钥槽、App 内不可撤销；续配说明会跳过换钥直接写 PIN 池与 bkey。",
-      "details": [
-        "首次：「添加门锁」正文含名称/MAC/型号，确认按钮「开始添加」",
-        "续配：「继续配网」正文强调「不会再换钥, 也不必再做键盘重置」，确认按钮「继续配网」",
-        "MAC 取显示序 ZKProtocol.lockMac(fromAdv:)；用线上序会让锁回 rc=12「mac地址不正确」",
-        "确认后进入 pairing 阶段，step 置 1"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/Sheets.swift",
-          "line": 296,
-          "symbol": "confirmPair(_:_:)"
-        },
-        {
-          "file": "App/UI/Sheets.swift",
-          "line": 312,
-          "symbol": "confirmDestructive(\"继续配网\" …)"
-        },
-        {
-          "file": "App/UI/Sheets.swift",
-          "line": 319,
-          "symbol": "confirmDestructive(\"添加门锁\" …)"
-        }
-      ],
-      "tags": [
-        "锁端读写",
-        "破坏性操作"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "device.add.progress",
       "parentKey": "device.add",
       "domain": "device",
@@ -1775,42 +1738,6 @@
       "status": "implemented"
     },
     {
-      "key": "unlock.dial.retry",
-      "parentKey": "unlock.dial",
-      "domain": "unlock",
-      "level": 3,
-      "name": "自动重试退避与手动再试",
-      "kind": "action",
-      "summary": "失败默认自动重试（最多 3 次），退避 2 秒 / 5 秒并在盘下显示「第 N 次 · 等 X 秒」；终态失败后给「再试一次」按钮。",
-      "details": [
-        "重试次数由 kf_auto_retry 决定：开=3 次，关=1 次（只发一次）",
-        "超时类失败不自动重试（指令可能已生效，再发等于第二次开门）",
-        "wait 期间轻点圆盘 = 取消重试转手动（AppState 的 0.8s/retryWait 判定）",
-        "终态 .failed 时圆盘下方出现「再试一次」主按钮，点了重新走 dialAction"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/UnlockDial.swift",
-          "line": 439,
-          "symbol": "if let retryText { Text(retryText) }"
-        },
-        {
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 1095,
-          "symbol": "if case .failed = app.unlockState { Button(\"再试一次\") }"
-        },
-        {
-          "file": "App/LockKeeperApp.swift",
-          "line": 476,
-          "symbol": "retryAttempt = attempt + 1 … 退避 2s/5s"
-        }
-      ],
-      "tags": [
-        "错误态"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "unlock.dial.fail",
       "parentKey": "unlock.dial",
       "domain": "unlock",
@@ -2352,42 +2279,6 @@
       "status": "implemented"
     },
     {
-      "key": "credential.fp.errors",
-      "parentKey": "credential.fp",
-      "domain": "credential",
-      "level": 3,
-      "name": "录入错误分支与完成页",
-      "kind": "edge",
-      "summary": "失败原因以 danger 文案常驻在开始按钮上方；成功页切到「添加成功 / 请用新添加的指纹开一次锁」。",
-      "details": [
-        "常见锁端错误的人话：rc=23 取不到有效指纹图像、rc=24 两次按压间隔超 15 秒录入已结束",
-        "无当前锁 toast「请先选择门锁」；未选归属 error「请先选择归属再录入」",
-        "重试前必须清空 presses（onPress 是累加回填，不清会出现 9/8 读数）",
-        "完成页唯一出口「完成」dismiss，不再提供重录"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/Sheets.swift",
-          "line": 849,
-          "symbol": "if !error.isEmpty { Label … }"
-        },
-        {
-          "file": "App/UI/Sheets.swift",
-          "line": 802,
-          "symbol": "if doneBatch != nil { … Text(\"添加成功\") }"
-        },
-        {
-          "file": "App/Core/StatusParser.swift",
-          "line": 174,
-          "symbol": "case 23: 这一下没取到有效指纹图像"
-        }
-      ],
-      "tags": [
-        "错误态"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "credential.owner",
       "parentKey": "credential",
       "domain": "credential",
@@ -2705,42 +2596,6 @@
           "file": "App/UI/Sheets.swift",
           "line": 2028,
           "symbol": "app.showToast(\"姓名为空或已存在\")"
-        }
-      ],
-      "tags": [
-        "核心"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "member.row",
-      "parentKey": "member.list",
-      "domain": "member",
-      "level": 3,
-      "name": "成员行操作（呼叫 / 重命名 / 补全信息）",
-      "kind": "action",
-      "summary": "行显示姓名与「关系 · 电话」；长按菜单给三个动作：一键呼叫、重命名、补全信息；左滑删除。",
-      "details": [
-        "呼叫：号码先过滤成数字与 +，不足 3 位不给入口（tel:// 打开系统电话）",
-        "重命名：弹窗输入，必须非空且只含汉字/英文/数字，否则 toast「请输入仅含汉字/英文/数字的非空姓名」",
-        "补全信息：三个字段（关系 / 电话 phonePad / 生日 MM-dd），生日填了但不入库（只 reload）",
-        "行高统一撑到 44pt 命中区"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/Sheets.swift",
-          "line": 1962,
-          "symbol": "memberRow(_:)"
-        },
-        {
-          "file": "App/UI/Sheets.swift",
-          "line": 1956,
-          "symbol": "telURL(_:)"
-        },
-        {
-          "file": "App/UI/Sheets.swift",
-          "line": 2007,
-          "symbol": "info(_:)"
         }
       ],
       "tags": [
@@ -3582,77 +3437,6 @@
       "status": "implemented"
     },
     {
-      "key": "settings.unlock.toggles",
-      "parentKey": "settings.unlock",
-      "domain": "settings",
-      "level": 3,
-      "name": "按住确认 / 误触围栏 / 自动重试 三开关",
-      "kind": "setting",
-      "summary": "三枚 Toggle：按住确认开锁（默认开）、误触围栏（默认关）、失败自动重试（默认开）。",
-      "details": [
-        "kf_hold_confirm 关闭 → 圆盘退回轻点直开（单手/VoiceOver 降级路径）",
-        "kf_fence 开启 → 手势前必须先「从边缘拖入中心」解锁围栏，4 秒有效",
-        "kf_auto_retry 关闭 → AppState 只发一次（attempts=1），没有 2s/5s 退避"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 447,
-          "symbol": "VariantToggle(\"按住确认开锁\")"
-        },
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 450,
-          "symbol": "VariantToggle(\"误触围栏\")"
-        },
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 478,
-          "symbol": "VariantToggle(\"失败自动重试\")"
-        }
-      ],
-      "tags": [
-        "设置"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "settings.unlock.gesture",
-      "parentKey": "settings.unlock",
-      "domain": "settings",
-      "level": 3,
-      "name": "手势三档 + 双击直开 + 圆盘尺寸",
-      "kind": "setting",
-      "summary": "开锁手势单选（hold / triple / charge）；「双击直开」只在 hold 档可开；圆盘尺寸三档 160/176/200。",
-      "details": [
-        "三档互斥：hold = 按住或上滑；triple = 连点三下；charge = 沿外沿转满一圈",
-        "mode≠hold 时「双击直开」Toggle disabled，并显示一句解释「三连点/旋转充能档已自带确认动作」",
-        "圆盘尺寸 Picker 用 menu 样式，tag 160/176/200，默认 176",
-        "双击直开标签自己写明「绕过按住确认」——减配必须明示"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 455,
-          "symbol": "Picker(\"开锁手势\", selection:)"
-        },
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 469,
-          "symbol": "VariantToggle(\"双击直开 (绕过按住确认)\")"
-        },
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 481,
-          "symbol": "Picker(\"圆盘尺寸\", selection:)"
-        }
-      ],
-      "tags": [
-        "设置"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "settings.time",
       "parentKey": "settings",
       "domain": "settings",
@@ -3797,43 +3581,6 @@
       "status": "implemented"
     },
     {
-      "key": "settings.family.credcare",
-      "parentKey": "settings.family",
-      "domain": "settings",
-      "level": 3,
-      "name": "凭证整理（历史版本配额 / 回收站保留 / 别名显示）",
-      "kind": "setting",
-      "summary": "三个控件：每凭证保留 3–30 个历史版本、回收站保留 7–90 天（步进 7）、成员别名显示开关。",
-      "details": [
-        "Stepper 范围写死在代码：版本 3...30 step 1；回收站 7...90 step 7",
-        "别名显示开 → 有备注名的成员优先显示备注（如「老妈」），否则显示称呼",
-        "footer 说明：版本快照与回收站只在本机留存；需锁端生效的操作保持「待下发」，到场连接后在凭证页队列补发"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 547,
-          "symbol": "Stepper(\"每个凭证保留 N 个历史版本\", in: 3...30, step: 1)"
-        },
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 551,
-          "symbol": "Stepper(\"回收站保留 N 天\", in: 7...90, step: 7)"
-        },
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 558,
-          "symbol": "VariantToggle(\"成员别名显示\")"
-        }
-      ],
-      "tags": [
-        "设置",
-        "凭证",
-        "数据"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "settings.tools",
       "parentKey": "settings",
       "domain": "settings",
@@ -3968,98 +3715,6 @@
           "file": "App/UI/SettingsView.swift",
           "line": 936,
           "symbol": "resetAppearance()"
-        }
-      ],
-      "tags": [
-        "设置",
-        "外观"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "settings.appearance.theme",
-      "parentKey": "settings.appearance",
-      "domain": "settings",
-      "level": 3,
-      "name": "主题 / 品牌色 / 圆角 / 自定义强调色",
-      "kind": "setting",
-      "summary": "四档主题（跟随系统 / 浅色 / 深色 / 纯黑 AMOLED）、七套品牌色、三档圆角，以及 ColorPicker 自定义强调色。",
-      "details": [
-        "主题键 kf_theme，tag \"\"/light/dark/black；纯黑为 OLED 省电与夜间极暗档",
-        "品牌色读 kf_accent，Picker 的 get 在空值时回落显示 indigo，而调色板 effectiveKey 在空值时取 brass（暖金）——两处默认不一致，新装用户会看到「靛蓝」被选中但实际配色是暖金；菜单项带 14pt 色块预览",
-        "圆角 kf_radius：标准 / 偏硬朗(小) / 偏柔和(大)，只影响卡片、控件、格子三档，胶囊不参与",
-        "自定义强调色存色相来源 kf_accent_custom，上屏前过亮度带压暗；启用后出现「取消自定义，回到六套预设」按钮与说明",
-        "实际是 7 套 preset（brass 暖金 / indigo 靛蓝 / forest 墨绿 / amber 琥珀 / graphite 石墨 / rose 玫瑰 / aurora 极光）+ 一条自定义；设置页按钮与 footer 仍写「六套」，是旧文案"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 632,
-          "symbol": "Picker(\"主题\", selection:)"
-        },
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 642,
-          "symbol": "Picker(\"品牌色\", selection:)"
-        },
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 661,
-          "symbol": "Picker(\"圆角\", selection:)"
-        },
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 750,
-          "symbol": "ColorPicker(\"自定义强调色 (会盖过上面六套)\")"
-        }
-      ],
-      "tags": [
-        "设置",
-        "外观"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "settings.appearance.layout",
-      "parentKey": "settings.appearance",
-      "domain": "settings",
-      "level": 3,
-      "name": "动效 / 密度 / 行高 / 行距 / 数字字体",
-      "kind": "setting",
-      "summary": "五档排版类偏好：动效强度三档、布局密度三档、凭证行高两档、时间线行距三档、主控读数数字字体两档。",
-      "details": [
-        "动效 kf_motion：calm / standard / lively，管全 App 动效令牌，不是只换 Tab 那一下",
-        "系统「减弱动态效果」开启时强制走克制档，并在下方显示一句解释",
-        "密度 kf_density：标准 / 紧凑 / 宽松，只缩放间距令牌，字号与按钮大小不变",
-        "凭证行高 kf_row_h：紧凑（只留名称与状态）/ 舒适（加高）；行距 kf_tl_gap：tight/标准/loose，与密度相乘",
-        "数字字体 kf_digit_font：圆体（默认）/ 系统默认体，射程只有 Hero 卡电量数字与指标块两处",
-        "中西文间距：短标签在汉字与拉丁/数字边界加 kerning，段内不拉开、不插 U+2005 等不可见字符（cjkSpaced，Mascot.swift:80）"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 673,
-          "symbol": "Picker(\"动效强度\", selection:)"
-        },
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 687,
-          "symbol": "Picker(\"布局密度\", selection:)"
-        },
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 698,
-          "symbol": "Picker(\"凭证行高\", selection:)"
-        },
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 706,
-          "symbol": "Picker(\"时间线行距\", selection:)"
-        },
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 717,
-          "symbol": "Picker(\"主控读数数字字体\", selection:)"
         }
       ],
       "tags": [
@@ -4652,43 +4307,6 @@
         "数据"
       ],
       "status": "implemented"
-    },
-    {
-      "key": "data.store.security-prefs",
-      "parentKey": "data",
-      "domain": "data",
-      "level": 2,
-      "name": "安全偏好键族（只剩 sharehalf）",
-      "kind": "data",
-      "summary": "**2026-10-26 精简后只剩一个仍然生效的安全偏好键**：`kf_speek_sharehalf`（376 分享遮半，**默认开**，所以它一直在起作用 —— 口述卡/复制/分享载荷里只给遮半码值）。原 14 个键里其余 13 个都没有写点、恒等于默认值，连同 `SecKey` 常量组一起删除；`kf_speek_guest` 随访客通道一并删除。",
-      "details": [
-        "kf_slock_coolon / kf_slock_streak / kf_strace_on / kf_strace_events / kf_sses_how / kf_smask_style",
-        "kf_speek_bgblur / kf_speek_timedsec / kf_speek_frost / kf_speek_sharehalf / kf_speek_glast / kf_speek_guest",
-        "kf_swmark_on / kf_swmark_txt / kf_saudit_months / kf_sdest_safemode / kf_sdest_reuseon",
-        "读侧真实生效的只有三处：kf_swmark_on（水印层，安全中心 + 根视图）、kf_sdest_safemode（LockGuard 只读模式）、kf_speek_sharehalf / kf_speek_glast（SecurityPolicy 分享遮半与访客隐藏敏感）"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/SecurityCenterView.swift",
-          "line": 16,
-          "symbol": "static let lockCoolOn = \"kf_slock_coolon\""
-        },
-        {
-          "file": "App/Core/LockGuard.swift",
-          "line": 18,
-          "symbol": "static var readOnly: Bool { DB.store.getBool(SecKey.safeModeOn, false) }"
-        },
-        {
-          "file": "App/LockKeeperApp.swift",
-          "line": 1092,
-          "symbol": "if DB.store.getBool(SecKey.watermarkOn, false)"
-        }
-      ],
-      "tags": [
-        "数据",
-        "安全"
-      ],
-      "status": "partial"
     },
     {
       "key": "care.milestone",
