@@ -387,38 +387,6 @@
       "status": "implemented"
     },
     {
-      "key": "credential.list.calendar-toggle",
-      "parentKey": "credential.list.header-menu",
-      "domain": "credential",
-      "level": 4,
-      "name": "月历到期视图开关",
-      "kind": "setting",
-      "summary": "一键在「列表」和「月历」之间切换，进月历会自动退出拖动排序档。",
-      "details": [
-        "菜单项文案随状态变：「月历到期视图」/「退出月历」，图标 calendar / list.bullet (403-405)",
-        "切换时 sorting = false，避免两种行内控件同时占位 (403)",
-        "打开后主列表位置渲染 CredCalendarView(mac:onPick:) (96-97)"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 403,
-          "symbol": "headerToolbar",
-          "note": "showCalendar.toggle()"
-        },
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 96,
-          "symbol": "vkBody",
-          "note": "showCalendar 分支"
-        }
-      ],
-      "tags": [
-        "到期"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "credential.list.group-mode",
       "parentKey": "credential.list.header-menu",
       "domain": "credential",
@@ -447,45 +415,6 @@
       ],
       "tags": [
         "分组"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "credential.list.smart-filter",
-      "parentKey": "credential.list.header-menu",
-      "domain": "credential",
-      "level": 4,
-      "name": "智能列表筛选",
-      "kind": "setting",
-      "summary": "「筛选」组列出「默认 (全部)」与保存下来的智能列表，选中即按成员/状态/标签过滤列表。",
-      "details": [
-        "「默认 (全部)」把 smartSel 清空 (414)",
-        "每条智能列表一个按钮，标签由 smartListLabel 拼：名称 + 成员名 + 状态中文（进行中/已排期/已过期）(415-417, 974-981)",
-        "过滤实现：kind!=fp 的列表作用于密码段，支持 owner 相等、stateString 相等、tag=stale（录入早于 365 天）、tag=noowner（owner 为空）(848-856)",
-        "kind==fp 的列表只作用于指纹段，支持 owner 与 noowner/stale（stale 用 LedgerFp.at 毫秒）(1016-1024)"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 414,
-          "symbol": "headerToolbar",
-          "note": "默认(全部)"
-        },
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 415,
-          "symbol": "headerToolbar",
-          "note": "smartLists 遍历"
-        },
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 848,
-          "symbol": "segFilteredPwds",
-          "note": "筛选取值口径"
-        }
-      ],
-      "tags": [
-        "筛选"
       ],
       "status": "implemented"
     },
@@ -679,86 +608,6 @@
       "status": "implemented"
     },
     {
-      "key": "credential.list.menu.pwd",
-      "parentKey": "credential.list",
-      "domain": "credential",
-      "level": 3,
-      "name": "密码长按菜单",
-      "kind": "action",
-      "summary": "长按一条密码弹出全部单条操作：看/详情/改值/改期/备注/归属/预警/催办文本/置顶/归档/历史/停用/彻底删除。",
-      "details": [
-        "查看密码内容 → viewPwd；密码详情 → pwdDetailItem（开 PwdDetailStudio）(1412-1413)",
-        "修改密码内容 → modifyPwd；修改有效期 → resetPwdPeriod（内部二次确认）(1414-1415)",
-        "添加备注 → editNote；归属到成员 → 子菜单 ownerMenu (1416-1417)",
-        "「三档预警」→ toggleAlerts actionSheet (1419)",
-        "「生成延期提醒文本」只在「有到期时间且 7 天内到期」时出现，复制的是不含口令的礼貌催办语 (1420-1427)",
-        "置顶/取消置顶（CredentialOrg.toggleStar）；归档/移出归档（setArchived，toast 提示归档区可还原）(1428-1439)",
-        "历史 (N) → HistItem(kind:pwd) 开历史 sheet；停用（本地, 锁端待处理）；彻底删除（红字）(1440-1445)"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1410,
-          "symbol": "credMenu"
-        },
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1423,
-          "symbol": "credMenu",
-          "note": "催办文本"
-        },
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1445,
-          "symbol": "credMenu",
-          "note": "彻底删除"
-        }
-      ],
-      "tags": [
-        "核心"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "credential.list.menu.fp",
-      "parentKey": "credential.list",
-      "domain": "credential",
-      "level": 3,
-      "name": "指纹长按菜单",
-      "kind": "action",
-      "summary": "长按一枚指纹：详情/重命名/预警开关/备注/归属/历史/置顶/归档/停用/彻底删除。",
-      "details": [
-        "指纹详情 → fpDetailItem（开 FpDetailStudio）；重命名 → renameFp (1448-1449)",
-        "「设为预警指纹」/「取消预警指纹」调 DB.setFpAlarm 取反并 toast (1450-1453)",
-        "添加备注（同一 editNote 的指纹分支）、归属到成员、历史 (N) (1454-1458)",
-        "置顶、归档/移出归档、停用（本地, 锁端待处理）、彻底删除 (1459-1472)"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1447,
-          "symbol": "credMenu",
-          "note": "指纹分支"
-        },
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1450,
-          "symbol": "credMenu",
-          "note": "预警指纹"
-        },
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1472,
-          "symbol": "credMenu",
-          "note": "彻底删除"
-        }
-      ],
-      "tags": [
-        "核心"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "credential.list.swipe",
       "parentKey": "credential.list",
       "domain": "credential",
@@ -794,38 +643,6 @@
       ],
       "tags": [
         "破坏性"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "credential.pwd.view",
-      "parentKey": "credential.list",
-      "domain": "credential",
-      "level": 3,
-      "name": "查看密码明文",
-      "kind": "action",
-      "summary": "菜单里「查看密码内容」把明文以 toast 形式显示，但先过应用锁关卡。",
-      "details": [
-        "无留存明文时 toast「当时未留存明文」(2165)",
-        "设了应用锁且本次会话未解锁：toast「需先解锁应用锁」，不显示 (2166)",
-        "通过后 toast「密码 #N: 明文 (请勿外传)」(2167)"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 2164,
-          "symbol": "viewPwd"
-        },
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 2166,
-          "symbol": "viewPwd",
-          "note": "应用锁关卡"
-        }
-      ],
-      "tags": [
-        "安全",
-        "明文"
       ],
       "status": "implemented"
     },
@@ -1164,38 +981,6 @@
       "status": "implemented"
     },
     {
-      "key": "credential.list.empty.demo-unwired",
-      "parentKey": "credential.list.empty",
-      "domain": "credential",
-      "level": 4,
-      "name": "空态演示按钮（已删）",
-      "kind": "edge",
-      "summary": "**2026-10-26 已删**：空态里的「看看它如何工作」只把 `showDemo` 置真，全文件没有任何 sheet/presenter 消费它，点按无可见结果。批一把按钮与 `@State showDemo` 一起删除，这条\"未接线\"线索随之消失。",
-      "details": [
-        "按钮动作只有 showDemo = true，并带无障碍提示「打开演示锁试玩, 不碰真实门锁」(1960-1966)",
-        "@State showDemo 声明于 56 行；全文件仅在 1960 行被写入，没有 .sheet(isPresented: $showDemo) 或其它读取点",
-        "结论：演示入口在凭证页这一侧未接线（登记为 edge，未当功能点）"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 56,
-          "symbol": "showDemo",
-          "note": "声明"
-        },
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1960,
-          "symbol": "emptyHint",
-          "note": "唯一写入点"
-        }
-      ],
-      "tags": [
-        "未接线"
-      ],
-      "status": "removed"
-    },
-    {
       "key": "credential.otp",
       "parentKey": "credential.list",
       "domain": "credential",
@@ -1348,48 +1133,6 @@
       ],
       "tags": [
         "首启"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "credential.list.edit-mode",
-      "parentKey": "credential.list",
-      "domain": "credential",
-      "level": 3,
-      "name": "选择模式（全选循环/智能选取）",
-      "kind": "flow",
-      "summary": "进入多选后可逐条点选、行右滑选、一键循环全选/反选/清空，或按「已过期/同成员/同类型」一次选一把。",
-      "details": [
-        "入口：「选择」按钮（带 quick 动画 + tick）(388-393)；整理建议带预勾选也会就地进这一态 (295-302)",
-        "循环键三态标签：全选(N 条) → 已全选(N)/反选 → 已选 x/y — 反选；副行「下一步: …」预告下一次点击 (1568-1592)",
-        "「顺序」把当前全量显示序写进 kf_cseq_（p=alias、f=batch），toast「已记住当前组内顺序」(1510-1519)",
-        "「智能选取」三键：已过期 / 同成员 / 同类型 → CredentialOrg.smartSet，toast「已套用「X」N 条」(1527-1536, 1593-1599)",
-        "选择位面=浏览位面：归档条目不进任何选取集合（看不到的不会被批量停掉）(1556-1566)",
-        "行首选择圈 + 整行单击切换；「完成」退出并清空选择 (1304-1311, 1601-1622, 1634-1636)",
-        "未选中时列表里有一句三条路径说明：点按 / 右滑「选」/ 循环键与智能选取 (1545)"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1489,
-          "symbol": "editList"
-        },
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1510,
-          "symbol": "editList",
-          "note": "顺序"
-        },
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1527,
-          "symbol": "editList",
-          "note": "智能选取"
-        }
-      ],
-      "tags": [
-        "批量",
-        "核心"
       ],
       "status": "implemented"
     },
@@ -1548,46 +1291,6 @@
       "tags": [
         "破坏性",
         "锁端读写"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "credential.list.member-view",
-      "parentKey": "credential.list",
-      "domain": "credential",
-      "level": 3,
-      "name": "按成员分组视图",
-      "kind": "data",
-      "summary": "每个成员一段，列出其名下密码与指纹；没有归属的条目统一进「未归属」段。",
-      "details": [
-        "每段标题「(称呼 · )姓名 (N)」，N = 该成员密码数 + 指纹数；称呼只在别名显示开启且 relation 非空时加 (1187)",
-        "段内密码与指纹各自 ForEach 并各自 onMove，写同一张 kf_cseq_ (1188-1195)",
-        "归档成员与归档条目不出现（集合一次取，闭包内 Set 查，避免 O(N×M) 解码）(1174-1185)",
-        "末尾「未归属 (N)」段同样支持段内拖动 (1199-1211)",
-        "底部固定两条入口：添加密码 / 录入指纹 (1213-1216)"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1170,
-          "symbol": "memberSections"
-        },
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1187,
-          "symbol": "memberSections",
-          "note": "段标题"
-        },
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1202,
-          "symbol": "memberSections",
-          "note": "未归属段"
-        }
-      ],
-      "tags": [
-        "分组",
-        "归属"
       ],
       "status": "implemented"
     },

@@ -656,7 +656,6 @@ struct DeviceHomeView: View {
                     if app.failStreak >= 3 {
                         checklist
                         NavigationLink {
-                            DiagnosticsView()
                         } label: {
                             Label("打开排查工具", systemImage: "wrench.and.screwdriver")
                                 .vkFont(.subheadline, weight: .medium)

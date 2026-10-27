@@ -100,7 +100,7 @@ const SYS_NAMES = new Set(['AreaMark','LineMark','PointMark','RuleMark','BarMark
 'GridItem',
 // SwiftUI 手势基类。2026-10-27 五轮删掉开锁圆盘的三档非默认手势后，
 // 全仓 DragGesture 用量从 4 处掉到 2 处，于是撞上本检查的误报形态。
-'DragGesture',
+'DragGesture', 'ImageRenderer', 'SharePreview', 'UNNotificationRequest',
 // 编译修复批 (1170/1255/150): 三个真实 Apple 符号, 全仓各只出现 1 次, 正好落进本检查的误报形态。
 //   · DispatchSemaphore — Foundation 自带的并发原语。DiagKit 1170 用它把 async 的
 //     `notificationSettings()` 拉回同步体检闭包 (体检项 run 是同步闭包, 不改成 async 是为了不动视图层)。

@@ -13,7 +13,6 @@ struct SettingsView: View {
     @State private var showAdd = false
     /// 2026-10-17 安卓版: 把当前锁的开锁凭证渲染成二维码 (扫码导入, 之后不再需要)
     @State private var shareLock: Keychain?
-    @State private var showDiag = false   // 587: 记录详情低电告警带 mac 过来 → 切锁并推诊断页
     // 2026-10-15 走查: 这两个目标页也自带 NavigationStack, 同样只能走 sheet
     // 包14: 27 设置内搜索 — 顶部搜索框过滤全部设置项
     @State private var query = ""
@@ -80,12 +79,6 @@ struct SettingsView: View {
         .sheet(isPresented: $showAdd) { AddDeviceView() }
         // 为什么不用 navigationDestination(isPresented:): 全仓无先例, 而 sheet+NavigationStack 与
         // 与 showDiag 那一段逐字同构 —— 无编译器的机器上, 复用已验证的写法是唯一稳的取向。
-        .sheet(isPresented: $showDiag) {
-            NavigationStack { DiagnosticsView() }
-                .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { showDiag = false } } }
-        }
-        .task { landPendingDiag(app.pendingDiag) }              // 冷启动/首次挂载: 值已挂着
-        .onChange(of: app.pendingDiag) { _, m in landPendingDiag(m) }
         .task { landPendingCare(app.pendingCare) }              // 1013: 与上两行同构
         .onChange(of: app.pendingCare) { _, m in landPendingCare(m) }
         // 2026-10-15: 设置 Tab 栈内子页 (安全中心 → 本机密码 / 销毁) 的"去设置…"落点, 同一条形态
@@ -94,12 +87,6 @@ struct SettingsView: View {
     }
 
     /// 587 落点: 切到本条记录所属锁, 再推诊断页 —— "查看这台锁的诊断"里的"这台锁"要真生效。
-    private func landPendingDiag(_ m: String?) {
-        guard let m, !m.isEmpty else { return }
-        app.pendingDiag = nil
-        if m != app.currentMac { app.select(m) }
-        showDiag = true
-    }
 
     /// 1013 落点: 切到通知里那台锁。
     /// 维护与保养页已随大删波4移除, 所以落到**设备页该锁** —— 电量、低电横幅、换电指引都在那里,
@@ -130,7 +117,6 @@ struct SettingsView: View {
         case "diag":
             // 自检黄条与 377 那条快捷条的按钮都写着"去诊断", 而光切 Tab 只把人放在设置页根上 ——
             // "诊断与运行日志"是这一页里的一行。切过去不等于送到。
-            showDiag = true
         case "members":
             // 817/317: 两枚"示例头像/去新建成员"写的是**直达成员入口**, 原来只到设置页根,
             // 剩下"家人与钥匙 → 成员管理"两跳还得自己找。成员中心到达后仍由 pendingMemberAdd 弹向导。
@@ -241,7 +227,6 @@ struct SettingsView: View {
             SearchHit(id: "s.gateway", title: "智能网关", icon: "antenna.radiowaves.left.and.right") { showGateway = true },
             SearchHit(id: "s.backup", title: "备份与恢复", icon: "externaldrive") { showBackup = true },
             SearchHit(id: "s.backupstudio", title: "备份与恢复", icon: "wrench.and.scissors") { showBackup = true },
-            SearchHit(id: "s.logs", title: "诊断与运行日志", icon: "list.bullet.rectangle") { showDiag = true },
             SearchHit(id: "s.applock", title: "本机数据保护 (应用锁)", icon: "lock.shield", anchor: .applock),
             SearchHit(id: "s.appearance", title: "外观 (主题/品牌色/密度)", icon: "paintbrush", anchor: .appearance),
         ]
@@ -581,7 +566,6 @@ struct SettingsView: View {
     private var toolsSection: some View {
         Section("工具") {
             Button { showBackup = true } label: { Label("备份与恢复", systemImage: "externaldrive") }
-            NavigationLink("诊断与运行日志") { DiagnosticsView() }
         }
     }
     // ---------- 本机数据保护 ----------

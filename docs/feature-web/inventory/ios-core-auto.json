@@ -1504,43 +1504,6 @@
       "status": "implemented"
     },
     {
-      "key": "care.battery",
-      "parentKey": "care",
-      "domain": "care",
-      "level": 2,
-      "name": "电量·维护·固件关怀引擎",
-      "kind": "service",
-      "summary": "本地电量采样、低电通知、启动关怀巡检与夜间免扰裁决的纯数据层（无 UI）。",
-      "details": [
-        "协议只给电量百分比，无电压、无充电位 —— 只做本地采样，不虚构电压/充电态/续航估算。",
-        "通知全部走 UNUserNotificationCenter 本地通知，免扰与白天送达统一在 notifyNow 裁决。",
-        "数据落盘族：kf_batt_ / kf_batt_state_ / kf_fwsince_ / kf_damp_last_ / kf_clock_notify_ / kf_fp_last_。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/BatteryCare.swift",
-          "line": 20,
-          "symbol": "enum BatteryCare"
-        },
-        {
-          "file": "App/Core/BatteryCare.swift",
-          "line": 210,
-          "symbol": "enum CareSchedule"
-        },
-        {
-          "file": "App/Core/BatteryCare.swift",
-          "line": 3,
-          "symbol": "存储键族头注"
-        }
-      ],
-      "tags": [
-        "电量",
-        "关怀",
-        "核心"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "care.battery.tier",
       "parentKey": "care.battery",
       "domain": "care",
@@ -1923,79 +1886,6 @@
       "status": "implemented"
     },
     {
-      "key": "diagnostic.logs.retention",
-      "parentKey": "diagnostic.logs",
-      "domain": "diagnostic",
-      "level": 4,
-      "name": "日志保留策略与二次确认",
-      "kind": "setting",
-      "summary": "kf_diag_log_retention 三档（全部 / 365 天 / 90 天）；切换前先算将删条数，确认后立即生效。",
-      "details": [
-        "pruneCount(days:) 给出这一刀会删几条，作为二次确认第一行。",
-        "pruneNow() 立即应用并返回实际删除条数（旧实现要等下一次写入才生效）。",
-        "append 与 all 用同一口径（本地日字符串比较）。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 179,
-          "symbol": "retentionKey"
-        },
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 207,
-          "symbol": "pruneCount"
-        },
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 215,
-          "symbol": "pruneNow"
-        }
-      ],
-      "tags": [
-        "保留策略",
-        "破坏性操作"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.logs.entity",
-      "parentKey": "diagnostic.logs",
-      "domain": "diagnostic",
-      "level": 3,
-      "name": "日志实体识别与详情卡",
-      "kind": "diagnostic",
-      "summary": "从日志文本识别可深链引用（凭证号 / 指纹批次 / 成员名 / MAC），并给只含元数据的详情。",
-      "details": [
-        "正则词表与 LockService 实际写出的词一致：凭证#(\\d+)、指纹#(\\d+)、MAC=[0-9a-fA-F]{12}（负向前瞻防从长 hex 截段）。",
-        "成员按名字包含匹配；pwd/fp 类可跳凭证页（isCredential），成员/MAC 只出元数据卡。",
-        "entityDetail 绝不输出 pwd 字段明文；台账查不到时提示回收站或建议拉一次凭证清单。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 240,
-          "symbol": "struct EntityRef"
-        },
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 268,
-          "symbol": "entities(in:)"
-        },
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 296,
-          "symbol": "entityDetail"
-        }
-      ],
-      "tags": [
-        "日志",
-        "深链",
-        "隐私"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "diagnostic.data-health",
       "parentKey": "diagnostic.kit",
       "domain": "diagnostic",
@@ -2038,42 +1928,6 @@
       "status": "implemented"
     },
     {
-      "key": "diagnostic.data-health.composition",
-      "parentKey": "diagnostic.data-health",
-      "domain": "diagnostic",
-      "level": 4,
-      "name": "存储构成三切片",
-      "kind": "diagnostic",
-      "summary": "把 kf_ 键分成「数据台账 / 日志与遥测 / 偏好设置」三段给出体积构成条。",
-      "details": [
-        "台账前缀含 keychains/ledger_/snap_/logcache_/members/cbin/cqueue 等；日志前缀含 diag_logs/ble_events/conn_attempts/crash_/wd_。",
-        "human() 用 1_000_000 与 1000 换算 MB/KB。",
-        "口径为键值长度估算，不是磁盘真实占用（必须与数字一起说明）。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 504,
-          "symbol": "struct Slice"
-        },
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 509,
-          "symbol": "composition()"
-        },
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 524,
-          "symbol": "human(_:)"
-        }
-      ],
-      "tags": [
-        "存储",
-        "可视化"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "diagnostic.data-health.vacuum",
       "parentKey": "diagnostic.data-health",
       "domain": "diagnostic",
@@ -2107,102 +1961,6 @@
       "tags": [
         "整理",
         "破坏性操作"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.data-health.scan",
-      "parentKey": "diagnostic.data-health.vacuum",
-      "domain": "diagnostic",
-      "level": 4,
-      "name": "孤儿数据只读扫描",
-      "kind": "diagnostic",
-      "summary": "只报告不删除：owner 指向已删成员的凭证数、已删锁的日志缓存残留条数。",
-      "details": [
-        "被 integrity() 调用（诊断页进页即跑），因此绝不能在此删数据。",
-        "文案区分「留作无主记录」与「立即整理会隔离保留」。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 612,
-          "symbol": "scanOrphans()"
-        },
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 628,
-          "symbol": "此处不删的说明"
-        }
-      ],
-      "tags": [
-        "只读",
-        "孤儿"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.data-health.gaps",
-      "parentKey": "diagnostic.data-health",
-      "domain": "diagnostic",
-      "level": 4,
-      "name": "空洞日期检测",
-      "kind": "diagnostic",
-      "summary": "近 14 天里整天没有任何日志条目的日期；只报两侧都有数据的空洞（首尾无数据不算缺口）。",
-      "details": [
-        "以 lockTimeStr 前 10 位为日 key，与 DiagLogs.localDay 同一本地口径。",
-        "last 与 first 之间的空洞才纳入，避免把「从未连过」误报成缺数据。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 636,
-          "symbol": "gapDays(mac:days:)"
-        },
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 648,
-          "symbol": "只报两侧都有数据的空洞"
-        }
-      ],
-      "tags": [
-        "空洞",
-        "日志"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.data-health.archive",
-      "parentKey": "diagnostic.data-health",
-      "domain": "diagnostic",
-      "level": 3,
-      "name": "老数据归档",
-      "kind": "action",
-      "summary": "把超过一年的锁端日志缓存移入归档键，归档上限 400 条且按 idxRaw 去重。",
-      "details": [
-        "判据 lockTime < 一年前的协议秒；按 idxRaw 去重避免同一条多份。",
-        "必须用 replaceLogs 替换语义，否则 writeLogs 的去重合并会把旧行又并回缓存。",
-        "返回实际移动条数；archivedCount 读归档数量。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 656,
-          "symbol": "archiveOldLogs()"
-        },
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 667,
-          "symbol": "按 idxRaw 去重"
-        },
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 678,
-          "symbol": "DB.replaceLogs"
-        }
-      ],
-      "tags": [
-        "归档",
-        "日志"
       ],
       "status": "implemented"
     },
@@ -2254,42 +2012,6 @@
       "status": "implemented"
     },
     {
-      "key": "diagnostic.reconcile.idx",
-      "parentKey": "diagnostic.reconcile",
-      "domain": "diagnostic",
-      "level": 4,
-      "name": "序号断档样本",
-      "kind": "diagnostic",
-      "summary": "对去重后的 idxRaw 排序求相邻差，差 >1 即记断档；差 >5000 只计数不报号数。",
-      "details": [
-        "skipped = 后 - 前 - 1；<=0 跳过。",
-        "游标边界（startIdx 从 0xFFFFFFFF 起）与锁端重排会算出上亿量级，报出来就是假数据，因此单列 anomalies。",
-        "used Int64 中转避免 0 附近截断语义。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 787,
-          "symbol": "断档计算"
-        },
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 796,
-          "symbol": "skipped > idxGapCap → anomalies"
-        },
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 728,
-          "symbol": "struct IdxGap"
-        }
-      ],
-      "tags": [
-        "序号",
-        "缺口"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "diagnostic.health",
       "parentKey": "diagnostic.kit",
       "domain": "diagnostic",
@@ -2336,108 +2058,6 @@
       "tags": [
         "体检",
         "核心"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.health.percent",
-      "parentKey": "diagnostic.health",
-      "domain": "diagnostic",
-      "level": 4,
-      "name": "总分口径唯一化",
-      "kind": "diagnostic",
-      "summary": "总分算术只写在 percent 一处，视图不另算；旧实现 raw/10 与 raw/2 两套导致「/100」是假数。",
-      "details": [
-        "full = list.count * 20；raw = Σ(ok ? 20 : 10)；score = raw*100/full。",
-        "全绿结果恒为 100。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 1099,
-          "symbol": "149 总分口径"
-        },
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 1102,
-          "symbol": "percent(_:)"
-        }
-      ],
-      "tags": [
-        "体检",
-        "算法"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.health.ble",
-      "parentKey": "diagnostic.health",
-      "domain": "diagnostic",
-      "level": 4,
-      "name": "蓝牙权限项与不可判定态",
-      "kind": "diagnostic",
-      "summary": "先看 CBCentralManager.authorization 是否 denied，再按 BLEService 真实 powerState 六态给不同文案。",
-      "details": [
-        "poweredOn 通过；poweredOff 提示控制中心打开后重测；unsupported/unauthorized/resetting 各自文案。",
-        "unknown 明示「不等于蓝牙正常」，引导进门锁页后复测（旧实现自建无代理中心管理器导致恒红）。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 1132,
-          "symbol": "checkBLE()"
-        },
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 1134,
-          "symbol": "authorization == .denied"
-        },
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 1152,
-          "symbol": "unknown / @unknown default"
-        }
-      ],
-      "tags": [
-        "体检",
-        "蓝牙"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.selfcheck",
-      "parentKey": "diagnostic.kit",
-      "domain": "diagnostic",
-      "level": 3,
-      "name": "本机库体自检 SelfCheck",
-      "kind": "diagnostic",
-      "summary": "三项只读自检：库体哈希是否与上次快照一致、审计链逐条重算、JSON 回环与台账计数核对。",
-      "details": [
-        "库体哈希走 BackupStudio.hashMismatch()，不一致时建议立即备份。",
-        "审计链 verifyChain 区分 brokenAt == -2（链序号异常：有条目被截断或换序重放）与具体断裂位置。",
-        "数据完整性按「不以 数据解析正常 开头」过滤，避免永远判异常。",
-        "summary 文案：全通过「本机自检三项全部通过」，否则「n 项异常 — 详情见下」。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 1429,
-          "symbol": "struct SelfCheckLine"
-        },
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 1432,
-          "symbol": "run()"
-        },
-        {
-          "file": "App/Core/DiagKit.swift",
-          "line": 445,
-          "symbol": "summary(_:)"
-        }
-      ],
-      "tags": [
-        "自检",
-        "只读"
       ],
       "status": "implemented"
     },
@@ -2562,42 +2182,6 @@
       "tags": [
         "KDF",
         "安全"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "backup.envelope.header",
-      "parentKey": "backup.envelope",
-      "domain": "backup",
-      "level": 4,
-      "name": "信封头长度校验",
-      "kind": "protocol",
-      "summary": "先验文件头声明的形状再碰密码学：IV 32 hex、HMAC 64 hex、盐 32 hex、密文是 32 的整数倍。",
-      "details": [
-        "形状不对报「文件头损坏: …」并点名是哪一段，不再拖到 MAC 层报「口令错误或数据被篡改」。",
-        "isHex 逐字符检查（HexKit.bytes 对坏输入是「尽力解」，不能当校验用）。",
-        "版本 v != 1 报「信封格式/版本不支持」。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Services/BackupKit.swift",
-          "line": 118,
-          "symbol": "isHex(_:len:)"
-        },
-        {
-          "file": "App/Services/BackupKit.swift",
-          "line": 132,
-          "symbol": "IV / HMAC / 盐 / 密文长度校验"
-        },
-        {
-          "file": "App/Services/BackupKit.swift",
-          "line": 126,
-          "symbol": "e.v == 1"
-        }
-      ],
-      "tags": [
-        "校验",
-        "错误分层"
       ],
       "status": "implemented"
     },
@@ -2926,55 +2510,6 @@
       "status": "implemented"
     },
     {
-      "key": "backup.merge",
-      "parentKey": "backup.engine",
-      "domain": "backup",
-      "level": 3,
-      "name": "合并恢复 / 逐锁动作 / 冲突裁决",
-      "kind": "flow",
-      "summary": "merge 路径只增不删：逐锁可 merge/keep/skip，同 id 冲突默认保本机、仅用户裁决为「取备份」才覆盖。",
-      "details": [
-        "restore 先清 currentMac（避免指向另一台设备的锁），按 zones 裁剪，按需留回滚点。",
-        "lockActs[mac] 缺省 merge；keep = 只迁钥匙串与直连参数、保留本机台账；skip = 整锁跳过并计数。",
-        "冲突键格式 mac:p:别名 / mac:f:批次；未在 conflictTakeBackup 集合中的同 id 条目一律 continue（保本机）。",
-        "meta（防御/防尾随/校时/OTP）与 globals（外观/组织/dongle/gateway/passcode/otpKeys/trace）在合并路径也一律迁移。",
-        "返回 (imported, overwritten, skipped)。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 504,
-          "symbol": "restore(bundle:zones:lockActs:conflictTakeBackup:makeSnapshot:)"
-        },
-        {
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 510,
-          "symbol": "清 currentMac"
-        },
-        {
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 532,
-          "symbol": "act merge/keep/skip"
-        },
-        {
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 557,
-          "symbol": "冲突裁决 guard"
-        },
-        {
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 613,
-          "symbol": "返回三元组"
-        }
-      ],
-      "tags": [
-        "合并",
-        "冲突",
-        "迁移"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "backup.upgrade",
       "parentKey": "backup.preview",
       "domain": "backup",
@@ -3051,83 +2586,6 @@
       "status": "implemented"
     },
     {
-      "key": "backup.canonical.fnv",
-      "parentKey": "backup.canonical",
-      "domain": "backup",
-      "level": 4,
-      "name": "fnv1a32 逐位复刻（含 legacy）",
-      "kind": "protocol",
-      "summary": "按 UTF-16 码元 &0xff 喂、^ 走有符号 int32、乘 16777619 走双精度、输出补零 8 位十六进制；旧语义版本仍被导入接受。",
-      "details": [
-        "JS 侧四条特征与教科书 FNV-1a 全不一致，旧实现（UTF-8 + 模乘 + 不补零）含纯 ASCII 也 100% 不匹配。",
-        "legacy 版本按 UTF-8 逐字节 + &* + 不补零 —— 只为认本仓此前写出的包，直接换掉会把用户已有备份判成篡改。",
-        "FNV 无密钥，只作意外损坏检测，不是防篡改（构造者可重算）。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Services/BackupCanonical.swift",
-          "line": 53,
-          "symbol": "fnv1a32 算法说明"
-        },
-        {
-          "file": "App/Services/BackupCanonical.swift",
-          "line": 61,
-          "symbol": "fnv1a32Hex(_:)"
-        },
-        {
-          "file": "App/Services/BackupCanonical.swift",
-          "line": 78,
-          "symbol": "fnv1a32HexLegacy"
-        }
-      ],
-      "tags": [
-        "校验和",
-        "互通"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "backup.verify",
-      "parentKey": "backup.engine",
-      "domain": "backup",
-      "level": 3,
-      "name": "校验和判定与哈希短码",
-      "kind": "diagnostic",
-      "summary": "checksumState 返回 ok/mismatch/absent 三态（新旧两种语义都认）；短码用 SHA256 前 8 位。",
-      "details": [
-        "计算前先把 checksum 字段清空再 canonical，避免自我指涉。",
-        "mismatch 在 parsePreview 阶段就抛错「内容哈希不一致 — 已拦下, 未写任何数据」。",
-        "「旧语义只对旧 schema 放行」的收紧已撤回：会把用户已有包误判成篡改，且不增安全。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 366,
-          "symbol": "enum ChecksumState"
-        },
-        {
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 381,
-          "symbol": "checksumState"
-        },
-        {
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 493,
-          "symbol": "verifyChecksum"
-        },
-        {
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 497,
-          "symbol": "shortHash 8 位"
-        }
-      ],
-      "tags": [
-        "校验",
-        "完整性"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "backup.rollback",
       "parentKey": "backup.engine",
       "domain": "backup",
@@ -3175,44 +2633,6 @@
       "status": "implemented"
     },
     {
-      "key": "backup.rollback.families",
-      "parentKey": "backup.rollback",
-      "domain": "backup",
-      "level": 4,
-      "name": "分区外内容族清单",
-      "kind": "data",
-      "summary": "回滚快照额外覆盖所有「恢复流程会改写、且是用户自己攒的内容」的键族，避免撤销后残留错包数据。",
-      "details": [
-        "成员扩展/生日/标旗、借出/认领/家庭记录/离职、记录备注/标旗/筛选视图。",
-        "凭证序号/星标/别名显示/回收站/停用原因/凭证清单/下发队列。",
-        "四族 TOTP/静态口令（otpStatus_/otpIdx_/kf_cotp_t_/kf_cotp_s_）与 kf_trace_persist_v1。",
-        "防御/防尾随/校时与设备组织（kf_lock_order/kf_lockmeta_/kf_lock_hidden_/kf_group_folded）。",
-        "刻意不收：日志与遥测（体积大且不是内容）、外观与开关（恢复不该动它们）。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 121,
-          "symbol": "判定标准两条"
-        },
-        {
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 140,
-          "symbol": "OTP 四族"
-        },
-        {
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 145,
-          "symbol": "meta 与设备组织族"
-        }
-      ],
-      "tags": [
-        "回滚",
-        "键族"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "backup.webdav",
       "parentKey": "backup.engine",
       "domain": "backup",
@@ -3250,60 +2670,6 @@
       "tags": [
         "云同步",
         "WebDAV"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "backup.webdav.list",
-      "parentKey": "backup.webdav",
-      "domain": "backup",
-      "level": 3,
-      "name": "远端列表、连通测试与滚动保留",
-      "kind": "service",
-      "summary": "PROPFIND 列远端条目（etag/大小/时间），支持连通测试与按「份」清理旧备份。",
-      "details": [
-        "Depth 必须显式写 1：不写按 RFC 4918 默认 Infinity，滚动保留会看到整个子树并可能删到用户其它文件。",
-        "期望 207；非 UTF-8 正文直接拒；resourcename 做实体解码 + 名字长度 <=256 护栏防注入。",
-        "safeRemoteURL 拒绝对路径、含 :// 与 .. 段；只删「锁管家_*.enc」且不含斜杠的名字族。",
-        "volumeSet 从尾部剥 _卷N 把同一次导出合成一份；保留最近 N 份 + 每月再保 1 份（Time Machine 口径）。",
-        "清理后写审计「WebDAV 滚动保留: 清理远端 N 个文件」。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 714,
-          "symbol": "testWebdav"
-        },
-        {
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 734,
-          "symbol": "listRemote"
-        },
-        {
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 745,
-          "symbol": "Depth: 1"
-        },
-        {
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 795,
-          "symbol": "safeRemoteURL"
-        },
-        {
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 827,
-          "symbol": "pruneRemote"
-        },
-        {
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 844,
-          "symbol": "每月再保 1 份"
-        }
-      ],
-      "tags": [
-        "远端",
-        "保留策略",
-        "安全"
       ],
       "status": "implemented"
     },
@@ -3346,36 +2712,6 @@
       "tags": [
         "ZIP",
         "校验"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "backup.zip.crc",
-      "parentKey": "backup.zip",
-      "domain": "backup",
-      "level": 4,
-      "name": "CRC32 表驱动实现",
-      "kind": "protocol",
-      "summary": "标准 IEEE 802.3 多项式 0xEDB88320 的 256 项查表法，初值与结果取反。",
-      "details": [
-        "表在首次访问时惰性构建（0..<256 逐位 8 次）。",
-        "crc32 从 0xFFFFFFFF 起算，末尾 ~ 取反。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Services/ZipKit.swift",
-          "line": 6,
-          "symbol": "enum CRC32"
-        },
-        {
-          "file": "App/Services/ZipKit.swift",
-          "line": 14,
-          "symbol": "crc32(_:)"
-        }
-      ],
-      "tags": [
-        "CRC",
-        "算法"
       ],
       "status": "implemented"
     },

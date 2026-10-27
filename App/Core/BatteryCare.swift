@@ -70,7 +70,6 @@ enum BatteryCare {
     static func samples(_ mac: String) -> [BattSample] {
         DB.store.get([BattSample].self, "kf_batt_" + mac) ?? []
     }
-    static func latest(_ mac: String) -> BattSample? { samples(mac).last }
 
     /// 统一展示读数 (ROADMAP 包4): Hero 卡/总览条带/档案页共用一个来源 —
     /// 采样表最新值与锁侧快照取时间较新的那个 (采样随读 03 落库, 通常不比快照旧);
@@ -100,20 +99,6 @@ enum BatteryCare {
     /// 追加策略: 电量变化必记; 未变化时距上点 ≥1h 记一次 — 日粒度足够趋势拟合且量小。
     /// 截断: 保留 90 天 + 500 条封顶。
     @discardableResult
-    static func sample(_ mac: String, pct: Int) -> Bool {
-        guard !mac.isEmpty, pct >= 0 else { return false }
-        lowCacheLock.withLock { $0 = (mac, isLow(pct)) }   // 120: 无论是否落点都刷新低电缓存
-        var list = samples(mac)
-        let now = Date().timeIntervalSince1970 * 1000
-        if let last = list.last, last.pct == pct, now - last.t < 3_600_000 { return false }
-        list.append(BattSample(t: now, pct: pct))
-        let cutoff = now - 90 * 86400 * 1000
-        list.removeAll { $0.t < cutoff }
-        if list.count > 500 { list = Array(list.suffix(500)) }
-        DB.store.setCodable("kf_batt_" + mac, list)
-        evaluateLowBattery(mac, pct: pct)
-        return true
-    }
 
 
     // ---------- 1004 低电本地通知 (滞回: ≤20% 提醒 / ≤10% 升级, 恢复 >30% 重新武装) ----------
@@ -133,9 +118,6 @@ enum BatteryCare {
         let body = level == 2
             ? "「\(name)」只剩 \(pct)%, 请尽快更换电池"
             : "「\(name)」电量 \(pct)%, 建议备好电池择日更换"
-        Task { await CareSchedule.notifyNow(id: "m4.batt." + mac,
-                                            title: level == 2 ? "电量告急" : "该喂电了",
-                                            body: body) }
     }
 
 
@@ -172,35 +154,7 @@ enum CareSchedule {
         return h >= 22 || h < 8
     }
 
-    /// 即时本地通知 (1004/1023/校时/146/1013 到期/1024 防潮): 免扰时段静默丢弃 (1031)
-    /// dayDeliver=true 的升级提醒 (1038): 夜间不丢, 挂到下一个 08:00 白天送达
-    static func notifyNow(id: String, title: String, body: String, dayDeliver: Bool = false) async {
-        let c = UNMutableNotificationContent()
-        c.title = title
-        c.body = body
-        c.sound = .default
-        if quietOn && isQuietHour() {
-            guard dayDeliver else { return }
-            let cal = WeekCal.gregorian
-            var target = cal.startOfDay(for: Date())
-            if cal.component(.hour, from: Date()) >= 22 {
-                target = cal.date(byAdding: .day, value: 1, to: target) ?? target
-            }
-            target = cal.date(byAdding: .hour, value: 8, to: target) ?? target
-            let comp = cal.dateComponents([.year, .month, .day, .hour, .minute], from: target)
-            try? await UNUserNotificationCenter.current()
-                .add(UNNotificationRequest(identifier: id, content: c,
-                                           trigger: UNCalendarNotificationTrigger(dateMatching: comp, repeats: false)))
-            return
-        }
-        try? await UNUserNotificationCenter.current()
-            .add(UNNotificationRequest(identifier: id, content: c, trigger: nil))
-    }
 
-    static func requestAuth() async -> Bool {
-        (try? await UNUserNotificationCenter.current()
-            .requestAuthorization(options: [.alert, .sound, .badge])) ?? false
-    }
 
 
 }

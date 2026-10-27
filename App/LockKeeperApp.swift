@@ -150,13 +150,9 @@ final class AppState: ObservableObject {
     /// 397 本机库体自检 (三项都是本地只读, 不碰 BLE)。结果存这里给诊断页显示, 返回异常项数给调用方决定要不要出声。
     /// 拆成"跑/存"与"提示"两步是因为: 解锁路径只在异常时提示 (每次解锁都弹"一切正常"会被关掉),
     /// 而手动按钮必须无论结果都给反馈。
-    @Published var selfCheck397: [SelfCheckLine] = []
     @discardableResult
 
     func runSelfCheck397() -> Int {
-        let ls = SelfCheck.run()
-        selfCheck397 = ls
-        let bad = ls.filter { !$0.ok }
         if let first = bad.first {
             lock.log("warn", "本机自检 \(bad.count) 项异常: \(first.name) — \(first.detail)")   // 397 本机自检
         }
@@ -591,14 +587,6 @@ final class AppState: ObservableObject {
         // AuditLog().purgeExpired(months:) 因此从未被自动调用过；手动清理入口仍在诊断页，不受影响。
         // 223 启动自动归档: 诊断页那枚开关开着才动手 (默认关), 走与手动按钮同一引擎; 条数进维护回执 (387)
         if DB.store.getBool("kf_diag_autoarchive") {
-            let archived = DataHealth.archiveOldLogs()
-        }
-        let cal = WeekCal.gregorian
-        let now = Date()
-        let year = cal.component(.year, from: now)
-        // 包8: 448 启动自检 (库体哈希 vs 上次快照, 异常挂黄条) + 1018 月度备份日排程
-        //       + 428 充电备份 BGTask 注册 (系统择机执行, 不承诺接电即备) + 445 中断迁移检测
-        Task { @MainActor in
             // 428: BGTask 注册已移到 QuickActionDelegate.didFinishLaunchingWithOptions ——
             // 必须早于启动完成 (Apple 契约), 且每进程只注册一次 (onLaunch 可能被多次调用)。
         }

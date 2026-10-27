@@ -106,6 +106,10 @@ const SYS_NAMES = new Set([
   // encryptText / decryptEnvelope / basicAuth 的**参数名**。删掉 WebDAV 一族里
   // 同名的局部变量后，这两个词会被当成悬空引用报出来。
   "envelope", "appPw",
+  // 2026-10-27 十三轮: fromDay/toDay 是 TimeFormat.range(fromDay:toDay:) 的参数名。
+  "fromDay", "toDay",
+  // 2026-10-27 十三轮: skipped 是 restore 的返回元组字段名。
+  "skipped", "imported", "overwritten",
 ]);
 
 function stripCode(line) {

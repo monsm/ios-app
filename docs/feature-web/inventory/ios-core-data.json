@@ -2670,37 +2670,6 @@
       "status": "implemented"
     },
     {
-      "key": "care.hints.once",
-      "parentKey": "care.hints",
-      "domain": "care",
-      "level": 3,
-      "name": "键形与清除策略",
-      "kind": "rule",
-      "summary": "键 kf_hint_<id>（Bool）；刻意不提供单独 clear——那条口子会被当成「重置教程」，而且不需要销毁级权限就能碰。",
-      "details": [
-        "清除走核弹销毁的 keys() 全表清，kf_hint_* 前缀天然在内（HintOnce.swift:9-11）",
-        "mark 只写 true，不写 false（未看过 = 键不存在）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/HintOnce.swift",
-          "line": 8,
-          "symbol": "mark(_:)"
-        },
-        {
-          "file": "App/Core/HintOnce.swift",
-          "line": 9,
-          "symbol": "keys()"
-        }
-      ],
-      "tags": [
-        "关怀",
-        "提示",
-        "数据销毁"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "data.backup.envelope.pbkdf2",
       "parentKey": "data.backup.envelope",
       "domain": "data",
