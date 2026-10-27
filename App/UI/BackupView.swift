@@ -11,7 +11,6 @@ struct BackupView: View {
     @State private var exportText = ""
     @State private var encryptExport = false      // 2026-10-27: 可选加密主备份
     @State private var exportPw = ""
-    @State private var showExportPwPrompt = false
     @State private var importText = ""
     @State private var busy = false
     /// 导出文件选择器（存到 iCloud 云盘 / 我的 iPhone）
@@ -169,7 +168,7 @@ struct BackupView: View {
     // ---------- 导入恢复 ----------
     private var importSection: some View {
         Section("导入恢复") {
-            Text("粘贴备份文本后导入。相同设备将覆盖, 其它设备保留 (门锁无需重置)。")
+            Text("粘贴备份文本后导入。⚠ 导入会**整表替换**这台锁的凭证台账 —— 本机在备份之后新加的密码/指纹会丢失。建议先导出一次当前备份。门锁本身无需重置。")
                 .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             TextField("粘贴备份文本", text: $importText, axis: .vertical)
@@ -197,7 +196,7 @@ struct BackupView: View {
                     .frame(minHeight: DS.Hit.min)
             }
             .disabled(busy)
-            Button("导入", role: .destructive) { confirmImport() } // 覆盖同名设备, 属破坏性动作
+            Button("导入", role: .destructive) { confirmImport() } // 整表替换同名设备的台账, 属破坏性动作
                 .disabled(busy || importText.isEmpty)
         }
     }
@@ -214,7 +213,7 @@ struct BackupView: View {
         // 但"导入一份旧备份"同样会让应用锁口令**回滚到旧值** —— 抢到手机的人用旧口令就能进。
         // 這件事不能默默发生, 至少在破坏性确认里说清楚。
         confirmDestructive("导入备份",
-                           "相同设备将被覆盖, 其它设备保留; 若备份里带应用锁口令, 本机口令会被替换成它。确定导入吗？",
+                           "这台锁的凭证台账会被备份里的内容**整表替换** —— 本机在备份之后新加的密码与指纹会丢失, 无法撤销。若备份里带应用锁口令, 本机口令也会被替换。确定导入吗？",
                            confirmTitle: "导入") {
             doImport()
         }

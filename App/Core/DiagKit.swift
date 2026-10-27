@@ -98,7 +98,7 @@ enum DiagLogs {
     static func localDay(_ d: Date = Date()) -> String { StatsKit.dayKey(d) }
 
     static var entries: [DiagLogEntry] {
-        DB.store.get([DiagLogEntry].self, "kf_diag_logs") ?? []
+        DiagLogStore.load()
     }
     /// 按 751 保留策略过滤后的全量 (最新在末尾)
     static func all() -> [DiagLogEntry] {
@@ -124,7 +124,7 @@ enum DiagLogs {
         let cs = localDay(WeekCal.shifted(Date(), days: -days))
         let kept = before.filter { $0.date >= cs }
         guard kept.count != before.count else { return 0 }
-        DB.store.setCodable("kf_diag_logs", kept)
+        DiagLogStore.save(kept)
         return before.count - kept.count
     }
     static func today() -> [DiagLogEntry] {
@@ -140,7 +140,7 @@ enum DiagLogs {
             let cs = localDay(WeekCal.shifted(Date(), days: -days))
             list = list.filter { $0.date >= cs }
         }
-        DB.store.setCodable("kf_diag_logs", list)
+        DiagLogStore.save(list)
     }
 }
 

@@ -40,7 +40,9 @@ final class LockService: ObservableObject {
             recentFrames.append(msg)
             if recentFrames.count > 60 { recentFrames.removeFirst(recentFrames.count - 60) }
         }
-let shown = msg   // 2026-10-27 三轮：帧脱敏已删（用户确认，日志将含帧明文）
+        // 2026-10-27 审核恢复 (AUDIT-A F-03)：帧脱敏回来了。含 hex= 的日志只留 8 字节帧头，
+        // 载荷（skey / 密码 / PIN / ekey）整段遮掉。完整帧只留在内存 recentFrames（不落盘、不可复制）。
+        let shown = rawFrame ? FrameRedact.apply(msg) : msg
         logs.append("\(t) [\(level)] \(shown)")
         if logs.count > 200 { logs.removeFirst(logs.count - 200) }
         if level == "warn" || level == "error" { lastError = shown }

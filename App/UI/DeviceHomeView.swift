@@ -73,9 +73,7 @@ struct DeviceHomeView: View {
                         moduleSlot(devOrder[0], delay: 1)   // 904: 槽位固定, 哪个模块占这个槽由用户定
                         attentionCard
                         if shown(.linkSense) { linkSenseCard }
-                        // 246 凭证选择胶囊: 该锁有多条可用 PIN 且还没签发 ekey 时才出现 (有 ekey 时开锁根本不用 PIN, 给了是假选择)
-                        if let kc = app.current, kc.ekey.isEmpty, kc.pins.count > 1 {
-                        }
+                        // 2026-10-27 审核：凭证选择胶囊已删（PIN 胶囊那一族），此处空壳一并移除。
                         unlockDial
                             .accessibilityElement(children: .contain)
                             .accessibilityLabel("开锁圆盘组")   // 868 开锁圆盘组

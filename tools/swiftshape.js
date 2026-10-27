@@ -84,7 +84,6 @@
 //    (Content: View 的泛型内容槽) 完全合法，把它当误报会让闸门变成噪音机。
 //
 // 判据自己先过正控：`--selftest` 拿 fixtures/swiftshape/ 里"该响的"与"不该响的"两组样例各跑一遍，
-// 三条判据都各有正控 (R3 的第一版看不见单行写完的小 struct —— 是注入探针 `App/_probe_r3.swift` 一测就不响才发现的)；
 // 打不响或误响就退出 2 (本仓在 keydead 上验证过这条纪律)。
 const fs = require('fs');
 const path = require('path');
@@ -683,7 +682,6 @@ function r3Hits(root) {
       let depth = 0;
       const body = [];
       // 整行写完的小 struct (`struct P: Codable { var a: String = "" }`) 也要看到体内字段 ——
-      // 第一版只逐行往下收，注入探针 (`App/_probe_r3.swift`) 一测就不响，
       // 那个"绿"是假的：判据看不见单行写法，等于对这类形状完全失明。
       const sameLine = /\{\s*(.+?)\s*\}\s*$/.exec(L[i]);
       if (sameLine) body.push(sameLine[1]);

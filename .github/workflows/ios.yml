@@ -165,6 +165,20 @@ jobs:
       - name: '行尾卫生闸门 (判失败: 无 CRCRLF / 无孤立 CR —— 会让行号与 shell 续行错乱)'
         run: node tools/eolhygiene.js
 
+      # 2026-10-27 新增（B 线审核建议）：这四类缺陷是现有 38 道闸门结构上抓不到的 ——
+      # 它们查形状/跨语言差分/文档一致性，没有一道查「这个块里还有没有东西」或「白名单是否过期」。
+      - name: '空块闸门 (判失败: 空 if/else/for/case/catch 与空 Section/Group —— 13 轮精简留下的空壳)'
+        run: node tools/emptyblock.js
+
+      - name: '只写不读状态闸门 (判失败: @State/@Published 声明了、赋值了、但全仓无人读 —— 订阅链路已断)'
+        run: node tools/writeonlystate.js
+
+      - name: '空协议实现闸门 (判失败: 声明 conform 了协议但缺必需方法 —— HeroSurface 那种空 conformer)'
+        run: node tools/emptyconform.js
+
+      - name: '死白名单闸门 (判失败: 白名单/注释引用了已删文件或越界行号 —— 豁免约定的可信度)'
+        run: node tools/deadallowlist.js
+
 
       - name: 'sheet 盖住切 Tab 收摊检查 (判失败: 被 sheet/fullScreenCover 端出来的页面里换 Tab, 动作附近必须有 dismiss(); requestTab 只过访客门禁、不算修好; 正控 fixtures/sheetcover/fire 3 条, 反控 ok/ 4 形 0 条)'
         run: |

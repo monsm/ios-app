@@ -218,6 +218,12 @@ data class Outcome(val ok: Boolean, val message: String, val trace: String = "",
      *  60s 是给"对端睡了但没发 DISCONNECTED"这种半死状态留的兜底, 不是省电参数。 */
     private val warmStaleMs = 60_000L
 
+// 2026-10-27 审核（AUDIT-A F-21）：本文件原先的超时窗口比 vendor 紧 2–5 倍
+// （连接 3000 vs 15000、每片写 4000 vs 8000、开锁回包 3000 vs 8000），
+// 而 04 超时**绝不重发**（防双开，这是对的）⇒ 弱信号下一次超时 = 一次开锁失败，没有第二次机会。
+// 已对齐 vendor/app/services/lock.js:199 的 timeout: 8000 / 连接 15000。
+// 唯一保留偏短的是「断开等待 1200ms」（那是 teardown 的礼貌等待，不是协议窗口）。
+
     /** 可以拿来直接开锁的链路; 有链路但不可用 → 返回 null 并把外层该拆谁写清楚。 */
     private fun pickWarm(lock: LockInfo): Session? {
         val w = warm ?: return null
@@ -333,7 +339,7 @@ data class Outcome(val ok: Boolean, val message: String, val trace: String = "",
                 s.lastUsedAt = System.currentTimeMillis()
                 return Attempt(null, true)   // 01 都没写出去: 锁肯定没动作, 拆链重建安全
             }
-            val tokenFrame = awaitFrame(s.notes, 0x01, 4_000)
+            val tokenFrame = awaitFrame(s.notes, 0x01, 8_000)
                 ?: return Attempt(Outcome(false, "门锁没有回应 — 靠近一点再试", trace.toString()),
                         s.disconnected.isCompleted)
             val token = tokenFrame.klvs[0x02]
@@ -366,7 +372,7 @@ data class Outcome(val ok: Boolean, val message: String, val trace: String = "",
                     Outcome(false, "开锁写入中断 — 门锁可能已执行, 先看一眼门", trace.toString()),
                     true)
             }
-            val res = awaitFrame(s.notes, 0x04, 3_000)
+            val res = awaitFrame(s.notes, 0x04, 8_000)
                 // 回执超时: 帧已出手机, 锁可能正在开 —— linkBroken=false, 绝不重建重发 (双开红线)
                 ?: return Attempt(
                     Outcome(false, "开锁没有回执 — 门锁可能已执行, 先看一眼门", trace.toString()),
@@ -425,8 +431,8 @@ data class Outcome(val ok: Boolean, val message: String, val trace: String = "",
         delay(80)   // 停扫后仍需 settle 一拍再连 (边扫边连 = 133 头号成因), 但从 120 收到 80
         val g = device.connectGatt(ctx, false, cb, BluetoothDevice.TRANSPORT_LE) ?: return false
         s.gatt = g
-        if (withTimeoutOrNull(3_000) { s.connected.await() } != true) return false
-        if (withTimeoutOrNull(2_000) { s.servicesOk.await() } != true) return false
+        if (withTimeoutOrNull(15_000) { s.connected.await() } != true) return false
+        if (withTimeoutOrNull(8_000) { s.servicesOk.await() } != true) return false
         val svc = g.getService(svcUuid) ?: return false
         val write = svc.getCharacteristic(UUID.fromString(KfProtocol.CHR_WRITE)) ?: return false
         val notify = svc.getCharacteristic(UUID.fromString(KfProtocol.CHR_NOTIFY)) ?: return false
@@ -439,7 +445,7 @@ data class Outcome(val ok: Boolean, val message: String, val trace: String = "",
             val req = runCatching {
                 g.writeDescriptor(cccd, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
             }.getOrNull()
-            if (req == BluetoothStatusCodes.SUCCESS) withTimeoutOrNull(4_000) { s.notifyOn.await() }
+            if (req == BluetoothStatusCodes.SUCCESS) withTimeoutOrNull(8_000) { s.notifyOn.await() }
         }
         // 协商 MTU: 只谈 ATT 层上界, **分片仍恒按 20 字节** (iOS BLEService.writeFrame 与 JS
         // writeFrame 都是 20B 定长分片, 锁端按 20B 组包 —— 跟着 MTU 放大分片会让锁收到残帧)。
@@ -463,7 +469,7 @@ data class Outcome(val ok: Boolean, val message: String, val trace: String = "",
             trace.append("03→写不通 ")
             return null   // 加固不是新闸门: 这条发不出去就照开 (交给 04 自己判定)
         }
-        val st = awaitFrame(s.notes, 0x03, 3_000)
+        val st = awaitFrame(s.notes, 0x03, 8_000)
         if (st == null) { trace.append("03→无回应 "); return null }
         val selfPid = KfProtocol.pidOf(st)
         if (selfPid <= 0) { trace.append("03→无pid "); return null }
@@ -602,7 +608,7 @@ data class Outcome(val ok: Boolean, val message: String, val trace: String = "",
                 gatt.writeCharacteristic(chr, chunk, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT)
             }.getOrNull()
             if (req != BluetoothStatusCodes.SUCCESS) return false
-            val ok = withTimeoutOrNull(4_000) { done.await() } ?: return false
+            val ok = withTimeoutOrNull(8_000) { done.await() } ?: return false
             if (!ok) return false
             off += n
         }

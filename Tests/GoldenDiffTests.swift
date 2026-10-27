@@ -110,6 +110,10 @@ final class GoldenDiffTests: XCTestCase {
         built["cmd31GWSetWifi"] = ZKCmdBuilder.cmd31GWSetWifi("HomeWiFi", "pass1234").hex
         built["cmd31GWSetWifi_cn"] = ZKCmdBuilder.cmd31GWSetWifi("客厅网关", "密码88").hex
         built["cmd35GWReboot"] = ZKCmdBuilder.cmd35GWReboot().hex
+        // 2026-10-27 审核补回：这两条向量一直在 golden.json 里，而构造器被删 ⇒ 本测试恒红。
+        // 构造器已按 vendor kernel/cmds.js:220-232 补回（功能面仍不做，只为对拍可用）。
+        built["cmd30GWDeviceName"] = ZKCmdBuilder.cmd30GWDeviceName().hex
+        built["cmd32GWSetIot"] = ZKCmdBuilder.cmd32GWSetIot("aabb", "cc", "dd").hex
 
         var mismatches: [String] = []
         for (name, expected) in cmds {

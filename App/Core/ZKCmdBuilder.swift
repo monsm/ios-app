@@ -277,4 +277,21 @@ enum ZKCmdBuilder {
     static func cmd35GWReboot() -> ZKCmd {
         ZKCmd(name: "35 网关重启", cmd: 0x35, hex: ZKProtocol.buildFrame(0x35, "", header: 8))
     }
+
+    // 2026-10-27 审核补回（AUDIT-A F-37）：这两个命令在功能精简时被删，而 golden.json 里仍有向量 ——
+    // 于是 `GoldenDiffTests` 恒红（40 条向量 vs 38 条构造器）。按 vendor `kernel/cmds.js:220-232` 补回。
+    // 两者的功能面（云端 IoT 档案 / 网关设备名）仍然不做，构造器只为让金标对拍回到可用状态。
+
+    /// cmd 30 GWGETDEVICENAME：无 KLV → 响应 deviceName @ KLV#01
+    static func cmd30GWDeviceName() -> ZKCmd {
+        ZKCmd(name: "30 网关名称", cmd: 0x30, hex: ZKProtocol.buildFrame(0x30, "", header: 8))
+    }
+
+    /// cmd 32 GWSETIOT：#05=iotpKey #06=iotdSec #07=devAccToken
+    static func cmd32GWSetIot(_ iotpKeyHex: String, _ iotdSecHex: String, _ devAccTokenHex: String) -> ZKCmd {
+        let klv = ZKProtocol.buildKLV(0x05, iotpKeyHex)
+            + ZKProtocol.buildKLV(0x06, iotdSecHex)
+            + ZKProtocol.buildKLV(0x07, devAccTokenHex)
+        return ZKCmd(name: "32 网关 IoT", cmd: 0x32, hex: ZKProtocol.buildFrame(0x32, klv, header: 8))
+    }
 }

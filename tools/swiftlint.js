@@ -330,7 +330,6 @@ const WHITE_CEIL = {
   // PDF / 分享长图的封面文字: 输出面压的是 heroA/heroB 渐变, 比值由 contrast.js B/C 节按
   // "每主题 × 明暗 × 两端" 机检 (≥4.5:1)。位图一旦生成就不再随系统反转/主题变化, 所以这里的
   // 纯白是**正确的**, 不是漏网 —— 但名单只允许往下减: 新增名额必须先证明底色仍是那批被检的深渐变。
-  'App/UI/ExportCenter.swift': 7,
 };
 const RE_WHITE_FG = [
   /\.foregroundStyle\((?:Color)?\.white\b/,
