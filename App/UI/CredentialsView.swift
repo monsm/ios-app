@@ -352,9 +352,6 @@ struct CredentialsView: View {
                             .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                         HStack(spacing: DS.Space.s) {
-                            .vkFont(.caption)
-                            .buttonStyle(.bordered)
-                            .accessibilityLabel("带着 \(search) 去回收站搜")   // 503 带着
                             Button {
                                 let q = search.trimmingCharacters(in: .whitespaces)
                                 let m = DB.members().first { $0.name.localizedCaseInsensitiveContains(q) || $0.relation.localizedCaseInsensitiveContains(q) }

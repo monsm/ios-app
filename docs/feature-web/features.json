@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T06:46:20.274Z",
+    "generated": "2026-10-27T06:50:43.122Z",
     "sources": [
       {
         "scout": "android-native",
@@ -16650,7 +16650,7 @@
           "line": 1626,
           "symbol": "batchBar",
           "note": "",
-          "text": "}"
+          "text": "static func topViewController() -> UIViewController? {"
         },
         {
           "platform": "ios",
@@ -16736,7 +16736,7 @@
           "line": 1229,
           "symbol": "credRow",
           "note": "",
-          "text": "// 屏幕上是一个看不见的码，而 idx 也已经被记进窗口 —— 用户只知道「没开门」。"
+          "text": "app.showToast(\"这把锁的 MAC 不是整 6 字节十六进制, 已中止生成 (临时码要用它反序拼料)\")"
         },
         {
           "platform": "ios",
@@ -16744,7 +16744,7 @@
           "line": 1246,
           "symbol": "credRow",
           "note": "状态胶囊",
-          "text": "VStack(alignment: .leading, spacing: DS.Space.xs) {"
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         },
         {
           "platform": "ios",
@@ -16752,7 +16752,7 @@
           "line": 1272,
           "symbol": "credRow",
           "note": "副行",
-          "text": "/// (原先连完直接调 genOtp, 被自己的占用挡下, 回执却报成功)。"
+          "text": "busyKey = \"otp\""
         }
       ],
       "platformEvidence": {
@@ -17988,7 +17988,7 @@
           "line": 1450,
           "symbol": "credMenu",
           "note": "setFpAlarm",
-          "text": "private func doDeleteFp(_ f: LedgerFp) async {"
+          "text": "guard !m.isEmpty else { app.showToast(\"未选择门锁\"); return }"
         },
         {
           "platform": "ios",
@@ -17996,7 +17996,7 @@
           "line": 1256,
           "symbol": "credRow",
           "note": "预警胶囊",
-          "text": ".frame(maxWidth: .infinity)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -18594,7 +18594,7 @@
           "line": 1346,
           "symbol": "credRow",
           "note": "整行 disabled",
-          "text": "UIApplication.topViewController()?.present(alert, animated: true)"
+          "text": "private func resetPwdPeriod(_ p: LedgerPwd) {"
         }
       ],
       "platformEvidence": {
@@ -18754,7 +18754,7 @@
           "line": 389,
           "symbol": "headerToolbar",
           "note": "选择按钮",
-          "text": ".accessibilityLabel(\"凭证搜索\")"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -18762,7 +18762,7 @@
           "line": 396,
           "symbol": "headerToolbar",
           "note": "Menu 溢出",
-          "text": "var fp: LedgerFp?"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -18830,7 +18830,7 @@
           "line": 691,
           "symbol": "searchSection",
           "note": "搜索框",
-          "text": "toggleSel(hit)"
+          "text": "// 编辑态整行单击已归勾选, 双击里再判一次 editMode, 两种模式不抢手势"
         },
         {
           "platform": "ios",
@@ -18838,7 +18838,7 @@
           "line": 709,
           "symbol": "filteredResults",
           "note": "",
-          "text": "// 182 原先这里挂着一枚 onLongPressGesture, 弹的是「长按可停用/删除; 编辑模式里用顺序按钮调整组内先后」——"
+          "text": "// 901 行高二档 (kf_row_h): minHeight 而不是固定 height —— 固定高度会裁掉多行备注"
         },
         {
           "platform": "ios",
@@ -18846,7 +18846,7 @@
           "line": 686,
           "symbol": "searchSection",
           "note": "兜底两按钮所在块",
-          "text": "if editMode { selectionCircle(hit) }"
+          "text": ".onTapGesture {"
         }
       ],
       "platformEvidence": {
@@ -18915,7 +18915,7 @@
           "line": 449,
           "symbol": "headerToolbar",
           "note": "segCount",
-          "text": "let rest = pwds"
+          "text": "let order = CredentialOrg.seq(mac)[\"p\"] ?? []"
         },
         {
           "platform": "ios",
@@ -18923,7 +18923,7 @@
           "line": 462,
           "symbol": "segChip",
           "note": "",
-          "text": "}"
+          "text": "/// 旧包/半写坏的表里出现重复 alias 时, 后者会当场 trap (整个凭证页变崩溃), 前者只是取第一个位次。"
         },
         {
           "platform": "ios",
@@ -18931,7 +18931,7 @@
           "line": 492,
           "symbol": "countForSeg",
           "note": "",
-          "text": "let credArchived: Set<Int> = []   // 2026-10-26: 归档已删"
+          "text": "fps = fps.filter { !credArchived.contains(100000 + $0.batch) }"
         }
       ],
       "platformEvidence": {
@@ -18999,7 +18999,7 @@
           "line": 1320,
           "symbol": "credRow",
           "note": "swipeActions",
-          "text": "// 旧密码即刻作废 = 破坏性, 按钮必须显式标红, 不能伪装成普通确认"
+          "text": "guard np.count >= 6, np.count <= 8, np.allSatisfy({ $0.isNumber }) else { app.showToast(\"需 6~8 位数字\"); return }"
         },
         {
           "platform": "ios",
@@ -19007,7 +19007,7 @@
           "line": 1329,
           "symbol": "credRow",
           "note": "!sorting 才出破坏性",
-          "text": "defer { busyKey = nil }"
+          "text": "let aliasOut = try await app.lock.pwdModify(alias: p.alias, pwd: np, validFrom: p.from, validTo: p.to)"
         },
         {
           "platform": "ios",
@@ -19015,7 +19015,7 @@
           "line": 1333,
           "symbol": "credRow",
           "note": "改期",
-          "text": "DB.rePwd(m, p.alias, np)"
+          "text": "// 确认口径：换槽 (上面按钮的破坏性项「作废旧密码」已经问过并要 6~8 位新码)，"
         }
       ],
       "platformEvidence": {
@@ -22446,7 +22446,7 @@
           "line": 406,
           "symbol": "headerToolbar",
           "note": "toggle + setGroupMode",
-          "text": "if hay.localizedCaseInsensitiveContains(q) {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -22508,7 +22508,7 @@
           "line": 1314,
           "symbol": "credRow",
           "note": "双击复制",
-          "text": ""
+          "text": "let alert = UIAlertController(title: \"修改密码 (#\\(p.alias))\", message: \"修改后旧密码立即作废, 需使用新密码开锁。\", preferredStyle: .alert)"
         },
         {
           "platform": "ios",
@@ -22516,7 +22516,7 @@
           "line": 1296,
           "symbol": "credRow",
           "note": "VoiceOver 拷贝动作",
-          "text": "// 2026-10-26 精简：stopUndoTimer 已删（undoBar 移除后无撤销条可停）。"
+          "text": "private static let shortDateFormatter: DateFormatter = {"
         }
       ],
       "platformEvidence": {
@@ -22579,7 +22579,7 @@
           "line": 1246,
           "symbol": "credRow",
           "note": "pwdState == 2",
-          "text": "VStack(alignment: .leading, spacing: DS.Space.xs) {"
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         },
         {
           "platform": "ios",
@@ -22587,7 +22587,7 @@
           "line": 1248,
           "symbol": "credRow",
           "note": "isEarlyExpired",
-          "text": ".vkFont(.footnote)"
+          "text": "// 包14/815 空态双按钮: 主\"添加密码\" + 次\"看看它如何工作\""
         },
         {
           "platform": "ios",
@@ -22595,7 +22595,7 @@
           "line": 1255,
           "symbol": "credRow",
           "note": "预警指纹",
-          "text": ".vkFont(.subheadline, weight: .semibold)"
+          "text": ".buttonStyle(SecondaryActionStyle(fullWidth: false))"
         }
       ],
       "platformEvidence": {
@@ -62755,7 +62755,7 @@
           "line": 1248,
           "symbol": "credRow",
           "note": "提前失效胶囊",
-          "text": ".vkFont(.footnote)"
+          "text": "// 包14/815 空态双按钮: 主\"添加密码\" + 次\"看看它如何工作\""
         },
         {
           "platform": "ios",
@@ -62832,7 +62832,7 @@
           "line": 875,
           "symbol": "orderedPwds",
           "note": "读 seq[p]",
-          "text": "if selCount == 0 {"
+          "text": "// 356 点按行选一条"
         },
         {
           "platform": "ios",
@@ -62840,7 +62840,7 @@
           "line": 1076,
           "symbol": "commitGroupMove",
           "note": "写 seq",
-          "text": "var done = 0"
+          "text": "for p in pwds {"
         },
         {
           "platform": "ios",
@@ -62848,7 +62848,7 @@
           "line": 889,
           "symbol": "manualIndex",
           "note": "重复别名防 trap",
-          "text": "}"
+          "text": "/// 隐藏行一旦进破坏性批量 (353 停用 / 922 删除), 就是\"看不到却被停掉\"。台账级读数不走这里。"
         }
       ],
       "platformEvidence": {
@@ -65517,7 +65517,7 @@
           "line": 1236,
           "symbol": "credRow",
           "note": "kf_row_h",
-          "text": "DB.saveOtpIdx(mac, OtpIdx(idx: idx, invalidTime: win))"
+          "text": "UIPasteboard.general.string = pwd   // 405"
         },
         {
           "platform": "ios",
