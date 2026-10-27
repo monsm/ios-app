@@ -1046,7 +1046,6 @@ struct DiagnosticsView: View {
 
     /// 72: 断连错误码人话翻译 (本地词表, 不改协议层; 124 占用类走保守文案)
     private func friendlyFailReason(_ what: String) -> String {
-        if what.contains("超时") { return "握手超时 — " + LinkSense.occupationHint() }
         if what.contains("蓝牙") { return "蓝牙未开/权限缺失 — 系统设置 → 隐私与安全性 → 蓝牙" }
         if what.contains("未发现") { return "不在广播范围 — 走近门锁 1 米内再试" }
         if what.contains("信号弱") { return "RSSI 低于围栏, 本轮跳过预热 (省电策略)" }

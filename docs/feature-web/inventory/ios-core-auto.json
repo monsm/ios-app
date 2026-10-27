@@ -1140,68 +1140,6 @@
       "status": "implemented"
     },
     {
-      "key": "device.link.weak-signal",
-      "parentKey": "device.link",
-      "domain": "device",
-      "level": 3,
-      "name": "弱信号与骤降提示",
-      "kind": "state",
-      "summary": "优先报「骤降」（与上次不同读数差 >=12 dB），否则绝对值低于 -75 时提示走近门锁。",
-      "details": [
-        "updateRssi 只在值变化时把旧值翻进 prevRssi，四处喂入共用同一份历史。",
-        "无读数返回 nil（不显示提示条）。",
-        "文案分别带 (旧 → 新) 数值与当前 RSSI。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/LinkSenseKit.swift",
-          "line": 594,
-          "symbol": "weakSignalHint"
-        },
-        {
-          "file": "App/Core/LinkSenseKit.swift",
-          "line": 351,
-          "symbol": "updateRssi / prevRssi"
-        }
-      ],
-      "tags": [
-        "信号",
-        "提示"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "device.link.connect-ms",
-      "parentKey": "device.link",
-      "domain": "device",
-      "level": 3,
-      "name": "握手耗时徽章 ConnectMsBadge",
-      "kind": "state",
-      "summary": "显示最近一次连接耗时毫秒；>=2000ms 变淡黄提醒偏慢。",
-      "details": [
-        "图标 stopwatch，文字 \"<n>ms\"；底色 heroPlate 胶囊。",
-        ">=2000ms 用 0xFFE9A8，否则 heroFg 0.85。",
-        "accessibilityLabel「最近一次连接耗时 n 毫秒」。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/LinkSenseKit.swift",
-          "line": 807,
-          "symbol": "struct ConnectMsBadge"
-        },
-        {
-          "file": "App/Core/LinkSenseKit.swift",
-          "line": 814,
-          "symbol": "ms >= 2000 变色"
-        }
-      ],
-      "tags": [
-        "耗时",
-        "Hero"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "device.link.reconnect-ladder",
       "parentKey": "device.link",
       "domain": "device",
@@ -1242,37 +1180,6 @@
         "重连",
         "退避",
         "省电"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "device.link.reconnect-dots",
-      "parentKey": "device.link.reconnect-ladder",
-      "domain": "device",
-      "level": 4,
-      "name": "回连节律点阵 ReconnectDots",
-      "kind": "state",
-      "summary": "五个点表示五轮退避，已过轮次主色、当前轮次警告色，0 轮时整排灰 = 待命。",
-      "details": [
-        "点径 7pt；已过 accent、当前 warn、其余 hairline。",
-        "文案：「回连第 N 轮 · 下一轮等 X 秒」/「失联后自动回连 (5/15/30/60/90 秒)」。",
-        "整体合并为一个无障碍元素并朗读轮次。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/LinkSenseKit.swift",
-          "line": 824,
-          "symbol": "struct ReconnectDots"
-        },
-        {
-          "file": "App/Core/LinkSenseKit.swift",
-          "line": 844,
-          "symbol": "fill(_:)"
-        }
-      ],
-      "tags": [
-        "重连",
-        "可视化"
       ],
       "status": "implemented"
     },
@@ -1593,98 +1500,6 @@
       "status": "implemented"
     },
     {
-      "key": "device.link.occupation",
-      "parentKey": "device.link.fail-classify",
-      "domain": "device",
-      "level": 4,
-      "name": "占用类保守文案",
-      "kind": "edge",
-      "summary": "协议未确证「占用」的细分码，所以只给保守提示「稍候 1–2 分钟再试」，**不虚构错误码语义** —— 这是诚实的保守处理，不是半成品。原标 partial 属误判。",
-      "details": [
-        "静态文案，不判断具体 rc。",
-        "文案自述「占用细分未确证」以避免过度承诺。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/LinkSenseKit.swift",
-          "line": 453,
-          "symbol": "occupationHint()"
-        }
-      ],
-      "tags": [
-        "边界",
-        "文案"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "device.link.success-rate",
-      "parentKey": "device.link",
-      "domain": "device",
-      "level": 3,
-      "name": "连接成功率（积累中占位）",
-      "kind": "diagnostic",
-      "summary": "按锁统计真实留存的连接尝试；样本不足 10 次只显示「积累中 (n/10)」，不编百分比。",
-      "details": [
-        "数据源 BleTelemetry.attempts 按 mac 过滤（全留存口径，不是滚动 30 天）。",
-        "达标后输出「成功率 X% (n 次)」。",
-        "展示在连接偏好页「连接统计」段。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/LinkSenseKit.swift",
-          "line": 458,
-          "symbol": "successRateText(mac:)"
-        },
-        {
-          "file": "App/Core/LinkSenseKit.swift",
-          "line": 694,
-          "symbol": "连接成功率行"
-        }
-      ],
-      "tags": [
-        "统计",
-        "占位"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "device.link.best-hour",
-      "parentKey": "device.link",
-      "domain": "device",
-      "level": 3,
-      "name": "高成功率时段建议",
-      "kind": "diagnostic",
-      "summary": "把连接尝试按小时分桶算成功率，样本够才给「成功率最高的时段」结论。",
-      "details": [
-        "总样本 <30 显示「时段统计积累中 (n/30)」。",
-        "单小时样本需 >=10 次才参与比较；并列时取样本更多的桶。",
-        "小时从「MM-dd HH:mm:ss」字符串第 6 位起截两位，不再过一次历法。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/LinkSenseKit.swift",
-          "line": 469,
-          "symbol": "bestHourHint()"
-        },
-        {
-          "file": "App/Core/LinkSenseKit.swift",
-          "line": 479,
-          "symbol": "每桶 >= 10"
-        },
-        {
-          "file": "App/Core/LinkSenseKit.swift",
-          "line": 695,
-          "symbol": "高成功率时段行"
-        }
-      ],
-      "tags": [
-        "统计",
-        "建议"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "device.link.bluetooth-off",
       "parentKey": "device.link",
       "domain": "device",
@@ -1809,41 +1624,6 @@
       "tags": [
         "设置页",
         "偏好"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "device.link.state-history",
-      "parentKey": "device.link",
-      "domain": "device",
-      "level": 3,
-      "name": "链路三态切换历史",
-      "kind": "data",
-      "summary": "每次三态切换记一笔（时刻 + 新状态），只保留最近 5 条，供长按胶囊看时间线。",
-      "details": [
-        "存储 kf_link_hist，元素 {at: \"MM-dd HH:mm\", to: 状态名}，插入队首、超 5 条截断。",
-        "由 LinkPill 宿主的 onChange 调用 noteStateHop（本文件内只有写入实现）。"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/LinkSenseKit.swift",
-          "line": 605,
-          "symbol": "struct StateHop"
-        },
-        {
-          "file": "App/Core/LinkSenseKit.swift",
-          "line": 606,
-          "symbol": "history()"
-        },
-        {
-          "file": "App/Core/LinkSenseKit.swift",
-          "line": 610,
-          "symbol": "noteStateHop"
-        }
-      ],
-      "tags": [
-        "历史",
-        "存储键"
       ],
       "status": "implemented"
     },

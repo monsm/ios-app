@@ -73,7 +73,6 @@ struct RecordsView: View {
     @State private var showOutWin = false      // 575 越界开门清单
     @State private var alarmTick = 0          // 735 角标刷新 (从告警中心返回时重算)
     @State private var showAlarmKinds = false // 565 告警类型多选面板
-    @State private var expandedMerged: Set<String> = []  // 592 连击合并展开态
     @State private var recPool: [Rec] = []    // 跨锁/单锁 Rec 池 (576 详情查找 + 770 行映射 + 580/584 翻页源)
     /// 593 组尾「全天 N 条 / 当日最晚」的可核口径: 取本次**过滤与分页截断之前**的行池按归属日算一次。
     /// 原先这两个数取自 g.rows —— 那是筛过、截过的显示集, 于是每设一次过滤就在谎报"今天只有 3 条"。
@@ -97,7 +96,6 @@ struct RecordsView: View {
         var warn: Bool
         var claim: Bool = false      // 791 可认领 (未归属且认领表还没有它)
         var care: Bool = false       // 1028: 保养/换电手机侧事件行
-        var mergedTail: [RowVM] = [] // 592 连击合并被折叠的后续行
         /// 行的身份 = 「哪把锁的哪一行」, 与 186/585/583 用的是同一份算术 (`RecordOverlay.oid`, 全仓只这一处拼接)。
         /// 原先等于 `key`: 单锁路径的 key 不带 mac 前缀, 而深链与定位带回来的都是 oid ⇒
         /// 583 的滚动锚与闪框、585 的落点在默认视图 (scope == 0) 里永远对不上任何一行。
@@ -324,7 +322,6 @@ struct RecordsView: View {
             highlightTokens = []
             filters = QueryFilters()
             reversed = false
-            expandedMerged = []
             applyFilter()
         }
         .onChange(of: filters) { applyFilter() }
@@ -1045,7 +1042,7 @@ struct RecordsView: View {
         let dayEnd = dayLatest[g.key]
         // 与「全天」同单位的显示数: 592 一行能装几条, 所以把折起来的尾行摊开再比。
         // 不摊开会写出"全天 5 条 · 当前显示 1 条"这种看着像少读了 4 条的话, 而那 4 条就在那一行里。
-        let shownEvents = g.rows.reduce(0) { $0 + 1 + $1.mergedTail.count }
+        let shownEvents = g.rows.count
         let dayFull = dayFullCount[g.key] ?? shownEvents
         // 591 行内次序注 + 680 同分钟歧义注: 一次扫过本组算出两张表，而不是每行各数一遍
         // (一千条的日子那样是 O(n²))。
@@ -1074,17 +1071,7 @@ struct RecordsView: View {
             ForEach(ordered) { r in
                 // 583: 整行包一层 Group 才能挂 listRowBackground (ViewBuilder 的 if/else 分支不是同一个类型)。
                 Group {
-                    if r.mergedTail.isEmpty {
-                        timelineRow(r, seq: seqByRow[r.id] ?? 0, dupMinute: dupMinute.contains(r.id), userOrd: userOrdByRow[r.id] ?? 0)
-                    } else if expandedMerged.contains(r.key) {
-                        // 592 展开态: 首行 + 被折叠的明细逐条列出
-                        timelineRow(r, seq: seqByRow[r.id] ?? 0, dupMinute: dupMinute.contains(r.id), userOrd: userOrdByRow[r.id] ?? 0)
-                        ForEach(r.mergedTail) { t in
-                            timelineRow(t)
-                        }
-                    } else {
-                        mergedRow(r)
-                    }
+                    timelineRow(r, seq: seqByRow[r.id] ?? 0, dupMinute: dupMinute.contains(r.id), userOrd: userOrdByRow[r.id] ?? 0)
                 }
                 .listRowBackground(FlashWash(on: flashKey == r.id))
             }
@@ -1202,60 +1189,7 @@ struct RecordsView: View {
 
     /// 592 合并行的标签 (从 mergedRow 的 Button label 抽出: 该表达式报 type-check 超时)
     @ViewBuilder
-    private func mergedRowLabel(_ r: RowVM, _ mergedLabel: String) -> some View {
-        HStack(alignment: .top, spacing: DS.Space.m) {
-            // 647 制式统一出口: 时间线行、合并行、详情卡、导出都走 TimeFormat，不各写 DateFormatter
-            Text(TimeFormat.clock(r.time))
-                .vkFont(.caption.monospacedDigit())
-                .foregroundStyle(DS.Palette.textSub)
-                .frame(width: 42, alignment: .trailing)
-                .padding(.top, 2)
-            Image(systemName: "circle.fill")
-                .font(.system(size: 8))
-                .foregroundStyle(DS.Palette.accent)
-                .frame(width: 12)
-                .padding(.top, 5)
-                .accessibilityHidden(true)
-            HStack(spacing: DS.Space.s) {
-                kindIcon(r)
-                Text(mergedLabel)
-                    .vkFont(.subheadline)
-                    .foregroundStyle(DS.Palette.text)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 1)
-                Image(systemName: "chevron.down")
-                    .font(.system(size: DS.Icon.xs))
-                    .foregroundStyle(DS.Palette.textSub)
-                    .accessibilityHidden(true)
-                Spacer(minLength: 0)
-            }
-            .padding(.bottom, DS.Space.m)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
-            .frame(minHeight: DS.Hit.min)
-        }
-        .listRowSeparator(.hidden)
-        .listRowInsets(EdgeInsets(top: 0, leading: DS.Space.l, bottom: 0, trailing: DS.Space.l))
-    }
 
-    /// 592 连击合并行: 同一凭证同一分钟内 ≥3 条折叠为一行, 点按展开明细
-    private func mergedRow(_ r: RowVM) -> some View {
-        let total = r.mergedTail.count + 1
-        // 2026-10-13 run 63: 原来把三段拼接内联进 Text, 整个 mergedRow 报 type-check 超时。先算好。
-        let mergedLabel = r.title + " · 同一分钟内 " + String(total) + " 次"   // 592 界面文案
-        // 2026-10-13 run 64: 两个 a11y 串原来内联在修饰符里, 与 label 一起把表达式拖超时。先算好。
-        let mergedA11y = "连续 " + String(total) + " 次: " + r.title + ", 点按展开"
-        let mergedHint = "点按展开这 " + String(total) + " 条"
-        return Button {
-            // 2026-10-13 run 66: Set.insert 返回 (inserted:memberAfterInsert:) 元组, 直接当闭包末句
-            // 会让 Button 的 action 推成"返回元组" ⇒ "conflicting arguments to generic parameter
-            // 'Result' ('Void' vs '(inserted: Bool, memberAfterInsert: String)')"。丢弃返回值。
-            withAnimation(DS.Motion.quick) { _ = expandedMerged.insert(r.key) }
-        } label: { mergedRowLabel(r, mergedLabel) }
-        .buttonStyle(PlainButtonStyle())
-        .accessibilityLabel(mergedA11y)
-        .accessibilityHint(mergedHint)
-    }
 
     /// 单条: 左时间列 + 时间轴(圆点与连线) + 事件文案
     /// 738 告警行: 左侧 3pt danger 色条 + danger 8% 浅底 (菱形警示点形状冗余);
@@ -1314,8 +1248,6 @@ struct RecordsView: View {
                 }
                 // 184 开门方式图标: fp 指纹 / pwd 数字 / temp 一次性 / key 钥匙
                 kindIcon(r)
-                // 183 成员色点: 可证明归属才显示 (成员档案色, 6pt 圆点)
-                memberDot(r)
                 rowTitle(r)
                     .padding(.top, 1)
                 // 591 行内次序注释: 只在第 2 次及以后写 —— "今天第一次"是废话，天天写等于没写。
@@ -1607,15 +1539,6 @@ struct RecordsView: View {
     }
     /// 183 成员色点: 可证明归属才显示 (成员档案色, 6pt 圆点)
     @ViewBuilder
-    private func memberDot(_ r: RowVM) -> some View {
-        if let id = r.whoId, !id.isEmpty, let m = DB.member(id) {
-            Circle()
-                .fill(memberColor(m))
-                .frame(width: 6, height: 6)
-                .padding(.top, 12)
-                .accessibilityLabel("成员 " + m.name + " 的色点")
-        }
-    }
     /// 183 成员色 (走成员档案 hex, 与安全中心同一纪律（该页已删，纪律沿用）)
     private func memberColor(_ m: Member) -> Color {
         var s = m.color
@@ -1973,8 +1896,6 @@ struct RecordsView: View {
                              credKey: Self.credNav(kind: c.kind, who: whoName, pwds: pwds, fps: fps),
                              warn: warn, claim: claimable, care: care))
         }
-        // 592 连击合并: 同日同类型连续 ≥3 条折叠为 "连续 N 次"
-        out = mergeConsecutive(out)
         allRows = out
         applyFilter()
     }
@@ -1991,37 +1912,6 @@ struct RecordsView: View {
             break
         }
         return ""
-    }
-    /// 592 连击合并 (口径已收严): **同一凭证**在同一分钟内连续 ≥3 条非告警行 → 首行挂 mergedTail, 可点展开。
-    /// 为什么收严: 旧口径只按「同日同 kind」，会把不同指纹、相隔几小时的两组开门折成一行「连续 N 次」，
-    /// 那是把两件事说成一件。窗口用**显示到分钟的时刻串**相等来表达 —— 同一分钟 ⇒ 真实间隔必 < 60s，
-    /// 只会**少合并**（10:03:59 与 10:04:00 算两行），不会把超过 60 秒的两行并起来。
-    private func mergeConsecutive(_ list: [RowVM]) -> [RowVM] {
-        var out = [RowVM]()
-        var run = [RowVM]()
-        func flush() {
-            if run.count >= 3, let f = run.first, f.kind != nil, !f.warn, !f.credKey.isEmpty,
-               run.allSatisfy({ $0.dayKey == f.dayKey && $0.kind == f.kind && !$0.warn
-                                 && $0.credKey == f.credKey && $0.time == f.time }) {
-                var head = f
-                head.mergedTail = Array(run.dropFirst())
-                out.append(head)
-            } else {
-                out.append(contentsOf: run)
-            }
-            run = []
-        }
-        for r in list {
-            if let f = run.last, r.kind == f.kind, r.dayKey == f.dayKey, !r.warn, !f.warn, r.key != f.key,
-               !r.credKey.isEmpty, r.credKey == f.credKey, r.time == f.time {
-                run.append(r)
-            } else {
-                flush()
-                run = [r]
-            }
-        }
-        flush()
-        return out
     }
 
     /// 这一处原本自建 DateFormatter 且**没钉 `en_US_POSIX`**：用户在「设置 → 语言与地区 → 历法」
@@ -2226,7 +2116,6 @@ struct RecordsView: View {
                              winText: winMap[RecordOverlay.oid(mac: r.mac, rowKey: r.key)] ?? "",
                              warn: r.alarm, claim: false, care: r.care)
             }
-            pool = mergeConsecutive(pool)
         }
         // 593 日界收尾的可核口径: 一天的**条数**与**最晚时刻**都取自上面这份还没被筛选、没被 598 截断的行池。
         // 组尾那句原文是「当日最晚 23:47 · 全天 N 条」—— 它说的是这一天, 不是"这一天还剩几行给我看"。
@@ -2235,7 +2124,7 @@ struct RecordsView: View {
         var dayEndBy: [String: String] = [:]
         for r in pool {
             // 592 折起来的尾行也属于这一天: 条数连尾一起数。
-            dayCount[r.dayKey, default: 0] += 1 + r.mergedTail.count
+            dayCount[r.dayKey, default: 0] += 1
             // 最晚时刻 = 这一天在池里**第一次出现**的那一行 —— 行池本身就是按锁端时刻倒序排好的
             // (render 与 buildRecs 各排一次, 用的都是 "yyyy-MM-dd HH:mm:ss" 串序 = 时间序, 跨年也成立;
             //  下面"按天分组: 日志本身已是时间倒序, 保持首现顺序即可"吃的是同一条前提)。

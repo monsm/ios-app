@@ -1101,8 +1101,6 @@ struct CredentialsView: View {
                 p.temp ? "一次性" : "",
                 p.at > 0 ? "添加于 " + shortDate(p.at) : "",
                 "",
-                // 331 设过本机提前量时按本机尺读数并标注, 没设与原来完全同值
-                CredentialOrg.listCountdown(mac, p, now),
                 !p.note.isEmpty ? "备注 \(p.note)" : ""
             ].filter { !$0.isEmpty }.joined(separator: " · ")
         }

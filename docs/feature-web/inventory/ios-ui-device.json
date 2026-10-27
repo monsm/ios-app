@@ -4652,42 +4652,6 @@
       "status": "implemented"
     },
     {
-      "key": "settings.appearance.herostats",
-      "parentKey": "settings.appearance",
-      "domain": "settings",
-      "level": 3,
-      "name": "主控卡指标位 / 素颜模式 / 最近开门条数",
-      "kind": "setting",
-      "summary": "两枚 Toggle 控制 Hero 卡上固件位与锁钟位（电量不给关）＋「素颜模式」＋最近开门条数三档。",
-      "details": [
-        "指标位写 DS.HeroStats，电量刻意没有开关（它决定还能不能开锁）",
-        "素颜模式 kf_plain：关掉空态插画与其它纯装饰层，功能与数据不受影响",
-        "最近开门条数 kf_recent_count：3 / 5 / 10，默认 5"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 726,
-          "symbol": "VariantToggle(\"主控卡显示固件位\")"
-        },
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 734,
-          "symbol": "VariantToggle(\"素颜模式\")"
-        },
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 739,
-          "symbol": "Picker(\"最近开门条数\", selection:)"
-        }
-      ],
-      "tags": [
-        "设置",
-        "外观"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "settings.appearance.quickpool",
       "parentKey": "settings.appearance",
       "domain": "settings",

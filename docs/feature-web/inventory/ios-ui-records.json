@@ -325,53 +325,6 @@
       "status": "implemented"
     },
     {
-      "key": "record.list.merged",
-      "parentKey": "record.timeline",
-      "domain": "record",
-      "level": 4,
-      "name": "连击合并行（同一分钟 ≥3 次）",
-      "kind": "state",
-      "summary": "同一凭证、同一显示分钟、同一天、非告警、≤3 条以上连续行折叠成「同一分钟内 N 次」，点按展开明细。",
-      "details": [
-        "折叠条件（flush 判定）：run.count >= 3，kind 非空，无 warn，credKey 非空，且全部同 dayKey/kind/credKey/time",
-        "窗口用「显示到分钟的时刻串相等」表达 ⇒ 真实间隔必 <60s，只会少合并不会多合并",
-        "展开后首行 + mergedTail 逐条按普通行渲染，折叠状态存 expandedMerged（内存态）",
-        "合并行文案「<标题> · 同一分钟内 N 次」；读屏「连续 N 次: …, 点按展开」"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/RecordsView.swift",
-          "line": 2348,
-          "symbol": "mergeConsecutive",
-          "note": "合并算法与判据"
-        },
-        {
-          "file": "App/UI/RecordsView.swift",
-          "line": 1524,
-          "symbol": "mergedRow",
-          "note": "折叠行 UI 与展开动作"
-        },
-        {
-          "file": "App/UI/RecordsView.swift",
-          "line": 1347,
-          "symbol": "daySection",
-          "note": "expandedMerged 展开态渲染"
-        },
-        {
-          "file": "App/UI/RecordsView.swift",
-          "line": 2326,
-          "symbol": "render",
-          "note": "单锁路径也过合并"
-        }
-      ],
-      "tags": [
-        "记录",
-        "合并",
-        "阈值"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "record.list.marks",
       "parentKey": "record.timeline",
       "domain": "record",
@@ -512,46 +465,6 @@
         "记录",
         "凭证",
         "深链"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "record.list.memberDot",
-      "parentKey": "record.timeline",
-      "domain": "record",
-      "level": 4,
-      "name": "成员色点（可证明归属才显示）",
-      "kind": "data",
-      "summary": "行上 6pt 成员建档色圆点，只在 whoId 可解析到成员档案时出现；色值取成员 color hex，非法回退 accent。",
-      "details": [
-        "归属只算「可证明」：Attribution.classify 的结果 + 791 认领覆盖层（认领优先改写 whoId）",
-        "色值解析：去掉 # 后按 16 进制转 Color；失败回落 DS.Palette.accent",
-        "读屏补一句「成员 X 的色点」"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/RecordsView.swift",
-          "line": 1898,
-          "symbol": "memberDot",
-          "note": "6pt 圆点"
-        },
-        {
-          "file": "App/UI/RecordsView.swift",
-          "line": 1908,
-          "symbol": "memberColor",
-          "note": "hex → Color 与回退"
-        },
-        {
-          "file": "App/UI/RecordsView.swift",
-          "line": 2300,
-          "symbol": "render",
-          "note": "791 认领优先于推断"
-        }
-      ],
-      "tags": [
-        "记录",
-        "成员",
-        "归属"
       ],
       "status": "implemented"
     },
@@ -2309,45 +2222,6 @@
       "status": "implemented"
     },
     {
-      "key": "member.list.header",
-      "parentKey": "member.list",
-      "domain": "member",
-      "level": 4,
-      "name": "概览头（N 位成员 · M 条凭证）",
-      "kind": "state",
-      "summary": "列表顶部一行：首位成员头像 + 「共 N 位成员 · M 条凭证」+「活跃度按台账推断 (约)」说明。",
-      "details": [
-        "M = Σ MemberHub.activity(id).owns（名下密码+指纹条数）",
-        "成员为空时用占位 Member(id:\"g\", name:\"家\") 画头像，避免空视图",
-        "整行合并为一个读屏元素"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/MemberCenterView.swift",
-          "line": 139,
-          "symbol": "headerStat",
-          "note": "抬头统计"
-        },
-        {
-          "file": "App/UI/MemberCenterView.swift",
-          "line": 151,
-          "symbol": "headerStat",
-          "note": "文案「共 N 位成员 · M 条凭证」"
-        },
-        {
-          "file": "App/UI/MemberCenterView.swift",
-          "line": 148,
-          "symbol": "MemberAvatar(member: Member(id: \"g\"…))",
-          "note": "空列表占位头像"
-        }
-      ],
-      "tags": [
-        "成员",
-        "统计"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "member.list.row",
       "parentKey": "member.list",
       "domain": "member",
@@ -2397,47 +2271,6 @@
         "成员",
         "行",
         "角色"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "member.list.dupMerge",
-      "parentKey": "member.list",
-      "domain": "member",
-      "level": 4,
-      "name": "同名成员长按并入（462 快捷合并）",
-      "kind": "action",
-      "summary": "行上长按上下文菜单除「归档」外，若有同名成员则出现「并入「X」」：迁移凭证归属、迁移认领、删除本档。",
-      "details": [
-        "迁移范围：遍历所有锁，把 owner == 本档的密码/指纹改指目标档（DB.setPwdOwner / setFpOwner）",
-        "再 MemberHub.reassignClaims(from:to:) 迁移 791 认领，最后 DB.removeMember(member.id)",
-        "无二次确认（长按菜单直接执行，破坏性但会迁走凭证）；详细合并流程见 member.merge",
-        "合并后 tick+1 重建行"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/MemberCenterView.swift",
-          "line": 404,
-          "symbol": "MemberRow.contextMenu",
-          "note": "「并入「X」」菜单项"
-        },
-        {
-          "file": "App/UI/MemberCenterView.swift",
-          "line": 412,
-          "symbol": "mergeInto",
-          "note": "迁移与删除"
-        },
-        {
-          "file": "App/UI/MemberCenterView.swift",
-          "line": 421,
-          "symbol": "MemberHub.reassignClaims",
-          "note": "认领迁移"
-        }
-      ],
-      "tags": [
-        "成员",
-        "合并",
-        "破坏性"
       ],
       "status": "implemented"
     },
@@ -2631,52 +2464,6 @@
       "tags": [
         "成员",
         "家庭场景"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "member.list.menu",
-      "parentKey": "member.center",
-      "domain": "member",
-      "level": 4,
-      "name": "成员中心右上菜单（排序/分组/家庭设置/导出名册）",
-      "kind": "action",
-      "summary": "ellipsis 菜单四项：排序 Picker（inline 四档）、分组标签、成员家庭设置、导出成员名册。",
-      "details": [
-        "排序 Picker 四档标签：「添加时间 / 姓名 / 最近开门时间 (约) / 近 30 天开门次数 (约)」",
-        "「成员家庭设置」按 sheet 弹出（不走切 Tab；它自带 NavigationStack + 保存），旧写法切 Tab 是空转",
-        "「导出成员名册」点击时先 ExportKit.writeRoster() 生成再开 sheet（ShareLink 需渲染期就有 URL）",
-        "按钮补 44pt 触达（自绘 label）"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/MemberCenterView.swift",
-          "line": 56,
-          "symbol": "toolbar",
-          "note": "菜单四项"
-        },
-        {
-          "file": "App/UI/MemberCenterView.swift",
-          "line": 58,
-          "symbol": "Picker(\"排序\")",
-          "note": "四档标签"
-        },
-        {
-          "file": "App/UI/MemberCenterView.swift",
-          "line": 66,
-          "symbol": "showFamilySettings = true",
-          "note": "家庭设置 sheet 而非切 Tab"
-        },
-        {
-          "file": "App/UI/MemberCenterView.swift",
-          "line": 67,
-          "symbol": "ExportKit.writeRoster()",
-          "note": "按需生成名册"
-        }
-      ],
-      "tags": [
-        "成员",
-        "菜单"
       ],
       "status": "implemented"
     },

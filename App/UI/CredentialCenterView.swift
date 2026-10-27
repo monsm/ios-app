@@ -252,7 +252,6 @@ struct CredDisableSheet: View {
     }
 
     private var pwdsLines: [String] {
-        DB.getPwdList(pwdAliases, mac).prefix(6).map { "#\($0.alias) · \(CredentialOrg.countdown($0))" }
     }
     private var fpLines: [String] {
         DB.getFpList(fpBatches, mac).prefix(6).map { "「\($0.name)」" }

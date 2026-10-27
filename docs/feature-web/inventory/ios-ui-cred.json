@@ -2695,43 +2695,6 @@
       "status": "implemented"
     },
     {
-      "key": "credential.tempcode.scene",
-      "parentKey": "credential.tempcode",
-      "domain": "credential",
-      "level": 3,
-      "name": "五场景预设",
-      "kind": "setting",
-      "summary": "搬家/维修/家政/访客/装修五个场景，点一下同时套默认时长与备注。",
-      "details": [
-        "五档定义：搬家 24h「搬家公司·大门·当天」、维修 6h、家政 4h、访客 8h、装修 720h「装修组·工地·整月」(146-152)",
-        "点选：scene=key、from=now、to=now+hours*3600，备注为空时填场景备注，tick 触感 (1536-1542)",
-        "芯片显示名称 + 提示（如「整月 · 长期工」），选中反色 (1543-1565)",
-        "装修场景额外黄条「长期工场景: 详情页挂「施工中」黄条, 建议 30 天内复查一次」(1476-1481)"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialStudio.swift",
-          "line": 146,
-          "symbol": "StudioTools.scenes"
-        },
-        {
-          "file": "App/UI/CredentialStudio.swift",
-          "line": 1536,
-          "symbol": "sceneChip"
-        },
-        {
-          "file": "App/UI/CredentialStudio.swift",
-          "line": 1476,
-          "symbol": "addForm",
-          "note": "装修黄条"
-        }
-      ],
-      "tags": [
-        "场景"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "credential.tempcode.value",
       "parentKey": "credential.tempcode",
       "domain": "credential",
@@ -2887,47 +2850,6 @@
       "tags": [
         "锁端读写",
         "批量"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "credential.tempcode.done",
-      "parentKey": "credential.tempcode",
-      "domain": "credential",
-      "level": 3,
-      "name": "完成页口述卡（172/329/333）",
-      "kind": "screen",
-      "summary": "下发成功后的口述卡：默认遮半码值、可完整显示/复制/分享，再给一句话口令与首次使用回执。",
-      "details": [
-        "CodeBigCard：标题「锁名 · 临时码」，窗口「生效 … ~ …」，默认 SecurityPolicy.halfMasked，「完整显示」才露全码，贴近面部自动复遮 (1589-1592, 359-444)",
-        "复制按当前真状态：遮半时复制遮半值并提示「完整值先点「完整显示」」；分享载荷同屏上状态 (404-416, 439-443)",
-        "长辈模式：完成页=口述卡 + 一枚大「完成」，标题也变「口述卡」(1593-1598, 1315)",
-        "一句话口令「密码是 XXXX，明天 18:00 下午前有效（锁名）」可复制/分享；时段判断按 12~18 点说「下午前有效」(1600-1639, 38-50)",
-        "首用回执：firstUse 有值 → 「约在 … 有人用它开过门」，否则「等待首次使用」（按时间窗推断，标「约」）(1641-1667)",
-        "「再发一张」清 result、换一枚新 6 位码、清备注 (1669-1675)"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialStudio.swift",
-          "line": 1586,
-          "symbol": "doneCard"
-        },
-        {
-          "file": "App/UI/CredentialStudio.swift",
-          "line": 1589,
-          "symbol": "doneCard",
-          "note": "CodeBigCard"
-        },
-        {
-          "file": "App/UI/CredentialStudio.swift",
-          "line": 1600,
-          "symbol": "doneCard",
-          "note": "一句话口令"
-        }
-      ],
-      "tags": [
-        "分享",
-        "安全"
       ],
       "status": "implemented"
     },

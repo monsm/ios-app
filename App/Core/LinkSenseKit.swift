@@ -406,43 +406,8 @@ final class LinkSense: ObservableObject {
         return FailKind(name: "协议类", hint: "会话/指令异常 — 到诊断页跑一键体检, 或重置重配该锁")
     }
 
-    /// 124 占用类保守文案: 协议 rc 未确证占用细分 (DEFERRED 备案), 不虚构错误码语义。
-    static func occupationHint() -> String {
-        "连接可能正被占用 (如另一台手机刚连过) — 稍候 1–2 分钟再试 (占用细分未确证, 保守文案)"
-    }
 
-    // ---------- 70 连接成功率: 样本不足显示"积累中"占位 ----------
-    static func successRateText(mac: String) -> String {
-        let list = BleTelemetry.attempts.filter { $0.mac == mac }
-        guard list.count >= 10 else { return "积累中 (\(list.count)/10)" }
-        let ok = list.filter { $0.ok }.count
-        return "成功率 \(Int(Double(ok) * 100 / Double(list.count)))% (\(list.count) 次)"
-    }
 
-    /// 539 高成功率时段: 从真实留存的连接尝试 (kf_conn_attempts) 按小时分桶算成功率。
-    /// 口径与 DiagKit.successRate() 同源 (全部留存, 上限 300 条)，不假装是滚动 7 天。
-    /// 每桶至少 10 次、总样本至少 30 次才给结论 —— 样本不够时说"积累中"，不编时段。
-    static func bestHourHint() -> String {
-        let a = BleTelemetry.attempts
-        guard a.count >= 30 else { return "时段统计积累中 (\(a.count)/30) — 每次连接结果都记在本地, 攒够才给结论" }
-        // ConnAttempt.t 形如 "MM-dd HH:mm:ss" (DiagKit 写入时就是本地串) ⇒ 直接截小时, 不再过一次历法
-        var n = [Int: Int](), ok = [Int: Int]()
-        for e in a {
-            guard e.t.count >= 10, let h = Int(e.t.dropFirst(6).prefix(2)) else { continue }
-            n[h, default: 0] += 1
-            if e.ok { ok[h, default: 0] += 1 }
-        }
-        let buckets = n.keys.filter { (n[$0] ?? 0) >= 10 }
-        guard !buckets.isEmpty else { return "各小时样本都还不够 (单时段需 ≥10 次) — 现有 \(a.count) 次连接记录" }
-        let best = buckets.max { lhs, rhs in
-            let pl = Double(ok[lhs, default: 0]) / Double(n[lhs] ?? 1)
-            let pr = Double(ok[rhs, default: 0]) / Double(n[rhs] ?? 1)
-            if pl == pr { return (n[lhs] ?? 0) < (n[rhs] ?? 0) }
-            return pl < pr
-        }!
-        let pct = Int(Double(ok[best, default: 0]) * 100 / Double(n[best] ?? 1))
-        return "成功率最高的时段: \(best) 时前后 (\(pct)% · \(n[best] ?? 0) 次样本)"
-    }
 
     // ---------- 扫描取 RSSI (63/71 数据源) ----------
     func scan(mac: String, timeoutMs: Int = 6000) async throws -> BLEAdvDevice? {
@@ -554,15 +519,6 @@ final class LinkSense: ObservableObject {
     var holdMinutes: Int {
         sessionSince.map { Int(Date().timeIntervalSince($0) / 60) } ?? 0
     }
-    /// 270/129 弱信号提示: 骤降优先 (基准 = 上次不同的读数), 否则走绝对值门槛 (Hero 卡提示条)
-    var weakSignalHint: String? {
-        guard let r = lastRssi else { return nil }
-        if let p = prevRssi, p - r >= 12 {
-            return "信号骤降 (\(p) → \(r)) — 建议走近门锁"
-        }
-        guard r < -75 else { return nil }
-        return "信号在变差 (RSSI \(r)) — 建议走近门锁"
-    }
 
     // ---------- 268 状态变化历史: 最近 5 次链路三态切换 (长按胶囊时间线) ----------
     struct StateHop: Codable { let at: String; let to: String }
@@ -654,8 +610,6 @@ struct LinkPrefsView: View {
                 LabeledRow("连接偏好记忆", "每锁 kf_link_auto_ 偏好 + rssiFor 实读; 扫描强度档走全局")
             }
             Section("连接统计") {
-                LabeledRow("连接成功率", LinkSense.successRateText(mac: mac))   // 70 连接成功率
-                LabeledRow("高成功率时段", LinkSense.bestHourHint())   // 539 高成功率时段
             }
         }
         .navigationTitle("连接与预握手")
@@ -766,50 +720,7 @@ struct LinkPill: View {
     }
 }
 
-/// 67 握手耗时标签 (hero 上的胶囊): 最近一次连接 ms, 超 2 秒标黄。
-struct ConnectMsBadge: View {
-    var ms: Int?
-    var body: some View {
-        if let ms {
-            Label(String(ms) + "ms", systemImage: "stopwatch")
-                .vkFont(.caption2, weight: .medium)
-                // 淡黄/纯白都必须坐在压暗底板上: 裸压主题渐变最亮端实测只有 3.95:1 与 3.89:1
-                .foregroundStyle(ms >= 2000 ? DS.heroTint(Color(hex: 0xFFE9A8)) : DS.heroFg.opacity(0.85))
-                .padding(.horizontal, DS.Space.s)
-                .padding(.vertical, 2)
-                .background(DS.heroPlate, in: Capsule())
-                .accessibilityLabel("最近一次连接耗时 " + String(ms) + " 毫秒")
-        }
-    }
-}
 
-/// 126 回连节律点阵: 5/15/30/60/90 五轮, 高亮当前轮; 0 轮时整排灰 = 待命。
-struct ReconnectDots: View {
-    var attempt: Int
-    var nextWait: Int
-    var body: some View {
-        HStack(spacing: DS.Space.xs) {
-            ForEach(0..<5, id: \.self) { i in
-                Circle()
-                    .fill(fill(i))
-                    .frame(width: 7, height: 7)
-                    .accessibilityHidden(true)
-            }
-            Text(attempt > 0 ? "回连第 \(attempt) 轮 · 下一轮等 \(nextWait) 秒"
-                 : "失联后自动回连 (5/15/30/60/90 秒)")
-                .vkFont(.caption2)
-                .foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("回连节律 " + (attempt > 0 ? "第 \(attempt) 轮, 下一轮等 \(nextWait) 秒" : "待命"))
-    }
-    private func fill(_ i: Int) -> Color {
-        if attempt > 0 && i < attempt { return DS.Palette.accent }
-        if attempt > 0 && i == attempt - 1 { return DS.Palette.warn }
-        return DS.Palette.hairline
-    }
-}
 
 /// 136 跨页全局 BLE 状态细条: 非设备 Tab 顶部 2pt 语义细线 + 状态行, 点按跳回设备页。
 struct BLEStrip: View {

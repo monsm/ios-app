@@ -742,7 +742,6 @@ struct DeviceHomeView: View {
                                 .accessibilityLabel(isCurrent
                                     ? (sense.lastRssi.map { "信号 \($0) dBm, 轻点显示数值" } ?? "信号未读到")   // 63 信号
                                     : "信号")
-                            ConnectMsBadge(ms: sense.connectMs)
                             // 268 状态变化历史: 长按胶囊弹出最近 5 次三态切换时间列表
                             .contextMenu {
                                 Menu("最近状态变化") {   // 268 最近状态变化
@@ -890,7 +889,6 @@ struct DeviceHomeView: View {
                     }
                     // 126 回连节律点阵 (仅在有回连轮次时出现)
                     if state == .down, sense.reconnectAttempt > 0 {
-                        ReconnectDots(attempt: sense.reconnectAttempt, nextWait: nextLadderWait)
                     }
                 }
             }
@@ -916,10 +914,7 @@ struct DeviceHomeView: View {
         if state == .down, let last = lastWakeFail {
             rows.append(("唤醒失败 · \(last.name) — \(last.hint)", last.icon, "danger", false))
         }
-        // 270/129 信号骤降预警: 最近 RSSI 走弱时建议靠近
-        if let w = sense.weakSignalHint {
-            rows.append((w, "antenna.radiowaves.left.and.right", "warn", false))
-        }
+        // 2026-10-27 四轮精简：弱信号提示已删（weakSignalHint 移除）。
         // 272 连接保持时长: 挂起过久提示重连
         if state == .ready, sense.holdMinutes >= 30 {
             rows.append(("连接已保持 \(sense.holdMinutes) 分钟 — 偏久, 可点刷新重连", "timer", "sub", false))   // 272 连接已保持
@@ -951,7 +946,6 @@ struct DeviceHomeView: View {
             return LinkSense.FailKind(name: "蓝牙未开", hint: "打开系统蓝牙后会自动重连")
         }
         if ev.what.contains("协议类") || ev.what.contains("会话重协商失败") {
-            return LinkSense.FailKind(name: "占用类", hint: LinkSense.occupationHint())
         }
         return LinkSense.FailKind(name: "不在广播范围", hint: "走到门锁旁 1 米内再试")
     }

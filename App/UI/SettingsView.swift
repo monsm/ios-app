@@ -742,11 +742,7 @@ struct SettingsView: View {
                 get: { DS.HeroStats.shows("lockclock") },
                 set: { v in app.setHeroStats(DS.HeroStats.all.filter { $0 != "lockclock" || v }) }))
             note("主控卡上那几个小位要显示哪几个；电量不给关。")
-            // 素颜模式 (idea 1046): 关掉空态装饰图形与礼花一类纯装饰层
-            VariantToggle("素颜模式", isOn: Binding(
-                get: { DB.store.getBool("kf_plain") },
-                set: { DB.store.set("kf_plain", $0) }))
-            note("关掉空态插画与其它纯装饰层；功能与数据一律不受影响。")
+            // 2026-10-27 四轮精简：素颜模式已删。
             // 最近开门条数 (idea 910): 设备页时间线长度
             Picker("最近开门条数", selection: Binding(
                 get: { DB.store.getInt("kf_recent_count", 5) },
@@ -773,14 +769,7 @@ struct SettingsView: View {
                     .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            // 895 "儿童友好"预设：不叫"儿童模式"——本 App 没有内容分级，名字暗示过滤就是虚假承诺
-            Button("套用儿童友好外观预设") { app.applyFriendlyPreset() }   // 895 套用儿童友好外观预设
-                .vkFont(.callout)
-                .foregroundStyle(DS.Palette.accentText)
-            Text("一次把品牌色、圆角、密度、凭证行高、动效与纹理推到「看得清、点得准、不闹」的组合；"
-                 + "只改外观，不过滤内容，任何一档之后都能单独改回。")
-                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
+            // 2026-10-27 四轮精简：儿童友好外观预设入口已删。
             // 记录页开场过滤策略 (908): 盖在 192"按锁记住上次过滤"之上的一层开场规则。
             // 措辞刻意避开"清除/删除"—— 三种策略都**不删**已存的会话过滤，只是决定进页面时从哪开始。
             Picker("记录页开场过滤", selection: Binding(
@@ -879,7 +868,7 @@ struct SettingsView: View {
 
     private func resetAppearance() {
         confirmDestructive("恢复默认外观",
-                          "将主题、品牌色、布局密度、圆角、高对比皮肤、周起始日、凭证行高、时间线行距、指标位、纹理与每日一句话重置为默认值（素颜模式与 App 图标不动），不影响任何门锁数据。确定恢复吗？",
+                          "将主题、品牌色、布局密度、圆角、高对比皮肤、周起始日、凭证行高、时间线行距、指标位、纹理与每日一句话重置为默认值）。，不影响任何门锁数据。确定恢复吗？",
                           confirmTitle: "恢复默认") {
             app.resetAppearance()
             app.showToast("已恢复默认外观")

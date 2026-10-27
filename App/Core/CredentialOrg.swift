@@ -621,17 +621,6 @@ enum CredentialOrg {
     static func fpAlarmLogCount(_ mac: String) -> Int {
         DB.readLogs(mac).filter { $0.type == 13 }.count
     }
-    /// 326/335 计次退役与用量刻度: 锁端**无计次字段**, 所以这里数的是"这条凭证自己的时间窗里
-    /// 本地开门日志 (type4) 有几条" —— 不是锁报过的用量, 也不保证每一条都真用它开过门
-    /// (CAPABILITY §3: 日志无凭证身份字段)。UI 小字与这句同一口径: 按本地开门日志时间窗推断。
-    static func usageCount(_ mac: String, p: LedgerPwd) -> Int {
-        guard let f = parseLocal(p.from), let to = parseLocal(p.to) else { return 0 }
-        return DB.readLogs(mac).filter { log in
-            guard log.type == 4 else { return false }
-            let t = ZKProtocol.protoSecondsToUnix(Int64(log.lockTime))
-            return f.timeIntervalSince1970 <= t && t <= to.timeIntervalSince1970
-        }.count
-    }
 
     // ---------- 315/174 指纹命名建议轮播 ----------
     /// 按该成员已录数量给 "成员·手指 (N)" 式建议; 手指序 食指→中指→备用→应急 循环 (315/174)
@@ -735,35 +724,6 @@ enum CredentialOrg {
         if who.isEmpty { who = "未归属" }
         if where_.isEmpty { where_ = "大门" }
         return [who, where_, when].joined(separator: "-")
-    }
-    /// 12 到期倒计时胶囊 (长期显示 "长期有效")
-    static func countdown(_ p: LedgerPwd) -> String {
-        guard let to = expiryDate(p) else { return "长期有效" }
-        let d = to.timeIntervalSinceNow
-        let day = Int(d / 86400)
-        if d <= 0 { return "已过期 \(max(-day, 0)) 天" }
-        if day >= 1 { return "剩 \(day) 天" }
-        let h = Int(d / 3600)
-        if h >= 1 { return "剩 \(h) 小时" }
-        return "剩 \(Int(d / 60)) 分钟"
-    }
-    /// 331 列表侧倒计时: 设过本机提前量时改按 effectiveExpiry 这把本机尺读数, 并标 "(本机提前)";
-    /// 没设就与 countdown 完全同值 (不吹一件没设过的事)。now 由调用方给一次, 与同行"提前失效"胶囊同帧同判据。
-    /// 越线但锁端未到期时如实说"锁端未到" —— 提示不是指令, 锁端没被改过。
-    static func listCountdown(_ mac: String, _ p: LedgerPwd, _ now: Date) -> String {
-        guard earlyExpireMin(mac, p.alias) > 0, let e = effectiveExpiry(mac, p) else {
-            return countdown(p)
-        }
-        let d = e.timeIntervalSince(now)
-        if d <= 0 {
-            // 锁端也已过期时按锁端事实报 —— 提前线在先, 更硬的事实在锁端
-            return now >= (expiryDate(p) ?? e) ? countdown(p) : "已过本机提前线 (锁端未到)"
-        }
-        let day = Int(d / 86400)
-        if day >= 1 { return "剩 \(day) 天 (本机提前)" }
-        let h = Int(d / 3600)
-        if h >= 1 { return "剩 \(h) 小时 (本机提前)" }
-        return "剩 \(Int(d / 60)) 分钟 (本机提前)"
     }
     static func stateLabel(_ s: Int) -> String {
         switch s {

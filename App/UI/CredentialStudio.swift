@@ -55,22 +55,7 @@ enum StudioTools {
         let f = DateFormatter(); f.dateFormat = "M月d日"
         return f.string(from: d)
     }
-    struct SceneDef: Identifiable {
-        let key: String
-        let name: String
-        let hint: String
-        let hours: Int
-        let note: String
-        var id: String { key }
-    }
-    /// 325 五场景预设: 选中即套默认时长与备注占位 (179)
-    static let scenes: [SceneDef] = [
-        SceneDef(key: "move", name: "搬家", hint: "1 天 · 单张", hours: 24, note: "搬家公司·大门·当天"),
-        SceneDef(key: "repair", name: "维修", hint: "半天 · 含复查", hours: 6, note: "维修师傅·待修项·半天"),
-        SceneDef(key: "cleaning", name: "家政", hint: "4 小时 · 单场", hours: 4, note: "钟点工·上午场·4小时"),
-        SceneDef(key: "guest", name: "访客", hint: "今晚 10 点前", hours: 8, note: "访客·今晚·10点前"),
-        SceneDef(key: "reno", name: "装修", hint: "整月 · 长期工", hours: 720, note: "装修组·工地·整月")   // 330 装修组
-    ]
+    // 2026-10-27 四轮精简：五场景预设已删。
 }
 
 // ================= 共享小组件 =================
@@ -288,13 +273,6 @@ struct CodeBigCard: View {
                 .vkFont(.caption)
                 .frame(minHeight: DS.Hit.min)
                 .accessibilityLabel("复制码值")
-                ShareLink(item: shareText) {
-                    Label("分享口述卡", systemImage: "square.and.arrow.up")
-                }
-                .buttonStyle(.bordered)
-                .vkFont(.caption)
-                .frame(minHeight: DS.Hit.min)
-                .accessibilityLabel("分享口述卡")
             }
             let foot = extraFoot.isEmpty ? "大字号方便对准锁键盘输入; 本卡含密码, 拍照或分享后注意保管。" : extraFoot
             Text(foot)
@@ -312,11 +290,6 @@ struct CodeBigCard: View {
         .shadow(color: DS.Palette.accent.opacity(0.14), radius: 10, y: 5)
         .padding(.horizontal, DS.Space.gutter)
         .accessibilityElement(children: .combine)
-    }
-    private var shareText: String {
-        // 376: 分享载荷与屏上显示同一真状态 —— 没点「完整显示」前, 分享出去的也是遮半值。
-        let shown = revealed ? code : SecurityPolicy.halfMasked(code)
-        return [title, "码值 \(shown)", window, "备注 \(note)"].filter { !$0.isEmpty }.joined(separator: "\n")
     }
 }
 
@@ -1148,7 +1121,6 @@ struct PwdStudio: View {
 struct TempCodeStudio: View {
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
-    @State private var scene = ""
     @State private var pwd = ""
     @State private var batchCount = 1      // 178 批量临时码
     @State private var from = Date()
@@ -1162,9 +1134,6 @@ struct TempCodeStudio: View {
     private var mac: String { app.current?.mac ?? "" }
     private var lockName: String { app.displayName }
     private var pwdOK: Bool { pwd.count >= 6 && pwd.count <= 8 && pwd.allSatisfy { $0.isNumber } }
-    private var sceneNote: String {
-        StudioTools.scenes.first { $0.key == scene }?.note ?? ""
-    }
     /// 327 租期重叠: 与同成员其它时间窗临时码的撞车
     private var overlaps: [LedgerPwd] {
         CredentialOrg.overlapWindows(mac, from: iso(from), to: iso(to), owner: owner, excluding: -1)
@@ -1174,7 +1143,7 @@ struct TempCodeStudio: View {
         NavigationStack {
             if result == nil { addForm } else { doneCard }
         }
-        .navigationTitle(result != nil && MemberHub.elderMode ? "口述卡" : "临时码")
+        .navigationTitle("临时码")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }
     }
@@ -1183,18 +1152,7 @@ struct TempCodeStudio: View {
     private var addForm: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DS.Space.l) {
-                // 325 五场景预设
-                VStack(alignment: .leading, spacing: DS.Space.xs) {
-                    Text("场景预设 (选中即套默认时长与备注)")
-                        .vkFont(.footnote, weight: .semibold)
-                        .foregroundStyle(DS.Palette.text)
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: DS.Space.xs)], spacing: DS.Space.xs) {
-                        ForEach(StudioTools.scenes) { s in
-                            sceneChip(s)
-                        }
-                    }
-                }
-                .card()
+                // 2026-10-27 四轮精简：五场景预设已删。
 
                 // 码值 (301 剪贴板即建 + 303 回显 + 173 生成 + 522 扫号 + 516 数字键盘)
                 VStack(alignment: .leading, spacing: DS.Space.xs) {
@@ -1371,7 +1329,7 @@ struct TempCodeStudio: View {
                         .accessibilityLabel("归属 " + m.name + (owner == m.id ? ", 已选" : ""))
                     }
                     TextField("给谁 · 哪扇门 · 用多久 (可长按调听写)", text: $note,
-                              prompt: Text(scene.isEmpty ? "如: 钟点工·大门·仅上午场" : sceneNote))
+                              prompt: Text("如: 钟点工·大门·仅上午场"))
                         .vkFont(.subheadline)
                         .frame(minHeight: DS.Hit.min)
                         .autocorrectionDisabled()
@@ -1395,37 +1353,6 @@ struct TempCodeStudio: View {
         .onAppear { checkClipboard() }
     }
 
-    private func sceneChip(_ s: StudioTools.SceneDef) -> some View {
-        Button {
-            scene = s.key
-            from = Date()
-            to = Date().addingTimeInterval(TimeInterval(s.hours * 3600))
-            if note.isEmpty { note = s.note }
-            DS.Haptics.tick.impactOccurred()
-        } label: {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(s.name)
-                    .vkFont(.footnote, weight: .semibold)
-                    .lineLimit(1)
-                Text(s.hint)
-                    .vkFont(.caption2)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, DS.Space.s)
-            .padding(.vertical, DS.Space.xs + 2)
-            .foregroundStyle(scene == s.key ? DS.Palette.onAccent : DS.Palette.text)
-            .background(scene == s.key ? DS.Palette.accent : DS.Palette.surfaceAlt,
-                        in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
-            .frame(minHeight: DS.Hit.min)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("场景 \(s.name): \(s.hint)")   // 325 场景
-        .accessibilityAddTraits(scene == s.key ? [.isSelected] : [])
-    }
     private func quickPill(_ t: String, _ act: @escaping () -> Void) -> some View {
         Button {
             act()
@@ -1567,7 +1494,6 @@ struct PwdDetailStudio: View {
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
     let alias: Int
-    @State private var showCard = false
     @State private var renewing = false
     @State private var copiedFlash = false   // 11 复制按钮形变
     private var mac: String { app.current?.mac ?? "" }
@@ -1754,28 +1680,7 @@ struct PwdDetailStudio: View {
                         }
                         .listRowBackground(DS.Palette.warn.opacity(0.08))
                     }
-                    // 335 线性用量刻度 (⚠ 锁端无计次字段, 数的是本地开门日志落在这条时间窗里的条数)
-                    if p.temp {
-                        Section("用量 (约)") {
-                            let u = CredentialOrg.usageCount(mac, p: p)
-                            HStack(spacing: DS.Space.s) {
-                                HStack(spacing: DS.Space.xs) {
-                                    ForEach(0..<8, id: \.self) { i in
-                                        Capsule()
-                                            .fill(i < min(u, 8) ? DS.Palette.accent : DS.Palette.surfaceAlt)
-                                            .frame(width: 14, height: 5)
-                                    }
-                                }
-                                Text(u > 0 ? "约 \(u) 条 (按本地开门日志时间窗推断, 锁端无计次字段)" : "无 (按本地开门日志时间窗推断)")
-                                    .vkFont(.caption2)
-                                    .foregroundStyle(DS.Palette.textSub)
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.8)
-                                Spacer(minLength: 0)
-                            }
-                            .accessibilityLabel("用量刻度, 按本地开门日志时间窗推断约 \(u) 条")   // 326/335 用量刻度
-                        }
-                    }
+                    // 2026-10-27 四轮精简：用量刻度已删。
                     // 332 原码续期 (⚠ 过期码是否留存锁端未确证: 本地沿用原值改期 + 入队兜底, 标"约")
                     if p.temp, CredentialOrg.pwdState(p) == 2, p.pwd != nil {
                         Section {
@@ -1790,8 +1695,7 @@ struct PwdDetailStudio: View {
                     }
                     Section("时段与归属") {
                         // 331: 状态行同步标注本机的提前失效档 (没设提前量时 earlyExpiryNote 回空串, 不说空话)
-                        row("状态", CredentialOrg.stateLabel(CredentialOrg.pwdState(p)) + " · "
-                            + CredentialOrg.countdown(p) + CredentialOrg.earlyExpiryNote(mac, p))
+                        row("状态", CredentialOrg.stateLabel(CredentialOrg.pwdState(p)) + CredentialOrg.earlyExpiryNote(mac, p))
                         row("归属", CredentialOrg.ownerName(p.owner).isEmpty ? "未归属" : CredentialOrg.ownerName(p.owner))
                         row("备注", p.note.isEmpty ? "无" : p.note)
                     }
@@ -1822,11 +1726,6 @@ struct PwdDetailStudio: View {
                         .vkFont(.subheadline)
                         .foregroundStyle(DS.Palette.accentText)
                         if p.pwd != nil {
-                            Button {
-                                showCard = true
-                            } label: {
-                                Label("生成口述卡", systemImage: "rectangle.portrait")   // 172/328 生成口述卡
-                            }
                             .vkFont(.subheadline)
                             .foregroundStyle(DS.Palette.accentText)
                         }
@@ -1838,25 +1737,7 @@ struct PwdDetailStudio: View {
                 .toolbar { ToolbarItem(placement: .navigationBarLeading) {
                     Button("关闭") { dismiss() }
                 } }
-                .sheet(isPresented: $showCard) {
-                    if let v = p.pwd {
-                        NavigationStack {
-                            ScrollView {
-                                CodeBigCard(title: "\(app.displayName) · " + CredentialOrg.displayPwd(p),
-                                            code: v,
-                                            window: p.temp ? "\(isoText(p.from)) ~ \(isoText(p.to)) 生效" : "长期有效",
-                                            note: p.note)
-                                Spacer(minLength: 0)
-                            }
-                            .dsScreenBackground()
-                            .navigationTitle("口述卡")
-                            .navigationBarTitleDisplayMode(.inline)
-                            .toolbar { ToolbarItem(placement: .navigationBarLeading) {
-                                Button("关闭") { showCard = false }
-                            } }
-                        }
-                    }
-                }
+        // 2026-10-27 四轮精简：口述卡 sheet 已删。
             }
         } else {
             EmptyState(systemImage: "key.slash", title: "凭证不存在", message: "这条凭证可能已被删除或移入回收站。")
@@ -2494,7 +2375,7 @@ struct CredStudioEntryView: View {
                     Text("凭证工坊")
                         .vkFont(.subheadline, weight: .semibold)
                         .foregroundStyle(DS.Palette.text)
-                    Text("添加 · 改造 · 口述卡 · OTP 独立口令")
+                    Text("添加 · 改造 · OTP 独立口令")
                         .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .lineLimit(1)

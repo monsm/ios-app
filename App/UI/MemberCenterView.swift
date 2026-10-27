@@ -35,7 +35,6 @@ struct MemberCenterView: View {
     var vkBody: some View {
         NavigationStack {
             List {
-                headerStat
                 groupChipSection
                 activeSection(sortKey)
                 visitorSection
@@ -125,32 +124,7 @@ struct MemberCenterView: View {
         }
     }
 
-    // 266 概览头: N 位成员 / M 条持凭证 (排除归档)
-    private var headerStat: some View {
-        let list = members
-        let n = list.count
-        let m = list.reduce(0) { $0 + MemberHub.activity($1.id).owns }
-        return Section {
-            HStack(spacing: DS.Space.m) {
-                if let first = list.first {
-                    MemberAvatar(member: first)
-                } else {
-                    MemberAvatar(member: Member(id: "g", name: "家", at: 0))
-                }
-                VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                    Text("共 \(n) 位成员 · \(m) 条凭证")   // 266 位成员
-                        .vkFont(.subheadline, weight: .semibold)
-                        .foregroundStyle(DS.Palette.text)
-                    Text("活跃度按台账推断 (约), 点成员看完整档案")
-                        .vkFont(.caption)
-                        .foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer(minLength: 0)
-            }
-            .accessibilityElement(children: .combine)
-        }
-    }
+    // 2026-10-27 四轮精简：概览头已删。
 
     // 630 分组过滤 chips (家人/访客/服务人员 — 与包10 图例同组字段)
     @ViewBuilder
@@ -357,9 +331,6 @@ struct MemberRow: View {
     let member: Member
     @State private var tick = 0
 
-    private var dup: Member? {
-        DB.members().first { $0.id != member.id && $0.name == member.name && !MemberHub.ext($0.id).archived }
-    }
 
     var body: some View {
         HStack(spacing: DS.Space.s) {
@@ -370,9 +341,6 @@ struct MemberRow: View {
                         .vkFont(.subheadline, weight: .medium)
                         .foregroundStyle(DS.Palette.text)
                     rolePill
-                    if dup != nil {
-                        StatusPill(text: "同名待合并", systemImage: "arrow.triangle.merge", tone: .warn)   // 462 同名待合并
-                    }
                 }
                 subLine
             }
@@ -390,27 +358,9 @@ struct MemberRow: View {
                 MemberHub.saveExt(member.id, e)
                 tick += 1
             }
-            if let d = dup {
-                Button("并入「\(d.name)」") {   // 462 并入
-                    mergeInto(d)
-                }
-            }
         }
     }
 
-    private func mergeInto(_ target: Member) {
-        for kc in DB.keychains() {
-            for p in DB.listPwds(kc.mac) where p.owner == member.id {
-                DB.setPwdOwner(kc.mac, p.alias, target.id)
-            }
-            for f in DB.listFps(kc.mac) where f.owner == member.id {
-                DB.setFpOwner(kc.mac, f.batch, target.id)
-            }
-        }
-        MemberHub.reassignClaims(from: member.id, to: target.id)   // 462
-        DB.removeMember(member.id)
-        tick += 1
-    }
 
     private var rolePill: some View {
         let r = MemberHub.ext(member.id).role
