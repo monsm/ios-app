@@ -570,7 +570,12 @@ struct DeviceHomeView: View {
         if ev.what.contains("蓝牙") {
             return LinkSense.FailKind(name: "蓝牙未开", hint: "打开系统蓝牙后会自动重连")
         }
+        // 2026-10-27 审核修复：这个分支原先是空的，协议/会话失败会落进下面的兜底
+        // 「不在广播范围」—— 用户看到"走到门锁旁 1 米内再试"，跑到门边也没用（锁的问题是协议层）。
         if ev.what.contains("协议类") || ev.what.contains("会话重协商失败") {
+            return LinkSense.FailKind(
+                name: "锁端未应答协议",
+                hint: "门锁回了帧但内容对不上 — 先校准锁内时间；仍不行就重启门锁电池")
         }
         return LinkSense.FailKind(name: "不在广播范围", hint: "走到门锁旁 1 米内再试")
     }

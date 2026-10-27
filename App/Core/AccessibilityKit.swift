@@ -94,6 +94,18 @@ extension DS {
     /// 之所以做成 ShapeStyle.resolve(in:) 而不是静态判断: 环境只有渲染时可知, 消费点各自读一遍旗标
     /// 迟早在某个页面上漂开 —— 收在这一处, 主控卡/开锁盘/成就卡/导出卡/帮助页/引导页同帧一起换。
     struct HeroSurface: ShapeStyle {
+        // 2026-10-27 审核修复：resolve(in:) 在精简批一被当"零引用"误删，而 ShapeStyle 协议
+        // 要求实现它 —— 三个在役消费点（HeroCard 底 / 分享卡 / 圆盘底）会拿不到任何样式。
+        // 恢复最小可用实现：降透明/高对比 → 实底，其余 → 品牌渐变。
+        // 原 863 反转降级分支（invHeroTop/invHeroBottom）已在 704a4c5 按用户决策删除，
+        // 这里不再引用那对令牌；反转色档回落品牌渐变（视觉上仍可读，只是不再单独降级）。
+        @MainActor
+        func resolve(in environment: EnvironmentValues) -> AnyShapeStyle {
+            if environment.accessibilityReduceTransparency || DS.Appearance.highContrast {
+                return AnyShapeStyle(Palette.surface)
+            }
+            return AnyShapeStyle(Gradient.hero)
+        }
     }
     /// 226 降透明档的卡片描边色: 与 heroFg 同源 (常规档白、反转档 text), 压在同侧纯色底上边界可辨
     @MainActor static var heroSolidStroke: Color { heroFg.opacity(0.30) }

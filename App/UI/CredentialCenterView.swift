@@ -89,8 +89,6 @@ struct CredDisableSheet: View {
     var onDone: () -> Void
     /// 313 停用必填原因: 空值 = 确认按钮不可点 (不给默认值, 免得"默认原因"变成假记录)
     @State private var reason = ""
-    /// 367 写入成员动态: 默认关 —— 默认往别人的档案页写一条东西, 等于未经确认改数据
-    @State private var writeToFeed = false
     private static let reasons: [(String, String)] = [
         ("leak", "疑似泄露"), ("rotate", "换码"), ("person", "人员变动"), ("other", "其他")]
 
@@ -108,11 +106,6 @@ struct CredDisableSheet: View {
     /// 没归属的那几条: 它们不进任何人的动态, 这句话得能在界面上说出来。
     private var unownedCount: Int {
         max(0, (pwdAliases.count + fpBatches.count) - ownerCounts.reduce(0) { $0 + $1.pwd + $1.fp })
-    }
-    /// 367 勾选行文案。「另有 0 条无归属」是把界面写成噪音, 所以只在真有的时候才出现那一半。
-    private var feedToggleLabel: String {
-        let head = "写入该成员动态 (影响 \(ownerIds.count) 位成员, 各写自己名下的条数)"   // 367 写入该成员动态
-        return unownedCount > 0 ? head + "; 另有 \(unownedCount) 条无归属, 不进任何人的动态" : head
     }
 
     var body: some View {
@@ -190,24 +183,15 @@ struct CredDisableSheet: View {
                             .vkFont(.caption2).foregroundStyle(DS.Palette.warn)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    // 367: 原句就是「勾选写入该成员动态」。勾上之后按归属各写一条 (每人只看到自己名下的条数),
-                    // 不勾则维持改动前那一条汇总流水 —— 两种形态各写各的, 绝不双写:
-                    // 同一件事在敏感流水里出现两行, 388 那个视图就会把一次停用数成两次。
-                    if !ownerIds.isEmpty {
-                        VariantToggle(feedToggleLabel, isOn: $writeToFeed)
-                            .vkFont(.footnote)
-                    }
+                    // 2026-10-27 审核修复：原「勾选写入该成员动态」开关已删 —— 它写的
+                    // SensitiveLedger 随审计流水族一起移除，勾上之后一个字都不会多（假开关）。
+                    // 367 的意图（按归属各写一条 vs 一条汇总）随载体消失，不再保留 UI。
                     // 353 二次点确认: 摘要页(一次) + 破坏性按钮(二次)
                     Button {
                         let label = Self.reasons.first { $0.0 == reason }?.1 ?? "其他"
                         let n = pwdAliases.count + fpBatches.count
                         // 只记条数与原因: 口令明文与指纹特征绝不进日志 (AUTOOPEN-PLAN §1 同一纪律)
                         app.lock.log("info", "停用 \(n) 条凭证 · 原因 \(label)")   // 313 停用
-                        if writeToFeed {
-                            for o in ownerCounts {
-                            }
-                        } else {
-                        }
                         // 361: 逐条落一个回溯便签, 回收站行才答得出"这条当初为什么被停"
                         // 468 代管补记: 属主被点名「由我代管」的条, via 与单条停用同一口径补「管理员代操作」。
                         // 按条拆开各写各的 —— 没代管的条不许整批跟着沾这句 (同单条 disableVia 的判据)。
