@@ -431,7 +431,7 @@ enum DB {
         // 2026-10-27 审核修复 (AUDIT-D D-18)：`读 → 改 → 写` 三步必须原子。
         // 原先没有同步：两个线程同时保存不同设备的钥匙串时，后写的那个用的是
         // 自己那份旧快照，会把对方刚加的键覆盖掉 —— 表现是「配了两把锁只剩一把」。
-        keychainWriteLock.withLock {
+        keychainWriteLock.withLock { _ in
             var map = store.getDict("kf_keychains")
             map[normalizeMac(kc.mac)] = kc.toDict()
             store.set("kf_keychains", map)

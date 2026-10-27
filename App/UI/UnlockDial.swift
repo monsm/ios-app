@@ -373,13 +373,15 @@ struct UnlockDial: View {
             guard !(CareSchedule.quietOn && CareSchedule.isQuietHour()) else { return }
             while !Task.isCancelled {
                 DS.Haptics.tick.impactOccurred()
-                try? await Task.sleep(for: .milliseconds(130))
+                // 2026-10-27 (AUDIT-D D-21)：取消后立即返回，不推进状态（原 try? 会吞掉 CancellationError）
+                do { try await Task.sleep(for: .milliseconds(130)) } catch { return }
                 // `try?` 把 CancellationError 咽成一个 nil 继续往下走 ⇒ 取消如果落在这 130ms 里,
                 // 第二记触感照样会震, 而这一刻正是"结果回来"的那一瞬 (成功/失败触感同帧叠加),
                 // 用户摸到的是"门开了还多一跳"。必须显式判一次再收尾。
                 guard !Task.isCancelled else { break }
                 DS.Haptics.tick.impactOccurred()
-                try? await Task.sleep(for: .milliseconds(950))
+                // 2026-10-27 (AUDIT-D D-21)：取消后立即返回，不推进状态（原 try? 会吞掉 CancellationError）
+                do { try await Task.sleep(for: .milliseconds(950)) } catch { return }
             }
         }
         // 状态变化: 成功庆祝 / 失败抖动 / 超时计时复位
@@ -390,7 +392,8 @@ struct UnlockDial: View {
             // 连开两次时上一段 0.72s 的动画余帧会接着播，看着像"涟漪只出现了一半"。
             if case .connecting = s {
                 slowTask = Task { @MainActor in
-                    try? await Task.sleep(for: .seconds(4))
+                    // 2026-10-27 (AUDIT-D D-21)：取消后立即返回，不推进状态（原 try? 会吞掉 CancellationError）
+                    do { try await Task.sleep(for: .seconds(4)) } catch { return }
                     guard !Task.isCancelled, case .connecting = state else { return }
                     slowConnect = true   // 89
                 }
@@ -404,7 +407,8 @@ struct UnlockDial: View {
             withAnimation(.spring(response: 0.32, dampingFraction: 0.45)) { pop = true }
             withAnimation(.easeOut(duration: 0.75)) { shock = true }
             Task {
-                try? await Task.sleep(for: .seconds(0.9))
+                // 2026-10-27 (AUDIT-D D-21)：取消后立即返回，不推进状态（原 try? 会吞掉 CancellationError）
+                do { try await Task.sleep(for: .seconds(0.9)) } catch { return }
                 withAnimation(DS.Motion.soft) { pop = false; shock = false }
             }
         }
@@ -421,7 +425,8 @@ struct UnlockDial: View {
         Task { @MainActor in
             for x in [CGFloat(-12), 12, -8, 8, -4, 4, 0] {
                 withAnimation(.easeOut(duration: 0.05)) { shakeX = x }
-                try? await Task.sleep(for: .milliseconds(55))
+                // 2026-10-27 (AUDIT-D D-21)：取消后立即返回，不推进状态（原 try? 会吞掉 CancellationError）
+                do { try await Task.sleep(for: .milliseconds(55)) } catch { return }
             }
             shakeX = 0
         }
@@ -440,7 +445,8 @@ struct UnlockDial: View {
                         armed = true
                         DS.Haptics.tick.impactOccurred()
                         Task { @MainActor in
-                            try? await Task.sleep(for: .seconds(4))
+                            // 2026-10-27 (AUDIT-D D-21)：取消后立即返回，不推进状态（原 try? 会吞掉 CancellationError）
+                            do { try await Task.sleep(for: .seconds(4)) } catch { return }
                             armed = false
                         }
                     }
@@ -525,7 +531,8 @@ struct UnlockDial: View {
                     DS.Haptics.tick.impactOccurred()   // 22 进度触感刻度
                 }
                 if p >= 1 { break }
-                try? await Task.sleep(for: .milliseconds(16))
+                // 2026-10-27 (AUDIT-D D-21)：取消后立即返回，不推进状态（原 try? 会吞掉 CancellationError）
+                do { try await Task.sleep(for: .milliseconds(16)) } catch { return }
             }
             guard !Task.isCancelled else { return }
             fire()

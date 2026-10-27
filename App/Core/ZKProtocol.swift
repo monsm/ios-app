@@ -215,6 +215,17 @@ enum ZKProtocol {
             // cmd 字节位置: 三种帧头均为字节 4
             results.append(ParsedFrame(ok: true, cmd: b[4], header: bodyOff, klvs: klvs, raw: hex))
         }
+        // 2026-10-27 审核补强 (AUDIT-D D-16)：三种头型**都会被尝试**，取第一个解析成功的 ——
+        // 而畸形回包可能被"猜"成一个结构合法但语义错位的帧（KLV 从错误偏移开始读，
+        // 恰好也能切出几个合法段）。协议没有校验和，客户端无法完全分辨。
+        // 能做的是：**多个候选同时成立时记遥测** —— 正常帧只有一种头型能解析成功，
+        // 出现多解说明收到的字节有问题，值得在日志里留痕（而不是静默取第一个）。
+        if results.count > 1 {
+            let others = results.dropFirst().map { String($0.header) }.joined(separator: "/")
+            BleTelemetry.recordEvent(
+                "回包帧头歧义: \(results.count) 种头型都能解析, 取 header=\(results[0].header), 其余 \(others)",
+                ok: false)
+        }
         if let first = results.first { return first }
         return ParsedFrame(ok: false, cmd: 0, header: 0, klvs: [], raw: hex)
     }

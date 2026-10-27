@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T09:44:56.751Z",
+    "generated": "2026-10-27T09:49:31.164Z",
     "sources": [
       {
         "scout": "android-native",
@@ -9596,7 +9596,7 @@
           "line": 591,
           "symbol": "shake()",
           "note": "",
-          "text": "case .success: return DS.Palette.ok"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -9612,7 +9612,7 @@
           "line": 481,
           "symbol": ".sensoryFeedback(trigger: state)",
           "note": "",
-          "text": "// 三连点档**不许**在这里单发 —— 否则\"数满三下\"被这行偷走，等于没做。"
+          "text": "action()"
         }
       ],
       "platformEvidence": {
@@ -9688,7 +9688,7 @@
           "line": 609,
           "symbol": "if fenceRequired, !armed {",
           "note": "",
-          "text": ".contentTransition(.symbolEffect(.replace))"
+          "text": ".font(.system(size: 46, weight: .medium))"
         },
         {
           "platform": "ios",
@@ -9696,7 +9696,7 @@
           "line": 455,
           "symbol": "误触围栏开启中: 先从圆盘边缘拖到中心",
           "note": "",
-          "text": "DS.Haptics.tick.impactOccurred()   // 3 双段触感 · 第一段 (落手)"
+          "text": "guard startInside else { return }   // 61: 边缘起手忽略"
         }
       ],
       "platformEvidence": {
@@ -9764,7 +9764,7 @@
           "line": 491,
           "symbol": ".sensoryFeedback(trigger: connected)",
           "note": "",
-          "text": "// 上滑越过 :441 阈值后 holdProgress 被锁存为 1; 用户把手指收回原点再松手是**取消意图**,"
+          "text": "return"
         },
         {
           "platform": "ios",
@@ -9772,7 +9772,7 @@
           "line": 496,
           "symbol": ".task(id: state) 心跳循环",
           "note": "",
-          "text": "// 2026-10-13 对抗式点击审计: 补 `swipeReady = false`。原实现在取消分支只复位"
+          "text": "} else if holdProgress >= 1, !swipeReady {"
         },
         {
           "platform": "ios",
@@ -9780,7 +9780,7 @@
           "line": 498,
           "symbol": "CareSchedule.quietOn && CareSchedule.isQuietHour()",
           "note": "",
-          "text": "// swipeReady 残留 true。后果两个: ① 上滑预填捷径失效; ② 上面的阈值判断"
+          "text": "// 旧实现这里无条件 fire() → \"拉回取消\"手势照样开门。现让该情形落到下面的取消回弹分支。"
         }
       ],
       "platformEvidence": {
@@ -9857,7 +9857,7 @@
           "line": 398,
           "symbol": "Circle().trim(from: 0, to: holdProgress)",
           "note": "",
-          "text": "if case .failed = s, !reduceMotion {"
+          "text": "slowConnect = true   // 89"
         },
         {
           "platform": "ios",
@@ -9942,7 +9942,7 @@
           "line": 523,
           "symbol": "if case .failed = s, !reduceMotion { shake() }",
           "note": "",
-          "text": "if marks > ticked, p < 1 {"
+          "text": "holdTask = Task { @MainActor in"
         },
         {
           "platform": "ios",
@@ -10027,7 +10027,7 @@
           "line": 464,
           "symbol": "已暂缓这一次: 离门锁再走近一步",
           "note": "",
-          "text": "holdProgress = 1"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -10097,7 +10097,7 @@
           "line": 516,
           "symbol": "slowTask = Task … sleep 4s → slowConnect = true",
           "note": "",
-          "text": "holdTask?.cancel()"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -10105,7 +10105,7 @@
           "line": 434,
           "symbol": "Button(\"取消等待\", action: cancelAction)",
           "note": "",
-          "text": "touchMoved = abs(g.translation.width) + abs(g.translation.height)"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -12728,7 +12728,7 @@
           "line": 641,
           "symbol": "DS.Haptics.tick.impactOccurred() // 第一段 (落手)",
           "note": "",
-          "text": "Circle()"
+          "text": ".fill(LinearGradient(colors: [DS.heroFg.opacity(0.20), .clear],"
         }
       ],
       "platformEvidence": {
@@ -41673,7 +41673,7 @@
           "line": 255,
           "symbol": "parseAdv",
           "note": "",
-          "text": "///  再由 `kt.getBytes()` 反转成线上序; 见 docs/BRICK-AUDIT.md §10。)"
+          "text": "buf = String(buf.dropFirst(cut * 2))"
         },
         {
           "platform": "android",
@@ -41697,7 +41697,7 @@
           "line": 256,
           "symbol": "parseAdv",
           "note": "range(of: \"98ed\")",
-          "text": "/// 单独立一个口的原因: 2026-10-17 真机配对在 PIN 批次第 1 批回 rc=12「mac地址不正确」——"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -42722,7 +42722,7 @@
           "line": 291,
           "symbol": "ProtoTime.localStr",
           "note": "",
-          "text": "var ci = 0"
+          "text": "guard advHex.count - from >= 24 else { return nil }"
         }
       ],
       "platformEvidence": {
@@ -43179,7 +43179,7 @@
           "line": 263,
           "symbol": "parseAdv",
           "note": "guard (frameCtrl & 0x0c) == 0x0c",
-          "text": "}"
+          "text": "/// 广播厂商段里那 6 字节是**线上序** (`macRaw`), 两者逐字节相反:"
         },
         {
           "platform": "ios",
@@ -43187,7 +43187,7 @@
           "line": 280,
           "symbol": "parseAdv",
           "note": "五个位的解包",
-          "text": "guard advHex.count - from >= 24 else { return nil }"
+          "text": "var macDisplay: String?  // 反转冒号大写"
         }
       ],
       "platformEvidence": {
@@ -43249,7 +43249,7 @@
           "line": 268,
           "symbol": "parseAdv",
           "note": "macDisplay 构造",
-          "text": "var macRaw: String?      // 按接收序 hex"
+          "text": "/// 拿 `macRaw` 当 MAC 用, 包络里又 reversePairs 一次 ⇒ 送出的 MAC 正好是**反的**。"
         },
         {
           "platform": "ios",
@@ -43265,7 +43265,7 @@
           "line": 238,
           "symbol": "lockMac",
           "note": "",
-          "text": "for total in prefs {"
+          "text": "buf += chunkHex"
         }
       ],
       "platformEvidence": {

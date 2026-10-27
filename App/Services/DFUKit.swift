@@ -129,12 +129,12 @@ final class DFUSession: NSObject, @unchecked Sendable {
         defer {
             if let p = peripheral {
                 p.delegate = nil
-                central?.cancelPeripheralConnection(p)
+                central.cancelPeripheralConnection(p)
             }
             peripheral = nil
             // 2026-10-27 (D-23)：扫描也要停 —— 失败时若停在无目标状态，
             // 扫描会一直跑着耗电，且下次开始新升级会撞上"已有扫描在跑"。
-            central?.stopScan()
+            central.stopScan()
         }
         try await scanForDFUDevice()
         guard let target = scannedPeripheral else {
