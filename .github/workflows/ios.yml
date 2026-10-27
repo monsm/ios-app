@@ -19,6 +19,12 @@ on:
   pull_request:            # PR 也跑: 编译/测试错误在合并前暴露
   workflow_dispatch:
 
+# 2026-10-27: 用户口径「构建直接 ipa 不要 zip」——
+# artifact 下载必定被 GitHub 二次打成 zip, 所以真正要"直接拿到 .ipa"只有一条路:
+# 挂到 Release 上 (asset 直链, 点一下就是 .ipa 本体)。contents: write 就是为这一步。
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build (iOS 27 SDK, unsigned IPA)
@@ -466,3 +472,86 @@ jobs:
           # 只传带编译号的那一份, 拿到的文件名就是这次构建的时刻。
           path: android-app/app/build/outputs/apk/debug/KfKey-*.apk
           if-no-files-found: error
+
+  # ================= 直链发布 (不经 zip) =================
+  # 用户口径: 「构建直接 ipa 不要 zip」。
+  #
+  # 为什么不能靠 artifact 满足: upload-artifact 存的是 zip 容器, 客户端下载**必然**
+  # 得到一个 .zip —— 里面再套着 .ipa。多点一次解压是小, 更麻烦的是 AltStore/Sideloadly
+  # 只认 .ipa 后缀, 而从 zip 里拖出来的文件在某些浏览器下会被改名成 .ipa.zip。
+  #
+  # Release asset 是**原样存**的: 下载 URL 点下去拿到的就是 OfflineLock-<stamp>-unsigned.ipa
+  # 本体, 后缀、字节、大小都对得上。所以这一支把 ipa/apk 都挪到 Release 上,
+  # 每次构建一个 tag (build-<stamp>), 同一次构建的两端产物挂在同一个 Release 下 ——
+  # 这正好也兑现了 stamp 那一支「一次 push 出一个时刻」的承诺: 打开一个 Release
+  # 就是同一次编译的 ipa + apk, 不会出现"ipa 是 10:00、apk 是 10:02"的错配。
+  #
+  # artifact 仍然保留 (上面两支): 它有 90 天保留期与失败也上传的日志, 是排障用的;
+  # Release 是**给人拿包**用的。两条路各司其职, 不是替代关系。
+  release:
+    name: Release 直链 (ipa + apk)
+    runs-on: ubuntu-latest
+    needs: [stamp, build, android]
+    if: github.event_name != 'pull_request'   # PR 不发版: 每次 PR 都建 Release 会淹掉真正的构建
+    steps:
+      - name: 下载本次构建的两端产物
+        uses: actions/download-artifact@v5
+        with:
+          path: dist
+
+      - name: 摊平到 dist/ (asset 名不带目录层级)
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          # download-artifact 会按 <artifact>/<file> 落盘, Release asset 只认文件名,
+          # 所以先摊平; 同名冲突立即可见 (那说明命名规则坏了, 不该静默覆盖)。
+          for f in dist/*/*.ipa dist/*/*.apk; do
+            [ -f "$f" ] || continue
+            base="$(basename "$f")"
+            [ -e "out/$base" ] && { echo "::error::产物重名: $base"; exit 1; }
+            cp "$f" "out/$base"
+          done
+          ls -l out/
+          # 断言: 至少一个 .ipa 与一个 .apk。缺了就是上游 job 静默失败, 不许发出空 Release。
+          ls out/*.ipa >/dev/null 2>&1 || { echo "::error::没有 .ipa"; exit 1; }
+          ls out/*.apk >/dev/null 2>&1 || { echo "::error::没有 .apk"; exit 1; }
+
+      - name: 发布到 Release (asset 直链, 下载即 .ipa)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STAMP: ${{ needs.stamp.outputs.kf_build_stamp }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          [ -n "$STAMP" ] || { echo "::error::stamp 作业没输出 kf_build_stamp"; exit 1; }
+          TAG="build-$STAMP"
+          # 同一 stamp 重复跑 (workflow_dispatch 重试) 时直接复用, 不建第二个 Release。
+          # notes 用 heredoc 喂进去: 多行 --notes 在 shell 里会被继续按行读,
+          # 缩进又与 YAML 块标量打架 —— heredoc 是唯一不会歧义的写法。
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG 已存在, 覆盖其中同名 asset"
+            gh release upload "$TAG" out/*.ipa out/*.apk --clobber
+          else
+            NOTES_FILE="$(mktemp)"
+            cat > "$NOTES_FILE" <<EOF
+          编译号 \`$STAMP\` · commit \`$SHA\`
+
+          ## 直接下载 (点开就是文件本体, 不经 zip)
+
+          - **iOS** — \`OfflineLock-$STAMP-unsigned.ipa\`
+            未签名, 供 AltStore / Sideloadly 自签安装
+          - **Android** — \`KfKey-$STAMP.apk\`
+            直接安装
+
+          这两个是**同一次编译**的产物 (同一个 stamp), 不要与其它构建混用。
+          EOF
+            gh release create "$TAG" out/*.ipa out/*.apk \
+              --title "构建 $STAMP" \
+              --notes-file "$NOTES_FILE"
+            echo "::notice::Release 直链: $(gh release view "$TAG" --json url -q .url)"
+          fi
+          {
+            echo "## 直链产物"
+            gh release view "$TAG" --json assets -q '.assets[] | "- [\(.name)](\(.url))  \(.size) 字节"'
+          } >> "$GITHUB_STEP_SUMMARY"
+
