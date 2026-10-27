@@ -432,8 +432,8 @@ struct RecDetailSheet: View {
             if let p = pws.first(where: { $0.temp && (r.whoName == nil || $0.owner == r.whoName) }) { return "pwd:" + String(p.alias) }
         case "fp":
             let match: (LedgerFp) -> Bool = { f in
-                if r.whoName == nil { return true }
-                return f.owner == r.whoName || f.name.contains(r.whoName!)
+                guard let who = r.whoName else { return true }
+                return f.owner == who || f.name.contains(who)
             }
             if let f = fps.first(where: match) { return "fp:\(f.batch)" }
         default:

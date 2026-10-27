@@ -1285,7 +1285,7 @@ struct RecordsView: View {
         var s = m.color
         if s.hasPrefix("#") { s.removeFirst() }
         let v = UInt32(s, radix: 16)
-        return v == nil ? DS.Palette.accent : Color(hex: v!)
+        return v.map { Color(hex: $0) } ?? DS.Palette.accent
     }
     /// 576 行 → Rec: 单锁与全部锁**同一条判据**, 键的算术只有 `RecordOverlay.oid` 一份
     /// (行侧就是 `RowVM.id` 那一个 oid, Rec 侧在这里现算, 不再各自拼 "mac#key")。
@@ -1588,7 +1588,7 @@ struct RecordsView: View {
         case "temp":
             if let p = pwds.first(where: { $0.temp && (who == nil || $0.owner == who) }) { return "pwd:" + String(p.alias) }
         case "fp":
-            if let f = fps.first(where: { (who == nil) || ($0.owner == who) || (!who!.isEmpty && $0.name.contains(who!)) }) { return "fp:" + String(f.batch) }
+            if let f = fps.first(where: { (who == nil) || ($0.owner == who) || (!(who ?? "").isEmpty && $0.name.contains(who!)) }) { return "fp:" + String(f.batch) }
         default:
             break
         }
@@ -2141,7 +2141,7 @@ struct ActiveCredsSheet: View {
                             .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                     } else {
-                        ForEach(Array(RecordSearch.activeCredentials(mac: app.current!.mac).enumerated()), id: \.offset) { i, c in
+                        ForEach(Array(RecordSearch.activeCredentials(mac: app.currentMac).enumerated()), id: \.offset) { i, c in
                             HStack(spacing: DS.Space.s) {
                                 Image(systemName: Self.icon(c.kind))
                                     .font(.system(size: DS.Icon.sm))

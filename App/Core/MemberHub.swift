@@ -149,7 +149,7 @@ enum MemberHub {
     static func activity(_ id: String) -> Activity {
         var a = Activity()
         let now = Date().timeIntervalSince1970
-        let mStart = WeekCal.gregorian.dateInterval(of: .month, for: Date())!.start.timeIntervalSince1970
+        let mStart = WeekCal.gregorian.dateInterval(of: .month, for: Date())?.start.timeIntervalSince1970 ?? 0
         for kc in DB.keychains() {
             let logs = DB.readLogs(kc.mac).filter { StatsKit.openTypes.contains($0.type) }
             let status = DB.readStatus(kc.mac)
