@@ -155,6 +155,12 @@ enum StatusParser {
     }
 
     // 锁端返回码文案 (JS lock.js RC_MSG, 与 App resultCodeToMessage 一致)
+    /// rc → 人话。**这张表要与 vendor `status.js` 逐字一致**（`tools/parseshadow.js` 会对拍），
+    /// 改文案会让闸门红 —— 想补提示请用 `rcHint(rc:)`。
+    ///
+    /// 2026-10-27 审核说明 (AUDIT-C A9)：27 条里只有 1 条与 Android 不同 ——
+    /// `rc=0` 本仓「成功」/ Android「已开锁」。语义相同（Android 只发开锁类命令，
+    /// 所以它的 rc=0 恒等于"开锁成功"），措辞不同不算缺陷。
     static let rcMsg: [Int: String] = [
         0: "成功", 1: "解密失败", 2: "无效的PIN码", 3: "命令过期", 5: "次数使用完毕",
         6: "开锁指令已绑定其他设备", 7: "执行的操作不在指定的状态", 8: "溢出", 9: "时间误差过大",

@@ -124,6 +124,11 @@ enum ZKCmdBuilder {
     // pin → LE 4B hex (数字或已是 8 hex 皆可 — JS pinToLE 双兼容)
     // 旧写法解析失败时回落 "00000000": 那是一个**合法 PIN 值**, 于是"读不到的凭证"会被签成
     // 一条 pin=0 的 ekey 发给锁 —— 既可能是错误凭证, 也会在锁端留下一次真实开锁尝试。改为显式失败。
+    // 2026-10-27 审核说明 (AUDIT-C A10)：PIN → 4B LE 的转换**只有本仓有** ——
+    // Android 全仓无 PIN 解析（它只扫二维码拿 ekey，不碰 skey）。
+    // 代价：ekey 过期 / 锁端擦除 / 用户换 PIN 后，Android 只能重扫码；
+    // 本仓能用 `buildEkeyOpen(skey, mac, pin)` 现签（AndroidPair 有这条回落）。
+    // 这不是重复，是能力差异；Android 的极简定位是刻意的（见 README「安卓版的能力边界」）。
     static func pinToLEOrNil(_ pin: String) -> String? {
         var h = pin.trimmingCharacters(in: .whitespaces).lowercased()
         if h.hasPrefix("0x") { h = String(h.dropFirst(2)) } // JS: replace(/^0x/i, '')

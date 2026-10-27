@@ -13,6 +13,10 @@ struct ZKLV: Equatable {
 }
 
 enum ZKProtocol {
+    // 2026-10-27 审核说明 (AUDIT-C A13)：时间基准（本地 2010 基准 + 有效期到 2118 + 三条换算出口）
+    // **只有本仓有** —— Android 完全不涉及（它不发 0E/05/0A/0B，也就不需要时间）。
+    // 后果：Android 侧 rc=3（命令过期）只能报错不能自愈；
+    // 本仓有 `AutoOpen.selfHealTime` → `syncTime()` 这条自愈链。
     // 协议时间基准 = **本地** 2010-01-01 00:00:00 (2026-10-17 全量盘点勘误: 旧值 1_262_304_000_000 是
     // 2010-01-01T00:00:00**Z**, 比 APK 少一个时区偏移)。
     //   依据 (逐字): APK `En.getProtocolTimeSecond(x) = An.getDate(x) − An.getDate('2010-01-01 00:00:00')`,

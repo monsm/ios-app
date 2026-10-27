@@ -320,6 +320,15 @@ final class LockService: ObservableObject {
         0x13: 3, 0x14: 3, 0x15: 3, 0x16: 3, 0x18: 3, 0x19: 3, 0x20: 3,
         0x21: 3, 0x22: 3, 0x24: 3, 0x25: 3
     ]
+    /// 从回包里取 rc。
+    ///
+    /// 2026-10-27 审核说明 (AUDIT-C A7)：本仓与 Android 在**两个边界**上口径不同 ——
+    ///   · rc 的 KLV 位置：本仓按命令查表（`rcKLV`，0x05 的 rc 在 KLV#01，其余在 #03）；
+    ///     Android 无条件读 KLV#03（因为它只发 03/04/08，不涉及 0x05）。
+    ///   · 未登记的命令：本仓返回 **0（乐观）**；Android 返回 **-1（悲观）**。
+    /// 乐观的理由：本仓会发 20+ 条命令，将来新增命令若忘了登记，返回 0 会让调用方
+    /// 当成"成功"继续走 —— 那可能是错的。所以**新增命令时必须同步登记到 `rcKLV`**，
+    /// 否则它的 rc 判定会静默失效。这条注释是给那一步的提醒。
     private func extractRc(_ cmd: UInt8, _ resp: ZKProtocol.ParsedFrame) -> Int {
         guard let key = LockService.rcKLV[cmd] else { return 0 }
         guard let k = resp.klvs.first(where: { $0.key == key }) else { return -1 }

@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T10:43:22.242Z",
+    "generated": "2026-10-27T10:45:32.012Z",
     "sources": [
       {
         "scout": "android-native",
@@ -2530,7 +2530,7 @@ const DATA = {
           "line": 457,
           "symbol": "ZKCmdBuilder.cmd12Echo(valueHex)",
           "note": "",
-          "text": "ble.disconnect()"
+          "text": "func probeEcho(deviceId: String, valueHex: String = \"123456\") async throws -> EchoProbe {"
         },
         {
           "platform": "ios",
@@ -3041,7 +3041,7 @@ const DATA = {
           "line": 268,
           "symbol": "cmd31GWSetWifi",
           "note": "",
-          "text": "return ZKCmd(name: \"41 钥匙串写钥\", cmd: 0x41, hex: ZKProtocol.buildFrame(0x41, klv, header: 8))"
+          "text": "// 2026-10-14: 与 cmd43 / buildEkey 同口径先剥冒号, 否则带冒号 MAC 使 reversePairs 返回空串。"
         },
         {
           "platform": "apk",
@@ -4172,7 +4172,7 @@ const DATA = {
           "line": 489,
           "symbol": "func syncTime()",
           "note": "",
-          "text": "guard !cred.isEmpty else { throw BLEErrorX.msg(\"开锁凭证为空 (ekey/PIN 签发失败), 已中止下发\") }"
+          "text": "guard let kc = DB.keychain(curMac), !kc.skey.isEmpty else { throw BLEErrorX.msg(\"无钥匙串, 无法开锁\") }"
         },
         {
           "platform": "ios",
@@ -4426,7 +4426,7 @@ const DATA = {
           "line": 618,
           "symbol": "deletePins",
           "note": "",
-          "text": "}"
+          "text": "guard alias > 0 else {"
         },
         {
           "platform": "apk",
@@ -4616,7 +4616,7 @@ const DATA = {
           "line": 244,
           "symbol": "cmd41WriteEkey",
           "note": "",
-          "text": "// cmd 19: status(1B 0=关/1=开)"
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -4745,7 +4745,7 @@ const DATA = {
           "line": 618,
           "symbol": "deletePins",
           "note": "",
-          "text": "}"
+          "text": "guard alias > 0 else {"
         },
         {
           "platform": "apk",
@@ -6178,7 +6178,7 @@ const DATA = {
           "line": 800,
           "symbol": "步骤 1/7",
           "note": "",
-          "text": "let (m, sk) = try keys()"
+          "text": "throw BLEErrorX.msg(\"13 已下发但没收到按压帧 (锁回了 \\(frames.count) 帧应答) — 请把手指按在指纹头上再抬起, 间隔 3 秒内\")"
         }
       ],
       "platformEvidence": {
@@ -6267,7 +6267,7 @@ const DATA = {
           "line": 499,
           "symbol": "ZKCmdBuilder.cmd0ESyncTime(m, sk, now)",
           "note": "",
-          "text": "/// 先读锁钟现在只用来**报告偏差** (读了不写回去), 再回读一次作为\"真的写进去了\"的证据 ——"
+          "text": "let r = try await exec(ZKCmdBuilder.cmd04Open(cred, klv01Hex: \"0000\"), retries: 2)"
         }
       ],
       "platformEvidence": {
@@ -6939,7 +6939,7 @@ const DATA = {
           "line": 800,
           "symbol": "progress(\"步骤 1/7: 探测交换方式 (cmd 23)\")",
           "note": "",
-          "text": "let (m, sk) = try keys()"
+          "text": "throw BLEErrorX.msg(\"13 已下发但没收到按压帧 (锁回了 \\(frames.count) 帧应答) — 请把手指按在指纹头上再抬起, 间隔 3 秒内\")"
         },
         {
           "platform": "ios",
@@ -6947,7 +6947,7 @@ const DATA = {
           "line": 142,
           "symbol": "cmd08SyncPinsBatch",
           "note": "",
-          "text": "let env = ZKProtocol.buildEkey(0x04, macHex, validFromSec: validFromSec, validToSec: validToSec, trackIdVal: trackId)"
+          "text": "// 这是**有意的偏离**：vendor 那侧是危险的，对齐它等于把安全门拆掉。"
         },
         {
           "platform": "ios",
@@ -6955,7 +6955,7 @@ const DATA = {
           "line": 828,
           "symbol": "ZKCmdBuilder.cmd05Exchange(skey)",
           "note": "",
-          "text": "}"
+          "text": "let r = try await exec(ZKCmdBuilder.cmd16GetLog(m, sk, orderType: orderType, startIdx: startIdx, pageSize: pageSize))"
         },
         {
           "platform": "ios",
@@ -6963,7 +6963,7 @@ const DATA = {
           "line": 958,
           "symbol": "progress(\"步骤 6/7: 设置 bkey (cmd 21)\")",
           "note": "",
-          "text": "}"
+          "text": "//      我们插进去的 01+03 两个来回是自创动作。裁定权改为交给带 MAC 校验的写命令 08 批次 1"
         }
       ],
       "platformEvidence": {
@@ -15205,7 +15205,7 @@ const DATA = {
           "line": 155,
           "symbol": "cmd0ASyncPwd",
           "note": "",
-          "text": "// cmd 08: addCount(1B)+delCount(1B)+addPins(4B LE×N)+delPins(4B LE×M)"
+          "text": "// JS: '2010-01-01T00:00:00' 本地解释 ⇒ 东八区为 −28800; 经 protoSecU32 收口成 0 (= APK 的取值)"
         },
         {
           "platform": "apk",
@@ -17600,7 +17600,7 @@ const DATA = {
           "line": 209,
           "symbol": "cmd14FpConfirm",
           "note": "",
-          "text": "// cmd 0E: syncTime(4B LE 协议秒)"
+          "text": "let body = u16leHex(alias)"
         },
         {
           "platform": "ios",
@@ -17900,7 +17900,7 @@ const DATA = {
           "line": 201,
           "symbol": "cmd13AddFp(times: 8, timeout: 15)",
           "note": "",
-          "text": "}"
+          "text": "guard let s, !s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }"
         },
         {
           "platform": "ios",
@@ -19437,7 +19437,7 @@ const DATA = {
           "line": 607,
           "symbol": "pwdClear 0xFFFF",
           "note": "",
-          "text": "// 报的还是\"已改写\"。0 号只可能来自这条密码当初没拿到锁端编号 (本文件上方 pwdAdd 那条)，"
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -22465,7 +22465,7 @@ const DATA = {
           "line": 133,
           "symbol": "buildEkeyShare",
           "note": "",
-          "text": "}"
+          "text": "var h = pin.trimmingCharacters(in: .whitespaces).lowercased()"
         }
       ],
       "platformEvidence": {
@@ -28952,7 +28952,7 @@ const DATA = {
           "line": 534,
           "symbol": "setDefence",
           "note": "",
-          "text": "func setValidationMode(_ bMode: Bool) async throws {"
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -29291,7 +29291,7 @@ const DATA = {
           "line": 235,
           "symbol": "cmd20ValidationMode",
           "note": "",
-          "text": "// 兜底对齐 JS cmds.js:138 (pageSize||20)"
+          "text": "static func cmd15DeleteFp(_ macHex: String, _ skeyHex: String, _ batchNumber: UInt32) -> ZKCmd {"
         }
       ],
       "platformEvidence": {
@@ -29364,7 +29364,7 @@ const DATA = {
           "line": 239,
           "symbol": "cmd24AutoLock",
           "note": "",
-          "text": "}"
+          "text": "static func cmd16GetLog(_ macHex: String, _ skeyHex: String, orderType: Int = 0, startIdx: UInt32 = 0, pageSize: Int = 20) -> ZKCmd {"
         }
       ],
       "platformEvidence": {
@@ -36373,7 +36373,7 @@ const DATA = {
           "line": 155,
           "symbol": "cmd0ASyncPwd(delAlias: 0xFFFF)",
           "note": "",
-          "text": "// cmd 08: addCount(1B)+delCount(1B)+addPins(4B LE×N)+delPins(4B LE×M)"
+          "text": "// JS: '2010-01-01T00:00:00' 本地解释 ⇒ 东八区为 −28800; 经 protoSecU32 收口成 0 (= APK 的取值)"
         },
         {
           "platform": "ios",
@@ -36560,7 +36560,7 @@ const DATA = {
           "line": 227,
           "symbol": "cmd18Volume",
           "note": "",
-          "text": "return ZKCmd(name: \"14 指纹确认\", cmd: 0x14, hex: ZKProtocol.wrapFrame(0x14, macHex, skeyHex, body, 0x02))"
+          "text": "// cmd 14: batchNumber(4B LE) + validFrom/To"
         },
         {
           "platform": "ios",
@@ -40793,7 +40793,7 @@ const DATA = {
           "line": 162,
           "symbol": "rcMessage(_:)",
           "note": "",
-          "text": "15: \"未知协议\", 16: \"参数不在范围内\", 17: \"丢包\", 18: \"不能设置重复的值\", 19: \"找不到指定的值\","
+          "text": "/// `rc=0` 本仓「成功」/ Android「已开锁」。语义相同（Android 只发开锁类命令，"
         }
       ],
       "platformEvidence": {
@@ -41085,7 +41085,7 @@ const DATA = {
           "line": 110,
           "symbol": "buildEkey",
           "note": "",
-          "text": ""
+          "text": "/// **只读**的 03 当探针 (它同样带 MAC, 却不落任何状态), 谁 rc=0 谁对, 结果记在 `kf_macorder_\u003cmac>`。"
         },
         {
           "platform": "ios",
@@ -41093,7 +41093,7 @@ const DATA = {
           "line": 118,
           "symbol": "buildEkey",
           "note": "包络字段拼接顺序",
-          "text": "static func setMacOrder(_ mac: String, _ o: MacOrder) { macOrdersLock.withLock { $0[normMac(mac)] = o } }"
+          "text": "/// 2026-10-27 审核合并 (AUDIT-C A11)：转调 `DB.normalizeMac`，不再各写一遍。"
         }
       ],
       "platformEvidence": {
@@ -41215,7 +41215,7 @@ const DATA = {
           "line": 70,
           "symbol": "buildFrame",
           "note": "",
-          "text": "var out = [ZKLV]()"
+          "text": "return HexKit.hexPair(UInt32(key)) + HexKit.hexPair(UInt32(len)) + v"
         },
         {
           "platform": "ios",
@@ -41223,7 +41223,7 @@ const DATA = {
           "line": 195,
           "symbol": "parseResponse",
           "note": "cmd 字节位置：三种帧头均为字节 4",
-          "text": ""
+          "text": "let klv = body + buildKLV(0xEE, tokenHex)"
         },
         {
           "platform": "android",
@@ -41487,7 +41487,7 @@ const DATA = {
           "line": 48,
           "symbol": "buildKLV",
           "note": "",
-          "text": "static func buildKLV(_ key: Int, _ valHex: String) -> String {"
+          "text": "//   于是这道闸门一直是\"假绿\"(它没有忠实复刻这一行)。"
         },
         {
           "platform": "android",
@@ -41705,7 +41705,7 @@ const DATA = {
           "line": 94,
           "symbol": "MacOrder",
           "note": "",
-          "text": "return (\"87\" + \"00\" + HexKit.hexPair(UInt32(len & 0xff)) + HexKit.hexPair(UInt32((len >> 8) & 0xff))"
+          "text": "if header == 8 {"
         },
         {
           "platform": "ios",
@@ -41713,7 +41713,7 @@ const DATA = {
           "line": 101,
           "symbol": "macOrder",
           "note": "默认 .display",
-          "text": "///     (**显示序**, 也是页面/台账里那个值), 而 getBytes 自己会按字节对翻转一次 ⇒ 包络里落**线上序**;"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -42001,7 +42001,7 @@ const DATA = {
           "line": 255,
           "symbol": "parseAdv",
           "note": "",
-          "text": "if parsed.ok { cut = total; frames.append(parsed); break }"
+          "text": "var cut = 0"
         },
         {
           "platform": "android",
@@ -42025,7 +42025,7 @@ const DATA = {
           "line": 256,
           "symbol": "parseAdv",
           "note": "range(of: \"98ed\")",
-          "text": "}"
+          "text": "for total in prefs {"
         },
         {
           "platform": "android",
@@ -42638,7 +42638,7 @@ const DATA = {
           "line": 169,
           "symbol": "rcHint 高频失败码人话",
           "note": "",
-          "text": "// 纯文案层映射, 不新增/不改动任何协议命令; 未命中的码回落 rcMessage。"
+          "text": "20: \"指纹传感器错误\", 21: \"门锁处于反锁状态\", 22: \"不能重复验证\", 23: \"无法获取有效的指纹图片\","
         },
         {
           "platform": "apk",
@@ -42964,7 +42964,7 @@ const DATA = {
           "line": 202,
           "symbol": "FrameAssembler",
           "note": "",
-          "text": "var raw: String"
+          "text": "var ok: Bool"
         },
         {
           "platform": "ios",
@@ -43034,7 +43034,7 @@ const DATA = {
           "line": 21,
           "symbol": "epochMs",
           "note": "",
-          "text": "static let epochMs: Int64 = {"
+          "text": "// 2010-01-01T00:00:00**Z**, 比 APK 少一个时区偏移)。"
         },
         {
           "platform": "ios",
@@ -43042,7 +43042,7 @@ const DATA = {
           "line": 29,
           "symbol": "protoSecondsFromMs",
           "note": "",
-          "text": "static func protoSecondsFromMs(_ ms: Int64) -> Int64 { (ms - epochMs) / 1000 }"
+          "text": "cal.timeZone = TimeZone.current"
         },
         {
           "platform": "ios",
@@ -43050,7 +43050,7 @@ const DATA = {
           "line": 291,
           "symbol": "ProtoTime.localStr",
           "note": "",
-          "text": "/// Java 原版是 `fc >= 0x0C`，三端（iOS/Android/vendor JS）都是 `(fc & 0x0C) == 0x0C`。"
+          "text": "var containMac: Int"
         }
       ],
       "platformEvidence": {
@@ -43237,7 +43237,7 @@ const DATA = {
           "line": 769,
           "symbol": "pair",
           "note": "已有钥匙串拒绝覆盖",
-          "text": "break"
+          "text": "if silent > Double(firstFrameMs) / 1000.0 {"
         },
         {
           "platform": "ios",
@@ -43245,7 +43245,7 @@ const DATA = {
           "line": 800,
           "symbol": "pair",
           "note": "步骤 1/7 cmd23",
-          "text": "let (m, sk) = try keys()"
+          "text": "throw BLEErrorX.msg(\"13 已下发但没收到按压帧 (锁回了 \\(frames.count) 帧应答) — 请把手指按在指纹头上再抬起, 间隔 3 秒内\")"
         },
         {
           "platform": "ios",
@@ -43253,7 +43253,7 @@ const DATA = {
           "line": 817,
           "symbol": "pair",
           "note": "步骤 3/7 cmd05",
-          "text": "func getLogs(orderType: Int = 0, startIdx: UInt32, pageSize: Int = 5) async throws -> LogPage {"
+          "text": "if DB.ledger(m).fps.contains(where: { $0.batch == batchNumber }) {"
         },
         {
           "platform": "ios",
@@ -43261,7 +43261,7 @@ const DATA = {
           "line": 902,
           "symbol": "finishPairing",
           "note": "尾链 5~7 步",
-          "text": "// 13 = 通讯过期 = 会话令牌被判无效/已过期。rc≠0 ⇒ 锁**没有执行**换钥 (锁内 skey 未动),"
+          "text": "//     if (data.needSessionToken()) { doRefreshSsToken(); token = ssToken.getToken(); }"
         }
       ],
       "platformEvidence": {
@@ -43363,7 +43363,7 @@ const DATA = {
           "line": 201,
           "symbol": "cmd13AddFp",
           "note": "",
-          "text": "}"
+          "text": "guard let s, !s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }"
         },
         {
           "platform": "ios",
@@ -43371,7 +43371,7 @@ const DATA = {
           "line": 630,
           "symbol": "fpStart",
           "note": "手工 injectToken",
-          "text": "// 2026-10-27 审核修复 (AUDIT-D D-54)：回包**无完整性校验** —— 伪造一个 rc=0 回包，"
+          "text": "// 把 0 当编号发出去照样会拿到成功码 ⇒ `execOk` 过、日志写\"已删除\"、锁里那条密码一动不动。"
         },
         {
           "platform": "ios",
@@ -43395,7 +43395,7 @@ const DATA = {
           "line": 638,
           "symbol": "fpStart",
           "note": "KLV 0x04..0x07 解包",
-          "text": "}"
+          "text": "try await execOk(try ZKCmdBuilder.cmd0ASyncPwd(m, sk, delAlias: alias))"
         },
         {
           "platform": "ios",
@@ -43403,7 +43403,7 @@ const DATA = {
           "line": 209,
           "symbol": "cmd14FpConfirm",
           "note": "",
-          "text": "// cmd 0E: syncTime(4B LE 协议秒)"
+          "text": "let body = u16leHex(alias)"
         }
       ],
       "platformEvidence": {
@@ -43507,7 +43507,7 @@ const DATA = {
           "line": 263,
           "symbol": "parseAdv",
           "note": "guard (frameCtrl & 0x0c) == 0x0c",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -43515,7 +43515,7 @@ const DATA = {
           "line": 280,
           "symbol": "parseAdv",
           "note": "五个位的解包",
-          "text": "var frameCtrl: Int"
+          "text": "return m.count == 12 ? m : nil"
         }
       ],
       "platformEvidence": {
@@ -43577,7 +43577,7 @@ const DATA = {
           "line": 268,
           "symbol": "parseAdv",
           "note": "macDisplay 构造",
-          "text": "/// (与 Android `BluetoothDevice.getAddress()` 同序 —— 原版 APK 就是把那个值当 TargetMAC 用的,"
+          "text": "// ---------- 广播厂商段解析 (JS services/ble.js parseAdv; 依据 BLEAdData.java) ----------"
         },
         {
           "platform": "ios",
@@ -43593,7 +43593,7 @@ const DATA = {
           "line": 238,
           "symbol": "lockMac",
           "note": "",
-          "text": "private var buf = \"\""
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -44824,7 +44824,7 @@ const DATA = {
           "line": 426,
           "symbol": "EchoProbe",
           "note": "",
-          "text": "DB.writeStatus(curMac, st) // 离线快照 (随时可读)"
+          "text": "var r: ExecResult"
         },
         {
           "platform": "ios",
@@ -44832,7 +44832,7 @@ const DATA = {
           "line": 457,
           "symbol": "sendEcho",
           "note": "",
-          "text": "ble.disconnect()"
+          "text": "func probeEcho(deviceId: String, valueHex: String = \"123456\") async throws -> EchoProbe {"
         },
         {
           "platform": "ios",
@@ -44840,7 +44840,7 @@ const DATA = {
           "line": 461,
           "symbol": "sendEcho",
           "note": "matched 判定",
-          "text": "tokenExpiryMs = 0"
+          "text": "try await ble.connect(deviceId: deviceId)"
         }
       ],
       "platformEvidence": {
@@ -44907,7 +44907,7 @@ const DATA = {
           "line": 738,
           "symbol": "fpDelete",
           "note": "",
-          "text": "defer { collector = nil; collectorCmd = 0 }"
+          "text": "let p = press(of: f)"
         }
       ],
       "platformEvidence": {
@@ -44963,7 +44963,7 @@ const DATA = {
           "line": 626,
           "symbol": "fpStart",
           "note": "",
-          "text": "throw BLEErrorX.msg(\"这条密码在本机台账里没有有效的锁端编号 (0 = 协议里的「不指定」)，无法按编号删除 — 请用「清空密码」或在门锁上处理\")"
+          "text": "return got"
         },
         {
           "platform": "ios",
@@ -44971,7 +44971,7 @@ const DATA = {
           "line": 710,
           "symbol": "fpStart",
           "note": "rc 分类报错",
-          "text": "/// 干净按压 = rc 正常 (0 或缺省 -1) 且 KLV#04 序号 > 0。"
+          "text": "func u32(_ key: UInt8) -> UInt32? {"
         },
         {
           "platform": "ios",
@@ -44979,7 +44979,7 @@ const DATA = {
           "line": 733,
           "symbol": "fpConfirm",
           "note": "",
-          "text": "+ \"batch=\\(p.batchNumber.map(String.init) ?? \"-\") rc=\\(p.rc)\")"
+          "text": "collectorCmd = 0x13"
         }
       ],
       "platformEvidence": {
@@ -45049,7 +45049,7 @@ const DATA = {
           "line": 746,
           "symbol": "getLogs",
           "note": "",
-          "text": "lastFrameAt = sentAt"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -45134,7 +45134,7 @@ const DATA = {
           "line": 543,
           "symbol": "pwdAdd",
           "note": "",
-          "text": "let (m, sk) = try keys()"
+          "text": "func setValidationMode(_ bMode: Bool) async throws {"
         },
         {
           "platform": "ios",
@@ -45142,7 +45142,7 @@ const DATA = {
           "line": 558,
           "symbol": "pwdAdd",
           "note": "0B 失败只 warn",
-          "text": ""
+          "text": "/// 由 DefendKit.protoSec 换算；撤防与不定期一律传 0（与 APK 的 time 字段全 0 一致）。"
         },
         {
           "platform": "ios",
@@ -45150,7 +45150,7 @@ const DATA = {
           "line": 563,
           "symbol": "pwdAdd",
           "note": "凭证#N 已添加",
-          "text": "/// 与 APK 的 sendDFUCmd 同口径：param 传 0 表示\"重启进 bootloader\"。"
+          "text": "let (m, sk) = try keys()"
         }
       ],
       "platformEvidence": {
@@ -45219,7 +45219,7 @@ const DATA = {
           "line": 595,
           "symbol": "pwdClear",
           "note": "",
-          "text": "_ = try await execOk(ZKCmdBuilder.cmd0BSyncPwdExpire(m, sk, alias, validFrom, validTo))"
+          "text": "// 那个保留值 (上面那条 cmd0ASyncPwd 自己就是这么调的) —— 于是一口气错三处：界面报"
         },
         {
           "platform": "ios",
@@ -45227,7 +45227,7 @@ const DATA = {
           "line": 154,
           "symbol": "cmd0ASyncPwd",
           "note": "delAlias 0xFFFF=清空",
-          "text": "}"
+          "text": "// 2026-10-14: 删掉从未使用的 DateFormatter f (实际解析走 protoSec) —— 免得误以为此处按本地时区解析。"
         }
       ],
       "platformEvidence": {
@@ -45289,7 +45289,7 @@ const DATA = {
           "line": 582,
           "symbol": "pwdDelete",
           "note": "",
-          "text": "let r = try await execOk(try ZKCmdBuilder.cmd0ASyncPwd(m, sk, delAlias: 0, addPwd: pwd, validFrom: validFrom, validTo: validTo))"
+          "text": "private func aliasFrom(_ r: ExecResult) -> Int? {"
         },
         {
           "platform": "ios",
@@ -45297,7 +45297,7 @@ const DATA = {
           "line": 589,
           "symbol": "pwdDelete",
           "note": "错误文案指向「清空密码」",
-          "text": "// 拿不到编号就是没确认到编号。本文件对\"响应缺关键字段\"的既有口径是抛错而不是给默认值"
+          "text": "func pwdAdd(pwd: String, validFrom: String, validTo: String) async throws -> Int {"
         }
       ],
       "platformEvidence": {
@@ -45359,7 +45359,7 @@ const DATA = {
           "line": 567,
           "symbol": "pwdModify",
           "note": "",
-          "text": "try await execOk(ZKCmdBuilder.cmd22EnableDfu(m, sk, param), needToken: true, retries: 1)"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -45367,7 +45367,7 @@ const DATA = {
           "line": 572,
           "symbol": "pwdModify",
           "note": "alias > 0 守卫",
-          "text": "// 0A 响应 KLV#04 = alias (LE 2B)"
+          "text": "/// 与 APK 的 sendDFUCmd 同口径：param 传 0 表示\"重启进 bootloader\"。"
         },
         {
           "platform": "ios",
@@ -45375,7 +45375,7 @@ const DATA = {
           "line": 579,
           "symbol": "pwdModify",
           "note": "锁端新编号提示",
-          "text": "@discardableResult"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -45529,7 +45529,7 @@ const DATA = {
           "line": 394,
           "symbol": "keys",
           "note": "",
-          "text": "private static func pairHint(_ rc: Int) -> String {"
+          "text": "/// 配网尾链中断的提示。参数是\"**本机有没有留存这一份密钥**\", 而不是\"换钥有没有发生\":"
         },
         {
           "platform": "ios",
@@ -45545,7 +45545,7 @@ const DATA = {
           "line": 521,
           "symbol": "setValidationMode",
           "note": "",
-          "text": "throw BLEErrorX.msg(\"校时命令已被接受, 但回读锁钟仍偏差 \\(after)s — 门锁可能忽略了 0E (rc=0 不等于写成功)\")"
+          "text": "try await execOk(ZKCmdBuilder.cmd0ESyncTime(m, sk, now))"
         },
         {
           "platform": "ios",
@@ -45553,7 +45553,7 @@ const DATA = {
           "line": 525,
           "symbol": "setAutoLock",
           "note": "",
-          "text": "}"
+          "text": "after = Int(lockSec - ZKProtocol.nowProtoSeconds())"
         }
       ],
       "platformEvidence": {
@@ -45628,7 +45628,7 @@ const DATA = {
           "line": 489,
           "symbol": "syncTime",
           "note": "",
-          "text": "guard !cred.isEmpty else { throw BLEErrorX.msg(\"开锁凭证为空 (ekey/PIN 签发失败), 已中止下发\") }"
+          "text": "guard let kc = DB.keychain(curMac), !kc.skey.isEmpty else { throw BLEErrorX.msg(\"无钥匙串, 无法开锁\") }"
         },
         {
           "platform": "ios",
@@ -45636,7 +45636,7 @@ const DATA = {
           "line": 495,
           "symbol": "syncTime",
           "note": "只报告偏差不写回",
-          "text": "/// (那边就是 `new St(En.getNowTimeString(), mac)`, 载荷为手机此刻的协议秒)。"
+          "text": "guard let pin, !pin.isEmpty else { throw BLEErrorX.msg(\"无 PIN 可用: 需要 ekey 或 PIN 才能签发开锁凭证\") }"
         },
         {
           "platform": "ios",
@@ -45644,7 +45644,7 @@ const DATA = {
           "line": 507,
           "symbol": "syncTime",
           "note": ">60s 视为未写入",
-          "text": "before = Int(lockSec - now)"
+          "text": "/// 全看这个钟, 所以这个空操作会把后面每一类命令都拖进时间问题里。"
         },
         {
           "platform": "ios",
@@ -45652,7 +45652,7 @@ const DATA = {
           "line": 500,
           "symbol": "syncTime",
           "note": "DB.saveSyncTime",
-          "text": "/// rc=0 只证明命令被接收, 不证明锁钟变了。"
+          "text": "return r.rc  // 0 成功; 22 双验继续"
         }
       ],
       "platformEvidence": {
@@ -45728,7 +45728,7 @@ const DATA = {
           "line": 465,
           "symbol": "unlock",
           "note": "",
-          "text": "}"
+          "text": "rejectWaiter(\"探测用临时链路已断开\")"
         },
         {
           "platform": "ios",
@@ -45736,7 +45736,7 @@ const DATA = {
           "line": 469,
           "symbol": "unlock",
           "note": "ekey 优先",
-          "text": "// retries: 1 —— 这是\"这一下通不通\"的一次探测, 不是重试到通为止的操作"
+          "text": "sessionTokenHex = \"0000\""
         },
         {
           "platform": "ios",
@@ -45744,7 +45744,7 @@ const DATA = {
           "line": 476,
           "symbol": "unlock",
           "note": "空凭证中止",
-          "text": ""
+          "text": "private func sendEcho(_ valueHex: String) async throws -> EchoProbe {"
         }
       ],
       "platformEvidence": {
@@ -46032,7 +46032,7 @@ const DATA = {
           "line": 129,
           "symbol": "readonlyCmds",
           "note": "含 0x02",
-          "text": "validFromSec: UInt32 = 0,"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -46165,7 +46165,7 @@ const DATA = {
           "line": 407,
           "symbol": "getStatus",
           "note": "",
-          "text": "private func keys() throws -> (mac: String, skey: String) {"
+          "text": "case 13: return \"通讯过期: 锁不认这份通讯会话 (会话令牌无效/已过期), 不是距离或信号问题 — 请在门锁键盘上做一次重置, 3 声提示后尽快点配对 (重置后的可配网窗口有限, 一旦超时锁会退回不可配网)\""
         },
         {
           "platform": "ios",
@@ -46213,7 +46213,7 @@ const DATA = {
           "line": 409,
           "symbol": "getStatus",
           "note": "无 skey 走明文",
-          "text": "guard let kc, kc.skey.count == 32 else { throw BLEErrorX.msg(\"钥匙串缺少有效 skey (请先配对或导入)\") }"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -46391,7 +46391,7 @@ const DATA = {
           "line": 477,
           "symbol": "unlock",
           "note": "retries: 2",
-          "text": "// ---------- 开锁 ----------"
+          "text": "let t0 = Date()"
         },
         {
           "platform": "android",
@@ -46431,7 +46431,7 @@ const DATA = {
           "line": 478,
           "symbol": "unlock",
           "note": "return r.rc // 0 成功; 22 双验继续",
-          "text": "func unlock(mac: String? = nil, pinDec: String? = nil) async throws -> Int {"
+          "text": "// retries: 1 —— 这是\"这一下通不通\"的一次探测, 不是重试到通为止的操作"
         },
         {
           "platform": "ios",
@@ -46439,7 +46439,7 @@ const DATA = {
           "line": 465,
           "symbol": "func unlock(mac:pinDec:)",
           "note": "",
-          "text": "}"
+          "text": "rejectWaiter(\"探测用临时链路已断开\")"
         },
         {
           "platform": "android",
@@ -46593,7 +46593,7 @@ const DATA = {
           "line": 828,
           "symbol": "pair",
           "note": "needToken: true",
-          "text": "}"
+          "text": "let r = try await exec(ZKCmdBuilder.cmd16GetLog(m, sk, orderType: orderType, startIdx: startIdx, pageSize: pageSize))"
         },
         {
           "platform": "apk",
@@ -46609,7 +46609,7 @@ const DATA = {
           "line": 829,
           "symbol": "pair",
           "note": "rc5 = extractRc(0x05, ...)",
-          "text": "return LogPage(surplus: surplus, logs: logs)"
+          "text": "if r.rc != 0 && r.rc != -1 { throw BLEErrorX.msg(StatusParser.rcMessage(r.rc)) }"
         },
         {
           "platform": "ios",
@@ -46712,7 +46712,7 @@ const DATA = {
           "line": 142,
           "symbol": "cmd08SyncPinsBatch",
           "note": "",
-          "text": "let env = ZKProtocol.buildEkey(0x04, macHex, validFromSec: validFromSec, validToSec: validToSec, trackIdVal: trackId)"
+          "text": "// 这是**有意的偏离**：vendor 那侧是危险的，对齐它等于把安全门拆掉。"
         },
         {
           "platform": "ios",
@@ -46720,7 +46720,7 @@ const DATA = {
           "line": 910,
           "symbol": "finishPairing",
           "note": "batchSize = 20",
-          "text": "// 真机报告 (2026-10-17): 用户报\"锁重置后一直添加不成功\", 而运行日志里只有 TX/RX 两行 ——"
+          "text": "if rc5 == 13 {"
         },
         {
           "platform": "apk",
@@ -46736,7 +46736,7 @@ const DATA = {
           "line": 144,
           "symbol": "cmd08SyncPinsBatch",
           "note": "body 布局",
-          "text": "return AESKit.encryptHex(env, keyHex: skeyHex)"
+          "text": "validFromSec: UInt32 = 0, validToSec: UInt32? = nil, trackId: UInt32 = 0) -> String {"
         },
         {
           "platform": "ios",
@@ -46744,7 +46744,7 @@ const DATA = {
           "line": 918,
           "symbol": "finishPairing",
           "note": "首批带 ffffffff",
-          "text": "// (旧实现在这里还有一个 `keyExchanged = true` 旗子, 写在回显比对**之后** —— 于是回显异常那一支"
+          "text": "if rc5 != 0 {"
         }
       ],
       "platformEvidence": {
@@ -46849,7 +46849,7 @@ const DATA = {
           "line": 155,
           "symbol": "cmd0ASyncPwd",
           "note": "",
-          "text": "// cmd 08: addCount(1B)+delCount(1B)+addPins(4B LE×N)+delPins(4B LE×M)"
+          "text": "// JS: '2010-01-01T00:00:00' 本地解释 ⇒ 东八区为 −28800; 经 protoSecU32 收口成 0 (= APK 的取值)"
         },
         {
           "platform": "ios",
@@ -46857,7 +46857,7 @@ const DATA = {
           "line": 545,
           "symbol": "pwdAdd",
           "note": "",
-          "text": "}"
+          "text": "try await execOk(ZKCmdBuilder.cmd20ValidationMode(m, sk, bMode))"
         },
         {
           "platform": "ios",
@@ -46889,7 +46889,7 @@ const DATA = {
           "line": 172,
           "symbol": "cmd0ASyncPwd",
           "note": "body 布局",
-          "text": "// 旧写法一律回落\"现在\", 于是导入 ISO 形态 (`2026-01-05T08:00:00Z`) 的台账会把有效期静默改写。"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -47013,7 +47013,7 @@ const DATA = {
           "line": 179,
           "symbol": "cmd0BSyncPwdExpire",
           "note": "",
-          "text": "throw BLEErrorX.msg(\"密码生效时间无法解析: \\(validFrom ?? \"\") (支持 ISO8601/带 Z、'yyyy-MM-dd HH:mm:ss'、秒/毫秒) — 已中止下发\")"
+          "text": "func suppliedButUnparsed(_ s: String?) -> Bool {"
         },
         {
           "platform": "ios",
@@ -47021,7 +47021,7 @@ const DATA = {
           "line": 558,
           "symbol": "pwdAdd",
           "note": "第二步 0B，失败不影响添加",
-          "text": ""
+          "text": "/// 由 DefendKit.protoSec 换算；撤防与不定期一律传 0（与 APK 的 time 字段全 0 一致）。"
         },
         {
           "platform": "ios",
@@ -47164,7 +47164,7 @@ const DATA = {
           "line": 130,
           "symbol": "writeCmdsBlocked",
           "note": "含 0x0c",
-          "text": "validToSec: UInt32? = nil,"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -47259,7 +47259,7 @@ const DATA = {
           "line": 130,
           "symbol": "writeCmdsBlocked",
           "note": "含 0x0d",
-          "text": "validToSec: UInt32? = nil,"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -47359,7 +47359,7 @@ const DATA = {
           "line": 196,
           "symbol": "cmd0ESyncTime",
           "note": "",
-          "text": "guard let s, !s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -47367,7 +47367,7 @@ const DATA = {
           "line": 499,
           "symbol": "syncTime",
           "note": "",
-          "text": "/// 先读锁钟现在只用来**报告偏差** (读了不写回去), 再回读一次作为\"真的写进去了\"的证据 ——"
+          "text": "let r = try await exec(ZKCmdBuilder.cmd04Open(cred, klv01Hex: \"0000\"), retries: 2)"
         },
         {
           "platform": "apk",
@@ -47383,7 +47383,7 @@ const DATA = {
           "line": 489,
           "symbol": "func syncTime()",
           "note": "",
-          "text": "guard !cred.isEmpty else { throw BLEErrorX.msg(\"开锁凭证为空 (ekey/PIN 签发失败), 已中止下发\") }"
+          "text": "guard let kc = DB.keychain(curMac), !kc.skey.isEmpty else { throw BLEErrorX.msg(\"无钥匙串, 无法开锁\") }"
         }
       ],
       "platformEvidence": {
@@ -47480,7 +47480,7 @@ const DATA = {
           "line": 457,
           "symbol": "sendEcho",
           "note": "retries: 1",
-          "text": "ble.disconnect()"
+          "text": "func probeEcho(deviceId: String, valueHex: String = \"123456\") async throws -> EchoProbe {"
         },
         {
           "platform": "apk",
@@ -47496,7 +47496,7 @@ const DATA = {
           "line": 459,
           "symbol": "sendEcho",
           "note": "KLV#01 回显比对",
-          "text": "connectedMAC = \"\""
+          "text": "// 等于让本机记住一台没有钥匙的设备 (下次冷启动会去连它)。"
         }
       ],
       "platformEvidence": {
@@ -47585,7 +47585,7 @@ const DATA = {
           "line": 209,
           "symbol": "cmd14FpConfirm",
           "note": "",
-          "text": "// cmd 0E: syncTime(4B LE 协议秒)"
+          "text": "let body = u16leHex(alias)"
         },
         {
           "platform": "ios",
@@ -47593,7 +47593,7 @@ const DATA = {
           "line": 735,
           "symbol": "fpConfirm",
           "note": "",
-          "text": "if r != 0 && r != -1 && r != rcBlurry { stopRc = r }"
+          "text": "guard f.cmd == self.collectorCmd else { return }"
         },
         {
           "platform": "ios",
@@ -47617,7 +47617,7 @@ const DATA = {
           "line": 212,
           "symbol": "cmd14FpConfirm",
           "note": "protoSecU32 收口",
-          "text": "return ZKCmd(name: \"0E 时间同步\", cmd: 0x0e, hex: ZKProtocol.wrapFrame(0x0e, macHex, skeyHex, body, 0x02))"
+          "text": "return ZKCmd(name: \"0B 密码有效期\", cmd: 0x0b, hex: ZKProtocol.wrapFrame(0x0b, macHex, skeyHex, body, 0x01))"
         }
       ],
       "platformEvidence": {
@@ -47713,7 +47713,7 @@ const DATA = {
           "line": 216,
           "symbol": "cmd15DeleteFp",
           "note": "",
-          "text": "// 兜底对齐 JS cmds.js:119-120 (times||8, timeout\u003c=0→15)"
+          "text": "let body = HexKit.u32leHex(UInt32(truncatingIfNeeded: timeSec))"
         },
         {
           "platform": "ios",
@@ -47721,7 +47721,7 @@ const DATA = {
           "line": 740,
           "symbol": "fpDelete",
           "note": "",
-          "text": "var attemptsLeft = 2 // JS _execMulti retries=2: 无帧时重发一次"
+          "text": "+ \"order=\\(p.orderIdx.map(String.init) ?? \"-\") \""
         },
         {
           "platform": "ios",
@@ -47839,7 +47839,7 @@ const DATA = {
           "line": 220,
           "symbol": "cmd16GetLog",
           "note": "",
-          "text": "return ZKCmd(name: \"13 录指纹\", cmd: 0x13, hex: ZKProtocol.wrapFrame(0x13, macHex, skeyHex, body, 0x02))"
+          "text": "static func cmd13AddFp(_ macHex: String, _ skeyHex: String, _ times: Int = 8, _ timeout: Int = 15) -> ZKCmd {"
         },
         {
           "platform": "ios",
@@ -47847,7 +47847,7 @@ const DATA = {
           "line": 748,
           "symbol": "getLogs",
           "note": "",
-          "text": "// 断链/取消早退: 旧写法会一直转到窗口到点才抛\"未收到任何按压响应\","
+          "text": "log(\"info\", \"TX 13 录指纹 (多响应, \\(times) 次按压)\")"
         },
         {
           "platform": "ios",
@@ -47951,7 +47951,7 @@ const DATA = {
           "line": 227,
           "symbol": "cmd18Volume",
           "note": "",
-          "text": "return ZKCmd(name: \"14 指纹确认\", cmd: 0x14, hex: ZKProtocol.wrapFrame(0x14, macHex, skeyHex, body, 0x02))"
+          "text": "// cmd 14: batchNumber(4B LE) + validFrom/To"
         },
         {
           "platform": "ios",
@@ -47975,7 +47975,7 @@ const DATA = {
           "line": 235,
           "symbol": "cmd20ValidationMode",
           "note": "",
-          "text": "// 兜底对齐 JS cmds.js:138 (pageSize||20)"
+          "text": "static func cmd15DeleteFp(_ macHex: String, _ skeyHex: String, _ batchNumber: UInt32) -> ZKCmd {"
         },
         {
           "platform": "ios",
@@ -47983,7 +47983,7 @@ const DATA = {
           "line": 239,
           "symbol": "cmd24AutoLock",
           "note": "",
-          "text": "}"
+          "text": "static func cmd16GetLog(_ macHex: String, _ skeyHex: String, orderType: Int = 0, startIdx: UInt32 = 0, pageSize: Int = 20) -> ZKCmd {"
         }
       ],
       "platformEvidence": {
@@ -48080,7 +48080,7 @@ const DATA = {
           "line": 231,
           "symbol": "cmd19OpenZotp",
           "note": "",
-          "text": "ZKCmd(name: \"15 删指纹\", cmd: 0x15, hex: ZKProtocol.wrapFrame(0x15, macHex, skeyHex, HexKit.u32leHex(batchNumber), 0x02))"
+          "text": "+ HexKit.u32leHex(protoSecU32(validTo))"
         },
         {
           "platform": "ios",
@@ -48088,7 +48088,7 @@ const DATA = {
           "line": 529,
           "symbol": "setZotp",
           "note": "",
-          "text": "let (m, sk) = try keys()"
+          "text": "if abs(after) > 60 {"
         },
         {
           "platform": "ios",
@@ -48193,7 +48193,7 @@ const DATA = {
           "line": 235,
           "symbol": "cmd20ValidationMode",
           "note": "",
-          "text": "// 兜底对齐 JS cmds.js:138 (pageSize||20)"
+          "text": "static func cmd15DeleteFp(_ macHex: String, _ skeyHex: String, _ batchNumber: UInt32) -> ZKCmd {"
         },
         {
           "platform": "ios",
@@ -48201,7 +48201,7 @@ const DATA = {
           "line": 521,
           "symbol": "setValidationMode",
           "note": "",
-          "text": "throw BLEErrorX.msg(\"校时命令已被接受, 但回读锁钟仍偏差 \\(after)s — 门锁可能忽略了 0E (rc=0 不等于写成功)\")"
+          "text": "try await execOk(ZKCmdBuilder.cmd0ESyncTime(m, sk, now))"
         },
         {
           "platform": "ios",
@@ -48302,7 +48302,7 @@ const DATA = {
           "line": 150,
           "symbol": "cmd21SetBkey",
           "note": "",
-          "text": "// JS: '2010-01-01T00:00:00' 本地解释 ⇒ 东八区为 −28800; 经 protoSecU32 收口成 0 (= APK 的取值)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -48310,7 +48310,7 @@ const DATA = {
           "line": 959,
           "symbol": "finishPairing",
           "note": "",
-          "text": ""
+          "text": "//      (见 finishPairing)。"
         },
         {
           "platform": "apk",
@@ -48326,7 +48326,7 @@ const DATA = {
           "line": 151,
           "symbol": "cmd21SetBkey",
           "note": "body = \"10\" + bkeyHex",
-          "text": "let vf = protoSecU32(\"2010-01-01 00:00:00\")"
+          "text": "// App generateEkey (分享/写钥匙串): 随机 TrackId + 本地时区 2010~2118 窗口"
         }
       ],
       "platformEvidence": {
@@ -48516,7 +48516,7 @@ const DATA = {
           "line": 801,
           "symbol": "pair",
           "note": "",
-          "text": "try await execOk(ZKCmdBuilder.cmd14FpConfirm(m, sk, batchNumber, validFrom, validTo))"
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -48532,7 +48532,7 @@ const DATA = {
           "line": 803,
           "symbol": "pair",
           "note": "way & 2 != 0 门禁",
-          "text": "}"
+          "text": "log(\"warn\", \"13 只收到 \\(presses.count)/\\(times) 次按压 (超时/提前收尾)\")"
         }
       ],
       "platformEvidence": {
@@ -48618,7 +48618,7 @@ const DATA = {
           "line": 239,
           "symbol": "cmd24AutoLock",
           "note": "",
-          "text": "}"
+          "text": "static func cmd16GetLog(_ macHex: String, _ skeyHex: String, orderType: Int = 0, startIdx: UInt32 = 0, pageSize: Int = 20) -> ZKCmd {"
         },
         {
           "platform": "ios",
@@ -48626,7 +48626,7 @@ const DATA = {
           "line": 527,
           "symbol": "setAutoLock",
           "note": "",
-          "text": "}"
+          "text": "// >60s 不可能是秒级回读误差 (即使固件把锁钟取整到分钟也只有几十秒) ⇒ 当成\"压根没写进去\"报错,"
         },
         {
           "platform": "apk",
@@ -48899,7 +48899,7 @@ const DATA = {
           "line": 268,
           "symbol": "cmd31GWSetWifi",
           "note": "",
-          "text": "return ZKCmd(name: \"41 钥匙串写钥\", cmd: 0x41, hex: ZKProtocol.buildFrame(0x41, klv, header: 8))"
+          "text": "// 2026-10-14: 与 cmd43 / buildEkey 同口径先剥冒号, 否则带冒号 MAC 使 reversePairs 返回空串。"
         },
         {
           "platform": "ios",
@@ -48939,7 +48939,7 @@ const DATA = {
           "line": 265,
           "symbol": "cmd38GWStatus",
           "note": "",
-          "text": "+ ZKProtocol.buildKLV(0x02, HexKit.hexPair(UInt32(truncatingIfNeeded: type)))"
+          "text": "// 之后写进硬件钥匙串的 MAC 就永久是反的 —— 归属写错、查不到、状态读错。"
         }
       ],
       "platformEvidence": {
@@ -49038,7 +49038,7 @@ const DATA = {
           "line": 276,
           "symbol": "cmd32GWSetIot",
           "note": "",
-          "text": "static func cmd43KeychainStatus(_ lockMacList: [String]) -> ZKCmd {"
+          "text": "// 2026-10-14: 去掉强解包 (空 = 查全部钥匙, 与旧口径一致), 并把剥冒号/小写收在前一行。"
         },
         {
           "platform": "ios",
@@ -49243,7 +49243,7 @@ const DATA = {
           "line": 265,
           "symbol": "cmd38GWStatus",
           "note": "",
-          "text": "+ ZKProtocol.buildKLV(0x02, HexKit.hexPair(UInt32(truncatingIfNeeded: type)))"
+          "text": "// 之后写进硬件钥匙串的 MAC 就永久是反的 —— 归属写错、查不到、状态读错。"
         },
         {
           "platform": "ios",
@@ -49357,7 +49357,7 @@ const DATA = {
           "line": 244,
           "symbol": "cmd41WriteEkey",
           "note": "",
-          "text": "// cmd 19: status(1B 0=关/1=开)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -49389,7 +49389,7 @@ const DATA = {
           "line": 252,
           "symbol": "cmd44GetEkeyInfo",
           "note": "",
-          "text": "// cmd 24: interval(1B 档位 1-6)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -49484,7 +49484,7 @@ const DATA = {
           "line": 258,
           "symbol": "cmd43KeychainStatus",
           "note": "",
-          "text": "// 2026-10-27 审核修复 (AUDIT-A F-39)：41/43/44 是**明文帧**，原先却调 `ZKProtocol.targetMac()`,"
+          "text": "static func cmd24AutoLock(_ macHex: String, _ skeyHex: String, _ interval: Int) -> ZKCmd {"
         },
         {
           "platform": "ios",
@@ -49594,7 +49594,7 @@ const DATA = {
           "line": 252,
           "symbol": "cmd44GetEkeyInfo",
           "note": "",
-          "text": "// cmd 24: interval(1B 档位 1-6)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -49699,7 +49699,7 @@ const DATA = {
           "line": 118,
           "symbol": "buildEkey",
           "note": "",
-          "text": "static func setMacOrder(_ mac: String, _ o: MacOrder) { macOrdersLock.withLock { $0[normMac(mac)] = o } }"
+          "text": "/// 2026-10-27 审核合并 (AUDIT-C A11)：转调 `DB.normalizeMac`，不再各写一遍。"
         },
         {
           "platform": "ios",
@@ -49707,7 +49707,7 @@ const DATA = {
           "line": 128,
           "symbol": "buildEkeyOpen",
           "note": "EKey(0x04) + pinLE + 0000",
-          "text": "var h = pin.trimmingCharacters(in: .whitespaces).lowercased()"
+          "text": "// Android 全仓无 PIN 解析（它只扫二维码拿 ekey，不碰 skey）。"
         }
       ],
       "platformEvidence": {
@@ -49768,7 +49768,7 @@ const DATA = {
           "line": 45,
           "symbol": "validTo2118",
           "note": "",
-          "text": "static let validTo2118: UInt32 = 3_408_134_400"
+          "text": "//   东八区算得 3_408_163_200, 而 JS `buildEkey` 的默认 vt 是 3_408_134_400 (= 本地 2118 − 本地 2010,"
         },
         {
           "platform": "ios",
@@ -49776,7 +49776,7 @@ const DATA = {
           "line": 138,
           "symbol": "buildEkeyShare",
           "note": "",
-          "text": "static func buildEkeyOpen(_ skeyHex: String, _ macHex: String, _ pin: String,"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -49784,7 +49784,7 @@ const DATA = {
           "line": 115,
           "symbol": "buildEkey",
           "note": "let vt = validToSec ?? validTo2118",
-          "text": "/// 原先这里是 `lowercased() + 去冒号`（顺序与 DB 那版相反，且不去连字符）——"
+          "text": "/// 内存注册表: 只有 DB 的落盘口与配网探针会写它 (协议层不读库, 免得 Core 里绕成环)。"
         }
       ],
       "platformEvidence": {
@@ -49852,7 +49852,7 @@ const DATA = {
           "line": 142,
           "symbol": "wrapFrame",
           "note": "",
-          "text": ""
+          "text": "+ HexKit.u32leHex(validFromSec)"
         },
         {
           "platform": "ios",
@@ -49860,7 +49860,7 @@ const DATA = {
           "line": 148,
           "symbol": "wrapEnc",
           "note": "",
-          "text": "static let writeCmdsBlocked: [UInt8] = [0x04, 0x05, 0x08, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x13, 0x14, 0x15,"
+          "text": "// ---------- 试验模式硬护栏 (JS kernel/protocol.js:19-27 READONLY_CMDS / WRITE_CMDS_BLOCKED / assertReadOnly) ----------"
         },
         {
           "platform": "ios",
@@ -49868,7 +49868,7 @@ const DATA = {
           "line": 155,
           "symbol": "wrapEnc",
           "note": "cipher.isEmpty ? \"\" : buildKLV(...)",
-          "text": "}"
+          "text": "static func assertReadOnly(_ cmd: UInt8) throws {"
         }
       ],
       "platformEvidence": {
@@ -49937,7 +49937,7 @@ const DATA = {
           "line": 76,
           "symbol": "buildFrame",
           "note": "header == 8 分支",
-          "text": "guard off + 2 + len \u003c= b.count else { return nil }"
+          "text": "while off \u003c b.count {"
         },
         {
           "platform": "ios",
@@ -49945,7 +49945,7 @@ const DATA = {
           "line": 79,
           "symbol": "buildFrame",
           "note": "10B 分支带 ssToken",
-          "text": "off += 2 + len"
+          "text": "let len = Int(b[off + 1])"
         }
       ],
       "platformEvidence": {
@@ -50008,7 +50008,7 @@ const DATA = {
           "line": 72,
           "symbol": "buildFrame",
           "note": "let len = klv.count / 2",
-          "text": "while off \u003c b.count {"
+          "text": "static func parseKLV(_ hex: String) -> [ZKLV]? {"
         },
         {
           "platform": "ios",
@@ -50016,7 +50016,7 @@ const DATA = {
           "line": 212,
           "symbol": "FrameAssembler.push",
           "note": "let len = HexKit.readU16LE(buf, byteOffset: 2)",
-          "text": "else { orders = [8, 10, 7] }"
+          "text": "let len = HexKit.readU16LE(hex, byteOffset: 2)"
         }
       ],
       "platformEvidence": {
@@ -50083,7 +50083,7 @@ const DATA = {
           "line": 181,
           "symbol": "parseResponse",
           "note": "",
-          "text": "guard !tokenHex.isEmpty, hex.count >= 16 else { return hex }"
+          "text": "// 2026-10-27 审核说明 (AUDIT-A F-48)：`injectToken` 的 8B/10B 自适应三端一致，"
         },
         {
           "platform": "android",
@@ -50099,7 +50099,7 @@ const DATA = {
           "line": 186,
           "symbol": "parseResponse",
           "note": "versionByte 0x01 优先 7B 试切",
-          "text": "let cmd = HexKit.bytes(hex)[4]"
+          "text": "let len = HexKit.readU16LE(hex, byteOffset: 2)"
         },
         {
           "platform": "ios",
@@ -50107,7 +50107,7 @@ const DATA = {
           "line": 197,
           "symbol": "parseResponse",
           "note": "取第一个成功结果",
-          "text": "struct ParsedFrame {"
+          "text": ": buildFrame(cmd, klv, ssToken: \"0000\", header: 8)"
         },
         {
           "platform": "android",
@@ -50299,7 +50299,7 @@ const DATA = {
           "line": 276,
           "symbol": "cmd32GWSetIot",
           "note": "",
-          "text": "static func cmd43KeychainStatus(_ lockMacList: [String]) -> ZKCmd {"
+          "text": "// 2026-10-14: 去掉强解包 (空 = 查全部钥匙, 与旧口径一致), 并把剥冒号/小写收在前一行。"
         },
         {
           "platform": "ios",
@@ -51311,7 +51311,7 @@ const DATA = {
           "line": 150,
           "symbol": "cmd21SetBkey",
           "note": "",
-          "text": "// JS: '2010-01-01T00:00:00' 本地解释 ⇒ 东八区为 −28800; 经 protoSecU32 收口成 0 (= APK 的取值)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -51650,7 +51650,7 @@ const DATA = {
           "line": 812,
           "symbol": "pair",
           "note": "三处全零检测",
-          "text": "log(\"info\", \"指纹#\\(batchNumber) 已删除 (已重读复核)\")"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -51713,7 +51713,7 @@ const DATA = {
           "line": 51,
           "symbol": "buildKLV",
           "note": "hexPair(UInt32(key)) + hexPair(UInt32(len)) + v",
-          "text": "// 帧长度对不上，锁端会按错误长度解析后面所有 KLV。"
+          "text": "// ---------- KLV ----------"
         },
         {
           "platform": "ios",
@@ -51793,7 +51793,7 @@ const DATA = {
           "line": 167,
           "symbol": "injectToken",
           "note": "KLV#0xEE 令牌",
-          "text": "order: MacOrder? = nil) -> String {"
+          "text": "return enc.isEmpty ? \"\" : buildFrame(cmd, enc, header: 8)"
         },
         {
           "platform": "ios",
@@ -51884,7 +51884,7 @@ const DATA = {
           "line": 58,
           "symbol": "parseKLV",
           "note": "",
-          "text": "// 截断而不是返回空串：空串会让上层构造出载荷为空的帧，反而更难定位。"
+          "text": "// 但这是定时炸弹：将来有人往 KLV 里塞固件分片或长日志就会踩。"
         },
         {
           "platform": "ios",
@@ -51892,7 +51892,7 @@ const DATA = {
           "line": 61,
           "symbol": "parseKLV",
           "note": "越界即 return nil",
-          "text": "if rawLen > 0xFF {"
+          "text": "// `project.yml` 的 Release 配置显式关断言，那种写法在真机包上等于没有校验）。"
         }
       ],
       "platformEvidence": {
@@ -51961,7 +51961,7 @@ const DATA = {
           "line": 750,
           "symbol": "getLogs",
           "note": "surplus 取自 KLV#04",
-          "text": "if Task.isCancelled || ble.connectedPeripheralId.isEmpty || connectedDeviceId.isEmpty {"
+          "text": "var broken = false"
         },
         {
           "platform": "ios",
@@ -52046,7 +52046,7 @@ const DATA = {
           "line": 754,
           "symbol": "getLogs",
           "note": "",
-          "text": "}"
+          "text": "let sentAt = Date()"
         }
       ],
       "platformEvidence": {
@@ -52167,7 +52167,7 @@ const DATA = {
           "line": 340,
           "symbol": "exec",
           "note": "",
-          "text": "sessionTokenHex = \"0000\""
+          "text": "let cmd = cmdObj.cmd"
         },
         {
           "platform": "ios",
@@ -52175,7 +52175,7 @@ const DATA = {
           "line": 347,
           "symbol": "exec",
           "note": "DB.setMacOrder(curMac, other)",
-          "text": "// rc=12「mac地址不正确」的**顺序自愈** (2026-10-17 真机): 0x88 包络里那 6 字节 MAC 有两种取法,"
+          "text": "if (rc == 3 || rc == 13), needToken {"
         },
         {
           "platform": "ios",
@@ -52183,7 +52183,7 @@ const DATA = {
           "line": 353,
           "symbol": "exec",
           "note": "复原并报不是字节序问题",
-          "text": "if rc == 12, pairMac == nil, LockService.macBearingCmds.contains(cmd), DB.keychain(curMac) != nil {"
+          "text": "if rc2 != 3 && rc2 != 13 { return ExecResult(frame: r2, rc: rc2, klvs: r2.klvs) }"
         }
       ],
       "platformEvidence": {
@@ -52252,7 +52252,7 @@ const DATA = {
           "line": 98,
           "symbol": "macOrdersLock",
           "note": "",
-          "text": "// ---------- 0x88 包络里的 MAC 字节序 (per MAC, 真机裁定) ----------"
+          "text": "return (\"87\" + \"00\" + HexKit.hexPair(UInt32(len & 0xff)) + HexKit.hexPair(UInt32((len >> 8) & 0xff))"
         },
         {
           "platform": "ios",
@@ -52260,7 +52260,7 @@ const DATA = {
           "line": 99,
           "symbol": "normMac",
           "note": "",
-          "text": "/// 0x88 包络里那 6 字节 MAC 有两个参照实现各写了一种取法, 而锁只认一种:"
+          "text": "+ HexKit.hexPair(UInt32(cmd)) + ssToken + \"000000\" + klv).uppercased()"
         }
       ],
       "platformEvidence": {
@@ -52321,7 +52321,7 @@ const DATA = {
           "line": 104,
           "symbol": "targetMac",
           "note": "",
-          "text": "/// 差的就是这 6 字节的先后。认错的表现是锁回 rc=12「mac地址不正确」—— 而 rc≠0 的语义是"
+          "text": "///   · `.display` — 原版 APK (main.js 的 `kt.getBytes`): `TargetMAC` 取 `BluetoothDevice.getAddress()`"
         },
         {
           "platform": "ios",
@@ -52329,7 +52329,7 @@ const DATA = {
           "line": 246,
           "symbol": "cmd41WriteEkey",
           "note": "先 targetMac 再 reversePairs",
-          "text": "ZKCmd(name: \"19 ZOTP\", cmd: 0x19, hex: ZKProtocol.wrapFrame(0x19, macHex, skeyHex, HexKit.hexPair(UInt32(on ? 1 : 0)), 0x02))"
+          "text": "static func cmd18Volume(_ macHex: String, _ skeyHex: String, _ silent: Bool) -> ZKCmd {"
         },
         {
           "platform": "ios",
@@ -52337,7 +52337,7 @@ const DATA = {
           "line": 254,
           "symbol": "cmd44GetEkeyInfo",
           "note": "先剥冒号小写",
-          "text": "ZKCmd(name: \"24 自动上锁\", cmd: 0x24, hex: ZKProtocol.wrapFrame(0x24, macHex, skeyHex, HexKit.hexPair(UInt32(truncatingIfNeeded: interval)), 0x01))"
+          "text": "static func cmd20ValidationMode(_ macHex: String, _ skeyHex: String, _ bMode: Bool) -> ZKCmd {"
         }
       ],
       "platformEvidence": {
@@ -52746,7 +52746,7 @@ const DATA = {
           "line": 364,
           "symbol": "execOk",
           "note": "",
-          "text": "// 不是顺序问题 → 复原注册表 (方向错了会比默认更难查), 让上层按 mac 不符去报错"
+          "text": "let other = ZKProtocol.flipped(used)"
         },
         {
           "platform": "ios",
@@ -52754,7 +52754,7 @@ const DATA = {
           "line": 367,
           "symbol": "execOk",
           "note": "",
-          "text": "}"
+          "text": "let rc2 = resp2.map { extractRc(cmd, $0) } ?? -1"
         },
         {
           "platform": "ios",
@@ -52762,7 +52762,7 @@ const DATA = {
           "line": 749,
           "symbol": "getLogs",
           "note": "rc != 0 && rc != -1 才抛",
-          "text": "// 期间锁已被人拿走/电量耗尽也不知情, collector 也一直被占 (新会话的 cmd13 帧会被吞)"
+          "text": "var attemptsLeft = 2 // JS _execMulti retries=2: 无帧时重发一次"
         }
       ],
       "platformEvidence": {
@@ -52831,7 +52831,7 @@ const DATA = {
           "line": 166,
           "symbol": "rcHint",
           "note": "",
-          "text": "static func rcMessage(_ rc: Int) -> String { rcMsg[rc] ?? (\"错误码 \\(rc)\") }"
+          "text": "6: \"开锁指令已绑定其他设备\", 7: \"执行的操作不在指定的状态\", 8: \"溢出\", 9: \"时间误差过大\","
         },
         {
           "platform": "ios",
@@ -52839,7 +52839,7 @@ const DATA = {
           "line": 181,
           "symbol": "rcFriendly",
           "note": "",
-          "text": "case 21: return \"门从里面反锁了, 先解除反锁再试\""
+          "text": "case 6: return \"这条开锁凭证已绑定到别的设备, 请重新下发凭证\""
         }
       ],
       "platformEvidence": {
@@ -52910,7 +52910,7 @@ const DATA = {
           "line": 162,
           "symbol": "rcMessage",
           "note": "",
-          "text": "15: \"未知协议\", 16: \"参数不在范围内\", 17: \"丢包\", 18: \"不能设置重复的值\", 19: \"找不到指定的值\","
+          "text": "/// `rc=0` 本仓「成功」/ Android「已开锁」。语义相同（Android 只发开锁类命令，"
         }
       ],
       "platformEvidence": {
@@ -53056,7 +53056,7 @@ const DATA = {
           "line": 209,
           "symbol": "FrameAssembler.push",
           "note": "guard let idx = buf.range(of: \"87\") else { buf = \"\"; break }",
-          "text": "var orders: [Int]"
+          "text": "guard hex.count >= 14 else { return ParsedFrame(ok: false, cmd: 0, header: 0, klvs: [], raw: hex) }"
         },
         {
           "platform": "ios",
@@ -53303,7 +53303,7 @@ const DATA = {
           "line": 130,
           "symbol": "writeCmdsBlocked",
           "note": "",
-          "text": "validToSec: UInt32? = nil,"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -53530,7 +53530,7 @@ const DATA = {
           "line": 420,
           "symbol": "readLockTime",
           "note": "",
-          "text": "r = try await exec(ZKCmdBuilder.cmd03StatusWrap(m, sk))"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -53839,7 +53839,7 @@ const DATA = {
           "line": 159,
           "symbol": "injectToken",
           "note": "",
-          "text": "/// `hex.isEmpty` 永不成立、08/0A/13/14/15/18/19/20/21/0B/0E/16/24/25 全部照样发给锁。"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -53871,7 +53871,7 @@ const DATA = {
           "line": 163,
           "symbol": "injectToken",
           "note": "header10 判据",
-          "text": "return enc.isEmpty ? \"\" : buildFrame(cmd, enc, header: 8)"
+          "text": "/// `hex.isEmpty` 永不成立、08/0A/13/14/15/18/19/20/21/0B/0E/16/24/25 全部照样发给锁。"
         },
         {
           "platform": "android",
@@ -54043,7 +54043,7 @@ const DATA = {
           "line": 381,
           "symbol": "pairHint",
           "note": "",
-          "text": "return r"
+          "text": "private func execOk(_ cmdObj: ZKCmd, needToken: Bool = true, retries: Int = 3) async throws -> ExecResult {"
         },
         {
           "platform": "ios",
@@ -54051,7 +54051,7 @@ const DATA = {
           "line": 383,
           "symbol": "pairHint",
           "note": "",
-          "text": ""
+          "text": "// rc = -1 的含义是\"该命令按 rcKLV 表本应带 rc KLV, 但回包里没有\" (extractRc 只在 cmd 命中表时才返回 -1)。"
         },
         {
           "platform": "ios",
@@ -54059,7 +54059,7 @@ const DATA = {
           "line": 385,
           "symbol": "pairHint",
           "note": "rc=13 长文案",
-          "text": "/// 配网尾链中断的提示。参数是\"**本机有没有留存这一份密钥**\", 而不是\"换钥有没有发生\":"
+          "text": "// 写命令面按 fail-closed 处理: 拿不到锁端结果就抛错, 让 UI 显示未确认而不是成功。"
         }
       ],
       "platformEvidence": {
@@ -54130,7 +54130,7 @@ const DATA = {
           "line": 863,
           "symbol": "pair",
           "note": "pending Keychain 构造",
-          "text": "progress(\"续配完成: \\(kc.pidName.isEmpty ? \"pid=\\(kc.pid)\" : kc.pidName) @ \\(m)\")"
+          "text": "// 2026-10-17 夜: 这里原本先跑一遍只读 03 探针「裁定 MAC 字节序」——已删, 理由见 finishPairing"
         },
         {
           "platform": "ios",
@@ -54138,7 +54138,7 @@ const DATA = {
           "line": 867,
           "symbol": "pair",
           "note": "savePendingPair",
-          "text": "progress(\"续配不通 (锁可能已再次重置) → 走完整配网\")"
+          "text": "bkey: pend.bkey, pins: pend.pins,"
         },
         {
           "platform": "ios",
@@ -54146,7 +54146,7 @@ const DATA = {
           "line": 883,
           "symbol": "pair",
           "note": "尾链成功才 clearPendingPair",
-          "text": "guard !KeyGen.isAllZeroHex(skey), !KeyGen.isAllZeroHex(bkey),"
+          "text": "guard way & 2 != 0 else { throw BLEErrorX.msg(\"交换方式不支持 (exSKeyWay=\\(way)), 固件要求 bit1=1\") }"
         }
       ],
       "platformEvidence": {
@@ -54224,7 +54224,7 @@ const DATA = {
           "line": 786,
           "symbol": "pair",
           "note": "直接用留存密钥走 finishPairing",
-          "text": "throw BLEErrorX.msg(\"锁回「无法获取有效的指纹图片」(rc=23): 手指按得太快/太湿, 或反复按同一处 — 请换一个角度重按\")"
+          "text": "if r == rcTimeout {"
         },
         {
           "platform": "ios",
@@ -54303,7 +54303,7 @@ const DATA = {
           "line": 902,
           "symbol": "finishPairing",
           "note": "",
-          "text": "// 13 = 通讯过期 = 会话令牌被判无效/已过期。rc≠0 ⇒ 锁**没有执行**换钥 (锁内 skey 未动),"
+          "text": "//     if (data.needSessionToken()) { doRefreshSsToken(); token = ssToken.getToken(); }"
         },
         {
           "platform": "ios",
@@ -54311,7 +54311,7 @@ const DATA = {
           "line": 906,
           "symbol": "finishPairing",
           "note": "批大小 20 的理由",
-          "text": "r5 = try await request(ZKCmdBuilder.cmd05Exchange(skey), cmd: 0x05, needToken: true, retries: 1)"
+          "text": "//   锁于是回 rc=13「通讯过期」—— 报的是**通讯会话**无效 (没有有效令牌), 而不是命令时间 (那是 rc=3)。"
         },
         {
           "platform": "ios",
@@ -54319,7 +54319,7 @@ const DATA = {
           "line": 953,
           "symbol": "finishPairing",
           "note": "pairWarning(resumable, ...)",
-          "text": "trackid: pending.trackid, resumable: resumable, progress: progress) }"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -54327,7 +54327,7 @@ const DATA = {
           "line": 978,
           "symbol": "finishPairing",
           "note": "DB.saveKeychain",
-          "text": "// ⇒ 真机帧序列是 20/20/20/4 四批。旧版取 16(\"让单帧更小\") 是自创: 锁端若按固定 20 槽位对位解析这一批,"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -54402,7 +54402,7 @@ const DATA = {
           "line": 884,
           "symbol": "pair",
           "note": "cleanWrongOrderTwin 调用",
-          "text": "!pins.contains(where: { KeyGen.isAllZeroHex($0) }) else {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -54410,7 +54410,7 @@ const DATA = {
           "line": 893,
           "symbol": "cleanWrongOrderTwin",
           "note": "",
-          "text": "//     if (data.needSessionToken()) { doRefreshSsToken(); token = ssToken.getToken(); }"
+          "text": "!pins.contains(where: { KeyGen.isAllZeroHex($0) }) else {"
         }
       ],
       "platformEvidence": {
@@ -54473,7 +54473,7 @@ const DATA = {
           "line": 478,
           "symbol": "unlock",
           "note": "return r.rc // 0 成功; 22 双验继续",
-          "text": "func unlock(mac: String? = nil, pinDec: String? = nil) async throws -> Int {"
+          "text": "// retries: 1 —— 这是\"这一下通不通\"的一次探测, 不是重试到通为止的操作"
         },
         {
           "platform": "ios",
@@ -54481,7 +54481,7 @@ const DATA = {
           "line": 159,
           "symbol": "rcMsg",
           "note": "22 不能重复验证",
-          "text": "0: \"成功\", 1: \"解密失败\", 2: \"无效的PIN码\", 3: \"命令过期\", 5: \"次数使用完毕\","
+          "text": "/// 改文案会让闸门红 —— 想补提示请用 `rcHint(rc:)`。"
         }
       ],
       "platformEvidence": {
@@ -54706,7 +54706,7 @@ const DATA = {
           "line": 830,
           "symbol": "pair",
           "note": "rc5 == 13 分支",
-          "text": "}"
+          "text": "let surplus = r.klvs.first(where: { $0.key == 0x04 }).map { Int(StatusParser.leHexToU32($0.val)) }"
         },
         {
           "platform": "ios",
@@ -54714,7 +54714,7 @@ const DATA = {
           "line": 850,
           "symbol": "pair",
           "note": "回显与本地 skey 比对",
-          "text": "if let pend = DB.pendingPair(m), !pend.skey.isEmpty, !pend.pins.isEmpty {"
+          "text": "throw BLEErrorX.msg(\"该锁已有钥匙串 (MAC=\\(old.mac)), 拒绝覆盖配网; 如需重配请先删除该设备\")"
         },
         {
           "platform": "ios",
@@ -54722,7 +54722,7 @@ const DATA = {
           "line": 855,
           "symbol": "pair",
           "note": "pairWarning(false, ...)",
-          "text": "// 开头那段: 读类命令证明不了字节序 (MAC 取错它也可能 rc=0), 探针会把错的值裁定成「已知」,"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -54794,7 +54794,7 @@ const DATA = {
           "line": 928,
           "symbol": "finishPairing",
           "note": "rb.rc == 12, n == 1",
-          "text": "}"
+          "text": "//  只报\"已中止\", 读起来像\"锁没被动过\"; 那个旗子现已全部换成\"本机有没有留存密钥\"，"
         },
         {
           "platform": "ios",
@@ -54802,7 +54802,7 @@ const DATA = {
           "line": 936,
           "symbol": "finishPairing",
           "note": "换序 rc=0 落盘",
-          "text": "trackid: String(KeyGen.genTrackId()), bleId: deviceId, fw: \"\","
+          "text": "\"换钥回显不匹配 (本地/回显长度 \\(skey.count)/\\(echo.val.count)) — 锁内密钥已是本机读不懂的一份, 无法续配; 请在门锁键盘上重置后重新配网\"))"
         },
         {
           "platform": "ios",
@@ -54810,7 +54810,7 @@ const DATA = {
           "line": 939,
           "symbol": "finishPairing",
           "note": "rc=18 视为已写入",
-          "text": "if resumable {"
+          "text": "progress(\"步骤 4/7: 留存本次密钥 (配网中断可续配)\")"
         },
         {
           "platform": "ios",
@@ -54818,7 +54818,7 @@ const DATA = {
           "line": 946,
           "symbol": "finishPairing",
           "note": "两种顺序都被拒",
-          "text": "//   ① 读类命令**证明不了**包络 MAC 的字节序 —— 03 即使 MAC 取错也可能回 rc=0, 于是探针会把一个"
+          "text": "pairedAt: ISO8601DateFormatter().string(from: Date()))"
         }
       ],
       "platformEvidence": {
@@ -54897,7 +54897,7 @@ const DATA = {
           "line": 546,
           "symbol": "pwdAdd",
           "note": "缺 KLV#04",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -54905,7 +54905,7 @@ const DATA = {
           "line": 572,
           "symbol": "pwdModify",
           "note": "alias > 0 守卫",
-          "text": "// 0A 响应 KLV#04 = alias (LE 2B)"
+          "text": "/// 与 APK 的 sendDFUCmd 同口径：param 传 0 表示\"重启进 bootloader\"。"
         },
         {
           "platform": "ios",
@@ -54913,7 +54913,7 @@ const DATA = {
           "line": 587,
           "symbol": "pwdDelete",
           "note": "alias > 0 守卫",
-          "text": "// \"添加成功 (别名 #0)\"、台账把这条密码记成 0 号、往后 `pwdDelete(0)` 发出去的就是\"不删任何东西\""
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -54985,7 +54985,7 @@ const DATA = {
           "line": 435,
           "symbol": "probeEcho",
           "note": "",
-          "text": "}"
+          "text": "DB.writeStatus(curMac, st) // 离线快照 (随时可读)"
         },
         {
           "platform": "ios",
@@ -54993,7 +54993,7 @@ const DATA = {
           "line": 440,
           "symbol": "probeEcho",
           "note": "defer 拆链清理",
-          "text": ""
+          "text": "func readLockTime() async throws -> Int64 {"
         },
         {
           "platform": "ios",
@@ -55001,7 +55001,7 @@ const DATA = {
           "line": 432,
           "symbol": "probeEcho",
           "note": "注释：回声不改锁内任何东西",
-          "text": "let st = try await getStatus()"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -55073,7 +55073,7 @@ const DATA = {
           "line": 647,
           "symbol": "fpStart",
           "note": "isPress 判据",
-          "text": "///"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -55081,7 +55081,7 @@ const DATA = {
           "line": 654,
           "symbol": "fpStart",
           "note": "collectionDone",
-          "text": "while i \u003c pins.count {"
+          "text": "/// 只发 delPins、addPins 为空。用于撤销一把手机钥匙：把它的 pin 从锁里摘掉，"
         },
         {
           "platform": "ios",
@@ -55089,7 +55089,7 @@ const DATA = {
           "line": 669,
           "symbol": "fpStart",
           "note": "stopRc 赋值",
-          "text": "}"
+          "text": "log(\"info\", \"已删除 \\(batch.count) 个 PIN (08 delPins)\")"
         }
       ],
       "platformEvidence": {
@@ -55162,7 +55162,7 @@ const DATA = {
           "line": 626,
           "symbol": "fpStart",
           "note": "默认参数 8000/16000/150000",
-          "text": "throw BLEErrorX.msg(\"这条密码在本机台账里没有有效的锁端编号 (0 = 协议里的「不指定」)，无法按编号删除 — 请用「清空密码」或在门锁上处理\")"
+          "text": "return got"
         },
         {
           "platform": "ios",
@@ -55170,7 +55170,7 @@ const DATA = {
           "line": 694,
           "symbol": "fpStart",
           "note": "首帧窗口",
-          "text": "let (m, sk) = try keys()"
+          "text": "//   · **锁从不发\"结束帧\"**: `orderIdx==0` 只有一个含义 = \"启动成功\"应答 (APK: 0==orderIdx → \"启动成功\");"
         },
         {
           "platform": "ios",
@@ -55178,7 +55178,7 @@ const DATA = {
           "line": 698,
           "symbol": "fpStart",
           "note": "空闲 16s 判定",
-          "text": "var frames = [ZKProtocol.ParsedFrame]()"
+          "text": "//   旧判据把「收过按压之后出现的 orderIdx==0」当成锁的收尾帧 —— 但锁在模糊/重复按压时同样会回"
         },
         {
           "platform": "ios",
@@ -55186,7 +55186,7 @@ const DATA = {
           "line": 684,
           "symbol": "fpStart",
           "note": "断链/取消早退",
-          "text": "//   · 首帧之后 APK 侧没有任何 App 计时器 —— 每次按压的节拍由 13 帧里的 timeout=15s 裁定;"
+          "text": "var batchNumber: UInt32?"
         }
       ],
       "platformEvidence": {
@@ -55263,7 +55263,7 @@ const DATA = {
           "line": 746,
           "symbol": "getLogs",
           "note": "pageSize: Int = 5",
-          "text": "lastFrameAt = sentAt"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -55271,7 +55271,7 @@ const DATA = {
           "line": 750,
           "symbol": "getLogs",
           "note": "surplus",
-          "text": "if Task.isCancelled || ble.connectedPeripheralId.isEmpty || connectedDeviceId.isEmpty {"
+          "text": "var broken = false"
         },
         {
           "platform": "ios",
@@ -55279,7 +55279,7 @@ const DATA = {
           "line": 754,
           "symbol": "getLogs",
           "note": "truncated 计数",
-          "text": "}"
+          "text": "let sentAt = Date()"
         }
       ],
       "platformEvidence": {
@@ -55835,7 +55835,7 @@ const DATA = {
           "line": 469,
           "symbol": "unlock",
           "note": "ekey 优先，否则 PIN 现签",
-          "text": "// retries: 1 —— 这是\"这一下通不通\"的一次探测, 不是重试到通为止的操作"
+          "text": "sessionTokenHex = \"0000\""
         },
         {
           "platform": "ios",
@@ -55851,7 +55851,7 @@ const DATA = {
           "line": 129,
           "symbol": "buildEkeyOpen",
           "note": "pinLE + 00 + 00",
-          "text": "if h.hasPrefix(\"0x\") { h = String(h.dropFirst(2)) } // JS: replace(/^0x/i, '')"
+          "text": "// 代价：ekey 过期 / 锁端擦除 / 用户换 PIN 后，Android 只能重扫码；"
         }
       ],
       "platformEvidence": {
@@ -62414,7 +62414,7 @@ const DATA = {
           "line": 412,
           "symbol": "getStatus",
           "note": "st.rc == 0 才写",
-          "text": ""
+          "text": "/// (锁压根没回密钥) 比任何猜测都有用, 而值里可能含 skey/ekey/PIN 明文 (不得进日志)。"
         },
         {
           "platform": "ios",
@@ -62430,7 +62430,7 @@ const DATA = {
           "line": 413,
           "symbol": "getStatus",
           "note": "DB.writeStatus",
-          "text": "// ---------- 状态 ----------"
+          "text": "nonisolated static func klvShape(_ f: ZKProtocol.ParsedFrame) -> String {"
         },
         {
           "platform": "ios",
@@ -62438,7 +62438,7 @@ const DATA = {
           "line": 414,
           "symbol": "getStatus",
           "note": "BatteryCare.sample",
-          "text": "func getStatus(mac: String? = nil) async throws -> LockStatus {"
+          "text": "f.klvs.isEmpty ? \"(无 KLV)\" : f.klvs.map { String(format: \"#%02x=%dB\", $0.key, $0.vlen) }.joined(separator: \" \")"
         }
       ],
       "platformEvidence": {
@@ -69351,7 +69351,7 @@ const DATA = {
           "line": 543,
           "symbol": "enableDfu",
           "note": "",
-          "text": "let (m, sk) = try keys()"
+          "text": "func setValidationMode(_ bMode: Bool) async throws {"
         },
         {
           "platform": "ios",

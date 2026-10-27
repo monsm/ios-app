@@ -33,6 +33,11 @@ enum AndroidPair {
         // 而 vendor 侧**没有对应的序列化器**（它的二维码载荷是手工拼的固定字段序）。
         // 两端不逐字节一致，但都能被对方解析（字段名匹配，不依赖顺序）。
         // 若将来要严格互操作，得改成手工拼串对齐 vendor 的字段序。
+    // 2026-10-27 审核说明 (AUDIT-C A14)：二维码载荷生成/解析两端各写一遍 ——
+    // 本仓这里生成，Android `LockStore.kt` 解析。字段名对得上（v/n/m/p/e），
+    // 唯一的形态差异是 **Android 做了本仓没做的上界校验**（ekey ≤ 510 字节，
+    // 因为 KLV 长度字段只有 1 字节）。这条校验应该反向回填到本仓 ——
+    // 见 AUDIT-A F-42；改它需要同步 golden，故留待与 Android 一起改。
     static func payload(_ kc: Keychain) -> String? {
         guard let e = ekey(for: kc) else { return nil }
         let name = kc.name.isEmpty ? LockArchive.displayName(kc) : kc.name
