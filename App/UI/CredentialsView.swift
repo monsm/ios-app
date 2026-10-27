@@ -352,10 +352,6 @@ struct CredentialsView: View {
                             .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                         HStack(spacing: DS.Space.s) {
-                            Button {
-                            } label: {
-                                Label("去回收站搜", systemImage: "magnifyingglass.circle")   // 503 去回收站搜
-                            }
                             .vkFont(.caption)
                             .buttonStyle(.bordered)
                             .accessibilityLabel("带着 \(search) 去回收站搜")   // 503 带着
@@ -788,9 +784,6 @@ struct CredentialsView: View {
                     app.showToast("催办文本已复制到剪贴板 (不含口令)")
                 }
             }
-            Button(hit.pinned ? "取消置顶" : "置顶") {
-                DS.Haptics.tick.impactOccurred()
-            }
                     // 2026-10-26 精简：版本历史入口已删。
             Divider()
             Button("停用 (本地, 锁端待处理)", role: .destructive) { disablePwd(p) }
@@ -988,9 +981,6 @@ struct CredentialsView: View {
                     extendAliases = selPwds.isEmpty ? [] : selPwds
                     if selPwds.isEmpty { app.showToast("延期只作用于已选密码"); return }
                     showExtend = true
-                }
-                // 2026-10-27 三轮精简：「移交」批量按钮已删。
-                batchBtn("前缀", icon: "textformat") {
                 }
                 batchBtn("导出", icon: "square.and.arrow.up") {
                     exportPackage()
@@ -1349,8 +1339,6 @@ struct CredentialsView: View {
                     }
                     // 487 保存自动快照: 改值即留一档 (值/时段/备注)
                     let finalAlias = aliasOut == p.alias ? p.alias : aliasOut
-                    if let p2 = DB.getPwd(m, finalAlias) {
-                    }
                     showToastOrganized("已修改, 旧密码已作废")
                 } catch { app.showToast("修改失败: \(error.localizedDescription)") }
             }

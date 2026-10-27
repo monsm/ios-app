@@ -436,15 +436,6 @@ struct RecordsView: View {
             HStack(spacing: DS.Space.s) {
                 Text("搜索")   // 551 搜索
                 Spacer(minLength: DS.Space.s)
-                Menu {
-                } label: {
-                    Image(systemName: "square.and.arrow.down")
-                        .font(.system(size: DS.Icon.sm))
-                        .foregroundStyle(DS.Palette.accentText)
-                }
-                .frame(minHeight: DS.Hit.min)
-                .contentShape(Rectangle())
-                .accessibilityLabel("另存过滤视图")
             }
         }
     }

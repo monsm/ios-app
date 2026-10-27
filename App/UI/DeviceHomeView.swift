@@ -651,18 +651,6 @@ struct DeviceHomeView: View {
                         .fixedSize(horizontal: false, vertical: true)
                     if app.failStreak >= 3 {
                         checklist
-                        NavigationLink {
-                        } label: {
-                            Label("打开排查工具", systemImage: "wrench.and.screwdriver")
-                                .vkFont(.subheadline, weight: .medium)
-                                .foregroundStyle(DS.Palette.accentText)
-                                .padding(.horizontal, DS.Space.l)
-                                .frame(minHeight: DS.Hit.min)
-                                .background(DS.Palette.accentText.opacity(0.09),
-                                            in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(PressableButtonStyle())
                     }
                 }
                 .transition(.opacity)
