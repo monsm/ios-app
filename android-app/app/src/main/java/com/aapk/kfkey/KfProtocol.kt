@@ -223,6 +223,11 @@ data class Frame(val cmd: Int, val klvs: List<Pair<Int, String>>, val raw: Strin
      */
     data class Adv(val pid: Int, val mac: String, val rssi: Int)
 
+    // 2026-10-27 审核说明 (AUDIT-A F-36)：这里**只取 macRaw / macDisplay**，
+    // 而广播帧里还有 resetStatus / dfuState / containNotify 三个位 —— 它们被丢弃了。
+    // 后果：Android 无法从广播判断"锁正在复位 / 处于 DFU / 有人在按键盘"，
+    // 也就不可能做"DFU 态自动跳过"这类判断。iOS 侧读了这三项（parseAdv 返回完整结构）。
+    // 极简版不需要它们（只开锁），但要知道这是**能力缺口**不是实现遗漏。
     fun parseAdv(manufacturer: ByteArray?, rssi: Int): Adv? {
         if (manufacturer == null || manufacturer.size < 10) return null
         val fc = manufacturer[0].toInt() and 0xff

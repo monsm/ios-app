@@ -392,7 +392,7 @@ struct VKTypography: ViewModifier {
     /// 写 `.environment(\.legibilityWeight, …)` 会编译报「cannot infer key path type」。
     /// 而 `vkFont` 是全仓文本排版的**唯一入口**（`uicoverage` 检查八守着不许回潮），
     /// 在这里读一次就等于全仓生效 —— 比在每个页面上各挂一次可靠得多。
-    @Environment(\.legibilityWeight) private var legibility: LegibilityWeight
+    @Environment(\.legibilityWeight) private var legibility: LegibilityWeight?
 
     func body(content: Content) -> AnyView {
         AnyView(content.font(Self.font(base, weight: weight, legibility: legibility)))
@@ -402,12 +402,12 @@ struct VKTypography: ViewModifier {
     /// `draw(...)` 收的是 `Text`（不能是 `some View`，见 `SecurityWatermark` 的水印层）——
     /// 那条路要的是"这一档字号配上这一档字重"的**结果**，而不是把变体差再写一遍
     /// （写两遍必然漂移，本仓老病灶）。
-    static func font(_ base: Font, weight: Font.Weight?, legibility: LegibilityWeight = .regular) -> Font {
+    static func font(_ base: Font, weight: Font.Weight?, legibility: LegibilityWeight? = nil) -> Font {
         // 逐字复刻：原来的 `.font(X)` 与（如果有）`.weight(w)` 一个不少、一个不多。
         var f = weight.map { base.weight($0) } ?? base
         // 2026-10-27 (AUDIT-B 2.6)：系统开了「加粗文本」时，显式字重的文本也加粗一档。
         // 系统默认只对系统字体正文自动加粗，自定义字重那一族不会变 —— 这正是原先的缺口。
-        if legibility == LegibilityWeight.bold, weight == nil { f = f.weight(.semibold) }
+        if legibility == .bold, weight == nil { f = f.weight(.semibold) }
         return f
     }
 }
