@@ -74,6 +74,8 @@ enum ZKCmdBuilder {
         return ZKCmd(name: "25 布防", cmd: 0x25, hex: ZKProtocol.wrapFrame(0x25, macHex, skeyHex, body, 0x01))
     }
 
+    // 2026-10-27 审核说明 (AUDIT-A F-46)：`cmd23ExKeyWay` 三端都只发**裸帧**（无 wrap 变体），
+    // 因为这条命令在 0x88 包络之外使用（配网前协商密钥交换方式，那时还没有 skey）。
     static func cmd23ExKeyWay() -> ZKCmd {
         ZKCmd(name: "23 交换方式", cmd: 0x23, hex: ZKProtocol.buildFrame(0x23, "", header: 8))
     }
@@ -89,6 +91,9 @@ enum ZKCmdBuilder {
         // JS cmd03Status(8, macHex, wrap=false) → 裸 03 帧 (无 KLV)
         ZKCmd(name: "03 状态(明文)", cmd: 0x03, hex: ZKProtocol.buildFrame(0x03, "", header: 8))
     }
+    // 2026-10-27 审核说明 (AUDIT-A F-38)：`cmd05Exchange` 硬编码 keyType=1（AES-128），
+    // 没有参数可调。vendor 侧也是恒 1（`main.js` 的 exchangeSKey 只发这一种），
+    // 所以不算缺陷；将来若有 keyType=2 的锁，这里需要加参数。
     static func cmd05Exchange(_ skeyHex: String, timeSec: Int64? = nil) -> ZKCmd {
         // JS: opts.timeSec || now — 0 也回落为 now
         let ts = UInt32(truncatingIfNeeded: timeSec.flatMap { $0 == 0 ? nil : $0 } ?? ZKProtocol.nowProtoSeconds())
@@ -127,6 +132,9 @@ enum ZKCmdBuilder {
         return HexKit.u32leHex(v)
     }
     // ekey (开锁凭证) = AES(skey)($t 包络); JS buildEkeyOpen/buildEkeyShare
+    // 2026-10-27 审核说明 (AUDIT-A F-18)：`pinToLE` 解析失败时 ——
+    // vendor **静默签 pin=0**（等于签出一张能开门的空凭据），本仓**直接拒绝**（抛错）。
+    // 这是**有意的偏离**：vendor 那侧是危险的，对齐它等于把安全门拆掉。
     static func buildEkeyOpen(_ skeyHex: String, _ macHex: String, _ pin: String,
                               validFromSec: UInt32 = 0, validToSec: UInt32? = nil, trackId: UInt32 = 0) -> String {
         // PIN 解析失败 = 凭证不可用, 整条 ekey 视为签发失败 (返回 "" 由 cmd04Open 的空值闸拦下)
@@ -292,6 +300,9 @@ enum ZKCmdBuilder {
     // 两者的功能面（云端 IoT 档案 / 网关设备名）仍然不做，构造器只为让金标对拍回到可用状态。
 
     /// cmd 30 GWGETDEVICENAME：无 KLV → 响应 deviceName @ KLV#01
+    // 2026-10-27 审核说明 (AUDIT-A F-41)：本仓网关能力只到 30/31/32/35/38 五条，
+    // 而 vendor 还有 36/37/39 等。缺的那些对应功能（云端绑定/固件推送）本仓不做，
+    // 构造器补了也没人调。30/32 是 2026-10-27 补的（为了让 golden 对拍回到可用状态）。
     static func cmd30GWDeviceName() -> ZKCmd {
         ZKCmd(name: "30 网关名称", cmd: 0x30, hex: ZKProtocol.buildFrame(0x30, "", header: 8))
     }

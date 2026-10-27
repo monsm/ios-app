@@ -442,6 +442,10 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
             }
             ackTimer = work
             self.writeAckLock.withLock { $0 = cont }
+    // 2026-10-27 审核说明 (AUDIT-A F-47)：分片写的**字节序列**三端一致（20B/片），
+    // 但**流控语义**不同：iOS 用 `.withResponse`（等系统 ack 再发下一片），
+    // Android 用固定 delay，vendor JS 用两者混合。字节相同不代表时序相同 ——
+    // 弱信号下 Android 更容易撞上"发太快锁跟不上"。
             device.writeValue(data, for: ch, type: .withResponse)
             // 每片写确认的超时 = 8s: APK Java 侧同一处是 `BLE_TIMEOUT` (8000ms, BleLockConnector.
             // writeRXCharacteristic 里每片 writeCharacteristic 后等 onCharacteristicWrite)。

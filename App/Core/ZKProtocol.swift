@@ -174,6 +174,9 @@ enum ZKProtocol {
     }
 
     // ---------- 令牌注入 (KLV#0xEE; 头型自适应 8B/10B) ----------
+    // 2026-10-27 审核说明 (AUDIT-A F-48)：`injectToken` 的 8B/10B 自适应三端一致，
+    // 但 Android 那侧有一处冗余（多判了一次长度），行为相同、代码略重复。
+    // 不影响协议，仅代码整洁度问题。
     static func injectToken(_ hex: String, _ tokenHex: String) -> String {
         guard !tokenHex.isEmpty, hex.count >= 16 else { return hex }
         let len = HexKit.readU16LE(hex, byteOffset: 2)

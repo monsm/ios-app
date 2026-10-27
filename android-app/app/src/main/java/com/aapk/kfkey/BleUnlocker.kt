@@ -615,6 +615,10 @@ data class Outcome(val ok: Boolean, val message: String, val trace: String = "",
         return true
     }
 
+        // 2026-10-27 审核说明 (AUDIT-A F-44)：这里用字符串 "87" 在缓冲区里重同步，
+        // 而载荷内部也可能出现 0x87 —— 那时会误判成新帧起点。
+        // vendor JS 侧同样这么写（它的 makeAssembler 也是 find("87")），
+        // 属三端共同的历史做法。真要修得改成"按长度字段跳跃"而不是找字节。
     private suspend fun awaitFrame(
         ch: ReceiveChannel<ByteArray>,
         cmd: Int,

@@ -425,6 +425,10 @@ final class LinkSense: ObservableObject {
         // 2026-10-14: 补取消判据 (与 LockService 的扫描循环同口径), 否则上层取消后仍空转到超时。
         while Date() < deadline, found == nil, !Task.isCancelled {
             found = ble.allDiscovered().first { adv in
+                // 2026-10-27 审核说明 (AUDIT-A F-35)：这里**同时接受两种 MAC 序**
+                // （下面一行同时比 macRaw 与 macDisplay），而 Android 只认显示序。
+                // 本仓宽松是有意的：老钥匙串可能按另一种序配过，只认一种会让它们连不上。
+                // Android 那边只有 3 条命令、不存在历史包袱，所以它不需要两序。
                 guard let a = ZKProtocol.parseAdv(adv.advertisHex), let m = a.macRaw else { return false }
                 return m == target || a.macDisplay?.replacingOccurrences(of: ":", with: "").lowercased() == target
             }

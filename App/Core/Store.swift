@@ -117,6 +117,9 @@ struct Keychain: Codable, Identifiable {
     var mac: String
     var pid: Int = 0
     var pidName: String = ""
+    /// 2026-10-27 审核说明 (AUDIT-A F-29)：本仓 `Keychain` 比 vendor 多一个 `name` 字段 ——
+    /// 那是给多锁用户起名用的（vendor 单锁，用不上）。备份包里它随包走，
+    /// 跨端迁移时 vendor 侧会忽略这个字段，不影响互操作。
     var name: String = ""
     var skey: String
     var bkey: String = ""
@@ -163,6 +166,10 @@ struct LedgerPwd: Codable, Identifiable {
     var from: String
     var to: String
     var temp: Bool
+    // 2026-10-27 审核说明 (AUDIT-A F-33)：`at` 字段有两种单位 ——
+    // `LedgerPwd.at` / `LedgerFp.at` 是**毫秒**，`CredBinEntry.at` / `CredSnapshot.at` 是**秒**。
+    // 这是历史包袱（两族数据不同时期引入）。**不要统一** —— 改了会让老备份解析错位。
+    // 新增字段时请沿用所属类型既有单位，并在注释里写明。
     var at: Double          // epoch **毫秒** (添加时刻；注意 `CredBinEntry.at` / `CredSnapshot.at` 是秒 —— 混用会差一千倍，第一百六十二批就是这么筛出 0 条的)
     var pwd: String?
     var owner: String?
@@ -206,6 +213,9 @@ struct StatusSnapshot: Codable {
     var at: Double
     var status: StatusSnapshotData
 }
+    /// 2026-10-27 审核说明 (AUDIT-A F-31)：本仓 `StatusSnapshotData` 只存状态对象的**子集**
+    /// （rc/pid/电量/锁钟/固件版本等界面要用的），而 vendor 存整个 status 对象。
+    /// 差异不影响功能：本仓用到哪几项就存哪几项，省 UserDefaults 空间。
 struct StatusSnapshotData: Codable {
     var rc: Int = 0
     var powerLevel: Int = 0
@@ -489,6 +499,10 @@ enum DB {
         store.set("kf_keychains", map)
     }
     // 删除设备: 钥匙串 + 每锁数据族 + 指针 (JS removeDevice 全量语义)
+    /// 2026-10-27 审核说明 (AUDIT-A F-30)：报告说本仓清理列表「漏了 kf_fpnames_」——
+    /// 实测该键在当前代码里**不存在**（指纹名存在 `LedgerFp.name` 里，不单独落键）。
+    /// 且第 496 行的兜底清理 `k.contains(m)` 已覆盖所有含本锁 MAC 的键，
+    /// 所以没有遗漏。跨端差异在于：vendor 用独立键存指纹名，本仓存在台账里。
     static func removeDevice(_ mac: String) {
         let m = mac.replacingOccurrences(of: ":", with: "").lowercased()
         removeKeychain(m)
@@ -929,6 +943,10 @@ enum DB {
         return hasStrong || hasLegacy
     }
     /// 门禁口令摘要轮数 (PBKDF2-HMAC-SHA256)
+    /// 2026-10-27 审核说明 (AUDIT-A F-17)：**vendor 没有 PBKDF2 实现** ——
+    /// 小程序侧的门禁口令是 32-bit FNV（`fnv1a32`），本仓加了 PBKDF2-HMAC-SHA256 6 万轮。
+    /// 所以这不是「对齐 vendor」而是**本仓自造的更强方案**；跨端互操作靠 d/d2 双写：
+    /// 旧包只有 d（FNV）时按旧口径验、验过即静默升级到 d2。
     static let pcIter = 60_000
     static func passcodeDigest(_ pw: String) -> [String: String] {
         let salt = String(UUID().uuidString.prefix(8))

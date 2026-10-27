@@ -6,6 +6,9 @@
 import Foundation
 
 /// 成员档案扩展 (包13): 挂在成员 id 上, 不动 Member 结构体 (备份互通不受影响)
+    // 2026-10-27 审核说明 (AUDIT-A F-32)：`Member` 模型是**本仓独有** ——
+    // vendor 没有"家人/成员"概念（它的凭证是平铺的）。
+    // 本仓加它是为了归属管理（谁的指纹、谁的密码），属功能增强，不是协议差异。
 struct MemberExt: Codable {
     var role: String = "member"      // 458 三档: main / member / guest
     var emoji: String = ""           // 916 emoji 代号 (纯文字头像, 零图片资源)

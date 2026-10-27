@@ -65,6 +65,10 @@ struct Rec: Identifiable {
     var lockName: String   // 770 锁名前缀标签
     var type: Int
     var typeName: String
+    // 2026-10-27 审核说明 (AUDIT-A F-27)：`idxRaw` / 窗口语义是**本仓新增** ——
+    // vendor 完全没有这个概念（它的日志是"拉一页显示一页"）。
+    // 本仓要支持"按序号定位、跨页合并、缺口标注"，所以引入了 idx 窗口。
+    // 不存在与 vendor 对齐的问题；差异在于本仓多做了一层可寻址性。
     var idxRaw: UInt32
     var lockTime: Int64
     var timeStr: String    // "yyyy-MM-dd HH:mm:ss"

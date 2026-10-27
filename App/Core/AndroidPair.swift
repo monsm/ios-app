@@ -13,6 +13,10 @@ enum AndroidPair {
     /// 这把锁的开锁凭证: 优先用配网时签好的 ekey; 没有就按 skey+PIN 现签一次 (与 unlock() 同一条算式,
     /// 同一组默认有效期, 所以签出来的与配网那次逐字节一致)。
     static func ekey(for kc: Keychain) -> String? {
+        // 2026-10-27 审核说明 (AUDIT-A F-42)：`AndroidPair.ekey` 的回退路径（ekey 为空时
+        // 用 skey+pin 现签一个）与文件头「逐字节一致」的承诺不完全符 ——
+        // 现签的那条路走的是 buildEkeyOpen，而 vendor 二维码通道发的是它自己的格式。
+        // 实测两端都能解析（字段名匹配），但不是逐字节。要严格互操作得改格式。
         if !kc.ekey.isEmpty { return kc.ekey }
         // 2026-10-27 审核说明 (AUDIT-A F-20)：`buildEkeyOpen` 的默认 TrackId 与有效期与 vendor 一致，
         // 但本文件原先的注释声称"与 iOS 逐字节一致"—— 实际只有**默认参数相同**，
