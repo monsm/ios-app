@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T01:39:09.722Z",
+    "generated": "2026-10-27T01:45:21.428Z",
     "sources": [
       {
         "scout": "android-native",
@@ -18805,7 +18805,7 @@
           "line": 695,
           "symbol": "proxySuffix(_:)",
           "note": "",
-          "text": "guard let id, let m = DB.member(id) else { return \"\" }"
+          "text": "if aliasDisplay, !m.relation.isEmpty { return m.relation }"
         },
         {
           "platform": "ios",
@@ -24037,7 +24037,7 @@
           "line": 713,
           "symbol": "batchDisable(_:pwdAliases:fpBatches:)",
           "note": "",
-          "text": "let head = to.hasPrefix(\"2118\") ? \"长期有效\" : String(to.prefix(prefix))"
+          "text": "return verb && !to.hasPrefix(\"2118\") ? \"到 \" + head : head"
         },
         {
           "platform": "ios",
