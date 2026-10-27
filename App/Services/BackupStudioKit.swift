@@ -141,7 +141,10 @@ enum BackupStudio {
 
     /// 2026-10-26: 原 prune(_ b: BackupBundle, _ z: BZones) 按四分区裁剪；分区概念已删
     /// （从来没有 UI 暴露，全部调用点都传全选），所以本函数不再裁剪任何东西，原样返回。
-    /// 保留函数壳是因为 bundleFor() 与 WebDAV 推包两处都调它 —— 改签名会波及无关代码。
+    /// 2026-10-27 审核：注释原称「bundleFor() 与 WebDAV 推包两处都调它」，
+    /// 实际 WebDAV 一族已删，现在只有 bundleFor() 一个调用点。函数本身是恒等映射
+    /// （分区概念已删），保留只为不改 bundleFor() 的调用链。
+    /// ⚠ 若后续要清理：直接内联到 bundleFor() 即可，无其它牵连。
     static func prune(_ b: BackupBundle) -> BackupBundle { b }
 
 

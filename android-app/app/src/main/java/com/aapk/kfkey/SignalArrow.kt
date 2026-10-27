@@ -136,7 +136,7 @@ fun SignalArrow(
     rollDeg: Float = 0f,
     sizeDp: Int = 260,
     // 颜色由调用方从 LocalKfColors 显式传入: DrawScope 不是 Composable,
-    // 在这里读 LocalKfColors 编译不过 (Theme.kt:8 记过这次未采纳的尝试)。
+    // 在这里读 LocalKfColors 编译不过 (2026-10-27 审核：Theme.kt 整文件已删，其 8 个色值零引用)。
     okColor: Color = KfDarkColors.ok,
     outlineColor: Color = Color.White,
     modifier: Modifier = Modifier,

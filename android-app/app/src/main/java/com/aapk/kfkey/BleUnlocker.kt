@@ -58,7 +58,8 @@ class BleUnlocker(private val ctx: Context) {
     private val svcUuid: UUID = UUID.fromString(KfProtocol.SVC)
 
     /// trace = 这一趟的过程留痕 (链路来源 / 令牌前缀 / rc)。只在失败时给用户看。
-    data class Outcome(val ok: Boolean, val message: String, val trace: String = "")
+// 2026-10-27 审核补齐 (C-A1)：加 rc 字段 —— 调用方需要它做 F6 锁态门（25 锁忙 / 26 被撬）。
+data class Outcome(val ok: Boolean, val message: String, val trace: String = "", val rc: Int = 0)
 
     fun isReady(): Boolean = adapter?.isEnabled == true
 
@@ -379,7 +380,7 @@ class BleUnlocker(private val ctx: Context) {
             }
             break
         }
-        return Attempt(Outcome(rc == 0, KfProtocol.rcText(rc), trace.toString()), s.disconnected.isCompleted)
+        return Attempt(Outcome(rc == 0, KfProtocol.rcText(rc), trace.toString(), rc), s.disconnected.isCompleted)
     }
     // ---------- 建链 ----------
 

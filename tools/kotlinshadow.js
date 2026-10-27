@@ -106,9 +106,11 @@ else good('A4 令牌通道 KLV#0xEE');
   if (!/armed = AutoOpenKit\.rssiSample\(prevArmed = armed/.test(ma))
     bad('A8 MainActivity 没有把 armed 回灌给 rssiSample (回差滤波等于没接)');
   else good('A8 武装位跨样本回灌');
-  // ② 一次性闩锁: 掉回解除线才放开, 发过就别再发
-  if (!/if \(!armed\)\s*\{?\s*fired = false/.test(ma)) bad('A8 缺少"掉线放开闩锁"那一步 (一次事件之后再也开不了)');
-  else good('A8 接近事件结束时放开闩锁');
+  // ② 一次性闩锁: 2026-10-27 审核后改成「信号掉到解除线以下 3dB 才放开」（与 iOS 同口径）。
+  //    旧写法是「!armed 就放开」—— 而 armed 在回差带内就会变 false，退半步再进一步会再开一次。
+  if (!/if\s*\(r < AutoOpenKit\.disarmThreshold\(\)\s*-\s*3\)\s*\{\s*fired = false/.test(ma))
+    bad("A8 缺少「走远放开闩锁」那一步 (一次事件之后再也开不了，或被回差带内抖动放开)");
+  else good('A8 走远才放开闩锁');
   if (!/if \(!armed \|\| fired\) return/.test(ma)) bad('A8 缺少 fired 拦截 (人站在门口会反复下发 04)');
   else good('A8 一次接近事件只发一次');
   if (!/AutoOpenKit\.coolReady\(lastAuto, now\)/.test(ma)) bad('A8 没读 60s 冷却');
@@ -345,10 +347,17 @@ else good('C 冷却 6s (与 iOS AutoOpenKit.cooldownSeconds=6 同口径)');
 
 function sample(prev, r, b) { return prev ? r > disarm(b) : r >= arm(b); }
 // 不变式: 信号恒强 (站在门口不动) ⇒ 逐样本只武装一次, 不反复翻转
+// 2026-10-27 审核修复 (C 线)：本组原先 5 处硬编码 -38，而 AutoOpenKit.BASE 实际是 -40 ——
+// 于是 BASE 改成任何值这组断言都全绿，**它测的是它自己**。改成从 Kotlin 源码实时读。
+const KT_PATH = path.join(__dirname, "..", "android-app", "app", "src", "main", "java", "com", "aapk", "kfkey", "AutoOpenKit.kt");
+const KT_SRC = fs.readFileSync(KT_PATH, "utf8");
+const BASE_M = /const val BASE = (-?\d+)/.exec(KT_SRC);
+if (!BASE_M) { console.error("✗ 未能从 AutoOpenKit.kt 解析 const val BASE"); process.exit(1); }
+const RB = parseInt(BASE_M[1], 10);   // 真实武装线
 {
   let armed = false, fired = false, fires = 0;
   for (let t = 0; t < 40; t++) {
-    armed = sample(armed, -35, -38);
+    armed = sample(armed, -35, RB);
     if (!armed) fired = false;
     if (armed && !fired) { fired = true; fires++; }
   }
@@ -356,17 +365,17 @@ function sample(prev, r, b) { return prev ? r > disarm(b) : r >= arm(b); }
   else good('C 一次接近事件只发一次 04');
   // 走开再回来: 掉到解除线以下 → 放开闩锁 → 可再发一次
   let armedB = true, firedB = true, firesB = 0;
-  for (const r of [-50, -60]) { armedB = sample(armedB, r, -38); if (!armedB) firedB = false; }
-  for (let t = 0; t < 10; t++) { armedB = sample(armedB, -34, -38); if (armedB && !firedB) { firedB = true; firesB++; } }
+  for (const r of [-50, -60]) { armedB = sample(armedB, r, RB); if (!armedB) firedB = false; }
+  for (let t = 0; t < 10; t++) { armedB = sample(armedB, -34, RB); if (armedB && !firedB) { firedB = true; firesB++; } }
   if (firesB !== 1) bad('C 走开再靠近没有再触发 (=' + firesB + '), 应恰好 1 次');
   else good('C 离开后重新靠近可再触发一次');
   // 回差带内来回抖动不翻转
   let a = true;
-  for (const r of [-40, -38, -40, -39, -40]) a = sample(a, r, -38);
-  if (!a) bad('C 回差失效: -40..-38 抖动把武装位翻掉了 (解除线应≈ ' + disarm(-38) + ')');
-  else good('C 回差带 [-41,-38] 内抖动不翻转');
+  for (const r of [-40, RB, -40, -39, -40]) a = sample(a, r, RB);
+  if (!a) bad('C 回差失效: -40..-38 抖动把武装位翻掉了 (解除线应≈ ' + disarm(RB) + ')');
+  else good('C 回差带 [' + (disarm(RB) + 1) + ',' + RB + '] 内抖动不翻转');
 }
-console.log('--- C 公式校验: BASE=' + (-38) + ' 武装线=-38 解除线=' + disarm(-38) + ' ---');
+console.log('--- C 公式校验: BASE=' + RB + ' 武装线=' + arm(RB) + ' 解除线=' + disarm(RB) + ' ---');
 
 console.log(fails ? '\n影子对拍不通过 (' + fails + ')' : '\n全部通过');
 process.exit(fails ? 1 : 0);

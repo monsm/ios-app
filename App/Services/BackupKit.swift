@@ -394,7 +394,10 @@ enum BackupKit {
         }
         var imported = 0, overwritten = 0
         for d in bundle.devices {
-            guard HexKit.bytes(d.mac).count == 6, !d.kc.skey.isEmpty else { continue }
+            // 2026-10-27 审核修复 (D-14)：原来只数「HexKit.bytes(d.mac).count == 6」——
+            // 而 bytes() 对非 hex 字符会尽力解，于是 12 个非 hex 字符也「长度对」⇒ 覆盖掉真 skey = 软砖。
+            // 改用同文件已有的 CryptoBox.isHex(_:len:) 严格校验。
+            guard CryptoBox.isHex(d.mac, len: 12), !d.kc.skey.isEmpty else { continue }
             var kc = d.kc
             kc.mac = DB.normalizeMac(d.mac)   // 归一化 (JS 包可能带冒号/大写)
             let existed = DB.keychain(kc.mac) != nil
@@ -439,11 +442,13 @@ enum BackupKit {
             applyGlobalsAppearanceAndOrg(globals, devices: bundle.devices)
             if let tr = globals.trace, let lines = tr.lines, !lines.isEmpty {
                 // 小程序 trace 行内含令牌/密钥 hex (vendor/app/utils/trace.js:5 自述), 原样落本机就会
-                // 进系统备份与导出中心。保留行数/时间语义供"记录"分区预览, 但先过同口径 hex 脱敏。
-let safe = lines   // 2026-10-27 三轮：帧脱敏已删，导出将含帧明文
+                // 进系统备份与导出中心。⚠ 脱敏已在三轮被删，下面落的是**原始行**（含令牌/密钥）。
+                // 2026-10-27 审核：变量名原叫 safe，但脱敏已在三轮被删 —— 它现在是**未脱敏**的原始行。
+                // 改成 unsanitized 让名字不再说谎（行为不变；真要脱敏见 AUDIT-A F-03）。
+                let unsanitized = lines
                 DB.store.set("kf_trace_persist_v1", [
-                    "savedAt": tr.savedAt ?? 0, "count": safe.count,
-                    "chars": tr.chars ?? 0, "lines": safe,
+                    "savedAt": tr.savedAt ?? 0, "count": unsanitized.count,
+                    "chars": tr.chars ?? 0, "lines": unsanitized,
                 ])
             }
         }

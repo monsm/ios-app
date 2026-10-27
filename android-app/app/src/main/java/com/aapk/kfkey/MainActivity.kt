@@ -122,6 +122,9 @@ private fun KfApp(unlocker: BleUnlocker) {
     var rssi by remember { mutableStateOf<Int?>(null) }
     var pending by remember { mutableStateOf<LockInfo?>(null) }   // 待二次确认的绑定
     var lastAuto by remember { mutableStateOf(0L) }                 // 上次自动下发时刻 (冷却基准)
+    // 2026-10-27 审核补齐 (C-A1)：iOS 有 F6 锁态门（rc=25 锁忙 / rc=26 被撬 → 拒绝自动开），
+    // Android 原先没有。这里缓存上次开锁回包的 rc，供 maybeAutoUnlock 做 F6 判断。
+    var lastRc by remember { mutableStateOf(0) }
     var armed by remember { mutableStateOf(false) }                // 回差滤波后的"已武装"位
     var fired by remember { mutableStateOf(false) }                // 本次接近事件是否已发过 04
     var prewarmStarted by remember { mutableStateOf(false) }       // 本次靠近是否已预热过
@@ -189,6 +192,8 @@ private fun KfApp(unlocker: BleUnlocker) {
         say(if (auto) "已靠近, 正在开锁…" else "正在开锁…")
         scope.launch {
             val r = unlocker.unlock(l)
+            // 2026-10-27 审核补齐：把 rc 落到状态里，供下一次自动开锁做 F6 锁态门判断。
+            lastRc = r.rc
             busy = false
             // 来源标注 (用户 2026-10-17): 开完要能说清是自动开的还是自己点的 ——
             // "谁把我门开了"必须能回答。只在成功时冠来源: 失败那句是诊断文案,
@@ -295,8 +300,29 @@ private fun KfApp(unlocker: BleUnlocker) {
         }
         armed = AutoOpenKit.rssiSample(prevArmed = armed, rssi = r)
         // 信号掉回解除线以下 = 这一次接近事件结束 → 放开闩锁与预热位, 下次靠近重来一遍
-        if (!armed) { fired = false; prewarmStarted = false }
+        // 2026-10-27 审核 (C-A3)：原写法「!armed 就放开闩锁」，而 armed 在回差带内就会变 false
+        // ⇒ 退半步再进一步可能再开一次。与 iOS 同口径：只在信号掉到解除线**以下 3dB**（真走远）才放开。
+        // 同时保留原行为：未武装时清 prewarmStarted（预热位该跟着复位）。
+        if (!armed) { prewarmStarted = false }
+        if (r < AutoOpenKit.disarmThreshold() - 3) { fired = false }
         if (!armed || fired) return
+        // 2026-10-27 审核补齐 (C-A1)：iOS 有 7 道门，Android 原先只有 4 道 ——
+        // 缺的正好是三道**否决门**，导致「在 iPhone 上开布防 → Android 手机照常自动开门」。
+        // F4 布防时段否决（本机侧；极简版不下发 cmd25，只拦本机）
+        if (lock?.defendOn == true) {
+            val cal = java.util.Calendar.getInstance()
+            val hour = cal.get(java.util.Calendar.HOUR_OF_DAY)
+            val st = lock?.defendStartHour ?: 22
+            val en = lock?.defendEndHour ?: 7
+            val inWindow = if (st <= en) hour in st until en else (hour >= st || hour < en)
+            if (inWindow) {
+                say("布防时段内，已拒绝自动开锁")
+                return
+            }
+        }
+        // F6 锁态门：上次回包 rc=25(锁忙) / rc=26(被撬) 时不自作主张再发 04
+        if (lastRc == 25) { say("门锁正忙，已跳过这次自动开锁"); return }
+        if (lastRc == 26) { say("检测到防拆事件，已暂停自动开锁"); return }
         if (!AutoOpenKit.coolReady(lastAuto, now)) return
         if (busy) return
         fired = true
@@ -453,6 +479,15 @@ private fun KfApp(unlocker: BleUnlocker) {
                         // 而下一把锁要连的时候还得先拆它 (安卓一次只养一条热链路)。
                         scope.launch { unlocker.release() }
                         say("已解绑")
+                    },
+                    defendOn = lock?.defendOn ?: false,
+                    onDefendToggle = { on ->
+                        lock?.let { l ->
+                            val upd = l.copy(defendOn = on)
+                            lock = upd
+                            LockStore.save(ctx, upd)
+                            say(if (on) "布防已开：22:00–07:00 不自动开锁" else "布防已关")
+                        }
                     },
                     onClose = { showSettings = false },
                 )
@@ -690,6 +725,10 @@ private fun ProximityCard(
     onRescan: () -> Unit,
     onUnbind: () -> Unit,
     onClose: () -> Unit,
+    // 2026-10-27 审核补齐 (C-A1)：iOS 有 F4 布防否决门，Android 原先没有入口。
+    // 极简版不下发 cmd25（那需要 skey 会话），只做本机侧否决。
+    defendOn: Boolean,
+    onDefendToggle: (Boolean) -> Unit,
 ) {
     // 2026-10-20: 这张卡此前整块读 Theme.kt 的固定暗色值 —— 浅色模式下是浅底 + 暗卡 + 浅字。
     val colors = LocalKfColors.current
@@ -725,6 +764,29 @@ private fun ProximityCard(
                     checkedTrackColor = colors.accent,
                     uncheckedThumbColor = colors.inkSub,
                     // 关闭态不能再用 bgBottom: 浅色档里底色与白卡几乎同色, 开关会"消失"。
+                    uncheckedTrackColor = colors.inkSub.copy(alpha = 0.30f),
+                    uncheckedBorderColor = colors.inkSub.copy(alpha = 0.45f)
+                )
+            )
+        }
+        // 2026-10-27 审核补齐：布防时段否决（22:00–07:00 默认，与 iOS 一致）。
+        Spacer(Modifier.height(10.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("布防时段内禁止自动开锁", color = colors.ink, fontSize = 15.sp)
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    "开启后，在 22:00–次日 07:00 之间不会自动开锁（本机侧拦截）。",
+                    color = colors.inkSub, fontSize = 12.sp, lineHeight = 17.sp,
+                )
+            }
+            Switch(
+                checked = defendOn,
+                onCheckedChange = onDefendToggle,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = colors.bgTop,
+                    checkedTrackColor = colors.accent,
+                    uncheckedThumbColor = colors.inkSub,
                     uncheckedTrackColor = colors.inkSub.copy(alpha = 0.30f),
                     uncheckedBorderColor = colors.inkSub.copy(alpha = 0.45f)
                 )

@@ -24,8 +24,17 @@ final class Store: @unchecked Sendable {
     }
     func getDict(_ k: String) -> [String: Any] {
         guard let d = defaults.data(forKey: key(k)) else { return [:] }
-        return (try? JSONSerialization.jsonObject(with: d)) as? [String: Any] ?? [:]
+        // 2026-10-27 审核修复 (D-07)：原来解码失败也返回 [:] —— 而 saveKeychain 会拿它
+        // 整表写回，于是「一次无关的保存」会把所有其它设备的钥匙串抹掉。
+        // 与 ledger() 同一类失效（有数据但解不出来），但后果更重：那不是空台账，是丢密钥。
+        // 现在失败时返回带哨兵键的字典，调用方（saveKeychain）见哨兵即放弃写入。
+        if let o = (try? JSONSerialization.jsonObject(with: d)) as? [String: Any] { return o }
+        corruptDictKeys.insert(k)
+        return [:]
     }
+    /// 解码失败过的字典键。saveKeychain 写入前查这里，避免用空表覆盖真数据。
+    private var corruptDictKeys: Set<String> = []
+    func isDictCorrupt(_ k: String) -> Bool { corruptDictKeys.contains(k) }
     func getString(_ k: String, _ def: String = "") -> String {
         if let s = defaults.string(forKey: key(k)) { return s }
         if let v = get(k, String.self) { return v }
@@ -347,6 +356,10 @@ enum DB {
     /// 2026-10-14 一次性迁移: 把旧 plist 里明文的 skey/bkey/ekey 搬进系统 Keychain, 并从 plist 抹掉。
     /// 幂等 (没有明文字段时不动), 启动时调一次。
     static func migrateSecretsToKeychain() {
+        // 2026-10-27 审核修复 (D-07)：读出来的字典若解码失败过，**绝不能写回** ——
+        // 那会把其它设备的钥匙串整表抹掉。这里直接放弃本次写入（密钥已进 Keychain，
+        // plist 里的非密字段下次保存会再试）。
+        if store.isDictCorrupt("kf_keychains") { return }
         var map = store.getDict("kf_keychains")
         var changed = false
         for (m, v) in map {
