@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T03:36:39.037Z",
+    "generated": "2026-10-27T03:42:46.338Z",
     "sources": [
       {
         "scout": "android-native",
@@ -30028,7 +30028,7 @@
           "line": 914,
           "symbol": "filterSummary",
           "note": "摘要文案",
-          "text": "return Date(timeIntervalSince1970: t / 1000)"
+          "text": "// ---------- 时间线 (包9 升级: 578 组头吸顶 / 738 告警行 / 592 连击 / 655 动词 / 679 年份 / 681 农历 / 649 凌晨) ----------"
         },
         {
           "platform": "ios",
@@ -30036,7 +30036,7 @@
           "line": 899,
           "symbol": "filterChips",
           "note": "复位按钮",
-          "text": "Label(\"跳回设备页定位「\" + LockArchive.displayName(app.devices.first { $0.mac == mac } ?? Keychain(mac: mac, skey: \"\")) + \"」\", systemImage: \"lock.rotation\")"
+          "text": ".foregroundStyle(DS.Palette.accentText)"
         }
       ],
       "platformEvidence": {
@@ -30976,7 +30976,7 @@
           "line": 1140,
           "symbol": "copyLastWeekDigest",
           "note": "摘要 + CSV 拼接",
-          "text": "}"
+          "text": "Button(\"复制\") {"
         },
         {
           "platform": "ios",
@@ -30992,7 +30992,7 @@
           "line": 1146,
           "symbol": "copyLastWeekDigest",
           "note": "toast 文案",
-          "text": "}"
+          "text": ".contextMenu {"
         }
       ],
       "platformEvidence": {
@@ -31062,7 +31062,7 @@
           "line": 1151,
           "symbol": "dropWatchSection",
           "note": "判定与文案",
-          "text": "Button {"
+          "text": "} label: {"
         },
         {
           "platform": "ios",
@@ -31070,7 +31070,7 @@
           "line": 1164,
           "symbol": "dropWatchSection",
           "note": "其余超阈值日",
-          "text": "Label(\"复制行标识\", systemImage: \"number\")   // 761 复制行标识"
+          "text": "Button {"
         },
         {
           "platform": "ios",
@@ -31078,7 +31078,7 @@
           "line": 963,
           "symbol": "secondaryRowsDisclosure",
           "note": "落点：低频区",
-          "text": "landDay(g.key)"
+          "text": ".vkFont(.caption2, weight: .semibold)"
         }
       ],
       "platformEvidence": {
@@ -31367,7 +31367,7 @@
           "line": 2181,
           "symbol": "fetch",
           "note": "拉取主流程",
-          "text": ".vkFont(.caption2, weight: .medium)"
+          "text": ".padding(.horizontal, DS.Space.s)"
         },
         {
           "platform": "ios",
@@ -31375,7 +31375,7 @@
           "line": 2199,
           "symbol": "while page < 20",
           "note": "翻页上限 20 页 / 100 条",
-          "text": "} header: {"
+          "text": "Text(\"口径: 临时码台账生效区间之外仍出现一次性密码开门 (本地检测, 时刻为锁端时间)。\")"
         },
         {
           "platform": "ios",
@@ -31383,7 +31383,7 @@
           "line": 2202,
           "symbol": "fresh",
           "note": "去重与游标回绕防护",
-          "text": "Text(\"口径: 临时码台账生效区间之外仍出现一次性密码开门 (本地检测, 时刻为锁端时间)。\")"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -31559,7 +31559,7 @@
           "line": 1176,
           "symbol": "lastYearTodayRow",
           "note": "展示行",
-          "text": "}"
+          "text": ".accessibilityElement(children: .combine)"
         },
         {
           "platform": "ios",
@@ -31567,7 +31567,7 @@
           "line": 1191,
           "symbol": "lastYearTodayCount",
           "note": "MM-dd 命中计数",
-          "text": ".vkFont(.subheadline)"
+          "text": "} else {"
         },
         {
           "platform": "ios",
@@ -31575,7 +31575,7 @@
           "line": 964,
           "symbol": "secondaryRowsDisclosure",
           "note": "落点：低频区",
-          "text": "} label: {"
+          "text": ".foregroundStyle(DS.Palette.danger)"
         }
       ],
       "platformEvidence": {
@@ -31683,7 +31683,7 @@
           "line": 2008,
           "symbol": "runningRow",
           "note": "骨架屏三行 + reduceMotion 处理",
-          "text": "Button(m) { monthJump = m }"
+          "text": "Label(monthJump.isEmpty ? \"按月份跳转\" : \"只看 \\(monthJump)\",   // 187 按月份跳转"
         },
         {
           "platform": "ios",
@@ -31691,7 +31691,7 @@
           "line": 1941,
           "symbol": "emptyHint",
           "note": "两种空态",
-          "text": "}"
+          "text": "/// 也是两份 —— 分组键是 593 全天口径与 586 当天全景的锚, 两处漂一格就会各自成立、合起来对不上。"
         }
       ],
       "platformEvidence": {
@@ -31784,7 +31784,7 @@
           "line": 2051,
           "symbol": "memberChips",
           "note": "chip 生成规则",
-          "text": "struct AlarmKindsSheet: View {"
+          "text": "var body: some View {"
         },
         {
           "platform": "ios",
@@ -31792,7 +31792,7 @@
           "line": 2078,
           "symbol": "chip",
           "note": "点击写 sel + filters.member",
-          "text": ".accessibilityAddTraits(sel.contains(t) ? .isSelected : [])"
+          "text": "Text(\"只看选中的类型 · 已选 \\(sel.count) 项\")   // 565 只看选中的类型"
         },
         {
           "platform": "ios",
@@ -31808,7 +31808,7 @@
           "line": 2065,
           "symbol": "chip(\"__care\")",
           "note": "1028 保养分组",
-          "text": ".vkFont(.subheadline)"
+          "text": "Image(systemName: sel.contains(t) ? \"checkmark.circle.fill\" : \"circle\")"
         }
       ],
       "platformEvidence": {
@@ -32084,7 +32084,7 @@
           "line": 1085,
           "symbol": "rangePickSheet",
           "note": "按天勾选 UI",
-          "text": ".fill(DS.Palette.hairline)"
+          "text": "// 告警用菱形警示点, 普通用圆点 — 形状本身即第二信息通道, 不只靠颜色"
         },
         {
           "platform": "ios",
@@ -32092,7 +32092,7 @@
           "line": 1123,
           "symbol": "copyRangeCSV",
           "note": "CSV 生成与转义",
-          "text": "if let rec = lookupRec(r) {"
+          "text": "// 打不开要说得出为什么。原先这里 `detailRec = lookupRec(r)` 拿到 nil 就什么都不发生 ——"
         },
         {
           "platform": "ios",
@@ -32100,7 +32100,7 @@
           "line": 1115,
           "symbol": "copyRangeCSV",
           "note": "复制按钮禁用条件",
-          "text": "// 738 告警行: 左侧 3pt 色条 + 浅红底 (danger 派生, 形状冗余)"
+          "text": ".listRowInsets(EdgeInsets(top: 0, leading: DS.Space.l, bottom: 0, trailing: DS.Space.l))"
         },
         {
           "platform": "ios",
@@ -32651,7 +32651,7 @@
           "line": 1369,
           "symbol": "daySection.header",
           "note": "组头 HStack",
-          "text": "// 566: 同步写进会话保留的那一份 (见 QueryFilters.member) —— 点\"全部\"时 member 归空,"
+          "text": "applyFilter()"
         },
         {
           "platform": "ios",
@@ -32659,7 +32659,7 @@
           "line": 1373,
           "symbol": "alarmDays.contains",
           "note": "581 未处置蓝点",
-          "text": "} label: {"
+          "text": ".vkFont(.subheadline, weight: .medium)"
         },
         {
           "platform": "ios",
@@ -32667,7 +32667,7 @@
           "line": 1382,
           "symbol": "damageDays.contains",
           "note": "596 含防撬/试错",
-          "text": ".foregroundStyle(on ? DS.Palette.onAccent : DS.Palette.text)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -32675,7 +32675,7 @@
           "line": 1397,
           "symbol": "g.dayKind",
           "note": "594 日型色带",
-          "text": "// 长期存活, `filters` 是构造时读的 @State, 之后每次进记录页都不会重读, 于是"
+          "text": "filters = QueryFilters.load(mac: DB.preferredMac())"
         },
         {
           "platform": "ios",
@@ -32683,7 +32683,7 @@
           "line": 1404,
           "symbol": "g.holiday / isMakeupWorkday",
           "note": "671 节假日与补班",
-          "text": "if sel.isEmpty, !filters.member.isEmpty {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -71874,7 +71874,7 @@
           "line": 842,
           "symbol": "DB.clearFailEvents",
           "note": "按锁清空",
-          "text": "/// 数据源就是本机日志缓存 (≤300 条), 所以只有\"这一年里本机读到过\"才可能出现; 没读到就不出现, 不假装。"
+          "text": "let n = lastYearTodayCount"
         }
       ],
       "platformEvidence": {
@@ -71973,7 +71973,7 @@
           "line": 2148,
           "symbol": "onRecordsAppear",
           "note": "每次进页重取（908）",
-          "text": ".variantList()"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -72072,7 +72072,7 @@
           "line": 1212,
           "symbol": "syncStampKey",
           "note": "kf_logsync_ 键格式",
-          "text": "}"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         },
         {
           "platform": "ios",
@@ -72088,7 +72088,7 @@
           "line": 2171,
           "symbol": "loadFromCache",
           "note": "HotCache 首屏读",
-          "text": "let wins = RecordSearch.outOfWindow(macs: DB.keychains().map { $0.mac })"
+          "text": ".vkFont(.footnote)"
         },
         {
           "platform": "ios",
@@ -72096,7 +72096,7 @@
           "line": 2210,
           "symbol": "HotCache.invalidate",
           "note": "拉取后作废",
-          "text": ".toolbar { ToolbarItem(placement: .navigationBarLeading) { Button(\"完成\") { dismiss() } } }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -72104,7 +72104,7 @@
           "line": 1071,
           "symbol": "firstDayFooter",
           "note": "300 条上限判据",
-          "text": "private func timelineRow(_ r: RowVM) -> some View {"
+          "text": "// 这一行是裸切片 (rowParts 的 \"yyyy-MM-dd HH:mm:ss\" 中段), 于是选了\"12 小时\"后"
         }
       ],
       "platformEvidence": {
@@ -72186,7 +72186,7 @@
           "line": 1764,
           "symbol": "RecordOverlay.note",
           "note": "读备注（行备注弹窗）",
-          "text": "let p = Self.rowParts(r.timeStr, todayKey: todayKey)"
+          "text": "title: Self.recTitle(r), whoId: r.whoId, whoKind: r.kind,"
         },
         {
           "platform": "ios",
@@ -72202,7 +72202,7 @@
           "line": 1771,
           "symbol": "RecordOverlay.setNote",
           "note": "写备注",
-          "text": "warn: r.alarm, claim: false, care: r.care)"
+          "text": "// 593 日界收尾的可核口径: 一天的**条数**与**最晚时刻**都取自上面这份还没被筛选、没被 598 截断的行池。"
         },
         {
           "platform": "ios",
@@ -72210,7 +72210,7 @@
           "line": 1781,
           "symbol": "RecordOverlay.toggleFlag",
           "note": "旗标写入",
-          "text": "dayCount[r.dayKey, default: 0] += 1"
+          "text": "//  下面\"按天分组: 日志本身已是时间倒序, 保持首现顺序即可\"吃的是同一条前提)。"
         },
         {
           "platform": "ios",
