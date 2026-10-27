@@ -1,7 +1,7 @@
 # 离线锁管家 for iOS (全原生 SwiftUI)
 
 智能锁离线管理端 — 对厂商原版 APK 的协议级 iOS 全原生移植。
-针对最新 iOS 26 SDK 编译，**最低部署版本 iOS 26.5**，通过 GitHub Actions 云编译，本地无需 Mac。
+针对最新 iOS 27 SDK 编译，**最低部署版本 iOS 27.0**，通过 GitHub Actions 云编译，本地无需 Mac。
 
 界面按 iOS 26 平台原生设计语言实现：液态玻璃（Liquid Glass）、声明式 `Tab` 导航、
 系统 `ContentUnavailableView` 空态、系统触觉反馈与符号动效。设计令牌集中在
@@ -15,7 +15,7 @@ App/Core/     协议与业务核心 (Swift 重写, 与已验证的 JS 核心做�
   HexKit        十六进制/字节工具
   AESKit        AES-128-ECB + ZeroPadding (CommonCrypto)
   ZKProtocol    0x87 帧 / KLV / 0x88 EKey 包络 / 令牌注入 / 三头型解析 / 粘包重组 / 广播解析
-  ZKCmdBuilder  全部 40 条命令构造器 (01..25/30/31/32/35/38/41/43/44)
+  ZKCmdBuilder  全部 28 条命令构造器 (01/03(明文·加密)/04/05/08/0A/0B/0E/12/13/14/15/16/18/19/20/21/22/23/24/25/31/35/38/41/43/44)
   ZOTP          临时密码 (冻结时钟差分验证)
   KeyGen        配网密钥族 (SecRandomCopyBytes CSPRNG)
   StatusParser  03 状态 / 16 日志解析 + rc 文案表
@@ -31,11 +31,10 @@ App/Services
   MobileKeyService 手机钥匙: 从锁 PIN 池取未占用 pin → 签 ekey → 撤销时发 cmd08 delPins
   HeroTexture   Hero 卡三档纹理 (纯矢量 Canvas 自绘, 零位图)
   TrialGuard    只读试验模式 (kf_trial_guard) 的读写口 + 顶部常驻红条
-  BackupPassphrase 备份口令的会话级共享 (一次输入两页通用, 不落盘)
   Attribution   开门归属推断 (R1 临时码窗口 / R2 唯一凭证+实时背书)
   BackupKit     全量备份包 + PBKDF2/AES-CBC/HMAC 信封 + 坚果云 WebDAV
-App/UI        SwiftUI: 设备 / 凭证 / 记录 / 设置 4 Tab + 45 个目的地 (枚举见 App/Core/Destination.swift)
-Tests         XCTest 差分回归 — 与 fixtures/golden.json 逐字节断言
+App/UI        SwiftUI: 设备 / 凭证 / 记录 / 设置 4 Tab + 25 个目的地 (枚举见 App/Core/Destination.swift)
+Tests         XCTest 差分回归 — 与 fixtures/golden.json 逐字节断言（⚠ CI 只 build-for-testing，不执行；需本地 `xcodebuild test` 才真跑）
 tools         golden.js — 用已验证的 JS 核心生成差分金标
 vendor/app    已验证的 JS 业务核心 (仅用于生成金标, 不参与 App 构建)
 ```
@@ -155,10 +154,6 @@ node tools/kotlinlocal.js
     台账或判据被改坏 ⇒ 打印 `✗ 分档回归` 并**退出 2**（第一百六十三批用"把 339 那行的编号改成 339x"证明它会开火，改回即恢复）。
     它自己先是被审出四处系统性错认（无界横杠区间 / 整行搜判定符号 / `:` 行号冒领编号 / `///` 吃掉强约定），
     修完才是能用的数：实现证据 924→828。**别把它当验收**：标注只是实现证据的一种形式，A 档里 35 条其实是"做时没写编号"
-14. `node tools/changelogcheck.js` — **更新说明对账（43/44，判失败）**：设置页"新变化"的每一条都带一个功能编号，
-    这条闸门拿它去问覆盖表"代码里有没有实现证据"，对不上就构建失败 —— 拍板口径是"内容锁死在真台账上"，
-    所以这份清单在结构上说不出"没做出来的功能"。第九十八批已用注入探针证明它会开火
-    （塞一条 `#15` 假条目 ⇒ 退出码 1）。它不证明界面长得对，那仍然只有真机能定论
 15. `node tools/swiftshape.js` — **Swift 形状机检（第一百三十七批新增，判失败）**：四类不用编译器也能定形的编译错误 (R1/R2/R4/R5)，加一条只许减不许增的棘轮 (R3) ——
     R1 `: some View` 成员里有顶层 `if` 而没有 else/return 却缺 `@ViewBuilder`；R2 `@ViewBuilder` 挂到了返回 String/Int/Bool…
     的声明上。落地当批就在现网代码里抓到 **3 + 1 处**（`SettingsView/autoOpenSection` 那处正是 run 47 变红的形状）。
@@ -260,7 +255,7 @@ node tools/kotlinlocal.js
     （`rc` 在 Swift 由调用方 `rcOf` 判，`applyPids` 基线自己也没有消费点）。未覆盖：手机侧失败行、缓存合并与分页游标。
     时区与 `golden.js` 同一颗钉子（`PARSE_SHADOW_TZ` 可覆盖）；放掉它会看到 `lockTimeStr` 差 8 小时的假红。
 
-23. `xcodegen generate` 生成 Xcode 工程（含 927 的 `OfflineLockWidget` 扩展 target）
+23. `xcodegen generate` 生成 Xcode 工程（单 target，无 Widget/扩展）
 24. **编译校验测试目标** — 云端无模拟器，只 `build-for-testing` 不执行 XCTest（主 App 与 Widget 扩展都会在这一条真编译）
     > ⚠ **这一条现在是红的**：Actions 上 run 43 (2026-10-07) 之后连红四场 (run 44–47)，失败都在这一步。
     > 也就是说第 1–22 道本地检查**没有一道替代编译器**（swiftcheck 只数括号，swiftlint 的符号检查只认大写类型名，

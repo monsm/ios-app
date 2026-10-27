@@ -85,7 +85,7 @@
 //
 // 判据自己先过正控：`--selftest` 拿 fixtures/swiftshape/ 里"该响的"与"不该响的"两组样例各跑一遍，
 // 三条判据都各有正控 (R3 的第一版看不见单行写完的小 struct —— 是注入探针 `App/_probe_r3.swift` 一测就不响才发现的)；
-// 打不响或误响就退出 2 (本仓在 changelogcheck / keydead 上都验证过这条纪律)。
+// 打不响或误响就退出 2 (本仓在 keydead 上验证过这条纪律)。
 const fs = require('fs');
 const path = require('path');
 

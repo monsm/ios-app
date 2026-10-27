@@ -4118,9 +4118,9 @@
         },
         {
           "file": "App/Services/HardwareService.swift",
-          "line": 373,
           "symbol": "errCodeOf",
-          "note": "注释：38 的 KLV#01 是 wifimac，不能当错误码"
+          "note": "注释：38 的 KLV#01 是 wifimac，不能当错误码",
+          "_note": "原行号 373 已越界（文件现 369 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -5552,9 +5552,9 @@
         },
         {
           "file": "App/Services/HardwareService.swift",
-          "line": 370,
           "symbol": "rebootGateway",
-          "note": "断开"
+          "note": "断开",
+          "_note": "原行号 370 已越界（文件现 369 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -5584,9 +5584,9 @@
         },
         {
           "file": "App/Services/HardwareService.swift",
-          "line": 373,
           "symbol": "errCodeOf",
-          "note": "注释：两套码制不能混用"
+          "note": "注释：两套码制不能混用",
+          "_note": "原行号 373 已越界（文件现 369 行），降级为文件级证据"
         },
         {
           "file": "App/Services/HardwareService.swift",

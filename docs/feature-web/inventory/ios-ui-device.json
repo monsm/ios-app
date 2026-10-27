@@ -335,8 +335,8 @@
       "evidence": [
         {
           "file": "App/UI/DeviceHomeView.swift",
-          "line": 1352,
-          "symbol": "againTile"
+          "symbol": "againTile",
+          "_note": "原行号 1352 已越界（文件现 1294 行），降级为文件级证据"
         },
         {
           "file": "App/Core/QuickPool.swift",
@@ -345,8 +345,8 @@
         },
         {
           "file": "App/UI/DeviceHomeView.swift",
-          "line": 1362,
-          "symbol": "showToast(\"还没有星标凭证 …\")"
+          "symbol": "showToast(\"还没有星标凭证 …\")",
+          "_note": "原行号 1362 已越界（文件现 1294 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -408,13 +408,13 @@
         },
         {
           "file": "App/UI/DeviceHomeView.swift",
-          "line": 1596,
-          "symbol": "moduleOrderSheet"
+          "symbol": "moduleOrderSheet",
+          "_note": "原行号 1596 已越界（文件现 1294 行），降级为文件级证据"
         },
         {
           "file": "App/UI/DeviceHomeView.swift",
-          "line": 1655,
-          "symbol": "Button(\"恢复默认\")"
+          "symbol": "Button(\"恢复默认\")",
+          "_note": "原行号 1655 已越界（文件现 1294 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -439,8 +439,8 @@
       "evidence": [
         {
           "file": "App/UI/DeviceHomeView.swift",
-          "line": 1674,
-          "symbol": "pinPickCapsule(_:)"
+          "symbol": "pinPickCapsule(_:)",
+          "_note": "原行号 1674 已越界（文件现 1294 行），降级为文件级证据"
         },
         {
           "file": "App/UI/DeviceHomeView.swift",
@@ -875,13 +875,13 @@
       "evidence": [
         {
           "file": "App/UI/DeviceHomeView.swift",
-          "line": 1758,
-          "symbol": "struct SyncTimeView"
+          "symbol": "struct SyncTimeView",
+          "_note": "原行号 1758 已越界（文件现 1294 行），降级为文件级证据"
         },
         {
           "file": "App/UI/DeviceHomeView.swift",
-          "line": 1771,
-          "symbol": "将手机时间同步到门锁内 (cmd 0E)"
+          "symbol": "将手机时间同步到门锁内 (cmd 0E)",
+          "_note": "原行号 1771 已越界（文件现 1294 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -906,13 +906,13 @@
       "evidence": [
         {
           "file": "App/UI/DeviceHomeView.swift",
-          "line": 1803,
-          "symbol": "private func run() async"
+          "symbol": "private func run() async",
+          "_note": "原行号 1803 已越界（文件现 1294 行），降级为文件级证据"
         },
         {
           "file": "App/UI/DeviceHomeView.swift",
-          "line": 1821,
-          "symbol": "try await app.lock.syncTime()"
+          "symbol": "try await app.lock.syncTime()",
+          "_note": "原行号 1821 已越界（文件现 1294 行），降级为文件级证据"
         },
         {
           "file": "App/Services/LockService.swift",
@@ -1098,8 +1098,8 @@
         },
         {
           "file": "App/UI/Sheets.swift",
-          "line": 1738,
-          "symbol": ".interactiveDismissDisabled(running)"
+          "symbol": ".interactiveDismissDisabled(running)",
+          "_note": "原行号 1738 已越界（文件现 1699 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1127,13 +1127,13 @@
         },
         {
           "file": "App/UI/Sheets.swift",
-          "line": 1702,
-          "symbol": "SecureField(\"WiFi 密码\")"
+          "symbol": "SecureField(\"WiFi 密码\")",
+          "_note": "原行号 1702 已越界（文件现 1699 行），降级为文件级证据"
         },
         {
           "file": "App/UI/Sheets.swift",
-          "line": 1706,
-          "symbol": "disabled: ssid.isEmpty || pwd.isEmpty"
+          "symbol": "disabled: ssid.isEmpty || pwd.isEmpty",
+          "_note": "原行号 1706 已越界（文件现 1699 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1159,13 +1159,13 @@
       "evidence": [
         {
           "file": "App/UI/Sheets.swift",
-          "line": 1805,
-          "symbol": "confirmProvision()"
+          "symbol": "confirmProvision()",
+          "_note": "原行号 1805 已越界（文件现 1699 行），降级为文件级证据"
         },
         {
           "file": "App/UI/Sheets.swift",
-          "line": 1832,
-          "symbol": "HardwareService.shared.provisionGateway"
+          "symbol": "HardwareService.shared.provisionGateway",
+          "_note": "原行号 1832 已越界（文件现 1699 行），降级为文件级证据"
         },
         {
           "file": "App/Services/HardwareService.swift",
@@ -1201,18 +1201,18 @@
       "evidence": [
         {
           "file": "App/UI/Sheets.swift",
-          "line": 1743,
-          "symbol": "gatewayList"
+          "symbol": "gatewayList",
+          "_note": "原行号 1743 已越界（文件现 1699 行），降级为文件级证据"
         },
         {
           "file": "App/UI/Sheets.swift",
-          "line": 1778,
-          "symbol": ".swipeActions { … }"
+          "symbol": ".swipeActions { … }",
+          "_note": "原行号 1778 已越界（文件现 1699 行），降级为文件级证据"
         },
         {
           "file": "App/UI/Sheets.swift",
-          "line": 1815,
-          "symbol": "confirmReboot(_:)"
+          "symbol": "confirmReboot(_:)",
+          "_note": "原行号 1815 已越界（文件现 1699 行），降级为文件级证据"
         },
         {
           "file": "App/Services/HardwareService.swift",
@@ -1410,8 +1410,8 @@
         },
         {
           "file": "App/UI/UnlockDial.swift",
-          "line": 853,
-          "symbol": "dialFill"
+          "symbol": "dialFill",
+          "_note": "原行号 853 已越界（文件现 690 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1437,8 +1437,8 @@
       "evidence": [
         {
           "file": "App/UI/UnlockDial.swift",
-          "line": 716,
-          "symbol": "beginHold()"
+          "symbol": "beginHold()",
+          "_note": "原行号 716 已越界（文件现 690 行），降级为文件级证据"
         },
         {
           "file": "App/UI/UnlockDial.swift",
@@ -1473,8 +1473,8 @@
       "evidence": [
         {
           "file": "App/UI/UnlockDial.swift",
-          "line": 726,
-          "symbol": "let marks = Int(p / 0.33)"
+          "symbol": "let marks = Int(p / 0.33)",
+          "_note": "原行号 726 已越界（文件现 690 行），降级为文件级证据"
         },
         {
           "file": "App/UI/UnlockDial.swift",
@@ -1483,8 +1483,8 @@
         },
         {
           "file": "App/UI/UnlockDial.swift",
-          "line": 768,
-          "symbol": "DS.Haptics.trigger.impactOccurred() // 第二段 (确认)"
+          "symbol": "DS.Haptics.trigger.impactOccurred() // 第二段 (确认)",
+          "_note": "原行号 768 已越界（文件现 690 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1616,13 +1616,13 @@
       "evidence": [
         {
           "file": "App/UI/UnlockDial.swift",
-          "line": 742,
-          "symbol": "nearRssiLimit"
+          "symbol": "nearRssiLimit",
+          "_note": "原行号 742 已越界（文件现 690 行），降级为文件级证据"
         },
         {
           "file": "App/UI/UnlockDial.swift",
-          "line": 751,
-          "symbol": "if nearRssiLimit && !weakNudge"
+          "symbol": "if nearRssiLimit && !weakNudge",
+          "_note": "原行号 751 已越界（文件现 690 行），降级为文件级证据"
         },
         {
           "file": "App/UI/UnlockDial.swift",
@@ -1725,8 +1725,8 @@
       "evidence": [
         {
           "file": "App/UI/DeviceHomeView.swift",
-          "line": 1917,
-          "symbol": "struct UnlockGateView"
+          "symbol": "struct UnlockGateView",
+          "_note": "原行号 1917 已越界（文件现 1294 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
@@ -1735,8 +1735,8 @@
         },
         {
           "file": "App/UI/DeviceHomeView.swift",
-          "line": 1933,
-          "symbol": "Text(\"30 秒内再次开锁\")"
+          "symbol": "Text(\"30 秒内再次开锁\")",
+          "_note": "原行号 1933 已越界（文件现 1294 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1761,18 +1761,18 @@
       "evidence": [
         {
           "file": "App/UI/DeviceHomeView.swift",
-          "line": 1979,
-          "symbol": "verify()"
+          "symbol": "verify()",
+          "_note": "原行号 1979 已越界（文件现 1294 行），降级为文件级证据"
         },
         {
           "file": "App/UI/DeviceHomeView.swift",
-          "line": 1981,
-          "symbol": "if DB.verifyPasscode(pw)"
+          "symbol": "if DB.verifyPasscode(pw)",
+          "_note": "原行号 1981 已越界（文件现 1294 行），降级为文件级证据"
         },
         {
           "file": "App/UI/DeviceHomeView.swift",
-          "line": 1963,
-          "symbol": "Button(\"验证并继续开锁\", action: verify)"
+          "symbol": "Button(\"验证并继续开锁\", action: verify)",
+          "_note": "原行号 1963 已越界（文件现 1294 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1795,13 +1795,13 @@
       "evidence": [
         {
           "file": "App/UI/DeviceHomeView.swift",
-          "line": 1967,
-          "symbol": "Button(\"取消\") { dismiss() }"
+          "symbol": "Button(\"取消\") { dismiss() }",
+          "_note": "原行号 1967 已越界（文件现 1294 行），降级为文件级证据"
         },
         {
           "file": "App/UI/DeviceHomeView.swift",
-          "line": 1975,
-          "symbol": ".presentationDetents([.medium])"
+          "symbol": ".presentationDetents([.medium])",
+          "_note": "原行号 1975 已越界（文件现 1294 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2340,18 +2340,18 @@
       "evidence": [
         {
           "file": "App/UI/Sheets.swift",
-          "line": 1869,
-          "symbol": "struct MembersView"
+          "symbol": "struct MembersView",
+          "_note": "原行号 1869 已越界（文件现 1699 行），降级为文件级证据"
         },
         {
           "file": "App/UI/Sheets.swift",
-          "line": 1885,
-          "symbol": "Text(\"添加成员后，就可以给成员添加密码，指纹和手机钥匙\")"
+          "symbol": "Text(\"添加成员后，就可以给成员添加密码，指纹和手机钥匙\")",
+          "_note": "原行号 1885 已越界（文件现 1699 行），降级为文件级证据"
         },
         {
           "file": "App/UI/Sheets.swift",
-          "line": 1946,
-          "symbol": ".sheet(isPresented: $showCenter) { MemberCenterView() }"
+          "symbol": ".sheet(isPresented: $showCenter) { MemberCenterView() }",
+          "_note": "原行号 1946 已越界（文件现 1699 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2376,18 +2376,18 @@
       "evidence": [
         {
           "file": "App/UI/Sheets.swift",
-          "line": 2021,
-          "symbol": "add()"
+          "symbol": "add()",
+          "_note": "原行号 2021 已越界（文件现 1699 行），降级为文件级证据"
         },
         {
           "file": "App/UI/Sheets.swift",
-          "line": 1895,
-          "symbol": "Button(\"添加\", action: add).disabled(newName.isEmpty)"
+          "symbol": "Button(\"添加\", action: add).disabled(newName.isEmpty)",
+          "_note": "原行号 1895 已越界（文件现 1699 行），降级为文件级证据"
         },
         {
           "file": "App/UI/Sheets.swift",
-          "line": 2028,
-          "symbol": "app.showToast(\"姓名为空或已存在\")"
+          "symbol": "app.showToast(\"姓名为空或已存在\")",
+          "_note": "原行号 2028 已越界（文件现 1699 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2412,18 +2412,18 @@
       "evidence": [
         {
           "file": "App/UI/Sheets.swift",
-          "line": 2063,
-          "symbol": "confirmRemove(_:)"
+          "symbol": "confirmRemove(_:)",
+          "_note": "原行号 2063 已越界（文件现 1699 行），降级为文件级证据"
         },
         {
           "file": "App/UI/Sheets.swift",
-          "line": 2071,
-          "symbol": "· 只移除档案: 只动本机台账 …"
+          "symbol": "· 只移除档案: 只动本机台账 …",
+          "_note": "原行号 2071 已越界（文件现 1699 行），降级为文件级证据"
         },
         {
           "file": "App/UI/Sheets.swift",
-          "line": 2083,
-          "symbol": "UIAlertAction(title: \"连锁端一起收回\", style: .destructive)"
+          "symbol": "UIAlertAction(title: \"连锁端一起收回\", style: .destructive)",
+          "_note": "原行号 2083 已越界（文件现 1699 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2448,13 +2448,13 @@
       "evidence": [
         {
           "file": "App/UI/Sheets.swift",
-          "line": 1937,
-          "symbol": "ToolbarItem(placement: .navigationBarTrailing)"
+          "symbol": "ToolbarItem(placement: .navigationBarTrailing)",
+          "_note": "原行号 1937 已越界（文件现 1699 行），降级为文件级证据"
         },
         {
           "file": "App/UI/Sheets.swift",
-          "line": 1942,
-          "symbol": "accessibilityLabel(\"成员中心 (家庭协作)\")"
+          "symbol": "accessibilityLabel(\"成员中心 (家庭协作)\")",
+          "_note": "原行号 1942 已越界（文件现 1699 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2480,18 +2480,18 @@
       "evidence": [
         {
           "file": "App/UI/SettingsView.swift",
-          "line": 1079,
-          "symbol": "struct SafemodeIntroView"
+          "symbol": "struct SafemodeIntroView",
+          "_note": "原行号 1079 已越界（文件现 1054 行），降级为文件级证据"
         },
         {
           "file": "App/UI/SettingsView.swift",
-          "line": 1096,
-          "symbol": "A模式：只需要单一方式 …"
+          "symbol": "A模式：只需要单一方式 …",
+          "_note": "原行号 1096 已越界（文件现 1054 行），降级为文件级证据"
         },
         {
           "file": "App/UI/SettingsView.swift",
-          "line": 1109,
-          "symbol": "else if app.status?.verifyMode == 1"
+          "symbol": "else if app.status?.verifyMode == 1",
+          "_note": "原行号 1109 已越界（文件现 1054 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2517,18 +2517,18 @@
       "evidence": [
         {
           "file": "App/UI/SettingsView.swift",
-          "line": 1114,
-          "symbol": "Button(\"切换到 B 模式（双验，更严）(cmd 20)\")"
+          "symbol": "Button(\"切换到 B 模式（双验，更严）(cmd 20)\")",
+          "_note": "原行号 1114 已越界（文件现 1054 行），降级为文件级证据"
         },
         {
           "file": "App/UI/SettingsView.swift",
-          "line": 1141,
-          "symbol": "try await app.lock.setValidationMode(true)"
+          "symbol": "try await app.lock.setValidationMode(true)",
+          "_note": "原行号 1141 已越界（文件现 1054 行），降级为文件级证据"
         },
         {
           "file": "App/UI/SettingsView.swift",
-          "line": 1147,
-          "symbol": "if app.status?.verifyMode == 1"
+          "symbol": "if app.status?.verifyMode == 1",
+          "_note": "原行号 1147 已越界（文件现 1054 行），降级为文件级证据"
         },
         {
           "file": "App/Core/ZKCmdBuilder.swift",
@@ -2594,13 +2594,13 @@
       "evidence": [
         {
           "file": "App/UI/SettingsView.swift",
-          "line": 1065,
-          "symbol": "private func run() async"
+          "symbol": "private func run() async",
+          "_note": "原行号 1065 已越界（文件现 1054 行），降级为文件级证据"
         },
         {
           "file": "App/UI/SettingsView.swift",
-          "line": 1071,
-          "symbol": "try await app.lock.setAutoLock(seconds - 1)"
+          "symbol": "try await app.lock.setAutoLock(seconds - 1)",
+          "_note": "原行号 1071 已越界（文件现 1054 行），降级为文件级证据"
         },
         {
           "file": "App/Core/ZKCmdBuilder.swift",
@@ -3284,13 +3284,13 @@
         },
         {
           "file": "App/Core/AutoOpen.swift",
-          "line": 572,
-          "symbol": "struct AutoOpenSection"
+          "symbol": "struct AutoOpenSection",
+          "_note": "原行号 572 已越界（文件现 543 行），降级为文件级证据"
         },
         {
           "file": "App/Core/AutoOpen.swift",
-          "line": 611,
-          "symbol": "仅 App 在前台且门不在布防时段生效"
+          "symbol": "仅 App 在前台且门不在布防时段生效",
+          "_note": "原行号 611 已越界（文件现 543 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -3316,18 +3316,18 @@
       "evidence": [
         {
           "file": "App/Core/AutoOpen.swift",
-          "line": 576,
-          "symbol": "VariantToggle(\"走近自动开门\")"
+          "symbol": "VariantToggle(\"走近自动开门\")",
+          "_note": "原行号 576 已越界（文件现 543 行），降级为文件级证据"
         },
         {
           "file": "App/Core/AutoOpen.swift",
-          "line": 580,
-          "symbol": "Picker(\"面容确认\", selection:)"
+          "symbol": "Picker(\"面容确认\", selection:)",
+          "_note": "原行号 580 已越界（文件现 543 行），降级为文件级证据"
         },
         {
           "file": "App/Core/AutoOpen.swift",
-          "line": 595,
-          "symbol": "if let r = AutoOpen.lastReject(mac)"
+          "symbol": "if let r = AutoOpen.lastReject(mac)",
+          "_note": "原行号 595 已越界（文件现 543 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -4050,8 +4050,8 @@
         },
         {
           "file": "App/UI/DeviceHomeView.swift",
-          "line": 1561,
-          "symbol": "DB.store.getString(\"kf_dev_order\")"
+          "symbol": "DB.store.getString(\"kf_dev_order\")",
+          "_note": "原行号 1561 已越界（文件现 1294 行），降级为文件级证据"
         },
         {
           "file": "App/Core/QuickPool.swift",
@@ -4116,13 +4116,13 @@
       "evidence": [
         {
           "file": "App/UI/Sheets.swift",
-          "line": 1901,
-          "symbol": "Section { 全家本月备份 }"
+          "symbol": "Section { 全家本月备份 }",
+          "_note": "原行号 1901 已越界（文件现 1699 行），降级为文件级证据"
         },
         {
           "file": "App/UI/Sheets.swift",
-          "line": 1908,
-          "symbol": "Text(\"\\(Milestones.backupThisMonth) / 4 次\")"
+          "symbol": "Text(\"\\(Milestones.backupThisMonth) / 4 次\")",
+          "_note": "原行号 1908 已越界（文件现 1699 行），降级为文件级证据"
         }
       ],
       "tags": [

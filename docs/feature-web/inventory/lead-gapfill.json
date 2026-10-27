@@ -93,21 +93,21 @@
         },
         {
           "file": "App/Core/QuickActions.swift",
-          "line": 20,
           "symbol": "registerChargeBackup()",
-          "note": "BGTask 注册"
+          "note": "BGTask 注册",
+          "_note": "原行号 20 已越界（文件现 18 行），降级为文件级证据"
         },
         {
           "file": "App/Core/QuickActions.swift",
-          "line": 21,
           "symbol": "migrateSecretsToKeychain()",
-          "note": "明文密钥搬 Keychain"
+          "note": "明文密钥搬 Keychain",
+          "_note": "原行号 21 已越界（文件现 18 行），降级为文件级证据"
         },
         {
           "file": "App/Core/QuickActions.swift",
-          "line": 22,
           "symbol": "hydrateMacOrders()",
-          "note": "MAC 字节序灌回协议层"
+          "note": "MAC 字节序灌回协议层",
+          "_note": "原行号 22 已越界（文件现 18 行），降级为文件级证据"
         }
       ]
     },
@@ -154,9 +154,9 @@
         },
         {
           "file": "App/Core/Route.swift",
-          "line": 69,
           "symbol": "guestBlockedTabs",
-          "note": "由 guestBlocked 派生"
+          "note": "由 guestBlocked 派生",
+          "_note": "原行号 69 已越界（文件现 66 行），降级为文件级证据"
         }
       ]
     },

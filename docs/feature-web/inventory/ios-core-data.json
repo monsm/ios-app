@@ -298,8 +298,8 @@
         },
         {
           "file": "App/Core/AuditChain.swift",
-          "line": 81,
-          "symbol": "key"
+          "symbol": "key",
+          "_note": "原行号 81 已越界（文件现 50 行），降级为文件级证据"
         },
         {
           "file": "App/Core/Milestones.swift",
@@ -351,8 +351,8 @@
         },
         {
           "file": "App/Core/CredentialOrg.swift",
-          "line": 1021,
-          "symbol": "sortKey"
+          "symbol": "sortKey",
+          "_note": "原行号 1021 已越界（文件现 745 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1209,8 +1209,8 @@
       "evidence": [
         {
           "file": "App/Core/AuditChain.swift",
-          "line": 80,
-          "symbol": "AuditLog"
+          "symbol": "AuditLog",
+          "_note": "原行号 80 已越界（文件现 50 行），降级为文件级证据"
         },
         {
           "file": "App/Core/AuditChain.swift",
@@ -1242,14 +1242,14 @@
       "evidence": [
         {
           "file": "App/Core/AuditChain.swift",
-          "line": 90,
-          "symbol": "append(_:_:target:diff:operator_:duress:)"
+          "symbol": "append(_:_:target:diff:operator_:duress:)",
+          "_note": "原行号 90 已越界（文件现 50 行），降级为文件级证据"
         },
         {
           "file": "App/Core/AuditChain.swift",
-          "line": 103,
           "symbol": "sha256Hex",
-          "note": "next[i].hash = sha256Hex(hashInput(prev))"
+          "note": "next[i].hash = sha256Hex(hashInput(prev))",
+          "_note": "原行号 103 已越界（文件现 50 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1349,9 +1349,9 @@
         },
         {
           "file": "App/Core/CredentialOrg.swift",
-          "line": 775,
           "symbol": "protoSecondsToUnix",
-          "note": "protoSecondsToUnix 消费点"
+          "note": "protoSecondsToUnix 消费点",
+          "_note": "原行号 775 已越界（文件现 745 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1582,13 +1582,13 @@
         },
         {
           "file": "App/Core/RecordSearch.swift",
-          "line": 796,
-          "symbol": "testMarkedKeys"
+          "symbol": "testMarkedKeys",
+          "_note": "原行号 796 已越界（文件现 793 行），降级为文件级证据"
         },
         {
           "file": "App/Core/RecordSearch.swift",
-          "line": 802,
-          "symbol": "checkState(_:)"
+          "symbol": "checkState(_:)",
+          "_note": "原行号 802 已越界（文件现 793 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1689,8 +1689,8 @@
         },
         {
           "file": "App/Core/CredentialOrg.swift",
-          "line": 1270,
-          "symbol": "pwdAgeDays(_:)"
+          "symbol": "pwdAgeDays(_:)",
+          "_note": "原行号 1270 已越界（文件现 745 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1822,14 +1822,14 @@
         },
         {
           "file": "App/Core/CredentialOrg.swift",
-          "line": 994,
-          "symbol": "markDisabled(_:kind:keys:label:via:)"
+          "symbol": "markDisabled(_:kind:keys:label:via:)",
+          "_note": "原行号 994 已越界（文件现 745 行），降级为文件级证据"
         },
         {
           "file": "App/Core/CredentialOrg.swift",
-          "line": 1000,
           "symbol": "m.count",
-          "note": "m.count > 200 截断"
+          "note": "m.count > 200 截断",
+          "_note": "原行号 1000 已越界（文件现 745 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1853,8 +1853,8 @@
       "evidence": [
         {
           "file": "App/Core/CredentialOrg.swift",
-          "line": 1113,
-          "symbol": "exportPackage(_:pwdAliases:fpBatches:password:)"
+          "symbol": "exportPackage(_:pwdAliases:fpBatches:password:)",
+          "_note": "原行号 1113 已越界（文件现 745 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1879,13 +1879,13 @@
       "evidence": [
         {
           "file": "App/Core/CredentialOrg.swift",
-          "line": 1104,
-          "symbol": "CredPackage"
+          "symbol": "CredPackage",
+          "_note": "原行号 1104 已越界（文件现 745 行），降级为文件级证据"
         },
         {
           "file": "App/Core/CredentialOrg.swift",
-          "line": 1113,
-          "symbol": "exportPackage"
+          "symbol": "exportPackage",
+          "_note": "原行号 1113 已越界（文件现 745 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1909,18 +1909,18 @@
       "evidence": [
         {
           "file": "App/Core/CredentialOrg.swift",
-          "line": 1450,
-          "symbol": "StudioDraft"
+          "symbol": "StudioDraft",
+          "_note": "原行号 1450 已越界（文件现 745 行），降级为文件级证据"
         },
         {
           "file": "App/Core/CredentialOrg.swift",
-          "line": 1464,
-          "symbol": "draft(_:)"
+          "symbol": "draft(_:)",
+          "_note": "原行号 1464 已越界（文件现 745 行），降级为文件级证据"
         },
         {
           "file": "App/Core/CredentialOrg.swift",
-          "line": 1470,
-          "symbol": "clearDraft(_:)"
+          "symbol": "clearDraft(_:)",
+          "_note": "原行号 1470 已越界（文件现 745 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2285,44 +2285,14 @@
         },
         {
           "file": "App/Core/LockGuard.swift",
-          "line": 34,
-          "symbol": "halfMasked(_:)"
+          "symbol": "halfMasked(_:)",
+          "_note": "原行号 34 已越界（文件现 32 行），降级为文件级证据"
         }
       ],
       "tags": [
         "安全",
         "脱敏",
         "显示"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "settings.speech",
-      "parentKey": "settings",
-      "domain": "settings",
-      "level": 2,
-      "name": "本地朗读（810/309）",
-      "kind": "service",
-      "summary": "全站唯一一份本地朗读出口：一个合成器实例、中文音色、开口前先停上一句；全程离线不联网不录音。",
-      "details": [
-        "必须只有一个实例：此前两份各自 new 的合成器会叠音，且「停掉上一句」在两份上各做一半（SpeechKit.swift:1-6）",
-        "AVSpeechSynthesizer 不是 Sendable，故由 Locked 持有（SpeechKit.swift:10-14）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/SpeechKit.swift",
-          "line": 9,
-          "symbol": "Speech"
-        },
-        {
-          "file": "App/Core/SpeechKit.swift",
-          "line": 14,
-          "symbol": "synth"
-        }
-      ],
-      "tags": [
-        "语音",
-        "无障碍"
       ],
       "status": "implemented"
     },
@@ -2484,9 +2454,9 @@
         },
         {
           "file": "App/Core/QuickPool.swift",
-          "line": 148,
           "symbol": "again",
-          "note": "again 不需要新页面"
+          "note": "again 不需要新页面",
+          "_note": "原行号 148 已越界（文件现 142 行），降级为文件级证据"
         }
       ],
       "tags": [

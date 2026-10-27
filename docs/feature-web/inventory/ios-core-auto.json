@@ -52,8 +52,8 @@
         },
         {
           "file": "App/Core/AutoOpen.swift",
-          "line": 572,
-          "symbol": "AutoOpenSection"
+          "symbol": "AutoOpenSection",
+          "_note": "原行号 572 已越界（文件现 543 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -84,15 +84,15 @@
         },
         {
           "file": "App/Core/AutoOpen.swift",
-          "line": 576,
           "symbol": "VariantToggle",
-          "note": "设置项「走近自动开门」"
+          "note": "设置项「走近自动开门」",
+          "_note": "原行号 576 已越界（文件现 543 行），降级为文件级证据"
         },
         {
           "file": "App/Core/AutoOpen.swift",
-          "line": 611,
           "symbol": "footer Text",
-          "note": "仅前台/非布防生效"
+          "note": "仅前台/非布防生效",
+          "_note": "原行号 611 已越界（文件现 543 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -134,9 +134,9 @@
         },
         {
           "file": "App/Core/AutoOpen.swift",
-          "line": 580,
           "symbol": "Picker 面容确认",
-          "note": "tag 0 免额外验证 / tag 1 严格"
+          "note": "tag 0 免额外验证 / tag 1 严格",
+          "_note": "原行号 580 已越界（文件现 543 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -166,8 +166,8 @@
         },
         {
           "file": "App/Core/AutoOpen.swift",
-          "line": 587,
-          "symbol": "Text(AutoOpen.riskDisclosure)"
+          "symbol": "Text(AutoOpen.riskDisclosure)",
+          "_note": "原行号 587 已越界（文件现 543 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -450,9 +450,9 @@
         },
         {
           "file": "App/Core/AutoOpen.swift",
-          "line": 595,
           "symbol": "设置页最后一次拒因",
-          "note": "VStack + accessibilityElement"
+          "note": "VStack + accessibilityElement",
+          "_note": "原行号 595 已越界（文件现 543 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -844,18 +844,18 @@
         },
         {
           "file": "App/Core/LinkSenseKit.swift",
-          "line": 735,
-          "symbol": "LinkPill"
+          "symbol": "LinkPill",
+          "_note": "原行号 735 已越界（文件现 719 行），降级为文件级证据"
         },
         {
           "file": "App/Core/LinkSenseKit.swift",
-          "line": 852,
-          "symbol": "BLEStrip"
+          "symbol": "BLEStrip",
+          "_note": "原行号 852 已越界（文件现 719 行），降级为文件级证据"
         },
         {
           "file": "App/Core/LinkSenseKit.swift",
-          "line": 923,
-          "symbol": "BLEOffBanner"
+          "symbol": "BLEOffBanner",
+          "_note": "原行号 923 已越界（文件现 719 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -917,23 +917,23 @@
       "evidence": [
         {
           "file": "App/Core/LinkSenseKit.swift",
-          "line": 735,
-          "symbol": "struct LinkPill"
+          "symbol": "struct LinkPill",
+          "_note": "原行号 735 已越界（文件现 719 行），降级为文件级证据"
         },
         {
           "file": "App/Core/LinkSenseKit.swift",
-          "line": 747,
-          "symbol": "redundancyIcon"
+          "symbol": "redundancyIcon",
+          "_note": "原行号 747 已越界（文件现 719 行），降级为文件级证据"
         },
         {
           "file": "App/Core/LinkSenseKit.swift",
-          "line": 754,
-          "symbol": "source 冷热标注"
+          "symbol": "source 冷热标注",
+          "_note": "原行号 754 已越界（文件现 719 行），降级为文件级证据"
         },
         {
           "file": "App/Core/LinkSenseKit.swift",
-          "line": 787,
-          "symbol": "拟人状态文案"
+          "symbol": "拟人状态文案",
+          "_note": "原行号 787 已越界（文件现 719 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -964,13 +964,13 @@
         },
         {
           "file": "App/Core/LinkSenseKit.swift",
-          "line": 721,
-          "symbol": "rssiLevel 阈值"
+          "symbol": "rssiLevel 阈值",
+          "_note": "原行号 721 已越界（文件现 719 行），降级为文件级证据"
         },
         {
           "file": "App/Core/LinkSenseKit.swift",
-          "line": 729,
-          "symbol": "rssiLabel"
+          "symbol": "rssiLabel",
+          "_note": "原行号 729 已越界（文件现 719 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1372,13 +1372,13 @@
         },
         {
           "file": "App/Core/LinkSenseKit.swift",
-          "line": 923,
-          "symbol": "struct BLEOffBanner"
+          "symbol": "struct BLEOffBanner",
+          "_note": "原行号 923 已越界（文件现 719 行），降级为文件级证据"
         },
         {
           "file": "App/Core/LinkSenseKit.swift",
-          "line": 936,
-          "symbol": "两条文案分支"
+          "symbol": "两条文案分支",
+          "_note": "原行号 936 已越界（文件现 719 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1658,13 +1658,13 @@
       "evidence": [
         {
           "file": "App/Core/BatteryCare.swift",
-          "line": 213,
-          "symbol": "battThreshold"
+          "symbol": "battThreshold",
+          "_note": "原行号 213 已越界（文件现 180 行），降级为文件级证据"
         },
         {
           "file": "App/Core/BatteryCare.swift",
-          "line": 215,
-          "symbol": "kf_batt_threshold 默认 15"
+          "symbol": "kf_batt_threshold 默认 15",
+          "_note": "原行号 215 已越界（文件现 180 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1689,18 +1689,18 @@
       "evidence": [
         {
           "file": "App/Core/BatteryCare.swift",
-          "line": 256,
-          "symbol": "refreshOnLaunch()"
+          "symbol": "refreshOnLaunch()",
+          "_note": "原行号 256 已越界（文件现 180 行），降级为文件级证据"
         },
         {
           "file": "App/Core/BatteryCare.swift",
-          "line": 258,
-          "symbol": "空钥匙串 / 授权前置"
+          "symbol": "空钥匙串 / 授权前置",
+          "_note": "原行号 258 已越界（文件现 180 行），降级为文件级证据"
         },
         {
           "file": "App/Core/BatteryCare.swift",
-          "line": 263,
-          "symbol": "逐锁循环"
+          "symbol": "逐锁循环",
+          "_note": "原行号 263 已越界（文件现 180 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1730,8 +1730,8 @@
         },
         {
           "file": "App/Core/BatteryCare.swift",
-          "line": 197,
-          "symbol": "versionLt"
+          "symbol": "versionLt",
+          "_note": "原行号 197 已越界（文件现 180 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1835,23 +1835,23 @@
       "evidence": [
         {
           "file": "App/Core/DiagKit.swift",
-          "line": 476,
-          "symbol": "enum DataHealth"
+          "symbol": "enum DataHealth",
+          "_note": "原行号 476 已越界（文件现 259 行），降级为文件级证据"
         },
         {
           "file": "App/Core/DiagKit.swift",
-          "line": 488,
-          "symbol": "families()"
+          "symbol": "families()",
+          "_note": "原行号 488 已越界（文件现 259 行），降级为文件级证据"
         },
         {
           "file": "App/Core/DiagKit.swift",
-          "line": 529,
-          "symbol": "integrity()"
+          "symbol": "integrity()",
+          "_note": "原行号 529 已越界（文件现 259 行），降级为文件级证据"
         },
         {
           "file": "App/Core/DiagKit.swift",
-          "line": 541,
-          "symbol": "fragmentsAllowed"
+          "symbol": "fragmentsAllowed",
+          "_note": "原行号 541 已越界（文件现 259 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1877,18 +1877,18 @@
       "evidence": [
         {
           "file": "App/Core/DiagKit.swift",
-          "line": 557,
-          "symbol": "vacuum()"
+          "symbol": "vacuum()",
+          "_note": "原行号 557 已越界（文件现 259 行），降级为文件级证据"
         },
         {
           "file": "App/Core/DiagKit.swift",
-          "line": 573,
-          "symbol": "purgeOrphanLogCaches"
+          "symbol": "purgeOrphanLogCaches",
+          "_note": "原行号 573 已越界（文件现 259 行），降级为文件级证据"
         },
         {
           "file": "App/Core/DiagKit.swift",
-          "line": 589,
-          "symbol": "quarantineOrphanCredentials"
+          "symbol": "quarantineOrphanCredentials",
+          "_note": "原行号 589 已越界（文件现 259 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1914,28 +1914,28 @@
       "evidence": [
         {
           "file": "App/Core/DiagKit.swift",
-          "line": 712,
-          "symbol": "struct PullSegment"
+          "symbol": "struct PullSegment",
+          "_note": "原行号 712 已越界（文件现 259 行），降级为文件级证据"
         },
         {
           "file": "App/Core/DiagKit.swift",
-          "line": 736,
-          "symbol": "struct PullGapReport"
+          "symbol": "struct PullGapReport",
+          "_note": "原行号 736 已越界（文件现 259 行），降级为文件级证据"
         },
         {
           "file": "App/Core/DiagKit.swift",
-          "line": 755,
-          "symbol": "enum RecordReconcile"
+          "symbol": "enum RecordReconcile",
+          "_note": "原行号 755 已越界（文件现 259 行），降级为文件级证据"
         },
         {
           "file": "App/Core/DiagKit.swift",
-          "line": 770,
-          "symbol": "pendingPull(logs:…)"
+          "symbol": "pendingPull(logs:…)",
+          "_note": "原行号 770 已越界（文件现 259 行），降级为文件级证据"
         },
         {
           "file": "App/Core/DiagKit.swift",
-          "line": 758,
-          "symbol": "idxGapCap = 5000"
+          "symbol": "idxGapCap = 5000",
+          "_note": "原行号 758 已越界（文件现 259 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1964,28 +1964,28 @@
       "evidence": [
         {
           "file": "App/Core/DiagKit.swift",
-          "line": 1062,
-          "symbol": "struct HealthCheckItem"
+          "symbol": "struct HealthCheckItem",
+          "_note": "原行号 1062 已越界（文件现 259 行），降级为文件级证据"
         },
         {
           "file": "App/Core/DiagKit.swift",
-          "line": 1075,
-          "symbol": "enum DiagHealth"
+          "symbol": "enum DiagHealth",
+          "_note": "原行号 1075 已越界（文件现 259 行），降级为文件级证据"
         },
         {
           "file": "App/Core/DiagKit.swift",
-          "line": 1082,
-          "symbol": "items 十项清单"
+          "symbol": "items 十项清单",
+          "_note": "原行号 1082 已越界（文件现 259 行），降级为文件级证据"
         },
         {
           "file": "App/Core/DiagKit.swift",
-          "line": 1102,
-          "symbol": "percent"
+          "symbol": "percent",
+          "_note": "原行号 1102 已越界（文件现 259 行），降级为文件级证据"
         },
         {
           "file": "App/Core/DiagKit.swift",
-          "line": 1118,
-          "symbol": "saveArchive"
+          "symbol": "saveArchive",
+          "_note": "原行号 1118 已越界（文件现 259 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2266,8 +2266,8 @@
         },
         {
           "file": "App/Services/BackupKit.swift",
-          "line": 469,
-          "symbol": "trace 脱敏"
+          "symbol": "trace 脱敏",
+          "_note": "原行号 469 已越界（文件现 455 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2432,8 +2432,8 @@
         },
         {
           "file": "App/Services/BackupKit.swift",
-          "line": 479,
-          "symbol": "currentMac 校验"
+          "symbol": "currentMac 校验",
+          "_note": "原行号 479 已越界（文件现 455 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2581,23 +2581,23 @@
       "evidence": [
         {
           "file": "App/Services/BackupKit.swift",
-          "line": 486,
-          "symbol": "enum CloudSync"
+          "symbol": "enum CloudSync",
+          "_note": "原行号 486 已越界（文件现 455 行），降级为文件级证据"
         },
         {
           "file": "App/Services/BackupKit.swift",
-          "line": 487,
-          "symbol": "remoteURL"
+          "symbol": "remoteURL",
+          "_note": "原行号 487 已越界（文件现 455 行），降级为文件级证据"
         },
         {
           "file": "App/Services/BackupKit.swift",
-          "line": 492,
-          "symbol": "push"
+          "symbol": "push",
+          "_note": "原行号 492 已越界（文件现 455 行），降级为文件级证据"
         },
         {
           "file": "App/Services/BackupKit.swift",
-          "line": 486,
-          "symbol": "download"
+          "symbol": "download",
+          "_note": "原行号 486 已越界（文件现 455 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -3264,18 +3264,18 @@
         },
         {
           "file": "App/Core/DesignSystem.swift",
-          "line": 1043,
-          "symbol": "SecondaryActionStyle"
+          "symbol": "SecondaryActionStyle",
+          "_note": "原行号 1043 已越界（文件现 1031 行），降级为文件级证据"
         },
         {
           "file": "App/Core/DesignSystem.swift",
-          "line": 1056,
-          "symbol": "DestructiveActionStyle"
+          "symbol": "DestructiveActionStyle",
+          "_note": "原行号 1056 已越界（文件现 1031 行），降级为文件级证据"
         },
         {
           "file": "App/Core/DesignSystem.swift",
-          "line": 1036,
-          "symbol": "BusyButton"
+          "symbol": "BusyButton",
+          "_note": "原行号 1036 已越界（文件现 1031 行），降级为文件级证据"
         }
       ],
       "tags": [

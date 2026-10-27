@@ -182,13 +182,13 @@
         },
         {
           "file": "App/UI/BackupView.swift",
-          "line": 313,
-          "symbol": "backupFilename"
+          "symbol": "backupFilename",
+          "_note": "原行号 313 已越界（文件现 289 行），降级为文件级证据"
         },
         {
           "file": "App/UI/BackupView.swift",
-          "line": 318,
-          "symbol": "dateFormat yyyyMMdd-HHmm"
+          "symbol": "dateFormat yyyyMMdd-HHmm",
+          "_note": "原行号 318 已越界（文件现 289 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -314,13 +314,13 @@
         },
         {
           "file": "App/UI/BackupView.swift",
-          "line": 333,
-          "symbol": "startAccessingSecurityScopedResource"
+          "symbol": "startAccessingSecurityScopedResource",
+          "_note": "原行号 333 已越界（文件现 289 行），降级为文件级证据"
         },
         {
           "file": "App/UI/BackupView.swift",
-          "line": 335,
-          "symbol": "读不出文本内容"
+          "symbol": "读不出文本内容",
+          "_note": "原行号 335 已越界（文件现 289 行），降级为文件级证据"
         },
         {
           "file": "App/UI/BackupView.swift",
@@ -329,8 +329,8 @@
         },
         {
           "file": "App/UI/BackupView.swift",
-          "line": 343,
-          "symbol": "pendingFileText = text"
+          "symbol": "pendingFileText = text",
+          "_note": "原行号 343 已越界（文件现 289 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -418,18 +418,18 @@
         },
         {
           "file": "App/UI/BackupView.swift",
-          "line": 290,
-          "symbol": "BackupStudio.parsePreview(text:password:)"
+          "symbol": "BackupStudio.parsePreview(text:password:)",
+          "_note": "原行号 290 已越界（文件现 289 行），降级为文件级证据"
         },
         {
           "file": "App/UI/BackupView.swift",
-          "line": 299,
-          "symbol": "口令错误 / 内容被改过 / 不是备份"
+          "symbol": "口令错误 / 内容被改过 / 不是备份",
+          "_note": "原行号 299 已越界（文件现 289 行），降级为文件级证据"
         },
         {
           "file": "App/UI/BackupView.swift",
-          "line": 385,
-          "symbol": "pull 里同一入口"
+          "symbol": "pull 里同一入口",
+          "_note": "原行号 385 已越界（文件现 289 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -455,28 +455,28 @@
       "evidence": [
         {
           "file": "App/UI/BackupView.swift",
-          "line": 291,
-          "symbol": "BackupKit.restoreAll(bundle)"
+          "symbol": "BackupKit.restoreAll(bundle)",
+          "_note": "原行号 291 已越界（文件现 289 行），降级为文件级证据"
         },
         {
           "file": "App/UI/BackupView.swift",
-          "line": 292,
-          "symbol": "app.loadDevices()"
+          "symbol": "app.loadDevices()",
+          "_note": "原行号 292 已越界（文件现 289 行），降级为文件级证据"
         },
         {
           "file": "App/UI/BackupView.swift",
-          "line": 293,
-          "symbol": "if bundle.globals?.appearance != nil"
+          "symbol": "if bundle.globals?.appearance != nil",
+          "_note": "原行号 293 已越界（文件现 289 行），降级为文件级证据"
         },
         {
           "file": "App/UI/BackupView.swift",
-          "line": 294,
-          "symbol": "armMigrateWizard(r)"
+          "symbol": "armMigrateWizard(r)",
+          "_note": "原行号 294 已越界（文件现 289 行），降级为文件级证据"
         },
         {
           "file": "App/UI/BackupView.swift",
-          "line": 296,
-          "symbol": "导入完成: 新增 x, 覆盖 y"
+          "symbol": "导入完成: 新增 x, 覆盖 y",
+          "_note": "原行号 296 已越界（文件现 289 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -502,18 +502,18 @@
       "evidence": [
         {
           "file": "App/UI/BackupView.swift",
-          "line": 298,
-          "symbol": "catch"
+          "symbol": "catch",
+          "_note": "原行号 298 已越界（文件现 289 行），降级为文件级证据"
         },
         {
           "file": "App/UI/BackupView.swift",
-          "line": 300,
-          "symbol": "导入被拦下"
+          "symbol": "导入被拦下",
+          "_note": "原行号 300 已越界（文件现 289 行），降级为文件级证据"
         },
         {
           "file": "App/UI/BackupView.swift",
-          "line": 299,
-          "symbol": "三类失败说明"
+          "symbol": "三类失败说明",
+          "_note": "原行号 299 已越界（文件现 289 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -539,23 +539,23 @@
       "evidence": [
         {
           "file": "App/UI/BackupView.swift",
-          "line": 304,
-          "symbol": "换机恢复后立起验证向导"
+          "symbol": "换机恢复后立起验证向导",
+          "_note": "原行号 304 已越界（文件现 289 行），降级为文件级证据"
         },
         {
           "file": "App/UI/BackupView.swift",
-          "line": 305,
-          "symbol": "armMigrateWizard"
+          "symbol": "armMigrateWizard",
+          "_note": "原行号 305 已越界（文件现 289 行），降级为文件级证据"
         },
         {
           "file": "App/UI/BackupView.swift",
-          "line": 307,
-          "symbol": "kf_migok_ 清理"
+          "symbol": "kf_migok_ 清理",
+          "_note": "原行号 307 已越界（文件现 289 行），降级为文件级证据"
         },
         {
           "file": "App/UI/BackupView.swift",
-          "line": 308,
-          "symbol": "kf_migrate_pending"
+          "symbol": "kf_migrate_pending",
+          "_note": "原行号 308 已越界（文件现 289 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -623,178 +623,6 @@
       "status": "implemented"
     },
     {
-      "key": "backup.webdav.studio",
-      "parentKey": "backup",
-      "domain": "backup",
-      "level": 2,
-      "name": "WebDAV 工作室",
-      "kind": "screen",
-      "summary": "用户自配 WebDAV 端点：连通测试、远端列表（下载/演练）、上传、密钥轮换、滚动保留。",
-      "details": [
-        "自带 NavigationStack + Form 三段：「WebDAV 端点 (走用户自配账号, 仅 Basic Auth 运行时输入)」「远端备份 (哈希先行: 先拉 etag 再拉正文)」「策略与密钥」",
-        "ready = !root.isEmpty && !acct.isEmpty && !appPw.isEmpty；左上「关闭」dismiss",
-        "onAppear 从 Store 预填 kf_webdav_root / kf_cloudcfg_acct / kf_cloudcfg_app（两枚口令留空）",
-        "body 走 vkBody.destined(.webDAVStudio) 变体路由"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 13,
-          "symbol": "struct WebDAVStudioView"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 30,
-          "symbol": "ready"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 32,
-          "symbol": "vkBody.destined(.webDAVStudio)"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 34,
-          "symbol": "NavigationStack"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 36,
-          "symbol": "Section WebDAV 端点"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 87,
-          "symbol": "Section 远端备份"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 128,
-          "symbol": "Section 策略与密钥"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 152,
-          "symbol": "onAppear 预填"
-        }
-      ],
-      "tags": [
-        "云同步",
-        "页面"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "backup.webdav.upload",
-      "parentKey": "backup.webdav.studio",
-      "domain": "backup",
-      "level": 3,
-      "name": "工作室上传当前备份",
-      "kind": "action",
-      "summary": "在工作室里整包加密上传（与备份页同一条 CloudSync 通道）。",
-      "details": [
-        "encPw 为空 → toast「请先填加密口令」",
-        "bundleFor(BZones()) → BackupCanonical.exportText → markExportSize → encryptText → CloudSync.push",
-        "成功：persist + Milestones.recordBackup + 自动滚动清理 + 成功触感 + toast「上传成功」",
-        "失败：toast(error.localizedDescription)；结束复位 busy"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 129,
-          "symbol": "Button 上传当前备份"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 210,
-          "symbol": "private func upload()"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 211,
-          "symbol": "请先填加密口令"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 215,
-          "symbol": "bundleFor(BZones())"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 221,
-          "symbol": "Milestones.recordBackup()"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 224,
-          "symbol": "滚动清理"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 228,
-          "symbol": "上传成功"
-        }
-      ],
-      "tags": [
-        "云同步",
-        "上传"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "backup.webdav.download",
-      "parentKey": "backup.webdav.studio",
-      "domain": "backup",
-      "level": 3,
-      "name": "下载恢复（HEAD etag 先行）",
-      "kind": "action",
-      "summary": "下载远端包：先用 HEAD 比对 etag，再取正文、校验，最后进预演门。",
-      "details": [
-        "safeRemoteURL 失败抛「地址非法 (远端条目名被护栏拒绝)」",
-        "HEAD 带 Basic Auth；服务端 ETag 与清单 etag 不同 → toast「远端文件已变 (清单 … ≠ 现在 …), 已中止 — 刷新后重下」并 return",
-        "服务端不支持 HEAD 时照常继续（不假拦）",
-        "GET 文本 → parsePreview(text: raw, password: encPw.isEmpty ? nil : encPw)",
-        "结果写 pendingDL = (bundle, \"文件名 · 校验通过 · zones\")，不直接入库"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 235,
-          "symbol": "private func download"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 240,
-          "symbol": "safeRemoteURL 护栏"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 241,
-          "symbol": "423 注释 etag 先行"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 247,
-          "symbol": "远端文件已变"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 255,
-          "symbol": "parsePreview"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 256,
-          "symbol": "pendingDL 赋值"
-        }
-      ],
-      "tags": [
-        "云同步",
-        "下载"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "backup.doc",
       "parentKey": "backup",
       "domain": "backup",
@@ -811,610 +639,28 @@
       "evidence": [
         {
           "file": "App/UI/BackupView.swift",
-          "line": 427,
-          "symbol": "BackupDoc 注释"
+          "symbol": "BackupDoc 注释",
+          "_note": "原行号 427 已越界（文件现 289 行），降级为文件级证据"
         },
         {
           "file": "App/UI/BackupView.swift",
-          "line": 431,
-          "symbol": "struct BackupDoc: FileDocument"
+          "symbol": "struct BackupDoc: FileDocument",
+          "_note": "原行号 431 已越界（文件现 289 行），降级为文件级证据"
         },
         {
           "file": "App/UI/BackupView.swift",
-          "line": 432,
-          "symbol": "readableContentTypes [.json]"
+          "symbol": "readableContentTypes [.json]",
+          "_note": "原行号 432 已越界（文件现 289 行），降级为文件级证据"
         },
         {
           "file": "App/UI/BackupView.swift",
-          "line": 439,
-          "symbol": "fileWrapper"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 290,
-          "symbol": "struct UIImageShareItem"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 293,
-          "symbol": "DataRepresentation(.png)"
+          "symbol": "fileWrapper",
+          "_note": "原行号 439 已越界（文件现 289 行），降级为文件级证据"
         }
       ],
       "tags": [
         "备份",
         "数据类型"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.center",
-      "parentKey": "diagnostic",
-      "domain": "diagnostic",
-      "level": 2,
-      "name": "诊断与运行日志主页",
-      "kind": "screen",
-      "summary": "一页 Form 聚合体检、存储与数据、遥测、日志、性能与急救等约十九个分区。",
-      "details": [
-        "顶部按条件插入「月度清理」任务行，其余按固定顺序排列",
-        ".navigationTitle(\"诊断与运行日志\")；variantList / dsScreenBackground",
-        ".task { if results.isEmpty { rerunAll() } }：进页即出分（纯本地读，不发包）",
-        "三条来路：设备页 push、设置页 push、设置页 sheet（SettingsView 的 showDiag）"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 6,
-          "symbol": "struct DiagnosticsView"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 118,
-          "symbol": "body = vkBody.destined(.diagnostics)"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 120,
-          "symbol": "Form"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1183,
-          "symbol": "navigationTitle 诊断与运行日志"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1186,
-          "symbol": ".task 进页即出分"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "页面"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.center.entry",
-      "parentKey": "diagnostic.center",
-      "domain": "diagnostic",
-      "level": 4,
-      "name": "三种容器下的返回语义",
-      "kind": "state",
-      "summary": "同一页在 push 与 sheet 里出现，切 Tab 前必须先收掉这一层，否则用户看不到切好的 Tab。",
-      "details": [
-        "注释：sheet 那条路里 TabView 被盖住，只写 tabSelection 会「点了没反应」",
-        "「月度清理」与「到凭证页查看」都先 app.requestRoute(...) 再 dismiss()",
-        "空态次按钮「去设备页操作」同样 requestRoute(.device) + dismiss()",
-        "诊断查阅是 push（NavigationLink），不是 sheet"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 8,
-          "symbol": "三条来路注释"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 127,
-          "symbol": "走查注释 sheet 场景"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 136,
-          "symbol": "dismiss()"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1026,
-          "symbol": "secondary requestRoute(.device) + dismiss"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1172,
-          "symbol": "requestRoute(.credentials) + dismiss"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "导航"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.report",
-      "parentKey": "diagnostic.center",
-      "domain": "diagnostic",
-      "level": 3,
-      "name": "诊断报告",
-      "kind": "diagnostic",
-      "summary": "复制全文、分享纯文本、生成带水印截图、进入只读查阅表。",
-      "details": [
-        "「复制全部诊断信息」写 UIPasteboard.general.string = report()，1.5s 后按钮复位（copied 旗标）",
-        "说明：报告含一行留白问题描述、应用/系统版本、全部已配对锁、本次体检分项、最近 100 条会话日志与近 7 天留档",
-        "「分享诊断报告」ShareLink 同一份 report()，不落盘不上传（本工程不打包 zip）",
-        "「生成诊断截图」/「重新生成截图」→ renderDiagShot；生成后才有「分享诊断截图」",
-        "「诊断查阅」NavigationLink → DiagReferenceView（可带 highlightRC）"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 159,
-          "symbol": "Section 诊断报告"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 161,
-          "symbol": "UIPasteboard report()"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 167,
-          "symbol": "已复制文案"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 176,
-          "symbol": "报告包含"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 181,
-          "symbol": "ShareLink 分享诊断报告"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 201,
-          "symbol": "生成诊断截图"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 210,
-          "symbol": "NavigationLink DiagReferenceView"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "报告"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.health",
-      "parentKey": "diagnostic.center",
-      "domain": "diagnostic",
-      "level": 3,
-      "name": "一键体检",
-      "kind": "diagnostic",
-      "summary": "跑分、单项复测、权限深链、结果存档与历次分数回看。",
-      "details": [
-        "标题行「总分 N / 100」+「全部重跑」；rerunAll() 调 DiagHealth.runAll() 并触发触感 tick",
-        "每项：通过/告警图标 + 名称 + 「重测 (id)」+ detail；重测后按 DiagHealth.percent(results) 重算总分并 toast",
-        "权限类：id 为 ble / notify 且未通过时才给「打开系统设置中的本 App 权限页」（openSettingsURLString 是唯一公开出口）",
-        "faceid 未通过只给系统设置录入步骤文字（iOS 无该项深链，本 App 设置页也没有这一项）",
-        "本地网络：说明本 App 不申请不使用（与门锁蓝牙直连），不摆永远绿的检查项"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 215,
-          "symbol": "一键体检注释"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 217,
-          "symbol": "Section 一键体检"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 219,
-          "symbol": "总分 N/100"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 224,
-          "symbol": "全部重跑"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 239,
-          "symbol": "重测 (id)"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 250,
-          "symbol": "ble/notify 权限入口"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 261,
-          "symbol": "faceid 提示"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 272,
-          "symbol": "本地网络说明"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "体检"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.data-health",
-      "parentKey": "diagnostic.center",
-      "domain": "diagnostic",
-      "level": 3,
-      "name": "存储构成与完整性自查",
-      "kind": "diagnostic",
-      "summary": "按键族显示体积构成条、合计与完整性自查结果。",
-      "details": [
-        "DataHealth.composition() 返回若干 slice（name + bytes），每行一条 6pt 胶囊占比条（装饰性，accessibilityHidden）",
-        "合计用 DataHealth.human(totalBytes)，注明「按本机键值大小估算，不是磁盘真实占用（UserDefaults 有对齐与元数据开销）」",
-        "「完整性自查」→ DataHealth.integrity() 返回字符串数组，逐行 caption 显示",
-        "构成条宽度 max(2, width * bytes / total)，total=0 时退化 2pt"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 326,
-          "symbol": "Section 存储与数据"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 327,
-          "symbol": "DataHealth.composition()"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 338,
-          "symbol": "GeometryReader 构成条"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 351,
-          "symbol": "合计口径"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 354,
-          "symbol": "完整性自查"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 357,
-          "symbol": "逐行显示"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "存储"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.reconcile",
-      "parentKey": "diagnostic.center",
-      "domain": "diagnostic",
-      "level": 3,
-      "name": "待补拉日期段",
-      "kind": "diagnostic",
-      "summary": "按本机日志推断要补哪几段、尾段单列、序号断档单列，可一键复制。",
-      "details": [
-        "RecordReconcile.pendingPull(mac:) → PullGapReport；封面行三种口径：没日志 / 首末日+覆盖天数 / 全行无有效锁端时刻",
-        "中段空洞逐段列出（pullGapRow，含判据小字），合计「约 N 天 · 列出最近 M 段 [· 另有 K 段未列出]」",
-        "跨度上限 RecordReconcile.defaultMaxSpanDays，超出只扫最近一段并如实播报",
-        "尾段（只有前一侧依据）单独一行，不与空洞相加",
-        "「复制待补拉清单」→ RecordReconcile.plainLine(r, name: app.displayName) + toast",
-        "明确写：补拉要到场（蓝牙直连）、锁端日志滚动，清单是候选不是保证"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 450,
-          "symbol": "749 注释"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 455,
-          "symbol": "Group 待补拉"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 456,
-          "symbol": "RecordReconcile.pendingPull"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 457,
-          "symbol": "LabeledRow 待补拉日期段"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 479,
-          "symbol": "合计约 N 天"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 486,
-          "symbol": "跨度上限播报"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 491,
-          "symbol": "尾段"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 524,
-          "symbol": "复制待补拉清单"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 538,
-          "symbol": "补拉要到场"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "对账"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.connect-rate",
-      "parentKey": "diagnostic.center",
-      "domain": "diagnostic",
-      "level": 3,
-      "name": "连接成功率与失败分类",
-      "kind": "diagnostic",
-      "summary": "成功率大字、按日趋势图与失败三类计数，无记录不画假基线。",
-      "details": [
-        "BleTelemetry.successRate() 有值 → 大字 pct% + 「已留存 N 次连接尝试, 成功 M」",
-        "dailyRates() ≥2 天 → Chart 折线+点，点标注 n，Y 轴 0...100，高 150",
-        "只有一天 → 「按日趋势需至少 2 天记录 — 当前只有一天 (1)」",
-        "无记录 → 「尚无连接尝试记录 — 做过扫描/开锁后这里才有数据」",
-        "failClasses() 每类一行：名称 + N 次 + hint"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 823,
-          "symbol": "748 注释"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 871,
-          "symbol": "Section 连接成功率"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 872,
-          "symbol": "successRate()"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 884,
-          "symbol": "dailyRates()"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 886,
-          "symbol": "Chart LineMark/PointMark"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 895,
-          "symbol": "需至少 2 天"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 900,
-          "symbol": "尚无连接尝试记录"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 904,
-          "symbol": "failClasses"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "遥测"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.ble-rescue",
-      "parentKey": "diagnostic.center",
-      "domain": "diagnostic",
-      "level": 3,
-      "name": "蓝牙急救",
-      "kind": "edge",
-      "summary": "【口径】近 20 条断连事件里失败 ≥3 时出现三步急救指引。",
-      "details": [
-        "触发：failsInLast20 >= 3（BleTelemetry.events.prefix(20) 里 !ok 的条数）",
-        "三步：控制中心关开蓝牙等 10 秒回设备页 / 设置→蓝牙关闭 App 后台后重开 / 重启手机",
-        "footer「近 20 条断连事件中有 N 条失败 — 建议按序执行」",
-        "不自动改任何设置，只给指引"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 719,
-          "symbol": "133 蓝牙堆栈急救注释"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 720,
-          "symbol": "if failsInLast20 >= 3"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 722,
-          "symbol": "第 1 步"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 723,
-          "symbol": "第 2 步"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 724,
-          "symbol": "第 3 步"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 728,
-          "symbol": "N 条失败"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1341,
-          "symbol": "failsInLast20"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "急救"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.selfcheck",
-      "parentKey": "diagnostic.center",
-      "domain": "diagnostic",
-      "level": 3,
-      "name": "本机库体自检",
-      "kind": "diagnostic",
-      "summary": "只读三项本机核对：库体哈希、审计链重算、JSON 回环与台账计数。",
-      "details": [
-        "「立即自检 (只读)」→ app.runSelfCheck397() + toast SelfCheck.summary(app.selfCheck397)",
-        "结果为空时说明：解锁时自动跑一次；三项都是本地只读",
-        "结果逐行：通过/告警图标 + name + detail",
-        "明确：本 App 没有 SQLite，这栏不是 quick_check、也不重建索引"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 783,
-          "symbol": "397 注释"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 784,
-          "symbol": "Section 本机库体自检"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 785,
-          "symbol": "Button 立即自检"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 786,
-          "symbol": "app.runSelfCheck397()"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 794,
-          "symbol": "解锁时自动跑一次"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 818,
-          "symbol": "没有 SQLite，不是 quick_check"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "自检"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "diagnostic.logs",
-      "parentKey": "diagnostic.center",
-      "domain": "diagnostic",
-      "level": 3,
-      "name": "运行日志",
-      "kind": "diagnostic",
-      "summary": "级别过滤、关键词搜索/高亮、时间窗刷选、原始报文与实体跳转。",
-      "details": [
-        "标题「运行日志 (最新在末尾) · 显示 <过滤后>/<全部> 条」",
-        "数据源 app.lock.logs.suffix(150)，再串级别过滤、关键词过滤、时间窗过滤",
-        "行 id =「行文本 + 同文本出现次序」，顶部插新行不会整体位移",
-        "每行可选中文本；长按菜单「查看原始报文」（无 hex 时禁用）",
-        "可见行含实体引用时给凭证/指纹胶囊按钮，点击弹台账元数据 sheet",
-        "空态两档：有过滤无匹配 → 「当前过滤条件下没有匹配行（共 N 条日志）」；彻底空 → GuidedEmptyView"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 917,
-          "symbol": "Section 运行日志"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1059,
-          "symbol": "ForEach(logRows)"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1266,
-          "symbol": "logRows 计算"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1269,
-          "symbol": "suffix(150)"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1258,
-          "symbol": "struct LogLine"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1263,
-          "symbol": "id 稳定说明"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1007,
-          "symbol": "过滤无匹配"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1013,
-          "symbol": "彻底空态"
-        }
-      ],
-      "tags": [
-        "诊断",
-        "日志"
       ],
       "status": "implemented"
     },
@@ -1910,18 +1156,18 @@
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1151,
-          "symbol": "selfCheckBanner"
+          "symbol": "selfCheckBanner",
+          "_note": "原行号 1151 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1158,
-          "symbol": "Button 去诊断"
+          "symbol": "Button 去诊断",
+          "_note": "原行号 1158 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1161,
-          "symbol": "pendingSettingsFocus = diag"
+          "symbol": "pendingSettingsFocus = diag",
+          "_note": "原行号 1161 已越界（文件现 1124 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1962,18 +1208,18 @@
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1252,
-          "symbol": "struct ToastView"
+          "symbol": "struct ToastView",
+          "_note": "原行号 1252 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1258,
-          "symbol": "lineLimit(3)"
+          "symbol": "lineLimit(3)",
+          "_note": "原行号 1258 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1265,
-          "symbol": ".axGlass(DS.Radius.control)"
+          "symbol": ".axGlass(DS.Radius.control)",
+          "_note": "原行号 1265 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
@@ -2253,38 +1499,38 @@
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1198,
-          "symbol": "handleScenePhase 注释"
+          "symbol": "handleScenePhase 注释",
+          "_note": "原行号 1198 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1199,
-          "symbol": "private func handleScenePhase"
+          "symbol": "private func handleScenePhase",
+          "_note": "原行号 1199 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1200,
-          "symbol": "setSceneActive"
+          "symbol": "setSceneActive",
+          "_note": "原行号 1200 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1206,
-          "symbol": "if app.appUnlocked"
+          "symbol": "if app.appUnlocked",
+          "_note": "原行号 1206 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1212,
-          "symbol": "else if phase == .background"
+          "symbol": "else if phase == .background",
+          "_note": "原行号 1212 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1217,
-          "symbol": "CrashGuard.markCleanExit"
+          "symbol": "CrashGuard.markCleanExit",
+          "_note": "原行号 1217 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1219,
-          "symbol": "else .inactive"
+          "symbol": "else .inactive",
+          "_note": "原行号 1219 已越界（文件现 1124 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2310,28 +1556,28 @@
       "evidence": [
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1201,
-          "symbol": "if phase == .active"
+          "symbol": "if phase == .active",
+          "_note": "原行号 1201 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1203,
-          "symbol": "AXFlags.refreshSnapshots()"
+          "symbol": "AXFlags.refreshSnapshots()",
+          "_note": "原行号 1203 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1207,
-          "symbol": "F0 前台门注释"
+          "symbol": "F0 前台门注释",
+          "_note": "原行号 1207 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1208,
-          "symbol": "AutoOpenController.onForeground"
+          "symbol": "AutoOpenController.onForeground",
+          "_note": "原行号 1208 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1204,
-          "symbol": "到点自动落锁已删"
+          "symbol": "到点自动落锁已删",
+          "_note": "原行号 1204 已越界（文件现 1124 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2357,38 +1603,38 @@
       "evidence": [
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1212,
-          "symbol": "else if phase == .background"
+          "symbol": "else if phase == .background",
+          "_note": "原行号 1212 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1216,
-          "symbol": "221 退后台收尾注释"
+          "symbol": "221 退后台收尾注释",
+          "_note": "原行号 1216 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1217,
-          "symbol": "CrashGuard.markCleanExit"
+          "symbol": "CrashGuard.markCleanExit",
+          "_note": "原行号 1217 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1218,
-          "symbol": "AutoOpenController.onBackground"
+          "symbol": "AutoOpenController.onBackground",
+          "_note": "原行号 1218 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1221,
-          "symbol": "inactive 清崩溃标记理由"
+          "symbol": "inactive 清崩溃标记理由",
+          "_note": "原行号 1221 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1223,
-          "symbol": "markCleanExit"
+          "symbol": "markCleanExit",
+          "_note": "原行号 1223 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1226,
-          "symbol": "onBackground"
+          "symbol": "onBackground",
+          "_note": "原行号 1226 已越界（文件现 1124 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2466,28 +1712,28 @@
       "evidence": [
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1229,
-          "symbol": "包2/136 跨页状态细条注释"
+          "symbol": "包2/136 跨页状态细条注释",
+          "_note": "原行号 1229 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1232,
-          "symbol": "func bleStatusStrip"
+          "symbol": "func bleStatusStrip",
+          "_note": "原行号 1232 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1233,
-          "symbol": "BLEStrip"
+          "symbol": "BLEStrip",
+          "_note": "原行号 1233 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1235,
-          "symbol": "requestRoute(.device)"
+          "symbol": "requestRoute(.device)",
+          "_note": "原行号 1235 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1236,
-          "symbol": "pendingJumpLock"
+          "symbol": "pendingJumpLock",
+          "_note": "原行号 1236 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
@@ -2778,13 +2024,8 @@
         },
         {
           "file": "App/UI/BackupView.swift",
-          "line": 293,
-          "symbol": "导入后按需 reloadAppearance"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 263,
-          "symbol": "commitDL 同样按需"
+          "symbol": "导入后按需 reloadAppearance",
+          "_note": "原行号 293 已越界（文件现 289 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -3088,38 +2329,38 @@
       "evidence": [
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1273,
-          "symbol": "拍板 A 注释"
+          "symbol": "拍板 A 注释",
+          "_note": "原行号 1273 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1276,
-          "symbol": "struct GuestReauthGate"
+          "symbol": "struct GuestReauthGate",
+          "_note": "原行号 1276 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1279,
-          "symbol": "@State note"
+          "symbol": "@State note",
+          "_note": "原行号 1279 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1286,
-          "symbol": "凭证与设置已收起"
+          "symbol": "凭证与设置已收起",
+          "_note": "原行号 1286 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1293,
-          "symbol": "Button 验证"
+          "symbol": "Button 验证",
+          "_note": "原行号 1293 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1301,
-          "symbol": "Button 取消"
+          "symbol": "Button 取消",
+          "_note": "原行号 1301 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1305,
-          "symbol": ".task await verify"
+          "symbol": ".task await verify",
+          "_note": "原行号 1305 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
@@ -3150,28 +2391,28 @@
       "evidence": [
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1307,
-          "symbol": "private func verify"
+          "symbol": "private func verify",
+          "_note": "原行号 1307 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1308,
-          "symbol": "guard !busy"
+          "symbol": "guard !busy",
+          "_note": "原行号 1308 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1311,
-          "symbol": "AuthKit.verifyBiometricAsync"
+          "symbol": "AuthKit.verifyBiometricAsync",
+          "_note": "原行号 1311 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1312,
-          "symbol": "commitUnlock(reauth: true)"
+          "symbol": "commitUnlock(reauth: true)",
+          "_note": "原行号 1312 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
-          "line": 1314,
-          "symbol": "未通过 note"
+          "symbol": "未通过 note",
+          "_note": "原行号 1314 已越界（文件现 1124 行），降级为文件级证据"
         },
         {
           "file": "App/LockKeeperApp.swift",
@@ -3528,23 +2769,13 @@
         },
         {
           "file": "App/UI/BackupView.swift",
-          "line": 307,
-          "symbol": "kf_migok_ 清理"
+          "symbol": "kf_migok_ 清理",
+          "_note": "原行号 307 已越界（文件现 289 行），降级为文件级证据"
         },
         {
           "file": "App/UI/BackupView.swift",
-          "line": 308,
-          "symbol": "kf_migrate_pending"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 153,
-          "symbol": "kf_webdav_root"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 176,
-          "symbol": "persist 写 kf_webdav_root"
+          "symbol": "kf_migrate_pending",
+          "_note": "原行号 308 已越界（文件现 289 行），降级为文件级证据"
         },
         {
           "file": "App/Core/Milestones.swift",
@@ -3560,66 +2791,6 @@
       "tags": [
         "数据",
         "备份"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "data.keys.diagnostic",
-      "parentKey": "data.shell-keys",
-      "domain": "data",
-      "level": 4,
-      "name": "诊断相关键",
-      "kind": "data",
-      "summary": "诊断页写入的开关、保留档与只读计数。",
-      "details": [
-        "kf_diag_log_retention：\"\" / \"365\" / \"90\"（DiagLogs.retentionKey）",
-        "kf_diag_autoarchive：启动自动归档（默认关）",
-        "kf_debug_raw：记录原始收发 hex",
-        "kf_silent_trouble：静默排查模式（DiagFlags.silent）",
-        "kf_diag_ops_on：操作打点开关（DiagOps.on，默认 true）",
-        "kf_wd_heals：会话自恢复累计（只读展示）",
-        "kf_bk_events：数据事件台账（诊断「数据事件」节读取）"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 363,
-          "symbol": "DiagLogs.retentionKey 读取"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 425,
-          "symbol": "kf_diag_autoarchive"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 630,
-          "symbol": "kf_debug_raw"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 638,
-          "symbol": "kf_silent_trouble"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 696,
-          "symbol": "DiagOps.on"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 845,
-          "symbol": "kf_wd_heals"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 561,
-          "symbol": "kf_bk_events"
-        }
-      ],
-      "tags": [
-        "数据",
-        "诊断"
       ],
       "status": "implemented"
     },
@@ -3668,11 +2839,6 @@
           "file": "App/LockKeeperApp.swift",
           "line": 693,
           "symbol": "Milestones.onceDone(crash758_)"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 188,
-          "symbol": "HintOnce.shown(830enc)"
         }
       ],
       "tags": [

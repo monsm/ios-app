@@ -54,13 +54,13 @@
       "evidence": [
         {
           "file": "App/UI/Sheets.swift",
-          "line": 1744,
-          "symbol": "Section 我的网关"
+          "symbol": "Section 我的网关",
+          "_note": "原行号 1744 已越界（文件现 1699 行），降级为文件级证据"
         },
         {
           "file": "App/UI/Sheets.swift",
-          "line": 1851,
-          "symbol": "readGatewayState"
+          "symbol": "readGatewayState",
+          "_note": "原行号 1851 已越界（文件现 1699 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -108,13 +108,13 @@
       "evidence": [
         {
           "file": "App/UI/SettingsView.swift",
-          "line": 1114,
-          "symbol": "切换到 B 模式按钮"
+          "symbol": "切换到 B 模式按钮",
+          "_note": "原行号 1114 已越界（文件现 1054 行），降级为文件级证据"
         },
         {
           "file": "App/UI/SettingsView.swift",
-          "line": 1138,
-          "symbol": "switchToDoubleVerify"
+          "symbol": "switchToDoubleVerify",
+          "_note": "原行号 1138 已越界（文件现 1054 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -135,13 +135,13 @@
       "evidence": [
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1808,
-          "symbol": "VariantToggle 开通临时密码"
+          "symbol": "VariantToggle 开通临时密码",
+          "_note": "原行号 1808 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1823,
-          "symbol": "setZotp"
+          "symbol": "setZotp",
+          "_note": "原行号 1823 已越界（文件现 1633 行），降级为文件级证据"
         }
       ],
       "tags": [

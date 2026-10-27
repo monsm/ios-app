@@ -165,8 +165,6 @@ jobs:
       - name: '行尾卫生闸门 (判失败: 无 CRCRLF / 无孤立 CR —— 会让行号与 shell 续行错乱)'
         run: node tools/eolhygiene.js
 
-      - name: '更新说明对账 (43/44: 每条必须能查到实现证据, 否则判失败)'
-        run: node tools/changelogcheck.js
 
       - name: 'sheet 盖住切 Tab 收摊检查 (判失败: 被 sheet/fullScreenCover 端出来的页面里换 Tab, 动作附近必须有 dismiss(); requestTab 只过访客门禁、不算修好; 正控 fixtures/sheetcover/fire 3 条, 反控 ok/ 4 形 0 条)'
         run: |

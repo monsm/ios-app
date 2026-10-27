@@ -56,54 +56,6 @@
           "note": "语义色提示块"
         }
       ]
-    },
-    {
-      "platform": "ios",
-      "status": "implemented",
-      "details": [
-        "rawFrame 输出完整帧的十六进制（含头/长度/命令/KLV）",
-        "rcOf 从回包里取 rc（缺项按 -1 处理，与协议层同口径）",
-        "friendlyFailReason 把 rc 翻译成用户能懂的一句话，而不是只给错误码",
-        "highlighted 给关键字节/片段加高亮，便于肉眼定位",
-        "report 汇总成整段文本，供复制与诊断截图（截图带水印）"
-      ],
-      "tags": [
-        "诊断",
-        "现场取证"
-      ],
-      "level": 4,
-      "key": "diagnostic.report.render",
-      "parentKey": "diagnostic.report",
-      "domain": "diagnostic",
-      "kind": "diagnostic",
-      "name": "诊断报告正文：十六进制报文 + 失败人话 + 高亮",
-      "summary": "把一次失败现场拼成可复制/可截图的报告：原始帧十六进制、rc 解码、失败原因翻译、关键片段高亮。",
-      "evidence": [
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1299,
-          "symbol": "rcOf",
-          "note": "取 rc"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1306,
-          "symbol": "rawFrame",
-          "note": "完整帧十六进制"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1344,
-          "symbol": "friendlyFailReason",
-          "note": "rc → 人话"
-        },
-        {
-          "file": "App/UI/DiagnosticsView.swift",
-          "line": 1354,
-          "symbol": "report",
-          "note": "汇总报告正文"
-        }
-      ]
     }
   ],
   "unresolved": [

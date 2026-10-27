@@ -9,7 +9,7 @@
 6. 深度要求：不是只列页面，而是列到**用户能做的动作、可调开关、状态/空态/错误态、自动化时序、后台行为、数据落盘键、协议命令**这一层。
 
 ## 1. 输出文件
-每个侦察兵只写自己的文件：`D:\aapk\feature-web\inventory\<scout>.json`
+每个侦察兵只写自己的文件：`docs/feature-web/inventory\<scout>.json`
 UTF-8、无 BOM、合法 JSON、2 空格缩进。结构：
 
 ```json
@@ -43,7 +43,7 @@ UTF-8、无 BOM、合法 JSON、2 空格缩进。结构：
 - `parentKey` 必须指向同一文件里出现过的节点，或 §2 的 domain 根。
 - 同一 key 可在多个侦察兵文件出现（合并时证据会合并），不要为了避免重复而丢掉证据。
 - 每个节点至少 1 条证据；模块/页面节点也要证据（struct/class 声明行）。
-- 证据路径：iOS 用 `App/...`；Android 用 `android-app/app/src/main/...`；APK 用 `apk_raw/...` 或 `jzzns22561_out/...`（相对 `D:\aapk\`）。
+- 证据路径：iOS 用 `App/...`；Android 用 `android-app/app/src/main/...`；APK 用 `apk_raw/...` 或 `jzzns22561_out/...`（相对 ``）。
 - APK 的 `main.js` 是单行压缩文件：行号恒为 1，改用 `"note": "page-xxx @offset 123456"` 记录字符偏移（用 grep/Select-String 找到的 Index）。
 
 ## 2. 12 个域（domain）与建议 module

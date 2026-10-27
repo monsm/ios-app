@@ -92,9 +92,9 @@
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2676,
           "symbol": "applyFilter",
-          "note": "filteredTotal 与 598 分档截断"
+          "note": "filteredTotal 与 598 分档截断",
+          "_note": "原行号 2676 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
@@ -139,21 +139,21 @@
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2685,
           "symbol": "applyFilter",
-          "note": "按 dayKey 分桶 + order 保序"
+          "note": "按 dayKey 分桶 + order 保序",
+          "_note": "原行号 2685 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2699,
           "symbol": "applyFilter",
-          "note": "657/675 补缺口行条件"
+          "note": "657/675 补缺口行条件",
+          "_note": "原行号 2699 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2525,
           "symbol": "gapRow",
-          "note": "缺口行文案"
+          "note": "缺口行文案",
+          "_note": "原行号 2525 已越界（文件现 2201 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -253,15 +253,15 @@
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2608,
           "symbol": "applyFilter",
-          "note": "检索过滤块与搜索面组装"
+          "note": "检索过滤块与搜索面组装",
+          "_note": "原行号 2608 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2624,
           "symbol": "RecordSearch.searchFace",
-          "note": "搜索面五段"
+          "note": "搜索面五段",
+          "_note": "原行号 2624 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
@@ -391,9 +391,9 @@
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2556,
           "symbol": "applyFilter",
-          "note": "两范围同一份 Rec 池"
+          "note": "两范围同一份 Rec 池",
+          "_note": "原行号 2556 已越界（文件现 2201 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -420,15 +420,15 @@
       "evidence": [
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2819,
           "symbol": "monthJumpRow",
-          "note": "月份菜单与清除"
+          "note": "月份菜单与清除",
+          "_note": "原行号 2819 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2822,
           "symbol": "monthJumpRow",
-          "note": "跳过 gap-* 假月份"
+          "note": "跳过 gap-* 假月份",
+          "_note": "原行号 2822 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
@@ -438,9 +438,9 @@
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2849,
           "symbol": "visibleRowCount",
-          "note": "当月条数"
+          "note": "当月条数",
+          "_note": "原行号 2849 已越界（文件现 2201 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -478,9 +478,9 @@
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2600,
           "symbol": "applyFilter",
-          "note": "四类虚拟分组过滤"
+          "note": "四类虚拟分组过滤",
+          "_note": "原行号 2600 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
@@ -513,21 +513,21 @@
       "evidence": [
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2871,
           "symbol": "struct AlarmKindsSheet",
-          "note": "sheet 声明"
+          "note": "sheet 声明",
+          "_note": "原行号 2871 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2878,
           "symbol": "ForEach(StatsKit.alarmTypes)",
-          "note": "按真实类型渲染"
+          "note": "按真实类型渲染",
+          "_note": "原行号 2878 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2903,
           "symbol": "AlarmKindsSheet",
-          "note": "无胁迫类告警说明"
+          "note": "无胁迫类告警说明",
+          "_note": "原行号 2903 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
@@ -560,21 +560,21 @@
       "evidence": [
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2925,
           "symbol": "struct ActiveCredsSheet",
-          "note": "sheet 声明"
+          "note": "sheet 声明",
+          "_note": "原行号 2925 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2937,
           "symbol": "ActiveCredsSheet",
-          "note": "列表与排名"
+          "note": "列表与排名",
+          "_note": "原行号 2937 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2958,
           "symbol": "ActiveCredsSheet",
-          "note": "口径说明"
+          "note": "口径说明",
+          "_note": "原行号 2958 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
@@ -607,15 +607,15 @@
       "evidence": [
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2984,
           "symbol": "struct OutWinSheet",
-          "note": "sheet 声明"
+          "note": "sheet 声明",
+          "_note": "原行号 2984 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2515,
           "symbol": "RecordSearch.outOfWindow",
-          "note": "数据源"
+          "note": "数据源",
+          "_note": "原行号 2515 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
@@ -625,9 +625,9 @@
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2565,
           "symbol": "applyFilter",
-          "note": "行级 winText 注入"
+          "note": "行级 winText 注入",
+          "_note": "原行号 2565 已越界（文件现 2201 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -831,27 +831,27 @@
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2417,
           "symbol": "landMember",
-          "note": "成员落地与未知成员提示"
+          "note": "成员落地与未知成员提示",
+          "_note": "原行号 2417 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2441,
           "symbol": "landRecordKey",
-          "note": "记录键落地与三种失败可能"
+          "note": "记录键落地与三种失败可能",
+          "_note": "原行号 2441 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2515,
           "symbol": "landDay",
-          "note": "当天全景落地"
+          "note": "当天全景落地",
+          "_note": "原行号 2515 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2486,
           "symbol": "flashRow",
-          "note": "1.2 秒闪框"
+          "note": "1.2 秒闪框",
+          "_note": "原行号 2486 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
@@ -899,27 +899,27 @@
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2202,
           "symbol": "fresh",
-          "note": "去重与游标回绕防护"
+          "note": "去重与游标回绕防护",
+          "_note": "原行号 2202 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2215,
           "symbol": "r.surplus",
-          "note": "KLV#04 缺失处理"
+          "note": "KLV#04 缺失处理",
+          "_note": "原行号 2215 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2244,
           "symbol": "AXTools.announceConnectFail",
-          "note": "失败播报"
+          "note": "失败播报",
+          "_note": "原行号 2244 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2254,
           "symbol": "AXTools.newEntryHaptic",
-          "note": "876 新条目双震"
+          "note": "876 新条目双震",
+          "_note": "原行号 2254 已越界（文件现 2201 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -949,39 +949,39 @@
       "evidence": [
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2257,
           "symbol": "render",
-          "note": "行池构建主流程"
+          "note": "行池构建主流程",
+          "_note": "原行号 2257 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2269,
           "symbol": "DB.failEvents",
-          "note": "手机侧失败行合并"
+          "note": "手机侧失败行合并",
+          "_note": "原行号 2269 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2283,
           "symbol": "Attribution.classify",
-          "note": "归属推断"
+          "note": "归属推断",
+          "_note": "原行号 2283 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2308,
           "symbol": "RecordVerbs.line",
-          "note": "655 动词化文案"
+          "note": "655 动词化文案",
+          "_note": "原行号 2308 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2314,
           "symbol": "StatsKit.alarmTypes",
-          "note": "告警判定"
+          "note": "告警判定",
+          "_note": "原行号 2314 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2297,
           "symbol": "rowKey",
-          "note": "行键两族"
+          "note": "行键两族",
+          "_note": "原行号 2297 已越界（文件现 2201 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1172,27 +1172,27 @@
       "evidence": [
         {
           "file": "App/UI/RecordsTimeline.swift",
-          "line": 477,
           "symbol": "jumpSection",
-          "note": "三个出口"
+          "note": "三个出口",
+          "_note": "原行号 477 已越界（文件现 441 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsTimeline.swift",
-          "line": 467,
           "symbol": "anchorDayKey",
-          "note": "586 锚日口径"
+          "note": "586 锚日口径",
+          "_note": "原行号 467 已越界（文件现 441 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsTimeline.swift",
-          "line": 502,
           "symbol": "jumpSection",
-          "note": "无法定位日期的 toast"
+          "note": "无法定位日期的 toast",
+          "_note": "原行号 502 已越界（文件现 441 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2466,
           "symbol": "dayFocusBanner",
-          "note": "落地端：只看这一天 + 看全部日子"
+          "note": "落地端：只看这一天 + 看全部日子",
+          "_note": "原行号 2466 已越界（文件现 2201 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1219,21 +1219,21 @@
       "evidence": [
         {
           "file": "App/UI/RecordsTimeline.swift",
-          "line": 574,
           "symbol": "noteSection",
-          "note": "编辑面与开关"
+          "note": "编辑面与开关",
+          "_note": "原行号 574 已越界（文件现 441 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsTimeline.swift",
-          "line": 601,
           "symbol": "saveNote",
-          "note": "保存动作"
+          "note": "保存动作",
+          "_note": "原行号 601 已越界（文件现 441 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsTimeline.swift",
-          "line": 595,
           "symbol": "noteSection",
-          "note": "本机标注边界说明"
+          "note": "本机标注边界说明",
+          "_note": "原行号 595 已越界（文件现 441 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1374,9 +1374,9 @@
         },
         {
           "file": "App/UI/RecordsTimeline.swift",
-          "line": 541,
           "symbol": "exportRow",
-          "note": "唯一生产点"
+          "note": "唯一生产点",
+          "_note": "原行号 541 已越界（文件现 441 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1422,9 +1422,9 @@
         },
         {
           "file": "App/UI/Sheets.swift",
-          "line": 1947,
           "symbol": "MemberCenterView()",
-          "note": "父级：成员管理 sheet"
+          "note": "父级：成员管理 sheet",
+          "_note": "原行号 1947 已越界（文件现 1699 行），降级为文件级证据"
         },
         {
           "file": "App/UI/MemberCenterView.swift",
@@ -1576,21 +1576,21 @@
         },
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1420,
           "symbol": "struct MemberGroupSheet",
-          "note": "分组编辑 sheet"
+          "note": "分组编辑 sheet",
+          "_note": "原行号 1420 已越界（文件现 1137 行），降级为文件级证据"
         },
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1426,
           "symbol": "MemberGroupSheet.options",
-          "note": "四档选项"
+          "note": "四档选项",
+          "_note": "原行号 1426 已越界（文件现 1137 行），降级为文件级证据"
         },
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1444,
           "symbol": "MemberGroupSheet",
-          "note": "保存分组"
+          "note": "保存分组",
+          "_note": "原行号 1444 已越界（文件现 1137 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1641,9 +1641,9 @@
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2603,
           "symbol": "applyFilter",
-          "note": "记录页消费 visitorId"
+          "note": "记录页消费 visitorId",
+          "_note": "原行号 2603 已越界（文件现 2201 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1677,21 +1677,21 @@
         },
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1365,
           "symbol": "struct MemberArchivedView",
-          "note": "归档列表 sheet"
+          "note": "归档列表 sheet",
+          "_note": "原行号 1365 已越界（文件现 1137 行），降级为文件级证据"
         },
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1380,
           "symbol": "MemberArchivedView",
-          "note": "恢复动作"
+          "note": "恢复动作",
+          "_note": "原行号 1380 已越界（文件现 1137 行），降级为文件级证据"
         },
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1395,
           "symbol": "MemberArchivedView",
-          "note": "归档影响面说明"
+          "note": "归档影响面说明",
+          "_note": "原行号 1395 已越界（文件现 1137 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2466,39 +2466,39 @@
       "evidence": [
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1165,
           "symbol": "ensureConnected",
-          "note": "连锁前置"
+          "note": "连锁前置",
+          "_note": "原行号 1165 已越界（文件现 1137 行），降级为文件级证据"
         },
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1170,
           "symbol": "addingTimeInterval(600)",
-          "note": "10 分钟有效期"
+          "note": "10 分钟有效期",
+          "_note": "原行号 1170 已越界（文件现 1137 行），降级为文件级证据"
         },
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1171,
           "symbol": "app.lock.pwdAdd",
-          "note": "锁端建码"
+          "note": "锁端建码",
+          "_note": "原行号 1171 已越界（文件现 1137 行），降级为文件级证据"
         },
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1172,
           "symbol": "LedgerPwd",
-          "note": "台账记账与 note"
+          "note": "台账记账与 note",
+          "_note": "原行号 1172 已越界（文件现 1137 行），降级为文件级证据"
         },
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1176,
           "symbol": "CredentialOrg.snapshot",
-          "note": "快照留痕"
+          "note": "快照留痕",
+          "_note": "原行号 1176 已越界（文件现 1137 行），降级为文件级证据"
         },
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1149,
           "symbol": "submit",
-          "note": "码非法时的如实提示"
+          "note": "码非法时的如实提示",
+          "_note": "原行号 1149 已越界（文件现 1137 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2531,9 +2531,9 @@
         },
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1139,
           "symbol": "pendingFpOwner",
-          "note": "317 归属交回"
+          "note": "317 归属交回",
+          "_note": "原行号 1139 已越界（文件现 1137 行），降级为文件级证据"
         },
         {
           "file": "App/UI/MemberCenterView.swift",
@@ -2584,9 +2584,9 @@
         },
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1143,
           "symbol": "submit",
-          "note": "收尾与成功提示"
+          "note": "收尾与成功提示",
+          "_note": "原行号 1143 已越界（文件现 1137 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2614,27 +2614,27 @@
       "evidence": [
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1186,
           "symbol": "struct MergeMembersView",
-          "note": "合并页声明"
+          "note": "合并页声明",
+          "_note": "原行号 1186 已越界（文件现 1137 行），降级为文件级证据"
         },
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1193,
           "symbol": "secondaryCandidates",
-          "note": "同名候选"
+          "note": "同名候选",
+          "_note": "原行号 1193 已越界（文件现 1137 行），降级为文件级证据"
         },
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1218,
           "symbol": "Picker",
-          "note": "无候选时的建议文案"
+          "note": "无候选时的建议文案",
+          "_note": "原行号 1218 已越界（文件现 1137 行），降级为文件级证据"
         },
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1243,
           "symbol": "doMerge",
-          "note": "迁移与删除"
+          "note": "迁移与删除",
+          "_note": "原行号 1243 已越界（文件现 1137 行），降级为文件级证据"
         },
         {
           "file": "App/UI/MemberCenterView.swift",
@@ -2667,27 +2667,27 @@
       "evidence": [
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1247,
           "symbol": "doMerge",
-          "note": "密码归属迁移"
+          "note": "密码归属迁移",
+          "_note": "原行号 1247 已越界（文件现 1137 行），降级为文件级证据"
         },
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1250,
           "symbol": "doMerge",
-          "note": "指纹归属迁移"
+          "note": "指纹归属迁移",
+          "_note": "原行号 1250 已越界（文件现 1137 行），降级为文件级证据"
         },
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1254,
           "symbol": "reassignClaims",
-          "note": "认领迁移"
+          "note": "认领迁移",
+          "_note": "原行号 1254 已越界（文件现 1137 行），降级为文件级证据"
         },
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1257,
           "symbol": "showToast",
-          "note": "迁移条数"
+          "note": "迁移条数",
+          "_note": "原行号 1257 已越界（文件现 1137 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2714,27 +2714,27 @@
       "evidence": [
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1475,
           "symbol": "struct MemberFamilySettingsView",
-          "note": "页面声明"
+          "note": "页面声明",
+          "_note": "原行号 1475 已越界（文件现 1137 行），降级为文件级证据"
         },
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1488,
           "symbol": "Section(\"长辈模式\")",
-          "note": "长辈模式段"
+          "note": "长辈模式段",
+          "_note": "原行号 1488 已越界（文件现 1137 行），降级为文件级证据"
         },
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1507,
           "symbol": "Section(\"隐私浏览\")",
-          "note": "隐私浏览段"
+          "note": "隐私浏览段",
+          "_note": "原行号 1507 已越界（文件现 1137 行），降级为文件级证据"
         },
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1524,
           "symbol": "Button(\"保存\")",
-          "note": "保存写入两个开关"
+          "note": "保存写入两个开关",
+          "_note": "原行号 1524 已越界（文件现 1137 行），降级为文件级证据"
         },
         {
           "file": "App/UI/MemberCenterView.swift",
@@ -2781,15 +2781,15 @@
         },
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1526,
           "symbol": "setElderMode",
-          "note": "长辈模式键"
+          "note": "长辈模式键",
+          "_note": "原行号 1526 已越界（文件现 1137 行），降级为文件级证据"
         },
         {
           "file": "App/UI/MemberCenterView.swift",
-          "line": 1527,
           "symbol": "setPrivacy",
-          "note": "隐私截止键"
+          "note": "隐私截止键",
+          "_note": "原行号 1527 已越界（文件现 1137 行），降级为文件级证据"
         },
         {
           "file": "App/Core/MemberHub.swift",
@@ -2840,15 +2840,15 @@
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2619,
           "symbol": "RecordOverlay.notes",
-          "note": "搜索面并表"
+          "note": "搜索面并表",
+          "_note": "原行号 2619 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsTimeline.swift",
-          "line": 579,
           "symbol": "RecordOverlay.note",
-          "note": "详情卡读取"
+          "note": "详情卡读取",
+          "_note": "原行号 579 已越界（文件现 441 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2936,9 +2936,9 @@
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2239,
           "symbol": "DB.store.set(syncStampKey, String(...))",
-          "note": "毫秒字符串写入"
+          "note": "毫秒字符串写入",
+          "_note": "原行号 2239 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
@@ -2948,9 +2948,9 @@
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2210,
           "symbol": "HotCache.invalidate",
-          "note": "拉取后作废"
+          "note": "拉取后作废",
+          "_note": "原行号 2210 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
@@ -2984,27 +2984,27 @@
       "evidence": [
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2259,
           "symbol": "render",
-          "note": "phone-side 行为 type 0、不混入缓存"
+          "note": "phone-side 行为 type 0、不混入缓存",
+          "_note": "原行号 2259 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2271,
           "symbol": "fails.enumerated()",
-          "note": "f_ 前缀行键与文案"
+          "note": "f_ 前缀行键与文案",
+          "_note": "原行号 2271 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2281,
           "symbol": "merged.sort",
-          "note": "合入后重排"
+          "note": "合入后重排",
+          "_note": "原行号 2281 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2382,
           "symbol": "failTimeStr",
-          "note": "时刻格式"
+          "note": "时刻格式",
+          "_note": "原行号 2382 已越界（文件现 2201 行），降级为文件级证据"
         },
         {
           "file": "App/UI/RecordsView.swift",

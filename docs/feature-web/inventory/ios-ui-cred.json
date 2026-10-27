@@ -64,20 +64,20 @@
       "evidence": [
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1094,
-          "symbol": "CredExtendView"
+          "symbol": "CredExtendView",
+          "_note": "原行号 1094 已越界（文件现 245 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1107,
           "symbol": "CredExtendView",
-          "note": "统一延期段"
+          "note": "统一延期段",
+          "_note": "原行号 1107 已越界（文件现 245 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1132,
           "symbol": "CredExtendView",
-          "note": "延期并登记待下发"
+          "note": "延期并登记待下发",
+          "_note": "原行号 1132 已越界（文件现 245 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -101,20 +101,20 @@
       "evidence": [
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1209,
-          "symbol": "CredDisableSheet"
+          "symbol": "CredDisableSheet",
+          "_note": "原行号 1209 已越界（文件现 245 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1247,
           "symbol": "CredDisableSheet",
-          "note": "停用摘要"
+          "note": "停用摘要",
+          "_note": "原行号 1247 已越界（文件现 245 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1327,
           "symbol": "CredDisableSheet",
-          "note": "确认停用按钮"
+          "note": "确认停用按钮",
+          "_note": "原行号 1327 已越界（文件现 245 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -151,8 +151,8 @@
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2551,
-          "symbol": "CredStudioEntryView"
+          "symbol": "CredStudioEntryView",
+          "_note": "原行号 2551 已越界（文件现 2370 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -327,20 +327,20 @@
       "evidence": [
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2534,
-          "symbol": "FpDetailStudio"
+          "symbol": "FpDetailStudio",
+          "_note": "原行号 2534 已越界（文件现 2370 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2546,
           "symbol": "FpDetailStudio",
-          "note": "List 骨架"
+          "note": "List 骨架",
+          "_note": "原行号 2546 已越界（文件现 2370 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2415,
           "symbol": "FpDetailStudio",
-          "note": "指纹不存在空态"
+          "note": "指纹不存在空态",
+          "_note": "原行号 2415 已越界（文件现 2370 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -664,20 +664,20 @@
       "evidence": [
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2170,
-          "symbol": "modifyPwd"
+          "symbol": "modifyPwd",
+          "_note": "原行号 2170 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2187,
           "symbol": "modifyPwd",
-          "note": "pwdModify 下发"
+          "note": "pwdModify 下发",
+          "_note": "原行号 2187 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2198,
           "symbol": "modifyPwd",
-          "note": "snapshot"
+          "note": "snapshot",
+          "_note": "原行号 2198 已越界（文件现 1633 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -703,20 +703,20 @@
       "evidence": [
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2207,
-          "symbol": "resetPwdPeriod"
-        },
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 2210,
           "symbol": "resetPwdPeriod",
-          "note": "确认文案"
+          "_note": "原行号 2207 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2226,
+          "symbol": "resetPwdPeriod",
+          "note": "确认文案",
+          "_note": "原行号 2210 已越界（文件现 1633 行），降级为文件级证据"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
           "symbol": "doResetPwdPeriod",
-          "note": "pwdExpire"
+          "note": "pwdExpire",
+          "_note": "原行号 2226 已越界（文件现 1633 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -742,20 +742,20 @@
       "evidence": [
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2249,
-          "symbol": "disablePwd"
+          "symbol": "disablePwd",
+          "_note": "原行号 2249 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2256,
           "symbol": "disablePwd",
-          "note": "enqueue del_pwd"
+          "note": "enqueue del_pwd",
+          "_note": "原行号 2256 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2258,
           "symbol": "disablePwd",
-          "note": "markDisabled 未填"
+          "note": "markDisabled 未填",
+          "_note": "原行号 2258 已越界（文件现 1633 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -782,20 +782,20 @@
       "evidence": [
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2286,
-          "symbol": "deletePwd"
+          "symbol": "deletePwd",
+          "_note": "原行号 2286 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2302,
           "symbol": "doDeletePwd",
-          "note": "pwdDelete 0A"
+          "note": "pwdDelete 0A",
+          "_note": "原行号 2302 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2317,
           "symbol": "deleteFp",
-          "note": "指纹后果文案"
+          "note": "指纹后果文案",
+          "_note": "原行号 2317 已越界（文件现 1633 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -820,14 +820,14 @@
       "evidence": [
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2348,
-          "symbol": "renameFp"
+          "symbol": "renameFp",
+          "_note": "原行号 2348 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2357,
           "symbol": "renameFp",
-          "note": "snapshot"
+          "note": "snapshot",
+          "_note": "原行号 2357 已越界（文件现 1633 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -884,20 +884,20 @@
       "evidence": [
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2364,
-          "symbol": "editNote"
+          "symbol": "editNote",
+          "_note": "原行号 2364 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2365,
           "symbol": "editNote",
-          "note": "仅本机留存"
+          "note": "仅本机留存",
+          "_note": "原行号 2365 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2385,
           "symbol": "editNote",
-          "note": "snapshot + setPwdNote"
+          "note": "snapshot + setPwdNote",
+          "_note": "原行号 2385 已越界（文件现 1633 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -921,20 +921,20 @@
       "evidence": [
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2408,
-          "symbol": "ownerMenu"
+          "symbol": "ownerMenu",
+          "_note": "原行号 2408 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2411,
           "symbol": "ownerMenu",
-          "note": "setPwdOwner"
+          "note": "setPwdOwner",
+          "_note": "原行号 2411 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2416,
           "symbol": "ownerMenu",
-          "note": "解除归属"
+          "note": "解除归属",
+          "_note": "原行号 2416 已越界（文件现 1633 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -959,14 +959,14 @@
       "evidence": [
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1945,
-          "symbol": "emptyHint"
+          "symbol": "emptyHint",
+          "_note": "原行号 1945 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1954,
           "symbol": "emptyHint",
-          "note": "添加第一条密码"
+          "note": "添加第一条密码",
+          "_note": "原行号 1954 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
@@ -998,20 +998,20 @@
       "evidence": [
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1806,
-          "symbol": "otpSection"
+          "symbol": "otpSection",
+          "_note": "原行号 1806 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1808,
           "symbol": "otpSection",
-          "note": "开通临时密码"
+          "note": "开通临时密码",
+          "_note": "原行号 1808 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1823,
           "symbol": "otpSection",
-          "note": "setZotp"
+          "note": "setZotp",
+          "_note": "原行号 1823 已越界（文件现 1633 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1038,20 +1038,20 @@
       "evidence": [
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1911,
-          "symbol": "genOtp"
+          "symbol": "genOtp",
+          "_note": "原行号 1911 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1917,
           "symbol": "genOtp",
-          "note": "100 个上限"
+          "note": "100 个上限",
+          "_note": "原行号 1917 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1925,
           "symbol": "genOtp",
-          "note": "zotpPeriod"
+          "note": "zotpPeriod",
+          "_note": "原行号 1925 已越界（文件现 1633 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1077,20 +1077,20 @@
       "evidence": [
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1852,
-          "symbol": "otpGenRow"
+          "symbol": "otpGenRow",
+          "_note": "原行号 1852 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1870,
           "symbol": "otpGenRow",
-          "note": "磨砂挡片"
+          "note": "磨砂挡片",
+          "_note": "原行号 1870 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1899,
           "symbol": "otpGenRow",
-          "note": "复制禁用条件"
+          "note": "复制禁用条件",
+          "_note": "原行号 1899 已越界（文件现 1633 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1116,19 +1116,19 @@
       "evidence": [
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1978,
-          "symbol": "otpStockHint"
-        },
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1986,
           "symbol": "otpStockHint",
-          "note": "发第一张"
+          "_note": "原行号 1978 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1997,
-          "symbol": "genFirstOtp"
+          "symbol": "otpStockHint",
+          "note": "发第一张",
+          "_note": "原行号 1986 已越界（文件现 1633 行），降级为文件级证据"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "symbol": "genFirstOtp",
+          "_note": "原行号 1997 已越界（文件现 1633 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1160,15 +1160,15 @@
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1644,
           "symbol": "batchBar",
-          "note": "置顶"
+          "note": "置顶",
+          "_note": "原行号 1644 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1664,
           "symbol": "batchBar",
-          "note": "导出"
+          "note": "导出",
+          "_note": "原行号 1664 已越界（文件现 1633 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1193,20 +1193,20 @@
       "evidence": [
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1724,
-          "symbol": "exportPackage"
+          "symbol": "exportPackage",
+          "_note": "原行号 1724 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1726,
           "symbol": "exportPackage",
-          "note": "8 位口令"
+          "note": "8 位口令",
+          "_note": "原行号 1726 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1735,
           "symbol": "exportPackage",
-          "note": "分享面板"
+          "note": "分享面板",
+          "_note": "原行号 1735 已越界（文件现 1633 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1232,20 +1232,20 @@
       "evidence": [
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1669,
           "symbol": "batchBar",
-          "note": "停用按钮"
+          "note": "停用按钮",
+          "_note": "原行号 1669 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1741,
-          "symbol": "finishDisable"
-        },
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1750,
           "symbol": "finishDisable",
-          "note": "回执"
+          "_note": "原行号 1741 已越界（文件现 1633 行），降级为文件级证据"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "symbol": "finishDisable",
+          "note": "回执",
+          "_note": "原行号 1750 已越界（文件现 1633 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1271,21 +1271,21 @@
       "evidence": [
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1675,
           "symbol": "batchBar",
-          "note": "删除按钮"
+          "note": "删除按钮",
+          "_note": "原行号 1675 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1678,
           "symbol": "batchBar",
-          "note": "确认文案"
+          "note": "确认文案",
+          "_note": "原行号 1678 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1774,
           "symbol": "batchDelete",
-          "note": "pwdDelete"
+          "note": "pwdDelete",
+          "_note": "原行号 1774 已越界（文件现 1633 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -1348,9 +1348,9 @@
       "evidence": [
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2166,
           "symbol": "viewPwd",
-          "note": "应用锁门槛"
+          "note": "应用锁门槛",
+          "_note": "原行号 2166 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialStudio.swift",
@@ -2304,9 +2304,9 @@
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2429,
           "symbol": "navBar",
-          "note": "先选归属成员"
+          "note": "先选归属成员",
+          "_note": "原行号 2429 已越界（文件现 2370 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2344,9 +2344,9 @@
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2497,
           "symbol": "start",
-          "note": "fpStart(times: 8)"
+          "note": "fpStart(times: 8)",
+          "_note": "原行号 2497 已越界（文件现 2370 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2373,21 +2373,21 @@
       "evidence": [
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2504,
           "symbol": "start",
-          "note": "按压不足"
+          "note": "按压不足",
+          "_note": "原行号 2504 已越界（文件现 2370 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2508,
           "symbol": "start",
-          "note": "无批次"
+          "note": "无批次",
+          "_note": "原行号 2508 已越界（文件现 2370 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2528,
           "symbol": "start",
-          "note": "错误进 error"
+          "note": "错误进 error",
+          "_note": "原行号 2528 已越界（文件现 2370 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2452,21 +2452,21 @@
       "evidence": [
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2371,
           "symbol": "step2",
-          "note": "重录继承 Toggle"
+          "note": "重录继承 Toggle",
+          "_note": "原行号 2371 已越界（文件现 2370 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2469,
           "symbol": "saveAndClose",
-          "note": "旧指纹入回收站"
+          "note": "旧指纹入回收站",
+          "_note": "原行号 2469 已越界（文件现 2370 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2415,
           "symbol": "FpDetailStudio",
-          "note": "prefillReplace"
+          "note": "prefillReplace",
+          "_note": "原行号 2415 已越界（文件现 2370 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2491,20 +2491,20 @@
       "evidence": [
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2449,
-          "symbol": "saveAndClose"
+          "symbol": "saveAndClose",
+          "_note": "原行号 2449 已越界（文件现 2370 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2453,
           "symbol": "saveAndClose",
-          "note": "锁已改变"
+          "note": "锁已改变",
+          "_note": "原行号 2453 已越界（文件现 2370 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2460,
           "symbol": "saveAndClose",
-          "note": "DB.addFp"
+          "note": "DB.addFp",
+          "_note": "原行号 2460 已越界（文件现 2370 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2529,14 +2529,14 @@
       "evidence": [
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2389,
-          "symbol": "doneCard"
+          "symbol": "doneCard",
+          "_note": "原行号 2389 已越界（文件现 2370 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2400,
           "symbol": "doneCard",
-          "note": "旧指纹已入回收站"
+          "note": "旧指纹已入回收站",
+          "_note": "原行号 2400 已越界（文件现 2370 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2561,21 +2561,21 @@
       "evidence": [
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2548,
           "symbol": "FpDetailStudio",
-          "note": "仅剩一枚"
+          "note": "仅剩一枚",
+          "_note": "原行号 2548 已越界（文件现 2370 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2557,
           "symbol": "FpDetailStudio",
-          "note": "档案段"
+          "note": "档案段",
+          "_note": "原行号 2557 已越界（文件现 2370 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2564,
           "symbol": "FpDetailStudio",
-          "note": "告警日志"
+          "note": "告警日志",
+          "_note": "原行号 2564 已越界（文件现 2370 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2600,15 +2600,15 @@
       "evidence": [
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2576,
           "symbol": "FpDetailStudio",
-          "note": "重录按钮"
+          "note": "重录按钮",
+          "_note": "原行号 2576 已越界（文件现 2370 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2415,
           "symbol": "FpDetailStudio",
-          "note": "sheet FpStudio"
+          "note": "sheet FpStudio",
+          "_note": "原行号 2415 已越界（文件现 2370 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2646,9 +2646,9 @@
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2473,
           "symbol": "FpDetailStudio.delete",
-          "note": "fpDelete 15"
+          "note": "fpDelete 15",
+          "_note": "原行号 2473 已越界（文件现 2370 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2674,21 +2674,21 @@
       "evidence": [
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1108,
           "symbol": "CredExtendView",
-          "note": "生效"
+          "note": "生效",
+          "_note": "原行号 1108 已越界（文件现 245 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1109,
           "symbol": "CredExtendView",
-          "note": "延期至 in: from..."
+          "note": "延期至 in: from...",
+          "_note": "原行号 1109 已越界（文件现 245 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1115,
           "symbol": "CredExtendView",
-          "note": "变更清单"
+          "note": "变更清单",
+          "_note": "原行号 1115 已越界（文件现 245 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2712,21 +2712,21 @@
       "evidence": [
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1132,
           "symbol": "CredExtendView",
-          "note": "执行按钮"
+          "note": "执行按钮",
+          "_note": "原行号 1132 已越界（文件现 245 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1151,
           "symbol": "apply",
-          "note": "batchExtend"
+          "note": "batchExtend",
+          "_note": "原行号 1151 已越界（文件现 245 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1153,
           "symbol": "apply",
-          "note": "回执"
+          "note": "回执",
+          "_note": "原行号 1153 已越界（文件现 245 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2752,21 +2752,21 @@
       "evidence": [
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1247,
           "symbol": "CredDisableSheet",
-          "note": "摘要段"
+          "note": "摘要段",
+          "_note": "原行号 1247 已越界（文件现 245 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1263,
           "symbol": "CredDisableSheet",
-          "note": "影响 N 位成员"
+          "note": "影响 N 位成员",
+          "_note": "原行号 1263 已越界（文件现 245 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1288,
           "symbol": "CredDisableSheet",
-          "note": "不可逆说明"
+          "note": "不可逆说明",
+          "_note": "原行号 1288 已越界（文件现 245 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2791,21 +2791,21 @@
       "evidence": [
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1294,
           "symbol": "CredDisableSheet",
-          "note": "原因芯片"
+          "note": "原因芯片",
+          "_note": "原行号 1294 已越界（文件现 245 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1315,
           "symbol": "CredDisableSheet",
-          "note": "未选提示"
+          "note": "未选提示",
+          "_note": "原行号 1315 已越界（文件现 245 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1358,
           "symbol": "CredDisableSheet",
-          "note": "按钮文案"
+          "note": "按钮文案",
+          "_note": "原行号 1358 已越界（文件现 245 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2829,21 +2829,21 @@
       "evidence": [
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1219,
           "symbol": "writeToFeed",
-          "note": "默认关"
+          "note": "默认关",
+          "_note": "原行号 1219 已越界（文件现 245 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1323,
           "symbol": "CredDisableSheet",
-          "note": "VariantToggle"
+          "note": "VariantToggle",
+          "_note": "原行号 1323 已越界（文件现 245 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1334,
           "symbol": "CredDisableSheet",
-          "note": "SensitiveLedger 按成员写"
+          "note": "SensitiveLedger 按成员写",
+          "_note": "原行号 1334 已越界（文件现 245 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2869,21 +2869,21 @@
       "evidence": [
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1331,
           "symbol": "CredDisableSheet",
-          "note": "lock.log"
+          "note": "lock.log",
+          "_note": "原行号 1331 已越界（文件现 245 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1347,
           "symbol": "CredDisableSheet",
-          "note": "markDisabled"
+          "note": "markDisabled",
+          "_note": "原行号 1347 已越界（文件现 245 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1375,
           "symbol": "CredDisableSheet",
-          "note": "取消只 dismiss"
+          "note": "取消只 dismiss",
+          "_note": "原行号 1375 已越界（文件现 245 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -2910,15 +2910,15 @@
       "evidence": [
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2302,
           "symbol": "doDeletePwd",
-          "note": "pwdDelete → 0A 删"
+          "note": "pwdDelete → 0A 删",
+          "_note": "原行号 2302 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2187,
           "symbol": "modifyPwd",
-          "note": "pwdModify → 0A 改写"
+          "note": "pwdModify → 0A 改写",
+          "_note": "原行号 2187 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialStudio.swift",
@@ -2950,15 +2950,15 @@
       "evidence": [
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2226,
           "symbol": "doResetPwdPeriod",
-          "note": "pwdExpire → 0B"
+          "note": "pwdExpire → 0B",
+          "_note": "原行号 2226 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1151,
           "symbol": "CredExtendView.apply",
-          "note": "batchExtend 入队 period"
+          "note": "batchExtend 入队 period",
+          "_note": "原行号 1151 已越界（文件现 245 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialStudio.swift",
@@ -2991,21 +2991,21 @@
       "evidence": [
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2497,
           "symbol": "FpStudio.start",
-          "note": "fpStart(times: 8)"
+          "note": "fpStart(times: 8)",
+          "_note": "原行号 2497 已越界（文件现 2370 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2500,
           "symbol": "FpStudio.start",
-          "note": "onPress 逐帧点亮"
+          "note": "onPress 逐帧点亮",
+          "_note": "原行号 2500 已越界（文件现 2370 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2504,
           "symbol": "FpStudio.start",
-          "note": "不满 8 次不写入"
+          "note": "不满 8 次不写入",
+          "_note": "原行号 2504 已越界（文件现 2370 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -3031,21 +3031,21 @@
       "evidence": [
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2517,
           "symbol": "FpStudio.start",
-          "note": "fpConfirm → 14"
+          "note": "fpConfirm → 14",
+          "_note": "原行号 2517 已越界（文件现 2370 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2508,
           "symbol": "FpStudio.start",
-          "note": "无有效批次中止"
+          "note": "无有效批次中止",
+          "_note": "原行号 2508 已越界（文件现 2370 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2513,
           "symbol": "FpStudio.start",
-          "note": "取消不越过"
+          "note": "取消不越过",
+          "_note": "原行号 2513 已越界（文件现 2370 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -3071,21 +3071,21 @@
       "evidence": [
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2473,
           "symbol": "FpDetailStudio.delete",
-          "note": "fpDelete → 15"
+          "note": "fpDelete → 15",
+          "_note": "原行号 2473 已越界（文件现 2370 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2330,
           "symbol": "doDeleteFp",
-          "note": "batchU32 越界中止"
+          "note": "batchU32 越界中止",
+          "_note": "原行号 2330 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1785,
           "symbol": "batchDelete",
-          "note": "批量分支同样转换"
+          "note": "批量分支同样转换",
+          "_note": "原行号 1785 已越界（文件现 1633 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -3111,21 +3111,21 @@
       "evidence": [
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1823,
           "symbol": "otpSection",
-          "note": "setZotp → 19"
+          "note": "setZotp → 19",
+          "_note": "原行号 1823 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1822,
           "symbol": "otpSection",
-          "note": "先 ensureConnected 钉锁"
+          "note": "先 ensureConnected 钉锁",
+          "_note": "原行号 1822 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1826,
           "symbol": "otpSection",
-          "note": "失败分支"
+          "note": "失败分支",
+          "_note": "原行号 1826 已越界（文件现 1633 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -3151,15 +3151,15 @@
       "evidence": [
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1925,
           "symbol": "genOtp",
-          "note": "readStatus.zotpPeriod"
+          "note": "readStatus.zotpPeriod",
+          "_note": "原行号 1925 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1822,
           "symbol": "otpSection",
-          "note": "ensureConnected 读状态"
+          "note": "ensureConnected 读状态",
+          "_note": "原行号 1822 已越界（文件现 1633 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -3185,21 +3185,21 @@
       "evidence": [
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2302,
           "symbol": "doDeletePwd",
-          "note": "别名下发前已取台账值"
+          "note": "别名下发前已取台账值",
+          "_note": "原行号 2302 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 1066,
           "symbol": "retry",
-          "note": "sendQueued 统一把关"
+          "note": "sendQueued 统一把关",
+          "_note": "原行号 1066 已越界（文件现 245 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1767,
           "symbol": "batchDelete",
-          "note": "对象已不在台账则中止"
+          "note": "对象已不在台账则中止",
+          "_note": "原行号 1767 已越界（文件现 1633 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -3265,9 +3265,9 @@
       "evidence": [
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2254,
           "symbol": "disablePwd",
-          "note": "addToBin"
+          "note": "addToBin",
+          "_note": "原行号 2254 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialCenterView.swift",
@@ -3277,9 +3277,9 @@
         },
         {
           "file": "App/UI/CredentialCenterView.swift",
-          "line": 372,
           "symbol": "daysLeftOf",
-          "note": "保留期换算"
+          "note": "保留期换算",
+          "_note": "原行号 372 已越界（文件现 245 行），降级为文件级证据"
         }
       ],
       "tags": [
@@ -3306,9 +3306,9 @@
       "evidence": [
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 2434,
           "symbol": "toggleAlerts",
-          "note": "saveAlert + scheduleAlerts"
+          "note": "saveAlert + scheduleAlerts",
+          "_note": "原行号 2434 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialStudio.swift",
@@ -3432,15 +3432,15 @@
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1854,
           "symbol": "otpGenRow",
-          "note": "kf_ax_bigotp"
+          "note": "kf_ax_bigotp",
+          "_note": "原行号 1854 已越界（文件现 1633 行），降级为文件级证据"
         },
         {
           "file": "App/UI/CredentialsView.swift",
-          "line": 1870,
           "symbol": "otpGenRow",
-          "note": "frostedOn 挡片"
+          "note": "frostedOn 挡片",
+          "_note": "原行号 1870 已越界（文件现 1633 行），降级为文件级证据"
         }
       ],
       "tags": [
