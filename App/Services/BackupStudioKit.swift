@@ -437,7 +437,6 @@ enum BackupStudio {
 
     struct RemoteEntry: Identifiable { var id: String { name }; let name: String; let size: Int; let etag: String; let modified: String }
     /// 197 连通测试: PROPFIND 回显服务器时间
-    @discardableResult
     /// XML 实体最小解码 (&lt; &gt; &amp; &quot; &apos; + 数字实体), 防注入名直接进 URL
     private static func xmlUnescape(_ s: String) -> String {
         var out = s

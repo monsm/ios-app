@@ -153,7 +153,6 @@ final class AppState: ObservableObject {
     /// 397 本机库体自检 (三项都是本地只读, 不碰 BLE)。结果存这里给诊断页显示, 返回异常项数给调用方决定要不要出声。
     /// 拆成"跑/存"与"提示"两步是因为: 解锁路径只在异常时提示 (每次解锁都弹"一切正常"会被关掉),
     /// 而手动按钮必须无论结果都给反馈。
-    @discardableResult
 
     func runSelfCheck397() -> Int {
         // 2026-10-27 十三轮：SelfCheck 三项检查（库体哈希/审计链/JSON 回环）已随诊断族移除。
