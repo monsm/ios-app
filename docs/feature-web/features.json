@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T01:50:15.809Z",
+    "generated": "2026-10-27T02:04:00.894Z",
     "sources": [
       {
         "scout": "android-native",
@@ -59165,7 +59165,7 @@
           "line": 129,
           "symbol": "apkshadow CI 步骤",
           "note": "",
-          "text": "- name: 'APK 基线协议对照 (以 apk_raw/assets/www/build/main.js + Java LockCommBase 为权威, 不用 vendor 移植稿; 帧头/KLV/EKey 包络/命令体/令牌注入键/pin 编码逐项断言)'"
+          "text": "- name: 'ZOTP 跨语言差分 (临时密码 6 位数的算术: Swift 侧逐行复刻进 node, 与 vendor 金标四格 + 三条不变式对拍)'"
         }
       ],
       "platformEvidence": {
