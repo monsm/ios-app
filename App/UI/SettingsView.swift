@@ -573,22 +573,21 @@ struct SettingsView: View {
                 Button("关闭本机密码", role: .destructive) { disablePasscode() }
             } else {
                 Button("设置本机密码") { setPasscode() }
-                note("4 位以上数字。查看密码与导出备份前会要求输入。")
+                note("4 位以上数字。⚠ 本机密码当前只保护「设置」页本身，不拦查看密码明文与导出备份（应用锁未实现）。")
             }
         } header: {
             Text("本机数据保护")
         } footer: {
-            Text("查看密码内容与导出备份前建议设置本机密码。")
+            Text("本机密码保护设置页入口。查看密码明文与导出备份不受它约束 —— 拿到手机的人可直接看。")
         }
     }
 
-    /// 关闭本机密码 = 撤掉查看密码明文与导出备份的唯一屏障, 必须显式二次确认
+    /// 关闭本机密码 = 撤掉「设置」页的入口屏障（它不拦查看明文/导出，见上方说明）
     private func disablePasscode() {
         confirmDestructive("关闭本机密码",
-                          "关闭后，查看密码内容与导出备份不再需要本机验证，任何拿到这台手机的人都能读取明文密码与钥匙串。确定要关闭吗？",
+                          "关闭后，设置页不再有入口屏障。注意：查看密码明文与导出备份本来就不受本机密码约束 —— 任何拿到这台手机的人都能直接读取。确定要关闭吗？",
                           confirmTitle: "关闭保护") {
             DB.setPasscode(nil)
-            app.appUnlocked = true
             app.showToast("已关闭")
         }
     }

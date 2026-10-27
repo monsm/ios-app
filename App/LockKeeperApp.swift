@@ -57,7 +57,10 @@ final class AppState: ObservableObject {
     @Published var status: LockStatus?
     @Published var snapshot: StatusSnapshotData?
     @Published var unlockState: UnlockState = .idle
-    @Published var appUnlocked: Bool
+    /// 2026-10-27 审核：本字段**不再承担任何门禁**。全仓没有路径能把它置回 false，
+    /// 原先四处深链门禁 / 明文密码门禁 / F0 门里的判断恒为真，已按「承认没有应用锁」全部删除。
+    /// 保留此字段只为 `SettingsView` 的旧引用与动画绑定，实际恒 true。
+    @Published var appUnlocked: Bool = true
     // 390: 伪装码进入后停在空壳界面 (不加载任何门锁/凭证视图与数据)
     @Published var decoyMode = false
     // 2026-10-13 对抗式排查: 启动块只跑一次的会话令牌。
@@ -109,15 +112,15 @@ final class AppState: ObservableObject {
            let m = items.first(where: { $0.name == "mac" })?.value, !m.isEmpty,
            DB.keychain(DB.normalizeMac(m)) != nil {
             let mac = DB.normalizeMac(m)
-            if appUnlocked && !decoyMode { select(mac) } else { pendingMac = mac }
+            if !decoyMode { select(mac) } else { pendingMac = mac }
         }
-        if appUnlocked && !decoyMode { requestTab(tab) } else { pendingRoute = Route.from(tab: tab) }
+        if !decoyMode { requestTab(tab) } else { pendingRoute = Route.from(tab: tab) }
     }
     func applyPendingRoute() {
-        if let m = pendingMac, appUnlocked && !decoyMode { pendingMac = nil; select(m) }
+        if let m = pendingMac, !decoyMode { pendingMac = nil; select(m) }
         guard let r = pendingRoute else { return }
         pendingRoute = nil
-        if appUnlocked && !decoyMode { requestRoute(r) }
+        if !decoyMode { requestRoute(r) }
     }
     // ---------- 377 访客通道: 受限 Tab 的唯一走位口 ----------
     /// 受控跳转都汇到这里: 目标是被收起来的 Tab 且本会话没重输过口令, 就把既有应用锁页拉起来而不是切过去。
@@ -161,18 +164,15 @@ final class AppState: ObservableObject {
     /// 应用锁验证通过后的落地。
     /// 2026-10-26: 原 `reauth` 参数已删 —— 它只服务 377 访客通道的「只放开 Tab 不动 appUnlocked」，
     /// 而那条通道已整套删除（guestAreaLocked 恒 false）。现在只有一种落地：置 appUnlocked。
-    func commitUnlock() {
-        withAnimation(DS.Motion.standard) { appUnlocked = true }
-    }
     // ---------- 161 应用锁秒进: 验证通过后回到上次停留的 Tab ----------
     static let lastTabKey = "kf_last_tab"
     func rememberTab(_ t: Int) {
-        guard appUnlocked, !decoyMode else { return }   // 锁着或空壳会话不记, 免得把伪装态当"上次停留"
+        guard !decoyMode else { return }   // 锁着或空壳会话不记, 免得把伪装态当"上次停留"
         DB.store.set(AppState.lastTabKey, t)
     }
     /// 挂起的深链优先 (那是用户明确要去的地方), 否则回到上次停留的 Tab; 越界档位夹回四页内。
     func restoreLastTab() {
-        guard appUnlocked, !decoyMode, pendingRoute == nil else { return }
+        guard !decoyMode, pendingRoute == nil else { return }
         let t = min(max(DB.store.getInt(AppState.lastTabKey, 0), 0), 3)
         // 2026-10-26: 原「上次停在受限区就不恢复」已删（guestAreaLocked 恒 false）⇒ 直接恢复。
         tabSelection = t
@@ -241,7 +241,6 @@ final class AppState: ObservableObject {
         // 2026-10-17 拍板 A: 删掉启动门禁 —— 打开 App 不再需要本机密码/FaceID。
         // 旧值 `!DB.hasPasscode()`: 设过密码的机器每次冷启动都停在 AppLockView。
         // 其余安全动作 (毁灭操作复核 383 / 访客受限区复核 377) 改成**只走面容/指纹**。
-        appUnlocked = true
         loadDevices(preferDefault: true)   // 包3/271: 冷启动落到上滑固定的默认锁
     }
 
@@ -975,12 +974,10 @@ struct RootView: View {
         if phase == .active {
             // 2026-10-17 拍板 A: 「到点自动落锁」随启动门禁一起删 —— 现在没有锁屏页可回,
             // 留着它只会把 appUnlocked 置 false, 让深链/落点/回连那些 guard 静默失效。
-            if app.appUnlocked {
                 // 靠近自动开锁 (AUTOOPEN): F0 前台门 + F1 进前台按档位刷面容 (挂起期静默)
                 AutoOpenController.shared.onForeground(mac: app.currentMac)
                 // 344 回前台才出快捷条 (344 的原话就是"回前台显示"), 顺带重算剩余秒数
                 // 897 四季图标: 默认关。开着也只在"季节真的换了"时对齐一次 (年-季记号)，不每次回前台打扰
-            }
         } else if phase == .background {
             // 2026-10-14: 只有**真进后台**才算退后台。旧实现把 .inactive (下拉通知中心/控制中心、
             // 来电、Face ID 系统弹窗) 也当退后台 —— 会误记锁定到期时刻 (反复下拉可无限顺延宽限),

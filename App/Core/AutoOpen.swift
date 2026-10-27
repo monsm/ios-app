@@ -195,7 +195,7 @@ enum AutoOpenKit {
 
 // ================= 门控矩阵: 全绿才允许下发 04 =================
 struct AutoOpenGate {
-    var f0Foreground: Bool        // App 前台且已解锁 (sceneActive && appUnlocked)
+    var f0Foreground: Bool        // App 前台且不在伪装模式 (sceneActive && !decoyMode)
     var faceTier: Int             // 0 标准 / 1 严格
     var lastFace: Date?          // 最近一次面容成功时刻 (nil = 从未)
     var facePendingPrompt: Bool  // 严格档弹窗在途
@@ -405,7 +405,7 @@ final class AutoOpenController {
         let snap = app.snapshot
         let coolReady = AutoOpenKit.coolReady(lastDispatch: lastAt, now: Date().timeIntervalSince1970)
         return AutoOpenGate(
-            f0Foreground: LinkSense.shared.sceneActive && app.appUnlocked && !app.decoyMode,
+            f0Foreground: LinkSense.shared.sceneActive && !app.decoyMode,
             faceTier: AutoOpen.faceTier,
             lastFace: AutoOpenKit.lastFace(),
             // 严格档在途位: 弹窗已发起且面容时刻尚未刷新 = 正在确认 (旧实现恒 false → 在途分支是死代码)

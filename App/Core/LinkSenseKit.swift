@@ -109,8 +109,10 @@ final class LinkSense: ObservableObject {
             var hits = Set<String>()
             while Date() < deadline, hits.count < targets.count {
                 for adv in ble.allDiscovered() {
-                    guard let a = ZKProtocol.parseAdv(adv.advertisHex), let m = a.macRaw else { continue }
-                    let mac = m.lowercased()
+                    // 2026-10-27 审核修复：warmLocks() 返回的是 kc.mac（显示序），而 macRaw 是线上序。
+                    // 原写法拿 macRaw 与 targets 比 —— 永不相等，多锁预连从未成功过（C 线审核发现）。
+                    guard let a = ZKProtocol.parseAdv(adv.advertisHex), let disp = a.macDisplay else { continue }
+                    let mac = disp.replacingOccurrences(of: ":", with: "").lowercased()
                     guard targets.contains(mac), !hits.contains(mac) else { continue }
                     hits.insert(mac)
                     Self.saveRssi(mac: mac, rssi: adv.rssi)
@@ -485,9 +487,11 @@ final class LinkSense: ObservableObject {
                     try? await Task.sleep(for: .milliseconds(150))
                 }
                 for adv in ble.allDiscovered() {
-                    if let a = ZKProtocol.parseAdv(adv.advertisHex), let m = a.macRaw,
-                       DB.keychain(m) != nil {
-                        Self.saveRssi(mac: m, rssi: adv.rssi)
+                    // 2026-10-27 审核修复：DB.keychain 的键是显示序（去冒号小写），
+                    // 而 macRaw 是线上序 ⇒ `DB.keychain(macRaw)` 恒 nil，冷启动扫描落档一条都写不进去。
+                    if let a = ZKProtocol.parseAdv(adv.advertisHex), let disp = a.macDisplay,
+                       DB.keychain(disp.replacingOccurrences(of: ":", with: "").lowercased()) != nil {
+                        Self.saveRssi(mac: disp.replacingOccurrences(of: ":", with: "").lowercased(), rssi: adv.rssi)
                     }
                 }
                 let seen = ble.allDiscovered().count

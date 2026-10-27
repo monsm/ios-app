@@ -1305,7 +1305,6 @@ struct CredentialsView: View {
 
     private func viewPwd(_ p: LedgerPwd) {
         guard let pwd = p.pwd else { app.showToast("当时未留存明文"); return }
-        if DB.hasPasscode() && !app.appUnlocked { app.showToast("需先解锁应用锁"); return }
         app.showToast("密码 #\(p.alias): \(pwd) (请勿外传)")
     }
 
