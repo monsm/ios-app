@@ -750,8 +750,6 @@ struct RootView: View {
     private var mainTabs: some View {
         // iOS 18+ 的 Tab 声明式写法: 类型安全, 系统按平台自动选择底栏/侧栏形态
         // 包15 键盘: Cmd 1-4 切 Tab 真接线 (164/530); Tab/Esc 遍历由系统「全键盘控制」提供 (854)
-        // 包2/136 跨页状态细条: 非设备 Tab 顶部一条 BLE 状态细线, 点按跳回设备页定位当前锁;
-        // 162 握手可离开: 切走 Tab 不取消进行中的握手 (回连循环/看门狗继续跑)
         mainTabView
             // 只读试验模式：全 App 顶部常驻红条。**必须常驻** ——
             // 用户第二天忘了自己开过它，会以为"App 坏了、什么都改不了"。
@@ -1027,9 +1025,6 @@ struct RootView: View {
             AutoOpenController.shared.onBackground()
         }
     }
-    // 包2/136 跨页状态细条: 非设备 Tab 顶部一条 BLE 状态细线 (2pt 语义色 + 状态行),
-    // 点按跳回设备 Tab 并定位当前锁; 135 scenePhase .active 时静默刷新, 退后台暂停回连。
-    @ViewBuilder
 }
 
 // LinkSense 宿主注册 (RootView 首次挂载时): 包装层只读协作, 不建循环依赖

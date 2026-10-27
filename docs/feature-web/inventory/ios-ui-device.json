@@ -91,38 +91,6 @@
       "status": "implemented"
     },
     {
-      "key": "device.home.hero.notice",
-      "parentKey": "device.home",
-      "domain": "device",
-      "level": 3,
-      "name": "Hero 条件提示单行（优先级）",
-      "kind": "state",
-      "summary": "同一时刻只显示最要紧的一条提示，优先级：严重低电 > 低电 > 链路未验证 > 低温季。",
-      "details": [
-        "严重低电：电量告急，尽快换电池（danger 色，仅当前锁）",
-        "低电：该喂电了（warn 色，任意页）",
-        "链路未验证：checkmark.seal「成功开一次锁即打标」",
-        "低温季：thermometer.snowflake「电池续航会缩短」，仅当前锁",
-        "构图预算写死在代码里：Hero 条件提示行 ≤1，四条判据不许并列显示"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 664,
-          "symbol": "heroNotice(kc:tier:isCurrent:)"
-        },
-        {
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 670,
-          "symbol": "!LockArchive.isVerified(kc.mac)"
-        }
-      ],
-      "tags": [
-        "状态"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "device.home.linkpill",
       "parentKey": "device.home",
       "domain": "device",
@@ -418,36 +386,6 @@
       "status": "implemented"
     },
     {
-      "key": "device.home.quick.editor",
-      "parentKey": "device.home.quick",
-      "domain": "device",
-      "level": 4,
-      "name": "长按编辑快捷操作格",
-      "kind": "action",
-      "summary": "长按任意格（含「再开一次」）弹系统菜单「编辑快捷操作格」，打开 QuickTileEditorSheet。",
-      "details": [
-        "走系统 contextMenu 而不是自挂长按手势，避免与 NavigationLink 点击冲突",
-        "编辑面板里 Toggle 每一项池子；全部关掉会兜回默认五格而不是让快捷区整体消失",
-        "面板内还含「常用动作排到前面」开关与计数清理，改动即时生效（bumpAppearanceForLayout）"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 1256,
-          "symbol": ".contextMenu { Button { showTileEdit = true } }"
-        },
-        {
-          "file": "App/Core/QuickPool.swift",
-          "line": 153,
-          "symbol": "struct QuickTileEditorSheet"
-        }
-      ],
-      "tags": [
-        "设置"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "device.home.modules",
       "parentKey": "device.home",
       "domain": "device",
@@ -664,81 +602,6 @@
       ],
       "tags": [
         "状态"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "device.add.row",
-      "parentKey": "device.add",
-      "domain": "device",
-      "level": 3,
-      "name": "设备行五种状态与可点性",
-      "kind": "state",
-      "summary": "每一行显示名称、dBm、MAC、型号，右侧状态胶囊区分：可配网 / 待续配 / 已配对 / 未识别 / 非门锁。",
-      "details": [
-        "可配网 = 广播 resetStatus==1 且 PidMap.isLock；待续配 = 是锁且 DB.pendingPair(mac) 有记录（不看 resetStatus）",
-        "已配对 = 不在重置态（提示「需先在键盘上物理重置」）",
-        "非门锁 = 型号不属于锁；未识别 = 广播解析失败",
-        "点不可配网的行给对应 toast：广播未识别 / 该锁不在重置态 / 未识别的设备型号",
-        "行内第二行文本最多两行，型号不截断（判断「是不是我的锁」的关键信息）"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/Sheets.swift",
-          "line": 218,
-          "symbol": "deviceRow(_:)"
-        },
-        {
-          "file": "App/UI/Sheets.swift",
-          "line": 228,
-          "symbol": "let canResume = isLock && (pendMac.map { DB.pendingPair($0) != nil } ?? false)"
-        },
-        {
-          "file": "App/UI/Sheets.swift",
-          "line": 232,
-          "symbol": "showToast(\"该锁不在重置态 — 请先做键盘物理重置\")"
-        }
-      ],
-      "tags": [
-        "状态",
-        "边界"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "device.add.manual",
-      "parentKey": "device.add",
-      "domain": "device",
-      "level": 3,
-      "name": "手输 MAC 定位（扫不到兜底）",
-      "kind": "action",
-      "summary": "输入 12 位十六进制 MAC 做 8 秒定向扫描，命中后走同一条配网链。",
-      "details": [
-        "归一化后必须 12 位十六进制（冒号可省略），否则 toast「MAC 需为 12 位十六进制 (冒号可省略)」",
-        "命中但不在重置态 → toast「找到了, 但该锁不在重置态 — 请先长按 RESET 重置」",
-        "扫到信号但广播不完整 → toast「已扫到信号但广播不完整, 请靠近门锁再试」",
-        "8 秒内未发现 → toast「8 秒内未发现该 MAC — 请确认锁已通电并靠近手机」"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/Sheets.swift",
-          "line": 327,
-          "symbol": "locateManual() async"
-        },
-        {
-          "file": "App/UI/Sheets.swift",
-          "line": 337,
-          "symbol": "LockService.shared.scanForMAC(m, timeoutMs: 8000)"
-        },
-        {
-          "file": "App/UI/Sheets.swift",
-          "line": 169,
-          "symbol": "Section(\"扫不到? 手动定位\")"
-        }
-      ],
-      "tags": [
-        "边界",
-        "错误态"
       ],
       "status": "implemented"
     },
@@ -1475,42 +1338,6 @@
       "tags": [
         "锁端读写",
         "破坏性操作"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "device.messages",
-      "parentKey": "device",
-      "domain": "device",
-      "level": 2,
-      "name": "动态（全锁日志汇总）",
-      "kind": "sheet",
-      "summary": "把本机缓存里所有锁的日志合成一个列表，按时间倒序，告警行加 warn 色与「告警：」前缀。",
-      "details": [
-        "数据源是 DB.keychains() × DB.readLogs(mac)，不联网不等锁",
-        "告警判定只认 StatsKit.alarmTypes（5 类），不在本页另写一份",
-        "行副标题为「锁内时间 · 设备名」，设备名缺失时用「型号 …后缀四位」",
-        "空态卡「还没有动态 / 连接门锁读取记录后，这里会汇总全部门锁的开门与告警事件」，主按钮「去添加门锁」直接在本 sheet 上再弹 AddDeviceView"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/Sheets.swift",
-          "line": 2101,
-          "symbol": "struct MessagesView"
-        },
-        {
-          "file": "App/UI/Sheets.swift",
-          "line": 2163,
-          "symbol": "private var rows: [Row]"
-        },
-        {
-          "file": "App/UI/Sheets.swift",
-          "line": 2171,
-          "symbol": "StatsKit.alarmTypes.contains(l.type)"
-        }
-      ],
-      "tags": [
-        "记录"
       ],
       "status": "implemented"
     },

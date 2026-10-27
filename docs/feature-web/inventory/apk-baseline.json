@@ -1170,38 +1170,6 @@
       "status": "implemented"
     },
     {
-      "key": "device.keychain.status",
-      "parentKey": "device",
-      "domain": "device",
-      "level": 3,
-      "kind": "screen",
-      "name": "钥匙串详情（page-keychaindetail）",
-      "summary": "钥匙串详情页当前是空壳：构造函数只存 navCtrl/navParams，ionViewDidLoad 仅打日志，没有任何字段渲染或动作。",
-      "details": [
-        "lo.keyChainDetail(l) 只 push(Qu) 不带参数",
-        "页面内无状态读取、无 cmd43/44 调用——详情数据实际在 page-addkeychain 里读"
-      ],
-      "evidence": [
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "Qu",
-          "note": "page-keychaindetail @658494 — 只有 ionViewDidLoad 打日志"
-        },
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "lo.prototype.keyChainDetail",
-          "note": "@553365 push(Qu) 无参数"
-        }
-      ],
-      "tags": [
-        "钥匙串",
-        "未完成"
-      ],
-      "status": "partial"
-    },
-    {
       "key": "device.keychain.write.blekey",
       "parentKey": "device.keychain.write",
       "domain": "device",
