@@ -251,7 +251,10 @@ struct CredDisableSheet: View {
         }
     }
 
+    /// 2026-10-27 五轮：原实现拼的是 `#alias · countdown(p)`，倒计时已删，
+    /// 只留别名 —— 停用确认页要的是"哪些条目"，不是"还剩多久"。
     private var pwdsLines: [String] {
+        DB.getPwdList(pwdAliases, mac).prefix(6).map { "#\($0.alias)" }
     }
     private var fpLines: [String] {
         DB.getFpList(fpBatches, mac).prefix(6).map { "「\($0.name)」" }
