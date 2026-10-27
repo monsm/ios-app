@@ -71,7 +71,7 @@ final class GoldenDiffTests: XCTestCase {
         let SKEY = "00112233445566778899aabbccddeeff"
         var built: [String: String] = [:]
         built["cmd01Session"] = ZKCmdBuilder.cmd01Session().hex
-        built["cmd03StatusPlain"] = ZKCmdBuilder.cmd03StatusPlain(MAC).hex
+        built["cmd03StatusPlain"] = ZKCmdBuilder.cmd03StatusPlain().hex
         built["cmd03StatusWrap"] = ZKCmdBuilder.cmd03StatusWrap(MAC, SKEY).hex
         built["cmd04Open_klv01"] = ZKCmdBuilder.cmd04Open(String(repeating: "cafebabe", count: 4), klv01Hex: "0000").hex
         built["cmd05Exchange"] = ZKCmdBuilder.cmd05Exchange(SKEY, timeSec: 0x5a).hex
