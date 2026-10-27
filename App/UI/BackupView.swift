@@ -68,7 +68,6 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !Backu
         // AnyView 擦平两分支类型差异 (与 AddPwdView 同一写法): 两支只差最外层那一只容器
         (embedded ? AnyView(listContent) : AnyView(NavigationStack { listContent }))
             // 2026-10-26 精简：待确认恢复包（pendingRestore）已删。
-        .sheet(isPresented: $showWebDAV) { WebDAVStudioView() }
         // 方案 a: 文件选择器 —— 备份的正常去处是「iCloud 云盘 / 我的 iPhone」。
         // 与「粘贴文本」共用同一个解析入口 (doImportText → parsePreview), 不另写一套解析。
         .fileExporter(isPresented: $showFileExporter,
@@ -337,43 +336,8 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !Backu
 
     // ---------- 云端上传 ----------
     // ---------- 云端上传 ----------
-    private func push() async {
-        guard !busy else { return }
-        guard cloudReady else { app.showToast("请填写账号/应用密码/加密口令"); return }
-        busy = true
-        cloudMode = .push
-        defer { busy = false }
-        do {
-            let payload = BackupKit.collectAll()
-            guard let data = try? JSONEncoder().encode(payload),
-                  let text = String(data: data, encoding: .utf8), !text.isEmpty else {
-                throw NSError(domain: "backup", code: 1, userInfo: [NSLocalizedDescriptionKey: "备份编码失败, 已中止上传"])
-            }
-            let envelope = try CryptoBox.encryptText(text, password: BackupPassphrase.current)
-            try await CloudSync.push(acct: cloudAcct, app: cloudApp, envelope: envelope)
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
-            Milestones.recordBackup()   // 980 备份卫士
-            app.showToast("上传成功")
-        } catch { app.showToast(error.localizedDescription) }
-    }
 
     // ---------- 云端恢复: 先下载解密, 再让用户确认覆盖, 最后才写盘 ----------
-    private func pull() async {
-        guard !busy else { return }
-        guard cloudReady else { app.showToast("请填写账号/应用密码/加密口令"); return }
-        busy = true
-        cloudMode = .pull
-        defer { busy = false }
-        do {
-            guard let envelope = try await CloudSync.download(acct: cloudAcct, app: cloudApp) else {
-                app.showToast("云端暂无备份"); return
-            }
-            // 2026-10-14: 走 parsePreview —— 旧实现自己 decrypt+decode, 绕过了 453 内容哈希闸、
-            // schema 上界闸与 upgradeChain (本地粘贴与工作室 WebDAV 都过它)。云端包同样不可信。
-            let (_, bundle) = try BackupStudio.parsePreview(text: envelope, password: BackupPassphrase.current)
-            // 不直接落盘: 交给 confirmationDialog, 用户确认后才覆盖本机
-        } catch { app.showToast(error.localizedDescription) }
-    }
 
 
 

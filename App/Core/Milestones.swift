@@ -32,9 +32,6 @@ enum Milestones {
         if h.count > 60 { h.removeFirst(h.count - 60) }
         DB.store.setCodable("kf_backup_hist", h)
         // 448: 备份发生点 = 自检基线更新点 (导出/上传/还原点全覆盖; 自检本身绝不回写)
-        BackupStudio.markBackupBaseline()
-    }
-    static var backupThisMonth: Int {
         let mk = monthKey()
         return (DB.store.get([Double].self, "kf_backup_hist") ?? [])
             .filter { monthKey(Date(timeIntervalSince1970: $0 / 1000)) == mk }.count

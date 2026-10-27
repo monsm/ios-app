@@ -131,7 +131,6 @@ struct MaskedDigits: View {
                     revealed.formSymmetricDifference([i])
                     if revealed.contains(i), !ledgerLogged {
                         ledgerLogged = true
-                        SensitiveLedger().record("查看", target: "密码")
                     }
                     DS.Haptics.tick.impactOccurred()
                 } label: {
@@ -1539,7 +1538,6 @@ struct PwdDetailStudio: View {
                                 }
                                 .buttonStyle(.bordered)
                                 .frame(minHeight: DS.Hit.min)
-                                Button("读出") { Speech.digits(v) }   // 309 读出
                                     .vkFont(.caption, weight: .medium)
                                     .buttonStyle(.bordered)
                                     .frame(minHeight: DS.Hit.min)

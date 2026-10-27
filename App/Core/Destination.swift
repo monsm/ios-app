@@ -37,6 +37,5 @@ enum Destination: String, CaseIterable, Identifiable {
     case syncTime = "SyncTimeView"
     case tailgate = "TailgateView"
     case unlockGate = "UnlockGateView"
-    case webDAVStudio = "WebDAVStudioView"
     var id: String { rawValue }
 }

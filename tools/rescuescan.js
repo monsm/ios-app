@@ -102,6 +102,10 @@ const SYS_NAMES = new Set([
   // 2026-10-27 五轮: `manual` 是 refreshStatusQuietly(manual:) 的参数名，
   // 删掉 DeviceHomeView 里同名局部后会被误判。
   "manual",
+  // 2026-10-27 六轮: `envelope` / `appPw` 都是 BackupKit / BackupStudioKit 里
+  // encryptText / decryptEnvelope / basicAuth 的**参数名**。删掉 WebDAV 一族里
+  // 同名的局部变量后，这两个词会被当成悬空引用报出来。
+  "envelope", "appPw",
 ]);
 
 function stripCode(line) {

@@ -432,96 +432,9 @@ enum BackupStudio {
     /// 507 备份状态角标: 今日已备份 / 多日未备份
     // 2026-10-26 精简：badgeState（备份状态角标）已删 —— 它依赖的 lastExportMs 随策略类一起移除。
 
-    // ================= WebDAV 增强 (197/422-423/430/436) =================
-    /// 用户自配 WebDAV 根 (坚果云或任意 WebDAV), 运行时输入 Basic Auth; 绝不上传非用户自配位置
-    static var webdavRoot: String {
-        get { DB.store.getString("kf_webdav_root", "https://dav.jianguoyun.com/dav/%E6%88%91%E7%9A%84%E5%9D%9A%E6%9E%9C%E4%BA%91") }
-        set { DB.store.set("kf_webdav_root", newValue) }
-    }
     struct RemoteEntry: Identifiable { var id: String { name }; let name: String; let size: Int; let etag: String; let modified: String }
-    /// 422 时间列: RFC1123 → 本地短格式, 解不开原样返回
-    static func humanDate(_ s: String) -> String {
-        let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
-        guard let d = f.date(from: s) else { return s }
-        let g = DateFormatter(); g.locale = Locale(identifier: "en_US_POSIX"); g.dateFormat = "yyyy-MM-dd HH:mm"
-        return g.string(from: d)
-    }
     /// 197 连通测试: PROPFIND 回显服务器时间
     @discardableResult
-    static func testWebdav(acct: String, appPw: String, root: String) async -> String {
-        guard let url = URL(string: root) else { return "地址非法" }
-        var req = URLRequest(url: url)
-        req.httpMethod = "PROPFIND"
-        req.setValue(CloudSync.basicAuth(acct, appPw), forHTTPHeaderField: "Authorization")
-        req.setValue("application/xml", forHTTPHeaderField: "Content-Type")
-        req.httpBody = Data("<?xml version=\"1.0\"?><propfind xmlns=\"DAV:\"><prop><getlastmodified/><resourcetype/></prop></propfind>".utf8)
-        req.timeoutInterval = 15
-        do {
-            let (_, resp) = try await URLSession.shared.data(for: req)
-            guard let http = resp as? HTTPURLResponse else { return "响应异常" }
-            if (200..<300).contains(http.statusCode) {
-                let t = http.value(forHTTPHeaderField: "Last-Modified") ?? "ok"
-                return "连通 · 服务器时间 \(t)"
-            }
-            if http.statusCode == 401 || http.statusCode == 403 { return "账号或应用密码错误" }   // 401 账号或应用密码错误
-            return "HTTP \(http.statusCode)"
-        } catch { return "网络不可达: \(error.localizedDescription)" }
-    }
-    /// 422/423 远端列表: 拉 etag (哈希) + 大小, 再按需拉正文 — 断点友好
-    static func listRemote(acct: String, appPw: String, root: String) async throws -> [RemoteEntry] {
-        // 原先这一行是 `return "地址非法"` —— 一个声明 `-> [RemoteEntry]` 的函数返回 String，编译器必拒。
-        // 可核实的出处：这一行在 `origin/main` (31df7a6，最后一次推送) 里就已经是这个样子，
-        // 而那一次推送对应的 CI run 47 结论是 failure (日志匿名取不到，所以不能断言 CI 报的就是它)。
-        // 改成抛错才对：调用方 `refresh()` 有 do/catch 会把这句话 toast 出来，
-        // `pruneRemote` 那侧是 try? ⇒ 直接不动远端。
-        guard let url = URL(string: root) else { throw DFUError.msg("远端地址非法") }
-        var req = URLRequest(url: url)
-        req.httpMethod = "PROPFIND"
-        // Depth: 1 必须显式写。不写时按 RFC 4918 服务端默认取 **Infinity**，那 430 滚动保留看到的就是
-        // 整个子树的每一层条目 (默认 root 又是整个坚果云根目录) —— 配合下面的删除面就是删到用户照片里。
-        req.setValue("1", forHTTPHeaderField: "Depth")
-        req.setValue(CloudSync.basicAuth(acct, appPw), forHTTPHeaderField: "Authorization")
-        req.setValue("application/xml", forHTTPHeaderField: "Content-Type")
-        req.httpBody = Data("<?xml version=\"1.0\"?><propfind xmlns=\"DAV:\"><prop><resourcename/><getcontentlength/><getetag/><getlastmodified/></prop></propfind>".utf8)
-        req.timeoutInterval = 20
-        let (data, resp) = try await URLSession.shared.data(for: req)
-        guard let http = resp as? HTTPURLResponse else { throw DFUError.msg("响应异常") }
-        if http.statusCode == 404 { return [] }
-        if http.statusCode == 401 || http.statusCode == 403 { throw DFUError.msg("账号或应用密码错误") }
-        guard http.statusCode == 207 else { throw DFUError.msg("PROPFIND HTTP \(http.statusCode)") }
-        // 422/423 远端列表: 拉 etag (哈希) + 大小, 再按需拉正文 — 断点友好
-        // 对抗硬化: 只取 UTF-8 可读正文, 恶意/二进制 XML 直接拒绝 (不静默误读为空)
-        guard let xml = String(data: data, encoding: .utf8), !xml.isEmpty else { throw DFUError.msg("远端列表解析失败 (响应非 UTF-8 XML)") }
-        var out: [RemoteEntry] = []
-        var i = xml.startIndex
-        while let s = xml.range(of: "<resourcename>", range: i..<xml.endIndex) {
-            // 对抗硬化: 内容做实体解码 + 长度护栏, 防恶意 XML 注入名直接拼进 URL
-            i = s.upperBound
-            guard let e = xml.range(of: "</resourcename>", range: i..<xml.endIndex) else { break }
-            var name = String(xml[i..<e.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
-            name = Self.xmlUnescape(name)
-            guard !name.isEmpty, name.count <= 256 else { continue }   // 长度护栏
-            i = e.upperBound
-            func cap(_ tag: String, from: String.Index) -> String {
-                var idx = from
-                while let r = xml.range(of: "<\(tag)>", range: idx..<xml.endIndex) {
-                    guard let en = xml.range(of: "</\(tag)>", range: r.upperBound..<xml.endIndex) else {
-                        idx = r.upperBound
-                        continue
-                    }
-                    idx = en.upperBound
-                    return Self.xmlUnescape(String(xml[r.upperBound..<en.lowerBound]))
-                }
-                return ""
-            }
-            out.append(RemoteEntry(name: name,
-                                   size: Int(cap("getcontentlength", from: i)) ?? 0,
-                                   etag: cap("getetag", from: i),
-                                   modified: cap("getlastmodified", from: i)))
-        }
-        return out.sorted { $0.name > $1.name }
-    }
     /// XML 实体最小解码 (&lt; &gt; &amp; &quot; &apos; + 数字实体), 防注入名直接进 URL
     private static func xmlUnescape(_ s: String) -> String {
         var out = s
@@ -529,29 +442,6 @@ enum BackupStudio {
             out = out.replacingOccurrences(of: ent, with: ch)
         }
         return out
-    }
-    static func safeRemoteURL(root: String, name: String) -> URL? {
-        // 对抗护栏: 远端条目名可能来自恶意/越权账号 — 拒绝路径穿越与外链, 只允许目录内相对名
-        guard !name.hasPrefix("/"), !name.contains("://") else { return nil }
-        for part in name.split(separator: "/") where part == ".." { return nil }
-        return URL(string: root + "/" + name)
-    }
-    /// 一"份"的组键 = 去掉尾部 `_卷N` 的名字 (410 分卷时同一次导出会写成基础卷 + 逐年卷)。
-    /// 按文件数取舍会把一套卷切成半套 —— 基础卷 (设备/凭证/设置) 没了，剩下的记录卷恢复不出任何东西。
-    /// 只剥**结尾**那一截 `_卷数字`：锁的显示名也可能含 "_卷" (409 把它拼在名字里)，
-    /// 从后往前找到的第一个不一定是卷号，认错了会把整把锁的备份并成一份。
-    static func volumeSet(_ name: String) -> String {
-        guard name.hasSuffix(".enc") else { return name }
-        let head = String(name.dropLast(4))
-        guard let r = head.range(of: "_卷", options: .backwards) else { return name }
-        let tail = head[r.upperBound...]
-        guard !tail.isEmpty, tail.allSatisfy({ $0.isNumber }) else { return name }
-        return String(head[..<r.lowerBound]) + ".enc"
-    }
-    /// 从 409 那个自描述名里取日期段；取不到算最旧 (空串排到最后)
-    static func dateInName(_ name: String) -> String {
-        guard let r = name.range(of: #"\d{4}-\d{2}-\d{2}"#, options: .regularExpression) else { return "" }
-        return String(name[r])
     }
 
     private static func jsonStr(_ s: String, _ marker: String) -> String? {

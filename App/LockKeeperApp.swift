@@ -723,9 +723,6 @@ struct RootView: View {
                 }
             }
             // 包8/448 启动自检黄条: 库体哈希与上次快照不一致 → 设备 Tab 顶部黄条 "去诊断"
-            if let w = BackupStudio.selfCheckWarning {
-                selfCheckBanner(w)
-            }
             if let t = app.toast {
                 ToastView(text: t)
                     .allowsHitTesting(false)   // 顶部提示不吃点击

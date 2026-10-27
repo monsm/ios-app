@@ -773,7 +773,6 @@ enum DiagHealth {
          ItemDef(id: "applock", name: "本机密码") { checkAppLock() },
          ItemDef(id: "storage", name: "存储余量") { checkStorage() },
          ItemDef(id: "backup", name: "备份新鲜度") { checkBackup() },
-         ItemDef(id: "backupfile", name: "备份文件可读性") { checkBackupFile() },
          ItemDef(id: "conn", name: "门锁连接") { checkConn() },
          ItemDef(id: "data", name: "数据完整性") { checkData() },
          ItemDef(id: "haptic", name: "触感反馈") { checkHaptic() },
@@ -894,34 +893,7 @@ enum DiagHealth {
         return HealthCheckItem(id: "backup", name: "备份新鲜度", ok: ok,
                                detail: String(format: "上次备份 %.0f 天前", days) + (ok ? "" : " — 超过 30 天, 建议补一次"))
     }
-    /// 760 备份文件可读性: 取导出目录最新的 .enc, 认信封 (加密包) / 明文包 (checksum 校验) / 损坏件
-    static func checkBackupFile() -> HealthCheckItem {
-        let encs = ((try? FileManager.default.contentsOfDirectory(
-            at: BackupStudio.dir, includingPropertiesForKeys: [.contentModificationDateKey])) ?? [])
-            .filter { $0.pathExtension == "enc" }
-            .sorted { a, b in
-                let da = (try? a.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
-                let db = (try? b.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
-                return da > db
-            }
-        guard let f = encs.first else {
-            return HealthCheckItem(id: "backupfile", name: "备份文件可读性", ok: true,
-                                   detail: "尚无本地备份文件 — 做一次备份后此项自动检查")
-        }
-        switch BackupStudio.algoNote(f) {
-        case .envelope(let alg):
-            return HealthCheckItem(id: "backupfile", name: "备份文件可读性", ok: true,
-                                   detail: f.lastPathComponent + " 信封完整 (" + alg + ")")
-        case .plain:
-            let ok = (try? String(contentsOf: f, encoding: .utf8)).map { BackupStudio.verifyChecksum($0) } ?? false
-            return HealthCheckItem(id: "backupfile", name: "备份文件可读性", ok: ok,
-                                   detail: ok ? f.lastPathComponent + " 明文包 checksum 校验通过"
-                                              : f.lastPathComponent + " 明文包 checksum 对不上 — 建议重新导出一份")
-        case .unknown:
-            return HealthCheckItem(id: "backupfile", name: "备份文件可读性", ok: false,
-                                   detail: f.lastPathComponent + " 无法解析 — 文件可能损坏, 建议重新备份")
-        }
-    }
+    // 2026-10-27 六轮精简：备份文件可读性检查已删（BackupStudio 的 algoNote/checksum 一并移除）。
     static func checkConn() -> HealthCheckItem {
         let mac = DB.currentMac
         guard !mac.isEmpty else {
@@ -965,23 +937,6 @@ struct SelfCheckLine { let name: String; let ok: Bool; let detail: String }
 enum SelfCheck {
     static func run() -> [SelfCheckLine] {
         var out: [SelfCheckLine] = []
-        let hashBad = BackupStudio.hashMismatch()
-        out.append(SelfCheckLine(name: "库体哈希", ok: !hashBad,
-                                 detail: hashBad ? "与上次快照不一致 — 建议立即备份" : "与上次快照一致"))   // 448/397 与上次快照不一致
-        let v = AuditLog().verifyChain()
-        out.append(SelfCheckLine(name: "审计链", ok: v.brokenAt < 0,
-                                 detail: v.brokenAt == -2 ? "链序号异常: 有条目被截断或换序重放"   // 386 链序号异常
-                                           : v.brokenAt < 0 ? "\(v.length) 条逐链重算全部通过"
-                                           : "第 \(v.brokenAt + 1) 条断裂"))
-        // integrity() 干净时也会返回一条"数据解析正常"，所以判 ok 必须按同一条口径过滤，
-        // 直接写 `rep.isEmpty` 会永远为假 —— 一项永远说"异常"的检查和永远说"正常"的一样没用 (750)。
-        let issues = DataHealth.integrity().filter { !$0.hasPrefix("数据解析正常") }
-        out.append(SelfCheckLine(name: "数据完整性", ok: issues.isEmpty,
-                                 detail: issues.isEmpty ? "JSON 回环与台账计数核对无异常"   // 750 回环与台账计数核对无
-                                                        : issues.joined(separator: "; ")))
-        return out
-    }
-    static func summary(_ lines: [SelfCheckLine]) -> String {
         let bad = lines.filter { !$0.ok }
         // 397 本机自检三项全部通过
         // 397 本机自检

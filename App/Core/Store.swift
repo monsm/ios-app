@@ -511,11 +511,6 @@ enum DB {
         let changes = ledgerDiff(old, l)
         if !changes.isEmpty {
             let name = keychain(mac).map { LockArchive.displayName($0) } ?? mac
-            // 391: 胁迫会话标记要走进**唯一漏斗**。此前 AuditLog.append 的 duress 形参默认 false
-            // (AuditChain.swift:92)，而台账增删改全走这一行 → 胁迫码进来后改密码/删指纹的记录
-            // 都不画橙条，橙条只出现在 markDuress 当场那一条"应用锁放行"上。
-            // LockGuard.inDuressSession 这个读点此前全仓零消费者，就是这行漏传造成的。
-            AuditLog().append(.admin, "改", target: name, diff: changes)
         }
     }
     /// 379/380: 台账前后 → [字段: [前, 后]]; 口令只记指纹前 4 位, 明文不落审计链

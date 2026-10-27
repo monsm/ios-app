@@ -1895,25 +1895,6 @@ struct MembersView: View {
                             .disabled(newName.isEmpty)
                     }
                 }
-                // 997 家庭共创目标: 本月全家备份进度
-                Section {
-                    VStack(alignment: .leading, spacing: DS.Space.xs) {
-                        HStack(spacing: DS.Space.s) {
-                            Text("全家本月备份")
-                                .vkFont(.subheadline, weight: .medium)
-                                .foregroundStyle(DS.Palette.text)
-                            Spacer(minLength: 0)
-                            Text("\(Milestones.backupThisMonth) / 4 次")
-                                .vkFont(.caption)
-                                .monospacedDigit()
-                                .foregroundStyle(DS.Palette.textSub)
-                        }
-                        ProgressView(value: Double(min(Milestones.backupThisMonth, 4)), total: 4)
-                            .tint(DS.Palette.accent)
-                    }
-                } footer: {
-                    Text("每月全家一起备份 4 次, 就不会丢东西。")
-                }
                 Section("成员 (\(members.count))") {
                     if members.isEmpty {
                         EmptyState(systemImage: "person.2.slash",

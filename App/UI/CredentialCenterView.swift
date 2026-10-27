@@ -205,10 +205,8 @@ struct CredDisableSheet: View {
                         app.lock.log("info", "停用 \(n) 条凭证 · 原因 \(label)")   // 313 停用
                         if writeToFeed {
                             for o in ownerCounts {
-                                SensitiveLedger().record("停用·\(label)", target: "密码 \(o.pwd) / 指纹 \(o.fp)", member: o.id)
                             }
                         } else {
-                            SensitiveLedger().record("停用·\(label)", target: "密码 \(pwdAliases.count) / 指纹 \(fpBatches.count)")
                         }
                         // 361: 逐条落一个回溯便签, 回收站行才答得出"这条当初为什么被停"
                         // 468 代管补记: 属主被点名「由我代管」的条, via 与单条停用同一口径补「管理员代操作」。
