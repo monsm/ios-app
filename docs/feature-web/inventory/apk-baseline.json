@@ -1526,33 +1526,6 @@
       "status": "implemented"
     },
     {
-      "key": "unlock.safemode",
-      "parentKey": "unlock",
-      "domain": "unlock",
-      "level": 3,
-      "kind": "screen",
-      "name": "门锁安全模式说明（page-safemodeintroduce）",
-      "summary": "纯说明页：A 模式单因子、B 模式双因子、C 级在 B 基础上停止广播（KX 才显示 C）。",
-      "details": [
-        "A「只需要单一方式（密码／指纹／手机）验证通过就可以开锁」",
-        "B「两种不同方式（指纹+密码／指纹+手机／手机+密码）组合」",
-        "C「在B级的基础上，门锁会停止消息广播，此时您无法接收门锁事件通知和查看门锁状态」",
-        "cModeShow 仅在 pid==KX 时为 true"
-      ],
-      "evidence": [
-        {
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "Pe",
-          "note": "page-safemodeintroduce @654547 — safeModeBDesc/safeModeCDesc/cModeShow"
-        }
-      ],
-      "tags": [
-        "安全模式"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "unlock.safemode.set",
       "parentKey": "unlock",
       "domain": "unlock",

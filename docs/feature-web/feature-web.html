@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T03:59:27.284Z",
+    "generated": "2026-10-27T04:24:09.852Z",
     "sources": [
       {
         "scout": "android-native",
@@ -341,7 +341,7 @@ const DATA = {
         "scout": "apk-baseline",
         "platform": "apk",
         "file": "apk-baseline.json",
-        "nodes": 148
+        "nodes": 147
       },
       {
         "scout": "ios-core-auto",
@@ -383,7 +383,7 @@ const DATA = {
         "scout": "ios-ui-system",
         "platform": "ios",
         "file": "ios-ui-system.json",
-        "nodes": 88
+        "nodes": 83
       },
       {
         "scout": "lead-apk-parity",
@@ -9252,125 +9252,6 @@ const DATA = {
       "path": "开锁与鉴权 › 覆盖/换绑二次确认"
     },
     {
-      "id": "unlock.guest",
-      "key": "unlock.guest",
-      "parent": "unlock",
-      "domain": "unlock",
-      "level": 3,
-      "name": "访客通道",
-      "kind": "flow",
-      "summary": "受限区（凭证/设置）整页收起，需面容/指纹复核才放开；锁重新落下即收回。",
-      "details": [
-        "三枚会话级状态：guestAreaUnlocked（内存态，刻意不落盘）、guestGateTarget（落点 Tab）、showGuestGate（复核页开关）",
-        "guestAreaLocked 判定四项：已进 App、非伪装、SecurityPolicy.guestActive、本会话未放开",
-        "界面只写「凭证与设置」两页，不夸口拦记录",
-        "代价：想关掉访客通道本身也要先复核一次（开关原话的「退出需密码」）"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/LockKeeperApp.swift",
-          "line": 68,
-          "symbol": "236/377/383 注释",
-          "note": "",
-          "text": "//   · coldStartScan() 再起一个扫描, 而它是裸 `Task {}` 不随 `.task` 取消 ⇒ 两个扫描轮询并发读同一 discovered。"
-        },
-        {
-          "platform": "ios",
-          "file": "App/LockKeeperApp.swift",
-          "line": 71,
-          "symbol": "guestAreaUnlocked",
-          "note": "",
-          "text": "// ---------- 236/377 访客通道 / 383 毁灭复核: 两枚会话级授权位 ----------"
-        },
-        {
-          "platform": "ios",
-          "file": "App/LockKeeperApp.swift",
-          "line": 73,
-          "symbol": "guestGateTarget",
-          "note": "",
-          "text": "// 而 `kf_speek_guest` **从来没有写点**（设置页无此开关）⇒ 恒 false ⇒ 本属性恒 false。"
-        },
-        {
-          "platform": "ios",
-          "file": "App/LockKeeperApp.swift",
-          "line": 75,
-          "symbol": "showGuestGate",
-          "note": "",
-          "text": "// 换页闸永不拦截。按\"删功能\"处置：连同下面四处判据一起展开成无条件。"
-        },
-        {
-          "platform": "ios",
-          "file": "App/LockKeeperApp.swift",
-          "line": 87,
-          "symbol": "guestAreaLocked",
-          "note": "",
-          "text": "// 迷你开锁面板只属于设备页 —— 换页不收拾就是两条残影。"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/LockKeeperApp.swift",
-            "line": 68,
-            "symbol": "236/377/383 注释",
-            "note": ""
-          },
-          {
-            "file": "App/LockKeeperApp.swift",
-            "line": 71,
-            "symbol": "guestAreaUnlocked",
-            "note": ""
-          },
-          {
-            "file": "App/LockKeeperApp.swift",
-            "line": 73,
-            "symbol": "guestGateTarget",
-            "note": ""
-          },
-          {
-            "file": "App/LockKeeperApp.swift",
-            "line": 75,
-            "symbol": "showGuestGate",
-            "note": ""
-          },
-          {
-            "file": "App/LockKeeperApp.swift",
-            "line": 87,
-            "symbol": "guestAreaLocked",
-            "note": ""
-          },
-          {
-            "file": "App/LockKeeperApp.swift",
-            "line": 77,
-            "symbol": "只拦凭证/设置两页注释",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "访客",
-        "门禁"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-system"
-      ],
-      "childCount": 2,
-      "isDomain": false,
-      "weight": 2,
-      "path": "开锁与鉴权 › 访客通道"
-    },
-    {
       "id": "unlock.manual",
       "key": "unlock.manual",
       "parent": "unlock",
@@ -11257,6 +11138,125 @@ const DATA = {
       "path": "开锁与鉴权 › 30 秒内二次开锁的本机密码闸 › 密码校验与放行"
     },
     {
+      "id": "unlock.guest",
+      "key": "unlock.guest",
+      "parent": "unlock",
+      "domain": "unlock",
+      "level": 3,
+      "name": "访客通道",
+      "kind": "flow",
+      "summary": "受限区（凭证/设置）整页收起，需面容/指纹复核才放开；锁重新落下即收回。",
+      "details": [
+        "三枚会话级状态：guestAreaUnlocked（内存态，刻意不落盘）、guestGateTarget（落点 Tab）、showGuestGate（复核页开关）",
+        "guestAreaLocked 判定四项：已进 App、非伪装、SecurityPolicy.guestActive、本会话未放开",
+        "界面只写「凭证与设置」两页，不夸口拦记录",
+        "代价：想关掉访客通道本身也要先复核一次（开关原话的「退出需密码」）"
+      ],
+      "evidence": [
+        {
+          "platform": "ios",
+          "file": "App/LockKeeperApp.swift",
+          "line": 68,
+          "symbol": "236/377/383 注释",
+          "note": "",
+          "text": "//   · coldStartScan() 再起一个扫描, 而它是裸 `Task {}` 不随 `.task` 取消 ⇒ 两个扫描轮询并发读同一 discovered。"
+        },
+        {
+          "platform": "ios",
+          "file": "App/LockKeeperApp.swift",
+          "line": 71,
+          "symbol": "guestAreaUnlocked",
+          "note": "",
+          "text": "// ---------- 236/377 访客通道 / 383 毁灭复核: 两枚会话级授权位 ----------"
+        },
+        {
+          "platform": "ios",
+          "file": "App/LockKeeperApp.swift",
+          "line": 73,
+          "symbol": "guestGateTarget",
+          "note": "",
+          "text": "// 而 `kf_speek_guest` **从来没有写点**（设置页无此开关）⇒ 恒 false ⇒ 本属性恒 false。"
+        },
+        {
+          "platform": "ios",
+          "file": "App/LockKeeperApp.swift",
+          "line": 75,
+          "symbol": "showGuestGate",
+          "note": "",
+          "text": "// 换页闸永不拦截。按\"删功能\"处置：连同下面四处判据一起展开成无条件。"
+        },
+        {
+          "platform": "ios",
+          "file": "App/LockKeeperApp.swift",
+          "line": 87,
+          "symbol": "guestAreaLocked",
+          "note": "",
+          "text": "// 迷你开锁面板只属于设备页 —— 换页不收拾就是两条残影。"
+        }
+      ],
+      "platformEvidence": {
+        "ios": [
+          {
+            "file": "App/LockKeeperApp.swift",
+            "line": 68,
+            "symbol": "236/377/383 注释",
+            "note": ""
+          },
+          {
+            "file": "App/LockKeeperApp.swift",
+            "line": 71,
+            "symbol": "guestAreaUnlocked",
+            "note": ""
+          },
+          {
+            "file": "App/LockKeeperApp.swift",
+            "line": 73,
+            "symbol": "guestGateTarget",
+            "note": ""
+          },
+          {
+            "file": "App/LockKeeperApp.swift",
+            "line": 75,
+            "symbol": "showGuestGate",
+            "note": ""
+          },
+          {
+            "file": "App/LockKeeperApp.swift",
+            "line": 87,
+            "symbol": "guestAreaLocked",
+            "note": ""
+          },
+          {
+            "file": "App/LockKeeperApp.swift",
+            "line": 77,
+            "symbol": "只拦凭证/设置两页注释",
+            "note": ""
+          }
+        ],
+        "android": [],
+        "apk": []
+      },
+      "platforms": [
+        "ios"
+      ],
+      "platformCount": 1,
+      "tags": [
+        "访客",
+        "门禁"
+      ],
+      "status": {
+        "ios": "implemented"
+      },
+      "commands": [],
+      "sources": [
+        "ios-ui-system"
+      ],
+      "childCount": 0,
+      "isDomain": false,
+      "weight": 1,
+      "path": "开锁与鉴权 › 访客通道"
+    },
+    {
       "id": "unlock.guest.gate",
       "key": "unlock.guest.gate",
       "parent": "unlock",
@@ -11395,13 +11395,9 @@ const DATA = {
       "domain": "unlock",
       "level": 3,
       "name": "只读安全模式（iOS 侧已删实现）",
-      "kind": "screen",
+      "kind": "edge",
       "summary": "**2026-10-26 精简：iOS 侧实现已删除。** 原判据 `SecurityPolicy.readOnly` 读的 `SecKey.safeModeOn` 从来没有写点（设置页无此开关）⇒ 恒 false ⇒ 两道 `guard allows(.unlock)` 永远放行，是纯死逻辑，已连同 `LockAction` 动作闸一并删除。原版 APK 仍有此能力（见 apk-baseline 的同名节点）。",
       "details": [
-        "A「只需要单一方式（密码／指纹／手机）验证通过就可以开锁」",
-        "B「两种不同方式（指纹+密码／指纹+手机／手机+密码）组合」",
-        "C「在B级的基础上，门锁会停止消息广播，此时您无法接收门锁事件通知和查看门锁状态」",
-        "cModeShow 仅在 pid==KX 时为 true",
         "SecurityPolicy.allows(.unlock) 不通过 → showToast(SecurityPolicy.denialMessage(.unlock)) 并 return",
         "拦两层：requestUnlock()（圆盘/快捷操作/AppIntents/深链汇入）与 startUnlock()（自动开锁 rearm 后重发）",
         "注释：拦在 requestUnlock 就等于拦住「开锁」这一族动作本身",
@@ -11415,14 +11411,6 @@ const DATA = {
           "symbol": "296 只读安全模式注释",
           "note": "",
           "text": "try await lock.ensureConnected(mac: kc.mac)"
-        },
-        {
-          "platform": "apk",
-          "file": "apk_raw/assets/www/build/main.js",
-          "line": 1,
-          "symbol": "Pe",
-          "note": "page-safemodeintroduce @654547 — safeModeBDesc/safeModeCDesc/cModeShow",
-          "text": ""
         },
         {
           "platform": "ios",
@@ -11497,32 +11485,21 @@ const DATA = {
           }
         ],
         "android": [],
-        "apk": [
-          {
-            "file": "apk_raw/assets/www/build/main.js",
-            "line": 1,
-            "symbol": "Pe",
-            "note": "page-safemodeintroduce @654547 — safeModeBDesc/safeModeCDesc/cModeShow"
-          }
-        ]
+        "apk": []
       },
       "platforms": [
-        "ios",
-        "apk"
+        "ios"
       ],
-      "platformCount": 2,
+      "platformCount": 1,
       "tags": [
-        "安全模式",
         "安全",
         "开锁"
       ],
       "status": {
-        "apk": "implemented",
         "ios": "removed"
       },
       "commands": [],
       "sources": [
-        "apk-baseline",
         "ios-ui-system"
       ],
       "childCount": 0,
@@ -14519,244 +14496,6 @@ const DATA = {
       "isDomain": false,
       "weight": 1,
       "path": "开锁与鉴权 › 访客复核页 › 生物识别复核"
-    },
-    {
-      "id": "unlock.guest.request-route",
-      "key": "unlock.guest.request-route",
-      "parent": "unlock.guest",
-      "domain": "unlock",
-      "level": 4,
-      "name": "requestRoute 换页漏斗",
-      "kind": "service",
-      "summary": "所有编程式换页汇到这一口，访客闸只在这里判一次。",
-      "details": [
-        "guard guestAreaLocked, guestBlockedTabs.contains(r.tabIndex) else { tabSelection = r.tabIndex; return }",
-        "命中受限 → guestGateTarget = r.tabIndex + showGuestGate = true（不直接切）",
-        "requestTab(Int) 退化为兼容适配器：Route.from(tab:) 为 nil 的越界值直接丢弃（不崩溃、不静默换页）",
-        "深链、粘贴条回凭证页、自检黄条去诊断都汇到这一口，避免侧门"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/LockKeeperApp.swift",
-          "line": 136,
-          "symbol": "377 受限 Tab 唯一走位口注释",
-          "note": "",
-          "text": "/// 现在它只做一件事：检查 7 天未备份的提醒标记（原访客逻辑之外的那部分职责）。"
-        },
-        {
-          "platform": "ios",
-          "file": "App/LockKeeperApp.swift",
-          "line": 141,
-          "symbol": "func requestRoute",
-          "note": "",
-          "text": "/// 兼容适配器：2026-10-16 起全仓**代码里**已无 `requestTab(\u003c字面量>)`（只剩注释引述），"
-        },
-        {
-          "platform": "ios",
-          "file": "App/LockKeeperApp.swift",
-          "line": 143,
-          "symbol": "guard guestAreaLocked",
-          "note": "",
-          "text": "/// 越界序号 (历史脏值 / 以后加 Tab 忘了改) 直接丢弃而不是崩溃，也不静默切到别的页。"
-        },
-        {
-          "platform": "ios",
-          "file": "App/LockKeeperApp.swift",
-          "line": 146,
-          "symbol": "guestGateTarget = tabIndex",
-          "note": "",
-          "text": "requestRoute(r)"
-        },
-        {
-          "platform": "ios",
-          "file": "App/LockKeeperApp.swift",
-          "line": 147,
-          "symbol": "showGuestGate = true",
-          "note": "",
-          "text": "}"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/LockKeeperApp.swift",
-            "line": 136,
-            "symbol": "377 受限 Tab 唯一走位口注释",
-            "note": ""
-          },
-          {
-            "file": "App/LockKeeperApp.swift",
-            "line": 141,
-            "symbol": "func requestRoute",
-            "note": ""
-          },
-          {
-            "file": "App/LockKeeperApp.swift",
-            "line": 143,
-            "symbol": "guard guestAreaLocked",
-            "note": ""
-          },
-          {
-            "file": "App/LockKeeperApp.swift",
-            "line": 146,
-            "symbol": "guestGateTarget = tabIndex",
-            "note": ""
-          },
-          {
-            "file": "App/LockKeeperApp.swift",
-            "line": 147,
-            "symbol": "showGuestGate = true",
-            "note": ""
-          },
-          {
-            "file": "App/LockKeeperApp.swift",
-            "line": 152,
-            "symbol": "func requestTab",
-            "note": ""
-          },
-          {
-            "file": "App/LockKeeperApp.swift",
-            "line": 153,
-            "symbol": "Route.from(tab:)",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "访客",
-        "路由"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-system"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "开锁与鉴权 › 访客通道 › requestRoute 换页漏斗"
-    },
-    {
-      "id": "unlock.guest.revoke",
-      "key": "unlock.guest.revoke",
-      "parent": "unlock.guest",
-      "domain": "unlock",
-      "level": 4,
-      "name": "会话授权收回",
-      "kind": "action",
-      "summary": "锁重新落下时清三枚访客状态，并把选中位从受限 Tab 收回设备页。",
-      "details": [
-        "revokeSessionGrants()：清 guestAreaUnlocked / showGuestGate / guestGateTarget",
-        "若 tabSelection 属于受限集 → 置 0（那两个 Tab 此刻已不在层级树里）",
-        "触发：appUnlocked 变 false（手动锁 / 到点自动锁 / 安全中心就地生效的访客开关）",
-        "注释：锁都重新落了还认旧账就等于没拦"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/LockKeeperApp.swift",
-          "line": 161,
-          "symbol": "377/383 会话授权收回注释",
-          "note": "",
-          "text": "lock.log(\"warn\", \"本机自检 \\(bad.count) 项异常: \\(first.name) — \\(first.detail)\")   // 397 本机自检"
-        },
-        {
-          "platform": "ios",
-          "file": "App/LockKeeperApp.swift",
-          "line": 165,
-          "symbol": "func revokeSessionGrants",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/LockKeeperApp.swift",
-          "line": 166,
-          "symbol": "guestAreaUnlocked = false",
-          "note": "",
-          "text": "/// 应用锁验证通过后的落地。"
-        },
-        {
-          "platform": "ios",
-          "file": "App/LockKeeperApp.swift",
-          "line": 169,
-          "symbol": "if guestBlockedTabs.contains(tabSelection)",
-          "note": "",
-          "text": "func commitUnlock() {"
-        },
-        {
-          "platform": "ios",
-          "file": "App/LockKeeperApp.swift",
-          "line": 1123,
-          "symbol": "appUnlocked false 时调用",
-          "note": "",
-          "text": "}"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/LockKeeperApp.swift",
-            "line": 161,
-            "symbol": "377/383 会话授权收回注释",
-            "note": ""
-          },
-          {
-            "file": "App/LockKeeperApp.swift",
-            "line": 165,
-            "symbol": "func revokeSessionGrants",
-            "note": ""
-          },
-          {
-            "file": "App/LockKeeperApp.swift",
-            "line": 166,
-            "symbol": "guestAreaUnlocked = false",
-            "note": ""
-          },
-          {
-            "file": "App/LockKeeperApp.swift",
-            "line": 169,
-            "symbol": "if guestBlockedTabs.contains(tabSelection)",
-            "note": ""
-          },
-          {
-            "file": "App/LockKeeperApp.swift",
-            "line": 1123,
-            "symbol": "appUnlocked false 时调用",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "访客",
-        "状态"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-system"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "开锁与鉴权 › 访客通道 › 会话授权收回"
     },
     {
       "id": "unlock.manual.busy-guard",
@@ -32620,7 +32359,7 @@ const DATA = {
       ],
       "childCount": 12,
       "isDomain": false,
-      "weight": 25,
+      "weight": 23,
       "path": "备份与迁移 › 备份·恢复·迁移引擎"
     },
     {
@@ -33033,6 +32772,105 @@ const DATA = {
       "path": "备份与迁移 › 备份·恢复·迁移引擎 › 覆盖式恢复 restoreAll"
     },
     {
+      "id": "backup.envelope",
+      "key": "backup.envelope",
+      "parent": "backup.engine",
+      "domain": "backup",
+      "level": 3,
+      "name": "加密信封格式",
+      "kind": "protocol",
+      "summary": "把明文包加密成 {v,alg,kdf,ivHex,macHex,cHex,meta} 的 JSON 信封，mac 覆盖 IV + 密文。",
+      "details": [
+        "v=1；alg=\"aes-128-cbc+hmac-sha256\"；kdf={alg:\"pbkdf2-hmac-sha256\", iter, saltHex}。",
+        "salt 与 iv 各 16 随机字节（HexKit 十六进制编码）；meta={size: 明文字符数, at: epoch 毫秒}。",
+        "HMAC 输入 = iv ‖ 密文；AES 由 CommonCrypto 负责 PKCS7 填充（不再手动补位，缓冲 = 明文长度 + 一块）。",
+        "加密失败必须抛错，返回空数组会把「加密失败」误诊成「文件头损坏」。"
+      ],
+      "evidence": [
+        {
+          "platform": "ios",
+          "file": "App/Services/BackupKit.swift",
+          "line": 22,
+          "symbol": "struct BackupEnvelope",
+          "note": "",
+          "text": "struct BackupEnvelope: Codable {"
+        },
+        {
+          "platform": "ios",
+          "file": "App/Services/BackupKit.swift",
+          "line": 102,
+          "symbol": "encryptText",
+          "note": "",
+          "text": "static func encryptText(_ text: String, password: String, iter: Int = defaultIter, saltHex: String? = nil, ivHex: String? = nil) throws -> String {"
+        },
+        {
+          "platform": "ios",
+          "file": "App/Services/BackupKit.swift",
+          "line": 107,
+          "symbol": "hmac(iv‖ct)",
+          "note": "",
+          "text": "let mac = hmacSha256(keys.mac, concat(HexKit.bytes(iv), ct))"
+        },
+        {
+          "platform": "ios",
+          "file": "App/Services/BackupKit.swift",
+          "line": 78,
+          "symbol": "PKCS7 双重填充修复",
+          "note": "",
+          "text": "var out = [UInt8](repeating: 0, count: plain.count + kCCBlockSizeAES128)"
+        }
+      ],
+      "platformEvidence": {
+        "ios": [
+          {
+            "file": "App/Services/BackupKit.swift",
+            "line": 22,
+            "symbol": "struct BackupEnvelope",
+            "note": ""
+          },
+          {
+            "file": "App/Services/BackupKit.swift",
+            "line": 102,
+            "symbol": "encryptText",
+            "note": ""
+          },
+          {
+            "file": "App/Services/BackupKit.swift",
+            "line": 107,
+            "symbol": "hmac(iv‖ct)",
+            "note": ""
+          },
+          {
+            "file": "App/Services/BackupKit.swift",
+            "line": 78,
+            "symbol": "PKCS7 双重填充修复",
+            "note": ""
+          }
+        ],
+        "android": [],
+        "apk": []
+      },
+      "platforms": [
+        "ios"
+      ],
+      "platformCount": 1,
+      "tags": [
+        "加密",
+        "信封"
+      ],
+      "status": {
+        "ios": "implemented"
+      },
+      "commands": [],
+      "sources": [
+        "ios-core-auto"
+      ],
+      "childCount": 3,
+      "isDomain": false,
+      "weight": 3,
+      "path": "备份与迁移 › 备份·恢复·迁移引擎 › 加密信封格式"
+    },
+    {
       "id": "backup.webdav",
       "key": "backup.webdav",
       "parent": "backup.engine",
@@ -33176,109 +33014,10 @@ const DATA = {
         "ios-core-auto",
         "ios-ui-system"
       ],
-      "childCount": 5,
-      "isDomain": false,
-      "weight": 5,
-      "path": "备份与迁移 › 备份·恢复·迁移引擎 › 坚果云同步（账号 / 上传 / 恢复）"
-    },
-    {
-      "id": "backup.envelope",
-      "key": "backup.envelope",
-      "parent": "backup.engine",
-      "domain": "backup",
-      "level": 3,
-      "name": "加密信封格式",
-      "kind": "protocol",
-      "summary": "把明文包加密成 {v,alg,kdf,ivHex,macHex,cHex,meta} 的 JSON 信封，mac 覆盖 IV + 密文。",
-      "details": [
-        "v=1；alg=\"aes-128-cbc+hmac-sha256\"；kdf={alg:\"pbkdf2-hmac-sha256\", iter, saltHex}。",
-        "salt 与 iv 各 16 随机字节（HexKit 十六进制编码）；meta={size: 明文字符数, at: epoch 毫秒}。",
-        "HMAC 输入 = iv ‖ 密文；AES 由 CommonCrypto 负责 PKCS7 填充（不再手动补位，缓冲 = 明文长度 + 一块）。",
-        "加密失败必须抛错，返回空数组会把「加密失败」误诊成「文件头损坏」。"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/Services/BackupKit.swift",
-          "line": 22,
-          "symbol": "struct BackupEnvelope",
-          "note": "",
-          "text": "struct BackupEnvelope: Codable {"
-        },
-        {
-          "platform": "ios",
-          "file": "App/Services/BackupKit.swift",
-          "line": 102,
-          "symbol": "encryptText",
-          "note": "",
-          "text": "static func encryptText(_ text: String, password: String, iter: Int = defaultIter, saltHex: String? = nil, ivHex: String? = nil) throws -> String {"
-        },
-        {
-          "platform": "ios",
-          "file": "App/Services/BackupKit.swift",
-          "line": 107,
-          "symbol": "hmac(iv‖ct)",
-          "note": "",
-          "text": "let mac = hmacSha256(keys.mac, concat(HexKit.bytes(iv), ct))"
-        },
-        {
-          "platform": "ios",
-          "file": "App/Services/BackupKit.swift",
-          "line": 78,
-          "symbol": "PKCS7 双重填充修复",
-          "note": "",
-          "text": "var out = [UInt8](repeating: 0, count: plain.count + kCCBlockSizeAES128)"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/Services/BackupKit.swift",
-            "line": 22,
-            "symbol": "struct BackupEnvelope",
-            "note": ""
-          },
-          {
-            "file": "App/Services/BackupKit.swift",
-            "line": 102,
-            "symbol": "encryptText",
-            "note": ""
-          },
-          {
-            "file": "App/Services/BackupKit.swift",
-            "line": 107,
-            "symbol": "hmac(iv‖ct)",
-            "note": ""
-          },
-          {
-            "file": "App/Services/BackupKit.swift",
-            "line": 78,
-            "symbol": "PKCS7 双重填充修复",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "加密",
-        "信封"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-core-auto"
-      ],
       "childCount": 3,
       "isDomain": false,
       "weight": 3,
-      "path": "备份与迁移 › 备份·恢复·迁移引擎 › 加密信封格式"
+      "path": "备份与迁移 › 备份·恢复·迁移引擎 › 坚果云同步（账号 / 上传 / 恢复）"
     },
     {
       "id": "backup.bundle",
@@ -34742,7 +34481,7 @@ const DATA = {
         "ios-core-auto",
         "ios-ui-system"
       ],
-      "childCount": 1,
+      "childCount": 0,
       "isDomain": false,
       "weight": 1,
       "path": "备份与迁移 › 备份·恢复·迁移引擎 › 坚果云同步（账号 / 上传 / 恢复） › 远端列表、连通测试与滚动保留"
@@ -36771,119 +36510,6 @@ const DATA = {
       "path": "备份与迁移 › schema 升级链 v1→v5"
     },
     {
-      "id": "backup.webdav.apply",
-      "key": "backup.webdav.apply",
-      "parent": "backup.webdav",
-      "domain": "backup",
-      "level": 4,
-      "name": "应用云端恢复",
-      "kind": "action",
-      "summary": "确认后落库、刷新内存，并清空内存里的口令。",
-      "details": [
-        "清 pendingRestore → BackupKit.restoreAll(bundle) → app.loadDevices()",
-        "appearance 段存在才 app.reloadAppearance()",
-        "armMigrateWizard(r) → 成功触感 → toast「恢复完成: 新增 x, 覆盖 y」",
-        "末尾 cloudPw = \"\"：口令用完即弃，不留在内存等下次"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupView.swift",
-          "line": 395,
-          "symbol": "applyPendingRestore",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupView.swift",
-          "line": 398,
-          "symbol": "BackupKit.restoreAll(bundle)",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupView.swift",
-          "line": 400,
-          "symbol": "reloadAppearance 条件",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupView.swift",
-          "line": 403,
-          "symbol": "恢复完成",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupView.swift",
-          "line": 404,
-          "symbol": "cloudPw = \"\"",
-          "note": "",
-          "text": ""
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/BackupView.swift",
-            "line": 395,
-            "symbol": "applyPendingRestore",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupView.swift",
-            "line": 398,
-            "symbol": "BackupKit.restoreAll(bundle)",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupView.swift",
-            "line": 400,
-            "symbol": "reloadAppearance 条件",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupView.swift",
-            "line": 403,
-            "symbol": "恢复完成",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupView.swift",
-            "line": 404,
-            "symbol": "cloudPw = \"\"",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "云同步",
-        "恢复"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-system"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "备份与迁移 › 备份·恢复·迁移引擎 › 坚果云同步（账号 / 上传 / 恢复） › 应用云端恢复"
-    },
-    {
       "id": "backup.webdav.encrypt",
       "key": "backup.webdav.encrypt",
       "parent": "backup.webdav",
@@ -37108,244 +36734,6 @@ const DATA = {
       "isDomain": false,
       "weight": 1,
       "path": "备份与迁移 › 备份·恢复·迁移引擎 › 坚果云同步（账号 / 上传 / 恢复） › 上传备份到坚果云"
-    },
-    {
-      "id": "backup.webdav.ready",
-      "key": "backup.webdav.ready",
-      "parent": "backup.webdav",
-      "domain": "backup",
-      "level": 4,
-      "name": "云端动作可用条件",
-      "kind": "state",
-      "summary": "账号、应用密码、加密口令三项齐全才允许上传或恢复。",
-      "details": [
-        "cloudReady = !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloudPw.isEmpty",
-        "两枚 BusyButton 都 disabled(!cloudReady)；push()/pull() 内再 guard 一次",
-        "guard 失败 toast「请填写账号/应用密码/加密口令」",
-        "默认 cloudMode = .push；按钮进行态据此区分"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupView.swift",
-          "line": 44,
-          "symbol": "cloudReady",
-          "note": "",
-          "text": "// AnyView 擦平两分支类型差异 (与 AddPwdView 同一写法): 两支只差最外层那一只容器"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupView.swift",
-          "line": 249,
-          "symbol": "上传 BusyButton",
-          "note": "",
-          "text": "}"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupView.swift",
-          "line": 252,
-          "symbol": ".disabled(!cloudReady)",
-          "note": "",
-          "text": "// 系统会把它丢掉, 用户看到的就是「选了文件, 界面没有任何反应」。"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupView.swift",
-          "line": 253,
-          "symbol": "从坚果云恢复",
-          "note": "",
-          "text": "// 先存起来, 由 onChange(showFilePicker) 在选择器收起后再问。"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupView.swift",
-          "line": 356,
-          "symbol": "guard cloudReady 提示",
-          "note": "",
-          "text": ""
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/BackupView.swift",
-            "line": 44,
-            "symbol": "cloudReady",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupView.swift",
-            "line": 249,
-            "symbol": "上传 BusyButton",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupView.swift",
-            "line": 252,
-            "symbol": ".disabled(!cloudReady)",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupView.swift",
-            "line": 253,
-            "symbol": "从坚果云恢复",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupView.swift",
-            "line": 356,
-            "symbol": "guard cloudReady 提示",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupView.swift",
-            "line": 263,
-            "symbol": "enum CloudMode",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "云同步",
-        "条件"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-system"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "备份与迁移 › 备份·恢复·迁移引擎 › 坚果云同步（账号 / 上传 / 恢复） › 云端动作可用条件"
-    },
-    {
-      "id": "backup.webdav.refresh",
-      "key": "backup.webdav.refresh",
-      "parent": "backup.webdav.list",
-      "domain": "backup",
-      "level": 4,
-      "name": "刷新列表 + 滚动保留清理",
-      "kind": "action",
-      "summary": "拉取远端清单，并顺手执行滚动保留策略。",
-      "details": [
-        "未 ready 直接 return（无提示）",
-        "listRemote 成功后若 rollingKeep > 0 → pruneRemote(keep:)；清理数 > 0 → toast「滚动保留: 已清理远端 N 份超限」",
-        "listRemote 抛错 → toast(error)；结束复位 busy",
-        "下载/恢复入口不受滚动保留影响"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupStudio.swift",
-          "line": 121,
-          "symbol": "Button 刷新列表",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupStudio.swift",
-          "line": 194,
-          "symbol": "private func refresh()",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupStudio.swift",
-          "line": 198,
-          "symbol": "listRemote",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupStudio.swift",
-          "line": 200,
-          "symbol": "rollingKeep",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupStudio.swift",
-          "line": 202,
-          "symbol": "pruneRemote",
-          "note": "",
-          "text": ""
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 121,
-            "symbol": "Button 刷新列表",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 194,
-            "symbol": "private func refresh()",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 198,
-            "symbol": "listRemote",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 200,
-            "symbol": "rollingKeep",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 202,
-            "symbol": "pruneRemote",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 203,
-            "symbol": "滚动保留 toast",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "云同步",
-        "保留"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-system"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "备份与迁移 › 备份·恢复·迁移引擎 › 坚果云同步（账号 / 上传 / 恢复） › 远端列表、连通测试与滚动保留 › 刷新列表 + 滚动保留清理"
     },
     {
       "id": "backup.zip.crc",
@@ -79934,11 +79322,6 @@ const DATA = {
     },
     {
       "source": "unlock",
-      "target": "unlock.guest",
-      "type": "tree"
-    },
-    {
-      "source": "unlock",
       "target": "unlock.manual",
       "type": "tree"
     },
@@ -80040,6 +79423,11 @@ const DATA = {
     {
       "source": "unlock.gate",
       "target": "unlock.gate.verify",
+      "type": "tree"
+    },
+    {
+      "source": "unlock",
+      "target": "unlock.guest",
       "type": "tree"
     },
     {
@@ -80220,16 +79608,6 @@ const DATA = {
     {
       "source": "unlock.guest.gate",
       "target": "unlock.guest.gate.biometric",
-      "type": "tree"
-    },
-    {
-      "source": "unlock.guest",
-      "target": "unlock.guest.request-route",
-      "type": "tree"
-    },
-    {
-      "source": "unlock.guest",
-      "target": "unlock.guest.revoke",
       "type": "tree"
     },
     {
@@ -81209,12 +80587,12 @@ const DATA = {
     },
     {
       "source": "backup.engine",
-      "target": "backup.webdav",
+      "target": "backup.envelope",
       "type": "tree"
     },
     {
       "source": "backup.engine",
-      "target": "backup.envelope",
+      "target": "backup.webdav",
       "type": "tree"
     },
     {
@@ -81384,27 +80762,12 @@ const DATA = {
     },
     {
       "source": "backup.webdav",
-      "target": "backup.webdav.apply",
-      "type": "tree"
-    },
-    {
-      "source": "backup.webdav",
       "target": "backup.webdav.encrypt",
       "type": "tree"
     },
     {
       "source": "backup.webdav",
       "target": "backup.webdav.push",
-      "type": "tree"
-    },
-    {
-      "source": "backup.webdav",
-      "target": "backup.webdav.ready",
-      "type": "tree"
-    },
-    {
-      "source": "backup.webdav.list",
-      "target": "backup.webdav.refresh",
       "type": "tree"
     },
     {
@@ -83849,24 +83212,24 @@ const DATA = {
     }
   ],
   "stats": {
-    "nodes": 833,
+    "nodes": 828,
     "domains": 13,
     "modules": 108,
     "features": 488,
-    "details": 224,
+    "details": 219,
     "byPlatform": {
-      "ios": 680,
+      "ios": 675,
       "android": 90,
-      "apk": 148
+      "apk": 147
     },
     "byDomain": {
       "device": 82,
-      "unlock": 82,
+      "unlock": 80,
       "credential": 104,
       "member": 37,
       "record": 32,
       "security": 10,
-      "backup": 46,
+      "backup": 43,
       "care": 15,
       "diagnostic": 33,
       "settings": 69,
@@ -83874,7 +83237,7 @@ const DATA = {
       "data": 87,
       "apk": 66
     },
-    "evidence": 2830,
+    "evidence": 2804,
     "commands": 45,
     "platSets": {
       "ios+android+apk": [
@@ -83938,7 +83301,6 @@ const DATA = {
         "unlock.autoopen",
         "unlock.gate",
         "unlock.autoopen.gate-chain",
-        "unlock.guest",
         "unlock.autoopen.calibrate",
         "unlock.autoopen.dispatch-result",
         "unlock.autoopen.face-service",
@@ -83959,7 +83321,9 @@ const DATA = {
         "unlock.dial.state",
         "unlock.gate.cancel",
         "unlock.gate.verify",
+        "unlock.guest",
         "unlock.guest.gate",
+        "unlock.safemode",
         "unlock.autoopen.cooldown-gate",
         "unlock.autoopen.defend-gate",
         "unlock.autoopen.face-clock",
@@ -83973,8 +83337,6 @@ const DATA = {
         "unlock.dial.hold.mark",
         "unlock.gate.flow",
         "unlock.guest.gate.biometric",
-        "unlock.guest.request-route",
-        "unlock.guest.revoke",
         "unlock.pin",
         "credential.list",
         "credential.pwd.detail",
@@ -84138,8 +83500,8 @@ const DATA = {
         "backup.center",
         "backup.webdav.studio",
         "backup.restore",
-        "backup.webdav",
         "backup.envelope",
+        "backup.webdav",
         "backup.bundle",
         "backup.bundle.globals",
         "backup.export",
@@ -84173,11 +83535,8 @@ const DATA = {
         "backup.restore.result",
         "backup.rollback.families",
         "backup.upgrade",
-        "backup.webdav.apply",
         "backup.webdav.encrypt",
         "backup.webdav.push",
-        "backup.webdav.ready",
-        "backup.webdav.refresh",
         "backup.zip.crc",
         "care.battery",
         "care.milestone",
@@ -84501,7 +83860,6 @@ const DATA = {
         "device.rename",
         "device.reset",
         "device.keychain.pin-alloc",
-        "unlock.safemode",
         "unlock.safemode.set",
         "credential.pwd.add",
         "credential.fp.add",
@@ -84850,7 +84208,7 @@ const DATA = {
       {
         "id": "backup",
         "name": "备份与恢复",
-        "count": 45,
+        "count": 42,
         "platforms": [
           "ios"
         ],
