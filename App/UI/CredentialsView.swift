@@ -774,7 +774,6 @@ struct CredentialsView: View {
     private func orderedFps(_ fps: [LedgerFp]) -> [LedgerFp] {
         let pinned: [LedgerFp] = []
         let rest = fps
-        var ordered: [LedgerFp]
         // 2026-10-27 三轮：排序四档已删，恒按时间倒序（原 default 分支）
         var ordered: [LedgerFp] = rest.sorted { ($0.at) > ($1.at) }
         let order = CredentialOrg.seq(mac)["f"] ?? []
@@ -1022,8 +1021,6 @@ struct CredentialsView: View {
         .accessibilityElement(children: .combine)
         // 849 凭证朗读顺序 "名称-类型-状态" (不堆叠字段), 856 盲文简写走 value
         .accessibilityLabel(credVoLabel(hit))
-        .accessibilityValue(AXTerms.br(credVoState(hit, now)))
-        // 849 拷贝对朗读侧走转子动作, 不对 VoiceOver 承诺"双击" (VO 的双击=激活, 不是我们的双击手势)
         .accessibilityActions {
             if let v = hit.pwd?.pwd {
                 Button("拷贝密码明文") {   // 849 拷贝密码明文
@@ -1086,8 +1083,6 @@ struct CredentialsView: View {
     /// 849 凭证朗读顺序: 名称-类型-状态 (密码/指纹/临时码 走 AXTerms 词表, 不混"密钥")
     private func credVoLabel(_ hit: CredHit) -> String {
         let kind = hit.pwd != nil
-            ? (hit.pwd?.temp == true ? AXTerms.otp : AXTerms.pwd) : AXTerms.fp
-        return AXTerms.credential + ": " + titleOf(hit) + ", " + kind
     }
     /// 856 状态字段简写 (盲文友好), 走 AXTerms.br
     /// 331 播报里"提前失效"排在"已排期"之前但让位于锁端"已过期" —— 与行上胶囊同一优先级
