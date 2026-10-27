@@ -58,7 +58,7 @@ struct SettingsView: View {
             SettingsGroupChips(selection: $groupFilter)
             // 每节挂一枚稳定锚 (`.id`), 供页内搜索 scrollTo 用。锚是字符串常量, 与筛选片无关。
             if settingsSectionShown(groupFilter, .daily) { lockSection.id(SettingsAnchor.lock) }
-            if settingsSectionShown(groupFilter, .data) { securitySection.id(SettingsAnchor.security) }
+            // 2026-10-27：`securitySection` 已删（纯说明无入口），见上方注释。
             if settingsSectionShown(groupFilter, .daily) { unlockSection.id(SettingsAnchor.unlock) }
             if settingsSectionShown(groupFilter, .look) { timeSection.id(SettingsAnchor.time) }
             if settingsSectionShown(groupFilter, .daily) { autoOpenSection.id(SettingsAnchor.autoOpen) }
@@ -408,14 +408,11 @@ struct SettingsView: View {
         }
     }
 
-    // ---------- 安全 ----------
-    private var securitySection: some View {
-        Section("安全") {
-            note("单次 / 双重验证：决定开一道锁还是两道。")
-            // 2026-10-26: 原「安全中心」入口已删 —— 那一页精简后只剩风险体检一块，
-            // 且原设计的十个安全开关只剩两条生效。风险评估改由诊断页的库体自检覆盖。
-        }
-    }
+    // 2026-10-27 界面审核修复：**删掉 `Section("安全")`** ——
+    // 它只有一句悬空说明「单次 / 双重验证：决定开一道锁还是两道」，
+    // 而这一节里**没有任何可操作项**（真正的切换入口在「安全模式说明」那一页）。
+    // 用户读到这句话却在这一节里找不到能点的东西 —— 说明与控件被拆到两处，是结构错位。
+    // 这句话已挪进 unlockSection 的 footer（验证模式与开锁动作本来就是一回事）。
 
     // ---------- 开锁 (包1: 按住确认/围栏/自动重试/圆盘尺寸) ----------
     // ---------- 647 时间显示 (制式 + 是否到秒) ----------
@@ -492,6 +489,11 @@ struct SettingsView: View {
         } header: {
             Text("开锁")
         } footer: {
+            // 2026-10-27：把原「安全」节的悬空说明并进来 —— 验证模式与开锁动作是一回事，
+            // 拆成两节只会让人在「安全」里找不到能点的东西。
+            Text("单次 / 双重验证（A / B 模式）：决定开一道锁还是两道。这是**锁端策略**，当前模式在「锁信息名片」读取后显示；本 App 只提供变严的入口（A→B），要放宽请到门锁键盘操作。")
+                .vkFont(.caption)
+                .foregroundStyle(DS.Palette.textSub)
             Text("按住圆盘时长 (默认 0.9s，可在上方「外观」里 0.4–1.6s 自定) 或上滑触发开锁；关闭「按住确认」后退回轻点直开 (适合单手与 VoiceOver)。误触围栏开启后需先从圆盘边缘拖到中心再执行开锁手势。")
                 .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)

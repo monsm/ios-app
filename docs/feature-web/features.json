@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T12:55:59.375Z",
+    "generated": "2026-10-27T13:16:36.815Z",
     "sources": [
       {
         "scout": "android-native",
@@ -28486,7 +28486,7 @@
           "line": 1036,
           "symbol": "struct TailgateView",
           "note": "",
-          "text": "var vkBody: some View {"
+          "text": ""
         },
         {
           "platform": "apk",
@@ -29332,7 +29332,7 @@
           "line": 575,
           "symbol": "Button { showBackup = true } label: { Label(\"备份与恢复\") }",
           "note": "",
-          "text": "set: { DB.store.set(\"kf_calias_display\", $0) }))"
+          "text": "VariantToggle(\"成员别名显示\", isOn: Binding("
         },
         {
           "platform": "ios",
@@ -33449,7 +33449,7 @@
           "line": 629,
           "symbol": "appearanceSection",
           "note": "",
-          "text": "}"
+          "text": "app.showToast(\"胁迫码已清除\")"
         },
         {
           "platform": "ios",
@@ -33465,7 +33465,7 @@
           "line": 828,
           "symbol": "footer: 主题、品牌色（六套）、密度、圆角 …",
           "note": "",
-          "text": "Button(\"取消自定义，回到六套预设\") { app.setCustomAccent(0) }"
+          "text": "supportsOpacity: false)"
         },
         {
           "platform": "ios",
@@ -33473,7 +33473,7 @@
           "line": 936,
           "symbol": "resetAppearance()",
           "note": "",
-          "text": "app.showToast(\"已恢复默认外观\")"
+          "text": "confirmTitle: \"恢复默认\") {"
         },
         {
           "platform": "ios",
@@ -33928,7 +33928,7 @@
           "line": 945,
           "symbol": "aboutSection",
           "note": "",
-          "text": "Spacer(minLength: DS.Space.m)"
+          "text": "HStack(spacing: DS.Space.s) {"
         },
         {
           "platform": "ios",
@@ -33936,7 +33936,7 @@
           "line": 969,
           "symbol": "Button { versionTaps += 1; if versionTaps >= 10 … }",
           "note": "",
-          "text": "}"
+          "text": "eggShown = true"
         },
         {
           "platform": "ios",
@@ -33944,7 +33944,7 @@
           "line": 1003,
           "symbol": "aboutFooterText",
           "note": "",
-          "text": "}"
+          "text": "return s"
         }
       ],
       "platformEvidence": {
@@ -34012,7 +34012,7 @@
           "line": 582,
           "symbol": "applockSection",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": "Text(\"「成员别名显示」开着时, 有备注名的成员优先显示备注 (如「老妈」), 否则显示称呼。\\n版本快照与回收站只在本机留存; 需锁端生效的操作保持「待下发」, 到场连接后在凭证页队列补发。\")"
         },
         {
           "platform": "ios",
@@ -34020,7 +34020,7 @@
           "line": 610,
           "symbol": "alert message: 4 位以上纯数字 (随机键位需要数字键盘 …)",
           "note": "",
-          "text": "}"
+          "text": "? \"冷启动需输密码。胁迫码已设置：被胁迫时输入它会进入空壳模式 —— 门能开，但凭证与记录显示为空。\""
         },
         {
           "platform": "ios",
@@ -34028,7 +34028,7 @@
           "line": 617,
           "symbol": "guard !f1.isEmpty, f1 == f2 else { showToast(\"两次输入不一致\") }",
           "note": "",
-          "text": "let alert = UIAlertController("
+          "text": "promptOldPasscode { ok in"
         }
       ],
       "platformEvidence": {
@@ -34096,7 +34096,7 @@
           "line": 501,
           "symbol": "autoOpenSection",
           "note": "",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -34166,7 +34166,7 @@
           "line": 508,
           "symbol": "familySection",
           "note": "",
-          "text": "}"
+          "text": "AutoOpenSection(mac: mac)"
         },
         {
           "platform": "ios",
@@ -34174,7 +34174,7 @@
           "line": 525,
           "symbol": "Button { showMembers = true } label: { Label(\"成员管理（含成员中心）\") }",
           "note": "",
-          "text": "Text(\"家人与钥匙\")"
+          "text": "memberFamilyRows"
         },
         {
           "platform": "ios",
@@ -34182,7 +34182,7 @@
           "line": 532,
           "symbol": "Label(\"未归属记录认领\")",
           "note": "",
-          "text": "credCareSection"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         }
       ],
       "platformEvidence": {
@@ -34388,7 +34388,7 @@
           "line": 423,
           "symbol": "timeSection",
           "note": "",
-          "text": "/// 分屏/多锁时\"同一条记录显示成三个样子\"是 647 的原罪，所以这节不提供任何页面级覆盖。"
+          "text": "private var timeSection: some View {"
         },
         {
           "platform": "ios",
@@ -34396,7 +34396,7 @@
           "line": 425,
           "symbol": "Picker(\"时间制式\", selection:)",
           "note": "",
-          "text": "/// 本 App 不再听系统的 12/24 小时偏好 —— 两件事共用一个键，而不是各存一份再吵谁赢。"
+          "text": "Picker(\"时间制式\", selection: Binding("
         },
         {
           "platform": "ios",
@@ -34404,7 +34404,7 @@
           "line": 432,
           "symbol": "VariantToggle(\"显示秒\", isOn:)",
           "note": "",
-          "text": "Text(\"24 小时制\").tag(\"24\")"
+          "text": "VariantToggle(\"显示秒\", isOn: Binding(   // 651 显示秒"
         }
       ],
       "platformEvidence": {
@@ -34471,7 +34471,7 @@
           "line": 573,
           "symbol": "toolsSection",
           "note": "",
-          "text": "VariantToggle(\"成员别名显示\", isOn: Binding("
+          "text": "// 第二行居中，而用户看到的是一串跟自己无关的编号 —— 本仓\"乱源治理\"清过 1037 处同类，这一处漏了。"
         },
         {
           "platform": "ios",
@@ -34479,7 +34479,7 @@
           "line": 575,
           "symbol": "Button { showBackup = true } label: { Label(\"备份与恢复\") }",
           "note": "",
-          "text": "set: { DB.store.set(\"kf_calias_display\", $0) }))"
+          "text": "VariantToggle(\"成员别名显示\", isOn: Binding("
         },
         {
           "platform": "ios",
@@ -34487,7 +34487,7 @@
           "line": 578,
           "symbol": "NavigationLink(\"诊断与运行日志\") { DiagnosticsView() }",
           "note": "",
-          "text": "Text(\"凭证整理\")"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         }
       ],
       "platformEvidence": {
@@ -34554,7 +34554,7 @@
           "line": 445,
           "symbol": "unlockSection",
           "note": "",
-          "text": "}"
+          "text": "private var unlockSection: some View {"
         },
         {
           "platform": "ios",
@@ -34570,7 +34570,7 @@
           "line": 492,
           "symbol": "footer: 按住圆盘时长 (默认 0.9s …)",
           "note": "",
-          "text": "} header: {"
+          "text": "// 2026-10-27：把原「安全」节的悬空说明并进来 —— 验证模式与开锁动作是一回事，"
         }
       ],
       "platformEvidence": {
@@ -35253,7 +35253,7 @@
           "line": 971,
           "symbol": "if versionTaps >= 10, !eggShown { eggShown = true; … }",
           "note": "",
-          "text": "HStack(spacing: DS.Space.s) {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -35261,7 +35261,7 @@
           "line": 989,
           "symbol": "LabeledRow(\"构建\", …)",
           "note": "",
-          "text": ".vkFont(.caption)"
+          "text": "} footer: {"
         },
         {
           "platform": "ios",
@@ -35269,7 +35269,7 @@
           "line": 990,
           "symbol": "LabeledRow(\"遥测\", \"无 · 全程离线\")",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": "Text(aboutFooterText)"
         }
       ],
       "platformEvidence": {
@@ -35340,7 +35340,7 @@
           "line": 766,
           "symbol": "Button(\"套用儿童友好外观预设\") { app.applyFriendlyPreset() }",
           "note": "",
-          "text": "Text(\"宽松\").tag(\"relaxed\")"
+          "text": "Text(\"标准\").tag(\"\")"
         },
         {
           "platform": "ios",
@@ -35356,7 +35356,7 @@
           "line": 775,
           "symbol": "Picker(\"记录页开场过滤\", selection:)",
           "note": "",
-          "text": "Text(\"紧凑 (只留名称与状态)\").tag(\"\")"
+          "text": "get: { DB.store.getString(\"kf_row_h\") },"
         },
         {
           "platform": "ios",
@@ -35364,7 +35364,7 @@
           "line": 936,
           "symbol": "resetAppearance()",
           "note": "",
-          "text": "app.showToast(\"已恢复默认外观\")"
+          "text": "confirmTitle: \"恢复默认\") {"
         },
         {
           "platform": "ios",
@@ -35474,7 +35474,7 @@
           "line": 790,
           "symbol": "ForEach(QuickPool.all) { a in VariantToggle(a.label, …) }",
           "note": "",
-          "text": "// 这里切的正是 902 原句\"Hero 卡电量数字圆体/默认体可选\"的那两处。"
+          "text": "// 902 数字字体两档: 单一令牌 DS.Metric.digitDesign, 落点只有主控卡读数与指标块两处。"
         },
         {
           "platform": "ios",
@@ -35490,7 +35490,7 @@
           "line": 804,
           "symbol": "VariantToggle(\"常用动作排到前面\")",
           "note": "",
-          "text": "get: { DS.HeroStats.shows(\"lockclock\") },"
+          "text": "set: { v in app.setHeroStats(DS.HeroStats.all.filter { $0 != \"firmware\" || v }) }))"
         }
       ],
       "platformEvidence": {
@@ -35556,7 +35556,7 @@
           "line": 586,
           "symbol": "Button(\"关闭本机密码\", role: .destructive) { disablePasscode() }",
           "note": "",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -35564,7 +35564,7 @@
           "line": 599,
           "symbol": "disablePasscode()",
           "note": "",
-          "text": "Button(\"关闭本机密码\", role: .destructive) { disablePasscode() }"
+          "text": "Button(\"更改本机密码\") { setPasscode() }"
         },
         {
           "platform": "ios",
@@ -35572,7 +35572,7 @@
           "line": 601,
           "symbol": "关闭后，查看密码内容与导出备份不再需要本机验证",
           "note": "",
-          "text": "Button(\"设置本机密码\") { setPasscode() }"
+          "text": "Button(\"关闭本机密码\", role: .destructive) { disablePasscode() }"
         }
       ],
       "platformEvidence": {
@@ -57579,7 +57579,7 @@
           "line": 633,
           "symbol": "DB.store.getString(\"kf_theme\")",
           "note": "",
-          "text": "guard !f1.isEmpty, f1 == f2 else { app.showToast(\"两次输入不一致\"); return }"
+          "text": "let f1 = alert.textFields?[0].text ?? \"\""
         },
         {
           "platform": "ios",
@@ -57595,7 +57595,7 @@
           "line": 549,
           "symbol": "DB.store.set(\"kf_ccred_quota\", $0)",
           "note": "",
-          "text": "MobileKeyView()"
+          "text": "// 前者是把钥匙写进随身硬件, 后者是把 ekey 发给成员的手机, 归属对象不同, 不能合并成一条。"
         }
       ],
       "platformEvidence": {
