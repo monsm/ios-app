@@ -519,6 +519,11 @@ jobs:
       - name: 发布到 Release (asset 直链, 下载即 .ipa)
         env:
           GH_TOKEN: ${{ github.token }}
+          # ⚠ 这一支**没有 checkout** —— 它只下载 artifact 再发版, 不需要源码。
+          # 但没有 git 仓库时 gh 无法推断 "要发到哪个 repo", 会直接 exit 1
+          # (run#40439345858 就是这么红的: 「发布到 Release」失败, 前两步都成功)。
+          # 显式给 GH_REPO 是唯一不依赖 workspace 的做法。
+          GH_REPO: ${{ github.repository }}
           STAMP: ${{ needs.stamp.outputs.kf_build_stamp }}
           SHA: ${{ github.sha }}
         run: |
