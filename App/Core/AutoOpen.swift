@@ -111,6 +111,15 @@ enum AutoOpenKit {
     /// (LAContext 一调就弹模态窗), 于是没主动刷过脸的人 lastFace 恒 nil ⇒ 恒拒 ⇒
     /// 用户报的"iOS 从来不会自动解锁"正是这条。默认档不能依赖任何弹窗。
     /// 严格档 = 0 窗口: 弹窗在途可放行 (下发前还有 F6 锁态门兜), 否则必须是本次进前台之后刷成的脸。
+    /// 严格档面容弹窗是否仍在途中。
+    /// 判据只看时间窗：发起过（startedAt != nil）+ 未超时（< 30s）+ 这次还没成功（lastFace 早于 startedAt）。
+    /// ⚠ 不能用 `lastFace == 发起时的快照` 判 —— 失败/取消时 lastFace 与快照都是 nil，`nil == nil` 恒真。
+    static func facePromptInFlight(startedAt: Date?, lastFace: Date?, now: Date) -> Bool {
+        guard let s = startedAt else { return false }
+        if now.timeIntervalSince(s) > 30 { return false }       // 弹窗超时未回 = 视为未在途
+        if let lf = lastFace, lf >= s { return false }          // 这之后成功过 = 已不在途
+        return true
+    }
     static func faceFresh(tier: Int, lastFace: Date?, now: Date, pendingPrompt: Bool, strictSince: Date? = nil) -> Bool {
         if !isStrict(tier) { return true }
         if pendingPrompt { return true }
@@ -294,7 +303,6 @@ final class AutoOpenController {
     private var lastDispatch: [String: TimeInterval] = [:]   // F5: 按锁记上次下发时刻
     private var eventFired: Set<String> = []                 // F5: 本次接近事件已发过 04 (掉回解除线才放开)
     private var promptStartedAt: Date?                       // F1 严格档: 本次进前台是否已发起弹窗
-    private var faceAtPrompt: Date?                          // F1 严格档: 发起弹窗时的面容时刻基准
     private var inFlight = false
 
     init(face: FaceService = SystemFaceService()) {
@@ -311,7 +319,6 @@ final class AutoOpenController {
         eventFired.removeAll()          // 新的一次"进前台 + 接近"事件, 放开一次性闩锁
         if AutoOpenKit.isStrict(AutoOpen.faceTier) {
             promptStartedAt = Date()    // 严格档: 记录弹窗发起时刻, 供在途位与"本次必刷"判定
-            faceAtPrompt = AutoOpenKit.lastFace()
             face.promptFace()
         }
     }
@@ -322,7 +329,6 @@ final class AutoOpenController {
         armed = false
         eventFired.removeAll()
         promptStartedAt = nil
-        faceAtPrompt = nil
         // 旧实现从不调 stop(): 回前台 start() 因 mgr != nil 幂等早退, 而传感器流已被系统停止
         // → met() 用陈旧 stillSince 恒判"已停留" (fail-open)
     }
@@ -403,7 +409,11 @@ final class AutoOpenController {
             faceTier: AutoOpen.faceTier,
             lastFace: AutoOpenKit.lastFace(),
             // 严格档在途位: 弹窗已发起且面容时刻尚未刷新 = 正在确认 (旧实现恒 false → 在途分支是死代码)
-            facePendingPrompt: promptStartedAt != nil && AutoOpenKit.lastFace() == faceAtPrompt,
+            // 2026-10-27 审核修复：原判据是 `promptStartedAt != nil && lastFace() == faceAtPrompt`，
+            // 而弹窗失败/取消时 noteFaceSuccess() 不调用 ⇒ lastFace() 与 faceAtPrompt 都是 nil，
+            // `nil == nil` 恒真 ⇒ 弹窗"在途"状态在本会话内永久为真 ⇒ faceFresh 永远放行。
+            // 现改为纯时间窗判定：发起过弹窗、距发起 < 30s、且这次还没成功。
+            facePendingPrompt: AutoOpenKit.facePromptInFlight(startedAt: promptStartedAt, lastFace: AutoOpenKit.lastFace(), now: Date()),
             facePromptStartedAt: promptStartedAt,
             now: Date(),
             // F4: 用户配了布防 (control=2) 就照常一票否决 + 落审计; 但"本机没存过布防记录"不能再读成
@@ -424,11 +434,12 @@ final class AutoOpenController {
         defer { inFlight = false }
         do {
             try await app.lock.ensureConnected(mac: mac)
+            // 2026-10-27 审核修复：闩锁与冷却必须在**下发之前**落，否则异常/超时路径
+            // 两者都不置位，而 lastDispatch 已经写了 —— 6 秒冷却一过就再发一帧，
+            // 站在门口链路抖动时会每 6 秒重试一次真实开门（手动路径明确禁止这么做）。
+            eventFired.insert(mac)
             lastDispatch[mac] = Date().timeIntervalSince1970
             let rc = try await app.lock.unlock(mac: mac)
-            // 2026-10-14: 补上闩锁置位 —— 旧实现只有 remove/removeAll/contains, 从无 insert,
-            // `if eventFired.contains(mac) { return }` 恒 false ⇒ "每个接近事件只发一次 04" 从未生效。
-            eventFired.insert(mac)
             switch rc {
             case 0:
                 // 成功: 冷却起算 (lastDispatch 已置), 复位武装让下次需重新靠近
@@ -461,6 +472,8 @@ final class AutoOpenController {
                 AutoOpen.audit(mac, "rc=\(rc) " + StatusParser.rcFriendly(rc))
             }
         } catch {
+            // 失败也要复位武装: 否则 armed 一直 true，RSSI 稍动就再触发一轮判定
+            armed = false
             AutoOpen.audit(mac, "下发异常 " + error.localizedDescription)
         }
     }
