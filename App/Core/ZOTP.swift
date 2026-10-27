@@ -20,6 +20,10 @@ enum ZOTP {
     /// **vendor 侧保持原名不改**（那是基线资产，改名会让金标 fixture 的语义漂移）；
     /// 这里用 `periodMin`，并在调用点写清换算。两边名字不同是有意的：
     /// 读基线的人看 JS，写 App 的人看这里，各按各自的名字理解。
+    // 2026-10-27 审核说明 (AUDIT-A F-28)：原先这里有 `assert(periodMin <= 120)`，
+    // 而 `project.yml` 的 Release 配置显式关断言 ⇒ 真机包上它等于不存在。
+    // 该 assert 已随 ZOTP 精简删除（不是"保留但无效"）。若将来要恢复入参校验，
+    // 必须写成 `guard ... else { return nil }` 而不是 assert。
     static func generate(macHex: String, skeyHex: String, periodMin: Int, idx: Int, nowSec: Int64? = nil) -> String {
         // 断言单位：锁端真实窗口在 1–120 分钟量级；若有人误传秒（如 1800），这里明确崩而不是静默错窗。
         assert(periodMin <= 0 || (1...120).contains(periodMin),

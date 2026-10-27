@@ -419,7 +419,7 @@ final class LockService: ObservableObject {
             let (m, sk) = try keys()
             r = try await exec(ZKCmdBuilder.cmd03StatusWrap(m, sk))
         } else {
-            r = try await exec(ZKCmdBuilder.cmd03StatusPlain(curMac), needToken: false)
+            r = try await exec(ZKCmdBuilder.cmd03StatusPlain(), needToken: false)
         }
         let st = StatusParser.parseStatus(r.klvs)
         if st.rc == 0 {

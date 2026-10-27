@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T09:58:42.769Z",
+    "generated": "2026-10-27T10:01:42.317Z",
     "sources": [
       {
         "scout": "android-native",
@@ -2713,7 +2713,7 @@
           "line": 268,
           "symbol": "cmd31GWSetWifi",
           "note": "",
-          "text": ""
+          "text": "static func cmd43KeychainStatus(_ lockMacList: [String]) -> ZKCmd {"
         },
         {
           "platform": "apk",
@@ -4288,7 +4288,7 @@
           "line": 244,
           "symbol": "cmd41WriteEkey",
           "note": "",
-          "text": "// ---- 钥匙串硬件 (ZKBBV1 pid=16289; 87 帧明文 KLV, needToken=false) ----"
+          "text": "// cmd 24: interval(1B 档位 1-6)"
         },
         {
           "platform": "apk",
@@ -6619,7 +6619,7 @@
           "line": 142,
           "symbol": "cmd08SyncPinsBatch",
           "note": "",
-          "text": "// cmd 08: addCount(1B)+delCount(1B)+addPins(4B LE×N)+delPins(4B LE×M)"
+          "text": "// JS: '2010-01-01T00:00:00' 本地解释 ⇒ 东八区为 −28800; 经 protoSecU32 收口成 0 (= APK 的取值)"
         },
         {
           "platform": "ios",
@@ -14877,7 +14877,7 @@
           "line": 155,
           "symbol": "cmd0ASyncPwd",
           "note": "",
-          "text": "// cmd 0A: delAlias(2B LE, 0xFFFF=清空) + addPwd(8B ASCII 右补零) + validFrom/To(4B LE)"
+          "text": "// cmd 21: skeyLen(1B=0x10)+bkey(16B)"
         },
         {
           "platform": "apk",
@@ -17272,7 +17272,7 @@
           "line": 209,
           "symbol": "cmd14FpConfirm",
           "note": "",
-          "text": "// cmd 14: batchNumber(4B LE) + validFrom/To"
+          "text": "let t = times > 0 ? times : 8"
         },
         {
           "platform": "ios",
@@ -17572,7 +17572,7 @@
           "line": 201,
           "symbol": "cmd13AddFp(times: 8, timeout: 15)",
           "note": "",
-          "text": "// cmd 13: times(1B) + timeout(1B)"
+          "text": "// cmd 0E: syncTime(4B LE 协议秒)"
         },
         {
           "platform": "ios",
@@ -22121,7 +22121,7 @@
           "line": 124,
           "symbol": "buildEkeyOpen",
           "note": "",
-          "text": "// ekey (开锁凭证) = AES(skey)($t 包络); JS buildEkeyOpen/buildEkeyShare"
+          "text": "if h.hasPrefix(\"0x\") { h = String(h.dropFirst(2)) } // JS: replace(/^0x/i, '')"
         },
         {
           "platform": "ios",
@@ -22129,7 +22129,7 @@
           "line": 106,
           "symbol": "cmd04Open",
           "note": "",
-          "text": "// cmd 04 OPEN: KLV#01 = 左补零 32; KLV#02 = 凭证密文"
+          "text": "// 空密文 = skey 非法/CCCrypt 失败: 不能再包成帧 (旧写法会发出 KLV#01 长度为 0 的假请求)"
         },
         {
           "platform": "ios",
@@ -22137,7 +22137,7 @@
           "line": 133,
           "symbol": "buildEkeyShare",
           "note": "",
-          "text": "// App generateEkey (分享/写钥匙串): 随机 TrackId + 本地时区 2010~2118 窗口"
+          "text": "guard let pinLE = pinToLEOrNil(pin) else { return \"\" }"
         }
       ],
       "platformEvidence": {
@@ -28963,7 +28963,7 @@
           "line": 235,
           "symbol": "cmd20ValidationMode",
           "note": "",
-          "text": "// cmd 20: mode(1B 0=A单验/1=B双验)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -29036,7 +29036,7 @@
           "line": 239,
           "symbol": "cmd24AutoLock",
           "note": "",
-          "text": "// cmd 24: interval(1B 档位 1-6)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -36045,7 +36045,7 @@
           "line": 155,
           "symbol": "cmd0ASyncPwd(delAlias: 0xFFFF)",
           "note": "",
-          "text": "// cmd 0A: delAlias(2B LE, 0xFFFF=清空) + addPwd(8B ASCII 右补零) + validFrom/To(4B LE)"
+          "text": "// cmd 21: skeyLen(1B=0x10)+bkey(16B)"
         },
         {
           "platform": "ios",
@@ -36232,7 +36232,7 @@
           "line": 227,
           "symbol": "cmd18Volume",
           "note": "",
-          "text": "// cmd 18: vol(1B) — App setSilentMode 语义: 0=有声 1=静音"
+          "text": "// 兜底对齐 JS cmds.js:138 (pageSize||20)"
         },
         {
           "platform": "ios",
@@ -40433,7 +40433,7 @@
           "line": 154,
           "symbol": "rcMsg",
           "note": "",
-          "text": "static let rcMsg: [Int: String] = ["
+          "text": "}.count"
         },
         {
           "platform": "ios",
@@ -40465,7 +40465,7 @@
           "line": 162,
           "symbol": "rcMessage(_:)",
           "note": "",
-          "text": "static func rcMessage(_ rc: Int) -> String { rcMsg[rc] ?? (\"错误码 \\(rc)\") }"
+          "text": "15: \"未知协议\", 16: \"参数不在范围内\", 17: \"丢包\", 18: \"不能设置重复的值\", 19: \"找不到指定的值\","
         }
       ],
       "platformEvidence": {
@@ -40584,7 +40584,7 @@
           "line": 51,
           "symbol": "parseStatus",
           "note": "",
-          "text": "static func parseStatus(_ klvs: [ZKLV]) -> LockStatus {"
+          "text": "for i in stride(from: b.count - 1, through: 0, by: -1) { v = v &* 256 &+ UInt32(b[i]) }"
         },
         {
           "platform": "android",
@@ -41315,7 +41315,7 @@
           "line": 124,
           "symbol": "parseLogEntry",
           "note": "",
-          "text": "static func parseLogEntry(_ hex: String) -> LogEntry? {"
+          "text": "12: \"授时\", 13: \"指纹告警\", 14: \"同步PIN\", 15: \"同步密码\","
         }
       ],
       "platformEvidence": {
@@ -41833,7 +41833,7 @@
           "line": 45,
           "symbol": "nextWindow",
           "note": "",
-          "text": "var i = 0"
+          "text": "guard p.count == 32 else { return \"\" }"
         },
         {
           "platform": "android",
@@ -42310,7 +42310,7 @@
           "line": 169,
           "symbol": "rcHint 高频失败码人话",
           "note": "",
-          "text": "case 3: return \"指令已过期, 多为锁内时钟不准 — 先到快捷操作校准时间再试\""
+          "text": "// 纯文案层映射, 不新增/不改动任何协议命令; 未命中的码回落 rcMessage。"
         },
         {
           "platform": "apk",
@@ -42358,7 +42358,7 @@
           "line": 106,
           "symbol": "cmd04Open",
           "note": "",
-          "text": "// cmd 04 OPEN: KLV#01 = 左补零 32; KLV#02 = 凭证密文"
+          "text": "// 空密文 = skey 非法/CCCrypt 失败: 不能再包成帧 (旧写法会发出 KLV#01 长度为 0 的假请求)"
         }
       ],
       "platformEvidence": {
@@ -42722,7 +42722,7 @@
           "line": 291,
           "symbol": "ProtoTime.localStr",
           "note": "",
-          "text": "guard advHex.count - from >= 24 else { return nil }"
+          "text": "static func parseAdv(_ advHex: String) -> AdvData? {"
         }
       ],
       "platformEvidence": {
@@ -43035,7 +43035,7 @@
           "line": 201,
           "symbol": "cmd13AddFp",
           "note": "",
-          "text": "// cmd 13: times(1B) + timeout(1B)"
+          "text": "// cmd 0E: syncTime(4B LE 协议秒)"
         },
         {
           "platform": "ios",
@@ -43075,7 +43075,7 @@
           "line": 209,
           "symbol": "cmd14FpConfirm",
           "note": "",
-          "text": "// cmd 14: batchNumber(4B LE) + validFrom/To"
+          "text": "let t = times > 0 ? times : 8"
         }
       ],
       "platformEvidence": {
@@ -44729,7 +44729,7 @@
           "line": 137,
           "symbol": "parseLogs",
           "note": "",
-          "text": "static func parseLogs(_ klvs: [ZKLV]) -> [LogEntry] {"
+          "text": "lockTime: lockTime,"
         },
         {
           "platform": "ios",
@@ -44737,7 +44737,7 @@
           "line": 147,
           "symbol": "truncatedLogCount",
           "note": "",
-          "text": "static func truncatedLogCount(_ klvs: [ZKLV]) -> Int {"
+          "text": "/// (七属性全无默认值，少传一个就编译不过 —— DiagKit:560 记着这件事)，在没有编译器的一晚里不划算。"
         }
       ],
       "platformEvidence": {
@@ -45877,7 +45877,7 @@
           "line": 98,
           "symbol": "cmd03StatusWrap",
           "note": "",
-          "text": "/// 其余调用点一律 nil = 按本机对这把锁已裁定的顺序 (默认原版 APK 语义)。"
+          "text": "return ZKCmd(name: \"05 换钥\", cmd: 0x05, hex: ZKProtocol.buildFrame(0x05, klv, header: 8))"
         },
         {
           "platform": "ios",
@@ -46055,7 +46055,7 @@
           "line": 106,
           "symbol": "cmd04Open",
           "note": "",
-          "text": "// cmd 04 OPEN: KLV#01 = 左补零 32; KLV#02 = 凭证密文"
+          "text": "// 空密文 = skey 非法/CCCrypt 失败: 不能再包成帧 (旧写法会发出 KLV#01 长度为 0 的假请求)"
         },
         {
           "platform": "ios",
@@ -46095,7 +46095,7 @@
           "line": 110,
           "symbol": "cmd04Open",
           "note": "KLV#01 左补零 32 + KLV#02 ekey",
-          "text": "if ekeyHex.isEmpty { return ZKCmd(name: \"04 开锁\", cmd: 0x04, hex: \"\") }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -46257,7 +46257,7 @@
           "line": 86,
           "symbol": "cmd05Exchange",
           "note": "",
-          "text": "}"
+          "text": "/// 这条命令需要 MAC（明文 03 帧确实不需要，MAC 只在 0x88 包络里）。"
         },
         {
           "platform": "ios",
@@ -46384,7 +46384,7 @@
           "line": 142,
           "symbol": "cmd08SyncPinsBatch",
           "note": "",
-          "text": "// cmd 08: addCount(1B)+delCount(1B)+addPins(4B LE×N)+delPins(4B LE×M)"
+          "text": "// JS: '2010-01-01T00:00:00' 本地解释 ⇒ 东八区为 −28800; 经 protoSecU32 收口成 0 (= APK 的取值)"
         },
         {
           "platform": "ios",
@@ -46408,7 +46408,7 @@
           "line": 144,
           "symbol": "cmd08SyncPinsBatch",
           "note": "body 布局",
-          "text": "if addPins.count > 20 { return nil }"
+          "text": "let vt = protoSecU32(\"2118-01-01 00:00:00\")"
         },
         {
           "platform": "ios",
@@ -46521,7 +46521,7 @@
           "line": 155,
           "symbol": "cmd0ASyncPwd",
           "note": "",
-          "text": "// cmd 0A: delAlias(2B LE, 0xFFFF=清空) + addPwd(8B ASCII 右补零) + validFrom/To(4B LE)"
+          "text": "// cmd 21: skeyLen(1B=0x10)+bkey(16B)"
         },
         {
           "platform": "ios",
@@ -46561,7 +46561,7 @@
           "line": 172,
           "symbol": "cmd0ASyncPwd",
           "note": "body 布局",
-          "text": "else { throw BLEErrorX.msg(\"密码有效期无法解析: \\(validTo ?? \"\") (支持 ISO8601/带 Z、'yyyy-MM-dd HH:mm:ss'、秒/毫秒) — 已中止下发\") }"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -46685,7 +46685,7 @@
           "line": 179,
           "symbol": "cmd0BSyncPwdExpire",
           "note": "",
-          "text": "// cmd 0B: alias(2B LE) + validFrom/To"
+          "text": "+ HexKit.asciiHex(addPwd, nBytes: 8)"
         },
         {
           "platform": "ios",
@@ -47031,7 +47031,7 @@
           "line": 196,
           "symbol": "cmd0ESyncTime",
           "note": "",
-          "text": "// cmd 0E: syncTime(4B LE 协议秒)"
+          "text": "let body = u16leHex(alias)"
         },
         {
           "platform": "ios",
@@ -47257,7 +47257,7 @@
           "line": 209,
           "symbol": "cmd14FpConfirm",
           "note": "",
-          "text": "// cmd 14: batchNumber(4B LE) + validFrom/To"
+          "text": "let t = times > 0 ? times : 8"
         },
         {
           "platform": "ios",
@@ -47289,7 +47289,7 @@
           "line": 212,
           "symbol": "cmd14FpConfirm",
           "note": "protoSecU32 收口",
-          "text": "+ HexKit.u32leHex(protoSecU32(validFrom))"
+          "text": "return ZKCmd(name: \"13 录指纹\", cmd: 0x13, hex: ZKProtocol.wrapFrame(0x13, macHex, skeyHex, body, 0x02))"
         }
       ],
       "platformEvidence": {
@@ -47385,7 +47385,7 @@
           "line": 216,
           "symbol": "cmd15DeleteFp",
           "note": "",
-          "text": "// cmd 15: batchNumber(4B LE)"
+          "text": "let body = HexKit.u32leHex(batchNumber)"
         },
         {
           "platform": "ios",
@@ -47511,7 +47511,7 @@
           "line": 220,
           "symbol": "cmd16GetLog",
           "note": "",
-          "text": "// cmd 16: orderType(1B) + startIdx(4B LE) + pageSize(1B)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -47527,7 +47527,7 @@
           "line": 137,
           "symbol": "parseLogs",
           "note": "只取 KLV#05",
-          "text": "static func parseLogs(_ klvs: [ZKLV]) -> [LogEntry] {"
+          "text": "lockTime: lockTime,"
         },
         {
           "platform": "apk",
@@ -47623,7 +47623,7 @@
           "line": 227,
           "symbol": "cmd18Volume",
           "note": "",
-          "text": "// cmd 18: vol(1B) — App setSilentMode 语义: 0=有声 1=静音"
+          "text": "// 兜底对齐 JS cmds.js:138 (pageSize||20)"
         },
         {
           "platform": "ios",
@@ -47647,7 +47647,7 @@
           "line": 235,
           "symbol": "cmd20ValidationMode",
           "note": "",
-          "text": "// cmd 20: mode(1B 0=A单验/1=B双验)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -47655,7 +47655,7 @@
           "line": 239,
           "symbol": "cmd24AutoLock",
           "note": "",
-          "text": "// cmd 24: interval(1B 档位 1-6)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -47752,7 +47752,7 @@
           "line": 231,
           "symbol": "cmd19OpenZotp",
           "note": "",
-          "text": "// cmd 19: status(1B 0=关/1=开)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -47865,7 +47865,7 @@
           "line": 235,
           "symbol": "cmd20ValidationMode",
           "note": "",
-          "text": "// cmd 20: mode(1B 0=A单验/1=B双验)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -47881,7 +47881,7 @@
           "line": 72,
           "symbol": "parseStatus",
           "note": "verifyMode = bit0",
-          "text": "s.verifyMode = s.securityLevel & 0x01"
+          "text": "case 0x07:"
         },
         {
           "platform": "apk",
@@ -47974,7 +47974,7 @@
           "line": 150,
           "symbol": "cmd21SetBkey",
           "note": "",
-          "text": "// cmd 21: skeyLen(1B=0x10)+bkey(16B)"
+          "text": "var body = HexKit.hexPair(UInt32(addPins.count)) + HexKit.hexPair(UInt32(delPins.count))"
         },
         {
           "platform": "ios",
@@ -47998,7 +47998,7 @@
           "line": 151,
           "symbol": "cmd21SetBkey",
           "note": "body = \"10\" + bkeyHex",
-          "text": "static func cmd21SetBkey(_ macHex: String, _ skeyHex: String, _ bkeyHex: String) -> ZKCmd {"
+          "text": "body += addPins.joined()"
         }
       ],
       "platformEvidence": {
@@ -48290,7 +48290,7 @@
           "line": 239,
           "symbol": "cmd24AutoLock",
           "note": "",
-          "text": "// cmd 24: interval(1B 档位 1-6)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -48571,7 +48571,7 @@
           "line": 268,
           "symbol": "cmd31GWSetWifi",
           "note": "",
-          "text": ""
+          "text": "static func cmd43KeychainStatus(_ lockMacList: [String]) -> ZKCmd {"
         },
         {
           "platform": "ios",
@@ -48603,7 +48603,7 @@
           "line": 280,
           "symbol": "cmd35GWReboot",
           "note": "",
-          "text": "}"
+          "text": "+ ZKProtocol.buildKLV(0x02, HexKit.utf8Hex(password))"
         },
         {
           "platform": "ios",
@@ -48611,7 +48611,7 @@
           "line": 265,
           "symbol": "cmd38GWStatus",
           "note": "",
-          "text": "for m in lockMacList { v += HexKit.reversePairs(m.replacingOccurrences(of: \":\", with: \"\").lowercased()) }"
+          "text": "let v = m.isEmpty ? \"\" : HexKit.reversePairs(m)"
         }
       ],
       "platformEvidence": {
@@ -48710,7 +48710,7 @@
           "line": 276,
           "symbol": "cmd32GWSetIot",
           "note": "",
-          "text": "+ ZKProtocol.buildKLV(0x03, HexKit.hexPair(UInt32(truncatingIfNeeded: authMode)))"
+          "text": "ZKCmd(name: \"38 网关状态\", cmd: 0x38, hex: ZKProtocol.buildFrame(0x38, \"\", header: 8))"
         },
         {
           "platform": "ios",
@@ -48806,7 +48806,7 @@
           "line": 280,
           "symbol": "cmd35GWReboot",
           "note": "",
-          "text": "}"
+          "text": "+ ZKProtocol.buildKLV(0x02, HexKit.utf8Hex(password))"
         },
         {
           "platform": "ios",
@@ -48915,7 +48915,7 @@
           "line": 265,
           "symbol": "cmd38GWStatus",
           "note": "",
-          "text": "for m in lockMacList { v += HexKit.reversePairs(m.replacingOccurrences(of: \":\", with: \"\").lowercased()) }"
+          "text": "let v = m.isEmpty ? \"\" : HexKit.reversePairs(m)"
         },
         {
           "platform": "ios",
@@ -49029,7 +49029,7 @@
           "line": 244,
           "symbol": "cmd41WriteEkey",
           "note": "",
-          "text": "// ---- 钥匙串硬件 (ZKBBV1 pid=16289; 87 帧明文 KLV, needToken=false) ----"
+          "text": "// cmd 24: interval(1B 档位 1-6)"
         },
         {
           "platform": "ios",
@@ -49061,7 +49061,7 @@
           "line": 252,
           "symbol": "cmd44GetEkeyInfo",
           "note": "",
-          "text": "+ ZKProtocol.buildKLV(0x02, HexKit.hexPair(UInt32(truncatingIfNeeded: type)))"
+          "text": "// 之后写进硬件钥匙串的 MAC 就永久是反的 —— 归属写错、查不到、状态读错。"
         }
       ],
       "platformEvidence": {
@@ -49156,7 +49156,7 @@
           "line": 258,
           "symbol": "cmd43KeychainStatus",
           "note": "",
-          "text": "// 2026-10-14: 去掉强解包 (空 = 查全部钥匙, 与旧口径一致), 并把剥冒号/小写收在前一行。"
+          "text": "+ ZKProtocol.buildKLV(0x03, u16leHex(pid))"
         },
         {
           "platform": "ios",
@@ -49266,7 +49266,7 @@
           "line": 252,
           "symbol": "cmd44GetEkeyInfo",
           "note": "",
-          "text": "+ ZKProtocol.buildKLV(0x02, HexKit.hexPair(UInt32(truncatingIfNeeded: type)))"
+          "text": "// 之后写进硬件钥匙串的 MAC 就永久是反的 —— 归属写错、查不到、状态读错。"
         },
         {
           "platform": "ios",
@@ -49379,7 +49379,7 @@
           "line": 128,
           "symbol": "buildEkeyOpen",
           "note": "EKey(0x04) + pinLE + 0000",
-          "text": "guard let pinLE = pinToLEOrNil(pin) else { return \"\" }"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -49448,7 +49448,7 @@
           "line": 138,
           "symbol": "buildEkeyShare",
           "note": "",
-          "text": "let vf = protoSecU32(\"2010-01-01 00:00:00\")"
+          "text": "// App generateEkey (分享/写钥匙串): 随机 TrackId + 本地时区 2010~2118 窗口"
         },
         {
           "platform": "ios",
@@ -49971,7 +49971,7 @@
           "line": 276,
           "symbol": "cmd32GWSetIot",
           "note": "",
-          "text": "+ ZKProtocol.buildKLV(0x03, HexKit.hexPair(UInt32(truncatingIfNeeded: authMode)))"
+          "text": "ZKCmd(name: \"38 网关状态\", cmd: 0x38, hex: ZKProtocol.buildFrame(0x38, \"\", header: 8))"
         },
         {
           "platform": "ios",
@@ -50400,7 +50400,7 @@
           "line": 83,
           "symbol": "hexToAscii",
           "note": "",
-          "text": "guard hex.count % 2 == 0 else { return \"\" }"
+          "text": "/// 本仓「丢掉末字符」（与 JS `substr(0, len-1)` 语义一致）；Android 会补一位。"
         }
       ],
       "platformEvidence": {
@@ -50983,7 +50983,7 @@
           "line": 150,
           "symbol": "cmd21SetBkey",
           "note": "",
-          "text": "// cmd 21: skeyLen(1B=0x10)+bkey(16B)"
+          "text": "var body = HexKit.hexPair(UInt32(addPins.count)) + HexKit.hexPair(UInt32(delPins.count))"
         },
         {
           "platform": "ios",
@@ -51457,7 +51457,7 @@
           "line": 102,
           "symbol": "cmd03StatusWrap",
           "note": "KLV#01 密文 + KLV#02 空",
-          "text": "if enc.isEmpty { return ZKCmd(name: \"03 加密状态\", cmd: 0x03, hex: \"\") }"
+          "text": "/// `order` 只有配网期的\"MAC 字节序只读探针\"会显式传 (见 LockService.calibrateMacOrder);"
         },
         {
           "platform": "ios",
@@ -51481,7 +51481,7 @@
           "line": 110,
           "symbol": "buildEkeyOpen",
           "note": "KLV#02 承载凭证密文",
-          "text": "if ekeyHex.isEmpty { return ZKCmd(name: \"04 开锁\", cmd: 0x04, hex: \"\") }"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -51625,7 +51625,7 @@
           "line": 125,
           "symbol": "parseLogEntry",
           "note": "",
-          "text": "guard hex.count >= 20 else { return nil }"
+          "text": "20: \"添加指纹\", 21: \"删除指纹\", 22: \"设置安全级别\", 23: \"状态广播开关\","
         },
         {
           "platform": "ios",
@@ -51641,7 +51641,7 @@
           "line": 128,
           "symbol": "parseLogEntry",
           "note": "idx 偏移",
-          "text": "let idx = leHexToU32(String(hex.dropFirst(4).prefix(8)))"
+          "text": "static func parseLogEntry(_ hex: String) -> LogEntry? {"
         }
       ],
       "platformEvidence": {
@@ -51710,7 +51710,7 @@
           "line": 147,
           "symbol": "truncatedLogCount",
           "note": "",
-          "text": "static func truncatedLogCount(_ klvs: [ZKLV]) -> Int {"
+          "text": "/// (七属性全无默认值，少传一个就编译不过 —— DiagKit:560 记着这件事)，在没有编译器的一晚里不划算。"
         },
         {
           "platform": "ios",
@@ -51781,7 +51781,7 @@
           "line": 117,
           "symbol": "logTypes",
           "note": "",
-          "text": "static let logTypes: [Int: String] = ["
+          "text": "return s"
         }
       ],
       "platformEvidence": {
@@ -52001,7 +52001,7 @@
           "line": 246,
           "symbol": "cmd41WriteEkey",
           "note": "先 targetMac 再 reversePairs",
-          "text": "// 而那个函数读的是 0x88 包络的 MAC 字节序注册表。若某把锁被 rc=12 自愈裁定成 `.raw`，"
+          "text": "ZKCmd(name: \"24 自动上锁\", cmd: 0x24, hex: ZKProtocol.wrapFrame(0x24, macHex, skeyHex, HexKit.hexPair(UInt32(truncatingIfNeeded: interval)), 0x01))"
         },
         {
           "platform": "ios",
@@ -52009,7 +52009,7 @@
           "line": 254,
           "symbol": "cmd44GetEkeyInfo",
           "note": "先剥冒号小写",
-          "text": "+ ZKProtocol.buildKLV(0x04, ekeyHex)"
+          "text": "static func cmd41WriteEkey(_ lockMacHex: String, _ pid: Int, _ ekeyHex: String, type: Int = 1) -> ZKCmd {"
         }
       ],
       "platformEvidence": {
@@ -52086,7 +52086,7 @@
           "line": 30,
           "symbol": "generate",
           "note": "MAC 12 hex 门禁",
-          "text": "let uPadded = String(repeating: \"0\", count: max(0, 8 - u.count)) + u"
+          "text": "\"periodMin 单位是分钟；传入 \\(periodMin) 看起来像秒 —— 请确认调用点\")"
         },
         {
           "platform": "ios",
@@ -52094,7 +52094,7 @@
           "line": 40,
           "symbol": "generate",
           "note": "异或取个位",
-          "text": "let p = AESKit.encryptHex(c, keyHex: skeyHex).uppercased()"
+          "text": "// vendor 基线在这里是逐对反向、对奇数长度会悄悄丢首字符 —— 那是一条跨语言分歧 (§10.44)。"
         }
       ],
       "platformEvidence": {
@@ -52171,7 +52171,7 @@
           "line": 46,
           "symbol": "nextWindow",
           "note": "",
-          "text": "while i + 1 < bytes.count {"
+          "text": "let body = String(p.prefix(p.count - 8)) // 前 24hex = 6 个 4hex 块"
         }
       ],
       "platformEvidence": {
@@ -52503,7 +52503,7 @@
           "line": 166,
           "symbol": "rcHint",
           "note": "",
-          "text": "static func rcHint(_ rc: Int) -> String? {"
+          "text": "static func rcMessage(_ rc: Int) -> String { rcMsg[rc] ?? (\"错误码 \\(rc)\") }"
         },
         {
           "platform": "ios",
@@ -52511,7 +52511,7 @@
           "line": 181,
           "symbol": "rcFriendly",
           "note": "",
-          "text": "/// 2026-10-27 审核说明 (AUDIT-A F-11/F-14)：rc 的三种边界在三端语义不同，这里是本机的口径 ——"
+          "text": "case 27: return \"门锁处于布防状态, 请先解除布防再开锁\""
         }
       ],
       "platformEvidence": {
@@ -52574,7 +52574,7 @@
           "line": 154,
           "symbol": "rcMsg",
           "note": "",
-          "text": "static let rcMsg: [Int: String] = ["
+          "text": "}.count"
         },
         {
           "platform": "ios",
@@ -52582,7 +52582,7 @@
           "line": 162,
           "symbol": "rcMessage",
           "note": "",
-          "text": "static func rcMessage(_ rc: Int) -> String { rcMsg[rc] ?? (\"错误码 \\(rc)\") }"
+          "text": "15: \"未知协议\", 16: \"参数不在范围内\", 17: \"丢包\", 18: \"不能设置重复的值\", 19: \"找不到指定的值\","
         }
       ],
       "platformEvidence": {
@@ -53194,7 +53194,7 @@
           "line": 56,
           "symbol": "parseStatus",
           "note": "",
-          "text": "case 0x04: // lockTime 4B LE 协议秒"
+          "text": "var s = LockStatus()"
         },
         {
           "platform": "ios",
@@ -53265,7 +53265,7 @@
           "line": 55,
           "symbol": "parseStatus",
           "note": "switch 全部分支",
-          "text": "switch k.key {"
+          "text": "static func parseStatus(_ klvs: [ZKLV]) -> LockStatus {"
         },
         {
           "platform": "ios",
@@ -53273,7 +53273,7 @@
           "line": 88,
           "symbol": "parseStatus",
           "note": "0x31 固件点分",
-          "text": "case 0x31: // 固件 3B: 反转后直读 p0.p1.p2"
+          "text": "case 0x26: s.pwdInfoMaxLen = intHex(k.val)"
         },
         {
           "platform": "ios",
@@ -53281,7 +53281,7 @@
           "line": 100,
           "symbol": "parseStatus",
           "note": "0x34 pid",
-          "text": "case 0x34:"
+          "text": "case 0x32:"
         }
       ],
       "platformEvidence": {
@@ -53350,7 +53350,7 @@
           "line": 70,
           "symbol": "parseStatus",
           "note": "",
-          "text": "case 0x08: // bit0=verifyMode bit1=broadcastMode bit2=tempPwdMode"
+          "text": "case 0x06:"
         },
         {
           "platform": "ios",
@@ -53358,7 +53358,7 @@
           "line": 72,
           "symbol": "parseStatus",
           "note": "三个派生位",
-          "text": "s.verifyMode = s.securityLevel & 0x01"
+          "text": "case 0x07:"
         }
       ],
       "platformEvidence": {
@@ -54153,7 +54153,7 @@
           "line": 159,
           "symbol": "rcMsg",
           "note": "22 不能重复验证",
-          "text": "20: \"指纹传感器错误\", 21: \"门锁处于反锁状态\", 22: \"不能重复验证\", 23: \"无法获取有效的指纹图片\","
+          "text": "0: \"成功\", 1: \"解密失败\", 2: \"无效的PIN码\", 3: \"命令过期\", 5: \"次数使用完毕\","
         }
       ],
       "platformEvidence": {
@@ -54305,7 +54305,7 @@
           "line": 101,
           "symbol": "cmd03StatusWrap",
           "note": "enc.isEmpty → hex: \"\"",
-          "text": "// 空密文 = skey 非法/CCCrypt 失败: 不能再包成帧 (旧写法会发出 KLV#01 长度为 0 的假请求)"
+          "text": "// ---- 密文管理面 ----"
         },
         {
           "platform": "ios",
@@ -55499,7 +55499,7 @@
           "line": 116,
           "symbol": "pinToLEOrNil",
           "note": "",
-          "text": "// 一条 pin=0 的 ekey 发给锁 —— 既可能是错误凭证, 也会在锁端留下一次真实开锁尝试。改为显式失败。"
+          "text": "let klv = ZKProtocol.buildKLV(0x01, HexKit.fillZeroLeft(klv01Hex, 32)) + ZKProtocol.buildKLV(0x02, ekeyHex)"
         },
         {
           "platform": "ios",
@@ -55515,7 +55515,7 @@
           "line": 124,
           "symbol": "buildEkeyOpen",
           "note": "",
-          "text": "// ekey (开锁凭证) = AES(skey)($t 包络); JS buildEkeyOpen/buildEkeyShare"
+          "text": "if h.hasPrefix(\"0x\") { h = String(h.dropFirst(2)) } // JS: replace(/^0x/i, '')"
         },
         {
           "platform": "ios",
@@ -55523,7 +55523,7 @@
           "line": 129,
           "symbol": "buildEkeyOpen",
           "note": "pinLE + 00 + 00",
-          "text": "let env = ZKProtocol.buildEkey(0x04, macHex, validFromSec: validFromSec, validToSec: validToSec, trackIdVal: trackId)"
+          "text": "// ekey (开锁凭证) = AES(skey)($t 包络); JS buildEkeyOpen/buildEkeyShare"
         }
       ],
       "platformEvidence": {

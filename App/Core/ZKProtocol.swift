@@ -284,6 +284,10 @@ enum ZKProtocol {
         var containMac: Int
         var dfuState: Int
     }
+    /// 2026-10-27 审核说明 (AUDIT-A F-09)：frameCtrl 的 ZK 门禁判据三端写法不同 ——
+    /// Java 原版是 `fc >= 0x0C`，三端（iOS/Android/vendor JS）都是 `(fc & 0x0C) == 0x0C`。
+    /// 两者在 fc 的 bit2/bit3 都置位时等价；差异只出现在高位有其他标志时。
+    /// 本仓沿用 JS 口径（位与），因为它对「额外标志位」更宽容 —— 新固件加了标志不会失配。
     static func parseAdv(_ advHex: String) -> AdvData? {
         guard let range = advHex.range(of: "98ed") else { return nil }
         let from = advHex.distance(from: advHex.startIndex, to: range.lowerBound)

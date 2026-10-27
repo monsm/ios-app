@@ -80,7 +80,12 @@ enum ZKCmdBuilder {
     static func cmd12Echo(_ valHex: String = "123456") -> ZKCmd {
         ZKCmd(name: "12 回声", cmd: 0x12, hex: ZKProtocol.buildFrame(0x12, ZKProtocol.buildKLV(0x01, valHex), header: 8))
     }
-    static func cmd03StatusPlain(_ macHex: String) -> ZKCmd {
+    /// cmd 03 状态（明文帧，无 KLV）。
+    /// 2026-10-27 审核修复 (AUDIT-A F-45)：**去掉未使用的 macHex 参数**。
+    /// 原先签名带 `_ macHex: String` 但函数体完全没用它 —— 那会误导调用方以为
+    /// 这条命令需要 MAC（明文 03 帧确实不需要，MAC 只在 0x88 包络里）。
+    /// 调用点同步改成无参（`cmd03StatusPlain()`）。
+    static func cmd03StatusPlain() -> ZKCmd {
         // JS cmd03Status(8, macHex, wrap=false) → 裸 03 帧 (无 KLV)
         ZKCmd(name: "03 状态(明文)", cmd: 0x03, hex: ZKProtocol.buildFrame(0x03, "", header: 8))
     }

@@ -94,7 +94,7 @@ final class HardwareService: ObservableObject {
     private func readStatusFrame() async throws -> Int {
         let target = connectedTargetId
         guard !target.isEmpty else { throw BLEErrorX.msg("内部错误: 复核时没有连接目标") }
-        let f = try await send(ZKCmdBuilder.cmd03StatusPlain(""), target: target, timeoutMs: 8000)
+        let f = try await send(ZKCmdBuilder.cmd03StatusPlain(), target: target, timeoutMs: 8000)
         return StatusParser.parseStatus(f.klvs).pid
     }
 

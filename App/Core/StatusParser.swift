@@ -40,6 +40,10 @@ struct LogEntry {
 }
 
 enum StatusParser {
+    /// 2026-10-27 审核说明 (AUDIT-A F-15)：`intHex` 的「前缀 hex」语义 ——
+    /// Android 与 vendor JS 一致（`parseInt(val||"0",16)||0`：取前缀，遇非 hex 截断，空串→0）；
+    /// 本仓也是这个口径。差异在**负数/超长值**上：JS 会走浮点、本仓用 & 掩码钳到 u32。
+    /// 协议里的 rc/pid/序号都在 u32 范围内，不触发。
     static func intHex(_ val: String) -> Int { Int(val.isEmpty ? "0" : val, radix: 16) ?? 0 }
     static func leHexToU32(_ val: String) -> UInt32 {
         let b = HexKit.bytes(val)
@@ -184,5 +188,19 @@ enum StatusParser {
     ///                 写命令不当作成功、读命令仍取回包里能拿到的字段。
     ///   · rc > 27   → 超出协议表，按未知错误码展示原值。
     /// 差异本身是历史包袱（三端各自演进），但**本机口径必须写清**，否则后来者会以为是 bug。
+    /// rc=13 的**补充提示**（2026-10-27 审核，AUDIT-A F-12）。
+    /// 为什么单独一个函数而不是改 `rcMsg`：那张表要与 vendor `status.js` **逐字一致**
+    /// （`tools/parseshadow.js` 会对拍），改文案会让闸门红。
+    /// Android 那边有这句补充（「本机已自动重取令牌仍被拒」），iOS 原先没有 ——
+    /// 于是用户看到「通讯过期」不知道下一步该做什么。
+    static func rcHint(_ rc: Int) -> String? {
+        switch rc {
+        case 13:
+            return "会话已失效，本机已自动重取令牌仍被拒 —— 多半是锁内时间偏差过大，请到设备页做一次「同步时间」"
+        default:
+            return nil
+        }
+    }
+
     static func rcFriendly(_ rc: Int) -> String { rcHint(rc) ?? rcMessage(rc) }
 }

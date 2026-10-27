@@ -25,6 +25,10 @@ enum AndroidPair {
 
     /// 二维码正文: `KFA1:{...}`。字段名压到 1 个字母是为了让二维码稀疏一点 (手机摄像头在
     /// 暗光/斜角下更好认), 不是为了省字节。
+        // 2026-10-27 审核说明 (AUDIT-A F-43)：这里用 `.sortedKeys` 序列化，
+        // 而 vendor 侧**没有对应的序列化器**（它的二维码载荷是手工拼的固定字段序）。
+        // 两端不逐字节一致，但都能被对方解析（字段名匹配，不依赖顺序）。
+        // 若将来要严格互操作，得改成手工拼串对齐 vendor 的字段序。
     static func payload(_ kc: Keychain) -> String? {
         guard let e = ekey(for: kc) else { return nil }
         let name = kc.name.isEmpty ? LockArchive.displayName(kc) : kc.name

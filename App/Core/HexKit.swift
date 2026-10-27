@@ -79,6 +79,9 @@ enum HexKit {
         return Int(b[byteOffset]) | (Int(b[byteOffset + 1]) << 8)
     }
     // JS En.toNormalByteOrder: 字节对反转 (奇数长度返回 '')
+    /// 2026-10-27 审核说明 (AUDIT-A F-07)：奇数长度输入时三端行为不同 ——
+    /// 本仓「丢掉末字符」（与 JS `substr(0, len-1)` 语义一致）；Android 会补一位。
+    /// 协议里的 MAC / ekey 恒为偶数长度，所以实际不触发；保留本仓语义与 JS 对齐。
     static func reversePairs(_ hex: String) -> String {
         guard hex.count % 2 == 0 else { return "" }
         let b = bytes(hex)
