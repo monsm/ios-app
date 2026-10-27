@@ -89,39 +89,6 @@
       "status": "implemented"
     },
     {
-      "key": "data.store.read-write",
-      "parentKey": "data.store",
-      "domain": "data",
-      "level": 3,
-      "name": "类型化读写与参数序反差",
-      "kind": "service",
-      "summary": "get<T>(类型, 键) 与 get<T>(键, 类型) 双序重载语义一致；set 走 JSONSerialization，setCodable 走 JSONEncoder。",
-      "details": [
-        "双参序重载是为了不批量改写 87 个既有调用点（Store.swift:10-13）",
-        "getDict 返回 [String: Any]，供 Map 结构的 kf_keychains/kf_members 等使用（Store.swift:25-28）",
-        "getString 先试 string(forKey:) 再试 JSON 解码，兼容早期直接写字符串的老数据（Store.swift:29-33）",
-        "setCodable(键, 值) 与 DB.setCodable(值, 键) 参数序相反，注释点名这是已踩过 5 次的坑（Store.swift:49-51）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/Store.swift",
-          "line": 13,
-          "symbol": "get(_:_:)",
-          "note": "双参序兼容"
-        },
-        {
-          "file": "App/Core/Store.swift",
-          "line": 51,
-          "symbol": "setCodable(_:_:)"
-        }
-      ],
-      "tags": [
-        "本地键值",
-        "核心"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "data.store.failure-ledger",
       "parentKey": "data.store",
       "domain": "data",
@@ -1259,42 +1226,6 @@
       "status": "implemented"
     },
     {
-      "key": "data.audit.chain",
-      "parentKey": "data.audit",
-      "domain": "data",
-      "level": 3,
-      "name": "事件结构与封链",
-      "kind": "data",
-      "summary": "AuditEvent 10 字段；seal 用「前序哈希 + 全字段」算本条 hash，起点是字符串 GENESIS。",
-      "details": [
-        "字段：id(毫秒序号) / ts(Unix 秒) / cat(door|admin) / action / target / diff / operator_ / duress / prevHash / hash（AuditChain.swift:46-58）",
-        "hashInput 拼接顺序：id#ts#cat#action#target#operator#duress#diffText#prev，diff 键排序后 join（AuditChain.swift:59-68）",
-        "operator_ 记会话验证方式（本机密码/面容/会话续期）；duress 只在操作日志里画橙标，不做全局可见边框（AuditChain.swift:54-55）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/AuditChain.swift",
-          "line": 46,
-          "symbol": "AuditEvent"
-        },
-        {
-          "file": "App/Core/AuditChain.swift",
-          "line": 59,
-          "symbol": "hashInput(_:)"
-        },
-        {
-          "file": "App/Core/AuditChain.swift",
-          "line": 72,
-          "symbol": "seal(prevHash:)"
-        }
-      ],
-      "tags": [
-        "审计",
-        "防篡改"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "data.audit.append",
       "parentKey": "data.audit",
       "domain": "data",
@@ -2362,31 +2293,6 @@
         "安全",
         "脱敏",
         "显示"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "security.ledger",
-      "parentKey": "security",
-      "domain": "security",
-      "level": 2,
-      "name": "敏感操作流水（388）",
-      "kind": "service",
-      "summary": "kf_audit_sensitive 记录「接触过明文」的动作：查看 / 复制 / 导出 / 停用·原因，最多 100 条，最新在前。",
-      "details": [
-        "只记接触明文的子集，不混进管理流水（AuditChain.swift:172-174）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/AuditChain.swift",
-          "line": 173,
-          "symbol": "SensitiveLedger"
-        }
-      ],
-      "tags": [
-        "安全",
-        "审计",
-        "脱敏"
       ],
       "status": "implemented"
     },

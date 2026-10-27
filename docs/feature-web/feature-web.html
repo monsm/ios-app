@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T03:42:46.338Z",
+    "generated": "2026-10-27T03:52:32.233Z",
     "sources": [
       {
         "scout": "android-native",
@@ -353,7 +353,7 @@ const DATA = {
         "scout": "ios-core-data",
         "platform": "ios",
         "file": "ios-core-data.json",
-        "nodes": 85
+        "nodes": 82
       },
       {
         "scout": "ios-core-proto",
@@ -371,7 +371,7 @@ const DATA = {
         "scout": "ios-ui-device",
         "platform": "ios",
         "file": "ios-ui-device.json",
-        "nodes": 120
+        "nodes": 119
       },
       {
         "scout": "ios-ui-records",
@@ -383,7 +383,7 @@ const DATA = {
         "scout": "ios-ui-system",
         "platform": "ios",
         "file": "ios-ui-system.json",
-        "nodes": 89
+        "nodes": 88
       },
       {
         "scout": "lead-apk-parity",
@@ -413,7 +413,7 @@ const DATA = {
         "scout": "lead-parity",
         "platform": "ios",
         "file": "lead-parity.json",
-        "nodes": 27
+        "nodes": 13
       }
     ],
     "unresolved": [
@@ -732,7 +732,7 @@ const DATA = {
       "status": {},
       "commands": [],
       "sources": [],
-      "childCount": 22,
+      "childCount": 18,
       "isDomain": true,
       "weight": 1,
       "path": "设备与连接"
@@ -809,7 +809,7 @@ const DATA = {
           "line": 130,
           "symbol": "sheet(isPresented: $showAdd)",
           "note": "AddDeviceView()",
-          "text": "reconnectDot = true"
+          "text": "// 112 换机迁移验证：这台锁真的连上过一次 ⇒ 打上已验证标记。"
         },
         {
           "platform": "android",
@@ -1088,7 +1088,7 @@ const DATA = {
           "line": 48,
           "symbol": "if flow == .pairing { rollback(reason: \"\") }",
           "note": "",
-          "text": "if flow == .pairing { rollback(reason: \"\") }   // 中途关闭也走清理"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -1171,7 +1171,7 @@ const DATA = {
           "line": 1673,
           "symbol": "struct GatewayView",
           "note": "",
-          "text": "@Environment(\\.dismiss) private var dismiss"
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -1203,7 +1203,7 @@ const DATA = {
           "line": 1691,
           "symbol": "VariantToggle(\"橙色灯闪烁中\")",
           "note": "",
-          "text": ".vkFont(.caption)"
+          "text": "app.showToast(\"重启成功\")"
         },
         {
           "platform": "ios",
@@ -1211,7 +1211,7 @@ const DATA = {
           "line": 1738,
           "symbol": ".interactiveDismissDisabled(running)",
           "note": "",
-          "text": "}"
+          "text": "ForEach(members) { m in memberRow(m) }"
         }
       ],
       "platformEvidence": {
@@ -1275,9 +1275,9 @@ const DATA = {
         "apk-baseline",
         "ios-ui-device"
       ],
-      "childCount": 7,
+      "childCount": 3,
       "isDomain": false,
-      "weight": 7,
+      "weight": 3,
       "path": "设备与连接 › 智能网关"
     },
     {
@@ -1307,7 +1307,7 @@ const DATA = {
           "line": 964,
           "symbol": "struct DeviceInfoView",
           "note": "",
-          "text": "@Environment(\\.dismiss) private var dismiss"
+          "text": "dateStyle: .medium, timeStyle: .none)"
         },
         {
           "platform": "apk",
@@ -1323,7 +1323,7 @@ const DATA = {
           "line": 982,
           "symbol": "BusyButton(title: \"重新读取\")",
           "note": "",
-          "text": "}"
+          "text": "let days = Int(Date().timeIntervalSince1970 * 1000 - s.at) / 86_400_000"
         },
         {
           "platform": "ios",
@@ -1331,7 +1331,7 @@ const DATA = {
           "line": 986,
           "symbol": "静音模式可在设置页切换",
           "note": "",
-          "text": "}"
+          "text": "/// 未读到时统一显示 \"—\", 不把 -1 当数值直接印给用户"
         }
       ],
       "platformEvidence": {
@@ -1414,7 +1414,7 @@ const DATA = {
           "line": 1465,
           "symbol": "struct KeychainHWView",
           "note": "",
-          "text": "@Environment(\\.dismiss) private var dismiss"
+          "text": "guard let kc = app.current else { app.showToast(\"请先选择门锁\"); return }   // 2026-10-15 走查: 下面那句\"请先配对门锁\"会说, 上面这句却静默 = 同一条链两种收法"
         },
         {
           "platform": "ios",
@@ -1422,7 +1422,7 @@ const DATA = {
           "line": 1505,
           "symbol": "if app.current == nil",
           "note": "",
-          "text": "Label {"
+          "text": "@State private var confirmed = false"
         },
         {
           "platform": "ios",
@@ -1430,7 +1430,7 @@ const DATA = {
           "line": 1522,
           "symbol": ".interactiveDismissDisabled(busy)",
           "note": "",
-          "text": "}"
+          "text": ".vkFont(.caption)"
         }
       ],
       "platformEvidence": {
@@ -1501,7 +1501,7 @@ const DATA = {
           "line": 2101,
           "symbol": "struct MessagesView",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -1880,7 +1880,7 @@ const DATA = {
           "line": 1222,
           "symbol": "quickActions",
           "note": "",
-          "text": "var body: some View { vkBody.destined(.syncTime) }"
+          "text": "HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {"
         },
         {
           "platform": "ios",
@@ -1896,7 +1896,7 @@ const DATA = {
           "line": 1227,
           "symbol": "let cols = AXPrefs.bigTile ? 2 : 3",
           "note": "",
-          "text": "Text(\"将手机时间同步到门锁内 (cmd 0E)。校准前会先读锁钟并补偿偏差。\")"
+          "text": ".foregroundStyle(DS.Palette.text)"
         }
       ],
       "platformEvidence": {
@@ -2395,7 +2395,7 @@ const DATA = {
           "line": 470,
           "symbol": "doneView",
           "note": "",
-          "text": "private var doneView: some View {"
+          "text": "// 360 到期待用"
         },
         {
           "platform": "ios",
@@ -2403,7 +2403,7 @@ const DATA = {
           "line": 486,
           "symbol": "Label(\"下一步: 到设备页成功开一次锁 …\")",
           "note": "",
-          "text": "Label(\"下一步: 到设备页成功开一次锁, 完成「链路已验证」标记\", systemImage: \"checkmark.seal\")"
+          "text": "// 想再打开只能退出这一页重进 (@State 回到默认 true)。自我隐藏的开关是\"点了找不到\"的一种:"
         }
       ],
       "platformEvidence": {
@@ -2464,7 +2464,7 @@ const DATA = {
           "line": 303,
           "symbol": "if let existing = DB.keychain(mac)",
           "note": "",
-          "text": "if let existing = DB.keychain(mac) {"
+          "text": "var meta = LockArchive.meta(kc.mac)"
         },
         {
           "platform": "ios",
@@ -2472,7 +2472,7 @@ const DATA = {
           "line": 54,
           "symbol": ".confirmationDialog(\"这把锁已经添加过\", isPresented:)",
           "note": "",
-          "text": ".confirmationDialog(\"这把锁已经添加过\", isPresented: Binding(get: { dupMac != nil },"
+          "text": "// 256: 回滚完成后错误必须可见, 不能无声吞掉"
         },
         {
           "platform": "ios",
@@ -2480,7 +2480,7 @@ const DATA = {
           "line": 68,
           "symbol": "重新配网会换掉门锁密钥",
           "note": "",
-          "text": "Text(\"「\\(dup.name)」(\\(dup.mac)) 已在本机台账中, 无需重新配网。重新配网会换掉门锁密钥, 旧手机钥匙将失效。\")"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -2548,7 +2548,7 @@ const DATA = {
           "line": 327,
           "symbol": "locateManual() async",
           "note": "",
-          "text": "private func locateManual() async {"
+          "text": "// 258 首连验证引导: 添加完成 → 引导首次开锁跑通全链路"
         },
         {
           "platform": "ios",
@@ -2556,7 +2556,7 @@ const DATA = {
           "line": 337,
           "symbol": "LockService.shared.scanForMAC(m, timeoutMs: 8000)",
           "note": "",
-          "text": "_ = try await LockService.shared.scanForMAC(m, timeoutMs: 8000)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -2564,7 +2564,7 @@ const DATA = {
           "line": 169,
           "symbol": "Section(\"扫不到? 手动定位\")",
           "note": "",
-          "text": "Text(\"扫不到? 手动定位\")"
+          "text": ".accessibilityHidden(true)"
         }
       ],
       "platformEvidence": {
@@ -2633,7 +2633,7 @@ const DATA = {
           "line": 426,
           "symbol": "namingView",
           "note": "",
-          "text": "private var namingView: some View {"
+          "text": "@EnvironmentObject var app: AppState"
         },
         {
           "platform": "ios",
@@ -2641,7 +2641,7 @@ const DATA = {
           "line": 456,
           "symbol": "saveNaming()",
           "note": "",
-          "text": "private func saveNaming() {"
+          "text": "} footer: {"
         },
         {
           "platform": "ios",
@@ -2649,7 +2649,7 @@ const DATA = {
           "line": 585,
           "symbol": "defaultName(for:)",
           "note": "",
-          "text": "private func defaultName(for kc: Keychain) -> String {"
+          "text": "let from = Date()"
         }
       ],
       "platformEvidence": {
@@ -2717,7 +2717,7 @@ const DATA = {
           "line": 359,
           "symbol": "probeEcho(_:)",
           "note": "",
-          "text": "private func probeEcho(_ d: BLEAdvDevice) async {"
+          "text": "// 2026-10-13 run 63: 原来是三重嵌套三元的一行比较, 加上上面的 map 闭包,"
         },
         {
           "platform": "ios",
@@ -2733,7 +2733,7 @@ const DATA = {
           "line": 284,
           "symbol": ".contextMenu { Button { probeEcho } }",
           "note": "",
-          "text": ".contextMenu {"
+          "text": "Text(\"昵称会显示在 Hero 卡与切换胶囊上; 场所副标题可留空。符号与色标可在「锁档案」里选。\")"
         }
       ],
       "platformEvidence": {
@@ -2802,7 +2802,7 @@ const DATA = {
           "line": 377,
           "symbol": "pairProgress",
           "note": "",
-          "text": "private var pairProgress: some View {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -2810,7 +2810,7 @@ const DATA = {
           "line": 383,
           "symbol": "stepBar(current: max(step, 1))",
           "note": "",
-          "text": "stepBar(current: max(step, 1))"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -2818,7 +2818,7 @@ const DATA = {
           "line": 415,
           "symbol": ".frame(maxHeight: 240)",
           "note": "",
-          "text": ".frame(maxHeight: 240)"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -2885,7 +2885,7 @@ const DATA = {
           "line": 572,
           "symbol": "rollback(reason:)",
           "note": "",
-          "text": "private func rollback(reason: String) {"
+          "text": "app.showToast(\"添加成功 (别名 #\\(alias))\")"
         },
         {
           "platform": "ios",
@@ -2893,7 +2893,7 @@ const DATA = {
           "line": 81,
           "symbol": "if !pairError.isEmpty { Section { Label … } }",
           "note": "",
-          "text": "Section {"
+          "text": "Text(LinkSense.rssiLevel(LinkSense.shared.lastRssi) >= 3"
         },
         {
           "platform": "ios",
@@ -2901,7 +2901,7 @@ const DATA = {
           "line": 90,
           "symbol": "配不上先别反复重试",
           "note": "",
-          "text": "Text(\"配不上先别反复重试: 先确认锁已上电、手机蓝牙开着, 再回设备页重连一次。\")"
+          "text": ".accessibilityElement(children: .combine)"
         }
       ],
       "platformEvidence": {
@@ -2971,7 +2971,7 @@ const DATA = {
           "line": 218,
           "symbol": "deviceRow(_:)",
           "note": "",
-          "text": "private func deviceRow(_ d: BLEAdvDevice) -> some View {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -2979,7 +2979,7 @@ const DATA = {
           "line": 228,
           "symbol": "let canResume = isLock && (pendMac.map { DB.pendingPair($0) != nil } ?? false)",
           "note": "",
-          "text": "let canResume = isLock && (pendMac.map { DB.pendingPair($0) != nil } ?? false)"
+          "text": ".foregroundStyle(DS.Palette.text)"
         },
         {
           "platform": "ios",
@@ -2987,7 +2987,7 @@ const DATA = {
           "line": 232,
           "symbol": "showToast(\"该锁不在重置态 — 请先做键盘物理重置\")",
           "note": "",
-          "text": "else if !inReset { app.showToast(\"该锁不在重置态 — 请先做键盘物理重置\") }"
+          "text": ".multilineTextAlignment(.center)"
         }
       ],
       "platformEvidence": {
@@ -3057,7 +3057,7 @@ const DATA = {
           "line": 501,
           "symbol": "private func scan() async",
           "note": "",
-          "text": "private func scan() async {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -3065,7 +3065,7 @@ const DATA = {
           "line": 537,
           "symbol": "scoreAdv(_:)",
           "note": "",
-          "text": "private func scoreAdv(_ d: BLEAdvDevice) -> Int {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -3073,7 +3073,7 @@ const DATA = {
           "line": 176,
           "symbol": ".task { await scan() }",
           "note": "",
-          "text": ".task { await scan() }   // 251: 进页即扫, 发现列表实时滚动"
+          "text": "// 行组已经是一层玻璃面 —— 行内再上玻璃就是玻璃叠玻璃, 接缝正好压在步骤字底下。"
         }
       ],
       "platformEvidence": {
@@ -3118,71 +3118,6 @@ const DATA = {
       "isDomain": false,
       "weight": 1,
       "path": "设备与连接 › 添加设备 / 配网 › 发现列表（扫描与排序）"
-    },
-    {
-      "id": "device.add.type",
-      "key": "device.add.type",
-      "parent": "device",
-      "domain": "device",
-      "level": 3,
-      "name": "按型号分流（iOS：扫描列表即按 pid 判可配网）",
-      "kind": "action",
-      "summary": "iOS 没有\"先选类型\"页：扫描列表每行直接显示 PidMap.modelName，并用 isLock/可配网状态分流，少一步点击。",
-      "details": [],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/Sheets.swift",
-          "line": 221,
-          "symbol": "isLock 判定",
-          "note": "",
-          "text": "let isLock = adv.map { PidMap.isLock($0.pid) } ?? false"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/Sheets.swift",
-          "line": 249,
-          "symbol": "列表显示型号",
-          "note": "",
-          "text": "Text(\"\\(adv?.macDisplay ?? \"—\") · \\(adv.map { PidMap.modelName($0.pid) } ?? \"未知\")\")"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/Sheets.swift",
-            "line": 221,
-            "symbol": "isLock 判定",
-            "note": ""
-          },
-          {
-            "file": "App/UI/Sheets.swift",
-            "line": 249,
-            "symbol": "列表显示型号",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "lead-parity"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "设备与连接 › 按型号分流（iOS：扫描列表即按 pid 判可配网）"
     },
     {
       "id": "device.bind-state",
@@ -3269,71 +3204,6 @@ const DATA = {
       "path": "设备与连接 › 绑定态恢复与空态"
     },
     {
-      "id": "device.gateway.add",
-      "key": "device.gateway.add",
-      "parent": "device.gateway",
-      "domain": "device",
-      "level": 3,
-      "name": "添加网关（iOS：准备网关 + 橙灯确认）",
-      "kind": "action",
-      "summary": "iOS 用「橙色灯闪烁中」开关代替 APK 的勾选确认页，语义相同：确认已重置到可配网状态。",
-      "details": [],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/Sheets.swift",
-          "line": 1689,
-          "symbol": "Section 准备网关",
-          "note": "",
-          "text": "VariantToggle(\"橙色灯闪烁中\", isOn: $confirmed)"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/Sheets.swift",
-          "line": 1692,
-          "symbol": "橙色灯确认开关",
-          "note": "",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/Sheets.swift",
-            "line": 1689,
-            "symbol": "Section 准备网关",
-            "note": ""
-          },
-          {
-            "file": "App/UI/Sheets.swift",
-            "line": 1692,
-            "symbol": "橙色灯确认开关",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "lead-parity"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "设备与连接 › 智能网关 › 添加网关（iOS：准备网关 + 橙灯确认）"
-    },
-    {
       "id": "device.gateway.list",
       "key": "device.gateway.list",
       "parent": "device.gateway",
@@ -3355,7 +3225,7 @@ const DATA = {
           "line": 1743,
           "symbol": "gatewayList",
           "note": "",
-          "text": "if gateways.isEmpty {"
+          "text": ".dsScreenBackground()"
         },
         {
           "platform": "ios",
@@ -3371,7 +3241,7 @@ const DATA = {
           "line": 1778,
           "symbol": ".swipeActions { … }",
           "note": "",
-          "text": "Button { confirmReboot(g) } label: { Label(\"重启\", systemImage: \"arrow.clockwise\") }.tint(DS.Palette.accent)"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         },
         {
           "platform": "ios",
@@ -3379,7 +3249,7 @@ const DATA = {
           "line": 1815,
           "symbol": "confirmReboot(_:)",
           "note": "",
-          "text": "confirmDestructive(\"重启网关\","
+          "text": "prompt(title: \"补全信息 (只填空缺)\", message: nil,"
         }
       ],
       "platformEvidence": {
@@ -3464,7 +3334,7 @@ const DATA = {
           "line": 1805,
           "symbol": "confirmProvision()",
           "note": "",
-          "text": "confirmDestructive(\"写入网关\","
+          "text": "guard n.allSatisfy({ $0.isLetter || $0.isNumber }) else {"
         },
         {
           "platform": "ios",
@@ -3496,7 +3366,7 @@ const DATA = {
           "line": 1832,
           "symbol": "HardwareService.shared.provisionGateway",
           "note": "",
-          "text": "confirmed = false"
+          "text": "reload()"
         }
       ],
       "platformEvidence": {
@@ -3569,57 +3439,6 @@ const DATA = {
       "path": "设备与连接 › 智能网关 › 配网确认 / 进度 / 结果"
     },
     {
-      "id": "device.gateway.reset-hint",
-      "key": "device.gateway.reset-hint",
-      "parent": "device.gateway",
-      "domain": "device",
-      "level": 3,
-      "name": "重置网关说明（iOS：同页文案）",
-      "kind": "action",
-      "summary": "iOS 把重置说明直接写在准备段里（长捅重置孔 5s 至橙灯），没有单独一页。",
-      "details": [],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/Sheets.swift",
-          "line": 1694,
-          "symbol": "长捅重置孔 5s 说明",
-          "note": "",
-          "text": "} else {"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/Sheets.swift",
-            "line": 1694,
-            "symbol": "长捅重置孔 5s 说明",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "lead-parity"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "设备与连接 › 智能网关 › 重置网关说明（iOS：同页文案）"
-    },
-    {
       "id": "device.gateway.status",
       "key": "device.gateway.status",
       "parent": "device",
@@ -3640,7 +3459,7 @@ const DATA = {
           "line": 1744,
           "symbol": "Section 我的网关",
           "note": "",
-          "text": "EmptyState(systemImage: \"antenna.radiowaves.left.and.right.slash\","
+          "text": ".toolbar {"
         },
         {
           "platform": "apk",
@@ -3656,7 +3475,7 @@ const DATA = {
           "line": 1851,
           "symbol": "readGatewayState",
           "note": "",
-          "text": "reload()"
+          "text": "let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)"
         }
       ],
       "platformEvidence": {
@@ -3731,7 +3550,7 @@ const DATA = {
           "line": 1698,
           "symbol": "TextField(\"WiFi 名称 (2.4GHz)\")",
           "note": "",
-          "text": ".autocorrectionDisabled()"
+          "text": "struct MembersView: View {"
         },
         {
           "platform": "apk",
@@ -3747,7 +3566,7 @@ const DATA = {
           "line": 1702,
           "symbol": "SecureField(\"WiFi 密码\")",
           "note": "",
-          "text": "}"
+          "text": "@FocusState private var nameFocused: Bool"
         },
         {
           "platform": "ios",
@@ -3755,7 +3574,7 @@ const DATA = {
           "line": 1706,
           "symbol": "disabled: ssid.isEmpty || pwd.isEmpty",
           "note": "",
-          "text": "}"
+          "text": "/// 不用 .id(tick) 重建整个 List —— 那会连带丢掉滚动位置、键盘焦点和动画上下文。"
         }
       ],
       "platformEvidence": {
@@ -3837,7 +3656,7 @@ const DATA = {
           "line": 857,
           "symbol": "attentionCard",
           "note": "",
-          "text": "Label(\"编辑快捷操作格\", systemImage: \"square.grid.2x2\")   // 905 编辑快捷操作格"
+          "text": ".strokeBorder(DS.Palette.hairline,"
         },
         {
           "platform": "ios",
@@ -3845,7 +3664,7 @@ const DATA = {
           "line": 879,
           "symbol": "attentionItems",
           "note": "",
-          "text": "// 点它直接开真正的录入表单 (quickDestination addFp = 与\"添加指纹\"大格同一个"
+          "text": "// 记账挪到**目的地出现时**, 语义也更准 (用过这一格 = 进过它的页面)。"
         },
         {
           "platform": "ios",
@@ -3853,7 +3672,7 @@ const DATA = {
           "line": 895,
           "symbol": "BatteryCare.fpCleanNeeded(mac)",
           "note": "",
-          "text": ".frame(maxWidth: .infinity)"
+          "text": ".font(.system(size: big ? DS.Icon.lg : DS.Icon.md, weight: .semibold))"
         }
       ],
       "platformEvidence": {
@@ -3921,7 +3740,7 @@ const DATA = {
           "line": 170,
           "symbol": ".onChange(of: app.pendingJumpLock)",
           "note": "",
-          "text": "// 243 断连触感: 已连接 → 断开瞬间一次中触感 (Hero 卡同步灰化见 statusCard)"
+          "text": ".sensoryFeedback(trigger: lockSvc.connectedMAC) { old, new in"
         },
         {
           "platform": "ios",
@@ -3929,7 +3748,7 @@ const DATA = {
           "line": 201,
           "symbol": "if app.pendingAddDevice",
           "note": "",
-          "text": "private func rescanPull() async {"
+          "text": "guard sense.btOn else {"
         },
         {
           "platform": "ios",
@@ -3937,7 +3756,7 @@ const DATA = {
           "line": 148,
           "symbol": ".onChange(of: app.currentMac)",
           "note": "",
-          "text": "// 当前锁不在翻页序列 (如沉睡锁从胶囊选中) → 重建序列并落位"
+          "text": "if let i = pageOrder.firstIndex(of: new) { pageIndex = i }"
         }
       ],
       "platformEvidence": {
@@ -4112,7 +3931,7 @@ const DATA = {
           "line": 330,
           "symbol": "groupChips",
           "note": "",
-          "text": "guard isCurrent else { return nil }"
+          "text": "if new == \"sev\", old != \"sev\" { return .error }"
         },
         {
           "platform": "ios",
@@ -4120,7 +3939,7 @@ const DATA = {
           "line": 293,
           "symbol": "inGroup(_:) ",
           "note": "",
-          "text": ".accessibilityAddTraits(on ? [.isSelected] : [])"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -4128,7 +3947,7 @@ const DATA = {
           "line": 347,
           "symbol": "groupFilter = name; syncPageOrder()",
           "note": "",
-          "text": "heroNoticeRow(icon: \"checkmark.seal\", text: \"链路待验证 · 成功开一次锁即打标\", tint: DS.heroFg)"
+          "text": ".font(.system(size: DS.Icon.md, weight: .medium))"
         }
       ],
       "platformEvidence": {
@@ -4197,7 +4016,7 @@ const DATA = {
           "line": 695,
           "symbol": "heroCard(for:isCurrent:)",
           "note": "",
-          "text": "Text(app.failStreak \u003c 3 ? \"再试一次, 别着急\" : \"连着几次没成, 逐项自查一遍:\")"
+          "text": "// 267 换锁二次确认: 横滑换锁后第一次点圆盘 → 放大的锁名胶囊提示, 再点才执行"
         },
         {
           "platform": "ios",
@@ -4205,7 +4024,7 @@ const DATA = {
           "line": 793,
           "symbol": "HeroStat(label: \"电量\")",
           "note": "",
-          "text": "withAnimation(DS.Motion.exit) { autoLockLeft = nil }"
+          "text": "private var quickActions: some View {"
         },
         {
           "platform": "ios",
@@ -4213,7 +4032,7 @@ const DATA = {
           "line": 846,
           "symbol": ".saturation(connected ? 1 : 0.55)",
           "note": "",
-          "text": "//        从未手动调整过且满 30 天 → 只把最常用的一格提到首格, 其余保序。"
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         }
       ],
       "platformEvidence": {
@@ -4282,7 +4101,7 @@ const DATA = {
           "line": 664,
           "symbol": "heroNotice(kc:tier:isCurrent:)",
           "note": "",
-          "text": "CaptionStepBar(phase: app.phase, unlockState: app.unlockState)"
+          "text": ".vkFont(.subheadline, weight: .medium)"
         },
         {
           "platform": "ios",
@@ -4290,7 +4109,7 @@ const DATA = {
           "line": 670,
           "symbol": "!LockArchive.isVerified(kc.mac)",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.accentText)"
+          "text": ".contentShape(Rectangle())"
         }
       ],
       "platformEvidence": {
@@ -4354,7 +4173,7 @@ const DATA = {
           "line": 732,
           "symbol": "LinkPill(state:connectMs:rssi:source:)",
           "note": "",
-          "text": "// (挂在整个圆盘区 VStack 上 —— 原先误挂在一个条件分支后（if AXPrefs.captions，该开关已于 2026-10-26 删除）,"
+          "text": "Task { @MainActor in"
         },
         {
           "platform": "ios",
@@ -4362,7 +4181,7 @@ const DATA = {
           "line": 738,
           "symbol": ".onTapGesture { if isCurrent { showRssi.toggle() } }",
           "note": "",
-          "text": ".overlay {"
+          "text": "app.requestUnlock()"
         },
         {
           "platform": "ios",
@@ -4370,7 +4189,7 @@ const DATA = {
           "line": 756,
           "symbol": ".contextMenu { Menu(\"最近状态变化\") }",
           "note": "",
-          "text": "Text(\"再点一次圆盘开始开锁\")"
+          "text": "private var checklist: some View {"
         }
       ],
       "platformEvidence": {
@@ -4441,7 +4260,7 @@ const DATA = {
           "line": 903,
           "symbol": "linkSenseCard",
           "note": "",
-          "text": ".contentShape(Rectangle())"
+          "text": ".lineLimit(1)"
         },
         {
           "platform": "ios",
@@ -4449,7 +4268,7 @@ const DATA = {
           "line": 948,
           "symbol": "// 535 同步回执",
           "note": "",
-          "text": ".frame(maxWidth: .infinity)"
+          "text": "private func openMemberRecords(_ id: String) {"
         },
         {
           "platform": "ios",
@@ -4457,7 +4276,7 @@ const DATA = {
           "line": 978,
           "symbol": "最后已知: 电量 … (缓存 …)",
           "note": "",
-          "text": "quickTileBody(icon: \"arrow.counterclockwise\", label: \"再开一次\")"
+          "text": "private var devOrder: [String] {"
         }
       ],
       "platformEvidence": {
@@ -4527,7 +4346,7 @@ const DATA = {
           "line": 96,
           "symbol": "Button { showModuleOrder = true }",
           "note": "",
-          "text": "}"
+          "text": ".buttonStyle(PressableButtonStyle())"
         },
         {
           "platform": "ios",
@@ -4627,7 +4446,7 @@ const DATA = {
           "line": 85,
           "symbol": "if let kc = app.current, kc.ekey.isEmpty, kc.pins.count > 1",
           "note": "",
-          "text": ".accessibilityLabel(\"开锁圆盘组\")   // 868 开锁圆盘组"
+          "text": "moduleSlot(devOrder[1], delay: 4)   // 904"
         }
       ],
       "platformEvidence": {
@@ -4697,7 +4516,7 @@ const DATA = {
           "line": 211,
           "symbol": "rescanPull()",
           "note": "",
-          "text": "app.showToast(\"4 秒内没扫到这把锁的广播 — 走近一点再下拉\")   // 537 秒内没扫到这把锁的广"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -4705,7 +4524,7 @@ const DATA = {
           "line": 217,
           "symbol": "sense.scan(mac:timeoutMs: 4000)",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -4713,7 +4532,7 @@ const DATA = {
           "line": 109,
           "symbol": ".refreshable { await rescanPull() }",
           "note": "",
-          "text": "Button { Task { await refresh(manual: true) } } label: {"
+          "text": "if refreshing { ProgressView() } else { Image(systemName: \"arrow.clockwise\") }"
         }
       ],
       "platformEvidence": {
@@ -4781,7 +4600,7 @@ const DATA = {
           "line": 1205,
           "symbol": "if let drift = clockDrift, abs(drift) > 2",
           "note": "",
-          "text": "if let res = try? await app.lock.syncTime() {"
+          "text": ".buttonStyle(PressableButtonStyle())"
         },
         {
           "platform": "ios",
@@ -4797,7 +4616,7 @@ const DATA = {
           "line": 1207,
           "symbol": "try? await app.lock.syncTime()",
           "note": "",
-          "text": "status = try await app.lock.getStatus()"
+          "text": ".accessibilityAddTraits(symbol == s.name ? [.isSelected] : [])"
         }
       ],
       "platformEvidence": {
@@ -4868,7 +4687,7 @@ const DATA = {
           "line": 1000,
           "symbol": "infoCardSection",
           "note": "",
-          "text": "if let kc {"
+          "text": "@ViewBuilder"
         },
         {
           "platform": "ios",
@@ -4876,7 +4695,7 @@ const DATA = {
           "line": 1029,
           "symbol": "if let v = status?.verDFU, v > 0",
           "note": "",
-          "text": "LabeledRow(\"固件服役\", fwAgeText)   // 1019"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -4884,7 +4703,7 @@ const DATA = {
           "line": 1127,
           "symbol": "driftText",
           "note": "",
-          "text": "if d == 0 { return \"与手机一致\" }"
+          "text": "Section {"
         }
       ],
       "platformEvidence": {
@@ -4952,7 +4771,7 @@ const DATA = {
           "line": 1045,
           "symbol": "statusSection",
           "note": "",
-          "text": "VStack(alignment: .leading, spacing: DS.Space.xxs) {"
+          "text": "// 290 编辑入口 (与 MembersView.prompt 同款 UIAlertController 表单)"
         },
         {
           "platform": "ios",
@@ -4960,7 +4779,7 @@ const DATA = {
           "line": 1054,
           "symbol": "BattSpark(samples: sp)",
           "note": "",
-          "text": "Text(battTrendCaption(sp))"
+          "text": "var m = meta; m.batteryModel = alert.textFields?.first?.text ?? \"\""
         },
         {
           "platform": "ios",
@@ -4968,7 +4787,7 @@ const DATA = {
           "line": 1172,
           "symbol": "capacityRow(title:used:cap:stock:)",
           "note": "",
-          "text": "LabeledRow(\"\\(title)容量\", \"\\(used) / \\(cap)\")"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -5126,7 +4945,7 @@ const DATA = {
           "line": 1526,
           "symbol": "dongleRow(_:)",
           "note": "",
-          "text": "HStack(spacing: DS.Space.s) {"
+          "text": "Section(\"配置 WiFi\") {"
         },
         {
           "platform": "ios",
@@ -5142,7 +4961,7 @@ const DATA = {
           "line": 1540,
           "symbol": "if let st = d.stat",
           "note": "",
-          "text": "HStack(spacing: DS.Space.s) {"
+          "text": "Section(\"配网进度\") {"
         }
       ],
       "platformEvidence": {
@@ -5210,7 +5029,7 @@ const DATA = {
           "line": 1465,
           "symbol": "struct KeychainHWView",
           "note": "",
-          "text": "@Environment(\\.dismiss) private var dismiss"
+          "text": "guard let kc = app.current else { app.showToast(\"请先选择门锁\"); return }   // 2026-10-15 走查: 下面那句\"请先配对门锁\"会说, 上面这句却静默 = 同一条链两种收法"
         },
         {
           "platform": "apk",
@@ -5226,7 +5045,7 @@ const DATA = {
           "line": 1476,
           "symbol": "钥匙串说明",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -5307,7 +5126,7 @@ const DATA = {
           "line": 1588,
           "symbol": "confirmWriteKey(_:)",
           "note": "",
-          "text": "let lockName = app.displayName"
+          "text": ".vkFont(.subheadline, weight: .semibold)"
         },
         {
           "platform": "ios",
@@ -5339,7 +5158,7 @@ const DATA = {
           "line": 1635,
           "symbol": "writeKey(_:)",
           "note": "",
-          "text": "guard !busy else { return }"
+          "text": "guard !running, !ssid.isEmpty, !pwd.isEmpty else { return }"
         }
       ],
       "platformEvidence": {
@@ -6926,71 +6745,6 @@ const DATA = {
       "path": "设备与连接 › 连接感知与离线同步包装层 › 链路三态判定"
     },
     {
-      "id": "device.list",
-      "key": "device.list",
-      "parent": "device",
-      "domain": "device",
-      "level": 3,
-      "name": "设备清单与空态（iOS：DeviceHomeView 空态 + 多锁切换）",
-      "kind": "action",
-      "summary": "iOS 首页在无锁时给「还没有添加门锁」引导，有锁时用胶囊切换；数据面是 DB.keychains() 本地台账。",
-      "details": [],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 50,
-          "symbol": "空态标题",
-          "note": "",
-          "text": "// 824 第二出口: 只有\"再扫一次\"不够 —— 换机或误删之后用户手上拿的是"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 54,
-          "symbol": "备份恢复入口",
-          "note": "",
-          "text": "// 下照常可达, 而访客态里「设置」Tab 不进层级树, 直写会落到一个看不见的"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 50,
-            "symbol": "空态标题",
-            "note": ""
-          },
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 54,
-            "symbol": "备份恢复入口",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "lead-parity"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "设备与连接 › 设备清单与空态（iOS：DeviceHomeView 空态 + 多锁切换）"
-    },
-    {
       "id": "device.multi-lock",
       "key": "device.multi-lock",
       "parent": "device",
@@ -7096,7 +6850,7 @@ const DATA = {
           "line": 1419,
           "symbol": "BusyButton 保存档案",
           "note": "",
-          "text": "}"
+          "text": "let lockName = app.displayName"
         },
         {
           "platform": "apk",
@@ -7112,7 +6866,7 @@ const DATA = {
           "line": 1448,
           "symbol": "DB.saveKeychain",
           "note": "",
-          "text": "m.place = place.trimmingCharacters(in: .whitespaces)"
+          "text": "busy = true"
         }
       ],
       "platformEvidence": {
@@ -8141,112 +7895,6 @@ const DATA = {
       "path": "设备与连接 › 绑定态恢复与空态 › 空态界面"
     },
     {
-      "id": "device.gateway.iot",
-      "key": "device.gateway.iot",
-      "parent": "device.gateway",
-      "domain": "device",
-      "level": 4,
-      "name": "IoT 三元组（iOS：构造器保留，云端停服不调用）",
-      "kind": "action",
-      "summary": "cmd32 构造器在 ZKCmdBuilder 里完整保留（KLV 05/06/07），但厂商云停服，iOS 不调用 —— 与 APK 同样不使用。",
-      "details": [],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/Core/ZKCmdBuilder.swift",
-          "line": 276,
-          "symbol": "cmd32GWSetIot",
-          "note": "",
-          "text": "}"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/Core/ZKCmdBuilder.swift",
-            "line": 276,
-            "symbol": "cmd32GWSetIot",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [
-        "32"
-      ],
-      "sources": [
-        "lead-parity"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "设备与连接 › 智能网关 › IoT 三元组（iOS：构造器保留，云端停服不调用）"
-    },
-    {
-      "id": "device.gateway.wifi.params",
-      "key": "device.gateway.wifi.params",
-      "parent": "device.gateway",
-      "domain": "device",
-      "level": 4,
-      "name": "WiFi 参数（iOS：auth=8 / enc=0 写死，与 APK 同值）",
-      "kind": "action",
-      "summary": "iOS 的 cmd31 默认 authMode=8(WPA/WPA2-PSK)、encryptType=0，KLV 01/02 用 UTF8 hex，与 APK 逐字节同源。",
-      "details": [],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/Core/ZKCmdBuilder.swift",
-          "line": 268,
-          "symbol": "cmd31GWSetWifi 默认参数",
-          "note": "",
-          "text": "}"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/Core/ZKCmdBuilder.swift",
-            "line": 268,
-            "symbol": "cmd31GWSetWifi 默认参数",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [
-        "31"
-      ],
-      "sources": [
-        "lead-parity"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "设备与连接 › 智能网关 › WiFi 参数（iOS：auth=8 / enc=0 写死，与 APK 同值）"
-    },
-    {
       "id": "device.home.gear",
       "key": "device.home.gear",
       "parent": "device.home",
@@ -8434,7 +8082,7 @@ const DATA = {
           "line": 1352,
           "symbol": "againTile",
           "note": "",
-          "text": ".onSubmit(verify)"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -8450,7 +8098,7 @@ const DATA = {
           "line": 1362,
           "symbol": "showToast(\"还没有星标凭证 …\")",
           "note": "",
-          "text": ".disabled(pw.isEmpty)"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -8517,7 +8165,7 @@ const DATA = {
           "line": 1256,
           "symbol": ".contextMenu { Button { showTileEdit = true } }",
           "note": "",
-          "text": ".dsScreenBackground()"
+          "text": "VStack(spacing: DS.Space.s) {"
         },
         {
           "platform": "ios",
@@ -8586,7 +8234,7 @@ const DATA = {
           "line": 1268,
           "symbol": "if DB.listFps(app.currentMac).isEmpty",
           "note": "",
-          "text": "failed = true"
+          "text": ".textFieldStyle(.plain)"
         },
         {
           "platform": "ios",
@@ -8594,7 +8242,7 @@ const DATA = {
           "line": 1270,
           "symbol": "quickDestination(\"addFp\")",
           "note": "",
-          "text": "app.showToast(\"未选择门锁\")"
+          "text": ".padding(.vertical, DS.Space.m)"
         }
       ],
       "platformEvidence": {
@@ -9200,122 +8848,6 @@ const DATA = {
       "path": "设备与连接 › 设置抽屉（门锁设置） › 靠近自动开锁开关"
     },
     {
-      "id": "device.reset.beacon",
-      "key": "device.reset.beacon",
-      "parent": "device",
-      "domain": "device",
-      "level": 4,
-      "name": "beacon key 抖动（iOS 在 KeyGen）",
-      "kind": "action",
-      "summary": "iOS 的 bkey 生成有相邻字节约束，与本节点同族。",
-      "details": [],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/Core/KeyGen.swift",
-          "line": 1,
-          "symbol": "bkey 生成",
-          "note": "",
-          "text": "// 配网密钥族生成器 — JS utils/keys.js 移植 (系统 CSPRNG: SecRandomCopyBytes)"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/Core/KeyGen.swift",
-            "line": 1,
-            "symbol": "bkey 生成",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "lead-parity"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "设备与连接 › beacon key 抖动（iOS 在 KeyGen）"
-    },
-    {
-      "id": "device.reset.pinpool",
-      "key": "device.reset.pinpool",
-      "parent": "device",
-      "domain": "device",
-      "level": 4,
-      "name": "64 个 PIN 分 4 批 + 0xFFFFFFFF 哨兵（iOS 同实现）",
-      "kind": "action",
-      "summary": "iOS 的 pair() 里批大小 20、首批带 KeyGen.delPinSentinel，与 APK syncPins20 逐字一致。",
-      "details": [],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/Services/LockService.swift",
-          "line": 922,
-          "symbol": "batchSize 20",
-          "note": "",
-          "text": "//      错的取法裁定成「已知」并写进 `kf_macorder_\u003cmac>`, 之后这条链上每条写命令都回 rc=12;"
-        },
-        {
-          "platform": "ios",
-          "file": "App/Services/LockService.swift",
-          "line": 930,
-          "symbol": "首批哨兵",
-          "note": "",
-          "text": "cleanWrongOrderTwin(m)"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/Services/LockService.swift",
-            "line": 922,
-            "symbol": "batchSize 20",
-            "note": ""
-          },
-          {
-            "file": "App/Services/LockService.swift",
-            "line": 930,
-            "symbol": "首批哨兵",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "lead-parity"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "设备与连接 › 64 个 PIN 分 4 批 + 0xFFFFFFFF 哨兵（iOS 同实现）"
-    },
-    {
       "id": "unlock",
       "key": "unlock",
       "parent": null,
@@ -9337,7 +8869,7 @@ const DATA = {
       "status": {},
       "commands": [],
       "sources": [],
-      "childCount": 15,
+      "childCount": 14,
       "isDomain": true,
       "weight": 1,
       "path": "开锁与鉴权"
@@ -9497,7 +9029,7 @@ const DATA = {
           "line": 1025,
           "symbol": "UnlockDial(state:phase:connected:bleReady:…)",
           "note": "",
-          "text": "}"
+          "text": "Button { moveModule(i, -1) } label: { Image(systemName: \"arrow.up\") }"
         },
         {
           "platform": "android",
@@ -9639,9 +9171,9 @@ const DATA = {
         "apk-baseline",
         "ios-ui-device"
       ],
-      "childCount": 11,
+      "childCount": 10,
       "isDomain": false,
-      "weight": 11,
+      "weight": 10,
       "path": "开锁与鉴权 › 开锁圆盘主界面"
     },
     {
@@ -9798,89 +9330,6 @@ const DATA = {
       "isDomain": false,
       "weight": 4,
       "path": "开锁与鉴权 › 30 秒内二次开锁的本机密码闸"
-    },
-    {
-      "id": "unlock.feedback",
-      "key": "unlock.feedback",
-      "parent": "unlock",
-      "domain": "unlock",
-      "level": 2,
-      "name": "开锁过程辅助反馈",
-      "kind": "service",
-      "summary": "围绕开锁的四类辅助信息：字幕式过程条、自动上锁倒计时、失败后的排查清单与临时码备援。",
-      "details": [
-        "全部挂在设备页圆盘下方，按状态/偏好出现，不占常驻版面",
-        "字幕条受 AXPrefs.captions 控制；清单在 failStreak ≥3 才出现",
-        "这些构件不发送任何协议指令，只读 AppState 状态与本地偏好"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 1036,
-          "symbol": "if AXPrefs.captions { CaptionStepBar(…) }",
-          "note": "",
-          "text": "guard o.indices.contains(i), o.indices.contains(j) else { return }"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 1041,
-          "symbol": "if let left = autoLockLeft { Label(\"约 \\(left) 秒后自动上锁 …\") }",
-          "note": "",
-          "text": "/// 904: 把模块放进某个槽位 (868 的扫描组标签随模块走, 不因换槽丢掉)"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 1067,
-          "symbol": "if app.failStreak > 0 { … }",
-          "note": "",
-          "text": "Button { moveModule(i, -1) } label: { Image(systemName: \"arrow.up\") }"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 1036,
-            "symbol": "if AXPrefs.captions { CaptionStepBar(…) }",
-            "note": ""
-          },
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 1041,
-            "symbol": "if let left = autoLockLeft { Label(\"约 \\(left) 秒后自动上锁 …\") }",
-            "note": ""
-          },
-          {
-            "file": "App/UI/DeviceHomeView.swift",
-            "line": 1067,
-            "symbol": "if app.failStreak > 0 { … }",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "无障碍"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-device"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "开锁与鉴权 › 开锁过程辅助反馈"
     },
     {
       "id": "unlock.proximity",
@@ -15076,57 +14525,6 @@ const DATA = {
       "path": "开锁与鉴权 › 开锁圆盘主界面 › 按压回弹"
     },
     {
-      "id": "unlock.dial.states",
-      "key": "unlock.dial.states",
-      "parent": "unlock.dial",
-      "domain": "unlock",
-      "level": 4,
-      "name": "开锁状态机（iOS 六态，比 APK 五态多 doubleVerify）",
-      "kind": "action",
-      "summary": "iOS：idle / connecting / opening / success / doubleVerify / failed(msg)，其中 doubleVerify 对应 rc=22 的双验继续。",
-      "details": [],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/LockKeeperApp.swift",
-          "line": 280,
-          "symbol": "enum 六态",
-          "note": "",
-          "text": "func select(_ mac: String) {"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/LockKeeperApp.swift",
-            "line": 280,
-            "symbol": "enum 六态",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "lead-parity"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "开锁与鉴权 › 开锁圆盘主界面 › 开锁状态机（iOS 六态，比 APK 五态多 doubleVerify）"
-    },
-    {
       "id": "unlock.finder.arrow",
       "key": "unlock.finder.arrow",
       "parent": "unlock.finder",
@@ -17414,7 +16812,7 @@ const DATA = {
           "line": 707,
           "symbol": "submit(permanent:)",
           "note": "",
-          "text": "private func submit(permanent: Bool) async {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -17525,9 +16923,9 @@ const DATA = {
         "ios-ui-cred",
         "ios-ui-device"
       ],
-      "childCount": 10,
+      "childCount": 8,
       "isDomain": false,
-      "weight": 11,
+      "weight": 9,
       "path": "凭证 › 密码工坊（四步添加/改造）"
     },
     {
@@ -17832,7 +17230,7 @@ const DATA = {
           "line": 594,
           "symbol": "struct AddPwdView",
           "note": "",
-          "text": "struct AddPwdView: View {"
+          "text": "// 同上: 临时码这一支的\"哪里\"也取场所，不再写死。"
         },
         {
           "platform": "ios",
@@ -17840,7 +17238,7 @@ const DATA = {
           "line": 610,
           "symbol": "pwdOK",
           "note": "",
-          "text": "private var pwdOK: Bool {"
+          "text": "struct StartAddFpView: View {"
         },
         {
           "platform": "ios",
@@ -17848,7 +17246,7 @@ const DATA = {
           "line": 680,
           "symbol": "Button(busy ? \"写入中…\" : \"关闭\")…interactiveDismissDisabled(busy)",
           "note": "",
-          "text": ".toolbar { ToolbarItem(placement: .navigationBarLeading) { Button(busy ? \"写入中…\" : \"关闭\") { dismiss() }.disabled(busy) } } .interactiveDismissDisabled(busy)   // 2026-10-15 走查: 写锁在飞时不给退出入口"
+          "text": "Text(error).fixedSize(horizontal: false, vertical: true)"
         }
       ],
       "platformEvidence": {
@@ -18292,7 +17690,7 @@ const DATA = {
           "line": 781,
           "symbol": "struct StartAddFpView",
           "note": "",
-          "text": "@Environment(\\.dismiss) private var dismiss"
+          "text": "note: \"\", src: \"app\", owner: owner, isAlarm: false))"
         },
         {
           "platform": "ios",
@@ -18300,7 +17698,7 @@ const DATA = {
           "line": 822,
           "symbol": "FpOwnerPicker(mac: app.current?.mac ?? \"\", owner: $owner)",
           "note": "",
-          "text": "ProgressView(value: Double(min(presses.count, 8)), total: 8)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -18308,7 +17706,7 @@ const DATA = {
           "line": 894,
           "symbol": ".keepingScreenAwake(busy)",
           "note": "",
-          "text": ""
+          "text": ".accessibilityElement(children: .combine)"
         }
       ],
       "platformEvidence": {
@@ -18762,9 +18160,9 @@ const DATA = {
         "apk-baseline",
         "ios-ui-cred"
       ],
-      "childCount": 5,
+      "childCount": 4,
       "isDomain": false,
-      "weight": 5,
+      "weight": 4,
       "path": "凭证 › 临时密码卡（ZOTP）"
     },
     {
@@ -20283,7 +19681,7 @@ const DATA = {
           "line": 931,
           "symbol": "guard presses.count >= 8",
           "note": "",
-          "text": "userInfo: [NSLocalizedDescriptionKey: \"只收到 \\(presses.count)/8 次按压, 未写入; 请重新录入并多按几次\"])"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -20299,7 +19697,7 @@ const DATA = {
           "line": 940,
           "symbol": "if Task.isCancelled { presses = []; return }",
           "note": "",
-          "text": "return"
+          "text": "private var firmwareText: String {"
         },
         {
           "platform": "ios",
@@ -20307,7 +19705,7 @@ const DATA = {
           "line": 944,
           "symbol": "app.lock.fpConfirm(batch, validFrom:…)",
           "note": "",
-          "text": "let existing = DB.listFps(kc.mac).compactMap { f -> Int? in"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -20625,7 +20023,7 @@ const DATA = {
           "line": 897,
           "symbol": "progressText",
           "note": "",
-          "text": "// 为什么必须换位置: 同一处连按 8 次, 锁会回 rc=23「无法获取有效的指纹图片」——"
+          "text": "capacityRow(title: \"密码\", used: pwdUsed, cap: pwdCap, stock: status?.pwdStock ?? app.snapshot?.pwdStock ?? -1)"
         },
         {
           "platform": "ios",
@@ -20641,7 +20039,7 @@ const DATA = {
           "line": 923,
           "symbol": "app.lock.fpStart(times: 8, onPress:)",
           "note": "",
-          "text": "self.presses.append(p)"
+          "text": "// 289 耗材备件提醒: 电量偏低时提示备一枚电池 (包4: 读数同 pctText 走采样)"
         }
       ],
       "platformEvidence": {
@@ -21630,57 +21028,6 @@ const DATA = {
       "isDomain": false,
       "weight": 1,
       "path": "凭证 › 凭证 Tab 主屏 › 凭证备注（含清除）"
-    },
-    {
-      "id": "credential.otp.close",
-      "key": "credential.otp.close",
-      "parent": "credential.otp",
-      "domain": "credential",
-      "level": 3,
-      "name": "关闭临时开锁密码（iOS：同一开关）",
-      "kind": "action",
-      "summary": "iOS 用一个开关双向控制（开/关），不像 APK 分 open/close 两页。",
-      "details": [],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1808,
-          "symbol": "同一 VariantToggle",
-          "note": "",
-          "text": ""
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/CredentialsView.swift",
-            "line": 1808,
-            "symbol": "同一 VariantToggle",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "lead-parity"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "凭证 › 临时密码卡（ZOTP） › 关闭临时开锁密码（iOS：同一开关）"
     },
     {
       "id": "credential.otp.open",
@@ -23744,7 +23091,7 @@ const DATA = {
           "line": 694,
           "symbol": "confirmTemp()",
           "note": "",
-          "text": "private func confirmTemp() {"
+          "text": ".vkFont(.caption)"
         },
         {
           "platform": "ios",
@@ -23752,7 +23099,7 @@ const DATA = {
           "line": 756,
           "symbol": "let to = from.addingTimeInterval(600)",
           "note": "",
-          "text": "let f = DateFormatter(); f.locale = Locale(identifier: \"en_US_POSIX\"); f.dateFormat = \"yyyy-MM-dd HH:mm:ss\""
+          "text": "DS.Haptics.tick.impactOccurred()"
         },
         {
           "platform": "ios",
@@ -23760,7 +23107,7 @@ const DATA = {
           "line": 667,
           "symbol": "Text(\"下发 10 分钟临时密码\")",
           "note": "",
-          "text": "Text(\"下发 10 分钟临时密码\")"
+          "text": "HStack(spacing: DS.Space.s) {"
         }
       ],
       "platformEvidence": {
@@ -23829,7 +23176,7 @@ const DATA = {
           "line": 630,
           "symbol": "Picker(\"类型\", selection: $permanent)",
           "note": "",
-          "text": "Picker(\"类型\", selection: $permanent) {"
+          "text": "VStack(spacing: DS.Space.xl) {"
         },
         {
           "platform": "ios",
@@ -23837,7 +23184,7 @@ const DATA = {
           "line": 721,
           "symbol": "if !permanent, toDate \u003c= fromDate",
           "note": "",
-          "text": "if !permanent, toDate \u003c= fromDate {"
+          "text": "// APK 对照 (StartaddfpPage.setKeepScreenOn): 录入期间不许自动锁屏 —— 用户手指按在锁上时"
         },
         {
           "platform": "ios",
@@ -23845,7 +23192,7 @@ const DATA = {
           "line": 657,
           "symbol": "VariantToggle(\"备注自动填命名模板 (谁-哪里-何时)\")",
           "note": "",
-          "text": "VariantToggle(\"备注自动填命名模板 (谁-哪里-何时)\", isOn: $useTemplate)"
+          "text": "Text(progressText)"
         }
       ],
       "platformEvidence": {
@@ -26124,122 +25471,6 @@ const DATA = {
       "path": "凭证 › 密码工坊（四步添加/改造） › 第四步：确认与二次输入 › 上次成功下发时刻（541）"
     },
     {
-      "id": "credential.pwd.add.validate",
-      "key": "credential.pwd.add.validate",
-      "parent": "credential.pwd.add",
-      "domain": "credential",
-      "level": 4,
-      "name": "密码 6~8 位纯数字（iOS 同口径）",
-      "kind": "action",
-      "summary": "iOS 密码工坊与临时码都用「6~8 位数字」校验，提示文案一致。",
-      "details": [],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialStudio.swift",
-          "line": 751,
-          "symbol": "Text 6~8 位数字",
-          "note": "",
-          "text": "quickDuration(\"7 天\", 7 * 86400)"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialStudio.swift",
-          "line": 821,
-          "symbol": "errorLine 校验",
-          "note": "",
-          "text": "errorField = \"\""
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/CredentialStudio.swift",
-            "line": 751,
-            "symbol": "Text 6~8 位数字",
-            "note": ""
-          },
-          {
-            "file": "App/UI/CredentialStudio.swift",
-            "line": 821,
-            "symbol": "errorLine 校验",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "lead-parity"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "凭证 › 密码工坊（四步添加/改造） › 密码 6~8 位纯数字（iOS 同口径）"
-    },
-    {
-      "id": "credential.pwd.add.window",
-      "key": "credential.pwd.add.window",
-      "parent": "credential.pwd.add",
-      "domain": "credential",
-      "level": 4,
-      "name": "永久 vs 临时有效期（iOS 同口径）",
-      "kind": "action",
-      "summary": "iOS 永久档写 2118-01-01，临时档用 DatePicker 的起止；与 APK 的两个常量同值。",
-      "details": [],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/CredentialStudio.swift",
-          "line": 1230,
-          "symbol": "2118-01-01 永久",
-          "note": "",
-          "text": ".foregroundStyle(DS.Palette.accentText)"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/CredentialStudio.swift",
-            "line": 1230,
-            "symbol": "2118-01-01 永久",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "lead-parity"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "凭证 › 密码工坊（四步添加/改造） › 永久 vs 临时有效期（iOS 同口径）"
-    },
-    {
       "id": "credential.pwd.detail.missing",
       "key": "credential.pwd.detail.missing",
       "parent": "credential.pwd.detail",
@@ -26437,7 +25668,7 @@ const DATA = {
           "line": 1869,
           "symbol": "struct MembersView",
           "note": "",
-          "text": "@Environment(\\.dismiss) private var dismiss"
+          "text": "/// 撤权那一支排 629/353 同一条队列; 指纹不可远程补录 (670) 的代价写在正文里。"
         },
         {
           "platform": "ios",
@@ -26461,7 +25692,7 @@ const DATA = {
           "line": 1885,
           "symbol": "Text(\"添加成员后，就可以给成员添加密码，指纹和手机钥匙\")",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -26469,7 +25700,7 @@ const DATA = {
           "line": 1946,
           "symbol": ".sheet(isPresented: $showCenter) { MemberCenterView() }",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -26844,7 +26075,7 @@ const DATA = {
           "line": 1937,
           "symbol": "ToolbarItem(placement: .navigationBarTrailing)",
           "note": "",
-          "text": ""
+          "text": "@ViewBuilder"
         },
         {
           "platform": "ios",
@@ -26860,7 +26091,7 @@ const DATA = {
           "line": 1942,
           "symbol": "accessibilityLabel(\"成员中心 (家庭协作)\")",
           "note": "",
-          "text": "}"
+          "text": "actionTitle: \"去添加门锁\") {"
         },
         {
           "platform": "ios",
@@ -27635,7 +26866,7 @@ const DATA = {
           "line": 2021,
           "symbol": "add()",
           "note": "",
-          "text": "for f in fields {"
+          "text": ""
         },
         {
           "platform": "apk",
@@ -27651,7 +26882,7 @@ const DATA = {
           "line": 1895,
           "symbol": "Button(\"添加\", action: add).disabled(newName.isEmpty)",
           "note": "",
-          "text": ".disabled(newName.isEmpty)"
+          "text": "DB.removeMember(m.id)"
         },
         {
           "platform": "ios",
@@ -27659,7 +26890,7 @@ const DATA = {
           "line": 2028,
           "symbol": "app.showToast(\"姓名为空或已存在\")",
           "note": "",
-          "text": "}"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -28349,7 +27580,7 @@ const DATA = {
           "line": 2063,
           "symbol": "confirmRemove(_:)",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -28357,7 +27588,7 @@ const DATA = {
           "line": 2071,
           "symbol": "· 只移除档案: 只动本机台账 …",
           "note": "",
-          "text": "UIApplication.topViewController()?.present(alert, animated: true)"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -28365,7 +27596,7 @@ const DATA = {
           "line": 2083,
           "symbol": "UIAlertAction(title: \"连锁端一起收回\", style: .destructive)",
           "note": "",
-          "text": "var id: String"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -33189,7 +32420,7 @@ const DATA = {
       "status": {},
       "commands": [],
       "sources": [],
-      "childCount": 4,
+      "childCount": 3,
       "isDomain": true,
       "weight": 1,
       "path": "安全与防御"
@@ -33417,65 +32648,10 @@ const DATA = {
         "apk-baseline",
         "ios-ui-device"
       ],
-      "childCount": 2,
-      "isDomain": false,
-      "weight": 2,
-      "path": "安全与防御 › 防尾随入室（等待时长）"
-    },
-    {
-      "id": "security.ledger",
-      "key": "security.ledger",
-      "parent": "security",
-      "domain": "security",
-      "level": 2,
-      "name": "敏感操作流水（388）",
-      "kind": "service",
-      "summary": "kf_audit_sensitive 记录「接触过明文」的动作：查看 / 复制 / 导出 / 停用·原因，最多 100 条，最新在前。",
-      "details": [
-        "只记接触明文的子集，不混进管理流水（AuditChain.swift:172-174）"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/Core/AuditChain.swift",
-          "line": 173,
-          "symbol": "SensitiveLedger",
-          "note": "",
-          "text": ""
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/Core/AuditChain.swift",
-            "line": 173,
-            "symbol": "SensitiveLedger",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "安全",
-        "审计",
-        "脱敏"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-core-data"
-      ],
-      "childCount": 0,
+      "childCount": 1,
       "isDomain": false,
       "weight": 1,
-      "path": "安全与防御 › 敏感操作流水（388）"
+      "path": "安全与防御 › 防尾随入室（等待时长）"
     },
     {
       "id": "security.defense",
@@ -34109,59 +33285,6 @@ const DATA = {
       "path": "安全与防御 › 一键布防（cmd25，iOS 侧已补齐） › 布防时段三条校验（iOS DefendKit.validate）"
     },
     {
-      "id": "security.tailgate.seconds",
-      "key": "security.tailgate.seconds",
-      "parent": "security.tailgate",
-      "domain": "security",
-      "level": 4,
-      "name": "等待时长 2~6 秒（iOS 比 APK 少 7 秒档）",
-      "kind": "action",
-      "summary": "iOS 的 TailgateView 提供 2...6 秒；APK 是 2..7。这是真实的一档差异，已如实记录。",
-      "details": [
-        "注意：APK 有 7 秒档，iOS 没有 —— 这条是真差异，不是伪缺口"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/SettingsView.swift",
-          "line": 1045,
-          "symbol": "Picker 2...6",
-          "note": "",
-          "text": "switching = true"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/SettingsView.swift",
-            "line": 1045,
-            "symbol": "Picker 2...6",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "lead-parity"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "安全与防御 › 防尾随入室（等待时长） › 等待时长 2~6 秒（iOS 比 APK 少 7 秒档）"
-    },
-    {
       "id": "backup",
       "key": "backup",
       "parent": null,
@@ -34285,137 +33408,6 @@ const DATA = {
       "isDomain": false,
       "weight": 25,
       "path": "备份与迁移 › 备份·恢复·迁移引擎"
-    },
-    {
-      "id": "backup.webdav.studio",
-      "key": "backup.webdav.studio",
-      "parent": "backup",
-      "domain": "backup",
-      "level": 2,
-      "name": "WebDAV 工作室",
-      "kind": "screen",
-      "summary": "用户自配 WebDAV 端点：连通测试、远端列表（下载/演练）、上传、密钥轮换、滚动保留。",
-      "details": [
-        "自带 NavigationStack + Form 三段：「WebDAV 端点 (走用户自配账号, 仅 Basic Auth 运行时输入)」「远端备份 (哈希先行: 先拉 etag 再拉正文)」「策略与密钥」",
-        "ready = !root.isEmpty && !acct.isEmpty && !appPw.isEmpty；左上「关闭」dismiss",
-        "onAppear 从 Store 预填 kf_webdav_root / kf_cloudcfg_acct / kf_cloudcfg_app（两枚口令留空）",
-        "body 走 vkBody.destined(.webDAVStudio) 变体路由"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupStudio.swift",
-          "line": 13,
-          "symbol": "struct WebDAVStudioView",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupStudio.swift",
-          "line": 30,
-          "symbol": "ready",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupStudio.swift",
-          "line": 32,
-          "symbol": "vkBody.destined(.webDAVStudio)",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupStudio.swift",
-          "line": 34,
-          "symbol": "NavigationStack",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupStudio.swift",
-          "line": 36,
-          "symbol": "Section WebDAV 端点",
-          "note": "",
-          "text": ""
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 13,
-            "symbol": "struct WebDAVStudioView",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 30,
-            "symbol": "ready",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 32,
-            "symbol": "vkBody.destined(.webDAVStudio)",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 34,
-            "symbol": "NavigationStack",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 36,
-            "symbol": "Section WebDAV 端点",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 87,
-            "symbol": "Section 远端备份",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 128,
-            "symbol": "Section 策略与密钥",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 152,
-            "symbol": "onAppear 预填",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "云同步",
-        "页面"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-system"
-      ],
-      "childCount": 3,
-      "isDomain": false,
-      "weight": 3,
-      "path": "备份与迁移 › WebDAV 工作室"
     },
     {
       "id": "backup.center",
@@ -34551,6 +33543,137 @@ const DATA = {
       "isDomain": false,
       "weight": 2,
       "path": "备份与迁移 › 备份与恢复（本屏入口）"
+    },
+    {
+      "id": "backup.webdav.studio",
+      "key": "backup.webdav.studio",
+      "parent": "backup",
+      "domain": "backup",
+      "level": 2,
+      "name": "WebDAV 工作室",
+      "kind": "screen",
+      "summary": "用户自配 WebDAV 端点：连通测试、远端列表（下载/演练）、上传、密钥轮换、滚动保留。",
+      "details": [
+        "自带 NavigationStack + Form 三段：「WebDAV 端点 (走用户自配账号, 仅 Basic Auth 运行时输入)」「远端备份 (哈希先行: 先拉 etag 再拉正文)」「策略与密钥」",
+        "ready = !root.isEmpty && !acct.isEmpty && !appPw.isEmpty；左上「关闭」dismiss",
+        "onAppear 从 Store 预填 kf_webdav_root / kf_cloudcfg_acct / kf_cloudcfg_app（两枚口令留空）",
+        "body 走 vkBody.destined(.webDAVStudio) 变体路由"
+      ],
+      "evidence": [
+        {
+          "platform": "ios",
+          "file": "App/UI/BackupStudio.swift",
+          "line": 13,
+          "symbol": "struct WebDAVStudioView",
+          "note": "",
+          "text": ""
+        },
+        {
+          "platform": "ios",
+          "file": "App/UI/BackupStudio.swift",
+          "line": 30,
+          "symbol": "ready",
+          "note": "",
+          "text": ""
+        },
+        {
+          "platform": "ios",
+          "file": "App/UI/BackupStudio.swift",
+          "line": 32,
+          "symbol": "vkBody.destined(.webDAVStudio)",
+          "note": "",
+          "text": ""
+        },
+        {
+          "platform": "ios",
+          "file": "App/UI/BackupStudio.swift",
+          "line": 34,
+          "symbol": "NavigationStack",
+          "note": "",
+          "text": ""
+        },
+        {
+          "platform": "ios",
+          "file": "App/UI/BackupStudio.swift",
+          "line": 36,
+          "symbol": "Section WebDAV 端点",
+          "note": "",
+          "text": ""
+        }
+      ],
+      "platformEvidence": {
+        "ios": [
+          {
+            "file": "App/UI/BackupStudio.swift",
+            "line": 13,
+            "symbol": "struct WebDAVStudioView",
+            "note": ""
+          },
+          {
+            "file": "App/UI/BackupStudio.swift",
+            "line": 30,
+            "symbol": "ready",
+            "note": ""
+          },
+          {
+            "file": "App/UI/BackupStudio.swift",
+            "line": 32,
+            "symbol": "vkBody.destined(.webDAVStudio)",
+            "note": ""
+          },
+          {
+            "file": "App/UI/BackupStudio.swift",
+            "line": 34,
+            "symbol": "NavigationStack",
+            "note": ""
+          },
+          {
+            "file": "App/UI/BackupStudio.swift",
+            "line": 36,
+            "symbol": "Section WebDAV 端点",
+            "note": ""
+          },
+          {
+            "file": "App/UI/BackupStudio.swift",
+            "line": 87,
+            "symbol": "Section 远端备份",
+            "note": ""
+          },
+          {
+            "file": "App/UI/BackupStudio.swift",
+            "line": 128,
+            "symbol": "Section 策略与密钥",
+            "note": ""
+          },
+          {
+            "file": "App/UI/BackupStudio.swift",
+            "line": 152,
+            "symbol": "onAppear 预填",
+            "note": ""
+          }
+        ],
+        "android": [],
+        "apk": []
+      },
+      "platforms": [
+        "ios"
+      ],
+      "platformCount": 1,
+      "tags": [
+        "云同步",
+        "页面"
+      ],
+      "status": {
+        "ios": "implemented"
+      },
+      "commands": [],
+      "sources": [
+        "ios-ui-system"
+      ],
+      "childCount": 2,
+      "isDomain": false,
+      "weight": 2,
+      "path": "备份与迁移 › WebDAV 工作室"
     },
     {
       "id": "backup.restore",
@@ -36409,131 +35532,6 @@ const DATA = {
       "isDomain": false,
       "weight": 1,
       "path": "备份与迁移 › 备份·恢复·迁移引擎 › 坚果云同步（账号 / 上传 / 恢复） › 远端列表、连通测试与滚动保留"
-    },
-    {
-      "id": "backup.webdav.test",
-      "key": "backup.webdav.test",
-      "parent": "backup.webdav.studio",
-      "domain": "backup",
-      "level": 3,
-      "name": "连通测试",
-      "kind": "action",
-      "summary": "用当前账号测 WebDAV 连通性，测完立即落盘并把结果写在按钮下方。",
-      "details": [
-        "未 ready → toast「请填写根地址/账号/应用密码」并 return",
-        "busy 时按钮文案「测试中…」；调用 BackupStudio.testWebdav(acct:appPw:root:)",
-        "测试后 persist()；结果文本写 testResult，以 caption/textSub 显示",
-        "测试不写远端、不上传"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupStudio.swift",
-          "line": 43,
-          "symbol": "LabeledContent 连通测试",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupStudio.swift",
-          "line": 44,
-          "symbol": "Button 测试",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupStudio.swift",
-          "line": 49,
-          "symbol": "testResult 显示",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupStudio.swift",
-          "line": 180,
-          "symbol": "private func test()",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/BackupStudio.swift",
-          "line": 181,
-          "symbol": "请填写根地址/账号/应用密码",
-          "note": "",
-          "text": ""
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 43,
-            "symbol": "LabeledContent 连通测试",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 44,
-            "symbol": "Button 测试",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 49,
-            "symbol": "testResult 显示",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 180,
-            "symbol": "private func test()",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 181,
-            "symbol": "请填写根地址/账号/应用密码",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 184,
-            "symbol": "testWebdav",
-            "note": ""
-          },
-          {
-            "file": "App/UI/BackupStudio.swift",
-            "line": 185,
-            "symbol": "persist()",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "云同步",
-        "测试"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-system"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "备份与迁移 › WebDAV 工作室 › 连通测试"
     },
     {
       "id": "backup.webdav.upload",
@@ -39346,7 +38344,7 @@ const DATA = {
           "line": 1901,
           "symbol": "Section { 全家本月备份 }",
           "note": "",
-          "text": "title: \"还没有成员\","
+          "text": "alert.addAction(UIAlertAction(title: \"取消\", style: .cancel))"
         },
         {
           "platform": "ios",
@@ -39362,7 +38360,7 @@ const DATA = {
           "line": 1908,
           "symbol": "Text(\"\\(Milestones.backupThisMonth) / 4 次\")",
           "note": "",
-          "text": "}"
+          "text": "struct MessagesView: View {"
         }
       ],
       "platformEvidence": {
@@ -44534,7 +43532,7 @@ const DATA = {
           "line": 1278,
           "symbol": "struct LockProfileView",
           "note": "",
-          "text": "@Environment(\\.dismiss) private var dismiss"
+          "text": "var m = LockArchive.meta(kc.mac)"
         },
         {
           "platform": "ios",
@@ -44542,7 +43540,7 @@ const DATA = {
           "line": 1298,
           "symbol": "预览 Section",
           "note": "",
-          "text": "Image(systemName: symbol.isEmpty ? \"lock.fill\" : symbol)"
+          "text": "@State private var busy = false"
         },
         {
           "platform": "ios",
@@ -44550,7 +43548,7 @@ const DATA = {
           "line": 1423,
           "symbol": "昵称不能为空。档案只存本机, 不写入门锁。",
           "note": "",
-          "text": "}"
+          "text": "Task { await self.writeKey(d) }"
         }
       ],
       "platformEvidence": {
@@ -47495,7 +46493,7 @@ const DATA = {
           "line": 1411,
           "symbol": "Section(\"电池档案\")",
           "note": "",
-          "text": "VariantToggle(\"记录换电日期\", isOn: $batteryHasDate)"
+          "text": "return b.map { String(format: \"%02X\", $0) }.joined(separator: \":\")"
         },
         {
           "platform": "ios",
@@ -47503,7 +46501,7 @@ const DATA = {
           "line": 1419,
           "symbol": "BusyButton(title: \"保存档案\", …, disabled: trimmed.isEmpty)",
           "note": "",
-          "text": "}"
+          "text": "let lockName = app.displayName"
         },
         {
           "platform": "ios",
@@ -47511,7 +46509,7 @@ const DATA = {
           "line": 1443,
           "symbol": "save()",
           "note": "",
-          "text": "guard !n.isEmpty, let kc = app.current else { app.showToast(\"昵称不能为空\"); return }"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -47579,7 +46577,7 @@ const DATA = {
           "line": 1347,
           "symbol": "VariantToggle(\"在翻页里隐藏这把锁\")",
           "note": "",
-          "text": "set: { LockArchive.setHidden(app.currentMac, $0) }))"
+          "text": ".navigationTitle(\"蓝牙钥匙串\")"
         },
         {
           "platform": "ios",
@@ -47587,7 +46585,7 @@ const DATA = {
           "line": 1350,
           "symbol": "隐藏后它退出左右横滑，只在切换胶囊的「已隐藏」区里可达",
           "note": "",
-          "text": ".vkFont(.caption)"
+          "text": ".task { reload() }"
         }
       ],
       "platformEvidence": {
@@ -47649,7 +46647,7 @@ const DATA = {
           "line": 1325,
           "symbol": "Section(\"身份\")",
           "note": "",
-          "text": ".autocorrectionDisabled()"
+          "text": "title: \"还没有钥匙串\","
         },
         {
           "platform": "ios",
@@ -47657,7 +46655,7 @@ const DATA = {
           "line": 1337,
           "symbol": "TextField(\"分组名 (如 家用 / 仓库 / 办公, 留空 = 未分组)\")",
           "note": "",
-          "text": ".submitLabel(.next)"
+          "text": "Text(\"尚未配对门锁 — 写入钥匙前需先配对门锁。\")"
         },
         {
           "platform": "ios",
@@ -47732,7 +46730,7 @@ const DATA = {
           "line": 1356,
           "symbol": "Section(\"符号\")",
           "note": "",
-          "text": "spacing: DS.Space.s) {"
+          "text": "VStack(alignment: .leading, spacing: DS.Space.xs) {"
         },
         {
           "platform": "ios",
@@ -47740,7 +46738,7 @@ const DATA = {
           "line": 1383,
           "symbol": "Section(\"色标\")",
           "note": "",
-          "text": "ForEach(LockArchive.swatches) { s in"
+          "text": "emphasized: false)"
         },
         {
           "platform": "ios",
@@ -47748,7 +46746,7 @@ const DATA = {
           "line": 1323,
           "symbol": "符号与色标同步用于 Hero 卡、切换胶囊与记录行的时间线标签。",
           "note": "",
-          "text": "Section(\"身份\") {"
+          "text": "if dongles.isEmpty {"
         }
       ],
       "platformEvidence": {
@@ -51060,7 +50058,7 @@ const DATA = {
       "status": {},
       "commands": [],
       "sources": [],
-      "childCount": 65,
+      "childCount": 64,
       "isDomain": true,
       "weight": 1,
       "path": "协议与命令"
@@ -67849,57 +66847,6 @@ const DATA = {
       "path": "协议与命令 › BLE 链路服务（BleUnlocker） › 分片写入（恒 20 字节）"
     },
     {
-      "id": "protocol.rc.expired",
-      "key": "protocol.rc.expired",
-      "parent": "protocol",
-      "domain": "protocol",
-      "level": 4,
-      "name": "resultCode 3「命令不在有效期」（iOS 同处置）",
-      "kind": "action",
-      "summary": "iOS 在 HardwareService 与 execOk 里都把 rc=3 翻成「命令不在有效期，请将手机时间同步到锁内」。",
-      "details": [],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/Services/HardwareService.swift",
-          "line": 241,
-          "symbol": "rc==3 文案",
-          "note": "",
-          "text": "if rc == 3 { throw BLEErrorX.msg(\"命令不在有效期，请将手机时间同步到锁内\") }"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/Services/HardwareService.swift",
-            "line": 241,
-            "symbol": "rc==3 文案",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "lead-parity"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "协议与命令 › resultCode 3「命令不在有效期」（iOS 同处置）"
-    },
-    {
       "id": "protocol.status.rc-table",
       "key": "protocol.status.rc-table",
       "parent": "protocol.status",
@@ -68265,9 +67212,9 @@ const DATA = {
         "apk-baseline",
         "ios-core-data"
       ],
-      "childCount": 8,
+      "childCount": 7,
       "isDomain": false,
-      "weight": 8,
+      "weight": 7,
       "path": "数据与存储 › 本机存储（SharedPreferences）"
     },
     {
@@ -68534,76 +67481,6 @@ const DATA = {
       "path": "数据与存储 › 时间与历法口径"
     },
     {
-      "id": "data.audit",
-      "key": "data.audit",
-      "parent": "data",
-      "domain": "data",
-      "level": 2,
-      "name": "审计留痕与哈希链",
-      "kind": "service",
-      "summary": "kf_audit_events 单表：开门/管理双流水 + 字段 diff + 前序哈希链 + 保留期物理删除。",
-      "details": [
-        "HashKit 优先 CryptoKit SHA-256，不可用时退化为双轮 FNV 拼接（只要求「改一条即破链」）（AuditChain.swift:18-28）",
-        "管理流水封顶 500（AuditChain.swift:83）"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/Core/AuditChain.swift",
-          "line": 80,
-          "symbol": "AuditLog",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/Core/AuditChain.swift",
-          "line": 17,
-          "symbol": "HashKit",
-          "note": "",
-          "text": "enum HashKit {"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/Core/AuditChain.swift",
-            "line": 80,
-            "symbol": "AuditLog",
-            "note": ""
-          },
-          {
-            "file": "App/Core/AuditChain.swift",
-            "line": 17,
-            "symbol": "HashKit",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "审计",
-        "安全",
-        "核心"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-core-data"
-      ],
-      "childCount": 3,
-      "isDomain": false,
-      "weight": 3,
-      "path": "数据与存储 › 审计留痕与哈希链"
-    },
-    {
       "id": "data.member",
       "key": "data.member",
       "parent": "data",
@@ -68671,6 +67548,76 @@ const DATA = {
       "isDomain": false,
       "weight": 3,
       "path": "数据与存储 › 成员档案数据层"
+    },
+    {
+      "id": "data.audit",
+      "key": "data.audit",
+      "parent": "data",
+      "domain": "data",
+      "level": 2,
+      "name": "审计留痕与哈希链",
+      "kind": "service",
+      "summary": "kf_audit_events 单表：开门/管理双流水 + 字段 diff + 前序哈希链 + 保留期物理删除。",
+      "details": [
+        "HashKit 优先 CryptoKit SHA-256，不可用时退化为双轮 FNV 拼接（只要求「改一条即破链」）（AuditChain.swift:18-28）",
+        "管理流水封顶 500（AuditChain.swift:83）"
+      ],
+      "evidence": [
+        {
+          "platform": "ios",
+          "file": "App/Core/AuditChain.swift",
+          "line": 80,
+          "symbol": "AuditLog",
+          "note": "",
+          "text": ""
+        },
+        {
+          "platform": "ios",
+          "file": "App/Core/AuditChain.swift",
+          "line": 17,
+          "symbol": "HashKit",
+          "note": "",
+          "text": "enum HashKit {"
+        }
+      ],
+      "platformEvidence": {
+        "ios": [
+          {
+            "file": "App/Core/AuditChain.swift",
+            "line": 80,
+            "symbol": "AuditLog",
+            "note": ""
+          },
+          {
+            "file": "App/Core/AuditChain.swift",
+            "line": 17,
+            "symbol": "HashKit",
+            "note": ""
+          }
+        ],
+        "android": [],
+        "apk": []
+      },
+      "platforms": [
+        "ios"
+      ],
+      "platformCount": 1,
+      "tags": [
+        "审计",
+        "安全",
+        "核心"
+      ],
+      "status": {
+        "ios": "implemented"
+      },
+      "commands": [],
+      "sources": [
+        "ios-core-data"
+      ],
+      "childCount": 2,
+      "isDomain": false,
+      "weight": 2,
+      "path": "数据与存储 › 审计留痕与哈希链"
     },
     {
       "id": "data.hardware",
@@ -68976,7 +67923,7 @@ const DATA = {
           "line": 1451,
           "symbol": "m.grp = LockArchive.normalizedGroup(grp)",
           "note": "",
-          "text": "m.symbol = symbol"
+          "text": "catch { app.showToast(error.localizedDescription) }"
         },
         {
           "platform": "ios",
@@ -69409,90 +68356,6 @@ const DATA = {
       "isDomain": false,
       "weight": 1,
       "path": "数据与存储 › 审计留痕与哈希链 › 追加、封顶与截断重锚"
-    },
-    {
-      "id": "data.audit.chain",
-      "key": "data.audit.chain",
-      "parent": "data.audit",
-      "domain": "data",
-      "level": 3,
-      "name": "事件结构与封链",
-      "kind": "data",
-      "summary": "AuditEvent 10 字段；seal 用「前序哈希 + 全字段」算本条 hash，起点是字符串 GENESIS。",
-      "details": [
-        "字段：id(毫秒序号) / ts(Unix 秒) / cat(door|admin) / action / target / diff / operator_ / duress / prevHash / hash（AuditChain.swift:46-58）",
-        "hashInput 拼接顺序：id#ts#cat#action#target#operator#duress#diffText#prev，diff 键排序后 join（AuditChain.swift:59-68）",
-        "operator_ 记会话验证方式（本机密码/面容/会话续期）；duress 只在操作日志里画橙标，不做全局可见边框（AuditChain.swift:54-55）"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/Core/AuditChain.swift",
-          "line": 46,
-          "symbol": "AuditEvent",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/Core/AuditChain.swift",
-          "line": 59,
-          "symbol": "hashInput(_:)",
-          "note": "",
-          "text": "static var backupGatePass: Bool {"
-        },
-        {
-          "platform": "ios",
-          "file": "App/Core/AuditChain.swift",
-          "line": 72,
-          "symbol": "seal(prevHash:)",
-          "note": "",
-          "text": ""
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/Core/AuditChain.swift",
-            "line": 46,
-            "symbol": "AuditEvent",
-            "note": ""
-          },
-          {
-            "file": "App/Core/AuditChain.swift",
-            "line": 59,
-            "symbol": "hashInput(_:)",
-            "note": ""
-          },
-          {
-            "file": "App/Core/AuditChain.swift",
-            "line": 72,
-            "symbol": "seal(prevHash:)",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "审计",
-        "防篡改"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-core-data"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "数据与存储 › 审计留痕与哈希链 › 事件结构与封链"
     },
     {
       "id": "data.audit.diff",
@@ -74103,77 +72966,6 @@ const DATA = {
       "isDomain": false,
       "weight": 1,
       "path": "数据与存储 › 本机存储（SharedPreferences） › 字节不变快照与族前缀（421 回滚）"
-    },
-    {
-      "id": "data.store.read-write",
-      "key": "data.store.read-write",
-      "parent": "data.store",
-      "domain": "data",
-      "level": 3,
-      "name": "类型化读写与参数序反差",
-      "kind": "service",
-      "summary": "get\u003cT>(类型, 键) 与 get\u003cT>(键, 类型) 双序重载语义一致；set 走 JSONSerialization，setCodable 走 JSONEncoder。",
-      "details": [
-        "双参序重载是为了不批量改写 87 个既有调用点（Store.swift:10-13）",
-        "getDict 返回 [String: Any]，供 Map 结构的 kf_keychains/kf_members 等使用（Store.swift:25-28）",
-        "getString 先试 string(forKey:) 再试 JSON 解码，兼容早期直接写字符串的老数据（Store.swift:29-33）",
-        "setCodable(键, 值) 与 DB.setCodable(值, 键) 参数序相反，注释点名这是已踩过 5 次的坑（Store.swift:49-51）"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/Core/Store.swift",
-          "line": 13,
-          "symbol": "get(_:_:)",
-          "note": "双参序兼容",
-          "text": "func get\u003cT: Decodable>(_ type: T.Type, _ k: String) -> T? { get(k, type) }"
-        },
-        {
-          "platform": "ios",
-          "file": "App/Core/Store.swift",
-          "line": 51,
-          "symbol": "setCodable(_:_:)",
-          "note": "",
-          "text": "func setCodable\u003cT: Encodable>(_ k: String, _ v: T) {"
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/Core/Store.swift",
-            "line": 13,
-            "symbol": "get(_:_:)",
-            "note": "双参序兼容"
-          },
-          {
-            "file": "App/Core/Store.swift",
-            "line": 51,
-            "symbol": "setCodable(_:_:)",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "本地键值",
-        "核心"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-core-data"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "数据与存储 › 本机存储（SharedPreferences） › 类型化读写与参数序反差"
     },
     {
       "id": "data.store.scan-profile",
@@ -81598,17 +80390,7 @@ const DATA = {
     },
     {
       "source": "device",
-      "target": "device.add.type",
-      "type": "tree"
-    },
-    {
-      "source": "device",
       "target": "device.bind-state",
-      "type": "tree"
-    },
-    {
-      "source": "device.gateway",
-      "target": "device.gateway.add",
       "type": "tree"
     },
     {
@@ -81619,11 +80401,6 @@ const DATA = {
     {
       "source": "device.gateway",
       "target": "device.gateway.provision",
-      "type": "tree"
-    },
-    {
-      "source": "device.gateway",
-      "target": "device.gateway.reset-hint",
       "type": "tree"
     },
     {
@@ -81808,11 +80585,6 @@ const DATA = {
     },
     {
       "source": "device",
-      "target": "device.list",
-      "type": "tree"
-    },
-    {
-      "source": "device",
       "target": "device.multi-lock",
       "type": "tree"
     },
@@ -81877,16 +80649,6 @@ const DATA = {
       "type": "tree"
     },
     {
-      "source": "device.gateway",
-      "target": "device.gateway.iot",
-      "type": "tree"
-    },
-    {
-      "source": "device.gateway",
-      "target": "device.gateway.wifi.params",
-      "type": "tree"
-    },
-    {
       "source": "device.home",
       "target": "device.home.gear",
       "type": "tree"
@@ -81947,16 +80709,6 @@ const DATA = {
       "type": "tree"
     },
     {
-      "source": "device",
-      "target": "device.reset.beacon",
-      "type": "tree"
-    },
-    {
-      "source": "device",
-      "target": "device.reset.pinpool",
-      "type": "tree"
-    },
-    {
       "source": "unlock",
       "target": "unlock.autoopen",
       "type": "tree"
@@ -81969,11 +80721,6 @@ const DATA = {
     {
       "source": "unlock",
       "target": "unlock.gate",
-      "type": "tree"
-    },
-    {
-      "source": "unlock",
-      "target": "unlock.feedback",
       "type": "tree"
     },
     {
@@ -82264,11 +81011,6 @@ const DATA = {
     {
       "source": "unlock.dial",
       "target": "unlock.dial.press",
-      "type": "tree"
-    },
-    {
-      "source": "unlock.dial",
-      "target": "unlock.dial.states",
       "type": "tree"
     },
     {
@@ -82627,11 +81369,6 @@ const DATA = {
       "type": "tree"
     },
     {
-      "source": "credential.otp",
-      "target": "credential.otp.close",
-      "type": "tree"
-    },
-    {
       "source": "credential",
       "target": "credential.otp.open",
       "type": "tree"
@@ -82889,16 +81626,6 @@ const DATA = {
     {
       "source": "credential.pwd.add.step3",
       "target": "credential.pwd.add.step3.last-apply",
-      "type": "tree"
-    },
-    {
-      "source": "credential.pwd.add",
-      "target": "credential.pwd.add.validate",
-      "type": "tree"
-    },
-    {
-      "source": "credential.pwd.add",
-      "target": "credential.pwd.add.window",
       "type": "tree"
     },
     {
@@ -83258,11 +81985,6 @@ const DATA = {
     },
     {
       "source": "security",
-      "target": "security.ledger",
-      "type": "tree"
-    },
-    {
-      "source": "security",
       "target": "security.defense",
       "type": "tree"
     },
@@ -83297,23 +82019,18 @@ const DATA = {
       "type": "tree"
     },
     {
-      "source": "security.tailgate",
-      "target": "security.tailgate.seconds",
-      "type": "tree"
-    },
-    {
       "source": "backup",
       "target": "backup.engine",
       "type": "tree"
     },
     {
       "source": "backup",
-      "target": "backup.webdav.studio",
+      "target": "backup.center",
       "type": "tree"
     },
     {
       "source": "backup",
-      "target": "backup.center",
+      "target": "backup.webdav.studio",
       "type": "tree"
     },
     {
@@ -83394,11 +82111,6 @@ const DATA = {
     {
       "source": "backup.webdav",
       "target": "backup.webdav.list",
-      "type": "tree"
-    },
-    {
-      "source": "backup.webdav.studio",
-      "target": "backup.webdav.test",
       "type": "tree"
     },
     {
@@ -84942,11 +83654,6 @@ const DATA = {
       "type": "tree"
     },
     {
-      "source": "protocol",
-      "target": "protocol.rc.expired",
-      "type": "tree"
-    },
-    {
       "source": "protocol.status",
       "target": "protocol.status.rc-table",
       "type": "tree"
@@ -84983,12 +83690,12 @@ const DATA = {
     },
     {
       "source": "data",
-      "target": "data.audit",
+      "target": "data.member",
       "type": "tree"
     },
     {
       "source": "data",
-      "target": "data.member",
+      "target": "data.audit",
       "type": "tree"
     },
     {
@@ -85034,11 +83741,6 @@ const DATA = {
     {
       "source": "data.audit",
       "target": "data.audit.append",
-      "type": "tree"
-    },
-    {
-      "source": "data.audit",
-      "target": "data.audit.chain",
       "type": "tree"
     },
     {
@@ -85289,11 +83991,6 @@ const DATA = {
     {
       "source": "data.store",
       "target": "data.store.raw-snapshot",
-      "type": "tree"
-    },
-    {
-      "source": "data.store",
-      "target": "data.store.read-write",
       "type": "tree"
     },
     {
@@ -85827,16 +84524,6 @@ const DATA = {
       "type": "cmd"
     },
     {
-      "source": "device.gateway.iot",
-      "target": "protocol.cmd32",
-      "type": "cmd"
-    },
-    {
-      "source": "device.gateway.wifi.params",
-      "target": "protocol.cmd31",
-      "type": "cmd"
-    },
-    {
       "source": "unlock.autoopen",
       "target": "protocol.cmd04",
       "type": "cmd"
@@ -85998,32 +84685,32 @@ const DATA = {
     }
   ],
   "stats": {
-    "nodes": 861,
+    "nodes": 842,
     "domains": 13,
-    "modules": 111,
-    "features": 502,
-    "details": 235,
+    "modules": 109,
+    "features": 494,
+    "details": 226,
     "byPlatform": {
-      "ios": 708,
+      "ios": 689,
       "android": 90,
       "apk": 149
     },
     "byDomain": {
-      "device": 97,
-      "unlock": 86,
-      "credential": 107,
+      "device": 89,
+      "unlock": 84,
+      "credential": 104,
       "member": 37,
       "record": 32,
-      "security": 12,
-      "backup": 47,
+      "security": 10,
+      "backup": 46,
       "care": 15,
       "diagnostic": 33,
       "settings": 69,
-      "protocol": 171,
-      "data": 89,
+      "protocol": 170,
+      "data": 87,
       "apk": 66
     },
-    "evidence": 2891,
+    "evidence": 2858,
     "commands": 45,
     "platSets": {
       "ios+android+apk": [
@@ -86053,10 +84740,7 @@ const DATA = {
         "device.add.rollback",
         "device.add.row",
         "device.add.scan",
-        "device.add.type",
-        "device.gateway.add",
         "device.gateway.list",
-        "device.gateway.reset-hint",
         "device.home.attention",
         "device.home.deepjump",
         "device.home.groupchips",
@@ -86086,21 +84770,15 @@ const DATA = {
         "device.link.rssi-bars",
         "device.link.startup-preconnect",
         "device.link.state",
-        "device.list",
         "device.synctime.run",
         "device.add.progress.chain",
-        "device.gateway.iot",
-        "device.gateway.wifi.params",
         "device.home.quick.again",
         "device.home.quick.editor",
         "device.home.quick.pendingfp",
         "device.link.rssi-fence",
         "device.link.scan-rssi",
-        "device.reset.beacon",
-        "device.reset.pinpool",
         "unlock.autoopen",
         "unlock.gate",
-        "unlock.feedback",
         "unlock.autoopen.gate-chain",
         "unlock.guest",
         "unlock.autoopen.calibrate",
@@ -86137,7 +84815,6 @@ const DATA = {
         "unlock.autoopen.self-heal-time",
         "unlock.autoopen.signal-gate",
         "unlock.dial.hold.mark",
-        "unlock.dial.states",
         "unlock.gate.flow",
         "unlock.guest.gate.biometric",
         "unlock.guest.request-route",
@@ -86187,7 +84864,6 @@ const DATA = {
         "credential.list.seg",
         "credential.list.swipe",
         "credential.note",
-        "credential.otp.close",
         "credential.owner.create",
         "credential.owner.list",
         "credential.pwd.add.draft",
@@ -86235,8 +84911,6 @@ const DATA = {
         "credential.pwd.add.step1.strength",
         "credential.pwd.add.step2.note",
         "credential.pwd.add.step3.last-apply",
-        "credential.pwd.add.validate",
-        "credential.pwd.add.window",
         "credential.pwd.detail.missing",
         "credential.share.ekey",
         "member.wizard",
@@ -86300,15 +84974,13 @@ const DATA = {
         "record.list.header",
         "record.search.count",
         "security.policy",
-        "security.ledger",
         "security.policy.guest",
         "security.policy.share-half",
         "security.policy.switch",
         "security.tailgate.set",
-        "security.tailgate.seconds",
         "backup.engine",
-        "backup.webdav.studio",
         "backup.center",
+        "backup.webdav.studio",
         "backup.restore",
         "backup.webdav",
         "backup.envelope",
@@ -86325,7 +84997,6 @@ const DATA = {
         "backup.verify",
         "backup.webdav.download",
         "backup.webdav.list",
-        "backup.webdav.test",
         "backup.webdav.upload",
         "backup.zip",
         "backup.bundle.appearance",
@@ -86577,14 +85248,13 @@ const DATA = {
         "protocol.cmd44.mac-list",
         "protocol.cred-guard",
         "protocol.ekey.sign",
-        "protocol.rc.expired",
         "data.design",
         "data.schema",
         "data.keys",
         "data.secret",
         "data.time",
-        "data.audit",
         "data.member",
+        "data.audit",
         "data.hardware",
         "data.search-index",
         "data.snapshot",
@@ -86594,7 +85264,6 @@ const DATA = {
         "data.shell-keys",
         "data.design.metric",
         "data.audit.append",
-        "data.audit.chain",
         "data.audit.diff",
         "data.cred-alert",
         "data.cred-bin",
@@ -86644,7 +85313,6 @@ const DATA = {
         "data.store.locked-mutex",
         "data.store.namespace",
         "data.store.raw-snapshot",
-        "data.store.read-write",
         "data.store.scan-profile",
         "data.time.day-key",
         "data.time.format",
@@ -86979,7 +85647,7 @@ const DATA = {
       {
         "id": "unlock.dial",
         "name": "开锁圆盘",
-        "count": 13,
+        "count": 12,
         "platforms": [
           "android",
           "apk",
@@ -86993,7 +85661,7 @@ const DATA = {
       {
         "id": "credential",
         "name": "凭证管理（密码/指纹/临时码）",
-        "count": 78,
+        "count": 76,
         "platforms": [
           "apk",
           "ios"
@@ -87029,7 +85697,7 @@ const DATA = {
       {
         "id": "backup",
         "name": "备份与恢复",
-        "count": 46,
+        "count": 45,
         "platforms": [
           "ios"
         ],
@@ -87040,7 +85708,7 @@ const DATA = {
       {
         "id": "security",
         "name": "安全中心 / 审计 / 销毁",
-        "count": 15,
+        "count": 12,
         "platforms": [
           "apk",
           "ios"
@@ -87085,7 +85753,7 @@ const DATA = {
       {
         "id": "gateway",
         "name": "智能网关",
-        "count": 26,
+        "count": 22,
         "platforms": [
           "apk",
           "ios"
@@ -87133,7 +85801,7 @@ const DATA = {
       {
         "id": "otp",
         "name": "临时码 / OTP",
-        "count": 23,
+        "count": 22,
         "platforms": [
           "android",
           "apk",

@@ -931,63 +931,6 @@
       "status": "implemented"
     },
     {
-      "key": "backup.webdav.test",
-      "parentKey": "backup.webdav.studio",
-      "domain": "backup",
-      "level": 3,
-      "name": "连通测试",
-      "kind": "action",
-      "summary": "用当前账号测 WebDAV 连通性，测完立即落盘并把结果写在按钮下方。",
-      "details": [
-        "未 ready → toast「请填写根地址/账号/应用密码」并 return",
-        "busy 时按钮文案「测试中…」；调用 BackupStudio.testWebdav(acct:appPw:root:)",
-        "测试后 persist()；结果文本写 testResult，以 caption/textSub 显示",
-        "测试不写远端、不上传"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 43,
-          "symbol": "LabeledContent 连通测试"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 44,
-          "symbol": "Button 测试"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 49,
-          "symbol": "testResult 显示"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 180,
-          "symbol": "private func test()"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 181,
-          "symbol": "请填写根地址/账号/应用密码"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 184,
-          "symbol": "testWebdav"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 185,
-          "symbol": "persist()"
-        }
-      ],
-      "tags": [
-        "云同步",
-        "测试"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "backup.webdav.list",
       "parentKey": "backup.webdav.studio",
       "domain": "backup",

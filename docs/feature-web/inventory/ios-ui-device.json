@@ -1983,41 +1983,6 @@
       "status": "implemented"
     },
     {
-      "key": "unlock.feedback",
-      "parentKey": "unlock",
-      "domain": "unlock",
-      "level": 2,
-      "name": "开锁过程辅助反馈",
-      "kind": "service",
-      "summary": "围绕开锁的四类辅助信息：字幕式过程条、自动上锁倒计时、失败后的排查清单与临时码备援。",
-      "details": [
-        "全部挂在设备页圆盘下方，按状态/偏好出现，不占常驻版面",
-        "字幕条受 AXPrefs.captions 控制；清单在 failStreak ≥3 才出现",
-        "这些构件不发送任何协议指令，只读 AppState 状态与本地偏好"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 1036,
-          "symbol": "if AXPrefs.captions { CaptionStepBar(…) }"
-        },
-        {
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 1041,
-          "symbol": "if let left = autoLockLeft { Label(\"约 \\(left) 秒后自动上锁 …\") }"
-        },
-        {
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 1067,
-          "symbol": "if app.failStreak > 0 { … }"
-        }
-      ],
-      "tags": [
-        "无障碍"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "credential.pwd",
       "parentKey": "credential",
       "domain": "credential",

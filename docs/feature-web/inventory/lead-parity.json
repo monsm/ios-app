@@ -70,55 +70,6 @@
       "platform": "ios"
     },
     {
-      "key": "device.gateway.add",
-      "parentKey": "device.gateway",
-      "domain": "device",
-      "level": 3,
-      "kind": "action",
-      "name": "添加网关（iOS：准备网关 + 橙灯确认）",
-      "summary": "iOS 用「橙色灯闪烁中」开关代替 APK 的勾选确认页，语义相同：确认已重置到可配网状态。",
-      "details": [],
-      "evidence": [
-        {
-          "file": "App/UI/Sheets.swift",
-          "line": 1689,
-          "symbol": "Section 准备网关"
-        },
-        {
-          "file": "App/UI/Sheets.swift",
-          "line": 1692,
-          "symbol": "橙色灯确认开关"
-        }
-      ],
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": "implemented",
-      "platform": "ios"
-    },
-    {
-      "key": "device.gateway.reset-hint",
-      "parentKey": "device.gateway",
-      "domain": "device",
-      "level": 3,
-      "kind": "action",
-      "name": "重置网关说明（iOS：同页文案）",
-      "summary": "iOS 把重置说明直接写在准备段里（长捅重置孔 5s 至橙灯），没有单独一页。",
-      "details": [],
-      "evidence": [
-        {
-          "file": "App/UI/Sheets.swift",
-          "line": 1694,
-          "symbol": "长捅重置孔 5s 说明"
-        }
-      ],
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": "implemented",
-      "platform": "ios"
-    },
-    {
       "key": "device.keychain.status",
       "parentKey": "device.keychain",
       "domain": "device",
@@ -200,28 +151,6 @@
       "platform": "ios"
     },
     {
-      "key": "unlock.dial.states",
-      "parentKey": "unlock.dial",
-      "domain": "unlock",
-      "level": 4,
-      "kind": "action",
-      "name": "开锁状态机（iOS 六态，比 APK 五态多 doubleVerify）",
-      "summary": "iOS：idle / connecting / opening / success / doubleVerify / failed(msg)，其中 doubleVerify 对应 rc=22 的双验继续。",
-      "details": [],
-      "evidence": [
-        {
-          "file": "App/LockKeeperApp.swift",
-          "line": 280,
-          "symbol": "enum 六态"
-        }
-      ],
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": "implemented",
-      "platform": "ios"
-    },
-    {
       "key": "credential.otp.open",
       "parentKey": "credential.otp",
       "domain": "credential",
@@ -240,28 +169,6 @@
           "file": "App/UI/CredentialsView.swift",
           "line": 1823,
           "symbol": "setZotp"
-        }
-      ],
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": "implemented",
-      "platform": "ios"
-    },
-    {
-      "key": "credential.otp.close",
-      "parentKey": "credential.otp",
-      "domain": "credential",
-      "level": 3,
-      "kind": "action",
-      "name": "关闭临时开锁密码（iOS：同一开关）",
-      "summary": "iOS 用一个开关双向控制（开/关），不像 APK 分 open/close 两页。",
-      "details": [],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1808,
-          "symbol": "同一 VariantToggle"
         }
       ],
       "tags": [
@@ -294,55 +201,6 @@
           "file": "App/Services/LockService.swift",
           "line": 607,
           "symbol": "pwdClear 0xFFFF"
-        }
-      ],
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": "implemented",
-      "platform": "ios"
-    },
-    {
-      "key": "credential.pwd.add.validate",
-      "parentKey": "credential.pwd.add",
-      "domain": "credential",
-      "level": 4,
-      "kind": "action",
-      "name": "密码 6~8 位纯数字（iOS 同口径）",
-      "summary": "iOS 密码工坊与临时码都用「6~8 位数字」校验，提示文案一致。",
-      "details": [],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialStudio.swift",
-          "line": 751,
-          "symbol": "Text 6~8 位数字"
-        },
-        {
-          "file": "App/UI/CredentialStudio.swift",
-          "line": 821,
-          "symbol": "errorLine 校验"
-        }
-      ],
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": "implemented",
-      "platform": "ios"
-    },
-    {
-      "key": "credential.pwd.add.window",
-      "parentKey": "credential.pwd.add",
-      "domain": "credential",
-      "level": 4,
-      "kind": "action",
-      "name": "永久 vs 临时有效期（iOS 同口径）",
-      "summary": "iOS 永久档写 2118-01-01，临时档用 DatePicker 的起止；与 APK 的两个常量同值。",
-      "details": [],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialStudio.swift",
-          "line": 1230,
-          "symbol": "2118-01-01 永久"
         }
       ],
       "tags": [
@@ -428,30 +286,6 @@
       "platform": "ios"
     },
     {
-      "key": "security.tailgate.seconds",
-      "parentKey": "security.tailgate",
-      "domain": "security",
-      "level": 4,
-      "kind": "action",
-      "name": "等待时长 2~6 秒（iOS 比 APK 少 7 秒档）",
-      "summary": "iOS 的 TailgateView 提供 2...6 秒；APK 是 2..7。这是真实的一档差异，已如实记录。",
-      "details": [
-        "注意：APK 有 7 秒档，iOS 没有 —— 这条是真差异，不是伪缺口"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/SettingsView.swift",
-          "line": 1045,
-          "symbol": "Picker 2...6"
-        }
-      ],
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": "implemented",
-      "platform": "ios"
-    },
-    {
       "key": "protocol.dfu.states",
       "parentKey": "protocol",
       "domain": "protocol",
@@ -465,28 +299,6 @@
           "file": "App/Services/DFUKit.swift",
           "line": 22,
           "symbol": "enum DFUState"
-        }
-      ],
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": "implemented",
-      "platform": "ios"
-    },
-    {
-      "key": "protocol.rc.expired",
-      "parentKey": "protocol",
-      "domain": "protocol",
-      "level": 4,
-      "kind": "action",
-      "name": "resultCode 3「命令不在有效期」（iOS 同处置）",
-      "summary": "iOS 在 HardwareService 与 execOk 里都把 rc=3 翻成「命令不在有效期，请将手机时间同步到锁内」。",
-      "details": [],
-      "evidence": [
-        {
-          "file": "App/Services/HardwareService.swift",
-          "line": 241,
-          "symbol": "rc==3 文案"
         }
       ],
       "tags": [
@@ -523,109 +335,6 @@
       "platform": "ios"
     },
     {
-      "key": "device.reset.pinpool",
-      "parentKey": "device",
-      "domain": "device",
-      "level": 4,
-      "kind": "action",
-      "name": "64 个 PIN 分 4 批 + 0xFFFFFFFF 哨兵（iOS 同实现）",
-      "summary": "iOS 的 pair() 里批大小 20、首批带 KeyGen.delPinSentinel，与 APK syncPins20 逐字一致。",
-      "details": [],
-      "evidence": [
-        {
-          "file": "App/Services/LockService.swift",
-          "line": 922,
-          "symbol": "batchSize 20"
-        },
-        {
-          "file": "App/Services/LockService.swift",
-          "line": 930,
-          "symbol": "首批哨兵"
-        }
-      ],
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": "implemented",
-      "platform": "ios"
-    },
-    {
-      "key": "device.reset.beacon",
-      "parentKey": "device",
-      "domain": "device",
-      "level": 4,
-      "kind": "action",
-      "name": "beacon key 抖动（iOS 在 KeyGen）",
-      "summary": "iOS 的 bkey 生成有相邻字节约束，与本节点同族。",
-      "details": [],
-      "evidence": [
-        {
-          "file": "App/Core/KeyGen.swift",
-          "line": 1,
-          "symbol": "bkey 生成"
-        }
-      ],
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": "implemented",
-      "platform": "ios"
-    },
-    {
-      "key": "device.list",
-      "parentKey": "device",
-      "domain": "device",
-      "level": 3,
-      "kind": "action",
-      "name": "设备清单与空态（iOS：DeviceHomeView 空态 + 多锁切换）",
-      "summary": "iOS 首页在无锁时给「还没有添加门锁」引导，有锁时用胶囊切换；数据面是 DB.keychains() 本地台账。",
-      "details": [],
-      "evidence": [
-        {
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 50,
-          "symbol": "空态标题"
-        },
-        {
-          "file": "App/UI/DeviceHomeView.swift",
-          "line": 54,
-          "symbol": "备份恢复入口"
-        }
-      ],
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": "implemented",
-      "platform": "ios"
-    },
-    {
-      "key": "device.add.type",
-      "parentKey": "device",
-      "domain": "device",
-      "level": 3,
-      "kind": "action",
-      "name": "按型号分流（iOS：扫描列表即按 pid 判可配网）",
-      "summary": "iOS 没有\"先选类型\"页：扫描列表每行直接显示 PidMap.modelName，并用 isLock/可配网状态分流，少一步点击。",
-      "details": [],
-      "evidence": [
-        {
-          "file": "App/UI/Sheets.swift",
-          "line": 221,
-          "symbol": "isLock 判定"
-        },
-        {
-          "file": "App/UI/Sheets.swift",
-          "line": 249,
-          "symbol": "列表显示型号"
-        }
-      ],
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": "implemented",
-      "platform": "ios"
-    },
-    {
       "key": "device.keychain.pin-alloc",
       "parentKey": "device.keychain",
       "domain": "device",
@@ -639,50 +348,6 @@
           "file": "App/Services/MobileKeyService.swift",
           "line": 82,
           "symbol": "availablePin"
-        }
-      ],
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": "implemented",
-      "platform": "ios"
-    },
-    {
-      "key": "device.gateway.iot",
-      "parentKey": "device.gateway",
-      "domain": "device",
-      "level": 4,
-      "kind": "action",
-      "name": "IoT 三元组（iOS：构造器保留，云端停服不调用）",
-      "summary": "cmd32 构造器在 ZKCmdBuilder 里完整保留（KLV 05/06/07），但厂商云停服，iOS 不调用 —— 与 APK 同样不使用。",
-      "details": [],
-      "evidence": [
-        {
-          "file": "App/Core/ZKCmdBuilder.swift",
-          "line": 276,
-          "symbol": "cmd32GWSetIot"
-        }
-      ],
-      "tags": [
-        "iOS 已有等价实现"
-      ],
-      "status": "implemented",
-      "platform": "ios"
-    },
-    {
-      "key": "device.gateway.wifi.params",
-      "parentKey": "device.gateway",
-      "domain": "device",
-      "level": 4,
-      "kind": "action",
-      "name": "WiFi 参数（iOS：auth=8 / enc=0 写死，与 APK 同值）",
-      "summary": "iOS 的 cmd31 默认 authMode=8(WPA/WPA2-PSK)、encryptType=0，KLV 01/02 用 UTF8 hex，与 APK 逐字节同源。",
-      "details": [],
-      "evidence": [
-        {
-          "file": "App/Core/ZKCmdBuilder.swift",
-          "line": 268,
-          "symbol": "cmd31GWSetWifi 默认参数"
         }
       ],
       "tags": [

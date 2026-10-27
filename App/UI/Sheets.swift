@@ -23,10 +23,6 @@ struct AddDeviceView: View {
     @State private var pairedKC: Keychain?
     @State private var nickname = ""
     @State private var place = ""
-    @State private var manualMac = ""            // 257 手输 MAC 兜底
-    @State private var locating = false
-    @State private var dupMac: (name: String, mac: String)?   // 255 去重拦截
-    @State private var probingId: String?        // APK 对照 page-romlist: 正在做连通探测的那一行
 
     var body: some View { vkBody.destined(.addDevice) }
     var vkBody: some View {
@@ -45,27 +41,8 @@ struct AddDeviceView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("关闭") {
-                        if flow == .pairing { rollback(reason: "") }   // 中途关闭也走清理
                         dismiss()
                     }
-                }
-            }
-            // 255 重复绑定拦截: 不进配网流程, 直接给出跳转既有锁的出口
-            .confirmationDialog("这把锁已经添加过", isPresented: Binding(get: { dupMac != nil },
-                                                                       set: { if !$0 { dupMac = nil } }),
-                                titleVisibility: .visible) {
-                Button("跳转到已有锁") {
-                    if let dup = dupMac {
-                        app.loadDevices()
-                        app.select(dup.mac)
-                        app.requestRoute(.device)
-                    }
-                    dismiss()
-                }
-                Button("取消", role: .cancel) { }
-            } message: {
-                if let dup = dupMac {
-                    Text("「\(dup.name)」(\(dup.mac)) 已在本机台账中, 无需重新配网。重新配网会换掉门锁密钥, 旧手机钥匙将失效。")
                 }
             }
         }
@@ -141,34 +118,22 @@ struct AddDeviceView: View {
                     }
                 }
                 ForEach(devices) { d in
-                    deviceRow(d)
+                    Button { Task { await confirmPair(d, nil) } } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(d.name.isEmpty ? "未知设备" : d.name)
+                                .vkFont(.subheadline, weight: .medium)
+                            Text(d.mac)
+                                .vkFont(.caption2)
+                                .foregroundStyle(DS.Palette.textSub)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .frame(minHeight: DS.Hit.min)
+                    }
                 }
             } header: {
                 Text("发现的设备")
             } footer: {
                 Text("长按任意一行可发一条免令牌明文回声，看这台设备答不答话 —— 它不改锁内任何东西，也不影响配对；点行本身仍是开始配对。")
-            }
-            // 257 手输 MAC 兜底: 扫不到时的手动定位 (服务换机场景)
-            Section {
-                TextField("锁的 MAC (如 AA:BB:CC:DD:EE:FF)", text: $manualMac)
-                    .textInputAutocapitalization(.characters)
-                    .autocorrectionDisabled()
-                    .submitLabel(.search)
-                    .onSubmit { Task { await locateManual() } }
-                Button {
-                    Task { await locateManual() }
-                } label: {
-                    HStack(spacing: DS.Space.s) {
-                        ProgressView().controlSize(.small).opacity(locating ? 1 : 0)
-                        Text("按 MAC 定位门锁")
-                    }
-                    .frame(minHeight: DS.Hit.min)
-                }
-                .disabled(locating || manualMac.isEmpty)
-            } header: {
-                Text("扫不到? 手动定位")
-            } footer: {
-                Text("MAC 印在锁内面板或说明书上。定位到锁后仍需锁处于重置态才能配网。")
             }
         }
         .variantList()
@@ -215,82 +180,6 @@ struct AddDeviceView: View {
         .animation(DS.Motion.soft, value: current)
     }
 
-    private func deviceRow(_ d: BLEAdvDevice) -> some View {
-        let adv = ZKProtocol.parseAdv(d.advertisHex)
-        let inReset = (adv?.resetStatus ?? 0) == 1
-        let isLock = adv.map { PidMap.isLock($0.pid) } ?? false
-        let canPair = inReset && isLock
-        // 续配入口 (2026-10-17 真机): 05 换钥回 rc=0 之后锁内 skey 已经是新的, 锁**不再广播重置位** ——
-        // 而本机此时正好留着一份尾链没走完的记录 (pendingPair)。若这一行因为 !inReset 不可点, 用户
-        // 就只剩"再跑一趟键盘重置"一条路, 而截图里那句"再点一次配网会接着配完"就成空头支票。
-        // 判据是**本机有没有这份记录**, 不是锁的广播位。
-        let pendMac = adv.flatMap { ZKProtocol.lockMac(fromAdv: $0) }
-        let canResume = isLock && (pendMac.map { DB.pendingPair($0) != nil } ?? false)
-        return Button {
-            if canPair || canResume { confirmPair(d, adv) }
-            else if adv == nil { app.showToast("广播未识别 — 非门锁设备, 或系统缓存了不完整广播") }
-            else if !inReset { app.showToast("该锁不在重置态 — 请先做键盘物理重置") }
-            else { app.showToast("未识别的设备型号") }
-        } label: {
-            HStack(spacing: DS.Space.s) {
-                VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                    HStack(spacing: DS.Space.xs) {
-                        Text(d.name)
-                            .vkFont(.subheadline)
-                            .foregroundStyle(DS.Palette.text)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.85)
-                        // 251: 信号强度是"该先点哪把锁"的排序依据, 标出来
-                        Text("\(d.rssi) dBm")
-                            .vkFont(.caption2)
-                            .monospacedDigit()
-                            .foregroundStyle(DS.Palette.textSub)
-                    }
-                    Text("\(adv?.macDisplay ?? "—") · \(adv.map { PidMap.modelName($0.pid) } ?? "未知")")
-                        .vkFont(.caption)
-                        .foregroundStyle(DS.Palette.textSub)
-                        // 型号是判断"是不是我的锁"的关键信息, 不做 lineLimit(1) 截断
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                    if canResume {
-                        Text("本机已留存密钥 — 点它接着配完, 不必再重置")
-                            .vkFont(.caption)
-                            .foregroundStyle(DS.Palette.textSub)
-                    } else if !inReset {
-                        Text("需先在键盘上物理重置")
-                            .vkFont(.caption)
-                            .foregroundStyle(DS.Palette.textSub)
-                    }
-                }
-                Spacer(minLength: DS.Space.s)
-                if adv == nil {
-                    StatusPill(text: "未识别", systemImage: "questionmark.circle", tone: .neutral)
-                } else if canPair {
-                    StatusPill(text: "可配网", systemImage: "checkmark.circle.fill", tone: .ok)
-                } else if canResume {
-                    StatusPill(text: "待续配", systemImage: "arrow.clockwise", tone: .warn)
-                } else if !inReset {
-                    StatusPill(text: "已配对", systemImage: "lock.fill", tone: .neutral)
-                } else {
-                    StatusPill(text: "非门锁", systemImage: "questionmark.circle", tone: .neutral)
-                }
-            }
-            .frame(minHeight: DS.Hit.min)
-            .contentShape(Rectangle()) // 整行可点
-        }
-        .accessibilityLabel("\(d.name)，\(d.rssi) dBm，\(canPair ? "可配网" : (adv == nil ? "未识别广播" : (canResume ? "待续配，本机已留存密钥" : "已配对，需先重置")))")
-        // APK 对照 (page-romlist): 原版在扫描列表里先对每台设备发一次回声 (cmd12) 再进锁页。
-        // 本机放在长按菜单里 —— 行本身就是"点它开始配对"的入口, 再塞一个按钮会把两件事做成同形。
-        .contextMenu {
-            Button {
-                Task { await probeEcho(d) }
-            } label: {
-                Label(probingId == d.deviceId ? "正在探测…" : "连通探测",
-                      systemImage: "dot.radiowaves.left.and.right")
-            }
-            .disabled(probingId != nil)
-        }
-    }
 
     // 写硬件类动作一律先确认: 配网会生成本机密钥并写入门锁, App 内无法撤销
     private func confirmPair(_ d: BLEAdvDevice, _ adv: ZKProtocol.AdvData?) {
@@ -301,7 +190,6 @@ struct AddDeviceView: View {
         let display = adv.macDisplay ?? "—"
         // 255 MAC 去重拦截: 本地已有该锁 → 不进配网, 引导跳转
         if let existing = DB.keychain(mac) {
-            dupMac = (LockArchive.displayName(existing), display)
             return
         }
         let model = PidMap.modelName(adv.pid)
@@ -323,56 +211,10 @@ struct AddDeviceView: View {
         }
     }
 
-    // 257 手输 MAC: 归一化 → 定向扫描 → 命中后走同一条配网链
-    private func locateManual() async {
-        let m = DB.normalizeMac(manualMac)
-        guard m.count == 12, m.allSatisfy({ $0.isHexDigit }) else {
-            app.showToast("MAC 需为 12 位十六进制 (冒号可省略)")
-            return
-        }
-        guard !locating else { return }
-        locating = true
-        defer { locating = false }
-        do {
-            _ = try await LockService.shared.scanForMAC(m, timeoutMs: 8000)
-            if let hit = BLEService.shared.allDiscovered().first(where: { d in
-                guard let a = ZKProtocol.parseAdv(d.advertisHex), let raw = a.macRaw else { return false }
-                return raw == m
-            }) {
-                let adv = ZKProtocol.parseAdv(hit.advertisHex)
-                if adv?.resetStatus != 1 {
-                    app.showToast("找到了, 但该锁不在重置态 — 请先长按 RESET 重置")
-                } else {
-                    confirmPair(hit, adv)
-                }
-            } else {
-                app.showToast("已扫到信号但广播不完整, 请靠近门锁再试")
-            }
-        } catch {
-            app.showToast("8 秒内未发现该 MAC — 请确认锁已通电并靠近手机")
-        }
-    }
 
     // APK 对照 page-romlist「固件列表」: 发一条免令牌明文回声, 看这台设备答不答话。
     // 不改锁内任何东西, 也不写本机台账 (读 03 状态会落快照/电量/固件观测三处); 不改配对状态。
     @MainActor
-    private func probeEcho(_ d: BLEAdvDevice) async {
-        guard probingId == nil else { return }
-        probingId = d.deviceId
-        defer { probingId = nil }
-        do {
-            let r = try await LockService.shared.probeEcho(deviceId: d.deviceId)
-            if r.ok {
-                let e = r.echoHex.isEmpty ? "无回显" : r.echoHex
-                app.showToast("\(d.name) 回声往返 \(r.ms) ms · 回显 \(e)"
-                             + (r.matched ? " (与发出值一致)" : " (与发出的 123456 不同 — 记下来, 不一定就是链路故障)"))
-            } else {
-                app.showToast("\(d.name) 回声 rc=\(r.rc): \(StatusParser.rcMessage(r.rc))")
-            }
-        } catch {
-            app.showToast("探测失败: \(error.localizedDescription)")
-        }
-    }
 
     private var pairProgress: some View {
         ScrollView {
@@ -566,19 +408,8 @@ struct AddDeviceView: View {
             step = 3
         } catch {
             // 256 失败回滚: 清理半成品 (台账/指针/连接), 回到发现页并显示原因
-            rollback(reason: error.localizedDescription)
+            pairError = error.localizedDescription
         }
-    }
-    private func rollback(reason: String) {
-        LockService.shared.disconnect()
-        // pair 只在末步才写台账; 中途失败至多留 bleId 缓存/lastDevice 指针, 全部清掉
-        if !pairTargetMac.isEmpty { DB.removeKeychain(pairTargetMac) }
-        DB.lastDevice = ""
-        pairSteps.removeAll()
-        pairError = reason
-        pairedKC = nil
-        flow = .scan
-        step = 0
     }
     private var pairTargetMac: String { pairedKC?.mac ?? "" }
 

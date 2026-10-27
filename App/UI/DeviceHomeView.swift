@@ -78,7 +78,6 @@ struct DeviceHomeView: View {
                         if shown(.linkSense) { linkSenseCard }
                         // 246 凭证选择胶囊: 该锁有多条可用 PIN 且还没签发 ekey 时才出现 (有 ekey 时开锁根本不用 PIN, 给了是假选择)
                         if let kc = app.current, kc.ekey.isEmpty, kc.pins.count > 1 {
-                            pinPickCapsule(kc)
                         }
                         unlockDial
                             .accessibilityElement(children: .contain)
@@ -335,39 +334,6 @@ struct DeviceHomeView: View {
     }
     // 243 断连灰化: 连接断开时整卡去饱和, 恢复即回彩
     // 包3: 参数化到任意锁 — 当前页吃实时状态, 其余页读各锁快照 (101/763 横滑预览)
-    /// Hero 卡的**唯一**条件提示行 (构图预算: ≤1)。
-    /// 按优先级取一条, 而不是四条并列 —— 判据与原实现逐条一致。
-    @ViewBuilder
-    private func heroNotice(kc: Keychain, tier: BatteryCare.Tier, isCurrent: Bool) -> some View {
-        if isCurrent, tier.severe {
-            heroNoticeRow(icon: "battery.0percent", text: "电量告急, 尽快换电池", tint: DS.Palette.danger)
-        } else if isLow(kc) {
-            heroNoticeRow(icon: "battery.25percent", text: "该喂电了, 别让它饿着", tint: DS.Palette.warn)
-        } else if !LockArchive.isVerified(kc.mac) {
-            heroNoticeRow(icon: "checkmark.seal", text: "链路待验证 · 成功开一次锁即打标", tint: DS.heroFg)
-            heroNoticeRow(icon: "thermometer.snowflake", text: "低温季: 电池续航会缩短, 多留意电量", tint: DS.heroFg)
-        }
-    }
-
-    /// 提示行的统一长相 (四个提示共用, 免得各写一份样式)。
-    @ViewBuilder
-    private func heroNoticeRow(icon: String, text: String, tint: Color) -> some View {
-        HStack(spacing: DS.Space.xs) {
-            Image(systemName: icon)
-                .font(.system(size: DS.Icon.sm, weight: .semibold))
-                .foregroundStyle(tint)
-                .accessibilityHidden(true)
-            Text(text)
-                .vkFont(.footnote)
-                .foregroundStyle(DS.heroFg.opacity(0.92))
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .frame(minHeight: DS.Hit.min)
-        .contentShape(Rectangle())
-    }
-
     private func heroCard(for kc: Keychain, isCurrent: Bool) -> some View {
         let connected = isCurrent && bleOn
         // 113 五档电量 / 120: 低电降级档 (≤20%) 关流光边并压亮度, 动效令牌同步降 calm
@@ -470,14 +436,6 @@ struct DeviceHomeView: View {
                                  emphasized: false)
                     }
 }   // 2026-10-27 三轮：原 statsLayout 降级布局已删，恒横排
-                // 2026-10-26 精简：备份状态角标已删（badgeState 随备份策略类一起移除）。
-                // 2026-10-18 构图预算 (MASTER.md §3.1: Hero 条件提示行 ≤1):
-                // 原来这里有四条独立提示行 (未验证 / 低电 / 严重低电 / 冷季),
-                // 它们**可以同时出现** —— 一屏 Hero 卡里叠四行叮嘱, 卡片就不像身份卡了。
-                // 改成**优先级单行**: 同一时刻只显示最要紧的那一条。
-                //   严重低电 > 低电 > 未验证 > 冷季
-                // 判据本身一个字没改, 只是从"并列显示"改成"按优先级取一"。
-                heroNotice(kc: kc, tier: tier, isCurrent: isCurrent)
                 // 790 最近活跃成员头像圈: 卡角叠放最近活跃 3 位, 点开列成员名, 选谁直接查谁的记录。
                 if isCurrent {
                     HStack(spacing: DS.Space.s) {
@@ -1130,36 +1088,6 @@ struct DeviceHomeView: View {
         }
     }
 
-    /// 246 凭证选择胶囊: 圆盘上方选"本次用哪条 PIN"。只显示**序号**, 不显示 PIN 值 ——
-     /// 口令是密钥材料, 摆在屏上等于给肩窥递梯子; 选中结果以**下标**存 kf_pinpick_<mac>, 开锁时随 pinDec 下发。
-    private func pinPickCapsule(_ kc: Keychain) -> some View {
-        let idx = app.chosenPinIndex(kc.mac)
-        return HStack(spacing: DS.Space.s) {
-            Menu {
-                ForEach(Array(kc.pins.enumerated()), id: \.offset) { i, _ in
-                    Button(idx == i ? "✓ PIN #\(i + 1)" : "PIN #\(i + 1)") { app.setChosenPinIndex(kc.mac, i) }
-                }
-                if idx >= 0 {
-                    Button("恢复默认 (第一条)") { app.setChosenPinIndex(kc.mac, -1) }
-                }
-            } label: {
-                HStack(spacing: DS.Space.xs) {
-                    Image(systemName: "key.horizontal.fill").font(.system(size: DS.Icon.xs))
-                    Text(idx >= 0 && idx < kc.pins.count ? "本次用 PIN #\(idx + 1)" : "本次用 PIN (默认第一条)")
-                        .vkFont(.caption)
-                    Image(systemName: "chevron.down").font(.system(size: 10))
-                }
-                .foregroundStyle(DS.Palette.accentText)
-                .padding(.horizontal, DS.Space.s)
-                .padding(.vertical, DS.Space.xxs)
-                .variantPlate(DS.Palette.accent.opacity(0.12), .capsule)
-            }
-            .frame(minHeight: DS.Hit.min)
-            .accessibilityLabel(idx >= 0 ? "本次开锁用第 \(idx + 1) 条 PIN, 点按更换" : "本次开锁用默认第一条 PIN, 点按更换")
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, DS.Space.gutter)
-    }
 
     private var bleOn: Bool { app.lock.connectedMAC == app.currentMac }
     // 包2/69 系统蓝牙开关 (btReady): 关时全 App 顶部出引导条; 与 bleOn (该锁会话) 区分
