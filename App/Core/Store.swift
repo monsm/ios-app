@@ -391,6 +391,16 @@ enum DB {
         }
         if changed { store.set("kf_keychains", map) }
     }
+    /// 台账写入的串行化锁。2026-10-27 新增（AUDIT-D D-19）。
+    /// `saveLedger` 的「corrupt 检查 → 读 → 写」必须原子：检查通过后若别的线程
+    /// 把台账标成 corrupt 并写空表，这次写入就会把真数据覆盖掉。
+    private static let ledgerWriteLock = Locked(0)
+
+    /// 钥匙串字典写入的串行化锁。2026-10-27 新增（AUDIT-D D-18）。
+    /// `kf_keychains` 是「整表读 → 改一个键 → 整表写」，没有同步时后写者会覆盖先写者，
+    /// 表现是「配了两把锁只剩一把」这类偶发数据丢失。
+    private static let keychainWriteLock = Locked(0)
+
     static func saveKeychain(_ kc: Keychain) {
         // 2026-10-14: 门锁密钥不再随偏好明文写进 plist (越狱/iTunes 备份即可读走), 改存系统 Keychain;
         // plist 只留非密字段 (mac/名称/pid/pins…)。读侧 fromDict 自动回填。
@@ -418,9 +428,14 @@ enum DB {
             BleTelemetry.recordEvent("Keychain 写入失败: " + failed.joined(separator: "/")
                                      + " @ " + String(kc.mac.prefix(6)), ok: false)
         }
-        var map = store.getDict("kf_keychains")
-        map[normalizeMac(kc.mac)] = kc.toDict()   // 归一化: 防导入冒号/大写 MAC 造成重复条目
-        store.set("kf_keychains", map)
+        // 2026-10-27 审核修复 (AUDIT-D D-18)：`读 → 改 → 写` 三步必须原子。
+        // 原先没有同步：两个线程同时保存不同设备的钥匙串时，后写的那个用的是
+        // 自己那份旧快照，会把对方刚加的键覆盖掉 —— 表现是「配了两把锁只剩一把」。
+        keychainWriteLock.withLock {
+            var map = store.getDict("kf_keychains")
+            map[normalizeMac(kc.mac)] = kc.toDict()
+            store.set("kf_keychains", map)
+        }
     }
     // ---------- 配网中断保护 (防软砖) ----------
     /// 05 换钥一 rc=0, 锁内 skey 就已经是**新的**了。本机若没把这套钥落盘, 后面任何一步失败
@@ -933,6 +948,45 @@ enum DB {
         store.remove("kf_passcode_weak")
         if let pw { set(passcodeDigest(pw), "kf_passcode") } else { store.remove("kf_passcode") }
     }
+
+    // ── 胁迫码（伪装模式）── 2026-10-27 新增（AUDIT-D D-48）
+    //
+    // 与正常密码同一套 PBKDF2 摘要，但存在**独立的键** `kf_duress` 里：
+    // 输正常密码 → 正常解锁；输胁迫码 → 进空壳模式（门能开、数据看不见）。
+    // 不共用 kf_passcode 的槽位，是因为「改正常密码」不该连带影响胁迫码 ——
+    // 用户设了胁迫码之后最不希望它被别的操作悄悄改掉或清掉。
+    private static let duressKey = "kf_duress"
+
+    static func hasDuressCode() -> Bool {
+        get([String: String].self, duressKey) != nil
+    }
+
+    /// 设置胁迫码。传 nil 或空串 = 清除。
+    /// 返回 false 表示输入不合法（<4 位 / 非纯数字 / 与正常密码相同）。
+    /// ⚠ 与正常密码相同会被拒 —— 否则输入正常密码就进伪装模式，人会被自己的配置坑到。
+    @discardableResult
+    static func setDuressCode(_ code: String?) -> Bool {
+        guard let code, !code.isEmpty else {
+            store.remove(duressKey)
+            return true
+        }
+        guard code.count >= 4, code.allSatisfy({ $0.isNumber }) else { return false }
+        if verifyPasscode(code) { return false }
+        set(passcodeDigest(code), duressKey)
+        return true
+    }
+
+    /// 验证胁迫码。没设过则恒 false。
+    static func verifyDuress(_ pw: String) -> Bool {
+        guard let rec = get([String: String].self, duressKey) else { return false }
+        let salt = rec["s"] ?? ""
+        if let strong = rec["d2"], !strong.isEmpty {
+            return pcStrong(pw, salt: salt) == strong
+        }
+        return rec["d"] == fnv1a32(salt + pw)
+    }
+
+    static func clearDuressCode() { store.remove(duressKey) }
 
 
     static func get<T: Decodable>(_ t: T.Type, _ k: String) -> T? {

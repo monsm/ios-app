@@ -115,6 +115,18 @@ enum CryptoBox {
 
     /// 449: 严格十六进制+长度 —— HexKit.bytes 对坏输入是"尽力解"(奇数长/非 hex 字会静默产出偏短的
     /// 结果), 当校验判据用等于放行; 这里逐字符查, 供信封头校验。
+    /// 常量时间字符串比对 —— 用于 MAC / 摘要这类"不能从耗时反推内容"的比较。
+    /// 2026-10-27 新增（AUDIT-D D-60）：`==` 会在第一个不同字符处短路，
+    /// 攻击者能按响应耗时逐字节猜出正确值。
+    /// 实现：长度不同直接 false（长度本身不是秘密）；相同长度则全量异或累积。
+    static func constantTimeEqual(_ a: String, _ b: String) -> Bool {
+        let x = Array(a.utf8), y = Array(b.utf8)
+        guard x.count == y.count else { return false }
+        var diff: UInt8 = 0
+        for i in 0..<x.count { diff |= x[i] ^ y[i] }
+        return diff == 0
+    }
+
     static func isHex(_ s: String, len: Int? = nil) -> Bool {
         if let len, s.count != len { return false }
         return !s.isEmpty && s.allSatisfy { $0.isHexDigit }
@@ -138,7 +150,12 @@ enum CryptoBox {
         let keys = deriveKey(password, saltHex: e.kdf.saltHex, iter: e.kdf.iter)
         let ct = HexKit.bytes(e.cHex)
         let mac = hmacSha256(keys.mac, concat(HexKit.bytes(e.ivHex), ct))
-        guard HexKit.hex(mac) == e.macHex.lowercased() else { throw DFUError.msg("口令错误或数据被篡改") }
+        // 2026-10-27 审核修复 (AUDIT-D D-60)：HMAC 比对改**常量时间**。
+        // 原先用 `==` 比字符串 —— Swift 的字符串相等会在第一个不同字节处短路返回，
+        // 攻击者能按响应耗时逐字节猜出正确 MAC（时序侧信道）。
+        // 本地备份场景威胁不高（要能反复喂包给你），但这是密码学代码的基本纪律，
+        // 而且 `CryptoBox` 里已经有常量时间比对的写法（同文件 :118 附近）。
+        guard CryptoBox.constantTimeEqual(HexKit.hex(mac), e.macHex.lowercased()) else { throw DFUError.msg("口令错误或数据被篡改") }
         let plain = try aesCbcDecrypt(ct, key: keys.enc, ivHex: e.ivHex)
         return String(bytes: plain, encoding: .utf8) ?? ""
     }

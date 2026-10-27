@@ -5,7 +5,9 @@
 // 96 铁律对照: 本特性是 96 的显式用户开关例外 — 未开 = 绝不自动开锁, 开 = 全门绿才出手。
 import Foundation
 import SwiftUI          // 本文件尾部有 SwiftUI 视图 (标定页/面板): 缺这一行 = View/@State/@EnvironmentObject 全找不到
-import CoreMotion
+// 2026-10-27 审核 (AUDIT-D D-53)：删掉 `import CoreMotion` ——
+// 全仓 0 处 CMMotionManager（原先大概是给"摇一摇"或姿态判断准备的，功能已删）。
+// 留着一个不用的框架 import 会让编译期多一层依赖，也误导读者以为这里有运动传感器逻辑。
 import LocalAuthentication
 import UIKit
 

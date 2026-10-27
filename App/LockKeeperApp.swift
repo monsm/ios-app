@@ -878,7 +878,7 @@ struct RootView: View {
         .onChange(of: lock.decoy) { _, d in app.decoyMode = d }
         .onChange(of: lock.unlocked) { _, u in
             app.appUnlocked = u
-            if u, !lock.decoy { restoreLastTab() }
+            if u, !lock.decoy { app.restoreLastTab() }
         }
     }
 

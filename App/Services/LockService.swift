@@ -212,7 +212,12 @@ final class LockService: ObservableObject {
         if secs > 0 {
             tokenExpiryMs = Int64(Date().timeIntervalSince1970 * 1000) + Int64(secs) * 1000 + 2000
         }
-        log("info", "会话令牌就绪 token=\(String(sessionTokenHex.prefix(4)))…(\(sessionTokenHex.count) 位) ttl=\(secs)s")
+        // 2026-10-27 审核 (AUDIT-D D-13)：**不再打印令牌前 4 位**。
+        // 原先打 `token.prefix(4)` —— 4 个 hex 字符只占 16 bit，看着"很短"，
+        // 但配合内存 `recentFrames` 里的完整帧，等于给攻击者一个校验位：
+        // 他可以拿已知帧去猜令牌、用这 4 位验证猜想对不对。
+        // 排查时真正需要的是"有没有拿到令牌、多长"，不是前几位是什么。
+        log("info", "会话令牌就绪 (长度 \(sessionTokenHex.count) hex 字符)")
     }
 
     // ---------- 请求 (令牌注入 + 重试 + 写失败清 waiter) ----------

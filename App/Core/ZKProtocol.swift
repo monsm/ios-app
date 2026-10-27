@@ -46,9 +46,19 @@ enum ZKProtocol {
 
     // ---------- KLV ----------
     static func buildKLV(_ key: Int, _ valHex: String) -> String {
-        let v = valHex
-        let len = v.count / 2
-        return HexKit.hexPair(UInt32(key)) + HexKit.hexPair(UInt32(len)) + v
+        // 2026-10-27 审核修复 (AUDIT-D D-15)：长度字段只占 1 字节（协议规定），
+        // 而 `hexPair(UInt32(len))` 对 len ≥ 256 会**静默截断**成低 8 位 ——
+        // 帧长度对不上，锁端会按错误长度解析后面所有 KLV。
+        // 当前调用点最大值是 ekey（30 字节）、WiFi 口令（≤64 字节），都不触发；
+        // 但这是定时炸弹：将来有人往 KLV 里塞固件分片或长日志就会踩。
+        // 现在超长直接返回空串 —— 上层 `buildFrame` 会构造出空载荷帧，
+        // 而 `cmdsshadow`/`golden` 会对不上，比静默截断更早暴露。
+        let len = valHex.count / 2
+        guard len <= 0xFF else {
+            assertionFailure("buildKLV 值超长: key=\(key) len=\(len) > 255 —— 协议单 KLV 上限")
+            return ""
+        }
+        return HexKit.hexPair(UInt32(key)) + HexKit.hexPair(UInt32(len)) + valHex
     }
     static func parseKLV(_ hex: String) -> [ZKLV]? {
         let b = HexKit.bytes(hex)
