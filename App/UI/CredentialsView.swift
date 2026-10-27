@@ -30,7 +30,6 @@ struct CredentialsView: View {
     @State private var seg: Int = 0          // 524 类型分段: 0 全部 / 1 密码 / 2 指纹 / 3 临时码
     @State private var memberView = CredentialOrg.groupMode == .owner   // 355 按成员视图
     @State private var search = ""
-    @State private var sortKey: CredentialOrg.CredSortKey = CredentialOrg.sortKey   // 914 排序
     /// 2026-10-26 恢复：`isBusy` 在清理四件套时被误删（它读 busyKey，是主流程状态）。
     private var isBusy: Bool { busyKey != nil }
     // 2026-10-26 恢复：这些 @State 在清理四件套时被连带删掉，但它们是主流程状态。
@@ -280,8 +279,7 @@ struct CredentialsView: View {
                 // 溢出: 其余全部按语义分组进这里
                 Menu {
                     Section("视图") {
-                        Button {
-                        }
+                        // 2026-10-27 三轮精简：排序入口已删（排序四档移除）。
                         Button {
                             memberView.toggle()
             // 2026-10-26 精简：分组模式持久化已删（整理功能移除）。
@@ -660,7 +658,7 @@ struct CredentialsView: View {
         // 526 置顶行固定顶部
         let pinned: [LedgerPwd] = []   // 2026-10-26: 星标已删，无置顶
         let rest = pwds
-        var ordered = orderPwds(rest)
+        var ordered = rest
         // 182/352 拖拽排序: 用户手动序优先 (seq 存的 index 数组)
         let order = CredentialOrg.seq(mac)["p"] ?? []
         let byIdx = manualIndex(order)
@@ -678,35 +676,6 @@ struct CredentialsView: View {
     /// 旧包/半写坏的表里出现重复 alias 时, 后者会当场 trap (整个凭证页变崩溃), 前者只是取第一个位次。
     private func manualIndex(_ order: [Int]) -> [Int: Int] {
         Dictionary(order.enumerated().map { ($1, $0) }, uniquingKeysWith: { first, _ in first })
-    }
-    private func orderPwds(_ input: [LedgerPwd]) -> [LedgerPwd] {
-        switch sortKey {
-        case .name:
-            return input.sorted { CredentialOrg.displayPwd($0).localizedStandardCompare(CredentialOrg.displayPwd($1)) == .orderedAscending }
-        case .type:
-            return input.sorted { a, b in
-                if a.temp != b.temp { return a.temp }
-                return a.alias < b.alias
-            }
-        case .recent:
-            // 标签写的是"最近使用", 旧写法按 p.at (录入时间) 排 —— 名不副实。
-            // 改用 inferredLastUseMap: 一次读日志, 临时凭证按自己的时间窗归属;
-            // 长期凭证锁端日志不记凭证身份, 只能给锁级参考 (同值 → 实际落到录入时间次序)。
-            let lastUse = CredentialOrg.inferredLastUseMap(mac)
-            return input.sorted { a, b in
-                // -1 当"无使用证据"哨兵: 真实 epoch 不可能为负
-                let ua = lastUse[a.alias] ?? -1
-                let ub = lastUse[b.alias] ?? -1
-                if ua != ub { return ua > ub }
-                return a.at > b.at
-            }
-        case .expiry:
-            return input.sorted { a, b in
-                let ta = CredentialOrg.expiryDate(a) ?? Date.distantFuture
-                let tb = CredentialOrg.expiryDate(b) ?? Date.distantFuture
-                return ta < tb
-            }
-        }
     }
 
     @ViewBuilder
@@ -806,14 +775,8 @@ struct CredentialsView: View {
         let pinned: [LedgerFp] = []
         let rest = fps
         var ordered: [LedgerFp]
-        switch sortKey {
-        case .name:
-            ordered = rest.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
-        case .type:
-            ordered = rest.sorted { ($0.isAlarm == true ? 0 : 1) < ($1.isAlarm == true ? 0 : 1) }
-        default:
-            ordered = rest.sorted { ($0.at) > ($1.at) }
-        }
+        // 2026-10-27 三轮：排序四档已删，恒按时间倒序（原 default 分支）
+        var ordered: [LedgerFp] = rest.sorted { ($0.at) > ($1.at) }
         let order = CredentialOrg.seq(mac)["f"] ?? []
         if !order.isEmpty {
             let byIdx = manualIndex(order)
