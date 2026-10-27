@@ -1019,8 +1019,7 @@ struct CredentialsView: View {
             }
         }
         .accessibilityElement(children: .combine)
-        // 849 凭证朗读顺序 "名称-类型-状态" (不堆叠字段), 856 盲文简写走 value
-        .accessibilityLabel(credVoLabel(hit))
+        .accessibilityLabel(titleOf(hit))
         .accessibilityActions {
             if let v = hit.pwd?.pwd {
                 Button("拷贝密码明文") {   // 849 拷贝密码明文
@@ -1080,11 +1079,6 @@ struct CredentialsView: View {
         if let f = hit.fp { return f.name }
         return ""
     }
-    /// 849 凭证朗读顺序: 名称-类型-状态 (密码/指纹/临时码 走 AXTerms 词表, 不混"密钥")
-    private func credVoLabel(_ hit: CredHit) -> String {
-        let kind = hit.pwd != nil
-    }
-    /// 856 状态字段简写 (盲文友好), 走 AXTerms.br
     /// 331 播报里"提前失效"排在"已排期"之前但让位于锁端"已过期" —— 与行上胶囊同一优先级
     private func credVoState(_ hit: CredHit, _ now: Date) -> String {
         if let p = hit.pwd {
