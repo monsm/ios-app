@@ -71,6 +71,10 @@ final class LockService: ObservableObject {
         tokenExpiryMs = 0
     }
     // 幂等按需连接: 已连同一把 → 直接; 缓存 bleId → 直连; 失败 → MAC 扫描解析 (回写缓存)
+    /// 2026-10-27 审核说明 (AUDIT-A F-26)：连接后读状态对 pid 这道闸门是 **iOS 新增的**，vendor 没有。
+    /// 加它的理由：广播里的 MAC 谁都能伪造，而状态帧的响应难伪造得多（见下方注释）。
+    /// 代价：老配对（未登记 pid）只能记警告不拦 —— 宁可放过老用户，也不能把正常人挡在门外。
+    /// 这是**有意的偏离**，不是"iOS 比 vendor 多做了点什么"的偶然。
     func ensureConnected(mac: String) async throws {
         let m = mac.lowercased()
         guard !m.isEmpty else { throw BLEErrorX.msg("未选择门锁 (缺少 MAC)") }

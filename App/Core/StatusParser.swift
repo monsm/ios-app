@@ -178,5 +178,11 @@ enum StatusParser {
         default: return nil
         }
     }
+    /// 2026-10-27 审核说明 (AUDIT-A F-11/F-14)：rc 的三种边界在三端语义不同，这里是本机的口径 ——
+    ///   · rc = 0    → 成功（vendor 与 iOS 一致；Android 按"开锁成功"措辞，语义相同只是文案不同）
+    ///   · rc = -1   → 回包无 KLV#03，**结果未知**（不是失败，也不是成功）。本机按"无法确认"处理：
+    ///                 写命令不当作成功、读命令仍取回包里能拿到的字段。
+    ///   · rc > 27   → 超出协议表，按未知错误码展示原值。
+    /// 差异本身是历史包袱（三端各自演进），但**本机口径必须写清**，否则后来者会以为是 bug。
     static func rcFriendly(_ rc: Int) -> String { rcHint(rc) ?? rcMessage(rc) }
 }

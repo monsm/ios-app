@@ -27,7 +27,7 @@ const swiftFiles = [];
       for (const e of fs.readdirSync(x, { withFileTypes: true })) {
         const f = path.join(x, e.name);
         if (e.isDirectory()) walk(f);
-        else if (f.endsWith('.swift')) swiftFiles.push(f);
+        else if (f.endsWith('.swift') || f.endsWith('.kt')) swiftFiles.push(f);
       }
     })(r);
   }
@@ -38,10 +38,12 @@ const baseNames = new Set(swiftFiles.map((f) => path.basename(f)));
 const declares = {};
 const allTypes = new Set();
 const reDecl = /^(?:final\s+|public\s+|internal\s+)?(?:enum|struct|class|actor|protocol|extension)\s+([A-Za-z_]\w*)/;
+// Kotlin 侧的类型声明（object / class / interface / data class）
+const reDeclKt = /^(?:internal\s+|private\s+|public\s+)?(?:data\s+)?(?:object|class|interface|enum\s+class)\s+(\w+)/;
 for (const f of swiftFiles) {
   const set = new Set();
   for (const line of fs.readFileSync(f, 'utf8').split(/\r?\n/)) {
-    const m = line.match(reDecl);
+      const m = line.match(reDecl) || line.match(reDeclKt);
     if (m) { set.add(m[1]); allTypes.add(m[1]); }
   }
   declares[baseName(f)] = set;
@@ -56,7 +58,16 @@ const SYS_PREFIX = ['UI', 'NS', 'CG', 'CA', 'AV', 'MK', 'SK', 'CN', 'SF', 'AX', 
 const SYS_NAMES = new Set(['Apple', 'iOS', 'iPadOS', 'SwiftUI', 'WidgetKit', 'XCTest', 'JSON', 'PDF', 'URL', 'UUID', 'Demo', 'Kitty']);
 const NON_MEMBER_EXT = /^(swift|md|json|js|yml|yaml|png|svg|xcassets|lock|txt|csv|pdf|ipa|mobileprovision|entitlements)$/;
 
-const docs = fs.readdirSync('docs').filter((f) => f.endsWith('.md')).map((f) => path.join('docs', f));
+// 2026-10-27 审核修复 (AUDIT-E)：原先只扫 docs 顶层 —— 20 份子目录文档从不被覆盖，
+// 其中 3146 条指针 39.1% 失效却没人管。改成**递归**扫描 docs 全树。
+const docs = (function walkDocs(dir, out = []) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) walkDocs(p, out);
+    else if (e.name.endsWith('.md')) out.push(p);
+  }
+  return out;
+})('docs');
 if (fs.existsSync('README.md')) docs.unshift('README.md');
 // 行内忽略标记: 台账里合法地需要**说出**那些死指针原文 (修指针的叙述本身就带着旧名字),
 // 否则闸门会在自己的说明书上开火 —— 一把天天误响的尺子最后没人看。标记写法: 行尾 `指针检查:忽略`。

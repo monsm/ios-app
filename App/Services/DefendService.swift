@@ -24,6 +24,12 @@ enum DefendService {
         }
 
         let control = mode.rawValue
+        // 2026-10-27 审核说明 (AUDIT-A F-40)：.once（不定期布防）这里发 0/0，
+        // 而 APK 发的是**绝对时间**（到点自动撤防）。这不是 bug，是 UI 层没有对应输入 ——
+        // DefendView 的 once 模式只有一个「执行布防」按钮，没有起止时间选择器，
+        // 所以本机无从得知「到几点撤防」。
+        // 已在 DefendView:179 如实告知用户「直到你手动撤防」—— 两种姿态的差异是可见的。
+        // 若以后要支持定时撤防，需先加 DatePicker，再把协议秒（基准 2010-01-01）填进这两格。
         let startProto = mode == .period ? DefendKit.protoSec(startSec) : 0
         let endProto = mode == .period ? DefendKit.protoSec(endSec) : 0
 

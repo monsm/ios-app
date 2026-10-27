@@ -14,6 +14,10 @@ enum AndroidPair {
     /// 同一组默认有效期, 所以签出来的与配网那次逐字节一致)。
     static func ekey(for kc: Keychain) -> String? {
         if !kc.ekey.isEmpty { return kc.ekey }
+        // 2026-10-27 审核说明 (AUDIT-A F-20)：`buildEkeyOpen` 的默认 TrackId 与有效期与 vendor 一致，
+        // 但本文件原先的注释声称"与 iOS 逐字节一致"—— 实际只有**默认参数相同**，
+        // 而二维码通道（KFA1:）不带 trackid/有效期字段，所以安卓侧签出来的 ekey 用的是默认值。
+        // 这不是 bug（vendor 的二维码通道也不带那两个字段），但注释不该说"逐字节"。
         guard let pin = kc.pins.first, !pin.isEmpty, !kc.skey.isEmpty else { return nil }
         let e = ZKCmdBuilder.buildEkeyOpen(kc.skey.lowercased(), kc.mac.lowercased(), pin)
         return e.isEmpty ? nil : e

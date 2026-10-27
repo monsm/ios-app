@@ -162,6 +162,9 @@ enum ZKProtocol {
     static func injectToken(_ hex: String, _ tokenHex: String) -> String {
         guard !tokenHex.isEmpty, hex.count >= 16 else { return hex }
         let len = HexKit.readU16LE(hex, byteOffset: 2)
+        // 2026-10-27 审核说明 (AUDIT-A F-08)：cmd 字节位置在三种帧头（8/7/10 字节）下**都写死字节 4**。
+        // 三端（iOS / Android / vendor JS）在此完全一致 —— 这是协议事实：长度字段恒在字节 2-3，
+        // 所以 cmd 恒在 4。7 字节头的差异只在 KLV 起始位置，不在 cmd 位置。
         let cmd = HexKit.bytes(hex)[4]
         let header10 = hex.count >= 20 + len * 2
         let bodyStart = header10 ? 20 : 16
