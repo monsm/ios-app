@@ -70,9 +70,11 @@ struct CredExtendView: View {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
         f.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        let out = CredentialOrg.batchExtend(mac, aliases, f.string(from: from), f.string(from: to))
+        let r = CredentialOrg.batchExtend(mac, aliases, f.string(from: from), f.string(from: to))
         busy = false
-        app.showToast("已改写 \(out.count) 条有效期, 锁端改期待下发")   // 348 已改写
+        // 2026-10-27 (D-58)：把"选中了但没找到"的条目如实报出来，不静默跳过
+        let extra = r.failed.isEmpty ? "" : " · ⚠ 有 \(r.failed.count) 条已不在台账"
+        app.showToast("已改写 \(r.done.count) 条有效期, 锁端改期待下发" + extra)
         _ = Milestones.recordOrganize()
         onDone()
     }

@@ -162,14 +162,20 @@ enum CredentialOrg {
 
     // ---------- 347/348/349/357 批量本地操作 (下发部分只入队, UI 标注本地意图) ----------
     /// 348 统一延期: 本地改写所选过期字段并留变更清单 (逐条入队, 到场后统一补发)
-    static func batchExtend(_ mac: String, _ aliases: [Int], _ from: String, _ to: String) -> [Int] {
+    /// 批量延期。2026-10-27 (D-58)：同 batchDisable —— 找不到的条目如实返回，不静默跳过。
+    static func batchExtend(_ mac: String, _ aliases: [Int], _ from: String, _ to: String)
+        -> (done: [Int], failed: [Int]) {
         var out: [Int] = []
+        var failed: [Int] = []
         for a in aliases {
-            guard let p = DB.ledger(mac).pwds.first(where: { $0.alias == a }) else { continue }
+            guard DB.ledger(mac).pwds.contains(where: { $0.alias == a }) else {
+                failed.append(a)
+                continue
+            }
             DB.setPwdPeriod(mac, a, from, to)
             out.append(a)
         }
-        return out
+        return (out, failed)
     }
     /// 468 代管补记: 条目**改动前**的属主被点名「由我代管」时, 快照补一句 管理员代操作。
     /// 判据与单条停用 disableVia、批量停用拆分同一张 proxyNames; 无归属不猜。
@@ -191,21 +197,35 @@ enum CredentialOrg {
         return n
     }
     /// 353 批量停用: 所选过期/老旧项本地移除并入回收站, 锁端删除入队
-    static func batchDisable(_ mac: String, pwdAliases: [Int], fpBatches: [Int]) -> Int {
+    /// 批量停用：把选中的密码/指纹移入回收站（同一批次，可整组还原）。
+    ///
+    /// 2026-10-27 审核修复 (AUDIT-D D-58)：原先 `guard ... else { continue }` **静默跳过**
+    /// 找不到的条目，只返回成功数 —— 用户看到「已停用 8 条」却不知道有 2 条根本没动
+    /// （可能是别处已经删了、或台账里编号对不上）。
+    /// 现在返回 (done, failed)：failed 是"选中了但没找到"的编号，UI 必须如实报出来。
+    static func batchDisable(_ mac: String, pwdAliases: [Int], fpBatches: [Int])
+        -> (done: Int, failedPwds: [Int], failedFps: [Int]) {
         var n = 0
+        var failedPwds: [Int] = []
+        var failedFps: [Int] = []
         let batchId = UUID().uuidString   // 353: 一次批量停用 = 一个批次, 回收站里可整组还原
         for a in pwdAliases {
-            guard let p = DB.ledger(mac).pwds.first(where: { $0.alias == a }) else { continue }
+            guard DB.ledger(mac).pwds.contains(where: { $0.alias == a }) else {
+                failedPwds.append(a)   // D-58：找不到就记下来，不静默跳过
+                continue
+            }
             DB.delPwd(mac, a)
-            // 498: 已过期的进回收站标"过期", 未过期的手动批量停用仍标"批量"
             n += 1
         }
         for b in fpBatches {
-            guard let f = DB.ledger(mac).fps.first(where: { $0.batch == b }) else { continue }
+            guard DB.ledger(mac).fps.contains(where: { $0.batch == b }) else {
+                failedFps.append(b)
+                continue
+            }
             DB.delFp(mac, b)
             n += 1
         }
-        return n
+        return (n, failedPwds, failedFps)
     }
 
     // ---------- 524/526/528 计数与三态 ----------

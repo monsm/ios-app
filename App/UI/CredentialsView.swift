@@ -1064,11 +1064,14 @@ struct CredentialsView: View {
         busyKey = "batch"
         Task { @MainActor in
             defer { busyKey = nil; editMode = false; selPwds = []; selFps = [] }
-            let n = CredentialOrg.batchDisable(mac, pwdAliases: selPwds, fpBatches: selFps)
-            if n > 0 {
+            // 2026-10-27 (D-58)：batchDisable 现在返回 (done, failedPwds, failedFps) ——
+            // 原先静默跳过找不到的条目，用户看到"已停用 8 条"却不知道有 2 条根本没动。
+            let r = CredentialOrg.batchDisable(mac, pwdAliases: selPwds, fpBatches: selFps)
+            if r.done > 0 {
                 _ = Milestones.recordOrganize()
                 app.flashReceipt("已写入本机")   // 508 已写入本机
-                app.showToast("已停用 \(n) 条, 收入回收站, 锁端删除待下发")
+                let extra = (r.failedPwds.count + r.failedFps.count) > 0 ? " · ⚠ 有 \(r.failedPwds.count + r.failedFps.count) 条已不在台账" : ""
+                app.showToast("已停用 \(r.done) 条, 收入回收站" + extra)
                 reload()
             } else {
                 app.showToast("所选凭证已不在台账")

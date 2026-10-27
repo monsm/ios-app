@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T10:05:28.565Z",
+    "generated": "2026-10-27T10:11:01.435Z",
     "sources": [
       {
         "scout": "android-native",
@@ -15832,7 +15832,7 @@
           "line": 695,
           "symbol": "proxySuffix(_:)",
           "note": "",
-          "text": ""
+          "text": "var pwd: String"
         },
         {
           "platform": "ios",
@@ -16122,7 +16122,7 @@
           "line": 1626,
           "symbol": "batchBar",
           "note": "",
-          "text": ""
+          "text": "alert.addAction(UIAlertAction(title: confirmTitle, style: .destructive) { _ in action() })"
         },
         {
           "platform": "ios",
@@ -16194,7 +16194,7 @@
           "line": 1229,
           "symbol": "credRow",
           "note": "",
-          "text": "let cur = DB.otpIdx(mac)"
+          "text": "guard busyKey == nil else { return false }"
         },
         {
           "platform": "ios",
@@ -16202,7 +16202,7 @@
           "line": 1246,
           "symbol": "credRow",
           "note": "状态胶囊",
-          "text": "guard !pwd.isEmpty else {"
+          "text": "// 空串不许当「生成成功」：原先会一路把空值写进 otpPwd、复制进剪贴板、再震一下「成功」，"
         },
         {
           "platform": "ios",
@@ -16210,7 +16210,7 @@
           "line": 1272,
           "symbol": "credRow",
           "note": "副行",
-          "text": "}"
+          "text": "Text(\"添加第一条密码\")"
         }
       ],
       "platformEvidence": {
@@ -17194,7 +17194,7 @@
           "line": 1450,
           "symbol": "credMenu",
           "note": "setFpAlarm",
-          "text": "guard !m.isEmpty else { app.showToast(\"未选择门锁\"); return }"
+          "text": "private func doDeletePwd(_ p: LedgerPwd) async {"
         },
         {
           "platform": "ios",
@@ -17202,7 +17202,7 @@
           "line": 1256,
           "symbol": "credRow",
           "note": "预警胶囊",
-          "text": "return true"
+          "text": "otpWin = win"
         }
       ],
       "platformEvidence": {
@@ -17744,7 +17744,7 @@
           "line": 1346,
           "symbol": "credRow",
           "note": "整行 disabled",
-          "text": "// 在用户按下\"作废旧密码\"的那一刻就把目标锁钉住 (含非空校验)，Task 里一律用 m"
+          "text": "alert.addAction(UIAlertAction(title: \"作废旧密码\", style: .destructive) { _ in"
         }
       ],
       "platformEvidence": {
@@ -18135,7 +18135,7 @@
           "line": 1320,
           "symbol": "credRow",
           "note": "swipeActions",
-          "text": "private func shortDate(_ ts: Double) -> String {"
+          "text": "f.locale = Locale(identifier: \"en_US_POSIX\")"
         },
         {
           "platform": "ios",
@@ -18143,7 +18143,7 @@
           "line": 1329,
           "symbol": "credRow",
           "note": "!sorting 才出破坏性",
-          "text": "// 改成系统 alert：用户点「知道了」即消失，不留在屏幕上。"
+          "text": "// 2026-10-27 审核修复 (AUDIT-D D-39)：**明文密码不再进 Toast**。"
         },
         {
           "platform": "ios",
@@ -18151,7 +18151,7 @@
           "line": 1333,
           "symbol": "credRow",
           "note": "改期",
-          "text": "alert.addAction(UIAlertAction(title: \"知道了\", style: .cancel))"
+          "text": "let alert = UIAlertController(title: \"密码 #\\(p.alias)\","
         }
       ],
       "platformEvidence": {
@@ -19889,7 +19889,7 @@
           "line": 713,
           "symbol": "batchDisable(_:pwdAliases:fpBatches:)",
           "note": "",
-          "text": "/// 这条判据此前在 `displayPwd` 那侧有一份、在回收站/历史/延期三处界面各有一份, 收成一处。"
+          "text": "DB.store.remove(\"kf_cdraft_\" + mac)"
         },
         {
           "platform": "ios",
@@ -20095,7 +20095,7 @@
           "line": 658,
           "symbol": "batchExtend(_:_:_:_:)",
           "note": "",
-          "text": "guard m > 0, let e = effectiveExpiry(mac, p) else { return \"\" }"
+          "text": "return who.isEmpty ? \"指纹·\" + base : who + \"·\" + base"
         },
         {
           "platform": "ios",
@@ -20111,7 +20111,7 @@
           "line": 662,
           "symbol": "auto: true",
           "note": "auto: true 自动还原点",
-          "text": "return \" · 本机提前 \" + String(m) + \" 分钟 (约 \" + f.string(from: e) + \", 锁端未改)\""
+          "text": "/// 同帧同判据), 不留隐式 Date() —— 隐式取时刻会让同一屏里两条结论各自漂。没设提前量恒 false。"
         }
       ],
       "platformEvidence": {
@@ -20918,7 +20918,7 @@
           "line": 451,
           "symbol": "canEvaluatePolicy",
           "note": "guard ctx.canEvaluatePolicy(...)",
-          "text": "/// 返回 (Base64 信封文本, 口令)。UI 用 ShareLink 发文本 + 口令单列展示, 不与凭证混排。"
+          "text": "if p.temp {"
         },
         {
           "platform": "ios",
@@ -20926,7 +20926,7 @@
           "line": 460,
           "symbol": "onDeniedPresentFallback",
           "note": "if ok { commit() } else { onDeniedPresentFallback(commit) }",
-          "text": "let text = String(data: json, encoding: .utf8),"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -21344,7 +21344,7 @@
           "line": 1314,
           "symbol": "credRow",
           "note": "双击复制",
-          "text": "private static let shortDateFormatter: DateFormatter = {"
+          "text": "// 2026-10-26 精简：stopUndoTimer 已删（undoBar 移除后无撤销条可停）。"
         },
         {
           "platform": "ios",
@@ -21352,7 +21352,7 @@
           "line": 1296,
           "symbol": "credRow",
           "note": "VoiceOver 拷贝动作",
-          "text": "if genOtp() {"
+          "text": "do {"
         }
       ],
       "platformEvidence": {
@@ -21415,7 +21415,7 @@
           "line": 1246,
           "symbol": "credRow",
           "note": "pwdState == 2",
-          "text": "guard !pwd.isEmpty else {"
+          "text": "// 空串不许当「生成成功」：原先会一路把空值写进 otpPwd、复制进剪贴板、再震一下「成功」，"
         },
         {
           "platform": "ios",
@@ -21423,7 +21423,7 @@
           "line": 1248,
           "symbol": "credRow",
           "note": "isEarlyExpired",
-          "text": "UINotificationFeedbackGenerator().notificationOccurred(.error)"
+          "text": "// 这道 guard 必须排在 saveOtpIdx 之前：失败的这一次不许占用窗口内的 100 个名额。"
         },
         {
           "platform": "ios",
@@ -21431,7 +21431,7 @@
           "line": 1255,
           "symbol": "credRow",
           "note": "预警指纹",
-          "text": "UINotificationFeedbackGenerator().notificationOccurred(.success)"
+          "text": "otpPwd = pwd"
         }
       ],
       "platformEvidence": {
@@ -52511,7 +52511,7 @@
           "line": 181,
           "symbol": "rcFriendly",
           "note": "",
-          "text": "case 27: return \"门锁处于布防状态, 请先解除布防再开锁\""
+          "text": "case 21: return \"门从里面反锁了, 先解除反锁再试\""
         }
       ],
       "platformEvidence": {
@@ -58379,7 +58379,7 @@
           "line": 1248,
           "symbol": "credRow",
           "note": "提前失效胶囊",
-          "text": "UINotificationFeedbackGenerator().notificationOccurred(.error)"
+          "text": "// 这道 guard 必须排在 saveOtpIdx 之前：失败的这一次不许占用窗口内的 100 个名额。"
         },
         {
           "platform": "ios",
@@ -58464,7 +58464,7 @@
           "line": 1076,
           "symbol": "commitGroupMove",
           "note": "写 seq",
-          "text": "}"
+          "text": "} else {"
         },
         {
           "platform": "ios",
@@ -59930,7 +59930,7 @@
           "line": 472,
           "symbol": "reclaimDays()",
           "note": "",
-          "text": "case panel(String)          // 面板名: 与 CredentialsView.consumeCredPanel 同一词表"
+          "text": "static func exportPackage(_ mac: String, pwdAliases: [Int], fpBatches: [Int], password: String) -> (data: Data, size: Int)? {"
         },
         {
           "platform": "ios",
@@ -61051,7 +61051,7 @@
           "line": 1236,
           "symbol": "credRow",
           "note": "kf_row_h",
-          "text": "// 周期必须取**锁端上报**的 zotpPeriod (03#05, 单位分钟), 缺省才回落 30。"
+          "text": "UINotificationFeedbackGenerator().notificationOccurred(.error)"
         },
         {
           "platform": "ios",
