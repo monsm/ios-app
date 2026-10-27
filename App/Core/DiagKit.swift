@@ -938,6 +938,12 @@ enum SelfCheck {
     /// 2026-10-27 六轮精简：本机自检三项已删（哈希比对 / 审计链 / JSON 回环
     /// 三个依赖随 WebDAV 一族与 AuditLog 一起移除），只留空实现保证调用点不炸。
     static func run() -> [SelfCheckLine] { [] }
+
+    /// 把自检结果压成一句话（手动触发时的 Toast / 解锁路径的静默判定都读它）。
+    static func summary(_ lines: [SelfCheckLine]) -> String {
+        let bad = lines.filter { !$0.ok }
+        return bad.isEmpty ? "本机自检全部通过" : "本机自检 \(bad.count) 项异常 — 详情见下"
+    }
 }
 
 /// 1170 同步读取通知授权状态的载体。

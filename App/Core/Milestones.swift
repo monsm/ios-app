@@ -33,8 +33,7 @@ enum Milestones {
         DB.store.setCodable("kf_backup_hist", h)
         // 448: 备份发生点 = 自检基线更新点 (导出/上传/还原点全覆盖; 自检本身绝不回写)
         let mk = monthKey()
-        return (DB.store.get([Double].self, "kf_backup_hist") ?? [])
-            .filter { monthKey(Date(timeIntervalSince1970: $0 / 1000)) == mk }.count
+        _ = mk   // 2026-10-27 六轮：backupThisMonth 已删，月度基线不再计算
     }
     /// 822 「还没有备份」要看的那一个事实: 本机最后一次生成/上传备份的时刻。
     static var lastBackupAt: Date? {
