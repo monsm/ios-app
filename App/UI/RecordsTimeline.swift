@@ -170,10 +170,7 @@ struct RecDetailSheet: View {
             .padding(.vertical, DS.Space.xs)
             .background(rec.alarm ? RecordSearch.toneColor(for: rec.type).opacity(0.08) : Color.clear)
 
-            if rec.type == 7 {
             // 2026-10-27 三轮精简：防撬检查清单已删（告警处置层移除）。
-                .padding(.vertical, DS.Space.xs)
-            }
 
 
             // ⚠737 今日试错累计 (keyboardErrCount 语义不确定, 标题带"?", 只数日志条数)

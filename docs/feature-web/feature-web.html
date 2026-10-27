@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T00:20:28.124Z",
+    "generated": "2026-10-27T00:26:00.519Z",
     "sources": [
       {
         "scout": "android-native",
@@ -36321,7 +36321,7 @@ const DATA = {
           "line": 180,
           "symbol": "AlarmMeta.levelName",
           "note": "严重级",
-          "text": "let trials = RecordSearch.trialCountToday(macs: [rec.mac])"
+          "text": ".font(.system(size: DS.Icon.sm))"
         },
         {
           "platform": "ios",
@@ -36329,7 +36329,7 @@ const DATA = {
           "line": 185,
           "symbol": "alarmSection",
           "note": "已处置/未处置徽标",
-          "text": ".accessibilityHidden(true)"
+          "text": ".foregroundStyle(DS.Palette.warn)"
         },
         {
           "platform": "ios",
@@ -82649,7 +82649,7 @@ const DATA = {
           "line": 204,
           "symbol": "RecordSearch.checkState",
           "note": "读勾选且按项数夹回",
-          "text": ".accessibilityHidden(true)"
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         },
         {
           "platform": "ios",
@@ -82657,7 +82657,7 @@ const DATA = {
           "line": 205,
           "symbol": "RecordSearch.setCheck",
           "note": "写勾选",
-          "text": "Text(\"响应时长: 积累中 — 处置记录够多后自动出分布\")   // 742 响应时长"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         },
         {
           "platform": "ios",
@@ -82665,7 +82665,7 @@ const DATA = {
           "line": 202,
           "symbol": "tamperChecks",
           "note": "4 项清单来源",
-          "text": ".font(.system(size: DS.Icon.sm))"
+          "text": "Text(\"响应时长: 积累中 — 处置记录够多后自动出分布\")   // 742 响应时长"
         }
       ],
       "platformEvidence": {
@@ -82751,7 +82751,7 @@ const DATA = {
           "line": 265,
           "symbol": "markDisposition",
           "note": "写已处理",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -82759,7 +82759,7 @@ const DATA = {
           "line": 278,
           "symbol": "undoDisposition",
           "note": "撤销",
-          "text": "Text(\"第 \\(atSafe + 1) / \\(siblings.count) 条\")"
+          "text": "Button(\"下一条\") { if atSafe \u003c siblings.count - 1 { at = atSafe + 1 } }"
         }
       ],
       "platformEvidence": {
