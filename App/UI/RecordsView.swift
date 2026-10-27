@@ -763,9 +763,6 @@ struct RecordsView: View {
         .accessibilityAddTraits(on.wrappedValue ? .isSelected : [])
     }
 
-    /// 190 第一扇门纪念: 滚到最早记录的结语行
-    @ViewBuilder
-
     @ViewBuilder   // 编译级修正: 这块是"顶层 if 而没有 else/return", 不加 builder 就是一句 "function declares some View…" 的编译错误
     /// 716 选区导出: 按**天**整组勾选 → 合并成一份 CSV (进剪贴板, 与 698 同一通路)。
     /// 行级多选刻意不做: 时间线一页上千行, 逐行勾选的手势成本远高于"按天勾"这种整组选择 (原句的"整组"正是这一档);
