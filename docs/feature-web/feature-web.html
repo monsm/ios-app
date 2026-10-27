@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T07:23:33.202Z",
+    "generated": "2026-10-27T07:34:54.474Z",
     "sources": [
       {
         "scout": "android-native",
@@ -8042,7 +8042,7 @@ const DATA = {
           "line": 497,
           "symbol": "AutoCalView",
           "note": "",
-          "text": "} else {"
+          "text": "try await app.lock.syncTime()"
         },
         {
           "platform": "ios",
@@ -9094,7 +9094,7 @@ const DATA = {
           "line": 423,
           "symbol": "private func dispatch",
           "note": "",
-          "text": "defendStartSec: d?.startSec ?? 0,"
+          "text": "// F4: 用户配了布防 (control=2) 就照常一票否决 + 落审计; 但\"本机没存过布防记录\"不能再读成"
         },
         {
           "platform": "ios",
@@ -9102,7 +9102,7 @@ const DATA = {
           "line": 428,
           "symbol": "app.lock.unlock(mac:)",
           "note": "",
-          "text": "// F6 锁态门 fail-closed: StatusSnapshotData.rc 默认 0 = \"成功\", 无快照时旧写法会误判锁态绿"
+          "text": "defendEndSec: d?.endSec ?? 0,"
         },
         {
           "platform": "ios",
@@ -9110,7 +9110,7 @@ const DATA = {
           "line": 441,
           "symbol": "verifyMode==1 双验提示",
           "note": "",
-          "text": "lastDispatch[mac] = Date().timeIntervalSince1970"
+          "text": "// 2026-10-27 审核修复：闩锁与冷却必须在**下发之前**落，否则异常/超时路径"
         },
         {
           "platform": "ios",
@@ -9118,7 +9118,7 @@ const DATA = {
           "line": 453,
           "symbol": "rc=25 / rc=26 分支",
           "note": "",
-          "text": "app.showToast(\"自动: 第一道已通过 — 请再用指纹或密码完成第二道\")"
+          "text": "// 直接喊\"自动开锁成功\"就是谎报 —— 与手动档 settleUnlockSuccess 同一口径 (2026-10-15 走查)。"
         }
       ],
       "platformEvidence": {
@@ -9553,7 +9553,7 @@ const DATA = {
           "line": 363,
           "symbol": "guard app.currentMac == mac",
           "note": "",
-          "text": "attempt(mac: mac)"
+          "text": "/// 每 2 秒由 LinkSense 驱动一次: 武装态下检查信号是否已达标, 达标则尝试下发。"
         }
       ],
       "platformEvidence": {
@@ -9842,7 +9842,7 @@ const DATA = {
           "line": 457,
           "symbol": "setSuspendUntil(+24h)",
           "note": "",
-          "text": "case 3:"
+          "text": "if app.status?.verifyMode == 1 {"
         },
         {
           "platform": "ios",
@@ -11549,7 +11549,7 @@ const DATA = {
           "line": 378,
           "symbol": "if eventFired.contains(mac) { return }",
           "note": "",
-          "text": "// 390 行原话: \"伪装口令进来的会话只渲染空壳\" —— 空壳后面门被打开, 就是这个 bug。"
+          "text": "//   ①机主在门口, AutoOpen 已武装且 60s 内刚刷过脸 (标准档);"
         },
         {
           "platform": "ios",
@@ -11557,7 +11557,7 @@ const DATA = {
           "line": 431,
           "symbol": "eventFired.insert(mac)",
           "note": "",
-          "text": "}"
+          "text": "coolReady: coolReady,"
         }
       ],
       "platformEvidence": {
@@ -11649,7 +11649,7 @@ const DATA = {
           "line": 412,
           "symbol": "defendControl: d?.control ?? 0",
           "note": "",
-          "text": "// 2026-10-27 审核修复：原判据是 `promptStartedAt != nil && lastFace() == faceAtPrompt`，"
+          "text": "f0Foreground: LinkSense.shared.sceneActive && !app.decoyMode,"
         }
       ],
       "platformEvidence": {
@@ -11816,7 +11816,7 @@ const DATA = {
           "line": 406,
           "symbol": "facePendingPrompt 计算",
           "note": "",
-          "text": "let coolReady = AutoOpenKit.coolReady(lastDispatch: lastAt, now: Date().timeIntervalSince1970)"
+          "text": "private func makeContext(mac: String, app: AppState) -> AutoOpenGate {"
         }
       ],
       "platformEvidence": {
@@ -11883,7 +11883,7 @@ const DATA = {
           "line": 402,
           "symbol": "f0Foreground",
           "note": "",
-          "text": "private func makeContext(mac: String, app: AppState) -> AutoOpenGate {"
+          "text": "AutoOpen.audit(mac, \"拒开 \" + AutoOpenGate.rejectText(rej) + \" · \" + door)"
         },
         {
           "platform": "ios",
@@ -11952,7 +11952,7 @@ const DATA = {
           "line": 419,
           "symbol": "lockReady: snap != nil && snap?.rc != 25 && snap?.rc != 26",
           "note": "",
-          "text": "// F4: 用户配了布防 (control=2) 就照常一票否决 + 落审计; 但\"本机没存过布防记录\"不能再读成"
+          "text": "// 现改为纯时间窗判定：发起过弹窗、距发起 \u003c 30s、且这次还没成功。"
         },
         {
           "platform": "ios",
@@ -12184,7 +12184,7 @@ const DATA = {
           "line": 469,
           "symbol": "selfHealTime",
           "note": "",
-          "text": "AutoOpen.audit(mac, \"rc=26 防拆事件 → 自动关自动开锁 24h\")"
+          "text": "case 25:"
         },
         {
           "platform": "ios",
@@ -12192,7 +12192,7 @@ const DATA = {
           "line": 476,
           "symbol": "ntpConfirmed: false",
           "note": "",
-          "text": "armed = false"
+          "text": "default:"
         }
       ],
       "platformEvidence": {
@@ -12267,7 +12267,7 @@ const DATA = {
           "line": 415,
           "symbol": "rssiArmed: armed",
           "note": "",
-          "text": "// 现改为纯时间窗判定：发起过弹窗、距发起 \u003c 30s、且这次还没成功。"
+          "text": "// 严格档在途位: 弹窗已发起且面容时刻尚未刷新 = 正在确认 (旧实现恒 false → 在途分支是死代码)"
         }
       ],
       "platformEvidence": {
@@ -29668,7 +29668,7 @@ const DATA = {
           "line": 52,
           "symbol": "listContent",
           "note": "",
-          "text": "defaultFilename: backupFilename) { result in"
+          "text": ".fileExporter(isPresented: $showFileExporter,"
         }
       ],
       "platformEvidence": {
@@ -29780,7 +29780,7 @@ const DATA = {
           "line": 178,
           "symbol": "importSection",
           "note": "",
-          "text": "private func confirmImport() {"
+          "text": ".textInputAutocapitalization(.never)"
         },
         {
           "platform": "ios",
@@ -30372,7 +30372,7 @@ const DATA = {
           "line": 114,
           "symbol": "exportSection",
           "note": "",
-          "text": "}"
+          "text": "app.showToast(\"加密失败 — 请检查密码后重试\")"
         },
         {
           "platform": "ios",
@@ -30396,7 +30396,7 @@ const DATA = {
           "line": 119,
           "symbol": "BusyButton 生成备份文本",
           "note": "",
-          "text": "Text(exportText)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -30870,7 +30870,7 @@ const DATA = {
           "line": 214,
           "symbol": "cloudSection",
           "note": "",
-          "text": ""
+          "text": "// 但\"导入一份旧备份\"同样会让应用锁口令**回滚到旧值** —— 抢到手机的人用旧口令就能进。"
         },
         {
           "platform": "ios",
@@ -30878,7 +30878,7 @@ const DATA = {
           "line": 18,
           "symbol": "cloudAcct 读穿透",
           "note": "",
-          "text": "/// 导入文件选择器（从 iCloud 云盘 / 我的 iPhone 选一份备份）"
+          "text": "/// 与导入对称: 导入能选文件, 导出也该能存文件 —— 原来只有「复制/分享文本」这一条路,"
         },
         {
           "platform": "ios",
@@ -30886,7 +30886,7 @@ const DATA = {
           "line": 23,
           "symbol": "cloudAcctField Binding",
           "note": "",
-          "text": ""
+          "text": "/// 文件已读入但**还没**弹确认框 —— 选择器还在关闭过程中弹 UIAlertController 会被静默丢掉"
         },
         {
           "platform": "ios",
@@ -30894,7 +30894,7 @@ const DATA = {
           "line": 239,
           "symbol": "TextField 坚果云账号",
           "note": "",
-          "text": "///   · 任何失败都给 toast, 不静默"
+          "text": "importText = \"\""
         }
       ],
       "platformEvidence": {
@@ -31193,7 +31193,7 @@ const DATA = {
           "line": 46,
           "symbol": "embedded 注释",
           "note": "",
-          "text": "// 2026-10-26 精简：待确认恢复包（pendingRestore）已删。"
+          "text": "var vkBody: some View {"
         },
         {
           "platform": "ios",
@@ -31201,7 +31201,7 @@ const DATA = {
           "line": 50,
           "symbol": "var embedded: Bool = false",
           "note": "",
-          "text": "document: BackupDoc(text: exportText),"
+          "text": "// 方案 a: 文件选择器 —— 备份的正常去处是「iCloud 云盘 / 我的 iPhone」。"
         },
         {
           "platform": "ios",
@@ -31209,7 +31209,7 @@ const DATA = {
           "line": 64,
           "symbol": "vkBody",
           "note": "",
-          "text": "// 不按扩展名筛: 备份可能是 .json / .txt / .enc (工作室导出的加密包)。"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -31217,7 +31217,7 @@ const DATA = {
           "line": 67,
           "symbol": "embedded ? AnyView(listContent) : AnyView(NavigationStack)",
           "note": "",
-          "text": "allowsMultipleSelection: false) { result in"
+          "text": "// 不按扩展名筛: 备份可能是 .json / .txt / .enc (工作室导出的加密包)。"
         }
       ],
       "platformEvidence": {
@@ -31473,7 +31473,7 @@ const DATA = {
           "line": 77,
           "symbol": "fileExporter",
           "note": "",
-          "text": "}"
+          "text": "importText = text"
         },
         {
           "platform": "ios",
@@ -31481,7 +31481,7 @@ const DATA = {
           "line": 78,
           "symbol": "BackupDoc(text: exportText)",
           "note": "",
-          "text": ""
+          "text": "confirmImport()"
         },
         {
           "platform": "ios",
@@ -31489,7 +31489,7 @@ const DATA = {
           "line": 80,
           "symbol": "defaultFilename: backupFilename",
           "note": "",
-          "text": "// ---------- 全量备份 ----------"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -31497,7 +31497,7 @@ const DATA = {
           "line": 82,
           "symbol": "Milestones.recordBackup()",
           "note": "",
-          "text": "Section(\"全量备份\") {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -31505,7 +31505,7 @@ const DATA = {
           "line": 86,
           "symbol": "NSUserCancelledError 判断",
           "note": "",
-          "text": "BusyButton(title: \"生成备份文本\", systemImage: \"doc.text\", isBusy: false) {"
+          "text": "// 2026-10-27 审核修复：主备份含明文 skey/pin/密码，任何人都能用它造开锁指令。"
         }
       ],
       "platformEvidence": {
@@ -31676,7 +31676,7 @@ const DATA = {
           "line": 189,
           "symbol": "Button 从剪贴板粘贴",
           "note": "",
-          "text": "}"
+          "text": ".frame(minHeight: DS.Hit.min)"
         },
         {
           "platform": "ios",
@@ -31692,7 +31692,7 @@ const DATA = {
           "line": 193,
           "symbol": "剪贴板是空的",
           "note": "",
-          "text": "// 把云端那套**口令层 + 453 内容哈希层**整个绕过:"
+          "text": "Button {"
         },
         {
           "platform": "ios",
@@ -31700,7 +31700,7 @@ const DATA = {
           "line": 199,
           "symbol": ".disabled(busy || importText.isEmpty)",
           "note": "",
-          "text": "do {"
+          "text": ".disabled(busy)"
         }
       ],
       "platformEvidence": {
@@ -31775,7 +31775,7 @@ const DATA = {
           "line": 267,
           "symbol": "confirmImport",
           "note": "",
-          "text": ""
+          "text": "///   · fileImporter 给的是**临时可访问 URL**, 必须 startAccessingSecurityScopedResource"
         },
         {
           "platform": "ios",
@@ -31783,7 +31783,7 @@ const DATA = {
           "line": 268,
           "symbol": "请先粘贴备份文本",
           "note": "",
-          "text": ""
+          "text": "///     否则 read 会失败 (这是 iOS 沙盒规则, 不是可选步骤)"
         },
         {
           "platform": "ios",
@@ -31791,7 +31791,7 @@ const DATA = {
           "line": 274,
           "symbol": "confirmDestructive 导入备份",
           "note": "",
-          "text": "/// fileExporter 要的文档类型 —— 备份是一段 UTF-8 文本, 用 `.json` 内容类型。"
+          "text": "guard let url = urls.first else { return }"
         },
         {
           "platform": "ios",
@@ -31799,7 +31799,7 @@ const DATA = {
           "line": 275,
           "symbol": "口令会被替换成它",
           "note": "",
-          "text": "///"
+          "text": "let scoped = url.startAccessingSecurityScopedResource()"
         },
         {
           "platform": "ios",
@@ -31807,7 +31807,7 @@ const DATA = {
           "line": 276,
           "symbol": "confirmTitle: 导入",
           "note": "",
-          "text": "/// 用 FileDocument 而不是 Transferable: `.fileExporter(document:contentType:)` 这一形"
+          "text": "defer { if scoped { url.stopAccessingSecurityScopedResource() } }"
         }
       ],
       "platformEvidence": {
@@ -31952,7 +31952,7 @@ const DATA = {
           "line": 201,
           "symbol": "Button 从文件选择",
           "note": "",
-          "text": "let (_, bundle) = try BackupStudio.parsePreview(text: importText, password: nil)"
+          "text": ".disabled(busy || importText.isEmpty)"
         },
         {
           "platform": "ios",
@@ -31960,7 +31960,7 @@ const DATA = {
           "line": 91,
           "symbol": "fileImporter",
           "note": "",
-          "text": "// 文案不写\"建议每周一次\"这种本 App 没有依据的规范；给的是**已发生的事实**与下一步动作。"
+          "text": ".vkFont(.caption).foregroundStyle(DS.Palette.textSub)"
         },
         {
           "platform": "ios",
@@ -31968,7 +31968,7 @@ const DATA = {
           "line": 94,
           "symbol": "allowedContentTypes: [.item]",
           "note": "",
-          "text": "Image(systemName: \"envelope\")"
+          "text": "// （PBKDF2-HMAC-SHA256 6 万轮 + AES-128-CBC + HMAC），与「351 凭证合包」同一套。"
         },
         {
           "platform": "ios",
@@ -31984,7 +31984,7 @@ const DATA = {
           "line": 99,
           "symbol": "onChange(showFilePicker)",
           "note": "",
-          "text": "Text(\"本机从未生成过备份文本，也没有上传成功记录。手机丢失或重装即不可恢复。\")"
+          "text": "SecureField(\"备份密码\", text: $exportPw)"
         }
       ],
       "platformEvidence": {
@@ -32065,7 +32065,7 @@ const DATA = {
           "line": 280,
           "symbol": "doImport",
           "note": "",
-          "text": "var text: String"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -32073,7 +32073,7 @@ const DATA = {
           "line": 288,
           "symbol": "do 块",
           "note": "",
-          "text": "}"
+          "text": "if (error as NSError).code != NSUserCancelledError {"
         },
         {
           "platform": "ios",
@@ -63717,7 +63717,7 @@ const DATA = {
           "line": 18,
           "symbol": "kf_cloudcfg_acct",
           "note": "",
-          "text": "/// 导入文件选择器（从 iCloud 云盘 / 我的 iPhone 选一份备份）"
+          "text": "/// 与导入对称: 导入能选文件, 导出也该能存文件 —— 原来只有「复制/分享文本」这一条路,"
         },
         {
           "platform": "ios",
@@ -63733,7 +63733,7 @@ const DATA = {
           "line": 19,
           "symbol": "kf_cloudcfg_app",
           "note": "",
-          "text": "@State private var showFilePicker = false"
+          "text": "/// 而备份的正常去处就是 iCloud 云盘。"
         },
         {
           "platform": "ios",
@@ -63741,7 +63741,7 @@ const DATA = {
           "line": 23,
           "symbol": "cloudAcctField 直写",
           "note": "",
-          "text": ""
+          "text": "/// 文件已读入但**还没**弹确认框 —— 选择器还在关闭过程中弹 UIAlertController 会被静默丢掉"
         },
         {
           "platform": "ios",

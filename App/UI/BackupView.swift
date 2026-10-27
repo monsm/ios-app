@@ -9,6 +9,9 @@ struct BackupView: View {
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
     @State private var exportText = ""
+    @State private var encryptExport = false      // 2026-10-27: 可选加密主备份
+    @State private var exportPw = ""
+    @State private var showExportPwPrompt = false
     @State private var importText = ""
     @State private var busy = false
     /// 导出文件选择器（存到 iCloud 云盘 / 我的 iPhone）
@@ -80,12 +83,40 @@ struct BackupView: View {
     // ---------- 全量备份 ----------
     private var exportSection: some View {
         Section("全量备份") {
-            Text("导出全部门锁、钥匙、密码台账与家人档案为一整段文本 (含敏感密钥, 请妥善保管)。")
+            // 2026-10-27 审核修复：主备份含明文 skey/pin/密码，任何人都能用它造开锁指令。
+            Text("⚠ 此文件含**明文门锁密钥**（skey / pin / 密码）—— 任何人拿到它就能开你家门，不需要你的手机。请勿通过微信/QQ 发送，不要放在共享文件夹或公开网盘。")
+                .vkFont(.caption).foregroundStyle(DS.Palette.danger)
+                .fixedSize(horizontal: false, vertical: true)
+            Text("导出全部门锁、钥匙、密码台账与家人档案为一整段文本。")
                 .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
+            // 2026-10-27 审核：主备份默认明文（含 skey）。给出可选加密 —— 用已有 CryptoBox
+            // （PBKDF2-HMAC-SHA256 6 万轮 + AES-128-CBC + HMAC），与「351 凭证合包」同一套。
+            // ⚠ 加密后忘记密码 = 备份永久作废，所以默认关闭、要用户主动勾。
+            VariantToggle("加密备份（需设密码，忘记则备份作废）", isOn: $encryptExport)
+                .vkFont(.footnote)
+            if encryptExport {
+                SecureField("备份密码", text: $exportPw)
+                    .textContentType(.newPassword)
+                    .vkFont(.footnote)
+                if exportPw.count > 0, exportPw.count < 8 {
+                    Text("至少 8 位")
+                        .vkFont(.caption2).foregroundStyle(DS.Palette.warn)
+                }
+            }
             BusyButton(title: "生成备份文本", systemImage: "doc.text", isBusy: false) {
                 Milestones.recordBackup()   // 980 备份卫士
-                exportText = BackupCanonical.exportText(BackupKit.collectAll())
+                let plain = BackupCanonical.exportText(BackupKit.collectAll())
+                if encryptExport {
+                    // 用已有信封加密（与 351 凭证合包同一套算法）。解不开时的错误由导入侧统一报。
+                    exportText = CryptoBox.encryptText(plain, password: exportPw)
+                    if exportText.isEmpty {
+                        app.showToast("加密失败 — 请检查密码后重试")
+                        return
+                    }
+                } else {
+                    exportText = plain
+                }
             }
             // 822 从未备份的信封: 没有备份时这页最该说的不是"怎么导出"，而是"现在一个都没有"。
             // 文案不写"建议每周一次"这种本 App 没有依据的规范；给的是**已发生的事实**与下一步动作。

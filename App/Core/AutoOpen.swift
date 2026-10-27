@@ -341,8 +341,12 @@ final class AutoOpenController {
         // 旧写法让未标定用户 armed 永远置不起来、自动开锁一次都不触发的那道死门。
         let base = AutoOpenKit.rssiBase(mac: mac)
         armed = AutoOpenKit.rssiSample(prevArmed: armed, rssi: rssi, base: base)
-        // 信号掉回解除线以下 = 本次接近事件结束 → 放开一次性闩锁, 下次靠近才可再发
-        if !armed { eventFired.remove(mac) }
+        // 2026-10-27 审核修复：闩锁解除原先跟着 `armed` 走，而 `armed` 在开锁成功后被置 false
+        // （下方 case 0），于是信号落进回差带 (-43..-40) 就会执行本行把闩锁放开 —— 
+        // 于是退半步再进一步就能再开一次。改用独立的「走远」判据：信号掉到解除线**以下再 3dB**
+        // （即真正离开门口，不只是回差带内抖动）才放开闩锁。armed 复位不再影响它。
+        let farAway = rssi < AutoOpenKit.disarmThreshold(base: base) - 3
+        if farAway { eventFired.remove(mac) }
         // 2026-10-18 性能分级（用户口径："只在箭头界面追求极致，退出就完全切断"）:
         // 原本这里按 `FindArrowPower.intensive` 分档 —— 那个开关属于「精确查找箭头界面」，
         // 而该界面从未接到任何入口上，所以 intensive 恒为 false，**这一行从未执行过**。
@@ -442,7 +446,8 @@ final class AutoOpenController {
             let rc = try await app.lock.unlock(mac: mac)
             switch rc {
             case 0:
-                // 成功: 冷却起算 (lastDispatch 已置), 复位武装让下次需重新靠近
+                // 成功: 冷却起算 (lastDispatch 已置)。复位 armed 只影响回差滤波的起点，
+                // **不再解除一次性闩锁** —— 闩锁现在由 feedRssi 的 farAway（走远）判据独立管理。
                 armed = false
                 // 先刷新锁态快照再报成功: 双验模式 (verifyMode==1) 下 rc=0 只是第一道过了,
                 // 直接喊"自动开锁成功"就是谎报 —— 与手动档 settleUnlockSuccess 同一口径 (2026-10-15 走查)。
