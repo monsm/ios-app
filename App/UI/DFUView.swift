@@ -206,7 +206,7 @@ struct DFUView: View {
         // 从导入到点「开始升级」之间可能过了很久（用户去接了个电话），
         // 期间锁内固件若被别的途径升级过，那次判定就过期了。
         // 这里用**当前**的 app.status.fw 重判，与导入时同一套判据。
-        if let blocked = FirmwareKit.downgradeBlocked(current: app.current?.fw ?? app.status?.fw,
+        if let blocked = FirmwareKit.downgradeBlocked(current: app.current?.fw ?? app.status?.firmware,
                                                       pkg: p) {
             error = blocked
             return
