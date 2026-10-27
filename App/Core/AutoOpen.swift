@@ -308,6 +308,11 @@ final class AutoOpenController {
     private var lastDispatch: [String: TimeInterval] = [:]   // F5: 按锁记上次下发时刻
     private var eventFired: Set<String> = []                 // F5: 本次接近事件已发过 04 (掉回解除线才放开)
     private var promptStartedAt: Date?                       // F1 严格档: 本次进前台是否已发起弹窗
+    /// 2026-10-27 审核修复 (AUDIT-D D-49)：上一次 scenePhase 是否真的进过后台。
+    /// `.inactive`（来电横幅、下拉控制中心、任务切换器预览）也会触发 `.active`，
+    /// 而每次 onForeground 都重置 promptStartedAt 会把「本次进前台必刷脸」的窗口
+    /// 无限延长 —— 用户反复进出，面容门就一直处于「刚发起」状态。
+    private var wasInBackground = true   // 冷启动视为「从后台来」
     private var inFlight = false
 
     init(face: FaceService = SystemFaceService()) {
