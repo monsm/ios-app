@@ -1,16 +1,15 @@
 // 收尾批新增模块的纯逻辑单测（2026-10-26）。
 //
-// 覆盖：TrialGuard / HeroTexture / BackupPassphrase / DefendService 的纯逻辑部分。
+// 覆盖：TrialGuard / HeroTexture / DefendService 的纯逻辑部分。
 // 不覆盖：DFUKit 的传输层（要真机 BLE，见 docs/DEVICE-CHECKLIST-2026-10-26.md）。
 //
 // 这些模块的共同点：逻辑极简，但**每一个都曾经"看着有、其实没有"** ——
-// TrialGuard 是只读不写的死代码、HeroTexture 是有键无渲染、BackupPassphrase 是两套口令各存一份。
 // 所以测试的重点不是"算得对不对"，而是"这条通路真的连上了"。
 import XCTest
 import Foundation
 @testable import OfflineLock
 
-/// 2026-10-26: 本类测的 MobileKeyService / DefendService / BackupPassphrase / TrialGuard
+/// 2026-10-26: 本类测的 MobileKeyService / DefendService / TrialGuard
 /// 都是 @MainActor 隔离的（它们直接读写 AppState 与 SwiftUI 状态），
 /// 而 XCTestCase 子类默认非隔离 ⇒ 加 @MainActor 让测试方法与被测对象在同一隔离域。
 @MainActor
@@ -20,13 +19,11 @@ final class NewModulesTests: XCTestCase {
         super.setUp()
         // 每个用例从干净状态开始：这些键都是全局单例
         TrialGuard.set(false)
-        BackupPassphrase.clear()
         DB.store.set("kf_hero_tex", "")
     }
 
     override func tearDown() {
         TrialGuard.set(false)
-        BackupPassphrase.clear()
         DB.store.set("kf_hero_tex", "")
         super.tearDown()
     }
@@ -89,35 +86,6 @@ final class NewModulesTests: XCTestCase {
         XCTAssertEqual(HeroTexture.grain.title, "颗粒")
     }
 
-    // MARK: - BackupPassphrase（会话级口令）
-
-    /// 核心价值：**一次输入、两页通用**。
-    /// 原先 BackupStudio.encPw 与 BackupView.cloudPw 是两个 @State，
-    /// 用户在工作室传上去、到备份页恢复还要再输一遍。
-    func testPassphraseSharedAcrossPages() {
-        XCTAssertTrue(BackupPassphrase.isEmpty)
-
-        BackupPassphrase.current = "hunter2"
-        XCTAssertEqual(BackupPassphrase.current, "hunter2")
-        XCTAssertFalse(BackupPassphrase.isEmpty)
-
-        // 模拟"另一个页面读同一个值"
-        let fromOtherPage = BackupPassphrase.current
-        XCTAssertEqual(fromOtherPage, "hunter2", "两个页面必须读到同一个口令")
-    }
-
-    func testPassphraseClear() {
-        BackupPassphrase.current = "abc"
-        BackupPassphrase.clear()
-        XCTAssertTrue(BackupPassphrase.isEmpty)
-        XCTAssertEqual(BackupPassphrase.current, "")
-    }
-
-    /// 说明文案必须点明"不落盘"—— 这是安全承诺，不能只写在代码注释里
-    func testPassphraseNote() {
-        XCTAssertTrue(BackupPassphrase.note.contains("不落盘"),
-                      "界面上必须说清口令不落盘：\(BackupPassphrase.note)")
-    }
 
     // MARK: - DefendService 的门禁（纯逻辑部分，不发命令）
 

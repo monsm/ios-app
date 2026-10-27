@@ -85,8 +85,6 @@ enum AXFlags {
 // 降级渐变自己把字吃掉了, 12 个 heroGradientSafe 消费点全中。一条渐变只能配一种前景色,
 // 所以两端必须**同侧** (都浅或都深), 由 Color.adaptive 跟着明暗走; 这四组比值已进 tools/contrast.js 断言。
 private extension Color {
-    static let invHeroTop    = Color.adaptive(0xF5F7FB, 0x11161F)
-    static let invHeroBottom = Color.adaptive(0xE7EBF3, 0x05070B)
 }
 
 extension DS {

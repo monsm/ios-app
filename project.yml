@@ -66,13 +66,6 @@ targets:
         NSPhotoLibraryAddUsageDescription: 将成就分享卡保存到相册 (完全本地生成, 不上传)。
         # 包8/411 恢复页相机扫码识别二维码备份 (纯本地 CoreImage 解码, 无网络)
         NSCameraUsageDescription: 识别备份二维码, 用于换机扫码搬运 (411, 全程本地解码无网络)。
-        # 包8/428 充电自动备份: BGTask 注册 (执行时机由系统择机, 不承诺接电即备; 7 天签名下照常调度)
-        BGTaskSchedulerPermittedIdentifiers:
-          - com.kf.chargebackup
-        # 2026-10-14: BGAppRefreshTaskRequest.submit 要求声明 fetch 后台模式, 缺它 submit 会被系统
-        # 直接拒 (notPermitted) 且旧实现 try? 吞掉 —— 功能"看起来装了其实从没跑过"。
-        UIBackgroundModes:
-          - fetch
         ITSAppUsesNonExemptEncryption: false
         # 备选 App 图标 (包16/idea 896): 键名 = setAlternateIconName 入参, 与 Assets.xcassets 的 appiconset 同名
         # 896 由 4 款扩到 9 款 (2026-10-12 拍板"造位图"): 新增五款的位图由 _audit1012/mkicon.js 按

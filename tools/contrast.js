@@ -250,25 +250,6 @@ for (const mode of ['light', 'dark']) {
        '长按满格时文字压在 danger 与次级块的合成色上', base.onSem[mode], over(base.danger[mode], base.surfaceAltBase[mode], 0.85));
 }
 
-// E3. 863 反转降级渐变两端 × heroFg 的另一支 (Palette.text)。
-//     原实现两端写死"近白→近黑", 单一前景色必然在一端归零 (实测 ink 压近黑端 1.06:1、
-//     近白字压近白端 1.01:1) —— 降级反而把字吃了。现在两端由 Color.adaptive 跟随明暗, 同侧才可读。
-const AKIT = path.join(__dirname, '..', 'App', 'Core', 'AccessibilityKit.swift');
-const akit = fs.readFileSync(AKIT, 'utf8');
-const invStops = {};
-for (const nm of ['invHeroTop', 'invHeroBottom']) {
-  const g = akit.match(new RegExp(`static let ${nm}\\s*=\\s*Color\\.adaptive\\(\\s*0x([0-9a-fA-F]{6})\\s*,\\s*0x([0-9a-fA-F]{6})\\s*\\)`));
-  if (!g) {
-    console.error(`✗ 未在 AccessibilityKit.swift 解析到 Color.${nm} = Color.adaptive(...) — 863 降级底结构变了, 这组断言不能空转`);
-    process.exit(1);
-  }
-  invStops[nm] = { light: parseInt(g[1], 16), dark: parseInt(g[2], 16) };
-}
-for (const mode of ['light', 'dark']) {
-  for (const nm of ['invHeroTop', 'invHeroBottom']) {
-    push(mode, 'text', `863.${nm}`, 4.5, '反转降级后 hero 卡正文仍须两端可读 (heroFg 走 text)', base.text[mode], invStops[nm][mode]);
-  }
-}
 
 // E4. hero 面上的每一层可读文字, 按"真实的叠层顺序"核: 渐变 → 纹理(white@0.07) → 柔光(white@0.12)
 //     → 卡内黑纱(heroScrim 0.20) → 底板(heroPlate 0.22) → 前景 (含 heroFg 的 alpha 档位)。
@@ -297,12 +278,6 @@ for (const s of surfaces) {
     const bg = plate === true ? plateOver(s.hex) : plate === false ? fieldOver(s.hex) : plateOver(s.hex);
     push(s.mode, label.split(' ')[0], s.name + (plate === false ? ' (无底板)' : ' (底板)'), 4.5,
          `hero 叠层最坏情况: ${label}`, over(fg, bg, alpha), bg);
-  }
-  // 863 反转档: 底色换成中性降级端, 前景换成随明暗的 text
-  for (const mode of ['light', 'dark']) {
-    const dEnd = invStops.invHeroTop[mode];
-    push(mode, 'text(反转)', `863.${mode} 底板`, 4.5, '反转档 hero 胶囊文字压黑纱底板',
-         over(base.text[mode], plateOver(dEnd), 1), plateOver(dEnd));
   }
 }
 

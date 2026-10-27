@@ -110,6 +110,8 @@ const SYS_NAMES = new Set([
   "fromDay", "toDay",
   // 2026-10-27 十三轮: skipped 是 restore 的返回元组字段名。
   "skipped", "imported", "overwritten",
+  // 2026-10-27 十四轮: isEmpty 是 Swift 标准库属性名（Array/String/Optional 都有）。
+  "isEmpty",
 ]);
 
 function stripCode(line) {
