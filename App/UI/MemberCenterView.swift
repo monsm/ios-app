@@ -747,14 +747,17 @@ struct MemberDetail360View: View {
             app.showToast("已删除并入回收站")
         })
         alert.addAction(UIAlertAction(title: "连锁端一起收回", style: .destructive) { _ in
-            // 排上队列的条数在闭包内取 (不改捕获的局部变量: handler 是 escaping 闭包)
-            let queued = DB.keychains().reduce(0) { sum, kc in
-                sum + CredentialOrg.cascadeBinMember(kc.mac, m.id, revokeLocks: true)
+            // 2026-10-27 (D-57)：不再收集"排上队列的条数" —— 根本没有队列（见 cascadeBinMember 注释）
+            for kc in DB.keychains() {
+                CredentialOrg.cascadeBinMember(kc.mac, m.id, revokeLocks: true)
             }
             DB.removeMember(m.id)
             onChanged()
-            app.showToast(queued > 0 ? "已删除并入回收站 · 已排 \(queued) 条锁端删除 (连接门锁后生效)"
-                                      : "已删除并入回收站 (名下没有可收回的凭证)")
+            // 2026-10-27 审核修复 (AUDIT-D D-57)：**不再承诺"已排 N 条锁端删除"**。
+            // 那句话是假的 —— `cascadeBinMember` 原先只 `queued += 1`，根本没有队列，
+            // 连接门锁后什么都不会发生。安全承诺级别的假话比不承诺更危险。
+            // 现在如实说：本机已处理，锁端凭证仍在，需要时手动删。
+            app.showToast("已删除并入回收站 · ⚠ 锁端凭证仍在，需要时请到设备页手动删除")
         })
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         UIApplication.topViewController()?.present(alert, animated: true)

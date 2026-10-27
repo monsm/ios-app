@@ -323,14 +323,21 @@ final class AutoOpenController {
         }
         eventFired.removeAll()          // 新的一次"进前台 + 接近"事件, 放开一次性闩锁
         if AutoOpenKit.isStrict(AutoOpen.faceTier) {
-            promptStartedAt = Date()    // 严格档: 记录弹窗发起时刻, 供在途位与"本次必刷"判定
-            face.promptFace()
+            // 2026-10-27 (D-49)：**只在真的从后台回来时**才重置弹窗时刻。
+            // `.inactive → .active`（下拉控制中心、来电横幅）不算 —— 否则反复进出会把
+            // "本次进前台必刷脸"的窗口无限延长，面容门形同虚设。
+            if wasInBackground {
+                promptStartedAt = Date()
+                wasInBackground = false
+                face.promptFace()
+            }
         }
     }
     func onBackground() {
         // 2026-10-14: 清理与"停传感器"不能挂在开关值上 —— 运行中把开关关掉时 AutoOpen.on 已为 false,
                 // 退后台必须收全部传感器与会话状态
         // 退后台: 清武装态 (F0 同时失效, 双保险) + 清一次性/面容在途位
+        wasInBackground = true   // 2026-10-27 (D-49)：下次 .active 才算真的从后台回来
         armed = false
         eventFired.removeAll()
         promptStartedAt = nil

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T10:01:42.317Z",
+    "generated": "2026-10-27T10:05:28.565Z",
     "sources": [
       {
         "scout": "android-native",
@@ -863,7 +863,7 @@
           "line": 1691,
           "symbol": "VariantToggle(\"橙色灯闪烁中\")",
           "note": "",
-          "text": "app.showToast(queued > 0 ? \"已删除并入回收站 · 已排 \\(queued) 条锁端删除 (连接门锁后生效)\""
+          "text": "// 2026-10-27 审核修复 (AUDIT-D D-57)：同 MemberCenterView —— 不再承诺假队列。"
         },
         {
           "platform": "ios",
@@ -7714,7 +7714,7 @@
           "line": 497,
           "symbol": "AutoCalView",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -8766,7 +8766,7 @@
           "line": 423,
           "symbol": "private func dispatch",
           "note": "",
-          "text": "// `nil == nil` 恒真 ⇒ 弹窗\"在途\"状态在本会话内永久为真 ⇒ faceFresh 永远放行。"
+          "text": "return AutoOpenGate("
         },
         {
           "platform": "ios",
@@ -8774,7 +8774,7 @@
           "line": 428,
           "symbol": "app.lock.unlock(mac:)",
           "note": "",
-          "text": "// F4: 用户配了布防 (control=2) 就照常一票否决 + 落审计; 但\"本机没存过布防记录\"不能再读成"
+          "text": "// 2026-10-27 审核修复：原判据是 `promptStartedAt != nil && lastFace() == faceAtPrompt`，"
         },
         {
           "platform": "ios",
@@ -8782,7 +8782,7 @@
           "line": 441,
           "symbol": "verifyMode==1 双验提示",
           "note": "",
-          "text": ""
+          "text": "rssiArmed: armed,"
         },
         {
           "platform": "ios",
@@ -8790,7 +8790,7 @@
           "line": 453,
           "symbol": "rc=25 / rc=26 分支",
           "note": "",
-          "text": "case 0:"
+          "text": "// 2026-10-27 审核修复：闩锁与冷却必须在**下发之前**落，否则异常/超时路径"
         }
       ],
       "platformEvidence": {
@@ -9217,7 +9217,7 @@
           "line": 333,
           "symbol": "mac != armedMac 时复位",
           "note": "",
-          "text": "// 退后台: 清武装态 (F0 同时失效, 双保险) + 清一次性/面容在途位"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -9225,7 +9225,7 @@
           "line": 363,
           "symbol": "guard app.currentMac == mac",
           "note": "",
-          "text": "// 省电也没变差：真正耗电的是持续开着扫描，而这里只是收到广播后多做一次纯计算。"
+          "text": "// 原本这里按 `FindArrowPower.intensive` 分档 —— 那个开关属于「精确查找箭头界面」，"
         }
       ],
       "platformEvidence": {
@@ -9514,7 +9514,7 @@
           "line": 457,
           "symbol": "setSuspendUntil(+24h)",
           "note": "",
-          "text": "// 先刷新锁态快照再报成功: 双验模式 (verifyMode==1) 下 rc=0 只是第一道过了,"
+          "text": "lastDispatch[mac] = Date().timeIntervalSince1970"
         },
         {
           "platform": "ios",
@@ -11221,7 +11221,7 @@
           "line": 378,
           "symbol": "if eventFired.contains(mac) { return }",
           "note": "",
-          "text": "guard app.currentMac == mac, !mac.isEmpty else { return }"
+          "text": "guard AutoOpen.on, armed else { return }"
         },
         {
           "platform": "ios",
@@ -11229,7 +11229,7 @@
           "line": 431,
           "symbol": "eventFired.insert(mac)",
           "note": "",
-          "text": "defendControl: d?.control ?? 0,"
+          "text": "// 现改为纯时间窗判定：发起过弹窗、距发起 < 30s、且这次还没成功。"
         }
       ],
       "platformEvidence": {
@@ -11321,7 +11321,7 @@
           "line": 412,
           "symbol": "defendControl: d?.control ?? 0",
           "note": "",
-          "text": "let d = DB.defend(mac)"
+          "text": "default:"
         }
       ],
       "platformEvidence": {
@@ -11488,7 +11488,7 @@
           "line": 406,
           "symbol": "facePendingPrompt 计算",
           "note": "",
-          "text": "let door = Self.doorName(mac: mac)"
+          "text": "faceAvailable: face.biometricAvailable"
         }
       ],
       "platformEvidence": {
@@ -11555,7 +11555,7 @@
           "line": 402,
           "symbol": "f0Foreground",
           "note": "",
-          "text": "case .none:"
+          "text": "let ctx = makeContext(mac: mac, app: app)"
         },
         {
           "platform": "ios",
@@ -11624,7 +11624,7 @@
           "line": 419,
           "symbol": "lockReady: snap != nil && snap?.rc != 25 && snap?.rc != 26",
           "note": "",
-          "text": "lastFace: AutoOpenKit.lastFace(),"
+          "text": "let d = DB.defend(mac)"
         },
         {
           "platform": "ios",
@@ -11856,7 +11856,7 @@
           "line": 469,
           "symbol": "selfHealTime",
           "note": "",
-          "text": "await selfHealTime(mac: mac)"
+          "text": "if app.status?.verifyMode == 1 {"
         },
         {
           "platform": "ios",
@@ -11864,7 +11864,7 @@
           "line": 476,
           "symbol": "ntpConfirmed: false",
           "note": "",
-          "text": "case 26:"
+          "text": "await selfHealTime(mac: mac)"
         }
       ],
       "platformEvidence": {
@@ -11939,7 +11939,7 @@
           "line": 415,
           "symbol": "rssiArmed: armed",
           "note": "",
-          "text": "let coolReady = AutoOpenKit.coolReady(lastDispatch: lastAt, now: Date().timeIntervalSince1970)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -15832,7 +15832,7 @@
           "line": 695,
           "symbol": "proxySuffix(_:)",
           "note": "",
-          "text": "guard let id, let m = DB.member(id) else { return \"\" }"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -19889,7 +19889,7 @@
           "line": 713,
           "symbol": "batchDisable(_:pwdAliases:fpBatches:)",
           "note": "",
-          "text": "let head = to.hasPrefix(\"2118\") ? \"长期有效\" : String(to.prefix(prefix))"
+          "text": "/// 这条判据此前在 `displayPwd` 那侧有一份、在回收站/历史/延期三处界面各有一份, 收成一处。"
         },
         {
           "platform": "ios",
@@ -20095,7 +20095,7 @@
           "line": 658,
           "symbol": "batchExtend(_:_:_:_:)",
           "note": "",
-          "text": "f.dateFormat = \"MM-dd HH:mm\""
+          "text": "guard m > 0, let e = effectiveExpiry(mac, p) else { return \"\" }"
         },
         {
           "platform": "ios",
@@ -20111,7 +20111,7 @@
           "line": 662,
           "symbol": "auto: true",
           "note": "auto: true 自动还原点",
-          "text": "DB.store.getInt(\"kf_cestudy_earlyexp_\" + mac + \"_\" + String(alias), 0)"
+          "text": "return \" · 本机提前 \" + String(m) + \" 分钟 (约 \" + f.string(from: e) + \", 锁端未改)\""
         }
       ],
       "platformEvidence": {
@@ -20918,7 +20918,7 @@
           "line": 451,
           "symbol": "canEvaluatePolicy",
           "note": "guard ctx.canEvaluatePolicy(...)",
-          "text": "let pwds = l.pwds.filter { pwdAliases.isEmpty || pwdAliases.contains($0.alias) }"
+          "text": "/// 返回 (Base64 信封文本, 口令)。UI 用 ShareLink 发文本 + 口令单列展示, 不与凭证混排。"
         },
         {
           "platform": "ios",
@@ -20926,7 +20926,7 @@
           "line": 460,
           "symbol": "onDeniedPresentFallback",
           "note": "if ok { commit() } else { onDeniedPresentFallback(commit) }",
-          "text": "}"
+          "text": "let text = String(data: json, encoding: .utf8),"
         }
       ],
       "platformEvidence": {
@@ -22521,7 +22521,7 @@
           "line": 1004,
           "symbol": "struct MemberWizardView",
           "note": "向导声明",
-          "text": "guard let sid = secondaryID else { return }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -22529,7 +22529,7 @@
           "line": 1018,
           "symbol": "steps",
           "note": "三步标题",
-          "text": "dismiss()"
+          "text": "DB.removeMember(sid)"
         },
         {
           "platform": "ios",
@@ -22537,7 +22537,7 @@
           "line": 1019,
           "symbol": "canNext",
           "note": "逐步校验",
-          "text": "}"
+          "text": "onDone()"
         },
         {
           "platform": "ios",
@@ -22545,7 +22545,7 @@
           "line": 1086,
           "symbol": "下一步",
           "note": "推进时建成员并阻断失败",
-          "text": "private let options = [\"\", \"家人\", \"访客\", \"服务人员\"]"
+          "text": "var onSaved: () -> Void = {}"
         },
         {
           "platform": "ios",
@@ -22553,7 +22553,7 @@
           "line": 1114,
           "symbol": "navigationTitle(\"建档向导\")",
           "note": "页面标题",
-          "text": "} label: {"
+          "text": "onSaved()"
         }
       ],
       "platformEvidence": {
@@ -23120,7 +23120,7 @@
           "line": 972,
           "symbol": "confirmDelete",
           "note": "预览 + 三选一弹窗",
-          "text": "Text(\"请选择\").tag(nil as String?)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -23128,7 +23128,7 @@
           "line": 975,
           "symbol": "confirmDelete",
           "note": "正文写两个选项的后果",
-          "text": "}"
+          "text": "Text(\"请选择\").tag(nil as String?)"
         },
         {
           "platform": "ios",
@@ -23136,7 +23136,7 @@
           "line": 982,
           "symbol": "只移除档案",
           "note": "cascadeBinMember 不带 revoke",
-          "text": ".fixedSize(horizontal: false, vertical: true)"
+          "text": "Text(\"没有同名成员。若只是称呼重复, 请在成员页重命名其一。\")"
         },
         {
           "platform": "ios",
@@ -23144,7 +23144,7 @@
           "line": 988,
           "symbol": "连锁端一起收回",
           "note": "revokeLocks + 队列条数",
-          "text": ".frame(maxWidth: .infinity)"
+          "text": "Section {"
         },
         {
           "platform": "ios",
@@ -23235,7 +23235,7 @@
           "line": 815,
           "symbol": "permSection",
           "note": "段结构与矩阵数据",
-          "text": "Text(e.isEmpty ? \"默认首字\" : e).tag(e)"
+          "text": ".autocorrectionDisabled()"
         },
         {
           "platform": "ios",
@@ -23251,7 +23251,7 @@
           "line": 824,
           "symbol": "Picker(\"角色\")",
           "note": "三档角色单选",
-          "text": "}"
+          "text": "// 副标题现算, 不手写第二份\"这档能干什么\" —— 那张表只有 MemberHub.permRows 一处定义"
         },
         {
           "platform": "ios",
@@ -23259,7 +23259,7 @@
           "line": 836,
           "symbol": "roleExample",
           "note": "三档示例行",
-          "text": ".vkFont(.caption)"
+          "text": "TextField(\"6~8 位数字 (下发到当前锁)\", text: $pwd)"
         },
         {
           "platform": "ios",
@@ -23267,7 +23267,7 @@
           "line": 846,
           "symbol": "permSection",
           "note": "矩阵边界说明",
-          "text": "Section {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -23607,7 +23607,7 @@
           "line": 922,
           "symbol": "editProfile",
           "note": "alert 与字段构造",
-          "text": "app.showToast(\"已建档; 建码需先选一把锁\")"
+          "text": "dismiss()"
         },
         {
           "platform": "ios",
@@ -23615,7 +23615,7 @@
           "line": 926,
           "symbol": "editProfile",
           "note": "角色不在此处的说明",
-          "text": "try await app.lock.ensureConnected(mac: kc.mac)"
+          "text": "return"
         },
         {
           "platform": "ios",
@@ -23623,7 +23623,7 @@
           "line": 936,
           "symbol": "field(...)",
           "note": "九个字段占位",
-          "text": "DB.addPwd(kc.mac, rec)"
+          "text": "let rec = LedgerPwd(alias: alias, from: from, to: to, temp: true,"
         },
         {
           "platform": "ios",
@@ -23631,7 +23631,7 @@
           "line": 947,
           "symbol": "UIAlertAction(\"保存\")",
           "note": "保存写库",
-          "text": "@EnvironmentObject var app: AppState"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -24060,7 +24060,7 @@
           "line": 795,
           "symbol": "VariantToggle",
           "note": "设置落点：详情页开关",
-          "text": "let mineSet = Set(mine)"
+          "text": "let mine = MemberHub.permRows(r).filter { $0.allowed }.map { $0.name }"
         }
       ],
       "platformEvidence": {
@@ -24298,7 +24298,7 @@
           "line": 990,
           "symbol": "reduce(0)",
           "note": "跨锁排队条数",
-          "text": "}"
+          "text": "Text(\"执行合并\")"
         },
         {
           "platform": "ios",
@@ -24306,7 +24306,7 @@
           "line": 995,
           "symbol": "showToast",
           "note": "两支 toast 文案",
-          "text": ".navigationTitle(\"重复合并\")   // 462 重复合并"
+          "text": ".disabled(secondaryID == nil)"
         },
         {
           "platform": "ios",
@@ -24314,7 +24314,7 @@
           "line": 980,
           "symbol": "confirmDelete",
           "note": "不可远程补录的代价说明",
-          "text": ".vkFont(.footnote)"
+          "text": ".pickerStyle(.inline)"
         }
       ],
       "platformEvidence": {
@@ -24383,7 +24383,7 @@
           "line": 982,
           "symbol": "只移除档案",
           "note": "不带 revoke 的移除",
-          "text": ".fixedSize(horizontal: false, vertical: true)"
+          "text": "Text(\"没有同名成员。若只是称呼重复, 请在成员页重命名其一。\")"
         },
         {
           "platform": "ios",
@@ -24391,7 +24391,7 @@
           "line": 978,
           "symbol": "confirmDelete",
           "note": "后果文案：TA 仍能开门",
-          "text": "if secondaryID == nil {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -24399,7 +24399,7 @@
           "line": 986,
           "symbol": "showToast",
           "note": "成功提示",
-          "text": "Button { doMerge() } label: {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -24467,7 +24467,7 @@
           "line": 863,
           "symbol": "permAllows(role, \"成员管理\")",
           "note": "开关出现条件",
-          "text": ".buttonStyle(PlainButtonStyle())"
+          "text": ".frame(maxWidth: .infinity, alignment: .trailing)"
         },
         {
           "platform": "ios",
@@ -24475,7 +24475,7 @@
           "line": 864,
           "symbol": "VariantToggle",
           "note": "设为紧急管理员",
-          "text": "}"
+          "text": ".frame(minHeight: DS.Hit.min)"
         },
         {
           "platform": "ios",
@@ -24483,7 +24483,7 @@
           "line": 872,
           "symbol": "permSection",
           "note": "作用与边界说明",
-          "text": "}"
+          "text": "submit()"
         },
         {
           "platform": "ios",
@@ -24491,7 +24491,7 @@
           "line": 878,
           "symbol": "permSection",
           "note": "禁用时就地说明",
-          "text": ".dsScreenBackground()"
+          "text": ".navigationTitle(\"建档向导\")   // 463 建档向导"
         }
       ],
       "platformEvidence": {
@@ -24566,7 +24566,7 @@
           "line": 839,
           "symbol": "ForEach(matrix)",
           "note": "五行矩阵渲染",
-          "text": "}"
+          "text": ".vkFont(.caption)"
         },
         {
           "platform": "ios",
@@ -24574,7 +24574,7 @@
           "line": 890,
           "symbol": "roleExample",
           "note": "能/不能 + 场景句",
-          "text": "}"
+          "text": "guard !n.isEmpty, n.count <= 20, n.allSatisfy({ $0.isLetter || $0.isNumber }) else {"
         },
         {
           "platform": "ios",
@@ -24582,7 +24582,7 @@
           "line": 905,
           "symbol": "roleExample",
           "note": "当前所选标记",
-          "text": "guard let id = newID ?? createMember() else { dismiss(); return }"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -24879,7 +24879,7 @@
           "line": 1123,
           "symbol": "createMember",
           "note": "校验与写入",
-          "text": ".navigationBarTitleDisplayMode(.inline)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -24887,7 +24887,7 @@
           "line": 1126,
           "symbol": "createMember",
           "note": "三条件校验",
-          "text": ".toolbar { ToolbarItem(placement: .navigationBarLeading) { Button(\"取消\") { dismiss() } } }"
+          "text": ".navigationBarTitleDisplayMode(.inline)"
         },
         {
           "platform": "ios",
@@ -24978,7 +24978,7 @@
           "line": 1080,
           "symbol": "NavigationLink(StartAddFpView)",
           "note": "指纹录入入口",
-          "text": "struct MemberGroupSheet: View {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -24994,7 +24994,7 @@
           "line": 1130,
           "symbol": "DB.addMember",
           "note": "建成员成功点",
-          "text": ""
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -25064,7 +25064,7 @@
           "line": 1050,
           "symbol": "TextField(\"称呼\")",
           "note": "称呼输入与上限",
-          "text": "} label: {"
+          "text": ".buttonStyle(SecondaryActionStyle(fullWidth: false))"
         },
         {
           "platform": "ios",
@@ -25072,7 +25072,7 @@
           "line": 1052,
           "symbol": "Picker(\"emoji 代号\")",
           "note": "八选一 emoji",
-          "text": "Text(MemberHub.display(m))"
+          "text": ".contentShape(Rectangle())"
         },
         {
           "platform": "ios",
@@ -25080,7 +25080,7 @@
           "line": 1026,
           "symbol": "pwdOK",
           "note": "数字码校验（末步用）",
-          "text": "@Environment(\\.dismiss) private var dismiss"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -25088,7 +25088,7 @@
           "line": 1123,
           "symbol": "createMember",
           "note": "写入与校验",
-          "text": ".navigationBarTitleDisplayMode(.inline)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -25162,7 +25162,7 @@
           "line": 1059,
           "symbol": "Picker(\"角色\")",
           "note": "三档角色",
-          "text": ".fixedSize(horizontal: false, vertical: true)"
+          "text": "+ \"凭证页也仍列 TA 名下凭证 —— 归档不许挡撤权入口。\")   // 460/795 凭证页也仍列"
         },
         {
           "platform": "ios",
@@ -25170,7 +25170,7 @@
           "line": 1030,
           "symbol": "rolePickHint",
           "note": "差集副标题",
-          "text": "private var archived: [Member] {"
+          "text": "var onRestored: () -> Void = {}"
         },
         {
           "platform": "ios",
@@ -25178,7 +25178,7 @@
           "line": 1066,
           "symbol": "TextField(\"备注名\")",
           "note": "备注名输入",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": "if archived.isEmpty {"
         }
       ],
       "platformEvidence": {
@@ -25248,7 +25248,7 @@
           "line": 1069,
           "symbol": "VariantToggle",
           "note": "顺路建临时码开关",
-          "text": ".navigationTitle(\"归档成员\")   // 460/795 归档成员"
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         },
         {
           "platform": "ios",
@@ -25256,7 +25256,7 @@
           "line": 1072,
           "symbol": "TextField(\"6~8 位数字\")",
           "note": "临时码输入",
-          "text": ".dsScreenBackground()"
+          "text": ".navigationTitle(\"归档成员\")   // 460/795 归档成员"
         },
         {
           "platform": "ios",
@@ -25264,7 +25264,7 @@
           "line": 1080,
           "symbol": "StartAddFpView",
           "note": "指纹录入入口",
-          "text": "struct MemberGroupSheet: View {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -25272,7 +25272,7 @@
           "line": 1026,
           "symbol": "pwdOK",
           "note": "6~8 位纯数字规则",
-          "text": "@Environment(\\.dismiss) private var dismiss"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -59922,7 +59922,7 @@
           "line": 140,
           "symbol": "histKey(_:_:_:)",
           "note": "",
-          "text": "static func memberCredentialPreview(_ memberID: String) -> [String] {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -59930,7 +59930,7 @@
           "line": 472,
           "symbol": "reclaimDays()",
           "note": "",
-          "text": "// 标识形如 c6.alert.<mac>.p<alias>.d7 —— MAC 归一化后是纯 hex (无点), 按 \".\" 切是安全的"
+          "text": "case panel(String)          // 面板名: 与 CredentialsView.consumeCredPanel 同一词表"
         },
         {
           "platform": "ios",
@@ -60400,7 +60400,7 @@
           "line": 960,
           "symbol": "MemberHub.saveExt",
           "note": "补全档案写 ext",
-          "text": "Form {"
+          "text": "var body: some View { vkBody.destined(.mergeMembers) }"
         }
       ],
       "platformEvidence": {

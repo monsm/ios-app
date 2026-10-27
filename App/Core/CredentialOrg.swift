@@ -114,26 +114,29 @@ enum CredentialOrg {
     ///    两处弹窗都是这么写的。
     /// 返回本次排上锁端删除的条数: 界面按实数报, 不写死一句"已删除"。
     @discardableResult
+    /// 删除成员时的级联：把名下凭证移入回收站，并（可选）安排锁端撤销。
+    ///
+    /// 2026-10-27 审核修复 (AUDIT-D D-57)：`revokeLocks` 原先**只 `queued += 1`，什么都不排** ——
+    /// 报告说 UI 因此告诉用户「已排 N 条，连接后生效」，那是**安全承诺级别的假话**。
+    /// 而且那两个 `var cp = p` 副本算完就丢（本意应是"清掉 owner 后写回"，实际没写）。
+    ///
+    /// 现在的处置（不假装有队列）：
+    ///   · 本机侧：凭证照旧移入回收站（`DB.delPwd`/`DB.delFp` 已在做）
+    ///   · 锁端：**不排队**，返回值恒为 0；调用方 UI 必须如实说「锁端凭证仍在，需要时手动删除」
+    /// 真要实现队列得先有：持久化队列 + 连接时消费 + 失败重试 + 冲突处理 —— 那是独立功能，
+    /// 不是这一条能顺手补上的。留假计数比不留更危险（用户以为已经处理了）。
+    @discardableResult
     static func cascadeBinMember(_ mac: String, _ memberID: String, revokeLocks: Bool = false) -> Int {
-        var queued = 0
-        let batchId = UUID().uuidString   // 这一批条目共用一个号 (两个循环、两种凭证都是同一次级联)
         for p in DB.listPwds(mac).filter({ $0.owner == memberID }) {
-            var cp = p
-            cp.owner = nil
             DB.delPwd(mac, p.alias)
-            if revokeLocks {
-                queued += 1
-            }
         }
         for f in DB.listFps(mac).filter({ $0.owner == memberID }) {
-            var cp = f
-            cp.owner = nil
             DB.delFp(mac, f.batch)
-            if revokeLocks {
-                queued += 1
-            }
         }
-        return queued
+        // revokeLocks 保留形参（调用方还在传），但当前**不做任何锁端排队** ——
+        // 见上方注释：没有队列基础设施，返回真数才是诚实的。
+        _ = revokeLocks
+        return 0
     }
     /// 501/263 删除成员预告: 名下将入回收站的凭证清单 (跨锁合计)。
     /// 两处「删除成员」弹窗共用这一份, 免得同一条预览各写一遍; 锁名一律走 LockArchive.displayName (769 口径)。
