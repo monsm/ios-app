@@ -17,6 +17,12 @@
 // 用法: node tools/contrast.js          (CI 闸门, 不达标 exit 1)
 //       node tools/contrast.js --verbose (附带完整表格)
 
+// 2026-10-27 审核补 (AUDIT-B 2.9)：休眠计数。
+// 原先「功能已移除 ⇒ 本条检查休眠」这两条只是 console.log 一行，**不进任何汇总**。
+// 后果：闸门看起来全绿，但其中两条检查其实什么都没查 —— 而且没人知道有两条在休眠。
+// 现在把休眠条数记下来，末尾汇总里明确报出「N 条休眠」。
+const SLEEPING = [];
+
 const fs = require('fs');
 const path = require('path');
 
@@ -190,6 +196,7 @@ if (festBlock) {
 } else {
   // 2026-10-26: 功能已删 ⇒ 这里**不是**失败，而是"检查对象不存在"。
   // 若将来 Festive 被加回来，上面那个 if 分支会重新接管，无需改代码。
+  SLEEPING.push('节日限定色 (enum Festive 已删)');
   console.log('节日限定色: 功能已移除 (enum Festive 不存在), 本条检查休眠');
 }
 
@@ -311,6 +318,7 @@ if (iconHits === 0) {
   // 2026-10-27 二轮: 备选 App 图标选择区已删（settings.appearance.icon），预览块不存在了。
   // 与节日色同一条纪律 —— 检查休眠而非移除：若将来 IconOption 预览块被加回来，
   // 上面的 matchAll 会重新命中，无需改代码。
+  SLEEPING.push('图标预览 (SettingsView 无 IconOption 预览块)');
   console.log('图标预览: 功能已移除 (SettingsView 无 IconOption 预览块), 本条检查休眠');
 }
 
@@ -347,3 +355,9 @@ if (failed > 0) {
   process.exit(1);
 }
 console.log('✓ 全部对比度达标 (正文 4.5:1 / 非文本 3:1 / 分隔线 1.2:1, 含全部主题与 AMOLED)');
+
+// 2026-10-27 (AUDIT-B 2.9)：休眠汇总 —— 让「有几条没在查」变成可见的数字。
+if (SLEEPING.length) {
+  console.log('\n休眠 ' + SLEEPING.length + ' 条 (目标已删，不判失败，但**这几条什么都没查**)：');
+  for (const s of SLEEPING) console.log('  · ' + s);
+}
