@@ -903,8 +903,10 @@ struct RootView: View {
         //
         // 为什么挂在 rootCore（而不是每个页面各挂一次）：这两项是**整树生效**的环境值，
         // 挂一处就够；分散挂会漏页面，且改口径要改几十处。
-        .dynamicTypeSize(AXTools.typeSize())
-        .environment(\.legibilityWeight, AXTools.boldText ? .bold : .regular)
+        .dynamicTypeSize(AXFlags.typeSize())
+        // 2026-10-27 修正：`legibilityWeight` **不是可写的 EnvironmentValues 键** ——
+        // `.environment(\.legibilityWeight, …)` 编译报「cannot infer key path type」。
+        // 它只能读。正确的接入点在 `VKTypography`（所有文本的唯一入口）里，见那里的实现。
     }
 
     /// 后台隐私幕/深链/Tab 与解锁状态钩子/触感/配色 —— 同上
