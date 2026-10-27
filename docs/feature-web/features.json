@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T05:28:16.071Z",
+    "generated": "2026-10-27T05:32:18.678Z",
     "sources": [
       {
         "scout": "android-native",
@@ -34830,7 +34830,7 @@
           "line": 109,
           "symbol": "低电缓存刷新",
           "note": "",
-          "text": "if pct > 30 {"
+          "text": "live >= 0 ? live : displayPct(mac, snapshot: DB.readStatus(mac)?.powerLevel ?? -1)"
         }
       ],
       "platformEvidence": {
@@ -34899,7 +34899,7 @@
           "line": 151,
           "symbol": "evaluateLowBattery",
           "note": "",
-          "text": "return [10, 15, 20].contains(v) ? v : 15"
+          "text": "DB.store.setCodable(\"kf_fwsince_\" + mac, s)"
         },
         {
           "platform": "ios",
@@ -34907,7 +34907,7 @@
           "line": 154,
           "symbol": ">30 复位武装",
           "note": "",
-          "text": "static func isQuietHour(_ d: Date = Date()) -> Bool {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -34915,7 +34915,7 @@
           "line": 168,
           "symbol": "notifyNow(id: m4.batt.)",
           "note": "",
-          "text": ""
+          "text": "return [10, 15, 20].contains(v) ? v : 15"
         }
       ],
       "platformEvidence": {
@@ -34993,7 +34993,7 @@
           "line": 107,
           "symbol": "sample(_:pct:)",
           "note": "",
-          "text": "private static func evaluateLowBattery(_ mac: String, pct: Int) {"
+          "text": "/// 否则 A 锁的电量会被安到 B 锁头上 (设备页那侧的同名判据)。"
         },
         {
           "platform": "ios",
@@ -35001,7 +35001,7 @@
           "line": 112,
           "symbol": "1 小时去重 + 90 天 + 500 条",
           "note": "",
-          "text": "}"
+          "text": "static func faceText(_ p: Int) -> String {"
         }
       ],
       "platformEvidence": {
@@ -35324,7 +35324,7 @@
           "line": 84,
           "symbol": "displayPct",
           "note": "",
-          "text": "if snapshot < 0 { return s.pct }      // 快照未知 → 采样是唯一证据 (调用方另有时间标注)"
+          "text": "if let last = list.last, nowMs - last.t < 60_000, last.pct == pct { return false }"
         },
         {
           "platform": "ios",
@@ -35332,7 +35332,7 @@
           "line": 94,
           "symbol": "facePct",
           "note": "",
-          "text": "/// 电量的界面写法 (<0 未读到 → \"--\"; >80 只报 \">80%\", 锁侧这个量本身就是粗估档)。"
+          "text": "/// 采样表最新值与锁侧快照取时间较新的那个 (采样随读 03 落库, 通常不比快照旧);"
         },
         {
           "platform": "ios",
@@ -35340,7 +35340,7 @@
           "line": 98,
           "symbol": "faceText",
           "note": "",
-          "text": "}"
+          "text": "static func displayPct(_ mac: String, snapshot: Int = -1) -> Int {"
         }
       ],
       "platformEvidence": {

@@ -70,6 +70,23 @@ enum BatteryCare {
     static func samples(_ mac: String) -> [BattSample] {
         DB.store.get([BattSample].self, "kf_batt_" + mac) ?? []
     }
+
+    /// 电量采样：每次读到锁状态就记一笔（LockService.readStatus 调用）。
+    /// 90 天截断 —— 更早的样本对「续航趋势」已经没有意义，留着只是占体积。
+    @discardableResult
+    static func sample(_ mac: String, pct: Int) -> Bool {
+        guard pct >= 0, pct <= 100 else { return false }
+        var list = samples(mac)
+        let nowMs = Date().timeIntervalSince1970 * 1000
+        let cutoff = nowMs - 90 * 24 * 3600 * 1000
+        list.removeAll { $0.t < cutoff }
+        // 同一分钟同一读数不重复记（一次开锁会连读两三遍状态）。
+        if let last = list.last, nowMs - last.t < 60_000, last.pct == pct { return false }
+        list.append(BattSample(t: nowMs, pct: pct))
+        DB.store.setCodable("kf_batt_" + mac, list)
+        evaluateLowBattery(mac, pct: pct)
+        return true
+    }
     /// 采样表里最新一条（displayPct 与档案页共用）。
     static func latest(_ mac: String) -> BattSample? { samples(mac).last }
 
