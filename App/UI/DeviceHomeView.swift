@@ -983,7 +983,6 @@ struct DeviceHomeView: View {
     }
 
 
-    @ViewBuilder
 
 
     /// 559 落地: 「最近开门」行上可证明的成员 → 记录 Tab 并按该成员过滤。
@@ -1048,9 +1047,11 @@ struct DeviceHomeView: View {
                 .accessibilityElement(children: .contain)
                 .accessibilityLabel("快捷操作格组")   // 868 快捷操作格组
         default:
-            if let kc = app.current { heroCard(for: kc, isCurrent: true) }
-                .accessibilityElement(children: .contain)
-                .accessibilityLabel("状态卡组")   // 868 状态卡组
+                if let kc = app.current {
+                    heroCard(for: kc, isCurrent: true)
+                        .accessibilityElement(children: .contain)
+                        .accessibilityLabel("状态卡组")   // 868 状态卡组
+                }
         }
     }
     private var moduleOrderSheet: some View {

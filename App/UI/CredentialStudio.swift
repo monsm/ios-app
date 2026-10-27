@@ -1029,7 +1029,7 @@ struct PwdStudio: View {
         CredentialOrg.saveDraft(mac, CredentialOrg.StudioDraft(
             step: step, kind: kind, pwd: pwd, permanent: kind == 0,
             fromISO: iso(from), toISO: iso(to), owner: owner,
-            useTemplate: useTemplate, note: note, scene: "", batch: 0,
+            useTemplate: useTemplate, note: note, batch: 0,
             at: Date().timeIntervalSince1970))
     }
 
@@ -1293,12 +1293,6 @@ struct TempCodeStudio: View {
                         .foregroundStyle(DS.Palette.warn)
                     }
                     // 330 装修黄条
-                    if scene == "reno" {
-                        Label("长期工场景: 详情页挂「施工中」黄条, 建议 30 天内复查一次", systemImage: "paintbrush")   // 330 长期工场景
-                            .vkFont(.caption)
-                            .foregroundStyle(DS.Palette.warn)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
                 }
                 .card()
 
@@ -1725,10 +1719,6 @@ struct PwdDetailStudio: View {
                         }
                         .vkFont(.subheadline)
                         .foregroundStyle(DS.Palette.accentText)
-                        if p.pwd != nil {
-                            .vkFont(.subheadline)
-                            .foregroundStyle(DS.Palette.accentText)
-                        }
                     }
                 }
                 .navigationTitle(CredentialOrg.displayPwd(p))
