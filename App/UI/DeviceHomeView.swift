@@ -485,6 +485,17 @@ struct DeviceHomeView: View {
                 out.append(("当前电量 \(p)%, 已低于提醒阈值 (\(CareSchedule.battThreshold)%) — 建议备好电池", "battery.25percent", .warn))
             }
         }
+        // 2026-10-28 补入口：`CredentialOrg.dueSoonPwds` 实现了「到期前 2 小时且开了 h2 提醒」
+        // 这一档（注释里明写"设备 Tab Hero 卡下插提醒行"），但全仓零调用 ——
+        // 用户开了"2 小时前提醒"却永远收不到这一行。现在接上。
+        // 只报条数、不点名（详情在凭证页），避免这张卡变成第二份凭证列表。
+        if let kc = app.current {
+            let due = CredentialOrg.dueSoonPwds(kc.mac)
+            if !due.isEmpty {
+                out.append(("有 \(due.count) 条凭证将在 2 小时内到期（最近一条 #\(due[0].alias)）—— 需要续期请到凭证页",
+                            "clock.badge.exclamationmark.fill", .warn))
+            }
+        }
         // 1023 指纹头清洁: 连续 3 次指纹识别告警
         return out
     }
@@ -792,7 +803,14 @@ struct DeviceHomeView: View {
                             // 921: 这一格是 Button 不是 NavigationLink —— 它不推开新页, 而是跨 Tab 定位
                             againTile
                                 .contextMenu {
+                                    // 2026-10-28 界面审核修复：这里原本是空的 Button 动作 ——
+                                    // 「编辑快捷操作格」点了什么都不发生。而上方注释还写着"面板内改动即时生效"，
+                                    // 说明面板本该存在，只是调用被删空了。
+                                    // 现在接到模块排序与显隐面板（同一张面板，快捷格顺序也在里面调）。
                                     Button {
+                                        DS.Haptics.tick.impactOccurred()
+                                        showModuleOrder = true
+                                    } label: {
                                     } label: {
                                         Label("编辑快捷操作格", systemImage: "square.grid.2x2")   // 905 编辑快捷操作格
                                     }
@@ -807,7 +825,14 @@ struct DeviceHomeView: View {
                             // 905: 长按任一格 → 编辑面板。走系统 contextMenu 而不是自挂长按手势:
                             // 与 NavigationLink 的点击零冲突 (同 740 "长按走菜单"的先例), 面板内改动即时生效。
                             .contextMenu {
+                                // 2026-10-28 界面审核修复：这里原本是空的 Button 动作 ——
+                                // 「编辑快捷操作格」点了什么都不发生。而上方注释还写着"面板内改动即时生效"，
+                                // 说明面板本该存在，只是调用被删空了。
+                                // 现在接到模块排序与显隐面板（同一张面板，快捷格顺序也在里面调）。
                                 Button {
+                                    DS.Haptics.tick.impactOccurred()
+                                    showModuleOrder = true
+                                } label: {
                                 } label: {
                                     Label("编辑快捷操作格", systemImage: "square.grid.2x2")   // 905 编辑快捷操作格
                                 }

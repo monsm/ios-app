@@ -1678,6 +1678,12 @@ struct PwdDetailStudio: View {
                         row("状态", CredentialOrg.stateLabel(CredentialOrg.pwdState(p)) + CredentialOrg.earlyExpiryNote(mac, p))
                         row("归属", CredentialOrg.ownerName(p.owner).isEmpty ? "未归属" : CredentialOrg.ownerName(p.owner))
                         row("备注", p.note.isEmpty ? "无" : p.note)
+                        // 2026-10-28 补入口：`CredentialOrg.pwdAgeDays` 早就实现了（按台账 `at` 算天数），
+                        // 但全仓零调用 —— 用户看不到"这条密码用了多久"，也就无从判断该不该换。
+                        // 未留存明文的老条目没有 at，返回 nil，此时不出这一行（不编造）。
+                        if let age = CredentialOrg.pwdAgeDays(p) {
+                            row("已用", age == 0 ? "今天新建" : "\(age) 天")
+                        }
                     }
                     // 311 同码引用卡 (⚠ 按时间窗推断, 标"约")
                     Section("用它开过的门 (约)") {

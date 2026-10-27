@@ -240,7 +240,10 @@ struct SettingsView: View {
             SearchHit(id: "s.members", title: "成员管理", icon: "person.2") { showMembers = true },
             SearchHit(id: "s.gateway", title: "智能网关", icon: "antenna.radiowaves.left.and.right") { showGateway = true },
             SearchHit(id: "s.backup", title: "备份与恢复", icon: "externaldrive") { showBackup = true },
-            SearchHit(id: "s.backupstudio", title: "备份与恢复", icon: "wrench.and.scissors") { showBackup = true },
+            // 2026-10-28 界面审核修复：删掉重复的 `s.backupstudio` 搜索项 ——
+            // 它和上一行 `s.backup` **标题相同、动作相同**（都只是 `showBackup = true`），
+            // 用户搜「备份」会看到两条一模一样的结果，点了做同一件事。
+            // 当初大概是给「备份工作室」单独留个入口，但那一页从未独立存在过。
             SearchHit(id: "s.applock", title: "本机数据保护 (应用锁)", icon: "lock.shield", anchor: .applock),
             SearchHit(id: "s.appearance", title: "外观 (主题/品牌色/密度)", icon: "paintbrush", anchor: .appearance),
         ]
