@@ -319,10 +319,9 @@ struct MemberCenterView: View {
     @ViewBuilder
 
     private var navSection: some View {
-        Section {
-        } header: {
-            Text("聚合视图")
-        }
+        // 2026-10-27 删除：`Section { } header: { Text("聚合视图") }` —— body 是**空的**。
+        // 屏幕上就是「聚合视图」标题下面一片空白，用户会以为加载失败。
+        // 聚合视图本身已在早前精简里移除，这个空壳是残留。
     }
 }
 

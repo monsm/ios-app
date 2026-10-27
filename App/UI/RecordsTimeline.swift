@@ -121,7 +121,11 @@ struct RecDetailSheet: View {
             Text(k)
                 .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
-                .frame(width: 108, alignment: .leading)
+                // 2026-10-27 布局核对修复：原先 `.frame(width: 108)` 是**硬宽度** ——
+                // 系统字号放大到 accessibility 档时，「协议内部索引」这类标签会被截断，
+                // 而右侧值列还占着固定空间。改成 `minWidth` + 左对齐：窄字号下宽度不变，
+                // 大字号下标签列自己撑开，不会被切。
+                .frame(minWidth: 108, alignment: .leading)
             HStack(spacing: DS.Space.xs) {
                 if let dot = dot {
                     Circle().fill(dot).frame(width: 8, height: 8).accessibilityHidden(true)

@@ -190,9 +190,9 @@ struct CredentialsView: View {
                             Label(memberView ? "按类型分组" : "按成员分组", systemImage: "person.2")
                         }
                     }
-                    Section("筛选") {
-            // 2026-10-26 精简：智能列表（命名过滤）已删。
-                    }
+            // 2026-10-27 删除：`Section("筛选")` 是个**空壳** —— 里面的「智能列表」
+            // 已于 2026-10-26 精简时删掉，只剩这一行注释。菜单里挂一个点不出任何东西的分组，
+            // 用户会以为是坏的。
                     Section("整理") {
                     // 2026-10-26 精简：该入口已删。
                         if !editMode && CredentialOrg.typeCounts(mac).all > 0 {

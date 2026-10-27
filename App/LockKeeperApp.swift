@@ -774,38 +774,16 @@ struct RootView: View {
             // 长按后直接点一下 (竖屏主操作) = 进那一页, 走的仍是 requestTab 那道访客门禁
             if let t = selected.first { app.requestTab(t) }
         }
-        // 25 Tab 栏中央主按钮 (Instagram 式)。iOS 的 TabView 没有"中间那个按钮"这种系统位,
-        // 所以落点用 safeAreaInset(.bottom) —— 与上面那条 .top 同一手法, 不是 overlay:
-        // 覆盖式会压住导航栏标题与页面内容 (本文件注释里已经记过一次这个坑)。
-        // **只导航、不开锁**: 主操作仍然只有那一个 176pt 圆盘。第二个开锁入口 = 第二套误开面,
-        // 也违背拍板"主屏/锁屏一键开锁是新的误开面"那条同向判断。
-        // 2026-10-27 截图核对修复：**原先用 `.safeAreaInset(edge: .bottom)` 挂"开锁"按钮** ——
-        // 在 iOS 18+ 的 TabView 上，bottom inset 的内容会**盖在 Tab 栏上**，
-        // 而不是把 Tab 栏顶上去。截图里「凭证」「记录」的标签被蓝色胶囊压住就是这个。
+        // 2026-10-27 删除：**Tab 栏上方的悬浮「开锁」按钮是冗余入口**。
         //
-        // 现在改成 `overlay(alignment: .bottom)` + 显式的底部留白：
-        //   · overlay 不参与布局协商，所以不会挤压 Tab 栏；
-        //   · 留白用 `DS.Hit.min + DS.Space.s`（约 60pt），把按钮抬到 Tab 栏**之上**；
-        //   · `allowsHitTesting` 只让按钮本身可点，空白区照常穿透到 Tab 栏。
-        .overlay(alignment: .bottom) {
-            if app.tabSelection != 0, !app.decoyMode {
-                Button {
-                    DS.Haptics.tick.impactOccurred()
-                    app.requestRoute(.device)
-                } label: {
-                    Label("开锁", systemImage: "lock.open.fill")
-                        .accessibilityLabel("到设备页开锁")
-                }
-                .buttonStyle(.borderedProminent)
-                .buttonBorderShape(.capsule)
-                .controlSize(.large)
-                .transition(.opacity)
-                // 抬到 Tab 栏之上：Tab 栏标准高度 49pt + 安全区，这里给 64pt 的固定间隙，
-                // 再加安全区 —— 两者相加一定高于 Tab 栏，不会被压。
-                .padding(.bottom, 64)
-                .allowsHitTesting(true)
-            }
-        }
+        // 它标着「开锁」，而实际只做 `requestRoute(.device)` —— 纯切页，不开锁。
+        // 而底栏第一个 Tab 就是「设备」，点 Tab 到的是同一个地方。
+        // 代码注释自己早就写着「**只导航、不开锁**: 主操作仍然只有那一个 176pt 圆盘」，
+        // 也写着「第二个开锁入口 = 第二套误开面」。
+        //
+        // 代价却是实打实的：占掉底部空间、压住 Tab 栏标签（截图里「凭证」「记录」被盖），
+        // 还让用户以为它能一键开锁 —— 点了只是跳页，困惑大于便利。
+        // 真正的主操作在设备页那个 176pt 圆盘上，不在这里。
         .animation(DS.Motion.quick, value: app.tabSelection)
         // 用 safeAreaInset 而不是 overlay — 覆盖式会压住导航栏标题
     }
