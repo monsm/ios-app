@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T11:18:01.396Z",
+    "generated": "2026-10-27T11:24:50.876Z",
     "sources": [
       {
         "scout": "android-native",
@@ -41705,7 +41705,7 @@
           "line": 230,
           "symbol": "normMac",
           "note": "fun normMac(m: String): String = m.replace(\":\", \"\").replace(\"-\", \"\").lowercase()",
-          "text": "val pid = (manufacturer[2].toInt() and 0xff) or ((manufacturer[3].toInt() and 0xff) shl 8)"
+          "text": "// 极简版不需要它们（只开锁），但要知道这是**能力缺口**不是实现遗漏。"
         },
         {
           "platform": "android",
