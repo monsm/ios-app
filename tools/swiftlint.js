@@ -75,6 +75,8 @@ const SYS_NAMES = new Set(['AreaMark','LineMark','PointMark','RuleMark','BarMark
 'Timeline', 'TimelineEntry', 'TimelineProvider', 'StaticConfiguration', 'WidgetConfiguration', 'WidgetBundle', 'WidgetFamily',
 // 2026-10-27: ProjectionTransform 是 SwiftUI `GeometryEffect` 协议要求返回的类型（锁屏输错抖动用）。
   'ProjectionTransform', 'GeometryEffect',
+// 2026-10-27: RunLoop 是 Foundation 的（Combine 的 receive(on:) 要它），不是本仓类型。
+  'RunLoop', 'AnyCancellable',
 // 585 记录引用深链要读 `kf://records?k=<行键>` 的查询参数。URLComponents 是 Foundation 自带的 URL 解析器
 // (iOS 7 起)，加白的理由是**替代方案更差**: 自己 split("?"/"&") 就等于手写一个不处理 % 转义、
 // 不处理重复键、不处理 `#fragment` 的解析器 —— 而这条路径是深链入口，写错的代价是"链接能开门却定位错行"。

@@ -19,22 +19,21 @@ import Combine
 final class CaptureWatcher: ObservableObject {
     @Published private(set) var isCaptured: Bool = UIScreen.main.isCaptured
 
-    private var token: NSObjectProtocol?
+    // 2026-10-27 修编译：不再手动持有 `NSObjectProtocol` token。
+    // Swift 6 严格并发下 `deinit` 是 nonisolated 的，不能访问非 Sendable 的 token；
+    // 而 `addObserver(forName:...)` 返回的 token 必须手动 remove —— 两者冲突。
+    // 改用 `publisher(for:)` + Combine `sink`：订阅随 `cancellables` 释放自动取消，
+    // deinit 里什么都不用做。
+    private var cancellables = Set<AnyCancellable>()
 
     init() {
-        token = NotificationCenter.default.addObserver(
-            forName: UIScreen.capturedDidChangeNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            MainActor.assumeIsolated {
+        NotificationCenter.default
+            .publisher(for: UIScreen.capturedDidChangeNotification)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
                 self?.isCaptured = UIScreen.main.isCaptured
             }
-        }
-    }
-
-    deinit {
-        if let token { NotificationCenter.default.removeObserver(token) }
+            .store(in: &cancellables)
     }
 }
 
