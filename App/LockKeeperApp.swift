@@ -947,7 +947,9 @@ struct RootView: View {
             switch new {
             case .ready: AXTools.announce("已连接门锁")
             case .down where old == .ready: AXTools.announce("门锁连接已断开")
-            case .connecting, .down: break
+            // 2026-10-27：新增 .notReady（连着但密钥未绑定）。它不是"稳定就绪态"，
+            // 所以不播报 —— 用户能从屏幕上的黄条看到原因，语音再念一遍是噪音。
+            case .notReady, .connecting, .down: break
             }
         }
         // 162 握手可离开: 圆盘握手 (connecting/opening) 在别的 Tab 上走到 success → 设备 Tab 挂角标。

@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T11:55:15.457Z",
+    "generated": "2026-10-27T12:06:18.946Z",
     "sources": [
       {
         "scout": "android-native",
@@ -10839,7 +10839,7 @@ const DATA = {
           "line": 1000,
           "symbol": "fullScreenCover",
           "note": "",
-          "text": ".padding(.vertical, DS.Space.s)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -35099,7 +35099,7 @@ const DATA = {
           "line": 1009,
           "symbol": "mainTabsChrome",
           "note": "",
-          "text": "/// 135 前后台切换收尾 —— 2026-10-13 run 60 从 body 的内联 .onChange 闭包里抽出来:"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -35107,7 +35107,7 @@ const DATA = {
           "line": 1014,
           "symbol": ".task { bootstrapOnce() }",
           "note": "",
-          "text": "LinkSense.shared.setSceneActive(phase == .active)"
+          "text": "@MainActor"
         },
         {
           "platform": "ios",
@@ -35115,7 +35115,7 @@ const DATA = {
           "line": 1022,
           "symbol": "2026-10-16 抽出注释",
           "note": "",
-          "text": "} else if phase == .background {"
+          "text": "// 344 回前台才出快捷条 (344 的原话就是\"回前台显示\"), 顺带重算剩余秒数"
         },
         {
           "platform": "ios",
@@ -35123,7 +35123,7 @@ const DATA = {
           "line": 1027,
           "symbol": "static func bootstrapOnce",
           "note": "",
-          "text": "AutoOpenController.shared.onBackground()"
+          "text": "// 还会提前清掉崩溃标记 (随后真崩溃被判成\"正常退出\")。.inactive 只收起过期的快捷条。"
         },
         {
           "platform": "ios",
@@ -35131,7 +35131,7 @@ const DATA = {
           "line": 1032,
           "symbol": "CrashGuard.checkAbnormalExit",
           "note": "",
-          "text": "// 且比\"锁落下\"更容易成立（后者那个事件已经不存在）。"
+          "text": "// appUnlocked 再也不会变 false，那条路径永不触发，等于**一次放开就永久敞开**。"
         }
       ],
       "platformEvidence": {
@@ -35511,7 +35511,7 @@ const DATA = {
           "line": 1019,
           "symbol": ".onChange(of: scenePhase)",
           "note": "",
-          "text": "AutoOpenController.shared.onForeground(mac: app.currentMac)"
+          "text": "// 留着它只会把 appUnlocked 置 false, 让深链/落点/回连那些 guard 静默失效。"
         },
         {
           "platform": "ios",
@@ -37285,7 +37285,7 @@ const DATA = {
           "line": 959,
           "symbol": "25 底栏注释",
           "note": "",
-          "text": ".sensoryFeedback(.selection, trigger: app.tabSelection)   // Tab 切换的轻触感"
+          "text": "if (old == .connecting || old == .opening), new == .success { handshakeDoneAway = true }"
         },
         {
           "platform": "ios",
@@ -37293,7 +37293,7 @@ const DATA = {
           "line": 964,
           "symbol": ".safeAreaInset(edge: .bottom)",
           "note": "",
-          "text": "/// 包8/448 启动自检黄条 —— 2026-10-13 run 64 从 body 内联块抽出: 该表达式报 type-check 超时。"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -37301,7 +37301,7 @@ const DATA = {
           "line": 966,
           "symbol": "if tabSelection != 0",
           "note": "",
-          "text": "HStack(spacing: DS.Space.xs) {"
+          "text": "/// 包8/448 启动自检黄条 —— 2026-10-13 run 64 从 body 内联块抽出: 该表达式报 type-check 超时。"
         },
         {
           "platform": "ios",
@@ -37309,7 +37309,7 @@ const DATA = {
           "line": 971,
           "symbol": "Label 开锁",
           "note": "",
-          "text": "Spacer(minLength: 0)"
+          "text": ".accessibilityHidden(true)"
         },
         {
           "platform": "ios",
@@ -37317,7 +37317,7 @@ const DATA = {
           "line": 981,
           "symbol": "if app.guestAreaLocked",
           "note": "",
-          "text": ".padding(.horizontal, DS.Space.l)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -38528,7 +38528,7 @@ const DATA = {
           "line": 1113,
           "symbol": ".onChange(of: app.appUnlocked)",
           "note": "",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -38536,7 +38536,7 @@ const DATA = {
           "line": 1116,
           "symbol": "restoreLastTab + applyPendingRoute",
           "note": "",
-          "text": "/// iOS 上 surface/canvas 的明度差已经足够表达层级, 描边反而是重复劳动。"
+          "text": "/// 卡片表面: 靠 surface 与渐变画布的明度差分层, 不加描边。"
         }
       ],
       "platformEvidence": {
@@ -38803,7 +38803,7 @@ const DATA = {
           "line": 1073,
           "symbol": "rootCore",
           "note": "",
-          "text": ".accessibilityAddTraits(.isStaticText)"
+          "text": ".padding(.horizontal, DS.Space.xl)"
         },
         {
           "platform": "ios",
@@ -38811,7 +38811,7 @@ const DATA = {
           "line": 1078,
           "symbol": ".id(app.appearanceSeed)",
           "note": "",
-          "text": "// （fullScreenCover on showGuestGate）已随访客通道一起移除，视图本身零引用。"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -38819,7 +38819,7 @@ const DATA = {
           "line": 1080,
           "symbol": ".dynamicTypeSize",
           "note": "",
-          "text": "struct PressFeedback: ButtonStyle {"
+          "text": "// （fullScreenCover on showGuestGate）已随访客通道一起移除，视图本身零引用。"
         },
         {
           "platform": "ios",
@@ -38827,7 +38827,7 @@ const DATA = {
           "line": 1082,
           "symbol": ".saturation",
           "note": "",
-          "text": "configuration.label"
+          "text": "struct PressFeedback: ButtonStyle {"
         },
         {
           "platform": "ios",
@@ -38835,7 +38835,7 @@ const DATA = {
           "line": 1086,
           "symbol": ".environment(legibilityWeight)",
           "note": "",
-          "text": ".animation(DS.Motion.quick, value: configuration.isPressed)"
+          "text": ".shadow(color: .black.opacity(configuration.isPressed ? 0.16 : 0), radius: 7, y: 3)"
         }
       ],
       "platformEvidence": {
@@ -39208,7 +39208,7 @@ const DATA = {
           "line": 1027,
           "symbol": "bootstrapOnce",
           "note": "",
-          "text": "AutoOpenController.shared.onBackground()"
+          "text": "// 还会提前清掉崩溃标记 (随后真崩溃被判成\"正常退出\")。.inactive 只收起过期的快捷条。"
         },
         {
           "platform": "ios",
@@ -39216,7 +39216,7 @@ const DATA = {
           "line": 1028,
           "symbol": "guard !launchBootstrapped",
           "note": "",
-          "text": "// 2026-10-26: 访客区/临时授权在这里收回。"
+          "text": "// 221 退后台收尾: 记会话时长并清崩溃标记 (CrashGuard 的判定就依赖这一步)"
         },
         {
           "platform": "ios",
@@ -39224,7 +39224,7 @@ const DATA = {
           "line": 1029,
           "symbol": "launchBootstrapped = true",
           "note": "",
-          "text": "// 原来由 .onChange(of: app.appUnlocked) 在\"锁落下\"时收 —— 但启动门禁删掉后"
+          "text": "AutoOpenController.shared.onBackground()"
         }
       ],
       "platformEvidence": {
