@@ -420,7 +420,6 @@ struct SettingsView: View {
     // ---------- 安全 ----------
     private var securitySection: some View {
         Section("安全") {
-            NavigationLink("门锁安全模式") { SafemodeIntroView(mode: "safe") }
             note("单次 / 双重验证：决定开一道锁还是两道。")
             // 2026-10-26: 原「安全中心」入口已删 —— 那一页精简后只剩风险体检一块，
             // 且原设计的十个安全开关只剩两条生效。风险评估改由诊断页的库体自检覆盖。
@@ -1014,7 +1013,7 @@ struct SafemodeIntroView: View {
     @State private var switching = false      // 拍板 #2: cmd20 下发中, 防止连点重复改锁端策略
     private var isOtp: Bool { mode == "otp" }
 
-    var body: some View { vkBody.destined(.safemodeIntro) }
+    var body: some View { vkBody.destined(.settings) }
     var vkBody: some View {
         Form {
             if isOtp {
@@ -1023,11 +1022,6 @@ struct SafemodeIntroView: View {
                     Text("生成前请先校准门锁时间 (0E)，否则手机与锁时间窗不同步会导致密码不匹配。").vkFont(.footnote)
                 }
             } else {
-                Section("门锁的安全模式介绍") {
-                    Text("门锁的安全模式分为A模式和B模式").vkFont(.subheadline)
-                    Text("A模式：只需要单一方式（密码／指纹／手机）验证通过就可以开锁").vkFont(.footnote)
-                    Text("B模式：需要用两种不同方式（指纹+密码／指纹+手机／手机+密码）组合验证通过才可开锁").vkFont(.footnote)
-                }
                 Section("怎么设置门锁的安全模式？") {
                     Text("当前模式在「锁信息名片」(设备页) 读取后显示。本 App 只给变严的方向 (A→B)；"
                          + "要放宽回 A 模式请在门锁键盘上操作或联系管理员。").vkFont(.footnote)

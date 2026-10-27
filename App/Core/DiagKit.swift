@@ -367,7 +367,7 @@ enum DataHealth {
         let rep = UserDefaults.standard.dictionaryRepresentation()
         var data = 0, logT = 0, pref = 0
         let dataPrefix = ["keychains", "ledger_", "snap_", "logcache_", "members", "keychain_dongles",
-                          "kf_gateways", "kf_chist_", "kf_cbin_", "kf_ccred", "kf_cseq_", "kf_clists_", "kf_calert_", "kf_fevents_"]
+                          "kf_gateways", "kf_cbin_", "kf_ccred", "kf_cseq_", "kf_clists_", "kf_calert_", "kf_fevents_"]
         let logPrefix = ["diag_logs", "ble_events", "conn_attempts", "crash_", "wd_"]
         for (k, v) in rep where k.hasPrefix("kf.") {
             let b = bytesOf(v)

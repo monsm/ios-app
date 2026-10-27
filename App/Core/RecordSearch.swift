@@ -249,13 +249,6 @@ enum RecordSearch {
                                alarm: StatsKit.alarmTypes.contains(e.type), care: false, failMsg: ""))
             }
             if includeFails {
-                for fe in DB.failEvents(mac) {
-                    out.append(Rec(key: "f_" + String(Int(fe.ts)), mac: mac, lockName: lockName, type: 0,
-                                   typeName: fe.msg.isEmpty ? "开锁失败" : "开锁失败 · " + fe.msg,
-                                   idxRaw: 0, lockTime: 0,
-                           timeStr: Self.localStr(fe.ts), whoName: nil, kind: nil, provable: nil,
-                                   cred: "", alarm: false, care: false, failMsg: fe.msg))
-                }
             }
         }
         out.sort { $0.timeStr > $1.timeStr }   // 字符串序 = 时间倒序 (同格式)

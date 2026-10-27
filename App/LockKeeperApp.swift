@@ -434,11 +434,6 @@ final class AppState: ObservableObject {
         unlockState = .failed(lastMsg)
         phase = 0
         UINotificationFeedbackGenerator().notificationOccurred(.error)
-        // 86 失败快照: 失败当时的 RSSI / 电量 / 错误码一起留痕 (电量取本机缓存读数, 与 125 同一份口径)
-        DB.recordFailEvent(kc.mac, lastMsg,
-                           rssi: LinkSense.shared.lastRssi,
-                           pct: DB.readStatus(kc.mac)?.powerLevel,
-                           rc: lastRc)
         finishDwell(.failed(lastMsg))
     }
 
@@ -967,7 +962,7 @@ struct RootView: View {
                 // 设置页根上。带落点名, 由设置页直接开诊断面。
                 app.pendingSettingsFocus = "diag"
                 app.requestRoute(.settings)
-            }   // 377: 访客通道开着时先复核, 不白切
+            }
                 .vkFont(.caption, weight: .medium)
         }
         .foregroundStyle(DS.Palette.warn)

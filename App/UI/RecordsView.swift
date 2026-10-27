@@ -1608,20 +1608,6 @@ struct RecordsView: View {
         // 而 761 那行"复制行标识 (f_/c_ 前缀键)"的说明一直是假的。
         // 表键就是派生出来的那个 idxRaw: 它只在本机这一份合并数组里唯一, 不参与任何持久化。
         var sideKey = [UInt32: String]()
-        let fails = DB.failEvents(mac)
-        if !fails.isEmpty {
-            merged.append(contentsOf: fails.enumerated().map { i, e in
-                let raw = UInt32(truncatingIfNeeded: Int(e.ts * 1000) + i)
-                sideKey[raw] = "f_" + String(Int(e.ts))
-                return LogEntry(type: 0, typeName: e.msg.isEmpty ? "开锁失败" : "开锁失败 · " + e.msg,
-                                idx: 0,
-                                idxRaw: raw,
-                                lockTime: 0,
-                                lockTimeStr: failTimeStr(e.ts),
-                                body: "")
-            })
-            merged.sort { $0.lockTimeStr > $1.lockTimeStr }
-        }
         let cls = Attribution.classify(
             logs: merged,
             pwds: DB.listPwds(mac), fps: DB.listFps(mac),

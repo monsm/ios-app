@@ -30,7 +30,6 @@ enum Destination: String, CaseIterable, Identifiable {
     case messages = "MessagesView"
     case mobileKey = "MobileKeyView"
     case records = "RecordsView"
-    case safemodeIntro = "SafemodeIntroView"
     case settings = "SettingsView"
     case shareToAndroid = "ShareToAndroidView"
     case startAddFp = "StartAddFpView"

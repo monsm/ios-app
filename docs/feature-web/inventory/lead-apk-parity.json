@@ -9,50 +9,7 @@
     "jzzns22561_out/sources/cn/zelkova/ZKurlcsPlugin/lockprotocol/LockCommBase.java",
     "jzzns22561_out/sources/com/plugin/urlcsDfuPlugin/BleDfu.java"
   ],
-  "nodes": [
-    {
-      "key": "protocol.apk-parity",
-      "parentKey": "protocol",
-      "domain": "protocol",
-      "level": 3,
-      "kind": "diagnostic",
-      "platform": "ios",
-      "name": "APK 协议基线对照闸门（apkshadow，41 项断言）",
-      "summary": "以 apk_raw 的 main.js + Java LockCommBase 为权威重算协议，与 Swift 实现逐项比对；不用 vendor 移植稿做基线。",
-      "details": [
-        "帧头：87 + 00 + len16LE + cmd + 000000 + KLV（对齐 Java LockCommBase:100-107）",
-        "KLV：key(1B)+len(1B)+value，单值上限 255B；toSmallByteOrder 是逐字节全反转",
-        "EKey 包络：88+00+反转MAC+TrackId(4LE)+VF(4LE)+VT(4LE)+Cmd，共 21B",
-        "令牌注入键 = 0xEE（Java (byte)-18）；main.js 的 SESSIONTOKENKEY=\"F0\" 是从未使用的死常量",
-        "pin 编码：Swift genPin 直接产出 4B 小端 hex，故 addPins.joined() 与 APK toSmallByteOrder(…,4) 等价",
-        "DFU：判据是广播 pid + dfuState==1（BleDfu.java:56），不是广播名；状态码 0/-1/1/-1/2/4/5/-1/6/7",
-        "已进 CI：与 cmdsshadow 并列"
-      ],
-      "evidence": [
-        {
-          "file": "tools/apkshadow.js",
-          "line": 1,
-          "symbol": "apkshadow"
-        },
-        {
-          "file": "docs/APK-PROTOCOL-PARITY.md",
-          "line": 1,
-          "symbol": "APK-PROTOCOL-PARITY"
-        },
-        {
-          "file": ".github/workflows/ios.yml",
-          "line": 129,
-          "symbol": "apkshadow CI 步骤"
-        }
-      ],
-      "tags": [
-        "APK 基线",
-        "协议对齐",
-        "CI 闸门"
-      ],
-      "status": "implemented"
-    }
-  ],
+  "nodes": [],
   "unresolved": [],
   "notes": [
     "本轮把协议对齐的权威来源从 vendor 移植稿换成原版 APK（main.js + Java 生产链），并固化成一个 CI 闸门。"

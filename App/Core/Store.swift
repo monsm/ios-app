@@ -436,11 +436,7 @@ enum DB {
         clearPendingPair(m)   // 删设备 = 连"未完成的配网记录"一起删 (否则下次配对先撞上一份过期密钥)
         for p in ["kf_ledger_", "kf_snap_", "kf_logcache_", "kf_defend_", "kf_tailgate_", "kf_synctime_", "otpStatus_", "otpIdx_", "kf_fevents_", "kf_lockmeta_", "kf_migok_",
                   "kf_batt_", "kf_batt_state_", "kf_mevents_", "kf_maint_", "kf_fwsince_", "kf_clock_notify_", "kf_damp_last_", "kf_fp_last_", "kf_care_notify_",
-                  "kf_cbin_", "kf_cqueue_", "kf_cstar_", "kf_calert_", "kf_clists_", "kf_cseq_",
-                  // 186/188 记录备注与标旗: 备注是用户写的自由文本 (可能含人名/地址), 必须随锁清除
-                  "kf_rnote_", "kf_rflag_",
-                  // 361 停用原因便签 (逐条, 只留最近 200 条)
-                  "kf_cdisrea_",
+                  "kf_cbin_", "kf_calert_", "kf_clists_", "kf_cseq_",
                   "kf_linkrssi_", "kf_link_auto_", "kf_macorder_"] {
             store.remove(p + m)
         }
@@ -890,33 +886,6 @@ enum DB {
         if let pw { set(passcodeDigest(pw), "kf_passcode") } else { store.remove("kf_passcode") }
     }
 
-    // ---------- 包1 (idea 92): 开锁失败的本地时间线标记 ----------
-    // 与锁端日志缓存 (kf_logcache_, 随 cmd16 同步整表覆写) 严格分开, 绝不混入锁日志;
-    // 时间线是回溯线索不是台账, 每锁封顶 50 条。
-    struct FailEvent: Codable {
-        var ts: Double    // 手机侧时间 (Unix 秒)
-        var msg: String   // 失败原因 (rcFriendly / 异常文案)
-        // 86 失败快照三要素: 失败当时的信号/电量/错误码。
-        // **可选是刻意的** —— 本机已存的旧记录没有这三个键, 写成非可选会让整份数组解码失败, 老留痕全丢。
-        var rssi: Int? = nil
-        var pct: Int? = nil
-        var rc: Int? = nil
-    }
-    static func failEvents(_ mac: String) -> [FailEvent] {
-        get([FailEvent].self, "kf_fevents_" + mac) ?? []
-    }
-    static func recordFailEvent(_ mac: String, _ msg: String,
-                                rssi: Int? = nil, pct: Int? = nil, rc: Int? = nil) {
-        var list = failEvents(mac)
-        list.insert(FailEvent(ts: Date().timeIntervalSince1970, msg: msg, rssi: rssi, pct: pct, rc: rc), at: 0)
-        if list.count > 50 { list = Array(list.prefix(50)) }
-        set(list, "kf_fevents_" + mac)
-    }
-    /// 清空本机开锁失败标记 (kf_fevents_)。入口在记录页"失败"筛选下 (拍板 #5, 2026-10-09)：
-    /// 必须走 `confirmDestructive` 二次确认, 且确认文案要写清"这些标记会以「失败」行混进时间线 (92), 清掉=那些行消失",
-    /// 同时说清它**不解除**任何冷却/挂起、不动锁端日志 —— 否则容易被当成"开锁失败的总开关"。
-    /// 自然清理路径仍在: 每锁 50 条滚动上限 + DB.removeDevice 按族清, 不会无限增长。
-    static func clearFailEvents(_ mac: String) { store.remove("kf_fevents_" + mac) }
 
     static func get<T: Decodable>(_ t: T.Type, _ k: String) -> T? {
         Store.shared.get(k, t)

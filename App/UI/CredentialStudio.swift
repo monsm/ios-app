@@ -233,12 +233,11 @@ struct CodeBigCard: View {
                 .foregroundStyle(DS.Palette.textSub)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
-            Text(revealed ? code : SecurityPolicy.halfMasked(code))
+            Text(code)
                 .vkFont(.system(.largeTitle, design: .rounded).monospacedDigit(), weight: .semibold)
                 .foregroundStyle(DS.Palette.text)
                 .textSelection(.enabled)
                 // 370: 口述卡这一路也接贴近复蔽 (卡片在屏期间才开监听)
-                .proximityRemask { revealed = false }
             Text(window)
                 .vkFont(.footnote)
                 .foregroundStyle(DS.Palette.textSub)
@@ -251,13 +250,6 @@ struct CodeBigCard: View {
                     .lineLimit(2)
             }
             HStack(spacing: DS.Space.s) {
-                Button {
-                    revealed.toggle()
-                    DS.Haptics.tick.impactOccurred()
-                } label: {
-                    Label(revealed ? "再遮起来" : "完整显示",
-                          systemImage: revealed ? "eye.slash" : "eye")
-                }
                 .buttonStyle(.bordered)
                 .vkFont(.caption)
                 .frame(minHeight: DS.Hit.min)

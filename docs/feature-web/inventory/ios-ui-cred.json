@@ -3585,45 +3585,6 @@
       "status": "implemented"
     },
     {
-      "key": "data.cred-star-archive",
-      "parentKey": "data",
-      "domain": "data",
-      "level": 3,
-      "name": "kf_cstar_ 置顶 / kf_carch_ 归档",
-      "kind": "data",
-      "summary": "星标与归档各一张整数集，指纹用 100000 + batch 偏移避免与密码别名撞号；两者都只影响展示层。",
-      "details": [
-        "键：kf_cstar_<mac>、kf_carch_<mac>；值：[Int]，密码存 alias、指纹存 100000 + batch",
-        "星标：toggleStar / setStar（批量置顶用 setStar(true) 而不是 toggle，避免把已置顶的翻下去）",
-        "归档：setArchived / unarchiveAll；归档条不参与当前显示、不进选择集合、不进整理建议，但搜索仍可见",
-        "两者都不改台账、不发锁端命令"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 871,
-          "symbol": "orderedPwds",
-          "note": "isStarred 分置顶段"
-        },
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 1436,
-          "symbol": "credMenu",
-          "note": "setArchived"
-        },
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 2019,
-          "symbol": "archivedStrip",
-          "note": "指纹 100000+batch"
-        }
-      ],
-      "tags": [
-        "数据"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "data.cred-bin",
       "parentKey": "data",
       "domain": "data",
@@ -3660,88 +3621,6 @@
       "tags": [
         "数据",
         "回收站"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "data.cred-queue",
-      "parentKey": "data",
-      "domain": "data",
-      "level": 3,
-      "name": "kf_cqueue_ 下发队列",
-      "kind": "data",
-      "summary": "离线时的锁端意图队列，逐项记录 kind/state/attempt/lastAt，按锁分开存放。",
-      "details": [
-        "键：kf_cqueue_<mac>；kind ∈ del_pwd / del_fp / period / restore",
-        "state：0 待下发 / 1 已完成 / 2 失败；pendingQueue 只返回 state != 1 的项",
-        "attempt 与 lastAt 支撑「第 N 次尝试 · MM-dd HH:mm」",
-        "多锁各存各的：横条计数与队列页都按当前 mac 取，不串台",
-        "写点：单条停用（del_pwd/del_fp）、统一延期（period）、续期失败（period）、恢复（restore）、重录继承清旧枚（del_fp）"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 2256,
-          "symbol": "disablePwd",
-          "note": "enqueue del_pwd"
-        },
-        {
-          "file": "App/UI/CredentialCenterView.swift",
-          "line": 974,
-          "symbol": "CredQueueView",
-          "note": "attempt/lastAt 展示"
-        },
-        {
-          "file": "App/UI/CredentialCenterView.swift",
-          "line": 996,
-          "symbol": "CredQueueView",
-          "note": "markQueue(done)"
-        }
-      ],
-      "tags": [
-        "数据",
-        "容错"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "data.cred-history",
-      "parentKey": "data",
-      "domain": "data",
-      "level": 3,
-      "name": "kf_chist_ 快照与配额",
-      "kind": "data",
-      "summary": "每凭证一张快照表，改值/改备注/归属/改期都留一档；配额与星标规则决定谁被淘汰。",
-      "details": [
-        "键：kf_chist_<mac>_<kind>_<key>；条目含 version/note/auto/starred/relTime 与内容摘要",
-        "auto=true：批量操作前的自动还原点，历史页置顶加标记",
-        "配额：kf_ccred_quota，默认 10，设置页 3~30 步进 1；星标版不受配额淘汰",
-        "恢复不覆盖：按选中版生成「恢复自 vX」新档",
-        "写点：改密码值、改价效期、改备注、改名（指纹）、改造、原码续期、批量延期"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialStudio.swift",
-          "line": 2198,
-          "symbol": "modifyPwd",
-          "note": "snapshot 修改了密码值"
-        },
-        {
-          "file": "App/UI/CredentialCenterView.swift",
-          "line": 496,
-          "symbol": "CredHistoryView",
-          "note": "quota 展示"
-        },
-        {
-          "file": "App/UI/CredentialCenterView.swift",
-          "line": 500,
-          "symbol": "CredHistoryView",
-          "note": "三条规则"
-        }
-      ],
-      "tags": [
-        "数据",
-        "快照"
       ],
       "status": "implemented"
     },
@@ -3783,47 +3662,6 @@
       "tags": [
         "数据",
         "通知"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "data.cred-disable-mark",
-      "parentKey": "data",
-      "domain": "data",
-      "level": 3,
-      "name": "kf_cdisrea_ 停用便签",
-      "kind": "data",
-      "summary": "台账里已经没有这条凭证了，停用原因/时刻/来源路径只能靠这张便签在回收站行回显。",
-      "details": [
-        "键：kf_cdisrea_<mac>；值 [kind:key → {label, at, via}]",
-        "只保留最近 200 条（回溯便签不是第二本台账）",
-        "回显点：回收站行 disableMarkText（台账已无此条，详情卡打不开）",
-        "via 只有本机几条真实路径：本机单条停用 / 本机单条停用 · 管理员代操作 / 本机批量停用（+ 代操作）",
-        "单条停用没有原因四选一，如实记「未填」而不是编一个默认原因"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/CredentialsView.swift",
-          "line": 2258,
-          "symbol": "disablePwd",
-          "note": "markDisabled 未填"
-        },
-        {
-          "file": "App/UI/CredentialCenterView.swift",
-          "line": 307,
-          "symbol": "binRow",
-          "note": "disableMarkText 回显"
-        },
-        {
-          "file": "App/UI/CredentialCenterView.swift",
-          "line": 1350,
-          "symbol": "CredDisableSheet",
-          "note": "批量代管标注"
-        }
-      ],
-      "tags": [
-        "数据",
-        "审计"
       ],
       "status": "implemented"
     },

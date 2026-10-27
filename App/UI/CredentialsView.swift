@@ -302,7 +302,6 @@ struct CredentialsView: View {
     @ViewBuilder
     private var listBody: some View {
             searchSection
-            otpStockHint
             if memberView {
                 memberSections
             } else {
@@ -1294,22 +1293,6 @@ struct CredentialsView: View {
     /// 这一块原先嵌在"整册空"的 emptyHint 里 ⇒ 台账里有密码但没发过临时码时它永远不出现;
     /// 提出来挂列表固定位 (listBody), 空台账时也只由这一块渲染一次。
     @ViewBuilder
-    private var otpStockHint: some View {
-        if DB.otpStatus(mac)?.on == true, DB.listPwds(mac).filter({ $0.temp }).isEmpty {
-            Section {
-                VStack(alignment: .leading, spacing: DS.Space.xs) {
-                    Text("临时码还没有发过一张 — 像酒店前台的门卡, 客人走一张, 就发下一张。")
-                        .vkFont(.caption)
-                        .foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Button("发第一张临时码") { genFirstOtp() }
-                        .buttonStyle(SecondaryActionStyle(fullWidth: false))
-                        .disabled(isBusy)
-                }
-                .padding(.vertical, 2)
-            }
-        }
-    }
     /// 821 空台账场景"发第一张临时码": 走现有 genOtp 通路, 需锁在场。
     /// busyKey 只占"连接中"这一段 —— genOtp 自带 busyKey==nil 门槛, 不先还回去第一张永远不生成
     /// (原先连完直接调 genOtp, 被自己的占用挡下, 回执却报成功)。

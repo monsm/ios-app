@@ -58,8 +58,8 @@ enum BackupStudio {
     nonisolated static let rollbackFamilies: [String] = [
         "kf_member_ext", "kf_member_bday", "kf_member_badge",       // 成员档案扩展 (角色/备注/分组/归档)
         "kf_mborrow_", "kf_mclaim_", "kf_house_win_", "kf_offboard_",   // 467 的 kf_mtransfer 族已随待接受区一起撤掉
-        "kf_rnote_", "kf_rflag_", "kf_rflt_",                       // 186 备注 / 188 标旗 / 记录筛选视图
-        "kf_cseq_", "kf_cstar_", "kf_calias_display", "kf_cbin_", "kf_cdisrea_", "kf_clists_", "kf_cqueue_",
+        "kf_rflt_",                       // 186 备注 / 188 标旗 / 记录筛选视图
+        "kf_cseq_", "kf_calias_display", "kf_cbin_", "kf_clists_", 
         "kf_bk_note",                 // 433 备注
         // 2026-10-13 对抗式排查: TOTP/静态口令族漏收。三种导入模式都会写这四个族
         //   · BackupKit.restoreAll :375-376 → otpStatus_ / otpIdx_
