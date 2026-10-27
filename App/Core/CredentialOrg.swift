@@ -675,7 +675,6 @@ enum CredentialOrg {
         var owner: String?
         var useTemplate: Bool
         var note: String
-        var scene: String
         var batch: Int
         var at: Double
     }
