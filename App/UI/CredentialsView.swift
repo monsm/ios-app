@@ -1323,7 +1323,15 @@ struct CredentialsView: View {
 
     private func viewPwd(_ p: LedgerPwd) {
         guard let pwd = p.pwd else { app.showToast("当时未留存明文"); return }
-        app.showToast("密码 #\(p.alias): \(pwd) (请勿外传)")
+        // 2026-10-27 审核修复 (AUDIT-D D-39)：**明文密码不再进 Toast**。
+        // Toast 的问题：可截图、录屏、旁人一眼看到、且不随页面关闭而消失（有停留时间）、
+        // 还会进无障碍朗读。而 `viewPwd` 是「看一眼明文」这个动作 —— 看完就该没了。
+        // 改成系统 alert：用户点「知道了」即消失，不留在屏幕上。
+        let alert = UIAlertController(title: "密码 #\(p.alias)",
+                                      message: pwd + "\n\n请勿外传；关闭后不再显示。",
+                                      preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "知道了", style: .cancel))
+        UIApplication.topViewController()?.present(alert, animated: true)
     }
 
     private func modifyPwd(_ p: LedgerPwd) {

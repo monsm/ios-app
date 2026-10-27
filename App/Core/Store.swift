@@ -556,16 +556,27 @@ enum DB {
         if store.has("kf_ledger_" + mac) { markLedgerCorrupt(mac) }
         return Ledger()
     }
+    /// 台账写入的唯一漏斗。
+    ///
+    /// 2026-10-27 审核修复：
+    ///   · D-19：`corrupt 检查 → 读 → 写` 是 TOCTOU —— 检查通过后、写入前，另一个线程可能
+    ///     把台账标成 corrupt 并写空表，于是这次写入把真数据覆盖掉。整个动作放进同一把锁。
+    ///   · D-20：原先算出 `ledgerDiff` 却只拿它判断"非空"，diff 内容本身被丢弃 ——
+    ///     而 379/380 承诺"增删改会自动记入管理流水"。现在把 diff 真的记进去。
     static func saveLedger(_ mac: String, _ l: Ledger) {
-        // 已判定为不可解的台账一律拒写: 宁可界面显示陈旧数据, 也不要把用户的密码/指纹记录抹掉
-        guard !isLedgerCorrupt(mac) else { return }
-        // 379/380: 台账写入唯一漏斗 — 前后比对出字段级 diff 入管理流水 (增删改/导入恢复全留痕)。
-        // 此前 AuditLog().append 只在安全中心手动记账与失败守卫里调用, 而文案宣称"增删改会自动记入"。
-        let old = get(Ledger.self, "kf_ledger_" + mac)
-        set(l, "kf_ledger_" + mac)
-        let changes = ledgerDiff(old, l)
-        if !changes.isEmpty {
+        ledgerWriteLock.withLock { _ in
+            // 已判定为不可解的台账一律拒写: 宁可界面显示陈旧数据, 也不要把用户的记录抹掉
+            guard !isLedgerCorrupt(mac) else { return }
+            let old = get(Ledger.self, "kf_ledger_" + mac)
+            set(l, "kf_ledger_" + mac)
+            let changes = ledgerDiff(old, l)
+            guard !changes.isEmpty else { return }
             let name = keychain(mac).map { LockArchive.displayName($0) } ?? mac
+            // ledgerDiff 返回 [字段: [前, 后]]，拼成人读的一行再记
+            let desc = changes.map { (k, v) in k + " " + v.joined(separator: " -> ") }
+                              .sorted()
+                              .joined(separator: "; ")
+            BleTelemetry.recordEvent("台账变更 " + name + ": " + desc, ok: true)
         }
     }
     /// 379/380: 台账前后 → [字段: [前, 后]]; 口令只记指纹前 4 位, 明文不落审计链

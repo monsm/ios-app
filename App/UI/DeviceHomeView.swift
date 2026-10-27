@@ -1121,6 +1121,8 @@ struct SyncTimeView: View {
     @State private var busy = false
     @State private var result = ""
     @State private var failed = false
+    /// 2026-10-27 (D-50)：冷却剩余秒数（0 = 无冷却）。
+    @State private var coolLeft = 0
 
     private var resultTone: ToneColor { failed ? .danger : .ok }
 
@@ -1220,6 +1222,8 @@ struct UnlockGateView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var pw = ""
     @State private var failed = false
+    /// 2026-10-27 (D-50)：冷却剩余秒数（0 = 无冷却）。
+    @State private var coolLeft = 0
 
     var body: some View { vkBody.destined(.unlockGate) }
     var vkBody: some View {
@@ -1255,7 +1259,13 @@ struct UnlockGateView: View {
                 .frame(maxWidth: 280)
                 .submitLabel(.go)
                 .onSubmit(verify)
-            if failed {
+            // 2026-10-27 (D-50)：冷却中优先显示冷却提示（比「密码错误」更准确 —— 这次根本没验）
+            if coolLeft > 0 {
+                Label("尝试次数过多，请等 \(coolLeft) 秒", systemImage: "clock.badge.exclamationmark")
+                    .vkFont(.footnote)
+                    .foregroundStyle(DS.Palette.warn)
+                    .transition(.opacity)
+            } else if failed {
                 Label("密码错误, 请重新输入", systemImage: "exclamationmark.circle.fill")
                     .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.danger)
@@ -1279,11 +1289,27 @@ struct UnlockGateView: View {
 
     private func verify() {
         guard !pw.isEmpty else { return }
+        // 2026-10-27 审核修复 (AUDIT-D D-50)：接上失败计数与冷却。
+        // 原先失败只清空输入框，可无限重试 —— 4 位数字码人工 1 万次可穷举，
+        // 脚本化更快（本机 UI 没有系统级节流）。
+        // 冷却梯度与 LockScreen 同一套（AppLock.cooldownSeconds）：3 次→30s，5 次→5min，7 次→30min。
+        let lock = AppLock.shared
+        let left = lock.cooldownRemaining()
+        if left > 0 {
+            coolLeft = left
+            UINotificationFeedbackGenerator().notificationOccurred(.error)
+            withAnimation(DS.Motion.quick) { failed = true }
+            pw = ""
+            return
+        }
         if DB.verifyPasscode(pw) {
+            coolLeft = 0
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             dismiss()
             app.startUnlock()
         } else {
+            // 走同一套计数：`recordFailure()` 会更新 failStreak 与 cooldownUntil
+            coolLeft = lock.recordFailure()
             UINotificationFeedbackGenerator().notificationOccurred(.error)
             withAnimation(DS.Motion.quick) { failed = true }
             pw = ""

@@ -103,6 +103,19 @@ final class AppLock: ObservableObject {
     }
 
     /// 手动上锁（设置页「立即锁定」、或回前台超时）。
+    /// 记一次失败并返回冷却秒数（0 = 无冷却）。
+    /// 2026-10-27 新增（AUDIT-D D-50）：二次开锁口令验证也要接计数 ——
+    /// 原先只有锁屏那里有，而「第二次开锁要验密码」那个入口同样可被暴力试。
+    @discardableResult
+    func recordFailure(now: Date = Date()) -> Int {
+        failStreak += 1
+        let cd = cooldownSeconds(for: failStreak)
+        cooldownUntil = cd > 0 ? now.timeIntervalSince1970 + cd : 0
+        DB.store.setInt(failStreakKey, failStreak)
+        DB.store.setDouble(cooldownKey, cooldownUntil)
+        return cd > 0 ? Int(cd) : 0
+    }
+
     func lock() {
         guard isEnabled else { return }
         unlocked = false

@@ -120,6 +120,22 @@ final class DFUSession: NSObject, @unchecked Sendable {
     /// 跑完整个升级。抛错即失败，成功返回时状态已推到 .completed。
     func run() async throws {
         emit(.connecting, "准备连接升级模式设备")
+        // 2026-10-27 审核修复 (AUDIT-D D-23)：**失败路径必须断开连接**。
+        // 原先 connect/discover/performTransfer 任一步抛错就直接退出，
+        // 而 peripheral 已经连上、delegate 还是 self —— 系统会保持这条链路，
+        // 结果是：锁停在半完成态（可能已在 bootloader），而 App 侧还占着它，
+        // 用户重试时「连不上」或「连到上一次那个还没死的会话」。
+        // 用 defer 保证无论成功失败都收尾（成功时也断开 —— 刷完本就该断开）。
+        defer {
+            if let p = peripheral {
+                p.delegate = nil
+                central?.cancelPeripheralConnection(p)
+            }
+            peripheral = nil
+            // 2026-10-27 (D-23)：扫描也要停 —— 失败时若停在无目标状态，
+            // 扫描会一直跑着耗电，且下次开始新升级会撞上"已有扫描在跑"。
+            central?.stopScan()
+        }
         try await scanForDFUDevice()
         guard let target = scannedPeripheral else {
             throw DFUTransportError.ble("扫描结束但没有可用设备")

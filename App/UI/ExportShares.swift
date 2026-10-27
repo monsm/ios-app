@@ -107,6 +107,15 @@ enum ExportKit {
         let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("exports", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        // 2026-10-27 审核修复 (AUDIT-D D-24)：写新文件前**先清掉同目录的旧导出**。
+        // 原先每次导出都留一份，永不清理 —— 成员名册含姓名/电话/备注，
+        // 明文躺在 Caches 里，越狱/备份/文件 App 都能读到，且旧文件会一直累积。
+        // 只留"最近一次"：用户分享完就不需要了，下次导出会重新生成。
+        if let olds = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil) {
+            for old in olds where old.pathExtension == "vcf" {
+                try? FileManager.default.removeItem(at: old)
+            }
+        }
         let url = dir.appendingPathComponent("锁管家_成员名册_\(f.string(from: Date())).vcf")
         guard (try? text.write(to: url, atomically: true, encoding: .utf8)) != nil else { return nil }
         return url

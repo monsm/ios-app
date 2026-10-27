@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T09:39:59.875Z",
+    "generated": "2026-10-27T09:44:56.751Z",
     "sources": [
       {
         "scout": "android-native",
@@ -1762,7 +1762,7 @@
           "line": 1222,
           "symbol": "quickActions",
           "note": "",
-          "text": "@State private var failed = false"
+          "text": "@Environment(\\.dismiss) private var dismiss"
         },
         {
           "platform": "ios",
@@ -1778,7 +1778,7 @@
           "line": 1227,
           "symbol": "let cols = AXPrefs.bigTile ? 2 : 3",
           "note": "",
-          "text": "Image(systemName: \"lock.shield\")"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -7029,7 +7029,7 @@
           "line": 1268,
           "symbol": "if DB.listFps(app.currentMac).isEmpty",
           "note": "",
-          "text": "Button(\"取消\") { dismiss() }"
+          "text": "} else if failed {"
         },
         {
           "platform": "ios",
@@ -7037,7 +7037,7 @@
           "line": 1270,
           "symbol": "quickDestination(\"addFp\")",
           "note": "",
-          "text": ".frame(maxWidth: 280)"
+          "text": ".vkFont(.footnote)"
         }
       ],
       "platformEvidence": {
@@ -15755,7 +15755,7 @@
           "line": 584,
           "symbol": "addFp(_:_:)",
           "note": "",
-          "text": "for f in new.fps {"
+          "text": "var d: [String: [String]] = [:]"
         }
       ],
       "platformEvidence": {
@@ -15824,7 +15824,7 @@
           "line": 579,
           "symbol": "setPwdOwner(_:_:_:)",
           "note": "",
-          "text": "if o.from != p.from || o.to != p.to { d[tag + \"·有效期\"] = [o.from + \"~\" + o.to, p.from + \"~\" + p.to] }"
+          "text": "BleTelemetry.recordEvent(\"台账变更 \" + name + \": \" + desc, ok: true)"
         },
         {
           "platform": "ios",
@@ -16122,7 +16122,7 @@
           "line": 1626,
           "symbol": "batchBar",
           "note": "",
-          "text": "action: @escaping @MainActor () -> Void) {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -17194,7 +17194,7 @@
           "line": 1450,
           "symbol": "credMenu",
           "note": "setFpAlarm",
-          "text": "//   回收站 reclaimDays 天 (497) + 504 还原排重新下发 + 506 撤销条。"
+          "text": "guard !m.isEmpty else { app.showToast(\"未选择门锁\"); return }"
         },
         {
           "platform": "ios",
@@ -17744,7 +17744,7 @@
           "line": 1346,
           "symbol": "credRow",
           "note": "整行 disabled",
-          "text": "let aliasOut = try await app.lock.pwdModify(alias: p.alias, pwd: np, validFrom: p.from, validTo: p.to)"
+          "text": "// 在用户按下\"作废旧密码\"的那一刻就把目标锁钉住 (含非空校验)，Task 里一律用 m"
         }
       ],
       "platformEvidence": {
@@ -18143,7 +18143,7 @@
           "line": 1329,
           "symbol": "credRow",
           "note": "!sorting 才出破坏性",
-          "text": "private func modifyPwd(_ p: LedgerPwd) {"
+          "text": "// 改成系统 alert：用户点「知道了」即消失，不留在屏幕上。"
         },
         {
           "platform": "ios",
@@ -18151,7 +18151,7 @@
           "line": 1333,
           "symbol": "credRow",
           "note": "改期",
-          "text": "alert.addAction(UIAlertAction(title: \"取消\", style: .cancel))"
+          "text": "alert.addAction(UIAlertAction(title: \"知道了\", style: .cancel))"
         }
       ],
       "platformEvidence": {
@@ -19985,7 +19985,7 @@
           "line": 564,
           "symbol": "rePwd(_:_:_:)",
           "note": "",
-          "text": "let old = get(Ledger.self, \"kf_ledger_\" + mac)"
+          "text": "///   · D-20：原先算出 `ledgerDiff` 却只拿它判断\"非空\"，diff 内容本身被丢弃 ——"
         },
         {
           "platform": "ios",
@@ -20009,7 +20009,7 @@
           "line": 569,
           "symbol": "setPwdPeriod(_:_:_:_:)",
           "note": "",
-          "text": "}"
+          "text": "guard !isLedgerCorrupt(mac) else { return }"
         }
       ],
       "platformEvidence": {
@@ -23037,7 +23037,7 @@
           "line": 110,
           "symbol": "writeRoster",
           "note": "文件名与目录",
-          "text": "let url = dir.appendingPathComponent(\"锁管家_成员名册_\\(f.string(from: Date())).vcf\")"
+          "text": "// 2026-10-27 审核修复 (AUDIT-D D-24)：写新文件前**先清掉同目录的旧导出**。"
         }
       ],
       "platformEvidence": {
@@ -40757,7 +40757,7 @@
           "line": 110,
           "symbol": "buildEkey",
           "note": "",
-          "text": "/// 原先这里是 `lowercased() + 去冒号`（顺序与 DB 那版相反，且不去连字符）——"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -40765,7 +40765,7 @@
           "line": 118,
           "symbol": "buildEkey",
           "note": "包络字段拼接顺序",
-          "text": "let m = normMac(macHex)"
+          "text": "static func setMacOrder(_ mac: String, _ o: MacOrder) { macOrdersLock.withLock { $0[normMac(mac)] = o } }"
         }
       ],
       "platformEvidence": {
@@ -40887,7 +40887,7 @@
           "line": 70,
           "symbol": "buildFrame",
           "note": "",
-          "text": "let len = Int(b[off + 1])"
+          "text": "var out = [ZKLV]()"
         },
         {
           "platform": "ios",
@@ -40895,7 +40895,7 @@
           "line": 195,
           "symbol": "parseResponse",
           "note": "cmd 字节位置：三种帧头均为字节 4",
-          "text": "}"
+          "text": "var ok: Bool"
         },
         {
           "platform": "android",
@@ -41377,7 +41377,7 @@
           "line": 94,
           "symbol": "MacOrder",
           "note": "",
-          "text": "/// 0x88 包络里那 6 字节 MAC 有两个参照实现各写了一种取法, 而锁只认一种:"
+          "text": "return (\"87\" + \"00\" + HexKit.hexPair(UInt32(len & 0xff)) + HexKit.hexPair(UInt32((len >> 8) & 0xff))"
         },
         {
           "platform": "ios",
@@ -41385,7 +41385,7 @@
           "line": 101,
           "symbol": "macOrder",
           "note": "默认 .display",
-          "text": "/// **只读**的 03 当探针 (它同样带 MAC, 却不落任何状态), 谁 rc=0 谁对, 结果记在 `kf_macorder_<mac>`。"
+          "text": "///     (**显示序**, 也是页面/台账里那个值), 而 getBytes 自己会按字节对翻转一次 ⇒ 包络里落**线上序**;"
         }
       ],
       "platformEvidence": {
@@ -41673,7 +41673,7 @@
           "line": 255,
           "symbol": "parseAdv",
           "note": "",
-          "text": "guard let d = adv.macDisplay else { return nil }"
+          "text": "///  再由 `kt.getBytes()` 反转成线上序; 见 docs/BRICK-AUDIT.md §10。)"
         },
         {
           "platform": "android",
@@ -41697,7 +41697,7 @@
           "line": 256,
           "symbol": "parseAdv",
           "note": "range(of: \"98ed\")",
-          "text": "let m = d.replacingOccurrences(of: \":\", with: \"\").lowercased()"
+          "text": "/// 单独立一个口的原因: 2026-10-17 真机配对在 PIN 批次第 1 批回 rc=12「mac地址不正确」——"
         },
         {
           "platform": "android",
@@ -42636,7 +42636,7 @@
           "line": 202,
           "symbol": "FrameAssembler",
           "note": "",
-          "text": "if versionByte == 0x01 { orders = [8, 7, 10] }"
+          "text": "guard hex.count >= 14 else { return ParsedFrame(ok: false, cmd: 0, header: 0, klvs: [], raw: hex) }"
         },
         {
           "platform": "ios",
@@ -42722,7 +42722,7 @@
           "line": 291,
           "symbol": "ProtoTime.localStr",
           "note": "",
-          "text": "}"
+          "text": "var ci = 0"
         }
       ],
       "platformEvidence": {
@@ -43179,7 +43179,7 @@
           "line": 263,
           "symbol": "parseAdv",
           "note": "guard (frameCtrl & 0x0c) == 0x0c",
-          "text": "var macRaw: String?      // 按接收序 hex"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -43187,7 +43187,7 @@
           "line": 280,
           "symbol": "parseAdv",
           "note": "五个位的解包",
-          "text": "// JS: pid = seg[4..5] | seg[6..7]<<8 (LE u16); macRaw = seg[8..19]"
+          "text": "guard advHex.count - from >= 24 else { return nil }"
         }
       ],
       "platformEvidence": {
@@ -43249,7 +43249,7 @@
           "line": 268,
           "symbol": "parseAdv",
           "note": "macDisplay 构造",
-          "text": "var containMac: Int"
+          "text": "var macRaw: String?      // 按接收序 hex"
         },
         {
           "platform": "ios",
@@ -43265,7 +43265,7 @@
           "line": 238,
           "symbol": "lockMac",
           "note": "",
-          "text": "if cut == 0 { break }"
+          "text": "for total in prefs {"
         }
       ],
       "platformEvidence": {
@@ -45704,7 +45704,7 @@
           "line": 129,
           "symbol": "readonlyCmds",
           "note": "含 0x02",
-          "text": "var mac = targetMac(macHex, order: order)"
+          "text": "validFromSec: UInt32 = 0,"
         },
         {
           "platform": "ios",
@@ -46836,7 +46836,7 @@
           "line": 130,
           "symbol": "writeCmdsBlocked",
           "note": "含 0x0c",
-          "text": "if mac.isEmpty { mac = \"000000000000\" }"
+          "text": "validToSec: UInt32? = nil,"
         },
         {
           "platform": "ios",
@@ -46931,7 +46931,7 @@
           "line": 130,
           "symbol": "writeCmdsBlocked",
           "note": "含 0x0d",
-          "text": "if mac.isEmpty { mac = \"000000000000\" }"
+          "text": "validToSec: UInt32? = nil,"
         },
         {
           "platform": "ios",
@@ -49371,7 +49371,7 @@
           "line": 118,
           "symbol": "buildEkey",
           "note": "",
-          "text": "let m = normMac(macHex)"
+          "text": "static func setMacOrder(_ mac: String, _ o: MacOrder) { macOrdersLock.withLock { $0[normMac(mac)] = o } }"
         },
         {
           "platform": "ios",
@@ -49456,7 +49456,7 @@
           "line": 115,
           "symbol": "buildEkey",
           "note": "let vt = validToSec ?? validTo2118",
-          "text": "static func flipped(_ o: MacOrder) -> MacOrder { o == .display ? .raw : .display }"
+          "text": "/// 原先这里是 `lowercased() + 去冒号`（顺序与 DB 那版相反，且不去连字符）——"
         }
       ],
       "platformEvidence": {
@@ -49524,7 +49524,7 @@
           "line": 142,
           "symbol": "wrapFrame",
           "note": "",
-          "text": "static let readonlyCmds: Set<UInt8> = [0x01, 0x02, 0x03, 0x12, 0x16, 0x23, 0x30, 0x38]"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -49532,7 +49532,7 @@
           "line": 148,
           "symbol": "wrapEnc",
           "note": "",
-          "text": "throw BLEErrorX.msg(String(format: \"护栏拦截: cmd 0x%02x 是写入/危险命令, 只读试验模式禁止发送!\", cmd))"
+          "text": "static let writeCmdsBlocked: [UInt8] = [0x04, 0x05, 0x08, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x13, 0x14, 0x15,"
         },
         {
           "platform": "ios",
@@ -49540,7 +49540,7 @@
           "line": 155,
           "symbol": "wrapEnc",
           "note": "cipher.isEmpty ? \"\" : buildKLV(...)",
-          "text": "static func wrapFrame(_ cmd: UInt8, _ macHex: String, _ skeyHex: String, _ bodyHex: String, _ klvKey: Int,"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -49609,7 +49609,7 @@
           "line": 76,
           "symbol": "buildFrame",
           "note": "header == 8 分支",
-          "text": "return out"
+          "text": "guard off + 2 + len <= b.count else { return nil }"
         },
         {
           "platform": "ios",
@@ -49617,7 +49617,7 @@
           "line": 79,
           "symbol": "buildFrame",
           "note": "10B 分支带 ssToken",
-          "text": "// ---------- 帧构造 (JS buildFrame: header 8 = Java 生产链; 其余 = 10B 旧 JS 格式) ----------"
+          "text": "off += 2 + len"
         }
       ],
       "platformEvidence": {
@@ -49680,7 +49680,7 @@
           "line": 72,
           "symbol": "buildFrame",
           "note": "let len = klv.count / 2",
-          "text": "let val = HexKit.hex(Array(b[(off + 2)..<(off + 2 + len)]))"
+          "text": "while off < b.count {"
         },
         {
           "platform": "ios",
@@ -49688,7 +49688,7 @@
           "line": 212,
           "symbol": "FrameAssembler.push",
           "note": "let len = HexKit.readU16LE(buf, byteOffset: 2)",
-          "text": "}"
+          "text": "if b.count < bodyOff + len { continue }"
         }
       ],
       "platformEvidence": {
@@ -49755,7 +49755,7 @@
           "line": 181,
           "symbol": "parseResponse",
           "note": "",
-          "text": "guard hex.count >= bodyStart + len * 2 else { return hex }"
+          "text": "// 三端（iOS / Android / vendor JS）在此完全一致 —— 这是协议事实：长度字段恒在字节 2-3，"
         },
         {
           "platform": "android",
@@ -49771,7 +49771,7 @@
           "line": 186,
           "symbol": "parseResponse",
           "note": "versionByte 0x01 优先 7B 试切",
-          "text": "}"
+          "text": "guard hex.count >= bodyStart + len * 2 else { return hex }"
         },
         {
           "platform": "ios",
@@ -49779,7 +49779,7 @@
           "line": 197,
           "symbol": "parseResponse",
           "note": "取第一个成功结果",
-          "text": "guard hex.count >= 14 else { return ParsedFrame(ok: false, cmd: 0, header: 0, klvs: [], raw: hex) }"
+          "text": "var header: Int"
         },
         {
           "platform": "android",
@@ -51465,7 +51465,7 @@
           "line": 167,
           "symbol": "injectToken",
           "note": "KLV#0xEE 令牌",
-          "text": "// 这里以空帧作失败标记, 由 LockService.request 在下发前拦死。"
+          "text": "order: MacOrder? = nil) -> String {"
         },
         {
           "platform": "ios",
@@ -51556,7 +51556,7 @@
           "line": 58,
           "symbol": "parseKLV",
           "note": "",
-          "text": "assertionFailure(\"buildKLV 值超长: key=\\(key) len=\\(len) > 255 —— 协议单 KLV 上限\")"
+          "text": "// 截断而不是返回空串：空串会让上层构造出载荷为空的帧，反而更难定位。"
         },
         {
           "platform": "ios",
@@ -51564,7 +51564,7 @@
           "line": 61,
           "symbol": "parseKLV",
           "note": "越界即 return nil",
-          "text": "return HexKit.hexPair(UInt32(key)) + HexKit.hexPair(UInt32(len)) + valHex"
+          "text": "if rawLen > 0xFF {"
         }
       ],
       "platformEvidence": {
@@ -51924,7 +51924,7 @@
           "line": 98,
           "symbol": "macOrdersLock",
           "note": "",
-          "text": "///     翻转后包络里落**显示序**。"
+          "text": "// ---------- 0x88 包络里的 MAC 字节序 (per MAC, 真机裁定) ----------"
         },
         {
           "platform": "ios",
@@ -51932,7 +51932,7 @@
           "line": 99,
           "symbol": "normMac",
           "note": "",
-          "text": "/// 差的就是这 6 字节的先后。认错的表现是锁回 rc=12「mac地址不正确」—— 而 rc≠0 的语义是"
+          "text": "/// 0x88 包络里那 6 字节 MAC 有两个参照实现各写了一种取法, 而锁只认一种:"
         }
       ],
       "platformEvidence": {
@@ -51993,7 +51993,7 @@
           "line": 104,
           "symbol": "targetMac",
           "note": "",
-          "text": "enum MacOrder: String { case display, raw }"
+          "text": "/// 差的就是这 6 字节的先后。认错的表现是锁回 rc=12「mac地址不正确」—— 而 rc≠0 的语义是"
         },
         {
           "platform": "ios",
@@ -52728,7 +52728,7 @@
           "line": 209,
           "symbol": "FrameAssembler.push",
           "note": "guard let idx = buf.range(of: \"87\") else { buf = \"\"; break }",
-          "text": "guard let klvs = parseKLV(klvHex) else { continue }"
+          "text": "else { orders = [8, 10, 7] }"
         },
         {
           "platform": "ios",
@@ -52975,7 +52975,7 @@
           "line": 130,
           "symbol": "writeCmdsBlocked",
           "note": "",
-          "text": "if mac.isEmpty { mac = \"000000000000\" }"
+          "text": "validToSec: UInt32? = nil,"
         },
         {
           "platform": "ios",
@@ -53511,7 +53511,7 @@
           "line": 159,
           "symbol": "injectToken",
           "note": "",
-          "text": "}"
+          "text": "/// `hex.isEmpty` 永不成立、08/0A/13/14/15/18/19/20/21/0B/0E/16/24/25 全部照样发给锁。"
         },
         {
           "platform": "ios",
@@ -53543,7 +53543,7 @@
           "line": 163,
           "symbol": "injectToken",
           "note": "header10 判据",
-          "text": "let env = buildEkey(cmd, macHex, order: order) + bodyHex"
+          "text": "return enc.isEmpty ? \"\" : buildFrame(cmd, enc, header: 8)"
         },
         {
           "platform": "android",
@@ -57172,7 +57172,7 @@
           "line": 721,
           "symbol": "members()",
           "note": "",
-          "text": "var kept = [CachedLog]()"
+          "text": "set(cache, \"kf_logcache_\" + mac)"
         }
       ],
       "platformEvidence": {
@@ -57302,7 +57302,7 @@
           "line": 791,
           "symbol": "dongles()",
           "note": "",
-          "text": "}"
+          "text": "// 2026-10-14: 旧写法按 count % 6 取色 —— 删成员后 count 回退会与现存成员撞色 (头像/时间线靠色区分)。"
         },
         {
           "platform": "ios",
@@ -57310,7 +57310,7 @@
           "line": 823,
           "symbol": "gateways()",
           "note": "",
-          "text": "// 档案扩展 / 徽章 / 生日 (均以成员 id 为键) 与值班周表: 删成员后成永久孤儿键, 一并清。"
+          "text": "var changed = false"
         }
       ],
       "platformEvidence": {
@@ -57424,7 +57424,7 @@
           "line": 630,
           "symbol": "writeStatus(_:_:)",
           "note": "",
-          "text": "}"
+          "text": "saveLedger(mac, l)"
         },
         {
           "platform": "ios",
@@ -57432,7 +57432,7 @@
           "line": 649,
           "symbol": "writeLogs(_:_:)",
           "note": "",
-          "text": "for i in l.fps.indices where l.fps[i].batch == batch { l.fps[i].note = note }"
+          "text": "var l = ledger(mac)"
         }
       ],
       "platformEvidence": {
@@ -59772,7 +59772,7 @@
           "line": 800,
           "symbol": "saveDongle(_:)",
           "note": "",
-          "text": "for (k, v) in info where !v.isEmpty { d[k] = v }"
+          "text": "store.set(\"kf_members\", map)"
         },
         {
           "platform": "ios",
@@ -59780,7 +59780,7 @@
           "line": 804,
           "symbol": "merged",
           "note": "逐字段空值回退",
-          "text": "}"
+          "text": "var map = store.getDict(\"kf_members\")"
         }
       ],
       "platformEvidence": {
@@ -59841,7 +59841,7 @@
           "line": 832,
           "symbol": "saveGateway(_:)",
           "note": "",
-          "text": "if duty.count != dbefore { store.setCodable(\"kf_duty_week\", duty) }"
+          "text": "if claims.count != before { store.setCodable(\"kf_mclaim_\" + kc.mac, claims) }"
         },
         {
           "platform": "ios",
@@ -59849,7 +59849,7 @@
           "line": 846,
           "symbol": "netState",
           "note": "netState != -1 ? ... : old.netState",
-          "text": "var map = store.getDict(\"kf_keychain_dongles\")"
+          "text": "// 钥匙串硬件"
         }
       ],
       "platformEvidence": {
@@ -60491,7 +60491,7 @@
           "line": 732,
           "symbol": "addMember(_:)",
           "note": "",
-          "text": "/// 日志缓存只为**还在台账里的锁**而写。为什么要在写入口拦一道: 删除设备会按族清掉 kf_logcache_<mac>,"
+          "text": "var kept = [CachedLog]()"
         },
         {
           "platform": "ios",
@@ -60499,7 +60499,7 @@
           "line": 731,
           "symbol": "memberPalette",
           "note": "",
-          "text": ""
+          "text": "var seen = Set<String>()"
         },
         {
           "platform": "ios",
@@ -60576,7 +60576,7 @@
           "line": 760,
           "symbol": "removeMember(_:)",
           "note": "",
-          "text": "static func saveOtpStatus(_ mac: String, _ s: OtpStatus) { set(s, \"otpStatus_\" + mac) }"
+          "text": "static func saveTailgate(_ mac: String, _ c: TailgateCfg) { set(c, \"kf_tailgate_\" + mac) }"
         },
         {
           "platform": "ios",
@@ -60584,7 +60584,7 @@
           "line": 786,
           "symbol": "duty",
           "note": "duty = duty.filter { $0.value != id }",
-          "text": "at: Date().timeIntervalSince1970 * 1000)"
+          "text": "/// 头像与矩阵圆点的读侧照旧只认 hex 字段; 超过六人从头轮转。"
         }
       ],
       "platformEvidence": {
@@ -61312,7 +61312,7 @@
           "line": 949,
           "symbol": "secret(_:_:)",
           "note": "Keychain 优先 + 明文迁移",
-          "text": "if let pw { set(passcodeDigest(pw), \"kf_passcode\") } else { store.remove(\"kf_passcode\") }"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -61834,7 +61834,7 @@
           "line": 864,
           "symbol": "pcIter",
           "note": "60_000 轮",
-          "text": "store.set(\"kf_keychain_dongles\", map)"
+          "text": "lastSeenAt: d.lastSeenAt.isEmpty ? old.lastSeenAt : d.lastSeenAt,"
         },
         {
           "platform": "ios",
@@ -61842,7 +61842,7 @@
           "line": 886,
           "symbol": "verifyPasscode(_:)",
           "note": "",
-          "text": "wifimac: g.wifimac.isEmpty ? old.wifimac : g.wifimac,"
+          "text": "return nil"
         },
         {
           "platform": "ios",
@@ -61850,7 +61850,7 @@
           "line": 896,
           "symbol": "passcodeRecord",
           "note": "验过即静默升级",
-          "text": "store.set(\"kf_gateways\", map)"
+          "text": "boundAt: g.boundAt.isEmpty ? old.boundAt : g.boundAt,"
         }
       ],
       "platformEvidence": {
@@ -62004,7 +62004,7 @@
           "line": 655,
           "symbol": "CachedLog",
           "note": "新 + 旧缓存去重合并",
-          "text": "saveLedger(mac, l)"
+          "text": "for i in l.fps.indices where l.fps[i].batch == batch { l.fps[i].name = name }"
         },
         {
           "platform": "ios",
@@ -62012,7 +62012,7 @@
           "line": 672,
           "symbol": "replaceLogs(_:_:)",
           "note": "",
-          "text": "static func getFpList(_ batches: [Int], _ mac: String) -> [LedgerFp] {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -62094,7 +62094,7 @@
           "line": 646,
           "symbol": "statusTime(_:)",
           "note": "",
-          "text": "}"
+          "text": "saveLedger(mac, l)"
         },
         {
           "platform": "ios",
@@ -62921,7 +62921,7 @@
           "line": 864,
           "symbol": "pcIter",
           "note": "",
-          "text": "store.set(\"kf_keychain_dongles\", map)"
+          "text": "lastSeenAt: d.lastSeenAt.isEmpty ? old.lastSeenAt : d.lastSeenAt,"
         },
         {
           "platform": "ios",
@@ -62929,7 +62929,7 @@
           "line": 891,
           "symbol": "d2",
           "note": "d2 主路径",
-          "text": "netState: g.netState != -1 ? g.netState : old.netState,"
+          "text": "if let old = gateway(g.mac) {"
         },
         {
           "platform": "ios",
@@ -62937,7 +62937,7 @@
           "line": 896,
           "symbol": "set(passcodeRecord",
           "note": "验过即静默升级",
-          "text": "store.set(\"kf_gateways\", map)"
+          "text": "boundAt: g.boundAt.isEmpty ? old.boundAt : g.boundAt,"
         }
       ],
       "platformEvidence": {
