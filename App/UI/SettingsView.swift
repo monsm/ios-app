@@ -508,20 +508,28 @@ struct SettingsView: View {
     }
 
     // ---------- 家人与钥匙 (包13: 成员中心/791/798-792/483/479-794 入口) ----------
+    /// 家人与钥匙 + 凭证整理 —— **两个独立的 Section**。
+    ///
+    /// 2026-10-27 截图核对修复：原先把这两个 Section 包在 `VStack(spacing: 0)` 里。
+    /// `Section` 只在 `List`/`Form` 的**直接子级**才有分组语义 —— 被 VStack 包住后，
+    /// 整个 VStack 变成 List 的一行，里面的 Section 退化成普通容器，于是：
+    ///   · header/footer 不再吸附在组头组尾，而是居中夹在行之间（截图里「家人与钥匙」居中）
+    ///   · 行与 footer 正文垂直重叠（「手机钥匙」压住「访客是本地虚拟分组…」）
+    ///   · 两节内容混成一坨（「凭证整理」跑到列表行中间）
+    /// 现在拆成两个并列的 Section（@ViewBuilder 允许一个属性返回多个 Section）。
+    @ViewBuilder
     private var familySection: some View {
-        VStack(spacing: 0) {
-            Section {
-                memberFamilyRows
-            } header: {
-                Text("家人与钥匙")
-            } footer: {
-                Text("「访客」是本地虚拟分组, 不占锁端槽位; 活跃度与摘录均按台账推断 (约)。")
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            credCareSection
+        Section {
+            memberFamilyRows
+        } header: {
+            Text("家人与钥匙")
+        } footer: {
+            Text("「访客」是本地虚拟分组, 不占锁端槽位; 活跃度与摘录均按台账推断 (约)。")
+                .vkFont(.caption)
+                .foregroundStyle(DS.Palette.textSub)
+                .fixedSize(horizontal: false, vertical: true)
         }
+        credCareSection
     }
     @ViewBuilder
     private var memberFamilyRows: some View {

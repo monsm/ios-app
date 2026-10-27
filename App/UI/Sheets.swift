@@ -841,6 +841,7 @@ struct DeviceInfoView: View {
                             .vkFont(.headline)
                             .foregroundStyle(DS.Palette.text)
                             .lineLimit(1)
+                            .layoutPriority(1)   // 2026-10-27：同 DeviceHomeView，防被右侧宽内容挤压
                             .minimumScaleFactor(0.85)
                         // 774 场所副标题
                         Text(LockArchive.subtitle(kc))

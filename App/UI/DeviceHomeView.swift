@@ -342,6 +342,10 @@ struct DeviceHomeView: View {
                                 .vkFont(.title3, weight: .semibold)
                                 .foregroundStyle(DS.heroFg)
                                 .lineLimit(1)
+                                // 2026-10-27 截图核对修复：这个 HStack 右侧是 LinkPill（很宽的胶囊），
+                                // 左侧名称只有 `.lineLimit(1)` 没有布局优先级 —— 于是被挤成「智能...」。
+                                // 给名称更高的优先级，压缩时优先压右侧胶囊而不是锁名。
+                                .layoutPriority(1)
                             // 774 场所副标题: 档案里填了场所就替代型号行
                             Text(LockArchive.subtitle(kc))
                                 .vkFont(.footnote)
@@ -1070,9 +1074,21 @@ struct DeviceHomeView: View {
     // 包2/69 系统蓝牙开关 (btReady): 关时全 App 顶部出引导条; 与 bleOn (该锁会话) 区分
     private var btReady: Bool { bleSvc.isPoweredOn }
     /// 包2/64 三态: 当前锁链路 (非当前锁视为静态预览 → 未连接)
+    /// 链路三态 + 「密钥未绑定」。
+    ///
+    /// 2026-10-27 截图核对修复：原实现只返回 `sense.linkState`（纯 BLE 连接态），
+    /// 于是蓝牙连着就显示「门锁在线，随时可开」，而同一屏的黄条又说「密钥尚未绑定」。
+    /// 密钥没绑定 ⇒ 签不出开锁凭据 ⇒ **开不了**。现在把 sKeyStatus 纳入判据：
+    /// 连着但密钥未绑定 ⇒ `.notReady`，徽章文案随之改成「密钥未绑定」而不是「随时可开」。
     private func linkState(for kc: Keychain) -> LinkState {
         guard kc.mac == app.currentMac else { return .down }
-        return sense.linkState
+        let s = sense.linkState
+        // 只有"已连接"这一态会被密钥状态否决；握手中/未连接本来就是"不能开"，不用改。
+        if s == .ready {
+            let sKey = app.status?.sKeyStatus ?? app.snapshot?.sKeyStatus ?? 0
+            if sKey != 0 { return .notReady }
+        }
+        return s
     }
     // 1004/114 低电判定 (0~20, 判定逻辑收敛到 BatteryCare)
     private func isLow(_ kc: Keychain) -> Bool { BatteryCare.isLow(batteryPct(for: kc)) }

@@ -233,6 +233,11 @@ struct RecordsView: View {
             // 187 按月跳转 (等价实现): 选月即只看该月, 顶部有清除口。
             // 原设计的"月份滚轮 + scrollTo"需把 List 包进 ScrollViewReader 并移动整条修饰符链,
             // 在这个从未编译过的工程里做结构性改动的风险不对等 → 记入需编译器清单, 这里先给可用能力。
+            // 2026-10-27 截图核对修复：**空态从未接线** —— `emptyHint` 定义在 1295 行，
+            // 但全仓 0 处调用。于是「全部记录」展开后一条都没有时，屏幕上一片空白，
+            // 用户分不清「这台锁没记录」和「读取失败/还在加载」。
+            // 现在按 groups 是否为空接上（emptyHint 内部已区分"被过滤掉"与"真没记录"）。
+            if groups.isEmpty { emptyHint }
             ForEach(groups.filter { g in (monthJump.isEmpty || g.key.hasPrefix(monthJump)) && (dayFocus.isEmpty || g.key == dayFocus) }) { g in
                 // 657: 缺口行走独立的极简一行，不冒充一天的组头 (它没有"当天 N 条"可说)
                 if g.isGap { gapRow(g) } else { daySection(g) }

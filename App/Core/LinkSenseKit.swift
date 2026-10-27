@@ -12,10 +12,18 @@ import Combine
 // ---------- 链路三态 (64 语义色: 已连接 / 握手中 / 未连接) ----------
 enum LinkState: Equatable {
     case ready, connecting, down
+    /// 2026-10-27 截图核对新增：**连上了但开不了锁**。
+    ///
+    /// 起因：设备页同一屏上「门锁在线，随时可开」与「密钥尚未绑定，该门锁可能还没完成配网」
+    /// 同时显示 —— 而密钥没绑定**根本开不了锁**。两句话都对，组合起来是误导，
+    /// 用户会以为能开，点下去失败。
+    /// 现在把「密钥未绑定」纳入链路状态，徽章就不会再说"随时可开"。
+    case notReady
     var name: String {
         switch self {
         case .ready: return "已连接"
         case .connecting: return "握手中"
+        case .notReady: return "密钥未绑定"
         default: return "未连接"
         }
     }
@@ -653,6 +661,9 @@ struct LinkPill: View {
         switch state {
         case .ready: return "link.circle.fill"
         case .connecting: return "arrow.triangle.2.circlepath"
+        // 2026-10-27：密钥未绑定 —— 连上了但开不了。用锁图标而不是链路图标，
+        // 因为问题不在"链路上"而在"没钥匙"。
+        case .notReady: return "lock.slash"
         default: return "link.circle.dashed"
         }
     }
@@ -663,6 +674,7 @@ struct LinkPill: View {
         switch state {
         case .ready: return "checkmark"
         case .connecting: return "hourglass"
+        case .notReady: return "exclamationmark"
         default: return "xmark"
         }
     }
@@ -671,6 +683,9 @@ struct LinkPill: View {
         switch state {
         case .ready: return "门锁在线, 随时可开"
         case .connecting: return "正在敲门…"
+        // 2026-10-27 截图核对修复：这一态原先不存在，于是蓝牙一连上就报「随时可开」，
+        // 而密钥没绑定根本开不了 —— 用户点下去只会失败。
+        case .notReady: return "已连接 · 密钥未绑定"
         default: return "未连接"
         }
     }
@@ -678,6 +693,8 @@ struct LinkPill: View {
         switch state {
         case .ready: return DS.heroTint(Color(hex: 0xBBF7D0))
         case .connecting: return DS.heroFg.opacity(0.9)
+        // 密钥未绑定用警告色（与下方黄条同色系），让"这条不是好消息"一眼可见
+        case .notReady: return DS.heroTint(Color(hex: 0xFDE68A))
         default: return DS.heroFg.opacity(0.75)
         }
     }

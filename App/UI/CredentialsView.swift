@@ -260,7 +260,11 @@ struct CredentialsView: View {
         switch i {
         case 1: return t.pwd
         case 2: return t.fp
-        case 3: return DB.listPwds(mac).filter { $0.temp }.count
+        // 2026-10-27 截图核对修复：原先用 `listPwds.filter { $0.temp }.count` ——
+        // 而「临时码」在这个 App 里是 ZOTP（锁端周期码），不是台账里带 temp 标记的密码。
+        // 台账里根本没有那种标记 ⇒ 计数恒 0 ⇒ chip 上永远没有数字
+        // （截图里「临时码」是唯一没数字的那个）。`typeCounts` 早就带了 otp 字段，直接用它。
+        case 3: return t.otp
         default: return t.all
         }
     }
@@ -1166,7 +1170,10 @@ struct CredentialsView: View {
     private var otpGenRow: some View {
         HStack(spacing: DS.Space.s) {
             // 374: 采集进行中不把码排出来, 大字模式也拿不到明文 (刻意只换文本, 不整页遮黑)
-                        Text(otpPwd)
+                // 2026-10-27 截图核对修复：`otpPwd` 初始是空串，直接 `Text("")` 会渲染成
+                // 一个**空的灰胶囊**（外层有背景样式）—— 截图里那个位置看起来像加载失败。
+                // 现在空值显示六位占位点，语义是"还没生成"而不是"坏了"。
+                Text(otpPwd.isEmpty ? "······" : otpPwd)
                 // 885 大字模式: 开关 (kf_ax_bigotp) 或双击切换, 等宽数字防跳 (231)
                 .vkFont((DB.store.getBool("kf_ax_bigotp") || otpBig) ? .largeTitle.weight(.semibold).monospacedDigit() : .title3.weight(.semibold).monospacedDigit())
                 // 342 换码微动效: 值换掉时逐位滚过去 (与 207 电量数字滚动同一个 contentTransition(.numericText()))。
@@ -1217,7 +1224,10 @@ struct CredentialsView: View {
             .accessibilityLabel("复制临时密码")
             .accessibilityHint("把当前临时密码复制到剪贴板")
         }
-        if !otpWin.isEmpty {
+        // 2026-10-27 截图核对修复：原先只判 `!otpWin.isEmpty`，而 `otpWin` 只在生成时赋值、
+        // **从不随窗口过期清空** —— 昨天生成过一次，今天打开页面仍显示昨天的失效时间
+        // （截图里显示「于 19:00 失效」而当时 6:49）。现在同时判"是否已过当前窗口"。
+        if !otpWin.isEmpty, otpWin == ZOTP.nextWindow() {
             Text("于 \(otpWin) 失效, 失效前仅可使用一次")
                 .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)

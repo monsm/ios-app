@@ -53,14 +53,28 @@ enum ZOTP {
         }
         return m
     }
-    // 30 分钟窗口失效时刻 (JS credentials.nextWindow: 分钟>30 → 下一半点, 否则本半点)
+    /// 当前 30 分钟窗口的**失效时刻**（"于 HH:MM 失效" 里的那个 HH:MM）。
+    ///
+    /// 2026-10-27 截图核对修复：原实现是
+    ///     let minutePart = m > 30 ? 0 : 30
+    ///     if m > 30 { hour += 1 }
+    /// 于是 **m == 30 这一分钟**（如 06:30）返回 `06:30` —— 那是**当前窗口自己**，
+    /// 而 06:30 这一分钟已经属于 06:00–06:30 窗口的末尾，码此刻就该失效了。
+    /// 实测（node 复刻）：6:49→07:00 ✓ · 6:30→06:30 ✗（应 07:00）· 23:45→00:00 ✓。
+    ///
+    /// 正确语义：**当前分钟 < 30 ⇒ 本小时的 :30；否则 ⇒ 下一小时的 :00**。
+    /// 即判据应为 `m >= 30`。这条是 iOS 侧自造（vendor 没有 nextWindow），无跨端口径要对。
     static func nextWindow(from now: Date = Date()) -> String {
         let cal = WeekCal.gregorian
-        let comps = cal.dateComponents([.minute], from: now)
-        let m = comps.minute ?? 0
-        let minutePart = m > 30 ? 0 : 30
+        let m = cal.component(.minute, from: now)
         var hour = cal.component(.hour, from: now)
-        if m > 30 { hour += 1 }
+        let minutePart: Int
+        if m < 30 {
+            minutePart = 30
+        } else {
+            minutePart = 0
+            hour += 1
+        }
         return String(format: "%02d:%02d", hour % 24, minutePart)
     }
 }

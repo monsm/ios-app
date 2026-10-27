@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T11:24:50.876Z",
+    "generated": "2026-10-27T11:55:15.457Z",
     "sources": [
       {
         "scout": "android-native",
@@ -605,7 +605,7 @@
           "line": 28,
           "symbol": "final class LinkSense",
           "note": "",
-          "text": "final class LinkSense: ObservableObject {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -621,7 +621,7 @@
           "line": 658,
           "symbol": "LinkPrefsView",
           "note": "",
-          "text": "}"
+          "text": ".accessibilityLabel(accessibilityText)"
         },
         {
           "platform": "ios",
@@ -629,7 +629,7 @@
           "line": 705,
           "symbol": "RSSIBars",
           "note": "",
-          "text": ".accessibilityHidden(true)"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -831,7 +831,7 @@
           "line": 1673,
           "symbol": "struct GatewayView",
           "note": "",
-          "text": "let alert = UIAlertController(title: \"删除成员\", message: msg, preferredStyle: .alert)"
+          "text": "+ \"\\n· 连锁端一起收回: 这些凭证会排上锁端删除, 到场连接后真正失效。指纹一旦在锁端删掉就无法远程补录, 只能本人到锁前重录 —— 还原时对指纹只剩本机记录。\""
         },
         {
           "platform": "apk",
@@ -863,7 +863,7 @@
           "line": 1691,
           "symbol": "VariantToggle(\"橙色灯闪烁中\")",
           "note": "",
-          "text": "// 2026-10-27 审核修复 (AUDIT-D D-57)：同 MemberCenterView —— 不再承诺假队列。"
+          "text": "reload()"
         },
         {
           "platform": "ios",
@@ -967,7 +967,7 @@
           "line": 964,
           "symbol": "struct DeviceInfoView",
           "note": "",
-          "text": "dateStyle: .medium, timeStyle: .none)"
+          "text": "return DateFormatter.localizedString(from: Date(timeIntervalSince1970: meta.batteryChangedAt),"
         },
         {
           "platform": "apk",
@@ -983,7 +983,7 @@
           "line": 982,
           "symbol": "BusyButton(title: \"重新读取\")",
           "note": "",
-          "text": "let days = Int(Date().timeIntervalSince1970 * 1000 - s.at) / 86_400_000"
+          "text": "guard let s = BatteryCare.fwSince(kc.mac, fw: fw) else { return \"首次读到后起算\" }"
         },
         {
           "platform": "ios",
@@ -991,7 +991,7 @@
           "line": 986,
           "symbol": "静音模式可在设置页切换",
           "note": "",
-          "text": "/// 未读到时统一显示 \"—\", 不把 -1 当数值直接印给用户"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -1074,7 +1074,7 @@
           "line": 1465,
           "symbol": "struct KeychainHWView",
           "note": "",
-          "text": "reload()"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -1082,7 +1082,7 @@
           "line": 1505,
           "symbol": "if app.current == nil",
           "note": "",
-          "text": "List {"
+          "text": "NavigationStack {"
         },
         {
           "platform": "ios",
@@ -1090,7 +1090,7 @@
           "line": 1522,
           "symbol": ".interactiveDismissDisabled(busy)",
           "note": "",
-          "text": "Section(\"成员 (\\(members.count))\") {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -1762,7 +1762,7 @@
           "line": 1222,
           "symbol": "quickActions",
           "note": "",
-          "text": "@Environment(\\.dismiss) private var dismiss"
+          "text": ".foregroundStyle(DS.Palette.text)"
         },
         {
           "platform": "ios",
@@ -1778,7 +1778,7 @@
           "line": 1227,
           "symbol": "let cols = AXPrefs.bigTile ? 2 : 3",
           "note": "",
-          "text": ""
+          "text": ".vkFont(.subheadline)"
         }
       ],
       "platformEvidence": {
@@ -2885,7 +2885,7 @@
           "line": 1698,
           "symbol": "TextField(\"WiFi 名称 (2.4GHz)\")",
           "note": "",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -2977,7 +2977,7 @@
           "line": 857,
           "symbol": "attentionCard",
           "note": "",
-          "text": "NavigationLink {"
+          "text": "// 2026-10-17 真机勘误「首页快捷操作点了没反应」: 记账原先是挂在 NavigationLink 的 **label**"
         },
         {
           "platform": "ios",
@@ -2985,7 +2985,7 @@
           "line": 879,
           "symbol": "attentionItems",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.text)"
+          "text": ".background(DS.Palette.accentText.opacity(0.12),"
         },
         {
           "platform": "ios",
@@ -2993,7 +2993,7 @@
           "line": 895,
           "symbol": "BatteryCare.fpCleanNeeded(mac)",
           "note": "",
-          "text": "}"
+          "text": "// ② `.overlay(.rect(...))` 里 `.rect` 会被推断成 ShapeStyle 而报"
         }
       ],
       "platformEvidence": {
@@ -3268,7 +3268,7 @@
           "line": 347,
           "symbol": "groupFilter = name; syncPageOrder()",
           "note": "",
-          "text": ".vkFont(.footnote)"
+          "text": "// 给名称更高的优先级，压缩时优先压右侧胶囊而不是锁名。"
         }
       ],
       "platformEvidence": {
@@ -3337,7 +3337,7 @@
           "line": 695,
           "symbol": "heroCard(for:isCurrent:)",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": ".overlay(Capsule().strokeBorder(DS.Palette.accent, lineWidth: 1.5))"
         },
         {
           "platform": "ios",
@@ -3345,7 +3345,7 @@
           "line": 793,
           "symbol": "HeroStat(label: \"电量\")",
           "note": "",
-          "text": "Label(\"编辑快捷操作格\", systemImage: \"square.grid.2x2\")   // 905 编辑快捷操作格"
+          "text": "againTile"
         },
         {
           "platform": "ios",
@@ -3423,7 +3423,7 @@
           "line": 732,
           "symbol": "LinkPill(state:connectMs:rssi:source:)",
           "note": "",
-          "text": "}"
+          "text": "if autoLockLeft != left { return }   // 期间重新开锁/切锁 → 让位新的倒计时"
         },
         {
           "platform": "ios",
@@ -3431,7 +3431,7 @@
           "line": 738,
           "symbol": ".onTapGesture { if isCurrent { showRssi.toggle() } }",
           "note": "",
-          "text": "Button { checks[i].toggle() } label: {"
+          "text": "// 87 排查清单: 查蓝牙 / 走近 / 查电量, 逐项可勾"
         },
         {
           "platform": "ios",
@@ -3439,7 +3439,7 @@
           "line": 756,
           "symbol": ".contextMenu { Menu(\"最近状态变化\") }",
           "note": "",
-          "text": "}"
+          "text": ".buttonStyle(PressableButtonStyle())"
         }
       ],
       "platformEvidence": {
@@ -3510,7 +3510,7 @@
           "line": 903,
           "symbol": "linkSenseCard",
           "note": "",
-          "text": "QuickPool.recordTap(\"again\")"
+          "text": "@ViewBuilder"
         },
         {
           "platform": "ios",
@@ -3518,7 +3518,7 @@
           "line": 948,
           "symbol": "// 535 同步回执",
           "note": "",
-          "text": "// ---------- 派生数据 (包3: 参数化到任意锁 — 当前页吃实时, 其余页读快照) ----------"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -3526,7 +3526,7 @@
           "line": 978,
           "symbol": "最后已知: 电量 … (缓存 …)",
           "note": "",
-          "text": "private func moduleSlot(_ id: String, delay: Int) -> some View {"
+          "text": "orderTick += 1"
         }
       ],
       "platformEvidence": {
@@ -3836,7 +3836,7 @@
           "line": 1205,
           "symbol": "if let drift = clockDrift, abs(drift) > 2",
           "note": "",
-          "text": ".buttonStyle(PressableButtonStyle())"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -3852,7 +3852,7 @@
           "line": 1207,
           "symbol": "try? await app.lock.syncTime()",
           "note": "",
-          "text": ".accessibilityAddTraits(symbol == s.name ? [.isSelected] : [])"
+          "text": ".accessibilityLabel(\"符号 \\(s.label)\")"
         }
       ],
       "platformEvidence": {
@@ -3923,7 +3923,7 @@
           "line": 1000,
           "symbol": "infoCardSection",
           "note": "",
-          "text": "@ViewBuilder"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -3931,7 +3931,7 @@
           "line": 1029,
           "symbol": "if let v = status?.verDFU, v > 0",
           "note": "",
-          "text": "}"
+          "text": "clockDrift = Int(lt - ZKProtocol.nowProtoSeconds())"
         },
         {
           "platform": "ios",
@@ -3939,7 +3939,7 @@
           "line": 1127,
           "symbol": "driftText",
           "note": "",
-          "text": "Section {"
+          "text": "// 预览: 与 Hero 卡同构的身份行, 编辑即所见"
         }
       ],
       "platformEvidence": {
@@ -4007,7 +4007,7 @@
           "line": 1045,
           "symbol": "statusSection",
           "note": "",
-          "text": "// 290 编辑入口 (与 MembersView.prompt 同款 UIAlertController 表单)"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -4015,7 +4015,7 @@
           "line": 1054,
           "symbol": "BattSpark(samples: sp)",
           "note": "",
-          "text": "var m = meta; m.batteryModel = alert.textFields?.first?.text ?? \"\""
+          "text": "alert.addAction(UIAlertAction(title: \"保存\", style: .default) { _ in"
         },
         {
           "platform": "ios",
@@ -4023,7 +4023,7 @@
           "line": 1172,
           "symbol": "capacityRow(title:used:cap:stock:)",
           "note": "",
-          "text": "}"
+          "text": ".lineLimit(3...6)"
         }
       ],
       "platformEvidence": {
@@ -4181,7 +4181,7 @@
           "line": 1526,
           "symbol": "dongleRow(_:)",
           "note": "",
-          "text": "message: \"添加后就能把密码和指纹归属到人。\","
+          "text": "title: \"还没有成员\","
         },
         {
           "platform": "ios",
@@ -4197,7 +4197,7 @@
           "line": 1540,
           "symbol": "if let st = d.stat",
           "note": "",
-          "text": "ToolbarItem(placement: .navigationBarTrailing) {"
+          "text": "// 包13: 成员中心入口 (788 总表 / 360 详情 / 家庭场景 / 聚合视图)"
         }
       ],
       "platformEvidence": {
@@ -4272,7 +4272,7 @@
           "line": 1588,
           "symbol": "confirmWriteKey(_:)",
           "note": "",
-          "text": ".frame(minHeight: DS.Hit.min)"
+          "text": "// 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。"
         },
         {
           "platform": "ios",
@@ -4304,7 +4304,7 @@
           "line": 1635,
           "symbol": "writeKey(_:)",
           "note": "",
-          "text": "var text: String = \"\""
+          "text": "let placeholder: String"
         }
       ],
       "platformEvidence": {
@@ -4538,7 +4538,7 @@
           "line": 39,
           "symbol": "btOn",
           "note": "",
-          "text": "@Published private(set) var btOn = BLEService.shared.isPoweredOn   // 69 系统蓝牙开关镜像"
+          "text": "@Published private(set) var lastRssi: Int? = nil        // 最近一次见到的该锁 RSSI (63/71)"
         },
         {
           "platform": "ios",
@@ -4546,7 +4546,7 @@
           "line": 43,
           "symbol": "btDenied",
           "note": "",
-          "text": "@Published private(set) var btDenied = false"
+          "text": "@Published private(set) var lastReconnectAt: Date = Date.distantPast"
         },
         {
           "platform": "ios",
@@ -4554,7 +4554,7 @@
           "line": 58,
           "symbol": "openBluetoothSettings()",
           "note": "",
-          "text": "func openBluetoothSettings() {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -4638,7 +4638,7 @@
           "line": 537,
           "symbol": "coldStartScan()",
           "note": "",
-          "text": "DB.store.get([StateHop].self, \"kf_link_hist\") ?? []"
+          "text": "/// 272 连接保持时长: 会话至今的分钟数 (异常久时 UI 提示重连)"
         },
         {
           "platform": "ios",
@@ -4646,7 +4646,7 @@
           "line": 567,
           "symbol": "kf_link_env / kf_link_envms",
           "note": "",
-          "text": "func enterPage() {"
+          "text": "preconnectTask = Task { @MainActor [weak self] in"
         },
         {
           "platform": "ios",
@@ -4654,7 +4654,7 @@
           "line": 580,
           "symbol": "envConclusion()",
           "note": "",
-          "text": "/// 所以这里显式标注而不是加 @MainActor —— 加了会让所有后台读点编译不过。"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -4723,7 +4723,7 @@
           "line": 370,
           "symbol": "startDeadWatch()",
           "note": "",
-          "text": ""
+          "text": "DB.store.set(\"kf_wd_heals\", DB.store.getInt(\"kf_wd_heals\", 0) + 1)"
         },
         {
           "platform": "ios",
@@ -4731,7 +4731,7 @@
           "line": 380,
           "symbol": "deadbeatCheck()",
           "note": "",
-          "text": "struct FailKind {"
+          "text": "// 已删: WakeReason 的四分法 (蓝牙未开/权限/不在广播范围/握手超时) 与在用的两处重合 ——"
         },
         {
           "platform": "ios",
@@ -4739,7 +4739,7 @@
           "line": 385,
           "symbol": "idle > 600 && 间隔 > 300",
           "note": "",
-          "text": "/// 加字段要全仓改签初始化器 (DiagKit:560 记过这件事), 这里零调用点改动。"
+          "text": "// 后者覆盖面更大 (还含 信号弱/回连轮次/会话重协商)。留第三份同表只会让三处漂移。"
         },
         {
           "platform": "ios",
@@ -4747,7 +4747,7 @@
           "line": 404,
           "symbol": "kf_wd_heals + 1",
           "note": "",
-          "text": "let rcTexts = StatusParser.rcMsg.filter { $0.key != 0 && $0.value.count >= 4 }.map { $0.value }"
+          "text": "func classifyFailure(_ error: Error) -> FailKind {"
         }
       ],
       "platformEvidence": {
@@ -4823,7 +4823,7 @@
           "line": 419,
           "symbol": "struct FailKind",
           "note": "",
-          "text": "let ble = BLEService.shared"
+          "text": "return FailKind(name: \"协议类\", hint: \"会话/指令异常 — 到诊断页跑一键体检, 或重置重配该锁\")"
         },
         {
           "platform": "ios",
@@ -4831,7 +4831,7 @@
           "line": 425,
           "symbol": "icon 计算属性",
           "note": "",
-          "text": "let target = mac.lowercased()"
+          "text": "// ---------- 扫描取 RSSI (63/71 数据源) ----------"
         },
         {
           "platform": "ios",
@@ -4839,7 +4839,7 @@
           "line": 435,
           "symbol": "classifyFailure",
           "note": "",
-          "text": "guard let a = ZKProtocol.parseAdv(adv.advertisHex), let m = a.macRaw else { return false }"
+          "text": "var found: BLEAdvDevice?"
         }
       ],
       "platformEvidence": {
@@ -4968,7 +4968,7 @@
           "line": 135,
           "symbol": "func preconnect()",
           "note": "",
-          "text": ""
+          "text": "/// 276 常用锁 (按本机缓存里的日志行数排): 预连只盯它们, 不是把全部锁都扫一遍"
         },
         {
           "platform": "ios",
@@ -4976,7 +4976,7 @@
           "line": 142,
           "symbol": "scan(timeoutMs: 6000)",
           "note": "",
-          "text": "do {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -4984,7 +4984,7 @@
           "line": 152,
           "symbol": "信号围栏拦截",
           "note": "",
-          "text": "let fence = LinkSense.rssiFence"
+          "text": "if let rssi = dev?.rssi { updateRssi(rssi) }"
         },
         {
           "platform": "ios",
@@ -4992,7 +4992,7 @@
           "line": 168,
           "symbol": "近场轻提醒",
           "note": "",
-          "text": "if !Task.isCancelled { await preconnectOthers() }"
+          "text": "let t0 = CFAbsoluteTimeGetCurrent()"
         },
         {
           "platform": "ios",
@@ -5000,7 +5000,7 @@
           "line": 174,
           "symbol": "DiagOps.record 预握手",
           "note": "",
-          "text": "BleTelemetry.recordEvent(\"预握手完成 \\(ms)ms\", ok: true)"
+          "text": "// 276: 同一次节律里顺手把其余常用锁也扫一遍 —— 不另开定时器 (预握手本身就是节律入口),"
         }
       ],
       "platformEvidence": {
@@ -5081,7 +5081,7 @@
           "line": 95,
           "symbol": "preconnectOthers(limit:timeoutMs:)",
           "note": "",
-          "text": "func preconnectOthers(limit: Int = 2, timeoutMs: Int = 3500) async {"
+          "text": "/// 冷启动即扫 (134) + 信号围栏自动预握手 (93): 只定位可见锁并记录 RSSI, 越过阈值才预热;"
         },
         {
           "platform": "ios",
@@ -5089,7 +5089,7 @@
           "line": 117,
           "symbol": "saveRssi 只写信号档",
           "note": "",
-          "text": "hits.insert(mac)"
+          "text": "var hits = Set<String>()"
         },
         {
           "platform": "ios",
@@ -5097,7 +5097,7 @@
           "line": 127,
           "symbol": "warmLocks",
           "note": "",
-          "text": "/// 276 常用锁 (按本机缓存里的日志行数排): 预连只盯它们, 不是把全部锁都扫一遍"
+          "text": "lockSvc.log(\"info\", \"多锁预连: 收到 \\(String(mac.prefix(6))) RSSI \\(adv.rssi)\")   // 276 多锁预连"
         }
       ],
       "platformEvidence": {
@@ -5167,7 +5167,7 @@
           "line": 258,
           "symbol": "ladderSeconds",
           "note": "",
-          "text": "// 于是自动开锁的武装位 (feedRssi) 收不到新数, 表现就是用户报的两条:"
+          "text": "let app = self.app"
         },
         {
           "platform": "ios",
@@ -5175,7 +5175,7 @@
           "line": 290,
           "symbol": "autoReconnectTick",
           "note": "",
-          "text": "AppState.hostRef?.showToast(\"回到锁身边\")   // 132 回到锁身边"
+          "text": "BleTelemetry.recordAttempt(mac: mac, ok: true, reason: \"回连成功 (第 \\(kind + 1) 轮)\")"
         },
         {
           "platform": "ios",
@@ -5183,7 +5183,7 @@
           "line": 315,
           "symbol": "pendingCount > 0 才回连",
           "note": "",
-          "text": "connectMs = ms"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -5191,7 +5191,7 @@
           "line": 338,
           "symbol": "失败 attempt 递增封顶",
           "note": "",
-          "text": "}"
+          "text": "guard deadWatchTask == nil else { return }"
         }
       ],
       "platformEvidence": {
@@ -5266,7 +5266,7 @@
           "line": 185,
           "symbol": "func refresh()",
           "note": "",
-          "text": "/// 进页/回前台静默预热 (95/135): 把 Hero 卡三态、信号格、耗时标签刷新到最新; 绝不动手开锁。"
+          "text": "let kind = classifyFailure(error)"
         },
         {
           "platform": "ios",
@@ -5274,7 +5274,7 @@
           "line": 189,
           "symbol": "已连接直接 markReady",
           "note": "",
-          "text": "guard let mac = app?.currentMac, !mac.isEmpty, app?.unlockState == .idle else { return }"
+          "text": "reconnectAttempt += 1"
         }
       ],
       "platformEvidence": {
@@ -5337,7 +5337,7 @@
           "line": 213,
           "symbol": "onPreconnectDone()",
           "note": "",
-          "text": "// 2026-10-26 精简：resync（到场/回前台自动补发队列）已删 —— 队列功能整套移除。"
+          "text": "} catch {"
         },
         {
           "platform": "ios",
@@ -5345,7 +5345,7 @@
           "line": 221,
           "symbol": "resync(mac:from:)",
           "note": "",
-          "text": "}"
+          "text": "// 2026-10-26 精简：resync（到场/回前台自动补发队列）已删 —— 队列功能整套移除。"
         },
         {
           "platform": "ios",
@@ -5353,7 +5353,7 @@
           "line": 242,
           "symbol": "lastReceipt",
           "note": "",
-          "text": "// 用户口径 2026-10-17: **后台不许扫锁** (不耗手机射频, 也不逼锁一直广播费它的电)。"
+          "text": "func setSceneActive(_ active: Bool) {"
         },
         {
           "platform": "ios",
@@ -5361,7 +5361,7 @@
           "line": 253,
           "symbol": "applyQueueItem → CredentialOrg.sendQueued",
           "note": "",
-          "text": "// 注意: 早期写过的「静置满 3s」(F2' 停留判定) **已从实现删除** —— 现在只按 RSSI 回差武装,"
+          "text": "BLEService.shared.stopScan()"
         }
       ],
       "platformEvidence": {
@@ -5435,7 +5435,7 @@
           "line": 705,
           "symbol": "struct RSSIBars",
           "note": "",
-          "text": ".accessibilityHidden(true)"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -5504,7 +5504,7 @@
           "line": 625,
           "symbol": "startupPreconnect(mac:)",
           "note": "",
-          "text": "Image(systemName: icon)"
+          "text": "/// 64 三态链路胶囊 (hero 渐变专用白字变体): 已连接(绿)/握手中(白+转)/未连接(灰白)。"
         },
         {
           "platform": "ios",
@@ -5512,7 +5512,7 @@
           "line": 636,
           "symbol": "enterPage()",
           "note": "",
-          "text": "// 98 冷热标识: 已连接时标注来源 — 预热/回连(\"已预热\") vs 用户触发的即连, 解释快慢差异"
+          "text": "// （原还有\"灰阶预览\"开关 AXFlags.grayPreview，2026-10-26 随该开关一起删除。）"
         }
       ],
       "platformEvidence": {
@@ -5582,7 +5582,7 @@
           "line": 75,
           "symbol": "var linkState",
           "note": "",
-          "text": "var linkState: LinkState {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -5590,7 +5590,7 @@
           "line": 591,
           "symbol": "holdMinutes",
           "note": "",
-          "text": "var body: some View {"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -5742,7 +5742,7 @@
           "line": 1419,
           "symbol": "BusyButton 保存档案",
           "note": "",
-          "text": "DB.removeGateway(g.mac)"
+          "text": "confirmTitle: \"删除\") {"
         },
         {
           "platform": "apk",
@@ -5758,7 +5758,7 @@
           "line": 1448,
           "symbol": "DB.saveKeychain",
           "note": "",
-          "text": "running = true"
+          "text": "guard !running else { return }"
         }
       ],
       "platformEvidence": {
@@ -7029,7 +7029,7 @@
           "line": 1268,
           "symbol": "if DB.listFps(app.currentMac).isEmpty",
           "note": "",
-          "text": "} else if failed {"
+          "text": ".padding(.horizontal, DS.Space.l)"
         },
         {
           "platform": "ios",
@@ -7037,7 +7037,7 @@
           "line": 1270,
           "symbol": "quickDestination(\"addFp\")",
           "note": "",
-          "text": ".vkFont(.footnote)"
+          "text": ".axGlass(DS.Radius.control)"
         }
       ],
       "platformEvidence": {
@@ -7175,7 +7175,7 @@
           "line": 68,
           "symbol": "static var rssiFence",
           "note": "",
-          "text": "/// 93 信号围栏的唯一读点：默认值只写这一处。原先三处各写 -70（预握手判定 / 设置页档位 / 圆盘 129 暂缓），"
+          "text": "// 这函数原来只写一行日志 —— 横幅与无障碍标签都在承诺\"点按前往系统设置\", 那是个不存在的热区。"
         },
         {
           "platform": "ios",
@@ -7183,7 +7183,7 @@
           "line": 151,
           "symbol": "fence 判定",
           "note": "",
-          "text": "}"
+          "text": "let dev = try await scan(mac: mac, timeoutMs: 6000)"
         },
         {
           "platform": "ios",
@@ -7191,7 +7191,7 @@
           "line": 673,
           "symbol": "Picker 信号围栏",
           "note": "",
-          "text": "case .connecting: return \"正在敲门…\""
+          "text": "private var redundancyIcon: String {"
         },
         {
           "platform": "ios",
@@ -7199,7 +7199,7 @@
           "line": 685,
           "symbol": "只影响自动预握手",
           "note": "",
-          "text": "text + (rssi.map { \" 信号\" + LinkSense.rssiLabel(LinkSense.rssiLevel($0)) } ?? \"\")"
+          "text": "case .connecting: return \"正在敲门…\""
         }
       ],
       "platformEvidence": {
@@ -7274,7 +7274,7 @@
           "line": 492,
           "symbol": "func scan(mac:timeoutMs:)",
           "note": "",
-          "text": "firstSeenMs = Int(Date().timeIntervalSince(t0) * 1000)"
+          "text": "try await ble.startScan(allowDuplicates: p.allowDuplicates, timeoutMs: p.timeoutMs)"
         },
         {
           "platform": "ios",
@@ -7282,7 +7282,7 @@
           "line": 504,
           "symbol": "300ms 轮询 + 取消判据",
           "note": "",
-          "text": "let seen = ble.allDiscovered().count"
+          "text": "for adv in ble.allDiscovered() {"
         },
         {
           "platform": "ios",
@@ -7290,7 +7290,7 @@
           "line": 519,
           "symbol": "noteScannedRssi",
           "note": "",
-          "text": "static func envConclusion() -> String {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -7298,7 +7298,7 @@
           "line": 525,
           "symbol": "saveRssi / rssiFor",
           "note": "",
-          "text": "if n >= 8 { return \"环境中度 (近一次扫到 \\(n) 台 BLE 设备\\(t)) — 可用, 干扰稍多时可贴得更近\" }"
+          "text": "/// 128: 首台可见耗时 (毫秒); -1 = 整窗一台没见"
         }
       ],
       "platformEvidence": {
@@ -7824,7 +7824,7 @@
           "line": 1025,
           "symbol": "UnlockDial(state:phase:connected:bleReady:…)",
           "note": "",
-          "text": "VStack(alignment: .leading, spacing: DS.Space.xs) {"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -10511,7 +10511,7 @@
           "line": 1000,
           "symbol": "fullScreenCover",
           "note": "",
-          "text": "}"
+          "text": ".padding(.vertical, DS.Space.s)"
         }
       ],
       "platformEvidence": {
@@ -15679,7 +15679,7 @@
           "line": 894,
           "symbol": ".keepingScreenAwake(busy)",
           "note": "",
-          "text": ".accessibilityElement(children: .combine)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -16122,7 +16122,7 @@
           "line": 1626,
           "symbol": "batchBar",
           "note": "",
-          "text": "alert.addAction(UIAlertAction(title: confirmTitle, style: .destructive) { _ in action() })"
+          "text": "// 破坏性确认: 取消 / 标红确认"
         },
         {
           "platform": "ios",
@@ -16194,7 +16194,7 @@
           "line": 1229,
           "symbol": "credRow",
           "note": "",
-          "text": "guard busyKey == nil else { return false }"
+          "text": "// （截图里显示「于 19:00 失效」而当时 6:49）。现在同时判\"是否已过当前窗口\"。"
         },
         {
           "platform": "ios",
@@ -16202,7 +16202,7 @@
           "line": 1246,
           "symbol": "credRow",
           "note": "状态胶囊",
-          "text": "// 空串不许当「生成成功」：原先会一路把空值写进 otpPwd、复制进剪贴板、再震一下「成功」，"
+          "text": "UINotificationFeedbackGenerator().notificationOccurred(.error)"
         },
         {
           "platform": "ios",
@@ -16210,7 +16210,7 @@
           "line": 1272,
           "symbol": "credRow",
           "note": "副行",
-          "text": "Text(\"添加第一条密码\")"
+          "text": "private var emptyHint: some View {"
         }
       ],
       "platformEvidence": {
@@ -17194,7 +17194,7 @@
           "line": 1450,
           "symbol": "credMenu",
           "note": "setFpAlarm",
-          "text": "private func doDeletePwd(_ p: LedgerPwd) async {"
+          "text": "private func deletePwd(_ p: LedgerPwd) {"
         },
         {
           "platform": "ios",
@@ -17202,7 +17202,7 @@
           "line": 1256,
           "symbol": "credRow",
           "note": "预警胶囊",
-          "text": "otpWin = win"
+          "text": "// 空串不许当「生成成功」：原先会一路把空值写进 otpPwd、复制进剪贴板、再震一下「成功」，"
         }
       ],
       "platformEvidence": {
@@ -17264,7 +17264,7 @@
           "line": 931,
           "symbol": "guard presses.count >= 8",
           "note": "",
-          "text": "}"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         },
         {
           "platform": "ios",
@@ -17280,7 +17280,7 @@
           "line": 940,
           "symbol": "if Task.isCancelled { presses = []; return }",
           "note": "",
-          "text": "private var firmwareText: String {"
+          "text": "private var meta: LockMeta { LockArchive.meta(kc?.mac ?? \"\") }"
         },
         {
           "platform": "ios",
@@ -17288,7 +17288,7 @@
           "line": 944,
           "symbol": "app.lock.fpConfirm(batch, validFrom:…)",
           "note": "",
-          "text": "}"
+          "text": "return fw.isEmpty ? \"未知\" : fw"
         }
       ],
       "platformEvidence": {
@@ -17564,7 +17564,7 @@
           "line": 897,
           "symbol": "progressText",
           "note": "",
-          "text": "capacityRow(title: \"密码\", used: pwdUsed, cap: pwdCap, stock: status?.pwdStock ?? app.snapshot?.pwdStock ?? -1)"
+          "text": "LabeledRow(\"锁内时间\", status?.lockTime.map { ProtoTime.localStr($0) } ?? \"—\")"
         },
         {
           "platform": "ios",
@@ -17580,7 +17580,7 @@
           "line": 923,
           "symbol": "app.lock.fpStart(times: 8, onPress:)",
           "note": "",
-          "text": "// 289 耗材备件提醒: 电量偏低时提示备一枚电池 (包4: 读数同 pctText 走采样)"
+          "text": ".foregroundStyle(DS.Palette.text)"
         }
       ],
       "platformEvidence": {
@@ -17744,7 +17744,7 @@
           "line": 1346,
           "symbol": "credRow",
           "note": "整行 disabled",
-          "text": "alert.addAction(UIAlertAction(title: \"作废旧密码\", style: .destructive) { _ in"
+          "text": "alert.addAction(UIAlertAction(title: \"知道了\", style: .cancel))"
         }
       ],
       "platformEvidence": {
@@ -17882,7 +17882,7 @@
           "line": 374,
           "symbol": "headerToolbar",
           "note": "",
-          "text": "app.showToast(\"已改用「\\(search)」重搜, 命中的是名称/备注/别名/归属\")   // 532 已改用"
+          "text": "// 那一格是称呼 (relation) 而不是姓名, 所以直接塞姓名会搜不到 TA 名下凭证 (假重搜)。"
         },
         {
           "platform": "ios",
@@ -17890,7 +17890,7 @@
           "line": 389,
           "symbol": "headerToolbar",
           "note": "选择按钮",
-          "text": ".keyboardShortcut(\"f\", modifiers: .command)"
+          "text": ".padding(.vertical, DS.Space.xs)"
         },
         {
           "platform": "ios",
@@ -17898,7 +17898,7 @@
           "line": 396,
           "symbol": "headerToolbar",
           "note": "Menu 溢出",
-          "text": "}"
+          "text": ".onSubmit {"
         }
       ],
       "platformEvidence": {
@@ -17966,7 +17966,7 @@
           "line": 691,
           "symbol": "searchSection",
           "note": "搜索框",
-          "text": ".overlay(alignment: .topLeading) {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -17974,7 +17974,7 @@
           "line": 709,
           "symbol": "filteredResults",
           "note": "",
-          "text": "Button { toggleSel(hit) } label: {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -17982,7 +17982,7 @@
           "line": 686,
           "symbol": "searchSection",
           "note": "兜底两按钮所在块",
-          "text": "app.showToast(\"已复制\")"
+          "text": ".accessibilityActions {"
         }
       ],
       "platformEvidence": {
@@ -18051,7 +18051,7 @@
           "line": 449,
           "symbol": "headerToolbar",
           "note": "segCount",
-          "text": "return pwds"
+          "text": "let credArchived: Set<Int> = []   // 2026-10-26: 归档已删"
         },
         {
           "platform": "ios",
@@ -18059,7 +18059,7 @@
           "line": 462,
           "symbol": "segChip",
           "note": "",
-          "text": "let ia = byIdx[a.alias, default: 9999]"
+          "text": "let order = CredentialOrg.seq(mac)[\"p\"] ?? []"
         },
         {
           "platform": "ios",
@@ -18067,7 +18067,7 @@
           "line": 492,
           "symbol": "countForSeg",
           "note": "",
-          "text": ""
+          "text": "// ---------- 指纹段 ----------"
         }
       ],
       "platformEvidence": {
@@ -18135,7 +18135,7 @@
           "line": 1320,
           "symbol": "credRow",
           "note": "swipeActions",
-          "text": "f.locale = Locale(identifier: \"en_US_POSIX\")"
+          "text": "// 833: 第一次浮出时多附一句防误删说明 (HintOnce 之后不再出现)。"
         },
         {
           "platform": "ios",
@@ -18143,7 +18143,7 @@
           "line": 1329,
           "symbol": "credRow",
           "note": "!sorting 才出破坏性",
-          "text": "// 2026-10-27 审核修复 (AUDIT-D D-39)：**明文密码不再进 Toast**。"
+          "text": "f.dateFormat = \"MM-dd\""
         },
         {
           "platform": "ios",
@@ -18151,7 +18151,7 @@
           "line": 1333,
           "symbol": "credRow",
           "note": "改期",
-          "text": "let alert = UIAlertController(title: \"密码 #\\(p.alias)\","
+          "text": "private func shortDate(_ ts: Double) -> String {"
         }
       ],
       "platformEvidence": {
@@ -21282,7 +21282,7 @@
           "line": 406,
           "symbol": "headerToolbar",
           "note": "toggle + setGroupMode",
-          "text": "private var filteredResults: [CredHit] {"
+          "text": "var fp: LedgerFp?"
         }
       ],
       "platformEvidence": {
@@ -21344,7 +21344,7 @@
           "line": 1314,
           "symbol": "credRow",
           "note": "双击复制",
-          "text": "// 2026-10-26 精简：stopUndoTimer 已删（undoBar 移除后无撤销条可停）。"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -21352,7 +21352,7 @@
           "line": 1296,
           "symbol": "credRow",
           "note": "VoiceOver 拷贝动作",
-          "text": "do {"
+          "text": "/// 提出来挂列表固定位 (listBody), 空台账时也只由这一块渲染一次。"
         }
       ],
       "platformEvidence": {
@@ -21415,7 +21415,7 @@
           "line": 1246,
           "symbol": "credRow",
           "note": "pwdState == 2",
-          "text": "// 空串不许当「生成成功」：原先会一路把空值写进 otpPwd、复制进剪贴板、再震一下「成功」，"
+          "text": "UINotificationFeedbackGenerator().notificationOccurred(.error)"
         },
         {
           "platform": "ios",
@@ -21423,7 +21423,7 @@
           "line": 1248,
           "symbol": "credRow",
           "note": "isEarlyExpired",
-          "text": "// 这道 guard 必须排在 saveOtpIdx 之前：失败的这一次不许占用窗口内的 100 个名额。"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -21431,7 +21431,7 @@
           "line": 1255,
           "symbol": "credRow",
           "note": "预警指纹",
-          "text": "otpPwd = pwd"
+          "text": "// `generate` 只在算得出码时才返回值 (钥匙串长度、MAC 形状任一不过就返回空串，见 ZOTP.swift)。"
         }
       ],
       "platformEvidence": {
@@ -25529,7 +25529,7 @@
           "line": 842,
           "symbol": "recordsTabContent",
           "note": "父级：Tab 第 3 页 + RecordsView().id(app.currentMac)",
-          "text": "RootView.registerHost(app)   // 包2: LinkSense 宿主注册 + 回连/巡检循环"
+          "text": "// 冷启动必跑（原入口的触发条件\"appUnlocked 变为 true\"在删掉启动门禁后永不成立）。"
         },
         {
           "platform": "ios",
@@ -25553,7 +25553,7 @@
           "line": 355,
           "symbol": "recordsChrome",
           "note": "NavigationStack + 全部 sheet/alert 挂载点",
-          "text": "reversed = false"
+          "text": "sel = \"\""
         }
       ],
       "platformEvidence": {
@@ -25646,7 +25646,7 @@
           "line": 376,
           "symbol": "recordsChrome",
           "note": "父级：sheet(item: $detailRec) 传 displayedRecs",
-          "text": ".alert(\"行备注 (最多 60 字)\", isPresented: Binding("
+          "text": "NavigationStack {"
         },
         {
           "platform": "ios",
@@ -25847,7 +25847,7 @@
           "line": 759,
           "symbol": "filterChips",
           "note": "摘要 + 展开面板",
-          "text": ".padding(.vertical, DS.Space.m)"
+          "text": "} label: {"
         },
         {
           "platform": "ios",
@@ -25863,7 +25863,7 @@
           "line": 914,
           "symbol": "filterSummary",
           "note": "摘要文案",
-          "text": "@ViewBuilder"
+          "text": "return \"未连接门锁 — 以下为本地缓存（读取于 \" + Self.stamp.string(from: at) + \"）。连接锁后点「重新读取」刷新。\""
         },
         {
           "platform": "ios",
@@ -25871,7 +25871,7 @@
           "line": 899,
           "symbol": "filterChips",
           "note": "复位按钮",
-          "text": "}"
+          "text": "DB.readLogs(mac).compactMap { $0.lockTimeStr.isEmpty ? nil : String($0.lockTimeStr.prefix(10)) }.min()"
         }
       ],
       "platformEvidence": {
@@ -25965,7 +25965,7 @@
           "line": 433,
           "symbol": "searchBar",
           "note": "占位文案与绑定",
-          "text": "} label: {"
+          "text": "Button {"
         },
         {
           "platform": "ios",
@@ -25989,7 +25989,7 @@
           "line": 345,
           "symbol": "onChange(searchText)",
           "note": "562 边输入边过滤",
-          "text": "// 所以点成员条跳过来什么也没发生。落点在 landMember —— 与点成员 chip 走同一条过滤链。"
+          "text": "sel = f"
         }
       ],
       "platformEvidence": {
@@ -26081,7 +26081,7 @@
           "line": 250,
           "symbol": "recordsToolbar",
           "note": "入口：更多菜单",
-          "text": "@ToolbarContentBuilder"
+          "text": ".scrollPosition(id: $scrolledRow)"
         }
       ],
       "platformEvidence": {
@@ -26153,7 +26153,7 @@
           "line": 374,
           "symbol": "recordsChrome",
           "note": "入口：filters.alarmKinds 绑定",
-          "text": ".sheet(isPresented: $showAdd) { AddDeviceView() }"
+          "text": "@ViewBuilder"
         }
       ],
       "platformEvidence": {
@@ -26219,7 +26219,7 @@
           "line": 306,
           "symbol": "onChange(pending*)",
           "note": "六个深链入口",
-          "text": "// @State 连同 filters 一起重读 (见 LockKeeperApp 里 credentialsTabContent 那段注释)。"
+          "text": "// 2026-10-15 走查: 只存\"与开场值不同\"的组合。唯一的理由是 onRecordsAppear 里那次"
         },
         {
           "platform": "ios",
@@ -26235,7 +26235,7 @@
           "line": 2143,
           "symbol": "onRecordsAppear",
           "note": "进页消费顺序",
-          "text": ".foregroundStyle(DS.Palette.accentText)"
+          "text": "} else {"
         }
       ],
       "platformEvidence": {
@@ -26659,7 +26659,7 @@
           "line": 1140,
           "symbol": "copyLastWeekDigest",
           "note": "摘要 + CSV 拼接",
-          "text": ".listRowInsets(EdgeInsets(top: 0, leading: DS.Space.l, bottom: 0, trailing: DS.Space.l))"
+          "text": ".frame(maxWidth: .infinity, alignment: .leading)"
         },
         {
           "platform": "ios",
@@ -26667,7 +26667,7 @@
           "line": 248,
           "symbol": "recordsToolbar",
           "note": "入口：更多菜单",
-          "text": "/// 记录页右上角工具栏 (从 body 内联的 .toolbar 里抽出: 该表达式报 type-check 超时)。"
+          "text": "// 闪一下的高亮 (flashKey) 才是保证用户认得出\"是这条\"的那一半; 滚动本身若落在"
         },
         {
           "platform": "ios",
@@ -26675,7 +26675,7 @@
           "line": 1146,
           "symbol": "copyLastWeekDigest",
           "note": "toast 文案",
-          "text": "detailRec = rec"
+          "text": ".contentShape(Rectangle())"
         }
       ],
       "platformEvidence": {
@@ -26745,7 +26745,7 @@
           "line": 1151,
           "symbol": "dropWatchSection",
           "note": "判定与文案",
-          "text": "}"
+          "text": "detailRec = rec"
         },
         {
           "platform": "ios",
@@ -26753,7 +26753,7 @@
           "line": 1164,
           "symbol": "dropWatchSection",
           "note": "其余超阈值日",
-          "text": "}"
+          "text": "app.requestRoute(.credentials)   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过 377 门禁"
         },
         {
           "platform": "ios",
@@ -26761,7 +26761,7 @@
           "line": 963,
           "symbol": "secondaryRowsDisclosure",
           "note": "落点：低频区",
-          "text": "let shownEvents = g.rows.count"
+          "text": "// 为什么不用 `g.rows`: 那是筛过、又被 598 截过的一页 —— 原来这句文案写的正是 g.rows.count,"
         }
       ],
       "platformEvidence": {
@@ -27050,7 +27050,7 @@
           "line": 2181,
           "symbol": "fetch",
           "note": "拉取主流程",
-          "text": "}"
+          "text": "switch kind {"
         },
         {
           "platform": "ios",
@@ -27058,7 +27058,7 @@
           "line": 2199,
           "symbol": "while page < 20",
           "note": "翻页上限 20 页 / 100 条",
-          "text": "ForEach(wins, id: \\.rec.id) { w in"
+          "text": "if wins.isEmpty {"
         },
         {
           "platform": "ios",
@@ -27208,7 +27208,7 @@
           "line": 1176,
           "symbol": "lastYearTodayRow",
           "note": "展示行",
-          "text": "} label: {"
+          "text": ".contextMenu {"
         },
         {
           "platform": "ios",
@@ -27216,7 +27216,7 @@
           "line": 1191,
           "symbol": "lastYearTodayCount",
           "note": "MM-dd 命中计数",
-          "text": "app.pendingCredNavMac = r.rowMac.isEmpty ? mac : r.rowMac"
+          "text": "Label(\"复制行标识\", systemImage: \"number\")   // 761 复制行标识"
         },
         {
           "platform": "ios",
@@ -27224,7 +27224,7 @@
           "line": 964,
           "symbol": "secondaryRowsDisclosure",
           "note": "落点：低频区",
-          "text": "let dayFull = dayFullCount[g.key] ?? shownEvents"
+          "text": "// 于是每设一次过滤, \"全天\"就被改小一次 (筛出 3 条却写着\"全天 3 条\")。"
         }
       ],
       "platformEvidence": {
@@ -27332,7 +27332,7 @@
           "line": 2008,
           "symbol": "runningRow",
           "note": "骨架屏三行 + reduceMotion 处理",
-          "text": "// map 里的 $0 是解包后的 String, 它没有 .name ⇒ \"value of type 'String' has no member 'name'\";"
+          "text": "if let p = pws.first(where: { !$0.temp && (r.whoName == nil || $0.owner == r.whoName) }) { return \"pwd:\" + String(p.alias) }"
         },
         {
           "platform": "ios",
@@ -27340,7 +27340,7 @@
           "line": 1941,
           "symbol": "emptyHint",
           "note": "两种空态",
-          "text": "filled.append(DayGroup(key: \"gap-\" + dk, rows: [],"
+          "text": "filled.append(DayGroup(key: \"gap-\" + groups[i + 1].key, rows: [],"
         }
       ],
       "platformEvidence": {
@@ -27433,7 +27433,7 @@
           "line": 2051,
           "symbol": "memberChips",
           "note": "chip 生成规则",
-          "text": "private var visibleRowCount: Int {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -27441,7 +27441,7 @@
           "line": 2078,
           "symbol": "chip",
           "note": "点击写 sel + filters.member",
-          "text": "List {"
+          "text": "struct AlarmKindsSheet: View {"
         },
         {
           "platform": "ios",
@@ -27457,7 +27457,7 @@
           "line": 2065,
           "symbol": "chip(\"__care\")",
           "note": "1028 保养分组",
-          "text": "return key"
+          "text": "if key == Self.dayKey(yesterday) { return \"昨天\" }"
         }
       ],
       "platformEvidence": {
@@ -27612,7 +27612,7 @@
           "line": 371,
           "symbol": "OutWinSheet",
           "note": "越界文案",
-          "text": "NavigationStack {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -27677,7 +27677,7 @@
           "line": 1085,
           "symbol": "rangePickSheet",
           "note": "按天勾选 UI",
-          "text": ""
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         },
         {
           "platform": "ios",
@@ -27685,7 +27685,7 @@
           "line": 1123,
           "symbol": "copyRangeCSV",
           "note": "CSV 生成与转义",
-          "text": ".font(.system(size: DS.Icon.xs, weight: .semibold))"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -27693,7 +27693,7 @@
           "line": 1115,
           "symbol": "copyRangeCSV",
           "note": "复制按钮禁用条件",
-          "text": "}"
+          "text": "// 告警用菱形警示点, 普通用圆点 — 形状本身即第二信息通道, 不只靠颜色"
         },
         {
           "platform": "ios",
@@ -27701,7 +27701,7 @@
           "line": 249,
           "symbol": "recordsToolbar",
           "note": "入口：更多菜单",
-          "text": "/// 工具栏内容是 ToolbarContent ⇒ 用 @ToolbarContentBuilder。"
+          "text": "// 相邻行 (组头高度/回收布局都会影响)，验收单里写明那不算数据缺陷。"
         }
       ],
       "platformEvidence": {
@@ -27837,7 +27837,7 @@
           "line": 707,
           "symbol": "scopeRow",
           "note": "分段控件 + 换锁菜单",
-          "text": "Text(secondaryRowsSummary)"
+          "text": "} label: {"
         },
         {
           "platform": "ios",
@@ -27845,7 +27845,7 @@
           "line": 333,
           "symbol": "onChange(scope)",
           "note": "切范围重置全部检索态",
-          "text": "}"
+          "text": "landRecordKey(k)"
         },
         {
           "platform": "ios",
@@ -27853,7 +27853,7 @@
           "line": 392,
           "symbol": "macs",
           "note": "范围 → 锁列表",
-          "text": "// 580/584: 把**当前显示顺序**交给详情卡，上下条与邻近横滑才走在用户刚才看到的那份结果里"
+          "text": "// 565 告警类型多选: 选中集直接写回 filters (走既有 onChange(of: filters) → applyFilter)"
         },
         {
           "platform": "ios",
@@ -28009,7 +28009,7 @@
           "line": 1297,
           "symbol": "daySection",
           "note": "日组渲染",
-          "text": "// 558 零结果救援 —— 顺带堵住一条**说谎的空态**: 这里原来无脑显示\"还没有记录，去重新读取\"，"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -28154,7 +28154,7 @@
           "line": 1369,
           "symbol": "daySection.header",
           "note": "组头 HStack",
-          "text": "chip(MemberHub.visitorId, \"访客\")   // 793 访客"
+          "text": "chip(\"\", \"全部\")"
         },
         {
           "platform": "ios",
@@ -28162,7 +28162,7 @@
           "line": 1373,
           "symbol": "alarmDays.contains",
           "note": "581 未处置蓝点",
-          "text": "}"
+          "text": "if rows.contains(where: { $0.whoId == nil && $0.whoKind == \"temp\" }) {"
         },
         {
           "platform": "ios",
@@ -28170,7 +28170,7 @@
           "line": 1382,
           "symbol": "damageDays.contains",
           "note": "596 含防撬/试错",
-          "text": "Text(totalCount == rows.count ? \"共 \\(totalCount) 条\" : \"\\(rows.count)/\\(totalCount) 条\")"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -28178,7 +28178,7 @@
           "line": 1397,
           "symbol": "g.dayKind",
           "note": "594 日型色带",
-          "text": "// 字重固定: 改字重会改变字形宽度, 胶囊随之跳变"
+          "text": "// 不需要额外分支"
         },
         {
           "platform": "ios",
@@ -28186,7 +28186,7 @@
           "line": 1404,
           "symbol": "g.holiday / isMakeupWorkday",
           "note": "671 节假日与补班",
-          "text": ".foregroundStyle(on ? DS.Palette.onAccent : DS.Palette.text)"
+          "text": ".lineLimit(1)"
         }
       ],
       "platformEvidence": {
@@ -28279,7 +28279,7 @@
           "line": 620,
           "symbol": "resultCount",
           "note": "计数文案",
-          "text": "// 676/672: 深夜区间的\"可调\"此前只写在注释里, 界面上没有任何入口 (两个键只有读没有写)。"
+          "text": ".accessibilityLabel(\"筛选: \\(filterSummary), 点按\\(filtersExpanded ? \"收起\" : \"展开\")全部筛选项\")"
         },
         {
           "platform": "ios",
@@ -28287,7 +28287,7 @@
           "line": 667,
           "symbol": "activeFilterCount",
           "note": "条件数口径",
-          "text": ".contentShape(Rectangle())"
+          "text": "reversed = false"
         },
         {
           "platform": "ios",
@@ -28295,7 +28295,7 @@
           "line": 637,
           "symbol": "resultCount",
           "note": "重置按钮",
-          "text": "}"
+          "text": "Picker(\"终点\", selection: Binding(get: { RecordSearch.nightTo },"
         }
       ],
       "platformEvidence": {
@@ -28486,7 +28486,7 @@
           "line": 1036,
           "symbol": "struct TailgateView",
           "note": "",
-          "text": "Text(\"开锁后自动上锁等待时长\")"
+          "text": "var vkBody: some View {"
         },
         {
           "platform": "apk",
@@ -29332,7 +29332,7 @@
           "line": 575,
           "symbol": "Button { showBackup = true } label: { Label(\"备份与恢复\") }",
           "note": "",
-          "text": ".fixedSize(horizontal: false, vertical: true)"
+          "text": "set: { DB.store.set(\"kf_calias_display\", $0) }))"
         },
         {
           "platform": "ios",
@@ -33449,7 +33449,7 @@
           "line": 629,
           "symbol": "appearanceSection",
           "note": "",
-          "text": "app.showToast(\"胁迫码已设置\")"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -33465,7 +33465,7 @@
           "line": 828,
           "symbol": "footer: 主题、品牌色（六套）、密度、圆角 …",
           "note": "",
-          "text": "// 措辞刻意避开\"清除/删除\"—— 三种策略都**不删**已存的会话过滤，只是决定进页面时从哪开始。"
+          "text": "Button(\"取消自定义，回到六套预设\") { app.setCustomAccent(0) }"
         },
         {
           "platform": "ios",
@@ -33473,7 +33473,7 @@
           "line": 936,
           "symbol": "resetAppearance()",
           "note": "",
-          "text": "Text(\"累计开锁\").foregroundStyle(DS.Palette.text)"
+          "text": "app.showToast(\"已恢复默认外观\")"
         },
         {
           "platform": "ios",
@@ -33689,7 +33689,7 @@
           "line": 1278,
           "symbol": "struct LockProfileView",
           "note": "",
-          "text": "var m = LockArchive.meta(kc.mac)"
+          "text": "DB.saveKeychain(kc2)"
         },
         {
           "platform": "ios",
@@ -33697,7 +33697,7 @@
           "line": 1298,
           "symbol": "预览 Section",
           "note": "",
-          "text": "@State private var confirmed = false"
+          "text": "@Environment(\\.dismiss) private var dismiss"
         },
         {
           "platform": "ios",
@@ -33705,7 +33705,7 @@
           "line": 1423,
           "symbol": "昵称不能为空。档案只存本机, 不写入门锁。",
           "note": "",
-          "text": ""
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -33928,7 +33928,7 @@
           "line": 945,
           "symbol": "aboutSection",
           "note": "",
-          "text": "Text(\"构建与主题\").foregroundStyle(DS.Palette.text)"
+          "text": "Spacer(minLength: DS.Space.m)"
         },
         {
           "platform": "ios",
@@ -33944,7 +33944,7 @@
           "line": 1003,
           "symbol": "aboutFooterText",
           "note": "",
-          "text": "Text(String(ch))"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -34012,7 +34012,7 @@
           "line": 582,
           "symbol": "applockSection",
           "note": "",
-          "text": "Button { showBackup = true } label: { Label(\"备份与恢复\", systemImage: \"externaldrive\") }"
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         },
         {
           "platform": "ios",
@@ -34020,7 +34020,7 @@
           "line": 610,
           "symbol": "alert message: 4 位以上纯数字 (随机键位需要数字键盘 …)",
           "note": "",
-          "text": "title: DB.hasDuressCode() ? \"更改胁迫码\" : \"设置胁迫码\","
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -34028,7 +34028,7 @@
           "line": 617,
           "symbol": "guard !f1.isEmpty, f1 == f2 else { showToast(\"两次输入不一致\") }",
           "note": "",
-          "text": "alert.addAction(UIAlertAction(title: \"清除胁迫码\", style: .destructive) { _ in"
+          "text": "let alert = UIAlertController("
         }
       ],
       "platformEvidence": {
@@ -34174,7 +34174,7 @@
           "line": 525,
           "symbol": "Button { showMembers = true } label: { Label(\"成员管理（含成员中心）\") }",
           "note": "",
-          "text": "}"
+          "text": "Text(\"家人与钥匙\")"
         },
         {
           "platform": "ios",
@@ -34182,7 +34182,7 @@
           "line": 532,
           "symbol": "Label(\"未归属记录认领\")",
           "note": "",
-          "text": "NavigationLink {"
+          "text": "credCareSection"
         }
       ],
       "platformEvidence": {
@@ -34471,7 +34471,7 @@
           "line": 573,
           "symbol": "toolsSection",
           "note": "",
-          "text": ".vkFont(.caption)"
+          "text": "VariantToggle(\"成员别名显示\", isOn: Binding("
         },
         {
           "platform": "ios",
@@ -34479,7 +34479,7 @@
           "line": 575,
           "symbol": "Button { showBackup = true } label: { Label(\"备份与恢复\") }",
           "note": "",
-          "text": ".fixedSize(horizontal: false, vertical: true)"
+          "text": "set: { DB.store.set(\"kf_calias_display\", $0) }))"
         },
         {
           "platform": "ios",
@@ -34487,7 +34487,7 @@
           "line": 578,
           "symbol": "NavigationLink(\"诊断与运行日志\") { DiagnosticsView() }",
           "note": "",
-          "text": ""
+          "text": "Text(\"凭证整理\")"
         }
       ],
       "platformEvidence": {
@@ -34771,7 +34771,7 @@
           "line": 1009,
           "symbol": "mainTabsChrome",
           "note": "",
-          "text": "// 2026-10-17 拍板 A: 「到点自动落锁」随启动门禁一起删 —— 现在没有锁屏页可回,"
+          "text": "/// 135 前后台切换收尾 —— 2026-10-13 run 60 从 body 的内联 .onChange 闭包里抽出来:"
         },
         {
           "platform": "ios",
@@ -34779,7 +34779,7 @@
           "line": 1014,
           "symbol": ".task { bootstrapOnce() }",
           "note": "",
-          "text": "// 897 四季图标: 默认关。开着也只在\"季节真的换了\"时对齐一次 (年-季记号)，不每次回前台打扰"
+          "text": "LinkSense.shared.setSceneActive(phase == .active)"
         },
         {
           "platform": "ios",
@@ -34787,7 +34787,7 @@
           "line": 1022,
           "symbol": "2026-10-16 抽出注释",
           "note": "",
-          "text": "// 原来由 .onChange(of: app.appUnlocked) 在\"锁落下\"时收 —— 但启动门禁删掉后"
+          "text": "} else if phase == .background {"
         },
         {
           "platform": "ios",
@@ -34795,7 +34795,7 @@
           "line": 1027,
           "symbol": "static func bootstrapOnce",
           "note": "",
-          "text": "} else {"
+          "text": "AutoOpenController.shared.onBackground()"
         },
         {
           "platform": "ios",
@@ -34803,7 +34803,7 @@
           "line": 1032,
           "symbol": "CrashGuard.checkAbnormalExit",
           "note": "",
-          "text": "// AUTOOPEN 不该继续武装并喂传感器); 锁定计时与崩溃标记的取舍见上。"
+          "text": "// 且比\"锁落下\"更容易成立（后者那个事件已经不存在）。"
         }
       ],
       "platformEvidence": {
@@ -34929,7 +34929,7 @@
           "line": 886,
           "symbol": "Tab 设备 value 0",
           "note": "",
-          "text": ""
+          "text": "// 伪装态同步到 AppState：全仓 12 处 decoyMode 判据靠它生效"
         },
         {
           "platform": "ios",
@@ -34937,7 +34937,7 @@
           "line": 888,
           "symbol": ".badge(handshakeDoneAway)",
           "note": "",
-          "text": "@ViewBuilder"
+          "text": ".onChange(of: lock.unlocked) { _, u in"
         },
         {
           "platform": "ios",
@@ -34945,7 +34945,7 @@
           "line": 891,
           "symbol": "if !app.guestAreaLocked",
           "note": "",
-          "text": "// 包16: 外观种子变更时整树重建 — 配色/密度即时全局生效; withAnimation 提供淡入淡出 (idea 21)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -34953,7 +34953,7 @@
           "line": 896,
           "symbol": "Tab 凭证 value 1",
           "note": "",
-          "text": "// 2026-10-27 审核修复 (AUDIT-B 2.6)：**接回两项系统无障碍支持**。"
+          "text": "private var rootCore: some View {"
         }
       ],
       "platformEvidence": {
@@ -35058,7 +35058,7 @@
           "line": 856,
           "symbol": "topBanners",
           "note": "",
-          "text": "}"
+          "text": "//"
         },
         {
           "platform": "ios",
@@ -35066,7 +35066,7 @@
           "line": 858,
           "symbol": "VStack 顺序",
           "note": "",
-          "text": "private func bootstrapOnce() { RootView.bootstrapOnce(app) }"
+          "text": "// 它是静默的（不弹权限、不弹面容、不 toast），失败也只是安静退出 ——"
         },
         {
           "platform": "ios",
@@ -35074,7 +35074,7 @@
           "line": 860,
           "symbol": "if !LinkSense.shared.btOn",
           "note": "",
-          "text": ""
+          "text": "//"
         },
         {
           "platform": "ios",
@@ -35082,7 +35082,7 @@
           "line": 866,
           "symbol": "BackupStudio.selfCheckWarning",
           "note": "",
-          "text": "@ViewBuilder"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -35090,7 +35090,7 @@
           "line": 869,
           "symbol": "if let t = app.toast",
           "note": "",
-          "text": "// 用户决策：**只在冷启动**要求输密码（不打断日常切前台）。"
+          "text": "rootChrome"
         }
       ],
       "platformEvidence": {
@@ -35183,7 +35183,7 @@
           "line": 1019,
           "symbol": ".onChange(of: scenePhase)",
           "note": "",
-          "text": "// 221 退后台收尾: 记会话时长并清崩溃标记 (CrashGuard 的判定就依赖这一步)"
+          "text": "AutoOpenController.shared.onForeground(mac: app.currentMac)"
         },
         {
           "platform": "ios",
@@ -35253,7 +35253,7 @@
           "line": 971,
           "symbol": "if versionTaps >= 10, !eggShown { eggShown = true; … }",
           "note": "",
-          "text": "// 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.5pt (< 44)。"
+          "text": "HStack(spacing: DS.Space.s) {"
         },
         {
           "platform": "ios",
@@ -35261,7 +35261,7 @@
           "line": 989,
           "symbol": "LabeledRow(\"构建\", …)",
           "note": "",
-          "text": ""
+          "text": ".vkFont(.caption)"
         },
         {
           "platform": "ios",
@@ -35269,7 +35269,7 @@
           "line": 990,
           "symbol": "LabeledRow(\"遥测\", \"无 · 全程离线\")",
           "note": "",
-          "text": "private var aboutFooterText: String {"
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         }
       ],
       "platformEvidence": {
@@ -35340,7 +35340,7 @@
           "line": 766,
           "symbol": "Button(\"套用儿童友好外观预设\") { app.applyFriendlyPreset() }",
           "note": "",
-          "text": "set: { app.setRowHeight($0) })) {"
+          "text": "Text(\"宽松\").tag(\"relaxed\")"
         },
         {
           "platform": "ios",
@@ -35356,7 +35356,7 @@
           "line": 775,
           "symbol": "Picker(\"记录页开场过滤\", selection:)",
           "note": "",
-          "text": "Text(\"紧凑\").tag(\"tight\")"
+          "text": "Text(\"紧凑 (只留名称与状态)\").tag(\"\")"
         },
         {
           "platform": "ios",
@@ -35364,7 +35364,7 @@
           "line": 936,
           "symbol": "resetAppearance()",
           "note": "",
-          "text": "Text(\"累计开锁\").foregroundStyle(DS.Palette.text)"
+          "text": "app.showToast(\"已恢复默认外观\")"
         },
         {
           "platform": "ios",
@@ -35474,7 +35474,7 @@
           "line": 790,
           "symbol": "ForEach(QuickPool.all) { a in VariantToggle(a.label, …) }",
           "note": "",
-          "text": "note(\"只换主控卡上电量那几个数字的字体。\")"
+          "text": "// 这里切的正是 902 原句\"Hero 卡电量数字圆体/默认体可选\"的那两处。"
         },
         {
           "platform": "ios",
@@ -35490,7 +35490,7 @@
           "line": 804,
           "symbol": "VariantToggle(\"常用动作排到前面\")",
           "note": "",
-          "text": "Text(\"3 条\").tag(3)"
+          "text": "get: { DS.HeroStats.shows(\"lockclock\") },"
         }
       ],
       "platformEvidence": {
@@ -35556,7 +35556,7 @@
           "line": 586,
           "symbol": "Button(\"关闭本机密码\", role: .destructive) { disablePasscode() }",
           "note": "",
-          "text": "private var applockSection: some View {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -35564,7 +35564,7 @@
           "line": 599,
           "symbol": "disablePasscode()",
           "note": "",
-          "text": "Text(DB.hasDuressCode()"
+          "text": "Button(\"关闭本机密码\", role: .destructive) { disablePasscode() }"
         },
         {
           "platform": "ios",
@@ -35572,7 +35572,7 @@
           "line": 601,
           "symbol": "关闭后，查看密码内容与导出备份不再需要本机验证",
           "note": "",
-          "text": ": \"冷启动需输密码。可另设一个胁迫码：被胁迫时输入它，App 进入空壳模式（门能开、数据看不见），不报警不暴露。\")"
+          "text": "Button(\"设置本机密码\") { setPasscode() }"
         }
       ],
       "platformEvidence": {
@@ -36479,7 +36479,7 @@
           "line": 1411,
           "symbol": "Section(\"电池档案\")",
           "note": "",
-          "text": ".contentShape(Rectangle())"
+          "text": ".frame(minHeight: DS.Hit.min)"
         },
         {
           "platform": "ios",
@@ -36487,7 +36487,7 @@
           "line": 1419,
           "symbol": "BusyButton(title: \"保存档案\", …, disabled: trimmed.isEmpty)",
           "note": "",
-          "text": "DB.removeGateway(g.mac)"
+          "text": "confirmTitle: \"删除\") {"
         },
         {
           "platform": "ios",
@@ -36495,7 +36495,7 @@
           "line": 1443,
           "symbol": "save()",
           "note": "",
-          "text": "}"
+          "text": "Task { await self.reboot(g) }"
         }
       ],
       "platformEvidence": {
@@ -36563,7 +36563,7 @@
           "line": 1347,
           "symbol": "VariantToggle(\"在翻页里隐藏这把锁\")",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.danger)"
+          "text": ".vkFont(.caption)"
         },
         {
           "platform": "ios",
@@ -36633,7 +36633,7 @@
           "line": 1325,
           "symbol": "Section(\"身份\")",
           "note": "",
-          "text": ".submitLabel(.done)"
+          "text": "SecureField(\"WiFi 密码\", text: $pwd)"
         },
         {
           "platform": "ios",
@@ -36641,7 +36641,7 @@
           "line": 1337,
           "symbol": "TextField(\"分组名 (如 家用 / 仓库 / 办公, 留空 = 未分组)\")",
           "note": "",
-          "text": "} icon: {"
+          "text": "Text(s).fixedSize(horizontal: false, vertical: true)"
         },
         {
           "platform": "ios",
@@ -36649,7 +36649,7 @@
           "line": 1341,
           "symbol": "TextField(\"备注 (换电历史/安装细节/门锁脾气…)\", axis: .vertical)",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.ok)"
+          "text": ".vkFont(.caption)"
         }
       ],
       "platformEvidence": {
@@ -36716,7 +36716,7 @@
           "line": 1356,
           "symbol": "Section(\"符号\")",
           "note": "",
-          "text": ".navigationTitle(\"智能网关\")"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -36724,7 +36724,7 @@
           "line": 1383,
           "symbol": "Section(\"色标\")",
           "note": "",
-          "text": "StatusPill(text: g.netState == 1 ? \"已联网\" : \"未联网\","
+          "text": ".foregroundStyle(DS.Palette.text)"
         },
         {
           "platform": "ios",
@@ -36732,7 +36732,7 @@
           "line": 1323,
           "symbol": "符号与色标同步用于 Hero 卡、切换胶囊与记录行的时间线标签。",
           "note": "",
-          "text": ".submitLabel(.next)"
+          "text": ".autocorrectionDisabled()"
         }
       ],
       "platformEvidence": {
@@ -36957,7 +36957,7 @@
           "line": 959,
           "symbol": "25 底栏注释",
           "note": "",
-          "text": "HStack(spacing: DS.Space.xs) {"
+          "text": ".sensoryFeedback(.selection, trigger: app.tabSelection)   // Tab 切换的轻触感"
         },
         {
           "platform": "ios",
@@ -36965,7 +36965,7 @@
           "line": 964,
           "symbol": ".safeAreaInset(edge: .bottom)",
           "note": "",
-          "text": "Spacer(minLength: 0)"
+          "text": "/// 包8/448 启动自检黄条 —— 2026-10-13 run 64 从 body 内联块抽出: 该表达式报 type-check 超时。"
         },
         {
           "platform": "ios",
@@ -36973,7 +36973,7 @@
           "line": 966,
           "symbol": "if tabSelection != 0",
           "note": "",
-          "text": "// 2026-10-15 走查 §4.3: 按钮说\"去诊断\", 原来只把人放到"
+          "text": "HStack(spacing: DS.Space.xs) {"
         },
         {
           "platform": "ios",
@@ -36981,7 +36981,7 @@
           "line": 971,
           "symbol": "Label 开锁",
           "note": "",
-          "text": ".vkFont(.caption, weight: .medium)"
+          "text": "Spacer(minLength: 0)"
         },
         {
           "platform": "ios",
@@ -36989,7 +36989,7 @@
           "line": 981,
           "symbol": "if app.guestAreaLocked",
           "note": "",
-          "text": "@ViewBuilder"
+          "text": ".padding(.horizontal, DS.Space.l)"
         }
       ],
       "platformEvidence": {
@@ -37285,7 +37285,7 @@
           "line": 869,
           "symbol": "if let t = app.toast",
           "note": "",
-          "text": "// 用户决策：**只在冷启动**要求输密码（不打断日常切前台）。"
+          "text": "rootChrome"
         }
       ],
       "platformEvidence": {
@@ -38200,7 +38200,7 @@
           "line": 1113,
           "symbol": ".onChange(of: app.appUnlocked)",
           "note": "",
-          "text": "// `card()`（新语法层的主表面，同一句 `.shadow(color: .cardElevation, radius: 12, y: 4)`）。"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -38208,7 +38208,7 @@
           "line": 1116,
           "symbol": "restoreLastTab + applyPendingRoute",
           "note": "",
-          "text": "static var cardElevation: Color {"
+          "text": "/// iOS 上 surface/canvas 的明度差已经足够表达层级, 描边反而是重复劳动。"
         }
       ],
       "platformEvidence": {
@@ -38475,7 +38475,7 @@
           "line": 1073,
           "symbol": "rootCore",
           "note": "",
-          "text": "struct PressFeedback: ButtonStyle {"
+          "text": ".accessibilityAddTraits(.isStaticText)"
         },
         {
           "platform": "ios",
@@ -38483,7 +38483,7 @@
           "line": 1078,
           "symbol": ".id(app.appearanceSeed)",
           "note": "",
-          "text": ".opacity(configuration.isPressed ? 0.9 : 1)"
+          "text": "// （fullScreenCover on showGuestGate）已随访客通道一起移除，视图本身零引用。"
         },
         {
           "platform": "ios",
@@ -38491,7 +38491,7 @@
           "line": 1080,
           "symbol": ".dynamicTypeSize",
           "note": "",
-          "text": "}"
+          "text": "struct PressFeedback: ButtonStyle {"
         },
         {
           "platform": "ios",
@@ -38499,7 +38499,7 @@
           "line": 1082,
           "symbol": ".saturation",
           "note": "",
-          "text": ""
+          "text": "configuration.label"
         },
         {
           "platform": "ios",
@@ -38507,7 +38507,7 @@
           "line": 1086,
           "symbol": ".environment(legibilityWeight)",
           "note": "",
-          "text": "/// 滚动手势、VoiceOver 激活这些系统语义弄丢 (全仓 40 处调用点都在吃这些语义)。"
+          "text": ".animation(DS.Motion.quick, value: configuration.isPressed)"
         }
       ],
       "platformEvidence": {
@@ -38594,7 +38594,7 @@
           "line": 859,
           "symbol": "69 蓝牙直通条注释",
           "note": "",
-          "text": ""
+          "text": "// 真到用户按圆盘时 ensureConnected 仍然会兜底重试，不改变任何既有语义。"
         },
         {
           "platform": "ios",
@@ -38602,7 +38602,7 @@
           "line": 860,
           "symbol": "if !LinkSense.shared.btOn",
           "note": "",
-          "text": ""
+          "text": "//"
         },
         {
           "platform": "ios",
@@ -38610,7 +38610,7 @@
           "line": 861,
           "symbol": "BLEOffBanner(denied:)",
           "note": "",
-          "text": "var body: some View {"
+          "text": "// 时序上它和首页渲染并行：用户看到界面的那一刻，链路往往已经建好了。"
         },
         {
           "platform": "ios",
@@ -38618,7 +38618,7 @@
           "line": 862,
           "symbol": "openBluetoothSettings()",
           "note": "",
-          "text": "rootChrome"
+          "text": "LinkSense.shared.startupPreconnect(mac: app.currentMac)"
         }
       ],
       "platformEvidence": {
@@ -38693,7 +38693,7 @@
           "line": 865,
           "symbol": "448 注释",
           "note": "",
-          "text": "/// 主界面。首启引导已随本轮删减移除, 启动不再分形态 —— 这里只返回主界面本体。"
+          "text": "private func bootstrapOnce() { RootView.bootstrapOnce(app) }"
         },
         {
           "platform": "ios",
@@ -38701,7 +38701,7 @@
           "line": 866,
           "symbol": "if let w = BackupStudio.selfCheckWarning",
           "note": "",
-          "text": "@ViewBuilder"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -38709,7 +38709,7 @@
           "line": 867,
           "symbol": "selfCheckBanner(w)",
           "note": "",
-          "text": "private var rootGroup: some View {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -38880,7 +38880,7 @@
           "line": 1027,
           "symbol": "bootstrapOnce",
           "note": "",
-          "text": "} else {"
+          "text": "AutoOpenController.shared.onBackground()"
         },
         {
           "platform": "ios",
@@ -38888,7 +38888,7 @@
           "line": 1028,
           "symbol": "guard !launchBootstrapped",
           "note": "",
-          "text": "// .inactive: 只收起过期的快捷条, **不**记锁定到期时刻 (否则反复下拉通知中心可无限顺延宽限)。"
+          "text": "// 2026-10-26: 访客区/临时授权在这里收回。"
         },
         {
           "platform": "ios",
@@ -38896,7 +38896,7 @@
           "line": 1029,
           "symbol": "launchBootstrapped = true",
           "note": "",
-          "text": "// 但崩溃标记仍要清 —— 从任务切换器强退时进程多在 .inactive 被 SIGKILL,"
+          "text": "// 原来由 .onChange(of: app.appUnlocked) 在\"锁落下\"时收 —— 但启动门禁删掉后"
         }
       ],
       "platformEvidence": {
@@ -39249,7 +39249,7 @@
           "line": 834,
           "symbol": "凭证 Tab 挂载",
           "note": "",
-          "text": "// 2026-10-26: 两件事从已失效的 .onChange(of: app.appUnlocked) 搬来这里。"
+          "text": "guard !app.launchBootstrapped else { return }"
         },
         {
           "platform": "ios",
@@ -39257,7 +39257,7 @@
           "line": 843,
           "symbol": "记录 Tab 挂载",
           "note": "",
-          "text": "LinkSense.shared.coldStartScan()   // 包2/134 冷启动先扫描 (定位可见锁, 不连接)"
+          "text": "app.restoreLastTab()          // 161: 回到上次停留的 Tab（内部见 pendingRoute 就避让）"
         },
         {
           "platform": "ios",
@@ -39265,7 +39265,7 @@
           "line": 849,
           "symbol": "设置 Tab 挂载",
           "note": "",
-          "text": "//"
+          "text": "RootView.registerHost(app)   // 包2: LinkSense 宿主注册 + 回连/巡检循环"
         }
       ],
       "platformEvidence": {
@@ -39342,7 +39342,7 @@
           "line": 917,
           "symbol": "26 长按菜单注释",
           "note": "",
-          "text": "// 它是退后台时盖一层不透明幕, 回前台不要求任何验证 —— 与\"需要面容才能看\"的直觉不符,"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -39350,7 +39350,7 @@
           "line": 927,
           "symbol": ".contextMenu(forSelectionType: Int.self)",
           "note": "",
-          "text": "//   · 解锁后 runSelfCheck397() —— 本机库体自检（异常才出声）"
+          "text": ".onOpenURL { url in app.handleDeepLink(url) }"
         },
         {
           "platform": "ios",
@@ -39358,7 +39358,7 @@
           "line": 929,
           "symbol": "case 0",
           "note": "",
-          "text": "// 2026-10-17 拍板删掉启动门禁后 init() 里 `appUnlocked = true`，此后它**再也不会变**，"
+          "text": "// 280 起点: 只在采集开着时记时间戳 (关着就等于零成本)。深链/意图造成的切换同样会记一次,"
         },
         {
           "platform": "ios",
@@ -39366,7 +39366,7 @@
           "line": 932,
           "symbol": "只看今天的记录",
           "note": "",
-          "text": "// 第三件随\"手动锁/到点自动锁\"一起去掉了（那条路径已不存在，没有\"锁落下\"这个事件）。"
+          "text": "// 2026-10-26: 这里原本是 `.onChange(of: app.appUnlocked)`，承接三件事："
         },
         {
           "platform": "ios",
@@ -39374,7 +39374,7 @@
           "line": 937,
           "symbol": "凭证回收站",
           "note": "",
-          "text": "// 168 状态变化播报: 只报稳定态 (就绪/断开), \"握手中\"不打扰;"
+          "text": "// 于是这个 onChange 一次都不触发 —— 三件事全部静默失效（\"回到上次停留\"与自检一直没跑）。"
         }
       ],
       "platformEvidence": {
@@ -39509,7 +39509,7 @@
           "line": 889,
           "symbol": "377 注释",
           "note": "",
-          "text": "private var rootCore: some View {"
+          "text": "app.appUnlocked = u"
         },
         {
           "platform": "ios",
@@ -39517,7 +39517,7 @@
           "line": 891,
           "symbol": "if !app.guestAreaLocked",
           "note": "",
-          "text": "// 包16: 外观种子变更时整树重建 — 配色/密度即时全局生效; withAnimation 提供淡入淡出 (idea 21)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -39604,7 +39604,7 @@
           "line": 824,
           "symbol": "deviceTabContent",
           "note": "",
-          "text": "/// 全都不跑，而且不报错。这就是本仓\"删/改名留悬空引用\"那一族的新成员：**换容器留孤儿副作用**。"
+          "text": "// 抽成独立方法后 body 只剩一行调用, 类型检查负担从整个 body 缩到一个函数。"
         },
         {
           "platform": "ios",
@@ -39612,7 +39612,7 @@
           "line": 827,
           "symbol": ".keyboardShortcut(\"1\")",
           "note": "",
-          "text": "guard !app.launchBootstrapped else { return }"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -39620,7 +39620,7 @@
           "line": 836,
           "symbol": ".keyboardShortcut(\"2\")",
           "note": "",
-          "text": "app.restoreLastTab()          // 161: 回到上次停留的 Tab（内部见 pendingRoute 就避让）"
+          "text": "// 547/758 异常退出档案: 这四个函数此前全库零调用, 整条链路从未跑过。"
         },
         {
           "platform": "ios",
@@ -39628,7 +39628,7 @@
           "line": 845,
           "symbol": ".keyboardShortcut(\"3\")",
           "note": "",
-          "text": "//"
+          "text": "let selfCheckBad = app.runSelfCheck397()"
         },
         {
           "platform": "ios",
@@ -39636,7 +39636,7 @@
           "line": 851,
           "symbol": ".keyboardShortcut(\"4\")",
           "note": "",
-          "text": "// 它是静默的（不弹权限、不弹面容、不 toast），失败也只是安静退出 ——"
+          "text": "// 2026-10-18 冷启动预连接（用户口径：\"打开 app 1 秒内做完一遍\"）。"
         }
       ],
       "platformEvidence": {
@@ -57579,7 +57579,7 @@
           "line": 633,
           "symbol": "DB.store.getString(\"kf_theme\")",
           "note": "",
-          "text": "})"
+          "text": "guard !f1.isEmpty, f1 == f2 else { app.showToast(\"两次输入不一致\"); return }"
         },
         {
           "platform": "ios",
@@ -57587,7 +57587,7 @@
           "line": 1451,
           "symbol": "m.grp = LockArchive.normalizedGroup(grp)",
           "note": "",
-          "text": "defer { running = false }"
+          "text": "error = \"\""
         },
         {
           "platform": "ios",
@@ -57595,7 +57595,7 @@
           "line": 549,
           "symbol": "DB.store.set(\"kf_ccred_quota\", $0)",
           "note": "",
-          "text": "}"
+          "text": "MobileKeyView()"
         }
       ],
       "platformEvidence": {
@@ -58379,7 +58379,7 @@
           "line": 1248,
           "symbol": "credRow",
           "note": "提前失效胶囊",
-          "text": "// 这道 guard 必须排在 saveOtpIdx 之前：失败的这一次不许占用窗口内的 100 个名额。"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -58456,7 +58456,7 @@
           "line": 875,
           "symbol": "orderedPwds",
           "note": "读 seq[p]",
-          "text": ".frame(minHeight: DS.Hit.min)"
+          "text": "ForEach([\"已过期\", \"同成员\", \"同类型\"], id: \\.self) { s in"
         },
         {
           "platform": "ios",
@@ -58464,7 +58464,7 @@
           "line": 1076,
           "symbol": "commitGroupMove",
           "note": "写 seq",
-          "text": "} else {"
+          "text": "app.flashReceipt(\"已写入本机\")   // 508 已写入本机"
         },
         {
           "platform": "ios",
@@ -58472,7 +58472,7 @@
           "line": 889,
           "symbol": "manualIndex",
           "note": "重复别名防 trap",
-          "text": ".fixedSize(horizontal: false, vertical: true)"
+          "text": "// 350 点按行选一条"
         }
       ],
       "platformEvidence": {
@@ -59274,7 +59274,7 @@
           "line": 169,
           "symbol": "DS.Haptics.tick 调用点",
           "note": "",
-          "text": "if dev.rssi >= -55, let host = AppState.hostRef, !(CareSchedule.quietOn && CareSchedule.isQuietHour()) {   // 99 近场轻提醒 (274 免扰时段静默)"
+          "text": "try await lockSvc.ensureConnected(mac: mac)"
         },
         {
           "platform": "ios",
@@ -59298,7 +59298,7 @@
           "line": 327,
           "symbol": "success 结果触感",
           "note": "",
-          "text": "// 本层做\"长挂起\"兜底:"
+          "text": "objectWillChange.send()"
         }
       ],
       "platformEvidence": {
@@ -60657,7 +60657,7 @@
           "line": 842,
           "symbol": "DB.clearFailEvents",
           "note": "按锁清空",
-          "text": "out.append([esc(r.dayKey), esc(r.time), esc(r.title), esc(who), esc(r.lockName)].joined(separator: \",\"))"
+          "text": "let rows = allRows.filter { rangeSel.contains($0.dayKey) }"
         }
       ],
       "platformEvidence": {
@@ -60730,7 +60730,7 @@
           "line": 289,
           "symbol": "onChange(filters)",
           "note": "差异才落盘",
-          "text": "mainList"
+          "text": "@ViewBuilder"
         },
         {
           "platform": "ios",
@@ -60738,7 +60738,7 @@
           "line": 2148,
           "symbol": "onRecordsAppear",
           "note": "每次进页重取（908）",
-          "text": ".foregroundStyle(DS.Palette.text)"
+          "text": ".foregroundStyle(DS.Palette.accentText)"
         },
         {
           "platform": "ios",
@@ -60746,7 +60746,7 @@
           "line": 527,
           "symbol": "RecordSearch.namedViews",
           "note": "kf_rviews 读点",
-          "text": ""
+          "text": "// 2026-10-26 精简：「失败筛选」说明与「清空本机失败标记」已删（用户确认）。"
         },
         {
           "platform": "ios",
@@ -60754,7 +60754,7 @@
           "line": 611,
           "symbol": "saveNamedView",
           "note": "命名视图写入",
-          "text": ".frame(minHeight: DS.Hit.min)"
+          "text": "Image(systemName: filtersExpanded ? \"chevron.up\" : \"chevron.down\")"
         }
       ],
       "platformEvidence": {
@@ -60837,7 +60837,7 @@
           "line": 1212,
           "symbol": "syncStampKey",
           "note": "kf_logsync_ 键格式",
-          "text": "Text(r.title)"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -60853,7 +60853,7 @@
           "line": 2171,
           "symbol": "loadFromCache",
           "note": "HotCache 首屏读",
-          "text": ".dsScreenBackground()"
+          "text": "Text(\"活跃凭证排序\")   // 574 活跃凭证排序"
         },
         {
           "platform": "ios",
@@ -60861,7 +60861,7 @@
           "line": 1071,
           "symbol": "firstDayFooter",
           "note": "300 条上限判据",
-          "text": "// 593 日界收尾标注: 交代\"这一天的边界在哪\"，核对当天有没有拉漏时不用再自己数末条。"
+          "text": ".frame(maxWidth: .infinity, alignment: .leading)"
         }
       ],
       "platformEvidence": {
@@ -60937,7 +60937,7 @@
           "line": 1764,
           "symbol": "RecordOverlay.note",
           "note": "读备注（行备注弹窗）",
-          "text": ".padding(.vertical, DS.Space.xs)"
+          "text": ".vkFont(.caption)"
         },
         {
           "platform": "ios",
@@ -60953,7 +60953,7 @@
           "line": 1771,
           "symbol": "RecordOverlay.setNote",
           "note": "写备注",
-          "text": "// lookupRec 恒 nil, 时间线行点下去没有反应 (第一百八十九批核出的默认路径断供)。"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -60961,7 +60961,7 @@
           "line": 1781,
           "symbol": "RecordOverlay.toggleFlag",
           "note": "旗标写入",
-          "text": "// 770 全部锁: Rec 池 → RowVM (行首带锁名小标签, 575 越界窗口小字)"
+          "text": "// 写成 `let` 在 Swift 里是\"给已初始化的常量再赋值\", 编译错误。"
         },
         {
           "platform": "ios",
@@ -61051,7 +61051,7 @@
           "line": 1236,
           "symbol": "credRow",
           "note": "kf_row_h",
-          "text": "UINotificationFeedbackGenerator().notificationOccurred(.error)"
+          "text": "/// 返回值 = 是否真生成 (首张按钮拿它决定回执; 各失败支自己弹原因, 不静默)。"
         },
         {
           "platform": "ios",
