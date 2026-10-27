@@ -340,7 +340,9 @@ enum CredentialOrg {
 
 
     // ---------- 361 停用原因回溯 (逐条存, 由 313 的必填原因采集) ----------
-    // 台账在停用后就没有这条凭证了, 详情卡无从打开 —— 所以回显落在回收站行 (CredBinView)。
+// 台账在停用后就没有这条凭证了, 详情卡无从打开。
+// 2026-10-27 审核修复 (AUDIT-B 2.8 #7)：原注释说「回显落在回收站行 (CredBinView)」，
+// 而 `CredBinView` 已随回收站整套移除（全仓 0 命中）。现在回显只落在本页的 Toast。
     struct DisableMark: Codable {
         var label: String    // 313 四选一的中文标签
         var at: Double

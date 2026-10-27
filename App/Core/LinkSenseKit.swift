@@ -370,7 +370,10 @@ final class LinkSense: ObservableObject {
 
     // ---------- 130 唤醒失败细分 ----------
     // 已删: WakeReason 的四分法 (蓝牙未开/权限/不在广播范围/握手超时) 与在用的两处重合 ——
-    // 日志侧分类走下面的 classifyFailure (536), 人话提示走 DiagnosticsView.friendlyFailReason (133),
+// 日志侧分类走下面的 classifyFailure (536)。
+// 2026-10-27 审核修复 (AUDIT-B 2.8 #5)：原注释说「人话提示走 DiagnosticsView.friendlyFailReason」，
+// 而 `DiagnosticsView.swift` 已随十三轮精简整文件删除（全仓 0 命中）。
+// 现在人话提示走本文件的 `classifyFailure` + `AXTools.announceConnectFail`。
     // 后者覆盖面更大 (还含 信号弱/回连轮次/会话重协商)。留第三份同表只会让三处漂移。
 
     // ---------- 536 失败三分类 (设备 / 蓝牙 / 协议) — 本地词表, 不改协议层 ----------

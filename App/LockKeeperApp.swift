@@ -6,7 +6,10 @@ import UserNotifications
 @main
 struct LockKeeperApp: App {
     @StateObject private var app = AppState()
-    // 启动期系统职责走 UIApplicationDelegate 适配器 (BGTask 注册 / 密钥迁移 / MAC 字节序回灌)。
+// 启动期系统职责走 UIApplicationDelegate 适配器（**密钥迁移** 一项）。
+// 2026-10-27 审核修复 (AUDIT-B 2.8 #9)：原注释列了三项「BGTask 注册 / 密钥迁移 / MAC 字节序回灌」，
+// 而 `BGTask` 已在 704a4c5 删除（全仓 0 命中）、MAC 回灌也随 `QuickAction` 一并移除。
+// 现在适配器里只剩密钥迁移一件事。
     // 为什么不能放进 App 的 onLaunch(): 那函数挂在 .task 上可能多次调用, 而 BGTask 注册必须早于启动完成。
     @UIApplicationDelegateAdaptor(QuickActionDelegate.self) private var quickActions
     var body: some Scene {

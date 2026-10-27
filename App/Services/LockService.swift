@@ -928,7 +928,10 @@ final class LockService: ObservableObject {
         //  只报"已中止", 读起来像"锁没被动过"; 那个旗子现已全部换成"本机有没有留存密钥"，
         //  因为对用户真正要紧的不是换钥发没发生, 而是他还能不能不再跑一趟锁跟前。)
         if let echo = r5.klvs.first(where: { $0.key == 0x02 }), echo.val.lowercased() != skey.lowercased() {
-            // skey 明文绝不进错误文案: 该串会写入 lastError → DiagLogs → kf.diag_logs (随系统备份) 与 UI 展示
+// skey 明文绝不进错误文案：该串会写入 lastError → DiagLogs → kf.diag_logs（现已 isExcludedFromBackup，不随系统备份）与 UI 展示。
+// 2026-10-27 审核修复 (AUDIT-B 2.8 #10)：原注释说「随系统备份」——
+// D-44 那批已把 `kf_diag_logs` 迁到 `Caches/` 并设 isExcludedFromBackup，所以它不再出机。
+// 但「不进错误文案」这条纪律不变：它仍会被导出中心带走、也会显示在界面上。
             log("error", "05 换钥回包密钥不一致: 回显 \(echo.val.count) 位 / 本地 \(skey.count) 位 · 回包 " + Self.klvShape(r5))
             // 回显不匹配时**不能**说"再点一次就能续配": 锁端那一份是本机读不懂的, 续配也白搭。
             // 这类必须去键盘重置 —— 文案与可续配那一族明确分开 (pairWarning(false, ...) 不追加续配承诺)。

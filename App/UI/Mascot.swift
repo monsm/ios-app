@@ -5,7 +5,9 @@
 // 「没锁交互的不影响核心功能的就剥离删掉」)。留下的两件都有真实消费方, 不是文档:
 //   · （原计划里的 DemoMascot / EmptyMascotHeader 空态图形**从未实现**，2026-10-26 核实全仓无定义。
 //      此处原先指向 DesignSystem:1074，那里也没有。空态图形现由 GuidedEmptyView 承担。）
-//   · ManualKit.chapters —— MemberCenterView 的「四步图文」直接读 ch.family 那一章,
+// 2026-10-27 审核修复 (AUDIT-B 2.8 #8)：这里原有一段「数据来源」清单，
+// 其中 `ManualKit.chapters` 已删（全仓 0 命中），`MemberCenterView` 的「四步图文」也已移除。
+// 保留那段会让读者去找一个不存在的章节数据源。现在 Mascot 只用本地内置文案。
 //     所以这张表只剩一章: 帮助手册整本删了, 但成员页仍在用它, 删表就等于删成员页的教程。
 import SwiftUI
 import UIKit

@@ -89,7 +89,10 @@ private extension Color {
 
 extension DS {
 
-    /// 226+863 hero 面唯一出口 (沿用旧名 heroGradientSafe, 12 个消费点不用挨个改):
+/// 226+863 hero 面唯一出口（沿用旧名 heroGradientSafe）。
+/// 2026-10-27 审核修复 (AUDIT-B 2.8 #2)：原注释写「12 个消费点不用挨个改」——
+/// 实测现在只有 **3 处**（DesignSystem 的 .fill / ExportShares 的 .background / UnlockDial 的 AnyShapeStyle）。
+/// 数字写大不是无害的：后来者会以为改它的影响面是 12 处而不敢动。
     /// 降透明 → 纯色 (226); 反转色 → 中性降级渐变 (863); 常规 → 品牌渐变。
     /// 之所以做成 ShapeStyle.resolve(in:) 而不是静态判断: 环境只有渲染时可知, 消费点各自读一遍旗标
     /// 迟早在某个页面上漂开 —— 收在这一处, 主控卡/开锁盘/成就卡/导出卡/帮助页/引导页同帧一起换。

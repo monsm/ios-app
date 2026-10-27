@@ -751,7 +751,9 @@ enum RecordSearch {
 
 
     /// 596 替代: 该日发生过防撬 (7) / 试错锁定 (10) / 键盘锁定 (224) 的日键集合。
-    /// 与 `unhandledAlarmDays` 同一份 IO 形状 (各锁缓存日志) 但**不看处置** ——
+/// 2026-10-27 审核修复 (AUDIT-B 2.8 #6)：原注释说「与 `unhandledAlarmDays` 同一份 IO 形状」，
+/// 而 `unhandledAlarmDays` 已删（全仓 0 命中）。现在它就是**唯一**这一类扫描：
+/// 各锁缓存日志 → 按日归集 → 不看处置。
     /// "这一天出过事"与"还没人看过"是两件事, 处置过的也照留; 日的归属沿用 649 (dayKeyOfNight)。
     static func damageDays(macs: [String]) -> Set<String> {
         var days = Set<String>()
