@@ -1754,7 +1754,7 @@ struct PwdDetailStudio: View {
         // 2026-10-27 四轮精简：口述卡 sheet 已删。
             }
         } else {
-            EmptyState(systemImage: "key.slash", title: "凭证不存在", message: "这条凭证可能已被删除或移入回收站。")
+            EmptyState(systemImage: "key.slash", title: "凭证不存在", message: "这条凭证可能已被删除（本机没有回收站，删除不可恢复）。")
         }
     }
     private func isoText(_ s: String) -> String {
@@ -2091,7 +2091,7 @@ struct FpStudio: View {
                 .frame(minHeight: DS.Hit.min)
             // 319 重录继承: 同成员已有指纹 → 成功后旧指纹入回收站 (保留原备注/归属, 来源"重录替代")
             if !sameOwnerFps.isEmpty {
-                VariantToggle("该成员已有 \(sameOwnerFps.count) 枚指纹, 录入成功后将旧指纹移入回收站 (重录继承, 保留原备注/归属)", isOn: $replaceOld)
+                VariantToggle("该成员已有 \(sameOwnerFps.count) 枚指纹, 录入成功后旧指纹将从本机台账移除（⚠ 本机没有回收站，不可恢复；备注/归属也不会保留）", isOn: $replaceOld)
                     .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -2332,7 +2332,7 @@ struct FpDetailStudio: View {
                 }
             }
         } else {
-            EmptyState(systemImage: "touchid", title: "指纹不存在", message: "这条指纹可能已被删除或移入回收站。")
+            EmptyState(systemImage: "touchid", title: "指纹不存在", message: "这条指纹可能已被删除（本机没有回收站，删除不可恢复）。")
         }
     }
     private func fpRow(_ k: String, _ v: String) -> some View {

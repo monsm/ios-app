@@ -742,32 +742,25 @@ struct MemberDetail360View: View {
     // 指纹不可远程补录 (670) 这句话与选项写在同一屏 —— 它是这个选择唯一的真代价。
     private func confirmDelete(_ m: Member) {
         let preview = CredentialOrg.memberCredentialPreview(m.id)
+        // 2026-10-28 修复（**安全级假承诺**）：原文案写「转入未分配并入回收站（可整组还原）」
+        // 与「这些凭证会排上锁端删除, 到场连接后真正失效」—— 两句都不成立：
+        //   · `cascadeBinMember` 只做 `DB.delPwd/delFp`，**没有回收站**、没有「转为未分配」；
+        //   · `revokeLocks` 形参被 `_ = revokeLocks` 直接丢弃，**没有任何队列**，锁端永远不动；
+        //   · 两个按钮的实际行为因此**完全相同** —— 保留「连锁端一起收回」只会让人以为更彻底。
+        // 现在只留一个按钮，并把真实后果说清楚。
         let msg = preview.isEmpty
-            ? "确定要删除「" + m.name + "」吗? TA 名下没有台账凭证。"
-            : "删除「" + m.name + "」后, 名下 " + String(preview.count) + " 条凭证将转为未分配并入回收站 (可整组还原):\n"
+            ? "确定要删除「" + m.name + "」吗? TA 名下没有台账凭证。本机记录删除后不可恢复。"
+            : "删除「" + m.name + "」后, 名下 " + String(preview.count) + " 条凭证将从**本机台账移除**"
+              + "（本机没有回收站，删除后不可恢复）:\n"
               + preview.prefix(5).joined(separator: "\n") + (preview.count > 5 ? "\n…" : "")
-              + "\n\n· 只移除档案: 只动本机台账, 锁里那些指纹与密码不会被收回, TA 仍能开门。\n"
-              + "· 连锁端一起收回: 这些凭证会排上锁端删除, 到场连接后真正失效。"
-              + "指纹一旦在锁端删掉就无法远程补录, 只能本人到锁前重录 —— 还原时对指纹只剩本机记录。"
+              + "\n\n⚠ 锁端凭证不受影响 —— 这些密码/指纹在门锁上**仍然有效**，"
+              + "必须到门锁键盘上手动删除才会真正失效。指纹一旦在锁端删掉就无法远程补录，只能本人到锁前重录。"
         let alert = UIAlertController(title: "删除成员", message: msg, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "只移除档案", style: .default) { _ in
+        alert.addAction(UIAlertAction(title: "移除档案（锁端需另删）", style: .destructive) { _ in
             for kc in DB.keychains() { CredentialOrg.cascadeBinMember(kc.mac, m.id) }
             DB.removeMember(m.id)
             onChanged()
-            app.showToast("已删除")
-        })
-        alert.addAction(UIAlertAction(title: "连锁端一起收回", style: .destructive) { _ in
-            // 2026-10-27 (D-57)：不再收集"排上队列的条数" —— 根本没有队列（见 cascadeBinMember 注释）
-            for kc in DB.keychains() {
-                CredentialOrg.cascadeBinMember(kc.mac, m.id, revokeLocks: true)
-            }
-            DB.removeMember(m.id)
-            onChanged()
-            // 2026-10-27 审核修复 (AUDIT-D D-57)：**不再承诺"已排 N 条锁端删除"**。
-            // 那句话是假的 —— `cascadeBinMember` 原先只 `queued += 1`，根本没有队列，
-            // 连接门锁后什么都不会发生。安全承诺级别的假话比不承诺更危险。
-            // 现在如实说：本机已处理，锁端凭证仍在，需要时手动删。
-            app.showToast("已删除 · ⚠ 锁端凭证仍在，需要时请到设备页手动删除")
+            app.showToast("已删除 · ⚠ 锁端凭证仍在，需要时请到门锁上手动删除")
         })
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         UIApplication.topViewController()?.present(alert, animated: true)

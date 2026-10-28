@@ -204,6 +204,16 @@ struct RecordsView: View {
     private var mainList: some View {
         List {
             if offline { jumpBackRow }
+            // 2026-10-28 修复：`cachedHint` 全仓零调用 —— 文案写好了但从不显示，
+            // 于是用户看到的是「未连接」+ 一堆记录，却不知道这些是本机缓存、更不知道读取时间。
+            if offline {
+                Section {
+                    Text(cachedHint)
+                        .vkFont(.caption)
+                        .foregroundStyle(DS.Palette.warn)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
             // ─────────────────────────────────────────────────────────────
             // 2026-10-18 重构: 列表前方原来叠了 **14 个区** ——
             //   scopeRow / searchBar / monthJumpRow /
@@ -1452,6 +1462,18 @@ struct RecordsView: View {
         if let d = app.pendingRecordsDay { landDay(d) }
         // 563 搜索词回填落地 (进页时一次性)
         if let q = app.pendingSearch { landSearch(q) }
+        // 2026-10-28 修复：进页先渲染**本机缓存** —— 原来只有手动刷新失败时才 render 缓存，
+        // 首次进页即使 DB.readLogs 有数据也显示「还没有记录」（用户会以为记录丢了）。
+        // 缓存只在本机，不发起蓝牙连接；真正拉取仍由用户点「重新读取」触发。
+        if allRows.isEmpty {
+            let cached = DB.readLogs(mac)
+            if !cached.isEmpty {
+                render(cached.map { LogEntry(type: $0.type, typeName: $0.typeName,
+                                               idx: $0.idxRaw, idxRaw: $0.idxRaw,
+                                               lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr,
+                                               body: "") }, offline: true)
+            }
+        }
     }
     // 2026-10-27 二轮精简：loadFromCache 已删（HotCache 移除后无缓存可读）。
 

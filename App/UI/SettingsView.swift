@@ -420,13 +420,13 @@ struct SettingsView: View {
         // 109 删除冷静期: 后果要可核对 (逐类计数), 且必须键入锁名才放行 —— 旧写法只有一次"确定吗"
         let pws = DB.listPwds(kc.mac).count
         let fps = DB.listFps(kc.mac).count
-        let pend = 0
-        let bin = 0   // 2026-10-26: 回收站已删
         let recs = DB.readLogs(kc.mac).count   // 109: 记录缓存 (kf_logcache_) 也随设备删除, 计数一并预告
         let name = LockArchive.displayName(kc)
         var consequence = "将删除本机的钥匙串与该门锁全部本地数据 (锁端密钥不变)。"
-        if pws + fps + pend + bin + recs > 0 {
-            consequence += " 连带删除: 密码台账 \(pws) 条、指纹台账 \(fps) 条、待下发 \(pend) 项、回收站 \(bin) 条、本机缓存的开门记录 \(recs) 条。"
+        if pws + fps + recs > 0 {
+        // 2026-10-28：删掉「待下发 N 项 / 回收站 N 条」—— 这两套功能都不存在
+        // （全仓无队列类型、无回收站存储），原来只是硬编码 0 凑文案。
+            consequence += " 连带删除: 密码台账 \(pws) 条、指纹台账 \(fps) 条、本机缓存的开门记录 \(recs) 条。"
         }
         consequence += " 删除后若未做过备份将无法找回。"
         confirmDestructiveTyped("删除设备", consequence, requireWord: name, confirmTitle: "确认删除") {

@@ -1345,34 +1345,27 @@ struct MembersView: View {
     /// 撤权那一支排 629/353 同一条队列; 指纹不可远程补录 (670) 的代价写在正文里。
     private func confirmRemove(_ m: Member) {
         let preview = CredentialOrg.memberCredentialPreview(m.id)
+        // 2026-10-28 修复（**安全级假承诺**）：与 MemberCenterView.confirmDelete 同一问题 ——
+        // 「并入回收站（可整组还原）」与「排上锁端删除」两句都无实现（无回收站、无队列）。
+        // 两个按钮行为完全相同，只留一个，并如实说明锁端凭证仍需手动删除。
         let msg = preview.isEmpty
-            ? "确定要删除「\(m.name)」吗？TA 名下没有台账凭证。"
-            // 单行字面量里不能有裸换行 (Swift 语法错): 原文的换行全部写成 \n 转义
-            : "删除「\(m.name)」后, 名下 \(preview.count) 条凭证将转为未分配并入回收站 (可整组还原):\n"
+            ? "确定要删除「\(m.name)」吗？TA 名下没有台账凭证。本机记录删除后不可恢复。"
+            : "删除「\(m.name)」后, 名下 \(preview.count) 条凭证将从**本机台账移除**"
+              + "（本机没有回收站，删除后不可恢复）:\n"
               + preview.prefix(5).joined(separator: "\n")
               + (preview.count > 5 ? "\n…" : "")
-              + "\n· 只移除档案: 只动本机台账, 锁里的指纹与密码不会被收回, TA 仍能开门。"
-              + "\n· 连锁端一起收回: 这些凭证会排上锁端删除, 到场连接后真正失效。指纹一旦在锁端删掉就无法远程补录, 只能本人到锁前重录 —— 还原时对指纹只剩本机记录。"
+              + "\n\n⚠ 锁端凭证不受影响 —— 这些密码/指纹在门锁上**仍然有效**，"
+              + "必须到门锁键盘上手动删除才会真正失效。指纹一旦在锁端删掉就无法远程补录，只能本人到锁前重录。"
         let alert = UIAlertController(title: "删除成员", message: msg, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "只移除档案", style: .default) { _ in
-            // 凭证随成员入回收站 (整组同戳), 成员档案移除并解除归属; 锁端不动
+        alert.addAction(UIAlertAction(title: "移除档案（锁端需另删）", style: .destructive) { _ in
             for kc in DB.keychains() {
                 CredentialOrg.cascadeBinMember(kc.mac, m.id)
             }
             DB.removeMember(m.id)
             _ = Milestones.recordOrganize()
             reload()
-        })
-        alert.addAction(UIAlertAction(title: "连锁端一起收回", style: .destructive) { _ in
-            // 2026-10-27 (D-57)：不再收集"排上队列的条数" —— 根本没有队列（见 cascadeBinMember 注释）
-            for kc in DB.keychains() {
-                CredentialOrg.cascadeBinMember(kc.mac, m.id, revokeLocks: true)
-            }
-            DB.removeMember(m.id)
-            _ = Milestones.recordOrganize()
-            reload()
-            // 2026-10-27 审核修复 (AUDIT-D D-57)：同 MemberCenterView —— 不再承诺假队列。
-            app.showToast("已删除 · ⚠ 锁端凭证仍在，需要时请到设备页手动删除")
+            onChanged()
+            app.showToast("已删除 · ⚠ 锁端凭证仍在，需要时请到门锁上手动删除")
         })
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         UIApplication.topViewController()?.present(alert, animated: true)

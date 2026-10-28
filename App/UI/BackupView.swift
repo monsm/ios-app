@@ -107,19 +107,28 @@ struct BackupView: View {
                         .vkFont(.caption2).foregroundStyle(DS.Palette.warn)
                 }
             }
-            BusyButton(title: "生成备份文本", systemImage: "doc.text", isBusy: false) {
-                Milestones.recordBackup()   // 980 备份卫士
+            // 2026-10-28 修复（**安全级**）：原来 `.count < 8` 只显示一行提示，按钮照样能按 ——
+            // 空密码/1 位密码都会被 `CryptoBox.encryptText` 当成合法口令，产出一个
+            // 「看起来加密、实际谁都能解」的备份。现在按钮直接禁用，函数里再 guard 一次。
+            // 另外 `Milestones.recordBackup()` 原来在函数**开头** —— 加密失败也会记一次「上次备份」，
+            // 于是「上次备份于 X」会指向一个从未生成的备份。移到成功之后。
+            BusyButton(title: "生成备份文本", systemImage: "doc.text", isBusy: false,
+                       disabled: encryptExport && exportPw.count < 8) {
                 let plain = BackupCanonical.exportText(BackupKit.collectAll())
                 if encryptExport {
-                    // 用已有信封加密（与 351 凭证合包同一套算法）。解不开时的错误由导入侧统一报。
+                    guard exportPw.count >= 8 else {
+                        app.showToast("加密备份至少要 8 位密码")
+                        return
+                    }
                     exportText = (try? CryptoBox.encryptText(plain, password: exportPw)) ?? ""
                     if exportText.isEmpty {
                         app.showToast("加密失败 — 请检查密码后重试")
-                        return
+                        return   // 失败不记「上次备份」
                     }
                 } else {
                     exportText = plain
                 }
+                Milestones.recordBackup()   // 980 备份卫士（只在真正生成成功后记一次）
             }
             // 822 从未备份的信封: 没有备份时这页最该说的不是"怎么导出"，而是"现在一个都没有"。
             // 文案不写"建议每周一次"这种本 App 没有依据的规范；给的是**已发生的事实**与下一步动作。

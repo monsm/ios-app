@@ -1106,7 +1106,7 @@ struct CredentialsView: View {
                     if selCount == 0 { app.showToast("先选择凭证"); return }
                     let n = selCount
                     confirmDestructive("删除所选 \(n) 条凭证",   // 922 删除所选
-                                       "删除后这些凭证在锁内立即失效 (需门锁在场直发); 本机记录进回收站 本机记录直接移除、**不可找回**, 值或开门能力要重新下发。确定继续？",
+                                       "删除后这些凭证在锁内立即失效（需门锁在场直发）；本机台账记录直接移除、**不可找回**（没有回收站），值或开门能力要重新下发。确定继续？",
                                        confirmTitle: "删除") {
                         Task { await batchDelete() }
                     }
