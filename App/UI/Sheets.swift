@@ -997,6 +997,22 @@ struct GatewayView: View {
                         Text("长捅网关的重置孔，保持5s左右，至指示灯变为橙色，即重置成功。")
                             .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
+                        // 2026-10-28 补：APK `GwstatePage`（网关状态页）有三条使用须知，iOS 全文没有 ——
+                        // 用户不知道网关该放多远、能做什么不能做什么，容易以为「买了网关就能远程开门」。
+                        // 第 2 条原文是「绑定到和门锁相同账号下即可」—— 那是云端账号口径；
+                        // iOS 纯离线没有账号，这里改写成等价的本地事实（IoT 凭据随配网一起写入网关）。
+                        Text("1. 建议距离门锁不超过五米，不能有障碍物阻隔。")
+                            .vkFont(.caption)
+                            .foregroundStyle(DS.Palette.textSub)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text("2. 无需和门锁配对；配网时 IoT 凭据会随 WiFi 一起写入网关。")
+                            .vkFont(.caption)
+                            .foregroundStyle(DS.Palette.textSub)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text("3. 只能接收门锁状态和通知，无法远程操作门锁。")
+                            .vkFont(.caption)
+                            .foregroundStyle(DS.Palette.warn)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 } else {
                     Section {

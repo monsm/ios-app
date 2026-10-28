@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-28T09:52:45.466Z",
+    "generated": "2026-10-28T10:30:51.112Z",
     "sources": [
       {
         "scout": "android-native",
@@ -4164,7 +4164,7 @@ const DATA = {
           "line": 1205,
           "symbol": "if let drift = clockDrift, abs(drift) > 2",
           "note": "",
-          "text": "NavigationStack {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -4180,7 +4180,7 @@ const DATA = {
           "line": 1207,
           "symbol": "try? await app.lock.syncTime()",
           "note": "",
-          "text": "Section {"
+          "text": "// ================= 成员管理 (manage/addmember/modifyname) ================="
         }
       ],
       "platformEvidence": {
@@ -4251,7 +4251,7 @@ const DATA = {
           "line": 1000,
           "symbol": "infoCardSection",
           "note": "",
-          "text": "}"
+          "text": "// 2026-10-28 补：APK `GwstatePage`（网关状态页）有三条使用须知，iOS 全文没有 ——"
         },
         {
           "platform": "ios",
@@ -4259,7 +4259,7 @@ const DATA = {
           "line": 1029,
           "symbol": "if let v = status?.verDFU, v > 0",
           "note": "",
-          "text": "BusyButton(title: \"开始配网\", systemImage: \"wifi\", isBusy: running, disabled: ssid.isEmpty || pwd.isEmpty) {"
+          "text": "// iOS 读 WiFi 名需要 `com.apple.developer.networking.wifi-info` entitlement + 定位权限，"
         },
         {
           "platform": "ios",
@@ -4267,7 +4267,7 @@ const DATA = {
           "line": 1127,
           "symbol": "driftText",
           "note": "",
-          "text": "// 配网会向网关硬件写入 WiFi 凭据, 配错需重新重置网关才能再配"
+          "text": ".frame(minHeight: DS.Hit.min)"
         }
       ],
       "platformEvidence": {
@@ -4335,7 +4335,7 @@ const DATA = {
           "line": 1045,
           "symbol": "statusSection",
           "note": "",
-          "text": "if !error.isEmpty {"
+          "text": "BusyButton(title: \"开始配网\", systemImage: \"wifi\", isBusy: running, disabled: ssid.isEmpty || pwd.isEmpty) {"
         },
         {
           "platform": "ios",
@@ -4343,7 +4343,7 @@ const DATA = {
           "line": 1054,
           "symbol": "BattSpark(samples: sp)",
           "note": "",
-          "text": "}"
+          "text": "} icon: {"
         },
         {
           "platform": "ios",
@@ -4351,7 +4351,7 @@ const DATA = {
           "line": 1172,
           "symbol": "capacityRow(title:used:cap:stock:)",
           "note": "",
-          "text": "running = true"
+          "text": "ssid = \"\"; pwd = \"\""
         }
       ],
       "platformEvidence": {
@@ -34017,7 +34017,7 @@ const DATA = {
           "line": 1278,
           "symbol": "struct LockProfileView",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -34025,7 +34025,7 @@ const DATA = {
           "line": 1298,
           "symbol": "预览 Section",
           "note": "",
-          "text": "guard let n = vals.first?.trimmingCharacters(in: .whitespaces), !n.isEmpty else { return }"
+          "text": "Button { UIApplication.shared.open(tel) } label: { Label(\"呼叫 \\(m.name)\", systemImage: \"phone.fill\") }"
         },
         {
           "platform": "ios",
@@ -36891,7 +36891,7 @@ const DATA = {
           "line": 1347,
           "symbol": "VariantToggle(\"在翻页里隐藏这把锁\")",
           "note": "",
-          "text": "alert.addTextField { tf in"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -36899,7 +36899,7 @@ const DATA = {
           "line": 1350,
           "symbol": "隐藏后它退出左右横滑，只在切换胶囊的「已隐藏」区里可达",
           "note": "",
-          "text": "tf.keyboardType = f.keyboard"
+          "text": "struct FieldSpec {"
         }
       ],
       "platformEvidence": {
@@ -36961,7 +36961,7 @@ const DATA = {
           "line": 1325,
           "symbol": "Section(\"身份\")",
           "note": "",
-          "text": "nameFocused = false"
+          "text": "prompt(title: \"补全信息 (只填空缺)\", message: nil,"
         },
         {
           "platform": "ios",
@@ -36969,7 +36969,7 @@ const DATA = {
           "line": 1337,
           "symbol": "TextField(\"分组名 (如 家用 / 仓库 / 办公, 留空 = 未分组)\")",
           "note": "",
-          "text": "var keyboard: UIKeyboardType = .default"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -36977,7 +36977,7 @@ const DATA = {
           "line": 1341,
           "symbol": "TextField(\"备注 (换电历史/安装细节/门锁脾气…)\", axis: .vertical)",
           "note": "",
-          "text": "message: String?,"
+          "text": "nameFocused = false"
         }
       ],
       "platformEvidence": {
@@ -37044,7 +37044,7 @@ const DATA = {
           "line": 1356,
           "symbol": "Section(\"符号\")",
           "note": "",
-          "text": "onConfirm(alert.textFields?.map { $0.text ?? \"\" } ?? [])"
+          "text": "private func prompt(title: String,"
         },
         {
           "platform": "ios",
@@ -37052,7 +37052,7 @@ const DATA = {
           "line": 1383,
           "symbol": "Section(\"色标\")",
           "note": "",
-          "text": "_ = Milestones.recordOrganize()"
+          "text": "// 「并入回收站（可整组还原）」与「排上锁端删除」两句都无实现（无回收站、无队列）。"
         },
         {
           "platform": "ios",
@@ -37060,7 +37060,7 @@ const DATA = {
           "line": 1323,
           "symbol": "符号与色标同步用于 Hero 卡、切换胶囊与记录行的时间线标签。",
           "note": "",
-          "text": "if let m = DB.addMember(newName) {"
+          "text": ""
         }
       ],
       "platformEvidence": {

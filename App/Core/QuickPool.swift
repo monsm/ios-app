@@ -129,7 +129,13 @@ enum QuickPool {
 func quickDestination(_ id: String) -> some View {
     switch id {
     case "addPwd":   PwdStudio(embedded: true)
-    case "otp":      SafemodeIntroView(mode: "otp")
+    // 2026-10-28 修（**入口指错**）：原来这里给的是 `SafemodeIntroView(mode: "otp")` ——
+    // 那是「临时密码介绍」页（纯说明文字），用户在设备页点「临时密码」快捷格，
+    // 看到的是一段介绍、没有任何生成入口。
+    // APK `OpendevicePage.imgClick(3)` → `queryOtpStatus` → 命中后直接 `page-otpgenerate`，
+    // 也就是**直达生成页**。这里改成 `TempCodeStudio()`（与凭证页 StudioHome 的 sheet 同一个视图），
+    // 它自带 `@Environment(\.dismiss)`，作为 NavigationLink 目的地压栈后可正常返回。
+    case "otp":      TempCodeStudio()
     case "syncTime": SyncTimeView()
     case "addFp":    FpStudio(embedded: true)
     case "studio":   StudioHome(embedded: true)

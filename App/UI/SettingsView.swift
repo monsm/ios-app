@@ -1124,7 +1124,7 @@ struct MechCounter: View {
 }
 
 
-// ---------- 防尾随 (tailgate: cmd24 档位 1-6, 2~6 秒) ----------
+// ---------- 防尾随 (tailgate: cmd24 档位 = 秒数，2~6 秒（APK 索引即秒数）) ----------
 struct TailgateView: View {
     @EnvironmentObject var app: AppState
     @State private var seconds = 6
@@ -1135,7 +1135,14 @@ struct TailgateView: View {
         Form {
             Section {
                 Picker("等待时长", selection: $seconds) {
-                    ForEach(2...7, id: \.self) { Text("\($0) 秒").tag($0) }
+                    // 2026-10-28 修（**安全相关 off-by-one**）：APK `TailgatePage.chooseBtnImgStrs`
+                    // 是 `["","","off","off","off","off","checkmark"]`（长度 7，索引 0..6），
+                    // `getCurrentChooseSecond()` 从索引 2 遍历到 6、**返回索引本身**，
+                    // `execSetTailgate` 又把这个索引值直接 `new Hi(索引, mac)` 送 cmd24 ——
+                    // 所以档位就是 **2/3/4/5/6 秒，默认 6 秒**（不是 1..6、也没有 7 秒）。
+                    // 原实现 `2...7` + `seconds-1` 让「选 6 秒」实际下发 5 秒 —— 防尾随时间
+                    // 比用户设定短 1 秒，正好是尾随者挤进门的那 1 秒。
+                    ForEach(2...6, id: \.self) { Text("\($0) 秒").tag($0) }
                 }
                 .pickerStyle(.inline)
             } header: {
@@ -1160,8 +1167,8 @@ struct TailgateView: View {
         defer { busy = false }
         do {
             try await app.lock.ensureConnected(mac: kc.mac)
-            try await app.lock.setAutoLock(seconds - 1) // cmd24 档位 = 秒数-1
-            DB.saveTailgate(kc.mac, TailgateCfg(interval: seconds - 1, at: Date().timeIntervalSince1970 * 1000))
+            try await app.lock.setAutoLock(seconds) // cmd24 档位 = 秒数本身（见 Picker 上方注释）
+            DB.saveTailgate(kc.mac, TailgateCfg(interval: seconds, at: Date().timeIntervalSince1970 * 1000))
             app.showToast("设置成功")
         } catch { app.showToast("设置失败: \(error.localizedDescription)") }
     }
