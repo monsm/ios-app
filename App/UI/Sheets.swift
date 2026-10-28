@@ -1017,6 +1017,13 @@ struct GatewayView: View {
                             .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
+                        // 2026-10-28 补：APK 的「更换其他 WiFi」走 NativeSettings.open("wifi") 直达系统 WiFi 面板；
+                        // iOS **没有**任何公开 API 能直达 WiFi 设置（openSettingsURLString 只到本 App 设置页）。
+                        // 所以这里只能如实告诉用户要自己离开 App 去系统设置，而不是放一个点了没反应的按钮。
+                        Text("需要换 WiFi 时，请先到「设置 → Wi-Fi」连上目标网络，再回来点「开始配网」。")
+                            .vkFont(.caption)
+                            .foregroundStyle(DS.Palette.textSub)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     Section {
                         BusyButton(title: "开始配网", systemImage: "wifi", isBusy: running, disabled: ssid.isEmpty || pwd.isEmpty) {

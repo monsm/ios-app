@@ -306,6 +306,12 @@ struct SettingsView: View {
                 note("靠近时先连上，开锁少等一两秒；成功率只在本机统计。")
                 Button("锁信息名片") { showDeviceInfo = true }
                 note("型号、固件、电量与绑定时间的汇总卡。")
+                // 2026-10-28 补入口（**真缺口**）：`SafemodeIntroView` 只在 QuickPool 里以
+                // `mode: "otp"` 构造过一次 —— `mode: "safe"` 那半边（A/B 说明 + 「切换到 B 模式」按钮）
+                // **永远不可达**。而 `setValidationMode(true)` 全仓只有它内部一处调用。
+                // 于是 APK 的 `page-setsafemode`（设置安全模式 A/B）在 iOS 上虽然有实现、却没入口。
+                NavigationLink("安全模式 (A/B 双验)") { SafemodeIntroView() }
+                note("单次验证还是两种方式组合验证；本 App 只提供 A→B 变严的方向。")
                 VariantToggle("静音模式", isOn: Binding(
                     get: { muteStored },
                     set: { silent in
@@ -1168,7 +1174,7 @@ struct SafemodeIntroView: View {
     @State private var switching = false      // 拍板 #2: cmd20 下发中, 防止连点重复改锁端策略
     private var isOtp: Bool { mode == "otp" }
 
-    var body: some View { vkBody.destined(.settings) }
+    var body: some View { vkBody.destined(.safemodeIntro) }
     var vkBody: some View {
         Form {
             if isOtp {
@@ -1178,6 +1184,18 @@ struct SafemodeIntroView: View {
                 }
             } else {
                 Section("怎么设置门锁的安全模式？") {
+                    // 2026-10-28 补：APK 的 page-safemodeintroduce 有 A/B 两档的完整定义，
+                    // iOS 这边只写「当前已是 B 模式」，用户不知道 A 和 B 到底差在哪。
+                    Text("A 模式：只需要单一方式（密码 / 指纹 / 手机）验证通过就可以开锁。")
+                        .vkFont(.footnote)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("B 模式：需要两种不同方式组合验证（指纹+密码 / 指纹+手机 / 手机+密码）才能开锁。")
+                        .vkFont(.footnote)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("只有 A 模式下临时开锁密码（ZOTP）才有效。")
+                        .vkFont(.footnote)
+                        .foregroundStyle(DS.Palette.warn)
+                        .fixedSize(horizontal: false, vertical: true)
                     Text("当前模式在「锁信息名片」(设备页) 读取后显示。本 App 只给变严的方向 (A→B)；"
                          + "要放宽回 A 模式请在门锁键盘上操作或联系管理员。").vkFont(.footnote)
                     // 拍板 #2 (第六十六批): 给切换入口, 但只允许更严方向。

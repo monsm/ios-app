@@ -46,6 +46,12 @@ targets:
         # 默认留 "1" 而不是写死日期: 写死的日期在本地构建里永远是假的。
         CFBundleVersion: "1"
         UILaunchScreen: {}
+        # 2026-10-28 补：DFU 是几分钟的 BLE 传输。Android 有 `DfuService` 前台服务，
+        # 切后台/锁屏时由系统继续；iOS 只有 BackgroundGuard 的约 30 秒 beginBackgroundTask，
+        # 传输中途被挂起会让锁停在半完成态（有变砖风险）。
+        # `bluetooth-central` 让 App 在后台继续处理 CoreBluetooth 事件 —— 这是 iOS 上最接近的等价能力。
+        UIBackgroundModes:
+          - bluetooth-central
         # 294 本地深链 (kf://): 快捷指令「打开 App」带参数直达; 只允许白名单路由, 且在应用锁未解开时不落地
         CFBundleURLTypes:
           - CFBundleURLName: kf.lockkeeper.deeplink

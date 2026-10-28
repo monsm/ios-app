@@ -1916,6 +1916,11 @@ struct FpStudio: View {
         .onAppear { consumePendingOwner(); consumePrefill() }
         // 挂在**页面最外层** (不是 immersive 上) —— 挂在步骤子视图上会在录入成功切到第 2 步时
         // 误取消刚跑完的流程; 这里只应在整页被关掉时触发。
+        // 2026-10-28 补：APK 在指纹录入页调 `brightness.setKeepScreenOn(true/false)`
+        // （main.js 共 4 处 onEnter/onLeave）。iOS 只有 DFUView 用了 keepingScreenAwake，
+        // 指纹录入页没有 —— 而 `Mascot.swift:126` 的注释还写着「调用点: StartAddFpView (录入中)」，
+        // 实际零调用。录指纹要按 8 次、每次间隔，中途自动锁屏会挂起进程并断开 BLE。
+        .keepingScreenAwake(step == 1)   // 只在沉浸式录入那一步开常亮
         .onDisappear { enrollTask?.cancel() }
     }
 
