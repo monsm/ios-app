@@ -771,7 +771,10 @@ struct RootView: View {
                     // 2026-10-28 修复：诊断页已随十三轮精简整族删除（SettingsView:95-97 自述），
                     // 这一枚只做 `pendingDiag = mac` + 切到设置页，落地只 select 锁、**不显示任何诊断信息**。
                     // 改成真存在的落点：这台锁的档案页（能看到固件/电量/型号等读数）。
-                    Button("这台锁的档案") { app.requestRoute(.lockProfile) }
+                    // 2026-10-28 修正：Route 只有 device/credentials/records/settings 四个成员，
+                    // 没有 lockProfile —— 锁档案页是 Destination 里的一站（Sheets.LockProfileView），
+                    // 从设备页的「更多」区进。这里落点改为设备页（那页上就能看到档案入口）。
+                    Button("这台锁的读数") { app.requestRoute(.device) }
                     Button("打开这一页") { app.requestTab(selected.first ?? 0) }
                 }
             }
