@@ -106,6 +106,9 @@ enum MobileKeyService {
         let ekey = ZKCmdBuilder.buildEkeyShare(kc.skey.lowercased(),
                                                kc.mac.lowercased(),
                                                pin,
+                                               // 2026-10-28：把用户选的有效期真正签进 ekey（此前 `vf`/`vt` 只写进台账字段，没进 ekey）。
+                                               validFromSec: ZKCmdBuilder.protoSecU32(vf),
+                                               validToSec: ZKCmdBuilder.protoSecU32(vt),
                                                random: { _ in UInt32.random(in: 1...0x7fff_ffff) })
         guard !ekey.isEmpty else {
             throw BLEErrorX.msg("ekey 签发失败（skey 非法或 PIN 不可解析），已中止")

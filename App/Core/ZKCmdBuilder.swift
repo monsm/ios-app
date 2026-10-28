@@ -150,11 +150,15 @@ enum ZKCmdBuilder {
     }
     // App generateEkey (分享/写钥匙串): 随机 TrackId + 本地时区 2010~2118 窗口
     static func buildEkeyShare(_ skeyHex: String, _ macHex: String, _ pin: String,
+                               validFromSec: UInt32? = nil,
+                               validToSec: UInt32? = nil,
                                random: (UInt32) -> UInt32) -> String {
-        // 2026-10-14: 删掉从未使用的 DateFormatter f (实际解析走 protoSec) —— 免得误以为此处按本地时区解析。
-        // JS: '2010-01-01T00:00:00' 本地解释 ⇒ 东八区为 −28800; 经 protoSecU32 收口成 0 (= APK 的取值)
-        let vf = protoSecU32("2010-01-01 00:00:00")
-        let vt = protoSecU32("2118-01-01 00:00:00")
+        // 2026-10-28 修复：原来这里**硬编码**永久窗口（2010~2118）——
+        // 调用方 `MobileKeyService.issue` 明明算出了 `vf`/`vt`（用户选的「8 小时」或自定义到期），
+        // 却没传进来，于是所有手机钥匙实际**永久有效**：界面写「8 小时后失效」，锁端认的是 2118。
+        // 现在由调用方传入协议秒；不传则保持原永久档（GoldenDiff 等既有调用不受影响）。
+        let vf = validFromSec ?? protoSecU32("2010-01-01 00:00:00")
+        let vt = validToSec ?? protoSecU32("2118-01-01 00:00:00")
         return buildEkeyOpen(skeyHex, macHex, pin, validFromSec: vf, validToSec: vt, trackId: random(0x7fffffff))
     }
     // cmd 08: addCount(1B)+delCount(1B)+addPins(4B LE×N)+delPins(4B LE×M)

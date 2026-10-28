@@ -91,7 +91,14 @@ enum AutoOpenKit {
     /// —— 它照抄当前时区与周序，但把历法钉成公历，用户把系统历法切成佛历/农历时 `.hour/.minute` 的
     /// 取法不会跟着换基准日 (全仓取分量都走这一个出口，理由见 WeekCal 头注)。
     static func defendActive(control: Int, startSec: Int, endSec: Int, now: Date, cal: Calendar = WeekCal.gregorian) -> Bool {
-        guard control == 2 else { return false }
+        // 2026-10-28 修复（**安全级**）：原来 `guard control == 2 else { return false }` ——
+        // control==1（`DefendMode.once`「不定期布防 / 出门布防」，一直生效到手动撤防）**直接返回 false**。
+        // 于是用户点了「出门布防」，界面上说「布防期间靠近门锁不会自动开门」，
+        // 实际 `defendActive` 恒 false ⇒ F4 否决门形同不存在，自动开锁照样开门。
+        // 正确语义：只有 control==0（撤防）不否决；1 与 2 都是布防态。
+        guard control != 0 else { return false }
+        // control == 1：不定期布防 = 全天生效，恒 active
+        guard control == 2 else { return true }
         guard startSec != endSec else { return true }
         let comps = cal.dateComponents([.hour, .minute, .second], from: now)
         // 2026-10-27 审核修复：startSec/endSec 是协议值（一天内秒数 / 2），

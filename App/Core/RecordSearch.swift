@@ -61,13 +61,13 @@ enum RecordOverlay {
     // 界面闪一下又回到「未处置」。处置记录是告警排查的核心（谁在什么时候确认过这条），
     // 所以按与备注/旗标同一套本机覆盖层补上，不新建第二套存储。
     static func dispKey(_ mac: String) -> String { "kf_rdisp_" + mac }
-    static func dispositions(_ mac: String) -> [String: Disposition] {
-        DB.store.get([String: Disposition].self, dispKey(mac)) ?? [:]
+    static func dispositions(_ mac: String) -> [String: RecordSearch.Disposition] {
+        DB.store.get([String: RecordSearch.Disposition].self, dispKey(mac)) ?? [:]
     }
-    static func disposition(_ mac: String, _ rowKey: String) -> Disposition? {
+    static func disposition(_ mac: String, _ rowKey: String) -> RecordSearch.Disposition? {
         dispositions(mac)[oid(mac: mac, rowKey: rowKey)]
     }
-    static func setDisposition(_ mac: String, _ rowKey: String, _ d: Disposition?) {
+    static func setDisposition(_ mac: String, _ rowKey: String, _ d: RecordSearch.Disposition?) {
         var m = dispositions(mac)
         let k = oid(mac: mac, rowKey: rowKey)
         if let d { m[k] = d } else { m.removeValue(forKey: k) }

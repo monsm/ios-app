@@ -212,6 +212,9 @@ struct RecDetailSheet: View {
                     RecordOverlay.setDisposition(rec.mac, rec.key,
                         RecordSearch.Disposition(at: Date().timeIntervalSince1970, verdict: "已处置"))
                     tick += 1
+                } label: {
+                    Label(disp != nil ? "已处置 · 更新" : "标记已处置", systemImage: "checkmark.circle")
+                        .vkFont(.footnote, weight: .medium)
                         .foregroundStyle(DS.Palette.accentText)
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -222,6 +225,7 @@ struct RecDetailSheet: View {
                     Button {
                         RecordOverlay.setDisposition(rec.mac, rec.key, nil)   // 2026-10-28: 真撤销
                         tick += 1
+                    } label: {
                         Label("撤销", systemImage: "arrow.uturn.left")   // 739 撤销
                             .vkFont(.footnote, weight: .medium)
                             .foregroundStyle(DS.Palette.danger)

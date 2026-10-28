@@ -626,6 +626,10 @@ struct SettingsView: View {
     private var toolsSection: some View {
         Section("工具") {
             Button { showBackup = true } label: { Label("备份与恢复", systemImage: "externaldrive") }
+            // 2026-10-28 补：`GatewayView` 此前**只有搜索索引能到达** ——
+            // `showGateway` 的唯一写点是 `s.gateway` 那条 SearchHit（SettingsView:251），
+            // 设置列表里没有可见行。用户不搜「智能网关」就永远看不到配网/状态/重启三个能力。
+            Button { showGateway = true } label: { Label("智能网关", systemImage: "antenna.radiowaves.left.and.right") }
             // 2026-10-28 补：通知权限状态此前**无处可看**（`NotifyAuthBox` 零调用）。
             // 到期提醒是这个 App 唯一的主动提醒出口，权限关了却没人告诉用户，等于静默失效。
             if notifyOff {

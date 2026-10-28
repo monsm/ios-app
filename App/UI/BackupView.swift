@@ -172,7 +172,7 @@ struct BackupView: View {
     // ---------- 导入恢复 ----------
     private var importSection: some View {
         Section("导入恢复") {
-            Text("粘贴备份文本后导入。⚠ 导入会**整表替换**这台锁的凭证台账 —— 本机在备份之后新加的密码/指纹会丢失。建议先导出一次当前备份。门锁本身无需重置。")
+            Text("粘贴备份文本后导入。导入是**合并**（只增不删）—— 本机已有的凭证会保留，同名冲突取本机。若想整表回滚到备份状态，请先手动清空该锁台账再导入。门锁本身无需重置。")
                 .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             // 2026-10-28 补：加密备份需要口令才能解开（导出侧能加密，导入侧原先没有入口）
@@ -196,7 +196,10 @@ struct BackupView: View {
                 Label("从剪贴板粘贴", systemImage: "doc.on.clipboard")
                     .frame(minHeight: DS.Hit.min)
             }
-            .disabled(busy || importText.isEmpty)
+            // 2026-10-28 修复：原为 .disabled(busy || importText.isEmpty) —— **importText 为空时禁用**，
+            // 而「从剪贴板粘贴」恰恰是 importText 为空时才需要按的那一枚。
+            // 结果：想粘贴的人按不到，只有先手打几个字才解锁。改成只看 busy。
+            .disabled(busy)
             // 从文件选择 (iCloud 云盘 / 我的 iPhone) —— 备份存在文件里时不必先复制再粘贴
             Button {
                 showFilePicker = true
