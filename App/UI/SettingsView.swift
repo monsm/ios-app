@@ -234,7 +234,7 @@ struct SettingsView: View {
             SearchHit(id: "s.mobilekey", title: "手机钥匙 (给成员发数字钥匙)", icon: "iphone.gen3.badge.key", anchor: .family),
             SearchHit(id: "s.dfu", title: "固件升级 (Nordic DFU, 在「家人与钥匙」段)", icon: "arrow.up.circle", anchor: .family),
             SearchHit(id: "s.trialguard", title: "只读试验模式 (真机排障只看不改)", icon: "eye.slash", anchor: .tools),
-            SearchHit(id: "s.safemode", title: "门锁安全模式", icon: "shield.lefthalf.filled", anchor: .security),
+            SearchHit(id: "s.safemode", title: "门锁安全模式", icon: "shield.lefthalf.filled", anchor: .unlock),
             SearchHit(id: "s.unlockopt", title: "开锁偏好 (按住确认/围栏/圆盘尺寸)", icon: "hand.draw", anchor: .unlock),
             SearchHit(id: "s.autoopen", title: "靠近自动开锁 (走近自动开门/距离标定)", icon: "person.walk", anchor: .autoOpen),
             SearchHit(id: "s.members", title: "成员管理", icon: "person.2") { showMembers = true },
@@ -582,7 +582,7 @@ struct SettingsView: View {
         } header: {
             Text("凭证整理")
         } footer: {
-            Text("「成员别名显示」开着时, 有备注名的成员优先显示备注 (如「老妈」), 否则显示称呼。\n版本快照与回收站只在本机留存; 需锁端生效的操作保持「待下发」, 到场连接后在凭证页队列补发。")
+            Text("「成员别名显示」开着时, 有备注名的成员优先显示备注 (如「老妈」), 否则显示称呼。\n版本快照只在本机留存; 需锁端生效的操作保持「待下发」, 到场连接后才真正生效。")
                 .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)

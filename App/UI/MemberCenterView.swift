@@ -743,7 +743,7 @@ struct MemberDetail360View: View {
             for kc in DB.keychains() { CredentialOrg.cascadeBinMember(kc.mac, m.id) }
             DB.removeMember(m.id)
             onChanged()
-            app.showToast("已删除并入回收站")
+            app.showToast("已删除")
         })
         alert.addAction(UIAlertAction(title: "连锁端一起收回", style: .destructive) { _ in
             // 2026-10-27 (D-57)：不再收集"排上队列的条数" —— 根本没有队列（见 cascadeBinMember 注释）
@@ -756,7 +756,7 @@ struct MemberDetail360View: View {
             // 那句话是假的 —— `cascadeBinMember` 原先只 `queued += 1`，根本没有队列，
             // 连接门锁后什么都不会发生。安全承诺级别的假话比不承诺更危险。
             // 现在如实说：本机已处理，锁端凭证仍在，需要时手动删。
-            app.showToast("已删除并入回收站 · ⚠ 锁端凭证仍在，需要时请到设备页手动删除")
+            app.showToast("已删除 · ⚠ 锁端凭证仍在，需要时请到设备页手动删除")
         })
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         UIApplication.topViewController()?.present(alert, animated: true)

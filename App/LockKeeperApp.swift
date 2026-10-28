@@ -752,9 +752,11 @@ struct RootView: View {
                     app.requestRoute(.records)
                 }
             case 1:
-                Button("凭证回收站") { app.pendingCredPanel = "bin"; app.requestRoute(.credentials) }
-                Button("到期与整理建议") { app.pendingCredPanel = "expired"; app.requestRoute(.credentials) }
-                Button("待补拉队列") { app.pendingCredPanel = "queue"; app.requestRoute(.credentials) }
+                // 2026-10-28 删除：这三枚（凭证回收站 / 到期与整理建议 / 待补拉队列）**全是死入口** ——
+                // 它们只写 `app.pendingCredPanel`，而那个字段全仓**零读取方**（注释提到的
+                // `consumeCredPanel` 从未存在）。回收站与待下发队列两套功能也早已整族移除。
+                // 点了只会跳到凭证页，什么都不会展开。
+                Button("打开凭证页") { app.requestRoute(.credentials) }
             case 2:
                 Button("只看今天") {
                     app.pendingRecordsDay = StatsKit.dayKey(Date())
@@ -766,7 +768,10 @@ struct RootView: View {
                 if app.currentMac.isEmpty {
                     Button("打开这一页") { app.requestTab(selected.first ?? 0) }
                 } else {
-                    Button("这台锁的诊断") { app.pendingDiag = app.currentMac; app.requestRoute(.settings) }
+                    // 2026-10-28 修复：诊断页已随十三轮精简整族删除（SettingsView:95-97 自述），
+                    // 这一枚只做 `pendingDiag = mac` + 切到设置页，落地只 select 锁、**不显示任何诊断信息**。
+                    // 改成真存在的落点：这台锁的档案页（能看到固件/电量/型号等读数）。
+                    Button("这台锁的档案") { app.requestRoute(.lockProfile) }
                     Button("打开这一页") { app.requestTab(selected.first ?? 0) }
                 }
             }

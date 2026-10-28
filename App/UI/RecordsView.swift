@@ -67,7 +67,6 @@ struct RecordsView: View {
     @State private var flashOnClose = ""
     @State private var scrolledRow: String? = nil
     // 185/597 左滑(前缘/后缘两个方向)共用的行备注弹窗目标 + 草稿
-    @State private var noteTarget: RowVM? = nil
     @State private var noteDraft = ""
     @State private var showActiveCreds = false  // 574 活跃凭证排序
     @State private var showOutWin = false      // 575 越界开门清单
@@ -272,6 +271,9 @@ struct RecordsView: View {
                     Button { showRangePick = true } label: { Label("选区导出", systemImage: "checklist") }   // 716 选区导出
                     Button { showActiveCreds = true } label: { Label("活跃凭证排序 (约)", systemImage: "list.number") }
                     Button { showOutWin = true } label: { Label("越界开门清单 (约)", systemImage: "clock.badge.exclamationmark") }
+                    // 2026-10-28 修复：`showAlarmKinds` 原来只有 sheet 绑定、**零 true 写点** ——
+                    // AlarmKindsSheet 是完整可用的功能（告警类型多选），却没有任何入口能打开它。
+                    Button { showAlarmKinds = true } label: { Label("告警类型筛选", systemImage: "line.3.horizontal.decrease.circle") }
                 }
             } label: {
                 Image(systemName: "ellipsis.circle")
@@ -298,6 +300,17 @@ struct RecordsView: View {
     /// 记录页核心内容 (Group + 页面级修饰符) —— 从巨型 body 拆出: 原表达式报 type-check 超时
     @ViewBuilder
     private var recordsCore: some View {
+        // 2026-10-28 修复：同凭证页 —— LockScreen 承诺「记录显示为空」，
+        // 但 decoyMode 不驱动任何视图清空。这里补上空壳态。
+        if app.decoyMode {
+            List {
+                Section {
+                    EmptyState(systemImage: "list.bullet.rectangle",
+                               title: "还没有记录",
+                               message: "连上锁后点右上角「重新读取」从锁内拉取开门记录。")
+                }
+            }
+        } else {
         // 2026-10-13 run 69: 原来这里是 `Group { if… }` —— Group 包一层再叠修饰符仍报 type-check 超时;
         // 改成 @ViewBuilder 计算属性 (无 Group 包装), 分支类型由构建器收成 _ConditionalContent。
         recordsGroup
@@ -368,6 +381,7 @@ struct RecordsView: View {
             highlightTokens = q.must
             applyFilter()   // 562 边输入边更新
         }
+        }
     }
 
     /// 记录页外层 (导航栈 + 弹窗/弹框) —— 同上, 继续拆
@@ -377,16 +391,9 @@ struct RecordsView: View {
             recordsCore
         }
         .sheet(isPresented: $showAdd) { AddDeviceView() }
-        // 185/597 行备注弹窗: 前缘(597)与后缘(185)两个滑出都把目标装进 noteTarget, 共用这一只
-        .alert("行备注 (最多 60 字)", isPresented: Binding(
-            get: { noteTarget != nil },
-            set: { if !$0 { noteTarget = nil } }
-        )) {
-            TextField("只存这台手机", text: $noteDraft)
-            Button("取消", role: .cancel) { noteTarget = nil }
-        } message: {
-            Text("备注跟着这一行 (锁 + 行标识) 走, 不写进锁端日志; 详情页里也能改。")   // 576 备注跟着这一行
-        }
+        // 2026-10-28 删除：原「行备注弹窗」(noteTarget alert) 是死 alert —— 全仓只有 = nil 写点。
+        // 2026-10-28 删除：`noteTarget` 是**死 alert** —— 全仓只有 `= nil` 写点，
+        // 这个弹窗永远不会呈现。备注编辑走详情卡里的 noteSection（RecordOverlay 单一写侧）。
         .sheet(isPresented: $showRangePick) { rangePickSheet }
         .sheet(isPresented: $showActiveCreds) { ActiveCredsSheet() }
         // 565 告警类型多选: 选中集直接写回 filters (走既有 onChange(of: filters) → applyFilter)

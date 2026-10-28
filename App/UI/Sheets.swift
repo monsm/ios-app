@@ -118,7 +118,7 @@ struct AddDeviceView: View {
                     }
                 }
                 ForEach(devices) { d in
-                    Button { Task { await confirmPair(d, nil) } } label: {
+                    Button { Task { await confirmPair(d, ZKProtocol.parseAdv(d.advertisHex)) } } label: {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(d.name.isEmpty ? "未知设备" : d.name)
                                 .vkFont(.subheadline, weight: .medium)
@@ -186,10 +186,22 @@ struct AddDeviceView: View {
         // MAC 一律取**显示序** (ZKProtocol.lockMac) —— 2026-10-17 真机: 这里原先用 adv.macRaw,
         // 而包络里还会 reversePairs 一次 ⇒ 锁收到的 0x88 TargetMAC 正好是反的, 05 之后的每一步
         // 都回 rc=12「mac地址不正确」(锁什么都没写, 只是拒绝), 且台账里会多一份永远对不上号的幽灵记录。
-        guard flow == .scan, let adv, let mac = ZKProtocol.lockMac(fromAdv: adv) else { return }
+        guard flow == .scan else { return }
+        // 2026-10-28 修复：原先这里 `let adv` 是必填，而唯一调用点传的是 **nil** ——
+        // 于是整个配网流程永远在第一步静默返回（无确认框、无进度、无报错）。
+        // 现在调用点从 `d.advertisHex` 解析出 AdvData；解析失败要说清，不能静默。
+        guard let adv = ZKProtocol.parseAdv(d.advertisHex),
+              let mac = ZKProtocol.lockMac(fromAdv: adv) else {
+            app.showToast("这条广播解析不出门锁信息（可能不是门锁设备），请靠近门锁重试")
+            return
+        }
         let display = adv.macDisplay ?? "—"
         // 255 MAC 去重拦截: 本地已有该锁 → 不进配网, 引导跳转
         if let existing = DB.keychain(mac) {
+            // 2026-10-28：原先这里直接 return（静默）—— 用户点了行什么都不会发生。
+            // 注释早就写着"引导跳转"，但跳转没写。现在如实说清并把人带到设备页。
+            app.showToast("这把锁已经添加过了（\(existing.mac.isEmpty ? mac : existing.mac)），请到设备页切换")
+            app.requestRoute(.device)
             return
         }
         let model = PidMap.modelName(adv.pid)
@@ -1690,7 +1702,7 @@ struct MembersView: View {
             _ = Milestones.recordOrganize()
             reload()
             // 2026-10-27 审核修复 (AUDIT-D D-57)：同 MemberCenterView —— 不再承诺假队列。
-            app.showToast("已删除并入回收站 · ⚠ 锁端凭证仍在，需要时请到设备页手动删除")
+            app.showToast("已删除 · ⚠ 锁端凭证仍在，需要时请到设备页手动删除")
         })
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         UIApplication.topViewController()?.present(alert, animated: true)

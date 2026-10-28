@@ -41,7 +41,6 @@ struct CredentialsView: View {
     @State private var showDisable = false
     @State private var pwdDetailItem: LedgerPwd?   // 包5 PwdDetailStudio
     @State private var fpDetailItem: LedgerFp?     // 包5 FpDetailStudio
-    @State private var showTempCode = false
 
     var body: some View { vkBody.destined(.credentials) }
     var vkBody: some View {
@@ -94,9 +93,8 @@ struct CredentialsView: View {
                 }
             }
             // 2026-10-26 精简：凭证中心 sheet 已删（四件套全部移除）。
-            .sheet(isPresented: $showTempCode) {
-                TempCodeStudio()
-            }
+        // 2026-10-28 删除：`showTempCode` 是**死 sheet** —— 全仓只有声明与绑定，
+        // 零 `= true` 写点，那张面板永远不会出现。临时码功能走的是页内的 otpSection，不需要这个 sheet。
             // 2026-10-26 精简：版本历史 sheet 已删。
             .sheet(item: $pwdDetailItem) { item in
                 PwdDetailStudio(alias: item.alias)
@@ -193,12 +191,38 @@ struct CredentialsView: View {
             // 2026-10-27 删除：`Section("筛选")` 是个**空壳** —— 里面的「智能列表」
             // 已于 2026-10-26 精简时删掉，只剩这一行注释。菜单里挂一个点不出任何东西的分组，
             // 用户会以为是坏的。
+                    // 2026-10-28 修复：这里原来是**空壳** —— 空 label 的 Button、只有触感没有动作，
+                    // 而 editMode 唯一置 true 的路径（app.pendingCredSelect）全仓只有 `= nil` 写点，
+                    // 于是全选/批量延期/导出/停用/删除 **7 个按钮永远不出现**。
+                    // 现在这里给两件真能用的：进入多选、按条件智能选取。
                     Section("整理") {
-                    // 2026-10-26 精简：该入口已删。
                         if !editMode && CredentialOrg.typeCounts(mac).all > 0 {
                             Button {
                                 DS.Haptics.tick.impactOccurred()
+                                withAnimation(DS.Motion.quick) { editMode = true }
+                                selPwds = []
+                                selFps = []
                             } label: {
+                                Label("选择凭证 (批量操作)", systemImage: "checkmark.circle")
+                            }
+                        }
+                        if editMode {
+                            Button {
+                                DS.Haptics.tick.impactOccurred()
+                                // 智能选取：按当前 seg 与筛选条件选中全部可见行（真实现，不再是空动作）
+                                let pwds = sortedPwds.map { $0.alias }
+                                let fps = sortedFps.map { $0.batch }
+                                selPwds = pwds
+                                selFps = fps
+                                app.showToast("已选中 \(pwds.count + fps.count) 条（当前筛选下的全部）")
+                            } label: {
+                                Label("智能选取 (当前筛选全部)", systemImage: "wand.and.stars")
+                            }
+                            Button(role: .destructive) {
+                                DS.Haptics.tick.impactOccurred()
+                                withAnimation(DS.Motion.quick) { editMode = false; selPwds = []; selFps = [] }
+                            } label: {
+                                Label("退出多选", systemImage: "xmark.circle")
                             }
                         }
                     }
@@ -303,12 +327,45 @@ struct CredentialsView: View {
     /// 列表内容抽成 ViewBuilder: 编辑模式与正常模式共用, 避免嵌套两个 List
     @ViewBuilder
     private var listBody: some View {
+        // 2026-10-28 修复：LockScreen.swift:8 承诺「输胁迫码 → 凭证与记录显示为空」，
+        // 但 decoyMode 此前只拦路由与自动开锁，**没有任何视图据它清空数据** ——
+        // 被胁迫时真实凭证全部可见，这句承诺是空话（安全承诺级别的假话）。
+        if app.decoyMode {
+            Section {
+                EmptyState(systemImage: "tray",
+                           title: "还没有凭证",
+                           message: "配好门锁后，在这里添加密码与指纹。")
+            }
+        } else {
             searchSection
             if memberView {
                 memberSections
             } else {
+                // 2026-10-28 修复：这里原来是**两个从未被使用的局部量** ——
+                // `let pwds = sortedPwds` / `let fps = sortedFps` 声明完就没了，
+                // 没有 ForEach。默认 memberView = (groupMode == .owner)，而 kf_ccred_prefs 默认 0 = .type，
+                // 于是默认走这一支 ⇒ **有凭证时整页空白**（空态提示又被 isEmpty 判据挡住）。
+                // 用户会以为数据丢了。现在按 seg 正确分段渲染。
                 let pwds = sortedPwds
                 let fps = sortedFps
+                // 524 类型分段：0 全部 / 1 密码 / 2 指纹 / 3 临时码
+                if seg != 2, !pwds.isEmpty {
+                    Section(seg == 3 ? "临时码 (\(pwds.count))" : "密码 (\(pwds.count))") {
+                        ForEach(pwds) { p in credRow(CredHit(id: "p\(p.alias)", pwd: p)) }
+                            .onMove { src, dst in
+                                commitGroupMove(keys: pwdKeys(pwds), slot: "p", src: src, dst: dst)
+                            }
+                    }
+                }
+                // 指纹只在「全部」与「指纹」两档出现；临时码档不显示指纹
+                if seg != 1, seg != 3, !fps.isEmpty {
+                    Section("指纹 (\(fps.count))") {
+                        ForEach(fps) { f in credRow(CredHit(id: "f\(f.batch)", fp: f)) }
+                            .onMove { src, dst in
+                                commitGroupMove(keys: fpKeys(fps), slot: "f", src: src, dst: dst)
+                            }
+                    }
+                }
             }
             if seg == 0 { otpSection }
             // 354: 全归档不算"台账空" — 归档区那张卡就是这批条目的落点, 谎报"还没有台账"会导向重复建码
@@ -316,6 +373,7 @@ struct CredentialsView: View {
                               && true) {   // 2026-10-26: 归档已删，恒空
                 emptyHint
             }
+        }
     }
 
     @ViewBuilder
@@ -935,12 +993,52 @@ struct CredentialsView: View {
             selFps = allF.filter { !selFps.contains($0) }
         }
     }
+    // 2026-10-28 修复：原实现是**空壳** —— 注释写着「智能选择已删」，
+    // 然后把 selPwds/selFps 原样写回，再弹一个「已套用 N 条」的**假 toast**。
+    // 用户以为筛选了，实际一条都没变。现在三个档各自真实现。
     private func applySmart(_ s: String) {
-        let key = s == "已过期" ? "expired" : (s == "同成员" ? "sameowner" : "samekind")
-        let r = (pwd: selPwds, fp: selFps)   // 2026-10-26: 智能选择已删
-        selPwds = r.pwd
-        selFps = r.fp
-        app.showToast("已套用「\(s)」 \(selPwds.count + selFps.count) 条")
+        let pwds: [Int]
+        let fps: [Int]
+        switch s {
+        case "已过期":
+            // 只选「已过期」这一态；指纹没有过期概念，不参与
+            pwds = sortedPwds.filter { CredentialOrg.pwdState($0) == 2 }.map { $0.alias }
+            fps = []
+        case "同成员":
+            // 以「当前已选中的第一条」为锚，选同归属的其余行；没有选中时按未归属处理
+            let anchorOwner = selPwds.first.flatMap { a in
+                sortedPwds.first { $0.alias == a }?.owner
+            }
+            pwds = sortedPwds.filter { $0.owner == anchorOwner }.map { $0.alias }
+            let anchorFpOwner = selFps.first.flatMap { b in
+                sortedFps.first { $0.batch == b }?.owner
+            }
+            fps = sortedFps.filter { $0.owner == anchorFpOwner }.map { $0.batch }
+        default:   // "同类型"
+            // 同类型 = 按当前 seg 那一类：临时码档只选 temp，密码档只选非 temp，指纹档只选指纹
+            if seg == 3 {
+                pwds = sortedPwds.filter { $0.temp }.map { $0.alias }
+                fps = []
+            } else if seg == 1 {
+                pwds = sortedPwds.filter { !$0.temp }.map { $0.alias }
+                fps = []
+            } else if seg == 2 {
+                pwds = []
+                fps = sortedFps.map { $0.batch }
+            } else {
+                pwds = sortedPwds.map { $0.alias }
+                fps = sortedFps.map { $0.batch }
+            }
+        }
+        selPwds = pwds
+        selFps = fps
+        let total = pwds.count + fps.count
+        if total == 0 {
+            // 如实说「一条都没选到」，不要弹「已套用 0 条」那种看起来成功的话
+            app.showToast("「\(s)」在这个筛选下没有可选的条目")
+        } else {
+            app.showToast("「\(s)」已选中 \(total) 条")
+        }
         DS.Haptics.tick.impactOccurred()
     }
     private func selectionCircle(_ hit: CredHit) -> some View {
@@ -1075,7 +1173,7 @@ struct CredentialsView: View {
                 _ = Milestones.recordOrganize()
                 app.flashReceipt("已写入本机")   // 508 已写入本机
                 let extra = (r.failedPwds.count + r.failedFps.count) > 0 ? " · ⚠ 有 \(r.failedPwds.count + r.failedFps.count) 条已不在台账" : ""
-                app.showToast("已停用 \(r.done) 条, 收入回收站" + extra)
+                app.showToast("已停用 \(r.done) 条" + extra)
                 reload()
             } else {
                 app.showToast("所选凭证已不在台账")

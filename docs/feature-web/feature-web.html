@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-27T22:45:04.235Z",
+    "generated": "2026-10-28T02:12:33.675Z",
     "sources": [
       {
         "scout": "android-native",
@@ -801,7 +801,7 @@ const DATA = {
           "line": 42,
           "symbol": "body",
           "note": "vkBody.destined(.deviceHome)",
-          "text": "Card {"
+          "text": "EmptyState(systemImage: \"lock.open.rotation\","
         },
         {
           "platform": "ios",
@@ -1159,7 +1159,7 @@ const DATA = {
           "line": 1673,
           "symbol": "struct GatewayView",
           "note": "",
-          "text": "+ \"\\n· 连锁端一起收回: 这些凭证会排上锁端删除, 到场连接后真正失效。指纹一旦在锁端删掉就无法远程补录, 只能本人到锁前重录 —— 还原时对指纹只剩本机记录。\""
+          "text": "/// 501 级联预告: 删除成员前列出名下将一并入回收站的凭证清单 (跨锁合计)"
         },
         {
           "platform": "apk",
@@ -1191,7 +1191,7 @@ const DATA = {
           "line": 1691,
           "symbol": "VariantToggle(\"橙色灯闪烁中\")",
           "note": "",
-          "text": "reload()"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -1295,7 +1295,7 @@ const DATA = {
           "line": 964,
           "symbol": "struct DeviceInfoView",
           "note": "",
-          "text": "return DateFormatter.localizedString(from: Date(timeIntervalSince1970: meta.batteryChangedAt),"
+          "text": "let t = LockArchive.meta(kc.mac).verifiedAt"
         },
         {
           "platform": "apk",
@@ -1311,7 +1311,7 @@ const DATA = {
           "line": 982,
           "symbol": "BusyButton(title: \"重新读取\")",
           "note": "",
-          "text": "guard let s = BatteryCare.fwSince(kc.mac, fw: fw) else { return \"首次读到后起算\" }"
+          "text": "return at > 0 ? LockStats.sampleTimeText(at) : \"尚未读取过快照\""
         },
         {
           "platform": "ios",
@@ -1319,7 +1319,7 @@ const DATA = {
           "line": 986,
           "symbol": "静音模式可在设置页切换",
           "note": "",
-          "text": ""
+          "text": "let n = BatteryCare.samples(kc?.mac ?? \"\").count"
         }
       ],
       "platformEvidence": {
@@ -1402,7 +1402,7 @@ const DATA = {
           "line": 1465,
           "symbol": "struct KeychainHWView",
           "note": "",
-          "text": "}"
+          "text": "do {"
         },
         {
           "platform": "ios",
@@ -1410,7 +1410,7 @@ const DATA = {
           "line": 1505,
           "symbol": "if app.current == nil",
           "note": "",
-          "text": "NavigationStack {"
+          "text": "@EnvironmentObject var app: AppState"
         },
         {
           "platform": "ios",
@@ -1418,7 +1418,7 @@ const DATA = {
           "line": 1522,
           "symbol": ".interactiveDismissDisabled(busy)",
           "note": "",
-          "text": "}"
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         }
       ],
       "platformEvidence": {
@@ -2090,7 +2090,7 @@ const DATA = {
           "line": 1222,
           "symbol": "quickActions",
           "note": "",
-          "text": "// 与手机钟无关；把它抄一份进本机反而造出第二个\"现在是几点\"。AutoOpen 那条自动校时走 audit (0E 双确认)。"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -2106,7 +2106,7 @@ const DATA = {
           "line": 1227,
           "symbol": "let cols = AXPrefs.bigTile ? 2 : 3",
           "note": "",
-          "text": "failed = true"
+          "text": "if kc.mac == app.currentMac, let fw = app.status?.firmware, !fw.isEmpty { return fw }"
         }
       ],
       "platformEvidence": {
@@ -2285,7 +2285,7 @@ const DATA = {
           "line": 470,
           "symbol": "doneView",
           "note": "",
-          "text": "// 360 到期待用"
+          "text": "Text(\"给门锁添加密码后，成员就可通过在门锁键盘上输入该密码进行开锁。\")"
         },
         {
           "platform": "ios",
@@ -2293,7 +2293,7 @@ const DATA = {
           "line": 486,
           "symbol": "Label(\"下一步: 到设备页成功开一次锁 …\")",
           "note": "",
-          "text": "// 想再打开只能退出这一页重进 (@State 回到默认 true)。自我隐藏的开关是\"点了找不到\"的一种:"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         }
       ],
       "platformEvidence": {
@@ -2354,7 +2354,7 @@ const DATA = {
           "line": 303,
           "symbol": "if let existing = DB.keychain(mac)",
           "note": "",
-          "text": "var meta = LockArchive.meta(kc.mac)"
+          "text": "Text(\"添加成功后请立刻做一次全量备份, 并成功开一次锁完成「链路已验证」标记。\")"
         },
         {
           "platform": "ios",
@@ -2438,7 +2438,7 @@ const DATA = {
           "line": 426,
           "symbol": "namingView",
           "note": "",
-          "text": "@EnvironmentObject var app: AppState"
+          "text": "private var pairTargetMac: String { pairedKC?.mac ?? \"\" }"
         },
         {
           "platform": "ios",
@@ -2446,7 +2446,7 @@ const DATA = {
           "line": 456,
           "symbol": "saveNaming()",
           "note": "",
-          "text": "} footer: {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -2454,7 +2454,7 @@ const DATA = {
           "line": 585,
           "symbol": "defaultName(for:)",
           "note": "",
-          "text": "let from = Date()"
+          "text": "dismiss()"
         }
       ],
       "platformEvidence": {
@@ -2522,7 +2522,7 @@ const DATA = {
           "line": 359,
           "symbol": "probeEcho(_:)",
           "note": "",
-          "text": "// 2026-10-13 run 63: 原来是三重嵌套三元的一行比较, 加上上面的 map 闭包,"
+          "text": "devices.removeAll()"
         },
         {
           "platform": "ios",
@@ -2538,7 +2538,7 @@ const DATA = {
           "line": 284,
           "symbol": ".contextMenu { Button { probeEcho } }",
           "note": "",
-          "text": "Text(\"昵称会显示在 Hero 卡与切换胶囊上; 场所副标题可留空。符号与色标可在「锁档案」里选。\")"
+          "text": ".padding(.vertical, DS.Space.xs)"
         }
       ],
       "platformEvidence": {
@@ -2607,7 +2607,7 @@ const DATA = {
           "line": 377,
           "symbol": "pairProgress",
           "note": "",
-          "text": ""
+          "text": ".map { $0.dev }"
         },
         {
           "platform": "ios",
@@ -2623,7 +2623,7 @@ const DATA = {
           "line": 415,
           "symbol": ".frame(maxHeight: 240)",
           "note": "",
-          "text": ""
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -2690,7 +2690,7 @@ const DATA = {
           "line": 572,
           "symbol": "rollback(reason:)",
           "note": "",
-          "text": "app.showToast(\"添加成功 (别名 #\\(alias))\")"
+          "text": "if useTemplate {"
         },
         {
           "platform": "ios",
@@ -2776,7 +2776,7 @@ const DATA = {
           "line": 501,
           "symbol": "private func scan() async",
           "note": "",
-          "text": "}"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         },
         {
           "platform": "ios",
@@ -2784,7 +2784,7 @@ const DATA = {
           "line": 537,
           "symbol": "scoreAdv(_:)",
           "note": "",
-          "text": ""
+          "text": "private func confirmTemp() {"
         },
         {
           "platform": "ios",
@@ -3213,7 +3213,7 @@ const DATA = {
           "line": 1698,
           "symbol": "TextField(\"WiFi 名称 (2.4GHz)\")",
           "note": "",
-          "text": "}"
+          "text": "for kc in DB.keychains() {"
         },
         {
           "platform": "apk",
@@ -3305,7 +3305,7 @@ const DATA = {
           "line": 857,
           "symbol": "attentionCard",
           "note": "",
-          "text": ".frame(maxWidth: .infinity)"
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         },
         {
           "platform": "ios",
@@ -3313,7 +3313,7 @@ const DATA = {
           "line": 879,
           "symbol": "attentionItems",
           "note": "",
-          "text": "@ViewBuilder content: () -> Content) -> some View {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -3321,7 +3321,7 @@ const DATA = {
           "line": 895,
           "symbol": "BatteryCare.fpCleanNeeded(mac)",
           "note": "",
-          "text": "let big = AXPrefs.bigTile   // 230 大格: 图标与字号随加大"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -3389,7 +3389,7 @@ const DATA = {
           "line": 170,
           "symbol": ".onChange(of: app.pendingJumpLock)",
           "note": "",
-          "text": "await refresh()"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -3397,7 +3397,7 @@ const DATA = {
           "line": 201,
           "symbol": "if app.pendingAddDevice",
           "note": "",
-          "text": "app.showToast(\"4 秒内没扫到这把锁的广播 — 走近一点再下拉\")   // 537 秒内没扫到这把锁的广"
+          "text": "return"
         },
         {
           "platform": "ios",
@@ -3405,7 +3405,7 @@ const DATA = {
           "line": 148,
           "symbol": ".onChange(of: app.currentMac)",
           "note": "",
-          "text": ".onChange(of: sense.linkState) { _, new in"
+          "text": "// 当前锁不在翻页序列 (如沉睡锁从胶囊选中) → 重建序列并落位"
         }
       ],
       "platformEvidence": {
@@ -3477,7 +3477,7 @@ const DATA = {
           "line": 47,
           "symbol": "if app.devices.isEmpty",
           "note": "",
-          "text": "// 824 第二出口: 只有\"再扫一次\"不够 —— 换机或误删之后用户手上拿的是"
+          "text": "// 一份备份文件，不是一把门锁。指不到恢复入口的空态等于把数据判了死刑。"
         },
         {
           "platform": "apk",
@@ -3493,7 +3493,7 @@ const DATA = {
           "line": 59,
           "symbol": "app.pendingSettingsFocus = \"backup\"",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.accentText)"
+          "text": ".frame(maxWidth: .infinity, minHeight: DS.Hit.min)"
         },
         {
           "platform": "ios",
@@ -3501,7 +3501,7 @@ const DATA = {
           "line": 52,
           "symbol": "actionTitle: \"添加设备\"",
           "note": "",
-          "text": "// Tab (点一下像没反应)。走 requestTab, 访客态由它拉起复核页。"
+          "text": "app.pendingSettingsFocus = \"backup\"   // §4.3: 这一按直达「备份与恢复」, 不再只放人在设置页根上"
         }
       ],
       "platformEvidence": {
@@ -3580,7 +3580,7 @@ const DATA = {
           "line": 330,
           "symbol": "groupChips",
           "note": "",
-          "text": "let tier = BatteryCare.tier(batteryPct(for: kc))"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -3588,7 +3588,7 @@ const DATA = {
           "line": 293,
           "symbol": "inGroup(_:) ",
           "note": "",
-          "text": "switch self {"
+          "text": "/// `.none` 在图标上是**空心圈**而不是灰点 —— 灰点会被读成\"我查过了, 它没事\", 而那正是没查过的样子。"
         },
         {
           "platform": "ios",
@@ -3596,7 +3596,7 @@ const DATA = {
           "line": 347,
           "symbol": "groupFilter = name; syncPageOrder()",
           "note": "",
-          "text": "// 给名称更高的优先级，压缩时优先压右侧胶囊而不是锁名。"
+          "text": "VStack(alignment: .leading, spacing: DS.Space.xxs) {"
         }
       ],
       "platformEvidence": {
@@ -3665,7 +3665,7 @@ const DATA = {
           "line": 695,
           "symbol": "heroCard(for:isCurrent:)",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": ".animation(DS.Motion.soft, value: autoLockLeft)"
         },
         {
           "platform": "ios",
@@ -3673,7 +3673,7 @@ const DATA = {
           "line": 793,
           "symbol": "HeroStat(label: \"电量\")",
           "note": "",
-          "text": "GlassEffectContainer(spacing: DS.Space.s) {"
+          "text": "// 否则每块各自折射、边缘会出现难看的接缝。"
         },
         {
           "platform": "ios",
@@ -3681,7 +3681,7 @@ const DATA = {
           "line": 846,
           "symbol": ".saturation(connected ? 1 : 0.55)",
           "note": "",
-          "text": "} label: {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -3751,7 +3751,7 @@ const DATA = {
           "line": 732,
           "symbol": "LinkPill(state:connectMs:rssi:source:)",
           "note": "",
-          "text": "app.requestUnlock()"
+          "text": "withAnimation(DS.Motion.standard) { confirmPulse = true }"
         },
         {
           "platform": "ios",
@@ -3759,7 +3759,7 @@ const DATA = {
           "line": 738,
           "symbol": ".onTapGesture { if isCurrent { showRssi.toggle() } }",
           "note": "",
-          "text": "autoLockLeft = total"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -3767,7 +3767,7 @@ const DATA = {
           "line": 756,
           "symbol": ".contextMenu { Menu(\"最近状态变化\") }",
           "note": "",
-          "text": ".font(.system(size: DS.Icon.sm, weight: .semibold))"
+          "text": "// 87 排查清单: 查蓝牙 / 走近 / 查电量, 逐项可勾"
         }
       ],
       "platformEvidence": {
@@ -3838,7 +3838,7 @@ const DATA = {
           "line": 903,
           "symbol": "linkSenseCard",
           "note": "",
-          "text": "in: RoundedRectangle(cornerRadius: 13, style: .continuous))"
+          "text": "VStack(spacing: DS.Space.s) {"
         },
         {
           "platform": "ios",
@@ -3846,7 +3846,7 @@ const DATA = {
           "line": 948,
           "symbol": "// 535 同步回执",
           "note": "",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -3854,7 +3854,7 @@ const DATA = {
           "line": 978,
           "symbol": "最后已知: 电量 … (缓存 …)",
           "note": "",
-          "text": "@State private var showModuleOrder = false"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -3924,7 +3924,7 @@ const DATA = {
           "line": 96,
           "symbol": "Button { showModuleOrder = true }",
           "note": "",
-          "text": "// 537 下拉重扫: 只扫不连。127 静默模式关的是\"自动\"回连/预握手/自动开锁,"
+          "text": "// 用户主动下拉属于手动动作 (与\"手动圆盘照常\"同一条口径), 所以这里不看 DiagFlags.silent。"
         },
         {
           "platform": "ios",
@@ -4010,7 +4010,7 @@ const DATA = {
           "line": 85,
           "symbol": "if let kc = app.current, kc.ekey.isEmpty, kc.pins.count > 1",
           "note": "",
-          "text": "Button { showModuleOrder = true } label: {"
+          "text": "Label(\"模块排序与显隐\", systemImage: \"arrow.up.arrow.down\")   // 904 模块排序"
         }
       ],
       "platformEvidence": {
@@ -4080,7 +4080,7 @@ const DATA = {
           "line": 211,
           "symbol": "rescanPull()",
           "note": "",
-          "text": "refreshing = true"
+          "text": "app.showToast(\"扫描没能启动: 蓝牙栈忙或权限未就绪\")   // 537 扫描没能启动"
         },
         {
           "platform": "ios",
@@ -4088,7 +4088,7 @@ const DATA = {
           "line": 217,
           "symbol": "sense.scan(mac:timeoutMs: 4000)",
           "note": "",
-          "text": "// 都走本地缓存, 不主动连锁 —— 下拉刷新已经把 03 快照发出去了, 这里不再叠一轮 IO。"
+          "text": "guard !refreshing else { return }"
         },
         {
           "platform": "ios",
@@ -4096,7 +4096,7 @@ const DATA = {
           "line": 109,
           "symbol": ".refreshable { await rescanPull() }",
           "note": "",
-          "text": "}"
+          "text": "ToolbarItem(placement: barSide) {"
         }
       ],
       "platformEvidence": {
@@ -4164,7 +4164,7 @@ const DATA = {
           "line": 1205,
           "symbol": "if let drift = clockDrift, abs(drift) > 2",
           "note": "",
-          "text": "}"
+          "text": "} label: {"
         },
         {
           "platform": "ios",
@@ -4180,7 +4180,7 @@ const DATA = {
           "line": 1207,
           "symbol": "try? await app.lock.syncTime()",
           "note": "",
-          "text": ".accessibilityLabel(\"符号 \\(s.label)\")"
+          "text": "Image(systemName: s.name)"
         }
       ],
       "platformEvidence": {
@@ -4251,7 +4251,7 @@ const DATA = {
           "line": 1000,
           "symbol": "infoCardSection",
           "note": "",
-          "text": ""
+          "text": "private func stockText(_ v: Int) -> String { v \u003c 0 ? \"—\" : \"\\(v)\" }"
         },
         {
           "platform": "ios",
@@ -4259,7 +4259,7 @@ const DATA = {
           "line": 1029,
           "symbol": "if let v = status?.verDFU, v > 0",
           "note": "",
-          "text": "clockDrift = Int(lt - ZKProtocol.nowProtoSeconds())"
+          "text": "return s.verifyMode == 0 ? \"A模式\" : \"B模式\""
         },
         {
           "platform": "ios",
@@ -4267,7 +4267,7 @@ const DATA = {
           "line": 1127,
           "symbol": "driftText",
           "note": "",
-          "text": "// 预览: 与 Hero 卡同构的身份行, 编辑即所见"
+          "text": "@State private var symbol = \"\""
         }
       ],
       "platformEvidence": {
@@ -4335,7 +4335,7 @@ const DATA = {
           "line": 1045,
           "symbol": "statusSection",
           "note": "",
-          "text": ""
+          "text": "// 锁钟是所有有效期窗口 (0A/0B/14) 与临时码的判据 —— 进页自动对齐, 漂移 > 2s 才真写"
         },
         {
           "platform": "ios",
@@ -4343,7 +4343,7 @@ const DATA = {
           "line": 1054,
           "symbol": "BattSpark(samples: sp)",
           "note": "",
-          "text": "alert.addAction(UIAlertAction(title: \"保存\", style: .default) { _ in"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -4351,7 +4351,7 @@ const DATA = {
           "line": 1172,
           "symbol": "capacityRow(title:used:cap:stock:)",
           "note": "",
-          "text": ".lineLimit(3...6)"
+          "text": "// 它同时是 Hero 卡副标题与\"全部锁总览\"的行副标题; **Widget 那一半做不到** ——"
         }
       ],
       "platformEvidence": {
@@ -4509,7 +4509,7 @@ const DATA = {
           "line": 1526,
           "symbol": "dongleRow(_:)",
           "note": "",
-          "text": "title: \"还没有成员\","
+          "text": ".autocorrectionDisabled()"
         },
         {
           "platform": "ios",
@@ -4525,7 +4525,7 @@ const DATA = {
           "line": 1540,
           "symbol": "if let st = d.stat",
           "note": "",
-          "text": "// 包13: 成员中心入口 (788 总表 / 360 详情 / 家庭场景 / 聚合视图)"
+          "text": "actionTitle: \"添加成员\") {"
         }
       ],
       "platformEvidence": {
@@ -4600,7 +4600,7 @@ const DATA = {
           "line": 1588,
           "symbol": "confirmWriteKey(_:)",
           "note": "",
-          "text": "// 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。"
+          "text": ".swipeActions {"
         },
         {
           "platform": "ios",
@@ -4632,7 +4632,7 @@ const DATA = {
           "line": 1635,
           "symbol": "writeKey(_:)",
           "note": "",
-          "text": "let placeholder: String"
+          "text": "if let m = DB.addMember(newName) {"
         }
       ],
       "platformEvidence": {
@@ -6070,7 +6070,7 @@ const DATA = {
           "line": 1419,
           "symbol": "BusyButton 保存档案",
           "note": "",
-          "text": "confirmTitle: \"删除\") {"
+          "text": "Button(\"重启网关\") { confirmReboot(g) }"
         },
         {
           "platform": "apk",
@@ -6086,7 +6086,7 @@ const DATA = {
           "line": 1448,
           "symbol": "DB.saveKeychain",
           "note": "",
-          "text": "guard !running else { return }"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -7357,7 +7357,7 @@ const DATA = {
           "line": 1268,
           "symbol": "if DB.listFps(app.currentMac).isEmpty",
           "note": "",
-          "text": "var vkBody: some View {"
+          "text": "Text(\"同步时间\")"
         },
         {
           "platform": "ios",
@@ -7365,7 +7365,7 @@ const DATA = {
           "line": 1270,
           "symbol": "quickDestination(\"addFp\")",
           "note": "",
-          "text": "Image(systemName: \"lock.shield\")"
+          "text": "Section {"
         }
       ],
       "platformEvidence": {
@@ -8152,7 +8152,7 @@ const DATA = {
           "line": 1025,
           "symbol": "UnlockDial(state:phase:connected:bleReady:…)",
           "note": "",
-          "text": "Text(moduleName(id))"
+          "text": ".accessibilityElement(children: .contain)"
         },
         {
           "platform": "android",
@@ -10839,7 +10839,7 @@ const DATA = {
           "line": 1000,
           "symbol": "fullScreenCover",
           "note": "",
-          "text": "// 344 回前台才出快捷条 (344 的原话就是\"回前台显示\"), 顺带重算剩余秒数"
+          "text": "if phase == .active {"
         }
       ],
       "platformEvidence": {
@@ -15197,7 +15197,7 @@ const DATA = {
           "line": 707,
           "symbol": "submit(permanent:)",
           "note": "",
-          "text": ""
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         },
         {
           "platform": "ios",
@@ -15334,7 +15334,7 @@ const DATA = {
           "line": 1733,
           "symbol": "PwdDetailStudio",
           "note": "",
-          "text": "guard let kc = app.current, let v = p.pwd, !renewing else { return }"
+          "text": ".dsScreenBackground()"
         },
         {
           "platform": "ios",
@@ -15342,7 +15342,7 @@ const DATA = {
           "line": 1746,
           "symbol": "PwdDetailStudio",
           "note": "List 骨架",
-          "text": "DB.addPwd(kc.mac, LedgerPwd(alias: alias, from: fromS, to: toS, temp: true,"
+          "text": "/// 332 原码续期 (⚠ 降级): 沿用原密码值改期 7 天, 走既有 0A 原位改写; 锁端未连则入队, 不新增协议"
         },
         {
           "platform": "ios",
@@ -15350,7 +15350,7 @@ const DATA = {
           "line": 1783,
           "symbol": "PwdDetailStudio",
           "note": "码值段",
-          "text": "guard need, let v = DB.listPwds(mac).first(where: { $0.pwd != nil && CredentialOrg.pwdState($0) == 0 })?.pwd else {"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         }
       ],
       "platformEvidence": {
@@ -15422,7 +15422,7 @@ const DATA = {
           "line": 2152,
           "symbol": "FpStudio",
           "note": "",
-          "text": "DB.delFp(em, f.batch)"
+          "text": "DB.addFp(em, LedgerFp(batch: Int(b), name: finalName, at: Date().timeIntervalSince1970 * 1000,"
         },
         {
           "platform": "apk",
@@ -15438,7 +15438,7 @@ const DATA = {
           "line": 2192,
           "symbol": "FpStudio",
           "note": "分步容器",
-          "text": "try await app.lock.fpConfirm(batch, validFrom: \"2010-01-01 00:00:00\", validTo: \"2118-01-01 00:00:00\")"
+          "text": "self.presses = ps"
         },
         {
           "platform": "ios",
@@ -15446,7 +15446,7 @@ const DATA = {
           "line": 2216,
           "symbol": "FpStudio",
           "note": "onAppear 消费预选",
-          "text": "private var f: LedgerFp? { DB.getFp(mac, batch) }"
+          "text": "withAnimation(DS.Motion.standard) { step = 2 }"
         }
       ],
       "platformEvidence": {
@@ -15587,7 +15587,7 @@ const DATA = {
           "line": 594,
           "symbol": "struct AddPwdView",
           "note": "",
-          "text": "// 同上: 临时码这一支的\"哪里\"也取场所，不再写死。"
+          "text": "guard pwdOK else { app.showToast(\"请输入6~8位数字密码\"); return }"
         },
         {
           "platform": "ios",
@@ -15595,7 +15595,7 @@ const DATA = {
           "line": 610,
           "symbol": "pwdOK",
           "note": "",
-          "text": "struct StartAddFpView: View {"
+          "text": "let rec = LedgerPwd(alias: alias, from: f.string(from: from), to: f.string(from: to), temp: true,"
         },
         {
           "platform": "ios",
@@ -15603,7 +15603,7 @@ const DATA = {
           "line": 680,
           "symbol": "Button(busy ? \"写入中…\" : \"关闭\")…interactiveDismissDisabled(busy)",
           "note": "",
-          "text": "Text(error).fixedSize(horizontal: false, vertical: true)"
+          "text": "ForEach(0..\u003c8, id: \\.self) { i in"
         }
       ],
       "platformEvidence": {
@@ -15991,7 +15991,7 @@ const DATA = {
           "line": 781,
           "symbol": "struct StartAddFpView",
           "note": "",
-          "text": "note: \"\", src: \"app\", owner: owner, isAlarm: false))"
+          "text": "if Task.isCancelled {"
         },
         {
           "platform": "ios",
@@ -16007,7 +16007,7 @@ const DATA = {
           "line": 894,
           "symbol": ".keepingScreenAwake(busy)",
           "note": "",
-          "text": "}"
+          "text": "// 45 电量 sparkline: 采样 ≥2 个点画真走势; 不足时退回诚实占位文案 (不画假线不插值)"
         }
       ],
       "platformEvidence": {
@@ -16450,7 +16450,7 @@ const DATA = {
           "line": 1626,
           "symbol": "batchBar",
           "note": "",
-          "text": "// 破坏性确认: 取消 / 标红确认"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -16522,7 +16522,7 @@ const DATA = {
           "line": 1229,
           "symbol": "credRow",
           "note": "",
-          "text": "// （截图里显示「于 19:00 失效」而当时 6:49）。现在同时判\"是否已过当前窗口\"。"
+          "text": "set: { on in"
         },
         {
           "platform": "ios",
@@ -16530,7 +16530,7 @@ const DATA = {
           "line": 1246,
           "symbol": "credRow",
           "note": "状态胶囊",
-          "text": "UINotificationFeedbackGenerator().notificationOccurred(.error)"
+          "text": "app.showToast(\"操作失败: \\(error.localizedDescription)\")"
         },
         {
           "platform": "ios",
@@ -16538,7 +16538,7 @@ const DATA = {
           "line": 1272,
           "symbol": "credRow",
           "note": "副行",
-          "text": "private var emptyHint: some View {"
+          "text": "// 一个**空的灰胶囊**（外层有背景样式）—— 截图里那个位置看起来像加载失败。"
         }
       ],
       "platformEvidence": {
@@ -17155,7 +17155,7 @@ const DATA = {
           "line": 2245,
           "symbol": "immersive",
           "note": "",
-          "text": "fpRow(\"备注\", f.note.isEmpty ? \"无\" : f.note)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -17163,7 +17163,7 @@ const DATA = {
           "line": 2292,
           "symbol": "immersive",
           "note": "开始录入",
-          "text": "}"
+          "text": ".foregroundStyle(DS.Palette.danger)"
         },
         {
           "platform": "ios",
@@ -17298,7 +17298,7 @@ const DATA = {
           "line": 2333,
           "symbol": "step2",
           "note": "",
-          "text": ""
+          "text": "try await app.lock.fpDelete(b)"
         },
         {
           "platform": "ios",
@@ -17306,7 +17306,7 @@ const DATA = {
           "line": 2340,
           "symbol": "step2",
           "note": "建议名",
-          "text": "}"
+          "text": "// 用户改成 7/90 天时说谎)，更要命的是「可找回」对指纹只成立一半 —— 回来的名称/备注/归属"
         },
         {
           "platform": "ios",
@@ -17314,7 +17314,7 @@ const DATA = {
           "line": 2363,
           "symbol": "step2",
           "note": "自定义名",
-          "text": ".lineLimit(1)"
+          "text": "} label: {"
         }
       ],
       "platformEvidence": {
@@ -17382,7 +17382,7 @@ const DATA = {
           "line": 2224,
           "symbol": "step0",
           "note": "",
-          "text": "Section {"
+          "text": "struct FpDetailStudio: View {"
         },
         {
           "platform": "ios",
@@ -17390,7 +17390,7 @@ const DATA = {
           "line": 2240,
           "symbol": "step0",
           "note": "FpOwnerPicker",
-          "text": "fpRow(\"指纹告警日志\", alarmN > 0 ? \"约 \\(alarmN) 条 (type13, 语义待实测)\" : \"无 (type13)\")"
+          "text": "Label(\"该成员名下仅剩 1 枚指纹, 建议补一枚备用\", systemImage: \"bell.badge\")   // 324 该成员名下仅剩"
         },
         {
           "platform": "ios",
@@ -17522,7 +17522,7 @@ const DATA = {
           "line": 1450,
           "symbol": "credMenu",
           "note": "setFpAlarm",
-          "text": "private func deletePwd(_ p: LedgerPwd) {"
+          "text": "let alert = UIAlertController(title: \"修改密码 (#\\(p.alias))\", message: \"修改后旧密码立即作废, 需使用新密码开锁。\", preferredStyle: .alert)"
         },
         {
           "platform": "ios",
@@ -17530,7 +17530,7 @@ const DATA = {
           "line": 1256,
           "symbol": "credRow",
           "note": "预警胶囊",
-          "text": "// 空串不许当「生成成功」：原先会一路把空值写进 otpPwd、复制进剪贴板、再震一下「成功」，"
+          "text": "} icon: {"
         }
       ],
       "platformEvidence": {
@@ -17592,7 +17592,7 @@ const DATA = {
           "line": 931,
           "symbol": "guard presses.count >= 8",
           "note": "",
-          "text": ".fixedSize(horizontal: false, vertical: true)"
+          "text": ".foregroundStyle(DS.Palette.text)"
         },
         {
           "platform": "ios",
@@ -17608,7 +17608,7 @@ const DATA = {
           "line": 940,
           "symbol": "if Task.isCancelled { presses = []; return }",
           "note": "",
-          "text": "private var meta: LockMeta { LockArchive.meta(kc?.mac ?? \"\") }"
+          "text": "Text(\"耗材提醒: 电量 \\(p289)%, 建议备一枚\\(meta.batteryModel.isEmpty ? \"对应型号\" : meta.batteryModel)电池。\")"
         },
         {
           "platform": "ios",
@@ -17616,7 +17616,7 @@ const DATA = {
           "line": 944,
           "symbol": "app.lock.fpConfirm(batch, validFrom:…)",
           "note": "",
-          "text": "return fw.isEmpty ? \"未知\" : fw"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -17694,7 +17694,7 @@ const DATA = {
           "line": 2104,
           "symbol": "fpDoubleSignCheck",
           "note": "",
-          "text": "if step == 0 {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -17702,7 +17702,7 @@ const DATA = {
           "line": 2129,
           "symbol": "fpDoubleSignCheck",
           "note": "双签正文",
-          "text": "// 把 A 锁的批次号记进 B 锁台账，比\"这次白录\"糟得多；此处宁可让用户重开一页。"
+          "text": ".vkFont(.subheadline, weight: .semibold)"
         },
         {
           "platform": "ios",
@@ -17892,7 +17892,7 @@ const DATA = {
           "line": 897,
           "symbol": "progressText",
           "note": "",
-          "text": "LabeledRow(\"锁内时间\", status?.lockTime.map { ProtoTime.localStr($0) } ?? \"—\")"
+          "text": "BattSpark(samples: sp)"
         },
         {
           "platform": "ios",
@@ -17908,7 +17908,7 @@ const DATA = {
           "line": 923,
           "symbol": "app.lock.fpStart(times: 8, onPress:)",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.text)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -18064,7 +18064,7 @@ const DATA = {
           "line": 67,
           "symbol": "isBusy",
           "note": "",
-          "text": "// 未选中时整条不占位: 常驻工具栏会让用户以为那些按钮现在也能点。"
+          "text": "if editMode { batchBar }"
         },
         {
           "platform": "ios",
@@ -18072,7 +18072,7 @@ const DATA = {
           "line": 1346,
           "symbol": "credRow",
           "note": "整行 disabled",
-          "text": "alert.addAction(UIAlertAction(title: \"知道了\", style: .cancel))"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -18148,7 +18148,7 @@ const DATA = {
           "line": 73,
           "symbol": "vkBody",
           "note": "无锁空态",
-          "text": ".variantList()"
+          "text": ".dsScreenBackground()"
         }
       ],
       "platformEvidence": {
@@ -18210,7 +18210,7 @@ const DATA = {
           "line": 374,
           "symbol": "headerToolbar",
           "note": "",
-          "text": "// 那一格是称呼 (relation) 而不是姓名, 所以直接塞姓名会搜不到 TA 名下凭证 (假重搜)。"
+          "text": "emptyHint"
         },
         {
           "platform": "ios",
@@ -18218,7 +18218,7 @@ const DATA = {
           "line": 389,
           "symbol": "headerToolbar",
           "note": "选择按钮",
-          "text": ".padding(.vertical, DS.Space.xs)"
+          "text": "HStack(spacing: DS.Space.xs) {"
         },
         {
           "platform": "ios",
@@ -18226,7 +18226,7 @@ const DATA = {
           "line": 396,
           "symbol": "headerToolbar",
           "note": "Menu 溢出",
-          "text": ".onSubmit {"
+          "text": "Button { CredentialOrg.removeSearchHistory(w) } label: {"
         }
       ],
       "platformEvidence": {
@@ -18294,7 +18294,7 @@ const DATA = {
           "line": 691,
           "symbol": "searchSection",
           "note": "搜索框",
-          "text": "}"
+          "text": "VStack(alignment: .leading, spacing: DS.Space.xs) {"
         },
         {
           "platform": "ios",
@@ -18310,7 +18310,7 @@ const DATA = {
           "line": 686,
           "symbol": "searchSection",
           "note": "兜底两按钮所在块",
-          "text": ".accessibilityActions {"
+          "text": "// 901 紧凑档 (kf_row_h 非 tall): 隐藏副标题只留名称与状态 (IDEA-BANK 901 的\"RSS 紧凑行\"),"
         }
       ],
       "platformEvidence": {
@@ -18379,7 +18379,7 @@ const DATA = {
           "line": 449,
           "symbol": "headerToolbar",
           "note": "segCount",
-          "text": "let credArchived: Set\u003cInt> = []   // 2026-10-26: 归档已删"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -18387,7 +18387,7 @@ const DATA = {
           "line": 462,
           "symbol": "segChip",
           "note": "",
-          "text": "let order = CredentialOrg.seq(mac)[\"p\"] ?? []"
+          "text": "var id: String"
         },
         {
           "platform": "ios",
@@ -18395,7 +18395,7 @@ const DATA = {
           "line": 492,
           "symbol": "countForSeg",
           "note": "",
-          "text": "// ---------- 指纹段 ----------"
+          "text": "private var sortedPwds: [LedgerPwd] { orderedPwds(segFilteredPwds()) }"
         }
       ],
       "platformEvidence": {
@@ -18463,7 +18463,7 @@ const DATA = {
           "line": 1320,
           "symbol": "credRow",
           "note": "swipeActions",
-          "text": "// 833: 第一次浮出时多附一句防误删说明 (HintOnce 之后不再出现)。"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -18471,7 +18471,7 @@ const DATA = {
           "line": 1329,
           "symbol": "credRow",
           "note": "!sorting 才出破坏性",
-          "text": "f.dateFormat = \"MM-dd\""
+          "text": "Text(\"于 \\(otpWin) 失效, 失效前仅可使用一次\")"
         },
         {
           "platform": "ios",
@@ -18479,7 +18479,7 @@ const DATA = {
           "line": 1333,
           "symbol": "credRow",
           "note": "改期",
-          "text": "private func shortDate(_ ts: Double) -> String {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -19617,7 +19617,7 @@ const DATA = {
           "line": 1849,
           "symbol": "PwdDetailStudio",
           "note": "到期预警段",
-          "text": "/// 319 重录入口: 详情页带原归属进来 (默认 nil=全新录入)"
+          "text": "@State private var owner: String? = nil"
         },
         {
           "platform": "ios",
@@ -19625,7 +19625,7 @@ const DATA = {
           "line": 1850,
           "symbol": "PwdDetailStudio",
           "note": "7 天档",
-          "text": "var prefillOwner: String? = nil"
+          "text": "@State private var presses: [LockService.FpPress] = []"
         },
         {
           "platform": "ios",
@@ -19702,7 +19702,7 @@ const DATA = {
           "line": 2013,
           "symbol": "PwdDetailStudio",
           "note": "生成口述卡",
-          "text": ".vkFont(.footnote, weight: .semibold)"
+          "text": "// 与 StartAddFpView 同一套提示节奏 (APK 第 4 下起要求换到手指边缘):"
         },
         {
           "platform": "ios",
@@ -19710,7 +19710,7 @@ const DATA = {
           "line": 2029,
           "symbol": "PwdDetailStudio",
           "note": "sheet",
-          "text": ".background(name == sug ? DS.Palette.accent : DS.Palette.accentText.opacity(0.10), in: Capsule())"
+          "text": ".foregroundStyle(DS.Palette.text)"
         },
         {
           "platform": "ios",
@@ -19718,7 +19718,7 @@ const DATA = {
           "line": 2033,
           "symbol": "PwdDetailStudio",
           "note": "CodeBigCard",
-          "text": ".buttonStyle(.plain)"
+          "text": "Button {"
         }
       ],
       "platformEvidence": {
@@ -19786,7 +19786,7 @@ const DATA = {
           "line": 1793,
           "symbol": "PwdDetailStudio",
           "note": "复制按钮",
-          "text": "confirmDestructive(\"删除指纹「\\(f.name)」\","
+          "text": "// 档案已经不在这台锁的台账里 (并发删除/切锁) ⇒ 没有任何可删的东西。原先这里直接 action()，"
         },
         {
           "platform": "ios",
@@ -19794,7 +19794,7 @@ const DATA = {
           "line": 1810,
           "symbol": "PwdDetailStudio",
           "note": "读出",
-          "text": "}"
+          "text": "\"开门能力只能本人到锁前重录。\",   // 670 开门能力只能本人到锁"
         },
         {
           "platform": "ios",
@@ -19802,7 +19802,7 @@ const DATA = {
           "line": 1820,
           "symbol": "PwdDetailStudio",
           "note": "4 位分段",
-          "text": "fail.addAction(UIAlertAction(title: \"好\", style: .cancel))"
+          "text": "message: \"这是「\" + (CredentialOrg.ownerName(f.owner).isEmpty ? \"未归属\" : CredentialOrg.ownerName(f.owner)) + \"」名下最后一枚可用指纹。输入任一在用密码（完整 \" + String(maskLen) + \" 位）完成双签。\","
         }
       ],
       "platformEvidence": {
@@ -19871,7 +19871,7 @@ const DATA = {
           "line": 1900,
           "symbol": "PwdDetailStudio",
           "note": "提前失效段",
-          "text": "@ViewBuilder"
+          "text": ".background(DS.Gradient.screen.ignoresSafeArea())"
         },
         {
           "platform": "ios",
@@ -19879,7 +19879,7 @@ const DATA = {
           "line": 1917,
           "symbol": "PwdDetailStudio",
           "note": "Slider 0...120 step 5",
-          "text": "FpOwnerPicker(mac: mac, owner: $owner)"
+          "text": "// 324 冗余横条: 该锁仅剩 1 枚可用指纹时提示补录"
         },
         {
           "platform": "ios",
@@ -19887,7 +19887,7 @@ const DATA = {
           "line": 1748,
           "symbol": "PwdDetailStudio",
           "note": "到点黄条",
-          "text": "} else {"
+          "text": "guard let kc = app.current, let v = p.pwd, !renewing else { return }"
         }
       ],
       "platformEvidence": {
@@ -20041,7 +20041,7 @@ const DATA = {
           "line": 1973,
           "symbol": "PwdDetailStudio",
           "note": "续期按钮",
-          "text": "ProgressView().tint(DS.heroFg).controlSize(.small)"
+          "text": "presses = []"
         },
         {
           "platform": "ios",
@@ -20049,7 +20049,7 @@ const DATA = {
           "line": 2066,
           "symbol": "renewExpired",
           "note": "pwdModify",
-          "text": "private var doneCard: some View {"
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         },
         {
           "platform": "ios",
@@ -20057,7 +20057,7 @@ const DATA = {
           "line": 2081,
           "symbol": "renewExpired",
           "note": "失败入队",
-          "text": ".fixedSize(horizontal: false, vertical: true)"
+          "text": "private var doneCard: some View {"
         }
       ],
       "platformEvidence": {
@@ -20127,7 +20127,7 @@ const DATA = {
           "line": 1933,
           "symbol": "PwdDetailStudio",
           "note": "施工中",
-          "text": "ForEach(0..\u003c8, id: \\.self) { i in"
+          "text": ".card()"
         },
         {
           "platform": "ios",
@@ -20135,7 +20135,7 @@ const DATA = {
           "line": 1946,
           "symbol": "PwdDetailStudio",
           "note": "用量刻度",
-          "text": "if !error.isEmpty {"
+          "text": ".frame(maxWidth: 220)"
         },
         {
           "platform": "ios",
@@ -20143,7 +20143,7 @@ const DATA = {
           "line": 1987,
           "symbol": "PwdDetailStudio",
           "note": "开门数推断",
-          "text": ".contentShape(Capsule())"
+          "text": "if busy {"
         }
       ],
       "platformEvidence": {
@@ -20511,7 +20511,7 @@ const DATA = {
           "line": 694,
           "symbol": "confirmTemp()",
           "note": "",
-          "text": ".vkFont(.caption)"
+          "text": "Image(systemName: \"exclamationmark.triangle.fill\").accessibilityHidden(true)"
         },
         {
           "platform": "ios",
@@ -20519,7 +20519,7 @@ const DATA = {
           "line": 756,
           "symbol": "let to = from.addingTimeInterval(600)",
           "note": "",
-          "text": "DS.Haptics.tick.impactOccurred()"
+          "text": "// 重试必须清空: onPress 是**累加**式回填，不清就会出现\"9/8\"这种读数 (旧写法整批赋值天然不会)"
         },
         {
           "platform": "ios",
@@ -20527,7 +20527,7 @@ const DATA = {
           "line": 667,
           "symbol": "Text(\"下发 10 分钟临时密码\")",
           "note": "",
-          "text": "HStack(spacing: DS.Space.s) {"
+          "text": ".accessibilityLabel(\"指纹录入进度\")"
         }
       ],
       "platformEvidence": {
@@ -20596,7 +20596,7 @@ const DATA = {
           "line": 630,
           "symbol": "Picker(\"类型\", selection: $permanent)",
           "note": "",
-          "text": "VStack(spacing: DS.Space.xl) {"
+          "text": "// 关页后 fpStart 仍会转满 30 秒，然后照样 fpConfirm、写台账、弹\"已录入\"，"
         },
         {
           "platform": "ios",
@@ -20604,7 +20604,7 @@ const DATA = {
           "line": 721,
           "symbol": "if !permanent, toDate \u003c= fromDate",
           "note": "",
-          "text": "// APK 对照 (StartaddfpPage.setKeepScreenOn): 录入期间不许自动锁屏 —— 用户手指按在锁上时"
+          "text": "var vkBody: some View {"
         },
         {
           "platform": "ios",
@@ -20612,7 +20612,7 @@ const DATA = {
           "line": 657,
           "symbol": "VariantToggle(\"备注自动填命名模板 (谁-哪里-何时)\")",
           "note": "",
-          "text": "Text(progressText)"
+          "text": ".buttonStyle(PrimaryActionStyle(fullWidth: false))"
         }
       ],
       "platformEvidence": {
@@ -20991,7 +20991,7 @@ const DATA = {
           "line": 1697,
           "symbol": "submitBatch",
           "note": "",
-          "text": "}"
+          "text": "Text(\"近 30 天约 \\(recent) 次\")"
         },
         {
           "platform": "ios",
@@ -21007,7 +21007,7 @@ const DATA = {
           "line": 1710,
           "symbol": "submitBatch",
           "note": "pwdAdd 0A",
-          "text": "Label(\"改造密码 (分屏对照 · 逐位高亮)\", systemImage: \"pencil\")"
+          "text": "} icon: {"
         }
       ],
       "platformEvidence": {
@@ -21610,7 +21610,7 @@ const DATA = {
           "line": 406,
           "symbol": "headerToolbar",
           "note": "toggle + setGroupMode",
-          "text": "var fp: LedgerFp?"
+          "text": ".contentShape(Rectangle())"
         }
       ],
       "platformEvidence": {
@@ -21672,7 +21672,7 @@ const DATA = {
           "line": 1314,
           "symbol": "credRow",
           "note": "双击复制",
-          "text": "}"
+          "text": "app.showToast(\"已复制\")"
         },
         {
           "platform": "ios",
@@ -21680,7 +21680,7 @@ const DATA = {
           "line": 1296,
           "symbol": "credRow",
           "note": "VoiceOver 拷贝动作",
-          "text": "/// 提出来挂列表固定位 (listBody), 空台账时也只由这一块渲染一次。"
+          "text": "if !p { withAnimation(DS.Motion.standard) { otpPeek = false } }"
         }
       ],
       "platformEvidence": {
@@ -21743,7 +21743,7 @@ const DATA = {
           "line": 1246,
           "symbol": "credRow",
           "note": "pwdState == 2",
-          "text": "UINotificationFeedbackGenerator().notificationOccurred(.error)"
+          "text": "app.showToast(\"操作失败: \\(error.localizedDescription)\")"
         },
         {
           "platform": "ios",
@@ -21759,7 +21759,7 @@ const DATA = {
           "line": 1255,
           "symbol": "credRow",
           "note": "预警指纹",
-          "text": "// `generate` 只在算得出码时才返回值 (钥匙串长度、MAC 形状任一不过就返回空串，见 ZOTP.swift)。"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         }
       ],
       "platformEvidence": {
@@ -22393,7 +22393,7 @@ const DATA = {
           "line": 2049,
           "symbol": "PwdDetailStudio",
           "note": "EmptyState 凭证不存在",
-          "text": "VariantToggle(\"该成员已有 \\(sameOwnerFps.count) 枚指纹, 录入成功后将旧指纹移入回收站 (重录继承, 保留原备注/归属)\", isOn: $replaceOld)"
+          "text": ".accessibilityLabel(\"建议名 \\(sug)\")"
         }
       ],
       "platformEvidence": {
@@ -25857,7 +25857,7 @@ const DATA = {
           "line": 842,
           "symbol": "recordsTabContent",
           "note": "父级：Tab 第 3 页 + RecordsView().id(app.currentMac)",
-          "text": "/// 实例便捷转发，供 `.task` 直接调用（保持 body 表达式小，见本文件多处 type-check 超时的教训）。"
+          "text": "// 真到用户按圆盘时 ensureConnected 仍然会兜底重试，不改变任何既有语义。"
         },
         {
           "platform": "ios",
@@ -25865,7 +25865,7 @@ const DATA = {
           "line": 178,
           "symbol": "noLockPlaceholder",
           "note": "无锁占位「去添加门锁」",
-          "text": "VStack(alignment: .leading, spacing: DS.Space.xs) {"
+          "text": "Text(reconLine)"
         },
         {
           "platform": "ios",
@@ -25873,7 +25873,7 @@ const DATA = {
           "line": 233,
           "symbol": "recordsToolbar",
           "note": "右上工具栏与「更多」菜单",
-          "text": "// 187 按月跳转 (等价实现): 选月即只看该月, 顶部有清除口。"
+          "text": "// 原设计的\"月份滚轮 + scrollTo\"需把 List 包进 ScrollViewReader 并移动整条修饰符链,"
         },
         {
           "platform": "ios",
@@ -25881,7 +25881,7 @@ const DATA = {
           "line": 355,
           "symbol": "recordsChrome",
           "note": "NavigationStack + 全部 sheet/alert 挂载点",
-          "text": "sel = \"\""
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -25974,7 +25974,7 @@ const DATA = {
           "line": 376,
           "symbol": "recordsChrome",
           "note": "父级：sheet(item: $detailRec) 传 displayedRecs",
-          "text": "NavigationStack {"
+          "text": ".onChange(of: filters) { applyFilter() }"
         },
         {
           "platform": "ios",
@@ -26175,7 +26175,7 @@ const DATA = {
           "line": 759,
           "symbol": "filterChips",
           "note": "摘要 + 展开面板",
-          "text": "} label: {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -26191,7 +26191,7 @@ const DATA = {
           "line": 914,
           "symbol": "filterSummary",
           "note": "摘要文案",
-          "text": "return \"未连接门锁 — 以下为本地缓存（读取于 \" + Self.stamp.string(from: at) + \"）。连接锁后点「重新读取」刷新。\""
+          "text": "private var syncStampKey: String { \"kf_logsync_\" + mac }"
         },
         {
           "platform": "ios",
@@ -26199,7 +26199,7 @@ const DATA = {
           "line": 899,
           "symbol": "filterChips",
           "note": "复位按钮",
-          "text": "DB.readLogs(mac).compactMap { $0.lockTimeStr.isEmpty ? nil : String($0.lockTimeStr.prefix(10)) }.min()"
+          "text": "let key = fmt.string(from: last)"
         }
       ],
       "platformEvidence": {
@@ -26293,7 +26293,7 @@ const DATA = {
           "line": 433,
           "symbol": "searchBar",
           "note": "占位文案与绑定",
-          "text": "Button {"
+          "text": ".accessibilityHidden(true)"
         },
         {
           "platform": "ios",
@@ -26317,7 +26317,7 @@ const DATA = {
           "line": 345,
           "symbol": "onChange(searchText)",
           "note": "562 边输入边过滤",
-          "text": "sel = f"
+          "text": "guard let k else { return }"
         }
       ],
       "platformEvidence": {
@@ -26409,7 +26409,7 @@ const DATA = {
           "line": 250,
           "symbol": "recordsToolbar",
           "note": "入口：更多菜单",
-          "text": ".scrollPosition(id: $scrolledRow)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -26481,7 +26481,7 @@ const DATA = {
           "line": 374,
           "symbol": "recordsChrome",
           "note": "入口：filters.alarmKinds 绑定",
-          "text": "@ViewBuilder"
+          "text": "applyFilter()"
         }
       ],
       "platformEvidence": {
@@ -26547,7 +26547,7 @@ const DATA = {
           "line": 306,
           "symbol": "onChange(pending*)",
           "note": "六个深链入口",
-          "text": "// 2026-10-15 走查: 只存\"与开场值不同\"的组合。唯一的理由是 onRecordsAppear 里那次"
+          "text": "List {"
         },
         {
           "platform": "ios",
@@ -26563,7 +26563,7 @@ const DATA = {
           "line": 2143,
           "symbol": "onRecordsAppear",
           "note": "进页消费顺序",
-          "text": "} else {"
+          "text": "NavigationStack {"
         }
       ],
       "platformEvidence": {
@@ -26987,7 +26987,7 @@ const DATA = {
           "line": 1140,
           "symbol": "copyLastWeekDigest",
           "note": "摘要 + CSV 拼接",
-          "text": ".frame(maxWidth: .infinity, alignment: .leading)"
+          "text": "rowTitle(r)"
         },
         {
           "platform": "ios",
@@ -26995,7 +26995,7 @@ const DATA = {
           "line": 248,
           "symbol": "recordsToolbar",
           "note": "入口：更多菜单",
-          "text": "// 闪一下的高亮 (flashKey) 才是保证用户认得出\"是这条\"的那一半; 滚动本身若落在"
+          "text": "// 相邻行 (组头高度/回收布局都会影响)，验收单里写明那不算数据缺陷。"
         },
         {
           "platform": "ios",
@@ -27003,7 +27003,7 @@ const DATA = {
           "line": 1146,
           "symbol": "copyLastWeekDigest",
           "note": "toast 文案",
-          "text": ".contentShape(Rectangle())"
+          "text": ".padding(.bottom, DS.Metric.tlGap)"
         }
       ],
       "platformEvidence": {
@@ -27073,7 +27073,7 @@ const DATA = {
           "line": 1151,
           "symbol": "dropWatchSection",
           "note": "判定与文案",
-          "text": "detailRec = rec"
+          "text": ".listRowSeparator(.hidden)"
         },
         {
           "platform": "ios",
@@ -27081,7 +27081,7 @@ const DATA = {
           "line": 1164,
           "symbol": "dropWatchSection",
           "note": "其余超阈值日",
-          "text": "app.requestRoute(.credentials)   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过 377 门禁"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -27089,7 +27089,7 @@ const DATA = {
           "line": 963,
           "symbol": "secondaryRowsDisclosure",
           "note": "落点：低频区",
-          "text": "// 为什么不用 `g.rows`: 那是筛过、又被 598 截过的一页 —— 原来这句文案写的正是 g.rows.count,"
+          "text": "// 为什么不用 `sorted(by:)`: Swift 的比较排序**不保证稳定**，而\"其余按原时间随后\"这条要的是稳定性 ——"
         }
       ],
       "platformEvidence": {
@@ -27378,7 +27378,7 @@ const DATA = {
           "line": 2181,
           "symbol": "fetch",
           "note": "拉取主流程",
-          "text": "switch kind {"
+          "text": ".navigationTitle(\"活跃凭证\")"
         },
         {
           "platform": "ios",
@@ -27386,7 +27386,7 @@ const DATA = {
           "line": 2199,
           "symbol": "while page \u003c 20",
           "note": "翻页上限 20 页 / 100 条",
-          "text": "if wins.isEmpty {"
+          "text": "@EnvironmentObject var app: AppState"
         },
         {
           "platform": "ios",
@@ -27536,7 +27536,7 @@ const DATA = {
           "line": 1176,
           "symbol": "lastYearTodayRow",
           "note": "展示行",
-          "text": ".contextMenu {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -27544,7 +27544,7 @@ const DATA = {
           "line": 1191,
           "symbol": "lastYearTodayCount",
           "note": "MM-dd 命中计数",
-          "text": "Label(\"复制行标识\", systemImage: \"number\")   // 761 复制行标识"
+          "text": "// 761 溯源: 复制本机缓存行标识 (锁日志序号 idx, 或手机侧事件的 f_/c_ 前缀键) + 日期 + 锁 MAC,"
         },
         {
           "platform": "ios",
@@ -27552,7 +27552,7 @@ const DATA = {
           "line": 964,
           "symbol": "secondaryRowsDisclosure",
           "note": "落点：低频区",
-          "text": "// 于是每设一次过滤, \"全天\"就被改小一次 (筛出 3 条却写着\"全天 3 条\")。"
+          "text": "// 拆成两段再拼是确定性的，还省掉整组比较。"
         }
       ],
       "platformEvidence": {
@@ -27628,7 +27628,7 @@ const DATA = {
           "line": 188,
           "symbol": "mainList",
           "note": "List 结构与区块顺序",
-          "text": "}"
+          "text": "Button {"
         },
         {
           "platform": "apk",
@@ -27644,7 +27644,7 @@ const DATA = {
           "line": 227,
           "symbol": "scrollPosition(id:)",
           "note": "行级滚动锚",
-          "text": "secondaryRowsDisclosure"
+          "text": "// 2026-10-27 审核修复 (AUDIT-B 2.5)：749 完整性对账**算完就丢** ——"
         },
         {
           "platform": "ios",
@@ -27660,7 +27660,7 @@ const DATA = {
           "line": 2008,
           "symbol": "runningRow",
           "note": "骨架屏三行 + reduceMotion 处理",
-          "text": "if let p = pws.first(where: { !$0.temp && (r.whoName == nil || $0.owner == r.whoName) }) { return \"pwd:\" + String(p.alias) }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -27668,7 +27668,7 @@ const DATA = {
           "line": 1941,
           "symbol": "emptyHint",
           "note": "两种空态",
-          "text": "filled.append(DayGroup(key: \"gap-\" + groups[i + 1].key, rows: [],"
+          "text": "guard gap >= 2 else { continue }"
         }
       ],
       "platformEvidence": {
@@ -27761,7 +27761,7 @@ const DATA = {
           "line": 2051,
           "symbol": "memberChips",
           "note": "chip 生成规则",
-          "text": "}"
+          "text": "if !monthJump.isEmpty {"
         },
         {
           "platform": "ios",
@@ -27769,7 +27769,7 @@ const DATA = {
           "line": 2078,
           "symbol": "chip",
           "note": "点击写 sel + filters.member",
-          "text": "struct AlarmKindsSheet: View {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -27785,7 +27785,7 @@ const DATA = {
           "line": 2065,
           "symbol": "chip(\"__care\")",
           "note": "1028 保养分组",
-          "text": "if key == Self.dayKey(yesterday) { return \"昨天\" }"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -27869,7 +27869,7 @@ const DATA = {
           "line": 216,
           "symbol": "mainList",
           "note": "monthJump/dayFocus 双重收窄",
-          "text": "//   · **常驻 3 个**: 今日摘要 / 范围(当前锁·全部锁) / 搜索"
+          "text": "//   · **按需 2 个**: 日期跳转(选了月才显示) / 结果计数(有筛选才显示)"
         }
       ],
       "platformEvidence": {
@@ -27940,7 +27940,7 @@ const DATA = {
           "line": 371,
           "symbol": "OutWinSheet",
           "note": "越界文案",
-          "text": "}"
+          "text": "highlightTokens = []"
         }
       ],
       "platformEvidence": {
@@ -28005,7 +28005,7 @@ const DATA = {
           "line": 1085,
           "symbol": "rangePickSheet",
           "note": "按天勾选 UI",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": "// 显示数与全天数不一致时把「当前显示」也写出来: 同一句话里的两个口径要各归各的名字,"
         },
         {
           "platform": "ios",
@@ -28013,7 +28013,7 @@ const DATA = {
           "line": 1123,
           "symbol": "copyRangeCSV",
           "note": "CSV 生成与转义",
-          "text": ""
+          "text": "Image(systemName: r.warn ? \"diamond.fill\" : \"circle.fill\")"
         },
         {
           "platform": "ios",
@@ -28021,7 +28021,7 @@ const DATA = {
           "line": 1115,
           "symbol": "copyRangeCSV",
           "note": "复制按钮禁用条件",
-          "text": "// 告警用菱形警示点, 普通用圆点 — 形状本身即第二信息通道, 不只靠颜色"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -28029,7 +28029,7 @@ const DATA = {
           "line": 249,
           "symbol": "recordsToolbar",
           "note": "入口：更多菜单",
-          "text": "// 相邻行 (组头高度/回收布局都会影响)，验收单里写明那不算数据缺陷。"
+          "text": ".scrollPosition(id: $scrolledRow)"
         }
       ],
       "platformEvidence": {
@@ -28165,7 +28165,7 @@ const DATA = {
           "line": 707,
           "symbol": "scopeRow",
           "note": "分段控件 + 换锁菜单",
-          "text": "} label: {"
+          "text": "/// 现在收进一个可展开区: 默认收起, 展开后与原来逐字一致。"
         },
         {
           "platform": "ios",
@@ -28173,7 +28173,7 @@ const DATA = {
           "line": 333,
           "symbol": "onChange(scope)",
           "note": "切范围重置全部检索态",
-          "text": "landRecordKey(k)"
+          "text": "recordsToolbar"
         },
         {
           "platform": "ios",
@@ -28181,7 +28181,7 @@ const DATA = {
           "line": 392,
           "symbol": "macs",
           "note": "范围 → 锁列表",
-          "text": "// 565 告警类型多选: 选中集直接写回 filters (走既有 onChange(of: filters) → applyFilter)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -28337,7 +28337,7 @@ const DATA = {
           "line": 1297,
           "symbol": "daySection",
           "note": "日组渲染",
-          "text": "}"
+          "text": "/// 576 行 → Rec: 单锁与全部锁**同一条判据**, 键的算术只有 `RecordOverlay.oid` 一份"
         },
         {
           "platform": "ios",
@@ -28482,7 +28482,7 @@ const DATA = {
           "line": 1369,
           "symbol": "daySection.header",
           "note": "组头 HStack",
-          "text": "chip(\"\", \"全部\")"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -28490,7 +28490,7 @@ const DATA = {
           "line": 1373,
           "symbol": "alarmDays.contains",
           "note": "581 未处置蓝点",
-          "text": "if rows.contains(where: { $0.whoId == nil && $0.whoKind == \"temp\" }) {"
+          "text": "Section {"
         },
         {
           "platform": "ios",
@@ -28506,7 +28506,7 @@ const DATA = {
           "line": 1397,
           "symbol": "g.dayKind",
           "note": "594 日型色带",
-          "text": "// 不需要额外分支"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -28514,7 +28514,7 @@ const DATA = {
           "line": 1404,
           "symbol": "g.holiday / isMakeupWorkday",
           "note": "671 节假日与补班",
-          "text": ".lineLimit(1)"
+          "text": "// 不需要额外分支"
         }
       ],
       "platformEvidence": {
@@ -28607,7 +28607,7 @@ const DATA = {
           "line": 620,
           "symbol": "resultCount",
           "note": "计数文案",
-          "text": ".accessibilityLabel(\"筛选: \\(filterSummary), 点按\\(filtersExpanded ? \"收起\" : \"展开\")全部筛选项\")"
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         },
         {
           "platform": "ios",
@@ -28615,7 +28615,7 @@ const DATA = {
           "line": 667,
           "symbol": "activeFilterCount",
           "note": "条件数口径",
-          "text": "reversed = false"
+          "text": "HStack(spacing: DS.Space.s) {"
         },
         {
           "platform": "ios",
@@ -28623,7 +28623,7 @@ const DATA = {
           "line": 637,
           "symbol": "resultCount",
           "note": "重置按钮",
-          "text": "Picker(\"终点\", selection: Binding(get: { RecordSearch.nightTo },"
+          "text": "Spacer(minLength: DS.Space.s)"
         }
       ],
       "platformEvidence": {
@@ -29636,7 +29636,7 @@ const DATA = {
           "line": 59,
           "symbol": "app.pendingSettingsFocus = \"backup\"",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.accentText)"
+          "text": ".frame(maxWidth: .infinity, minHeight: DS.Hit.min)"
         },
         {
           "platform": "ios",
@@ -29668,7 +29668,7 @@ const DATA = {
           "line": 52,
           "symbol": "listContent",
           "note": "",
-          "text": "document: BackupDoc(text: exportText),"
+          "text": "// 2026-10-26 精简：待确认恢复包（pendingRestore）已删。"
         }
       ],
       "platformEvidence": {
@@ -29780,7 +29780,7 @@ const DATA = {
           "line": 178,
           "symbol": "importSection",
           "note": "",
-          "text": ".autocorrectionDisabled()"
+          "text": "// 2026-10-28 补：加密备份需要口令才能解开（导出侧能加密，导入侧原先没有入口）"
         },
         {
           "platform": "ios",
@@ -30372,7 +30372,7 @@ const DATA = {
           "line": 114,
           "symbol": "exportSection",
           "note": "",
-          "text": "return"
+          "text": "// 用已有信封加密（与 351 凭证合包同一套算法）。解不开时的错误由导入侧统一报。"
         },
         {
           "platform": "ios",
@@ -30870,7 +30870,7 @@ const DATA = {
           "line": 214,
           "symbol": "cloudSection",
           "note": "",
-          "text": "// 现在先 parsePreview（它本身就是导入的必经入口：解密 → 校验哈希 → 升级链），"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -30878,7 +30878,7 @@ const DATA = {
           "line": 18,
           "symbol": "cloudAcct 读穿透",
           "note": "",
-          "text": "/// 而备份的正常去处就是 iCloud 云盘。"
+          "text": "@State private var importText = \"\""
         },
         {
           "platform": "ios",
@@ -30886,7 +30886,7 @@ const DATA = {
           "line": 23,
           "symbol": "cloudAcctField Binding",
           "note": "",
-          "text": "/// (两层模态套着)。所以先存这里, 等选择器真正收起后再问。"
+          "text": "@State private var showFileExporter = false"
         },
         {
           "platform": "ios",
@@ -30894,7 +30894,7 @@ const DATA = {
           "line": 239,
           "symbol": "TextField 坚果云账号",
           "note": "",
-          "text": "}"
+          "text": "这份备份包含 \\(pv.macs.count) 把锁、\\(pv.pwdCount) 条密码、\\(pv.fpCount) 枚指纹。"
         }
       ],
       "platformEvidence": {
@@ -31193,7 +31193,7 @@ const DATA = {
           "line": 46,
           "symbol": "embedded 注释",
           "note": "",
-          "text": "// AnyView 擦平两分支类型差异 (与 AddPwdView 同一写法): 两支只差最外层那一只容器"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -31201,7 +31201,7 @@ const DATA = {
           "line": 50,
           "symbol": "var embedded: Bool = false",
           "note": "",
-          "text": "// 与「粘贴文本」共用同一个解析入口 (doImportText → parsePreview), 不另写一套解析。"
+          "text": "// AnyView 擦平两分支类型差异 (与 AddPwdView 同一写法): 两支只差最外层那一只容器"
         },
         {
           "platform": "ios",
@@ -31209,7 +31209,7 @@ const DATA = {
           "line": 64,
           "symbol": "vkBody",
           "note": "",
-          "text": "}"
+          "text": "if (e as NSError).code != NSUserCancelledError {"
         },
         {
           "platform": "ios",
@@ -31217,7 +31217,7 @@ const DATA = {
           "line": 67,
           "symbol": "embedded ? AnyView(listContent) : AnyView(NavigationStack)",
           "note": "",
-          "text": "// 内容正确性由 parsePreview 把关 (解密 → 内容哈希 → schema), 不靠文件类型。"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -31473,7 +31473,7 @@ const DATA = {
           "line": 77,
           "symbol": "fileExporter",
           "note": "",
-          "text": "confirmImport()"
+          "text": ".onChange(of: showFilePicker) { _, showing in"
         },
         {
           "platform": "ios",
@@ -31481,7 +31481,7 @@ const DATA = {
           "line": 78,
           "symbol": "BackupDoc(text: exportText)",
           "note": "",
-          "text": "}"
+          "text": "guard !showing, let text = pendingFileText else { return }"
         },
         {
           "platform": "ios",
@@ -31489,7 +31489,7 @@ const DATA = {
           "line": 80,
           "symbol": "defaultFilename: backupFilename",
           "note": "",
-          "text": ""
+          "text": "importText = text"
         },
         {
           "platform": "ios",
@@ -31497,7 +31497,7 @@ const DATA = {
           "line": 82,
           "symbol": "Milestones.recordBackup()",
           "note": "",
-          "text": "// ---------- 全量备份 ----------"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -31505,7 +31505,7 @@ const DATA = {
           "line": 86,
           "symbol": "NSUserCancelledError 判断",
           "note": "",
-          "text": "Text(\"⚠ 此文件含**明文门锁密钥**（skey / pin / 密码）—— 任何人拿到它就能开你家门，不需要你的手机。请勿通过微信/QQ 发送，不要放在共享文件夹或公开网盘。\")"
+          "text": "// ---------- 全量备份 ----------"
         }
       ],
       "platformEvidence": {
@@ -31676,7 +31676,7 @@ const DATA = {
           "line": 189,
           "symbol": "Button 从剪贴板粘贴",
           "note": "",
-          "text": "}"
+          "text": "Button {"
         },
         {
           "platform": "ios",
@@ -31684,7 +31684,7 @@ const DATA = {
           "line": 190,
           "symbol": "UIPasteboard.general.string",
           "note": "",
-          "text": ".disabled(busy || importText.isEmpty)"
+          "text": "if let s = UIPasteboard.general.string, !s.isEmpty {"
         },
         {
           "platform": "ios",
@@ -31692,7 +31692,7 @@ const DATA = {
           "line": 193,
           "symbol": "剪贴板是空的",
           "note": "",
-          "text": "showFilePicker = true"
+          "text": "app.showToast(\"剪贴板是空的\")"
         },
         {
           "platform": "ios",
@@ -31700,7 +31700,7 @@ const DATA = {
           "line": 199,
           "symbol": ".disabled(busy || importText.isEmpty)",
           "note": "",
-          "text": "Button(\"导入\", role: .destructive) { confirmImport() } // 整表替换同名设备的台账, 属破坏性动作"
+          "text": ".disabled(busy || importText.isEmpty)"
         }
       ],
       "platformEvidence": {
@@ -31775,7 +31775,7 @@ const DATA = {
           "line": 267,
           "symbol": "confirmImport",
           "note": "",
-          "text": "}"
+          "text": "app.loadDevices()"
         },
         {
           "platform": "ios",
@@ -31783,7 +31783,7 @@ const DATA = {
           "line": 268,
           "symbol": "请先粘贴备份文本",
           "note": "",
-          "text": "}"
+          "text": "if bundle.globals?.appearance != nil { app.reloadAppearance() }   // 894 带外观段才刷, 免得白重建一次全树"
         },
         {
           "platform": "ios",
@@ -31791,7 +31791,7 @@ const DATA = {
           "line": 274,
           "symbol": "confirmDestructive 导入备份",
           "note": "",
-          "text": "DB.store.set(\"kf_migrate_pending\", ISO8601DateFormatter().string(from: Date()))"
+          "text": "// 口令错误 / 内容被改过 (453) / 不是备份 —— 一律不写库"
         },
         {
           "platform": "ios",
@@ -31799,7 +31799,7 @@ const DATA = {
           "line": 275,
           "symbol": "口令会被替换成它",
           "note": "",
-          "text": "}"
+          "text": "app.showToast(\"导入被拦下: \\(error.localizedDescription)\")"
         },
         {
           "platform": "ios",
@@ -31807,7 +31807,7 @@ const DATA = {
           "line": 276,
           "symbol": "confirmTitle: 导入",
           "note": "",
-          "text": ""
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -31952,7 +31952,7 @@ const DATA = {
           "line": 201,
           "symbol": "Button 从文件选择",
           "note": "",
-          "text": "}"
+          "text": "Button {"
         },
         {
           "platform": "ios",
@@ -31960,7 +31960,7 @@ const DATA = {
           "line": 91,
           "symbol": "fileImporter",
           "note": "",
-          "text": ".fixedSize(horizontal: false, vertical: true)"
+          "text": ".vkFont(.caption).foregroundStyle(DS.Palette.danger)"
         },
         {
           "platform": "ios",
@@ -31968,7 +31968,7 @@ const DATA = {
           "line": 94,
           "symbol": "allowedContentTypes: [.item]",
           "note": "",
-          "text": "// ⚠ 加密后忘记密码 = 备份永久作废，所以默认关闭、要用户主动勾。"
+          "text": ".vkFont(.caption).foregroundStyle(DS.Palette.textSub)"
         },
         {
           "platform": "ios",
@@ -31984,7 +31984,7 @@ const DATA = {
           "line": 99,
           "symbol": "onChange(showFilePicker)",
           "note": "",
-          "text": ".textContentType(.newPassword)"
+          "text": "VariantToggle(\"加密备份（需设密码，忘记则备份作废）\", isOn: $encryptExport)"
         }
       ],
       "platformEvidence": {
@@ -32065,7 +32065,7 @@ const DATA = {
           "line": 280,
           "symbol": "doImport",
           "note": "",
-          "text": "private var backupFilename: String {"
+          "text": "private func armMigrateWizard(_ r: (imported: Int, overwritten: Int, skipped: Int)) {"
         },
         {
           "platform": "ios",
@@ -32073,7 +32073,7 @@ const DATA = {
           "line": 288,
           "symbol": "do 块",
           "note": "",
-          "text": "/// 文件选择器的结果处理。"
+          "text": "/// 导出文件名 —— 带日期, 多次备份不互相覆盖。"
         },
         {
           "platform": "ios",
@@ -34017,7 +34017,7 @@ const DATA = {
           "line": 1278,
           "symbol": "struct LockProfileView",
           "note": "",
-          "text": "DB.saveKeychain(kc2)"
+          "text": "symbol = m.symbol; colorKey = m.colorKey"
         },
         {
           "platform": "ios",
@@ -34025,7 +34025,7 @@ const DATA = {
           "line": 1298,
           "symbol": "预览 Section",
           "note": "",
-          "text": "@Environment(\\.dismiss) private var dismiss"
+          "text": "m.batteryChangedAt = batteryHasDate ? batteryDate.timeIntervalSince1970 : 0"
         },
         {
           "platform": "ios",
@@ -34033,7 +34033,7 @@ const DATA = {
           "line": 1423,
           "symbol": "昵称不能为空。档案只存本机, 不写入门锁。",
           "note": "",
-          "text": "}"
+          "text": ".frame(minHeight: DS.Hit.min)"
         }
       ],
       "platformEvidence": {
@@ -35099,7 +35099,7 @@ const DATA = {
           "line": 1009,
           "symbol": "mainTabsChrome",
           "note": "",
-          "text": "// 原来由 .onChange(of: app.appUnlocked) 在\"锁落下\"时收 —— 但启动门禁删掉后"
+          "text": "// 来电、Face ID 系统弹窗) 也当退后台 —— 会误记锁定到期时刻 (反复下拉可无限顺延宽限),"
         },
         {
           "platform": "ios",
@@ -35107,7 +35107,7 @@ const DATA = {
           "line": 1014,
           "symbol": ".task { bootstrapOnce() }",
           "note": "",
-          "text": "} else {"
+          "text": "// 原来由 .onChange(of: app.appUnlocked) 在\"锁落下\"时收 —— 但启动门禁删掉后"
         },
         {
           "platform": "ios",
@@ -35115,7 +35115,7 @@ const DATA = {
           "line": 1022,
           "symbol": "2026-10-16 抽出注释",
           "note": "",
-          "text": "}"
+          "text": "// 只在 .background 清会把正常强退误报成\"异常退出\"。"
         },
         {
           "platform": "ios",
@@ -35123,7 +35123,7 @@ const DATA = {
           "line": 1027,
           "symbol": "static func bootstrapOnce",
           "note": "",
-          "text": "@MainActor"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -35131,7 +35131,7 @@ const DATA = {
           "line": 1032,
           "symbol": "CrashGuard.checkAbnormalExit",
           "note": "",
-          "text": "}"
+          "text": "@MainActor"
         }
       ],
       "platformEvidence": {
@@ -35249,7 +35249,7 @@ const DATA = {
           "line": 884,
           "symbol": "TabView(selection:)",
           "note": "",
-          "text": "// 于是「设置→辅助功能→显示与文字大小」里的加粗文本与字号对 App 完全无效。"
+          "text": ".id(app.appearanceSeed)"
         },
         {
           "platform": "ios",
@@ -35257,7 +35257,7 @@ const DATA = {
           "line": 886,
           "symbol": "Tab 设备 value 0",
           "note": "",
-          "text": "//   · `dynamicTypeSize`：把 App 档 × 系统相对倍率映射到最近的 DynamicTypeSize 预设"
+          "text": "// 2026-10-27 审核修复 (AUDIT-B 2.6)：**接回两项系统无障碍支持**。"
         },
         {
           "platform": "ios",
@@ -35265,7 +35265,7 @@ const DATA = {
           "line": 888,
           "symbol": ".badge(handshakeDoneAway)",
           "note": "",
-          "text": "//"
+          "text": "// 但它们唯一的消费点（根视图这两个修饰符）在早前精简里被删了 ——"
         },
         {
           "platform": "ios",
@@ -35273,7 +35273,7 @@ const DATA = {
           "line": 891,
           "symbol": "if !app.guestAreaLocked",
           "note": "",
-          "text": ".dynamicTypeSize(AXFlags.typeSize())"
+          "text": "//   · `dynamicTypeSize`：把 App 档 × 系统相对倍率映射到最近的 DynamicTypeSize 预设"
         },
         {
           "platform": "ios",
@@ -35281,7 +35281,7 @@ const DATA = {
           "line": 896,
           "symbol": "Tab 凭证 value 1",
           "note": "",
-          "text": ""
+          "text": ".dynamicTypeSize(AXFlags.typeSize())"
         }
       ],
       "platformEvidence": {
@@ -35386,7 +35386,7 @@ const DATA = {
           "line": 856,
           "symbol": "topBanners",
           "note": "",
-          "text": "// 伪装码在 LockScreen 里识别：输胁迫码同样进主界面，但 decoy = true（空壳模式）。"
+          "text": "@ViewBuilder"
         },
         {
           "platform": "ios",
@@ -35394,7 +35394,7 @@ const DATA = {
           "line": 858,
           "symbol": "VStack 顺序",
           "note": "",
-          "text": "if lock.unlocked {"
+          "text": "// 2026-10-27 新增（AUDIT-D D-01 + D-48）：应用锁门禁。"
         },
         {
           "platform": "ios",
@@ -35402,7 +35402,7 @@ const DATA = {
           "line": 860,
           "symbol": "if !LinkSense.shared.btOn",
           "note": "",
-          "text": "} else {"
+          "text": "// 未解锁 → LockScreen；解锁后 → 主界面。"
         },
         {
           "platform": "ios",
@@ -35410,7 +35410,7 @@ const DATA = {
           "line": 866,
           "symbol": "BackupStudio.selfCheckWarning",
           "note": "",
-          "text": ".onChange(of: lock.unlocked) { _, u in"
+          "text": "LockScreen()"
         },
         {
           "platform": "ios",
@@ -35418,7 +35418,7 @@ const DATA = {
           "line": 869,
           "symbol": "if let t = app.toast",
           "note": "",
-          "text": "}"
+          "text": "// 伪装态同步到 AppState：全仓 12 处 decoyMode 判据靠它生效"
         }
       ],
       "platformEvidence": {
@@ -35511,7 +35511,7 @@ const DATA = {
           "line": 1019,
           "symbol": ".onChange(of: scenePhase)",
           "note": "",
-          "text": "// AUTOOPEN 不该继续武装并喂传感器); 锁定计时与崩溃标记的取舍见上。"
+          "text": "} else {"
         },
         {
           "platform": "ios",
@@ -36807,7 +36807,7 @@ const DATA = {
           "line": 1411,
           "symbol": "Section(\"电池档案\")",
           "note": "",
-          "text": ".frame(minHeight: DS.Hit.min)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -36815,7 +36815,7 @@ const DATA = {
           "line": 1419,
           "symbol": "BusyButton(title: \"保存档案\", …, disabled: trimmed.isEmpty)",
           "note": "",
-          "text": "confirmTitle: \"删除\") {"
+          "text": "Button(\"重启网关\") { confirmReboot(g) }"
         },
         {
           "platform": "ios",
@@ -36823,7 +36823,7 @@ const DATA = {
           "line": 1443,
           "symbol": "save()",
           "note": "",
-          "text": "Task { await self.reboot(g) }"
+          "text": "\"将把 WiFi「\\(ssid)」写入网关硬件。写入过程网关会重启并清空原有网络配置，若网络不通需要重新重置网关才能再次配网。确定开始配网吗？\","
         }
       ],
       "platformEvidence": {
@@ -36891,7 +36891,7 @@ const DATA = {
           "line": 1347,
           "symbol": "VariantToggle(\"在翻页里隐藏这把锁\")",
           "note": "",
-          "text": ".vkFont(.caption)"
+          "text": "ForEach(Array(steps.enumerated()), id: \\.offset) { _, s in"
         },
         {
           "platform": "ios",
@@ -36899,7 +36899,7 @@ const DATA = {
           "line": 1350,
           "symbol": "隐藏后它退出左右横滑，只在切换胶囊的「已隐藏」区里可达",
           "note": "",
-          "text": "}"
+          "text": "} icon: {"
         }
       ],
       "platformEvidence": {
@@ -36961,7 +36961,7 @@ const DATA = {
           "line": 1325,
           "symbol": "Section(\"身份\")",
           "note": "",
-          "text": "SecureField(\"WiFi 密码\", text: $pwd)"
+          "text": "Text(\"接通电源，重置网关，待网关指示灯闪烁橙色后点击下一步。\").vkFont(.footnote)"
         },
         {
           "platform": "ios",
@@ -36969,7 +36969,7 @@ const DATA = {
           "line": 1337,
           "symbol": "TextField(\"分组名 (如 家用 / 仓库 / 办公, 留空 = 未分组)\")",
           "note": "",
-          "text": "Text(s).fixedSize(horizontal: false, vertical: true)"
+          "text": "SecureField(\"WiFi 密码\", text: $pwd)"
         },
         {
           "platform": "ios",
@@ -36977,7 +36977,7 @@ const DATA = {
           "line": 1341,
           "symbol": "TextField(\"备注 (换电历史/安装细节/门锁脾气…)\", axis: .vertical)",
           "note": "",
-          "text": ".vkFont(.caption)"
+          "text": "BusyButton(title: \"开始配网\", systemImage: \"wifi\", isBusy: running, disabled: ssid.isEmpty || pwd.isEmpty) {"
         }
       ],
       "platformEvidence": {
@@ -37052,7 +37052,7 @@ const DATA = {
           "line": 1383,
           "symbol": "Section(\"色标\")",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.text)"
+          "text": "message: \"先在上方重置网关并勾选指示灯状态，再回来配网。\")"
         },
         {
           "platform": "ios",
@@ -37060,7 +37060,7 @@ const DATA = {
           "line": 1323,
           "symbol": "符号与色标同步用于 Hero 卡、切换胶囊与记录行的时间线标签。",
           "note": "",
-          "text": ".autocorrectionDisabled()"
+          "text": "if !confirmed {"
         }
       ],
       "platformEvidence": {
@@ -37285,7 +37285,7 @@ const DATA = {
           "line": 959,
           "symbol": "25 底栏注释",
           "note": "",
-          "text": "}"
+          "text": "// 设置页根上。带落点名, 由设置页直接开诊断面。"
         },
         {
           "platform": "ios",
@@ -37301,7 +37301,7 @@ const DATA = {
           "line": 966,
           "symbol": "if tabSelection != 0",
           "note": "",
-          "text": "/// 包8/508 写入回执浮层 —— 2026-10-13 run 63 从 body 内联块抽出:"
+          "text": ".padding(.horizontal, DS.Space.l)"
         },
         {
           "platform": "ios",
@@ -37309,7 +37309,7 @@ const DATA = {
           "line": 971,
           "symbol": "Label 开锁",
           "note": "",
-          "text": "Image(systemName: \"checkmark.circle.fill\")"
+          "text": "/// 包8/508 写入回执浮层 —— 2026-10-13 run 63 从 body 内联块抽出:"
         },
         {
           "platform": "ios",
@@ -37317,7 +37317,7 @@ const DATA = {
           "line": 981,
           "symbol": "if app.guestAreaLocked",
           "note": "",
-          "text": "// 2026-10-14 材质统一: 悬浮回执条从实底改液态玻璃 (与 ToastView 同一条 axGlass 通道)。"
+          "text": ".vkFont(.caption, weight: .medium)"
         }
       ],
       "platformEvidence": {
@@ -37613,7 +37613,7 @@ const DATA = {
           "line": 869,
           "symbol": "if let t = app.toast",
           "note": "",
-          "text": "}"
+          "text": "// 伪装态同步到 AppState：全仓 12 处 decoyMode 判据靠它生效"
         }
       ],
       "platformEvidence": {
@@ -38528,7 +38528,7 @@ const DATA = {
           "line": 1113,
           "symbol": ".onChange(of: app.appUnlocked)",
           "note": "",
-          "text": "var tint: ToneColor?"
+          "text": "})"
         },
         {
           "platform": "ios",
@@ -38536,7 +38536,7 @@ const DATA = {
           "line": 1116,
           "symbol": "restoreLastTab + applyPendingRoute",
           "note": "",
-          "text": "self.tint = tint"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -38803,7 +38803,7 @@ const DATA = {
           "line": 1073,
           "symbol": "rootCore",
           "note": "",
-          "text": "/// 滚动手势、VoiceOver 激活这些系统语义弄丢 (全仓 40 处调用点都在吃这些语义)。"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -38811,7 +38811,7 @@ const DATA = {
           "line": 1078,
           "symbol": ".id(app.appearanceSeed)",
           "note": "",
-          "text": "}"
+          "text": "/// 滚动手势、VoiceOver 激活这些系统语义弄丢 (全仓 40 处调用点都在吃这些语义)。"
         },
         {
           "platform": "ios",
@@ -38819,7 +38819,7 @@ const DATA = {
           "line": 1080,
           "symbol": ".dynamicTypeSize",
           "note": "",
-          "text": "let configuration: Configuration"
+          "text": "struct PressableButtonStyle: PrimitiveButtonStyle {"
         },
         {
           "platform": "ios",
@@ -38827,7 +38827,7 @@ const DATA = {
           "line": 1082,
           "symbol": ".saturation",
           "note": "",
-          "text": "var body: some View {"
+          "text": "Gate(configuration: configuration)"
         },
         {
           "platform": "ios",
@@ -38835,7 +38835,7 @@ const DATA = {
           "line": 1086,
           "symbol": ".environment(legibilityWeight)",
           "note": "",
-          "text": "lastFire = now"
+          "text": "@State private var lastFire = Date.distantPast"
         }
       ],
       "platformEvidence": {
@@ -38922,7 +38922,7 @@ const DATA = {
           "line": 859,
           "symbol": "69 蓝牙直通条注释",
           "note": "",
-          "text": "mainTabsChrome"
+          "text": "// 用户决策：**只在冷启动**要求输密码（不打断日常切前台）。"
         },
         {
           "platform": "ios",
@@ -38930,7 +38930,7 @@ const DATA = {
           "line": 860,
           "symbol": "if !LinkSense.shared.btOn",
           "note": "",
-          "text": "} else {"
+          "text": "// 未解锁 → LockScreen；解锁后 → 主界面。"
         },
         {
           "platform": "ios",
@@ -38938,7 +38938,7 @@ const DATA = {
           "line": 861,
           "symbol": "BLEOffBanner(denied:)",
           "note": "",
-          "text": "LockScreen()"
+          "text": "// 伪装码在 LockScreen 里识别：输胁迫码同样进主界面，但 decoy = true（空壳模式）。"
         },
         {
           "platform": "ios",
@@ -38946,7 +38946,7 @@ const DATA = {
           "line": 862,
           "symbol": "openBluetoothSettings()",
           "note": "",
-          "text": "}"
+          "text": "ZStack {"
         }
       ],
       "platformEvidence": {
@@ -39021,7 +39021,7 @@ const DATA = {
           "line": 865,
           "symbol": "448 注释",
           "note": "",
-          "text": ".onChange(of: lock.decoy) { _, d in app.decoyMode = d }"
+          "text": "} else {"
         },
         {
           "platform": "ios",
@@ -39029,7 +39029,7 @@ const DATA = {
           "line": 866,
           "symbol": "if let w = BackupStudio.selfCheckWarning",
           "note": "",
-          "text": ".onChange(of: lock.unlocked) { _, u in"
+          "text": "LockScreen()"
         },
         {
           "platform": "ios",
@@ -39037,7 +39037,7 @@ const DATA = {
           "line": 867,
           "symbol": "selfCheckBanner(w)",
           "note": "",
-          "text": "app.appUnlocked = u"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -39208,7 +39208,7 @@ const DATA = {
           "line": 1027,
           "symbol": "bootstrapOnce",
           "note": "",
-          "text": "@MainActor"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -39216,7 +39216,7 @@ const DATA = {
           "line": 1028,
           "symbol": "guard !launchBootstrapped",
           "note": "",
-          "text": "static func registerHost(_ app: AppState) {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -39224,7 +39224,7 @@ const DATA = {
           "line": 1029,
           "symbol": "launchBootstrapped = true",
           "note": "",
-          "text": "AppState.hostRef = app"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -39577,7 +39577,7 @@ const DATA = {
           "line": 834,
           "symbol": "凭证 Tab 挂载",
           "note": "",
-          "text": "//"
+          "text": "// 2026-10-18 冷启动预连接（用户口径：\"打开 app 1 秒内做完一遍\"）。"
         },
         {
           "platform": "ios",
@@ -39585,7 +39585,7 @@ const DATA = {
           "line": 843,
           "symbol": "记录 Tab 挂载",
           "note": "",
-          "text": "private func bootstrapOnce() { RootView.bootstrapOnce(app) }"
+          "text": "//"
         },
         {
           "platform": "ios",
@@ -39670,7 +39670,7 @@ const DATA = {
           "line": 917,
           "symbol": "26 长按菜单注释",
           "note": "",
-          "text": "// 第三件随\"手动锁/到点自动锁\"一起去掉了（那条路径已不存在，没有\"锁落下\"这个事件）。"
+          "text": "//   · 解锁后 runSelfCheck397() —— 本机库体自检（异常才出声）"
         },
         {
           "platform": "ios",
@@ -39678,7 +39678,7 @@ const DATA = {
           "line": 927,
           "symbol": ".contextMenu(forSelectionType: Int.self)",
           "note": "",
-          "text": "case .down where old == .ready: AXTools.announce(\"门锁连接已断开\")"
+          "text": "// 168 状态变化播报: 只报稳定态 (就绪/断开), \"握手中\"不打扰;"
         },
         {
           "platform": "ios",
@@ -39686,7 +39686,7 @@ const DATA = {
           "line": 929,
           "symbol": "case 0",
           "note": "",
-          "text": "// 所以不播报 —— 用户能从屏幕上的黄条看到原因，语音再念一遍是噪音。"
+          "text": ".onChange(of: sense.linkState) { old, new in"
         },
         {
           "platform": "ios",
@@ -39694,7 +39694,7 @@ const DATA = {
           "line": 932,
           "symbol": "只看今天的记录",
           "note": "",
-          "text": "}"
+          "text": "case .down where old == .ready: AXTools.announce(\"门锁连接已断开\")"
         },
         {
           "platform": "ios",
@@ -39702,7 +39702,7 @@ const DATA = {
           "line": 937,
           "symbol": "凭证回收站",
           "note": "",
-          "text": "if (old == .connecting || old == .opening), new == .success { handshakeDoneAway = true }"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -39837,7 +39837,7 @@ const DATA = {
           "line": 889,
           "symbol": "377 注释",
           "note": "",
-          "text": "// 为什么挂在 rootCore（而不是每个页面各挂一次）：这两项是**整树生效**的环境值，"
+          "text": "// 于是「设置→辅助功能→显示与文字大小」里的加粗文本与字号对 App 完全无效。"
         },
         {
           "platform": "ios",
@@ -39845,7 +39845,7 @@ const DATA = {
           "line": 891,
           "symbol": "if !app.guestAreaLocked",
           "note": "",
-          "text": ".dynamicTypeSize(AXFlags.typeSize())"
+          "text": "//   · `dynamicTypeSize`：把 App 档 × 系统相对倍率映射到最近的 DynamicTypeSize 预设"
         }
       ],
       "platformEvidence": {
@@ -39932,7 +39932,7 @@ const DATA = {
           "line": 824,
           "symbol": "deviceTabContent",
           "note": "",
-          "text": "if selfCheckBad > 0 {"
+          "text": "// 2026-10-26: 两件事从已失效的 .onChange(of: app.appUnlocked) 搬来这里。"
         },
         {
           "platform": "ios",
@@ -39940,7 +39940,7 @@ const DATA = {
           "line": 827,
           "symbol": ".keyboardShortcut(\"1\")",
           "note": "",
-          "text": "RootView.registerHost(app)   // 包2: LinkSense 宿主注册 + 回连/巡检循环"
+          "text": "app.applyPendingRoute()       // 落地挂起的深链"
         },
         {
           "platform": "ios",
@@ -39948,7 +39948,7 @@ const DATA = {
           "line": 836,
           "symbol": ".keyboardShortcut(\"2\")",
           "note": "",
-          "text": "// 它是静默的（不弹权限、不弹面容、不 toast），失败也只是安静退出 ——"
+          "text": "// 原来连接要等 DeviceHomeView 的 .task → sense.enterPage() → preconnect()，"
         },
         {
           "platform": "ios",
@@ -39956,7 +39956,7 @@ const DATA = {
           "line": 845,
           "symbol": ".keyboardShortcut(\"3\")",
           "note": "",
-          "text": ""
+          "text": "LinkSense.shared.startupPreconnect(mac: app.currentMac)"
         },
         {
           "platform": "ios",
@@ -39964,7 +39964,7 @@ const DATA = {
           "line": 851,
           "symbol": ".keyboardShortcut(\"4\")",
           "note": "",
-          "text": "@ViewBuilder"
+          "text": "var body: some View {"
         }
       ],
       "platformEvidence": {
@@ -47045,7 +47045,7 @@ const DATA = {
           "line": 2081,
           "symbol": "renewExpired",
           "note": "续期失败入队 period",
-          "text": ".fixedSize(horizontal: false, vertical: true)"
+          "text": "private var doneCard: some View {"
         },
         {
           "platform": "apk",
@@ -57915,7 +57915,7 @@ const DATA = {
           "line": 1451,
           "symbol": "m.grp = LockArchive.normalizedGroup(grp)",
           "note": "",
-          "text": "error = \"\""
+          "text": "guard !running else { return }"
         },
         {
           "platform": "ios",
@@ -58452,7 +58452,7 @@ const DATA = {
           "line": 1855,
           "symbol": "PwdDetailStudio",
           "note": "详情页同键读写",
-          "text": "owner == nil ? [] : DB.listFps(mac).filter { $0.owner == owner && $0.batch != Int(doneBatch ?? 0) }"
+          "text": "@State private var error = \"\""
         },
         {
           "platform": "ios",
@@ -58460,7 +58460,7 @@ const DATA = {
           "line": 1890,
           "symbol": "PwdDetailStudio",
           "note": "五档与到期时通知口径",
-          "text": ".navigationBarTitleDisplayMode(.inline)"
+          "text": "} else {"
         }
       ],
       "platformEvidence": {
@@ -58699,7 +58699,7 @@ const DATA = {
           "line": 1917,
           "symbol": "PwdDetailStudio",
           "note": "Slider 写值",
-          "text": "FpOwnerPicker(mac: mac, owner: $owner)"
+          "text": "// 324 冗余横条: 该锁仅剩 1 枚可用指纹时提示补录"
         },
         {
           "platform": "ios",
@@ -58715,7 +58715,7 @@ const DATA = {
           "line": 1904,
           "symbol": "PwdDetailStudio",
           "note": "读值",
-          "text": "Label {"
+          "text": ".navigationTitle(\"录入指纹\")"
         }
       ],
       "platformEvidence": {
@@ -58784,7 +58784,7 @@ const DATA = {
           "line": 875,
           "symbol": "orderedPwds",
           "note": "读 seq[p]",
-          "text": "ForEach([\"已过期\", \"同成员\", \"同类型\"], id: \\.self) { s in"
+          "text": "Button(\"彻底删除\", role: .destructive) { deleteFp(f) }   // 670 彻底删除"
         },
         {
           "platform": "ios",
@@ -58792,7 +58792,7 @@ const DATA = {
           "line": 1076,
           "symbol": "commitGroupMove",
           "note": "写 seq",
-          "text": "app.flashReceipt(\"已写入本机\")   // 508 已写入本机"
+          "text": "Spacer(minLength: 0)"
         },
         {
           "platform": "ios",
@@ -58800,7 +58800,7 @@ const DATA = {
           "line": 889,
           "symbol": "manualIndex",
           "note": "重复别名防 trap",
-          "text": "// 350 点按行选一条"
+          "text": "// ---------- 347 编辑模式: 选择圈 + 全选循环 (356) + 智能选取 (350) ----------"
         }
       ],
       "platformEvidence": {
@@ -60985,7 +60985,7 @@ const DATA = {
           "line": 842,
           "symbol": "DB.clearFailEvents",
           "note": "按锁清空",
-          "text": "let rows = allRows.filter { rangeSel.contains($0.dayKey) }"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -61058,7 +61058,7 @@ const DATA = {
           "line": 289,
           "symbol": "onChange(filters)",
           "note": "差异才落盘",
-          "text": "@ViewBuilder"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -61066,7 +61066,7 @@ const DATA = {
           "line": 2148,
           "symbol": "onRecordsAppear",
           "note": "每次进页重取（908）",
-          "text": ".foregroundStyle(DS.Palette.accentText)"
+          "text": ".vkFont(.footnote)"
         },
         {
           "platform": "ios",
@@ -61074,7 +61074,7 @@ const DATA = {
           "line": 527,
           "symbol": "RecordSearch.namedViews",
           "note": "kf_rviews 读点",
-          "text": "// 2026-10-26 精简：「失败筛选」说明与「清空本机失败标记」已删（用户确认）。"
+          "text": "var n = 0"
         },
         {
           "platform": "ios",
@@ -61082,7 +61082,7 @@ const DATA = {
           "line": 611,
           "symbol": "saveNamedView",
           "note": "命名视图写入",
-          "text": "Image(systemName: filtersExpanded ? \"chevron.up\" : \"chevron.down\")"
+          "text": ".vkFont(.caption2, weight: .semibold)"
         }
       ],
       "platformEvidence": {
@@ -61165,7 +61165,7 @@ const DATA = {
           "line": 1212,
           "symbol": "syncStampKey",
           "note": "kf_logsync_ 键格式",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -61181,7 +61181,7 @@ const DATA = {
           "line": 2171,
           "symbol": "loadFromCache",
           "note": "HotCache 首屏读",
-          "text": "Text(\"活跃凭证排序\")   // 574 活跃凭证排序"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -61189,7 +61189,7 @@ const DATA = {
           "line": 1071,
           "symbol": "firstDayFooter",
           "note": "300 条上限判据",
-          "text": ".frame(maxWidth: .infinity, alignment: .leading)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -61265,7 +61265,7 @@ const DATA = {
           "line": 1764,
           "symbol": "RecordOverlay.note",
           "note": "读备注（行备注弹窗）",
-          "text": ".vkFont(.caption)"
+          "text": "return HStack(spacing: DS.Space.s) {"
         },
         {
           "platform": "ios",
@@ -61281,7 +61281,7 @@ const DATA = {
           "line": 1771,
           "symbol": "RecordOverlay.setNote",
           "note": "写备注",
-          "text": "}"
+          "text": ".vkFont(.caption)"
         },
         {
           "platform": "ios",
@@ -61289,7 +61289,7 @@ const DATA = {
           "line": 1781,
           "symbol": "RecordOverlay.toggleFlag",
           "note": "旗标写入",
-          "text": "// 写成 `let` 在 Swift 里是\"给已初始化的常量再赋值\", 编译错误。"
+          "text": "// 576/580/583/585 —— Rec 池是「点行开详情、详情上下翻页、引用深链定位」唯一的判据来源,"
         },
         {
           "platform": "ios",
@@ -61379,7 +61379,7 @@ const DATA = {
           "line": 1236,
           "symbol": "credRow",
           "note": "kf_row_h",
-          "text": "/// 返回值 = 是否真生成 (首张按钮拿它决定回执; 各失败支自己弹原因, 不静默)。"
+          "text": "defer { busyKey = nil }"
         },
         {
           "platform": "ios",
@@ -63717,7 +63717,7 @@ const DATA = {
           "line": 18,
           "symbol": "kf_cloudcfg_acct",
           "note": "",
-          "text": "/// 而备份的正常去处就是 iCloud 云盘。"
+          "text": "@State private var importText = \"\""
         },
         {
           "platform": "ios",
@@ -63733,7 +63733,7 @@ const DATA = {
           "line": 19,
           "symbol": "kf_cloudcfg_app",
           "note": "",
-          "text": "@State private var showFileExporter = false"
+          "text": "@State private var busy = false"
         },
         {
           "platform": "ios",
@@ -63741,7 +63741,7 @@ const DATA = {
           "line": 23,
           "symbol": "cloudAcctField 直写",
           "note": "",
-          "text": "/// (两层模态套着)。所以先存这里, 等选择器真正收起后再问。"
+          "text": "@State private var showFileExporter = false"
         },
         {
           "platform": "ios",

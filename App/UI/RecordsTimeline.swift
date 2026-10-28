@@ -295,7 +295,11 @@ struct RecDetailSheet: View {
     private var linkSection: some View {
         Section {
             Button {
-                app.showToast("已复制本条引用链接")   // 585 已复制本条引用链接
+                // 2026-10-28 修复：原先**只弹 toast，没有写剪贴板** —— 用户以为复制了，粘出来是空的。
+                // 现在真写：kf://records?k=<oid>（scheme 与 host 白名单见 project.yml / handleDeepLink）。
+                let link = "kf://records?k=" + RecordOverlay.oid(mac: rec.mac, rowKey: rec.key)
+                Clip.set(link)
+                app.showToast("已复制本条引用链接")
             } label: {
                 Label("复制本条引用链接", systemImage: "link")
                     .vkFont(.subheadline, weight: .medium)
@@ -391,7 +395,11 @@ struct RecDetailSheet: View {
             TextField("开门附言 / 备注", text: $noteDraft)   // 990/186 开门附言
                 .autocorrectionDisabled()
                 .onSubmit { saveNote() }
+                // 2026-10-28 修复：原来只在 .onAppear 赋值 —— 上下条翻页时这条视图不重建，
+                // 于是草稿框里残留的是**上一条**的备注，点「保存备注」会写到错的行。
+                // 现在按 rec.key 变化同步刷新（翻页即换草稿）。
                 .onAppear { noteDraft = RecordOverlay.note(rec.mac, rec.key) }
+                .onChange(of: rec.key) { _, _ in noteDraft = RecordOverlay.note(rec.mac, rec.key) }
             HStack(spacing: DS.Space.m) {
                 Button("保存备注") { saveNote() }
                     .vkFont(.subheadline, weight: .medium)

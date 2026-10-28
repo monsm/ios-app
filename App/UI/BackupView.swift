@@ -11,6 +11,10 @@ struct BackupView: View {
     @State private var exportText = ""
     @State private var encryptExport = false      // 2026-10-27: 可选加密主备份
     @State private var exportPw = ""
+    /// 2026-10-28 修复：导入侧原来**没有口令输入框**，两处 parsePreview 都传 `password: nil` ——
+    /// 而导出侧（:98 的 SecureField）能加密。于是用户一旦勾了「备份密码」，那份备份
+    /// **永远导不回来**（decryptAny 会抛「此备份带口令」）。
+    @State private var importPw = ""
     @State private var importText = ""
     @State private var busy = false
     /// 导出文件选择器（存到 iCloud 云盘 / 我的 iPhone）
@@ -171,6 +175,11 @@ struct BackupView: View {
             Text("粘贴备份文本后导入。⚠ 导入会**整表替换**这台锁的凭证台账 —— 本机在备份之后新加的密码/指纹会丢失。建议先导出一次当前备份。门锁本身无需重置。")
                 .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
+            // 2026-10-28 补：加密备份需要口令才能解开（导出侧能加密，导入侧原先没有入口）
+            SecureField("备份密码（导出时设过的才需要填）", text: $importPw)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .disabled(busy)
             TextField("粘贴备份文本", text: $importText, axis: .vertical)
                 .vkFont(.caption.monospaced())
                 .lineLimit(3...6)
@@ -215,7 +224,7 @@ struct BackupView: View {
         // 把 macs / pwdCount / fpCount 摆进确认文案，再让用户点。
         let pv: BackupStudio.Preview
         do {
-            let (p, _) = try BackupStudio.parsePreview(text: importText, password: nil)
+            let (p, _) = try BackupStudio.parsePreview(text: importText, password: importPw.isEmpty ? nil : importPw)
             pv = p
         } catch {
             app.showToast("导入被拦下: \(error.localizedDescription)")
@@ -247,7 +256,7 @@ struct BackupView: View {
         // 与云端路径同一套判据。加密备份仍需口令 (本页只收明文粘贴, 与改动前一致)。
         do {
             // 2026-10-13 修 CI: `BackupStudioKit` 是**文件名**, 类型名是 `BackupStudio` (enum)。
-            let (_, bundle) = try BackupStudio.parsePreview(text: importText, password: nil)
+            let (_, bundle) = try BackupStudio.parsePreview(text: importText, password: importPw.isEmpty ? nil : importPw)
             // 2026-10-27 审核修复 (AUDIT-C F1)：改用 `BackupStudio.restore` —— **合并导入**。
             // 原先走 `BackupKit.restoreAll`，它对同设备台账是 `DB.saveLedger` **整表替换**，
             // 于是界面承诺「其它设备保留」而本机在备份之后新加的凭证会丢 —— 正是

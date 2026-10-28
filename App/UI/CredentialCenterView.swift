@@ -154,7 +154,7 @@ struct CredDisableSheet: View {
                     }
                 }
                 Section {
-                    Text("不可逆说明: 停用后本机台账移除, 锁端删除记为「待下发」— 7 天内可一键恢复, 超期需重新录入/生成。")   // 364 不可逆说明
+                    Text("不可逆说明: 停用后本机台账移除; 锁端删除记为「待下发」, 到场连接后才会真正失效。本机没有回收站 —— 停用即不可在 App 内恢复, 需要时只能重新录入/生成。")
                         .vkFont(.caption)
                         .foregroundStyle(DS.Palette.danger)
                         .fixedSize(horizontal: false, vertical: true)

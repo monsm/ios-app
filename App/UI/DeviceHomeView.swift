@@ -25,7 +25,6 @@ struct DeviceHomeView: View {
     @State private var confirmMac: String?
     @State private var confirmPulse = false
     @State private var autoLockLeft: Int?
-    @State private var showSettings = false   // 包8/507 备份角标跳转
     // 同屏提醒要按预算排位，视图层的 @State 预算读不到。判据一字未改，只是换了存放处。
     @State private var showRssi = false   // 63 点信号格弹出 dBm 数值 (格数看不出 1 格还是 2 格时看数字化)
     // 乱源治理第 3 批: 设备页模块显隐。默认空集 = 一块都不隐 (拍板口径), 面板只给能力不给默认。
@@ -114,7 +113,8 @@ struct DeviceHomeView: View {
             }
             .sheet(isPresented: $showAdd) { AddDeviceView() }
             .sheet(isPresented: $showModuleOrder) { moduleOrderSheet }
-            .sheet(isPresented: $showSettings) { SettingsView() }
+            // 2026-10-28 删除：`showSettings` 是**死 sheet** —— 零 `= true` 写点。
+            // 设置页走 Tab 切换（app.requestRoute(.settings)），不需要这个 sheet。
             // 250 二次开锁应用锁闸
             .sheet(isPresented: $app.showGate) { UnlockGateView() }
             // 91 回连静默小点: 回连成功不打扰, 胶囊旁亮一枚小点 3 秒
@@ -134,7 +134,14 @@ struct DeviceHomeView: View {
             }
             // 包3: 换锁后同步翻页索引 + 清理与锁绑定的过程态
             .onChange(of: app.currentMac) { _, new in
-                if confirmMac != new { confirmMac = nil }   // 菜单/联动切锁不设防, 只有横滑才设
+                // 2026-10-28 修复：confirmMac 全仓只有 = nil 的写点，**从没有一处写非 nil** ——
+                // 于是 dialAction 里那条「首点只亮胶囊、二点才发指令」的软闸永不触发，
+                // 换锁之后第一次点圆盘**直接开锁**（正是误触风险最高的时刻）。
+                // 现在换锁即设防：新锁需要点两次才发指令。
+                if confirmMac != new {
+                    confirmMac = new.isEmpty ? nil : new
+                    confirmPulse = false   // 换锁同时清掉上一次的脉冲态
+                }
                 if let i = pageOrder.firstIndex(of: new) {
                     if i != pageIndex { pageIndex = i }
                 } else {
@@ -1008,12 +1015,59 @@ struct DeviceHomeView: View {
             quickActions
                 .accessibilityElement(children: .contain)
                 .accessibilityLabel("快捷操作格组")   // 868 快捷操作格组
+        // 2026-10-28 修复：原来这个 switch 只判 "quick"，
+        // devOrder 默认是 ["hero","quick","recent"] ⇒ hero 与 recent **都落 default 画成 heroCard**，
+        // 同屏两张几乎相同的身份卡，而「最近开门」模块根本不存在。
+        // 现在三个槽各有各的渲染器。
+        case "hero":
+            if let kc = app.current {
+                heroCard(for: kc, isCurrent: true)
+                    .accessibilityElement(children: .contain)
+                    .accessibilityLabel("状态卡组")
+            }
+        case "recent":
+            recentModule
         default:
-                if let kc = app.current {
-                    heroCard(for: kc, isCurrent: true)
-                        .accessibilityElement(children: .contain)
-                        .accessibilityLabel("状态卡组")   // 868 状态卡组
+            EmptyView()
+        }
+    }
+
+    /// 2026-10-28 新增：「最近开门」模块（devOrder 的第三个槽）。
+    /// 数据来自 `app.recentRecords()` —— 那个方法早就实现了（含成员归属推断与告警标红），
+    /// 但全仓零调用；`kf_recent_count`（设置-外观「最近开门条数」3/5/10）也因此一直空转。
+    private var recentModule: some View {
+        let rows = app.recentRecords()
+        return VStack(alignment: .leading, spacing: DS.Space.m) {
+            SectionTitle(text: "最近开门")
+                .padding(.horizontal, DS.Space.gutter)
+            Card {
+                if rows.isEmpty {
+                    Text("还没有开门记录。连上锁后到「记录」页拉取一次。")
+                        .vkFont(.footnote)
+                        .foregroundStyle(DS.Palette.textSub)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    VStack(alignment: .leading, spacing: DS.Space.s) {
+                        ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
+                            HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
+                                Image(systemName: r.warn ? "exclamationmark.triangle.fill" : "door.left.hand.open")
+                                    .font(.system(size: DS.Icon.sm, weight: .semibold))
+                                    .foregroundStyle(r.warn ? DS.Palette.danger : DS.Palette.textSub)
+                                    .accessibilityHidden(true)
+                                Text(r.text)
+                                    .vkFont(.footnote)
+                                    .foregroundStyle(DS.Palette.text)
+                                    .lineLimit(2)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Spacer(minLength: 0)
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+            }
+            .padding(.horizontal, DS.Space.gutter)
         }
     }
     private var moduleOrderSheet: some View {
@@ -1072,6 +1126,38 @@ struct DeviceHomeView: View {
                     Text("显示与隐藏")
                 } footer: {
                     Text("默认全部显示。关掉只是本页不再画这一块，功能、数据与排程都不受影响；设备切换器、开锁圆盘、三个可排序槽与异常卡不能关 —— 前两件是主操作与身份，后两件藏了就等于把警告和数据说明瞒掉。")
+                        .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
+                }
+                // 2026-10-28 补齐：这张面板原来只排 3 个模块槽 + 3 个显隐开关，
+                // **改不了快捷格的组成与顺序** —— 而设置页 :869 的文案写着
+                // 「也可以直接在设备页长按任一快捷格打开这份编辑」。
+                // 那句话一直不成立（长按打开的就是这张面板，改不了快捷格）。
+                // 现在把快捷格的十一选六搬进来，两处入口改的是同一份数据（QuickPool）。
+                Section {
+                    ForEach(QuickPool.all) { a in
+                        VariantToggle(a.label, isOn: Binding(
+                            get: { QuickPool.selected.contains(a) },
+                            set: { on in
+                                var ids = QuickPool.selected.map { $0.id }
+                                if on { if !ids.contains(a.id) { ids.append(a.id) } }
+                                else { ids.removeAll { $0 == a.id } }
+                                // 一格都不留 = 快捷区整体消失，兜回默认格
+                                QuickPool.setSelected(ids.isEmpty ? QuickPool.defaultIds : ids)
+                                app.bumpAppearanceForLayout()
+                            }))
+                    }
+                    VariantToggle("常用动作排到前面", isOn: Binding(
+                        get: { QuickPool.smartFirst },
+                        set: { v in
+                            QuickPool.setSmartFirst(v)
+                            if !v { QuickPool.clearCounts() }
+                            app.showToast(v ? "开始按点击次数排序（只存本机）" : "已停止记录并清空计数")
+                            app.bumpAppearanceForLayout()
+                        }))
+                } header: {
+                    Text("快捷操作格")
+                } footer: {
+                    Text("勾选要在设备页显示的格子。一格都不留会兜回默认格 —— 「自定义」不该等于「自残」。")
                         .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                 }
                 Section {

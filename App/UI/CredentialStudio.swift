@@ -1688,6 +1688,21 @@ struct PwdDetailStudio: View {
                     // 311 同码引用卡 (⚠ 按时间窗推断, 标"约")
                     Section("用它开过的门 (约)") {
                         let n = CredentialOrg.openCountInWindow(mac, p: p)
+                        // 2026-10-28 补真入口：`CredentialOrg.recentUseCount` 实现了「近 N 天使用次数」
+                        // （按时间窗命中开门日志推断，日志缺失返回 nil），但全仓零调用 —— 上次只接了
+                        // pwdAgeDays，把它漏了。这条与上面那个「时间窗内次数」是两个口径：
+                        // 上面看的是这条凭证的**有效期窗口**，这里看的是**最近 30 天**（"最近还在用吗"）。
+                        if let recent = CredentialOrg.recentUseCount(mac, pwdAlias: p.alias) {
+                            Label {
+                                Text("近 30 天约 \(recent) 次")
+                                    .fixedSize(horizontal: false, vertical: true)
+                            } icon: {
+                                Image(systemName: "clock.arrow.circlepath")
+                                    .accessibilityHidden(true)
+                            }
+                            .vkFont(.caption)
+                            .foregroundStyle(DS.Palette.textSub)
+                        }
                         if n > 0 {
                             Label {
                                 Text("时间窗内约 \(n) 次开门 (按时间推断, 无 alias 字段)")
@@ -2074,7 +2089,7 @@ struct FpStudio: View {
                 .foregroundStyle(DS.Palette.text)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
-            Text("请用新指纹开一次锁, 确认可用。" + (replaceOld ? " 旧指纹已移入回收站。" : ""))   // 319 旧指纹已移入回收站
+            Text("请用新指纹开一次锁, 确认可用。" + (replaceOld ? " 旧指纹已从本机台账移除。" : ""))
                 .vkFont(.footnote)
                 .foregroundStyle(DS.Palette.textSub)
                 .multilineTextAlignment(.center)
@@ -2151,7 +2166,7 @@ struct FpStudio: View {
                 // 还原时第一百五十二批的 reclaim 会把这条还没发出去的 del_fp 一并收回。
                 DB.delFp(em, f.batch)
             }
-            app.showToast("旧指纹已移入回收站 (备注/归属保留)")
+            app.showToast("旧指纹已从本机台账移除 (备注/归属保留)")
         }
         withAnimation(DS.Motion.standard) { step = 3 }
     }
