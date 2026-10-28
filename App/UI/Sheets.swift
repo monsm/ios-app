@@ -636,6 +636,10 @@ struct StartAddFpView: View {
     /// 2026-10-17 用户口径: 录指纹**先选归属**。此前这一页直接开录, 记出来的指纹恒为"未归属",
     /// 事后只能到台账里一条条补 —— 而归属本来就是录入前就知道的事。
     @State private var owner: String? = nil
+    /// 2026-10-28 补：APK 的指纹录入带 `fpValidFrom`/`fpValidTo`（`Cu(batch, fpValidFrom, fpValidTo)`），
+    /// 可以做「临时指纹」。iOS 此前把有效期**写死** 2010~2118（永久），做不出临时指纹。
+    @State private var fpForever = true
+    @State private var fpValidTo = Date().addingTimeInterval(24 * 3600)
 
     private var content: some View {
         ScrollView {
@@ -662,6 +666,20 @@ struct StartAddFpView: View {
                         // 先选归属; 这把锁还没有成员时, 选择器会直接弹"新增归属"。
                         FpOwnerPicker(mac: app.current?.mac ?? "", owner: $owner)
                             .card()
+                        // 2026-10-28 补：临时指纹（APK 有 fpValidFrom/fpValidTo，iOS 原写死永久）
+                        VStack(alignment: .leading, spacing: DS.Space.s) {
+                            VariantToggle("永久有效", isOn: $fpForever)
+                            if !fpForever {
+                                DatePicker("到期时间", selection: $fpValidTo,
+                                           in: Date().addingTimeInterval(60)...Date().addingTimeInterval(365 * 86400),
+                                           displayedComponents: [.date, .hourAndMinute])
+                                Text("临时指纹：到点后锁端不再接受这枚指纹。适合保姆/装修工/短租。")
+                                    .vkFont(.caption2)
+                                    .foregroundStyle(DS.Palette.textSub)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                        .card()
                         ProgressView(value: Double(min(presses.count, 8)), total: 8)
                             .padding(.horizontal, DS.Space.gutter)
                             .accessibilityLabel("指纹录入进度")
@@ -782,8 +800,14 @@ struct StartAddFpView: View {
                 presses = []
                 return
             }
-            try await app.lock.fpConfirm(batch, validFrom: "2010-01-01 00:00:00", validTo: "2118-01-01 00:00:00")
-            // 自动命名: 指纹N (取台账内最大编号 + 1)
+            // 2026-10-28：按用户选择的有效期下发（永久档仍用 2118，与 APK 一致）
+            let fpFmt = DateFormatter()
+            fpFmt.locale = Locale(identifier: "en_US_POSIX")
+            fpFmt.calendar = WeekCal.gregorian
+            fpFmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            let fpFrom = "2010-01-01 00:00:00"
+            let fpTo = fpForever ? "2118-01-01 00:00:00" : fpFmt.string(from: fpValidTo)
+            try await app.lock.fpConfirm(batch, validFrom: fpFrom, validTo: fpTo)
             let existing = DB.listFps(kc.mac).compactMap { f -> Int? in
                 guard let m = f.name.range(of: "指纹(\\d+)", options: .regularExpression) else { return nil }
                 return Int(f.name[m].dropFirst(2))

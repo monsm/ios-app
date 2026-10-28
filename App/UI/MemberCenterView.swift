@@ -16,6 +16,17 @@ struct MemberCenterView: View {
     @State private var sortKey: Int = 0        // 264/466: 0 添加时间 / 1 姓名 / 2 最近开门时间 / 3 近 30 天开门次数
     @State private var groupFilter: String = "" // 630 分组过滤
     @State private var showWizard = false
+
+    /// 2026-10-28：建档向导的统一入口（带 15 人上限检查）。
+    /// APK `presentMemberAddPage` 判 `16 != memberList.length`，超出时明确拒绝
+    /// 「已添加15个成员，无法再添加」（数组含一个"自己"占位，实际上限 15）。
+    private func openWizard() {
+        if DB.members().count >= 15 {
+            app.showToast("已添加 15 个成员，无法再添加（锁端槽位上限）")
+            return
+        }
+        showWizard = true
+    }
     @State private var showArchived = false
     @State private var showGroups = false
     // 415 名册导出: ShareLink 要在渲染期就有 URL, 所以点菜单时先按需生成再开面板 (不在 body 里写盘)
@@ -901,15 +912,6 @@ struct MemberWizardView: View {
         MemberHub.saveExt(m.id, e)
         if app.pendingFpOwner == "request" { app.pendingFpOwner = m.id }   // 317: 建完交回
         return m.id
-    }
-
-    /// 2026-10-28：建档向导的统一入口（带 15 人上限检查）。
-    private func openWizard() {
-        if DB.members().count >= 15 {
-            app.showToast("已添加 15 个成员，无法再添加（锁端槽位上限）")
-            return
-        }
-        showWizard = true
     }
 
     private func submit() {

@@ -8,7 +8,7 @@ import UserNotifications
 
 
 /// 启动期系统职责。
-final class QuickActionDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+final class QuickActionDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         DB.migrateSecretsToKeychain()
@@ -18,7 +18,7 @@ final class QuickActionDelegate: NSObject, UIApplicationDelegate, UNUserNotifica
         // 到期通知即使送达也点不动（handleNotificationAction/applyNotification 零调用）。
         // 这里补上：启动即申请授权 + 设 delegate。
         let nc = UNUserNotificationCenter.current()
-        nc.delegate = self
+        nc.delegate = NotificationDelegate.shared
         nc.requestAuthorization(options: [.alert, .sound, .badge]) { granted, err in
             if let err { CredentialOrg.notifyLog.error("通知授权失败: \(String(describing: err), privacy: .public)") }
             else if !granted { CredentialOrg.notifyLog.error("用户未授予通知权限：到期提醒不会送达") }
@@ -26,12 +26,25 @@ final class QuickActionDelegate: NSObject, UIApplicationDelegate, UNUserNotifica
         return true
     }
 
-    /// 2026-10-28 补：点按通知 → 定位到那条凭证。
-    /// CredentialOrg 早就有 handleNotificationAction（解析 id）+ applyNotification（落点），
+}
+
+
+/// 2026-10-28：通知点按的 delegate —— **独立于 UIApplicationDelegate**。
+///
+/// 为什么不直接让 `QuickActionDelegate` 兼：Swift 6 严格并发下
+/// `UNUserNotificationCenterDelegate` 的协议要求是 nonisolated 的，
+/// 而 `UIApplicationDelegate` 的实现是 main-actor 隔离；两者混在同一个类上会报
+/// 「conformance crosses into main actor-isolated code」。
+/// 拆开之后：这个类整体 nonisolated，只在跳转那一步显式切回 MainActor。
+final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
+    static let shared = NotificationDelegate()
+
+    /// 点按通知 → 定位到那条凭证。
+    /// `CredentialOrg` 早就有 `handleNotificationAction`（解析 id）与 `applyNotification`（落点），
     /// 但没有任何 delegate 调它们，等于整条链断在最后一米。
-    func userNotificationCenter(_ center: UNUserNotificationCenter,
-                                didReceive response: UNNotificationResponse,
-                                withCompletionHandler completionHandler: @escaping () -> Void) {
+    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                            didReceive response: UNNotificationResponse,
+                                            withCompletionHandler completionHandler: @escaping () -> Void) {
         let id = response.notification.request.identifier
         if let action = CredentialOrg.handleNotificationAction(id) {
             Task { @MainActor in CredentialOrg.applyNotification(action) }
@@ -39,9 +52,9 @@ final class QuickActionDelegate: NSObject, UIApplicationDelegate, UNUserNotifica
         completionHandler()
     }
 
-    /// 前台收到通知也显示（否则 App 在前台时用户看不到到期提醒）。
-    func userNotificationCenter(_ center: UNUserNotificationCenter,
-                                willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
+    /// 前台也显示：否则 App 在前台时用户看不到到期提醒。
+    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                            willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
         [.banner, .sound]
     }
 }
