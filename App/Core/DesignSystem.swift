@@ -228,7 +228,12 @@ enum DS {
         /// 读 AXFlags 而不是自己调 UIAccessibility：本仓的系统旗标只有一个读点。
         /// 这里用的是**快照**而不是 @MainActor 的那个属性: 令牌会被 ButtonStyle/ToggleStyle 的
         /// makeBody (非隔离) 求值, 而系统旗标本身是主 actor 的 —— 快照由 AXFlags 在回前台时刷新。
-        private static var systemReduceMotion: Bool { false }   // 2026-10-27 三轮：无障碍层已删，恒 false
+        // 2026-10-28 修复：这里曾写死 `false`（注释「无障碍层已删」）——
+        // 但上面 :227-230 的注释还在说「系统减弱动态 = 强制最静的一档，用户偏好让路
+        // （这不是偏好，是无障碍硬约束）」。于是系统「减弱动态效果」对本 App 的所有
+        // DS.Motion 令牌（quick/standard/soft/exit）完全无效 —— 一个无障碍硬约束被静默摘掉了。
+        // 现接回快照：AXFlags 在启动 + 每次回前台刷新（见 RootView 的 scenePhase 处）。
+        private static var systemReduceMotion: Bool { AXFlags.reduceMotionSnapshot }
         private static var tier: String {
             if systemReduceMotion { return "calm" }
             // 120 低电视觉降级: 锁电量 ≤20% 时全 App 动效也压到 calm —— 与系统减弱动态同优先级,

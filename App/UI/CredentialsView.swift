@@ -867,8 +867,9 @@ struct CredentialsView: View {
             Button("添加备注") { editNote(fp: f) }
             Menu("归属到成员") { ownerMenu(isPwd: false, key: f.batch) }
                     // 2026-10-26 精简：版本历史入口已删。
-            Button(hit.pinned ? "取消置顶" : "置顶") {
-            }
+                    // 2026-10-28 删除：这枚「置顶 / 取消置顶」是**空动作** —— `Button { }`，
+                    // 点了一点反应都没有，而 `CredHit.pinned` 全仓无一处写非默认值。
+                    // 置顶功能从未实现过（与同段的「版本历史」「归档」一样是被删功能的残壳）。
                     // 2026-10-26 精简：归档/移出归档入口已删（归档功能整套移除）。
             Divider()
             Button("停用 (本地, 锁端待处理)", role: .destructive) { disableFp(f) }

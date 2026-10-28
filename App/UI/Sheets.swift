@@ -775,6 +775,10 @@ struct LockProfileView: View {
     @State private var symbol = ""
     @State private var colorKey = ""
     @State private var batteryModel = ""
+    /// 2026-10-28 补：`LockArchive.setDefaultMac` 全仓零调用 —— 而 `defaultMac` 有 2 处消费
+    /// （冷启动落点 `AppState.loadDevices(preferDefault:)` + 设备排序首位）。
+    /// 于是「启动默认锁」这个功能**永远设不了**，用户只能靠"上次停留"。
+    @State private var isDefaultLock = false
     @State private var batteryHasDate = false
     @State private var batteryDate = Date()
     @State private var loaded = false
@@ -905,6 +909,16 @@ struct LockProfileView: View {
                     DatePicker("换电日期", selection: $batteryDate, displayedComponents: .date)
                 }
             }
+            // 2026-10-28 补入口：「设为启动默认锁」—— `setDefaultMac` 此前零调用。
+            Section {
+                VariantToggle("设为启动默认锁", isOn: $isDefaultLock)
+            } footer: {
+                Text("开启后，冷启动（杀进程再打开）会直接落在这把锁；关掉则维持「上次停留的那把」。"
+                     + " 只在本机生效，不写入门锁。")
+                    .vkFont(.caption)
+                    .foregroundStyle(DS.Palette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             Section {
                 BusyButton(title: "保存档案", systemImage: "checkmark", isBusy: false, disabled: trimmed.isEmpty) {
                     save()
@@ -926,6 +940,7 @@ struct LockProfileView: View {
             symbol = m.symbol; colorKey = m.colorKey
             batteryModel = m.batteryModel
             batteryHasDate = m.batteryChangedAt > 0
+            isDefaultLock = LockArchive.defaultMac == kc.mac
             if m.batteryChangedAt > 0 { batteryDate = Date(timeIntervalSince1970: m.batteryChangedAt) }
         }
     }
@@ -945,6 +960,13 @@ struct LockProfileView: View {
         m.batteryModel = batteryModel.trimmingCharacters(in: .whitespaces)
         m.batteryChangedAt = batteryHasDate ? batteryDate.timeIntervalSince1970 : 0
         LockArchive.save(kc.mac, m)
+        // 2026-10-28：默认锁与档案一起保存（`setDefaultMac` 会同时把它排到手工顺序首位，
+        // 避免"顺序表说 A 在前、默认锁说 B 在前"两个真相）。
+        if isDefaultLock {
+            LockArchive.setDefaultMac(kc.mac)
+        } else if LockArchive.defaultMac == kc.mac {
+            LockArchive.setDefaultMac("")   // 关掉 = 清除，回到"上次停留"
+        }
         app.loadDevices()
         app.showToast("档案已保存")
         dismiss()

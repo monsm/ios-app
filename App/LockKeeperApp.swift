@@ -852,7 +852,10 @@ struct RootView: View {
 
 
     var body: some View {
+        // 2026-10-28：冷启动时 scenePhase 的 onChange 不一定触发初始回调，
+        // 这里补一次，保证首帧的动效令牌就能拿到正确的系统减弱动态值。
         rootChrome
+            .onAppear { AXFlags.refreshSnapshots() }
     }
 
     /// 主界面。首启引导已随本轮删减移除, 启动不再分形态 —— 这里只返回主界面本体。
@@ -1001,6 +1004,11 @@ struct RootView: View {
     private func handleScenePhase(_ phase: ScenePhase) {
         LinkSense.shared.setSceneActive(phase == .active)
         if phase == .active {
+            // 2026-10-28 修复：`AXFlags.refreshSnapshots` 全仓零调用 —— 而它的注释写着
+            // 「刷新点 = 启动 + 每次回前台」。缺了这一步，`reduceMotionSnapshot` 恒为初始值 false，
+            // 于是 DS.Motion 的 systemReduceMotion 永远拿不到系统「减弱动态效果」的真值。
+            // 改这个系统开关必须先离开 App 去设置，回来一定经过 .active —— 这里是唯一正确的刷新点。
+            AXFlags.refreshSnapshots()
             // 2026-10-17 拍板 A: 「到点自动落锁」随启动门禁一起删 —— 现在没有锁屏页可回,
             // 留着它只会把 appUnlocked 置 false, 让深链/落点/回连那些 guard 静默失效。
                 // 靠近自动开锁 (AUTOOPEN): F0 前台门 + F1 进前台按档位刷面容 (挂起期静默)

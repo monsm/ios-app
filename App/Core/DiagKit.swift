@@ -256,3 +256,55 @@ enum DiagFlags {
 private final class NotifyAuthBox: @unchecked Sendable {
     var status: UNAuthorizationStatus = .notDetermined
 }
+
+/// 2026-10-28 补：`NotifyAuthBox` 之前是**孤儿** —— 类与注释都写好了
+/// （「1170 同步读取通知授权状态」），但没有任何读取入口、也没有任何调用方。
+/// 后果：用户在系统弹窗里点了「不允许」之后，App 内**看不到任何提示** ——
+/// 凭证到期提醒不会送达，用户不知道为什么，只会觉得「这 App 的提醒是坏的」。
+/// 而 `QuickActionDelegate` 里新加的 `requestAuthorization` 只会写 os 日志，用户看不到。
+enum NotifyAuth {
+    /// 同步读（把 async 的 `getNotificationSettings` 拉回同步）—— 用注释里预留的那只盒子。
+    /// 超时 2 秒兜底：读不到就报「未确定」而不是卡住设置页。
+    static var status: UNAuthorizationStatus {
+        let box = NotifyAuthBox()
+        let sem = DispatchSemaphore(value: 0)
+        UNUserNotificationCenter.current().getNotificationSettings { s in
+            box.status = s.authorizationStatus
+            sem.signal()
+        }
+        _ = sem.wait(timeout: .now() + 2)
+        return box.status
+    }
+
+    /// 给用户看的一句话。
+    static var label: String {
+        switch status {
+        case .authorized: return "已开启"
+        case .denied: return "已拒绝"
+        case .notDetermined: return "未询问"
+        case .provisional: return "临时授权"
+        case .ephemeral: return "会话授权"
+        @unknown default: return "未知"
+        }
+    }
+
+    /// 提醒送不到（被拒或还没问过）。
+    static var isOff: Bool { status == .denied || status == .notDetermined }
+
+    /// 给定状态的一句话（供 UI 读一次后缓存，避免每次 body 都走同步阻塞）。
+    static func labelFor(_ s: UNAuthorizationStatus) -> String {
+        switch s {
+        case .authorized: return "已开启"
+        case .denied: return "已拒绝"
+        case .notDetermined: return "未询问"
+        case .provisional: return "临时授权"
+        case .ephemeral: return "会话授权"
+        @unknown default: return "未知"
+        }
+    }
+
+    /// 提醒送不到（给定状态版）。
+    static func isOffFor(_ s: UNAuthorizationStatus) -> Bool {
+        s == .denied || s == .notDetermined
+    }
+}

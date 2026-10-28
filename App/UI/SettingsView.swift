@@ -22,6 +22,10 @@ struct SettingsView: View {
     @State private var groupFilter: SettingsGroup?
     // 与门锁通信中的忙碌态 — 防止连点重复下发指令
     @State private var settingMute = false
+    /// 2026-10-28：通知权限只在进页时读一次（`NotifyAuth.status` 是同步阻塞读，
+    /// 不能放在 body 里每次重算都调，否则设置页每次刷新都卡最多 2 秒）。
+    @State private var notifyLabel = ""
+    @State private var notifyOff = false
     @State private var clearingPwd = false
     // 包18: 版本彩蛋 (298) / VoiceOver 致意 (1049)
     @State private var eggShown = false
@@ -35,6 +39,11 @@ struct SettingsView: View {
     var vkBody: some View {
         NavigationStack {
             settingsReader
+        }
+        .onAppear {
+            let s = NotifyAuth.status
+            notifyLabel = NotifyAuth.labelFor(s)
+            notifyOff = NotifyAuth.isOffFor(s)
         }
     }
 
@@ -234,9 +243,10 @@ struct SettingsView: View {
             SearchHit(id: "s.mobilekey", title: "手机钥匙 (给成员发数字钥匙)", icon: "iphone.gen3.badge.key", anchor: .family),
             SearchHit(id: "s.dfu", title: "固件升级 (Nordic DFU, 在「家人与钥匙」段)", icon: "arrow.up.circle", anchor: .family),
             SearchHit(id: "s.trialguard", title: "只读试验模式 (真机排障只看不改)", icon: "eye.slash", anchor: .tools),
-            SearchHit(id: "s.safemode", title: "门锁安全模式", icon: "shield.lefthalf.filled", anchor: .unlock),
+            // 2026-10-28 删除：`s.safemode`「门锁安全模式」—— 那个 Section 已于 81c1432 删除
+            // （纯说明无入口），搜索项却留着，点进去滚到 unlock 段也没有任何「安全模式」内容。
             SearchHit(id: "s.unlockopt", title: "开锁偏好 (按住确认/围栏/圆盘尺寸)", icon: "hand.draw", anchor: .unlock),
-            SearchHit(id: "s.autoopen", title: "靠近自动开锁 (走近自动开门/距离标定)", icon: "person.walk", anchor: .autoOpen),
+            SearchHit(id: "s.autoopen", title: "靠近自动开锁 (走近自动开门)", icon: "person.walk", anchor: .autoOpen),
             SearchHit(id: "s.members", title: "成员管理", icon: "person.2") { showMembers = true },
             SearchHit(id: "s.gateway", title: "智能网关", icon: "antenna.radiowaves.left.and.right") { showGateway = true },
             SearchHit(id: "s.backup", title: "备份与恢复", icon: "externaldrive") { showBackup = true },
@@ -468,14 +478,12 @@ struct SettingsView: View {
                 get: { UnlockPrefs.mode },
                 set: { app.setUnlockOption("kf_gesture_mode", $0) })) {
                 Text("按住确认 (默认)").tag("hold")
-                Text("三连点防误开").tag("triple")   // 58 三连点防误开
-                Text("旋转充能").tag("charge")   // 52 旋转充能
+                        // 2026-10-28 删除：这两档**从未实现** —— `UnlockPrefs.modes = ["hold"]`，
+                        // 而 `mode` 的实现是 `modes.contains(v) ? v : "hold"` ⇒ 选什么都回弹到 hold；
+                        // `triple` / `charge` 在后台零出现（UnlockDial 没有任何对应手势处理）。
+                        // 留着等于给用户两个永远选不上、选了也不生效的假选项。
             }
-            Text("三连点 = 连点圆盘三次才发指令，前两下只有渐强触感；旋转充能 = 沿圆盘外沿转满一圈"
-                 + "(iPhone 无数码表冠，本档按原句「转一圈才发」的行为落地)。两种都不缩短防误触的判定，"
-                 + "只是把「按住」换成另一种必须做完的动作。")
-                .vkFont(.caption)
-                .foregroundStyle(DS.Palette.textSub)
+                        // 2026-10-28：原说明文字讲的是两个不存在的档位，随档位一起删。
             // 53 双击直开: 这是防误触的**减配** (绕过按住确认)，所以默认关、只在按住确认档可开、
             // 标签自己写明「绕过确认」 —— 一个把安全降级说得像便捷特性的开关，本仓不写。
             VariantToggle("双击直开 (绕过按住确认)", isOn: Binding(
@@ -612,6 +620,23 @@ struct SettingsView: View {
     private var toolsSection: some View {
         Section("工具") {
             Button { showBackup = true } label: { Label("备份与恢复", systemImage: "externaldrive") }
+            // 2026-10-28 补：通知权限状态此前**无处可看**（`NotifyAuthBox` 零调用）。
+            // 到期提醒是这个 App 唯一的主动提醒出口，权限关了却没人告诉用户，等于静默失效。
+            if notifyOff {
+                Button {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                } label: {
+                    HStack(spacing: DS.Space.s) {
+                        Label("通知权限", systemImage: "bell.slash")
+                        Spacer(minLength: 0)
+                        Text(notifyLabel + " · 到期提醒不会送达")
+                            .vkFont(.caption)
+                            .foregroundStyle(DS.Palette.danger)
+                    }
+                }
+            }
             // 2026-10-28 补入口：`TrialGuard.set(true)` 全仓零调用 —— 这道只读护栏
             // 永远打不开（`LockService` 里的 assertReadOnly 判据一直在，但没人能开）。
             // 而设置页搜索索引 :236 还写着「只读试验模式 (真机排障只看不改)」—— 搜得到、开不了。
@@ -946,6 +971,16 @@ struct SettingsView: View {
                 Text("按住圆盘多久算确认。关掉「按住确认」后此项不生效。")
                     .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
             }
+            // 2026-10-28 补：`MemberHub.setElderMode` 全仓零调用 —— 而 `MemberHub.elderMode` 有 6 处 UI 消费
+            // （凭证页分段从 4 段降到 3 段、完成页切「口述卡」、隐藏部分次要入口）。
+            // 于是「长辈模式」永远开不了，那 6 处分支是**永远走不到的死路**。
+            VariantToggle("长辈模式 (分段更少 / 大字 / 口述卡)", isOn: Binding(
+                get: { MemberHub.elderMode },
+                set: { on in
+                    MemberHub.setElderMode(on)
+                    app.bumpAppearanceForLayout()
+                    app.showToast(on ? "长辈模式已开启：凭证页分段精简为 3 档" : "长辈模式已关闭")
+                }))
             VariantToggle("大格模式 (快捷格 2 列)", isOn: Binding(
                 get: { AXPrefs.bigTile },
                 set: { app.setUnlockOption("kf_bigtile", $0) }))
