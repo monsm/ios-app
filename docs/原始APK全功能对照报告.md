@@ -212,3 +212,47 @@ APK 声明 `clear=1` / `ecdh=2`，但 `ecdh` 在 677KB 的 main.js 里**只有�
 
 **按「原始 APK 除互联网」的标准，iOS 实现是完整的。**
 `vendor/apk-baseline/lockprotocol/` 本次从 2 个文件补到 **29 个**，这是之前审计的最大盲区，现已闭合。
+
+
+---
+
+## 7. 本轮代码修复（10 项）
+
+| # | 修复 | 文件 | 性质 |
+|---|---|---|---|
+| 1 | BLE 错误码补 `1008`「不支持的ssToken方式」 | `App/Services/BLEService.swift` | 枚举缺口 |
+| 2 | 网关配网 WiFi 名：iOS 无 entitlement，改为手输 + 如实提示 | `App/UI/Sheets.swift` | 平台限制 |
+| 3 | **「安全模式 A/B」页面不可达** —— `SafemodeIntroView` 只以 `mode:"otp"` 构造过 | `App/UI/SettingsView.swift` + `Destination.swift` | **真缺口** |
+| 4 | 补 A/B 模式的定义说明（APK 有，iOS 只写「当前已是 B」） | `App/UI/SettingsView.swift` | 文案完整性 |
+| 5 | **录指纹页缺屏幕常亮** —— `Mascot.swift:126` 注释写着会调用，实际零调用 | `App/UI/CredentialStudio.swift` | **真缺口** |
+| 6 | DFU 加 `UIBackgroundModes: [bluetooth-central]`（Android 有前台服务） | `project.yml` | 可靠性 |
+| 7 | **`PidMap.productNames[7873]` 型号名错** —— 写成 V1 Pro，应为 JZ | `App/Core/PidMap.swift` | **字节级 bug** |
+| 8 | **硬件台账 MAC 用错序** —— `scanForDongle`/`provisionGateway` 用 `macRaw`（线上序） | `App/Services/HardwareService.swift` | **字节级 bug** |
+| 9 | **`rcKLV` 漏登记 `0x23`** —— 配网握手 rc 恒为 0，失败当成功 | `App/Services/LockService.swift` | **字节级 bug** |
+| 10 | 空 token 防护 —— 只判 KLV#02 存在、没判非空 | `App/Services/LockService.swift` | 健壮性 |
+
+## 8. 复核掉的「疑似 bug」（经代码核实不触发）
+
+| 子代理怀疑 | 核实结果 |
+|---|---|
+| `cmd0A` 非 ASCII 密码被 `&0xff` 截断 | UI 校验 `pwd.allSatisfy { $0.isNumber }` ⇒ 密码恒 6–8 位数字，永不触发 |
+| `pinToLEOrNil` 8 位十进制 PIN 被当 hex | `KeyGen.genPin()` 生成的是 `HexKit.hex([b3,b2,b1,b0])` = **8 位 hex 且本身已是 LE**，直接返回正确 |
+| `cmd21SetBkey` 硬编码 skeyLen `"10"` | `KeyGen.genBkey()` = `randomBytes(16)` ⇒ 恒 16 字节，`0x10` 正确 |
+| 明文 `cmd03` 缺 KLV#01 EKey 包 | APK `getDeviceInfo` 用的是 **0x88 包络**（对应 iOS `cmd03StatusWrap`）；iOS 的 `cmd03StatusPlain` 只在台账缺 skey 的异常场景用，不影响正常流程 |
+
+## 9. 剩余协议健壮性待办（不影响正常功能）
+
+以下来自逐行比对，均为**边界条件**或**诊断精度**问题，正常流程不触发：
+
+| # | 项 | 影响 | 优先级 |
+|---|---|---|---|
+| 1 | `request` 的 8s timer 覆盖「写+收」两段（Java 是每片 8s + 收包 8s） | 极弱信号下长帧（cmd08 13 分片）可能提前报 1007 | P1 |
+| 2 | `parseAdv` 帧控制门禁用 `(fc & 0x0C) == 0x0C`，Java 用 `adData[2] >= 12` | fc=0x10 时 Java 接受/iOS 拒绝 | P2（待真机） |
+| 3 | `StatusParser.logTypes` 与 APK `We` 表部分编号不同（11/17/19 等） | 若锁按 APK 表发事件，iOS 显示「未知(N)」 | P2（待真机） |
+| 4 | `StatusParser.intHex` 是整串解析，JS 是前缀解析 | `"01zz"` → JS 1 / iOS 0 | P3 |
+| 5 | `broadcastMode` iOS 归一化为 0/1，JS 是 0/2 | C 模式判定显示差异 | P3 |
+| 6 | `buildKLV` >255 字节截断（Java 是长度取低 8 位、值全量） | 未来塞固件分片才会触发 | P3 |
+| 7 | `BLEError` 的 1006/6001/6004 枚举存在但从未抛出 | 排障时错误码语义丢失 | P2 |
+| 8 | `KLV#36` 未解析 | 新固件字段缺失 | P3 |
+
+**结论：以上 8 项都不影响「功能是否存在」，只影响极端条件下的表现或诊断精度。按「原始 APK 除互联网的全部功能都要在 iOS 实现」的口径，功能面已经完整。**

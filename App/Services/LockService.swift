@@ -197,6 +197,15 @@ final class LockService: ObservableObject {
             log("error", "01 会话令牌响应缺 KLV#02 · 回包 " + Self.klvShape(f))
             throw BLEErrorX.msg("01 响应无令牌 (回包 \(Self.klvShape(f))): 配网期出现说明锁已不在重置/可配网状态, 请在门锁键盘上重置后立即重试")
         }
+        // 2026-10-28 修：上面只判了 KLV#02 **存在**，没判**非空** —— 锁若返回 `vlen=0` 的空令牌，
+        // `sessionTokenHex = ""` 之后 `injectToken` 会 `guard !tokenHex.isEmpty else { return hex }`
+        // **原样返回不注入**，于是所有 needToken 命令都缺 KLV#EE，持续 rc=13（通讯过期），
+        // 而调用方只看到「通讯过期」，完全不知道真实原因是拿到了空令牌。
+        // Java `LockCommBase.getBytes` 在这里是抛 `LockException`（"未给命令提供ssToken"），口径更严。
+        guard !k.val.isEmpty else {
+            log("error", "01 会话令牌 KLV#02 为空 · 回包 " + Self.klvShape(f))
+            throw BLEErrorX.msg("01 响应里的令牌是空值 (回包 \(Self.klvShape(f)))：锁没有给出有效会话令牌，请重置门锁后立即重试")
+        }
         // 安全类型 gate 已删: JS lock.js _ensureToken 从不检查 (V81 注释 — Java 发送路径也从不检查),
         // 只要 KLV#02 令牌在就继续。Swift 之前的整串 intHex&3 硬抛会让
         // 安全类型编为 2 字节 (如 "0200"→512&3=0) 或缺 KLV#01 的固件配网必败, 而小程序正常。

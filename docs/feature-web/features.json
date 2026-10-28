@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-28T09:46:02.296Z",
+    "generated": "2026-10-28T09:52:45.466Z",
     "sources": [
       {
         "scout": "android-native",
@@ -2202,7 +2202,7 @@
           "line": 457,
           "symbol": "ZKCmdBuilder.cmd12Echo(valueHex)",
           "note": "",
-          "text": "/// (apk_raw/assets/www/build/main.js RomlistPage.echo)。"
+          "text": "return t"
         },
         {
           "platform": "ios",
@@ -3844,7 +3844,7 @@
           "line": 489,
           "symbol": "func syncTime()",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -4098,7 +4098,7 @@
           "line": 618,
           "symbol": "deletePins",
           "note": "",
-          "text": "func pwdModify(alias: Int, pwd: String, validFrom: String, validTo: String) async throws -> Int {"
+          "text": "_ = try await execOk(ZKCmdBuilder.cmd0BSyncPwdExpire(m, sk, alias, validFrom, validTo))"
         },
         {
           "platform": "apk",
@@ -4417,7 +4417,7 @@
           "line": 618,
           "symbol": "deletePins",
           "note": "",
-          "text": "func pwdModify(alias: Int, pwd: String, validFrom: String, validTo: String) async throws -> Int {"
+          "text": "_ = try await execOk(ZKCmdBuilder.cmd0BSyncPwdExpire(m, sk, alias, validFrom, validTo))"
         },
         {
           "platform": "apk",
@@ -5834,7 +5834,7 @@
           "line": 763,
           "symbol": "func pair",
           "note": "",
-          "text": "// 期间锁已被人拿走/电量耗尽也不知情, collector 也一直被占 (新会话的 cmd13 帧会被吞)"
+          "text": "var attemptsLeft = 2 // JS _execMulti retries=2: 无帧时重发一次"
         },
         {
           "platform": "apk",
@@ -5850,7 +5850,7 @@
           "line": 800,
           "symbol": "步骤 1/7",
           "note": "",
-          "text": "throw BLEErrorX.msg(\"锁回「无法获取有效的指纹图片」(rc=23): 手指按得太快/太湿, 或反复按同一处 — 请换一个角度重按\")"
+          "text": "if r == rcTimeout {"
         }
       ],
       "platformEvidence": {
@@ -5939,7 +5939,7 @@
           "line": 499,
           "symbol": "ZKCmdBuilder.cmd0ESyncTime(m, sk, now)",
           "note": "",
-          "text": "let pin = pinDec ?? kc.pins.first"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -6611,7 +6611,7 @@
           "line": 800,
           "symbol": "progress(\"步骤 1/7: 探测交换方式 (cmd 23)\")",
           "note": "",
-          "text": "throw BLEErrorX.msg(\"锁回「无法获取有效的指纹图片」(rc=23): 手指按得太快/太湿, 或反复按同一处 — 请换一个角度重按\")"
+          "text": "if r == rcTimeout {"
         },
         {
           "platform": "ios",
@@ -6627,7 +6627,7 @@
           "line": 828,
           "symbol": "ZKCmdBuilder.cmd05Exchange(skey)",
           "note": "",
-          "text": ""
+          "text": "let (m, sk) = try keys()"
         },
         {
           "platform": "ios",
@@ -6635,7 +6635,7 @@
           "line": 958,
           "symbol": "progress(\"步骤 6/7: 设置 bkey (cmd 21)\")",
           "note": "",
-          "text": "} else {"
+          "text": "// 失败就只剩\"去门锁键盘重置\"一条路 (锁内部密钥对本机不可知 = 软砖)。现在换钥后立即留存,"
         }
       ],
       "platformEvidence": {
@@ -19109,7 +19109,7 @@
           "line": 607,
           "symbol": "pwdClear 0xFFFF",
           "note": "",
-          "text": "// 第二步: 0B 设置有效期 (App 两步链)"
+          "text": "log(\"warn\", \"0A 响应无 KLV#04 alias (固件未返回)\")"
         },
         {
           "platform": "apk",
@@ -28624,7 +28624,7 @@
           "line": 534,
           "symbol": "setDefence",
           "note": "",
-          "text": "if abs(after) > 60 {"
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -39848,7 +39848,7 @@
           "line": 320,
           "symbol": "exec",
           "note": "",
-          "text": "0x13: 3, 0x14: 3, 0x15: 3, 0x16: 3, 0x18: 3, 0x19: 3, 0x20: 3,"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -39856,7 +39856,7 @@
           "line": 763,
           "symbol": "pair",
           "note": "",
-          "text": "// 期间锁已被人拿走/电量耗尽也不知情, collector 也一直被占 (新会话的 cmd13 帧会被吞)"
+          "text": "var attemptsLeft = 2 // JS _execMulti retries=2: 无帧时重发一次"
         }
       ],
       "platformEvidence": {
@@ -40275,7 +40275,7 @@
           "line": 235,
           "symbol": "request",
           "note": "写前忙判",
-          "text": "hex = ZKProtocol.injectToken(hex, sessionTokenHex)"
+          "text": "var hex = cmdObj.hex"
         }
       ],
       "platformEvidence": {
@@ -40425,7 +40425,7 @@
           "line": 308,
           "symbol": "rcKLV",
           "note": "",
-          "text": "}"
+          "text": "if case BLEErrorX.code(.writeFailed) = error { brokenLink = true }"
         },
         {
           "platform": "ios",
@@ -40457,7 +40457,7 @@
           "line": 313,
           "symbol": "extractRc",
           "note": "",
-          "text": "// rc 所在 KLV key (JS lock.js RC_KLV, 勘误后权威表)"
+          "text": "disconnect()"
         },
         {
           "platform": "ios",
@@ -42901,7 +42901,7 @@
           "line": 763,
           "symbol": "pair",
           "note": "",
-          "text": "// 期间锁已被人拿走/电量耗尽也不知情, collector 也一直被占 (新会话的 cmd13 帧会被吞)"
+          "text": "var attemptsLeft = 2 // JS _execMulti retries=2: 无帧时重发一次"
         },
         {
           "platform": "ios",
@@ -42909,7 +42909,7 @@
           "line": 769,
           "symbol": "pair",
           "note": "已有钥匙串拒绝覆盖",
-          "text": "if stopRc != nil { break }"
+          "text": "lastFrameAt = sentAt"
         },
         {
           "platform": "ios",
@@ -42917,7 +42917,7 @@
           "line": 800,
           "symbol": "pair",
           "note": "步骤 1/7 cmd23",
-          "text": "throw BLEErrorX.msg(\"锁回「无法获取有效的指纹图片」(rc=23): 手指按得太快/太湿, 或反复按同一处 — 请换一个角度重按\")"
+          "text": "if r == rcTimeout {"
         },
         {
           "platform": "ios",
@@ -42925,7 +42925,7 @@
           "line": 817,
           "symbol": "pair",
           "note": "步骤 3/7 cmd05",
-          "text": "}"
+          "text": "log(\"warn\", \"13 只收到 \\(presses.count)/\\(times) 次按压 (超时/提前收尾)\")"
         },
         {
           "platform": "ios",
@@ -42933,7 +42933,7 @@
           "line": 902,
           "symbol": "finishPairing",
           "note": "尾链 5~7 步",
-          "text": "progress(\"步骤 3/7: cmd 05 交换密钥 (先建通讯会话)\")"
+          "text": "let bkey = KeyGen.genBkey()"
         }
       ],
       "platformEvidence": {
@@ -43043,7 +43043,7 @@
           "line": 630,
           "symbol": "fpStart",
           "note": "手工 injectToken",
-          "text": "log(\"info\", \"凭证#\\(alias) 已改写\" + (got == alias ? \"\" : \", 锁端新编号 凭证#\\(got) (0A 删旧+加新)\"))"
+          "text": "// 报的还是\"已改写\"。0 号只可能来自这条密码当初没拿到锁端编号 (本文件上方 pwdAdd 那条)，"
         },
         {
           "platform": "ios",
@@ -43067,7 +43067,7 @@
           "line": 638,
           "symbol": "fpStart",
           "note": "KLV 0x04..0x07 解包",
-          "text": "guard alias > 0 else {"
+          "text": "let got = aliasFrom(r) ?? alias"
         },
         {
           "platform": "ios",
@@ -44496,7 +44496,7 @@
           "line": 426,
           "symbol": "EchoProbe",
           "note": "",
-          "text": ""
+          "text": "/// (锁压根没回密钥) 比任何猜测都有用, 而值里可能含 skey/ekey/PIN 明文 (不得进日志)。"
         },
         {
           "platform": "ios",
@@ -44504,7 +44504,7 @@
           "line": 457,
           "symbol": "sendEcho",
           "note": "",
-          "text": "/// (apk_raw/assets/www/build/main.js RomlistPage.echo)。"
+          "text": "return t"
         },
         {
           "platform": "ios",
@@ -44512,7 +44512,7 @@
           "line": 461,
           "symbol": "sendEcho",
           "note": "matched 判定",
-          "text": "///     所以**对还没配对的设备**也发得出去 —— 这正是它存在的理由。"
+          "text": "/// 一次回声往返的结果。`matched` = 锁回显的 KLV#01 与本机发出去的值**逐字节相同**。"
         }
       ],
       "platformEvidence": {
@@ -44579,7 +44579,7 @@
           "line": 738,
           "symbol": "fpDelete",
           "note": "",
-          "text": "collectorCmd = 0x13"
+          "text": "guard r == 0 || r == -1 else { return false }"
         }
       ],
       "platformEvidence": {
@@ -44635,7 +44635,7 @@
           "line": 626,
           "symbol": "fpStart",
           "note": "",
-          "text": "}"
+          "text": "@discardableResult"
         },
         {
           "platform": "ios",
@@ -44643,7 +44643,7 @@
           "line": 710,
           "symbol": "fpStart",
           "note": "rc 分类报错",
-          "text": "let hex = ZKProtocol.injectToken(ZKCmdBuilder.cmd13AddFp(m, sk, times, 15).hex,"
+          "text": "//     orderIdx 1..8 = 第 N 次按压, 到 8 由 App 用该帧 batchNumber 发 14。"
         },
         {
           "platform": "ios",
@@ -44651,7 +44651,7 @@
           "line": 733,
           "symbol": "fpConfirm",
           "note": "",
-          "text": "/// 收尾判据只有一条: 收满 times 次干净按压。没有任何\"提前收尾\"的合法信号。"
+          "text": "/// 干净按压 = rc 正常 (0 或缺省 -1) 且 KLV#04 序号 > 0。"
         }
       ],
       "platformEvidence": {
@@ -44721,7 +44721,7 @@
           "line": 746,
           "symbol": "getLogs",
           "note": "",
-          "text": "+ \"feature=\\(p.featureNumber.map(String.init) ?? \"-\") \""
+          "text": "let hardDeadline = Date().addingTimeInterval(Double(overallMs) / 1000.0)"
         },
         {
           "platform": "ios",
@@ -44806,7 +44806,7 @@
           "line": 543,
           "symbol": "pwdAdd",
           "note": "",
-          "text": "let (m, sk) = try keys()"
+          "text": "if abs(after) > 60 {"
         },
         {
           "platform": "ios",
@@ -44814,7 +44814,7 @@
           "line": 558,
           "symbol": "pwdAdd",
           "note": "0B 失败只 warn",
-          "text": "try await execOk(ZKCmdBuilder.cmd19OpenZotp(m, sk, on))"
+          "text": "let (m, sk) = try keys()"
         },
         {
           "platform": "ios",
@@ -44822,7 +44822,7 @@
           "line": 563,
           "symbol": "pwdAdd",
           "note": "凭证#N 已添加",
-          "text": "/// 由 DefendKit.protoSec 换算；撤防与不定期一律传 0（与 APK 的 time 字段全 0 一致）。"
+          "text": "try await execOk(ZKCmdBuilder.cmd24AutoLock(m, sk, interval))"
         }
       ],
       "platformEvidence": {
@@ -44891,7 +44891,7 @@
           "line": 595,
           "symbol": "pwdClear",
           "note": "",
-          "text": "let (m, sk) = try keys()"
+          "text": "// 0A 响应 KLV#04 = alias (LE 2B)"
         },
         {
           "platform": "ios",
@@ -44961,7 +44961,7 @@
           "line": 582,
           "symbol": "pwdDelete",
           "note": "",
-          "text": "log(\"info\", \"已下发 22 进 DFU: param=\\(param)（随后断链属预期）\")"
+          "text": "// ---------- 进 DFU (cmd22) —— 补齐 OTA 链路的第一步 ----------"
         },
         {
           "platform": "ios",
@@ -44969,7 +44969,7 @@
           "line": 589,
           "symbol": "pwdDelete",
           "note": "错误文案指向「清空密码」",
-          "text": "guard let k = r.klvs.first(where: { $0.key == 0x04 }), k.val.count >= 2 else { return nil }"
+          "text": "// 超时给短一点：锁可能在回 rc 后立刻开始重启，等太久只会拿到断链错误。"
         }
       ],
       "platformEvidence": {
@@ -45031,7 +45031,7 @@
           "line": 567,
           "symbol": "pwdModify",
           "note": "",
-          "text": "func setDefence(control: Int, startSec: Int, endSec: Int) async throws {"
+          "text": "try await execOk(ZKCmdBuilder.cmd19OpenZotp(m, sk, on))"
         },
         {
           "platform": "ios",
@@ -45039,7 +45039,7 @@
           "line": 572,
           "symbol": "pwdModify",
           "note": "alias > 0 守卫",
-          "text": ""
+          "text": "/// 由 DefendKit.protoSec 换算；撤防与不定期一律传 0（与 APK 的 time 字段全 0 一致）。"
         },
         {
           "platform": "ios",
@@ -45047,7 +45047,7 @@
           "line": 579,
           "symbol": "pwdModify",
           "note": "锁端新编号提示",
-          "text": "let (m, sk) = try keys()"
+          "text": "log(\"info\", \"布防已下发 (25): control=\\(control) start=\\(startSec) end=\\(endSec)\")"
         }
       ],
       "platformEvidence": {
@@ -45201,7 +45201,7 @@
           "line": 394,
           "symbol": "keys",
           "note": "",
-          "text": "if r.rc != 0 { throw BLEErrorX.msg(StatusParser.rcMessage(r.rc)) }"
+          "text": "@discardableResult"
         },
         {
           "platform": "ios",
@@ -45209,7 +45209,7 @@
           "line": 515,
           "symbol": "setSilent",
           "note": "",
-          "text": "@discardableResult"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -45217,7 +45217,7 @@
           "line": 521,
           "symbol": "setValidationMode",
           "note": "",
-          "text": "before = Int(lockSec - now)"
+          "text": "/// 全看这个钟, 所以这个空操作会把后面每一类命令都拖进时间问题里。"
         },
         {
           "platform": "ios",
@@ -45225,7 +45225,7 @@
           "line": 525,
           "symbol": "setAutoLock",
           "note": "",
-          "text": "}"
+          "text": "func syncTime() async throws -> (before: Int, after: Int) {"
         }
       ],
       "platformEvidence": {
@@ -45300,7 +45300,7 @@
           "line": 489,
           "symbol": "syncTime",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -45308,7 +45308,7 @@
           "line": 495,
           "symbol": "syncTime",
           "note": "只报告偏差不写回",
-          "text": "let cred: String"
+          "text": "let echo = (r.klvs.first { $0.key == 0x01 }?.val ?? \"\").lowercased()"
         },
         {
           "platform": "ios",
@@ -45316,7 +45316,7 @@
           "line": 507,
           "symbol": "syncTime",
           "note": ">60s 视为未写入",
-          "text": ""
+          "text": "} else {"
         },
         {
           "platform": "ios",
@@ -45324,7 +45324,7 @@
           "line": 500,
           "symbol": "syncTime",
           "note": "DB.saveSyncTime",
-          "text": "guard let pin, !pin.isEmpty else { throw BLEErrorX.msg(\"无 PIN 可用: 需要 ekey 或 PIN 才能签发开锁凭证\") }"
+          "text": "// ---------- 开锁 ----------"
         }
       ],
       "platformEvidence": {
@@ -45400,7 +45400,7 @@
           "line": 465,
           "symbol": "unlock",
           "note": "",
-          "text": "let hadLink = !ble.connectedPeripheralId.isEmpty"
+          "text": "/// APK 侧的同一个动作在 RomlistPage: 扫描列表里对每台 ZK* 设备先 echo, rc=0 才进那把锁的页面"
         },
         {
           "platform": "ios",
@@ -45408,7 +45408,7 @@
           "line": 469,
           "symbol": "unlock",
           "note": "ekey 优先",
-          "text": "// (它会以为本机还连着, 于是下一次操作发向一条已经不存在的链路)。"
+          "text": "///   · 它不需要 skey (免令牌明文族: vendor/app/utils/kernel/cmds.js:50 的 cmd12Echo 不注入 KLV#0xEE),"
         },
         {
           "platform": "ios",
@@ -45416,7 +45416,7 @@
           "line": 476,
           "symbol": "unlock",
           "note": "空凭证中止",
-          "text": "if hadLink { log(\"warn\", \"探测用临时链路已撤下 — 原有链路需按需重连\") }"
+          "text": "defer {"
         }
       ],
       "platformEvidence": {
@@ -45837,7 +45837,7 @@
           "line": 407,
           "symbol": "getStatus",
           "note": "",
-          "text": "/// 而配网期本机还没有钥匙串, 0E 校时根本发不出去 (校时链路要 skey) —— 同一句话在配网语境里是空头支票。"
+          "text": "// ---------- 密钥面 ----------"
         },
         {
           "platform": "ios",
@@ -45885,7 +45885,7 @@
           "line": 409,
           "symbol": "getStatus",
           "note": "无 skey 走明文",
-          "text": "switch rc {"
+          "text": "/// 留存过就不必去门锁键盘做重置 (再点一次配网会跳过换钥接着配完) —— 这是软砖后路的分水岭。"
         },
         {
           "platform": "android",
@@ -46063,7 +46063,7 @@
           "line": 477,
           "symbol": "unlock",
           "note": "retries: 2",
-          "text": "}"
+          "text": "// 拆掉临时链路, 并把探测期间假装出来的连接态清干净 —— 留着会骗过 ensureConnected"
         },
         {
           "platform": "android",
@@ -46103,7 +46103,7 @@
           "line": 478,
           "symbol": "unlock",
           "note": "return r.rc // 0 成功; 22 双验继续",
-          "text": "return try await sendEcho(valueHex)"
+          "text": "// (它会以为本机还连着, 于是下一次操作发向一条已经不存在的链路)。"
         },
         {
           "platform": "ios",
@@ -46111,7 +46111,7 @@
           "line": 465,
           "symbol": "func unlock(mac:pinDec:)",
           "note": "",
-          "text": "let hadLink = !ble.connectedPeripheralId.isEmpty"
+          "text": "/// APK 侧的同一个动作在 RomlistPage: 扫描列表里对每台 ZK* 设备先 echo, rc=0 才进那把锁的页面"
         },
         {
           "platform": "android",
@@ -46265,7 +46265,7 @@
           "line": 828,
           "symbol": "pair",
           "note": "needToken: true",
-          "text": ""
+          "text": "let (m, sk) = try keys()"
         },
         {
           "platform": "apk",
@@ -46281,7 +46281,7 @@
           "line": 829,
           "symbol": "pair",
           "note": "rc5 = extractRc(0x05, ...)",
-          "text": "// ---------- 日志 ----------"
+          "text": "try await execOk(ZKCmdBuilder.cmd15DeleteFp(m, sk, batchNumber))"
         },
         {
           "platform": "ios",
@@ -46289,7 +46289,7 @@
           "line": 309,
           "symbol": "rcKLV",
           "note": "0x05: 1",
-          "text": "}"
+          "text": "if brokenLink {"
         }
       ],
       "platformEvidence": {
@@ -46392,7 +46392,7 @@
           "line": 910,
           "symbol": "finishPairing",
           "note": "batchSize = 20",
-          "text": "//   本机 (与 vendor/app/utils/kernel/cmds.js:cmd05Exchange 的\"免令牌明文\"模型) 一直把 05 裸发,"
+          "text": ""
         },
         {
           "platform": "apk",
@@ -46416,7 +46416,7 @@
           "line": 918,
           "symbol": "finishPairing",
           "note": "首批带 ffffffff",
-          "text": "// 二次擦写锁内密钥域)。request(needToken:true) 每轮都会重新走 01, 令牌必然是新的。"
+          "text": "//   ⇒ 真机真序是: 23(免令牌) → 01(取令牌) → 05(带 KLV#0xEE) → ..."
         }
       ],
       "platformEvidence": {
@@ -46693,7 +46693,7 @@
           "line": 558,
           "symbol": "pwdAdd",
           "note": "第二步 0B，失败不影响添加",
-          "text": "try await execOk(ZKCmdBuilder.cmd19OpenZotp(m, sk, on))"
+          "text": "let (m, sk) = try keys()"
         },
         {
           "platform": "ios",
@@ -47039,7 +47039,7 @@
           "line": 499,
           "symbol": "syncTime",
           "note": "",
-          "text": "let pin = pinDec ?? kc.pins.first"
+          "text": ""
         },
         {
           "platform": "apk",
@@ -47055,7 +47055,7 @@
           "line": 489,
           "symbol": "func syncTime()",
           "note": "",
-          "text": "}"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -47152,7 +47152,7 @@
           "line": 457,
           "symbol": "sendEcho",
           "note": "retries: 1",
-          "text": "/// (apk_raw/assets/www/build/main.js RomlistPage.echo)。"
+          "text": "return t"
         },
         {
           "platform": "apk",
@@ -47168,7 +47168,7 @@
           "line": 459,
           "symbol": "sendEcho",
           "note": "KLV#01 回显比对",
-          "text": "///   · 回声**不改锁内任何东西**, 也不写本机台账 —— 读 03 会落状态快照 + 电量采样 + 固件观测三处;"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -47265,7 +47265,7 @@
           "line": 735,
           "symbol": "fpConfirm",
           "note": "",
-          "text": "var lastFrameAt = Date()          // 最近一帧到达时刻 (collector 刷新; 空闲判据用)"
+          "text": "/// 于是屏上写着 4/8、锁里其实只有 3 次有效特征。"
         },
         {
           "platform": "ios",
@@ -47393,7 +47393,7 @@
           "line": 740,
           "symbol": "fpDelete",
           "note": "",
-          "text": "guard f.cmd == self.collectorCmd else { return }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -47519,7 +47519,7 @@
           "line": 748,
           "symbol": "getLogs",
           "note": "",
-          "text": "let r = p.rc   // FpPress.rc 是 Int (extractRc 缺省给 -1), 不是 Optional"
+          "text": "collector = { f in"
         },
         {
           "platform": "ios",
@@ -47631,7 +47631,7 @@
           "line": 515,
           "symbol": "setSilent",
           "note": "",
-          "text": "@discardableResult"
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -47873,7 +47873,7 @@
           "line": 521,
           "symbol": "setValidationMode",
           "note": "",
-          "text": "before = Int(lockSec - now)"
+          "text": "/// 全看这个钟, 所以这个空操作会把后面每一类命令都拖进时间问题里。"
         },
         {
           "platform": "ios",
@@ -47982,7 +47982,7 @@
           "line": 959,
           "symbol": "finishPairing",
           "note": "",
-          "text": "log(\"error\", \"配网中断保护未能落盘 (系统 Keychain 写失败) — 尾链若中断只能靠门锁键盘重置恢复\")"
+          "text": "// 尾链走完再提升为正式钥匙串 (saveKeychain + clearPendingPair)。"
         },
         {
           "platform": "apk",
@@ -48188,7 +48188,7 @@
           "line": 801,
           "symbol": "pair",
           "note": "",
-          "text": "}"
+          "text": "throw BLEErrorX.msg(\"锁已结束录入 (rc=24 录入超时: 两次按压之间超过 15 秒) — 已收 \\(presses.count)/\\(times) 次, 请重新开始\")"
         },
         {
           "platform": "apk",
@@ -48204,7 +48204,7 @@
           "line": 803,
           "symbol": "pair",
           "note": "way & 2 != 0 门禁",
-          "text": "throw BLEErrorX.msg(\"13 录指纹被锁端拒绝 (rc=\\(ackRc): \\(StatusParser.rcMessage(ackRc))) — 未进入按压采集\")"
+          "text": "throw BLEErrorX.msg(\"13 录指纹被锁端中止 (rc=\\(r): \\(StatusParser.rcMessage(r))) — 已收 \\(presses.count)/\\(times) 次\")"
         }
       ],
       "platformEvidence": {
@@ -48298,7 +48298,7 @@
           "line": 527,
           "symbol": "setAutoLock",
           "note": "",
-          "text": "DB.saveSyncTime(m, Date().timeIntervalSince1970 * 1000)"
+          "text": "let now = ZKProtocol.nowProtoSeconds()"
         },
         {
           "platform": "apk",
@@ -51322,7 +51322,7 @@
           "line": 812,
           "symbol": "pair",
           "note": "三处全零检测",
-          "text": ""
+          "text": "throw BLEErrorX.msg(\"13 录指纹被锁端拒绝 (rc=\\(ackRc): \\(StatusParser.rcMessage(ackRc))) — 未进入按压采集\")"
         }
       ],
       "platformEvidence": {
@@ -51473,7 +51473,7 @@
           "line": 309,
           "symbol": "rcKLV",
           "note": "rc 键在各命令上的位置",
-          "text": "}"
+          "text": "if brokenLink {"
         },
         {
           "platform": "ios",
@@ -51633,7 +51633,7 @@
           "line": 750,
           "symbol": "getLogs",
           "note": "surplus 取自 KLV#04",
-          "text": "if let onPress, isPress(f) { onPress(p) }"
+          "text": "frames.append(f)"
         },
         {
           "platform": "ios",
@@ -51718,7 +51718,7 @@
           "line": 754,
           "symbol": "getLogs",
           "note": "",
-          "text": "var attemptsLeft = 2 // JS _execMulti retries=2: 无帧时重发一次"
+          "text": "+ \"order=\\(p.orderIdx.map(String.init) ?? \"-\") \""
         }
       ],
       "platformEvidence": {
@@ -51839,7 +51839,7 @@
           "line": 340,
           "symbol": "exec",
           "note": "",
-          "text": "return StatusParser.intHex(k.val)"
+          "text": "///   · rc 的 KLV 位置：本仓按命令查表（`rcKLV`，0x05 的 rc 在 KLV#01，其余在 #03）；"
         },
         {
           "platform": "ios",
@@ -51847,7 +51847,7 @@
           "line": 347,
           "symbol": "exec",
           "note": "DB.setMacOrder(curMac, other)",
-          "text": "let rc = extractRc(cmd, resp)"
+          "text": "guard let key = LockService.rcKLV[cmd] else { return 0 }"
         },
         {
           "platform": "ios",
@@ -51855,7 +51855,7 @@
           "line": 353,
           "symbol": "exec",
           "note": "复原并报不是字节序问题",
-          "text": "log(\"warn\", \"\\(cmdObj.name) rc=\\(rc) → 刷新令牌重试一次\")"
+          "text": "private func exec(_ cmdObj: ZKCmd, needToken: Bool = true, retries: Int = 3) async throws -> ExecResult {"
         }
       ],
       "platformEvidence": {
@@ -52418,7 +52418,7 @@
           "line": 364,
           "symbol": "execOk",
           "note": "",
-          "text": "// 一帧是安全的 (与 rc=3 刷令牌那一支同一条纪律)。只做一次, 成功即落盘: 下一帧起不必再试。"
+          "text": "let resp2 = try? await request(cmdObj, cmd: cmd, needToken: true, retries: 1)"
         },
         {
           "platform": "ios",
@@ -52426,7 +52426,7 @@
           "line": 367,
           "symbol": "execOk",
           "note": "",
-          "text": "if rc == 12, pairMac == nil, LockService.macBearingCmds.contains(cmd), DB.keychain(curMac) != nil {"
+          "text": "if rc2 != 3 && rc2 != 13 { return ExecResult(frame: r2, rc: rc2, klvs: r2.klvs) }"
         },
         {
           "platform": "ios",
@@ -52434,7 +52434,7 @@
           "line": 749,
           "symbol": "getLogs",
           "note": "rc != 0 && rc != -1 才抛",
-          "text": "if r != 0 && r != -1 && r != rcBlurry { stopRc = r }"
+          "text": "guard f.cmd == self.collectorCmd else { return }"
         }
       ],
       "platformEvidence": {
@@ -52644,7 +52644,7 @@
           "line": 309,
           "symbol": "rcKLV",
           "note": "",
-          "text": "}"
+          "text": "if brokenLink {"
         },
         {
           "platform": "ios",
@@ -52660,7 +52660,7 @@
           "line": 305,
           "symbol": "macBearingCmds",
           "note": "",
-          "text": "if !macToHeal.isEmpty { try? await ensureConnected(mac: macToHeal) }"
+          "text": "if let w = waiter, w.cmd == cmd { w.timer?.cancel(); waiter = nil }"
         }
       ],
       "platformEvidence": {
@@ -52896,7 +52896,7 @@
           "line": 288,
           "symbol": "request",
           "note": "",
-          "text": "if case BLEErrorX.code(.responseTimeout) = error { maybeExecuted = true }"
+          "text": "} catch {"
         },
         {
           "platform": "ios",
@@ -52904,7 +52904,7 @@
           "line": 293,
           "symbol": "request",
           "note": "let macToHeal = curMac",
-          "text": "}"
+          "text": "// 锁端已经执行了。随后断链自愈 (下面那段) 会重连, 外层 for attempt 再发一次"
         }
       ],
       "platformEvidence": {
@@ -52967,7 +52967,7 @@
           "line": 276,
           "symbol": "request",
           "note": "",
-          "text": "frame = try await respTask.value"
+          "text": "} catch {"
         },
         {
           "platform": "ios",
@@ -52983,7 +52983,7 @@
           "line": 281,
           "symbol": "request",
           "note": "不重发并 break",
-          "text": "// 写类命令 + \"指令可能已生效\"的失败 = 不重发, 交上层判定 (防止电机连触发/双开)。"
+          "text": "w.cont.resume(throwing: error)"
         }
       ],
       "platformEvidence": {
@@ -53054,7 +53054,7 @@
           "line": 241,
           "symbol": "request",
           "note": "定时器实现",
-          "text": "log(\"info\", \"TX \\(cmdObj.name) attempt=\\(attempt + 1)/\\(retries) needToken=\\(needToken)\")"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -53062,7 +53062,7 @@
           "line": 215,
           "symbol": "request",
           "note": "timeoutMs: Int = 8000",
-          "text": "// 2026-10-27 审核 (AUDIT-D D-13)：**不再打印令牌前 4 位**。"
+          "text": "// JS session.js: ttl=0 保留默认 45s — now+0+2s 会立即过期"
         }
       ],
       "platformEvidence": {
@@ -53124,7 +53124,7 @@
           "line": 246,
           "symbol": "request",
           "note": "注册时的覆盖保护",
-          "text": "// 先挂 waiter 再写 (防响应早于 waiter 注册)"
+          "text": "var lastErr: Error = BLEErrorX.code(.writeFailed)"
         },
         {
           "platform": "ios",
@@ -53202,7 +53202,7 @@
           "line": 420,
           "symbol": "readLockTime",
           "note": "",
-          "text": "}"
+          "text": "case 7, 27: return \"锁当前不在可配网状态, 请在门锁键盘上做一次重置再试\""
         }
       ],
       "platformEvidence": {
@@ -53519,7 +53519,7 @@
           "line": 225,
           "symbol": "request",
           "note": "唯一调用点",
-          "text": "private func request(_ cmdObj: ZKCmd, cmd: UInt8, needToken: Bool, retries: Int, timeoutMs: Int = 8000) async throws -> ZKProtocol.ParsedFrame {"
+          "text": "// 原先打 `token.prefix(4)` —— 4 个 hex 字符只占 16 bit，看着\"很短\"，"
         },
         {
           "platform": "android",
@@ -53643,7 +53643,7 @@
           "line": 200,
           "symbol": "ensureToken",
           "note": "KLV#03 → secs",
-          "text": "// 安全类型 gate 已删: JS lock.js _ensureToken 从不检查 (V81 注释 — Java 发送路径也从不检查),"
+          "text": "// 2026-10-28 修：上面只判了 KLV#02 **存在**，没判**非空** —— 锁若返回 `vlen=0` 的空令牌，"
         },
         {
           "platform": "ios",
@@ -53651,7 +53651,7 @@
           "line": 208,
           "symbol": "ensureToken",
           "note": "expiry 计算",
-          "text": "// 我曾为配合\"令牌复用\"改成 `let ttl = secs > 0 ? secs : 45` 再乘，"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -53715,7 +53715,7 @@
           "line": 381,
           "symbol": "pairHint",
           "note": "",
-          "text": "}"
+          "text": "let rc2 = resp2.map { extractRc(cmd, $0) } ?? -1"
         },
         {
           "platform": "ios",
@@ -53723,7 +53723,7 @@
           "line": 383,
           "symbol": "pairHint",
           "note": "",
-          "text": "return ExecResult(frame: resp, rc: rc, klvs: resp.klvs)"
+          "text": "DB.setMacOrder(curMac, other)"
         },
         {
           "platform": "ios",
@@ -53731,7 +53731,7 @@
           "line": 385,
           "symbol": "pairHint",
           "note": "rc=13 长文案",
-          "text": "@discardableResult"
+          "text": "return ExecResult(frame: r2, rc: rc2, klvs: r2.klvs)"
         }
       ],
       "platformEvidence": {
@@ -53802,7 +53802,7 @@
           "line": 863,
           "symbol": "pair",
           "note": "pending Keychain 构造",
-          "text": "//    这是本 App 最接近\"变砖\"的那条后路: 没有它, 用户手上没锁 (或锁在门上) 就只能干等下次到锁跟前。"
+          "text": "if let old = DB.keychain(m), !old.skey.isEmpty {"
         },
         {
           "platform": "ios",
@@ -53810,7 +53810,7 @@
           "line": 867,
           "symbol": "pair",
           "note": "savePendingPair",
-          "text": "do {"
+          "text": "curMac = m"
         },
         {
           "platform": "ios",
@@ -53818,7 +53818,7 @@
           "line": 883,
           "symbol": "pair",
           "note": "尾链成功才 clearPendingPair",
-          "text": "}"
+          "text": "resumable: true, progress: progress)"
         }
       ],
       "platformEvidence": {
@@ -53888,7 +53888,7 @@
           "line": 779,
           "symbol": "pair",
           "note": "DB.pendingPair 判据",
-          "text": "// 锁按 13 帧里的 timeout=15s 裁定\"还接不接受下一次按压\"; 超过 16s 没有新帧,"
+          "text": "if collectionDone() { break }"
         },
         {
           "platform": "ios",
@@ -53904,7 +53904,7 @@
           "line": 790,
           "symbol": "pair",
           "note": "成功清 pending",
-          "text": "if let r = stopRc {"
+          "text": "// 这里如实收尾并报错, 不干等到 150s 让用户以为程序卡死。"
         }
       ],
       "platformEvidence": {
@@ -53975,7 +53975,7 @@
           "line": 902,
           "symbol": "finishPairing",
           "note": "",
-          "text": "progress(\"步骤 3/7: cmd 05 交换密钥 (先建通讯会话)\")"
+          "text": "let bkey = KeyGen.genBkey()"
         },
         {
           "platform": "ios",
@@ -53983,7 +53983,7 @@
           "line": 906,
           "symbol": "finishPairing",
           "note": "批大小 20 的理由",
-          "text": "//   Java 侧据此执行 (cn.zelkova.ZKurlcsPlugin.lockprotocol.BleLockConnector.doExecute):"
+          "text": "guard !KeyGen.isAllZeroHex(skey), !KeyGen.isAllZeroHex(bkey),"
         },
         {
           "platform": "ios",
@@ -53991,7 +53991,7 @@
           "line": 953,
           "symbol": "finishPairing",
           "note": "pairWarning(resumable, ...)",
-          "text": "trackid: String(KeyGen.genTrackId()), bleId: deviceId, fw: \"\","
+          "text": "\"换钥回显不匹配 (本地/回显长度 \\(skey.count)/\\(echo.val.count)) — 锁内密钥已是本机读不懂的一份, 无法续配; 请在门锁键盘上重置后重新配网\"))"
         },
         {
           "platform": "ios",
@@ -53999,7 +53999,7 @@
           "line": 978,
           "symbol": "finishPairing",
           "note": "DB.saveKeychain",
-          "text": "/// 旧版把广播里的**线上序** macRaw 当 MAC 落库, 那份记录从未与锁对上过一次话, 却会一直挂在"
+          "text": "let kc = try await BackgroundGuard.run(\"配网尾链\") { try await finishPairing(m: m, deviceId: deviceId, skey: skey, bkey: bkey, pins: pins,"
         }
       ],
       "platformEvidence": {
@@ -54074,7 +54074,7 @@
           "line": 884,
           "symbol": "pair",
           "note": "cleanWrongOrderTwin 调用",
-          "text": ""
+          "text": "DB.clearPendingPair(m)"
         },
         {
           "platform": "ios",
@@ -54082,7 +54082,7 @@
           "line": 893,
           "symbol": "cleanWrongOrderTwin",
           "note": "",
-          "text": "let bkey = KeyGen.genBkey()"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -54145,7 +54145,7 @@
           "line": 478,
           "symbol": "unlock",
           "note": "return r.rc // 0 成功; 22 双验继续",
-          "text": "return try await sendEcho(valueHex)"
+          "text": "// (它会以为本机还连着, 于是下一次操作发向一条已经不存在的链路)。"
         },
         {
           "platform": "ios",
@@ -54234,7 +54234,7 @@
           "line": 391,
           "symbol": "klvShape",
           "note": "",
-          "text": "if r.rc == -1 {"
+          "text": "log(\"info\", \"\\(cmdObj.name) -> rc=\\(rc)\")"
         }
       ],
       "platformEvidence": {
@@ -54313,7 +54313,7 @@
           "line": 220,
           "symbol": "request",
           "note": "空帧闸",
-          "text": "log(\"info\", \"会话令牌就绪 (长度 \\(sessionTokenHex.count) hex 字符)\")"
+          "text": "// 真要兜 ttl=0，正确做法是在**复用判据**里处理（见 ensureToken 开头），而不是改记账口径。"
         }
       ],
       "platformEvidence": {
@@ -54378,7 +54378,7 @@
           "line": 830,
           "symbol": "pair",
           "note": "rc5 == 13 分支",
-          "text": "struct LogPage { var surplus: Int?; var logs: [LogEntry] }"
+          "text": "// 2026-10-27 审核修复 (D-54)：同 pwdDelete —— 删除后重读复核。"
         },
         {
           "platform": "ios",
@@ -54386,7 +54386,7 @@
           "line": 850,
           "symbol": "pair",
           "note": "回显与本地 skey 比对",
-          "text": "pairMac = m"
+          "text": "log(\"warn\", \"这一页日志有 \\(truncated) 条声明长度与实际长度不符 (帧被截断或超长)，已按原样入缓存\")   // 16 这一页日志有"
         },
         {
           "platform": "ios",
@@ -54394,7 +54394,7 @@
           "line": 855,
           "symbol": "pair",
           "note": "pairWarning(false, ...)",
-          "text": "throw BLEErrorX.msg(\"该锁已有钥匙串 (MAC=\\(old.mac)), 拒绝覆盖配网; 如需重配请先删除该设备\")"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -54466,7 +54466,7 @@
           "line": 928,
           "symbol": "finishPairing",
           "note": "rb.rc == 12, n == 1",
-          "text": "+ \" · 回包 \" + Self.klvShape(r5))"
+          "text": "log(\"warn\", \"05 rc=13 (通讯过期): 重开会话令牌后重试一次 · 回包 \" + Self.klvShape(r5))"
         },
         {
           "platform": "ios",
@@ -54474,7 +54474,7 @@
           "line": 936,
           "symbol": "finishPairing",
           "note": "换序 rc=0 落盘",
-          "text": "// skey 明文绝不进错误文案：该串会写入 lastError → DiagLogs → kf.diag_logs（现已 isExcludedFromBackup，不随系统备份）与 UI 展示。"
+          "text": "log(\"error\", \"05 换钥被锁拒收: rc=\\(rc5) (\\(StatusParser.rcMessage(rc5))) · \\(Self.pairHint(rc5))\""
         },
         {
           "platform": "ios",
@@ -54482,7 +54482,7 @@
           "line": 939,
           "symbol": "finishPairing",
           "note": "rc=18 视为已写入",
-          "text": "// 但「不进错误文案」这条纪律不变：它仍会被导出中心带走、也会显示在界面上。"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -54490,7 +54490,7 @@
           "line": 946,
           "symbol": "finishPairing",
           "note": "两种顺序都被拒",
-          "text": ""
+          "text": "// 2026-10-27 审核修复 (AUDIT-B 2.8 #10)：原注释说「随系统备份」——"
         }
       ],
       "platformEvidence": {
@@ -54569,7 +54569,7 @@
           "line": 546,
           "symbol": "pwdAdd",
           "note": "缺 KLV#04",
-          "text": "/// cmd 20 验证模式 (A/B)。入口在设置-安全模式说明 (拍板 #2, 第六十六批)：**只允许 A→B 变严**,"
+          "text": "} else {"
         },
         {
           "platform": "ios",
@@ -54577,7 +54577,7 @@
           "line": 572,
           "symbol": "pwdModify",
           "note": "alias > 0 守卫",
-          "text": ""
+          "text": "/// 由 DefendKit.protoSec 换算；撤防与不定期一律传 0（与 APK 的 time 字段全 0 一致）。"
         },
         {
           "platform": "ios",
@@ -54585,7 +54585,7 @@
           "line": 587,
           "symbol": "pwdDelete",
           "note": "alias > 0 守卫",
-          "text": "private func aliasFrom(_ r: ExecResult) -> Int? {"
+          "text": "func enableDfu(param: Int = 0) async throws {"
         }
       ],
       "platformEvidence": {
@@ -54657,7 +54657,7 @@
           "line": 435,
           "symbol": "probeEcho",
           "note": "",
-          "text": "} else {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -54665,7 +54665,7 @@
           "line": 440,
           "symbol": "probeEcho",
           "note": "defer 拆链清理",
-          "text": "DB.writeStatus(curMac, st) // 离线快照 (随时可读)"
+          "text": "var r: ExecResult"
         },
         {
           "platform": "ios",
@@ -54673,7 +54673,7 @@
           "line": 432,
           "symbol": "probeEcho",
           "note": "注释：回声不改锁内任何东西",
-          "text": "if let kc, !kc.skey.isEmpty {"
+          "text": "guard let kc, kc.skey.count == 32 else { throw BLEErrorX.msg(\"钥匙串缺少有效 skey (请先配对或导入)\") }"
         }
       ],
       "platformEvidence": {
@@ -54745,7 +54745,7 @@
           "line": 647,
           "symbol": "fpStart",
           "note": "isPress 判据",
-          "text": "// 注：读的是本机台账（删除成功后调用方落盘），不是锁端 —— 锁端没有\"列出密码\"的命令。"
+          "text": "guard alias > 0 else {"
         },
         {
           "platform": "ios",
@@ -54753,7 +54753,7 @@
           "line": 654,
           "symbol": "fpStart",
           "note": "collectionDone",
-          "text": "let (m, sk) = try keys()"
+          "text": "// App 就会报「已删除」而凭证在锁里仍然有效。协议层没有 MAC，无法根治；"
         },
         {
           "platform": "ios",
@@ -54761,7 +54761,7 @@
           "line": 669,
           "symbol": "fpStart",
           "note": "stopRc 赋值",
-          "text": "let batch = Array(pins[i..<min(i + 20, pins.count)])"
+          "text": "/// 否则下一个用旧 pin 签出来的 ekey 仍然能开门。"
         }
       ],
       "platformEvidence": {
@@ -54834,7 +54834,7 @@
           "line": 626,
           "symbol": "fpStart",
           "note": "默认参数 8000/16000/150000",
-          "text": "}"
+          "text": "@discardableResult"
         },
         {
           "platform": "ios",
@@ -54842,7 +54842,7 @@
           "line": 694,
           "symbol": "fpStart",
           "note": "首帧窗口",
-          "text": "// onPress 是**纯 UI 出口**: 每收到一帧干净按压就在主 actor 上调一次, 让录入页的 8 点进度实时填。"
+          "text": "// ---------- 指纹 ----------"
         },
         {
           "platform": "ios",
@@ -54850,7 +54850,7 @@
           "line": 698,
           "symbol": "fpStart",
           "note": "空闲 16s 判定",
-          "text": "//   · 首帧之后 APK 侧没有任何 App 计时器 —— 每次按压的节拍由 13 帧里的 timeout=15s 裁定;"
+          "text": "var batchNumber: UInt32?"
         },
         {
           "platform": "ios",
@@ -54858,7 +54858,7 @@
           "line": 684,
           "symbol": "fpStart",
           "note": "断链/取消早退",
-          "text": ""
+          "text": "i += 20"
         }
       ],
       "platformEvidence": {
@@ -54935,7 +54935,7 @@
           "line": 746,
           "symbol": "getLogs",
           "note": "pageSize: Int = 5",
-          "text": "+ \"feature=\\(p.featureNumber.map(String.init) ?? \"-\") \""
+          "text": "let hardDeadline = Date().addingTimeInterval(Double(overallMs) / 1000.0)"
         },
         {
           "platform": "ios",
@@ -54943,7 +54943,7 @@
           "line": 750,
           "symbol": "getLogs",
           "note": "surplus",
-          "text": "if let onPress, isPress(f) { onPress(p) }"
+          "text": "frames.append(f)"
         },
         {
           "platform": "ios",
@@ -54951,7 +54951,7 @@
           "line": 754,
           "symbol": "getLogs",
           "note": "truncated 计数",
-          "text": "var attemptsLeft = 2 // JS _execMulti retries=2: 无帧时重发一次"
+          "text": "+ \"order=\\(p.orderIdx.map(String.init) ?? \"-\") \""
         }
       ],
       "platformEvidence": {
@@ -55507,7 +55507,7 @@
           "line": 469,
           "symbol": "unlock",
           "note": "ekey 优先，否则 PIN 现签",
-          "text": "// (它会以为本机还连着, 于是下一次操作发向一条已经不存在的链路)。"
+          "text": "///   · 它不需要 skey (免令牌明文族: vendor/app/utils/kernel/cmds.js:50 的 cmd12Echo 不注入 KLV#0xEE),"
         },
         {
           "platform": "ios",
@@ -62086,7 +62086,7 @@
           "line": 412,
           "symbol": "getStatus",
           "note": "st.rc == 0 才写",
-          "text": "case 13: return \"通讯过期: 锁不认这份通讯会话 (会话令牌无效/已过期), 不是距离或信号问题 — 请在门锁键盘上做一次重置, 3 声提示后尽快点配对 (重置后的可配网窗口有限, 一旦超时锁会退回不可配网)\""
+          "text": "? \"\\(msg) — 本机已留存这一步的密钥 (skey/PIN/bkey), 再点一次配网会接着配完, 不必做键盘重置\""
         },
         {
           "platform": "ios",
@@ -62102,7 +62102,7 @@
           "line": 413,
           "symbol": "getStatus",
           "note": "DB.writeStatus",
-          "text": "default: return \"锁可能不在重置态, 请在门锁键盘上重置后重试\""
+          "text": ": msg"
         },
         {
           "platform": "ios",
@@ -69023,7 +69023,7 @@
           "line": 543,
           "symbol": "enableDfu",
           "note": "",
-          "text": "let (m, sk) = try keys()"
+          "text": "if abs(after) > 60 {"
         },
         {
           "platform": "ios",
