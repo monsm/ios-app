@@ -4,14 +4,44 @@
 //   ② 0x88 包络 MAC 字节序裁定灌回协议层。
 // 这两件都**不能**放进 App 的 onLaunch(): 那个函数挂在 .task 上、可能多次调用。
 import UIKit
+import UserNotifications
 
 
 /// 启动期系统职责。
-final class QuickActionDelegate: NSObject, UIApplicationDelegate {
+final class QuickActionDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         DB.migrateSecretsToKeychain()
         DB.hydrateMacOrders()   // 0x88 包络 MAC 字节序: 把已裁定的顺序灌回协议层 (2026-10-17)
+        // 2026-10-28 修复：全仓**从未调用 requestAuthorization**，也没设过
+        // UNUserNotificationCenterDelegate —— 于是 CredentialOrg.scheduleAlerts 排的 6 条
+        // 到期通知即使送达也点不动（handleNotificationAction/applyNotification 零调用）。
+        // 这里补上：启动即申请授权 + 设 delegate。
+        let nc = UNUserNotificationCenter.current()
+        nc.delegate = self
+        nc.requestAuthorization(options: [.alert, .sound, .badge]) { granted, err in
+            if let err { CredentialOrg.notifyLog.error("通知授权失败: \(String(describing: err), privacy: .public)") }
+            else if !granted { CredentialOrg.notifyLog.error("用户未授予通知权限：到期提醒不会送达") }
+        }
         return true
+    }
+
+    /// 2026-10-28 补：点按通知 → 定位到那条凭证。
+    /// CredentialOrg 早就有 handleNotificationAction（解析 id）+ applyNotification（落点），
+    /// 但没有任何 delegate 调它们，等于整条链断在最后一米。
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                didReceive response: UNNotificationResponse,
+                                withCompletionHandler completionHandler: @escaping () -> Void) {
+        let id = response.notification.request.identifier
+        if let action = CredentialOrg.handleNotificationAction(id) {
+            Task { @MainActor in CredentialOrg.applyNotification(action) }
+        }
+        completionHandler()
+    }
+
+    /// 前台收到通知也显示（否则 App 在前台时用户看不到到期提醒）。
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
+        [.banner, .sound]
     }
 }

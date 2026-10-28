@@ -46,6 +46,12 @@ struct DFUView: View {
         .navigationTitle("固件升级")
         .variantList()
         .dsScreenBackground()
+        // 2026-10-28 补：APK 升级中禁止返回（main.js pop() 被拦）+ 屏幕常亮（setKeepScreenOn）。
+        // iOS 此前两条都没有 —— 升级中途误退出会让锁停在**半完成态**（22 已让锁进 bootloader，
+        // 固件没传完就是一块不能用的锁），而自动锁屏会中断传输。
+        .interactiveDismissDisabled(phase == .running)
+        .navigationBarBackButtonHidden(phase == .running)
+        .keepingScreenAwake(phase == .running)
         .fileImporter(isPresented: $importing,
                       allowedContentTypes: [.zip, .data],
                       allowsMultipleSelection: false) { result in

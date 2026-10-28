@@ -180,7 +180,7 @@ struct MemberCenterView: View {
                 EmptyState(systemImage: "person.2.slash",
                            title: "还没有成员",
                            message: "建档向导分三步: 称呼 → 角色 → 初始凭证。",
-                           actionTitle: "建档向导") { showWizard = true }   // 463 建档向导
+                           actionTitle: "建档向导") { openWizard() }   // 463 建档向导
             }
             ForEach(list) { m in
                 NavigationLink { MemberDetail360View(memberID: m.id, onChanged: { tick += 1 }) } label: {
@@ -903,7 +903,25 @@ struct MemberWizardView: View {
         return m.id
     }
 
+    /// 2026-10-28：建档向导的统一入口（带 15 人上限检查）。
+    private func openWizard() {
+        if DB.members().count >= 15 {
+            app.showToast("已添加 15 个成员，无法再添加（锁端槽位上限）")
+            return
+        }
+        showWizard = true
+    }
+
     private func submit() {
+        // 2026-10-28 补：APK 有成员上限 —— `presentMemberAddPage` 判 `16 != memberList.length`，
+        // 超出时明确拒绝：「已添加15个成员，无法再添加」（数组含一个"自己"占位，实际上限 15）。
+        // iOS 此前零判据，用户可以一直加下去，而锁端槽位装不下。
+        // 已在编辑既有成员（newID != nil）时不拦 —— 那不是新增。
+        if newID == nil, DB.members().count >= 15 {
+            app.showToast("已添加 15 个成员，无法再添加（锁端槽位上限）")
+            dismiss()
+            return
+        }
         guard let id = newID ?? createMember() else { dismiss(); return }
         guard makePwd, pwdOK() else {
             onDone()

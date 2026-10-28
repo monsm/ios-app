@@ -224,6 +224,10 @@ struct CodeBigCard: View {
     var note: String = ""
     var extraFoot: String = ""
     @EnvironmentObject var app: AppState
+    /// 2026-10-28 修复：注释写着「默认遮下半段，「完整显示」后露出全码」，
+    /// 但 `Text(code)` 直接印的是**完整码值** —— 没有遮、也没有「完整显示」按钮。
+    /// 而 SecurityPolicy.halfMasked 全仓零调用（注释还断言它「一直在生效」）。
+    @State private var revealCode = false
     /// 376 分享遮半: 默认遮下半段, 「完整显示」后露出全码; 每次进卡片 (完成页/sheet 重建) 都回默认遮, 不跨次保留。
     var body: some View {
         VStack(spacing: DS.Space.s) {
@@ -232,7 +236,7 @@ struct CodeBigCard: View {
                 .foregroundStyle(DS.Palette.textSub)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
-            Text(code)
+            Text(revealCode ? code : SecurityPolicy.halfMasked(code))
                 .vkFont(.system(.largeTitle, design: .rounded).monospacedDigit(), weight: .semibold)
                 .foregroundStyle(DS.Palette.text)
                 .textSelection(.enabled)
@@ -249,6 +253,19 @@ struct CodeBigCard: View {
                     .lineLimit(2)
             }
             HStack(spacing: DS.Space.s) {
+                // 2026-10-28 补：与遮半配套的「完整显示」开关（注释承诺过，但从未存在）
+                Button {
+                    revealCode.toggle()
+                    DS.Haptics.tick.impactOccurred()
+                } label: {
+                    Label(revealCode ? "隐藏" : "完整显示", systemImage: revealCode ? "eye.slash" : "eye")
+                }
+                .buttonStyle(.bordered)
+                .vkFont(.caption)
+                .frame(minHeight: DS.Hit.min)
+                // 复制给的是**全码**：用户主动取用，遮半会让复制出来的码没法用。
+                // 遮半只作用于**屏幕显示**（防旁人一眼看到）。
+
                 Button {
                     Clip.set(code)   // 405
                     app.showToast("码值已复制")

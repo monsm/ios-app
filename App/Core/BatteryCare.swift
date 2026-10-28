@@ -136,6 +136,18 @@ enum BatteryCare {
         let body = level == 2
             ? "「\(name)」只剩 \(pct)%, 请尽快更换电池"
             : "「\(name)」电量 \(pct)%, 建议备好电池择日更换"
+
+            // 2026-10-28 修复：上面把 name/body 都算好了，**函数到此就结束了** ——
+            // `body` 与 `name` 都是死变量，1004 承诺的低电本地通知从未发送过。
+            // 现在真正发出去（identifier 带 mac+level，同级只发一次；滞回已在上面记过账）。
+            let content = UNMutableNotificationContent()
+            content.title = level == 2 ? "门锁电量告急" : "门锁电量偏低"
+            content.body = body
+            content.sound = .default
+            let req = UNNotificationRequest(identifier: "c6.batt.\(mac).l\(level)", content: content, trigger: nil)
+            UNUserNotificationCenter.current().add(req) { err in
+                if let err { CredentialOrg.notifyLog.error("低电通知发送失败 mac=\(mac, privacy: .public) err=\(String(describing: err), privacy: .public)") }
+            }
     }
 
 

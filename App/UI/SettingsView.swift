@@ -350,7 +350,16 @@ struct SettingsView: View {
             }
         }
     }
-    private var muteStored: Bool { DB.store.getBool("kf_mute_" + mac) }
+    // 2026-10-28 修复：原来只读本地 kf_mute_ —— **换手机 / 别人在锁上改过之后，
+    // 这个开关显示的状态就和锁端不一致（开关会撒谎）**。
+    // APK 的做法是用 03 回包的 getSoundVolumn() > 0 反推开关（main.js 三处）。
+    // iOS 的 StatusParser.swift:82 早就解析了 KLV#14 soundVolumn，只是零消费。
+    // 现在：读得到锁端状态就用锁端（1 = 静音，0 = 有声，与 cmd18 载荷语义一致），
+    // 读不到才回落本地记录。
+    private var muteStored: Bool {
+        if let s = app.status { return s.soundVolumn > 0 }
+        return DB.store.getBool("kf_mute_" + mac)
+    }
 
     /// 2026-10-14: 设置项小字注解。口径"简洁明了" —— 只说用户决策需要的那一句
     /// (这一项是干什么的 / 要不要连锁 / 有什么后果), 不铺陈实现细节 (那些留在注释里)。
@@ -555,6 +564,16 @@ struct SettingsView: View {
         } label: {
             Label("手机钥匙", systemImage: "iphone.gen3.badge.key")
         }
+        // 2026-10-28 补：`HardwareService` 的蓝牙钥匙串（ZKBBV1）整套能力早就写好了 ——
+        // 5 个服务方法 + 4 个 CRUD + 备份集成都齐，但**零 UI 入口**。
+        // 而上面「手机钥匙」的 footer 还在对用户说「与「蓝牙钥匙串」不同：钥匙串是随身硬件」，
+        // 用户会去找那个入口 —— 找不到。现在补上（与手机钥匙并列，两者归属对象不同：
+        // 一个写进实体硬件，一个发给成员手机，不能合并）。
+        NavigationLink {
+            DongleView()
+        } label: {
+            Label("蓝牙钥匙串", systemImage: "key.horizontal")
+        }
         // 2026-10-14 走查: 「添加另一把锁」原先挂在本节末尾 —— 它讲的是"再加一把锁", 属于门锁本身,
         // 与"谁能开门"（家人与钥匙）不是同一件事; 而且本节的 footer 正在解释成员分组, 摆一个添加设备
         // 在下面读起来像"给这个成员再加一把锁"。已挪进 lockSection 的「门锁」节 (与「删除设备」同处,
@@ -593,6 +612,29 @@ struct SettingsView: View {
     private var toolsSection: some View {
         Section("工具") {
             Button { showBackup = true } label: { Label("备份与恢复", systemImage: "externaldrive") }
+            // 2026-10-28 补入口：`TrialGuard.set(true)` 全仓零调用 —— 这道只读护栏
+            // 永远打不开（`LockService` 里的 assertReadOnly 判据一直在，但没人能开）。
+            // 而设置页搜索索引 :236 还写着「只读试验模式 (真机排障只看不改)」—— 搜得到、开不了。
+            // 按 TrialGuardKit 的设计取舍放在「工具」这一段（低频/实验室入口）。
+            Button {
+                if TrialGuard.isOn {
+                    TrialGuard.set(false)
+                    app.showToast("只读试验模式已关闭")
+                } else {
+                    confirmDestructive("开启只读试验模式", TrialGuard.warning, confirmTitle: "开启") {
+                        TrialGuard.set(true)
+                        app.showToast("只读试验模式已开启：写入类操作全部停用")
+                    }
+                }
+            } label: {
+                HStack(spacing: DS.Space.s) {
+                    Label("只读试验模式", systemImage: "eye.slash")
+                    Spacer(minLength: 0)
+                    Text(TrialGuard.isOn ? "已开启" : "关闭")
+                        .vkFont(.caption)
+                        .foregroundStyle(TrialGuard.isOn ? DS.Palette.danger : DS.Palette.textSub)
+                }
+            }
         }
     }
     // ---------- 本机数据保护 ----------

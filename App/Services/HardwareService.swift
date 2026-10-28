@@ -277,6 +277,35 @@ final class HardwareService: ObservableObject {
         rec.lastKeyAt = ISO8601DateFormatter().string(from: Date())
         DB.saveDongle(rec)
     }
+
+    /// 2026-10-28 新增：**写一把「假钥匙」** —— 对应 APK 的 `addFaultKeyChain`。
+    ///
+    /// 与 `writeDongleKey` 的唯一区别是 PIN 来源：APK 用 `Math.floor(1e4 * Math.random())`
+    /// 取一个**随机 PIN**（不在锁的 PIN 池里），ValidTo 仍是 2118-01-01 永久。
+    ///
+    /// 语义：这把实体钥匙**开不了锁**（PIN 不在池里），它只是一把"占位/测试"钥匙 ——
+    /// 用来验证钥匙串本身能收钥、或给不该真正通行的人一把看着像的钥匙。
+    /// 所以这里不写 `lastKeyLock`（它不是给某把锁用的）。
+    func writeFaultDongleKey(dongleMac: String, lock: Keychain) async throws {
+        let vf = ZKCmdBuilder.protoSecU32("2010-01-01 00:00:00")
+        let vt = ZKCmdBuilder.protoSecU32("2118-01-01 00:00:00")
+        // 随机 4 位 PIN（0..9999），与 APK 的 Math.floor(1e4 * Math.random()) 同范围
+        let pin = String(format: "%04d", Int.random(in: 0...9999))
+        let ekey = ZKCmdBuilder.buildEkeyOpen(lock.skey.lowercased(), lock.mac.lowercased(),
+                                             pin, validFromSec: vf, validToSec: vt,
+                                             trackId: KeyGen.genTrackId())
+        guard !ekey.isEmpty else {
+            throw BLEErrorX.msg("假钥匙签发失败（skey 非法），已中止")
+        }
+        let f = try await send(ZKCmdBuilder.cmd41WriteEkey(lock.mac.lowercased(), lock.pid, ekey),
+                               target: dongleMac)
+        let rc = rcOf(f)
+        if rc != 0 {
+            if rc == 3 { throw BLEErrorX.msg("命令不在有效期，请将手机时间同步到锁内") }
+            throw BLEErrorX.msg(StatusParser.rcMessage(rc))
+        }
+        log("已写入假钥匙（随机 PIN，不绑成员）到 \(dongleMac)")
+    }
     func deleteDongleKey(dongleMac: String, lock: Keychain) async throws {
         let f = try await send(ZKCmdBuilder.cmd41WriteEkey(lock.mac.lowercased(), lock.pid, ""), target: dongleMac)
         let rc = rcOf(f)
