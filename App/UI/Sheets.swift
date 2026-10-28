@@ -1364,7 +1364,6 @@ struct MembersView: View {
             DB.removeMember(m.id)
             _ = Milestones.recordOrganize()
             reload()
-            onChanged()
             app.showToast("已删除 · ⚠ 锁端凭证仍在，需要时请到门锁上手动删除")
         })
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
