@@ -128,10 +128,10 @@ enum QuickPool {
 @ViewBuilder
 func quickDestination(_ id: String) -> some View {
     switch id {
-    case "addPwd":   AddPwdView(embedded: true)
+    case "addPwd":   PwdStudio(embedded: true)
     case "otp":      SafemodeIntroView(mode: "otp")
     case "syncTime": SyncTimeView()
-    case "addFp":    StartAddFpView(embedded: true)
+    case "addFp":    FpStudio(embedded: true)
     case "studio":   StudioHome(embedded: true)
     case "backup":   BackupView(embedded: true)
     case "again":    Text("「再开一次」在设备页长按编辑或直接点按, 不需要新页面")   // 921 再开一次

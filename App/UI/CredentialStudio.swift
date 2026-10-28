@@ -1881,6 +1881,9 @@ struct FpStudio: View {
     /// 319 重录入口: 详情页带原归属进来 (默认 nil=全新录入)
     var prefillOwner: String? = nil
     var prefillReplace = false
+    /// 2026-10-28：与 PwdStudio 同口径 —— 嵌在 NavigationLink 里时不再自带 NavigationStack，
+    /// 否则会出现「导航栏叠导航栏」。默认 false（sheet 里用）。
+    var embedded: Bool = false
 
     private var mac: String { app.current?.mac ?? "" }
     private var sameOwnerFps: [LedgerFp] {
@@ -1899,23 +1902,11 @@ struct FpStudio: View {
     }
 
     var body: some View {
-        NavigationStack {
-            if step == 3 {
-                doneCard
-            } else if step == 1 {
-                immersive
+        Group {
+            if embedded {
+                core
             } else {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: DS.Space.l) {
-                        StepDots(total: 4, index: step, labels: ["归属", "录入", "命名", "回执"])
-                        if step == 0 { step0 }
-                        if step == 2 { step2 }
-                        navBar
-                    }
-                    .padding(DS.Space.l)
-                }
-                .background(DS.Gradient.screen.ignoresSafeArea())
-                .axBottomAnchor()   // 870
+                NavigationStack { core }
             }
         }
         .navigationTitle("录入指纹")
@@ -1926,6 +1917,28 @@ struct FpStudio: View {
         // 挂在**页面最外层** (不是 immersive 上) —— 挂在步骤子视图上会在录入成功切到第 2 步时
         // 误取消刚跑完的流程; 这里只应在整页被关掉时触发。
         .onDisappear { enrollTask?.cancel() }
+    }
+
+    /// 2026-10-28：从 body 抽出的内容 —— embedded 与否共用同一份。
+    @ViewBuilder
+    private var core: some View {
+        if step == 3 {
+            doneCard
+        } else if step == 1 {
+            immersive
+        } else {
+            ScrollView {
+                VStack(alignment: .leading, spacing: DS.Space.l) {
+                    StepDots(total: 4, index: step, labels: ["归属", "录入", "命名", "回执"])
+                    if step == 0 { step0 }
+                    if step == 2 { step2 }
+                    navBar
+                }
+                .padding(DS.Space.l)
+            }
+            .background(DS.Gradient.screen.ignoresSafeArea())
+            .axBottomAnchor()   // 870
+        }
     }
 
     // ---------- 324 冗余横条 + 322 缺失提醒 + 317 归属先行必选 ----------

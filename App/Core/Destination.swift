@@ -1,5 +1,5 @@
 // 本文件由 `node tools/destmap.js --emit` 生成，**不要手改**。
-// 生成时的目的地总数 = 26。改了界面呈现方式之后重新生成，
+// 生成时的目的地总数 = 24。改了界面呈现方式之后重新生成，
 // 并核对 diff —— 少一条就是某套界面会缺一个页面而没人发现。
 import SwiftUI
 
@@ -7,7 +7,6 @@ import SwiftUI
 /// rawValue 是 View 类型名，供 tools/uicoverage.js 与本台账对账。
 enum Destination: String, CaseIterable, Identifiable {
     case addDevice = "AddDeviceView"
-    case addPwd = "AddPwdView"
     case backup = "BackupView"
     case credentials = "CredentialsView"
     case credExtend = "CredExtendView"
@@ -28,7 +27,6 @@ enum Destination: String, CaseIterable, Identifiable {
     case records = "RecordsView"
     case settings = "SettingsView"
     case shareToAndroid = "ShareToAndroidView"
-    case startAddFp = "StartAddFpView"
     case syncTime = "SyncTimeView"
     case tailgate = "TailgateView"
     case unlockGate = "UnlockGateView"

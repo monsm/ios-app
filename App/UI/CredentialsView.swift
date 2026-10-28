@@ -663,8 +663,8 @@ struct CredentialsView: View {
             }
         }
         Section {
-            NavigationLink { AddPwdView(embedded: true) } label: { Label("添加密码", systemImage: "plus") }
-            NavigationLink { StartAddFpView(embedded: true) } label: { Label("录入指纹", systemImage: "plus") }
+            NavigationLink { PwdStudio(embedded: true) } label: { Label("添加密码", systemImage: "plus") }
+            NavigationLink { FpStudio(embedded: true) } label: { Label("录入指纹", systemImage: "plus") }
         }
     }
 
@@ -1376,7 +1376,7 @@ struct CredentialsView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 // 包14/815 空态双按钮: 主"添加密码" + 次"看看它如何工作"
                 HStack(spacing: DS.Space.s) {
-                    NavigationLink { AddPwdView(embedded: true) } label: {
+                    NavigationLink { PwdStudio(embedded: true) } label: {
                         Text("添加第一条密码")
                             .vkFont(.subheadline, weight: .semibold)
                             .frame(maxWidth: .infinity)
