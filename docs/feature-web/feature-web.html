@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-28T02:12:33.675Z",
+    "generated": "2026-10-28T02:20:17.184Z",
     "sources": [
       {
         "scout": "android-native",
@@ -10839,7 +10839,7 @@ const DATA = {
           "line": 1000,
           "symbol": "fullScreenCover",
           "note": "",
-          "text": "if phase == .active {"
+          "text": "@MainActor"
         }
       ],
       "platformEvidence": {
@@ -25857,7 +25857,7 @@ const DATA = {
           "line": 842,
           "symbol": "recordsTabContent",
           "note": "父级：Tab 第 3 页 + RecordsView().id(app.currentMac)",
-          "text": "// 真到用户按圆盘时 ensureConnected 仍然会兜底重试，不改变任何既有语义。"
+          "text": "//"
         },
         {
           "platform": "ios",
@@ -35099,7 +35099,7 @@ const DATA = {
           "line": 1009,
           "symbol": "mainTabsChrome",
           "note": "",
-          "text": "// 来电、Face ID 系统弹窗) 也当退后台 —— 会误记锁定到期时刻 (反复下拉可无限顺延宽限),"
+          "text": "// 897 四季图标: 默认关。开着也只在\"季节真的换了\"时对齐一次 (年-季记号)，不每次回前台打扰"
         },
         {
           "platform": "ios",
@@ -35107,7 +35107,7 @@ const DATA = {
           "line": 1014,
           "symbol": ".task { bootstrapOnce() }",
           "note": "",
-          "text": "// 原来由 .onChange(of: app.appUnlocked) 在\"锁落下\"时收 —— 但启动门禁删掉后"
+          "text": "// 221 退后台收尾: 记会话时长并清崩溃标记 (CrashGuard 的判定就依赖这一步)"
         },
         {
           "platform": "ios",
@@ -35115,7 +35115,7 @@ const DATA = {
           "line": 1022,
           "symbol": "2026-10-16 抽出注释",
           "note": "",
-          "text": "// 只在 .background 清会把正常强退误报成\"异常退出\"。"
+          "text": "} else {"
         },
         {
           "platform": "ios",
@@ -35123,7 +35123,7 @@ const DATA = {
           "line": 1027,
           "symbol": "static func bootstrapOnce",
           "note": "",
-          "text": "}"
+          "text": "// AUTOOPEN 不该继续武装并喂传感器); 锁定计时与崩溃标记的取舍见上。"
         },
         {
           "platform": "ios",
@@ -35131,7 +35131,7 @@ const DATA = {
           "line": 1032,
           "symbol": "CrashGuard.checkAbnormalExit",
           "note": "",
-          "text": "@MainActor"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -35249,7 +35249,7 @@ const DATA = {
           "line": 884,
           "symbol": "TabView(selection:)",
           "note": "",
-          "text": ".id(app.appearanceSeed)"
+          "text": "// 包16: 外观种子变更时整树重建 — 配色/密度即时全局生效; withAnimation 提供淡入淡出 (idea 21)"
         },
         {
           "platform": "ios",
@@ -35257,7 +35257,7 @@ const DATA = {
           "line": 886,
           "symbol": "Tab 设备 value 0",
           "note": "",
-          "text": "// 2026-10-27 审核修复 (AUDIT-B 2.6)：**接回两项系统无障碍支持**。"
+          "text": "// 冷启动展示; 回前台 \u003c 300s 不重演; 深链进入时一律不展示。"
         },
         {
           "platform": "ios",
@@ -35265,7 +35265,7 @@ const DATA = {
           "line": 888,
           "symbol": ".badge(handshakeDoneAway)",
           "note": "",
-          "text": "// 但它们唯一的消费点（根视图这两个修饰符）在早前精简里被删了 ——"
+          "text": ".animation(DS.Motion.soft, value: app.appUnlocked)"
         },
         {
           "platform": "ios",
@@ -35273,7 +35273,7 @@ const DATA = {
           "line": 891,
           "symbol": "if !app.guestAreaLocked",
           "note": "",
-          "text": "//   · `dynamicTypeSize`：把 App 档 × 系统相对倍率映射到最近的 DynamicTypeSize 预设"
+          "text": "// 但它们唯一的消费点（根视图这两个修饰符）在早前精简里被删了 ——"
         },
         {
           "platform": "ios",
@@ -35281,7 +35281,7 @@ const DATA = {
           "line": 896,
           "symbol": "Tab 凭证 value 1",
           "note": "",
-          "text": ".dynamicTypeSize(AXFlags.typeSize())"
+          "text": "//"
         }
       ],
       "platformEvidence": {
@@ -35386,7 +35386,7 @@ const DATA = {
           "line": 856,
           "symbol": "topBanners",
           "note": "",
-          "text": "@ViewBuilder"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -35394,7 +35394,7 @@ const DATA = {
           "line": 858,
           "symbol": "VStack 顺序",
           "note": "",
-          "text": "// 2026-10-27 新增（AUDIT-D D-01 + D-48）：应用锁门禁。"
+          "text": "/// 主界面。首启引导已随本轮删减移除, 启动不再分形态 —— 这里只返回主界面本体。"
         },
         {
           "platform": "ios",
@@ -35402,7 +35402,7 @@ const DATA = {
           "line": 860,
           "symbol": "if !LinkSense.shared.btOn",
           "note": "",
-          "text": "// 未解锁 → LockScreen；解锁后 → 主界面。"
+          "text": "private var rootGroup: some View {"
         },
         {
           "platform": "ios",
@@ -35410,7 +35410,7 @@ const DATA = {
           "line": 866,
           "symbol": "BackupStudio.selfCheckWarning",
           "note": "",
-          "text": "LockScreen()"
+          "text": "if lock.unlocked {"
         },
         {
           "platform": "ios",
@@ -35418,7 +35418,7 @@ const DATA = {
           "line": 869,
           "symbol": "if let t = app.toast",
           "note": "",
-          "text": "// 伪装态同步到 AppState：全仓 12 处 decoyMode 判据靠它生效"
+          "text": "LockScreen()"
         }
       ],
       "platformEvidence": {
@@ -35511,7 +35511,7 @@ const DATA = {
           "line": 1019,
           "symbol": ".onChange(of: scenePhase)",
           "note": "",
-          "text": "} else {"
+          "text": "// 改挂\"真进后台\"：用户离开 App 就是\"这一次查验的会话结束了\"，这与原意一致，"
         },
         {
           "platform": "ios",
@@ -37285,7 +37285,7 @@ const DATA = {
           "line": 959,
           "symbol": "25 底栏注释",
           "note": "",
-          "text": "// 设置页根上。带落点名, 由设置页直接开诊断面。"
+          "text": "Spacer(minLength: 0)"
         },
         {
           "platform": "ios",
@@ -37293,7 +37293,7 @@ const DATA = {
           "line": 964,
           "symbol": ".safeAreaInset(edge: .bottom)",
           "note": "",
-          "text": "}"
+          "text": "app.requestRoute(.settings)"
         },
         {
           "platform": "ios",
@@ -37301,7 +37301,7 @@ const DATA = {
           "line": 966,
           "symbol": "if tabSelection != 0",
           "note": "",
-          "text": ".padding(.horizontal, DS.Space.l)"
+          "text": ".vkFont(.caption, weight: .medium)"
         },
         {
           "platform": "ios",
@@ -37309,7 +37309,7 @@ const DATA = {
           "line": 971,
           "symbol": "Label 开锁",
           "note": "",
-          "text": "/// 包8/508 写入回执浮层 —— 2026-10-13 run 63 从 body 内联块抽出:"
+          "text": ".background(DS.Palette.warn.opacity(0.14))"
         },
         {
           "platform": "ios",
@@ -37317,7 +37317,7 @@ const DATA = {
           "line": 981,
           "symbol": "if app.guestAreaLocked",
           "note": "",
-          "text": ".vkFont(.caption, weight: .medium)"
+          "text": ".foregroundStyle(DS.Palette.ok)"
         }
       ],
       "platformEvidence": {
@@ -37613,7 +37613,7 @@ const DATA = {
           "line": 869,
           "symbol": "if let t = app.toast",
           "note": "",
-          "text": "// 伪装态同步到 AppState：全仓 12 处 decoyMode 判据靠它生效"
+          "text": "LockScreen()"
         }
       ],
       "platformEvidence": {
@@ -38528,7 +38528,7 @@ const DATA = {
           "line": 1113,
           "symbol": ".onChange(of: app.appUnlocked)",
           "note": "",
-          "text": "})"
+          "text": "tc.userInterfaceStyle == .dark"
         },
         {
           "platform": "ios",
@@ -38536,7 +38536,7 @@ const DATA = {
           "line": 1116,
           "symbol": "restoreLastTab + applyPendingRoute",
           "note": "",
-          "text": ""
+          "text": "})"
         }
       ],
       "platformEvidence": {
@@ -38803,7 +38803,7 @@ const DATA = {
           "line": 1073,
           "symbol": "rootCore",
           "note": "",
-          "text": "}"
+          "text": ".opacity(configuration.isPressed ? 0.9 : 1)"
         },
         {
           "platform": "ios",
@@ -38811,7 +38811,7 @@ const DATA = {
           "line": 1078,
           "symbol": ".id(app.appearanceSeed)",
           "note": "",
-          "text": "/// 滚动手势、VoiceOver 激活这些系统语义弄丢 (全仓 40 处调用点都在吃这些语义)。"
+          "text": "/// 872 防连点: 300ms 内重复点击忽略 (开关 AXPrefs.dbltapGuard, 默认开)。"
         },
         {
           "platform": "ios",
@@ -38819,7 +38819,7 @@ const DATA = {
           "line": 1080,
           "symbol": ".dynamicTypeSize",
           "note": "",
-          "text": "struct PressableButtonStyle: PrimitiveButtonStyle {"
+          "text": "/// ButtonStyle 拿不到 action (拦不住点击), 而直接在外层用 onTapGesture 会把 List 行点击、"
         },
         {
           "platform": "ios",
@@ -38827,7 +38827,7 @@ const DATA = {
           "line": 1082,
           "symbol": ".saturation",
           "note": "",
-          "text": "Gate(configuration: configuration)"
+          "text": "/// 内层 Button 保留全部系统行为, 只有 trigger() 走闸; 闸状态是每个按钮各自的 @State, 不跨按钮误伤。"
         },
         {
           "platform": "ios",
@@ -38835,7 +38835,7 @@ const DATA = {
           "line": 1086,
           "symbol": ".environment(legibilityWeight)",
           "note": "",
-          "text": "@State private var lastFire = Date.distantPast"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -38922,7 +38922,7 @@ const DATA = {
           "line": 859,
           "symbol": "69 蓝牙直通条注释",
           "note": "",
-          "text": "// 用户决策：**只在冷启动**要求输密码（不打断日常切前台）。"
+          "text": "@ViewBuilder"
         },
         {
           "platform": "ios",
@@ -38930,7 +38930,7 @@ const DATA = {
           "line": 860,
           "symbol": "if !LinkSense.shared.btOn",
           "note": "",
-          "text": "// 未解锁 → LockScreen；解锁后 → 主界面。"
+          "text": "private var rootGroup: some View {"
         },
         {
           "platform": "ios",
@@ -38938,7 +38938,7 @@ const DATA = {
           "line": 861,
           "symbol": "BLEOffBanner(denied:)",
           "note": "",
-          "text": "// 伪装码在 LockScreen 里识别：输胁迫码同样进主界面，但 decoy = true（空壳模式）。"
+          "text": "// 2026-10-27 新增（AUDIT-D D-01 + D-48）：应用锁门禁。"
         },
         {
           "platform": "ios",
@@ -38946,7 +38946,7 @@ const DATA = {
           "line": 862,
           "symbol": "openBluetoothSettings()",
           "note": "",
-          "text": "ZStack {"
+          "text": "// 用户决策：**只在冷启动**要求输密码（不打断日常切前台）。"
         }
       ],
       "platformEvidence": {
@@ -39021,7 +39021,7 @@ const DATA = {
           "line": 865,
           "symbol": "448 注释",
           "note": "",
-          "text": "} else {"
+          "text": "ZStack {"
         },
         {
           "platform": "ios",
@@ -39029,7 +39029,7 @@ const DATA = {
           "line": 866,
           "symbol": "if let w = BackupStudio.selfCheckWarning",
           "note": "",
-          "text": "LockScreen()"
+          "text": "if lock.unlocked {"
         },
         {
           "platform": "ios",
@@ -39037,7 +39037,7 @@ const DATA = {
           "line": 867,
           "symbol": "selfCheckBanner(w)",
           "note": "",
-          "text": "}"
+          "text": "mainTabsChrome"
         },
         {
           "platform": "ios",
@@ -39208,7 +39208,7 @@ const DATA = {
           "line": 1027,
           "symbol": "bootstrapOnce",
           "note": "",
-          "text": "}"
+          "text": "// AUTOOPEN 不该继续武装并喂传感器); 锁定计时与崩溃标记的取舍见上。"
         },
         {
           "platform": "ios",
@@ -39216,7 +39216,7 @@ const DATA = {
           "line": 1028,
           "symbol": "guard !launchBootstrapped",
           "note": "",
-          "text": "}"
+          "text": "AutoOpenController.shared.onBackground()"
         },
         {
           "platform": "ios",
@@ -39224,7 +39224,7 @@ const DATA = {
           "line": 1029,
           "symbol": "launchBootstrapped = true",
           "note": "",
-          "text": ""
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -39577,7 +39577,7 @@ const DATA = {
           "line": 834,
           "symbol": "凭证 Tab 挂载",
           "note": "",
-          "text": "// 2026-10-18 冷启动预连接（用户口径：\"打开 app 1 秒内做完一遍\"）。"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -39585,7 +39585,7 @@ const DATA = {
           "line": 843,
           "symbol": "记录 Tab 挂载",
           "note": "",
-          "text": "//"
+          "text": "// 现在：启动链路里**立刻**发起预连接（与 coldStartScan 同一拍，不等 UI）。"
         },
         {
           "platform": "ios",
@@ -39593,7 +39593,7 @@ const DATA = {
           "line": 849,
           "symbol": "设置 Tab 挂载",
           "note": "",
-          "text": ""
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -39670,7 +39670,7 @@ const DATA = {
           "line": 917,
           "symbol": "26 长按菜单注释",
           "note": "",
-          "text": "//   · 解锁后 runSelfCheck397() —— 本机库体自检（异常才出声）"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -39678,7 +39678,7 @@ const DATA = {
           "line": 927,
           "symbol": ".contextMenu(forSelectionType: Int.self)",
           "note": "",
-          "text": "// 168 状态变化播报: 只报稳定态 (就绪/断开), \"握手中\"不打扰;"
+          "text": "app.rememberTab(t)   // 161 记\"上次停留\""
         },
         {
           "platform": "ios",
@@ -39686,7 +39686,7 @@ const DATA = {
           "line": 929,
           "symbol": "case 0",
           "note": "",
-          "text": ".onChange(of: sense.linkState) { old, new in"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -39694,7 +39694,7 @@ const DATA = {
           "line": 932,
           "symbol": "只看今天的记录",
           "note": "",
-          "text": "case .down where old == .ready: AXTools.announce(\"门锁连接已断开\")"
+          "text": ".onChange(of: sense.linkState) { old, new in"
         },
         {
           "platform": "ios",
@@ -39702,7 +39702,7 @@ const DATA = {
           "line": 937,
           "symbol": "凭证回收站",
           "note": "",
-          "text": "}"
+          "text": "// 所以不播报 —— 用户能从屏幕上的黄条看到原因，语音再念一遍是噪音。"
         }
       ],
       "platformEvidence": {
@@ -39837,7 +39837,7 @@ const DATA = {
           "line": 889,
           "symbol": "377 注释",
           "note": "",
-          "text": "// 于是「设置→辅助功能→显示与文字大小」里的加粗文本与字号对 App 完全无效。"
+          "text": "// 2026-10-27 审核修复 (AUDIT-B 2.6)：**接回两项系统无障碍支持**。"
         },
         {
           "platform": "ios",
@@ -39845,7 +39845,7 @@ const DATA = {
           "line": 891,
           "symbol": "if !app.guestAreaLocked",
           "note": "",
-          "text": "//   · `dynamicTypeSize`：把 App 档 × 系统相对倍率映射到最近的 DynamicTypeSize 预设"
+          "text": "// 但它们唯一的消费点（根视图这两个修饰符）在早前精简里被删了 ——"
         }
       ],
       "platformEvidence": {
@@ -39932,7 +39932,7 @@ const DATA = {
           "line": 824,
           "symbol": "deviceTabContent",
           "note": "",
-          "text": "// 2026-10-26: 两件事从已失效的 .onChange(of: app.appUnlocked) 搬来这里。"
+          "text": "app.onLaunch()"
         },
         {
           "platform": "ios",
@@ -39940,7 +39940,7 @@ const DATA = {
           "line": 827,
           "symbol": ".keyboardShortcut(\"1\")",
           "note": "",
-          "text": "app.applyPendingRoute()       // 落地挂起的深链"
+          "text": "// 2026-10-26: 两件事从已失效的 .onChange(of: app.appUnlocked) 搬来这里。"
         },
         {
           "platform": "ios",
@@ -39948,7 +39948,7 @@ const DATA = {
           "line": 836,
           "symbol": ".keyboardShortcut(\"2\")",
           "note": "",
-          "text": "// 原来连接要等 DeviceHomeView 的 .task → sense.enterPage() → preconnect()，"
+          "text": "LinkSense.shared.coldStartScan()   // 包2/134 冷启动先扫描 (定位可见锁, 不连接)"
         },
         {
           "platform": "ios",
@@ -39956,7 +39956,7 @@ const DATA = {
           "line": 845,
           "symbol": ".keyboardShortcut(\"3\")",
           "note": "",
-          "text": "LinkSense.shared.startupPreconnect(mac: app.currentMac)"
+          "text": "// 真到用户按圆盘时 ensureConnected 仍然会兜底重试，不改变任何既有语义。"
         },
         {
           "platform": "ios",
@@ -39964,7 +39964,7 @@ const DATA = {
           "line": 851,
           "symbol": ".keyboardShortcut(\"4\")",
           "note": "",
-          "text": "var body: some View {"
+          "text": "private func bootstrapOnce() { RootView.bootstrapOnce(app) }"
         }
       ],
       "platformEvidence": {
