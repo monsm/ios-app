@@ -301,7 +301,13 @@ struct RecDetailSheet: View {
             Button {
                 // 2026-10-28 修复：原先**只弹 toast，没有写剪贴板** —— 用户以为复制了，粘出来是空的。
                 // 现在真写：kf://records?k=<oid>（scheme 与 host 白名单见 project.yml / handleDeepLink）。
-                let link = "kf://records?k=" + RecordOverlay.oid(mac: rec.mac, rowKey: rec.key)
+                // 2026-10-28 修复：`oid` 的格式是 `mac#行键` —— 里面那个 `#` 在 URL 里是 **fragment 分隔符**，
+                // 不编码就直接拼，`k` 参数只会剩下 `mac`，粘到 App 里 `landRecordKey` 永远找不到那一行。
+                // 整串用 alphanumerics 编码（`#` → `%23`，其它特殊字符一并转义），
+                // `handleDeepLink` 那边用 URLComponents 解析会自动解码回来。
+                let oidRaw = RecordOverlay.oid(mac: rec.mac, rowKey: rec.key)
+                let oidEnc = oidRaw.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? oidRaw
+                let link = "kf://records?k=" + oidEnc
                 Clip.set(link)
                 app.showToast("已复制本条引用链接")
             } label: {
@@ -310,7 +316,7 @@ struct RecDetailSheet: View {
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
             }
-            Text("链接只编码「哪把锁的哪一行」(mac#行键)，不含口令、指纹数据与原始帧。"
+            Text("链接只编码「哪把锁的哪一行」(mac + 行键，已 URL 转义)，不含口令、指纹数据与原始帧。"
                  + "粘进备忘录点一下 = 回到记录页并按当前显示范围定位本条；"
                  + "行不在显示范围内时页面如实说明原因，不会打开相邻的一条顶替。")   // 585 行不在显示范围内时页
                 .vkFont(.caption)

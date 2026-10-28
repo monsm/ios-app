@@ -217,7 +217,8 @@ struct DongleView: View {
             Text("写钥 / 删钥")
         } footer: {
             Text("写钥会把该锁的 ekey 写进这把实体钥匙串（走 cmd 41）。"
-                 + "「假钥匙」用随机 PIN、不绑成员 —— 它不属于任何人，只用来验证钥匙串可用或做临时通行。")
+                 + "⚠「假钥匙」用随机 PIN、不绑成员 —— 它**开不了锁**（PIN 不在锁的 PIN 池里），"
+                 + "只用来验证钥匙串本身能收钥，或给不该真正通行的人一把看着像的钥匙。")
                 .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
         }

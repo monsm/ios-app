@@ -130,6 +130,23 @@ struct MobileKeyView: View {
                     }
                     .frame(minHeight: DS.Hit.min)
                     .contentShape(Rectangle())
+                    // 2026-10-28 补：签发后**没有任何交付手段** —— `MobileKeyService.issue` 只写本机
+                    // `kf_mkey_`，成员手机拿不到 ekey。用户点「发一把」看到「已发」，实际什么也没发出去。
+                    // 补系统分享（微信/AirDrop/短信都能走），把 PIN + ekey + 有效期一次交给对方。
+                    .contextMenu {
+                        ShareLink(item: shareText(k, kc)) {
+                            Label("分享这把钥匙", systemImage: "square.and.arrow.up")
+                        }
+                        Button {
+                            Clip.set(k.ekey)
+                            app.showToast("ekey 已复制")
+                        } label: {
+                            Label("只复制 ekey", systemImage: "doc.on.doc")
+                        }
+                        Button(role: .destructive) { confirmRevoke(kc, k) } label: {
+                            Label("撤销此钥匙", systemImage: "trash")
+                        }
+                    }
                     .swipeActions(edge: .trailing) {
                         Button(role: .destructive) {
                             confirmRevoke(kc, k)
@@ -140,7 +157,8 @@ struct MobileKeyView: View {
         } header: {
             Text("已发的钥匙（\(keys.count)）")
         } footer: {
-            Text("撤销会同时把这个 pin 从锁里删掉（cmd08 delPins）—— 只删本地记录的话，"
+            Text("长按一把钥匙可以「分享」或「只复制 ekey」—— 签发只在本机记账，必须把 ekey 交给对方才真正生效。"
+                 + "撤销会同时把这个 pin 从锁里删掉（cmd08 delPins）—— 只删本地记录的话，"
                  + "旧 pin 签出的 ekey 仍然能开门。")
                 .vkFont(.caption)
         }
@@ -177,6 +195,20 @@ struct MobileKeyView: View {
         } catch {
             app.showToast("发放失败: \(error.localizedDescription)")
         }
+    }
+
+    /// 2026-10-28：把一把手机钥匙的交付内容拼成一段可分享文本。
+    /// 含 PIN 与 ekey —— 这两样合起来就能开门，分享时提醒用户走可信渠道。
+    private func shareText(_ k: MobileKey, _ kc: Keychain) -> String {
+        """
+        手机钥匙 · \(LockArchive.displayName(kc))
+        成员：\(k.memberName)
+        PIN：\(k.pin)
+        ekey：\(k.ekey)
+        有效期：\(MobileKeyService.validityLabel(k))
+        锁 MAC：\(kc.mac)
+        （这两项合起来就能开门，请走可信渠道发送）
+        """
     }
 
     private func confirmRevoke(_ kc: Keychain, _ k: MobileKey) {
