@@ -318,7 +318,12 @@ final class LockService: ObservableObject {
     private static let rcKLV: [UInt8: Int] = [
         0x03: 3, 0x04: 3, 0x05: 1, 0x08: 3, 0x0a: 3, 0x0b: 3, 0x0e: 3, 0x12: 3,
         0x13: 3, 0x14: 3, 0x15: 3, 0x16: 3, 0x18: 3, 0x19: 3, 0x20: 3,
-        0x21: 3, 0x22: 3, 0x24: 3, 0x25: 3
+        0x21: 3, 0x22: 3, 0x23: 3, 0x24: 3, 0x25: 3
+        // 2026-10-28 修：补登记 `0x23`（ExKeyWay，配网握手的关键一步 `LockService.pair` 里调用）。
+        // 它走的是 `request`/`extractRc`，而表里原来没有 0x23 ⇒ `guard let key = rcKLV[cmd] else { return 0 }`
+        // 让它的 rc **恒为 0**：锁端拒绝握手时 iOS 会当成功、继续走后面的 05→08→21，
+        // 最后得到一份对不上号的半成品台账。其它走 `HardwareService.send` 的命令（41/43/44/38/31/35）
+        // 用的是 `rcOf`（无条件读 KLV#03），不受这张表影响。
     ]
     /// 从回包里取 rc。
     ///

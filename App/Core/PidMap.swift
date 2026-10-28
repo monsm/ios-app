@@ -14,7 +14,7 @@ enum PidMap {
     ]
     // 中文产品名 (App rominfo getPNameWithPid)
     static let productNames: [Int: String] = [
-        8097: "智能门锁 K1", 8098: "智能门锁 KX", 7857: "智能门锁 V1", 7873: "智能门锁 V1 Pro",
+        8097: "智能门锁 K1", 8098: "智能门锁 KX", 7857: "智能门锁 V1", 7858: "智能门锁 V1 Pro", 7873: "智能门锁 JZ",
         7891: "智能门锁 Z3", 7892: "智能门锁 Z3 NFC", 7893: "智能门锁 Z3 AL"
     ]
     static let locks = [KX, V1, V1_Pro, JZ]

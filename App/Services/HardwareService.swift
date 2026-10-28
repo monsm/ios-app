@@ -147,7 +147,11 @@ final class HardwareService: ObservableObject {
         let deadline = Date().addingTimeInterval(15)
         while Date() < deadline {
             for d in ble.allDiscovered() {
-                guard let a = ZKProtocol.parseAdv(d.advertisHex), a.pid == PidMap.ZKBBV1, let mac = a.macRaw else { continue }
+                // 2026-10-28 修复：原来用 `a.macRaw`（**线上序**）当台账键 —— 而 APK `BleScan` 的
+                // `mac` 字段取的是 `device.getAddress()`（**显示序**），`BLEAdData.getMacText()` 也转显示序。
+                // 用线上序会在「重扫/重连」时得到另一个键、和锁/网关的 MAC 对不上（显示反序的一串）。
+                // `ZKProtocol.lockMac(fromAdv:)` 是全局唯一的显示序出口。
+                guard let a = ZKProtocol.parseAdv(d.advertisHex), a.pid == PidMap.ZKBBV1, let mac = ZKProtocol.lockMac(fromAdv: a) ?? a.macRaw else { continue }
                 var rec = DB.dongle(mac) ?? Dongle(mac: mac)
                 rec.bleId = d.deviceId
                 if rec.boundAt.isEmpty { rec.boundAt = ISO8601DateFormatter().string(from: Date()) }
@@ -387,7 +391,8 @@ final class HardwareService: ObservableObject {
         var advPid = 0
         for d in ble.allDiscovered() {
             if d.deviceId == deviceId, let a = ZKProtocol.parseAdv(d.advertisHex) {
-                if let m = a.macRaw { mac = m }
+                // 2026-10-28 修复：同上 —— 台账键必须用显示序（APK `BleScan.mac` 的口径）。
+                if let m = ZKProtocol.lockMac(fromAdv: a) { mac = m }
                 advPid = a.pid
                 break
             }
