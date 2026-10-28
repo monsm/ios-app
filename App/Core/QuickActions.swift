@@ -36,7 +36,11 @@ final class QuickActionDelegate: NSObject, UIApplicationDelegate {
 /// 而 `UIApplicationDelegate` 的实现是 main-actor 隔离；两者混在同一个类上会报
 /// 「conformance crosses into main actor-isolated code」。
 /// 拆开之后：这个类整体 nonisolated，只在跳转那一步显式切回 MainActor。
-final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
+final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate, @unchecked Sendable {
+    // 2026-10-28：@unchecked Sendable 是**有据**的 —— 这个类没有任何存储属性，
+    // 两个方法都是 nonisolated 的纯函数式实现（不读写实例状态）。
+    // 缺了它，static let shared 会在 Swift 6 严格并发下报
+    // 「non-Sendable type may have shared mutable state」。
     static let shared = NotificationDelegate()
 
     /// 点按通知 → 定位到那条凭证。
