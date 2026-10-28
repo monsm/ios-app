@@ -999,13 +999,24 @@ struct GatewayView: View {
                             .foregroundStyle(DS.Palette.textSub)
                     }
                 } else {
-                    Section("配置 WiFi") {
+                    Section {
                         TextField("WiFi 名称 (2.4GHz)", text: $ssid)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
                             .submitLabel(.next)
                         SecureField("WiFi 密码", text: $pwd)
                             .submitLabel(.done)
+                    } header: {
+                        Text("配置 WiFi")
+                    } footer: {
+                        // 2026-10-28：APK 用原生的 WifiNamePlugin.getWifiInfo 自动预填当前 SSID；
+                        // iOS 读 WiFi 名需要 `com.apple.developer.networking.wifi-info` entitlement + 定位权限，
+                        // 本工程两者都没有（也不该为一个配网表单去申请定位）。所以这里如实说明要手输，
+                        // 而不是让用户以为是 App 忘了填。
+                        Text("iOS 不允许 App 读取当前 WiFi 名，请手动输入（只支持 2.4GHz）。")
+                            .vkFont(.caption)
+                            .foregroundStyle(DS.Palette.textSub)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     Section {
                         BusyButton(title: "开始配网", systemImage: "wifi", isBusy: running, disabled: ssid.isEmpty || pwd.isEmpty) {

@@ -43,6 +43,7 @@ enum BLEError: Int {
     case notFound = 1001        // 未发现设备
     case ssTokenFail = 1006
     case responseTimeout = 1007
+    case unsupportedToken = 1008   // 2026-10-28 补：APK bleCodeMsg[1008]「不支持的ssToken方式」
     case connectTimeout = 2003
     case parseFail = 5001
     case writeTimeout = 6001
@@ -54,6 +55,7 @@ enum BLEError: Int {
         case .notFound: return "未发现门锁，请靠近门锁重试"
         case .ssTokenFail: return "获取ssToken失败"
         case .responseTimeout: return "超时未收到返回数据"
+        case .unsupportedToken: return "不支持的ssToken方式"
         case .connectTimeout: return "连接设备超时"
         case .parseFail: return "解析数据失败"
         case .writeTimeout: return "超时未等到Rx写入确认"
