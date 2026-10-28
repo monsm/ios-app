@@ -56,6 +56,23 @@ enum RecordOverlay {
         DB.store.setCodable(flagKey(mac), set.sorted())
         return set.contains(k)
     }
+    // ---------- 2026-10-28 补：处置层 ----------
+    // 详情页的「标记已处置 / 撤销」此前是**假按钮** —— `disp` 硬编码 nil、点击只 `tick += 1`，
+    // 界面闪一下又回到「未处置」。处置记录是告警排查的核心（谁在什么时候确认过这条），
+    // 所以按与备注/旗标同一套本机覆盖层补上，不新建第二套存储。
+    static func dispKey(_ mac: String) -> String { "kf_rdisp_" + mac }
+    static func dispositions(_ mac: String) -> [String: Disposition] {
+        DB.store.get([String: Disposition].self, dispKey(mac)) ?? [:]
+    }
+    static func disposition(_ mac: String, _ rowKey: String) -> Disposition? {
+        dispositions(mac)[oid(mac: mac, rowKey: rowKey)]
+    }
+    static func setDisposition(_ mac: String, _ rowKey: String, _ d: Disposition?) {
+        var m = dispositions(mac)
+        let k = oid(mac: mac, rowKey: rowKey)
+        if let d { m[k] = d } else { m.removeValue(forKey: k) }
+        DB.store.setCodable(dispKey(mac), m)
+    }
     /// 行下灰字与左旗的读取都由上面几枚函数直接服务 UI; 不再另留 noteLine 这种"看着像入口"的别名。
 }
 

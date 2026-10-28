@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-28T08:51:55.078Z",
+    "generated": "2026-10-28T08:58:54.713Z",
     "sources": [
       {
         "scout": "android-native",
@@ -26167,7 +26167,7 @@ const DATA = {
           "line": 171,
           "symbol": "QueryFilters",
           "note": "",
-          "text": "}"
+          "text": "static let openVerb: [Int: String] = [1: \"用了数字钥匙开了门\", 2: \"用了密码开门\", 3: \"用指纹开了门\", 4: \"用一次性密码开门\", 5: \"用 NFC 开了门\"]"
         },
         {
           "platform": "ios",
@@ -26183,7 +26183,7 @@ const DATA = {
           "line": 191,
           "symbol": "key(_:)",
           "note": "",
-          "text": ""
+          "text": "/// 查询过滤 (564/571/572/567/568 的本地筛选态)"
         },
         {
           "platform": "ios",
@@ -26285,7 +26285,7 @@ const DATA = {
           "line": 543,
           "symbol": "parse(_:)",
           "note": "",
-          "text": "var timeHit: [String] = []"
+          "text": "if tok.count > 1 {"
         },
         {
           "platform": "ios",
@@ -26301,7 +26301,7 @@ const DATA = {
           "line": 730,
           "symbol": "searchFace(title:lockName:whoName:cred:note:)",
           "note": "",
-          "text": "/// 736 前后事件上下文: 告警前后 10 分钟同锁记录 (前 3 条 / 后 3 条)"
+          "text": "static var testMarkedKeys: Set\u003cString> {"
         },
         {
           "platform": "ios",
@@ -27465,7 +27465,7 @@ const DATA = {
           "line": 172,
           "symbol": "segment",
           "note": "",
-          "text": "}"
+          "text": "static let alarmVerb: [Int: String] = [6: \"触发低电量提醒\", 7: \"出现撬锁告警\", 10: \"多次密码失败已锁定\", 13: \"指纹模块告警\", 224: \"键盘被锁定\"]"
         },
         {
           "platform": "ios",
@@ -27473,7 +27473,7 @@ const DATA = {
           "line": 185,
           "symbol": "alarmKinds",
           "note": "",
-          "text": "var failedOnly = false          // 569 失败事件 (仅 10/13/224 + 92 手机侧失败, 锁端仅记录告警级)"
+          "text": "if let v = alarmVerb[type] { return prefix.isEmpty ? v : prefix + v }"
         }
       ],
       "platformEvidence": {
@@ -28265,7 +28265,7 @@ const DATA = {
           "line": 612,
           "symbol": "timePhrases(joined:)",
           "note": "",
-          "text": "out.append((\"上月\", (m.start, m.end)))"
+          "text": "out.append((\"昨晚\", (s, s.addingTimeInterval(4 * 3600))))"
         },
         {
           "platform": "ios",
@@ -28273,7 +28273,7 @@ const DATA = {
           "line": 653,
           "symbol": "tokensFirstContaining",
           "note": "N月D日 分支",
-          "text": "/// 搜索框敲「13月1日」即崩的根因。"
+          "text": "dd = d2"
         }
       ],
       "platformEvidence": {
@@ -28407,7 +28407,7 @@ const DATA = {
           "line": 439,
           "symbol": "nightWindowDegenerate",
           "note": "",
-          "text": "Holiday(day: \"2026-04-04\", name: \"清明\", off: true),"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -28415,7 +28415,7 @@ const DATA = {
           "line": 446,
           "symbol": "isLateNight",
           "note": "a > b ? (hour >= a || hour \u003c b) : (hour >= a && hour \u003c b)",
-          "text": "Holiday(day: \"2026-05-05\", name: \"劳动节\", off: true),"
+          "text": "Holiday(day: \"2026-02-15\", name: \"春节\", off: true),"
         }
       ],
       "platformEvidence": {
@@ -28814,7 +28814,7 @@ const DATA = {
           "line": 1036,
           "symbol": "struct TailgateView",
           "note": "",
-          "text": "Spacer(minLength: DS.Space.m)"
+          "text": ".accessibilityElement(children: .combine)"
         },
         {
           "platform": "apk",
@@ -29660,7 +29660,7 @@ const DATA = {
           "line": 575,
           "symbol": "Button { showBackup = true } label: { Label(\"备份与恢复\") }",
           "note": "",
-          "text": "// 2026-10-28 补：`HardwareService` 的蓝牙钥匙串（ZKBBV1）整套能力早就写好了 ——"
+          "text": "// 前者是把钥匙写进随身硬件, 后者是把 ekey 发给成员的手机, 归属对象不同, 不能合并成一条。"
         },
         {
           "platform": "ios",
@@ -30213,7 +30213,7 @@ const DATA = {
           "line": 186,
           "symbol": "canonical(_:)",
           "note": "",
-          "text": "static func canonical(_ b: BackupBundle) -> String {"
+          "text": "return .obj(pairs)"
         },
         {
           "platform": "ios",
@@ -30221,7 +30221,7 @@ const DATA = {
           "line": 203,
           "symbol": "members 按 id 排序",
           "note": "",
-          "text": "(\"members\", .arr((b.members ?? []).sorted { $0.id \u003c $1.id }.map(memberValue))),"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -30229,7 +30229,7 @@ const DATA = {
           "line": 286,
           "symbol": "exportText 追加 checksum",
           "note": "",
-          "text": "guard canonical.hasSuffix(\"}\") else { return \"\" }"
+          "text": "gp.append((\"trace\", .obj(["
         }
       ],
       "platformEvidence": {
@@ -32205,7 +32205,7 @@ const DATA = {
           "line": 470,
           "symbol": "upgradeChain",
           "note": "",
-          "text": "let iter = jsonNum(head, \"\\\"iter\\\":\") {"
+          "text": "guard head.hasPrefix(\"{\") else { return .unknown }"
         },
         {
           "platform": "ios",
@@ -32213,7 +32213,7 @@ const DATA = {
           "line": 474,
           "symbol": "v3 mac 归一化",
           "note": "",
-          "text": "}"
+          "text": "return .envelope(\"\\(alg) · \\(kdf) \\(iter) 轮\")"
         },
         {
           "platform": "ios",
@@ -32221,7 +32221,7 @@ const DATA = {
           "line": 481,
           "symbol": "v5 只推进版本号",
           "note": "",
-          "text": "var h = bkEvents()"
+          "text": "/// 参数像有能力、实际什么都不记, 是本仓反复出现的\"命名即承诺\"缺陷类, 这里把名字真存下来。"
         }
       ],
       "platformEvidence": {
@@ -33777,7 +33777,7 @@ const DATA = {
           "line": 629,
           "symbol": "appearanceSection",
           "note": "",
-          "text": "}"
+          "text": "// 2026-10-28 补：通知权限状态此前**无处可看**（`NotifyAuthBox` 零调用）。"
         },
         {
           "platform": "ios",
@@ -33793,7 +33793,7 @@ const DATA = {
           "line": 828,
           "symbol": "footer: 主题、品牌色（六套）、密度、圆角 …",
           "note": "",
-          "text": "Text(\"标准\").tag(\"standard\")"
+          "text": "note(\"只换主控卡的底纹，不影响内容与读数。\")"
         },
         {
           "platform": "ios",
@@ -33801,7 +33801,7 @@ const DATA = {
           "line": 936,
           "symbol": "resetAppearance()",
           "note": "",
-          "text": "Text(\"也可以直接在设备页长按任一快捷格打开这份编辑。\")   // 905 也可以直接在设备页长"
+          "text": "else { ids.removeAll { $0 == a.id } }"
         },
         {
           "platform": "ios",
@@ -34256,7 +34256,7 @@ const DATA = {
           "line": 945,
           "symbol": "aboutSection",
           "note": "",
-          "text": "}))"
+          "text": "get: { QuickPool.smartFirst },"
         },
         {
           "platform": "ios",
@@ -34264,7 +34264,7 @@ const DATA = {
           "line": 969,
           "symbol": "Button { versionTaps += 1; if versionTaps >= 10 … }",
           "note": "",
-          "text": ".pickerStyle(.menu)"
+          "text": "get: { AXPrefs.holdDuration },"
         },
         {
           "platform": "ios",
@@ -34272,7 +34272,7 @@ const DATA = {
           "line": 1003,
           "symbol": "aboutFooterText",
           "note": "",
-          "text": "} footer: {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -34340,7 +34340,7 @@ const DATA = {
           "line": 582,
           "symbol": "applockSection",
           "note": "",
-          "text": "} label: {"
+          "text": "// 5 个服务方法 + 4 个 CRUD + 备份集成都齐，但**零 UI 入口**。"
         },
         {
           "platform": "ios",
@@ -34348,7 +34348,7 @@ const DATA = {
           "line": 610,
           "symbol": "alert message: 4 位以上纯数字 (随机键位需要数字键盘 …)",
           "note": "",
-          "text": "Text(\"凭证整理\")"
+          "text": "// 语义说明挪进本节 footer，标签回归一行 (截图里折行撑歪开关就是这条)。"
         },
         {
           "platform": "ios",
@@ -34356,7 +34356,7 @@ const DATA = {
           "line": 617,
           "symbol": "guard !f1.isEmpty, f1 == f2 else { showToast(\"两次输入不一致\") }",
           "note": "",
-          "text": "}"
+          "text": "} footer: {"
         }
       ],
       "platformEvidence": {
@@ -34424,7 +34424,7 @@ const DATA = {
           "line": 501,
           "symbol": "autoOpenSection",
           "note": "",
-          "text": "Picker(\"圆盘尺寸\", selection: Binding("
+          "text": ".vkFont(.caption)"
         },
         {
           "platform": "ios",
@@ -34494,7 +34494,7 @@ const DATA = {
           "line": 508,
           "symbol": "familySection",
           "note": "",
-          "text": ".pickerStyle(.menu)"
+          "text": "get: { DB.store.getInt(\"kf_dial_size\", 176) },"
         },
         {
           "platform": "ios",
@@ -34502,7 +34502,7 @@ const DATA = {
           "line": 525,
           "symbol": "Button { showMembers = true } label: { Label(\"成员管理（含成员中心）\") }",
           "note": "",
-          "text": "@ViewBuilder   // 编译级修正: 这块是\"顶层 if 而没有 else/return\", 不加 builder 就是一句 \"function declares some View…\" 的编译错误"
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         },
         {
           "platform": "ios",
@@ -34510,7 +34510,7 @@ const DATA = {
           "line": 532,
           "symbol": "Label(\"未归属记录认领\")",
           "note": "",
-          "text": "// ---------- 家人与钥匙 (包13: 成员中心/791/798-792/483/479-794 入口) ----------"
+          "text": "private var autoOpenSection: some View {"
         }
       ],
       "platformEvidence": {
@@ -34716,7 +34716,7 @@ const DATA = {
           "line": 423,
           "symbol": "timeSection",
           "note": "",
-          "text": "consequence += \" 连带删除: 密码台账 \\(pws) 条、指纹台账 \\(fps) 条、待下发 \\(pend) 项、回收站 \\(bin) 条、本机缓存的开门记录 \\(recs) 条。\""
+          "text": "let pend = 0"
         },
         {
           "platform": "ios",
@@ -34724,7 +34724,7 @@ const DATA = {
           "line": 425,
           "symbol": "Picker(\"时间制式\", selection:)",
           "note": "",
-          "text": "consequence += \" 删除后若未做过备份将无法找回。\""
+          "text": "let recs = DB.readLogs(kc.mac).count   // 109: 记录缓存 (kf_logcache_) 也随设备删除, 计数一并预告"
         },
         {
           "platform": "ios",
@@ -34732,7 +34732,7 @@ const DATA = {
           "line": 432,
           "symbol": "VariantToggle(\"显示秒\", isOn:)",
           "note": "",
-          "text": ""
+          "text": "confirmDestructiveTyped(\"删除设备\", consequence, requireWord: name, confirmTitle: \"确认删除\") {"
         }
       ],
       "platformEvidence": {
@@ -34799,7 +34799,7 @@ const DATA = {
           "line": 573,
           "symbol": "toolsSection",
           "note": "",
-          "text": "Label(\"手机钥匙\", systemImage: \"iphone.gen3.badge.key\")"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -34807,7 +34807,7 @@ const DATA = {
           "line": 575,
           "symbol": "Button { showBackup = true } label: { Label(\"备份与恢复\") }",
           "note": "",
-          "text": "// 2026-10-28 补：`HardwareService` 的蓝牙钥匙串（ZKBBV1）整套能力早就写好了 ——"
+          "text": "// 前者是把钥匙写进随身硬件, 后者是把 ekey 发给成员的手机, 归属对象不同, 不能合并成一条。"
         },
         {
           "platform": "ios",
@@ -34815,7 +34815,7 @@ const DATA = {
           "line": 578,
           "symbol": "NavigationLink(\"诊断与运行日志\") { DiagnosticsView() }",
           "note": "",
-          "text": "// 用户会去找那个入口 —— 找不到。现在补上（与手机钥匙并列，两者归属对象不同："
+          "text": "} label: {"
         }
       ],
       "platformEvidence": {
@@ -34882,7 +34882,7 @@ const DATA = {
           "line": 445,
           "symbol": "unlockSection",
           "note": "",
-          "text": "private var timeSection: some View {"
+          "text": "// ---------- 开锁 (包1: 按住确认/围栏/自动重试/圆盘尺寸) ----------"
         },
         {
           "platform": "ios",
@@ -34898,7 +34898,7 @@ const DATA = {
           "line": 492,
           "symbol": "footer: 按住圆盘时长 (默认 0.9s …)",
           "note": "",
-          "text": ".disabled(UnlockPrefs.mode != \"hold\")"
+          "text": "// 2026-10-28：原说明文字讲的是两个不存在的档位，随档位一起删。"
         }
       ],
       "platformEvidence": {
@@ -35581,7 +35581,7 @@ const DATA = {
           "line": 971,
           "symbol": "if versionTaps >= 10, !eggShown { eggShown = true; … }",
           "note": "",
-          "text": "Text(\"按住圆盘多久算确认。关掉「按住确认」后此项不生效。\")"
+          "text": "ForEach([0.4, 0.6, 0.9, 1.2, 1.6], id: \\.self) { s in"
         },
         {
           "platform": "ios",
@@ -35589,7 +35589,7 @@ const DATA = {
           "line": 989,
           "symbol": "LabeledRow(\"构建\", …)",
           "note": "",
-          "text": "set: { app.setUnlockOption(\"kf_dbltap_guard\", $0) }))"
+          "text": "}))"
         },
         {
           "platform": "ios",
@@ -35597,7 +35597,7 @@ const DATA = {
           "line": 990,
           "symbol": "LabeledRow(\"遥测\", \"无 · 全程离线\")",
           "note": "",
-          "text": "Picker(\"低电提醒阈值\", selection: Binding("
+          "text": "VariantToggle(\"大格模式 (快捷格 2 列)\", isOn: Binding("
         }
       ],
       "platformEvidence": {
@@ -35668,7 +35668,7 @@ const DATA = {
           "line": 766,
           "symbol": "Button(\"套用儿童友好外观预设\") { app.applyFriendlyPreset() }",
           "note": "",
-          "text": "alert.addAction(UIAlertAction(title: \"取消\", style: .cancel))"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -35684,7 +35684,7 @@ const DATA = {
           "line": 775,
           "symbol": "Picker(\"记录页开场过滤\", selection:)",
           "note": "",
-          "text": "})"
+          "text": "let f2 = alert.textFields?[1].text ?? \"\""
         },
         {
           "platform": "ios",
@@ -35692,7 +35692,7 @@ const DATA = {
           "line": 936,
           "symbol": "resetAppearance()",
           "note": "",
-          "text": "Text(\"也可以直接在设备页长按任一快捷格打开这份编辑。\")   // 905 也可以直接在设备页长"
+          "text": "else { ids.removeAll { $0 == a.id } }"
         },
         {
           "platform": "ios",
@@ -35802,7 +35802,7 @@ const DATA = {
           "line": 790,
           "symbol": "ForEach(QuickPool.all) { a in VariantToggle(a.label, …) }",
           "note": "",
-          "text": "}"
+          "text": "get: { DB.store.getString(\"kf_theme\") },"
         },
         {
           "platform": "ios",
@@ -35818,7 +35818,7 @@ const DATA = {
           "line": 804,
           "symbol": "VariantToggle(\"常用动作排到前面\")",
           "note": "",
-          "text": ".accessibilityHidden(true)"
+          "text": "set: { app.setAccent($0) })) {"
         }
       ],
       "platformEvidence": {
@@ -35884,7 +35884,7 @@ const DATA = {
           "line": 586,
           "symbol": "Button(\"关闭本机密码\", role: .destructive) { disablePasscode() }",
           "note": "",
-          "text": "// 与\"谁能开门\"（家人与钥匙）不是同一件事; 而且本节的 footer 正在解释成员分组, 摆一个添加设备"
+          "text": "NavigationLink {"
         },
         {
           "platform": "ios",
@@ -35892,7 +35892,7 @@ const DATA = {
           "line": 599,
           "symbol": "disablePasscode()",
           "note": "",
-          "text": "set: { DB.store.set(\"kf_ccred_quota\", $0) }), in: 3...30, step: 1)"
+          "text": "Section {"
         },
         {
           "platform": "ios",
@@ -35900,7 +35900,7 @@ const DATA = {
           "line": 601,
           "symbol": "关闭后，查看密码内容与导出备份不再需要本机验证",
           "note": "",
-          "text": "// 2026-10-26 精简：回收站保留天数设置已删（回收站整套移除）。"
+          "text": "// \"每凭证几版\" 还是 \"总共几版\"? 同一节下面的「回收站保留 N 天」是单值, 两个 Stepper"
         }
       ],
       "platformEvidence": {
@@ -57907,7 +57907,7 @@ const DATA = {
           "line": 633,
           "symbol": "DB.store.getString(\"kf_theme\")",
           "note": "",
-          "text": "Spacer(minLength: 0)"
+          "text": "if let url = URL(string: UIApplication.openSettingsURLString) {"
         },
         {
           "platform": "ios",
@@ -57923,7 +57923,7 @@ const DATA = {
           "line": 549,
           "symbol": "DB.store.set(\"kf_ccred_quota\", $0)",
           "note": "",
-          "text": "Text(\"「访客」是本地虚拟分组, 不占锁端槽位; 活跃度与摘录均按台账推断 (约)。\")"
+          "text": "private var familySection: some View {"
         }
       ],
       "platformEvidence": {
@@ -60448,7 +60448,7 @@ const DATA = {
           "line": 737,
           "symbol": "histKey",
           "note": "",
-          "text": "//   前事件 [t0-win, t0) 里\"紧邻\"的在前 ⇒ 应取 prefix (旧写法 suffix 取到窗内最旧 3 条);"
+          "text": "struct SameCount {"
         },
         {
           "platform": "ios",
@@ -61865,7 +61865,7 @@ const DATA = {
           "line": 783,
           "symbol": "markDisposition(key:verdict:)",
           "note": "",
-          "text": "return sorted.prefix(max(0, count)).map { $0.element }"
+          "text": "return days"
         },
         {
           "platform": "ios",
@@ -61936,7 +61936,7 @@ const DATA = {
           "line": 203,
           "symbol": "load(mac:)",
           "note": "",
-          "text": "static func setPolicy(_ v: String) {"
+          "text": "/// 565 告警类型多选: 空 = 不限类型 (与 567 的\"仅告警\"各自独立, 两个都选中时取交集);"
         },
         {
           "platform": "ios",
@@ -61944,7 +61944,7 @@ const DATA = {
           "line": 212,
           "symbol": "save(mac:)",
           "note": "",
-          "text": "}"
+          "text": "private static func key(_ mac: String) -> String { \"kf_rflt_\" + mac }"
         },
         {
           "platform": "ios",
@@ -61952,7 +61952,7 @@ const DATA = {
           "line": 193,
           "symbol": "policyKey",
           "note": "",
-          "text": "// 908 默认策略: 在\"会话续用\"之上加一层可改的开场规则 (见 load 里的 policy)。"
+          "text": "var segment: Int = 0            // 564 时段: 0 全部 / 1 早(6-10) / 2 午(10-15) / 3 晚(15-22) / 4 深夜"
         }
       ],
       "platformEvidence": {
@@ -62856,7 +62856,7 @@ const DATA = {
           "line": 423,
           "symbol": "dayKeyOfNight(_:)",
           "note": "",
-          "text": "static let builtinRows: [Holiday] = ["
+          "text": "/// 此前 extendedEndHour/holidayExtendOn 组成一条没人走的链 = 设置形同虚设。"
         }
       ],
       "platformEvidence": {

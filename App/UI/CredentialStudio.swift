@@ -1784,7 +1784,7 @@ struct PwdDetailStudio: View {
         } catch {
             // 用函数入口捕获的 kc.mac，不用**活读**的 `mac` 计算属性：两次 await 之间当前锁可能被
             // AppIntent / kf:// 深链改掉，那样成功路径写 A 锁、失败入队却指向 B 锁。
-            app.showToast("锁未连接, 续期已记入待下发队列")   // 365 锁未连接
+            app.showToast("锁未连接 —— 续期只在页面内生效，未写入门锁")   // 365 锁未连接
         }
     }
     private func row(_ k: String, _ v: String) -> some View {

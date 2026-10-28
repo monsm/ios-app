@@ -148,6 +148,25 @@ enum BackupCanonical {
         if let o = meta.otpIdx {
             pairs.append(("otpIdx", .obj([("idx", .num(Double(o.idx))), ("invalidTime", .str(o.invalidTime))])))
         }
+        // 2026-10-28 修复（**数据丢失级**）：`Meta.mobileKeys` 字段早就存在（BackupKit.swift:193，
+        // 注释还写着「缺省 = 这次备份没带」），但这里**从未序列化它** ——
+        // 而 `exportText` 是唯一导出路径 ⇒ 备份文本里根本没有手机钥匙，
+        // 换机恢复后「手机钥匙」全丢（成员手机里的 ekey 还在，本机台账没了，无法吊销也无法重发）。
+        if let mk = meta.mobileKeys, !mk.isEmpty {
+            pairs.append(("mobileKeys", .arr(mk.map { k -> JValue in
+                .obj([
+                    ("id", .str(k.id)),
+                    ("pin", .str(k.pin)),
+                    ("ekey", .str(k.ekey)),
+                    ("memberID", .str(k.memberID)),
+                    ("memberName", .str(k.memberName)),
+                    ("forever", .bool(k.forever)),
+                    ("validFrom", .str(k.validFrom)),
+                    ("validTo", .str(k.validTo)),
+                    ("at", .num(k.at))
+                ])
+            })))
+        }
         return pairs.isEmpty ? .null : .obj(pairs)
     }
     private static func dongleValue(_ d: Dongle) -> JValue {

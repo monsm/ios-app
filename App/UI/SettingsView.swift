@@ -404,7 +404,13 @@ struct SettingsView: View {
         do {
             try await app.lock.ensureConnected(mac: m)
             try await app.lock.pwdClear()
-            DB.saveLedger(m, Ledger()) // 清空本地密码台账 (指纹保留)
+            // 2026-10-28 修复（**数据丢失级**）：原来写 `DB.saveLedger(m, Ledger())` ——
+            // `Ledger()` 的两个字段都是空数组，`fps` 也一起被清空，而同行注释还写着「指纹保留」。
+            // 用户点「清空密码」，指纹台账**连带消失**（锁端指纹仍能开锁，本机档案没了）。
+            // 文案只说「会作废所有成员的密码」，没有任何一句预告指纹会没。
+            var keepLedger = DB.ledger(m)
+            keepLedger.pwds = []              // 只清密码
+            DB.saveLedger(m, keepLedger)      // 指纹（fps）原样保留
             app.showToast("清空密码成功")
         } catch { app.showToast("清空失败: \(error.localizedDescription)") }
     }
@@ -609,7 +615,7 @@ struct SettingsView: View {
         } header: {
             Text("凭证整理")
         } footer: {
-            Text("「成员别名显示」开着时, 有备注名的成员优先显示备注 (如「老妈」), 否则显示称呼。\n版本快照只在本机留存; 需锁端生效的操作保持「待下发」, 到场连接后才真正生效。")
+            Text("「成员别名显示」开着时, 有备注名的成员优先显示备注 (如「老妈」), 否则显示称呼。\n版本快照只在本机留存; 需锁端生效的操作必须到场连接后另行执行，本 App 不排队。")
                 .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)

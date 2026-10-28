@@ -29,7 +29,7 @@ struct CredExtendView: View {
                 Section("统一延期 (\(aliases.count) 条)") {   // 348 统一延期
                     DatePicker("生效", selection: $from, displayedComponents: .date)
                     DatePicker("延期至", selection: $to, in: from..., displayedComponents: .date)
-                    Text("将一次性改写所选密码的过期字段并列出变更清单; 锁端改期记为「待下发」。")
+                    Text("将一次性改写所选密码的**本机**过期字段并列出变更清单。⚠ 不会写入门锁 —— 锁端的有效期要到场后另行下发。")
                         .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
@@ -51,7 +51,7 @@ struct CredExtendView: View {
                     }
                 }
                 Section {
-                    BusyButton(title: "延期并登记待下发", isBusy: busy) {
+                    BusyButton(title: "延期（只改本机）", isBusy: busy) {
                         Task { apply() }   // apply() 是同步方法: 那个 await 什么都没等 (UnnecessaryEffectMarker)
                     }
                 }
@@ -74,7 +74,7 @@ struct CredExtendView: View {
         busy = false
         // 2026-10-27 (D-58)：把"选中了但没找到"的条目如实报出来，不静默跳过
         let extra = r.failed.isEmpty ? "" : " · ⚠ 有 \(r.failed.count) 条已不在台账"
-        app.showToast("已改写 \(r.done.count) 条有效期, 锁端改期待下发" + extra)
+        app.showToast("已改写 \(r.done.count) 条本机有效期（锁端未改动）" + extra)
         _ = Milestones.recordOrganize()
         onDone()
     }
@@ -154,7 +154,7 @@ struct CredDisableSheet: View {
                     }
                 }
                 Section {
-                    Text("不可逆说明: 停用后本机台账移除; 锁端删除记为「待下发」, 到场连接后才会真正失效。本机没有回收站 —— 停用即不可在 App 内恢复, 需要时只能重新录入/生成。")
+                    Text("不可逆说明: 停用只移除**本机台账**。锁端凭证仍然有效 —— 必须到门锁键盘上手动删除才会真正失效。本机没有回收站，停用即不可在 App 内恢复，需要时只能重新录入/生成。")
                         .vkFont(.caption)
                         .foregroundStyle(DS.Palette.danger)
                         .fixedSize(horizontal: false, vertical: true)

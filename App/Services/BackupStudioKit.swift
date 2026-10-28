@@ -328,6 +328,9 @@ enum BackupStudio {
                 if let t = meta.synctime { DB.saveSyncTime(mac, t) }
                 if let o = meta.otpStatus { DB.saveOtpStatus(mac, o) }
                 if let o = meta.otpIdx { DB.saveOtpIdx(mac, o) }
+                // 2026-10-28 修复：`Meta.mobileKeys` 反向也要回写 —— 否则备份带了、恢复不写，
+                // 同一份数据在"导出侧补了序列化"之后仍然进不了本机。
+                if let mk = meta.mobileKeys { MobileKeyService.save(mac, mk) }
             }
             guard act != "keep", let l = d.ledger else { continue }
             var cur = DB.ledger(mac)

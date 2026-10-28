@@ -1524,7 +1524,7 @@ struct CredentialsView: View {
         confirmDestructive("停用密码 #\(p.alias)",
                           // 天数口径：这个 7 天是 **364 的一键恢复窗口**，出处 `CredentialOrg.withinRecoverWindow`
                           //   里写死的 `7 * 86400`，与 497 那个 7~90 天可调的回收站保留期不是同一件事 (所以不读 reclaimDays)。
-                          "停用后本机台账立即移除并收入回收站 — 7 天内可一键恢复, 超期需重新下发; 锁端删除记为「待下发」。",
+                          "停用只移除本机台账（没有回收站，不可恢复）；锁端凭证仍然有效，必须到门锁键盘上手动删除才会真正失效。",
                           confirmTitle: "停用") {
             DB.delPwd(mac, p.alias)
             // 361: 单条停用没有 313 的四选一, 便签如实记"未填", 不编一个原因充数 (要不要补必填见 NEXT-DECISIONS 组5)
@@ -1537,7 +1537,7 @@ struct CredentialsView: View {
         confirmDestructive("停用指纹「\(f.name)」",
                           // 天数口径：同停用密码那一支 —— 7 天是 364 一键恢复窗口 (`withinRecoverWindow` 写死)，
                           //   不是 497 那个可调的回收站保留期。
-                          "停用后本机台账立即移除并收入回收站 — 7 天内可一键恢复, 超期需重新录入; 锁端删除记为「待下发」。",
+                          "停用只移除本机台账（没有回收站，不可恢复）；锁端指纹仍然有效，必须到门锁上手动删除才会真正失效。",
                           confirmTitle: "停用") {
             DB.delFp(mac, f.batch)
             CredentialOrg.markDisabled(mac, kind: "fp", keys: [f.batch], label: "未填", via: disableVia(owner: f.owner))   // 361 同上, 如实记未填; 468 代管时补标注

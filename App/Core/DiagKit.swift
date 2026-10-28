@@ -249,10 +249,13 @@ enum DiagFlags {
 
 
 
-@MainActor
 
 /// 1170 同步读取通知授权状态的载体。
 /// 只写一次 (写完即 signal), 故 @unchecked Sendable 安全 —— 不做跨线程读写交错。
+// 2026-10-28：这里原有一个悬空的 `@MainActor` 修饰 NotifyAuthBox —— 而它是 `@unchecked Sendable`
+// 的跨线程载体（用 DispatchSemaphore 把 async 回调拉回同步），status 必须能从非隔离回调里写。
+// 带 @MainActor 会让 `getNotificationSettings` 的闭包编译失败：
+// 「main actor-isolated property 'status' can not be referenced from a nonisolated context」。
 private final class NotifyAuthBox: @unchecked Sendable {
     var status: UNAuthorizationStatus = .notDetermined
 }

@@ -147,7 +147,7 @@ struct RecDetailSheet: View {
         // 处置留痕的键与 186 备注、585 引用深链是同一份行身份算术 (`RecordOverlay.oid`, 全仓只这一处),
         // 所以这里不再自己拼 "mac#key" —— 告警中心与本页必须认得同一个键。
         let dkey = RecordOverlay.oid(mac: rec.mac, rowKey: rec.key)
-        let disp: RecordSearch.Disposition? = nil   // 2026-10-27 三轮：处置层已删，恒未处置
+        let disp = RecordOverlay.disposition(rec.mac, rec.key)   // 2026-10-28: 接回真实处置存储
         Section {
             HStack(spacing: DS.Space.s) {
                 Image(systemName: "diamond.fill")
@@ -208,10 +208,10 @@ struct RecDetailSheet: View {
             // 726 处置留痕: 结论按钮 (与告警中心同一留痕 API)
             HStack(spacing: DS.Space.s) {
                 Button {
+                    // 2026-10-28：原先只 `tick += 1` —— 界面闪一下又回「未处置」，处置从未落盘。
+                    RecordOverlay.setDisposition(rec.mac, rec.key,
+                        RecordSearch.Disposition(at: Date().timeIntervalSince1970, verdict: "已处置"))
                     tick += 1
-                } label: {
-                    Label(disp != nil ? "已处置 · 更新" : "标记已处置", systemImage: "checkmark.circle")
-                        .vkFont(.footnote, weight: .medium)
                         .foregroundStyle(DS.Palette.accentText)
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -220,8 +220,8 @@ struct RecDetailSheet: View {
 
                 if disp != nil {
                     Button {
+                        RecordOverlay.setDisposition(rec.mac, rec.key, nil)   // 2026-10-28: 真撤销
                         tick += 1
-                    } label: {
                         Label("撤销", systemImage: "arrow.uturn.left")   // 739 撤销
                             .vkFont(.footnote, weight: .medium)
                             .foregroundStyle(DS.Palette.danger)
