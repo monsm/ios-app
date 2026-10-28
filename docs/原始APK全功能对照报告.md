@@ -256,3 +256,45 @@ APK 声明 `clear=1` / `ecdh=2`，但 `ecdh` 在 677KB 的 main.js 里**只有�
 | 8 | `KLV#36` 未解析 | 新固件字段缺失 | P3 |
 
 **结论：以上 8 项都不影响「功能是否存在」，只影响极端条件下的表现或诊断精度。按「原始 APK 除互联网的全部功能都要在 iOS 实现」的口径，功能面已经完整。**
+
+---
+
+## 10. 第三路独立核对（main.js 全量功能提取）
+
+另派一名子代理从 `main.js` 独立提取全部用户可见功能（不依赖 CSV），口径：
+**51 个 `page-*` selector（含 5 个空壳/死页）→ 排除互联网后 72 个业务功能点**。
+
+结论：**iOS 已实现 61 / 部分或偏差 5 / 缺失 6**（61+5+6=72 自校验通过）。
+
+### 已修的 3 项
+
+| # | 项 | 性质 | 修复 |
+|---|---|---|---|
+| 1 | **防尾随档位 off-by-one** | **安全相关** | APK `getCurrentChooseSecond()` 返回索引 2–6 **直接当秒数**；iOS 原来 `ForEach(2...7)` + `seconds-1` ⇒ 选 6 秒实发 5 秒、多出 7 秒档。已改 `2...6` + `setAutoLock(seconds)` |
+| 2 | **「临时密码」快捷格指向介绍页** | 入口错误 | APK `imgClick(3)` → `page-otpgenerate` 直达生成；iOS `QuickPool:132` 原来给 `SafemodeIntroView(mode:"otp")`（纯说明）。已改 `TempCodeStudio()` |
+| 3 | **网关缺三条使用须知** | 文案缺失 | APK `GwstatePage` 三条（五米内/无需配对/只能收状态不能远程操作）。已补到 `GatewayView`，第 2 条按本地口径改写 |
+
+### 复核掉 3 项（不适用）
+
+| 子代理列为 | 核实结果 |
+|---|---|
+| P0 开锁页「钥匙有效期」横幅 | APK 依赖云端 `deviceData.dState/createTime/expireTime`：`dState=1` 是**别人分享的钥匙**、`dState=2` 是钥匙失效。iOS 纯离线没有「分享进来的钥匙」概念，`Device`/`Keychain` 也没有这三个字段（全仓零命中）。iOS 的等价能力在 `MobileKeyView`（手机钥匙「永久 / 自定义到期」已显示）——**架构差异，不是缺口** |
+| 钥匙串「添加未知钥匙」`addOtherKeyChain` | 所在页 `page-keychaindetail` 是**空壳**（子代理自己确认「模板只有 padding 容器」），方法虽在但**不可达** |
+| 钥匙串「按锁查钥」`getNowEKeyInfo` | iOS `DongleView` 的「查看已写入的钥匙」→ `HardwareService.cmd44GetEkeyInfo` 已实现 |
+
+### 仍不适用
+
+- 协议测试页 `page-testlockrom` / RomList：APK `showTest = !1` 硬编码，从未置 true
+- 设备类型列表 `page-devicetypelist`：APK 走云端 `getProductList`（互联网）
+- 网关「更换其他 WiFi」：iOS 无公开 API 直达 WiFi 面板，已加提示
+
+### 反向确认：iOS 独有功能
+
+子代理用 `main.js` 全文计数证明：**记录 / 历史 / 备份 / 二维码 / 自动开锁 / 应用锁 / 胁迫 / 访客 / 长辈 / 主题 / 导出 CSV** 在 APK 里全部 **0 次**。
+
+⇒ iOS 的记录页、备份恢复、应用锁+胁迫码、分享给安卓、凭证工坊、成员中心、AutoOpen、
+手势偏好、外观系统、诊断、`kf://` 深链、电池档案、锁档案、锁钟偏差、只读试验模式、
+固件包本地校验 **全部是 iOS 独有**，不是 APK 移植。
+
+**这条很重要**：之前那份「未修 20 项」清单里 19 项「缺口」正是这一类 —— 它们是 iOS 自己长出来的功能，
+按「原始 APK 除互联网」的口径根本不该算缺口。
