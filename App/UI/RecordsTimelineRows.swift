@@ -2,7 +2,7 @@
 // 2026-10-29 从 RecordsRows.swift（787 行）拆出。
 import SwiftUI
 
-extension RecordsRows {
+extension RecordsView {
     func daySection(_ g: DayGroup) -> some View {
         // 653 生日组头: 该成员生日日 (MM-dd 命中组头日期) → "今日是妈妈的生日"标签
         let bday = g.key.count == 10 ? String(g.key.suffix(5)) : ""

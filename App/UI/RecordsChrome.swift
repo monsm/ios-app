@@ -3,6 +3,7 @@
 import SwiftUI
 
 extension RecordsView {
+    @ToolbarContentBuilder
     var recordsToolbar: some ToolbarContent {
         ToolbarItem(placement: .navigationBarTrailing) {
             // 读取中把刷新按钮换成进度圈, 状态一目了然
