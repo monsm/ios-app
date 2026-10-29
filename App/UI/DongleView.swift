@@ -103,6 +103,13 @@ struct DongleView: View {
 
     @ViewBuilder
     private func dongleSection(_ d: Dongle) -> some View {
+        dongleInfoSection(d)
+        dongleWriteSection(d)
+        dongleUnbindSection(d)
+    }
+
+    /// 头部信息 + 已写入的钥匙清单。
+    private func dongleInfoSection(_ d: Dongle) -> some View {
         Section {
             // 头部信息
             HStack(spacing: DS.Space.s) {
@@ -178,8 +185,10 @@ struct DongleView: View {
                     .vkFont(.caption2)
             }
         }
+    }
 
-        // 写钥 / 删钥
+    /// 写钥 / 删钥。
+    private func dongleWriteSection(_ d: Dongle) -> some View {
         Section {
             if app.devices.isEmpty {
                 Text("本机还没有门锁档案 —— 先添加一把锁，才能给它写钥匙。")
@@ -227,8 +236,10 @@ struct DongleView: View {
                 .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
         }
+    }
 
-        // 解绑
+    /// 从本机解绑。
+    private func dongleUnbindSection(_ d: Dongle) -> some View {
         Section {
             Button(role: .destructive) {
                 DB.removeDongle(d.mac)

@@ -3,7 +3,8 @@
 import SwiftUI
 
 extension RecordsView {
-    func daySection(_ g: DayGroup) -> some View {
+    @ViewBuilder
+    private func daySection(_ g: DayGroup) -> some View {
         // 653 生日组头: 该成员生日日 (MM-dd 命中组头日期) → "今日是妈妈的生日"标签
         let bday = g.key.count == 10 ? String(g.key.suffix(5)) : ""
         let hasAlarm = g.rows.contains(where: \.warn)
@@ -34,6 +35,15 @@ extension RecordsView {
                 .listRowBackground(FlashWash(on: flashKey == r.id))
             }
         } header: {
+            daySectionHeader(g, openN: openN, alarmN: alarmN, hasAlarm: hasAlarm)
+        } footer: {
+            daySectionFooter(dayEnd: dayEnd, dayFull: dayFull, shownEvents: shownEvents)
+        }
+    }
+
+    /// 组头：日期 + 日型色带 + 节假日/补班/含次日凌晨 + 开/警计数徽标 + 农历与使用者小字。
+    @ViewBuilder
+    private func daySectionHeader(_ g: DayGroup, openN: Int, alarmN: Int, hasAlarm: Bool) -> some View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: DS.Space.s) {
                     Text(dayLabel(g.key))
@@ -129,7 +139,11 @@ extension RecordsView {
             .padding(.horizontal, DS.Space.l)
             .padding(.vertical, DS.Space.xs)
             .background(hasAlarm ? DS.Palette.danger.opacity(0.04) : Color.clear)
-        } footer: {
+    }
+
+    /// 组尾：日界收尾标注（只在 ≥2 条的日子出现）。
+    @ViewBuilder
+    private func daySectionFooter(dayEnd: String?, dayFull: Int, shownEvents: Int) -> some View {
             // 593 日界收尾标注: 交代"这一天的边界在哪"，核对当天有没有拉漏时不用再自己数末条。
             // 只在 ≥2 条的日子出现 —— 单条日子的"最晚"就是那条，写出来是噪音不是信息。
             // 显示数与全天数不一致时把「当前显示」也写出来: 同一句话里的两个口径要各归各的名字,
@@ -142,7 +156,6 @@ extension RecordsView {
                     .foregroundStyle(DS.Palette.textSub)
                     .padding(.horizontal, DS.Space.l)
             }
-        }
     }
 
     /// 592 合并行的标签 (从 mergedRow 的 Button label 抽出: 该表达式报 type-check 超时)
