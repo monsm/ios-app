@@ -182,29 +182,10 @@ enum MemberHub {
         /// 久未用 (262 置灰判据): 30 天无可证明归属开门
         var stale: Bool { opens30 == 0 }
     }
-    static func activity(_ id: String) -> Activity {
-        var a = Activity()
-        let now = Date().timeIntervalSince1970
-        let mStart = WeekCal.gregorian.dateInterval(of: .month, for: Date())?.start.timeIntervalSince1970 ?? 0
-        for kc in DB.keychains() {
-            let logs = DB.readLogs(kc.mac).filter { StatsKit.openTypes.contains($0.type) }
-            let status = DB.readStatus(kc.mac)
-            let rows = Attribution.classify(
-                logs: logs.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,
-                                          lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") },
-                pwds: DB.listPwds(kc.mac), fps: DB.listFps(kc.mac),
-                status: status.map { ($0.fpStock, $0.pwdStock, $0.lockTime) })
-            for (i, r) in rows.enumerated() where r.who == id {
-                let unix = ZKProtocol.protoSecondsToUnix(Int64(logs[i].lockTime))
-                if unix >= now - 30 * 86400 { a.opens30 += 1 }
-                if unix >= mStart { a.month += 1 }
-                if logs[i].lockTimeStr > a.last { a.last = logs[i].lockTimeStr }
-            }
-            a.owns += DB.listPwds(kc.mac).filter { $0.owner == id }.count
-            a.owns += DB.listFps(kc.mac).filter { $0.owner == id }.count
-        }
-        return a
-    }
+    // 2026-10-29 删除：`activity(_:)`（单个成员一次全量扫描）已零调用 —— 成员中心与建档向导
+    // 都改用下面的 `activityBundle(_:)`（一次遍历算完全员）。留着它只会让人误以为还有个
+    // 「按成员查」的便宜入口，实际是 O(锁 × 日志) 的重活。
+
 
     /// 一次算完全员的活跃度 + 访客统计（2026-10-29 性能）。
     ///
