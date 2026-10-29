@@ -7,9 +7,13 @@ extension RecordSearch {
     static func buildRecs(macs: [String], includeFails: Bool = true, includeCare: Bool = true) -> [Rec] {
         var out = [Rec]()
         let members = DB.members()
+        // 2026-10-30 性能：`memberName` 原来对每次调用都 `members.first(where:)` 线性查找 ——
+        // 而它在 applyFilter 热路径上（搜索/切锁/刷新都会全量重跑），单锁几百条日志就是几百次线性扫。
+        // 一次建表。
+        let memberNames = Dictionary(members.map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
         func memberName(_ id: String?) -> String? {
             guard let id, !id.isEmpty else { return nil }
-            return members.first(where: { $0.id == id })?.name
+            return memberNames[id]
         }
         for mac in macs {
             let kc = DB.keychain(mac)
