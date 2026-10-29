@@ -45,6 +45,37 @@ enum DF {
     /// `MM-dd HH:mm`（本地时区）。
     static var shortDayTime: DateFormatter { cached("MM-dd HH:mm") }
 
+    /// `DateFormatter.localizedString(from:dateStyle:.none,timeStyle:.medium)` 的缓存版。
+    /// 那个**类方法每次调用都会新建一个 formatter**；本仓有几处在 body / BLE 日志行里调它，
+    /// 设备页每次重算 body 都要白建一个。
+    static func localTime(_ d: Date = Date()) -> String {
+        let key = "DFLOCALTIME"
+        let dict = Thread.current.threadDictionary
+        if let f = dict[key] as? DateFormatter { return f.string(from: d) }
+        let f = DateFormatter()
+        f.dateStyle = .none
+        f.timeStyle = .medium
+        dict[key] = f
+        return f.string(from: d)
+    }
+
+    /// `dateStyle: .short, timeStyle: .short` 的缓存版（如「已验证于 26/10/29 18:00」）。
+    static func localShort(_ d: Date) -> String { localCached("DFLOCALSHORT", d) { f in
+        f.dateStyle = .short; f.timeStyle = .short
+    } }
+    /// `dateStyle: .medium, timeStyle: .none` 的缓存版（如「10月29日」）。
+    static func localDate(_ d: Date) -> String { localCached("DFLOCALDATE", d) { f in
+        f.dateStyle = .medium; f.timeStyle = .none
+    } }
+    private static func localCached(_ key: String, _ d: Date, _ cfg: (DateFormatter) -> Void) -> String {
+        let dict = Thread.current.threadDictionary
+        if let f = dict[key] as? DateFormatter { return f.string(from: d) }
+        let f = DateFormatter()
+        cfg(f)
+        dict[key] = f
+        return f.string(from: d)
+    }
+
     /// ISO8601（不带小数秒）。`ISO8601DateFormatter` 初始化同样昂贵。
     static func iso(_ fractional: Bool = false) -> ISO8601DateFormatter {
         let key = "DFISO|" + (fractional ? "frac" : "plain")

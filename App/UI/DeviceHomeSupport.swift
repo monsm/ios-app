@@ -21,7 +21,7 @@ struct SyncTimeView: View {
                         .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                     LabeledRow("锁钟", app.status?.lockTime.map { ProtoTime.localStr($0) } ?? "—")
-                    LabeledRow("手机时间", DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium))
+                    LabeledRow("手机时间", DF.localTime())
                 } else {
                     Text("请先在设备页选择一把门锁").foregroundStyle(DS.Palette.textSub)
                 }

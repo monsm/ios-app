@@ -39,7 +39,8 @@ final class HardwareService: ObservableObject {
     }
     var debugRaw: Bool { DB.store.getBool("kf_debug_raw") }
     func log(_ msg: String) {
-        let t = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium)
+        // 2026-10-29 性能：DateFormatter.localizedString 每次调用都新建 formatter，而本函数按 BLE 日志行调用。
+        let t = DF.localTime()
         // 与 LockService 同口径脱敏: 帧 hex 内含 ekey / 网关 WiFi SSID+口令明文, 不得进任何可复制的日志数组
         // 2026-10-27 审核恢复：网关 SSID/口令也在帧里，同款脱敏。
         let shown = msg.contains("hex=") ? FrameRedact.apply(msg) : msg

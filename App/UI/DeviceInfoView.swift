@@ -173,8 +173,7 @@ struct DeviceInfoView: View {
         guard let kc else { return "—" }
         let t = LockArchive.meta(kc.mac).verifiedAt
         guard t > 0 else { return "待验证 (成功开一次锁即打标)" }
-        return "已验证 · " + DateFormatter.localizedString(from: Date(timeIntervalSince1970: t),
-                                                           dateStyle: .short, timeStyle: .short)
+        return "已验证 · " + DF.localShort(Date(timeIntervalSince1970: t))
     }
     private var driftText: String {
         guard let d = clockDrift else { return "—" }
@@ -183,8 +182,7 @@ struct DeviceInfoView: View {
     }
     private var batteryDateText: String {
         guard meta.batteryChangedAt > 0 else { return "点击记录" }
-        return DateFormatter.localizedString(from: Date(timeIntervalSince1970: meta.batteryChangedAt),
-                                             dateStyle: .medium, timeStyle: .none)
+        return DF.localDate(Date(timeIntervalSince1970: meta.batteryChangedAt))
     }
     private var sampleText: String {
         // 291 采样时间: 快照与电量采样取最新
