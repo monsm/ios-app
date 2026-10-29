@@ -213,6 +213,16 @@ const checks = [
     file: 'App/Services/BLEService.swift',
     must: ['scanRefLock.withLock { n -> Int in', 'scanRefLock.withLock { $0 = max(0, $0 - 1) }', 'scanRefLock.withLock { $0 += 1 }'],
   },
+  {
+    name: 'R40 DST：快捷档 N 天走 WeekCal.shifted（第 40 轮）',
+    file: 'App/UI/TempCodeStudio.swift',
+    must: ['WeekCal.shifted(from, days: 7)', 'WeekCal.shifted(from, days: 30)'],
+  },
+  {
+    name: 'R41 校时页 syncTicket 世代号（第 41 轮）',
+    file: 'App/UI/DeviceHomeSupport.swift',
+    must: ['syncTicket', 'guard ticket == syncTicket, app.currentMac == m else { return }'],
+  },
 ];
 
 let bad = 0;
