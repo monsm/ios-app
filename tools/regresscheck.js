@@ -223,6 +223,16 @@ const checks = [
     file: 'App/UI/DeviceHomeSupport.swift',
     must: ['syncTicket', 'guard ticket == syncTicket, app.currentMac == m else { return }'],
   },
+  {
+    name: 'R41 outOfWindow 一次解析窗口（第 49 轮性能）',
+    file: 'App/Core/RecordSearchQuery.swift',
+    must: ['struct TempWin { let from: Int64', 'perMac[mac] = wins'],
+  },
+  {
+    name: 'R42 outOfWindow 任一窗内即正常（第 49 轮缺陷）',
+    file: 'App/Core/RecordSearchQuery.swift',
+    must: ['!temps.contains(where: { ts >= $0.from && ts <= $0.to })'],
+  },
 ];
 
 let bad = 0;
