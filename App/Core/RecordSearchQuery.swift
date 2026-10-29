@@ -5,22 +5,28 @@ import Foundation
 extension RecordSearch {
     static func outOfWindow(macs: [String]) -> [OutWin] {
         var out = [OutWin]()
+        // 2026-10-30 性能：临时码窗口先统一解析成秒对（标签也一并拼好）——
+        // 原来在内层对每条开门日志各 parseStamp 两遍：日志 × 凭证 × 2 次字符串解析，
+        // parseStamp 是一次 DateFormatter 解析，300 条日志 × 20 张临时码 = 1.2 万次。
+        // 现在每张临时码只解析一次；日志循环里只剩整数比较。
+        struct TempWin { let from: Int; let to: Int; let label: String }
+        var perMac: [String: [TempWin]] = [:]
         for mac in macs {
             let pws = DB.listPwds(mac).filter { $0.temp }
             guard !pws.isEmpty else { continue }
-            // 2026-10-29 修正：临时码开门在 APK We 表里是 16（旧值 4 是消息中心枚举）。
-            for r in buildRecs(macs: [mac], includeFails: false, includeCare: false) where r.type == 16 {
-                guard let d = dateOf(r) else { continue }
-                let t = d.timeIntervalSince1970
-                for p in pws {
-                    let f = parseStamp(p.from), to = parseStamp(p.to)
-                    guard f > 0, to > 0 else { continue }
-                    let ts = Int(t)
-                    if ts > to || ts < f {
-                        out.append(OutWin(rec: r, window: "约 " + String(p.from.dropFirst(5).prefix(11)) + " – " + String(p.to.dropFirst(5).prefix(11))))
-                        break
-                    }
-                }
+            perMac[mac] = pws.compactMap { p in
+                guard let f = parseStamp(p.from), let to = parseStamp(p.to), f > 0, to > 0 else { return nil }
+                let label = "约 " + String(p.from.dropFirst(5).prefix(11)) + " – " + String(p.to.dropFirst(5).prefix(11))
+                return TempWin(from: f, to: to, label: label)
+            }
+        }
+        // 2026-10-29 修正：临时码开门在 APK We 表里是 16（旧值 4 是消息中心枚举）。
+        for r in buildRecs(macs: macs, includeFails: false, includeCare: false) where r.type == 16 {
+            guard let d = dateOf(r), let temps = perMac[r.mac], !temps.isEmpty else { continue }
+            let ts = Int(d.timeIntervalSince1970)
+            // 这条开门落在**任一**临时码窗口内 = 正常；全都不在窗内才报越界（取第一条窗口做展示）
+            if !temps.contains(where: { ts >= $0.from && ts <= $0.to }) {
+                out.append(OutWin(rec: r, window: temps[0].label))
             }
         }
         return out.sorted { $0.rec.timeStr > $1.rec.timeStr }
