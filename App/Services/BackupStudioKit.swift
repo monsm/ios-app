@@ -362,7 +362,7 @@ enum BackupStudio {
     }
 
     /// 导入成员并建立「旧 id → 本机 id」映射（恢复包里的凭证 owner 要按这个 remap 重写）。
-    private func importMembers(_ members: [Member], remap: inout [String: String]) {
+    private static func importMembers(_ members: [Member], remap: inout [String: String]) {
             for m in members {
                 if let hit = DB.members().first(where: { $0.name == m.name }) {
                     remap[m.id] = hit.id
