@@ -60,6 +60,18 @@ extension DB {
         get(LogCache.self, "kf_logcache_" + mac)?.logs ?? []
     }
 
+    /// 2026-10-30 性能：`readLogs(mac).count` 的专用口 —— 只数条数，不解码每一条。
+    /// 实现直接用 `JSONSerialization` 取根数组的 count（LogCache 的 logs 就是根下第一个数组），
+    /// 不走 Codable：`readLogs` 的成本是「300 条 CachedLog 逐条解码」，这里的成本只是解析一遍结构。
+    /// 调用方：warmLocks（多锁预热排序，每把锁一次）。
+    static func readLogCount(_ mac: String) -> Int {
+        guard let d = UserDefaults.standard.data(forKey: "kf.kf_logcache_" + mac),
+              let root = try? JSONSerialization.jsonObject(with: d) as? [String: Any],
+              let logs = root["logs"] as? [Any] else { return 0 }
+        return logs.count
+    }
+
+
     // 配置记忆
     static func defend(_ mac: String) -> DefendCfg? { get(DefendCfg.self, "kf_defend_" + mac) }
 

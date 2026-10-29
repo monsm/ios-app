@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T18:36:29.053Z",
+    "generated": "2026-10-29T18:46:48.925Z",
     "sources": [
       {
         "scout": "android-native",
@@ -4723,7 +4723,7 @@
           "line": 370,
           "symbol": "startDeadWatch()",
           "note": "",
-          "text": "}"
+          "text": "Self.saveRssi(mac: target, rssi: f.rssi)"
         },
         {
           "platform": "ios",
@@ -4731,7 +4731,7 @@
           "line": 380,
           "symbol": "deadbeatCheck()",
           "note": "",
-          "text": "static func saveRssi(mac: String, rssi: Int) {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -4739,7 +4739,7 @@
           "line": 385,
           "symbol": "idle > 600 && 间隔 > 300",
           "note": "",
-          "text": "}"
+          "text": "LinkSense.shared.updateRssi(rssi)"
         },
         {
           "platform": "ios",
@@ -4747,7 +4747,7 @@
           "line": 404,
           "symbol": "kf_wd_heals + 1",
           "note": "",
-          "text": "let ble = BLEService.shared"
+          "text": "coldScanTask?.cancel()"
         }
       ],
       "platformEvidence": {
@@ -4823,7 +4823,7 @@
           "line": 419,
           "symbol": "struct FailKind",
           "note": "",
-          "text": "}"
+          "text": "while Date() < deadline {"
         },
         {
           "platform": "ios",
@@ -4831,7 +4831,7 @@
           "line": 425,
           "symbol": "icon 计算属性",
           "note": "",
-          "text": "if let a = ZKProtocol.parseAdv(adv.advertisHex), let disp = a.macDisplay,"
+          "text": "for adv in ble.allDiscovered() {"
         },
         {
           "platform": "ios",
@@ -4839,7 +4839,7 @@
           "line": 435,
           "symbol": "classifyFailure",
           "note": "",
-          "text": "} catch {"
+          "text": "DB.store.set(\"kf_link_env\", seen)"
         }
       ],
       "platformEvidence": {
@@ -4984,7 +4984,7 @@
           "line": 152,
           "symbol": "信号围栏拦截",
           "note": "",
-          "text": ""
+          "text": ".prefix(max(1, limit))"
         },
         {
           "platform": "ios",
@@ -4992,7 +4992,7 @@
           "line": 168,
           "symbol": "近场轻提醒",
           "note": "",
-          "text": "try await lockSvc.ensureConnected(mac: mac)"
+          "text": "let dev = try await scan(mac: mac, timeoutMs: 6000)"
         },
         {
           "platform": "ios",
@@ -5000,7 +5000,7 @@
           "line": 174,
           "symbol": "DiagOps.record 预握手",
           "note": "",
-          "text": "} catch {"
+          "text": "markReady(ms: ms, rssi: lastRssi)"
         }
       ],
       "platformEvidence": {
@@ -5167,7 +5167,7 @@
           "line": 258,
           "symbol": "ladderSeconds",
           "note": "",
-          "text": "try? await Task.sleep(for: .seconds(60))"
+          "text": "guard deadWatchTask == nil else { return }"
         },
         {
           "platform": "ios",
@@ -5175,7 +5175,7 @@
           "line": 290,
           "symbol": "autoReconnectTick",
           "note": "",
-          "text": "BleTelemetry.recordEvent(\"会话重协商失败\", ok: false)"
+          "text": "DB.store.set(\"kf_wd_heals\", DB.store.getInt(\"kf_wd_heals\", 0) + 1)"
         },
         {
           "platform": "ios",
@@ -5183,7 +5183,7 @@
           "line": 315,
           "symbol": "pendingCount > 0 才回连",
           "note": "",
-          "text": "case \"占用类\": return \"person.2.slash\""
+          "text": "switch name {"
         },
         {
           "platform": "ios",
@@ -5191,7 +5191,7 @@
           "line": 338,
           "symbol": "失败 attempt 递增封顶",
           "note": "",
-          "text": ""
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -5266,7 +5266,7 @@
           "line": 185,
           "symbol": "func refresh()",
           "note": "",
-          "text": "// ---------- 126 回连节律: 5/15/30/60/90 秒梯度, 仅有排队变更的锁才自动回连 ----------"
+          "text": "// 2026-10-26 精简：resync（到场/回前台自动补发队列）已删 —— 队列功能整套移除。"
         },
         {
           "platform": "ios",
@@ -5274,7 +5274,7 @@
           "line": 189,
           "symbol": "已连接直接 markReady",
           "note": "",
-          "text": "LinkSense.ladderSeconds[min(max(reconnectAttempt, 0), LinkSense.ladderSeconds.count - 1)]"
+          "text": "static let ladderSeconds: [Double] = [5, 15, 30, 60, 90]"
         }
       ],
       "platformEvidence": {
@@ -5337,7 +5337,7 @@
           "line": 213,
           "symbol": "onPreconnectDone()",
           "note": "",
-          "text": "// 否则退后台后那轮扫描还要跑满 6~10s 超时才自然停。"
+          "text": "} else {"
         },
         {
           "platform": "ios",
@@ -5345,7 +5345,7 @@
           "line": 221,
           "symbol": "resync(mac:from:)",
           "note": "",
-          "text": "sessionSince = Date()"
+          "text": "/// 98 用户主动路径 (圆盘开锁前 ensureConnected) 标记为\"即连\", 解释快慢差异"
         },
         {
           "platform": "ios",
@@ -5353,7 +5353,7 @@
           "line": 242,
           "symbol": "lastReceipt",
           "note": "",
-          "text": "reconnectAttempt = 0"
+          "text": "func markReady(ms: Int?, rssi: Int?) {"
         },
         {
           "platform": "ios",
@@ -5361,7 +5361,7 @@
           "line": 253,
           "symbol": "applyQueueItem → CredentialOrg.sendQueued",
           "note": "",
-          "text": "// 连接保持但 10 分钟无刷新标记, 且当前有待下发/正在使用 → 主动重协商一次。"
+          "text": "// 现役的自愈就是本层: 60s 一拍巡检 (:309 的 deadbeatCheck), 挂起 >10 分钟且**有待下发项**才重协商一次。"
         }
       ],
       "platformEvidence": {
@@ -7183,7 +7183,7 @@
           "line": 151,
           "symbol": "fence 判定",
           "note": "",
-          "text": "}"
+          "text": ".sorted { $0.1 > $1.1 }"
         },
         {
           "platform": "ios",
@@ -7274,7 +7274,7 @@
           "line": 492,
           "symbol": "func scan(mac:timeoutMs:)",
           "note": "",
-          "text": "/// 而写入只在主 actor 的 onAppear。本仓既有约定是「读一次拿局部引用, 不缓存跨调用」,"
+          "text": "extension AppState {"
         },
         {
           "platform": "ios",
@@ -7282,7 +7282,7 @@
           "line": 504,
           "symbol": "300ms 轮询 + 取消判据",
           "note": "",
-          "text": "guard let r = rssi else { return 0 }"
+          "text": "extension LinkSense {"
         },
         {
           "platform": "ios",
@@ -7290,7 +7290,7 @@
           "line": 519,
           "symbol": "noteScannedRssi",
           "note": "",
-          "text": ""
+          "text": "/// 64 三态链路胶囊 (hero 渐变专用白字变体): 已连接(绿)/握手中(白+转)/未连接(灰白)。"
         },
         {
           "platform": "ios",
@@ -59274,7 +59274,7 @@
           "line": 169,
           "symbol": "DS.Haptics.tick 调用点",
           "note": "",
-          "text": "let ms = Int((CFAbsoluteTimeGetCurrent() - t0) * 1000)"
+          "text": "if let rssi = dev?.rssi { updateRssi(rssi) }"
         },
         {
           "platform": "ios",
@@ -59298,7 +59298,7 @@
           "line": 327,
           "symbol": "success 结果触感",
           "note": "",
-          "text": "// (LockService:282/:498、HardwareService:236/:246), 所以错误串命中 rc 表文案 = 锁端拒绝了指令。"
+          "text": "return FailKind(name: \"蓝牙类\", hint: \"检查系统蓝牙开关与权限, 开关一次蓝牙再试\")"
         }
       ],
       "platformEvidence": {

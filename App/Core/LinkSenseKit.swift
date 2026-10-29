@@ -143,8 +143,11 @@ final class LinkSense: ObservableObject {
     }
     /// 276 常用锁 (按本机缓存里的日志行数排): 预连只盯它们, 不是把全部锁都扫一遍
     static func warmLocks(limit: Int) -> [String] {
+        // 2026-10-30 性能：这里只需要「每把锁日志缓存的条数」，不需要解码每一条 ——
+        // 原来的 DB.readLogs(mac).count 会把每把锁整份 LogCache（≤300 条）解码成结构体再数数。
+        // readLogCount 直接用「JSON 数组长度」从原始字节量出来，零条目解码。
         DB.keychains()
-            .map { ($0.mac, DB.readLogs($0.mac).count) }
+            .map { ($0.mac, DB.readLogCount($0.mac)) }
             .sorted { $0.1 > $1.1 }
             .prefix(max(1, limit))
             .map { $0.0 }
