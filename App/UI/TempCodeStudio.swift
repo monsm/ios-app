@@ -151,8 +151,11 @@ struct TempCodeStudio: View {
                     HStack(spacing: DS.Space.xs) {
                         quickPill("1 小时") { from = Date(); to = Date().addingTimeInterval(3600) }
                         quickPill("今天内") { from = Date(); to = TimeFormat.dayEnd() }   // 终点单一出口 (520/828)
-                        quickPill("7 天") { from = Date(); to = Date().addingTimeInterval(7 * 86400) }
-                        quickPill("30 天") { from = Date(); to = Date().addingTimeInterval(30 * 86400) }
+                        // 2026-10-30 修复（日历日）：「7 天/30 天」的语义是**日历日**，
+                        // 原实现用 24 小时×7/30 —— 夏令时切换日会差一小时（§10.33 同款）。
+                        // 走 WeekCal.shifted（日历日唯一出口）。
+                        quickPill("7 天") { from = Date(); to = WeekCal.shifted(from, days: 7) }
+                        quickPill("30 天") { from = Date(); to = WeekCal.shifted(from, days: 30) }
                     }
                     HStack(spacing: DS.Space.s) {
                         Text(isoShort(from, prefix: "生效 "))

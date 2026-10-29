@@ -294,7 +294,8 @@ struct PwdDetailStudio: View {
         defer { renewing = false }
         let f = DF.cached("yyyy-MM-dd HH:mm:ss")
         let fromS = f.string(from: Date())
-        let toS = f.string(from: Date().addingTimeInterval(7 * 86400))
+        // 2026-10-30 修复（日历日）：续期「+7 天」的语义是日历日，原 24 小时×7 在夏令时切换日差一小时。
+        let toS = f.string(from: WeekCal.shifted(Date(), days: 7))
         do {
             try await app.lock.ensureConnected(mac: kc.mac)
             let alias = try await app.lock.pwdModify(alias: p.alias, pwd: v, validFrom: fromS, validTo: toS)
