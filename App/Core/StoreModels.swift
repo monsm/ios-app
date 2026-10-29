@@ -175,6 +175,8 @@ struct StatusSnapshot: Codable {
 
     enum CodingKeys: String, CodingKey { case at, status }
 
+    init(at: Double, status: StatusSnapshotData) { self.at = at; self.status = status }
+
     /// 容错解码（2026-10-29）：缺字段回落默认值。
     /// 合成解码器对非 Optional 字段要求键必须存在 —— 持久化模型都靠"加字段不破坏老数据"演进，
     /// 所以凡是走 `get(...)` / `setCodable(...)` 的模型都显式写一份。
@@ -209,6 +211,17 @@ struct StatusSnapshotData: Codable, Equatable {
     var fpCap: Int?
 
     enum CodingKeys: String, CodingKey { case rc, powerLevel, firmware, lockTime, pinStock, pwdStock, fpStock, verifyMode, broadcastMode, tempPwdMode, securityLevel, sKeyStatus, zotpPeriod, pinCap, pwdCap, fpCap }
+
+    init(rc: Int = 0, powerLevel: Int = 0, firmware: String = "", lockTime: Int64 = 0,
+         pinStock: Int = 0, pwdStock: Int = 0, fpStock: Int = 0, verifyMode: Int = 0,
+         broadcastMode: Int = 0, tempPwdMode: Int = 0, securityLevel: Int = 0, sKeyStatus: Int = 0,
+         zotpPeriod: Int? = nil, pinCap: Int? = nil, pwdCap: Int? = nil, fpCap: Int? = nil) {
+        self.rc = rc; self.powerLevel = powerLevel; self.firmware = firmware; self.lockTime = lockTime
+        self.pinStock = pinStock; self.pwdStock = pwdStock; self.fpStock = fpStock
+        self.verifyMode = verifyMode; self.broadcastMode = broadcastMode; self.tempPwdMode = tempPwdMode
+        self.securityLevel = securityLevel; self.sKeyStatus = sKeyStatus
+        self.zotpPeriod = zotpPeriod; self.pinCap = pinCap; self.pwdCap = pwdCap; self.fpCap = fpCap
+    }
 
     /// 容错解码（2026-10-29）：缺字段回落默认值。
     /// 合成解码器对非 Optional 字段要求键必须存在 —— 持久化模型都靠"加字段不破坏老数据"演进，
