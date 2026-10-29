@@ -4,7 +4,7 @@ import SwiftUI
 
 extension RecordsView {
     @ViewBuilder
-    private func daySection(_ g: DayGroup) -> some View {
+    func daySection(_ g: DayGroup) -> some View {
         // 653 生日组头: 该成员生日日 (MM-dd 命中组头日期) → "今日是妈妈的生日"标签
         let bday = g.key.count == 10 ? String(g.key.suffix(5)) : ""
         let hasAlarm = g.rows.contains(where: \.warn)
