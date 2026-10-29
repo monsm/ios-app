@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T15:23:45.018Z",
+    "generated": "2026-10-29T15:35:56.162Z",
     "sources": [
       {
         "scout": "android-native",
@@ -25537,7 +25537,7 @@
           "line": 178,
           "symbol": "noLockPlaceholder",
           "note": "无锁占位「去添加门锁」",
-          "text": "/// 可复制（发给管理员/记进工单）。"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -25545,7 +25545,7 @@
           "line": 233,
           "symbol": "recordsToolbar",
           "note": "右上工具栏与「更多」菜单",
-          "text": "//   · 其余全部**收进\"更多\"或移到列表之后**: 生日条 / 成员 chip / 门神 / 掉电观察 / 去年今日"
+          "text": "//   · **常驻 3 个**: 今日摘要 / 范围(当前锁·全部锁) / 搜索"
         },
         {
           "platform": "ios",
@@ -25553,7 +25553,7 @@
           "line": 355,
           "symbol": "recordsChrome",
           "note": "NavigationStack + 全部 sheet/alert 挂载点",
-          "text": "l.lockTimeStr.count >= 10 && String(l.lockTimeStr.dropFirst(5).prefix(5)) == key"
+          "text": "let key = DF.cached(\"MM-dd\").string(from: last)"
         }
       ],
       "platformEvidence": {
@@ -25646,7 +25646,7 @@
           "line": 376,
           "symbol": "recordsChrome",
           "note": "父级：sheet(item: $detailRec) 传 displayedRecs",
-          "text": "Button {"
+          "text": "var jumpBackRow: some View {"
         },
         {
           "platform": "ios",
@@ -25965,7 +25965,7 @@
           "line": 433,
           "symbol": "searchBar",
           "note": "占位文案与绑定",
-          "text": "static func recTitle(_ r: Rec) -> String {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -25989,7 +25989,7 @@
           "line": 345,
           "symbol": "onChange(searchText)",
           "note": "562 边输入边过滤",
-          "text": "}"
+          "text": ".vkFont(.caption)"
         }
       ],
       "platformEvidence": {
@@ -26081,7 +26081,7 @@
           "line": 250,
           "symbol": "recordsToolbar",
           "note": "入口：更多菜单",
-          "text": "// 在这个从未编译过的工程里做结构性改动的风险不对等 → 记入需编译器清单, 这里先给可用能力。"
+          "text": "// 187 按月跳转 (等价实现): 选月即只看该月, 顶部有清除口。"
         }
       ],
       "platformEvidence": {
@@ -26153,7 +26153,7 @@
           "line": 374,
           "symbol": "recordsChrome",
           "note": "入口：filters.alarmKinds 绑定",
-          "text": "var jumpBackRow: some View {"
+          "text": "/// 136 补充 跨页跳回: 记录/告警页一键跳回设备页定位该锁"
         }
       ],
       "platformEvidence": {
@@ -26219,7 +26219,7 @@
           "line": 306,
           "symbol": "onChange(pending*)",
           "note": "六个深链入口",
-          "text": "let memberNames = Dictionary(DB.members().map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })"
+          "text": "var out = [\"日期,时间,内容,成员,锁\"]"
         },
         {
           "platform": "ios",
@@ -26667,7 +26667,7 @@
           "line": 248,
           "symbol": "recordsToolbar",
           "note": "入口：更多菜单",
-          "text": "// 187 按月跳转 (等价实现): 选月即只看该月, 顶部有清除口。"
+          "text": "// 正是防「把未拉全说成已拉全」那个假安慰的。现在接上显示。"
         },
         {
           "platform": "ios",
@@ -27300,7 +27300,7 @@
           "line": 188,
           "symbol": "mainList",
           "note": "List 结构与区块顺序",
-          "text": "if let gap = pullGap {"
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         },
         {
           "platform": "apk",
@@ -27316,7 +27316,7 @@
           "line": 227,
           "symbol": "scrollPosition(id:)",
           "note": "行级滚动锚",
-          "text": "//   emptyHint / runningRow / dropWatchSection / lastYearTodayRow"
+          "text": "//   scopeRow / searchBar / monthJumpRow /"
         },
         {
           "platform": "ios",
@@ -27541,7 +27541,7 @@
           "line": 216,
           "symbol": "mainList",
           "note": "monthJump/dayFocus 双重收窄",
-          "text": "Section {"
+          "text": "// 于是用户看到的是「未连接」+ 一堆记录，却不知道这些是本机缓存、更不知道读取时间。"
         }
       ],
       "platformEvidence": {
@@ -27701,7 +27701,7 @@
           "line": 249,
           "symbol": "recordsToolbar",
           "note": "入口：更多菜单",
-          "text": "// 原设计的\"月份滚轮 + scrollTo\"需把 List 包进 ScrollViewReader 并移动整条修饰符链,"
+          "text": "if !reconLine.isEmpty { reconRow }"
         }
       ],
       "platformEvidence": {
@@ -27845,7 +27845,7 @@
           "line": 333,
           "symbol": "onChange(scope)",
           "note": "切范围重置全部检索态",
-          "text": "var lastYearTodayRow: some View {"
+          "text": "/// 数据源就是本机日志缓存 (≤300 条), 所以只有\"这一年里本机读到过\"才可能出现; 没读到就不出现, 不假装。"
         },
         {
           "platform": "ios",
@@ -27853,7 +27853,7 @@
           "line": 392,
           "symbol": "macs",
           "note": "范围 → 锁列表",
-          "text": "guard let t = Double(raw), t > 0 else { return nil }"
+          "text": "func lastSyncAt() -> Date? {"
         },
         {
           "platform": "ios",
@@ -60722,7 +60722,7 @@
           "line": 44,
           "symbol": "QueryFilters.load",
           "note": "构造时按锁读",
-          "text": "/// Attribution 分类 + 分组 + 补缺口）。快速输入 10 个字就是 10 次全量重建。"
+          "text": "@State var searchText = \"\""
         },
         {
           "platform": "ios",
@@ -60730,7 +60730,7 @@
           "line": 289,
           "symbol": "onChange(filters)",
           "note": "差异才落盘",
-          "text": "// 2026-10-26 精简：「失败筛选」说明与「清空本机失败标记」已删（用户确认）。"
+          "text": "if !filters.alarmKinds.isEmpty { n += 1 }"
         },
         {
           "platform": "ios",

@@ -27,6 +27,8 @@ struct RecordsView: View {
     @State var rows: [RowVM] = []
     @State var allRows: [RowVM] = []
     @State var running = false
+    /// 2026-10-29：fetch 的世代号 —— 只有最新那次有权复位 running（见 RecordsRows.fetch 头注释）。
+    @State var fetchTicket = 0
     @State var offline = false
     // 18/187 日期快速滚动锚 = 按月跳转 (同一实现，两编号别再各做一个): 筛除式而不是滚动锚定 ——
     // 把 List 包进 ScrollViewReader 要移动整条修饰符链，本机没有编译器时那条重构的代价大于收益。

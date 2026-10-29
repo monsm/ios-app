@@ -213,7 +213,19 @@ extension RecordsView {
     // 2026-10-27 二轮精简：loadFromCache 已删（HotCache 移除后无缓存可读）。
 
     func fetch() async {
-        guard !running, let kc = app.current else { return }
+        // 2026-10-29 并发：`guard !running` + `running = true` 在 MainActor 上是原子的，
+        // 但**同一个按钮连点两次**会各自起一个 Task，第二个在第一个 `running = true` 之后
+        // 才真正进入函数体 —— 那时 guard 已能拦住，所以这里够用；
+        // 真正需要防的是「第一次 fetch 还没跑完，用户切了锁」—— 那种情况下
+        // 第二次 fetch 用新 kc 覆盖 running，第一次结束时的 `running = false` 会把
+        // 第二次的守卫提前解掉。用一个自增序号把「过期的那次」直接丢弃。
+        // 2026-10-29 补：并发的第二次 fetch 直接丢弃 —— 否则两次分页会互相覆盖 seen/startIdx，
+        // 还可能各写一次 DB.writeLogs（合并语义下不会丢数据，但会重复拉 20 页）。
+        guard !running else { return }
+        guard let kc = app.current else { return }
+        let ticket = fetchTicket + 1
+        fetchTicket = ticket
+        defer { if fetchTicket == ticket { running = false } }
         running = true
         offline = false
         var events = [LogEntry]()
@@ -288,7 +300,7 @@ extension RecordsView {
                 app.showToast("读取失败: \(error.localizedDescription)")
             }
         }
-        running = false
+        // running 由 defer 复位（只有"最新那次"才有权复位，见函数头注释）。
         // 876 新条目双震: 本次读取有新增记录时两段 success 触感 (听障确认通道, 设置可关)
         if !events.isEmpty { AXTools.newEntryHaptic() }
     }
