@@ -241,7 +241,7 @@ struct SettingsView: View {
             //    **不给 go** —— 给一个空的 go 会让人以为点搜索就直接进页面，实际只滚动。
             SearchHit(id: "s.defend", title: "布防 (时段内否决自动开锁)", icon: "shield.lefthalf.filled", anchor: .lock),
             SearchHit(id: "s.mobilekey", title: "手机钥匙 (给成员发数字钥匙)", icon: "iphone.gen3.badge.key", anchor: .family),
-            SearchHit(id: "s.dfu", title: "固件升级 (Nordic DFU, 在「家人与钥匙」段)", icon: "arrow.up.circle", anchor: .family),
+            SearchHit(id: "s.dfu", title: "固件升级 (Nordic DFU)", icon: "arrow.up.circle", anchor: .lock),
             SearchHit(id: "s.trialguard", title: "只读试验模式 (真机排障只看不改)", icon: "eye.slash", anchor: .tools),
             // 2026-10-28 删除：`s.safemode`「门锁安全模式」—— 那个 Section 已于 81c1432 删除
             // （纯说明无入口），搜索项却留着，点进去滚到 unlock 段也没有任何「安全模式」内容。
@@ -354,6 +354,16 @@ struct SettingsView: View {
                         }
                     }
                     note("时段内一票否决自动开锁；布防期间靠近门锁不会自动开门。")
+                // 2026-10-29 移位置：`canDeviceUpgrade` 原本挂在「凭证与成员」段的成员管理里 ——
+                // 但「固件升级」是**锁**的能力（cmd22 + Nordic DFU），不是成员的能力。
+                // 放在成员段里，用户会在锁段里找「固件升级」而找不到。移到锁段、紧挨布防/防尾随。
+                if PidMap.canDeviceUpgrade(app.current?.pid ?? 0) {
+                    NavigationLink {
+                        DFUView()
+                    } label: {
+                        Label("固件升级", systemImage: "arrow.up.circle")
+                    }
+                }
                 }
                 if canClearPwd {
                     Button("清空密码", role: .destructive) { clearPwd() }
@@ -568,15 +578,6 @@ struct SettingsView: View {
     @ViewBuilder
     private var memberFamilyRows: some View {
         Button { showMembers = true } label: { Label("成员管理（含成员中心）", systemImage: "person.2") }
-        // 包9 固件升级 (cmd22 + Nordic DFU): 原版 APK 有完整 OTA, iOS 此前把 DFU 逻辑整体删掉只剩包解析。
-        // 门禁用 canDeviceUpgrade (与 APK 同源), 防网关/钥匙串误入。
-        if PidMap.canDeviceUpgrade(app.current?.pid ?? 0) {
-            NavigationLink {
-                DFUView()
-            } label: {
-                Label("固件升级", systemImage: "arrow.up.circle")
-            }
-        }
         // 包9 手机钥匙 (41/43/44 的成员侧): 与「蓝牙钥匙串」并列 ——
         // 前者是把钥匙写进随身硬件, 后者是把 ekey 发给成员的手机, 归属对象不同, 不能合并成一条。
         NavigationLink {

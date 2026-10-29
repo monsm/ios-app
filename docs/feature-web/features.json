@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T01:44:15.779Z",
+    "generated": "2026-10-29T01:54:58.797Z",
     "sources": [
       {
         "scout": "android-native",
@@ -19125,7 +19125,7 @@
           "line": 375,
           "symbol": "pwdClear",
           "note": "",
-          "text": "private var muteStored: Bool {"
+          "text": "Button(\"删除设备\", role: .destructive) { deleteDevice() }"
         }
       ],
       "platformEvidence": {
@@ -29332,7 +29332,7 @@
           "line": 575,
           "symbol": "Button { showBackup = true } label: { Label(\"备份与恢复\") }",
           "note": "",
-          "text": "DFUView()"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -33465,7 +33465,7 @@
           "line": 828,
           "symbol": "footer: 主题、品牌色（六套）、密度、圆角 …",
           "note": "",
-          "text": "Picker(\"圆角\", selection: Binding("
+          "text": "// 圆角档位 (900): 只动卡片/控件/格子三档，胶囊不参与"
         },
         {
           "platform": "ios",
@@ -33473,7 +33473,7 @@
           "line": 936,
           "symbol": "resetAppearance()",
           "note": "",
-          "text": "// 905 快捷格\"十一选六\" (921 加了\"再开一次\") + 1047 常用动作排前。"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         },
         {
           "platform": "ios",
@@ -33928,7 +33928,7 @@
           "line": 945,
           "symbol": "aboutSection",
           "note": "",
-          "text": "if on { if !ids.contains(a.id) { ids.append(a.id) } }"
+          "text": "var ids = QuickPool.selected.map { $0.id }"
         },
         {
           "platform": "ios",
@@ -33936,7 +33936,7 @@
           "line": 969,
           "symbol": "Button { versionTaps += 1; if versionTaps >= 10 … }",
           "note": "",
-          "text": ".map { \"\\($0.label) \\(c[$0.id]!) 次\" }.joined(separator: \" · \"))"
+          "text": ": \"已记录: \" + QuickPool.all.filter { c[$0.id] != nil }"
         },
         {
           "platform": "ios",
@@ -33944,7 +33944,7 @@
           "line": 1003,
           "symbol": "aboutFooterText",
           "note": "",
-          "text": "VariantToggle(\"双击防抖 (0.3 秒内忽略重复触发)\", isOn: Binding("
+          "text": "set: { app.setUnlockOption(\"kf_bigtile\", $0) }))"
         }
       ],
       "platformEvidence": {
@@ -34012,7 +34012,7 @@
           "line": 582,
           "symbol": "applockSection",
           "note": "",
-          "text": "NavigationLink {"
+          "text": "// 前者是把钥匙写进随身硬件, 后者是把 ekey 发给成员的手机, 归属对象不同, 不能合并成一条。"
         },
         {
           "platform": "ios",
@@ -34020,7 +34020,7 @@
           "line": 610,
           "symbol": "alert message: 4 位以上纯数字 (随机键位需要数字键盘 …)",
           "note": "",
-          "text": "get: { CredentialOrg.quota(mac) },"
+          "text": "Stepper(\"每个凭证保留 \\(CredentialOrg.quota(mac)) 个历史版本\", value: Binding(   // 491 历史版本配额"
         },
         {
           "platform": "ios",
@@ -34028,7 +34028,7 @@
           "line": 617,
           "symbol": "guard !f1.isEmpty, f1 == f2 else { showToast(\"两次输入不一致\") }",
           "note": "",
-          "text": "VariantToggle(\"成员别名显示\", isOn: Binding("
+          "text": "// 语义说明挪进本节 footer，标签回归一行 (截图里折行撑歪开关就是这条)。"
         }
       ],
       "platformEvidence": {
@@ -34096,7 +34096,7 @@
           "line": 501,
           "symbol": "autoOpenSection",
           "note": "",
-          "text": "VariantToggle(\"双击直开 (绕过按住确认)\", isOn: Binding("
+          "text": "set: { app.setUnlockOption(\"kf_gesture_mode\", $0) })) {"
         },
         {
           "platform": "ios",
@@ -34166,7 +34166,7 @@
           "line": 508,
           "symbol": "familySection",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": "// 2026-10-28：原说明文字讲的是两个不存在的档位，随档位一起删。"
         },
         {
           "platform": "ios",
@@ -34174,7 +34174,7 @@
           "line": 525,
           "symbol": "Button { showMembers = true } label: { Label(\"成员管理（含成员中心）\") }",
           "note": "",
-          "text": "// 拆成两节只会让人在「安全」里找不到能点的东西。"
+          "text": "set: { app.setUnlockOption(\"kf_dial_size\", $0) })) {"
         },
         {
           "platform": "ios",
@@ -34182,7 +34182,7 @@
           "line": 532,
           "symbol": "Label(\"未归属记录认领\")",
           "note": "",
-          "text": ".fixedSize(horizontal: false, vertical: true)"
+          "text": "Text(\"开锁\")"
         }
       ],
       "platformEvidence": {
@@ -34388,7 +34388,7 @@
           "line": 423,
           "symbol": "timeSection",
           "note": "",
-          "text": ""
+          "text": "// 2026-10-28 修复（**数据丢失级**）：原来写 `DB.saveLedger(m, Ledger())` ——"
         },
         {
           "platform": "ios",
@@ -34396,7 +34396,7 @@
           "line": 425,
           "symbol": "Picker(\"时间制式\", selection:)",
           "note": "",
-          "text": "guard let kc = app.current else { return }"
+          "text": "// 用户点「清空密码」，指纹台账**连带消失**（锁端指纹仍能开锁，本机档案没了）。"
         },
         {
           "platform": "ios",
@@ -34404,7 +34404,7 @@
           "line": 432,
           "symbol": "VariantToggle(\"显示秒\", isOn:)",
           "note": "",
-          "text": "if pws + fps + recs > 0 {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -34471,7 +34471,7 @@
           "line": 573,
           "symbol": "toolsSection",
           "note": "",
-          "text": "if PidMap.canDeviceUpgrade(app.current?.pid ?? 0) {"
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         },
         {
           "platform": "ios",
@@ -34479,7 +34479,7 @@
           "line": 575,
           "symbol": "Button { showBackup = true } label: { Label(\"备份与恢复\") }",
           "note": "",
-          "text": "DFUView()"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -34487,7 +34487,7 @@
           "line": 578,
           "symbol": "NavigationLink(\"诊断与运行日志\") { DiagnosticsView() }",
           "note": "",
-          "text": "}"
+          "text": "@ViewBuilder"
         }
       ],
       "platformEvidence": {
@@ -34554,7 +34554,7 @@
           "line": 445,
           "symbol": "unlockSection",
           "note": "",
-          "text": "// 2026-10-27 界面审核修复：**删掉 `Section(\"安全\")`** ——"
+          "text": "consequence += \" 连带删除: 密码台账 \\(pws) 条、指纹台账 \\(fps) 条、本机缓存的开门记录 \\(recs) 条。\""
         },
         {
           "platform": "ios",
@@ -34570,7 +34570,7 @@
           "line": 492,
           "symbol": "footer: 按住圆盘时长 (默认 0.9s …)",
           "note": "",
-          "text": "Text(\"按住确认 (默认)\").tag(\"hold\")"
+          "text": "get: { DB.store.getBool(\"kf_hold_confirm\", true) },"
         }
       ],
       "platformEvidence": {
@@ -35253,7 +35253,7 @@
           "line": 971,
           "symbol": "if versionTaps >= 10, !eggShown { eggShown = true; … }",
           "note": "",
-          "text": ".fixedSize(horizontal: false, vertical: true)"
+          "text": ".vkFont(.caption2).foregroundStyle(DS.Palette.textSub)"
         },
         {
           "platform": "ios",
@@ -35261,7 +35261,7 @@
           "line": 989,
           "symbol": "LabeledRow(\"构建\", …)",
           "note": "",
-          "text": "}"
+          "text": ".vkFont(.caption2).foregroundStyle(DS.Palette.textSub)"
         },
         {
           "platform": "ios",
@@ -35269,7 +35269,7 @@
           "line": 990,
           "symbol": "LabeledRow(\"遥测\", \"无 · 全程离线\")",
           "note": "",
-          "text": "// 2026-10-28 补：`MemberHub.setElderMode` 全仓零调用 —— 而 `MemberHub.elderMode` 有 6 处 UI 消费"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -35340,7 +35340,7 @@
           "line": 766,
           "symbol": "Button(\"套用儿童友好外观预设\") { app.applyFriendlyPreset() }",
           "note": "",
-          "text": "// 2026-10-27 审核修复 (AUDIT-D D-09)：**已有密码时改密码必须先验原密码**。"
+          "text": "private func setPasscode() {"
         },
         {
           "platform": "ios",
@@ -35356,7 +35356,7 @@
           "line": 775,
           "symbol": "Picker(\"记录页开场过滤\", selection:)",
           "note": "",
-          "text": "presentSetPasscodeAlert()"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -35364,7 +35364,7 @@
           "line": 936,
           "symbol": "resetAppearance()",
           "note": "",
-          "text": "// 905 快捷格\"十一选六\" (921 加了\"再开一次\") + 1047 常用动作排前。"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         },
         {
           "platform": "ios",
@@ -35474,7 +35474,7 @@
           "line": 790,
           "symbol": "ForEach(QuickPool.all) { a in VariantToggle(a.label, …) }",
           "note": "",
-          "text": "app.showToast(\"已设置\")"
+          "text": "DB.setPasscode(f1)"
         },
         {
           "platform": "ios",
@@ -35490,7 +35490,7 @@
           "line": 804,
           "symbol": "VariantToggle(\"常用动作排到前面\")",
           "note": "",
-          "text": "Text(\"深色\").tag(\"dark\")"
+          "text": "Text(\"浅色\").tag(\"light\")"
         }
       ],
       "platformEvidence": {
@@ -35556,7 +35556,7 @@
           "line": 586,
           "symbol": "Button(\"关闭本机密码\", role: .destructive) { disablePasscode() }",
           "note": "",
-          "text": "}"
+          "text": "Label(\"手机钥匙\", systemImage: \"iphone.gen3.badge.key\")"
         },
         {
           "platform": "ios",
@@ -35564,7 +35564,7 @@
           "line": 599,
           "symbol": "disablePasscode()",
           "note": "",
-          "text": "// 在下面读起来像\"给这个成员再加一把锁\"。已挪进 lockSection 的「门锁」节 (与「删除设备」同处,"
+          "text": "// 与\"谁能开门\"（家人与钥匙）不是同一件事; 而且本节的 footer 正在解释成员分组, 摆一个添加设备"
         },
         {
           "platform": "ios",
@@ -35572,7 +35572,7 @@
           "line": 601,
           "symbol": "关闭后，查看密码内容与导出备份不再需要本机验证",
           "note": "",
-          "text": "}"
+          "text": "// 一加一删成对), 空态那一支本来就带「添加设备」按钮。"
         }
       ],
       "platformEvidence": {
@@ -36053,7 +36053,7 @@
           "line": 358,
           "symbol": "confirmDestructive(\"清空密码\", …)",
           "note": "",
-          "text": "if canClearPwd {"
+          "text": "// 但「固件升级」是**锁**的能力（cmd22 + Nordic DFU），不是成员的能力。"
         },
         {
           "platform": "ios",
@@ -36061,7 +36061,7 @@
           "line": 376,
           "symbol": "DB.saveLedger(m, Ledger())",
           "note": "",
-          "text": "if let s = app.status { return s.soundVolumn > 0 }"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -36147,7 +36147,7 @@
           "line": 381,
           "symbol": "deleteDevice()",
           "note": "",
-          "text": "/// (这一项是干什么的 / 要不要连锁 / 有什么后果), 不铺陈实现细节 (那些留在注释里)。"
+          "text": "// APK 的做法是用 03 回包的 getSoundVolumn() > 0 反推开关（main.js 三处）。"
         },
         {
           "platform": "ios",
@@ -36155,7 +36155,7 @@
           "line": 395,
           "symbol": "confirmDestructiveTyped(\"删除设备\", … requireWord: name)",
           "note": "",
-          "text": "confirmDestructive(\"清空密码\","
+          "text": ".vkFont(.caption)"
         }
       ],
       "platformEvidence": {
@@ -38390,7 +38390,7 @@
           "line": 384,
           "symbol": "let pws = DB.listPwds(kc.mac).count",
           "note": "",
-          "text": "Text(s)"
+          "text": "// 读不到才回落本地记录。"
         },
         {
           "platform": "ios",
@@ -38398,7 +38398,7 @@
           "line": 392,
           "symbol": "连带删除: 密码台账 … 回收站 … 开门记录 …",
           "note": "",
-          "text": ""
+          "text": "/// 与 deviceManageSection 既有的 caption2 小字同一族, 这里收成一个 helper 免得每处重抄三行修饰。"
         },
         {
           "platform": "ios",
@@ -38406,7 +38406,7 @@
           "line": 395,
           "symbol": "requireWord: name",
           "note": "",
-          "text": "confirmDestructive(\"清空密码\","
+          "text": ".vkFont(.caption)"
         }
       ],
       "platformEvidence": {
@@ -57579,7 +57579,7 @@
           "line": 633,
           "symbol": "DB.store.getString(\"kf_theme\")",
           "note": "",
-          "text": "Section(\"工具\") {"
+          "text": "private var toolsSection: some View {"
         },
         {
           "platform": "ios",
@@ -57595,7 +57595,7 @@
           "line": 549,
           "symbol": "DB.store.set(\"kf_ccred_quota\", $0)",
           "note": "",
-          "text": "/// 整个 VStack 变成 List 的一行，里面的 Section 退化成普通容器，于是："
+          "text": "if !mac.isEmpty {"
         }
       ],
       "platformEvidence": {
