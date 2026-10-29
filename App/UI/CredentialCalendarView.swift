@@ -11,7 +11,7 @@ import SwiftUI
 
 struct CredentialCalendarView: View {
     @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
 
     @State private var monthAnchor = Date()
     @State private var picked: Date?

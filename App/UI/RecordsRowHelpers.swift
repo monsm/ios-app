@@ -2,7 +2,7 @@
 // 2026-10-29 从 RecordsRows.swift（834 行）拆出。
 import SwiftUI
 
-extension RecordsRows {
+extension RecordsView {
     func highlightSegments(_ text: String) -> [HlSeg] {
         guard !highlightTokens.isEmpty else { return [HlSeg(text: text, hit: false, id: 0)] }
         var segs = [HlSeg]()

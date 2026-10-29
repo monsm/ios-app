@@ -6,7 +6,7 @@ import AVFoundation
 
 struct StudioHome: View {
     @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
     /// embedded = 由外部 NavigationStack push (宿主已提供导航栏); 非 embedded 时自带导航栏
     var embedded: Bool = true
     @State private var showAddPwd = false

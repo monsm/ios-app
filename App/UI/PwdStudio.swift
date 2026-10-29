@@ -6,7 +6,7 @@ import AVFoundation
 
 struct PwdStudio: View {
     @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
     /// true = 由外部 NavigationStack push (不自带导航栏); false = sheet 呈现自带导航栏
     var embedded: Bool = false
     /// 编辑对象: nil = 新增

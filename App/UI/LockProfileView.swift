@@ -4,7 +4,7 @@ import SwiftUI
 
 struct LockProfileView: View {
     @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
     @State private var name = ""
     @State private var place = ""
     @State private var grp = ""      // 104/767 分组名 (与设备管理页同一字段)

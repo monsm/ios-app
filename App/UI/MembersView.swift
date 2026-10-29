@@ -4,7 +4,7 @@ import SwiftUI
 
 struct MembersView: View {
     @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
     @State private var newName = ""
     @FocusState private var nameFocused: Bool
     @State private var showCenter = false

@@ -6,7 +6,7 @@ import AVFoundation
 
 struct FpDetailStudio: View {
     @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
     let batch: Int
     @State private var busy = false
     @State private var showRelink = false   // 319 重录入口 sheet

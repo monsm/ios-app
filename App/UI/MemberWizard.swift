@@ -6,7 +6,7 @@ import SwiftUI
 // ================= 463 建档向导 (称呼 → 角色 → 初始凭证 三小步, 末步顺路建临时码) =================
 struct MemberWizardView: View {
     @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
     var onDone: () -> Void = {}
     @State private var step = 0
     @State private var name = ""
@@ -196,7 +196,7 @@ struct MemberWizardView: View {
 // ================= 462 重复合并 (同名检测 + 手动迁移凭证归属) =================
 struct MergeMembersView: View {
     @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
     let primary: Member
     var onDone: () -> Void = {}
     @State private var secondaryID: String?
@@ -274,7 +274,7 @@ struct MergeMembersView: View {
 
 // ================= 460/795 归档成员列表 (恢复入口) =================
 struct MemberArchivedView: View {
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
     var onRestored: () -> Void = {}
     @State private var tick = 0
 
@@ -330,7 +330,7 @@ struct MemberArchivedView: View {
 // ================= 630 分组标签编辑 =================
 struct MemberGroupSheet: View {
     @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
     var onSaved: () -> Void = {}
     @State private var tags: [String: String] = [:]
 

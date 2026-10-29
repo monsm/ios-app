@@ -4,7 +4,7 @@ import SwiftUI
 
 struct AddDeviceView: View {
     @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
     private enum Flow { case scan, pairing, naming, done }
     @State private var flow: Flow = .scan
     @State private var step = 0                  // 253: 0 发现 · 1 校验 · 2 初始化 · 3 命名

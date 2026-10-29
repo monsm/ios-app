@@ -84,7 +84,7 @@ struct CredExtendView: View {
 // ================= 353 批量停用摘要确认页 =================
 struct CredDisableSheet: View {
     @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
     var mac: String
     var pwdAliases: [Int]
     var fpBatches: [Int]

@@ -7,7 +7,7 @@ struct UnlockPulseRing: View {
     /// 66 信号强度驱动呼吸速率: 越近呼吸越快 (可达即有反馈), 无缓存 RSSI 用 1.1s 基准。
     /// 只在忙态挂载, 因此速率变化不会被当成"卡住"的信号。
     var rssi: Int? = nil
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
     @State private var breathe = false
 
     /// 呼吸周期: RSSI -50 → 0.7s, -95 → 1.8s, 线性内插并夹在 [0.7, 1.8]

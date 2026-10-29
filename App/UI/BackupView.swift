@@ -7,7 +7,7 @@ import UniformTypeIdentifiers
 
 struct BackupView: View {
     @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
     @State private var exportText = ""
     @State private var encryptExport = false      // 2026-10-27: 可选加密主备份
     @State private var exportPw = ""

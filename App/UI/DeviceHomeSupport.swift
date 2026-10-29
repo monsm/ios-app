@@ -105,7 +105,7 @@ struct LabeledRow: View {
 // 同一锁 30 秒内再次开锁需先验证本机密码 (未设密码则无此闸)。
 struct UnlockGateView: View {
     @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
     @State private var pw = ""
     @State private var failed = false
     /// 2026-10-27 (D-50)：冷却剩余秒数（0 = 无冷却）。

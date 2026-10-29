@@ -70,7 +70,7 @@ struct UnlockDial: View {
     @State var weakNudge = false        // 129 已因信号偏弱暂缓过一次
     @State var holdTask: Task<Void, Never>? = nil
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
 
     // ---------- 偏好 (设置-开锁, 经 AppState.setUnlockOption 重建生效) ----------
     var detail: String? {

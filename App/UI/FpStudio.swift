@@ -61,7 +61,7 @@ func fpDoubleSignCheck(mac: String, batch: Int, confirmTitle: String, action: @e
 // ================= 指纹工坊 (41 沉浸 / 315 命名建议 / 317 归属先行 / 322 缺失提醒 / 324 冗余横条 / 319 重录继承) =================
 struct FpStudio: View {
     @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
     // 515 分步: 0 归属 (317 必选) / 1 沉浸录入 (41) / 2 命名备注 (315/319) / 3 回执
     @State private var step = 0
     @State private var owner: String? = nil

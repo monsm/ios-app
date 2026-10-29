@@ -4,7 +4,7 @@ import SwiftUI
 
 struct DeviceInfoView: View {
     @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
     @State private var status: LockStatus?
     @State private var busy = false
     @State private var clockDrift: Int? = nil   // 47 锁钟偏差 (秒; nil = 未读到锁钟)

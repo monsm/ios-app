@@ -16,7 +16,7 @@ import SwiftUI
 
 struct LockSettingsView: View {
     @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
 
     @State private var settingMute = false
     @State private var clearingPwd = false

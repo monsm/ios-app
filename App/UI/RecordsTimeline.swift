@@ -25,7 +25,7 @@ struct RecDetailSheet: View {
     private var atSafe: Int { siblings.isEmpty ? 0 : min(max(at, 0), siblings.count - 1) }
 
     @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
     @State private var tick = 0
     @State private var noteDraft = ""      // 186 备注草稿
     @State private var card: UIImage?      // 718 本条记录卡 (只在开卡时渲染一次)

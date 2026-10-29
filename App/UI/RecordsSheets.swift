@@ -8,7 +8,7 @@ import SwiftUI
 /// 选中集直接绑定 filters.alarmKinds (空 = 不限类型; 选中数回显在打开的 chip 上)。
 struct AlarmKindsSheet: View {
     @Binding var sel: Set<Int>
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
     var body: some View {
         NavigationStack {
             List {
@@ -62,7 +62,7 @@ struct AlarmKindsSheet: View {
 // ---------- 包9/574 活跃凭证排序 (台账近 30 天推断, 一律标"约") ----------
 struct ActiveCredsSheet: View {
     @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
     var body: some View {
         NavigationStack {
             List {
@@ -121,7 +121,7 @@ struct ActiveCredsSheet: View {
 // ---------- 包9/575 越界开门清单 (本地检测, 窗口为台账 from/to, 一律标"约") ----------
 struct OutWinSheet: View {
     @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
     var body: some View {
         NavigationStack {
             List {

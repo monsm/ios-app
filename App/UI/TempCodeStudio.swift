@@ -6,7 +6,7 @@ import AVFoundation
 
 struct TempCodeStudio: View {
     @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
     @State private var pwd = ""
     @State private var batchCount = 1      // 178 批量临时码
     @State private var from = Date()

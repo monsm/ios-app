@@ -6,7 +6,7 @@ import CoreImage.CIFilterBuiltins
 import SwiftUI
 
 struct ShareToAndroidView: View {
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
     let kc: Keychain
 
     @State private var qr: UIImage?

@@ -6,7 +6,7 @@ import AVFoundation
 
 struct PwdDetailStudio: View {
     @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
     let alias: Int
     @State private var renewing = false
     @State private var copiedFlash = false   // 11 复制按钮形变

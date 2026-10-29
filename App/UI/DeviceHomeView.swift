@@ -12,7 +12,7 @@ struct DeviceHomeView: View {
     @ObservedObject var bleSvc = BLEService.shared
     // 包2 连接感知: 预握手/回连节律/回执 (只读观察, 不动协议)
     @ObservedObject var sense = LinkSense.shared
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
     @State var showAdd = false
     // 2026-10-29：锁设置 sheet（B 档）—— 设备页工具栏齿轮打开
     @State var showLockSettings = false
@@ -326,7 +326,6 @@ struct DeviceHomeView: View {
 
 
     // ---------- 需要用户处理的异常: 只在真有问题时出现, 不占常驻版面 ----------
-    @ViewBuilder
     static let lastStamp: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "HH:mm"
