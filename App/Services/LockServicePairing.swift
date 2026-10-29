@@ -52,10 +52,29 @@ extension LockService {
         curMac = m
         defer { pairMac = nil }
 
-        // 0. 续配: 上一次配网在换钥之后中断 (App 被杀 / 08·21·03 任一步失败 / 断链) 时,
-        //    锁内 skey 就是本机留存的那一份 —— 先拿它把尾链走完。走不通 (锁被重新重置过, 密钥域已擦) 再回退整链。
-        //    这是本 App 最接近"变砖"的那条后路。
-        if let kc = try await resumePairIfPossible(m: m, deviceId: deviceId, progress: progress) { return kc }
+        // 0. 续配: 上一次配网在换钥之后中断 (App 被杀 / 08·21·03 任一步失败 / 断链) 时, 锁内 skey
+        //    就是本机留存的那一份 —— 先拿它把尾链走完。走不通 (锁被重新重置过, 密钥域已擦) 再回退整链。
+        //    这是本 App 最接近"变砖"的那条后路: 没有它, 用户手上没锁 (或锁在门上) 就只能干等下次到锁跟前。
+        if let pend = DB.pendingPair(m), !pend.skey.isEmpty, !pend.pins.isEmpty {
+            progress("发现上次中断的配网记录 → 先试续配 (不重新换钥)")
+            log("info", "续配尝试: 用留存密钥直接走尾链 (留存于 \(pend.pairedAt))")
+            do {
+                // 2026-10-17 夜: 这里原本先跑一遍只读 03 探针「裁定 MAC 字节序」——已删, 理由见 finishPairing
+                // 开头那段: 读类命令证明不了字节序 (MAC 取错它也可能 rc=0), 探针会把错的值裁定成「已知」,
+                // 之后这条链上每条写命令都回 rc=12。裁定权现在归真正带 MAC 校验的写命令: 08 批次 1。
+                let kc = try await finishPairing(m: m, deviceId: deviceId, skey: pend.skey.lowercased(),
+                                                bkey: pend.bkey, pins: pend.pins,
+                                                trackid: pend.trackid.isEmpty ? String(KeyGen.genTrackId()) : pend.trackid,
+                                                resumable: true, progress: progress)
+                DB.clearPendingPair(m)
+                connectedMAC = m
+                progress("续配完成: \(kc.pidName.isEmpty ? "pid=\(kc.pid)" : kc.pidName) @ \(m)")
+                return kc
+            } catch {
+                log("warn", "续配不通 (\(error.localizedDescription)) → 回退完整配网链 (锁可能已被再次重置)")
+                progress("续配不通 (锁可能已再次重置) → 走完整配网")
+            }
+        }
 
         progress("步骤 1/7: 探测交换方式 (cmd 23)")
         let w = try await request(ZKCmdBuilder.cmd23ExKeyWay(), cmd: 0x23, needToken: false, retries: 3)
@@ -123,7 +142,16 @@ extension LockService {
         // 从 05 rc=0 这一刻起, 锁内 skey 已经是新的一份。旧实现要等到尾链全部成功才落盘 ⇒ 尾链任一步
         // 失败就只剩"去门锁键盘重置"一条路 (锁内部密钥对本机不可知 = 软砖)。现在换钥后立即留存,
         // 尾链走完再提升为正式钥匙串 (saveKeychain + clearPendingPair)。
-        let (pending, resumable) = persistPendingKey(m: m, skey: skey, bkey: bkey, pins: pins, deviceId: deviceId)
+        let pending = Keychain(version: 1, mac: m, skey: skey, bkey: bkey, pins: pins,
+                               ekey: ZKCmdBuilder.buildEkeyOpen(skey, m, pins[0]),
+                               trackid: String(KeyGen.genTrackId()), bleId: deviceId, fw: "",
+                               pairedAt: ISO8601DateFormatter().string(from: Date()))
+        let resumable = DB.savePendingPair(pending)
+        if resumable {
+            log("info", "已留存换钥后的密钥 (尾链若中断, 再点一次配网即续配, 无需键盘重置)")
+        } else {
+            log("error", "配网中断保护未能落盘 (系统 Keychain 写失败) — 尾链若中断只能靠门锁键盘重置恢复")
+        }
 
         // 步骤 4.5/7 的「只读 03 探针」整块删除 (2026-10-17 夜; 依据 = 原版 APK 逐字 + 真机现象):
         //   ① 读类命令**证明不了**包络 MAC 的字节序 —— 03 即使 MAC 取错也可能回 rc=0, 于是探针会把一个
@@ -234,43 +262,4 @@ extension LockService {
         return kc
     }
 
-
-    /// 续配: 用上次中断时留存的密钥直接把尾链走完。走不通返回 nil，调用方回退完整配网链。
-    private func resumePairIfPossible(m: String, deviceId: String, progress: @escaping (String) -> Void) async throws -> Keychain? {
-        guard let pend = DB.pendingPair(m), !pend.skey.isEmpty, !pend.pins.isEmpty else { return nil }
-            progress("发现上次中断的配网记录 → 先试续配 (不重新换钥)")
-            log("info", "续配尝试: 用留存密钥直接走尾链 (留存于 \(pend.pairedAt))")
-            do {
-                // 2026-10-17 夜: 这里原本先跑一遍只读 03 探针「裁定 MAC 字节序」——已删, 理由见 finishPairing
-                // 开头那段: 读类命令证明不了字节序 (MAC 取错它也可能 rc=0), 探针会把错的值裁定成「已知」,
-                // 之后这条链上每条写命令都回 rc=12。裁定权现在归真正带 MAC 校验的写命令: 08 批次 1。
-                let kc = try await finishPairing(m: m, deviceId: deviceId, skey: pend.skey.lowercased(),
-                                                bkey: pend.bkey, pins: pend.pins,
-                                                trackid: pend.trackid.isEmpty ? String(KeyGen.genTrackId()) : pend.trackid,
-                                                resumable: true, progress: progress)
-                DB.clearPendingPair(m)
-                connectedMAC = m
-                progress("续配完成: \(kc.pidName.isEmpty ? "pid=\(kc.pid)" : kc.pidName) @ \(m)")
-                return kc
-            } catch {
-                log("warn", "续配不通 (\(error.localizedDescription)) → 回退完整配网链 (锁可能已被再次重置)")
-                progress("续配不通 (锁可能已再次重置) → 走完整配网")
-            }
-        return nil
-    }
-
-    /// 留存换钥后的密钥（尾链若中断，再点一次配网即续配，无需键盘重置）。
-    private func persistPendingKey(m: String, skey: String, bkey: String, pins: [String], deviceId: String) -> (Keychain, Bool) {
-        let pending = Keychain(version: 1, mac: m, skey: skey, bkey: bkey, pins: pins,
-                               ekey: ZKCmdBuilder.buildEkeyOpen(skey, m, pins[0]),
-                               trackid: String(KeyGen.genTrackId()), bleId: deviceId, fw: "",
-                               pairedAt: ISO8601DateFormatter().string(from: Date()))
-        let resumable = DB.savePendingPair(pending)
-        if resumable {
-            log("info", "已留存换钥后的密钥 (尾链若中断, 再点一次配网即续配, 无需键盘重置)")
-        } else {
-            log("error", "配网中断保护未能落盘 (系统 Keychain 写失败) — 尾链若中断只能靠门锁键盘重置恢复")
-        }
-        return (pending, resumable)
-    }
 }
