@@ -11,7 +11,6 @@
 #
 # 规则：新增任何图标名，必须先在真机/模拟器确认它存在，再加入本文件。
 # 反向也查：本文件里有、代码里没用的名字要删掉，避免清单腐化成"什么都放行"。
-
 antenna.radiowaves.left.and.right
 antenna.radiowaves.left.and.right.slash
 archivebox
@@ -130,7 +129,7 @@ power
 qrcode
 questionmark.circle
 questionmark.key.filled
-rectangle.portrait.text.square
+rectangle.portrait
 shield.lefthalf.filled
 slider.horizontal.3
 speaker.slash
