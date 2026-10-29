@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T05:21:56.750Z",
+    "generated": "2026-10-29T05:30:01.782Z",
     "sources": [
       {
         "scout": "android-native",
@@ -14845,7 +14845,7 @@
           "line": 547,
           "symbol": "listPwds(_:)",
           "note": "",
-          "text": "static func preferredMac() -> String {"
+          "text": "// autoOpenAudit(_:) 用 getDict 取一个存 [AuditEntry] JSON 的键 (类型就不对，取回来必然是空)、"
         },
         {
           "platform": "ios",
@@ -15747,7 +15747,7 @@
           "line": 553,
           "symbol": "addPwd(_:_:)",
           "note": "",
-          "text": "set { store.set(\"kf_current_mac\", newValue) }"
+          "text": "static func saveOtpStatus(_ mac: String, _ s: OtpStatus) { set(s, \"otpStatus_\" + mac) }"
         },
         {
           "platform": "ios",
@@ -15755,7 +15755,7 @@
           "line": 584,
           "symbol": "addFp(_:_:)",
           "note": "",
-          "text": "let old = get(Ledger.self, \"kf_ledger_\" + mac)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -15824,7 +15824,7 @@
           "line": 579,
           "symbol": "setPwdOwner(_:_:_:)",
           "note": "",
-          "text": "///     而 379/380 承诺\"增删改会自动记入管理流水\"。现在把 diff 真的记进去。"
+          "text": "at: Date().timeIntervalSince1970 * 1000)"
         },
         {
           "platform": "ios",
@@ -19985,7 +19985,7 @@
           "line": 564,
           "symbol": "rePwd(_:_:_:)",
           "note": "",
-          "text": "static func markLedgerCorrupt(_ mac: String) { ledgerLock.withLock { $0.insert(mac) } }"
+          "text": "guard let id else { return nil }"
         },
         {
           "platform": "ios",
@@ -20009,7 +20009,7 @@
           "line": 569,
           "symbol": "setPwdPeriod(_:_:_:_:)",
           "note": "",
-          "text": "// 旧实现在 ②下返回空 Ledger, 调用方 (addPwd/addFp/…) 紧接着 save → **台账被空表整表覆盖清空**。"
+          "text": "static let memberPalette = [\"#818CF8\", \"#4ADE80\", \"#F59E0B\", \"#FB7185\", \"#22D3EE\", \"#94A3B8\"]"
         }
       ],
       "platformEvidence": {
@@ -56901,7 +56901,7 @@
           "line": 120,
           "symbol": "Codable",
           "note": "合成 Codable 的坑写在注释里",
-          "text": "/// 2026-10-27 审核说明 (AUDIT-A F-29)：本仓 `Keychain` 比 vendor 多一个 `name` 字段 ——"
+          "text": "let map = store.getDict(\"kf_keychains\")"
         },
         {
           "platform": "ios",
@@ -56970,7 +56970,7 @@
           "line": 439,
           "symbol": "kf_ledger_",
           "note": "族删前缀清单起点",
-          "text": "+ \" @ \" + String(kc.mac.prefix(6)), ok: false)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -57033,7 +57033,7 @@
           "line": 374,
           "symbol": "saveKeychain",
           "note": "密钥不再明文写 plist, 改存系统 Keychain",
-          "text": "for kc in keychains() { ZKProtocol.setMacOrder(kc.mac, macOrder(kc.mac)) }"
+          "text": "let desc = changes.map { (k, v) in k + \" \" + v.joined(separator: \" -> \") }"
         }
       ],
       "platformEvidence": {
@@ -57172,7 +57172,7 @@
           "line": 721,
           "symbol": "members()",
           "note": "",
-          "text": "static func writeLogs(_ mac: String, _ logs: [LogEntry]) {"
+          "text": "return passcodeRecord(pw, salt: salt)"
         }
       ],
       "platformEvidence": {
@@ -57302,7 +57302,7 @@
           "line": 791,
           "symbol": "dongles()",
           "note": "",
-          "text": "let used = Set(members().map { $0.color })"
+          "text": "let salt = rec[\"s\"] ?? \"\""
         },
         {
           "platform": "ios",
@@ -57310,7 +57310,7 @@
           "line": 823,
           "symbol": "gateways()",
           "note": "",
-          "text": "for i in l.fps.indices where l.fps[i].owner == id { l.fps[i].owner = nil; changed = true }"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -57424,7 +57424,7 @@
           "line": 630,
           "symbol": "writeStatus(_:_:)",
           "note": "",
-          "text": "}"
+          "text": "let map = store.getDict(\"kf_keychain_dongles\")"
         },
         {
           "platform": "ios",
@@ -57432,7 +57432,7 @@
           "line": 649,
           "symbol": "writeLogs(_:_:)",
           "note": "",
-          "text": "saveLedger(mac, l)"
+          "text": "stat: d.stat ?? old.stat)"
         }
       ],
       "platformEvidence": {
@@ -58029,7 +58029,7 @@
           "line": 507,
           "symbol": "saveLedger(_:_:)",
           "note": "",
-          "text": "let m = mac.replacingOccurrences(of: \":\", with: \"\").lowercased()"
+          "text": "var cache = get(LogCache.self, \"kf_logcache_\" + mac) ?? LogCache(at: 0, logs: [])"
         },
         {
           "platform": "ios",
@@ -58045,7 +58045,7 @@
           "line": 531,
           "symbol": "fingerprint",
           "note": "fingerprint(o.pwd)",
-          "text": "if defWasThis { store.remove(\"kf_default_mac\") }"
+          "text": "// 已经存在的话顺手拿掉: 它就是孤儿本身, 留着只会让体检一直报。"
         }
       ],
       "platformEvidence": {
@@ -59772,7 +59772,7 @@
           "line": 800,
           "symbol": "saveDongle(_:)",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -59780,7 +59780,7 @@
           "line": 804,
           "symbol": "merged",
           "note": "逐字段空值回退",
-          "text": "store.set(\"kf_members\", map)"
+          "text": "/// 跨文件写 Codable 的唯一入口 (参数序 = 值在前、键在后, 与内部 set 一致)"
         }
       ],
       "platformEvidence": {
@@ -59841,7 +59841,7 @@
           "line": 832,
           "symbol": "saveGateway(_:)",
           "note": "",
-          "text": "// 档案扩展 / 徽章 / 生日 (均以成员 id 为键) 与值班周表: 删成员后成永久孤儿键, 一并清。"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -59849,7 +59849,7 @@
           "line": 846,
           "symbol": "netState",
           "note": "netState != -1 ? ... : old.netState",
-          "text": "let map = store.getDict(\"kf_keychain_dongles\")"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -60024,7 +60024,7 @@
           "line": 485,
           "symbol": "currentMac",
           "note": "",
-          "text": "}"
+          "text": "// 快照"
         },
         {
           "platform": "ios",
@@ -60208,7 +60208,7 @@
           "line": 435,
           "symbol": "removeDevice(_:)",
           "note": "",
-          "text": "if pinsJoined.isEmpty { SecretStore.remove(secretAccount(kc.mac, \"pins\")) }"
+          "text": "static func setPwdOwner(_ mac: String, _ alias: Int, _ owner: String?) {"
         },
         {
           "platform": "ios",
@@ -60216,7 +60216,7 @@
           "line": 469,
           "symbol": "ord",
           "note": "kf_lock_order 剪枝",
-          "text": "}"
+          "text": "saveLedger(mac, l)"
         },
         {
           "platform": "ios",
@@ -60224,7 +60224,7 @@
           "line": 475,
           "symbol": "set(\"kf_default_mac\", h)",
           "note": "默认锁交棒",
-          "text": "kc.bkey = SecretStore.get(pendingPairAccount(m, \"bkey\")) ?? \"\""
+          "text": "static func getFp(_ mac: String, _ batch: Int) -> LedgerFp? {"
         }
       ],
       "platformEvidence": {
@@ -60491,7 +60491,7 @@
           "line": 732,
           "symbol": "addMember(_:)",
           "note": "",
-          "text": "if merged.count >= 300 { break }"
+          "text": "static func fnv1a32(_ s: String) -> String {"
         },
         {
           "platform": "ios",
@@ -60499,7 +60499,7 @@
           "line": 731,
           "symbol": "memberPalette",
           "note": "",
-          "text": "merged.append(l)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -60507,7 +60507,7 @@
           "line": 182,
           "symbol": "Member",
           "note": "",
-          "text": "var at: Double          // epoch **毫秒** (添加时刻；与 `LedgerPwd.at` 同约定)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -60576,7 +60576,7 @@
           "line": 760,
           "symbol": "removeMember(_:)",
           "note": "",
-          "text": "static func saveSyncTime(_ mac: String, _ t: Double) { store.set(\"kf_synctime_\" + mac, t) }"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -60584,7 +60584,7 @@
           "line": 786,
           "symbol": "duty",
           "note": "duty = duty.filter { $0.value != id }",
-          "text": "static func addMember(_ name: String) -> Member? {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -61122,7 +61122,7 @@
           "line": 290,
           "symbol": "DefendCfg",
           "note": "",
-          "text": "}"
+          "text": "static func removeDevice(_ mac: String) {"
         },
         {
           "platform": "ios",
@@ -61130,7 +61130,7 @@
           "line": 261,
           "symbol": "DongleStat",
           "note": "",
-          "text": "var stat: DongleStat?"
+          "text": "let pins = SecretStore.get(pendingPairAccount(m, \"pins\")) ?? \"\""
         },
         {
           "platform": "ios",
@@ -61138,7 +61138,7 @@
           "line": 272,
           "symbol": "Gateway",
           "note": "",
-          "text": "mac = try c.decodeIfPresent(String.self, forKey: .mac) ?? \"\""
+          "text": "/// 而那一份记录正是\"再点一次配网就能接着配完\"的依据 (2026-10-17 真机截图里的承诺就是它)。"
         }
       ],
       "platformEvidence": {
@@ -61304,7 +61304,7 @@
           "line": 131,
           "symbol": "init(from:)",
           "note": "",
-          "text": "var pairedAt: String = \"\""
+          "text": "/// MAC 归一化 —— **全仓唯一入口**（2026-10-27 审核合并，AUDIT-C A11）。"
         },
         {
           "platform": "ios",
@@ -61312,7 +61312,7 @@
           "line": 949,
           "symbol": "secret(_:_:)",
           "note": "Keychain 优先 + 明文迁移",
-          "text": "var hash: UInt32 = 0x811c9dc5"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -61382,7 +61382,7 @@
           "line": 150,
           "symbol": "LedgerPwd",
           "note": "",
-          "text": "pidName = try c.decodeIfPresent(String.self, forKey: .pidName) ?? \"\""
+          "text": "/// 落盘 + 同步进协议层注册表 (协议层成帧只看注册表)"
         },
         {
           "platform": "ios",
@@ -61390,7 +61390,7 @@
           "line": 161,
           "symbol": "LedgerFp",
           "note": "",
-          "text": "}"
+          "text": "static func secretAccount(_ mac: String, _ field: String) -> String { \"kc.\" + normalizeMac(mac) + \".\" + field }"
         },
         {
           "platform": "ios",
@@ -61398,7 +61398,7 @@
           "line": 176,
           "symbol": "Ledger",
           "note": "",
-          "text": "var note: String"
+          "text": "// 关键: 只有 Keychain 里确实有值 (原本就有, 或本次写成功) 才允许抹掉 plist 明文。"
         }
       ],
       "platformEvidence": {
@@ -61466,7 +61466,7 @@
           "line": 198,
           "symbol": "StatusSnapshotData",
           "note": "",
-          "text": ""
+          "text": "static func saveKeychain(_ kc: Keychain) {"
         },
         {
           "platform": "ios",
@@ -61474,7 +61474,7 @@
           "line": 223,
           "symbol": "CachedLog",
           "note": "",
-          "text": "var lockTime: Int64 = 0"
+          "text": "+ \" @ \" + String(kc.mac.prefix(6)), ok: false)"
         }
       ],
       "platformEvidence": {
@@ -61762,7 +61762,7 @@
           "line": 350,
           "symbol": "migrateSecretsToKeychain()",
           "note": "",
-          "text": "/// 而 Android 版早就去掉了（`KfProtocol.kt:230`）—— iOS 没去，于是同一份带连字符的 MAC"
+          "text": "static func ledger(_ mac: String) -> Ledger {"
         },
         {
           "platform": "ios",
@@ -61770,7 +61770,7 @@
           "line": 361,
           "symbol": "stored",
           "note": "stored || set 成功才 removeValue",
-          "text": "/// 而顺序认不出来时的代价很小 (默认回原版 APK 语义, 错一次由 rc=12 自愈纠正)。"
+          "text": "///     把台账标成 corrupt 并写空表，于是这次写入把真数据覆盖掉。整个动作放进同一把锁。"
         }
       ],
       "platformEvidence": {
@@ -61834,7 +61834,7 @@
           "line": 864,
           "symbol": "pcIter",
           "note": "60_000 轮",
-          "text": "lastKeyAt: d.lastKeyAt.isEmpty ? old.lastKeyAt : d.lastKeyAt,"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -61842,7 +61842,7 @@
           "line": 886,
           "symbol": "verifyPasscode(_:)",
           "note": "",
-          "text": "static func saveGateway(_ g: Gateway) {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -61850,7 +61850,7 @@
           "line": 896,
           "symbol": "passcodeRecord",
           "note": "验过即静默升级",
-          "text": "romVer: g.romVer.isEmpty ? old.romVer : g.romVer,"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -61920,7 +61920,7 @@
           "line": 374,
           "symbol": "saveKeychain(_:)",
           "note": "",
-          "text": "for kc in keychains() { ZKProtocol.setMacOrder(kc.mac, macOrder(kc.mac)) }"
+          "text": "let desc = changes.map { (k, v) in k + \" \" + v.joined(separator: \" -> \") }"
         },
         {
           "platform": "ios",
@@ -61928,7 +61928,7 @@
           "line": 425,
           "symbol": "removeKeychain(_:)",
           "note": "",
-          "text": "if kc.bkey.isEmpty { SecretStore.remove(secretAccount(kc.mac, \"bkey\")) }"
+          "text": "static func setPwdPeriod(_ mac: String, _ alias: Int, _ from: String, _ to: String) {"
         },
         {
           "platform": "ios",
@@ -61936,7 +61936,7 @@
           "line": 438,
           "symbol": "removeDevice",
           "note": "clearPendingPair",
-          "text": "BleTelemetry.recordEvent(\"Keychain 写入失败: \" + failed.joined(separator: \"/\")"
+          "text": "saveLedger(mac, l)"
         }
       ],
       "platformEvidence": {
@@ -62004,7 +62004,7 @@
           "line": 655,
           "symbol": "CachedLog",
           "note": "新 + 旧缓存去重合并",
-          "text": "}"
+          "text": "var map = store.getDict(\"kf_keychain_dongles\")"
         },
         {
           "platform": "ios",
@@ -62012,7 +62012,7 @@
           "line": 672,
           "symbol": "replaceLogs(_:_:)",
           "note": "",
-          "text": "static func setFpNote(_ mac: String, _ batch: Int, _ note: String) {"
+          "text": "var merged = g"
         }
       ],
       "platformEvidence": {
@@ -62078,7 +62078,7 @@
           "line": 636,
           "symbol": "zotpPeriod",
           "note": "zotpPeriod: st.zotpPeriod > 0 ? ... : nil",
-          "text": "static func rePwd(_ mac: String, _ alias: Int, _ pwd: String) {"
+          "text": "return nil"
         },
         {
           "platform": "ios",
@@ -62094,7 +62094,7 @@
           "line": 646,
           "symbol": "statusTime(_:)",
           "note": "",
-          "text": "static func setPwdNote(_ mac: String, _ alias: Int, _ note: String) {"
+          "text": "lastSeenAt: d.lastSeenAt.isEmpty ? old.lastSeenAt : d.lastSeenAt,"
         },
         {
           "platform": "ios",
@@ -62921,7 +62921,7 @@
           "line": 864,
           "symbol": "pcIter",
           "note": "",
-          "text": "lastKeyAt: d.lastKeyAt.isEmpty ? old.lastKeyAt : d.lastKeyAt,"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -62929,7 +62929,7 @@
           "line": 891,
           "symbol": "d2",
           "note": "d2 主路径",
-          "text": "name: g.name.isEmpty ? old.name : g.name,"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -62937,7 +62937,7 @@
           "line": 896,
           "symbol": "set(passcodeRecord",
           "note": "验过即静默升级",
-          "text": "romVer: g.romVer.isEmpty ? old.romVer : g.romVer,"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -63506,7 +63506,7 @@
           "line": 462,
           "symbol": "k.contains(m)",
           "note": "for k in store.keys() where k.contains(m)",
-          "text": "if v.isEmpty { SecretStore.remove(pendingPairAccount(kc.mac, f)); continue }"
+          "text": "var l = ledger(mac)"
         }
       ],
       "platformEvidence": {
