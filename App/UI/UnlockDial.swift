@@ -55,25 +55,25 @@ struct UnlockDial: View {
     var action: () -> Void             // 手势确认 / VO 直开 → AppState.requestUnlock
     var cancelAction: () -> Void = {}  // 89 握手超时提前取消
 
-    @State private var pop = false
-    @State private var shock = false
-    @State private var breathe = false
-    @State private var slowConnect = false     // 89 握手超 4 秒
-    @State private var shakeX: CGFloat = 0     // 74 失败抖动
+    @State var pop = false
+    @State var shock = false
+    @State var breathe = false
+    @State var slowConnect = false     // 89 握手超 4 秒
+    @State var shakeX: CGFloat = 0     // 74 失败抖动
     // --- 手势态 ---
-    @State private var pressing = false
-    @State private var holdProgress: CGFloat = 0
-    @State private var firedThisTouch = false
-    @State private var swipePeakUp: CGFloat = 0
-    @State private var touchMoved: CGFloat = 0
-    @State private var armed = false           // 62 误触围栏已解锁
-    @State private var weakNudge = false        // 129 已因信号偏弱暂缓过一次
-    @State private var holdTask: Task<Void, Never>? = nil
+    @State var pressing = false
+    @State var holdProgress: CGFloat = 0
+    @State var firedThisTouch = false
+    @State var swipePeakUp: CGFloat = 0
+    @State var touchMoved: CGFloat = 0
+    @State var armed = false           // 62 误触围栏已解锁
+    @State var weakNudge = false        // 129 已因信号偏弱暂缓过一次
+    @State var holdTask: Task<Void, Never>? = nil
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // ---------- 偏好 (设置-开锁, 经 AppState.setUnlockOption 重建生效) ----------
-    private var detail: String? {
+    var detail: String? {
         switch state {
         case .connecting: return "正在唤醒门锁…"
         case .opening: return "请稍候 · 轻点圆盘可撤销"
@@ -84,14 +84,14 @@ struct UnlockDial: View {
         }
     }
     /// 242 角落状态点: 灰=未连接/蓝牙关, 品牌色=握手中, 绿=就绪 — Hero 卡滚出屏幕也不丢信息
-    private var dotColor: Color {
+    var dotColor: Color {
         if !bleReady { return DS.Palette.textSub }
         if connected { return DS.Palette.ok }
         if isBusy { return DS.Palette.accent }
         return DS.Palette.textSub
     }
     /// 90 连续失败: 中心切换为信号搜索符号循环动效
-    private var searching: Bool {
+    var searching: Bool {
         if case .failed = state { return failStreak >= 2 }
         return false
     }
@@ -279,14 +279,14 @@ struct UnlockDial: View {
         }
     }
 
-    @State private var slowTask: Task<Void, Never>? = nil
+    @State var slowTask: Task<Void, Never>? = nil
 
 
 
 
 
     /// 74 失败抖动: 左右衰减摆动, 不打断下方原因文案
-    private func shake() {
+    func shake() {
         Task { @MainActor in
             for x in [CGFloat(-12), 12, -8, 8, -4, 4, 0] {
                 withAnimation(.easeOut(duration: 0.05)) { shakeX = x }
@@ -298,7 +298,7 @@ struct UnlockDial: View {
     }
 
     // ---------- 手势 (61 起手围栏 / 62 误触围栏 / 1 按住 / 51 上滑 / 56 撤销轻点) ----------
-    private var dragGesture: some Gesture {
+    var dragGesture: some Gesture {
         DragGesture(minimumDistance: 0, coordinateSpace: .local)
             .onChanged { g in
                 touchMoved = abs(g.translation.width) + abs(g.translation.height)
@@ -379,10 +379,10 @@ struct UnlockDial: View {
                 }
             }
     }
-    @State private var swipeReady = false
+    @State var swipeReady = false
 
     /// 按住充能循环: 0.9s 线性填充 + 三成/六成两记刻度触感, 填满自动触发
-    private func beginHold() {
+    func beginHold() {
         let start = Date()
         holdTask?.cancel()
         holdTask = Task { @MainActor in
@@ -403,18 +403,18 @@ struct UnlockDial: View {
             fire()
         }
     }
-    private func stopHold() {
+    func stopHold() {
         holdTask?.cancel()
         holdTask = nil
     }
     /// 129 极限距离: 拿最近一次扫到的 RSSI 与 93 信号围栏比，余量 ≤5 dBm 就算逼近下限。
     /// 无读数 (nil 或 BLE 下界以下) 不判弱 —— 把"没扫到"读成"很远"是另一种假。
-    private var nearRssiLimit: Bool {
+    var nearRssiLimit: Bool {
         guard let r = rssi, r > -127 else { return false }
         return r <= LinkSense.rssiFence + 5
     }
 
-    private func fire() {
+    func fire() {
         guard !isBusy, bleReady, !firedThisTouch else { return }
         // 129 暂缓: 第一次手势只提示不发指令，同一轮里第二次确认才真发 ——
         // 原句是"提示再走近一步并暂缓发指令"，暂缓不等于把人不关在门外，所以不做硬拦。
@@ -441,14 +441,14 @@ struct UnlockDial: View {
 
     /// 失败态用 danger 色。单独抽出来避免在 View 体内对 enum 做相等比较
     /// (复杂三元表达式在大型 body 里会拖慢类型检查, 且在 SDK 26 上曾导致重载解析失败)
-    private var detailTone: Color {
+    var detailTone: Color {
         if case .failed = state { return DS.Palette.danger }
         return DS.Palette.textSub
     }
 
     /// idle/连接/开锁中走品牌渐变, 上面必须是纯白 (两端 ≥4.5:1);
     /// 成功/警告/失败沿用 onAccent 的明暗自适应语义 (深色模式压近黑墨色)
-    private var contentColor: Color {
+    var contentColor: Color {
         switch state {
         // 反转模式 (863) 下 hero 底会降级成近白, 前景必须随之下沉为墨色
         case .idle, .connecting, .opening: return DS.heroFg
@@ -457,7 +457,7 @@ struct UnlockDial: View {
     }
 
     /// 光晕颜色随状态走, 让"开锁成功"在视觉上也亮一下
-    private var dialGlow: Color {
+    var dialGlow: Color {
         switch state {
         case .idle, .connecting, .opening: return DS.Palette.accent
         case .success: return DS.Palette.ok
@@ -469,7 +469,7 @@ struct UnlockDial: View {
     /// 圆盘中心图标 (从 dialButtonLabel 再抽一层: 两个 symbolEffect 的重载推断把整个标签拖超时;
     /// 并把 options 写成显式 SymbolEffectOptions.repeating 进一步消歧)
     @ViewBuilder
-    private func dialIcon() -> some View {
+    func dialIcon() -> some View {
         Image(systemName: iconName)
             .font(.system(size: 46, weight: .medium))
             .foregroundStyle(contentColor)
@@ -486,7 +486,7 @@ struct UnlockDial: View {
 
     /// 圆盘按钮的标签 (从 body 内联的 Button label 里抽出 —— 巨型表达式报 type-check 超时)
     @ViewBuilder
-    private func dialButtonLabel() -> some View {
+    func dialButtonLabel() -> some View {
         VStack(spacing: DS.Space.s) {
             dialIcon()
             Text(title)
@@ -520,7 +520,7 @@ struct UnlockDial: View {
     }
 
     // 226 后 heroGradientSafe 是 ShapeStyle (HeroSurface), 不再是 LinearGradient —— 盘子底收成 AnyShapeStyle 一起装
-    private var dialFill: AnyShapeStyle {
+    var dialFill: AnyShapeStyle {
         // 245 蓝牙关: 整盘置灰 —— 此时 state 多半还是 idle (靛蓝), 盘面看着能点而 action 里的
         // guard 挡着不动, 灰面让"不可用"先于点按可见。无专门 disabled 灰度令牌, 用现有两色组合。
         if !bleReady {
@@ -544,7 +544,7 @@ struct UnlockDial: View {
                                             startPoint: .topLeading, endPoint: .bottomTrailing))
     }
 
-    private var baseLinkValue: String {
+    var baseLinkValue: String {
         let link = !bleReady ? "蓝牙未开启" : (connected ? "已连接就绪" : "未连接")
         switch state {
         case .idle: return link + (connected ? ", 可开锁" : ", 点击后自动唤醒门锁蓝牙")
@@ -554,7 +554,7 @@ struct UnlockDial: View {
         case .failed(let msg): return msg
         }
     }
-    private var voHint: String {
+    var voHint: String {
         "轻点两下直接开锁, 无需按住. 转子上下滑可切换 状态/电量/连接 播报. "
             + "按住时长可自定 (0.4–1.6s, 设置-辅助)"
     }

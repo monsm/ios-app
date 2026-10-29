@@ -16,7 +16,7 @@ import UIKit
 struct CredentialsView: View {
     @EnvironmentObject var app: AppState
     // 包2 连接感知: 510 待下发横条 / 535 回执 依赖 LinkSense 补发回执计时 (只读观察)
-    @ObservedObject private var sense = LinkSense.shared
+    @ObservedObject var sense = LinkSense.shared
     @State var refreshTick = 0
     @State var showAdd = false
     /// 正在与门锁通信的条目 ("pwd:3" / "fp:12" / "otp") / nil = 空闲

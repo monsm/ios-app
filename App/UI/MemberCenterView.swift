@@ -12,28 +12,28 @@ import Charts
 struct MemberCenterView: View {
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
-    @State private var tick = 0
-    @State private var sortKey: Int = 0        // 264/466: 0 添加时间 / 1 姓名 / 2 最近开门时间 / 3 近 30 天开门次数
-    @State private var groupFilter: String = "" // 630 分组过滤
-    @State private var showWizard = false
+    @State var tick = 0
+    @State var sortKey: Int = 0        // 264/466: 0 添加时间 / 1 姓名 / 2 最近开门时间 / 3 近 30 天开门次数
+    @State var groupFilter: String = "" // 630 分组过滤
+    @State var showWizard = false
 
     /// 2026-10-28：建档向导的统一入口（带 15 人上限检查）。
     /// APK `presentMemberAddPage` 判 `16 != memberList.length`，超出时明确拒绝
     /// 「已添加15个成员，无法再添加」（数组含一个"自己"占位，实际上限 15）。
-    private func openWizard() {
+    func openWizard() {
         if DB.members().count >= 15 {
             app.showToast("已添加 15 个成员，无法再添加（锁端槽位上限）")
             return
         }
         showWizard = true
     }
-    @State private var showArchived = false
-    @State private var showGroups = false
+    @State var showArchived = false
+    @State var showGroups = false
     // 415 名册导出: ShareLink 要在渲染期就有 URL, 所以点菜单时先按需生成再开面板 (不在 body 里写盘)
-    @State private var rosterURL: URL?
-    @State private var showRoster = false
+    @State var rosterURL: URL?
+    @State var showRoster = false
 
-    private var members: [Member] {
+    var members: [Member] {
         // archivedIDs() 此前零调用: 它一次解出整张 ext 表; 旧写法每个成员调两次 ext() = 每成员整体重解一遍字典。
         // groupTag 那步仍按成员取 ext (要的是值不是集合), 至少砍掉一半重复解码。
         let archived = MemberHub.archivedIDs()
@@ -139,7 +139,7 @@ struct MemberCenterView: View {
 
     // 630 分组过滤 chips (家人/访客/服务人员 — 与包10 图例同组字段)
     @ViewBuilder
-    private var groupChipSection: some View {
+    var groupChipSection: some View {
         let tags = Array(Set(DB.members().map { MemberHub.ext($0.id).groupTag })).filter { !$0.isEmpty }.sorted()
         if !tags.isEmpty {
             Section {
@@ -153,7 +153,7 @@ struct MemberCenterView: View {
             }
         }
     }
-    private func groupChip(_ tag: String, _ label: String) -> some View {
+    func groupChip(_ tag: String, _ label: String) -> some View {
         let on = groupFilter == tag
         return Button {
             withAnimation(DS.Motion.quick) { groupFilter = tag }
@@ -177,7 +177,7 @@ struct MemberCenterView: View {
     /// 466 原句要的是"按近 30 天开门次数"那一档 —— 以前这一页只有"按最近一次开门时间" (tag 2),
     /// 名字却叫"最近活跃", 次数那一档根本没接。现在两档各排各的, 口径都带"约" (台账归属推断)。
     /// 活跃度表一次算完再排: 原先在比较式里现算 MemberHub.activity(), 每比一次就全锁重读一遍日志。
-    private func activeSection(_ sort: Int) -> some View {
+    func activeSection(_ sort: Int) -> some View {
         let acts: [String: MemberHub.Activity] = (sort == 2 || sort == 3) ? activityTable : [:]
         let list: [Member]
         switch sort {
@@ -217,14 +217,14 @@ struct MemberCenterView: View {
         }
     }
     /// 264/466 排序用的活跃度表: 一次算完全员, 不在比较式里逐次重扫全锁日志。
-    private var activityTable: [String: MemberHub.Activity] {
+    var activityTable: [String: MemberHub.Activity] {
         var t: [String: MemberHub.Activity] = [:]
         for m in members { t[m.id] = MemberHub.activity(m.id) }
         return t
     }
 
     // 793 访客虚拟分组: 本地展示层虚拟成员, 不占锁端槽位
-    private var visitorSection: some View {
+    var visitorSection: some View {
         let opens = visitorOpenCount
         let temps = visitorOwns
         return Section {
@@ -257,7 +257,7 @@ struct MemberCenterView: View {
             Text("「访客」只出现在本地展示层, 不写入锁端凭证表。")
         }
     }
-    private var visitorOpenCount: Int {
+    var visitorOpenCount: Int {
         var n = 0
         for kc in DB.keychains() {
             let logs = DB.readLogs(kc.mac).filter { StatsKit.openTypes.contains($0.type) }
@@ -271,12 +271,12 @@ struct MemberCenterView: View {
         }
         return n
     }
-    private var visitorOwns: Int {
+    var visitorOwns: Int {
         DB.keychains().reduce(0) { $0 + DB.listPwds($1.mac).filter { $0.temp }.count }
     }
 
     @ViewBuilder
-    private var archivedSection: some View {
+    var archivedSection: some View {
         let arch = DB.members().filter { MemberHub.ext($0.id).archived }
         if !arch.isEmpty {
             Section {
@@ -293,7 +293,7 @@ struct MemberCenterView: View {
     }
 
     // 家庭场景快捷 (481/475)
-    private var sceneSection: some View {
+    var sceneSection: some View {
         Section {
             if let dutyID = MemberHub.dutyThisWeek, let dm = DB.member(dutyID) {
                 LabeledContent("本周主责") {   // 481 本周主责
@@ -329,7 +329,7 @@ struct MemberCenterView: View {
     // 章里第一段就把这句写在明面上 —— 做不到就说不做，不拿四步里的某一步含糊带过。
     @ViewBuilder
 
-    private var navSection: some View {
+    var navSection: some View {
         // 2026-10-27 删除：`Section { } header: { Text("聚合视图") }` —— body 是**空的**。
         // 屏幕上就是「聚合视图」标题下面一片空白，用户会以为加载失败。
         // 聚合视图本身已在早前精简里移除，这个空壳是残留。
@@ -339,7 +339,7 @@ struct MemberCenterView: View {
 // ---------- 成员行 (457 首字头像 + 458 角色 + 462 同名提示 + 262/466 活跃度) ----------
 struct MemberRow: View {
     let member: Member
-    @State private var tick = 0
+    @State var tick = 0
 
 
     var body: some View {
@@ -372,13 +372,13 @@ struct MemberRow: View {
     }
 
 
-    private var rolePill: some View {
+    var rolePill: some View {
         let r = MemberHub.ext(member.id).role
         return StatusPill(text: MemberHub.roleLabel(r),
                           systemImage: r == "main" ? "crown.fill" : (r == "guest" ? "person.badge.clock" : "person.fill"),
                           tone: r == "main" ? .warn : .neutral)
     }
-    private var subLine: some View {
+    var subLine: some View {
         let e = MemberHub.ext(member.id)
         let a = MemberHub.activity(member.id)
         let bits = [member.relation,
@@ -394,7 +394,7 @@ struct MemberRow: View {
             .opacity(a.stale ? 0.55 : 1)
     }
     // 262/466 久未用置灰 (台账推断口径)
-    private var staleTag: some View {
+    var staleTag: some View {
         let stale = MemberHub.activity(member.id).stale
         return Text(stale ? "久未用" : "活跃 (约)")
             .vkFont(.caption2)
@@ -416,7 +416,7 @@ struct MemberAvatar: View {
     /// 457: 未显式传 tint 时读成员建档色 (480 建档色此前只有 480 自己消费, 头像一直恒为 accentText)。
     /// 994: 这段原先写在 body 里的 `var base = …; if … { base = … }` 提到独立计算属性 ——
     /// 头像现在是 @ViewBuilder 的 body, 结果构建器里只允许产出视图的 `if`, 给局部变量赋值的那种裸 `if` 得搬出去。
-    private var baseColor: Color {
+    var baseColor: Color {
         if let t = tint { return t }
         if member.color.hasPrefix("#"), let v = UInt32(member.color.dropFirst(), radix: 16) {
             return Color(hex: v)
@@ -429,7 +429,7 @@ struct MemberAvatar: View {
     }
 
     /// 457/916 头像本体 (994 抽出成函数只为给上面两条分支复用同一条链, 渲染内容与抽出前一致)
-    private func avatarCircle(base: Color) -> some View {
+    func avatarCircle(base: Color) -> some View {
         let e = MemberHub.ext(member.id)
         let ch = String(member.name.prefix(1))
         return ZStack {

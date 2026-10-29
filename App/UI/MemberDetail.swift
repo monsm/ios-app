@@ -8,10 +8,10 @@ struct MemberDetail360View: View {
     let memberID: String
     var onChanged: () -> Void = {}
     @EnvironmentObject var app: AppState
-    @State private var tick = 0
-    @State private var showMerge = false
+    @State var tick = 0
+    @State var showMerge = false
 
-    private var member: Member? { DB.member(memberID) }
+    var member: Member? { DB.member(memberID) }
 
     var body: some View { vkBody.destined(.memberDetail360) }
     /// ⚠ `@ViewBuilder` 这一句不能省：顶层是 `if let / else` 两个**不同类型**的分支
@@ -60,7 +60,7 @@ struct MemberDetail360View: View {
     // 2026-10-29 补（**后台有实现、前台零调用**）：`MemberHub.recentExcerpts` 一直在 ——
     // 成员 360 页看不到「这个人最近开过哪把锁」。补一个板块，只读本机缓存的开锁类日志。
     @ViewBuilder
-    private func excerptSection(_ m: Member) -> some View {
+    func excerptSection(_ m: Member) -> some View {
         let items = MemberHub.recentExcerpts(m.id, 8)
         Section {
             if items.isEmpty {
@@ -88,7 +88,7 @@ struct MemberDetail360View: View {
     }
 
     // ---------- 261/472 名下凭证 (含借用横条) ----------
-    private func credsSection(_ m: Member) -> some View {
+    func credsSection(_ m: Member) -> some View {
         var pwdCount = 0, fpCount = 0
         var borrowLines: [String] = []
         var credLines: [String] = []   // 261 清单: 借用中的走 borrowLines, 同一凭证不在本段出现两次
@@ -147,7 +147,7 @@ struct MemberDetail360View: View {
 
 
     // ---------- 470 权限矩阵 + 469 紧急管理员 + 843 角色与示例内嵌 ----------
-    private func permSection(_ m: Member) -> some View {
+    func permSection(_ m: Member) -> some View {
         let role = MemberHub.ext(m.id).role
         let matrix = MemberHub.permRows(role)          // 470 的表定义在 MemberHub (全仓唯一一份)
         let admins = MemberHub.emergencyAdmins()       // 469 读点: 一次解表, 下面那行点名与会议摘要共用
@@ -222,7 +222,7 @@ struct MemberDetail360View: View {
     /// 843 角色示例行：能/不能两串**由 MemberHub.permRows 现算**，只有场景句是写死的文案
     /// (场景讲的是"这种人通常是谁"，不是权限位 —— 权限位改了这里会跟着变，不会两边各说一套)。
     /// "访客名下仍可以有临时码"这句刻意保留：那是**锁端**的事，470 只管本机 UI，两者最容易被读混。
-    private func roleExample(_ r: String, current: String) -> some View {
+    func roleExample(_ r: String, current: String) -> some View {
         let can = MemberHub.permCan(r)
         let cant = MemberHub.permCannot(r)
         let scene: String
@@ -254,7 +254,7 @@ struct MemberDetail360View: View {
     }
 
     // ---------- 补全档案 (265/461/458/457-916/464/465/475/480/484/630) ----------
-    private func editProfile(_ m: Member) {
+    func editProfile(_ m: Member) {
         let e = MemberHub.ext(m.id)
         // 843: 角色不再在这里填英文代码 —— 它有了正上方的单选 (主理人/成员/访客)，两处能改一个值就是两个真相源。
         // 旧写法还留着一个真隐患: 手打 "Main"/"管理员" 这类值不报错，只会被 MemberHub.permRows 静默当成"成员"。
@@ -304,7 +304,7 @@ struct MemberDetail360View: View {
     // D-152a (2026-10-11 拍板 方案③): 弹窗当场选「只移除档案 / 连锁端一起收回」, 默认第一项。
     // 撤权那一支走的还是 629/353 那条现成队列 (CredentialOrg.enqueue del_pwd/del_fp), 没有新数据面;
     // 指纹不可远程补录 (670) 这句话与选项写在同一屏 —— 它是这个选择唯一的真代价。
-    private func confirmDelete(_ m: Member) {
+    func confirmDelete(_ m: Member) {
         let preview = CredentialOrg.memberCredentialPreview(m.id)
         // 2026-10-28 修复（**安全级假承诺**）：原文案写「转入未分配并入回收站（可整组还原）」
         // 与「这些凭证会排上锁端删除, 到场连接后真正失效」—— 两句都不成立：

@@ -2,7 +2,7 @@
 // 2026-10-29 从 DeviceHomeBlocks.swift（763 行）拆出。
 import SwiftUI
 
-extension DeviceHomeBlocks {
+extension DeviceHomeView {
     var quickActions: some View {
         VStack(alignment: .leading, spacing: DS.Space.m) {
             SectionTitle(text: "快捷操作")

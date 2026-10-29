@@ -8,10 +8,10 @@ struct DeviceHomeView: View {
     @EnvironmentObject var app: AppState
     // 包1: 圆盘的连接语言 (241/242/245) 与回连触感 (243) 需要观察 BLE/锁会话实时状态 —
     // 两个服务单例不是 EnvironmentObject, 在此直接观察
-    @ObservedObject private var lockSvc = LockService.shared
-    @ObservedObject private var bleSvc = BLEService.shared
+    @ObservedObject var lockSvc = LockService.shared
+    @ObservedObject var bleSvc = BLEService.shared
     // 包2 连接感知: 预握手/回连节律/回执 (只读观察, 不动协议)
-    @ObservedObject private var sense = LinkSense.shared
+    @ObservedObject var sense = LinkSense.shared
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State var showAdd = false
     // 2026-10-29：锁设置 sheet（B 档）—— 设备页工具栏齿轮打开
