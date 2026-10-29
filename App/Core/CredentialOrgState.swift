@@ -22,12 +22,32 @@ extension CredentialOrg {
     /// 926/930 判 ❌ 后拍板按替代执行 —— 替代栏原话是"到期前 2 小时与到期时各发本地通知"。
     /// 排程扩到六条, 列表提醒行 (dueSoonPwds) **照旧保留**: 前台多一处提示不是坏事。
     static func scheduleAlerts(_ mac: String, _ p: LedgerPwd, _ a: CredAlert) {
-        let c = UNUserNotificationCenter.current()
         let id = "c6.alert.\(mac).p\(p.alias)"
+        // 2026-10-29 修复（竞态）：原来的顺序是「异步查待处理 → 回调里删旧的」与「下面同步排新的」，
+        // 而 getPendingNotificationRequests 的回调是**另一个线程、晚于本函数返回**才跑的 ——
+        // 于是它删 stale 时，本函数刚排进去的新通知**也在 pending 列表里**（id 前缀相同），
+        // 被一并删掉。表现：改了凭证有效期/提醒档位后，提醒反而**一条都不响**，
+        // 而界面上"已排程"照旧显示。
+        // 修法：把「删旧 + 排新」整体放进同一个异步序列里，删除先完成再排。
+        scheduleAlertsOrdered(id: id, p: p, a: a, mac: mac)
+    }
+
+    /// 删旧 → 排新，严格串行（见 scheduleAlerts 的竞态说明）。
+    private static func scheduleAlertsOrdered(id: String, p: LedgerPwd, a: CredAlert, mac: String) {
+        let c = UNUserNotificationCenter.current()
         c.getPendingNotificationRequests { reqs in
             let stale = reqs.map(\.identifier).filter { $0 == id || $0.hasPrefix(id + ".") }
-            if !stale.isEmpty { c.removePendingNotificationRequests(withIdentifiers: stale) }
+            let afterRemove: () -> Void = { scheduleAlertsNow(id: id, p: p, a: a, mac: mac) }
+            if stale.isEmpty { afterRemove(); return }
+            c.removePendingNotificationRequests(withIdentifiers: stale)
+            // removePendingNotificationRequests 没有完成回调，但它与 add 都在同一串行队列上；
+            // 为了让「删」先于「加」在语义上确定，排新动作再跳一次主队列。
+            DispatchQueue.main.async(execute: afterRemove)
         }
+    }
+
+    /// 真正排六条提醒（原 scheduleAlerts 的函数体）。
+    private static func scheduleAlertsNow(id: String, p: LedgerPwd, a: CredAlert, mac: String) {
         // "到期时"不看单档开关: 开了任何一档 = 在意这条凭证的到期, 到点本身最该说话。
         let any = a.day || a.d3 || a.d1 || a.h24 || a.h2
         guard let to = expiryDate(p), any else { return }
