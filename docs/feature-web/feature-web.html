@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T13:21:17.109Z",
+    "generated": "2026-10-29T13:47:56.332Z",
     "sources": [
       {
         "scout": "android-native",
@@ -33479,7 +33479,7 @@ const DATA = {
           "line": 229,
           "symbol": "append(_:_:date:time:)",
           "note": "",
-          "text": "list.insert(BleEvent(at: DiagTime.mmddHHmm(), what: what, ok: ok), at: 0)"
+          "text": "// 重连失败阶梯每十几秒就会记一条，等于持续在做全量 200/300 条的编解码。"
         },
         {
           "platform": "ios",

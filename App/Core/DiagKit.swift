@@ -224,20 +224,57 @@ struct ConnAttempt: Codable {
     }
 }
 enum BleTelemetry {
+    // 2026-10-29 性能：与 DiagLogs 同一套处理 ——
+    // 原来每次 recordEvent / recordAttempt 都是「读整份数组 → 插入 → 整份编码 → UserDefaults 落盘」。
+    // 重连失败阶梯每十几秒就会记一条，等于持续在做全量 200/300 条的编解码。
+    // 现在：内存缓存 + 标脏 + 1 秒防抖合并，真正落盘一秒钟最多一次。
+    private static let eventCache = Locked<[BleEvent]?>(nil)
+    private static let attemptCache = Locked<[ConnAttempt]?>(nil)
+    private static let eventDirty = Locked(false)
+    private static let attemptDirty = Locked(false)
+
     static func recordEvent(_ what: String, ok: Bool) {
-        var list = DB.store.get([BleEvent].self, "kf_ble_events") ?? []
+        var list = eventCache.withLock { $0 } ?? DB.store.get([BleEvent].self, "kf_ble_events") ?? []
         list.insert(BleEvent(at: DiagTime.mmddHHmm(), what: what, ok: ok), at: 0)
         if list.count > 200 { list = Array(list.prefix(200)) }
-        DB.store.setCodable("kf_ble_events", list)
+        eventCache.withLock { $0 = list }
+        scheduleFlush(eventDirty)
     }
-    static var events: [BleEvent] { DB.store.get([BleEvent].self, "kf_ble_events") ?? [] }
+    static var events: [BleEvent] {
+        eventCache.withLock { $0 } ?? DB.store.get([BleEvent].self, "kf_ble_events") ?? []
+    }
     static func recordAttempt(mac: String, ok: Bool, reason: String) {
-        var list = DB.store.get([ConnAttempt].self, "kf_conn_attempts") ?? []
+        var list = attemptCache.withLock { $0 } ?? DB.store.get([ConnAttempt].self, "kf_conn_attempts") ?? []
         list.insert(ConnAttempt(t: DiagTime.mmddHHmmss(), mac: mac, ok: ok, reason: reason), at: 0)
         if list.count > 300 { list = Array(list.prefix(300)) }
-        DB.store.setCodable("kf_conn_attempts", list)
+        attemptCache.withLock { $0 = list }
+        scheduleFlush(attemptDirty)
     }
-    static var attempts: [ConnAttempt] { DB.store.get([ConnAttempt].self, "kf_conn_attempts") ?? [] }
+    static var attempts: [ConnAttempt] {
+        attemptCache.withLock { $0 } ?? DB.store.get([ConnAttempt].self, "kf_conn_attempts") ?? []
+    }
+
+    /// 立刻把内存里的遥测写盘（进后台 / 退出前调用）。
+    static func flush() {
+        if eventDirty.withLock({ d -> Bool in let h = d; d = false; return h }) {
+            DB.store.setCodable("kf_ble_events", eventCache.withLock { $0 } ?? [])
+        }
+        if attemptDirty.withLock({ d -> Bool in let h = d; d = false; return h }) {
+            DB.store.setCodable("kf_conn_attempts", attemptCache.withLock { $0 } ?? [])
+        }
+    }
+    private static func scheduleFlush(_ flag: Locked<Bool>) {
+        let already = flag.withLock { d -> Bool in
+            if d { return true }
+            d = true
+            return false
+        }
+        if already { return }
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1))
+            flush()
+        }
+    }
     /// 每日连接成功率（诊断界面已删，但 BleTelemetry 的统计仍产出，供未来复用）。
     struct DayRate: Identifiable {
         var id: String { day }

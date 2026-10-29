@@ -303,6 +303,8 @@ extension RootView {
             // 2026-10-29：诊断日志改成内存缓存 + 1s 防抖落盘（原来每条日志都读文件+写文件）。
             // 真进后台时冲一次，避免最后 1 秒的日志丢在内存里。
             DiagLogs.flush()
+            // 2026-10-29：BLE 遥测同样改成内存缓存 + 1s 防抖，退后台一起冲。
+            BleTelemetry.flush()
         } else {
             // .inactive: 只收起过期的快捷条, **不**记锁定到期时刻 (否则反复下拉通知中心可无限顺延宽限)。
             // 但崩溃标记仍要清 —— 从任务切换器强退时进程多在 .inactive 被 SIGKILL,
@@ -312,6 +314,8 @@ extension RootView {
             AutoOpenController.shared.onBackground()
             // 任务切换器强退多停在 .inactive 就被 SIGKILL —— 这里也冲一次。
             DiagLogs.flush()
+            // 2026-10-29：BLE 遥测同样改成内存缓存 + 1s 防抖，退后台一起冲。
+            BleTelemetry.flush()
         }
     }
 
