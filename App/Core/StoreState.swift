@@ -16,9 +16,13 @@ extension DB {
             fpCap: st.fpInfoCapacity > 0 ? st.fpInfoCapacity : nil)
         // 2026-10-29 性能：每次 getStatus 成功都会走到这里，而状态大多时候没变。
         // 原先无条件 set → 每次都是一次 JSONSerialization + UserDefaults(plist) 落盘。
-        // 现在先比一遍：字段全等就不写（at 时间戳不参与比较，它只是"上次读到"的标记）。
-        if let old = get(StatusSnapshot.self, "kf_snap_" + mac)?.status, old == d { return }
-        set(StatusSnapshot(at: Date().timeIntervalSince1970 * 1000, status: d), "kf_snap_" + mac)
+        //
+        // 但不能"没变就完全不写"：信封里的 `at` 是「数据截至」的展示基准（statusTime()），
+        // 完全不写会让用户看到一条明明刚读过、却标着很旧时间的快照。
+        // 所以：字段全等 且 距上次落盘 < 60s 才跳过；超过 60s 仍刷新一次 `at`。
+        let nowMs = Date().timeIntervalSince1970 * 1000
+        if let old = get(StatusSnapshot.self, "kf_snap_" + mac), old.status == d, nowMs - old.at < 60_000 { return }
+        set(StatusSnapshot(at: nowMs, status: d), "kf_snap_" + mac)
     }
 
     static func readStatus(_ mac: String) -> StatusSnapshotData? {

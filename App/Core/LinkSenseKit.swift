@@ -40,7 +40,8 @@ final class LinkSense: ObservableObject {
     var prevRssi: Int? = nil                        // 270 上一次 RSSI: 骤降检测基准 (只在值变化时翻档)
     @Published private(set) var connectMs: Int? = nil        // 67 握手耗时 (最近一次, ms)
     @Published var reconnectAttempt = 0          // 126 回连节律轮次
-    @Published var lastReconnectAt: Date = Date.distantPast
+    /// 2026-10-29 性能：只写不读（回连节律只把它当记录），去掉 @Published。
+    var lastReconnectAt: Date = Date.distantPast
     @Published private(set) var sessionSince: Date? = nil    // 272 连接保持时长基准
     @Published private(set) var lastReceipt = 0              // 535 同步回执 (最近一次补发条数)
     @Published var connectSource = "预热"        // 98 冷热连接标识: 预热/回连 vs 即连

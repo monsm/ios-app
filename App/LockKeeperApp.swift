@@ -95,7 +95,8 @@ final class AppState: ObservableObject {
     }
     // 294 本地深链 (kf://): 白名单路由; 应用锁未解开时**先挂起**, 解锁后才落地 (深链不得绕过门禁)
     @Published var pendingRoute: Route?
-    @Published var pendingMac: String?   // 294 深链带的锁 ID (kf://device?mac=), 解锁后落地
+    /// 2026-10-29 性能：只在 AppState 内部落地（294 深链锁 ID），没有任何视图读它 —— 不需要发布。
+    var pendingMac: String?
     /// 294 深链 host 白名单。2026-10-16 C1: **由 Route.deepLinkHosts 派生**，不再手写序号表。
     /// 顺序只有一个声明处 (Route.byHost)，深链、Tab 号、访客受限集三样都从它推。
     static let deepLinkHosts: [String: Int] = Route.deepLinkHosts
@@ -195,7 +196,8 @@ final class AppState: ObservableObject {
     @Published var pendingCredNavMac: String?
     /// 366/1013 通知点按 → 凭证 Tab 的对应面板。与 pendingCredNav (577 定位到单条凭证) 是两回事。
     /// 应用锁未解开时凭证 Tab 根本不在层级树里, 值就一直挂着 → 解锁后 onAppear 才落地 (通知不得绕过门禁)
-    @Published var pendingCredPanel: String?
+    /// 2026-10-29 性能：全仓零读取方（见 RootTabs 里那条注释），只被写入 —— 不需要发布。
+    var pendingCredPanel: String?
     /// 358 整理建议 → 凭证页多选预勾选: 建议行点按带过来要勾的密码 alias 表。
     /// 与 pendingCredPanel (到了开哪个面板) 是两回事 —— 这个负责"进了多选先勾好哪些", 同 pendingRecordKey 族只存会话态。
     @Published var pendingCredSelect: [Int]?

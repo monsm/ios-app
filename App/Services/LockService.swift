@@ -7,7 +7,10 @@ import Combine
 final class LockService: ObservableObject {
     static let shared = LockService()
     @Published var connectedMAC: String = ""
-    @Published private(set) var lastError: String = ""
+    /// 2026-10-29 性能：全仓**没有任何视图读** lastError（只有写入与注释提及）。
+    /// 它原来是 @Published，于是每条 warn/error 日志都会触发 objectWillChange ——
+    /// DeviceHomeView 观察着 LockService.shared，等于白重算一次设备页。降级为普通属性。
+    private(set) var lastError: String = ""
     /// 2026-10-29 性能：这两个数组**全仓没有任何视图读**（只写 + 自己数 count）。
     /// 但它们原来是 @Published，于是每写一行 BLE 日志都会触发 objectWillChange ——
     /// 而 DeviceHomeView 观察着 LockService.shared，等于每行日志都把设备页整页重算一遍
