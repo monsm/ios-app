@@ -28,7 +28,10 @@ extension SettingsView {
     }
     @ViewBuilder
     var unlockSection: some View {
-        Section {
+        // 2026-10-30 性能：`UnlockPrefs.mode` 在本块里被读 3 次（Picker 的 get、disabled 判据、提示条件），
+        // 每次都要查一次 UserDefaults。一次读出来共用。
+        let gestureMode = UnlockPrefs.mode
+        return Section {
             VariantToggle("按住确认开锁", isOn: Binding(
                 get: { DB.store.getBool("kf_hold_confirm", true) },
                 set: { app.setUnlockOption("kf_hold_confirm", $0) }))
@@ -38,7 +41,7 @@ extension SettingsView {
             // 52/58 开锁手势三档 (第九十八批, 2026-10-10 拍板"手势族全做"后补回)。
             // 默认档 hold 与拍板前的行为**逐字一致**; 另两档是**替代**按住确认的确认方式，互斥而非叠加。
             Picker("开锁手势", selection: Binding(
-                get: { UnlockPrefs.mode },
+                get: { gestureMode },
                 set: { app.setUnlockOption("kf_gesture_mode", $0) })) {
                 Text("按住确认 (默认)").tag("hold")
                         // 2026-10-28 删除：这两档**从未实现** —— `UnlockPrefs.modes = ["hold"]`，
@@ -52,8 +55,8 @@ extension SettingsView {
             VariantToggle("双击直开 (绕过按住确认)", isOn: Binding(
                 get: { DB.store.getBool("kf_tap_direct") },
                 set: { app.setUnlockOption("kf_tap_direct", $0) }))
-                .disabled(UnlockPrefs.mode != "hold")
-            if UnlockPrefs.mode != "hold" {
+                .disabled(gestureMode != "hold")
+            if gestureMode != "hold" {
                 Text("三连点/旋转充能档已自带确认动作，双击直开只在「按住确认」档提供。")
                     .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
@@ -213,13 +216,17 @@ extension SettingsView {
     }
     @ViewBuilder
     var applockSection: some View {
-        Section {
-            if DB.hasPasscode() {
+        // 2026-10-30 性能：`DB.hasPasscode()` / `DB.hasDuressCode()` 在本块里各被读 2 次，
+        // 每次都是一份 SecureStore 查询。一次读出来，header/footer/按钮三处共用。
+        let hasPasscode = DB.hasPasscode()
+        let hasDuress = DB.hasDuressCode()
+        return Section {
+            if hasPasscode {
                 Button { setPasscode() } label: {
                     Label("更改本机密码", systemImage: "lock.rotation")
                 }
                 Button { setDuressCode() } label: {
-                    Label(DB.hasDuressCode() ? "更改胁迫码" : "设置胁迫码", systemImage: "exclamationmark.shield")
+                    Label(hasDuress ? "更改胁迫码" : "设置胁迫码", systemImage: "exclamationmark.shield")
                 }
                 Button(role: .destructive) { disablePasscode() } label: {
                     Label("关闭本机密码", systemImage: "lock.slash")
@@ -233,7 +240,7 @@ extension SettingsView {
         } header: {
             Text("应用锁")
         } footer: {
-            Text(DB.hasDuressCode()
+            Text(hasDuress
                  ? "冷启动需输密码。胁迫码已设置：被胁迫时输入它会进入空壳模式 —— 门能开，但凭证与记录显示为空。"
                  : "冷启动需输密码。可另设一个胁迫码：被胁迫时输入它，App 进入空壳模式（门能开、数据看不见），不报警不暴露。")
         }
