@@ -203,6 +203,14 @@ struct MergeMembersView: View {
         DB.members().filter { $0.id != primary.id && $0.name == primary.name }
     }
 
+    /// 2026-10-29 性能：副档选择器每行要显示"名下 N 条"。
+    /// 原来每行调一次 `MemberHub.activity(m.id)` —— 那是「遍历全部锁 × 读全部日志 × Attribution 分类」，
+    /// 3 个候选就是 3 次全量扫描。现在一次算完（复用 activityBundle，它本来就是为这个场景加的）。
+    private var ownsTable: [String: Int] {
+        let bundle = MemberHub.activityBundle(secondaryCandidates.map { $0.id })
+        return bundle.table.mapValues { $0.owns }
+    }
+
     var body: some View { vkBody.destined(.mergeMembers) }
     var vkBody: some View {
         NavigationStack {
@@ -220,7 +228,9 @@ struct MergeMembersView: View {
                     Picker("选择副档", selection: $secondaryID) {
                         Text("请选择").tag(nil as String?)
                         ForEach(secondaryCandidates) { m in
-                            Text(m.name + " · 名下 " + String(MemberHub.activity(m.id).owns) + " 条").tag(m.id as String?)
+                            // 2026-10-29 性能：原来每个候选都调一次 MemberHub.activity（= 全锁重读日志 + 分类）。
+                            // 一次建表，行内只查字典。
+                            Text(m.name + " · 名下 " + String(ownsTable[m.id] ?? 0) + " 条").tag(m.id as String?)
                         }
                     }
                     .pickerStyle(.inline)
