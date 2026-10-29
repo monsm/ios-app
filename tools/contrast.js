@@ -2,7 +2,7 @@
 // 设计令牌对比度闸门 — 把"对比度已核算"这种口头声明变成可复现的机器检查。
 //
 // 背景: DS.Palette 的颜色是 UIColor 动态色(明暗各一套), 之前对比度是手算的,
-// 手算不可复现、也没人会在改色后重算。这里直接从 DesignSystem.swift 解析出
+// 手算不可复现、也没人会在改色后重算。这里直接从 DesignPalette.swift 解析出（2026-10-29：色板从 DesignSystem.swift 拆出）
 // 每一组取值, 按 WCAG 2.1 相对亮度公式算出比值, 低于阈值即失败。
 //
 // 包16 起色板扩展为: 基础令牌 + 六套品牌主题 (themeTable, idea 31 + 886) + AMOLED 纯黑覆盖
@@ -26,7 +26,10 @@ const SLEEPING = [];
 const fs = require('fs');
 const path = require('path');
 
-const SRC = path.join(__dirname, '..', 'App', 'Core', 'DesignSystem.swift');
+const SRC_PALETTE = path.join(__dirname, '..', 'App', 'Core', 'DesignPalette.swift');
+// 2026-10-29：DesignSystem.swift 拆成 4 个文件 —— 色板在 DesignPalette.swift，
+// accentThemes 仍在 DesignSystem.swift（它在 DS 里但不在 Palette 里）。两处都要读。
+const SRC_DS = path.join(__dirname, '..', 'App', 'Core', 'DesignSystem.swift');
 const verbose = process.argv.includes('--verbose');
 
 // ---------- WCAG 相对亮度 ----------
@@ -45,10 +48,11 @@ function contrast(a, b) {
 }
 
 // ---------- 解析 DesignSystem.swift ----------
-const src = fs.readFileSync(SRC, 'utf8');
+const src = fs.readFileSync(SRC_PALETTE, 'utf8');
+const dsSrc = fs.readFileSync(SRC_DS, 'utf8');
 const paletteBlock = src.match(/enum Palette \{([\s\S]*?)\n    \}/);
 if (!paletteBlock) {
-  console.error('✗ 未能在 DesignSystem.swift 中定位 enum Palette — 结构变了?');
+  console.error('✗ 未能在 DesignPalette.swift 中定位 enum Palette — 结构变了?');
   process.exit(1);
 }
 const block = paletteBlock[1];
@@ -86,7 +90,7 @@ while ((m = reTheme.exec(block)) !== null) {
 // 理由是防"半接线"：886 扩色板时最容易发生的是 themeTable 加了主题但色板没加 (选不到 = 死色)，
 // 或色板列了但表里没有 (选中后 themed() 走 ?? indigo 回退，屏幕上悄悄换色)。
 // 两个集合不等就是这两种事故之一，因此判失败而不是只数个数。
-const metaKeys = [...src.matchAll(/AccentTheme\(key:\s*"(\w+)"/g)].map((x) => x[1]);
+const metaKeys = [...dsSrc.matchAll(/AccentTheme\(key:\s*"(\w+)"/g)].map((x) => x[1]);
 if (!metaKeys.length) {
   console.error('✗ 没解析到 DS.accentThemes 的键 — 色板元数据结构变了? 闸门不能瞎猜，直接失败');
   process.exit(1);
