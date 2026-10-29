@@ -244,13 +244,16 @@ extension CredentialsView {
         return pwds
     }
     /// 置顶段在前, 其余按 182 手动序 (kf_cseq_), 没有手动序才按 914 的排序维度
-    func orderedPwds(_ pwds: [LedgerPwd]) -> [LedgerPwd] {
+    /// 2026-10-30 性能：`CredentialOrg.seq(mac)` 是**一次 DB.get 解码**，原来本函数每次都调 ——
+    /// 而 memberSections 对每个成员都调一次 orderedPwds/orderedFps ⇒ O(成员) 次整表解码。
+    /// 现在接受可选的 order 参数，调用方一次取、多处传。
+    func orderedPwds(_ pwds: [LedgerPwd], order preOrder: [Int]? = nil) -> [LedgerPwd] {
         // 526 置顶行固定顶部
         let pinned: [LedgerPwd] = []   // 2026-10-26: 星标已删，无置顶
         let rest = pwds
         var ordered = rest
         // 182/352 拖拽排序: 用户手动序优先 (seq 存的 index 数组)
-        let order = CredentialOrg.seq(mac)["p"] ?? []
+        let order = preOrder ?? (CredentialOrg.seq(mac)["p"] ?? [])
         let byIdx = manualIndex(order)
         if !order.isEmpty {
             ordered = ordered.sorted { a, b in
@@ -296,12 +299,12 @@ extension CredentialsView {
         fps = fps.filter { !credArchived.contains(100000 + $0.batch) }
         return fps
     }
-    func orderedFps(_ fps: [LedgerFp]) -> [LedgerFp] {
+    func orderedFps(_ fps: [LedgerFp], order preOrder: [Int]? = nil) -> [LedgerFp] {
         let pinned: [LedgerFp] = []
         let rest = fps
         // 2026-10-27 三轮：排序四档已删，恒按时间倒序（原 default 分支）
         var ordered: [LedgerFp] = rest.sorted { ($0.at) > ($1.at) }
-        let order = CredentialOrg.seq(mac)["f"] ?? []
+        let order = preOrder ?? (CredentialOrg.seq(mac)["f"] ?? [])
         if !order.isEmpty {
             let byIdx = manualIndex(order)
             ordered = ordered.sorted { a, b in
@@ -341,7 +344,6 @@ extension CredentialsView {
     func fpKeys(_ group: [LedgerFp]) -> [Int] { group.map { $0.batch } }
 
 
-
     @ViewBuilder
     var memberSections: some View {
         // 2026-10-15 走查 (性能): 原写法在 ForEach(DB.members()) 行内逐成员调 DB.listPwds/listFps
@@ -349,16 +351,20 @@ extension CredentialsView {
         // 全量解码)。提到循环外算一次, 行内只做内存 filter —— 行为不变, 解码次数从 O(M×N) 降为 O(1)。
         let allPwds = DB.listPwds(mac)
         let allFps = DB.listFps(mac)
+        // 2026-10-30 性能：排序表一次取 —— 原来每个成员各解一次（O(成员) 次整表解码）。
+        let seqAll = CredentialOrg.seq(mac)
+        let orderP = seqAll["p"] ?? []
+        let orderF = seqAll["f"] ?? []
         let archPwd: Set<Int> = []
         let archFp = archPwd   // isArchived 内部: pwd 存原 alias, fp 存 100000+batch, 同一个 Set
         ForEach(DB.members()) { m in
             // 354: 归档条目在本页任何浏览方式里都不出现 (含按成员视图); 归档区卡是唯一落点
             let pwds = orderedPwds(allPwds.filter {
                 $0.owner == m.id && !archPwd.contains($0.alias)
-            })
+            }, order: orderP)
             let fps = orderedFps(allFps.filter {
                 $0.owner == m.id && !archFp.contains(100000 + $0.batch)
-            })
+            }, order: orderF)
             if !pwds.isEmpty || !fps.isEmpty {
                 Section("\(CredentialOrg.aliasDisplay && !m.relation.isEmpty ? m.relation + " · " : "")\(m.name) (\(pwds.count + fps.count))") {
                     ForEach(pwds) { p in credRow(CredHit(id: "p\(p.alias)", pwd: p)) }
@@ -372,8 +378,8 @@ extension CredentialsView {
                 }
             }
         }
-        let noPwd = orderedPwds(allPwds.filter { $0.owner == nil && !archPwd.contains($0.alias) })
-        let noFp = orderedFps(allFps.filter { $0.owner == nil && !archFp.contains(100000 + $0.batch) })
+        let noPwd = orderedPwds(allPwds.filter { $0.owner == nil && !archPwd.contains($0.alias) }, order: orderP)
+        let noFp = orderedFps(allFps.filter { $0.owner == nil && !archFp.contains(100000 + $0.batch) }, order: orderF)
         if !noPwd.isEmpty || !noFp.isEmpty {
             Section("未归属 (\(noPwd.count + noFp.count))") {
                 ForEach(noPwd) { p in credRow(CredHit(id: "p\(p.alias)", pwd: p)) }
