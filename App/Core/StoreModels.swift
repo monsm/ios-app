@@ -172,6 +172,17 @@ struct Member: Codable, Identifiable {
 struct StatusSnapshot: Codable {
     var at: Double
     var status: StatusSnapshotData
+
+    enum CodingKeys: String, CodingKey { case at, status }
+
+    /// 容错解码（2026-10-29）：缺字段回落默认值。
+    /// 合成解码器对非 Optional 字段要求键必须存在 —— 持久化模型都靠"加字段不破坏老数据"演进，
+    /// 所以凡是走 `get(...)` / `setCodable(...)` 的模型都显式写一份。
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        at = try c.decodeIfPresent(Double.self, forKey: .at) ?? 0
+        status = try c.decodeIfPresent(StatusSnapshotData.self, forKey: .status) ?? .init()
+    }
 }
     /// 2026-10-27 审核说明 (AUDIT-A F-31)：本仓 `StatusSnapshotData` 只存状态对象的**子集**
     /// （rc/pid/电量/锁钟/固件版本等界面要用的），而 vendor 存整个 status 对象。
@@ -196,10 +207,47 @@ struct StatusSnapshotData: Codable, Equatable {
     var pinCap: Int?
     var pwdCap: Int?
     var fpCap: Int?
+
+    enum CodingKeys: String, CodingKey { case rc, powerLevel, firmware, lockTime, pinStock, pwdStock, fpStock, verifyMode, broadcastMode, tempPwdMode, securityLevel, sKeyStatus, zotpPeriod, pinCap, pwdCap, fpCap }
+
+    /// 容错解码（2026-10-29）：缺字段回落默认值。
+    /// 合成解码器对非 Optional 字段要求键必须存在 —— 持久化模型都靠"加字段不破坏老数据"演进，
+    /// 所以凡是走 `get(...)` / `setCodable(...)` 的模型都显式写一份。
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        rc = try c.decodeIfPresent(Int.self, forKey: .rc) ?? 0
+        powerLevel = try c.decodeIfPresent(Int.self, forKey: .powerLevel) ?? 0
+        firmware = try c.decodeIfPresent(String.self, forKey: .firmware) ?? ""
+        lockTime = try c.decodeIfPresent(Int64.self, forKey: .lockTime) ?? 0
+        pinStock = try c.decodeIfPresent(Int.self, forKey: .pinStock) ?? 0
+        pwdStock = try c.decodeIfPresent(Int.self, forKey: .pwdStock) ?? 0
+        fpStock = try c.decodeIfPresent(Int.self, forKey: .fpStock) ?? 0
+        verifyMode = try c.decodeIfPresent(Int.self, forKey: .verifyMode) ?? 0
+        broadcastMode = try c.decodeIfPresent(Int.self, forKey: .broadcastMode) ?? 0
+        tempPwdMode = try c.decodeIfPresent(Int.self, forKey: .tempPwdMode) ?? 0
+        securityLevel = try c.decodeIfPresent(Int.self, forKey: .securityLevel) ?? 0
+        sKeyStatus = try c.decodeIfPresent(Int.self, forKey: .sKeyStatus) ?? 0
+        zotpPeriod = try c.decodeIfPresent(Int.self, forKey: .zotpPeriod)
+        pinCap = try c.decodeIfPresent(Int.self, forKey: .pinCap)
+        pwdCap = try c.decodeIfPresent(Int.self, forKey: .pwdCap)
+        fpCap = try c.decodeIfPresent(Int.self, forKey: .fpCap)
+    }
 }
 struct LogCache: Codable {
     var at: Double
     var logs: [CachedLog]
+
+    enum CodingKeys: String, CodingKey { case at, logs }
+
+    init(at: Double, logs: [CachedLog]) { self.at = at; self.logs = logs }
+
+    /// 容错解码：缺键回落空；单条坏记录只丢那一条（Lossy）。
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        at = try c.decodeIfPresent(Double.self, forKey: .at) ?? 0
+        let arr = (try? c.decodeIfPresent([Lossy<CachedLog>].self, forKey: .logs)) ?? nil
+        logs = (arr ?? []).compactMap { $0.value }
+    }
 }
 struct CachedLog: Codable {
     var type: Int
@@ -207,6 +255,24 @@ struct CachedLog: Codable {
     var idxRaw: UInt32
     var lockTime: Int64
     var lockTimeStr: String
+
+    enum CodingKeys: String, CodingKey { case type, typeName, idxRaw, lockTime, lockTimeStr }
+
+    init(type: Int, typeName: String, idxRaw: UInt32, lockTime: Int64, lockTimeStr: String) {
+        self.type = type; self.typeName = typeName; self.idxRaw = idxRaw
+        self.lockTime = lockTime; self.lockTimeStr = lockTimeStr
+    }
+
+    /// 容错解码（2026-10-29）：与 Ledger 同理 —— 加字段不该让整份日志缓存解不出，
+    /// 那会让记录页在升级后突然"一条都没有"（readLogs 返回 []）。
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        type = try c.decodeIfPresent(Int.self, forKey: .type) ?? 0
+        typeName = try c.decodeIfPresent(String.self, forKey: .typeName) ?? ""
+        idxRaw = try c.decodeIfPresent(UInt32.self, forKey: .idxRaw) ?? 0
+        lockTime = try c.decodeIfPresent(Int64.self, forKey: .lockTime) ?? 0
+        lockTimeStr = try c.decodeIfPresent(String.self, forKey: .lockTimeStr) ?? ""
+    }
 }
 
 // ---------- 钥匙串硬件台账 ----------
