@@ -238,6 +238,16 @@ const checks = [
     file: 'App/UI/CredentialActions.swift',
     must: ['if seqBasePwds.isEmpty && seqBaseFps.isEmpty {'],
   },
+  {
+    name: 'R44 成员中心空态三层判据（第 58 轮）',
+    file: 'App/UI/MemberCenterView.swift',
+    must: ['if DB.members().isEmpty {', 'actionTitle: "查看归档") { showArchived = true }', 'actionTitle: "清除筛选") { groupFilter = "" }'],
+  },
+  {
+    name: 'R45 越界开门空态按有无临时码分说（第 59 轮）',
+    file: 'App/UI/RecordsSheets.swift',
+    must: ['@State private var anyTemp = false', 'Text(anyTemp ? "没有越界开门', 'anyTemp = DB.keychains().contains'],
+  },
 ];
 
 let bad = 0;
