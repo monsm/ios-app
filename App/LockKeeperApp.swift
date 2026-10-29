@@ -285,12 +285,19 @@ final class AppState: ObservableObject {
     /// 而它被两处**自动**路径调用 —— 切锁 (:181 select) 与开锁后的复位定时器 (:356)，
     /// 于是"开了静默还在自动连锁读状态"，干净复现问题的口径是假的 (AUDIT-A §127 那条 gap 至今成立)。
     /// 用户主动的刷新与"下发后回读校验"传 `manual: true` 照连 (不传就把 cmd20 的回读也一起吞掉)。
+    /// 2026-10-29 性能：`status` 是 @Published，而它被 RootView 与设备页观察 ——
+    /// 每次轮询无条件赋值都会让整棵树重算 body，哪怕读数一模一样（绝大多数轮询都是这样）。
+    /// 这里只在真的变化时赋值。
+    func applyStatus(_ st: LockStatus) {
+        if status != st { status = st }
+    }
+
     func refreshStatusQuietly(manual: Bool = false) async {
         guard manual || !DiagFlags.silent else { return }
         guard let kc = current else { return }
         do {
             try await lock.ensureConnected(mac: kc.mac)
-            status = try await lock.getStatus()
+            applyStatus(try await lock.getStatus())
             LockArchive.touchConnected(kc.mac)   // 包3/292: 连接成功刷新沉睡判定基准
         } catch {
             status = nil

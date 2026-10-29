@@ -5,7 +5,7 @@
 // 差分基准: golden.parse.*
 import Foundation
 
-struct LockStatus {
+struct LockStatus: Equatable {
     var rc: Int = -1
     var sKeyStatus: Int = -1
     var powerLevel: Int = -1

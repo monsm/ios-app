@@ -8,9 +8,13 @@ final class LockService: ObservableObject {
     static let shared = LockService()
     @Published var connectedMAC: String = ""
     @Published private(set) var lastError: String = ""
-    @Published var logs: [String] = []
+    /// 2026-10-29 性能：这两个数组**全仓没有任何视图读**（只写 + 自己数 count）。
+    /// 但它们原来是 @Published，于是每写一行 BLE 日志都会触发 objectWillChange ——
+    /// 而 DeviceHomeView 观察着 LockService.shared，等于每行日志都把设备页整页重算一遍
+    /// （hero 卡 + 开锁圆盘 + 快捷格 + 最近开门）。去掉 @Published：数组仍保留给调试/诊断。
+    var logs: [String] = []
     /// 包11/740: 原始报文环形记录 (RX 帧 hex), 供诊断页 hex 查看, 不持久化
-    @Published private(set) var recentFrames: [String] = []
+    private(set) var recentFrames: [String] = []
 
     let ble = BLEService.shared
     var sessionTokenHex: String = "0000"   // 锁端上报令牌的原始 hex — 整串透传 (JS utils/session.js:15 保存 k.val 全串)

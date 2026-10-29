@@ -220,7 +220,7 @@ extension RecordsView {
             // 等于把"给 B 的帧"从 A 的链路发出去。先 ensureConnected(kc.mac) 才把链和键都对上。
             try await app.lock.ensureConnected(mac: kc.mac)
             // 现场 03 背书 (R2 唯一规则), 失败不阻断
-            if let st = try? await app.lock.getStatus(mac: kc.mac) { app.status = st }
+            if let st = try? await app.lock.getStatus(mac: kc.mac) { app.applyStatus(st) }
             var startIdx: UInt32 = 0xFFFFFFFF
             var page = 0
             var seen = Set<UInt32>()

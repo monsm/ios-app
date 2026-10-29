@@ -7,7 +7,9 @@ import Combine
 final class HardwareService: ObservableObject {
     static let shared = HardwareService()
     @Published private(set) var busy = false
-    @Published var logs: [String] = []
+    /// 2026-10-29 性能：只写不读的诊断数组，去掉 @Published（没有视图观察 HardwareService，
+    /// 但 @Published 仍会走 objectWillChange 的发送路径与数组 COW 记录）。
+    var logs: [String] = []
 
     private let ble = BLEService.shared
     struct Waiter {

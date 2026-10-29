@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T11:04:35.807Z",
+    "generated": "2026-10-29T11:07:49.924Z",
     "sources": [
       {
         "scout": "android-native",
@@ -2952,7 +2952,7 @@ const DATA = {
           "line": 367,
           "symbol": "cmd35GWReboot()",
           "note": "",
-          "text": "// 原先这里少了那一半回退，长度不对时会把反转后的十六进制直接当版本号显示）"
+          "text": "case 0x01: s.wifimac = k.val // 原始字节序 hex"
         }
       ],
       "platformEvidence": {
@@ -3033,7 +3033,7 @@ const DATA = {
           "line": 351,
           "symbol": "ZKCmdBuilder.cmd31GWSetWifi",
           "note": "",
-          "text": "func readGatewayState(mac: String) async throws -> GatewayState {"
+          "text": "// ================= 网关 (App 网关六页离线等价) ================="
         },
         {
           "platform": "ios",
@@ -4002,7 +4002,7 @@ const DATA = {
           "line": 431,
           "symbol": "chosenPinIndex(_:)",
           "note": "",
-          "text": "unlockState = .failed(lastMsg)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -4517,7 +4517,7 @@ const DATA = {
           "line": 174,
           "symbol": "cmd43KeychainStatus([])",
           "note": "",
-          "text": "let task = Task\u003cZKProtocol.ParsedFrame, Error> { @MainActor in"
+          "text": "// 而 writeFrameHex 在 Task 外无条件执行 => 判忙时帧仍被发出 -> 错帧。"
         },
         {
           "platform": "ios",
@@ -4608,7 +4608,7 @@ const DATA = {
           "line": 238,
           "symbol": "cmd41WriteEkey(lock.mac…)",
           "note": "",
-          "text": "s.ekeyCount = direct(0x24) ?? -1"
+          "text": "s.power = direct(0x11) ?? -1"
         },
         {
           "platform": "ios",
@@ -8333,7 +8333,7 @@ const DATA = {
           "line": 397,
           "symbol": "if DB.hasPasscode(), let t = lastUnlockSuccessAt, now.timeIntervalSince(t) \u003c 30",
           "note": "",
-          "text": "phase = 3"
+          "text": "do {"
         },
         {
           "platform": "ios",
@@ -8341,7 +8341,7 @@ const DATA = {
           "line": 368,
           "symbol": "开锁语义注释",
           "note": "",
-          "text": "}"
+          "text": "unlockTask = nil"
         },
         {
           "platform": "ios",
@@ -8349,7 +8349,7 @@ const DATA = {
           "line": 371,
           "symbol": "requestUnlock",
           "note": "",
-          "text": "/// 存的是**下标**而不是 PIN 本身 —— 口令留在钥匙串 (kc.pins) 里, 不落 UserDefaults。"
+          "text": "if unlockState == .connecting || unlockState == .opening {"
         },
         {
           "platform": "ios",
@@ -8357,7 +8357,7 @@ const DATA = {
           "line": 379,
           "symbol": "if unlockState == .connecting || .opening",
           "note": "",
-          "text": "return (i >= 0 && i \u003c kc.pins.count) ? kc.pins[i] : nil"
+          "text": "/// -1 / 越界 = 未选, 交给 LockService 走既有的 `kc.pins.first` 兜底 (老行为不变)。"
         }
       ],
       "platformEvidence": {
@@ -10902,7 +10902,7 @@ const DATA = {
           "line": 296,
           "symbol": "296 只读安全模式注释",
           "note": "",
-          "text": "status = nil"
+          "text": "guard manual || !DiagFlags.silent else { return }"
         },
         {
           "platform": "ios",
@@ -10910,7 +10910,7 @@ const DATA = {
           "line": 371,
           "symbol": "func requestUnlock",
           "note": "",
-          "text": "/// 存的是**下标**而不是 PIN 本身 —— 口令留在钥匙串 (kc.pins) 里, 不落 UserDefaults。"
+          "text": "if unlockState == .connecting || unlockState == .opening {"
         },
         {
           "platform": "ios",
@@ -10918,7 +10918,7 @@ const DATA = {
           "line": 374,
           "symbol": "guard SecurityPolicy.allows(.unlock)",
           "note": "",
-          "text": "// 【保留未接 2026-10-29】多 PIN 时记住「用哪一枚」—— 多锁/多 PIN 场景"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -10926,7 +10926,7 @@ const DATA = {
           "line": 375,
           "symbol": "denialMessage",
           "note": "",
-          "text": "func setChosenPinIndex(_ mac: String, _ i: Int) { DB.store.set(\"kf_pinpick_\" + mac, i) }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -10934,7 +10934,7 @@ const DATA = {
           "line": 404,
           "symbol": "func startUnlock",
           "note": "",
-          "text": "UINotificationFeedbackGenerator().notificationOccurred(.warning)"
+          "text": "phase = 3"
         }
       ],
       "platformEvidence": {
@@ -13709,7 +13709,7 @@ const DATA = {
           "line": 439,
           "symbol": "private func runUnlock",
           "note": "",
-          "text": "private func finishDwell(_ finished: UnlockState) {"
+          "text": "phase = 0"
         },
         {
           "platform": "ios",
@@ -13717,7 +13717,7 @@ const DATA = {
           "line": 441,
           "symbol": "attempts = kf_auto_retry ? 3 : 1",
           "note": "",
-          "text": "switch finished {"
+          "text": "finishDwell(.failed(lastMsg))"
         },
         {
           "platform": "ios",
@@ -13725,7 +13725,7 @@ const DATA = {
           "line": 445,
           "symbol": "phase = 1",
           "note": "",
-          "text": "}"
+          "text": "/// 成功档 2s 回待机并轻提示可查记录 (idea 247, 每天只提示一次)。"
         },
         {
           "platform": "ios",
@@ -13733,7 +13733,7 @@ const DATA = {
           "line": 453,
           "symbol": "lock.unlock(mac:pinDec:)",
           "note": "",
-          "text": "await refreshStatusQuietly()"
+          "text": "Task { @MainActor in"
         },
         {
           "platform": "ios",
@@ -13741,7 +13741,7 @@ const DATA = {
           "line": 455,
           "symbol": "if rc == 0",
           "note": "",
-          "text": "}"
+          "text": "if unlockState == finished {"
         }
       ],
       "platformEvidence": {
@@ -14134,7 +14134,7 @@ const DATA = {
           "line": 428,
           "symbol": "246 本次用哪条 PIN 注释",
           "note": "",
-          "text": "break"
+          "text": "for w in stride(from: attempt == 1 ? 2 : 5, through: 1, by: -1) {"
         },
         {
           "platform": "ios",
@@ -14142,7 +14142,7 @@ const DATA = {
           "line": 431,
           "symbol": "func chosenPinIndex",
           "note": "",
-          "text": "unlockState = .failed(lastMsg)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -14150,7 +14150,7 @@ const DATA = {
           "line": 432,
           "symbol": "kf_pinpick_ + mac",
           "note": "",
-          "text": "phase = 0"
+          "text": "retryWait = nil"
         },
         {
           "platform": "ios",
@@ -14158,7 +14158,7 @@ const DATA = {
           "line": 434,
           "symbol": "func chosenPin",
           "note": "",
-          "text": "finishDwell(.failed(lastMsg))"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -14166,7 +14166,7 @@ const DATA = {
           "line": 436,
           "symbol": "i >= 0 && i \u003c kc.pins.count",
           "note": "",
-          "text": ""
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -33785,7 +33785,7 @@ const DATA = {
           "line": 525,
           "symbol": "外观变更注释",
           "note": "",
-          "text": "}"
+          "text": "whoId = who"
         },
         {
           "platform": "ios",
@@ -33809,7 +33809,7 @@ const DATA = {
           "line": 527,
           "symbol": "private func applyAppearance",
           "note": "",
-          "text": "}"
+          "text": "// 第一百五十七批：这里原本自己写着 `type == 7 || 13 || 224` —— 5 类告警只圈了 3 类，"
         }
       ],
       "platformEvidence": {
@@ -37581,7 +37581,7 @@ const DATA = {
           "line": 356,
           "symbol": "func showToast",
           "note": "",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -37597,7 +37597,7 @@ const DATA = {
           "line": 359,
           "symbol": "let stay = msg.count > 20 ?",
           "note": "",
-          "text": "func cancelUnlock(notify: Bool = false) {"
+          "text": "// 同上：startUnlock 那层 guard 也已删（同一个恒 false 的只读模式判据）。"
         },
         {
           "platform": "ios",
@@ -37908,7 +37908,7 @@ const DATA = {
           "line": 587,
           "symbol": "开锁偏好注释",
           "note": "",
-          "text": "/// 滚动手势、VoiceOver 激活这些系统语义弄丢 (全仓 40 处调用点都在吃这些语义)。"
+          "text": "// 2026-10-26: 原 `GuestReauthGate`（377 访客受限区复核页）已删 —— 它的唯一入口"
         },
         {
           "platform": "ios",
@@ -37916,7 +37916,7 @@ const DATA = {
           "line": 598,
           "symbol": "static let behaviorKeys",
           "note": "",
-          "text": ""
+          "text": "/// 每张卡都套 0.5pt 描边会让所有卡片看起来出自同一个模板 —— 描边是 1px Web 做法,"
         },
         {
           "platform": "ios",
@@ -40051,7 +40051,7 @@ const DATA = {
           "line": 358,
           "symbol": "长文案多停留注释",
           "note": "",
-          "text": "/// 56/89: 提前取消 (撤销窗口 / 握手超时取消按钮)"
+          "text": "func startUnlock() {"
         },
         {
           "platform": "ios",
@@ -40059,7 +40059,7 @@ const DATA = {
           "line": 359,
           "symbol": "stay 计算",
           "note": "",
-          "text": "func cancelUnlock(notify: Bool = false) {"
+          "text": "// 同上：startUnlock 那层 guard 也已删（同一个恒 false 的只读模式判据）。"
         },
         {
           "platform": "ios",
@@ -40067,7 +40067,7 @@ const DATA = {
           "line": 362,
           "symbol": "if toast == msg",
           "note": "",
-          "text": "phase = 0"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -40075,7 +40075,7 @@ const DATA = {
           "line": 363,
           "symbol": "DS.Duration.quick",
           "note": "",
-          "text": "retryWait = nil"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -40446,7 +40446,7 @@ const DATA = {
           "line": 290,
           "symbol": "HardwareService",
           "note": "网关段",
-          "text": "///"
+          "text": "/// 与 `writeDongleKey` 的唯一区别是 PIN 来源：APK 用 `Math.floor(1e4 * Math.random())`"
         },
         {
           "platform": "ios",
@@ -40680,7 +40680,7 @@ const DATA = {
           "line": 72,
           "symbol": "pidFor",
           "note": "钥匙串型号恒为 ZKBBV1",
-          "text": "// 复核口径与门锁一致：读一次状态帧，用**设备自己的响应**对 pid（响应比广播难伪造得多）。"
+          "text": "// 后果：伪造一份含目标 MAC 的广播并暴露 6E400001 服务，App 就会连到他，"
         }
       ],
       "platformEvidence": {
@@ -40769,7 +40769,7 @@ const DATA = {
           "line": 466,
           "symbol": "lastMsg = StatusParser.rcFriendly(rc)",
           "note": "",
-          "text": "private func settleUnlockSuccess() {"
+          "text": "DB.store.set(\"kf_unlock_hint_day\", day)"
         },
         {
           "platform": "apk",
@@ -40896,7 +40896,7 @@ const DATA = {
           "line": 8,
           "symbol": "LockStatus",
           "note": "",
-          "text": "struct LockStatus {"
+          "text": "struct LockStatus: Equatable {"
         },
         {
           "platform": "android",
@@ -41786,7 +41786,7 @@ const DATA = {
           "line": 16,
           "symbol": "sessionTokenHex",
           "note": "",
-          "text": "var sessionTokenHex: String = \"0000\"   // 锁端上报令牌的原始 hex — 整串透传 (JS utils/session.js:15 保存 k.val 全串)"
+          "text": "/// 包11/740: 原始报文环形记录 (RX 帧 hex), 供诊断页 hex 查看, 不持久化"
         },
         {
           "platform": "android",
@@ -41842,7 +41842,7 @@ const DATA = {
           "line": 68,
           "symbol": "disconnect",
           "note": "断链复位令牌与 ttl",
-          "text": "0x15, 0x16, 0x18, 0x19, 0x20, 0x21, 0x22, 0x24,"
+          "text": ""
         },
         {
           "platform": "android",
@@ -44724,7 +44724,7 @@ const DATA = {
           "line": 72,
           "symbol": "ensureConnected",
           "note": "",
-          "text": "0x13: 3, 0x14: 3, 0x15: 3, 0x16: 3, 0x18: 3, 0x19: 3, 0x20: 3,"
+          "text": "0x15, 0x16, 0x18, 0x19, 0x20, 0x21, 0x22, 0x24,"
         },
         {
           "platform": "ios",
@@ -44732,7 +44732,7 @@ const DATA = {
           "line": 75,
           "symbol": "ensureConnected",
           "note": "已连也要绑 curMac",
-          "text": "// 它走的是 `request`/`extractRc`，而表里原来没有 0x23 ⇒ `guard let key = rcKLV[cmd] else { return 0 }`"
+          "text": "0x03: 3, 0x04: 3, 0x05: 1, 0x08: 3, 0x0a: 3, 0x0b: 3, 0x0e: 3, 0x12: 3,"
         },
         {
           "platform": "ios",
@@ -44740,7 +44740,7 @@ const DATA = {
           "line": 107,
           "symbol": "ensureConnected",
           "note": "pid 不符断开",
-          "text": "var nextTimeout: UInt32?"
+          "text": "struct FpPress {"
         },
         {
           "platform": "ios",
@@ -48811,7 +48811,7 @@ const DATA = {
           "line": 292,
           "symbol": "readGatewayState",
           "note": "网关侧只用 38/31/35",
-          "text": "/// 用来验证钥匙串本身能收钥、或给不该真正通行的人一把看着像的钥匙。"
+          "text": "///"
         },
         {
           "platform": "apk",
@@ -48907,7 +48907,7 @@ const DATA = {
           "line": 351,
           "symbol": "provisionGateway",
           "note": "timeoutMs: 10000",
-          "text": "func readGatewayState(mac: String) async throws -> GatewayState {"
+          "text": "// ================= 网关 (App 网关六页离线等价) ================="
         },
         {
           "platform": "apk",
@@ -48923,7 +48923,7 @@ const DATA = {
           "line": 352,
           "symbol": "provisionGateway",
           "note": "errCodeOf 取 KLV#01",
-          "text": "let f = try await send(ZKCmdBuilder.cmd38GWStatus(), target: mac)"
+          "text": "/// cmd 38 状态 (App Oo.parseKlv: 01/04/05 双重反转即原始字节序 → ASCII)"
         },
         {
           "platform": "ios",
@@ -49046,7 +49046,7 @@ const DATA = {
           "line": 324,
           "symbol": "provisionGateway",
           "note": "配网链只用 38/31/35",
-          "text": "// 原先这里直接看 KLV#04：一次 rc=1(解密失败) 的回字里没有 04，于是返回空列表，"
+          "text": "// 返回码在 KLV#03；基线 keychain.js:176 写明\"无 rc KLV (如 44/43 无状态位) — 调用层自行决定\" ⇒"
         },
         {
           "platform": "apk",
@@ -49142,7 +49142,7 @@ const DATA = {
           "line": 355,
           "symbol": "provisionGateway",
           "note": "",
-          "text": "rec.wifimac = st.wifimac; rec.romVer = st.romVer; rec.eCtrlVer = st.eCtrlVer"
+          "text": "let st = HardwareService.parseGWStatus(f.klvs)"
         },
         {
           "platform": "apk",
@@ -49158,7 +49158,7 @@ const DATA = {
           "line": 367,
           "symbol": "rebootGateway",
           "note": "",
-          "text": "// 原先这里少了那一半回退，长度不对时会把反转后的十六进制直接当版本号显示）"
+          "text": "case 0x01: s.wifimac = k.val // 原始字节序 hex"
         }
       ],
       "platformEvidence": {
@@ -49251,7 +49251,7 @@ const DATA = {
           "line": 303,
           "symbol": "parseGWStatus",
           "note": "",
-          "text": "throw BLEErrorX.msg(\"假钥匙签发失败（skey 非法），已中止\")"
+          "text": "trackId: KeyGen.genTrackId())"
         },
         {
           "platform": "apk",
@@ -49365,7 +49365,7 @@ const DATA = {
           "line": 238,
           "symbol": "writeDongleKey",
           "note": "",
-          "text": "s.ekeyCount = direct(0x24) ?? -1"
+          "text": "s.power = direct(0x11) ?? -1"
         },
         {
           "platform": "apk",
@@ -49381,7 +49381,7 @@ const DATA = {
           "line": 250,
           "symbol": "deleteDongleKey",
           "note": "空 ekey = 删除",
-          "text": "return r.count == 6 ? dotted(r) : \"\""
+          "text": "nonisolated static func dotted3(_ hex: String) -> String {"
         },
         {
           "platform": "ios",
@@ -49492,7 +49492,7 @@ const DATA = {
           "line": 174,
           "symbol": "readDongleState",
           "note": "恒传 []",
-          "text": "let task = Task\u003cZKProtocol.ParsedFrame, Error> { @MainActor in"
+          "text": "// 而 writeFrameHex 在 Task 外无条件执行 => 判忙时帧仍被发出 -> 错帧。"
         },
         {
           "platform": "apk",
@@ -49508,7 +49508,7 @@ const DATA = {
           "line": 180,
           "symbol": "readDongleState",
           "note": "rc 门禁",
-          "text": "}"
+          "text": "self.waiter = nil"
         }
       ],
       "platformEvidence": {
@@ -49602,7 +49602,7 @@ const DATA = {
           "line": 256,
           "symbol": "dongleKeys",
           "note": "",
-          "text": "}"
+          "text": "func v(_ off: Int) -> Int { Int(hex.dropFirst(off).prefix(2), radix: 16) ?? 0 }"
         },
         {
           "platform": "apk",
@@ -49618,7 +49618,7 @@ const DATA = {
           "line": 262,
           "symbol": "dongleKeys",
           "note": "rc>0 拒绝，勿误报空",
-          "text": "let vt = ZKCmdBuilder.protoSecU32(\"2118-01-01 00:00:00\")"
+          "text": "// 4294938496 (≈2146) ⇒ 写进硬件钥匙的凭证窗口永远不生效 (同 0A/14 的真机勘误)"
         }
       ],
       "platformEvidence": {
@@ -50213,7 +50213,7 @@ const DATA = {
           "line": 346,
           "symbol": "errCodeOf",
           "note": "",
-          "text": "return StatusParser.intHex(k.val)"
+          "text": "private func rcOf(_ f: ZKProtocol.ParsedFrame) -> Int {"
         },
         {
           "platform": "ios",
@@ -50229,7 +50229,7 @@ const DATA = {
           "line": 285,
           "symbol": "rcOf",
           "note": "",
-          "text": ""
+          "text": "DB.saveDongle(rec)"
         }
       ],
       "platformEvidence": {
@@ -50307,7 +50307,7 @@ const DATA = {
           "line": 324,
           "symbol": "provisionGateway",
           "note": "链中没有 32",
-          "text": "// 原先这里直接看 KLV#04：一次 rc=1(解密失败) 的回字里没有 04，于是返回空列表，"
+          "text": "// 返回码在 KLV#03；基线 keychain.js:176 写明\"无 rc KLV (如 44/43 无状态位) — 调用层自行决定\" ⇒"
         }
       ],
       "platformEvidence": {
@@ -50371,7 +50371,7 @@ const DATA = {
           "line": 324,
           "symbol": "provisionGateway",
           "note": "",
-          "text": "// 原先这里直接看 KLV#04：一次 rc=1(解密失败) 的回字里没有 04，于是返回空列表，"
+          "text": "// 返回码在 KLV#03；基线 keychain.js:176 写明\"无 rc KLV (如 44/43 无状态位) — 调用层自行决定\" ⇒"
         },
         {
           "platform": "ios",
@@ -50379,7 +50379,7 @@ const DATA = {
           "line": 345,
           "symbol": "provisionGateway",
           "note": "pid 落库",
-          "text": "guard let k = f.klvs.first(where: { $0.key == 0x03 }) else { return -1 }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -50387,7 +50387,7 @@ const DATA = {
           "line": 353,
           "symbol": "provisionGateway",
           "note": "31 errCode",
-          "text": "let st = HardwareService.parseGWStatus(f.klvs)"
+          "text": "func readGatewayState(mac: String) async throws -> GatewayState {"
         },
         {
           "platform": "ios",
@@ -50395,7 +50395,7 @@ const DATA = {
           "line": 362,
           "symbol": "provisionGateway",
           "note": "结束断开",
-          "text": "var s = GatewayState()"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -50471,7 +50471,7 @@ const DATA = {
           "line": 366,
           "symbol": "rebootGateway",
           "note": "",
-          "text": "case 0x02: // 与 0x03 同式：整 3 字节才点分，否则按 ASCII 解（基线 gateway.js 两支都有 ASCII 回退；"
+          "text": "switch k.key {"
         },
         {
           "platform": "ios",
@@ -50541,7 +50541,7 @@ const DATA = {
           "line": 81,
           "symbol": "scanForPIDs",
           "note": "",
-          "text": "}"
+          "text": "log(\"连接后身份不符: 设备 pid=\\(remotePid) 与登记的 \\(knownPid) 不一致 → 已断开\")"
         },
         {
           "platform": "ios",
@@ -50549,7 +50549,7 @@ const DATA = {
           "line": 92,
           "symbol": "scanForPIDs",
           "note": "resetRequired 门禁",
-          "text": "/// 读一次设备状态帧（cmd03），用于连接后的身份复核。"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -50557,7 +50557,7 @@ const DATA = {
           "line": 105,
           "symbol": "scanForPID",
           "note": "无 pid 拒绝盲连",
-          "text": "if dongleRecord(mac) != nil { return PidMap.ZKBBV1 }  // 钥匙串当前型号恒为 ZKBBV1 (原两分支同值)"
+          "text": "private func gatewayRecord(_ mac: String) -> Gateway? { DB.gateway(mac) }"
         }
       ],
       "platformEvidence": {
@@ -50628,7 +50628,7 @@ const DATA = {
           "line": 292,
           "symbol": "readGatewayState",
           "note": "",
-          "text": "/// 用来验证钥匙串本身能收钥、或给不该真正通行的人一把看着像的钥匙。"
+          "text": "///"
         },
         {
           "platform": "ios",
@@ -50636,7 +50636,7 @@ const DATA = {
           "line": 303,
           "symbol": "parseGWStatus",
           "note": "",
-          "text": "throw BLEErrorX.msg(\"假钥匙签发失败（skey 非法），已中止\")"
+          "text": "trackId: KeyGen.genTrackId())"
         },
         {
           "platform": "ios",
@@ -50644,7 +50644,7 @@ const DATA = {
           "line": 311,
           "symbol": "parseGWStatus",
           "note": "版本 ASCII 回退",
-          "text": "}"
+          "text": "if rc == 3 { throw BLEErrorX.msg(\"命令不在有效期，请将手机时间同步到锁内\") }"
         }
       ],
       "platformEvidence": {
@@ -50978,7 +50978,7 @@ const DATA = {
           "line": 255,
           "symbol": "dongleKeys",
           "note": "",
-          "text": "return \"\\(v(4)).\\(v(2)).\\(v(0))\""
+          "text": "guard hex.count == 6 else { return hex }"
         },
         {
           "platform": "ios",
@@ -50986,7 +50986,7 @@ const DATA = {
           "line": 262,
           "symbol": "dongleKeys",
           "note": "rc 与「空」的区别",
-          "text": "let vt = ZKCmdBuilder.protoSecU32(\"2118-01-01 00:00:00\")"
+          "text": "// 4294938496 (≈2146) ⇒ 写进硬件钥匙的凭证窗口永远不生效 (同 0A/14 的真机勘误)"
         }
       ],
       "platformEvidence": {
@@ -51048,7 +51048,7 @@ const DATA = {
           "line": 112,
           "symbol": "scanForDongle",
           "note": "",
-          "text": "/// 按**型号族**扫描 (网关有 GW / GW_commercial / GW2_commercial 三个 pid)。"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -51056,7 +51056,7 @@ const DATA = {
           "line": 118,
           "symbol": "scanForDongle",
           "note": "pid 门禁 + macRaw",
-          "text": "try await ble.startScan(timeoutMs: timeoutMs)"
+          "text": "throw BLEErrorX.msg(\"台账缺少该设备的型号 (pid), 拒绝按广播盲连 — 请先在 App 内连接门锁刷新档案\")"
         },
         {
           "platform": "ios",
@@ -51064,7 +51064,7 @@ const DATA = {
           "line": 129,
           "symbol": "scanForDongle",
           "note": "超时文案",
-          "text": "try? await Task.sleep(nanoseconds: 300_000_000)"
+          "text": "return d.deviceId"
         }
       ],
       "platformEvidence": {
@@ -51133,7 +51133,7 @@ const DATA = {
           "line": 173,
           "symbol": "readDongleState",
           "note": "",
-          "text": "if waiter != nil { throw BLEErrorX.msg(\"已有命令在等待响应\") }"
+          "text": "// 忙判必须在写之前 (与 LockService.request 同款修复, 2026-10-14): 旧判据在 Task 内,"
         },
         {
           "platform": "ios",
@@ -51141,7 +51141,7 @@ const DATA = {
           "line": 182,
           "symbol": "readDongleState",
           "note": "rc=3 专用文案",
-          "text": "// 调用方 task.value 永久挂起、页面 busy 永转"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -51149,7 +51149,7 @@ const DATA = {
           "line": 186,
           "symbol": "readDongleState",
           "note": "只在此后写库",
-          "text": "}"
+          "text": "cont.resume(throwing: BLEErrorX.msg(\"已有命令在等待响应\"))"
         }
       ],
       "platformEvidence": {
@@ -51218,7 +51218,7 @@ const DATA = {
           "line": 222,
           "symbol": "writeDongleKey",
           "note": "",
-          "text": "let st = HardwareService.parseKCStatus(f.klvs)"
+          "text": "throw BLEErrorX.msg(\"钥匙串返回失败码 \" + StatusParser.rcMessage(rc) + \"，本次读数未采纳 (上一次的好数据仍留着)\")"
         },
         {
           "platform": "ios",
@@ -51226,7 +51226,7 @@ const DATA = {
           "line": 244,
           "symbol": "writeDongleKey",
           "note": "写成功才更新台账",
-          "text": "}"
+          "text": "s.eCtrl = klvs.first(where: { $0.key == 0x35 }).map { HardwareService.dotted3($0.val) } ?? \"\""
         },
         {
           "platform": "ios",
@@ -51234,7 +51234,7 @@ const DATA = {
           "line": 249,
           "symbol": "deleteDongleKey",
           "note": "",
-          "text": "let r = HexKit.reversePairs(hex)"
+          "text": "/// **原样返回那段十六进制** ⇒ 一次长度不对的读数会在界面上显示成一个假版本号，还会被写进备份包。"
         }
       ],
       "platformEvidence": {
@@ -52980,7 +52980,7 @@ const DATA = {
           "line": 285,
           "symbol": "rcOf",
           "note": "钥匙串统一用 KLV#03",
-          "text": ""
+          "text": "DB.saveDongle(rec)"
         },
         {
           "platform": "ios",
@@ -53064,7 +53064,7 @@ const DATA = {
           "line": 62,
           "symbol": "disconnect",
           "note": "断链清 collector",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -53156,7 +53156,7 @@ const DATA = {
           "line": 62,
           "symbol": "disconnect",
           "note": "",
-          "text": ""
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -55351,7 +55351,7 @@ const DATA = {
           "line": 229,
           "symbol": "writeDongleKey",
           "note": "缺 PIN 拒绝",
-          "text": "}"
+          "text": "log(\"状态: 电量 \\(st.power), 钥匙 \\(st.ekeyCount)/\\(st.ekeyAmount), 固件 \\(st.firmware)\")"
         },
         {
           "platform": "ios",
@@ -55359,7 +55359,7 @@ const DATA = {
           "line": 235,
           "symbol": "writeDongleKey",
           "note": "空 ekey 拒绝",
-          "text": "// 看上去像\"这里处理过返回码了\"，实际什么都没做，而调用方也确实没看过 rc。"
+          "text": "// KLV#03 (返回码) 不在这里落：DongleStat 没有 rc 字段，判 rc 的是调用方 readDongleState (走 rcOf)。"
         },
         {
           "platform": "ios",
@@ -55367,7 +55367,7 @@ const DATA = {
           "line": 250,
           "symbol": "deleteDongleKey",
           "note": "空串 = 删除",
-          "text": "return r.count == 6 ? dotted(r) : \"\""
+          "text": "nonisolated static func dotted3(_ hex: String) -> String {"
         },
         {
           "platform": "ios",
@@ -55375,7 +55375,7 @@ const DATA = {
           "line": 225,
           "symbol": "writeDongleKey",
           "note": "2010~2118 窗口",
-          "text": "rec.lastSeenAt = DF.iso().string(from: Date())"
+          "text": "var rec = DB.dongle(mac) ?? Dongle(mac: mac)"
         }
       ],
       "platformEvidence": {
@@ -55453,7 +55453,7 @@ const DATA = {
           "line": 194,
           "symbol": "parseKCStatus",
           "note": "",
-          "text": "} catch {"
+          "text": "if debugRaw { log(\"TX hex=\\(cmdObj.hex)\") }"
         },
         {
           "platform": "ios",
@@ -55461,7 +55461,7 @@ const DATA = {
           "line": 200,
           "symbol": "parseKCStatus",
           "note": "power 缺省 -1",
-          "text": "throw error"
+          "text": "w.cont.resume(throwing: error)"
         },
         {
           "platform": "ios",
@@ -55469,7 +55469,7 @@ const DATA = {
           "line": 212,
           "symbol": "dotted3",
           "note": "",
-          "text": "// 钥匙串返回码在 KLV#03 (vendor keychain.js 的 parseKCStatus 同一口径)。原先这里从不看 rc:"
+          "text": "func readDongleState(mac: String) async throws -> DongleStat {"
         },
         {
           "platform": "ios",
@@ -55477,7 +55477,7 @@ const DATA = {
           "line": 185,
           "symbol": "readDongleState",
           "note": "rc 通过后才 parse+落库",
-          "text": "return"
+          "text": "if self.waiter != nil {"
         }
       ],
       "platformEvidence": {
@@ -55554,7 +55554,7 @@ const DATA = {
           "line": 274,
           "symbol": "parseEkeyMacs",
           "note": "",
-          "text": "let f = try await send(ZKCmdBuilder.cmd41WriteEkey(lock.mac.lowercased(), lock.pid, ekey), target: dongleMac)"
+          "text": "throw BLEErrorX.msg(\"ekey 签发失败 (skey 非法或 PIN 不可解析), 已中止写入硬件钥匙\")"
         },
         {
           "platform": "ios",
@@ -55562,7 +55562,7 @@ const DATA = {
           "line": 263,
           "symbol": "dongleKeys",
           "note": "无 KLV#04 → 空数组",
-          "text": "// 旧写法 `lock.pins.first ?? \"1\"`: PIN 池为空时**回落到 PIN \"1\"** 去签发硬件钥匙凭证 ——"
+          "text": "let vf = ZKCmdBuilder.protoSecU32(\"2010-01-01 00:00:00\")"
         }
       ],
       "platformEvidence": {
@@ -58196,7 +58196,7 @@ const DATA = {
           "line": 598,
           "symbol": "behaviorKeys",
           "note": "",
-          "text": ""
+          "text": "/// 每张卡都套 0.5pt 描边会让所有卡片看起来出自同一个模板 —— 描边是 1px Web 做法,"
         },
         {
           "platform": "ios",
@@ -58204,7 +58204,7 @@ const DATA = {
           "line": 431,
           "symbol": "kf_pinpick_",
           "note": "",
-          "text": "unlockState = .failed(lastMsg)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -58212,7 +58212,7 @@ const DATA = {
           "line": 520,
           "symbol": "kf_unlock_hint_day",
           "note": "",
-          "text": "// 第一百五十七批：这里原本自己写着 `type == 7 || 13 || 224` —— 5 类告警只圈了 3 类，"
+          "text": "var whoId: String? = nil"
         }
       ],
       "platformEvidence": {
@@ -63916,7 +63916,7 @@ const DATA = {
           "line": 518,
           "symbol": "unlockReturnedHint",
           "note": "",
-          "text": "whoId = who"
+          "text": "// 559: 带出可证明的成员 id 供\"查这位成员的记录\"; 判据与下面显示成员名**同一条** ——"
         },
         {
           "platform": "ios",
@@ -63924,7 +63924,7 @@ const DATA = {
           "line": 520,
           "symbol": "kf_unlock_hint_day",
           "note": "",
-          "text": "// 第一百五十七批：这里原本自己写着 `type == 7 || 13 || 224` —— 5 类告警只圈了 3 类，"
+          "text": "var whoId: String? = nil"
         }
       ],
       "platformEvidence": {
