@@ -371,7 +371,6 @@ struct SettingsView: View {
     /// 本 App 不再听系统的 12/24 小时偏好 —— 两件事共用一个键，而不是各存一份再吵谁赢。
 
     // ---------- 靠近自动开锁 (AUTOOPEN-PLAN §4): 全门绿才自动开门, 默认关, fail-closed ----------
-    @ViewBuilder   // 编译级修正: 这块是"顶层 if 而没有 else/return", 不加 builder 就是一句 "function declares some View…" 的编译错误
 
     // ---------- 家人与钥匙 (包13: 成员中心/791/798-792/483/479-794 入口) ----------
     /// 家人与钥匙 + 凭证整理 —— **两个独立的 Section**。

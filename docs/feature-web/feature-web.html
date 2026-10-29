@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T04:59:42.289Z",
+    "generated": "2026-10-29T05:03:00.282Z",
     "sources": [
       {
         "scout": "android-native",
@@ -19453,7 +19453,7 @@ const DATA = {
           "line": 375,
           "symbol": "pwdClear",
           "note": "",
-          "text": ""
+          "text": "// ---------- 家人与钥匙 (包13: 成员中心/791/798-792/483/479-794 入口) ----------"
         }
       ],
       "platformEvidence": {
@@ -34716,7 +34716,7 @@ const DATA = {
           "line": 423,
           "symbol": "timeSection",
           "note": "",
-          "text": "promptOldPasscode { ok in"
+          "text": "guard ok else { return }"
         },
         {
           "platform": "ios",
@@ -34724,7 +34724,7 @@ const DATA = {
           "line": 425,
           "symbol": "Picker(\"时间制式\", selection:)",
           "note": "",
-          "text": "confirmDestructive(\"关闭本机密码\","
+          "text": "\"关闭后，设置页不再有入口屏障。注意：查看密码明文与导出备份本来就不受本机密码约束 —— 任何拿到这台手机的人都能直接读取。确定要关闭吗？\","
         },
         {
           "platform": "ios",
@@ -34732,7 +34732,7 @@ const DATA = {
           "line": 432,
           "symbol": "VariantToggle(\"显示秒\", isOn:)",
           "note": "",
-          "text": "}"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -34882,7 +34882,7 @@ const DATA = {
           "line": 445,
           "symbol": "unlockSection",
           "note": "",
-          "text": "})"
+          "text": "UIApplication.topViewController()?.present(alert, animated: true)"
         },
         {
           "platform": "ios",
@@ -34898,7 +34898,7 @@ const DATA = {
           "line": 492,
           "symbol": "footer: 按住圆盘时长 (默认 0.9s …)",
           "note": "",
-          "text": "var s = \"厂商已停服的智能锁离线管理端。门锁数据、密码台账、家人档案全部保存在本机。换新手机用「备份与恢复」转移, 门锁无需重置。\""
+          "text": "if eggShown { s += \" Build \\(Bundle.main.infoDictionary?[\"CFBundleVersion\"] as? String ?? \"?\") · 本地构建。\" }"
         }
       ],
       "platformEvidence": {
@@ -36389,7 +36389,7 @@ const DATA = {
           "line": 376,
           "symbol": "DB.saveLedger(m, Ledger())",
           "note": "",
-          "text": "// ---------- 家人与钥匙 (包13: 成员中心/791/798-792/483/479-794 入口) ----------"
+          "text": "/// 家人与钥匙 + 凭证整理 —— **两个独立的 Section**。"
         }
       ],
       "platformEvidence": {
@@ -36475,7 +36475,7 @@ const DATA = {
           "line": 381,
           "symbol": "deleteDevice()",
           "note": "",
-          "text": "/// 整个 VStack 变成 List 的一行，里面的 Section 退化成普通容器，于是："
+          "text": "///   · header/footer 不再吸附在组头组尾，而是居中夹在行之间（截图里「家人与钥匙」居中）"
         },
         {
           "platform": "ios",
@@ -36483,7 +36483,7 @@ const DATA = {
           "line": 395,
           "symbol": "confirmDestructiveTyped(\"删除设备\", … requireWord: name)",
           "note": "",
-          "text": "alert.addAction(UIAlertAction(title: \"取消\", style: .cancel))"
+          "text": "if DB.hasDuressCode() {"
         }
       ],
       "platformEvidence": {
@@ -38718,7 +38718,7 @@ const DATA = {
           "line": 384,
           "symbol": "let pws = DB.listPwds(kc.mac).count",
           "note": "",
-          "text": "///   · 两节内容混成一坨（「凭证整理」跑到列表行中间）"
+          "text": "/// 现在拆成两个并列的 Section（@ViewBuilder 允许一个属性返回多个 Section）。"
         },
         {
           "platform": "ios",
@@ -38726,7 +38726,7 @@ const DATA = {
           "line": 392,
           "symbol": "连带删除: 密码台账 … 回收站 … 开门记录 …",
           "note": "",
-          "text": "preferredStyle: .alert)"
+          "text": "alert.addTextField { $0.isSecureTextEntry = true; $0.keyboardType = .numberPad; $0.placeholder = \"4 位以上数字\" }"
         },
         {
           "platform": "ios",
@@ -38734,7 +38734,7 @@ const DATA = {
           "line": 395,
           "symbol": "requireWord: name",
           "note": "",
-          "text": "alert.addAction(UIAlertAction(title: \"取消\", style: .cancel))"
+          "text": "if DB.hasDuressCode() {"
         }
       ],
       "platformEvidence": {
