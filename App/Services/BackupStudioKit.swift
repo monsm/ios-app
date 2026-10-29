@@ -54,7 +54,10 @@ enum BackupStudio {
     /// 而 undoLastRestore 旧实现只回滚六分区, 这些内容**恢复不过来也撤不回来**。
     /// 判定标准两条: ① 恢复流程确实会改写它们指向的东西; ② 里面是用户自己攒的**内容** (不是遥测、不是开关档位)。
     /// 刻意不收: 日志与遥测 (kf_diag_logs / kf_fevents_ / kf_ble_events …) 体积大且不是内容;
-    /// 外观与开关 (kf_theme / kf_ax_* / kf_slock_*) 恢复本来就不该动它们, 收进快照反而会把用户改过的设置回滚掉。
+    /// 外观与开关的**分界**（2026-10-30 第 63 轮修正）：
+    ///   · `collectAppearance` 里**会导出、restore 会写回**的那 13 个外观键 → **必须收**（否则撤销恢复不完整，见下）；
+    ///   · 纯开关类（`kf_ax_*` / `kf_slock_*` / `kf_quick_*` …）恢复流程从不碰 → **仍然刻意不收**，
+    ///     收进快照反而会把用户这段时间改过的设置一起回滚掉。
     nonisolated static let rollbackFamilies: [String] = [
         "kf_member_ext", "kf_member_bday", "kf_member_badge",       // 成员档案扩展 (角色/备注/分组/归档)
         "kf_mborrow_", "kf_mclaim_", "kf_house_win_", "kf_offboard_",   // 467 的 kf_mtransfer 族已随待接受区一起撤掉
@@ -72,7 +75,18 @@ enum BackupStudio {
         //   · BackupKit.restoreAll 的 meta 段 → kf_defend_ / kf_tailgate_ / kf_synctime_
         //   · deviceOrg 段 → kf_lock_order / kf_lockmeta_ / kf_lock_hidden_ / kf_group_folded
         "kf_defend_", "kf_tailgate_", "kf_synctime_",
-        "kf_lock_order", "kf_lockmeta_", "kf_lock_hidden_", "kf_group_folded"
+        "kf_lock_order", "kf_lockmeta_", "kf_lock_hidden_", "kf_group_folded",
+        // 2026-10-30 对抗式排查（第 63 轮）：外观段的这四个键同样由 restore 写，而快照没收 ⇒
+        // 导错备份再「撤销恢复」时，主题/密度/圆角/星期起始都回来了，但**高对比、素色、
+        // 首页统计可见集、最近开门条数**停在了错包的值 —— 用户看到的界面和点撤销之前不一样。
+        //   · BackupKit.applyGlobalsAppearanceAndOrg → kf_hc / kf_plain / kf_hero_stats / kf_recent_count
+        // 判据与上面两批同源：①恢复流程确实会改写它们 ②里面是用户自己攒的偏好。
+        // 其余外观键（kf_theme / kf_accent / kf_density / kf_radius / kf_week_start / kf_row_h /
+        // kf_tl_gap / kf_motion / kf_hero_tex）在 collectAppearance 里**只导出枚举白名单内的值**，
+        // 恢复时写回的也一定是那几档 —— 但它们同样是"恢复会写"，一并补进来才叫撤销完整。
+        "kf_hc", "kf_plain", "kf_hero_stats", "kf_recent_count",
+        "kf_theme", "kf_accent", "kf_density", "kf_radius", "kf_week_start",
+        "kf_row_h", "kf_tl_gap", "kf_motion", "kf_hero_tex"
     ]
     struct RollbackBundle: Codable {
         var keychains: [String]      // JSON: [Keychain]
