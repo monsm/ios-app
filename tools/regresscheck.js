@@ -89,6 +89,100 @@ const checks = [
     file: 'App/Core/CredentialOrg.swift',
     must: ['static func alertTable', 'alerts["pwd:"'],
   },
+
+  // ---------- 第二轮补录（第 32 轮盘点时确认已修、此前未入防线）----------
+  {
+    name: 'R2 RSSI 节流 + 骤变通道',
+    file: 'App/Core/LinkSenseKit.swift',
+    must: ['lastRssiPublishAt', 'bigJump'],
+  },
+  {
+    name: 'R3 syncBtOn 只在变化时发',
+    file: 'App/Core/LinkSenseKit.swift',
+    must: ['if btOn != on { btOn = on }', 'if btDenied != denied { btDenied = denied }'],
+  },
+  {
+    name: 'R6 ToastCenter 独立',
+    file: 'App/Core/ToastCenter.swift',
+    must: ['final class ToastCenter', 'ToastBannerHost'],
+  },
+  {
+    name: 'R7 DiagLogs 缓存 + flush',
+    file: 'App/Core/DiagKit.swift',
+    must: ['entryCache', 'savePending', 'static func flush()'],
+  },
+  {
+    name: 'R8 writeStatus 的 60s 窗口',
+    file: 'App/Core/StoreState.swift',
+    must: ['nowMs - old.at < 60_000'],
+  },
+  {
+    name: 'R9 搜索 180ms 防抖',
+    file: 'App/UI/RecordsView.swift',
+    must: ['searchDebounce'],
+  },
+  {
+    name: 'R10 统计 CSV 一次建表',
+    file: 'App/Core/StatsKit.swift',
+    must: ['memberNames'],
+  },
+  {
+    name: 'R13 DF.cached (DateFormatter 缓存)',
+    file: 'App/Core/DateFormats.swift',
+    must: ['static func cached('],
+  },
+  {
+    name: 'R17 批量操作一次建存在集',
+    file: 'App/Core/CredentialOrgBatch.swift',
+    must: ['let existing = Set(DB.ledger(mac).pwds.map'],
+  },
+  {
+    name: 'R18 allExt 整表入口',
+    file: 'App/Core/MemberHub.swift',
+    must: ['static func allExt()', 'ext(_ id: String, in table'],
+  },
+  {
+    name: 'R19 MemberExt 容错',
+    file: 'App/Core/MemberHub.swift',
+    must: ['decodeIfPresent(String.self, forKey: .role) ?? "member"'],
+  },
+  {
+    name: 'R20 StatusSnapshot 容错',
+    file: 'App/Core/StoreModels.swift',
+    must: ['struct StatusSnapshotData: Codable, Equatable'],
+  },
+  {
+    name: 'R21 LogCache/CachedLog 容错',
+    file: 'App/Core/StoreModels.swift',
+    must: ['struct CachedLog: Codable', 'Lossy<CachedLog>'],
+  },
+  {
+    name: 'R26 凭证页 seq 一次取',
+    file: 'App/UI/CredentialActions.swift',
+    must: ['let seqAll = CredentialOrg.seq(mac)', 'order: orderP'],
+  },
+  {
+    name: 'R27 日志落盘一次化',
+    file: 'App/UI/RecordsRows.swift',
+    must: ['if !events.isEmpty { DB.writeLogs(kc.mac, events) }'],
+    countMust: 'if !events.isEmpty { DB.writeLogs(kc.mac, events) }',
+    minCount: 2,
+  },
+  {
+    name: 'R30 QuickPool.selected 建表',
+    file: 'App/Core/QuickPool.swift',
+    must: ['let byID = Dictionary(all.map'],
+  },
+  {
+    name: 'R31 viewdbcheck 轻重分级 + task 排除',
+    file: 'tools/viewdbcheck.js',
+    must: ['inAsync(k)'],
+  },
+  {
+    name: 'R32 布防摘要一次读',
+    file: 'App/UI/DeviceHomeView.swift',
+    must: ['let defend = DB.defend(kc.mac)'],
+  },
 ];
 
 let bad = 0;
