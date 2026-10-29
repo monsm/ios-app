@@ -515,6 +515,8 @@ final class AppState: ObservableObject {
             pwds: DB.listPwds(kc.mac), fps: DB.listFps(kc.mac),
             status: status.map { ($0.fpStock, $0.pwdStock, $0.lockTime ?? 0) })
         var out = [(String, String, Bool, String, String?)]()
+        // 2026-10-29 性能：循环里每行调一次 DB.member（各自解析一份成员字典）。一次建表。
+        let memberByID = Dictionary(DB.members().map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         for (i, e) in logs.enumerated() {
             guard i < rows.count else { continue }
             let c = rows[i]
@@ -522,7 +524,7 @@ final class AppState: ObservableObject {
             // 559: 带出可证明的成员 id 供"查这位成员的记录"; 判据与下面显示成员名**同一条** ——
             // 行上真写着成员名才带出, 成员已从档案删掉的行走 landMember 的 guard 也只会落个失败 toast。
             var whoId: String? = nil
-            if let who = c.who, let m = DB.member(who) {
+            if let who = c.who, let m = memberByID[who] {
                 // 919: 别名开关开且 relation 非空时, 首页这行也走关系称呼
                 let shown = MemberHub.aliasName(who) ?? m.name
                 text = (e.lockTimeStr.isEmpty ? "" : String(e.lockTimeStr.dropFirst(5).prefix(11)) + " · ") + shown + " 用" + (Attribution.words[c.kind ?? ""] ?? "") + "开了门"

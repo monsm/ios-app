@@ -70,11 +70,14 @@ enum StatsKit {
             }
             var per = [String: Int]()
             var rows = ["时间,类型,成员"]
+            // 2026-10-29 性能：循环里每行调一次 DB.member（各自解析一份成员字典）。
+            // 上周小结是一次性导出，但一条记录一行、几十行时仍会重复解析几十次。一次建表。
+            let memberNames = Dictionary(DB.members().map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
             for (i, c) in cls.enumerated() {
                 let l = week[i]
                 if let who = c.who { per[who, default: 0] += 1 }
                 rows.append(esc(l.lockTimeStr) + "," + esc(l.typeName) + ","
-                            + esc(c.who.flatMap { DB.member($0)?.name } ?? "未归属"))
+                            + esc(c.who.flatMap { memberNames[$0] } ?? "未归属"))
             }
             let alarms = logs.filter { l in
                 alarmTypes.contains(l.type) && (dateOf(l).map { $0 >= from && $0 < end } ?? false)

@@ -189,9 +189,14 @@ enum DB {
         let map = store.getDict("kf_members")
         return map.values.compactMap { $0 as? [String: Any] }.compactMap(Member.fromDict)
     }
+    /// 2026-10-29 性能：原来每次 `DB.member(id)` 都先 `members()` —— 把整张 kf_members 字典
+    /// 逐条 `Member.fromDict` 重建一遍，再 linear search。全仓 55 个调用点，其中记录页是逐行调。
+    /// 现在直接按 id 取那一条。
     static func member(_ id: String?) -> Member? {
-        guard let id else { return nil }
-        return members().first { $0.id == id }
+        guard let id, !id.isEmpty else { return nil }
+        let map = store.getDict("kf_members")
+        guard let d = map[id] as? [String: Any] else { return nil }
+        return Member.fromDict(d)
     }
     /// 259 新成员建档色板: 与 DS 主题表 dark 档的六个 accent 同色号 (靛蓝/绿/琥珀/玫瑰/青/石墨),
     /// 头像与矩阵圆点的读侧照旧只认 hex 字段; 超过六人从头轮转。

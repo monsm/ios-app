@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T14:26:00.452Z",
+    "generated": "2026-10-29T14:50:14.781Z",
     "sources": [
       {
         "scout": "android-native",
@@ -25553,7 +25553,7 @@
           "line": 355,
           "symbol": "recordsChrome",
           "note": "NavigationStack + 全部 sheet/alert 挂载点",
-          "text": "}"
+          "text": "l.lockTimeStr.count >= 10 && String(l.lockTimeStr.dropFirst(5).prefix(5)) == key"
         }
       ],
       "platformEvidence": {
@@ -25646,7 +25646,7 @@
           "line": 376,
           "symbol": "recordsChrome",
           "note": "父级：sheet(item: $detailRec) 传 displayedRecs",
-          "text": "app.requestRoute(.device)"
+          "text": "Button {"
         },
         {
           "platform": "ios",
@@ -25965,7 +25965,7 @@
           "line": 433,
           "symbol": "searchBar",
           "note": "占位文案与绑定",
-          "text": "let kindWord = StatsKit.openTypes.contains(r.type) ? (Attribution.words[r.kind ?? \"\"] ?? nil) : nil"
+          "text": "static func recTitle(_ r: Rec) -> String {"
         },
         {
           "platform": "ios",
@@ -26153,7 +26153,7 @@
           "line": 374,
           "symbol": "recordsChrome",
           "note": "入口：filters.alarmKinds 绑定",
-          "text": "Button {"
+          "text": "var jumpBackRow: some View {"
         }
       ],
       "platformEvidence": {
@@ -26219,7 +26219,7 @@
           "line": 306,
           "symbol": "onChange(pending*)",
           "note": "六个深链入口",
-          "text": "let who = r.whoId.flatMap { DB.member($0)?.name } ?? \"未归属\""
+          "text": "let memberNames = Dictionary(DB.members().map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })"
         },
         {
           "platform": "ios",
@@ -27612,7 +27612,7 @@
           "line": 371,
           "symbol": "OutWinSheet",
           "note": "越界文案",
-          "text": "@ViewBuilder"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -27845,7 +27845,7 @@
           "line": 333,
           "symbol": "onChange(scope)",
           "note": "切范围重置全部检索态",
-          "text": "if n > 0 {"
+          "text": "var lastYearTodayRow: some View {"
         },
         {
           "platform": "ios",
@@ -27853,7 +27853,7 @@
           "line": 392,
           "symbol": "macs",
           "note": "范围 → 锁列表",
-          "text": "}"
+          "text": "guard let t = Double(raw), t > 0 else { return nil }"
         },
         {
           "platform": "ios",
@@ -33457,7 +33457,7 @@
           "line": 525,
           "symbol": "外观变更注释",
           "note": "",
-          "text": "if let who = c.who, let m = DB.member(who) {"
+          "text": "// 行上真写着成员名才带出, 成员已从档案删掉的行走 landMember 的 guard 也只会落个失败 toast。"
         },
         {
           "platform": "ios",
@@ -33481,7 +33481,7 @@
           "line": 527,
           "symbol": "private func applyAppearance",
           "note": "",
-          "text": "let shown = MemberHub.aliasName(who) ?? m.name"
+          "text": "if let who = c.who, let m = memberByID[who] {"
         }
       ],
       "platformEvidence": {
@@ -37588,7 +37588,7 @@
           "line": 598,
           "symbol": "static let behaviorKeys",
           "note": "",
-          "text": "/// 卡片表面: 靠 surface 与渐变画布的明度差分层, 不加描边。"
+          "text": "/// 内层 Button 保留全部系统行为, 只有 trigger() 走闸; 闸状态是每个按钮各自的 @State, 不跨按钮误伤。"
         },
         {
           "platform": "ios",
@@ -56970,7 +56970,7 @@
           "line": 439,
           "symbol": "kf_ledger_",
           "note": "族删前缀清单起点",
-          "text": "}"
+          "text": "static func setCodable<T: Encodable>(_ v: T, _ k: String) {"
         }
       ],
       "platformEvidence": {
@@ -57033,7 +57033,7 @@
           "line": 374,
           "symbol": "saveKeychain",
           "note": "密钥不再明文写 plist, 改存系统 Keychain",
-          "text": "if let strong = rec[\"d2\"], !strong.isEmpty {"
+          "text": "static func verifyPasscode(_ pw: String) -> Bool {"
         }
       ],
       "platformEvidence": {
@@ -57868,7 +57868,7 @@
           "line": 598,
           "symbol": "behaviorKeys",
           "note": "",
-          "text": "/// 卡片表面: 靠 surface 与渐变画布的明度差分层, 不加描边。"
+          "text": "/// 内层 Button 保留全部系统行为, 只有 trigger() 走闸; 闸状态是每个按钮各自的 @State, 不跨按钮误伤。"
         },
         {
           "platform": "ios",
@@ -57884,7 +57884,7 @@
           "line": 520,
           "symbol": "kf_unlock_hint_day",
           "note": "",
-          "text": "let c = rows[i]"
+          "text": "for (i, e) in logs.enumerated() {"
         }
       ],
       "platformEvidence": {
@@ -60208,7 +60208,7 @@
           "line": 435,
           "symbol": "removeDevice(_:)",
           "note": "",
-          "text": "Store.shared.setCodable(k, v)"
+          "text": "static func get<T: Decodable>(_ t: T.Type, _ k: String) -> T? {"
         },
         {
           "platform": "ios",
@@ -61122,7 +61122,7 @@
           "line": 290,
           "symbol": "DefendCfg",
           "note": "",
-          "text": "static func gateways() -> [Gateway] {"
+          "text": "map.removeValue(forKey: mac.replacingOccurrences(of: \":\", with: \"\").lowercased())"
         },
         {
           "platform": "ios",
@@ -61130,7 +61130,7 @@
           "line": 261,
           "symbol": "DongleStat",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -61138,7 +61138,7 @@
           "line": 272,
           "symbol": "Gateway",
           "note": "",
-          "text": "name: d.name.isEmpty ? old.name : d.name,"
+          "text": "static func saveDongle(_ d: Dongle) {"
         }
       ],
       "platformEvidence": {
@@ -61466,7 +61466,7 @@
           "line": 198,
           "symbol": "StatusSnapshotData",
           "note": "",
-          "text": "static let memberPalette = [\"#818CF8\", \"#4ADE80\", \"#F59E0B\", \"#FB7185\", \"#22D3EE\", \"#94A3B8\"]"
+          "text": "guard let d = map[id] as? [String: Any] else { return nil }"
         },
         {
           "platform": "ios",
@@ -61474,7 +61474,7 @@
           "line": 223,
           "symbol": "CachedLog",
           "note": "",
-          "text": "map[id] = d"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -61762,7 +61762,7 @@
           "line": 350,
           "symbol": "migrateSecretsToKeychain()",
           "note": "",
-          "text": "return passcodeRecord(pw, salt: salt)"
+          "text": "/// 所以这不是「对齐 vendor」而是**本仓自造的更强方案**；跨端互操作靠 d/d2 双写："
         },
         {
           "platform": "ios",
@@ -61770,7 +61770,7 @@
           "line": 361,
           "symbol": "stored",
           "note": "stored || set 成功才 removeValue",
-          "text": "static func fnv1a32(_ s: String) -> String {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -61920,7 +61920,7 @@
           "line": 374,
           "symbol": "saveKeychain(_:)",
           "note": "",
-          "text": "if let strong = rec[\"d2\"], !strong.isEmpty {"
+          "text": "static func verifyPasscode(_ pw: String) -> Bool {"
         },
         {
           "platform": "ios",
@@ -61928,7 +61928,7 @@
           "line": 425,
           "symbol": "removeKeychain(_:)",
           "note": "",
-          "text": "}"
+          "text": "let salt = rec[\"s\"] ?? \"\""
         },
         {
           "platform": "ios",
@@ -61936,7 +61936,7 @@
           "line": 438,
           "symbol": "removeDevice",
           "note": "clearPendingPair",
-          "text": "Store.shared.setCodable(k, v)"
+          "text": "/// 跨文件写 Codable 的唯一入口 (参数序 = 值在前、键在后, 与内部 set 一致)"
         }
       ],
       "platformEvidence": {
@@ -63588,7 +63588,7 @@
           "line": 518,
           "symbol": "unlockReturnedHint",
           "note": "",
-          "text": "for (i, e) in logs.enumerated() {"
+          "text": "// 2026-10-29 性能：循环里每行调一次 DB.member（各自解析一份成员字典）。一次建表。"
         },
         {
           "platform": "ios",
@@ -63596,7 +63596,7 @@
           "line": 520,
           "symbol": "kf_unlock_hint_day",
           "note": "",
-          "text": "let c = rows[i]"
+          "text": "for (i, e) in logs.enumerated() {"
         }
       ],
       "platformEvidence": {

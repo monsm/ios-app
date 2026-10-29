@@ -302,8 +302,10 @@ struct RecordsView: View {
         let rows = allRows.filter { rangeSel.contains($0.dayKey) }
         guard !rows.isEmpty else { app.showToast("选中的天里没有记录行"); return }
         var out = ["日期,时间,内容,成员,锁"]
+        // 2026-10-29 性能：循环里每行调一次 DB.member（各自解析一份成员字典）。一次建表。
+        let memberNames = Dictionary(DB.members().map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
         for r in rows.sorted(by: { ($0.dayKey, $0.time) < ($1.dayKey, $1.time) }) {
-            let who = r.whoId.flatMap { DB.member($0)?.name } ?? "未归属"
+            let who = r.whoId.flatMap { memberNames[$0] } ?? "未归属"
             out.append([esc(r.dayKey), esc(r.time), esc(r.title), esc(who), esc(r.lockName)].joined(separator: ","))
         }
         Clip.set(out.joined(separator: "\n"))
