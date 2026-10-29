@@ -9,7 +9,8 @@ extension RecordSearch {
         // 原来在内层对每条开门日志各 parseStamp 两遍：日志 × 凭证 × 2 次字符串解析，
         // parseStamp 是一次 DateFormatter 解析，300 条日志 × 20 张临时码 = 1.2 万次。
         // 现在每张临时码只解析一次；日志循环里只剩整数比较。
-        struct TempWin { let from: Int; let to: Int; let label: String }
+        // parseStamp 返回 Int64（DateFormatter 解析出的秒），窗口对齐用它
+        struct TempWin { let from: Int64; let to: Int64; let label: String }
         var perMac: [String: [TempWin]] = [:]
         for mac in macs {
             let pws = DB.listPwds(mac).filter { $0.temp }
@@ -25,7 +26,7 @@ extension RecordSearch {
         // 2026-10-29 修正：临时码开门在 APK We 表里是 16（旧值 4 是消息中心枚举）。
         for r in buildRecs(macs: macs, includeFails: false, includeCare: false) where r.type == 16 {
             guard let d = dateOf(r), let temps = perMac[r.mac], !temps.isEmpty else { continue }
-            let ts = Int(d.timeIntervalSince1970)
+            let ts = Int64(d.timeIntervalSince1970)
             // 这条开门落在**任一**临时码窗口内 = 正常；全都不在窗内才报越界（取第一条窗口做展示）
             if !temps.contains(where: { ts >= $0.from && ts <= $0.to }) {
                 out.append(OutWin(rec: r, window: temps[0].label))
