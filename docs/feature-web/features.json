@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T01:05:52.785Z",
+    "generated": "2026-10-29T01:08:49.559Z",
     "sources": [
       {
         "scout": "android-native",
@@ -967,7 +967,7 @@
           "line": 964,
           "symbol": "struct DeviceInfoView",
           "note": "",
-          "text": "TextField(\"电池型号 (如 CR123A × 2)\", text: $batteryModel)"
+          "text": "Section(\"电池档案\") {"
         },
         {
           "platform": "apk",
@@ -983,7 +983,7 @@
           "line": 982,
           "symbol": "BusyButton(title: \"重新读取\")",
           "note": "",
-          "text": "save()"
+          "text": "BusyButton(title: \"保存档案\", systemImage: \"checkmark\", isBusy: false, disabled: trimmed.isEmpty) {"
         },
         {
           "platform": "ios",
@@ -991,7 +991,7 @@
           "line": 986,
           "symbol": "静音模式可在设置页切换",
           "note": "",
-          "text": "}"
+          "text": "Text(\"昵称不能为空。档案只存本机, 不写入门锁。\")"
         }
       ],
       "platformEvidence": {
@@ -1074,7 +1074,7 @@
           "line": 1465,
           "symbol": "struct KeychainHWView",
           "note": "",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -2126,7 +2126,7 @@
           "line": 585,
           "symbol": "defaultName(for:)",
           "note": "",
-          "text": "capacityRow(title: \"指纹\", used: fpUsed, cap: fpCap, stock: status?.fpStock ?? app.snapshot?.fpStock ?? -1)"
+          "text": "capacityRow(title: \"密码\", used: pwdUsed, cap: pwdCap, stock: status?.pwdStock ?? app.snapshot?.pwdStock ?? -1)"
         }
       ],
       "platformEvidence": {
@@ -2362,7 +2362,7 @@
           "line": 572,
           "symbol": "rollback(reason:)",
           "note": "",
-          "text": "Text(battTrendCaption(sp))"
+          "text": "BattSpark(samples: sp)"
         },
         {
           "platform": "ios",
@@ -3836,7 +3836,7 @@
           "line": 1205,
           "symbol": "if let drift = clockDrift, abs(drift) > 2",
           "note": "",
-          "text": "\"将把 WiFi「\\(ssid)」写入网关硬件。写入过程网关会重启并清空原有网络配置，若网络不通需要重新重置网关才能再次配网。确定开始配网吗？\","
+          "text": "confirmDestructive(\"写入网关\","
         },
         {
           "platform": "ios",
@@ -3852,7 +3852,7 @@
           "line": 1207,
           "symbol": "try? await app.lock.syncTime()",
           "note": "",
-          "text": "Task { await self.provision() }"
+          "text": "confirmTitle: \"开始配网\") {"
         }
       ],
       "platformEvidence": {
@@ -3923,7 +3923,7 @@
           "line": 1000,
           "symbol": "infoCardSection",
           "note": "",
-          "text": "batteryHasDate = m.batteryChangedAt > 0"
+          "text": "batteryModel = m.batteryModel"
         },
         {
           "platform": "ios",
@@ -3931,7 +3931,7 @@
           "line": 1029,
           "symbol": "if let v = status?.verDFU, v > 0",
           "note": "",
-          "text": "app.showToast(\"档案已保存\")"
+          "text": "app.loadDevices()"
         },
         {
           "platform": "ios",
@@ -3939,7 +3939,7 @@
           "line": 1127,
           "symbol": "driftText",
           "note": "",
-          "text": "}"
+          "text": ".animation(DS.Motion.standard, value: steps)"
         }
       ],
       "platformEvidence": {
@@ -4007,7 +4007,7 @@
           "line": 1045,
           "symbol": "statusSection",
           "note": "",
-          "text": "@State private var gateways: [Gateway] = []"
+          "text": "@State private var error = \"\""
         },
         {
           "platform": "ios",
@@ -4015,7 +4015,7 @@
           "line": 1054,
           "symbol": "BattSpark(samples: sp)",
           "note": "",
-          "text": "VariantToggle(\"橙色灯闪烁中\", isOn: $confirmed)"
+          "text": "Text(\"接通电源，重置网关，待网关指示灯闪烁橙色后点击下一步。\").vkFont(.footnote)"
         },
         {
           "platform": "ios",
@@ -4023,7 +4023,7 @@
           "line": 1172,
           "symbol": "capacityRow(title:used:cap:stock:)",
           "note": "",
-          "text": "}"
+          "text": "tone: g.netState == 1 ? .ok : .neutral)"
         }
       ],
       "platformEvidence": {
@@ -5742,7 +5742,7 @@
           "line": 1419,
           "symbol": "BusyButton 保存档案",
           "note": "",
-          "text": "let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)"
+          "text": "onConfirm: @escaping ([String]) -> Void) {"
         },
         {
           "platform": "apk",
@@ -5758,7 +5758,7 @@
           "line": 1448,
           "symbol": "DB.saveKeychain",
           "note": "",
-          "text": "+ (preview.count > 5 ? \"\\n…\" : \"\")"
+          "text": "+ preview.prefix(5).joined(separator: \"\\n\")"
         }
       ],
       "platformEvidence": {
@@ -14869,7 +14869,7 @@
           "line": 707,
           "symbol": "submit(permanent:)",
           "note": "",
-          "text": "// iOS 此前只做前两条，于是 KX 进 C 级后仍显示 B —— 用户解释不了\"为什么收不到通知\"。"
+          "text": "//   1 == verifyMode && 0 == broadcastMode → \"C模式\"（覆盖前一条）"
         },
         {
           "platform": "ios",
@@ -15259,7 +15259,7 @@
           "line": 594,
           "symbol": "struct AddPwdView",
           "note": "",
-          "text": "let hi = sp.map(\\.pct).max() ?? 0"
+          "text": "let lo = sp.map(\\.pct).min() ?? 0"
         },
         {
           "platform": "ios",
@@ -15267,7 +15267,7 @@
           "line": 610,
           "symbol": "pwdOK",
           "note": "",
-          "text": "// 289 耗材备件提醒: 电量偏低时提示备一枚电池 (包4: 读数同 pctText 走采样)"
+          "text": ".foregroundStyle(DS.Palette.text)"
         },
         {
           "platform": "ios",
@@ -15275,7 +15275,7 @@
           "line": 680,
           "symbol": "Button(busy ? \"写入中…\" : \"关闭\")…interactiveDismissDisabled(busy)",
           "note": "",
-          "text": "private var fpUsed: Int {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -15663,7 +15663,7 @@
           "line": 781,
           "symbol": "struct StartAddFpView",
           "note": "",
-          "text": "var path = Path()"
+          "text": "func y(_ v: Int) -> CGFloat { 2 + ih - ih * CGFloat(v - lo) / CGFloat(span) }"
         },
         {
           "platform": "ios",
@@ -15671,7 +15671,7 @@
           "line": 822,
           "symbol": "FpOwnerPicker(mac: app.current?.mac ?? \"\", owner: $owner)",
           "note": "",
-          "text": "var vkBody: some View {"
+          "text": "var body: some View { vkBody.destined(.lockProfile) }"
         },
         {
           "platform": "ios",
@@ -15679,7 +15679,7 @@
           "line": 894,
           "symbol": ".keepingScreenAwake(busy)",
           "note": "",
-          "text": "Text(\"PIN 池有多枚时，这里决定开锁用哪一枚。选「自动」= 用第一枚（与旧行为一致）。\")"
+          "text": "} footer: {"
         }
       ],
       "platformEvidence": {
@@ -17264,7 +17264,7 @@
           "line": 931,
           "symbol": "guard presses.count >= 8",
           "note": "",
-          "text": "}"
+          "text": ".accessibilityAddTraits(symbol == s.name ? [.isSelected] : [])"
         },
         {
           "platform": "ios",
@@ -17280,7 +17280,7 @@
           "line": 940,
           "symbol": "if Task.isCancelled { presses = []; return }",
           "note": "",
-          "text": "DS.Haptics.tick.impactOccurred()"
+          "text": "colorKey = s.key"
         },
         {
           "platform": "ios",
@@ -17288,7 +17288,7 @@
           "line": 944,
           "symbol": "app.lock.fpConfirm(batch, validFrom:…)",
           "note": "",
-          "text": ".frame(width: 34, height: 34)"
+          "text": ".fill(LockArchive.swatchColor(s.key))"
         }
       ],
       "platformEvidence": {
@@ -17564,7 +17564,7 @@
           "line": 897,
           "symbol": "progressText",
           "note": "",
-          "text": "// 108 手动隐藏这把锁: 只影响设备 Tab 的横滑翻页与胶囊主列表。"
+          "text": "Section {"
         },
         {
           "platform": "ios",
@@ -17580,7 +17580,7 @@
           "line": 923,
           "symbol": "app.lock.fpStart(times: 8, onPress:)",
           "note": "",
-          "text": "Text(s.label)"
+          "text": "in: Circle())"
         }
       ],
       "platformEvidence": {
@@ -20191,7 +20191,7 @@
           "line": 756,
           "symbol": "let to = from.addingTimeInterval(600)",
           "note": "",
-          "text": "var m = meta; m.batteryChangedAt = 0; LockArchive.save(kc?.mac ?? \"\", m)"
+          "text": "alert.addAction(UIAlertAction(title: \"清除\", style: .destructive) { _ in"
         },
         {
           "platform": "ios",
@@ -20199,7 +20199,7 @@
           "line": 667,
           "symbol": "Text(\"下发 10 分钟临时密码\")",
           "note": "",
-          "text": "if let f = status?.firmware, !f.isEmpty { fw = f }"
+          "text": "var fw = kc.fw"
         }
       ],
       "platformEvidence": {
@@ -20268,7 +20268,7 @@
           "line": 630,
           "symbol": "Picker(\"类型\", selection: $permanent)",
           "note": "",
-          "text": "return fw.isEmpty ? \"未知\" : fw"
+          "text": "let fw = kc?.fw ?? \"\""
         },
         {
           "platform": "ios",
@@ -20276,7 +20276,7 @@
           "line": 721,
           "symbol": "if !permanent, toDate <= fromDate",
           "note": "",
-          "text": "if let lt = status?.lockTime {"
+          "text": "// 47: 状态读回瞬间锁钟与手机时钟的差 (协议秒基准换算)"
         },
         {
           "platform": "ios",
@@ -20284,7 +20284,7 @@
           "line": 657,
           "symbol": "VariantToggle(\"备注自动填命名模板 (谁-哪里-何时)\")",
           "note": "",
-          "text": "}"
+          "text": "return at > 0 ? LockStats.sampleTimeText(at) : \"尚未读取过快照\""
         }
       ],
       "platformEvidence": {
@@ -33689,7 +33689,7 @@
           "line": 1278,
           "symbol": "struct LockProfileView",
           "note": "",
-          "text": "var vkBody: some View {"
+          "text": "var body: some View { vkBody.destined(.members) }"
         },
         {
           "platform": "ios",
@@ -33697,7 +33697,7 @@
           "line": 1298,
           "symbol": "预览 Section",
           "note": "",
-          "text": "if members.isEmpty {"
+          "text": "Section(\"成员 (\\(members.count))\") {"
         },
         {
           "platform": "ios",
@@ -33705,7 +33705,7 @@
           "line": 1423,
           "symbol": "昵称不能为空。档案只存本机, 不写入门锁。",
           "note": "",
-          "text": "tf.text = f.text"
+          "text": "tf.placeholder = f.placeholder"
         }
       ],
       "platformEvidence": {
@@ -36479,7 +36479,7 @@
           "line": 1411,
           "symbol": "Section(\"电池档案\")",
           "note": "",
-          "text": "var keyboard: UIKeyboardType = .default"
+          "text": "var text: String = \"\""
         },
         {
           "platform": "ios",
@@ -36487,7 +36487,7 @@
           "line": 1419,
           "symbol": "BusyButton(title: \"保存档案\", …, disabled: trimmed.isEmpty)",
           "note": "",
-          "text": "let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)"
+          "text": "onConfirm: @escaping ([String]) -> Void) {"
         },
         {
           "platform": "ios",
@@ -36495,7 +36495,7 @@
           "line": 1443,
           "symbol": "save()",
           "note": "",
-          "text": "let msg = preview.isEmpty"
+          "text": "// 两个按钮行为完全相同，只留一个，并如实说明锁端凭证仍需手动删除。"
         }
       ],
       "platformEvidence": {
@@ -36563,7 +36563,7 @@
           "line": 1347,
           "symbol": "VariantToggle(\"在翻页里隐藏这把锁\")",
           "note": "",
-          "text": "}"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         },
         {
           "platform": "ios",
@@ -36571,7 +36571,7 @@
           "line": 1350,
           "symbol": "隐藏后它退出左右横滑，只在切换胶囊的「已隐藏」区里可达",
           "note": "",
-          "text": ".swipeActions {"
+          "text": ".accessibilityElement(children: .combine)"
         }
       ],
       "platformEvidence": {
@@ -36633,7 +36633,7 @@
           "line": 1325,
           "symbol": "Section(\"身份\")",
           "note": "",
-          "text": "MemberCenterView()"
+          "text": ".sheet(isPresented: $showCenter) {"
         },
         {
           "platform": "ios",
@@ -36641,7 +36641,7 @@
           "line": 1337,
           "symbol": "TextField(\"分组名 (如 家用 / 仓库 / 办公, 留空 = 未分组)\")",
           "note": "",
-          "text": "private func memberRow(_ m: Member) -> some View {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -36649,7 +36649,7 @@
           "line": 1341,
           "symbol": "TextField(\"备注 (换电历史/安装细节/门锁脾气…)\", axis: .vertical)",
           "note": "",
-          "text": "}"
+          "text": "Text(m.name).vkFont(.subheadline).foregroundStyle(DS.Palette.text)"
         }
       ],
       "platformEvidence": {
@@ -36716,7 +36716,7 @@
           "line": 1356,
           "symbol": "Section(\"符号\")",
           "note": "",
-          "text": "Button { UIApplication.shared.open(tel) } label: { Label(\"呼叫 \\(m.name)\", systemImage: \"phone.fill\") }"
+          "text": "if let tel = Self.telURL(m.phone) {"
         },
         {
           "platform": "ios",
@@ -36724,7 +36724,7 @@
           "line": 1383,
           "symbol": "Section(\"色标\")",
           "note": "",
-          "text": "prompt(title: \"补全信息 (只填空缺)\", message: nil,"
+          "text": "private func info(_ m: Member) {"
         },
         {
           "platform": "ios",
@@ -57587,7 +57587,7 @@
           "line": 1451,
           "symbol": "m.grp = LockArchive.normalizedGroup(grp)",
           "note": "",
-          "text": "let alert = UIAlertController(title: \"删除成员\", message: msg, preferredStyle: .alert)"
+          "text": "+ \"必须到门锁键盘上手动删除才会真正失效。指纹一旦在锁端删掉就无法远程补录，只能本人到锁前重录。\""
         },
         {
           "platform": "ios",

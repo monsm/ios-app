@@ -546,6 +546,7 @@ struct DeviceInfoView: View {
     }
 
     // 运行状态: 数值旁标注采样时间 (291), 容量读协议容量族 (773)
+    @ViewBuilder
     private var statusSection: some View {
         // 2026-10-29 补：`LinkSense.envConclusion` 零调用 —— 它算的是「近一次扫描见到多少台 BLE
         // 设备」，用来解释「为什么这台锁有时连不上」。放在锁信息名片里（诊断语义最贴的地方）。

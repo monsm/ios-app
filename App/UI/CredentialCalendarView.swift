@@ -168,7 +168,7 @@ struct CredentialCalendarView: View {
             bits.append(f.string(from: to))
         }
         if p.temp { bits.append("临时码") }
-        if !p.owner.isEmpty, let m = DB.member(p.owner) { bits.append(m.name) }
+        if let own = p.owner, !own.isEmpty, let m = DB.member(own) { bits.append(m.name) }
         return bits.isEmpty ? "—" : bits.joined(separator: " · ")
     }
 

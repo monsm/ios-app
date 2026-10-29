@@ -95,7 +95,7 @@ struct RecDetailSheet: View {
             // 详情是"看这一条"的场景，时段与通勤判断才有解释价值。
             if let h = Self.hourOf(rec.timeStr) {
                 var seg = TimeWord.word(h)
-                if let c = CommuteLabel.tag(date: RecordSearch.dateFromKey(rec.dayKey) ?? Date(), hour: h) {
+                if let c = CommuteLabel.tag(date: RecordSearch.dateFromKey(String(rec.timeStr.prefix(10))) ?? Date(), hour: h) {
                     seg += " · \(c)时段"
                 }
                 fieldRow("时段", seg)
