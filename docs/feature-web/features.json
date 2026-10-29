@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T05:49:03.382Z",
+    "generated": "2026-10-29T05:53:48.543Z",
     "sources": [
       {
         "scout": "android-native",
@@ -32208,7 +32208,7 @@
           "line": 240,
           "symbol": "低电 → calm",
           "note": "",
-          "text": "/// 撞上 863 降级后的浅色 hero，变成白字压白底。"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -56642,7 +56642,7 @@
           "line": 106,
           "symbol": "enum DS",
           "note": "",
-          "text": "/// 892 自定义强调色 (ColorPicker 管线)。"
+          "text": "///"
         },
         {
           "platform": "ios",
@@ -56658,7 +56658,7 @@
           "line": 20,
           "symbol": "Color.adaptive",
           "note": "",
-          "text": "/// 而行宽只有 ~361pt —— 后两枚永远看不见, 且 `showsIndicators: false` 连\"还能滚\"都不说。"
+          "text": "/// 2026-10-15 走查把这条补上。"
         },
         {
           "platform": "ios",
@@ -57732,7 +57732,7 @@
           "line": 152,
           "symbol": "enum Metric",
           "note": "",
-          "text": "//"
+          "text": "// 函数体只构造那个 Group、从不引用接收者, 于是 `X.dsScreenBackground()` 的结果就是"
         },
         {
           "platform": "ios",
@@ -57740,7 +57740,7 @@
           "line": 153,
           "symbol": "dial 三档",
           "note": "",
-          "text": "// 2026-10-13 (首次真机运行): 原实现**丢掉了 self** ——"
+          "text": "// \"一层渐变\", X 整个不见了。全仓 99 处这么用 ⇒ **每个页面都只剩底色 = 打开 App 一片空白**。"
         },
         {
           "platform": "ios",
@@ -57748,7 +57748,7 @@
           "line": 160,
           "symbol": "rowMinH 44/60",
           "note": "",
-          "text": "//"
+          "text": "let flat = DS.Appearance.isAMOLED   // 2026-10-27 三轮：AXFlags 已删，反转色/降透明不再降级"
         },
         {
           "platform": "ios",
@@ -57756,7 +57756,7 @@
           "line": 166,
           "symbol": "tlGap 叠乘",
           "note": "",
-          "text": "else { DS.Gradient.screenMesh.ignoresSafeArea() }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -58544,7 +58544,7 @@
           "line": 235,
           "symbol": "reduceMotionSnapshot",
           "note": "",
-          "text": "}"
+          "text": "/// 撞上 863 降级后的浅色 hero，变成白字压白底。"
         },
         {
           "platform": "ios",
@@ -58552,7 +58552,7 @@
           "line": 292,
           "symbol": "highContrast",
           "note": "",
-          "text": ".fontDesign(DS.Metric.digitDesign)   // 902 数字字体两档: 圆体/默认体走令牌 (设置-外观可切), 中文自动回退苹方"
+          "text": ".frame(maxWidth: .infinity, alignment: .leading)"
         },
         {
           "platform": "ios",
@@ -58568,7 +58568,7 @@
           "line": 159,
           "symbol": "kf_ax_bigotp 交叉引用",
           "note": "",
-          "text": "// 正确写法: 把渐变放进 .background, 内容留在前景。"
+          "text": "// 这里回到唯一那套底色 —— 与 226/863/AMOLED 三条降级纪律逐字一致。"
         },
         {
           "platform": "ios",
@@ -58668,7 +58668,7 @@
           "line": 287,
           "symbol": "isAMOLED",
           "note": "",
-          "text": ".minimumScaleFactor(0.7)"
+          "text": ".fontDesign(DS.Metric.digitDesign)   // 902 数字字体两档: 圆体/默认体走令牌 (设置-外观可切), 中文自动回退苹方"
         },
         {
           "platform": "ios",
@@ -58676,7 +58676,7 @@
           "line": 292,
           "symbol": "highContrast",
           "note": "",
-          "text": ".fontDesign(DS.Metric.digitDesign)   // 902 数字字体两档: 圆体/默认体走令牌 (设置-外观可切), 中文自动回退苹方"
+          "text": ".frame(maxWidth: .infinity, alignment: .leading)"
         },
         {
           "platform": "ios",
@@ -58684,7 +58684,7 @@
           "line": 381,
           "symbol": "amoledOverride",
           "note": "",
-          "text": "// 慢到只剩\"页面在呼吸\"的潜意识感受; reduceMotion 时静止"
+          "text": "// 248: 22 点后光源与圆盘同档降峰值"
         },
         {
           "platform": "ios",
@@ -58692,7 +58692,7 @@
           "line": 324,
           "symbol": "hairlineStrong",
           "note": "",
-          "text": ".font(.system(size: DS.Icon.sm, weight: .medium))"
+          "text": ".lineLimit(1)"
         }
       ],
       "platformEvidence": {
@@ -58837,7 +58837,7 @@
           "line": 444,
           "symbol": "enum CustomAccent",
           "note": "",
-          "text": ".buttonStyle(.borderedProminent)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -58853,7 +58853,7 @@
           "line": 513,
           "symbol": "derived 六档角色",
           "note": "",
-          "text": ".accessibilityHint(\"打开演示锁, 完整走一遍添加与开锁\")"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -58861,7 +58861,7 @@
           "line": 397,
           "symbol": "key == nil 才用自定义色",
           "note": "",
-          "text": "// 226 降透明: 渐变退纯色后补一圈描边, 找回卡片边界 (色走 heroSolidStroke, 反转档自动跟随)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -58935,7 +58935,7 @@
           "line": 110,
           "symbol": "enum Space",
           "note": "",
-          "text": "/// 所以这里存的只是**色相来源**，真正上屏的每一档都要被\"拉进亮度带\"再过一遍 WCAG："
+          "text": "///   · 压在色上的白字要 ≥4.5  ⇒ 该色相对亮度 ≤ 0.1833"
         },
         {
           "platform": "ios",
@@ -58943,7 +58943,7 @@
           "line": 112,
           "symbol": "densityScale",
           "note": "",
-          "text": "///   · 近黑墨字 (0x0A0E15) 压在该色上要 ≥4.5 ⇒ 亮度 ≥ 0.198"
+          "text": "///   · 主色文字压在三种浅色底上 ≥4.5 ⇒ 亮度 ≤ 0.154"
         },
         {
           "platform": "ios",
@@ -58951,7 +58951,7 @@
           "line": 120,
           "symbol": "d(v) 吸附 0.5pt",
           "note": "",
-          "text": ""
+          "text": "struct AccentTheme: Identifiable {"
         },
         {
           "platform": "ios",
@@ -58959,7 +58959,7 @@
           "line": 129,
           "symbol": "gutter",
           "note": "",
-          "text": "LinearGradient(colors: [DS.Palette.themed(\"heroA\", key: key), DS.Palette.themed(\"heroB\", key: key)],"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -59153,7 +59153,7 @@
           "line": 556,
           "symbol": "Gradient.hero",
           "note": "",
-          "text": "}"
+          "text": "let title: String"
         },
         {
           "platform": "ios",
@@ -59161,7 +59161,7 @@
           "line": 572,
           "symbol": "screenMesh 3×3",
           "note": "",
-          "text": "ProgressView().controlSize(.small)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -59266,7 +59266,7 @@
           "line": 204,
           "symbol": "触感分级说明",
           "note": "",
-          "text": ""
+          "text": "struct StatusPill: View {"
         },
         {
           "platform": "ios",
@@ -59282,7 +59282,7 @@
           "line": 211,
           "symbol": "enum Haptics",
           "note": "",
-          "text": "let systemImage: String"
+          "text": "VK().statusPill(text: text, systemImage: systemImage, tone: tone.color)"
         },
         {
           "platform": "ios",
@@ -59290,7 +59290,7 @@
           "line": 212,
           "symbol": "tick / trigger",
           "note": "",
-          "text": "var tone: ToneColor = .neutral"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -59379,7 +59379,7 @@
           "line": 230,
           "symbol": "enum Motion",
           "note": "",
-          "text": "/// hero 面上的玻璃底板 (HeroStat / HeroPill / 节日胶囊 / 状态胶囊 / 耗时标签共用)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -59387,7 +59387,7 @@
           "line": 235,
           "symbol": "systemReduceMotion",
           "note": "",
-          "text": "}"
+          "text": "/// 撞上 863 降级后的浅色 hero，变成白字压白底。"
         },
         {
           "platform": "ios",
@@ -59395,7 +59395,7 @@
           "line": 240,
           "symbol": "appLowBattery → calm",
           "note": "",
-          "text": "/// 撞上 863 降级后的浅色 hero，变成白字压白底。"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -59403,7 +59403,7 @@
           "line": 246,
           "symbol": "quick",
           "note": "",
-          "text": "var body: some View {"
+          "text": ".vkFont(.caption, weight: .medium)"
         },
         {
           "platform": "ios",
@@ -59411,7 +59411,7 @@
           "line": 277,
           "symbol": "enum Duration",
           "note": "",
-          "text": ".foregroundStyle(tone.color)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -59490,7 +59490,7 @@
           "line": 135,
           "symbol": "enum Radius",
           "note": "",
-          "text": "// 顺序即设置页色板从左到右的次序: brass 放最前 = 默认)。"
+          "text": "AccentTheme(key: \"forest\", name: \"墨绿\"),"
         },
         {
           "platform": "ios",
@@ -59498,7 +59498,7 @@
           "line": 137,
           "symbol": "k 三档",
           "note": "",
-          "text": "AccentTheme(key: \"indigo\", name: \"靛蓝\"),"
+          "text": "// 886 补齐的后三套 (顺序即设置页色板从左到右的次序)"
         },
         {
           "platform": "ios",
@@ -59506,7 +59506,7 @@
           "line": 144,
           "symbol": "card / control / tile",
           "note": "",
-          "text": "]"
+          "text": "/// 页面底: 渐变画布, List/Form 需同时 .variantList()"
         }
       ],
       "platformEvidence": {
@@ -59574,7 +59574,7 @@
           "line": 337,
           "symbol": "themeTable",
           "note": "",
-          "text": "// 滚动负责\"看见变化\"，等宽负责\"变化时布局不抖\"。"
+          "text": ".frame(maxWidth: .infinity, alignment: .leading)"
         },
         {
           "platform": "ios",
@@ -59582,7 +59582,7 @@
           "line": 386,
           "symbol": "effectiveKey 默认 brass",
           "note": "",
-          "text": "// 248: 22 点后光源与圆盘同档降峰值"
+          "text": "RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous)"
         },
         {
           "platform": "ios",
@@ -59590,7 +59590,7 @@
           "line": 393,
           "symbol": "themed(role:key:)",
           "note": "",
-          "text": "}"
+          "text": "if reduceTransparency {"
         },
         {
           "platform": "ios",
@@ -63007,7 +63007,7 @@
           "line": 418,
           "symbol": "895 命名理由",
           "note": "",
-          "text": "let message: String"
+          "text": "self.title = title"
         },
         {
           "platform": "ios",
@@ -63023,7 +63023,7 @@
           "line": 422,
           "symbol": "apply 六键",
           "note": "",
-          "text": "init(systemImage: String, title: String, message: String) {"
+          "text": "init(systemImage: String, title: String, message: String, actionTitle: String, action: @escaping () -> Void) {"
         }
       ],
       "platformEvidence": {
@@ -63091,7 +63091,7 @@
           "line": 189,
           "symbol": "HeroStats 说明",
           "note": "",
-          "text": "}"
+          "text": "var color: Color {"
         },
         {
           "platform": "ios",
@@ -63099,7 +63099,7 @@
           "line": 192,
           "symbol": "enum HeroStats",
           "note": "",
-          "text": "enum ToneColor {"
+          "text": "case .accent:  return DS.Palette.accentText"
         },
         {
           "platform": "ios",
@@ -63107,7 +63107,7 @@
           "line": 194,
           "symbol": "visible 白名单与回退",
           "note": "",
-          "text": "var color: Color {"
+          "text": "case .warn:    return DS.Palette.warn"
         }
       ],
       "platformEvidence": {
@@ -63288,7 +63288,7 @@
           "line": 40,
           "symbol": "mdText(_:)",
           "note": "",
-          "text": "rowH = 0"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -63296,7 +63296,7 @@
           "line": 46,
           "symbol": "stronglyEmphasized",
           "note": "",
-          "text": "totalH += rowH"
+          "text": "return CGSize(width: proposal.width ?? widest, height: totalH)"
         },
         {
           "platform": "ios",
@@ -63304,7 +63304,7 @@
           "line": 63,
           "symbol": "struct FlowLayout",
           "note": "",
-          "text": "rowH = max(rowH, size.height)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -63312,7 +63312,7 @@
           "line": 88,
           "symbol": "placeSubviews 换行",
           "note": "",
-          "text": "/// 调用点只有视图动作; 唯一一处非 UI 调用 (预握手节律) 显式跳主 actor, 见 LinkSenseKit.preconnect。"
+          "text": "/// UIFeedbackGenerator 是 UIKit 对象 (主 actor)。整族标主 actor: 触感是 UI 反馈,"
         }
       ],
       "platformEvidence": {
