@@ -20,7 +20,7 @@ import UIKit
 struct RecordsView: View {
     @EnvironmentObject var app: AppState
     @State var groups: [DayGroup] = []
-    @State var damageDays: Set<String> = []  // 596 含防撬/试错锁定/键盘锁定的自然日
+    @State var damageDays: Set<String> = []  // 596 含「多次密码开门失败锁定」的自然日
     @State var rows: [RowVM] = []
     @State var allRows: [RowVM] = []
     @State var running = false

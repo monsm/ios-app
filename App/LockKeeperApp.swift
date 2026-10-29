@@ -518,7 +518,7 @@ final class AppState: ObservableObject {
                 whoId = who
             }
             // 第一百五十七批：这里原本自己写着 `type == 7 || 13 || 224` —— 5 类告警只圈了 3 类，
-            // 于是设备页这行**低电量(6) 与 试错锁定(10) 的告警不标红**，
+            // 于是设备页这行**低电量(4) 与 密码失败锁定(10) 的告警不标红**，
             // 而同一条记录在告警中心、统计、导出里都算告警 ⇒ 同一件事两个颜色。口径只认 StatsKit.alarmTypes 那一份。
             let warn = StatsKit.alarmTypes.contains(e.type)
             out.append((text, e.lockTimeStr, warn, RecordOverlay.oid(mac: kc.mac, rowKey: String(e.idxRaw)), whoId))

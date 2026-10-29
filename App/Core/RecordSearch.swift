@@ -7,8 +7,8 @@
 //         745 测试标记排除 / 727 检查清单 (复用处置字段) / 742 响应时长 (占位"积累中")
 //   551 的搜索面在 `searchFace` 一处定义, 含 186 备注与 568 凭证标签 (第一百八十九批补齐:
 //   此前备注不在任何搜索面上, 而搜索框占位文案写着它可搜)。
-// 纪律: 颜色只走 DS 令牌 (danger 派生, 页面层 .opacity); 告警类型只用 CAPABILITY §3
-//       真实存在的 5 种 (6 低电 / 7 防撬 / 10 试错锁定 / 13 指纹告警 / 224 键盘锁定);
+// 纪律: 颜色只走 DS 令牌 (danger 派生, 页面层 .opacity); 告警类型只用锁端日志表的
+//       2 种 (4 静态电量 / 10 多次密码开门失败锁定);
 //       归属统计走 Attribution 可证明链, 推断值一律标"约"。
 import SwiftUI
 import Foundation
@@ -77,15 +77,14 @@ enum RecordOverlay {
 }
 
 
-/// 724 四级告警色标: 提示/注意/严重/紧急 — 真实 5 种告警类的本地定级
+/// 724 四级告警色标: 提示/注意/严重/紧急 — 锁端日志表里 2 种告警类的本地定级
 /// (协议无胁迫类, 不虚构; 定级与色标映射在 AlarmCenterView 的 RecordSearch 扩展, 形状冗余保色觉可读)
 enum AlarmMeta {
-    static let urgent: Set<Int> = [7, 224]   // 防撬 / 键盘锁定
-    static let serious: Set<Int> = [10, 13]  // 试错锁定 / 指纹告警
-    /// 596 替代: 原句要的是"含胁迫告警"的日警示 —— 协议没有胁迫类 (§5), 改挂这三类**真实存在**
-    /// 且在意的告警: 防撬 / 试错锁定 / 键盘锁定。比 `urgent`([7,224]) 有意多收 10:
-    /// 试错锁定是"有人在试密码"的读数, "这一天出过事"这件事里它必须算。
-    static let damageTypes: Set<Int> = [7, 10, 224]
+    static let urgent: Set<Int> = [10]   // 2026-10-29 修正：日志表里只有「多次密码失败锁定」是紧急级
+    static let serious: Set<Int> = [4]   // 2026-10-29 修正：13 在日志表里是「交换秘钥」，不是指纹告警
+    /// 596 替代: 原句要的是"含胁迫告警"的日警示 —— 协议日志表里没有胁迫类 (§5),
+    /// 能挂的只有「多次密码开门失败锁定」(10)：有人反复试密码，这一天确实"出过事"。
+    static let damageTypes: Set<Int> = [10]   // 2026-10-29 修正：日志表里只有 10
     static func level(_ t: Int) -> Int {
         if urgent.contains(t) { return 3 }
         if serious.contains(t) { return 2 }
@@ -147,12 +146,13 @@ enum TimeWord {
 
 /// 655 动词化日志文案 (统一动词表: "张三 用 指纹 开了门", 告警/操作各用各的动词)
 enum RecordVerbs {
-    static let openVerb: [Int: String] = [1: "用了数字钥匙开了门", 2: "用了密码开门", 3: "用指纹开了门", 4: "用一次性密码开门", 5: "用 NFC 开了门"]
-    static let alarmVerb: [Int: String] = [6: "触发低电量提醒", 7: "出现撬锁告警", 10: "多次密码失败已锁定", 13: "指纹模块告警", 224: "键盘被锁定"]
+    static let openVerb: [Int: String] = [11: "用了数字钥匙开了门", 16: "用了一次性密码开门", 17: "用了密码开门", 19: "用指纹开了门"]
+    static let alarmVerb: [Int: String] = [4: "触发低电量提醒", 10: "多次密码开门失败已锁定"]
     static let opVerb: [Int: String] = [
-        8: "重新上电", 9: "DFU 后更新版本", 12: "校时完成", 14: "同步 PIN", 15: "同步密码",
-        20: "录入了指纹", 21: "删除了指纹", 22: "调整了安全级别", 23: "切换了状态广播",
-        24: "设置了单双验", 25: "开通了临时密码", 26: "调整了音量", 27: "设置了 beacom 密钥"
+        8: "重新上电", 9: "DFU 后更新版本", 12: "校时完成", 13: "交换秘钥",
+        14: "同步 PIN", 15: "同步密码", 20: "录入了指纹", 21: "删除了指纹",
+        22: "调整了安全级别", 23: "切换了状态广播", 24: "设置了单双验",
+        25: "开通了临时密码", 26: "调整了音量", 27: "设置了 beacom 密钥",
     ]
     /// whoName 可空; kindWord 由 Attribution.words 取
     static func line(type: Int, who: String?, kindWord: String?, typeName: String) -> String {

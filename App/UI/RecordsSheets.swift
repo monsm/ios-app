@@ -3,7 +3,7 @@
 import SwiftUI
 
 // ---------- 565 告警类型多选面板 ----------
-/// 对勾列表按库里**实际**告警类型渲染 (StatsKit.alarmTypes 五类)。原句列了"胁迫", 但协议日志
+/// 对勾列表按库里**实际**告警类型渲染 (StatsKit.alarmTypes 两类)。原句列了"胁迫", 但协议日志
 /// 类型表没有胁迫类 (与 725 判 ❌ 同一理由) —— 不虚构一个查不到的类型, 也在面板里把这件事写明。
 /// 选中集直接绑定 filters.alarmKinds (空 = 不限类型; 选中数回显在打开的 chip 上)。
 struct AlarmKindsSheet: View {

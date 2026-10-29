@@ -91,7 +91,7 @@ struct RecDetailSheet: View {
         Section("时间线与归属") {
             fieldRow("锁", rec.lockName + (scopeAll ? "" : " (当前锁)"))
             fieldRow("类型", rec.typeName + " (#" + String(rec.type) + ")")
-            // 2026-10-29 补：`RecordSearch.sameTypeCount` 零调用 —— 单看一条"撬锁"不知道是偶发还是惯犯。
+            // 2026-10-29 补：`RecordSearch.sameTypeCount` 零调用 —— 单看一条"锁定"不知道是偶发还是惯犯。
             if rec.type != 0 {
                 let sc = RecordSearch.sameTypeCount(mac: rec.mac, type: rec.type, exceptKey: rec.key)
                 if sc.total > 1 {

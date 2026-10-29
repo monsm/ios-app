@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T09:12:17.968Z",
+    "generated": "2026-10-29T09:23:37.456Z",
     "sources": [
       {
         "scout": "android-native",
@@ -40761,7 +40761,7 @@ const DATA = {
           "line": 154,
           "symbol": "rcMsg",
           "note": "",
-          "text": "}.count"
+          "text": "static func parseLogs(_ klvs: [ZKLV]) -> [LogEntry] {"
         },
         {
           "platform": "ios",
@@ -40793,7 +40793,7 @@ const DATA = {
           "line": 162,
           "symbol": "rcMessage(_:)",
           "note": "",
-          "text": "/// `rc=0` 本仓「成功」/ Android「已开锁」。语义相同（Android 只发开锁类命令，"
+          "text": "/// 翻页边界上截半条是真实会发生的，而它现在的表现是一条看起来正常的记录，"
         }
       ],
       "platformEvidence": {
@@ -41643,7 +41643,7 @@ const DATA = {
           "line": 124,
           "symbol": "parseLogEntry",
           "note": "",
-          "text": "12: \"授时\", 13: \"指纹告警\", 14: \"同步PIN\", 15: \"同步密码\","
+          "text": "//   DigitalKeyOpen=1 / PasswordOpen=2 / FPOpen=3 / TempPwdOpen=4 / NFCOpen=5 /"
         }
       ],
       "platformEvidence": {
@@ -42638,7 +42638,7 @@ const DATA = {
           "line": 169,
           "symbol": "rcHint 高频失败码人话",
           "note": "",
-          "text": "20: \"指纹传感器错误\", 21: \"门锁处于反锁状态\", 22: \"不能重复验证\", 23: \"无法获取有效的指纹图片\","
+          "text": ""
         },
         {
           "platform": "apk",
@@ -45057,7 +45057,7 @@ const DATA = {
           "line": 137,
           "symbol": "parseLogs",
           "note": "",
-          "text": "lockTime: lockTime,"
+          "text": "16: \"一次性密码开门\", 17: \"密码开门\", 19: \"指纹开门\", 20: \"添加指纹\", 21: \"删除指纹\","
         },
         {
           "platform": "ios",
@@ -45065,7 +45065,7 @@ const DATA = {
           "line": 147,
           "symbol": "truncatedLogCount",
           "note": "",
-          "text": "/// (七属性全无默认值，少传一个就编译不过 —— DiagKit:560 记着这件事)，在没有编译器的一晚里不划算。"
+          "text": "return LogEntry(type: type,"
         }
       ],
       "platformEvidence": {
@@ -47855,7 +47855,7 @@ const DATA = {
           "line": 137,
           "symbol": "parseLogs",
           "note": "只取 KLV#05",
-          "text": "lockTime: lockTime,"
+          "text": "16: \"一次性密码开门\", 17: \"密码开门\", 19: \"指纹开门\", 20: \"添加指纹\", 21: \"删除指纹\","
         },
         {
           "platform": "apk",
@@ -51953,7 +51953,7 @@ const DATA = {
           "line": 125,
           "symbol": "parseLogEntry",
           "note": "",
-          "text": "20: \"添加指纹\", 21: \"删除指纹\", 22: \"设置安全级别\", 23: \"状态广播开关\","
+          "text": "//   PowerLower=6 / Lockpicking=7 / WarningFP=13 / Thekeyboardislocked=224）。"
         },
         {
           "platform": "ios",
@@ -51969,7 +51969,7 @@ const DATA = {
           "line": 128,
           "symbol": "parseLogEntry",
           "note": "idx 偏移",
-          "text": "static func parseLogEntry(_ hex: String) -> LogEntry? {"
+          "text": "//"
         }
       ],
       "platformEvidence": {
@@ -52038,7 +52038,7 @@ const DATA = {
           "line": 147,
           "symbol": "truncatedLogCount",
           "note": "",
-          "text": "/// (七属性全无默认值，少传一个就编译不过 —— DiagKit:560 记着这件事)，在没有编译器的一晚里不划算。"
+          "text": "return LogEntry(type: type,"
         },
         {
           "platform": "ios",
@@ -52831,7 +52831,7 @@ const DATA = {
           "line": 166,
           "symbol": "rcHint",
           "note": "",
-          "text": "6: \"开锁指令已绑定其他设备\", 7: \"执行的操作不在指定的状态\", 8: \"溢出\", 9: \"时间误差过大\","
+          "text": "e.val.count / 2 \u003c 2 ? true : intHex(String(e.val.dropFirst(2).prefix(2))) != e.val.count / 2 - 2"
         },
         {
           "platform": "ios",
@@ -52839,7 +52839,7 @@ const DATA = {
           "line": 181,
           "symbol": "rcFriendly",
           "note": "",
-          "text": "case 6: return \"这条开锁凭证已绑定到别的设备, 请重新下发凭证\""
+          "text": "15: \"未知协议\", 16: \"参数不在范围内\", 17: \"丢包\", 18: \"不能设置重复的值\", 19: \"找不到指定的值\","
         }
       ],
       "platformEvidence": {
@@ -52902,7 +52902,7 @@ const DATA = {
           "line": 154,
           "symbol": "rcMsg",
           "note": "",
-          "text": "}.count"
+          "text": "static func parseLogs(_ klvs: [ZKLV]) -> [LogEntry] {"
         },
         {
           "platform": "ios",
@@ -52910,7 +52910,7 @@ const DATA = {
           "line": 162,
           "symbol": "rcMessage",
           "note": "",
-          "text": "/// `rc=0` 本仓「成功」/ Android「已开锁」。语义相同（Android 只发开锁类命令，"
+          "text": "/// 翻页边界上截半条是真实会发生的，而它现在的表现是一条看起来正常的记录，"
         }
       ],
       "platformEvidence": {
@@ -54481,7 +54481,7 @@ const DATA = {
           "line": 159,
           "symbol": "rcMsg",
           "note": "22 不能重复验证",
-          "text": "/// 改文案会让闸门红 —— 想补提示请用 `rcHint(rc:)`。"
+          "text": "/// Swift 侧**没有把 `invalid` 建进 `LogEntry`**：那要在 20 处构造点各补一个参数"
         }
       ],
       "platformEvidence": {
@@ -62848,7 +62848,7 @@ const DATA = {
           "line": 24,
           "symbol": "dayKey(_:)",
           "note": "",
-          "text": "static func dayKey(_ d: Date) -> String {"
+          "text": "guard l.lockTime > 0 else { return nil }"
         },
         {
           "platform": "ios",
@@ -63005,7 +63005,7 @@ const DATA = {
           "line": 20,
           "symbol": "dateOf(_:)",
           "note": "",
-          "text": "static func dateOf(_ l: CachedLog) -> Date? {"
+          "text": "/// 全仓 47 个 `dateOf` 调用方都把一条没有时间戳的记录当成 2010-01-01 那条日子在数"
         },
         {
           "platform": "ios",

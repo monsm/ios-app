@@ -6,8 +6,11 @@ import Foundation
 import SwiftUI
 
 enum StatsKit {
-    static let openTypes: Set<Int> = [1, 2, 3, 4, 5]
-    static let alarmTypes: Set<Int> = [6, 7, 10, 13, 224]
+    /// 2026-10-29 修正：开锁类只认 APK `We` 表里的 11/16/17/19（原来抄的 1-5 是消息中心枚举）。
+    static let openTypes: Set<Int> = [11, 16, 17, 19]
+    /// 2026-10-29 修正：日志里的告警只有 4 静态电量 / 10 多次密码失败锁定。
+    /// （撬锁 7 / 指纹告警 13 / 键盘锁定 224 属于**消息中心**的 mType，不在锁端日志类型表里。）
+    static let alarmTypes: Set<Int> = [4, 10]
 
     // ---------- 日期 ----------
     /// 缓存日志的协议秒 → 本地 `Date`。**`lockTime == 0` 是"锁端时钟没读到/无时钟型号"的占位值**

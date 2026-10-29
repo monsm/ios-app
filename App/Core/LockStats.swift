@@ -236,7 +236,7 @@ struct LockUsage: Identifiable {
     var mac: String
     var name: String
     var opens30d: Int = 0        // 开门类 (type 1-5)
-    var alarms30d: Int = 0       // 告警类 (6 电量低/7 撬锁/10 试错锁定/13 指纹告警/224 键盘锁定)
+    var alarms30d: Int = 0       // 告警类 (4 静态电量 / 10 多次密码开门失败锁定)
     var lastOpenAt: String = ""  // 最近一次开门 (日志缓存内)
     /// 这台锁**有没有日志缓存**。`usage()` 是对 `DB.keychains()` 全量 map 出来的, 从未同步过的锁也在集合里、
     /// 各项计数天然是 0 —— 而 0 与"没读到"是两件事 (本文件 recentAlarmMacs 那条注释就写着这个口径:
@@ -257,7 +257,7 @@ struct LockUsage: Identifiable {
 enum LockStats {
     /// 第一百五十七批：这两组类型集合原本在 `StatsKit.swift:9-10` 与这里各抄一份 (值相同)。
     /// 抄两份的意思是"哪天加一类告警，只改一处就会静悄悄地漂" —— 而那正是本批在设备页刚抓到的缺陷形态
-    /// (`recentRecords` 曾自己写了 `7||13||224`，漏掉 6 低电量与 10 试错锁定)。口径只留 StatsKit 一份。
+    /// (`recentRecords` 曾自己写了 `7||13||224`，那三个值都不在锁端日志类型表里)。口径只留 StatsKit 一份。
     static var openTypes: Set<Int> { StatsKit.openTypes }
     static var alarmTypes: Set<Int> { StatsKit.alarmTypes }
     static let windowDays = 30

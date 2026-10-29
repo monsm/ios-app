@@ -50,20 +50,20 @@ extension RecordsView {
                         .vkFont(.headline)
                     // 581 未处置告警蓝点: 该日有未处置告警才出现, 口径与 735 角标同一条 (不另存"已读"位)
                     // 596 替代: 原句是组头红字"含胁迫" —— 胁迫类协议不存在 (§5), 改挂真实存在的三类
-                    // (防撬 7 / 试错锁定 10 / 键盘锁定 224)。点按落 586 既有的"当天全景"(landDay),
+                    // (锁端日志表里只有 10 多次密码开门失败锁定)。点按落 586 既有的"当天全景"(landDay),
                     // 与"直接过滤到当日"同一件事; 与上面那枚蓝点**不互相替代**: 蓝点看未处置, 这条看这一天出过事。
                     if damageDays.contains(g.key) {
                         Button {
                             landDay(g.key)
                         } label: {
-                            Text("含防撬/试错")   // 596 含防撬
+                            Text("含密码失败锁定")   // 596
                                 .vkFont(.caption2, weight: .semibold)
                                 .foregroundStyle(DS.Palette.danger)
                                 .frame(minHeight: DS.Hit.min)
                                 .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("该日有防撬、试错锁定或键盘锁定告警, 点按只看这一天")   // 596 该日有防撬
+                        .accessibilityLabel("该日有多次密码开门失败锁定, 点按只看这一天")   // 596
                     }
                     // 594 日型色带 (4pt 竖条): 工作日靛蓝 / 周末青绿 / 法定节假日橙 (判据见 DayGroup.dayKind)。
                     // 每天都出现 —— 三档互比才有"哪天不是平常日"的读法; 原先只在节假日给 3pt 橙条。
