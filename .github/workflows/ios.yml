@@ -114,6 +114,12 @@ jobs:
       - name: '图标一致性硬闸门 (210: 同标签多图标即失败; 接线日实测 0 族命中)'
         run: node tools/iconmap.js --strict
 
+      # 2026-10-29 加：Image(systemName:) 遇到不存在的名字不报错、不留白框，就是什么都不画。
+      # 当天连踩两次（clock.badge.chevron.right / hand.raised.dotted），编译与全部静态闸门都没红。
+      # 本闸门强制每个图标名都经过一次人工确认并登记在 fixtures/sf-symbols-used.txt。
+      - name: 'SF Symbols 名称白名单 (判失败: 未登记即红; 新增图标须先真机确认再登记)'
+        run: node tools/symbolcheck.js
+
       - name: 假开关扫描 (kf_ 键的读写两侧是否都有人; 别名/搬运函数/单行 setter 已认, 残余局限见工具头注; 报线索不判失败)
         run: node tools/keydead.js
 
