@@ -136,6 +136,20 @@ enum CredentialOrg {
     static func alert(_ mac: String, _ p: LedgerPwd) -> CredAlert {
         DB.get(CredAlert.self, alertKey(mac, "pwd", p.alias)) ?? CredAlert()
     }
+
+    /// 2026-10-30：一次取该锁的全部**密码**提醒（键格式见 `alertKey`：`kf_calert_<mac>_pwd_<alias>`）。
+    /// 提醒是「每凭证一键」的存储形态，逐条读就是逐条解码；批量场景先取一次。
+    /// 返回键是 `"pwd:<alias>"`（与 dueSoonPwds 的查表键一致）。
+    static func alertTable(_ mac: String) -> [String: CredAlert] {
+        let prefix = "kf_calert_" + mac + "_pwd_"
+        var out = [String: CredAlert]()
+        for k in DB.store.keys() where k.hasPrefix(prefix) {
+            if let a = DB.get(CredAlert.self, k) {
+                out["pwd:" + String(k.dropFirst(prefix.count))] = a
+            }
+        }
+        return out
+    }
     static func saveAlert(_ mac: String, _ p: LedgerPwd, _ a: CredAlert) {
         DB.setCodable(a, alertKey(mac, "pwd", p.alias))
     }
@@ -158,11 +172,14 @@ enum CredentialOrg {
     }
     /// App 内 2 小时档: 到期前 2 小时且开了 h2 的条 (设备 Tab Hero 卡下插提醒行)
     /// 359: 提醒行点按要跳最近一条的详情 —— 名单与计数必须同源同一个 filter, 抽出来共用
+    /// 2026-10-30 性能：`alert(mac,p)` 每条凭证一次 DB.get 解码 —— 本函数原来对**每条凭证**都调，
+    /// 而它被设备页 hero 区每次刷新都调一遍。改成先把该锁的提醒表一次取出来，闭包里只查字典。
     static func dueSoonPwds(_ mac: String) -> [LedgerPwd] {
         let soon = nowSec + 2 * 3600
+        let alerts = alertTable(mac)
         return DB.listPwds(mac).filter { p in
             if let to = expiryDate(p) {
-                let a = alert(mac, p)
+                let a = alerts["pwd:" + String(p.alias)] ?? CredAlert()
                 return a.h2 && to.timeIntervalSince1970 <= soon && to.timeIntervalSince1970 >= nowSec - 3600
             }
             return false

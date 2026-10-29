@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T16:53:52.923Z",
+    "generated": "2026-10-29T17:03:33.433Z",
     "sources": [
       {
         "scout": "android-native",
@@ -20918,7 +20918,7 @@
           "line": 451,
           "symbol": "canEvaluatePolicy",
           "note": "guard ctx.canEvaluatePolicy(...)",
-          "text": "self.fromISO = fromISO; self.toISO = toISO; self.owner = owner"
+          "text": "var kind: Int          // 0 密码 / 1 临时码"
         },
         {
           "platform": "ios",
@@ -20926,7 +20926,7 @@
           "line": 460,
           "symbol": "onDeniedPresentFallback",
           "note": "if ok { commit() } else { onDeniedPresentFallback(commit) }",
-          "text": "fromISO = try c.decodeIfPresent(String.self, forKey: .fromISO) ?? \"\""
+          "text": "var at: Double"
         }
       ],
       "platformEvidence": {
@@ -59922,7 +59922,7 @@
           "line": 140,
           "symbol": "histKey(_:_:_:)",
           "note": "",
-          "text": "DB.setCodable(a, alertKey(mac, \"pwd\", p.alias))"
+          "text": "/// 2026-10-30：一次取该锁的全部**密码**提醒（键格式见 `alertKey`：`kf_calert_<mac>_pwd_<alias>`）。"
         },
         {
           "platform": "ios",
@@ -59930,7 +59930,7 @@
           "line": 472,
           "symbol": "reclaimDays()",
           "note": "",
-          "text": "static func saveDraft(_ mac: String, _ d: StudioDraft) {"
+          "text": "let c = try decoder.container(keyedBy: CodingKeys.self)"
         },
         {
           "platform": "ios",
