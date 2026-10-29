@@ -182,8 +182,10 @@ extension SettingsView {
             if quickSmartFirst {
                 let c = QuickPool.counts
                 Text(c.isEmpty ? "还没攒到点击记录：去设备页点几次快捷格。"
-                               : "已记录: " + QuickPool.all.filter { c[$0.id] != nil }
-                                   .map { "\($0.label) \(c[$0.id]!) 次" }.joined(separator: " · "))
+                                : "已记录: " + QuickPool.all.compactMap { a in
+                                    // 2026-10-30：原来是 filter{ != nil } + map{ c[$0.id]! } 强解包 ——
+                                    // 两段闭包之间的隐式时序依赖改为一次 compactMap：键不在就整行跳过，不赌字典不变。
+                                    c[a.id].map { "\(a.label) \($0) 次" } }.joined(separator: " · "))
                     .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
