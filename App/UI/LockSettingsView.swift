@@ -29,6 +29,7 @@ struct LockSettingsView: View {
         NavigationStack {
             Form {
                 if let kc = app.current {
+                    overviewSection(kc)
                     capabilitySection(kc)
                     dangerSection(kc)
                 } else {
@@ -48,6 +49,54 @@ struct LockSettingsView: View {
                 }
             }
         }
+    }
+
+    // MARK: - 概览（只读，不触发连接）
+
+    /// 读数全部来自 `app.status`（上一次同步的全局快照）+ `kc` 的静态字段。
+    /// **刻意不调用 `DeviceInfoView.reload()`** —— 打开设置页不应该连蓝牙、更不应该自动写锁钟。
+    /// 要看「进页刷新」的完整诊断，走「锁信息名片」。
+    @ViewBuilder
+    private func overviewSection(_ kc: Keychain) -> some View {
+        Section {
+            LabeledRow("型号", PidMap.productName(kc.pid))
+            LabeledRow("固件版本", firmwareText(kc))
+            if let v = app.status?.verDFU, v > 0 { LabeledRow("Boot 版本", "\(v)") }
+            if let v = app.status?.verKeyboard, v > 0 { LabeledRow("键盘版本", "\(v)") }
+            LabeledRow("MAC", kc.mac)
+            if !kc.pairedAt.isEmpty { LabeledRow("绑定于", kc.pairedAt) }
+            LabeledRow("锁钟偏差", driftLabel)
+            LabeledRow("门锁电量", batteryLabel)
+            if let s = app.status {
+                LabeledRow("安全模式", modeLabel(s))
+                LabeledRow("锁内时间", s.lockTime.map { ProtoTime.localStr($0) } ?? "—")
+            }
+        } header: {
+            Text("概览")
+        } footer: {
+            Text("读数是上一次同步的快照。要强制刷新请到「锁信息名片」点「重新读取」。")
+        }
+    }
+
+    private func firmwareText(_ kc: Keychain) -> String {
+        if let fw = app.status?.firmware, !fw.isEmpty { return fw }
+        return kc.fw.isEmpty ? "未知" : kc.fw
+    }
+
+    private var driftLabel: String {
+        guard let t = app.status?.lockTime, t > 0 else { return "—" }
+        let dev = Int(Date().timeIntervalSince1970) - Int(t)
+        return dev == 0 ? "同步" : "\(dev)s"
+    }
+
+    private var batteryLabel: String {
+        let p = app.status?.powerLevel ?? app.snapshot?.powerLevel ?? -1
+        return p < 0 ? "—" : (p > 80 ? ">80%" : "\(p)%")
+    }
+
+    private func modeLabel(_ s: LockStatus) -> String {
+        if s.verifyMode == 1 && s.broadcastMode == 0 { return "C 模式" }
+        return s.verifyMode == 0 ? "A 模式" : "B 模式"
     }
 
     // MARK: - 能力（6 项，按 pid 裁剪）

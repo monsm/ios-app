@@ -22,13 +22,10 @@ struct SettingsView: View {
     // 刻意是视图内 @State 而不是落盘键: 记住"上次只看外观与辅助"会让下次进来少看见一堆设置，
     // 那是把筛选变成隐藏 —— 页内搜索 (§27) 同样是会话态，两处口径一致。
     @State private var groupFilter: SettingsGroup?
-    // 与门锁通信中的忙碌态 — 防止连点重复下发指令
-    @State private var settingMute = false
     /// 2026-10-28：通知权限只在进页时读一次（`NotifyAuth.status` 是同步阻塞读，
     /// 不能放在 body 里每次重算都调，否则设置页每次刷新都卡最多 2 秒）。
     @State private var notifyLabel = ""
     @State private var notifyOff = false
-    @State private var clearingPwd = false
     // 包18: 版本彩蛋 (298) / VoiceOver 致意 (1049)
     @State private var eggShown = false
     @State private var versionTaps = 0
@@ -233,8 +230,8 @@ struct SettingsView: View {
             // 由 searchResults 负责"切组 + scrollTo 滚到那一节"。
             // 不在本页的功能 (开 sheet 的那些) 仍是 `anchor: nil`, 交给 go 直接开。
             SearchHit(id: "s.lockprofile", title: "锁档案 (昵称/符号/色标)", icon: "lock", anchor: .lock),
-            SearchHit(id: "s.mute", title: "静音模式", icon: "speaker.slash", anchor: .lock),
-            SearchHit(id: "s.synctime", title: "校准门锁时间", icon: "clock.arrow.circlepath", anchor: .lock),
+            SearchHit(id: "s.mute", title: "静音模式", icon: "speaker.slash") { showLockSettings = true },
+            SearchHit(id: "s.synctime", title: "校准门锁时间", icon: "clock.arrow.circlepath") { showLockSettings = true },
             // 2026-10-26: 今日新增的四项补进搜索索引 —— 入口在门锁段/工具段里，但索引此前没登记，
             // 于是搜「布防」「手机钥匙」「固件升级」「只读」都是零结果。
             //
@@ -242,9 +239,9 @@ struct SettingsView: View {
             //    没有程序化 push 的入口（设置页用的是 NavigationLink 声明式，不是 path 栈）。
             //    所以这里只给 anchor（保证滚到对应段，用户看到那一行再点），
             //    **不给 go** —— 给一个空的 go 会让人以为点搜索就直接进页面，实际只滚动。
-            SearchHit(id: "s.defend", title: "布防 (时段内否决自动开锁)", icon: "shield.lefthalf.filled", anchor: .lock),
+            SearchHit(id: "s.defend", title: "布防 (时段内否决自动开锁)", icon: "shield.lefthalf.filled") { showLockSettings = true },
             SearchHit(id: "s.mobilekey", title: "手机钥匙 (给成员发数字钥匙)", icon: "iphone.gen3.badge.key", anchor: .family),
-            SearchHit(id: "s.dfu", title: "固件升级 (Nordic DFU)", icon: "arrow.up.circle", anchor: .lock),
+            SearchHit(id: "s.dfu", title: "固件升级 (Nordic DFU)", icon: "arrow.up.circle") { showLockSettings = true },
             SearchHit(id: "s.trialguard", title: "只读试验模式 (真机排障只看不改)", icon: "eye.slash", anchor: .tools),
             // 2026-10-28 删除：`s.safemode`「门锁安全模式」—— 那个 Section 已于 81c1432 删除
             // （纯说明无入口），搜索项却留着，点进去滚到 unlock 段也没有任何「安全模式」内容。
@@ -314,85 +311,18 @@ struct SettingsView: View {
                     Label("锁设置（布防 / 防尾随 / 静音 / 固件…）", systemImage: "gearshape")
                 }
                 note("型号、固件、电量与绑定时间的汇总卡。")
-                // 2026-10-28 补入口（**真缺口**）：`SafemodeIntroView` 只在 QuickPool 里以
-                // `mode: "otp"` 构造过一次 —— `mode: "safe"` 那半边（A/B 说明 + 「切换到 B 模式」按钮）
-                // **永远不可达**。而 `setValidationMode(true)` 全仓只有它内部一处调用。
-                // 于是 APK 的 `page-setsafemode`（设置安全模式 A/B）在 iOS 上虽然有实现、却没入口。
-                NavigationLink("安全模式 (A/B 双验)") { SafemodeIntroView() }
-                note("单次验证还是两种方式组合验证；本 App 只提供 A→B 变严的方向。")
-                VariantToggle("静音模式", isOn: Binding(
-                    get: { muteStored },
-                    set: { silent in
-                        guard !settingMute else { return }
-                        settingMute = true
-                        Task {
-                            defer { settingMute = false }
-                            do {
-                                try await app.lock.ensureConnected(mac: mac)
-                                try await app.lock.setSilent(silent)
-                                DB.store.set("kf_mute_" + mac, silent)
-                                app.showToast(silent ? "已静音" : "已恢复提示音")
-                            } catch {
-                                // DB 未写 → 开关回弹, 配 toast 说明原因
-                                app.showToast("设置失败: \(error.localizedDescription)")
-                            }
-                        }
-                    }))
-                    .disabled(settingMute)
-                note("关掉门锁键盘的提示音；不影响本 App 的通知。")
-                NavigationLink("校准门锁时间") { SyncTimeView() }
-                note("锁端时钟不准时，临时码和有效期会失效。")
-                if canTailgate {
-                    NavigationLink("防尾随入室") { TailgateView() }
-                    note("开门后短时间内刷同一凭证才告警。")
-                }
-                // 包9 布防 (cmd25): 原版 APK 有、iOS 此前只有构造器没有入口。
-                // 门禁用 canDefend (KX / V1_Pro 家族)，与 APK 的 canDefend 白名单同源。
-                if canDefend {
-                    NavigationLink {
-                        DefendView()
-                    } label: {
-                        HStack(spacing: DS.Space.s) {
-                            Text("布防")
-                            Spacer(minLength: 0)
-                            Text(DefendKit.summary(DB.defend(mac)))
-                                .vkFont(.caption)
-                                .foregroundStyle(DefendKit.isActive(DB.defend(mac))
-                                                 ? DS.Palette.ok : DS.Palette.textSub)
-                        }
-                    }
-                    note("时段内一票否决自动开锁；布防期间靠近门锁不会自动开门。")
-                // 2026-10-29 移位置：`canDeviceUpgrade` 原本挂在「凭证与成员」段的成员管理里 ——
-                // 但「固件升级」是**锁**的能力（cmd22 + Nordic DFU），不是成员的能力。
-                // 放在成员段里，用户会在锁段里找「固件升级」而找不到。移到锁段、紧挨布防/防尾随。
-                if PidMap.canDeviceUpgrade(app.current?.pid ?? 0) {
-                    NavigationLink {
-                        DFUView()
-                    } label: {
-                        Label("固件升级", systemImage: "arrow.up.circle")
-                    }
-                }
-                }
-                if canClearPwd {
-                    Button("清空密码", role: .destructive) { clearPwd() }
-                        .disabled(clearingPwd)
-                }
+                // 2026-10-29 深重构：7 项锁能力（安全模式 / 静音 / 校准 / 防尾随 / 布防 / 固件升级 / 清空密码）
+                // 已全部迁到「锁设置」页（`LockSettingsView`）—— 本页不再保留第二份入口，避免同一功能两处维护。
+                //
+                // 顺带修一个真 bug：原 `if canDefend {` 的闭合在下面几行，把「固件升级」错误地嵌在了
+                // 「布防可用」条件里 —— V1 / JZ 不支持布防，于是它们的固件升级入口也一起不显示。
+                // 迁走后这个嵌套条件自然消失。
                 // 2026-10-14 走查: 从「家人与钥匙」挪来 (它属于门锁本身, 不属于成员)。
                 // 一加一删成对, 且本节空态那一支本来就带「添加设备」按钮 —— 有锁时才需要"另一把"。
                 Button { showAdd = true } label: { Label("添加另一把锁", systemImage: "plus") }
                 Button("删除设备", role: .destructive) { deleteDevice() }
             }
         }
-    }
-    // 2026-10-28 修复：原来只读本地 kf_mute_ —— **换手机 / 别人在锁上改过之后，
-    // 这个开关显示的状态就和锁端不一致（开关会撒谎）**。
-    // APK 的做法是用 03 回包的 getSoundVolumn() > 0 反推开关（main.js 三处）。
-    // iOS 的 StatusParser.swift:82 早就解析了 KLV#14 soundVolumn，只是零消费。
-    // 现在：读得到锁端状态就用锁端（1 = 静音，0 = 有声，与 cmd18 载荷语义一致），
-    // 读不到才回落本地记录。
-    private var muteStored: Bool {
-        if let s = app.status { return s.soundVolumn > 0 }
-        return DB.store.getBool("kf_mute_" + mac)
     }
 
     /// 2026-10-14: 设置项小字注解。口径"简洁明了" —— 只说用户决策需要的那一句
@@ -404,40 +334,7 @@ struct SettingsView: View {
             .foregroundStyle(DS.Palette.textSub)
             .fixedSize(horizontal: false, vertical: true)
     }
-    private var canTailgate: Bool { PidMap.canTailgate(app.current?.pid ?? 0, fw: app.current?.fw) }
-    private var canDefend: Bool { PidMap.canDefend(app.current?.pid ?? 0) }
-    private var canClearPwd: Bool { PidMap.canClearPwd(app.current?.pid ?? 0) }
 
-    private func clearPwd() {
-        guard !clearingPwd else { return }
-        confirmDestructive("清空密码",
-                          "执行清空密码操作，会作废所有成员的密码，门锁需重新逐个添加。确定要清空吗？",
-                          confirmTitle: "清空") {
-            Task { await self.doClearPwd() }
-        }
-    }
-    private func doClearPwd() async {
-        guard !clearingPwd else { return }
-        // 第八十七批: 这条最硬 —— 它要**清空整本密码台账**。原先 `mac` (活读 app.current) 在
-        // ensureConnected 与 pwdClear 两次 await 之后才读最后一次；期间当前锁被改掉 (AppIntent /
-        // kf:// 深链都会动 app.current) 就会清掉另一把锁的台账，而 nil 时 `?? ""` 还会静默写空台账。
-        let m = mac
-        guard !m.isEmpty else { app.showToast("未选择门锁"); return }
-        clearingPwd = true
-        defer { clearingPwd = false }
-        do {
-            try await app.lock.ensureConnected(mac: m)
-            try await app.lock.pwdClear()
-            // 2026-10-28 修复（**数据丢失级**）：原来写 `DB.saveLedger(m, Ledger())` ——
-            // `Ledger()` 的两个字段都是空数组，`fps` 也一起被清空，而同行注释还写着「指纹保留」。
-            // 用户点「清空密码」，指纹台账**连带消失**（锁端指纹仍能开锁，本机档案没了）。
-            // 文案只说「会作废所有成员的密码」，没有任何一句预告指纹会没。
-            var keepLedger = DB.ledger(m)
-            keepLedger.pwds = []              // 只清密码
-            DB.saveLedger(m, keepLedger)      // 指纹（fps）原样保留
-            app.showToast("清空密码成功")
-        } catch { app.showToast("清空失败: \(error.localizedDescription)") }
-    }
 
     private func deleteDevice() {
         guard let kc = app.current else { return }

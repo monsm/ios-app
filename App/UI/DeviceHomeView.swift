@@ -197,6 +197,25 @@ struct DeviceHomeView: View {
                         // 868 扫描组划分: 状态卡 / 圆盘 / 快捷格各自成组 (children: .contain),
                         // 外接开关与"切换控制"可以按组逐项聚焦, 不用在整页里一个个划过去。
                         moduleSlot(devOrder[0], delay: 1)   // 904: 槽位固定, 哪个模块占这个槽由用户定
+                        // 2026-10-29 深重构：锁的唯一入口。Hero 卡内不能放按钮（`.accessibilityElement(.combine)`
+                        // 会把按钮吞成整卡一个 VoiceOver 元素），所以用独立行 —— HIG 的 disclosure 惯例。
+                        if app.current != nil {
+                            NavigationLink {
+                                LockSettingsView()
+                            } label: {
+                                HStack(spacing: DS.Space.s) {
+                                    Label("管理这把锁", systemImage: "slider.horizontal.3")
+                                    Spacer(minLength: 0)
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 11, weight: .semibold))
+                                        .foregroundStyle(DS.Palette.textSub)
+                                }
+                                .frame(maxWidth: .infinity, minHeight: DS.Hit.min)
+                            }
+                            .buttonStyle(PressableButtonStyle())
+                            .padding(.horizontal, DS.Space.gutter)
+                            .accessibilityHint("锁的概览、布防、防尾随、静音、固件与危险操作")
+                        }
                         attentionCard
                         if shown(.linkSense) { linkSenseCard }
                         // 2026-10-27 审核：凭证选择胶囊已删（PIN 胶囊那一族），此处空壳一并移除。
