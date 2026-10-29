@@ -17,31 +17,31 @@ struct CredentialsView: View {
     @EnvironmentObject var app: AppState
     // 包2 连接感知: 510 待下发横条 / 535 回执 依赖 LinkSense 补发回执计时 (只读观察)
     @ObservedObject private var sense = LinkSense.shared
-    @State private var refreshTick = 0
-    @State private var showAdd = false
+    @State var refreshTick = 0
+    @State var showAdd = false
     /// 正在与门锁通信的条目 ("pwd:3" / "fp:12" / "otp") / nil = 空闲
-    @State private var busyKey: String?
-    @State private var otpPwd = "******"
-    @State private var otpWin = ""
-    @State private var otpBig = false   // 885 凭证大字模式: 双击或开关切大字号对照抄写""
-    @State private var otpPeek = false  // 375 磨砂挡片长按移开中 (松手复位)
+    @State var busyKey: String?
+    @State var otpPwd = "******"
+    @State var otpWin = ""
+    @State var otpBig = false   // 885 凭证大字模式: 双击或开关切大字号对照抄写""
+    @State var otpPeek = false  // 375 磨砂挡片长按移开中 (松手复位)
 
     // ---------- 包6 列表组织 ----------
-    @State private var seg: Int = 0          // 524 类型分段: 0 全部 / 1 密码 / 2 指纹 / 3 临时码
-    @State private var memberView = CredentialOrg.groupMode == .owner   // 355 按成员视图
-    @State private var search = ""
+    @State var seg: Int = 0          // 524 类型分段: 0 全部 / 1 密码 / 2 指纹 / 3 临时码
+    @State var memberView = CredentialOrg.groupMode == .owner   // 355 按成员视图
+    @State var search = ""
     /// 2026-10-26 恢复：`isBusy` 在清理四件套时被误删（它读 busyKey，是主流程状态）。
-    private var isBusy: Bool { busyKey != nil }
+    var isBusy: Bool { busyKey != nil }
     // 2026-10-26 恢复：这些 @State 在清理四件套时被连带删掉，但它们是主流程状态。
-    @State private var editMode = false
-    @State private var showCalendar = false   // 2026-10-29: 到期月历 sheet
-    @State private var selPwds: [Int] = []
-    @State private var selFps: [Int] = []
-    @State private var showExtend = false
-    @State private var extendAliases: [Int] = []
-    @State private var showDisable = false
-    @State private var pwdDetailItem: LedgerPwd?   // 包5 PwdDetailStudio
-    @State private var fpDetailItem: LedgerFp?     // 包5 FpDetailStudio
+    @State var editMode = false
+    @State var showCalendar = false   // 2026-10-29: 到期月历 sheet
+    @State var selPwds: [Int] = []
+    @State var selFps: [Int] = []
+    @State var showExtend = false
+    @State var extendAliases: [Int] = []
+    @State var showDisable = false
+    @State var pwdDetailItem: LedgerPwd?   // 包5 PwdDetailStudio
+    @State var fpDetailItem: LedgerFp?     // 包5 FpDetailStudio
 
     var body: some View { vkBody.destined(.credentials) }
     var vkBody: some View {
@@ -118,15 +118,15 @@ struct CredentialsView: View {
         }
     }
 
-    private func reload() { refreshTick += 1 }
+    func reload() { refreshTick += 1 }
 
-    private var mac: String { app.current?.mac ?? "" }
+    var mac: String { app.current?.mac ?? "" }
 
     // ---------- 顶部工具条 (524 分段计数 / 914 四维排序器 / 363 月历 / 358 整理 / 347 选择) ----------
     // 472 借用横条: 页顶显示进行中借用, 点 已归还 销记
     // ---------- 577 详情跳凭证定位 (包9): 记录/告警详情"来源凭证"深链 → 高亮条 + 打开对应详情 ----------
     /// 消费深链: pwd:<alias> → 密码段 + 打开详情; fp:<batch> → 指纹段。跨锁时先切锁。
-    private func consumeCredJump() {
+    func consumeCredJump() {
         guard let nav = app.pendingCredNav else { return }
         if let m = app.pendingCredNavMac, m != mac {
             app.select(m)
@@ -146,7 +146,7 @@ struct CredentialsView: View {
 
     /// 358: 整理建议行点按带回的多选预勾选。就地进编辑模式并勾好 —— 与「选择」按钮同一条状态机
     /// (editMode/selPwds/selFps), 不另造一套选中集; 排序档互斥照 :379 的口径先关掉再进。
-    private func consumeCredSelect() {
+    func consumeCredSelect() {
         guard let ids = app.pendingCredSelect else { return }
         app.pendingCredSelect = nil
         withAnimation(DS.Motion.quick) { editMode = true }
@@ -155,7 +155,7 @@ struct CredentialsView: View {
     }
 
     // 2026-10-26 精简：pendingQueueBar（待下发横条）已删（队列功能整套移除）。
-    private var LockArchiveLockName: String {
+    var LockArchiveLockName: String {
         app.devices.first { $0.mac == mac }.map { LockArchive.displayName($0) } ?? String(mac.prefix(6))
     }
 
@@ -170,7 +170,7 @@ struct CredentialsView: View {
     ///   3. 其余全进「⋯」: 视图(排序/月历/按成员/智能筛选) + 整理(整理建议/拖动排序) + 数据(待处理)
     ///
     /// 判据一条没改: 每个入口调的还是原来那个 action, 只是**位置**从"平铺三行"改成"按语义分层"。
-    private var headerToolbar: some View {
+    var headerToolbar: some View {
         VStack(spacing: DS.Space.xs) {
             // 第 1 行: 计数 + 溢出菜单。只保留"看/找/选"三件事之外的一切。
             HStack(spacing: DS.Space.s) {
@@ -256,7 +256,7 @@ struct CredentialsView: View {
         .accessibilityElement(children: .contain)
     }
 
-    private func segChip(_ i: Int) -> some View {
+    func segChip(_ i: Int) -> some View {
         // 479 长辈模式: 只留 全部/密码/指纹 三组, 隐藏临时码组与批量/导出入口; 字号同步行本体那一档 (大字)
         let labels = MemberHub.elderMode ? ["全部", "密码", "指纹", ""] : ["全部", "密码", "指纹", "临时码"]
         let c = countForSeg(i)
@@ -286,7 +286,7 @@ struct CredentialsView: View {
         .accessibilityLabel("\(labels[i]) \(c) 条")
         .accessibilityAddTraits(on ? [.isSelected] : [])
     }
-    private func countForSeg(_ i: Int) -> Int {
+    func countForSeg(_ i: Int) -> Int {
         let t = CredentialOrg.typeCounts(mac)
         switch i {
         case 1: return t.pwd
@@ -301,7 +301,7 @@ struct CredentialsView: View {
     }
 
     // ---------- 主列表 ----------
-    private var mainList: some View {
+    var mainList: some View {
         List {
             listBody
         }
@@ -311,7 +311,7 @@ struct CredentialsView: View {
 
     /// 列表内容抽成 ViewBuilder: 编辑模式与正常模式共用, 避免嵌套两个 List
     @ViewBuilder
-    private var listBody: some View {
+    var listBody: some View {
         // 2026-10-28 修复：LockScreen.swift:8 承诺「输胁迫码 → 凭证与记录显示为空」，
         // 但 decoyMode 此前只拦路由与自动开锁，**没有任何视图据它清空数据** ——
         // 被胁迫时真实凭证全部可见，这句承诺是空话（安全承诺级别的假话）。
@@ -362,7 +362,7 @@ struct CredentialsView: View {
     }
 
     @ViewBuilder
-    private var searchSection: some View {
+    var searchSection: some View {
         Section {
             if search.isEmpty {
                 let hist = CredentialOrg.searchHistory()
@@ -450,7 +450,7 @@ struct CredentialsView: View {
         var pinned: Bool = false
     }
 
-    private var filteredResults: [CredHit] {
+    var filteredResults: [CredHit] {
         let q = search.trimmingCharacters(in: .whitespaces)
         guard !q.isEmpty else { return [] }
         var hits: [CredHit] = []
@@ -474,12 +474,12 @@ struct CredentialsView: View {
 
     // 2026-10-26 精简：queueSection（下发状态步条）已删（队列功能整套移除）。
     // ---------- 524/526/527/914/182 密码段 (三态分组头 528 + 置顶 + 组尾统计 529) ----------
-    private var sortedPwds: [LedgerPwd] { orderedPwds(segFilteredPwds()) }
+    var sortedPwds: [LedgerPwd] { orderedPwds(segFilteredPwds()) }
     /// 182 拖动排序的回写基准 = **全量**显示序 (不扣分段、不套智能筛选)。
     /// 拿"屏幕上这一批"回写整表, 没显示的那批会被推到表尾 —— 分段是展示层的事, 顺序是台账层的事。
-    private var seqBasePwds: [LedgerPwd] { orderedPwds(DB.listPwds(mac)) }
+    var seqBasePwds: [LedgerPwd] { orderedPwds(DB.listPwds(mac)) }
 
-    private func segFilteredPwds() -> [LedgerPwd] {
+    func segFilteredPwds() -> [LedgerPwd] {
         var pwds = DB.listPwds(mac)
         if seg == 1 || seg == 3 {
             pwds = pwds.filter { seg == 3 ? $0.temp : !$0.temp }
@@ -496,7 +496,7 @@ struct CredentialsView: View {
         return pwds
     }
     /// 置顶段在前, 其余按 182 手动序 (kf_cseq_), 没有手动序才按 914 的排序维度
-    private func orderedPwds(_ pwds: [LedgerPwd]) -> [LedgerPwd] {
+    func orderedPwds(_ pwds: [LedgerPwd]) -> [LedgerPwd] {
         // 526 置顶行固定顶部
         let pinned: [LedgerPwd] = []   // 2026-10-26: 星标已删，无置顶
         let rest = pwds
@@ -516,13 +516,13 @@ struct CredentialsView: View {
     /// 手动序数组 → "元素 → 位次" 查表。
     /// 这里刻意用 uniquingKeysWith 而不是 uniqueKeysWithValues: kf_cseq_ 是持久化数据,
     /// 旧包/半写坏的表里出现重复 alias 时, 后者会当场 trap (整个凭证页变崩溃), 前者只是取第一个位次。
-    private func manualIndex(_ order: [Int]) -> [Int: Int] {
+    func manualIndex(_ order: [Int]) -> [Int: Int] {
         Dictionary(order.enumerated().map { ($1, $0) }, uniquingKeysWith: { first, _ in first })
     }
 
 
     /// 行内小提示行 (装饰, 不参与 VoiceOver 合并)
-    private struct HintRow: View {
+    struct HintRow: View {
         let text: String
         var body: some View {
             Text(text)
@@ -533,11 +533,11 @@ struct CredentialsView: View {
     }
 
     // ---------- 指纹段 ----------
-    private var sortedFps: [LedgerFp] { orderedFps(segFilteredFps()) }
+    var sortedFps: [LedgerFp] { orderedFps(segFilteredFps()) }
     /// 182 拖动排序的回写基准 (同密码段那一支: 全量, 不套智能筛选)
-    private var seqBaseFps: [LedgerFp] { orderedFps(DB.listFps(mac)) }
+    var seqBaseFps: [LedgerFp] { orderedFps(DB.listFps(mac)) }
 
-    private func segFilteredFps() -> [LedgerFp] {
+    func segFilteredFps() -> [LedgerFp] {
         var fps = DB.listFps(mac)
         // 460 归档成员的口令/指纹不进当前显示; seqBaseFps 保持全量 (同上)
         // 2026-10-15 走查 (性能): 同 segFilteredPwds — 集合一次取, 闭包内 Set 查。
@@ -548,7 +548,7 @@ struct CredentialsView: View {
         fps = fps.filter { !credArchived.contains(100000 + $0.batch) }
         return fps
     }
-    private func orderedFps(_ fps: [LedgerFp]) -> [LedgerFp] {
+    func orderedFps(_ fps: [LedgerFp]) -> [LedgerFp] {
         let pinned: [LedgerFp] = []
         let rest = fps
         // 2026-10-27 三轮：排序四档已删，恒按时间倒序（原 default 分支）
@@ -570,7 +570,7 @@ struct CredentialsView: View {
     /// 所以先在本段里搬, 再把搬完的这一串依次回写到"整表里属于本段的那些位置"上 ——
     /// 别段的位次一格不动, 段内先后就落进了 kf_cseq_。
     /// 下标先过一道范围筛: 数组搬动用越界 IndexSet 是当场 trap, 而这一句的索引来自系统回调。
-    private func commitGroupMove(keys: [Int], slot: String, src: IndexSet, dst: Int) {
+    func commitGroupMove(keys: [Int], slot: String, src: IndexSet, dst: Int) {
         let within = IndexSet(src.filter { $0 >= 0 && $0 < keys.count })
         guard !within.isEmpty else { return }
         var moved = keys
@@ -589,13 +589,13 @@ struct CredentialsView: View {
         app.showToast("组内先后已记住, 跨启动保持")   // 182 组内先后已记住
     }
     /// 两个段的取键函数 (密码取 alias, 指纹取 batch)
-    private func pwdKeys(_ group: [LedgerPwd]) -> [Int] { group.map { $0.alias } }
-    private func fpKeys(_ group: [LedgerFp]) -> [Int] { group.map { $0.batch } }
+    func pwdKeys(_ group: [LedgerPwd]) -> [Int] { group.map { $0.alias } }
+    func fpKeys(_ group: [LedgerFp]) -> [Int] { group.map { $0.batch } }
 
 
 
     @ViewBuilder
-    private var memberSections: some View {
+    var memberSections: some View {
         // 2026-10-15 走查 (性能): 原写法在 ForEach(DB.members()) 行内逐成员调 DB.listPwds/listFps
         // (M 成员 = M+1 次全量 JSON 解码) 且每条凭证行各调一次 isArchived (每次都 archived(mac)
         // 全量解码)。提到循环外算一次, 行内只做内存 filter —— 行为不变, 解码次数从 O(M×N) 降为 O(1)。
@@ -648,210 +648,16 @@ struct CredentialsView: View {
     // 479 长辈模式在这一族行上接了**真的大字与高对比**: 字号走语义档升一级 (标题行 subheadline→title3,
     // 副行 caption→body), 对比度走"次文本色升到主文本色"那一档 (两个色都是 DS.Palette 里被 contrast.js 检过的令牌)。
     // 刻意不写 .system(size:): 那一档不参与 Dynamic Type 缩放, 字号闸门 (tools/dynamictype.js 规则 1) 也不放行。
-    private var elderOn: Bool { MemberHub.elderMode }
-    private var rowTitleFont: Font { elderOn ? .title3.weight(.semibold) : .subheadline.weight(.semibold) }
-    private var rowSubFont: Font { elderOn ? .body : .caption }
-    private var rowSubColor: Color { elderOn ? DS.Palette.text : DS.Palette.textSub }
+    var elderOn: Bool { MemberHub.elderMode }
+    var rowTitleFont: Font { elderOn ? .title3.weight(.semibold) : .subheadline.weight(.semibold) }
+    var rowSubFont: Font { elderOn ? .body : .caption }
+    var rowSubColor: Color { elderOn ? DS.Palette.text : DS.Palette.textSub }
 
-    @ViewBuilder
-    private func credRow(_ hit: CredHit) -> some View {
-        let p = hit.pwd
-        let f = hit.fp
-        // 331 同行一个时刻: 胶囊与副行倒计时同帧同判据, 不留两处各自取 Date()
-        let now = Date()
-        // 901 紧凑档 (kf_row_h 非 tall): 隐藏副标题只留名称与状态 (IDEA-BANK 901 的"RSS 紧凑行"),
-        // 舒适档 tall 才带副行与推断名。判据只有行高这一个键, 不另造开关。
-        let compactRow = DB.store.getString("kf_row_h") != "tall"
-        // 901 行高二档挂在**行本体**上 (DS.Metric.rowMinH): 凭证行是"看+点"的高频行,
-        // 手抖的人在长列表里靠的是行高而不是字号。加高只加空白，不动字号与触达下限。
-        VStack(alignment: .leading, spacing: DS.Space.xs) {
-            HStack(spacing: DS.Space.s) {
-                Text(titleOf(hit))
-                    .vkFont(rowTitleFont)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-                if let p {
-                    if CredentialOrg.pwdState(p) == 2 {
-                        StatusPill(text: "已过期", systemImage: "clock.badge.xmark", tone: .danger)
-                    } else if CredentialOrg.isEarlyExpired(mac, p, now) {
-                        // 331 本机提前线已过、锁端未到期: 只提示, 锁到锁端到期照常开门
-                        StatusPill(text: "提前失效", systemImage: "hourglass", tone: .warn)
-                    } else if CredentialOrg.pwdState(p) == 1 {
-                        StatusPill(text: "已排期", systemImage: "calendar.badge.clock", tone: .accent)
-                    }
-                }
-                if let f, f.isAlarm == true {
-                    StatusPill(text: "预警指纹", systemImage: "bell.badge", tone: .warn)
-                }
-                if let o = p?.owner ?? f?.owner, !o.isEmpty {
-                    ownerBadge(CredentialOrg.ownerName(o))
-                }
-                Spacer(minLength: 0)
-                if hit.pinned {
-                    Image(systemName: "star.fill")
-                        .font(.system(size: DS.Icon.sm, weight: .medium))
-                        .foregroundStyle(DS.Palette.accentText)
-                        .accessibilityLabel("已置顶")
-                }
-                if busyKey == ("p" + String(hit.id.dropFirst())) {
-                    ProgressView().controlSize(.mini)
-                }
-            }
-            let sub = subOf(hit, now)
-            if !sub.isEmpty && !compactRow {
-                Text(sub)
-                    .vkFont(rowSubFont)
-                    .foregroundStyle(rowSubColor)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            // 918 命名模板: 主标题下挂 "谁-哪里-何时" 推断名 (锁端无名称字段, 本地展示);
-            // 901 紧凑档同副行一起收起 —— "只留名称与状态"里没有它
-            if !compactRow, let p, CredentialOrg.aliasDisplay, CredentialOrg.namingTemplate(p) != titleOf(hit) {
-                Text(CredentialOrg.namingTemplate(p))
-                    .vkFont(rowSubFont)
-                    .foregroundStyle(rowSubColor)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                    .accessibilityHidden(true)
-            }
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(titleOf(hit))
-        .accessibilityActions {
-            if let v = hit.pwd?.pwd {
-                Button("拷贝密码明文") {   // 849 拷贝密码明文
-                    Clip.set(v)
-                    app.showToast("已复制")
-                }
-            }
-        }
-        .contextMenu { credMenu(hit) }
-        .overlay(alignment: .topLeading) {
-            if editMode { selectionCircle(hit) }
-        }
-        .contentShape(Rectangle())
-        .onTapGesture {
-            guard editMode else { return }
-            toggleSel(hit)
-        }
-        // 849 非编辑态双击整行 = 拷贝该条密码明文 (与详情页同一条 405 通路);
-        // 编辑态整行单击已归勾选, 双击里再判一次 editMode, 两种模式不抢手势
-        .onTapGesture(count: 2) {
-            if !editMode, let v = hit.pwd?.pwd {
-                Clip.set(v)
-                app.showToast("已复制")
-            }
-        }
-        .swipeActions(edge: .trailing) {
-            if editMode {
-                Button { toggleSel(hit) } label: {
-                    Label(isSelected(hit) ? "取消选" : "选", systemImage: isSelected(hit) ? "xmark.circle" : "checkmark.circle")
-                }
-                .tint(DS.Palette.accent)
-            }
-        }
-        // 182 原先这里挂着一枚 onLongPressGesture, 弹的是「长按可停用/删除; 编辑模式里用顺序按钮调整组内先后」——
-        // 既不是拖动 (假热区), 又会把拖动排序要用的那次长按抢走。排序真做到之后这一句整块撤掉:
-        // 停用/删除走右侧滑动或长按菜单 (contextMenu 由系统提供), 组内先后走上方的排序档 (182)。
-        // 901 行高二档 (kf_row_h): minHeight 而不是固定 height —— 固定高度会裁掉多行备注
-        .frame(minHeight: DS.Metric.rowMinH, alignment: .topLeading)
-        .disabled(isBusy)
-    }
-
-    private func titleOf(_ hit: CredHit) -> String {
-        if let p = hit.pwd { return CredentialOrg.displayPwd(p) }
-        if let f = hit.fp { return f.name }
-        return ""
-    }
-
-    private func subOf(_ hit: CredHit, _ now: Date) -> String {
-        if let p = hit.pwd {
-            return [
-                p.temp ? "一次性" : "",
-                p.at > 0 ? "添加于 " + shortDate(p.at) : "",
-                "",
-                !p.note.isEmpty ? "备注 \(p.note)" : ""
-            ].filter { !$0.isEmpty }.joined(separator: " · ")
-        }
-        if let f = hit.fp {
-            return [
-                f.at > 0 ? "登记于 " + shortDate(f.at) : "已登记在门锁内",
-                f.at > 0 ? "" : "",
-                f.src == "app" ? "本机录入" : "",
-                !f.note.isEmpty ? "备注 \(f.note)" : ""
-            ].filter { !$0.isEmpty }.joined(separator: " · ")
-        }
-        return ""
-    }
-
-    /// 368 催办语: 称呼用备注或成员名, 到期日按本机时区读法; 没有称呼就说"您好", 不编造姓名。
-    private func renewText(_ p: LedgerPwd, _ to: Date) -> String {
-        let who = p.note.isEmpty ? (p.owner.flatMap { DB.member($0)?.name } ?? "") : p.note
-        let greet = who.isEmpty ? "您好" : "您好，\(who)"
-        let day = to.formatted(.dateTime.year().month().day())
-        let hour = to.formatted(.dateTime.hour().minute())
-        return "\(greet)，您那条进门凭证将在 \(day) \(hour) 到期。"
-            + "如果还需要用，麻烦提前说一声，我给您延一下或重新发一张。"
-    }
-
-    @ViewBuilder
-    private func credMenu(_ hit: CredHit) -> some View {
-        if let p = hit.pwd {
-            Button("查看密码内容") { viewPwd(p) }
-            Button("密码详情") { pwdDetailItem = p }   // 305/308/309 密码详情
-            Button("修改密码内容") { modifyPwd(p) }
-            Button("修改有效期") { Task { resetPwdPeriod(p) } }
-            Button("添加备注") { editNote(pwd: p) }
-            Menu("归属到成员") { ownerMenu(isPwd: true, key: p.alias) }
-            Divider()
-            Button("三档预警") { toggleAlerts(p) }   // 359 三档预警
-            // 368 延期催办文本: 只对"有到期时间且 7 天内到期"的条目出现, 产出可直接发给住客的礼貌催办语。
-            // 文本里**绝不含口令本身** (要复制到聊天工具, 含码等于把门卡发出去)。
-            if let d = CredentialOrg.expiryDate(p), d.timeIntervalSinceNow > 0, d.timeIntervalSinceNow < 7 * 86_400 {
-                Button("生成延期提醒文本") {   // 368 生成延期提醒文本
-                    Clip.set(renewText(p, d))
-                    app.showToast("催办文本已复制到剪贴板 (不含口令)")
-                }
-            }
-                    // 2026-10-26 精简：版本历史入口已删。
-            Divider()
-            Button("停用 (本地, 锁端待处理)", role: .destructive) { disablePwd(p) }
-            Button("彻底删除", role: .destructive) { deletePwd(p) }   // 670 彻底删除
-        }
-        if let f = hit.fp {
-            Button("指纹详情") { fpDetailItem = f }   // 316/320/323 指纹详情
-            Button("重命名") { renameFp(f) }
-            Button(f.isAlarm == true ? "取消预警指纹" : "设为预警指纹") {
-                DB.setFpAlarm(mac, f.batch, f.isAlarm != true)
-                app.showToast(f.isAlarm == true ? "已取消预警指纹" : "已设为预警指纹")
-            }
-            Button("添加备注") { editNote(fp: f) }
-            Menu("归属到成员") { ownerMenu(isPwd: false, key: f.batch) }
-                    // 2026-10-26 精简：版本历史入口已删。
-                    // 2026-10-28 删除：这枚「置顶 / 取消置顶」是**空动作** —— `Button { }`，
-                    // 点了一点反应都没有，而 `CredHit.pinned` 全仓无一处写非默认值。
-                    // 置顶功能从未实现过（与同段的「版本历史」「归档」一样是被删功能的残壳）。
-                    // 2026-10-26 精简：归档/移出归档入口已删（归档功能整套移除）。
-            Divider()
-            Button("停用 (本地, 锁端待处理)", role: .destructive) { disableFp(f) }
-            Button("彻底删除", role: .destructive) { deleteFp(f) }   // 670 彻底删除
-        }
-    }
-
-    // 成员归属徽章: 用 accentText (文字级对比度 6:1), 不用品牌填充色
-    private func ownerBadge(_ name: String) -> some View {
-        Text(name)
-            .vkFont(.caption, weight: .medium)
-            .lineLimit(1)
-            .foregroundStyle(DS.Palette.accentText)
-            .padding(.horizontal, DS.Space.s).padding(.vertical, DS.Space.xxs)
-            .variantPlate(DS.Palette.accentText.opacity(0.12), .capsule)
-    }
 
     // ---------- 347 编辑模式: 选择圈 + 全选循环 (356) + 智能选取 (350) ----------
-    private var selCount: Int { selPwds.count + selFps.count }
+    var selCount: Int { selPwds.count + selFps.count }
 
-    private var editList: some View {
+    var editList: some View {
         List {
             Section {
                 HStack(spacing: DS.Space.s) {
@@ -921,28 +727,28 @@ struct CredentialsView: View {
     /// 354 选择位面 = 浏览位面: 归档条目既看不见, 也不许被"全选/反选/智能选取"选中 —
     /// 隐藏行一旦进破坏性批量 (353 停用 / 922 删除), 就是"看不到却被停掉"。台账级读数不走这里。
     // 2026-10-15 走查 (性能): isArchived 每条一次全量解码 ⇒ N 条 = O(N²) 解码。集合一次取, 行为不变。
-    private var selectablePwds: [LedgerPwd] {
+    var selectablePwds: [LedgerPwd] {
         let arch: Set<Int> = []
         return DB.listPwds(mac).filter { !arch.contains($0.alias) }
     }
-    private var selectableFps: [LedgerFp] {
+    var selectableFps: [LedgerFp] {
         let arch: Set<Int> = []
         return DB.listFps(mac).filter { !arch.contains(100000 + $0.batch) }
     }
-    private var selectableTotal: Int { selectablePwds.count + selectableFps.count }
-    private var cycleLabel: String {
+    var selectableTotal: Int { selectablePwds.count + selectableFps.count }
+    var cycleLabel: String {
         let total = selectableTotal
         if selCount == 0 { return "全选 (\(total) 条)" }
         if selCount == total { return "已全选 (\(total))" }
         return "已选 \(selCount) / \(total) — 反选"
     }
-    private var cycleNextLabel: String {
+    var cycleNextLabel: String {
         let total = selectableTotal
         if selCount == 0 { return "反选" }
         if selCount == total { return "清空" }
         return "全选"
     }
-    private func cycleSelect() {
+    func cycleSelect() {
         let allP = selectablePwds.map { $0.alias }
         let allF = selectableFps.map { $0.batch }
         let total = allP.count + allF.count
@@ -958,7 +764,7 @@ struct CredentialsView: View {
     // 2026-10-28 修复：原实现是**空壳** —— 注释写着「智能选择已删」，
     // 然后把 selPwds/selFps 原样写回，再弹一个「已套用 N 条」的**假 toast**。
     // 用户以为筛选了，实际一条都没变。现在三个档各自真实现。
-    private func applySmart(_ s: String) {
+    func applySmart(_ s: String) {
         let pwds: [Int]
         let fps: [Int]
         switch s {
@@ -1003,32 +809,10 @@ struct CredentialsView: View {
         }
         DS.Haptics.tick.impactOccurred()
     }
-    private func selectionCircle(_ hit: CredHit) -> some View {
-        let on = isSelected(hit)
-        return Image(systemName: on ? "checkmark.circle.fill" : "circle")
-            .font(.system(size: DS.Icon.md, weight: .medium))
-            .foregroundStyle(on ? DS.Palette.accent : DS.Palette.textSub)
-            .padding(.leading, 6)
-            .frame(width: 32, height: 32)
-            .contentShape(Rectangle())
-            .accessibilityLabel(on ? "已选中" : "未选中")
-    }
-    private func isSelected(_ hit: CredHit) -> Bool {
-        if let p = hit.pwd { return selPwds.contains(p.alias) }
-        if let f = hit.fp { return selFps.contains(f.batch) }
-        return false
-    }
-    private func toggleSel(_ hit: CredHit) {
-        if let p = hit.pwd {
-            if let i = selPwds.firstIndex(of: p.alias) { selPwds.remove(at: i) } else { selPwds.append(p.alias) }
-        } else if let f = hit.fp {
-            if let i = selFps.firstIndex(of: f.batch) { selFps.remove(at: i) } else { selFps.append(f.batch) }
-        }
-    }
 
     // ---------- 批量操作栏 (347/348/349/351/353/357) ----------
     @ViewBuilder
-    private var batchBar: some View {
+    var batchBar: some View {
         VStack(spacing: DS.Space.xs) {
             HStack(spacing: DS.Space.s) {
                 Text("已选 \(selCount) 条")
@@ -1088,7 +872,7 @@ struct CredentialsView: View {
     }
     /// 2026-10-29：批量加前缀（`CredentialOrg.batchPrefixNote` 的 UI 入口）。
     /// 只加在**还没有这个前缀**的条目上（函数内判 `hasPrefix`），不会重复叠加。
-    private func promptBatchPrefix() {
+    func promptBatchPrefix() {
         let n = selCount
         let alert = UIAlertController(
             title: "批量加前缀",
@@ -1109,7 +893,7 @@ struct CredentialsView: View {
         UIApplication.topViewController()?.present(alert, animated: true)
     }
 
-    private func batchBtn(_ t: String, icon: String, destructive: Bool = false, _ a: @escaping () -> Void) -> some View {
+    func batchBtn(_ t: String, icon: String, destructive: Bool = false, _ a: @escaping () -> Void) -> some View {
         Button { a() } label: {
             VStack(spacing: 2) {
                 Image(systemName: icon)
@@ -1127,7 +911,7 @@ struct CredentialsView: View {
 
 
     /// 351 合包导出: 仅凭证分区的 AES 信封, 8 位数字口令单列生成 (不与凭证混发), 走分享面板
-    private func exportPackage() {
+    func exportPackage() {
         guard selCount > 0 else { app.showToast("先选择要导出的凭证"); return }
         let pw = KeyGen.randomDigits(8)
         guard let result = CredentialOrg.exportPackage(mac, pwdAliases: selPwds, fpBatches: selFps, password: pw) else {
@@ -1150,10 +934,10 @@ struct CredentialsView: View {
     /// 353 批量停用摘要确认页之后的执行: 本地移除 + 回收站 + 锁端删除入队
     /// 一次性展示敏感串（口令等）。不进 Toast（会被截屏/录屏带走），
     /// 而是弹一个可手动关闭的对话框 —— 用户在自己准备好时才看。
-    @State private var secretOnce: String?
-    private func presentSecretOnce(_ s: String) { secretOnce = s }
+    @State var secretOnce: String?
+    func presentSecretOnce(_ s: String) { secretOnce = s }
 
-    private func finishDisable() {
+    func finishDisable() {
         guard busyKey == nil else { return }
         busyKey = "batch"
         Task { @MainActor in
@@ -1176,7 +960,7 @@ struct CredentialsView: View {
 
     /// 922 批量删除: 逐条复用单条「彻底删除」那一支 (锁内直删 + 回收站留档), 不做物理删;
     /// 中断时把已删条数如实报出, 不静默跳过 (与批量停用同一个 busyKey 闸, 不加第二把锁)
-    private func batchDelete() async {
+    func batchDelete() async {
         guard busyKey == nil else { return }
         let m = mac
         guard !m.isEmpty else { app.showToast("未选择门锁"); return }
@@ -1214,7 +998,7 @@ struct CredentialsView: View {
 
 
     // ---------- OTP 内联卡 (App credentials + otpgenerate) ----------
-    private var otpSection: some View {
+    var otpSection: some View {
         Section("临时密码 (ZOTP)") {
             VariantToggle("开通临时密码", isOn: Binding(
                 get: { DB.otpStatus(mac)?.on ?? false },
@@ -1257,7 +1041,7 @@ struct CredentialsView: View {
 
 
     @ViewBuilder
-    private var otpGenRow: some View {
+    var otpGenRow: some View {
         HStack(spacing: DS.Space.s) {
             // 374: 采集进行中不把码排出来, 大字模式也拿不到明文 (刻意只换文本, 不整页遮黑)
                 // 2026-10-27 截图核对修复：`otpPwd` 初始是空串，直接 `Text("")` 会渲染成
@@ -1325,7 +1109,7 @@ struct CredentialsView: View {
     }
     /// 返回值 = 是否真生成 (首张按钮拿它决定回执; 各失败支自己弹原因, 不静默)。
     @discardableResult
-    private func genOtp() -> Bool {
+    func genOtp() -> Bool {
         guard busyKey == nil else { return false }
         guard let kc = app.current, kc.skey.count == 32 else { app.showToast("缺少该锁钥匙串"); return false }
         let win = ZOTP.nextWindow()
@@ -1359,7 +1143,7 @@ struct CredentialsView: View {
         return true
     }
 
-    private var emptyHint: some View {
+    var emptyHint: some View {
         Section {
             VStack(alignment: .leading, spacing: DS.Space.xs) {
                 Text("本机还没有凭证台账。用「添加密码」或「录入指纹」开始。")
@@ -1401,7 +1185,7 @@ struct CredentialsView: View {
     /// 821 空台账场景"发第一张临时码": 走现有 genOtp 通路, 需锁在场。
     /// busyKey 只占"连接中"这一段 —— genOtp 自带 busyKey==nil 门槛, 不先还回去第一张永远不生成
     /// (原先连完直接调 genOtp, 被自己的占用挡下, 回执却报成功)。
-    private func genFirstOtp() {
+    func genFirstOtp() {
         guard busyKey == nil else { return }
         busyKey = "otp"
         Task {
@@ -1427,17 +1211,17 @@ struct CredentialsView: View {
     // 2026-10-26 精简：stopUndoTimer 已删（undoBar 移除后无撤销条可停）。
 
     // ---------- 动作 ----------
-    private static let shortDateFormatter: DateFormatter = {
+    static let shortDateFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "MM-dd"
         f.locale = Locale(identifier: "en_US_POSIX")
         return f
     }()
-    private func shortDate(_ ts: Double) -> String {
+    func shortDate(_ ts: Double) -> String {
         Self.shortDateFormatter.string(from: Date(timeIntervalSince1970: ts / 1000))
     }
 
-    private func viewPwd(_ p: LedgerPwd) {
+    func viewPwd(_ p: LedgerPwd) {
         guard let pwd = p.pwd else { app.showToast("当时未留存明文"); return }
         // 2026-10-27 审核修复 (AUDIT-D D-39)：**明文密码不再进 Toast**。
         // Toast 的问题：可截图、录屏、旁人一眼看到、且不随页面关闭而消失（有停留时间）、
@@ -1450,7 +1234,7 @@ struct CredentialsView: View {
         UIApplication.topViewController()?.present(alert, animated: true)
     }
 
-    private func modifyPwd(_ p: LedgerPwd) {
+    func modifyPwd(_ p: LedgerPwd) {
         guard busyKey == nil else { return }
         let alert = UIAlertController(title: "修改密码 (#\(p.alias))", message: "修改后旧密码立即作废, 需使用新密码开锁。", preferredStyle: .alert)
         alert.addTextField { $0.placeholder = "新密码 6~8 位数字"; $0.keyboardType = .numberPad }
@@ -1484,14 +1268,14 @@ struct CredentialsView: View {
         UIApplication.topViewController()?.present(alert, animated: true)
     }
 
-    private func resetPwdPeriod(_ p: LedgerPwd) {
+    func resetPwdPeriod(_ p: LedgerPwd) {
         guard busyKey == nil else { return }
         // 重发 0B 会覆盖锁内有效期, 与「删除」同级别, 先知会再执行
         confirmDestructive("修改有效期", "将按原有效期重新下发到门锁 (\(periodText(p)))。确定继续吗？", confirmTitle: "重新下发") {
             Task { await self.doResetPwdPeriod(p) }
         }
     }
-    private func doResetPwdPeriod(_ p: LedgerPwd) async {
+    func doResetPwdPeriod(_ p: LedgerPwd) async {
         guard busyKey == nil else { return }
         // 第八十七批: 入口一次性钉住目标锁。原先 `mac` (活读 app.current) 在这条链上被读 3 次 ——
         // 两次 await 之间当前锁若被 AppIntent / kf:// 深链改掉，命令发向 A 锁而台账写进 B 锁；
@@ -1509,7 +1293,7 @@ struct CredentialsView: View {
         } catch { app.showToast("更新失败: \(error.localizedDescription)") }
     }
 
-    private func periodText(_ p: LedgerPwd) -> String {
+    func periodText(_ p: LedgerPwd) -> String {
         if p.to.hasPrefix("2118") { return "长期有效" }
         return "到 \(p.to.prefix(16).replacingOccurrences(of: "T", with: " ")) 失效"
     }
@@ -1517,13 +1301,13 @@ struct CredentialsView: View {
     /// 468 代管: 这条凭证的属主在成员档案上被标了「由我代管」时, 361 的停用便签补一句 管理员代操作。
     /// 判据读 MemberHub.proxyNames (与成员页同一张 kf_member_ext), 只在归属可证明时补, 无归属不猜。
     /// 便签的回显点在回收站那一行 (CredentialCenterView 的 disableMarkText), 所以这句标注是给人看得见的。
-    private func disableVia(owner: String?) -> String {
+    func disableVia(owner: String?) -> String {
         guard let o = owner, !o.isEmpty, MemberHub.proxyNames.contains(o) else { return "本机单条停用" }
         return "本机单条停用 · 管理员代操作"   // 468 本机单条停用
     }
 
     /// 364/180/360 停用: 本地移除 + 回收站 (7 天恢复窗口), 锁端删除入队 (本地意图, UI 明示)
-    private func disablePwd(_ p: LedgerPwd) {
+    func disablePwd(_ p: LedgerPwd) {
         guard busyKey == nil else { return }
         confirmDestructive("停用密码 #\(p.alias)",
                           // 天数口径：这个 7 天是 **364 的一键恢复窗口**，出处 `CredentialOrg.withinRecoverWindow`
@@ -1536,7 +1320,7 @@ struct CredentialsView: View {
             showToastOrganized("已停用, 7 天内可恢复")   // 364 已停用
         }
     }
-    private func disableFp(_ f: LedgerFp) {
+    func disableFp(_ f: LedgerFp) {
         guard busyKey == nil else { return }
         confirmDestructive("停用指纹「\(f.name)」",
                           // 天数口径：同停用密码那一支 —— 7 天是 364 一键恢复窗口 (`withinRecoverWindow` 写死)，
@@ -1550,7 +1334,7 @@ struct CredentialsView: View {
     }
 
     /// 彻底删除: 锁端删除 + 本地删前快照 (494 双通道), 670 后果文案具体化
-    private func deletePwd(_ p: LedgerPwd) {
+    func deletePwd(_ p: LedgerPwd) {
         guard busyKey == nil else { return }
         confirmDestructive("彻底删除密码 #\(p.alias)",
                            // 「30 天」原先写死：回收站保留期是设置页那枚 7~90 天的 Stepper (497)，
@@ -1560,7 +1344,7 @@ struct CredentialsView: View {
             Task { await self.doDeletePwd(p) }
         }
     }
-    private func doDeletePwd(_ p: LedgerPwd) async {
+    func doDeletePwd(_ p: LedgerPwd) async {
         guard busyKey == nil else { return }
         let m = mac
         guard !m.isEmpty else { app.showToast("未选择门锁"); return }
@@ -1577,7 +1361,7 @@ struct CredentialsView: View {
         } catch { app.showToast("删除失败: \(error.localizedDescription)") }
     }
 
-    private func deleteFp(_ f: LedgerFp) {
+    func deleteFp(_ f: LedgerFp) {
         guard busyKey == nil else { return }
         confirmDestructive("彻底删除指纹「\(f.name)」",
                            "删除后果: 该指纹在锁内立即失效且无法远程补录 — 需成员本人到锁前重新录入 8 次指压。本机记录直接移除、不可找回。确定继续？",
@@ -1585,7 +1369,7 @@ struct CredentialsView: View {
             Task { await self.doDeleteFp(f) }
         }
     }
-    private func doDeleteFp(_ f: LedgerFp) async {
+    func doDeleteFp(_ f: LedgerFp) async {
         guard busyKey == nil else { return }
         let m = mac
         guard !m.isEmpty else { app.showToast("未选择门锁"); return }
@@ -1606,7 +1390,7 @@ struct CredentialsView: View {
         } catch { app.showToast("删除失败: \(error.localizedDescription)") }
     }
 
-    private func renameFp(_ f: LedgerFp) {
+    func renameFp(_ f: LedgerFp) {
         let alert = UIAlertController(title: "重命名指纹", message: nil, preferredStyle: .alert)
         alert.addTextField { $0.placeholder = "如: 主人大拇指"; $0.text = f.name }
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
@@ -1621,7 +1405,7 @@ struct CredentialsView: View {
         UIApplication.topViewController()?.present(alert, animated: true)
     }
 
-    private func editNote(pwd: LedgerPwd? = nil, fp: LedgerFp? = nil) {
+    func editNote(pwd: LedgerPwd? = nil, fp: LedgerFp? = nil) {
         let alert = UIAlertController(title: "凭证备注", message: "仅本机留存, 随全量备份换机", preferredStyle: .alert)
         alert.addTextField { $0.text = pwd?.note ?? fp?.note ?? "" }
         alert.addAction(UIAlertAction(title: "清除", style: .destructive) { _ in
@@ -1655,13 +1439,13 @@ struct CredentialsView: View {
 
     /// 1007 维护致谢: 整理动作计数, 每 10 次附一句致谢
     /// 1007 整理动作计数 (致谢文案已随徽章引擎删除, 这里只记数 + 刷新)
-    private func showToastOrganized(_ base: String) {
+    func showToastOrganized(_ base: String) {
         Milestones.recordOrganize()
         app.showToast(base)
         refreshTick += 1
     }
     @ViewBuilder
-    private func ownerMenu(isPwd: Bool, key: Int) -> some View {
+    func ownerMenu(isPwd: Bool, key: Int) -> some View {
         ForEach(DB.members()) { m in
             Button(m.name) {
                 if isPwd { DB.setPwdOwner(mac, key, m.id) } else { DB.setFpOwner(mac, key, m.id) }
@@ -1677,7 +1461,7 @@ struct CredentialsView: View {
 
     /// 359/930 到期预警五档: 7 / 3 / 1 天 + 24 / 2 小时**全部排本地通知** (930 替代落地后
     /// 2 小时档不再只是列表提醒行), 另有一条"到期时"通知自动跟着走, 不单设开关。
-    private func toggleAlerts(_ p: LedgerPwd) {
+    func toggleAlerts(_ p: LedgerPwd) {
         let a = CredentialOrg.alert(mac, p)
         let sheet = UIAlertController(title: "到期预警 #\(p.alias)",   // 359/930 到期预警
                                      message: "长期有效密码无到期点, 不适用。",

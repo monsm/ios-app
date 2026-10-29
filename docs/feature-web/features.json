@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T03:59:48.299Z",
+    "generated": "2026-10-29T04:05:24.732Z",
     "sources": [
       {
         "scout": "android-native",
@@ -16122,7 +16122,7 @@
           "line": 1626,
           "symbol": "batchBar",
           "note": "",
-          "text": "alert.addTextField { $0.text = pwd?.note ?? fp?.note ?? \"\" }"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -16194,7 +16194,7 @@
           "line": 1229,
           "symbol": "credRow",
           "note": "",
-          "text": "do {"
+          "text": "// 改成系统 alert：用户点「知道了」即消失，不留在屏幕上。"
         },
         {
           "platform": "ios",
@@ -16202,7 +16202,7 @@
           "line": 1246,
           "symbol": "credRow",
           "note": "状态胶囊",
-          "text": "Text(\"每 30 分钟更换一次; 生成前请先校准门锁时间 (偏差 >180 秒会导致锁侧校验失败)。\")"
+          "text": "// 在用户按下\"作废旧密码\"的那一刻就把目标锁钉住 (含非空校验)，Task 里一律用 m"
         },
         {
           "platform": "ios",
@@ -16210,7 +16210,7 @@
           "line": 1272,
           "symbol": "credRow",
           "note": "副行",
-          "text": ".contentTransition(.numericText())"
+          "text": "guard busyKey == nil else { return }"
         }
       ],
       "platformEvidence": {
@@ -17194,7 +17194,7 @@
           "line": 1450,
           "symbol": "credMenu",
           "note": "setFpAlarm",
-          "text": "UIApplication.topViewController()?.present(alert, animated: true)"
+          "text": "Button(m.name) {"
         },
         {
           "platform": "ios",
@@ -17202,7 +17202,7 @@
           "line": 1256,
           "symbol": "credRow",
           "note": "预警胶囊",
-          "text": "}"
+          "text": "if aliasOut != p.alias {"
         }
       ],
       "platformEvidence": {
@@ -17728,7 +17728,7 @@
           "line": 23,
           "symbol": "busyKey",
           "note": "键语义",
-          "text": "@State private var busyKey: String?"
+          "text": "@State var busyKey: String?"
         },
         {
           "platform": "ios",
@@ -17744,7 +17744,7 @@
           "line": 1346,
           "symbol": "credRow",
           "note": "整行 disabled",
-          "text": "// 空串不许当「生成成功」：原先会一路把空值写进 otpPwd、复制进剪贴板、再震一下「成功」，"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -17966,7 +17966,7 @@
           "line": 691,
           "symbol": "searchSection",
           "note": "搜索框",
-          "text": "Image(systemName: \"star.fill\")"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -17974,7 +17974,7 @@
           "line": 709,
           "symbol": "filteredResults",
           "note": "",
-          "text": "if !compactRow, let p, CredentialOrg.aliasDisplay, CredentialOrg.namingTemplate(p) != titleOf(hit) {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -17982,7 +17982,7 @@
           "line": 686,
           "symbol": "searchSection",
           "note": "兜底两按钮所在块",
-          "text": "if let o = p?.owner ?? f?.owner, !o.isEmpty {"
+          "text": "var seq = CredentialOrg.seq(mac)"
         }
       ],
       "platformEvidence": {
@@ -18135,7 +18135,7 @@
           "line": 1320,
           "symbol": "credRow",
           "note": "swipeActions",
-          "text": "if !otpWin.isEmpty, otpWin == ZOTP.nextWindow() {"
+          "text": "showToastOrganized(\"已停用, 7 天内可恢复\")   // 364 已停用"
         },
         {
           "platform": "ios",
@@ -18143,7 +18143,7 @@
           "line": 1329,
           "symbol": "credRow",
           "note": "!sorting 才出破坏性",
-          "text": "guard busyKey == nil else { return false }"
+          "text": "confirmTitle: \"停用\") {"
         },
         {
           "platform": "ios",
@@ -18151,7 +18151,7 @@
           "line": 1333,
           "symbol": "credRow",
           "note": "改期",
-          "text": "let idx = (cur?.invalidTime == win) ? (cur?.idx ?? -1) + 1 : 0"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -21274,7 +21274,7 @@
           "line": 31,
           "symbol": "memberView",
           "note": "初始值取 groupMode",
-          "text": "@State private var memberView = CredentialOrg.groupMode == .owner   // 355 按成员视图"
+          "text": "@State var memberView = CredentialOrg.groupMode == .owner   // 355 按成员视图"
         },
         {
           "platform": "ios",
@@ -21344,7 +21344,7 @@
           "line": 1314,
           "symbol": "credRow",
           "note": "双击复制",
-          "text": ".accessibilityLabel(\"复制临时密码\")"
+          "text": "//   里写死的 `7 * 86400`，与 497 那个 7~90 天可调的回收站保留期不是同一件事 (所以不读 reclaimDays)。"
         },
         {
           "platform": "ios",
@@ -21352,7 +21352,7 @@
           "line": 1296,
           "symbol": "credRow",
           "note": "VoiceOver 拷贝动作",
-          "text": "Button {"
+          "text": "func periodText(_ p: LedgerPwd) -> String {"
         }
       ],
       "platformEvidence": {
@@ -21415,7 +21415,7 @@
           "line": 1246,
           "symbol": "credRow",
           "note": "pwdState == 2",
-          "text": "Text(\"每 30 分钟更换一次; 生成前请先校准门锁时间 (偏差 >180 秒会导致锁侧校验失败)。\")"
+          "text": "// 在用户按下\"作废旧密码\"的那一刻就把目标锁钉住 (含非空校验)，Task 里一律用 m"
         },
         {
           "platform": "ios",
@@ -21423,7 +21423,7 @@
           "line": 1248,
           "symbol": "credRow",
           "note": "isEarlyExpired",
-          "text": "} icon: {"
+          "text": "guard !m.isEmpty else { app.showToast(\"未选择门锁\"); return }"
         },
         {
           "platform": "ios",
@@ -21431,7 +21431,7 @@
           "line": 1255,
           "symbol": "credRow",
           "note": "预警指纹",
-          "text": "}"
+          "text": "DB.rePwd(m, p.alias, np)"
         }
       ],
       "platformEvidence": {
@@ -58379,7 +58379,7 @@
           "line": 1248,
           "symbol": "credRow",
           "note": "提前失效胶囊",
-          "text": "} icon: {"
+          "text": "guard !m.isEmpty else { app.showToast(\"未选择门锁\"); return }"
         },
         {
           "platform": "ios",
@@ -58456,7 +58456,7 @@
           "line": 875,
           "symbol": "orderedPwds",
           "note": "读 seq[p]",
-          "text": "Button(\"顺序\") {"
+          "text": "func promptBatchPrefix() {"
         },
         {
           "platform": "ios",
@@ -58464,7 +58464,7 @@
           "line": 1076,
           "symbol": "commitGroupMove",
           "note": "写 seq",
-          "text": "confirmDestructive(\"删除所选 \\(n) 条凭证\",   // 922 删除所选"
+          "text": ".onTapGesture(count: 2) { otpBig.toggle() }"
         },
         {
           "platform": "ios",
@@ -58472,7 +58472,7 @@
           "line": 889,
           "symbol": "manualIndex",
           "note": "重复别名防 trap",
-          "text": ".accessibilityLabel(\"把当前先后写成手动序, 与排序档里的拖动共用同一张顺序表\")   // 182/352 把当前先后写成手动序"
+          "text": "let done = CredentialOrg.batchPrefixNote(mac, pwdAliases: selPwds, fpBatches: selFps, prefix: p)"
         }
       ],
       "platformEvidence": {
@@ -61051,7 +61051,7 @@
           "line": 1236,
           "symbol": "credRow",
           "note": "kf_row_h",
-          "text": "app.showToast(on ? \"临时密码已开启\" : \"已关闭\")"
+          "text": ""
         },
         {
           "platform": "ios",
