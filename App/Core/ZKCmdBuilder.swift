@@ -37,17 +37,14 @@ enum ZKCmdBuilder {
         // ("1760000000" → "1760000000T00:00:00Z") → 解析失败 → 静默回落"现在" (实测 JS 与本机时钟同值)。
         // 台账导入的 from/to 常以字符串形态存 epoch，跟着 JS 走就等于把有效期静默改写成今天 —— 宁可多认一种形态。
         if let n = Int64(raw) { return n > 1_000_000_000_000 ? n / 1000 : n }
-        let iso = ISO8601DateFormatter()          // 含 …THH:mm:ssZ / 带偏移 形态
-        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        // 2026-10-29 性能：ISO8601DateFormatter 初始化同样昂贵，改用线程级缓存（带小数秒变体）。
+        let iso = DF.iso(true)          // 含 …THH:mm:ssZ / 带偏移 形态
         if let d = iso.date(from: raw) { return ZKProtocol.protoSecondsFromMs(Int64(d.timeIntervalSince1970 * 1000)) }
-        let iso2 = ISO8601DateFormatter()
-        iso2.formatOptions = [.withInternetDateTime]
+        let iso2 = DF.iso()
         if let d = iso2.date(from: raw) { return ZKProtocol.protoSecondsFromMs(Int64(d.timeIntervalSince1970 * 1000)) }
         func f(_ fmt: String, _ tz: TimeZone) -> Int64? {
-            let df = DateFormatter()
-            df.locale = Locale(identifier: "en_US_POSIX")
-            df.timeZone = tz
-            df.dateFormat = fmt
+            // 2026-10-29 性能：fmt 是运行时变量，按 (fmt, tz) 走缓存 —— 同一格式不会重复装配 ICU。
+            let df = DF.cached(fmt, timeZone: tz)
             guard let d = df.date(from: raw) else { return nil }
             return ZKProtocol.protoSecondsFromMs(Int64(d.timeIntervalSince1970 * 1000))
         }

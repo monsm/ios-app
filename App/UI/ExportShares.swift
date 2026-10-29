@@ -93,7 +93,7 @@ enum ExportKit {
         }
         let text = out
         guard !text.isEmpty else { return nil }
-        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; f.timeZone = TimeZone.current; f.locale = Locale(identifier: "en_US_POSIX")
+        let f = DF.cached("yyyy-MM-dd")
         let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("exports", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)

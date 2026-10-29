@@ -292,7 +292,7 @@ struct BackupView: View {
     private func armMigrateWizard(_ r: (imported: Int, overwritten: Int, skipped: Int)) {
         guard r.imported + r.overwritten > 0 else { return }
         for kc in DB.keychains() { DB.store.remove("kf_migok_" + kc.mac) }
-        DB.store.set("kf_migrate_pending", ISO8601DateFormatter().string(from: Date()))
+        DB.store.set("kf_migrate_pending", DF.iso().string(from: Date()))
     }
 
     // ---------- 文件导入 (iCloud 云盘 / 我的 iPhone) ----------

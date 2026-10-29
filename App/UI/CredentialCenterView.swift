@@ -18,6 +18,10 @@ struct CredExtendView: View {
     var mac: String
     var aliases: [Int]
     var onDone: () -> Void
+    /// 2026-10-29 性能：把「按 alias 查密码」从逐行 DB 调用改成一次建表。
+    private var pwdByAlias: [Int: LedgerPwd] {
+        Dictionary(DB.ledger(mac).pwds.map { ($0.alias, $0) }, uniquingKeysWith: { a, _ in a })
+    }
     @State private var from = Date()
     @State private var to = Date().addingTimeInterval(30 * 86400)
     @State private var busy = false
@@ -35,8 +39,10 @@ struct CredExtendView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Section("变更清单") {
+                    // 2026-10-29 性能：原来每行调一次 DB.getPwd（逐行全表解码）。
+                    // 现在外面算一次字典，行里只查表。
                     ForEach(aliases, id: \.self) { a in
-                        if let p = DB.getPwd(mac, a) {
+                        if let p = pwdByAlias[a] {
                             HStack(spacing: DS.Space.s) {
                                 Text("#\(a)")
                                     .vkFont(.subheadline)
@@ -103,6 +109,11 @@ struct CredDisableSheet: View {
         }
     }
     private var ownerIds: [String] { ownerCounts.map { $0.id } }
+
+    /// 2026-10-29 性能：原来每个头像都调一次 DB.member(id)（逐行全表解码）。改成一次建表。
+    private var memberNameByID: [String: String] {
+        Dictionary(DB.members().map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
+    }
     /// 没归属的那几条: 它们不进任何人的动态, 这句话得能在界面上说出来。
     private var unownedCount: Int {
         max(0, (pwdAliases.count + fpBatches.count) - ownerCounts.reduce(0) { $0 + $1.pwd + $1.fp })
@@ -115,16 +126,16 @@ struct CredDisableSheet: View {
                     HStack(spacing: DS.Space.s) {
                         // 影响成员头像列 (成员色点 183 风格, 纯本地) —— 名单见 ownerCounts, 顺序稳定
                         ForEach(ownerIds, id: \.self) { id in
-                            if let m = DB.member(id) {
+                            if let name = memberNameByID[id] {
                                 Circle()
                                     .fill(DS.Palette.accentText)
                                     .frame(width: 26, height: 26)
-                                    .overlay(Text(String(m.name.prefix(1)))
+                                    .overlay(Text(String(name.prefix(1)))
                                         .vkFont(.caption2)
                                         // accentText 在深色模式是浅紫, 白首字母压上去几乎看不见
                                         .foregroundStyle(DS.Palette.onAccent)
                                         .lineLimit(1))
-                                    .accessibilityLabel("成员 \(m.name)")
+                                    .accessibilityLabel("成员 \(name)")
                             }
                         }
                         Text("影响 \(ownerIds.count) 位成员")

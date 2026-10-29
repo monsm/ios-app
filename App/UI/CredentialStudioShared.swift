@@ -47,14 +47,14 @@ enum StudioTools {
             return "密码是 \(v)，长期有效（\(lockName)）"
         }
         let c = WeekCal.gregorian
-        let tf = DateFormatter(); tf.dateFormat = "HH:mm"
+        let tf = DF.cached("HH:mm")
         let hm = tf.string(from: to)
         let dayTxt = c.isDateInTomorrow(to) ? "明天" : (c.isDateInToday(to) ? "今天" : mdy(to))
         let tail = hm.hasPrefix("12") || hm.hasPrefix("13") || hm.hasPrefix("14") || hm.hasPrefix("15") || hm.hasPrefix("16") || hm.hasPrefix("17") || hm.hasPrefix("18") ? "下午前有效" : "前有效"
         return "密码是 \(v)，\(dayTxt) \(hm) \(tail)（\(lockName)）"
     }
     static func mdy(_ d: Date) -> String {
-        let f = DateFormatter(); f.dateFormat = "M月d日"
+        let f = DF.cached("M月d日")
         return f.string(from: d)
     }
     // 2026-10-27 四轮精简：五场景预设已删。

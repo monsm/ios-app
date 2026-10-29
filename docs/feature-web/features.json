@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T10:39:06.873Z",
+    "generated": "2026-10-29T10:43:59.355Z",
     "sources": [
       {
         "scout": "android-native",
@@ -2713,7 +2713,7 @@
           "line": 268,
           "symbol": "cmd31GWSetWifi",
           "note": "",
-          "text": "// 而那个函数读的是 0x88 包络的 MAC 字节序注册表。若某把锁被 rc=12 自愈裁定成 `.raw`，"
+          "text": "static func cmd41WriteEkey(_ lockMacHex: String, _ pid: Int, _ ekeyHex: String, type: Int = 1) -> ZKCmd {"
         },
         {
           "platform": "apk",
@@ -4288,7 +4288,7 @@
           "line": 244,
           "symbol": "cmd41WriteEkey",
           "note": "",
-          "text": "// 兜底对齐 JS cmds.js:138 (pageSize||20)"
+          "text": "return ZKCmd(name: \"16 日志\", cmd: 0x16, hex: ZKProtocol.wrapFrame(0x16, macHex, skeyHex, body, 0x01))"
         },
         {
           "platform": "apk",
@@ -6619,7 +6619,7 @@
           "line": 142,
           "symbol": "cmd08SyncPinsBatch",
           "note": "",
-          "text": "// 这是**有意的偏离**：vendor 那侧是危险的，对齐它等于把安全门拆掉。"
+          "text": "// PIN 解析失败 = 凭证不可用, 整条 ekey 视为签发失败 (返回 \"\" 由 cmd04Open 的空值闸拦下)"
         },
         {
           "platform": "ios",
@@ -14877,7 +14877,7 @@
           "line": 155,
           "symbol": "cmd0ASyncPwd",
           "note": "",
-          "text": "random: (UInt32) -> UInt32) -> String {"
+          "text": "// 却没传进来，于是所有手机钥匙实际**永久有效**：界面写「8 小时后失效」，锁端认的是 2118。"
         },
         {
           "platform": "apk",
@@ -17272,7 +17272,7 @@
           "line": 209,
           "symbol": "cmd14FpConfirm",
           "note": "",
-          "text": "return ZKCmd(name: \"0B 密码有效期\", cmd: 0x0b, hex: \"\")"
+          "text": "let to = protoSecOrNil(validTo) ?? ZKProtocol.nowProtoSeconds()"
         },
         {
           "platform": "ios",
@@ -17572,7 +17572,7 @@
           "line": 201,
           "symbol": "cmd13AddFp(times: 8, timeout: 15)",
           "note": "",
-          "text": "// cmd 0B: alias(2B LE) + validFrom/To"
+          "text": "func suppliedButUnparsed(_ s: String?) -> Bool {"
         },
         {
           "platform": "ios",
@@ -20918,7 +20918,7 @@
           "line": 451,
           "symbol": "canEvaluatePolicy",
           "note": "guard ctx.canEvaluatePolicy(...)",
-          "text": "var where_ = \"\""
+          "text": "static func expiryLabel(_ to: String, verb: Bool = true, prefix: Int = 10) -> String {"
         },
         {
           "platform": "ios",
@@ -20926,7 +20926,7 @@
           "line": 460,
           "symbol": "onDeniedPresentFallback",
           "note": "if ok { commit() } else { onDeniedPresentFallback(commit) }",
-          "text": "static func stateLabel(_ s: Int) -> String {"
+          "text": "if let to = expiryDate(p), let f = parseLocal(p.from) {"
         }
       ],
       "platformEvidence": {
@@ -22121,7 +22121,7 @@
           "line": 124,
           "symbol": "buildEkeyOpen",
           "note": "",
-          "text": "// pin → LE 4B hex (数字或已是 8 hex 皆可 — JS pinToLE 双兼容)"
+          "text": "// 2026-10-27 审核说明 (AUDIT-C A10)：PIN → 4B LE 的转换**只有本仓有** ——"
         },
         {
           "platform": "ios",
@@ -22129,7 +22129,7 @@
           "line": 106,
           "symbol": "cmd04Open",
           "note": "",
-          "text": "// ---- 密文管理面 ----"
+          "text": "static func cmd03StatusWrap(_ macHex: String, _ skeyHex: String, order: ZKProtocol.MacOrder? = nil) -> ZKCmd {"
         },
         {
           "platform": "ios",
@@ -22137,7 +22137,7 @@
           "line": 133,
           "symbol": "buildEkeyShare",
           "note": "",
-          "text": "var h = pin.trimmingCharacters(in: .whitespaces).lowercased()"
+          "text": "guard !h.isEmpty, let v = UInt32(h) else { return nil }"
         }
       ],
       "platformEvidence": {
@@ -28963,7 +28963,7 @@
           "line": 235,
           "symbol": "cmd20ValidationMode",
           "note": "",
-          "text": "+ HexKit.u32leHex(protoSecU32(validTo))"
+          "text": "// cmd 15: batchNumber(4B LE)"
         }
       ],
       "platformEvidence": {
@@ -29036,7 +29036,7 @@
           "line": 239,
           "symbol": "cmd24AutoLock",
           "note": "",
-          "text": "static func cmd15DeleteFp(_ macHex: String, _ skeyHex: String, _ batchNumber: UInt32) -> ZKCmd {"
+          "text": "// cmd 16: orderType(1B) + startIdx(4B LE) + pageSize(1B)"
         }
       ],
       "platformEvidence": {
@@ -36045,7 +36045,7 @@
           "line": 155,
           "symbol": "cmd0ASyncPwd(delAlias: 0xFFFF)",
           "note": "",
-          "text": "random: (UInt32) -> UInt32) -> String {"
+          "text": "// 却没传进来，于是所有手机钥匙实际**永久有效**：界面写「8 小时后失效」，锁端认的是 2118。"
         },
         {
           "platform": "ios",
@@ -36232,7 +36232,7 @@
           "line": 227,
           "symbol": "cmd18Volume",
           "note": "",
-          "text": "let to = timeout > 0 ? timeout : 15"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -42350,7 +42350,7 @@
           "line": 63,
           "symbol": "cmd01Session",
           "note": "",
-          "text": "static func cmd01Session() -> ZKCmd {"
+          "text": "// 22/25 两条命令的**帧构造**保留: GoldenDiffTests 拿它们与 vendor JS 做字节对拍 (金标资产)。"
         },
         {
           "platform": "ios",
@@ -42358,7 +42358,7 @@
           "line": 106,
           "symbol": "cmd04Open",
           "note": "",
-          "text": "// ---- 密文管理面 ----"
+          "text": "static func cmd03StatusWrap(_ macHex: String, _ skeyHex: String, order: ZKProtocol.MacOrder? = nil) -> ZKCmd {"
         }
       ],
       "platformEvidence": {
@@ -42463,7 +42463,7 @@
           "line": 71,
           "symbol": "cmd25Defence",
           "note": "",
-          "text": "}"
+          "text": "return ZKCmd(name: \"25 布防\", cmd: 0x25, hex: ZKProtocol.wrapFrame(0x25, macHex, skeyHex, body, 0x01))"
         },
         {
           "platform": "ios",
@@ -42558,7 +42558,7 @@
           "line": 66,
           "symbol": "cmd22EnableDfu",
           "note": "App 侧封装已随 DFU 入口删除",
-          "text": "// 22/25 两条命令的**帧构造**保留: GoldenDiffTests 拿它们与 vendor JS 做字节对拍 (金标资产)。"
+          "text": "static func cmd22EnableDfu(_ macHex: String, _ skeyHex: String, _ param: Int = 0) -> ZKCmd {"
         },
         {
           "platform": "ios",
@@ -43035,7 +43035,7 @@
           "line": 201,
           "symbol": "cmd13AddFp",
           "note": "",
-          "text": "// cmd 0B: alias(2B LE) + validFrom/To"
+          "text": "func suppliedButUnparsed(_ s: String?) -> Bool {"
         },
         {
           "platform": "ios",
@@ -43075,7 +43075,7 @@
           "line": 209,
           "symbol": "cmd14FpConfirm",
           "note": "",
-          "text": "return ZKCmd(name: \"0B 密码有效期\", cmd: 0x0b, hex: \"\")"
+          "text": "let to = protoSecOrNil(validTo) ?? ZKProtocol.nowProtoSeconds()"
         }
       ],
       "platformEvidence": {
@@ -44899,7 +44899,7 @@
           "line": 154,
           "symbol": "cmd0ASyncPwd",
           "note": "delAlias 0xFFFF=清空",
-          "text": "validToSec: UInt32? = nil,"
+          "text": "// 调用方 `MobileKeyService.issue` 明明算出了 `vf`/`vt`（用户选的「8 小时」或自定义到期），"
         }
       ],
       "platformEvidence": {
@@ -45495,7 +45495,7 @@
           "line": 63,
           "symbol": "cmd01Session",
           "note": "",
-          "text": "static func cmd01Session() -> ZKCmd {"
+          "text": "// 22/25 两条命令的**帧构造**保留: GoldenDiffTests 拿它们与 vendor JS 做字节对拍 (金标资产)。"
         },
         {
           "platform": "ios",
@@ -45829,7 +45829,7 @@
           "line": 82,
           "symbol": "cmd03StatusPlain",
           "note": "",
-          "text": "static func cmd12Echo(_ valHex: String = \"123456\") -> ZKCmd {"
+          "text": "/// cmd 03 状态（明文帧，无 KLV）。"
         },
         {
           "platform": "ios",
@@ -45877,7 +45877,7 @@
           "line": 98,
           "symbol": "cmd03StatusWrap",
           "note": "",
-          "text": "// JS: opts.timeSec || now — 0 也回落为 now"
+          "text": "+ ZKProtocol.buildKLV(0x02, \"01\")"
         },
         {
           "platform": "ios",
@@ -46055,7 +46055,7 @@
           "line": 106,
           "symbol": "cmd04Open",
           "note": "",
-          "text": "// ---- 密文管理面 ----"
+          "text": "static func cmd03StatusWrap(_ macHex: String, _ skeyHex: String, order: ZKProtocol.MacOrder? = nil) -> ZKCmd {"
         },
         {
           "platform": "ios",
@@ -46095,7 +46095,7 @@
           "line": 110,
           "symbol": "cmd04Open",
           "note": "KLV#01 左补零 32 + KLV#02 ekey",
-          "text": "let enc = AESKit.encryptHex(ZKProtocol.buildEkey(0x03, macHex, order: order), keyHex: skeyHex)"
+          "text": "let klv = ZKProtocol.buildKLV(0x01, enc) + ZKProtocol.buildKLV(0x02, \"\")"
         },
         {
           "platform": "ios",
@@ -46257,7 +46257,7 @@
           "line": 86,
           "symbol": "cmd05Exchange",
           "note": "",
-          "text": "/// 2026-10-27 审核修复 (AUDIT-A F-45)：**去掉未使用的 macHex 参数**。"
+          "text": "/// 调用点同步改成无参（`cmd03StatusPlain()`）。"
         },
         {
           "platform": "ios",
@@ -46384,7 +46384,7 @@
           "line": 142,
           "symbol": "cmd08SyncPinsBatch",
           "note": "",
-          "text": "// 这是**有意的偏离**：vendor 那侧是危险的，对齐它等于把安全门拆掉。"
+          "text": "// PIN 解析失败 = 凭证不可用, 整条 ekey 视为签发失败 (返回 \"\" 由 cmd04Open 的空值闸拦下)"
         },
         {
           "platform": "ios",
@@ -46408,7 +46408,7 @@
           "line": 144,
           "symbol": "cmd08SyncPinsBatch",
           "note": "body 布局",
-          "text": "validFromSec: UInt32 = 0, validToSec: UInt32? = nil, trackId: UInt32 = 0) -> String {"
+          "text": "let env = ZKProtocol.buildEkey(0x04, macHex, validFromSec: validFromSec, validToSec: validToSec, trackIdVal: trackId)"
         },
         {
           "platform": "ios",
@@ -46521,7 +46521,7 @@
           "line": 155,
           "symbol": "cmd0ASyncPwd",
           "note": "",
-          "text": "random: (UInt32) -> UInt32) -> String {"
+          "text": "// 却没传进来，于是所有手机钥匙实际**永久有效**：界面写「8 小时后失效」，锁端认的是 2118。"
         },
         {
           "platform": "ios",
@@ -46561,7 +46561,7 @@
           "line": 172,
           "symbol": "cmd0ASyncPwd",
           "note": "body 布局",
-          "text": "// cmd 21: skeyLen(1B=0x10)+bkey(16B)"
+          "text": "return ZKCmd(name: \"21 bkey\", cmd: 0x21, hex: ZKProtocol.wrapFrame(0x21, macHex, skeyHex, body, 0x02))"
         }
       ],
       "platformEvidence": {
@@ -46685,7 +46685,7 @@
           "line": 179,
           "symbol": "cmd0BSyncPwdExpire",
           "note": "",
-          "text": "guard addPwd.utf16.count <= 8 else { throw BLEErrorX.msg(\"密码最长 8 位\") } // JS throw — 不静默截断"
+          "text": "// 2026-10-14 对抗式排查: 上一批只把 validTo 改成了 throw, validFrom 仍静默回落 —— 补齐。"
         },
         {
           "platform": "ios",
@@ -47031,7 +47031,7 @@
           "line": 196,
           "symbol": "cmd0ESyncTime",
           "note": "",
-          "text": "+ HexKit.asciiHex(addPwd, nBytes: 8)"
+          "text": "return ZKCmd(name: \"0A 同步密码\", cmd: 0x0a, hex: ZKProtocol.wrapFrame(0x0a, macHex, skeyHex, body, 0x01))"
         },
         {
           "platform": "ios",
@@ -47144,7 +47144,7 @@
           "line": 79,
           "symbol": "cmd12Echo",
           "note": "",
-          "text": "static func cmd23ExKeyWay() -> ZKCmd {"
+          "text": "static func cmd12Echo(_ valHex: String = \"123456\") -> ZKCmd {"
         },
         {
           "platform": "ios",
@@ -47257,7 +47257,7 @@
           "line": 209,
           "symbol": "cmd14FpConfirm",
           "note": "",
-          "text": "return ZKCmd(name: \"0B 密码有效期\", cmd: 0x0b, hex: \"\")"
+          "text": "let to = protoSecOrNil(validTo) ?? ZKProtocol.nowProtoSeconds()"
         },
         {
           "platform": "ios",
@@ -47289,7 +47289,7 @@
           "line": 212,
           "symbol": "cmd14FpConfirm",
           "note": "protoSecU32 收口",
-          "text": "let to = protoSecOrNil(validTo) ?? ZKProtocol.nowProtoSeconds()"
+          "text": "+ HexKit.u32leHex(UInt32(clamping: max(0, to)))"
         }
       ],
       "platformEvidence": {
@@ -47385,7 +47385,7 @@
           "line": 216,
           "symbol": "cmd15DeleteFp",
           "note": "",
-          "text": "return ZKCmd(name: \"0B 密码有效期\", cmd: 0x0b, hex: ZKProtocol.wrapFrame(0x0b, macHex, skeyHex, body, 0x01))"
+          "text": "static func cmd0ESyncTime(_ macHex: String, _ skeyHex: String, _ timeSec: Int64) -> ZKCmd {"
         },
         {
           "platform": "ios",
@@ -47511,7 +47511,7 @@
           "line": 220,
           "symbol": "cmd16GetLog",
           "note": "",
-          "text": "let body = HexKit.u32leHex(UInt32(truncatingIfNeeded: timeSec))"
+          "text": "// cmd 13: times(1B) + timeout(1B)"
         },
         {
           "platform": "ios",
@@ -47623,7 +47623,7 @@
           "line": 227,
           "symbol": "cmd18Volume",
           "note": "",
-          "text": "let to = timeout > 0 ? timeout : 15"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -47647,7 +47647,7 @@
           "line": 235,
           "symbol": "cmd20ValidationMode",
           "note": "",
-          "text": "+ HexKit.u32leHex(protoSecU32(validTo))"
+          "text": "// cmd 15: batchNumber(4B LE)"
         },
         {
           "platform": "ios",
@@ -47655,7 +47655,7 @@
           "line": 239,
           "symbol": "cmd24AutoLock",
           "note": "",
-          "text": "static func cmd15DeleteFp(_ macHex: String, _ skeyHex: String, _ batchNumber: UInt32) -> ZKCmd {"
+          "text": "// cmd 16: orderType(1B) + startIdx(4B LE) + pageSize(1B)"
         }
       ],
       "platformEvidence": {
@@ -47752,7 +47752,7 @@
           "line": 231,
           "symbol": "cmd19OpenZotp",
           "note": "",
-          "text": "// cmd 14: batchNumber(4B LE) + validFrom/To"
+          "text": "+ HexKit.u32leHex(protoSecU32(validFrom))"
         },
         {
           "platform": "ios",
@@ -47865,7 +47865,7 @@
           "line": 235,
           "symbol": "cmd20ValidationMode",
           "note": "",
-          "text": "+ HexKit.u32leHex(protoSecU32(validTo))"
+          "text": "// cmd 15: batchNumber(4B LE)"
         },
         {
           "platform": "ios",
@@ -47974,7 +47974,7 @@
           "line": 150,
           "symbol": "cmd21SetBkey",
           "note": "",
-          "text": "}"
+          "text": "validFromSec: UInt32? = nil,"
         },
         {
           "platform": "ios",
@@ -47998,7 +47998,7 @@
           "line": 151,
           "symbol": "cmd21SetBkey",
           "note": "body = \"10\" + bkeyHex",
-          "text": "// App generateEkey (分享/写钥匙串): 随机 TrackId + 本地时区 2010~2118 窗口"
+          "text": "validToSec: UInt32? = nil,"
         }
       ],
       "platformEvidence": {
@@ -48084,7 +48084,7 @@
           "line": 66,
           "symbol": "cmd22EnableDfu",
           "note": "注释：App 侧封装已删",
-          "text": "// 22/25 两条命令的**帧构造**保留: GoldenDiffTests 拿它们与 vendor JS 做字节对拍 (金标资产)。"
+          "text": "static func cmd22EnableDfu(_ macHex: String, _ skeyHex: String, _ param: Int = 0) -> ZKCmd {"
         },
         {
           "platform": "apk",
@@ -48100,7 +48100,7 @@
           "line": 68,
           "symbol": "cmd22EnableDfu",
           "note": "",
-          "text": "// 22 的 App 侧入口**没有**（DFU 现在走 Nordic DFU 的独立通道，不经 cmd22 使能）。"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -48180,7 +48180,7 @@
           "line": 76,
           "symbol": "cmd23ExKeyWay",
           "note": "",
-          "text": ""
+          "text": "static func cmd23ExKeyWay() -> ZKCmd {"
         },
         {
           "platform": "ios",
@@ -48290,7 +48290,7 @@
           "line": 239,
           "symbol": "cmd24AutoLock",
           "note": "",
-          "text": "static func cmd15DeleteFp(_ macHex: String, _ skeyHex: String, _ batchNumber: UInt32) -> ZKCmd {"
+          "text": "// cmd 16: orderType(1B) + startIdx(4B LE) + pageSize(1B)"
         },
         {
           "platform": "ios",
@@ -48388,7 +48388,7 @@
           "line": 71,
           "symbol": "cmd25Defence",
           "note": "",
-          "text": "}"
+          "text": "return ZKCmd(name: \"25 布防\", cmd: 0x25, hex: ZKProtocol.wrapFrame(0x25, macHex, skeyHex, body, 0x01))"
         },
         {
           "platform": "apk",
@@ -48404,7 +48404,7 @@
           "line": 67,
           "symbol": "cmd25Defence",
           "note": "注释：setDefence 已删除",
-          "text": "// 25 的 App 侧链路**在**（LockService.setDefence → DefendService → DefendView → 设置页入口），"
+          "text": "ZKCmd(name: \"22 DFU\", cmd: 0x22, hex: ZKProtocol.wrapFrame(0x22, macHex, skeyHex, HexKit.hexPair(UInt32(param & 0xff)), 0x02))"
         }
       ],
       "platformEvidence": {
@@ -48571,7 +48571,7 @@
           "line": 268,
           "symbol": "cmd31GWSetWifi",
           "note": "",
-          "text": "// 而那个函数读的是 0x88 包络的 MAC 字节序注册表。若某把锁被 rc=12 自愈裁定成 `.raw`，"
+          "text": "static func cmd41WriteEkey(_ lockMacHex: String, _ pid: Int, _ ekeyHex: String, type: Int = 1) -> ZKCmd {"
         },
         {
           "platform": "ios",
@@ -48603,7 +48603,7 @@
           "line": 280,
           "symbol": "cmd35GWReboot",
           "note": "",
-          "text": "// 2026-10-14: 去掉强解包 (空 = 查全部钥匙, 与旧口径一致), 并把剥冒号/小写收在前一行。"
+          "text": "return ZKCmd(name: \"44 钥匙串查钥\", cmd: 0x44, hex: ZKProtocol.buildFrame(0x44, ZKProtocol.buildKLV(0x01, v), header: 8))"
         },
         {
           "platform": "ios",
@@ -48611,7 +48611,7 @@
           "line": 265,
           "symbol": "cmd38GWStatus",
           "note": "",
-          "text": ""
+          "text": "// 而那个函数读的是 0x88 包络的 MAC 字节序注册表。若某把锁被 rc=12 自愈裁定成 `.raw`，"
         }
       ],
       "platformEvidence": {
@@ -48710,7 +48710,7 @@
           "line": 276,
           "symbol": "cmd32GWSetIot",
           "note": "",
-          "text": "+ ZKProtocol.buildKLV(0x04, ekeyHex)"
+          "text": "static func cmd44GetEkeyInfo(_ lockMacHex: String?) -> ZKCmd {"
         },
         {
           "platform": "ios",
@@ -48806,7 +48806,7 @@
           "line": 280,
           "symbol": "cmd35GWReboot",
           "note": "",
-          "text": "// 2026-10-14: 去掉强解包 (空 = 查全部钥匙, 与旧口径一致), 并把剥冒号/小写收在前一行。"
+          "text": "return ZKCmd(name: \"44 钥匙串查钥\", cmd: 0x44, hex: ZKProtocol.buildFrame(0x44, ZKProtocol.buildKLV(0x01, v), header: 8))"
         },
         {
           "platform": "ios",
@@ -48915,7 +48915,7 @@
           "line": 265,
           "symbol": "cmd38GWStatus",
           "note": "",
-          "text": ""
+          "text": "// 而那个函数读的是 0x88 包络的 MAC 字节序注册表。若某把锁被 rc=12 自愈裁定成 `.raw`，"
         },
         {
           "platform": "ios",
@@ -49029,7 +49029,7 @@
           "line": 244,
           "symbol": "cmd41WriteEkey",
           "note": "",
-          "text": "// 兜底对齐 JS cmds.js:138 (pageSize||20)"
+          "text": "return ZKCmd(name: \"16 日志\", cmd: 0x16, hex: ZKProtocol.wrapFrame(0x16, macHex, skeyHex, body, 0x01))"
         },
         {
           "platform": "ios",
@@ -49061,7 +49061,7 @@
           "line": 252,
           "symbol": "cmd44GetEkeyInfo",
           "note": "",
-          "text": "}"
+          "text": "ZKCmd(name: \"19 ZOTP\", cmd: 0x19, hex: ZKProtocol.wrapFrame(0x19, macHex, skeyHex, HexKit.hexPair(UInt32(on ? 1 : 0)), 0x02))"
         }
       ],
       "platformEvidence": {
@@ -49156,7 +49156,7 @@
           "line": 258,
           "symbol": "cmd43KeychainStatus",
           "note": "",
-          "text": "static func cmd20ValidationMode(_ macHex: String, _ skeyHex: String, _ bMode: Bool) -> ZKCmd {"
+          "text": "// cmd 24: interval(1B 档位 1-6)"
         },
         {
           "platform": "ios",
@@ -49266,7 +49266,7 @@
           "line": 252,
           "symbol": "cmd44GetEkeyInfo",
           "note": "",
-          "text": "}"
+          "text": "ZKCmd(name: \"19 ZOTP\", cmd: 0x19, hex: ZKProtocol.wrapFrame(0x19, macHex, skeyHex, HexKit.hexPair(UInt32(on ? 1 : 0)), 0x02))"
         },
         {
           "platform": "ios",
@@ -49379,7 +49379,7 @@
           "line": 128,
           "symbol": "buildEkeyOpen",
           "note": "EKey(0x04) + pinLE + 0000",
-          "text": "// Android 全仓无 PIN 解析（它只扫二维码拿 ekey，不碰 skey）。"
+          "text": "// 这不是重复，是能力差异；Android 的极简定位是刻意的（见 README「安卓版的能力边界」）。"
         }
       ],
       "platformEvidence": {
@@ -49448,7 +49448,7 @@
           "line": 138,
           "symbol": "buildEkeyShare",
           "note": "",
-          "text": "}"
+          "text": "// vendor **静默签 pin=0**（等于签出一张能开门的空凭据），本仓**直接拒绝**（抛错）。"
         },
         {
           "platform": "ios",
@@ -49971,7 +49971,7 @@
           "line": 276,
           "symbol": "cmd32GWSetIot",
           "note": "",
-          "text": "+ ZKProtocol.buildKLV(0x04, ekeyHex)"
+          "text": "static func cmd44GetEkeyInfo(_ lockMacHex: String?) -> ZKCmd {"
         },
         {
           "platform": "ios",
@@ -50983,7 +50983,7 @@
           "line": 150,
           "symbol": "cmd21SetBkey",
           "note": "",
-          "text": "}"
+          "text": "validFromSec: UInt32? = nil,"
         },
         {
           "platform": "ios",
@@ -51457,7 +51457,7 @@
           "line": 102,
           "symbol": "cmd03StatusWrap",
           "note": "KLV#01 密文 + KLV#02 空",
-          "text": "+ ZKProtocol.buildKLV(0x03, skeyHex)"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -51481,7 +51481,7 @@
           "line": 110,
           "symbol": "buildEkeyOpen",
           "note": "KLV#02 承载凭证密文",
-          "text": "let enc = AESKit.encryptHex(ZKProtocol.buildEkey(0x03, macHex, order: order), keyHex: skeyHex)"
+          "text": "let klv = ZKProtocol.buildKLV(0x01, enc) + ZKProtocol.buildKLV(0x02, \"\")"
         }
       ],
       "platformEvidence": {
@@ -52001,7 +52001,7 @@
           "line": 246,
           "symbol": "cmd41WriteEkey",
           "note": "先 targetMac 再 reversePairs",
-          "text": "let body = HexKit.hexPair(UInt32(truncatingIfNeeded: orderType)) + HexKit.u32leHex(startIdx) + HexKit.hexPair(UInt32(truncatingIfNeeded: size))"
+          "text": "// cmd 18: vol(1B) — App setSilentMode 语义: 0=有声 1=静音"
         },
         {
           "platform": "ios",
@@ -52009,7 +52009,7 @@
           "line": 254,
           "symbol": "cmd44GetEkeyInfo",
           "note": "先剥冒号小写",
-          "text": "static func cmd19OpenZotp(_ macHex: String, _ skeyHex: String, _ on: Bool) -> ZKCmd {"
+          "text": "// cmd 20: mode(1B 0=A单验/1=B双验)"
         }
       ],
       "platformEvidence": {
@@ -54305,7 +54305,7 @@
           "line": 101,
           "symbol": "cmd03StatusWrap",
           "note": "enc.isEmpty → hex: \"\"",
-          "text": "+ ZKProtocol.buildKLV(0x02, \"01\")"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -55499,7 +55499,7 @@
           "line": 116,
           "symbol": "pinToLEOrNil",
           "note": "",
-          "text": "// cmd 04 OPEN: KLV#01 = 左补零 32; KLV#02 = 凭证密文"
+          "text": "// \"KLV#02 长度 0\" 的开锁帧, 既可能被固件当异常包丢弃, 也可能被误读成一次真实开锁尝试。"
         },
         {
           "platform": "ios",
@@ -55515,7 +55515,7 @@
           "line": 124,
           "symbol": "buildEkeyOpen",
           "note": "",
-          "text": "// pin → LE 4B hex (数字或已是 8 hex 皆可 — JS pinToLE 双兼容)"
+          "text": "// 2026-10-27 审核说明 (AUDIT-C A10)：PIN → 4B LE 的转换**只有本仓有** ——"
         },
         {
           "platform": "ios",
@@ -55523,7 +55523,7 @@
           "line": 129,
           "symbol": "buildEkeyOpen",
           "note": "pinLE + 00 + 00",
-          "text": "// 代价：ekey 过期 / 锁端擦除 / 用户换 PIN 后，Android 只能重扫码；"
+          "text": "static func pinToLEOrNil(_ pin: String) -> String? {"
         }
       ],
       "platformEvidence": {
@@ -58209,7 +58209,7 @@
           "line": 22,
           "symbol": "CredCenterView",
           "note": "bin 计数与保留天数",
-          "text": "@State private var to = Date().addingTimeInterval(30 * 86400)"
+          "text": "private var pwdByAlias: [Int: LedgerPwd] {"
         },
         {
           "platform": "ios",
@@ -59930,7 +59930,7 @@
           "line": 472,
           "symbol": "reclaimDays()",
           "note": "",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",

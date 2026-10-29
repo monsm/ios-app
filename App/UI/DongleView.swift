@@ -13,6 +13,10 @@ import SwiftUI
 
 struct DongleView: View {
     @EnvironmentObject var app: AppState
+    /// 2026-10-29 性能：钥匙串名字一次建表，避免 ForEach 里逐行 DB.keychain（逐行全表解码）。
+    private var keychainNameByMac: [String: String] {
+        Dictionary(DB.keychains().map { ($0.mac, LockArchive.displayName($0)) }, uniquingKeysWith: { a, _ in a })
+    }
     @State private var busy = false
     @State private var scanning = false
     @State private var error = ""
@@ -160,12 +164,13 @@ struct DongleView: View {
                         .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                 } else {
+                    // 2026-10-29 性能：原来每行调一次 DB.keychain（逐行全表解码）。改成一次建表。
                     ForEach(keys, id: \.self) { m in
                         HStack(spacing: DS.Space.s) {
                             Text(shortMAC(m)).vkFont(.caption.monospaced())
                             Spacer(minLength: 0)
-                            if let kc = DB.keychain(DB.normalizeMac(m)) {
-                                Text(LockArchive.displayName(kc))
+                            if let name = keychainNameByMac[DB.normalizeMac(m)] {
+                                Text(name)
                                     .vkFont(.caption2)
                                     .foregroundStyle(DS.Palette.textSub)
                             } else {

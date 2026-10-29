@@ -228,7 +228,7 @@ extension LockService {
                           skey: skey, bkey: bkey, pins: pins,
                           ekey: ZKCmdBuilder.buildEkeyOpen(skey, m, pins[0]),
                           trackid: trackid, bleId: deviceId, fw: st.firmware,
-                          pairedAt: ISO8601DateFormatter().string(from: Date()))
+                          pairedAt: DF.iso().string(from: Date()))
         DB.saveKeychain(kc)
         progress("配网完成: \(st.pidName.isEmpty ? "pid=\(st.pid)" : st.pidName) @ \(m)")
         return kc
@@ -264,7 +264,7 @@ extension LockService {
         let pending = Keychain(version: 1, mac: m, skey: skey, bkey: bkey, pins: pins,
                                ekey: ZKCmdBuilder.buildEkeyOpen(skey, m, pins[0]),
                                trackid: String(KeyGen.genTrackId()), bleId: deviceId, fw: "",
-                               pairedAt: ISO8601DateFormatter().string(from: Date()))
+                               pairedAt: DF.iso().string(from: Date()))
         let resumable = DB.savePendingPair(pending)
         if resumable {
             log("info", "已留存换钥后的密钥 (尾链若中断, 再点一次配网即续配, 无需键盘重置)")

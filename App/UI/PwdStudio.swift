@@ -182,7 +182,7 @@ struct PwdStudio: View {
         app.showToast("已回填草稿")   // 518 已回填草稿
     }
     func iso(_ d: Date) -> String {
-        let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        let f = DF.cached("yyyy-MM-dd HH:mm:ss")
         return f.string(from: d)
     }
     func saveDraft() {
@@ -223,7 +223,7 @@ struct PwdStudio: View {
         }
         busy = true
         defer { busy = false }
-        let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        let f = DF.cached("yyyy-MM-dd HH:mm:ss")
         let isTemp = kind == 1
         let fromS = isTemp ? iso(from) : "2010-01-01 00:00:00"
         let toS = isTemp ? iso(to) : "2118-01-01 00:00:00"

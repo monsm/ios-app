@@ -154,7 +154,7 @@ final class HardwareService: ObservableObject {
                 guard let a = ZKProtocol.parseAdv(d.advertisHex), a.pid == PidMap.ZKBBV1, let mac = ZKProtocol.lockMac(fromAdv: a) ?? a.macRaw else { continue }
                 var rec = DB.dongle(mac) ?? Dongle(mac: mac)
                 rec.bleId = d.deviceId
-                if rec.boundAt.isEmpty { rec.boundAt = ISO8601DateFormatter().string(from: Date()) }
+                if rec.boundAt.isEmpty { rec.boundAt = DF.iso().string(from: Date()) }
                 if d.name != "(未命名)" { rec.name = d.name }
                 DB.saveDongle(rec)
                 log("找到钥匙串: \(a.macDisplay ?? mac) (\(d.name))")
@@ -221,7 +221,7 @@ final class HardwareService: ObservableObject {
         let st = HardwareService.parseKCStatus(f.klvs)
         var rec = DB.dongle(mac) ?? Dongle(mac: mac)
         rec.stat = st
-        rec.lastSeenAt = ISO8601DateFormatter().string(from: Date())
+        rec.lastSeenAt = DF.iso().string(from: Date())
         DB.saveDongle(rec)
         log("状态: 电量 \(st.power), 钥匙 \(st.ekeyCount)/\(st.ekeyAmount), 固件 \(st.firmware)")
         return st
@@ -278,7 +278,7 @@ final class HardwareService: ObservableObject {
         }
         var rec = DB.dongle(dongleMac) ?? Dongle(mac: dongleMac)
         rec.lastKeyLock = lock.mac
-        rec.lastKeyAt = ISO8601DateFormatter().string(from: Date())
+        rec.lastKeyAt = DF.iso().string(from: Date())
         DB.saveDongle(rec)
     }
 
@@ -401,7 +401,7 @@ final class HardwareService: ObservableObject {
         var rec = DB.gateway(mac) ?? Gateway(mac: mac)
         rec.bleId = deviceId
         if rec.pid <= 0 { rec.pid = advPid > 0 ? advPid : PidMap.GW }
-        if rec.boundAt.isEmpty { rec.boundAt = ISO8601DateFormatter().string(from: Date()) }
+        if rec.boundAt.isEmpty { rec.boundAt = DF.iso().string(from: Date()) }
 
         progress("步骤 2/5: 读取网关信息 (cmd 38)")
         let st = try await readGatewayState(mac: mac)
@@ -414,7 +414,7 @@ final class HardwareService: ObservableObject {
         let ec2 = errCodeOf(rb)
         if ec2 != 0 { log("重启指令返回 errCode \(ec2) (网关可能已自行重启)") }
         rec.lastWifi = ssid
-        rec.provisionedAt = ISO8601DateFormatter().string(from: Date())
+        rec.provisionedAt = DF.iso().string(from: Date())
         rec.ssid = st.ssid
         DB.saveGateway(rec)
         ble.disconnect()

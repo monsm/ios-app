@@ -281,7 +281,7 @@ enum BackupKit {
         }
         let trace = DB.get(BackupBundle.Globals.TraceRec.self, "kf_trace_persist_v1")
         return BackupBundle(
-            at: ISO8601DateFormatter().string(from: Date()),
+            at: DF.iso().string(from: Date()),
             currentMac: DB.currentMac,
             devices: devices,
             members: DB.members().isEmpty ? nil : DB.members(),

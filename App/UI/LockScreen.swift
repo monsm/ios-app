@@ -15,6 +15,10 @@ struct LockScreen: View {
     @EnvironmentObject var app: AppState
     @ObservedObject private var lock = AppLock.shared
 
+    /// 2026-10-29 性能：冷却倒计时用的是 1s 定时器。原来把 `Timer.publish(...)` 直接写在
+    /// `.onReceive(...)` 的参数里 —— SwiftUI 每次重算 body 都会构造一个新的 TimerPublisher，
+    /// 而本页每秒都会因 errorText 变化而重算 ⇒ 每秒新建一个定时器。放进 @State 只建一次。
+    @State private var cooldownTick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     @State private var input = ""
     @State private var errorText = ""
     @State private var shake = 0
@@ -95,7 +99,7 @@ struct LockScreen: View {
         .dsScreenBackground()
         .onAppear { focused = true }
         // 冷却倒计时：每秒重算一次，让按钮的 disabled 状态与提示文字跟着走
-        .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
+        .onReceive(cooldownTick) { _ in
             if lock.cooldownRemaining() > 0 {
                 errorText = "尝试次数过多，请等 \(lock.cooldownRemaining()) 秒"
             } else if errorText.hasPrefix("尝试次数过多") {

@@ -251,16 +251,23 @@ enum CredentialOrg {
         // 2026-10-29 修正：日志类型按 APK We 表 —— 17 密码开门 / 16 一次性密码开门。
         let logs = DB.readLogs(mac).filter { $0.type == 17 || $0.type == 16 }
         guard !logs.isEmpty else { return nil }
+        // 2026-10-29 性能：原先在 for l in logs 里做两件与 l 无关的事 ——
+        //   ① parseLocal(p.from)/parseLocal(p.to) 每条日志重解析一遍；
+        //   ② DB.ledger(mac).pwds.filter {...} 每条日志整表重解码一次（O(日志 × 台账)）。
+        // 现在都提到循环外，循环体只剩整数比较。
+        let windowFrom = p.temp ? parseLocal(p.from) : nil
+        let windowTo = p.temp ? parseLocal(p.to) : nil
+        let ownedCount = (!p.temp && p.owner != nil)
+            ? DB.ledger(mac).pwds.filter { !$0.temp && $0.owner != nil }.count : 0
         var n = 0
         for l in logs {
             let t = ZKProtocol.protoSecondsToUnix(Int64(l.lockTime))
             guard t >= nowSec - Double(days) * 86400 else { continue }
             if p.temp {
-                if let f = parseLocal(p.from), let to = parseLocal(p.to),
+                if let f = windowFrom, let to = windowTo,
                    f.timeIntervalSince1970 <= t, t <= to.timeIntervalSince1970 { n += 1 }
             } else if p.owner != nil, l.type == 17 {
-                let owned = DB.ledger(mac).pwds.filter { !$0.temp && $0.owner != nil }
-                if owned.count == 1 { n += 1 }
+                if ownedCount == 1 { n += 1 }
             }
         }
         return n

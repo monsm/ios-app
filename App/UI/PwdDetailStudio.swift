@@ -292,7 +292,7 @@ struct PwdDetailStudio: View {
         guard let kc = app.current, let v = p.pwd, !renewing else { return }
         renewing = true
         defer { renewing = false }
-        let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        let f = DF.cached("yyyy-MM-dd HH:mm:ss")
         let fromS = f.string(from: Date())
         let toS = f.string(from: Date().addingTimeInterval(7 * 86400))
         do {

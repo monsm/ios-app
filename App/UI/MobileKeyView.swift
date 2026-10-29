@@ -177,12 +177,7 @@ struct MobileKeyView: View {
         guard !busy, let m = members.first(where: { $0.id == memberID }) else { return }
         busy = true
         defer { busy = false }
-        let fmt = DateFormatter()
-        // 这个串会**落盘**（kf_mkey_ 的 validFrom/validTo），必须钉公元历：
-        // 非公历系统历法下 "yyyy" 会给出异 era 年份，与 MobileKeyService 里的
-        // "2118-01-01 00:00:00" 永久判据对不上。
-        fmt.locale = Locale(identifier: "en_US_POSIX")
-        fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        let fmt = DF.cached("yyyy-MM-dd HH:mm:ss")
         do {
             _ = try await MobileKeyService.issue(app,
                                                  kc: kc,
