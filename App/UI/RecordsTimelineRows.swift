@@ -14,6 +14,9 @@ extension RecordsView {
         // 为什么不用 `sorted(by:)`: Swift 的比较排序**不保证稳定**，而"其余按原时间随后"这条要的是稳定性 ——
         // 拆成两段再拼是确定性的，还省掉整组比较。
         let ordered = g.rows.filter(\.warn) + g.rows.filter { !$0.warn }
+        // 2026-10-30 性能：旗标集合在**组内**一次取（原来每个 timelineRow 各取一次 =
+        // 每行一次「解码整份旗标数组 + Set 构造」）。
+        let flagged = RecordOverlay.allFlags(macs: [mac] + ordered.map { $0.rowMac })
         // 593 日界收尾: 最晚时刻与全天条数都取自 applyFilter 里**过滤与分页截断之前**的行池
         // (`dayLatest` / `dayFullCount`), 因为组尾那句「全天 N 条」说的是这一天, 不是"这一天还剩几行给我看"。
         // 为什么不用 `ordered.last`: 589 刚把告警行提到组首，"显示上的末条"与"一天里最晚的一条"从此不是一回事，
@@ -30,7 +33,7 @@ extension RecordsView {
             ForEach(ordered) { r in
                 // 583: 整行包一层 Group 才能挂 listRowBackground (ViewBuilder 的 if/else 分支不是同一个类型)。
                 Group {
-                    timelineRow(r)
+                    timelineRow(r, flagged: flagged)
                 }
                 .listRowBackground(FlashWash(on: flashKey == r.id))
             }
@@ -162,8 +165,8 @@ extension RecordsView {
     @ViewBuilder
 
 
-    func timelineRow(_ r: RowVM) -> some View {
-        return timelineRowContent(r)
+    func timelineRow(_ r: RowVM, flagged: Set<String>) -> some View {
+        return timelineRowContent(r, flagged: flagged)
         // 738 告警行: 左侧 3pt 色条 + 浅红底 (danger 派生, 形状冗余)
         .background(Color.clear)
         .listRowSeparator(.hidden)
@@ -239,7 +242,11 @@ extension RecordsView {
 
     /// 时间线行的内容层（时刻 / 连接线与事件点 / 标旗 / 开门方式 / 行距）。
     @ViewBuilder
-    private func timelineRowContent(_ r: RowVM) -> some View {
+    /// 2026-10-30 性能：`RecordOverlay.isFlagged(mac,key)` 每次调用都要 `flags(mac)` ——
+    /// 那是「DB.get 解码整份旗标数组 + Set(...) 构造」。时间线是**逐行**渲染，
+    /// 100 行就是 100 次全表解码 + 100 次 Set 构造。
+    /// 现在由调用方一次取 Set，行内只做 contains。
+    private func timelineRowContent(_ r: RowVM, flagged: Set<String>) -> some View {
     HStack(alignment: .top, spacing: DS.Space.m) {
         // 911/647: 主时间线行也必须走 TimeFormat.clock 这一个出口。此前只有合并行 (:1612) 走了,
         // 这一行是裸切片 (rowParts 的 "yyyy-MM-dd HH:mm:ss" 中段), 于是选了"12 小时"后
@@ -267,7 +274,7 @@ extension RecordsView {
 
         HStack(spacing: DS.Space.s) {
             // 188 手动标旗: 旗标行左侧常显 (形状+颜色双通道, 不只靠颜色)
-            if RecordOverlay.isFlagged(r.rowMac.isEmpty ? mac : r.rowMac, r.key) {
+            if flagged.contains(RecordOverlay.oid(mac: r.rowMac.isEmpty ? mac : r.rowMac, rowKey: r.key)) {
                 Image(systemName: "flag.fill")
                     .font(.system(size: DS.Icon.xs, weight: .semibold))
                     .foregroundStyle(DS.Palette.danger)

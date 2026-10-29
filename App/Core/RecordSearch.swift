@@ -42,6 +42,13 @@ enum RecordOverlay {
         if t.isEmpty { m.removeValue(forKey: k) } else { m[k] = String(t.prefix(60)) }   // 60 字上限: 行下灰字一行放得下
         DB.store.setCodable(noteKey(mac), m)
     }
+    /// 2026-10-30：多锁旗标合并（时间线逐行渲染时一次取，别逐行解整份表）。
+    static func allFlags(macs: [String]) -> Set<String> {
+        var out = Set<String>()
+        for m in macs where !m.isEmpty { out.formUnion(flags(m)) }
+        return out
+    }
+
     static func flags(_ mac: String) -> Set<String> {
         Set(DB.store.get([String].self, flagKey(mac)) ?? [])
     }

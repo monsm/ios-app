@@ -448,8 +448,11 @@ extension RecordsView {
         for m in macs { noteByOid.merge(RecordOverlay.notes(m)) { _, newest in newest } }
         var credByOid: [String: String] = [:]
         for x in recPool { credByOid[RecordOverlay.oid(mac: x.mac, rowKey: x.key)] = x.cred }
+        // 2026-10-30 性能：`DB.member(id)` 原来在**每行**都调一次（各自解析一份成员字典）。
+        // 搜索是边输入边重算的热路径，一次建表。
+        let memberNames = Dictionary(DB.members().map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
         return pool.filter { r in
-            let whoStr = r.whoId.flatMap { DB.member($0)?.name ?? "" } ?? ""
+            let whoStr = r.whoId.flatMap { memberNames[$0] } ?? ""
             let txt = RecordSearch.searchFace(title: r.title, lockName: r.lockName, whoName: whoStr,
                                               cred: credByOid[r.id] ?? "", note: noteByOid[r.id] ?? "")
             let memberHit = q.member.map { txt.localizedCaseInsensitiveContains($0) } ?? false

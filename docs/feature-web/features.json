@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T16:18:59.518Z",
+    "generated": "2026-10-29T16:53:52.923Z",
     "sources": [
       {
         "scout": "android-native",
@@ -25839,7 +25839,7 @@
           "line": 171,
           "symbol": "QueryFilters",
           "note": "",
-          "text": "struct QueryFilters: Codable, Equatable {"
+          "text": "if let v = alarmVerb[type] { return prefix.isEmpty ? v : prefix + v }"
         },
         {
           "platform": "ios",
@@ -25855,7 +25855,7 @@
           "line": 191,
           "symbol": "key(_:)",
           "note": "",
-          "text": "/// 全默认构造（调用点只写 QueryFilters()）。"
+          "text": "/// 原句列了\"胁迫\", 但协议日志类型表没有胁迫类 (与 725 判 ❌ 同一理由), 不虚构一个查不到的类型。"
         },
         {
           "platform": "ios",
@@ -27137,7 +27137,7 @@
           "line": 172,
           "symbol": "segment",
           "note": "",
-          "text": "var segment: Int = 0            // 564 时段: 0 全部 / 1 早(6-10) / 2 午(10-15) / 3 晚(15-22) / 4 深夜"
+          "text": "if let v = opVerb[type] { return prefix + v }"
         },
         {
           "platform": "ios",
@@ -27145,7 +27145,7 @@
           "line": 185,
           "symbol": "alarmKinds",
           "note": "",
-          "text": "var alarmKinds: Set<Int> = []"
+          "text": "/// 分开存的结果是\"过滤组合记住了、成员没记住\"这种半截行为，而且 908 的开场策略只管这一份结构,"
         }
       ],
       "platformEvidence": {
@@ -28079,7 +28079,7 @@
           "line": 439,
           "symbol": "nightWindowDegenerate",
           "note": "",
-          "text": "if ch.isNumber { digits.append(ch) } else { break }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -28087,7 +28087,7 @@
           "line": 446,
           "symbol": "isLateNight",
           "note": "a > b ? (hour >= a || hour < b) : (hour >= a && hour < b)",
-          "text": "let head = tok[..<i.lowerBound]"
+          "text": "if ch.isNumber { digits.append(ch) } else { break }"
         }
       ],
       "platformEvidence": {
@@ -61608,7 +61608,7 @@
           "line": 203,
           "symbol": "load(mac:)",
           "note": "",
-          "text": "segment = try c.decodeIfPresent(Int.self, forKey: .segment) ?? 0"
+          "text": "self.failedOnly = failedOnly; self.alarmKinds = alarmKinds"
         },
         {
           "platform": "ios",
@@ -61616,7 +61616,7 @@
           "line": 212,
           "symbol": "save(mac:)",
           "note": "",
-          "text": "}"
+          "text": "lateNight = try c.decodeIfPresent(Bool.self, forKey: .lateNight) ?? false"
         },
         {
           "platform": "ios",
@@ -61624,7 +61624,7 @@
           "line": 193,
           "symbol": "policyKey",
           "note": "",
-          "text": "kind: String = \"\", member: String = \"\", failedOnly: Bool = false, alarmKinds: Set<Int> = []) {"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -62528,7 +62528,7 @@
           "line": 423,
           "symbol": "dayKeyOfNight(_:)",
           "note": "",
-          "text": "/// \"当年 N月D日\" → 一个合法 Date; 解不出 (2月30日 之类) 返 nil"
+          "text": "/// 备注此前完全不在搜索面上, 而界面上写着它可搜 = 承诺了一个搜不到的热区 (第一百八十九批)。"
         }
       ],
       "platformEvidence": {
