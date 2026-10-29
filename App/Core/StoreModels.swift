@@ -60,31 +60,100 @@ struct LedgerPwd: Codable, Identifiable {
     // 2026-10-27 审核说明 (AUDIT-A F-33)：`at` 字段有两种单位 ——
     // `LedgerPwd.at` / `LedgerFp.at` 是**毫秒**，`CredBinEntry.at` / `CredSnapshot.at` 是**秒**。
     // 这是历史包袱（两族数据不同时期引入）。**不要统一** —— 改了会让老备份解析错位。
-    // 新增字段时请沿用所属类型既有单位，并在注释里写明。
-    var at: Double          // epoch **毫秒** (添加时刻；注意 `CredBinEntry.at` / `CredSnapshot.at` 是秒 —— 混用会差一千倍，第一百六十二批就是这么筛出 0 条的)
+    var at: Double          // epoch **毫秒**
     var pwd: String?
     var owner: String?
     var note: String
     var id: Int { alias }
+
+    enum CodingKeys: String, CodingKey { case alias, from, to, temp, at, pwd, owner, note }
+
+    init(alias: Int, from: String, to: String, temp: Bool, at: Double,
+         pwd: String?, owner: String?, note: String) {
+        self.alias = alias; self.from = from; self.to = to; self.temp = temp
+        self.at = at; self.pwd = pwd; self.owner = owner; self.note = note
+    }
+
+    /// 容错解码（2026-10-29）：**缺字段回落默认值**，而不是整份 ledger 解不出。
+    ///
+    /// 合成解码器对非 Optional 字段要求键必须存在；而这两个 struct 的字段几乎全是非 Optional。
+    /// 于是「新增一个字段」或「导入不完全的旧备份」就会让整份 Ledger 解码失败 →
+    /// 触发 markLedgerCorrupt → 整个会话里所有凭证写入（含备份恢复的导入）被静默拒绝。
+    /// 这就是上一轮那两个「损坏标记永不清除」Bug 的**根因**，在这里堵掉。
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        alias = try c.decodeIfPresent(Int.self, forKey: .alias) ?? 0
+        from = try c.decodeIfPresent(String.self, forKey: .from) ?? ""
+        to = try c.decodeIfPresent(String.self, forKey: .to) ?? ""
+        temp = try c.decodeIfPresent(Bool.self, forKey: .temp) ?? false
+        at = try c.decodeIfPresent(Double.self, forKey: .at) ?? 0
+        pwd = try c.decodeIfPresent(String.self, forKey: .pwd)
+        owner = try c.decodeIfPresent(String.self, forKey: .owner)
+        note = try c.decodeIfPresent(String.self, forKey: .note) ?? ""
+    }
 }
 struct LedgerFp: Codable, Identifiable {
     var batch: Int
     var name: String
-    var at: Double          // epoch **毫秒** (添加时刻；与 `LedgerPwd.at` 同约定)
+    var at: Double          // epoch **毫秒** (与 `LedgerPwd.at` 同约定)
     var note: String
     /// 锁端要 UInt32 批次号, 台账里是 Int, 而导入链 (BackupKit.restoreAll / BackupStudioKit 解码与合账)
     /// **不校验符号与上界**。`UInt32(-1)` 在 Swift 里是 **trap** (不是 nil、不是异常) ⇒
     /// 构造/损坏一份含 {"batch": -1} 或超大的备份导进去, 用户在凭证页点一下「删除」进程当场崩。
-    /// (第 209 批对抗式排查确证; 四处 fpDelete 调用点原先都裸转。)
     var batchU32: UInt32? { (batch >= 0 && batch <= Int(UInt32.max)) ? UInt32(batch) : nil }
     var src: String?
     var owner: String?
     var isAlarm: Bool?
     var id: Int { batch }
+
+    enum CodingKeys: String, CodingKey { case batch, name, at, note, src, owner, isAlarm }
+
+    init(batch: Int, name: String, at: Double, note: String,
+         src: String?, owner: String?, isAlarm: Bool?) {
+        self.batch = batch; self.name = name; self.at = at; self.note = note
+        self.src = src; self.owner = owner; self.isAlarm = isAlarm
+    }
+
+    /// 容错解码 —— 理由同 `LedgerPwd.init(from:)`。
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        batch = try c.decodeIfPresent(Int.self, forKey: .batch) ?? 0
+        name = try c.decodeIfPresent(String.self, forKey: .name) ?? ""
+        at = try c.decodeIfPresent(Double.self, forKey: .at) ?? 0
+        note = try c.decodeIfPresent(String.self, forKey: .note) ?? ""
+        src = try c.decodeIfPresent(String.self, forKey: .src)
+        owner = try c.decodeIfPresent(String.self, forKey: .owner)
+        isAlarm = try c.decodeIfPresent(Bool.self, forKey: .isAlarm)
+    }
 }
+/// 逐元素容错：数组里某个元素解不出时**跳过它**，不连累整个数组。
+/// 用途见 `Ledger.init(from:)` —— 一条坏记录不该让整份台账变成"不可解"。
+struct Lossy<T: Decodable>: Decodable {
+    let value: T?
+    init(from decoder: Decoder) throws { value = try? T(from: decoder) }
+}
+
 struct Ledger: Codable {
     var pwds: [LedgerPwd] = []
     var fps: [LedgerFp] = []
+
+    enum CodingKeys: String, CodingKey { case pwds, fps }
+
+    init(pwds: [LedgerPwd] = [], fps: [LedgerFp] = []) {
+        self.pwds = pwds
+        self.fps = fps
+    }
+
+    /// 容错解码（2026-10-29）：缺键回落空数组；单个元素坏掉只丢那一条。
+    /// 原合成的解码器要求 `pwds`/`fps` 两个键都存在，且任一元素坏掉就整份失败 ——
+    /// 那会直接触发 `markLedgerCorrupt`，让整个会话的凭证写入被拒。
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let p = (try? c.decodeIfPresent([Lossy<LedgerPwd>].self, forKey: .pwds)) ?? nil
+        pwds = (p ?? []).compactMap { $0.value }
+        let f = (try? c.decodeIfPresent([Lossy<LedgerFp>].self, forKey: .fps)) ?? nil
+        fps = (f ?? []).compactMap { $0.value }
+    }
 }
 
 // ---------- 成员档案 (services/members.js v3) ----------
