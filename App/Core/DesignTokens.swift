@@ -2,6 +2,7 @@
 // 2026-10-29 从 DesignSystem.swift（1012 行）拆出 —— 都是 DS 的子 enum，
 // 用 `extension DS { ... }` 保持 `DS.Radius.card` 这种调用形式不变。
 import SwiftUI
+import UIKit
 
 /// 设计系统命名空间。
 /// 2026-10-29：`enum DS` 的空壳声明放在这里（原在 DesignSystem.swift）。
@@ -24,6 +25,7 @@ extension DS {
         static var tile: CGFloat { r(18) }
     }
     enum Hit { static let min: CGFloat = 44 }
+    @MainActor
     enum Haptics {
         static let tick = UIImpactFeedbackGenerator(style: .light)
         static let trigger = UIImpactFeedbackGenerator(style: .medium)

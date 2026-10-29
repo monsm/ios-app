@@ -1,6 +1,7 @@
 // LinkSense · 重连阶梯（预热 / 自动重连 / 退避 / 唤醒失败归因）
 // 2026-10-29 从 LinkSenseKit.swift 拆出。
 import Foundation
+import UIKit
 
 extension LinkSense {
     func preconnect() async {

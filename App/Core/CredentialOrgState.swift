@@ -1,6 +1,7 @@
 // CredentialOrg · 状态与到期（已过期 / 即将过期 / 到期日 / 弱口令 / 停用标记 / 智能列表）
 // 2026-10-29 从 CredentialOrg.swift 拆出。
 import Foundation
+@preconcurrency import UserNotifications
 
 extension CredentialOrg {
     /// 永久有效期 (2118) 返回 nil — 不参与到期排序与预警
