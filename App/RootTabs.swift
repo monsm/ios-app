@@ -309,4 +309,30 @@ extension RootView {
             AutoOpenController.shared.onBackground()
         }
     }
+
+    // 2026-10-29：4 个 Tab 内容属性从 LockKeeperApp 搬到本文件 ——
+    // destmap.js 的 propertyBody 只跟**同一文件**一跳，`Tab(...) { xxxTabContent }` 的
+    // 内容属性必须与 Tab 同文件，否则四个根页不进台账（uicoverage 会掉 4 条）。
+    @ViewBuilder private var deviceTabContent: some View {
+        DeviceHomeView()
+            .keyboardShortcut("1", modifiers: .command)
+    }
+    @ViewBuilder private var credentialsTabContent: some View {
+        // 身份挂在这里 (父层) 才有效: CredentialsView 的 @State 由 TabView 持有,
+        // 在其 body 内部写 .id(app.currentMac) 不会重建该 struct → 切锁后
+        // selPwds/selFps/otpPwd 仍是上一把锁的值, 批量停用会打到错锁。
+        CredentialsView().id(app.currentMac)
+            .keyboardShortcut("2", modifiers: .command)
+    }
+    @ViewBuilder private var recordsTabContent: some View {
+        // 同凭证 Tab: 记录是纯 per-lock 数据, 在父层挂身份才能整体重建。
+        // RecordsView 只有 :178 onAppear→loadFromCache, 编程式切锁 (跳回/意图改 currentMac)
+        // 不触发 → groups/allRows 仍是旧锁行, :1187 的认领会把旧锁 idxRaw 记到新锁键下。
+        RecordsView().id(app.currentMac)
+            .keyboardShortcut("3", modifiers: .command)
+    }
+    @ViewBuilder private var settingsTabContent: some View {
+        SettingsView()
+            .keyboardShortcut("4", modifiers: .command)
+    }
 }

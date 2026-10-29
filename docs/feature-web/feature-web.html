@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T05:16:41.119Z",
+    "generated": "2026-10-29T05:19:02.036Z",
     "sources": [
       {
         "scout": "android-native",
@@ -34890,7 +34890,7 @@ const DATA = {
           "line": 624,
           "symbol": "func setUnlockOption(_ key: String, _ v: Any)",
           "note": "",
-          "text": "}"
+          "text": "private struct Gate: View {"
         },
         {
           "platform": "ios",
@@ -35676,7 +35676,7 @@ const DATA = {
           "line": 640,
           "symbol": "892 自定义强调色注释",
           "note": "",
-          "text": "/// 872 防连点: 300ms 内重复点击忽略 (开关 AXPrefs.dbltapGuard, 默认开)。"
+          "text": "/// 每张卡都套 0.5pt 描边会让所有卡片看起来出自同一个模板 —— 描边是 1px Web 做法,"
         },
         {
           "platform": "ios",
@@ -35700,7 +35700,7 @@ const DATA = {
           "line": 642,
           "symbol": "func setCustomAccent",
           "note": "",
-          "text": "/// ButtonStyle 拿不到 action (拦不住点击), 而直接在外层用 onTapGesture 会把 List 行点击、"
+          "text": "/// 阴影在深色模式下纯黑不可见, 故改用极淡的提亮。"
         }
       ],
       "platformEvidence": {
@@ -37908,7 +37908,7 @@ const DATA = {
           "line": 587,
           "symbol": "开锁偏好注释",
           "note": "",
-          "text": "}"
+          "text": ".lineLimit(3)"
         },
         {
           "platform": "ios",
@@ -37916,7 +37916,7 @@ const DATA = {
           "line": 598,
           "symbol": "static let behaviorKeys",
           "note": "",
-          "text": "static func registerHost(_ app: AppState) {"
+          "text": ".accessibilityAddTraits(.isStaticText)"
         },
         {
           "platform": "ios",
@@ -37924,7 +37924,7 @@ const DATA = {
           "line": 620,
           "symbol": "无障碍键并入",
           "note": "",
-          "text": ".shadow(color: .black.opacity(0.18), radius: 16, y: 6)"
+          "text": "struct PressableButtonStyle: PrimitiveButtonStyle {"
         },
         {
           "platform": "ios",
@@ -37932,7 +37932,7 @@ const DATA = {
           "line": 624,
           "symbol": "func setUnlockOption",
           "note": "",
-          "text": "}"
+          "text": "private struct Gate: View {"
         },
         {
           "platform": "ios",
@@ -37940,7 +37940,7 @@ const DATA = {
           "line": 626,
           "symbol": "if behaviorKeys.contains",
           "note": "",
-          "text": ""
+          "text": "@State private var lastFire = Date.distantPast"
         }
       ],
       "platformEvidence": {
@@ -38033,7 +38033,7 @@ const DATA = {
           "line": 629,
           "symbol": "894 恢复带外观段注释",
           "note": "",
-          "text": ""
+          "text": "let now = Date()"
         },
         {
           "platform": "ios",
@@ -38049,7 +38049,7 @@ const DATA = {
           "line": 633,
           "symbol": "func reloadAppearance",
           "note": "",
-          "text": ".scaleEffect(configuration.isPressed ? 0.96 : 1)"
+          "text": "} label: { configuration.label }"
         },
         {
           "platform": "ios",
@@ -38057,7 +38057,7 @@ const DATA = {
           "line": 634,
           "symbol": "themeSeed 重读",
           "note": "",
-          "text": ".shadow(color: .black.opacity(configuration.isPressed ? 0.16 : 0), radius: 7, y: 3)"
+          "text": ".buttonStyle(PressFeedback())"
         },
         {
           "platform": "ios",
@@ -38065,7 +38065,7 @@ const DATA = {
           "line": 639,
           "symbol": "bumpAppearanceForLayout",
           "note": "",
-          "text": ""
+          "text": "/// 卡片表面: 靠 surface 与渐变画布的明度差分层, 不加描边。"
         }
       ],
       "platformEvidence": {
@@ -38146,7 +38146,7 @@ const DATA = {
           "line": 652,
           "symbol": "idea 202 注释",
           "note": "",
-          "text": "var body: some View {"
+          "text": ": UIColor(Color.black).withAlphaComponent(0.05)"
         },
         {
           "platform": "ios",
@@ -38154,7 +38154,7 @@ const DATA = {
           "line": 657,
           "symbol": "func resetAppearance",
           "note": "",
-          "text": "configuration.trigger()"
+          "text": "struct Card\u003cContent: View>: View {"
         },
         {
           "platform": "ios",
@@ -38162,7 +38162,7 @@ const DATA = {
           "line": 659,
           "symbol": "kf_theme = \"\"",
           "note": "",
-          "text": ".buttonStyle(PressFeedback())"
+          "text": "var content: Content"
         },
         {
           "platform": "ios",
@@ -38170,7 +38170,7 @@ const DATA = {
           "line": 668,
           "symbol": "kf_accent_custom",
           "note": "",
-          "text": "/// `tint` 给\"需要处理\"的卡混入语义色底 (8%), 让异常自带色温而不靠描边。"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -38178,7 +38178,7 @@ const DATA = {
           "line": 672,
           "symbol": "kf_motion remove 注释",
           "note": "",
-          "text": "extension Color {"
+          "text": "// `.legacy` 分支是原来这段 body 逐字搬过去的，见 VariantGrammar.swift 的 VK.card。"
         }
       ],
       "platformEvidence": {
@@ -39312,7 +39312,7 @@ const DATA = {
           "line": 688,
           "symbol": "启动结算注释",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -39320,7 +39320,7 @@ const DATA = {
           "line": 689,
           "symbol": "func onLaunch",
           "note": "",
-          "text": "/// 语义色叠底 (低电/告警的 ToneColor)。实底时代是 0.08；改玻璃后提到 0.14 ——"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -39328,7 +39328,7 @@ const DATA = {
           "line": 692,
           "symbol": "if CrashGuard.pendingAbnormal",
           "note": "",
-          "text": "tint.map { $0.color.opacity(0.14) } ?? .clear"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -39336,7 +39336,7 @@ const DATA = {
           "line": 704,
           "symbol": "let retention = DB.store.getInt(SecKey.auditRetention)",
           "note": "",
-          "text": "var text: String"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -39344,7 +39344,7 @@ const DATA = {
           "line": 706,
           "symbol": "if DestroyKit.backupGatePass",
           "note": "",
-          "text": "var body: some View {"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -58196,7 +58196,7 @@ const DATA = {
           "line": 598,
           "symbol": "behaviorKeys",
           "note": "",
-          "text": "static func registerHost(_ app: AppState) {"
+          "text": ".accessibilityAddTraits(.isStaticText)"
         },
         {
           "platform": "ios",

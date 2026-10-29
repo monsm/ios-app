@@ -538,31 +538,6 @@ struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
     // 读取 themeSeed: 设置页切换主题时立即重建配色
     private var colorScheme: ColorScheme? { Theme.scheme(for: app.themeSeed) }
-    /// 四个 Tab 的内容视图 (从 body 内联的 TabView 里抽出: 该表达式报 type-check 超时)。
-    /// ⚠ Tab 是 TabContent **不是** View: `.keyboardShortcut` 挂不上去 (报 "Tab … has no member
-    ///   'keyboardShortcut'"), 要挂在 Tab 的**内容视图**上; 只有 `.badge` 才是 Tab 自己的成员。
-    @ViewBuilder private var deviceTabContent: some View {
-        DeviceHomeView()
-            .keyboardShortcut("1", modifiers: .command)
-    }
-    @ViewBuilder private var credentialsTabContent: some View {
-        // 身份挂在这里 (父层) 才有效: CredentialsView 的 @State 由 TabView 持有,
-        // 在其 body 内部写 .id(app.currentMac) 不会重建该 struct → 切锁后
-        // selPwds/selFps/otpPwd 仍是上一把锁的值, 批量停用会打到错锁。
-        CredentialsView().id(app.currentMac)
-            .keyboardShortcut("2", modifiers: .command)
-    }
-    @ViewBuilder private var recordsTabContent: some View {
-        // 同凭证 Tab: 记录是纯 per-lock 数据, 在父层挂身份才能整体重建。
-        // RecordsView 只有 :178 onAppear→loadFromCache, 编程式切锁 (跳回/意图改 currentMac)
-        // 不触发 → groups/allRows 仍是旧锁行, :1187 的认领会把旧锁 idxRaw 记到新锁键下。
-        RecordsView().id(app.currentMac)
-            .keyboardShortcut("3", modifiers: .command)
-    }
-    @ViewBuilder private var settingsTabContent: some View {
-        SettingsView()
-            .keyboardShortcut("4", modifiers: .command)
-    }
 
     /// 顶部横幅栈 (演示/BLE/自检/粘贴建议/toast/写入回执) —— 从 body 内联的 safeAreaInset
     /// 里抽出: 该表达式报 type-check 超时。
