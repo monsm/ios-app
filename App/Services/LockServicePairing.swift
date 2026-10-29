@@ -58,7 +58,7 @@ extension LockService {
         // 0. 续配: 上一次配网在换钥之后中断 (App 被杀 / 08·21·03 任一步失败 / 断链) 时,
         //    锁内 skey 就是本机留存的那一份 —— 先拿它把尾链走完。走不通 (锁被重新重置过, 密钥域已擦) 再回退整链。
         //    这是本 App 最接近"变砖"的那条后路。
-        if let kc = try await resumePairIfPossible(m: m, deviceId: deviceId) { return kc }
+        if let kc = try await resumePairIfPossible(m: m, deviceId: deviceId, progress: progress) { return kc }
 
         progress("步骤 1/7: 探测交换方式 (cmd 23)")
         let w = try await request(ZKCmdBuilder.cmd23ExKeyWay(), cmd: 0x23, needToken: false, retries: 3)
@@ -239,8 +239,8 @@ extension LockService {
 
 
     /// 续配: 用上次中断时留存的密钥直接把尾链走完。走不通返回 nil，调用方回退完整配网链。
-    private func resumePairIfPossible(m: String, deviceId: String) async throws -> Keychain? {
-        guard let pend = DB.pendingPair(m), !pend.skey.isEmpty, !pend.pins.isEmpty {
+    private func resumePairIfPossible(m: String, deviceId: String, progress: @escaping (String) -> Void) async throws -> Keychain? {
+        guard let pend = DB.pendingPair(m), !pend.skey.isEmpty, !pend.pins.isEmpty else { return nil }
             progress("发现上次中断的配网记录 → 先试续配 (不重新换钥)")
             log("info", "续配尝试: 用留存密钥直接走尾链 (留存于 \(pend.pairedAt))")
             do {
@@ -259,7 +259,6 @@ extension LockService {
                 log("warn", "续配不通 (\(error.localizedDescription)) → 回退完整配网链 (锁可能已被再次重置)")
                 progress("续配不通 (锁可能已再次重置) → 走完整配网")
             }
-        }
         return nil
     }
 

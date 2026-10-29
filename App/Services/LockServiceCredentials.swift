@@ -233,15 +233,15 @@ extension LockService {
     }
 
 
-    // ---------- 指纹录入的帧解析helper（2026-10-29 从 fpStart 的嵌套函数提到方法，便于单测） ----------
+    // ---------- 指纹录入的帧解析 helper（2026-10-29 从 fpStart 的嵌套函数提到方法，便于单测） ----------
 
     /// 与 JS lock.js:507-511 同一套取值口径 (0x04 序号 / 0x05 特征号 / 0x06 批次 / 0x07 下一次超时)
     func press(of f: ZKProtocol.ParsedFrame) -> FpPress {
-    func u32(_ key: UInt8) -> UInt32? {
-    f.klvs.first(where: { $0.key == key }).map { StatusParser.leHexToU32($0.val) }
-    }
-    return FpPress(orderIdx: u32(0x04), featureNumber: u32(0x05),
-    batchNumber: u32(0x06), nextTimeout: u32(0x07), rc: extractRc(0x13, f))
+        func u32(_ key: UInt8) -> UInt32? {
+            f.klvs.first(where: { $0.key == key }).map { StatusParser.leHexToU32($0.val) }
+        }
+        return FpPress(orderIdx: u32(0x04), featureNumber: u32(0x05),
+                       batchNumber: u32(0x06), nextTimeout: u32(0x07), rc: extractRc(0x13, f))
     }
 
     func rcOf(_ f: ZKProtocol.ParsedFrame) -> Int { extractRc(0x13, f) }
@@ -250,8 +250,8 @@ extension LockService {
     /// 模糊帧/超时帧**不计数** —— 旧写法只判 orderIdx>0, 模糊那一下也会点亮一格进度,
     /// 于是屏上写着 4/8、锁里其实只有 3 次有效特征。
     func isPress(_ f: ZKProtocol.ParsedFrame) -> Bool {
-    let r = rcOf(f)
-    guard r == 0 || r == -1 else { return false }
-    return (press(of: f).orderIdx ?? 0) > 0
+        let r = rcOf(f)
+        guard r == 0 || r == -1 else { return false }
+        return (press(of: f).orderIdx ?? 0) > 0
     }
 }
