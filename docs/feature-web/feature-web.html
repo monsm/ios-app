@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T06:35:35.526Z",
+    "generated": "2026-10-29T06:48:47.471Z",
     "sources": [
       {
         "scout": "android-native",
@@ -57361,7 +57361,7 @@ const DATA = {
           "line": 374,
           "symbol": "saveKeychain",
           "note": "密钥不再明文写 plist, 改存系统 Keychain",
-          "text": "}"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -60835,7 +60835,7 @@ const DATA = {
           "line": 182,
           "symbol": "Member",
           "note": "",
-          "text": "at: Date().timeIntervalSince1970 * 1000)"
+          "text": "var map = store.getDict(\"kf_members\")"
         }
       ],
       "platformEvidence": {
@@ -61450,7 +61450,7 @@ const DATA = {
           "line": 290,
           "symbol": "DefendCfg",
           "note": "",
-          "text": "}"
+          "text": "map[merged.mac] = merged.toDict()"
         },
         {
           "platform": "ios",
@@ -61458,7 +61458,7 @@ const DATA = {
           "line": 261,
           "symbol": "DongleStat",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -61466,7 +61466,7 @@ const DATA = {
           "line": 272,
           "symbol": "Gateway",
           "note": "",
-          "text": "}"
+          "text": "static func saveGateway(_ g: Gateway) {"
         }
       ],
       "platformEvidence": {
@@ -61632,7 +61632,7 @@ const DATA = {
           "line": 131,
           "symbol": "init(from:)",
           "note": "",
-          "text": "static var currentMac: String {"
+          "text": "get { store.getString(\"kf_current_mac\") }"
         },
         {
           "platform": "ios",
@@ -61710,7 +61710,7 @@ const DATA = {
           "line": 150,
           "symbol": "LedgerPwd",
           "note": "",
-          "text": "static func cacheWritable(_ mac: String) -> Bool {"
+          "text": "guard keychain(mac) != nil else {"
         },
         {
           "platform": "ios",
@@ -61718,7 +61718,7 @@ const DATA = {
           "line": 161,
           "symbol": "LedgerFp",
           "note": "",
-          "text": "// 成员"
+          "text": "static func members() -> [Member] {"
         },
         {
           "platform": "ios",
@@ -61726,7 +61726,7 @@ const DATA = {
           "line": 176,
           "symbol": "Ledger",
           "note": "",
-          "text": "// 2026-10-14: 旧写法按 count % 6 取色 —— 删成员后 count 回退会与现存成员撞色 (头像/时间线靠色区分)。"
+          "text": "// 先挑一个当前没被占用的色, 六色用满才按人数轮转。"
         }
       ],
       "platformEvidence": {
@@ -61794,7 +61794,7 @@ const DATA = {
           "line": 198,
           "symbol": "StatusSnapshotData",
           "note": "",
-          "text": "}"
+          "text": "store.set(\"kf_members\", map)"
         },
         {
           "platform": "ios",
@@ -61802,7 +61802,7 @@ const DATA = {
           "line": 223,
           "symbol": "CachedLog",
           "note": "",
-          "text": "}"
+          "text": "var duty = store.get([String: String].self, \"kf_duty_week\") ?? [:]"
         }
       ],
       "platformEvidence": {
@@ -62090,7 +62090,7 @@ const DATA = {
           "line": 350,
           "symbol": "migrateSecretsToKeychain()",
           "note": "",
-          "text": "}"
+          "text": "// 只有旧摘要的历史库: 按旧口径验, 验过即静默升级 (无感迁移, 不会把老用户锁在外面)"
         },
         {
           "platform": "ios",
@@ -62098,7 +62098,7 @@ const DATA = {
           "line": 361,
           "symbol": "stored",
           "note": "stored || set 成功才 removeValue",
-          "text": "if let pw { set(passcodeDigest(pw), \"kf_passcode\") } else { store.remove(\"kf_passcode\") }"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -62248,7 +62248,7 @@ const DATA = {
           "line": 374,
           "symbol": "saveKeychain(_:)",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
