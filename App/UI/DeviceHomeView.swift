@@ -290,30 +290,6 @@ struct DeviceHomeView: View {
         .accessibilityAddTraits(on ? [.isSelected] : [])
     }
 
-    /// 764 的四种状态: 优先级 告警 > 低电 > 已连接 > 无读数。
-    /// `.none` 在图标上是**空心圈**而不是灰点 —— 灰点会被读成"我查过了, 它没事", 而那正是没查过的样子。
-    /// 嵌套类型**不继承**外层 View 的主 actor 隔离, 而这里的色板走 DS.Palette 的高对比令牌 (主 actor)
-    /// —— 所以显式标一次。
-    @MainActor
-    private enum Dot {
-        case alarm, low, linked, none
-        var color: Color {
-            switch self {
-            case .alarm: return DS.Palette.danger
-            case .low: return DS.Palette.warn
-            case .linked: return DS.Palette.ok
-            case .none: return DS.Palette.hairlineStrong
-            }
-        }
-        var word: String {
-            switch self {
-            case .alarm: return "近 30 天有告警"
-            case .low: return "低电量"
-            case .linked: return "已连接"
-            case .none: return "没读到读数"
-            }
-        }
-    }
 
     // 243 断连灰化: 连接断开时整卡去饱和, 恢复即回彩
     // 包3: 参数化到任意锁 — 当前页吃实时状态, 其余页读各锁快照 (101/763 横滑预览)

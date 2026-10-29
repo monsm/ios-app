@@ -74,6 +74,13 @@ struct RecDetailSheet: View {
         Section("时间线与归属") {
             fieldRow("锁", rec.lockName + (scopeAll ? "" : " (当前锁)"))
             fieldRow("类型", rec.typeName + " (#" + String(rec.type) + ")")
+            // 2026-10-29 补：`RecordSearch.sameTypeCount` 零调用 —— 单看一条"撬锁"不知道是偶发还是惯犯。
+            if rec.type != 0 {
+                let sc = RecordSearch.sameTypeCount(mac: rec.mac, type: rec.type, exceptKey: rec.key)
+                if sc.total > 1 {
+                    fieldRow("同类记录", "共 \(sc.total) 条" + (sc.lastStr.isEmpty ? "" : " · 上一条 \(TimeFormat.clock(sc.lastStr))"))
+                }
+            }
             // 647 制式: 全部时间字段只经 TimeFormat.clock() 这一个出口 (与时间线、导出同一份口径)
             fieldRow("锁端时刻", TimeFormat.clock(rec.timeStr))
             // 650 时间来源徽标: "锁内时钟"=这条时刻来自日志 #04 协议秒; "本机录入"=拉取时补的墙钟。

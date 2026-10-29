@@ -1169,6 +1169,14 @@ struct TempCodeStudio: View {
                             .vkFont(.caption2)
                             .foregroundStyle(pwdOK ? DS.Palette.ok : DS.Palette.textSub)
                             .lineLimit(1)
+                        // 2026-10-29 补：`CredentialOrg.weakReason` 零调用 —— 位数合规只说明长度对，
+                        // 111111 / 123456 这种仍然能过。这里把三条弱口令判据的结果如实提示（不评"强度分"）。
+                        if pwdOK, let weak = CredentialOrg.weakReason(pwd) {
+                            Text("⚠ \(weak)，建议换一个")
+                                .vkFont(.caption2)
+                                .foregroundStyle(DS.Palette.warn)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
                     }
                     if !pwd.isEmpty {
                         MaskedDigits(value: pwd, big: true)

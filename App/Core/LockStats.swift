@@ -321,16 +321,6 @@ enum LockStats {
         }
     }
 
-    /// 764 图标行的告警判据: 近 windowDays 天内**日志缓存里**有告警类记录的锁。
-    /// 只读已有缓存、不主动连锁 —— 图标行每次 body 都会重算, 这里必须是可以放在刷新里算一次的纯本地聚合。
-    /// 读不到日志的锁 (从未同步) 不在集合里, 界面上标成"没有读数"而不是"没有告警" (空心圈)。
-    // 【保留未接 2026-10-29】近 30 天有告警的锁（设备图标红点）—— 多锁图标行的告警判据
-    static func recentAlarmMacs(_ usages: [LockUsage]? = nil) -> Set<String> {
-        let src = usages ?? usage()
-        var set = Set<String>()
-        for u in src where u.alarms30d > 0 { set.insert(u.mac) }
-        return set
-    }
 
 
 }
