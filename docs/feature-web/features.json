@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T02:12:19.184Z",
+    "generated": "2026-10-29T02:17:06.455Z",
     "sources": [
       {
         "scout": "android-native",
@@ -481,7 +481,7 @@
           "line": 130,
           "symbol": "sheet(isPresented: $showAdd)",
           "note": "AddDeviceView()",
-          "text": "// 112 换机迁移验证：这台锁真的连上过一次 ⇒ 打上已验证标记。"
+          "text": "ToolbarItem(placement: barSide) {"
         },
         {
           "platform": "android",
@@ -1762,7 +1762,7 @@
           "line": 1222,
           "symbol": "quickActions",
           "note": "",
-          "text": "LabeledRow(\"锁钟\", app.status?.lockTime.map { ProtoTime.localStr($0) } ?? \"—\")"
+          "text": "@State private var result = \"\""
         },
         {
           "platform": "ios",
@@ -1778,7 +1778,7 @@
           "line": 1227,
           "symbol": "let cols = AXPrefs.bigTile ? 2 : 3",
           "note": "",
-          "text": "} header: {"
+          "text": "private var resultTone: ToneColor { failed ? .danger : .ok }"
         }
       ],
       "platformEvidence": {
@@ -2977,7 +2977,7 @@
           "line": 857,
           "symbol": "attentionCard",
           "note": "",
-          "text": "/// 905/1047: `onTap` 是给 1047 记频次用的**可选**回调。"
+          "text": ".overlay("
         },
         {
           "platform": "ios",
@@ -2985,7 +2985,7 @@
           "line": 879,
           "symbol": "attentionItems",
           "note": "",
-          "text": "VStack(spacing: DS.Space.s) {"
+          "text": "// 上的 simultaneousGesture(TapGesture) —— 同一次点击被两个手势系统抢 (label 的 Tap 与"
         },
         {
           "platform": "ios",
@@ -2993,7 +2993,7 @@
           "line": 895,
           "symbol": "BatteryCare.fpCleanNeeded(mac)",
           "note": "",
-          "text": ".padding(.vertical, DS.Space.m)"
+          "text": "// 图标坐进主色 12% 的圆角底座: 四个入口有了统一的\"图标 + 玻璃砖\"节奏"
         }
       ],
       "platformEvidence": {
@@ -3061,7 +3061,7 @@
           "line": 170,
           "symbol": ".onChange(of: app.pendingJumpLock)",
           "note": "",
-          "text": "app.showToast(\"已定位到「\" + app.displayName + \"」\")"
+          "text": "if let i = pageOrder.firstIndex(of: new) { pageIndex = i }"
         },
         {
           "platform": "ios",
@@ -3069,7 +3069,7 @@
           "line": 201,
           "symbol": "if app.pendingAddDevice",
           "note": "",
-          "text": ""
+          "text": "if let m = app.pendingJumpLock {"
         },
         {
           "platform": "ios",
@@ -3077,7 +3077,7 @@
           "line": 148,
           "symbol": ".onChange(of: app.currentMac)",
           "note": "",
-          "text": "confirmMac = new.isEmpty ? nil : new"
+          "text": "if !DB.store.getString(\"kf_migrate_pending\").isEmpty {"
         }
       ],
       "platformEvidence": {
@@ -3252,7 +3252,7 @@
           "line": 330,
           "symbol": "groupChips",
           "note": "",
-          "text": "}"
+          "text": "VStack(alignment: .leading, spacing: DS.Space.xxs) {"
         },
         {
           "platform": "ios",
@@ -3260,7 +3260,7 @@
           "line": 293,
           "symbol": "inGroup(_:) ",
           "note": "",
-          "text": ".contentShape(Capsule())"
+          "text": "private func chip(_ name: String, _ label: String) -> some View {"
         },
         {
           "platform": "ios",
@@ -3268,7 +3268,7 @@
           "line": 347,
           "symbol": "groupFilter = name; syncPageOrder()",
           "note": "",
-          "text": ".foregroundStyle(DS.heroFg)"
+          "text": "Spacer(minLength: 0)"
         }
       ],
       "platformEvidence": {
@@ -3337,7 +3337,7 @@
           "line": 695,
           "symbol": "heroCard(for:isCurrent:)",
           "note": "",
-          "text": ".padding(DS.Space.l)"
+          "text": ".vkFont(.headline)"
         },
         {
           "platform": "ios",
@@ -3345,7 +3345,7 @@
           "line": 793,
           "symbol": "HeroStat(label: \"电量\")",
           "note": "",
-          "text": "Button {"
+          "text": "spacing: DS.Space.s) {"
         },
         {
           "platform": "ios",
@@ -3353,7 +3353,7 @@
           "line": 846,
           "symbol": ".saturation(connected ? 1 : 0.55)",
           "note": "",
-          "text": ")"
+          "text": "Image(systemName: \"hand.raised.dotted\")"
         }
       ],
       "platformEvidence": {
@@ -3423,7 +3423,7 @@
           "line": 732,
           "symbol": "LinkPill(state:connectMs:rssi:source:)",
           "note": "",
-          "text": "// 87 排查清单: 查蓝牙 / 走近 / 查电量, 逐项可勾"
+          "text": "// 39 倒计时: 秒数来自本地布防记忆 (kf_tailgate_, 档位+1=秒), 没设过按厂商默认 6 秒"
         },
         {
           "platform": "ios",
@@ -3431,7 +3431,7 @@
           "line": 738,
           "symbol": ".onTapGesture { if isCurrent { showRssi.toggle() } }",
           "note": "",
-          "text": "Image(systemName: checks[i] ? \"checkmark.circle.fill\" : \"circle\")"
+          "text": "for left in stride(from: total, through: 1, by: -1) {"
         },
         {
           "platform": "ios",
@@ -3439,7 +3439,7 @@
           "line": 756,
           "symbol": ".contextMenu { Menu(\"最近状态变化\") }",
           "note": "",
-          "text": "private var checkTexts: [String] {"
+          "text": "Text(txt)"
         }
       ],
       "platformEvidence": {
@@ -3510,7 +3510,7 @@
           "line": 903,
           "symbol": "linkSenseCard",
           "note": "",
-          "text": ".variantPlate(DS.Palette.surface, .tile, edge: DS.Palette.hairline)"
+          "text": ".vkFont(big ? .callout : .caption)"
         },
         {
           "platform": "ios",
@@ -3518,7 +3518,7 @@
           "line": 948,
           "symbol": "// 535 同步回执",
           "note": "",
-          "text": "/// 存的是**顺序串** (kf_dev_order = \"hero,quick,recent\"), 非法/缺失一律回落默认。"
+          "text": "/// 559 落地: 「最近开门」行上可证明的成员 → 记录 Tab 并按该成员过滤。"
         },
         {
           "platform": "ios",
@@ -3526,7 +3526,7 @@
           "line": 978,
           "symbol": "最后已知: 电量 … (缓存 …)",
           "note": "",
-          "text": "// 2026-10-28 修复：原来这个 switch 只判 \"quick\"，"
+          "text": "var o = devOrder"
         }
       ],
       "platformEvidence": {
@@ -3682,7 +3682,7 @@
           "line": 85,
           "symbol": "if let kc = app.current, kc.ekey.isEmpty, kc.pins.count > 1",
           "note": "",
-          "text": "moduleSlot(devOrder[1], delay: 4)   // 904"
+          "text": "// 2026-10-29：布防入口 —— 原来只在「设置 → 锁段」，用户找不到（本次审核的起点）。"
         }
       ],
       "platformEvidence": {
@@ -3752,7 +3752,7 @@
           "line": 211,
           "symbol": "rescanPull()",
           "note": "",
-          "text": "sense.noteScannedRssi(dev.rssi)"
+          "text": "showAdd = true"
         },
         {
           "platform": "ios",
@@ -3760,7 +3760,7 @@
           "line": 217,
           "symbol": "sense.scan(mac:timeoutMs: 4000)",
           "note": "",
-          "text": "app.showToast(\"扫描没能启动: 蓝牙栈忙或权限未就绪\")   // 537 扫描没能启动"
+          "text": "/// 537 下拉重扫: 三种结果说实话 —— 蓝牙没开 / 扫到了 (给信号数值) / 超时没扫到 (不假装刷新成功)。"
         },
         {
           "platform": "ios",
@@ -3768,7 +3768,7 @@
           "line": 109,
           "symbol": ".refreshable { await rescanPull() }",
           "note": "",
-          "text": "if refreshing { ProgressView() } else { Image(systemName: \"arrow.clockwise\") }"
+          "text": ".frame(maxWidth: .infinity, minHeight: DS.Hit.min)"
         }
       ],
       "platformEvidence": {
@@ -7029,7 +7029,7 @@
           "line": 1268,
           "symbol": "if DB.listFps(app.currentMac).isEmpty",
           "note": "",
-          "text": "// 与手机钟无关；把它抄一份进本机反而造出第二个\"现在是几点\"。AutoOpen 那条自动校时走 audit (0E 双确认)。"
+          "text": "failed = false"
         },
         {
           "platform": "ios",
@@ -7037,7 +7037,7 @@
           "line": 1270,
           "symbol": "quickDestination(\"addFp\")",
           "note": "",
-          "text": "result = \"同步成功\""
+          "text": "// 第八十八批: 校时页原先不先绑锁就直接 syncTime (服务层按自己的 curMac 取钥)，"
         }
       ],
       "platformEvidence": {
@@ -7824,7 +7824,7 @@
           "line": 1025,
           "symbol": "UnlockDial(state:phase:connected:bleReady:…)",
           "note": "",
-          "text": "// 点成员行 → 记录页按 TA 过滤。不可证明的行不响应（不猜、不弹\"未知成员\"）。"
+          "text": "} else {"
         },
         {
           "platform": "android",

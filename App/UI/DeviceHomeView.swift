@@ -82,6 +82,21 @@ struct DeviceHomeView: View {
                         unlockDial
                             .accessibilityElement(children: .contain)
                             .accessibilityLabel("开锁圆盘组")   // 868 开锁圆盘组
+                        // 2026-10-29：布防入口 —— 原来只在「设置 → 锁段」，用户找不到（本次审核的起点）。
+                        // 只在锁支持布防时出现（canDefend）；与设置页那条**并存**（不删，避免打断老用户习惯）。
+                        // 放圆盘下方：HIG 说重要控制宜在中部/下部，且与开锁动作同屏。
+                        if PidMap.canDefend(app.current?.pid ?? 0) {
+                            NavigationLink {
+                                DefendView()
+                            } label: {
+                                Label("布防", systemImage: "shield.lefthalf.filled")
+                                    .vkFont(.subheadline, weight: .medium)
+                                    .frame(maxWidth: .infinity, minHeight: DS.Hit.min)
+                            }
+                            .buttonStyle(PressableButtonStyle())
+                            .padding(.horizontal, DS.Space.gutter)
+                            .accessibilityHint("时段内一票否决自动开锁；布防期间靠近门锁不会自动开门")
+                        }
                         moduleSlot(devOrder[1], delay: 4)   // 904
                         moduleSlot(devOrder[2], delay: 5)   // 904
                         // 904 模块排序入口: 做成显式文字按钮 —— 原句点名的"长按设备页空白进编辑态"会与
