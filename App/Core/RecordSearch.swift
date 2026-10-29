@@ -183,6 +183,32 @@ struct QueryFilters: Codable, Equatable {
     /// 非空 = 只留这些告警类型 (StatsKit.alarmTypes 的子集)。按库里实际类型渲染 ——
     /// 原句列了"胁迫", 但协议日志类型表没有胁迫类 (与 725 判 ❌ 同一理由), 不虚构一个查不到的类型。
     var alarmKinds: Set<Int> = []
+
+    enum CodingKeys: String, CodingKey {
+        case segment, dayKind, lateNight, alarmOnly, kind, member, failedOnly, alarmKinds
+    }
+
+    /// 全默认构造（调用点只写 QueryFilters()）。
+    init(segment: Int = 0, dayKind: Int = 0, lateNight: Bool = false, alarmOnly: Bool = false,
+         kind: String = "", member: String = "", failedOnly: Bool = false, alarmKinds: Set<Int> = []) {
+        self.segment = segment; self.dayKind = dayKind; self.lateNight = lateNight
+        self.alarmOnly = alarmOnly; self.kind = kind; self.member = member
+        self.failedOnly = failedOnly; self.alarmKinds = alarmKinds
+    }
+
+    /// 容错解码（2026-10-29）：过滤条件是「按锁存一份」的持久化状态，
+    /// 加字段后老数据解不出会静默回到「全部」，用户会以为自己设的筛选丢了。
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        segment = try c.decodeIfPresent(Int.self, forKey: .segment) ?? 0
+        dayKind = try c.decodeIfPresent(Int.self, forKey: .dayKind) ?? 0
+        lateNight = try c.decodeIfPresent(Bool.self, forKey: .lateNight) ?? false
+        alarmOnly = try c.decodeIfPresent(Bool.self, forKey: .alarmOnly) ?? false
+        kind = try c.decodeIfPresent(String.self, forKey: .kind) ?? ""
+        member = try c.decodeIfPresent(String.self, forKey: .member) ?? ""
+        failedOnly = try c.decodeIfPresent(Bool.self, forKey: .failedOnly) ?? false
+        alarmKinds = try c.decodeIfPresent(Set<Int>.self, forKey: .alarmKinds) ?? []
+    }
 }
 
 // 192 过滤会话保留: 按锁记住最后一次过滤组合, 再次进记录页不必重设 (与 NamedView 的长期存档不同, 这是"会话续用")
@@ -450,6 +476,14 @@ enum RecordSearch {
     struct Disposition: Codable {
         var at: Double        // 处置时刻 (Unix 秒)
         var verdict: String   // "已处理" / "误报" / "已处置" / "测试" / "已人工检查"
+
+    enum CodingKeys: String, CodingKey { case at, verdict }
+    init(at: Double, verdict: String) { self.at = at; self.verdict = verdict }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        at = try c.decodeIfPresent(Double.self, forKey: .at) ?? 0
+        verdict = try c.decodeIfPresent(String.self, forKey: .verdict) ?? ""
+    }
     }
     /// 745 测试标记的键集 (统计口径排除用, 键 = mac#idxRaw): 与处置留痕同一份 kf_rdispo,
     /// 不另造"测试"状态 —— 标记本身就是一条处置结论。此前这个查询零调用, 统计层并未真排除。

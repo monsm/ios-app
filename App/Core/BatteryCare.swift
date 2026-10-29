@@ -12,6 +12,14 @@ import UserNotifications
 struct BattSample: Codable {
     var t: Double   // Unix 毫秒
     var pct: Int
+
+    enum CodingKeys: String, CodingKey { case t, pct }
+    init(t: Double, pct: Int) { self.t = t; self.pct = pct }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        t = try c.decodeIfPresent(Double.self, forKey: .t) ?? 0
+        pct = try c.decodeIfPresent(Int.self, forKey: .pct) ?? 0
+    }
 }
 
 

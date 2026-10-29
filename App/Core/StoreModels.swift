@@ -166,6 +166,25 @@ struct Member: Codable, Identifiable {
     var phone: String = ""
     var color: String = "#3D8BFF"
     var at: Double = 0
+
+    enum CodingKeys: String, CodingKey { case id, name, relation, phone, color, at }
+
+    init(id: String, name: String, relation: String = "", phone: String = "",
+         color: String = "#3D8BFF", at: Double = 0) {
+        self.id = id; self.name = name; self.relation = relation; self.phone = phone
+        self.color = color; self.at = at
+    }
+
+    /// 容错解码：成员档案是备份/台账的共同底座，缺一个字段不该让整条成员消失。
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decodeIfPresent(String.self, forKey: .id) ?? ""
+        name = try c.decodeIfPresent(String.self, forKey: .name) ?? ""
+        relation = try c.decodeIfPresent(String.self, forKey: .relation) ?? ""
+        phone = try c.decodeIfPresent(String.self, forKey: .phone) ?? ""
+        color = try c.decodeIfPresent(String.self, forKey: .color) ?? "#3D8BFF"
+        at = try c.decodeIfPresent(Double.self, forKey: .at) ?? 0
+    }
 }
 
 // ---------- 快照 (services/snapshot.js) ----------
@@ -352,18 +371,54 @@ struct DefendCfg: Codable {
     var startSec: Int
     var endSec: Int
     var at: Double
+
+    enum CodingKeys: String, CodingKey { case control, startSec, endSec, at }
+    init(control: Int, startSec: Int, endSec: Int, at: Double) {
+        self.control = control; self.startSec = startSec; self.endSec = endSec; self.at = at
+    }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        control = try c.decodeIfPresent(Int.self, forKey: .control) ?? 0
+        startSec = try c.decodeIfPresent(Int.self, forKey: .startSec) ?? 0
+        endSec = try c.decodeIfPresent(Int.self, forKey: .endSec) ?? 0
+        at = try c.decodeIfPresent(Double.self, forKey: .at) ?? 0
+    }
 }
 struct TailgateCfg: Codable {
     var interval: Int
     var at: Double
+
+    enum CodingKeys: String, CodingKey { case interval, at }
+    init(interval: Int, at: Double) { self.interval = interval; self.at = at }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        interval = try c.decodeIfPresent(Int.self, forKey: .interval) ?? 0
+        at = try c.decodeIfPresent(Double.self, forKey: .at) ?? 0
+    }
 }
 struct OtpStatus: Codable {
     var on: Bool
     var at: Double
+
+    enum CodingKeys: String, CodingKey { case on, at }
+    init(on: Bool, at: Double) { self.on = on; self.at = at }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        on = try c.decodeIfPresent(Bool.self, forKey: .on) ?? false
+        at = try c.decodeIfPresent(Double.self, forKey: .at) ?? 0
+    }
 }
 struct OtpIdx: Codable {
     var idx: Int
     var invalidTime: String
+
+    enum CodingKeys: String, CodingKey { case idx, invalidTime }
+    init(idx: Int, invalidTime: String) { self.idx = idx; self.invalidTime = invalidTime }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        idx = try c.decodeIfPresent(Int.self, forKey: .idx) ?? 0
+        invalidTime = try c.decodeIfPresent(String.self, forKey: .invalidTime) ?? ""
+    }
 }
 
 // ---------- 存储访问层 ----------
@@ -416,8 +471,12 @@ extension Keychain {
 extension Member {
     static func fromDict(_ d: [String: Any]) -> Member? { Member(fromDict: d) }
     init?(fromDict d: [String: Any]) {
-        guard let id = d["id"] as? String, let name = d["name"] as? String else { return nil }
-        self.id = id; self.name = name
+        // 2026-10-29：原来还要求 name 必须存在 —— 缺名成员会被**整条丢弃**，
+        // 名下凭证随之变成"未归属"（而 MemberHub.display 本来就有 unnamedLabel 兜底）。
+        // 这里只把 id 当必需（没有 id 无法归属），name 允许空。
+        guard let id = d["id"] as? String else { return nil }
+        self.id = id
+        self.name = d["name"] as? String ?? ""
         self.relation = d["relation"] as? String ?? ""
         self.phone = d["phone"] as? String ?? ""
         self.color = d["color"] as? String ?? "#3D8BFF"

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T12:16:58.250Z",
+    "generated": "2026-10-29T12:32:18.647Z",
     "sources": [
       {
         "scout": "android-native",
@@ -25855,7 +25855,7 @@
           "line": 191,
           "symbol": "key(_:)",
           "note": "",
-          "text": "private static func key(_ mac: String) -> String { \"kf_rflt_\" + mac }"
+          "text": "/// 全默认构造（调用点只写 QueryFilters()）。"
         },
         {
           "platform": "ios",
@@ -28079,7 +28079,7 @@
           "line": 439,
           "symbol": "nightWindowDegenerate",
           "note": "",
-          "text": "for tok in joined.components(separatedBy: \" \") where tok.contains(marker) {"
+          "text": "if ch.isNumber { digits.append(ch) } else { break }"
         },
         {
           "platform": "ios",
@@ -28087,7 +28087,7 @@
           "line": 446,
           "symbol": "isLateNight",
           "note": "a > b ? (hour >= a || hour < b) : (hour >= a && hour < b)",
-          "text": ""
+          "text": "let head = tok[..<i.lowerBound]"
         }
       ],
       "platformEvidence": {
@@ -32074,7 +32074,7 @@
           "line": 176,
           "symbol": "struct FwSince / fwSince",
           "note": "",
-          "text": "/// 287 低电横幅阈值 (默认 15%, 可选 10/15/20)"
+          "text": "// 2026-10-26: 这里原有 `versionLt`（版本串逐段比较），与 ZipKit/FirmwareKit 里的那份**逐字相同**。"
         },
         {
           "platform": "ios",
@@ -32200,7 +32200,7 @@
           "line": 53,
           "symbol": "appLowBattery",
           "note": "",
-          "text": "/// 无锁 / 无读数 / 未知(-1) → false: 判不出就不降级, 不瞎猜。"
+          "text": "// ---------- 120 全 App 低电分支 ----------"
         },
         {
           "platform": "ios",
@@ -32216,7 +32216,7 @@
           "line": 109,
           "symbol": "低电缓存刷新",
           "note": "",
-          "text": "live >= 0 ? live : displayPct(mac, snapshot: DB.readStatus(mac)?.powerLevel ?? -1)"
+          "text": "if snapshot < 0 { return s.pct }      // 快照未知 → 采样是唯一证据 (调用方另有时间标注)"
         }
       ],
       "platformEvidence": {
@@ -32285,7 +32285,7 @@
           "line": 151,
           "symbol": "evaluateLowBattery",
           "note": "",
-          "text": "}"
+          "text": "let content = UNMutableNotificationContent()"
         },
         {
           "platform": "ios",
@@ -32293,7 +32293,7 @@
           "line": 154,
           "symbol": ">30 复位武装",
           "note": "",
-          "text": ""
+          "text": "content.sound = .default"
         },
         {
           "platform": "ios",
@@ -32301,7 +32301,7 @@
           "line": 168,
           "symbol": "notifyNow(id: m4.batt.)",
           "note": "",
-          "text": "// 2026-10-26: 这里原有 `versionLt`（版本串逐段比较），与 ZipKit/FirmwareKit 里的那份**逐字相同**。"
+          "text": "if let s = DB.store.get(FwSince.self, \"kf_fwsince_\" + mac), s.fw == fw { return s }"
         }
       ],
       "platformEvidence": {
@@ -32379,7 +32379,7 @@
           "line": 107,
           "symbol": "sample(_:pct:)",
           "note": "",
-          "text": "/// 否则 A 锁的电量会被安到 B 锁头上 (设备页那侧的同名判据)。"
+          "text": "let snapAt = DB.get(StatusSnapshot.self, \"kf_snap_\" + mac)?.at ?? 0"
         },
         {
           "platform": "ios",
@@ -32387,7 +32387,7 @@
           "line": 112,
           "symbol": "1 小时去重 + 90 天 + 500 条",
           "note": "",
-          "text": "static func faceText(_ p: Int) -> String {"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -32455,7 +32455,7 @@
           "line": 24,
           "symbol": "struct Tier",
           "note": "",
-          "text": "// 这一档表就是\"档位映射说明\"的数据源，界面上展示原值 + 映射，**不标毫伏**，不虚构精度。"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -32463,7 +32463,7 @@
           "line": 30,
           "symbol": "tier(_:)",
           "note": "",
-          "text": "}"
+          "text": "// ============ 122/113 五档电量 (满/高/中/低/空) ============"
         },
         {
           "platform": "ios",
@@ -32471,7 +32471,7 @@
           "line": 42,
           "symbol": "isLow(0...20)",
           "note": "",
-          "text": "/// 1004 喂电提醒判定 (≤20%; 与 287 的可调横幅阈值互相独立)"
+          "text": "case 0...10:   return Tier(icon: \"battery.0percent\", tone: .danger, label: \"空\", severe: true)"
         }
       ],
       "platformEvidence": {
@@ -32710,7 +32710,7 @@
           "line": 84,
           "symbol": "displayPct",
           "note": "",
-          "text": "if let last = list.last, nowMs - last.t < 60_000, last.pct == pct { return false }"
+          "text": "@discardableResult"
         },
         {
           "platform": "ios",
@@ -32718,7 +32718,7 @@
           "line": 94,
           "symbol": "facePct",
           "note": "",
-          "text": "/// 采样表最新值与锁侧快照取时间较新的那个 (采样随读 03 落库, 通常不比快照旧);"
+          "text": "DB.store.setCodable(\"kf_batt_\" + mac, list)"
         },
         {
           "platform": "ios",
@@ -32726,7 +32726,7 @@
           "line": 98,
           "symbol": "faceText",
           "note": "",
-          "text": "static func displayPct(_ mac: String, snapshot: Int = -1) -> Int {"
+          "text": "/// 采样表里最新一条（displayPct 与档案页共用）。"
         }
       ],
       "platformEvidence": {
@@ -61608,7 +61608,7 @@
           "line": 203,
           "symbol": "load(mac:)",
           "note": "",
-          "text": "static func load(mac: String) -> QueryFilters {"
+          "text": "segment = try c.decodeIfPresent(Int.self, forKey: .segment) ?? 0"
         },
         {
           "platform": "ios",
@@ -61616,7 +61616,7 @@
           "line": 212,
           "symbol": "save(mac:)",
           "note": "",
-          "text": "func save(mac: String) {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -61624,7 +61624,7 @@
           "line": 193,
           "symbol": "policyKey",
           "note": "",
-          "text": "static let policyKey = \"kf_filter_default\""
+          "text": "kind: String = \"\", member: String = \"\", failedOnly: Bool = false, alarmKinds: Set<Int> = []) {"
         }
       ],
       "platformEvidence": {
@@ -62528,7 +62528,7 @@
           "line": 423,
           "symbol": "dayKeyOfNight(_:)",
           "note": "",
-          "text": "if ch.isNumber { digits.append(ch) } else { return nil }"
+          "text": "/// \"当年 N月D日\" → 一个合法 Date; 解不出 (2月30日 之类) 返 nil"
         }
       ],
       "platformEvidence": {
