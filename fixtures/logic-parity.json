@@ -74,7 +74,7 @@
       ],
       "impl": [
         {
-          "file": "App/Services/LockService.swift",
+          "file": "App/Services/LockServiceLink.swift",
           "re": "timeoutMs: Int = 8000",
           "note": "request 的默认窗口"
         },
@@ -98,7 +98,7 @@
       ],
       "impl": [
         {
-          "file": "App/Services/LockService.swift",
+          "file": "App/Services/LockServiceLink.swift",
           "re": "retries: Int = 3",
           "note": "exec/execOk 默认"
         },
@@ -122,7 +122,7 @@
       ],
       "impl": [
         {
-          "file": "App/Services/LockService.swift",
+          "file": "App/Services/LockServiceLink.swift",
           "re": "guard let w = self\\.waiter, w\\.cmd == cmd else \\{ return \\}",
           "note": "陈旧的其它 cmd 定时器不误杀"
         },
@@ -146,7 +146,7 @@
       ],
       "impl": [
         {
-          "file": "App/Services/LockService.swift",
+          "file": "App/Services/LockServiceLink.swift",
           "re": "if let w = waiter, w\\.cmd == cmd \\{",
           "note": "只清同 cmd"
         },
@@ -170,7 +170,7 @@
       ],
       "impl": [
         {
-          "file": "App/Services/LockService.swift",
+          "file": "App/Services/LockServiceLink.swift",
           "re": "var brokenLink = ble\\.connectedPeripheralId\\.isEmpty",
           "note": "写失败/断链都走自愈"
         },
@@ -199,7 +199,7 @@
       ],
       "impl": [
         {
-          "file": "App/Services/LockService.swift",
+          "file": "App/Services/LockServiceLink.swift",
           "re": "if needToken \\{\\s*try await ensureToken\\(\\)",
           "note": "request 内无条件"
         },
@@ -223,7 +223,7 @@
       ],
       "impl": [
         {
-          "file": "App/Services/LockService.swift",
+          "file": "App/Services/LockServiceLink.swift",
           "re": "Int64\\(secs\\) \\* 1000 \\+ 2000",
           "note": "tokenExpiryMs 记账口径"
         },
@@ -247,7 +247,7 @@
       ],
       "impl": [
         {
-          "file": "App/Services/LockService.swift",
+          "file": "App/Services/LockServiceLink.swift",
           "re": "(?:if rc == 3 && needToken|if \\(rc == 3 \\|\\| rc == 13\\), needToken)",
           "note": "refresh 后 retries: 1"
         },
@@ -300,12 +300,12 @@
       ],
       "impl": [
         {
-          "file": "App/Services/LockService.swift",
+          "file": "App/Services/LockServiceCredentials.swift",
           "re": "firstFrameMs: Int = 8000",
           "note": "fpStart 首帧窗口 (= Java 那个计时器)"
         },
         {
-          "file": "App/Services/LockService.swift",
+          "file": "App/Services/LockServiceCredentials.swift",
           "re": "if frames\\.isEmpty \\{",
           "note": "空闲判据只对首帧成立"
         }
@@ -324,7 +324,7 @@
       ],
       "impl": [
         {
-          "file": "App/Services/LockService.swift",
+          "file": "App/Services/LockServiceOps.swift",
           "re": "cmd04Open\\(cred, klv01Hex: \"0000\"\\), retries: 2",
           "note": "unlock"
         },
@@ -358,22 +358,22 @@
       ],
       "impl": [
         {
-          "file": "App/Services/BLEService.swift",
+          "file": "App/Services/BLETypes.swift",
           "re": "case ssTokenFail = 1006",
           "note": ""
         },
         {
-          "file": "App/Services/BLEService.swift",
+          "file": "App/Services/BLETypes.swift",
           "re": "case responseTimeout = 1007",
           "note": ""
         },
         {
-          "file": "App/Services/BLEService.swift",
+          "file": "App/Services/BLETypes.swift",
           "re": "case writeTimeout = 6001",
           "note": ""
         },
         {
-          "file": "App/Services/BLEService.swift",
+          "file": "App/Services/BLETypes.swift",
           "re": "case writeFailed = 6005",
           "note": ""
         },
@@ -402,7 +402,7 @@
       ],
       "impl": [
         {
-          "file": "App/Services/LockService.swift",
+          "file": "App/Services/LockServiceLink.swift",
           "re": "scanForMAC\\(m, timeoutMs: 8000\\)",
           "note": ""
         },
@@ -426,7 +426,7 @@
       ],
       "impl": [
         {
-          "file": "App/Services/LockService.swift",
+          "file": "App/Services/LockServiceLink.swift",
           "re": "sessionTokenHex = k\\.val\\.lowercased\\(\\)",
           "note": ""
         },
@@ -474,7 +474,7 @@
       ],
       "impl": [
         {
-          "file": "App/Services/LockService.swift",
+          "file": "App/Services/LockServiceLink.swift",
           "re": "if r\\.rc == -1 \\{",
           "note": "写命令面 fail-closed: 抛「无法确认锁端结果」"
         }
@@ -494,7 +494,7 @@
       ],
       "impl": [
         {
-          "file": "App/Services/LockService.swift",
+          "file": "App/Services/LockServiceLink.swift",
           "re": "ZKProtocol\\.writeCmdsBlocked\\.contains\\(cmd\\)",
           "note": "命中即 break, 交上层判定"
         }
