@@ -34,16 +34,21 @@ extension DB {
         guard cacheWritable(mac) else { return }
         var cache = get(LogCache.self, "kf_logcache_" + mac) ?? LogCache(at: 0, logs: [])
         cache.at = Date().timeIntervalSince1970 * 1000
-        var seen = Set<String>()
-        var merged = [CachedLog]()
-        for l in (logs.map { CachedLog(type: $0.type, typeName: $0.typeName, idxRaw: $0.idxRaw, lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr) } + cache.logs) {
-            let k = String(l.idxRaw)
-            if seen.contains(k) { continue }
-            seen.insert(k)
-            merged.append(l)
-            if merged.count >= 300 { break }
+        // 2026-10-29 性能：本函数在**分页循环**里被调（每页 5 条、最多 20 页），
+        // 每次都要 get(整份缓存解码) + 合并 + set(整份写回) ⇒ O(页数 × 缓存条数) 的编解码，
+        // 外加最多 20 次 UserDefaults 落盘。调用方已改成「循环结束只写一次」。
+        //
+        // 合并语义保持不变（新页 + 已有缓存、按 idxRaw 去重、上限 300 条）；
+        // 这里把结果按 idxRaw 倒序排一次 —— idxRaw 是锁端日志序号，越大越新，
+        // 与原先「新页在前 + 旧缓存在后」的顺序等价，且不依赖调用方的拉取顺序。
+        var byIdx = [UInt32: CachedLog]()
+        for l in cache.logs { byIdx[l.idxRaw] = l }
+        for e in logs {
+            byIdx[e.idxRaw] = CachedLog(type: e.type, typeName: e.typeName, idxRaw: e.idxRaw,
+                                       lockTime: e.lockTime, lockTimeStr: e.lockTimeStr)
         }
-        cache.logs = merged
+        let merged = Array(byIdx.values).sorted { $0.idxRaw > $1.idxRaw }
+        cache.logs = Array(merged.prefix(300))
         set(cache, "kf_logcache_" + mac)
     }
 

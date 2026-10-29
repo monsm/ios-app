@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T10:50:47.411Z",
+    "generated": "2026-10-29T11:02:26.609Z",
     "sources": [
       {
         "scout": "android-native",
@@ -15840,7 +15840,7 @@
           "line": 258,
           "symbol": "proxyNames",
           "note": "",
-          "text": "/// 462 合并/迁移归属: 旧成员 id 认领过的记录改判给新成员 ——"
+          "text": "var out = [Excerpt]()"
         },
         {
           "platform": "ios",
@@ -22252,7 +22252,7 @@
           "line": 205,
           "symbol": "activeSection",
           "note": "排序四档与列表",
-          "text": "// 460/795 归档不蒸发: 左滑归档保留历史不删除 (再次左滑恢复在归档列表)"
+          "text": "ForEach(list) { m in"
         },
         {
           "platform": "apk",
@@ -22268,7 +22268,7 @@
           "line": 222,
           "symbol": "NavigationLink",
           "note": "进 360 详情",
-          "text": "}"
+          "text": "} footer: {"
         },
         {
           "platform": "ios",
@@ -22276,7 +22276,7 @@
           "line": 225,
           "symbol": "swipeActions",
           "note": "左滑归档",
-          "text": "var t: [String: MemberHub.Activity] = [:]"
+          "text": "+ \"要看谁这段时间开得多, 上方选「近 30 天开门次数」那一档。\")"
         },
         {
           "platform": "ios",
@@ -22284,7 +22284,7 @@
           "line": 30,
           "symbol": "members",
           "note": "排除归档 + 分组过滤",
-          "text": "@State var showArchived = false"
+          "text": "showWizard = true"
         }
       ],
       "platformEvidence": {
@@ -22655,7 +22655,7 @@
           "line": 42,
           "symbol": "body",
           "note": "七段列表顺序",
-          "text": ".filter { m in groupFilter.isEmpty || MemberHub.ext(m.id).groupTag == groupFilter }"
+          "text": "return DB.members()"
         },
         {
           "platform": "ios",
@@ -22663,7 +22663,7 @@
           "line": 56,
           "symbol": "toolbar",
           "note": "右上菜单四项",
-          "text": ".navigationTitle(\"成员中心\")"
+          "text": "navSection"
         },
         {
           "platform": "ios",
@@ -22671,7 +22671,7 @@
           "line": 134,
           "symbol": ".id(tick)",
           "note": "写库后重建",
-          "text": "ToolbarItem(placement: .navigationBarLeading) { Button(\"完成\") { showRoster = false } }"
+          "text": ".navigationTitle(\"导出成员名册\")"
         }
       ],
       "platformEvidence": {
@@ -22827,7 +22827,7 @@
           "line": 86,
           "symbol": "showFamilySettings",
           "note": "父级 sheet 挂载",
-          "text": "}"
+          "text": ".frame(minHeight: DS.Hit.min)"
         }
       ],
       "platformEvidence": {
@@ -23013,7 +23013,7 @@
           "line": 99,
           "symbol": "showRoster sheet",
           "note": "结果 sheet 与空态",
-          "text": "// 415 名册分享面板: 用 ShareLink(item: URL) 而不是 UIActivityViewController ——"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -23434,7 +23434,7 @@
           "line": 304,
           "symbol": "archivedSection",
           "note": "归档入口（计数）",
-          "text": "Text(MemberHub.display(dm))"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -23762,7 +23762,7 @@
           "line": 167,
           "symbol": "groupChipSection",
           "note": "chip 过滤",
-          "text": ".padding(.horizontal, DS.Space.s)"
+          "text": "return Button {"
         },
         {
           "platform": "ios",
@@ -23770,7 +23770,7 @@
           "line": 36,
           "symbol": "members",
           "note": "groupTag 过滤生效点",
-          "text": "var members: [Member] {"
+          "text": "@State var showRoster = false"
         },
         {
           "platform": "ios",
@@ -24044,7 +24044,7 @@
           "line": 321,
           "symbol": "sceneSection",
           "note": "本周主责与便签",
-          "text": "}"
+          "text": "// 屏幕上就是「聚合视图」标题下面一片空白，用户会以为加载失败。"
         },
         {
           "platform": "ios",
@@ -24052,7 +24052,7 @@
           "line": 323,
           "symbol": "dutyThisWeek",
           "note": "主责读取",
-          "text": "} header: {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -24209,7 +24209,7 @@
           "line": 285,
           "symbol": "visitorOpenCount",
           "note": "未归属临时码计数",
-          "text": "if !arch.isEmpty {"
+          "text": "if let dutyID = MemberHub.dutyThisWeek, let dm = DB.member(dutyID) {"
         },
         {
           "platform": "ios",
@@ -24217,7 +24217,7 @@
           "line": 299,
           "symbol": "visitorOwns",
           "note": "名下临时码条数",
-          "text": "// 家庭场景快捷 (481/475)"
+          "text": "Text(MemberHub.ext(m.id).note)"
         }
       ],
       "platformEvidence": {
@@ -24707,7 +24707,7 @@
           "line": 367,
           "symbol": "struct MemberRow",
           "note": "行声明",
-          "text": ".accessibilityElement(children: .combine)"
+          "text": "let r = MemberHub.ext(member.id).role"
         },
         {
           "platform": "ios",
@@ -24715,7 +24715,7 @@
           "line": 380,
           "symbol": "MemberRow",
           "note": "称呼（备注）双层文本",
-          "text": ""
+          "text": "return Text(bits.isEmpty ? \"暂无台账凭证\" : bits.joined(separator: \" · \"))"
         },
         {
           "platform": "ios",
@@ -24723,7 +24723,7 @@
           "line": 385,
           "symbol": "MemberRow",
           "note": "同名待合并",
-          "text": "tone: r == \"main\" ? .warn : .neutral)"
+          "text": ".opacity(a.stale ? 0.55 : 1)"
         },
         {
           "platform": "ios",
@@ -24731,7 +24731,7 @@
           "line": 432,
           "symbol": "subLine",
           "note": "副行四段",
-          "text": ""
+          "text": "Text(e.emoji)"
         },
         {
           "platform": "ios",
@@ -24739,7 +24739,7 @@
           "line": 448,
           "symbol": "staleTag",
           "note": "久未用/活跃 (约)",
-          "text": ".vkFont(.title3)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -25407,7 +25407,7 @@
           "line": 216,
           "symbol": "EmptyState",
           "note": "空态建档向导按钮",
-          "text": "Text(\"成员 (\\(list.count))\")"
+          "text": "} label: { Label(\"归档\", systemImage: \"archivebox\") }"
         },
         {
           "platform": "ios",
@@ -25415,7 +25415,7 @@
           "line": 89,
           "symbol": "onAppear",
           "note": "pendingMemberAdd 一次性消费",
-          "text": ".sheet(isPresented: $showArchived) { MemberArchivedView(onRestored: { tick += 1 }) }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -25423,7 +25423,7 @@
           "line": 80,
           "symbol": "sheet(isPresented: $showWizard)",
           "note": "向导 sheet 挂载",
-          "text": "Image(systemName: \"ellipsis.circle\").accessibilityLabel(\"成员中心菜单\")"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -60376,7 +60376,7 @@
           "line": 228,
           "symbol": "MemberHub.saveExt",
           "note": "归档写入示例",
-          "text": "}"
+          "text": "/// 264/466 排序用的活跃度表: 一次算完全员, 不在比较式里逐次重扫全锁日志。"
         },
         {
           "platform": "ios",

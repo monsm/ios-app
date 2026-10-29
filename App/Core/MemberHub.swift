@@ -169,6 +169,56 @@ enum MemberHub {
         }
         return a
     }
+
+    /// 一次算完全员的活跃度 + 访客统计（2026-10-29 性能）。
+    ///
+    /// 原来 `activity(_:)` 每调一次就要把**每把锁的全部日志**读一遍再做 Attribution 分类；
+    /// 而成员中心的每一行要调它 2 次（subLine 的"最近开门/名下"、staleTag 的"久未用"），
+    /// 排序还要再来一遍 ⇒ O(成员数² × 锁数 × 日志数)。10 个成员 × 2 把锁 × 100 条日志，
+    /// 单次渲染就是 4000 次分类。
+    ///
+    /// 这里改成**一次遍历**：外层走锁，内层把每条归属结果直接累加到对应成员；
+    /// 顺带把访客虚拟分组的两项统计（开门数 / 名下临时码数）一起算出来。
+    struct ActivityBundle {
+        var table: [String: Activity] = [:]
+        var visitorOpens = 0
+        var visitorTemps = 0
+    }
+
+    static func activityBundle(_ ids: [String]) -> ActivityBundle {
+        var b = ActivityBundle()
+        for id in ids { b.table[id] = Activity() }
+        let now = Date().timeIntervalSince1970
+        let mStart = WeekCal.gregorian.dateInterval(of: .month, for: Date())?.start.timeIntervalSince1970 ?? now
+        for kc in DB.keychains() {
+            let logs = DB.readLogs(kc.mac).filter { StatsKit.openTypes.contains($0.type) }
+            let status = DB.readStatus(kc.mac)
+            let pwds = DB.listPwds(kc.mac)
+            let fps = DB.listFps(kc.mac)
+            let rows = Attribution.classify(
+                logs: logs.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,
+                                          lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") },
+                pwds: pwds, fps: fps,
+                status: status.map { ($0.fpStock, $0.pwdStock, $0.lockTime) })
+            for (i, r) in rows.enumerated() {
+                if isVisitorRow(kind: r.kind, whoId: r.who) { b.visitorOpens += 1 }
+                guard let who = r.who, var a = b.table[who] else { continue }
+                let unix = ZKProtocol.protoSecondsToUnix(Int64(logs[i].lockTime))
+                if unix >= now - 30 * 86400 { a.opens30 += 1 }
+                if unix >= mStart { a.month += 1 }
+                if logs[i].lockTimeStr > a.last { a.last = logs[i].lockTimeStr }
+                b.table[who] = a
+            }
+            for p in pwds {
+                if p.temp { b.visitorTemps += 1 }
+                if let o = p.owner, !o.isEmpty, var a = b.table[o] { a.owns += 1; b.table[o] = a }
+            }
+            for f in fps {
+                if let o = f.owner, !o.isEmpty, var a = b.table[o] { a.owns += 1; b.table[o] = a }
+            }
+        }
+        return b
+    }
     /// 799 成员周小结一句人话 (跨全部锁): 近 7 天可证明归属次数 + 工作日最活跃小时段, 归属不出不计
     static func weekSentence(_ id: String) -> String? {
         let cutoff = Date().addingTimeInterval(-7 * 86400).timeIntervalSince1970

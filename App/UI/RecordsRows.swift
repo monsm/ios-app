@@ -237,7 +237,8 @@ extension RecordsView {
                 guard !fresh.isEmpty else { break }
                 fresh.forEach { seen.insert($0.idxRaw) }
                 events.append(contentsOf: fresh)
-                DB.writeLogs(kc.mac, fresh)
+                // 2026-10-29 性能 + 正确性：原来每页都调 DB.writeLogs（最多 20 次全量落盘，且会互相覆盖）。
+                // 现在循环结束统一写一次（writeLogs 自己也改成合并语义）。
                 let lowest = fresh.map { $0.idxRaw }.min() ?? 0
                 guard lowest > 0 else { break }
                 startIdx = lowest - 1
@@ -264,6 +265,8 @@ extension RecordsView {
                 pullGap = nil
                 reconLine = "锁 \(app.displayName) · 本次拉取 \(events.count) 条 · 锁端报告无剩余 · 本次会话内已拉全 · \(Self.stamp.string(from: Date()))"   // 749 本次拉取
             }
+            // 2026-10-29：把本次拉到的全部记录一次性合并落盘（分页循环里不再逐页写）。
+            if !events.isEmpty { DB.writeLogs(kc.mac, events) }
             // 存取必须同型: set(Int) 落 JSON 数字, getString 解 String 必失败 → lastSyncAt 恒 nil,
             // 刚读完也会误报"未连接·读取时间未知"
             DB.store.set(syncStampKey, String(Int(Date().timeIntervalSince1970 * 1000)))
@@ -272,6 +275,9 @@ extension RecordsView {
         } catch {
             // 852 读取失败主动播报 (VoiceOver 运行时即时朗读, 含"离门太远"人话原因)
             AXTools.announceConnectFail(error.localizedDescription)
+            // 2026-10-29：分页中途失败时，已拉到的页也要合并落盘（原实现是每页即时写，
+            // 改成循环外统一写之后必须在这里补一次，否则中途失败会把已读到的证据丢掉）。
+            if !events.isEmpty { DB.writeLogs(kc.mac, events) }
             let cached = DB.readLogs(kc.mac)
             if !cached.isEmpty {
                 render(cached.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw, lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") }, offline: true)

@@ -13,6 +13,8 @@ struct MemberCenterView: View {
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) var dismiss
     @State var tick = 0
+    /// 2026-10-29 性能：全员活跃度一次算完，行内不再各自重扫全锁日志。
+    @State var activity = MemberHub.ActivityBundle()
     @State var sortKey: Int = 0        // 264/466: 0 添加时间 / 1 姓名 / 2 最近开门时间 / 3 近 30 天开门次数
     @State var groupFilter: String = "" // 630 分组过滤
     @State var showWizard = false
@@ -136,6 +138,9 @@ struct MemberCenterView: View {
                 }
             }
             .id(tick)   // 写库后重建, List 直接重查 DB
+            // 2026-10-29 性能：全员活跃度只在进页与写库后（tick 变化）算一次，不再每次 body 重算。
+            .task { activity = MemberHub.activityBundle(members.map { $0.id }) }
+            .onChange(of: tick) { _, _ in activity = MemberHub.activityBundle(members.map { $0.id }) }
         }
     }
 
@@ -182,7 +187,7 @@ struct MemberCenterView: View {
     /// 名字却叫"最近活跃", 次数那一档根本没接。现在两档各排各的, 口径都带"约" (台账归属推断)。
     /// 活跃度表一次算完再排: 原先在比较式里现算 MemberHub.activity(), 每比一次就全锁重读一遍日志。
     func activeSection(_ sort: Int) -> some View {
-        let acts: [String: MemberHub.Activity] = (sort == 2 || sort == 3) ? activityTable : [:]
+        let acts: [String: MemberHub.Activity] = (sort == 2 || sort == 3) ? activity.table : [:]
         let list: [Member]
         switch sort {
         case 1: list = members.sorted { MemberHub.display($0) < MemberHub.display($1) }
@@ -199,7 +204,7 @@ struct MemberCenterView: View {
             }
             ForEach(list) { m in
                 NavigationLink { MemberDetail360View(memberID: m.id, onChanged: { tick += 1 }) } label: {
-                    MemberRow(member: m)
+                    MemberRow(member: m, act: activity.table[m.id])
                 }
                 .swipeActions {
                     // 460/795 归档不蒸发: 左滑归档保留历史不删除 (再次左滑恢复在归档列表)
@@ -221,16 +226,11 @@ struct MemberCenterView: View {
         }
     }
     /// 264/466 排序用的活跃度表: 一次算完全员, 不在比较式里逐次重扫全锁日志。
-    var activityTable: [String: MemberHub.Activity] {
-        var t: [String: MemberHub.Activity] = [:]
-        for m in members { t[m.id] = MemberHub.activity(m.id) }
-        return t
-    }
 
     // 793 访客虚拟分组: 本地展示层虚拟成员, 不占锁端槽位
     var visitorSection: some View {
-        let opens = visitorOpenCount
-        let temps = visitorOwns
+        let opens = activity.visitorOpens
+        let temps = activity.visitorTemps
         return Section {
             Button {
                 app.pendingRecordsFilter = MemberHub.visitorId
@@ -260,23 +260,6 @@ struct MemberCenterView: View {
         } footer: {
             Text("「访客」只出现在本地展示层, 不写入锁端凭证表。")
         }
-    }
-    var visitorOpenCount: Int {
-        var n = 0
-        for kc in DB.keychains() {
-            let logs = DB.readLogs(kc.mac).filter { StatsKit.openTypes.contains($0.type) }
-            let status = DB.readStatus(kc.mac)
-            let rows = Attribution.classify(
-                logs: logs.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,
-                                          lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") },
-                pwds: DB.listPwds(kc.mac), fps: DB.listFps(kc.mac),
-                status: status.map { ($0.fpStock, $0.pwdStock, $0.lockTime) })
-            for r in rows where MemberHub.isVisitorRow(kind: r.kind, whoId: r.who) { n += 1 }
-        }
-        return n
-    }
-    var visitorOwns: Int {
-        DB.keychains().reduce(0) { $0 + DB.listPwds($1.mac).filter { $0.temp }.count }
     }
 
     @ViewBuilder
@@ -343,6 +326,8 @@ struct MemberCenterView: View {
 // ---------- 成员行 (457 首字头像 + 458 角色 + 462 同名提示 + 262/466 活跃度) ----------
 struct MemberRow: View {
     let member: Member
+    /// 2026-10-29 性能：由父视图一次算好传入，行内不再调 MemberHub.activity（那会重扫全锁日志）。
+    var act: MemberHub.Activity?
     @State var tick = 0
 
 
@@ -386,7 +371,7 @@ struct MemberRow: View {
     }
     var subLine: some View {
         let e = MemberHub.ext(member.id)
-        let a = MemberHub.activity(member.id)
+        let a = act ?? MemberHub.Activity()
         let bits = [member.relation,
                     e.remark.isEmpty ? "" : "备注 " + e.remark,
                     a.last.isEmpty ? "" : "最近开门约 " + String(a.last.prefix(10)),
@@ -401,7 +386,7 @@ struct MemberRow: View {
     }
     // 262/466 久未用置灰 (台账推断口径)
     var staleTag: some View {
-        let stale = MemberHub.activity(member.id).stale
+        let stale = (act ?? MemberHub.Activity()).stale
         return Text(stale ? "久未用" : "活跃 (约)")
             .vkFont(.caption2)
             .foregroundStyle(stale ? DS.Palette.textSub : DS.Palette.ok)
