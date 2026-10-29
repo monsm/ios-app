@@ -130,14 +130,14 @@ extension LockService {
             guard f.cmd == self.collectorCmd else { return }
             frames.append(f)
             lastFrameAt = Date()
-            let p = press(of: f)
-            self.log("info", "RX 13 #\(frames.count) press=\(isPress(f) ? 1 : 0) "
+            let p = self.press(of: f)
+            self.log("info", "RX 13 #\(frames.count) press=\(self.isPress(f) ? 1 : 0) "
                 + "order=\(p.orderIdx.map(String.init) ?? "-") "
                 + "feature=\(p.featureNumber.map(String.init) ?? "-") "
                 + "batch=\(p.batchNumber.map(String.init) ?? "-") rc=\(p.rc)")
             let r = p.rc   // FpPress.rc 是 Int (extractRc 缺省给 -1), 不是 Optional
             if r != 0 && r != -1 && r != rcBlurry { stopRc = r }
-            if let onPress, isPress(f) { onPress(p) }
+            if let onPress, self.isPress(f) { onPress(p) }
         }
         defer { collector = nil; collectorCmd = 0 }
         log("info", "TX 13 录指纹 (多响应, \(times) 次按压)")
@@ -176,7 +176,7 @@ extension LockService {
             }
             if broken { break }
         }
-        let presses = frames.filter(isPress).map { press(of: $0) }
+        let presses = frames.filter(self.isPress).map { press(of: $0) }
         if let r = stopRc {
             if r == rcTimeout {
                 throw BLEErrorX.msg("锁已结束录入 (rc=24 录入超时: 两次按压之间超过 15 秒) — 已收 \(presses.count)/\(times) 次, 请重新开始")
