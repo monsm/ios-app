@@ -54,8 +54,11 @@ enum QuickPool {
     static var selected: [QuickAction] {
         let stored = DB.store.get([String].self, idsKey) ?? defaultIds
         var seen = Set<String>()
-        let picked = stored.filter { seen.insert($0).inserted }
-            .compactMap { id in all.first { $0.id == id } }
+        // 2026-10-30 性能：原来对每个存储 id 都 `all.first { $0.id == id }`（O(stored × all)），
+        // 而本属性在设置页是**逐格**调用的（ForEach 里每行一次）—— 11 格 × 11 次线性查找。
+        // 一次建表后按 id 取。
+        let byID = Dictionary(all.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        let picked = stored.filter { seen.insert($0).inserted }.compactMap { byID[$0] }
         return picked.isEmpty ? all.filter { defaultIds.contains($0.id) } : picked
     }
     static func setSelected(_ ids: [String]) {

@@ -111,9 +111,8 @@ struct CredDisableSheet: View {
     private var ownerIds: [String] { ownerCounts.map { $0.id } }
 
     /// 2026-10-29 性能：原来每个头像都调一次 DB.member(id)（逐行全表解码）。改成一次建表。
-    private var memberNameByID: [String: String] {
-        Dictionary(DB.members().map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
-    }
+    /// 2026-10-30：建表结果放 @State，进页时（.task）填一次 —— 不再每次 body 求值都重建。
+    @State private var memberNameByID: [String: String] = [:]
     /// 没归属的那几条: 它们不进任何人的动态, 这句话得能在界面上说出来。
     private var unownedCount: Int {
         max(0, (pwdAliases.count + fpBatches.count) - ownerCounts.reduce(0) { $0 + $1.pwd + $1.fp })
@@ -241,6 +240,11 @@ struct CredDisableSheet: View {
             .toolbar { ToolbarItem(placement: .navigationBarLeading) {
                 Button("取消") { dismiss() }
             } }
+        }
+        // 进页时填一次成员名表（见 memberNameByID 注释）。
+        .task {
+            memberNameByID = Dictionary(DB.members().map { ($0.id, $0.name) },
+                                        uniquingKeysWith: { a, _ in a })
         }
     }
 

@@ -39,10 +39,32 @@ function scan() {
           for (const ch of code) { if (ch === '{') { dep++; s = true; } else if (ch === '}') dep--; }
           if (s && dep <= 0) { end = k; break; }
         }
+        // 2026-10-30：区分轻重 —— `getString/getBool/getInt/getDouble` 走 defaults 直接取值（不涉 JSON），
+        // 而 `ledger/listPwds/readLogs/members/store.get(...)` 这些每次都要解码整份数据。
+        // 只统计后者，否则闸门被一堆廉价标量读淹没（appearanceSection 的 10 次全是 getString）。
+        // 2026-10-30 续：`.task { }` / `.onAppear { }` 块里的读库是**进页一次**的一次性填充，
+        // 那是正确修法（把逐帧读库挪到生命周期回调），不该算欠账 —— 排除掉。
+        const asyncBlocks = [];
+        for (let k = i; k <= end; k++) {
+          if (/^\.(task|onAppear)\s*\{/.test(L[k].trim())) {
+            let d2 = 0, e2 = k, s2 = false;
+            for (let j = k; j <= end; j++) {
+              const c2 = L[j].replace(/\/\/.*$/, '');
+              for (const ch of c2) { if (ch === '{') { d2++; s2 = true; } else if (ch === '}') d2--; }
+              if (s2 && d2 <= 0) { e2 = j; break; }
+            }
+            asyncBlocks.push([k, e2]);
+            k = e2;
+          }
+        }
+        const inAsync = (k) => asyncBlocks.some(([a, b]) => k >= a && k <= b);
         let n = 0;
         for (let k = i; k <= end; k++) {
+          if (inAsync(k)) continue;
           const code = L[k].replace(/\/\/.*$/, '');
-          n += (code.match(/\bDB\./g) || []).length;
+          const all = (code.match(/\bDB\./g) || []).length;
+          const light = (code.match(/\bDB\.store\.(getString|getBool|getInt|getDouble)\s*\(/g) || []).length;
+          n += Math.max(0, all - light);
         }
         if (!n) continue;
         const key = `${d}/${f}`;

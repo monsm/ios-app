@@ -150,9 +150,13 @@ extension SettingsView {
             // 放在"外观"这一节里是有意的：它改的是设备页那一圈格子的组成与次序，属于布局个性化；
             // 但要注意它改完是**立即生效**的 (走 bumpAppearanceForLayout 重建一次树)，
             // 不需要重进 App。
+            // 2026-10-30 性能：`QuickPool.selected` / `smartFirst` 原来在每格各读一次
+            // （selected 每次还要查一次 UserDefaults 并重建数组）。一次读出来共用。
+            let quickSelected = Set(QuickPool.selected.map { $0.id })
+            let quickSmartFirst = QuickPool.smartFirst
             ForEach(QuickPool.all) { a in
                 VariantToggle(a.label, isOn: Binding(
-                    get: { QuickPool.selected.contains(a) },
+                    get: { quickSelected.contains(a.id) },
                     set: { on in
                         var ids = QuickPool.selected.map { $0.id }
                         if on { if !ids.contains(a.id) { ids.append(a.id) } }
@@ -165,7 +169,7 @@ extension SettingsView {
             Text("也可以直接在设备页长按任一快捷格打开这份编辑。")   // 905 也可以直接在设备页长
                 .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
             VariantToggle("常用动作排到前面", isOn: Binding(   // 1047 常用动作排到前面
-                get: { QuickPool.smartFirst },
+                get: { quickSmartFirst },
                 set: { v in
                     QuickPool.setSmartFirst(v)
                     if !v { QuickPool.clearCounts() }   // 关掉就把计数清空: 不留"统计还在偷偷跑"
@@ -175,7 +179,7 @@ extension SettingsView {
             Text("没动过这个开关时: 本机静默记点击次数, 满 30 天后首格自动推荐最常用的一格; 关掉 = 停止记录并清空计数, 排序回到你手选的次序。")
                 .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
-            if QuickPool.smartFirst {
+            if quickSmartFirst {
                 let c = QuickPool.counts
                 Text(c.isEmpty ? "还没攒到点击记录：去设备页点几次快捷格。"
                                : "已记录: " + QuickPool.all.filter { c[$0.id] != nil }

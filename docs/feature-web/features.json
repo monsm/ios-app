@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T17:03:33.433Z",
+    "generated": "2026-10-29T17:15:39.226Z",
     "sources": [
       {
         "scout": "android-native",
@@ -6968,7 +6968,7 @@
           "line": 119,
           "symbol": "repeatTarget(_:)",
           "note": "",
-          "text": "}"
+          "text": "var out = picked.filter { $0.id != top.id }"
         }
       ],
       "platformEvidence": {
@@ -33863,7 +33863,7 @@
           "line": 96,
           "symbol": "ordered()",
           "note": "",
-          "text": ""
+          "text": "DB.store.set(freqKey, c)"
         }
       ],
       "platformEvidence": {
@@ -35482,7 +35482,7 @@
           "line": 96,
           "symbol": "static func ordered()",
           "note": "",
-          "text": ""
+          "text": "DB.store.set(freqKey, c)"
         },
         {
           "platform": "ios",
@@ -36885,7 +36885,7 @@
           "line": 119,
           "symbol": "repeatTarget(_:)",
           "note": "",
-          "text": "}"
+          "text": "var out = picked.filter { $0.id != top.id }"
         },
         {
           "platform": "ios",
