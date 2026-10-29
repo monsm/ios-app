@@ -79,7 +79,8 @@ final class AppState: ObservableObject {
     // 而 `kf_speek_guest` **从来没有写点**（设置页无此开关）⇒ 恒 false ⇒ 本属性恒 false。
     // 于是下游四处判据全部恒等于「访客未开启」：凭证/设置 Tab 永远显示、访客入口按钮永不出现、
     // 换页闸永不拦截。按"删功能"处置：连同下面四处判据一起展开成无条件。
-    @Published var toast: String?
+    // 2026-10-29 性能：`toast` 已迁到独立的 ToastCenter（见 Core/ToastCenter.swift）。
+    // 它原来挂在这里，而 RootView + 43 个视图都观察 AppState ⇒ 每条提示都重算整棵树。
     // 主题键的镜像: 变更时驱动 RootView 重建, 让配色立即生效
     @Published var themeSeed: String = DB.store.getString("kf_theme")
     /// 外观种子 (包16): 主题/品牌色/密度任一变更 +1, RootView 以 .id 重建全树实现即时换肤
@@ -314,15 +315,9 @@ final class AppState: ObservableObject {
         }
     }
     func showToast(_ msg: String) {
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { toast = msg }
-        // 长文案多停留一会儿, 保证读得完
-        let stay: UInt64 = msg.count > 20 ? 3_400_000_000 : 1_800_000_000
-        Task { @MainActor in
-            try? await Task.sleep(nanoseconds: stay)
-            if toast == msg {
-                withAnimation(.easeIn(duration: DS.Duration.quick)) { toast = nil } // idea 211 时长令牌
-            }
-        }
+        // 2026-10-29 性能：具体展示逻辑在 ToastCenter 里（带自己的自动清除计时），
+        // 这样一次提示只重算一条提示条，不再把整棵树带着算一遍。
+        ToastCenter.shared.show(msg)
     }
 
     // 开锁 (App opendevice 语义: rc=0 成功 / rc=22 双验继续 / 其余报错)
@@ -560,11 +555,8 @@ struct RootView: View {
                 }
             }
             // 包8/448 启动自检黄条: 库体哈希与上次快照不一致 → 设备 Tab 顶部黄条 "去诊断"
-            if let t = app.toast {
-                ToastView(text: t)
-                    .allowsHitTesting(false)   // 顶部提示不吃点击
-                    .transition(.move(edge: .top).combined(with: .opacity))
-            }
+            // 2026-10-29 性能：提示条改由独立宿主观察 ToastCenter —— 见 ToastBannerHost 注释。
+            ToastBannerHost()
             // 包8/508 写入回执: 凭证保存/停用成功后对勾浮出 (替代云同步反馈)
             if let r = app.writeReceipt {
                 writeReceiptView(r)

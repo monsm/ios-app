@@ -44,14 +44,14 @@ final class Store: @unchecked Sendable {
             valueCache.withLock { $0[k, default: [:]]["dict"] = o }
             return o
         }
-        corruptDictKeys.insert(k)
+        corruptKeys.withLock { $0.insert(k) }
         return [:]
     }
     /// 写路径统一失效：任何一次写入都可能改变同键的任意类型变体。
     private func invalidateCache(_ k: String) { valueCache.withLock { $0[k] = nil } }
     /// 解码失败过的字典键。saveKeychain 写入前查这里，避免用空表覆盖真数据。
-    private var corruptDictKeys: Set<String> = []
-    func isDictCorrupt(_ k: String) -> Bool { corruptDictKeys.contains(k) }
+    private let corruptKeys = Locked(Set<String>())
+    func isDictCorrupt(_ k: String) -> Bool { corruptKeys.withLock { $0.contains(k) } }
     func getString(_ k: String, _ def: String = "") -> String {
         if let s = defaults.string(forKey: key(k)) { return s }
         if let v = get(k, String.self) { return v }
@@ -70,6 +70,10 @@ final class Store: @unchecked Sendable {
             let d = try JSONSerialization.data(withJSONObject: v, options: [.fragmentsAllowed])
             defaults.set(d, forKey: key(k))
             invalidateCache(k)
+            // 2026-10-29 修复：写成功说明这份数据已经是合法 JSON —— 必须把「曾经解不出」的标记清掉。
+            // 原实现从不清除：一次解码失败之后，saveKeychain 会在整个会话里拒绝再写钥匙串，
+            // 用户配新锁时静默不落盘（下次启动锁就没了），而界面上一切正常。
+            corruptKeys.withLock { $0.remove(k) }
         } catch {
             recordFailure(k, "JSONSerialization: \((error as NSError).localizedDescription)")
         }
@@ -80,6 +84,8 @@ final class Store: @unchecked Sendable {
         do {
             defaults.set(try JSONEncoder().encode(v), forKey: key(k))
             invalidateCache(k)
+            // 同上：写成功即视为该键已恢复健康。
+            corruptKeys.withLock { $0.remove(k) }
         } catch {
             recordFailure(k, "JSONEncoder: \((error as NSError).localizedDescription)")
         }
@@ -109,7 +115,11 @@ final class Store: @unchecked Sendable {
     func failureLines() -> [String] { (defaults.array(forKey: key(Self.failureKey)) as? [String]) ?? [] }
     /// 刻意**不提供**清空口: 这本账的删除动作留在既有语义里 —— 核弹销毁按 `keys()` 全表清 (AuditChain:242)，
     /// 加一个 `clearFailureLog()` 只会多一条零调用声明，而且给了"把证据抹掉但不告诉用户抹了什么"的按钮。
-    func remove(_ k: String) { defaults.removeObject(forKey: key(k)); invalidateCache(k) }
+    func remove(_ k: String) {
+        defaults.removeObject(forKey: key(k))
+        invalidateCache(k)
+        corruptKeys.withLock { $0.remove(k) }
+    }
     /// 键是否存在 (区分"无数据"与"有数据但解不出")
     func has(_ k: String) -> Bool { defaults.object(forKey: key(k)) != nil }
     func keys() -> [String] {
