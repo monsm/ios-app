@@ -112,6 +112,10 @@ const SYS_NAMES = new Set([
   "skipped", "imported", "overwritten",
   // 2026-10-27 十四轮: isEmpty 是 Swift 标准库属性名（Array/String/Optional 都有）。
   "isEmpty",
+  // 2026-10-29 大删波：这三个是**常见局部变量/参数名**，不是项目定义的「功能符号」。
+  // rescuescan 的 DEF_RE 会把 `let isCurrent = ...` / `let created = ...` 这类局部声明
+  // 也收进定义集，删掉外层函数后就误判成「悬空引用」。
+  "isCurrent", "created", "image",
 ]);
 
 function stripCode(line) {

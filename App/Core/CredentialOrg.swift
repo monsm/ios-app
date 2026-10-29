@@ -175,12 +175,6 @@ enum CredentialOrg {
         }
         return (out, failed)
     }
-    /// 468 代管补记: 条目**改动前**的属主被点名「由我代管」时, 快照补一句 管理员代操作。
-    /// 判据与单条停用 disableVia、批量停用拆分同一张 proxyNames; 无归属不猜。
-    private static func proxySuffix(_ owner: String?) -> String {
-        guard let o = owner, !o.isEmpty, MemberHub.proxyNames.contains(o) else { return "" }
-        return " · 管理员代操作"   // 468 管理员代操作
-    }
     /// 357 前缀批量备注
     static func batchPrefixNote(_ mac: String, pwdAliases: [Int], fpBatches: [Int], prefix: String) -> Int {
         var n = 0

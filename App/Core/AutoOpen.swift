@@ -65,12 +65,6 @@ enum AutoOpen {
     static func autocal(_ mac: String) -> AutoCal? {
         DB.store.get(AutoCal.self, "kf_autocal_" + mac)
     }
-    static func saveAutocal(_ mac: String, _ c: AutoCal) {
-        DB.store.set("kf_autocal_" + mac, c)
-    }
-    static func removeAutocal(_ mac: String) {
-        DB.store.remove("kf_autocal_" + mac)
-    }
     /// 删除设备时随每锁数据族清 (DB.removeDevice 已按族清 kf_autocal_/kf_autoopen_audit_/kf_autoopen_suspend_until_ 前缀键)
 
     /// §3.4 标准档风险披露文案 (强制展示, 不得弱化)

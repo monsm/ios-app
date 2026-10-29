@@ -109,24 +109,8 @@ enum DiagLogs {
         }
         return list
     }
-    /// 751: 切档前先算"这一刀会删掉几条" — 界面拿它做二次确认的第一行。
-    static func pruneCount(days: Int?) -> Int {
-        guard let days else { return 0 }
-        let cs = localDay(WeekCal.shifted(Date(), days: -days))
-        return entries.filter { $0.date < cs }.count
-    }
     /// 751: 确认后**立即应用**保留策略 (与 append 的裁剪同一口径), 返回实际删掉的条数。
     /// 原先只从下一次写入起生效 —— 切完看不到任何变化, "显示将删条数+二次确认"也就无从谈起。
-    @discardableResult
-    static func pruneNow() -> Int {
-        let before = entries
-        guard let days = retentionDays else { return 0 }
-        let cs = localDay(WeekCal.shifted(Date(), days: -days))
-        let kept = before.filter { $0.date >= cs }
-        guard kept.count != before.count else { return 0 }
-        DiagLogStore.save(kept)
-        return before.count - kept.count
-    }
     static func today() -> [DiagLogEntry] {
         let d = localDay()
         return entries.filter { $0.date == d }
@@ -172,14 +156,6 @@ enum BleTelemetry {
         DB.store.setCodable("kf_conn_attempts", list)
     }
     static var attempts: [ConnAttempt] { DB.store.get([ConnAttempt].self, "kf_conn_attempts") ?? [] }
-    /// 近 30 天成功率 (⚠ 需积累, 冷启动为 nil → UI 显示"积累中")
-    static func successRate() -> (total: Int, ok: Int, pct: Int)? {
-        let a = attempts
-        guard !a.isEmpty else { return nil }
-        let total = a.count
-        let ok = a.filter { $0.ok }.count
-        return (total, ok, Int(Double(ok) * 100 / Double(total)))
-    }
     /// 每日连接成功率（诊断界面已删，但 BleTelemetry 的统计仍产出，供未来复用）。
     struct DayRate: Identifiable {
         var id: String { day }
@@ -189,41 +165,6 @@ enum BleTelemetry {
     /// 失败分类（同上）。
     struct FailClass { let name: String; let n: Int; let hint: String }
 
-    static func dailyRates() -> [DayRate] {
-        var order: [String] = []
-        var bucket: [String: (n: Int, ok: Int)] = [:]
-        // attempts 是新在前 (insert at 0); 按日聚合后反转成时间正序画趋势
-        for a in attempts {
-            let day = String(a.t.prefix(5))          // MM-dd
-            if bucket[day] == nil { order.append(day) }
-            var v = bucket[day] ?? (0, 0)
-            v.n += 1
-            if a.ok { v.ok += 1 }
-            bucket[day] = v
-        }
-        return order.reversed().map { d in
-            let v = bucket[d] ?? (0, 0)
-            return DayRate(day: d, n: v.n, ok: v.ok, pct: v.n > 0 ? Double(v.ok * 100) / Double(v.n) : 0)
-        }
-    }
-    static func failClasses() -> [FailClass] {
-        func classify(_ r: String) -> String {
-            if r.contains("超时") { return "超时" }
-            if r.contains("未发现") || r.contains("扫描") { return "未发现设备" }
-            if r.contains("断开") { return "中途断开" }
-            return "其他"
-        }
-        let fails = attempts.filter { !$0.ok }
-        let groups = Dictionary(grouping: fails) { classify($0.reason) }
-        let hints: [String: String] = [
-            "超时": "把手机贴近门锁、避开拥挤商场等干扰源后再试",
-            "未发现设备": "确认门锁已通电、手机蓝牙已开, 距离 1 米内再扫",
-            "中途断开": "走动中掉线属正常, 靠近后再试; 频繁出现先查门锁电量",
-            "其他": "换个时间段重试; 仍不行请跑一次一键体检"
-        ]
-        return groups.map { k, v in FailClass(name: k, n: v.count, hint: hints[k] ?? "") }
-            .sorted { $0.n > $1.n }
-    }
 }
 
 // ---------- 277 看门狗自恢复 —— 第九十一批删除这份零调用副本 ----------

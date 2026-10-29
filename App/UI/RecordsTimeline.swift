@@ -245,27 +245,6 @@ struct RecDetailSheet: View {
     @ViewBuilder
     private var contextSection: some View {
     }
-    private func contextRow(_ r: Rec, tag: String) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
-            Text(tag)
-                .vkFont(.caption2, weight: .semibold)
-                .lineLimit(1)
-                .foregroundStyle(DS.Palette.textSub)
-                .frame(width: 14)
-            VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                Text(RecordSearch.localStr(r.lockTime > 0 ? Double(r.lockTime) : 0).isEmpty ? r.timeStr : r.timeStr)
-                    .vkFont(.caption.monospacedDigit())
-                    .lineLimit(1)
-                    .foregroundStyle(DS.Palette.textSub)
-                Text(r.typeName + ((MemberHub.aliasName(r.whoId) ?? r.whoName).map { " · " + $0 } ?? ""))
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.text)
-                    .lineLimit(1)
-            }
-            Spacer(minLength: 0)
-        }
-        .accessibilityElement(children: .combine)
-    }
 
     // ---------- 580 上一条 / 下一条: 在**当前筛选结果集**内顺序切换 ----------
     @ViewBuilder

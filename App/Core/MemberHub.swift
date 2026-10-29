@@ -226,25 +226,10 @@ enum MemberHub {
         return out.suffix(n).reversed().map { $0 }
     }
 
-    /// 2026-10-26 精简：`sourceCounts` 原按版本快照的 note 区分「移交/恢复/新建」，
-    /// 版本历史整套移除后快照恒 nil ⇒ moved 与 restored 恒 0，只剩 created。
-    static func sourceCounts(_ id: String) -> (created: Int, moved: Int, restored: Int) {
-        var created = 0
-        for kc in DB.keychains() {
-            created += DB.listPwds(kc.mac).filter { $0.owner == id }.count
-            created += DB.listFps(kc.mac).filter { $0.owner == id }.count
-        }
-        return (created, 0, 0)
-    }
 
     // ---------- 472 借用登记 (per-lock) ----------
     static func borrows(_ mac: String) -> [String: MemberBorrow] {
         DB.store.get([String: MemberBorrow].self, "kf_mborrow_" + mac) ?? [:]
-    }
-    static func saveBorrow(_ mac: String, itemKey: String, _ b: MemberBorrow?) {
-        var all = borrows(mac)
-        if let b { all[itemKey] = b } else { all.removeValue(forKey: itemKey) }
-        DB.store.setCodable("kf_mborrow_" + mac, all)
     }
 
 
@@ -258,11 +243,6 @@ enum MemberHub {
     static var dutyThisWeek: String? {
         let map = DB.store.get([String: String].self, "kf_duty_week") ?? [:]
         return map[weekKey()]
-    }
-    static func setDuty(_ memberId: String?) {
-        var map = DB.store.get([String: String].self, "kf_duty_week") ?? [:]
-        if let memberId { map[weekKey()] = memberId } else { map.removeValue(forKey: weekKey()) }
-        DB.store.setCodable("kf_duty_week", map)
     }
 
     // ---------- 791 未归属记录认领 (记录 key = idxRaw, 本机覆盖层) ----------

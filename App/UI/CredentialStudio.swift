@@ -1757,9 +1757,6 @@ struct PwdDetailStudio: View {
             EmptyState(systemImage: "key.slash", title: "凭证不存在", message: "这条凭证可能已被删除（本机没有回收站，删除不可恢复）。")
         }
     }
-    private func isoText(_ s: String) -> String {
-        CredentialOrg.parseLocal(s)?.formatted(.dateTime.month().day().hour().minute()) ?? s.prefix(16).description
-    }
     /// 332 原码续期 (⚠ 降级): 沿用原密码值改期 7 天, 走既有 0A 原位改写; 锁端未连则入队, 不新增协议
     private func renewExpired(_ p: LedgerPwd) async {
         guard let kc = app.current, let v = p.pwd, !renewing else { return }
@@ -2390,39 +2387,4 @@ private extension Double {
     }
 }
 
-// ================= 工坊入口: 凭证 Tab "凭证工坊" 一行 (177 扇出) =================
-struct CredStudioEntryView: View {
-    var body: some View {
-        NavigationLink {
-            StudioHome(embedded: true)
-        } label: {
-            HStack(spacing: DS.Space.s) {
-                Image(systemName: "wrench.and.screwdriver")
-                    .font(.system(size: DS.Icon.sm, weight: .semibold))
-                    .foregroundStyle(DS.Palette.accentText)
-                    .frame(width: DS.Icon.md + 8, height: DS.Icon.md + 8)
-                    .variantPlate(DS.Palette.accentText.opacity(0.12), .iconBadge)
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("凭证工坊")
-                        .vkFont(.subheadline, weight: .semibold)
-                        .foregroundStyle(DS.Palette.text)
-                    Text("添加 · 改造 · OTP 独立口令")
-                        .vkFont(.caption2)
-                        .foregroundStyle(DS.Palette.textSub)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
-                    .font(.system(size: DS.Icon.xs, weight: .semibold))
-                    .foregroundStyle(DS.Palette.textSub)
-                    .accessibilityHidden(true)
-            }
-            .frame(minHeight: DS.Hit.min)
-            .contentShape(Rectangle())
-        }
-        .accessibilityLabel("凭证工坊, 四类凭证的添加·编辑·详情")
-    }
-}
 

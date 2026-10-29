@@ -314,21 +314,6 @@ struct DeviceHomeView: View {
         }
     }
 
-    // ---------- 状态卡: 身份 + 连接 + 三个关键读数 ----------
-    // 全页唯一的品牌渐变面 (HeroCard): 门锁的"身份卡"配得上最高视觉权重,
-    // 也让页面其余部分可以安心保持安静。
-    // 78 卡片翻面: 开锁成功翻到背面看本次开门摘要, 点按翻回 (reduceMotion 退化为淡入淡出)。
-    private func statusCard(for kc: Keychain) -> some View {
-        let isCurrent = kc.mac == app.currentMac
-        return heroCard(for: kc, isCurrent: isCurrent)
-        // 包4: 低电分级触感 — 进入 ≤20% 一次 warning, 跌入 ≤10% (告急) 一次 error
-        .sensoryFeedback(trigger: lowBucket(kc)) { old, new in
-            guard isCurrent else { return nil }
-            if new == "sev", old != "sev" { return .error }
-            if new == "low", old != "low" { return .warning }
-            return nil
-        }
-    }
     // 243 断连灰化: 连接断开时整卡去饱和, 恢复即回彩
     // 包3: 参数化到任意锁 — 当前页吃实时状态, 其余页读各锁快照 (101/763 横滑预览)
     private func heroCard(for kc: Keychain, isCurrent: Bool) -> some View {

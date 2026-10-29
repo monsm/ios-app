@@ -754,21 +754,6 @@ struct RecordsView: View {
         return parts.isEmpty ? "更多视图" : parts.joined(separator: " · ")
     }
 
-    private func chipRowSection(_ title: String, selected: Int, items: [(String, Int)], pick: @escaping (_ name: String, _ i: Int) -> Void) -> some View {
-        VStack(alignment: .leading, spacing: DS.Space.xs) {
-            Text(title)
-                .vkFont(.caption)
-                .foregroundStyle(DS.Palette.textSub)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: DS.Space.s) {
-                    ForEach(Array(items.enumerated()), id: \.offset) { _, item in
-                        miniChip(item.0, on: selected == item.1) { pick(item.0, item.1) }
-                    }
-                }
-                .padding(.vertical, DS.Space.xxs)
-            }
-        }
-    }
     private func miniChip(_ name: String, on: Bool, _ tap: @escaping () -> Void) -> some View {
         Button {
             DS.Haptics.tick.impactOccurred()
@@ -788,26 +773,6 @@ struct RecordsView: View {
         .buttonStyle(PressableButtonStyle())
         .accessibilityLabel(name)
         .accessibilityAddTraits(on ? .isSelected : [])
-    }
-    private func chipToggle(_ title: String, on: Binding<Bool>) -> some View {
-        Button {
-            DS.Haptics.tick.impactOccurred()
-            on.wrappedValue.toggle()
-        } label: {
-            Text(title)
-                .vkFont(.footnote, weight: .medium)
-                .lineLimit(1)
-                .padding(.horizontal, 12)
-                .padding(.vertical, DS.Space.m)
-                .background(on.wrappedValue ? DS.Palette.danger.opacity(0.12) : DS.Palette.surfaceAlt, in: Capsule())
-                .overlay(Capsule().strokeBorder(on.wrappedValue ? DS.Palette.danger.opacity(0.4) : DS.Palette.hairline, lineWidth: 0.5))
-                .foregroundStyle(on.wrappedValue ? DS.Palette.danger : DS.Palette.text)
-                .frame(minHeight: DS.Hit.min)
-                .contentShape(Capsule())
-        }
-        .buttonStyle(PlainButtonStyle())
-        .accessibilityLabel(title)
-        .accessibilityAddTraits(on.wrappedValue ? .isSelected : [])
     }
 
     @ViewBuilder   // 编译级修正: 这块是"顶层 if 而没有 else/return", 不加 builder 就是一句 "function declares some View…" 的编译错误
@@ -914,10 +879,6 @@ struct RecordsView: View {
 
     private var firstLogDay: String? {
         DB.readLogs(mac).compactMap { $0.lockTimeStr.isEmpty ? nil : String($0.lockTimeStr.prefix(10)) }.min()
-    }
-    private func chineseDay(_ key: String) -> String {
-        let p = key.split(separator: "-")
-        return p.count == 3 ? "\(p[0])年\(Int(p[1]) ?? 0)月\(Int(p[2]) ?? 0)日" : key
     }
 
     private var mac: String { app.current?.mac ?? "" }
@@ -1629,14 +1590,6 @@ struct RecordsView: View {
     /// (§10.30)。归到 `StatsKit.dayKey` 一并解决。
     private static func dayKey(_ d: Date) -> String { StatsKit.dayKey(d) }
 
-    /// 92: 手机侧失败时刻 → 与锁日志同格式的 "yyyy-MM-dd HH:mm:ss" (可排序)
-    private func failTimeStr(_ ts: Double) -> String {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone.current
-        return f.string(from: Date(timeIntervalSince1970: ts))
-    }
 
     // ---------- 580/584/585 详情翻页与引用深链的数据源 ----------
     // 551/554/555/564/571/572/567/568/569/570/770: 行**内容**两种范围两条来源 (单锁 = 本地行池 allRows,

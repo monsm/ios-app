@@ -565,20 +565,6 @@ struct MemberDetail360View: View {
 
 
 
-    private func sourceCell(_ label: String, _ n: Int) -> some View {
-        VStack(spacing: DS.Space.xs) {
-            Text(String(n))
-                .vkFont(.title3, weight: .semibold)
-                .monospacedDigit()
-                .foregroundStyle(DS.Palette.accentText)
-            Text(label)
-                .vkFont(.caption2)
-                .foregroundStyle(DS.Palette.textSub)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, DS.Space.s)
-        .variantPlate(DS.Palette.surfaceAlt, .control)
-    }
 
 
 

@@ -952,27 +952,6 @@ struct RootView: View {
     }
 
 
-    /// 包8/448 启动自检黄条 —— 2026-10-13 run 64 从 body 内联块抽出: 该表达式报 type-check 超时。
-    private func selfCheckBanner(_ w: String) -> some View {
-        HStack(spacing: DS.Space.xs) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: DS.Icon.sm, weight: .semibold))
-                .accessibilityHidden(true)
-            Text(w).vkFont(.caption).fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
-            Button("去诊断") {
-                // 2026-10-15 走查 §4.3: 按钮说"去诊断", 原来只把人放到
-                // 设置页根上。带落点名, 由设置页直接开诊断面。
-                app.pendingSettingsFocus = "diag"
-                app.requestRoute(.settings)
-            }
-                .vkFont(.caption, weight: .medium)
-        }
-        .foregroundStyle(DS.Palette.warn)
-        .padding(.horizontal, DS.Space.l)
-        .padding(.vertical, DS.Space.s)
-        .background(DS.Palette.warn.opacity(0.14))
-    }
 
     /// 包8/508 写入回执浮层 —— 2026-10-13 run 63 从 body 内联块抽出:
     /// 巨型 body 里这一段报 "unable to type-check this expression in reasonable time"。

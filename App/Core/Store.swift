@@ -737,22 +737,6 @@ enum DB {
     static func readLogs(_ mac: String) -> [CachedLog] {
         get(LogCache.self, "kf_logcache_" + mac)?.logs ?? []
     }
-    /// 223: 缓存**替换**写入 (不并回旧份)。writeLogs 的语义是 `新 + 旧缓存` 按 idxRaw 去重合并,
-    /// 那是给"锁端只回增量"的抓取用的；归档要的是"把这几行从缓存里移走"，用 writeLogs 就等于
-    /// 只写了归档侧、缓存里的旧行一条没少 —— "移入"变成"复制"，下一轮还会把同批再归档一遍。
-    static func replaceLogs(_ mac: String, _ logs: [CachedLog]) {
-        guard cacheWritable(mac) else { return }
-        var seen = Set<String>()
-        var kept = [CachedLog]()
-        for l in logs {
-            let k = String(l.idxRaw)
-            if seen.contains(k) { continue }
-            seen.insert(k)
-            kept.append(l)
-            if kept.count >= 300 { break }
-        }
-        set(LogCache(at: Date().timeIntervalSince1970 * 1000, logs: kept), "kf_logcache_" + mac)
-    }
 
     /// 日志缓存只为**还在台账里的锁**而写。为什么要在写入口拦一道: 删除设备会按族清掉 kf_logcache_<mac>,
     /// 而任何在删锁之后又跑一遍的"改写日志"都会把它重新写回来 —— 于是体检里凭空多出一条

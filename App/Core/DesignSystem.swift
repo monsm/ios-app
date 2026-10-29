@@ -24,30 +24,6 @@ extension Color {
     }
 }
 
-// ---------- 富文本助手 ----------
-/// 把文案里的 `**加粗**` 渲染成真的粗体。
-///
-/// 为什么不能直接写 `Text(s)`: SwiftUI **只在字符串字面量**上解析 Markdown
-/// (`Text("a**b**c")` 走 LocalizedStringKey, 会变粗), 而一旦文案是
-/// ① 拼接出来的 (`Text("a" + "b")`)、② 三元表达式的结果、③ 存在数据结构里当 `String` 用
-/// (`Text(entry.detail)`), 就走 `Text(_: some StringProtocol)` —— **不解析 Markdown**,
-/// 用户看到的是原样的两颗星 `**`。2026-10-14 走查在 `ChangelogView` 的条目详情、
-/// `RecoveryTip.detail` 与设置页两处脚注上都踩到了这个形状。
-///
-/// 这里**不引** `AttributedString(markdown:)`: 本仓文案里 `锁管家_` / `demo_` 这类下划线是正常字符,
-/// 交给 CommonMark 会被当成强调符吃掉。自己按 `**` 切段反而可预测 —— 只有成对的 `**` 会变粗,
-/// 其它字符一个不动。
-func mdText(_ s: String) -> Text {
-    let parts = s.components(separatedBy: "**")
-    guard parts.count > 1, parts.contains(where: { !$0.isEmpty }) else { return Text(s) }
-    var out = AttributedString()
-    for (i, p) in parts.enumerated() where !p.isEmpty {
-        var seg = AttributedString(p)
-        if i % 2 == 1 { seg.inlinePresentationIntent = .stronglyEmphasized }
-        out.append(seg)
-    }
-    return Text(out)
-}
 
 // ---------- 换行流式布局 ----------
 /// 按可用宽度自动换行的横排容器 (给"一排可选片"用)。

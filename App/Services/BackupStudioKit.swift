@@ -131,13 +131,6 @@ enum BackupStudio {
     /// 启动注册 + 设置开关 setter 都会调本函数, 用标志去重。
     private static let registeredLock = Locked(false)
 
-    /// 分区裁剪的统一口径 (导出 / 恢复 / 预演共用, 427 分区选择性恢复)
-    /// 组包 + 分区裁剪: 未勾分区在包内置空 (恢复端按 nil 语义跳过)
-    static func bundleFor() -> BackupBundle {
-        var b = BackupKit.collectAll()
-        b.at = ISO8601DateFormatter().string(from: Date())
-        return prune(b)
-    }
 
     /// 2026-10-26: 原 prune(_ b: BackupBundle, _ z: BZones) 按四分区裁剪；分区概念已删
     /// （从来没有 UI 暴露，全部调用点都传全选），所以本函数不再裁剪任何东西，原样返回。
@@ -270,16 +263,6 @@ enum BackupStudio {
         out.schema = s
         return out
     }
-    /// 422/423 哈希先行: 校验 checksum (434 短码展示同一口径)
-    /// 两条都认：与小程序一致的新语义 (178 批起) + 本仓旧包按旧语义写出的 checksum。
-    /// 只认新的会把用户已有的备份判成"内容被篡改"，那是数据失踪级观感，不是安全收益。
-    static func verifyChecksum(_ text: String) -> Bool {
-        checksumState(text) == .ok
-    }
-    /// 434 哈希短码: SHA256 前 8 位
-    static func shortHash(_ text: String) -> String {
-        String(HashKit.sha256Hex(text).prefix(8))
-    }
     /// 418/427/441: 策略 + 分区裁剪 + 逐锁动作; 返回 (新增, 覆盖, 跳过)
     /// - lockActs: 441 迁移逐把确认 — mac(已规范化) → merge/keep/skip, 缺省 merge; 只在 .merge 生效
     /// - conflictTakeBackup: 419 冲突裁决 — id (mac:p:别名 / mac:f:批次) 集合, 命中 = 该条取备份, 未命中保本机
@@ -388,19 +371,6 @@ enum BackupStudio {
     }
 
 
-    /// 已过期临时凭证计数（用于提示"有几条临时码已经过期可清理"）。
-    /// 2026-10-26: 原注释写的是「193 体积预估」—— 与下面的函数毫无关系（注释错位，属搬运时漏改）。
-    static func expiredTemporaryCount() -> Int {
-        // 到期口径: 台账 from/to 是 "yyyy-MM-dd" 字符串, 直接按日比较 (与 CredentialOrg 状态推断同向)
-        let today = Milestones.dayKey()
-        var n = 0
-        for kc in DB.keychains() {
-            for p in DB.ledger(kc.mac).pwds where p.temp && !p.to.isEmpty && p.to != "2118-12-31" {
-                if p.to.compare(today) == .orderedAscending { n += 1 }
-            }
-        }
-        return n
-    }
 
 
 
@@ -420,15 +390,6 @@ enum BackupStudio {
         return fpVersion + BackupCanonical.fnv1a32Hex(canon)
     }
 
-    /// 397 解锁后自检用的**只读**核对: 只比不改。基线由备份时写入 (markBackupBaseline), 本函数只比不改 ——
-    /// 一处"每检查一次就把上次的异常抹平"的检查证明不了任何事, 所以自检绝不回写基线。
-    static func hashMismatch() -> Bool {
-        let last = DB.store.getString("kf_bk_dbhash")
-        guard last.hasPrefix(fpVersion) else { return false }   // 无基线, 或旧算法基线 (升级后不复用), 不算异常
-        return last != dbFingerprint()
-    }
-    /// 448: 基线由"备份发生点"写入 — 自检对比的是与最新快照的差异, 不再自写自读
-    static func markBackupBaseline() { DB.store.set("kf_bk_dbhash", dbFingerprint()) }
     /// 448 启动自检: 库体哈希 vs 上次备份时的基线; 不一致返回黄条文案。
     /// 基线只在备份发生点 (markBackupBaseline, 由 Milestones.recordBackup 尾调用) 更新,
     /// 本函数只比不改 —— 自查后回写会把上一次的异常直接抹平。
@@ -439,15 +400,6 @@ enum BackupStudio {
     // 2026-10-26 精简：badgeState（备份状态角标）已删 —— 它依赖的 lastExportMs 随策略类一起移除。
 
     struct RemoteEntry: Identifiable { var id: String { name }; let name: String; let size: Int; let etag: String; let modified: String }
-    /// 197 连通测试: PROPFIND 回显服务器时间
-    /// XML 实体最小解码 (&lt; &gt; &amp; &quot; &apos; + 数字实体), 防注入名直接进 URL
-    private static func xmlUnescape(_ s: String) -> String {
-        var out = s
-        for (ent, ch) in [("&#38;", "&"), ("&amp;", "&"), ("&lt;", "<"), ("&gt;", ">"), ("&quot;", "\""), ("&apos;", "'")] {
-            out = out.replacingOccurrences(of: ent, with: ch)
-        }
-        return out
-    }
 
     private static func jsonStr(_ s: String, _ marker: String) -> String? {
         guard let r = s.firstRange(of: marker) else { return nil }
@@ -463,18 +415,6 @@ enum BackupStudio {
     /// 认不出信封就说"未能识别"，绝不回落到徽章那串 —— 那会把一个明文包或损坏件标成"加密过"。
     /// 明文包 (BackupBundle 直接写盘, 没有信封) 单独一档: 混进"未能识别"会让人以为文件坏了。
     enum AlgoNote: Equatable { case envelope(String), plain, unknown }
-    static func algoNote(_ url: URL) -> AlgoNote {
-        guard let data = try? Data(contentsOf: url, options: [.mappedIfSafe]) else { return .unknown }
-        // 前 4096 字节全 ASCII (键名与参数值都是 ASCII), 不存在截断多字节字符导致解不出的情况
-        let head = String(data: data.prefix(4096), encoding: .utf8) ?? ""
-        guard head.hasPrefix("{") else { return .unknown }
-        if let alg = jsonStr(head, "\"alg\":\""),
-           let kdf = jsonStr(head, "\"kdf\":{\"alg\":\""),
-           let iter = jsonNum(head, "\"iter\":") {
-            return .envelope("\(alg) · \(kdf) \(iter) 轮")
-        }
-        return head.contains("\"devices\":") ? .plain : .unknown
-    }
 
     // ================= 511 数据事件 (导出/恢复/迁移) =================
     /// 事件带名字: 旧实现收 `_ label: String` 却只存毫秒, 列表只能显示"备份事件 #N" ——

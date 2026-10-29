@@ -20,16 +20,6 @@ struct ExportRecord {
     var key: String = ""  // 锁端行键 (idxRaw) — mac#key 即 726 留痕键; 无 idx 的行留空
 }
 
-/// 718 单条记录卡分享: UIImage 不满足 Transferable, 而"分享这一条"不值得为它造一个完整导出条目。
-/// PNG 而不是 JPEG: 卡上是锐利文字与数字。
-struct RecordCardImage: Transferable {
-    let image: UIImage
-    let fileName: String
-    static var transferRepresentation: some TransferRepresentation {
-        DataRepresentation(exportedContentType: .png) { $0.image.pngData() ?? Data() }
-            .suggestedFileName { $0.fileName }
-    }
-}
 
 /// 718 卡片版式 (明示仅含本条数据)。渲染入口是 ExportKit.recordCard。
 struct RecordShareCardView: View {

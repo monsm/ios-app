@@ -301,28 +301,6 @@ struct CredentialsView: View {
         .listRowSpacing(DS.Space.xs)   // 批量操作行距保持宽松 (纪律: 批量行距)
     }
     /// 182 排序档的说明行: 只承诺这一档真做得到的事 (段内先后 + 落 kf_cseq_ 跨启动)。
-    @ViewBuilder
-    private func routerRow(_ symbol: String, _ title: String, _ scene: String) -> some View {
-        HStack(spacing: DS.Space.s) {
-            Image(systemName: symbol)
-                .font(.system(size: DS.Icon.md))
-                .foregroundStyle(DS.Palette.accentText)
-                .frame(width: 28)
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                Text(title)
-                    .vkFont(.subheadline, weight: .medium)
-                    .foregroundStyle(DS.Palette.text)
-                Text(scene)
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer(minLength: 0)
-        }
-        .frame(minHeight: DS.Hit.min)
-        .accessibilityElement(children: .combine)
-    }
 
     /// 列表内容抽成 ViewBuilder: 编辑模式与正常模式共用, 避免嵌套两个 List
     @ViewBuilder
@@ -608,15 +586,6 @@ struct CredentialsView: View {
     private func fpKeys(_ group: [LedgerFp]) -> [Int] { group.map { $0.batch } }
 
 
-    /// 529 段尾统计行的统一渲染。两个段种的"使用"不是一个读数 (密码有逐条时间窗推断, 指纹只有锁整体),
-    /// 所以只共用样式, 话各说各的 —— 不拿同一句糊过去。
-    private func segStatRow(_ text: String) -> some View {
-        Text(text)
-            .vkFont(.caption2)
-            .foregroundStyle(DS.Palette.textSub)
-            .fixedSize(horizontal: false, vertical: true)
-            .accessibilityHidden(true)
-    }
 
     @ViewBuilder
     private var memberSections: some View {
@@ -786,21 +755,6 @@ struct CredentialsView: View {
         if let p = hit.pwd { return CredentialOrg.displayPwd(p) }
         if let f = hit.fp { return f.name }
         return ""
-    }
-    /// 331 播报里"提前失效"排在"已排期"之前但让位于锁端"已过期" —— 与行上胶囊同一优先级
-    private func credVoState(_ hit: CredHit, _ now: Date) -> String {
-        if let p = hit.pwd {
-            if CredentialOrg.pwdState(p) == 2 { return "已过期" }
-            if CredentialOrg.isEarlyExpired(mac, p, now) { return "提前失效" }
-            switch CredentialOrg.pwdState(p) {
-            case 1: return "已排期"
-            default: return "可用"
-            }
-        }
-        if let f = hit.fp {
-            return f.isAlarm == true ? "预警指纹" : "可用"
-        }
-        return "可用"
     }
 
     private func subOf(_ hit: CredHit, _ now: Date) -> String {
