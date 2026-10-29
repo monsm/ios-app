@@ -73,6 +73,16 @@ struct RecDetailSheet: View {
         return Int(hh)
     }
 
+    /// 2026-10-29：时段标签（自然时段词 + 工作日通勤判断）。
+    /// 抽成函数而不是写在 ViewBuilder 里 —— ViewBuilder 只收 View 表达式，
+    /// `var seg = ...; seg += ...` 会被当成 `()` 而报 "type () cannot conform to View"。
+    private static func segmentLabel(_ r: Rec, hour h: Int) -> String {
+        var seg = TimeWord.word(h)
+        let day = RecordSearch.dateFromKey(String(r.timeStr.prefix(10))) ?? Date()
+        if let c = CommuteLabel.tag(date: day, hour: h) { seg += " · \(c)时段" }
+        return seg
+    }
+
     // ---------- 全字段 ----------
     @ViewBuilder
     private var fieldSection: some View {
@@ -94,11 +104,7 @@ struct RecDetailSheet: View {
             // 放在详情里而不是列表行上：列表行已经在时间前面带日期，再加"上午/下午"是噪声；
             // 详情是"看这一条"的场景，时段与通勤判断才有解释价值。
             if let h = Self.hourOf(rec.timeStr) {
-                var seg = TimeWord.word(h)
-                if let c = CommuteLabel.tag(date: RecordSearch.dateFromKey(String(rec.timeStr.prefix(10))) ?? Date(), hour: h) {
-                    seg += " · \(c)时段"
-                }
-                fieldRow("时段", seg)
+                fieldRow("时段", Self.segmentLabel(rec, hour: h))
             }
             // 650 时间来源徽标: "锁内时钟"=这条时刻来自日志 #04 协议秒; "本机录入"=拉取时补的墙钟。
             // 两者可能差几秒 (锁端靠 21 校时)，所以来源必须写出来，而不是混成"一个时间"。
