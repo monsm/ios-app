@@ -537,12 +537,12 @@ struct RootView: View {
     @State private var handshakeDoneAway = false
     @Environment(\.scenePhase) private var scenePhase
     // 读取 themeSeed: 设置页切换主题时立即重建配色
-    private var colorScheme: ColorScheme? { Theme.scheme(for: app.themeSeed) }
+    var colorScheme: ColorScheme? { Theme.scheme(for: app.themeSeed) }
 
     /// 顶部横幅栈 (演示/BLE/自检/粘贴建议/toast/写入回执) —— 从 body 内联的 safeAreaInset
     /// 里抽出: 该表达式报 type-check 超时。
     @ViewBuilder
-    private var topBanners: some View {
+    var topBanners: some View {
         VStack(spacing: 0) {
             // 包2/69 蓝牙直通条: 系统蓝牙关闭时全 App 顶部提示 (深链系统设置不可用 → 指引文案)
             if !LinkSense.shared.btOn {

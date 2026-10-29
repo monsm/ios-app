@@ -6,7 +6,7 @@ import Combine
 @MainActor
 final class LockService: ObservableObject {
     static let shared = LockService()
-    @Published private(set) var connectedMAC: String = ""
+    @Published var connectedMAC: String = ""
     @Published private(set) var lastError: String = ""
     @Published var logs: [String] = []
     /// 包11/740: 原始报文环形记录 (RX 帧 hex), 供诊断页 hex 查看, 不持久化

@@ -39,11 +39,11 @@ final class LinkSense: ObservableObject {
     @Published private(set) var lastRssi: Int? = nil        // 最近一次见到的该锁 RSSI (63/71)
     var prevRssi: Int? = nil                        // 270 上一次 RSSI: 骤降检测基准 (只在值变化时翻档)
     @Published private(set) var connectMs: Int? = nil        // 67 握手耗时 (最近一次, ms)
-    @Published private(set) var reconnectAttempt = 0          // 126 回连节律轮次
-    @Published private(set) var lastReconnectAt: Date = Date.distantPast
+    @Published var reconnectAttempt = 0          // 126 回连节律轮次
+    @Published var lastReconnectAt: Date = Date.distantPast
     @Published private(set) var sessionSince: Date? = nil    // 272 连接保持时长基准
     @Published private(set) var lastReceipt = 0              // 535 同步回执 (最近一次补发条数)
-    @Published private(set) var connectSource = "预热"        // 98 冷热连接标识: 预热/回连 vs 即连
+    @Published var connectSource = "预热"        // 98 冷热连接标识: 预热/回连 vs 即连
     @Published private(set) var btOn = BLEService.shared.isPoweredOn   // 69 系统蓝牙开关镜像
     /// 「系统蓝牙关着」和「本 App 没拿到权限」是**两件事**，用户要做的事也不同。
     /// 之前只有 btOn，于是在权限被拒时也显示"蓝牙已关闭"，用户去开蓝牙、

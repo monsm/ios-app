@@ -30,13 +30,13 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     //     栈底 ViewBodyAccessor.updateBody ← NavigationStack.init(root:) ← 本 App 的 body
     //   下面三处非主线程写入点因此都走 publishOnMain；`@MainActor` 的 startScan 与 .main 队列回调
     //   (didUpdateState / didDisconnect) 本来就落在主线程，保持不变。
-    @Published private(set) var isPoweredOn = false
+    @Published var isPoweredOn = false
     @Published private(set) var scanning = false
     // 2026-10-27 审核改名 (AUDIT-C 4.1)：原名 `connectedMAC` 装的其实是 **CBPeripheral 的 UUID 字符串**，
     // 而 `LockService.connectedMAC` 装的是**真正的 MAC**（"fbb993c5cc95"）—— 两个同名属性两种标识符，
     // 靠"它们恰好都被维护"来工作。任何一次赋值漏掉（如 disconnect 只清了一个）就变成"以为还连着"。
     // 现改成 `connectedPeripheralId`，名字与内容一致。
-    @Published private(set) var connectedPeripheralId: String = ""
+    @Published var connectedPeripheralId: String = ""
 
     /// 非主线程也能安全写 @Published: 已在主线程就直接写，否则跳回主线程写 (为什么要跳见上方那段)。
     // @Sendable: 这个闭包要交给 DispatchQueue.main.async (@Sendable 参数)。三个调用点都是

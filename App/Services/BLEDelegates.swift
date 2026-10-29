@@ -1,7 +1,7 @@
 // BLE 代理 · CBCentralManagerDelegate / CBPeripheralDelegate（扫描 / 连接 / 发现 / 通知 / 写入回调）
 // 2026-10-29 从 BLEService.swift 拆出。
 import Foundation
-import CoreBluetooth
+@preconcurrency import CoreBluetooth
 
 extension BLEService: CBCentralManagerDelegate {
     public func centralManagerDidUpdateState(_ central: CBCentralManager) {

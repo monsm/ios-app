@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T05:53:48.543Z",
+    "generated": "2026-10-29T06:26:36.262Z",
     "sources": [
       {
         "scout": "android-native",
@@ -4546,7 +4546,7 @@
           "line": 43,
           "symbol": "btDenied",
           "note": "",
-          "text": "@Published private(set) var lastReconnectAt: Date = Date.distantPast"
+          "text": "@Published var lastReconnectAt: Date = Date.distantPast"
         },
         {
           "platform": "ios",
@@ -61382,7 +61382,7 @@
           "line": 150,
           "symbol": "LedgerPwd",
           "note": "",
-          "text": "private static func cacheWritable(_ mac: String) -> Bool {"
+          "text": "static func cacheWritable(_ mac: String) -> Bool {"
         },
         {
           "platform": "ios",

@@ -1,7 +1,7 @@
 // BLE 基础类型 · UUID / 广播设备 / 错误码 / 扫描档
 // 2026-10-29 从 BLEService.swift（617 行）拆出。
 import Foundation
-import CoreBluetooth
+@preconcurrency import CoreBluetooth
 
 enum BLEUUID {
     static let svcMain = CBUUID(string: "6E400001-B5A3-F393-E0A9-E50E24DCCA9E")   // 门锁 NUS
