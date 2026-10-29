@@ -233,6 +233,11 @@ const checks = [
     file: 'App/Core/RecordSearchQuery.swift',
     must: ['!temps.contains(where: { ts >= $0.from && ts <= $0.to })'],
   },
+  {
+    name: 'R43 凭证页空态判据看全量台账（第 57 轮）',
+    file: 'App/UI/CredentialActions.swift',
+    must: ['if seqBasePwds.isEmpty && seqBaseFps.isEmpty {'],
+  },
 ];
 
 let bad = 0;

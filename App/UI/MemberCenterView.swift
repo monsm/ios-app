@@ -202,11 +202,28 @@ struct MemberCenterView: View {
         default: list = members.sorted { $0.at < $1.at }
         }
         return Section {
+            // 2026-10-30 修复（与凭证页空态同族）：`list` 是**过滤后**的集合 ——
+            // 已排除归档成员、且套了 `groupFilter` 分组筛选。原来它一空就报「还没有成员」，
+            // 但「选了分组 A、A 里没人」或「成员全归档了」这两种情况都**不是**没有成员，
+            // 用户会以为档案被清了（并因此去重建一个同名的）。
+            // 正确口径：真没成员（DB.members() 空）才给建档向导；只是被筛空就给对应的出口。
             if list.isEmpty {
-                EmptyState(systemImage: "person.2.slash",
-                           title: "还没有成员",
-                           message: "建档向导分三步: 称呼 → 角色 → 初始凭证。",
-                           actionTitle: "建档向导") { openWizard() }   // 463 建档向导
+                if DB.members().isEmpty {
+                    EmptyState(systemImage: "person.2.slash",
+                               title: "还没有成员",
+                               message: "建档向导分三步: 称呼 → 角色 → 初始凭证。",
+                               actionTitle: "建档向导") { openWizard() }   // 463 建档向导
+                } else if groupFilter.isEmpty {
+                    EmptyState(systemImage: "archivebox",
+                               title: "成员都归档了",
+                               message: "归档的成员仍在档案里，可随时恢复。",
+                               actionTitle: "查看归档") { showArchived = true }
+                } else {
+                    EmptyState(systemImage: "line.3.horizontal.decrease.circle",
+                               title: "这个分组下没有成员",
+                               message: "当前按「\(groupFilter)」筛选，清除筛选可看到全部成员。",
+                               actionTitle: "清除筛选") { groupFilter = "" }
+                }
             }
             ForEach(list) { m in
                 NavigationLink { MemberDetail360View(memberID: m.id, onChanged: { tick += 1 }) } label: {

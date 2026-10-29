@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T22:15:36.216Z",
+    "generated": "2026-10-29T22:28:19.444Z",
     "sources": [
       {
         "scout": "android-native",
@@ -22252,7 +22252,7 @@
           "line": 205,
           "symbol": "activeSection",
           "note": "排序四档与列表",
-          "text": "if list.isEmpty {"
+          "text": "// 2026-10-30 修复（与凭证页空态同族）：`list` 是**过滤后**的集合 ——"
         },
         {
           "platform": "apk",
@@ -22268,7 +22268,7 @@
           "line": 222,
           "symbol": "NavigationLink",
           "note": "进 360 详情",
-          "text": "} label: { Label(\"归档\", systemImage: \"archivebox\") }"
+          "text": "EmptyState(systemImage: \"line.3.horizontal.decrease.circle\","
         },
         {
           "platform": "ios",
@@ -22276,7 +22276,7 @@
           "line": 225,
           "symbol": "swipeActions",
           "note": "左滑归档",
-          "text": "}"
+          "text": "actionTitle: \"清除筛选\") { groupFilter = \"\" }"
         },
         {
           "platform": "ios",
@@ -23434,7 +23434,7 @@
           "line": 304,
           "symbol": "archivedSection",
           "note": "归档入口（计数）",
-          "text": "if !MemberHub.ext(m.id).note.isEmpty {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -24044,7 +24044,7 @@
           "line": 321,
           "symbol": "sceneSection",
           "note": "本周主责与便签",
-          "text": "// 否则改了说明书而这里没改，就会出现\"两处教程说法不一致\"。"
+          "text": "if !MemberHub.ext(m.id).note.isEmpty {"
         },
         {
           "platform": "ios",
@@ -24052,7 +24052,7 @@
           "line": 323,
           "symbol": "dutyThisWeek",
           "note": "主责读取",
-          "text": "// 章里第一段就把这句写在明面上 —— 做不到就说不做，不拿四步里的某一步含糊带过。"
+          "text": "Text(MemberHub.ext(m.id).note)"
         },
         {
           "platform": "ios",
@@ -24185,7 +24185,7 @@
           "line": 252,
           "symbol": "visitorSection",
           "note": "虚拟分组行",
-          "text": "Text(\"临时码未归属记录约 \\(opens) 条 · 名下临时码 \\(temps) 条\")"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -24201,7 +24201,7 @@
           "line": 256,
           "symbol": "pendingRecordsFilter",
           "note": "跳记录页过滤",
-          "text": "}"
+          "text": "let temps = activity.visitorTemps"
         },
         {
           "platform": "ios",
@@ -24217,7 +24217,7 @@
           "line": 299,
           "symbol": "visitorOwns",
           "note": "名下临时码条数",
-          "text": "Text(\"本周主责: 未安排 — 在成员的详情页里设置\")   // 481 本周主责"
+          "text": ".contentShape(Rectangle())"
         }
       ],
       "platformEvidence": {
@@ -24707,7 +24707,7 @@
           "line": 367,
           "symbol": "struct MemberRow",
           "note": "行声明",
-          "text": "Label(\"归档\", systemImage: \"archivebox\")"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -24715,7 +24715,7 @@
           "line": 380,
           "symbol": "MemberRow",
           "note": "称呼（备注）双层文本",
-          "text": "let e = MemberHub.ext(member.id)"
+          "text": "e.archived = true"
         },
         {
           "platform": "ios",
@@ -24723,7 +24723,7 @@
           "line": 385,
           "symbol": "MemberRow",
           "note": "同名待合并",
-          "text": "a.owns > 0 ? \"名下 \" + String(a.owns) + \" 条\" : \"\"]"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -24731,7 +24731,7 @@
           "line": 432,
           "symbol": "subLine",
           "note": "副行四段",
-          "text": "let ch = String(member.name.prefix(1))"
+          "text": "/// 994: 这段原先写在 body 里的 `var base = …; if … { base = … }` 提到独立计算属性 ——"
         },
         {
           "platform": "ios",
@@ -24739,7 +24739,7 @@
           "line": 448,
           "symbol": "staleTag",
           "note": "久未用/活跃 (约)",
-          "text": ".foregroundStyle(base)"
+          "text": "let e = MemberHub.ext(member.id)"
         }
       ],
       "platformEvidence": {
@@ -25407,7 +25407,7 @@
           "line": 216,
           "symbol": "EmptyState",
           "note": "空态建档向导按钮",
-          "text": "// 460/795 归档不蒸发: 左滑归档保留历史不删除 (再次左滑恢复在归档列表)"
+          "text": "} else if groupFilter.isEmpty {"
         },
         {
           "platform": "ios",
@@ -60376,7 +60376,7 @@
           "line": 228,
           "symbol": "MemberHub.saveExt",
           "note": "归档写入示例",
-          "text": "} footer: {"
+          "text": "ForEach(list) { m in"
         },
         {
           "platform": "ios",
