@@ -280,16 +280,7 @@ enum BackupStudio {
         // 合并 = **只增不删**。旧实现把 .merge 并入 .overwrite 走 restoreAll,
         // 而 restoreAll 用 DB.saveLedger 整表替换 (BackupKit.swift:206) → 选"合并"仍删掉本机新增凭证。
         var remap = [String: String]()
-        if let members = c.members {
-            for m in members {
-                if let hit = DB.members().first(where: { $0.name == m.name }) {
-                    remap[m.id] = hit.id
-                } else if let created = DB.addMember(m.name) {
-                    remap[m.id] = created.id
-                    DB.setMemberInfo(created.id, ["relation": m.relation, "phone": m.phone])
-                }
-            }
-        }
+        if let members = c.members { importMembers(members, remap: &remap) }
         var mimp = 0, mover = 0, mskip = 0
         for d in c.devices {
             guard HexKit.bytes(d.mac).count == 6, !d.kc.skey.isEmpty else { continue }
@@ -368,6 +359,18 @@ enum BackupStudio {
             }
         }
         return (mimp, mover, mskip)
+    }
+
+    /// 导入成员并建立「旧 id → 本机 id」映射（恢复包里的凭证 owner 要按这个 remap 重写）。
+    private func importMembers(_ members: [Member], remap: inout [String: String]) {
+            for m in members {
+                if let hit = DB.members().first(where: { $0.name == m.name }) {
+                    remap[m.id] = hit.id
+                } else if let created = DB.addMember(m.name) {
+                    remap[m.id] = created.id
+                    DB.setMemberInfo(created.id, ["relation": m.relation, "phone": m.phone])
+                }
+            }
     }
 
 
