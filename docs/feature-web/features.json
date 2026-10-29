@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T12:41:12.742Z",
+    "generated": "2026-10-29T12:47:16.857Z",
     "sources": [
       {
         "scout": "android-native",
@@ -3252,7 +3252,7 @@
           "line": 330,
           "symbol": "groupChips",
           "note": "",
-          "text": "[\"手机蓝牙已开启\", \"已靠近门锁 (1–2 米内)\", \"门锁电量充足 (低于 20% 先换电池)\"]"
+          "text": "// ---------- 开锁主控 ----------"
         },
         {
           "platform": "ios",
@@ -3260,7 +3260,7 @@
           "line": 293,
           "symbol": "inGroup(_:) ",
           "note": "",
-          "text": "app.devices.allSatisfy({ DB.store.getBool(\"kf_migok_\" + $0.mac) }) {"
+          "text": "let flag = DB.store.getString(\"kf_migrate_pending\")"
         },
         {
           "platform": "ios",
@@ -3268,7 +3268,7 @@
           "line": 347,
           "symbol": "groupFilter = name; syncPageOrder()",
           "note": "",
-          "text": "ForEach(Array(devOrder.enumerated()), id: \\.offset) { i, id in"
+          "text": "List {"
         }
       ],
       "platformEvidence": {
