@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T01:11:25.349Z",
+    "generated": "2026-10-29T01:30:11.356Z",
     "sources": [
       {
         "scout": "android-native",
@@ -15832,7 +15832,7 @@
           "line": 695,
           "symbol": "proxySuffix(_:)",
           "note": "",
-          "text": "var pwd: String"
+          "text": "static func clearDraft(_ mac: String) {"
         },
         {
           "platform": "ios",
@@ -19889,7 +19889,7 @@
           "line": 713,
           "symbol": "batchDisable(_:pwdAliases:fpBatches:)",
           "note": "",
-          "text": "DB.store.remove(\"kf_cdraft_\" + mac)"
+          "text": "return p.temp ? \"临时密码 #\\(p.alias)\" : \"密码 #\\(p.alias)\""
         },
         {
           "platform": "ios",
@@ -20095,7 +20095,7 @@
           "line": 658,
           "symbol": "batchExtend(_:_:_:_:)",
           "note": "",
-          "text": "return who.isEmpty ? \"指纹·\" + base : who + \"·\" + base"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -20111,7 +20111,7 @@
           "line": 662,
           "symbol": "auto: true",
           "note": "auto: true 自动还原点",
-          "text": "/// 同帧同判据), 不留隐式 Date() —— 隐式取时刻会让同一屏里两条结论各自漂。没设提前量恒 false。"
+          "text": "guard m > 0, let e = effectiveExpiry(mac, p) else { return \"\" }"
         }
       ],
       "platformEvidence": {

@@ -617,22 +617,6 @@ enum CredentialOrg {
             return f.timeIntervalSince1970 <= t && t <= to.timeIntervalSince1970
         }.count
     }
-    /// 2026-10-27 二轮精简：原按 lastUse(of:opens:)（带 expiry/credKind 过滤的逐条推导）计算；
-    /// last-first-use 推断层删除后，改为「该密码 alias 最近一次开门时刻」的直接聚合 ——
-    /// 临时码的时间窗过滤不再有，长期凭证本来就是锁级参考（原注释同口径）。
-    // 【保留未接 2026-10-29】推断每条密码「最近一次使用」—— 凭证列表的排序/角标可用
-    static func inferredLastUseMap(_ mac: String) -> [Int: Double] {
-        let opens = openTimes(mac)
-        guard !opens.isEmpty else { return [:] }
-        let latest = opens.max() ?? 0
-        var out: [Int: Double] = [:]
-        for p in DB.ledger(mac).pwds { out[p.alias] = latest }
-        return out
-    }
-    private static func openTimes(_ mac: String) -> [Double] {
-        DB.readLogs(mac).filter { $0.type == 2 || $0.type == 4 }
-            .map { ZKProtocol.protoSecondsToUnix(Int64($0.lockTime)) }
-    }
     /// 316 指纹档案统计: 近 30 天 type3 (指纹开门) 日志条数 — ⚠ 日志无指纹身份字段, 只能按锁整体推断, 标"约"
     static func fpUseCount30d(_ mac: String) -> Int {
         let cut = nowSec - 30 * 86400
@@ -753,15 +737,6 @@ enum CredentialOrg {
         case 1: return "已排期"
         case 2: return "已过期"
         default: return "进行中"
-        }
-    }
-    /// 智能列表 state 字段用的机读串 (matches/label 共用)
-    // 【保留未接 2026-10-29】智能列表的机读状态串（matches/label 共用）—— 筛选器重构时用
-    static func stateString(_ s: Int) -> String {
-        switch s {
-        case 1: return "scheduled"
-        case 2: return "expired"
-        default: return "active"
         }
     }
 }
