@@ -41,7 +41,8 @@ struct CredentialCalendarView: View {
         cal.range(of: .day, in: .month, for: monthAnchor)?.count ?? 30
     }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.credentialCalendar) }
+    var vkBody: some View {
         NavigationStack {
             List {
                 Section {
