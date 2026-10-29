@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T01:30:11.356Z",
+    "generated": "2026-10-29T01:36:57.665Z",
     "sources": [
       {
         "scout": "android-native",
@@ -32867,7 +32867,7 @@ const DATA = {
           "line": 29,
           "symbol": "recordBackup()",
           "note": "",
-          "text": "// ---------- 980/997 备份历史 (备份页\"距上次备份\"与新鲜度判定的唯一数据源) ----------"
+          "text": "static var lastBackupAt: Date? {"
         },
         {
           "platform": "ios",
@@ -32875,7 +32875,7 @@ const DATA = {
           "line": 32,
           "symbol": "recordBackup",
           "note": "h.count > 60 截断",
-          "text": "var h = DB.store.get([Double].self, \"kf_backup_hist\") ?? []"
+          "text": "return Date(timeIntervalSince1970: t / 1000)"
         },
         {
           "platform": "ios",
@@ -32883,7 +32883,7 @@ const DATA = {
           "line": 43,
           "symbol": "lastBackupAt",
           "note": "",
-          "text": "else { return nil }"
+          "text": "static func recordOrganize() {"
         }
       ],
       "platformEvidence": {
@@ -32953,7 +32953,7 @@ const DATA = {
           "line": 17,
           "symbol": "onceDone(_:)",
           "note": "",
-          "text": "static func onceDone(_ k: String) -> Bool {"
+          "text": "// ---------- 980/997 备份历史 (备份页\"距上次备份\"与新鲜度判定的唯一数据源) ----------"
         },
         {
           "platform": "ios",
@@ -32961,7 +32961,7 @@ const DATA = {
           "line": 50,
           "symbol": "unlockTotal",
           "note": "",
-          "text": "DB.store.set(\"kf_unlock_count\", unlockTotal + 1)"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -32969,7 +32969,7 @@ const DATA = {
           "line": 56,
           "symbol": "organizeTotal",
           "note": "",
-          "text": "DB.store.set(\"kf_organize_count\", organizeTotal + 1)"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -42799,7 +42799,7 @@ const DATA = {
           "line": 33,
           "symbol": "canDefend",
           "note": "",
-          "text": "// 布防: 仅 KX/V1_Pro; 未知 pid (新品固件, 如实测 49408) 按 KX 家族放行"
+          "text": "isGW(pid) ? false : (pid == KX || pid == V1_Pro || !isKnown(pid))"
         },
         {
           "platform": "ios",
@@ -42807,7 +42807,7 @@ const DATA = {
           "line": 47,
           "symbol": "canTailgate",
           "note": "",
-          "text": "// 尾随/自动上锁: V1_Pro 且固件 \u003c 1.0.3 拒绝 (App tailgate_defend_romver)"
+          "text": "if !canDefend(pid) { return false }"
         }
       ],
       "platformEvidence": {
@@ -52562,7 +52562,7 @@ const DATA = {
           "line": 33,
           "symbol": "canDefend",
           "note": "",
-          "text": "// 布防: 仅 KX/V1_Pro; 未知 pid (新品固件, 如实测 49408) 按 KX 家族放行"
+          "text": "isGW(pid) ? false : (pid == KX || pid == V1_Pro || !isKnown(pid))"
         },
         {
           "platform": "ios",
@@ -52570,7 +52570,7 @@ const DATA = {
           "line": 47,
           "symbol": "canTailgate",
           "note": "",
-          "text": "// 尾随/自动上锁: V1_Pro 且固件 \u003c 1.0.3 拒绝 (App tailgate_defend_romver)"
+          "text": "if !canDefend(pid) { return false }"
         },
         {
           "platform": "ios",
@@ -52578,7 +52578,7 @@ const DATA = {
           "line": 52,
           "symbol": "canClearPwd",
           "note": "",
-          "text": "}"
+          "text": "// 曾有 canDeviceInfo(_:) = canClearPwd 的同义别名 (零调用, 已删): 同一判断留两个名字只会让人"
         },
         {
           "platform": "ios",
@@ -52586,7 +52586,7 @@ const DATA = {
           "line": 55,
           "symbol": "canDeviceUpgrade",
           "note": "",
-          "text": "// 以为\"设备信息\"有独立的能力口径。真要给锁信息名片加门禁时再按实际语义写新谓词。"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -60368,7 +60368,7 @@ const DATA = {
           "line": 30,
           "symbol": "recordBackup",
           "note": "kf_backup_hist",
-          "text": "@MainActor"
+          "text": "guard let h = DB.store.get([Double].self, \"kf_backup_hist\"), let t = h.max(), t > 0"
         }
       ],
       "platformEvidence": {
@@ -63725,7 +63725,7 @@ const DATA = {
           "line": 30,
           "symbol": "kf_backup_hist",
           "note": "",
-          "text": "@MainActor"
+          "text": "guard let h = DB.store.get([Double].self, \"kf_backup_hist\"), let t = h.max(), t > 0"
         },
         {
           "platform": "ios",

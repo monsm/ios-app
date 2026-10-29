@@ -26,8 +26,6 @@ enum PidMap {
         return "未知型号(pid=\(pid))"
     }
     static func productName(_ pid: Int) -> String { productNames[pid] ?? ("智能门锁 (pid=\(pid))") }
-    // 【保留未接 2026-10-29】判断 pid 是否门锁（0 = 自动识别也归为锁）—— 语义清晰的工具
-    static func isLock(_ pid: Int) -> Bool { pid == 0 || locks.contains(pid) }
     private static func isKnown(_ pid: Int) -> Bool { names[pid] != nil }
     private static func isGW(_ pid: Int) -> Bool { gws.contains(pid) }
     // 布防: 仅 KX/V1_Pro; 未知 pid (新品固件, 如实测 49408) 按 KX 家族放行
