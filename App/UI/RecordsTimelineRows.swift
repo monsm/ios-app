@@ -162,53 +162,8 @@ extension RecordsView {
     @ViewBuilder
 
 
-    /// 单条: 左时间列 + 时间轴(圆点与连线) + 事件文案
-    /// 738 告警行: 左侧 3pt danger 色条 + danger 8% 浅底 (菱形警示点形状冗余);
-    /// 184 开门方式图标 / 183 成员色点 (可证明归属才显) / 770 锁名小标签 / 557 命中高亮
     func timelineRow(_ r: RowVM) -> some View {
-        HStack(alignment: .top, spacing: DS.Space.m) {
-            // 911/647: 主时间线行也必须走 TimeFormat.clock 这一个出口。此前只有合并行 (:1612) 走了,
-            // 这一行是裸切片 (rowParts 的 "yyyy-MM-dd HH:mm:ss" 中段), 于是选了"12 小时"后
-            // 同一页普通行仍显 24 小时、合并行显 12 小时 —— 一句注释承诺的"全部时间字段"就是这么破的。
-            Text(TimeFormat.clock(r.time))
-                .vkFont(.caption.monospacedDigit())
-                .foregroundStyle(DS.Palette.textSub)
-                .frame(width: 42, alignment: .trailing)
-                .padding(.top, 2)
-
-            ZStack(alignment: .top) {
-                // 连接线: 留半格让线自然收在圆点上下 (592 展开态内也保持贯通)
-                Rectangle()
-                    .fill(DS.Palette.hairline)
-                    .frame(width: 1.5)
-                    .frame(maxHeight: .infinity)
-                // 告警用菱形警示点, 普通用圆点 — 形状本身即第二信息通道, 不只靠颜色
-                Image(systemName: r.warn ? "diamond.fill" : "circle.fill")
-                    .font(.system(size: r.warn ? 10 : 8))
-                    .foregroundStyle(r.warn ? DS.Palette.danger : DS.Palette.accent)
-                    .padding(.top, 5)
-            }
-            .frame(width: 12)
-            .accessibilityHidden(true)
-
-            HStack(spacing: DS.Space.s) {
-                // 188 手动标旗: 旗标行左侧常显 (形状+颜色双通道, 不只靠颜色)
-                if RecordOverlay.isFlagged(r.rowMac.isEmpty ? mac : r.rowMac, r.key) {
-                    Image(systemName: "flag.fill")
-                        .font(.system(size: DS.Icon.xs, weight: .semibold))
-                        .foregroundStyle(DS.Palette.danger)
-                        .accessibilityLabel("已标旗")
-                }
-                // 184 开门方式图标: fp 指纹 / pwd 数字 / temp 一次性 / key 钥匙
-                rowTitle(r)
-                    .padding(.top, 1)
-                Spacer(minLength: 0)
-            }
-            // 907 时间线行距三档 (kf_tl_gap, 叠在 kf_density 之上): 竖列越密越难扫,
-            // 这一档分别照顾"一眼看完一整天"与"一屏塞更多条"。
-            .padding(.bottom, DS.Metric.tlGap)
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
+        return timelineRowContent(r)
         // 738 告警行: 左侧 3pt 色条 + 浅红底 (danger 派生, 形状冗余)
         .background(Color.clear)
         .listRowSeparator(.hidden)
@@ -276,5 +231,53 @@ extension RecordsView {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(r.title + ", " + r.time)
         .accessibilityAddTraits([.isButton])
+    }
+
+    /// 时间线行的内容层（时刻 / 连接线与事件点 / 标旗 / 开门方式 / 行距）。
+    @ViewBuilder
+    private func timelineRowContent(_ r: RowVM) -> some View {
+    HStack(alignment: .top, spacing: DS.Space.m) {
+        // 911/647: 主时间线行也必须走 TimeFormat.clock 这一个出口。此前只有合并行 (:1612) 走了,
+        // 这一行是裸切片 (rowParts 的 "yyyy-MM-dd HH:mm:ss" 中段), 于是选了"12 小时"后
+        // 同一页普通行仍显 24 小时、合并行显 12 小时 —— 一句注释承诺的"全部时间字段"就是这么破的。
+        Text(TimeFormat.clock(r.time))
+            .vkFont(.caption.monospacedDigit())
+            .foregroundStyle(DS.Palette.textSub)
+            .frame(width: 42, alignment: .trailing)
+            .padding(.top, 2)
+
+        ZStack(alignment: .top) {
+            // 连接线: 留半格让线自然收在圆点上下 (592 展开态内也保持贯通)
+            Rectangle()
+                .fill(DS.Palette.hairline)
+                .frame(width: 1.5)
+                .frame(maxHeight: .infinity)
+            // 告警用菱形警示点, 普通用圆点 — 形状本身即第二信息通道, 不只靠颜色
+            Image(systemName: r.warn ? "diamond.fill" : "circle.fill")
+                .font(.system(size: r.warn ? 10 : 8))
+                .foregroundStyle(r.warn ? DS.Palette.danger : DS.Palette.accent)
+                .padding(.top, 5)
+        }
+        .frame(width: 12)
+        .accessibilityHidden(true)
+
+        HStack(spacing: DS.Space.s) {
+            // 188 手动标旗: 旗标行左侧常显 (形状+颜色双通道, 不只靠颜色)
+            if RecordOverlay.isFlagged(r.rowMac.isEmpty ? mac : r.rowMac, r.key) {
+                Image(systemName: "flag.fill")
+                    .font(.system(size: DS.Icon.xs, weight: .semibold))
+                    .foregroundStyle(DS.Palette.danger)
+                    .accessibilityLabel("已标旗")
+            }
+            // 184 开门方式图标: fp 指纹 / pwd 数字 / temp 一次性 / key 钥匙
+            rowTitle(r)
+                .padding(.top, 1)
+            Spacer(minLength: 0)
+        }
+        // 907 时间线行距三档 (kf_tl_gap, 叠在 kf_density 之上): 竖列越密越难扫,
+        // 这一档分别照顾"一眼看完一整天"与"一屏塞更多条"。
+        .padding(.bottom, DS.Metric.tlGap)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
     }
 }
