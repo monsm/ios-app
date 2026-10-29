@@ -226,12 +226,14 @@ struct DeviceHomeView: View {
                             NavigationLink {
                                 DefendView()
                             } label: {
+                                // 2026-10-29 性能：原来 summary 与 isActive 各读一次 DB.defend（同一份数据解两遍）。
+                                let defend = DB.defend(kc.mac)
                                 HStack(spacing: DS.Space.s) {
                                     Label("布防", systemImage: "shield.lefthalf.filled")
                                     Spacer(minLength: 0)
-                                    Text(DefendKit.summary(DB.defend(kc.mac)))
+                                    Text(DefendKit.summary(defend))
                                         .vkFont(.caption)
-                                        .foregroundStyle(DefendKit.isActive(DB.defend(kc.mac))
+                                        .foregroundStyle(DefendKit.isActive(defend)
                                                          ? DS.Palette.ok : DS.Palette.textSub)
                                 }
                                 .frame(maxWidth: .infinity, minHeight: DS.Hit.min)
