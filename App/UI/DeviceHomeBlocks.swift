@@ -51,114 +51,8 @@ extension DeviceHomeView {
         let tier = BatteryCare.tier(batteryPct(for: kc))
         return HeroCard {
             VStack(alignment: .leading, spacing: DS.Space.m) {
-                HStack(alignment: .top, spacing: DS.Space.m) {
-                    HStack(spacing: DS.Space.s) {
-                        // 105 锁符号: 档案里选的 SF Symbol 同步到 Hero 卡
-                        Image(systemName: LockArchive.symbolName(LockArchive.meta(kc.mac)))
-                            .font(.system(size: DS.Icon.md, weight: .medium))
-                            .foregroundStyle(LockArchive.swatchColor(LockArchive.meta(kc.mac).colorKey))
-                            .accessibilityHidden(true)
-                        VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                            Text(LockArchive.displayName(kc))
-                                .vkFont(.title3, weight: .semibold)
-                                .foregroundStyle(DS.heroFg)
-                                .lineLimit(1)
-                                // 2026-10-27 截图核对修复：这个 HStack 右侧是 LinkPill（很宽的胶囊），
-                                // 左侧名称只有 `.lineLimit(1)` 没有布局优先级 —— 于是被挤成「智能...」。
-                                // 给名称更高的优先级，压缩时优先压右侧胶囊而不是锁名。
-                                .layoutPriority(1)
-                            // 774 场所副标题: 档案里填了场所就替代型号行
-                            Text(LockArchive.subtitle(kc))
-                                .vkFont(.footnote)
-                                .foregroundStyle(DS.heroFg.opacity(0.9))
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.8)
-                        }
-                    }
-                    Spacer(minLength: 0)
-                    HStack(spacing: DS.Space.xs) {
-                        if isCurrent {
-                            // 包2: 三态语义胶囊 (64) + 拟人文案 (68) + 冷热标识 (98) + 63 信号格 + 67 耗时
-                            LinkPill(state: linkState(for: kc), connectMs: sense.connectMs, rssi: sense.lastRssi,
-                                     source: sense.connectSource == "即连" ? "即连" : "已预热")
-                            RSSIBars(level: LinkSense.rssiLevel(sense.lastRssi))
-                                .opacity(isCurrent ? 1 : 0)
-                                .accessibilityHidden(!isCurrent)
-                                // 63 点一格弹出 dBm 原始数值: 三格表看不出"1 格强"与"2 格弱"的界
-                                .onTapGesture { if isCurrent { showRssi.toggle() } }
-                                .overlay(alignment: .top) {
-                                    if isCurrent && showRssi {
-                                        Text(sense.lastRssi.map { "\($0) dBm" } ?? "未读到信号")
-                                            .vkFont(.caption2.monospacedDigit())
-                                            .foregroundStyle(DS.heroFg)
-                                            .padding(.horizontal, DS.Space.xs)
-                                            .padding(.vertical, 2)
-                                            .background(Capsule().fill(.black.opacity(0.55)))
-                                            .offset(y: -18)
-                                            .accessibilityHidden(true)
-                                    }
-                                }
-                                .accessibilityLabel(isCurrent
-                                    ? (sense.lastRssi.map { "信号 \($0) dBm, 轻点显示数值" } ?? "信号未读到")   // 63 信号
-                                    : "信号")
-                            // 268 状态变化历史: 长按胶囊弹出最近 5 次三态切换时间列表
-                            .contextMenu {
-                                Menu("最近状态变化") {   // 268 最近状态变化
-                                    ForEach(Array(LinkSense.history().enumerated()), id: \.offset) { _, h in
-                                        Text(h.at + " " + h.to)
-                                    }
-                                }
-                                // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.5pt (< 44)。
-                                // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
-                                .frame(minHeight: DS.Hit.min)
-                                .contentShape(Rectangle())
-                            }
-                            // 91 回连静默小点
-                            if reconnectDot {
-                                Circle()
-                                    .frame(width: 8, height: 8)
-                                    .foregroundStyle(DS.Palette.ok)
-                                    .overlay(Circle().strokeBorder(DS.heroFg.opacity(0.7), lineWidth: 1))
-                                    .transition(.opacity)
-                                    .accessibilityHidden(true)
-                            }
-                        } else {
-                            HeroPill(text: "滑动到这页即连接", systemImage: "arrow.left.arrow.right",
-                                     tint: DS.heroFg.opacity(0.75))
-                        }
-                    }
-                }
-                    // 电量是一级读数(它决定你还能不能开锁), 固件/锁钟是三级参考信息 —
-                    // 三者同级会让人看不出重点
-                    HStack(spacing: DS.Space.s) {
-                    HeroStat(systemImage: battTier(for: kc).icon,
-                             label: "电量",
-                             value: batteryText(for: kc),
-                             emphasized: true,
-                             tint: battTint(for: kc))
-                    // 909 指标位显隐: **电量不参与隐藏** —— 它决定"还能不能开锁"，
-                    // 一个能把自己藏掉的读数就不是读数。固件/锁钟是参考信息，允许收起来腾位置。
-                    if DS.HeroStats.shows("firmware") {
-                        HeroStat(systemImage: "memorychip",
-                                 label: "固件",
-                                 value: firmwareText(for: kc),
-                                 emphasized: false)
-                    }
-                    if DS.HeroStats.shows("lockclock") {
-                        HeroStat(systemImage: "clock",
-                                 label: "锁钟",
-                                 value: lockClockText(for: kc),
-                                 emphasized: false)
-                    }
-                    // 2026-10-29 补：APK `OpendevicePage` 有「钥匙有效期」横幅（`bleKeyValid`，`dState=1`
-                    // 显示 createTime~expireTime，等于永久则显示"永久"）。iOS 没有云端下发的这两个字段 ——
-                    // 本机 ekey 全部由 `buildEkeyOpen` 用 "2010-01-01 ~ 2118-01-01" 签发，所以如实写「永久」，
-                    // 不编一个假日期；没有 ekey 时写「未生成」（与「链路验证」同一条"读不到就说读不到"的口径）。
-                    HeroStat(systemImage: "key.horizontal",
-                             label: "钥匙",
-                             value: kc.ekey.isEmpty ? "未生成" : "永久",
-                             emphasized: false)
-}   // 2026-10-27 三轮：原 statsLayout 降级布局已删，恒横排
+                heroIdentityRow(kc, isCurrent: isCurrent)
+                heroStatsRow(kc)
                 // 790 最近活跃成员头像圈: 卡角叠放最近活跃 3 位, 点开列成员名, 选谁直接查谁的记录。
                 if isCurrent {
                     HStack(spacing: DS.Space.s) {
@@ -171,6 +65,122 @@ extension DeviceHomeView {
         .brightness(tier.severe ? -0.06 : 0)   // 120 低电视觉降级
         // 847 Hero 卡合并播报: 单元素合读 连接态+电量 (盲文简写 856)
         .accessibilityElement(children: .combine)
+    }
+
+    /// Hero 卡身份行：锁符号 + 名称/场所 + 三态胶囊 / 信号格 / 回连小点。
+    @ViewBuilder
+    private func heroIdentityRow(_ kc: Keychain, isCurrent: Bool) -> some View {
+        HStack(alignment: .top, spacing: DS.Space.m) {
+            HStack(spacing: DS.Space.s) {
+                // 105 锁符号: 档案里选的 SF Symbol 同步到 Hero 卡
+                Image(systemName: LockArchive.symbolName(LockArchive.meta(kc.mac)))
+                    .font(.system(size: DS.Icon.md, weight: .medium))
+                    .foregroundStyle(LockArchive.swatchColor(LockArchive.meta(kc.mac).colorKey))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                    Text(LockArchive.displayName(kc))
+                        .vkFont(.title3, weight: .semibold)
+                        .foregroundStyle(DS.heroFg)
+                        .lineLimit(1)
+                        // 2026-10-27 截图核对修复：这个 HStack 右侧是 LinkPill（很宽的胶囊），
+                        // 左侧名称只有 `.lineLimit(1)` 没有布局优先级 —— 于是被挤成「智能...」。
+                        // 给名称更高的优先级，压缩时优先压右侧胶囊而不是锁名。
+                        .layoutPriority(1)
+                    // 774 场所副标题: 档案里填了场所就替代型号行
+                    Text(LockArchive.subtitle(kc))
+                        .vkFont(.footnote)
+                        .foregroundStyle(DS.heroFg.opacity(0.9))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+            }
+            Spacer(minLength: 0)
+            HStack(spacing: DS.Space.xs) {
+                if isCurrent {
+                    // 包2: 三态语义胶囊 (64) + 拟人文案 (68) + 冷热标识 (98) + 63 信号格 + 67 耗时
+                    LinkPill(state: linkState(for: kc), connectMs: sense.connectMs, rssi: sense.lastRssi,
+                             source: sense.connectSource == "即连" ? "即连" : "已预热")
+                    RSSIBars(level: LinkSense.rssiLevel(sense.lastRssi))
+                        .opacity(isCurrent ? 1 : 0)
+                        .accessibilityHidden(!isCurrent)
+                        // 63 点一格弹出 dBm 原始数值: 三格表看不出"1 格强"与"2 格弱"的界
+                        .onTapGesture { if isCurrent { showRssi.toggle() } }
+                        .overlay(alignment: .top) {
+                            if isCurrent && showRssi {
+                                Text(sense.lastRssi.map { "\($0) dBm" } ?? "未读到信号")
+                                    .vkFont(.caption2.monospacedDigit())
+                                    .foregroundStyle(DS.heroFg)
+                                    .padding(.horizontal, DS.Space.xs)
+                                    .padding(.vertical, 2)
+                                    .background(Capsule().fill(.black.opacity(0.55)))
+                                    .offset(y: -18)
+                                    .accessibilityHidden(true)
+                            }
+                        }
+                        .accessibilityLabel(isCurrent
+                            ? (sense.lastRssi.map { "信号 \($0) dBm, 轻点显示数值" } ?? "信号未读到")   // 63 信号
+                            : "信号")
+                    // 268 状态变化历史: 长按胶囊弹出最近 5 次三态切换时间列表
+                    .contextMenu {
+                        Menu("最近状态变化") {   // 268 最近状态变化
+                            ForEach(Array(LinkSense.history().enumerated()), id: \.offset) { _, h in
+                                Text(h.at + " " + h.to)
+                            }
+                        }
+                        // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.5pt (< 44)。
+                        // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+                        .frame(minHeight: DS.Hit.min)
+                        .contentShape(Rectangle())
+                    }
+                    // 91 回连静默小点
+                    if reconnectDot {
+                        Circle()
+                            .frame(width: 8, height: 8)
+                            .foregroundStyle(DS.Palette.ok)
+                            .overlay(Circle().strokeBorder(DS.heroFg.opacity(0.7), lineWidth: 1))
+                            .transition(.opacity)
+                            .accessibilityHidden(true)
+                    }
+                } else {
+                    HeroPill(text: "滑动到这页即连接", systemImage: "arrow.left.arrow.right",
+                             tint: DS.heroFg.opacity(0.75))
+                }
+            }
+        }
+    }
+
+    /// Hero 卡指标行：电量（恒显）+ 固件 / 锁钟（可按 909 隐藏）+ 钥匙有效期。
+    @ViewBuilder
+    private func heroStatsRow(_ kc: Keychain) -> some View {
+        HStack(spacing: DS.Space.s) {
+        HeroStat(systemImage: battTier(for: kc).icon,
+                 label: "电量",
+                 value: batteryText(for: kc),
+                 emphasized: true,
+                 tint: battTint(for: kc))
+        // 909 指标位显隐: **电量不参与隐藏** —— 它决定"还能不能开锁"，
+        // 一个能把自己藏掉的读数就不是读数。固件/锁钟是参考信息，允许收起来腾位置。
+        if DS.HeroStats.shows("firmware") {
+            HeroStat(systemImage: "memorychip",
+                     label: "固件",
+                     value: firmwareText(for: kc),
+                     emphasized: false)
+        }
+        if DS.HeroStats.shows("lockclock") {
+            HeroStat(systemImage: "clock",
+                     label: "锁钟",
+                     value: lockClockText(for: kc),
+                     emphasized: false)
+        }
+        // 2026-10-29 补：APK `OpendevicePage` 有「钥匙有效期」横幅（`bleKeyValid`，`dState=1`
+        // 显示 createTime~expireTime，等于永久则显示"永久"）。iOS 没有云端下发的这两个字段 ——
+        // 本机 ekey 全部由 `buildEkeyOpen` 用 "2010-01-01 ~ 2118-01-01" 签发，所以如实写「永久」，
+        // 不编一个假日期；没有 ekey 时写「未生成」（与「链路验证」同一条"读不到就说读不到"的口径）。
+        HeroStat(systemImage: "key.horizontal",
+                 label: "钥匙",
+                 value: kc.ekey.isEmpty ? "未生成" : "永久",
+                 emphasized: false)
+}   // 2026-10-27 三轮：原 statsLayout 降级布局已删，恒横排
     }
     @ViewBuilder
     var attentionCard: some View {
