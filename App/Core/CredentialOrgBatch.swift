@@ -10,8 +10,11 @@ extension CredentialOrg {
         -> (done: [Int], failed: [Int]) {
         var out: [Int] = []
         var failed: [Int] = []
+        // 2026-10-29 性能：原来循环里每轮都 `DB.ledger(mac)` —— 那是一整份台账解码，
+        // 选 20 条就是 20 次全量解码。别名唯一，先建一次存在集即可。
+        let existing = Set(DB.ledger(mac).pwds.map(\.alias))
         for a in aliases {
-            guard DB.ledger(mac).pwds.contains(where: { $0.alias == a }) else {
+            guard existing.contains(a) else {
                 failed.append(a)
                 continue
             }
@@ -26,10 +29,13 @@ extension CredentialOrg {
     static func batchPrefixNote(_ mac: String, pwdAliases: [Int], fpBatches: [Int], prefix: String) -> Int {
         var n = 0
         var l = DB.ledger(mac)
-        for i in l.pwds.indices where pwdAliases.contains(l.pwds[i].alias) && !(l.pwds[i].note.hasPrefix(prefix)) {
+        // 2026-10-29 性能：`数组.contains` 在逐行循环里是 O(n×m)，换成 Set 变 O(n+m)。
+        let aliasSet = Set(pwdAliases)
+        let batchSet = Set(fpBatches)
+        for i in l.pwds.indices where aliasSet.contains(l.pwds[i].alias) && !(l.pwds[i].note.hasPrefix(prefix)) {
             l.pwds[i].note = prefix + l.pwds[i].note; n += 1
         }
-        for i in l.fps.indices where fpBatches.contains(l.fps[i].batch) && !(l.fps[i].note.hasPrefix(prefix)) {
+        for i in l.fps.indices where batchSet.contains(l.fps[i].batch) && !(l.fps[i].note.hasPrefix(prefix)) {
             l.fps[i].note = prefix + l.fps[i].note; n += 1
         }
         DB.saveLedger(mac, l)
@@ -49,16 +55,19 @@ extension CredentialOrg {
         var failedPwds: [Int] = []
         var failedFps: [Int] = []
         let batchId = UUID().uuidString   // 353: 一次批量停用 = 一个批次, 回收站里可整组还原
+        // 2026-10-29 性能：同 batchExtend —— 循环里每轮整份解码台账。
+        let existingAliases = Set(DB.ledger(mac).pwds.map(\.alias))
         for a in pwdAliases {
-            guard DB.ledger(mac).pwds.contains(where: { $0.alias == a }) else {
+            guard existingAliases.contains(a) else {
                 failedPwds.append(a)   // D-58：找不到就记下来，不静默跳过
                 continue
             }
             DB.delPwd(mac, a)
             n += 1
         }
+        let existingBatches = Set(DB.ledger(mac).fps.map(\.batch))
         for b in fpBatches {
-            guard DB.ledger(mac).fps.contains(where: { $0.batch == b }) else {
+            guard existingBatches.contains(b) else {
                 failedFps.append(b)
                 continue
             }
