@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T14:59:00.857Z",
+    "generated": "2026-10-29T15:03:45.842Z",
     "sources": [
       {
         "scout": "android-native",
@@ -16168,7 +16168,7 @@ const DATA = {
           "line": 258,
           "symbol": "proxyNames",
           "note": "",
-          "text": "}"
+          "text": "let unix = ZKProtocol.protoSecondsToUnix(Int64(logs[i].lockTime))"
         },
         {
           "platform": "ios",
@@ -22580,7 +22580,7 @@ const DATA = {
           "line": 205,
           "symbol": "activeSection",
           "note": "排序四档与列表",
-          "text": "ForEach(list) { m in"
+          "text": "title: \"还没有成员\","
         },
         {
           "platform": "apk",
@@ -22596,7 +22596,7 @@ const DATA = {
           "line": 222,
           "symbol": "NavigationLink",
           "note": "进 360 详情",
-          "text": "} footer: {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -22604,7 +22604,7 @@ const DATA = {
           "line": 225,
           "symbol": "swipeActions",
           "note": "左滑归档",
-          "text": "+ \"要看谁这段时间开得多, 上方选「近 30 天开门次数」那一档。\")"
+          "text": "Text(\"成员 (\\(list.count))\")"
         },
         {
           "platform": "ios",
@@ -22983,7 +22983,7 @@ const DATA = {
           "line": 42,
           "symbol": "body",
           "note": "七段列表顺序",
-          "text": "return DB.members()"
+          "text": "let extTable = MemberHub.allExt()"
         },
         {
           "platform": "ios",
@@ -22991,7 +22991,7 @@ const DATA = {
           "line": 56,
           "symbol": "toolbar",
           "note": "右上菜单四项",
-          "text": "navSection"
+          "text": "archivedSection"
         },
         {
           "platform": "ios",
@@ -22999,7 +22999,7 @@ const DATA = {
           "line": 134,
           "symbol": ".id(tick)",
           "note": "写库后重建",
-          "text": ".navigationTitle(\"导出成员名册\")"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -23155,7 +23155,7 @@ const DATA = {
           "line": 86,
           "symbol": "showFamilySettings",
           "note": "父级 sheet 挂载",
-          "text": ".frame(minHeight: DS.Hit.min)"
+          "text": "// 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.5pt (\u003c 44)。"
         }
       ],
       "platformEvidence": {
@@ -23341,7 +23341,7 @@ const DATA = {
           "line": 99,
           "symbol": "showRoster sheet",
           "note": "结果 sheet 与空态",
-          "text": "}"
+          "text": "app.pendingMemberAdd = false"
         },
         {
           "platform": "ios",
@@ -23762,7 +23762,7 @@ const DATA = {
           "line": 304,
           "symbol": "archivedSection",
           "note": "归档入口（计数）",
-          "text": "}"
+          "text": "Text(MemberHub.ext(m.id).note)"
         },
         {
           "platform": "ios",
@@ -24090,7 +24090,7 @@ const DATA = {
           "line": 167,
           "symbol": "groupChipSection",
           "note": "chip 过滤",
-          "text": "return Button {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -24174,7 +24174,7 @@ const DATA = {
           "line": 103,
           "symbol": "emergencyAdmins()",
           "note": "",
-          "text": "static let roles = [\"main\", \"member\", \"guest\"]"
+          "text": "// map(\\.key) 产出 [String], 声明是 Set\u003cString> → 不可隐式转换, 显式包一层"
         },
         {
           "platform": "ios",
@@ -24372,7 +24372,7 @@ const DATA = {
           "line": 321,
           "symbol": "sceneSection",
           "note": "本周主责与便签",
-          "text": "// 屏幕上就是「聚合视图」标题下面一片空白，用户会以为加载失败。"
+          "text": "// 章里第一段就把这句写在明面上 —— 做不到就说不做，不拿四步里的某一步含糊带过。"
         },
         {
           "platform": "ios",
@@ -24380,7 +24380,7 @@ const DATA = {
           "line": 323,
           "symbol": "dutyThisWeek",
           "note": "主责读取",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -24513,7 +24513,7 @@ const DATA = {
           "line": 252,
           "symbol": "visitorSection",
           "note": "虚拟分组行",
-          "text": "}"
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         },
         {
           "platform": "ios",
@@ -24529,7 +24529,7 @@ const DATA = {
           "line": 256,
           "symbol": "pendingRecordsFilter",
           "note": "跳记录页过滤",
-          "text": ".buttonStyle(PlainButtonStyle())"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -24537,7 +24537,7 @@ const DATA = {
           "line": 285,
           "symbol": "visitorOpenCount",
           "note": "未归属临时码计数",
-          "text": "if let dutyID = MemberHub.dutyThisWeek, let dm = DB.member(dutyID) {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -24545,7 +24545,7 @@ const DATA = {
           "line": 299,
           "symbol": "visitorOwns",
           "note": "名下临时码条数",
-          "text": "Text(MemberHub.ext(m.id).note)"
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         }
       ],
       "platformEvidence": {
@@ -25035,7 +25035,7 @@ const DATA = {
           "line": 367,
           "symbol": "struct MemberRow",
           "note": "行声明",
-          "text": "let r = MemberHub.ext(member.id).role"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -25043,7 +25043,7 @@ const DATA = {
           "line": 380,
           "symbol": "MemberRow",
           "note": "称呼（备注）双层文本",
-          "text": "return Text(bits.isEmpty ? \"暂无台账凭证\" : bits.joined(separator: \" · \"))"
+          "text": "let bits = [member.relation,"
         },
         {
           "platform": "ios",
@@ -25051,7 +25051,7 @@ const DATA = {
           "line": 385,
           "symbol": "MemberRow",
           "note": "同名待合并",
-          "text": ".opacity(a.stale ? 0.55 : 1)"
+          "text": "return Text(bits.isEmpty ? \"暂无台账凭证\" : bits.joined(separator: \" · \"))"
         },
         {
           "platform": "ios",
@@ -25059,7 +25059,7 @@ const DATA = {
           "line": 432,
           "symbol": "subLine",
           "note": "副行四段",
-          "text": "Text(e.emoji)"
+          "text": "Circle()"
         },
         {
           "platform": "ios",
@@ -25735,7 +25735,7 @@ const DATA = {
           "line": 216,
           "symbol": "EmptyState",
           "note": "空态建档向导按钮",
-          "text": "} label: { Label(\"归档\", systemImage: \"archivebox\") }"
+          "text": "var e = MemberHub.ext(m.id)"
         },
         {
           "platform": "ios",
@@ -25743,7 +25743,7 @@ const DATA = {
           "line": 89,
           "symbol": "onAppear",
           "note": "pendingMemberAdd 一次性消费",
-          "text": "}"
+          "text": ".contentShape(Rectangle())"
         },
         {
           "platform": "ios",
@@ -25751,7 +25751,7 @@ const DATA = {
           "line": 80,
           "symbol": "sheet(isPresented: $showWizard)",
           "note": "向导 sheet 挂载",
-          "text": "}"
+          "text": "} label: {"
         }
       ],
       "platformEvidence": {
@@ -60704,7 +60704,7 @@ const DATA = {
           "line": 228,
           "symbol": "MemberHub.saveExt",
           "note": "归档写入示例",
-          "text": "/// 264/466 排序用的活跃度表: 一次算完全员, 不在比较式里逐次重扫全锁日志。"
+          "text": "+ \"「久未用」判的是近 30 天没有可证明归属的开门, 标在每行行尾; \"   // 262/466 久未用"
         },
         {
           "platform": "ios",

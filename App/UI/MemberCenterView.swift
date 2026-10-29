@@ -38,10 +38,12 @@ struct MemberCenterView: View {
     var members: [Member] {
         // archivedIDs() 此前零调用: 它一次解出整张 ext 表; 旧写法每个成员调两次 ext() = 每成员整体重解一遍字典。
         // groupTag 那步仍按成员取 ext (要的是值不是集合), 至少砍掉一半重复解码。
-        let archived = MemberHub.archivedIDs()
+        // 2026-10-29 性能：archivedIDs() 与逐成员的 ext() 各自整表解码一遍；一次取表共用。
+        let extTable = MemberHub.allExt()
+        let archived = MemberHub.archivedIDs(extTable)
         return DB.members()
             .filter { !archived.contains($0.id) }
-            .filter { m in groupFilter.isEmpty || MemberHub.ext(m.id).groupTag == groupFilter }
+            .filter { m in groupFilter.isEmpty || MemberHub.ext(m.id, in: extTable).groupTag == groupFilter }
     }
 
     var body: some View { vkBody.destined(.memberCenter) }
@@ -149,7 +151,9 @@ struct MemberCenterView: View {
     // 630 分组过滤 chips (家人/访客/服务人员 — 与包10 图例同组字段)
     @ViewBuilder
     var groupChipSection: some View {
-        let tags = Array(Set(DB.members().map { MemberHub.ext($0.id).groupTag })).filter { !$0.isEmpty }.sorted()
+        // 2026-10-29 性能：逐成员 ext() = 逐成员整表解码；一次取表。
+        let extTable = MemberHub.allExt()
+        let tags = Array(Set(DB.members().map { MemberHub.ext($0.id, in: extTable).groupTag })).filter { !$0.isEmpty }.sorted()
         if !tags.isEmpty {
             Section {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -264,7 +268,8 @@ struct MemberCenterView: View {
 
     @ViewBuilder
     var archivedSection: some View {
-        let arch = DB.members().filter { MemberHub.ext($0.id).archived }
+        let extTable = MemberHub.allExt()
+        let arch = DB.members().filter { MemberHub.ext($0.id, in: extTable).archived }
         if !arch.isEmpty {
             Section {
                 Button { showArchived = true } label: {

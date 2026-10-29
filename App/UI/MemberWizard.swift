@@ -287,7 +287,9 @@ struct MemberArchivedView: View {
     @State private var tick = 0
 
     private var archived: [Member] {
-        DB.members().filter { MemberHub.ext($0.id).archived }
+        // 2026-10-29 性能：逐成员 ext() = 逐成员整表解码。
+        let extTable = MemberHub.allExt()
+        return DB.members().filter { MemberHub.ext($0.id, in: extTable).archived }
     }
 
     var body: some View { vkBody.destined(.memberArchived) }

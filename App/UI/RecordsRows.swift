@@ -112,11 +112,14 @@ extension RecordsView {
 
     // ---------- 成员过滤 (保留既有 793 访客虚拟分组 / 791 可认领 / 1028 保养) ----------
     var memberChips: some View {
-        Section {
+        // 2026-10-29 性能：原先逐成员调 ext()（各自整表解码）。提到 Section 外一次取表 ——
+        // 写进 filter 闭包内等于每比较一次解一次，等于没改。
+        let extTable = MemberHub.allExt()
+        return Section {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: DS.Space.s) {
                     chip("", "全部")
-                    ForEach(DB.members().filter { !MemberHub.ext($0.id).archived }) { m in   // 795: 归档成员不排 chip
+                    ForEach(DB.members().filter { !MemberHub.ext($0.id, in: extTable).archived }) { m in   // 795: 归档成员不排 chip
                         if rows.contains(where: { $0.whoId == m.id }) { chip(m.id, MemberHub.aliasName(m.id) ?? m.name) }   // 919: chip 同走别名开关
                     }
                     if rows.contains(where: { $0.whoId == nil && $0.whoKind == "temp" }) {

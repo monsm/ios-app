@@ -84,18 +84,24 @@ enum MemberHub {
 
     // ---------- 档案扩展 ----------
     private static let extKey = "kf_member_ext"
-    static func ext(_ id: String) -> MemberExt {
-        let all = DB.store.get([String: MemberExt].self, extKey) ?? [:]
-        return all[id] ?? MemberExt()
+    /// 2026-10-29 性能：`ext(id)` 每调一次都要把**整张 kf_member_ext** 解码一遍，
+    /// 而成员中心的 groupChipSection / archivedSection / members 过滤都是逐成员调用 ——
+    /// M 个成员就是 M 次全量解码（O(M) 的解码 × M 次调用）。
+    /// 这里加一个整表 accessor，调用方一次取表、行内只查字典。
+    static func allExt() -> [String: MemberExt] {
+        DB.store.get([String: MemberExt].self, extKey) ?? [:]
+    }
+    static func ext(_ id: String, in table: [String: MemberExt]? = nil) -> MemberExt {
+        (table ?? allExt())[id] ?? MemberExt()
     }
     static func saveExt(_ id: String, _ e: MemberExt) {
         var all = DB.store.get([String: MemberExt].self, extKey) ?? [:]
         all[id] = e
         DB.store.setCodable(extKey, all)
     }
-    static func archivedIDs() -> Set<String> {
+    static func archivedIDs(_ table: [String: MemberExt]? = nil) -> Set<String> {
         // map(\.key) 产出 [String], 声明是 Set<String> → 不可隐式转换, 显式包一层
-        Set((DB.store.get([String: MemberExt].self, extKey) ?? [:]).filter { $0.value.archived }.map(\.key))
+        Set((table ?? allExt()).filter { $0.value.archived }.map(\.key))
     }
     static func isActive(_ id: String) -> Bool { !ext(id).archived }
 
