@@ -66,6 +66,13 @@ struct RecDetailSheet: View {
         }
     }
 
+    /// 2026-10-29：从 "yyyy-MM-dd HH:mm:ss" 里取小时；格式不对返回 nil（不猜）。
+    private static func hourOf(_ s: String) -> Int? {
+        guard s.count >= 13 else { return nil }
+        let hh = String(s.dropFirst(11).prefix(2))
+        return Int(hh)
+    }
+
     // ---------- 全字段 ----------
     @ViewBuilder
     private var fieldSection: some View {
@@ -83,6 +90,16 @@ struct RecDetailSheet: View {
             }
             // 647 制式: 全部时间字段只经 TimeFormat.clock() 这一个出口 (与时间线、导出同一份口径)
             fieldRow("锁端时刻", TimeFormat.clock(rec.timeStr))
+            // 2026-10-29 补：`TimeWord`（自然时段词）与 `CommuteLabel`（工作日通勤时段）一直零调用。
+            // 放在详情里而不是列表行上：列表行已经在时间前面带日期，再加"上午/下午"是噪声；
+            // 详情是"看这一条"的场景，时段与通勤判断才有解释价值。
+            if let h = Self.hourOf(rec.timeStr) {
+                var seg = TimeWord.word(h)
+                if let c = CommuteLabel.tag(date: RecordSearch.dateFromKey(rec.dayKey) ?? Date(), hour: h) {
+                    seg += " · \(c)时段"
+                }
+                fieldRow("时段", seg)
+            }
             // 650 时间来源徽标: "锁内时钟"=这条时刻来自日志 #04 协议秒; "本机录入"=拉取时补的墙钟。
             // 两者可能差几秒 (锁端靠 21 校时)，所以来源必须写出来，而不是混成"一个时间"。
             // 650 色点: 绿点=锁内时钟 (权威), 灰点=本机录入 (补的墙钟), 一行内区分。

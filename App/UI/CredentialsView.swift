@@ -34,6 +34,7 @@ struct CredentialsView: View {
     private var isBusy: Bool { busyKey != nil }
     // 2026-10-26 恢复：这些 @State 在清理四件套时被连带删掉，但它们是主流程状态。
     @State private var editMode = false
+    @State private var showCalendar = false   // 2026-10-29: 到期月历 sheet
     @State private var selPwds: [Int] = []
     @State private var selFps: [Int] = []
     @State private var showExtend = false
@@ -80,6 +81,8 @@ struct CredentialsView: View {
             .onChange(of: app.pendingCredNav) { _, _ in consumeCredJump() }
             .onChange(of: app.pendingCredSelect) { _, _ in consumeCredSelect() }
             // 2026-10-26 精简：整理建议中心 sheet 已删。
+            // 2026-10-29: 到期月历
+            .sheet(isPresented: $showCalendar) { CredentialCalendarView() }
             .sheet(isPresented: $showExtend) {
                 if !extendAliases.isEmpty {
                     // 同上: CredExtendView 里那颗按钮写的是「关闭」, 而它过去只 reload()
@@ -180,6 +183,10 @@ struct CredentialsView: View {
                 // 溢出: 其余全部按语义分组进这里
                 Menu {
                     Section("视图") {
+                        // 2026-10-29：`CredentialOrg.monthDeadlines` / `dayDeadlines` 零调用 —— 到期月历入口
+                        Button { showCalendar = true } label: {
+                            Label("到期月历", systemImage: "calendar")
+                        }
                         // 2026-10-27 三轮精简：排序入口已删（排序四档移除）。
                         Button {
                             memberView.toggle()
