@@ -178,8 +178,6 @@ extension DeviceHomeView {
     // ---------- 派生数据 (包3: 参数化到任意锁 — 当前页吃实时, 其余页读快照) ----------
     /// 826 聚光教练标: nil = 不显示; 0/1/2 = 当前焦点序号 (只在首进设备 Tab 时出现一次)
     // 904 模块排序: 排序表开关 + 改完强制重算 (顺序存在 DB 里)
-    @State var showModuleOrder = false
-    @State var orderTick = 0
     /// 904 三模块的当前顺序 (槽位固定, 默认 = 现状, 所以默认渲染逐字节不变)。
     /// 存的是**顺序串** (kf_dev_order = "hero,quick,recent"), 非法/缺失一律回落默认。
     var devOrder: [String] {

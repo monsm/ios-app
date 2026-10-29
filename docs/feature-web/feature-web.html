@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T04:48:26.149Z",
+    "generated": "2026-10-29T04:51:28.863Z",
     "sources": [
       {
         "scout": "android-native",
@@ -801,7 +801,7 @@ const DATA = {
           "line": 42,
           "symbol": "body",
           "note": "vkBody.destined(.deviceHome)",
-          "text": ""
+          "text": "@State var orderTick = 0"
         },
         {
           "platform": "ios",
@@ -809,7 +809,7 @@ const DATA = {
           "line": 130,
           "symbol": "sheet(isPresented: $showAdd)",
           "note": "AddDeviceView()",
-          "text": "app.showToast(\"已定位到「\" + app.displayName + \"」\")"
+          "text": "app.pendingJumpLock = nil"
         },
         {
           "platform": "android",
@@ -3389,7 +3389,7 @@ const DATA = {
           "line": 170,
           "symbol": ".onChange(of: app.pendingJumpLock)",
           "note": "",
-          "text": "title: \"还没有添加门锁\","
+          "text": "if app.devices.isEmpty {"
         },
         {
           "platform": "ios",
@@ -3397,7 +3397,7 @@ const DATA = {
           "line": 201,
           "symbol": "if app.pendingAddDevice",
           "note": "",
-          "text": "// 会把按钮吞成整卡一个 VoiceOver 元素），所以用独立行 —— HIG 的 disclosure 惯例。"
+          "text": "// 外接开关与\"切换控制\"可以按组逐项聚焦, 不用在整页里一个个划过去。"
         },
         {
           "platform": "ios",
@@ -3405,7 +3405,7 @@ const DATA = {
           "line": 148,
           "symbol": ".onChange(of: app.currentMac)",
           "note": "",
-          "text": "if m != app.currentMac {"
+          "text": "// 包2/136 补充 跨页跳回: 记录/告警入口点\"跳回设备页定位该锁\""
         }
       ],
       "platformEvidence": {
@@ -3477,7 +3477,7 @@ const DATA = {
           "line": 47,
           "symbol": "if app.devices.isEmpty",
           "note": "",
-          "text": ""
+          "text": "var vkBody: some View {"
         },
         {
           "platform": "apk",
@@ -3493,7 +3493,7 @@ const DATA = {
           "line": 59,
           "symbol": "app.pendingSettingsFocus = \"backup\"",
           "note": "",
-          "text": ".navigationTitle(app.displayName)"
+          "text": "// 用户主动下拉属于手动动作 (与\"手动圆盘照常\"同一条口径), 所以这里不看 DiagFlags.silent。"
         },
         {
           "platform": "ios",
@@ -3501,7 +3501,7 @@ const DATA = {
           "line": 52,
           "symbol": "actionTitle: \"添加设备\"",
           "note": "",
-          "text": "ScrollView {"
+          "text": "@ViewBuilder"
         }
       ],
       "platformEvidence": {
@@ -3580,7 +3580,7 @@ const DATA = {
           "line": 330,
           "symbol": "groupChips",
           "note": "",
-          "text": "return f"
+          "text": "static let lastStamp: DateFormatter = {"
         },
         {
           "platform": "ios",
@@ -3588,7 +3588,7 @@ const DATA = {
           "line": 293,
           "symbol": "inGroup(_:) ",
           "note": "",
-          "text": "let us = LockStats.usage()"
+          "text": "refreshing = false"
         },
         {
           "platform": "ios",
@@ -3596,7 +3596,7 @@ const DATA = {
           "line": 347,
           "symbol": "groupFilter = name; syncPageOrder()",
           "note": "",
-          "text": "// 液态玻璃: 相邻玻璃元素必须放进同一个 GlassEffectContainer 才能融成一体,"
+          "text": "// 2026-10-27 三轮精简：focusButton（专注开锁入口）已删。"
         }
       ],
       "platformEvidence": {
@@ -3924,7 +3924,7 @@ const DATA = {
           "line": 96,
           "symbol": "Button { showModuleOrder = true }",
           "note": "",
-          "text": "Task { @MainActor in"
+          "text": "if !DB.store.getString(\"kf_migrate_pending\").isEmpty {"
         },
         {
           "platform": "ios",
@@ -4010,7 +4010,7 @@ const DATA = {
           "line": 85,
           "symbol": "if let kc = app.current, kc.ekey.isEmpty, kc.pins.count > 1",
           "note": "",
-          "text": ".sheet(isPresented: $app.showGate) { UnlockGateView() }"
+          "text": "// 2026-10-28 删除：`showSettings` 是**死 sheet** —— 零 `= true` 写点。"
         }
       ],
       "platformEvidence": {
@@ -4080,7 +4080,7 @@ const DATA = {
           "line": 211,
           "symbol": "rescanPull()",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": "Spacer(minLength: 0)"
         },
         {
           "platform": "ios",
@@ -4088,7 +4088,7 @@ const DATA = {
           "line": 217,
           "symbol": "sense.scan(mac:timeoutMs: 4000)",
           "note": "",
-          "text": ".accessibilityHint(\"锁的概览、布防、防尾随、静音、固件与危险操作\")"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -4096,7 +4096,7 @@ const DATA = {
           "line": 109,
           "symbol": ".refreshable { await rescanPull() }",
           "note": "",
-          "text": "confirmPulse = false   // 换锁同时清掉上一次的脉冲态"
+          "text": "// 现在换锁即设防：新锁需要点两次才发指令。"
         }
       ],
       "platformEvidence": {
@@ -29636,7 +29636,7 @@ const DATA = {
           "line": 59,
           "symbol": "app.pendingSettingsFocus = \"backup\"",
           "note": "",
-          "text": ".navigationTitle(app.displayName)"
+          "text": "// 用户主动下拉属于手动动作 (与\"手动圆盘照常\"同一条口径), 所以这里不看 DiagFlags.silent。"
         },
         {
           "platform": "ios",

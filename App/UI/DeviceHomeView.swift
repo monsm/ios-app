@@ -37,6 +37,9 @@ struct DeviceHomeView: View {
     @State var showRssi = false   // 63 点信号格弹出 dBm 数值 (格数看不出 1 格还是 2 格时看数字化)
     // 乱源治理第 3 批: 设备页模块显隐。默认空集 = 一块都不隐 (拍板口径), 面板只给能力不给默认。
     @State var devHidden = DevModuleStore.hidden
+    // 2026-10-29：这两个原在 DeviceHomeQuick 的 extension 里 —— Swift 不允许 extension 有存储属性，移回主 struct。
+    @State var showModuleOrder = false
+    @State var orderTick = 0
     /// 这一块现在该不该画 (必留的五块不走这里, 见 DevModules 文件头)
     func shown(_ m: DevModule) -> Bool { !devHidden.contains(m.rawValue) }
 
