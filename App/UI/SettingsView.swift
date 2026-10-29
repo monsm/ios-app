@@ -294,11 +294,6 @@ struct SettingsView: View {
                     .listRowInsets(EdgeInsets())
             } else {
                 NavigationLink("锁档案 (昵称/符号/色标/备注)") { LockProfileView() }
-                if let kc = app.current {
-                    Button { shareLock = kc } label: {
-                        Label("分享给安卓 (扫码开锁)", systemImage: "qrcode")
-                    }
-                }
                 note("型号、固件、电量与完整名片都在设备页 →「管理这把锁」→「概览」里。")
                 Button("删除设备", role: .destructive) { deleteDevice() }
             }

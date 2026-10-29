@@ -163,6 +163,12 @@ extension SettingsView {
             // `showGateway` 的唯一写点是 `s.gateway` 那条 SearchHit（SettingsView:251），
             // 设置列表里没有可见行。用户不搜「智能网关」就永远看不到配网/状态/重启三个能力。
             Button { showGateway = true } label: { Label("智能网关", systemImage: "antenna.radiowaves.left.and.right") }
+            // 2026-10-29 布局整理：「分享给安卓」原先挂在「门锁」段（"这一把锁的凭证"）。
+            // 但它实际做的是**跨平台数据交换**（把 ekey 编成二维码给安卓端扫），
+            // 与「备份与恢复」「智能网关」同族，所以移到工具段。
+            if let kc = app.current {
+                Button { shareLock = kc } label: { Label("分享给安卓 (扫码开锁)", systemImage: "qrcode") }
+            }
             // 2026-10-28 补：通知权限状态此前**无处可看**（`NotifyAuthBox` 零调用）。
             // 到期提醒是这个 App 唯一的主动提醒出口，权限关了却没人告诉用户，等于静默失效。
             if notifyOff {
