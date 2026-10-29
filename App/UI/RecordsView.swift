@@ -160,7 +160,7 @@ struct RecordsView: View {
 
     /// 无锁占位 —— 2026-10-13 run 63 从 body 的 Group 分支抽出 (该表达式报 type-check 超时)
     @ViewBuilder
-    private var noLockPlaceholder: some View {
+    var noLockPlaceholder: some View {
         EmptyState(systemImage: "list.bullet.rectangle",
                    title: "还没有添加门锁",
                    message: "开门与操作记录存在门锁内。请先添加并配对门锁，再回到这里读取。",
@@ -172,7 +172,7 @@ struct RecordsView: View {
     /// 可复制（发给管理员/记进工单）。
     /// 2026-10-27 新增（AUDIT-B 2.5）：原先 `reconLine` 算完就丢，用户永远看不到。
     @ViewBuilder
-    private var reconRow: some View {
+    var reconRow: some View {
         Section {
             VStack(alignment: .leading, spacing: DS.Space.xs) {
                 Text(reconLine)
@@ -201,7 +201,7 @@ struct RecordsView: View {
     /// 记录页主体列表 —— 2026-10-13 run 63 从 body 的 Group else 分支抽出:
     /// 整个 body 表达式报 type-check 超时。
     @ViewBuilder
-    private var mainList: some View {
+    var mainList: some View {
         List {
             if offline { jumpBackRow }
             // 2026-10-28 修复：`cachedHint` 全仓零调用 —— 文案写好了但从不显示，
@@ -262,7 +262,7 @@ struct RecordsView: View {
     /// 记录页右上角工具栏 (从 body 内联的 .toolbar 里抽出: 该表达式报 type-check 超时)。
     /// 工具栏内容是 ToolbarContent ⇒ 用 @ToolbarContentBuilder。
     @ToolbarContentBuilder
-    private var recordsToolbar: some ToolbarContent {
+    var recordsToolbar: some ToolbarContent {
         ToolbarItem(placement: .navigationBarTrailing) {
             // 读取中把刷新按钮换成进度圈, 状态一目了然
             if running {
@@ -299,7 +299,7 @@ struct RecordsView: View {
 
     /// 记录页二选一 (无锁占位 / 主体列表) —— 从 recordsCore 拆出: 该表达式报 type-check 超时
     @ViewBuilder
-    private var recordsGroup: some View {
+    var recordsGroup: some View {
         if app.current == nil {
             noLockPlaceholder
         } else {
@@ -309,7 +309,7 @@ struct RecordsView: View {
 
     /// 记录页核心内容 (Group + 页面级修饰符) —— 从巨型 body 拆出: 原表达式报 type-check 超时
     @ViewBuilder
-    private var recordsCore: some View {
+    var recordsCore: some View {
         // 2026-10-28 修复：同凭证页 —— LockScreen 承诺「记录显示为空」，
         // 但 decoyMode 不驱动任何视图清空。这里补上空壳态。
         if app.decoyMode {
@@ -396,7 +396,7 @@ struct RecordsView: View {
 
     /// 记录页外层 (导航栈 + 弹窗/弹框) —— 同上, 继续拆
     @ViewBuilder
-    private var recordsChrome: some View {
+    var recordsChrome: some View {
         NavigationStack {
             recordsCore
         }
@@ -424,8 +424,8 @@ struct RecordsView: View {
         }
     }
 
-    private var macs: [String] { scope == 1 ? DB.keychains().map { $0.mac } : [mac] }
-    private var activeFilters: Bool {
+    var macs: [String] { scope == 1 ? DB.keychains().map { $0.mac } : [mac] }
+    var activeFilters: Bool {
         filters.segment != 0 || filters.dayKind != 0 || filters.lateNight || filters.alarmOnly
     }
 
@@ -433,7 +433,7 @@ struct RecordsView: View {
     /// 拉全 / 未拉全 (带剩余条数) / 锁端没报告剩余所以不可判 —— 最后一种最容易被写成"已拉全"。
     /// 复制走 UIPasteboard 的普通文本路径 (不含口令等敏感值)。
     @ViewBuilder
-    private var searchBar: some View {
+    var searchBar: some View {
         Section {
             VStack(alignment: .leading, spacing: DS.Space.s) {
                 HStack(spacing: DS.Space.s) {
@@ -501,7 +501,7 @@ struct RecordsView: View {
 
     /// 562 实时计数 "约 N 条" (归属口径标"约", 边输入边更新)
     @ViewBuilder
-    private var resultCount: some View {
+    var resultCount: some View {
         Section {
             HStack(spacing: DS.Space.s) {
                 // 2026-10-13 run 63: 原来把三段拼接 + 两个三元全内联进 Text, 报 type-check 超时。
@@ -533,7 +533,7 @@ struct RecordsView: View {
 
     /// 573 生效条件数。**不含 scope**: 单锁↔全部锁是"看哪本台账"而不是过滤条件，
     /// 算进去等于让重置按钮谎报它把范围也清掉了 (它不会，也不该)。
-    private var activeFilterCount: Int {
+    var activeFilterCount: Int {
         var n = 0
         if filters.segment != 0 { n += 1 }
         if filters.dayKind != 0 { n += 1 }
@@ -551,7 +551,7 @@ struct RecordsView: View {
 
     /// 561/770 跨锁范围切换: 单锁/全部锁; 全部锁时行首带锁名小标签 (770)
     @ViewBuilder
-    private var scopeRow: some View {
+    var scopeRow: some View {
         Section {
             HStack(spacing: DS.Space.s) {
                 Text("范围")
@@ -588,7 +588,7 @@ struct RecordsView: View {
     // 17 筛选 chips (原句"Spotify 式筛选 chips") = 下面这一整行 chip，与 564/571/572/567/568/569/570 同一处。
     // 不另建一套"chips 组件": 同一页两种筛选外观，用户会以为它们是两个功能、两套状态。
     // ---------- 包9: 筛选 chip 行 (564/571/572/567/568/569/570) ----------
-    private static let kindOptions: [(String, String)] = [("全部凭证", ""), ("指纹", "fp"), ("密码", "pwd"), ("临时码", "temp"), ("数字钥匙", "key")]
+    static let kindOptions: [(String, String)] = [("全部凭证", ""), ("指纹", "fp"), ("密码", "pwd"), ("临时码", "temp"), ("数字钥匙", "key")]
 
     /// 筛选区 —— 2026-10-18 按 PageGrammar 规则 3 重构。
     ///
@@ -603,7 +603,7 @@ struct RecordsView: View {
     /// 为什么不是删掉低频筛选项: 它们是真功能 (567/565/570 都是拍板过的),
     /// 问题从来不是"有这些筛选", 而是"它们一直摊在首屏"。
     @ViewBuilder
-    private var filterChips: some View {
+    var filterChips: some View {
         Section {
             Button {
                 withAnimation(DS.Motion.quick) { filtersExpanded.toggle() }
@@ -694,7 +694,7 @@ struct RecordsView: View {
     }
 
     /// 一行摘要: 没筛选时是「全部记录」, 有筛选时列出已启用项。
-    private var filterSummary: String {
+    var filterSummary: String {
         var parts: [String] = []
         if filters.segment != 0 {
             let names = ["全部", "早 6-9", "午 10-14", "晚 15-21", "深夜"]
@@ -716,7 +716,7 @@ struct RecordsView: View {
     /// 而是不是每次进记录页都要看。原来全部常驻在列表前, 首屏被它们占满。
     /// 现在收进一个可展开区: 默认收起, 展开后与原来逐字一致。
     @ViewBuilder
-    private var secondaryRowsDisclosure: some View {
+    var secondaryRowsDisclosure: some View {
         Section {
             Button {
                 withAnimation(DS.Motion.quick) { secondaryRowsExpanded.toggle() }
@@ -748,7 +748,7 @@ struct RecordsView: View {
     }
 
     /// 折叠行上的一行说明: 只列现在真有内容的那几块, 空的不占字。
-    private var secondaryRowsSummary: String {
+    var secondaryRowsSummary: String {
         var parts: [String] = []
         if !DB.members().isEmpty { parts.append("成员筛选") }
         return parts.isEmpty ? "更多视图" : parts.joined(separator: " · ")
@@ -759,7 +759,7 @@ struct RecordsView: View {
     /// 716 选区导出: 按**天**整组勾选 → 合并成一份 CSV (进剪贴板, 与 698 同一通路)。
     /// 行级多选刻意不做: 时间线一页上千行, 逐行勾选的手势成本远高于"按天勾"这种整组选择 (原句的"整组"正是这一档);
     /// 凭证 Tab 那套多选 (1518) 是"列表行 + 批量动作", 与这里"导出选区"不是同一件事, 不硬搬。
-    private var rangePickSheet: some View {
+    var rangePickSheet: some View {
         NavigationStack {
             List {
                 Section {
@@ -830,7 +830,7 @@ struct RecordsView: View {
     /// 654 去年今日: 时间线顶部的偶发入口 —— 同一月日在去年有开门记录时出一行。
     /// 数据源就是本机日志缓存 (≤300 条), 所以只有"这一年里本机读到过"才可能出现; 没读到就不出现, 不假装。
     @ViewBuilder
-    private var lastYearTodayRow: some View {
+    var lastYearTodayRow: some View {
         let n = lastYearTodayCount
         if n > 0 {
             Section {
@@ -845,7 +845,7 @@ struct RecordsView: View {
             }
         }
     }
-    private var lastYearTodayCount: Int {
+    var lastYearTodayCount: Int {
         let cal = WeekCal.gregorian
         guard let last = cal.date(byAdding: .year, value: -1, to: Date()) else { return 0 }
         let fmt = DateFormatter()
@@ -857,17 +857,17 @@ struct RecordsView: View {
         }.count
     }
 
-    private var firstLogDay: String? {
+    var firstLogDay: String? {
         DB.readLogs(mac).compactMap { $0.lockTimeStr.isEmpty ? nil : String($0.lockTimeStr.prefix(10)) }.min()
     }
 
-    private var mac: String { app.current?.mac ?? "" }
-    private var syncStampKey: String { "kf_logsync_" + mac }
-    private var totalCount: Int { allRows.count }
-    private var todayKey: String { Self.dayKey(Date()) }
+    var mac: String { app.current?.mac ?? "" }
+    var syncStampKey: String { "kf_logsync_" + mac }
+    var totalCount: Int { allRows.count }
+    var todayKey: String { Self.dayKey(Date()) }
 
     // ---------- 顶部状态条 ----------
-    private var cachedHint: String {
+    var cachedHint: String {
         if let at = lastSyncAt() {
             return "未连接门锁 — 以下为本地缓存（读取于 " + Self.stamp.string(from: at) + "）。连接锁后点「重新读取」刷新。"
         }
@@ -875,7 +875,7 @@ struct RecordsView: View {
     }
     /// 136 补充 跨页跳回: 记录/告警页一键跳回设备页定位该锁
     @ViewBuilder
-    private var jumpBackRow: some View {
+    var jumpBackRow: some View {
         Section {
             Button {
                 app.pendingJumpLock = mac
@@ -887,7 +887,7 @@ struct RecordsView: View {
             .foregroundStyle(DS.Palette.accentText)
         }
     }
-    private static let stamp: DateFormatter = {
+    static let stamp: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "MM-dd HH:mm"
         f.locale = Locale(identifier: "en_US_POSIX")
@@ -1105,7 +1105,7 @@ struct RecordsView: View {
     /// 单锁路径 (render) 与全部锁路径 (applyFilter) 原先各抄一遍这套换算, 连 649 的「凌晨归前一晚」
     /// 也是两份 —— 分组键是 593 全天口径与 586 当天全景的锚, 两处漂一格就会各自成立、合起来对不上。
     /// 现在只有这一份: 时刻串不足 16 位 (手机侧事件或锁端未回时刻) 一律显示 "--:--", 日键不足 10 位记 "__none"。
-    private static func rowParts(_ full: String, todayKey: String) -> (dayKey: String, time: String, hour: Int) {
+    static func rowParts(_ full: String, todayKey: String) -> (dayKey: String, time: String, hour: Int) {
         let hh = full.count >= 13 ? (Int(full.dropFirst(11).prefix(2)) ?? -1) : -1
         var day = full.count >= 10 ? String(full.prefix(10)) : "__none"
         if day.count == 10, hh >= 0, hh < 5, let d0 = RecordSearch.dateFromKey(day) {
@@ -1121,12 +1121,12 @@ struct RecordsView: View {
     /// 两种显示写法都以小时开头。"--:--" (时刻未知: 手机侧行没带时刻、或锁端未回) 不参与 ——
     /// 它连这一天的边界都说不成, 写进组尾只会变成一句没有数的空话。
     /// (旧写法是拿它配"时刻串字典序取最大"来定最晚, 跨年日组会说错, 见 applyFilter 里 593 那段。)
-    private static func isClockish(_ t: String) -> Bool {
+    static func isClockish(_ t: String) -> Bool {
         t.count >= 5 && t.prefix(2).allSatisfy { $0.isNumber }
     }
 
     /// 551 Rec → 655 动词化文案 (告警/操作/关怀各用各的动词)
-    private static func recTitle(_ r: Rec) -> String {
+    static func recTitle(_ r: Rec) -> String {
         if r.alarm || r.care || !r.failMsg.isEmpty { return r.typeName }
         let kindWord = StatsKit.openTypes.contains(r.type) ? (Attribution.words[r.kind ?? ""] ?? nil) : nil
         // 461: 与列表行同口径 — 有可证明归属时显示"称呼（备注）" (919: 别名开关开时关系称呼顶替)
@@ -1135,7 +1135,7 @@ struct RecordsView: View {
         return RecordVerbs.line(type: r.type, who: whoShow, kindWord: kindWord, typeName: r.typeName)
     }
     /// 577 全部锁模式下 Rec → 凭证深链 (各锁台账独立)
-    private static func recCredNav(_ r: Rec) -> String {
+    static func recCredNav(_ r: Rec) -> String {
         let pws = DB.listPwds(r.mac)
         let fps = DB.listFps(r.mac)
         switch r.kind {
@@ -1158,7 +1158,7 @@ struct RecordsView: View {
 
     /// 187 按月跳转: 只列本机已有记录的月份 (不造空月), 选中即筛, 再点一次清除
     @ViewBuilder
-    private var monthJumpRow: some View {
+    var monthJumpRow: some View {
         // 657 补缺口行之后，月份列表必须跳过 gap-* 键 —— 否则月份选择器里会多出 "gap-2026" 这种假月份。
         // (这是补空日时最容易漏的一处: 它不影响时间线本身，只在点开月份弹层时才现形。)
         let months = Array(Set(groups.filter { !$0.isGap }.map { String($0.key.prefix(7)) })).sorted(by: >)
@@ -1188,7 +1188,7 @@ struct RecordsView: View {
             .frame(minHeight: DS.Hit.min - DS.Space.s)
         }
     }
-    private var visibleRowCount: Int {
+    var visibleRowCount: Int {
         groups.filter { monthJump.isEmpty || $0.key.hasPrefix(monthJump) }.reduce(0) { $0 + $1.rows.count }
     }
 
