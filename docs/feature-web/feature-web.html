@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T04:29:10.147Z",
+    "generated": "2026-10-29T04:40:28.593Z",
     "sources": [
       {
         "scout": "android-native",
@@ -8144,7 +8144,7 @@ const DATA = {
           "line": 219,
           "symbol": "struct UnlockDial",
           "note": "",
-          "text": "if connected { return DS.Palette.ok }"
+          "text": "// 59 演练层只在\"从没真手势过\"时浮现一次"
         },
         {
           "platform": "ios",
@@ -8176,7 +8176,7 @@ const DATA = {
           "line": 274,
           "symbol": "dial = AXFlags.axStackLayout ? 128 : DS.Metric.dial",
           "note": "",
-          "text": ".trim(from: 0, to: holdProgress)"
+          "text": "Task {"
         },
         {
           "platform": "android",
@@ -9924,7 +9924,7 @@ const DATA = {
           "line": 591,
           "symbol": "shake()",
           "note": "",
-          "text": "switch state {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -9932,7 +9932,7 @@ const DATA = {
           "line": 299,
           "symbol": "failStreak >= 2 ? \"antenna.radiowaves.left.and.right\" : \"exclamationmark.triangle.fill\"",
           "note": "",
-          "text": "// 80 三段进度细条"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -9940,7 +9940,7 @@ const DATA = {
           "line": 481,
           "symbol": ".sensoryFeedback(trigger: state)",
           "note": "",
-          "text": "// 设置关闭按住确认 (单手/VO 降级): 轻点直发, 围栏开启时仍需已解锁。"
+          "text": ".contentTransition(.symbolEffect(.replace))"
         }
       ],
       "platformEvidence": {
@@ -10008,7 +10008,7 @@ const DATA = {
           "line": 279,
           "symbol": "insideFence(_:)",
           "note": "",
-          "text": ".opacity(holdProgress > 0.001 ? 0.95 : 0)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -10016,7 +10016,7 @@ const DATA = {
           "line": 609,
           "symbol": "if fenceRequired, !armed {",
           "note": "",
-          "text": "// `.contentTransition(.symbolEffect(.replace))` (Apple 文档里的图标替换动画),"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -10024,7 +10024,7 @@ const DATA = {
           "line": 455,
           "symbol": "误触围栏开启中: 先从圆盘边缘拖到中心",
           "note": "",
-          "text": "if holdConfirmOn {"
+          "text": "default: return DS.Palette.onAccent"
         }
       ],
       "platformEvidence": {
@@ -10092,7 +10092,7 @@ const DATA = {
           "line": 491,
           "symbol": ".sensoryFeedback(trigger: connected)",
           "note": "",
-          "text": "} else if holdProgress >= 1, !swipeReady {"
+          "text": "dialIcon()"
         },
         {
           "platform": "ios",
@@ -10100,7 +10100,7 @@ const DATA = {
           "line": 496,
           "symbol": ".task(id: state) 心跳循环",
           "note": "",
-          "text": "// 松手取消回弹: 进度环弹回零位"
+          "text": ".minimumScaleFactor(0.8)"
         },
         {
           "platform": "ios",
@@ -10108,7 +10108,7 @@ const DATA = {
           "line": 498,
           "symbol": "CareSchedule.quietOn && CareSchedule.isQuietHour()",
           "note": "",
-          "text": "// pressing/holdProgress, 不碰 swipeReady ⇒ 上滑预填后拉回原点松手 (取消) 时"
+          "text": ".contentTransition(.opacity)   // 状态色变化时交叉淡化, 而不是 RGB 硬跳"
         }
       ],
       "platformEvidence": {
@@ -10185,7 +10185,7 @@ const DATA = {
           "line": 398,
           "symbol": "Circle().trim(from: 0, to: holdProgress)",
           "note": "",
-          "text": "}"
+          "text": "if p >= 1 { break }"
         },
         {
           "platform": "ios",
@@ -10193,7 +10193,7 @@ const DATA = {
           "line": 257,
           "symbol": "holdConfirmOn = DB.store.getBool(\"kf_hold_confirm\", true)",
           "note": "",
-          "text": ".allowsHitTesting(false)"
+          "text": "// 连开两次时上一段 0.72s 的动画余帧会接着播，看着像\"涟漪只出现了一半\"。"
         }
       ],
       "platformEvidence": {
@@ -10262,7 +10262,7 @@ const DATA = {
           "line": 350,
           "symbol": "guard !reduceMotion else { return }",
           "note": "",
-          "text": "// 系统级触觉反馈: 跟随\"减少触感\"系统开关, 也省掉手动生成器"
+          "text": "guard bleReady else { return }"
         },
         {
           "platform": "ios",
@@ -10270,7 +10270,7 @@ const DATA = {
           "line": 523,
           "symbol": "if case .failed = s, !reduceMotion { shake() }",
           "note": "",
-          "text": "let marks = Int(p / 0.33)"
+          "text": "private var dialFill: AnyShapeStyle {"
         },
         {
           "platform": "ios",
@@ -10278,7 +10278,7 @@ const DATA = {
           "line": 284,
           "symbol": "private var dim: CGFloat { 1 }",
           "note": "",
-          "text": ".strokeBorder(DS.Palette.ok.opacity(0.75),"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -10355,7 +10355,7 @@ const DATA = {
           "line": 464,
           "symbol": "已暂缓这一次: 离门锁再走近一步",
           "note": "",
-          "text": "stopHold()"
+          "text": "case .doubleVerify: return DS.Palette.warn"
         }
       ],
       "platformEvidence": {
@@ -10417,7 +10417,7 @@ const DATA = {
           "line": 176,
           "symbol": "private struct PhaseBar",
           "note": "",
-          "text": ""
+          "text": "Button(\"取消等待\", action: cancelAction)"
         },
         {
           "platform": "ios",
@@ -10425,7 +10425,7 @@ const DATA = {
           "line": 516,
           "symbol": "slowTask = Task … sleep 4s → slowConnect = true",
           "note": "",
-          "text": "let start = Date()"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -10433,7 +10433,7 @@ const DATA = {
           "line": 434,
           "symbol": "Button(\"取消等待\", action: cancelAction)",
           "note": "",
-          "text": "touchMoved = abs(g.translation.width) + abs(g.translation.height)"
+          "text": "pressing = false"
         }
       ],
       "platformEvidence": {
@@ -10502,7 +10502,7 @@ const DATA = {
           "line": 290,
           "symbol": "iconName",
           "note": "",
-          "text": "// 242 角落状态点: 右上角常显"
+          "text": "Task { @MainActor in"
         },
         {
           "platform": "ios",
@@ -10510,7 +10510,7 @@ const DATA = {
           "line": 302,
           "symbol": "title",
           "note": "",
-          "text": ".transition(.opacity)"
+          "text": "DragGesture(minimumDistance: 0, coordinateSpace: .local)"
         },
         {
           "platform": "ios",
@@ -10518,7 +10518,7 @@ const DATA = {
           "line": 326,
           "symbol": "dotColor",
           "note": "",
-          "text": "if fenceRequired, !armed, !isBusy, bleReady, state == .idle {"
+          "text": "DS.Haptics.tick.impactOccurred()   // 3 双段触感 · 第一段 (落手)"
         },
         {
           "platform": "ios",
@@ -13056,7 +13056,7 @@ const DATA = {
           "line": 641,
           "symbol": "DS.Haptics.tick.impactOccurred() // 第一段 (落手)",
           "note": "",
-          "text": "// strokeBorder 画在圆内侧, 与既有 hairline/径向光晕叠出厚度; 不吞点击。"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -25881,7 +25881,7 @@ const DATA = {
           "line": 355,
           "symbol": "recordsChrome",
           "note": "NavigationStack + 全部 sheet/alert 挂载点",
-          "text": "guard let k else { return }"
+          "text": "DB.readLogs(mac).compactMap { $0.lockTimeStr.isEmpty ? nil : String($0.lockTimeStr.prefix(10)) }.min()"
         }
       ],
       "platformEvidence": {
@@ -25974,7 +25974,7 @@ const DATA = {
           "line": 376,
           "symbol": "recordsChrome",
           "note": "父级：sheet(item: $detailRec) 传 displayedRecs",
-          "text": "}"
+          "text": "app.requestRoute(.device)"
         },
         {
           "platform": "ios",
@@ -26293,7 +26293,7 @@ const DATA = {
           "line": 433,
           "symbol": "searchBar",
           "note": "占位文案与绑定",
-          "text": "/// 拉全 / 未拉全 (带剩余条数) / 锁端没报告剩余所以不可判 —— 最后一种最容易被写成\"已拉全\"。"
+          "text": "static func recTitle(_ r: Rec) -> String {"
         },
         {
           "platform": "ios",
@@ -26317,7 +26317,7 @@ const DATA = {
           "line": 345,
           "symbol": "onChange(searchText)",
           "note": "562 边输入边过滤",
-          "text": ".onAppear { onRecordsAppear() }"
+          "text": "let fmt = DateFormatter()"
         }
       ],
       "platformEvidence": {
@@ -26481,7 +26481,7 @@ const DATA = {
           "line": 374,
           "symbol": "recordsChrome",
           "note": "入口：filters.alarmKinds 绑定",
-          "text": "guard let m else { return }"
+          "text": "Button {"
         }
       ],
       "platformEvidence": {
@@ -26547,7 +26547,7 @@ const DATA = {
           "line": 306,
           "symbol": "onChange(pending*)",
           "note": "六个深链入口",
-          "text": "mainList"
+          "text": "app.showToast(\"已复制 \\(rows.count) 行 CSV\")   // 716 已复制"
         },
         {
           "platform": "ios",
@@ -27940,7 +27940,7 @@ const DATA = {
           "line": 371,
           "symbol": "OutWinSheet",
           "note": "越界文案",
-          "text": ".onChange(of: app.pendingRecordsMember) { _, m in"
+          "text": "@ViewBuilder"
         }
       ],
       "platformEvidence": {
@@ -28173,7 +28173,7 @@ const DATA = {
           "line": 333,
           "symbol": "onChange(scope)",
           "note": "切范围重置全部检索态",
-          "text": "// 换锁那一路不必在这里补: 父层的 `RecordsView().id(app.currentMac)` 会让整页重建,"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         },
         {
           "platform": "ios",
@@ -28181,7 +28181,7 @@ const DATA = {
           "line": 392,
           "symbol": "macs",
           "note": "范围 → 锁列表",
-          "text": "applyFilter()   // 562 边输入边更新"
+          "text": "guard let t = Double(raw), t > 0 else { return nil }"
         },
         {
           "platform": "ios",
@@ -28607,7 +28607,7 @@ const DATA = {
           "line": 620,
           "symbol": "resultCount",
           "note": "计数文案",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -28615,7 +28615,7 @@ const DATA = {
           "line": 667,
           "symbol": "activeFilterCount",
           "note": "条件数口径",
-          "text": "// \"yyyy-MM-dd\" → \"M月d日\""
+          "text": ""
         },
         {
           "platform": "ios",
@@ -28623,7 +28623,7 @@ const DATA = {
           "line": 637,
           "symbol": "resultCount",
           "note": "重置按钮",
-          "text": "} label: {"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -61058,7 +61058,7 @@ const DATA = {
           "line": 289,
           "symbol": "onChange(filters)",
           "note": "差异才落盘",
-          "text": "Image(systemName: \"ellipsis.circle\")"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -61074,7 +61074,7 @@ const DATA = {
           "line": 527,
           "symbol": "RecordSearch.namedViews",
           "note": "kf_rviews 读点",
-          "text": "return \"未连接门锁 — 以下为本地缓存（读取于 \" + Self.stamp.string(from: at) + \"）。连接锁后点「重新读取」刷新。\""
+          "text": ""
         },
         {
           "platform": "ios",
@@ -61082,7 +61082,7 @@ const DATA = {
           "line": 611,
           "symbol": "saveNamedView",
           "note": "命名视图写入",
-          "text": "case \"fp\":"
+          "text": ""
         }
       ],
       "platformEvidence": {
