@@ -9,6 +9,7 @@ import SwiftUI
 struct AlarmKindsSheet: View {
     @Binding var sel: Set<Int>
     @Environment(\.dismiss) var dismiss
+
     var body: some View {
         NavigationStack {
             List {
@@ -43,6 +44,7 @@ struct AlarmKindsSheet: View {
                         .foregroundStyle(DS.Palette.textSub)
                 }
             }
+
             .navigationTitle("告警类型")   // 565 告警类型
             .variantList()
             .dsScreenBackground()
@@ -122,15 +124,25 @@ struct ActiveCredsSheet: View {
 struct OutWinSheet: View {
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) var dismiss
+    /// 2026-10-30：有没有临时码 —— 决定空态那句话怎么说（「没有越界」在没临时码时是假话）。
+    /// 在 `.task` 里算一次（视图内读库棘轮不允许在 body 里新增 DB 调用）。
+    @State private var anyTemp = false
     var body: some View {
         NavigationStack {
             List {
                 Section {
-                    let wins = RecordSearch.outOfWindow(macs: DB.keychains().map { $0.mac })
+                    // 2026-10-30：keychains() 与临时码判据都在 body 里只读一次 —— 视图内读库棘轮不允许新增。
+                    let allMacs = DB.keychains().map { $0.mac }
+                    let wins = RecordSearch.outOfWindow(macs: allMacs)
                     if wins.isEmpty {
-                        Text("没有越界开门 — 临时码都在窗口内使用 (约)。")
+                        // 2026-10-30 修复（空态谎报同族）：outOfWindow 在「一张临时码都没有」时也返回空，
+                        // 而原句「临时码都在窗口内使用」暗含"有临时码且都合规" —— 没有临时码时是假话。
+                        // 按台账里到底有没有临时码分两种说法。
+                        Text(anyTemp ? "没有越界开门 — 临时码都在窗口内使用 (约)。"
+                                     : "还没有下发过临时码，所以没有越界可查。")
                             .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     ForEach(wins, id: \.rec.id) { w in
                         VStack(alignment: .leading, spacing: 4) {
@@ -161,6 +173,10 @@ struct OutWinSheet: View {
                         .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                 }
+            }
+            .task {
+                // 一次性判断「有没有临时码」（空态文案用）；只读，不写任何持久状态。
+                anyTemp = DB.keychains().contains { DB.listPwds($0.mac).contains { $0.temp } }
             }
             .navigationTitle("越界开门")
             .variantList()
