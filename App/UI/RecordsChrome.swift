@@ -128,11 +128,20 @@ extension RecordsView {
         .onChange(of: filters) { applyFilter() }
         .onChange(of: reversed) { applyFilter() }
         .onChange(of: searchText) { _, t in
+            // 解析预览标签是纯字符串活，立刻更新（用户要看到"识别成了什么"）。
             let q = RecordSearch.parse(t)
             parsedTags = q.parsedTags
             highlightTokens = q.must
-            applyFilter()   // 562 边输入边更新
+            // 562 边输入边更新 —— 但全量重建加 180ms 防抖：原来每敲一个字都重建一次
+            // （buildRecs + Attribution.classify + groupByDay + fillGaps），快速输入 10 个字就是 10 次。
+            searchDebounce?.cancel()
+            searchDebounce = Task {
+                try? await Task.sleep(for: .milliseconds(180))
+                guard !Task.isCancelled else { return }
+                applyFilter()
+            }
         }
+        .onDisappear { searchDebounce?.cancel() }
         }
     }
 

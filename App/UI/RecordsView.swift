@@ -37,6 +37,10 @@ struct RecordsView: View {
     // ---------- 包9 检索态 (551/553/554/555/557/560/562) ----------
     @State var scope = 0             // 561/770: 0 当前锁 / 1 全部锁
     @State var searchText = ""
+    /// 2026-10-29 性能：搜索框每敲一个字都会走一次 applyFilter（= 重建全量 Rec 池 +
+    /// Attribution 分类 + 分组 + 补缺口）。快速输入 10 个字就是 10 次全量重建。
+    /// 这里加 180ms 防抖：只在停顿后算一次。
+    @State var searchDebounce: Task<Void, Never>?
     @State var parsedTags: [String] = []    // 555 解析预览标签
     @State var highlightTokens: [String] = []  // 557 命中高亮词
     @State var filters = QueryFilters.load(mac: DB.preferredMac())   // 192 会话保留

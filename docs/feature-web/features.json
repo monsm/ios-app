@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T11:02:26.609Z",
+    "generated": "2026-10-29T11:04:35.807Z",
     "sources": [
       {
         "scout": "android-native",
@@ -25537,7 +25537,7 @@
           "line": 178,
           "symbol": "noLockPlaceholder",
           "note": "无锁占位「去添加门锁」",
-          "text": ".vkFont(.caption)"
+          "text": "var reconRow: some View {"
         },
         {
           "platform": "ios",
@@ -25545,7 +25545,7 @@
           "line": 233,
           "symbol": "recordsToolbar",
           "note": "右上工具栏与「更多」菜单",
-          "text": "filterChips          // 已折叠为一行摘要 + 可展开面板 (见 filterChips 注释)"
+          "text": "searchBar"
         },
         {
           "platform": "ios",
@@ -25553,7 +25553,7 @@
           "line": 355,
           "symbol": "recordsChrome",
           "note": "NavigationStack + 全部 sheet/alert 挂载点",
-          "text": "var totalCount: Int { allRows.count }"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -25646,7 +25646,7 @@
           "line": 376,
           "symbol": "recordsChrome",
           "note": "父级：sheet(item: $detailRec) 传 displayedRecs",
-          "text": ".foregroundStyle(DS.Palette.accentText)"
+          "text": "} label: {"
         },
         {
           "platform": "ios",
@@ -25965,7 +25965,7 @@
           "line": 433,
           "symbol": "searchBar",
           "note": "占位文案与绑定",
-          "text": "}"
+          "text": "// 461: 与列表行同口径 — 有可证明归属时显示\"称呼（备注）\" (919: 别名开关开时关系称呼顶替)"
         },
         {
           "platform": "ios",
@@ -25989,7 +25989,7 @@
           "line": 345,
           "symbol": "onChange(searchText)",
           "note": "562 边输入边过滤",
-          "text": "l.lockTimeStr.count >= 10 && String(l.lockTimeStr.dropFirst(5).prefix(5)) == key"
+          "text": "guard let last = cal.date(byAdding: .year, value: -1, to: Date()) else { return 0 }"
         }
       ],
       "platformEvidence": {
@@ -26081,7 +26081,7 @@
           "line": 250,
           "symbol": "recordsToolbar",
           "note": "入口：更多菜单",
-          "text": "// 657: 缺口行走独立的极简一行，不冒充一天的组头 (它没有\"当天 N 条\"可说)"
+          "text": "// 用户分不清「这台锁没记录」和「读取失败/还在加载」。"
         }
       ],
       "platformEvidence": {
@@ -26153,7 +26153,7 @@
           "line": 374,
           "symbol": "recordsChrome",
           "note": "入口：filters.alarmKinds 绑定",
-          "text": "}"
+          "text": "app.pendingJumpLock = mac"
         }
       ],
       "platformEvidence": {
@@ -26219,7 +26219,7 @@
           "line": 306,
           "symbol": "onChange(pending*)",
           "note": "六个深链入口",
-          "text": "/// 698 上周小结: 上一个完整自然周 (周一–周日) 的 CSV + 三句话摘要, 一起进剪贴板。"
+          "text": "Clip.set(out.joined(separator: \"\\n\"))"
         },
         {
           "platform": "ios",
@@ -26667,7 +26667,7 @@
           "line": 248,
           "symbol": "recordsToolbar",
           "note": "入口：更多菜单",
-          "text": "if groups.isEmpty { emptyHint }"
+          "text": "// 2026-10-27 截图核对修复：**空态从未接线** —— `emptyHint` 定义在 1295 行，"
         },
         {
           "platform": "ios",
@@ -27300,7 +27300,7 @@
           "line": 188,
           "symbol": "mainList",
           "note": "List 结构与区块顺序",
-          "text": "Clip.set(reconLine)"
+          "text": ".foregroundStyle(DS.Palette.warn)"
         },
         {
           "platform": "apk",
@@ -27316,7 +27316,7 @@
           "line": 227,
           "symbol": "scrollPosition(id:)",
           "note": "行级滚动锚",
-          "text": "// ─────────────────────────────────────────────────────────────"
+          "text": "// 现在按三条判据收敛 (不是删功能, 是分级):"
         },
         {
           "platform": "ios",
@@ -27541,7 +27541,7 @@
           "line": 216,
           "symbol": "mainList",
           "note": "monthJump/dayFocus 双重收窄",
-          "text": "// ─────────────────────────────────────────────────────────────"
+          "text": ".foregroundStyle(DS.Palette.warn)"
         }
       ],
       "platformEvidence": {
@@ -27612,7 +27612,7 @@
           "line": 371,
           "symbol": "OutWinSheet",
           "note": "越界文案",
-          "text": "app.requestRoute(.device)"
+          "text": "var jumpBackRow: some View {"
         }
       ],
       "platformEvidence": {
@@ -27701,7 +27701,7 @@
           "line": 249,
           "symbol": "recordsToolbar",
           "note": "入口：更多菜单",
-          "text": "ForEach(groups.filter { g in (monthJump.isEmpty || g.key.hasPrefix(monthJump)) && (dayFocus.isEmpty || g.key == dayFocus) }) { g in"
+          "text": "// 但全仓 0 处调用。于是「全部记录」展开后一条都没有时，屏幕上一片空白，"
         }
       ],
       "platformEvidence": {
@@ -27845,7 +27845,7 @@
           "line": 333,
           "symbol": "onChange(scope)",
           "note": "切范围重置全部检索态",
-          "text": "}"
+          "text": "Text(\"去年今日: \\(n) 条开门记录\")   // 654 去年今日"
         },
         {
           "platform": "ios",
@@ -27853,7 +27853,7 @@
           "line": 392,
           "symbol": "macs",
           "note": "范围 → 锁列表",
-          "text": "comps.year = 0"
+          "text": "/// 行级时刻 (554 时间短语判定): 组头日 + 时分"
         },
         {
           "platform": "ios",
@@ -60722,7 +60722,7 @@
           "line": 44,
           "symbol": "QueryFilters.load",
           "note": "构造时按锁读",
-          "text": "@State var filtersExpanded = false"
+          "text": "@State var parsedTags: [String] = []    // 555 解析预览标签"
         },
         {
           "platform": "ios",
@@ -60730,7 +60730,7 @@
           "line": 289,
           "symbol": "onChange(filters)",
           "note": "差异才落盘",
-          "text": ""
+          "text": "return n"
         },
         {
           "platform": "ios",

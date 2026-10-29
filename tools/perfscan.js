@@ -27,6 +27,8 @@ const DIRS = ['App', 'App/Core', 'App/Services', 'App/UI'];
 const FORMatter = /(?:^|[^.\w])DateFormatter\(\)|ISO8601DateFormatter\(\)/;
 // R4：DateFormatter.localizedString(...) 是个**每次调用都新建 formatter** 的类方法，与 DateFormatter() 同罪。
 const LOCALIZED_STRING = /DateFormatter\.localizedString\(/;
+// R5：Store.keys() 走 defaults.dictionaryRepresentation()（整域拷贝），只许出现在 Store 层。
+const DICT_DUMP = /store\.keys\(\)|dictionaryRepresentation\(\)/;
 const DB_READ = /\bDB\.(?:list\w+|read\w+|ledger|members|member|keychains|keychain|dongles|dongle|defend|otpStatus|getPwd|getPwdList|getFpList|pendingPair|store\.get\w*)\s*\(/;
 
 function swiftFiles() {
@@ -71,18 +73,19 @@ const detail = {};
 for (const { d, f, p } of swiftFiles()) {
   const key = `${d}/${f}`;
   const L = fs.readFileSync(p, 'utf8').split(/\r?\n/);
-  let r1 = 0, r3 = 0, r4 = 0;
-  const r1Lines = [], r3Lines = [], r4Lines = [];
+  let r1 = 0, r3 = 0, r4 = 0, r5 = 0;
+  const r1Lines = [], r3Lines = [], r4Lines = [], r5Lines = [];
   L.forEach((l, i) => {
     if (/^\s*\/\//.test(l)) return;
     if (FORMatter.test(l) && !key.endsWith('DateFormats.swift')) { r1++; r1Lines.push(i + 1); }
     if (/\.onReceive\(\s*Timer\.publish\(/.test(l)) { r3++; r3Lines.push(i + 1); }
     if (LOCALIZED_STRING.test(l)) { r4++; r4Lines.push(i + 1); }
+    if (d === 'App/UI' && DICT_DUMP.test(l)) { r5++; r5Lines.push(i + 1); }
   });
   const r2 = countForEachDbRead(L);
-  if (r1 || r2 || r3 || r4) {
-    cur[key] = { r1_rawFormatter: r1, r2_forEachDbRead: r2, r3_inlineTimer: r3, r4_localizedString: r4 };
-    detail[key] = { r1: r1Lines, r3: r3Lines, r4: r4Lines };
+  if (r1 || r2 || r3 || r4 || r5) {
+    cur[key] = { r1_rawFormatter: r1, r2_forEachDbRead: r2, r3_inlineTimer: r3, r4_localizedString: r4, r5_dictDumpInUI: r5 };
+    detail[key] = { r1: r1Lines, r3: r3Lines, r4: r4Lines, r5: r5Lines };
   }
 }
 
@@ -90,9 +93,9 @@ const baseline = fs.existsSync(BASE) ? JSON.parse(fs.readFileSync(BASE, 'utf8'))
 const keys = new Set([...Object.keys(cur), ...Object.keys(baseline)]);
 const violations = [];
 for (const k of [...keys].sort()) {
-  const b = baseline[k] || { r1_rawFormatter: 0, r2_forEachDbRead: 0, r3_inlineTimer: 0, r4_localizedString: 0 };
-  const c = cur[k] || { r1_rawFormatter: 0, r2_forEachDbRead: 0, r3_inlineTimer: 0, r4_localizedString: 0 };
-  for (const rule of ['r1_rawFormatter', 'r2_forEachDbRead', 'r3_inlineTimer', 'r4_localizedString']) {
+  const b = baseline[k] || { r1_rawFormatter: 0, r2_forEachDbRead: 0, r3_inlineTimer: 0, r4_localizedString: 0, r5_dictDumpInUI: 0 };
+  const c = cur[k] || { r1_rawFormatter: 0, r2_forEachDbRead: 0, r3_inlineTimer: 0, r4_localizedString: 0, r5_dictDumpInUI: 0 };
+  for (const rule of ['r1_rawFormatter', 'r2_forEachDbRead', 'r3_inlineTimer', 'r4_localizedString', 'r5_dictDumpInUI']) {
     if (c[rule] > b[rule]) violations.push({ file: k, rule, base: b[rule], now: c[rule] });
   }
 }
@@ -101,7 +104,8 @@ const sum = (o, rule) => Object.values(o).reduce((a, x) => a + (x[rule] || 0), 0
 console.log(`性能棘轮: R1 formatter ${sum(cur, 'r1_rawFormatter')} (基线 ${sum(baseline, 'r1_rawFormatter')}) · ` +
             `R2 ForEach 内 DB 读 ${sum(cur, 'r2_forEachDbRead')} (基线 ${sum(baseline, 'r2_forEachDbRead')}) · ` +
             `R3 内联 Timer ${sum(cur, 'r3_inlineTimer')} (基线 ${sum(baseline, 'r3_inlineTimer')}) · ` +
-            `R4 localizedString ${sum(cur, 'r4_localizedString')} (基线 ${sum(baseline, 'r4_localizedString')})`);
+            `R4 localizedString ${sum(cur, 'r4_localizedString')} (基线 ${sum(baseline, 'r4_localizedString')}) · ` +
+            `R5 UI 层字典转储 ${sum(cur, 'r5_dictDumpInUI')} (基线 ${sum(baseline, 'r5_dictDumpInUI')})`);
 
 if (process.argv.includes('--list')) {
   for (const k of Object.keys(detail).sort()) {
@@ -109,6 +113,7 @@ if (process.argv.includes('--list')) {
     if (d.r1.length) console.log(`  R1 ${k}  DateFormatter @${d.r1.join(',')}`);
     if (d.r3.length) console.log(`  R3 ${k}  inline Timer @${d.r3.join(',')}`);
     if (d.r4.length) console.log(`  R4 ${k}  DateFormatter.localizedString @${d.r4.join(',')}`);
+    if (d.r5.length) console.log(`  R5 ${k}  Store.keys/dictionaryRepresentation @${d.r5.join(',')}`);
   }
 }
 
