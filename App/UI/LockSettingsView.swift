@@ -72,7 +72,9 @@ struct LockSettingsView: View {
                 LabeledRow("锁内时间", s.lockTime.map { ProtoTime.localStr($0) } ?? "—")
             }
             // 2026-10-29 入口去重：锁信息名片收进「概览」底部（唯一入口）。
-            NavigationLink("锁信息名片（进页刷新 / 完整诊断）") { DeviceInfoView() }
+            NavigationLink { DeviceInfoView() } label: {
+                Label("锁信息名片（进页刷新 / 完整诊断）", systemImage: "rectangle.portrait.text.square")
+            }
         } header: {
             Text("概览")
         } footer: {

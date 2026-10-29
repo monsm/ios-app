@@ -215,11 +215,19 @@ extension SettingsView {
     var applockSection: some View {
         Section {
             if DB.hasPasscode() {
-                Button("更改本机密码") { setPasscode() }
-                Button(DB.hasDuressCode() ? "更改胁迫码" : "设置胁迫码") { setDuressCode() }
-                Button("关闭本机密码", role: .destructive) { disablePasscode() }
+                Button { setPasscode() } label: {
+                    Label("更改本机密码", systemImage: "lock.rotation")
+                }
+                Button { setDuressCode() } label: {
+                    Label(DB.hasDuressCode() ? "更改胁迫码" : "设置胁迫码", systemImage: "exclamationmark.shield")
+                }
+                Button(role: .destructive) { disablePasscode() } label: {
+                    Label("关闭本机密码", systemImage: "lock.slash")
+                }
             } else {
-                Button("设置本机密码") { setPasscode() }
+                Button { setPasscode() } label: {
+                    Label("设置本机密码", systemImage: "lock.badge.plus")
+                }
                 note("4 位以上数字。设置后，**冷启动** App 需要输入它才能进入。")
             }
         } header: {
@@ -280,7 +288,9 @@ extension SettingsView {
                 // 2026-10-29：APK `page-testlockrom` / `page-romlist` 两页都被 `showTest=!1` 关着，
                 // iOS 的 `LockService.probeEcho` 也零调用 —— 把两边合成一个隐藏诊断页，
                 // 挂在同一个彩蛋下面（连点版本号 10 次），不占正常用户版面。
-                NavigationLink("协议测试（回声探测 / 附近设备）") { ProtocolTestView() }
+                NavigationLink { ProtocolTestView() } label: {
+                Label("协议测试（回声探测 / 附近设备）", systemImage: "waveform.path.ecg")
+            }
             }
         } footer: {
             Text(aboutFooterText)

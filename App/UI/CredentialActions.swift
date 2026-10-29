@@ -426,7 +426,7 @@ extension CredentialsView {
                     .buttonStyle(.plain)
                     .frame(minHeight: DS.Hit.min)
                     Spacer(minLength: 0)
-                    Button("顺序") {
+                    Button {
                         // 182/352: 记住当前组内顺序 (置顶段单独记, 避免拖动段误伤置顶)。
                         // 拖动排序 (上方排序档) 与这一枚写的是同一张 kf_cseq_, 不是两套顺序。
                         // 回写取 seqBase* (全量显示序) 而不是 sortedPwds/sortedFps: 后者已经被分段与智能筛选削过,
@@ -436,6 +436,8 @@ extension CredentialsView {
                         seq["f"] = seqBaseFps.map { $0.batch }
                         CredentialOrg.setSeq(mac, seq)
                         app.showToast("已记住当前组内顺序")   // 182/352 已记住当前组内顺序
+                    } label: {
+                        Label("顺序", systemImage: "arrow.up.arrow.down")
                     }
                     .vkFont(.caption, weight: .medium)
                     .foregroundStyle(DS.Palette.accentText)

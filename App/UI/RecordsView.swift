@@ -481,7 +481,9 @@ struct RecordsView: View {
                     Text("\(visibleRowCount) 条")
                         .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
-                    Button("清除") { monthJump = "" }
+                    Button { monthJump = "" } label: {
+                        Label("清除", systemImage: "xmark.circle")
+                    }
                         .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.accentText)
                 }

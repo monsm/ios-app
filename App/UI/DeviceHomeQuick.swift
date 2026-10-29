@@ -233,7 +233,20 @@ extension DeviceHomeView {
     var recentModule: some View {
         let rows = app.recentRecords()
         return VStack(alignment: .leading, spacing: DS.Space.m) {
-            SectionTitle(text: "最近开门")
+            HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
+                SectionTitle(text: "最近开门")
+                Spacer(minLength: 0)
+                // 2026-10-29：给「最近开门」补一条**看全部**的出口 ——
+                // 「记录」Tab 的职责就是全量时间线（筛选 / 导出 / 对账），
+                // 设备页这里只是最近 N 条的摘要。加这个入口后两者的分工一眼能看懂，
+                // 也不用让用户猜"记录 Tab 是干什么的"。
+                Button { app.requestRoute(.records) } label: {
+                    Label("查看全部", systemImage: "chevron.right")
+                        .labelStyle(.titleAndIcon)
+                        .vkFont(.caption)
+                }
+                .accessibilityHint("打开记录页：全量时间线、筛选与导出")
+            }
                 .padding(.horizontal, DS.Space.gutter)
             Card {
                 if rows.isEmpty {

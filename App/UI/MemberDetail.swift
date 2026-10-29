@@ -37,8 +37,12 @@ struct MemberDetail360View: View {
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {
-                    Button("补全档案 (关系/电话/生日/代号/分组/便签)") { editProfile(m); onChanged() }
-                    Button("重复合并") { showMerge = true }   // 462 重复合并
+                    Button { editProfile(m); onChanged() } label: {
+                        Label("补全档案 (关系/电话/生日/代号/分组/便签)", systemImage: "person.text.rectangle")
+                    }
+                    Button { showMerge = true } label: {   // 462 重复合并
+                        Label("重复合并", systemImage: "arrow.triangle.merge")
+                    }
                     Button(role: .destructive) { confirmDelete(m) } label: {
                         Label("删除并级联提示", systemImage: "trash")   // 263 删除并级联提示
                     }

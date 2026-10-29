@@ -94,8 +94,12 @@ struct MembersView: View {
             if let tel = Self.telURL(m.phone) {
                 Button { UIApplication.shared.open(tel) } label: { Label("呼叫 \(m.name)", systemImage: "phone.fill") }
             }
-            Button("重命名") { rename(m) }
-            Button("补全信息") { info(m) }
+            Button { rename(m) } label: {
+                Label("重命名", systemImage: "pencil")
+            }
+            Button { info(m) } label: {
+                Label("补全信息", systemImage: "person.text.rectangle")
+            }
         }
         // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 14.5pt (< 44)。
         // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。

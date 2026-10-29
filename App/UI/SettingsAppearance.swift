@@ -124,7 +124,9 @@ extension SettingsView {
                             }),
                         supportsOpacity: false)
             if DS.CustomAccent.isActive {
-                Button("取消自定义，回到六套预设") { app.setCustomAccent(0) }
+                Button { app.setCustomAccent(0) } label: {
+                    Label("取消自定义，回到六套预设", systemImage: "arrow.uturn.backward")
+                }
                     .vkFont(.footnote).foregroundStyle(DS.Palette.accentText)
                 Text("自定义色只影响强调色、主控卡与按钮渐变；文字与语义色仍走系统令牌。选到很亮的颜色时会被压暗到能看清白字的范围，观感接近同色系的深色版。")
                     .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
@@ -224,7 +226,9 @@ extension SettingsView {
                 }
             }
             .pickerStyle(.menu)
-            Button("恢复默认外观") { app.resetAppearance() }
+            Button { app.resetAppearance() } label: {
+                Label("恢复默认外观", systemImage: "arrow.uturn.backward.circle")
+            }
         } header: {
             Text("外观")
         } footer: {

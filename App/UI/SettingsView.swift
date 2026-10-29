@@ -296,7 +296,9 @@ struct SettingsView: View {
                                 )
                     .listRowInsets(EdgeInsets())
             } else {
-                NavigationLink("锁档案 (昵称/符号/色标/备注)") { LockProfileView() }
+                NavigationLink { LockProfileView() } label: {
+                    Label("锁档案 (昵称/符号/色标/备注)", systemImage: "person.text.rectangle")
+                }
                 note("型号、固件、电量与完整名片都在设备页 →「管理这把锁」→「概览」里。")
                 Button("删除设备", role: .destructive) { deleteDevice() }
             }

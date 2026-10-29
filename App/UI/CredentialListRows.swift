@@ -151,35 +151,59 @@ extension CredentialsView {
     @ViewBuilder
     func credMenu(_ hit: CredHit) -> some View {
         if let p = hit.pwd {
-            Button("查看密码内容") { viewPwd(p) }
-            Button("密码详情") { pwdDetailItem = p }   // 305/308/309 密码详情
-            Button("修改密码内容") { modifyPwd(p) }
-            Button("修改有效期") { Task { resetPwdPeriod(p) } }
-            Button("添加备注") { editNote(pwd: p) }
+            Button { viewPwd(p) } label: {
+                Label("查看密码内容", systemImage: "eye")
+            }
+            Button { pwdDetailItem = p }   label: {   // 305/308/309 密码详情
+                Label("密码详情", systemImage: "info.circle")
+            }
+            Button { modifyPwd(p) } label: {
+                Label("修改密码内容", systemImage: "pencil")
+            }
+            Button { Task { resetPwdPeriod(p) } } label: {
+                Label("修改有效期", systemImage: "calendar.badge.clock")
+            }
+            Button { editNote(pwd: p) } label: {
+                Label("添加备注", systemImage: "text.bubble")
+            }
             Menu("归属到成员") { ownerMenu(isPwd: true, key: p.alias) }
             Divider()
-            Button("三档预警") { toggleAlerts(p) }   // 359 三档预警
+            Button { toggleAlerts(p) }   label: {   // 359 三档预警
+                Label("三档预警", systemImage: "bell.badge")
+            }
             // 368 延期催办文本: 只对"有到期时间且 7 天内到期"的条目出现, 产出可直接发给住客的礼貌催办语。
             // 文本里**绝不含口令本身** (要复制到聊天工具, 含码等于把门卡发出去)。
             if let d = CredentialOrg.expiryDate(p), d.timeIntervalSinceNow > 0, d.timeIntervalSinceNow < 7 * 86_400 {
-                Button("生成延期提醒文本") {   // 368 生成延期提醒文本
+                Button {   // 368 生成延期提醒文本
                     Clip.set(renewText(p, d))
                     app.showToast("催办文本已复制到剪贴板 (不含口令)")
+                } label: {
+                    Label("生成延期提醒文本", systemImage: "doc.text")
                 }
             }
                     // 2026-10-26 精简：版本历史入口已删。
             Divider()
-            Button("停用 (本地, 锁端待处理)", role: .destructive) { disablePwd(p) }
-            Button("彻底删除", role: .destructive) { deletePwd(p) }   // 670 彻底删除
+            Button(role: .destructive) { disablePwd(p) } label: {
+                Label("停用 (本地, 锁端待处理)", systemImage: "pause.circle")
+            }
+            Button(role: .destructive) { deletePwd(p) }   label: {   // 670 彻底删除
+                Label("彻底删除", systemImage: "trash")
+            }
         }
         if let f = hit.fp {
-            Button("指纹详情") { fpDetailItem = f }   // 316/320/323 指纹详情
-            Button("重命名") { renameFp(f) }
+            Button { fpDetailItem = f }   label: {   // 316/320/323 指纹详情
+                Label("指纹详情", systemImage: "info.circle")
+            }
+            Button { renameFp(f) } label: {
+                Label("重命名", systemImage: "pencil")
+            }
             Button(f.isAlarm == true ? "取消预警指纹" : "设为预警指纹") {
                 DB.setFpAlarm(mac, f.batch, f.isAlarm != true)
                 app.showToast(f.isAlarm == true ? "已取消预警指纹" : "已设为预警指纹")
             }
-            Button("添加备注") { editNote(fp: f) }
+            Button { editNote(fp: f) } label: {
+                Label("添加备注", systemImage: "text.bubble")
+            }
             Menu("归属到成员") { ownerMenu(isPwd: false, key: f.batch) }
                     // 2026-10-26 精简：版本历史入口已删。
                     // 2026-10-28 删除：这枚「置顶 / 取消置顶」是**空动作** —— `Button { }`，

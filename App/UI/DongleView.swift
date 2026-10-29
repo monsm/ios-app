@@ -113,7 +113,7 @@ struct DongleView: View {
         Section {
             // 头部信息
             HStack(spacing: DS.Space.s) {
-                Image(systemName: "key.horizontal.fill")
+                Image(systemName: "key.horizontal")
                     .foregroundStyle(DS.Palette.accentText)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {

@@ -315,10 +315,12 @@ struct TempCodeStudio: View {
                     .accessibilityLabel("分享一句话口令")   // 329 分享一句话口令
                 }
                 if !MemberHub.elderMode {
-                    Button("再发一张") {
+                    Button {
                         result = nil
                         pwd = StudioTools.genDigits(6)
                         note = ""
+                    } label: {
+                        Label("再发一张", systemImage: "paperplane")
                     }
                     .buttonStyle(SecondaryActionStyle(fullWidth: false))
                 }

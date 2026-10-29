@@ -183,18 +183,22 @@ extension RecordsView {
         // 185 左滑快捷操作: 只暴露行本来就有能力 (714 复制 / 577 跳凭证 / 186 备注 / 188 标旗)
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             if !r.credKey.isEmpty {
-                Button("看凭证") {
+                Button {
                     app.pendingCredNav = r.credKey
                     app.pendingCredNavMac = r.rowMac.isEmpty ? mac : r.rowMac
                     app.requestRoute(.credentials)   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过 377 门禁
                     // 收摊口径：换页一律走 requestRoute 这个唯一漏斗（先过访客闸再切 Tab），
                     // 而本页是 Tab 根、没有 sheet 盖着，所以这里不需要 dismiss()。
+                } label: {
+                    Label("看凭证", systemImage: "key.horizontal")
                 }
                 .tint(DS.Palette.warn)
             }
-            Button("复制") {
+            Button {
                 Clip.set("[" + (r.lockName.isEmpty ? app.displayName : r.lockName) + "] " + r.time + " " + r.title)
                 app.showToast("已复制本条记录")
+            } label: {
+                Label("复制", systemImage: "doc.on.doc")
             }
             .tint(DS.Palette.accent)
         }

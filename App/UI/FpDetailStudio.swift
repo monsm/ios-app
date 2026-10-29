@@ -77,11 +77,11 @@ struct FpDetailStudio: View {
                                     Task { await delete() }
                                 }
                             } label: {
-                                // 210 图标一致: 「彻底删除」全仓统一 xmark.bin —— trash 已被「回收站」占住
+                                // 210 图标一致: 「彻底删除」全仓统一 trash —— trash 已被「回收站」占住
                                 // (CredentialsView 那一行 Label("回收站 (N)", systemImage: "trash")), 在回收站里
                                 // 用同一枚垃圾桶画"不可逆地抹掉"等于让图标自己跟文字打架。
-                                // 另一处同标签落点是 CredentialCenterView 的 swipeAction, 它就是 xmark.bin。
-                                Label("彻底删除", systemImage: "xmark.bin")   // 323 彻底删除
+                                // 另一处同标签落点是 CredentialCenterView 的 swipeAction, 它就是 trash。
+                                Label("彻底删除", systemImage: "trash")   // 323 彻底删除
                             }
                             .vkFont(.subheadline)
                             .foregroundStyle(DS.Palette.danger)

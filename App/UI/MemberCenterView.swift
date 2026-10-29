@@ -67,10 +67,14 @@ struct MemberCenterView: View {
                             Text("近 30 天开门次数 (约)").tag(3)
                         }
                         .pickerStyle(.inline)
-                        Button("分组标签") { showGroups = true }   // 630 分组标签
-                        Button("导出成员名册") {   // 415 导出成员名册
+                        Button { showGroups = true }   label: {   // 630 分组标签
+                            Label("分组标签", systemImage: "tag")
+                        }
+                        Button {   // 415 导出成员名册
                             rosterURL = ExportKit.writeRoster()
                             showRoster = true
+                        } label: {
+                            Label("导出成员名册", systemImage: "square.and.arrow.up")
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle").accessibilityLabel("成员中心菜单")
@@ -362,11 +366,13 @@ struct MemberRow: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .contextMenu {
-            Button("归档") {   // 460/795 归档
+            Button {   // 460/795 归档
                 var e = MemberHub.ext(member.id)
                 e.archived = true
                 MemberHub.saveExt(member.id, e)
                 tick += 1
+            } label: {
+                Label("归档", systemImage: "archivebox")
             }
         }
     }
