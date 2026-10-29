@@ -250,7 +250,7 @@ extension RootView {
     /// 包8/508 写入回执浮层 —— 2026-10-13 run 63 从 body 内联块抽出:
     /// 巨型 body 里这一段报 "unable to type-check this expression in reasonable time"。
     @ViewBuilder
-    private func writeReceiptView(_ r: String) -> some View {
+    func writeReceiptView(_ r: String) -> some View {
         HStack(spacing: DS.Space.xs) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: DS.Icon.md))

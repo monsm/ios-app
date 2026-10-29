@@ -530,12 +530,12 @@ final class AppState: ObservableObject {
 // ---------- 根视图 (AppLock 门禁 + TabView) ----------
 struct RootView: View {
     @EnvironmentObject var app: AppState
-    @ObservedObject private var sense = LinkSense.shared
+    @ObservedObject var sense = LinkSense.shared
     /// 2026-10-27：应用锁（冷启动门禁 + 伪装码）
-    @ObservedObject private var lock = AppLock.shared
+    @ObservedObject var lock = AppLock.shared
     // 162 握手可离开: 圆盘握手在别的 Tab 完成 → 设备 Tab 亮角标; 回到设备页清零
-    @State private var handshakeDoneAway = false
-    @Environment(\.scenePhase) private var scenePhase
+    @State var handshakeDoneAway = false
+    @Environment(\.scenePhase) var scenePhase
     // 读取 themeSeed: 设置页切换主题时立即重建配色
     var colorScheme: ColorScheme? { Theme.scheme(for: app.themeSeed) }
 
