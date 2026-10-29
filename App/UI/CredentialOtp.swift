@@ -4,9 +4,12 @@ import SwiftUI
 
 extension CredentialsView {
     var otpSection: some View {
-        Section("临时密码 (ZOTP)") {
+        // 2026-10-29 性能：`DB.otpStatus(mac)` 原来在 get 闭包与下面的 if 各读一次（每次整份解码）。
+        // 一次读出来，两处共用。
+        let otpOn = DB.otpStatus(mac)?.on ?? false
+        return Section("临时密码 (ZOTP)") {
             VariantToggle("开通临时密码", isOn: Binding(
-                get: { DB.otpStatus(mac)?.on ?? false },
+                get: { otpOn },
                 set: { on in
                     guard busyKey == nil else { return }
                     // 同上: 开关按下的一刻钉住锁，Task 里用 m 而不是再活读一次
@@ -29,7 +32,7 @@ extension CredentialsView {
                     }
                 }))
                 .disabled(isBusy)
-            if DB.otpStatus(mac)?.on == true {
+            if otpOn {
                 otpGenRow
                 Label {
                     Text("每 30 分钟更换一次; 生成前请先校准门锁时间 (偏差 >180 秒会导致锁侧校验失败)。")

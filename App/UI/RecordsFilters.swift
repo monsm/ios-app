@@ -104,7 +104,10 @@ extension RecordsView {
     }
     @ViewBuilder
     var scopeRow: some View {
-        Section {
+        // 2026-10-29 性能：`DB.keychains()` 原来在本块里调 3 次（判断 count、ForEach、还有一处），
+        // 每次都是「整表取字典 + 逐把 Keychain.fromDict」。一次取、三处共用。
+        let allLocks = DB.keychains()
+        return Section {
             HStack(spacing: DS.Space.s) {
                 Text("范围")
                     .vkFont(.footnote)
@@ -115,10 +118,10 @@ extension RecordsView {
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()
-                if scope == 0, DB.keychains().count > 1 {
+                if scope == 0, allLocks.count > 1 {
                     // 191 按锁切换: 走 AppState.select (清实时状态 + 重读快照), 不自己改 currentMac
                     Menu {
-                        ForEach(DB.keychains()) { kc in
+                        ForEach(allLocks) { kc in
                             Button { app.select(kc.mac) } label: {
                                 Label(LockArchive.displayName(kc) + (kc.mac == mac ? " · 当前" : ""),
                                       systemImage: kc.mac == mac ? "checkmark.circle.fill" : "lock")
