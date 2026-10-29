@@ -8,6 +8,8 @@ struct SyncTimeView: View {
     @State private var result = ""
     @State private var failed = false
     /// 2026-10-27 (D-50)：冷却剩余秒数（0 = 无冷却）。
+    /// 2026-10-30：校时的世代号 —— 只有最新那次有权写结果（与 AppState.statusTicket 同款）。
+    @State private var syncTicket = 0
     @State private var coolLeft = 0
 
     private var resultTone: ToneColor { failed ? .danger : .ok }
@@ -50,6 +52,12 @@ struct SyncTimeView: View {
     }
 
     private func run() async {
+        // 2026-10-30 修复（切锁竞态，与 AppState.statusTicket 同款）：
+        // 校时页的 run 有两段 await，期间用户可能切到另一把锁 ——
+        // 旧写法会把 B 锁的校时结果（成功 toast / result 文案）显示在 A 锁的页面上。
+        // 世代号 + 返回前复核当前锁，过期的直接丢弃。
+        syncTicket += 1
+        let ticket = syncTicket
         busy = true
         failed = false
         result = ""
@@ -68,13 +76,15 @@ struct SyncTimeView: View {
             // 留存口径：校时这一步本机**不落任何数** —— 记录的时间戳本来就来自锁端回包 (lockTimeStr)，
             // 与手机钟无关；把它抄一份进本机反而造出第二个"现在是几点"。AutoOpen 那条自动校时走 audit (0E 双确认)。
             try await app.lock.syncTime()
+            guard ticket == syncTicket, app.currentMac == m else { return }   // 过期丢弃
             result = "同步成功"
             app.showToast("时间已同步")
         } catch {
+            guard ticket == syncTicket, app.currentMac == m else { return }   // 过期丢弃
             failed = true
             result = "同步失败：\(error.localizedDescription)"
         }
-        busy = false
+        if ticket == syncTicket { busy = false }
     }
 }
 
