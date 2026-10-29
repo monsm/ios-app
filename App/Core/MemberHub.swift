@@ -22,6 +22,34 @@ struct MemberExt: Codable {
     var careText: String = ""        // 480 孩子码关怀文案
     var note: String = ""            // 475 家庭便签 (与成员绑定; 成员中心与 vCard 导出在用)
     var welcome: String = ""         // 484 访客欢迎语 (归属靠时间推断, 展示带"约")
+
+    enum CodingKeys: String, CodingKey {
+        case role, emoji, remark, commonLocks, emergency, groupTag, archived, proxy, emergencyAdmin, careText, note, welcome
+    }
+
+    /// 全默认构造（`MemberHub.ext()` 找不到该成员时用它兜底）。
+    /// 加 `init(from:)` 会让合成的逐参数 init 消失，所以这里显式补一个。
+    init() {}
+
+    /// 容错解码（2026-10-29）：与 Ledger 家族同一类问题。
+    /// 本表是 `[成员id: MemberExt]` 一整个字典存进 UserDefaults ——
+    /// 只要**任意一个成员**缺一个字段，合成解码器就让整张表解码失败，
+    /// 于是所有人的角色/分组/归档/备注/emoji 全部回落默认值（归档的人会重新出现在名单里）。
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        role = try c.decodeIfPresent(String.self, forKey: .role) ?? "member"
+        emoji = try c.decodeIfPresent(String.self, forKey: .emoji) ?? ""
+        remark = try c.decodeIfPresent(String.self, forKey: .remark) ?? ""
+        commonLocks = try c.decodeIfPresent([String].self, forKey: .commonLocks) ?? []
+        emergency = try c.decodeIfPresent(String.self, forKey: .emergency) ?? ""
+        groupTag = try c.decodeIfPresent(String.self, forKey: .groupTag) ?? ""
+        archived = try c.decodeIfPresent(Bool.self, forKey: .archived) ?? false
+        proxy = try c.decodeIfPresent(Bool.self, forKey: .proxy) ?? false
+        emergencyAdmin = try c.decodeIfPresent(Bool.self, forKey: .emergencyAdmin) ?? false
+        careText = try c.decodeIfPresent(String.self, forKey: .careText) ?? ""
+        note = try c.decodeIfPresent(String.self, forKey: .note) ?? ""
+        welcome = try c.decodeIfPresent(String.self, forKey: .welcome) ?? ""
+    }
 }
 
 /// 472 借用登记 (per-lock)

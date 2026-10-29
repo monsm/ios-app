@@ -345,6 +345,8 @@ extension RecordsView {
                              warn: warn, claim: claimable, care: care))
         }
         allRows = out
+        // 2026-10-29 性能：去年今日的命中数跟日志一起算一次，别让 body 每次再扫一遍。
+        lastYearToday = Self.countLastYearToday(merged)
         applyFilter()
     }
     /// 577 凭证深链: kind+归属 → pwd:<alias> / fp:<batch>; 台账无命中留空 (不深跳)

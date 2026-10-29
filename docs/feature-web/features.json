@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T12:03:52.986Z",
+    "generated": "2026-10-29T12:16:58.250Z",
     "sources": [
       {
         "scout": "android-native",
@@ -15840,7 +15840,7 @@
           "line": 258,
           "symbol": "proxyNames",
           "note": "",
-          "text": "var out = [Excerpt]()"
+          "text": "logs: logs.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,"
         },
         {
           "platform": "ios",
@@ -22752,7 +22752,7 @@
           "line": 78,
           "symbol": "permRows(_:)",
           "note": "",
-          "text": "/// 这张表现在同时是**判据**: 成员页上真存在的两枚开关按它亮灭 (468 代管走「管凭证」, 469 紧急管理员走「成员管理」),"
+          "text": "private static let extKey = \"kf_member_ext\""
         }
       ],
       "platformEvidence": {
@@ -22811,7 +22811,7 @@
           "line": 38,
           "symbol": "MemberHub",
           "note": "",
-          "text": "static func isVisitorRow(kind: String?, whoId: String?) -> Bool {"
+          "text": "init(from decoder: Decoder) throws {"
         },
         {
           "platform": "ios",
@@ -22902,7 +22902,7 @@
           "line": 40,
           "symbol": "visitorId",
           "note": "",
-          "text": "}"
+          "text": "role = try c.decodeIfPresent(String.self, forKey: .role) ?? \"member\""
         },
         {
           "platform": "ios",
@@ -22918,7 +22918,7 @@
           "line": 42,
           "symbol": "isVisitorRow(kind:whoId:)",
           "note": "",
-          "text": "/// 以及凭证页单条停用时往 361 便签里补的那一句「管理员代操作」)。"
+          "text": "remark = try c.decodeIfPresent(String.self, forKey: .remark) ?? \"\""
         },
         {
           "platform": "ios",
@@ -23243,7 +23243,7 @@
           "line": 78,
           "symbol": "permRows",
           "note": "矩阵唯一定义（五行）",
-          "text": "/// 这张表现在同时是**判据**: 成员页上真存在的两枚开关按它亮灭 (468 代管走「管凭证」, 469 紧急管理员走「成员管理」),"
+          "text": "private static let extKey = \"kf_member_ext\""
         },
         {
           "platform": "ios",
@@ -23846,7 +23846,7 @@
           "line": 103,
           "symbol": "emergencyAdmins()",
           "note": "",
-          "text": "/// 原先这个位只有成员页 Toggle 的 set、全仓零读取方, 界面却写\"救援码说明与其绑定\" ⇒ 空头支票。"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -23917,7 +23917,7 @@
           "line": 64,
           "symbol": "roles",
           "note": "",
-          "text": "static func isActive(_ id: String) -> Bool { !ext(id).archived }"
+          "text": "static let visitorId = \"__visitor\""
         },
         {
           "platform": "ios",
@@ -23925,7 +23925,7 @@
           "line": 65,
           "symbol": "roleLabel(_:)",
           "note": "",
-          "text": ""
+          "text": "/// 访客虚拟行判定: 临时码类记录且无可证明归属 (与 793 \"不与家人混淆\" 的独立分组)"
         }
       ],
       "platformEvidence": {
@@ -25537,7 +25537,7 @@
           "line": 178,
           "symbol": "noLockPlaceholder",
           "note": "无锁占位「去添加门锁」",
-          "text": "var reconRow: some View {"
+          "text": "/// 可复制（发给管理员/记进工单）。"
         },
         {
           "platform": "ios",
@@ -25545,7 +25545,7 @@
           "line": 233,
           "symbol": "recordsToolbar",
           "note": "右上工具栏与「更多」菜单",
-          "text": "searchBar"
+          "text": "//   · 其余全部**收进\"更多\"或移到列表之后**: 生日条 / 成员 chip / 门神 / 掉电观察 / 去年今日"
         },
         {
           "platform": "ios",
@@ -25646,7 +25646,7 @@
           "line": 376,
           "symbol": "recordsChrome",
           "note": "父级：sheet(item: $detailRec) 传 displayedRecs",
-          "text": "} label: {"
+          "text": "app.requestRoute(.device)"
         },
         {
           "platform": "ios",
@@ -25965,7 +25965,7 @@
           "line": 433,
           "symbol": "searchBar",
           "note": "占位文案与绑定",
-          "text": "// 461: 与列表行同口径 — 有可证明归属时显示\"称呼（备注）\" (919: 别名开关开时关系称呼顶替)"
+          "text": "let kindWord = StatsKit.openTypes.contains(r.type) ? (Attribution.words[r.kind ?? \"\"] ?? nil) : nil"
         },
         {
           "platform": "ios",
@@ -25989,7 +25989,7 @@
           "line": 345,
           "symbol": "onChange(searchText)",
           "note": "562 边输入边过滤",
-          "text": "guard let last = cal.date(byAdding: .year, value: -1, to: Date()) else { return 0 }"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -26081,7 +26081,7 @@
           "line": 250,
           "symbol": "recordsToolbar",
           "note": "入口：更多菜单",
-          "text": "// 用户分不清「这台锁没记录」和「读取失败/还在加载」。"
+          "text": "// 在这个从未编译过的工程里做结构性改动的风险不对等 → 记入需编译器清单, 这里先给可用能力。"
         }
       ],
       "platformEvidence": {
@@ -26153,7 +26153,7 @@
           "line": 374,
           "symbol": "recordsChrome",
           "note": "入口：filters.alarmKinds 绑定",
-          "text": "app.pendingJumpLock = mac"
+          "text": "Button {"
         }
       ],
       "platformEvidence": {
@@ -26219,7 +26219,7 @@
           "line": 306,
           "symbol": "onChange(pending*)",
           "note": "六个深链入口",
-          "text": "Clip.set(out.joined(separator: \"\\n\"))"
+          "text": "let who = r.whoId.flatMap { DB.member($0)?.name } ?? \"未归属\""
         },
         {
           "platform": "ios",
@@ -26667,7 +26667,7 @@
           "line": 248,
           "symbol": "recordsToolbar",
           "note": "入口：更多菜单",
-          "text": "// 2026-10-27 截图核对修复：**空态从未接线** —— `emptyHint` 定义在 1295 行，"
+          "text": "// 187 按月跳转 (等价实现): 选月即只看该月, 顶部有清除口。"
         },
         {
           "platform": "ios",
@@ -27300,7 +27300,7 @@
           "line": 188,
           "symbol": "mainList",
           "note": "List 结构与区块顺序",
-          "text": ".foregroundStyle(DS.Palette.warn)"
+          "text": "if let gap = pullGap {"
         },
         {
           "platform": "apk",
@@ -27316,7 +27316,7 @@
           "line": 227,
           "symbol": "scrollPosition(id:)",
           "note": "行级滚动锚",
-          "text": "// 现在按三条判据收敛 (不是删功能, 是分级):"
+          "text": "//   emptyHint / runningRow / dropWatchSection / lastYearTodayRow"
         },
         {
           "platform": "ios",
@@ -27541,7 +27541,7 @@
           "line": 216,
           "symbol": "mainList",
           "note": "monthJump/dayFocus 双重收窄",
-          "text": ".foregroundStyle(DS.Palette.warn)"
+          "text": "Section {"
         }
       ],
       "platformEvidence": {
@@ -27612,7 +27612,7 @@
           "line": 371,
           "symbol": "OutWinSheet",
           "note": "越界文案",
-          "text": "var jumpBackRow: some View {"
+          "text": "@ViewBuilder"
         }
       ],
       "platformEvidence": {
@@ -27701,7 +27701,7 @@
           "line": 249,
           "symbol": "recordsToolbar",
           "note": "入口：更多菜单",
-          "text": "// 但全仓 0 处调用。于是「全部记录」展开后一条都没有时，屏幕上一片空白，"
+          "text": "// 原设计的\"月份滚轮 + scrollTo\"需把 List 包进 ScrollViewReader 并移动整条修饰符链,"
         }
       ],
       "platformEvidence": {
@@ -27845,7 +27845,7 @@
           "line": 333,
           "symbol": "onChange(scope)",
           "note": "切范围重置全部检索态",
-          "text": "Text(\"去年今日: \\(n) 条开门记录\")   // 654 去年今日"
+          "text": "if n > 0 {"
         },
         {
           "platform": "ios",
@@ -27853,7 +27853,7 @@
           "line": 392,
           "symbol": "macs",
           "note": "范围 → 锁列表",
-          "text": "/// 行级时刻 (554 时间短语判定): 组头日 + 时分"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -57164,7 +57164,7 @@
           "line": 38,
           "symbol": "MemberHub",
           "note": "",
-          "text": "static func isVisitorRow(kind: String?, whoId: String?) -> Bool {"
+          "text": "init(from decoder: Decoder) throws {"
         },
         {
           "platform": "ios",
@@ -60368,7 +60368,7 @@
           "line": 47,
           "symbol": "extKey",
           "note": "",
-          "text": "}"
+          "text": "proxy = try c.decodeIfPresent(Bool.self, forKey: .proxy) ?? false"
         },
         {
           "platform": "ios",
@@ -60384,7 +60384,7 @@
           "line": 48,
           "symbol": "ext(_:)",
           "note": "",
-          "text": ""
+          "text": "emergencyAdmin = try c.decodeIfPresent(Bool.self, forKey: .emergencyAdmin) ?? false"
         },
         {
           "platform": "ios",
@@ -60392,7 +60392,7 @@
           "line": 57,
           "symbol": "archivedIDs()",
           "note": "",
-          "text": "all[id] = e"
+          "text": "var by: String        // 借用人"
         },
         {
           "platform": "ios",
@@ -60722,7 +60722,7 @@
           "line": 44,
           "symbol": "QueryFilters.load",
           "note": "构造时按锁读",
-          "text": "@State var parsedTags: [String] = []    // 555 解析预览标签"
+          "text": "/// Attribution 分类 + 分组 + 补缺口）。快速输入 10 个字就是 10 次全量重建。"
         },
         {
           "platform": "ios",
@@ -60730,7 +60730,7 @@
           "line": 289,
           "symbol": "onChange(filters)",
           "note": "差异才落盘",
-          "text": "return n"
+          "text": "// 2026-10-26 精简：「失败筛选」说明与「清空本机失败标记」已删（用户确认）。"
         },
         {
           "platform": "ios",

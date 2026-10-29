@@ -21,6 +21,9 @@ struct RecordsView: View {
     @EnvironmentObject var app: AppState
     @State var groups: [DayGroup] = []
     @State var damageDays: Set<String> = []  // 596 含「多次密码开门失败锁定」的自然日
+    /// 654 去年今日的命中数。2026-10-29 性能：原先是个 computed var，每次 body 求值都
+    /// `DB.readLogs(mac).filter{...}` 扫一遍全部日志；改成在 render() 里跟日志一起算一次。
+    @State var lastYearToday = 0
     @State var rows: [RowVM] = []
     @State var allRows: [RowVM] = []
     @State var running = false
@@ -326,7 +329,7 @@ struct RecordsView: View {
     /// 数据源就是本机日志缓存 (≤300 条), 所以只有"这一年里本机读到过"才可能出现; 没读到就不出现, 不假装。
     @ViewBuilder
     var lastYearTodayRow: some View {
-        let n = lastYearTodayCount
+        let n = lastYearToday
         if n > 0 {
             Section {
                 Label {
@@ -340,19 +343,17 @@ struct RecordsView: View {
             }
         }
     }
-    var lastYearTodayCount: Int {
+    /// 654 去年今日：同一「月-日」在去年有开门记录时出一行的判据。
+    /// 2026-10-29 性能：原来是 computed var（每次 body 都扫全部日志），现在由 render() 调一次。
+    static func countLastYearToday(_ logs: [LogEntry]) -> Int {
         let cal = WeekCal.gregorian
         guard let last = cal.date(byAdding: .year, value: -1, to: Date()) else { return 0 }
-        let fmt = DF.cached("MM-dd")
-        let key = fmt.string(from: last)
-        return DB.readLogs(mac).filter { l in
+        let key = DF.cached("MM-dd").string(from: last)
+        return logs.filter { l in
             l.lockTimeStr.count >= 10 && String(l.lockTimeStr.dropFirst(5).prefix(5)) == key
         }.count
     }
 
-    var firstLogDay: String? {
-        DB.readLogs(mac).compactMap { $0.lockTimeStr.isEmpty ? nil : String($0.lockTimeStr.prefix(10)) }.min()
-    }
 
     var mac: String { app.current?.mac ?? "" }
     var syncStampKey: String { "kf_logsync_" + mac }
