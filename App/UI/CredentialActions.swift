@@ -102,8 +102,13 @@ extension CredentialsView {
             }
             if seg == 0 { otpSection }
             // 354: 全归档不算"台账空" — 归档区那张卡就是这批条目的落点, 谎报"还没有台账"会导向重复建码
-            if memberView || (!memberView && sortedPwds.isEmpty && sortedFps.isEmpty
-                              && true) {   // 2026-10-26: 归档已删，恒空
+            // 2026-10-30 修复：原判据是 `memberView || (!memberView && sortedPwds.isEmpty && sortedFps.isEmpty && true)`
+            // —— 前半的 `memberView ||` 让「按成员视图」下**无条件**渲染这条空态提示：
+            //   有凭证时成员分组列在上面，底下却多出一句"本机还没有凭证台账"，用户会以为数据丢了。
+            //   那个 `&& true` 是「归档功能已删」的残留（原意是 !allArchived，删掉后恒真）。
+            // 正确判据：看**全量台账**（seqBase 不扣分段、不含归档过滤）—— 空才提示；
+            // 全归档时 seqBase 仍非空 ⇒ 不提示，正是 354 的原意。两种视图共用同一条判据。
+            if seqBasePwds.isEmpty && seqBaseFps.isEmpty {
                 emptyHint
             }
         }
