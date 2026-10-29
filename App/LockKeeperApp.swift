@@ -389,6 +389,9 @@ final class AppState: ObservableObject {
         var lastMsg = ""
         var lastRc: Int? = nil   // 86: 服务层回的错误码 (异常路径没有码, 保持 nil)
         for attempt in 1...attempts {
+            // 2026-10-29 修复：取消后底层可能把 CancellationError 包成 BLE 超时再抛上来，
+            // 那样会落进下面的 catch 继续跑下一轮 —— 已取消的操作会「复活」并把状态改成失败。
+            if Task.isCancelled { return }
             phase = 1
             unlockState = .connecting
             do {
@@ -416,6 +419,8 @@ final class AppState: ObservableObject {
             } catch {
                 lastMsg = error.localizedDescription
             }
+            // 2026-10-29：catch 之后再看一次 —— 取消不算失败，也不该进 failStreak / 重试。
+            if Task.isCancelled { return }
             // 超时不自动重试: 指令可能已生效 (门已开只是没回执), 再发一次就是第二次开锁动作
             if lastMsg.contains("超时") { break }
             failStreak += 1   // 87 三连败排查清单按尝试次数累计
@@ -431,6 +436,8 @@ final class AppState: ObservableObject {
             }
             break
         }
+        // 2026-10-29：取消时不写失败终态（cancelUnlock 已把状态复位成 idle）。
+        if Task.isCancelled { return }
         // 终态失败: 直读原因 (84) + 写入时间线标记 (92)
         unlockState = .failed(lastMsg)
         phase = 0

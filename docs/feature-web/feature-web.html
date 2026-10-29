@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T13:47:56.332Z",
+    "generated": "2026-10-29T13:58:37.236Z",
     "sources": [
       {
         "scout": "android-native",
@@ -4002,7 +4002,7 @@ const DATA = {
           "line": 431,
           "symbol": "chosenPinIndex(_:)",
           "note": "",
-          "text": "}"
+          "text": "retryWait = w"
         },
         {
           "platform": "ios",
@@ -8333,7 +8333,7 @@ const DATA = {
           "line": 397,
           "symbol": "if DB.hasPasscode(), let t = lastUnlockSuccessAt, now.timeIntervalSince(t) \u003c 30",
           "note": "",
-          "text": "phase = 2"
+          "text": "do {"
         },
         {
           "platform": "ios",
@@ -10934,7 +10934,7 @@ const DATA = {
           "line": 404,
           "symbol": "func startUnlock",
           "note": "",
-          "text": "return"
+          "text": "phase = 3"
         }
       ],
       "platformEvidence": {
@@ -13709,7 +13709,7 @@ const DATA = {
           "line": 439,
           "symbol": "private func runUnlock",
           "note": "",
-          "text": "}"
+          "text": "// 2026-10-29：取消时不写失败终态（cancelUnlock 已把状态复位成 idle）。"
         },
         {
           "platform": "ios",
@@ -13717,7 +13717,7 @@ const DATA = {
           "line": 441,
           "symbol": "attempts = kf_auto_retry ? 3 : 1",
           "note": "",
-          "text": "/// 收尾复位: 只复位\"本次操作的结果态\", 用户中途已重试则不得覆盖。"
+          "text": "// 终态失败: 直读原因 (84) + 写入时间线标记 (92)"
         },
         {
           "platform": "ios",
@@ -13725,7 +13725,7 @@ const DATA = {
           "line": 445,
           "symbol": "phase = 1",
           "note": "",
-          "text": "switch finished {"
+          "text": "finishDwell(.failed(lastMsg))"
         },
         {
           "platform": "ios",
@@ -13733,7 +13733,7 @@ const DATA = {
           "line": 453,
           "symbol": "lock.unlock(mac:pinDec:)",
           "note": "",
-          "text": "unlockState = .idle"
+          "text": "case .success: dwell = 2_000_000_000"
         },
         {
           "platform": "ios",
@@ -13741,7 +13741,7 @@ const DATA = {
           "line": 455,
           "symbol": "if rc == 0",
           "note": "",
-          "text": "if case .success = finished { unlockReturnedHint() }"
+          "text": "default: dwell = finished.isFailed ? 3_000_000_000 : 4_200_000_000"
         }
       ],
       "platformEvidence": {
@@ -14134,7 +14134,7 @@ const DATA = {
           "line": 428,
           "symbol": "246 本次用哪条 PIN 注释",
           "note": "",
-          "text": "}"
+          "text": "if attempt \u003c attempts, !Task.isCancelled {"
         },
         {
           "platform": "ios",
@@ -14142,7 +14142,7 @@ const DATA = {
           "line": 431,
           "symbol": "func chosenPinIndex",
           "note": "",
-          "text": "}"
+          "text": "retryWait = w"
         },
         {
           "platform": "ios",
@@ -14150,7 +14150,7 @@ const DATA = {
           "line": 432,
           "symbol": "kf_pinpick_ + mac",
           "note": "",
-          "text": "break"
+          "text": "do { try await Task.sleep(for: .seconds(1)) } catch { return }"
         },
         {
           "platform": "ios",
@@ -14158,7 +14158,7 @@ const DATA = {
           "line": 434,
           "symbol": "func chosenPin",
           "note": "",
-          "text": "// 终态失败: 直读原因 (84) + 写入时间线标记 (92)"
+          "text": "retryWait = nil"
         },
         {
           "platform": "ios",
@@ -14166,7 +14166,7 @@ const DATA = {
           "line": 436,
           "symbol": "i >= 0 && i \u003c kc.pins.count",
           "note": "",
-          "text": "phase = 0"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -33785,7 +33785,7 @@ const DATA = {
           "line": 525,
           "symbol": "外观变更注释",
           "note": "",
-          "text": "// 于是设备页这行**低电量(4) 与 密码失败锁定(10) 的告警不标红**，"
+          "text": "if let who = c.who, let m = DB.member(who) {"
         },
         {
           "platform": "ios",
@@ -33809,7 +33809,7 @@ const DATA = {
           "line": 527,
           "symbol": "private func applyAppearance",
           "note": "",
-          "text": "let warn = StatsKit.alarmTypes.contains(e.type)"
+          "text": "let shown = MemberHub.aliasName(who) ?? m.name"
         }
       ],
       "platformEvidence": {
@@ -37908,7 +37908,7 @@ const DATA = {
           "line": 587,
           "symbol": "开锁偏好注释",
           "note": "",
-          "text": "/// ButtonStyle 拿不到 action (拦不住点击), 而直接在外层用 onTapGesture 会把 List 行点击、"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -37916,7 +37916,7 @@ const DATA = {
           "line": 598,
           "symbol": "static let behaviorKeys",
           "note": "",
-          "text": "// **只此一处定义**是刻意的：另抄一份阴影色，两套变体迟早会在这一步上分家。"
+          "text": "/// 卡片表面: 靠 surface 与渐变画布的明度差分层, 不加描边。"
         },
         {
           "platform": "ios",
@@ -58196,7 +58196,7 @@ const DATA = {
           "line": 598,
           "symbol": "behaviorKeys",
           "note": "",
-          "text": "// **只此一处定义**是刻意的：另抄一份阴影色，两套变体迟早会在这一步上分家。"
+          "text": "/// 卡片表面: 靠 surface 与渐变画布的明度差分层, 不加描边。"
         },
         {
           "platform": "ios",
@@ -58204,7 +58204,7 @@ const DATA = {
           "line": 431,
           "symbol": "kf_pinpick_",
           "note": "",
-          "text": "}"
+          "text": "retryWait = w"
         },
         {
           "platform": "ios",
@@ -58212,7 +58212,7 @@ const DATA = {
           "line": 520,
           "symbol": "kf_unlock_hint_day",
           "note": "",
-          "text": "let shown = MemberHub.aliasName(who) ?? m.name"
+          "text": "let c = rows[i]"
         }
       ],
       "platformEvidence": {
@@ -63916,7 +63916,7 @@ const DATA = {
           "line": 518,
           "symbol": "unlockReturnedHint",
           "note": "",
-          "text": "if let who = c.who, let m = DB.member(who) {"
+          "text": "for (i, e) in logs.enumerated() {"
         },
         {
           "platform": "ios",
@@ -63924,7 +63924,7 @@ const DATA = {
           "line": 520,
           "symbol": "kf_unlock_hint_day",
           "note": "",
-          "text": "let shown = MemberHub.aliasName(who) ?? m.name"
+          "text": "let c = rows[i]"
         }
       ],
       "platformEvidence": {
