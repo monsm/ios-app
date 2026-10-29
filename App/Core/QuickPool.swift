@@ -35,6 +35,11 @@ enum QuickPool {
         QuickAction(id: "again",    icon: "arrow.counterclockwise",      label: "再开一次"),   // 921
         // ↓ 四个是从本页其它位置也到达得到的真实页面，不是新造的入口
         QuickAction(id: "backup",   icon: "archivebox",                  label: "备份与恢复"),
+        // 2026-10-29：页面型能力 —— 默认不展示（defaultIds 不含），用户到「设置→外观→快捷格」自查勾选。
+        // 加它们是因为「设置→锁段」7 项里没有其它直达路径；这三项都是既有 Destination，不新增任何东西。
+        QuickAction(id: "tailgate", icon: "figure.walk.arrival", label: "防尾随"),
+        QuickAction(id: "safemode", icon: "lock.rotation",       label: "安全模式"),
+        QuickAction(id: "dfu",      icon: "arrow.up.circle",     label: "固件升级"),
     ]
     /// 默认选中现状那六格 = 与旧版观感一致
     static let defaultIds = ["addPwd", "otp", "syncTime", "addFp", "studio"]
@@ -140,6 +145,9 @@ func quickDestination(_ id: String) -> some View {
     case "addFp":    FpStudio(embedded: true)
     case "studio":   StudioHome(embedded: true)
     case "backup":   BackupView(embedded: true)
+    case "tailgate": TailgateView()
+    case "safemode": SafemodeIntroView()
+    case "dfu":      DFUView()
     case "again":    Text("「再开一次」在设备页长按编辑或直接点按, 不需要新页面")   // 921 再开一次
     default:         Text("这个快捷入口对应的页面已不存在，请到设置-外观里重新选择")
     }
