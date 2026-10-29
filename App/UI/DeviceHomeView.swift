@@ -44,83 +44,7 @@ struct DeviceHomeView: View {
     var vkBody: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: DS.Space.m) {
-                    if app.devices.isEmpty {
-                        Card {
-                            EmptyState(systemImage: "lock.open.rotation",
-                                       title: "还没有添加门锁",
-                                       message: "请先在门锁键盘上长按重置键恢复出厂，再回到这里添加设备（需要开启蓝牙）",
-                                       actionTitle: "添加设备") { showAdd = true }
-                            // 824 第二出口: 只有"再扫一次"不够 —— 换机或误删之后用户手上拿的是
-                            // 一份备份文件，不是一把门锁。指不到恢复入口的空态等于把数据判了死刑。
-                            Button {
-                                // 2026-10-14 走查: 原为直写 `app.tabSelection = 3` —— 设备页在访客通道
-                                // 下照常可达, 而访客态里「设置」Tab 不进层级树, 直写会落到一个看不见的
-                                // Tab (点一下像没反应)。走 requestTab, 访客态由它拉起复核页。
-                                app.pendingSettingsFocus = "backup"   // §4.3: 这一按直达「备份与恢复」, 不再只放人在设置页根上
-                                app.requestRoute(.settings)
-                                app.showToast("到「备份与恢复」：可本地导入，或从坚果云恢复")   // 824 设置
-                            } label: {
-                                Label("从备份恢复", systemImage: "square.and.arrow.down")   // 824 从备份恢复
-                                    .vkFont(.subheadline, weight: .medium)
-                                    .foregroundStyle(DS.Palette.accentText)
-                                    .frame(maxWidth: .infinity, minHeight: DS.Hit.min)
-                            }
-                            .buttonStyle(PressableButtonStyle())
-                            // 1044 家庭公告板: 空态里的一张便签
-                        }
-                    } else {
-                        // 767 按组切换 + 764 多锁状态图标行: 都放在 Hero 卡上方 ——
-                        // 先一眼看清"哪把锁有事", 再落到当前锁的主控卡。
-                        if app.devices.count > 1 {
-                            if shown(.groupChips) { groupChips }
-                        }
-                        // 868 扫描组划分: 状态卡 / 圆盘 / 快捷格各自成组 (children: .contain),
-                        // 外接开关与"切换控制"可以按组逐项聚焦, 不用在整页里一个个划过去。
-                        moduleSlot(devOrder[0], delay: 1)   // 904: 槽位固定, 哪个模块占这个槽由用户定
-                        attentionCard
-                        if shown(.linkSense) { linkSenseCard }
-                        // 2026-10-27 审核：凭证选择胶囊已删（PIN 胶囊那一族），此处空壳一并移除。
-                        unlockDial
-                            .accessibilityElement(children: .contain)
-                            .accessibilityLabel("开锁圆盘组")   // 868 开锁圆盘组
-                        // 2026-10-29：布防入口 —— 原来只在「设置 → 锁段」，用户找不到（本次审核的起点）。
-                        // 只在锁支持布防时出现（canDefend）；与设置页那条**并存**（不删，避免打断老用户习惯）。
-                        // 行内带当前布防状态（DefendKit.summary），不用点进去才知道现在是"撤防"还是"布防中"。
-                        // 放圆盘下方：HIG 说重要控制宜在中部/下部，且与开锁动作同屏。
-                        if let kc = app.current, PidMap.canDefend(kc.pid) {
-                            NavigationLink {
-                                DefendView()
-                            } label: {
-                                HStack(spacing: DS.Space.s) {
-                                    Label("布防", systemImage: "shield.lefthalf.filled")
-                                    Spacer(minLength: 0)
-                                    Text(DefendKit.summary(DB.defend(kc.mac)))
-                                        .vkFont(.caption)
-                                        .foregroundStyle(DefendKit.isActive(DB.defend(kc.mac))
-                                                         ? DS.Palette.ok : DS.Palette.textSub)
-                                }
-                                .frame(maxWidth: .infinity, minHeight: DS.Hit.min)
-                            }
-                            .buttonStyle(PressableButtonStyle())
-                            .padding(.horizontal, DS.Space.gutter)
-                            .accessibilityHint("时段内一票否决自动开锁；布防期间靠近门锁不会自动开门")
-                        }
-                        moduleSlot(devOrder[1], delay: 4)   // 904
-                        moduleSlot(devOrder[2], delay: 5)   // 904
-                        // 904 模块排序入口: 做成显式文字按钮 —— 原句点名的"长按设备页空白进编辑态"会与
-                        // 60/873 那族手势链冲突 (设备页是 ScrollView, 空白长按同时是滚动/下拉刷新的一部分),
-                        // 排序落成上/下移按钮, 不改整页手势。
-                        Button { showModuleOrder = true } label: {
-                            Label("模块排序与显隐", systemImage: "arrow.up.arrow.down")   // 904 模块排序
-                                .vkFont(.caption)
-                                .foregroundStyle(DS.Palette.textSub)
-                                .frame(maxWidth: .infinity, minHeight: DS.Hit.min)
-                        }
-                        .buttonStyle(PressableButtonStyle())
-                    }
-                }
-                .padding(.vertical, DS.Space.m)
+                deviceContent
             }
             // 537 下拉重扫: 只扫不连。127 静默模式关的是"自动"回连/预握手/自动开锁,
             // 用户主动下拉属于手动动作 (与"手动圆盘照常"同一条口径), 所以这里不看 DiagFlags.silent。
@@ -227,6 +151,89 @@ struct DeviceHomeView: View {
                 }
             }
         }
+    }
+
+    /// 2026-10-29：从 vkBody 抽出 —— 加了齿轮/sheet 后整个表达式触发 Swift 类型推断超时，
+    /// 拆一层是最小修复（`error: unable to type-check this expression in reasonable time`）。
+    @ViewBuilder
+    private var deviceContent: some View {
+                VStack(spacing: DS.Space.m) {
+                    if app.devices.isEmpty {
+                        Card {
+                            EmptyState(systemImage: "lock.open.rotation",
+                                       title: "还没有添加门锁",
+                                       message: "请先在门锁键盘上长按重置键恢复出厂，再回到这里添加设备（需要开启蓝牙）",
+                                       actionTitle: "添加设备") { showAdd = true }
+                            // 824 第二出口: 只有"再扫一次"不够 —— 换机或误删之后用户手上拿的是
+                            // 一份备份文件，不是一把门锁。指不到恢复入口的空态等于把数据判了死刑。
+                            Button {
+                                // 2026-10-14 走查: 原为直写 `app.tabSelection = 3` —— 设备页在访客通道
+                                // 下照常可达, 而访客态里「设置」Tab 不进层级树, 直写会落到一个看不见的
+                                // Tab (点一下像没反应)。走 requestTab, 访客态由它拉起复核页。
+                                app.pendingSettingsFocus = "backup"   // §4.3: 这一按直达「备份与恢复」, 不再只放人在设置页根上
+                                app.requestRoute(.settings)
+                                app.showToast("到「备份与恢复」：可本地导入，或从坚果云恢复")   // 824 设置
+                            } label: {
+                                Label("从备份恢复", systemImage: "square.and.arrow.down")   // 824 从备份恢复
+                                    .vkFont(.subheadline, weight: .medium)
+                                    .foregroundStyle(DS.Palette.accentText)
+                                    .frame(maxWidth: .infinity, minHeight: DS.Hit.min)
+                            }
+                            .buttonStyle(PressableButtonStyle())
+                            // 1044 家庭公告板: 空态里的一张便签
+                        }
+                    } else {
+                        // 767 按组切换 + 764 多锁状态图标行: 都放在 Hero 卡上方 ——
+                        // 先一眼看清"哪把锁有事", 再落到当前锁的主控卡。
+                        if app.devices.count > 1 {
+                            if shown(.groupChips) { groupChips }
+                        }
+                        // 868 扫描组划分: 状态卡 / 圆盘 / 快捷格各自成组 (children: .contain),
+                        // 外接开关与"切换控制"可以按组逐项聚焦, 不用在整页里一个个划过去。
+                        moduleSlot(devOrder[0], delay: 1)   // 904: 槽位固定, 哪个模块占这个槽由用户定
+                        attentionCard
+                        if shown(.linkSense) { linkSenseCard }
+                        // 2026-10-27 审核：凭证选择胶囊已删（PIN 胶囊那一族），此处空壳一并移除。
+                        unlockDial
+                            .accessibilityElement(children: .contain)
+                            .accessibilityLabel("开锁圆盘组")   // 868 开锁圆盘组
+                        // 2026-10-29：布防入口 —— 原来只在「设置 → 锁段」，用户找不到（本次审核的起点）。
+                        // 只在锁支持布防时出现（canDefend）；与设置页那条**并存**（不删，避免打断老用户习惯）。
+                        // 行内带当前布防状态（DefendKit.summary），不用点进去才知道现在是"撤防"还是"布防中"。
+                        // 放圆盘下方：HIG 说重要控制宜在中部/下部，且与开锁动作同屏。
+                        if let kc = app.current, PidMap.canDefend(kc.pid) {
+                            NavigationLink {
+                                DefendView()
+                            } label: {
+                                HStack(spacing: DS.Space.s) {
+                                    Label("布防", systemImage: "shield.lefthalf.filled")
+                                    Spacer(minLength: 0)
+                                    Text(DefendKit.summary(DB.defend(kc.mac)))
+                                        .vkFont(.caption)
+                                        .foregroundStyle(DefendKit.isActive(DB.defend(kc.mac))
+                                                         ? DS.Palette.ok : DS.Palette.textSub)
+                                }
+                                .frame(maxWidth: .infinity, minHeight: DS.Hit.min)
+                            }
+                            .buttonStyle(PressableButtonStyle())
+                            .padding(.horizontal, DS.Space.gutter)
+                            .accessibilityHint("时段内一票否决自动开锁；布防期间靠近门锁不会自动开门")
+                        }
+                        moduleSlot(devOrder[1], delay: 4)   // 904
+                        moduleSlot(devOrder[2], delay: 5)   // 904
+                        // 904 模块排序入口: 做成显式文字按钮 —— 原句点名的"长按设备页空白进编辑态"会与
+                        // 60/873 那族手势链冲突 (设备页是 ScrollView, 空白长按同时是滚动/下拉刷新的一部分),
+                        // 排序落成上/下移按钮, 不改整页手势。
+                        Button { showModuleOrder = true } label: {
+                            Label("模块排序与显隐", systemImage: "arrow.up.arrow.down")   // 904 模块排序
+                                .vkFont(.caption)
+                                .foregroundStyle(DS.Palette.textSub)
+                                .frame(maxWidth: .infinity, minHeight: DS.Hit.min)
+                        }
+                        .buttonStyle(PressableButtonStyle())
+                    }
+                }
+                .padding(.vertical, DS.Space.m)
     }
 
     /// 537 下拉重扫: 三种结果说实话 —— 蓝牙没开 / 扫到了 (给信号数值) / 超时没扫到 (不假装刷新成功)。
