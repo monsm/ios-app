@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T04:22:20.830Z",
+    "generated": "2026-10-29T04:24:33.207Z",
     "sources": [
       {
         "scout": "android-native",
@@ -1762,7 +1762,7 @@
           "line": 1222,
           "symbol": "quickActions",
           "note": "",
-          "text": "let s = sense.linkState"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -1778,7 +1778,7 @@
           "line": 1227,
           "symbol": "let cols = AXPrefs.bigTile ? 2 : 3",
           "note": "",
-          "text": "}"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -2977,7 +2977,7 @@
           "line": 857,
           "symbol": "attentionCard",
           "note": "",
-          "text": "showModuleOrder = true"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -2985,7 +2985,7 @@
           "line": 879,
           "symbol": "attentionItems",
           "note": "",
-          "text": "} label: {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -2993,7 +2993,7 @@
           "line": 895,
           "symbol": "BatteryCare.fpCleanNeeded(mac)",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -3252,7 +3252,7 @@
           "line": 330,
           "symbol": "groupChips",
           "note": "",
-          "text": "ScrollView(.horizontal, showsIndicators: false) {"
+          "text": "return f"
         },
         {
           "platform": "ios",
@@ -3268,7 +3268,7 @@
           "line": 347,
           "symbol": "groupFilter = name; syncPageOrder()",
           "note": "",
-          "text": ".vkFont(.subheadline, weight: .medium)"
+          "text": "// 液态玻璃: 相邻玻璃元素必须放进同一个 GlassEffectContainer 才能融成一体,"
         }
       ],
       "platformEvidence": {
@@ -3337,7 +3337,7 @@
           "line": 695,
           "symbol": "heroCard(for:isCurrent:)",
           "note": "",
-          "text": "if app.failStreak >= 2, DB.otpStatus(app.currentMac)?.on == true {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -3353,7 +3353,7 @@
           "line": 846,
           "symbol": ".saturation(connected ? 1 : 0.55)",
           "note": "",
-          "text": "ForEach(tiles) { a in"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -3423,7 +3423,7 @@
           "line": 732,
           "symbol": "LinkPill(state:connectMs:rssi:source:)",
           "note": "",
-          "text": ".animation(DS.Motion.soft, value: app.failStreak)"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -3431,7 +3431,7 @@
           "line": 738,
           "symbol": ".onTapGesture { if isCurrent { showRssi.toggle() } }",
           "note": "",
-          "text": "Text(\"即将开锁\")"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -3439,7 +3439,7 @@
           "line": 756,
           "symbol": ".contextMenu { Menu(\"最近状态变化\") }",
           "note": "",
-          "text": "}"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -3510,7 +3510,7 @@
           "line": 903,
           "symbol": "linkSenseCard",
           "note": "",
-          "text": ".padding(.vertical, DS.Space.m)"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -3518,7 +3518,7 @@
           "line": 948,
           "symbol": "// 535 同步回执",
           "note": "",
-          "text": "in: RoundedRectangle(cornerRadius: 13, style: .continuous))"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -3526,7 +3526,7 @@
           "line": 978,
           "symbol": "最后已知: 电量 … (缓存 …)",
           "note": "",
-          "text": "app.pendingCredNavMac = app.currentMac"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -7824,7 +7824,7 @@
           "line": 1025,
           "symbol": "UnlockDial(state:phase:connected:bleReady:…)",
           "note": "",
-          "text": "var o = devOrder"
+          "text": ""
         },
         {
           "platform": "android",
