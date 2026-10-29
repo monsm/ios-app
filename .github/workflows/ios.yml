@@ -125,6 +125,12 @@ jobs:
       - name: '重复函数声明 (判失败: 同类型作用域内同签名出现 >1 次 ⇒ 红)'
         run: node tools/dupscan.js
 
+      # 2026-10-29 加：Swift 合成 init(from:) 只对 Optional 用 decodeIfPresent，
+      # 非 Optional 字段的默认值不参与解码 —— 加一个字段就让整份老数据解不出（静默）。
+      # 这道棘轮只许降不许升：新模型必须手写容错 init(from:)。
+      - name: 'Codable 容错解码棘轮 (判失败: 新增/加字段的 Codable 模型没有手写 init(from:))'
+        run: node tools/codablecheck.js
+
       # 2026-10-29 加：本仓「数据库」是 UserDefaults + JSON，读一次就是一次全量解码。
       # 写在 body / ForEach 里会按帧、按行解码 —— 编译和所有既有闸门都不会红，
       # 真机上只表现为掉帧、发热、滚动卡顿。这份棘轮只许降不许升。
