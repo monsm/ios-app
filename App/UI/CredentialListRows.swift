@@ -10,62 +10,9 @@ extension CredentialsView {
         let f = hit.fp
         // 331 同行一个时刻: 胶囊与副行倒计时同帧同判据, 不留两处各自取 Date()
         let now = Date()
-        // 901 紧凑档 (kf_row_h 非 tall): 隐藏副标题只留名称与状态 (IDEA-BANK 901 的"RSS 紧凑行"),
-        // 舒适档 tall 才带副行与推断名。判据只有行高这一个键, 不另造开关。
+        // 901 紧凑档 (kf_row_h 非 tall): 隐藏副标题只留名称与状态 (IDEA-BANK 901 的"RSS 紧凑行")
         let compactRow = DB.store.getString("kf_row_h") != "tall"
-        // 901 行高二档挂在**行本体**上 (DS.Metric.rowMinH): 凭证行是"看+点"的高频行,
-        // 手抖的人在长列表里靠的是行高而不是字号。加高只加空白，不动字号与触达下限。
-        VStack(alignment: .leading, spacing: DS.Space.xs) {
-            HStack(spacing: DS.Space.s) {
-                Text(titleOf(hit))
-                    .vkFont(rowTitleFont)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-                if let p {
-                    if CredentialOrg.pwdState(p) == 2 {
-                        StatusPill(text: "已过期", systemImage: "clock.badge.xmark", tone: .danger)
-                    } else if CredentialOrg.isEarlyExpired(mac, p, now) {
-                        // 331 本机提前线已过、锁端未到期: 只提示, 锁到锁端到期照常开门
-                        StatusPill(text: "提前失效", systemImage: "hourglass", tone: .warn)
-                    } else if CredentialOrg.pwdState(p) == 1 {
-                        StatusPill(text: "已排期", systemImage: "calendar.badge.clock", tone: .accent)
-                    }
-                }
-                if let f, f.isAlarm == true {
-                    StatusPill(text: "预警指纹", systemImage: "bell.badge", tone: .warn)
-                }
-                if let o = p?.owner ?? f?.owner, !o.isEmpty {
-                    ownerBadge(CredentialOrg.ownerName(o))
-                }
-                Spacer(minLength: 0)
-                if hit.pinned {
-                    Image(systemName: "star.fill")
-                        .font(.system(size: DS.Icon.sm, weight: .medium))
-                        .foregroundStyle(DS.Palette.accentText)
-                        .accessibilityLabel("已置顶")
-                }
-                if busyKey == ("p" + String(hit.id.dropFirst())) {
-                    ProgressView().controlSize(.mini)
-                }
-            }
-            let sub = subOf(hit, now)
-            if !sub.isEmpty && !compactRow {
-                Text(sub)
-                    .vkFont(rowSubFont)
-                    .foregroundStyle(rowSubColor)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            // 918 命名模板: 主标题下挂 "谁-哪里-何时" 推断名 (锁端无名称字段, 本地展示);
-            // 901 紧凑档同副行一起收起 —— "只留名称与状态"里没有它
-            if !compactRow, let p, CredentialOrg.aliasDisplay, CredentialOrg.namingTemplate(p) != titleOf(hit) {
-                Text(CredentialOrg.namingTemplate(p))
-                    .vkFont(rowSubFont)
-                    .foregroundStyle(rowSubColor)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                    .accessibilityHidden(true)
-            }
-        }
+        return credRowContent(hit, p: p, f: f, now: now, compactRow: compactRow)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(titleOf(hit))
         .accessibilityActions {
@@ -107,6 +54,62 @@ extension CredentialsView {
         // 901 行高二档 (kf_row_h): minHeight 而不是固定 height —— 固定高度会裁掉多行备注
         .frame(minHeight: DS.Metric.rowMinH, alignment: .topLeading)
         .disabled(isBusy)
+    }
+
+    /// 凭证行的内容层（标题 / 状态胶囊 / 归属徽标 / 副行 / 推断名）。
+    @ViewBuilder
+    private func credRowContent(_ hit: CredHit, p: LedgerPwd?, f: LedgerFp?, now: Date, compactRow: Bool) -> some View {
+    VStack(alignment: .leading, spacing: DS.Space.xs) {
+        HStack(spacing: DS.Space.s) {
+            Text(titleOf(hit))
+                .vkFont(rowTitleFont)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+            if let p {
+                if CredentialOrg.pwdState(p) == 2 {
+                    StatusPill(text: "已过期", systemImage: "clock.badge.xmark", tone: .danger)
+                } else if CredentialOrg.isEarlyExpired(mac, p, now) {
+                    // 331 本机提前线已过、锁端未到期: 只提示, 锁到锁端到期照常开门
+                    StatusPill(text: "提前失效", systemImage: "hourglass", tone: .warn)
+                } else if CredentialOrg.pwdState(p) == 1 {
+                    StatusPill(text: "已排期", systemImage: "calendar.badge.clock", tone: .accent)
+                }
+            }
+            if let f, f.isAlarm == true {
+                StatusPill(text: "预警指纹", systemImage: "bell.badge", tone: .warn)
+            }
+            if let o = p?.owner ?? f?.owner, !o.isEmpty {
+                ownerBadge(CredentialOrg.ownerName(o))
+            }
+            Spacer(minLength: 0)
+            if hit.pinned {
+                Image(systemName: "star.fill")
+                    .font(.system(size: DS.Icon.sm, weight: .medium))
+                    .foregroundStyle(DS.Palette.accentText)
+                    .accessibilityLabel("已置顶")
+            }
+            if busyKey == ("p" + String(hit.id.dropFirst())) {
+                ProgressView().controlSize(.mini)
+            }
+        }
+        let sub = subOf(hit, now)
+        if !sub.isEmpty && !compactRow {
+            Text(sub)
+                .vkFont(rowSubFont)
+                .foregroundStyle(rowSubColor)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        // 918 命名模板: 主标题下挂 "谁-哪里-何时" 推断名 (锁端无名称字段, 本地展示);
+        // 901 紧凑档同副行一起收起 —— "只留名称与状态"里没有它
+        if !compactRow, let p, CredentialOrg.aliasDisplay, CredentialOrg.namingTemplate(p) != titleOf(hit) {
+            Text(CredentialOrg.namingTemplate(p))
+                .vkFont(rowSubFont)
+                .foregroundStyle(rowSubColor)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .accessibilityHidden(true)
+        }
+    }
     }
 
     func titleOf(_ hit: CredHit) -> String {
