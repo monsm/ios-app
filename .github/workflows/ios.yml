@@ -120,6 +120,11 @@ jobs:
       - name: 'SF Symbols 名称白名单 (判失败: 未登记即红; 新增图标须先真机确认再登记)'
         run: node tools/symbolcheck.js
 
+      # 2026-10-29 加：用「按块替换」改代码时两次把旧函数留在原地（DiagKit 的 all/today/append），
+      # 本地静态闸门全绿、CI 编译才报 invalid redeclaration。这道闸门把「同类型作用域内同签名」判死。
+      - name: '重复函数声明 (判失败: 同类型作用域内同签名出现 >1 次 ⇒ 红)'
+        run: node tools/dupscan.js
+
       # 2026-10-29 加：本仓「数据库」是 UserDefaults + JSON，读一次就是一次全量解码。
       # 写在 body / ForEach 里会按帧、按行解码 —— 编译和所有既有闸门都不会红，
       # 真机上只表现为掉帧、发热、滚动卡顿。这份棘轮只许降不许升。
