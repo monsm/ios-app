@@ -111,7 +111,7 @@ extension SettingsView {
         NavigationLink {
             MobileKeyView()
         } label: {
-            Label("手机钥匙", systemImage: "iphone.gen3.badge.key")
+            Label("手机钥匙", systemImage: "iphone.gen3")
         }
         // 2026-10-28 补：`HardwareService` 的蓝牙钥匙串（ZKBBV1）整套能力早就写好了 ——
         // 5 个服务方法 + 4 个 CRUD + 备份集成都齐，但**零 UI 入口**。
@@ -226,7 +226,7 @@ extension SettingsView {
                 }
             } else {
                 Button { setPasscode() } label: {
-                    Label("设置本机密码", systemImage: "lock.badge.plus")
+                    Label("设置本机密码", systemImage: "lock.fill")
                 }
                 note("4 位以上数字。设置后，**冷启动** App 需要输入它才能进入。")
             }

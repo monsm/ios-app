@@ -162,7 +162,7 @@ struct DeviceHomeView: View {
                 VStack(spacing: DS.Space.m) {
                     if app.devices.isEmpty {
                         Card {
-                            EmptyState(systemImage: "lock.open.rotation",
+                            EmptyState(systemImage: "lock.open",
                                        title: "还没有添加门锁",
                                        message: "请先在门锁键盘上长按重置键恢复出厂，再回到这里添加设备（需要开启蓝牙）",
                                        actionTitle: "添加设备") { showAdd = true }

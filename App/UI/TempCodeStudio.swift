@@ -225,7 +225,7 @@ struct TempCodeStudio: View {
                 .card()
 
                 BusyButton(title: batchCount > 1 ? "下发 \(batchCount) 张" : "下发临时码",   // 178 下发
-                           systemImage: "clock.badge.chevron.right", isBusy: busy) {
+                           systemImage: "timer", isBusy: busy) {
                     Task { await submitBatch() }
                 }
                 .disabled(!pwdOK || to <= from)

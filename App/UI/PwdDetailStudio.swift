@@ -39,7 +39,7 @@ struct PwdDetailStudio: View {
                                      + "门锁在它自己那份到期时刻之前照样能开门。要真停用, 得走列表里的停用或改期。")
                                     .fixedSize(horizontal: false, vertical: true)
                             } icon: {
-                                Image(systemName: "bell.z.fill")
+                                Image(systemName: "bell.badge")
                             }
                             .vkFont(.caption)
                             .foregroundStyle(DS.Palette.warn)

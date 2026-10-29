@@ -51,7 +51,7 @@ struct MobileKeyView: View {
     private func introSection(_ kc: Keychain) -> some View {
         Section {
             HStack(spacing: DS.Space.s) {
-                Image(systemName: "iphone.gen3.badge.key").font(.system(size: DS.Icon.sm))
+                Image(systemName: "iphone.gen3").font(.system(size: DS.Icon.sm))
                     .foregroundStyle(DS.Palette.accentText).accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: DS.Space.xxs) {
                     Text("PIN 池 \(kc.pins.count) 个 · 本机已发 \(keys.count) 把")

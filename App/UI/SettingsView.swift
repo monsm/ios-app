@@ -237,7 +237,7 @@ struct SettingsView: View {
             //    所以这里只给 anchor（保证滚到对应段，用户看到那一行再点），
             //    **不给 go** —— 给一个空的 go 会让人以为点搜索就直接进页面，实际只滚动。
             SearchHit(id: "s.defend", title: "布防 (时段内否决自动开锁)", icon: "shield.lefthalf.filled") { openLockSettings() },
-            SearchHit(id: "s.mobilekey", title: "手机钥匙 (给成员发数字钥匙)", icon: "iphone.gen3.badge.key", anchor: .family),
+            SearchHit(id: "s.mobilekey", title: "手机钥匙 (给成员发数字钥匙)", icon: "iphone.gen3", anchor: .family),
             SearchHit(id: "s.dfu", title: "固件升级 (Nordic DFU)", icon: "arrow.up.circle") { openLockSettings() },
             SearchHit(id: "s.trialguard", title: "只读试验模式 (真机排障只看不改)", icon: "eye.slash", anchor: .tools),
             // 2026-10-28 删除：`s.safemode`「门锁安全模式」—— 那个 Section 已于 81c1432 删除

@@ -64,7 +64,7 @@ extension DeviceHomeView {
                             quickDestination("addFp")
                         } label: {
                             VStack(spacing: DS.Space.xs) {
-                                Image(systemName: "hand.raised.dotted")
+                                Image(systemName: "touchid")
                                     .font(.system(size: DS.Icon.md))
                                     .foregroundStyle(DS.Palette.textSub)
                                 Text("待添加指纹")
