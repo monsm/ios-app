@@ -295,14 +295,26 @@ final class AppState: ObservableObject {
         if status != st { status = st }
     }
 
+    /// 2026-10-29 修复：`refreshStatusQuietly` 的调用点里 `select()` 与开锁复位定时器是**并发**的 ——
+    /// 而函数体在 await 之后才写 `status`。场景：用户切到 B 锁 → select 起了一次读 → 还没回来时
+    /// 开锁复位定时器那次（读的是 A 锁）先返回 ⇒ `status` 被写成 A 锁的读数，而界面标题是 B。
+    /// 用世代号 + 返回前复核当前锁，过期的那次直接丢弃。
+    private var statusTicket = 0
+
     func refreshStatusQuietly(manual: Bool = false) async {
         guard manual || !DiagFlags.silent else { return }
         guard let kc = current else { return }
+        statusTicket += 1
+        let ticket = statusTicket
         do {
             try await lock.ensureConnected(mac: kc.mac)
-            applyStatus(try await lock.getStatus())
+            let st = try await lock.getStatus()
+            // await 之后世界可能已经变了：世代号变了，或当前锁已经不是发起时那把。
+            guard ticket == statusTicket, currentMac == kc.mac else { return }
+            applyStatus(st)
             LockArchive.touchConnected(kc.mac)   // 包3/292: 连接成功刷新沉睡判定基准
         } catch {
+            guard ticket == statusTicket, currentMac == kc.mac else { return }
             status = nil
         }
     }

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T15:35:56.162Z",
+    "generated": "2026-10-29T15:45:27.270Z",
     "sources": [
       {
         "scout": "android-native",
@@ -3674,7 +3674,7 @@
           "line": 431,
           "symbol": "chosenPinIndex(_:)",
           "note": "",
-          "text": "retryWait = w"
+          "text": "} catch {"
         },
         {
           "platform": "ios",
@@ -8005,7 +8005,7 @@
           "line": 397,
           "symbol": "if DB.hasPasscode(), let t = lastUnlockSuccessAt, now.timeIntervalSince(t) < 30",
           "note": "",
-          "text": "do {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -8013,7 +8013,7 @@
           "line": 368,
           "symbol": "开锁语义注释",
           "note": "",
-          "text": "if unlockState == .connecting || unlockState == .opening {"
+          "text": "// 同上：startUnlock 那层 guard 也已删（同一个恒 false 的只读模式判据）。"
         },
         {
           "platform": "ios",
@@ -8029,7 +8029,7 @@
           "line": 379,
           "symbol": "if unlockState == .connecting || .opening",
           "note": "",
-          "text": "func setChosenPinIndex(_ mac: String, _ i: Int) { DB.store.set(\"kf_pinpick_\" + mac, i) }"
+          "text": "retryWait = nil"
         }
       ],
       "platformEvidence": {
@@ -10590,7 +10590,7 @@
           "line": 374,
           "symbol": "guard SecurityPolicy.allows(.unlock)",
           "note": "",
-          "text": "// ---------- 246 本次用哪条 PIN ----------"
+          "text": "/// 56/89: 提前取消 (撤销窗口 / 握手超时取消按钮)"
         },
         {
           "platform": "ios",
@@ -10598,7 +10598,7 @@
           "line": 375,
           "symbol": "denialMessage",
           "note": "",
-          "text": "/// 存的是**下标**而不是 PIN 本身 —— 口令留在钥匙串 (kc.pins) 里, 不落 UserDefaults。"
+          "text": "func cancelUnlock(notify: Bool = false) {"
         },
         {
           "platform": "ios",
@@ -10606,7 +10606,7 @@
           "line": 404,
           "symbol": "func startUnlock",
           "note": "",
-          "text": "phase = 3"
+          "text": "// 2026-10-29 修复：取消后底层可能把 CancellationError 包成 BLE 超时再抛上来，"
         }
       ],
       "platformEvidence": {
@@ -13381,7 +13381,7 @@
           "line": 439,
           "symbol": "private func runUnlock",
           "note": "",
-          "text": "// 2026-10-29：取消时不写失败终态（cancelUnlock 已把状态复位成 idle）。"
+          "text": "// 83/85: 前两次自动静默重试, 退避 2s/5s 并显示节奏文案; 之后转手动"
         },
         {
           "platform": "ios",
@@ -13389,7 +13389,7 @@
           "line": 441,
           "symbol": "attempts = kf_auto_retry ? 3 : 1",
           "note": "",
-          "text": "// 终态失败: 直读原因 (84) + 写入时间线标记 (92)"
+          "text": "retryAttempt = attempt + 1"
         },
         {
           "platform": "ios",
@@ -13397,7 +13397,7 @@
           "line": 445,
           "symbol": "phase = 1",
           "note": "",
-          "text": "finishDwell(.failed(lastMsg))"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -13405,7 +13405,7 @@
           "line": 453,
           "symbol": "lock.unlock(mac:pinDec:)",
           "note": "",
-          "text": "case .success: dwell = 2_000_000_000"
+          "text": "// 终态失败: 直读原因 (84) + 写入时间线标记 (92)"
         },
         {
           "platform": "ios",
@@ -13413,7 +13413,7 @@
           "line": 455,
           "symbol": "if rc == 0",
           "note": "",
-          "text": "default: dwell = finished.isFailed ? 3_000_000_000 : 4_200_000_000"
+          "text": "phase = 0"
         }
       ],
       "platformEvidence": {
@@ -13806,7 +13806,7 @@
           "line": 428,
           "symbol": "246 本次用哪条 PIN 注释",
           "note": "",
-          "text": "if attempt < attempts, !Task.isCancelled {"
+          "text": "lastMsg = StatusParser.rcFriendly(rc)   // 84 人话直读"
         },
         {
           "platform": "ios",
@@ -13814,7 +13814,7 @@
           "line": 431,
           "symbol": "func chosenPinIndex",
           "note": "",
-          "text": "retryWait = w"
+          "text": "} catch {"
         },
         {
           "platform": "ios",
@@ -13822,7 +13822,7 @@
           "line": 432,
           "symbol": "kf_pinpick_ + mac",
           "note": "",
-          "text": "do { try await Task.sleep(for: .seconds(1)) } catch { return }"
+          "text": "lastMsg = error.localizedDescription"
         },
         {
           "platform": "ios",
@@ -13830,7 +13830,7 @@
           "line": 434,
           "symbol": "func chosenPin",
           "note": "",
-          "text": "retryWait = nil"
+          "text": "// 2026-10-29：catch 之后再看一次 —— 取消不算失败，也不该进 failStreak / 重试。"
         },
         {
           "platform": "ios",
@@ -13838,7 +13838,7 @@
           "line": 436,
           "symbol": "i >= 0 && i < kc.pins.count",
           "note": "",
-          "text": "}"
+          "text": "// 超时不自动重试: 指令可能已生效 (门已开只是没回执), 再发一次就是第二次开锁动作"
         }
       ],
       "platformEvidence": {
@@ -33457,7 +33457,7 @@
           "line": 525,
           "symbol": "外观变更注释",
           "note": "",
-          "text": "// 行上真写着成员名才带出, 成员已从档案删掉的行走 landMember 的 guard 也只会落个失败 toast。"
+          "text": "let rows = Attribution.classify("
         },
         {
           "platform": "ios",
@@ -33481,7 +33481,7 @@
           "line": 527,
           "symbol": "private func applyAppearance",
           "note": "",
-          "text": "if let who = c.who, let m = memberByID[who] {"
+          "text": "pwds: DB.listPwds(kc.mac), fps: DB.listFps(kc.mac),"
         }
       ],
       "platformEvidence": {
@@ -37253,7 +37253,7 @@
           "line": 356,
           "symbol": "func showToast",
           "note": "",
-          "text": "// 同上：startUnlock 那层 guard 也已删（同一个恒 false 的只读模式判据）。"
+          "text": "return"
         },
         {
           "platform": "ios",
@@ -37261,7 +37261,7 @@
           "line": 357,
           "symbol": "withAnimation spring",
           "note": "",
-          "text": "unlockTask?.cancel()"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -37269,7 +37269,7 @@
           "line": 359,
           "symbol": "let stay = msg.count > 20 ?",
           "note": "",
-          "text": "}"
+          "text": "// 250: 同一锁 30 秒内再次开锁, 先过应用锁验证 (未设本机密码则无此闸)"
         },
         {
           "platform": "ios",
@@ -37588,7 +37588,7 @@
           "line": 598,
           "symbol": "static let behaviorKeys",
           "note": "",
-          "text": "/// 内层 Button 保留全部系统行为, 只有 trigger() 走闸; 闸状态是每个按钮各自的 @State, 不跨按钮误伤。"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -39723,7 +39723,7 @@
           "line": 358,
           "symbol": "长文案多停留注释",
           "note": "",
-          "text": "unlockTask = Task { await runUnlock() }"
+          "text": "lastDispatch = now"
         },
         {
           "platform": "ios",
@@ -39731,7 +39731,7 @@
           "line": 359,
           "symbol": "stay 计算",
           "note": "",
-          "text": "}"
+          "text": "// 250: 同一锁 30 秒内再次开锁, 先过应用锁验证 (未设本机密码则无此闸)"
         },
         {
           "platform": "ios",
@@ -39739,7 +39739,7 @@
           "line": 362,
           "symbol": "if toast == msg",
           "note": "",
-          "text": "/// 56/89: 提前取消 (撤销窗口 / 握手超时取消按钮)"
+          "text": "return"
         },
         {
           "platform": "ios",
@@ -39747,7 +39747,7 @@
           "line": 363,
           "symbol": "DS.Duration.quick",
           "note": "",
-          "text": "func cancelUnlock(notify: Bool = false) {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -40441,7 +40441,7 @@
           "line": 466,
           "symbol": "lastMsg = StatusParser.rcFriendly(rc)",
           "note": "",
-          "text": "}"
+          "text": "case .doubleVerify: dwell = 4_200_000_000"
         },
         {
           "platform": "apk",
@@ -57868,7 +57868,7 @@
           "line": 598,
           "symbol": "behaviorKeys",
           "note": "",
-          "text": "/// 内层 Button 保留全部系统行为, 只有 trigger() 走闸; 闸状态是每个按钮各自的 @State, 不跨按钮误伤。"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -57876,7 +57876,7 @@
           "line": 431,
           "symbol": "kf_pinpick_",
           "note": "",
-          "text": "retryWait = w"
+          "text": "} catch {"
         },
         {
           "platform": "ios",
@@ -57884,7 +57884,7 @@
           "line": 520,
           "symbol": "kf_unlock_hint_day",
           "note": "",
-          "text": "for (i, e) in logs.enumerated() {"
+          "text": "// 手拼就是第二个规则点: 哪天格式改了, 这行的深链会静默认不出 (585 的 toast 兜住, 但没人去点)。"
         }
       ],
       "platformEvidence": {
@@ -63588,7 +63588,7 @@
           "line": 518,
           "symbol": "unlockReturnedHint",
           "note": "",
-          "text": "// 2026-10-29 性能：循环里每行调一次 DB.member（各自解析一份成员字典）。一次建表。"
+          "text": "// 最近开门 (attribution R1/R2); 条数偏好见 idea 910 (kf_recent_count, 默认 5)"
         },
         {
           "platform": "ios",
@@ -63596,7 +63596,7 @@
           "line": 520,
           "symbol": "kf_unlock_hint_day",
           "note": "",
-          "text": "for (i, e) in logs.enumerated() {"
+          "text": "// 手拼就是第二个规则点: 哪天格式改了, 这行的深链会静默认不出 (585 的 toast 兜住, 但没人去点)。"
         }
       ],
       "platformEvidence": {
