@@ -378,17 +378,6 @@ enum BackupStudio {
     /// 库体指纹 (448/397 共用一份算法, 免得两处各算各的后端口径漂移)
     /// 库体指纹算法版本: 变更时递增 —— 旧基线 (不带前缀) 不参与比对, 免得升级后误报自检异常。
     private static let fpVersion = "2:"
-    private static func dbFingerprint() -> String {
-        // 旧实现只统计长度 (skey.count + pins.count) —— 替换等长 skey / 增删等量 pin 察觉不到。
-        // 改为对 skey 与 pins **内容**取摘要。
-        var m = [String: String]()
-        for kc in DB.keychains() {
-            let pinsHash = BackupCanonical.fnv1a32Hex(kc.pins.joined(separator: ","))
-            m[DB.normalizeMac(kc.mac)] = BackupCanonical.fnv1a32Hex(kc.skey.lowercased()) + ":" + pinsHash
-        }
-        let canon = m.sorted { $0.key < $1.key }.map { "\($0.0):\($0.1)" }.joined(separator: "|")
-        return fpVersion + BackupCanonical.fnv1a32Hex(canon)
-    }
 
     /// 448 启动自检: 库体哈希 vs 上次备份时的基线; 不一致返回黄条文案。
     /// 基线只在备份发生点 (markBackupBaseline, 由 Milestones.recordBackup 尾调用) 更新,
@@ -401,17 +390,7 @@ enum BackupStudio {
 
     struct RemoteEntry: Identifiable { var id: String { name }; let name: String; let size: Int; let etag: String; let modified: String }
 
-    private static func jsonStr(_ s: String, _ marker: String) -> String? {
-        guard let r = s.firstRange(of: marker) else { return nil }
-        guard let end = s[r.upperBound...].firstRange(of: "\"") else { return nil }
-        return String(s[r.upperBound..<end.lowerBound])
-    }
 
-    private static func jsonNum(_ s: String, _ marker: String) -> Int? {
-        guard let r = s.firstRange(of: marker) else { return nil }
-        let digits = s[r.upperBound...].prefix { $0.isNumber }
-        return digits.isEmpty ? nil : Int(digits)
-    }
     /// 认不出信封就说"未能识别"，绝不回落到徽章那串 —— 那会把一个明文包或损坏件标成"加密过"。
     /// 明文包 (BackupBundle 直接写盘, 没有信封) 单独一档: 混进"未能识别"会让人以为文件坏了。
     enum AlgoNote: Equatable { case envelope(String), plain, unknown }

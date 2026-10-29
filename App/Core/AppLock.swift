@@ -102,6 +102,20 @@ final class AppLock: ObservableObject {
         return .wrong(remaining: cd > 0 ? Int(cd) : 0)
     }
 
+    /// 2026-10-29 新增：Face ID / Touch ID 通过后解锁（与密码成功同一条收尾路径）。
+    ///
+    /// **只在没设胁迫码时可用**（调用方 `LockScreen` 用 `!DB.hasDuressCode()` 把关）：
+    /// 密码解锁可以输胁迫码进伪装模式，Face ID 不能 —— 若同时提供，被胁迫时刷脸会
+    /// 直接暴露「这不是伪装模式」。宁可少一个便利入口，也不给胁迫场景留破绽。
+    func unlockByBiometric() {
+        unlocked = true
+        decoy = false
+        failStreak = 0
+        cooldownUntil = 0
+        DB.store.setInt(failStreakKey, 0)
+        DB.store.setDouble(cooldownKey, 0)
+    }
+
     /// 手动上锁（设置页「立即锁定」、或回前台超时）。
     /// 记一次失败并返回冷却秒数（0 = 无冷却）。
     /// 2026-10-27 新增（AUDIT-D D-50）：二次开锁口令验证也要接计数 ——

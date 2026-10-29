@@ -371,6 +371,7 @@ final class AppState: ObservableObject {
     /// 存的是**下标**而不是 PIN 本身 —— 口令留在钥匙串 (kc.pins) 里, 不落 UserDefaults。
     /// -1 / 越界 = 未选, 交给 LockService 走既有的 `kc.pins.first` 兜底 (老行为不变)。
     func chosenPinIndex(_ mac: String) -> Int { DB.store.getInt("kf_pinpick_" + mac, -1) }
+    // 【保留未接 2026-10-29】多 PIN 时记住「用哪一枚」—— 多锁/多 PIN 场景
     func setChosenPinIndex(_ mac: String, _ i: Int) { DB.store.set("kf_pinpick_" + mac, i) }
     /// 解析成本次开锁要用的 PIN; nil = 不指定 (与从前逐字节相同)
     func chosenPin(_ kc: Keychain) -> String? {

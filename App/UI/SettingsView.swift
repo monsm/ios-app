@@ -1081,6 +1081,10 @@ struct SettingsView: View {
             if eggShown {
                 LabeledRow("构建", Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?")
                 LabeledRow("遥测", "无 · 全程离线")
+                // 2026-10-29：APK `page-testlockrom` / `page-romlist` 两页都被 `showTest=!1` 关着，
+                // iOS 的 `LockService.probeEcho` 也零调用 —— 把两边合成一个隐藏诊断页，
+                // 挂在同一个彩蛋下面（连点版本号 10 次），不占正常用户版面。
+                NavigationLink("协议测试（回声探测 / 附近设备）") { ProtocolTestView() }
             }
         } footer: {
             Text(aboutFooterText)
@@ -1204,7 +1208,7 @@ struct SafemodeIntroView: View {
                         .foregroundStyle(DS.Palette.warn)
                         .fixedSize(horizontal: false, vertical: true)
                     Text("当前模式在「锁信息名片」(设备页) 读取后显示。本 App 只给变严的方向 (A→B)；"
-                         + "要放宽回 A 模式请在门锁键盘上操作或联系管理员。").vkFont(.footnote)
+                         + "放宽回 A 模式属于降低安全等级, 会二次确认。").vkFont(.footnote)
                     // 拍板 #2 (第六十六批): 给切换入口, 但只允许更严方向。
                     // 不给 B→A 的理由写在这: 放宽验证会让"两种组合验证"这条既有保护一指之间消失,
                     // 而锁端不记录是谁改的 —— 本机审计只会留下一条无法解释的降级。
@@ -1213,14 +1217,29 @@ struct SafemodeIntroView: View {
                             .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                     } else if app.status?.verifyMode == 1 {
-                        Text("当前已是 B 模式（双验）。本 App 不提供改回 A 模式的入口。")
+                        // 2026-10-29 补（用户拍板）：APK `page-setsafemode` 是 A/B 二选一，iOS 原先只给 A→B。
+                        // 放宽方向保留二次确认与明确的安全等级警告 —— 不是无提示的降级。
+                        Text("当前已是 B 模式（双验）。可以改回 A 模式（更宽松）。")
                             .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.ok)
+                        Button(switching ? "切换中…" : "改回 A 模式（单验，更宽松）(cmd 20)") {
+                            confirmDestructive("改回 A 模式（单验）",
+                                "锁端将只需**单一方式**验证就能开锁 (cmd 20)：原来要两种组合，改回后一种即可。"
+                                + "这是**降低**安全等级，请确认你确实需要这样。切换后请先实测。",
+                                confirmTitle: "改回 A 模式") {
+                                switching = true
+                                Task { await switchToSingleVerify() }
+                            }
+                        }
+                        .vkFont(.subheadline, weight: .medium)
+                        .foregroundStyle(DS.Palette.accentText)
+                        .disabled(switching)
+                        .frame(minHeight: DS.Hit.min)
                     } else {
                         Button(switching ? "切换中…" : "切换到 B 模式（双验，更严）(cmd 20)") {
                             confirmDestructive("切换到 B 模式（双验）",
                                 "锁端将要求两种不同方式组合验证才能开锁 (cmd 20)。这一步会改变锁的验证策略："
-                                + "切换后请先实测一次组合方式能开锁，再让其他人使用。本 App 不提供改回 A 模式的入口。",
+                                + "切换后请先实测一次组合方式能开锁，再让其他人使用。可以随时用同一入口改回 A 模式（会二次确认）。",
                                 confirmTitle: "切到 B 模式") {
                                 switching = true
                                 Task { await switchToDoubleVerify() }
@@ -1255,6 +1274,25 @@ struct SafemodeIntroView: View {
                 app.showToast("已切到 B 模式（双验），锁状态已回读确认")
             } else {
                 app.lock.log("warn", "cmd20 已下发但回读 verifyMode 仍不是 B —— 视为未生效 (不报成功)")
+                app.showToast("命令已下发，但回读显示未生效 —— 请重读锁信息再试一次")
+            }
+        } catch {
+            app.lock.log("warn", "切换安全模式失败 (cmd20): \(error.localizedDescription)")
+            app.showToast("切换失败：命令没有成功下发，锁仍按原模式验证")
+        }
+    }
+
+    /// 2026-10-29：改回 A 模式（单验）。与 switchToDoubleVerify 同一条「下发后回读」纪律。
+    private func switchToSingleVerify() async {
+        defer { switching = false }
+        do {
+            try await app.lock.setValidationMode(false)
+            await app.refreshStatusQuietly(manual: true)
+            if app.status?.verifyMode == 0 {
+                app.lock.log("warn", "安全模式已切换 B→A 单验 (cmd20, 回读确认 verifyMode=0)")
+                app.showToast("已切回 A 模式（单验），锁状态已回读确认")
+            } else {
+                app.lock.log("warn", "cmd20 已下发但回读 verifyMode 仍不是 A —— 视为未生效 (不报成功)")
                 app.showToast("命令已下发，但回读显示未生效 —— 请重读锁信息再试一次")
             }
         } catch {

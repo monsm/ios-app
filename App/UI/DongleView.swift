@@ -198,12 +198,17 @@ struct DongleView: View {
                     Label("把钥匙写入这把锁", systemImage: "square.and.arrow.down")
                 }
                 .disabled(busy || targetLockMac.isEmpty)
+            // 2026-10-29：APK `KeychaindetailPage` 有「添加未知钥匙」与「写假钥匙」两个按钮，
+            // 但两者都只做「随机 4 位 PIN + 永久 + 不绑成员」，差别仅在传给 `sendToKeyChian` 的
+            // 第二个参数（那是**目标 MAC**）—— `addOtherKeyChain` 传的是 `toSmallByteOrder(pin,6)`，
+            // 是 APK 自己的 bug（写到一个不存在的目标）。所以 iOS 只保留一个入口，文案改成
+            // 「未知钥匙」这个更贴近实际语义的说法。
                 // 「添加假钥匙」= 随机 pin、不绑成员（APK addFaultKeyChain）。
                 // 用途：给访客/临时工一把能开门但查不到归属的实体钥匙，或用来验证钥匙串本身可用。
                 Button {
                     Task { await writeFaultKey(d) }
                 } label: {
-                    Label("写入一把假钥匙（随机 PIN）", systemImage: "questionmark.key.filled")
+                    Label("写入一把未知钥匙（随机 PIN，永久）", systemImage: "questionmark.key.filled")
                 }
                 .disabled(busy)
                 Button(role: .destructive) {

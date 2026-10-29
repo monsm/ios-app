@@ -524,6 +524,7 @@ final class LinkSense: ObservableObject {
     static var envCount: Int { DB.store.getInt("kf_link_env", 0) }
     /// 128: 首台可见耗时 (毫秒); -1 = 整窗一台没见
     static var envFirstSeenMs: Int { DB.store.getInt("kf_link_envms", -1) }
+    // 【保留未接 2026-10-29】环境结论（信号弱/干扰大）—— 诊断页已删，留给将来的连接自检
     static func envConclusion() -> String {
         let n = envCount
         let ms = envFirstSeenMs

@@ -359,6 +359,7 @@ struct BackupDoc: FileDocument {
         let data = configuration.file.regularFileContents ?? Data()
         text = String(data: data, encoding: .utf8) ?? ""
     }
+    // 【协议要求 2026-10-29】FileDocument 协议要求的方法 —— 由系统在保存时调用，不是死代码
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
         FileWrapper(regularFileWithContents: Data(text.utf8))
     }

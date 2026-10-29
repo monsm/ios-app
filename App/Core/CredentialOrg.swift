@@ -176,6 +176,7 @@ enum CredentialOrg {
         return (out, failed)
     }
     /// 357 前缀批量备注
+    // 【保留未接 2026-10-29】批量给多条凭证加同一个前缀备注（用户 B1 未选，保留待接：凭证页多选菜单可挂）
     static func batchPrefixNote(_ mac: String, pwdAliases: [Int], fpBatches: [Int], prefix: String) -> Int {
         var n = 0
         var l = DB.ledger(mac)
@@ -361,6 +362,7 @@ enum CredentialOrg {
         DB.store.setCodable(disReasonKey(mac), m)   // 注意层间参数序相反: store.setCodable(键,值), DB.setCodable(值,键)
     }
     /// 361 回显文案: 停用原因 + 时刻 + 来源路径; 没有标记 (非本 App 停用) 就不编造
+    // 【保留未接 2026-10-29】停用原因回显（用户 B1 未选，保留待接：凭证详情页的停用行）
     static func disableMarkText(_ mac: String, kind: String, key: Int) -> String? {
         guard let d = disableMark(mac, kind: kind, key: key) else { return nil }
         let f = DateFormatter()
@@ -406,6 +408,7 @@ enum CredentialOrg {
     }
 
     // ---------- 363 月历到期 (每日格右上角当日到期凭证数) ----------
+    // 【保留未接 2026-10-29】月历到期角标（用户 B1 未选，保留待接：凭证页月历视图）
     static func monthDeadlines(_ mac: String, year: Int, month: Int) -> [Date: Int] {
         var cal = WeekCal.gregorian
         cal.timeZone = TimeZone.current
@@ -421,6 +424,7 @@ enum CredentialOrg {
         }
         return out
     }
+    // 【保留未接 2026-10-29】某天到期凭证列表 —— monthDeadlines 的配套读侧，同日历一起接
     static func dayDeadlines(_ mac: String, _ date: Date) -> [LedgerPwd] {
         let cal = WeekCal.gregorian
         return DB.listPwds(mac).filter { p in
@@ -542,6 +546,7 @@ enum CredentialOrg {
     }
 
     /// 弱口令三条判据 (都可证伪; 不评"强度分"): 少于 6 位 / 全部同一位 / 连续递增递减
+    // 【保留未接 2026-10-29】弱口令判据（少于6位/全同位/连续）—— 新密码输入时可用于即时提示
     static func weakReason(_ v: String) -> String? {
         guard !v.isEmpty else { return nil }
         if v.count < 6 { return "少于 6 位" }
@@ -615,6 +620,7 @@ enum CredentialOrg {
     /// 2026-10-27 二轮精简：原按 lastUse(of:opens:)（带 expiry/credKind 过滤的逐条推导）计算；
     /// last-first-use 推断层删除后，改为「该密码 alias 最近一次开门时刻」的直接聚合 ——
     /// 临时码的时间窗过滤不再有，长期凭证本来就是锁级参考（原注释同口径）。
+    // 【保留未接 2026-10-29】推断每条密码「最近一次使用」—— 凭证列表的排序/角标可用
     static func inferredLastUseMap(_ mac: String) -> [Int: Double] {
         let opens = openTimes(mac)
         guard !opens.isEmpty else { return [:] }
@@ -750,6 +756,7 @@ enum CredentialOrg {
         }
     }
     /// 智能列表 state 字段用的机读串 (matches/label 共用)
+    // 【保留未接 2026-10-29】智能列表的机读状态串（matches/label 共用）—— 筛选器重构时用
     static func stateString(_ s: Int) -> String {
         switch s {
         case 1: return "scheduled"

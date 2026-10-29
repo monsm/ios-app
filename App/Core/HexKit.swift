@@ -8,6 +8,7 @@ enum HexKit {
     /// （复刻 `parseInt(pair,16)`：首字符非 hex → 0，次字符非 hex → 只取首位），
     /// 于是收到含噪声的帧时 iOS 会「成功」解析出一个垃圾帧，而 Android 那版直接抛异常。
     /// 协议解析路径应当用这个严格版：坏输入就该显式失败，不能读成合法帧。
+    // 【保留未接 2026-10-29】严格十六进制解析：坏输入显式失败。协议解析路径**本该用它**（现在用宽容版 bytes()），留作后续收紧
     static func strictBytes(_ hex: String) -> [UInt8]? {
         guard hex.count % 2 == 0 else { return nil }
         var out = [UInt8]()

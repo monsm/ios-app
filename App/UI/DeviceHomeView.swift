@@ -233,6 +233,7 @@ struct DeviceHomeView: View {
 
     /// 767 组过滤: "" = 全部; "未分组" = 档案里组名为空的那些。
     /// 图标行与翻页共用这一条判据, 免得出现"chip 选了家用, 图标行还亮着仓库"的两套答案。
+    // 【保留未接 2026-10-29】设备组筛选判据（"" = 全部 / "未分组" = 组名为空）—— 设备页组 chip 用
     private func inGroup(_ kc: Keychain) -> Bool {
         if groupFilter.isEmpty { return true }
         let g = LockArchive.group(kc.mac)
@@ -421,6 +422,14 @@ struct DeviceHomeView: View {
                                  value: lockClockText(for: kc),
                                  emphasized: false)
                     }
+                    // 2026-10-29 补：APK `OpendevicePage` 有「钥匙有效期」横幅（`bleKeyValid`，`dState=1`
+                    // 显示 createTime~expireTime，等于永久则显示"永久"）。iOS 没有云端下发的这两个字段 ——
+                    // 本机 ekey 全部由 `buildEkeyOpen` 用 "2010-01-01 ~ 2118-01-01" 签发，所以如实写「永久」，
+                    // 不编一个假日期；没有 ekey 时写「未生成」（与「链路验证」同一条"读不到就说读不到"的口径）。
+                    HeroStat(systemImage: "key.horizontal",
+                             label: "钥匙",
+                             value: kc.ekey.isEmpty ? "未生成" : "永久",
+                             emphasized: false)
 }   // 2026-10-27 三轮：原 statsLayout 降级布局已删，恒横排
                 // 790 最近活跃成员头像圈: 卡角叠放最近活跃 3 位, 点开列成员名, 选谁直接查谁的记录。
                 if isCurrent {
@@ -941,11 +950,13 @@ struct DeviceHomeView: View {
 
     /// 559 落地: 「最近开门」行上可证明的成员 → 记录 Tab 并按该成员过滤。
     /// 复用 582 的 pendingRecordsMember → landMember 链路 (记录页消费后清空, 不残留过滤)。
+    // 【保留未接 2026-10-29】「最近开门」行点成员 → 跳记录页按 TA 过滤（配套 provableMemberId/mergedLine）
     private func openMemberRecords(_ id: String) {
         app.pendingRecordsMember = id
         app.requestRoute(.records)
     }
     /// 559: Rec 行的归属可证明才给"查记录" (与 landMember 的 guard 同判据 —— 动作出现就必然落得下去)。
+    // 【保留未接 2026-10-29】判断记录归属是否可证明 —— openMemberRecords 的守卫
     private func provableMemberId(_ r: Rec) -> String? {
         guard let id = r.whoId, !id.isEmpty, DB.member(id) != nil else { return nil }
         return id
@@ -953,6 +964,7 @@ struct DeviceHomeView: View {
 
     /// 合并流的一行正文: 时间 (MM-dd HH:mm) + 可证明归属则说"谁用什么开了门", 推不出就只报事件名。
     /// 与单锁那条 (AppState.recentRecords) 同一口径: 推不出归属**不猜**, 也不显示"未知成员"。
+    // 【保留未接 2026-10-29】合并流的一行正文 —— openMemberRecords 的配套渲染
     private func mergedLine(_ r: Rec) -> String {
         let t = r.timeStr.isEmpty ? "" : String(r.timeStr.dropFirst(5).prefix(11))
         let what: String
@@ -1193,12 +1205,6 @@ struct DeviceHomeView: View {
     private func battTint(for kc: Keychain) -> Color? {
         if (0...10).contains(batteryPct(for: kc)) { return DS.Palette.danger }
         return isLow(kc) ? DS.Palette.warn : nil
-    }
-    /// 120 低电分级触感档位: 平时 "ok" / ≤20% "low" / ≤10% "sev" — 只有档位变化才响一次
-    private func lowBucket(_ kc: Keychain) -> String {
-        let p = batteryPct(for: kc)
-        if p >= 0, p <= 10 { return "sev" }
-        return isLow(kc) ? "low" : "ok"
     }
     private func batteryPct(for kc: Keychain) -> Int {
         // 包4 + 2026-10-15 走查: 读数与写法都收进 BatteryCare.facePct/faceText, 这里只留"实时读数只属于当前这把"这一条判据

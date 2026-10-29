@@ -68,6 +68,27 @@ struct LockScreen: View {
             .disabled(input.isEmpty || lock.cooldownRemaining() > 0)
             .frame(maxWidth: 220)
 
+            // 2026-10-29 补（**后台有代码、前台无入口**）：`AuthKit.verifyBiometricAsync` 全仓零调用，
+            // 应用锁只能输密码。这里加 Face ID / Touch ID 入口 —— 但**设了胁迫码时不提供**：
+            // 密码可以输胁迫码进伪装模式，Face ID 不能；两者并存会让被胁迫者刷脸即暴露。
+            if AuthKit.biometricAvailable && !DB.hasDuressCode() {
+                Button {
+                    Task {
+                        let ok = await AuthKit.verifyBiometricAsync(reason: "解锁离线锁管家")
+                        if ok {
+                            lock.unlockByBiometric()
+                            UINotificationFeedbackGenerator().notificationOccurred(.success)
+                        }
+                    }
+                } label: {
+                    Label("用 Face ID 解锁", systemImage: "faceid")
+                        .vkFont(.subheadline, weight: .medium)
+                        .frame(maxWidth: 220)
+                }
+                .disabled(lock.cooldownRemaining() > 0)
+                .accessibilityHint("刷脸解锁；设了胁迫码时不显示这个按钮")
+            }
+
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -111,6 +132,7 @@ struct LockScreen: View {
 /// 输错时抖一下。纯视觉反馈，不携带信息（伪装码成功时不抖）。
 private struct ShakeEffect: GeometryEffect {
     var animatableData: CGFloat
+    // 【协议要求 2026-10-29】GeometryEffect 协议要求的方法 —— 由系统在动画每帧调用，不是死代码
     func effectValue(size: CGSize) -> ProjectionTransform {
         ProjectionTransform(CGAffineTransform(
             translationX: 8 * sin(animatableData * .pi * 4), y: 0))

@@ -754,26 +754,6 @@ struct RecordsView: View {
         return parts.isEmpty ? "更多视图" : parts.joined(separator: " · ")
     }
 
-    private func miniChip(_ name: String, on: Bool, _ tap: @escaping () -> Void) -> some View {
-        Button {
-            DS.Haptics.tick.impactOccurred()
-            tap()
-        } label: {
-            Text(name)
-                .vkFont(.footnote, weight: .medium)
-                .lineLimit(1)
-                .padding(.horizontal, 12)
-                .padding(.vertical, DS.Space.m)
-                .background(on ? DS.Palette.accent : DS.Palette.surfaceAlt, in: Capsule())
-                .overlay(Capsule().strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
-                .foregroundStyle(on ? DS.Palette.onAccent : DS.Palette.text)
-                .frame(minHeight: DS.Hit.min)
-                .contentShape(Capsule())
-        }
-        .buttonStyle(PressableButtonStyle())
-        .accessibilityLabel(name)
-        .accessibilityAddTraits(on ? .isSelected : [])
-    }
 
     @ViewBuilder   // 编译级修正: 这块是"顶层 if 而没有 else/return", 不加 builder 就是一句 "function declares some View…" 的编译错误
     /// 716 选区导出: 按**天**整组勾选 → 合并成一份 CSV (进剪贴板, 与 698 同一通路)。

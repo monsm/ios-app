@@ -203,6 +203,7 @@ enum MemberHub {
         var time: String
         var text: String
     }
+    // 【保留未接 2026-10-29】成员详情「最近记录摘录」—— 成员 360 页的空档补位
     static func recentExcerpts(_ id: String, _ n: Int = 10) -> [Excerpt] {
         var out = [Excerpt]()
         for kc in DB.keychains() {

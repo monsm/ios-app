@@ -23,6 +23,10 @@ struct AddDeviceView: View {
     @State private var pairedKC: Keychain?
     @State private var nickname = ""
     @State private var place = ""
+    /// 2026-10-29 补：APK `page-devicetypelist`（设备类型列表）允许手选型号。
+    /// iOS 默认从蓝牙广播自动识别（`pairedKC.pid`），这里给一个**修正**通道：
+    /// 识别不到、或广播里的 pid 是老固件的错值时才用得上。0 = 自动（不覆盖）。
+    @State private var pidChoice = 0
 
     var body: some View { vkBody.destined(.addDevice) }
     var vkBody: some View {
@@ -296,6 +300,18 @@ struct AddDeviceView: View {
                 Text("昵称会显示在 Hero 卡与切换胶囊上; 场所副标题可留空。符号与色标可在「锁档案」里选。")
             }
             Section {
+                Picker("型号", selection: $pidChoice) {
+                    Text("自动识别（推荐）").tag(0)
+                    ForEach(PidMap.names.sorted(by: { $0.key < $1.key }), id: \.key) { pid, name in
+                        Text(name).tag(pid)
+                    }
+                }
+            } header: {
+                Text("门锁型号")
+            } footer: {
+                Text("默认从蓝牙广播自动识别。识别不到或识别错时可手动指定 —— 型号决定哪些功能可用（布防、清空密码、固件升级都以它为准）。")
+            }
+            Section {
                 BusyButton(title: "完成添加", systemImage: "checkmark", isBusy: false, disabled: nickname.isEmpty) {
                     saveNaming()
                 }
@@ -311,6 +327,11 @@ struct AddDeviceView: View {
         let name = nickname.trimmingCharacters(in: .whitespaces)
         guard !name.isEmpty, var kc = pairedKC else { return }
         kc.name = name
+        // 2026-10-29：手选了型号就以手选为准（0 = 自动，保留配网时从广播读到的 pid）
+        if pidChoice != 0 {
+            kc.pid = pidChoice
+            kc.pidName = PidMap.names[pidChoice] ?? kc.pidName
+        }
         DB.saveKeychain(kc)
         var meta = LockArchive.meta(kc.mac)
         meta.place = place.trimmingCharacters(in: .whitespaces)

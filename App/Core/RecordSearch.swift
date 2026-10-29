@@ -135,6 +135,7 @@ extension RecordSearch {
 
 
 /// 674 通勤时段标签: 工作日 7-9 / 17-19 实时计算, 无需积累
+// 【保留未接 2026-10-29】通勤时段标签（工作日 7-9 / 17-19 实时计算）—— 记录页时段分组用
 enum CommuteLabel {
     static func tag(date: Date, hour: Int) -> String? {
         // 原写法用 `Calendar(identifier: .chinese)` 取 weekday, 而它的注释写"周一=2, 周日=7"、代码却排除 1 和 7 ——
@@ -151,6 +152,7 @@ enum CommuteLabel {
 }
 
 /// 658 自然时段词: 清晨/上午/午前/午间/下午/傍晚/晚间/深夜 (组头与行级小字共用)
+// 【保留未接 2026-10-29】自然时段词（清晨/上午/午间…）—— 记录组头与行级小字用
 enum TimeWord {
     static func word(_ hour: Int) -> String {
         switch hour {
@@ -738,6 +740,7 @@ enum RecordSearch {
         var total: Int
         var lastStr: String   // 除当前条外最近一条
     }
+    // 【保留未接 2026-10-29】同类型记录计数（「这是本周第 3 次撬锁」）—— 记录详情可挂
     static func sameTypeCount(mac: String, type: Int, exceptKey: String) -> SameCount {
         let hits = DB.readLogs(mac).filter { $0.type == type && String($0.idxRaw) != exceptKey }
         let last = hits.first?.lockTimeStr ?? ""
@@ -745,6 +748,7 @@ enum RecordSearch {
     }
 
     /// 736 前后事件上下文: 告警前后 10 分钟同锁记录 (前 3 条 / 后 3 条)
+    // 【保留未接 2026-10-29】告警前后 10 分钟同锁记录（前3/后3）—— 记录详情「前后事件」区
     static func context(mac: String, aroundKey: String, minutes: Int = 10, n: Int = 3) -> (before: [Rec], after: [Rec]) {
         let recs = buildRecs(macs: [mac], includeFails: false, includeCare: false)
         guard let mid = recs.first(where: { $0.key == aroundKey }), let md = dateOf(mid) else { return ([], []) }
@@ -790,6 +794,7 @@ enum RecordSearch {
     /// 为什么加 offset 当 tiebreak: 日志只到分钟, 同一分钟内的两行 (尤其跨锁) 先后是**入库次序**
     ///   而不是时间信息 (与 680 同一坦白)。Swift 的 sorted(by:) 不保证稳定, 不写这一条,
     ///   同样的数据两次进页可能给出相反的顺序。
+    // 【保留未接 2026-10-29】多锁合并的「最近开门」流 —— 设备页跨锁时间线
     static func mergedRecentOpens(macs: [String], count: Int) -> [Rec] {
         let rows = buildRecs(macs: macs, includeFails: false, includeCare: false)
             .filter { StatsKit.openTypes.contains($0.type) }
