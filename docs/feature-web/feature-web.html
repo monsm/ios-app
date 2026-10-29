@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T03:02:31.765Z",
+    "generated": "2026-10-29T03:09:58.581Z",
     "sources": [
       {
         "scout": "android-native",
@@ -809,7 +809,7 @@ const DATA = {
           "line": 130,
           "symbol": "sheet(isPresented: $showAdd)",
           "note": "AddDeviceView()",
-          "text": ".toolbar {"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -2090,7 +2090,7 @@ const DATA = {
           "line": 1222,
           "symbol": "quickActions",
           "note": "",
-          "text": "if kc.mac == app.currentMac, let lt = app.status?.lockTime { return ProtoTime.localStr(lt) }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -2106,7 +2106,7 @@ const DATA = {
           "line": 1227,
           "symbol": "let cols = AXPrefs.bigTile ? 2 : 3",
           "note": "",
-          "text": "let t = DB.syncTime(app.currentMac)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -3305,7 +3305,7 @@ const DATA = {
           "line": 857,
           "symbol": "attentionCard",
           "note": "",
-          "text": "NavigationLink {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -3313,7 +3313,7 @@ const DATA = {
           "line": 879,
           "symbol": "attentionItems",
           "note": "",
-          "text": "}"
+          "text": ".overlay("
         },
         {
           "platform": "ios",
@@ -3321,7 +3321,7 @@ const DATA = {
           "line": 895,
           "symbol": "BatteryCare.fpCleanNeeded(mac)",
           "note": "",
-          "text": "// NavigationLink 自身的激活), 结果就是\"次数记上了、页面没进去\"。label 现在零手势,"
+          "text": "/// 用 simultaneousGesture 而不是把 NavigationLink 换成 Button：换掉就会丢导航，"
         }
       ],
       "platformEvidence": {
@@ -3389,7 +3389,7 @@ const DATA = {
           "line": 170,
           "symbol": ".onChange(of: app.pendingJumpLock)",
           "note": "",
-          "text": "}"
+          "text": "// 2026-10-14 走查: 原为直写 `app.tabSelection = 3` —— 设备页在访客通道"
         },
         {
           "platform": "ios",
@@ -3397,7 +3397,7 @@ const DATA = {
           "line": 201,
           "symbol": "if app.pendingAddDevice",
           "note": "",
-          "text": "}"
+          "text": "// 只在锁支持布防时出现（canDefend）；与设置页那条**并存**（不删，避免打断老用户习惯）。"
         },
         {
           "platform": "ios",
@@ -3405,7 +3405,7 @@ const DATA = {
           "line": 148,
           "symbol": ".onChange(of: app.currentMac)",
           "note": "",
-          "text": "}"
+          "text": "if app.pendingAddDevice {"
         }
       ],
       "platformEvidence": {
@@ -3477,7 +3477,7 @@ const DATA = {
           "line": 47,
           "symbol": "if app.devices.isEmpty",
           "note": "",
-          "text": "VStack(spacing: DS.Space.m) {"
+          "text": "deviceContent"
         },
         {
           "platform": "apk",
@@ -3493,7 +3493,7 @@ const DATA = {
           "line": 59,
           "symbol": "app.pendingSettingsFocus = \"backup\"",
           "note": "",
-          "text": "// Tab (点一下像没反应)。走 requestTab, 访客态由它拉起复核页。"
+          "text": ".keyboardShortcut(\"r\", modifiers: .command)"
         },
         {
           "platform": "ios",
@@ -3501,7 +3501,7 @@ const DATA = {
           "line": 52,
           "symbol": "actionTitle: \"添加设备\"",
           "note": "",
-          "text": "message: \"请先在门锁键盘上长按重置键恢复出厂，再回到这里添加设备（需要开启蓝牙）\","
+          "text": ".dsScreenBackground()"
         }
       ],
       "platformEvidence": {
@@ -3580,7 +3580,7 @@ const DATA = {
           "line": 330,
           "symbol": "groupChips",
           "note": "",
-          "text": "// 243 断连灰化: 连接断开时整卡去饱和, 恢复即回彩"
+          "text": ".contentShape(Capsule())"
         },
         {
           "platform": "ios",
@@ -3588,7 +3588,7 @@ const DATA = {
           "line": 293,
           "symbol": "inGroup(_:) ",
           "note": "",
-          "text": "}"
+          "text": "private var tiles: [QuickAction] {"
         },
         {
           "platform": "ios",
@@ -3596,7 +3596,7 @@ const DATA = {
           "line": 347,
           "symbol": "groupFilter = name; syncPageOrder()",
           "note": "",
-          "text": ".vkFont(.title3, weight: .semibold)"
+          "text": "// 105 锁符号: 档案里选的 SF Symbol 同步到 Hero 卡"
         }
       ],
       "platformEvidence": {
@@ -3665,7 +3665,7 @@ const DATA = {
           "line": 695,
           "symbol": "heroCard(for:isCurrent:)",
           "note": "",
-          "text": "}"
+          "text": ".vkFont(.subheadline, weight: .semibold)"
         },
         {
           "platform": "ios",
@@ -3673,7 +3673,7 @@ const DATA = {
           "line": 793,
           "symbol": "HeroStat(label: \"电量\")",
           "note": "",
-          "text": "}"
+          "text": "private var checkTexts: [String] {"
         },
         {
           "platform": "ios",
@@ -3681,7 +3681,7 @@ const DATA = {
           "line": 846,
           "symbol": ".saturation(connected ? 1 : 0.55)",
           "note": "",
-          "text": "showModuleOrder = true"
+          "text": ".contextMenu {"
         }
       ],
       "platformEvidence": {
@@ -3751,7 +3751,7 @@ const DATA = {
           "line": 732,
           "symbol": "LinkPill(state:connectMs:rssi:source:)",
           "note": "",
-          "text": "}"
+          "text": ".padding(DS.Space.l)"
         },
         {
           "platform": "ios",
@@ -3759,7 +3759,7 @@ const DATA = {
           "line": 738,
           "symbol": ".onTapGesture { if isCurrent { showRssi.toggle() } }",
           "note": "",
-          "text": "withAnimation(DS.Motion.standard) { confirmPulse = true }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -3767,7 +3767,7 @@ const DATA = {
           "line": 756,
           "symbol": ".contextMenu { Menu(\"最近状态变化\") }",
           "note": "",
-          "text": "if autoLockLeft != left { return }   // 期间重新开锁/切锁 → 让位新的倒计时"
+          "text": "let interval = DB.tailgate(app.currentMac)?.interval ?? 5"
         }
       ],
       "platformEvidence": {
@@ -3838,7 +3838,7 @@ const DATA = {
           "line": 903,
           "symbol": "linkSenseCard",
           "note": "",
-          "text": ".accessibilityLabel(label)"
+          "text": "// 记账挪到**目的地出现时**, 语义也更准 (用过这一格 = 进过它的页面)。"
         },
         {
           "platform": "ios",
@@ -3846,7 +3846,7 @@ const DATA = {
           "line": 948,
           "symbol": "// 535 同步回执",
           "note": "",
-          "text": "app.showToast(\"已跳到凭证页定位「\" + t.name + \"」\")   // 921 界面文案"
+          "text": "let target = QuickPool.repeatTarget(app.currentMac)"
         },
         {
           "platform": "ios",
@@ -3854,7 +3854,7 @@ const DATA = {
           "line": 978,
           "symbol": "最后已知: 电量 … (缓存 …)",
           "note": "",
-          "text": "/// 存的是**顺序串** (kf_dev_order = \"hero,quick,recent\"), 非法/缺失一律回落默认。"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -3924,7 +3924,7 @@ const DATA = {
           "line": 96,
           "symbol": "Button { showModuleOrder = true }",
           "note": "",
-          "text": "Label(\"布防\", systemImage: \"shield.lefthalf.filled\")"
+          "text": ".onChange(of: app.currentMac) { _, new in"
         },
         {
           "platform": "ios",
@@ -4010,7 +4010,7 @@ const DATA = {
           "line": 85,
           "symbol": "if let kc = app.current, kc.ekey.isEmpty, kc.pins.count > 1",
           "note": "",
-          "text": ".accessibilityElement(children: .contain)"
+          "text": "// 原先只有 BackupView 立旗标 + 这里清旗标的读侧，**没有任何地方把 kf_migok_ 置真**，"
         }
       ],
       "platformEvidence": {
@@ -4080,7 +4080,7 @@ const DATA = {
           "line": 211,
           "symbol": "rescanPull()",
           "note": "",
-          "text": "}"
+          "text": "Text(DefendKit.summary(DB.defend(kc.mac)))"
         },
         {
           "platform": "ios",
@@ -4088,7 +4088,7 @@ const DATA = {
           "line": 217,
           "symbol": "sense.scan(mac:timeoutMs: 4000)",
           "note": "",
-          "text": "app.pendingJumpLock = nil"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -4096,7 +4096,7 @@ const DATA = {
           "line": 109,
           "symbol": ".refreshable { await rescanPull() }",
           "note": "",
-          "text": "moduleSlot(devOrder[1], delay: 4)   // 904"
+          "text": "if let i = pageOrder.firstIndex(of: new) { pageIndex = i }"
         }
       ],
       "platformEvidence": {
@@ -7357,7 +7357,7 @@ const DATA = {
           "line": 1268,
           "symbol": "if DB.listFps(app.currentMac).isEmpty",
           "note": "",
-          "text": "Label(result, systemImage: failed ? \"xmark.octagon.fill\" : \"checkmark.circle.fill\")"
+          "text": "BusyButton(title: \"将手机时间同步到锁内\","
         },
         {
           "platform": "ios",
@@ -7365,7 +7365,7 @@ const DATA = {
           "line": 1270,
           "symbol": "quickDestination(\"addFp\")",
           "note": "",
-          "text": ".foregroundStyle(resultTone.color)"
+          "text": "isBusy: busy,"
         }
       ],
       "platformEvidence": {
@@ -8152,7 +8152,7 @@ const DATA = {
           "line": 1025,
           "symbol": "UnlockDial(state:phase:connected:bleReady:…)",
           "note": "",
-          "text": "/// 2026-10-28 新增：「最近开门」模块（devOrder 的第三个槽）。"
+          "text": "case \"recent\":"
         },
         {
           "platform": "android",
@@ -29636,7 +29636,7 @@ const DATA = {
           "line": 59,
           "symbol": "app.pendingSettingsFocus = \"backup\"",
           "note": "",
-          "text": "// Tab (点一下像没反应)。走 requestTab, 访客态由它拉起复核页。"
+          "text": ".keyboardShortcut(\"r\", modifiers: .command)"
         },
         {
           "platform": "ios",
