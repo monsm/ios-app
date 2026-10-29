@@ -50,7 +50,6 @@ final class LockService: ObservableObject {
         DiagLogs.append(level, shown, date: DiagLogs.localDay(), time: t)
     }
 
-
     // ---------- 帧等待 ----------
     struct Waiter {
         var cmd: UInt8
@@ -89,13 +88,9 @@ final class LockService: ObservableObject {
         f.klvs.isEmpty ? "(无 KLV)" : f.klvs.map { String(format: "#%02x=%dB", $0.key, $0.vlen) }.joined(separator: " ")
     }
 
-
     // ---------- 连通探测 (cmd12 回声) ----------
     /// 一次回声往返的结果。`matched` = 锁回显的 KLV#01 与本机发出去的值**逐字节相同**。
     struct EchoProbe { var ok: Bool; var rc: Int; var echoHex: String; var ms: Int; var matched: Bool }
-
-
-
 
     /// 校时 (cmd 0E): 发**手机当前时间** —— 与原版 APK synctime 页完全一致
     /// (那边就是 `new St(En.getNowTimeString(), mac)`, 载荷为手机此刻的协议秒)。
@@ -104,14 +99,8 @@ final class LockService: ObservableObject {
     /// 全看这个钟, 所以这个空操作会把后面每一类命令都拖进时间问题里。
     /// 先读锁钟现在只用来**报告偏差** (读了不写回去), 再回读一次作为"真的写进去了"的证据 ——
     /// rc=0 只证明命令被接收, 不证明锁钟变了。
-    @discardableResult
-
-
 
     @discardableResult
-    @discardableResult
-
-
 
     // ---------- 指纹 ----------
     struct FpPress {
@@ -122,11 +111,7 @@ final class LockService: ObservableObject {
         var rc: Int
     }
 
-
     // ---------- 日志 ----------
     struct LogPage { var surplus: Int?; var logs: [LogEntry] }
-
-
-
 
 }

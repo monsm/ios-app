@@ -563,8 +563,6 @@ struct RootView: View {
         }
     }
 
-    /// 四个 Tab 的 TabView (从 mainTabs 抽出: 该表达式报 type-check 超时)
-    @ViewBuilder
 }
 
 // LinkSense 宿主注册 (RootView 首次挂载时): 包装层只读协作, 不建循环依赖
