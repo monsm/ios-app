@@ -14,11 +14,13 @@ extension RecordSearch {
         for mac in macs {
             let pws = DB.listPwds(mac).filter { $0.temp }
             guard !pws.isEmpty else { continue }
-            perMac[mac] = pws.compactMap { p in
-                guard let f = parseStamp(p.from), let to = parseStamp(p.to), f > 0, to > 0 else { return nil }
+            var wins = [TempWin]()
+            for p in pws {
+                guard let f = parseStamp(p.from), let to = parseStamp(p.to), f > 0, to > 0 else { continue }
                 let label = "约 " + String(p.from.dropFirst(5).prefix(11)) + " – " + String(p.to.dropFirst(5).prefix(11))
-                return TempWin(from: f, to: to, label: label)
+                wins.append(TempWin(from: f, to: to, label: label))
             }
+            perMac[mac] = wins
         }
         // 2026-10-29 修正：临时码开门在 APK We 表里是 16（旧值 4 是消息中心枚举）。
         for r in buildRecs(macs: macs, includeFails: false, includeCare: false) where r.type == 16 {
