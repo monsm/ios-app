@@ -2180,7 +2180,7 @@
         "segment：0 全部 / 1 早(6-10) / 2 午(10-15) / 3 晚(15-22) / 4 深夜（RecordSearch.swift:172）",
         "dayKind：0 全部 / 1 仅工作日 / 2 仅周末（RecordSearch.swift:173）",
         "alarmKinds 为空 = 不限类型；与 alarmOnly 各自独立，都选中时取交集（RecordSearch.swift:182-185）",
-        "failedOnly 只对应锁端告警级 10/13/224 + 手机侧失败行（锁端无逐次失败明细）（RecordSearch.swift:181）"
+        "failedOnly 只对应锁端告警级 10（多次密码开门失败锁定）+ 手机侧失败行（锁端无逐次失败明细）"
       ],
       "evidence": [
         {
