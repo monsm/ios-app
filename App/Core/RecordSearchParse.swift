@@ -129,10 +129,7 @@ extension RecordSearch {
 
     static func rangeLabel(_ r: (from: Date, to: Date)?) -> String {
         guard let r = r else { return "" }
-        let f = DateFormatter()
-        f.dateFormat = "MM-dd HH:mm"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone.current
+        let f = DF.cached("MM-dd HH:mm")
         return f.string(from: r.from) + " – " + f.string(from: r.to)
     }
 

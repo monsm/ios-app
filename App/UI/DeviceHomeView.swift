@@ -320,8 +320,7 @@ struct DeviceHomeView: View {
 
     // ---------- 需要用户处理的异常: 只在真有问题时出现, 不占常驻版面 ----------
     static let lastStamp: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "HH:mm"
+        let f = DF.cached("HH:mm")
         return f
     }()
 

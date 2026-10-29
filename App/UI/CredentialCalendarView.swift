@@ -154,18 +154,14 @@ struct CredentialCalendarView: View {
     }
 
     private func dayTitle(_ d: Date) -> String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "zh_CN")
-        f.dateFormat = "M 月 d 日 EEEE"
+        let f = DF.cached("M 月 d 日 EEEE", locale: "zh_CN")
         return f.string(from: d)
     }
 
     private func detailLine(_ p: LedgerPwd) -> String {
         var bits: [String] = []
         if let to = CredentialOrg.expiryDate(p) {
-            let f = DateFormatter()
-            f.locale = Locale(identifier: "zh_CN")
-            f.dateFormat = "HH:mm 到期"
+            let f = DF.cached("HH:mm 到期", locale: "zh_CN")
             bits.append(f.string(from: to))
         }
         if p.temp { bits.append("临时码") }

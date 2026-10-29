@@ -175,9 +175,7 @@ struct MemberWizardView: View {
             }
             do {
                 try await app.lock.ensureConnected(mac: kc.mac)
-                let f = DateFormatter()
-                f.locale = Locale(identifier: "en_US_POSIX")
-                f.dateFormat = "yyyy-MM-dd HH:mm:ss"
+                let f = DF.cached("yyyy-MM-dd HH:mm:ss")
                 let from = f.string(from: Date())
                 let to = f.string(from: Date().addingTimeInterval(600))
                 let alias = try await app.lock.pwdAdd(pwd: pwd, validFrom: from, validTo: to)

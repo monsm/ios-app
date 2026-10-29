@@ -268,9 +268,7 @@ enum LockStats {
     }
     static func sampleTimeText(_ at: Double) -> String {
         guard at > 0 else { return "" }
-        let f = DateFormatter()
-        f.dateFormat = "MM-dd HH:mm"
-        f.locale = Locale(identifier: "en_US_POSIX")
+        let f = DF.cached("MM-dd HH:mm")
         return "采样于 " + f.string(from: Date(timeIntervalSince1970: at / 1000))
     }
 

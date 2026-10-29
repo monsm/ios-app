@@ -32,12 +32,9 @@ enum CredentialOrg {
     static func seqKey(_ mac: String) -> String { "kf_cseq_" + mac }
 
     // ---------- 时间解析 (台账串 "yyyy-MM-dd HH:mm:ss", 本地时区) ----------
-    static let credFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        f.locale = Locale(identifier: "en_US_POSIX")   // 这一份既格式化也**反解析**台账串，必须钉公元历 (原 zh_CN 对纯数字格式没起作用，反而跟着系统历法跑)
-        return f
-    }()
+    /// 这一份既格式化也**反解析**台账串，必须钉公元历 (原 zh_CN 对纯数字格式没起作用，反而跟着系统历法跑)。
+    /// 2026-10-29 性能：改成取线程级缓存的 DF.stamp，不再每次进程启动建一个 DateFormatter。
+    static var credFormatter: DateFormatter { DF.stamp }
     static func parseLocal(_ s: String) -> Date? {
         let t = String(s.prefix(19))
         return credFormatter.date(from: t)
@@ -251,7 +248,8 @@ enum CredentialOrg {
     static func recentUseCount(_ mac: String, pwdAlias: Int, days: Int = 30) -> Int? {
         let p = DB.ledger(mac).pwds.first { $0.alias == pwdAlias }
         guard let p else { return nil }
-        let logs = DB.readLogs(mac).filter { $0.type == 2 || $0.type == 4 }
+        // 2026-10-29 修正：日志类型按 APK We 表 —— 17 密码开门 / 16 一次性密码开门。
+        let logs = DB.readLogs(mac).filter { $0.type == 17 || $0.type == 16 }
         guard !logs.isEmpty else { return nil }
         var n = 0
         for l in logs {
@@ -260,7 +258,7 @@ enum CredentialOrg {
             if p.temp {
                 if let f = parseLocal(p.from), let to = parseLocal(p.to),
                    f.timeIntervalSince1970 <= t, t <= to.timeIntervalSince1970 { n += 1 }
-            } else if p.owner != nil, l.type == 2 {
+            } else if p.owner != nil, l.type == 17 {
                 let owned = DB.ledger(mac).pwds.filter { !$0.temp && $0.owner != nil }
                 if owned.count == 1 { n += 1 }
             }
@@ -364,22 +362,18 @@ enum CredentialOrg {
     static func openCountInWindow(_ mac: String, p: LedgerPwd) -> Int {
         guard let f = parseLocal(p.from), let to = parseLocal(p.to) else { return 0 }
         return DB.readLogs(mac).filter { log in
-            guard log.type == 2 || log.type == 4 else { return false }
+            guard log.type == 17 || log.type == 16 else { return false }
             let t = ZKProtocol.protoSecondsToUnix(Int64(log.lockTime))
             return f.timeIntervalSince1970 <= t && t <= to.timeIntervalSince1970
         }.count
     }
-    /// 316 指纹档案统计: 近 30 天 type3 (指纹开门) 日志条数 — ⚠ 日志无指纹身份字段, 只能按锁整体推断, 标"约"
+    /// 316 指纹档案统计: 近 30 天 type19 (指纹开门) 日志条数 — ⚠ 日志无指纹身份字段, 只能按锁整体推断, 标"约"
     static func fpUseCount30d(_ mac: String) -> Int {
         let cut = nowSec - 30 * 86400
         return DB.readLogs(mac).filter { l in
-            guard l.type == 3 else { return false }
+            guard l.type == 19 else { return false }
             return ZKProtocol.protoSecondsToUnix(Int64(l.lockTime)) >= cut
         }.count
-    }
-    /// 320 误识计数: 本地日志 type13 (指纹告警) 出现次数 — ⚠ 锁端语义待实测, 只做展示标"约"
-    static func fpAlarmLogCount(_ mac: String) -> Int {
-        DB.readLogs(mac).filter { $0.type == 13 }.count
     }
 
     // ---------- 315/174 指纹命名建议轮播 ----------
@@ -408,9 +402,7 @@ enum CredentialOrg {
     static func earlyExpiryNote(_ mac: String, _ p: LedgerPwd) -> String {
         let m = earlyExpireMin(mac, p.alias)
         guard m > 0, let e = effectiveExpiry(mac, p) else { return "" }
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "MM-dd HH:mm"
+        let f = DF.cached("MM-dd HH:mm")
         return " · 本机提前 " + String(m) + " 分钟 (约 " + f.string(from: e) + ", 锁端未改)"
     }
     static func earlyExpireMin(_ mac: String, _ alias: Int) -> Int {

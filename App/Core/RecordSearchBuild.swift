@@ -37,11 +37,8 @@ extension RecordSearch {
     }
 
     static func localStr(_ ts: Double) -> String {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone.current
-        return f.string(from: Date(timeIntervalSince1970: ts))
+        // 2026-10-29 性能：复用进程级 formatter（原每次新建，且本函数按记录调用）。
+        DF.stamp.string(from: Date(timeIntervalSince1970: ts))
     }
 
     static func dateOf(_ l: CachedLog) -> Date? { StatsKit.dateOf(l) }
@@ -52,11 +49,8 @@ extension RecordSearch {
 
     /// "yyyy-MM-dd" → 该日 0 点 (本地时区)
     static func dateFromKey(_ key: String) -> Date? {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone.current
-        return f.date(from: key)
+        // 2026-10-29 性能：fillGaps 会对每一对相邻日各调两次，原来就是 2xN 个 formatter。
+        DF.day.date(from: key)
     }
 
     /// 649 凌晨归属前一晚: 0:00-4:59 归前一天

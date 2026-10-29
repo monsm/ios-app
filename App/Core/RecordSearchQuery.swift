@@ -8,7 +8,8 @@ extension RecordSearch {
         for mac in macs {
             let pws = DB.listPwds(mac).filter { $0.temp }
             guard !pws.isEmpty else { continue }
-            for r in buildRecs(macs: [mac], includeFails: false, includeCare: false) where r.type == 4 {
+            // 2026-10-29 修正：临时码开门在 APK We 表里是 16（旧值 4 是消息中心枚举）。
+            for r in buildRecs(macs: [mac], includeFails: false, includeCare: false) where r.type == 16 {
                 guard let d = dateOf(r) else { continue }
                 let t = d.timeIntervalSince1970
                 for p in pws {

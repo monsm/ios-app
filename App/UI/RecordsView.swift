@@ -339,9 +339,7 @@ struct RecordsView: View {
     var lastYearTodayCount: Int {
         let cal = WeekCal.gregorian
         guard let last = cal.date(byAdding: .year, value: -1, to: Date()) else { return 0 }
-        let fmt = DateFormatter()
-        fmt.locale = Locale(identifier: "en_US_POSIX")
-        fmt.dateFormat = "MM-dd"
+        let fmt = DF.cached("MM-dd")
         let key = fmt.string(from: last)
         return DB.readLogs(mac).filter { l in
             l.lockTimeStr.count >= 10 && String(l.lockTimeStr.dropFirst(5).prefix(5)) == key
@@ -379,9 +377,7 @@ struct RecordsView: View {
         }
     }
     static let stamp: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "MM-dd HH:mm"
-        f.locale = Locale(identifier: "en_US_POSIX")
+        let f = DF.cached("MM-dd HH:mm")
         return f
     }()
     func lastSyncAt() -> Date? {

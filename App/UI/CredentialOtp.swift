@@ -219,12 +219,7 @@ extension CredentialsView {
     // 2026-10-26 精简：stopUndoTimer 已删（undoBar 移除后无撤销条可停）。
 
     // ---------- 动作 ----------
-    static let shortDateFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "MM-dd"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        return f
-    }()
+    static var shortDateFormatter: DateFormatter { DF.cached("MM-dd") }
     func shortDate(_ ts: Double) -> String {
         Self.shortDateFormatter.string(from: Date(timeIntervalSince1970: ts / 1000))
     }

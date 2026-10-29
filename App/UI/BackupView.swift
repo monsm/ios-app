@@ -299,10 +299,7 @@ struct BackupView: View {
 
     /// 导出文件名 —— 带日期, 多次备份不互相覆盖。
     private var backupFilename: String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.calendar = WeekCal.gregorian
-        f.dateFormat = "yyyyMMdd-HHmm"
+        let f = DF.cached("yyyyMMdd-HHmm")
         return "锁管家备份-\(f.string(from: Date()))"
     }
 

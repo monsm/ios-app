@@ -6,15 +6,26 @@ import Foundation
 final class Store: @unchecked Sendable {
     static let shared = Store()
     private let defaults = UserDefaults.standard
+    /// 解码结果缓存：裸键 → [类型名 | "dict" → 已解码值]。
+    ///
+    /// 2026-10-29 性能：本仓"数据库"是 UserDefaults + JSON 编码，`get` 每次都要
+    /// `defaults.data(forKey:)` + **新建一个 JSONDecoder** + 全量解码。而视图 body 里
+    /// 有 ~70 处读 DB、记录页/成员页还会按行读 —— 一次渲染几十次全量解码是掉帧的主因。
+    /// 所有写入都收敛在本类的 set / setCodable / remove，故缓存只在这三处失效即可。
+    private let valueCache = Locked([String: [String: Any]]())
     private func key(_ k: String) -> String { "kf." + k }
     /// 兼容全库既有的 `get(类型, 键)` 写法 (BatteryCare/DiagKit/Milestones/MemberHub/RecordSearch 等约 87 处)。
     /// Swift 按参数序解析重载: 键优先与类型优先两种形态都合法, 语义完全一致 ——
     /// 这样就不必为了一个签名顺序去批量改写 87 个调用点 (那样做风险远大于收益)。
     func get<T: Decodable>(_ type: T.Type, _ k: String) -> T? { get(k, type) }
     func get<T: Decodable>(_ k: String, _ type: T.Type) -> T? {
+        let variant = String(describing: T.self)
+        if let hit = valueCache.withLock({ $0[k]?[variant] }) { return hit as? T }
         guard let d = defaults.data(forKey: key(k)) else { return nil }
         do {
-            return try JSONDecoder().decode(T.self, from: d)
+            let v = try JSONDecoder().decode(T.self, from: d)
+            valueCache.withLock { $0[k, default: [:]][variant] = v }
+            return v
         } catch {
             // **有数据但解不出来**是比写失败更难查的一种失效: 读侧拿到 nil ⇒ 一路回落默认值，
             // 界面上什么都看不出来，而用户确实设置过 (与 §104 那批"恒为默认值"是同一类症状的另一种成因)。
@@ -23,15 +34,21 @@ final class Store: @unchecked Sendable {
         }
     }
     func getDict(_ k: String) -> [String: Any] {
+        if let hit = valueCache.withLock({ $0[k]?["dict"] }) as? [String: Any] { return hit }
         guard let d = defaults.data(forKey: key(k)) else { return [:] }
         // 2026-10-27 审核修复 (D-07)：原来解码失败也返回 [:] —— 而 saveKeychain 会拿它
         // 整表写回，于是「一次无关的保存」会把所有其它设备的钥匙串抹掉。
         // 与 ledger() 同一类失效（有数据但解不出来），但后果更重：那不是空台账，是丢密钥。
         // 现在失败时返回带哨兵键的字典，调用方（saveKeychain）见哨兵即放弃写入。
-        if let o = (try? JSONSerialization.jsonObject(with: d)) as? [String: Any] { return o }
+        if let o = (try? JSONSerialization.jsonObject(with: d)) as? [String: Any] {
+            valueCache.withLock { $0[k, default: [:]]["dict"] = o }
+            return o
+        }
         corruptDictKeys.insert(k)
         return [:]
     }
+    /// 写路径统一失效：任何一次写入都可能改变同键的任意类型变体。
+    private func invalidateCache(_ k: String) { valueCache.withLock { $0[k] = nil } }
     /// 解码失败过的字典键。saveKeychain 写入前查这里，避免用空表覆盖真数据。
     private var corruptDictKeys: Set<String> = []
     func isDictCorrupt(_ k: String) -> Bool { corruptDictKeys.contains(k) }
@@ -49,11 +66,10 @@ final class Store: @unchecked Sendable {
         // 顶层标量 (String/Bool/Int/Double) 是 JSON fragment: 不开 .fragmentsAllowed 时
         // JSONSerialization 直接抛错, 被 try? + if let 静默吞掉 → 该键从未落盘,
         // 读侧只能拿到默认值 (设置页所有开关/主题/救援码/免验窗口全部失效)。
-        // 第九十五批把"吞掉"改成"记一笔": 失败本身仍然不改返回值 (改签名要动几百个调用点，风险远大于收益)，
-        // 但从这往后它不再是**只有天知道**——调用方紧接着报"已设置/已保存"时，诊断页至少能看到那是假成功。
         do {
             let d = try JSONSerialization.data(withJSONObject: v, options: [.fragmentsAllowed])
             defaults.set(d, forKey: key(k))
+            invalidateCache(k)
         } catch {
             recordFailure(k, "JSONSerialization: \((error as NSError).localizedDescription)")
         }
@@ -63,6 +79,7 @@ final class Store: @unchecked Sendable {
     func setCodable<T: Encodable>(_ k: String, _ v: T) {
         do {
             defaults.set(try JSONEncoder().encode(v), forKey: key(k))
+            invalidateCache(k)
         } catch {
             recordFailure(k, "JSONEncoder: \((error as NSError).localizedDescription)")
         }
@@ -92,7 +109,7 @@ final class Store: @unchecked Sendable {
     func failureLines() -> [String] { (defaults.array(forKey: key(Self.failureKey)) as? [String]) ?? [] }
     /// 刻意**不提供**清空口: 这本账的删除动作留在既有语义里 —— 核弹销毁按 `keys()` 全表清 (AuditChain:242)，
     /// 加一个 `clearFailureLog()` 只会多一条零调用声明，而且给了"把证据抹掉但不告诉用户抹了什么"的按钮。
-    func remove(_ k: String) { defaults.removeObject(forKey: key(k)) }
+    func remove(_ k: String) { defaults.removeObject(forKey: key(k)); invalidateCache(k) }
     /// 键是否存在 (区分"无数据"与"有数据但解不出")
     func has(_ k: String) -> Bool { defaults.object(forKey: key(k)) != nil }
     func keys() -> [String] {

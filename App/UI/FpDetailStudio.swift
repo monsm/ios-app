@@ -45,9 +45,9 @@ struct FpDetailStudio: View {
                         if useN > 0 {
                             fpRow("近 30 天指纹开门", "约 \(useN) 次 (日志无指纹身份字段, 整锁推断)")
                         }
-                        // 320 误识档案 (⚠ 锁端 type13 语义待实测, 只展示本地日志计数标"约")
-                        let alarmN = CredentialOrg.fpAlarmLogCount(mac)
-                        fpRow("指纹告警日志", alarmN > 0 ? "约 \(alarmN) 条 (type13, 语义待实测)" : "无 (type13)")
+                        // 2026-10-29 删除「指纹告警日志」行：APK 的日志类型表（We）里没有"指纹告警"这个事件 ——
+                        // 旧实现数的 type13 在新表里是「交换秘钥」，会把配网换钥显示成指纹告警。
+                        // （指纹模块告警只在**消息中心**的 mType 枚举里，不在锁端日志帧。）
                     }
                     Section {
                         fpRow("名称", f.name)
@@ -144,9 +144,8 @@ struct FpDetailStudio: View {
 // Double 台账毫秒 → 本地日期串 (凭证页同源, 局部实现)
 private extension Double {
     func credDay() -> String {
-        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        return f.string(from: Date(timeIntervalSince1970: self / 1000))
+        // 2026-10-29 性能：每行调用一次，复用 DF.day（原来每行新建一个 DateFormatter）。
+        return DF.day.string(from: Date(timeIntervalSince1970: self / 1000))
     }
 }
 

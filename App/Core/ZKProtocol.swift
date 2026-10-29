@@ -333,9 +333,7 @@ enum ZKProtocol {
 enum ProtoTime {
     static func localStr(_ sec: Int64) -> String {
         let d = Date(timeIntervalSince1970: ZKProtocol.protoSecondsToUnix(sec))
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        f.locale = Locale(identifier: "en_US_POSIX")
+        let f = DF.cached("yyyy-MM-dd HH:mm:ss")
         return f.string(from: d)
     }
 }

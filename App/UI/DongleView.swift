@@ -340,13 +340,10 @@ struct DongleView: View {
     }
 
     private func shortTime(_ s: String) -> String {
-        guard let d = ISO8601DateFormatter().date(from: s) else { return s }
-        let f = DateFormatter()
-        // 2026-10-28：本仓规范 —— 日期格式必须钉 locale 与公历，
-        // 否则非公历系统下 MM-dd 会算出异 era 年份。
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.calendar = WeekCal.gregorian
-        f.dateFormat = "MM-dd HH:mm"
-        return f.string(from: d)
+        // 2026-10-29 性能：本函数按行调用，ISO8601DateFormatter + DateFormatter 都改成复用。
+        // 2026-10-28 规范不变：日期格式必须钉 locale 与公历，否则非公历系统下 MM-dd 会算出异 era 年份
+        // （DF.cached 固定 en_US_POSIX，其历法即公历）。
+        guard let d = DF.iso().date(from: s) else { return s }
+        return DF.shortDayTime.string(from: d)
     }
 }

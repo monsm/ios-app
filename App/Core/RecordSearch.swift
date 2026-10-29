@@ -255,11 +255,9 @@ enum RecordSearch {
         var window: String     // "约 10-01 08:00 – 10-02 08:00"
     }
     static func parseStamp(_ s: String) -> Int64 {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        f.timeZone = TimeZone(identifier: "UTC")     // 与 Attribution.ms 同语义 (JS 生态本地串按 UTC 读)
-        return Int64(f.date(from: s)?.timeIntervalSince1970 ?? 0)
+        // 与 Attribution.ms 同语义 (JS 生态把本地串按 UTC 读)。
+        // 2026-10-29 性能：改用共享的 UTC 变体 —— **不能**对缓存实例改 timeZone，那会污染所有其它使用者。
+        return Int64(DF.stampUTC.date(from: s)?.timeIntervalSince1970 ?? 0)
     }
 
 
@@ -275,10 +273,7 @@ enum RecordSearch {
 
     static func dateOf(_ r: Rec) -> Date? {
         if !r.timeStr.isEmpty {
-            let f = DateFormatter()
-            f.dateFormat = "yyyy-MM-dd HH:mm:ss"
-            f.locale = Locale(identifier: "en_US_POSIX")
-            f.timeZone = TimeZone.current
+            let f = DF.cached("yyyy-MM-dd HH:mm:ss")
             return f.date(from: r.timeStr)
         }
         return nil
@@ -487,7 +482,8 @@ extension RecordSearch {
         switch AlarmMeta.level(type) {
         case 3: return DS.Palette.danger
         case 2: return DS.Palette.danger.opacity(0.72)
-        case 1: return type == 6 ? DS.Palette.warn : DS.Palette.textSub
+        // 2026-10-29：type 6 在 APK We 表里不存在（旧枚举的"电量低"）；告警 4/10 已由 level 2/3 接走。
+        case 1: return DS.Palette.textSub
         default: return DS.Palette.textSub
         }
     }

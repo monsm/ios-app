@@ -25,11 +25,8 @@ enum StatsKit {
         return Date(timeIntervalSince1970: ZKProtocol.protoSecondsToUnix(l.lockTime))
     }
     static func dayKey(_ d: Date) -> String {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone.current
-        return f.string(from: d)
+        // 2026-10-29 性能：原每调用新建一个 DateFormatter；本函数在分组/补缺口里是按天循环调用的。
+        DF.day.string(from: d)
     }
     static func startOfDay(_ d: Date) -> Date {
         WeekCal.gregorian.startOfDay(for: d)
@@ -55,9 +52,7 @@ enum StatsKit {
             guard let thisWeek = cal.dateInterval(of: .weekOfYear, for: today),
                   let from = cal.date(byAdding: .day, value: -7, to: thisWeek.start),
                   let end = cal.date(byAdding: .day, value: 7, to: from) else { return ("", []) }
-            let fmt = DateFormatter()
-            fmt.locale = Locale(identifier: "en_US_POSIX")
-            fmt.dateFormat = "yyyy-MM-dd"
+            let fmt = DF.day
             let head = fmt.string(from: from) + " 至 " + fmt.string(from: cal.date(byAdding: .day, value: -1, to: end) ?? from)
             let week = logs.filter { l in
                 openTypes.contains(l.type) && (dateOf(l).map { $0 >= from && $0 < end } ?? false)
