@@ -355,7 +355,7 @@ extension RecordsView {
     }
 
 
-    private var emptyHint: some View {
+    var emptyHint: some View {
         Section {
             // 558 零结果救援 —— 顺带堵住一条**说谎的空态**: 这里原来无脑显示"还没有记录，去重新读取"，
             // 而把上千条筛成 0 条时同样走到这一支 —— 那句话是在骗用户去重连一把好端端的锁。
@@ -420,7 +420,7 @@ extension RecordsView {
 
 
     // ---------- 成员过滤 (保留既有 793 访客虚拟分组 / 791 可认领 / 1028 保养) ----------
-    private var memberChips: some View {
+    var memberChips: some View {
         Section {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: DS.Space.s) {
@@ -651,7 +651,7 @@ extension RecordsView {
         applyFilter()
     }
     /// 577 凭证深链: kind+归属 → pwd:<alias> / fp:<batch>; 台账无命中留空 (不深跳)
-    private static func credNav(kind: String?, who: String?, pwds: [LedgerPwd], fps: [LedgerFp]) -> String {
+    static func credNav(kind: String?, who: String?, pwds: [LedgerPwd], fps: [LedgerFp]) -> String {
         switch kind {
         case "pwd":
             if let p = pwds.first(where: { !$0.temp && (who == nil || $0.owner == who) }) { return "pwd:" + String(p.alias) }
@@ -668,7 +668,7 @@ extension RecordsView {
     /// 这一处原本自建 DateFormatter 且**没钉 `en_US_POSIX`**：用户在「设置 → 语言与地区 → 历法」
     /// 里选佛历/和历等非公历时，`yyyy` 会输出 2569 这类异 era 年份，与锁端日志的公历日 key 永不相等
     /// (§10.30)。归到 `StatsKit.dayKey` 一并解决。
-    private static func dayKey(_ d: Date) -> String { StatsKit.dayKey(d) }
+    static func dayKey(_ d: Date) -> String { StatsKit.dayKey(d) }
 
 
     // ---------- 580/584/585 详情翻页与引用深链的数据源 ----------
@@ -747,7 +747,7 @@ extension RecordsView {
     /// 会以为别的记录没了；而且**没有任何回到全部日子的入口**（只能绕去"按月份跳转→清除"）。
     /// 收窄显示范围必须同时告诉用户范围被收窄了 —— 与 657 那行"这不是没记录是筛掉了"同一个原则。
     @ViewBuilder
-    private var dayFocusBanner: some View {
+    var dayFocusBanner: some View {
         if !dayFocus.isEmpty {
             HStack(spacing: DS.Space.s) {
                 Image(systemName: "calendar.day.timeline.left").accessibilityHidden(true)
