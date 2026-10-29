@@ -54,7 +54,24 @@ enum AutoOpen {
         reason = try c.decodeIfPresent(String.self, forKey: .reason) ?? ""
     }
     }
+    /// 2026-10-29 性能：同 mac + 同 reason **10 秒内只记一次**。
+    ///
+    /// audit 在「已武装但某道门不过」时会被**每个 RSSI 样本**调用（站在门口每秒好几次），
+    /// 而每次都是「读整份 500 条 → 插入 → 整份编码 → UserDefaults 落盘」——
+    /// 不节流等于每秒几次 50KB 级的 plist 写入，还全是同一条拒因。
+    private static let autoOpenAuditLast = Locked<[String: TimeInterval]>([:])
+
     static func audit(_ mac: String, _ reason: String) {
+        let throttleKey = mac + "|" + reason
+        let nowTs = Date().timeIntervalSince1970
+        let skip = autoOpenAuditLast.withLock { m -> Bool in
+            if let t = m[throttleKey], nowTs - t < 10 { return true }
+            // 组合数有限，但仍给个上限：reason 里偶尔会带可变文案
+            if m.count > 200 { m.removeAll() }
+            m[throttleKey] = nowTs
+            return false
+        }
+        if skip { return }
         var list = audits(mac)
         list.insert(AuditEntry(at: DiagTime.mmddHHmm(), mac: mac, reason: reason), at: 0)
         if list.count > 500 { list = Array(list.prefix(500)) }
