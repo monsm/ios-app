@@ -42,6 +42,12 @@ struct DeviceHomeView: View {
 
     var body: some View { vkBody.destined(.deviceHome) }
     var vkBody: some View {
+        deviceShell
+    }
+
+    /// 2026-10-29：NavigationStack 壳 —— 从 vkBody 抽出，压 Swift 类型推断预算。
+    @ViewBuilder
+    private var deviceShell: some View {
         NavigationStack {
             ScrollView {
                 deviceContent
@@ -62,12 +68,12 @@ struct DeviceHomeView: View {
                 }
                 ToolbarItem(placement: barSide) {
                     Button { showAdd = true } label: { Image(systemName: "plus") }
-                    // 2026-10-29：锁设置入口（齿轮放工具栏，不放 Hero 卡 —— 卡内 .accessibilityElement(.combine) 会吞按钮）
-                    ToolbarItem(placement: barSide) {
-                        Button { showLockSettings = true } label: { Image(systemName: "gearshape") }
-                            .accessibilityLabel("锁设置")
-                    }
                         .accessibilityLabel("添加设备")
+                }
+                // 2026-10-29：锁设置入口（齿轮放工具栏，不放 Hero 卡 —— 卡内 .accessibilityElement(.combine) 会吞按钮）
+                ToolbarItem(placement: barSide) {
+                    Button { showLockSettings = true } label: { Image(systemName: "gearshape") }
+                        .accessibilityLabel("锁设置")
                 }
             }
             .sheet(isPresented: $showAdd) { AddDeviceView() }
