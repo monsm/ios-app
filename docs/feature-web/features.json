@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T03:44:38.023Z",
+    "generated": "2026-10-29T03:49:16.491Z",
     "sources": [
       {
         "scout": "android-native",
@@ -26235,7 +26235,7 @@
           "line": 2143,
           "symbol": "onRecordsAppear",
           "note": "进页消费顺序",
-          "text": "switch kind {"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -27050,7 +27050,7 @@
           "line": 2181,
           "symbol": "fetch",
           "note": "拉取主流程",
-          "text": ".vkFont(.caption)"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -27058,7 +27058,7 @@
           "line": 2199,
           "symbol": "while page < 20",
           "note": "翻页上限 20 页 / 100 条",
-          "text": ".toolbar { ToolbarItem(placement: .navigationBarLeading) { Button(\"完成\") { dismiss() } } }"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -27433,7 +27433,7 @@
           "line": 2051,
           "symbol": "memberChips",
           "note": "chip 生成规则",
-          "text": "} label: {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -27441,7 +27441,7 @@
           "line": 2078,
           "symbol": "chip",
           "note": "点击写 sel + filters.member",
-          "text": ".variantList()"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -27457,7 +27457,7 @@
           "line": 2065,
           "symbol": "chip(\"__care\")",
           "note": "1028 保养分组",
-          "text": ".buttonStyle(.plain)"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -60738,7 +60738,7 @@
           "line": 2148,
           "symbol": "onRecordsAppear",
           "note": "每次进页重取（908）",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -60853,7 +60853,7 @@
           "line": 2171,
           "symbol": "loadFromCache",
           "note": "HotCache 首屏读",
-          "text": ".lineLimit(1)"
+          "text": ""
         },
         {
           "platform": "ios",
