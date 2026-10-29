@@ -37,6 +37,8 @@ final class LinkSense: ObservableObject {
     static let shared = LinkSense()
     @Published private(set) var sceneActive = true          // 135 scenePhase 消费点
     @Published private(set) var lastRssi: Int? = nil        // 最近一次见到的该锁 RSSI (63/71)
+    /// 2026-10-29 性能：RSSI 节流基准（见 updateRssi）。
+    private var lastRssiPublishAt = Date.distantPast
     var prevRssi: Int? = nil                        // 270 上一次 RSSI: 骤降检测基准 (只在值变化时翻档)
     @Published private(set) var connectMs: Int? = nil        // 67 握手耗时 (最近一次, ms)
     @Published var reconnectAttempt = 0          // 126 回连节律轮次
@@ -217,14 +219,23 @@ final class LinkSense: ObservableObject {
     /// 270 统一 RSSI 入口: 旧值翻入 prevRssi 再更新现值 —— 四处喂入共用一份历史, 骤降提示才有基准
     func updateRssi(_ r: Int) {
         if let cur = lastRssi, cur != r { prevRssi = cur }
-        lastRssi = r
+        // 2026-10-29 性能：BLE 广播每秒来好几次，而 lastRssi 是 @Published ——
+        // 每来一次都会让观察 LinkSense 的 DeviceHomeView（hero 卡 + 开锁圆盘 + 快捷格）整页重算。
+        // 现在：展示值最多 2 秒刷新一次；只有骤变（≥15 dBm，比如走近/走远）才立刻推。
+        // prevRssi 仍逐次记录，骤降检测拿到的历史不受影响。
+        let now = Date()
+        let bigJump = lastRssi == nil || abs(r - (lastRssi ?? r)) >= 15
+        if bigJump || now.timeIntervalSince(lastRssiPublishAt) >= 2 {
+            lastRssi = r
+            lastRssiPublishAt = now
+        }
     }
     func markReady(ms: Int?, rssi: Int?) {
         connectMs = ms
         sessionSince = Date()
         reconnectAttempt = 0
         if let rssi { updateRssi(rssi) }
-        objectWillChange.send()
+        // 2026-10-29 性能：上一行的 @Published 赋值已经发过一次，这里再手发一次等于双倍重算。
     }
 
     // ---------- 275 假死检测 + 131 会话重协商: 连接态久无有效会话 → 重新 ensureConnected ----------
@@ -354,8 +365,9 @@ final class LinkSense: ObservableObject {
     /// 537 下拉重扫: 把刚扫到的信号推给 UI。**只动"最近见到的信号", 不动连接态** ——
     /// 扫到广播 ≠ 已连接, 把 linkState 一起改掉就是凭空承诺一个没发生的会话。
     func noteScannedRssi(_ rssi: Int) {
+        // 用户主动下拉重扫，立即刷新（@Published 赋值本身就会发通知，不需再手发）。
         lastRssi = rssi
-        objectWillChange.send()
+        lastRssiPublishAt = Date()
     }
 
     // ---------- 每锁 RSSI 记忆 (71 设备列表迷你信号格 / 129 极限距离) ----------

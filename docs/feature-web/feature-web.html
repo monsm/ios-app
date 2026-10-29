@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T12:54:07.486Z",
+    "generated": "2026-10-29T13:02:41.770Z",
     "sources": [
       {
         "scout": "android-native",
@@ -4874,7 +4874,7 @@ const DATA = {
           "line": 43,
           "symbol": "btDenied",
           "note": "",
-          "text": "/// 2026-10-29 性能：只写不读（回连节律只把它当记录），去掉 @Published。"
+          "text": "@Published private(set) var connectMs: Int? = nil        // 67 握手耗时 (最近一次, ms)"
         },
         {
           "platform": "ios",
@@ -4882,7 +4882,7 @@ const DATA = {
           "line": 58,
           "symbol": "openBluetoothSettings()",
           "note": "",
-          "text": "var deadWatchTask: Task\u003cVoid, Never>?"
+          "text": "var lastDeadlockAt = Date.distantPast"
         },
         {
           "platform": "ios",
@@ -5051,7 +5051,7 @@ const DATA = {
           "line": 370,
           "symbol": "startDeadWatch()",
           "note": "",
-          "text": "DB.store.get(Int.self, \"kf_linkrssi_\" + mac)"
+          "text": "lastRssiPublishAt = Date()"
         },
         {
           "platform": "ios",
@@ -5059,7 +5059,7 @@ const DATA = {
           "line": 380,
           "symbol": "deadbeatCheck()",
           "note": "",
-          "text": "var preconnectTask: Task\u003cVoid, Never>?"
+          "text": "/// 上次扫到的该锁 RSSI; nil = 从未扫到"
         },
         {
           "platform": "ios",
@@ -5067,7 +5067,7 @@ const DATA = {
           "line": 385,
           "symbol": "idle > 600 && 间隔 > 300",
           "note": "",
-          "text": "guard self != nil, !Task.isCancelled else { return }   // 只为\"已销毁/已取消就别扫\""
+          "text": "/// 134 冷启动先扫描: App 启动广播扫描一次, 把可见已配对锁的 RSSI 落档 (不连接、不下发)"
         },
         {
           "platform": "ios",
@@ -5075,7 +5075,7 @@ const DATA = {
           "line": 404,
           "symbol": "kf_wd_heals + 1",
           "note": "",
-          "text": "for adv in ble.allDiscovered() {"
+          "text": "try await ble.startScan(allowDuplicates: p.allowDuplicates, timeoutMs: p.timeoutMs)"
         }
       ],
       "platformEvidence": {
@@ -5151,7 +5151,7 @@ const DATA = {
           "line": 419,
           "symbol": "struct FailKind",
           "note": "",
-          "text": "}"
+          "text": "if let a = ZKProtocol.parseAdv(adv.advertisHex), let disp = a.macDisplay,"
         },
         {
           "platform": "ios",
@@ -5159,7 +5159,7 @@ const DATA = {
           "line": 425,
           "symbol": "icon 计算属性",
           "note": "",
-          "text": "/// 128: 首台可见耗时 (毫秒); -1 = 整窗一台没见"
+          "text": "BleTelemetry.recordEvent(\"冷启动扫描, 可见设备 \\(seen)\", ok: true)   // 134 冷启动扫描"
         },
         {
           "platform": "ios",
@@ -5167,7 +5167,7 @@ const DATA = {
           "line": 435,
           "symbol": "classifyFailure",
           "note": "",
-          "text": "return \"环境安静 (近一次扫到 \\(n) 台 BLE 设备\\(t)) — 连接条件良好\""
+          "text": "/// 128 环境拥挤度: 最近一次冷启动扫描的可见 BLE 设备数 + 首台可见耗时"
         }
       ],
       "platformEvidence": {
@@ -5296,7 +5296,7 @@ const DATA = {
           "line": 135,
           "symbol": "func preconnect()",
           "note": "",
-          "text": "}"
+          "text": "lockSvc.log(\"warn\", \"多锁预连扫描失败: \\(error.localizedDescription)\")"
         },
         {
           "platform": "ios",
@@ -5304,7 +5304,7 @@ const DATA = {
           "line": 142,
           "symbol": "scan(timeoutMs: 6000)",
           "note": "",
-          "text": ".map { $0.0 }"
+          "text": ".sorted { $0.1 > $1.1 }"
         },
         {
           "platform": "ios",
@@ -5312,7 +5312,7 @@ const DATA = {
           "line": 152,
           "symbol": "信号围栏拦截",
           "note": "",
-          "text": "markReady(ms: connectMs, rssi: lastRssi)"
+          "text": "guard let mac = app?.currentMac, !mac.isEmpty, app?.unlockState == .idle else { return }"
         },
         {
           "platform": "ios",
@@ -5320,7 +5320,7 @@ const DATA = {
           "line": 168,
           "symbol": "近场轻提醒",
           "note": "",
-          "text": "BleTelemetry.recordEvent(\"握手失败 \" + classifyFailure(error).name, ok: false)"
+          "text": "} catch {"
         },
         {
           "platform": "ios",
@@ -5328,7 +5328,7 @@ const DATA = {
           "line": 174,
           "symbol": "DiagOps.record 预握手",
           "note": "",
-          "text": "// 2026-10-26 精简：resync（到场/回前台自动补发队列）已删 —— 队列功能整套移除。"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -5409,7 +5409,7 @@ const DATA = {
           "line": 95,
           "symbol": "preconnectOthers(limit:timeoutMs:)",
           "note": "",
-          "text": "// ---------- 预握手 (95 进页预热 / 93 信号围栏 / 96 只预热不执行 / 134 冷启动先扫描) ----------"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -5417,7 +5417,7 @@ const DATA = {
           "line": 117,
           "symbol": "saveRssi 只写信号档",
           "note": "",
-          "text": "let deadline = Date().addingTimeInterval(Double(timeoutMs) / 1000.0)"
+          "text": "ble.stopScan()"
         },
         {
           "platform": "ios",
@@ -5425,7 +5425,7 @@ const DATA = {
           "line": 127,
           "symbol": "warmLocks",
           "note": "",
-          "text": "Self.saveRssi(mac: mac, rssi: adv.rssi)"
+          "text": "guard targets.contains(mac), !hits.contains(mac) else { continue }"
         }
       ],
       "platformEvidence": {
@@ -5495,7 +5495,7 @@ const DATA = {
           "line": 258,
           "symbol": "ladderSeconds",
           "note": "",
-          "text": "guard let self else { return }"
+          "text": "func deadbeatCheck() {"
         },
         {
           "platform": "ios",
@@ -5503,7 +5503,7 @@ const DATA = {
           "line": 290,
           "symbol": "autoReconnectTick",
           "note": "",
-          "text": "let hint: String"
+          "text": "// ---------- 130 唤醒失败细分 ----------"
         },
         {
           "platform": "ios",
@@ -5511,7 +5511,7 @@ const DATA = {
           "line": 315,
           "symbol": "pendingCount > 0 才回连",
           "note": "",
-          "text": "}"
+          "text": "func classifyFailure(_ error: Error) -> FailKind {"
         },
         {
           "platform": "ios",
@@ -5519,7 +5519,7 @@ const DATA = {
           "line": 338,
           "symbol": "失败 attempt 递增封顶",
           "note": "",
-          "text": "found = ble.allDiscovered().first { adv in"
+          "text": "let ble = BLEService.shared"
         }
       ],
       "platformEvidence": {
@@ -5594,7 +5594,7 @@ const DATA = {
           "line": 185,
           "symbol": "func refresh()",
           "note": "",
-          "text": "reconnectTask = Task { @MainActor [weak self] in"
+          "text": "func startReconnectLoop() {"
         },
         {
           "platform": "ios",
@@ -5602,7 +5602,7 @@ const DATA = {
           "line": 189,
           "symbol": "已连接直接 markReady",
           "note": "",
-          "text": "self.syncBtOn()"
+          "text": "guard let self else { return }"
         }
       ],
       "platformEvidence": {
@@ -5665,7 +5665,7 @@ const DATA = {
           "line": 213,
           "symbol": "onPreconnectDone()",
           "note": "",
-          "text": "sessionSince = Date()"
+          "text": "func noteUserConnect() {"
         },
         {
           "platform": "ios",
@@ -5673,7 +5673,7 @@ const DATA = {
           "line": 221,
           "symbol": "resync(mac:from:)",
           "note": "",
-          "text": "}"
+          "text": "if let cur = lastRssi, cur != r { prevRssi = cur }"
         },
         {
           "platform": "ios",
@@ -5681,7 +5681,7 @@ const DATA = {
           "line": 242,
           "symbol": "lastReceipt",
           "note": "",
-          "text": "guard let self else { return }"
+          "text": "// 更正 (第九十一批): 这里原写着\"看门狗 Watchdog (包11) 已每 45s 读 03 自愈\" —— 那句是假的,"
         },
         {
           "platform": "ios",
@@ -5689,7 +5689,7 @@ const DATA = {
           "line": 253,
           "symbol": "applyQueueItem → CredentialOrg.sendQueued",
           "note": "",
-          "text": "lastDeadlockAt = Date()"
+          "text": "guard let self else { return }"
         }
       ],
       "platformEvidence": {
@@ -5910,7 +5910,7 @@ const DATA = {
           "line": 75,
           "symbol": "var linkState",
           "note": "",
-          "text": "var lockSvc: LockService { LockService.shared }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -7503,7 +7503,7 @@ const DATA = {
           "line": 68,
           "symbol": "static var rssiFence",
           "note": "",
-          "text": "// 69: iOS 没有直达\"蓝牙\"面板的 App 级深链, 能跳的只有本 App 的设置页 (与 DiagnosticsView 同一个出口)。"
+          "text": "/// 69 \"去开启\": 系统设置无 App 级深链 API, 只能引导用户自行开启 (文案 + 常驻提示条)"
         },
         {
           "platform": "ios",
@@ -7511,7 +7511,7 @@ const DATA = {
           "line": 151,
           "symbol": "fence 判定",
           "note": "",
-          "text": "if lockSvc.connectedMAC == mac {"
+          "text": "let app = self.app"
         },
         {
           "platform": "ios",
@@ -7602,7 +7602,7 @@ const DATA = {
           "line": 492,
           "symbol": "func scan(mac:timeoutMs:)",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -7610,7 +7610,7 @@ const DATA = {
           "line": 504,
           "symbol": "300ms 轮询 + 取消判据",
           "note": "",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -59602,7 +59602,7 @@ const DATA = {
           "line": 169,
           "symbol": "DS.Haptics.tick 调用点",
           "note": "",
-          "text": "reconnectAttempt += 1"
+          "text": "BleTelemetry.recordAttempt(mac: mac, ok: false, reason: classifyFailure(error).name + \" \" + error.localizedDescription)"
         },
         {
           "platform": "ios",
@@ -59626,7 +59626,7 @@ const DATA = {
           "line": 327,
           "symbol": "success 结果触感",
           "note": "",
-          "text": "let ble = BLEService.shared"
+          "text": "if m.contains(\"未发现\") || m.contains(\"扫描\") || m.contains(\"超时\") {"
         }
       ],
       "platformEvidence": {
