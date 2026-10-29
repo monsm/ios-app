@@ -3,6 +3,12 @@
 // 用 `extension DS { ... }` 保持 `DS.Radius.card` 这种调用形式不变。
 import SwiftUI
 
+/// 设计系统命名空间。
+/// 2026-10-29：`enum DS` 的空壳声明放在这里（原在 DesignSystem.swift）。
+/// 拆分成 4 个文件后，`DS.Space` / `DS.Palette` / `DS.Haptics` 这些调用形式仍要有一个
+/// 类型锚点，各文件的 `extension DS` 才能挂上去。
+enum DS {}
+
 extension DS {
     enum Radius {
         private static var k: CGFloat {
