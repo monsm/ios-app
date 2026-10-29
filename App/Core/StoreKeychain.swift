@@ -2,20 +2,30 @@
 // 2026-10-29 从 Store.swift（621 行）拆出。
 import Foundation
 
+/// 2026-10-29 性能：keychain(mac) 原来每次都 Keychain.fromDict → **4 次 SecItemCopyMatching**
+/// （skey / bkey / ekey / pins 各一次）。全仓 39 个调用点，其中不少在列表与比较式里。
+/// 这里按 mac 缓存整份 Keychain（密钥只在内存），写路径负责失效。
+private let keychainCache = Locked<[String: Keychain]>([:])
+
 extension DB {
     // 钥匙串 (多锁)
     static func keychains() -> [Keychain] {
         let map = store.getDict("kf_keychains")
-        return map.values.compactMap { $0 as? [String: Any] }
+        let list = map.values.compactMap { $0 as? [String: Any] }
             .compactMap { Keychain.fromDict($0) }
             .sorted { ($0.pairedAt) < ($1.pairedAt) }
+        // 顺手把整表填进缓存，后续逐把 keychain(mac) 不必再打 Keychain API。
+        keychainCache.withLock { c in for kc in list { c[normalizeMac(kc.mac)] = kc } }
+        return list
     }
 
     static func keychain(_ mac: String) -> Keychain? {
-        let m = mac.replacingOccurrences(of: ":", with: "").lowercased()
+        let m = normalizeMac(mac)
+        if let hit = keychainCache.withLock({ $0[m] }) { return hit }
         let map = store.getDict("kf_keychains")
-        if let d = map[m] as? [String: Any] { return Keychain.fromDict(d) }
-        return nil
+        guard let d = map[m] as? [String: Any], let kc = Keychain.fromDict(d) else { return nil }
+        keychainCache.withLock { $0[m] = kc }
+        return kc
     }
 
     /// MAC 归一化 —— **全仓唯一入口**（2026-10-27 审核合并，AUDIT-C A11）。
@@ -115,6 +125,9 @@ extension DB {
             var map = store.getDict("kf_keychains")
             map[normalizeMac(kc.mac)] = kc.toDict()
             store.set("kf_keychains", map)
+            // 缓存失效而不是写入 kc：调用方可能带着空 skey 进来（空值不覆盖既有密钥），
+            // 那种情况下把 kc 塞进缓存会把真密钥遮掉。下次读会重新从 plist+Keychain 组装。
+            keychainCache.withLock { $0[normalizeMac(kc.mac)] = nil }
         }
     }
 
@@ -170,6 +183,7 @@ extension DB {
         var map = store.getDict("kf_keychains")
         map.removeValue(forKey: m)
         store.set("kf_keychains", map)
+        keychainCache.withLock { $0[m] = nil }
     }
 
     // 删除设备: 钥匙串 + 每锁数据族 + 指针 (JS removeDevice 全量语义)

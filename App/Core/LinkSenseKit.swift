@@ -62,8 +62,14 @@ final class LinkSense: ObservableObject {
     private init() {}
     /// 69: 跟随 BLEService 的开关变化 (回连循环 2s tick 顺带刷新, 不另起订阅)
     func syncBtOn() {
-        btOn = BLEService.shared.isPoweredOn
-        btDenied = (BLEService.shared.powerState == .unauthorized)
+        // 2026-10-29 性能：这个函数由 reconnectTask **每 2 秒**调一次（见 startReconnectLoop）。
+        // 原来是无条件给两个 @Published 赋值 —— 即使蓝牙状态没变，也每 2 秒发一次 objectWillChange，
+        // 让观察 LinkSense 的 DeviceHomeView 整页重算。等于给整个 App 挂了一个 0.5Hz 的重渲染心跳。
+        // 只在真的变化时赋值。
+        let on = BLEService.shared.isPoweredOn
+        let denied = (BLEService.shared.powerState == .unauthorized)
+        if btOn != on { btOn = on }
+        if btDenied != denied { btDenied = denied }
     }
     /// 69 "去开启": 系统设置无 App 级深链 API, 只能引导用户自行开启 (文案 + 常驻提示条)
     func openBluetoothSettings() {
