@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T17:27:45.775Z",
+    "generated": "2026-10-29T17:37:47.396Z",
     "sources": [
       {
         "scout": "android-native",
@@ -22580,7 +22580,7 @@ const DATA = {
           "line": 205,
           "symbol": "activeSection",
           "note": "排序四档与列表",
-          "text": "title: \"还没有成员\","
+          "text": "if list.isEmpty {"
         },
         {
           "platform": "apk",
@@ -22596,7 +22596,7 @@ const DATA = {
           "line": 222,
           "symbol": "NavigationLink",
           "note": "进 360 详情",
-          "text": "}"
+          "text": "} label: { Label(\"归档\", systemImage: \"archivebox\") }"
         },
         {
           "platform": "ios",
@@ -22604,7 +22604,7 @@ const DATA = {
           "line": 225,
           "symbol": "swipeActions",
           "note": "左滑归档",
-          "text": "Text(\"成员 (\\(list.count))\")"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -22999,7 +22999,7 @@ const DATA = {
           "line": 134,
           "symbol": ".id(tick)",
           "note": "写库后重建",
-          "text": "}"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         }
       ],
       "platformEvidence": {
@@ -23762,7 +23762,7 @@ const DATA = {
           "line": 304,
           "symbol": "archivedSection",
           "note": "归档入口（计数）",
-          "text": "Text(MemberHub.ext(m.id).note)"
+          "text": "if !MemberHub.ext(m.id).note.isEmpty {"
         },
         {
           "platform": "ios",
@@ -24372,7 +24372,7 @@ const DATA = {
           "line": 321,
           "symbol": "sceneSection",
           "note": "本周主责与便签",
-          "text": "// 章里第一段就把这句写在明面上 —— 做不到就说不做，不拿四步里的某一步含糊带过。"
+          "text": "// 否则改了说明书而这里没改，就会出现\"两处教程说法不一致\"。"
         },
         {
           "platform": "ios",
@@ -24380,7 +24380,7 @@ const DATA = {
           "line": 323,
           "symbol": "dutyThisWeek",
           "note": "主责读取",
-          "text": ""
+          "text": "// 章里第一段就把这句写在明面上 —— 做不到就说不做，不拿四步里的某一步含糊带过。"
         },
         {
           "platform": "ios",
@@ -24513,7 +24513,7 @@ const DATA = {
           "line": 252,
           "symbol": "visitorSection",
           "note": "虚拟分组行",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": "Text(\"临时码未归属记录约 \\(opens) 条 · 名下临时码 \\(temps) 条\")"
         },
         {
           "platform": "ios",
@@ -24545,7 +24545,7 @@ const DATA = {
           "line": 299,
           "symbol": "visitorOwns",
           "note": "名下临时码条数",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": "Text(\"本周主责: 未安排 — 在成员的详情页里设置\")   // 481 本周主责"
         }
       ],
       "platformEvidence": {
@@ -25035,7 +25035,7 @@ const DATA = {
           "line": 367,
           "symbol": "struct MemberRow",
           "note": "行声明",
-          "text": "}"
+          "text": "Label(\"归档\", systemImage: \"archivebox\")"
         },
         {
           "platform": "ios",
@@ -25043,7 +25043,7 @@ const DATA = {
           "line": 380,
           "symbol": "MemberRow",
           "note": "称呼（备注）双层文本",
-          "text": "let bits = [member.relation,"
+          "text": "let e = MemberHub.ext(member.id)"
         },
         {
           "platform": "ios",
@@ -25051,7 +25051,7 @@ const DATA = {
           "line": 385,
           "symbol": "MemberRow",
           "note": "同名待合并",
-          "text": "return Text(bits.isEmpty ? \"暂无台账凭证\" : bits.joined(separator: \" · \"))"
+          "text": "a.owns > 0 ? \"名下 \" + String(a.owns) + \" 条\" : \"\"]"
         },
         {
           "platform": "ios",
@@ -25059,7 +25059,7 @@ const DATA = {
           "line": 432,
           "symbol": "subLine",
           "note": "副行四段",
-          "text": "Circle()"
+          "text": "let ch = String(member.name.prefix(1))"
         },
         {
           "platform": "ios",
@@ -25067,7 +25067,7 @@ const DATA = {
           "line": 448,
           "symbol": "staleTag",
           "note": "久未用/活跃 (约)",
-          "text": "}"
+          "text": ".foregroundStyle(base)"
         }
       ],
       "platformEvidence": {
@@ -25735,7 +25735,7 @@ const DATA = {
           "line": 216,
           "symbol": "EmptyState",
           "note": "空态建档向导按钮",
-          "text": "var e = MemberHub.ext(m.id)"
+          "text": "// 460/795 归档不蒸发: 左滑归档保留历史不删除 (再次左滑恢复在归档列表)"
         },
         {
           "platform": "ios",
@@ -57298,7 +57298,7 @@ const DATA = {
           "line": 439,
           "symbol": "kf_ledger_",
           "note": "族删前缀清单起点",
-          "text": "let salt = rec[\"s\"] ?? \"\""
+          "text": "/// 验证胁迫码。没设过则恒 false。"
         }
       ],
       "platformEvidence": {
@@ -57361,7 +57361,7 @@ const DATA = {
           "line": 374,
           "symbol": "saveKeychain",
           "note": "密钥不再明文写 plist, 改存系统 Keychain",
-          "text": "[\"s\": salt, \"d\": fnv1a32(salt + pw), \"d2\": pcStrong(pw, salt: salt)]"
+          "text": "/// 同时写强摘要 d2 与旧 FNV 摘要 d:"
         }
       ],
       "platformEvidence": {
@@ -60536,7 +60536,7 @@ const DATA = {
           "line": 435,
           "symbol": "removeDevice(_:)",
           "note": "",
-          "text": ""
+          "text": "set(passcodeDigest(code), duressKey)"
         },
         {
           "platform": "ios",
@@ -60704,7 +60704,7 @@ const DATA = {
           "line": 228,
           "symbol": "MemberHub.saveExt",
           "note": "归档写入示例",
-          "text": "+ \"「久未用」判的是近 30 天没有可证明归属的开门, 标在每行行尾; \"   // 262/466 久未用"
+          "text": "} footer: {"
         },
         {
           "platform": "ios",
@@ -61450,7 +61450,7 @@ const DATA = {
           "line": 290,
           "symbol": "DefendCfg",
           "note": "",
-          "text": "merged = Dongle(mac: d.mac,"
+          "text": "var map = store.getDict(\"kf_keychain_dongles\")"
         },
         {
           "platform": "ios",
@@ -61458,7 +61458,7 @@ const DATA = {
           "line": 261,
           "symbol": "DongleStat",
           "note": "",
-          "text": "claims = claims.filter { $0.value != id }"
+          "text": "// 已删 id 既显示不出人, 又因 claims 里仍有该 id 而**永远无法重新认领** (悬空引用)。"
         },
         {
           "platform": "ios",
@@ -61466,7 +61466,7 @@ const DATA = {
           "line": 272,
           "symbol": "Gateway",
           "note": "",
-          "text": "duty = duty.filter { $0.value != id }"
+          "text": "var duty = store.get([String: String].self, \"kf_duty_week\") ?? [:]"
         }
       ],
       "platformEvidence": {
@@ -61802,7 +61802,7 @@ const DATA = {
           "line": 223,
           "symbol": "CachedLog",
           "note": "",
-          "text": "let used = Set(members().map { $0.color })"
+          "text": "if n.isEmpty || existing.contains(where: { $0.name == n }) { return nil }"
         }
       ],
       "platformEvidence": {
@@ -62090,7 +62090,7 @@ const DATA = {
           "line": 350,
           "symbol": "migrateSecretsToKeychain()",
           "note": "",
-          "text": "/// 于是：① 应用锁界面出现，但任何输入都验不过 → 用户被永久锁在外面；"
+          "text": "///"
         },
         {
           "platform": "ios",
@@ -62098,7 +62098,7 @@ const DATA = {
           "line": 361,
           "symbol": "stored",
           "note": "stored || set 成功才 removeValue",
-          "text": "/// 门禁口令摘要轮数 (PBKDF2-HMAC-SHA256)"
+          "text": "let hasLegacy = !(rec[\"d\"] ?? \"\").isEmpty"
         }
       ],
       "platformEvidence": {
@@ -62248,7 +62248,7 @@ const DATA = {
           "line": 374,
           "symbol": "saveKeychain(_:)",
           "note": "",
-          "text": "[\"s\": salt, \"d\": fnv1a32(salt + pw), \"d2\": pcStrong(pw, salt: salt)]"
+          "text": "/// 同时写强摘要 d2 与旧 FNV 摘要 d:"
         },
         {
           "platform": "ios",
@@ -62256,7 +62256,7 @@ const DATA = {
           "line": 425,
           "symbol": "removeKeychain(_:)",
           "note": "",
-          "text": "static func setDuressCode(_ code: String?) -> Bool {"
+          "text": "/// 返回 false 表示输入不合法（\u003c4 位 / 非纯数字 / 与正常密码相同）。"
         },
         {
           "platform": "ios",
@@ -62264,7 +62264,7 @@ const DATA = {
           "line": 438,
           "symbol": "removeDevice",
           "note": "clearPendingPair",
-          "text": "guard let rec = get([String: String].self, duressKey) else { return false }"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -63834,7 +63834,7 @@ const DATA = {
           "line": 462,
           "symbol": "k.contains(m)",
           "note": "for k in store.keys() where k.contains(m)",
-          "text": ""
+          "text": "}"
         }
       ],
       "platformEvidence": {

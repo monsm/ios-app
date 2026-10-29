@@ -108,7 +108,9 @@ struct MemberCenterView: View {
                 NavigationStack {
                     List {
                         Section("成员名册") {   // 415 成员名册
-                            Text("共 \(DB.members().count) 位成员 · 文件 "
+                            // 2026-10-30 性能：members() 一次取（原两处各调一次）。
+                            let memberCount = DB.members().count
+                            Text("共 \(memberCount) 位成员 · 文件 "
                                  + (rosterURL?.lastPathComponent ?? "生成失败"))
                                 .vkFont(.subheadline)
                                 .foregroundStyle(DS.Palette.text)

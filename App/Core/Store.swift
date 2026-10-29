@@ -217,11 +217,14 @@ enum DB {
     static let memberPalette = ["#818CF8", "#4ADE80", "#F59E0B", "#FB7185", "#22D3EE", "#94A3B8"]
     static func addMember(_ name: String) -> Member? {
         let n = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        if n.isEmpty || members().contains(where: { $0.name == n }) { return nil }
+        // 2026-10-30 性能：`members()` 原来在本函数里被调 4 次（contains / map / count ×2），
+        // 每次都是一份数组拷贝（派生缓存只免了 fromDict，没免拷贝）。一次取。
+        let existing = members()
+        if n.isEmpty || existing.contains(where: { $0.name == n }) { return nil }
         // 2026-10-14: 旧写法按 count % 6 取色 —— 删成员后 count 回退会与现存成员撞色 (头像/时间线靠色区分)。
         // 先挑一个当前没被占用的色, 六色用满才按人数轮转。
-        let used = Set(members().map { $0.color })
-        let color = memberPalette.first { !used.contains($0) } ?? memberPalette[members().count % memberPalette.count]
+        let used = Set(existing.map { $0.color })
+        let color = memberPalette.first { !used.contains($0) } ?? memberPalette[existing.count % memberPalette.count]
         let m = Member(id: UUID().uuidString.prefix(8).description, name: n,
                        color: color,   // 259: 建档即分配, 不再全员品牌靛蓝
                        at: Date().timeIntervalSince1970 * 1000)
