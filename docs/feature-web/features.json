@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T11:23:29.764Z",
+    "generated": "2026-10-29T11:28:49.053Z",
     "sources": [
       {
         "scout": "android-native",
@@ -33143,7 +33143,7 @@
           "line": 192,
           "symbol": "localDay",
           "note": "",
-          "text": "list.append(DiagLogEntry(date: date, time: time, level: level, msg: msg))"
+          "text": "list.insert(BleEvent(at: DiagTime.mmddHHmm(), what: what, ok: ok), at: 0)"
         },
         {
           "platform": "ios",
@@ -33151,7 +33151,7 @@
           "line": 229,
           "symbol": "append(_:_:date:time:)",
           "note": "",
-          "text": "static var attempts: [ConnAttempt] { DB.store.get([ConnAttempt].self, \"kf_conn_attempts\") ?? [] }"
+          "text": "enum DiagFlags {"
         },
         {
           "platform": "ios",
@@ -33159,7 +33159,7 @@
           "line": 224,
           "symbol": "today()",
           "note": "",
-          "text": "var list = DB.store.get([ConnAttempt].self, \"kf_conn_attempts\") ?? []"
+          "text": "// 而不是把这个 enum 贴回来。 (本段第一版我写成\"LockService 没有串行化原语\"，是错的 ——"
         }
       ],
       "platformEvidence": {
