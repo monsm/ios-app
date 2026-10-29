@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T13:13:36.005Z",
+    "generated": "2026-10-29T13:21:17.109Z",
     "sources": [
       {
         "scout": "android-native",
@@ -2624,7 +2624,7 @@
           "line": 367,
           "symbol": "cmd35GWReboot()",
           "note": "",
-          "text": "case 0x01: s.wifimac = k.val // 原始字节序 hex"
+          "text": "return st"
         }
       ],
       "platformEvidence": {
@@ -2705,7 +2705,7 @@
           "line": 351,
           "symbol": "ZKCmdBuilder.cmd31GWSetWifi",
           "note": "",
-          "text": "// ================= 网关 (App 网关六页离线等价) ================="
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -4189,7 +4189,7 @@
           "line": 174,
           "symbol": "cmd43KeychainStatus([])",
           "note": "",
-          "text": "// 而 writeFrameHex 在 Task 外无条件执行 => 判忙时帧仍被发出 -> 错帧。"
+          "text": "throw BLEErrorX.msg(\"搜索设备超时\")"
         },
         {
           "platform": "ios",
@@ -4280,7 +4280,7 @@
           "line": 238,
           "symbol": "cmd41WriteEkey(lock.mac…)",
           "note": "",
-          "text": "s.power = direct(0x11) ?? -1"
+          "text": "nonisolated static func parseKCStatus(_ klvs: [ZKLV]) -> DongleStat {"
         },
         {
           "platform": "ios",
@@ -40118,7 +40118,7 @@
           "line": 290,
           "symbol": "HardwareService",
           "note": "网关段",
-          "text": "/// 与 `writeDongleKey` 的唯一区别是 PIN 来源：APK 用 `Math.floor(1e4 * Math.random())`"
+          "text": "rec.lastKeyAt = DF.iso().string(from: Date())"
         },
         {
           "platform": "ios",
@@ -40352,7 +40352,7 @@
           "line": 72,
           "symbol": "pidFor",
           "note": "钥匙串型号恒为 ZKBBV1",
-          "text": "// 后果：伪造一份含目标 MAC 的广播并暴露 6E400001 服务，App 就会连到他，"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -48483,7 +48483,7 @@
           "line": 292,
           "symbol": "readGatewayState",
           "note": "网关侧只用 38/31/35",
-          "text": "///"
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -48579,7 +48579,7 @@
           "line": 351,
           "symbol": "provisionGateway",
           "note": "timeoutMs: 10000",
-          "text": "// ================= 网关 (App 网关六页离线等价) ================="
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -48595,7 +48595,7 @@
           "line": 352,
           "symbol": "provisionGateway",
           "note": "errCodeOf 取 KLV#01",
-          "text": "/// cmd 38 状态 (App Oo.parseKlv: 01/04/05 双重反转即原始字节序 → ASCII)"
+          "text": "private func rcOf(_ f: ZKProtocol.ParsedFrame) -> Int {"
         },
         {
           "platform": "ios",
@@ -48718,7 +48718,7 @@
           "line": 324,
           "symbol": "provisionGateway",
           "note": "配网链只用 38/31/35",
-          "text": "// 返回码在 KLV#03；基线 keychain.js:176 写明\"无 rc KLV (如 44/43 无状态位) — 调用层自行决定\" ⇒"
+          "text": "let rc = rcOf(f)"
         },
         {
           "platform": "apk",
@@ -48814,7 +48814,7 @@
           "line": 355,
           "symbol": "provisionGateway",
           "note": "",
-          "text": "let st = HardwareService.parseGWStatus(f.klvs)"
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -48830,7 +48830,7 @@
           "line": 367,
           "symbol": "rebootGateway",
           "note": "",
-          "text": "case 0x01: s.wifimac = k.val // 原始字节序 hex"
+          "text": "return st"
         }
       ],
       "platformEvidence": {
@@ -48923,7 +48923,7 @@
           "line": 303,
           "symbol": "parseGWStatus",
           "note": "",
-          "text": "trackId: KeyGen.genTrackId())"
+          "text": "let vf = ZKCmdBuilder.protoSecU32(\"2010-01-01 00:00:00\")"
         },
         {
           "platform": "apk",
@@ -49037,7 +49037,7 @@
           "line": 238,
           "symbol": "writeDongleKey",
           "note": "",
-          "text": "s.power = direct(0x11) ?? -1"
+          "text": "nonisolated static func parseKCStatus(_ klvs: [ZKLV]) -> DongleStat {"
         },
         {
           "platform": "apk",
@@ -49053,7 +49053,7 @@
           "line": 250,
           "symbol": "deleteDongleKey",
           "note": "空 ekey = 删除",
-          "text": "nonisolated static func dotted3(_ hex: String) -> String {"
+          "text": "s.eCtrl = klvs.first(where: { $0.key == 0x35 }).map { HardwareService.dotted3($0.val) } ?? \"\""
         },
         {
           "platform": "ios",
@@ -49164,7 +49164,7 @@
           "line": 174,
           "symbol": "readDongleState",
           "note": "恒传 []",
-          "text": "// 而 writeFrameHex 在 Task 外无条件执行 => 判忙时帧仍被发出 -> 错帧。"
+          "text": "throw BLEErrorX.msg(\"搜索设备超时\")"
         },
         {
           "platform": "apk",
@@ -49180,7 +49180,7 @@
           "line": 180,
           "symbol": "readDongleState",
           "note": "rc 门禁",
-          "text": "self.waiter = nil"
+          "text": "// 而 writeFrameHex 在 Task 外无条件执行 => 判忙时帧仍被发出 -> 错帧。"
         }
       ],
       "platformEvidence": {
@@ -49274,7 +49274,7 @@
           "line": 256,
           "symbol": "dongleKeys",
           "note": "",
-          "text": "func v(_ off: Int) -> Int { Int(hex.dropFirst(off).prefix(2), radix: 16) ?? 0 }"
+          "text": "nonisolated static func dotted3(_ hex: String) -> String {"
         },
         {
           "platform": "apk",
@@ -49290,7 +49290,7 @@
           "line": 262,
           "symbol": "dongleKeys",
           "note": "rc>0 拒绝，勿误报空",
-          "text": "// 4294938496 (≈2146) ⇒ 写进硬件钥匙的凭证窗口永远不生效 (同 0A/14 的真机勘误)"
+          "text": "func v(_ off: Int) -> Int { Int(hex.dropFirst(off).prefix(2), radix: 16) ?? 0 }"
         }
       ],
       "platformEvidence": {
@@ -49885,7 +49885,7 @@
           "line": 346,
           "symbol": "errCodeOf",
           "note": "",
-          "text": "private func rcOf(_ f: ZKProtocol.ParsedFrame) -> Int {"
+          "text": "while h.distance(from: i, to: h.endIndex) >= 12 {"
         },
         {
           "platform": "ios",
@@ -49901,7 +49901,7 @@
           "line": 285,
           "symbol": "rcOf",
           "note": "",
-          "text": "DB.saveDongle(rec)"
+          "text": "if rc == 3 { throw BLEErrorX.msg(\"命令不在有效期，请将手机时间同步到锁内\") }"
         }
       ],
       "platformEvidence": {
@@ -49979,7 +49979,7 @@
           "line": 324,
           "symbol": "provisionGateway",
           "note": "链中没有 32",
-          "text": "// 返回码在 KLV#03；基线 keychain.js:176 写明\"无 rc KLV (如 44/43 无状态位) — 调用层自行决定\" ⇒"
+          "text": "let rc = rcOf(f)"
         }
       ],
       "platformEvidence": {
@@ -50043,7 +50043,7 @@
           "line": 324,
           "symbol": "provisionGateway",
           "note": "",
-          "text": "// 返回码在 KLV#03；基线 keychain.js:176 写明\"无 rc KLV (如 44/43 无状态位) — 调用层自行决定\" ⇒"
+          "text": "let rc = rcOf(f)"
         },
         {
           "platform": "ios",
@@ -50051,7 +50051,7 @@
           "line": 345,
           "symbol": "provisionGateway",
           "note": "pid 落库",
-          "text": "}"
+          "text": "var i = h.startIndex"
         },
         {
           "platform": "ios",
@@ -50059,7 +50059,7 @@
           "line": 353,
           "symbol": "provisionGateway",
           "note": "31 errCode",
-          "text": "func readGatewayState(mac: String) async throws -> GatewayState {"
+          "text": "guard let k = f.klvs.first(where: { $0.key == 0x03 }) else { return -1 }"
         },
         {
           "platform": "ios",
@@ -50067,7 +50067,7 @@
           "line": 362,
           "symbol": "provisionGateway",
           "note": "结束断开",
-          "text": "}"
+          "text": "var rec = DB.gateway(mac) ?? Gateway(mac: mac)"
         }
       ],
       "platformEvidence": {
@@ -50143,7 +50143,7 @@
           "line": 366,
           "symbol": "rebootGateway",
           "note": "",
-          "text": "switch k.key {"
+          "text": "log(\"网关状态: rom \\(st.romVer), ssid \\(st.ssid), 联网 \\(st.netState == 1 ? \"是\" : \"否\")\")"
         },
         {
           "platform": "ios",
@@ -50213,7 +50213,7 @@
           "line": 81,
           "symbol": "scanForPIDs",
           "note": "",
-          "text": "log(\"连接后身份不符: 设备 pid=\\(remotePid) 与登记的 \\(knownPid) 不一致 → 已断开\")"
+          "text": "do {"
         },
         {
           "platform": "ios",
@@ -50221,7 +50221,7 @@
           "line": 92,
           "symbol": "scanForPIDs",
           "note": "resetRequired 门禁",
-          "text": "}"
+          "text": "throw e"
         },
         {
           "platform": "ios",
@@ -50229,7 +50229,7 @@
           "line": 105,
           "symbol": "scanForPID",
           "note": "无 pid 拒绝盲连",
-          "text": "private func gatewayRecord(_ mac: String) -> Gateway? { DB.gateway(mac) }"
+          "text": "guard !target.isEmpty else { throw BLEErrorX.msg(\"内部错误: 复核时没有连接目标\") }"
         }
       ],
       "platformEvidence": {
@@ -50300,7 +50300,7 @@
           "line": 292,
           "symbol": "readGatewayState",
           "note": "",
-          "text": "///"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -50308,7 +50308,7 @@
           "line": 303,
           "symbol": "parseGWStatus",
           "note": "",
-          "text": "trackId: KeyGen.genTrackId())"
+          "text": "let vf = ZKCmdBuilder.protoSecU32(\"2010-01-01 00:00:00\")"
         },
         {
           "platform": "ios",
@@ -50316,7 +50316,7 @@
           "line": 311,
           "symbol": "parseGWStatus",
           "note": "版本 ASCII 回退",
-          "text": "if rc == 3 { throw BLEErrorX.msg(\"命令不在有效期，请将手机时间同步到锁内\") }"
+          "text": "throw BLEErrorX.msg(\"假钥匙签发失败（skey 非法），已中止\")"
         }
       ],
       "platformEvidence": {
@@ -50650,7 +50650,7 @@
           "line": 255,
           "symbol": "dongleKeys",
           "note": "",
-          "text": "guard hex.count == 6 else { return hex }"
+          "text": "/// **原样返回那段十六进制** ⇒ 一次长度不对的读数会在界面上显示成一个假版本号，还会被写进备份包。"
         },
         {
           "platform": "ios",
@@ -50658,7 +50658,7 @@
           "line": 262,
           "symbol": "dongleKeys",
           "note": "rc 与「空」的区别",
-          "text": "// 4294938496 (≈2146) ⇒ 写进硬件钥匙的凭证窗口永远不生效 (同 0A/14 的真机勘误)"
+          "text": "func v(_ off: Int) -> Int { Int(hex.dropFirst(off).prefix(2), radix: 16) ?? 0 }"
         }
       ],
       "platformEvidence": {
@@ -50720,7 +50720,7 @@
           "line": 112,
           "symbol": "scanForDongle",
           "note": "",
-          "text": "}"
+          "text": "private func pidFor(_ mac: String) -> Int? {"
         },
         {
           "platform": "ios",
@@ -50728,7 +50728,7 @@
           "line": 118,
           "symbol": "scanForDongle",
           "note": "pid 门禁 + macRaw",
-          "text": "throw BLEErrorX.msg(\"台账缺少该设备的型号 (pid), 拒绝按广播盲连 — 请先在 App 内连接门锁刷新档案\")"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -50736,7 +50736,7 @@
           "line": 129,
           "symbol": "scanForDongle",
           "note": "超时文案",
-          "text": "return d.deviceId"
+          "text": "while Date() < deadline {"
         }
       ],
       "platformEvidence": {
@@ -50805,7 +50805,7 @@
           "line": 173,
           "symbol": "readDongleState",
           "note": "",
-          "text": "// 忙判必须在写之前 (与 LockService.request 同款修复, 2026-10-14): 旧判据在 Task 内,"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -50813,7 +50813,7 @@
           "line": 182,
           "symbol": "readDongleState",
           "note": "rc=3 专用文案",
-          "text": "}"
+          "text": "let task = Task<ZKProtocol.ParsedFrame, Error> { @MainActor in"
         },
         {
           "platform": "ios",
@@ -50821,7 +50821,7 @@
           "line": 186,
           "symbol": "readDongleState",
           "note": "只在此后写库",
-          "text": "cont.resume(throwing: BLEErrorX.msg(\"已有命令在等待响应\"))"
+          "text": "self.waiter = nil"
         }
       ],
       "platformEvidence": {
@@ -50890,7 +50890,7 @@
           "line": 222,
           "symbol": "writeDongleKey",
           "note": "",
-          "text": "throw BLEErrorX.msg(\"钥匙串返回失败码 \" + StatusParser.rcMessage(rc) + \"，本次读数未采纳 (上一次的好数据仍留着)\")"
+          "text": "// parseKCStatus 于是全部给默认值，而这一份\"全没读到\"会被**当成一次真实读数覆盖上一次的好数据**，"
         },
         {
           "platform": "ios",
@@ -50898,7 +50898,7 @@
           "line": 244,
           "symbol": "writeDongleKey",
           "note": "写成功才更新台账",
-          "text": "s.eCtrl = klvs.first(where: { $0.key == 0x35 }).map { HardwareService.dotted3($0.val) } ?? \"\""
+          "text": "s.power = direct(0x11) ?? -1"
         },
         {
           "platform": "ios",
@@ -50906,7 +50906,7 @@
           "line": 249,
           "symbol": "deleteDongleKey",
           "note": "",
-          "text": "/// **原样返回那段十六进制** ⇒ 一次长度不对的读数会在界面上显示成一个假版本号，还会被写进备份包。"
+          "text": "s.pid = klvs.first(where: { $0.key == 0x34 }).map { Int(StatusParser.leHexToU32($0.val)) } ?? 0"
         }
       ],
       "platformEvidence": {
@@ -52652,7 +52652,7 @@
           "line": 285,
           "symbol": "rcOf",
           "note": "钥匙串统一用 KLV#03",
-          "text": "DB.saveDongle(rec)"
+          "text": "if rc == 3 { throw BLEErrorX.msg(\"命令不在有效期，请将手机时间同步到锁内\") }"
         },
         {
           "platform": "ios",
@@ -55023,7 +55023,7 @@
           "line": 229,
           "symbol": "writeDongleKey",
           "note": "缺 PIN 拒绝",
-          "text": "log(\"状态: 电量 \\(st.power), 钥匙 \\(st.ekeyCount)/\\(st.ekeyAmount), 固件 \\(st.firmware)\")"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -55031,7 +55031,7 @@
           "line": 235,
           "symbol": "writeDongleKey",
           "note": "空 ekey 拒绝",
-          "text": "// KLV#03 (返回码) 不在这里落：DongleStat 没有 rc 字段，判 rc 的是调用方 readDongleState (走 rcOf)。"
+          "text": "log(\"状态: 电量 \\(st.power), 钥匙 \\(st.ekeyCount)/\\(st.ekeyAmount), 固件 \\(st.firmware)\")"
         },
         {
           "platform": "ios",
@@ -55039,7 +55039,7 @@
           "line": 250,
           "symbol": "deleteDongleKey",
           "note": "空串 = 删除",
-          "text": "nonisolated static func dotted3(_ hex: String) -> String {"
+          "text": "s.eCtrl = klvs.first(where: { $0.key == 0x35 }).map { HardwareService.dotted3($0.val) } ?? \"\""
         },
         {
           "platform": "ios",
@@ -55047,7 +55047,7 @@
           "line": 225,
           "symbol": "writeDongleKey",
           "note": "2010~2118 窗口",
-          "text": "var rec = DB.dongle(mac) ?? Dongle(mac: mac)"
+          "text": "let rc = rcOf(f)"
         }
       ],
       "platformEvidence": {
@@ -55125,7 +55125,7 @@
           "line": 194,
           "symbol": "parseKCStatus",
           "note": "",
-          "text": "if debugRaw { log(\"TX hex=\\(cmdObj.hex)\") }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -55133,7 +55133,7 @@
           "line": 200,
           "symbol": "parseKCStatus",
           "note": "power 缺省 -1",
-          "text": "w.cont.resume(throwing: error)"
+          "text": "if debugRaw { log(\"TX hex=\\(cmdObj.hex)\") }"
         },
         {
           "platform": "ios",
@@ -55141,7 +55141,7 @@
           "line": 212,
           "symbol": "dotted3",
           "note": "",
-          "text": "func readDongleState(mac: String) async throws -> DongleStat {"
+          "text": "return frame"
         },
         {
           "platform": "ios",
@@ -55149,7 +55149,7 @@
           "line": 185,
           "symbol": "readDongleState",
           "note": "rc 通过后才 parse+落库",
-          "text": "if self.waiter != nil {"
+          "text": "guard let w = self.waiter, w.cmd == cmdObj.cmd else { return }"
         }
       ],
       "platformEvidence": {
@@ -55226,7 +55226,7 @@
           "line": 274,
           "symbol": "parseEkeyMacs",
           "note": "",
-          "text": "throw BLEErrorX.msg(\"ekey 签发失败 (skey 非法或 PIN 不可解析), 已中止写入硬件钥匙\")"
+          "text": "throw BLEErrorX.msg(\"该锁的钥匙串没有 PIN 池, 无法为硬件钥匙签发凭证 (已拒绝, 不回落默认 PIN)\")"
         },
         {
           "platform": "ios",
@@ -55234,7 +55234,7 @@
           "line": 263,
           "symbol": "dongleKeys",
           "note": "无 KLV#04 → 空数组",
-          "text": "let vf = ZKCmdBuilder.protoSecU32(\"2010-01-01 00:00:00\")"
+          "text": "return \"\\(v(4)).\\(v(2)).\\(v(0))\""
         }
       ],
       "platformEvidence": {

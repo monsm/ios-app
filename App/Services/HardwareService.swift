@@ -33,6 +33,12 @@ final class HardwareService: ObservableObject {
         ble.onFrame { [weak self] frame in
             Task { @MainActor in
                 guard let self, let w = self.waiter, frame.cmd == w.cmd else { return }
+                // 2026-10-29 修复：原来这里只清 waiter、**不取消超时定时器**。
+                // 那个 DispatchWorkItem 到期时只判 `waiter?.cmd == cmdObj.cmd` —— 若此刻正好有
+                // **同 cmd** 的新命令在等（加密狗读写全是重复 cmd），陈旧定时器会把新 waiter
+                // 当成自己的、以「响应超时」杀掉，而真正的回包到达时已无 waiter 可接 ——
+                // 表现为「偶发一条命令莫名超时、重试才好」。
+                w.timer?.cancel()
                 self.waiter = nil
                 w.cont.resume(returning: frame)
             }
