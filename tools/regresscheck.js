@@ -183,6 +183,36 @@ const checks = [
     file: 'App/UI/DeviceHomeView.swift',
     must: ['let defend = DB.defend(kc.mac)'],
   },
+  {
+    name: 'R33 RSSI 从广播级发布改节流（第 10 轮）',
+    file: 'App/Core/LinkSenseKit.swift',
+    must: ['lastRssiPublishAt'],
+  },
+  {
+    name: 'R34 buildRecs memberName 建表（第 34 轮）',
+    file: 'App/Core/RecordSearchBuild.swift',
+    must: ['let memberNames = Dictionary(members.map', 'return memberNames[id]'],
+  },
+  {
+    name: 'R35 viewdbcheck 排除写侧（第 36 轮）',
+    file: 'tools/viewdbcheck.js',
+    must: ['setInt|setDouble|setCodable|remove'],
+  },
+  {
+    name: 'R36 DongleView 一次取（第 35 轮）',
+    file: 'App/UI/DongleView.swift',
+    must: ['let allDongles = DB.dongles()'],
+  },
+  {
+    name: 'R37 冷启动链路（第 37 轮复核，无改动 —— 断言放在有实体改动的文件）',
+    file: 'App/Core/LinkSenseReconnect.swift',
+    must: ['AutoOpenController.shared.tickDwell(mac: mac)', 'reconnectAttempt = min(kind + 1, LinkSense.ladderSeconds.count)'],
+  },
+  {
+    name: 'R39 扫描引用计数两个出口都还票（第 38 轮）',
+    file: 'App/Services/BLEService.swift',
+    must: ['scanRefLock.withLock { n -> Int in', 'scanRefLock.withLock { $0 = max(0, $0 - 1) }', 'scanRefLock.withLock { $0 += 1 }'],
+  },
 ];
 
 let bad = 0;
