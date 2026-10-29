@@ -1089,7 +1089,7 @@ struct CredentialsView: View {
             preferredStyle: .alert)
         alert.addTextField { tf in
             tf.placeholder = "前缀"
-            tf.autocorrectionDisabled = true
+            tf.autocorrectionType = .no   // UITextField 没有 autocorrectionDisabled（那是 SwiftUI 的）
         }
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         alert.addAction(UIAlertAction(title: "加前缀", style: .default) { _ in
