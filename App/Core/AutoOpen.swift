@@ -44,6 +44,15 @@ enum AutoOpen {
         var at: String        // 手机侧 mm-dd HH:mm
         var mac: String
         var reason: String    // 门名 + 拒因 (哪道门 F0-F6)
+
+    enum CodingKeys: String, CodingKey { case at, mac, reason }
+    init(at: String, mac: String, reason: String) { self.at = at; self.mac = mac; self.reason = reason }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        at = try c.decodeIfPresent(String.self, forKey: .at) ?? ""
+        mac = try c.decodeIfPresent(String.self, forKey: .mac) ?? ""
+        reason = try c.decodeIfPresent(String.self, forKey: .reason) ?? ""
+    }
     }
     static func audit(_ mac: String, _ reason: String) {
         var list = audits(mac)

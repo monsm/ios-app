@@ -187,6 +187,15 @@ enum CredentialOrg {
         var label: String    // 313 四选一的中文标签
         var at: Double
         var via: String      // 真实来源只有本机这几条路径, 不写"操作端"这种无法证实的值
+
+    enum CodingKeys: String, CodingKey { case label, at, via }
+    init(label: String, at: Double, via: String) { self.label = label; self.at = at; self.via = via }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        label = try c.decodeIfPresent(String.self, forKey: .label) ?? ""
+        at = try c.decodeIfPresent(Double.self, forKey: .at) ?? 0
+        via = try c.decodeIfPresent(String.self, forKey: .via) ?? ""
+    }
     }
     /// 2026-10-27 七轮：`kf_cdisrea_` 停用便签**保留** —— 它是停用功能的一部分，
     /// 不是死键（disableMark / disableMarks / setDisableMark 三处都在用）。
@@ -432,6 +441,30 @@ enum CredentialOrg {
         var note: String
         var batch: Int
         var at: Double
+
+    enum CodingKeys: String, CodingKey {
+        case step, kind, pwd, permanent, fromISO, toISO, owner, useTemplate, note, batch, at
+    }
+    init(step: Int, kind: Int, pwd: String, permanent: Bool, fromISO: String, toISO: String,
+         owner: String?, useTemplate: Bool, note: String, batch: Int, at: Double) {
+        self.step = step; self.kind = kind; self.pwd = pwd; self.permanent = permanent
+        self.fromISO = fromISO; self.toISO = toISO; self.owner = owner
+        self.useTemplate = useTemplate; self.note = note; self.batch = batch; self.at = at
+    }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        step = try c.decodeIfPresent(Int.self, forKey: .step) ?? 0
+        kind = try c.decodeIfPresent(Int.self, forKey: .kind) ?? 0
+        pwd = try c.decodeIfPresent(String.self, forKey: .pwd) ?? ""
+        permanent = try c.decodeIfPresent(Bool.self, forKey: .permanent) ?? false
+        fromISO = try c.decodeIfPresent(String.self, forKey: .fromISO) ?? ""
+        toISO = try c.decodeIfPresent(String.self, forKey: .toISO) ?? ""
+        owner = try c.decodeIfPresent(String.self, forKey: .owner)
+        useTemplate = try c.decodeIfPresent(Bool.self, forKey: .useTemplate) ?? false
+        note = try c.decodeIfPresent(String.self, forKey: .note) ?? ""
+        batch = try c.decodeIfPresent(Int.self, forKey: .batch) ?? 0
+        at = try c.decodeIfPresent(Double.self, forKey: .at) ?? 0
+    }
     }
     static func draft(_ mac: String) -> StudioDraft? {
         DB.get(StudioDraft.self, "kf_cdraft_" + mac)

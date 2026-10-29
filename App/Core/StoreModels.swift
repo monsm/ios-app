@@ -345,6 +345,23 @@ struct DongleStat: Codable {
     var firmware: String = ""
     var pid: Int = 0
     var eCtrl: String = ""
+
+    enum CodingKeys: String, CodingKey { case power, absPower, ekeyCount, ekeyAmount, firmware, pid, eCtrl }
+    init(power: Int = -1, absPower: Int = -1, ekeyCount: Int = -1, ekeyAmount: Int = -1,
+         firmware: String = "", pid: Int = 0, eCtrl: String = "") {
+        self.power = power; self.absPower = absPower; self.ekeyCount = ekeyCount
+        self.ekeyAmount = ekeyAmount; self.firmware = firmware; self.pid = pid; self.eCtrl = eCtrl
+    }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        power = try c.decodeIfPresent(Int.self, forKey: .power) ?? -1
+        absPower = try c.decodeIfPresent(Int.self, forKey: .absPower) ?? -1
+        ekeyCount = try c.decodeIfPresent(Int.self, forKey: .ekeyCount) ?? -1
+        ekeyAmount = try c.decodeIfPresent(Int.self, forKey: .ekeyAmount) ?? -1
+        firmware = try c.decodeIfPresent(String.self, forKey: .firmware) ?? ""
+        pid = try c.decodeIfPresent(Int.self, forKey: .pid) ?? 0
+        eCtrl = try c.decodeIfPresent(String.self, forKey: .eCtrl) ?? ""
+    }
 }
 
 // ---------- 网关台账 ----------

@@ -43,6 +43,14 @@ struct DiagOp: Codable, Identifiable {
     var t: String            // MM-dd HH:mm:ss
     var label: String
     var id: String { t + label }
+
+    enum CodingKeys: String, CodingKey { case t, label }
+    init(t: String, label: String) { self.t = t; self.label = label }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        t = try c.decodeIfPresent(String.self, forKey: .t) ?? ""
+        label = try c.decodeIfPresent(String.self, forKey: .label) ?? ""
+    }
 }
 enum DiagOps {
     static let on = "kf_diag_ops_on"      // 156 开关 (诊断页)
@@ -85,6 +93,16 @@ struct DiagLogEntry: Codable, Identifiable {
     var level: String       // info / warn / error
     var msg: String
     var id: String { date + time + level + msg }
+
+    enum CodingKeys: String, CodingKey { case date, time, level, msg }
+    init(date: String, time: String, level: String, msg: String) { self.date = date; self.time = time; self.level = level; self.msg = msg }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        date = try c.decodeIfPresent(String.self, forKey: .date) ?? ""
+        time = try c.decodeIfPresent(String.self, forKey: .time) ?? ""
+        level = try c.decodeIfPresent(String.self, forKey: .level) ?? "info"
+        msg = try c.decodeIfPresent(String.self, forKey: .msg) ?? ""
+    }
 }
 enum DiagLogs {
     static let retentionKey = "kf_diag_log_retention"  // 751: "" 全部 / "365" / "90"
@@ -179,12 +197,31 @@ struct BleEvent: Codable, Identifiable {
     var what: String        // 扫描/连接成功/连接失败/断开
     var ok: Bool
     var id: String { at + what + (ok ? "Y" : "N") }
+
+    enum CodingKeys: String, CodingKey { case at, what, ok }
+    init(at: String, what: String, ok: Bool) { self.at = at; self.what = what; self.ok = ok }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        at = try c.decodeIfPresent(String.self, forKey: .at) ?? ""
+        what = try c.decodeIfPresent(String.self, forKey: .what) ?? ""
+        ok = try c.decodeIfPresent(Bool.self, forKey: .ok) ?? false
+    }
 }
 struct ConnAttempt: Codable {
     var t: String          // MM-dd HH:mm:ss
     var mac: String
     var ok: Bool
     var reason: String
+
+    enum CodingKeys: String, CodingKey { case t, mac, ok, reason }
+    init(t: String, mac: String, ok: Bool, reason: String) { self.t = t; self.mac = mac; self.ok = ok; self.reason = reason }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        t = try c.decodeIfPresent(String.self, forKey: .t) ?? ""
+        mac = try c.decodeIfPresent(String.self, forKey: .mac) ?? ""
+        ok = try c.decodeIfPresent(Bool.self, forKey: .ok) ?? false
+        reason = try c.decodeIfPresent(String.self, forKey: .reason) ?? ""
+    }
 }
 enum BleTelemetry {
     static func recordEvent(_ what: String, ok: Bool) {
