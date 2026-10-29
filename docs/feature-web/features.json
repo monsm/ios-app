@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T11:19:49.361Z",
+    "generated": "2026-10-29T11:23:29.764Z",
     "sources": [
       {
         "scout": "android-native",
@@ -32892,7 +32892,7 @@
           "line": 73,
           "symbol": "218/221 删因说明",
           "note": "",
-          "text": ""
+          "text": "// scheduleSave / flush），但它和 Store 的情况不同 —— 诊断日志是\"只追加、读侧不要求读到最新一条\""
         }
       ],
       "platformEvidence": {
@@ -33135,7 +33135,7 @@
           "line": 171,
           "symbol": "struct DiagLogEntry",
           "note": "",
-          "text": "// 原 `enum Watchdog` 34 行 (45s 心跳 + 失败重连 + kf_wd_heal 计数) 在全仓**零调用点**，"
+          "text": "flush()"
         },
         {
           "platform": "ios",
@@ -33143,7 +33143,7 @@
           "line": 192,
           "symbol": "localDay",
           "note": "",
-          "text": ""
+          "text": "list.append(DiagLogEntry(date: date, time: time, level: level, msg: msg))"
         },
         {
           "platform": "ios",
@@ -33151,7 +33151,7 @@
           "line": 229,
           "symbol": "append(_:_:date:time:)",
           "note": "",
-          "text": "case .provisional: return \"临时授权\""
+          "text": "static var attempts: [ConnAttempt] { DB.store.get([ConnAttempt].self, \"kf_conn_attempts\") ?? [] }"
         },
         {
           "platform": "ios",
@@ -33159,7 +33159,7 @@
           "line": 224,
           "symbol": "today()",
           "note": "",
-          "text": "static var label: String {"
+          "text": "var list = DB.store.get([ConnAttempt].self, \"kf_conn_attempts\") ?? []"
         }
       ],
       "platformEvidence": {

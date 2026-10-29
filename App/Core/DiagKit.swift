@@ -68,6 +68,11 @@ enum DiagOps {
 // (例：CredentialStudio.swift:1113-1115 新增后立刻 `DB.getPwd` 做快照)，
 // 把 set 改成 1s 合并会直接造出读后写陈旧；那不是一个"性能优化"，是拿正确性换没测过的收益。
 // 结论：218/221 从 DONE 退回 MISS，要真做批量落盘得先给 Store 加"读穿透"，单独立项。
+//
+// 2026-10-29 补充：**诊断日志这一块**后来确实做了防抖落盘（见下面 DiagLogs 的 entryCache /
+// scheduleSave / flush），但它和 Store 的情况不同 —— 诊断日志是"只追加、读侧不要求读到最新一条"
+// （all() / today() 都是展示用），所以 1 秒延迟没有正确性代价；而且它原来是**每条日志
+// 读一次文件 + 写一次文件**，是这轮里 IO 最重的一处。Store 仍然保持同步写，理由见上。
 
 
 
@@ -97,8 +102,74 @@ enum DiagLogs {
     /// (它们属于本机意义上的昨天) —— 保留期与列表都按字符串日期比较，不会丢数据，只是分组挪了一天。
     static func localDay(_ d: Date = Date()) -> String { StatsKit.dayKey(d) }
 
-    static var entries: [DiagLogEntry] {
-        DiagLogStore.load()
+    // ---------- 内存缓存 + 防抖落盘 (2026-10-29 性能) ----------
+    /// 原来每次 `append` 都是：`entries`（= `DiagLogStore.load()`：**同步读文件 + JSON 解码**）
+    /// → append → `save`（JSON 编码 + 原子写文件）。而 `LockService.log()` **每写一行日志都会调它**，
+    /// 一次开锁十几行 ⇒ 十几次文件读 + 十几次整文件写。
+    ///
+    /// 现在：内存里留一份，`append` 只改内存并标脏；落盘由一个 1 秒防抖任务合并成一次。
+    /// 另外提供 `flush()`，由 scenePhase 进后台时调用，避免最后 1 秒的日志丢在内存里。
+    private static let entryCache = Locked<[DiagLogEntry]?>(nil)
+    private static let savePending = Locked(false)
+
+    private static func loadIntoCache() -> [DiagLogEntry] {
+        if let c = entryCache.withLock({ $0 }) { return c }
+        let loaded = DiagLogStore.load()
+        entryCache.withLock { $0 = loaded }
+        return loaded
+    }
+
+    static var entries: [DiagLogEntry] { loadIntoCache() }
+
+    /// 按 751 保留策略过滤后的全量 (最新在末尾)
+    static func all() -> [DiagLogEntry] {
+        var list = loadIntoCache()
+        if let days = retentionDays {
+            let cs = localDay(WeekCal.shifted(Date(), days: -days))
+            list = list.filter { $0.date >= cs }
+        }
+        return list
+    }
+    /// 751: 确认后**立即应用**保留策略 (与 append 的裁剪同一口径), 返回实际删掉的条数。
+    static func today() -> [DiagLogEntry] {
+        let d = localDay()
+        return loadIntoCache().filter { $0.date == d }
+    }
+    /// 由 LockService 分级日志调用: date/time 取自行内已有时序, 落持久台账
+    static func append(_ level: String, _ msg: String, date: String, time: String) {
+        var list = loadIntoCache()
+        list.append(DiagLogEntry(date: date, time: time, level: level, msg: msg))
+        if list.count > 500 { list = Array(list.suffix(500)) }
+        if let days = retentionDays {
+            let cs = localDay(WeekCal.shifted(Date(), days: -days))
+            list = list.filter { $0.date >= cs }
+        }
+        entryCache.withLock { $0 = list }
+        scheduleSave()
+    }
+    /// 立刻把内存里的日志写盘（进后台 / 退出前调用）。
+    static func flush() {
+        // 只有真有未落盘的改动才写 —— 否则每次切前台/后台都白写一次文件。
+        let pending = savePending.withLock { v -> Bool in
+            let had = v
+            v = false
+            return had
+        }
+        guard pending else { return }
+        let snapshot = entryCache.withLock { $0 } ?? []
+        DiagLogStore.save(snapshot)
+    }
+    private static func scheduleSave() {
+        let already = savePending.withLock { v -> Bool in
+            if v { return true }
+            v = true
+            return false
+        }
+        if already { return }
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1))
+            flush()
+        }
     }
     /// 按 751 保留策略过滤后的全量 (最新在末尾)
     static func all() -> [DiagLogEntry] {
