@@ -360,6 +360,19 @@ struct SettingsView: View {
         }
     }
 
+    func setPasscode() {
+        // 2026-10-27 审核修复 (AUDIT-D D-09)：**已有密码时改密码必须先验原密码**。
+        // 否则拿到解锁手机的人可以直接改成一个自己知道的密码，等于接管保护。
+        if DB.hasPasscode() {
+            promptOldPasscode { ok in
+                guard ok else { return }
+                presentSetPasscodeAlert()
+            }
+            return
+        }
+        presentSetPasscodeAlert()
+    }
+
     func promptOldPasscode(_ then: @escaping (Bool) -> Void) {
         let alert = UIAlertController(title: "验证原密码",
                                       message: "修改或关闭本机密码前需要先验证。",
@@ -381,4 +394,53 @@ struct SettingsView: View {
     }
 
 /// 机械计数样式数字 (idea 1006): 每位一格, 等宽数字
+    func presentSetPasscodeAlert() {
+        let alert = UIAlertController(title: "设置本机密码", message: "4 位以上纯数字 (随机键位需要数字键盘, 含字母会失去该保护)", preferredStyle: .alert)
+        alert.addTextField { $0.isSecureTextEntry = true; $0.keyboardType = .numberPad }
+        alert.addTextField { $0.isSecureTextEntry = true; $0.placeholder = "再次输入"; $0.keyboardType = .numberPad }
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        alert.addAction(UIAlertAction(title: "确定", style: .default) { _ in
+            let f1 = alert.textFields?[0].text ?? ""
+            let f2 = alert.textFields?[1].text ?? ""
+            guard !f1.isEmpty, f1 == f2 else { app.showToast("两次输入不一致"); return }
+            guard f1.count >= 4 else { app.showToast("密码需 4 位以上"); return } // 与提示文案一致
+            guard f1.allSatisfy({ $0.isNumber }) else { app.showToast("只能使用数字"); return }
+            DB.setPasscode(f1)
+            app.showToast("已设置")
+        })
+        UIApplication.topViewController()?.present(alert, animated: true)
+    }
+
+    func setDuressCode() {
+        promptOldPasscode { ok in
+            guard ok else { return }
+            let alert = UIAlertController(
+                title: DB.hasDuressCode() ? "更改胁迫码" : "设置胁迫码",
+                message: "被胁迫时输入这个码，App 进入空壳模式：门能开，但凭证与记录显示为空。\n\n⚠ 必须与正常密码不同 —— 相同就等于把正常密码当胁迫码用。",
+                preferredStyle: .alert)
+            alert.addTextField { $0.isSecureTextEntry = true; $0.keyboardType = .numberPad; $0.placeholder = "4 位以上数字" }
+            alert.addTextField { $0.isSecureTextEntry = true; $0.keyboardType = .numberPad; $0.placeholder = "再次输入" }
+            alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+            if DB.hasDuressCode() {
+                alert.addAction(UIAlertAction(title: "清除胁迫码", style: .destructive) { _ in
+                    DB.clearDuressCode()
+                    app.showToast("胁迫码已清除")
+                })
+            }
+            alert.addAction(UIAlertAction(title: "确定", style: .default) { _ in
+                let f1 = alert.textFields?[0].text ?? ""
+                let f2 = alert.textFields?[1].text ?? ""
+                guard !f1.isEmpty, f1 == f2 else { app.showToast("两次输入不一致"); return }
+                guard f1.count >= 4 else { app.showToast("需 4 位以上"); return }
+                guard f1.allSatisfy({ $0.isNumber }) else { app.showToast("只能使用数字"); return }
+                if DB.setDuressCode(f1) {
+                    app.showToast("胁迫码已设置")
+                } else {
+                    app.showToast("设置失败：胁迫码不能与正常密码相同")
+                }
+            })
+            UIApplication.topViewController()?.present(alert, animated: true)
+        }
+    }
+
 }

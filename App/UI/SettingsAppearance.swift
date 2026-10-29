@@ -224,7 +224,7 @@ extension SettingsView {
                 }
             }
             .pickerStyle(.menu)
-            Button("恢复默认外观") { resetAppearance() }
+            Button("恢复默认外观") { app.resetAppearance() }
         } header: {
             Text("外观")
         } footer: {

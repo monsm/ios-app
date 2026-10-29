@@ -505,4 +505,10 @@ struct RecordsView: View {
         if parts.count == 3 { return "\(Int(parts[1]) ?? 0)月\(Int(parts[2]) ?? 0)日" }
         return key
     }
+
+    /// 2026-10-29 入口去重：添加设备只在设备页右上角「+」，这里只做跳转 + 指路。
+    func goAddDevice() {
+        app.requestRoute(.device)
+        app.showToast("在设备页右上角点「+」添加门锁")
+    }
 }

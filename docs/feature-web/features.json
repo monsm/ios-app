@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T08:22:09.920Z",
+    "generated": "2026-10-29T08:27:55.793Z",
     "sources": [
       {
         "scout": "android-native",
@@ -18067,7 +18067,7 @@
           "line": 492,
           "symbol": "countForSeg",
           "note": "",
-          "text": ""
+          "text": "app.requestRoute(.device)"
         }
       ],
       "platformEvidence": {
@@ -19125,7 +19125,7 @@
           "line": 375,
           "symbol": "pwdClear",
           "note": "",
-          "text": "}"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -34388,7 +34388,7 @@
           "line": 423,
           "symbol": "timeSection",
           "note": "",
-          "text": ""
+          "text": "alert.addAction(UIAlertAction(title: \"取消\", style: .cancel))"
         },
         {
           "platform": "ios",
@@ -34396,7 +34396,7 @@
           "line": 425,
           "symbol": "Picker(\"时间制式\", selection:)",
           "note": "",
-          "text": ""
+          "text": "alert.addAction(UIAlertAction(title: \"清除胁迫码\", style: .destructive) { _ in"
         },
         {
           "platform": "ios",
@@ -34404,7 +34404,7 @@
           "line": 432,
           "symbol": "VariantToggle(\"显示秒\", isOn:)",
           "note": "",
-          "text": ""
+          "text": "let f2 = alert.textFields?[1].text ?? \"\""
         }
       ],
       "platformEvidence": {
@@ -36061,7 +36061,7 @@
           "line": 376,
           "symbol": "DB.saveLedger(m, Ledger())",
           "note": "",
-          "text": ""
+          "text": "func promptOldPasscode(_ then: @escaping (Bool) -> Void) {"
         }
       ],
       "platformEvidence": {
@@ -36147,7 +36147,7 @@
           "line": 381,
           "symbol": "deleteDevice()",
           "note": "",
-          "text": "}"
+          "text": "alert.addAction(UIAlertAction(title: \"取消\", style: .cancel) { _ in then(false) })"
         },
         {
           "platform": "ios",
@@ -38390,7 +38390,7 @@
           "line": 384,
           "symbol": "let pws = DB.listPwds(kc.mac).count",
           "note": "",
-          "text": "}"
+          "text": "if DB.verifyPasscode(pw) { then(true) }"
         },
         {
           "platform": "ios",
@@ -38398,7 +38398,7 @@
           "line": 392,
           "symbol": "连带删除: 密码台账 … 回收站 … 开门记录 …",
           "note": "",
-          "text": ""
+          "text": "if eggShown { s += \" Build \\(Bundle.main.infoDictionary?[\"CFBundleVersion\"] as? String ?? \"?\") · 本地构建。\" }"
         },
         {
           "platform": "ios",
@@ -52250,7 +52250,7 @@
           "line": 52,
           "symbol": "canClearPwd",
           "note": "",
-          "text": "// 曾有 canDeviceInfo(_:) = canClearPwd 的同义别名 (零调用, 已删): 同一判断留两个名字只会让人"
+          "text": "/// 恢复 deviceRow 后重新需要它 —— 判据与 canClearPwd 同源（非网关、且是已知锁型）。"
         },
         {
           "platform": "ios",
@@ -52258,7 +52258,7 @@
           "line": 55,
           "symbol": "canDeviceUpgrade",
           "note": "",
-          "text": "}"
+          "text": "// 曾有 canDeviceInfo(_:) = canClearPwd 的同义别名 (零调用, 已删): 同一判断留两个名字只会让人"
         }
       ],
       "platformEvidence": {

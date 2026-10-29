@@ -48,6 +48,9 @@ enum PidMap {
         if pid == V1_Pro, let f = fw, !f.isEmpty, cmpFw(f, "1.0.3") < 0 { return false }
         return true
     }
+    /// 2026-10-29：`isLock` 在 `fdd0606` 十轮精简时随 deviceRow 一起被删，
+    /// 恢复 deviceRow 后重新需要它 —— 判据与 canClearPwd 同源（非网关、且是已知锁型）。
+    static func isLock(_ pid: Int) -> Bool { isGW(pid) ? false : locks.contains(pid) || isKnown(pid) }
     static func canClearPwd(_ pid: Int) -> Bool { isGW(pid) ? false : (locks.contains(pid) || !isKnown(pid)) }
     // 曾有 canDeviceInfo(_:) = canClearPwd 的同义别名 (零调用, 已删): 同一判断留两个名字只会让人
     // 以为"设备信息"有独立的能力口径。真要给锁信息名片加门禁时再按实际语义写新谓词。
