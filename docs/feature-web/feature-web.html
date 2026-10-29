@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T23:25:40.138Z",
+    "generated": "2026-10-29T23:37:13.587Z",
     "sources": [
       {
         "scout": "android-native",
@@ -29772,7 +29772,7 @@ const DATA = {
           "line": 397,
           "symbol": "restoreAll(_:)",
           "note": "",
-          "text": "DB.store.set(key, v)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -29788,7 +29788,7 @@ const DATA = {
           "line": 413,
           "symbol": "mac/skey 守卫",
           "note": "",
-          "text": "DB.store.set(\"kf_hero_stats\", DS.HeroStats.all.filter { stats.contains($0) })"
+          "text": "set(\"kf_row_h\", a.rowH)"
         },
         {
           "platform": "ios",
@@ -29796,7 +29796,7 @@ const DATA = {
           "line": 422,
           "symbol": "owner 重映射 / 置 nil",
           "note": "",
-          "text": ""
+          "text": "DB.store.set(\"kf_hero_stats\", DS.HeroStats.all.filter { stats.contains($0) })"
         },
         {
           "platform": "ios",
@@ -29934,7 +29934,7 @@ const DATA = {
           "line": 255,
           "symbol": "ledger 为空置 nil",
           "note": "",
-          "text": "}"
+          "text": "var groups: [GroupRec]?   // kf_lockmeta_\u003cmac>.grp"
         }
       ],
       "platformEvidence": {
@@ -30016,7 +30016,7 @@ const DATA = {
           "line": 267,
           "symbol": "kf_bk_otp 勾选才收 OTP",
           "note": "",
-          "text": "let l = DB.ledger(mac)"
+          "text": "enum BackupKit {"
         },
         {
           "platform": "ios",
@@ -30364,7 +30364,7 @@ const DATA = {
           "line": 249,
           "symbol": "collectAll()",
           "note": "",
-          "text": "struct DeviceOrg: Codable {"
+          "text": "///  ③ 一律用**数组**而不是字典: 小程序 canonicalBundle 对 globals 内层是原样透传 (只对顶层键排序),"
         },
         {
           "platform": "ios",
@@ -30380,7 +30380,7 @@ const DATA = {
           "line": 256,
           "symbol": "Device.Meta 逐项",
           "note": "",
-          "text": "struct PasscodeRec: Codable { var s: String; var d: String }"
+          "text": "var folded: [String]?     // kf_group_folded: 被收起的组名"
         },
         {
           "platform": "ios",
@@ -30388,7 +30388,7 @@ const DATA = {
           "line": 279,
           "symbol": "BackupBundle 组装",
           "note": "",
-          "text": "let passcode = DB.get([String: String].self, \"kf_passcode\").map {"
+          "text": "mobileKeys: MobileKeyService.list(mac).isEmpty ? nil : MobileKeyService.list(mac)))"
         },
         {
           "platform": "ios",
@@ -31003,7 +31003,7 @@ const DATA = {
           "line": 219,
           "symbol": "CodingKeys recentCount = \"recent\"",
           "note": "",
-          "text": "var recentCount: Int?     // kf_recent_count (910) → JSON 键名是 \"recent\""
+          "text": "var tlGap: String?        // kf_tl_gap (907)"
         },
         {
           "platform": "ios",
@@ -31011,7 +31011,7 @@ const DATA = {
           "line": 295,
           "symbol": "collectAppearance",
           "note": "",
-          "text": "}"
+          "text": "members: DB.members().isEmpty ? nil : DB.members(),"
         },
         {
           "platform": "ios",
@@ -31019,7 +31019,7 @@ const DATA = {
           "line": 373,
           "symbol": "applyAppearance",
           "note": "",
-          "text": "let keep = order.map { DB.normalizeMac($0) }.filter { known.contains($0) }"
+          "text": "static func applyGlobalsAppearanceAndOrg(_ globals: BackupBundle.Globals, devices: [BackupBundle.Device]) {"
         }
       ],
       "platformEvidence": {
@@ -31094,7 +31094,7 @@ const DATA = {
           "line": 233,
           "symbol": "var deviceOrg",
           "note": "",
-          "text": "/// 字段名 recentCount 在 BackupKit / BackupStudioKit 里被多处引用，改名牵连面大；"
+          "text": "/// 影响面: 只要备份包的外观段带 recent (即用户把\"最近记录条数\"设成 3/5/10)，"
         },
         {
           "platform": "ios",
@@ -31102,7 +31102,7 @@ const DATA = {
           "line": 320,
           "symbol": "collectDeviceOrg",
           "note": "",
-          "text": "return allowed.contains(v) ? v : nil"
+          "text": "\"kf_tl_gap\":     [\"\", \"tight\", \"loose\"],"
         },
         {
           "platform": "ios",
@@ -31110,7 +31110,7 @@ const DATA = {
           "line": 343,
           "symbol": "applyGlobalsAppearanceAndOrg",
           "note": "",
-          "text": "let groups = DB.keychains()"
+          "text": "heroTex: enumVal(\"kf_hero_tex\"),"
         },
         {
           "platform": "ios",
@@ -31118,7 +31118,7 @@ const DATA = {
           "line": 349,
           "symbol": "known = 包内 ∩ 本机",
           "note": "",
-          "text": "let hidden = DB.keychains().map { $0.mac }.filter { LockArchive.isHidden($0) }.sorted()"
+          "text": "/// 四项全空就整段不带 (缺字段 = 恢复时不动本机); groups 按 mac 排序, 同一份数据两次导出得到同一 canonical。"
         }
       ],
       "platformEvidence": {

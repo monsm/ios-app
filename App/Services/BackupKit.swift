@@ -197,6 +197,10 @@ struct BackupBundle: Codable {
         var keychainDongles: [Dongle]?
         var gatewayList: [Gateway]?
         var passcode: PasscodeRec?   // JS 包互通: {s,d} 应用锁摘要
+        /// 胁迫码摘要（kf_duress，与 passcode 同结构）。
+        /// 2026-10-30 修复（第 64 轮）：这一项**从来没进过备份** —— 用户换机后胁迫码直接丢，
+        /// 而「被胁迫时输它会进空壳模式」是一条安全承诺；承诺在换机后静默失效是「不正常」。
+        var duress: PasscodeRec?
         var trace: TraceRec?         // JS 包互通: LOCK 日志恢复档 (原样存取)
         /// 894 外观随备份走: **typed 结构而不是自由字典**。
         /// 用字典就等于把"任意偏好键写入"重新开放给一个可伪造的 JSON 字段。
@@ -279,6 +283,10 @@ enum BackupKit {
         let passcode = DB.get([String: String].self, "kf_passcode").map {
             BackupBundle.Globals.PasscodeRec(s: $0["s"] ?? "", d: $0["d"] ?? "")
         }
+        // 2026-10-30 修复：胁迫码同口径导出（缺省 = 没设过 = 恢复时不动本机）。
+        let duress = DB.get([String: String].self, "kf_duress").map {
+            BackupBundle.Globals.PasscodeRec(s: $0["s"] ?? "", d: $0["d"] ?? "")
+        }
         let trace = DB.get(BackupBundle.Globals.TraceRec.self, "kf_trace_persist_v1")
         return BackupBundle(
             at: DF.iso().string(from: Date()),
@@ -289,6 +297,7 @@ enum BackupKit {
                 keychainDongles: dongles.isEmpty ? nil : dongles,
                 gatewayList: gws.isEmpty ? nil : gws,
                 passcode: passcode,
+                duress: duress,
                 trace: trace,
                 appearance: collectAppearance(),
                 deviceOrg: collectDeviceOrg()))

@@ -368,6 +368,13 @@ enum BackupStudio {
                 // 同 BackupKit.restoreAll: 只写 s/d (d2 不进 canonical, 包体里没有)
                 DB.store.set("kf_passcode", ["s": pc.s, "d": pc.d])
             }
+            if let dc = g.duress, !dc.s.isEmpty, !dc.d.isEmpty {
+                // 2026-10-30 修复（第 64 轮）：胁迫码与正常密码同一套 PBKDF2 摘要，但存在独立键里。
+                // 原先只导出/恢复 kf_passcode ⇒ 换机后胁迫码静默消失，
+                // 而「被胁迫时输它会进空壳模式」是一条安全承诺 —— 承诺随换机失效属「不正常」。
+                // 与 passcode 同口径：缺字段/空摘要 = 这次备份没带 = 不动本机（不主动清除用户已设的码）。
+                DB.store.set("kf_duress", ["s": dc.s, "d": dc.d])
+            }
             if let tr = g.trace, let lines = tr.lines, !lines.isEmpty {
                 DB.store.set("kf_trace_persist_v1", [
                     "savedAt": tr.savedAt ?? 0, "count": lines.count,
