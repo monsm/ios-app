@@ -17,7 +17,8 @@ extension RecordSearch {
             guard !pws.isEmpty else { continue }
             var wins = [TempWin]()
             for p in pws {
-                guard let f = parseStamp(p.from), let to = parseStamp(p.to), f > 0, to > 0 else { continue }
+                let f = parseStamp(p.from), to = parseStamp(p.to)   // parseStamp 失败给 0，下面 f>0 判据兜住
+                guard f > 0, to > 0 else { continue }
                 let label = "约 " + String(p.from.dropFirst(5).prefix(11)) + " – " + String(p.to.dropFirst(5).prefix(11))
                 wins.append(TempWin(from: f, to: to, label: label))
             }
