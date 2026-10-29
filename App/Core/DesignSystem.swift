@@ -9,20 +9,6 @@ import SwiftUI
 import UIKit
 
 // ---------- 色彩基元 ----------
-extension Color {
-    init(hex: UInt32) {
-        self.init(.sRGB,
-                  red: Double((hex >> 16) & 0xff) / 255,
-                  green: Double((hex >> 8) & 0xff) / 255,
-                  blue: Double(hex & 0xff) / 255)
-    }
-    /// 明暗自适应色。light / dark 为 6 位 RGB 十六进制
-    static func adaptive(_ light: UInt32, _ dark: UInt32) -> Color {
-        Color(UIColor { tc in
-            tc.userInterfaceStyle == .dark ? UIColor(Color(hex: dark)) : UIColor(Color(hex: light))
-        })
-    }
-}
 
 
 // ---------- 换行流式布局 ----------
@@ -83,96 +69,17 @@ enum DS {
     /// 间距: 统一 4 / 8 节奏。
     /// 布局密度 (包16): kf_density 三档映射为间距缩放系数 — 字号、触达、图标不缩放,
     /// 只动"呼吸感"; 变更由 AppState.bumpAppearance 驱动全局重建, 即时生效。
-    enum Space {
-        /// 紧凑 0.85 / 标准 1.0 / 宽松 1.18
-        static var densityScale: CGFloat {
-            switch DB.store.getString("kf_density") {
-            case "compact": return 0.85
-            case "relaxed": return 1.18
-            default: return 1.0
-            }
-        }
-        /// 缩放并吸附到 0.5pt, 避免亚像素抖动
-        private static func d(_ v: CGFloat) -> CGFloat { (v * densityScale * 2).rounded() / 2 }
-        static var xxs: CGFloat { d(2) }
-        static var xs: CGFloat { d(4) }
-        static var s: CGFloat { d(8) }
-        static var m: CGFloat { d(12) }
-        static var l: CGFloat { d(16) }
-        static var xl: CGFloat { d(24) }
-        static var xxl: CGFloat { d(32) }
-        /// 页面左右边距 (统一 gutter)
-        static var gutter: CGFloat { d(16) }
-    }
     /// 全局圆角档位 (包16/idea 900): kf_radius "" 标准 / "soft" 小 / "plump" 大。
     /// 三档值都经过检查：card 最大 28pt，卡片仍明显小于半宽，不会出现"圆到看不出是卡片"的破形。
     /// 注: 原第 4 档 `pill = 999` 第九十三批删除 —— 上面那句"刻意保留 pill 不参与缩放"讲的是胶囊语义，
     /// 但全仓胶囊一律走 `Capsule()` (115 处)，没有任何一处读这个值，等于**注释替一个零读取的常量编理由**。
-    enum Radius {
-        private static var k: CGFloat {
-            switch DB.store.getString("kf_radius") {
-            case "soft": return 0.62      // 小圆角: 更硬朗, 密集列表更省空间
-            case "plump": return 1.3      // 大圆角: 更柔和, 与"儿童友好档"预设同向
-            default: return 1.0
-            }
-        }
-        private static func r(_ v: CGFloat) -> CGFloat { (v * k * 2).rounded() / 2 }
-        static var card: CGFloat { r(22) }
-        static var control: CGFloat { r(16) }
-        static var tile: CGFloat { r(18) }
-    }
     /// iOS 最小触达 44×44pt
-    enum Hit { static let min: CGFloat = 44 }
     /// 圆盘直径三档 (idea 249): kf_dial_size 160/176/200。变更经 AppState.setUnlockOption
     /// → 外观重建通道即时生效, 与密度令牌同一机制。
-    enum Metric {
-        static var dial: CGFloat {
-            let v = DB.store.getInt("kf_dial_size", 176)
-            return CGFloat([160, 176, 200].contains(v) ? v : 176)
-        }
-        /// 901 凭证行高两档: kf_row_h ""(紧凑: 44, 隐藏副行只留名称与状态)/"tall"(舒适: 60, 带副行)。
-        /// 只做"加高"不做"压矮" —— 矮过内容自己撑开的高度就得靠裁切文字换空间，那是破版不是紧凑。
-        /// 与无障碍页的 `kf_ax_bigotp` (OTP 大字) 是两回事：那档改字号，这档改行最小高度。
-        static var rowMinH: CGFloat {
-            DB.store.getString("kf_row_h") == "tall" ? 60 : 44
-        }
-        /// 907 时间线行距三档: kf_tl_gap。刻意**乘在 densityScale 之上**而不是替代它 ——
-        /// 布局密度 (kf_density) 管的是全 App 的呼吸感，这一档只管记录时间线那一条竖列。
-        /// 两档体系叠乘而不是各写一套，是为了避免"密度调了、时间线不动"的那类假设置。
-        static var tlGap: CGFloat {
-            let f: CGFloat
-            switch DB.store.getString("kf_tl_gap") {
-            case "tight": f = 0.5
-            case "loose": f = 2.0
-            default: f = 1.0
-            }
-            return (DS.Space.m * f * 2).rounded() / 2
-        }
-        /// 902 数字字体两档: kf_digit_font ""(圆体 = 默认, 与旧版观感一致) / "plain"(系统默认体)。
-        /// 射程如实圈死: 这一档只管**读数令牌的两处落点** (MetricTile 与 HeroStat 的数字 Text),
-        /// 902 原句就是"Hero 卡电量数字圆体/默认体可选"。它不是全 App 数字字体总闸 ——
-        /// 那版 (§84 撤掉的那种) 要动 58 处各写死 monospacedDigit 的散点, 散点没统一成令牌之前
-        /// 加总闸只会造出"切了没反应"；这里只承诺切得到、也切得到的那两处。
-        static var digitDesign: Font.Design {
-            DB.store.getString("kf_digit_font") == "plain" ? .default : .rounded
-        }
-    }
 
     /// 909 Hero 指标位显隐: kf_hero_stats 存"要看的参考项"，白名单外的一律丢弃。
     /// **电量不在可选项里**：它决定"还能不能开锁"，能被自己藏掉的读数就不是读数 (DeviceHomeView 恒显示它)。
     /// 默认两项全开 = 与旧版观感一致；两项全关时回退全开，不留一张没有指标的空板卡。
-    enum HeroStats {
-        static let all = ["firmware", "lockclock"]
-        static var visible: Set<String> {
-            let stored = DB.store.get([String].self, "kf_hero_stats") ?? []
-            let keep = Set(stored.filter { all.contains($0) })
-            return keep.isEmpty ? Set(all) : keep
-        }
-        static func shows(_ id: String) -> Bool { visible.contains(id) }
-        static func setVisible(_ ids: [String]) {
-            DB.store.set("kf_hero_stats", all.filter { ids.contains($0) })
-        }
-    }
     /// 触感分级常量 (idea 22): 全 App 触感只允许这三档 —
     ///   tick    = light 档: 围栏解锁/进度刻度/就绪轻震 (269) 等过程触感
     ///   trigger = medium 档: 手势确认触发/断连提醒 (243) 等动作触感
@@ -180,18 +87,7 @@ enum DS {
     /// UIFeedbackGenerator 是 UIKit 对象 (主 actor)。整族标主 actor: 触感是 UI 反馈,
     /// 调用点只有视图动作; 唯一一处非 UI 调用 (预握手节律) 显式跳主 actor, 见 LinkSenseKit.preconnect。
     @MainActor
-    enum Haptics {
-        static let tick = UIImpactFeedbackGenerator(style: .light)
-        static let trigger = UIImpactFeedbackGenerator(style: .medium)
-    }
     /// SF Symbols 尺寸令牌 — 全 App 只用这一套, 避免 17/20/28 混用
-    enum Icon {
-        static let xs: CGFloat = 13
-        static let sm: CGFloat = 16
-        static let md: CGFloat = 20
-        static let lg: CGFloat = 26
-        static let xl: CGFloat = 44
-    }
     /// 动效令牌 — 不给每个页面各写一个 duration。
     /// 默认接近临界阻尼 (苹果 fluid interfaces 的"日常档"), 只给高频物理感交互留轻微回弹。
     /// 动效档位 (包16/idea 899)：kf_motion 三档 × 系统"减弱动态效果"叠加。
@@ -199,214 +95,14 @@ enum DS {
     /// App 侧没有任何一处 `withAnimation` 包着 tabSelection —— 所以这一档管的是**全 App 的动效令牌**
     /// (81 处调用点)，不是"只换 Tab 那一下"。写清这一点，才不会让人以为调了它 Tab 就一定跟着变。
     /// 默认档 "standard" 的三个值 = 本批之前的字面值，所以不改任何人的既有观感。
-    enum Motion {
-        /// 系统减弱动态 = 强制最静的一档，用户偏好让路 (这不是偏好，是无障碍硬约束)。
-        /// 读 AXFlags 而不是自己调 UIAccessibility：本仓的系统旗标只有一个读点。
-        /// 这里用的是**快照**而不是 @MainActor 的那个属性: 令牌会被 ButtonStyle/ToggleStyle 的
-        /// makeBody (非隔离) 求值, 而系统旗标本身是主 actor 的 —— 快照由 AXFlags 在回前台时刷新。
-        // 2026-10-28 修复：这里曾写死 `false`（注释「无障碍层已删」）——
-        // 但上面 :227-230 的注释还在说「系统减弱动态 = 强制最静的一档，用户偏好让路
-        // （这不是偏好，是无障碍硬约束）」。于是系统「减弱动态效果」对本 App 的所有
-        // DS.Motion 令牌（quick/standard/soft/exit）完全无效 —— 一个无障碍硬约束被静默摘掉了。
-        // 现接回快照：AXFlags 在启动 + 每次回前台刷新（见 RootView 的 scenePhase 处）。
-        private static var systemReduceMotion: Bool { AXFlags.reduceMotionSnapshot }
-        private static var tier: String {
-            if systemReduceMotion { return "calm" }
-            // 120 低电视觉降级: 锁电量 ≤20% 时全 App 动效也压到 calm —— 与系统减弱动态同优先级,
-            // 用户显式 lively/standard 也让路 (原句"低电量模式"本就是系统级压降动效的形态)。
-            if BatteryCare.appLowBattery { return "calm" }
-            let v = DB.store.getString("kf_motion")
-            return ["calm", "standard", "lively"].contains(v) ? v : "standard"
-        }
-        /// 召唤锁核的位移弹簧（跟手后的回位与吸附）。
-        /// 放在令牌层而不是写在视图里，只有一个理由：`calm` 档（系统减弱动态 / 低电量）
-        static var quick: Animation {
-            switch tier {
-            case "calm": return .easeOut(duration: 0.10)
-            case "lively": return .spring(response: 0.22, dampingFraction: 0.68)
-            default: return .spring(response: 0.22, dampingFraction: 0.9)
-            }
-        }
-        static var standard: Animation {
-            switch tier {
-            case "calm": return .easeInOut(duration: 0.16)
-            case "lively": return .spring(response: 0.45, dampingFraction: 0.68)
-            default: return .spring(response: 0.4, dampingFraction: 0.85)
-            }
-        }
-        static var soft: Animation {
-            switch tier {
-            case "calm": return .easeInOut(duration: 0.12)
-            case "lively": return .easeInOut(duration: 0.34)
-            default: return .easeInOut(duration: 0.25)
-            }
-        }
-        static var exit: Animation {
-            switch tier {
-            case "calm": return .easeOut(duration: 0.08)
-            case "lively": return .easeOut(duration: 0.20)
-            default: return .easeOut(duration: 0.15)
-            }
-        }
-    }
     /// 时长令牌 (idea 211): 150/250 毫秒两档 — 微交互 / 标准转场。
     /// 需要 Animation 对象用 Motion, 只需要时长 (如 Task 前的 withAnimation) 用这里。
-    enum Duration {
-        static let quick: TimeInterval = 0.15
-        static let standard: TimeInterval = 0.25
-    }
     /// 外观引擎 (包16): 品牌主题 / AMOLED 的存储键解析点。
     /// 只读 DB.store (UserDefaults), 变更即时性由 AppState.applyAppearance → RootView .id 重建保证。
-    enum Appearance {
-        /// 品牌主题键 (idea 31): "" = 默认靛蓝
-        static var accentKey: String { DB.store.getString("kf_accent") }
-        /// AMOLED 纯黑 (idea 30): kf_theme == "black"
-        static var isAMOLED: Bool { DB.store.getString("kf_theme") == "black" }
-        /// 893 App 内高对比皮肤: 与系统"增加对比度"**并联** (任一为真即加强)，不替代系统开关。
-        /// 为什么要 App 内这一个: 系统的对比度开关是全局的，很多人不愿为这一个 App 改整机;
-        /// 而"我就是想在看锁的时候字更硬"是 App 内可以满足的。加强项三组 (分隔线/次级文本加深 +
-        /// 862 玻璃卡降实底)，不引入新颜色 —— 用的就是原本给系统高对比准备的那对令牌。
-        @MainActor static var highContrast: Bool { DB.store.getBool("kf_hc") }
-    }
 
-    enum Palette {
-        // ---------- 机检基础令牌 (tools/contrast.js 解析 static let) ----------
-        static let canvasBase  = Color.adaptive(0xF6F3EC, 0x121009)   // 页面底: v10 暖白 / 暖黑 (2026-10-18 两端都转暖)
-        static let surfaceBase = Color.adaptive(0xFFFDF9, 0x1C1913)   // 卡片: 暖白 / 暖黑, 比页面底亮一档
-        static let surfaceAltBase = Color.adaptive(0xF0ECE3, 0x252017) // 卡片内次级块: 暖灰 / 暖褐
-        static let hairline   = Color.adaptive(0xDCD5C9, 0x38322A)   // 分隔线: 暖色 (浅 1.32:1 / 深 1.50:1 对画布)
-        static let text       = Color.adaptive(0x17140F, 0xF7F3EA)   // 主文本
-        static let textSub    = Color.adaptive(0x5C5245, 0xACA08D)   // 暖灰: 浅 6.90:1 / 深 7.40:1
-        static let ok         = Color.adaptive(0x15803D, 0x4ADE80)   // 成功
-        static let warn       = Color.adaptive(0xB45309, 0xFBBF24)   // 警告 4.5:1 / 高
-        static let danger     = Color.adaptive(0xB91C1C, 0xF87171)   // 错误 6.0:1
-        // 594 日型色带三档 (工作日/周末两枚在此, 节假日橙直接复用 warn): **固定语义色, 不随主题** ——
-        // 这三档要的是"互相可辨"(哪天不是平常日), 而 accent 在极光/墨绿/琥珀主题里会撞青绿或橙档。
-        static let dayKindWorkday = Color.adaptive(0x4F46E5, 0x818CF8)   // 工作日 靛蓝
-        static let dayKindWeekend = Color.adaptive(0x0D9488, 0x2DD4BF)   // 周末 青绿
-        // 压在三枚语义填充色 (ok/warn/danger) 上的文字与符号色。
-        // 第八十三批为什么要新令牌而不是继续写 .white: 语义色是"浅色档深、深色档浅"的 (danger
-        // 浅档 B91C1C / 深档 F87171), 纯白在浅档 6.47:1 合格, 到深档只剩 2.77:1 —— 角标数字直接读不出。
-        // 与主题表的 onAccent 同一个道理: 浅档白字、深档墨字。实测比值全部写进 tools/contrast.js 断言。
-        static let onSem      = Color.adaptive(0xFFFFFF, 0x0A0E15)   // 语义填充上的前景
-        // 已经有一层强调填充 (accent / danger / ok) 时, 想在其上再垫一块低对比底板该往哪个方向垫:
-        // 底板永远与 onAccent/onSem **反向** (浅档白字→垫黑, 深档墨字→垫白), 这样洗底只会把对比度推高而不是拉平。
-        // 第八十三批的教训形状: 原先写死 Color.white.opacity(0.24) 当选中 chip 的角标底, 深色档墨字压洗白 = 越垫越糊。
-        static let onFillWash = Color.adaptive(0x000000, 0xFFFFFF)
-
-        // ---------- 862 增强对比映射 (包15): 系统 accessibilityHighContrast 开启时加深一档 ----------
-        // 语义角色不变, 只是明端向纯黑 / 暗端向纯白再走一步 (hairline 可辨 1.2:1 余量放大);
-        // 页面继续引用 hairline/textSub 不感知, 只有这两组"增强"变体不同。
-        private static let hairlineHC = Color.adaptive(0x8A7D6A, 0x6E6454)
-        @MainActor static var hairlineStrong: Color { Appearance.highContrast ? hairlineHC : hairline }
-
-        // ---------- 品牌主题表 (idea 31: 靛蓝/墨绿/琥珀) ----------
-        // 结构: [主题: [明暗: [角色: hex]]]。tools/contrast.js 机检本表:
-        // accentText 对三种底 ≥4.5:1, onAccent 对 accent ≥4.5:1, 纯白对 hero 两端 ≥4.5:1,
-        // onAccent 对主按钮渐变 btnA/btnB 两端 ≥4.5:1 (包1)。
-        // btnA/btnB = DS.Gradient.button 端点: 浅色与 hero 同值 (白字, 现状达标);
-        // 深色改用 accentText→accent 区间 — 旧案直接复用 hero, 近黑 onAccent 压暗端仅 ~2.4:1
-        // (包1 必修缺陷), 新案近黑字压浅端 ≥9.8:1、压 accent 端 ≥6.4:1。
-        // 891 深浅双端点: 每套主题在表里就是 light/dark 两组值，切深色不产生"断色" (对比度由 contrast.js 逐档机检)。
-        // 209 夜间色板 = 同一张表的 dark 分支 (heroA/heroB/btnA/btnB 各自有深色端点)。
-        // 原句"另建一套低饱和深靛组"没有单独再做: 深色档已经在这张表里，再造一套就是两个真相源。
-        // 886 六套色板与 892 自定义强调色共用这一张表 —— 皮肤只有一处定义，页面各自读令牌。
-        static let themeTable: [String: [String: [String: UInt32]]] = [
-            // 2026-10-18 v10 暖金/黄铜 —— v10 原型的锁体就是黄铜倒角, 这是与它同族的强调色。
-            // 取色口径与其余六套一致: accentText 对三种底 ≥4.5 / onAccent 对 accent 与 btnA/btnB /
-            // 纯白对 hero 两端 ≥4.5。浅色 heroA 取 #855915 (白字 6.11), 深色 heroA 取 #9C6B1C (白字 4.63)。
-            "brass": [
-                "light": ["accent": 0x8F6119, "accentText": 0x6F4A10, "onAccent": 0xFFFFFF, "heroA": 0x855915, "heroB": 0x6F4A10, "btnA": 0x855915, "btnB": 0x6F4A10],
-                "dark": ["accent": 0xE8B45C, "accentText": 0xF5CB85, "onAccent": 0x0A0E15, "heroA": 0x9C6B1C, "heroB": 0x855915, "btnA": 0xF5CB85, "btnB": 0xE8B45C]
-            ],
-            "indigo": [
-                "light": ["accent": 0x4F46E5, "accentText": 0x4338CA, "onAccent": 0xFFFFFF, "heroA": 0x5A55EC, "heroB": 0x4338CA, "btnA": 0x5A55EC, "btnB": 0x4338CA],
-                "dark": ["accent": 0x818CF8, "accentText": 0xA5B4FC, "onAccent": 0x0A0E15, "heroA": 0x5B5BD6, "heroB": 0x4136C9, "btnA": 0xA5B4FC, "btnB": 0x818CF8]
-            ],
-            "forest": [
-                "light": ["accent": 0x166534, "accentText": 0x14532D, "onAccent": 0xFFFFFF, "heroA": 0x178040, "heroB": 0x0F5A2C, "btnA": 0x178040, "btnB": 0x0F5A2C],
-                "dark": ["accent": 0x4ADE80, "accentText": 0x86EFAC, "onAccent": 0x0A0E15, "heroA": 0x188345, "heroB": 0x0F5A2C, "btnA": 0x86EFAC, "btnB": 0x4ADE80]
-            ],
-            "amber": [
-                "light": ["accent": 0x854D0E, "accentText": 0x713F12, "onAccent": 0xFFFFFF, "heroA": 0x9A5B10, "heroB": 0x713F12, "btnA": 0x9A5B10, "btnB": 0x713F12],
-                "dark": ["accent": 0xF59E0B, "accentText": 0xFCD34D, "onAccent": 0x0A0E15, "heroA": 0xBA560B, "heroB": 0x713F12, "btnA": 0xFCD34D, "btnB": 0xF59E0B]
-            ],
-            // ---- 886 六色色板: 以下三套是包16 补齐的那一半 ----
-            // 取色不是"再调三个色号"：每套都要过 tools/contrast.js 的全部断言 (accentText 对三种底 /
-            // onAccent 对 accent 与 btnA/btnB / 纯白对 hero 两端 / dark accentText 对 AMOLED 三表面 ≥4.5)。
-            // heroB 一律留深色端 —— 浅色端压白字到不了 4.5，这是这三套 hero 都偏深的真正原因。
-            // 注: 每套的说明只能写在**独立行**，`"名字": [` 后面不能跟行尾注释 ——
-            //     tools/contrast.js 的解析要求 `[` 之后紧跟 "light"，它会把这种写法当成解析失败。
-            // 石墨: 中性蓝灰, 给"不想要彩色"的人; 也是唯一一套接近无彩的主题
-            "graphite": [
-                "light": ["accent": 0x475569, "accentText": 0x334155, "onAccent": 0xFFFFFF, "heroA": 0x475569, "heroB": 0x1F2937, "btnA": 0x475569, "btnB": 0x1F2937],
-                "dark": ["accent": 0x94A3B8, "accentText": 0xCBD5E1, "onAccent": 0x0A0E15, "heroA": 0x475569, "heroB": 0x1E293B, "btnA": 0xCBD5E1, "btnB": 0x94A3B8]
-            ],
-            // 玫瑰: 低饱和酒红, 深色档刻意偏粉 (纯红在 dark 上压不住对比度)
-            "rose": [
-                "light": ["accent": 0x9D2B4C, "accentText": 0x83233F, "onAccent": 0xFFFFFF, "heroA": 0xA83255, "heroB": 0x6E1B33, "btnA": 0xA83255, "btnB": 0x6E1B33],
-                "dark": ["accent": 0xFB7185, "accentText": 0xFDA4AF, "onAccent": 0x0A0E15, "heroA": 0xA83255, "heroB": 0x6E1B33, "btnA": 0xFDA4AF, "btnB": 0xFB7185]
-            ],
-            // 极光: 青→靛的双端渐变 (heroA/heroB 色差最大的一套)
-            "aurora": [
-                "light": ["accent": 0x0E7490, "accentText": 0x155E75, "onAccent": 0xFFFFFF, "heroA": 0x0E7490, "heroB": 0x312E81, "btnA": 0x0E7490, "btnB": 0x312E81],
-                "dark": ["accent": 0x22D3EE, "accentText": 0x67E8F9, "onAccent": 0x0A0E15, "heroA": 0x0E7490, "heroB": 0x4338CA, "btnA": 0x67E8F9, "btnB": 0x22D3EE]
-            ]
-        ]
-        /// AMOLED 纯黑覆盖 (idea 30): 表面与画布降为纯黑/近黑。
-        /// 机检: text/textSub/ok/warn/danger 与各主题 dark accentText 在这些底上 ≥4.5:1。
-        static let amoledOverride: [String: UInt32] = [
-            "canvas": 0x000000, "surface": 0x121009, "surfaceAlt": 0x1A1610
-        ]
-
-        /// 当前生效主题 (kf_accent, 空值归一到靛蓝)
-        private static func effectiveKey(_ key: String?) -> String {
-            let k = key ?? Appearance.accentKey
-            // 2026-10-18: 新装用户默认暖金 (brass), 与 v10 黄铜语言一致; 老用户 kf_accent 已存值不受影响。
-            return k.isEmpty ? "brass" : k
-        }
-        /// 主题表 → 动态色: 明暗 trait 在 provider 内解析 (与 Color.adaptive 同一机制),
-        /// kf_accent 变更经全局重建后重新求值。key 缺省 = 当前主题, 显式传 key 供色板小样预览。
-        static func themed(_ role: String, key: String? = nil) -> Color {
-            Color(UIColor { tc in
-                // 892: 自定义色只在**没有显式指定 key** 时生效 —— 设置页色板小样传的是 key=某预设，
-                // 那一路必须显示预设本来的颜色，否则六个色块会全被自定义色染成一样，"选色板"就废了。
-                if key == nil, CustomAccent.isActive,
-                   let hex = CustomAccent.derived(CustomAccent.rgb, dark: tc.userInterfaceStyle == .dark)[role] {
-                    return UIColor(Color(hex: hex))
-                }
-                let theme = Palette.themeTable[effectiveKey(key)] ?? Palette.themeTable["brass"]!
-                let mode = theme[tc.userInterfaceStyle == .dark ? "dark" : "light"] ?? theme["light"]!
-                return UIColor(Color(hex: mode[role]!))
-            })
-        }
-
-        // ---------- 活动令牌 (API 与旧版一致, 全 App 调用点零改动) ----------
-        /// AMOLED 时表面降为纯黑/近黑, 其余场景与旧版一致
-        static var canvas: Color { Appearance.isAMOLED ? Color(hex: amoledOverride["canvas"]!) : canvasBase }
-        static var surface: Color { Appearance.isAMOLED ? Color(hex: amoledOverride["surface"]!) : surfaceBase }
-        static var surfaceAlt: Color { Appearance.isAMOLED ? Color(hex: amoledOverride["surfaceAlt"]!) : surfaceAltBase }
-        // 压在填充色上的文字。深色模式下 accent/ok/warn/danger 都是高亮浅色,
-        // 白字压上去不达 4.5:1 — 故深色模式改用近黑墨色 (机检: tools/contrast.js)。
-        static var accent    : Color { themed("accent") }      // 主行动填充 / 全局 tint
-        static var accentText : Color { themed("accentText") } // 主色文字
-        static var onAccent   : Color { themed("onAccent") }   // 压在 accent/hero 上的文字
-    }
     /// 895 "儿童友好"预设 —— **名字里不写"模式/空间/过滤"**，因为它只调外观档位：
     /// 本 App 没有任何内容分级或过滤机制 (锁台账本身就是成人内容)，把它叫"儿童模式"就是虚假承诺。
     /// 一次把五档推到"看得清、点得准、不闹"的组合，任何一档仍可事后单独改回。
-    enum FriendlyPreset {
-        static func apply() {
-            DB.store.set("kf_accent", "aurora")      // 极光: 六套里明度最高的一套
-            DB.store.set("kf_radius", "plump")        // 大圆角
-            DB.store.set("kf_density", "relaxed")     // 间距放宽
-            DB.store.set("kf_row_h", "tall")          // 凭证行加高
-            DB.store.set("kf_motion", "calm")         // 动效克制
-            DB.store.set("kf_hero_tex", "")           // 关掉装饰纹理
-        }
-        // 刻意不写 isApplied 之类的"是否已套用"回显：预设是一次性动作，
-        // 用户套完还会单独改某一档，届时"未套用"的显示反而是错的。没有消费点就不留这个 API。
-    }
     /// 892 自定义强调色 (ColorPicker 管线)。
     ///
     /// 为什么不能"用户选什么就上什么": 系统 ColorPicker 给的是任意 sRGB，
@@ -418,129 +114,8 @@ enum DS {
     /// 落在上面两条中间那个窄带 (0.1833–0.198) 里的颜色，白字墨字都不达标 ⇒ 一律再压暗到白字带内。
     /// 这套判据在 state/accent-sweep.js 里按同一公式扫过 **5400 个自定义色 (360 色相 × 5 饱和 × 3 明度)
     /// × 明暗两态 = 10800 组派生，全部达标**（结论与复跑方式记在 §91，不是"我觉得没问题"）。
-    enum CustomAccent {
-        static let key = "kf_accent_custom"
-        /// 0 = 未启用自定义色 (走六套预设)
-        static var rgb: UInt32 {
-            let v = DB.store.getInt(key)          // Store 存 Int, 免得依赖 String 解析的歧义
-            return (v >= 0 && v <= 0xFFFFFF) ? UInt32(v) : 0
-        }
-        static var isActive: Bool { rgb != 0 }
-        static func set(_ hex: UInt32) {
-            // Store 只有 set(_:Any) (顶层标量走 .fragmentsAllowed)；没有 setInt 这种东西 ——
-            // 写之前查过 App/Core/Store.swift:29，别凭手感造方法 (第七十九批刚为这类缺陷扫过全表)。
-            if hex == 0 { DB.store.remove(key) } else { DB.store.set(key, Int(hex)) }
-        }
-        /// SwiftUI Color → 6 位 RGB。
-        /// 必须走 UIColor 而不是硬读 Color 的内部值：Color 可能活在 Display P3 等别的色彩空间里，
-        /// 直接取分量会得到与 sRGB 不同的数；先转成 UIColor 再取红绿蓝就是系统做的 sRGB 换算。
-        /// 取不到分量 (极少数色彩空间) 时返回 0 = 不启用自定义色，而不是猜一个。
-        static func rgb(from color: Color) -> UInt32 {
-            let u = UIColor(color)
-            var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-            guard u.getRed(&r, green: &g, blue: &b, alpha: &a) else { return 0 }
-            // 先乘后取整，并把越界分量夹回 0...1 (P3 广色域的换算结果可能略微超出 sRGB 范围)
-            func q(_ v: CGFloat) -> UInt32 {
-                UInt32((max(0.0, min(1.0, Double(v))) * 255.0).rounded())
-            }
-            return (q(r) << 16) | (q(g) << 8) | q(b)
-        }
-
-        // ---------- WCAG 相对亮度 (与 tools/contrast.js 同一公式) ----------
-        static func luminance(_ hex: UInt32) -> Double {
-            func ch(_ c: UInt32) -> Double {
-                let s = Double(c) / 255.0
-                return s <= 0.03928 ? s / 12.92 : pow((s + 0.055) / 1.055, 2.4)
-            }
-            return 0.2126 * ch((hex >> 16) & 0xff) + 0.7152 * ch((hex >> 8) & 0xff) + 0.0722 * ch(hex & 0xff)
-        }
-        static func ratio(_ a: UInt32, _ b: UInt32) -> Double {
-            let la = luminance(a), lb = luminance(b)
-            return (max(la, lb) + 0.05) / (min(la, lb) + 0.05)
-        }
-        /// 把颜色沿"向黑插值"的方向压到亮度 ≤ target (色相与饱和度大致保留)
-        static func darkenTo(_ hex: UInt32, _ target: Double) -> UInt32 {
-            if luminance(hex) <= target { return hex }
-            var lo = 0.0, hi = 1.0
-            for _ in 0..<24 {
-                let mid = (lo + hi) / 2
-                if luminance(mix(hex, 0x000000, mid)) > target { lo = mid } else { hi = mid }
-            }
-            return mix(hex, 0x000000, hi)
-        }
-        /// 沿"向白插值"抬亮度 (给深色模式下需要抬亮的文字档用)
-        static func lightenTo(_ hex: UInt32, _ target: Double) -> UInt32 {
-            if luminance(hex) >= target { return hex }
-            var lo = 0.0, hi = 1.0
-            for _ in 0..<24 {
-                let mid = (lo + hi) / 2
-                if luminance(mix(hex, 0xFFFFFF, mid)) < target { lo = mid } else { hi = mid }
-            }
-            return mix(hex, 0xFFFFFF, hi)
-        }
-        static func mix(_ a: UInt32, _ b: UInt32, _ t: Double) -> UInt32 {
-            let k = max(0.0, min(1.0, t))
-            func part(_ shift: Int) -> UInt32 {
-                let x = Double((a >> shift) & 0xff), y = Double((b >> shift) & 0xff)
-                return UInt32((x + (y - x) * k).rounded())
-            }
-            return (part(16) << 16) | (part(8) << 8) | part(0)
-        }
-        /// 派生六档角色色。band 值来自上面的判据，改动必须同步重跑 sweep。
-        static func derived(_ base: UInt32, dark: Bool) -> [String: UInt32] {
-            let white: UInt32 = 0xFFFFFF, ink: UInt32 = 0x0A0E15
-            // 填充/hero: 一律压进"白字带" (≤0.1833) —— 深色模式也不放宽，因为 hero 上恒是白字
-            let fill = darkenTo(base, 0.1833)
-            // 主色文字: 浅色底上 ≤0.154；深色模式下反过来要够亮才压得住深色底 (≥0.40 起判)
-            let text = dark ? lightenTo(base, 0.40) : darkenTo(base, 0.154)
-            // 压在填充上的字: 白字达标就用白，否则墨字 (墨字要亮度 ≥0.198 才有 4.5:1)
-            let onFill = ratio(white, fill) >= 4.5 ? white : ink
-            return ["accent": fill, "accentText": text, "onAccent": onFill,
-                    "heroA": fill, "heroB": darkenTo(fill, 0.10),
-                    "btnA": fill, "btnB": darkenTo(fill, 0.10)]
-        }
-    }
     // 2026-10-26 精简：Festive（节日限定色）已删。
 
-    enum Gradient {
-        /// 主控卡 / 开锁盘 idle 态 / 主按钮 — 主题色向深色端的对角渐变 (随 kf_accent 切换)
-        static var hero: LinearGradient {
-            // 2026-10-26 精简：节日限定色分支已删（festive 整套移除，恒走主题色）。
-            return LinearGradient(colors: [Palette.themed("heroA"), Palette.themed("heroB")],
-                                  startPoint: .topLeading, endPoint: .bottomTrailing)
-        }
-        /// 页面底: 极淡的纵向渐变画布, 替代平涂 (scrollContentBackground 需配 .hidden)
-        /// AMOLED 下退化为近纯黑的微渐变, 保住"画布有深度"的层次暗示
-        /// 32 Mesh 网格渐变背景 (Headspace 那种柔和网格): 取色与 `screen` **同源** (同一对 canvas 上下色 + 中间过渡色),
-        /// 只把两色纵向渐变升级成 3×3 网格, 所以主题/深浅/AMOLED 仍是同一个真相源。
-        /// 部署目标 iOS 26.5, MeshGradient 自 18.0 起可用 —— 不写可用性分支。
-        /// 三档特殊情形在 dsScreenBackground 里回落线性渐变 (AMOLED 纯黑 / 智能反转幂等色 / 降低透明度实底)。
-        static var screenMesh: MeshGradient {
-            let top = Appearance.isAMOLED ? Color(hex: 0x050505) : Color.adaptive(0xF7F9FD, 0x0C1120)
-            let bottom = Appearance.isAMOLED ? Color(hex: 0x000000) : Color.adaptive(0xE9EDF6, 0x06080E)
-            let mid = Color.adaptive(0xF2F5FB, 0x090E1B)
-            return MeshGradient(width: 3, height: 3, points: [
-                SIMD2<Float>(0.0, 0.0), SIMD2<Float>(0.5, 0.0), SIMD2<Float>(1.0, 0.0),
-                SIMD2<Float>(0.0, 0.5), SIMD2<Float>(0.58, 0.44), SIMD2<Float>(1.0, 0.5),
-                SIMD2<Float>(0.0, 1.0), SIMD2<Float>(0.5, 1.0), SIMD2<Float>(1.0, 1.0),
-            ], colors: [
-                top, top, top,
-                top, mid, bottom,
-                bottom, bottom, bottom,
-            ])
-        }
-        static var screen: LinearGradient {
-            let top = Appearance.isAMOLED ? Color(hex: 0x050505) : Color.adaptive(0xF7F9FD, 0x0C1120)
-            let bottom = Appearance.isAMOLED ? Color(hex: 0x000000) : Color.adaptive(0xE9EDF6, 0x06080E)
-            return LinearGradient(colors: [top, bottom], startPoint: .top, endPoint: .bottom)
-        }
-        /// 主按钮渐变 (PrimaryActionStyle 专用): 浅色 = hero 同值白字; 深色 = accentText→accent
-        /// 区间配近黑字。HeroCard/MomentCard/圆盘 idle 仍用 hero 白字渐变, 不受本修复影响。
-        static var button: LinearGradient {
-            LinearGradient(colors: [Palette.themed("btnA"), Palette.themed("btnB")],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
-        }
-    }
 }
 
 // ---------- 品牌主题元数据 (设置页色板小样用, idea 31) ----------
