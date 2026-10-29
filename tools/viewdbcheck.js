@@ -63,7 +63,8 @@ function scan() {
           if (inAsync(k)) continue;
           const code = L[k].replace(/\/\/.*$/, '');
           const all = (code.match(/\bDB\./g) || []).length;
-          const light = (code.match(/\bDB\.store\.(getString|getBool|getInt|getDouble)\s*\(/g) || []).length;
+          // set*/remove* 是写侧（生命周期只在用户动作时触发一次），不算读侧欠账
+          const light = (code.match(/\bDB\.store\.(getString|getBool|getInt|getDouble)\s*\(|\bDB\.store\.(set|setInt|setDouble|setCodable|remove)\s*\(/g) || []).length;
           n += Math.max(0, all - light);
         }
         if (!n) continue;
