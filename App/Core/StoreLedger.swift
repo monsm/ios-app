@@ -7,6 +7,10 @@ extension DB {
 
     static func isLedgerCorrupt(_ mac: String) -> Bool { ledgerLock.withLock { $0.contains(mac) } }
 
+    /// 2026-10-29：清掉损坏标记。只在"用户显式选择以某份备份为准"（备份恢复）时调用 ——
+    /// 否则一次解码失败会让整个会话里所有 ledger 写入（含恢复时的凭证导入）静默失败。
+    static func clearAllLedgerCorrupt() { ledgerLock.withLock { $0.removeAll() } }
+
     static func ledger(_ mac: String) -> Ledger {
         if let l = get(Ledger.self, "kf_ledger_" + mac) { return l }
         // get 返回 nil 有两种语义: ①该键不存在 (真空台账) ②有键但解码抛错 (字段缺任一即整表抛)。
@@ -25,7 +29,11 @@ extension DB {
     static func saveLedger(_ mac: String, _ l: Ledger) {
         ledgerWriteLock.withLock { _ in
             // 已判定为不可解的台账一律拒写: 宁可界面显示陈旧数据, 也不要把用户的记录抹掉
-            guard !isLedgerCorrupt(mac) else { return }
+            guard !isLedgerCorrupt(mac) else {
+                // 不要静默：这条以前是直接 return，用户看到"保存成功"但什么都没落盘。
+                BleTelemetry.recordEvent("台账不可解, 本次写入被拒 @" + String(mac.prefix(6)), ok: false)
+                return
+            }
             let old = get(Ledger.self, "kf_ledger_" + mac)
             set(l, "kf_ledger_" + mac)
             let changes = ledgerDiff(old, l)
