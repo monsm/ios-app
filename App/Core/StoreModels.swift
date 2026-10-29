@@ -107,7 +107,7 @@ struct StatusSnapshot: Codable {
     /// 2026-10-27 审核说明 (AUDIT-A F-31)：本仓 `StatusSnapshotData` 只存状态对象的**子集**
     /// （rc/pid/电量/锁钟/固件版本等界面要用的），而 vendor 存整个 status 对象。
     /// 差异不影响功能：本仓用到哪几项就存哪几项，省 UserDefaults 空间。
-struct StatusSnapshotData: Codable {
+struct StatusSnapshotData: Codable, Equatable {
     var rc: Int = 0
     var powerLevel: Int = 0
     var firmware: String = ""

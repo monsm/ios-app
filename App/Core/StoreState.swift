@@ -14,6 +14,10 @@ extension DB {
             pinCap: st.pinInfoCapacity > 0 ? st.pinInfoCapacity : nil,
             pwdCap: st.pwdInfoCapacity > 0 ? st.pwdInfoCapacity : nil,
             fpCap: st.fpInfoCapacity > 0 ? st.fpInfoCapacity : nil)
+        // 2026-10-29 性能：每次 getStatus 成功都会走到这里，而状态大多时候没变。
+        // 原先无条件 set → 每次都是一次 JSONSerialization + UserDefaults(plist) 落盘。
+        // 现在先比一遍：字段全等就不写（at 时间戳不参与比较，它只是"上次读到"的标记）。
+        if let old = get(StatusSnapshot.self, "kf_snap_" + mac)?.status, old == d { return }
         set(StatusSnapshot(at: Date().timeIntervalSince1970 * 1000, status: d), "kf_snap_" + mac)
     }
 

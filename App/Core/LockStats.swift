@@ -81,8 +81,13 @@ enum LockArchive {
     /// 292: 连接成功即刷新基准 (开锁成功也会走到这里)
     static func touchConnected(_ mac: String) {
         guard !mac.isEmpty else { return }
+        // 2026-10-29 性能：本函数在每次状态回读后都会被调一次，
+        // 而它每次都要 读字典 → 改一个时间戳 → 整表写回（一次 UserDefaults 落盘）。
+        // "最近连接时间"只用于沉睡判定（按天/按周的量级），5 分钟的精度完全够，故加节流。
+        let now = Date().timeIntervalSince1970
         var m = meta(mac)
-        m.lastConnectedAt = Date().timeIntervalSince1970
+        if now - m.lastConnectedAt < 300 { return }
+        m.lastConnectedAt = now
         save(mac, m)
     }
     /// 258: 首次开锁成功 = 全链路 (BLE→会话→04→日志) 跑通, 打"链路已验证"标记
