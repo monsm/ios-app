@@ -9,6 +9,8 @@ struct SettingsView: View {
     @State private var showMembers = false
     @State private var showGateway = false
     @State private var showDeviceInfo = false
+    // 2026-10-29：锁设置 sheet（B 档）
+    @State private var showLockSettings = false
     @State private var showBackup = false
     @State private var showAdd = false
     /// 2026-10-17 安卓版: 把当前锁的开锁凭证渲染成二维码 (扫码导入, 之后不再需要)
@@ -82,6 +84,7 @@ struct SettingsView: View {
         .dsScreenBackground()
         .sheet(isPresented: $showMembers) { MembersView() }
         .sheet(isPresented: $showGateway) { GatewayView() }
+        .sheet(isPresented: $showLockSettings) { LockSettingsView() }
         .sheet(isPresented: $showDeviceInfo) { DeviceInfoView() }
         .sheet(isPresented: $showBackup) { BackupView() }
         .sheet(item: $shareLock) { ShareToAndroidView(kc: $0) }
@@ -305,6 +308,11 @@ struct SettingsView: View {
                 NavigationLink("锁档案 (昵称/符号/色标/备注)") { LockProfileView() }
                 note("靠近时先连上，开锁少等一两秒；成功率只在本机统计。")
                 Button("锁信息名片") { showDeviceInfo = true }
+                // 2026-10-29：锁设置独立页（B 档）—— 7 项能力的集中入口。
+                // 下方原有 7 行**保留不删**（双入口，老用户路径不打断）。
+                Button { showLockSettings = true } label: {
+                    Label("锁设置（布防 / 防尾随 / 静音 / 固件…）", systemImage: "gearshape")
+                }
                 note("型号、固件、电量与绑定时间的汇总卡。")
                 // 2026-10-28 补入口（**真缺口**）：`SafemodeIntroView` 只在 QuickPool 里以
                 // `mode: "otp"` 构造过一次 —— `mode: "safe"` 那半边（A/B 说明 + 「切换到 B 模式」按钮）

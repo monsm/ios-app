@@ -14,6 +14,8 @@ struct DeviceHomeView: View {
     @ObservedObject private var sense = LinkSense.shared
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showAdd = false
+    // 2026-10-29：锁设置 sheet（B 档）—— 设备页工具栏齿轮打开
+    @State private var showLockSettings = false
     @State private var refreshing = false
     @State private var reconnectDot = false   // 91 回连静默小点
     @State private var checks = [false, false, false]   // 87 排查清单勾选态
@@ -136,10 +138,16 @@ struct DeviceHomeView: View {
                 }
                 ToolbarItem(placement: barSide) {
                     Button { showAdd = true } label: { Image(systemName: "plus") }
+                    // 2026-10-29：锁设置入口（齿轮放工具栏，不放 Hero 卡 —— 卡内 .accessibilityElement(.combine) 会吞按钮）
+                    ToolbarItem(placement: barSide) {
+                        Button { showLockSettings = true } label: { Image(systemName: "gearshape") }
+                            .accessibilityLabel("锁设置")
+                    }
                         .accessibilityLabel("添加设备")
                 }
             }
             .sheet(isPresented: $showAdd) { AddDeviceView() }
+            .sheet(isPresented: $showLockSettings) { LockSettingsView() }
             .sheet(isPresented: $showModuleOrder) { moduleOrderSheet }
             // 2026-10-28 删除：`showSettings` 是**死 sheet** —— 零 `= true` 写点。
             // 设置页走 Tab 切换（app.requestRoute(.settings)），不需要这个 sheet。
