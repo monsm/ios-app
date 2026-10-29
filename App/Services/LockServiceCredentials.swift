@@ -117,24 +117,8 @@ extension LockService {
                                          sessionTokenHex)
         var frames = [ZKProtocol.ParsedFrame]()
         // 与 JS lock.js:507-511 同一套取值口径 (0x04 序号 / 0x05 特征号 / 0x06 批次 / 0x07 下一次超时)
-        func press(of f: ZKProtocol.ParsedFrame) -> FpPress {
-            func u32(_ key: UInt8) -> UInt32? {
-                f.klvs.first(where: { $0.key == key }).map { StatusParser.leHexToU32($0.val) }
-            }
-            return FpPress(orderIdx: u32(0x04), featureNumber: u32(0x05),
-                           batchNumber: u32(0x06), nextTimeout: u32(0x07), rc: extractRc(0x13, f))
-        }
         let rcBlurry = 23   // 锁端"无法获取有效的指纹图片" (= APK 前端说的"指纹模糊")
         let rcTimeout = 24  // 锁端"录入指纹超时" = 锁已退出录入态
-        func rcOf(_ f: ZKProtocol.ParsedFrame) -> Int { extractRc(0x13, f) }
-        /// 干净按压 = rc 正常 (0 或缺省 -1) 且 KLV#04 序号 > 0。
-        /// 模糊帧/超时帧**不计数** —— 旧写法只判 orderIdx>0, 模糊那一下也会点亮一格进度,
-        /// 于是屏上写着 4/8、锁里其实只有 3 次有效特征。
-        func isPress(_ f: ZKProtocol.ParsedFrame) -> Bool {
-            let r = rcOf(f)
-            guard r == 0 || r == -1 else { return false }
-            return (press(of: f).orderIdx ?? 0) > 0
-        }
         func pressesCount() -> Int { frames.reduce(0) { $0 + (isPress($1) ? 1 : 0) } }
         /// 收尾判据只有一条: 收满 times 次干净按压。没有任何"提前收尾"的合法信号。
         func collectionDone() -> Bool { pressesCount() >= times }
@@ -248,4 +232,26 @@ extension LockService {
         return LogPage(surplus: surplus, logs: logs)
     }
 
+
+    // ---------- 指纹录入的帧解析helper（2026-10-29 从 fpStart 的嵌套函数提到方法，便于单测） ----------
+
+    /// 与 JS lock.js:507-511 同一套取值口径 (0x04 序号 / 0x05 特征号 / 0x06 批次 / 0x07 下一次超时)
+    func press(of f: ZKProtocol.ParsedFrame) -> FpPress {
+    func u32(_ key: UInt8) -> UInt32? {
+    f.klvs.first(where: { $0.key == key }).map { StatusParser.leHexToU32($0.val) }
+    }
+    return FpPress(orderIdx: u32(0x04), featureNumber: u32(0x05),
+    batchNumber: u32(0x06), nextTimeout: u32(0x07), rc: extractRc(0x13, f))
+    }
+
+    func rcOf(_ f: ZKProtocol.ParsedFrame) -> Int { extractRc(0x13, f) }
+
+    /// 干净按压 = rc 正常 (0 或缺省 -1) 且 KLV#04 序号 > 0。
+    /// 模糊帧/超时帧**不计数** —— 旧写法只判 orderIdx>0, 模糊那一下也会点亮一格进度,
+    /// 于是屏上写着 4/8、锁里其实只有 3 次有效特征。
+    func isPress(_ f: ZKProtocol.ParsedFrame) -> Bool {
+    let r = rcOf(f)
+    guard r == 0 || r == -1 else { return false }
+    return (press(of: f).orderIdx ?? 0) > 0
+    }
 }
