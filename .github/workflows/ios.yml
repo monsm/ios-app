@@ -131,6 +131,11 @@ jobs:
       - name: 'Codable 容错解码棘轮 (判失败: 新增/加字段的 Codable 模型没有手写 init(from:))'
         run: node tools/codablecheck.js
 
+      # 2026-10-29 加：本轮审计里最反复出现的性能问题是「在 var xxx: some View 里直接调 DB.*」，
+      # 视图每次重算都会重读存储。这道棘轮按文件统计命中次数，只许降不许升。
+      - name: '视图内读库棘轮 (判失败: 视图计算属性里的 DB 调用比基线多)'
+        run: node tools/viewdbcheck.js
+
       # 2026-10-29 加：本仓「数据库」是 UserDefaults + JSON，读一次就是一次全量解码。
       # 写在 body / ForEach 里会按帧、按行解码 —— 编译和所有既有闸门都不会红，
       # 真机上只表现为掉帧、发热、滚动卡顿。这份棘轮只许降不许升。
