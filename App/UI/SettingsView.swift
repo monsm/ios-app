@@ -192,7 +192,7 @@ struct SettingsView: View {
     /// 设置页每一节的滚动锚 (2026-10-15): rawValue 直接当 `.id()` 用 —— 字符串, 稳定且读得懂。
     /// `group` = 这一节归哪个筛选分组。跳转前必须先切过去, 否则命中节可能压根没被渲染,
     /// `scrollTo` 会**静默落空** (这正是"点了搜索没反应"的另一种形态)。
-    private enum SettingsAnchor: String {
+    enum SettingsAnchor: String {
         case lock, security, unlock, time, autoOpen, family
         case tools, drill, applock, appearance, memory, alertTone, about
 
@@ -208,7 +208,7 @@ struct SettingsView: View {
     }
 
     /// 27 设置页内搜索 (原句落点"App Store 式设置内搜索"): 命中词映射到对应条目, 直达功能
-    private struct SearchHit: Identifiable {
+    struct SearchHit: Identifiable {
         let id: String
         let title: String
         let icon: String

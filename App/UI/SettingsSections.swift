@@ -4,6 +4,7 @@
 import SwiftUI
 
 extension SettingsView {
+    @ViewBuilder
     var timeSection: some View {
         Section {
             Picker("时间制式", selection: Binding(
@@ -25,6 +26,7 @@ extension SettingsView {
                 .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
         }
     }
+    @ViewBuilder
     var unlockSection: some View {
         Section {
             VariantToggle("按住确认开锁", isOn: Binding(
@@ -87,6 +89,7 @@ extension SettingsView {
             AutoOpenSection(mac: mac)
         }
     }
+    @ViewBuilder
     var familySection: some View {
         Section {
             memberFamilyRows
@@ -100,6 +103,7 @@ extension SettingsView {
         }
         credCareSection
     }
+    @ViewBuilder
     var memberFamilyRows: some View {
         Button { showMembers = true } label: { Label("成员管理（含成员中心）", systemImage: "person.2") }
         // 包9 手机钥匙 (41/43/44 的成员侧): 与「蓝牙钥匙串」并列 ——
@@ -124,6 +128,7 @@ extension SettingsView {
         // 在下面读起来像"给这个成员再加一把锁"。已挪进 lockSection 的「门锁」节 (与「删除设备」同处,
         // 一加一删成对), 空态那一支本来就带「添加设备」按钮。
     }
+    @ViewBuilder
     var credCareSection: some View {
         Section {
             // 2026-10-14 走查: 原标签「历史版本配额 N 版/凭证」的量纲读不出来 —— "版/凭证" 是
@@ -150,6 +155,7 @@ extension SettingsView {
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
+    @ViewBuilder
     var toolsSection: some View {
         Section("工具") {
             Button { showBackup = true } label: { Label("备份与恢复", systemImage: "externaldrive") }
@@ -199,6 +205,7 @@ extension SettingsView {
             }
         }
     }
+    @ViewBuilder
     var applockSection: some View {
         Section {
             if DB.hasPasscode() {
@@ -217,6 +224,7 @@ extension SettingsView {
                  : "冷启动需输密码。可另设一个胁迫码：被胁迫时输入它，App 进入空壳模式（门能开、数据看不见），不报警不暴露。")
         }
     }
+    @ViewBuilder
     var aboutSection: some View {
         Section {
             // 机械计数器 (idea 1006): 累计开锁次数
