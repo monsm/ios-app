@@ -84,14 +84,21 @@ struct DeviceHomeView: View {
                             .accessibilityLabel("开锁圆盘组")   // 868 开锁圆盘组
                         // 2026-10-29：布防入口 —— 原来只在「设置 → 锁段」，用户找不到（本次审核的起点）。
                         // 只在锁支持布防时出现（canDefend）；与设置页那条**并存**（不删，避免打断老用户习惯）。
+                        // 行内带当前布防状态（DefendKit.summary），不用点进去才知道现在是"撤防"还是"布防中"。
                         // 放圆盘下方：HIG 说重要控制宜在中部/下部，且与开锁动作同屏。
-                        if PidMap.canDefend(app.current?.pid ?? 0) {
+                        if let kc = app.current, PidMap.canDefend(kc.pid) {
                             NavigationLink {
                                 DefendView()
                             } label: {
-                                Label("布防", systemImage: "shield.lefthalf.filled")
-                                    .vkFont(.subheadline, weight: .medium)
-                                    .frame(maxWidth: .infinity, minHeight: DS.Hit.min)
+                                HStack(spacing: DS.Space.s) {
+                                    Label("布防", systemImage: "shield.lefthalf.filled")
+                                    Spacer(minLength: 0)
+                                    Text(DefendKit.summary(DB.defend(kc.mac)))
+                                        .vkFont(.caption)
+                                        .foregroundStyle(DefendKit.isActive(DB.defend(kc.mac))
+                                                         ? DS.Palette.ok : DS.Palette.textSub)
+                                }
+                                .frame(maxWidth: .infinity, minHeight: DS.Hit.min)
                             }
                             .buttonStyle(PressableButtonStyle())
                             .padding(.horizontal, DS.Space.gutter)
