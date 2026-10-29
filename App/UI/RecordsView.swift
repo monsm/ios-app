@@ -261,8 +261,6 @@ struct RecordsView: View {
 
     /// 记录页右上角工具栏 (从 body 内联的 .toolbar 里抽出: 该表达式报 type-check 超时)。
     /// 工具栏内容是 ToolbarContent ⇒ 用 @ToolbarContentBuilder。
-    @ToolbarContentBuilder
-
     var macs: [String] { scope == 1 ? DB.keychains().map { $0.mac } : [mac] }
     var activeFilters: Bool {
         filters.segment != 0 || filters.dayKind != 0 || filters.lateNight || filters.alarmOnly

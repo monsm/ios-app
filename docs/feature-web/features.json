@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T05:03:00.282Z",
+    "generated": "2026-10-29T05:06:14.983Z",
     "sources": [
       {
         "scout": "android-native",
@@ -25553,7 +25553,7 @@
           "line": 355,
           "symbol": "recordsChrome",
           "note": "NavigationStack + 全部 sheet/alert 挂载点",
-          "text": "DB.readLogs(mac).compactMap { $0.lockTimeStr.isEmpty ? nil : String($0.lockTimeStr.prefix(10)) }.min()"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -25646,7 +25646,7 @@
           "line": 376,
           "symbol": "recordsChrome",
           "note": "父级：sheet(item: $detailRec) 传 displayedRecs",
-          "text": "app.requestRoute(.device)"
+          "text": "Label(\"跳回设备页定位「\" + LockArchive.displayName(app.devices.first { $0.mac == mac } ?? Keychain(mac: mac, skey: \"\")) + \"」\", systemImage: \"lock.rotation\")"
         },
         {
           "platform": "ios",
@@ -25965,7 +25965,7 @@
           "line": 433,
           "symbol": "searchBar",
           "note": "占位文案与绑定",
-          "text": "static func recTitle(_ r: Rec) -> String {"
+          "text": "let kindWord = StatsKit.openTypes.contains(r.type) ? (Attribution.words[r.kind ?? \"\"] ?? nil) : nil"
         },
         {
           "platform": "ios",
@@ -25989,7 +25989,7 @@
           "line": 345,
           "symbol": "onChange(searchText)",
           "note": "562 边输入边过滤",
-          "text": "let fmt = DateFormatter()"
+          "text": "fmt.dateFormat = \"MM-dd\""
         }
       ],
       "platformEvidence": {
@@ -26153,7 +26153,7 @@
           "line": 374,
           "symbol": "recordsChrome",
           "note": "入口：filters.alarmKinds 绑定",
-          "text": "Button {"
+          "text": "app.requestRoute(.device)"
         }
       ],
       "platformEvidence": {
@@ -26219,7 +26219,7 @@
           "line": 306,
           "symbol": "onChange(pending*)",
           "note": "六个深链入口",
-          "text": "app.showToast(\"已复制 \\(rows.count) 行 CSV\")   // 716 已复制"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -27612,7 +27612,7 @@
           "line": 371,
           "symbol": "OutWinSheet",
           "note": "越界文案",
-          "text": "@ViewBuilder"
+          "text": "Section {"
         }
       ],
       "platformEvidence": {
@@ -27845,7 +27845,7 @@
           "line": 333,
           "symbol": "onChange(scope)",
           "note": "切范围重置全部检索态",
-          "text": ".fixedSize(horizontal: false, vertical: true)"
+          "text": "Image(systemName: \"calendar.badge.clock\").accessibilityHidden(true)"
         },
         {
           "platform": "ios",
@@ -27853,7 +27853,7 @@
           "line": 392,
           "symbol": "macs",
           "note": "范围 → 锁列表",
-          "text": "guard let t = Double(raw), t > 0 else { return nil }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -60730,7 +60730,7 @@
           "line": 289,
           "symbol": "onChange(filters)",
           "note": "差异才落盘",
-          "text": "}"
+          "text": "// 2026-10-26 精简：搜索建议补全（suggestions）已删（用户确认）。"
         },
         {
           "platform": "ios",
