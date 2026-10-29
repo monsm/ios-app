@@ -184,7 +184,7 @@ struct MemberDetail360View: View {
             }
             Text("矩阵管的是本机 UI: 「管凭证」这一行决定这一档给不给代管开关 (上方「家庭场景」那一节), "   // 470 矩阵管的是本机
                  + "「成员管理」这一行决定能不能被指成紧急管理员 (就在下面)。不给的那一枚会就地写明为什么少。"
-                 + "边界: 锁端没有角色字段, 备份包也不带角色 —— 这三档不改任何发往门锁的字节; "
+                 + "边界： 锁端没有角色字段， 备份包也不带角色 —— 这三档不改任何发往门锁的字节; "
                  + "角色与代管会被写进成员名册那张 vcf 的备注行。")   // 415 角色与代管会被写进成
                 .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
@@ -208,13 +208,13 @@ struct MemberDetail360View: View {
                         onChanged()
                     }))
                 .fixedSize(horizontal: false, vertical: true)
-                Text("这一档的作用是把人点出来: 上面那一行会写上 Ta 的名字, 免得只剩一个人管钥匙。"
-                     + "救援码本身仍在 设置-安全 里生成, 那段说明目前不读这份名单 —— 两者今天没有绑定关系。")
+                Text("这一档的作用是把人点出来： 上面那一行会写上 Ta 的名字， 免得只剩一个人管钥匙。"
+                     + "救援码本身仍在 设置-安全 里生成， 那段说明目前不读这份名单 —— 两者今天没有绑定关系。")
                     .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             } else {
-                Text("角色是「" + MemberHub.roleLabel(role) + "」: 矩阵里「成员管理」这一行是禁用, 所以这一档不给指成紧急管理员 (收的就是本机 UI)。要给它, 先把角色改成主理人。")
+                Text("角色是「" + MemberHub.roleLabel(role) + "」: 矩阵里「成员管理」这一行是禁用， 所以这一档不给指成紧急管理员 (收的就是本机 UI)。要给它， 先把角色改成主理人。")
                     .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -280,7 +280,7 @@ struct MemberDetail360View: View {
         let fNote = field("家庭便签 (如 周六换锁芯)", e.note)
         let fWelcome = field("访客欢迎语", e.welcome)   // 484 访客欢迎语
         let fGroup = field("分组标签 家人/访客/服务人员", e.groupTag)   // 630 分组标签
-        let fCommon = field("常用锁 (mac 或名称, 逗号分隔; 多锁时排前)",
+        let fCommon = field("常用锁 (mac 或名称， 逗号分隔; 多锁时排前)",
                             e.commonLocks.joined(separator: ", "))
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         alert.addAction(UIAlertAction(title: "保存", style: .default) { _ in
@@ -318,7 +318,7 @@ struct MemberDetail360View: View {
         // 现在只留一个按钮，并把真实后果说清楚。
         let msg = preview.isEmpty
             ? "确定要删除「" + m.name + "」吗? TA 名下没有台账凭证。本机记录删除后不可恢复。"
-            : "删除「" + m.name + "」后, 名下 " + String(preview.count) + " 条凭证将从**本机台账移除**"
+            : "删除「" + m.name + "」后， 名下 " + String(preview.count) + " 条凭证将从**本机台账移除**"
               + "（本机没有回收站，删除后不可恢复）:\n"
               + preview.prefix(5).joined(separator: "\n") + (preview.count > 5 ? "\n…" : "")
               + "\n\n⚠ 锁端凭证不受影响 —— 这些密码/指纹在门锁上**仍然有效**，"

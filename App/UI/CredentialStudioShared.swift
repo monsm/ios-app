@@ -29,7 +29,7 @@ enum StudioTools {
         if v.count >= 8 { score += 1 }
         if isSequential(v) { score -= 1 }
         if uniq <= 1 { score = 0 }
-        let hint = uniq <= 1 ? "全部同数字, 易被猜出" : (isSequential(v) ? "顺子 (如 123456), 建议避免" : (v.count < 6 ? "位数偏短" : "强度正常"))
+        let hint = uniq <= 1 ? "全部同数字， 易被猜出" : (isSequential(v) ? "顺子 (如 123456), 建议避免" : (v.count < 6 ? "位数偏短" : "强度正常"))
         return (max(score, 0), hint)
     }
     private static func isSequential(_ v: String) -> Bool {
@@ -80,7 +80,7 @@ struct StepDots: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
         }
-        .accessibilityLabel("表单进度 第 \(index + 1) 步, 共 \(total) 步")
+        .accessibilityLabel("表单进度 第 \(index + 1) 步， 共 \(total) 步")
     }
 }
 
@@ -128,7 +128,7 @@ struct MaskedDigits: View {
                 let mask = maskChar(style: style, index: i, count: value.count, ch: ch)
                 let shown: String = on ? String(ch) : mask
                 let digitFont: Font = (big ? Font.title : Font.title3).weight(.semibold).monospacedDigit()
-                let a11yLabel: String = on ? "第 \(i + 1) 位" : "第 \(i + 1) 位, 点按显示"
+                let a11yLabel: String = on ? "第 \(i + 1) 位" : "第 \(i + 1) 位， 点按显示"
                 Button {
                     revealed.formSymmetricDifference([i])
                     if revealed.contains(i), !ledgerLogged {
@@ -208,13 +208,13 @@ struct PwdDiffView: View {
                 }
             }
             if changed.isEmpty {
-                Text("新旧值完全一致, 未做任何改动")
+                Text("新旧值完全一致， 未做任何改动")
                     .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("新旧密码逐位对比, 共 \(changed.count) 位改动")
+        .accessibilityLabel("新旧密码逐位对比， 共 \(changed.count) 位改动")
     }
 }
 
@@ -279,7 +279,7 @@ struct CodeBigCard: View {
                 .frame(minHeight: DS.Hit.min)
                 .accessibilityLabel("复制码值")
             }
-            let foot = extraFoot.isEmpty ? "大字号方便对准锁键盘输入; 本卡含密码, 拍照或分享后注意保管。" : extraFoot
+            let foot = extraFoot.isEmpty ? "大字号方便对准锁键盘输入; 本卡含密码， 拍照或分享后注意保管。" : extraFoot
             Text(foot)
                 .vkFont(.caption2)
                 .foregroundStyle(DS.Palette.textSub)

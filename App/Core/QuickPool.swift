@@ -151,7 +151,7 @@ func quickDestination(_ id: String) -> some View {
     case "tailgate": TailgateView()
     case "safemode": SafemodeIntroView()
     case "dfu":      DFUView()
-    case "again":    Text("「再开一次」在设备页长按编辑或直接点按, 不需要新页面")   // 921 再开一次
+    case "again":    Text("「再开一次」在设备页长按编辑或直接点按， 不需要新页面")   // 921 再开一次
     default:         Text("这个快捷入口对应的页面已不存在，请到设置-外观里重新选择")
     }
 }

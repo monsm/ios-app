@@ -193,7 +193,7 @@ enum BackupStudio {
         }
         let ck = checksumState(body)
         if ck == .mismatch {
-            throw DFUError.msg("内容哈希不一致 — 已拦下, 未写任何数据; 建议重传这份备份")   // 453 内容哈希不一致
+            throw DFUError.msg("内容哈希不一致 — 已拦下， 未写任何数据; 建议重传这份备份")   // 453 内容哈希不一致
         }
         let m = upgradeChain(raw)
         // 2026-10-26: 这里原有一个 zones 局部数组（设备/凭证/成员/记录四段摘要），
@@ -389,7 +389,7 @@ enum BackupStudio {
     /// 基线只在备份发生点 (markBackupBaseline, 由 Milestones.recordBackup 尾调用) 更新,
     /// 本函数只比不改 —— 自查后回写会把上一次的异常直接抹平。
     static var selfCheckWarning: String? {
-        DB.store.getBool("kf_bk_selfwarn") ? "数据自检异常, 去诊断" : nil   // 448 数据自检异常
+        DB.store.getBool("kf_bk_selfwarn") ? "数据自检异常， 去诊断" : nil   // 448 数据自检异常
     }
     /// 507 备份状态角标: 今日已备份 / 多日未备份
     // 2026-10-26 精简：badgeState（备份状态角标）已删 —— 它依赖的 lastExportMs 随策略类一起移除。

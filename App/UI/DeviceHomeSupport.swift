@@ -134,7 +134,7 @@ struct UnlockGateView: View {
                 Text("30 秒内再次开锁")
                     .vkFont(.title3, weight: .semibold)
                     .foregroundStyle(DS.Palette.text)
-                Text("为防误触, 请先验证本机密码")
+                Text("为防误触， 请先验证本机密码")
                     .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
             }
@@ -162,7 +162,7 @@ struct UnlockGateView: View {
                     .foregroundStyle(DS.Palette.warn)
                     .transition(.opacity)
             } else if failed {
-                Label("密码错误, 请重新输入", systemImage: "exclamationmark.circle.fill")
+                Label("密码错误， 请重新输入", systemImage: "exclamationmark.circle.fill")
                     .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.danger)
                     .transition(.opacity)

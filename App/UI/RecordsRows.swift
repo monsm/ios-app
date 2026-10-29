@@ -261,7 +261,7 @@ extension RecordsView {
                 guard let surplus = r.surplus else {
                     // 锁端未回 KLV#04: 只读到本页, 如实告知而非假装"已拉全"
                     noSurplusReport = true
-                    app.showToast("锁端未报告剩余条数, 已读 \(events.count) 条")
+                    app.showToast("锁端未报告剩余条数， 已读 \(events.count) 条")
                     break
                 }
                 if surplus <= 0 { break }
@@ -297,7 +297,7 @@ extension RecordsView {
             if !cached.isEmpty {
                 render(cached.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw, lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") }, offline: true)
             } else {
-                app.showToast("读取失败: \(error.localizedDescription)")
+                app.showToast("读取失败： \(error.localizedDescription)")
             }
         }
         // running 由 defer 复位（只有"最新那次"才有权复位，见函数头注释）。

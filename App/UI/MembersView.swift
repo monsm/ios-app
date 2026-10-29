@@ -23,7 +23,7 @@ struct MembersView: View {
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                     HStack(spacing: DS.Space.m) {
-                        TextField("姓名 (仅限汉字, 英文和数字)", text: $newName)
+                        TextField("姓名 (仅限汉字， 英文和数字)", text: $newName)
                             .autocorrectionDisabled()
                             .submitLabel(.done)
                             .focused($nameFocused)
@@ -185,7 +185,7 @@ struct MembersView: View {
         // 两个按钮行为完全相同，只留一个，并如实说明锁端凭证仍需手动删除。
         let msg = preview.isEmpty
             ? "确定要删除「\(m.name)」吗？TA 名下没有台账凭证。本机记录删除后不可恢复。"
-            : "删除「\(m.name)」后, 名下 \(preview.count) 条凭证将从**本机台账移除**"
+            : "删除「\(m.name)」后， 名下 \(preview.count) 条凭证将从**本机台账移除**"
               + "（本机没有回收站，删除后不可恢复）:\n"
               + preview.prefix(5).joined(separator: "\n")
               + (preview.count > 5 ? "\n…" : "")

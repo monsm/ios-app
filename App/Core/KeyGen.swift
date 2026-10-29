@@ -40,7 +40,7 @@ enum KeyGen {
         var seen = Set<String>()
         var guardBudget = n * 512 + 256
         while out.count < n {
-            if guardBudget <= 0 { throw NSError(domain: "KeyGen", code: 1, userInfo: [NSLocalizedDescriptionKey: "随机源异常: 无法生成 \(n) 个唯一 PIN"]) }
+            if guardBudget <= 0 { throw NSError(domain: "KeyGen", code: 1, userInfo: [NSLocalizedDescriptionKey: "随机源异常： 无法生成 \(n) 个唯一 PIN"]) }
             guardBudget -= 1
             let p = genPin()
             if seen.contains(p) { continue }

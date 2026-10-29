@@ -99,7 +99,7 @@ extension SettingsView {
         } header: {
             Text("家人与钥匙")
         } footer: {
-            Text("「访客」是本地虚拟分组, 不占锁端槽位; 活跃度与摘录均按台账推断 (约)。")
+            Text("「访客」是本地虚拟分组， 不占锁端槽位; 活跃度与摘录均按台账推断 (约)。")
                 .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -156,7 +156,7 @@ extension SettingsView {
         } header: {
             Text("凭证整理")
         } footer: {
-            Text("「成员别名显示」开着时, 有备注名的成员优先显示备注 (如「老妈」), 否则显示称呼。\n版本快照只在本机留存; 需锁端生效的操作必须到场连接后另行执行，本 App 不排队。")
+            Text("「成员别名显示」开着时， 有备注名的成员优先显示备注 (如「老妈」), 否则显示称呼。\n版本快照只在本机留存; 需锁端生效的操作必须到场连接后另行执行，本 App 不排队。")
                 .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)

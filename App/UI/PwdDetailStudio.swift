@@ -35,8 +35,8 @@ struct PwdDetailStudio: View {
                     if p.temp, CredentialOrg.isEarlyExpired(mac, p, Date()) {
                         Section {
                             Label {
-                                Text("已过本机设定的提前失效时刻 — 这一条只是提示: 没有向门锁发过任何停用或改期命令, "   // 331 已过本机设定的提前失
-                                     + "门锁在它自己那份到期时刻之前照样能开门。要真停用, 得走列表里的停用或改期。")
+                                Text("已过本机设定的提前失效时刻 — 这一条只是提示： 没有向门锁发过任何停用或改期命令， "   // 331 已过本机设定的提前失
+                                     + "门锁在它自己那份到期时刻之前照样能开门。要真停用， 得走列表里的停用或改期。")
                                     .fixedSize(horizontal: false, vertical: true)
                             } icon: {
                                 Image(systemName: "bell.badge")
@@ -46,11 +46,11 @@ struct PwdDetailStudio: View {
                         }
                         .listRowBackground(DS.Palette.warn.opacity(0.06))
                     }
-                    Section("码值 (默认打码, 点位揭示)") {
+                    Section("码值 (默认打码， 点位揭示)") {
                         if let v = p.pwd {
                                 MaskedDigits(value: v, big: true)
                         } else {
-                            Text("当时未留存明文, 可在锁上核对后回填")
+                            Text("当时未留存明文， 可在锁上核对后回填")
                                 .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -76,7 +76,7 @@ struct PwdDetailStudio: View {
                                     .vkFont(.caption, weight: .medium)
                                     .buttonStyle(.bordered)
                                     .frame(minHeight: DS.Hit.min)
-                                    .accessibilityHint("逐位语音播报, 便于电话转述")
+                                    .accessibilityHint("逐位语音播报， 便于电话转述")
                                 Spacer(minLength: 0)
                             }
                             // 308 4 位分段转述: 点任一块只复制该块
@@ -105,7 +105,7 @@ struct PwdDetailStudio: View {
                     // 列表提醒行不动 —— 前台那条行仍然有用, 只是不再是 h2 的唯一出口。
                     if CredentialOrg.expiryDate(p) == nil {
                         Section("到期预警") {   // 359 到期预警
-                            Text("长期有效密码无到期点, 三档预警不适用。")
+                            Text("长期有效密码无到期点， 三档预警不适用。")
                                 .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -152,9 +152,9 @@ struct PwdDetailStudio: View {
                                     CredentialOrg.saveAlert(mac, p, a)
                                     CredentialOrg.scheduleAlerts(mac, p, a)
                                 }))
-                            Text("五档 (7/3/1 天 · 24/2 小时) 都排本地通知, 另有一条「到期时」通知自动跟着走; "
+                            Text("五档 (7/3/1 天 · 24/2 小时) 都排本地通知， 另有一条「到期时」通知自动跟着走; "
                                  + "2 小时档同时还在凭证列表插提醒行。近 7 天到期条数会显示在凭证 Tab 角标上。"   // 930 小时档同时还在凭证列
-                                 + "开关只存本机, 与锁端无关。")
+                                 + "开关只存本机， 与锁端无关。")
                                 .vkFont(.caption2)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -172,12 +172,12 @@ struct PwdDetailStudio: View {
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.8)
                                     Spacer(minLength: 0)
-                                    Text("只在本页提示, 不改锁端")
+                                    Text("只在本页提示， 不改锁端")
                                         .vkFont(.caption2)
                                         .foregroundStyle(DS.Palette.textSub)
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.8)
-                                        .accessibilityLabel("这一档只影响本页的提示: 列表行没有色条, 也不会向门锁下发停用")
+                                        .accessibilityLabel("这一档只影响本页的提示： 列表行没有色条， 也不会向门锁下发停用")
                                 }
                                 Slider(value: Binding(
                                     get: { Double(CredentialOrg.earlyExpireMin(mac, p.alias)) },
@@ -186,8 +186,8 @@ struct PwdDetailStudio: View {
                                 .tint(DS.Palette.accent)
                                 .frame(minHeight: DS.Hit.min)
                                 .accessibilityLabel("提前失效分钟数滑杆")   // 331 提前失效分钟数滑杆
-                                Text("实话: 这枚滑杆在本机只存一个分钟数 —— 列表行没有渐进色条, 门锁那侧的到期时刻一个字都没改。"
-                                     + "到点本页挂提醒条并在状态行标注, 要不要真停用仍由你决定。")   // 331 到点本页挂提醒条并在
+                                Text("实话： 这枚滑杆在本机只存一个分钟数 —— 列表行没有渐进色条， 门锁那侧的到期时刻一个字都没改。"
+                                     + "到点本页挂提醒条并在状态行标注， 要不要真停用仍由你决定。")   // 331 到点本页挂提醒条并在
                                     .vkFont(.caption2)
                                     .foregroundStyle(DS.Palette.textSub)
                                     .fixedSize(horizontal: false, vertical: true)
@@ -252,7 +252,7 @@ struct PwdDetailStudio: View {
                         }
                         if n > 0 {
                             Label {
-                                Text("时间窗内约 \(n) 次开门 (按时间推断, 无 alias 字段)")
+                                Text("时间窗内约 \(n) 次开门 (按时间推断， 无 alias 字段)")
                                     .fixedSize(horizontal: false, vertical: true)
                             } icon: {
                                 Image(systemName: "door.left.hand.open")
@@ -260,7 +260,7 @@ struct PwdDetailStudio: View {
                             .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                         } else {
-                            Text("暂无记录 (⚠ 按时间窗推断, 无数据不编造)")
+                            Text("暂无记录 (⚠ 按时间窗推断， 无数据不编造)")
                                 .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                         }

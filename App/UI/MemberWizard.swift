@@ -50,7 +50,7 @@ struct MemberWizardView: View {
                 Section("步骤 \(step + 1)/3 · " + steps[step]) {
                     switch step {
                     case 0:
-                        TextField("称呼 (汉字/英文/数字, 上限 20)", text: $name)
+                        TextField("称呼 (汉字/英文/数字， 上限 20)", text: $name)
                             .autocorrectionDisabled()
                         Picker("emoji 代号", selection: $emoji) {   // 916 代号
                             ForEach(["", "🐻", "🐱", "🐸", "🐙", "🦊", "🐧", "🐯"], id: \.self) { e in
@@ -74,7 +74,7 @@ struct MemberWizardView: View {
                         if makePwd {
                             TextField("6~8 位数字 (下发到当前锁)", text: $pwd)
                                 .keyboardType(.numberPad)
-                            Text("归属自动记为 TA; 不建也行, 稍后在凭证页添加。")
+                            Text("归属自动记为 TA; 不建也行， 稍后在凭证页添加。")
                                 .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -127,7 +127,7 @@ struct MemberWizardView: View {
         let n = name.trimmingCharacters(in: .whitespaces)
         // 2026-10-14: 与重命名 (rename) 同口径 —— 否则能建出"之后改不动"的名字 (重命名强制字母数字)。
         guard !n.isEmpty, n.count <= 20, n.allSatisfy({ $0.isLetter || $0.isNumber }) else {
-            app.showToast("姓名需为汉字/英文/数字, 上限 20 字")
+            app.showToast("姓名需为汉字/英文/数字， 上限 20 字")
             return nil
         }
         guard let m = DB.addMember(n) else {
@@ -185,7 +185,7 @@ struct MemberWizardView: View {
                 DB.addPwd(kc.mac, rec)
                 app.showToast("已建档并给 TA 建了 10 分钟临时码")
             } catch {
-                app.showToast("建档成功, 建码失败: " + error.localizedDescription)
+                app.showToast("建档成功， 建码失败： " + error.localizedDescription)
             }
         }
     }
@@ -224,7 +224,7 @@ struct MergeMembersView: View {
                         Spacer(minLength: 0)
                     }
                 }
-                Section("副档 (凭证将迁移至主档, 档案删除)") {
+                Section("副档 (凭证将迁移至主档， 档案删除)") {
                     Picker("选择副档", selection: $secondaryID) {
                         Text("请选择").tag(nil as String?)
                         ForEach(secondaryCandidates) { m in
@@ -235,7 +235,7 @@ struct MergeMembersView: View {
                     }
                     .pickerStyle(.inline)
                     if secondaryID == nil {
-                        Text("没有同名成员。若只是称呼重复, 请在成员页重命名其一。")
+                        Text("没有同名成员。若只是称呼重复， 请在成员页重命名其一。")
                             .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
@@ -273,7 +273,7 @@ struct MergeMembersView: View {
         MemberHub.reassignClaims(from: sid, to: primary.id)   // 462
         DB.removeMember(sid)
         onDone()
-        app.showToast("已合并, 迁移 \(moved) 条凭证至「" + primary.name + "」")
+        app.showToast("已合并， 迁移 \(moved) 条凭证至「" + primary.name + "」")
         dismiss()
     }
 }

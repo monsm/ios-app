@@ -162,7 +162,7 @@ struct CredDisableSheet: View {
                     }
                 }
                 Section {
-                    Text("不可逆说明: 停用只移除**本机台账**。锁端凭证仍然有效 —— 必须到门锁键盘上手动删除才会真正失效。本机没有回收站，停用即不可在 App 内恢复，需要时只能重新录入/生成。")
+                    Text("不可逆说明： 停用只移除**本机台账**。锁端凭证仍然有效 —— 必须到门锁键盘上手动删除才会真正失效。本机没有回收站，停用即不可在 App 内恢复，需要时只能重新录入/生成。")
                         .vkFont(.caption)
                         .foregroundStyle(DS.Palette.danger)
                         .fixedSize(horizontal: false, vertical: true)
@@ -230,7 +230,7 @@ struct CredDisableSheet: View {
                     .opacity(reason.isEmpty ? 0.45 : 1)
                     .accessibilityHint(reason.isEmpty
                         ? "需先选停用原因才能执行"
-                        : "已展示影响成员与不可逆说明, 点按即执行停用")
+                        : "已展示影响成员与不可逆说明， 点按即执行停用")
                 }
             }
             .navigationTitle("批量停用确认")

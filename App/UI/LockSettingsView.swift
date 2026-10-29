@@ -136,7 +136,7 @@ struct LockSettingsView: View {
                             DB.store.set("kf_mute_" + mac, silent)
                             app.showToast(silent ? "已静音" : "已恢复提示音")
                         } catch {
-                            app.showToast("设置失败: \(error.localizedDescription)")
+                            app.showToast("设置失败： \(error.localizedDescription)")
                         }
                     }
                 }))
@@ -242,7 +242,7 @@ struct LockSettingsView: View {
             DB.saveLedger(m, keepLedger)
             app.showToast("清空密码成功")
         } catch {
-            app.showToast("清空失败: \(error.localizedDescription)")
+            app.showToast("清空失败： \(error.localizedDescription)")
         }
     }
 }

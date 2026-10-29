@@ -15,7 +15,7 @@ extension RecordsView {
                         .accessibilityHidden(true)
                     // 551: 这句占位文案承诺的三段 (成员 / 凭证 / 备注) 由 `RecordSearch.searchFace`
                     // 一处定义、在 applyFilter 的检索块里落地 —— 少一段就是让用户搜一个搜不到的热区。
-                    TextField("搜索: 成员 / 凭证 / 昨晚 告警 / +指纹 -临时码", text: $searchText)   // 551/554/555 搜索
+                    TextField("搜索： 成员 / 凭证 / 昨晚 告警 / +指纹 -临时码", text: $searchText)   // 551/554/555 搜索
                         .vkFont(.subheadline)
                         .foregroundStyle(DS.Palette.text)
                     if !searchText.isEmpty {
@@ -189,7 +189,7 @@ extension RecordsView {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("筛选: \(filterSummary), 点按\(filtersExpanded ? "收起" : "展开")全部筛选项")
+            .accessibilityLabel("筛选： \(filterSummary), 点按\(filtersExpanded ? "收起" : "展开")全部筛选项")
 
             if filtersExpanded {
             // 2026-10-26 精简：仅告警 / 告警类型多选 / 失败筛选 / 正序回放 四枚 chip 已删（用户确认）。
@@ -214,7 +214,7 @@ extension RecordsView {
                 }
                 .frame(minHeight: DS.Hit.min)
                 if RecordSearch.nightWindowDegenerate {
-                    Text("起点与终点相同 = 空区间, 这一档筛不出任何记录。")
+                    Text("起点与终点相同 = 空区间， 这一档筛不出任何记录。")
                         .vkFont(.caption2).foregroundStyle(DS.Palette.warn)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -222,7 +222,7 @@ extension RecordsView {
                                                                    set: { RecordSearch.setHolidayExtend($0) }))
                     .vkFont(.caption)
                     .frame(minHeight: DS.Hit.min)
-                Text("顺延只影响深夜档的判定, 不改记录的归属日 (凌晨仍归前一晚)。")
+                Text("顺延只影响深夜档的判定， 不改记录的归属日 (凌晨仍归前一晚)。")
                     .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -333,7 +333,7 @@ extension RecordsView {
                 } header: {
                     Text("按天勾选")   // 716 按天勾选
                 } footer: {
-                    Text("只导出勾选那些天的行; CSV 走剪贴板, 不上传、不落盘。")
+                    Text("只导出勾选那些天的行; CSV 走剪贴板， 不上传、不落盘。")
                         .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                 }
                 Section {

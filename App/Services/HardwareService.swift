@@ -84,7 +84,7 @@ final class HardwareService: ObservableObject {
             if knownPid > 0, remotePid > 0, remotePid != knownPid {
                 ble.disconnect()
                 connectedTargetId = ""
-                log("连接后身份不符: 设备 pid=\(remotePid) 与登记的 \(knownPid) 不一致 → 已断开")
+                log("连接后身份不符： 设备 pid=\(remotePid) 与登记的 \(knownPid) 不一致 → 已断开")
                 throw BLEErrorX.msg("连到的设备与目标不是同一个 (pid 不符)，已断开。附近可能有伪造广播。")
             }
             if knownPid <= 0 { log("未登记 pid, 跳过连接后身份复核 (老记录)") }
@@ -102,7 +102,7 @@ final class HardwareService: ObservableObject {
     /// 用设备自己的响应去对 pid，而不是只信广播里的字段（广播谁都能伪造）。
     private func readStatusFrame() async throws -> Int {
         let target = connectedTargetId
-        guard !target.isEmpty else { throw BLEErrorX.msg("内部错误: 复核时没有连接目标") }
+        guard !target.isEmpty else { throw BLEErrorX.msg("内部错误： 复核时没有连接目标") }
         let f = try await send(ZKCmdBuilder.cmd03StatusPlain(), target: target, timeoutMs: 8000)
         return StatusParser.parseStatus(f.klvs).pid
     }
@@ -166,7 +166,7 @@ final class HardwareService: ObservableObject {
                 if rec.boundAt.isEmpty { rec.boundAt = DF.iso().string(from: Date()) }
                 if d.name != "(未命名)" { rec.name = d.name }
                 DB.saveDongle(rec)
-                log("找到钥匙串: \(a.macDisplay ?? mac) (\(d.name))")
+                log("找到钥匙串： \(a.macDisplay ?? mac) (\(d.name))")
                 return rec
             }
             try? await Task.sleep(nanoseconds: 300_000_000)
@@ -232,7 +232,7 @@ final class HardwareService: ObservableObject {
         rec.stat = st
         rec.lastSeenAt = DF.iso().string(from: Date())
         DB.saveDongle(rec)
-        log("状态: 电量 \(st.power), 钥匙 \(st.ekeyCount)/\(st.ekeyAmount), 固件 \(st.firmware)")
+        log("状态： 电量 \(st.power), 钥匙 \(st.ekeyCount)/\(st.ekeyAmount), 固件 \(st.firmware)")
         return st
     }
     nonisolated static func parseKCStatus(_ klvs: [ZKLV]) -> DongleStat {
@@ -271,7 +271,7 @@ final class HardwareService: ObservableObject {
         // 旧写法 `lock.pins.first ?? "1"`: PIN 池为空时**回落到 PIN "1"** 去签发硬件钥匙凭证 ——
         // 写进dongle 的是一条人人猜得到的凭证, 而流程显示"写入成功"。缺 PIN 必须直接拒绝。
         guard let pin = lock.pins.first, !pin.isEmpty else {
-            throw BLEErrorX.msg("该锁的钥匙串没有 PIN 池, 无法为硬件钥匙签发凭证 (已拒绝, 不回落默认 PIN)")
+            throw BLEErrorX.msg("该锁的钥匙串没有 PIN 池， 无法为硬件钥匙签发凭证 (已拒绝， 不回落默认 PIN)")
         }
         let ekey = ZKCmdBuilder.buildEkeyOpen(lock.skey.lowercased(), lock.mac.lowercased(), pin,
                                              validFromSec: vf, validToSec: vt, trackId: trackId)
@@ -332,7 +332,7 @@ final class HardwareService: ObservableObject {
         // 原先这里直接看 KLV#04：一次 rc=1(解密失败) 的回字里没有 04，于是返回空列表，
         // 界面弹的就是"没有查询到钥匙"——把一次失败说成一把钥匙都没有（与 §10.48 的 43 同一族）。
         let rc = rcOf(f)
-        if rc > 0 { throw BLEErrorX.msg("查钥匙失败: " + StatusParser.rcMessage(rc) + " (这不代表硬件狗里没有钥匙)") }
+        if rc > 0 { throw BLEErrorX.msg("查钥匙失败： " + StatusParser.rcMessage(rc) + " (这不代表硬件狗里没有钥匙)") }
         // 2026-10-26: 原先这里有一份**与 parseEkeyMacs 逐字相同**的内联解析（两份真相）。
         // 现在只保留 parseEkeyMacs 一份，这里直接调它 —— 改一处就够，不会一处改了一处没改。
         return Self.parseEkeyMacs(f.klvs)
@@ -363,7 +363,7 @@ final class HardwareService: ObservableObject {
         rec.wifimac = st.wifimac; rec.romVer = st.romVer; rec.eCtrlVer = st.eCtrlVer
         rec.ssid = st.ssid; rec.wifiIP = st.wifiIP; rec.netState = st.netState
         DB.saveGateway(rec)
-        log("网关状态: rom \(st.romVer), ssid \(st.ssid), 联网 \(st.netState == 1 ? "是" : "否")")
+        log("网关状态： rom \(st.romVer), ssid \(st.ssid), 联网 \(st.netState == 1 ? "是" : "否")")
         return st
     }
     nonisolated static func parseGWStatus(_ klvs: [ZKLV]) -> GatewayState {
@@ -388,7 +388,7 @@ final class HardwareService: ObservableObject {
     }
     /// 网关配网全链 (App gwreset: 扫描 → 38 → 31 写 WiFi → 35 重启)
     func provisionGateway(ssid: String, password: String, progress: @escaping (String) -> Void) async throws -> Gateway {
-        progress("步骤 1/5: 搜索网关 (请靠近网关, 橙色灯闪烁中)")
+        progress("步骤 1/5: 搜索网关 (请靠近网关， 橙色灯闪烁中)")
         let deviceId = try await scanForPIDs(pids: PidMap.gws, resetRequired: true, timeoutMs: 15000)
         try await ble.connect(deviceId: deviceId)
         connectedTargetId = deviceId   // 否则后续 readGatewayState→connectTarget 会自断重连,

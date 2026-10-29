@@ -27,7 +27,7 @@ extension CredentialsView {
                             DB.saveOtpStatus(m, OtpStatus(on: on, at: Date().timeIntervalSince1970 * 1000))
                             app.showToast(on ? "临时密码已开启" : "已关闭")
                         } catch {
-                            app.showToast("操作失败: \(error.localizedDescription)")
+                            app.showToast("操作失败： \(error.localizedDescription)")
                         }
                     }
                 }))
@@ -66,7 +66,7 @@ extension CredentialsView {
                 .foregroundStyle(DS.Palette.text)
                 .textSelection(.enabled)
                 .onTapGesture(count: 2) { otpBig.toggle() }
-                .accessibilityLabel("临时码, 双击切大字号")
+                .accessibilityLabel("临时码， 双击切大字号")
                 // 375 防窥挡片：**只有用户主动打开才盖住**（`otpShieldOn` 默认 false）。
                 // 2026-10-29 修复「生成临时码后被挡住看不见」：原实现用 `if !otpPeek` 而 otpPeek 默认 false，
                 // 等于挡片常驻；生成完也不揭开。现在默认不盖，长按才临时揭开，松手复位。
@@ -112,7 +112,7 @@ extension CredentialsView {
         // **从不随窗口过期清空** —— 昨天生成过一次，今天打开页面仍显示昨天的失效时间
         // （截图里显示「于 19:00 失效」而当时 6:49）。现在同时判"是否已过当前窗口"。
         if !otpWin.isEmpty, otpWin == ZOTP.nextWindow() {
-            Text("于 \(otpWin) 失效, 失效前仅可使用一次")
+            Text("于 \(otpWin) 失效， 失效前仅可使用一次")
                 .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -126,7 +126,7 @@ extension CredentialsView {
         let cur = DB.otpIdx(mac)
         let idx = (cur?.invalidTime == win) ? (cur?.idx ?? -1) + 1 : 0
         if idx > 99 {
-            app.showToast("当前窗口已达 100 个上限, 请到下一个 30 分钟窗口再生成")
+            app.showToast("当前窗口已达 100 个上限， 请到下一个 30 分钟窗口再生成")
             UINotificationFeedbackGenerator().notificationOccurred(.error)
             return false
         }
@@ -141,7 +141,7 @@ extension CredentialsView {
         // 屏幕上是一个看不见的码，而 idx 也已经被记进窗口 —— 用户只知道「没开门」。
         // 这道 guard 必须排在 saveOtpIdx 之前：失败的这一次不许占用窗口内的 100 个名额。
         guard !pwd.isEmpty else {
-            app.showToast("这把锁的 MAC 不是整 6 字节十六进制, 已中止生成 (临时码要用它反序拼料)")
+            app.showToast("这把锁的 MAC 不是整 6 字节十六进制， 已中止生成 (临时码要用它反序拼料)")
             UINotificationFeedbackGenerator().notificationOccurred(.error)
             return false
         }
@@ -205,9 +205,9 @@ extension CredentialsView {
                 try await app.lock.ensureConnected(mac: mac)
                 busyKey = nil   // 还回连接占用再生成; genOtp 同步完成, 生成段无需再占
                 if genOtp() {
-                    app.showToast("第一张临时码已生成, 可让客人直接在锁键盘输入")
+                    app.showToast("第一张临时码已生成， 可让客人直接在锁键盘输入")
                 }
-            } catch { app.showToast("需在场连接锁端: \(error.localizedDescription)") }
+            } catch { app.showToast("需在场连接锁端： \(error.localizedDescription)") }
         }
     }
 
@@ -242,7 +242,7 @@ extension CredentialsView {
 
     func modifyPwd(_ p: LedgerPwd) {
         guard busyKey == nil else { return }
-        let alert = UIAlertController(title: "修改密码 (#\(p.alias))", message: "修改后旧密码立即作废, 需使用新密码开锁。", preferredStyle: .alert)
+        let alert = UIAlertController(title: "修改密码 (#\(p.alias))", message: "修改后旧密码立即作废， 需使用新密码开锁。", preferredStyle: .alert)
         alert.addTextField { $0.placeholder = "新密码 6~8 位数字"; $0.keyboardType = .numberPad }
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         // 旧密码即刻作废 = 破坏性, 按钮必须显式标红, 不能伪装成普通确认
@@ -267,8 +267,8 @@ extension CredentialsView {
                     }
                     // 487 保存自动快照: 改值即留一档 (值/时段/备注)
                     let finalAlias = aliasOut == p.alias ? p.alias : aliasOut
-                    showToastOrganized("已修改, 旧密码已作废")
-                } catch { app.showToast("修改失败: \(error.localizedDescription)") }
+                    showToastOrganized("已修改， 旧密码已作废")
+                } catch { app.showToast("修改失败： \(error.localizedDescription)") }
             }
         })
         UIApplication.topViewController()?.present(alert, animated: true)
@@ -296,7 +296,7 @@ extension CredentialsView {
             try await app.lock.pwdExpire(p.alias, p.from, p.to)
             DB.setPwdPeriod(m, p.alias, p.from, p.to)
             app.showToast("已更新有效期")
-        } catch { app.showToast("更新失败: \(error.localizedDescription)") }
+        } catch { app.showToast("更新失败： \(error.localizedDescription)") }
     }
 
     func periodText(_ p: LedgerPwd) -> String {
@@ -323,7 +323,7 @@ extension CredentialsView {
             DB.delPwd(mac, p.alias)
             // 361: 单条停用没有 313 的四选一, 便签如实记"未填", 不编一个原因充数 (要不要补必填见 NEXT-DECISIONS 组5)
             CredentialOrg.markDisabled(mac, kind: "pwd", keys: [p.alias], label: "未填", via: disableVia(owner: p.owner))
-            showToastOrganized("已停用, 7 天内可恢复")   // 364 已停用
+            showToastOrganized("已停用， 7 天内可恢复")   // 364 已停用
         }
     }
     func disableFp(_ f: LedgerFp) {
@@ -335,7 +335,7 @@ extension CredentialsView {
                           confirmTitle: "停用") {
             DB.delFp(mac, f.batch)
             CredentialOrg.markDisabled(mac, kind: "fp", keys: [f.batch], label: "未填", via: disableVia(owner: f.owner))   // 361 同上, 如实记未填; 468 代管时补标注
-            showToastOrganized("已停用, 7 天内可恢复")   // 364 已停用
+            showToastOrganized("已停用， 7 天内可恢复")   // 364 已停用
         }
     }
 
@@ -345,7 +345,7 @@ extension CredentialsView {
         confirmDestructive("彻底删除密码 #\(p.alias)",
                            // 「30 天」原先写死：回收站保留期是设置页那枚 7~90 天的 Stepper (497)，
                            // 用户调过之后这句就把安全网说大了 —— 而它恰恰出现在按下去就不可逆的那一刻。
-                           "删除后该密码在锁内立即失效, 本机台账移除 (本机记录直接移除不可找回, 密码值需重新生成下发才有效)。确定继续？",
+                           "删除后该密码在锁内立即失效， 本机台账移除 (本机记录直接移除不可找回， 密码值需重新生成下发才有效)。确定继续？",
                            confirmTitle: "彻底删除") {
             Task { await self.doDeletePwd(p) }
         }
@@ -364,13 +364,13 @@ extension CredentialsView {
             //   回收站 reclaimDays 天 (497) + 504 还原排重新下发 + 506 撤销条。
             DB.delPwd(m, p.alias)
             showToastOrganized("已彻底删除")
-        } catch { app.showToast("删除失败: \(error.localizedDescription)") }
+        } catch { app.showToast("删除失败： \(error.localizedDescription)") }
     }
 
     func deleteFp(_ f: LedgerFp) {
         guard busyKey == nil else { return }
         confirmDestructive("彻底删除指纹「\(f.name)」",
-                           "删除后果: 该指纹在锁内立即失效且无法远程补录 — 需成员本人到锁前重新录入 8 次指压。本机记录直接移除、不可找回。确定继续？",
+                           "删除后果： 该指纹在锁内立即失效且无法远程补录 — 需成员本人到锁前重新录入 8 次指压。本机记录直接移除、不可找回。确定继续？",
                            confirmTitle: "彻底删除") {
             Task { await self.doDeleteFp(f) }
         }
@@ -393,12 +393,12 @@ extension CredentialsView {
             //   (无法远程补录，本人重录 8 次指压)；回收站那条回来的仍是档案，开门能力要重录 (670)。
             DB.delFp(m, f.batch)
             showToastOrganized("已彻底删除")
-        } catch { app.showToast("删除失败: \(error.localizedDescription)") }
+        } catch { app.showToast("删除失败： \(error.localizedDescription)") }
     }
 
     func renameFp(_ f: LedgerFp) {
         let alert = UIAlertController(title: "重命名指纹", message: nil, preferredStyle: .alert)
-        alert.addTextField { $0.placeholder = "如: 主人大拇指"; $0.text = f.name }
+        alert.addTextField { $0.placeholder = "如： 主人大拇指"; $0.text = f.name }
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         alert.addAction(UIAlertAction(title: "确定", style: .default) { _ in
             let name = (alert.textFields?.first?.text ?? "").trimmingCharacters(in: .whitespaces)
@@ -412,7 +412,7 @@ extension CredentialsView {
     }
 
     func editNote(pwd: LedgerPwd? = nil, fp: LedgerFp? = nil) {
-        let alert = UIAlertController(title: "凭证备注", message: "仅本机留存, 随全量备份换机", preferredStyle: .alert)
+        let alert = UIAlertController(title: "凭证备注", message: "仅本机留存， 随全量备份换机", preferredStyle: .alert)
         alert.addTextField { $0.text = pwd?.note ?? fp?.note ?? "" }
         alert.addAction(UIAlertAction(title: "清除", style: .destructive) { _ in
             if let p = pwd {
@@ -470,7 +470,7 @@ extension CredentialsView {
     func toggleAlerts(_ p: LedgerPwd) {
         let a = CredentialOrg.alert(mac, p)
         let sheet = UIAlertController(title: "到期预警 #\(p.alias)",   // 359/930 到期预警
-                                     message: "长期有效密码无到期点, 不适用。",
+                                     message: "长期有效密码无到期点， 不适用。",
                                      preferredStyle: .actionSheet)
         func addTier(_ title: String, current: Bool, toggle: @escaping () -> Void) {
             sheet.addAction(UIAlertAction(title: (current ? "○ " : "◉ ") + title, style: .default, handler: { _ in toggle() }))

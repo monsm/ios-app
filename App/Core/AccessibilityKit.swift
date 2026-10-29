@@ -143,7 +143,7 @@ enum AXTools {
     }
     /// 连接失败播报话术 (852 示例: "连接失败, 可能离门太远")
     static func announceConnectFail(_ reason: String) {
-        announce("连接失败, 可能离门太远. \(reason)")
+        announce("连接失败， 可能离门太远. \(reason)")
     }
     /// 876 新条目双震: 两段 success 触感间隔 220ms — 帮听障用户确认"有新记录";
     /// App 内恒开（AXPrefs.doubleHaptic 已于 2026-10-26 删除）; 设备级"减少触感/振动"由系统直接拦截, 天然遵循

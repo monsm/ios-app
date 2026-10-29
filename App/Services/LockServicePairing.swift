@@ -8,7 +8,7 @@ extension LockService {
     /// 留存过就不必去门锁键盘做重置 (再点一次配网会跳过换钥接着配完) —— 这是软砖后路的分水岭。
     static func pairWarning(_ resumable: Bool, _ msg: String) -> String {
         resumable
-            ? "\(msg) — 本机已留存这一步的密钥 (skey/PIN/bkey), 再点一次配网会接着配完, 不必做键盘重置"
+            ? "\(msg) — 本机已留存这一步的密钥 (skey/PIN/bkey), 再点一次配网会接着配完， 不必做键盘重置"
             : msg
     }
 
@@ -16,10 +16,10 @@ extension LockService {
     /// 而配网期本机还没有钥匙串, 0E 校时根本发不出去 (校时链路要 skey) —— 同一句话在配网语境里是空头支票。
     static func pairHint(_ rc: Int) -> String {
         switch rc {
-        case 3, 9: return "锁内时钟不准, 而配网期无法校时 (校时要密钥); 请在门锁键盘上重置后马上重试"
-        case 7, 27: return "锁当前不在可配网状态, 请在门锁键盘上做一次重置再试"
-        case 13: return "通讯过期: 锁不认这份通讯会话 (会话令牌无效/已过期), 不是距离或信号问题 — 请在门锁键盘上做一次重置, 3 声提示后尽快点配对 (重置后的可配网窗口有限, 一旦超时锁会退回不可配网)"
-        default: return "锁可能不在重置态, 请在门锁键盘上重置后重试"
+        case 3, 9: return "锁内时钟不准， 而配网期无法校时 (校时要密钥); 请在门锁键盘上重置后马上重试"
+        case 7, 27: return "锁当前不在可配网状态， 请在门锁键盘上做一次重置再试"
+        case 13: return "通讯过期： 锁不认这份通讯会话 (会话令牌无效/已过期), 不是距离或信号问题 — 请在门锁键盘上做一次重置， 3 声提示后尽快点配对 (重置后的可配网窗口有限， 一旦超时锁会退回不可配网)"
+        default: return "锁可能不在重置态， 请在门锁键盘上重置后重试"
         }
     }
 
@@ -71,7 +71,7 @@ extension LockService {
         // 于是锁与本机都用 "0000…" 通信 —— 抓一帧即可解密, 而 7 步流程一路绿灯。此处 fail-closed 中止。
         guard !KeyGen.isAllZeroHex(skey), !KeyGen.isAllZeroHex(bkey),
               !pins.contains(where: { KeyGen.isAllZeroHex($0) }) else {
-            throw BLEErrorX.msg("随机源异常: 生成的密钥族含全零字段, 已在换钥前中止 (锁未被改动, 可稍后重试)")
+            throw BLEErrorX.msg("随机源异常： 生成的密钥族含全零字段， 已在换钥前中止 (锁未被改动， 可稍后重试)")
         }
 
         progress("步骤 3/7: cmd 05 交换密钥 (先建通讯会话)")
@@ -99,7 +99,7 @@ extension LockService {
             // 真机报告 (2026-10-17): 用户报"锁重置后一直添加不成功", 而运行日志里只有 TX/RX 两行 ——
             // 05 被锁拒收的原因既没进日志、也没进任何台账, 于是现场只能靠回包长度反推。
             // 这里把判决 (rc + 人话 + 该做什么) 与证据 (回包 KLV 的键与长度, 值一概不写) 一起留下。
-            log("error", "05 换钥被锁拒收: rc=\(rc5) (\(StatusParser.rcMessage(rc5))) · \(Self.pairHint(rc5))"
+            log("error", "05 换钥被锁拒收： rc=\(rc5) (\(StatusParser.rcMessage(rc5))) · \(Self.pairHint(rc5))"
                 + " · 回包 " + Self.klvShape(r5))
             throw BLEErrorX.msg("换钥失败 rc=\(rc5) (\(StatusParser.rcMessage(rc5))) — \(Self.pairHint(rc5))")
         }
@@ -112,11 +112,11 @@ extension LockService {
 // 2026-10-27 审核修复 (AUDIT-B 2.8 #10)：原注释说「随系统备份」——
 // D-44 那批已把 `kf_diag_logs` 迁到 `Caches/` 并设 isExcludedFromBackup，所以它不再出机。
 // 但「不进错误文案」这条纪律不变：它仍会被导出中心带走、也会显示在界面上。
-            log("error", "05 换钥回包密钥不一致: 回显 \(echo.val.count) 位 / 本地 \(skey.count) 位 · 回包 " + Self.klvShape(r5))
+            log("error", "05 换钥回包密钥不一致： 回显 \(echo.val.count) 位 / 本地 \(skey.count) 位 · 回包 " + Self.klvShape(r5))
             // 回显不匹配时**不能**说"再点一次就能续配": 锁端那一份是本机读不懂的, 续配也白搭。
             // 这类必须去键盘重置 —— 文案与可续配那一族明确分开 (pairWarning(false, ...) 不追加续配承诺)。
             throw BLEErrorX.msg(Self.pairWarning(false,
-                "换钥回显不匹配 (本地/回显长度 \(skey.count)/\(echo.val.count)) — 锁内密钥已是本机读不懂的一份, 无法续配; 请在门锁键盘上重置后重新配网"))
+                "换钥回显不匹配 (本地/回显长度 \(skey.count)/\(echo.val.count)) — 锁内密钥已是本机读不懂的一份， 无法续配; 请在门锁键盘上重置后重新配网"))
         }
 
         progress("步骤 4/7: 留存本次密钥 (配网中断可续配)")
@@ -156,7 +156,7 @@ extension LockService {
     func finishPairing(m: String, deviceId: String, skey: String, bkey: String, pins: [String],
                                trackid: String, resumable: Bool,
                                progress: @escaping (String) -> Void) async throws -> Keychain {
-        log("info", "配网尾链 MAC 字节序 = \(ZKProtocol.macOrder(m).rawValue) (默认 = 原版 APK 语义, 显示序)")
+        log("info", "配网尾链 MAC 字节序 = \(ZKProtocol.macOrder(m).rawValue) (默认 = 原版 APK 语义， 显示序)")
         // 批大小 20 = 原版 APK 逐字 (main.js syncPins20: `o>20?20:o` + `generateRandomNumbers(64)`)
         // ⇒ 真机帧序列是 20/20/20/4 四批。旧版取 16("让单帧更小") 是自创: 锁端若按固定 20 槽位对位解析这一批,
         // 16 的批就会让后续字节错位 —— 而错位读出的"目标 MAC"正好会回 rc=12「mac地址不正确」。
@@ -193,17 +193,17 @@ extension LockService {
                 } else if rb2.rc == 18 {
                     // 18 = 不能设置重复的值 ⇒ 这一批其实已经写进锁里了: 原序是对的, rc=12 来自别的地方。
                     ZKProtocol.setMacOrder(m, used)
-                    log("info", "PIN 批次 1 换序后 rc=18 (重复值) ⇒ 原序 \(used.rawValue) 有效, 本批视为已写入")
+                    log("info", "PIN 批次 1 换序后 rc=18 (重复值) ⇒ 原序 \(used.rawValue) 有效， 本批视为已写入")
                     rb = ExecResult(frame: rb2.frame, rc: 0, klvs: rb2.klvs)
                 } else {
                     ZKProtocol.setMacOrder(m, used)
-                    log("error", "PIN 批次 1 两种字节序都被拒: 原序 rc=12 / 换序 rc=\(rb2.rc) — 不是字节序问题"
+                    log("error", "PIN 批次 1 两种字节序都被拒： 原序 rc=12 / 换序 rc=\(rb2.rc) — 不是字节序问题"
                         + " · 回包 " + Self.klvShape(rb2.frame))
                     rb = rb2
                 }
             }
             if rb.rc != 0 {
-                log("error", "PIN 批次 \(n) 被锁拒收: rc=\(rb.rc) (\(StatusParser.rcMessage(rb.rc))) · 回包 " + Self.klvShape(rb.frame))
+                log("error", "PIN 批次 \(n) 被锁拒收： rc=\(rb.rc) (\(StatusParser.rcMessage(rb.rc))) · 回包 " + Self.klvShape(rb.frame))
                 throw BLEErrorX.msg(Self.pairWarning(resumable, "PIN 批次 \(n) 失败 rc=\(rb.rc) (\(StatusParser.rcMessage(rb.rc)))"))
             }
             i += batchSize
@@ -212,7 +212,7 @@ extension LockService {
         progress("步骤 6/7: 设置 bkey (cmd 21)")
         let r21 = try await exec(ZKCmdBuilder.cmd21SetBkey(m, skey, bkey))
         if r21.rc != 0 {
-            log("error", "21 bkey 被锁拒收: rc=\(r21.rc) (\(StatusParser.rcMessage(r21.rc))) · 回包 " + Self.klvShape(r21.frame))
+            log("error", "21 bkey 被锁拒收： rc=\(r21.rc) (\(StatusParser.rcMessage(r21.rc))) · 回包 " + Self.klvShape(r21.frame))
             throw BLEErrorX.msg(Self.pairWarning(resumable, "bkey 失败 rc=\(r21.rc) (\(StatusParser.rcMessage(r21.rc)))"))
         }
 
@@ -220,7 +220,7 @@ extension LockService {
         let stR = try await exec(ZKCmdBuilder.cmd03StatusWrap(m, skey))
         let st = StatusParser.parseStatus(stR.klvs)
         if stR.rc != 0 {
-            log("error", "03 加密回读校验被锁拒收: rc=\(stR.rc) (\(StatusParser.rcMessage(stR.rc))) · 回包 " + Self.klvShape(stR.frame))
+            log("error", "03 加密回读校验被锁拒收： rc=\(stR.rc) (\(StatusParser.rcMessage(stR.rc))) · 回包 " + Self.klvShape(stR.frame))
             throw BLEErrorX.msg(Self.pairWarning(resumable, "配对校验失败 rc=\(stR.rc) (\(StatusParser.rcMessage(stR.rc)))"))
         }
 
@@ -230,7 +230,7 @@ extension LockService {
                           trackid: trackid, bleId: deviceId, fw: st.firmware,
                           pairedAt: DF.iso().string(from: Date()))
         DB.saveKeychain(kc)
-        progress("配网完成: \(st.pidName.isEmpty ? "pid=\(st.pid)" : st.pidName) @ \(m)")
+        progress("配网完成： \(st.pidName.isEmpty ? "pid=\(st.pid)" : st.pidName) @ \(m)")
         return kc
     }
 
@@ -239,7 +239,7 @@ extension LockService {
     private func resumePairIfPossible(m: String, deviceId: String, progress: @escaping (String) -> Void) async throws -> Keychain? {
         guard let pend = DB.pendingPair(m), !pend.skey.isEmpty, !pend.pins.isEmpty else { return nil }
             progress("发现上次中断的配网记录 → 先试续配 (不重新换钥)")
-            log("info", "续配尝试: 用留存密钥直接走尾链 (留存于 \(pend.pairedAt))")
+            log("info", "续配尝试： 用留存密钥直接走尾链 (留存于 \(pend.pairedAt))")
             do {
                 // 2026-10-17 夜: 这里原本先跑一遍只读 03 探针「裁定 MAC 字节序」——已删, 理由见 finishPairing
                 // 开头那段: 读类命令证明不了字节序 (MAC 取错它也可能 rc=0), 探针会把错的值裁定成「已知」,
@@ -250,7 +250,7 @@ extension LockService {
                                                 resumable: true, progress: progress)
                 DB.clearPendingPair(m)
                 connectedMAC = m
-                progress("续配完成: \(kc.pidName.isEmpty ? "pid=\(kc.pid)" : kc.pidName) @ \(m)")
+                progress("续配完成： \(kc.pidName.isEmpty ? "pid=\(kc.pid)" : kc.pidName) @ \(m)")
                 return kc
             } catch {
                 log("warn", "续配不通 (\(error.localizedDescription)) → 回退完整配网链 (锁可能已被再次重置)")
@@ -267,7 +267,7 @@ extension LockService {
                                pairedAt: DF.iso().string(from: Date()))
         let resumable = DB.savePendingPair(pending)
         if resumable {
-            log("info", "已留存换钥后的密钥 (尾链若中断, 再点一次配网即续配, 无需键盘重置)")
+            log("info", "已留存换钥后的密钥 (尾链若中断， 再点一次配网即续配， 无需键盘重置)")
         } else {
             log("error", "配网中断保护未能落盘 (系统 Keychain 写失败) — 尾链若中断只能靠门锁键盘重置恢复")
         }

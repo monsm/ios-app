@@ -271,7 +271,7 @@ enum MemberHub {
         guard n > 0 else { return nil }
         let name = DB.member(id)?.name ?? "成员"
         if let b = byHour.max(by: { $0.value < $1.value }) {
-            return "\(name)近 7 天开门约 \(n) 次, 工作日 \(b.key)–\(b.key + 1) 点最活跃。"
+            return "\(name)近 7 天开门约 \(n) 次， 工作日 \(b.key)–\(b.key + 1) 点最活跃。"
         }
         return "\(name)近 7 天开门约 \(n) 次 (工作日样本不足)。"
     }

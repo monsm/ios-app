@@ -76,7 +76,7 @@ struct DeviceInfoView: View {
                 LabeledRow("锁钟偏差", driftText)
             }
         } footer: {
-            Text("锁钟偏差较大时临时密码与时间窗凭证会失效, 可到快捷操作「校准时间」。Boot / 键盘版本只在锁上报时出现，这两行缺失表示该固件不报这两支，不是读取失败。")
+            Text("锁钟偏差较大时临时密码与时间窗凭证会失效， 可到快捷操作「校准时间」。Boot / 键盘版本只在锁上报时出现，这两行缺失表示该固件不报这两支，不是读取失败。")
         }
     }
 
@@ -129,7 +129,7 @@ struct DeviceInfoView: View {
         let lo = sp.map(\.pct).min() ?? 0
         let hi = sp.map(\.pct).max() ?? 0
         let days = sp.count >= 2 ? max(Int((sp[sp.count - 1].t - sp[0].t) / 86_400_000) + 1, 1) : 1
-        return "电量走势: \(sp.count) 个采样点 · 跨 \(days) 天 · 最低 \(lo)% / 最高 \(hi)%"   // 45 电量走势
+        return "电量走势： \(sp.count) 个采样点 · 跨 \(days) 天 · 最低 \(lo)% / 最高 \(hi)%"   // 45 电量走势
     }
 
     // 290 电池档案: 型号与换电日期 (表单可编辑, 纯本地台账)
@@ -147,7 +147,7 @@ struct DeviceInfoView: View {
             let p289 = BatteryCare.displayPct(kc?.mac ?? "",
                                               snapshot: status?.powerLevel ?? app.snapshot?.powerLevel ?? -1)
             if p289 >= 0, p289 <= 25 {
-                Text("耗材提醒: 电量 \(p289)%, 建议备一枚\(meta.batteryModel.isEmpty ? "对应型号" : meta.batteryModel)电池。")
+                Text("耗材提醒： 电量 \(p289)%, 建议备一枚\(meta.batteryModel.isEmpty ? "对应型号" : meta.batteryModel)电池。")
                     .vkFont(.caption)
                     .foregroundStyle(DS.Palette.warn)
                     .fixedSize(horizontal: false, vertical: true)
@@ -155,7 +155,7 @@ struct DeviceInfoView: View {
         } header: {
             Text("电池档案")
         } footer: {
-            Text("记录电池型号与换电日期, 换电池时心里有数 (仅本机台账, 不写入门锁)。")
+            Text("记录电池型号与换电日期， 换电池时心里有数 (仅本机台账， 不写入门锁)。")
         }
     }
 
@@ -192,7 +192,7 @@ struct DeviceInfoView: View {
     /// 45: 电量趋势的诚实占位 — 采样埋点已开, 曲线等数据积累
     private var trendText: String {
         let n = BatteryCare.samples(kc?.mac ?? "").count
-        return n == 0 ? "电量趋势: 尚无采样, 每次连接自动记录" : "电量趋势: 已积累 \(n) 个采样点, 曲线待数据更满"
+        return n == 0 ? "电量趋势： 尚无采样， 每次连接自动记录" : "电量趋势： 已积累 \(n) 个采样点， 曲线待数据更满"
     }
     /// 1019 固件服役天数 (从本机首次读到该版本起算)
     private var fwAgeText: String {
@@ -201,7 +201,7 @@ struct DeviceInfoView: View {
         if let f = status?.firmware, !f.isEmpty { fw = f }
         guard let s = BatteryCare.fwSince(kc.mac, fw: fw) else { return "首次读到后起算" }
         let days = Int(Date().timeIntervalSince1970 * 1000 - s.at) / 86_400_000
-        return days > 365 ? "\(days) 天 · 已超一年, 建议读读发行说明" : "\(days) 天"
+        return days > 365 ? "\(days) 天 · 已超一年， 建议读读发行说明" : "\(days) 天"
     }
 
     /// 未读到时统一显示 "—", 不把 -1 当数值直接印给用户
@@ -262,7 +262,7 @@ struct DeviceInfoView: View {
             if let drift = clockDrift, abs(drift) > 2 {
                 app.lock.log("info", "设备信息页自动校时 (偏差 \(drift)s, APK RominfoPage 进页同步口径)")
                 if let res = try? await app.lock.syncTime() {
-                    app.lock.log("info", "自动校时完成: 校前偏差 \(res.before)s, 校后偏差 \(res.after)s")
+                    app.lock.log("info", "自动校时完成： 校前偏差 \(res.before)s, 校后偏差 \(res.after)s")
                     status = try await app.lock.getStatus()
                     if let lt = status?.lockTime { clockDrift = Int(lt - ZKProtocol.nowProtoSeconds()) }
                 }

@@ -188,20 +188,20 @@ enum StatusParser {
     // 纯文案层映射, 不新增/不改动任何协议命令; 未命中的码回落 rcMessage。
     static func rcHint(_ rc: Int) -> String? {
         switch rc {
-        case 1, 11: return "通讯受干扰, 请靠近门锁再试一次"
-        case 3: return "指令已过期, 多为锁内时钟不准 — 先到快捷操作校准时间再试"
-        case 5: return "这条凭证的使用次数已用完, 请换一条或重新添加"
-        case 6: return "这条开锁凭证已绑定到别的设备, 请重新下发凭证"
+        case 1, 11: return "通讯受干扰， 请靠近门锁再试一次"
+        case 3: return "指令已过期， 多为锁内时钟不准 — 先到快捷操作校准时间再试"
+        case 5: return "这条凭证的使用次数已用完， 请换一条或重新添加"
+        case 6: return "这条开锁凭证已绑定到别的设备， 请重新下发凭证"
         case 9: return "锁内时间与手机偏差过大 — 先校准时间再试"
         // 2026-10-27 审核补 (AUDIT-A F-12)：Android 有这句，iOS 原先没有 ——
         // 用户看到 rc=13「通讯过期」不知道下一步做什么。
         // 不改 rcMsg 表（那张要与 vendor status.js 逐字一致，parseshadow 会对拍）。
         case 13: return "会话已失效，本机已自动重取令牌仍被拒 —— 多半是锁内时间偏差过大，请到设备页做一次「同步时间」"
-        case 21: return "门从里面反锁了, 先解除反锁再试"
+        case 21: return "门从里面反锁了， 先解除反锁再试"
         case 23: return "这一下没取到有效指纹图像 (按太快/手指太湿/重复同一位置) — 换一个位置重按"
         case 24: return "锁已结束录入 (两次按压之间超过 15 秒) — 请重新开始录入"
         case 25: return "锁正忙 (可能刚有人操作过), 等两秒再试"
-        case 27: return "门锁处于布防状态, 请先解除布防再开锁"
+        case 27: return "门锁处于布防状态， 请先解除布防再开锁"
         default: return nil
         }
     }

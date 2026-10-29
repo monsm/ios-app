@@ -303,7 +303,7 @@ struct RecordsView: View {
         }
         let rows = allRows.filter { rangeSel.contains($0.dayKey) }
         guard !rows.isEmpty else { app.showToast("选中的天里没有记录行"); return }
-        var out = ["日期,时间,内容,成员,锁"]
+        var out = ["日期，时间，内容，成员，锁"]
         // 2026-10-29 性能：循环里每行调一次 DB.member（各自解析一份成员字典）。一次建表。
         let memberNames = Dictionary(DB.members().map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
         for r in rows.sorted(by: { ($0.dayKey, $0.time) < ($1.dayKey, $1.time) }) {
@@ -322,7 +322,7 @@ struct RecordsView: View {
         let text = d.lines.joined(separator: "\n") + "\n\n" + d.csv
         Clip.set(text)
         let rows = max(d.csv.split(separator: "\n").count - 1, 0)
-        app.showToast("已复制上周小结: \(d.lines.count) 句摘要 + \(rows) 行 CSV")   // 698 已复制上周小结
+        app.showToast("已复制上周小结： \(d.lines.count) 句摘要 + \(rows) 行 CSV")   // 698 已复制上周小结
     }
 
     /// 1040 掉电观察行: 采样表里"同一本地日掉电 > 20 个百分点"的日子, 在时间线顶部插一行提示。
@@ -337,7 +337,7 @@ struct RecordsView: View {
         if n > 0 {
             Section {
                 Label {
-                    Text("去年今日: \(n) 条开门记录")   // 654 去年今日
+                    Text("去年今日： \(n) 条开门记录")   // 654 去年今日
                         .fixedSize(horizontal: false, vertical: true)
                 } icon: {
                     Image(systemName: "calendar.badge.clock").accessibilityHidden(true)

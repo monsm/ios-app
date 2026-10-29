@@ -39,7 +39,7 @@ struct AlarmKindsSheet: View {
                 } header: {
                     Text("只看选中的类型 · 已选 \(sel.count) 项")   // 565 只看选中的类型
                 } footer: {
-                    Text("不选 = 不限类型。列表按锁端日志实际有的告警类型给出; 协议无「胁迫」类告警, 不列。")
+                    Text("不选 = 不限类型。列表按锁端日志实际有的告警类型给出; 协议无「胁迫」类告警， 不列。")
                         .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                 }
@@ -95,7 +95,7 @@ struct ActiveCredsSheet: View {
                             }
                             .accessibilityElement(children: .combine)
                         }
-                        Text("口径: 近 30 天开门日志按凭证类计次 (台账推断, 标「约」)。")
+                        Text("口径： 近 30 天开门日志按凭证类计次 (台账推断， 标「约」)。")
                             .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
@@ -169,7 +169,7 @@ struct OutWinSheet: View {
                 } header: {
                     Text("越界开门清单 (约)")
                 } footer: {
-                    Text("口径: 临时码台账生效区间之外仍出现一次性密码开门 (本地检测, 时刻为锁端时间)。")
+                    Text("口径： 临时码台账生效区间之外仍出现一次性密码开门 (本地检测， 时刻为锁端时间)。")
                         .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                 }

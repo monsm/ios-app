@@ -289,7 +289,7 @@ struct SettingsView: View {
             if app.current == nil {
                 GuidedEmptyView(systemImage: "lock",
                                 title: "还没有添加门锁",
-                                message: "添加后这一段才会出现锁档案与删除。三步走: 连锁 → 录凭证 → 开门。",
+                                message: "添加后这一段才会出现锁档案与删除。三步走： 连锁 → 录凭证 → 开门。",
                                 step: 1, stepTotal: 3,
                                 primaryTitle: "去设备页添加",
                                 primary: { goAddDevice() },
@@ -338,7 +338,7 @@ struct SettingsView: View {
         if pws + fps + recs > 0 {
         // 2026-10-28：删掉「待下发 N 项 / 回收站 N 条」—— 这两套功能都不存在
         // （全仓无队列类型、无回收站存储），原来只是硬编码 0 凑文案。
-            consequence += " 连带删除: 密码台账 \(pws) 条、指纹台账 \(fps) 条、本机缓存的开门记录 \(recs) 条。"
+            consequence += " 连带删除： 密码台账 \(pws) 条、指纹台账 \(fps) 条、本机缓存的开门记录 \(recs) 条。"
         }
         consequence += " 删除后若未做过备份将无法找回。"
         confirmDestructiveTyped("删除设备", consequence, requireWord: name, confirmTitle: "确认删除") {
@@ -388,14 +388,14 @@ struct SettingsView: View {
     }
 
     var aboutFooterText: String {
-        var s = "厂商已停服的智能锁离线管理端。门锁数据、密码台账、家人档案全部保存在本机。换新手机用「备份与恢复」转移, 门锁无需重置。"
+        var s = "厂商已停服的智能锁离线管理端。门锁数据、密码台账、家人档案全部保存在本机。换新手机用「备份与恢复」转移， 门锁无需重置。"
         if eggShown { s += " Build \(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?") · 本地构建。" }
         return s
     }
 
 /// 机械计数样式数字 (idea 1006): 每位一格, 等宽数字
     func presentSetPasscodeAlert() {
-        let alert = UIAlertController(title: "设置本机密码", message: "4 位以上纯数字 (随机键位需要数字键盘, 含字母会失去该保护)", preferredStyle: .alert)
+        let alert = UIAlertController(title: "设置本机密码", message: "4 位以上纯数字 (随机键位需要数字键盘， 含字母会失去该保护)", preferredStyle: .alert)
         alert.addTextField { $0.isSecureTextEntry = true; $0.keyboardType = .numberPad }
         alert.addTextField { $0.isSecureTextEntry = true; $0.placeholder = "再次输入"; $0.keyboardType = .numberPad }
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))

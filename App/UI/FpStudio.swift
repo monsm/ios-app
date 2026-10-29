@@ -49,7 +49,7 @@ func fpDoubleSignCheck(mac: String, batch: Int, confirmTitle: String, action: @e
             Clip.set("")
             action()
         } else {
-            let fail = UIAlertController(title: "双签未通过", message: "密码不符, 删除已取消。", preferredStyle: .alert)   // 323 密码不符
+            let fail = UIAlertController(title: "双签未通过", message: "密码不符， 删除已取消。", preferredStyle: .alert)   // 323 密码不符
             fail.addAction(UIAlertAction(title: "好", style: .cancel))
             UIApplication.topViewController()?.present(fail, animated: true)
         }
@@ -153,7 +153,7 @@ struct FpStudio: View {
         // 324 冗余横条: 该锁仅剩 1 枚可用指纹时提示补录
         if CredentialOrg.fpCountTotal(mac) == 1 {
             Label {
-                Text("这把锁只剩 1 枚可用指纹, 建议补一枚备用")   // 324 这把锁只剩
+                Text("这把锁只剩 1 枚可用指纹， 建议补一枚备用")   // 324 这把锁只剩
                     .fixedSize(horizontal: false, vertical: true)
             } icon: {
                 Image(systemName: "bell.badge")
@@ -189,7 +189,7 @@ struct FpStudio: View {
                     }
                     .accessibilityHidden(true)
                 }
-                Text("请选好的手指按在门锁指纹头上, 抬起, 重复 8 次")   // 41 请选好的手指按在门锁
+                Text("请选好的手指按在门锁指纹头上， 抬起， 重复 8 次")   // 41 请选好的手指按在门锁
                     .vkFont(.footnote)
                     .foregroundStyle(DS.heroFg)
                     .multilineTextAlignment(.center)
@@ -251,8 +251,8 @@ struct FpStudio: View {
         switch presses.count {
         case 0: return "准备就绪"
         case 1...3: return "重复此步骤 (\(presses.count)/8) — 抬起后再按"
-        case 4...6: return "第 \(presses.count + 1)/8 次: 把手指的边缘按上去, 换一个位置"
-        default: return "第 \(presses.count + 1)/8 次: 再换一个角度"
+        case 4...6: return "第 \(presses.count + 1)/8 次： 把手指的边缘按上去， 换一个位置"
+        default: return "第 \(presses.count + 1)/8 次： 再换一个角度"
         }
     }
 
@@ -288,7 +288,7 @@ struct FpStudio: View {
                 }
                 .padding(.horizontal, DS.Space.xs)
             }
-            TextField("自定义名称", text: $name, prompt: Text("如: 妈妈·左手食指"))
+            TextField("自定义名称", text: $name, prompt: Text("如： 妈妈·左手食指"))
                 .vkFont(.subheadline)
                 .frame(minHeight: DS.Hit.min)
                 .autocorrectionDisabled()
@@ -297,7 +297,7 @@ struct FpStudio: View {
                 .frame(minHeight: DS.Hit.min)
             // 319 重录继承: 同成员已有指纹 → 成功后旧指纹入回收站 (保留原备注/归属, 来源"重录替代")
             if !sameOwnerFps.isEmpty {
-                VariantToggle("该成员已有 \(sameOwnerFps.count) 枚指纹, 录入成功后旧指纹将从本机台账移除（⚠ 本机没有回收站，不可恢复；备注/归属也不会保留）", isOn: $replaceOld)
+                VariantToggle("该成员已有 \(sameOwnerFps.count) 枚指纹， 录入成功后旧指纹将从本机台账移除（⚠ 本机没有回收站，不可恢复；备注/归属也不会保留）", isOn: $replaceOld)
                     .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -325,7 +325,7 @@ struct FpStudio: View {
                 .foregroundStyle(DS.Palette.text)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
-            Text("请用新指纹开一次锁, 确认可用。" + (replaceOld ? " 旧指纹已从本机台账移除。" : ""))
+            Text("请用新指纹开一次锁， 确认可用。" + (replaceOld ? " 旧指纹已从本机台账移除。" : ""))
                 .vkFont(.footnote)
                 .foregroundStyle(DS.Palette.textSub)
                 .multilineTextAlignment(.center)
@@ -353,7 +353,7 @@ struct FpStudio: View {
             }
             Spacer(minLength: 0)
             if step == 0 {
-                Button("下一步: 录入") {
+                Button("下一步： 录入") {
                     guard owner != nil || DB.members().isEmpty else {
                         app.showToast("先选归属成员")   // 317 先选归属成员
                         DS.Haptics.trigger.impactOccurred()
@@ -429,10 +429,10 @@ struct FpStudio: View {
             // 14 会把这一批指纹真正启用: 不满 8 次按压的批次不确认
             guard presses.count >= 8 else {
                 throw NSError(domain: "fp", code: 2,
-                              userInfo: [NSLocalizedDescriptionKey: "只收到 \(presses.count)/8 次按压, 未写入; 请重新录入并多按几次"])
+                              userInfo: [NSLocalizedDescriptionKey: "只收到 \(presses.count)/8 次按压， 未写入; 请重新录入并多按几次"])
             }
             guard let batch = ps.compactMap({ $0.batchNumber }).first, batch > 0 else {
-                throw NSError(domain: "fp", code: 1, userInfo: [NSLocalizedDescriptionKey: "未拿到有效指纹批次, 请重新录入"])
+                throw NSError(domain: "fp", code: 1, userInfo: [NSLocalizedDescriptionKey: "未拿到有效指纹批次， 请重新录入"])
             }
             // 第八十九批: 关页 (enrollTask?.cancel()) 后**不越过这个不可逆点** ——
             // fpConfirm 会真正启用这批指纹并写本机台账，不该在用户已经退出后代他做。

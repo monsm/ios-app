@@ -18,14 +18,14 @@ struct FpOwnerPicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: DS.Space.xs) {
-            Text("先选归属, 再录入")   // 317 先选归属
+            Text("先选归属， 再录入")   // 317 先选归属
                 .vkFont(.footnote, weight: .semibold)
                 .foregroundStyle(DS.Palette.text)
             ForEach(members) { m in
                 row(m)
             }
             if members.isEmpty {
-                Text("这把锁还没有成员 — 直接建一个, 这枚指纹就记在他名下。")   // 317 还没有成员
+                Text("这把锁还没有成员 — 直接建一个， 这枚指纹就记在他名下。")   // 317 还没有成员
                     .vkFont(.caption)
                     .foregroundStyle(DS.Palette.warn)
                     .fixedSize(horizontal: false, vertical: true)
@@ -52,7 +52,7 @@ struct FpOwnerPicker: View {
             Button("创建") { create() }
             Button("取消", role: .cancel) { newName = "" }
         } message: {
-            Text("姓名可用汉字 / 英文 / 数字, 上限 20 字。建完会自动选中。")
+            Text("姓名可用汉字 / 英文 / 数字， 上限 20 字。建完会自动选中。")
         }
     }
 
@@ -102,7 +102,7 @@ struct FpOwnerPicker: View {
         let n = newName.trimmingCharacters(in: .whitespaces)
         // 与成员中心 createMember 同一条校验: 否则能建出"之后改不动"的名字 (重命名强制字母数字)
         guard !n.isEmpty, n.count <= 20, n.allSatisfy({ $0.isLetter || $0.isNumber }) else {
-            app.showToast("姓名需为汉字/英文/数字, 上限 20 字")
+            app.showToast("姓名需为汉字/英文/数字， 上限 20 字")
             return
         }
         guard let m = DB.addMember(n) else {

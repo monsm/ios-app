@@ -115,8 +115,8 @@ struct MemberCenterView: View {
                                 .vkFont(.subheadline)
                                 .foregroundStyle(DS.Palette.text)
                                 .fixedSize(horizontal: false, vertical: true)
-                            Text("名册里只有人与称呼: 不含锁 MAC、凭证编号、口令, 也不含常用锁清单。\n"
-                                 + "要搬整套数据请走备份 —— 名册不承担那个用途, 也正因为它少, 才适合发给家人线下核对。")
+                            Text("名册里只有人与称呼： 不含锁 MAC、凭证编号、口令， 也不含常用锁清单。\n"
+                                 + "要搬整套数据请走备份 —— 名册不承担那个用途， 也正因为它少， 才适合发给家人线下核对。")
                                 .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -211,7 +211,7 @@ struct MemberCenterView: View {
                 if DB.members().isEmpty {
                     EmptyState(systemImage: "person.2.slash",
                                title: "还没有成员",
-                               message: "建档向导分三步: 称呼 → 角色 → 初始凭证。",
+                               message: "建档向导分三步： 称呼 → 角色 → 初始凭证。",
                                actionTitle: "建档向导") { openWizard() }   // 463 建档向导
                 } else if groupFilter.isEmpty {
                     EmptyState(systemImage: "archivebox",
@@ -243,9 +243,9 @@ struct MemberCenterView: View {
         } header: {
             Text("成员 (\(list.count))")
         } footer: {
-            Text("活跃度与摘录为台账推断 (约): 锁端日志无身份字段, 归属只算可证明的。"
-                 + "「久未用」判的是近 30 天没有可证明归属的开门, 标在每行行尾; "   // 262/466 久未用
-                 + "要看谁这段时间开得多, 上方选「近 30 天开门次数」那一档。")
+            Text("活跃度与摘录为台账推断 (约): 锁端日志无身份字段， 归属只算可证明的。"
+                 + "「久未用」判的是近 30 天没有可证明归属的开门， 标在每行行尾; "   // 262/466 久未用
+                 + "要看谁这段时间开得多， 上方选「近 30 天开门次数」那一档。")
         }
     }
     /// 264/466 排序用的活跃度表: 一次算完全员, 不在比较式里逐次重扫全锁日志。
@@ -277,11 +277,11 @@ struct MemberCenterView: View {
                 .frame(minHeight: DS.Hit.min)
             }
             .buttonStyle(PlainButtonStyle())
-            .accessibilityLabel("访客虚拟分组, 约 \(opens) 条未归属临时码记录")
+            .accessibilityLabel("访客虚拟分组， 约 \(opens) 条未归属临时码记录")
         } header: {
             Text("访客 (虚拟分组)")
         } footer: {
-            Text("「访客」只出现在本地展示层, 不写入锁端凭证表。")
+            Text("「访客」只出现在本地展示层， 不写入锁端凭证表。")
         }
     }
 
@@ -313,7 +313,7 @@ struct MemberCenterView: View {
                         .foregroundStyle(DS.Palette.accentText)
                 }
             } else {
-                Text("本周主责: 未安排 — 在成员的详情页里设置")   // 481 本周主责
+                Text("本周主责： 未安排 — 在成员的详情页里设置")   // 481 本周主责
                     .vkFont(.subheadline)
                     .foregroundStyle(DS.Palette.textSub)
             }

@@ -72,7 +72,7 @@ extension CredentialOrg {
                         title: "密码临期", body: "\(name) 距到期还有 2 小时。")
         }
         addCalendar(id: id + ".t0", date: to, title: "已到期",
-                    body: "\(name) 到期了, 锁端到这个时刻后不再放行这条凭证。")
+                    body: "\(name) 到期了， 锁端到这个时刻后不再放行这条凭证。")
     }
 
     /// 930 凭证 Tab 角标: 近 7 日内到期的条数。

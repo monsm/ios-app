@@ -171,7 +171,7 @@ extension CredentialsView {
                                     let term = CredentialOrg.ownerName(m.id)
                                     search = term.isEmpty ? m.name : term
                                     CredentialOrg.pushSearchHistory(search)
-                                    app.showToast("已改用「\(search)」重搜, 命中的是名称/备注/别名/归属")   // 532 已改用
+                                    app.showToast("已改用「\(search)」重搜， 命中的是名称/备注/别名/归属")   // 532 已改用
                                 } else {
                                     app.showToast("没有匹配的成员")
                                 }
@@ -187,7 +187,7 @@ extension CredentialsView {
             }
             TextField("搜索名称 / 备注 / #别名", text: $search)   // 531 搜索名称
                 .keyboardShortcut("f", modifiers: .command)
-                .accessibilityLabel("凭证搜索, 键盘 Cmd/Control+F")
+                .accessibilityLabel("凭证搜索， 键盘 Cmd/Control+F")
                 .autocorrectionDisabled()
                 .onSubmit {
                     if !search.isEmpty { CredentialOrg.pushSearchHistory(search) }
@@ -342,7 +342,7 @@ extension CredentialsView {
         seq[slot] = base
         CredentialOrg.setSeq(mac, seq)
         reload()
-        app.showToast("组内先后已记住, 跨启动保持")   // 182 组内先后已记住
+        app.showToast("组内先后已记住， 跨启动保持")   // 182 组内先后已记住
     }
     /// 两个段的取键函数 (密码取 alias, 指纹取 batch)
     func pwdKeys(_ group: [LedgerPwd]) -> [Int] { group.map { $0.alias } }
@@ -429,7 +429,7 @@ extension CredentialsView {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(cycleLabel)
                                 .vkFont(.subheadline, weight: .semibold)
-                            Text("下一步: \(cycleNextLabel)")   // 356 下一步
+                            Text("下一步： \(cycleNextLabel)")   // 356 下一步
                                 .vkFont(.caption2)
                                 .foregroundStyle(DS.Palette.textSub)
                         }
@@ -455,7 +455,7 @@ extension CredentialsView {
                     .vkFont(.caption, weight: .medium)
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
-                    .accessibilityLabel("把当前先后写成手动序, 与排序档里的拖动共用同一张顺序表")   // 182/352 把当前先后写成手动序
+                    .accessibilityLabel("把当前先后写成手动序， 与排序档里的拖动共用同一张顺序表")   // 182/352 把当前先后写成手动序
                 }
                 HStack(spacing: DS.Space.s) {
                     Text("智能选取")   // 350 智能选取
@@ -476,7 +476,7 @@ extension CredentialsView {
                     // 也没有一个滚动容器替用户划出多选区。这里改成这一屏真做得到的三条路 (逐条点按 / 行右滑「选」/ 356 循环 + 350 智能选取)。
                     // 356 点按行选一条
                     // 350 点按行选一条
-                    Text("点按行选一条; 行右侧滑动点「选」同样算一条。要连着选一片: 上面那枚循环键按 全选→反选→清空 走, 或用「智能选取」一次选一把 已过期/同成员/同类型。")
+                    Text("点按行选一条; 行右侧滑动点「选」同样算一条。要连着选一片： 上面那枚循环键按 全选→反选→清空 走， 或用「智能选取」一次选一把 已过期/同成员/同类型。")
                         .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)

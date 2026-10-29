@@ -32,7 +32,7 @@ struct FpDetailStudio: View {
                     // 324 冗余横条: 该成员名下仅剩此枚 → 提示补备用
                     if CredentialOrg.fpCountByOwner(mac, f.owner) == 1 {
                         Section {
-                            Label("该成员名下仅剩 1 枚指纹, 建议补一枚备用", systemImage: "bell.badge")   // 324 该成员名下仅剩
+                            Label("该成员名下仅剩 1 枚指纹， 建议补一枚备用", systemImage: "bell.badge")   // 324 该成员名下仅剩
                                 .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.warn)
                         }
@@ -43,7 +43,7 @@ struct FpDetailStudio: View {
                         fpRow("登记", f.at > 0 ? "登记于 " + f.at.credDay() : "已登记在门锁内")
                         let useN = CredentialOrg.fpUseCount30d(mac)
                         if useN > 0 {
-                            fpRow("近 30 天指纹开门", "约 \(useN) 次 (日志无指纹身份字段, 整锁推断)")
+                            fpRow("近 30 天指纹开门", "约 \(useN) 次 (日志无指纹身份字段， 整锁推断)")
                         }
                         // 2026-10-29 删除「指纹告警日志」行：APK 的日志类型表（We）里没有"指纹告警"这个事件 ——
                         // 旧实现数的 type13 在新表里是「交换秘钥」，会把配网换钥显示成指纹告警。
@@ -136,7 +136,7 @@ struct FpDetailStudio: View {
             // 是档案，锁端那条模板已经删了，开门能力必须本人重录 (回收站页 670 早就把这句写明了)。
             app.showToast("指纹已删除：本机这条档案直接移除、不可找回，开门要本人到锁前重录")   // 670 界面文案
         } catch {
-            app.showToast("删除失败: " + error.localizedDescription)
+            app.showToast("删除失败： " + error.localizedDescription)
         }
     }
 }

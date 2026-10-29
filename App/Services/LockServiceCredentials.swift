@@ -59,7 +59,7 @@ extension LockService {
         // 能做的是删除后重读一次本机台账，确认那一条真的不在了。
         // 注：读的是本机台账（删除成功后调用方落盘），不是锁端 —— 锁端没有"列出密码"的命令。
         if DB.ledger(m).pwds.contains(where: { $0.alias == alias }) {
-            log("warn", "删除复核异常: 凭证#\(alias) 仍在台账里")
+            log("warn", "删除复核异常： 凭证#\(alias) 仍在台账里")
         }
         log("info", "凭证#\(alias) 已删除 (0A, 已复核)")
     }
@@ -140,7 +140,7 @@ extension LockService {
             if let onPress, self.isPress(f) { onPress(p) }
         }
         defer { collector = nil; collectorCmd = 0 }
-        log("info", "TX 13 录指纹 (多响应, \(times) 次按压)")
+        log("info", "TX 13 录指纹 (多响应， \(times) 次按压)")
         var attemptsLeft = 2 // JS _execMulti retries=2: 无帧时重发一次
         var broken = false
         while frames.isEmpty && attemptsLeft > 0 {
@@ -152,7 +152,7 @@ extension LockService {
                 // 断链/取消早退: 旧写法会一直转到窗口到点才抛"未收到任何按压响应",
                 // 期间锁已被人拿走/电量耗尽也不知情, collector 也一直被占 (新会话的 cmd13 帧会被吞)
                 if Task.isCancelled || ble.connectedPeripheralId.isEmpty || connectedDeviceId.isEmpty {
-                    log("warn", "13 录指纹中链路断开或任务取消, 提前结束")
+                    log("warn", "13 录指纹中链路断开或任务取消， 提前结束")
                     broken = true
                     break
                 }
@@ -162,7 +162,7 @@ extension LockService {
                 if frames.isEmpty {
                     // Java 唯一的那个计时器 (BLE_TIMEOUT=8000): 收到任何一帧即 cancel 且不重启
                     if silent > Double(firstFrameMs) / 1000.0 {
-                        log("warn", "13 录指纹首帧窗口 \(firstFrameMs)ms 内无任何回包, 提前收尾")
+                        log("warn", "13 录指纹首帧窗口 \(firstFrameMs)ms 内无任何回包， 提前收尾")
                         break
                     }
                 } else if silent > Double(idleAfterPressMs) / 1000.0 {
@@ -179,7 +179,7 @@ extension LockService {
         let presses = frames.filter(self.isPress).map { press(of: $0) }
         if let r = stopRc {
             if r == rcTimeout {
-                throw BLEErrorX.msg("锁已结束录入 (rc=24 录入超时: 两次按压之间超过 15 秒) — 已收 \(presses.count)/\(times) 次, 请重新开始")
+                throw BLEErrorX.msg("锁已结束录入 (rc=24 录入超时： 两次按压之间超过 15 秒) — 已收 \(presses.count)/\(times) 次， 请重新开始")
             }
             throw BLEErrorX.msg("13 录指纹被锁端中止 (rc=\(r): \(StatusParser.rcMessage(r))) — 已收 \(presses.count)/\(times) 次")
         }
@@ -187,12 +187,12 @@ extension LockService {
             // 应答帧里的 rc 是唯一能解释"为什么锁没开始收指纹"的证据 (拒绝/指纹被禁/未校时…)
             let ackRc = frames.first.map { extractRc(0x13, $0) } ?? -1
             if ackRc == rcBlurry {
-                throw BLEErrorX.msg("锁回「无法获取有效的指纹图片」(rc=23): 手指按得太快/太湿, 或反复按同一处 — 请换一个角度重按")
+                throw BLEErrorX.msg("锁回「无法获取有效的指纹图片」(rc=23): 手指按得太快/太湿， 或反复按同一处 — 请换一个角度重按")
             }
             if ackRc != 0 && ackRc != -1 {
                 throw BLEErrorX.msg("13 录指纹被锁端拒绝 (rc=\(ackRc): \(StatusParser.rcMessage(ackRc))) — 未进入按压采集")
             }
-            throw BLEErrorX.msg("13 已下发但没收到按压帧 (锁回了 \(frames.count) 帧应答) — 请把手指按在指纹头上再抬起, 间隔 3 秒内")
+            throw BLEErrorX.msg("13 已下发但没收到按压帧 (锁回了 \(frames.count) 帧应答) — 请把手指按在指纹头上再抬起， 间隔 3 秒内")
         }
         if presses.count < times {
             log("warn", "13 只收到 \(presses.count)/\(times) 次按压 (超时/提前收尾)")
@@ -211,7 +211,7 @@ extension LockService {
         try await execOk(ZKCmdBuilder.cmd15DeleteFp(m, sk, batchNumber))
         // 2026-10-27 审核修复 (D-54)：同 pwdDelete —— 删除后重读复核。
         if DB.ledger(m).fps.contains(where: { $0.batch == batchNumber }) {
-            log("warn", "删除复核失败: 指纹#\(batchNumber) 仍存在于锁端 — 可能收到伪造回包")
+            log("warn", "删除复核失败： 指纹#\(batchNumber) 仍存在于锁端 — 可能收到伪造回包")
             throw BLEErrorX.msg("门锁回包说已删除，但重读发现这枚指纹还在。可能有人在伪造回包。")
         }
         log("info", "指纹#\(batchNumber) 已删除 (已重读复核)")

@@ -111,7 +111,7 @@ extension BLEService: CBPeripheralDelegate {
         if let e = error {
             let cb = connectCompletion
             connectCompletion = nil
-            cb?(.failure(BLEErrorX.msg("notify 开启失败: \(e.localizedDescription)")))
+            cb?(.failure(BLEErrorX.msg("notify 开启失败： \(e.localizedDescription)")))
             return
         }
         guard characteristic.uuid == notifyChar?.uuid else { return }

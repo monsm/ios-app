@@ -66,7 +66,7 @@ struct DeviceHomeView: View {
                     }
                     .keyboardShortcut("r", modifiers: .command)
                     .disabled(refreshing)
-                    .accessibilityLabel("刷新门锁状态, 键盘 Cmd/Control+R")
+                    .accessibilityLabel("刷新门锁状态， 键盘 Cmd/Control+R")
                 }
                 ToolbarItem(placement: barSide) {
                     Button { showAdd = true } label: { Image(systemName: "plus") }
@@ -269,12 +269,12 @@ struct DeviceHomeView: View {
         do {
             if let dev = try await sense.scan(mac: app.currentMac, timeoutMs: 4000) {
                 sense.noteScannedRssi(dev.rssi)
-                app.showToast("已重扫: 信号 \(dev.rssi) dBm")   // 537 已重扫
+                app.showToast("已重扫： 信号 \(dev.rssi) dBm")   // 537 已重扫
             } else {
                 app.showToast("4 秒内没扫到这把锁的广播 — 走近一点再下拉")   // 537 秒内没扫到这把锁的广
             }
         } catch {
-            app.showToast("扫描没能启动: 蓝牙栈忙或权限未就绪")   // 537 扫描没能启动
+            app.showToast("扫描没能启动： 蓝牙栈忙或权限未就绪")   // 537 扫描没能启动
         }
         await refresh(manual: true)
     }

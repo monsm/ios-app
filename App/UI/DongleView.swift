@@ -102,7 +102,7 @@ struct DongleView: View {
             app.showToast("已找到钥匙串「\(d.name.isEmpty ? d.mac : d.name)」")
             tick += 1
         } catch {
-            self.error = "搜索失败: \(error.localizedDescription)"
+            self.error = "搜索失败： \(error.localizedDescription)"
         }
     }
 
@@ -275,7 +275,7 @@ struct DongleView: View {
             app.showToast("状态已更新")
             tick += 1
         } catch {
-            self.error = "读状态失败: \(error.localizedDescription)"
+            self.error = "读状态失败： \(error.localizedDescription)"
         }
     }
 
@@ -289,7 +289,7 @@ struct DongleView: View {
             keysByDongle[d.mac] = keys
             tick += 1
         } catch {
-            self.error = "查钥匙失败: \(error.localizedDescription)"
+            self.error = "查钥匙失败： \(error.localizedDescription)"
         }
     }
 
@@ -304,7 +304,7 @@ struct DongleView: View {
             app.showToast("钥匙已写入「\(LockArchive.displayName(kc))」")
             tick += 1
         } catch {
-            self.error = "写钥失败: \(error.localizedDescription)"
+            self.error = "写钥失败： \(error.localizedDescription)"
         }
     }
 
@@ -321,7 +321,7 @@ struct DongleView: View {
             app.showToast("假钥匙已写入（随机 PIN，不绑成员）")
             tick += 1
         } catch {
-            self.error = "写假钥匙失败: \(error.localizedDescription)"
+            self.error = "写假钥匙失败： \(error.localizedDescription)"
         }
     }
 
@@ -335,7 +335,7 @@ struct DongleView: View {
             app.showToast("已从钥匙串删除「\(LockArchive.displayName(kc))」的钥匙")
             tick += 1
         } catch {
-            self.error = "删钥失败: \(error.localizedDescription)"
+            self.error = "删钥失败： \(error.localizedDescription)"
         }
     }
 

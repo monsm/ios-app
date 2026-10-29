@@ -115,7 +115,7 @@ extension DB {
         if pinsJoined.isEmpty { SecretStore.remove(secretAccount(kc.mac, "pins")) }
         else if !SecretStore.set(pinsJoined, for: secretAccount(kc.mac, "pins")) { failed.append("pins") }
         if !failed.isEmpty {
-            BleTelemetry.recordEvent("Keychain 写入失败: " + failed.joined(separator: "/")
+            BleTelemetry.recordEvent("Keychain 写入失败： " + failed.joined(separator: "/")
                                      + " @ " + String(kc.mac.prefix(6)), ok: false)
         }
         // 2026-10-27 审核修复 (AUDIT-D D-18)：`读 → 改 → 写` 三步必须原子。

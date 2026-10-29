@@ -46,7 +46,7 @@ extension RecordSearch {
         // 569 失败事件词
         if tokens.contains(where: { $0.contains("失败") || $0.contains("未成功") }) {
             q.credKind = nil
-            q.parsedTags.append("失败(仅告警级)")
+            q.parsedTags.append("失败（仅告警级）")
         }
         q.must.removeAll { $0.hasPrefix("告警") || $0.hasPrefix("失败") || $0.hasPrefix("异常") }
         // 551 成员名匹配

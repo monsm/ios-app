@@ -15,16 +15,16 @@ extension LinkSense {
             if let rssi = dev?.rssi { updateRssi(rssi) }
             guard let dev = dev else {
                 BleTelemetry.recordAttempt(mac: mac, ok: false, reason: "未发现 (不在广播范围或锁未广播)")
-                BleTelemetry.recordEvent("预握手: 未发现 " + String(mac.prefix(6)), ok: false)
-                lockSvc.log("warn", "预握手: 扫描未发现 \(mac), 不在广播范围")   // 134/130 预握手
+                BleTelemetry.recordEvent("预握手： 未发现 " + String(mac.prefix(6)), ok: false)
+                lockSvc.log("warn", "预握手： 扫描未发现 \(mac), 不在广播范围")   // 134/130 预握手
                 reconnectAttempt += 1
                 return
             }
             let fence = LinkSense.rssiFence
             if dev.rssi < fence {
                 BleTelemetry.recordAttempt(mac: mac, ok: false, reason: "RSSI \(dev.rssi) 低于围栏 \(fence), 跳过预热")
-                BleTelemetry.recordEvent("预握手: 信号弱跳过", ok: false)
-                lockSvc.log("info", "预握手: RSSI \(dev.rssi) 低于围栏 \(fence), 低信号不浪费电量")   // 93 预握手
+                BleTelemetry.recordEvent("预握手： 信号弱跳过", ok: false)
+                lockSvc.log("info", "预握手： RSSI \(dev.rssi) 低于围栏 \(fence), 低信号不浪费电量")   // 93 预握手
                 reconnectAttempt += 1
                 return
             }
@@ -33,13 +33,13 @@ extension LinkSense {
             let ms = Int((CFAbsoluteTimeGetCurrent() - t0) * 1000)
             connectSource = "预热"
             markReady(ms: ms, rssi: dev.rssi)
-            lockSvc.log("info", "预握手完成: 耗时 \(ms)ms (只预热不执行, 96)")
+            lockSvc.log("info", "预握手完成： 耗时 \(ms)ms (只预热不执行， 96)")
             // 276: 同一次节律里顺手把其余常用锁也扫一遍 —— 不另开定时器 (预握手本身就是节律入口),
             // 也不改上面那条单锁链的任何判断 (它仍然只决定当前锁要不要预热)。
             if !Task.isCancelled { await preconnectOthers() }
             if dev.rssi >= -55, let host = AppState.hostRef, !(CareSchedule.quietOn && CareSchedule.isQuietHour()) {   // 99 近场轻提醒 (274 免扰时段静默)
                 Task { @MainActor in DS.Haptics.tick.impactOccurred() }
-                host.showToast("锁就在附近, 已就绪")   // 99 锁就在附近
+                host.showToast("锁就在附近， 已就绪")   // 99 锁就在附近
             }
             BleTelemetry.recordAttempt(mac: mac, ok: true, reason: "预握手 \(ms)ms")
             BleTelemetry.recordEvent("预握手完成 \(ms)ms", ok: true)

@@ -206,7 +206,7 @@ struct GatewayView: View {
             // confirmed == true 的那一支里渲染 —— 于是连服务回调最后那句"添加成功!"也一起没了,
             // 成功与"点了没反应"完全同形 (失败反倒看得见, error 走的是另一支)。补一句结论,
             // 并把话说准: 到这里为止被网关 errCode 0 认下的是"WiFi 写入", 联网状态得等它自己上报。
-            app.showToast("配网指令已被网关接受 · 正在用「\(sentWifi)」重连, 联网状态稍后在下方列表复核")
+            app.showToast("配网指令已被网关接受 · 正在用「\(sentWifi)」重连， 联网状态稍后在下方列表复核")
         } catch {
             self.error = error.localizedDescription
         }
@@ -230,7 +230,7 @@ struct GatewayView: View {
         do {
             try await HardwareService.shared.rebootGateway(mac: g.mac)
             app.showToast("重启成功")
-        } catch { app.showToast("重启失败: \(error.localizedDescription)") }
+        } catch { app.showToast("重启失败： \(error.localizedDescription)") }
         reload()
     }
 }

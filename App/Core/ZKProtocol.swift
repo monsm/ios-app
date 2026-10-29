@@ -64,7 +64,7 @@ enum ZKProtocol {
         let rawLen = v.count / 2
         if rawLen > 0xFF {
             v = String(v.prefix(0xFF * 2))
-            BleTelemetry.recordEvent("buildKLV 超长截断: key=\(key) \(rawLen)→255 字节", ok: false)
+            BleTelemetry.recordEvent("buildKLV 超长截断： key=\(key) \(rawLen)→255 字节", ok: false)
         }
         let len = v.count / 2
         return HexKit.hexPair(UInt32(key)) + HexKit.hexPair(UInt32(len)) + v
@@ -154,7 +154,7 @@ enum ZKProtocol {
     /// 只读模式下放行只读命令, 其余抛错 (与 JS 同语义)
     static func assertReadOnly(_ cmd: UInt8) throws {
         guard readonlyCmds.contains(cmd) else {
-            throw BLEErrorX.msg(String(format: "护栏拦截: cmd 0x%02x 是写入/危险命令, 只读试验模式禁止发送!", cmd))
+            throw BLEErrorX.msg(String(format: "护栏拦截： cmd 0x%02x 是写入/危险命令， 只读试验模式禁止发送!", cmd))
         }
     }
 
@@ -230,7 +230,7 @@ enum ZKProtocol {
         if results.count > 1 {
             let others = results.dropFirst().map { String($0.header) }.joined(separator: "/")
             BleTelemetry.recordEvent(
-                "回包帧头歧义: \(results.count) 种头型都能解析, 取 header=\(results[0].header), 其余 \(others)",
+                "回包帧头歧义： \(results.count) 种头型都能解析， 取 header=\(results[0].header), 其余 \(others)",
                 ok: false)
         }
         if let first = results.first { return first }

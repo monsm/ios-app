@@ -75,7 +75,7 @@ struct LinkPill: View {
     // 68 拟人状态文案: "门锁在线，随时可开"
     private var text: String {
         switch state {
-        case .ready: return "门锁在线, 随时可开"
+        case .ready: return "门锁在线， 随时可开"
         case .connecting: return "正在敲门…"
         // 2026-10-27 截图核对修复：这一态原先不存在，于是蓝牙一连上就报「随时可开」，
         // 而密钥没绑定根本开不了 —— 用户点下去只会失败。
@@ -111,8 +111,8 @@ struct BLEOffBanner: View {
                     .foregroundStyle(DS.Palette.warn)
                     .accessibilityHidden(true)
                 Text(denied
-                     ? "本 App 没有蓝牙权限 — 到设置里允许后, 才能配对与开锁"
-                     : "蓝牙已关闭 — 打开系统蓝牙后, 门锁才能被唤醒")
+                     ? "本 App 没有蓝牙权限 — 到设置里允许后， 才能配对与开锁"
+                     : "蓝牙已关闭 — 打开系统蓝牙后， 门锁才能被唤醒")
                     .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.text)
                     .fixedSize(horizontal: false, vertical: true)
@@ -129,8 +129,8 @@ struct BLEOffBanner: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(denied
-                            ? "本 App 没有蓝牙权限, 点按前往系统设置允许"
-                            : "蓝牙已关闭, 点按前往系统设置开启")
+                            ? "本 App 没有蓝牙权限， 点按前往系统设置允许"
+                            : "蓝牙已关闭， 点按前往系统设置开启")
         .accessibilityHint(denied ? "到系统设置允许本 App 使用蓝牙" : "到系统设置打开蓝牙开关")
     }
 }

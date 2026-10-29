@@ -67,14 +67,14 @@ extension LockService {
             let knownPid = kc.pid
             if knownPid > 0, st.pid > 0, st.pid != knownPid {
                 disconnect()
-                log("warn", "连接后身份不符: 锁端 pid=\(st.pid) 与登记的 pid=\(knownPid) 不一致 → 已断开, 不写缓存")
+                log("warn", "连接后身份不符： 锁端 pid=\(st.pid) 与登记的 pid=\(knownPid) 不一致 → 已断开， 不写缓存")
                 throw BLEErrorX.msg("连到的设备与「\(kc.name)」不是同一把锁 (pid 不符)，已断开。附近可能有同名或伪造广播。")
             }
             if knownPid <= 0 { log("warn", "钥匙串未登记 pid, 跳过连接后身份复核 (老配对)") }
         } catch let e as BLEErrorX {
             throw e
         } catch {
-            log("warn", "连接后读状态失败 (\(error.localizedDescription)) → 断开, 不写缓存")
+            log("warn", "连接后读状态失败 (\(error.localizedDescription)) → 断开， 不写缓存")
             disconnect()
             throw BLEErrorX.msg("连上后读不到锁端状态，已断开重来")
         }
@@ -144,7 +144,7 @@ extension LockService {
             // 配网期这条基本只有一个含义: 锁已退回不可配网态 (01 拿不到令牌 ⇒ 之后每一步令牌面命令都发不出去)。
             // 与 05 被拒时同一取证口径: 留"回包形状"(只键与长度, 无值) + 该做什么, 免得现场只看到一句"无令牌"。
             log("error", "01 会话令牌响应缺 KLV#02 · 回包 " + Self.klvShape(f))
-            throw BLEErrorX.msg("01 响应无令牌 (回包 \(Self.klvShape(f))): 配网期出现说明锁已不在重置/可配网状态, 请在门锁键盘上重置后立即重试")
+            throw BLEErrorX.msg("01 响应无令牌 (回包 \(Self.klvShape(f))): 配网期出现说明锁已不在重置/可配网状态， 请在门锁键盘上重置后立即重试")
         }
         // 2026-10-28 修：上面只判了 KLV#02 **存在**，没判**非空** —— 锁若返回 `vlen=0` 的空令牌，
         // `sessionTokenHex = ""` 之后 `injectToken` 会 `guard !tokenHex.isEmpty else { return hex }`
@@ -244,7 +244,7 @@ extension LockService {
                     if case BLEErrorX.code(.responseTimeout) = error { maybeExecuted = true }
                     if case BLEErrorX.code(.writeFailed) = error { maybeExecuted = true }
                     if maybeExecuted {
-                        log("warn", "\(cmdObj.name) 写命令失败(响应超时或写失败, 指令可能已生效) → 不重发 (避免重复执行), 交上层判定")
+                        log("warn", "\(cmdObj.name) 写命令失败(响应超时或写失败， 指令可能已生效) → 不重发 (避免重复执行), 交上层判定")
                         break
                     }
                 }
@@ -260,7 +260,7 @@ extension LockService {
                     disconnect()
                     if !macToHeal.isEmpty { try? await ensureConnected(mac: macToHeal) }
                 }
-                log("warn", "cmd \(String(format: "%02x", cmd)) 第 \(attempt + 1) 次失败: \(error.localizedDescription)")
+                log("warn", "cmd \(String(format: "%02x", cmd)) 第 \(attempt + 1) 次失败： \(error.localizedDescription)")
             }
         }
         throw lastErr
@@ -317,7 +317,7 @@ extension LockService {
             }
             // 不是顺序问题 → 复原注册表 (方向错了会比默认更难查), 让上层按 mac 不符去报错
             ZKProtocol.setMacOrder(curMac, used)
-            log("warn", "\(cmdObj.name) rc=12: 两种 MAC 字节序都被拒 (回退 \(used.rawValue)) — 不是字节序问题, 是锁内密钥与本机不一致")
+            log("warn", "\(cmdObj.name) rc=12: 两种 MAC 字节序都被拒 (回退 \(used.rawValue)) — 不是字节序问题， 是锁内密钥与本机不一致")
         }
         log("info", "\(cmdObj.name) -> rc=\(rc)")
         return ExecResult(frame: resp, rc: rc, klvs: resp.klvs)

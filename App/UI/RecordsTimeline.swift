@@ -129,7 +129,7 @@ struct RecDetailSheet: View {
                     return abs(t1.timeIntervalSince(t2)) <= 300
                 }
                 if near {
-                    fieldRow("陪同进入 (疑似)", "同一凭证 5 分钟内还有别的成员用过 — 短窗启发式, 只作提示")   // 797 同一凭证
+                    fieldRow("陪同进入 (疑似)", "同一凭证 5 分钟内还有别的成员用过 — 短窗启发式， 只作提示")   // 797 同一凭证
                 }
             }
             if rec.provable != nil {
@@ -217,7 +217,7 @@ struct RecDetailSheet: View {
             }
             if trials > 0 {
                 // 737 涉事凭证明写"无法归属": 锁定级事件行不带凭证槽位 (依赖协议失败明细), 不猜
-                Text("涉事凭证无法归属: 锁端仅记录锁定级事件行, 不带凭证槽位 (依赖协议失败明细)。")
+                Text("涉事凭证无法归属： 锁端仅记录锁定级事件行， 不带凭证槽位 (依赖协议失败明细)。")
                     .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -229,7 +229,7 @@ struct RecDetailSheet: View {
                     .font(.system(size: DS.Icon.sm))
                     .foregroundStyle(DS.Palette.textSub)
                     .accessibilityHidden(true)
-                Text("响应时长: 积累中 — 处置记录够多后自动出分布")   // 742 响应时长
+                Text("响应时长： 积累中 — 处置记录够多后自动出分布")   // 742 响应时长
                     .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -432,7 +432,7 @@ struct RecDetailSheet: View {
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
             }
-            Text("两个出口都不改你的筛选条件: 一颗只是滚过去并闪一下，另一颗只把显示范围收到那一天，"
+            Text("两个出口都不改你的筛选条件： 一颗只是滚过去并闪一下，另一颗只把显示范围收到那一天，"
                  + "页顶有「看全部日子」可以退回来。")
                 .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
@@ -474,7 +474,7 @@ struct RecDetailSheet: View {
             VariantToggle(isOn: Binding(
                 get: { RecordOverlay.isFlagged(rec.mac, rec.key) },
                 set: { _ in RecordOverlay.toggleFlag(rec.mac, rec.key); tick += 1 })) {
-                Label("标为异常: 时间线行左侧常显红旗", systemImage: "flag.fill")   // 188 标为异常
+                Label("标为异常： 时间线行左侧常显红旗", systemImage: "flag.fill")   // 188 标为异常
                     .vkFont(.subheadline)
             }
             .frame(minHeight: DS.Hit.min)

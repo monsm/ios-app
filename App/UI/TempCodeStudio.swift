@@ -63,7 +63,7 @@ struct TempCodeStudio: View {
                     if !pwd.isEmpty {
                         MaskedDigits(value: pwd, big: true)
                     }
-                    TextField("输入码值, 或点「生成」", text: $pwd, prompt: Text("输入 6~8 位数字"))   // 516 输入
+                    TextField("输入码值， 或点「生成」", text: $pwd, prompt: Text("输入 6~8 位数字"))   // 516 输入
                         .keyboardType(.numberPad)
                         .vkFont(.title3.monospacedDigit(), weight: .semibold)
                         .frame(minHeight: DS.Hit.min)
@@ -83,7 +83,7 @@ struct TempCodeStudio: View {
                         .padding(.horizontal, DS.Space.s)
                         .padding(.vertical, 4)
                         .variantCallout(DS.Palette.warn, .control, wash: 0.10)
-                        .accessibilityLabel("码值来自剪贴板, 点清除可移除")
+                        .accessibilityLabel("码值来自剪贴板， 点清除可移除")
                     }
                     HStack(spacing: DS.Space.xs) {
                         Button("生成") {   // 173 生成
@@ -114,7 +114,7 @@ struct TempCodeStudio: View {
                     let dups = pwdOK ? CredentialOrg.duplicatePwdValues(mac, pwd, excluding: -1) : []
                     let others = pwdOK ? CredentialOrg.duplicatePwdLockNames(pwd, excludingMac: mac) : []
                     if !others.isEmpty {
-                        Label("其它 \(others.count) 把锁上也有同值: " + others.prefix(3).joined(separator: "、")
+                        Label("其它 \(others.count) 把锁上也有同值： " + others.prefix(3).joined(separator: "、")
                             + (others.count > 3 ? " 等" : ""), systemImage: "lock.rectangle.stack")   // 304 界面文案
                             .vkFont(.caption)
                             .foregroundStyle(DS.Palette.warn)
@@ -123,7 +123,7 @@ struct TempCodeStudio: View {
                     if !dups.isEmpty {
                         // 304 查看即跳: 不再只给一句"建议换一组", 真把同值那条的详情打开
                         HStack(spacing: DS.Space.xs) {
-                            Label("本锁已有 \(dups.count) 条同值凭证, 建议换一组", systemImage: "plus.slash.minus")   // 304 本锁已有
+                            Label("本锁已有 \(dups.count) 条同值凭证， 建议换一组", systemImage: "plus.slash.minus")   // 304 本锁已有
                                 .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.warn)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -220,7 +220,7 @@ struct TempCodeStudio: View {
                         .accessibilityLabel("归属 " + m.name + (owner == m.id ? ", 已选" : ""))
                     }
                     TextField("给谁 · 哪扇门 · 用多久 (可长按调听写)", text: $note,
-                              prompt: Text("如: 钟点工·大门·仅上午场"))
+                              prompt: Text("如： 钟点工·大门·仅上午场"))
                         .vkFont(.subheadline)
                         .frame(minHeight: DS.Hit.min)
                         .autocorrectionDisabled()
@@ -232,7 +232,7 @@ struct TempCodeStudio: View {
                     Task { await submitBatch() }
                 }
                 .disabled(!pwdOK || to <= from)
-                Text("请将手机靠近门锁; 批量走既有 0A 逐条下发, 锁端无批量命令, 失败逐条报。")   // 178 请将手机靠近门锁
+                Text("请将手机靠近门锁; 批量走既有 0A 逐条下发， 锁端无批量命令， 失败逐条报。")   // 178 请将手机靠近门锁
                     .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -269,7 +269,7 @@ struct TempCodeStudio: View {
                 CodeBigCard(title: "\(lockName) · 临时码", code: result?.pwd ?? pwd,
                             window: "\(isoShort(from)) ~ \(isoShort(to)) 生效",
                             note: note,
-                            extraFoot: batchCount > 1 ? "批量共 \(batchCount) 张, 其余已逐张下发" : "")
+                            extraFoot: batchCount > 1 ? "批量共 \(batchCount) 张， 其余已逐张下发" : "")
                 if MemberHub.elderMode {
                     // 486 代际完成页切换: 长辈模式下完成页默认形态 = 口述卡 (页标题也切到「口述卡」) + 一枚大「完成」;
                     // 486 代际完成页切换: 长辈模式下完成页默认形态 = 口述卡 (页标题也切到「口述卡」) + 一枚大「完成」。
@@ -302,7 +302,7 @@ struct TempCodeStudio: View {
                     }
                     .buttonStyle(.plain)
                     .padding(.horizontal, DS.Space.gutter)
-                    .accessibilityLabel("复制一句话口令: " + text)
+                    .accessibilityLabel("复制一句话口令： " + text)
                     // 329 分享面板: 系统分享单 (与 405 复制同源明文, 发给家人用)
                     ShareLink(item: text) {
                         Label("分享一句话口令", systemImage: "square.and.arrow.up")   // 329 分享一句话口令
@@ -369,7 +369,7 @@ struct TempCodeStudio: View {
                 app.showToast("第 \(i + 1)/\(max(batchCount, 1)) 张已下发 (别名 #\(alias))")
             } catch {
                 failed += 1
-                app.showToast("第 \(i + 1) 张下发失败: \(error.localizedDescription)")   // 178 张下发失败
+                app.showToast("第 \(i + 1) 张下发失败： \(error.localizedDescription)")   // 178 张下发失败
             }
         }
         if let r = last {
@@ -377,7 +377,7 @@ struct TempCodeStudio: View {
             // 整条批量链都用入口捕获的 kc.mac，这一行原先落到**活读**的 mac:
             // 批量下发以十秒计，中途当前锁被改掉就会清掉另一把锁的草稿 (tools/macpin.js 抓到的)
             CredentialOrg.clearDraft(kc.mac)
-            if failed > 0 { app.showToast("批量完成, \(failed) 张失败, 稍后可在凭证页重试") }
+            if failed > 0 { app.showToast("批量完成， \(failed) 张失败， 稍后可在凭证页重试") }
         }
     }
 }

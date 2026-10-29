@@ -202,7 +202,7 @@ struct DefendView: View {
             await app.refreshStatusQuietly(manual: true)
             app.showToast(mode == .off ? "已撤防" : "布防成功")
         } catch {
-            app.showToast("布防失败: \(error.localizedDescription)")
+            app.showToast("布防失败： \(error.localizedDescription)")
         }
     }
 

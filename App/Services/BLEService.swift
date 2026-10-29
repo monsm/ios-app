@@ -110,10 +110,10 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     }
     func readyMessage() -> String {
         switch manager?.state {
-        case .poweredOff: return "蓝牙未开启: 请到系统设置打开蓝牙后重试"
-        case .unauthorized: return "未获得蓝牙权限: 请在系统设置 → 隐私与安全性 → 蓝牙 中允许本 App"
+        case .poweredOff: return "蓝牙未开启： 请到系统设置打开蓝牙后重试"
+        case .unauthorized: return "未获得蓝牙权限： 请在系统设置 → 隐私与安全性 → 蓝牙 中允许本 App"
         case .unsupported: return "此设备不支持所需的蓝牙功能"
-        default: return "蓝牙未就绪, 请稍候重试"
+        default: return "蓝牙未就绪， 请稍候重试"
         }
     }
 

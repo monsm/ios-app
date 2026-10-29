@@ -18,7 +18,7 @@ extension DeviceHomeView {
                 }
                 .padding(.horizontal, DS.Space.gutter)
             }
-            .accessibilityLabel("按组切换门锁, 当前\(groupFilter.isEmpty ? "全部" : groupFilter)")
+            .accessibilityLabel("按组切换门锁， 当前\(groupFilter.isEmpty ? "全部" : groupFilter)")
         }
     }
     func chip(_ name: String, _ label: String) -> some View {
@@ -281,7 +281,7 @@ extension DeviceHomeView {
         }
         // 131 会话重协商进行中: 假死巡检触发, 完成即消 (只读旗标, 无手动入口)
         if sense.revalidating {
-            rows.append(("会话重协商中 — 假死巡检触发, 完成后自动消失", "arrow.triangle.2.circlepath", "accent", false))   // 131 会话重协商中
+            rows.append(("会话重协商中 — 假死巡检触发， 完成后自动消失", "arrow.triangle.2.circlepath", "accent", false))   // 131 会话重协商中
         }
         // 130 唤醒失败细分 (保守): 最近一次握手失败时给出三类归因 + 124 占用保守文案
         if state == .down, let last = lastWakeFail {
@@ -290,7 +290,7 @@ extension DeviceHomeView {
         // 2026-10-27 四轮精简：弱信号提示已删（weakSignalHint 移除）。
         // 272 连接保持时长: 挂起过久提示重连
         if state == .ready, sense.holdMinutes >= 30 {
-            rows.append(("连接已保持 \(sense.holdMinutes) 分钟 — 偏久, 可点刷新重连", "timer", "sub", false))   // 272 连接已保持
+            rows.append(("连接已保持 \(sense.holdMinutes) 分钟 — 偏久， 可点刷新重连", "timer", "sub", false))   // 272 连接已保持
         }
         // 273 意图暂存: 断连且有排队变更时, 明示"已暂存, 回连续作"
         // 125 最后已知状态: 断连时展示最后一次读到的电量/固件并标注"缓存"
@@ -299,7 +299,7 @@ extension DeviceHomeView {
             let when = at > 0 ? " · 数据截至 " + Self.lastStamp.string(from: Date(timeIntervalSince1970: at / 1000)) : ""
             let batt = snap.powerLevel >= 0 ? String(snap.powerLevel) + "%" : "--"
             let fw = snap.firmware.isEmpty ? "未知" : snap.firmware
-            rows.append(("最后已知: 电量 " + batt + " / 固件 " + fw + " (缓存" + when + ")",
+            rows.append(("最后已知： 电量 " + batt + " / 固件 " + fw + " (缓存" + when + ")",
                          "clock.arrow.circlepath", "sub", true))
         }
         return rows
@@ -363,7 +363,7 @@ extension DeviceHomeView {
                     .foregroundStyle(DS.Palette.accentText)
                     .fixedSize(horizontal: false, vertical: true)
                     .transition(.opacity)
-                    .accessibilityLabel("自动上锁倒计时 \(left) 秒, 请确认门已关好")
+                    .accessibilityLabel("自动上锁倒计时 \(left) 秒， 请确认门已关好")
             }
             if !btReady {
                 Text("打开系统蓝牙后即可开锁")
@@ -385,7 +385,7 @@ extension DeviceHomeView {
             // 1003 安慰式报错: 一次失败轻声安慰, 三次后给可勾排查清单 (87)
             if app.failStreak > 0 {
                 VStack(spacing: DS.Space.xs) {
-                    Text(app.failStreak < 3 ? "再试一次, 别着急" : "连着几次没成, 逐项自查一遍:")
+                    Text(app.failStreak < 3 ? "再试一次， 别着急" : "连着几次没成， 逐项自查一遍：")
                         .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .multilineTextAlignment(.center)
@@ -441,7 +441,7 @@ extension DeviceHomeView {
                 .axGlass(DS.Radius.card)
                 .transition(.scale(scale: 1.12).combined(with: .opacity))
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel("换锁确认: 即将对 \(app.displayName) 开锁, 再点一次圆盘确认")
+                .accessibilityLabel("换锁确认： 即将对 \(app.displayName) 开锁， 再点一次圆盘确认")
             }
         }
     }

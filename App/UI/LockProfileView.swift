@@ -49,7 +49,7 @@ struct LockProfileView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel("预览: \(trimmed.isEmpty ? "未命名" : trimmed)")
+                .accessibilityLabel("预览： \(trimmed.isEmpty ? "未命名" : trimmed)")
             } footer: {
                 Text("符号与色标同步用于 Hero 卡、切换胶囊与记录行的时间线标签。")   // 105 符号与色标同步用于
             }
@@ -65,7 +65,7 @@ struct LockProfileView: View {
                     .submitLabel(.next)
                 // 104/767 分组名: 与"设备管理"页写的是同一个字段 (kf_lockmeta_.grp), 两处都能改、改完都生效。
                 // 设备页上方会出现按组切换的胶囊; 建议名 (家用/仓库/办公) 在设备管理页的右键菜单里一键选。
-                TextField("分组名 (如 家用 / 仓库 / 办公, 留空 = 未分组)", text: $grp)
+                TextField("分组名 (如 家用 / 仓库 / 办公， 留空 = 未分组)", text: $grp)
                     .autocorrectionDisabled()
                     .submitLabel(.next)
                 // 106 备注: 备忘录标题正文的双字段案
@@ -186,7 +186,7 @@ struct LockProfileView: View {
                     save()
                 }
             } footer: {
-                Text("昵称不能为空。档案只存本机, 不写入门锁。")
+                Text("昵称不能为空。档案只存本机， 不写入门锁。")
             }
         }
         .navigationTitle("锁档案")

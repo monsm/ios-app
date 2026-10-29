@@ -176,13 +176,13 @@ extension SettingsView {
                     app.showToast(v ? "开始按点击次数排序（只存本机）" : "已停止记录并清空计数")
                     app.bumpAppearanceForLayout()
                 }))
-            Text("没动过这个开关时: 本机静默记点击次数, 满 30 天后首格自动推荐最常用的一格; 关掉 = 停止记录并清空计数, 排序回到你手选的次序。")
+            Text("没动过这个开关时： 本机静默记点击次数， 满 30 天后首格自动推荐最常用的一格; 关掉 = 停止记录并清空计数， 排序回到你手选的次序。")
                 .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             if quickSmartFirst {
                 let c = QuickPool.counts
                 Text(c.isEmpty ? "还没攒到点击记录：去设备页点几次快捷格。"
-                                : "已记录: " + QuickPool.all.compactMap { a in
+                                : "已记录： " + QuickPool.all.compactMap { a in
                                     // 2026-10-30：原来是 filter{ != nil } + map{ c[$0.id]! } 强解包 ——
                                     // 两段闭包之间的隐式时序依赖改为一次 compactMap：键不在就整行跳过，不赌字典不变。
                                     c[a.id].map { "\(a.label) \($0) 次" } }.joined(separator: " · "))

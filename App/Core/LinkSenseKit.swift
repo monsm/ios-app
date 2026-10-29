@@ -76,7 +76,7 @@ final class LinkSense: ObservableObject {
         // 69: iOS 没有直达"蓝牙"面板的 App 级深链, 能跳的只有本 App 的设置页 (与 DiagnosticsView 同一个出口)。
         // 这函数原来只写一行日志 —— 横幅与无障碍标签都在承诺"点按前往系统设置", 那是个不存在的热区。
         if let u = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(u) }
-        lockSvc.log("info", "蓝牙开启引导: 已跳到本 App 的系统设置页 (蓝牙开关仍需在系统设置或控制中心里打开, 69)")
+        lockSvc.log("info", "蓝牙开启引导： 已跳到本 App 的系统设置页 (蓝牙开关仍需在系统设置或控制中心里打开， 69)")
         BleTelemetry.recordEvent("蓝牙开启引导", ok: true)
     }
 
@@ -133,12 +133,12 @@ final class LinkSense: ObservableObject {
                     guard targets.contains(mac), !hits.contains(mac) else { continue }
                     hits.insert(mac)
                     Self.saveRssi(mac: mac, rssi: adv.rssi)
-                    lockSvc.log("info", "多锁预连: 收到 \(String(mac.prefix(6))) RSSI \(adv.rssi)")   // 276 多锁预连
+                    lockSvc.log("info", "多锁预连： 收到 \(String(mac.prefix(6))) RSSI \(adv.rssi)")   // 276 多锁预连
                 }
                 if hits.count < targets.count { try? await Task.sleep(for: .milliseconds(250)) }
             }
         } catch {
-            lockSvc.log("warn", "多锁预连扫描失败: \(error.localizedDescription)")
+            lockSvc.log("warn", "多锁预连扫描失败： \(error.localizedDescription)")
         }
     }
     /// 276 常用锁 (按本机缓存里的日志行数排): 预连只盯它们, 不是把全部锁都扫一遍
@@ -272,7 +272,7 @@ final class LinkSense: ObservableObject {
         guard idle > 600, Date().timeIntervalSince(lastDeadlockAt) > 300 else { return }
         lastDeadlockAt = Date()
         revalidating = true
-        lockSvc.log("info", "会话巡检: 连接已挂 \(Int(idle / 60)) 分钟, 重新校验会话")   // 275/131 会话巡检
+        lockSvc.log("info", "会话巡检： 连接已挂 \(Int(idle / 60)) 分钟， 重新校验会话")   // 275/131 会话巡检
         BleTelemetry.recordEvent("会话重协商 (挂起 \(Int(idle / 60)) 分钟)", ok: true)
         Task { @MainActor [weak self] in
             guard let self else { return }
@@ -289,7 +289,7 @@ final class LinkSense: ObservableObject {
                     // 277 看门狗自恢复累计: 会话假死被巡检判定并重新握手成功的次数 (明细就是上面那条日志)
                     DB.store.set("kf_wd_heals", DB.store.getInt("kf_wd_heals", 0) + 1)
                 } catch {
-                    self.lockSvc.log("warn", "会话重协商失败: \(error.localizedDescription)")
+                    self.lockSvc.log("warn", "会话重协商失败： \(error.localizedDescription)")
                     BleTelemetry.recordEvent("会话重协商失败", ok: false)
                 }
             }
@@ -324,19 +324,19 @@ final class LinkSense: ObservableObject {
     func classifyFailure(_ error: Error) -> FailKind {
         let m = error.localizedDescription
         if m.contains("蓝牙") || m.contains("unauthorized") || m.contains("not powered") {
-            return FailKind(name: "蓝牙类", hint: "检查系统蓝牙开关与权限, 开关一次蓝牙再试")
+            return FailKind(name: "蓝牙类", hint: "检查系统蓝牙开关与权限， 开关一次蓝牙再试")
         }
         // 536: "指令被拒"档 —— 服务层对锁端 rc != 0 一律以 StatusParser.rcMessage(rc) 抛错
         // (LockService:282/:498、HardwareService:236/:246), 所以错误串命中 rc 表文案 = 锁端拒绝了指令。
         // 只取 4 字及以上的码文案: "丢包"/"溢出" 这类两字词出现在别的串里会误判。
         let rcTexts = StatusParser.rcMsg.filter { $0.key != 0 && $0.value.count >= 4 }.map { $0.value }
         if rcTexts.contains(where: { m.contains($0) }) || m.hasPrefix("错误码 ") {
-            return FailKind(name: "指令被拒", hint: "锁端拒绝了这条指令 — 到诊断页「错误码对照表」按码处置; 多为权限/状态不满足, 可重试一次")   // 159 锁端拒绝了这条指令
+            return FailKind(name: "指令被拒", hint: "锁端拒绝了这条指令 — 到诊断页「错误码对照表」按码处置; 多为权限/状态不满足， 可重试一次")   // 159 锁端拒绝了这条指令
         }
         if m.contains("未发现") || m.contains("扫描") || m.contains("超时") {
             return FailKind(name: "设备类", hint: "确认门锁通电并靠近 1 米内; 频繁失败先查电量")
         }
-        return FailKind(name: "协议类", hint: "会话/指令异常 — 到诊断页跑一键体检, 或重置重配该锁")
+        return FailKind(name: "协议类", hint: "会话/指令异常 — 到诊断页跑一键体检， 或重置重配该锁")
     }
 
 
@@ -431,10 +431,10 @@ final class LinkSense: ObservableObject {
                     }
                 }
                 let seen = ble.allDiscovered().count
-                BleTelemetry.recordEvent("冷启动扫描, 可见设备 \(seen)", ok: true)   // 134 冷启动扫描
+                BleTelemetry.recordEvent("冷启动扫描， 可见设备 \(seen)", ok: true)   // 134 冷启动扫描
                 DB.store.set("kf_link_env", seen)
                 DB.store.set("kf_link_envms", firstSeenMs)
-                DiagOps.record("冷启动扫描 (\(seen) 台可见, 首台 \(firstSeenMs >= 0 ? "\(firstSeenMs)ms" : "整窗未见"))")
+                DiagOps.record("冷启动扫描 (\(seen) 台可见， 首台 \(firstSeenMs >= 0 ? "\(firstSeenMs)ms" : "整窗未见"))")
             } catch {
                 BleTelemetry.recordEvent("冷启动扫描失败", ok: false)
             }
@@ -451,8 +451,8 @@ final class LinkSense: ObservableObject {
         let ms = envFirstSeenMs
         let t = ms >= 0 ? ", 首台 \(ms)ms 可见" : ""
         if n == 0 { return "近一次扫描未见 BLE 设备 (无数据或蓝牙关闭)" }
-        if n >= 20 { return "环境拥挤 (近一次扫到 \(n) 台 BLE 设备\(t)) — 商场/办公楼等密集环境, 连接偶发超时属正常, 保持 1 米内" }
-        if n >= 8 { return "环境中度 (近一次扫到 \(n) 台 BLE 设备\(t)) — 可用, 干扰稍多时可贴得更近" }
+        if n >= 20 { return "环境拥挤 (近一次扫到 \(n) 台 BLE 设备\(t)) — 商场/办公楼等密集环境， 连接偶发超时属正常， 保持 1 米内" }
+        if n >= 8 { return "环境中度 (近一次扫到 \(n) 台 BLE 设备\(t)) — 可用， 干扰稍多时可贴得更近" }
         return "环境安静 (近一次扫到 \(n) 台 BLE 设备\(t)) — 连接条件良好"
     }
 

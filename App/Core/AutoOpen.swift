@@ -96,7 +96,7 @@ enum AutoOpen {
     /// §3.4 标准档风险披露文案 (强制展示, 不得弱化)
     /// §3.4 风险披露 (强制展示, 不得弱化)。讲的是**现在的门** —— 默认档不再额外验面容,
     /// 而不是旧的"60 秒复用窗"; 文案描述已经不存在的门就等于对用户说谎。
-    static let riskDisclosure = "默认档只认「手机已解锁 + App 在前台」: 别人拿你已解锁的手机走近门锁, 6 秒后仍可能自动开门。介意请切严格档 (每次进前台刷一次脸)。"
+    static let riskDisclosure = "默认档只认「手机已解锁 + App 在前台」: 别人拿你已解锁的手机走近门锁， 6 秒后仍可能自动开门。介意请切严格档 (每次进前台刷一次脸)。"
 }
 
 // ================= 纯逻辑: 门控判定 / 标定 / 滤波器 / 0E 双确认 (可单测, 无 UI 依赖) =================
@@ -285,10 +285,10 @@ struct AutoOpenGate {
     static func rejectText(_ r: Reject) -> String {
         switch r {
         case .off: return "主开关未开"
-        case .suspended: return "rc=26 防拆挂起, 自动开锁 24h 内禁用"
+        case .suspended: return "rc=26 防拆挂起， 自动开锁 24h 内禁用"
         case .f0: return "F0 非前台/App 未解锁"
         case .f1face: return "F1 面容未确认 (严格档要求本次进前台刷过脸)"
-        case .f4defend: return "F4 布防时段内, 一票否决"
+        case .f4defend: return "F4 布防时段内， 一票否决"
         case .f3rssi: return "F3 信号未达武装线"
         case .f5cool: return "F5 冷却中 (6 秒)"
         case .f6busy: return "F6 锁态未知或忙 (rc=25/无 03 回显)"
@@ -317,7 +317,7 @@ struct SystemFaceService: FaceService {
             guard ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &err),
                   err?.code != LAError.biometryNotAvailable.rawValue else { return }
             ctx.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics,
-                               localizedReason: "确认是你, 才允许靠近自动开门") { ok, _ in
+                               localizedReason: "确认是你， 才允许靠近自动开门") { ok, _ in
                 if ok { AutoOpenKit.noteFaceSuccess() }
             }
         }
@@ -350,7 +350,7 @@ final class AutoOpenController {
     func onForeground(mac: String) {
         guard AutoOpen.on, !mac.isEmpty else { return }
         guard !AutoOpen.isSuspended(mac: mac) else {
-            AutoOpen.audit(mac, "拒开 rc=26 防拆挂起中, 面容不刷新")
+            AutoOpen.audit(mac, "拒开 rc=26 防拆挂起中， 面容不刷新")
             return   // rc=26 挂起期不弹面容, 门保持不过
         }
         eventFired.removeAll()          // 新的一次"进前台 + 接近"事件, 放开一次性闩锁
@@ -426,7 +426,7 @@ final class AutoOpenController {
         // 390 行原话: "伪装口令进来的会话只渲染空壳" —— 空壳后面门被打开, 就是这个 bug。
         // 手动锁定也应清零武装/面容时刻 （原 SecurityCenterView 那条，该页已删）, 这里先保证自动链在伪装态一律拒。
         guard !app.decoyMode else {
-            AutoOpen.audit(mac, "拒开: 伪装会话期间禁止自动下发 04")
+            AutoOpen.audit(mac, "拒开： 伪装会话期间禁止自动下发 04")
             return
         }
         if eventFired.contains(mac) { return }   // F5 一次性: 每个接近事件只发一次 04
@@ -499,7 +499,7 @@ final class AutoOpenController {
                 // 来源标注 (用户 2026-10-17): 自动链不经过 AppState.runUnlock, 那句"开锁成功"
                 // 在自动档下从来没出现过 —— 门开了却没人说是谁开的。这里点明"自动"。
                 if app.status?.verifyMode == 1 {
-                    app.showToast("自动: 第一道已通过 — 请再用指纹或密码完成第二道")
+                    app.showToast("自动： 第一道已通过 — 请再用指纹或密码完成第二道")
                 } else {
                     app.showToast("自动开锁成功 — \(app.displayName)")
                 }
@@ -508,15 +508,15 @@ final class AutoOpenController {
                 await selfHealTime(mac: mac)
             case 5:
                 // G3 times 语义未确证: 只提示, 不自动重签 (方案 §3.3 前置实验未过前保持保守)
-                AutoOpen.audit(mac, "rc=5 次数用完 — 提示联系主人换钥, 不自动重签")
-                app.showToast("凭证次数用完 (rc=5) — 请联系主人换钥, 不自动重签")
+                AutoOpen.audit(mac, "rc=5 次数用完 — 提示联系主人换钥， 不自动重签")
+                app.showToast("凭证次数用完 (rc=5) — 请联系主人换钥， 不自动重签")
             case 25:
-                AutoOpen.audit(mac, "rc=25 锁正忙, 拒绝自动开锁")
+                AutoOpen.audit(mac, "rc=25 锁正忙， 拒绝自动开锁")
             case 26:
                 // 防拆: 拒 + 自动关自动开锁 24h (记审计 + 挂起键)
                 AutoOpen.setSuspendUntil(mac, Int64(Date().timeIntervalSince1970 * 1000) + 24 * 3600 * 1000)
                 AutoOpen.audit(mac, "rc=26 防拆事件 → 自动关自动开锁 24h")
-                app.showToast("检测到防拆事件, 自动开锁已暂停 24 小时")
+                app.showToast("检测到防拆事件， 自动开锁已暂停 24 小时")
             default:
                 AutoOpen.audit(mac, "rc=\(rc) " + StatusParser.rcFriendly(rc))
             }
@@ -531,7 +531,7 @@ final class AutoOpenController {
     private func selfHealTime(mac: String) async {
         guard let app = AppState.hostRef else { return }
         guard let lockSec = try? await app.lock.readLockTime() else {
-            AutoOpen.audit(mac, "rc=3 读锁钟失败, 未自动校时")
+            AutoOpen.audit(mac, "rc=3 读锁钟失败， 未自动校时")
             return
         }
         let phone = ZKProtocol.nowProtoSeconds()
@@ -539,14 +539,14 @@ final class AutoOpenController {
         if write {
             do {
                 try await app.lock.syncTime()
-                AutoOpen.audit(mac, "rc=3 → 偏差 \(abs(phone - lockSec))s 在 30s~24h 窗内, 已自动校时 (0E 双确认)")
+                AutoOpen.audit(mac, "rc=3 → 偏差 \(abs(phone - lockSec))s 在 30s~24h 窗内， 已自动校时 (0E 双确认)")
             } catch {
                 AutoOpen.audit(mac, "rc=3 → 自动校时失败 " + error.localizedDescription)
             }
         } else {
             let dev = Int(abs(phone - lockSec))
-            AutoOpen.audit(mac, "rc=3 → 偏差 \(dev)s 超出双确认窗, 只提示不写 (0E 双确认)")
-            app.showToast("锁钟偏差约 \(dev / 3600) 小时 — 为避免误写仅提示, 请手动校准门锁时间")
+            AutoOpen.audit(mac, "rc=3 → 偏差 \(dev)s 超出双确认窗， 只提示不写 (0E 双确认)")
+            app.showToast("锁钟偏差约 \(dev / 3600) 小时 — 为避免误写仅提示， 请手动校准门锁时间")
         }
     }
 

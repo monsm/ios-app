@@ -46,14 +46,14 @@ struct ShareToAndroidView: View {
                                 .foregroundStyle(DS.Palette.textSub)
                         }
 
-                        Text("在安卓 App 里点「扫码添加」扫这张码。导入之后, 点一下开锁和靠近开锁都不再需要它。")
+                        Text("在安卓 App 里点「扫码添加」扫这张码。导入之后， 点一下开锁和靠近开锁都不再需要它。")
                             .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
 
                         Label {
-                            Text("这张码等于一把钥匙: 只当面给自己人扫, 不要发群里、不要截图外传。")
+                            Text("这张码等于一把钥匙： 只当面给自己人扫， 不要发群里、不要截图外传。")
                                 .fixedSize(horizontal: false, vertical: true)
                         } icon: {
                             Image(systemName: "exclamationmark.shield.fill").accessibilityHidden(true)
@@ -98,7 +98,7 @@ struct ShareToAndroidView: View {
         guard qr == nil else { return }
         guard let p = AndroidPair.payload(kc) else {
             // 没有 ekey 也没有可用的 PIN/skey = 这把锁本机签不出开锁凭证, 如实说, 不生成一张假码
-            failed = "这把锁在本机没有可用的开锁凭证 (ekey 与 PIN 都缺), 无法分享。请先在本机开一次锁, 或重新配网。"
+            failed = "这把锁在本机没有可用的开锁凭证 (ekey 与 PIN 都缺), 无法分享。请先在本机开一次锁， 或重新配网。"
             return
         }
         guard let img = Self.qrImage(p) else {

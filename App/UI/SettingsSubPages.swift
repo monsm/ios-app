@@ -71,7 +71,7 @@ struct TailgateView: View {
             try await app.lock.setAutoLock(seconds) // cmd24 档位 = 秒数本身（见 Picker 上方注释）
             DB.saveTailgate(kc.mac, TailgateCfg(interval: seconds, at: Date().timeIntervalSince1970 * 1000))
             app.showToast("设置成功")
-        } catch { app.showToast("设置失败: \(error.localizedDescription)") }
+        } catch { app.showToast("设置失败： \(error.localizedDescription)") }
     }
 }
 
@@ -105,7 +105,7 @@ struct SafemodeIntroView: View {
                         .foregroundStyle(DS.Palette.warn)
                         .fixedSize(horizontal: false, vertical: true)
                     Text("当前模式在「锁信息名片」(设备页) 读取后显示。本 App 只给变严的方向 (A→B)；"
-                         + "放宽回 A 模式属于降低安全等级, 会二次确认。").vkFont(.footnote)
+                         + "放宽回 A 模式属于降低安全等级， 会二次确认。").vkFont(.footnote)
                     // 拍板 #2 (第六十六批): 给切换入口, 但只允许更严方向。
                     // 不给 B→A 的理由写在这: 放宽验证会让"两种组合验证"这条既有保护一指之间消失,
                     // 而锁端不记录是谁改的 —— 本机审计只会留下一条无法解释的降级。

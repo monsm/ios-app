@@ -160,7 +160,7 @@ extension DeviceHomeView {
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityLabel("再开一次")   // 921 再开一次
-        .accessibilityHint(target.map { "跳到凭证页定位 " + $0.name } ?? "还没有星标凭证, 先去凭证页点亮星标")
+        .accessibilityHint(target.map { "跳到凭证页定位 " + $0.name } ?? "还没有星标凭证， 先去凭证页点亮星标")
     }
 
 

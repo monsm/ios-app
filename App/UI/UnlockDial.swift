@@ -194,7 +194,7 @@ struct UnlockDial: View {
             }
             // 62 围栏开启但未解锁时的教学一句
             if fenceRequired, !armed, !isBusy, bleReady, state == .idle {
-                Text("误触围栏开启中: 先从圆盘边缘拖到中心, 再执行开锁手势")
+                Text("误触围栏开启中： 先从圆盘边缘拖到中心， 再执行开锁手势")
                     .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .multilineTextAlignment(.center)
@@ -204,8 +204,8 @@ struct UnlockDial: View {
             // 129 极限距离提示: 最近一次 RSSI 逼近 93 信号围栏下限时, 第一次手势只提示不发出
             if nearRssiLimit {
                 Text(weakNudge
-                     ? "已暂缓这一次: 离门锁再走近一步, 然后重新按住圆盘"   // 129 界面文案
-                     : "信号偏弱, 走近一步再开更稳")   // 129 信号偏弱
+                     ? "已暂缓这一次： 离门锁再走近一步， 然后重新按住圆盘"   // 129 界面文案
+                     : "信号偏弱， 走近一步再开更稳")   // 129 信号偏弱
                     .vkFont(.caption)
                     .foregroundStyle(DS.Palette.warn)
                     .multilineTextAlignment(.center)
@@ -555,7 +555,7 @@ struct UnlockDial: View {
         }
     }
     var voHint: String {
-        "轻点两下直接开锁, 无需按住. 转子上下滑可切换 状态/电量/连接 播报. "
+        "轻点两下直接开锁， 无需按住. 转子上下滑可切换 状态/电量/连接 播报. "
             + "按住时长可自定 (0.4–1.6s, 设置-辅助)"
     }
 }

@@ -239,7 +239,7 @@ struct CredentialsView: View {
                         .frame(width: DS.Hit.min, height: DS.Hit.min)
                         .contentShape(Rectangle())
                 }
-                .accessibilityLabel("更多: 排序/视图/筛选/整理")
+                .accessibilityLabel("更多： 排序/视图/筛选/整理")
             }
             // 第 2 行: 类型分段 (4 个) —— 这是**筛选**不是操作, 允许常驻一行
             let segCount = MemberHub.elderMode ? 3 : 4
@@ -434,7 +434,7 @@ struct CredentialsView: View {
             }
             showToastOrganized("已删除 \(done) 条")
         } catch {
-            app.showToast(done > 0 ? "已删除 \(done) 条后中断: \(error.localizedDescription)" : "删除失败: \(error.localizedDescription)")
+            app.showToast(done > 0 ? "已删除 \(done) 条后中断： \(error.localizedDescription)" : "删除失败： \(error.localizedDescription)")
         }
         reload()
     }
@@ -471,7 +471,7 @@ func confirmDestructiveTyped(_ title: String,
                              confirmTitle: String = "确认删除",
                              action: @escaping @MainActor () -> Void) {
     let alert = UIAlertController(title: title,
-                                  message: message + "\n\n请输入「\(requireWord)」以解锁删除按钮:",
+                                  message: message + "\n\n请输入「\(requireWord)」以解锁删除按钮：",
                                   preferredStyle: .alert)
     alert.addTextField { $0.placeholder = requireWord; $0.autocorrectionType = .no; $0.autocapitalizationType = .none }
     alert.addAction(UIAlertAction(title: "取消", style: .cancel))

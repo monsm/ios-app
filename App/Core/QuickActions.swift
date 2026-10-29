@@ -20,7 +20,7 @@ final class QuickActionDelegate: NSObject, UIApplicationDelegate {
         let nc = UNUserNotificationCenter.current()
         nc.delegate = NotificationDelegate.shared
         nc.requestAuthorization(options: [.alert, .sound, .badge]) { granted, err in
-            if let err { CredentialOrg.notifyLog.error("通知授权失败: \(String(describing: err), privacy: .public)") }
+            if let err { CredentialOrg.notifyLog.error("通知授权失败： \(String(describing: err), privacy: .public)") }
             else if !granted { CredentialOrg.notifyLog.error("用户未授予通知权限：到期提醒不会送达") }
         }
         return true

@@ -481,7 +481,7 @@ struct GuidedEmptyView: View {
                         .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                 }
-                .accessibilityLabel("引导阶段 第 \(step) 步, 共 \(stepTotal) 步")
+                .accessibilityLabel("引导阶段 第 \(step) 步， 共 \(stepTotal) 步")
             }
             ContentUnavailableView {
                 Label(title, systemImage: systemImage)
@@ -504,7 +504,7 @@ struct GuidedEmptyView: View {
                     .vkFont(.footnote, weight: .medium)
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
-                    .accessibilityHint("打开演示锁, 完整走一遍添加与开锁")
+                    .accessibilityHint("打开演示锁， 完整走一遍添加与开锁")
             }
         }
         .padding(.vertical, DS.Space.l)

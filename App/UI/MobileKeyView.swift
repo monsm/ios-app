@@ -188,7 +188,7 @@ struct MobileKeyView: View {
             app.showToast("已给「\(m.name)」发一把手机钥匙")
             reload()
         } catch {
-            app.showToast("发放失败: \(error.localizedDescription)")
+            app.showToast("发放失败： \(error.localizedDescription)")
         }
     }
 
@@ -224,7 +224,7 @@ struct MobileKeyView: View {
             app.showToast("已撤销")
             reload()
         } catch {
-            app.showToast("撤销失败: \(error.localizedDescription)")
+            app.showToast("撤销失败： \(error.localizedDescription)")
         }
     }
 

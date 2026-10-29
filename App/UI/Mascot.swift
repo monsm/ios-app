@@ -56,7 +56,7 @@ struct CaptionStepBar: View {
     private func captionName(_ i: Int) -> String { ["验证", "执行", "完成"][i] }
     private var captionText: String {
         let done = phase > 0 ? "验证" : ""
-        return "过程字幕: " + done + (phase > 1 ? " 执行, " : "") + (unlockState == .success ? " 完成" : (phase > 1 ? "执行中" : "进行中"))
+        return "过程字幕： " + done + (phase > 1 ? " 执行， " : "") + (unlockState == .success ? " 完成" : (phase > 1 ? "执行中" : "进行中"))
     }
 }
 

@@ -61,7 +61,7 @@ struct AddDeviceView: View {
                     .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.danger)
                 } footer: {
-                    Text("配不上先别反复重试: 先确认锁已上电、手机蓝牙开着, 再回设备页重连一次。")
+                    Text("配不上先别反复重试： 先确认锁已上电、手机蓝牙开着， 再回设备页重连一次。")
                 }
             }
             Section("操作指引") {
@@ -98,7 +98,7 @@ struct AddDeviceView: View {
                 .buttonStyle(PrimaryActionStyle())
                 .disabled(scanning)
             } footer: {
-                Text("列表按信号强弱实时排序, 点选可配网的锁即开始添加。")
+                Text("列表按信号强弱实时排序， 点选可配网的锁即开始添加。")
             }
             // 253 四步进度 (发现/校验/初始化/命名) — 扫描中处于第 0 步
             Section {
@@ -143,7 +143,7 @@ struct AddDeviceView: View {
         let canResume = isLock && (pendMac.map { DB.pendingPair($0) != nil } ?? false)
         return Button {
             if canPair || canResume { confirmPair(d, adv) }
-            else if adv == nil { app.showToast("广播未识别 — 非门锁设备, 或系统缓存了不完整广播") }
+            else if adv == nil { app.showToast("广播未识别 — 非门锁设备， 或系统缓存了不完整广播") }
             else if !inReset { app.showToast("该锁不在重置态 — 请先做键盘物理重置") }
             else { app.showToast("未识别的设备型号") }
         } label: {
@@ -168,7 +168,7 @@ struct AddDeviceView: View {
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
                     if canResume {
-                        Text("本机已留存密钥 — 点它接着配完, 不必再重置")
+                        Text("本机已留存密钥 — 点它接着配完， 不必再重置")
                             .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                     } else if !inReset {
@@ -219,12 +219,12 @@ struct AddDeviceView: View {
             if r.ok {
                 let eh = r.echoHex.isEmpty ? "无回显" : r.echoHex
                 app.showToast("\(d.name) 回声往返 \(r.ms) ms · 回显 \(eh)"
-                    + (r.matched ? " (与发出值一致)" : " (与发出的 123456 不同 — 记下来, 不一定就是链路故障)"))
+                    + (r.matched ? " (与发出值一致)" : " (与发出的 123456 不同 — 记下来， 不一定就是链路故障)"))
             } else {
                 app.showToast("\(d.name) 回声 rc=\(r.rc): \(StatusParser.rcMessage(r.rc))")
             }
         } catch {
-            app.showToast("探测失败: \(error.localizedDescription)")
+            app.showToast("探测失败： \(error.localizedDescription)")
         }
     }
 
@@ -297,7 +297,7 @@ struct AddDeviceView: View {
         // "不会再换钥", 因为它与"添加"最危险的那一步 (擦锁内密钥域) 完全是两回事。
         if DB.pendingPair(mac) != nil {
             confirmDestructive("继续配网",
-                              "本机留有一份「\(d.name)」（\(display) · \(model)）未走完的配网密钥。这次会跳过换钥, 直接把 PIN 池与 bkey 写完 —— 不重新生成密钥, 也不必再做键盘重置。请贴近门锁后继续。",
+                              "本机留有一份「\(d.name)」（\(display) · \(model)）未走完的配网密钥。这次会跳过换钥， 直接把 PIN 池与 bkey 写完 —— 不重新生成密钥， 也不必再做键盘重置。请贴近门锁后继续。",
                               confirmTitle: "继续配网") {
                 Task { await self.pair(d, mac) }
             }
@@ -399,7 +399,7 @@ struct AddDeviceView: View {
                     saveNaming()
                 }
             } footer: {
-                Text("添加成功后请立刻做一次全量备份, 并成功开一次锁完成「链路已验证」标记。")
+                Text("添加成功后请立刻做一次全量备份， 并成功开一次锁完成「链路已验证」标记。")
             }
         }
         .variantList()
@@ -435,13 +435,13 @@ struct AddDeviceView: View {
                 Text("添加成功")
                     .vkFont(.headline)
                     .foregroundStyle(DS.Palette.text)
-                Text("已生成本机密钥并写入门锁。请立刻做一次全量备份, 钥匙串只存于本机。")
+                Text("已生成本机密钥并写入门锁。请立刻做一次全量备份， 钥匙串只存于本机。")
                     .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                 // 258 首连验证引导: 添加完成 → 引导首次开锁跑通全链路
-                Label("下一步: 到设备页成功开一次锁, 完成「链路已验证」标记", systemImage: "checkmark.seal")
+                Label("下一步： 到设备页成功开一次锁， 完成「链路已验证」标记", systemImage: "checkmark.seal")
                     .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.accentText)
                     .fixedSize(horizontal: false, vertical: true)

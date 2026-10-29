@@ -67,13 +67,13 @@ extension LockService {
     // ---------- 开锁 ----------
     func unlock(mac: String? = nil, pinDec: String? = nil) async throws -> Int {
         if let mac { curMac = mac.lowercased() }
-        guard let kc = DB.keychain(curMac), !kc.skey.isEmpty else { throw BLEErrorX.msg("无钥匙串, 无法开锁") }
+        guard let kc = DB.keychain(curMac), !kc.skey.isEmpty else { throw BLEErrorX.msg("无钥匙串， 无法开锁") }
         let cred: String
         if !kc.ekey.isEmpty {
             cred = kc.ekey                                     // 配网时已签发
         } else {
             let pin = pinDec ?? kc.pins.first
-            guard let pin, !pin.isEmpty else { throw BLEErrorX.msg("无 PIN 可用: 需要 ekey 或 PIN 才能签发开锁凭证") }
+            guard let pin, !pin.isEmpty else { throw BLEErrorX.msg("无 PIN 可用： 需要 ekey 或 PIN 才能签发开锁凭证") }
             cred = ZKCmdBuilder.buildEkeyOpen(kc.skey.lowercased(), kc.mac.lowercased(), pin)
         }
         guard !cred.isEmpty else { throw BLEErrorX.msg("开锁凭证为空 (ekey/PIN 签发失败), 已中止下发") }
@@ -89,18 +89,18 @@ extension LockService {
             before = Int(lockSec - now)
             if before != 0 { log("info", "校时前锁钟比手机\(before > 0 ? "快" : "慢") \(abs(before))s") }
         } else {
-            log("warn", "读锁钟失败 (不影响下发: 0E 用手机当前时间)")
+            log("warn", "读锁钟失败 (不影响下发： 0E 用手机当前时间)")
         }
         try await execOk(ZKCmdBuilder.cmd0ESyncTime(m, sk, now))
         DB.saveSyncTime(m, Date().timeIntervalSince1970 * 1000)
         var after = 0
         if let lockSec = try? await readLockTime() {
             after = Int(lockSec - ZKProtocol.nowProtoSeconds())
-            log("info", "校时回读: 锁钟偏差 \(after)s")
+            log("info", "校时回读： 锁钟偏差 \(after)s")
             // >60s 不可能是秒级回读误差 (即使固件把锁钟取整到分钟也只有几十秒) ⇒ 当成"压根没写进去"报错,
             // 而不是拿一句"同步成功"把用户送走。
             if abs(after) > 60 {
-                throw BLEErrorX.msg("校时命令已被接受, 但回读锁钟仍偏差 \(after)s — 门锁可能忽略了 0E (rc=0 不等于写成功)")
+                throw BLEErrorX.msg("校时命令已被接受， 但回读锁钟仍偏差 \(after)s — 门锁可能忽略了 0E (rc=0 不等于写成功)")
             }
         } else {
             log("warn", "校时回读失败 — 无法确认锁钟已更新")

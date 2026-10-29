@@ -86,7 +86,7 @@ enum ZKCmdBuilder {
     /// 调用点同步改成无参（`cmd03StatusPlain()`）。
     static func cmd03StatusPlain() -> ZKCmd {
         // JS cmd03Status(8, macHex, wrap=false) → 裸 03 帧 (无 KLV)
-        ZKCmd(name: "03 状态(明文)", cmd: 0x03, hex: ZKProtocol.buildFrame(0x03, "", header: 8))
+        ZKCmd(name: "03 状态（明文）", cmd: 0x03, hex: ZKProtocol.buildFrame(0x03, "", header: 8))
     }
     // 2026-10-27 审核说明 (AUDIT-A F-38)：`cmd05Exchange` 硬编码 keyType=1（AES-128），
     // 没有参数可调。vendor 侧也是恒 1（`main.js` 的 exchangeSKey 只发这一种），
@@ -182,13 +182,13 @@ enum ZKCmdBuilder {
             return protoSecOrNil(s) == nil
         }
         if suppliedButUnparsed(validFrom) {
-            throw BLEErrorX.msg("密码生效时间无法解析: \(validFrom ?? "") (支持 ISO8601/带 Z、'yyyy-MM-dd HH:mm:ss'、秒/毫秒) — 已中止下发")
+            throw BLEErrorX.msg("密码生效时间无法解析： \(validFrom ?? "") (支持 ISO8601/带 Z、'yyyy-MM-dd HH:mm:ss'、秒/毫秒) — 已中止下发")
         }
         let from = protoSecOrNil(validFrom) ?? ZKProtocol.nowProtoSeconds()
         let to: Int64
         if let v = protoSecOrNil(validTo) { to = v }
         else if validTo == nil || validTo?.isEmpty == true { to = ZKProtocol.nowProtoSeconds() }
-        else { throw BLEErrorX.msg("密码有效期无法解析: \(validTo ?? "") (支持 ISO8601/带 Z、'yyyy-MM-dd HH:mm:ss'、秒/毫秒) — 已中止下发") }
+        else { throw BLEErrorX.msg("密码有效期无法解析： \(validTo ?? "") (支持 ISO8601/带 Z、'yyyy-MM-dd HH:mm:ss'、秒/毫秒) — 已中止下发") }
         let body = u16leHex(delAlias)
             + HexKit.asciiHex(addPwd, nBytes: 8)
             + HexKit.u32leHex(UInt32(clamping: max(0, from)))

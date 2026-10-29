@@ -184,7 +184,7 @@ extension CredentialsView {
                     // 2026-10-26 精简：版本历史入口已删。
             Divider()
             Button(role: .destructive) { disablePwd(p) } label: {
-                Label("停用 (本地, 锁端待处理)", systemImage: "pause.circle")
+                Label("停用 (本地， 锁端待处理)", systemImage: "pause.circle")
             }
             Button(role: .destructive) { deletePwd(p) }   label: {   // 670 彻底删除
                 Label("彻底删除", systemImage: "trash")
@@ -211,7 +211,7 @@ extension CredentialsView {
                     // 置顶功能从未实现过（与同段的「版本历史」「归档」一样是被删功能的残壳）。
                     // 2026-10-26 精简：归档/移出归档入口已删（归档功能整套移除）。
             Divider()
-            Button("停用 (本地, 锁端待处理)", role: .destructive) { disableFp(f) }
+            Button("停用 (本地， 锁端待处理)", role: .destructive) { disableFp(f) }
             Button("彻底删除", role: .destructive) { deleteFp(f) }   // 670 彻底删除
         }
     }

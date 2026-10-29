@@ -34,7 +34,7 @@ enum DevModule: String, CaseIterable, Identifiable {
         case .statusIcons:
             return "少一眼看清哪把锁有事; 逐把点进胶囊仍能看到状态。"
         case .linkSense:
-            return "少蓝牙直通条、回连节律、最后已知状态与同步回执。自动回连与巡检照常跑, 只是不在这里显示。"
+            return "少蓝牙直通条、回连节律、最后已知状态与同步回执。自动回连与巡检照常跑， 只是不在这里显示。"
         }
     }
 }

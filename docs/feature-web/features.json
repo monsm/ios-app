@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T23:04:21.963Z",
+    "generated": "2026-10-29T23:16:13.539Z",
     "sources": [
       {
         "scout": "android-native",
@@ -7706,7 +7706,7 @@
           "line": 288,
           "symbol": "AutoOpenController",
           "note": "@MainActor 单例状态机",
-          "text": "case .suspended: return \"rc=26 防拆挂起, 自动开锁 24h 内禁用\""
+          "text": "case .suspended: return \"rc=26 防拆挂起， 自动开锁 24h 内禁用\""
         },
         {
           "platform": "ios",
@@ -26219,7 +26219,7 @@
           "line": 306,
           "symbol": "onChange(pending*)",
           "note": "六个深链入口",
-          "text": "var out = [\"日期,时间,内容,成员,锁\"]"
+          "text": "var out = [\"日期，时间，内容，成员，锁\"]"
         },
         {
           "platform": "ios",
@@ -29582,7 +29582,7 @@
           "line": 148,
           "symbol": "struct BackupBundle",
           "note": "",
-          "text": "throw DFUError.msg(\"文件头损坏: 密文应为 32 的整数倍个十六进制字符\")   // 449 文件头损坏"
+          "text": "throw DFUError.msg(\"文件头损坏： 密文应为 32 的整数倍个十六进制字符\")   // 449 文件头损坏"
         },
         {
           "platform": "ios",
@@ -50143,7 +50143,7 @@
           "line": 366,
           "symbol": "rebootGateway",
           "note": "",
-          "text": "log(\"网关状态: rom \\(st.romVer), ssid \\(st.ssid), 联网 \\(st.netState == 1 ? \"是\" : \"否\")\")"
+          "text": "log(\"网关状态： rom \\(st.romVer), ssid \\(st.ssid), 联网 \\(st.netState == 1 ? \"是\" : \"否\")\")"
         },
         {
           "platform": "ios",
@@ -50229,7 +50229,7 @@
           "line": 105,
           "symbol": "scanForPID",
           "note": "无 pid 拒绝盲连",
-          "text": "guard !target.isEmpty else { throw BLEErrorX.msg(\"内部错误: 复核时没有连接目标\") }"
+          "text": "guard !target.isEmpty else { throw BLEErrorX.msg(\"内部错误： 复核时没有连接目标\") }"
         }
       ],
       "platformEvidence": {
@@ -51147,7 +51147,7 @@
           "line": 43,
           "symbol": "genPins",
           "note": "预算耗尽抛错",
-          "text": "if guardBudget <= 0 { throw NSError(domain: \"KeyGen\", code: 1, userInfo: [NSLocalizedDescriptionKey: \"随机源异常: 无法生成 \\(n) 个唯一 PIN\"]) }"
+          "text": "if guardBudget <= 0 { throw NSError(domain: \"KeyGen\", code: 1, userInfo: [NSLocalizedDescriptionKey: \"随机源异常： 无法生成 \\(n) 个唯一 PIN\"]) }"
         },
         {
           "platform": "ios",
@@ -55031,7 +55031,7 @@
           "line": 235,
           "symbol": "writeDongleKey",
           "note": "空 ekey 拒绝",
-          "text": "log(\"状态: 电量 \\(st.power), 钥匙 \\(st.ekeyCount)/\\(st.ekeyAmount), 固件 \\(st.firmware)\")"
+          "text": "log(\"状态： 电量 \\(st.power), 钥匙 \\(st.ekeyCount)/\\(st.ekeyAmount), 固件 \\(st.firmware)\")"
         },
         {
           "platform": "ios",
@@ -55226,7 +55226,7 @@
           "line": 274,
           "symbol": "parseEkeyMacs",
           "note": "",
-          "text": "throw BLEErrorX.msg(\"该锁的钥匙串没有 PIN 池, 无法为硬件钥匙签发凭证 (已拒绝, 不回落默认 PIN)\")"
+          "text": "throw BLEErrorX.msg(\"该锁的钥匙串没有 PIN 池， 无法为硬件钥匙签发凭证 (已拒绝， 不回落默认 PIN)\")"
         },
         {
           "platform": "ios",
@@ -59298,7 +59298,7 @@
           "line": 327,
           "symbol": "success 结果触感",
           "note": "",
-          "text": "return FailKind(name: \"蓝牙类\", hint: \"检查系统蓝牙开关与权限, 开关一次蓝牙再试\")"
+          "text": "return FailKind(name: \"蓝牙类\", hint: \"检查系统蓝牙开关与权限， 开关一次蓝牙再试\")"
         }
       ],
       "platformEvidence": {

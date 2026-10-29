@@ -58,7 +58,7 @@ enum StatsKit {
                 openTypes.contains(l.type) && (dateOf(l).map { $0 >= from && $0 < end } ?? false)
             }
             guard !week.isEmpty else {
-                return ("", ["上周 (" + head + ") 没有本机读到的开门记录 — 缓存只留最近 300 条, 更早的翻不到不代表没发生。"])
+                return ("", ["上周 (" + head + ") 没有本机读到的开门记录 — 缓存只留最近 300 条， 更早的翻不到不代表没发生。"])
             }
             let cls = Attribution.classify(
                 logs: week.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,
@@ -69,7 +69,7 @@ enum StatsKit {
                 s.contains(",") || s.contains("\"") ? "\"" + s.replacingOccurrences(of: "\"", with: "\"\"") + "\"" : s
             }
             var per = [String: Int]()
-            var rows = ["时间,类型,成员"]
+            var rows = ["时间，类型，成员"]
             // 2026-10-29 性能：循环里每行调一次 DB.member（各自解析一份成员字典）。
             // 上周小结是一次性导出，但一条记录一行、几十行时仍会重复解析几十次。一次建表。
             let memberNames = Dictionary(DB.members().map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
@@ -84,7 +84,7 @@ enum StatsKit {
             }.count
             var lines = ["上周 (" + head + ") 共开门 \(week.count) 次。"]
             if let t = per.max(by: { $0.value < $1.value }), let n = DB.member(t.key)?.name {
-                lines.append("最活跃成员: \(n) (约 \(t.value) 次)。")
+                lines.append("最活跃成员： \(n) (约 \(t.value) 次)。")
             } else {
                 lines.append("成员归属都还证明不了 (归属需要台账与日志窗口对齐)。")
             }

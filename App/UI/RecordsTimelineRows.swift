@@ -66,7 +66,7 @@ extension RecordsView {
                                 .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("该日有多次密码开门失败锁定, 点按只看这一天")   // 596
+                        .accessibilityLabel("该日有多次密码开门失败锁定， 点按只看这一天")   // 596
                     }
                     // 594 日型色带 (4pt 竖条): 工作日靛蓝 / 周末青绿 / 法定节假日橙 (判据见 DayGroup.dayKind)。
                     // 每天都出现 —— 三档互比才有"哪天不是平常日"的读法; 原先只在节假日给 3pt 橙条。

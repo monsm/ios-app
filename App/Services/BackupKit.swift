@@ -141,11 +141,11 @@ enum CryptoBox {
         // 449 声明长度校验: 先验文件头写明的形状, 再碰密码学 —— IV 恰 16 字节 / HMAC 恰 32 字节 /
         // 盐恰 16 字节 / 密文是 16 字节块的整数倍 (都写成十六进制)。形状不对报"文件头损坏"点名哪一段,
         // 不再拖到 MAC 层报"口令错误或数据被篡改" —— 那是两件事, 不该一句话。
-        guard isHex(e.ivHex, len: 32) else { throw DFUError.msg("文件头损坏: IV 应为 32 个十六进制字符") }   // 449 文件头损坏
-        guard isHex(e.macHex, len: 64) else { throw DFUError.msg("文件头损坏: HMAC 应为 64 个十六进制字符") }   // 449 文件头损坏
-        guard isHex(e.kdf.saltHex, len: 32) else { throw DFUError.msg("文件头损坏: 盐应为 32 个十六进制字符") }   // 449 文件头损坏
+        guard isHex(e.ivHex, len: 32) else { throw DFUError.msg("文件头损坏： IV 应为 32 个十六进制字符") }   // 449 文件头损坏
+        guard isHex(e.macHex, len: 64) else { throw DFUError.msg("文件头损坏： HMAC 应为 64 个十六进制字符") }   // 449 文件头损坏
+        guard isHex(e.kdf.saltHex, len: 32) else { throw DFUError.msg("文件头损坏： 盐应为 32 个十六进制字符") }   // 449 文件头损坏
         guard isHex(e.cHex), e.cHex.count % 32 == 0 else {
-            throw DFUError.msg("文件头损坏: 密文应为 32 的整数倍个十六进制字符")   // 449 文件头损坏
+            throw DFUError.msg("文件头损坏： 密文应为 32 的整数倍个十六进制字符")   // 449 文件头损坏
         }
         let keys = deriveKey(password, saltHex: e.kdf.saltHex, iter: e.kdf.iter)
         let ct = HexKit.bytes(e.cHex)

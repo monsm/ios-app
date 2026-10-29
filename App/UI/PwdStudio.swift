@@ -84,7 +84,7 @@ struct PwdStudio: View {
     // ---------- 518 草稿续填横条 ----------
     func draftBar(_ d: CredentialOrg.StudioDraft) -> some View {
         HStack(spacing: DS.Space.s) {
-            Label("上次填到第 \(d.step + 1) 步, 继续?", systemImage: "arrow.triangle.branch")
+            Label("上次填到第 \(d.step + 1) 步， 继续?", systemImage: "arrow.triangle.branch")
                 .vkFont(.caption)
                 .foregroundStyle(DS.Palette.warn)
             Spacer(minLength: 0)
@@ -108,7 +108,7 @@ struct PwdStudio: View {
         .padding(.vertical, DS.Space.xs)
         .variantCallout(DS.Palette.warn, .control, wash: 0.10)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("草稿续填: 上次填到第 \(d.step + 1) 步, 点继续可回填")   // 518 草稿续填
+        .accessibilityLabel("草稿续填： 上次填到第 \(d.step + 1) 步， 点继续可回填")   // 518 草稿续填
     }
 
     // ---------- 515/317 step0 类型与归属 ----------
@@ -128,7 +128,7 @@ struct PwdStudio: View {
             }
             Spacer(minLength: 0)
             if step < 3 {
-                Button(step == 0 ? "下一步: 码值" : (step == 1 ? "下一步: 有效期" : "下一步: 确认")) {
+                Button(step == 0 ? "下一步： 码值" : (step == 1 ? "下一步： 有效期" : "下一步： 确认")) {
                     if step == 0, owner == nil, !DB.members().isEmpty {
                         errorField = "owner"
                         app.showToast("先选归属成员")   // 317 先选归属成员
@@ -146,7 +146,7 @@ struct PwdStudio: View {
                     // 现在停在这一步: toast + 触感 + errorField 同步 (字段下方那行 errorLine 已经在按 to<=from 显示)。
                     if step == 2, kind == 1, to <= from {
                         errorField = "period"
-                        app.showToast("到期要晚于生效, 请先点一枚快捷档")   // 519 到期要晚于生效
+                        app.showToast("到期要晚于生效， 请先点一枚快捷档")   // 519 到期要晚于生效
                         DS.Haptics.trigger.impactOccurred()
                         return
                     }
@@ -217,7 +217,7 @@ struct PwdStudio: View {
         if kind == 1, to <= from {
             step = 2
             errorField = "period"
-            app.showToast("到期要晚于生效: 草稿里的这一档已过期, 请重选")   // 519 到期要晚于生效
+            app.showToast("到期要晚于生效： 草稿里的这一档已过期， 请重选")   // 519 到期要晚于生效
             DS.Haptics.trigger.impactOccurred()
             return
         }
@@ -260,7 +260,7 @@ struct PwdStudio: View {
             app.showToast(isTemp ? "临时码已下发" : "密码已下发 (别名 #\(alias))")
             if !embedded { dismiss() }
         } catch {
-            app.showToast("下发失败: " + error.localizedDescription)
+            app.showToast("下发失败： " + error.localizedDescription)
         }
     }
 

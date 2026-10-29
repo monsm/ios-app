@@ -62,7 +62,7 @@ struct BackupView: View {
             } else if case .failure(let e) = result {
                 // 用户取消不报错 (NSUserCancelledError)
                 if (e as NSError).code != NSUserCancelledError {
-                    app.showToast("保存失败: " + e.localizedDescription)
+                    app.showToast("保存失败： " + e.localizedDescription)
                 }
             }
         }
@@ -239,7 +239,7 @@ struct BackupView: View {
             let (p, _) = try BackupStudio.parsePreview(text: importText, password: importPw.isEmpty ? nil : importPw)
             pv = p
         } catch {
-            app.showToast("导入被拦下: \(error.localizedDescription)")
+            app.showToast("导入被拦下： \(error.localizedDescription)")
             return
         }
 
@@ -280,11 +280,11 @@ struct BackupView: View {
             if bundle.globals?.appearance != nil { app.reloadAppearance() }   // 894 带外观段才刷, 免得白重建一次全树
             armMigrateWizard(r)
             UINotificationFeedbackGenerator().notificationOccurred(.success)
-            app.showToast("导入完成: 新增 \(r.imported), 合并 \(r.overwritten)" + (r.skipped > 0 ? ", 跳过 \(r.skipped)" : ""))
+            app.showToast("导入完成： 新增 \(r.imported), 合并 \(r.overwritten)" + (r.skipped > 0 ? ", 跳过 \(r.skipped)" : ""))
             importText = ""
         } catch {
             // 口令错误 / 内容被改过 (453) / 不是备份 —— 一律不写库
-            app.showToast("导入被拦下: \(error.localizedDescription)")
+            app.showToast("导入被拦下： \(error.localizedDescription)")
         }
     }
 

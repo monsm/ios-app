@@ -352,7 +352,7 @@ final class AppState: ObservableObject {
         let now = Date()
         // 244 指令去重: 1.2s 内的重复触发只提示, 不重复入队
         guard now.timeIntervalSince(lastDispatch) > 1.2 else {
-            showToast("指令已收到, 正在执行")
+            showToast("指令已收到， 正在执行")
             return
         }
         lastDispatch = now
@@ -480,7 +480,7 @@ final class AppState: ObservableObject {
         let day = Milestones.dayKey()
         if DB.store.getString("kf_unlock_hint_day") != day {
             DB.store.set("kf_unlock_hint_day", day)
-            showToast("本次开门已记录, 可到「记录」回看")
+            showToast("本次开门已记录， 可到「记录」回看")
         }
     }
     func onLaunch() {
@@ -504,7 +504,7 @@ final class AppState: ObservableObject {
         // 此前直接报「门已打开」= 对 B 模式用户说谎; 用状态帧镜像判, 快照未读到时宁可不提示 (与
         // 与本 App「未读到≠无告警」同一口径)。
         if status?.verifyMode == 1 {
-            showToast("双验模式: 第一道已通过, 请再用指纹或密码完成第二道验证")
+            showToast("双验模式： 第一道已通过， 请再用指纹或密码完成第二道验证")
         } else {
             // 来源标注 (用户 2026-10-17): 与自动档那句成对 —— 开完要能说清是自己点的还是走近自动开的。
             // 只在非双验时报"成功", 双验那条上面已经给了实话。

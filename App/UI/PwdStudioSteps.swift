@@ -11,7 +11,7 @@ extension PwdStudio {
                 segChip("临时码", on: kind == 1) { kind = 1 }
                 Spacer(minLength: 0)
             }
-            .accessibilityLabel("凭证类型: " + (kind == 0 ? "长期密码" : "临时码"))
+            .accessibilityLabel("凭证类型： " + (kind == 0 ? "长期密码" : "临时码"))
             ownerCard
         }
     }
@@ -70,7 +70,7 @@ extension PwdStudio {
                     .fixedSize(horizontal: false, vertical: true)
             }
             if errorField == "owner" {
-                errorLine("归属必选: 先选成员; 没有成员可先去成员中心新建再返回。")   // 317 归属必选
+                errorLine("归属必选： 先选成员; 没有成员可先去成员中心新建再返回。")   // 317 归属必选
             }
         }
         .card()
@@ -120,7 +120,7 @@ extension PwdStudio {
                 .padding(.horizontal, DS.Space.s)
                 .padding(.vertical, 4)
                 .variantCallout(DS.Palette.warn, .control, wash: 0.10)
-                .accessibilityLabel("码值来自剪贴板, 点清除可移除")
+                .accessibilityLabel("码值来自剪贴板， 点清除可移除")
             }
             HStack(spacing: DS.Space.s) {
                 ForEach([6, 7, 8], id: \.self) { n in
@@ -155,13 +155,13 @@ extension PwdStudio {
                 .accessibilityLabel("密码强度 " + s.hint)
             }
             if errorField == "value" {
-                errorLine("码值需 6~8 位数字: 就在上面那格码值里改, 改好再点下一步。")   // 519 码值需
+                errorLine("码值需 6~8 位数字： 就在上面那格码值里改， 改好再点下一步。")   // 519 码值需
             }
             let dups = pwdOK ? CredentialOrg.duplicatePwdValues(mac, pwd, excluding: editAlias ?? -1) : []
             // 304 说的是"全库", 上面那个只查本锁 → 跨锁检查接上 (duplicatePwdLockNames 此前零调用)
             let others = pwdOK ? CredentialOrg.duplicatePwdLockNames(pwd, excludingMac: mac) : []
             if !others.isEmpty {
-                Label("其它 \(others.count) 把锁上也有同值: " + others.prefix(3).joined(separator: "、")
+                Label("其它 \(others.count) 把锁上也有同值： " + others.prefix(3).joined(separator: "、")
                     + (others.count > 3 ? " 等" : ""),   // 304 界面文案
                       systemImage: "lock.rectangle.stack")
                     .vkFont(.caption)
@@ -192,7 +192,7 @@ extension PwdStudio {
                 .accessibilityElement(children: .combine)
             }
             if let c = pwdOK ? CredentialOrg.prefixConflict(mac, pwd, excluding: editAlias ?? -1).first : nil {
-                Text("与「\(CredentialOrg.displayPwd(c))」前 4 位相同, 口头易混淆。")   // 314 位相同
+                Text("与「\(CredentialOrg.displayPwd(c))」前 4 位相同， 口头易混淆。")   // 314 位相同
                     .vkFont(.caption)
                     .foregroundStyle(DS.Palette.warn)
                     .fixedSize(horizontal: false, vertical: true)
@@ -258,14 +258,14 @@ extension PwdStudio {
                         Spacer(minLength: 0)
                     }
                     if to <= from {
-                        errorLine("到期需晚于生效: 点上面任一快捷档, 或把到期往后挪; 这一步不让过。")   // 519 到期需晚于生效
+                        errorLine("到期需晚于生效： 点上面任一快捷档， 或把到期往后挪; 这一步不让过。")   // 519 到期需晚于生效
                     }
                 }
                 .card()
             } else {
                 VStack(alignment: .leading, spacing: DS.Space.xs) {
                     Text("长期密码无到期点; 老旧巡检会在详情页提示「添加满 180 天」那一条 —— "   // 305 长期密码无到期点
-                         + "台账只有添加时刻, 那句说的是这条加了多久, 不是这个值多久没换过。")
+                         + "台账只有添加时刻， 那句说的是这条加了多久， 不是这个值多久没换过。")
                         .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
@@ -300,7 +300,7 @@ extension PwdStudio {
                     }
                     .padding(.vertical, 2)
                 }
-                TextField("如: 钟点工·大门·仅上午场", text: $note,   // 523 钟点工
+                TextField("如： 钟点工·大门·仅上午场", text: $note,   // 523 钟点工
                           prompt: Text("给谁 · 哪扇门 · 用多久"))
                     .vkFont(.subheadline)
                     .frame(minHeight: DS.Hit.min)
@@ -358,7 +358,7 @@ extension PwdStudio {
                         .foregroundStyle(DS.Palette.text)
                     PwdDiffView(old: old, new: pwd.isEmpty ? old : pwd)
                         .card()
-                    Text("改动位共 \(CredentialOrg.digitDiff(old: old, new: pwd.isEmpty ? old : pwd).count) 处 (逐位高亮, 确认后才落库)。")
+                    Text("改动位共 \(CredentialOrg.digitDiff(old: old, new: pwd.isEmpty ? old : pwd).count) 处 (逐位高亮， 确认后才落库)。")
                         .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
