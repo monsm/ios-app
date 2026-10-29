@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T05:30:01.782Z",
+    "generated": "2026-10-29T05:32:54.895Z",
     "sources": [
       {
         "scout": "android-native",
@@ -949,7 +949,7 @@ const DATA = {
           "line": 658,
           "symbol": "LinkPrefsView",
           "note": "",
-          "text": ".accessibilityElement(children: .combine)"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -957,7 +957,7 @@ const DATA = {
           "line": 705,
           "symbol": "RSSIBars",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -5763,7 +5763,7 @@ const DATA = {
           "line": 705,
           "symbol": "struct RSSIBars",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -5840,7 +5840,7 @@ const DATA = {
           "line": 636,
           "symbol": "enterPage()",
           "note": "",
-          "text": "// 228 色觉冗余: 三态不能只靠颜色 + 链路圈的虚实来分 —— 色觉障碍下 fill/dashed 几乎同形，"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -7519,7 +7519,7 @@ const DATA = {
           "line": 673,
           "symbol": "Picker 信号围栏",
           "note": "",
-          "text": "/// 后者的差别正是这里要冗余掉的那个差别。"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -7527,7 +7527,7 @@ const DATA = {
           "line": 685,
           "symbol": "只影响自动预握手",
           "note": "",
-          "text": "case .ready: return \"门锁在线, 随时可开\""
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -16160,7 +16160,7 @@ const DATA = {
           "line": 695,
           "symbol": "proxySuffix(_:)",
           "note": "",
-          "text": "static func clearDraft(_ mac: String) {"
+          "text": "/// 这条判据此前在 `displayPwd` 那侧有一份、在回收站/历史/延期三处界面各有一份, 收成一处。"
         },
         {
           "platform": "ios",
@@ -20217,7 +20217,7 @@ const DATA = {
           "line": 713,
           "symbol": "batchDisable(_:pwdAliases:fpBatches:)",
           "note": "",
-          "text": "return p.temp ? \"临时密码 #\\(p.alias)\" : \"密码 #\\(p.alias)\""
+          "text": "static func stateLabel(_ s: Int) -> String {"
         },
         {
           "platform": "ios",
@@ -20423,7 +20423,7 @@ const DATA = {
           "line": 658,
           "symbol": "batchExtend(_:_:_:_:)",
           "note": "",
-          "text": "}"
+          "text": "var permanent: Bool"
         },
         {
           "platform": "ios",
@@ -20439,7 +20439,7 @@ const DATA = {
           "line": 662,
           "symbol": "auto: true",
           "note": "auto: true 自动还原点",
-          "text": "guard m > 0, let e = effectiveExpiry(mac, p) else { return \"\" }"
+          "text": "var useTemplate: Bool"
         }
       ],
       "platformEvidence": {
@@ -21246,7 +21246,7 @@ const DATA = {
           "line": 451,
           "symbol": "canEvaluatePolicy",
           "note": "guard ctx.canEvaluatePolicy(...)",
-          "text": "f.timeIntervalSince1970 \u003c= t, t \u003c= to.timeIntervalSince1970 { n += 1 }"
+          "text": "let fps = l.fps.filter { fpBatches.isEmpty || fpBatches.contains($0.batch) }"
         },
         {
           "platform": "ios",
@@ -21254,7 +21254,7 @@ const DATA = {
           "line": 460,
           "symbol": "onDeniedPresentFallback",
           "note": "if ok { commit() } else { onDeniedPresentFallback(commit) }",
-          "text": "// ---------- 351 合包导出: 仅凭证分区的最小 AES 信封 (口令由 UI 生成, 不走全量 schema) ----------"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -26167,7 +26167,7 @@ const DATA = {
           "line": 171,
           "symbol": "QueryFilters",
           "note": "",
-          "text": "/// 655 动词化日志文案 (统一动词表: \"张三 用 指纹 开了门\", 告警/操作各用各的动词)"
+          "text": "struct QueryFilters: Codable, Equatable {"
         },
         {
           "platform": "ios",
@@ -26183,7 +26183,7 @@ const DATA = {
           "line": 191,
           "symbol": "key(_:)",
           "note": "",
-          "text": "}"
+          "text": "private static func key(_ mac: String) -> String { \"kf_rflt_\" + mac }"
         },
         {
           "platform": "ios",
@@ -26285,7 +26285,7 @@ const DATA = {
           "line": 543,
           "symbol": "parse(_:)",
           "note": "",
-          "text": "for tok in raw.components(separatedBy: \" \") where !tok.isEmpty {"
+          "text": "q.parsedTags.append(rangeLabel(range))"
         },
         {
           "platform": "ios",
@@ -26301,7 +26301,7 @@ const DATA = {
           "line": 730,
           "symbol": "searchFace(title:lockName:whoName:cred:note:)",
           "note": "",
-          "text": "/// 不另造\"测试\"状态 —— 标记本身就是一条处置结论。处置写入口已随告警处置层移除，"
+          "text": "let recs = buildRecs(macs: [mac], includeFails: false, includeCare: false)"
         },
         {
           "platform": "ios",
@@ -27465,7 +27465,7 @@ const DATA = {
           "line": 172,
           "symbol": "segment",
           "note": "",
-          "text": "enum RecordVerbs {"
+          "text": "var segment: Int = 0            // 564 时段: 0 全部 / 1 早(6-10) / 2 午(10-15) / 3 晚(15-22) / 4 深夜"
         },
         {
           "platform": "ios",
@@ -27473,7 +27473,7 @@ const DATA = {
           "line": 185,
           "symbol": "alarmKinds",
           "note": "",
-          "text": "return prefix.isEmpty ? v : prefix + v"
+          "text": "var alarmKinds: Set\u003cInt> = []"
         }
       ],
       "platformEvidence": {
@@ -28265,7 +28265,7 @@ const DATA = {
           "line": 612,
           "symbol": "timePhrases(joined:)",
           "note": "",
-          "text": "let y = cal.date(byAdding: .day, value: -1, to: now)!"
+          "text": "out.append((\"本月\", (m.start, now)))"
         },
         {
           "platform": "ios",
@@ -28273,7 +28273,7 @@ const DATA = {
           "line": 653,
           "symbol": "tokensFirstContaining",
           "note": "N月D日 分支",
-          "text": "var cc = DateComponents(); cc.year = cal.component(.year, from: now) - 1; cc.month = mo; cc.day = dy"
+          "text": "c.month = max(1, min(12, month))"
         }
       ],
       "platformEvidence": {
@@ -28407,7 +28407,7 @@ const DATA = {
           "line": 439,
           "symbol": "nightWindowDegenerate",
           "note": "",
-          "text": "var name: String"
+          "text": "Holiday(day: \"2026-05-02\", name: \"劳动节\", off: true),"
         },
         {
           "platform": "ios",
@@ -28415,7 +28415,7 @@ const DATA = {
           "line": 446,
           "symbol": "isLateNight",
           "note": "a > b ? (hour >= a || hour \u003c b) : (hour >= a && hour \u003c b)",
-          "text": "Holiday(day: \"2026-01-04\", name: \"元旦\", off: false),"
+          "text": "Holiday(day: \"2026-06-21\", name: \"端午\", off: true),"
         }
       ],
       "platformEvidence": {
@@ -60250,7 +60250,7 @@ const DATA = {
           "line": 140,
           "symbol": "histKey(_:_:_:)",
           "note": "",
-          "text": "/// 501/263 删除成员预告: 名下将入回收站的凭证清单 (跨锁合计)。"
+          "text": "/// 348 统一延期: 本地改写所选过期字段并留变更清单 (逐条入队, 到场后统一补发)"
         },
         {
           "platform": "ios",
@@ -60258,7 +60258,7 @@ const DATA = {
           "line": 472,
           "symbol": "reclaimDays()",
           "note": "",
-          "text": "let pwds = l.pwds.filter { pwdAliases.isEmpty || pwdAliases.contains($0.alias) }"
+          "text": "let parts = id.split(separator: \".\", omittingEmptySubsequences: true).map(String.init)"
         },
         {
           "platform": "ios",
@@ -60448,7 +60448,7 @@ const DATA = {
           "line": 737,
           "symbol": "histKey",
           "note": "",
-          "text": ""
+          "text": "// 两支都反转为时间正序返回, 调用方用 `.before.last` 当\"紧邻上一条\"才成立。"
         },
         {
           "platform": "ios",
@@ -61538,7 +61538,7 @@ const DATA = {
           "line": 25,
           "symbol": "CredSnapshot",
           "note": "",
-          "text": "var d3: Bool = false       // 930: 到期前 3 天"
+          "text": "enum CredentialOrg {"
         },
         {
           "platform": "ios",
@@ -61554,7 +61554,7 @@ const DATA = {
           "line": 51,
           "symbol": "CredBinEntry",
           "note": "",
-          "text": "static let notifyLog = Logger(subsystem: \"com.aapk.OfflineLock\", category: \"credentialNotify\")"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -61865,7 +61865,7 @@ const DATA = {
           "line": 783,
           "symbol": "markDisposition(key:verdict:)",
           "note": "",
-          "text": "guard let d = dateOf(l) else { continue }"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -61936,7 +61936,7 @@ const DATA = {
           "line": 203,
           "symbol": "load(mac:)",
           "note": "",
-          "text": "var member: String = \"\""
+          "text": "static func load(mac: String) -> QueryFilters {"
         },
         {
           "platform": "ios",
@@ -61944,7 +61944,7 @@ const DATA = {
           "line": 212,
           "symbol": "save(mac:)",
           "note": "",
-          "text": "// 908 默认策略: 在\"会话续用\"之上加一层可改的开场规则 (见 load 里的 policy)。"
+          "text": "func save(mac: String) {"
         },
         {
           "platform": "ios",
@@ -61952,7 +61952,7 @@ const DATA = {
           "line": 193,
           "symbol": "policyKey",
           "note": "",
-          "text": "/// 查询过滤 (564/571/572/567/568 的本地筛选态)"
+          "text": "static let policyKey = \"kf_filter_default\""
         }
       ],
       "platformEvidence": {
@@ -62856,7 +62856,7 @@ const DATA = {
           "line": 423,
           "symbol": "dayKeyOfNight(_:)",
           "note": "",
-          "text": "static var nightWindowDegenerate: Bool { nightFrom == nightTo }"
+          "text": "Holiday(day: \"2026-01-04\", name: \"元旦\", off: false),"
         }
       ],
       "platformEvidence": {
