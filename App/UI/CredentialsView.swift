@@ -438,6 +438,12 @@ struct CredentialsView: View {
         }
         reload()
     }
+
+    /// 2026-10-29 入口去重：添加设备只在设备页右上角「+」，这里只做跳转 + 指路。
+    func goAddDevice() {
+        app.requestRoute(.device)
+        app.showToast("在设备页右上角点「+」添加门锁")
+    }
 }
 
 
@@ -487,9 +493,4 @@ extension UIApplication {
         return vc
     }
 
-    /// 2026-10-29 入口去重：添加设备只在设备页右上角「+」，这里只做跳转 + 指路。
-    func goAddDevice() {
-        app.requestRoute(.device)
-        app.showToast("在设备页右上角点「+」添加门锁")
-    }
 }
