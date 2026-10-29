@@ -1385,6 +1385,20 @@ struct CredentialsView: View {
                     .buttonStyle(SecondaryActionStyle(fullWidth: false))
                 }
                 .padding(.top, DS.Space.xs)
+                // 2026-10-29 补（**后台有动作、前台无入口**）：`genFirstOtp()` 全仓零调用，
+                // 它上方还孤悬一个 `@ViewBuilder`（说明这块视图被删过、只剩动作函数）。
+                // 空台账时用户只被引导「添加密码或录入指纹」—— 而 APK `page-otpgenerate` 是独立入口，
+                // 这里补一个等价入口：需锁在场，走现有 genOtp 通路（与 otpSection 的「生成」同一个）。
+                Button {
+                    genFirstOtp()
+                } label: {
+                    Text(isBusy ? "生成中…" : "发第一张临时码")
+                        .vkFont(.subheadline, weight: .semibold)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(SecondaryActionStyle(fullWidth: false))
+                .disabled(isBusy)
+                .padding(.top, DS.Space.xs)
             }
             .padding(.vertical, 2)
         }
@@ -1393,7 +1407,6 @@ struct CredentialsView: View {
     /// 821 临时码零库存: 已开通但一张没发 → "酒店前台发门卡"比喻 + 首张按钮。
     /// 这一块原先嵌在"整册空"的 emptyHint 里 ⇒ 台账里有密码但没发过临时码时它永远不出现;
     /// 提出来挂列表固定位 (listBody), 空台账时也只由这一块渲染一次。
-    @ViewBuilder
     /// 821 空台账场景"发第一张临时码": 走现有 genOtp 通路, 需锁在场。
     /// busyKey 只占"连接中"这一段 —— genOtp 自带 busyKey==nil 门槛, 不先还回去第一张永远不生成
     /// (原先连完直接调 genOtp, 被自己的占用挡下, 回执却报成功)。
