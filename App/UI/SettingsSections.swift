@@ -133,12 +133,16 @@ extension SettingsView {
     }
     @ViewBuilder
     var credCareSection: some View {
-        Section {
+        // 2026-10-30 性能：`CredentialOrg.quota(mac)` 与 `aliasDisplay` 各被读 2 次（标签 + Binding.get）。
+        // 一次读出来共用。
+        let quota = CredentialOrg.quota(mac)
+        let aliasOn = CredentialOrg.aliasDisplay
+        return Section {
             // 2026-10-14 走查: 原标签「历史版本配额 N 版/凭证」的量纲读不出来 —— "版/凭证" 是
             // "每凭证几版" 还是 "总共几版"? 同一节下面的「回收站保留 N 天」是单值, 两个 Stepper
             // 单位不同却并列, 更容易读岔。改成一句能直接念出来的话。
-            Stepper("每个凭证保留 \(CredentialOrg.quota(mac)) 个历史版本", value: Binding(   // 491 历史版本配额
-                get: { CredentialOrg.quota(mac) },
+            Stepper("每个凭证保留 \(quota) 个历史版本", value: Binding(   // 491 历史版本配额
+                get: { quota },
                 set: { DB.store.set("kf_ccred_quota", $0) }), in: 3...30, step: 1)
                 .fixedSize(horizontal: false, vertical: true)
             // 2026-10-26 精简：回收站保留天数设置已删（回收站整套移除）。
@@ -146,7 +150,7 @@ extension SettingsView {
             // 第二行居中，而用户看到的是一串跟自己无关的编号 —— 本仓"乱源治理"清过 1037 处同类，这一处漏了。
             // 语义说明挪进本节 footer，标签回归一行 (截图里折行撑歪开关就是这条)。
             VariantToggle("成员别名显示", isOn: Binding(
-                get: { CredentialOrg.aliasDisplay },
+                get: { aliasOn },
                 set: { DB.store.set("kf_calias_display", $0) }))
                 .fixedSize(horizontal: false, vertical: true)
         } header: {

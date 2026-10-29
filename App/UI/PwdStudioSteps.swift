@@ -33,11 +33,14 @@ extension PwdStudio {
         .accessibilityAddTraits(on ? [.isSelected] : [])
     }
     var ownerCard: some View {
-        VStack(alignment: .leading, spacing: DS.Space.xs) {
+        // 2026-10-30 性能：`DB.members()` 原来在本块里调 2 次（ForEach + isEmpty 判据）。
+        // 虽然第 22 轮给 members() 加了派生缓存，但这里仍是一次多余的数组拷贝 + 缓存查表。一次取共用。
+        let allMembers = DB.members()
+        return VStack(alignment: .leading, spacing: DS.Space.xs) {
             Text("归属成员")
                 .vkFont(.footnote, weight: .semibold)
                 .foregroundStyle(errorField == "owner" ? DS.Palette.danger : DS.Palette.text)
-            ForEach(DB.members()) { m in
+            ForEach(allMembers) { m in
                 Button {
                     owner = m.id
                     errorField = ""
@@ -60,7 +63,7 @@ extension PwdStudio {
                 .buttonStyle(.plain)
                 .accessibilityLabel("归属 " + m.name + (owner == m.id ? ", 已选" : ""))
             }
-            if DB.members().isEmpty {
+            if allMembers.isEmpty {
                 Text("还没有成员。可先选「未归属」, 稍后在成员中心补归属。")
                     .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)

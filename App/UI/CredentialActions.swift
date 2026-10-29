@@ -357,7 +357,9 @@ extension CredentialsView {
         let orderF = seqAll["f"] ?? []
         let archPwd: Set<Int> = []
         let archFp = archPwd   // isArchived 内部: pwd 存原 alias, fp 存 100000+batch, 同一个 Set
-        ForEach(DB.members()) { m in
+        // 2026-10-30 性能：members() 一次取（虽然第 22 轮已有派生缓存，仍是一次多余数组拷贝）。
+        let allMembers = DB.members()
+        ForEach(allMembers) { m in
             // 354: 归档条目在本页任何浏览方式里都不出现 (含按成员视图); 归档区卡是唯一落点
             let pwds = orderedPwds(allPwds.filter {
                 $0.owner == m.id && !archPwd.contains($0.alias)
