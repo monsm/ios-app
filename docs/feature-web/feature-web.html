@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T08:47:48.496Z",
+    "generated": "2026-10-29T08:54:29.452Z",
     "sources": [
       {
         "scout": "android-native",
@@ -15688,7 +15688,7 @@ const DATA = {
           "line": 283,
           "symbol": "Button { shareLock = kc } label: { Label(\"分享给安卓 (扫码开锁)\") }",
           "note": "",
-          "text": "//   · 锁设置       → 设备页「管理这把锁」是唯一入口（本页不再重复）"
+          "text": "// 2026-10-29 入口去重（用户反馈「同一个界面被很多次入口」）："
         },
         {
           "platform": "ios",
@@ -19429,7 +19429,7 @@ const DATA = {
           "line": 332,
           "symbol": "Button 清空密码",
           "note": "",
-          "text": "var consequence = \"将删除本机的钥匙串与该门锁全部本地数据 (锁端密钥不变)。\""
+          "text": "let fps = DB.listFps(kc.mac).count"
         },
         {
           "platform": "ios",
@@ -19453,7 +19453,7 @@ const DATA = {
           "line": 375,
           "symbol": "pwdClear",
           "note": "",
-          "text": "alert.addTextField { $0.isSecureTextEntry = true; $0.keyboardType = .numberPad }"
+          "text": "let alert = UIAlertController(title: \"验证原密码\","
         }
       ],
       "platformEvidence": {
@@ -28830,7 +28830,7 @@ const DATA = {
           "line": 327,
           "symbol": "if canTailgate { NavigationLink(\"防尾随入室\") }",
           "note": "",
-          "text": "// 109 删除冷静期: 后果要可核对 (逐类计数), 且必须键入锁名才放行 —— 旧写法只有一次\"确定吗\""
+          "text": ""
         },
         {
           "platform": "ios",
@@ -28838,7 +28838,7 @@ const DATA = {
           "line": 353,
           "symbol": "PidMap.canTailgate(app.current?.pid ?? 0, fw:)",
           "note": "",
-          "text": "app.showToast(\"已关闭\")"
+          "text": "\"关闭后，设置页不再有入口屏障。注意：查看密码明文与导出备份本来就不受本机密码约束 —— 任何拿到这台手机的人都能直接读取。确定要关闭吗？\","
         }
       ],
       "platformEvidence": {
@@ -29051,7 +29051,7 @@ const DATA = {
           "line": 332,
           "symbol": "布防行状态",
           "note": "",
-          "text": "var consequence = \"将删除本机的钥匙串与该门锁全部本地数据 (锁端密钥不变)。\""
+          "text": "let fps = DB.listFps(kc.mac).count"
         },
         {
           "platform": "ios",
@@ -29644,7 +29644,7 @@ const DATA = {
           "line": 139,
           "symbol": "case \"backup\": showBackup = true",
           "note": "",
-          "text": "// 剩下\"家人与钥匙 → 成员管理\"两跳还得自己找。成员中心到达后仍由 pendingMemberAdd 弹向导。"
+          "text": "setPasscode()"
         },
         {
           "platform": "ios",
@@ -33933,7 +33933,7 @@ const DATA = {
           "line": 278,
           "symbol": "lockSection",
           "note": "",
-          "text": "var lockSection: some View {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -33941,7 +33941,7 @@ const DATA = {
           "line": 287,
           "symbol": "if app.current == nil { GuidedEmptyView(…) }",
           "note": "",
-          "text": "GuidedEmptyView(systemImage: \"lock\","
+          "text": "//   · 添加另一把锁 → 设备页右上角「+」是唯一入口"
         },
         {
           "platform": "ios",
@@ -33949,7 +33949,7 @@ const DATA = {
           "line": 337,
           "symbol": "Button { showAdd = true } label: { Label(\"添加另一把锁\") }",
           "note": "",
-          "text": "}"
+          "text": "// 2026-10-28：删掉「待下发 N 项 / 回收站 N 条」—— 这两套功能都不存在"
         }
       ],
       "platformEvidence": {
@@ -34117,7 +34117,7 @@ const DATA = {
           "line": 134,
           "symbol": "landPendingFocus(_:)",
           "note": "",
-          "text": "case \"passcode\":"
+          "text": "case \"backup\":"
         }
       ],
       "platformEvidence": {
@@ -34716,7 +34716,7 @@ const DATA = {
           "line": 423,
           "symbol": "timeSection",
           "note": "",
-          "text": "})"
+          "text": "alert.addAction(UIAlertAction(title: \"清除胁迫码\", style: .destructive) { _ in"
         },
         {
           "platform": "ios",
@@ -34724,7 +34724,7 @@ const DATA = {
           "line": 425,
           "symbol": "Picker(\"时间制式\", selection:)",
           "note": "",
-          "text": "alert.addAction(UIAlertAction(title: \"确定\", style: .default) { _ in"
+          "text": "app.showToast(\"胁迫码已清除\")"
         },
         {
           "platform": "ios",
@@ -34732,7 +34732,7 @@ const DATA = {
           "line": 432,
           "symbol": "VariantToggle(\"显示秒\", isOn:)",
           "note": "",
-          "text": "app.showToast(\"胁迫码已设置\")"
+          "text": "guard f1.count >= 4 else { app.showToast(\"需 4 位以上\"); return }"
         }
       ],
       "platformEvidence": {
@@ -36112,7 +36112,7 @@ const DATA = {
           "line": 66,
           "symbol": "SettingsGroupChips(selection: $groupFilter)",
           "note": "",
-          "text": "// 2026-10-27：`securitySection` 已删（纯说明无入口），见上方注释。"
+          "text": "// 开门日常(3) → 凭证与成员(1) → 数据与安全(2) → 外观与辅助(2) → 帮助与关于(1)。"
         },
         {
           "platform": "ios",
@@ -36196,7 +36196,7 @@ const DATA = {
           "line": 170,
           "symbol": "searchTextRow",
           "note": "",
-          "text": ".accessibilityLabel(\"搜索设置项\")"
+          "text": ".accessibilityHidden(true)"
         },
         {
           "platform": "ios",
@@ -36204,7 +36204,7 @@ const DATA = {
           "line": 225,
           "symbol": "private var searchHits: [SearchHit]",
           "note": "",
-          "text": "// 不在本页的功能 (开 sheet 的那些) 仍是 `anchor: nil`, 交给 go 直接开。"
+          "text": "// 2026-10-15 补上第二半: 光切筛选片还不够 —— 命中节常常排在所属分组的第二、第三节"
         },
         {
           "platform": "ios",
@@ -36212,7 +36212,7 @@ const DATA = {
           "line": 254,
           "symbol": "return all.filter { $0.title.localizedCaseInsensitiveContains(q) || $0.id.hasSuffix(q) }",
           "note": "",
-          "text": "return all.filter { $0.title.localizedCaseInsensitiveContains(q) || $0.id.hasSuffix(q) }"
+          "text": "SearchHit(id: \"s.applock\", title: \"本机数据保护 (应用锁)\", icon: \"lock.shield\", anchor: .applock),"
         }
       ],
       "platformEvidence": {
@@ -36365,7 +36365,7 @@ const DATA = {
           "line": 332,
           "symbol": "Button(\"清空密码\", role: .destructive) { clearPwd() }",
           "note": "",
-          "text": "var consequence = \"将删除本机的钥匙串与该门锁全部本地数据 (锁端密钥不变)。\""
+          "text": "let fps = DB.listFps(kc.mac).count"
         },
         {
           "platform": "ios",
@@ -36381,7 +36381,7 @@ const DATA = {
           "line": 358,
           "symbol": "confirmDestructive(\"清空密码\", …)",
           "note": "",
-          "text": "func setPasscode() {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -36389,7 +36389,7 @@ const DATA = {
           "line": 376,
           "symbol": "DB.saveLedger(m, Ledger())",
           "note": "",
-          "text": "alert.addAction(UIAlertAction(title: \"取消\", style: .cancel) { _ in then(false) })"
+          "text": "message: \"修改或关闭本机密码前需要先验证。\","
         }
       ],
       "platformEvidence": {
@@ -36467,7 +36467,7 @@ const DATA = {
           "line": 338,
           "symbol": "Button(\"删除设备\", role: .destructive) { deleteDevice() }",
           "note": "",
-          "text": "consequence += \" 删除后若未做过备份将无法找回。\""
+          "text": "// （全仓无队列类型、无回收站存储），原来只是硬编码 0 凑文案。"
         },
         {
           "platform": "ios",
@@ -36475,7 +36475,7 @@ const DATA = {
           "line": 381,
           "symbol": "deleteDevice()",
           "note": "",
-          "text": "})"
+          "text": "let pw = alert.textFields?[0].text ?? \"\""
         },
         {
           "platform": "ios",
@@ -36483,7 +36483,7 @@ const DATA = {
           "line": 395,
           "symbol": "confirmDestructiveTyped(\"删除设备\", … requireWord: name)",
           "note": "",
-          "text": "alert.addTextField { $0.isSecureTextEntry = true; $0.placeholder = \"再次输入\"; $0.keyboardType = .numberPad }"
+          "text": "func presentSetPasscodeAlert() {"
         }
       ],
       "platformEvidence": {
@@ -36552,7 +36552,7 @@ const DATA = {
           "line": 305,
           "symbol": "VariantToggle(\"静音模式\", isOn:)",
           "note": "",
-          "text": "app.requestRoute(.device)"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -36568,7 +36568,7 @@ const DATA = {
           "line": 314,
           "symbol": "try await app.lock.setSilent(silent)",
           "note": "",
-          "text": "}"
+          "text": "func openLockSettings() {"
         },
         {
           "platform": "ios",
@@ -36576,7 +36576,7 @@ const DATA = {
           "line": 342,
           "symbol": "muteStored",
           "note": "",
-          "text": "app.showToast(\"已删除「\\(name)」\")"
+          "text": "confirmDestructiveTyped(\"删除设备\", consequence, requireWord: name, confirmTitle: \"确认删除\") {"
         }
       ],
       "platformEvidence": {
@@ -36653,7 +36653,7 @@ const DATA = {
           "line": 299,
           "symbol": "NavigationLink(\"锁档案 (昵称/符号/色标/备注)\") { LockProfileView() }",
           "note": "",
-          "text": "}"
+          "text": "NavigationLink(\"锁档案 (昵称/符号/色标/备注)\") { LockProfileView() }"
         },
         {
           "platform": "ios",
@@ -36661,7 +36661,7 @@ const DATA = {
           "line": 301,
           "symbol": "NavigationLink(\"连接与预握手 (自动预热/成功率)\") { LinkPrefsView(mac: mac) }",
           "note": "",
-          "text": "}"
+          "text": "Button(\"删除设备\", role: .destructive) { deleteDevice() }"
         },
         {
           "platform": "ios",
@@ -36669,7 +36669,7 @@ const DATA = {
           "line": 303,
           "symbol": "Button(\"锁信息名片\") { showDeviceInfo = true }",
           "note": "",
-          "text": "/// 2026-10-29 入口去重：添加设备只在设备页右上角「+」。"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -36735,7 +36735,7 @@ const DATA = {
           "line": 325,
           "symbol": "NavigationLink(\"校准门锁时间\") { SyncTimeView() }",
           "note": "",
-          "text": "func deleteDevice() {"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         },
         {
           "platform": "ios",
@@ -36743,7 +36743,7 @@ const DATA = {
           "line": 326,
           "symbol": "note(\"锁端时钟不准时，临时码和有效期会失效。\")",
           "note": "",
-          "text": "guard let kc = app.current else { return }"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -38635,7 +38635,7 @@ const DATA = {
           "line": 262,
           "symbol": "if let a = h.anchor { groupFilter = a.group; … scrollTo }",
           "note": "",
-          "text": "if let a = h.anchor {"
+          "text": "Section(\"搜索结果 (\\(searchHits.count))\") {"
         },
         {
           "platform": "ios",
@@ -38643,7 +38643,7 @@ const DATA = {
           "line": 270,
           "symbol": "h.go()",
           "note": "",
-          "text": "h.go()"
+          "text": "withAnimation(DS.Motion.quick) { proxy.scrollTo(a, anchor: .top) }"
         },
         {
           "platform": "ios",
@@ -38651,7 +38651,7 @@ const DATA = {
           "line": 153,
           "symbol": "default: break // 认不出的落点名不做任何事",
           "note": "",
-          "text": "}"
+          "text": "// \"安全中心自己收摊 + 设置页 onDismiss 补开\"承担。"
         }
       ],
       "platformEvidence": {
@@ -38718,7 +38718,7 @@ const DATA = {
           "line": 384,
           "symbol": "let pws = DB.listPwds(kc.mac).count",
           "note": "",
-          "text": ""
+          "text": "})"
         },
         {
           "platform": "ios",
@@ -38726,7 +38726,7 @@ const DATA = {
           "line": 392,
           "symbol": "连带删除: 密码台账 … 回收站 … 开门记录 …",
           "note": "",
-          "text": "func presentSetPasscodeAlert() {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -38734,7 +38734,7 @@ const DATA = {
           "line": 395,
           "symbol": "requireWord: name",
           "note": "",
-          "text": "alert.addTextField { $0.isSecureTextEntry = true; $0.placeholder = \"再次输入\"; $0.keyboardType = .numberPad }"
+          "text": "func presentSetPasscodeAlert() {"
         }
       ],
       "platformEvidence": {

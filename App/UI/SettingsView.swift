@@ -62,14 +62,17 @@ struct SettingsView: View {
             // 谁不碰它就没有任何行为变化；碰了是把 17 节先筛成 3~6 节。
             SettingsGroupChips(selection: $groupFilter)
             // 每节挂一枚稳定锚 (`.id`), 供页内搜索 scrollTo 用。锚是字符串常量, 与筛选片无关。
+            // 2026-10-29 布局整理：9 节按**分组顺序**排列 ——
+            // 开门日常(3) → 凭证与成员(1) → 数据与安全(2) → 外观与辅助(2) → 帮助与关于(1)。
+            // 原先「时间显示」(外观组) 夹在两个「开门日常」节之间，切到「外观」筛选片后
+            // 它排在最前面，与同组的「外观」节隔了三节，读起来像两个不相干的东西。
             if settingsSectionShown(groupFilter, .daily) { lockSection.id(SettingsAnchor.lock) }
-            // 2026-10-27：`securitySection` 已删（纯说明无入口），见上方注释。
             if settingsSectionShown(groupFilter, .daily) { unlockSection.id(SettingsAnchor.unlock) }
-            if settingsSectionShown(groupFilter, .look) { timeSection.id(SettingsAnchor.time) }
             if settingsSectionShown(groupFilter, .daily) { autoOpenSection.id(SettingsAnchor.autoOpen) }
             if settingsSectionShown(groupFilter, .keys) { familySection.id(SettingsAnchor.family) }
             if settingsSectionShown(groupFilter, .data) { toolsSection.id(SettingsAnchor.tools) }
             if settingsSectionShown(groupFilter, .data) { applockSection.id(SettingsAnchor.applock) }
+            if settingsSectionShown(groupFilter, .look) { timeSection.id(SettingsAnchor.time) }
             if settingsSectionShown(groupFilter, .look) { appearanceSection.id(SettingsAnchor.appearance) }
             if settingsSectionShown(groupFilter, .help) { aboutSection.id(SettingsAnchor.about) }
         }
