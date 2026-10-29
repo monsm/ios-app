@@ -41,7 +41,10 @@ struct DongleView: View {
                         .accessibilityLabel("操作失败：\(error)")
                 }
             }
-            if DB.dongles().isEmpty {
+            // 2026-10-30 性能：`DB.dongles()` 原来在本块里调 2 次（isEmpty 判据 + ForEach），
+            // 每次都是整表字典转结构体。一次取共用。
+            let allDongles = DB.dongles()
+            if allDongles.isEmpty {
                 Section {
                     EmptyState(systemImage: "key.horizontal",
                                title: "还没有绑定蓝牙钥匙串",
@@ -49,7 +52,7 @@ struct DongleView: View {
                                actionTitle: "搜索钥匙串") { Task { await scan() } }
                 }
             } else {
-                ForEach(DB.dongles()) { d in
+                ForEach(allDongles) { d in
                     dongleSection(d)
                 }
             }
