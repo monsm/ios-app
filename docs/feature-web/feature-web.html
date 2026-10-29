@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T18:46:48.925Z",
+    "generated": "2026-10-29T18:58:43.720Z",
     "sources": [
       {
         "scout": "android-native",
@@ -43933,7 +43933,7 @@ const DATA = {
           "line": 227,
           "symbol": "connect",
           "note": "",
-          "text": "}"
+          "text": "case .failure(let e): cont.resume(throwing: e)"
         },
         {
           "platform": "ios",
@@ -43941,7 +43941,7 @@ const DATA = {
           "line": 249,
           "symbol": "connect",
           "note": "超时工作项",
-          "text": "// 不唤醒它们就会永久挂死, 并且 writeBusy 卡 true 会阻塞之后每一次写。"
+          "text": "func disconnect() {"
         },
         {
           "platform": "ios",
@@ -44033,7 +44033,7 @@ const DATA = {
           "line": 267,
           "symbol": "disconnect",
           "note": "",
-          "text": "/// 从**已建立的连接**上取一次 RSSI (peripheral.readRSSI → didReadRSSI)。"
+          "text": "s.waiters.removeAll()"
         },
         {
           "platform": "ios",
@@ -44154,7 +44154,7 @@ const DATA = {
           "line": 415,
           "symbol": "writeChunk",
           "note": "超时抛 writeFailed",
-          "text": ""
+          "text": "// 第九十一批删掉 `ensureNotify(deviceId:)`：它是 `func ensureNotify… { _ = deviceId }` 这种"
         },
         {
           "platform": "apk",
@@ -44355,7 +44355,7 @@ const DATA = {
           "line": 306,
           "symbol": "readLinkRSSI",
           "note": "",
-          "text": "// onCharacteristicWrite 才发下一片 (BLE_TIMEOUT=8s), 没有固定间隔 —— 我们这里的"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -44371,7 +44371,7 @@ const DATA = {
           "line": 299,
           "symbol": "readLinkRSSI",
           "note": "注释：连上后门锁停止广播",
-          "text": "var i = 0"
+          "text": "// sending 'completion' risks causing data races 的根因。改为经 self 回读"
         }
       ],
       "platformEvidence": {
@@ -44440,7 +44440,7 @@ const DATA = {
           "line": 200,
           "symbol": "startScan",
           "note": "",
-          "text": "guard let devUUID = UUID(uuidString: deviceId) else { throw BLEErrorX.code(.notFound) }"
+          "text": "scanTimer = nil"
         },
         {
           "platform": "ios",
@@ -44456,7 +44456,7 @@ const DATA = {
           "line": 209,
           "symbol": "startScan",
           "note": "到点 stopScanInternal 的定时器",
-          "text": "self.connectCompletion = { result in"
+          "text": "func connect(deviceId: String, timeoutMs: Int = 20000) async throws {"
         }
       ],
       "platformEvidence": {
@@ -44532,7 +44532,7 @@ const DATA = {
           "line": 344,
           "symbol": "acquireWriteSlot",
           "note": "",
-          "text": "func waitWriteReady(_ device: CBPeripheral, maxSeconds: Double = 0.12) async {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -44540,7 +44540,7 @@ const DATA = {
           "line": 362,
           "symbol": "releaseWriteSlot",
           "note": "",
-          "text": "// 之前 withoutResponse + 20ms 假 ack — CoreBluetooth 无响应队列满时会静默丢包, 锁收到残帧"
+          "text": "readyCont = c"
         },
         {
           "platform": "ios",
@@ -44548,7 +44548,7 @@ const DATA = {
           "line": 281,
           "symbol": "disconnect",
           "note": "唤醒队列",
-          "text": "d.readRSSI()"
+          "text": "///"
         }
       ],
       "platformEvidence": {
@@ -44623,7 +44623,7 @@ const DATA = {
           "line": 326,
           "symbol": "writeFrameHex",
           "note": "",
-          "text": "s.waiters.append(c)"
+          "text": "/// 前者的 continuation 永不完成 (挂死)。已在写的情况下把调用方排进等待队列。"
         },
         {
           "platform": "ios",
@@ -44631,7 +44631,7 @@ const DATA = {
           "line": 339,
           "symbol": "writeFrameHex",
           "note": "逐片 await writeChunk",
-          "text": "next?.resume()"
+          "text": "s.waiters.append(c)"
         },
         {
           "platform": "ios",
@@ -44639,7 +44639,7 @@ const DATA = {
           "line": 423,
           "symbol": "writeChunk",
           "note": "8.0 秒 ack 超时",
-          "text": ""
+          "text": "// MARK: - CBPeripheralDelegate"
         },
         {
           "platform": "ios",
@@ -44647,7 +44647,7 @@ const DATA = {
           "line": 396,
           "symbol": "writeChunk",
           "note": "withoutResponse 回退",
-          "text": "// 旧值 3s 比 APK 紧 2.6 倍, 弱信号下真机容易把\"已写成功\"误判成写失败。"
+          "text": "guard let self, self.writeAckLock.withLock({ $0 != nil }) else { return }"
         }
       ],
       "platformEvidence": {
@@ -53072,7 +53072,7 @@ const DATA = {
           "line": 265,
           "symbol": "connect",
           "note": "连接成功后 assembler.reset()",
-          "text": "}"
+          "text": "s.busy = false"
         }
       ],
       "platformEvidence": {

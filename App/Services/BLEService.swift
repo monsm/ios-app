@@ -180,8 +180,21 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
         }
         if left == 0 { stopScanInternal() }
     }
+    /// 2026-10-30 修复（引用计数泄漏）：这个函数有两个入口 ——
+    ///   ① startScan 自己挂的超时定时器（intervalMs 到点自然停）
+    ///   ② stopScan()（调用方显式停，计数 -1，见 stopScan）
+    /// 原实现只在 ② 里把 scanRefLock 减回去，① 到点时只停物理扫描、**计数留在 +1**。
+    /// 于是计数永远回不到 0：下一次 startScan +1 变 2，stopScan -1 变 1 ——
+    /// `left == 0` 永不成立，后续所有 stopScan() 都不再真停，
+    /// 扫描窗口全靠各调用方自己的 Timer 自然过期（AUDIT-D D-25 的防护从此失效一半）。
+    ///
+    /// 修法：① 与 ② 是**同一张票的两个出口**，都只减 1（归零不行 ——
+    /// coldStartScan 与 preconnect 并发时两张票都在手，先到的出口把计数清 0
+    /// 会把另一张还没用完的票也清掉，恰好复现 D-25 要防的「先结束的把还在用的扫描停掉」）。
+    /// 物理停扫描仍照旧（isScanning 为假时系统调用是幂等的）。
     func stopScanInternal() {
         guard manager != nil else { return }
+        scanRefLock.withLock { $0 = max(0, $0 - 1) }
         if manager.isScanning { manager.stopScan() }
         scanTimer?.invalidate()
         scanTimer = nil
