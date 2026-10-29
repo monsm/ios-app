@@ -1,0 +1,11 @@
+{
+  "App/Services/BackupKit.swift::BackupBundle": "备份信封：坏备份应整份拒绝，不该半份导入",
+  "App/Services/BackupKit.swift::BackupEnvelope": "备份信封头：同上",
+  "App/Services/BackupKit.swift::Globals": "备份里的全局设置段：同上",
+  "App/Services/BackupKit.swift::Appearance": "备份里的外观段：同上",
+  "App/Services/BackupKit.swift::Device": "备份里的设备条目：同上",
+  "App/Services/BackupKit.swift::DeviceOrg": "备份里的设备组织段：同上",
+  "App/Services/BackupStudioKit.swift::RollbackBundle": "回滚点信封：坏回滚点应整份拒绝",
+  "App/Core/CredentialOrg.swift::CredPackage": "凭证导出包：用户主动导入，坏包应报错而不是半份生效",
+  "App/Core/StoreModels.swift::Gateway": "运行时走 fromDict（已容错）；Codable 只用于备份信封"
+}

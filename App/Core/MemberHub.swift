@@ -57,6 +57,14 @@ struct MemberBorrow: Codable {
     var by: String        // 借用人
     var due: String       // 归还日 "yyyy-MM-dd"
     var at: Double       // 登记时刻
+
+    enum CodingKeys: String, CodingKey { case by, due, at }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        by = try c.decodeIfPresent(String.self, forKey: .by) ?? ""
+        due = try c.decodeIfPresent(String.self, forKey: .due) ?? ""
+        at = try c.decodeIfPresent(Double.self, forKey: .at) ?? 0
+    }
 }
 
 enum MemberHub {

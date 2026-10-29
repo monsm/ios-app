@@ -21,6 +21,7 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 const BASE = path.join(ROOT, 'fixtures', 'codable-baseline.json');
+const INTENTIONAL = path.join(ROOT, 'fixtures', 'codable-intentional.json');
 const DIRS = ['App', 'App/Core', 'App/Services', 'App/UI'];
 
 function scan() {
@@ -58,7 +59,10 @@ function scan() {
 }
 
 const cur = scan();
-const curMap = Object.fromEntries(cur.map(x => [x.id, x.required]));
+const intentional = fs.existsSync(INTENTIONAL) ? JSON.parse(fs.readFileSync(INTENTIONAL, 'utf8')) : {};
+// 已评审为「应当严格」的备份/导出信封不算欠账；其余才是真欠账。
+const debt = cur.filter(x => !(x.id in intentional));
+const curMap = Object.fromEntries(debt.map(x => [x.id, x.required]));
 const baseline = fs.existsSync(BASE) ? JSON.parse(fs.readFileSync(BASE, 'utf8')) : {};
 
 if (process.argv.includes('--list')) {
@@ -69,14 +73,14 @@ if (process.argv.includes('--list')) {
 
 if (process.argv.includes('--update')) {
   fs.writeFileSync(BASE, JSON.stringify(curMap, null, 2) + '\n', 'utf8');
-  console.log(`已更新基线 → fixtures/codable-baseline.json（${cur.length} 个）`);
+  console.log(`已更新基线 → fixtures/codable-baseline.json（未评审欠账 ${debt.length} 个，已评审为严格 ${cur.length - debt.length} 个）`);
   process.exit(0);
 }
 
 const added = Object.keys(curMap).filter(k => !(k in baseline));
 const increased = Object.keys(curMap).filter(k => k in baseline && curMap[k] > baseline[k]);
 
-console.log(`Codable 容错棘轮: 未加容错的模型 ${cur.length} 个（基线 ${Object.keys(baseline).length}）`);
+console.log(`Codable 容错棘轮: 未加容错 ${cur.length} 个 = 已评审为严格 ${cur.length - debt.length} + 未评审欠账 ${debt.length}（基线 ${Object.keys(baseline).length}）`);
 
 if (added.length) {
   console.error('✗ 新增了未做容错解码的 Codable 模型：');

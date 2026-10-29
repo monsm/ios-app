@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T12:47:16.857Z",
+    "generated": "2026-10-29T12:54:07.486Z",
     "sources": [
       {
         "scout": "android-native",
@@ -15840,7 +15840,7 @@
           "line": 258,
           "symbol": "proxyNames",
           "note": "",
-          "text": "logs: logs.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,"
+          "text": "/// 799 成员周小结一句人话 (跨全部锁): 近 7 天可证明归属次数 + 工作日最活跃小时段, 归属不出不计"
         },
         {
           "platform": "ios",
@@ -22752,7 +22752,7 @@
           "line": 78,
           "symbol": "permRows(_:)",
           "note": "",
-          "text": "private static let extKey = \"kf_member_ext\""
+          "text": "/// 以及凭证页单条停用时往 361 便签里补的那一句「管理员代操作」)。"
         }
       ],
       "platformEvidence": {
@@ -23243,7 +23243,7 @@
           "line": 78,
           "symbol": "permRows",
           "note": "矩阵唯一定义（五行）",
-          "text": "private static let extKey = \"kf_member_ext\""
+          "text": "/// 以及凭证页单条停用时往 361 便签里补的那一句「管理员代操作」)。"
         },
         {
           "platform": "ios",
@@ -23846,7 +23846,7 @@
           "line": 103,
           "symbol": "emergencyAdmins()",
           "note": "",
-          "text": ""
+          "text": "static let roles = [\"main\", \"member\", \"guest\"]"
         },
         {
           "platform": "ios",
@@ -23917,7 +23917,7 @@
           "line": 64,
           "symbol": "roles",
           "note": "",
-          "text": "static let visitorId = \"__visitor\""
+          "text": "by = try c.decodeIfPresent(String.self, forKey: .by) ?? \"\""
         },
         {
           "platform": "ios",
@@ -23925,7 +23925,7 @@
           "line": 65,
           "symbol": "roleLabel(_:)",
           "note": "",
-          "text": "/// 访客虚拟行判定: 临时码类记录且无可证明归属 (与 793 \"不与家人混淆\" 的独立分组)"
+          "text": "due = try c.decodeIfPresent(String.self, forKey: .due) ?? \"\""
         }
       ],
       "platformEvidence": {
