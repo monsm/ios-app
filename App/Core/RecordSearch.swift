@@ -350,7 +350,7 @@ enum RecordSearch {
     // 三个缓存 + 失效键是一组 (ensureMerged 一次写全, accessor 只读) —— 用一把原生锁护住整组。
     // 选 Locked (值活在临界区内) 而不是 unsafe: 它是 Swift 并发组里的标准互斥原语,
     // withLock 保证 unlock 一定执行; 内置表是常量, 合并只在首次访问时发生一次。
-    private struct Merged: Sendable {
+    struct Merged: Sendable {
         var rows: [Holiday] = []
         var map: [String: String] = [:]
         var makeup: Set<String> = []

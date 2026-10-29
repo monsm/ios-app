@@ -61,7 +61,6 @@ final class LockService: ObservableObject {
     var collectorCmd: UInt8 = 0
 
     // ---------- 请求 (令牌注入 + 重试 + 写失败清 waiter) ----------
-    @discardableResult
 
     // rc 所在 KLV key (JS lock.js RC_KLV, 勘误后权威表)
     /// 0x88 包络里带 MAC 的命令 (rc=12 的顺序自愈只对它们有意义; 网关/明面命令的 MAC 在别处)。
@@ -80,7 +79,6 @@ final class LockService: ObservableObject {
     ]
     struct ExecResult { var frame: ZKProtocol.ParsedFrame; var rc: Int; var klvs: [ZKLV] }
 
-    @discardableResult
 
     /// 回包的 KLV 形状 —— **只报键与长度, 一个值都不带**: 真机排障时 "#02=0B" 这种事实
     /// (锁压根没回密钥) 比任何猜测都有用, 而值里可能含 skey/ekey/PIN 明文 (不得进日志)。
@@ -100,7 +98,6 @@ final class LockService: ObservableObject {
     /// 先读锁钟现在只用来**报告偏差** (读了不写回去), 再回读一次作为"真的写进去了"的证据 ——
     /// rc=0 只证明命令被接收, 不证明锁钟变了。
 
-    @discardableResult
 
     // ---------- 指纹 ----------
     struct FpPress {
