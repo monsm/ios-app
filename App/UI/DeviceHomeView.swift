@@ -19,7 +19,13 @@ struct DeviceHomeView: View {
     @State private var checks = [false, false, false]   // 87 排查清单勾选态
     // 包3 多锁导航: 101/763 横滑翻页 / 102 胶囊切换器 / 267 换锁二次确认 / 271 上滑默认 / 39 倒计时 / 112 换机向导
     @State private var pageIndex = 0
-    @State private var pageOrder: [String] = []
+    // 2026-10-29 修（**两处联动**）：pageOrder 原来是 @State 却**从未赋值**（只有 firstIndex 读点），
+    // 恒空数组 ⇒ 换锁时永远走「不在翻页序列」分支。同时 groupFilter 只被 chip 写、**没人读**
+    // （唯一读它的 inGroup 零调用）⇒ 组筛选点了没反应。改成从 app.devices 经 inGroup 派生，
+    // 一次修好两处：组 chip 真生效，翻页序列也跟着过滤后的顺序走。
+    private var pageOrder: [String] {
+        app.devices.filter { inGroup($0) }.map { $0.mac }
+    }
     // 767 设备 Tab 按组切换: "" = 全部组。只影响"这一屏看得见哪些锁", 不动档案也不动数据。
     @State private var groupFilter = ""
     @State private var confirmMac: String?

@@ -547,6 +547,18 @@ struct DeviceInfoView: View {
 
     // 运行状态: 数值旁标注采样时间 (291), 容量读协议容量族 (773)
     private var statusSection: some View {
+        // 2026-10-29 补：`LinkSense.envConclusion` 零调用 —— 它算的是「近一次扫描见到多少台 BLE
+        // 设备」，用来解释「为什么这台锁有时连不上」。放在锁信息名片里（诊断语义最贴的地方）。
+        Section("连接环境") {
+            Label {
+                Text(LinkSense.envConclusion())
+                    .fixedSize(horizontal: false, vertical: true)
+            } icon: {
+                Image(systemName: "antenna.radiowaves.left.and.right")
+            }
+            .vkFont(.caption)
+            .foregroundStyle(DS.Palette.textSub)
+        }
         Section("运行状态") {
             VStack(alignment: .leading, spacing: DS.Space.xxs) {
                 LabeledRow("门锁电量", pctText)
@@ -855,6 +867,31 @@ struct LockProfileView: View {
                 // 106 备注: 备忘录标题正文的双字段案
                 TextField("备注 (换电历史/安装细节/门锁脾气…)", text: $note, axis: .vertical)
                     .lineLimit(3...6)
+            }
+            // 2026-10-29 补（**后台有实现、前台零入口**）：`AppState.setChosenPinIndex` 零调用，
+            // 而读侧 `chosenPinIndex` / `chosenPin` / `lock.unlock(pinDec:)` 都已在用。
+            // PIN 池有多枚时，用户没法选「开锁用哪一枚」。
+            Section {
+                if let kc = app.current, kc.pins.count > 1 {
+                    Picker("开锁用哪一枚", selection: Binding(
+                        get: { app.chosenPinIndex(kc.mac) },
+                        set: { app.setChosenPinIndex(kc.mac, $0) }
+                    )) {
+                        Text("自动（第一枚）").tag(-1)
+                        ForEach(Array(kc.pins.enumerated()), id: \.offset) { i, _ in
+                            Text("第 \(i + 1) 枚 · …\(String(kc.pins[i].suffix(3)))").tag(i)
+                        }
+                    }
+                } else {
+                    Text("这把锁只有一枚 PIN，或还没读到 PIN 池 —— 不需要选。")
+                        .vkFont(.footnote)
+                        .foregroundStyle(DS.Palette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            } header: {
+                Text("开锁 PIN")
+            } footer: {
+                Text("PIN 池有多枚时，这里决定开锁用哪一枚。选「自动」= 用第一枚（与旧行为一致）。")
             }
             Section {
                 // 108 手动隐藏这把锁: 只影响设备 Tab 的横滑翻页与胶囊主列表。

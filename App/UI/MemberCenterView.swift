@@ -483,6 +483,7 @@ struct MemberDetail360View: View {
                 // 直接改本机台账, 队列没有发起方 → 这个区永远只显示"暂无"。留着就是假开关那一族。
                 credsSection(m)
                 permSection(m)
+                excerptSection(m)
             }
             .navigationTitle(MemberHub.display(m))
             .variantList()
@@ -508,6 +509,36 @@ struct MemberDetail360View: View {
         }
     }
 
+
+    // 2026-10-29 补（**后台有实现、前台零调用**）：`MemberHub.recentExcerpts` 一直在 ——
+    // 成员 360 页看不到「这个人最近开过哪把锁」。补一个板块，只读本机缓存的开锁类日志。
+    @ViewBuilder
+    private func excerptSection(_ m: Member) -> some View {
+        let items = MemberHub.recentExcerpts(m.id, 8)
+        Section {
+            if items.isEmpty {
+                Text("还没有这位成员的开锁记录（或记录页还没拉取过日志）。")
+                    .vkFont(.footnote)
+                    .foregroundStyle(DS.Palette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                ForEach(Array(items.enumerated()), id: \.offset) { _, e in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(e.time)
+                            .vkFont(.caption.monospacedDigit())
+                            .foregroundStyle(DS.Palette.textSub)
+                        Text(e.text)
+                            .vkFont(.footnote)
+                            .foregroundStyle(DS.Palette.text)
+                    }
+                }
+            }
+        } header: {
+            Text("最近开锁（\(items.count) 条）")
+        } footer: {
+            Text("只取本机缓存的开锁类日志，按时间倒序。要看全部请到记录页按 TA 筛选。")
+        }
+    }
 
     // ---------- 261/472 名下凭证 (含借用横条) ----------
     private func credsSection(_ m: Member) -> some View {
