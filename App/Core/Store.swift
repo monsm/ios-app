@@ -48,7 +48,15 @@ final class Store: @unchecked Sendable {
         return [:]
     }
     /// 写路径统一失效：任何一次写入都可能改变同键的任意类型变体。
-    private func invalidateCache(_ k: String) { valueCache.withLock { $0[k] = nil } }
+    private func invalidateCache(_ k: String) {
+        valueCache.withLock { $0[k] = nil }
+        // 2026-10-29 性能：`DB.members()` / `MemberHub.allExt()` 这类「整表转结构体」的结果也缓存，
+        // 但它们的失效必须挂在**底层键**的写入上（kf_members / kf_member_ext）。
+        if k == "kf_members" { derivedCache.withLock { $0["members"] = nil } }
+        if k == "kf_member_ext" { derivedCache.withLock { $0["memberExt"] = nil } }
+    }
+    /// 派生缓存：整表 → [结构体] 的转换结果（见 invalidateCache 的失效规则）。
+    let derivedCache = Locked([String: Any]())
     /// 解码失败过的字典键。saveKeychain 写入前查这里，避免用空表覆盖真数据。
     private let corruptKeys = Locked(Set<String>())
     func isDictCorrupt(_ k: String) -> Bool { corruptKeys.withLock { $0.contains(k) } }
@@ -185,9 +193,15 @@ enum DB {
 
 
     // 成员
+    /// 2026-10-29 性能：`members()` 会把整张 kf_members 字典逐条 `Member.fromDict` 重建，
+    /// 而它被 55 处调用（记录页/成员页/统计/导出都在热路径）。结果缓存，失效挂在 `kf_members` 的写入上
+    /// （见 `Store.invalidateCache`）。
     static func members() -> [Member] {
+        if let hit = store.derivedCache.withLock({ $0["members"] }) as? [Member] { return hit }
         let map = store.getDict("kf_members")
-        return map.values.compactMap { $0 as? [String: Any] }.compactMap(Member.fromDict)
+        let list = map.values.compactMap { $0 as? [String: Any] }.compactMap(Member.fromDict)
+        store.derivedCache.withLock { $0["members"] = list }
+        return list
     }
     /// 2026-10-29 性能：原来每次 `DB.member(id)` 都先 `members()` —— 把整张 kf_members 字典
     /// 逐条 `Member.fromDict` 重建一遍，再 linear search。全仓 55 个调用点，其中记录页是逐行调。

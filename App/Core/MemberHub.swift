@@ -89,7 +89,11 @@ enum MemberHub {
     /// M 个成员就是 M 次全量解码（O(M) 的解码 × M 次调用）。
     /// 这里加一个整表 accessor，调用方一次取表、行内只查字典。
     static func allExt() -> [String: MemberExt] {
-        DB.store.get([String: MemberExt].self, extKey) ?? [:]
+        // 2026-10-29 性能：整表解码结果缓存，失效挂在 `kf_member_ext` 的写入上（见 Store.invalidateCache）。
+        if let hit = DB.store.derivedCache.withLock({ $0["memberExt"] }) as? [String: MemberExt] { return hit }
+        let table = DB.store.get([String: MemberExt].self, extKey) ?? [:]
+        DB.store.derivedCache.withLock { $0["memberExt"] = table }
+        return table
     }
     static func ext(_ id: String, in table: [String: MemberExt]? = nil) -> MemberExt {
         (table ?? allExt())[id] ?? MemberExt()

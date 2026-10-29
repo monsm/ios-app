@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T15:13:53.069Z",
+    "generated": "2026-10-29T15:23:45.018Z",
     "sources": [
       {
         "scout": "android-native",
@@ -15840,7 +15840,7 @@
           "line": 258,
           "symbol": "proxyNames",
           "note": "",
-          "text": "let unix = ZKProtocol.protoSecondsToUnix(Int64(logs[i].lockTime))"
+          "text": "lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: \"\") },"
         },
         {
           "platform": "ios",
@@ -23846,7 +23846,7 @@
           "line": 103,
           "symbol": "emergencyAdmins()",
           "note": "",
-          "text": "// map(\\.key) 产出 [String], 声明是 Set<String> → 不可隐式转换, 显式包一层"
+          "text": "all[id] = e"
         },
         {
           "platform": "ios",
@@ -56901,7 +56901,7 @@
           "line": 120,
           "symbol": "Codable",
           "note": "合成 Codable 的坑写在注释里",
-          "text": "invalidateCache(k)"
+          "text": "defaults.set(next, forKey: key(Self.failureKey))"
         },
         {
           "platform": "ios",
@@ -56970,7 +56970,7 @@
           "line": 439,
           "symbol": "kf_ledger_",
           "note": "族删前缀清单起点",
-          "text": "static func setCodable<T: Encodable>(_ v: T, _ k: String) {"
+          "text": "let salt = rec[\"s\"] ?? \"\""
         }
       ],
       "platformEvidence": {
@@ -57033,7 +57033,7 @@
           "line": 374,
           "symbol": "saveKeychain",
           "note": "密钥不再明文写 plist, 改存系统 Keychain",
-          "text": "static func verifyPasscode(_ pw: String) -> Bool {"
+          "text": "[\"s\": salt, \"d\": fnv1a32(salt + pw), \"d2\": pcStrong(pw, salt: salt)]"
         }
       ],
       "platformEvidence": {
@@ -60208,7 +60208,7 @@
           "line": 435,
           "symbol": "removeDevice(_:)",
           "note": "",
-          "text": "static func get<T: Decodable>(_ t: T.Type, _ k: String) -> T? {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -60507,7 +60507,7 @@
           "line": 182,
           "symbol": "Member",
           "note": "",
-          "text": "return true"
+          "text": "/// \"已删门锁 … 的日志缓存残留\" 的孤儿 (真机报告 2026-10-17: 演示数据的清除路径就踩在这一处)。"
         }
       ],
       "platformEvidence": {
@@ -61122,7 +61122,7 @@
           "line": 290,
           "symbol": "DefendCfg",
           "note": "",
-          "text": "map.removeValue(forKey: mac.replacingOccurrences(of: \":\", with: \"\").lowercased())"
+          "text": "merged = Dongle(mac: d.mac,"
         },
         {
           "platform": "ios",
@@ -61130,7 +61130,7 @@
           "line": 261,
           "symbol": "DongleStat",
           "note": "",
-          "text": ""
+          "text": "claims = claims.filter { $0.value != id }"
         },
         {
           "platform": "ios",
@@ -61138,7 +61138,7 @@
           "line": 272,
           "symbol": "Gateway",
           "note": "",
-          "text": "static func saveDongle(_ d: Dongle) {"
+          "text": "duty = duty.filter { $0.value != id }"
         }
       ],
       "platformEvidence": {
@@ -61296,7 +61296,7 @@
           "line": 104,
           "symbol": "Keychain",
           "note": "",
-          "text": "private let failureLock = Locked(false)"
+          "text": "/// 只存\"键 ← 失败原因\"，**不存值** (值可能是口令或 2FA 种子，绝不能在诊断里重现)。"
         },
         {
           "platform": "ios",
@@ -61304,7 +61304,7 @@
           "line": 131,
           "symbol": "init(from:)",
           "note": "",
-          "text": "/// 按前缀族取键 (已去掉 \"kf.\" 头): 回滚只收\"恢复会动到\"的那几族, 不把日志/遥测这类大块拖进快照"
+          "text": "/// 键是否存在 (区分\"无数据\"与\"有数据但解不出\")"
         },
         {
           "platform": "ios",
@@ -61382,7 +61382,7 @@
           "line": 150,
           "symbol": "LedgerPwd",
           "note": "",
-          "text": ""
+          "text": "enum DB {"
         },
         {
           "platform": "ios",
@@ -61390,7 +61390,7 @@
           "line": 161,
           "symbol": "LedgerFp",
           "note": "",
-          "text": "static var lastDevice: String {"
+          "text": "/// 表现是「配了两把锁只剩一把」这类偶发数据丢失。"
         },
         {
           "platform": "ios",
@@ -61398,7 +61398,7 @@
           "line": 176,
           "symbol": "Ledger",
           "note": "",
-          "text": "static func cacheWritable(_ mac: String) -> Bool {"
+          "text": "/// 2026-10-14: 原为非隔离可变 static var, 后台任务与主线程并发访问是数据竞争; 加锁存取。"
         }
       ],
       "platformEvidence": {
@@ -61466,7 +61466,7 @@
           "line": 198,
           "symbol": "StatusSnapshotData",
           "note": "",
-          "text": "guard let d = map[id] as? [String: Any] else { return nil }"
+          "text": "/// （见 `Store.invalidateCache`）。"
         },
         {
           "platform": "ios",
@@ -61474,7 +61474,7 @@
           "line": 223,
           "symbol": "CachedLog",
           "note": "",
-          "text": "}"
+          "text": "let used = Set(members().map { $0.color })"
         }
       ],
       "platformEvidence": {
@@ -61762,7 +61762,7 @@
           "line": 350,
           "symbol": "migrateSecretsToKeychain()",
           "note": "",
-          "text": "/// 所以这不是「对齐 vendor」而是**本仓自造的更强方案**；跨端互操作靠 d/d2 双写："
+          "text": "/// 于是：① 应用锁界面出现，但任何输入都验不过 → 用户被永久锁在外面；"
         },
         {
           "platform": "ios",
@@ -61770,7 +61770,7 @@
           "line": 361,
           "symbol": "stored",
           "note": "stored || set 成功才 removeValue",
-          "text": "}"
+          "text": "/// 门禁口令摘要轮数 (PBKDF2-HMAC-SHA256)"
         }
       ],
       "platformEvidence": {
@@ -61920,7 +61920,7 @@
           "line": 374,
           "symbol": "saveKeychain(_:)",
           "note": "",
-          "text": "static func verifyPasscode(_ pw: String) -> Bool {"
+          "text": "[\"s\": salt, \"d\": fnv1a32(salt + pw), \"d2\": pcStrong(pw, salt: salt)]"
         },
         {
           "platform": "ios",
@@ -61928,7 +61928,7 @@
           "line": 425,
           "symbol": "removeKeychain(_:)",
           "note": "",
-          "text": "let salt = rec[\"s\"] ?? \"\""
+          "text": "static func setDuressCode(_ code: String?) -> Bool {"
         },
         {
           "platform": "ios",
@@ -61936,7 +61936,7 @@
           "line": 438,
           "symbol": "removeDevice",
           "note": "clearPendingPair",
-          "text": "/// 跨文件写 Codable 的唯一入口 (参数序 = 值在前、键在后, 与内部 set 一致)"
+          "text": "guard let rec = get([String: String].self, duressKey) else { return false }"
         }
       ],
       "platformEvidence": {
@@ -62195,7 +62195,7 @@
           "line": 63,
           "symbol": "failureKey",
           "note": "",
-          "text": "func setInt(_ k: String, _ v: Int) { set(k, v) }"
+          "text": "func getString(_ k: String, _ def: String = \"\") -> String {"
         },
         {
           "platform": "ios",
@@ -62203,7 +62203,7 @@
           "line": 70,
           "symbol": "recordFailure(_:_:)",
           "note": "",
-          "text": "let d = try JSONSerialization.data(withJSONObject: v, options: [.fragmentsAllowed])"
+          "text": "func getDouble(_ k: String, _ def: Double = 0) -> Double { get(k, Double.self) ?? def }"
         },
         {
           "platform": "ios",
@@ -62211,7 +62211,7 @@
           "line": 80,
           "symbol": "failureLines()",
           "note": "",
-          "text": "}"
+          "text": "invalidateCache(k)"
         }
       ],
       "platformEvidence": {
@@ -62290,7 +62290,7 @@
           "line": 69,
           "symbol": "failureLock",
           "note": "消费点之一：Locked(false)",
-          "text": "do {"
+          "text": "func getInt(_ k: String, _ def: Int = 0) -> Int { get(k, Int.self) ?? def }"
         },
         {
           "platform": "ios",
@@ -62367,7 +62367,7 @@
           "line": 86,
           "symbol": "keys()",
           "note": "",
-          "text": "invalidateCache(k)"
+          "text": "recordFailure(k, \"JSONSerialization: \\((error as NSError).localizedDescription)\")"
         },
         {
           "platform": "ios",
@@ -62375,7 +62375,7 @@
           "line": 85,
           "symbol": "has(_:)",
           "note": "",
-          "text": "defaults.set(try JSONEncoder().encode(v), forKey: key(k))"
+          "text": "} catch {"
         }
       ],
       "platformEvidence": {
@@ -62436,7 +62436,7 @@
           "line": 91,
           "symbol": "rawData(_:)",
           "note": "",
-          "text": "}"
+          "text": "func setCodable<T: Encodable>(_ k: String, _ v: T) {"
         },
         {
           "platform": "ios",
@@ -62444,7 +62444,7 @@
           "line": 94,
           "symbol": "matchingKeys(prefixes:)",
           "note": "",
-          "text": "/// 为什么不建内存静态量: Swift 6 下非隔离可变全局本身要处理竞态，而且进程重启就没了 ——"
+          "text": "invalidateCache(k)"
         },
         {
           "platform": "ios",
@@ -62452,7 +62452,7 @@
           "line": 97,
           "symbol": "clearAll",
           "note": "已删除",
-          "text": "/// 同键同因只记一次: 热 getter 若每帧都失败，不把 defaults 当日志刷。"
+          "text": "} catch {"
         }
       ],
       "platformEvidence": {
@@ -63750,7 +63750,7 @@
           "line": 76,
           "symbol": "prefix(40)",
           "note": "if next.count > 40",
-          "text": "corruptKeys.withLock { $0.remove(k) }"
+          "text": "// 读侧只能拿到默认值 (设置页所有开关/主题/救援码/免验窗口全部失效)。"
         }
       ],
       "platformEvidence": {
