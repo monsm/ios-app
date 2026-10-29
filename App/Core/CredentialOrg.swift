@@ -42,11 +42,6 @@ enum CredentialOrg {
         let t = String(s.prefix(19))
         return credFormatter.date(from: t)
     }
-    /// 永久有效期 (2118) 返回 nil — 不参与到期排序与预警
-    static func expiryDate(_ p: LedgerPwd) -> Date? {
-        guard !p.to.hasPrefix("2118") else { return nil }
-        return parseLocal(p.to)
-    }
     static var nowSec: Double { Date().timeIntervalSince1970 }
 
     static func quota(_ mac: String) -> Int { DB.store.getInt("kf_ccred_quota", 10) }
@@ -136,80 +131,7 @@ enum CredentialOrg {
 
     /// 启动清理: 全锁回收站 497 保留期巡检 (LockKeeperApp.onLaunch 调用)
 
-    // ---------- 347/348/349/357 批量本地操作 (下发部分只入队, UI 标注本地意图) ----------
-    /// 348 统一延期: 本地改写所选过期字段并留变更清单 (逐条入队, 到场后统一补发)
-    /// 批量延期。2026-10-27 (D-58)：同 batchDisable —— 找不到的条目如实返回，不静默跳过。
-    static func batchExtend(_ mac: String, _ aliases: [Int], _ from: String, _ to: String)
-        -> (done: [Int], failed: [Int]) {
-        var out: [Int] = []
-        var failed: [Int] = []
-        for a in aliases {
-            guard DB.ledger(mac).pwds.contains(where: { $0.alias == a }) else {
-                failed.append(a)
-                continue
-            }
-            DB.setPwdPeriod(mac, a, from, to)
-            out.append(a)
-        }
-        return (out, failed)
-    }
-    /// 357 前缀批量备注
-    // 【保留未接 2026-10-29】批量给多条凭证加同一个前缀备注（用户 B1 未选，保留待接：凭证页多选菜单可挂）
-    static func batchPrefixNote(_ mac: String, pwdAliases: [Int], fpBatches: [Int], prefix: String) -> Int {
-        var n = 0
-        var l = DB.ledger(mac)
-        for i in l.pwds.indices where pwdAliases.contains(l.pwds[i].alias) && !(l.pwds[i].note.hasPrefix(prefix)) {
-            l.pwds[i].note = prefix + l.pwds[i].note; n += 1
-        }
-        for i in l.fps.indices where fpBatches.contains(l.fps[i].batch) && !(l.fps[i].note.hasPrefix(prefix)) {
-            l.fps[i].note = prefix + l.fps[i].note; n += 1
-        }
-        DB.saveLedger(mac, l)
-        return n
-    }
-    /// 353 批量停用: 所选过期/老旧项本地移除并入回收站, 锁端删除入队
-    /// 批量停用：把选中的密码/指纹移入回收站（同一批次，可整组还原）。
-    ///
-    /// 2026-10-27 审核修复 (AUDIT-D D-58)：原先 `guard ... else { continue }` **静默跳过**
-    /// 找不到的条目，只返回成功数 —— 用户看到「已停用 8 条」却不知道有 2 条根本没动
-    /// （可能是别处已经删了、或台账里编号对不上）。
-    /// 现在返回 (done, failed)：failed 是"选中了但没找到"的编号，UI 必须如实报出来。
-    static func batchDisable(_ mac: String, pwdAliases: [Int], fpBatches: [Int])
-        -> (done: Int, failedPwds: [Int], failedFps: [Int]) {
-        var n = 0
-        var failedPwds: [Int] = []
-        var failedFps: [Int] = []
-        let batchId = UUID().uuidString   // 353: 一次批量停用 = 一个批次, 回收站里可整组还原
-        for a in pwdAliases {
-            guard DB.ledger(mac).pwds.contains(where: { $0.alias == a }) else {
-                failedPwds.append(a)   // D-58：找不到就记下来，不静默跳过
-                continue
-            }
-            DB.delPwd(mac, a)
-            n += 1
-        }
-        for b in fpBatches {
-            guard DB.ledger(mac).fps.contains(where: { $0.batch == b }) else {
-                failedFps.append(b)
-                continue
-            }
-            DB.delFp(mac, b)
-            n += 1
-        }
-        return (n, failedPwds, failedFps)
-    }
 
-    // ---------- 524/526/528 计数与三态 ----------
-    static func typeCounts(_ mac: String) -> (all: Int, pwd: Int, fp: Int, otp: Int) {
-        let pwds = DB.listPwds(mac), fps = DB.listFps(mac)
-        return (pwds.count + fps.count, pwds.count, fps.count, DB.otpStatus(mac)?.on == true ? 1 : 0)
-    }
-    static func pwdState(_ p: LedgerPwd) -> Int {
-        // 0 进行中 / 1 已排期 / 2 已过期 (按时间窗推断, 一次性语义锁端未定义故不区分)
-        if let to = expiryDate(p), to.timeIntervalSinceNow <= 0 { return 2 }
-        if let f = parseLocal(p.from), f.timeIntervalSinceNow > 0 { return 1 }
-        return 0
-    }
 
 
 
@@ -220,60 +142,8 @@ enum CredentialOrg {
     static func saveAlert(_ mac: String, _ p: LedgerPwd, _ a: CredAlert) {
         DB.setCodable(a, alertKey(mac, "pwd", p.alias))
     }
-    /// 926/930 替代: 7 / 3 / 1 天 + 24 / 2 小时**都**排本地通知, 另加"到期时"一条。
-    /// 原 359 把 2 小时档做成"只插列表提醒行, 不排通知"(详情页卡片上写着这句话);
-    /// 926/930 判 ❌ 后拍板按替代执行 —— 替代栏原话是"到期前 2 小时与到期时各发本地通知"。
-    /// 排程扩到六条, 列表提醒行 (dueSoonPwds) **照旧保留**: 前台多一处提示不是坏事。
-    static func scheduleAlerts(_ mac: String, _ p: LedgerPwd, _ a: CredAlert) {
-        let c = UNUserNotificationCenter.current()
-        let id = "c6.alert.\(mac).p\(p.alias)"
-        c.getPendingNotificationRequests { reqs in
-            let stale = reqs.map(\.identifier).filter { $0 == id || $0.hasPrefix(id + ".") }
-            if !stale.isEmpty { c.removePendingNotificationRequests(withIdentifiers: stale) }
-        }
-        // "到期时"不看单档开关: 开了任何一档 = 在意这条凭证的到期, 到点本身最该说话。
-        let any = a.day || a.d3 || a.d1 || a.h24 || a.h2
-        guard let to = expiryDate(p), any else { return }
-        let name = displayPwd(p)
-        // 天数档是**日历日** ⇒ 走 WeekCal.shifted; 小时档说的是"还有 N 小时" = 时长。
-        // 两种口径在这里不是一回事 (§10.33), 混用会让 -1 天那条在夏令时切换日多/少一小时。
-        func dayTier(_ on: Bool, _ k: Int, _ suf: String, _ tail: String) {
-            if on {
-                addCalendar(id: id + suf, date: WeekCal.shifted(to, days: -k),
-                            title: "密码临期", body: "\(name) 距到期还有 \(k) 天。" + tail)
-            }
-        }
-        dayTier(a.day, 7, ".d7", "记得续期或停用。")
-        dayTier(a.d3, 3, ".d3", "")
-        dayTier(a.d1, 1, ".d1", "明天就失效了。")
-        if a.h24 {
-            addCalendar(id: id + ".h24", date: to.addingTimeInterval(-86400),
-                        title: "密码临期", body: "\(name) 距到期不足 24 小时。")
-        }
-        if a.h2 {
-            addCalendar(id: id + ".h2", date: to.addingTimeInterval(-7200),
-                        title: "密码临期", body: "\(name) 距到期还有 2 小时。")
-        }
-        addCalendar(id: id + ".t0", date: to, title: "已到期",
-                    body: "\(name) 到期了, 锁端到这个时刻后不再放行这条凭证。")
-    }
 
-    /// 930 凭证 Tab 角标: 近 7 日内到期的条数。
-    /// 与 363 月历格、dueSoonPwds 同源同一把尺 (expiryDate), 不另算第二套; 长期有效 (2118) 与归档条不计。
-    static func expiringSoonCount(macs: [String], within days: Int = 7) -> Int {
-        let limit = nowSec + Double(days) * 86400
-        var n = 0
-        for mac in macs {
-            for p in DB.listPwds(mac) {
-                if let to = expiryDate(p) {
-                    let t = to.timeIntervalSince1970
-                    if t >= nowSec && t <= limit { n += 1 }
-                }
-            }
-        }
-        return n
-    }
-    private static func addCalendar(id: String, date: Date, title: String, body: String) {
+    static func addCalendar(id: String, date: Date, title: String, body: String) {
         guard date > Date() else { return }
         let c = UNMutableNotificationContent()
         c.title = title
@@ -324,9 +194,6 @@ enum CredentialOrg {
     /// 2026-10-27 七轮：`kf_cdisrea_` 停用便签**保留** —— 它是停用功能的一部分，
     /// 不是死键（disableMark / disableMarks / setDisableMark 三处都在用）。
     static func disReasonKey(_ mac: String) -> String { "kf_cdisrea_" + mac }
-    static func disableMark(_ mac: String, kind: String, key: Int) -> DisableMark? {
-        (DB.store.get([String: DisableMark].self, disReasonKey(mac)) ?? [:])["\(kind):\(key)"]
-    }
     static func markDisabled(_ mac: String, kind: String, keys: [Int], label: String, via: String) {
         guard !keys.isEmpty else { return }
         var m = DB.store.get([String: DisableMark].self, disReasonKey(mac)) ?? [:]
@@ -338,15 +205,6 @@ enum CredentialOrg {
             m = Dictionary(uniqueKeysWithValues: keep.map { ($0.key, $0.value) })
         }
         DB.store.setCodable(disReasonKey(mac), m)   // 注意层间参数序相反: store.setCodable(键,值), DB.setCodable(值,键)
-    }
-    /// 361 回显文案: 停用原因 + 时刻 + 来源路径; 没有标记 (非本 App 停用) 就不编造
-    // 【保留未接 2026-10-29】停用原因回显（用户 B1 未选，保留待接：凭证详情页的停用行）
-    static func disableMarkText(_ mac: String, kind: String, key: Int) -> String? {
-        guard let d = disableMark(mac, kind: kind, key: key) else { return nil }
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "MM-dd HH:mm"
-        return "停用原因 \(d.label) · \(f.string(from: Date(timeIntervalSince1970: d.at))) · \(d.via)"   // 361 停用原因
     }
 
     // ---------- 355/914 组织偏好持久化 ----------
@@ -385,31 +243,6 @@ enum CredentialOrg {
         DB.setCodable(searchHistory().filter { $0 != q }, "kf_csearch_hist")
     }
 
-    // ---------- 363 月历到期 (每日格右上角当日到期凭证数) ----------
-    // 【保留未接 2026-10-29】月历到期角标（用户 B1 未选，保留待接：凭证页月历视图）
-    static func monthDeadlines(_ mac: String, year: Int, month: Int) -> [Date: Int] {
-        var cal = WeekCal.gregorian
-        cal.timeZone = TimeZone.current
-        guard let start = cal.date(from: DateComponents(year: year, month: month, day: 1)) else { return [:] }
-        var out: [Date: Int] = [:]
-        for p in DB.listPwds(mac) {
-            guard let to = expiryDate(p),
-                  cal.component(.year, from: to) == year,
-                  cal.component(.month, from: to) == month,
-                  let key = cal.date(from: DateComponents(year: year, month: month, day: cal.component(.day, from: to))) else { continue }
-            out[key, default: 0] += 1
-            _ = start
-        }
-        return out
-    }
-    // 【保留未接 2026-10-29】某天到期凭证列表 —— monthDeadlines 的配套读侧，同日历一起接
-    static func dayDeadlines(_ mac: String, _ date: Date) -> [LedgerPwd] {
-        let cal = WeekCal.gregorian
-        return DB.listPwds(mac).filter { p in
-            guard let to = expiryDate(p) else { return false }
-            return cal.isDate(to, inSameDayAs: date)
-        }
-    }
 
 
     // ---------- 529 组尾统计 (基于台账推断, 标"约") ----------
@@ -443,19 +276,6 @@ enum CredentialOrg {
         var pwds: [LedgerPwd]
         var fps: [LedgerFp]
         var at: Double
-    }
-    /// 返回 (Base64 信封文本, 口令)。UI 用 ShareLink 发文本 + 口令单列展示, 不与凭证混排。
-    static func exportPackage(_ mac: String, pwdAliases: [Int], fpBatches: [Int], password: String) -> (data: Data, size: Int)? {
-        let l = DB.ledger(mac)
-        let pwds = l.pwds.filter { pwdAliases.isEmpty || pwdAliases.contains($0.alias) }
-        let fps = l.fps.filter { fpBatches.isEmpty || fpBatches.contains($0.batch) }
-        guard !pwds.isEmpty || !fps.isEmpty else { return nil }
-        let pkg = CredPackage(v: 1, mac: mac, lockName: LockArchive.displayName(DB.keychain(mac) ?? Keychain(mac: mac, skey: "")),
-                              pwds: pwds, fps: fps, at: nowSec)
-        guard let json = try? JSONEncoder().encode(pkg),
-              let text = String(data: json, encoding: .utf8),
-              let enc = try? CryptoBox.encryptText(text, password: password) else { return nil }
-        return (Data(enc.utf8), pwds.count + fps.count)
     }
 
 
@@ -499,47 +319,7 @@ enum CredentialOrg {
     // ================= 包5 凭证工坊辅助 (纯本地推断, 不新增协议命令) =================
     // 展示层语义纪律: 锁端一次性/周期/暂停未定义 (CAPABILITY §4), 所有推断值 UI 必须带"约"字。
 
-    // ---------- 304 全库重复拦截 ----------
-    static func duplicatePwdValues(_ mac: String, _ value: String, excluding: Int) -> [LedgerPwd] {
-        DB.listPwds(mac).filter { $0.pwd == value && $0.alias != excluding }
-    }
-    /// 跨锁同值 (304 "全库"): 只报**其它锁**的显示名 (去重)。
-    /// 旧版 `duplicatePwdValuesAnyLock` 返回 [LedgerPwd] 却不带 mac —— 调用方拿到条目也说不出是哪把锁,
-    /// 还把当前锁的其它别名一起算进来, 与上面的同锁检查重复计数。改成直接给一句警告需要的信息。
-    static func duplicatePwdLockNames(_ value: String, excludingMac: String) -> [String] {
-        guard !value.isEmpty else { return [] }
-        var names: [String] = []
-        for k in DB.keychains() where k.mac != excludingMac {
-            guard DB.listPwds(k.mac).contains(where: { $0.pwd == value }) else { continue }
-            let n = LockArchive.displayName(k)
-            if !names.contains(n) { names.append(n) }
-        }
-        return names
-    }
-    /// 314 前缀混淆: 同锁内其它密码前 4 位相同, 口头易混淆
-    static func prefixConflict(_ mac: String, _ value: String, excluding: Int) -> [LedgerPwd] {
-        guard value.count >= 4 else { return [] }
-        let pre = value.prefix(4)
-        return DB.listPwds(mac).filter { $0.alias != excluding && $0.pwd?.hasPrefix(pre) == true }
-    }
 
-    /// 弱口令三条判据 (都可证伪; 不评"强度分"): 少于 6 位 / 全部同一位 / 连续递增递减
-    // 【保留未接 2026-10-29】弱口令判据（少于6位/全同位/连续）—— 新密码输入时可用于即时提示
-    static func weakReason(_ v: String) -> String? {
-        guard !v.isEmpty else { return nil }
-        if v.count < 6 { return "少于 6 位" }
-        if Set(v).count == 1 { return "全部同一位数字" }
-        let digits = v.compactMap { $0.wholeNumberValue }
-        if digits.count == v.count, digits.count >= 3 {
-            var up = true, down = true
-            for i in 1..<digits.count {
-                if digits[i] != digits[i - 1] + 1 { up = false }
-                if digits[i] != digits[i - 1] - 1 { down = false }
-            }
-            if up || down { return "连续递增/递减序列" }
-        }
-        return nil
-    }
     static func pwdAgeDays(_ p: LedgerPwd) -> Int? {
         guard p.at > 0 else { return nil }
         // 单位口径：毫秒 —— LedgerPwd.at 写的是 `timeIntervalSince1970 * 1000` (见 CredentialStudio 提交那两处)，先除回秒再算天数。
@@ -571,12 +351,6 @@ enum CredentialOrg {
         }
     }
 
-    // ---------- 319 重录继承 / 324 冗余横条 ----------
-    /// 该成员名下可用指纹数 (0 = 最后一枚 → 删除需双签 323; 冗余横条 324 用全锁口径)
-    static func fpCountByOwner(_ mac: String, _ owner: String?) -> Int {
-        guard let o = owner else { return 0 }
-        return DB.listFps(mac).filter { $0.owner == o }.count
-    }
     static func fpCountTotal(_ mac: String) -> Int { DB.listFps(mac).count }
 
     // ---------- 311/316/320/326/335/333 台账推断统计 (⚠ 全部标"约") ----------
@@ -630,10 +404,6 @@ enum CredentialOrg {
         return to.addingTimeInterval(-Double(m) * 60)
     }
 
-    static func isEarlyExpired(_ mac: String, _ p: LedgerPwd, _ now: Date) -> Bool {
-        guard earlyExpireMin(mac, p.alias) > 0, let e = effectiveExpiry(mac, p) else { return false }
-        return now >= e
-    }
     /// 331 详情页状态行的后缀: 设了提前量才给, 没设就空串 (提示语不吹一件没设过的事)。
     static func earlyExpiryNote(_ mac: String, _ p: LedgerPwd) -> String {
         let m = earlyExpireMin(mac, p.alias)
@@ -675,21 +445,6 @@ enum CredentialOrg {
         DB.store.remove("kf_cdraft_" + mac)
     }
 
-    // ---------- 显示层辅助 (919 别名显示切换: 成员"别名"字段 = relation 备注, 空则回退真名) ----------
-    static func ownerName(_ id: String?) -> String {
-        guard let id, let m = DB.member(id) else { return "" }
-        if aliasDisplay, !m.relation.isEmpty { return m.relation }
-        return m.name
-    }
-    static func displayPwd(_ p: LedgerPwd) -> String {
-        if !p.note.isEmpty {
-            let s = p.note.split(separator: "·").map { String($0).trimmingCharacters(in: .whitespaces) }.first
-            if let s, !s.isEmpty, s.count <= 12 { return s }
-        }
-        let o = ownerName(p.owner)
-        if !o.isEmpty { return "\(o) 的密码 #\(p.alias)" }
-        return p.temp ? "临时密码 #\(p.alias)" : "密码 #\(p.alias)"
-    }
     /// 到期时刻的界面读法。`2118-01-01 00:00` 是**"永不到期"的哨兵值** (写库与 363/331 那两条判据都用它),
     /// 直接印出来就是"到 2118-01-01"这种把内部哨兵当事实报给用户的话。
     /// 这条判据此前在 `displayPwd` 那侧有一份、在回收站/历史/延期三处界面各有一份, 收成一处。
