@@ -19,6 +19,7 @@ struct AddDeviceView: View {
     /// iOS 默认从蓝牙广播自动识别（`pairedKC.pid`），这里给一个**修正**通道：
     /// 识别不到、或广播里的 pid 是老固件的错值时才用得上。0 = 自动（不覆盖）。
     @State private var pidChoice = 0
+    @State private var probingId: String?   // APK 对照 page-romlist: 正在做连通探测的那一行
 
     var body: some View { vkBody.destined(.addDevice) }
     var vkBody: some View {
@@ -114,17 +115,7 @@ struct AddDeviceView: View {
                     }
                 }
                 ForEach(devices) { d in
-                    Button { Task { await confirmPair(d, ZKProtocol.parseAdv(d.advertisHex)) } } label: {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(d.name.isEmpty ? "未知设备" : d.name)
-                                .vkFont(.subheadline, weight: .medium)
-                            Text(d.deviceId)
-                                .vkFont(.caption2)
-                                .foregroundStyle(DS.Palette.textSub)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .frame(minHeight: DS.Hit.min)
-                    }
+                    deviceRow(d)
                 }
             } header: {
                 Text("发现的设备")
@@ -135,6 +126,106 @@ struct AddDeviceView: View {
         .variantList()
         .dsScreenBackground()
         .task { await scan() }   // 251: 进页即扫, 发现列表实时滚动
+    }
+
+    // 2026-10-29 恢复（`fdd0606` 十轮精简时删掉了 76 行的 deviceRow，列表退化成只剩名字与 ID）：
+    // 每行必须能回答「这台是不是我的锁 / 能不能现在配 / 不能的话差哪一步」，
+    // 所以保留 dBm、MAC·型号、重置态提示与状态徽标四件套。
+    private func deviceRow(_ d: BLEAdvDevice) -> some View {
+        let adv = ZKProtocol.parseAdv(d.advertisHex)
+        let inReset = (adv?.resetStatus ?? 0) == 1
+        let isLock = adv.map { PidMap.isLock($0.pid) } ?? false
+        let canPair = inReset && isLock
+        // 续配入口 (2026-10-17 真机): 05 换钥回 rc=0 之后锁内 skey 已经是新的, 锁**不再广播重置位** ——
+        // 而本机此时正好留着一份尾链没走完的记录 (pendingPair)。若这一行因为 !inReset 不可点, 用户
+        // 就只剩"再跑一趟键盘重置"一条路。判据是**本机有没有这份记录**, 不是锁的广播位。
+        let pendMac = adv.flatMap { ZKProtocol.lockMac(fromAdv: $0) }
+        let canResume = isLock && (pendMac.map { DB.pendingPair($0) != nil } ?? false)
+        return Button {
+            if canPair || canResume { confirmPair(d, adv) }
+            else if adv == nil { app.showToast("广播未识别 — 非门锁设备, 或系统缓存了不完整广播") }
+            else if !inReset { app.showToast("该锁不在重置态 — 请先做键盘物理重置") }
+            else { app.showToast("未识别的设备型号") }
+        } label: {
+            HStack(spacing: DS.Space.s) {
+                VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                    HStack(spacing: DS.Space.xs) {
+                        Text(d.name.isEmpty ? "未知设备" : d.name)
+                            .vkFont(.subheadline)
+                            .foregroundStyle(DS.Palette.text)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.85)
+                        // 251: 信号强度是"该先点哪把锁"的排序依据, 标出来
+                        Text("\(d.rssi) dBm")
+                            .vkFont(.caption2)
+                            .monospacedDigit()
+                            .foregroundStyle(DS.Palette.textSub)
+                    }
+                    Text("\(adv?.macDisplay ?? "—") · \(adv.map { PidMap.modelName($0.pid) } ?? "未知")")
+                        .vkFont(.caption)
+                        .foregroundStyle(DS.Palette.textSub)
+                        // 型号是判断"是不是我的锁"的关键信息, 不做 lineLimit(1) 截断
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if canResume {
+                        Text("本机已留存密钥 — 点它接着配完, 不必再重置")
+                            .vkFont(.caption)
+                            .foregroundStyle(DS.Palette.textSub)
+                    } else if !inReset {
+                        Text("需先在键盘上物理重置")
+                            .vkFont(.caption)
+                            .foregroundStyle(DS.Palette.textSub)
+                    }
+                }
+                Spacer(minLength: DS.Space.s)
+                if adv == nil {
+                    StatusPill(text: "未识别", systemImage: "questionmark.circle", tone: .neutral)
+                } else if canPair {
+                    StatusPill(text: "可配网", systemImage: "checkmark.circle.fill", tone: .ok)
+                } else if canResume {
+                    StatusPill(text: "待续配", systemImage: "arrow.clockwise", tone: .warn)
+                } else if !inReset {
+                    StatusPill(text: "已配对", systemImage: "lock.fill", tone: .neutral)
+                } else {
+                    StatusPill(text: "非门锁", systemImage: "questionmark.circle", tone: .neutral)
+                }
+            }
+            .frame(minHeight: DS.Hit.min)
+            .contentShape(Rectangle())
+        }
+        .accessibilityLabel("\(d.name.isEmpty ? "未知设备" : d.name)，\(d.rssi) dBm，\(canPair ? "可配网" : (adv == nil ? "未识别广播" : (canResume ? "待续配" : "已配对")))")
+        // APK 对照 (page-romlist): 原版在扫描列表里先对每台设备发一次回声 (cmd12) 再进锁页。
+        // 本机放在长按菜单里 —— 行本身就是"点它开始配对"的入口, 再塞一个按钮会把两件事做成同形。
+        .contextMenu {
+            Button {
+                Task { await probeEcho(d) }
+            } label: {
+                Label(probingId == d.deviceId ? "正在探测…" : "连通探测",
+                      systemImage: "dot.radiowaves.left.and.right")
+            }
+            .disabled(probingId != nil)
+        }
+    }
+
+    /// 长按行的「连通探测」：对这台设备发一次回声 (cmd 12)，把链路可用性先验一遍。
+    /// 注意：`probeEcho` 自带临时链路管理（连接→探测→拆链路→清连接态），
+    /// **不要**先调 `ensureConnected(mac:)` —— 那会把一台还没钥匙的设备写进 DB.lastDevice。
+    private func probeEcho(_ d: BLEAdvDevice) async {
+        guard probingId == nil else { return }
+        probingId = d.deviceId
+        defer { probingId = nil }
+        do {
+            let r = try await app.lock.probeEcho(deviceId: d.deviceId)
+            if r.ok {
+                let eh = r.echoHex.isEmpty ? "无回显" : r.echoHex
+                app.showToast("\(d.name) 回声往返 \(r.ms) ms · 回显 \(eh)"
+                    + (r.matched ? " (与发出值一致)" : " (与发出的 123456 不同 — 记下来, 不一定就是链路故障)"))
+            } else {
+                app.showToast("\(d.name) 回声 rc=\(r.rc): \(StatusParser.rcMessage(r.rc))")
+            }
+        } catch {
+            app.showToast("探测失败: \(error.localizedDescription)")
+        }
     }
 
     // 253 四步进度条: 发现 → 校验 → 初始化 → 命名

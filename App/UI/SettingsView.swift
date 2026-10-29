@@ -8,11 +8,8 @@ struct SettingsView: View {
     @EnvironmentObject var app: AppState
     @State var showMembers = false
     @State var showGateway = false
-    @State var showDeviceInfo = false
     // 2026-10-29：锁设置 sheet（B 档）
-    @State var showLockSettings = false
     @State var showBackup = false
-    @State var showAdd = false
     /// 2026-10-17 安卓版: 把当前锁的开锁凭证渲染成二维码 (扫码导入, 之后不再需要)
     @State var shareLock: Keychain?
     // 2026-10-15 走查: 这两个目标页也自带 NavigationStack, 同样只能走 sheet
@@ -81,11 +78,8 @@ struct SettingsView: View {
         .dsScreenBackground()
         .sheet(isPresented: $showMembers) { MembersView() }
         .sheet(isPresented: $showGateway) { GatewayView() }
-        .sheet(isPresented: $showLockSettings) { LockSettingsView() }
-        .sheet(isPresented: $showDeviceInfo) { DeviceInfoView() }
         .sheet(isPresented: $showBackup) { BackupView() }
         .sheet(item: $shareLock) { ShareToAndroidView(kc: $0) }
-        .sheet(isPresented: $showAdd) { AddDeviceView() }
         // 为什么不用 navigationDestination(isPresented:): 全仓无先例, 而 sheet+NavigationStack 与
         // 与 showDiag 那一段逐字同构 —— 无编译器的机器上, 复用已验证的写法是唯一稳的取向。
         .task { landPendingCare(app.pendingCare) }              // 1013: 与上两行同构
@@ -230,8 +224,8 @@ struct SettingsView: View {
             // 由 searchResults 负责"切组 + scrollTo 滚到那一节"。
             // 不在本页的功能 (开 sheet 的那些) 仍是 `anchor: nil`, 交给 go 直接开。
             SearchHit(id: "s.lockprofile", title: "锁档案 (昵称/符号/色标)", icon: "lock", anchor: .lock),
-            SearchHit(id: "s.mute", title: "静音模式", icon: "speaker.slash") { showLockSettings = true },
-            SearchHit(id: "s.synctime", title: "校准门锁时间", icon: "clock.arrow.circlepath") { showLockSettings = true },
+            SearchHit(id: "s.mute", title: "静音模式", icon: "speaker.slash") { openLockSettings() },
+            SearchHit(id: "s.synctime", title: "校准门锁时间", icon: "clock.arrow.circlepath") { openLockSettings() },
             // 2026-10-26: 今日新增的四项补进搜索索引 —— 入口在门锁段/工具段里，但索引此前没登记，
             // 于是搜「布防」「手机钥匙」「固件升级」「只读」都是零结果。
             //
@@ -239,9 +233,9 @@ struct SettingsView: View {
             //    没有程序化 push 的入口（设置页用的是 NavigationLink 声明式，不是 path 栈）。
             //    所以这里只给 anchor（保证滚到对应段，用户看到那一行再点），
             //    **不给 go** —— 给一个空的 go 会让人以为点搜索就直接进页面，实际只滚动。
-            SearchHit(id: "s.defend", title: "布防 (时段内否决自动开锁)", icon: "shield.lefthalf.filled") { showLockSettings = true },
+            SearchHit(id: "s.defend", title: "布防 (时段内否决自动开锁)", icon: "shield.lefthalf.filled") { openLockSettings() },
             SearchHit(id: "s.mobilekey", title: "手机钥匙 (给成员发数字钥匙)", icon: "iphone.gen3.badge.key", anchor: .family),
-            SearchHit(id: "s.dfu", title: "固件升级 (Nordic DFU)", icon: "arrow.up.circle") { showLockSettings = true },
+            SearchHit(id: "s.dfu", title: "固件升级 (Nordic DFU)", icon: "arrow.up.circle") { openLockSettings() },
             SearchHit(id: "s.trialguard", title: "只读试验模式 (真机排障只看不改)", icon: "eye.slash", anchor: .tools),
             // 2026-10-28 删除：`s.safemode`「门锁安全模式」—— 那个 Section 已于 81c1432 删除
             // （纯说明无入口），搜索项却留着，点进去滚到 unlock 段也没有任何「安全模式」内容。
@@ -283,58 +277,55 @@ struct SettingsView: View {
     }
     var lockSection: some View {
         Section("门锁") {
-            // 分享给安卓: 只在有当前锁时出现。入口放在门锁段而不是设备管理页 ——
-            // 这张码是"这一把锁"的凭证, 而设备管理讲的是锁与锁之间的关系。
-            if let kc = app.current {
-                Button { shareLock = kc } label: {
-                    Label("分享给安卓 (扫码开锁)", systemImage: "qrcode")
-                }
-            }
+            // 2026-10-29 入口去重（用户反馈「同一个界面被很多次入口」）：
+            // 本段原先有 6 个入口，其中 3 个是别处的重复：
+            //   · 锁信息名片   → 已收进「锁设置 → 概览」底部一行（唯一入口）
+            //   · 锁设置       → 设备页「管理这把锁」是唯一入口（本页不再重复）
+            //   · 添加另一把锁 → 设备页右上角「+」是唯一入口
+            // 留下的是**只有设置页才有**的三项：锁档案 / 分享给安卓 / 删除设备。
             if app.current == nil {
-                // 814 的 1/3 = 引导次序 (连锁→录凭证→开门), 这里停在"连锁"前一步;
-                // 此前这里只有一个裸「添加设备」按钮, 空态组件在设置页零消费。
                 GuidedEmptyView(systemImage: "lock",
                                 title: "还没有添加门锁",
-                                message: "添加后这一段才会出现锁档案、静音、校时与删除等设置。三步走: 连锁 → 录凭证 → 开门。",
+                                message: "添加后这一段才会出现锁档案与删除。三步走: 连锁 → 录凭证 → 开门。",
                                 step: 1, stepTotal: 3,
-                                primaryTitle: "添加设备",
-                                primary: { showAdd = true },
+                                primaryTitle: "去设备页添加",
+                                primary: { goAddDevice() },
                                 )
                     .listRowInsets(EdgeInsets())
             } else {
                 NavigationLink("锁档案 (昵称/符号/色标/备注)") { LockProfileView() }
-                note("靠近时先连上，开锁少等一两秒；成功率只在本机统计。")
-                Button("锁信息名片") { showDeviceInfo = true }
-                // 2026-10-29：锁设置独立页（B 档）—— 7 项能力的集中入口。
-                // 下方原有 7 行**保留不删**（双入口，老用户路径不打断）。
-                Button { showLockSettings = true } label: {
-                    Label("锁设置（布防 / 防尾随 / 静音 / 固件…）", systemImage: "gearshape")
+                if let kc = app.current {
+                    Button { shareLock = kc } label: {
+                        Label("分享给安卓 (扫码开锁)", systemImage: "qrcode")
+                    }
                 }
-                note("型号、固件、电量与绑定时间的汇总卡。")
-                // 2026-10-29 深重构：7 项锁能力（安全模式 / 静音 / 校准 / 防尾随 / 布防 / 固件升级 / 清空密码）
-                // 已全部迁到「锁设置」页（`LockSettingsView`）—— 本页不再保留第二份入口，避免同一功能两处维护。
-                //
-                // 顺带修一个真 bug：原 `if canDefend {` 的闭合在下面几行，把「固件升级」错误地嵌在了
-                // 「布防可用」条件里 —— V1 / JZ 不支持布防，于是它们的固件升级入口也一起不显示。
-                // 迁走后这个嵌套条件自然消失。
-                // 2026-10-14 走查: 从「家人与钥匙」挪来 (它属于门锁本身, 不属于成员)。
-                // 一加一删成对, 且本节空态那一支本来就带「添加设备」按钮 —— 有锁时才需要"另一把"。
-                Button { showAdd = true } label: { Label("添加另一把锁", systemImage: "plus") }
+                note("型号、固件、电量与完整名片都在设备页 →「管理这把锁」→「概览」里。")
                 Button("删除设备", role: .destructive) { deleteDevice() }
             }
         }
     }
 
+    /// 2026-10-29 入口去重：添加设备只在设备页右上角「+」。
+    func goAddDevice() {
+        app.requestRoute(.device)
+        app.showToast("在设备页右上角点「+」添加门锁")
+    }
+
+    /// 2026-10-29：锁设置只有设备页「管理这把锁」一个入口。
+    /// 设置页搜索命中这四项时，直接把用户送到那个入口（而不是本页再开一个重复的 sheet）。
+    func openLockSettings() {
+        app.requestRoute(.device)
+        app.showToast("在设备页点「管理这把锁」进入锁设置")
+    }
+
     /// 2026-10-14: 设置项小字注解。口径"简洁明了" —— 只说用户决策需要的那一句
     /// (这一项是干什么的 / 要不要连锁 / 有什么后果), 不铺陈实现细节 (那些留在注释里)。
-    /// 与 deviceManageSection 既有的 caption2 小字同一族, 这里收成一个 helper 免得每处重抄三行修饰。
     func note(_ s: String) -> some View {
         Text(s)
             .vkFont(.caption)
             .foregroundStyle(DS.Palette.textSub)
             .fixedSize(horizontal: false, vertical: true)
     }
-
 
     func deleteDevice() {
         guard let kc = app.current else { return }
@@ -357,67 +348,6 @@ struct SettingsView: View {
         }
     }
 
-    // 2026-10-27 界面审核修复：**删掉 `Section("安全")`** ——
-    // 它只有一句悬空说明「单次 / 双重验证：决定开一道锁还是两道」，
-    // 而这一节里**没有任何可操作项**（真正的切换入口在「安全模式说明」那一页）。
-    // 用户读到这句话却在这一节里找不到能点的东西 —— 说明与控件被拆到两处，是结构错位。
-    // 这句话已挪进 unlockSection 的 footer（验证模式与开锁动作本来就是一回事）。
-
-    // ---------- 开锁 (包1: 按住确认/围栏/自动重试/圆盘尺寸) ----------
-    // ---------- 647 时间显示 (制式 + 是否到秒) ----------
-    /// 单一出口: 时间线/详情卡/导出都读 `TimeFormat`，这里写的就是它们的结果。
-    /// 分屏/多锁时"同一条记录显示成三个样子"是 647 的原罪，所以这节不提供任何页面级覆盖。
-    /// 911 时间制式覆盖 (原句"独立于系统设置") 就是这同一个 Picker: 选"跟随系统"之外的一档时,
-    /// 本 App 不再听系统的 12/24 小时偏好 —— 两件事共用一个键，而不是各存一份再吵谁赢。
-
-    // ---------- 靠近自动开锁 (AUTOOPEN-PLAN §4): 全门绿才自动开门, 默认关, fail-closed ----------
-
-    // ---------- 家人与钥匙 (包13: 成员中心/791/798-792/483/479-794 入口) ----------
-    /// 家人与钥匙 + 凭证整理 —— **两个独立的 Section**。
-    ///
-    /// 2026-10-27 截图核对修复：原先把这两个 Section 包在 `VStack(spacing: 0)` 里。
-    /// `Section` 只在 `List`/`Form` 的**直接子级**才有分组语义 —— 被 VStack 包住后，
-    /// 整个 VStack 变成 List 的一行，里面的 Section 退化成普通容器，于是：
-    ///   · header/footer 不再吸附在组头组尾，而是居中夹在行之间（截图里「家人与钥匙」居中）
-    ///   · 行与 footer 正文垂直重叠（「手机钥匙」压住「访客是本地虚拟分组…」）
-    ///   · 两节内容混成一坨（「凭证整理」跑到列表行中间）
-    /// 现在拆成两个并列的 Section（@ViewBuilder 允许一个属性返回多个 Section）。
-    func setDuressCode() {
-        promptOldPasscode { ok in
-            guard ok else { return }
-            let alert = UIAlertController(
-                title: DB.hasDuressCode() ? "更改胁迫码" : "设置胁迫码",
-                message: "被胁迫时输入这个码，App 进入空壳模式：门能开，但凭证与记录显示为空。\n\n⚠ 必须与正常密码不同 —— 相同就等于把正常密码当胁迫码用。",
-                preferredStyle: .alert)
-            alert.addTextField { $0.isSecureTextEntry = true; $0.keyboardType = .numberPad; $0.placeholder = "4 位以上数字" }
-            alert.addTextField { $0.isSecureTextEntry = true; $0.keyboardType = .numberPad; $0.placeholder = "再次输入" }
-            alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-            if DB.hasDuressCode() {
-                alert.addAction(UIAlertAction(title: "清除胁迫码", style: .destructive) { _ in
-                    DB.clearDuressCode()
-                    app.showToast("胁迫码已清除")
-                })
-            }
-            alert.addAction(UIAlertAction(title: "确定", style: .default) { _ in
-                let f1 = alert.textFields?[0].text ?? ""
-                let f2 = alert.textFields?[1].text ?? ""
-                guard !f1.isEmpty, f1 == f2 else { app.showToast("两次输入不一致"); return }
-                guard f1.count >= 4 else { app.showToast("需 4 位以上"); return }
-                guard f1.allSatisfy({ $0.isNumber }) else { app.showToast("只能使用数字"); return }
-                if DB.setDuressCode(f1) {
-                    app.showToast("胁迫码已设置")
-                } else {
-                    app.showToast("设置失败：胁迫码不能与正常密码相同")
-                }
-            })
-            UIApplication.topViewController()?.present(alert, animated: true)
-        }
-    }
-
-    /// 关闭本机密码 = 撤掉「设置」页的入口屏障（它不拦查看明文/导出，见上方说明）
-    /// 关闭本机密码 —— **必须先验证原密码**。
-    /// 2026-10-27 审核修复 (AUDIT-D D-08)：原先只要点两下（确认框 + 确定）就能永久移除应用锁，
-    /// 不需要知道原密码 —— 拿到解锁手机的人可以直接把保护关掉。
     func disablePasscode() {
         promptOldPasscode { ok in
             guard ok else { return }
@@ -430,7 +360,6 @@ struct SettingsView: View {
         }
     }
 
-    /// 验证原密码。取消/输错都不执行后续动作。
     func promptOldPasscode(_ then: @escaping (Bool) -> Void) {
         let alert = UIAlertController(title: "验证原密码",
                                       message: "修改或关闭本机密码前需要先验证。",
@@ -445,53 +374,11 @@ struct SettingsView: View {
         UIApplication.topViewController()?.present(alert, animated: true)
     }
 
-    func setPasscode() {
-        // 2026-10-27 审核修复 (AUDIT-D D-09)：**已有密码时改密码必须先验原密码**。
-        // 否则拿到解锁手机的人可以直接改成一个自己知道的密码，等于接管保护。
-        if DB.hasPasscode() {
-            promptOldPasscode { ok in
-                guard ok else { return }
-                presentSetPasscodeAlert()
-            }
-            return
-        }
-        presentSetPasscodeAlert()
-    }
-
-    func presentSetPasscodeAlert() {
-        let alert = UIAlertController(title: "设置本机密码", message: "4 位以上纯数字 (随机键位需要数字键盘, 含字母会失去该保护)", preferredStyle: .alert)
-        alert.addTextField { $0.isSecureTextEntry = true; $0.keyboardType = .numberPad }
-        alert.addTextField { $0.isSecureTextEntry = true; $0.placeholder = "再次输入"; $0.keyboardType = .numberPad }
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        alert.addAction(UIAlertAction(title: "确定", style: .default) { _ in
-            let f1 = alert.textFields?[0].text ?? ""
-            let f2 = alert.textFields?[1].text ?? ""
-            guard !f1.isEmpty, f1 == f2 else { app.showToast("两次输入不一致"); return }
-            guard f1.count >= 4 else { app.showToast("密码需 4 位以上"); return } // 与提示文案一致
-            guard f1.allSatisfy({ $0.isNumber }) else { app.showToast("只能使用数字"); return }
-            DB.setPasscode(f1)
-            app.showToast("已设置")
-        })
-        UIApplication.topViewController()?.present(alert, animated: true)
-    }
-
-
-
-    func resetAppearance() {
-        confirmDestructive("恢复默认外观",
-                          "将主题、品牌色、布局密度、圆角、高对比皮肤、周起始日、凭证行高、时间线行距、指标位、纹理与每日一句话重置为默认值）。，不影响任何门锁数据。确定恢复吗？",
-                          confirmTitle: "恢复默认") {
-            app.resetAppearance()
-            app.showToast("已恢复默认外观")
-        }
-    }
-    // ---------- 关于 ----------
-
     var aboutFooterText: String {
         var s = "厂商已停服的智能锁离线管理端。门锁数据、密码台账、家人档案全部保存在本机。换新手机用「备份与恢复」转移, 门锁无需重置。"
         if eggShown { s += " Build \(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?") · 本地构建。" }
         return s
     }
-}
 
 /// 机械计数样式数字 (idea 1006): 每位一格, 等宽数字
+}

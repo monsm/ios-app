@@ -142,7 +142,6 @@ extension RecordsView {
         NavigationStack {
             recordsCore
         }
-        .sheet(isPresented: $showAdd) { AddDeviceView() }
         // 2026-10-28 删除：原「行备注弹窗」(noteTarget alert) 是死 alert —— 全仓只有 = nil 写点。
         // 2026-10-28 删除：`noteTarget` 是**死 alert** —— 全仓只有 `= nil` 写点，
         // 这个弹窗永远不会呈现。备注编辑走详情卡里的 noteSection（RecordOverlay 单一写侧）。

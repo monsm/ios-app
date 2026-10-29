@@ -31,7 +31,6 @@ struct RecordsView: View {
     @State var pullGap: String?   // 749 本次会话未拉全的如实标注
     @State var reconLine = ""     // 749 对账结果一行 (可复制, 供发给管理员/记进工单)
     @State var sel = "" // '' 全部 / 成员id / __unknown
-    @State var showAdd = false
     // 716 选区导出: 按天整组勾选 (行级多选不做 —— 一页上千行, 逐行勾选的手势成本远高于按天勾)
     @State var showRangePick = false
     @State var rangeSel: Set<String> = []
@@ -164,7 +163,7 @@ struct RecordsView: View {
         EmptyState(systemImage: "list.bullet.rectangle",
                    title: "还没有添加门锁",
                    message: "开门与操作记录存在门锁内。请先添加并配对门锁，再回到这里读取。",
-                   actionTitle: "去添加门锁") { showAdd = true }
+                   actionTitle: "去添加门锁") { goAddDevice() }
     }
 
 

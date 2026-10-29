@@ -18,13 +18,13 @@ struct CredentialsView: View {
     // 包2 连接感知: 510 待下发横条 / 535 回执 依赖 LinkSense 补发回执计时 (只读观察)
     @ObservedObject var sense = LinkSense.shared
     @State var refreshTick = 0
-    @State var showAdd = false
     /// 正在与门锁通信的条目 ("pwd:3" / "fp:12" / "otp") / nil = 空闲
     @State var busyKey: String?
     @State var otpPwd = "******"
     @State var otpWin = ""
     @State var otpBig = false   // 885 凭证大字模式: 双击或开关切大字号对照抄写""
-    @State var otpPeek = false  // 375 磨砂挡片长按移开中 (松手复位)
+    @State var otpShieldOn = false  // 375 防窥挡片: **默认关**（开了才会盖住临时码）
+    @State var otpReveal = false    // 375 长按挡片查看中（松手复位）
 
     // ---------- 包6 列表组织 ----------
     @State var seg: Int = 0          // 524 类型分段: 0 全部 / 1 密码 / 2 指纹 / 3 临时码
@@ -51,7 +51,7 @@ struct CredentialsView: View {
                     EmptyState(systemImage: "lock.badge.plus",
                                title: "还没有添加门锁",
                                message: "凭证台账要绑定到具体门锁。请先在门锁键盘上长按重置键恢复出厂，再回来添加设备（需要开启蓝牙）。",
-                               actionTitle: "去添加门锁") { showAdd = true }
+                               actionTitle: "去添加门锁") { goAddDevice() }
                 } else {
                     VStack(spacing: 0) {
                         headerToolbar
@@ -106,7 +106,6 @@ struct CredentialsView: View {
                 FpDetailStudio(batch: item.batch)
             }
         }
-        .sheet(isPresented: $showAdd) { AddDeviceView() }
         // 2026-10-27：解密密口令不再进 Toast（会被截屏/录屏带走），改成一次性对话框。
         .alert("解密密口令（只看这一次）", isPresented: Binding(
             get: { secretOnce != nil },

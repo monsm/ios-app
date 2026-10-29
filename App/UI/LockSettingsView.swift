@@ -71,6 +71,8 @@ struct LockSettingsView: View {
                 LabeledRow("安全模式", modeLabel(s))
                 LabeledRow("锁内时间", s.lockTime.map { ProtoTime.localStr($0) } ?? "—")
             }
+            // 2026-10-29 入口去重：锁信息名片收进「概览」底部（唯一入口）。
+            NavigationLink("锁信息名片（进页刷新 / 完整诊断）") { DeviceInfoView() }
         } header: {
             Text("概览")
         } footer: {
@@ -104,15 +106,8 @@ struct LockSettingsView: View {
     @ViewBuilder
     private func capabilitySection(_ kc: Keychain) -> some View {
         Section {
-            if PidMap.canDefend(kc.pid) {
-                NavigationLink {
-                    DefendView()
-                } label: {
-                    capabilityLabel("布防", icon: "shield.lefthalf.filled",
-                                    detail: DefendKit.summary(DB.defend(kc.mac)),
-                                    active: DefendKit.isActive(DB.defend(kc.mac)))
-                }
-            }
+            // 2026-10-29 入口去重：布防只在设备页圆盘下方那一行（带实时状态）。
+            // 本页不再重复 —— 从设备页进来时，那一行就在上一屏。
             if PidMap.canTailgate(kc.pid, fw: kc.fw) {
                 NavigationLink {
                     TailgateView()

@@ -64,22 +64,24 @@ extension CredentialsView {
                 .textSelection(.enabled)
                 .onTapGesture(count: 2) { otpBig.toggle() }
                 .accessibilityLabel("临时码, 双击切大字号")
-                // 375 挡片: 开关开着才出现; 长按移开, 松手复位。
-                // 挡片在顶层会吃掉触摸, 所以 885 的双击在挡片上也挂一份 —— 否则默认开挡片时双击等于失灵。
+                // 375 防窥挡片：**只有用户主动打开才盖住**（`otpShieldOn` 默认 false）。
+                // 2026-10-29 修复「生成临时码后被挡住看不见」：原实现用 `if !otpPeek` 而 otpPeek 默认 false，
+                // 等于挡片常驻；生成完也不揭开。现在默认不盖，长按才临时揭开，松手复位。
                 .overlay(alignment: .leading) {
-                    // 2026-10-17 真机勘误「临时码能生成但不显示」: 挡片默认值原为 true ——
-                    // 生成出来的六位码被一层 .ultraThinMaterial 常驻盖住, 只有长按 0.5s 才露出来,
-                    // 用户看到的就是"空白/******"。默认改为关 (需要的人仍可在设置-安全里打开)。
-                    if !otpPeek {
+                    if otpShieldOn && !otpReveal {
                         RoundedRectangle(cornerRadius: DS.Radius.control)
                             .fill(.ultraThinMaterial)
                             .onLongPressGesture(minimumDuration: 0.5, maximumDistance: 50, pressing: { p in
-                                if !p { withAnimation(DS.Motion.standard) { otpPeek = false } }
+                                if !p { withAnimation(DS.Motion.standard) { otpReveal = false } }
                             }, perform: {
-                                withAnimation(DS.Motion.standard) { otpPeek = true }
+                                withAnimation(DS.Motion.standard) { otpReveal = true }
                             })
                             .onTapGesture(count: 2) { otpBig.toggle() }
                     }
+                }
+                // 防窥挡片的开关放在长按菜单里：不占版面，也不会误触。
+                .contextMenu {
+                    VariantToggle("防窥挡片（盖住临时码）", isOn: $otpShieldOn)
                 }
             Spacer(minLength: DS.Space.m)
             Button {
@@ -142,6 +144,7 @@ extension CredentialsView {
         }
         DB.saveOtpIdx(mac, OtpIdx(idx: idx, invalidTime: win))
         otpPwd = pwd
+        otpReveal = true   // 刚生成的码必须立刻可见（防窥挡片开着也不挡这一次）
         otpWin = win
         Clip.set(pwd)   // 405
         UINotificationFeedbackGenerator().notificationOccurred(.success)

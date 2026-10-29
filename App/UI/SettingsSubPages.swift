@@ -110,9 +110,14 @@ struct SafemodeIntroView: View {
                     // 不给 B→A 的理由写在这: 放宽验证会让"两种组合验证"这条既有保护一指之间消失,
                     // 而锁端不记录是谁改的 —— 本机审计只会留下一条无法解释的降级。
                     if app.status == nil {
-                        Text("还没读到锁状态 —— 先在设备页读一次锁信息，这里才会出现切换按钮。")
-                            .vkFont(.footnote)
-                            .foregroundStyle(DS.Palette.textSub)
+                        // 2026-10-29：给一个**就地重试**按钮，而不是让用户自己跑去设备页。
+                        Button {
+                            Task { await app.refreshStatusQuietly(manual: true) }
+                        } label: {
+                            Label("还没读到锁状态 —— 点这里读取", systemImage: "arrow.clockwise")
+                        }
+                        .frame(minHeight: DS.Hit.min)
+                        .vkFont(.footnote)
                     } else if app.status?.verifyMode == 1 {
                         // 2026-10-29 补（用户拍板）：APK `page-setsafemode` 是 A/B 二选一，iOS 原先只给 A→B。
                         // 放宽方向保留二次确认与明确的安全等级警告 —— 不是无提示的降级。
@@ -153,6 +158,15 @@ struct SafemodeIntroView: View {
         .navigationTitle(isOtp ? "临时密码介绍" : "安全模式说明")
         .variantList()
         .dsScreenBackground()
+        // 2026-10-29 修复「A/B 只看到说明，没有实际切换」：
+        // 切换按钮只在 `app.status != nil` 时出现，而本页原先不主动读状态 ——
+        // 用户从设备页进来若还没读过锁信息，就只看到两段说明 + 一句"还没读到锁状态"。
+        // 现在进页自读一次（manual: true 让静默排查档不吞掉这次回读）。
+        .task {
+            if app.status == nil {
+                await app.refreshStatusQuietly(manual: true)
+            }
+        }
     }
 
     /// 拍板 #2: 下发 cmd20 后**必须回读校验** —— rc=0 只说明锁收了命令, 不代表验证策略真的改了。
