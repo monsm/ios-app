@@ -302,15 +302,20 @@ extension RecordsView {
         // 而 761 那行"复制行标识 (f_/c_ 前缀键)"的说明一直是假的。
         // 表键就是派生出来的那个 idxRaw: 它只在本机这一份合并数组里唯一, 不参与任何持久化。
         var sideKey = [UInt32: String]()
+        // 2026-10-29 性能：listPwds/listFps 原来各读两次（classify 一次、下面又各读一次），
+        // 每次都是一份数组拷贝；这里先取一次，两处共用。
+        let pwds = DB.listPwds(mac)
+        let fps = DB.listFps(mac)
         let cls = Attribution.classify(
             logs: merged,
-            pwds: DB.listPwds(mac), fps: DB.listFps(mac),
+            pwds: pwds, fps: fps,
             status: app.status.map { ($0.fpStock, $0.pwdStock, $0.lockTime ?? 0) })
         // 791 认领覆盖层: 本机认领结果直接改写 whoId (不改锁端数据)
         let claims = MemberHub.claims(mac)
+        // 2026-10-29 性能：原先每行调两次 DB.member(id)（各自从字典重建一次 Member）。
+        // 300 行 = 600 次重建；这里一次建表。
+        let memberByID = Dictionary(DB.members().map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         var out = [RowVM]()
-        let pwds = DB.listPwds(mac)
-        let fps = DB.listFps(mac)
         for (i, e) in merged.enumerated() {
             guard i < cls.count else { continue }
             let c = cls[i]
@@ -320,7 +325,7 @@ extension RecordsView {
             let p = Self.rowParts(e.lockTimeStr, todayKey: todayKey)   // 归属日 (649 凌晨归前一晚) + 显示时刻
             var whoId = c.who
             if let claimed = claims[rowKey] { whoId = claimed }   // 791 认领优先
-            let whoName = whoId.flatMap { DB.member($0)?.name }
+            let whoName = whoId.flatMap { memberByID[$0]?.name }
             // 655 动词化日志文案: "张三 用 指纹 开了门" (保留 791 认领与 1028 关怀行)
             let care = e.type == 0 && (e.typeName.hasPrefix("保养") || e.typeName.hasPrefix("更换电池"))
             let title: String
@@ -330,7 +335,7 @@ extension RecordsView {
                 let kindWord = StatsKit.openTypes.contains(e.type) ? (Attribution.words[c.kind ?? ""] ?? nil) : nil
                 // 461: 条目显示"称呼（备注）"; whoName 留裸名给 credNav/筛选匹配 (919: 别名开关开时关系称呼顶替)
                 let whoShow = MemberHub.aliasName(whoId)
-                    ?? whoId.flatMap { DB.member($0).map(MemberHub.doubleLine) } ?? whoName
+                    ?? whoId.flatMap { memberByID[$0].map(MemberHub.doubleLine) } ?? whoName
                 title = RecordVerbs.line(type: e.type, who: whoShow, kindWord: kindWord, typeName: e.typeName)
             }
             let warn = StatsKit.alarmTypes.contains(e.type)
