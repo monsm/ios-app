@@ -13,68 +13,10 @@ import Combine
 
 // 服务/特征 UUID (依据 Java BleLockConnector + GateWayConnector)
 // Java 缺陷注记: GateWayConnector 构造会覆盖静态 UUID 导致锁/网关不可共存 — 本实现按连接目标选对 UUID, 无此缺陷
-enum BLEUUID {
-    static let svcMain = CBUUID(string: "6E400001-B5A3-F393-E0A9-E50E24DCCA9E")   // 门锁 NUS
-    static let chrWrite = CBUUID(string: "6E400002-B5A3-F393-E0A9-E50E24DCCA9E")
-    static let chrNotify = CBUUID(string: "6E400003-B5A3-F393-E0A9-E50E24DCCA9E")
-    static let svcGW = CBUUID(string: "0000FE90-0000-1000-8000-00805F9B34FB")     // 网关
-    static let chrGWWrite = CBUUID(string: "0000FE92-0000-1000-8000-00805F9B34FB")
-    static let chrGWNotify = CBUUID(string: "0000FE91-0000-1000-8000-00805F9B34FB")
-    // DFU (Nordic): Secure FE59 / Legacy 1530 + 蓝牙钥匙串 (自定义 6E401001)
-    static let svcDfuSecure = CBUUID(string: "0000FE59-0000-1000-8000-00805F9B34FB")
-    static let dfuSecureControl = CBUUID(string: "8EC90001-F315-4F60-9FB8-838830DAEA50")
-    static let dfuSecurePacket = CBUUID(string: "8EC90002-F315-4F60-9FB8-838830DAEA50")
-    static let svcDfuLegacy = CBUUID(string: "00001530-1212-EFDE-1523-785FEABCD123")
-    static let dfuLegacyControl = CBUUID(string: "00001531-1212-EFDE-1523-785FEABCD123")
-    static let dfuLegacyPacket = CBUUID(string: "00001532-1212-EFDE-1523-785FEABCD123")
-}
 
-struct BLEAdvDevice: Identifiable {
-    var id: String { deviceId }
-    var deviceId: String
-    var name: String
-    var rssi: Int
-    var advertisHex: String
-    var serviceUUIDs: [String]
-}
 
 // 错误码 (JS ble.js classifyError/bleCodeMessage 词表 — 与 App 同套编号)
-enum BLEError: Int {
-    case notFound = 1001        // 未发现设备
-    case ssTokenFail = 1006
-    case responseTimeout = 1007
-    case unsupportedToken = 1008   // 2026-10-28 补：APK bleCodeMsg[1008]「不支持的ssToken方式」
-    case connectTimeout = 2003
-    case parseFail = 5001
-    case writeTimeout = 6001
-    case underlying = 6004
-    case writeFailed = 6005
 
-    var message: String {
-        switch self {
-        case .notFound: return "未发现门锁，请靠近门锁重试"
-        case .ssTokenFail: return "获取ssToken失败"
-        case .responseTimeout: return "超时未收到返回数据"
-        case .unsupportedToken: return "不支持的ssToken方式"
-        case .connectTimeout: return "连接设备超时"
-        case .parseFail: return "解析数据失败"
-        case .writeTimeout: return "超时未等到Rx写入确认"
-        case .underlying: return "蓝牙底层失败"
-        case .writeFailed: return "发送命令失败"
-        }
-    }
-}
-
-enum BLEErrorX: LocalizedError {
-    case code(BLEError)
-    case msg(String)
-    var errorDescription: String? {
-        switch self {
-        case .code(let c): return c.message
-        case .msg(let m): return m
-        }
-    }
-}
 
 final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     static let shared = BLEService()
@@ -99,35 +41,35 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     /// 非主线程也能安全写 @Published: 已在主线程就直接写，否则跳回主线程写 (为什么要跳见上方那段)。
     // @Sendable: 这个闭包要交给 DispatchQueue.main.async (@Sendable 参数)。三个调用点都是
     // `[weak self] in self?.xxx = ...`, self 本身已是 @unchecked Sendable, 所以不需要再包一层。
-    private func publishOnMain(_ apply: @escaping @Sendable () -> Void) {
+    func publishOnMain(_ apply: @escaping @Sendable () -> Void) {
         if Thread.isMainThread { apply() } else { DispatchQueue.main.async(execute: apply) }
     }
 
-    private var manager: CBCentralManager!
-    private var scanTimer: Timer?
+    var manager: CBCentralManager!
+    var scanTimer: Timer?
     // 2026-10-27 审核修复 (AUDIT-D D-25)：扫描引用计数。
     // 原先 `startScan` 先 `stopScanInternal()` 再开、`stopScan` 直接停 ——
     // 两个 Task 各自 defer stopScan 时，先结束的那个会把还在用的扫描停掉：
     // 冷启动扫描（2.5–10s）与 startupPreconnect 并发时，预连接偶发"扫不到锁"
     // （表现为冷启动后第一次开锁慢一拍）。现在只有计数归零才真停。
-    private let scanRefLock = Locked(0)
-    private var discovered = [String: BLEAdvDevice]()
+    let scanRefLock = Locked(0)
+    var discovered = [String: BLEAdvDevice]()
 
     // 当前连接
-    private var device: CBPeripheral?
-    private var writeChar: CBCharacteristic?
-    private var notifyChar: CBCharacteristic?
-    private var connectCompletion: ((Result<Void, Error>) -> Void)?
-    private var connectTimeoutWork: DispatchWorkItem?
+    var device: CBPeripheral?
+    var writeChar: CBCharacteristic?
+    var notifyChar: CBCharacteristic?
+    var connectCompletion: ((Result<Void, Error>) -> Void)?
+    var connectTimeoutWork: DispatchWorkItem?
     // 2026-10-27 审核修复 (AUDIT-D D-17)：这个槽被主队列（CB 回调 / disconnect 清理）
     // 与协作线程（写入方）同时读写，原先没有任何同步。后果：ack 丢失 →
     // 每片写的 continuation 悬空 → 配网 cmd08 批撞上软砖窗口。现用 Locked 包裹。
-    private let writeAckLock = Locked(CheckedContinuation<Void, Error>?.none)
+    let writeAckLock = Locked(CheckedContinuation<Void, Error>?.none)
     /// 连接层测距的单槽回调。只在主线程读写: CBCentralManager 建在 queue: .main (见 init),
     /// 于是 didReadRSSI 与调用点 (LinkSense 的 @MainActor tick) 都在主线程, 不需要再加锁。
-    private var rssiCompletion: ((Int?) -> Void)?
+    var rssiCompletion: ((Int?) -> Void)?
     /// 测距代次: 定时器要判断"等的还是不是我那一次"。
-    private var rssiGeneration = 0
+    var rssiGeneration = 0
     // 写槽串行化: writeAckCont 是单一槽位, 并发写时后者会覆盖前者的 continuation
     // → 前者永不 resume (挂死 + continuation 泄漏), 而 LockService 与 HardwareService 各有独立 waiter,
     // 共用本服务时确实可并发 (看门狗/回连循环 vs 用户手动操作)。didWriteValueFor 本就按序回调, 串起来即可。
@@ -136,14 +78,14 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     /// (跑在全局执行器上) —— LockService 与 HardwareService 各有独立 waiter, 同时下发时两个调用方
     /// 会双双看到 busy=false 而同时进入临界区, 后者的 continuation 覆盖前者 ⇒ 前者永不 resume
     /// (挂死) + continuation 泄漏。Swift 6 的模型把这类跨线程读写直接算 UB, 所以这里必须上锁。
-    private let writeSlot = Locked((busy: false, waiters: [CheckedContinuation<Void, Never>]()))
+    let writeSlot = Locked((busy: false, waiters: [CheckedContinuation<Void, Never>]()))
     // 1b/拍板#1: 无响应写的"可发"就绪等待。单槽即可 —— 分片写 (cmd08) 本身逐片 await, 不会并发。
-    private var readyCont: CheckedContinuation<Void, Never>?
-    private var readyTimer: DispatchWorkItem?
+    var readyCont: CheckedContinuation<Void, Never>?
+    var readyTimer: DispatchWorkItem?
 
     // 帧重组 + 订阅
-    private let assembler = ZKProtocol.FrameAssembler()
-    private var frameSubscribers: [(ZKProtocol.ParsedFrame) -> Void] = []
+    let assembler = ZKProtocol.FrameAssembler()
+    var frameSubscribers: [(ZKProtocol.ParsedFrame) -> Void] = []
 
     override init() {
         super.init()
@@ -166,7 +108,7 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
             try? await Task.sleep(nanoseconds: 100_000_000)
         }
     }
-    private func readyMessage() -> String {
+    func readyMessage() -> String {
         switch manager?.state {
         case .poweredOff: return "蓝牙未开启: 请到系统设置打开蓝牙后重试"
         case .unauthorized: return "未获得蓝牙权限: 请在系统设置 → 隐私与安全性 → 蓝牙 中允许本 App"
@@ -179,7 +121,7 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     func onFrame(_ cb: @escaping (ZKProtocol.ParsedFrame) -> Void) {
         frameSubscribers.append(cb)
     }
-    private func emit(_ f: ZKProtocol.ParsedFrame) {
+    func emit(_ f: ZKProtocol.ParsedFrame) {
         for cb in frameSubscribers { cb(f) }
     }
 
@@ -238,7 +180,7 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
         }
         if left == 0 { stopScanInternal() }
     }
-    private func stopScanInternal() {
+    func stopScanInternal() {
         guard manager != nil else { return }
         if manager.isScanning { manager.stopScan() }
         scanTimer?.invalidate()
@@ -369,7 +311,7 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     }
     /// 取写槽 (FIFO): 同一特征值的 with-response 写必须串行, 否则 writeAckCont 单槽被后者覆盖,
     /// 前者的 continuation 永不完成 (挂死)。已在写的情况下把调用方排进等待队列。
-    private func acquireWriteSlot() async {
+    func acquireWriteSlot() async {
         // 快路径: 空槽直接占用 (判定与占用在同一个临界区里, 不存在中间窗口)
         let gotIt = writeSlot.withLock { s -> Bool in
             if s.busy { return false }
@@ -387,7 +329,7 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
             if raced { c.resume() }   // resume 必须在锁外, 否则可能在锁内同步重入
         }
     }
-    private func releaseWriteSlot() {
+    func releaseWriteSlot() {
         // 出队与放槽也在同一个临界区: 有等待者时**保持 busy=true**, 槽直接交给下一位,
         // 中间不留"谁都能进"的空档。
         let next = writeSlot.withLock { s -> CheckedContinuation<Void, Never>? in
@@ -399,7 +341,7 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     /// 无响应写的真流控: 等 `peripheralIsReady(toSendWriteWithoutResponse:)`。
     /// 保留兜底超时 (默认 0.12s, 与旧的 20ms sleep 同量级但更宽) —— 个别固件不再回调时,
     /// "永远等下去"比原来的盲限速更糟, 所以到点也放行。
-    private func waitWriteReady(_ device: CBPeripheral, maxSeconds: Double = 0.12) async {
+    func waitWriteReady(_ device: CBPeripheral, maxSeconds: Double = 0.12) async {
         if device.canSendWriteWithoutResponse { return }
         await withCheckedContinuation { (c: CheckedContinuation<Void, Never>) in
             // 单槽: 先放行上一位等待者, 绝不让它悬着 (悬着的 continuation 是永久泄漏)
@@ -415,7 +357,7 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
             DispatchQueue.main.asyncAfter(deadline: .now() + maxSeconds, execute: work)
         }
     }
-    private func writeChunk(_ data: Data, on device: CBPeripheral, characteristic ch: CBCharacteristic) async throws {
+    func writeChunk(_ data: Data, on device: CBPeripheral, characteristic ch: CBCharacteristic) async throws {
         // with-response 真流控 (JS writeBLECharacteristicValue 即此语义): 由 didWriteValueFor 收口。
         // 之前 withoutResponse + 20ms 假 ack — CoreBluetooth 无响应队列满时会静默丢包, 锁收到残帧
         // (cmd08 批量 13 分片最危险); writeAckCont/disconnect/didDisconnect 的失败恢复路径也随之变活。
@@ -464,153 +406,5 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
 }
 
 // MARK: - CBCentralManagerDelegate
-extension BLEService: CBCentralManagerDelegate {
-    public func centralManagerDidUpdateState(_ central: CBCentralManager) {
-        DispatchQueue.main.async {
-            self.isPoweredOn = (central.state == .poweredOn)
-        }
-    }
-    public func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral,
-                              advertisementData: [String: Any], rssi RSSI: NSNumber) {
-        // 厂商段必须在任何分支都捕获 — ZK 锁广播只带厂商段 (98ed...), 缺它扫描永远解析不出 pid/MAC
-        let mfgHex = ((advertisementData[CBAdvertisementDataManufacturerDataKey] as? Data).map { HexKit.hex($0) }) ?? ""
-        let svcDataHex = ((advertisementData[CBAdvertisementDataServiceDataKey] as? Data).map { HexKit.hex($0) }) ?? ""
-        let serviceUUIDs = (advertisementData[CBAdvertisementDataServiceUUIDsKey] as? [CBUUID])?.map { $0.uuidString.uppercased() } ?? []
-        discovered[peripheral.identifier.uuidString] = BLEAdvDevice(
-            deviceId: peripheral.identifier.uuidString,
-            name: peripheral.name ?? (advertisementData[CBAdvertisementDataLocalNameKey] as? String ?? "(未命名)"),
-            rssi: RSSI.intValue,
-            advertisHex: mfgHex.isEmpty ? svcDataHex : mfgHex,
-            serviceUUIDs: serviceUUIDs)
-    }
-    public func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-        peripheral.delegate = self
-        peripheral.discoverServices(nil)
-    }
-    public func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
-        let cb = connectCompletion
-        connectCompletion = nil
-        cb?(.failure(BLEErrorX.code(.connectTimeout)))
-    }
-    public func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
-        guard peripheral === device else { return } // 陈旧设备的迟到回调: 不影响新一轮连接
-        writeChar = nil
-        notifyChar = nil
-        connectedPeripheralId = ""
-        assembler.reset()
-        // 断开后系统不会再发 ready 回调: 等在 readyCont 上的那一路必须放行, 否则 continuation 就悬着
-        // (waitWriteReady 的兜底超时也会救它, 但那是 0.12s 的无谓等待 —— 两个机制都留着才稳)。
-        readyTimer?.cancel()
-        readyTimer = nil
-        if let r = readyCont {
-            readyCont = nil
-            r.resume()
-        }
-        if let w = writeAckLock.withLock({ c -> CheckedContinuation<Void, Error>? in
-            let old = c; c = nil; return old
-        }) {
-            w.resume(throwing: BLEErrorX.msg("连接已断开"))
-        }
-        if let cb = connectCompletion {
-            connectCompletion = nil
-            cb(.failure(BLEErrorX.msg("连接已断开")))
-        }
-    }
-}
 
 // MARK: - CBPeripheralDelegate
-extension BLEService: CBPeripheralDelegate {
-    public func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
-        guard let services = peripheral.services else {
-            let cb = connectCompletion; connectCompletion = nil
-            cb?(.failure(BLEErrorX.code(.parseFail)))
-            return
-        }
-        // NUS 优先, 网关 FE90 回退 (与 JS discover 同序)
-        let target = services.first { $0.uuid == BLEUUID.svcMain }?.uuid
-            ?? services.first { $0.uuid == BLEUUID.svcGW }?.uuid
-        guard let svc = target else {
-            let cb = connectCompletion; connectCompletion = nil
-            cb?(.failure(BLEErrorX.msg("未发现 6E400001/FE90 服务")))
-            return
-        }
-        peripheral.discoverCharacteristics(nil, for: (services.first { $0.uuid == svc })!)
-    }
-    public func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
-        guard let chars = service.characteristics, error == nil else {
-            let cb = connectCompletion
-            connectCompletion = nil
-            cb?(.failure(BLEErrorX.msg("读取特征失败")))
-            return
-        }
-        let isMain = service.uuid == BLEUUID.svcMain
-        let wTarget = isMain ? BLEUUID.chrWrite : BLEUUID.chrGWWrite
-        let nTarget = isMain ? BLEUUID.chrNotify : BLEUUID.chrGWNotify
-        let w = chars.first { $0.uuid == wTarget }
-        let n = chars.first { $0.uuid == nTarget }
-        guard let wc = w else {
-            let cb = connectCompletion; connectCompletion = nil
-            cb?(.failure(BLEErrorX.code(.parseFail)))
-            return
-        }
-        guard let nc = n else {
-            let cb = connectCompletion
-            connectCompletion = nil
-            cb?(.failure(BLEErrorX.msg("未找到通知特征 (数据上行不可用)")))
-            return
-        }
-        writeChar = wc
-        notifyChar = nc
-        peripheral.setNotifyValue(true, for: nc)
-    }
-    private func finishConnect() {
-        let cb = connectCompletion
-        connectCompletion = nil
-        cb?(.success(()))
-    }
-    public func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
-        // notify 开启完成 = 连接就绪 (JS ensureNotify 语义)
-        if let e = error {
-            let cb = connectCompletion
-            connectCompletion = nil
-            cb?(.failure(BLEErrorX.msg("notify 开启失败: \(e.localizedDescription)")))
-            return
-        }
-        guard characteristic.uuid == notifyChar?.uuid else { return }
-        finishConnect()
-    }
-    public func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
-        guard let data = characteristic.value, error == nil else { return }
-        let frames = assembler.push(HexKit.hex(data))
-        for f in frames { emit(f) }
-    }
-    public func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
-        if let w = writeAckLock.withLock({ c -> CheckedContinuation<Void, Error>? in
-            let old = c; c = nil; return old
-        }) {
-            if error != nil { w.resume(throwing: BLEErrorX.code(.writeFailed)) } else { w.resume() }
-            return
-        }
-        if let cb = connectCompletion, writeChar != nil, error != nil {
-            connectCompletion = nil
-            cb(.failure(BLEErrorX.code(.writeFailed)))
-        }
-    }
-    /// 拍板 #1 (第六十五批): 这条回调就是上面 .withoutResponse 分支的正解 —— 本机队列满时系统不报错也不抛,
-    /// 只是暂时不再接受写; 旧的 20ms 盲 sleep 分不清"对端慢"与"队列满", 分片写 (cmd08) 就可能残帧。
-    /// 收到就绪信号即放行 waitWriteReady 里的等待者; 没有等待者时什么也不做。
-    public func peripheralIsReady(toSendWriteWithoutResponse peripheral: CBPeripheral) {
-        readyTimer?.cancel()
-        readyTimer = nil
-        guard let c = readyCont else { return }
-        readyCont = nil
-        c.resume()
-    }
-    /// 连接层测距的回执。本扩展的回调都跑在 CBCentralManager 的 .main 队列上 (见 init),
-    /// 所以这里可以直接调 completion —— 而 completion 那头是 @MainActor 的 LinkSense 代码。
-    public func peripheral(_ peripheral: CBPeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {
-        let cb = rssiCompletion
-        rssiCompletion = nil
-        cb?(error == nil ? RSSI.intValue : nil)
-    }
-}

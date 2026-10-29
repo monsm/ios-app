@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T05:37:08.208Z",
+    "generated": "2026-10-29T05:39:19.508Z",
     "sources": [
       {
         "scout": "android-native",
@@ -4646,7 +4646,7 @@
           "line": 567,
           "symbol": "kf_link_env / kf_link_envms",
           "note": "",
-          "text": "preconnectTask?.cancel()"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -4654,7 +4654,7 @@
           "line": 580,
           "symbol": "envConclusion()",
           "note": "",
-          "text": "}"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -4723,7 +4723,7 @@
           "line": 370,
           "symbol": "startDeadWatch()",
           "note": "",
-          "text": "DB.store.set(\"kf_wd_heals\", DB.store.getInt(\"kf_wd_heals\", 0) + 1)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -4731,7 +4731,7 @@
           "line": 380,
           "symbol": "deadbeatCheck()",
           "note": "",
-          "text": "// 已删: WakeReason 的四分法 (蓝牙未开/权限/不在广播范围/握手超时) 与在用的两处重合 ——"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -4739,7 +4739,7 @@
           "line": 385,
           "symbol": "idle > 600 && 间隔 > 300",
           "note": "",
-          "text": "// 后者覆盖面更大 (还含 信号弱/回连轮次/会话重协商)。留第三份同表只会让三处漂移。"
+          "text": "let ble = BLEService.shared"
         },
         {
           "platform": "ios",
@@ -4747,7 +4747,7 @@
           "line": 404,
           "symbol": "kf_wd_heals + 1",
           "note": "",
-          "text": "func classifyFailure(_ error: Error) -> FailKind {"
+          "text": "// 2026-10-27 审核修复：DB.keychain 的键是显示序（去冒号小写），"
         }
       ],
       "platformEvidence": {
@@ -4823,7 +4823,7 @@
           "line": 419,
           "symbol": "struct FailKind",
           "note": "",
-          "text": "return FailKind(name: \"协议类\", hint: \"会话/指令异常 — 到诊断页跑一键体检, 或重置重配该锁\")"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -4831,7 +4831,7 @@
           "line": 425,
           "symbol": "icon 计算属性",
           "note": "",
-          "text": "// ---------- 扫描取 RSSI (63/71 数据源) ----------"
+          "text": "static var envFirstSeenMs: Int { DB.store.getInt(\"kf_link_envms\", -1) }"
         },
         {
           "platform": "ios",
@@ -4839,7 +4839,7 @@
           "line": 435,
           "symbol": "classifyFailure",
           "note": "",
-          "text": "var found: BLEAdvDevice?"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -4984,7 +4984,7 @@
           "line": 152,
           "symbol": "信号围栏拦截",
           "note": "",
-          "text": "if let rssi = dev?.rssi { updateRssi(rssi) }"
+          "text": "return"
         },
         {
           "platform": "ios",
@@ -4992,7 +4992,7 @@
           "line": 168,
           "symbol": "近场轻提醒",
           "note": "",
-          "text": "let t0 = CFAbsoluteTimeGetCurrent()"
+          "text": "reconnectAttempt += 1"
         },
         {
           "platform": "ios",
@@ -5000,7 +5000,7 @@
           "line": 174,
           "symbol": "DiagOps.record 预握手",
           "note": "",
-          "text": "// 276: 同一次节律里顺手把其余常用锁也扫一遍 —— 不另开定时器 (预握手本身就是节律入口),"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -5167,7 +5167,7 @@
           "line": 258,
           "symbol": "ladderSeconds",
           "note": "",
-          "text": "let app = self.app"
+          "text": "defer { self.revalidating = false }"
         },
         {
           "platform": "ios",
@@ -5175,7 +5175,7 @@
           "line": 290,
           "symbol": "autoReconnectTick",
           "note": "",
-          "text": "BleTelemetry.recordAttempt(mac: mac, ok: true, reason: \"回连成功 (第 \\(kind + 1) 轮)\")"
+          "text": "/// 130 图标细分: 三类各配一枚图标。名称全部取自本仓已在用的 SF Symbol"
         },
         {
           "platform": "ios",
@@ -5183,7 +5183,7 @@
           "line": 315,
           "symbol": "pendingCount > 0 才回连",
           "note": "",
-          "text": ""
+          "text": "if m.contains(\"未发现\") || m.contains(\"扫描\") || m.contains(\"超时\") {"
         },
         {
           "platform": "ios",
@@ -5191,7 +5191,7 @@
           "line": 338,
           "symbol": "失败 attempt 递增封顶",
           "note": "",
-          "text": "guard deadWatchTask == nil else { return }"
+          "text": "// 2026-10-27 审核说明 (AUDIT-A F-35)：这里**同时接受两种 MAC 序**"
         }
       ],
       "platformEvidence": {
@@ -5266,7 +5266,7 @@
           "line": 185,
           "symbol": "func refresh()",
           "note": "",
-          "text": "let kind = classifyFailure(error)"
+          "text": "while !Task.isCancelled {"
         },
         {
           "platform": "ios",
@@ -5274,7 +5274,7 @@
           "line": 189,
           "symbol": "已连接直接 markReady",
           "note": "",
-          "text": "reconnectAttempt += 1"
+          "text": "try? await Task.sleep(for: .seconds(2))"
         }
       ],
       "platformEvidence": {
@@ -5337,7 +5337,7 @@
           "line": 213,
           "symbol": "onPreconnectDone()",
           "note": "",
-          "text": "} catch {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -5345,7 +5345,7 @@
           "line": 221,
           "symbol": "resync(mac:from:)",
           "note": "",
-          "text": "// 2026-10-26 精简：resync（到场/回前台自动补发队列）已删 —— 队列功能整套移除。"
+          "text": "func markReady(ms: Int?, rssi: Int?) {"
         },
         {
           "platform": "ios",
@@ -5353,7 +5353,7 @@
           "line": 242,
           "symbol": "lastReceipt",
           "note": "",
-          "text": "func setSceneActive(_ active: Bool) {"
+          "text": "self.deadbeatCheck()"
         },
         {
           "platform": "ios",
@@ -5361,7 +5361,7 @@
           "line": 253,
           "symbol": "applyQueueItem → CredentialOrg.sendQueued",
           "note": "",
-          "text": "BLEService.shared.stopScan()"
+          "text": "revalidating = true"
         }
       ],
       "platformEvidence": {
@@ -5590,7 +5590,7 @@
           "line": 591,
           "symbol": "holdMinutes",
           "note": "",
-          "text": "}"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -7183,7 +7183,7 @@
           "line": 151,
           "symbol": "fence 判定",
           "note": "",
-          "text": "let dev = try await scan(mac: mac, timeoutMs: 6000)"
+          "text": "markReady(ms: connectMs, rssi: lastRssi)"
         },
         {
           "platform": "ios",
@@ -7274,7 +7274,7 @@
           "line": 492,
           "symbol": "func scan(mac:timeoutMs:)",
           "note": "",
-          "text": "try await ble.startScan(allowDuplicates: p.allowDuplicates, timeoutMs: p.timeoutMs)"
+          "text": "static func rssiLabel(_ level: Int) -> String {"
         },
         {
           "platform": "ios",
@@ -7282,7 +7282,7 @@
           "line": 504,
           "symbol": "300ms 轮询 + 取消判据",
           "note": "",
-          "text": "for adv in ble.allDiscovered() {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -7290,7 +7290,7 @@
           "line": 519,
           "symbol": "noteScannedRssi",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -7298,7 +7298,7 @@
           "line": 525,
           "symbol": "saveRssi / rssiFor",
           "note": "",
-          "text": "/// 128: 首台可见耗时 (毫秒); -1 = 整窗一台没见"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -39926,7 +39926,7 @@
           "line": 73,
           "symbol": "BLEService",
           "note": "",
-          "text": "case .code(let c): return c.message"
+          "text": "// 写槽串行化: writeAckCont 是单一槽位, 并发写时后者会覆盖前者的 continuation"
         },
         {
           "platform": "apk",
@@ -39942,7 +39942,7 @@
           "line": 538,
           "symbol": "didUpdateNotificationState",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -39950,7 +39950,7 @@
           "line": 92,
           "symbol": "publishOnMain",
           "note": "",
-          "text": "@Published private(set) var scanning = false"
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -42550,7 +42550,7 @@
           "line": 20,
           "symbol": "svcDfuSecure",
           "note": "",
-          "text": "static let svcGW = CBUUID(string: \"0000FE90-0000-1000-8000-00805F9B34FB\")     // 网关"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -42566,7 +42566,7 @@
           "line": 23,
           "symbol": "svcDfuLegacy",
           "note": "",
-          "text": "// DFU (Nordic): Secure FE59 / Legacy 1530 + 蓝牙钥匙串 (自定义 6E401001)"
+          "text": "// ↑ 这三个 @Published 必须在**主线程**写。理由不是洁癖: Combine 在哪个线程 emit, SwiftUI 就在那个"
         }
       ],
       "platformEvidence": {
@@ -42644,7 +42644,7 @@
           "line": 126,
           "symbol": "assembler",
           "note": "",
-          "text": "/// 连接层测距的单槽回调。只在主线程读写: CBCentralManager 建在 queue: .main (见 init),"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -43605,7 +43605,7 @@
           "line": 227,
           "symbol": "connect",
           "note": "",
-          "text": "options: [CBCentralManagerScanOptionAllowDuplicatesKey: allowDuplicates])"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -43613,7 +43613,7 @@
           "line": 249,
           "symbol": "connect",
           "note": "超时工作项",
-          "text": "func allDiscovered() -> [BLEAdvDevice] { Array(discovered.values) }"
+          "text": "// 不唤醒它们就会永久挂死, 并且 writeBusy 卡 true 会阻塞之后每一次写。"
         },
         {
           "platform": "ios",
@@ -43621,7 +43621,7 @@
           "line": 497,
           "symbol": "didDiscoverServices",
           "note": "NUS 优先 / FE90 回退",
-          "text": "writeChar = nil"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -43705,7 +43705,7 @@
           "line": 267,
           "symbol": "disconnect",
           "note": "",
-          "text": "self.connectCompletion = { result in"
+          "text": "/// 从**已建立的连接**上取一次 RSSI (peripheral.readRSSI → didReadRSSI)。"
         },
         {
           "platform": "ios",
@@ -43713,7 +43713,7 @@
           "line": 463,
           "symbol": "didDisconnectPeripheral",
           "note": "",
-          "text": "// 显式 setNotifyValue，而不是留一个吞参数的同名函数。"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -43721,7 +43721,7 @@
           "line": 477,
           "symbol": "didDisconnectPeripheral",
           "note": "写确认与连接等待被唤醒",
-          "text": "let svcDataHex = ((advertisementData[CBAdvertisementDataServiceDataKey] as? Data).map { HexKit.hex($0) }) ?? \"\""
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -43794,7 +43794,7 @@
           "line": 38,
           "symbol": "BLEError",
           "note": "",
-          "text": "var serviceUUIDs: [String]"
+          "text": "// 现改成 `connectedPeripheralId`，名字与内容一致。"
         },
         {
           "platform": "apk",
@@ -43818,7 +43818,7 @@
           "line": 48,
           "symbol": "BLEError.message",
           "note": "",
-          "text": "case parseFail = 5001"
+          "text": "var manager: CBCentralManager!"
         },
         {
           "platform": "ios",
@@ -43826,7 +43826,7 @@
           "line": 415,
           "symbol": "writeChunk",
           "note": "超时抛 writeFailed",
-          "text": "DispatchQueue.main.asyncAfter(deadline: .now() + maxSeconds, execute: work)"
+          "text": ""
         },
         {
           "platform": "apk",
@@ -43943,7 +43943,7 @@
           "line": 549,
           "symbol": "didUpdateValueFor",
           "note": "",
-          "text": "let w = chars.first { $0.uuid == wTarget }"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -43951,7 +43951,7 @@
           "line": 160,
           "symbol": "onFrame",
           "note": "",
-          "text": "/// 等待蓝牙就绪。首装时权限弹窗未答复期间 state 恒 .unknown, 直接判\"未开启\"会误导;"
+          "text": "// 标 @MainActor 后调用点无需改动, 而函数体 (含 Timer) 确定跑在主线程/main run loop 上。"
         },
         {
           "platform": "ios",
@@ -43959,7 +43959,7 @@
           "line": 538,
           "symbol": "didUpdateNotificationState",
           "note": "",
-          "text": "}"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -44027,7 +44027,7 @@
           "line": 306,
           "symbol": "readLinkRSSI",
           "note": "",
-          "text": "// 写槽随连接一起复位: 断链时若有调用方在 acquireWriteSlot 的队列里等槽,"
+          "text": "// onCharacteristicWrite 才发下一片 (BLE_TIMEOUT=8s), 没有固定间隔 —— 我们这里的"
         },
         {
           "platform": "ios",
@@ -44035,7 +44035,7 @@
           "line": 577,
           "symbol": "didReadRSSI",
           "note": "",
-          "text": "return"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -44043,7 +44043,7 @@
           "line": 299,
           "symbol": "readLinkRSSI",
           "note": "注释：连上后门锁停止广播",
-          "text": "c(.failure(BLEErrorX.msg(\"连接已取消\")))"
+          "text": "var i = 0"
         }
       ],
       "platformEvidence": {
@@ -44112,7 +44112,7 @@
           "line": 200,
           "symbol": "startScan",
           "note": "",
-          "text": "/// 只有极速档开重复广播: 拿满每个广播包用于密集环境清点, 代价是 CPU 与耗电"
+          "text": "guard let devUUID = UUID(uuidString: deviceId) else { throw BLEErrorX.code(.notFound) }"
         },
         {
           "platform": "ios",
@@ -44120,7 +44120,7 @@
           "line": 170,
           "symbol": "ScanProfile",
           "note": "",
-          "text": "switch manager?.state {"
+          "text": "scanTimer?.invalidate()"
         },
         {
           "platform": "ios",
@@ -44128,7 +44128,7 @@
           "line": 209,
           "symbol": "startScan",
           "note": "到点 stopScanInternal 的定时器",
-          "text": "}"
+          "text": "self.connectCompletion = { result in"
         }
       ],
       "platformEvidence": {
@@ -44196,7 +44196,7 @@
           "line": 120,
           "symbol": "writeSlot",
           "note": "",
-          "text": "private var connectCompletion: ((Result<Void, Error>) -> Void)?"
+          "text": "// ---------- 帧订阅 ----------"
         },
         {
           "platform": "ios",
@@ -44204,7 +44204,7 @@
           "line": 344,
           "symbol": "acquireWriteSlot",
           "note": "",
-          "text": "// sending 'completion' risks causing data races 的根因。改为经 self 回读"
+          "text": "func waitWriteReady(_ device: CBPeripheral, maxSeconds: Double = 0.12) async {"
         },
         {
           "platform": "ios",
@@ -44212,7 +44212,7 @@
           "line": 362,
           "symbol": "releaseWriteSlot",
           "note": "",
-          "text": "i += chunk"
+          "text": "// 之前 withoutResponse + 20ms 假 ack — CoreBluetooth 无响应队列满时会静默丢包, 锁收到残帧"
         },
         {
           "platform": "ios",
@@ -44220,7 +44220,7 @@
           "line": 281,
           "symbol": "disconnect",
           "note": "唤醒队列",
-          "text": "}"
+          "text": "d.readRSSI()"
         }
       ],
       "platformEvidence": {
@@ -44295,7 +44295,7 @@
           "line": 326,
           "symbol": "writeFrameHex",
           "note": "",
-          "text": "///"
+          "text": "s.waiters.append(c)"
         },
         {
           "platform": "ios",
@@ -44303,7 +44303,7 @@
           "line": 339,
           "symbol": "writeFrameHex",
           "note": "逐片 await writeChunk",
-          "text": "d.readRSSI()"
+          "text": "next?.resume()"
         },
         {
           "platform": "ios",
@@ -44311,7 +44311,7 @@
           "line": 423,
           "symbol": "writeChunk",
           "note": "8.0 秒 ack 超时",
-          "text": "guard ch.properties.contains(.write) else {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -44319,7 +44319,7 @@
           "line": 396,
           "symbol": "writeChunk",
           "note": "withoutResponse 回退",
-          "text": "}"
+          "text": "// 旧值 3s 比 APK 紧 2.6 倍, 弱信号下真机容易把\"已写成功\"误判成写失败。"
         }
       ],
       "platformEvidence": {
@@ -52744,7 +52744,7 @@
           "line": 265,
           "symbol": "connect",
           "note": "连接成功后 assembler.reset()",
-          "text": "do {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -59274,7 +59274,7 @@
           "line": 169,
           "symbol": "DS.Haptics.tick 调用点",
           "note": "",
-          "text": "try await lockSvc.ensureConnected(mac: mac)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -59298,7 +59298,7 @@
           "line": 327,
           "symbol": "success 结果触感",
           "note": "",
-          "text": "objectWillChange.send()"
+          "text": "let scanT0 = Date()   // 285: 扫描时长自查的计时起点"
         }
       ],
       "platformEvidence": {
