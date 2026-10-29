@@ -126,7 +126,6 @@ enum DB {
     /// 表现是「配了两把锁只剩一把」这类偶发数据丢失。
     static let keychainWriteLock = Locked(0)
 
-    @discardableResult
 
     static var currentMac: String {
         get { store.getString("kf_current_mac") }
@@ -408,7 +407,7 @@ enum DB {
     static func setCodable<T: Encodable>(_ v: T, _ k: String) {
         Store.shared.setCodable(k, v)
     }
-    private static func set<T: Encodable>(_ v: T, _ k: String) {
+    static func set<T: Encodable>(_ v: T, _ k: String) {
         Store.shared.setCodable(k, v)
     }
 }
