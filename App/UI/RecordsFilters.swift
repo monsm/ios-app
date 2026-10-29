@@ -351,13 +351,31 @@ extension RecordsView {
     }
     func applyFilter() {
         // 576/580/583/585 —— Rec 池是「点行开详情、详情上下翻页、引用深链定位」唯一的判据来源,
-        // **两种范围都要喂**。原先只有 scope == 1 分支赋值 ⇒ 默认「当前锁」视图里 recPool 恒空,
-        // lookupRec 恒 nil, 时间线行点下去没有反应 (第一百八十九批核出的默认路径断供)。
-        // `macs` 自己就按范围给出 [当前锁] / [全部锁], 所以这里不需要分支: 一次拉取, 两路共用。
+        // **两种范围都要喂**。`macs` 自己就按范围给出 [当前锁] / [全部锁], 所以一次拉取两路共用。
         let recs = RecordSearch.buildRecs(macs: macs, includeFails: true, includeCare: true)
         recPool = recs
-        // `var` 不是风格问题: 全部锁分支建行后还要过一次 592 合并, 那是同一分支内的第二次赋值,
-        // 写成 `let` 在 Swift 里是"给已初始化的常量再赋值", 编译错误。
+        let pool = buildPool(recs)
+        computeDayTotals(pool)
+        var filtered = applyMemberFilter(pool)
+        if !searchText.isEmpty { filtered = applyTextSearch(filtered) }
+        if activeFilters { filtered = applyStructuredFilters(filtered) }
+        // 570 正序回放: 整段反转 (时间线从最早逐条回放)
+        if reversed { filtered = filtered.reversed() }
+        // 598: 在**分组之前**截断 —— 分组本身是 O(n)，一次挂上千个 Section 才是滚动掉帧的主因。
+        filteredTotal = filtered.count
+        if shownCap <= 0 { shownCap = filtered.count > 600 ? 600 : filtered.count }
+        capped = filtered.count > shownCap
+        if capped { filtered = Array(filtered.prefix(shownCap)) }
+        rows = filtered
+        groups = fillGaps(groupByDay(filtered))
+        // 596 同日一并算一次 (同一次 applyFilter 内的同一份日志缓存, 不另起一遍 IO)
+        damageDays = RecordSearch.damageDays(macs: macs)
+    }
+
+    // ---------- applyFilter 的阶段拆分（2026-10-29：原 183 行 → 7 段，每段可单独测） ----------
+
+    /// 770 全部锁: Rec 池 → RowVM（行首带锁名小标签，575 越界窗口小字）。单锁直接复用 allRows。
+    func buildPool(_ recs: [Rec]) -> [RowVM] {
         var pool: [RowVM]
         if scope == 0 {
             pool = allRows
@@ -377,9 +395,11 @@ extension RecordsView {
                              warn: r.alarm, claim: false, care: r.care)
             }
         }
-        // 593 日界收尾的可核口径: 一天的**条数**与**最晚时刻**都取自上面这份还没被筛选、没被 598 截断的行池。
-        // 组尾那句原文是「当日最晚 23:47 · 全天 N 条」—— 它说的是这一天, 不是"这一天还剩几行给我看"。
-        // 原先两个数都来自 g.rows (筛过 + 截过), 于是每次过滤、每页分页都会把"全天"改小一次。
+        return pool
+    }
+
+    /// 593 日界收尾口径: 一天条数与最晚时刻取自**未筛未截**的行池。
+    func computeDayTotals(_ pool: [RowVM]) {
         var dayCount: [String: Int] = [:]
         var dayEndBy: [String: String] = [:]
         for r in pool {
@@ -395,7 +415,10 @@ extension RecordsView {
         }
         dayFullCount = dayCount
         dayLatest = dayEndBy
-        // 成员/未知/访客/保养 过滤 (保留既有 793/791/1028 语义)
+    }
+
+    /// 成员 / 未知 / 访客 / 保养 过滤（793 / 791 / 1028）。
+    func applyMemberFilter(_ pool: [RowVM]) -> [RowVM] {
         var filtered = pool
         switch sel {
         case "": break
@@ -404,132 +427,122 @@ extension RecordsView {
         case "__care": filtered = pool.filter { $0.care }
         default: filtered = pool.filter { $0.whoId == sel }
         }
-        // 551/554/555 文本检索: 正词全中 + 负词全不中 + 时间短语窗 + 告警/凭证类词
-        if !searchText.isEmpty {
-            let q = RecordSearch.parse(searchText)
-            // 551 搜索面补齐: 占位文案写着「成员 / 凭证 / 备注」, 而拼接只有 title + 锁名 + 成员名 ——
-            // 186 备注与 568 凭证标签压根不在搜索面上, 等于界面承诺了一个检索不到东西的热区。
-            //   · 备注的存储键本身就是 mac#行键 (RecordOverlay.setNote 写进去的就是 `oid`), 所以直接并表,
-            //     不在这里二次换算;
-            //   · 凭证标签 (含 310 别名) 只有 Rec 带得动, 出处就是刚喂好的 recPool —— 单锁模式现在也有池子,
-            //     这正是本批补的那一条。
-            // 两张表都在筛选循环**外面**各建一次: RecordOverlay.notes 每次调用都要解一遍 JSON,
-            // 放进逐行判据里就是一千行解一千次。
-            var noteByOid: [String: String] = [:]
-            for m in macs { noteByOid.merge(RecordOverlay.notes(m)) { _, newest in newest } }
-            var credByOid: [String: String] = [:]
-            for x in recPool { credByOid[RecordOverlay.oid(mac: x.mac, rowKey: x.key)] = x.cred }
-            filtered = filtered.filter { r in
-                let whoStr = r.whoId.flatMap { DB.member($0)?.name ?? "" } ?? ""
-                let txt = RecordSearch.searchFace(title: r.title, lockName: r.lockName, whoName: whoStr,
-                                                  cred: credByOid[r.id] ?? "", note: noteByOid[r.id] ?? "")
-                let memberHit = q.member.map { txt.localizedCaseInsensitiveContains($0) } ?? false
-                let mustHit = q.must.isEmpty || q.must.allSatisfy { txt.localizedCaseInsensitiveContains($0) } || memberHit
-                let notHit = q.not.allSatisfy { !txt.localizedCaseInsensitiveContains($0) }
-                guard mustHit, notHit else { return false }
-                if q.alarmOnly, !r.warn { return false }
-                if let k = q.credKind, r.kind != k { return false }
-                // 554 时间短语: 按 562 口径落在窗内 (行级时刻近似: 日 + 时分)
-                if let rng = q.range, let d = rowDate(r) {
-                    if d < rng.from || d > rng.to { return false }
-                }
-                return true
+        return filtered
+    }
+
+    /// 551/554/555 文本检索: 正词全中 + 负词全不中 + 时间短语窗 + 告警/凭证类词。
+    func applyTextSearch(_ pool: [RowVM]) -> [RowVM] {
+        let q = RecordSearch.parse(searchText)
+        // 551 搜索面补齐: 占位文案写着「成员 / 凭证 / 备注」, 而拼接只有 title + 锁名 + 成员名 ——
+        // 186 备注与 568 凭证标签压根不在搜索面上, 等于界面承诺了一个检索不到东西的热区。
+        //   · 备注的存储键本身就是 mac#行键 (RecordOverlay.setNote 写进去的就是 `oid`), 所以直接并表,
+        //     不在这里二次换算;
+        //   · 凭证标签 (含 310 别名) 只有 Rec 带得动, 出处就是刚喂好的 recPool —— 单锁模式现在也有池子,
+        //     这正是本批补的那一条。
+        // 两张表都在筛选循环**外面**各建一次: RecordOverlay.notes 每次调用都要解一遍 JSON,
+        // 放进逐行判据里就是一千行解一千次。
+        var noteByOid: [String: String] = [:]
+        for m in macs { noteByOid.merge(RecordOverlay.notes(m)) { _, newest in newest } }
+        var credByOid: [String: String] = [:]
+        for x in recPool { credByOid[RecordOverlay.oid(mac: x.mac, rowKey: x.key)] = x.cred }
+        return pool.filter { r in
+            let whoStr = r.whoId.flatMap { DB.member($0)?.name ?? "" } ?? ""
+            let txt = RecordSearch.searchFace(title: r.title, lockName: r.lockName, whoName: whoStr,
+                                              cred: credByOid[r.id] ?? "", note: noteByOid[r.id] ?? "")
+            let memberHit = q.member.map { txt.localizedCaseInsensitiveContains($0) } ?? false
+            let mustHit = q.must.isEmpty || q.must.allSatisfy { txt.localizedCaseInsensitiveContains($0) } || memberHit
+            let notHit = q.not.allSatisfy { !txt.localizedCaseInsensitiveContains($0) }
+            guard mustHit, notHit else { return false }
+            if q.alarmOnly, !r.warn { return false }
+            if let k = q.credKind, r.kind != k { return false }
+            // 554 时间短语: 按 562 口径落在窗内 (行级时刻近似: 日 + 时分)
+            if let rng = q.range, let d = rowDate(r) {
+                if d < rng.from || d > rng.to { return false }
             }
+            return true
         }
-        // 564/571/572/567/568/569 过滤条件 (单锁与全部锁同一口径)
-        if activeFilters {
-            filtered = filtered.filter { r in
-                let hour = r.hour >= 0 ? r.hour : -1
-                if hour >= 0 {
-                    // 672: 传行的归属日键 (与 RecordSearch 内部判定同一口径, 凌晨已归前一晚)
-                    if filters.lateNight && !RecordSearch.isLateNight(hour, dayKey: r.dayKey) { return false }
-                    switch filters.segment {
-                    case 1: if !(6...9).contains(hour) { return false }
-                    case 2: if !(10...14).contains(hour) { return false }
-                    case 3: if !(15...21).contains(hour) { return false }
-                    case 4: if !RecordSearch.isLateNight(hour, dayKey: r.dayKey) { return false }
-                    default: break
-                    }
-                    if let d = RecordSearch.dateFromKey(r.dayKey) {
-                        let wk = WeekCal.gregorian.component(.weekday, from: d)
-                        let isWeekend = wk == 1 || wk == 7
-                        if filters.dayKind == 1 && isWeekend { return false }
-                        if filters.dayKind == 2 && !isWeekend { return false }
-                    }
-                } else if filters.segment != 0 || filters.lateNight || filters.dayKind != 0 {
-                    return false   // 时刻未知行不进时段/周末口径
+    }
+
+    /// 564/571/572/567/568/569 结构化过滤（时段 / 周末 / 告警类型 / 凭证类型）。
+    func applyStructuredFilters(_ pool: [RowVM]) -> [RowVM] {
+        return pool.filter { r in
+            let hour = r.hour >= 0 ? r.hour : -1
+            if hour >= 0 {
+                // 672: 传行的归属日键 (与 RecordSearch 内部判定同一口径, 凌晨已归前一晚)
+                if filters.lateNight && !RecordSearch.isLateNight(hour, dayKey: r.dayKey) { return false }
+                switch filters.segment {
+                case 1: if !(6...9).contains(hour) { return false }
+                case 2: if !(10...14).contains(hour) { return false }
+                case 3: if !(15...21).contains(hour) { return false }
+                case 4: if !RecordSearch.isLateNight(hour, dayKey: r.dayKey) { return false }
+                default: break
                 }
-                if filters.alarmOnly && !r.warn { return false }
-                // 565 类型多选: 只留选中的告警类型 (选中集全是告警类, 天然只出告警行; 与 567 可叠加取交集)
-                if !filters.alarmKinds.isEmpty, !filters.alarmKinds.contains(r.type) { return false }
-                // ⚠569: 锁端仅记录告警级 (10/13/224) + 手机侧失败行, 无逐次失败明细
-                if !filters.kind.isEmpty, r.kind != filters.kind { return false }
-                return true
+                if let d = RecordSearch.dateFromKey(r.dayKey) {
+                    let wk = WeekCal.gregorian.component(.weekday, from: d)
+                    let isWeekend = wk == 1 || wk == 7
+                    if filters.dayKind == 1 && isWeekend { return false }
+                    if filters.dayKind == 2 && !isWeekend { return false }
+                }
+            } else if filters.segment != 0 || filters.lateNight || filters.dayKind != 0 {
+                return false   // 时刻未知行不进时段/周末口径
             }
+            if filters.alarmOnly && !r.warn { return false }
+            // 565 类型多选: 只留选中的告警类型 (选中集全是告警类, 天然只出告警行; 与 567 可叠加取交集)
+            if !filters.alarmKinds.isEmpty, !filters.alarmKinds.contains(r.type) { return false }
+            // ⚠569: 锁端仅记录告警级 (10/13/224) + 手机侧失败行, 无逐次失败明细
+            if !filters.kind.isEmpty, r.kind != filters.kind { return false }
+            return true
         }
-        // 570 正序回放: 整段反转 (时间线从最早逐条回放)
-        if reversed { filtered = filtered.reversed() }
-        // 598: 在**分组之前**截断 —— 分组本身是 O(n)，一次挂上千个 Section 才是滚动掉帧的主因。
-        // 同时留下截断前的总数: resultCount 报的必须是"筛掉多少"而不是"这次渲染了多少"，
-        // 否则一次分页就把统计口径悄悄改小了 (那是最难发现的错法: 数字看着都对)。
-        filteredTotal = filtered.count
-        // 598 分档截断: 上限没定过 (首页) → 池 ≤600 全显、>600 显 600; 已定 → 用户按过「继续加载」,
-        // 只在还没显完时保留 capped。写死 1200 的旧判据在 300 条级数据层上永远不触发, 等于把 598 判成"做了"。
-        if shownCap <= 0 {
-            shownCap = filtered.count > 600 ? 600 : filtered.count
-        }
-        capped = filtered.count > shownCap
-        if capped { filtered = Array(filtered.prefix(shownCap)) }
-        rows = filtered
-        // 按天分组: 日志本身已是时间倒序, 保持首现顺序即可
+    }
+
+    /// 按天分组: 日志本身已是时间倒序, 保持首现顺序即可。
+    func groupByDay(_ rows: [RowVM]) -> [DayGroup] {
         var order: [String] = []
         var buckets: [String: [RowVM]] = [:]
-        for r in filtered {
+        for r in rows {
             if buckets[r.dayKey] == nil { order.append(r.dayKey) }
             buckets[r.dayKey, default: []].append(r)
         }
-        groups = order.map { key in
+        return order.map { key in
             DayGroup(key: key, rows: buckets[key] ?? [])
         }
-        // 657/675 补缺口行。三个前提都是"别把筛掉的痕迹说成空档":
-        //   · 未筛选 (activeFilterCount == 0) —— 用户过滤掉周末后再补"周六无记录"是在指责日历;
-        //   · 非正序回放 —— 570 的回放是从最早逐条读，插空行会打断那条叙事线;
-        //   · 时间未知行 "__none" 不参与推算 (它没有相邻日的概念)。
-        if !reversed, activeFilterCount == 0, groups.count >= 2 {
-            var filled: [DayGroup] = []
-            for i in 0..<groups.count {
-                filled.append(groups[i])
-                guard i + 1 < groups.count,
-                      !groups[i].isNone, !groups[i + 1].isNone,
-                      let newer = RecordSearch.dateFromKey(groups[i].key),
-                      let older = RecordSearch.dateFromKey(groups[i + 1].key) else { continue }
-                // 相隔天数要**就近取整**而不是截断：原本写的是 `(elapsed - 43_200) / 86_400`，
-                // 减半天再截断 = 比"向下取整"还早一格 ⇒ 相隔 N 天算出 N-1，于是
-                //   · 只缺一天时 gap = 1，被 `gap >= 2` 挡掉 ⇒ **空了一整天从来不补** (675 那行"缺口"永远少一段)；
-                //   · 缺 N 天的那条汇总行报 `missing = N-1` ⇒ 「N 天无记录」恒定少说一天。
-                // 改成 + 半天再截断：N=1 相邻 ⇒ 1、N=2 ⇒ 2 (missing 1) …；有夏令时的日子两天可能只差 23 小时，
-                // 就近取整同样落对 (减半天那版会把 23 小时当成一天、把 47 小时当成两天)。见 §10.33。
-                let gap = Int((newer.timeIntervalSince(older) + 43_200) / 86_400)
-                guard gap >= 2 else { continue }
-                let missing = gap - 1
-                if missing > 7 {
-                    var hol: String? = nil
-                    for k in 1...min(missing, 45) where hol == nil {
-                        hol = RecordSearch.holidayName(RecordSearch.dayKeyOf(WeekCal.shifted(older, days: k)))
-                    }
-                    filled.append(DayGroup(key: "gap-" + groups[i + 1].key, rows: [],
-                                           isGap: true, gapDays: missing, gapHoliday: hol))
-                } else {
-                    for k in 1...missing {
-                        let dk = RecordSearch.dayKeyOf(WeekCal.shifted(older, days: k))
-                        filled.append(DayGroup(key: "gap-" + dk, rows: [],
-                                               isGap: true, gapDays: 1, gapHoliday: RecordSearch.holidayName(dk)))
-                    }
+    }
+
+    /// 657/675 补缺口行。三个前提都是「别把筛掉的痕迹说成空档」。
+    func fillGaps(_ input: [DayGroup]) -> [DayGroup] {
+        var groups = input
+        var filled: [DayGroup] = []
+        for i in 0..<groups.count {
+            filled.append(groups[i])
+            guard i + 1 < groups.count,
+                  !groups[i].isNone, !groups[i + 1].isNone,
+                  let newer = RecordSearch.dateFromKey(groups[i].key),
+                  let older = RecordSearch.dateFromKey(groups[i + 1].key) else { continue }
+            // 相隔天数要**就近取整**而不是截断：原本写的是 `(elapsed - 43_200) / 86_400`，
+            // 减半天再截断 = 比"向下取整"还早一格 ⇒ 相隔 N 天算出 N-1，于是
+            //   · 只缺一天时 gap = 1，被 `gap >= 2` 挡掉 ⇒ **空了一整天从来不补** (675 那行"缺口"永远少一段)；
+            //   · 缺 N 天的那条汇总行报 `missing = N-1` ⇒ 「N 天无记录」恒定少说一天。
+            // 改成 + 半天再截断：N=1 相邻 ⇒ 1、N=2 ⇒ 2 (missing 1) …；有夏令时的日子两天可能只差 23 小时，
+            // 就近取整同样落对 (减半天那版会把 23 小时当成一天、把 47 小时当成两天)。见 §10.33。
+            let gap = Int((newer.timeIntervalSince(older) + 43_200) / 86_400)
+            guard gap >= 2 else { continue }
+            let missing = gap - 1
+            if missing > 7 {
+                var hol: String? = nil
+                for k in 1...min(missing, 45) where hol == nil {
+                    hol = RecordSearch.holidayName(RecordSearch.dayKeyOf(WeekCal.shifted(older, days: k)))
+                }
+                filled.append(DayGroup(key: "gap-" + groups[i + 1].key, rows: [],
+                                       isGap: true, gapDays: missing, gapHoliday: hol))
+            } else {
+                for k in 1...missing {
+                    let dk = RecordSearch.dayKeyOf(WeekCal.shifted(older, days: k))
+                    filled.append(DayGroup(key: "gap-" + dk, rows: [],
+                                           isGap: true, gapDays: 1, gapHoliday: RecordSearch.holidayName(dk)))
                 }
             }
-            groups = filled
         }
-        // 596 同日一并算一次 (同一次 applyFilter 内的同一份日志缓存, 不另起一遍 IO)
-        damageDays = RecordSearch.damageDays(macs: macs)
+        groups = filled
+        return groups
     }
 }
