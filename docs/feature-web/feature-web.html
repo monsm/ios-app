@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T23:37:13.587Z",
+    "generated": "2026-10-29T23:51:27.197Z",
     "sources": [
       {
         "scout": "android-native",
@@ -29772,7 +29772,7 @@ const DATA = {
           "line": 397,
           "symbol": "restoreAll(_:)",
           "note": "",
-          "text": "}"
+          "text": "/// 2026-10-14: 原先只有 restoreAll(.overwrite) 走这段, 而 WebDAV 与换机迁移走的是 .merge/.missing"
         },
         {
           "platform": "ios",
@@ -29788,7 +29788,7 @@ const DATA = {
           "line": 413,
           "symbol": "mac/skey 守卫",
           "note": "",
-          "text": "set(\"kf_row_h\", a.rowH)"
+          "text": "LockArchive.setOrder(keep + rest)"
         },
         {
           "platform": "ios",
@@ -29796,7 +29796,7 @@ const DATA = {
           "line": 422,
           "symbol": "owner 重映射 / 置 nil",
           "note": "",
-          "text": "DB.store.set(\"kf_hero_stats\", DS.HeroStats.all.filter { stats.contains($0) })"
+          "text": "let keep = folded.map { LockArchive.normalizedGroup($0) }.filter { live.contains($0) }"
         },
         {
           "platform": "ios",
@@ -29804,7 +29804,7 @@ const DATA = {
           "line": 451,
           "symbol": "otpKeys 白名单",
           "note": "",
-          "text": ""
+          "text": "// 2026-10-30 补（第 65 轮）：无障碍/交互偏好。缺字段 = 这次备份没带 = 不动本机。"
         }
       ],
       "platformEvidence": {
@@ -29934,7 +29934,7 @@ const DATA = {
           "line": 255,
           "symbol": "ledger 为空置 nil",
           "note": "",
-          "text": "var groups: [GroupRec]?   // kf_lockmeta_\u003cmac>.grp"
+          "text": "case theme, accent, density, radius, hc, weekStart, rowH, tlGap"
         }
       ],
       "platformEvidence": {
@@ -30016,7 +30016,7 @@ const DATA = {
           "line": 267,
           "symbol": "kf_bk_otp 勾选才收 OTP",
           "note": "",
-          "text": "enum BackupKit {"
+          "text": "var deviceOrg: DeviceOrg?"
         },
         {
           "platform": "ios",
@@ -30024,7 +30024,7 @@ const DATA = {
           "line": 444,
           "symbol": "passcode 只写 s/d",
           "note": "",
-          "text": ""
+          "text": "if let v = a.hc { DB.store.set(\"kf_hc\", v) }"
         },
         {
           "platform": "ios",
@@ -30229,7 +30229,7 @@ const DATA = {
           "line": 286,
           "symbol": "exportText 追加 checksum",
           "note": "",
-          "text": "gp.append((\"trace\", .obj(["
+          "text": "if !ov.isEmpty { gp.append((\"deviceOrg\", .obj(ov))) }"
         }
       ],
       "platformEvidence": {
@@ -30364,7 +30364,7 @@ const DATA = {
           "line": 249,
           "symbol": "collectAll()",
           "note": "",
-          "text": "///  ③ 一律用**数组**而不是字典: 小程序 canonicalBundle 对 globals 内层是原样透传 (只对顶层键排序),"
+          "text": "/// 这份包**永远导不回来**。"
         },
         {
           "platform": "ios",
@@ -30380,7 +30380,7 @@ const DATA = {
           "line": 256,
           "symbol": "Device.Meta 逐项",
           "note": "",
-          "text": "var folded: [String]?     // kf_group_folded: 被收起的组名"
+          "text": "case recentCount = \"recent\""
         },
         {
           "platform": "ios",
@@ -30388,7 +30388,7 @@ const DATA = {
           "line": 279,
           "symbol": "BackupBundle 组装",
           "note": "",
-          "text": "mobileKeys: MobileKeyService.list(mac).isEmpty ? nil : MobileKeyService.list(mac)))"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -30745,7 +30745,7 @@ const DATA = {
           "line": 128,
           "symbol": "rollbackFamilies",
           "note": "",
-          "text": "(try? data.write(to: rollURL, options: .atomic)) != nil else { return false }"
+          "text": "extras: extra)"
         },
         {
           "platform": "ios",
@@ -30753,7 +30753,7 @@ const DATA = {
           "line": 148,
           "symbol": "struct RollbackBundle",
           "note": "",
-          "text": ""
+          "text": "for f in sorted.dropFirst(min(keep, sorted.count)) { try? FileManager.default.removeItem(at: f) }"
         },
         {
           "platform": "ios",
@@ -30761,7 +30761,7 @@ const DATA = {
           "line": 159,
           "symbol": "makeRollbackPoint",
           "note": "",
-          "text": "/// 453 哈希层判定: 与 verifyChecksum 共用一套算法 (新语义 + 旧语义两条都认)"
+          "text": "/// 实际 WebDAV 一族已删，现在只有 bundleFor() 一个调用点。函数本身是恒等映射"
         },
         {
           "platform": "ios",
@@ -30769,7 +30769,7 @@ const DATA = {
           "line": 190,
           "symbol": "canUndoLastRestore",
           "note": "",
-          "text": "}"
+          "text": "// 收紧既不增安全又伤兼容。如实两条都认; 真要防篡改得换带密钥的 MAC (另立项)。"
         },
         {
           "platform": "ios",
@@ -30777,7 +30777,7 @@ const DATA = {
           "line": 208,
           "symbol": "restoreRollbackSnapshot",
           "note": "",
-          "text": "let ck = checksumState(body)"
+          "text": "let raw = try? JSONDecoder().decode(BackupBundle.self, from: data) else {"
         }
       ],
       "platformEvidence": {
@@ -31011,7 +31011,7 @@ const DATA = {
           "line": 295,
           "symbol": "collectAppearance",
           "note": "",
-          "text": "members: DB.members().isEmpty ? nil : DB.members(),"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -31019,7 +31019,7 @@ const DATA = {
           "line": 373,
           "symbol": "applyAppearance",
           "note": "",
-          "text": "static func applyGlobalsAppearanceAndOrg(_ globals: BackupBundle.Globals, devices: [BackupBundle.Device]) {"
+          "text": "elderMode: DB.store.has(\"kf_elder_mode\") ? DB.store.getBool(\"kf_elder_mode\") : nil)"
         }
       ],
       "platformEvidence": {
@@ -31094,7 +31094,7 @@ const DATA = {
           "line": 233,
           "symbol": "var deviceOrg",
           "note": "",
-          "text": "/// 影响面: 只要备份包的外观段带 recent (即用户把\"最近记录条数\"设成 3/5/10)，"
+          "text": "var bigTile: Bool?        // kf_bigtile  2 列大格"
         },
         {
           "platform": "ios",
@@ -31102,7 +31102,7 @@ const DATA = {
           "line": 320,
           "symbol": "collectDeviceOrg",
           "note": "",
-          "text": "\"kf_tl_gap\":     [\"\", \"tight\", \"loose\"],"
+          "text": "/// 894 收集外观档。只收**枚举过的档位值**，读到没见过的值就当没这项 (nil)，"
         },
         {
           "platform": "ios",
@@ -31110,7 +31110,7 @@ const DATA = {
           "line": 343,
           "symbol": "applyGlobalsAppearanceAndOrg",
           "note": "",
-          "text": "heroTex: enumVal(\"kf_hero_tex\"),"
+          "text": "guard let allowed = Self.appearanceAllow[key] else { return nil }"
         },
         {
           "platform": "ios",
@@ -31118,7 +31118,7 @@ const DATA = {
           "line": 349,
           "symbol": "known = 包内 ∩ 本机",
           "note": "",
-          "text": "/// 四项全空就整段不带 (缺字段 = 恢复时不动本机); groups 按 mac 排序, 同一份数据两次导出得到同一 canonical。"
+          "text": "theme: enumVal(\"kf_theme\"),"
         }
       ],
       "platformEvidence": {

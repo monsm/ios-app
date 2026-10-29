@@ -86,7 +86,14 @@ enum BackupStudio {
         // 恢复时写回的也一定是那几档 —— 但它们同样是"恢复会写"，一并补进来才叫撤销完整。
         "kf_hc", "kf_plain", "kf_hero_stats", "kf_recent_count",
         "kf_theme", "kf_accent", "kf_density", "kf_radius", "kf_week_start",
-        "kf_row_h", "kf_tl_gap", "kf_motion", "kf_hero_tex"
+        "kf_row_h", "kf_tl_gap", "kf_motion", "kf_hero_tex",
+        // 2026-10-30 补（第 65 轮）：**无障碍/交互偏好**这批既没进备份、也没进回滚。
+        // 它们与外观同性质（用户主动拨、restore 会写回），因此两条路都要覆盖：
+        //   · 备份：BackupBundle.Globals.Appearance 新增 10 个 Optional 字段
+        //   · 回滚：本名单（否则「撤销恢复」把大字/大格/圆盘大小停在错包的值）
+        "kf_ax_bigotp", "kf_ax_bigpreview", "kf_ax_hold", "kf_bigtile",
+        "kf_dial_size", "kf_digit_font", "kf_gesture_mode",
+        "kf_hold_confirm", "kf_dbltap_guard", "kf_elder_mode"
     ]
     struct RollbackBundle: Codable {
         var keychains: [String]      // JSON: [Keychain]

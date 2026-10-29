@@ -247,6 +247,19 @@ enum BackupCanonical {
                 if let hs = ap.heroStats, !hs.isEmpty {
                     av.append(("heroStats", .arr(hs.sorted().map { JValue.str($0) })))
                 }
+                // 2026-10-30 补（第 65 轮）：无障碍/交互偏好也进校验和。
+                // 不进的话，改包体里的这批开关既不会被发现，也让「同一份备份两次导出得到不同 canonical」
+                // 有了新口子 —— 与 appearance 段当初进 canonical 是同一个理由。字段名按字母序 emit。
+                putB("axBigOtp", ap.axBigOtp)
+                putB("axBigPreview", ap.axBigPreview)
+                put("axHold", ap.axHold)
+                putB("bigTile", ap.bigTile)
+                if let n = ap.dialSize { av.append(("dialSize", .num(Double(n)))) }
+                put("digitFont", ap.digitFont)
+                put("gestureMode", ap.gestureMode)
+                putB("holdConfirm", ap.holdConfirm)
+                putB("dbltapGuard", ap.dbltapGuard)
+                putB("elderMode", ap.elderMode)
                 if !av.isEmpty {
                     gp.append(("appearance", .obj(av.sorted { $0.0 < $1.0 })))
                 }

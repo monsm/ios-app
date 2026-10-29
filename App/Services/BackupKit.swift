@@ -222,6 +222,21 @@ struct BackupBundle: Codable {
             var plain: Bool?          // kf_plain (1046)
             var recentCount: Int?     // kf_recent_count (910) → JSON 键名是 "recent"
             var heroStats: [String]?  // kf_hero_stats (909)
+            // 2026-10-30 补（第 65 轮）：**无障碍与交互偏好**从来没进过备份。
+            // 判据同外观那批：①用户主动拨的 ②App 靠它们改变行为。
+            // 用户换了机、导了备份，却发现「大字模式 / 大格 / 长按时长 / 圆盘大小 / 手势」全部回到默认 ——
+            // 对依赖无障碍档的人来说，这等于换机后 App 突然不可用。
+            // 全部 Optional：缺字段 = 这次备份没带 = 恢复时不动本机。
+            var axBigOtp: Bool?       // kf_ax_bigotp  OTP 大字
+            var axBigPreview: Bool?   // kf_ax_bigpreview  大预览
+            var axHold: String?       // kf_ax_hold  长按时长 (字符串形态 "0.9")
+            var bigTile: Bool?        // kf_bigtile  2 列大格
+            var dialSize: Int?        // kf_dial_size 圆盘直径 160/176/200
+            var digitFont: String?    // kf_digit_font ""/plain
+            var gestureMode: String?  // kf_gesture_mode 手势档
+            var holdConfirm: Bool?    // kf_hold_confirm 长按确认
+            var dbltapGuard: Bool?    // kf_dbltap_guard 双击防抖
+            var elderMode: Bool?      // kf_elder_mode 长辈模式
 
             /// 显式的键映射 —— 只有 recentCount 一处的 Swift 名与 JSON 键不同。
             ///
@@ -343,7 +358,19 @@ enum BackupKit {
             heroTex: enumVal("kf_hero_tex"),
             plain: DB.store.has("kf_plain") ? DB.store.getBool("kf_plain") : nil,
             recentCount: [3, 5, 10].contains(recent) ? recent : nil,
-            heroStats: stats.count == DS.HeroStats.all.count ? nil : Array(stats).sorted())
+            heroStats: stats.count == DS.HeroStats.all.count ? nil : Array(stats).sorted(),
+            // 2026-10-30 补（第 65 轮）：无障碍/交互偏好同口径导出。
+            // 读侧全部走「键存在才带值」—— 没拨过的开关不该在包里出现一个假默认。
+            axBigOtp: DB.store.has("kf_ax_bigotp") ? DB.store.getBool("kf_ax_bigotp") : nil,
+            axBigPreview: DB.store.has("kf_ax_bigpreview") ? DB.store.getBool("kf_ax_bigpreview") : nil,
+            axHold: DB.store.has("kf_ax_hold") ? DB.store.getString("kf_ax_hold") : nil,
+            bigTile: DB.store.has("kf_bigtile") ? DB.store.getBool("kf_bigtile") : nil,
+            dialSize: DB.store.has("kf_dial_size") ? DB.store.getInt("kf_dial_size", 176) : nil,
+            digitFont: DB.store.has("kf_digit_font") ? DB.store.getString("kf_digit_font") : nil,
+            gestureMode: DB.store.has("kf_gesture_mode") ? DB.store.getString("kf_gesture_mode") : nil,
+            holdConfirm: DB.store.has("kf_hold_confirm") ? DB.store.getBool("kf_hold_confirm", true) : nil,
+            dbltapGuard: DB.store.has("kf_dbltap_guard") ? DB.store.getBool("kf_dbltap_guard", true) : nil,
+            elderMode: DB.store.has("kf_elder_mode") ? DB.store.getBool("kf_elder_mode") : nil)
     }
     /// D-36 收集设备组织 (顺序 / 分组 / 分组折叠 / 隐藏)。
     /// 四项全空就整段不带 (缺字段 = 恢复时不动本机); groups 按 mac 排序, 同一份数据两次导出得到同一 canonical。
@@ -421,5 +448,18 @@ enum BackupKit {
             // 白名单外的项丢掉; 全空由 DS.HeroStats 自己回退全开 (不留一张没有指标的光板卡)
             DB.store.set("kf_hero_stats", DS.HeroStats.all.filter { stats.contains($0) })
         }
+        // 2026-10-30 补（第 65 轮）：无障碍/交互偏好。缺字段 = 这次备份没带 = 不动本机。
+        // 拨过这些开关的人换机后最痛：大字/大格/长按时长全回默认 = App 突然不可用。
+        if let v = a.axBigOtp { DB.store.set("kf_ax_bigotp", v) }
+        if let v = a.axBigPreview { DB.store.set("kf_ax_bigpreview", v) }
+        // kf_ax_hold 存的是字符串形态的秒数（"0.9"），恢复时先校验可解析再写
+        if let v = a.axHold, Double(v) != nil { DB.store.set("kf_ax_hold", v) }
+        if let v = a.bigTile { DB.store.set("kf_bigtile", v) }
+        if let n = a.dialSize, [160, 176, 200].contains(n) { DB.store.set("kf_dial_size", n) }
+        if let v = a.digitFont, ["", "plain"].contains(v) { DB.store.set("kf_digit_font", v) }
+        if let v = a.gestureMode { DB.store.set("kf_gesture_mode", v) }
+        if let v = a.holdConfirm { DB.store.set("kf_hold_confirm", v) }
+        if let v = a.dbltapGuard { DB.store.set("kf_dbltap_guard", v) }
+        if let v = a.elderMode { DB.store.set("kf_elder_mode", v) }
     }
 }
