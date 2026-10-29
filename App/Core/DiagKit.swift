@@ -171,32 +171,6 @@ enum DiagLogs {
             flush()
         }
     }
-    /// 按 751 保留策略过滤后的全量 (最新在末尾)
-    static func all() -> [DiagLogEntry] {
-        var list = entries
-        if let days = retentionDays {
-            let cs = localDay(WeekCal.shifted(Date(), days: -days))
-            list = list.filter { $0.date >= cs }
-        }
-        return list
-    }
-    /// 751: 确认后**立即应用**保留策略 (与 append 的裁剪同一口径), 返回实际删掉的条数。
-    /// 原先只从下一次写入起生效 —— 切完看不到任何变化, "显示将删条数+二次确认"也就无从谈起。
-    static func today() -> [DiagLogEntry] {
-        let d = localDay()
-        return entries.filter { $0.date == d }
-    }
-    /// 由 LockService 分级日志调用: date/time 取自行内已有时序, 落持久台账
-    static func append(_ level: String, _ msg: String, date: String, time: String) {
-        var list = entries
-        list.append(DiagLogEntry(date: date, time: time, level: level, msg: msg))
-        if list.count > 500 { list = Array(list.suffix(500)) }
-        if let days = retentionDays {
-            let cs = localDay(WeekCal.shifted(Date(), days: -days))
-            list = list.filter { $0.date >= cs }
-        }
-        DiagLogStore.save(list)
-    }
 }
 
 // ---------- 748 BLE 事件流水与连接成败遥测 (⚠ 降级: 环形留存, 图表随积累展示) ----------
