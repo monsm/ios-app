@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T03:49:16.491Z",
+    "generated": "2026-10-29T03:50:29.779Z",
     "sources": [
       {
         "scout": "android-native",
@@ -7029,7 +7029,7 @@
           "line": 1268,
           "symbol": "if DB.listFps(app.currentMac).isEmpty",
           "note": "",
-          "text": "@State private var busy = false"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -7037,7 +7037,7 @@
           "line": 1270,
           "symbol": "quickDestination(\"addFp\")",
           "note": "",
-          "text": "@State private var failed = false"
+          "text": ""
         }
       ],
       "platformEvidence": {
