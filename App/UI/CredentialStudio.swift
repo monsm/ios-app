@@ -1501,6 +1501,20 @@ struct PwdDetailStudio: View {
         if let p = p {
             NavigationStack {
                 List {
+                    // 2026-10-29 补（**后台有实现、前台零调用**）：`CredentialOrg.disableMarkText`
+                    // 返回「停用原因 X · MM-dd HH:mm · via」。停用过的凭证在详情页看不到原因，
+                    // 用户只看到列表里一条灰行、不知道为什么。这里补一行如实回显（没标记就不显示，不编）。
+                    if let mark = CredentialOrg.disableMarkText(mac, kind: "pwd", key: p.alias) {
+                        Section {
+                            Label {
+                                Text(mark).fixedSize(horizontal: false, vertical: true)
+                            } icon: {
+                                Image(systemName: "pause.circle.fill")
+                            }
+                            .vkFont(.caption)
+                            .foregroundStyle(DS.Palette.warn)
+                        }
+                    }
                     // 331 提前失效到点: 顶部提醒条 (本地提示, **不自动下发停用**)
                     if p.temp, CredentialOrg.isEarlyExpired(mac, p, Date()) {
                         Section {
@@ -2266,6 +2280,18 @@ struct FpDetailStudio: View {
         if let f = f {
             NavigationStack {
                 List {
+                    // 2026-10-29 补：同 PwdDetailStudio —— 停用原因回显（没标记就不显示，不编）
+                    if let mark = CredentialOrg.disableMarkText(mac, kind: "fp", key: f.batch) {
+                        Section {
+                            Label {
+                                Text(mark).fixedSize(horizontal: false, vertical: true)
+                            } icon: {
+                                Image(systemName: "pause.circle.fill")
+                            }
+                            .vkFont(.caption)
+                            .foregroundStyle(DS.Palette.warn)
+                        }
+                    }
                     // 324 冗余横条: 该成员名下仅剩此枚 → 提示补备用
                     if CredentialOrg.fpCountByOwner(mac, f.owner) == 1 {
                         Section {

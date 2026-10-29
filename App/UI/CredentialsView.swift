@@ -1048,6 +1048,13 @@ struct CredentialsView: View {
                 batchBtn("导出", icon: "square.and.arrow.up") {
                     exportPackage()
                 }
+                // 2026-10-29 补（**注释承诺了、按钮却不在**）：本段上方注释写着「上一排是整理类
+                // (置顶/延期/移交/前缀/导出)」，实际只有「延期」「导出」两个 —— 而 `CredentialOrg.batchPrefixNote`
+                // 一直在、零调用。补回「前缀」按钮。
+                batchBtn("前缀", icon: "textformat.abc") {
+                    if selCount == 0 { app.showToast("先选择凭证"); return }
+                    promptBatchPrefix()
+                }
             }
             HStack(spacing: DS.Space.xs) {
                 batchBtn("停用", icon: "pause.circle", destructive: true) {
@@ -1072,6 +1079,29 @@ struct CredentialsView: View {
         .background(.bar)
         .accessibilityElement(children: .contain)
     }
+    /// 2026-10-29：批量加前缀（`CredentialOrg.batchPrefixNote` 的 UI 入口）。
+    /// 只加在**还没有这个前缀**的条目上（函数内判 `hasPrefix`），不会重复叠加。
+    private func promptBatchPrefix() {
+        let n = selCount
+        let alert = UIAlertController(
+            title: "批量加前缀",
+            message: "给已选的 \(n) 条凭证的备注前加同一个前缀（例如「客房-」）。已有备注会保留在前缀后面。",
+            preferredStyle: .alert)
+        alert.addTextField { tf in
+            tf.placeholder = "前缀"
+            tf.autocorrectionDisabled = true
+        }
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        alert.addAction(UIAlertAction(title: "加前缀", style: .default) { _ in
+            let p = (alert.textFields?.first?.text ?? "").trimmingCharacters(in: .whitespaces)
+            guard !p.isEmpty else { app.showToast("前缀不能为空"); return }
+            let done = CredentialOrg.batchPrefixNote(mac, pwdAliases: selPwds, fpBatches: selFps, prefix: p)
+            app.showToast(done > 0 ? "已给 \(done) 条加前缀「\(p)」" : "没有可加的凭证（可能都已带这个前缀）")
+            reload()
+        })
+        UIApplication.topViewController()?.present(alert, animated: true)
+    }
+
     private func batchBtn(_ t: String, icon: String, destructive: Bool = false, _ a: @escaping () -> Void) -> some View {
         Button { a() } label: {
             VStack(spacing: 2) {

@@ -243,7 +243,52 @@ struct RecDetailSheet: View {
 
     // ---------- 736 前后事件上下文 ----------
     @ViewBuilder
+    // 2026-10-29 补（**后台有实现、前台是空壳**）：`RecordSearch.context` 一直零调用，
+    // 而这里就是个空的 `@ViewBuilder` —— 用户在记录详情里看不到「出这事之前和之后发生了什么」。
+    // 只取同锁、±10 分钟、前 3 / 后 3 条；不做完整时间线（那是记录页的事）。
     private var contextSection: some View {
+        let ctx = RecordSearch.context(mac: rec.mac, aroundKey: rec.key)
+        if !ctx.before.isEmpty || !ctx.after.isEmpty {
+            Section {
+                ForEach(ctx.before, id: \.key) { r in contextRow(r, tag: "前") }
+                HStack(spacing: DS.Space.s) {
+                    Image(systemName: "arrowtriangle.right.fill")
+                        .font(.system(size: 8))
+                        .foregroundStyle(DS.Palette.accentText)
+                    Text("当前这一条")
+                        .vkFont(.caption, weight: .semibold)
+                        .foregroundStyle(DS.Palette.accentText)
+                    Spacer(minLength: 0)
+                }
+                ForEach(ctx.after, id: \.key) { r in contextRow(r, tag: "后") }
+            } header: {
+                Text("前后事件（±10 分钟 · 同锁）")
+            } footer: {
+                Text("最多前 3 / 后 3 条。用来回答「出这事之前之后发生了什么」，不是完整时间线。")
+            }
+        }
+    }
+    
+    private func contextRow(_ r: Rec, tag: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
+            Text(tag)
+                .vkFont(.caption2, weight: .semibold)
+                .lineLimit(1)
+                .foregroundStyle(DS.Palette.textSub)
+                .frame(width: 14)
+            VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                Text(r.timeStr)
+                    .vkFont(.caption.monospacedDigit())
+                    .lineLimit(1)
+                    .foregroundStyle(DS.Palette.textSub)
+                Text(r.typeName + ((MemberHub.aliasName(r.whoId) ?? r.whoName).map { " · " + $0 } ?? ""))
+                    .vkFont(.footnote)
+                    .foregroundStyle(DS.Palette.text)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 0)
+        }
+        .accessibilityElement(children: .combine)
     }
 
     // ---------- 580 上一条 / 下一条: 在**当前筛选结果集**内顺序切换 ----------

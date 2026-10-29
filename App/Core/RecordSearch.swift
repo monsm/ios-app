@@ -787,23 +787,6 @@ enum RecordSearch {
         return days
     }
 
-    /// 765 跨锁合并"最近开门": 各锁日志按时间并成一条流 (行尾的锁名标签由 UI 用 Rec.lockName 打)。
-    /// 为什么按 `timeStr` 而不是 `lockTime` 数值排: 与 658 同一口径 —— 那串是本页显示的权威时间,
-    ///   epoch 还带秒/毫秒口径差, 按它排完再显示另一套就成了自相矛盾。空时间串自然沉底,
-    ///   不会伪装成"最近一条"。
-    /// 为什么加 offset 当 tiebreak: 日志只到分钟, 同一分钟内的两行 (尤其跨锁) 先后是**入库次序**
-    ///   而不是时间信息 (与 680 同一坦白)。Swift 的 sorted(by:) 不保证稳定, 不写这一条,
-    ///   同样的数据两次进页可能给出相反的顺序。
-    // 【保留未接 2026-10-29】多锁合并的「最近开门」流 —— 设备页跨锁时间线
-    static func mergedRecentOpens(macs: [String], count: Int) -> [Rec] {
-        let rows = buildRecs(macs: macs, includeFails: false, includeCare: false)
-            .filter { StatsKit.openTypes.contains($0.type) }
-        let sorted = rows.enumerated().sorted { a, b in
-            if a.element.timeStr != b.element.timeStr { return a.element.timeStr > b.element.timeStr }
-            return a.offset < b.offset
-        }
-        return sorted.prefix(max(0, count)).map { $0.element }
-    }
 }
 
 

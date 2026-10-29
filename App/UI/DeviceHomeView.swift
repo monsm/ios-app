@@ -955,26 +955,7 @@ struct DeviceHomeView: View {
         app.pendingRecordsMember = id
         app.requestRoute(.records)
     }
-    /// 559: Rec 行的归属可证明才给"查记录" (与 landMember 的 guard 同判据 —— 动作出现就必然落得下去)。
-    // 【保留未接 2026-10-29】判断记录归属是否可证明 —— openMemberRecords 的守卫
-    private func provableMemberId(_ r: Rec) -> String? {
-        guard let id = r.whoId, !id.isEmpty, DB.member(id) != nil else { return nil }
-        return id
-    }
 
-    /// 合并流的一行正文: 时间 (MM-dd HH:mm) + 可证明归属则说"谁用什么开了门", 推不出就只报事件名。
-    /// 与单锁那条 (AppState.recentRecords) 同一口径: 推不出归属**不猜**, 也不显示"未知成员"。
-    // 【保留未接 2026-10-29】合并流的一行正文 —— openMemberRecords 的配套渲染
-    private func mergedLine(_ r: Rec) -> String {
-        let t = r.timeStr.isEmpty ? "" : String(r.timeStr.dropFirst(5).prefix(11))
-        let what: String
-        if let who = MemberHub.aliasName(r.whoId) ?? r.whoName, let kind = r.kind {
-            what = who + " 用" + (Attribution.words[kind] ?? "") + "开了门"
-        } else {
-            what = r.typeName
-        }
-        return t.isEmpty ? what : t + " · " + what
-    }
 
     // ---------- 派生数据 (包3: 参数化到任意锁 — 当前页吃实时, 其余页读快照) ----------
     /// 826 聚光教练标: nil = 不显示; 0/1/2 = 当前焦点序号 (只在首进设备 Tab 时出现一次)
@@ -1057,6 +1038,12 @@ struct DeviceHomeView: View {
                                     .foregroundStyle(DS.Palette.text)
                                     .lineLimit(2)
                                     .fixedSize(horizontal: false, vertical: true)
+                                // 2026-10-29 补（**后台有实现、前台一直零调用**）：`openMemberRecords` 就是给这行用的 ——
+                                // `recentRecords()` 已带出 `whoId`（只在归属**可证明**时才带），这里接成可点：
+                                // 点成员行 → 记录页按 TA 过滤。不可证明的行不响应（不猜、不弹"未知成员"）。
+                                .contentShape(Rectangle())
+                                .onTapGesture { if let id = r.whoId { openMemberRecords(id) } }
+                                .accessibilityHint(r.whoId == nil ? "这条记录的归属推断不出来，不能按成员筛选" : "查看这位成员的全部记录")
                                 Spacer(minLength: 0)
                             }
                         }
