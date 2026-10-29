@@ -82,7 +82,17 @@ const PID_NAMES = { 8097: 'K1', 8098: 'KX', 7857: 'V1', 7858: 'V1_Pro', 7873: 'J
 const modelName = (pid) => pid === 0 ? '自动识别' : (PID_NAMES[pid] ?? `未知型号(pid=${pid})`);
 
 // ---------------- StatusParser.parseStatus / parseLogEntry / truncatedLogCount ----------------
-const LOG_TYPES = { 1: '数字钥匙开门', 2: '密码开门', 3: '指纹开门', 4: '临时密码开门', 5: 'NFC开门', 6: '电量低', 7: '撬锁', 8: '重新上电', 9: 'DFU 后版本', 10: '多次密码失败锁定', 12: '授时', 13: '指纹告警', 14: '同步PIN', 15: '同步密码', 20: '添加指纹', 21: '删除指纹', 22: '设置安全级别', 23: '状态广播开关', 24: '设置单双验', 25: '开通临时密码', 26: '设置音量', 27: '设置beacom密钥', 224: '键盘被锁定' };
+// 2026-10-29：这张表**改为直接读 Swift 源码**，不再手抄 —— 手抄版曾抄的是 APK 的
+// 消息中心枚举 Rn（1-7/13/224），而锁端日志帧用的是 We 表（4/8-27），两边一起错。
+// 解析 `App/Core/StatusParser.swift` 里 `static let logTypes: [Int: String] = [ ... ]` 的字面量。
+const LOG_TYPES = (() => {
+  const src = fs.readFileSync(path.join(__dirname, '..', 'App', 'Core', 'StatusParser.swift'), 'utf8');
+  const m = /static let logTypes:\s*\[Int:\s*String\]\s*=\s*\[([\s\S]*?)\n\s*\]/.exec(src);
+  if (!m) throw new Error('parseshadow: 无法从 StatusParser.swift 解析 logTypes');
+  const out = {};
+  for (const mm of m[1].matchAll(/(\d+)\s*:\s*"([^"]*)"/g)) out[Number(mm[1])] = mm[2];
+  return out;
+})();
 function parseStatus(klvs, raw = '') {
   const s = { rc: -1, sKeyStatus: -1, powerLevel: -1, lockTime: null, pid: 0, pidName: '未知', firmware: '', keyboardFreeze: 0, keyboardErrCount: 0, securityLevel: 0, verifyMode: 0, broadcastMode: 0, tempPwdMode: 0, zotpPeriod: 0, soundVolumn: 0, pinInfoCapacity: 0, pinInfoStock: 0, pinInfoBinding: 0, pwdInfoCapacity: 0, pwdInfoStock: 0, pwdInfoMaxLen: 0, fpInfoCapacity: 0, fpInfoStock: 0, fpInfoBatchNumber: 0, verDFU: 0, verKeyboard: 0, eCtrlVer: '' };
   for (const k of klvs) {

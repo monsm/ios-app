@@ -110,12 +110,24 @@ const stKlvs =
 g.parse = {
   status_frame: frame8(0x03, stKlvs),
   status: ST.parseStatus(P.parseResponse(frame8(0x03, stKlvs)).klvs),
-  // 16 日志: 每条 KLV#05 = [type][len][idx 4B LE][lockTime 4B LE]...
+  // 16 日志: 每条 KLV#05 = [type][len][idx 4B LE][lockTime 4B LE][diffBody...]
+  // 2026-10-29：类型号改用 APK `We` 表的真实值（4/10/11/17/19），并保留 02/07 两条
+  // 作为「表外类型 → 未知(N)」的回退用例（02/07 只在消息中心枚举 Rn 里，日志不会发）。
+  // len 按 APK `Ge.parseData` 的严格校验 `2*len == body.length` 填（body = 去掉前 2 字节）。
   log_frame: frame8(0x16,
     klv(0x03, '00') +
     klv(0x04, '02000000') +
-    klv(0x05, '020e' + '01000000' + '803aa101' + '3031323334') +
-    klv(0x05, '070c' + '02000000' + '203bb101' + 'aabb')),
+    // type 17 (0x11) 密码开门：diffBody = pwdIdx(4) + preLogIdx(8) = 12 hex，总 16 字节 ⇒ len 0x0e
+    klv(0x05, '110e' + '01000000' + '803aa101' + '0100' + '02000000') +
+    // type 19 (0x13) 指纹开门：diffBody = fpBatchNo(8) + fpIdx(8) + 8 = 24 hex，总 22 字节 ⇒ len 0x14
+    klv(0x05, '1314' + '02000000' + '203bb101' + '01000000' + '02000000' + '03000000') +
+    // type 11 (0x0b) 数字钥匙开门：diffBody = track(8) + pin(8) + uuid(32) + 8 = 56 hex，总 38 字节 ⇒ len 0x24
+    klv(0x05, '0b24' + '03000000' + '403cb101' + '00000000' + '00000000' + '00112233445566778899aabbccddeeff' + '00000000') +
+    // type 4 (0x04) 静态电量：diffBody = pwdLv(4) = 4 hex，总 12 字节 ⇒ len 0x0a
+    klv(0x05, '040a' + '04000000' + '503db101' + '0300') +
+    // 表外类型回退：02 / 07 应显示 未知(2) / 未知(7)
+    klv(0x05, '020e' + '05000000' + '603eb101' + '3031323334') +
+    klv(0x05, '070c' + '06000000' + '703fb101' + 'aabb')),
   log_parsed: null,
   // 8B/7B/10B 三头解析兼容
   header8: frame8(0x03, klv(0x03, '00')),

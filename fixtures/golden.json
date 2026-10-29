@@ -104,27 +104,71 @@
    "fpStock": 3,
    "verFirmware": "9.2.5"
   },
-  "log_frame": "8700280016000000030100040402000000050f020e01000000803aa1013031323334050c070c02000000203bb101aabb",
+  "log_frame": "87008800160000000301000404020000000510110e01000000803aa1010100020000000516131402000000203bb10101000000020000000300000005260b2403000000403cb101000000000000000000112233445566778899aabbccddeeff00000000050c040a04000000503db1010300050f020e05000000603eb1013031323334050c070c06000000703fb101aabb",
   "log_parsed": [
    {
-    "type": 2,
+    "type": 17,
     "typeName": "密码开门",
     "len": 14,
     "idx": 1,
     "idxRaw": 1,
     "lockTime": 27343488,
     "lockTimeStr": "2010-11-13 11:24:48",
+    "body": "010002000000",
+    "invalid": false
+   },
+   {
+    "type": 19,
+    "typeName": "指纹开门",
+    "len": 20,
+    "idx": 2,
+    "idxRaw": 2,
+    "lockTime": 28392224,
+    "lockTimeStr": "2010-11-25 14:43:44",
+    "body": "010000000200000003000000",
+    "invalid": false
+   },
+   {
+    "type": 11,
+    "typeName": "数字钥匙开门",
+    "len": 36,
+    "idx": 3,
+    "idxRaw": 3,
+    "lockTime": 28392512,
+    "lockTimeStr": "2010-11-25 14:48:32",
+    "body": "000000000000000000112233445566778899aabbccddeeff00000000",
+    "invalid": false
+   },
+   {
+    "type": 4,
+    "typeName": "静态电量",
+    "len": 10,
+    "idx": 4,
+    "idxRaw": 4,
+    "lockTime": 28392784,
+    "lockTimeStr": "2010-11-25 14:53:04",
+    "body": "0300",
+    "invalid": false
+   },
+   {
+    "type": 2,
+    "typeName": "未知(2)",
+    "len": 14,
+    "idx": 5,
+    "idxRaw": 5,
+    "lockTime": 28393056,
+    "lockTimeStr": "2010-11-25 14:57:36",
     "body": "3031323334",
     "invalid": true
    },
    {
     "type": 7,
-    "typeName": "撬锁",
+    "typeName": "未知(7)",
     "len": 12,
-    "idx": 2,
-    "idxRaw": 2,
-    "lockTime": 28392224,
-    "lockTimeStr": "2010-11-25 14:43:44",
+    "idx": 6,
+    "idxRaw": 6,
+    "lockTime": 28393328,
+    "lockTimeStr": "2010-11-25 15:02:08",
     "body": "aabb",
     "invalid": true
    }
