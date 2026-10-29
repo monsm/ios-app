@@ -17,14 +17,11 @@ struct DeviceInfoView: View {
                 statusSection
                 batterySection
                 Section {
-                    NavigationLink { LockProfileView() } label: {
-                        Label("编辑锁档案 (符号/色标/备注)", systemImage: "pencil.and.outline")
-                    }
                     BusyButton(title: "重新读取", systemImage: "arrow.clockwise", isBusy: busy) {
                         Task { await reload() }
                     }
                 } footer: {
-                    Text("静音模式可在设置页切换; 安全模式切换请在门锁键盘或联系管理员操作。")
+                    Text("静音模式、安全模式 A/B、校时、布防、防尾随与固件升级都在「设备页 → 管理这把锁」里。")
                 }
             }
             .navigationTitle("锁信息名片")
