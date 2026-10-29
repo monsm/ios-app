@@ -360,17 +360,17 @@ extension CredentialsView {
         let seqAll = CredentialOrg.seq(mac)
         let orderP = seqAll["p"] ?? []
         let orderF = seqAll["f"] ?? []
-        let archPwd: Set<Int> = []
-        let archFp = archPwd   // isArchived 内部: pwd 存原 alias, fp 存 100000+batch, 同一个 Set
+        // 2026-10-30 清理：`archPwd` / `archFp` 是**恒空集合**（归档功能 2026-10-26 已整套移除），
+        // 于是下面四处的 `!archX.contains(...)` 恒为真 = 一次多余数组复制 + 四段死判据。全部去掉。
         // 2026-10-30 性能：members() 一次取（虽然第 22 轮已有派生缓存，仍是一次多余数组拷贝）。
         let allMembers = DB.members()
         ForEach(allMembers) { m in
             // 354: 归档条目在本页任何浏览方式里都不出现 (含按成员视图); 归档区卡是唯一落点
             let pwds = orderedPwds(allPwds.filter {
-                $0.owner == m.id && !archPwd.contains($0.alias)
+                $0.owner == m.id
             }, order: orderP)
             let fps = orderedFps(allFps.filter {
-                $0.owner == m.id && !archFp.contains(100000 + $0.batch)
+                $0.owner == m.id
             }, order: orderF)
             if !pwds.isEmpty || !fps.isEmpty {
                 Section("\(CredentialOrg.aliasDisplay && !m.relation.isEmpty ? m.relation + " · " : "")\(m.name) (\(pwds.count + fps.count))") {
@@ -385,8 +385,8 @@ extension CredentialsView {
                 }
             }
         }
-        let noPwd = orderedPwds(allPwds.filter { $0.owner == nil && !archPwd.contains($0.alias) }, order: orderP)
-        let noFp = orderedFps(allFps.filter { $0.owner == nil && !archFp.contains(100000 + $0.batch) }, order: orderF)
+        let noPwd = orderedPwds(allPwds.filter { $0.owner == nil }, order: orderP)
+        let noFp = orderedFps(allFps.filter { $0.owner == nil }, order: orderF)
         if !noPwd.isEmpty || !noFp.isEmpty {
             Section("未归属 (\(noPwd.count + noFp.count))") {
                 ForEach(noPwd) { p in credRow(CredHit(id: "p\(p.alias)", pwd: p)) }
@@ -491,12 +491,11 @@ extension CredentialsView {
     /// 隐藏行一旦进破坏性批量 (353 停用 / 922 删除), 就是"看不到却被停掉"。台账级读数不走这里。
     // 2026-10-15 走查 (性能): isArchived 每条一次全量解码 ⇒ N 条 = O(N²) 解码。集合一次取, 行为不变。
     var selectablePwds: [LedgerPwd] {
-        let arch: Set<Int> = []
-        return DB.listPwds(mac).filter { !arch.contains($0.alias) }
+        // 2026-10-30 清理：原来的 `arch` 恒空集合 + filter 恒真 = 白复制一份数组。
+        DB.listPwds(mac)
     }
     var selectableFps: [LedgerFp] {
-        let arch: Set<Int> = []
-        return DB.listFps(mac).filter { !arch.contains(100000 + $0.batch) }
+        DB.listFps(mac)
     }
     var selectableTotal: Int { selectablePwds.count + selectableFps.count }
     var cycleLabel: String {
