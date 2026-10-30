@@ -38,7 +38,7 @@ struct ShareToAndroidView: View {
                             .background(Color.white)
                             .accessibilityLabel("这把锁的开锁二维码")
 
-                        VStack(spacing: 2) {
+                        VStack(spacing: DS.Space.xxs) {
                             Text(title)
                                 .vkFont(.headline)
                                 .foregroundStyle(DS.Palette.text)

@@ -6,7 +6,7 @@ struct RSSIBars: View {
     var level: Int                 // 0-4
     var tint: Color = DS.Palette.accentText
     var body: some View {
-        HStack(spacing: 2) {
+        HStack(spacing: DS.Space.xxs) {
             ForEach(0..<4, id: \.self) { i in
                 RoundedRectangle(cornerRadius: 1)
                     .fill(i < level ? tint : DS.Palette.hairline)

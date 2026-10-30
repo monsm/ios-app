@@ -131,7 +131,7 @@ extension CredentialsView {
                             .foregroundStyle(DS.Palette.textSub)
                         HStack(spacing: DS.Space.xs) {
                             ForEach(hist.prefix(5), id: \.self) { w in
-                                HStack(spacing: 2) {
+                                HStack(spacing: DS.Space.xxs) {
                                     Button(w) { search = w }
                                         .vkFont(.caption)
                                         .buttonStyle(.bordered)
@@ -428,7 +428,7 @@ extension CredentialsView {
                         cycleSelect()
                         DS.Haptics.tick.impactOccurred()
                     } label: {
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: DS.Space.xxs) {
                             Text(cycleLabel)
                                 .vkFont(.subheadline, weight: .semibold)
                             Text("下一步： \(cycleNextLabel)")   // 356 下一步

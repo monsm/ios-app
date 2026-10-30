@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 // uitokencheck —— 间距/圆角必须走设计令牌（判失败）。
 //
+// 2026-10-31（UI/UX 第 3 轮）：判据扩到 `HStack/VStack/LazyVStack/LazyHStack(spacing: N)` ——
+// 同 padding 一样，硬编码 spacing 不随「密度档」变化。本轮修了 15 处。
+// 同时核实了两件事：**硬编码 `.animation` 全仓 0 处**（`DS.Motion` 已用 49 次）——动效层是干净的。
+//
 // 正控：把 `App/UI/CredentialOtp.swift` 的 `.padding(.vertical, DS.Space.xxs)` 改回 `.padding(.vertical, 2)`
 //       ⇒ 报出「padding(.vertical, 2) 应走 DS.Space.xxs」。
 // 负控：全仓零误报（装饰性小圆角有白名单，见下）。
@@ -63,7 +67,7 @@ const RADIUS_ALLOW = [
 ];
 
 const bad = [];
-const okCount = { padding: 0, radius: 0 };   // 统计**已走 token**的调用数
+const okCount = { padding: 0, radius: 0, spacing: 0 };
 
 for (const { rel, abs } of files) {
   if (/Design(System|Palette|Tokens|Metrics)/.test(rel)) continue;   // 令牌定义文件本身豁免
@@ -85,6 +89,16 @@ for (const { rel, abs } of files) {
         bad.push(`${rel}:${i + 1}  padding(…, ${v}) 应走 DS.Space.${SPACE[v]}（否则不随「密度档」变化）`);
       }
     }
+    // HStack/VStack spacing（2026-10-31 UI/UX 第 3 轮补）
+    const sm = c.match(/\b(HStack|VStack|LazyVStack|LazyHStack)\s*\(\s*(?:alignment\s*:\s*[^,)]*?,\s*)?spacing\s*:\s*(\d+(?:\.\d+)?)/);
+    if (sm) {
+      const v = sm[2];
+      if (SPACE[v]) {
+        bad.push(`${rel}:${i + 1}  ${sm[1]}(spacing: ${v}) 应走 DS.Space.${SPACE[v]}（否则不随「密度档」变化）`);
+      }
+    }
+    if (/\b(?:HStack|VStack|LazyVStack|LazyHStack)\s*\([^)]*spacing\s*:\s*DS\.Space\./.test(c)) okCount.spacing++;
+
     // cornerRadius
     const rm = c.match(/(?:cornerRadius\s*:\s*|RoundedRectangle\(\s*cornerRadius\s*:\s*)(\d+(?:\.\d+)?)/);
     if (rm) {
@@ -106,4 +120,4 @@ if (bad.length) {
   console.log('修法：把数字换成对应 token；若该处确实是**装饰性零件形状**（不是容器圆角），加进 RADIUS_ALLOW 并写明理由。');
   process.exit(1);
 }
-console.log(`✓ 间距/圆角全部走设计令牌（已走 token 的 ${okCount.padding + okCount.radius} 处）`);
+console.log(`✓ 间距/圆角/spacing 全部走设计令牌（已走 token 的 ${okCount.padding + okCount.radius + okCount.spacing} 处）`);

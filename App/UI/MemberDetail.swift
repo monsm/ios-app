@@ -82,7 +82,7 @@ struct MemberDetail360View: View {
                     .fixedSize(horizontal: false, vertical: true)
             } else {
                 ForEach(Array(items.enumerated()), id: \.offset) { _, e in
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: DS.Space.xxs) {
                         Text(e.time)
                             .vkFont(.caption.monospacedDigit())
                             .foregroundStyle(DS.Palette.textSub)

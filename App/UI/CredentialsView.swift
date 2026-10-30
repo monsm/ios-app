@@ -354,7 +354,7 @@ struct CredentialsView: View {
 
     func batchBtn(_ t: String, icon: String, destructive: Bool = false, _ a: @escaping () -> Void) -> some View {
         Button { a() } label: {
-            VStack(spacing: 2) {
+            VStack(spacing: DS.Space.xxs) {
                 Image(systemName: icon)
                     .font(.system(size: DS.Icon.md, weight: .medium))
                 Text(t).vkFont(.caption2)

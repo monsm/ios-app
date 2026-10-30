@@ -56,7 +56,7 @@ struct ProtocolTestView: View {
                             probe = nil
                             probeError = ""
                         } label: {
-                            VStack(alignment: .leading, spacing: 2) {
+                            VStack(alignment: .leading, spacing: DS.Space.xxs) {
                                 HStack {
                                     Text(d.name).vkFont(.subheadline, weight: .medium)
                                     Spacer(minLength: 0)

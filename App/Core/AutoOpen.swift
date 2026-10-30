@@ -705,7 +705,7 @@ struct AutoOpenSection: View {
                 // 拒因**早就落进审计**了 (AutoOpen.audit / lastReject), 这里只是把它显示出来,
                 // 既不新增门也不放宽门: 看得见原因才知道下一步该做什么 (标定 / 布防时段 / 刷脸)。
                 if let r = AutoOpen.lastReject(mac) {
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: DS.Space.xxs) {
                         Text("上一次没自动开：\(r.reason)")
                             .vkFont(.footnote)
                         Text(r.at)

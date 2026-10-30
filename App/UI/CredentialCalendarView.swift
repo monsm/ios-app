@@ -82,7 +82,7 @@ struct CredentialCalendarView: View {
                                 .foregroundStyle(DS.Palette.textSub)
                         } else {
                             ForEach(items, id: \.alias) { p in
-                                VStack(alignment: .leading, spacing: 2) {
+                                VStack(alignment: .leading, spacing: DS.Space.xxs) {
                                     Text(CredentialOrg.displayPwd(p))
                                         .vkFont(.footnote)
                                     Text(detailLine(p))
@@ -111,7 +111,7 @@ struct CredentialCalendarView: View {
     }
 
     private var weekdayHeader: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: DS.Space.xs) {
             ForEach(["日", "一", "二", "三", "四", "五", "六"], id: \.self) { w in
                 Text(w)
                     .vkFont(.caption2, weight: .semibold)

@@ -47,7 +47,7 @@ extension RecordsView {
     /// 组头：日期 + 日型色带 + 节假日/补班/含次日凌晨 + 开/警计数徽标 + 农历与使用者小字。
     @ViewBuilder
     private func daySectionHeader(_ g: DayGroup, openN: Int, alarmN: Int, hasAlarm: Bool) -> some View {
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: DS.Space.xxs) {
                 HStack(spacing: DS.Space.s) {
                     Text(dayLabel(g.key))
                         .vkFont(.headline)

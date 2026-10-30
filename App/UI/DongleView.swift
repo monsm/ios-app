@@ -127,7 +127,7 @@ struct DongleView: View {
                 Image(systemName: "key.horizontal")
                     .foregroundStyle(DS.Palette.accentText)
                     .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: DS.Space.xxs) {
                     Text(d.name.isEmpty ? "未命名钥匙串" : d.name)
                         .vkFont(.subheadline, weight: .medium)
                     Text(shortMAC(d.mac))

@@ -89,7 +89,7 @@ struct ActiveCredsSheet: View {
                                         .font(.system(size: DS.Icon.sm))
                                         .foregroundStyle(DS.Palette.accentText)
                                         .accessibilityHidden(true)
-                                    VStack(alignment: .leading, spacing: 2) {
+                                    VStack(alignment: .leading, spacing: DS.Space.xxs) {
                                         Text(c.word + " (约)")
                                             .vkFont(.subheadline, weight: .medium)
                                             .foregroundStyle(DS.Palette.text)
@@ -155,7 +155,7 @@ struct OutWinSheet: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     ForEach(wins, id: \.rec.id) { w in
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: DS.Space.xs) {
                             HStack(spacing: DS.Space.s) {
                                 Text(w.rec.lockName)
                                     .vkFont(.caption2, weight: .medium)

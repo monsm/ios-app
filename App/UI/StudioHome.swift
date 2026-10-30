@@ -79,7 +79,7 @@ struct StudioHome: View {
                     .frame(width: DS.Icon.md + 8, height: DS.Icon.md + 8)
                     .variantPlate(DS.Palette.accentText.opacity(0.12), .iconBadge)
                     .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: DS.Space.xxs) {
                     Text(title)
                         .vkFont(.subheadline, weight: .semibold)
                         .foregroundStyle(DS.Palette.text)
