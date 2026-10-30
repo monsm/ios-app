@@ -53,6 +53,9 @@ jobs:
       - name: '日期格式单一来源闸门 (判失败: DF.cached("裸格式串") 绕过 DateFormats 的具名访问器)'
         run: node tools/datefmtcheck.js
 
+      - name: '页面空态闸门 (判失败: 渲染集合的页面没有空态判据 —— 用户停在空白页无路可走)'
+        run: node tools/emptycheck.js
+
       - name: 金标漂移校验 (committed 必须等于 JS 核心输出; 改 vendor 后须重生成并提交)
         run: node tools/golden.js --check
 

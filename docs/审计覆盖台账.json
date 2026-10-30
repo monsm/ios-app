@@ -45,7 +45,7 @@
       "items": [
         { "id": "un.entry", "name": "入口指向已删功能", "status": "done", "evidence": "第 85/86/96 轮" },
         { "id": "un.unreachable", "name": "功能存在但不可达（零调用）", "status": "done", "evidence": "第 99 轮零调用扫描（修正版）" },
-        { "id": "un.empty", "name": "空态缺失", "status": "partial", "evidence": "第 92 轮补活跃凭证、第 103 轮修 MergeMembersView 判据写错（== nil 应为 isEmpty）；已自动扫全部 74 View 的集合渲染点，剩 ~49 个未逐页人工审" },
+        { "id": "un.empty", "name": "空态缺失", "status": "done", "evidence": "第 92 轮补活跃凭证、第 103 轮修 MergeMembersView 判据写错；第 112 轮逐个核实全部 32 个「渲染集合的页面级 View」：29 个有显式空态判据（isEmpty / ContentUnavailableView / EmptyState / 文案），3 个渲染固定内容（DefendView 时段选项 / TailgateView 时长选项 / StudioHome 三条写死入口）空态不适用；新增 emptycheck 闸门（带 3 条白名单+理由）防回退" },
         { "id": "un.deadkey", "name": "死开关（kf_ 键无写点）", "status": "done", "evidence": "keydead 闸门 + 第 26 轮" },
         { "id": "un.noconsume", "name": "生成但无消费", "status": "done", "evidence": "第 98 轮回滚点" }
       ]
