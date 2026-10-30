@@ -380,6 +380,9 @@ struct FpStudio: View {
         // 把 A 锁的批次号记进 B 锁台账，比"这次白录"糟得多；此处宁可让用户重开一页。
         guard let em = enrolledMac, em == app.current?.mac else {
             error = "当前锁已改变，本次录入不写入台账，请关闭后重新录入"
+            // 2026-10-30 修复（第 126 轮，**失败零反馈**）：`error` 只在 step==1 的沉浸式分支渲染，
+            // 停在第 2 步点「保存登记」失败时界面上什么都没有。补一条 toast。
+            app.showToast(error)
             return
         }
         let finalName = name.isEmpty ? CredentialOrg.fpNameSuggestion(em, owner: owner) : name
@@ -399,7 +402,7 @@ struct FpStudio: View {
                 // 确认口径：这一刀是用户在上一步**自己勾上**的 (录入第 2 步那条 Toggle 的文案就把后果写全了：
                 // 当前 Toggle 文案是「本机没有回收站，不可恢复；备注/归属也不会保留」) ⇒ 勾选即知情同意，
                 // 再弹一次确认是把同一句话问两遍。**不可逆**：本仓没有回收站、没有下发队列（addToBin 从未存在），
-                // 还原时第一百五十二批的 reclaim 会把这条还没发出去的 del_fp 一并收回。
+            // 本机整条删除、锁端凭证不受影响、**不可恢复**（回收站与 reclaim 均已在早期批次删除）。
                 DB.delFp(em, f.batch)
             }
             // 2026-10-30 修复（第 116 轮，**假承诺**）：`DB.delFp` 是**整条删除**（含 note/owner），
