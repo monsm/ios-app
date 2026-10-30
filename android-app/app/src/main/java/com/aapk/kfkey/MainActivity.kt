@@ -130,6 +130,9 @@ private fun KfApp(unlocker: BleUnlocker) {
     // 后果：App 重启后 F6 门"忘了"锁上次报过 rc=25/26 ⇒ 锁正忙/被撬状态下照样下发 04。
     // 现在初值从已加载的 lock 里取回，重启后 F6 仍然有效。
     var lastRc by remember { mutableStateOf(lock?.lastRc ?: 0) }
+    // 2026-10-31（第 37 轮）：标定采样面板开关 + 采样缓冲。
+    var showCalibrate by remember { mutableStateOf(false) }
+    val calSamples = remember { mutableStateListOf<Int>() }
     var armed by remember { mutableStateOf(false) }                // 回差滤波后的"已武装"位
     // 2026-10-30（提速，与 iOS 同式）: 最近 RSSI 样本（最新在前，最多 3 个）—— 中值武装判据用。
     val rssiHistory = remember { mutableStateListOf<Int>() }
@@ -506,6 +509,17 @@ private fun KfApp(unlocker: BleUnlocker) {
                         }
                     },
                     onClose = { showSettings = false },
+                    // 2026-10-31（第 37 轮）：F3 标定入口。
+                    rssiP95 = lock?.rssiP95 ?: 0,
+                    onCalibrate = { showCalibrate = true },
+                    onClearCalibration = {
+                        lock?.let { l ->
+                            val upd = l.copy(rssiP95 = 0)
+                            lock = upd
+                            LockStore.save(ctx, upd)
+                            say("距离基准已清除，回到默认 " + AutoOpenKit.BASE + " dBm")
+                        }
+                    },
                 )
             }
         }
@@ -538,6 +552,63 @@ private fun KfApp(unlocker: BleUnlocker) {
             dismissButton = {
                 TextButton(onClick = { pending = null }) { Text("取消", color = colors.inkSub) }
             }
+        )
+    }
+
+    // 2026-10-31（第 37 轮）：F3 标定采样面板。与 iOS `AutoCalibrateSheet` 同逻辑：
+    // 站到「平时想让它自动开锁的那个位置」，点开始采样，采够 5 个样本才能保存
+    // （`AutoOpenKit.p95` 对 <5 返回 null —— 3 个样本的 95 分位没有统计意义）。
+    if (showCalibrate) {
+        // 采样驱动: 与自动开锁用同一个 RSSI 来源, 每 0.5 秒收一个样本, 40 个（20 秒）自动停。
+        LaunchedEffect(showCalibrate) {
+            while (showCalibrate && calSamples.size < 40) {
+                rssi?.let { calSamples.add(it) }
+                delay(500)
+            }
+        }
+        val p95 = AutoOpenKit.p95(calSamples)
+        AlertDialog(
+            onDismissRequest = { showCalibrate = false; calSamples.clear() },
+            containerColor = colors.surface,
+            titleContentColor = colors.ink,
+            textContentColor = colors.inkSub,
+            title = { Text("标定距离基准", fontWeight = FontWeight.Medium) },
+            text = {
+                Column {
+                    if (calSamples.isEmpty) {
+                        // 空态: 别只显示"已采 0 个" —— 那是数字, 不是下一步该做什么。
+                        Text("点「开始采样」后站在你想让它开锁的位置别动，采 20 秒左右。")
+                    } else if (p95 == null) {
+                        Text("已采 " + calSamples.size + " 个样本，还差 " + (5 - calSamples.size) + " 个才能保存。")
+                    } else {
+                        Text("已采 " + calSamples.size + " 个样本 → 基准 " + p95 + " dBm")
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        "说明：不标定也能用，默认按 " + AutoOpenKit.BASE + " dBm 触发。标定只是按这把锁实测的 P95 定线。",
+                        fontSize = 12.sp, lineHeight = 17.sp,
+                    )
+                }
+            },
+            confirmButton = {
+                if (p95 != null) {
+                    TextButton(onClick = {
+                        lock?.let { l ->
+                            val upd = l.copy(rssiP95 = p95)
+                            lock = upd
+                            LockStore.save(ctx, upd)
+                            say("距离基准已保存：" + p95 + " dBm")
+                        }
+                        showCalibrate = false
+                        calSamples.clear()
+                    }) { Text("保存", color = colors.accent) }
+                } else {
+                    TextButton(onClick = { calSamples.clear() }) { Text("重新采样", color = colors.accent) }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCalibrate = false; calSamples.clear() }) { Text("取消", color = colors.inkSub) }
+            },
         )
     }
 
@@ -745,6 +816,13 @@ private fun ProximityCard(
     // 极简版不下发 cmd25（那需要 skey 会话），只做本机侧否决。
     defendOn: Boolean,
     onDefendToggle: (Boolean) -> Unit,
+    // 2026-10-31（第 37 轮）：**F3 距离标定的 UI 入口**。iOS 第 29 轮补齐了同样的闭环；
+    // Android 之前只有数据层（`LockInfo.rssiP95` + `AutoOpenKit.rssiBase`），没有地方写它 ——
+    // 等于标定功能对用户不存在，永远走 -40 兜底线。不同型号门锁发射功率差异大，
+    // 固定线在强锁上"走廊里就开"（误开），在弱锁上"站到门口还不够"（不开）。
+    rssiP95: Int,
+    onCalibrate: () -> Unit,
+    onClearCalibration: () -> Unit,
 ) {
     // 2026-10-20: 这张卡此前整块读 Theme.kt 的固定暗色值 —— 浅色模式下是浅底 + 暗卡 + 浅字。
     val colors = LocalKfColors.current
@@ -806,6 +884,36 @@ private fun ProximityCard(
                     uncheckedTrackColor = colors.inkSub.copy(alpha = 0.30f),
                     uncheckedBorderColor = colors.inkSub.copy(alpha = 0.45f)
                 )
+            )
+        }
+        // 2026-10-31（第 37 轮）：F3 距离标定。已标定显示基准值 + 重标/清除；
+        // 未标定显示"可选精修"入口，并说明默认兜底线（数值从 AutoOpenKit 取，不写死）。
+        Spacer(Modifier.height(10.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    if (rssiP95 != 0) "距离基准：" + rssiP95 + " dBm（已标定）" else "距离基准（可选）",
+                    color = colors.ink, fontSize = 15.sp,
+                )
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    if (rssiP95 != 0) "按这把锁实测的 P95 定线，比默认值更贴你家的门。"
+                    else "不标定也能用：默认按 " + AutoOpenKit.BASE + " dBm 触发。若发现「走廊里就开」或「站到门口不开」，标定一次更准。",
+                    color = colors.inkSub, fontSize = 12.sp, lineHeight = 17.sp,
+                )
+            }
+            if (rssiP95 != 0) {
+                Text(
+                    "清除",
+                    color = colors.inkSub, fontSize = 13.sp,
+                    modifier = Modifier.clickable { onClearCalibration() }.padding(vertical = 10.dp, horizontal = 8.dp),
+                )
+            }
+            Text(
+                if (rssiP95 != 0) "重标" else "标定",
+                color = colors.accent.copy(alpha = 0.9f), fontSize = 13.sp,
+                // 文字按钮也要够按: padding 把触达撑到 44dp 以上（与上面「完成」同口径）
+                modifier = Modifier.clickable { onCalibrate() }.padding(vertical = 10.dp, horizontal = 12.dp),
             )
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
