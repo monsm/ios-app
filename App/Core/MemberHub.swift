@@ -237,7 +237,10 @@ enum MemberHub {
                 b.table[who] = a
             }
             for p in pwds {
-                if p.temp { b.visitorTemps += 1 }
+                // 2026-10-30 修复（第 143 轮，**口径不一致**）：原来只要 `p.temp` 就计入 visitorTemps，
+                // 但 793 对「访客」的定义是**未归属**的临时码（`isVisitorRow` 也按 whoId == nil 判）。
+                // 已归属成员的临时码被算进「访客 · 名下临时码」⇒ 数字系统性偏大。
+                if p.temp, (p.owner ?? "").isEmpty { b.visitorTemps += 1 }
                 if let o = p.owner, !o.isEmpty, var a = b.table[o] { a.owns += 1; b.table[o] = a }
             }
             for f in fps {
