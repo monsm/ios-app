@@ -269,7 +269,9 @@ struct TempCodeStudio: View {
         ScrollView {
             VStack(spacing: DS.Space.l) {
                 CodeBigCard(title: "\(lockName) · 临时码", code: result?.pwd ?? pwd,
-                            window: "\(isoShort(from)) ~ \(isoShort(to)) 生效",
+                            // 2026-10-30 修复（第 150 轮）：批量每张错峰 30 分钟，完成卡显示的码取自 result（可能是第 i 张），
+                            // 窗口却一直用入口的 from/to —— 屏幕上的窗口与这张码的真实窗口不符。优先用台账里那条的窗口。
+                            window: result.map { "\($0.from) ~ \($0.to) 生效" } ?? "\(isoShort(from)) ~ \(isoShort(to)) 生效"
                             note: note,
                             // 2026-10-30 修复（第 116 轮，**假回执**）：原文无条件写「其余已逐张下发」，即使 failed>0 也照写。
                             extraFoot: batchCount > 1
