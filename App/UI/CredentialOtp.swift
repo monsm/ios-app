@@ -27,7 +27,7 @@ extension CredentialsView {
                         defer { busyKey = nil }
                         do {
                             // 第八十八批: 这条命令面原先不先绑锁就直接发 (services 层按自己的 curMac 取钥,
-                            // LockService.swift:285-288 / :93)，于是"用户点的是这把锁，19 命令发到上次连过的那把"。
+                            // LockService（原 :285，该文件已拆分，行号失效）-288 / :93)，于是"用户点的是这把锁，19 命令发到上次连过的那把"。
                             // 补 ensureConnected 把目标钉成 m —— 与仓内其它命令面的写法同构。
                             try await app.lock.ensureConnected(mac: m)
                             try await app.lock.setZotp(on)

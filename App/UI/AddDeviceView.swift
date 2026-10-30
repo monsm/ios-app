@@ -485,7 +485,7 @@ struct AddDeviceView: View {
         } catch {
             app.showToast(error.localizedDescription)
         }
-        // 扫描必须收口: 本函数与 DFUKit:516 不同, 此前没有任何 stopScan 调用点,
+        // 扫描必须收口: 本函数与 DFUKit（原 :516，该文件已拆分，行号失效） 不同, 此前没有任何 stopScan 调用点,
         // allowDuplicates 扫描会在离页后继续回调与占radio (对照 BLEService 的 scanTimer 只在超时才停)。
         BLEService.shared.stopScan()
         scanning = false

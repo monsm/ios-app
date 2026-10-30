@@ -187,7 +187,7 @@ enum AuthKit {
                   err?.code != LAError.biometryNotAvailable.rawValue else { cont.resume(returning: false); return }
             ctx.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { ok, _ in
                 // 同上: 真实面容通过就记账。受限区复核
-                // (LockKeeperApp:1647)、毁灭操作复核（原 SecurityCenterView:88，该页已于 2026-10-26 删除） 都走这一支 ——
+                // (LockKeeperApp（原 :1647，该文件已拆分，行号失效）)、毁灭操作复核（原 SecurityCenterView:88，该页已于 2026-10-26 删除） 都走这一支 ——
                 // 这三处是标准档下唯一能拿到"最近刷过脸"这个事实的地方。
                 if ok { AutoOpenKit.noteFaceSuccess() }
                 cont.resume(returning: ok)
@@ -266,6 +266,6 @@ private struct GlassModifier: ViewModifier {
     }
 }
 
-// 871 命中域扩容 (44pt 基础上再留 16pt = 60pt): 时间线认领行已内联写了同一组算术 (RecordsView:1094)。
+// 871 命中域扩容 (44pt 基础上再留 16pt = 60pt): 时间线认领行已内联写了同一组算术 (RecordsView（原 :1094，该文件已拆分，行号失效）)。
 // 这里曾另有一个 axHit60() 修饰器零调用 —— 留着两份 60pt 算术迟早漂移, 且它把 contentShape 写死成
 // Rectangle 而认领行要的是 Capsule, 换过去反而是视觉退化 → 删修饰器, 保留在用的一处实现。

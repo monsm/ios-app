@@ -310,7 +310,7 @@ final class LinkSense: ObservableObject {
         let hint: String
         /// 130 图标细分: 三类各配一枚图标。名称全部取自本仓已在用的 SF Symbol
         /// (不臆造 systemName —— 名字错了真机上只会显示空白)。做成计算属性而不是新增字段:
-        /// 加字段要全仓改签初始化器 (DiagKit:560 记过这件事), 这里零调用点改动。
+        /// 加字段要全仓改签初始化器 (DiagKit（原 :560，该文件已拆分，行号失效） 记过这件事), 这里零调用点改动。
         var icon: String {
             switch name {
             case "蓝牙类", "蓝牙未开": return "antenna.radiowaves.left.and.right.slash"
@@ -327,7 +327,7 @@ final class LinkSense: ObservableObject {
             return FailKind(name: "蓝牙类", hint: "检查系统蓝牙开关与权限， 开关一次蓝牙再试")
         }
         // 536: "指令被拒"档 —— 服务层对锁端 rc != 0 一律以 StatusParser.rcMessage(rc) 抛错
-        // (LockService:282/:498、HardwareService:236/:246), 所以错误串命中 rc 表文案 = 锁端拒绝了指令。
+        // (LockService（原 :282，该文件已拆分，行号失效）/:498、HardwareService:236/:246), 所以错误串命中 rc 表文案 = 锁端拒绝了指令。
         // 只取 4 字及以上的码文案: "丢包"/"溢出" 这类两字词出现在别的串里会误判。
         let rcTexts = StatusParser.rcMsg.filter { $0.key != 0 && $0.value.count >= 4 }.map { $0.value }
         if rcTexts.contains(where: { m.contains($0) }) || m.hasPrefix("错误码 ") {

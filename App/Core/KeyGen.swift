@@ -22,7 +22,7 @@ enum KeyGen {
     }
     /// 全零 = 随机源故障的特征值。第九十一批删掉了 `isAllZero([UInt8])` 那份:
     /// 它的注释写着"调用点: 配网/钥匙圈生成"，而全仓**一个调用点都没有** (deadscan 剥注释后才报出来)。
-    /// 现役的那道闸是**十六进制形式** —— LockService.swift:535-536 在写库前用 isAllZeroHex 逐个核
+    /// 现役的那道闸是**十六进制形式** —— LockService（原 :535，该文件已拆分，行号失效）-536 在写库前用 isAllZeroHex 逐个核
     /// skey / bkey / pins，字节形态没有独立的产生点，所以不需要两份。
     /// 留着"字节形态那份 + 一句谎话式的调用点注释"比删掉危险: 下一个人会以为已经防住了。
     static func isAllZeroHex(_ hex: String) -> Bool {

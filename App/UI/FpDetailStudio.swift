@@ -1,5 +1,5 @@
 // 指纹详情 + private extension Double.credDay()
-// 2026-10-29 从 CredentialStudio.swift 拆出。credDay 是 private extension，只被 FpDetailStudio:2314 用，必须同文件
+// 2026-10-29 从 CredentialStudio.swift 拆出。credDay 是 private extension，只被 FpDetailStudio（原 :2314，该文件已拆分，行号失效） 用，必须同文件
 import SwiftUI
 import UIKit
 import AVFoundation

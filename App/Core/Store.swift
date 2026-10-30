@@ -122,7 +122,7 @@ final class Store: @unchecked Sendable {
     }
     func failureLines() -> [String] { (defaults.array(forKey: key(Self.failureKey)) as? [String]) ?? [] }
     /// 刻意**不提供**清空口: 这本账的删除动作留在既有语义里 —— **核弹销毁功能并不存在**
-    /// （2026-10-30 第 99 轮核实：原句引用 `AuditChain:242`，但那个文件只有 60 余行、无销毁实现）。
+    /// （2026-10-30 第 99 轮核实：原句引用 AuditChain 第 242 行，但那个文件只有 53 行、无销毁实现）。
     /// 加一个 `clearFailureLog()` 只会多一条零调用声明，而且给了"把证据抹掉但不告诉用户抹了什么"的按钮。
     func remove(_ k: String) {
         defaults.removeObject(forKey: key(k))
