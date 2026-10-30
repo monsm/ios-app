@@ -140,16 +140,19 @@ enum CredentialOrg {
         DB.get(CredAlert.self, alertKey(mac, "pwd", p.alias)) ?? CredAlert()
     }
 
-    /// 2026-10-30：一次取该锁的全部**密码**提醒（键格式见 `alertKey`：`kf_calert_<mac>_pwd_<alias>`）。
-    /// 提醒是「每凭证一键」的存储形态，逐条读就是逐条解码；批量场景先取一次。
-    /// 返回键是 `"pwd:<alias>"`（与 dueSoonPwds 的查表键一致）。
+    /// 2026-10-30 修复（第 93 轮）：原实现遍历 `DB.store.keys()` 过滤 `kf_calert_<mac>_pwd_` 前缀 ——
+    /// 而 `Store.keys()` 内部是 `defaults.dictionaryRepresentation()`，**会把整个 UserDefaults 连同值一起复制**
+    /// （包括每把锁 300 条的日志缓存 JSON）。本函数被设备页 Hero 区每次刷新都调一次 ——
+    /// 等于每次刷新都复制一遍全库数据。而它想省的「N 次 DB.get」其实**全都命中 `valueCache`**（一次字典查找），
+    /// 所以那条"优化"反而把 O(N) 次缓存命中换成了 O(全库大小) 的一次深拷贝。
+    ///
+    /// 现在改成**从台账驱动**：遍历该锁的密码（`DB.listPwds` 也是缓存数组），逐条取提醒（缓存命中）。
+    /// 语义与原实现一致 —— 原实现能扫到"台账里已不存在的孤儿提醒键"，
+    /// 但 `dueSoonPwds` 只查台账里存在的密码，孤儿键本来就不会被读到。
     static func alertTable(_ mac: String) -> [String: CredAlert] {
-        let prefix = "kf_calert_" + mac + "_pwd_"
         var out = [String: CredAlert]()
-        for k in DB.store.keys() where k.hasPrefix(prefix) {
-            if let a = DB.get(CredAlert.self, k) {
-                out["pwd:" + String(k.dropFirst(prefix.count))] = a
-            }
+        for p in DB.listPwds(mac) {
+            out["pwd:" + String(p.alias)] = alert(mac, p)
         }
         return out
     }

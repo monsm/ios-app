@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T04:06:50.478Z",
+    "generated": "2026-10-30T04:26:25.730Z",
     "sources": [
       {
         "scout": "android-native",
@@ -20918,7 +20918,7 @@
           "line": 451,
           "symbol": "canEvaluatePolicy",
           "note": "guard ctx.canEvaluatePolicy(...)",
-          "text": "static func earlyExpireMin(_ mac: String, _ alias: Int) -> Int {"
+          "text": "let f = DF.cached(\"MM-dd HH:mm\")"
         },
         {
           "platform": "ios",
@@ -20926,7 +20926,7 @@
           "line": 460,
           "symbol": "onDeniedPresentFallback",
           "note": "if ok { commit() } else { onDeniedPresentFallback(commit) }",
-          "text": "var step: Int"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -59930,7 +59930,7 @@
           "line": 472,
           "symbol": "reclaimDays()",
           "note": "",
-          "text": "enum CodingKeys: String, CodingKey {"
+          "text": "var batch: Int"
         },
         {
           "platform": "ios",
