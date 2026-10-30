@@ -277,11 +277,23 @@ function bareFonts() {
   const files = readSwiftFiles('App');      // 不含 Widget（独立 target，看不到语法层）
   for (const f of files) {
     const rel = f.replace(/\\/g, '/');
-    if (rel === 'App/Core/VariantGrammar.swift') continue;
+    // 2026-10-31（UI/UX 第 5 轮，**豁免过宽**）：原来整文件跳过 `VariantGrammar.swift`，
+    // 而那个文件有 425 行 —— 只有**后半段**（`VKTypography` / `vkFont` 的实现，386 行起）
+    // 才是「语法层自己就是真字体的实现处」。前半段是**普通 UI 控件**（VariantToggleStyle /
+    // chipToggle / 各种 pill），那些文字本该走 `vkFont` —— 整文件豁免导致 6 处裸 `.font` 漏检，
+    // 那 6 处**绕过了系统「加粗文本」开关**（`vkFont` 里读 `legibilityWeight`，裸 `.font` 不读）。
+    // 现在收窄：只跳过「从 `struct VKTypography` 到文件末尾」这一段。
+    let skipFrom = Infinity;
+    if (rel === 'App/Core/VariantGrammar.swift') {
+      const src0 = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
+      const idx = src0.indexOf("struct VKTypography");
+      skipFrom = idx >= 0 ? src0.slice(0, idx).split("\n").length + 1 : Infinity;
+    }
     const src = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n');
     const lines = src.replace(/\r\n/g, '\n').split('\n');
 
     for (const ln of scanBareFont(src)) {
+      if (ln >= skipFrom) continue;   // 语法层自己的实现段，豁免
       bad.push(`${rel}:${ln}  ${lines[ln - 1].replace(/\/\/.*$/, '').trim().slice(0, 72)}`);
     }
   }

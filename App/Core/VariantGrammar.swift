@@ -90,10 +90,10 @@ struct VK {
                     .fill(DS.Palette.accent)
                     .frame(width: 3, height: 14)
                     .accessibilityHidden(true)
-                Text(text).font(.headline).foregroundStyle(DS.Palette.text)
+                Text(text).vkFont(.headline).foregroundStyle(DS.Palette.text)
                 if let count {
                     Text("\(count)")
-                        .font(.caption.weight(.semibold))
+                        .vkFont(.caption, weight: .semibold)
                         .foregroundStyle(DS.Palette.textSub)
                         .padding(.horizontal, DS.Space.s).padding(.vertical, DS.Space.xxs)
                         .background(DS.Palette.surfaceAlt, in: Capsule())
@@ -114,7 +114,7 @@ struct VK {
                     .font(.system(size: DS.Icon.xs, weight: .semibold))
                     .foregroundStyle(tone)
                 Text(text)
-                    .font(.caption.weight(.medium))
+                    .vkFont(.caption, weight: .medium)
                     .foregroundStyle(DS.Palette.textSub)
                     .lineLimit(1)
             }
@@ -261,7 +261,7 @@ extension VK {
                                           @ViewBuilder _ label: () -> Label) -> AnyView {
                 return AnyView(
             label()
-                .font(.headline)
+                .vkFont(.headline)
                 .foregroundStyle(DS.Palette.onAccent)
                 .padding(.vertical, DS.Space.m + 2)
                 .padding(.horizontal, DS.Space.l)
@@ -281,7 +281,7 @@ extension VK {
                                             @ViewBuilder _ label: () -> Label) -> AnyView {
                 return AnyView(
             label()
-                .font(.subheadline.weight(.semibold))
+                .vkFont(.subheadline, weight: .semibold)
                 .foregroundStyle(DS.Palette.accentText)
                 .padding(.vertical, DS.Space.s + 2)
                 .padding(.horizontal, DS.Space.l)
@@ -300,7 +300,7 @@ extension VK {
                                              @ViewBuilder _ label: () -> Label) -> AnyView {
                 return AnyView(
             label()
-                .font(.subheadline.weight(.semibold))
+                .vkFont(.subheadline, weight: .semibold)
                 .foregroundStyle(DS.Palette.danger)
                 .padding(.vertical, DS.Space.s + 2)
                 .padding(.horizontal, DS.Space.l)
