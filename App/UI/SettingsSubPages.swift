@@ -93,6 +93,8 @@ struct SafemodeIntroView: View {
     var mode = "safe"
     @EnvironmentObject var app: AppState
     @State private var switching = false      // 拍板 #2: cmd20 下发中, 防止连点重复改锁端策略
+    @State private var refreshingStatus = false   // 2026-10-30（第 154 轮）：读取锁状态要有进行中态
+    @State private var refreshFailed = false       // 以及失败提示 —— 原来点了没反应，用户以为按钮坏了
     /// 2026-10-30 标注（第 148 轮）：`mode == "otp"` 分支**全仓不可达** —— 两个调用点
     /// （`LockSettingsView:121` 与 `QuickPool:182`）传的都是 `SafemodeIntroView()`，没有任何地方传 `mode: "otp"`。
     /// 临时码说明已并入 `TempCodeStudio`，这个分支是历史残留（保留代码，标注以免误以为在用）。
@@ -131,12 +133,32 @@ struct SafemodeIntroView: View {
                     if app.status == nil {
                         // 2026-10-29：给一个**就地重试**按钮，而不是让用户自己跑去设备页。
                         Button {
-                            Task { await app.refreshStatusQuietly(manual: true) }
+                            Task {
+                                refreshingStatus = true
+                                refreshFailed = false
+                                await app.refreshStatusQuietly(manual: true)
+                                refreshingStatus = false
+                                refreshFailed = (app.status == nil)
+                            }
                         } label: {
-                            Label("还没读到锁状态 —— 点这里读取", systemImage: "arrow.clockwise")
+                            if refreshingStatus {
+                                HStack(spacing: DS.Space.xs) {
+                                    ProgressView()
+                                    Text("正在读取锁状态…")
+                                }
+                            } else {
+                                Label("还没读到锁状态 —— 点这里读取", systemImage: "arrow.clockwise")
+                            }
                         }
                         .frame(minHeight: DS.Hit.min)
                         .vkFont(.footnote)
+                        .disabled(refreshingStatus)
+                        if refreshFailed {
+                            Text("读取失败 —— 请确认锁在身边、蓝牙已开，再试一次。")
+                                .vkFont(.caption)
+                                .foregroundStyle(DS.Palette.warn)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
                     } else if let s = app.status, s.verifyMode == 1, s.broadcastMode == 0 {
                         // 2026-10-30 修复（第 124 轮）：C 模式（verifyMode=1 且 broadcastMode=0）也被下面的
                         // `verifyMode == 1` 判成「当前已是 B 模式（双验）」，并给出「改回 A」按钮 —— 会误导用户降级。
