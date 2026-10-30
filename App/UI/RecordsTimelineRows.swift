@@ -161,20 +161,7 @@ extension RecordsView {
             }
     }
 
-    /// 592 合并行的标签 (从 mergedRow 的 Button label 抽出: 该表达式报 type-check 超时)
     @ViewBuilder
-
-
-    /// 576 行点开详情 —— 手势与 VoiceOver 默认动作**共用这一份**（两份会漂移）。
-    private func openDetail(_ r: RowVM) {
-        if let rec = lookupRec(r) {
-            detailRec = rec
-        } else {
-            // 打不开要说得出为什么。原先这里 `detailRec = lookupRec(r)` 拿到 nil 就什么都不发生 ——
-            // 那正是 576 在默认「当前锁」视图里坏掉两个版本时用户看到的形状: 行能点, 点了没反应。
-            app.showToast("本机台账里没有这一行对应的记录数据 — 点右上角重新读取后再试")   // 576 本机台账里没有这一行
-        }
-    }
 
     func timelineRow(_ r: RowVM, flagged: Set<String>) -> some View {
         return timelineRowContent(r, flagged: flagged)
@@ -245,6 +232,17 @@ extension RecordsView {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(r.title + ", " + r.time)
         .accessibilityAddTraits([.isButton])
+    }
+
+    /// 576 行点开详情 —— 手势与 VoiceOver 默认动作**共用这一份**（两份会漂移）。
+    private func openDetail(_ r: RowVM) {
+        if let rec = lookupRec(r) {
+            detailRec = rec
+        } else {
+            // 打不开要说得出为什么。原先这里 `detailRec = lookupRec(r)` 拿到 nil 就什么都不发生 ——
+            // 那正是 576 在默认「当前锁」视图里坏掉两个版本时用户看到的形状: 行能点, 点了没反应。
+            app.showToast("本机台账里没有这一行对应的记录数据 — 点右上角重新读取后再试")   // 576 本机台账里没有这一行
+        }
     }
 
     /// 时间线行的内容层（时刻 / 连接线与事件点 / 标旗 / 开门方式 / 行距）。
