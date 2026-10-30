@@ -14,6 +14,7 @@ const ROOT = path.resolve(__dirname, '..');
 // 与 .github/workflows/ios.yml 一一对应（顺序也一致）
 const GATES = [
   ['golden', ['--check']],
+  ['gatepathcheck', []],
   ['shadowdiff', []],
   ['swiftcheck', []],
   ['swiftlint', []],
