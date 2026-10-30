@@ -458,6 +458,9 @@ jobs:
       - name: '闸门自身可信度 (判失败: 新加闸门必须有正控记录 + 修法提示)'
         run: node tools/gateaudit2.js
 
+      - name: '手动开锁链闸门 (判失败: 并发/去重/撤销窗口/应用锁 四类场景)'
+        run: node tools/manualunlockcheck.js
+
       - name: 'Android 门控逻辑闸门 (判失败: 7 道门 + 切锁/退后台 场景必须不发 04)'
         run: node tools/kotlinasyncwindowcheck.js
 

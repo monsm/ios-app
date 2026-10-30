@@ -44,6 +44,7 @@ const GATES = [
   ['docnumbercheck', []],
   ['docclaimcheck', []],
   ['gateaudit2', []],
+  ['manualunlockcheck', []],
   ['kotlinasyncwindowcheck', []],
   ['asyncwindowcheck', []],
   ['gatepersistcheck', []],
