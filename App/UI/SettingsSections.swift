@@ -312,8 +312,9 @@ extension SettingsView {
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .onAppear {
-            // VoiceOver 致意 (idea 1049): 累计 30 天后一句静默致谢
-        }
+        // 2026-10-30 删除（第 114 轮）：这里原本是一个空的 `.onAppear {}`，注释写着
+        // 「VoiceOver 致意 (idea 1049): 累计 30 天后一句静默致谢」—— 但**处理体只有注释**。
+        // 全仓 grep「1049 / 致意」只剩两处注释（这里 + SettingsView:26 的名目），**功能从未实现**。
+        // 删掉空壳；若将来要做，需要「使用天数计数 + 一次性标记 + 一句 AXTools.announce」，那是独立特性。
     }
 }

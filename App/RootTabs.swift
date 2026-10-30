@@ -5,7 +5,7 @@ import SwiftUI
 extension RootView {
     private var mainTabView: some View {
         TabView(selection: $app.tabSelection) {
-            // 280 页面打开耗时: 起点在下面的 onChange(tabSelection)，终点就是各 Tab 内容的 onAppear。
+            // （原「280 页面打开耗时」埋点已在第 114 轮删除 —— 它只有注释没有实现。）
             Tab("设备", systemImage: "lock.fill", value: 0) { deviceTabContent }
                 // 162 握手可离开: 握手在别的 Tab 完成时这里亮一枚 "✓" (nil = 无角标); 回设备页即清
                 .badge(handshakeDoneAway ? Text("✓") : nil)
@@ -212,10 +212,10 @@ extension RootView {
         // 且启动门禁已删, 留着只会让用户回前台时以为 App 卡住。
         // 294 本地深链: 系统把 kf:// 路由送到这里; 解锁完成的瞬间才落地挂起的路由
         .onOpenURL { url in app.handleDeepLink(url) }
-        .onChange(of: app.tabSelection) { _, new in
-            // 280 起点: 只在采集开着时记时间戳 (关着就等于零成本)。深链/意图造成的切换同样会记一次,
-            // 因为对用户而言那也是一次"页面打开"。
-        }
+        // 2026-10-30 删除（第 114 轮）：这里原本是一个**空的** `.onChange(of: app.tabSelection)`，
+        // 注释写着「280 起点: 只在采集开着时记时间戳」—— 但**处理体只有注释、没有代码**。
+        // 全仓 grep「280 / 打开耗时」只有两句注释，**这个埋点从未实现**（起点没有、终点也没有）。
+        // 与其留一个看起来在测量的空壳，不如删掉：真要测，得先有采集开关与落点，那是独立特性。
         // 2026-10-26: 这里原本是 `.onChange(of: app.appUnlocked)`，承接三件事：
         //   · 解锁后 restoreLastTab() —— 回到上次停留的 Tab
     //   · 解锁后自检 —— SelfCheck 与 runSelfCheck397 已在第 86 轮删除（诊断族移除后只剩空壳）

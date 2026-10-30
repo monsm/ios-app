@@ -23,7 +23,8 @@ struct SettingsView: View {
     /// 不能放在 body 里每次重算都调，否则设置页每次刷新都卡最多 2 秒）。
     @State var notifyLabel = ""
     @State var notifyOff = false
-    // 包18: 版本彩蛋 (298) / VoiceOver 致意 (1049)
+    // 包18: 版本彩蛋 (298) —— ✅ 实现（`eggShown` / `versionTaps` 在本文件）。
+    //       VoiceOver 致意 (1049) —— ❌ **未实现**（全仓只有注释，第 114 轮已把空壳删除）。
     @State var eggShown = false
     @State var versionTaps = 0
 

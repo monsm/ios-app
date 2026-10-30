@@ -85,10 +85,14 @@ extension RecordsView {
             recordsToolbar
         }
         .onAppear { onRecordsAppear() }
-        // 从设备页/矩阵点另一把锁回来时 allRows 还是旧锁的、recPool 已是新锁的
-        // ⇒ 点行命中"这条记录不在当前显示范围里"的兜底 toast，看起来像数据丢了。
-        .onChange(of: app.currentMac) { _, _ in
-        }
+        // 2026-10-30 删除（第 114 轮）：这里原本挂着一个**空的** `.onChange(of: app.currentMac) { _, _ in }`，
+        // 上面那句注释描述着「从设备页/矩阵点另一把锁回来时 allRows 还是旧锁的」这个问题 ——
+        // 但**处理体是空的**，等于声明了一个修复却什么都没做（「文档虚构能力」那一族）。
+        //
+        // 而这个问题**本身并不存在**：`RootTabs.swift:344` 是 `RecordsView().id(app.currentMac)`，
+        // 换锁时整页连同 @State 一起重建，`allRows` 从空开始、`onRecordsAppear` 重新读新锁缓存。
+        // 所以正确的做法不是补处理体，而是把这个空壳与它那句误导注释一起删掉。
+        // （`RecordsChrome.swift:75-76` 早就写着「换锁那一路不必在这里补」—— 两处注释互相矛盾，留了半年。）
         .onChange(of: app.pendingSearch) { _, q in
             guard let q else { return }
             landSearch(q)

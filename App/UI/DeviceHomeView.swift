@@ -120,8 +120,8 @@ struct DeviceHomeView: View {
                 autoLockLeft = nil
                 checks = [false, false, false]
             }
-            .onChange(of: app.devices.count) { _, _ in
-            }
+            // 2026-10-30 删除（第 114 轮）：这里原本是一个**完全空的** `.onChange(of: app.devices.count)`
+            // （没有注释、没有代码），是某次功能删除后的空壳。删掉。
             // 268 状态变化历史: 三态切换记最近 5 笔 (长按胶囊可回看)
             .onChange(of: sense.linkState) { _, new in
                 sense.noteStateHop(new.name)

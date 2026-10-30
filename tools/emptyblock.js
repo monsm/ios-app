@@ -118,6 +118,21 @@ for (const file of files) {
         if (!hasComment) problems.push({ rel, line: i + 1, kind: '空容器', text: t.slice(0, 70) });
       }
     }
+
+    // ⑤ 空**修饰符闭包**（2026-10-30 新增，第 114 轮）
+    // 第 113/114 轮抽查发现三处：`.onChange(of:) { _, _ in }` / `.onAppear { }` ——
+    // 它们**只有注释**、没有一行代码，而注释描述的正是"这里做了什么"。
+    // 这一类比空 if/for 更隐蔽：注释让读者以为功能在，闸门 ①~④ 都不覆盖闭包形态。
+    //
+    // 判据：`.xxx(...) {` 或 `.xxx {`（可带 `_ , _ in` 形参行）之后，
+    //      跳过空行/注释，**下一条就是 `}`** ⇒ 报（即使中间有注释也报 —— 那正是"注释代替实现"）。
+    if (/^\.\w+\s*(\([^)]*\))?\s*\{\s*$/.test(t) || /^\.\w+\s*(\([^)]*\))?\s*\{\s*[_\w\s,]*\bin\s*$/.test(t)) {
+      let j = i + 1;
+      while (j < L.length && isBlankOrComment(L[j])) j++;
+      if (j < L.length && codeOf(L[j]).trim() === '}') {
+        problems.push({ rel, line: i + 1, kind: '空闭包', text: t.slice(0, 70) });
+      }
+    }
   }
 }
 
