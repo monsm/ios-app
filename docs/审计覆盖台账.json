@@ -67,7 +67,7 @@
       "items": [
         { "id": "ui.route", "name": "界面打开方式（4 Tab + 28 sheet + 深链）", "status": "done", "evidence": "uicoverage / destmap / sheetcover 闸门；第 103 轮盘点 74 View 零孤儿" },
         { "id": "ui.hig", "name": "逐页 HIG 构成审核（74 个 View）", "status": "done", "evidence": "第 104 轮：higaudit 闸门机检全部 39 个页面级 View 的 5 个结构维度（标题/主题背景/退出手段/硬编码色/图标按钮 a11y）→ 0 处；复杂页（设备/凭证/记录/设置/布防/DFU/手机钥匙/录入/工坊）前 103 轮已人工逐页审。残余：视觉层级与分组是否合理属审美判断，静态查不了" },
-        { "id": "ui.state", "name": "三态齐备（空/错/加载）", "status": "partial", "evidence": "第 103 轮自动扫过：10 个渲染集合的 View 里 6 个固定尺寸组件、3 个 Picker、1 个真缺陷已修；第 104 轮 higaudit 覆盖标题/背景/退出三态" },
+        { "id": "ui.state", "name": "三态齐备（空/错/加载）", "status": "done", "evidence": "第 103 轮空态扫描（74 View）+ 第 104 轮 higaudit 结构三态 + 第 108 轮异步三态扫描（所有含 await/Task 的 View 逐个核加载态与错误态）：唯一真缺陷 PwdDetailStudio 续期按钮（无进行中反馈 + catch 谎报原因与效果）已修；其余 6 个候选核实为命名差异导致的误报（settingMute/clearingPwd/switching/busyKey/scanning/probing 都算加载态）" },
         { "id": "ui.dynamictype", "name": "动态字体", "status": "done", "evidence": "dynamictype 闸门" },
         { "id": "ui.contrast", "name": "对比度", "status": "done", "evidence": "contrast 闸门" },
         { "id": "ui.touch", "name": "触达区域 ≥44pt", "status": "done", "evidence": "DS.Hit.min + 第 30 轮" },
