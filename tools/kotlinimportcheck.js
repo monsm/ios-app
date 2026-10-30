@@ -29,6 +29,8 @@ const NEED = {
   // 本仓第一次用 Compose 语义，漏 import 就是 unresolved reference。
   'semantics': 'androidx.compose.ui.semantics.semantics',
   'contentDescription': 'androidx.compose.ui.semantics.contentDescription',
+  // 2026-10-31（第 72 轮）：`role = Role.Button` 也要 import —— 本仓第一次给 Canvas 补语义。
+  'Role': 'androidx.compose.ui.semantics.Role',
 };
 
 if (!fs.existsSync(KT)) {

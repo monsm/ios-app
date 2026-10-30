@@ -62,6 +62,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.LocalContext
@@ -616,7 +617,7 @@ private fun KfApp(unlocker: BleUnlocker) {
             title = { Text("标定距离基准", fontWeight = FontWeight.Medium) },
             text = {
                 Column {
-        // 2026-10-31（第 46 轮，**编译错误**）：Kotlin 的 `isEmpty` 是**方法**，必须带括号； Swift 里它是属性。从 Swift 搬过来时极易漏掉 `()`。
+                    // 2026-10-31（第 46 轮，**编译错误**）：Kotlin 的 `isEmpty` 是**方法**，必须带括号； Swift 里它是属性。从 Swift 搬过来时极易漏掉 `()`。
                     if (calSamples.isEmpty()) {
                         // 空态: 别只显示"已采 0 个" —— 那是数字, 不是下一步该做什么。
                         Text("点「开始采样」后站在你想让它开锁的位置别动，采 20 秒左右。")
@@ -628,9 +629,9 @@ private fun KfApp(unlocker: BleUnlocker) {
                     Spacer(Modifier.height(6.dp))
                     Text(
                         "说明：不标定也能用，默认按 " + AutoOpenKit.BASE + " dBm 触发。标定只是按这把锁实测的 P95 定线。",
-                    // 2026-10-31（第 49 轮 · 动态字体）：删掉硬编码 `lineHeight` —— 它是**固定 sp**，
-                    // 用户把系统字号调大后 `fontSize` 跟着变大而 `lineHeight` 不变 ⇒ 行距比例失调、文字互相挤。
-                    // Compose 默认行高（约 1.2~1.5 倍字号）会随 fontScale 自动算，比固定值稳。
+                        // 2026-10-31（第 49 轮 · 动态字体）：删掉硬编码 `lineHeight` —— 它是**固定 sp**，
+                        // 用户把系统字号调大后 `fontSize` 跟着变大而 `lineHeight` 不变 ⇒ 行距比例失调、文字互相挤。
+                        // Compose 默认行高（约 1.2~1.5 倍字号）会随 fontScale 自动算，比固定值稳。
                         fontSize = 12.sp,
                     )
                 }
@@ -744,6 +745,13 @@ private fun UnlockDial(busy: Boolean, onClick: () -> Unit) {
                 .scale(scale)
                 .clip(CircleShape)
                 .clickable(interactionSource = interaction, indication = null, enabled = !busy) { onClick() },
+            // 2026-10-31（第 72 轮 · 无障碍）：这个圆盘是**可点的主开锁按钮**，但内容全是 Canvas 自绘，
+            // 屏幕阅读器读不出任何东西 —— 视障用户不知道"这里可以点一下开门"。
+            // 补语义（用 `semantics` 而不是 `clearAndSetSemantics`：后者会把按压态的语义也抹掉）。
+            .semantics {
+                contentDescription = if (busy) "正在开锁" else "点一下开锁"
+                role = Role.Button
+            },
             contentAlignment = Alignment.Center
         ) {
             Canvas(Modifier.fillMaxSize()) {
@@ -1031,6 +1039,8 @@ private fun GearButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
             .clip(CircleShape)
             .background(colors.surface.copy(alpha = 0.92f))
             .clickable { onClick() },
+            // 2026-10-31（第 72 轮 · 无障碍）：齿轮也是自绘 Canvas，读屏读不出来 → 补语义。
+            .semantics { contentDescription = "门锁设置"; role = Role.Button },
         contentAlignment = Alignment.Center,
     ) {
         // 自绘齿轮 (8 齿 + 内圈 + 轴心): 与首页圆盘、空态二维码框同一路子, 不借现成图标。
