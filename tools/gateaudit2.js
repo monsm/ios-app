@@ -31,7 +31,7 @@ const STATS_ONLY = new Set([
 const NEW_GATES = [
   "modifiercheck.js", "scopecheck.js", "gatepathcheck.js",
   "kotlinimportcheck.js", "kotlinmathcheck.js", "kotlinsyntaxcheck.js",
-  "kotlincontrast.js", "gatepersistcheck.js", "docclaimcheck.js", "hotpathcheck.js", "kotlinchaincheck.js",
+  "kotlincontrast.js", "gatepersistcheck.js", "docclaimcheck.js", "hotpathcheck.js", "kotlinchaincheck.js", "docnumbercheck.js",
 ];
 
 const bad = [];

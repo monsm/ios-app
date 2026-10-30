@@ -449,6 +449,9 @@ jobs:
       - name: '热路径 Task 闸门 (判失败: 每事件新建裸 Task 会洪泛 MainActor)'
         run: node tools/hotpathcheck.js
 
+      - name: '验收清单数字闸门 (判失败: 可机器算的数字与实际不符)'
+        run: node tools/docnumbercheck.js
+
       - name: '文档断言一致性 (判失败: 文档里的绝对化断言与代码事实矛盾)'
         run: node tools/docclaimcheck.js
 

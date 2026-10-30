@@ -41,6 +41,7 @@ const GATES = [
   ['lockpair', []],
   ['typepred', []],
   ['hotpathcheck', []],
+  ['docnumbercheck', []],
   ['docclaimcheck', []],
   ['gateaudit2', []],
   ['gatepersistcheck', []],
