@@ -277,16 +277,6 @@ extension CredentialsView {
     }
 
 
-    /// 行内小提示行 (装饰, 不参与 VoiceOver 合并)
-    struct HintRow: View {
-        let text: String
-        var body: some View {
-            Text(text)
-                .vkFont(.caption2)
-                .foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
 
     // ---------- 指纹段 ----------
     var sortedFps: [LedgerFp] { orderedFps(segFilteredFps()) }
