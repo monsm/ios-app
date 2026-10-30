@@ -330,6 +330,10 @@ struct MemberDetail360View: View {
         let alert = UIAlertController(title: "删除成员", message: msg, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "移除档案（锁端需另删）", style: .destructive) { _ in
             for kc in DB.keychains() { CredentialOrg.cascadeBinMember(kc.mac, m.id) }
+            // 2026-10-30 补（第 144 轮，**两条路径行为不一致**）：同一个「删除成员」动作，
+            // `MembersView.confirmRemove` 会记一次整理里程碑（L200 `Milestones.recordOrganize()`），本页不记 ——
+            // 于是「从成员中心删」不计入，「从成员详情删」也不计入，两处统计对不上。补齐。
+            _ = Milestones.recordOrganize()
             DB.removeMember(m.id)
             onChanged()
             app.showToast("已删除 · ⚠ 锁端凭证仍在，需要时请到门锁上手动删除")
