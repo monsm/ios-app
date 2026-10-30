@@ -464,6 +464,9 @@ jobs:
       - name: '文档断言一致性 (判失败: 文档里的绝对化断言与代码事实矛盾)'
         run: node tools/docclaimcheck.js
 
+      - name: '闸门豁免合规闸门 (判失败: 白名单项缺理由 / 整文件跳过没写原因)'
+        run: node tools/gateexemptcheck.js
+
       - name: '闸门自身可信度 (判失败: 新加闸门必须有正控记录 + 修法提示)'
         run: node tools/gateaudit2.js
 

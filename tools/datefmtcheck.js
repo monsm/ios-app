@@ -33,7 +33,7 @@ for (const d of DIRS) {
   for (const f of fs.readdirSync(dir)) {
     if (!f.endsWith('.swift')) continue;
     const rel = `${d}/${f}`;
-    if (rel === 'App/Core/DateFormats.swift') continue;
+    if (rel === 'App/Core/DateFormats.swift') continue;   // 格式串的**唯一来源**（`DF` 定义处），当然要含裸格式串
     const L = fs.readFileSync(path.join(dir, f), 'utf8').split(/\r?\n/);
     L.forEach((l, i) => {
       const code = l.replace(/\/\/.*$/, '');

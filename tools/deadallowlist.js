@@ -27,7 +27,7 @@ walk(path.join(ROOT, 'App'));
 const problems = [];
 
 for (const f of fs.readdirSync(TOOLS).filter(x => x.endsWith('.js'))) {
-  if (f === 'deadallowlist.js') continue;
+  if (f === 'deadallowlist.js') continue;   // 本文件自身是台账读取器，不扫自己（否则会把台账里的文件名当成"引用"）
   const txt = fs.readFileSync(path.join(TOOLS, f), 'utf8');
   const L = txt.split(/\r?\n/);
 
