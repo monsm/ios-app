@@ -131,8 +131,8 @@ struct PwdStudio: View {
         .accessibilityLabel("草稿续填： 上次填到第 \(d.step + 1) 步， 点继续可回填")   // 518 草稿续填
     }
 
-    // ---------- 515/317 step0 类型与归属 ----------
-    @ViewBuilder
+    // 2026-10-30 删除（第 130 轮）：这里原来是「515/317 step0 类型与归属」标题 + 一个**孤立的 `@ViewBuilder`** ——
+    // step0 已拆到 PwdStudioSteps.swift，本文件没有该声明；裸 `@ViewBuilder` 会挂到下面的 navBar 上（无害但误导）。
 
     // ---------- 515 导航条 ----------
     var navBar: some View {

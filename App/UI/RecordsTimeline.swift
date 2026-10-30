@@ -492,7 +492,7 @@ struct RecDetailSheet: View {
             }
             .frame(minHeight: DS.Hit.min)
         } footer: {
-            Text("附言/备注与旗标都是本机标注：不写进门锁，也不进导出 CSV 之外的任何出口；删除这台设备上的锁会一并清除。")
+            Text("附言/备注与旗标都是本机标注：不写进门锁；除导出 CSV 外，也会随「备份与恢复」整包带走（回滚时一并还原）。")   // 2026-10-30：原句说「不进导出 CSV 之外的任何出口」，但 BackupBundle.Meta 的 recNotes/recFlags 与回滚族表 kf_rnote_/kf_rflag_ 都含它们
                 .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -506,24 +506,6 @@ struct RecDetailSheet: View {
         app.showToast(noteDraft.trimmingCharacters(in: .whitespaces).isEmpty ? "备注已清空" : "备注已保存在这台手机")
     }
 
-    private static func credNav(_ r: Rec) -> String {
-        guard let kind = r.kind else { return "" }
-        let pws = DB.listPwds(r.mac)
-        let fps = DB.listFps(r.mac)
-        switch kind {
-        case "pwd":
-            if let p = pws.first(where: { !$0.temp && (r.whoName == nil || $0.owner == r.whoName) }) { return "pwd:" + String(p.alias) }
-        case "temp":
-            if let p = pws.first(where: { $0.temp && (r.whoName == nil || $0.owner == r.whoName) }) { return "pwd:" + String(p.alias) }
-        case "fp":
-            let match: (LedgerFp) -> Bool = { f in
-                guard let who = r.whoName else { return true }
-                return f.owner == who || f.name.contains(who)
-            }
-            if let f = fps.first(where: match) { return "fp:\(f.batch)" }
-        default:
-            break
-        }
-        return ""
-    }
+    // 2026-10-30 删除（第 130 轮）：`credNav(_:)` 全仓**零调用**（deadscan B 档已列出）。
+    // 577「来源凭证深跳」从未接线，这个函数是它的残骸。
 }
