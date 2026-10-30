@@ -348,7 +348,24 @@ else good('C 解除线 = base + 10·log10(0.5) (与 iOS disarmThreshold 同式)'
 if (!/const val COOLDOWN_MS = 6_000L/.test(ao)) bad('C 冷却时长不是 6_000L (用户 2026-10-17: 开完锁等 6 秒恢复自动扫锁; iOS cooldownSeconds 必须同步改 6)');
 else good('C 冷却 6s (与 iOS AutoOpenKit.cooldownSeconds=6 同口径)');
 
-function sample(prev, r, b) { return prev ? r > disarm(b) : r >= arm(b); }
+// 2026-10-31（第 25 轮，**与 iOS 同一隐患**）：原 `sample` 是旧单样本复刻，而
+// `MainActivity` 自第 23 轮起改调 `AutoOpenKit.rssiArmedByMedian`（3 样本中值）——
+// 整段 C 断言都在测一个线上不用的函数，给出的"全绿"是假安心。
+// 现改为中值复刻，并保留单样本形态（1 元素窗 = 退化等价，用于下面的老断言）。
+// 逐行对齐 Kotlin:
+//   val cur = history.firstOrNull() ?: return prevArmed
+//   if (prevArmed && cur <= disarm) return false
+//   val med = history.take(3).sorted()[size/2]
+//   return if (prevArmed) med > disarm else med >= arm
+function sample(prev, r, b) { return armedByMedian(prev, [r], b); }   // 1 元素窗
+function armedByMedian(prev, history, b) {
+  if (history.length === 0) return prev;
+  const cur = history[0];
+  if (prev && cur <= disarm(b)) return false;
+  const win = history.slice(0, 3).slice().sort((x, y) => x - y);
+  const med = win[Math.floor(win.length / 2)];
+  return prev ? med > disarm(b) : med >= arm(b);
+}
 // 不变式: 信号恒强 (站在门口不动) ⇒ 逐样本只武装一次, 不反复翻转
 // 2026-10-27 审核修复 (C 线)：本组原先 5 处硬编码 -38，而 AutoOpenKit.BASE 实际是 -40 ——
 // 于是 BASE 改成任何值这组断言都全绿，**它测的是它自己**。改成从 Kotlin 源码实时读。
@@ -381,6 +398,26 @@ const RB = parseInt(BASE_M[1], 10);   // 真实武装线
   for (const r of [-40, RB, -40, -39, -40]) a = sample(a, r, RB);
   if (!a) bad('C 回差失效: [' + disarm(RB) + ',' + RB + '] 抖动把武装位翻掉了 (解除线应≈ ' + disarm(RB) + ')');
   else good('C 回差带 [' + (disarm(RB) + 1) + ',' + RB + '] 内抖动不翻转');
+  // 2026-10-31（第 25 轮）：**中值专属断言** —— 上面那些老断言用的是 1 元素窗（退化等价），
+  // 只验证了回差算术，没验证"3 样本如何吃掉尖峰"。这几条才是第 23 轮改中值的理由。
+  // 基准 RB（默认 -40）⇒ 武装线 RB，解除线 disarm(RB)≈-43。
+  {
+    const spikeArm = armedByMedian(false, [RB - 40, RB + 1, RB + 2], RB);   // 一个 -80 尖峰 + 两个达线
+    if (!spikeArm) bad("C 中值失效: 单个尖峰就把武装挡掉了 (单样本会漏开, 这正是改中值要解决的)");
+    else good("C 单尖峰被中值吃掉 (仍武装)");
+    const twoSpike = armedByMedian(false, [RB - 40, RB - 40, RB + 2], RB);
+    if (twoSpike) bad("C 中值过宽: 两个尖峰也放行 (应拦住)");
+    else good("C 两个尖峰仍拦住");
+    const holdMid = armedByMedian(true, [RB + 2, RB - 1, RB - 10], RB);
+    if (!holdMid) bad("C 已武装时中值在带内没有维持");
+    else good("C 已武装 中值在带内维持");
+    const curDrop = armedByMedian(true, [disarm(RB) - 1, RB + 5, RB + 5], RB);
+    if (curDrop) bad("C 已武装时 cur 跌破解除线却没有立刻解除 (走开要快, 不该被中值拖住)");
+    else good("C cur 跌破解除线立刻解除 (不看中值)");
+    const empty = armedByMedian(false, [], RB);
+    if (empty) bad("C 空窗返回了武装 (不该发明数据)");
+    else good("C 空窗返回原态");
+  }
 }
 console.log('--- C 公式校验: BASE=' + RB + ' 武装线=' + arm(RB) + ' 解除线=' + disarm(RB) + ' ---');
 
