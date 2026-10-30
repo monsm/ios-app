@@ -458,6 +458,9 @@ jobs:
       - name: '自动开锁门控数据源闸门 (判失败: 门判据读到重启会清零的变量 —— 该拦不拦/双开)'
         run: node tools/gatepersistcheck.js
 
+      - name: 'Compose modifier 链逗号闸门 (判失败: 逗号闭合参数列表后又挂 .xxx ⇒ Syntax error)'
+        run: node tools/kotlinchaincheck.js
+
       - name: 'Kotlin/Swift 语法差异闸门 (判失败: .isEmpty 缺 () 等 —— 从 Swift 搬 Kotlin 的高危区)'
         run: node tools/kotlinsyntaxcheck.js
 

@@ -744,7 +744,7 @@ private fun UnlockDial(busy: Boolean, onClick: () -> Unit) {
                 .size(232.dp)
                 .scale(scale)
                 .clip(CircleShape)
-                .clickable(interactionSource = interaction, indication = null, enabled = !busy) { onClick() },
+                .clickable(interactionSource = interaction, indication = null, enabled = !busy) { onClick() }
             // 2026-10-31（第 72 轮 · 无障碍）：这个圆盘是**可点的主开锁按钮**，但内容全是 Canvas 自绘，
             // 屏幕阅读器读不出任何东西 —— 视障用户不知道"这里可以点一下开门"。
             // 补语义（用 `semantics` 而不是 `clearAndSetSemantics`：后者会把按压态的语义也抹掉）。
@@ -1038,7 +1038,7 @@ private fun GearButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
             .size(56.dp)
             .clip(CircleShape)
             .background(colors.surface.copy(alpha = 0.92f))
-            .clickable { onClick() },
+            .clickable { onClick() }
             // 2026-10-31（第 72 轮 · 无障碍）：齿轮也是自绘 Canvas，读屏读不出来 → 补语义。
             .semantics { contentDescription = "门锁设置"; role = Role.Button },
         contentAlignment = Alignment.Center,
