@@ -366,7 +366,7 @@ struct HeroCard<Content: View>: View {
                         .fill(DS.heroGradientSafe)
                         .clipShape(RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
                     // 889 Hero 纹理三档 (kf_hero_tex)：纯矢量，不引入任何图片资源
-                    // (本 App 除 App 图标外零位图，与 Celebration.swift 的礼花同源都走 Canvas 自绘)。
+                    // (本 App 除 App 图标外零位图 —— 纹理与礼花这类装饰一律走 Canvas 自绘，不引位图资源)。
                     // 透明度钉在 0.05–0.09 之间 —— 纹理压在 hero 渐变上，而渐变上永远有纯白正文 (≥4.7:1)；
                     // 再高就会把白字的局部对比拉下来，那是把"好看"换来"看不清"。
                     // 2026-10-26: 这段注释此前**没有对应实现** —— 键/备份/写入口/复算登记都齐，只差这里的消费点。

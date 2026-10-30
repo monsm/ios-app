@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T05:09:08.738Z",
+    "generated": "2026-10-30T05:29:26.539Z",
     "sources": [
       {
         "scout": "android-native",
@@ -33463,7 +33463,7 @@ const DATA = {
           "line": 171,
           "symbol": "struct DiagLogEntry",
           "note": "",
-          "text": "let pending = savePending.withLock { v -> Bool in"
+          "text": "// 只有真有未落盘的改动才写 —— 否则每次切前台/后台都白写一次文件。"
         },
         {
           "platform": "ios",
@@ -33479,7 +33479,7 @@ const DATA = {
           "line": 229,
           "symbol": "append(_:_:date:time:)",
           "note": "",
-          "text": "// 重连失败阶梯每十几秒就会记一条，等于持续在做全量 200/300 条的编解码。"
+          "text": "// 原来每次 recordEvent / recordAttempt 都是「读整份数组 → 插入 → 整份编码 → UserDefaults 落盘」。"
         },
         {
           "platform": "ios",
@@ -33487,7 +33487,7 @@ const DATA = {
           "line": 224,
           "symbol": "today()",
           "note": "",
-          "text": "}"
+          "text": "reason = try c.decodeIfPresent(String.self, forKey: .reason) ?? \"\""
         }
       ],
       "platformEvidence": {

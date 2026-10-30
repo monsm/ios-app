@@ -15,7 +15,12 @@ import Combine
 
 // ================= 本地工具 (纯离线, 不碰锁端) =================
 // 309 的逐位朗读原来在这里另建一台 AVSpeechSynthesizer (private `StudioTTS`)，
-// 与 AppIntents 里那台各说各话 ⇒ 已收进 `App/Core/SpeechKit.swift` 的 `Speech.digits`。
+// 2026-10-30 修正（第 101 轮）：原句写「已收进 `App/Core/SpeechKit.swift` 的 `Speech.digits`」——
+// 但 `SpeechKit.swift` **本仓不存在**，`Speech.digits` 也不存在，
+// 全仓**零 `AVSpeechSynthesizer`**（只在注释里出现过）。
+// 也就是说 309「逐位朗读」这个功能**已随精简整体删除**，不是"收进了某处"。
+// 需要朗读时用 `AXTools.announce`（VoiceOver 公告，`AccessibilityKit`）—— 那是**不同机制**
+// （让 VoiceOver 念 vs App 自己合成语音），不要把它当成 309 的实现。
 
 enum StudioTools {
     /// 173 本地 CSPRNG 数字生成 (KeyGen 即 SecureRandom 底层)
