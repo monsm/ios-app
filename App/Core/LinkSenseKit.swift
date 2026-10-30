@@ -396,11 +396,28 @@ final class LinkSense: ObservableObject {
 
     // ---------- 每锁 RSSI 记忆 (71 设备列表迷你信号格 / 129 极限距离) ----------
     static func saveRssi(mac: String, rssi: Int) {
-        DB.store.set("kf_linkrssi_" + mac, rssi)
+        // 2026-10-30（提速，第 5 项，**判定链前的同步写盘**）：原来每个 RSSI 样本都无条件
+        // `DB.store.set(...)` —— 那是 `JSONSerialization` + `defaults.set` + 缓存失效，**同步**。
+        // 第 2 项把 RSSI 轮询提到 0.5s 之后，等于每 0.5s 在自动开锁判定链前插一次写盘。
+        // 而这个值只是「设备列表迷你信号格 / 极限距离提示」的展示记忆，**丢一次无所谓**。
+        // 节流：同一把锁 ≥3s 才落一次盘；信号骤变（≥10dBm，走近/走远）立刻落。
+        // **判定链不节流** —— 下面的 updateRssi / feedRssi 仍然每个样本都喂。
+        let now = Date()
+        let key = "kf_linkrssi_" + mac
+        let prev = DB.store.get(Int.self, key)
+        let jump = prev == nil || abs(rssi - (prev ?? rssi)) >= 10
+        let due = Self.lastRssiPersistAt.withLock { $0[mac] }.map { now.timeIntervalSince($0) >= 3 } ?? true
+        if jump || due {
+            DB.store.set(key, rssi)
+            Self.lastRssiPersistAt.withLock { $0[mac] = now }
+        }
         LinkSense.shared.updateRssi(rssi)
-        // 靠近自动开锁 (AUTOOPEN): 每个 RSSI 事件喂入回差滤波 (未开主开关 = 零开销, 控制器内 guard)
+        // 靠近自动开锁 (AUTOOPEN): 每个 RSSI 事件都喂入滤波 (未开主开关 = 零开销, 控制器内 guard)。
         Task { @MainActor in AutoOpenController.shared.feedRssi(mac: mac, rssi: rssi) }
     }
+    /// 2026-10-30（提速，第 5 项）: 每把锁最近一次「落盘 RSSI」的时刻，用于节流。
+    /// Swift 6 不允许非隔离的可变全局状态 —— 值必须由 `Locked` 持有（见 Locked.swift 头注）。
+    private static let lastRssiPersistAt = Locked([String: Date]())
     /// 上次扫到的该锁 RSSI; nil = 从未扫到
     static func rssiFor(_ mac: String) -> Int? {
         DB.store.get(Int.self, "kf_linkrssi_" + mac)

@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T15:06:25.704Z",
+    "generated": "2026-10-30T15:17:52.142Z",
     "sources": [
       {
         "scout": "android-native",
@@ -4966,7 +4966,7 @@ const DATA = {
           "line": 537,
           "symbol": "coldStartScan()",
           "note": "",
-          "text": ""
+          "text": "/// RSSI 档位: -55 满 / -65 近 / -75 中 / -85 远"
         },
         {
           "platform": "ios",
@@ -5075,7 +5075,7 @@ const DATA = {
           "line": 404,
           "symbol": "kf_wd_heals + 1",
           "note": "",
-          "text": "/// 上次扫到的该锁 RSSI; nil = 从未扫到"
+          "text": "// **判定链不节流** —— 下面的 updateRssi / feedRssi 仍然每个样本都喂。"
         }
       ],
       "platformEvidence": {
@@ -5151,7 +5151,7 @@ const DATA = {
           "line": 419,
           "symbol": "struct FailKind",
           "note": "",
-          "text": "coldScanTask?.cancel()"
+          "text": "/// Swift 6 不允许非隔离的可变全局状态 —— 值必须由 `Locked` 持有（见 Locked.swift 头注）。"
         },
         {
           "platform": "ios",
@@ -5159,7 +5159,7 @@ const DATA = {
           "line": 425,
           "symbol": "icon 计算属性",
           "note": "",
-          "text": "// 123: 冷启动扫描时长/去重跟随用户档位 (默认 5s = 旧硬编码值, 不改变既有行为)"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -5167,7 +5167,7 @@ const DATA = {
           "line": 435,
           "symbol": "classifyFailure",
           "note": "",
-          "text": "if firstSeenMs \u003c 0, !ble.allDiscovered().isEmpty {"
+          "text": "func coldStartScan() {"
         }
       ],
       "platformEvidence": {
@@ -7602,7 +7602,7 @@ const DATA = {
           "line": 492,
           "symbol": "func scan(mac:timeoutMs:)",
           "note": "",
-          "text": "/// 仍然受既有开关 `kf_link_auto_\u003cmac>` 管: 用户选了\"手动连接模式\"就不预热。"
+          "text": "var holdMinutes: Int {"
         },
         {
           "platform": "ios",
@@ -7610,7 +7610,7 @@ const DATA = {
           "line": 504,
           "symbol": "300ms 轮询 + 取消判据",
           "note": "",
-          "text": "}"
+          "text": "/// 与 enterPage() 的区别只是**发起时机**:"
         },
         {
           "platform": "ios",
@@ -7618,7 +7618,7 @@ const DATA = {
           "line": 519,
           "symbol": "noteScannedRssi",
           "note": "",
-          "text": "extension LinkSense {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -7626,7 +7626,7 @@ const DATA = {
           "line": 525,
           "symbol": "saveRssi / rssiFor",
           "note": "",
-          "text": "if r >= -75 { return 2 }"
+          "text": "/// 全 App 唯一的 AppState 弱引用入口 (由 RootView 挂载时赋值)。"
         }
       ],
       "platformEvidence": {
@@ -8034,7 +8034,7 @@ const DATA = {
           "line": 288,
           "symbol": "AutoOpenController",
           "note": "@MainActor 单例状态机",
-          "text": "case .suspended: return \"rc=26 防拆挂起， 自动开锁 24h 内禁用\""
+          "text": "guard faceAvailable else { return .f1face }"
         },
         {
           "platform": "ios",
@@ -8042,7 +8042,7 @@ const DATA = {
           "line": 497,
           "symbol": "AutoCalView",
           "note": "",
-          "text": "// 直接喊\"自动开锁成功\"就是谎报 —— 与手动档 settleUnlockSuccess 同一口径 (2026-10-15 走查)。"
+          "text": "// F4: 用户配了布防 (control=2) 就照常一票否决 + 落审计; 但\"本机没存过布防记录\"不能再读成"
         },
         {
           "platform": "ios",
@@ -8569,7 +8569,7 @@ const DATA = {
           "line": 202,
           "symbol": "AutoOpenGate.Reject",
           "note": "",
-          "text": "// 60s 太保守 (人走开再回来要等一分钟), 用户口径 6 秒。双开不靠这个数兜: 靠 F5 一次性闩锁"
+          "text": "/// `rssiSample` 是**单样本**判定 —— 一个抖动样本就能让 armed 翻转："
         },
         {
           "platform": "ios",
@@ -8577,7 +8577,7 @@ const DATA = {
           "line": 215,
           "symbol": "rejectReason",
           "note": "",
-          "text": "if dev \u003c 24 * 3600 { return true }      // 30s \u003c 偏差 \u003c 24h → 自动写 (自愈)"
+          "text": "let win = Array(history.prefix(3)).sorted()"
         },
         {
           "platform": "ios",
@@ -8585,7 +8585,7 @@ const DATA = {
           "line": 244,
           "symbol": "rejectText",
           "note": "",
-          "text": "case off                 // 主开关未开"
+          "text": "static func noteFaceSuccess() { lastFaceLock.withLock { $0 = Date() } }"
         }
       ],
       "platformEvidence": {
@@ -9094,7 +9094,7 @@ const DATA = {
           "line": 423,
           "symbol": "private func dispatch",
           "note": "",
-          "text": "//   ②胁迫者让机主点「立即锁定」(只置 appUnlocked=false, 不清 armed/lastFace);"
+          "text": "if farAway { eventFired.remove(mac) }"
         },
         {
           "platform": "ios",
@@ -9102,7 +9102,7 @@ const DATA = {
           "line": 428,
           "symbol": "app.lock.unlock(mac:)",
           "note": "",
-          "text": "guard !app.decoyMode else {"
+          "text": "// 现改为无条件事件驱动：信号武装的那一拍立即判定，不等 2s tick。"
         },
         {
           "platform": "ios",
@@ -9110,7 +9110,7 @@ const DATA = {
           "line": 441,
           "symbol": "verifyMode==1 双验提示",
           "note": "",
-          "text": "case .none:"
+          "text": "attempt(mac: mac)"
         },
         {
           "platform": "ios",
@@ -9118,7 +9118,7 @@ const DATA = {
           "line": 453,
           "symbol": "rc=25 / rc=26 分支",
           "note": "",
-          "text": "let snap = app.snapshot"
+          "text": "//   ②胁迫者让机主点「立即锁定」(只置 appUnlocked=false, 不清 armed/lastFace);"
         }
       ],
       "platformEvidence": {
@@ -9193,7 +9193,7 @@ const DATA = {
           "line": 260,
           "symbol": "protocol FaceService",
           "note": "",
-          "text": ") -> Reject {"
+          "text": "var coolReady: Bool          // F5 冷却: 上一次下发距今 > cooldownSeconds(=6s)。曾误写 60s —— 60 是热链路上限, 不是冷却"
         },
         {
           "platform": "ios",
@@ -9201,7 +9201,7 @@ const DATA = {
           "line": 266,
           "symbol": "struct SystemFaceService",
           "note": "",
-          "text": "// 上一版把这条放在档位判断之前, 等于 tier 0 也被生物识别可用性否决 —— 死门换个位置留着。"
+          "text": "case f0                  // 非前台/App 未解锁"
         },
         {
           "platform": "ios",
@@ -9209,7 +9209,7 @@ const DATA = {
           "line": 278,
           "symbol": "evaluatePolicy",
           "note": "",
-          "text": "guard rssiArmed else { return .f3rssi }"
+          "text": "suspended: Bool,"
         }
       ],
       "platformEvidence": {
@@ -9375,7 +9375,7 @@ const DATA = {
           "line": 305,
           "symbol": "onForeground",
           "note": "",
-          "text": "}"
+          "text": "static func rejectText(_ r: Reject) -> String {"
         },
         {
           "platform": "ios",
@@ -9383,7 +9383,7 @@ const DATA = {
           "line": 312,
           "symbol": "严格档发起弹窗",
           "note": "",
-          "text": "}"
+          "text": "case .f3rssi: return \"F3 信号未达武装线\""
         },
         {
           "platform": "ios",
@@ -9391,7 +9391,7 @@ const DATA = {
           "line": 318,
           "symbol": "onBackground",
           "note": "",
-          "text": "err?.code != LAError.biometryNotAvailable.rawValue else { return }"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -9529,7 +9529,7 @@ const DATA = {
           "line": 293,
           "symbol": "armedMac",
           "note": "",
-          "text": "case .f5cool: return \"F5 冷却中 (6 秒)\""
+          "text": "guard !AutoOpenKit.defendActive(control: defendControl, startSec: defendStartSec, endSec: defendEndSec, now: now)"
         },
         {
           "platform": "ios",
@@ -9537,7 +9537,7 @@ const DATA = {
           "line": 294,
           "symbol": "lastDispatch: [String: TimeInterval]",
           "note": "",
-          "text": "case .f6busy: return \"F6 锁态未知或忙 (rc=25/无 03 回显)\""
+          "text": "else { return .f4defend }"
         },
         {
           "platform": "ios",
@@ -9545,7 +9545,7 @@ const DATA = {
           "line": 333,
           "symbol": "mac != armedMac 时复位",
           "note": "",
-          "text": "private var armed = false"
+          "text": "func promptFace() {"
         },
         {
           "platform": "ios",
@@ -9553,7 +9553,7 @@ const DATA = {
           "line": 363,
           "symbol": "guard app.currentMac == mac",
           "note": "",
-          "text": "wasInBackground = false"
+          "text": "private var rssiHistory: [Int] = []"
         }
       ],
       "platformEvidence": {
@@ -9842,7 +9842,7 @@ const DATA = {
           "line": 457,
           "symbol": "setSuspendUntil(+24h)",
           "note": "",
-          "text": "faceTier: AutoOpen.faceTier,"
+          "text": "// 手动锁定也应清零武装/面容时刻 （原 SecurityCenterView 那条，该页已删）, 这里先保证自动链在伪装态一律拒。"
         },
         {
           "platform": "ios",
@@ -9850,7 +9850,7 @@ const DATA = {
           "line": 307,
           "symbol": "onForeground 挂起分支",
           "note": "",
-          "text": "struct SystemFaceService: FaceService {"
+          "text": "case .off: return \"主开关未开\""
         }
       ],
       "platformEvidence": {
@@ -11549,7 +11549,7 @@ const DATA = {
           "line": 378,
           "symbol": "if eventFired.contains(mac) { return }",
           "note": "",
-          "text": "}"
+          "text": "eventFired.removeAll()          // 新的一次\"进前台 + 接近\"事件, 放开一次性闩锁"
         },
         {
           "platform": "ios",
@@ -11557,7 +11557,7 @@ const DATA = {
           "line": 431,
           "symbol": "eventFired.insert(mac)",
           "note": "",
-          "text": "}"
+          "text": "// 早判定只是把「同样的判定」提前到广播到达那一刻，不新增任何放行路径。"
         }
       ],
       "platformEvidence": {
@@ -11641,7 +11641,7 @@ const DATA = {
           "line": 232,
           "symbol": "guard !defendActive",
           "note": "",
-          "text": "var lastFace: Date?          // 最近一次面容成功时刻 (nil = 从未)"
+          "text": "static func dualTimeSync(phoneProto: Int64, lockProto: Int64, ntpConfirmed: Bool) -> Bool {"
         },
         {
           "platform": "ios",
@@ -11649,7 +11649,7 @@ const DATA = {
           "line": 412,
           "symbol": "defendControl: d?.control ?? 0",
           "note": "",
-          "text": "}"
+          "text": "// 旧写法让未标定用户 armed 永远置不起来、自动开锁一次都不触发的那道死门。"
         }
       ],
       "platformEvidence": {
@@ -11732,7 +11732,7 @@ const DATA = {
           "line": 324,
           "symbol": "onBackground 清在途位",
           "note": "",
-          "text": "}"
+          "text": "func promptFace()"
         }
       ],
       "platformEvidence": {
@@ -11800,7 +11800,7 @@ const DATA = {
           "line": 226,
           "symbol": "if AutoOpenKit.isStrict(faceTier)",
           "note": "",
-          "text": "}"
+          "text": "lastDispatch == 0 || now - lastDispatch > cooldownSeconds"
         },
         {
           "platform": "ios",
@@ -11808,7 +11808,7 @@ const DATA = {
           "line": 229,
           "symbol": "guard AutoOpenKit.faceFresh",
           "note": "",
-          "text": "struct AutoOpenGate {"
+          "text": "// ---------- 0E 双确认 (rc=3 自愈校时): 30s \u003c |偏差| \u003c 24h 才写; ≥24h 仅 NTP 对表一致时放宽到 48h ----------"
         },
         {
           "platform": "ios",
@@ -11816,7 +11816,7 @@ const DATA = {
           "line": 406,
           "symbol": "facePendingPrompt 计算",
           "note": "",
-          "text": "// ---------- 全门判定 + 下发 (每个接近事件只发一次: F5) ----------"
+          "text": "armedMac = mac; armed = false; eventFired.remove(mac)"
         }
       ],
       "platformEvidence": {
@@ -11883,7 +11883,7 @@ const DATA = {
           "line": 402,
           "symbol": "f0Foreground",
           "note": "",
-          "text": "// 省电也没变差：真正耗电的是持续开着扫描，而这里只是收到广播后多做一次纯计算。"
+          "text": "// ---------- F3 喂入: RSSI 事件 (LinkSenseKit saveRssi 后调) ----------"
         },
         {
           "platform": "ios",
@@ -11891,7 +11891,7 @@ const DATA = {
           "line": 222,
           "symbol": "guard f0Foreground",
           "note": "",
-          "text": "// 那个全局可变变量。把值交给 Locked 持有, 可变性就只存在于临界区内部。"
+          "text": "// 60s 太保守 (人走开再回来要等一分钟), 用户口径 6 秒。双开不靠这个数兜: 靠 F5 一次性闩锁"
         }
       ],
       "platformEvidence": {
@@ -11952,7 +11952,7 @@ const DATA = {
           "line": 419,
           "symbol": "lockReady: snap != nil && snap?.rc != 25 && snap?.rc != 26",
           "note": "",
-          "text": "// 2026-10-13 对抗式排查: 补 390 伪装会话红线 (两道, 这里是指令入口, 下面 F0 是门判据)。"
+          "text": "// （下方 case 0），于是信号落进回差带 (-43..-40) 就会执行本行把闩锁放开 ——"
         },
         {
           "platform": "ios",
@@ -11960,7 +11960,7 @@ const DATA = {
           "line": 239,
           "symbol": "guard lockReady",
           "note": "",
-          "text": "var rssiArmed: Bool          // F3 滤波当前态"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -12184,7 +12184,7 @@ const DATA = {
           "line": 469,
           "symbol": "selfHealTime",
           "note": "",
-          "text": "// 这不是拆门: 一旦布防设置存在, control=2 仍严格生效 (defendActive 的时段判定一字未改)。"
+          "text": ")"
         },
         {
           "platform": "ios",
@@ -12192,7 +12192,7 @@ const DATA = {
           "line": 476,
           "symbol": "ntpConfirmed: false",
           "note": "",
-          "text": "// F6 锁态门 fail-closed: StatusSnapshotData.rc 默认 0 = \"成功\", 无快照时旧写法会误判锁态绿"
+          "text": "AutoOpen.audit(mac, \"拒开 \" + AutoOpenGate.rejectText(rej) + \" · \" + door)"
         }
       ],
       "platformEvidence": {
@@ -12259,7 +12259,7 @@ const DATA = {
           "line": 237,
           "symbol": "guard rssiArmed",
           "note": "",
-          "text": "var defendStartSec: Int"
+          "text": "return false"
         },
         {
           "platform": "ios",
@@ -12267,7 +12267,7 @@ const DATA = {
           "line": 415,
           "symbol": "rssiArmed: armed",
           "note": "",
-          "text": "guard AutoOpen.on, !inFlight else { return }"
+          "text": "if rssiHistory.count > 3 { rssiHistory.removeLast(rssiHistory.count - 3) }"
         }
       ],
       "platformEvidence": {
