@@ -330,6 +330,13 @@ extension RecordsView {
         // 2026-10-29 性能：原先每行调两次 DB.member(id)（各自从字典重建一次 Member）。
         // 300 行 = 600 次重建；这里一次建表。
         let memberByID = Dictionary(DB.members().map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        // 2026-10-30 性能（第 89 轮）：`credNav` 原来对每行做 `pwds.first(where:)` / `fps.first(where:)`，
+        // 300 行 × 几十条凭证 = 上万次线性比较，且这是时间线渲染热路径。
+        // 先建「按归属取第一条」的索引，循环里 O(1) 查表。语义与 credNav 原实现逐条对齐：
+        //   · 非临时密码：`!p.temp`，who == nil 时取全表第一条；否则取该 owner 的第一条
+        //   · 临时密码：`p.temp`，同上
+        //   · 指纹：`who == nil || owner == who || name 含 who`，同上取第一条
+        let credIndex = Self.CredNavIndex(pwds: pwds, fps: fps)
         var out = [RowVM]()
         for (i, e) in merged.enumerated() {
             guard i < cls.count else { continue }
@@ -361,7 +368,7 @@ extension RecordsView {
                              hour: p.hour, type: e.type,
                              title: title, whoId: whoId, whoKind: c.kind,
                              kind: c.kind, lockName: "", rowMac: mac,
-                             credKey: Self.credNav(kind: c.kind, who: whoName, pwds: pwds, fps: fps),
+            credKey: credIndex.nav(kind: c.kind, who: whoName),
                              warn: warn, claim: claimable, care: care))
         }
         allRows = out
@@ -370,18 +377,54 @@ extension RecordsView {
         applyFilter()
     }
     /// 577 凭证深链: kind+归属 → pwd:<alias> / fp:<batch>; 台账无命中留空 (不深跳)
-    static func credNav(kind: String?, who: String?, pwds: [LedgerPwd], fps: [LedgerFp]) -> String {
-        switch kind {
-        case "pwd":
-            if let p = pwds.first(where: { !$0.temp && (who == nil || $0.owner == who) }) { return "pwd:" + String(p.alias) }
-        case "temp":
-            if let p = pwds.first(where: { $0.temp && (who == nil || $0.owner == who) }) { return "pwd:" + String(p.alias) }
-        case "fp":
-            if let f = fps.first(where: { (who == nil) || ($0.owner == who) || (!(who ?? "").isEmpty && $0.name.contains(who!)) }) { return "fp:" + String(f.batch) }
-        default:
-            break
+    /// 2026-10-30 性能（第 89 轮）：`credNav` 从「每次线性扫数组」改成「先建索引再 O(1) 查」。
+    /// 语义与旧实现逐条对齐（旧签名保留为便利入口，内部走索引）。
+    struct CredNavIndex {
+        private let nonTempAny: LedgerPwd?
+        private let tempAny: LedgerPwd?
+        private let fpAny: LedgerFp?
+        private let nonTempByOwner: [String: LedgerPwd]
+        private let tempByOwner: [String: LedgerPwd]
+        private let fpByOwner: [String: LedgerFp]
+        private let fpList: [LedgerFp]
+
+        init(pwds: [LedgerPwd], fps: [LedgerFp]) {
+            var nt: [String: LedgerPwd] = [:], tp: [String: LedgerPwd] = [:], fo: [String: LedgerFp] = [:]
+            for p in pwds {
+                if p.temp { if let o = p.owner, tp[o] == nil { tp[o] = p } }
+                else { if let o = p.owner, nt[o] == nil { nt[o] = p } }
+            }
+            for f in fps { if let o = f.owner, fo[o] == nil { fo[o] = f } }
+            nonTempAny = pwds.first { !$0.temp }
+            tempAny = pwds.first { $0.temp }
+            fpAny = fps.first
+            nonTempByOwner = nt; tempByOwner = tp; fpByOwner = fo; fpList = fps
         }
-        return ""
+
+        func nav(kind: String?, who: String?) -> String {
+            switch kind {
+            case "pwd":
+                let p = who.flatMap { nonTempByOwner[$0] } ?? nonTempAny
+                if let p { return "pwd:" + String(p.alias) }
+            case "temp":
+                let p = who.flatMap { tempByOwner[$0] } ?? tempAny
+                if let p { return "pwd:" + String(p.alias) }
+            case "fp":
+                // 原判据含 `name 含 who` 的模糊匹配 —— 只有精确归属命中不了时才退到线性扫。
+                if let w = who, let f = fpByOwner[w] { return "fp:" + String(f.batch) }
+                if who == nil, let f = fpAny { return "fp:" + String(f.batch) }
+                if let w = who, !w.isEmpty,
+                   let f = fpList.first(where: { $0.name.contains(w) || $0.owner == w }) {
+                    return "fp:" + String(f.batch)
+                }
+            default: break
+            }
+            return ""
+        }
+    }
+
+    static func credNav(kind: String?, who: String?, pwds: [LedgerPwd], fps: [LedgerFp]) -> String {
+        CredNavIndex(pwds: pwds, fps: fps).nav(kind: kind, who: who)
     }
 
     /// 这一处原本自建 DateFormatter 且**没钉 `en_US_POSIX`**：用户在「设置 → 语言与地区 → 历法」
