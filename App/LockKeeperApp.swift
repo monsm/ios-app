@@ -17,6 +17,17 @@ struct LockKeeperApp: App {
             RootView()
                 .environmentObject(app)
                 .tint(DS.Palette.accent)
+                // 2026-10-31（UI/UX 第 7 轮，**全局文字色缺默认**）：本仓的主题是**暖调**
+                // （`DS.Palette.text` 浅色 0x17140F 暖黑 / 深色 0xF7F3EA 暖白），
+                // 而 SwiftUI 的 `List` / `Form` 里没写 `color:` 的 `Text` 用的是**系统默认 label**
+                // （中性纯黑/纯白）—— 于是同一屏里「显式指定了 text 的文字」和「没指定的文字」
+                // 是两种色温，凑近看能看出偏色。全仓 87 处显式 `foregroundStyle(DS.Palette.text)`
+                // 说明作者一直在跟这个问题打补丁，但补不全（`BackupView` / `DefendView` /
+                // `LockSettingsView` 三个页面的主文本占比为 0%，全靠默认色）。
+                //
+                // 这里设一次全局默认：已有自己 `foregroundStyle` 的文字（273 处 textSub + 87 处 text）
+                // 会**覆盖**它，所以不会改变任何已显式指定的样式；只有「没指定」的那些才受影响。
+                .foregroundStyle(DS.Palette.text)
         }
     }
 }

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T20:49:28.361Z",
+    "generated": "2026-10-30T23:06:13.533Z",
     "sources": [
       {
         "scout": "android-native",
@@ -3674,7 +3674,7 @@
           "line": 431,
           "symbol": "chosenPinIndex(_:)",
           "note": "",
-          "text": "if rc == 22 {"
+          "text": "try await lock.ensureConnected(mac: kc.mac)"
         },
         {
           "platform": "ios",
@@ -8005,7 +8005,7 @@
           "line": 397,
           "symbol": "if DB.hasPasscode(), let t = lastUnlockSuccessAt, now.timeIntervalSince(t) < 30",
           "note": "",
-          "text": "/// 存的是**下标**而不是 PIN 本身 —— 口令留在钥匙串 (kc.pins) 里, 不落 UserDefaults。"
+          "text": "unlockTask?.cancel()"
         },
         {
           "platform": "ios",
@@ -8013,7 +8013,7 @@
           "line": 368,
           "symbol": "开锁语义注释",
           "note": "",
-          "text": "lastDispatch = now"
+          "text": "Date().timeIntervalSince(dispatchAt) < 0.8 || retryWait != nil {"
         },
         {
           "platform": "ios",
@@ -8021,7 +8021,7 @@
           "line": 371,
           "symbol": "requestUnlock",
           "note": "",
-          "text": "showGate = true"
+          "text": "return"
         },
         {
           "platform": "ios",
@@ -8029,7 +8029,7 @@
           "line": 379,
           "symbol": "if unlockState == .connecting || .opening",
           "note": "",
-          "text": "unlockTask?.cancel()"
+          "text": "lastDispatch = now"
         }
       ],
       "platformEvidence": {
@@ -10383,7 +10383,7 @@
           "line": 68,
           "symbol": "236/377/383 注释",
           "note": "",
-          "text": "@Published var decoyMode = false"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -10391,7 +10391,7 @@
           "line": 71,
           "symbol": "guestAreaUnlocked",
           "note": "",
-          "text": "// 被 `.id(app.appearanceSeed)` 包着 —— 改任何外观档 (主题/品牌色/密度/圆角/行高/动效/快捷格次序)"
+          "text": "@Published var status: LockStatus?"
         },
         {
           "platform": "ios",
@@ -10399,7 +10399,7 @@
           "line": 73,
           "symbol": "guestGateTarget",
           "note": "",
-          "text": "//   · onLaunch() 再跑一遍 (自检 / 月备排程 / 成就结算 / CrashGuard 重复打点);"
+          "text": "@Published var unlockState: UnlockState = .idle"
         },
         {
           "platform": "ios",
@@ -10407,7 +10407,7 @@
           "line": 75,
           "symbol": "showGuestGate",
           "note": "",
-          "text": "// 加这一位让启动块幂等 (AppState 是引用类型, 不受视图换身份影响)。"
+          "text": "/// 原先四处深链门禁 / 明文密码门禁 / F0 门里的判断恒为真，已按「承认没有应用锁」全部删除。"
         },
         {
           "platform": "ios",
@@ -10415,7 +10415,7 @@
           "line": 87,
           "symbol": "guestAreaLocked",
           "note": "",
-          "text": "@Published var appearanceSeed = 0"
+          "text": "var launchBootstrapped = false"
         }
       ],
       "platformEvidence": {
@@ -10574,7 +10574,7 @@
           "line": 296,
           "symbol": "296 只读安全模式注释",
           "note": "",
-          "text": "/// 开锁复位定时器那次（读的是 A 锁）先返回 ⇒ `status` 被写成 A 锁的读数，而界面标题是 B。"
+          "text": "/// 于是\"开了静默还在自动连锁读状态\"，干净复现问题的口径是假的 (AUDIT-A §127 那条 gap 至今成立)。"
         },
         {
           "platform": "ios",
@@ -10582,7 +10582,7 @@
           "line": 371,
           "symbol": "func requestUnlock",
           "note": "",
-          "text": "showGate = true"
+          "text": "return"
         },
         {
           "platform": "ios",
@@ -10590,7 +10590,7 @@
           "line": 374,
           "symbol": "guard SecurityPolicy.allows(.unlock)",
           "note": "",
-          "text": "startUnlock()"
+          "text": "// 244 指令去重: 1.2s 内的重复触发只提示, 不重复入队"
         },
         {
           "platform": "ios",
@@ -10598,7 +10598,7 @@
           "line": 375,
           "symbol": "denialMessage",
           "note": "",
-          "text": "}"
+          "text": "guard now.timeIntervalSince(lastDispatch) > 1.2 else {"
         },
         {
           "platform": "ios",
@@ -10606,7 +10606,7 @@
           "line": 404,
           "symbol": "func startUnlock",
           "note": "",
-          "text": "let i = chosenPinIndex(kc.mac)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -13381,7 +13381,7 @@
           "line": 439,
           "symbol": "private func runUnlock",
           "note": "",
-          "text": "} catch is CancellationError {"
+          "text": "settleUnlockSuccess()"
         },
         {
           "platform": "ios",
@@ -13389,7 +13389,7 @@
           "line": 441,
           "symbol": "attempts = kf_auto_retry ? 3 : 1",
           "note": "",
-          "text": "} catch {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -13397,7 +13397,7 @@
           "line": 445,
           "symbol": "phase = 1",
           "note": "",
-          "text": "if Task.isCancelled { return }"
+          "text": "finishDwell(.doubleVerify)"
         },
         {
           "platform": "ios",
@@ -13405,7 +13405,7 @@
           "line": 453,
           "symbol": "lock.unlock(mac:pinDec:)",
           "note": "",
-          "text": "retryWait = w"
+          "text": "lastMsg = error.localizedDescription"
         },
         {
           "platform": "ios",
@@ -13413,7 +13413,7 @@
           "line": 455,
           "symbol": "if rc == 0",
           "note": "",
-          "text": "}"
+          "text": "// 2026-10-29：catch 之后再看一次 —— 取消不算失败，也不该进 failStreak / 重试。"
         }
       ],
       "platformEvidence": {
@@ -13532,7 +13532,7 @@
           "line": 189,
           "symbol": "func commitUnlock",
           "note": "",
-          "text": "// 包2/136 补充: 跨页跳回 — 记录/告警入口点\"跳回设备页定位该锁\"时, 落点即选中并提示"
+          "text": "tabSelection = t"
         },
         {
           "platform": "ios",
@@ -13540,7 +13540,7 @@
           "line": 192,
           "symbol": "guestAreaUnlocked = true",
           "note": "",
-          "text": "@Published var pendingCredNav: String?"
+          "text": "@Published var writeReceipt: String?   // 包8/508 写入回执: 凭证保存成功后\"已写入本机\"对勾浮出"
         },
         {
           "platform": "ios",
@@ -13548,7 +13548,7 @@
           "line": 193,
           "symbol": "tabSelection = guestGateTarget",
           "note": "",
-          "text": "@Published var pendingCredNavMac: String?"
+          "text": "// 包1: 开锁过程态 — 80 三段进度 / 85 重试节奏 / 250 二次开锁应用锁闸"
         }
       ],
       "platformEvidence": {
@@ -13806,7 +13806,7 @@
           "line": 428,
           "symbol": "246 本次用哪条 PIN 注释",
           "note": "",
-          "text": "settleUnlockSuccess()"
+          "text": "phase = 1"
         },
         {
           "platform": "ios",
@@ -13814,7 +13814,7 @@
           "line": 431,
           "symbol": "func chosenPinIndex",
           "note": "",
-          "text": "if rc == 22 {"
+          "text": "try await lock.ensureConnected(mac: kc.mac)"
         },
         {
           "platform": "ios",
@@ -13822,7 +13822,7 @@
           "line": 432,
           "symbol": "kf_pinpick_ + mac",
           "note": "",
-          "text": "unlockState = .doubleVerify"
+          "text": "LinkSense.shared.noteUserConnect()   // 98 冷热标识: 用户触发的连接标\"即连\""
         },
         {
           "platform": "ios",
@@ -13830,7 +13830,7 @@
           "line": 434,
           "symbol": "func chosenPin",
           "note": "",
-          "text": "finishDwell(.doubleVerify)"
+          "text": "dispatchAt = Date()   // 56 撤销窗口从指令真正发出起算"
         },
         {
           "platform": "ios",
@@ -13838,7 +13838,7 @@
           "line": 436,
           "symbol": "i >= 0 && i < kc.pins.count",
           "note": "",
-          "text": "}"
+          "text": "let rc = try await lock.unlock(mac: kc.mac, pinDec: chosenPin(kc))   // 246: 带上下拉胶囊选的那条"
         }
       ],
       "platformEvidence": {
@@ -33457,7 +33457,7 @@
           "line": 525,
           "symbol": "外观变更注释",
           "note": "",
-          "text": "let hour = WeekCal.gregorian.component(.hour, from: Date())"
+          "text": "// 此前直接报「门已打开」= 对 B 模式用户说谎; 用状态帧镜像判, 快照未读到时宁可不提示 (与"
         },
         {
           "platform": "ios",
@@ -33481,7 +33481,7 @@
           "line": 527,
           "symbol": "private func applyAppearance",
           "note": "",
-          "text": ""
+          "text": "if status?.verifyMode == 1 {"
         }
       ],
       "platformEvidence": {
@@ -34562,7 +34562,7 @@
           "line": 624,
           "symbol": "func setUnlockOption(_ key: String, _ v: Any)",
           "note": "",
-          "text": "/// iOS 上 surface/canvas 的明度差已经足够表达层级, 描边反而是重复劳动。"
+          "text": "// （fullScreenCover on showGuestGate）已随访客通道一起移除，视图本身零引用。"
         },
         {
           "platform": "ios",
@@ -34640,7 +34640,7 @@
           "line": 104,
           "symbol": "294 深链注释",
           "note": "",
-          "text": "func handleDeepLink(_ url: URL) {"
+          "text": "// 54/372 摇一摇的过程态跟着换页走: 回位票只在\"留在设置页\"期间有效,"
         },
         {
           "platform": "ios",
@@ -34648,7 +34648,7 @@
           "line": 105,
           "symbol": "pendingRoute",
           "note": "",
-          "text": "guard url.scheme == \"kf\", let host = url.host?.lowercased(),"
+          "text": "// 迷你开锁面板只属于设备页 —— 换页不收拾就是两条残影。"
         },
         {
           "platform": "ios",
@@ -34656,7 +34656,7 @@
           "line": 109,
           "symbol": "static let deepLinkHosts",
           "note": "",
-          "text": "if let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems,"
+          "text": "@Published var pendingRoute: Route?"
         },
         {
           "platform": "ios",
@@ -34664,7 +34664,7 @@
           "line": 110,
           "symbol": "func handleDeepLink",
           "note": "",
-          "text": "let k = items.first(where: { $0.name == \"k\" })?.value, !k.isEmpty {"
+          "text": "/// 2026-10-29 性能：只在 AppState 内部落地（294 深链锁 ID），没有任何视图读它 —— 不需要发布。"
         },
         {
           "platform": "ios",
@@ -34672,7 +34672,7 @@
           "line": 111,
           "symbol": "guard url.scheme == \"kf\"",
           "note": "",
-          "text": "pendingRecordKey = k"
+          "text": "var pendingMac: String?"
         }
       ],
       "platformEvidence": {
@@ -35348,7 +35348,7 @@
           "line": 640,
           "symbol": "892 自定义强调色注释",
           "note": "",
-          "text": ""
+          "text": "// **只此一处定义**是刻意的：另抄一份阴影色，两套变体迟早会在这一步上分家。"
         },
         {
           "platform": "ios",
@@ -37253,7 +37253,7 @@
           "line": 356,
           "symbol": "func showToast",
           "note": "",
-          "text": "if unlockState == .opening,"
+          "text": "// 2026-10-31（第 63 轮，**自动/手动并发缺口**）：自动链在途时 `unlockState` 仍是 `.idle`，"
         },
         {
           "platform": "ios",
@@ -37261,7 +37261,7 @@
           "line": 357,
           "symbol": "withAnimation spring",
           "note": "",
-          "text": "Date().timeIntervalSince(dispatchAt) < 0.8 || retryWait != nil {"
+          "text": "// 下面那条 `unlockState == .connecting || .opening` 拦不住它 —— 用户此时点圆盘会让"
         },
         {
           "platform": "ios",
@@ -37269,7 +37269,7 @@
           "line": 359,
           "symbol": "let stay = msg.count > 20 ?",
           "note": "",
-          "text": "}"
+          "text": "if AutoOpenController.shared.isDispatching {"
         },
         {
           "platform": "ios",
@@ -37580,7 +37580,7 @@
           "line": 587,
           "symbol": "开锁偏好注释",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -37596,7 +37596,7 @@
           "line": 620,
           "symbol": "无障碍键并入",
           "note": "",
-          "text": "/// 内层 Button 保留全部系统行为, 只有 trigger() 走闸; 闸状态是每个按钮各自的 @State, 不跨按钮误伤。"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -37604,7 +37604,7 @@
           "line": 624,
           "symbol": "func setUnlockOption",
           "note": "",
-          "text": "/// iOS 上 surface/canvas 的明度差已经足够表达层级, 描边反而是重复劳动。"
+          "text": "// （fullScreenCover on showGuestGate）已随访客通道一起移除，视图本身零引用。"
         },
         {
           "platform": "ios",
@@ -37612,7 +37612,7 @@
           "line": 626,
           "symbol": "if behaviorKeys.contains",
           "note": "",
-          "text": "/// `tint` 给\"需要处理\"的卡混入语义色底 (8%), 让异常自带色温而不靠描边。"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -37705,7 +37705,7 @@
           "line": 629,
           "symbol": "894 恢复带外观段注释",
           "note": "",
-          "text": "// **只此一处定义**是刻意的：另抄一份阴影色，两套变体迟早会在这一步上分家。"
+          "text": "/// ButtonStyle 拿不到 action (拦不住点击), 而直接在外层用 onTapGesture 会把 List 行点击、"
         },
         {
           "platform": "ios",
@@ -37721,7 +37721,7 @@
           "line": 633,
           "symbol": "func reloadAppearance",
           "note": "",
-          "text": ""
+          "text": "/// 卡片表面: 靠 surface 与渐变画布的明度差分层, 不加描边。"
         },
         {
           "platform": "ios",
@@ -37729,7 +37729,7 @@
           "line": 634,
           "symbol": "themeSeed 重读",
           "note": "",
-          "text": ""
+          "text": "/// 每张卡都套 0.5pt 描边会让所有卡片看起来出自同一个模板 —— 描边是 1px Web 做法,"
         },
         {
           "platform": "ios",
@@ -37737,7 +37737,7 @@
           "line": 639,
           "symbol": "bumpAppearanceForLayout",
           "note": "",
-          "text": ""
+          "text": "// `card()`（新语法层的主表面，同一句 `.shadow(color: .cardElevation, radius: 12, y: 4)`）。"
         }
       ],
       "platformEvidence": {
@@ -37943,7 +37943,7 @@
           "line": 113,
           "symbol": "585 行内定位键注释",
           "note": "",
-          "text": "// 294 带锁 ID 直达: kf://device?mac=<hex> 落点为该锁详情 (开锁入口), 锁着先挂起。"
+          "text": "/// 顺序只有一个声明处 (Route.byHost)，深链、Tab 号、访客受限集三样都从它推。"
         },
         {
           "platform": "ios",
@@ -37951,7 +37951,7 @@
           "line": 115,
           "symbol": "URLComponents queryItems",
           "note": "",
-          "text": "if host == \"device\","
+          "text": "func handleDeepLink(_ url: URL) {"
         },
         {
           "platform": "ios",
@@ -37959,7 +37959,7 @@
           "line": 116,
           "symbol": "items.first(name == k)",
           "note": "",
-          "text": "let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems,"
+          "text": "guard url.scheme == \"kf\", let host = url.host?.lowercased(),"
         },
         {
           "platform": "ios",
@@ -37967,7 +37967,7 @@
           "line": 117,
           "symbol": "pendingRecordKey = k",
           "note": "",
-          "text": "let m = items.first(where: { $0.name == \"mac\" })?.value, !m.isEmpty,"
+          "text": "let tab = AppState.deepLinkHosts[host] else { return }   // 未知 host = 忽略, 不跳不崩"
         },
         {
           "platform": "ios",
@@ -37975,7 +37975,7 @@
           "line": 114,
           "symbol": "值只是找哪条",
           "note": "",
-          "text": "// 未知 MAC 直接忽略 (与 host 白名单同款, 不跳不崩)。"
+          "text": "static let deepLinkHosts: [String: Int] = Route.deepLinkHosts"
         }
       ],
       "platformEvidence": {
@@ -38056,7 +38056,7 @@
           "line": 119,
           "symbol": "带锁 ID 直达注释",
           "note": "",
-          "text": "let mac = DB.normalizeMac(m)"
+          "text": "// 值本身只是\"到那页以后找哪条\"的字符串，找不到的由消费方如实说\"不在本机台账里\"。"
         },
         {
           "platform": "ios",
@@ -38064,7 +38064,7 @@
           "line": 121,
           "symbol": "if host == \"device\"",
           "note": "",
-          "text": "}"
+          "text": "let k = items.first(where: { $0.name == \"k\" })?.value, !k.isEmpty {"
         },
         {
           "platform": "ios",
@@ -38072,7 +38072,7 @@
           "line": 124,
           "symbol": "DB.keychain(DB.normalizeMac(m)) != nil",
           "note": "",
-          "text": "func applyPendingRoute() {"
+          "text": "// 294 带锁 ID 直达: kf://device?mac=<hex> 落点为该锁详情 (开锁入口), 锁着先挂起。"
         },
         {
           "platform": "ios",
@@ -38080,7 +38080,7 @@
           "line": 126,
           "symbol": "select(mac) 或 pendingMac",
           "note": "",
-          "text": "guard let r = pendingRoute else { return }"
+          "text": "if host == \"device\","
         },
         {
           "platform": "ios",
@@ -38088,7 +38088,7 @@
           "line": 130,
           "symbol": "applyPendingRoute",
           "note": "",
-          "text": "// ---------- 377 访客通道: 受限 Tab 的唯一走位口 ----------"
+          "text": "let mac = DB.normalizeMac(m)"
         }
       ],
       "platformEvidence": {
@@ -38176,7 +38176,7 @@
           "line": 130,
           "symbol": "applyPendingRoute",
           "note": "",
-          "text": "// ---------- 377 访客通道: 受限 Tab 的唯一走位口 ----------"
+          "text": "let mac = DB.normalizeMac(m)"
         },
         {
           "platform": "ios",
@@ -38184,7 +38184,7 @@
           "line": 205,
           "symbol": "挂起深链优先注释",
           "note": "",
-          "text": "@Published var pendingMemberAdd = false"
+          "text": "/// 366/1013 通知点按 → 凭证 Tab 的对应面板。与 pendingCredNav (577 定位到单条凭证) 是两回事。"
         },
         {
           "platform": "ios",
@@ -38192,7 +38192,7 @@
           "line": 206,
           "symbol": "restoreLastTab",
           "note": "",
-          "text": "/// 317 指纹工坊无成员直达: \"request\"=已请人建档; 建完改写为新成员 id, FpStudio 取走预选"
+          "text": "/// 应用锁未解开时凭证 Tab 根本不在层级树里, 值就一直挂着 → 解锁后 onAppear 才落地 (通知不得绕过门禁)"
         },
         {
           "platform": "ios",
@@ -38864,7 +38864,7 @@
           "line": 60,
           "symbol": "启动块只跑一次的会话令牌注释",
           "note": "",
-          "text": "@Published var status: LockStatus?"
+          "text": "/// 2026-10-27 三轮恢复：`UnlockState` 在删 Moment 队列时被连带删掉 ——"
         },
         {
           "platform": "ios",
@@ -38872,7 +38872,7 @@
           "line": 67,
           "symbol": "var launchBootstrapped",
           "note": "",
-          "text": "// 390: 伪装码进入后停在空壳界面 (不加载任何门锁/凭证视图与数据)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -39485,7 +39485,7 @@
           "line": 85,
           "symbol": "static let guestBlockedTabs",
           "note": "",
-          "text": "@Published var themeSeed: String = DB.store.getString(\"kf_theme\")"
+          "text": "//   · coldStartScan() 再起一个扫描, 而它是裸 `Task {}` 不随 `.task` 取消 ⇒ 两个扫描轮询并发读同一 discovered。"
         },
         {
           "platform": "ios",
@@ -39493,7 +39493,7 @@
           "line": 87,
           "symbol": "guestAreaLocked",
           "note": "",
-          "text": "@Published var appearanceSeed = 0"
+          "text": "var launchBootstrapped = false"
         },
         {
           "platform": "ios",
@@ -39501,7 +39501,7 @@
           "line": 88,
           "symbol": "SecurityPolicy.guestActive",
           "note": "",
-          "text": "/// 2026-10-14: 行为类偏好 (开锁怎么开/什么动静) 的轻量变更信号 —— 见 setUnlockOption 注释。"
+          "text": "// ---------- 236/377 访客通道 / 383 毁灭复核: 两枚会话级授权位 ----------"
         },
         {
           "platform": "ios",
@@ -39723,7 +39723,7 @@
           "line": 358,
           "symbol": "长文案多停留注释",
           "note": "",
-          "text": "cancelUnlock(notify: true)"
+          "text": "// 两路同时下发 04（一次接近、两次开门）。这里补一道闸：自动在途时提示并拒绝手动。"
         },
         {
           "platform": "ios",
@@ -39731,7 +39731,7 @@
           "line": 359,
           "symbol": "stay 计算",
           "note": "",
-          "text": "}"
+          "text": "if AutoOpenController.shared.isDispatching {"
         },
         {
           "platform": "ios",
@@ -39739,7 +39739,7 @@
           "line": 362,
           "symbol": "if toast == msg",
           "note": "",
-          "text": "let now = Date()"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -39747,7 +39747,7 @@
           "line": 363,
           "symbol": "DS.Duration.quick",
           "note": "",
-          "text": "// 244 指令去重: 1.2s 内的重复触发只提示, 不重复入队"
+          "text": "if unlockState == .connecting || unlockState == .opening {"
         }
       ],
       "platformEvidence": {
@@ -40441,7 +40441,7 @@
           "line": 466,
           "symbol": "lastMsg = StatusParser.rcFriendly(rc)",
           "note": "",
-          "text": "UINotificationFeedbackGenerator().notificationOccurred(.error)"
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -57852,7 +57852,7 @@
           "line": 200,
           "symbol": "static let lastTabKey",
           "note": "",
-          "text": "@Published var pendingCredSelect: [Int]?"
+          "text": "// 包2/136 补充: 跨页跳回 — 记录/告警入口点\"跳回设备页定位该锁\"时, 落点即选中并提示"
         },
         {
           "platform": "ios",
@@ -57860,7 +57860,7 @@
           "line": 201,
           "symbol": "func rememberTab",
           "note": "",
-          "text": "// 包9/582 图表下钻: 统计页成员条 → 记录 Tab 按该成员过滤"
+          "text": "@Published var pendingJumpLock: String?"
         },
         {
           "platform": "ios",
@@ -57876,7 +57876,7 @@
           "line": 431,
           "symbol": "kf_pinpick_",
           "note": "",
-          "text": "if rc == 22 {"
+          "text": "try await lock.ensureConnected(mac: kc.mac)"
         },
         {
           "platform": "ios",
@@ -57884,7 +57884,7 @@
           "line": 520,
           "symbol": "kf_unlock_hint_day",
           "note": "",
-          "text": "// 只在非双验时报\"成功\", 双验那条上面已经给了实话。"
+          "text": "// 包3: 258 首连验证标记 (开锁成功=全链路跑通) + 292 连接基准刷新"
         }
       ],
       "platformEvidence": {
@@ -63564,7 +63564,7 @@
           "line": 200,
           "symbol": "kf_last_tab",
           "note": "",
-          "text": "@Published var pendingCredSelect: [Int]?"
+          "text": "// 包2/136 补充: 跨页跳回 — 记录/告警入口点\"跳回设备页定位该锁\"时, 落点即选中并提示"
         },
         {
           "platform": "ios",
@@ -63572,7 +63572,7 @@
           "line": 202,
           "symbol": "rememberTab guard",
           "note": "",
-          "text": "@Published var pendingRecordsMember: String?"
+          "text": "// 包9/577 详情跳凭证: 记录/告警详情\"来源凭证\"→ 凭证 Tab 定位该条并高亮 (值 = \"pwd:<alias>\" / \"fp:<batch>\", mac 另存)"
         },
         {
           "platform": "ios",
@@ -63580,7 +63580,7 @@
           "line": 208,
           "symbol": "restoreLastTab 夹 0...3",
           "note": "",
-          "text": "/// 585 记录引用深链: `kf://records?k=<行键>` 带回来的**行内定位键**。"
+          "text": "var pendingCredPanel: String?"
         },
         {
           "platform": "ios",
@@ -63588,7 +63588,7 @@
           "line": 518,
           "symbol": "unlockReturnedHint",
           "note": "",
-          "text": "} else {"
+          "text": "finishDwell(.success)"
         },
         {
           "platform": "ios",
@@ -63596,7 +63596,7 @@
           "line": 520,
           "symbol": "kf_unlock_hint_day",
           "note": "",
-          "text": "// 只在非双验时报\"成功\", 双验那条上面已经给了实话。"
+          "text": "// 包3: 258 首连验证标记 (开锁成功=全链路跑通) + 292 连接基准刷新"
         }
       ],
       "platformEvidence": {

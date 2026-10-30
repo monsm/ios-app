@@ -43,6 +43,7 @@ const GATES = [
   ['hotpathcheck', []],
   ['docnumbercheck', []],
   ['docclaimcheck', []],
+  ['uiglobalcolorcheck', []],
   ['gateexemptcheck', []],
   ['gateaudit2', []],
   ['kotlinmanualcheck', []],
