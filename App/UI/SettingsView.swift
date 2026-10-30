@@ -192,16 +192,18 @@ struct SettingsView: View {
     /// `group` = 这一节归哪个筛选分组。跳转前必须先切过去, 否则命中节可能压根没被渲染,
     /// `scrollTo` 会**静默落空** (这正是"点了搜索没反应"的另一种形态)。
     enum SettingsAnchor: String {
-        case lock, security, unlock, time, autoOpen, family
-        case tools, drill, applock, appearance, memory, alertTone, about
+        // 2026-10-30 清理（第 132 轮）：`security` / `drill` / `memory` / `alertTone` 四个 case
+        // 对应的节已随安全中心、诊断族、记忆页删除，没有任何 `.id()` 或 `SearchHit` 引用它们 —— 只留实际在用的 9 个。
+        case lock, unlock, time, autoOpen, family
+        case tools, applock, appearance, about
 
         var group: SettingsGroup {
             switch self {
-            case .lock, .unlock, .autoOpen, .alertTone: return .daily
-            case .security, .tools, .drill, .applock: return .data
+            case .lock, .unlock, .autoOpen: return .daily
+            case .tools, .applock: return .data
             case .family: return .keys
             case .time, .appearance: return .look
-            case .memory, .about: return .help
+            case .about: return .help
             }
         }
     }
