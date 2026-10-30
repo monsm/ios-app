@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T15:34:12.690Z",
+    "generated": "2026-10-30T16:00:05.490Z",
     "sources": [
       {
         "scout": "android-native",
@@ -5666,7 +5666,7 @@
           "line": 103,
           "symbol": "BleUnlocker.warm",
           "note": "private var warm: Session? = null（单条热链路）",
-          "text": ""
+          "text": "fun onLinkDown() {"
         },
         {
           "platform": "android",
@@ -6121,7 +6121,7 @@
           "line": 250,
           "symbol": "release",
           "note": "suspend fun release() = mutex.withLock { warm = null; seen.clear(); if (w != null) teardown(w) }",
-          "text": "}"
+          "text": "teardown(s)"
         },
         {
           "platform": "android",
@@ -13731,7 +13731,7 @@
           "line": 211,
           "symbol": "unlock",
           "note": "\"开锁没有回执 — 门锁可能已执行, 先看一眼门\"",
-          "text": "if (a2.linkBroken) closeWarm(s)"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -14400,7 +14400,7 @@
           "line": 292,
           "symbol": "prewarm",
           "note": "suspend fun prewarm(lock: LockInfo)",
-          "text": "// ---------- 预热 ----------"
+          "text": "*/"
         },
         {
           "platform": "android",
@@ -14416,7 +14416,7 @@
           "line": 304,
           "symbol": "prewarm",
           "note": "val device = freshSeen(lock.mac) ?: return@withLock",
-          "text": "closeWarm(cur)"
+          "text": "* 失败一律静默 —— 它只是让下一次开锁变快, 不是功能本身, 不该因此给用户报错。"
         }
       ],
       "platformEvidence": {
@@ -41474,7 +41474,7 @@
           "line": 356,
           "symbol": "runUnlock",
           "note": "val tokKlv = KfProtocol.klv(0xEE, token).uppercase(); if (!hex.endsWith(tokKlv)) ...",
-          "text": "trace.toString()),"
+          "text": "if (!writeChunked(g, write, KfProtocol.bytes(KfProtocol.tokenFrame()), s)) {"
         },
         {
           "platform": "apk",
@@ -41689,7 +41689,7 @@
           "line": 651,
           "symbol": "advOf",
           "note": "先 parseAdv(p)，失败再 indexOfCompanyId 跳 2 字节重试",
-          "text": "if (fr.cmd == cmd) return fr"
+          "text": "timeoutMs: Long,"
         },
         {
           "platform": "ios",
@@ -41713,7 +41713,7 @@
           "line": 664,
           "symbol": "indexOfCompanyId",
           "note": "找 0x98、0xED 两字节",
-          "text": "for (i in 0 until data.size()) {"
+          "text": "// 一次到达的可能是 0 / 1 / 多帧, 也可能只有半帧。口径照 iOS ZKProtocol.FrameAssembler:"
         }
       ],
       "platformEvidence": {
@@ -41825,7 +41825,7 @@
           "line": 326,
           "symbol": "runUnlock",
           "note": "开锁链只有 tokenFrame(01) 与 unlockFrame(04)，identity 走 statusFrame(03)",
-          "text": "}"
+          "text": "teardown(s)"
         },
         {
           "platform": "ios",
@@ -41967,7 +41967,7 @@
           "line": 549,
           "symbol": "observeRssi",
           "note": "广播只取 normMac(adv.mac) 比对，adv.pid 全程未参与身份判定",
-          "text": "// 而这里必须 null filters (锁的广播只有厂商段 98ED、没有服务 UUID, 按 UUID 过滤"
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -42007,7 +42007,7 @@
           "line": 457,
           "symbol": "verifyIdentity",
           "note": "注释：为什么不在扫描那一跳比广播 pid",
-          "text": "// ---------- 身份复核 ----------"
+          "text": "delay(80)   // 停扫后仍需 settle 一拍再连 (边扫边连 = 133 头号成因), 但从 120 收到 80"
         },
         {
           "platform": "android",
@@ -45511,7 +45511,7 @@
           "line": 331,
           "symbol": "runUnlock",
           "note": "writeChunked(g, write, KfProtocol.bytes(KfProtocol.tokenFrame()), s)",
-          "text": "private class Attempt(val outcome: Outcome?, val linkBroken: Boolean)"
+          "text": "} catch (_: Exception) {"
         },
         {
           "platform": "android",
@@ -45567,7 +45567,7 @@
           "line": 335,
           "symbol": "runUnlock",
           "note": "val tokenFrame = awaitFrame(s.notes, 0x01, 4_000)",
-          "text": "val write = s.write ?: return Attempt(null, false)"
+          "text": ""
         },
         {
           "platform": "android",
@@ -45575,7 +45575,7 @@
           "line": 338,
           "symbol": "runUnlock",
           "note": "val token = tokenFrame.klvs[0x02]",
-          "text": "if (!writeChunked(g, write, KfProtocol.bytes(KfProtocol.tokenFrame()), s)) {"
+          "text": "/** outcome=null = \"帧没出手机\"级别的失败, 外层可以安全拆链重建。 */"
         }
       ],
       "platformEvidence": {
@@ -45853,7 +45853,7 @@
           "line": 453,
           "symbol": "verifyIdentity",
           "note": "private suspend fun verifyIdentity(s, lock, trace): Outcome?",
-          "text": "s.lastUsedAt = System.currentTimeMillis()"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -45893,7 +45893,7 @@
           "line": 461,
           "symbol": "verifyIdentity",
           "note": "writeChunked(g, write, KfProtocol.bytes(KfProtocol.statusFrame()), s)",
-          "text": "if (lock.pid <= 0 || s.identityVerified) return null"
+          "text": "if (withTimeoutOrNull(8_000) { s.servicesOk.await() } != true) return false"
         },
         {
           "platform": "android",
@@ -45901,7 +45901,7 @@
           "line": 465,
           "symbol": "verifyIdentity",
           "note": "val st = awaitFrame(s.notes, 0x03, 3_000)",
-          "text": "// 与台账 pid **不是同一套编号** (golden: parseAdv 的 7970 vs status KLV#34 的 16289),"
+          "text": "s.write = write"
         }
       ],
       "platformEvidence": {
@@ -46079,7 +46079,7 @@
           "line": 368,
           "symbol": "runUnlock",
           "note": "val res = awaitFrame(s.notes, 0x04, 3_000)",
-          "text": "// 04 的写入被同步拒绝 = 没出手机; 但已经发出去过几片时不能一概而论 ——"
+          "text": "val secType = tokenFrame.first(0x01)?.let { KfProtocol.intHex(it) and 0x03 }"
         },
         {
           "platform": "apk",
@@ -46119,7 +46119,7 @@
           "line": 373,
           "symbol": "runUnlock",
           "note": "rc = KfProtocol.rc(res); trace.append(\"04→rc=\" + rc + \" \")",
-          "text": "true)"
+          "text": "\", 回包 \" + KfProtocol.klvShape(tokenFrame) + \") — 离门锁近一点再试\","
         },
         {
           "platform": "android",
@@ -53527,7 +53527,7 @@
           "line": 354,
           "symbol": "runUnlock",
           "note": "val hex = KfProtocol.injectToken(KfProtocol.unlockFrame(lock.ekey), token)",
-          "text": "\"门锁没有给会话令牌 (安全类型=\" + (secType?.toString() ?: \"无\") +"
+          "text": "trace.append(\"复用令牌(\" + (nowMs - s.tokenFetchedAt) + \"ms) \")"
         },
         {
           "platform": "android",
@@ -53551,7 +53551,7 @@
           "line": 357,
           "symbol": "runUnlock",
           "note": "if (!hex.endsWith(tokKlv)) return Attempt(Outcome(false, \"内部错误: 会话令牌没能装进开锁帧\", ...))",
-          "text": "s.disconnected.isCompleted)"
+          "text": "s.lastUsedAt = System.currentTimeMillis()"
         }
       ],
       "platformEvidence": {
@@ -55601,7 +55601,7 @@
           "line": 386,
           "symbol": "buildLink",
           "note": "private suspend fun buildLink(s: Session, device: BluetoothDevice): Boolean",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "android",
@@ -55609,7 +55609,7 @@
           "line": 424,
           "symbol": "buildLink",
           "note": "delay(80)   // 停扫后仍需 settle 一拍再连（边扫边连 = 133 头号成因）",
-          "text": "override fun onMtuChanged(g: BluetoothGatt, mtu: Int, status: Int) {"
+          "text": "runCatching { g.discoverServices() }"
         },
         {
           "platform": "android",
@@ -55617,7 +55617,7 @@
           "line": 427,
           "symbol": "buildLink",
           "note": "if (withTimeoutOrNull(3_000) { s.connected.await() } != true) return false; if (withTimeoutOrNull(2_000) { s.servicesOk.await() } != true) return false",
-          "text": "}"
+          "text": "// connected 永不完成 → 干等满 10 秒 → 报成\"连接超时\", 把真因盖住。"
         },
         {
           "platform": "android",
@@ -55625,7 +55625,7 @@
           "line": 441,
           "symbol": "buildLink",
           "note": "if (req == BluetoothStatusCodes.SUCCESS) withTimeoutOrNull(4_000) { s.notifyOn.await() }",
-          "text": "val cccd = notify.getDescriptor(CCCD)"
+          "text": "s.writeDone?.complete(status == BluetoothGatt.GATT_SUCCESS)"
         }
       ],
       "platformEvidence": {
@@ -55713,7 +55713,7 @@
           "line": 675,
           "symbol": "humanBle",
           "note": "private fun humanBle(e: Throwable): String = when (e) { is SecurityException -> ...; else -> e.message ?: \"未知错误\" }",
-          "text": "private fun indexOfCompanyId(p: ByteArray): Int {"
+          "text": "buf.setLength(0)"
         },
         {
           "platform": "android",
@@ -55721,7 +55721,7 @@
           "line": 132,
           "symbol": "unlock",
           "note": "Outcome(false, \"这台手机没有蓝牙\") / \"蓝牙未开启\"",
-          "text": "suspend fun unlock(lock: LockInfo): Outcome = mutex.withLock {"
+          "text": ""
         },
         {
           "platform": "android",
@@ -55729,7 +55729,7 @@
           "line": 182,
           "symbol": "unlock",
           "note": "Outcome(false, \"没找到这把锁 — 靠近门锁, 或确认门锁有电\")",
-          "text": "val device = scanned"
+          "text": "scanned = try {"
         },
         {
           "platform": "android",
@@ -55737,7 +55737,7 @@
           "line": 192,
           "symbol": "unlock",
           "note": "Outcome(false, \"蓝牙权限被收回了 — 到系统设置里重新允许后重试\")",
-          "text": "teardown(s)"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -55818,7 +55818,7 @@
           "line": 453,
           "symbol": "verifyIdentity",
           "note": "private suspend fun verifyIdentity(s: Session, lock: LockInfo, trace: StringBuilder): Outcome?",
-          "text": "s.lastUsedAt = System.currentTimeMillis()"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -55826,7 +55826,7 @@
           "line": 454,
           "symbol": "verifyIdentity",
           "note": "if (lock.pid <= 0 || s.identityVerified) return null",
-          "text": "return true"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -55834,7 +55834,7 @@
           "line": 467,
           "symbol": "verifyIdentity",
           "note": "val selfPid = KfProtocol.pidOf(st)",
-          "text": "// 03 在 04 之前、不驱动执行器, 多发一次没有副作用 (对照 G4 只约束 04 的重发)。"
+          "text": "val cccd = notify.getDescriptor(CCCD)"
         },
         {
           "platform": "android",
@@ -55842,7 +55842,7 @@
           "line": 476,
           "symbol": "verifyIdentity",
           "note": "s.identityVerified = true",
-          "text": "trace.append(\"03→pid=\" + selfPid + \" \")"
+          "text": "// 协商 MTU: 只谈 ATT 层上界, **分片仍恒按 20 字节** (iOS BLEService.writeFrame 与 JS"
         }
       ],
       "platformEvidence": {
@@ -55917,7 +55917,7 @@
           "line": 611,
           "symbol": "awaitFrame",
           "note": "private suspend fun awaitFrame(ch: ReceiveChannel<ByteArray>, cmd: Int, timeoutMs: Long): KfProtocol.Frame?",
-          "text": "val ok = withTimeoutOrNull(8_000) { done.await() } ?: return false"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -55925,7 +55925,7 @@
           "line": 633,
           "symbol": "awaitFrame",
           "note": "val start = buf.indexOf(\"87\"); if (start < 0) { buf.setLength(0); break }",
-          "text": "} catch (e: Exception) {"
+          "text": "val req = runCatching {"
         },
         {
           "platform": "android",
@@ -55933,7 +55933,7 @@
           "line": 637,
           "symbol": "awaitFrame",
           "note": "val rest = buf.substring(minOf(fr.raw.length, buf.length)); buf.setLength(0); buf.append(rest)",
-          "text": "buf.append(KfProtocol.hex(chunk))"
+          "text": "val ok = withTimeoutOrNull(8_000) { done.await() } ?: return false"
         },
         {
           "platform": "android",
@@ -55941,7 +55941,7 @@
           "line": 640,
           "symbol": "awaitFrame",
           "note": "if (fr.cmd == cmd) return fr",
-          "text": "//  ② 逐帧吃掉, 只消费这一帧自己那一段, 剩下半截留在 buf 里等下一包。"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -56023,7 +56023,7 @@
           "line": 330,
           "symbol": "runUnlock",
           "note": "for (attempt in 1..2) {",
-          "text": "/** outcome=null = \"帧没出手机\"级别的失败, 外层可以安全拆链重建。 */"
+          "text": "throw ce"
         },
         {
           "platform": "android",
@@ -56031,7 +56031,7 @@
           "line": 376,
           "symbol": "runUnlock",
           "note": "if ((rc == 3 || rc == 13) && attempt == 1) { trace.append(\"(会话过期, 重取令牌再试) \"); continue }",
-          "text": "// 回执超时: 帧已出手机, 锁可能正在开 —— linkBroken=false, 绝不重建重发 (双开红线)"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -56039,7 +56039,7 @@
           "line": 364,
           "symbol": "runUnlock",
           "note": "Outcome(false, \"开锁写入中断 — 门锁可能已执行, 先看一眼门\", ...)",
-          "text": "if (!hex.endsWith(tokKlv)) {"
+          "text": "val token = tokenFrame.first(0x02)"
         },
         {
           "platform": "android",
@@ -56047,7 +56047,7 @@
           "line": 370,
           "symbol": "runUnlock",
           "note": "回执超时 -> linkBroken=false, 绝不重建重发",
-          "text": "// 保守起见: 报\"可能已执行\", linkBroken=true 让外层拆链, 但**绝不原地重发**。"
+          "text": "Outcome("
         }
       ],
       "platformEvidence": {
@@ -56123,7 +56123,7 @@
           "line": 221,
           "symbol": "pickWarm",
           "note": "private fun pickWarm(lock: LockInfo): Session?",
-          "text": "// 2026-10-27 审核（AUDIT-A F-21）：本文件原先的超时窗口比 vendor 紧 2–5 倍"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -56131,7 +56131,7 @@
           "line": 218,
           "symbol": "warmStaleMs",
           "note": "private val warmStaleMs = 60_000L",
-          "text": "*  60s 是给\"对端睡了但没发 DISCONNECTED\"这种半死状态留的兜底, 不是省电参数。 */"
+          "text": "val a2 = runUnlock(s, lock, trace)"
         },
         {
           "platform": "android",
@@ -56139,7 +56139,7 @@
           "line": 226,
           "symbol": "pickWarm",
           "note": "if (System.currentTimeMillis() - w.lastUsedAt > warmStaleMs) return null",
-          "text": ""
+          "text": "*  60s 是给\"对端睡了但没发 DISCONNECTED\"这种半死状态留的兜底, 不是省电参数。 */"
         },
         {
           "platform": "android",
@@ -56147,7 +56147,7 @@
           "line": 119,
           "symbol": "seen",
           "note": "private val seen = ConcurrentHashMap<String, Pair<BluetoothDevice, Long>>(); seenTtlMs = 10_000L",
-          "text": "*/"
+          "text": "* stopScan 又会把监测一起停掉 (表现 = \"当前信号再也不更新\")。缓存句柄之后, 预热"
         }
       ],
       "platformEvidence": {
@@ -56230,7 +56230,7 @@
           "line": 535,
           "symbol": "observeRssi",
           "note": "fun observeRssi(lock: LockInfo): Flow<Int> = callbackFlow { ... }",
-          "text": "return v"
+          "text": "val pump = launch {"
         },
         {
           "platform": "android",
@@ -56238,7 +56238,7 @@
           "line": 539,
           "symbol": "observeRssi",
           "note": ".setScanMode(SCAN_MODE_LOW_LATENCY).setCallbackType(CALLBACK_TYPE_ALL_MATCHES)",
-          "text": "* 近场信号流: 只上报这把锁的广播 RSSI (dBm)。UI 拿它判\"到没到门口\"以及触发预热。"
+          "text": "val r = readLinkedRssi(warm)"
         },
         {
           "platform": "android",
@@ -56246,7 +56246,7 @@
           "line": 551,
           "symbol": "observeRssi",
           "note": "seen[lock.mac] = result.device to System.currentTimeMillis(); trySend(result.rssi)",
-          "text": "// 连上之后走 readRemoteRssi 的 200ms 轮询 (见 observeSignal), 那才是亚秒级的那一路。"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -56254,7 +56254,7 @@
           "line": 561,
           "symbol": "observeRssi",
           "note": "if (runCatching { scanner.startScan(null, settings, cb) }.isFailure) { close(); return@callbackFlow }",
-          "text": "}"
+          "text": "return v"
         }
       ],
       "platformEvidence": {
@@ -56329,7 +56329,7 @@
           "line": 501,
           "symbol": "observeSignal",
           "note": "fun observeSignal(lock: LockInfo): Flow<Int> = channelFlow { ... }",
-          "text": "* 另两个好处: ① 测距顺带刷新 lastUsedAt, 热链路不会在 60 秒后被自己判过期 —— 那正是"
+          "text": "if (selfPid <= 0) { trace.append(\"03→无pid \"); return null }"
         },
         {
           "platform": "android",
@@ -56337,7 +56337,7 @@
           "line": 509,
           "symbol": "observeSignal",
           "note": "delay(200)  // 连接层测距轮询",
-          "text": "val pump = launch {"
+          "text": "s.identityVerified = true"
         },
         {
           "platform": "android",
@@ -56345,7 +56345,7 @@
           "line": 513,
           "symbol": "observeSignal",
           "note": "withTimeoutOrNull(3_000) { observeRssi(lock).collect { send(it) } }",
-          "text": "val r = readLinkedRssi(warm)"
+          "text": "// ---------- 近场信号 ----------"
         },
         {
           "platform": "android",
@@ -56353,7 +56353,7 @@
           "line": 521,
           "symbol": "readLinkedRssi",
           "note": "g.readRemoteRssi(); withTimeoutOrNull(1_500) { d.await() }",
-          "text": "}"
+          "text": "*   · \"信号刷新很慢很慢\" = 连上之后信号干脆不动了, 界面停在最后一次读数;"
         }
       ],
       "platformEvidence": {
@@ -56434,7 +56434,7 @@
           "line": 587,
           "symbol": "writeChunked",
           "note": "private suspend fun writeChunked(gatt, chr, data, s): Boolean",
-          "text": "// 由调用方的 try/catch 接住 (取消原样上抛, 其余转成人话)。"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -56442,7 +56442,7 @@
           "line": 595,
           "symbol": "writeChunked",
           "note": "val n = minOf(20, data.size - off)",
-          "text": "gatt: BluetoothGatt,"
+          "text": "close(); return@callbackFlow"
         },
         {
           "platform": "android",
@@ -56450,7 +56450,7 @@
           "line": 601,
           "symbol": "writeChunked",
           "note": "gatt.writeCharacteristic(chr, chunk, WRITE_TYPE_DEFAULT)",
-          "text": "while (off < data.size) {"
+          "text": ""
         },
         {
           "platform": "android",
@@ -56458,7 +56458,7 @@
           "line": 604,
           "symbol": "writeChunked",
           "note": "val ok = withTimeoutOrNull(4_000) { done.await() } ?: return false",
-          "text": "val done = CompletableDeferred<Boolean>()"
+          "text": "val found = CompletableDeferred<BluetoothDevice>()"
         }
       ],
       "platformEvidence": {

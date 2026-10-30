@@ -83,6 +83,14 @@ data class Outcome(val ok: Boolean, val message: String, val trace: String = "",
         @Volatile var writeDone: CompletableDeferred<Boolean>? = null
         @Volatile var rssiRead: CompletableDeferred<Int?>? = null   // 连接层测距的落点
         @Volatile var identityVerified = false   // 这条链路已用锁端 03 自报 pid 核过身份
+
+        // 2026-10-30（提速，与 iOS `tokenFetchedAtMs` 同源）：会话令牌**有界复用**。
+        // 原来 `runUnlock` 每次开锁都无条件发 01 刷令牌 —— 开锁链是「01 + 04 两次往返」。
+        // 令牌本身带 TTL（KLV#03，锁端常见 45s），在窗口内复用即可，省一次往返 ≈100ms。
+        // 20s 窗口远小于 45s TTL；真过期由 rc=3 / rc=13 的刷令牌重试兜底。
+        @Volatile var tokenHex: String = ""
+        @Volatile var tokenFetchedAt: Long = 0L
+        @Volatile var tokenTtlMs: Long = 0L
         @Volatile var lastUsedAt = System.currentTimeMillis()
 
         /**
@@ -335,32 +343,50 @@ data class Outcome(val ok: Boolean, val message: String, val trace: String = "",
         val write = s.write ?: return Attempt(null, false)
         var rc = -1
         for (attempt in 1..2) {
-            if (!writeChunked(g, write, KfProtocol.bytes(KfProtocol.tokenFrame()), s)) {
-                s.lastUsedAt = System.currentTimeMillis()
-                return Attempt(null, true)   // 01 都没写出去: 锁肯定没动作, 拆链重建安全
-            }
-            val tokenFrame = awaitFrame(s.notes, 0x01, 8_000)
-                ?: return Attempt(Outcome(false, "门锁没有回应 — 靠近一点再试", trace.toString()),
+            // 2026-10-30（提速，**省一次蓝牙往返 ≈100ms**）：令牌有界复用。
+            // 判据三条：① 令牌非空 ② 年龄 < 20s ③ 锁端 TTL 还没到（留 2s 余量）。
+            // 命中就直接用旧令牌发 04；未命中才发 01。过期仍由下方 rc=3/13 分支兜底。
+            val nowMs = System.currentTimeMillis()
+            val tokenFresh = s.tokenHex.isNotEmpty() &&
+                nowMs - s.tokenFetchedAt < 20_000L &&
+                (s.tokenTtlMs <= 0L || s.tokenFetchedAt + s.tokenTtlMs - 2000L > nowMs)
+            if (tokenFresh) {
+                trace.append("复用令牌(" + (nowMs - s.tokenFetchedAt) + "ms) ")
+            } else {
+                if (!writeChunked(g, write, KfProtocol.bytes(KfProtocol.tokenFrame()), s)) {
+                    s.lastUsedAt = System.currentTimeMillis()
+                    return Attempt(null, true)   // 01 都没写出去: 锁肯定没动作, 拆链重建安全
+                }
+                val tokenFrame = awaitFrame(s.notes, 0x01, 8_000)
+                    ?: return Attempt(Outcome(false, "门锁没有回应 — 靠近一点再试", trace.toString()),
+                            s.disconnected.isCompleted)
+                // 闸门 A9 与 iOS `ensureToken` 都按 `if (token == null)` 这段做判据 —— 沿用同词。
+                val token = tokenFrame.first(0x02)
+                if (token == null) {
+                    // ⚠ 01 的响应里**没有 rc**: KLV#03 在那一帧是"令牌有效秒数 (u16 LE)"。
+                    // JS lock.js 的 RC_KLV 压根没有 0x01 这一项 (iOS extractRc 对 01 恒返 0)。
+                    val secType = tokenFrame.first(0x01)?.let { KfProtocol.intHex(it) and 0x03 }
+                    return Attempt(
+                        Outcome(
+                            false,
+                            "门锁没有给会话令牌 (安全类型=" + (secType?.toString() ?: "无") +
+                                ", 回包 " + KfProtocol.klvShape(tokenFrame) + ") — 离门锁近一点再试",
+                            trace.toString()),
                         s.disconnected.isCompleted)
-            val token = tokenFrame.first(0x02)
-            if (token == null) {
-                // ⚠ 01 的响应里**没有 rc**: KLV#03 在那一帧是"令牌有效秒数 (u16 LE)"。
-                // JS lock.js 的 RC_KLV 压根没有 0x01 这一项 (iOS extractRc 对 01 恒返 0)。
-                // 权威口径两条都照搬: JS lock.js:254 报安全类型, iOS LockService:178 报回包形状。
-                val secType = tokenFrame.first(0x01)?.let { KfProtocol.intHex(it) and 0x03 }
-                return Attempt(
-                    Outcome(
-                        false,
-                        "门锁没有给会话令牌 (安全类型=" + (secType?.toString() ?: "无") +
-                            ", 回包 " + KfProtocol.klvShape(tokenFrame) + ") — 离门锁近一点再试",
-                        trace.toString()),
-                    s.disconnected.isCompleted)
+                }
+                // TTL: KLV#03 = 令牌有效秒数 (u16 LE)。0 = 锁没报，按"不复用"处理（宁多发一次 01）。
+                val ttlSec = tokenFrame.first(0x03)?.let { KfProtocol.intHex(it) } ?: 0
+                s.tokenHex = token
+                s.tokenFetchedAt = System.currentTimeMillis()
+                s.tokenTtlMs = if (ttlSec > 0) ttlSec.toLong() * 1000L else 0L
+                trace.append("01→" + token.take(8) + " ")
             }
-            trace.append("01→" + token.take(8) + " ")
+            // 到这里 token 一定是非空: 要么来自刚刷的 s.tokenHex, 要么复用命中时它本来就非空。
+            val useToken = s.tokenHex
 
-            val hex = KfProtocol.injectToken(KfProtocol.unlockFrame(lock.ekey), token)
+            val hex = KfProtocol.injectToken(KfProtocol.unlockFrame(lock.ekey), useToken)
             // 护栏 (2026-10-17 那个 rc=13 的坑): 令牌 KLV 必须逐字节躺在帧尾才算注入成功。
-            val tokKlv = KfProtocol.klv(0xEE, token).uppercase()
+            val tokKlv = KfProtocol.klv(0xEE, useToken).uppercase()
             if (!hex.endsWith(tokKlv)) {
                 return Attempt(Outcome(false, "内部错误: 会话令牌没能装进开锁帧", trace.toString()), false)
             }
