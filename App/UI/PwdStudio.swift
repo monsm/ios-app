@@ -40,7 +40,10 @@ struct PwdStudio: View {
     // 521 二次输入确认: 保存前重输码值核对 (恒开; 原开关在设置-安全页, 该页已删)
     @State var confirmPwd = ""
     var mac: String { app.current?.mac ?? "" }
-    var editing: LedgerPwd? { editAlias.flatMap { DB.getPwd(mac, $0) } }
+    /// 2026-10-30 修复（第 118 轮，**计算属性在 body 里反复解库**）：`editing` 原来是计算属性，
+    /// 被 `.navigationTitle` 与确认步反复求值 —— 每敲一个码值字符就全量解码一次台账。
+    /// 改成进页取一次的 @State 快照（编辑期间这条记录不会变）。
+    @State private var editing: LedgerPwd? = nil
 
     var pwdOK: Bool { pwd.count >= 6 && pwd.count <= 8 && pwd.allSatisfy { $0.isNumber } }
 
@@ -77,6 +80,7 @@ struct PwdStudio: View {
         } }
         .onAppear {
             checkClipboard()
+            editing = editAlias.flatMap { DB.getPwd(mac, $0) }
             // 2026-10-30 修复（第 115 轮，**改造模式静默丢改动**）：本页从不把 `editing` 回填到 @State ——
             // 于是「改造密码」时第 0 步默认「长期密码」、第 2 步不显示有效期，提交时又用 `e.from`/`e.to` 原窗口，
             // 用户在第 0/2 步做的任何改动都被忽略（而界面上看着是改成功了）。

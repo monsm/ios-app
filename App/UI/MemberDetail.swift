@@ -97,9 +97,13 @@ struct MemberDetail360View: View {
         var borrowLines: [String] = []
         var credLines: [String] = []   // 261 清单: 借用中的走 borrowLines, 同一凭证不在本段出现两次
         for kc in DB.keychains() where !kc.mac.isEmpty {
+            // 2026-10-30 修复（第 118 轮，**循环内 DB 读**）：`MemberHub.borrows(kc.mac)` 原来在
+            // 「每条密码」「每枚指纹」里各调一次 —— 外层已是「全部锁 × 全部凭证」，等于 O(锁×凭证) 次台账解码。
+            // 每把锁取一次，两个内层循环共用。
+            let borrow = MemberHub.borrows(kc.mac)
             for p in DB.listPwds(kc.mac) where p.owner == m.id {
                 pwdCount += 1
-                if let b = MemberHub.borrows(kc.mac)["p" + String(p.alias)] {
+                if let b = borrow["p" + String(p.alias)] {
                     borrowLines.append(CredentialOrg.displayPwd(p) + " · 借给 " + b.by + " (还 " + b.due + ")")
                 } else {
                     credLines.append(CredentialOrg.displayPwd(p))
@@ -107,7 +111,7 @@ struct MemberDetail360View: View {
             }
             for f in DB.listFps(kc.mac) where f.owner == m.id {
                 fpCount += 1
-                if let b = MemberHub.borrows(kc.mac)["f" + String(f.batch)] {
+                if let b = borrow["f" + String(f.batch)] {
                     borrowLines.append("「" + f.name + "」 · 借给 " + b.by + " (还 " + b.due + ")")
                 } else {
                     credLines.append("「" + f.name + "」")
