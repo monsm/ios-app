@@ -277,7 +277,9 @@ struct PwdStudio: View {
             showDraftBar = false
             submitted = true   // 518
             app.flashReceipt("已写入本机")   // 508 已写入本机
-            app.showToast(isTemp ? "临时码已下发" : "密码已下发 (别名 #\(alias))")
+            // 2026-10-30（第 141 轮）：原来紧跟着再弹一句「临时码已下发 / 密码已下发」——
+            // 同一次成功给了两种说法（一个讲本机落库、一个讲锁端下发），用户会以为发生了两件事。合并成一句。
+            app.showToast(isTemp ? "临时码已下发并记入本机台账" : "密码已下发并记入本机台账 (别名 #\(alias))")
             if !embedded { dismiss() }
         } catch {
             app.showToast("下发失败： " + error.localizedDescription)

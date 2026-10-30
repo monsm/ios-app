@@ -262,7 +262,9 @@ struct DFUView: View {
             let session = DFUSession(macHex: kc.mac, pid: kc.pid, pkg: p)   // pid 用于按 APK 的 BleDfu 判据过滤广播
             session.onState = { st, msg in
                 stateText = msg
-                if st == .aborted { error = msg }
+                // 2026-10-30（第 141 轮）：`DFUSession` 只 emit connecting/completed/enablingDfu/processStarting/validating，
+            // 全仓没有任何地方发出 `.aborted` —— 这条分支实际上是死的。保留作防御（枚举若将来扩状态即可生效）。
+            if st == .aborted { error = msg }
             }
             session.onProgress = { v in progress = v }
             // 2026-10-27 审核 (AUDIT-D D-22)：刷机中途切后台会被系统挂起，锁留在半完成态。
