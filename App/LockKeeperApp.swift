@@ -308,6 +308,13 @@ final class AppState: ObservableObject {
             // await 之后世界可能已经变了：世代号变了，或当前锁已经不是发起时那把。
             guard ticket == statusTicket, currentMac == kc.mac else { return }
             applyStatus(st)
+            // 2026-10-30 修复（**自动开锁 F6 的隐形死门**）：这里原来只写 `status`，不写 `snapshot`。
+            // 而 `snapshot` 只在初始化与 `select()` 赋值（本文件两处 `snapshot = DB.readStatus`）。
+            // AutoOpen 的 F6 判据是 `snap != nil && rc != 25/26`，用的是 **`app.snapshot`**，不是 `status`。
+            // ⇒ 若本次启动没 `select()` 过这把锁，`snapshot == nil` ⇒ F6 永远拒 ⇒ **自动开锁一次都不触发**，
+            // 而审计只写「F6 锁态未知或忙」——看起来像锁态问题，实际是快照没同步。
+            // `DB.writeStatus` 已由 `getStatus()` 内部完成，这里只需把结果读回内存。
+            snapshot = DB.readStatus(kc.mac)
             LockArchive.touchConnected(kc.mac)   // 包3/292: 连接成功刷新沉睡判定基准
         } catch {
             guard ticket == statusTicket, currentMac == kc.mac else { return }
