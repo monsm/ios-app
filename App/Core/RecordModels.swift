@@ -21,8 +21,11 @@ struct Rec: Identifiable {
     var provable: String?  // temp/unique
     var cred: String       // 568 凭证维度标签 (归所有凭证历史用)
     var alarm: Bool
-    var care: Bool         // 手机侧保养/换电事件 (1028)
-    var failMsg: String    // 92 手机侧失败原因 (非空 = kf_fevents_ 行)
-    var id: String { mac + "#" + key }
+    /// ⚠ 2026-10-30 核实（第 90 轮）：**预留未接** —— 全仓 kf_care_marks 零读零写，
+    /// buildRecs 恒传 care: false，单锁路径 RecordsRows.render 也没有合并手机侧行。
+    /// 所以本字段当前**恒为 false**；接上这一族前不要写依赖它的 UI 判据。
+    var care: Bool         // 手机侧保养/换电事件 (1028) —— 预留未接
+    /// ⚠ 同上（第 90 轮核实）：**预留未接** —— 全仓 kf_fevents_ 零读零写，本字段恒为空串。
+    var failMsg: String    // 92 手机侧失败原因 —— 预留未接
 }
 

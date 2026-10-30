@@ -307,16 +307,18 @@ extension RecordsView {
 
     func render(_ logs: [LogEntry], offline: Bool) {
         self.offline = offline
-        // 92 (包1): 本地开锁失败标记合入时间线 — 手机侧记录 (DB.kf_fevents_), 绝不混入锁日志缓存;
-        // type 0 非任何锁端日志类型, 归属推断自然回落"未归属", 行样式走普通灰图标
-        var merged = logs
-        // 手机侧行 (92 失败 / 1028 保养) 的**行身份**: 与 `RecordSearch.buildRecs` 给同一族事件用的键并成一份
-        // ("f_" + Unix 秒 / "c_" + Unix 毫秒)。原先这两族行在单锁路径拿的是 `String(idxRaw)`,
-        // 而那个 idxRaw 是 `Int(ts*1000) + 数组下标` 现编的派生数 —— 于是同一条记录在两种范围下行身份不同:
-        // 单锁模式里 576 详情打不开、186 备注与 188 标旗写了不显示 (详情卡按 Rec 的键写, 行按派生数读),
-        // 而 761 那行"复制行标识 (f_/c_ 前缀键)"的说明一直是假的。
-        // 表键就是派生出来的那个 idxRaw: 它只在本机这一份合并数组里唯一, 不参与任何持久化。
-        var sideKey = [UInt32: String]()
+        // 2026-10-30 修正（第 90 轮）：这一段的注释过去声称「本地开锁失败标记合入时间线 ——
+        // 手机侧记录 (DB.kf_fevents_)」「手机侧行 (92 失败 / 1028 保养) 的行身份…」——
+        // 但**全仓 `kf_fevents_` / `kf_care_marks` 零读零写**（只在清理族表与备份排除说明里出现），
+        // 而本函数从头到尾就是 `var merged = logs`，**没有任何 append**；`sideKey` 也从未被填充。
+        //
+        // 也就是说：92 失败记录 / 1028 保养记录这一族**从未实现**。`Rec.care` 恒 false、
+        // `Rec.failMsg` 恒空串 —— 所以「保养」筛选 chip 永不出现、详情页的「失败原因」行永不显示。
+        // （这两处消费方的空判据本身是自洽的，不会显示假数据；但**也不能产生真数据**。）
+        //
+        // 现在把注释改成事实：本函数只渲染**锁端日志**。要接这一族，先设计
+        // `kf_fevents_` / `kf_care_marks` 的存储与写入点，再回来补合并逻辑。
+        let merged = logs
         // 2026-10-29 性能：listPwds/listFps 原来各读两次（classify 一次、下面又各读一次），
         // 每次都是一份数组拷贝；这里先取一次，两处共用。
         let pwds = DB.listPwds(mac)
@@ -343,7 +345,7 @@ extension RecordsView {
             let c = cls[i]
             // 行身份只有一个来源: 锁日志 = idxRaw 字符串; 手机侧行 (type 0) = 上面算好的 f_/c_ 前缀键。
             // 791 认领的读写、186 备注、188 标旗、576 详情都从这里起, 不再各拿一份派生数。
-            let rowKey = e.type == 0 ? (sideKey[e.idxRaw] ?? String(e.idxRaw)) : String(e.idxRaw)
+            let rowKey = String(e.idxRaw)   // 只有锁端日志 → 行身份就是它的 idxRaw
             let p = Self.rowParts(e.lockTimeStr, todayKey: todayKey)   // 归属日 (649 凌晨归前一晚) + 显示时刻
             var whoId = c.who
             if let claimed = claims[rowKey] { whoId = claimed }   // 791 认领优先
