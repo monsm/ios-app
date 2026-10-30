@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T10:23:58.812Z",
+    "generated": "2026-10-30T10:37:45.312Z",
     "sources": [
       {
         "scout": "android-native",
@@ -15360,7 +15360,7 @@
           "line": 283,
           "symbol": "Button { shareLock = kc } label: { Label(\"分享给安卓 (扫码开锁)\") }",
           "note": "",
-          "text": "if !query.trimmingCharacters(in: .whitespaces).isEmpty && searchHits.isEmpty {"
+          "text": "// 「搜了没结果」和「搜索坏了」。"
         },
         {
           "platform": "ios",
@@ -19101,7 +19101,7 @@
           "line": 332,
           "symbol": "Button 清空密码",
           "note": "",
-          "text": "/// (这一项是干什么的 / 要不要连上锁 / 有什么后果), 不铺陈实现细节 (那些留在注释里)。"
+          "text": "/// 2026-10-14: 设置项小字注解。口径\"简洁明了\" —— 只说用户决策需要的那一句"
         },
         {
           "platform": "ios",
@@ -19125,7 +19125,7 @@
           "line": 375,
           "symbol": "pwdClear",
           "note": "",
-          "text": "// 否则拿到解锁手机的人可以直接改成一个自己知道的密码，等于接管保护。"
+          "text": "// 2026-10-27 审核修复 (AUDIT-D D-09)：**已有密码时改密码必须先验原密码**。"
         }
       ],
       "platformEvidence": {
@@ -28502,7 +28502,7 @@
           "line": 327,
           "symbol": "if canTailgate { NavigationLink(\"防尾随入室\") }",
           "note": "",
-          "text": "app.requestRoute(.device)"
+          "text": "func openLockSettings() {"
         },
         {
           "platform": "ios",
@@ -28510,7 +28510,7 @@
           "line": 353,
           "symbol": "PidMap.canTailgate(app.current?.pid ?? 0, fw:)",
           "note": "",
-          "text": "consequence += \" 删除后若未做过备份将无法找回。\""
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -28723,7 +28723,7 @@
           "line": 332,
           "symbol": "布防行状态",
           "note": "",
-          "text": "/// (这一项是干什么的 / 要不要连上锁 / 有什么后果), 不铺陈实现细节 (那些留在注释里)。"
+          "text": "/// 2026-10-14: 设置项小字注解。口径\"简洁明了\" —— 只说用户决策需要的那一句"
         },
         {
           "platform": "ios",
@@ -29316,7 +29316,7 @@
           "line": 139,
           "symbol": "case \"backup\": showBackup = true",
           "note": "",
-          "text": "// 396 随机键位的前提: 直接拉起「设置本机密码」流程"
+          "text": "case \"passcode\":"
         },
         {
           "platform": "ios",
@@ -33613,7 +33613,7 @@
           "line": 287,
           "symbol": "if app.current == nil { GuidedEmptyView(…) }",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": ".vkFont(.footnote)"
         },
         {
           "platform": "ios",
@@ -33621,7 +33621,7 @@
           "line": 337,
           "symbol": "Button { showAdd = true } label: { Label(\"添加另一把锁\") }",
           "note": "",
-          "text": ".fixedSize(horizontal: false, vertical: true)"
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         }
       ],
       "platformEvidence": {
@@ -33781,7 +33781,7 @@
           "line": 60,
           "symbol": "settingsList(_:)",
           "note": "",
-          "text": "searchTextRow"
+          "text": "List {"
         },
         {
           "platform": "ios",
@@ -33789,7 +33789,7 @@
           "line": 134,
           "symbol": "landPendingFocus(_:)",
           "note": "",
-          "text": "switch f {"
+          "text": "app.pendingSettingsFocus = nil"
         }
       ],
       "platformEvidence": {
@@ -34388,7 +34388,7 @@
           "line": 423,
           "symbol": "timeSection",
           "note": "",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -34396,7 +34396,7 @@
           "line": 425,
           "symbol": "Picker(\"时间制式\", selection:)",
           "note": "",
-          "text": "promptOldPasscode { ok in"
+          "text": "func setDuressCode() {"
         },
         {
           "platform": "ios",
@@ -34404,7 +34404,7 @@
           "line": 432,
           "symbol": "VariantToggle(\"显示秒\", isOn:)",
           "note": "",
-          "text": "alert.addTextField { $0.isSecureTextEntry = true; $0.keyboardType = .numberPad; $0.placeholder = \"再次输入\" }"
+          "text": "alert.addTextField { $0.isSecureTextEntry = true; $0.keyboardType = .numberPad; $0.placeholder = \"4 位以上数字\" }"
         }
       ],
       "platformEvidence": {
@@ -34554,7 +34554,7 @@
           "line": 445,
           "symbol": "unlockSection",
           "note": "",
-          "text": "guard f1.allSatisfy({ $0.isNumber }) else { app.showToast(\"只能使用数字\"); return }"
+          "text": "guard f1.count >= 4 else { app.showToast(\"需 4 位以上\"); return }"
         },
         {
           "platform": "ios",
@@ -35784,7 +35784,7 @@
           "line": 66,
           "symbol": "SettingsGroupChips(selection: $groupFilter)",
           "note": "",
-          "text": "// 2026-10-29 布局整理：9 节按**分组顺序**排列 ——"
+          "text": "// 每节挂一枚稳定锚 (`.id`), 供页内搜索 scrollTo 用。锚是字符串常量, 与筛选片无关。"
         },
         {
           "platform": "ios",
@@ -35868,7 +35868,7 @@
           "line": 170,
           "symbol": "searchTextRow",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": ".font(.system(size: DS.Icon.sm))"
         },
         {
           "platform": "ios",
@@ -35876,7 +35876,7 @@
           "line": 225,
           "symbol": "private var searchHits: [SearchHit]",
           "note": "",
-          "text": "//     维护与保养 / 门锁安全模式 / 开锁偏好 / 锁档案」这些入口全在设置页, 设备页没有它们。"
+          "text": "//   · `app.tabSelection = 0` 的 6 条: 把用户送去设备页, 而「静音模式 / 校准门锁时间 /"
         },
         {
           "platform": "ios",
@@ -35884,7 +35884,7 @@
           "line": 254,
           "symbol": "return all.filter { $0.title.localizedCaseInsensitiveContains(q) || $0.id.hasSuffix(q) }",
           "note": "",
-          "text": "// 当初大概是给「备份工作室」单独留个入口，但那一页从未独立存在过。"
+          "text": "// 用户搜「备份」会看到两条一模一样的结果，点了做同一件事。"
         }
       ],
       "platformEvidence": {
@@ -36037,7 +36037,7 @@
           "line": 332,
           "symbol": "Button(\"清空密码\", role: .destructive) { clearPwd() }",
           "note": "",
-          "text": "/// (这一项是干什么的 / 要不要连上锁 / 有什么后果), 不铺陈实现细节 (那些留在注释里)。"
+          "text": "/// 2026-10-14: 设置项小字注解。口径\"简洁明了\" —— 只说用户决策需要的那一句"
         },
         {
           "platform": "ios",
@@ -36053,7 +36053,7 @@
           "line": 358,
           "symbol": "confirmDestructive(\"清空密码\", …)",
           "note": "",
-          "text": "}"
+          "text": "app.showToast(\"已删除「\\(name)」\")"
         },
         {
           "platform": "ios",
@@ -36061,7 +36061,7 @@
           "line": 376,
           "symbol": "DB.saveLedger(m, Ledger())",
           "note": "",
-          "text": "if DB.hasPasscode() {"
+          "text": "// 否则拿到解锁手机的人可以直接改成一个自己知道的密码，等于接管保护。"
         }
       ],
       "platformEvidence": {
@@ -36139,7 +36139,7 @@
           "line": 338,
           "symbol": "Button(\"删除设备\", role: .destructive) { deleteDevice() }",
           "note": "",
-          "text": "}"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         },
         {
           "platform": "ios",
@@ -36147,7 +36147,7 @@
           "line": 381,
           "symbol": "deleteDevice()",
           "note": "",
-          "text": "return"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -36155,7 +36155,7 @@
           "line": 395,
           "symbol": "confirmDestructiveTyped(\"删除设备\", … requireWord: name)",
           "note": "",
-          "text": "else { app.showToast(\"原密码不正确\"); then(false) }"
+          "text": "if DB.verifyPasscode(pw) { then(true) }"
         }
       ],
       "platformEvidence": {
@@ -36224,7 +36224,7 @@
           "line": 305,
           "symbol": "VariantToggle(\"静音模式\", isOn:)",
           "note": "",
-          "text": "primary: { goAddDevice() },"
+          "text": "primaryTitle: \"去设备页添加\","
         },
         {
           "platform": "ios",
@@ -36240,7 +36240,7 @@
           "line": 314,
           "symbol": "try await app.lock.setSilent(silent)",
           "note": "",
-          "text": "}"
+          "text": "Button(\"删除设备\", role: .destructive) { deleteDevice() }"
         },
         {
           "platform": "ios",
@@ -36248,7 +36248,7 @@
           "line": 342,
           "symbol": "muteStored",
           "note": "",
-          "text": "// 109 删除冷静期: 后果要可核对 (逐类计数), 且必须键入锁名才放行 —— 旧写法只有一次\"确定吗\""
+          "text": "guard let kc = app.current else { return }"
         }
       ],
       "platformEvidence": {
@@ -36325,7 +36325,7 @@
           "line": 299,
           "symbol": "NavigationLink(\"锁档案 (昵称/符号/色标/备注)\") { LockProfileView() }",
           "note": "",
-          "text": "if app.current == nil {"
+          "text": "// 留下的是**只有设置页才有**的三项：锁档案 / 分享给安卓 / 删除设备。"
         },
         {
           "platform": "ios",
@@ -36333,7 +36333,7 @@
           "line": 301,
           "symbol": "NavigationLink(\"连接与预握手 (自动预热/成功率)\") { LinkPrefsView(mac: mac) }",
           "note": "",
-          "text": "title: \"还没有添加门锁\","
+          "text": "GuidedEmptyView(systemImage: \"lock\","
         },
         {
           "platform": "ios",
@@ -36341,7 +36341,7 @@
           "line": 303,
           "symbol": "Button(\"锁信息名片\") { showDeviceInfo = true }",
           "note": "",
-          "text": "step: 1, stepTotal: 3,"
+          "text": "message: \"添加后这一段才会出现锁档案与删除。三步走： 连上锁 → 录凭证 → 开门。\","
         }
       ],
       "platformEvidence": {
@@ -36407,7 +36407,7 @@
           "line": 325,
           "symbol": "NavigationLink(\"校准门锁时间\") { SyncTimeView() }",
           "note": "",
-          "text": "/// 设置页搜索命中这四项时，直接把用户送到那个入口（而不是本页再开一个重复的 sheet）。"
+          "text": "/// 2026-10-29：锁设置只有设备页「管理这把锁」一个入口。"
         },
         {
           "platform": "ios",
@@ -36415,7 +36415,7 @@
           "line": 326,
           "symbol": "note(\"锁端时钟不准时，临时码和有效期会失效。\")",
           "note": "",
-          "text": "func openLockSettings() {"
+          "text": "/// 设置页搜索命中这四项时，直接把用户送到那个入口（而不是本页再开一个重复的 sheet）。"
         }
       ],
       "platformEvidence": {
@@ -38307,7 +38307,7 @@
           "line": 262,
           "symbol": "if let a = h.anchor { groupFilter = a.group; … scrollTo }",
           "note": "",
-          "text": "if !searchHits.isEmpty {"
+          "text": "func searchResults(_ proxy: ScrollViewProxy) -> some View {"
         },
         {
           "platform": "ios",
@@ -38315,7 +38315,7 @@
           "line": 270,
           "symbol": "h.go()",
           "note": "",
-          "text": "DispatchQueue.main.async {"
+          "text": "// ② 再等一拍: 同一帧里新插入的 Section 还没进 List 的布局, 当场 scrollTo 找不到它"
         },
         {
           "platform": "ios",
@@ -38323,7 +38323,7 @@
           "line": 153,
           "symbol": "default: break // 认不出的落点名不做任何事",
           "note": "",
-          "text": "// 另 2 处本来就在本 Tab 的「安全中心」sheet 里，那次 requestTab 是同值空转，真正退栈由 §4.2 那套"
+          "text": "// 九处**全部**与 `app.requestTab(3)` 成对：7 处靠它把人先带到设置 Tab（不然这一页没挂载，值没人消费）；"
         }
       ],
       "platformEvidence": {
@@ -38390,7 +38390,7 @@
           "line": 384,
           "symbol": "let pws = DB.listPwds(kc.mac).count",
           "note": "",
-          "text": "}"
+          "text": "presentSetPasscodeAlert()"
         },
         {
           "platform": "ios",
@@ -38398,7 +38398,7 @@
           "line": 392,
           "symbol": "连带删除: 密码台账 … 回收站 … 开门记录 …",
           "note": "",
-          "text": "alert.addAction(UIAlertAction(title: \"验证\", style: .default) { _ in"
+          "text": "alert.addAction(UIAlertAction(title: \"取消\", style: .cancel) { _ in then(false) })"
         },
         {
           "platform": "ios",
@@ -38406,7 +38406,7 @@
           "line": 395,
           "symbol": "requireWord: name",
           "note": "",
-          "text": "else { app.showToast(\"原密码不正确\"); then(false) }"
+          "text": "if DB.verifyPasscode(pw) { then(true) }"
         }
       ],
       "platformEvidence": {

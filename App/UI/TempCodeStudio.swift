@@ -263,7 +263,8 @@ struct TempCodeStudio: View {
         .accessibilityLabel("快捷时长 \(t)")   // 520 快捷时长
     }
 
-    // ---------- 完成页: 172/328 大字口述卡 + 329 一句话 + 333 首用回执 (⚠ 按时间推断标"约") ----------
+    // ---------- 完成页: 172/328 大字口述卡 + 329 一句话 ----------
+    // 2026-10-30 修正：原注释还写「333 首用回执」，doneCard 里没有任何回执元素，已删。
     private var doneCard: some View {
         ScrollView {
             VStack(spacing: DS.Space.l) {

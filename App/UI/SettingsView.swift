@@ -28,7 +28,8 @@ struct SettingsView: View {
     @State var eggShown = false
     @State var versionTaps = 0
 
-    /// 831 NEW 角标: 新功能首见, 进入一次即消 (状态存偏好表 kf_seen_)
+    /// 2026-10-30 修正：原注释说「831 NEW 角标…已看过落 kf_seen_」—— 全仓既无角标绘制、也无 kf_seen_ 读写点，**该功能从未实现**。
+    /// 下面两个 @State 属于「版本彩蛋 (298)」，与 NEW 角标无关。
     /// "已看过"的落库放在 destination 的 .onAppear: 写在 ViewBuilder 里等于在构造视图时改数据,
     /// 视图被重建/预取时会反复触发, 而且 body 有副作用本来就是 SwiftUI 明确要避免的。
     @ViewBuilder
