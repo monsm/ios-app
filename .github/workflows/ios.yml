@@ -68,6 +68,11 @@ jobs:
           # 2026-10-27 新增：改签名后漏改调用点，编译期才报错（GoldenDiffTests 那次）。
           # 上面几道只查语法形状，查不到「实参个数对不对得上声明」，所以补这一道。
           node tools/aritycheck.js
+          # 2026-10-30 新增（第 67 轮）：数组/参数列表元素之间**漏逗号**。
+          # 第 66 轮往 rollbackFamilies 插了一行元素、行尾漏了逗号 ——
+          # swiftcheck 只查括号平衡（逗号不在它的判据里），本地 48 道全绿，
+          # 只有 CI 编译报 `Expected ',' separator`，白等 4 分钟。
+          node tools/commacheck.js
 
       # 删页残留符号 (2026-10-25 加): 本次大删里同一个坑踩了四次 —— 删掉整页 .swift 时,
       # 那个文件里还住着**别的页面在用**的小构件 (cjkSpaced / CaptionStepBar / ExportDir /
