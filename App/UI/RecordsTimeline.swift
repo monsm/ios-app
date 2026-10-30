@@ -302,7 +302,12 @@ struct RecDetailSheet: View {
                 ForEach(ctxBefore, id: \.key) { r in contextRow(r, tag: "前") }
                 HStack(spacing: DS.Space.s) {
                     Image(systemName: "arrowtriangle.right.fill")
-                        .font(.system(size: 8))
+                        // 2026-10-30（界面全维度审计）：原来是 `.font(.system(size: 8))` —— 8pt 低于 HIG
+                        // 移动端 11pt 下限（`typography.md › Minimum type size`）。
+                        // 它是**装饰性指示箭头**（旁边有 `Text("当前这一条")` 承载语义），所以不构成无障碍
+                        // 硬伤；但 8pt 在最小字号设置下会被压到几乎不可见。改用 `.caption2` 语义字号：
+                        // 随系统动态字体缩放，且与旁边的 `.caption` 文字有清晰层级差。
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.accentText)
                     Text("当前这一条")
                         .vkFont(.caption, weight: .semibold)
