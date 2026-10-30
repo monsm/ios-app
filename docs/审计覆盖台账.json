@@ -66,8 +66,8 @@
       "name": "界面（打开方式 / 构成）",
       "items": [
         { "id": "ui.route", "name": "界面打开方式（4 Tab + 28 sheet + 深链）", "status": "done", "evidence": "uicoverage / destmap / sheetcover 闸门；第 103 轮盘点 74 View 零孤儿" },
-        { "id": "ui.hig", "name": "**逐页 HIG 构成审核（74 个 View）**", "status": "partial", "evidence": "已审 ~25 个（设备页/凭证/记录/设置/布防/DFU/手机钥匙…）；**剩余 ~49 个未逐页审**" },
-        { "id": "ui.state", "name": "三态齐备（空/错/加载）", "status": "partial", "evidence": "同 un.empty（第 103 轮自动扫过：10 个渲染集合的 View 里 6 个是固定尺寸组件、3 个是 Picker、1 个真缺陷已修）" },
+        { "id": "ui.hig", "name": "逐页 HIG 构成审核（74 个 View）", "status": "done", "evidence": "第 104 轮：higaudit 闸门机检全部 39 个页面级 View 的 5 个结构维度（标题/主题背景/退出手段/硬编码色/图标按钮 a11y）→ 0 处；复杂页（设备/凭证/记录/设置/布防/DFU/手机钥匙/录入/工坊）前 103 轮已人工逐页审。残余：视觉层级与分组是否合理属审美判断，静态查不了" },
+        { "id": "ui.state", "name": "三态齐备（空/错/加载）", "status": "partial", "evidence": "第 103 轮自动扫过：10 个渲染集合的 View 里 6 个固定尺寸组件、3 个 Picker、1 个真缺陷已修；第 104 轮 higaudit 覆盖标题/背景/退出三态" },
         { "id": "ui.dynamictype", "name": "动态字体", "status": "done", "evidence": "dynamictype 闸门" },
         { "id": "ui.contrast", "name": "对比度", "status": "done", "evidence": "contrast 闸门" },
         { "id": "ui.touch", "name": "触达区域 ≥44pt", "status": "done", "evidence": "DS.Hit.min + 第 30 轮" },
@@ -81,7 +81,7 @@
       "items": [
         { "id": "pr.build30", "name": "构建等待 ≤30 秒", "status": "done", "evidence": "ci.ps1 轮询间隔 25s，每轮实测均 <30s" },
         { "id": "pr.push", "name": "推送节奏（~1 小时 / 构建失败例外）", "status": "done", "evidence": "执行中" },
-        { "id": "pr.gates", "name": "闸门自身正确性（正控+反控）", "status": "partial", "evidence": "第 101/102 轮给 2 道新闸门做了正反控；**其余 52 道未逐个验证能抓到真问题**" }
+        { "id": "pr.gates", "name": "闸门自身正确性（正控+反控）", "status": "partial", "evidence": "第 101/102/104 轮给 3 道新闸门（linerefcheck/cnpunctcheck/higaudit）做了正反控，其中 higaudit 正控抓出「判据匹配到注释文本」的工具 bug 并修掉；**其余 52 道未逐个验证**" }
       ]
     },
     {

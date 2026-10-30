@@ -240,6 +240,8 @@ jobs:
 
       - name: '界面完整性与一致性 (判失败: 目的地枚举不得与台账漂移 / 不得再出现绕过 requestRoute 的裸写换页; 覆盖率只报进度不判失败)'
         run: |
+      - name: '页面构成一致性闸门 (判失败: 39 个页面级 View 缺标题/主题背景/退出手段/无障碍标签)'
+        run: node tools/higaudit.js
           node tools/destmap.js
           node tools/uicoverage.js
 

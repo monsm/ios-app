@@ -88,6 +88,13 @@ struct ShareToAndroidView: View {
             // 一旦截图外传就再也收不回来（AndroidPair.swift:3-6 自己写了这句话）。
             // 检测到录屏/截图时整块遮住，停止后自动恢复。
             .captureShield("这张二维码是开锁钥匙\n屏幕正在被录制或截图，已遮挡")
+            // 2026-10-30 修复（第 104 轮，**界面不统一**）：
+            // 本页是全仓 39 个页面级 View 里**唯一**既没 `.dsScreenBackground()`、
+            // 也没等价 `.background(DS.Gradient.screen)` 的 —— 底色会露出系统默认
+            // （浅色近纯白 / 深色纯黑），而全 App 用暖白 0xF6F3EC / 暖黑 0x121009。
+            // 从别的页跳到这一页会明显"换了个 App"。
+            // 放在 captureShield 之后：遮罩压在背景上，导航栏在最上层。
+            .dsScreenBackground()
             .navigationTitle("分享给安卓")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }
