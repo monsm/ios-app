@@ -78,7 +78,9 @@ struct SectionTitle: View {
     var text: String
     var count: Int?
     var body: some View {
-        // 2026-10-16: 形状交给当前变体决定 (VK.sectionTitle)，21 处调用一次跟着两套走。
+        // 2026-10-16: 形状交给当前变体决定 (VK.sectionTitle)，调用点一次跟着两套走。
+        // 2026-10-30 核实（第 88 轮）：原注释写「21 处」—— 现只剩 2 处（都在 DeviceHomeQuick），
+        // 删掉具体数字，避免再次过时。
         // legacy 分支是这里原来的实现逐字搬过去的，见 VariantGrammar.swift。
         VK().sectionTitle(text: text, count: count)
     }

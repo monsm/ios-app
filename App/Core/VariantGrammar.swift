@@ -78,7 +78,10 @@ struct VK {
     }
 
 
-    /// 分区标题。**21 处 `SectionTitle` 全走这里。** legacy 分支逐字搬自原实现。
+    /// 分区标题。**全仓 2 处 `SectionTitle`（都在 DeviceHomeQuick）全走这里。**
+    /// 2026-10-30 核实（第 88 轮）：原注释写「21 处」—— 那是 2026-10-16 落地时的规模，
+    /// 后续页面精简后只剩 2 个消费点。带计数的注释改代码时必须同步改计数。
+    /// legacy 分支逐字搬自原实现。
     func sectionTitle(text: String, count: Int?) -> AnyView {
         return AnyView(
             HStack(spacing: DS.Space.s) {
