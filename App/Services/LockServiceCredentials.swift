@@ -179,20 +179,22 @@ extension LockService {
         let presses = frames.filter(self.isPress).map { press(of: $0) }
         if let r = stopRc {
             if r == rcTimeout {
-                throw BLEErrorX.msg("锁已结束录入 (rc=24 录入超时： 两次按压之间超过 15 秒) — 已收 \(presses.count)/\(times) 次， 请重新开始")
+                throw BLEErrorX.msg("门锁结束了这次录入（两次按压间隔超过 15 秒）— 已收到 \(presses.count)/\(times) 次，请重新开始")
             }
-            throw BLEErrorX.msg("13 录指纹被锁端中止 (rc=\(r): \(StatusParser.rcMessage(r))) — 已收 \(presses.count)/\(times) 次")
+            // 2026-10-30（界面全维度 · 错误文案）：`rc=` 是协议码，用户读不懂也不该读 —— 保留在日志（上一行已记），
+            // 用户文案只说人话：发生了什么 + 该怎么做。
+            throw BLEErrorX.msg("门锁中止了这次指纹录入（\(StatusParser.rcMessage(r))）— 已收到 \(presses.count)/\(times) 次，请重新开始录入")
         }
         guard !presses.isEmpty else {
             // 应答帧里的 rc 是唯一能解释"为什么锁没开始收指纹"的证据 (拒绝/指纹被禁/未校时…)
             let ackRc = frames.first.map { extractRc(0x13, $0) } ?? -1
             if ackRc == rcBlurry {
-                throw BLEErrorX.msg("锁回「无法获取有效的指纹图片」(rc=23): 手指按得太快/太湿， 或反复按同一处 — 请换一个角度重按")
+                throw BLEErrorX.msg("门锁没能取到清晰的指纹图像 — 手指按得太快、太湿，或反复按同一处；请换一个角度重按")
             }
             if ackRc != 0 && ackRc != -1 {
-                throw BLEErrorX.msg("13 录指纹被锁端拒绝 (rc=\(ackRc): \(StatusParser.rcMessage(ackRc))) — 未进入按压采集")
+                throw BLEErrorX.msg("门锁拒绝了这次指纹录入（\(StatusParser.rcMessage(ackRc))）— 还没开始采集，请重新开始录入")
             }
-            throw BLEErrorX.msg("13 已下发但没收到按压帧 (锁回了 \(frames.count) 帧应答) — 请把手指按在指纹头上再抬起， 间隔 3 秒内")
+            throw BLEErrorX.msg("指纹录入已开始，但门锁没有收到任何一次按压 — 请把手指按在指纹头上再抬起，每次间隔 3 秒内")
         }
         if presses.count < times {
             log("warn", "13 只收到 \(presses.count)/\(times) 次按压 (超时/提前收尾)")
