@@ -14,7 +14,11 @@ struct FpDetailStudio: View {
     private var f: LedgerFp? { DB.getFp(mac, batch) }
 
     var body: some View {
-        if let f = f {
+        // 2026-10-30（第 160 轮，**性能**）：`f` 是计算属性（每次 `DB.getFp` 都解一遍台账），
+        // 而 body 里引用了它 **11 次** ⇒ 一次 body 求值解 11 遍。顶部取一次，下面全用这个局部值。
+        // 不用 `@State` 快照 —— 那样在「重录」后可能变旧；局部 let 每帧仍是最新值。
+        let fp = f
+        if let f = fp {
             NavigationStack {
                 List {
                     // 2026-10-29 补：同 PwdDetailStudio —— 停用原因回显（没标记就不显示，不编）
