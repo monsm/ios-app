@@ -198,6 +198,26 @@ enum AutoOpenKit {
         return rssi >= arm
     }
 
+    /// 2026-10-30（提速，第 4 轮）：**中值滤波的武装判据**。
+    /// 原来 `rssiSample` 是**单样本**判定 —— 一个抖动样本就能让 armed 翻转：
+    ///   · 走近时被一次 -85 的尖峰打断 ⇒ 不武装，用户要在门口多站一拍；
+    ///   · 已武装后被一次假强信号维持 ⇒ 走开了还留着 armed。
+    /// 现在取最近 3 个样本的**中位数**再判：单个尖峰被吃掉，而"真的走近"仍然 1 个样本就能过
+    /// （3 样本窗只要 2 个达线即中位数达线，所以**不会变慢**，只会变稳）。
+    /// - Parameter history: 最近的样本，**最新的在前**（调用方维护）。
+    static func rssiArmedByMedian(prevArmed: Bool, history: [Int], base: Int) -> Bool {
+        guard let cur = history.first else { return prevArmed }
+        let arm = armThreshold(base: base)
+        let disarm = disarmThreshold(base: base)
+        // 已武装: 单样本跌破解除线就解除（走开要快，不能因为中值而拖住）
+        if prevArmed, cur <= disarm { return false }
+        // 未武装: 用 3 样本中值判，抗单点尖峰
+        let win = Array(history.prefix(3)).sorted()
+        let med = win[win.count / 2]
+        if prevArmed { return med > disarm }
+        return med >= arm
+    }
+
     // ---------- F5 冷却: 每次接近事件只发一次 04, 成功后 6s 冷却 ----------
     // 60s 太保守 (人走开再回来要等一分钟), 用户口径 6 秒。双开不靠这个数兜: 靠 F5 一次性闩锁
     // (eventFired, 信号掉回解除线才放开) + 回差带 (-43..-40) + 04 超时绝不重发。
@@ -339,6 +359,8 @@ final class AutoOpenController {
     /// `.inactive`（来电横幅、下拉控制中心、任务切换器预览）也会触发 `.active`，
     /// 而每次 onForeground 都重置 promptStartedAt 会把「本次进前台必刷脸」的窗口
     /// 无限延长 —— 用户反复进出，面容门就一直处于「刚发起」状态。
+    /// 2026-10-30（提速，第 4 轮）: 最近 RSSI 样本（最新在前，最多 3 个）—— 中值武装判据用。
+    private var rssiHistory: [Int] = []
     private var wasInBackground = true   // 冷启动视为「从后台来」
     private var inFlight = false
 
@@ -380,11 +402,19 @@ final class AutoOpenController {
     // ---------- F3 喂入: RSSI 事件 (LinkSenseKit saveRssi 后调) ----------
     func feedRssi(mac: String, rssi: Int) {
         guard AutoOpen.on else { return }
-        if mac != armedMac { armedMac = mac; armed = false; eventFired.remove(mac) }
+        if mac != armedMac {
+            armedMac = mac; armed = false; eventFired.remove(mac)
+            // 2026-10-30（第 4 轮）：换锁必须清空样本窗 —— 否则上一把锁的 RSSI 会参与中值判定，
+            // 用 A 锁的强信号把 B 锁武装起来（F3 是"这把锁够近"的判据，混锁等于假武装）。
+            rssiHistory.removeAll()
+        }
         // rssiBase 现在恒有值 (未标定退回 -40), 所以不再有"没标定就 return"这条 —— 那正是
         // 旧写法让未标定用户 armed 永远置不起来、自动开锁一次都不触发的那道死门。
+        // 2026-10-30（提速，第 4 轮）：维护最近 3 个样本（最新在前），供中值武装判据用。
+        rssiHistory.insert(rssi, at: 0)
+        if rssiHistory.count > 3 { rssiHistory.removeLast(rssiHistory.count - 3) }
         let base = AutoOpenKit.rssiBase(mac: mac)
-        armed = AutoOpenKit.rssiSample(prevArmed: armed, rssi: rssi, base: base)
+        armed = AutoOpenKit.rssiArmedByMedian(prevArmed: armed, history: rssiHistory, base: base)
         // 2026-10-27 审核修复：闩锁解除原先跟着 `armed` 走，而 `armed` 在开锁成功后被置 false
         // （下方 case 0），于是信号落进回差带 (-43..-40) 就会执行本行把闩锁放开 —— 
         // 于是退半步再进一步就能再开一次。改用独立的「走远」判据：信号掉到解除线**以下再 3dB**
