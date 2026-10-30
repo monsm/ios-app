@@ -286,7 +286,11 @@ struct UnlockDial: View {
 
 
     /// 74 失败抖动: 左右衰减摆动, 不打断下方原因文案
+    /// 2026-10-30 修复（第 83 轮）：原实现无条件抖 —— 系统「减弱动态效果」打开时，
+    /// 左右位移正是最该被压掉的那类动效（前庭敏感用户会不适）。
+    /// 现在 reduceMotion 下整条抖动不播：失败仍由下方原因文案 + 触感承载，语义不丢。
     func shake() {
+        guard !reduceMotion else { return }
         Task { @MainActor in
             for x in [CGFloat(-12), 12, -8, 8, -4, 4, 0] {
                 withAnimation(.easeOut(duration: 0.05)) { shakeX = x }

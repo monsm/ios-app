@@ -28,7 +28,10 @@ final class ToastCenter: ObservableObject {
     func show(_ msg: String) {
         seq &+= 1
         let mine = seq
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { toast = msg }
+        // 2026-10-30 修复（第 83 轮）：入场动画原来是**硬编码** `.spring(response: 0.35, dampingFraction: 0.8)`，
+        // 绕过了 `DS.Motion` 的统一降级 —— 系统「减弱动态效果」打开时，这条弹簧仍照播。
+        // 同一函数第 37 行退场用的是 `DS.Duration.quick`（会降级），两条不一致。
+        withAnimation(DS.Motion.quick) { toast = msg }
         let stay: UInt64 = msg.count > 20 ? 3_400_000_000 : 1_800_000_000
         Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: stay)
