@@ -43,7 +43,9 @@ struct PwdStudio: View {
     /// 2026-10-30 修复（第 118 轮，**计算属性在 body 里反复解库**）：`editing` 原来是计算属性，
     /// 被 `.navigationTitle` 与确认步反复求值 —— 每敲一个码值字符就全量解码一次台账。
     /// 改成进页取一次的 @State 快照（编辑期间这条记录不会变）。
-    @State private var editing: LedgerPwd? = nil
+    // 2026-10-30 修（第 128 轮，**构建失败根因**）：这里必须保持 internal（不能 private）——
+    // 同类型的扩展在 PwdStudioSteps.swift 里用到了 diting（L354/368/431），private 跨文件不可见。
+    @State var editing: LedgerPwd? = nil
 
     var pwdOK: Bool { pwd.count >= 6 && pwd.count <= 8 && pwd.allSatisfy { $0.isNumber } }
 
