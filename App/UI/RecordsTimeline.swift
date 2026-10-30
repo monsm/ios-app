@@ -30,6 +30,15 @@ struct RecDetailSheet: View {
     @State private var tick = 0
     @State private var noteDraft = ""      // 186 备注草稿
     @State private var card: UIImage?      // 718 本条记录卡 (只在开卡时渲染一次)
+    // 2026-10-30（第 158 轮，**性能**）：本页 body 原来一次跑三次全量日志扫描 ——
+    // `sameTypeCount`（L97）、`trialCountToday`（L208）、`context`（L282，内部 buildRecs + 全量 classify）。
+    // 而 `noteDraft` 是 TextField 的 @State，**每敲一个字都会重算整个 body** ⇒ 一次输入 N 次全表扫描。
+    // 三处都缓存到 @State，在 `.task(id: rec.id)` 里算一次。
+    @State private var sameTypeTotal = 0
+    @State private var sameTypeLast = ""
+    @State private var trialsToday = 0
+    @State private var ctxBefore: [Rec] = []
+    @State private var ctxAfter: [Rec] = []
 
     init(rec: Rec, siblings: [Rec] = [], scopeAll: Bool = false) {
         initial = rec
@@ -54,6 +63,14 @@ struct RecDetailSheet: View {
             // 718: 卡片图在开卡时渲染一次存进 @State —— 放 body 里每帧重跑 ImageRenderer 是白付的代价
             .task(id: rec.id) {
                 card = ExportKit.recordCard(exportRow, lockName: rec.lockName)
+                // 一次性算好三处扫描结果（原来是每帧各跑一次）
+                if rec.type != 0 {
+                    let sc = RecordSearch.sameTypeCount(mac: rec.mac, type: rec.type, exceptKey: rec.key)
+                    sameTypeTotal = sc.total; sameTypeLast = sc.lastStr
+                } else { sameTypeTotal = 0; sameTypeLast = "" }
+                trialsToday = RecordSearch.trialCountToday(macs: [rec.mac])
+                let c = RecordSearch.context(mac: rec.mac, aroundKey: rec.key)
+                ctxBefore = c.before; ctxAfter = c.after
             }
             .navigationTitle("记录详情")   // 576 记录详情
             .variantList()
@@ -94,9 +111,9 @@ struct RecDetailSheet: View {
             fieldRow("类型", rec.typeName + " (#" + String(rec.type) + ")")
             // 2026-10-29 补：`RecordSearch.sameTypeCount` 零调用 —— 单看一条"锁定"不知道是偶发还是惯犯。
             if rec.type != 0 {
-                let sc = RecordSearch.sameTypeCount(mac: rec.mac, type: rec.type, exceptKey: rec.key)
-                if sc.total > 1 {
-                    fieldRow("同类记录", "共 \(sc.total) 条" + (sc.lastStr.isEmpty ? "" : " · 上一条 \(TimeFormat.clock(sc.lastStr))"))
+                // 2026-10-30：改用 `.task(id: rec.id)` 缓存的值（原来每帧一次全表扫描）。
+                if sameTypeTotal > 1 {
+                    fieldRow("同类记录", "共 \(sameTypeTotal) 条" + (sameTypeLast.isEmpty ? "" : " · 上一条 \(TimeFormat.clock(sameTypeLast))"))
                 }
             }
             // 647 制式: 全部时间字段只经 TimeFormat.clock() 这一个出口 (与时间线、导出同一份口径)
@@ -206,18 +223,18 @@ struct RecDetailSheet: View {
 
 
             // ⚠737 今日试错累计 (keyboardErrCount 语义不确定, 标题带"?", 只数日志条数)
-            let trials = RecordSearch.trialCountToday(macs: [rec.mac])
+            // 2026-10-30：改用缓存值（原来每帧一次全表扫描）。
             HStack(spacing: DS.Space.s) {
                 Image(systemName: "questionmark.circle")
                     .font(.system(size: DS.Icon.sm))
                     .foregroundStyle(DS.Palette.warn)
                     .accessibilityHidden(true)
-                Text("今日试错累计? 本锁 " + String(trials) + " 条锁定类日志")   // 737 今日试错累计
+                Text("今日试错累计? 本锁 " + String(trialsToday) + " 条锁定类日志")   // 737 今日试错累计
                     .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.warn)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            if trials > 0 {
+            if trialsToday > 0 {
                 // 737 涉事凭证明写"无法归属": 锁定级事件行不带凭证槽位 (依赖协议失败明细), 不猜
                 Text("涉事凭证无法归属： 锁端仅记录锁定级事件行， 不带凭证槽位 (依赖协议失败明细)。")
                     .vkFont(.caption2)
@@ -279,10 +296,10 @@ struct RecDetailSheet: View {
     // 而这里就是个空的 `@ViewBuilder` —— 用户在记录详情里看不到「出这事之前和之后发生了什么」。
     // 只取同锁、±10 分钟、前 3 / 后 3 条；不做完整时间线（那是记录页的事）。
     private var contextSection: some View {
-        let ctx = RecordSearch.context(mac: rec.mac, aroundKey: rec.key)
-        if !ctx.before.isEmpty || !ctx.after.isEmpty {
+        // 2026-10-30：改用 `.task(id: rec.id)` 缓存的前后各 3 条（原来每帧一次全表扫描 + 全量 classify）。
+        if !ctxBefore.isEmpty || !ctxAfter.isEmpty {
             Section {
-                ForEach(ctx.before, id: \.key) { r in contextRow(r, tag: "前") }
+                ForEach(ctxBefore, id: \.key) { r in contextRow(r, tag: "前") }
                 HStack(spacing: DS.Space.s) {
                     Image(systemName: "arrowtriangle.right.fill")
                         .font(.system(size: 8))
@@ -292,7 +309,7 @@ struct RecDetailSheet: View {
                         .foregroundStyle(DS.Palette.accentText)
                     Spacer(minLength: 0)
                 }
-                ForEach(ctx.after, id: \.key) { r in contextRow(r, tag: "后") }
+                ForEach(ctxAfter, id: \.key) { r in contextRow(r, tag: "后") }
             } header: {
                 Text("前后事件（±10 分钟 · 同锁）")
             } footer: {

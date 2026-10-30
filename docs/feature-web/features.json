@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T12:09:02.500Z",
+    "generated": "2026-10-30T12:14:52.035Z",
     "sources": [
       {
         "scout": "android-native",
@@ -25670,7 +25670,7 @@
           "line": 60,
           "symbol": ".task(id: rec.id)",
           "note": "分享卡渲染一次",
-          "text": ".dsScreenBackground()"
+          "text": "linkSection     // 585 引用深链"
         }
       ],
       "platformEvidence": {
@@ -26306,7 +26306,7 @@
           "line": 168,
           "symbol": "alarmSection",
           "note": "段结构与处置键",
-          "text": "}"
+          "text": "HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {"
         },
         {
           "platform": "ios",
@@ -26314,7 +26314,7 @@
           "line": 180,
           "symbol": "AlarmMeta.levelName",
           "note": "严重级",
-          "text": "// 2026-10-30 删除（第 131 轮）：这里原有一个 `let dkey = RecordOverlay.oid(...)` —— 声明后从未使用，"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -26322,7 +26322,7 @@
           "line": 185,
           "symbol": "alarmSection",
           "note": "已处置/未处置徽标",
-          "text": "Image(systemName: \"diamond.fill\")"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -26330,7 +26330,7 @@
           "line": 48,
           "symbol": "body",
           "note": "if rec.alarm 才渲染",
-          "text": "noteSection     // 186 备注 / 188 标旗"
+          "text": "_at = State(initialValue: i)"
         }
       ],
       "platformEvidence": {
@@ -26409,7 +26409,7 @@
           "line": 77,
           "symbol": "fieldSection",
           "note": "字段清单",
-          "text": "/// 2026-10-29：时段标签（自然时段词 + 工作日通勤判断）。"
+          "text": ".dsScreenBackground()"
         },
         {
           "platform": "ios",
@@ -26417,7 +26417,7 @@
           "line": 88,
           "symbol": "fieldSection",
           "note": "650 时间来源 + 色点",
-          "text": "@ViewBuilder"
+          "text": "private static func hourOf(_ s: String) -> Int? {"
         },
         {
           "platform": "ios",
@@ -26425,7 +26425,7 @@
           "line": 116,
           "symbol": "fieldSection",
           "note": "凭证维度 (约)",
-          "text": "fieldRow(\"开门方式\", kindWord)"
+          "text": "fieldRow(\"同类记录\", \"共 \\(sameTypeTotal) 条\" + (sameTypeLast.isEmpty ? \"\" : \" · 上一条 \\(TimeFormat.clock(sameTypeLast))\"))"
         },
         {
           "platform": "ios",
@@ -26433,7 +26433,7 @@
           "line": 131,
           "symbol": "fieldSection",
           "note": "归属强度",
-          "text": "}"
+          "text": "dot: rec.lockTime > 0 ? DS.Palette.ok : DS.Palette.textSub)"
         },
         {
           "platform": "ios",
@@ -26441,7 +26441,7 @@
           "line": 139,
           "symbol": "fieldSection",
           "note": "行标识与 idxRaw",
-          "text": "if !rec.failMsg.isEmpty {"
+          "text": "// 797 陪同进入疑似: 同一凭证 (临时码/密码) 在 5 分钟窗口内被**不同成员**用过的后续行。"
         }
       ],
       "platformEvidence": {
