@@ -74,26 +74,36 @@ struct ActiveCredsSheet: View {
                             .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                     } else {
-                        ForEach(Array(RecordSearch.activeCredentials(mac: app.currentMac).enumerated()), id: \.offset) { i, c in
-                            HStack(spacing: DS.Space.s) {
-                                Image(systemName: Self.icon(c.kind))
-                                    .font(.system(size: DS.Icon.sm))
-                                    .foregroundStyle(DS.Palette.accentText)
-                                    .accessibilityHidden(true)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(c.word + " (约)")
-                                        .vkFont(.subheadline, weight: .medium)
-                                        .foregroundStyle(DS.Palette.text)
-                                    Text("近 30 天约 " + String(c.count) + " 次开门")
-                                        .vkFont(.caption)
+                        // 2026-10-30 修复（第 92 轮）：补空态 —— 原来 `ForEach` 空时这一段只剩下面的「口径」说明，
+                        // 用户看到的是一片空白加一句方法论。HIG 要求空屏要邀请下一步动作。
+                        let credRows = RecordSearch.activeCredentials(mac: app.currentMac)
+                        if credRows.isEmpty {
+                            Text("近 30 天还没有读到开门记录 —— 先用这把锁开几次门，或到记录页点「重新读取」从锁内拉取。")
+                                .vkFont(.footnote)
+                                .foregroundStyle(DS.Palette.textSub)
+                                .fixedSize(horizontal: false, vertical: true)
+                        } else {
+                            ForEach(Array(credRows.enumerated()), id: \.offset) { i, c in
+                                HStack(spacing: DS.Space.s) {
+                                    Image(systemName: Self.icon(c.kind))
+                                        .font(.system(size: DS.Icon.sm))
+                                        .foregroundStyle(DS.Palette.accentText)
+                                        .accessibilityHidden(true)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(c.word + " (约)")
+                                            .vkFont(.subheadline, weight: .medium)
+                                            .foregroundStyle(DS.Palette.text)
+                                        Text("近 30 天约 " + String(c.count) + " 次开门")
+                                            .vkFont(.caption)
+                                            .foregroundStyle(DS.Palette.textSub)
+                                    }
+                                    Spacer(minLength: 0)
+                                    Text("#" + String(i + 1))
+                                        .vkFont(.caption.monospacedDigit())
                                         .foregroundStyle(DS.Palette.textSub)
                                 }
-                                Spacer(minLength: 0)
-                                Text("#" + String(i + 1))
-                                    .vkFont(.caption.monospacedDigit())
-                                    .foregroundStyle(DS.Palette.textSub)
+                                .accessibilityElement(children: .combine)
                             }
-                            .accessibilityElement(children: .combine)
                         }
                         Text("口径： 近 30 天开门日志按凭证类计次 (台账推断， 标「约」)。")
                             .vkFont(.caption)
