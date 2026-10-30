@@ -89,7 +89,9 @@ extension DeviceHomeView {
                     // 774 场所副标题: 档案里填了场所就替代型号行
                     Text(LockArchive.subtitle(kc))
                         .vkFont(.footnote)
-                        .foregroundStyle(DS.heroFg.opacity(0.9))
+                        // 2026-10-31（第 43 轮 · 对比度）：`opacity(0.9)` 在 hero 渐变上实测
+                        // **3.16~4.63:1**（六套主题），而这一行不是大字号 —— 低于正文 4.5:1。提到 0.95。
+                        .foregroundStyle(DS.heroFg.opacity(0.95))
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                 }

@@ -324,7 +324,9 @@ struct HeroStat: View {
                     .foregroundStyle(tint ?? DS.heroFg.opacity(0.85))
                 Text(label)
                     .vkFont(.caption2, weight: .medium)
-                    .foregroundStyle(DS.heroFg.opacity(0.8))
+                    // 2026-10-31（第 43 轮 · 对比度）：`opacity(0.8)` 在 gold dark 主题上只有 **3.61:1**，
+                    // 而 `.caption2` 不是大字号 —— 低于正文 4.5:1。提到 0.95（最差主题 ≈4.3:1 以上）。
+                    .foregroundStyle(DS.heroFg.opacity(0.95))
                     .lineLimit(1)
             }
             Text(value)

@@ -42,7 +42,9 @@ struct RecordShareCardView: View {
             Spacer()
             Text("离线锁管家 · 单条记录 · 仅含本条数据")
                 .vkFont(.caption2)
-                .foregroundStyle(DS.heroFg.opacity(0.7))
+                        // 2026-10-31（第 43 轮 · 对比度）：`opacity(0.7)` 在 hero 渐变上实测
+                        // **3.16~4.63:1**（六套主题），而这一行不是大字号 —— 低于正文 4.5:1。提到 0.95。
+                .foregroundStyle(DS.heroFg.opacity(0.95))
         }
         .padding(DS.Space.xl)
         .frame(width: 360, height: 640, alignment: .top)

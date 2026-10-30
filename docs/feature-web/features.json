@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T18:03:33.740Z",
+    "generated": "2026-10-30T18:11:19.928Z",
     "sources": [
       {
         "scout": "android-native",
@@ -23005,7 +23005,7 @@
           "line": 84,
           "symbol": "ExportKit.writeRoster",
           "note": "vCard 生成与写盘",
-          "text": "if !m.relation.isEmpty { note.append(\"关系 \" + m.relation) }"
+          "text": "if !ext.groupTag.isEmpty { out += \"CATEGORIES:\" + vcfEscape(ext.groupTag) + \"\\n\" }"
         },
         {
           "platform": "ios",
@@ -23021,7 +23021,7 @@
           "line": 88,
           "symbol": "writeRoster",
           "note": "VCARD 字段顺序",
-          "text": "if !ext.emergency.isEmpty { note.append(\"紧急联系 \" + ext.emergency) }"
+          "text": "if ext.archived { note.append(\"已归档\") }"
         },
         {
           "platform": "ios",
@@ -23029,7 +23029,7 @@
           "line": 94,
           "symbol": "writeRoster",
           "note": "NOTE 行拼接项",
-          "text": "let text = out"
+          "text": "out += \"END:VCARD\\n\""
         },
         {
           "platform": "ios",
@@ -23037,7 +23037,7 @@
           "line": 110,
           "symbol": "writeRoster",
           "note": "文件名与目录",
-          "text": "guard (try? text.write(to: url, atomically: true, encoding: .utf8)) != nil else { return nil }"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -25768,7 +25768,7 @@
           "line": 63,
           "symbol": "enum ExportKit",
           "note": "两个导出入口",
-          "text": "// ---------- 415 成员名册 (vCard 3.0) ----------"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -26848,7 +26848,7 @@
           "line": 53,
           "symbol": "RecordShareCardView",
           "note": "仅含本条数据的落款",
-          "text": "enum ExportKit {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -26864,7 +26864,7 @@
           "line": 66,
           "symbol": "ExportKit.recordCard",
           "note": "ImageRenderer scale 2",
-          "text": "s.replacingOccurrences(of: \"\\\\\", with: \"\\\\\\\\\")"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -58684,7 +58684,7 @@
           "line": 381,
           "symbol": "amoledOverride",
           "note": "",
-          "text": "Circle()"
+          "text": "// 右上一团柔光: 给渐变一个\"光源\", 缓慢漂移 (±8pt / 9s) 让它活过来,"
         },
         {
           "platform": "ios",
@@ -58837,7 +58837,7 @@
           "line": 444,
           "symbol": "enum CustomAccent",
           "note": "",
-          "text": "}"
+          "text": ".buttonStyle(.borderedProminent)"
         },
         {
           "platform": "ios",
@@ -58845,7 +58845,7 @@
           "line": 485,
           "symbol": "darkenTo",
           "note": "",
-          "text": ".vkFont(.caption)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -58853,7 +58853,7 @@
           "line": 513,
           "symbol": "derived 六档角色",
           "note": "",
-          "text": "}"
+          "text": ".accessibilityHint(\"打开演示锁， 完整走一遍添加与开锁\")"
         },
         {
           "platform": "ios",
@@ -58861,7 +58861,7 @@
           "line": 397,
           "symbol": "key == nil 才用自定义色",
           "note": "",
-          "text": "if reduceTransparency {"
+          "text": ".overlay {"
         }
       ],
       "platformEvidence": {
@@ -59161,7 +59161,7 @@
           "line": 572,
           "symbol": "screenMesh 3×3",
           "note": "",
-          "text": "Image(systemName: systemImage).font(.system(size: DS.Icon.sm, weight: .semibold))"
+          "text": "ProgressView().controlSize(.small)"
         },
         {
           "platform": "ios",
@@ -59574,7 +59574,7 @@
           "line": 337,
           "symbol": "themeTable",
           "note": "",
-          "text": ".monospacedDigit()"
+          "text": "// 663 等宽数字 (原句\"财经数字排版\"): 读数换值时字宽不跳，与 207 的逐位滚动是一对 ——"
         },
         {
           "platform": "ios",
@@ -59582,7 +59582,7 @@
           "line": 386,
           "symbol": "effectiveKey 默认 brass",
           "note": "",
-          "text": ".offset(x: drift ? 54 : 46, y: drift ? -51 : -44)"
+          "text": ".blur(radius: 42)"
         },
         {
           "platform": "ios",
@@ -59590,7 +59590,7 @@
           "line": 393,
           "symbol": "themed(role:key:)",
           "note": "",
-          "text": "}"
+          "text": ".fill(DS.heroScrim)"
         },
         {
           "platform": "ios",
@@ -63007,7 +63007,7 @@
           "line": 418,
           "symbol": "895 命名理由",
           "note": "",
-          "text": "var action: (() -> Void)?"
+          "text": "let message: String"
         },
         {
           "platform": "ios",
@@ -63015,7 +63015,7 @@
           "line": 421,
           "symbol": "enum FriendlyPreset",
           "note": "",
-          "text": "self.systemImage = systemImage"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -63023,7 +63023,7 @@
           "line": 422,
           "symbol": "apply 六键",
           "note": "",
-          "text": "self.title = title"
+          "text": "init(systemImage: String, title: String, message: String) {"
         }
       ],
       "platformEvidence": {
