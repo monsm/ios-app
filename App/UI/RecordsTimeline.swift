@@ -177,7 +177,8 @@ struct RecDetailSheet: View {
     private var alarmSection: some View {
         // 处置留痕的键与 186 备注、585 引用深链是同一份行身份算术 (`RecordOverlay.oid`, 全仓只这一处),
         // 所以这里不再自己拼 "mac#key" —— 告警中心与本页必须认得同一个键。
-        let dkey = RecordOverlay.oid(mac: rec.mac, rowKey: rec.key)
+        // 2026-10-30 删除（第 131 轮）：这里原有一个 `let dkey = RecordOverlay.oid(...)` —— 声明后从未使用，
+        // 下面的按钮直接走 RecordOverlay.setDisposition（由 API 内部再算一次 oid）。
         let disp = RecordOverlay.disposition(rec.mac, rec.key)   // 2026-10-28: 接回真实处置存储
         Section {
             HStack(spacing: DS.Space.s) {

@@ -465,7 +465,7 @@ extension DeviceHomeView {
     }
     // 39 倒计时: 秒数来自本地布防记忆 (kf_tailgate_, 档位+1=秒), 没设过按厂商默认 6 秒
     func startAutoLockCountdown() {
-        let interval = DB.tailgate(app.currentMac)?.interval ?? 5
+        let interval = DB.tailgate(app.currentMac)?.interval ?? 6   // 2026-10-30：注释写「厂商默认 6 秒」、TailgateView 初值也是 6，这里却兜 5 —— 同一默认值两处不同
         let total = max(2, interval + 1)
         autoLockLeft = total
         Task { @MainActor in

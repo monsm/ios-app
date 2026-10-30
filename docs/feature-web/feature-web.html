@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T10:37:45.312Z",
+    "generated": "2026-10-30T10:57:22.476Z",
     "sources": [
       {
         "scout": "android-native",
@@ -26642,7 +26642,7 @@ const DATA = {
           "line": 180,
           "symbol": "AlarmMeta.levelName",
           "note": "严重级",
-          "text": "let dkey = RecordOverlay.oid(mac: rec.mac, rowKey: rec.key)"
+          "text": "// 2026-10-30 删除（第 131 轮）：这里原有一个 `let dkey = RecordOverlay.oid(...)` —— 声明后从未使用，"
         },
         {
           "platform": "ios",
@@ -26650,7 +26650,7 @@ const DATA = {
           "line": 185,
           "symbol": "alarmSection",
           "note": "已处置/未处置徽标",
-          "text": ".font(.system(size: DS.Icon.sm))"
+          "text": "Image(systemName: \"diamond.fill\")"
         },
         {
           "platform": "ios",
