@@ -71,6 +71,12 @@ struct TailgateView: View {
 
     private func run() async {
         guard let kc = app.current, !busy else { return }
+        // 2026-10-30 补（第 139 轮，**缺失门禁**）：`PidMap.canTailgate(pid:fw:)` 早就存在、
+        // `LockSettingsView:117` 也在用，唯独本页没有 —— 不支持防尾随的锁照样能发 cmd24。
+        guard PidMap.canTailgate(kc.pid, fw: kc.fw) else {
+            app.showToast("这把锁不支持防尾随（型号不在白名单，或固件太旧）")
+            return
+        }
         busy = true
         defer { busy = false }
         do {
