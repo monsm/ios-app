@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T12:03:19.951Z",
+    "generated": "2026-10-30T12:09:02.500Z",
     "sources": [
       {
         "scout": "android-native",
@@ -22580,7 +22580,7 @@ const DATA = {
           "line": 205,
           "symbol": "activeSection",
           "note": "排序四档与列表",
-          "text": "switch sort {"
+          "text": ".contentShape(Capsule())"
         },
         {
           "platform": "apk",
@@ -22596,7 +22596,7 @@ const DATA = {
           "line": 222,
           "symbol": "NavigationLink",
           "note": "进 360 详情",
-          "text": "actionTitle: \"建档向导\") { openWizard() }   // 463 建档向导"
+          "text": "case 3: list = members.sorted { (acts[$0.id]?.opens30 ?? -1) > (acts[$1.id]?.opens30 ?? -1) }"
         },
         {
           "platform": "ios",
@@ -22604,7 +22604,7 @@ const DATA = {
           "line": 225,
           "symbol": "swipeActions",
           "note": "左滑归档",
-          "text": "title: \"成员都归档了\","
+          "text": "return Section {"
         },
         {
           "platform": "ios",
@@ -22983,7 +22983,7 @@ const DATA = {
           "line": 42,
           "symbol": "body",
           "note": "七段列表顺序",
-          "text": "// groupTag 那步仍按成员取 ext (要的是值不是集合), 至少砍掉一半重复解码。"
+          "text": "// 不必再用 `.id(tick)` 把整个 List 换身份（会丢滚动位置、键盘焦点和动画上下文）。"
         },
         {
           "platform": "ios",
@@ -22991,7 +22991,7 @@ const DATA = {
           "line": 56,
           "symbol": "toolbar",
           "note": "右上菜单四项",
-          "text": "activeSection(sortKey)"
+          "text": "/// 的「最近开门 / 名下」与两档排序全部按空值走。改用**全部未归档**成员。"
         },
         {
           "platform": "ios",
@@ -22999,7 +22999,7 @@ const DATA = {
           "line": 134,
           "symbol": ".id(tick)",
           "note": "写库后重建",
-          "text": ".frame(minHeight: DS.Hit.min)"
+          "text": "// 但 `ExportKit.writeRoster` 实际还导出 TEL（电话）、NICKNAME（备注）、CATEGORIES（分组），"
         }
       ],
       "platformEvidence": {
@@ -23155,7 +23155,7 @@ const DATA = {
           "line": 86,
           "symbol": "showFamilySettings",
           "note": "父级 sheet 挂载",
-          "text": "Image(systemName: \"ellipsis.circle\").accessibilityLabel(\"成员中心菜单\")"
+          "text": "Text(\"近 30 天开门次数 (约)\").tag(3)"
         }
       ],
       "platformEvidence": {
@@ -23341,7 +23341,7 @@ const DATA = {
           "line": 99,
           "symbol": "showRoster sheet",
           "note": "结果 sheet 与空态",
-          "text": ".onAppear {"
+          "text": "Image(systemName: \"ellipsis.circle\").accessibilityLabel(\"成员中心菜单\")"
         },
         {
           "platform": "ios",
@@ -23762,7 +23762,7 @@ const DATA = {
           "line": 304,
           "symbol": "archivedSection",
           "note": "归档入口（计数）",
-          "text": "if !arch.isEmpty {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -24090,7 +24090,7 @@ const DATA = {
           "line": 167,
           "symbol": "groupChipSection",
           "note": "chip 过滤",
-          "text": "Section {"
+          "text": ".onChange(of: tick) { _, _ in recomputeActivity() }"
         },
         {
           "platform": "ios",
@@ -24372,7 +24372,7 @@ const DATA = {
           "line": 321,
           "symbol": "sceneSection",
           "note": "本周主责与便签",
-          "text": "if let dutyID = MemberHub.dutyThisWeek, let dm = DB.member(dutyID) {"
+          "text": "Label(\"归档成员 (\\(arch.count)) · 保留历史\", systemImage: \"archivebox\")"
         },
         {
           "platform": "ios",
@@ -24380,7 +24380,7 @@ const DATA = {
           "line": 323,
           "symbol": "dutyThisWeek",
           "note": "主责读取",
-          "text": "Text(MemberHub.display(dm))"
+          "text": ".frame(maxWidth: .infinity, alignment: .leading)"
         },
         {
           "platform": "ios",
@@ -24513,7 +24513,7 @@ const DATA = {
           "line": 252,
           "symbol": "visitorSection",
           "note": "虚拟分组行",
-          "text": ".tint(DS.Palette.ok)"
+          "text": "var e = MemberHub.ext(m.id)"
         },
         {
           "platform": "ios",
@@ -24529,7 +24529,7 @@ const DATA = {
           "line": 256,
           "symbol": "pendingRecordsFilter",
           "note": "跳记录页过滤",
-          "text": "Text(\"成员 (\\(list.count))\")"
+          "text": "})"
         },
         {
           "platform": "ios",
@@ -24537,7 +24537,7 @@ const DATA = {
           "line": 285,
           "symbol": "visitorOpenCount",
           "note": "未归属临时码计数",
-          "text": "}"
+          "text": "app.pendingRecordsFilter = MemberHub.visitorId"
         },
         {
           "platform": "ios",
@@ -24545,7 +24545,7 @@ const DATA = {
           "line": 299,
           "symbol": "visitorOwns",
           "note": "名下临时码条数",
-          "text": ""
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -25035,7 +25035,7 @@ const DATA = {
           "line": 367,
           "symbol": "struct MemberRow",
           "note": "行声明",
-          "text": "/// 2026-10-29 性能：由父视图一次算好传入，行内不再调 MemberHub.activity（那会重扫全锁日志）。"
+          "text": "// 手表那半步做不到 (本 App 无 watch target，协议也不能让手表替锁开门)，"
         },
         {
           "platform": "ios",
@@ -25043,7 +25043,7 @@ const DATA = {
           "line": 380,
           "symbol": "MemberRow",
           "note": "称呼（备注）双层文本",
-          "text": "Text(MemberHub.doubleLine(member))"
+          "text": "let member: Member"
         },
         {
           "platform": "ios",
@@ -25051,7 +25051,7 @@ const DATA = {
           "line": 385,
           "symbol": "MemberRow",
           "note": "同名待合并",
-          "text": "subLine"
+          "text": "/// 同一动作在 swipeActions 走的是**父层** tick，会刷新 —— 两条路径行为不一致。现在统一走父层回调。"
         },
         {
           "platform": "ios",
@@ -25059,7 +25059,7 @@ const DATA = {
           "line": 432,
           "symbol": "subLine",
           "note": "副行四段",
-          "text": ".vkFont(.caption2)"
+          "text": "return Text(bits.isEmpty ? \"暂无台账凭证\" : bits.joined(separator: \" · \"))"
         },
         {
           "platform": "ios",
@@ -25067,7 +25067,7 @@ const DATA = {
           "line": 448,
           "symbol": "staleTag",
           "note": "久未用/活跃 (约)",
-          "text": "var tint: Color? = nil   // 480: 传成员建档色时整个头像随该色; 不传维持原 accentText 口径"
+          "text": ".lineLimit(1)"
         }
       ],
       "platformEvidence": {
@@ -25735,7 +25735,7 @@ const DATA = {
           "line": 216,
           "symbol": "EmptyState",
           "note": "空态建档向导按钮",
-          "text": "// 正确口径：真没成员（DB.members() 空）才给建档向导；只是被筛空就给对应的出口。"
+          "text": "func activeSection(_ sort: Int) -> some View {"
         },
         {
           "platform": "ios",
@@ -25743,7 +25743,7 @@ const DATA = {
           "line": 89,
           "symbol": "onAppear",
           "note": "pendingMemberAdd 一次性消费",
-          "text": "// 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。"
+          "text": "Button { showGroups = true }   label: {   // 630 分组标签"
         },
         {
           "platform": "ios",
@@ -25751,7 +25751,7 @@ const DATA = {
           "line": 80,
           "symbol": "sheet(isPresented: $showWizard)",
           "note": "向导 sheet 挂载",
-          "text": "rosterURL = ExportKit.writeRoster()"
+          "text": "ToolbarItem(placement: .navigationBarTrailing) {"
         }
       ],
       "platformEvidence": {
@@ -60704,7 +60704,7 @@ const DATA = {
           "line": 228,
           "symbol": "MemberHub.saveExt",
           "note": "归档写入示例",
-          "text": "} else {"
+          "text": "// 但「选了分组 A、A 里没人」或「成员全归档了」这两种情况都**不是**没有成员，"
         },
         {
           "platform": "ios",

@@ -38,6 +38,9 @@ struct MemberCenterView: View {
     @State var showRoster = false
 
     var members: [Member] {
+        // 2026-10-30 修复（第 157 轮）：让 `members` 依赖 `tick` —— 这样写库后只需重算数据，
+        // 不必再用 `.id(tick)` 把整个 List 换身份（会丢滚动位置、键盘焦点和动画上下文）。
+        let _ = tick
         // archivedIDs() 此前零调用: 它一次解出整张 ext 表; 旧写法每个成员调两次 ext() = 每成员整体重解一遍字典。
         // groupTag 那步仍按成员取 ext (要的是值不是集合), 至少砍掉一半重复解码。
         // 2026-10-29 性能：archivedIDs() 与逐成员的 ext() 各自整表解码一遍；一次取表共用。
@@ -46,6 +49,16 @@ struct MemberCenterView: View {
         return DB.members()
             .filter { !archived.contains($0.id) }
             .filter { m in groupFilter.isEmpty || MemberHub.ext(m.id, in: extTable).groupTag == groupFilter }
+    }
+
+    /// 2026-10-30 修复（第 157 轮，**筛选态下活跃度丢失**）：原来用 `members.map { $0.id }` —— 而 `members`
+    /// 被 `groupFilter` 筛过 ⇒ 在筛选态触发一次重算后，被筛掉的成员从 activity 表里消失；清除筛选后这些行
+    /// 的「最近开门 / 名下」与两档排序全部按空值走。改用**全部未归档**成员。
+    private func recomputeActivity() {
+        let extTable = MemberHub.allExt()
+        let archived = MemberHub.archivedIDs(extTable)
+        let ids = DB.members().filter { !archived.contains($0.id) }.map { $0.id }
+        activity = MemberHub.activityBundle(ids)
     }
 
     var body: some View { vkBody.destined(.memberCenter) }
@@ -147,10 +160,11 @@ struct MemberCenterView: View {
                     }
                 }
             }
-            .id(tick)   // 写库后重建, List 直接重查 DB
+            // 2026-10-30 删除（第 157 轮）：`.id(tick)` 会把整表换身份重建 List —— 会丢滚动位置/键盘焦点/动画。
+            // 改成让 `members` 依赖 `tick`（见上），数据照样刷新，但视图身份不变。
             // 2026-10-29 性能：全员活跃度只在进页与写库后（tick 变化）算一次，不再每次 body 重算。
-            .task { activity = MemberHub.activityBundle(members.map { $0.id }) }
-            .onChange(of: tick) { _, _ in activity = MemberHub.activityBundle(members.map { $0.id }) }
+            .task { recomputeActivity() }
+            .onChange(of: tick) { _, _ in recomputeActivity() }
         }
     }
 
