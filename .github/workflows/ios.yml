@@ -458,6 +458,9 @@ jobs:
       - name: '闸门自身可信度 (判失败: 新加闸门必须有正控记录 + 修法提示)'
         run: node tools/gateaudit2.js
 
+      - name: '异步窗口逻辑闸门 (判失败: 7 类「异步期间世界变了」场景必须不发 04)'
+        run: node tools/asyncwindowcheck.js
+
       - name: '自动开锁门控数据源闸门 (判失败: 门判据读到重启会清零的变量 —— 该拦不拦/双开)'
         run: node tools/gatepersistcheck.js
 
