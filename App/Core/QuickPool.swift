@@ -135,19 +135,28 @@ enum QuickPool {
     static func repeatTarget(_ mac: String) -> (name: String, nav: String)? {
         guard !mac.isEmpty else { return nil }
         let ledger = DB.ledger(mac)
-        // 已归档成员的口令不再作为直达目标 —— 收起的东西不许从快捷入口"复活"（354 同款纪律）。
+        let pwds = ledger.pwds
+        guard !pwds.isEmpty else { return nil }
+        // 2026-10-30 性能：**不要**在循环里调 `CredentialOrg.recentUseCount` ——
+        // 它每次都会 `DB.ledger(mac)` 全量解码一次台账 + `DB.readLogs(mac)` 全量读日志，
+        // 对 N 条密码就是 N 次全表解码（O(N²)）。这里改成**单遍**：台账一次、日志一次，
+        // 口径与 `recentUseCount` 逐条对齐（type 17 密码开门；非临时且已有归属；
+        // 且「本机只有这一条有归属的长期密码」才计入 —— 多归属时日志无法归到具体人，不猜）。
         let archived = MemberHub.archivedIDs()
-        var best: (alias: Int, name: String, count: Int)?
-        for p in ledger.pwds where !p.temp {
-            if let o = p.owner, archived.contains(o) { continue }
-            guard let n = CredentialOrg.recentUseCount(mac, pwdAlias: p.alias, days: 30), n > 0 else { continue }
-            if best == nil || n > best!.count {
-                best = (p.alias, "#\(p.alias)", n)
-            }
+        let ownedCount = pwds.filter { !$0.temp && $0.owner != nil }.count
+        let since = Date().timeIntervalSince1970 - 30 * 86400
+        var opens = 0
+        for l in DB.readLogs(mac) where l.type == 17 {
+            let t = ZKProtocol.protoSecondsToUnix(Int64(l.lockTime))
+            if t >= since { opens += 1 }
         }
-        guard let b = best else { return nil }
-        // 载荷走 577 深链同一套：`pwd:<alias>` 由 CredentialsView 的 pendingCredNav 消费。
-        return (b.name, "pwd:\(b.alias)")
+        guard opens > 0, ownedCount == 1 else { return nil }
+        // 只在「唯一归属」的那条长期密码上给直达目标。
+        for p in pwds where !p.temp {
+            guard let o = p.owner, !archived.contains(o) else { continue }
+            return ("#\(p.alias)", "pwd:\(p.alias)")
+        }
+        return nil
     }
 }
 
