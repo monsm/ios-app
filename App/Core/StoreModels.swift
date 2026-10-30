@@ -293,12 +293,13 @@ struct CachedLog: Codable {
     init(type: Int, typeName: String, idxRaw: UInt32, lockTime: Int64, lockTimeStr: String) {
         self.type = type; self.typeName = typeName; self.idxRaw = idxRaw
         self.lockTime = lockTime; self.lockTimeStr = lockTimeStr
+    }
+
 
     /// 2026-10-30 补（第 163 轮）：`typeName` 是**取日志那一刻快照下来的字符串**。
     /// 老版本写入的「未知(19)」会永久留在 `kf_logcache_` 里 —— 即使后来 `StatusParser.logTypes`
     /// 已经补上 `19: 指纹开门`，界面上仍显示「未知(19)」。**显示时总是用当前表重算**，缺失才回落缓存值。
     var displayTypeName: String { StatusParser.logTypes[type] ?? typeName }
-    }
 
     /// 容错解码（2026-10-29）：与 Ledger 同理 —— 加字段不该让整份日志缓存解不出，
     /// 那会让记录页在升级后突然"一条都没有"（readLogs 返回 []）。
