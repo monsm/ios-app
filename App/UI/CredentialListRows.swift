@@ -32,6 +32,9 @@ extension CredentialsView {
             guard editMode else { return }
             toggleSel(hit)
         }
+        // 2026-10-30 补（第 107 轮，**无障碍**）：编辑态"点整行 = 勾选"对 VoiceOver 不可用 ——
+        // 读屏用户进得了编辑态却勾不了任何一条。补一个具名动作（不抢默认动作，双击仍是"打开"）。
+        .accessibilityAction(named: Text("选择")) { if editMode { toggleSel(hit) } }
         // 849 非编辑态双击整行 = 拷贝该条密码明文 (与详情页同一条 405 通路);
         // 编辑态整行单击已归勾选, 双击里再判一次 editMode, 两种模式不抢手势
         .onTapGesture(count: 2) {

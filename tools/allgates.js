@@ -59,6 +59,7 @@ const GATES = [
   ['linerefcheck', []],
   ['cnpunctcheck', []],
   ['higaudit', []],
+  ['a11ycheck', []],
   ['sheetcover', ['--selftest']],
   ['sheetcover', []],
   ['copynum', ['--selftest']],

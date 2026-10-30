@@ -77,6 +77,11 @@ extension CredentialsView {
                 .foregroundStyle(DS.Palette.text)
                 .textSelection(.enabled)
                 .onTapGesture(count: 2) { otpBig.toggle() }
+                // 2026-10-30 补（第 107 轮，**无障碍**）：`.onTapGesture` 对 VoiceOver 不可激活 ——
+                // 原来只有 `.accessibilityLabel("临时码， 双击切大字号")`，读屏用户听得到这句话
+                // 却**没有任何办法触发它**（VoiceOver 的双击走的是"默认动作"，而默认动作没定义）。
+                // 补 `accessibilityAction`：把双击手势接成默认动作，标签里那句承诺才兑现得了。
+                .accessibilityAction { otpBig.toggle() }
                 .accessibilityLabel("临时码， 双击切大字号")
                 // 375 防窥挡片：**只有用户主动打开才盖住**（`otpShieldOn` 默认 false）。
                 // 2026-10-29 修复「生成临时码后被挡住看不见」：原实现用 `if !otpPeek` 而 otpPeek 默认 false，
@@ -91,6 +96,10 @@ extension CredentialsView {
                                 withAnimation(DS.Motion.standard) { otpReveal = true }
                             })
                             .onTapGesture(count: 2) { otpBig.toggle() }
+                            // 2026-10-30 补（第 107 轮，**无障碍**）：挡片的两条手势（长按揭开 / 双击切字号）
+                            // 对 VoiceOver 没有意义 —— 上面 OTP 文本的 `accessibilityLabel` 已经**替换**了码值，
+                            // 读屏根本不朗读数字，也就不存在"被挡住看不见"。挡片对读屏纯属视觉装饰，标 hidden。
+                            .accessibilityHidden(true)
                     }
                 }
                 // 防窥挡片的开关放在长按菜单里：不占版面，也不会误触。

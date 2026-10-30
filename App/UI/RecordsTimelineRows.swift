@@ -165,6 +165,17 @@ extension RecordsView {
     @ViewBuilder
 
 
+    /// 576 行点开详情 —— 手势与 VoiceOver 默认动作**共用这一份**（两份会漂移）。
+    private func openDetail(_ r: RowVM) {
+        if let rec = lookupRec(r) {
+            detailRec = rec
+        } else {
+            // 打不开要说得出为什么。原先这里 `detailRec = lookupRec(r)` 拿到 nil 就什么都不发生 ——
+            // 那正是 576 在默认「当前锁」视图里坏掉两个版本时用户看到的形状: 行能点, 点了没反应。
+            app.showToast("本机台账里没有这一行对应的记录数据 — 点右上角重新读取后再试")   // 576 本机台账里没有这一行
+        }
+    }
+
     func timelineRow(_ r: RowVM, flagged: Set<String>) -> some View {
         return timelineRowContent(r, flagged: flagged)
         // 738 告警行: 左侧 3pt 色条 + 浅红底 (danger 派生, 形状冗余)
@@ -174,15 +185,11 @@ extension RecordsView {
         .contentShape(Rectangle())
         // 576 行点开进详情 sheet (全字段 + 告警 727 清单 + 736 前后 3 条)。
         // 判据是 `lookupRec` 那一条 oid: 单锁与全部锁同一个口, 不再依赖"这次是哪种范围"。
-        .onTapGesture {
-            if let rec = lookupRec(r) {
-                detailRec = rec
-            } else {
-                // 打不开要说得出为什么。原先这里 `detailRec = lookupRec(r)` 拿到 nil 就什么都不发生 ——
-                // 那正是 576 在默认「当前锁」视图里坏掉两个版本时用户看到的形状: 行能点, 点了没反应。
-                app.showToast("本机台账里没有这一行对应的记录数据 — 点右上角重新读取后再试")   // 576 本机台账里没有这一行
-            }
-        }
+        // 2026-10-30 补（第 107 轮，**无障碍**）：整行点开详情，而 `.onTapGesture` 读屏激活不了 ——
+        // 576 详情页对读屏用户等于不存在。补按钮特征 + 默认动作，逻辑与手势共用 `openDetail`。
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { openDetail(r) }
+        .onTapGesture { openDetail(r) }
         // 185 左滑快捷操作: 只暴露行本来就有能力 (714 复制 / 577 跳凭证 / 186 备注 / 188 标旗)
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             if !r.credKey.isEmpty {

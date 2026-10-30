@@ -105,6 +105,10 @@ extension DeviceHomeView {
                         .accessibilityHidden(!isCurrent)
                         // 63 点一格弹出 dBm 原始数值: 三格表看不出"1 格强"与"2 格弱"的界
                         .onTapGesture { if isCurrent { showRssi.toggle() } }
+                        // 2026-10-30 补（第 107 轮，**无障碍**）：同上 —— 点信号格弹 dBm，
+                        // 而 `.onTapGesture` 读屏激活不了。补默认动作 + 按钮特征。
+                        .accessibilityAddTraits(.isButton)
+                        .accessibilityAction { if isCurrent { showRssi.toggle() } }
                         .overlay(alignment: .top) {
                             if isCurrent && showRssi {
                                 Text(sense.lastRssi.map { "\($0) dBm" } ?? "未读到信号")

@@ -161,6 +161,9 @@ struct MaskedDigits: View {
         }
         // 849 兜住位与位之间的缝: 双击缝里也拷整条
         .onTapGesture(count: 2) { copyAll() }
+        // 2026-10-30 补（第 107 轮，**无障碍**）：内层那枚有 `accessibilityAction(named: "拷整条明文")`，
+        // 而外层"双击位与位之间的缝"这条手势没有对应动作 —— 补齐，两处语义一致。
+        .accessibilityAction(named: "拷整条明文") { copyAll() }
         // 370 贴近复蔽: 面部贴近 → 已揭示的位立刻复遮 (与 373 到点复遮同一结局, 只是触发源不同)
         .proximityRemask {
             if !revealed.isEmpty { revealed = [] }

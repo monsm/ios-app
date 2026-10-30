@@ -72,7 +72,7 @@
         { "id": "ui.contrast", "name": "对比度", "status": "done", "evidence": "contrast 闸门" },
         { "id": "ui.touch", "name": "触达区域 ≥44pt", "status": "done", "evidence": "DS.Hit.min + 第 30 轮" },
         { "id": "ui.icon", "name": "图标一致性", "status": "done", "evidence": "iconmap --strict 闸门" },
-        { "id": "ui.a11y", "name": "无障碍标签 / VoiceOver", "status": "partial", "evidence": "A11Y-FREQUENCY 有清单；第 102 轮修了 2 处朗读标点；**未逐控件核 label**" }
+        { "id": "ui.a11y", "name": "无障碍标签 / VoiceOver", "status": "done", "evidence": "第 107 轮：a11ycheck 闸门（56 道）+ 修 7 处「有 .onTapGesture 但无 accessibilityAction」（读屏看得见点不动）→ 硬闸门归零；第 102 轮修 2 处朗读标点；higaudit H7 图标按钮 label 归零。残余：37 处装饰性 Image 的 hidden/label 属上下文判断，工具只报线索" }
       ]
     },
     {

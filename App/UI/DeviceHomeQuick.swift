@@ -275,6 +275,10 @@ extension DeviceHomeView {
                                 // 点成员行 → 记录页按 TA 过滤。不可证明的行不响应（不猜、不弹"未知成员"）。
                                 .contentShape(Rectangle())
                                 .onTapGesture { if let id = r.whoId { openMemberRecords(id) } }
+                                // 2026-10-30 补（第 107 轮，**无障碍**）：这一行本来就有 `accessibilityHint`
+                                // 说「查看这位成员的记录」，但没有可激活的动作 —— 提示成了空话。
+                                .accessibilityAddTraits(.isButton)
+                                .accessibilityAction { if let id = r.whoId { openMemberRecords(id) } }
                                 .accessibilityHint(r.whoId == nil ? "这条记录的归属推断不出来，不能按成员筛选" : "查看这位成员的全部记录")
                                 Spacer(minLength: 0)
                             }

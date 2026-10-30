@@ -247,6 +247,8 @@ jobs:
 
       - name: '选用镜像里最新的 Xcode (最新 iOS SDK)'
         run: |
+      - name: 'VoiceOver 可激活闸门 (判失败: 有 .onTapGesture 但无 accessibilityAction —— 读屏用户看得见点不动)'
+        run: node tools/a11ycheck.js
           # 镜像里同时装了 27.0/27.1/27.2, 默认可能是旧的 —— 显式挑版本号最大的那个,
           # 否则 deploymentTarget 与 SDK 会差档 (报 "deployment target is greater than SDK")。
           echo "已安装: $(ls -d /Applications/Xcode*.app | xargs -n1 basename | tr '\n' ' ')"
