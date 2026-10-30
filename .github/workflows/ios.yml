@@ -44,6 +44,9 @@ jobs:
       - name: '工作流自检 (step 名裸冒号 / 块体截断 / 重名 —— 统一交给 workflowcheck.js)'
         run: node tools/workflowcheck.js
 
+      - name: 'Swift 属性配对闸门 (判失败: @ViewBuilder 挂到不返回 View 的声明上 —— CI 报 unexpected non-void return)'
+        run: node tools/attrcheck.js
+
       - name: 金标漂移校验 (committed 必须等于 JS 核心输出; 改 vendor 后须重生成并提交)
         run: node tools/golden.js --check
 
