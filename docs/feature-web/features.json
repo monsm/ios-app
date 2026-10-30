@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T04:43:00.530Z",
+    "generated": "2026-10-30T05:00:28.327Z",
     "sources": [
       {
         "scout": "android-native",
@@ -30417,7 +30417,7 @@
           "line": 128,
           "symbol": "rollbackFamilies",
           "note": "",
-          "text": "return [kc.mac: String(data: d, encoding: .utf8) ?? \"\"]"
+          "text": "var dongles: [String]"
         },
         {
           "platform": "ios",
@@ -30425,7 +30425,7 @@
           "line": 148,
           "symbol": "struct RollbackBundle",
           "note": "",
-          "text": "let all = (try? FileManager.default.contentsOfDirectory(at: rollbackDir,"
+          "text": "},"
         },
         {
           "platform": "ios",
@@ -30433,7 +30433,7 @@
           "line": 159,
           "symbol": "makeRollbackPoint",
           "note": "",
-          "text": "/// 2026-10-14: register 每进程只能一次 (二次注册抛 NSInternalInconsistencyException)。"
+          "text": "// 2026-10-14: 秒级时间戳同一秒两次快照会同名覆盖 -> 改毫秒。"
         },
         {
           "platform": "ios",
@@ -30441,7 +30441,7 @@
           "line": 190,
           "symbol": "canUndoLastRestore",
           "note": "",
-          "text": "guard let data = text.data(using: .utf8),"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -30449,7 +30449,7 @@
           "line": 208,
           "symbol": "restoreRollbackSnapshot",
           "note": "",
-          "text": "static func parsePreview(text: String, password: String?) throws -> (preview: Preview, bundle: BackupBundle) {"
+          "text": "static func checksumState(_ text: String) -> ChecksumState {"
         }
       ],
       "platformEvidence": {
@@ -31877,7 +31877,7 @@
           "line": 470,
           "symbol": "upgradeChain",
           "note": "",
-          "text": ""
+          "text": "var h = bkEvents()"
         },
         {
           "platform": "ios",
@@ -31885,7 +31885,7 @@
           "line": 474,
           "symbol": "v3 mac 归一化",
           "note": "",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
