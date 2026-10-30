@@ -24,7 +24,8 @@ extension LockService {
 
     func readLockTime() async throws -> Int64 {
         let st = try await getStatus()
-        guard let t = st.lockTime else { throw BLEErrorX.msg("状态中无锁钟 (KLV#04)") }
+        // 2026-10-30（界面全维度 · 错误文案）：`KLV#04` 是协议字段号，用户读不懂。
+        guard let t = st.lockTime else { throw BLEErrorX.msg("门锁这次没有回报时间 — 请重新读取状态；若反复如此，可能是固件版本较老不支持校时") }
         return t
     }
 
@@ -73,10 +74,12 @@ extension LockService {
             cred = kc.ekey                                     // 配网时已签发
         } else {
             let pin = pinDec ?? kc.pins.first
-            guard let pin, !pin.isEmpty else { throw BLEErrorX.msg("无 PIN 可用： 需要 ekey 或 PIN 才能签发开锁凭证") }
+            // 2026-10-30（同上）：说清"去哪补"。
+            guard let pin, !pin.isEmpty else { throw BLEErrorX.msg("这把锁还没有可用的开锁凭证 — 请先在「凭证」页添加一条密码，或重新配对这把锁") }
             cred = ZKCmdBuilder.buildEkeyOpen(kc.skey.lowercased(), kc.mac.lowercased(), pin)
         }
-        guard !cred.isEmpty else { throw BLEErrorX.msg("开锁凭证为空 (ekey/PIN 签发失败), 已中止下发") }
+        // 2026-10-30（同上）：不暴露 ekey/PIN 术语。
+        guard !cred.isEmpty else { throw BLEErrorX.msg("没能生成开锁凭证 — 请重新配对这把锁，或改用「凭证」页里的密码开锁") }
         let r = try await exec(ZKCmdBuilder.cmd04Open(cred, klv01Hex: "0000"), retries: 2)
         return r.rc  // 0 成功; 22 双验继续
     }

@@ -417,7 +417,9 @@ final class HardwareService: ObservableObject {
         progress("步骤 3/5: 写入 WiFi 配置 (cmd 31)")
         let wf = try await send(ZKCmdBuilder.cmd31GWSetWifi(ssid, password), target: mac, timeoutMs: 10000)
         let ec = errCodeOf(wf)
-        if ec != 0 { throw BLEErrorX.msg("WiFi 配置失败 (errCode \(ec))") }
+        // 2026-10-30（界面全维度 · 错误文案）：`errCode` 是协议内部码，用户不知道该怎么办。
+        // 补人话指引：WiFi 配置失败最常见的两个原因是名称/密码错、或网关不支持 5GHz。
+        if ec != 0 { throw BLEErrorX.msg("WiFi 配置失败（网关回绝，代码 \(ec)）— 请确认 WiFi 名称与密码无误，且是 2.4GHz 网络，然后重试") }
         progress("步骤 4/5: 重启网关使其生效 (cmd 35)")
         let rb = try await send(ZKCmdBuilder.cmd35GWReboot(), target: mac)
         let ec2 = errCodeOf(rb)
@@ -433,7 +435,8 @@ final class HardwareService: ObservableObject {
     func rebootGateway(mac: String) async throws {
         let rb = try await send(ZKCmdBuilder.cmd35GWReboot(), target: mac)
         let ec = errCodeOf(rb)
-        if ec != 0 { throw BLEErrorX.msg("重启失败 (errCode \(ec))") }
+        // 2026-10-30（同上）：补人话指引。
+        if ec != 0 { throw BLEErrorX.msg("网关重启未确认（代码 \(ec)）— 请靠近网关重试；若网关灯已熄灭又亮起，说明其实已重启") }
         ble.disconnect()
     }
     // 网关应答码: 缺 KLV#01 → 0 (App Co/So/Mo 构造器默认)。
