@@ -214,10 +214,22 @@ struct PwdDetailStudio: View {
                             Button {
                                 Task { await renewExpired(p) }
                             } label: {
-                                Label("续期 7 天 (原值沿用 · 锁端留存未确证)", systemImage: "arrow.triangle.2.circlepath")
+                                // 2026-10-30 补（第 108 轮，**三态齐备**）：
+                                // `renewing` 这个 guard 变量一直存在（防重入），但界面从来没读过它 ——
+                                // 续期要走两次 BLE await（ensureConnected + pwdModify），真机上可能好几秒，
+                                // 期间按钮毫无变化：用户会以为"没点中"再点一次（guard 挡住了，但感觉像卡死）。
+                                // 现在进行中显示菊花 + 文案改成"正在续期…"，并置灰。
+                                HStack(spacing: DS.Space.xs) {
+                                    if renewing {
+                                        ProgressView().controlSize(.small)
+                                    }
+                                    Label(renewing ? "正在续期…" : "续期 7 天 (原值沿用 · 锁端留存未确证)",
+                                          systemImage: "arrow.triangle.2.circlepath")
+                                }
                             }
                             .vkFont(.subheadline)
                             .foregroundStyle(DS.Palette.accentText)
+                            .disabled(renewing)
                         }
                     }
                     Section("时段与归属") {
@@ -312,7 +324,15 @@ struct PwdDetailStudio: View {
         } catch {
             // 用函数入口捕获的 kc.mac，不用**活读**的 `mac` 计算属性：两次 await 之间当前锁可能被
             // AppIntent / kf:// 深链改掉，那样成功路径写 A 锁、失败入队却指向 B 锁。
-            app.showToast("锁未连接 —— 续期只在页面内生效，未写入门锁")   // 365 锁未连接
+            //
+            // 2026-10-30 修复（第 108 轮，**错误文案双重误导**）：
+            //   原句 `app.showToast("锁未连接 —— 续期只在页面内生效，未写入门锁")` 两处都不对：
+            //     ① 不管实际是什么错（rc 拒绝 / 超时 / 参数被拒 / 真的没连上）都报「锁未连接」——
+            //        用户按这句去排查方向全错；
+            //     ② 「续期只在页面内生效」暗示**本机台账已经改了**，而 DB 写入全在 `do` 里、
+            //        await 之后 —— catch 分支里**一个字都没写**，实际是"什么都没发生"。
+            //   现在：带上真实原因，并明确说清"没有任何改动"。
+            app.showToast("续期失败：\(error.localizedDescription) —— 有效期未改动")
         }
     }
     private func row(_ k: String, _ v: String) -> some View {
