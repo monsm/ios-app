@@ -331,7 +331,13 @@ enum ZKProtocol {
 
 // ---------- 时间显示 (JS utils/time.js) ----------
 enum ProtoTime {
+    /// 2026-10-30 修复（第 75 轮）：`sec == 0` 是「锁端时钟没读到 / 无时钟型号」的占位值，
+    /// 而 `protoSecondsToUnix(0)` 恰好等于协议纪元 2010-01-01 的 Unix 秒 ——
+    /// 于是 `localStr(0)` 会把它渲染成 `2010-01-01 08:00:00`，界面上像"锁内时间真的是 2010 年"。
+    /// 与 `StatsKit.dateOf`（早已把 lockTime == 0 收成 nil，见 §10.32）同口径：**0 = 没有时间**，返回空串。
+    /// 调用点（`DeviceHomeSupport` 校时页 / `DeviceInfoView` 锁内时间）的 `?? "—"` 兜底本来就等着空串。
     static func localStr(_ sec: Int64) -> String {
+        guard sec > 0 else { return "" }
         let d = Date(timeIntervalSince1970: ZKProtocol.protoSecondsToUnix(sec))
         let f = DF.cached("yyyy-MM-dd HH:mm:ss")
         return f.string(from: d)
