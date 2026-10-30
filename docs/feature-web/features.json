@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T13:53:34.781Z",
+    "generated": "2026-10-30T13:59:59.129Z",
     "sources": [
       {
         "scout": "android-native",
@@ -4638,7 +4638,7 @@
           "line": 537,
           "symbol": "coldStartScan()",
           "note": "",
-          "text": "/// 69 蓝牙直通条: 系统蓝牙关闭时全 App 顶部引导条 (深链不可用 → 系统设置指引文案)。"
+          "text": "static func rssiLevel(_ rssi: Int?) -> Int {"
         },
         {
           "platform": "ios",
@@ -4747,7 +4747,7 @@
           "line": 404,
           "symbol": "kf_wd_heals + 1",
           "note": "",
-          "text": "DB.store.get(Int.self, \"kf_linkrssi_\" + mac)"
+          "text": "let key = \"kf_linkrssi_\" + mac"
         }
       ],
       "platformEvidence": {
@@ -4823,7 +4823,7 @@
           "line": 419,
           "symbol": "struct FailKind",
           "note": "",
-          "text": "guard self != nil, !Task.isCancelled else { return }   // 只为\"已销毁/已取消就别扫\""
+          "text": "private static let lastRssiPersistAt = Locked([String: Date]())"
         },
         {
           "platform": "ios",
@@ -4831,7 +4831,7 @@
           "line": 425,
           "symbol": "icon 计算属性",
           "note": "",
-          "text": "let t0 = Date()"
+          "text": "/// 134 冷启动先扫描: App 启动广播扫描一次, 把可见已配对锁的 RSSI 落档 (不连接、不下发)"
         },
         {
           "platform": "ios",
@@ -4839,7 +4839,7 @@
           "line": 435,
           "symbol": "classifyFailure",
           "note": "",
-          "text": "}"
+          "text": "coldScanTask?.cancel()"
         }
       ],
       "platformEvidence": {
@@ -7274,7 +7274,7 @@
           "line": 492,
           "symbol": "func scan(mac:timeoutMs:)",
           "note": "",
-          "text": "guard !mac.isEmpty else { return }"
+          "text": "sessionSince.map { Int(Date().timeIntervalSince($0) / 60) } ?? 0"
         },
         {
           "platform": "ios",
@@ -7282,7 +7282,7 @@
           "line": 504,
           "symbol": "300ms 轮询 + 取消判据",
           "note": "",
-          "text": "// ---------- AppState 宿主注册 (LinkSense 只读协作, 不建循环依赖) ----------"
+          "text": "///   · enterPage  —— DeviceHomeView 的 .task 里，首页渲染完才跑;"
         },
         {
           "platform": "ios",
@@ -7290,7 +7290,7 @@
           "line": 519,
           "symbol": "noteScannedRssi",
           "note": "",
-          "text": "static func rssiLevel(_ rssi: Int?) -> Int {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -7298,7 +7298,7 @@
           "line": 525,
           "symbol": "saveRssi / rssiFor",
           "note": "",
-          "text": "return 0"
+          "text": "/// `nonisolated(unsafe)`: 读取方跨隔离域 (BLE 回调 / 通知代理 / 后台 Task),"
         }
       ],
       "platformEvidence": {
