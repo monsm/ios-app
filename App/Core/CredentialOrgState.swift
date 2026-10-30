@@ -32,6 +32,22 @@ extension CredentialOrg {
         scheduleAlertsOrdered(id: id, p: p, a: a, mac: mac)
     }
 
+    /// 2026-10-30 新增（第 94 轮）：**删除/停用凭证时取消已排程的到期提醒**。
+    ///
+    /// 在此之前 `removePendingNotificationRequests` 只在 `scheduleAlertsOrdered` 里被调 ——
+    /// 也就是只有「改提醒开关」会取消，**删凭证不会**。于是：
+    ///   建一条 10 月 25 日到期的密码并开「7 天提醒」→ 10 月 20 日把它删了
+    ///   → 10 月 18 日那条提醒**照旧弹出**，说「密码临期」—— 而那条密码早已不存在。
+    /// 用户会以为删除没生效，或者被一条指向空气的提醒反复打扰。
+    static func cancelAlerts(mac: String, alias: Int) {
+        let id = "c6.alert.\(mac).p\(alias)"
+        let c = UNUserNotificationCenter.current()
+        c.getPendingNotificationRequests { reqs in
+            let stale = reqs.map(\.identifier).filter { $0 == id || $0.hasPrefix(id + ".") }
+            if !stale.isEmpty { c.removePendingNotificationRequests(withIdentifiers: stale) }
+        }
+    }
+
     /// 删旧 → 排新，严格串行（见 scheduleAlerts 的竞态说明）。
     private static func scheduleAlertsOrdered(id: String, p: LedgerPwd, a: CredAlert, mac: String) {
         let c = UNUserNotificationCenter.current()

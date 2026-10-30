@@ -90,6 +90,10 @@ extension DB {
         var l = ledger(mac)
         l.pwds.removeAll { $0.alias == alias }
         saveLedger(mac, l)
+        // 2026-10-30 修复（第 94 轮）：删凭证必须一并取消它的到期提醒。
+        // 这里是全仓所有 `DB.delPwd` 的唯一落点（停用/彻底删除/批量/换槽/恢复都走它），
+        // 所以取消放在这一处即可覆盖全部删除路径。
+        CredentialOrg.cancelAlerts(mac: mac, alias: alias)
     }
 
     static func rePwd(_ mac: String, _ alias: Int, _ pwd: String) {
