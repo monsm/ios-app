@@ -61,6 +61,7 @@ const GATES = [
   ['a11ycheck', []],
   ['workflowcheck', []],
   ['attrcheck', []],
+  ['commacheck', []],
   ['sheetcover', ['--selftest']],
   ['sheetcover', []],
   ['copynum', ['--selftest']],
