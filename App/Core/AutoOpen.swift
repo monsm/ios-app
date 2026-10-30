@@ -543,13 +543,18 @@ final class AutoOpenController {
     private func dispatch(mac: String, app: AppState) async {
         defer { inFlight = false }
         do {
-            try await app.lock.ensureConnected(mac: mac)
-            // 2026-10-27 审核修复：闩锁与冷却必须在**下发之前**落，否则异常/超时路径
-            // 两者都不置位，而 lastDispatch 已经写了 —— 6 秒冷却一过就再发一帧，
-            // 站在门口链路抖动时会每 6 秒重试一次真实开门（手动路径明确禁止这么做）。
+            // 2026-10-31（第 55 轮，**写入时机的第二类缺陷**）：闩锁与冷却原来在
+            // `ensureConnected` **之后** —— 建连失败时走 catch，两者都不置位 ⇒
+            // 站在门口信号抖动会让 2s tick 每拍都重试「建连 + 判定」；一旦某次建连成功，
+            // 冷却与闩锁都是空的 ⇒ 立刻真发一帧 04。
+            // 第 528-530 行注释本意是「在下发之前落」，但它的位置在**建连之后** ——
+            // 「之前」的参照物错了：真正的临界点是**这次判定被采纳**的那一刻，不是 04 出手机的那一刻。
+            // 现在移到 ensureConnected 之前：判定一旦采纳，无论建连成败都算「这次接近已消费」。
             eventFired.insert(mac)
             lastDispatch[mac] = Date().timeIntervalSince1970
             AutoOpen.setPersistedLastDispatch(mac, lastDispatch[mac]!)   // 跨重启保持冷却
+
+            try await app.lock.ensureConnected(mac: mac)
             let rc = try await app.lock.unlock(mac: mac)
             switch rc {
             case 0:
