@@ -49,8 +49,12 @@ object AutoOpenKit {
     }
     fun armThreshold(base: Int = BASE): Int = base
 
+    // 2026-10-31（第 32 轮，**同一个 Kotlin 编译错误**）：`base` 是 Int，`10 * log10(0.5)` 是 Double ——
+    // `Int + Double` 在 Kotlin 里**没有隐式提升**，编译必拒。
+    // 第 31 轮我只修了 p95 里的那一处，没搜同类的第二处 ⇒ CI 继续红。
+    // 这里把 base 显式转 Double（与 Swift `Double(base) + 10 * log10(0.5)` 同形）。
     fun disarmThreshold(base: Int = BASE): Int =
-        (base + 10 * log10(0.5)).roundToInt()
+        (base.toDouble() + 10 * log10(0.5)).roundToInt()
 
     /** 已武装需掉到解除线以下才解除; 未武装需越过武装线才武装 (AutoOpenKit.rssiSample 逐行)。 */
     fun rssiSample(prevArmed: Boolean, rssi: Int, base: Int = BASE): Boolean {
