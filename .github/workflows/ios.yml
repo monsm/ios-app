@@ -41,6 +41,9 @@ jobs:
         with:
           node-version: "24"
 
+      - name: '导航架构闸门 (判失败: NavigationLink 指向一级页面 ⇒ Tab 里套 Tab)'
+        run: node tools/uinavarchcheck.js
+
       - name: '设计令牌闸门 (判失败: 硬编码间距/圆角不随「密度」「圆角」设置变化)'
         run: node tools/uitokencheck.js
 

@@ -79,6 +79,7 @@ const GATES = [
   ['copynum', ['--selftest']],
   ['copynum', ['App']],
   ['destmap', []],
+  ['uinavarchcheck', []],
   ['uitokencheck', []],
   ['uishellcheck', []],
   ['uicoverage', []],
