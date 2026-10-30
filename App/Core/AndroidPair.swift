@@ -40,7 +40,10 @@ enum AndroidPair {
     // 见 AUDIT-A F-42；改它需要同步 golden，故留待与 Android 一起改。
     static func payload(_ kc: Keychain) -> String? {
         guard let e = ekey(for: kc) else { return nil }
-        let name = kc.name.isEmpty ? LockArchive.displayName(kc) : kc.name
+        // 2026-10-30 清理（第 76 轮）：`LockArchive.displayName` 本身已是「name 非空用 name、否则型号」
+        // 这条口径（LockKeeperApp:255 写明「口径在 LockArchive.displayName 一份」）——
+        // 外面再包一层 `kc.name.isEmpty ? … : kc.name` 是纯重复。直接用它。
+        let name = LockArchive.displayName(kc)
         let dict: [String: Any] = [
             "v": 1,
             "n": name,
@@ -54,7 +57,10 @@ enum AndroidPair {
     }
 
     /// 安卓端把这张码存下来之后, 本机不再需要它 —— 但用户可能想再给第二台手机扫, 所以入口常驻。
-    static func displayName(_ kc: Keychain) -> String {
-        kc.name.isEmpty ? LockArchive.displayName(kc) : kc.name
-    }
+    ///
+    /// 2026-10-30 删除（第 76 轮）：这里原本有个 `displayName(_ kc:)`，函数体是
+    /// `kc.name.isEmpty ? LockArchive.displayName(kc) : kc.name` —— 而 `LockArchive.displayName`
+    /// **本身就是这条规则**（`return kc.name.isEmpty ? model : kc.name`）。
+    /// 等于包了一层再判同一个条件，且容易让人以为"这里有一条独立口径"。
+    /// 显示名口径只有一份，调用方直接用 `LockArchive.displayName(kc)`。
 }

@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T01:41:32.573Z",
+    "generated": "2026-10-30T01:50:52.723Z",
     "sources": [
       {
         "scout": "android-native",
@@ -15696,7 +15696,7 @@ const DATA = {
           "line": 89,
           "symbol": ".onAppear(perform: build)",
           "note": "",
-          "text": ".captureShield(\"这张二维码是开锁钥匙\\n屏幕正在被录制或截图，已遮挡\")"
+          "text": "// 检测到录屏/截图时整块遮住，停止后自动恢复。"
         }
       ],
       "platformEvidence": {
@@ -20736,7 +20736,7 @@ const DATA = {
           "line": 94,
           "symbol": "guard let p = AndroidPair.payload(kc)",
           "note": "",
-          "text": ".onAppear(perform: build)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -20744,7 +20744,7 @@ const DATA = {
           "line": 96,
           "symbol": "failed = \"这把锁在本机没有可用的开锁凭证 …\"",
           "note": "",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -20752,7 +20752,7 @@ const DATA = {
           "line": 76,
           "symbol": "Text(failed.isEmpty ? \"正在生成…\" : failed)",
           "note": "",
-          "text": ".accessibilityHidden(true)"
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         }
       ],
       "platformEvidence": {
@@ -20822,7 +20822,7 @@ const DATA = {
           "line": 29,
           "symbol": ".interpolation(.none)",
           "note": "",
-          "text": "Image(uiImage: qr)"
+          "text": "if let qr {"
         },
         {
           "platform": "ios",
@@ -20830,7 +20830,7 @@ const DATA = {
           "line": 66,
           "symbol": "ShareLink(item: Image(uiImage: qr), …)",
           "note": "",
-          "text": ""
+          "text": ".variantCallout(DS.Palette.warn, .control, wash: 0.10)"
         },
         {
           "platform": "ios",
@@ -20838,7 +20838,7 @@ const DATA = {
           "line": 111,
           "symbol": "filter.correctionLevel = \"M\"",
           "note": "",
-          "text": "/// CIQRCodeGenerator + 整数倍放大。纠错档用 M: 屏幕对屏幕扫, 不需要 H 那种密度,"
+          "text": ""
         }
       ],
       "platformEvidence": {

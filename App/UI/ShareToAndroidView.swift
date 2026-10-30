@@ -12,7 +12,8 @@ struct ShareToAndroidView: View {
     @State private var qr: UIImage?
     @State private var failed = ""
 
-    private var title: String { AndroidPair.displayName(kc) }
+    // 2026-10-30（第 76 轮）：AndroidPair.displayName 已删（它只是 LockArchive.displayName 的重复包装）。
+    private var title: String { LockArchive.displayName(kc) }
     private var macText: String {
         // 显示序 (AA:BB:CC:DD:EE:FF) 只用于给人核对, 载荷里是去冒号的小写
         let m = kc.mac.lowercased()
