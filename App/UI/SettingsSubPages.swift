@@ -87,7 +87,9 @@ struct SafemodeIntroView: View {
         Form {
             if isOtp {
                 Section("临时密码 (ZOTP) 介绍") {
-                    Text("ZOTP 是临时开锁密码：6 位数字密码，每 30 分钟更换一次，同一窗口内最多 99 个。").vkFont(.footnote)
+                    // 2026-10-30 修复（第 92 轮）：原写「最多 99 个」—— 与生成侧 `if idx > 99 { 拒绝 }` 矛盾。
+                    // `idx` 允许 0…99 共 **100** 个；`CredentialOtp` 的提示与注释也都写 100。
+                    Text("ZOTP 是临时开锁密码：6 位数字密码，每 30 分钟更换一次，同一窗口内最多 100 个。").vkFont(.footnote)
                     // 2026-10-30 修复（第 74 轮）：`(0E)` 是协议命令号，说明页不该让用户看到内部编号。
                     Text("生成前请先校准门锁时间，否则手机与锁的时间窗不同步会导致密码不匹配。").vkFont(.footnote)
                 }
