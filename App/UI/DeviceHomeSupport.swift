@@ -20,7 +20,7 @@ struct SyncTimeView: View {
         Form {
             Section {
                 if app.current != nil {
-                    Text("将手机时间同步到门锁内。校准前会先读锁钟并补偿偏差。")
+                    Text("将手机当前时间下发给门锁。上面那行是锁端回报的锁钟，仅供核对 —— 本操作不做偏差补偿。")   // 2026-10-30：syncTime() 只把偏差写日志，cmd0E 用的是手机当前时间
                         .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                     // 2026-10-30 修复（第 123 轮）：`ProtoTime.localStr(0)` 返回**空串**，而 `?? "—"` 只兜 nil，

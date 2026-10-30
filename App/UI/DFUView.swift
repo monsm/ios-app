@@ -127,7 +127,7 @@ struct DFUView: View {
             Text("固件包")
         } footer: {
             Text("包内需要 manifest.json + bin + dat；解包后逐项校验 CRC 与尺寸。"
-                 + "**本仓没有厂商签名校验能力**（锁内没有公钥），包的来源请自己确认。")
+                 + "本仓没有厂商签名校验能力（锁内没有公钥），包的来源请自己确认。")   // 2026-10-30：Text(String) 不解析 markdown，原星号会原样显示
                 .vkFont(.caption)
         }
     }
@@ -236,7 +236,7 @@ struct DFUView: View {
         }
         confirmDestructive("开始固件升级",
                           "将把「\(p.version ?? "未知版本")」写入门锁「\(kc.name.isEmpty ? kc.mac : kc.name)」。"
-                          + "升级中门锁会重启并断开蓝牙，**中途断电有变砖风险**；"
+                          + "升级中门锁会重启并断开蓝牙，中途断电有变砖风险；"   // 2026-10-30：UIAlertController 不渲染 markdown
                           + "本仓无法校验固件签名，请确认这个包来自可信来源。",
                           confirmTitle: "开始升级") {
             Task { await run(p, kc: kc) }

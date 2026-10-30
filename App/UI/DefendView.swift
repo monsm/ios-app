@@ -200,7 +200,7 @@ struct DefendView: View {
             // 但锁端状态帧不带布防字段（DefendCfg 是本机记忆 + 锁端 control 的合成），
             // 所以这里只做"重新读一次锁状态"确认链路还活着，不宣称读到了布防。
             await app.refreshStatusQuietly(manual: true)
-            app.showToast(mode == .off ? "已撤防" : "布防成功")
+            app.showToast(mode == .off ? "撤防命令已下发（锁端是否生效以现场为准）" : "布防命令已下发（锁端是否生效以现场为准）")   // 2026-10-30：上面注释明确「不宣称读到了布防」，原 toast 却写「成功」
         } catch {
             app.showToast("布防失败： \(error.localizedDescription)")
         }
