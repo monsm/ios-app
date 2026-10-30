@@ -264,9 +264,8 @@ struct PwdStudio: View {
                     DB.addPwd(kc.mac, LedgerPwd(alias: alias, from: e.from, to: e.to, temp: e.temp,
                                                 at: Date().timeIntervalSince1970 * 1000, pwd: pwd, owner: owner, note: finalNote))
                 } else {
-                    DB.rePwd(kc.mac, alias, pwd)
-                    DB.setPwdNote(kc.mac, alias, finalNote)
-                    DB.setPwdOwner(kc.mac, alias, owner)
+                    // 2026-10-30（第 161 轮）：三次台账读改写 → 一次 `updatePwd`（一条审计记录，不是三条）。
+                    DB.updatePwd(kc.mac, alias, pwd: pwd, note: finalNote, owner: owner)
                 }
             } else {
                 alias = try await app.lock.pwdAdd(pwd: pwd, validFrom: fromS, validTo: toS)

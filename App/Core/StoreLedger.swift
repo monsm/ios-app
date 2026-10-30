@@ -120,6 +120,19 @@ extension DB {
         saveLedger(mac, l)
     }
 
+    /// 2026-10-30（第 161 轮）：一次读改写完成 `pwd` / `note` / `owner` 三处修改。
+    /// 原来调用方连调 `rePwd` / `setPwdNote` / `setPwdOwner` —— 那是**三次整表解码 + 编码 + 三条台账变更记录**，
+    /// 而它们逻辑上是同一个动作（改造一条密码）。合并后只有一条 `台账变更` 审计记录。
+    static func updatePwd(_ mac: String, _ alias: Int, pwd: String, note: String, owner: String?) {
+        var l = ledger(mac)
+        for i in l.pwds.indices where l.pwds[i].alias == alias {
+            l.pwds[i].pwd = pwd
+            l.pwds[i].note = note
+            l.pwds[i].owner = owner
+        }
+        saveLedger(mac, l)
+    }
+
     static func addFp(_ mac: String, _ f: LedgerFp) {
         var l = ledger(mac)
         l.fps.removeAll { $0.batch == f.batch }
