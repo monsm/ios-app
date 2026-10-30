@@ -1046,7 +1046,9 @@ private fun AirTagLayer(
     ) {
         // 顶部: 正在查找 + 锁名 (对齐 AirTag 精确查找的标题区)
         Column(Modifier.padding(start = 28.dp, top = 56.dp)) {
-            Text("正在查找", color = Color.White.copy(alpha = 0.85f), fontSize = 15.sp, fontWeight = FontWeight.Medium)
+            // 2026-10-31（第 45 轮 · 对比度）：白对 #0B6B3A = 6.6:1，alpha 0.85 稀释后约 5.3:1（达标但余量小）。
+            // 提到 0.95 ⇒ 约 6.1:1，与标题的视觉层级差靠字号而非透明度表达。
+            Text("正在查找", color = Color.White.copy(alpha = 0.95f), fontSize = 15.sp, fontWeight = FontWeight.Medium)
             Spacer(Modifier.height(2.dp))
             Text(name, color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Bold)
         }
@@ -1066,7 +1068,7 @@ private fun AirTagLayer(
         // 底部左: 粗估距离 + 方向 (诚实: 是估计值, 不是 UWB 测距)
         Column(Modifier.align(Alignment.BottomStart).padding(start = 28.dp, bottom = 116.dp)) {
             Text(distText, color = Color.White, fontSize = 34.sp, fontWeight = FontWeight.Bold)
-            Text(directionLabel(bearing), color = Color.White.copy(alpha = 0.92f), fontSize = 26.sp, fontWeight = FontWeight.SemiBold)
+            Text(directionLabel(bearing), color = Color.White.copy(alpha = 0.95f), fontSize = 26.sp, fontWeight = FontWeight.SemiBold)
         }
         // 左下: 收起 (回到手动底层)
         Box(Modifier.align(Alignment.BottomStart).padding(28.dp)) {
@@ -1077,7 +1079,9 @@ private fun AirTagLayer(
                 CircleIconButton(
                     label = if (soundOn) "🔊" else "🔇",
                     contentDescription = if (soundOn) "关闭提示音" else "打开提示音",
-                    onClick = onToggle,
+                    // 2026-10-31（第 45 轮，**编译错误**）：参数名是 `onToggleSound`（见函数签名），
+                    // 内部却写成 `onToggle` —— unresolved reference，APK 编译必拒。
+                    onClick = onToggleSound,
                 )
         }
     }
