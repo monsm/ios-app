@@ -198,7 +198,14 @@ final class LinkSense: ObservableObject {
                 guard let self else { return }
                 self.autoReconnectTick()
                 self.syncBtOn()
-                try? await Task.sleep(for: .seconds(2))
+                // 2026-10-30（提速，第 2 项）：**自动开锁的最大延迟源**。
+                // 门锁一旦连上就停止广播，`didDiscover` 不再产生样本 —— 武装判定只能靠这一拍
+                // 主动读 `readLinkRSSI`。原来固定 2 秒一拍 ⇒ 到场判定最多滞后 2 秒。
+                // 开着自动开锁时提到 0.5 秒（4×），把「走到门口 → 开锁」压到 0.5s 内；
+                // **关着时保持 2 秒** —— 不为一个没用到的功能付电量。
+                // 注：`readLinkRSSI` 走的是 CoreBluetooth 的 `readRSSI()`（系统 API，不占协议往返），
+                // 所以提速不增加协议开销，只多几次系统级 RSSI 查询。
+                try? await Task.sleep(for: .seconds(AutoOpen.on ? 0.5 : 2))
             }
         }
     }

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T14:39:54.233Z",
+    "generated": "2026-10-30T14:46:50.673Z",
     "sources": [
       {
         "scout": "android-native",
@@ -4723,7 +4723,7 @@
           "line": 370,
           "symbol": "startDeadWatch()",
           "note": "",
-          "text": "}"
+          "text": "// （下面一行同时比 macRaw 与 macDisplay），而 Android 只认显示序。"
         },
         {
           "platform": "ios",
@@ -4731,7 +4731,7 @@
           "line": 380,
           "symbol": "deadbeatCheck()",
           "note": "",
-          "text": "// 用户主动下拉重扫，立即刷新（@Published 赋值本身就会发通知，不需再手发）。"
+          "text": "Self.saveRssi(mac: target, rssi: f.rssi)"
         },
         {
           "platform": "ios",
@@ -4739,7 +4739,7 @@
           "line": 385,
           "symbol": "idle > 600 && 间隔 > 300",
           "note": "",
-          "text": "// ---------- 每锁 RSSI 记忆 (71 设备列表迷你信号格 / 129 极限距离) ----------"
+          "text": "/// 扫到广播 ≠ 已连接, 把 linkState 一起改掉就是凭空承诺一个没发生的会话。"
         },
         {
           "platform": "ios",
@@ -4747,7 +4747,7 @@
           "line": 404,
           "symbol": "kf_wd_heals + 1",
           "note": "",
-          "text": "var preconnectTask: Task<Void, Never>?"
+          "text": "/// 134 冷启动先扫描: App 启动广播扫描一次, 把可见已配对锁的 RSSI 落档 (不连接、不下发)"
         }
       ],
       "platformEvidence": {
@@ -4823,7 +4823,7 @@
           "line": 419,
           "symbol": "struct FailKind",
           "note": "",
-          "text": "// 顺带量出\"首台可见耗时\" —— 首次发现越晚, 说明 2.4G 侦听窗口被挤得越厉害, 这才是拥挤度那一半。"
+          "text": "do {"
         },
         {
           "platform": "ios",
@@ -4831,7 +4831,7 @@
           "line": 425,
           "symbol": "icon 计算属性",
           "note": "",
-          "text": "}"
+          "text": "// (委托回调还没进来) ⇒ 拥挤度结论一直在说\"未见 BLE 设备\"。这里把窗口等满再读数,"
         },
         {
           "platform": "ios",
@@ -4839,7 +4839,7 @@
           "line": 435,
           "symbol": "classifyFailure",
           "note": "",
-          "text": "}"
+          "text": "for adv in ble.allDiscovered() {"
         }
       ],
       "platformEvidence": {
@@ -5167,7 +5167,7 @@
           "line": 258,
           "symbol": "ladderSeconds",
           "note": "",
-          "text": "guard deadWatchTask == nil else { return }"
+          "text": "// 更正 (第九十一批): 这里原写着\"看门狗 Watchdog (包11) 已每 45s 读 03 自愈\" —— 那句是假的,"
         },
         {
           "platform": "ios",
@@ -5175,7 +5175,7 @@
           "line": 290,
           "symbol": "autoReconnectTick",
           "note": "",
-          "text": "DB.store.set(\"kf_wd_heals\", DB.store.getInt(\"kf_wd_heals\", 0) + 1)"
+          "text": "} catch {"
         },
         {
           "platform": "ios",
@@ -5183,7 +5183,7 @@
           "line": 315,
           "symbol": "pendingCount > 0 才回连",
           "note": "",
-          "text": "switch name {"
+          "text": "struct FailKind {"
         },
         {
           "platform": "ios",
@@ -5191,7 +5191,7 @@
           "line": 338,
           "symbol": "失败 attempt 递增封顶",
           "note": "",
-          "text": "}"
+          "text": "// 只取 4 字及以上的码文案: \"丢包\"/\"溢出\" 这类两字词出现在别的串里会误判。"
         }
       ],
       "platformEvidence": {
@@ -5337,7 +5337,7 @@
           "line": 213,
           "symbol": "onPreconnectDone()",
           "note": "",
-          "text": "} else {"
+          "text": "func setSceneActive(_ active: Bool) {"
         },
         {
           "platform": "ios",
@@ -5345,7 +5345,7 @@
           "line": 221,
           "symbol": "resync(mac:from:)",
           "note": "",
-          "text": "/// 98 用户主动路径 (圆盘开锁前 ensureConnected) 标记为\"即连\", 解释快慢差异"
+          "text": "// 用户口径 2026-10-17: **后台不许扫锁** (不耗手机射频, 也不逼锁一直广播费它的电)。"
         },
         {
           "platform": "ios",
@@ -5353,7 +5353,7 @@
           "line": 242,
           "symbol": "lastReceipt",
           "note": "",
-          "text": "func markReady(ms: Int?, rssi: Int?) {"
+          "text": "let now = Date()"
         },
         {
           "platform": "ios",
@@ -5361,7 +5361,7 @@
           "line": 253,
           "symbol": "applyQueueItem → CredentialOrg.sendQueued",
           "note": "",
-          "text": "// 现役的自愈就是本层: 60s 一拍巡检 (:309 的 deadbeatCheck), 挂起 >10 分钟且**有待下发项**才重协商一次。"
+          "text": "if let rssi { updateRssi(rssi) }"
         }
       ],
       "platformEvidence": {
@@ -7274,7 +7274,7 @@
           "line": 492,
           "symbol": "func scan(mac:timeoutMs:)",
           "note": "",
-          "text": "}"
+          "text": "preconnectTask = Task { @MainActor [weak self] in"
         },
         {
           "platform": "ios",
@@ -7282,7 +7282,7 @@
           "line": 504,
           "symbol": "300ms 轮询 + 取消判据",
           "note": "",
-          "text": ""
+          "text": "/// `nonisolated(unsafe)`: 读取方跨隔离域 (BLE 回调 / 通知代理 / 后台 Task),"
         },
         {
           "platform": "ios",
@@ -7290,7 +7290,7 @@
           "line": 519,
           "symbol": "noteScannedRssi",
           "note": "",
-          "text": "}"
+          "text": "if r >= -65 { return 3 }"
         },
         {
           "platform": "ios",
@@ -7298,7 +7298,7 @@
           "line": 525,
           "symbol": "saveRssi / rssiFor",
           "note": "",
-          "text": ""
+          "text": "[\"不可测\", \"远\", \"中\", \"近\", \"满\"][min(max(level, 0), 4)]"
         }
       ],
       "platformEvidence": {
@@ -59298,7 +59298,7 @@
           "line": 327,
           "symbol": "success 结果触感",
           "note": "",
-          "text": "return FailKind(name: \"蓝牙类\", hint: \"检查系统蓝牙开关与权限， 开关一次蓝牙再试\")"
+          "text": "default: return \"exclamationmark.circle\"   // 协议类"
         }
       ],
       "platformEvidence": {
