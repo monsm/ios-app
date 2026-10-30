@@ -187,12 +187,14 @@ extension CredentialsView {
             }
             TextField("搜索名称 / 备注 / #别名", text: $search)   // 531 搜索名称
                 .keyboardShortcut("f", modifiers: .command)
+                // 2026-10-30 修复（第 113 轮）：这里原来**挂了两个** `.accessibilityLabel` ——
+                // 第 190 行那句带「键盘 Cmd/Control+F」的提示，被下面那句 "凭证搜索" 覆盖掉了，
+                // 于是快捷键提示从来没被读屏念过（修饰符后写者胜）。合并成一条。
                 .accessibilityLabel("凭证搜索， 键盘 Cmd/Control+F")
                 .autocorrectionDisabled()
                 .onSubmit {
                     if !search.isEmpty { CredentialOrg.pushSearchHistory(search) }
                 }
-                .accessibilityLabel("凭证搜索")
         }
     }
 
@@ -356,11 +358,16 @@ extension CredentialsView {
         let allMembers = DB.members()
         ForEach(allMembers) { m in
             // 354: 归档条目在本页任何浏览方式里都不出现 (含按成员视图); 归档区卡是唯一落点
+            // 2026-10-30 修复（第 113 轮，**分段筛选在按成员视图下完全失效**）：
+            // 上面那行分段 chip（CredentialsView:250-257）是**常驻**渲染的，按成员视图下也在；
+            // 而这里原来只按 `owner == m.id` 过滤，**没套 seg** —— 于是用户在「按成员」视图里
+            // 点「密码 / 指纹 / 临时码」分段，列表毫无变化（chip 高亮变了、内容没变）。
+            // 判据与 segFilteredPwds 同一套：1 密码=非 temp、3 临时码=temp、2 指纹=只指纹。
             let pwds = orderedPwds(allPwds.filter {
-                $0.owner == m.id
+                $0.owner == m.id && (seg == 0 || (seg == 1 && !$0.temp) || (seg == 3 && $0.temp))
             }, order: orderP)
             let fps = orderedFps(allFps.filter {
-                $0.owner == m.id
+                $0.owner == m.id && (seg == 0 || seg == 2)
             }, order: orderF)
             if !pwds.isEmpty || !fps.isEmpty {
                 Section("\(CredentialOrg.aliasDisplay && !m.relation.isEmpty ? m.relation + " · " : "")\(m.name) (\(pwds.count + fps.count))") {

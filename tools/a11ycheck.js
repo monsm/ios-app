@@ -92,6 +92,48 @@ for (const d of DIRS) {
   }
 }
 
+// A3（硬闸门）：同一条修饰符链上出现 ≥2 个 `.accessibilityLabel` —— **后者覆盖前者**，
+// 前一个是死代码。2026-10-30（第 113 轮）在 CredentialActions 的搜索框上实测到：
+// 带「键盘 Cmd/Control+F」的那句被下面那句「凭证搜索」覆盖，快捷键提示从来没被读过。
+const dupLabel = [];
+for (const d of DIRS) {
+  const dir = path.join(ROOT, d);
+  if (!fs.existsSync(dir)) continue;
+  for (const f of fs.readdirSync(dir)) {
+    if (!f.endsWith('.swift')) continue;
+    const rel = `${d}/${f}`;
+    const L = fs.readFileSync(path.join(dir, f), 'utf8').split(/\r?\n/);
+    // 按「连续以 . 开头的行 + 夹在中间的注释」聚成一条链
+    let chain = [], start = 0;
+    const flush = () => {
+      const labels = chain.filter(x => /^\s*\.accessibilityLabel\s*\(/.test(x));
+      if (labels.length >= 2) {
+        dupLabel.push(`${rel}:${start + 1}  同链 ${labels.length} 个 accessibilityLabel（后写的覆盖前面的）`);
+      }
+      chain = [];
+    };
+    for (let i = 0; i < L.length; i++) {
+      const line = L[i];
+      const isMod = /^\s*\./.test(line);
+      const isComment = /^\s*\/\//.test(line) || line.trim() === '';
+      if (isMod || (isComment && chain.length)) {
+        if (!chain.length) start = i;
+        chain.push(line);
+      } else {
+        flush();
+      }
+    }
+    flush();
+  }
+}
+
+if (dupLabel.length) {
+  console.log(`✗ 同一条修饰符链上重复 accessibilityLabel ${dupLabel.length} 处：`);
+  dupLabel.forEach(x => console.log('  ' + x));
+  console.log('\n修法：合并成一条（后写的会覆盖前面的，前面那句是死代码）。');
+  process.exit(1);
+}
+
 if (soft.length) {
   console.log(`【线索】Image(systemName:) 无 a11y 标注 ${soft.length} 处（装饰性应 hidden、功能性应 label）:`);
   soft.slice(0, 15).forEach(x => console.log('  ' + x));
