@@ -167,6 +167,18 @@ enum BackupCanonical {
                 ])
             })))
         }
+        // 2026-10-30 补（第 66 轮）：记录页覆盖层（备注 / 标旗 / 处置）也进校验和。
+        // 与 mobileKeys 同一条纪律：字段存在但这里不序列化 ⇒ 导出文本里没有它 ⇒ 换机全丢。
+        // 键序固定（字典按键名排、数组已 sorted），保证「同一份备份两次导出得到同一 canonical」。
+        if let n = meta.recNotes, !n.isEmpty {
+            pairs.append(("recNotes", .obj(n.sorted { $0.key < $1.key }.map { (k, v) in (k, JValue.str(v)) })))
+        }
+        if let f = meta.recFlags, !f.isEmpty {
+            pairs.append(("recFlags", .arr(f.sorted().map { JValue.str($0) })))
+        }
+        if let dd = meta.recDisps, !dd.isEmpty {
+            pairs.append(("recDisps", .obj(dd.sorted { $0.key < $1.key }.map { (k, v) in (k, JValue.str(v)) })))
+        }
         return pairs.isEmpty ? .null : .obj(pairs)
     }
     private static func dongleValue(_ d: Dongle) -> JValue {

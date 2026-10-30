@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-29T23:51:27.197Z",
+    "generated": "2026-10-30T00:05:29.435Z",
     "sources": [
       {
         "scout": "android-native",
@@ -26167,7 +26167,7 @@ const DATA = {
           "line": 171,
           "symbol": "QueryFilters",
           "note": "",
-          "text": "if let v = alarmVerb[type] { return prefix.isEmpty ? v : prefix + v }"
+          "text": "default: return \"深夜\""
         },
         {
           "platform": "ios",
@@ -26183,7 +26183,7 @@ const DATA = {
           "line": 191,
           "symbol": "key(_:)",
           "note": "",
-          "text": "/// 原句列了\"胁迫\", 但协议日志类型表没有胁迫类 (与 725 判 ❌ 同一理由), 不虚构一个查不到的类型。"
+          "text": "return prefix.isEmpty ? v : prefix + v"
         },
         {
           "platform": "ios",
@@ -26285,7 +26285,7 @@ const DATA = {
           "line": 543,
           "symbol": "parse(_:)",
           "note": "",
-          "text": ""
+          "text": "/// 原住 AlarmCenterView (已删), 但 RecordsTimeline 的记录行仍用它上色。"
         },
         {
           "platform": "ios",
@@ -27465,7 +27465,7 @@ const DATA = {
           "line": 172,
           "symbol": "segment",
           "note": "",
-          "text": "if let v = opVerb[type] { return prefix + v }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -27473,7 +27473,7 @@ const DATA = {
           "line": 185,
           "symbol": "alarmKinds",
           "note": "",
-          "text": "/// 分开存的结果是\"过滤组合记住了、成员没记住\"这种半截行为，而且 908 的开场策略只管这一份结构,"
+          "text": "]"
         }
       ],
       "platformEvidence": {
@@ -28407,7 +28407,7 @@ const DATA = {
           "line": 439,
           "symbol": "nightWindowDegenerate",
           "note": "",
-          "text": "}"
+          "text": "/// 搜索框占位文案承诺了「成员 / 凭证 / 备注」三段 (RecordsView 的 searchBar), 那三段就得真在串里:"
         },
         {
           "platform": "ios",
@@ -28415,7 +28415,7 @@ const DATA = {
           "line": 446,
           "symbol": "isLateNight",
           "note": "a > b ? (hour >= a || hour \u003c b) : (hour >= a && hour \u003c b)",
-          "text": "if ch.isNumber { digits.append(ch) } else { break }"
+          "text": "/// 备注要按 (锁, 行) 去查本机覆盖层, 只有拿着行的 UI 给得起这个数, 所以它是个参数而不是在这里自己读表。"
         }
       ],
       "platformEvidence": {
@@ -29772,7 +29772,7 @@ const DATA = {
           "line": 397,
           "symbol": "restoreAll(_:)",
           "note": "",
-          "text": "/// 2026-10-14: 原先只有 restoreAll(.overwrite) 走这段, 而 WebDAV 与换机迁移走的是 .merge/.missing"
+          "text": ".map { BackupBundle.Globals.DeviceOrg.GroupRec(mac: $0.0, name: $0.1) }"
         },
         {
           "platform": "ios",
@@ -29788,7 +29788,7 @@ const DATA = {
           "line": 413,
           "symbol": "mac/skey 守卫",
           "note": "",
-          "text": "LockArchive.setOrder(keep + rest)"
+          "text": "/// 白名单式落地: 顺序只认本包里真有的 mac, 分组只写这些 mac, 折叠只收现在真存在的组, 隐藏只对包内 mac 生效。"
         },
         {
           "platform": "ios",
@@ -29796,7 +29796,7 @@ const DATA = {
           "line": 422,
           "symbol": "owner 重映射 / 置 nil",
           "note": "",
-          "text": "let keep = folded.map { LockArchive.normalizedGroup($0) }.filter { live.contains($0) }"
+          "text": "if let order = org.order {"
         },
         {
           "platform": "ios",
@@ -29804,7 +29804,7 @@ const DATA = {
           "line": 451,
           "symbol": "otpKeys 白名单",
           "note": "",
-          "text": "// 2026-10-30 补（第 65 轮）：无障碍/交互偏好。缺字段 = 这次备份没带 = 不动本机。"
+          "text": "set(\"kf_density\", a.density)"
         }
       ],
       "platformEvidence": {
@@ -29934,7 +29934,7 @@ const DATA = {
           "line": 255,
           "symbol": "ledger 为空置 nil",
           "note": "",
-          "text": "case theme, accent, density, radius, hc, weekStart, rowH, tlGap"
+          "text": "/// 于是导入端重算 canonical 时少了这个字段 → checksum 必然对不上 → 整包被拒。"
         }
       ],
       "platformEvidence": {
@@ -30016,7 +30016,7 @@ const DATA = {
           "line": 267,
           "symbol": "kf_bk_otp 勾选才收 OTP",
           "note": "",
-          "text": "var deviceOrg: DeviceOrg?"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -30024,7 +30024,7 @@ const DATA = {
           "line": 444,
           "symbol": "passcode 只写 s/d",
           "note": "",
-          "text": "if let v = a.hc { DB.store.set(\"kf_hc\", v) }"
+          "text": "static func applyAppearance(_ a: BackupBundle.Globals.Appearance) {"
         },
         {
           "platform": "ios",
@@ -30213,7 +30213,7 @@ const DATA = {
           "line": 186,
           "symbol": "canonical(_:)",
           "note": "",
-          "text": "return .obj(pairs)"
+          "text": "if !d.name.isEmpty { pairs.append((\"name\", .str(d.name))) }"
         },
         {
           "platform": "ios",
@@ -30221,7 +30221,7 @@ const DATA = {
           "line": 203,
           "symbol": "members 按 id 排序",
           "note": "",
-          "text": ""
+          "text": "(\"bleId\", .str(g.bleId)), (\"boundAt\", .str(g.boundAt)), (\"wifimac\", .str(g.wifimac)),"
         },
         {
           "platform": "ios",
@@ -30229,7 +30229,7 @@ const DATA = {
           "line": 286,
           "symbol": "exportText 追加 checksum",
           "note": "",
-          "text": "if !ov.isEmpty { gp.append((\"deviceOrg\", .obj(ov))) }"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -30364,7 +30364,7 @@ const DATA = {
           "line": 249,
           "symbol": "collectAll()",
           "note": "",
-          "text": "/// 这份包**永远导不回来**。"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -30380,7 +30380,7 @@ const DATA = {
           "line": 256,
           "symbol": "Device.Meta 逐项",
           "note": "",
-          "text": "case recentCount = \"recent\""
+          "text": "///"
         },
         {
           "platform": "ios",
@@ -30388,7 +30388,7 @@ const DATA = {
           "line": 279,
           "symbol": "BackupBundle 组装",
           "note": "",
-          "text": "}"
+          "text": "var groups: [GroupRec]?   // kf_lockmeta_\u003cmac>.grp"
         },
         {
           "platform": "ios",
@@ -30745,7 +30745,7 @@ const DATA = {
           "line": 128,
           "symbol": "rollbackFamilies",
           "note": "",
-          "text": "extras: extra)"
+          "text": "return [kc.mac: String(data: d, encoding: .utf8) ?? \"\"]"
         },
         {
           "platform": "ios",
@@ -30753,7 +30753,7 @@ const DATA = {
           "line": 148,
           "symbol": "struct RollbackBundle",
           "note": "",
-          "text": "for f in sorted.dropFirst(min(keep, sorted.count)) { try? FileManager.default.removeItem(at: f) }"
+          "text": "let all = (try? FileManager.default.contentsOfDirectory(at: rollbackDir,"
         },
         {
           "platform": "ios",
@@ -30761,7 +30761,7 @@ const DATA = {
           "line": 159,
           "symbol": "makeRollbackPoint",
           "note": "",
-          "text": "/// 实际 WebDAV 一族已删，现在只有 bundleFor() 一个调用点。函数本身是恒等映射"
+          "text": "/// 2026-10-14: register 每进程只能一次 (二次注册抛 NSInternalInconsistencyException)。"
         },
         {
           "platform": "ios",
@@ -30769,7 +30769,7 @@ const DATA = {
           "line": 190,
           "symbol": "canUndoLastRestore",
           "note": "",
-          "text": "// 收紧既不增安全又伤兼容。如实两条都认; 真要防篡改得换带密钥的 MAC (另立项)。"
+          "text": "guard let data = text.data(using: .utf8),"
         },
         {
           "platform": "ios",
@@ -30777,7 +30777,7 @@ const DATA = {
           "line": 208,
           "symbol": "restoreRollbackSnapshot",
           "note": "",
-          "text": "let raw = try? JSONDecoder().decode(BackupBundle.self, from: data) else {"
+          "text": "static func parsePreview(text: String, password: String?) throws -> (preview: Preview, bundle: BackupBundle) {"
         }
       ],
       "platformEvidence": {
@@ -31003,7 +31003,7 @@ const DATA = {
           "line": 219,
           "symbol": "CodingKeys recentCount = \"recent\"",
           "note": "",
-          "text": "var tlGap: String?        // kf_tl_gap (907)"
+          "text": "var appearance: Appearance?"
         },
         {
           "platform": "ios",
@@ -31011,7 +31011,7 @@ const DATA = {
           "line": 295,
           "symbol": "collectAppearance",
           "note": "",
-          "text": "}"
+          "text": "let l = DB.ledger(mac)"
         },
         {
           "platform": "ios",
@@ -31019,7 +31019,7 @@ const DATA = {
           "line": 373,
           "symbol": "applyAppearance",
           "note": "",
-          "text": "elderMode: DB.store.has(\"kf_elder_mode\") ? DB.store.getBool(\"kf_elder_mode\") : nil)"
+          "text": "plain: DB.store.has(\"kf_plain\") ? DB.store.getBool(\"kf_plain\") : nil,"
         }
       ],
       "platformEvidence": {
@@ -31094,7 +31094,7 @@ const DATA = {
           "line": 233,
           "symbol": "var deviceOrg",
           "note": "",
-          "text": "var bigTile: Bool?        // kf_bigtile  2 列大格"
+          "text": "var heroStats: [String]?  // kf_hero_stats (909)"
         },
         {
           "platform": "ios",
@@ -31102,7 +31102,7 @@ const DATA = {
           "line": 320,
           "symbol": "collectDeviceOrg",
           "note": "",
-          "text": "/// 894 收集外观档。只收**枚举过的档位值**，读到没见过的值就当没这项 (nil)，"
+          "text": "return BackupBundle("
         },
         {
           "platform": "ios",
@@ -31110,7 +31110,7 @@ const DATA = {
           "line": 343,
           "symbol": "applyGlobalsAppearanceAndOrg",
           "note": "",
-          "text": "guard let allowed = Self.appearanceAllow[key] else { return nil }"
+          "text": "\"kf_theme\":      [\"\", \"light\", \"dark\", \"black\"],"
         },
         {
           "platform": "ios",
@@ -31118,7 +31118,7 @@ const DATA = {
           "line": 349,
           "symbol": "known = 包内 ∩ 本机",
           "note": "",
-          "text": "theme: enumVal(\"kf_theme\"),"
+          "text": "\"kf_tl_gap\":     [\"\", \"tight\", \"loose\"],"
         }
       ],
       "platformEvidence": {
@@ -61936,7 +61936,7 @@ const DATA = {
           "line": 203,
           "symbol": "load(mac:)",
           "note": "",
-          "text": "self.failedOnly = failedOnly; self.alarmKinds = alarmKinds"
+          "text": "var lateNight = false           // 572 深夜预设 (跟随 676 夜间时段配置)"
         },
         {
           "platform": "ios",
@@ -61944,7 +61944,7 @@ const DATA = {
           "line": 212,
           "symbol": "save(mac:)",
           "note": "",
-          "text": "lateNight = try c.decodeIfPresent(Bool.self, forKey: .lateNight) ?? false"
+          "text": "/// 非空 = 只留这些告警类型 (StatsKit.alarmTypes 的子集)。按库里实际类型渲染 ——"
         },
         {
           "platform": "ios",
@@ -61952,7 +61952,7 @@ const DATA = {
           "line": 193,
           "symbol": "policyKey",
           "note": "",
-          "text": ""
+          "text": "if let v = alarmVerb[type] { return prefix.isEmpty ? v : prefix + v }"
         }
       ],
       "platformEvidence": {
@@ -62856,7 +62856,7 @@ const DATA = {
           "line": 423,
           "symbol": "dayKeyOfNight(_:)",
           "note": "",
-          "text": "/// 备注此前完全不在搜索面上, 而界面上写着它可搜 = 承诺了一个搜不到的热区 (第一百八十九批)。"
+          "text": "static func extendedEndHour(_ dayKey: String) -> Int? {"
         }
       ],
       "platformEvidence": {

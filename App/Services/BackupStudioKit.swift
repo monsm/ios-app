@@ -61,7 +61,15 @@ enum BackupStudio {
     nonisolated static let rollbackFamilies: [String] = [
         "kf_member_ext", "kf_member_bday", "kf_member_badge",       // 成员档案扩展 (角色/备注/分组/归档)
         "kf_mborrow_", "kf_mclaim_", "kf_house_win_", "kf_offboard_",   // 467 的 kf_mtransfer 族已随待接受区一起撤掉
-        "kf_rflt_",                       // 186 备注 / 188 标旗 / 记录筛选视图
+        // 2026-10-30 修正（第 66 轮）：原注释「186 备注 / 188 标旗」**写错了族** ——
+        // `kf_rflt_<mac>` 是 QueryFilters 的**过滤会话**（记住上次的筛选组合），不含备注也不含旗标。
+        // 真正的记录页覆盖层是另外三族，它们此前**既不进备份、也不进回滚**：
+        //   · kf_rnote_<mac>  行备注（用户手写的自由文本，Store.removeDevice 的族表注释明确写着"敏感本地数据"）
+        //   · kf_rflag_<mac>  行标旗
+        //   · kf_rdisp_<mac>  行处置（「标记已处置 / 撤销」，告警排查的核心：谁在什么时候确认过这条）
+        // 这三族是用户自己攒的**内容**，且 restore 会整表替换台账/重建成员 ⇒ 恢复后行键全部失效，
+        // 不收进快照就等于「备注和旗标凭空没了」，也撤不回来 —— 与 421 当初补洞的判据同源。
+        "kf_rflt_", "kf_rnote_", "kf_rflag_", "kf_rdisp_", "kf_rdispo"
         "kf_cseq_", "kf_calias_display", "kf_cbin_", "kf_clists_", 
         "kf_bk_note",                 // 433 备注
         // 2026-10-13 对抗式排查: TOTP/静态口令族漏收。三种导入模式都会写这四个族
@@ -329,6 +337,12 @@ enum BackupStudio {
                 // 2026-10-28 修复：`Meta.mobileKeys` 反向也要回写 —— 否则备份带了、恢复不写，
                 // 同一份数据在"导出侧补了序列化"之后仍然进不了本机。
                 if let mk = meta.mobileKeys { MobileKeyService.save(mac, mk) }
+                // 2026-10-30 补（第 66 轮）：记录页覆盖层（备注 / 标旗 / 处置）。
+                // 与 mobileKeys 同一条纪律 —— 备份带了、恢复不写，等于"导出侧补了序列化"却进不了本机。
+                // 缺字段 = 这次备份没带 = 不动本机（不主动清掉用户本机已有的备注）。
+                if let n = meta.recNotes { RecordOverlay.setNotes(mac, n) }
+                if let f = meta.recFlags { RecordOverlay.setFlags(mac, Set(f)) }
+                if let dd = meta.recDisps { RecordOverlay.setDispositions(mac, dd) }
             }
             guard act != "keep", let l = d.ledger else { continue }
             var cur = DB.ledger(mac)

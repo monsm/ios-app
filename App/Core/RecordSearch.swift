@@ -42,6 +42,16 @@ enum RecordOverlay {
         if t.isEmpty { m.removeValue(forKey: k) } else { m[k] = String(t.prefix(60)) }   // 60 字上限: 行下灰字一行放得下
         DB.store.setCodable(noteKey(mac), m)
     }
+    /// 2026-10-30（第 66 轮）：整表写入 —— 只供备份恢复用（逐条 setNote 会把整表解码 N 遍）。
+    /// 与 setNote 同一口径：空文本删键、超长截到 60 字（不让坏备份写进一个比行下灰字更长的值）。
+    static func setNotes(_ mac: String, _ table: [String: String]) {
+        var m = [String: String]()
+        for (k, v) in table {
+            let t = v.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !t.isEmpty { m[k] = String(t.prefix(60)) }
+        }
+        DB.store.setCodable(noteKey(mac), m)
+    }
     /// 2026-10-30：多锁旗标合并（时间线逐行渲染时一次取，别逐行解整份表）。
     static func allFlags(macs: [String]) -> Set<String> {
         var out = Set<String>()
@@ -63,6 +73,10 @@ enum RecordOverlay {
         DB.store.setCodable(flagKey(mac), set.sorted())
         return set.contains(k)
     }
+    /// 2026-10-30（第 66 轮）：整表写入 —— 只供备份恢复用。
+    static func setFlags(_ mac: String, _ set: Set<String>) {
+        DB.store.setCodable(flagKey(mac), set.sorted())
+    }
     // ---------- 2026-10-28 补：处置层 ----------
     // 详情页的「标记已处置 / 撤销」此前是**假按钮** —— `disp` 硬编码 nil、点击只 `tick += 1`，
     // 界面闪一下又回到「未处置」。处置记录是告警排查的核心（谁在什么时候确认过这条），
@@ -78,6 +92,14 @@ enum RecordOverlay {
         var m = dispositions(mac)
         let k = oid(mac: mac, rowKey: rowKey)
         if let d { m[k] = d } else { m.removeValue(forKey: k) }
+        DB.store.setCodable(dispKey(mac), m)
+    }
+    /// 2026-10-30（第 66 轮）：整表写入 —— 只供备份恢复用（备份包里存的是 verdict 字符串）。
+    static func setDispositions(_ mac: String, _ table: [String: String]) {
+        var m = [String: RecordSearch.Disposition]()
+        for (k, verdict) in table {
+            m[k] = RecordSearch.Disposition(at: 0, verdict: verdict)
+        }
         DB.store.setCodable(dispKey(mac), m)
     }
     /// 行下灰字与左旗的读取都由上面几枚函数直接服务 UI; 不再另留 noteLine 这种"看着像入口"的别名。
