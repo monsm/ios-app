@@ -126,6 +126,12 @@ private fun KfApp(unlocker: BleUnlocker) {
     var pending by remember { mutableStateOf<LockInfo?>(null) }   // 待二次确认的绑定
     // 2026-10-31（第 53 轮）：初值从已加载的 lock 读回 —— 与 `lastRc` 同口径（第 27 轮）。
     var lastAuto by remember { mutableStateOf(lock?.lastAutoMs ?: 0L) }   // 上次自动下发时刻 (冷却基准)
+    // 2026-10-31（第 66 轮，**拒绝文案刷屏**）：`maybeAutoUnlock` 由 RSSI 广播驱动（每秒数次），
+    // 而 F4 布防 / F6 锁态 / 冷却这几处的 `say(...)` 是**每次广播都刷**。用户站在门口时
+    // 状态行会被「布防时段内，已拒绝自动开锁」永久占住，看不到「正在寻找门锁…」等正常状态。
+    // 记一句上次拒绝的文案 + 时刻，同一句 10 秒内不重复写（换了一句就立刻写）。
+    var lastRejectSaid by remember { mutableStateOf("") }
+    var lastRejectAt by remember { mutableStateOf(0L) }
     // 2026-10-27 审核补齐 (C-A1)：iOS 有 F6 锁态门（rc=25 锁忙 / rc=26 被撬 → 拒绝自动开），
     // Android 原先没有。这里缓存上次开锁回包的 rc，供 maybeAutoUnlock 做 F6 判断。
     // 2026-10-31（第 27 轮修复，**F6 跨会话失效**）：原来是 `mutableStateOf(0)` —— 初值恒 0，
@@ -170,6 +176,15 @@ private fun KfApp(unlocker: BleUnlocker) {
     fun say(text: String, bad: Boolean = false) {
         status = text
         statusBad = bad
+    }
+
+    // 2026-10-31（第 66 轮）：拒绝类文案的节流 —— 同一句 10s 内不重复写状态行。
+    fun sayReject(text: String) {
+        val now = System.currentTimeMillis()
+        if (text == lastRejectSaid && now - lastRejectAt < 10_000L) return
+        lastRejectSaid = text
+        lastRejectAt = now
+        say(text)
     }
 
     // 权限: 扫描/连接 + 相机 (扫码)。minSdk=33 ⇒ 三项都是运行时权限, 没有版本分支。
@@ -357,13 +372,13 @@ private fun KfApp(unlocker: BleUnlocker) {
             val en = lock?.defendEndHour ?: 7
             val inWindow = if (st <= en) hour in st until en else (hour >= st || hour < en)
             if (inWindow) {
-                say("布防时段内，已拒绝自动开锁")
+                sayReject("布防时段内，已拒绝自动开锁")
                 return
             }
         }
         // F6 锁态门：上次回包 rc=25(锁忙) / rc=26(被撬) 时不自作主张再发 04
-        if (lastRc == 25) { say("门锁正忙，已跳过这次自动开锁"); return }
-        if (lastRc == 26) { say("检测到防拆事件，已暂停自动开锁"); return }
+        if (lastRc == 25) { sayReject("门锁正忙，已跳过这次自动开锁"); return }
+        if (lastRc == 26) { sayReject("检测到防拆事件，已暂停自动开锁"); return }
         if (!AutoOpenKit.coolReady(lastAuto, now)) return
         if (busy) return
         fired = true

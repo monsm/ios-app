@@ -591,6 +591,23 @@ final class AutoOpenController {
                 AutoOpen.audit(mac, "建连期间退后台，放弃本次自动开锁")
                 return
             }
+            // 2026-10-31（第 66 轮，**异步窗口内的其余状态**）：`attempt()` 在**入口**查了这些，
+            // 但 `dispatch` 是异步的（建连 0.5~2s + 等回执），期间用户能做任何事。
+            // 入口只查一次、下发前不复查 ⇒ 以下三种都能在窗口内变化而漏过：
+            //   ① 伪装会话（`decoyMode`）—— 被胁迫时点了「立即锁定」再输伪装口令，
+            //      空壳界面后面门被打开。这是**安全问题**，不是体验问题。
+            //   ② 防拆挂起（`isSuspended`）—— rc=26 触发 24h 挂起，但在途那一次仍会发。
+            //   ③ 开关被关（`AutoOpen.on`）—— 用户在 1 秒内关掉「走近自动开门」。
+            guard AutoOpen.on, !app.decoyMode, !AutoOpen.isSuspended(mac: mac) else {
+                AutoOpen.audit(mac, "下发前复查：开关已关 / 伪装会话 / 已挂起，放弃本次自动开锁")
+                return
+            }
+
+            // 复查 app 仍在（解绑后 hostRef 可能已换）
+            guard AppState.hostRef != nil, app.currentMac == mac else {
+                AutoOpen.audit(mac, "下发前复查：当前锁已解绑，放弃本次自动开锁")
+                return
+            }
             let rc = try await app.lock.unlock(mac: mac)
             switch rc {
             case 0:
