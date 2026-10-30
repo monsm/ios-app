@@ -61,10 +61,16 @@ struct CredentialsView: View {
                     // 而**其他三个 Tab 都是「NavigationStack → 列表/滚动」两层**，凭证页多了一层固定工具条，
                     // 视觉上像少了一屏、且工具条不随内容滚动。现在把 headerToolbar 移进 `mainList` 的 List 里，
                     // 四个 Tab 的骨架就一致了（导航栏 → 内容），工具条也随列表滚走。
-                    if editMode {
-                        editList
-                    } else {
-                        mainList
+                    // 2026-10-30 修（**编译错误**）：上一版我把 `VStack` 整个删掉，于是 `if editMode {…} else {…}`
+                    // 这个**语句**直接挂了 `.safeAreaInset` —— SwiftUI 里语句不能接修饰符，CI 必报
+                    // `cannot infer contextual base` / `value of type () has no member safeAreaInset`。
+                    // 用 `Group` 收口：它不引入额外布局（不像 VStack 会加一层堆叠），只提供挂修饰符的位置。
+                    Group {
+                        if editMode {
+                            editList
+                        } else {
+                            mainList
+                        }
                     }
                     .safeAreaInset(edge: .bottom) {
                         // 29 上下文工具栏 (Photos 式): 选中态才出现的这条 batchBar 就是它——

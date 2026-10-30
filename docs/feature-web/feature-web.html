@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T13:59:59.129Z",
+    "generated": "2026-10-30T14:05:02.934Z",
     "sources": [
       {
         "scout": "android-native",
@@ -15084,7 +15084,7 @@ const DATA = {
           "line": 69,
           "symbol": "vkBody",
           "note": "body = vkBody.destined(.credentials)",
-          "text": ".safeAreaInset(edge: .bottom) {"
+          "text": "if editMode {"
         },
         {
           "platform": "ios",
@@ -15092,7 +15092,7 @@ const DATA = {
           "line": 88,
           "symbol": "vkBody",
           "note": "三条通知条互斥取一",
-          "text": "// 2026-10-26 精简：整理建议中心 sheet 已删。"
+          "text": "refreshTick += 1"
         }
       ],
       "platformEvidence": {
@@ -18064,7 +18064,7 @@ const DATA = {
           "line": 67,
           "symbol": "isBusy",
           "note": "",
-          "text": "mainList"
+          "text": "// 用 `Group` 收口：它不引入额外布局（不像 VStack 会加一层堆叠），只提供挂修饰符的位置。"
         },
         {
           "platform": "ios",
@@ -18148,7 +18148,7 @@ const DATA = {
           "line": 73,
           "symbol": "vkBody",
           "note": "无锁空态",
-          "text": "if editMode { batchBar }"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -18210,7 +18210,7 @@ const DATA = {
           "line": 374,
           "symbol": "headerToolbar",
           "note": "",
-          "text": "// 口令不进剪贴板: 明文凭证包与口令必须分开交付。"
+          "text": "guard selCount > 0 else { app.showToast(\"先选择要导出的凭证\"); return }"
         },
         {
           "platform": "ios",
@@ -18218,7 +18218,7 @@ const DATA = {
           "line": 389,
           "symbol": "headerToolbar",
           "note": "选择按钮",
-          "text": "/// 而是弹一个可手动关闭的对话框 —— 用户在自己准备好时才看。"
+          "text": "app.showToast(\"已生成 \\(result.size) 条凭证包并复制到剪贴板。解密密口令已单独显示，请勿与凭证包同渠道发送。\")"
         },
         {
           "platform": "ios",
@@ -18226,7 +18226,7 @@ const DATA = {
           "line": 396,
           "symbol": "headerToolbar",
           "note": "Menu 溢出",
-          "text": "Task { @MainActor in"
+          "text": "@State var secretOnce: String?"
         }
       ],
       "platformEvidence": {
@@ -18379,7 +18379,7 @@ const DATA = {
           "line": 449,
           "symbol": "headerToolbar",
           "note": "segCount",
-          "text": ""
+          "text": "showToastOrganized(\"已删除 \\(done) 条\")"
         },
         {
           "platform": "ios",
@@ -18387,7 +18387,7 @@ const DATA = {
           "line": 462,
           "symbol": "segChip",
           "note": "",
-          "text": "@MainActor"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -18395,7 +18395,7 @@ const DATA = {
           "line": 492,
           "symbol": "countForSeg",
           "note": "",
-          "text": "}, for: .editingChanged)"
+          "text": "let ok = UIAlertAction(title: confirmTitle, style: .destructive) { _ in action() }"
         }
       ],
       "platformEvidence": {
@@ -21610,7 +21610,7 @@ const DATA = {
           "line": 406,
           "symbol": "headerToolbar",
           "note": "toggle + setGroupMode",
-          "text": "reload()"
+          "text": "let r = CredentialOrg.batchDisable(mac, pwdAliases: selPwds, fpBatches: selFps)"
         }
       ],
       "platformEvidence": {
