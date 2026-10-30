@@ -42,11 +42,17 @@ jobs:
           # 严格解析器报 "mapping values are not allowed here" —— 于是 actionlint / 编辑器 / 任何
           # 标准工具眼里的这份工作流一直是坏的。第一百三十七批加新步骤时自己就踩了一次,
           # 是 `python -c "import yaml; yaml.safe_load(...)"` 当场抓出来的 (那条正控现在写在下面)。
-          if grep -nE '^      - name: [^'"'"'"].*: .*' .github/workflows/ios.yml; then
+          if grep -nE '^      - name: [^'"'"].*: .*' .github/workflows/ios.yml; then
             echo "::error file=.github/workflows/ios.yml::上面的 step 名里有未加单引号的冒号, 请给整条名字加引号"
             exit 1
           fi
           echo "工作流 step 名检查 ✓"
+
+      # 2026-10-30 新增（第 109 轮）：本轮的「插入 step」脚本把新 step 插到了 `run: |` 块头
+      # 和它的缩进体之间，GitHub 在**解析阶段**就 0 job —— 而本地 56 道闸门全绿（它们不读 workflow）。
+      # 下面这道闸门补上那个缺口。注意：它自己也是**用脚本插进来的**，所以插完必须立刻跑一次。
+      - name: '工作流结构闸门 (判失败: run: | 块体被截断 / step 名裸冒号 / 同 job 内 step 重名)'
+        run: node tools/workflowcheck.js
 
       - name: Setup Node (金标漂移校验用)
         uses: actions/setup-node@v7
@@ -233,25 +239,28 @@ jobs:
 
       - name: '界面文案去规格编号 (夹具契约判失败 + 现网顾问级: 七种包围形状各有正控, 量纲/标准名/示例/脱敏样例四类反控不许误响; 现网命中只打印不判失败)'
         run: |
-      - name: '中文标点闸门 (判失败: 用户文案里中文字符后紧跟半角 . 或 , —— VoiceOver 朗读节奏会错)'
-        run: node tools/cnpunctcheck.js
           node tools/copynum.js --selftest
           node tools/copynum.js App
 
+      - name: '中文标点闸门 (判失败: 用户文案里中文字符后紧跟半角 . 或 , —— VoiceOver 朗读节奏会错)'
+        run: node tools/cnpunctcheck.js
+
       - name: '界面完整性与一致性 (判失败: 目的地枚举不得与台账漂移 / 不得再出现绕过 requestRoute 的裸写换页; 覆盖率只报进度不判失败)'
         run: |
-      - name: '页面构成一致性闸门 (判失败: 39 个页面级 View 缺标题/主题背景/退出手段/无障碍标签)'
-        run: node tools/higaudit.js
           node tools/destmap.js
           node tools/uicoverage.js
 
-      - name: '选用镜像里最新的 Xcode (最新 iOS SDK)'
-        run: |
+      - name: '页面构成一致性闸门 (判失败: 39 个页面级 View 缺标题/主题背景/退出手段/无障碍标签)'
+        run: node tools/higaudit.js
+
       - name: 'VoiceOver 可激活闸门 (判失败: 有 .onTapGesture 但无 accessibilityAction —— 读屏用户看得见点不动)'
         run: node tools/a11ycheck.js
+
+      - name: '选用镜像里最新的 Xcode (最新 iOS SDK)'
+        run: |
           # 镜像里同时装了 27.0/27.1/27.2, 默认可能是旧的 —— 显式挑版本号最大的那个,
           # 否则 deploymentTarget 与 SDK 会差档 (报 "deployment target is greater than SDK")。
-          echo "已安装: $(ls -d /Applications/Xcode*.app | xargs -n1 basename | tr '\n' ' ')"
+          echo "已安装: $(ls -d /Applications/Xcode*.app | xargs -n1 basename | tr ' ' ' ')"
           LATEST=$(ls -d /Applications/Xcode*.app | sort | tail -1)   # BSD sort 没有 -V; Xcode_27.0/27.1/27.2 字典序即版本序
           echo "选用: $LATEST"
           sudo xcode-select -s "$LATEST"
