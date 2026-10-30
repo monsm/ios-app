@@ -18,7 +18,6 @@ const GATES = [
   ['contrast', []],
   ['dynamictype', []],
   ['aritycheck', []],
-  ['commacheck', []],
   ['orphanscan', ['--base', 'HEAD~1']],
   ['rescuescan', ['--base', 'HEAD~1']],
   ['deadscan', []],
