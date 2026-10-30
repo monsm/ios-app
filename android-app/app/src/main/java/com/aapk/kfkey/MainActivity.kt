@@ -204,11 +204,20 @@ private fun KfApp(unlocker: BleUnlocker) {
         busy = true
         say(if (auto) "已靠近, 正在开锁…" else "正在开锁…")
         scope.launch {
+            // 2026-10-31（第 64 轮，**切锁竞态**）：`l` 是进入 `doUnlock` 时捕获的引用，
+            // 而建连/下发是异步的 —— 用户在这段时间解绑或换锁后，`lock` 已变（或为 null）。
+            // 这里按旧 `l` 下发可能开错锁；下面回写 `lastRc` 时又用**当前** `lock`，
+            // 会把 A 锁的 rc 存到 B 锁头上。两处都要按同一把锁收口。
+            if (lock?.mac != l.mac) {
+                busy = false
+                say("门锁已切换，本次开锁已取消")
+                return@launch
+            }
             val r = unlocker.unlock(l)
             // 2026-10-27 审核补齐：把 rc 落到状态里，供下一次自动开锁做 F6 锁态门判断。
             // 2026-10-31（第 27 轮）：写内存态之外**也要落盘** —— 否则下次启动读回的还是旧值。
             lastRc = r.rc
-            lock?.let { LockStore.save(ctx, it.copy(lastRc = r.rc)) }
+            lock?.takeIf { it.mac == l.mac }?.let { LockStore.save(ctx, it.copy(lastRc = r.rc)) }
             busy = false
             // 来源标注 (用户 2026-10-17): 开完要能说清是自动开的还是自己点的 ——
             // "谁把我门开了"必须能回答。只在成功时冠来源: 失败那句是诊断文案,

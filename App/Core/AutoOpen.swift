@@ -549,6 +549,16 @@ final class AutoOpenController {
 
     private func dispatch(mac: String, app: AppState) async {
         defer { inFlight = false }
+        // 2026-10-31（第 64 轮，**错误恢复 / 状态一致性**）：`attempt()` 起 Task **之前**有
+        // `guard app.currentMac == mac`，但 Task 内部没有复查 —— 建连/下发是异步的，
+        // 用户在这段时间切到另一把锁后，`app.lock` 的 `curMac` 已被改，
+        // 而这里仍按旧 `mac` 下发 ⇒ 可能开错锁、或钥匙串与锁对不上导致 rc=12。
+        // 复查放在 `do` 之前：此时还没写任何状态（eventFired/lastDispatch 在 do 内），
+        // 提前 return 不会污染 F5 冷却。
+        guard app.currentMac == mac, !mac.isEmpty else {
+            AutoOpen.audit(mac, "下发前复查：当前锁已切换，放弃本次自动开锁")
+            return
+        }
         do {
             // 2026-10-31（第 55 轮，**写入时机的第二类缺陷**）：闩锁与冷却原来在
             // `ensureConnected` **之后** —— 建连失败时走 catch，两者都不置位 ⇒
