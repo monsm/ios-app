@@ -458,6 +458,9 @@ jobs:
       - name: '闸门自身可信度 (判失败: 新加闸门必须有正控记录 + 修法提示)'
         run: node tools/gateaudit2.js
 
+      - name: 'Android 门控逻辑闸门 (判失败: 7 道门 + 切锁/退后台 场景必须不发 04)'
+        run: node tools/kotlinasyncwindowcheck.js
+
       - name: '异步窗口逻辑闸门 (判失败: 7 类「异步期间世界变了」场景必须不发 04)'
         run: node tools/asyncwindowcheck.js
 
