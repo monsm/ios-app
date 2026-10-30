@@ -591,7 +591,10 @@ private fun KfApp(unlocker: BleUnlocker) {
                     Spacer(Modifier.height(6.dp))
                     Text(
                         "说明：不标定也能用，默认按 " + AutoOpenKit.BASE + " dBm 触发。标定只是按这把锁实测的 P95 定线。",
-                        fontSize = 12.sp, lineHeight = 17.sp,
+                    // 2026-10-31（第 49 轮 · 动态字体）：删掉硬编码 `lineHeight` —— 它是**固定 sp**，
+                    // 用户把系统字号调大后 `fontSize` 跟着变大而 `lineHeight` 不变 ⇒ 行距比例失调、文字互相挤。
+                    // Compose 默认行高（约 1.2~1.5 倍字号）会随 fontScale 自动算，比固定值稳。
+                        fontSize = 12.sp,
                     )
                 }
             },
@@ -810,7 +813,10 @@ private fun EmptyState(onScan: () -> Unit) {
             // （见 SettingsSections.swift:176-180 的注释与实现）。照旧文案走，用户点进「门锁」找不到。
             // 另外 iOS 设置页里没有叫「门锁」的段 —— 那是「管理这把锁」的入口名。
             "在 iOS 端「设置 → 工具 → 分享给安卓 (扫码开锁)」生成二维码，\n扫一次即可。之后开锁不再需要它。",
-            color = colors.inkSub, fontSize = 13.sp, textAlign = TextAlign.Center, lineHeight = 20.sp
+                    // 2026-10-31（第 49 轮 · 动态字体）：删掉硬编码 `lineHeight` —— 它是**固定 sp**，
+                    // 用户把系统字号调大后 `fontSize` 跟着变大而 `lineHeight` 不变 ⇒ 行距比例失调、文字互相挤。
+                    // Compose 默认行高（约 1.2~1.5 倍字号）会随 fontScale 自动算，比固定值稳。
+            color = colors.inkSub, fontSize = 13.sp, textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(28.dp))
         PillButton("扫码添加门锁", onScan)
@@ -853,14 +859,20 @@ private fun ProximityCard(
                 // (这一句原来写的是 -38/-41, 阈值早就挪到 -40/-43 了, 界面却还在按旧数字承诺)。
                 Text(
                     "开着它: 手机解了锁、App 在前台时, 靠近到 " + AutoOpenKit.BASE + " dBm 以内会自动开一次。",
-                    color = colors.inkSub, fontSize = 12.sp, lineHeight = 17.sp,
+                    // 2026-10-31（第 49 轮 · 动态字体）：删掉硬编码 `lineHeight` —— 它是**固定 sp**，
+                    // 用户把系统字号调大后 `fontSize` 跟着变大而 `lineHeight` 不变 ⇒ 行距比例失调、文字互相挤。
+                    // Compose 默认行高（约 1.2~1.5 倍字号）会随 fontScale 自动算，比固定值稳。
+                    color = colors.inkSub, fontSize = 12.sp,
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
                     "一次靠近只开一次: 要走开让信号掉到 " + AutoOpenKit.disarmThreshold() +
                         " dBm 以下, 隔 6 秒后再靠近才会再开。",
             // 2026-10-31（第 42 轮 · 对比度）：自动开锁规则说明（多近触发 / 多久能再触发） —— 去掉 alpha（原来叠在底上低于 4.5:1）
-                    color = colors.inkSub, fontSize = 12.sp, lineHeight = 17.sp,
+                    // 2026-10-31（第 49 轮 · 动态字体）：删掉硬编码 `lineHeight` —— 它是**固定 sp**，
+                    // 用户把系统字号调大后 `fontSize` 跟着变大而 `lineHeight` 不变 ⇒ 行距比例失调、文字互相挤。
+                    // Compose 默认行高（约 1.2~1.5 倍字号）会随 fontScale 自动算，比固定值稳。
+                    color = colors.inkSub, fontSize = 12.sp,
                 )
             }
             Switch(
@@ -884,7 +896,10 @@ private fun ProximityCard(
                 Spacer(Modifier.height(3.dp))
                 Text(
                     "开启后，在 22:00–次日 07:00 之间不会自动开锁（本机侧拦截）。",
-                    color = colors.inkSub, fontSize = 12.sp, lineHeight = 17.sp,
+                    // 2026-10-31（第 49 轮 · 动态字体）：删掉硬编码 `lineHeight` —— 它是**固定 sp**，
+                    // 用户把系统字号调大后 `fontSize` 跟着变大而 `lineHeight` 不变 ⇒ 行距比例失调、文字互相挤。
+                    // Compose 默认行高（约 1.2~1.5 倍字号）会随 fontScale 自动算，比固定值稳。
+                    color = colors.inkSub, fontSize = 12.sp,
                 )
             }
             Switch(
@@ -912,7 +927,10 @@ private fun ProximityCard(
                 Text(
                     if (rssiP95 != 0) "按这把锁实测的 P95 定线，比默认值更贴你家的门。"
                     else "不标定也能用：默认按 " + AutoOpenKit.BASE + " dBm 触发。若发现「走廊里就开」或「站到门口不开」，标定一次更准。",
-                    color = colors.inkSub, fontSize = 12.sp, lineHeight = 17.sp,
+                    // 2026-10-31（第 49 轮 · 动态字体）：删掉硬编码 `lineHeight` —— 它是**固定 sp**，
+                    // 用户把系统字号调大后 `fontSize` 跟着变大而 `lineHeight` 不变 ⇒ 行距比例失调、文字互相挤。
+                    // Compose 默认行高（约 1.2~1.5 倍字号）会随 fontScale 自动算，比固定值稳。
+                    color = colors.inkSub, fontSize = 12.sp,
                 )
             }
             if (rssiP95 != 0) {
