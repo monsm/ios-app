@@ -117,8 +117,12 @@ struct MemberCenterView: View {
                                 .vkFont(.subheadline)
                                 .foregroundStyle(DS.Palette.text)
                                 .fixedSize(horizontal: false, vertical: true)
-                            Text("名册里只有人与称呼： 不含锁 MAC、凭证编号、口令， 也不含常用锁清单。\n"
-                                 + "要搬整套数据请走备份 —— 名册不承担那个用途， 也正因为它少， 才适合发给家人线下核对。")
+                            // 2026-10-30 修复（第 152 轮，**隐私边界描述与实现不符**）：原文案写「名册里只有人与称呼」，
+                            // 但 `ExportKit.writeRoster` 实际还导出 TEL（电话）、NICKNAME（备注）、CATEGORIES（分组），
+                            // 以及 NOTE 里的关系/角色/紧急联系人/便签/关怀 —— 用户会以为发出去只有名字。
+                            Text("名册含： 姓名、备注、电话、分组，以及关系 / 角色 / 紧急联系人 / 便签 / 关怀（写在 NOTE 里）。\n"
+                            + "不含锁 MAC、凭证编号、口令， 也不含常用锁清单。\n"
+                            + "要搬整套数据请走备份 —— 名册不承担那个用途。")
                                 .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
