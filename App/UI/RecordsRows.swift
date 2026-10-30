@@ -310,7 +310,7 @@ extension RecordsView {
         // 2026-10-30 修正（第 90 轮）：这一段的注释过去声称「本地开锁失败标记合入时间线 ——
         // 手机侧记录 (DB.kf_fevents_)」「手机侧行 (92 失败 / 1028 保养) 的行身份…」——
         // 但**全仓 `kf_fevents_` / `kf_care_marks` 零读零写**（只在清理族表与备份排除说明里出现），
-        // 而本函数从头到尾就是 `var merged = logs`，**没有任何 append**；`sideKey` 也从未被填充。
+        // 而本函数从头到尾就是 let merged = logs，**没有任何 append**；sideKey 也从未被填充。
         //
         // 也就是说：92 失败记录 / 1028 保养记录这一族**从未实现**。`Rec.care` 恒 false、
         // `Rec.failMsg` 恒空串 —— 所以「保养」筛选 chip 永不出现、详情页的「失败原因」行永不显示。
