@@ -420,7 +420,10 @@ struct MemberRow: View {
     }
     // 262/466 久未用置灰 (台账推断口径)
     var staleTag: some View {
-        let stale = (act ?? MemberHub.Activity()).stale
+        // 2026-10-30 修复（第 149 轮，**首帧误判**）：`act` 为 nil 表示「活跃度还没算完」，原来用空 `Activity()` 兜底，
+        // 而空对象的 opens30 == 0 ⇒ stale 为 true ⇒ 首帧所有成员都被标「久未用」并压暗到 .opacity(0.55)。
+        // 未加载完就该按「非 stale」处理，不要先给一个错误结论。
+        let stale = act?.stale ?? false
         return Text(stale ? "久未用" : "活跃 (约)")
             .vkFont(.caption2)
             .foregroundStyle(stale ? DS.Palette.textSub : DS.Palette.ok)

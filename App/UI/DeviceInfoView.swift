@@ -231,7 +231,7 @@ struct DeviceInfoView: View {
     private var pctText: String {
         // 包4: 统一取采样最新值 (读 03 即记录), 快照兜底 — 未读到不印 -1
         let p = BatteryCare.displayPct(kc?.mac ?? "", snapshot: status?.powerLevel ?? app.snapshot?.powerLevel ?? -1)
-        return p < 0 ? "—" : (p > 80 ? ">80%" : "\(p)%")
+        return BatteryCare.faceText(p)   // 2026-10-30：占位符与「>80%」阈值原来和 BatteryCare.faceText 各写一份（本页用「—」、那边用「--」），统一走同一个出口
     }
     /// 2026-10-30：判据链已抽到 `LockStatus.modeText`（全仓唯一一份）。
     private var modeText: String { status?.modeText ?? "—" }

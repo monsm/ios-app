@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T11:36:41.199Z",
+    "generated": "2026-10-30T11:42:17.010Z",
     "sources": [
       {
         "scout": "android-native",
@@ -24731,7 +24731,7 @@
           "line": 432,
           "symbol": "subLine",
           "note": "副行四段",
-          "text": "// 457 首字符号头像 + 916 emoji 代号: 零图片资源 (本地绘制)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -24739,7 +24739,7 @@
           "line": 448,
           "symbol": "staleTag",
           "note": "久未用/活跃 (约)",
-          "text": "if member.color.hasPrefix(\"#\"), let v = UInt32(member.color.dropFirst(), radix: 16) {"
+          "text": "/// 头像现在是 @ViewBuilder 的 body, 结果构建器里只允许产出视图的 `if`, 给局部变量赋值的那种裸 `if` 得搬出去。"
         }
       ],
       "platformEvidence": {
