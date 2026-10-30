@@ -40,6 +40,25 @@ const disarmThreshold = (base) => round(base + 10 * log10(0.5));
 function rssiSample(prevArmed, rssi, base) {
   return prevArmed ? rssi > disarmThreshold(base) : rssi >= armThreshold(base);
 }
+
+// 2026-10-31（第 24 轮，**闸门测错对象**）：Swift 侧 `feedRssi` 自第 13 轮起已改调
+// `AutoOpenKit.rssiArmedByMedian`（3 样本中值），而本影子仍在测旧的单样本 `rssiSample`
+// —— 等于"验的不是线上那行代码"。这里补上中值复刻，并把 F3 用例改测它。
+// 逐行对齐 Swift:
+//   guard let cur = history.first else { return prevArmed }
+//   if prevArmed, cur <= disarm { return false }
+//   let med = history.prefix(3).sorted()[count/2]
+//   return prevArmed ? med > disarm : med >= arm
+function rssiArmedByMedian(prevArmed, history, base) {
+  if (history.length === 0) return prevArmed;
+  const arm = armThreshold(base);
+  const disarm = disarmThreshold(base);
+  const cur = history[0];                          // 最新在前
+  if (prevArmed && cur <= disarm) return false;     // 解除走单样本（走开要快）
+  const win = history.slice(0, 3).slice().sort((a, b) => a - b);
+  const med = win[Math.floor(win.length / 2)];
+  return prevArmed ? med > disarm : med >= arm;
+}
 function p95(samples) {
   if (samples.length < 5) return null;
   const a = [...samples].sort((x, y) => x - y);
@@ -90,16 +109,26 @@ push('F1', '未知档 7 弹窗在途放行', faceFresh(7, -1, true, -1), true);
 // F3 回差 (基准 -60 ⇒ 武装线 -60, 解除线 -63)
 push('F3', 'arm(-60)', armThreshold(-60), -60);
 push('F3', 'disarm(-60) ≈ -63', disarmThreshold(-60), -63);
-push('F3', '未武装 恰在武装线', rssiSample(false, -60, -60), true);
-push('F3', '未武装 差一格', rssiSample(false, -61, -60), false);
-push('F3', '已武装 回差带内保持', rssiSample(true, -62, -60), true);
-push('F3', '已武装 恰在解除线解除', rssiSample(true, -63, -60), false);
-push('F3', '已武装 更低解除', rssiSample(true, -64, -60), false);
-push('F3', '解除后带内需重新越过武装线', rssiSample(false, -62, -60), false);
-push('F3', '远处 -80 不武装', rssiSample(false, -80, -60), false);
-push('F3', '比标定近 -55 武装', rssiSample(false, -55, -60), true);
-push('F3', '近处 -40 武装', rssiSample(false, -40, -60), true);
-push('F3', '已武装微抖 -41 保持', rssiSample(true, -41, -60), true);
+push('F3', '未武装 恰在武装线', rssiArmedByMedian(false, [-60], -60), true);
+push('F3', '未武装 差一格', rssiArmedByMedian(false, [-61], -60), false);
+push('F3', '已武装 回差带内保持', rssiArmedByMedian(true, [-62], -60), true);
+push('F3', '已武装 恰在解除线解除', rssiArmedByMedian(true, [-63], -60), false);
+push('F3', '已武装 更低解除', rssiArmedByMedian(true, [-64], -60), false);
+push('F3', '解除后带内需重新越过武装线', rssiArmedByMedian(false, [-62], -60), false);
+push('F3', '远处 -80 不武装', rssiArmedByMedian(false, [-80], -60), false);
+push('F3', '比标定近 -55 武装', rssiArmedByMedian(false, [-55], -60), true);
+push('F3', '近处 -40 武装', rssiArmedByMedian(false, [-40], -60), true);
+push('F3', '已武装微抖 -41 保持', rssiArmedByMedian(true, [-41], -60), true);
+
+// 2026-10-31（第 24 轮）：**中值专属用例** —— 单样本等价于 1 元素窗（上面已覆盖），
+// 这几条测的是「3 样本窗如何吃掉尖峰」，那正是第 13 轮改中值的理由。
+// 基准 -60 ⇒ 武装线 -60，解除线 -63。
+push('F3', '尖峰打断不武装 (样本 -80,-59,-58 → 中值 -59 达线 ⇒ 武装)', rssiArmedByMedian(false, [-80, -59, -58], -60), true);
+push('F3', '两个尖峰才拦住 (样本 -80,-80,-58 → 中值 -80 ⇒ 不武装)', rssiArmedByMedian(false, [-80, -80, -58], -60), false);
+push('F3', '已武装 中值在带内维持 (样本 -58,-62,-70 → 中值 -62 > -63 ⇒ 保持)', rssiArmedByMedian(true, [-58, -62, -70], -60), true);
+push('F3', '已武装 cur 跌破解除线立刻解除 (不看中值)', rssiArmedByMedian(true, [-64, -40, -40], -60), false);
+push('F3', '空窗返回原态 (不发明数据)', rssiArmedByMedian(false, [], -60), false);
+push('F3', '单样本 -60 恰在武装线 ⇒ 武装', rssiArmedByMedian(false, [-60], -60), true);
 
 // F3 P95
 push('P95', '样本不足 = nil', p95([-60, -58, -55, -62]), null);
