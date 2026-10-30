@@ -60,6 +60,26 @@ const ok = [];
       if (guarded) bad.push('iOS F6: `DB.writeStatus` 被 rc==0 条件包裹 —— 锁报 rc=25/26 时不写快照，F6 永远放行');
       else ok.push('iOS F6: 快照无条件写入');
     }
+
+    // ⑤ F5 写入**时机**：闩锁与冷却必须在 `ensureConnected` **之前**落（2026-10-31 第 55 轮）
+    // 原来它们在 `ensureConnected` 之后 —— 建连失败走 catch 时两者都不置位，
+    // 站门口信号抖动会让 tick 每拍重试「建连 + 判定」；一旦建连成功立刻真发 04。
+    // 判据：`eventFired.insert` 的行号必须**小于** `ensureConnected` 的行号。
+    {
+      const lines = src.split(/\r?\n/);
+      let firedAt = -1, ensureAt = -1;
+      for (let k = 0; k < lines.length; k++) {
+        if (firedAt < 0 && /eventFired\.insert\(mac\)/.test(lines[k])) firedAt = k;
+        if (ensureAt < 0 && /try await app\.lock\.ensureConnected\(mac: mac\)/.test(lines[k])) ensureAt = k;
+      }
+      if (firedAt < 0 || ensureAt < 0) {
+        ok.push("iOS F5: 找不到 eventFired.insert / ensureConnected（结构变了，先更新本闸门）");
+      } else if (firedAt > ensureAt) {
+        bad.push("iOS F5: `eventFired.insert` 在 `ensureConnected` 之后（行 " + (firedAt + 1) + " > " + (ensureAt + 1) + "）—— 建连失败时不置位，站门口会反复重试");
+      } else {
+        ok.push("iOS F5: 闩锁在 ensureConnected 之前落（判定一旦采纳即消费）");
+      }
+    }
   }
 }
 

@@ -550,11 +550,13 @@ final class AutoOpenController {
             // 第 528-530 行注释本意是「在下发之前落」，但它的位置在**建连之后** ——
             // 「之前」的参照物错了：真正的临界点是**这次判定被采纳**的那一刻，不是 04 出手机的那一刻。
             // 现在移到 ensureConnected 之前：判定一旦采纳，无论建连成败都算「这次接近已消费」。
+
             eventFired.insert(mac)
             lastDispatch[mac] = Date().timeIntervalSince1970
             AutoOpen.setPersistedLastDispatch(mac, lastDispatch[mac]!)   // 跨重启保持冷却
 
             try await app.lock.ensureConnected(mac: mac)
+
             let rc = try await app.lock.unlock(mac: mac)
             switch rc {
             case 0:
