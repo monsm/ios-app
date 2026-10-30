@@ -39,10 +39,15 @@ object AutoOpenKit {
     fun p95(samples: List<Int>): Int? {
         if (samples.size < 5) return null
         val a = samples.sorted()
-        val rank = (a.size - 1) * 0.95
+        // 2026-10-31（第 33 轮，**同一错误的第三处**）：`a.size - 1` 是 Int，`* 0.95` 是 Double ——
+        // `Int * Double` 在 Kotlin 没有隐式提升，编译必拒。Swift 那边写的是
+        // `Double(sorted.count - 1) * 0.95`，先把整型转 Double 再乘。这里照抄。
+        val rank = (a.size - 1).toDouble() * 0.95
         val lo = kotlin.math.floor(rank).toInt()
         val hi = kotlin.math.ceil(rank).toInt()
-        val frac = rank - lo
+        // 2026-10-31（第 33 轮，**同一错误的第四处**）：`rank` 是 Double、`lo` 是 Int ——
+        // `Double - Int` 同样没有隐式提升。
+        val frac = rank - lo.toDouble()
         if (lo == hi) return a[lo]
         val v = a[lo].toDouble() + (a[hi].toDouble() - a[lo].toDouble()) * frac
         return v.roundToInt()

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T16:42:49.869Z",
+    "generated": "2026-10-30T17:02:11.666Z",
     "sources": [
       {
         "scout": "android-native",
@@ -14024,7 +14024,7 @@
           "line": 48,
           "symbol": "AutoOpenKit.COOLDOWN_MS",
           "note": "const val COOLDOWN_MS = 6_000L",
-          "text": "return v.roundToInt()"
+          "text": "// 2026-10-31（第 33 轮，**同一错误的第四处**）：`rank` 是 Double、`lo` 是 Int ——"
         },
         {
           "platform": "android",
@@ -14040,7 +14040,7 @@
           "line": 50,
           "symbol": "coolReady",
           "note": "lastDispatchMs == 0L || nowMs - lastDispatchMs > COOLDOWN_MS",
-          "text": "fun armThreshold(base: Int = BASE): Int = base"
+          "text": "val frac = rank - lo.toDouble()"
         },
         {
           "platform": "android",
