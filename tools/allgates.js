@@ -7,7 +7,9 @@
 const { execFileSync } = require('child_process');
 const path = require('path');
 
-const ROOT = 'D:/aapk/ios-app';
+// 2026-10-31（第 35 轮，**闸门自身导致 CI 红**）：硬编码 `D:/aapk/ios-app` 在 CI 上不存在
+// （runner 路径是 /home/runner/work/...）。所有闸门必须用 __dirname 推根目录。
+const ROOT = path.resolve(__dirname, '..');
 
 // 与 .github/workflows/ios.yml 一一对应（顺序也一致）
 const GATES = [

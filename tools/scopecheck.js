@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
-const ROOT = 'D:/aapk/ios-app';
+// 2026-10-31（第 35 轮，**闸门自身导致 CI 红**）：硬编码 `D:/aapk/ios-app` 在 CI 上不存在
+// （runner 路径是 /home/runner/work/...）。所有闸门必须用 __dirname 推根目录。
+const ROOT = path.resolve(__dirname, '..');
 const DIRS = ['App', 'App/Core', 'App/Services', 'App/UI'];
 
 // 精确判据：**计算属性** `var xxx: T {` 出现在函数/初始化器体内 ⇒ 编译必红。

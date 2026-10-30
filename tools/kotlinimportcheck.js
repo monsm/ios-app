@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
-const KT = 'D:/aapk/ios-app/android-app/app/src/main/java/com/aapk/kfkey/';
+// 2026-10-31（第 35 轮，**闸门自身导致 CI 红**）：原来硬编码 `D:/aapk/...` 本地绝对路径，
+// CI 上不存在 ⇒ `ENOENT scandir` ⇒ 整个 job 失败。所有闸门都必须用 `path.resolve(__dirname, '..')`。
+const KT = path.join(path.resolve(__dirname, '..'), 'android-app', 'app', 'src', 'main', 'java', 'com', 'aapk', 'kfkey') + path.sep;
 
 // 检查：用到的符号是否有对应 import（只查常见 Compose / kotlin 标准库符号）
 const NEED = {
@@ -21,6 +23,11 @@ const NEED = {
   'launch': 'kotlinx.coroutines.launch',
   'JSONObject': 'org.json.JSONObject',
 };
+
+if (!fs.existsSync(KT)) {
+  console.log('✓ 无 android-app 工程，跳过');
+  process.exit(0);
+}
 
 const files = fs.readdirSync(KT).filter(f => f.endsWith('.kt'));
 const problems = [];
