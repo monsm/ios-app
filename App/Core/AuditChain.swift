@@ -2,8 +2,11 @@
 // 三个子模块:
 //   AuditLog   审计留痕: 开门/管理双流水 + 字段 diff + 敏感操作台账 + 脱敏导出
 //   AuditChain 防篡改哈希链: 每事件哈希覆盖前序哈希 (本地轻量 SHA-256 链)
-//   DestroyKit 数据销毁: 等价覆写 (Store 底层是 UserDefaults plist, 覆写 = 随机字节重灌+删除)
-//               + 销毁前备份闸 + 残留全文检查
+//   ~~DestroyKit 数据销毁~~ —— ⚠ 2026-10-30 核实（第 99 轮）：**本文件与全仓都没有 DestroyKit**。
+//   原头注列的「等价覆写（随机字节重灌+删除）+ 销毁前备份闸 + 残留全文检查」三项**从未实现**。
+//   实际只有上面两项（AuditLog / AuditChain）。
+//   本文件也没有第 242 行 —— 整个文件只有 60 余行（3 个哈希函数）。
+//   真要「核弹销毁」，得先定清"哪些键属于 App、哪些是日志/遥测"（见 Store.swift:143-146 的说明）。
 // 存储键全部 kf_ 前缀, 与小程序/备份互通语义一致; 只经 DB.store 读写, 不改 Store 本身。
 import Foundation
 #if canImport(CryptoKit)

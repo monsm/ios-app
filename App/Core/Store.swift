@@ -121,7 +121,8 @@ final class Store: @unchecked Sendable {
         }
     }
     func failureLines() -> [String] { (defaults.array(forKey: key(Self.failureKey)) as? [String]) ?? [] }
-    /// 刻意**不提供**清空口: 这本账的删除动作留在既有语义里 —— 核弹销毁按 `keys()` 全表清 (AuditChain:242)，
+    /// 刻意**不提供**清空口: 这本账的删除动作留在既有语义里 —— **核弹销毁功能并不存在**
+    /// （2026-10-30 第 99 轮核实：原句引用 `AuditChain:242`，但那个文件只有 60 余行、无销毁实现）。
     /// 加一个 `clearFailureLog()` 只会多一条零调用声明，而且给了"把证据抹掉但不告诉用户抹了什么"的按钮。
     func remove(_ k: String) {
         defaults.removeObject(forKey: key(k))
@@ -141,7 +142,7 @@ final class Store: @unchecked Sendable {
         keys().filter { k in prefixes.contains { p in k.hasPrefix(p) } }
     }
     // `clearAll()` (一把删光所有 kf.* 键) 第九十二批删除：全库零调用点，而且它比看起来危险 ——
-    // 销毁流程走的是"按前缀族回滚/覆写"那套 (matchingKeys)，从来没人调它。
+    // （2026-10-30 第 99 轮核实：**没有"销毁流程"** —— 那套「按前缀族回滚/覆写」只服务于回滚快照，而回滚快照本身只生成、无消费，见 BackupStudioKit 的 421 段注释）。
     // 留着这么一把没有主的清空枪，只会让下一个加"重置"按钮的人顺手拿来用；
     // 真要全清得先定清"哪些键属于 App、哪些是日志/遥测"，那是设计不是一行删除。
 }

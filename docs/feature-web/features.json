@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T05:00:28.327Z",
+    "generated": "2026-10-30T05:09:08.738Z",
     "sources": [
       {
         "scout": "android-native",
@@ -56970,7 +56970,7 @@
           "line": 439,
           "symbol": "kf_ledger_",
           "note": "族删前缀清单起点",
-          "text": "/// 验证胁迫码。没设过则恒 false。"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -57033,7 +57033,7 @@
           "line": 374,
           "symbol": "saveKeychain",
           "note": "密钥不再明文写 plist, 改存系统 Keychain",
-          "text": "/// 同时写强摘要 d2 与旧 FNV 摘要 d:"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -57241,7 +57241,7 @@
           "line": 17,
           "symbol": "HashKit",
           "note": "",
-          "text": "enum HashKit {"
+          "text": "#endif"
         }
       ],
       "platformEvidence": {
@@ -58037,7 +58037,7 @@
           "line": 31,
           "symbol": "fingerprint(_:)",
           "note": "",
-          "text": "static func fingerprint(_ s: String) -> String {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -60208,7 +60208,7 @@
           "line": 435,
           "symbol": "removeDevice(_:)",
           "note": "",
-          "text": "set(passcodeDigest(code), duressKey)"
+          "text": "if verifyPasscode(code) { return false }"
         },
         {
           "platform": "ios",
@@ -60507,7 +60507,7 @@
           "line": 182,
           "symbol": "Member",
           "note": "",
-          "text": "/// \"已删门锁 … 的日志缓存残留\" 的孤儿 (真机报告 2026-10-17: 演示数据的清除路径就踩在这一处)。"
+          "text": "/// 而任何在删锁之后又跑一遍的\"改写日志\"都会把它重新写回来 —— 于是体检里凭空多出一条"
         }
       ],
       "platformEvidence": {
@@ -61122,7 +61122,7 @@
           "line": 290,
           "symbol": "DefendCfg",
           "note": "",
-          "text": "var map = store.getDict(\"kf_keychain_dongles\")"
+          "text": "static func saveDongle(_ d: Dongle) {"
         },
         {
           "platform": "ios",
@@ -61130,7 +61130,7 @@
           "line": 261,
           "symbol": "DongleStat",
           "note": "",
-          "text": "// 已删 id 既显示不出人, 又因 claims 里仍有该 id 而**永远无法重新认领** (悬空引用)。"
+          "text": "// 2026-10-14: 认领映射 (kf_mclaim_) 里指向该成员的条目必须删掉 —— 否则记录页 whoId 指向"
         },
         {
           "platform": "ios",
@@ -61138,7 +61138,7 @@
           "line": 272,
           "symbol": "Gateway",
           "note": "",
-          "text": "var duty = store.get([String: String].self, \"kf_duty_week\") ?? [:]"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -61304,7 +61304,7 @@
           "line": 131,
           "symbol": "init(from:)",
           "note": "",
-          "text": "/// 键是否存在 (区分\"无数据\"与\"有数据但解不出\")"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -61382,7 +61382,7 @@
           "line": 150,
           "symbol": "LedgerPwd",
           "note": "",
-          "text": "enum DB {"
+          "text": "// ---------- 钥匙串台账 (services/lock.js) ----------"
         },
         {
           "platform": "ios",
@@ -61390,7 +61390,7 @@
           "line": 161,
           "symbol": "LedgerFp",
           "note": "",
-          "text": "/// 表现是「配了两把锁只剩一把」这类偶发数据丢失。"
+          "text": "/// `kf_keychains` 是「整表读 → 改一个键 → 整表写」，没有同步时后写者会覆盖先写者，"
         },
         {
           "platform": "ios",
@@ -61398,7 +61398,7 @@
           "line": 176,
           "symbol": "Ledger",
           "note": "",
-          "text": "/// 2026-10-14: 原为非隔离可变 static var, 后台任务与主线程并发访问是数据竞争; 加锁存取。"
+          "text": "/// 台账解码失败的锁 (防\"解不出→空表写回\"清空数据)。"
         }
       ],
       "platformEvidence": {
@@ -61466,7 +61466,7 @@
           "line": 198,
           "symbol": "StatusSnapshotData",
           "note": "",
-          "text": "/// （见 `Store.invalidateCache`）。"
+          "text": "/// 而它被 55 处调用（记录页/成员页/统计/导出都在热路径）。结果缓存，失效挂在 `kf_members` 的写入上"
         },
         {
           "platform": "ios",
@@ -61474,7 +61474,7 @@
           "line": 223,
           "symbol": "CachedLog",
           "note": "",
-          "text": "if n.isEmpty || existing.contains(where: { $0.name == n }) { return nil }"
+          "text": "let existing = members()"
         }
       ],
       "platformEvidence": {
@@ -61762,7 +61762,7 @@
           "line": 350,
           "symbol": "migrateSecretsToKeychain()",
           "note": "",
-          "text": "///"
+          "text": "/// 是否设了本机密码。"
         },
         {
           "platform": "ios",
@@ -61770,7 +61770,7 @@
           "line": 361,
           "symbol": "stored",
           "note": "stored || set 成功才 removeValue",
-          "text": "let hasLegacy = !(rec[\"d\"] ?? \"\").isEmpty"
+          "text": "let hasStrong = !(rec[\"d2\"] ?? \"\").isEmpty"
         }
       ],
       "platformEvidence": {
@@ -61920,7 +61920,7 @@
           "line": 374,
           "symbol": "saveKeychain(_:)",
           "note": "",
-          "text": "/// 同时写强摘要 d2 与旧 FNV 摘要 d:"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -61928,7 +61928,7 @@
           "line": 425,
           "symbol": "removeKeychain(_:)",
           "note": "",
-          "text": "/// 返回 false 表示输入不合法（<4 位 / 非纯数字 / 与正常密码相同）。"
+          "text": "/// 设置胁迫码。传 nil 或空串 = 清除。"
         },
         {
           "platform": "ios",
@@ -61936,7 +61936,7 @@
           "line": 438,
           "symbol": "removeDevice",
           "note": "clearPendingPair",
-          "text": ""
+          "text": "}"
         }
       ],
       "platformEvidence": {
