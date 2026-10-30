@@ -198,7 +198,10 @@ final class LinkSense: ObservableObject {
                 guard let self else { return }
                 self.autoReconnectTick()
                 self.syncBtOn()
-                try? await Task.sleep(for: .seconds(2))
+                // 2026-10-30（提速，**自动开锁最大延迟源**）：连上后门锁停止广播，RSSI 只能靠这一拍主动读，
+                // 原来 2s 一拍 ⇒ 到场判定最多滞后 2 秒。开着自动开锁时提到 0.5s（4×），把「走到门口→开锁」压到 0.5s 内。
+                // 只在 autoOpen 开启时提速；关着时保持 2s，不为一个没用到的功能付电量。
+                try? await Task.sleep(for: .seconds(AutoOpen.on ? 0.5 : 2))
             }
         }
     }

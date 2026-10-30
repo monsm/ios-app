@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T13:21:01.551Z",
+    "generated": "2026-10-30T13:36:40.569Z",
     "sources": [
       {
         "scout": "android-native",
@@ -4723,7 +4723,7 @@
           "line": 370,
           "symbol": "startDeadWatch()",
           "note": "",
-          "text": "}"
+          "text": "return m == target || a.macDisplay?.replacingOccurrences(of: \":\", with: \"\").lowercased() == target"
         },
         {
           "platform": "ios",
@@ -4731,7 +4731,7 @@
           "line": 380,
           "symbol": "deadbeatCheck()",
           "note": "",
-          "text": "// 用户主动下拉重扫，立即刷新（@Published 赋值本身就会发通知，不需再手发）。"
+          "text": "/// 537 下拉重扫: 把刚扫到的信号推给 UI。**只动\"最近见到的信号\", 不动连接态** ——"
         },
         {
           "platform": "ios",
@@ -4739,7 +4739,7 @@
           "line": 385,
           "symbol": "idle > 600 && 间隔 > 300",
           "note": "",
-          "text": "// ---------- 每锁 RSSI 记忆 (71 设备列表迷你信号格 / 129 极限距离) ----------"
+          "text": "lastRssiPublishAt = Date()"
         },
         {
           "platform": "ios",
@@ -4747,7 +4747,7 @@
           "line": 404,
           "symbol": "kf_wd_heals + 1",
           "note": "",
-          "text": "var preconnectTask: Task<Void, Never>?"
+          "text": "var coldScanTask: Task<Void, Never>?"
         }
       ],
       "platformEvidence": {
@@ -4823,7 +4823,7 @@
           "line": 419,
           "symbol": "struct FailKind",
           "note": "",
-          "text": "// 顺带量出\"首台可见耗时\" —— 首次发现越晚, 说明 2.4G 侦听窗口被挤得越厉害, 这才是拥挤度那一半。"
+          "text": "try await ble.startScan(allowDuplicates: p.allowDuplicates, timeoutMs: p.timeoutMs)"
         },
         {
           "platform": "ios",
@@ -4831,7 +4831,7 @@
           "line": 425,
           "symbol": "icon 计算属性",
           "note": "",
-          "text": "}"
+          "text": "while Date() < deadline {"
         },
         {
           "platform": "ios",
@@ -4839,7 +4839,7 @@
           "line": 435,
           "symbol": "classifyFailure",
           "note": "",
-          "text": "}"
+          "text": "DB.keychain(disp.replacingOccurrences(of: \":\", with: \"\").lowercased()) != nil {"
         }
       ],
       "platformEvidence": {
@@ -5167,7 +5167,7 @@
           "line": 258,
           "symbol": "ladderSeconds",
           "note": "",
-          "text": "guard deadWatchTask == nil else { return }"
+          "text": "// 本层做\"长挂起\"兜底:"
         },
         {
           "platform": "ios",
@@ -5175,7 +5175,7 @@
           "line": 290,
           "symbol": "autoReconnectTick",
           "note": "",
-          "text": "DB.store.set(\"kf_wd_heals\", DB.store.getInt(\"kf_wd_heals\", 0) + 1)"
+          "text": "self.lockSvc.log(\"info\", \"假死判定 → 已重新握手\")   // 275/131 假死判定"
         },
         {
           "platform": "ios",
@@ -5183,7 +5183,7 @@
           "line": 315,
           "symbol": "pendingCount > 0 才回连",
           "note": "",
-          "text": "switch name {"
+          "text": "/// (不臆造 systemName —— 名字错了真机上只会显示空白)。做成计算属性而不是新增字段:"
         },
         {
           "platform": "ios",
@@ -5191,7 +5191,7 @@
           "line": 338,
           "symbol": "失败 attempt 递增封顶",
           "note": "",
-          "text": "}"
+          "text": "// 但诊断页已随十三轮精简**整族删除**（见 SettingsView 自述），用户找不到它。"
         }
       ],
       "platformEvidence": {
@@ -5337,7 +5337,7 @@
           "line": 213,
           "symbol": "onPreconnectDone()",
           "note": "",
-          "text": "} else {"
+          "text": "guard let self else { return }"
         },
         {
           "platform": "ios",
@@ -5345,7 +5345,7 @@
           "line": 221,
           "symbol": "resync(mac:from:)",
           "note": "",
-          "text": "/// 98 用户主动路径 (圆盘开锁前 ensureConnected) 标记为\"即连\", 解释快慢差异"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -5353,7 +5353,7 @@
           "line": 242,
           "symbol": "lastReceipt",
           "note": "",
-          "text": "func markReady(ms: Int?, rssi: Int?) {"
+          "text": "lastRssiPublishAt = now"
         },
         {
           "platform": "ios",
@@ -5361,7 +5361,7 @@
           "line": 253,
           "symbol": "applyQueueItem → CredentialOrg.sendQueued",
           "note": "",
-          "text": "// 现役的自愈就是本层: 60s 一拍巡检 (:309 的 deadbeatCheck), 挂起 >10 分钟且**有待下发项**才重协商一次。"
+          "text": "// ---------- 275 假死检测 + 131 会话重协商: 连接态久无有效会话 → 重新 ensureConnected ----------"
         }
       ],
       "platformEvidence": {
@@ -7282,7 +7282,7 @@
           "line": 504,
           "symbol": "300ms 轮询 + 取消判据",
           "note": "",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -7298,7 +7298,7 @@
           "line": 525,
           "symbol": "saveRssi / rssiFor",
           "note": "",
-          "text": ""
+          "text": "/// 64 三态链路胶囊 (hero 渐变专用白字变体): 已连接(绿)/握手中(白+转)/未连接(灰白)。"
         }
       ],
       "platformEvidence": {
@@ -41514,7 +41514,7 @@
           "line": 68,
           "symbol": "disconnect",
           "note": "断链复位令牌与 ttl",
-          "text": "var collectorCmd: UInt8 = 0"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -44396,7 +44396,7 @@
           "line": 72,
           "symbol": "ensureConnected",
           "note": "",
-          "text": "// rc 所在 KLV key (JS lock.js RC_KLV, 勘误后权威表)"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -44404,7 +44404,7 @@
           "line": 75,
           "symbol": "ensureConnected",
           "note": "已连也要绑 curMac",
-          "text": "0x15, 0x16, 0x18, 0x19, 0x20, 0x21, 0x22, 0x24,"
+          "text": "// rc 所在 KLV key (JS lock.js RC_KLV, 勘误后权威表)"
         },
         {
           "platform": "ios",
@@ -44412,7 +44412,7 @@
           "line": 107,
           "symbol": "ensureConnected",
           "note": "pid 不符断开",
-          "text": ""
+          "text": "/// 全看这个钟, 所以这个空操作会把后面每一类命令都拖进时间问题里。"
         },
         {
           "platform": "ios",
@@ -44420,7 +44420,7 @@
           "line": 122,
           "symbol": "ensureConnected",
           "note": "复核通过才写缓存",
-          "text": ""
+          "text": "struct LogPage { var surplus: Int?; var logs: [LogEntry] }"
         }
       ],
       "platformEvidence": {
@@ -52736,7 +52736,7 @@
           "line": 62,
           "symbol": "disconnect",
           "note": "断链清 collector",
-          "text": "var cmd: UInt8"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -52828,7 +52828,7 @@
           "line": 62,
           "symbol": "disconnect",
           "note": "",
-          "text": "var cmd: UInt8"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -59298,7 +59298,7 @@
           "line": 327,
           "symbol": "success 结果触感",
           "note": "",
-          "text": "return FailKind(name: \"蓝牙类\", hint: \"检查系统蓝牙开关与权限， 开关一次蓝牙再试\")"
+          "text": "func classifyFailure(_ error: Error) -> FailKind {"
         }
       ],
       "platformEvidence": {
