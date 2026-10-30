@@ -124,7 +124,11 @@ private fun KfApp(unlocker: BleUnlocker) {
     var lastAuto by remember { mutableStateOf(0L) }                 // 上次自动下发时刻 (冷却基准)
     // 2026-10-27 审核补齐 (C-A1)：iOS 有 F6 锁态门（rc=25 锁忙 / rc=26 被撬 → 拒绝自动开），
     // Android 原先没有。这里缓存上次开锁回包的 rc，供 maybeAutoUnlock 做 F6 判断。
-    var lastRc by remember { mutableStateOf(0) }
+    // 2026-10-31（第 27 轮修复，**F6 跨会话失效**）：原来是 `mutableStateOf(0)` —— 初值恒 0，
+    // 而 `LockStore` 里其实早就持久化了 `lastRc`（`lr` 字段，load 时读、save 时写）。
+    // 后果：App 重启后 F6 门"忘了"锁上次报过 rc=25/26 ⇒ 锁正忙/被撬状态下照样下发 04。
+    // 现在初值从已加载的 lock 里取回，重启后 F6 仍然有效。
+    var lastRc by remember { mutableStateOf(lock?.lastRc ?: 0) }
     var armed by remember { mutableStateOf(false) }                // 回差滤波后的"已武装"位
     // 2026-10-30（提速，与 iOS 同式）: 最近 RSSI 样本（最新在前，最多 3 个）—— 中值武装判据用。
     val rssiHistory = remember { mutableStateListOf<Int>() }
@@ -195,7 +199,9 @@ private fun KfApp(unlocker: BleUnlocker) {
         scope.launch {
             val r = unlocker.unlock(l)
             // 2026-10-27 审核补齐：把 rc 落到状态里，供下一次自动开锁做 F6 锁态门判断。
+            // 2026-10-31（第 27 轮）：写内存态之外**也要落盘** —— 否则下次启动读回的还是旧值。
             lastRc = r.rc
+            lock?.let { LockStore.save(ctx, it.copy(lastRc = r.rc)) }
             busy = false
             // 来源标注 (用户 2026-10-17): 开完要能说清是自动开的还是自己点的 ——
             // "谁把我门开了"必须能回答。只在成功时冠来源: 失败那句是诊断文案,
