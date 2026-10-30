@@ -88,6 +88,31 @@ for (const [label, P] of [['暗色 KfDarkColors', DARK], ['浅色 KfLightColors'
   console.log(`  ${okA ? 'ok  ' : 'FAIL'} onAccent 对 accent   = ${ra.toFixed(2)}:1  (需 ≥4.5)`);
 }
 
+
+// ── 2026-10-31（第 42 轮）：**alpha 稀释的正文对比度** ──
+//
+// `inkSub.copy(alpha = 0.55f)` 这类写法在 Compose 里很自然，但它把有效前景色稀释了：
+// 叠在底上后实测 2.8~4.1:1（六种底全部低于 4.5:1）。而它们用在**用户要读的说明正文**上
+// （失败详情 / 自动开锁规则 / MAC 地址），不是装饰。
+//
+// 判据：`colors.ink` 或 `colors.inkSub` 上挂 `.copy(alpha = X)` 且 X < 1.0，且该行不是
+// `uncheckedTrackColor` / `uncheckedBorderColor` / `background` / `border`（那些是非文本元素，3:1 即可）。
+const MAIN = path.join(path.resolve(__dirname, ".."), "android-app", "app", "src", "main", "java", "com", "aapk", "kfkey", "MainActivity.kt");
+if (fs.existsSync(MAIN)) {
+  const ml = fs.readFileSync(MAIN, "utf8").split(/\r?\n/);
+  for (let k = 0; k < ml.length; k++) {
+    const c = ml[k];
+    if (/^\s*\/\//.test(c)) continue;                                  // 注释
+    if (!/colors\.(ink|inkSub)\.copy\(\s*alpha\s*=/.test(c)) continue;  // 只查这两个前景色
+    // 非文本元素放行（开关轨道/边框/背景）
+    if (/uncheckedTrackColor|uncheckedBorderColor|TrackColor|BorderColor|background\(/.test(c)) continue;
+    // 只看「这一行是给 Text 的 color」（同一行或上一行有 color =）
+    const isTextColor = /color\s*=\s*colors\.(ink|inkSub)\.copy/.test(c);
+    if (!isTextColor) continue;
+    total++; fails++;
+    bad.push("MainActivity.kt:" + (k + 1) + "  正文用了 alpha 稀释色（有效对比度会低于 4.5:1）: " + c.trim().slice(0, 70));
+  }
+}
 console.log(`\n断言 ${total} 条 | 不达标 ${fails} 条`);
 if (fails) {
   console.log('\n✗ 不达标明细：');

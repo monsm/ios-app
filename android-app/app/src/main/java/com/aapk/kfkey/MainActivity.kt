@@ -438,14 +438,16 @@ private fun KfApp(unlocker: BleUnlocker) {
                         armed -> "信号已满 (当前 $rssi dBm) — 马上自动开"
                         else -> "还差一点 (当前 $rssi dBm) — 走近或转动手机"
                     },
-                    color = colors.inkSub.copy(alpha = 0.7f),
+                    // 2026-10-31（第 42 轮 · 对比度）：近场提示 —— 用户靠它判断该不该继续走；去掉 alpha（0.7 叠底后 <4.5:1）
+                    color = colors.inkSub,
                     fontSize = 12.sp,
                     fontFamily = FontFamily.Monospace
                 )
                 if (!detail.isEmpty()) {
                     Text(
                         text = detail,
-                        color = colors.inkSub.copy(alpha = 0.55f),
+            // 2026-10-31（第 42 轮 · 对比度）：开锁失败详情 —— **最需要读清的一段**，0.55 叠在底上只有约 2.8:1 —— 去掉 alpha（原来叠在底上低于 4.5:1）
+                        color = colors.inkSub,
                         fontSize = 11.sp,
                         fontFamily = FontFamily.Monospace,
                         textAlign = TextAlign.Center,
@@ -657,7 +659,10 @@ private fun Header(lock: LockInfo?) {
             Spacer(Modifier.height(6.dp))
             Text(
                 text = lock.macText,
-                color = colors.inkSub.copy(alpha = 0.75f),
+                // 2026-10-31（第 42 轮 · 对比度）：原来是 `inkSub.copy(alpha = 0.75f)` ——
+                // 叠在底色上有效对比度只有 **3.63~4.13:1**（六种底全部低于 4.5:1，见 kotlincontrast 的 alpha 检查）。
+                // 而 MAC 地址是**用户要核对的内容**（与门锁背面对号），不是装饰文字，必须达 4.5:1。
+                color = colors.inkSub,
                 fontSize = 12.sp,
                 fontFamily = FontFamily.Monospace,
                 letterSpacing = 1.5.sp
@@ -799,7 +804,11 @@ private fun EmptyState(onScan: () -> Unit) {
         Text("还没有绑定门锁", color = colors.ink, fontSize = 20.sp, fontWeight = FontWeight.Light)
         Spacer(Modifier.height(10.dp))
         Text(
-            "在 iOS 端「设置 → 门锁 → 分享给安卓」生成二维码,\n扫一次即可。之后开锁不再需要它。",
+            // 2026-10-31（第 42 轮，**文案承诺与实际不符**）：原文案写「设置 → 门锁 → 分享给安卓」，
+            // 而 iOS 侧那个入口 2026-10-29 已从「门锁」段**移到「工具」段**
+            // （见 SettingsSections.swift:176-180 的注释与实现）。照旧文案走，用户点进「门锁」找不到。
+            // 另外 iOS 设置页里没有叫「门锁」的段 —— 那是「管理这把锁」的入口名。
+            "在 iOS 端「设置 → 工具 → 分享给安卓 (扫码开锁)」生成二维码，\n扫一次即可。之后开锁不再需要它。",
             color = colors.inkSub, fontSize = 13.sp, textAlign = TextAlign.Center, lineHeight = 20.sp
         )
         Spacer(Modifier.height(28.dp))
@@ -849,7 +858,8 @@ private fun ProximityCard(
                 Text(
                     "一次靠近只开一次: 要走开让信号掉到 " + AutoOpenKit.disarmThreshold() +
                         " dBm 以下, 隔 6 秒后再靠近才会再开。",
-                    color = colors.inkSub.copy(alpha = 0.75f), fontSize = 12.sp, lineHeight = 17.sp,
+            // 2026-10-31（第 42 轮 · 对比度）：自动开锁规则说明（多近触发 / 多久能再触发） —— 去掉 alpha（原来叠在底上低于 4.5:1）
+                    color = colors.inkSub, fontSize = 12.sp, lineHeight = 17.sp,
                 )
             }
             Switch(
@@ -919,7 +929,8 @@ private fun ProximityCard(
             )
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("门锁设置", color = colors.inkSub.copy(alpha = 0.6f), fontSize = 12.sp, modifier = Modifier.weight(1f))
+            // 2026-10-31（第 42 轮 · 对比度）：「门锁设置」分组标题 —— 去掉 alpha（原来叠在底上低于 4.5:1）
+            Text("门锁设置", color = colors.inkSub, fontSize = 12.sp, modifier = Modifier.weight(1f))
             Text(
                 "完成",
                 color = colors.accent.copy(alpha = 0.9f),
