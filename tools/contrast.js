@@ -360,6 +360,84 @@ if (failed > 0) {
 }
 console.log('✓ 全部对比度达标 (正文 4.5:1 / 非文本 3:1 / 分隔线 1.2:1, 含全部主题与 AMOLED)');
 
+
+// ── 2026-10-31（第 44 轮）：**opacity 稀释的前景对比度** ──
+//
+// 第 43 轮在 iOS 找到 3 处 `DS.heroFg.opacity(0.7~0.9)` 用在 `.caption2` / `.footnote` 上 ——
+// 实测 3.16~4.63:1，六套主题全部低于正文 4.5:1。这类写法视觉上"更柔和"，
+// 但可读性下降，代码评审里很容易放过。本段把它机检化。
+//
+// 判据：`DS.heroFg.opacity(X)` 或 `DS.Palette.<role>.opacity(X)` 用于 **Text 前景**
+//       （`.foregroundStyle(...)` 且同一视图是 Text/Label）且 X < 1.0 ⇒
+//       按 hero 渐变两端最差主题算有效对比度，< 4.5 ⇒ 判失败。
+//
+// 不查的场景（合理）：
+//   · 图标前景（Image/Icon）—— 非文本，3:1 即可
+//   · `.background(...)` / `.shadow(...)` / `.fill(...)` / `.strokeBorder(...)` —— 非文字
+//   · 大字号（≥18pt 或 bold）—— 3:1 即可（本段保守按 4.5 判，若确属大字号请显式豁免）
+if (typeof contrast === "function" && typeof hexToRgb === "undefined") {
+  // hexToRgb 未定义时补一个（本文件此前没用到）
+}
+function _hexToRgb(h) {
+  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+}
+function _blend(fg, bg, a) { return fg.map((c, k) => Math.round(c * a + bg[k] * (1 - a))); }
+
+{
+  const DIRS = ["App", "App/Core", "App/Services", "App/UI"];
+  const root = path.join(__dirname, "..");
+  const files = [];
+  for (const d of DIRS) {
+    const dir = path.join(root, d);
+    if (!fs.existsSync(dir)) continue;
+    for (const f of fs.readdirSync(dir)) if (f.endsWith(".swift")) files.push({ rel: d + "/" + f, src: fs.readFileSync(path.join(dir, f), "utf8") });
+  }
+
+  const OPACITY_BAD = [];
+  for (const { rel, src: s } of files) {
+    const Ls = s.split(/\r?\n/);
+    for (let k = 0; k < Ls.length; k++) {
+      const c = Ls[k].replace(/\/\/.*$/, "");
+      if (!c.trim()) continue;
+      // 只查 foregroundStyle 上的 opacity（文字前景）
+      const m = c.match(/\.foregroundStyle\(\s*(?:tint\s*\?\?\s*)?DS\.(heroFg|Palette\.\w+)\.opacity\(\s*(0\.\d+)\s*\)/);
+      if (!m) continue;
+      const a = parseFloat(m[2]);
+      if (a >= 1.0) continue;
+      // 往前找是 Text/Label 还是 Image
+      let isText = false, isImage = false;
+      for (let j = Math.max(0, k - 10); j <= k; j++) {
+        const cc = Ls[j].replace(/\/\/.*$/, "");
+        if (/Text\s*\(|Label\s*\(/.test(cc)) isText = true;
+        if (/Image\s*\(|systemImage:/i.test(cc)) isImage = true;
+      }
+      if (!isText || isImage) continue;   // 图标/非文本放行
+      // 算 hero 两端最差对比度（用 gold light 的 heroA/heroB 作保守估计）
+      const heroA = "855915", heroB = "6F4A10";
+      const fg = [255, 255, 255];
+      // 有效前景色 = 白按 α 混合到底色上，再算对比度。
+      // （上一版把混合后的 RGB 又拼成 hex 再解析，hex 长度/前导零会出错，算出恒 1.00:1。）
+      const _srgb = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.05) / 1.05, 2.4); };
+      const _lumRgb = (rgb) => 0.2126 * _srgb(rgb[0]) + 0.7152 * _srgb(rgb[1]) + 0.0722 * _srgb(rgb[2]);
+      const _ratioRgb = (x, y) => {
+        const l1 = _lumRgb(x), l2 = _lumRgb(y);
+        return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+      };
+      const heroArgbs = ["855915", "6F4A10"].map(_hexToRgb);
+      const worst = Math.min(...heroArgbs.map((bg) => _ratioRgb(_blend(fg, bg, a), bg)));
+      if (worst < 4.5) OPACITY_BAD.push(rel + ":" + (k + 1) + "  opacity(" + a + ") → " + worst.toFixed(2) + ":1  " + c.trim().slice(0, 60));
+    }
+  }
+
+  if (OPACITY_BAD.length) {
+    console.log("\n✗ opacity 稀释前景对比度 " + OPACITY_BAD.length + " 处（正文需 ≥4.5:1）：");
+    OPACITY_BAD.forEach(x => console.log("  " + x));
+    console.log("\n修法：把 opacity 提到 0.95，或改成不透明的语义色；确属大字号/粗体可在此显式豁免。");
+    process.exit(1);
+  } else {
+    console.log("✓ 无 opacity 稀释前景对比度（文字前景均 ≥4.5:1）");
+  }
+}
 // 2026-10-27 (AUDIT-B 2.9)：休眠汇总 —— 让「有几条没在查」变成可见的数字。
 if (SLEEPING.length) {
   console.log('\n休眠 ' + SLEEPING.length + ' 条 (目标已删，不判失败，但**这几条什么都没查**)：');
