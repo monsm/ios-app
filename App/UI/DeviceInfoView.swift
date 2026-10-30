@@ -124,7 +124,9 @@ struct DeviceInfoView: View {
     }
 
     /// 45: 采样表就是 sparkline 的唯一数据源 (每次读 03 追加, 90 天截断)
-    private var battSamples: [BattSample] { BatteryCare.samples(kc?.mac ?? "") }
+    /// 2026-10-30（第 162 轮，**性能**）：原来是计算属性 —— `BatteryCare.samples` 内部 `store.get` 每调一次解一遍 JSON，
+    /// 而 body 里有两处用它（L106 的 `sp` 与 L198 的 `trendText`）⇒ 一次 body 解两遍。改 @State，`reload()` 里填一次。
+    @State private var battSamples: [BattSample] = []
     /// 45: 图下那行写全可核事实 —— 点数/跨度天数/最低最高, 不写"预计""续航"一类协议没有的词
     private func battTrendCaption(_ sp: [BattSample]) -> String {
         let lo = sp.map(\.pct).min() ?? 0
@@ -195,7 +197,7 @@ struct DeviceInfoView: View {
     }
     /// 45: 电量趋势的诚实占位 — 采样埋点已开, 曲线等数据积累
     private var trendText: String {
-        let n = BatteryCare.samples(kc?.mac ?? "").count
+        let n = battSamples.count   // 2026-10-30：改用 reload() 缓存的值
         return n == 0 ? "电量趋势： 尚无采样， 每次连接自动记录" : "电量趋势： 已积累 \(n) 个采样点， 曲线待数据更满"
     }
     /// 1019 固件服役天数 (从本机首次读到该版本起算)
@@ -252,6 +254,7 @@ struct DeviceInfoView: View {
             // 本页 body 的 kc 已是新锁、`status` 却是旧锁读数 —— 同一屏混两把锁的数据。不一致就丢弃。
             guard app.currentMac == kc.mac else { return }
             if let st = status { app.applyStatus(st) }
+            battSamples = BatteryCare.samples(kc.mac)   // 2026-10-30：一次取，body 两处共用
             // 47: 状态读回瞬间锁钟与手机时钟的差 (协议秒基准换算)
             if let lt = status?.lockTime {
                 clockDrift = Int(lt - ZKProtocol.nowProtoSeconds())
