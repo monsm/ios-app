@@ -34,6 +34,10 @@ extension LinkSense {
             connectSource = "预热"
             markReady(ms: ms, rssi: dev.rssi)
             lockSvc.log("info", "预握手完成： 耗时 \(ms)ms (只预热不执行， 96)")
+            // 2026-10-30（提速，第 2 轮）：与 `refresh()` 同口径 —— 预握手成功后预取会话令牌，
+            // 让**首次**开锁也只剩 cmd04 一次往返（而不是 cmd01 + cmd04 两次）。
+            // 冷启动 / 回前台 / 进页三条预热路径都覆盖到，用户在哪个入口都吃到这个提前量。
+            if lockSvc.waiter == nil { try? await lockSvc.prefetchSession() }
             // 276: 同一次节律里顺手把其余常用锁也扫一遍 —— 不另开定时器 (预握手本身就是节律入口),
             // 也不改上面那条单锁链的任何判断 (它仍然只决定当前锁要不要预热)。
             if !Task.isCancelled { await preconnectOthers() }

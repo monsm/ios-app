@@ -174,6 +174,13 @@ final class LinkSense: ObservableObject {
             markReady(ms: ms, rssi: lastRssi)
             BleTelemetry.recordAttempt(mac: mac, ok: true, reason: "进页预热 \(ms)ms")
             BleTelemetry.recordEvent("握手完成 (进页预热)", ok: true)
+            // 2026-10-30（提速，第 2 轮）：**把首次开锁的两次往返挪到预热里**。
+            // 预热本来就在"用户还没点开锁"的时候发生，这里多做 cmd01（+可选 cmd03）不占用户时间；
+            // 等真点开锁时令牌已在 20s 窗口内 ⇒ 首次开锁也只剩 cmd04 一次往返。
+            // 只在"无命令在飞"时预取 —— 用户若已在开锁，waiter 单槽会被撞，宁可不预取也不拖慢真实操作。
+            if lockSvc.waiter == nil {
+                try? await lockSvc.prefetchSession()
+            }
         } catch {
             BleTelemetry.recordAttempt(mac: mac, ok: false, reason: classifyFailure(error).name + " " + error.localizedDescription)
             BleTelemetry.recordEvent("握手失败 " + classifyFailure(error).name, ok: false)

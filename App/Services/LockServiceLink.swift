@@ -131,6 +131,13 @@ extension LockService {
     }
 
     // ---------- 令牌 ----------
+    /// 2026-10-30（提速，第 2 轮）：预热期预取会话令牌 —— 把「首次开锁的 cmd01 往返」挪到用户点击之前。
+    /// 只在无命令在飞时调用（调用方已判 `waiter == nil`）；失败静默（预热失败不该打扰用户）。
+    func prefetchSession() async throws {
+        if waiter != nil { return }
+        try await ensureToken()
+    }
+
     func ensureToken() async throws {
         // 2026-10-18 性能: **令牌复用**。原来每次 needToken 都无条件重发 cmd01,
         // 而 cmd01 是一次完整往返（写 20B + 等回包）。开锁链上它是纯开销:

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T13:36:40.569Z",
+    "generated": "2026-10-30T13:42:31.689Z",
     "sources": [
       {
         "scout": "android-native",
@@ -3674,7 +3674,7 @@
           "line": 431,
           "symbol": "chosenPinIndex(_:)",
           "note": "",
-          "text": "if Task.isCancelled { return }"
+          "text": "} catch is CancellationError {"
         },
         {
           "platform": "ios",
@@ -4638,7 +4638,7 @@
           "line": 537,
           "symbol": "coldStartScan()",
           "note": "",
-          "text": ""
+          "text": "/// 69 蓝牙直通条: 系统蓝牙关闭时全 App 顶部引导条 (深链不可用 → 系统设置指引文案)。"
         },
         {
           "platform": "ios",
@@ -4723,7 +4723,7 @@
           "line": 370,
           "symbol": "startDeadWatch()",
           "note": "",
-          "text": "return m == target || a.macDisplay?.replacingOccurrences(of: \":\", with: \"\").lowercased() == target"
+          "text": "while Date() < deadline, found == nil, !Task.isCancelled {"
         },
         {
           "platform": "ios",
@@ -4731,7 +4731,7 @@
           "line": 380,
           "symbol": "deadbeatCheck()",
           "note": "",
-          "text": "/// 537 下拉重扫: 把刚扫到的信号推给 UI。**只动\"最近见到的信号\", 不动连接态** ——"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -4739,7 +4739,7 @@
           "line": 385,
           "symbol": "idle > 600 && 间隔 > 300",
           "note": "",
-          "text": "lastRssiPublishAt = Date()"
+          "text": "return found"
         },
         {
           "platform": "ios",
@@ -4747,7 +4747,7 @@
           "line": 404,
           "symbol": "kf_wd_heals + 1",
           "note": "",
-          "text": "var coldScanTask: Task<Void, Never>?"
+          "text": "DB.store.get(Int.self, \"kf_linkrssi_\" + mac)"
         }
       ],
       "platformEvidence": {
@@ -4823,7 +4823,7 @@
           "line": 419,
           "symbol": "struct FailKind",
           "note": "",
-          "text": "try await ble.startScan(allowDuplicates: p.allowDuplicates, timeoutMs: p.timeoutMs)"
+          "text": "guard self != nil, !Task.isCancelled else { return }   // 只为\"已销毁/已取消就别扫\""
         },
         {
           "platform": "ios",
@@ -4831,7 +4831,7 @@
           "line": 425,
           "symbol": "icon 计算属性",
           "note": "",
-          "text": "while Date() < deadline {"
+          "text": "let t0 = Date()"
         },
         {
           "platform": "ios",
@@ -4839,7 +4839,7 @@
           "line": 435,
           "symbol": "classifyFailure",
           "note": "",
-          "text": "DB.keychain(disp.replacingOccurrences(of: \":\", with: \"\").lowercased()) != nil {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -5167,7 +5167,7 @@
           "line": 258,
           "symbol": "ladderSeconds",
           "note": "",
-          "text": "// 本层做\"长挂起\"兜底:"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -5175,7 +5175,7 @@
           "line": 290,
           "symbol": "autoReconnectTick",
           "note": "",
-          "text": "self.lockSvc.log(\"info\", \"假死判定 → 已重新握手\")   // 275/131 假死判定"
+          "text": "do {"
         },
         {
           "platform": "ios",
@@ -5183,7 +5183,7 @@
           "line": 315,
           "symbol": "pendingCount > 0 才回连",
           "note": "",
-          "text": "/// (不臆造 systemName —— 名字错了真机上只会显示空白)。做成计算属性而不是新增字段:"
+          "text": "// 后者覆盖面更大 (还含 信号弱/回连轮次/会话重协商)。留第三份同表只会让三处漂移。"
         },
         {
           "platform": "ios",
@@ -5191,7 +5191,7 @@
           "line": 338,
           "symbol": "失败 attempt 递增封顶",
           "note": "",
-          "text": "// 但诊断页已随十三轮精简**整族删除**（见 SettingsView 自述），用户找不到它。"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -5266,7 +5266,7 @@
           "line": 185,
           "symbol": "func refresh()",
           "note": "",
-          "text": "// 2026-10-26 精简：resync（到场/回前台自动补发队列）已删 —— 队列功能整套移除。"
+          "text": "BleTelemetry.recordAttempt(mac: mac, ok: false, reason: classifyFailure(error).name + \" \" + error.localizedDescription)"
         },
         {
           "platform": "ios",
@@ -5274,7 +5274,7 @@
           "line": 189,
           "symbol": "已连接直接 markReady",
           "note": "",
-          "text": "static let ladderSeconds: [Double] = [5, 15, 30, 60, 90]"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -5337,7 +5337,7 @@
           "line": 213,
           "symbol": "onPreconnectDone()",
           "note": "",
-          "text": "guard let self else { return }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -5345,7 +5345,7 @@
           "line": 221,
           "symbol": "resync(mac:from:)",
           "note": "",
-          "text": "}"
+          "text": "await self.refresh()"
         },
         {
           "platform": "ios",
@@ -5353,7 +5353,7 @@
           "line": 242,
           "symbol": "lastReceipt",
           "note": "",
-          "text": "lastRssiPublishAt = now"
+          "text": "// 每来一次都会让观察 LinkSense 的 DeviceHomeView（hero 卡 + 开锁圆盘 + 快捷格）整页重算。"
         },
         {
           "platform": "ios",
@@ -5361,7 +5361,7 @@
           "line": 253,
           "symbol": "applyQueueItem → CredentialOrg.sendQueued",
           "note": "",
-          "text": "// ---------- 275 假死检测 + 131 会话重协商: 连接态久无有效会话 → 重新 ensureConnected ----------"
+          "text": "connectMs = ms"
         }
       ],
       "platformEvidence": {
@@ -7274,7 +7274,7 @@
           "line": 492,
           "symbol": "func scan(mac:timeoutMs:)",
           "note": "",
-          "text": "}"
+          "text": "guard !mac.isEmpty else { return }"
         },
         {
           "platform": "ios",
@@ -7282,7 +7282,7 @@
           "line": 504,
           "symbol": "300ms 轮询 + 取消判据",
           "note": "",
-          "text": "}"
+          "text": "// ---------- AppState 宿主注册 (LinkSense 只读协作, 不建循环依赖) ----------"
         },
         {
           "platform": "ios",
@@ -7290,7 +7290,7 @@
           "line": 519,
           "symbol": "noteScannedRssi",
           "note": "",
-          "text": "}"
+          "text": "static func rssiLevel(_ rssi: Int?) -> Int {"
         },
         {
           "platform": "ios",
@@ -7298,7 +7298,7 @@
           "line": 525,
           "symbol": "saveRssi / rssiFor",
           "note": "",
-          "text": "/// 64 三态链路胶囊 (hero 渐变专用白字变体): 已连接(绿)/握手中(白+转)/未连接(灰白)。"
+          "text": "return 0"
         }
       ],
       "platformEvidence": {
@@ -8005,7 +8005,7 @@
           "line": 397,
           "symbol": "if DB.hasPasscode(), let t = lastUnlockSuccessAt, now.timeIntervalSince(t) < 30",
           "note": "",
-          "text": "var lastMsg = \"\""
+          "text": "return (i >= 0 && i < kc.pins.count) ? kc.pins[i] : nil"
         },
         {
           "platform": "ios",
@@ -8021,7 +8021,7 @@
           "line": 371,
           "symbol": "requestUnlock",
           "note": "",
-          "text": "func cancelUnlock(notify: Bool = false) {"
+          "text": "unlockTask?.cancel()"
         },
         {
           "platform": "ios",
@@ -8029,7 +8029,7 @@
           "line": 379,
           "symbol": "if unlockState == .connecting || .opening",
           "note": "",
-          "text": "}"
+          "text": "unlockTask = nil"
         }
       ],
       "platformEvidence": {
@@ -10582,7 +10582,7 @@
           "line": 371,
           "symbol": "func requestUnlock",
           "note": "",
-          "text": "func cancelUnlock(notify: Bool = false) {"
+          "text": "unlockTask?.cancel()"
         },
         {
           "platform": "ios",
@@ -10590,7 +10590,7 @@
           "line": 374,
           "symbol": "guard SecurityPolicy.allows(.unlock)",
           "note": "",
-          "text": "phase = 0"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -10598,7 +10598,7 @@
           "line": 375,
           "symbol": "denialMessage",
           "note": "",
-          "text": "retryWait = nil"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -10606,7 +10606,7 @@
           "line": 404,
           "symbol": "func startUnlock",
           "note": "",
-          "text": "unlockState = .connecting"
+          "text": "var lastRc: Int? = nil   // 86: 服务层回的错误码 (异常路径没有码, 保持 nil)"
         }
       ],
       "platformEvidence": {
@@ -13381,7 +13381,7 @@
           "line": 439,
           "symbol": "private func runUnlock",
           "note": "",
-          "text": "retryWait = w"
+          "text": "if lastMsg.contains(\"超时\") { break }"
         },
         {
           "platform": "ios",
@@ -13389,7 +13389,7 @@
           "line": 441,
           "symbol": "attempts = kf_auto_retry ? 3 : 1",
           "note": "",
-          "text": "}"
+          "text": "// 83/85: 前两次自动静默重试, 退避 2s/5s 并显示节奏文案; 之后转手动"
         },
         {
           "platform": "ios",
@@ -13397,7 +13397,7 @@
           "line": 445,
           "symbol": "phase = 1",
           "note": "",
-          "text": "break"
+          "text": "retryWait = w"
         },
         {
           "platform": "ios",
@@ -13405,7 +13405,7 @@
           "line": 453,
           "symbol": "lock.unlock(mac:pinDec:)",
           "note": "",
-          "text": "finishDwell(.failed(lastMsg))"
+          "text": "// 2026-10-29：取消时不写失败终态（cancelUnlock 已把状态复位成 idle）。"
         },
         {
           "platform": "ios",
@@ -13413,7 +13413,7 @@
           "line": 455,
           "symbol": "if rc == 0",
           "note": "",
-          "text": ""
+          "text": "// 终态失败: 直读原因 (84) + 写入时间线标记 (92)"
         }
       ],
       "platformEvidence": {
@@ -13806,7 +13806,7 @@
           "line": 428,
           "symbol": "246 本次用哪条 PIN 注释",
           "note": "",
-          "text": "lastMsg = error.localizedDescription"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -13814,7 +13814,7 @@
           "line": 431,
           "symbol": "func chosenPinIndex",
           "note": "",
-          "text": "if Task.isCancelled { return }"
+          "text": "} catch is CancellationError {"
         },
         {
           "platform": "ios",
@@ -13822,7 +13822,7 @@
           "line": 432,
           "symbol": "kf_pinpick_ + mac",
           "note": "",
-          "text": "// 超时不自动重试: 指令可能已生效 (门已开只是没回执), 再发一次就是第二次开锁动作"
+          "text": "return   // cancelUnlock 已复位, 不计入失败"
         },
         {
           "platform": "ios",
@@ -13830,7 +13830,7 @@
           "line": 434,
           "symbol": "func chosenPin",
           "note": "",
-          "text": "failStreak += 1   // 87 三连败排查清单按尝试次数累计"
+          "text": "lastMsg = error.localizedDescription"
         },
         {
           "platform": "ios",
@@ -13838,7 +13838,7 @@
           "line": 436,
           "symbol": "i >= 0 && i < kc.pins.count",
           "note": "",
-          "text": "if attempt < attempts, !Task.isCancelled {"
+          "text": "// 2026-10-29：catch 之后再看一次 —— 取消不算失败，也不该进 failStreak / 重试。"
         }
       ],
       "platformEvidence": {
@@ -33457,7 +33457,7 @@
           "line": 525,
           "symbol": "外观变更注释",
           "note": "",
-          "text": "var out = [(String, String, Bool, String, String?)]()"
+          "text": "let n = count ?? DB.store.getInt(\"kf_recent_count\", 5)"
         },
         {
           "platform": "ios",
@@ -33481,7 +33481,7 @@
           "line": 527,
           "symbol": "private func applyAppearance",
           "note": "",
-          "text": "let memberByID = Dictionary(DB.members().map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })"
+          "text": "let rows = Attribution.classify("
         }
       ],
       "platformEvidence": {
@@ -37253,7 +37253,7 @@
           "line": 356,
           "symbol": "func showToast",
           "note": "",
-          "text": "if DB.hasPasscode(), let t = lastUnlockSuccessAt, now.timeIntervalSince(t) < 30 {"
+          "text": "guard now.timeIntervalSince(lastDispatch) > 1.2 else {"
         },
         {
           "platform": "ios",
@@ -37261,7 +37261,7 @@
           "line": 357,
           "symbol": "withAnimation spring",
           "note": "",
-          "text": "showGate = true"
+          "text": "showToast(\"指令已收到， 正在执行\")"
         },
         {
           "platform": "ios",
@@ -37580,7 +37580,7 @@
           "line": 587,
           "symbol": "开锁偏好注释",
           "note": "",
-          "text": "extension RootView {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -37588,7 +37588,7 @@
           "line": 598,
           "symbol": "static let behaviorKeys",
           "note": "",
-          "text": "// 2026-10-26: 原 `GuestReauthGate`（377 访客受限区复核页）已删 —— 它的唯一入口"
+          "text": "LinkSense.shared.startDeadWatch()"
         },
         {
           "platform": "ios",
@@ -37596,7 +37596,7 @@
           "line": 620,
           "symbol": "无障碍键并入",
           "note": "",
-          "text": ""
+          "text": "// `card()`（新语法层的主表面，同一句 `.shadow(color: .cardElevation, radius: 12, y: 4)`）。"
         },
         {
           "platform": "ios",
@@ -39739,7 +39739,7 @@
           "line": 362,
           "symbol": "if toast == msg",
           "note": "",
-          "text": ""
+          "text": "if DB.hasPasscode(), let t = lastUnlockSuccessAt, now.timeIntervalSince(t) < 30 {"
         },
         {
           "platform": "ios",
@@ -39747,7 +39747,7 @@
           "line": 363,
           "symbol": "DS.Duration.quick",
           "note": "",
-          "text": "func startUnlock() {"
+          "text": "showGate = true"
         }
       ],
       "platformEvidence": {
@@ -40441,7 +40441,7 @@
           "line": 466,
           "symbol": "lastMsg = StatusParser.rcFriendly(rc)",
           "note": "",
-          "text": "try? await Task.sleep(nanoseconds: dwell)"
+          "text": "switch finished {"
         },
         {
           "platform": "apk",
@@ -57868,7 +57868,7 @@
           "line": 598,
           "symbol": "behaviorKeys",
           "note": "",
-          "text": "// 2026-10-26: 原 `GuestReauthGate`（377 访客受限区复核页）已删 —— 它的唯一入口"
+          "text": "LinkSense.shared.startDeadWatch()"
         },
         {
           "platform": "ios",
@@ -57876,7 +57876,7 @@
           "line": 431,
           "symbol": "kf_pinpick_",
           "note": "",
-          "text": "if Task.isCancelled { return }"
+          "text": "} catch is CancellationError {"
         },
         {
           "platform": "ios",
@@ -57884,7 +57884,7 @@
           "line": 520,
           "symbol": "kf_unlock_hint_day",
           "note": "",
-          "text": "let logs = DB.readLogs(kc.mac).prefix(n)"
+          "text": "// 最近开门 (attribution R1/R2); 条数偏好见 idea 910 (kf_recent_count, 默认 5)"
         }
       ],
       "platformEvidence": {
@@ -59298,7 +59298,7 @@
           "line": 327,
           "symbol": "success 结果触感",
           "note": "",
-          "text": "func classifyFailure(_ error: Error) -> FailKind {"
+          "text": "case \"指令被拒\": return \"xmark.circle.fill\""
         }
       ],
       "platformEvidence": {
@@ -63588,7 +63588,7 @@
           "line": 518,
           "symbol": "unlockReturnedHint",
           "note": "",
-          "text": "guard let kc = current else { return [] }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -63596,7 +63596,7 @@
           "line": 520,
           "symbol": "kf_unlock_hint_day",
           "note": "",
-          "text": "let logs = DB.readLogs(kc.mac).prefix(n)"
+          "text": "// 最近开门 (attribution R1/R2); 条数偏好见 idea 910 (kf_recent_count, 默认 5)"
         }
       ],
       "platformEvidence": {
