@@ -104,7 +104,20 @@ if (fail.length) {
         { cwd: ROOT, encoding: 'utf8', timeout: 240000, stdio: ['ignore', 'pipe', 'pipe'] });
       execFileSync('node', [path.join(ROOT, 'tools', 'featurewebcheck.js')],
         { cwd: ROOT, encoding: 'utf8', timeout: 240000, stdio: ['ignore', 'pipe', 'pipe'] });
-      console.log('✓ 已重建并通过（记得把 docs/feature-web/ 一起提交）');
+
+      // 2026-10-30（第 114 轮）：**光提示不够** —— 本轮我就漏了把重建产物一起提交，
+      // 于是 CI 在 `功能图谱派生一致性` 那一步红了。现在直接列出必须 git add 的文件。
+      console.log('\n══════════════════════════════════════════════════════════');
+      console.log('⚠ 基线已重建，以下文件**必须一起提交**，否则 CI 必红：');
+      try {
+        const st = execFileSync('git', ['status', '--porcelain', 'docs/feature-web'],
+          { cwd: ROOT, encoding: 'utf8', timeout: 30000, stdio: ['ignore', 'pipe', 'pipe'] });
+        const dirty = st.trim().split('\n').filter(Boolean);
+        if (dirty.length) dirty.forEach(l => console.log('    ' + l));
+        else console.log('    （工作树已干净 —— 说明改动已在之前的提交里）');
+      } catch { console.log('    （git status 读取失败，请手工检查 docs/feature-web/）'); }
+      console.log('建议：提交时用 `git add -A`（整树），不要只 add App/tools。');
+      console.log('══════════════════════════════════════════════════════════');
       process.exit(0);
     } catch (e2) {
       console.log('✗ 重建后仍失败: ' + ((e2.stdout || '') + (e2.stderr || '')).trim().slice(-300));
