@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T04:26:25.730Z",
+    "generated": "2026-10-30T04:38:05.559Z",
     "sources": [
       {
         "scout": "android-native",
@@ -4409,7 +4409,7 @@
           "line": 10,
           "symbol": "struct MobileKeyView",
           "note": "",
-          "text": ""
+          "text": "struct MobileKeyView: View {"
         },
         {
           "platform": "ios",

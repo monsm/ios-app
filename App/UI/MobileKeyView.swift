@@ -1,6 +1,8 @@
 // 手机钥匙（数字钥匙）页 —— 原版 APK 的 page-addblekey / page-delblekey 在 iOS 侧的对应实现。
 //
-// 一个页面两件事：给成员发一把手机钥匙 + 列出已发的并撤销。
+// 一个页面两件事：给成员签发一把手机钥匙 + 列出本机已签发的并撤销。
+// ⚠ 2026-10-30（第 95 轮）措辞纪律：「签发」= 只写本机台账；「交付」= 用户长按分享给对方。
+// 这两个动作**不是一回事**，UI 文案不得混用（原本文案把签发写成"已发"，用户以为送达了）。
 // 原版是两个页面（addblekey / delblekey）且靠服务端成员表判断 pin 占用；
 // 本机离线，只能看到「本机发过的」，这一点在页面上如实写出来，不用文案糊过去。
 import SwiftUI
@@ -54,7 +56,7 @@ struct MobileKeyView: View {
                 Image(systemName: "iphone.gen3").font(.system(size: DS.Icon.sm))
                     .foregroundStyle(DS.Palette.accentText).accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                    Text("PIN 池 \(kc.pins.count) 个 · 本机已发 \(keys.count) 把")
+                    Text("PIN 池 \(kc.pins.count) 个 · 本机已签发 \(keys.count) 把")
                         .vkFont(.subheadline, weight: .medium)
                     if let hint = MobileKeyService.foreignKeyHint(app, kc: kc) {
                         Text(hint).vkFont(.caption).foregroundStyle(DS.Palette.warn)
@@ -87,7 +89,7 @@ struct MobileKeyView: View {
                 DatePicker("到期时间", selection: $validTo, in: Date()...,
                            displayedComponents: [.date, .hourAndMinute])
             }
-            BusyButton(title: "发一把手机钥匙", systemImage: "key.horizontal", isBusy: busy) {
+            BusyButton(title: "签发一把手机钥匙", systemImage: "key.horizontal", isBusy: busy) {
                 Task { await issue(kc) }
             }
             .disabled(memberID.isEmpty || busy)
@@ -104,7 +106,7 @@ struct MobileKeyView: View {
         }
     }
 
-    // MARK: - 已发
+    // MARK: - 已签发（本机台账）
 
     private func issuedSection(_ kc: Keychain) -> some View {
         Section {
@@ -155,7 +157,8 @@ struct MobileKeyView: View {
                 }
             }
         } header: {
-            Text("已发的钥匙（\(keys.count)）")
+            // 2026-10-30（第 95 轮）：同上 —— 「已发」暗示送达，改为「本机签发的」。
+            Text("本机签发的钥匙（\(keys.count)）")
         } footer: {
             Text("长按一把钥匙可以「分享」或「只复制 ekey」—— 签发只在本机记账，必须把 ekey 交给对方才真正生效。"
                  + "撤销会同时把这个 pin 从锁里删掉（cmd08 delPins）—— 只删本地记录的话，"
@@ -185,10 +188,14 @@ struct MobileKeyView: View {
                                                  forever: forever,
                                                  validFrom: fmt.string(from: Date()),
                                                  validTo: fmt.string(from: validTo))
-            app.showToast("已给「\(m.name)」发一把手机钥匙")
+            // 2026-10-30 修复（第 95 轮）：原句「已给 XXX **发**一把手机钥匙」暗示已经送达，
+            // 而 `issue` 只写本机 `kf_mkey_` —— 成员的手机**什么也没收到**。
+            // 真正的交付入口在列表行的长按菜单（「分享这把钥匙」）。
+            // 用户看到"已发"就不会再去找分享，结果对方永远拿不到钥匙。
+            app.showToast("已生成手机钥匙 —— 长按这一行「分享这把钥匙」交给「\(m.name)」")
             reload()
         } catch {
-            app.showToast("发放失败： \(error.localizedDescription)")
+            app.showToast("签发失败： \(error.localizedDescription)")
         }
     }
 
