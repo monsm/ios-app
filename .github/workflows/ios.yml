@@ -41,6 +41,9 @@ jobs:
         with:
           node-version: "24"
 
+      - name: '页面壳一致性闸门 (判失败: Tab 根 View 缺 NavigationStack / navigationTitle)'
+        run: node tools/uishellcheck.js
+
       - name: '闸门路径可移植性 (判失败: 硬编码绝对路径 —— CI runner 路径不同必 ENOENT)'
         run: node tools/gatepathcheck.js
       - name: '工作流自检 (step 名裸冒号 / 块体截断 / 重名 —— 统一交给 workflowcheck.js)'
