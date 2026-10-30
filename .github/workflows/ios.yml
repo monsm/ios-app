@@ -464,6 +464,9 @@ jobs:
       - name: '文档断言一致性 (判失败: 文档里的绝对化断言与代码事实矛盾)'
         run: node tools/docclaimcheck.js
 
+      - name: '设计系统采纳率闸门 (判失败: 定义了组件却零调用 = 死组件)'
+        run: node tools/uidsadoptioncheck.js
+
       - name: '全局文字色默认闸门 (判失败: 暖调主题被系统中性色打散)'
         run: node tools/uiglobalcolorcheck.js
 
