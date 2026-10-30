@@ -69,7 +69,7 @@ enum BackupStudio {
         //   · kf_rdisp_<mac>  行处置（「标记已处置 / 撤销」，告警排查的核心：谁在什么时候确认过这条）
         // 这三族是用户自己攒的**内容**，且 restore 会整表替换台账/重建成员 ⇒ 恢复后行键全部失效，
         // 不收进快照就等于「备注和旗标凭空没了」，也撤不回来 —— 与 421 当初补洞的判据同源。
-        "kf_rflt_", "kf_rnote_", "kf_rflag_", "kf_rdisp_", "kf_rdispo"
+        "kf_rflt_", "kf_rnote_", "kf_rflag_", "kf_rdisp_", "kf_rdispo",
         "kf_cseq_", "kf_calias_display", "kf_cbin_", "kf_clists_", 
         "kf_bk_note",                 // 433 备注
         // 2026-10-13 对抗式排查: TOTP/静态口令族漏收。三种导入模式都会写这四个族
