@@ -56,6 +56,9 @@ jobs:
       - name: '页面空态闸门 (判失败: 渲染集合的页面没有空态判据 —— 用户停在空白页无路可走)'
         run: node tools/emptycheck.js
 
+      - name: '跨文件 private 闸门 (判失败: struct 与 extension 分文件时，private 成员在另一文件不可见 —— 编译必红)'
+        run: node tools/privcheck.js
+
       - name: 金标漂移校验 (committed 必须等于 JS 核心输出; 改 vendor 后须重生成并提交)
         run: node tools/golden.js --check
 
