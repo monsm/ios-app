@@ -316,26 +316,38 @@ extension CredentialsView {
     func disablePwd(_ p: LedgerPwd) {
         guard busyKey == nil else { return }
         confirmDestructive("停用密码 #\(p.alias)",
-                          // 天数口径：这个 7 天是 **364 的一键恢复窗口**，出处 `CredentialOrg.withinRecoverWindow`
-                          //   里写死的 `7 * 86400`，与 497 那个 7~90 天可调的回收站保留期不是同一件事 (所以不读 reclaimDays)。
+                          // 2026-10-30 修正（第 71 轮）：原注释引用的 `CredentialOrg.withinRecoverWindow` **已不存在**，
+                          // 「7 天恢复窗口」是回收站整套移除前的遗留说法。下面那句确认文案才是事实（没有回收站，不可恢复）。
                           "停用只移除本机台账（没有回收站，不可恢复）；锁端凭证仍然有效，必须到门锁键盘上手动删除才会真正失效。",
                           confirmTitle: "停用") {
             DB.delPwd(mac, p.alias)
             // 361: 单条停用没有 313 的四选一, 便签如实记"未填", 不编一个原因充数 (要不要补必填见 NEXT-DECISIONS 组5)
             CredentialOrg.markDisabled(mac, kind: "pwd", keys: [p.alias], label: "未填", via: disableVia(owner: p.owner))
-            showToastOrganized("已停用， 7 天内可恢复")   // 364 已停用
+            // 2026-10-30 修复（第 71 轮）：原句「已停用，7 天内可恢复」是**假承诺** ——
+            // 同一函数的确认文案明写「停用只移除本机台账（没有回收站，不可恢复）」，
+            // 而 `CredentialOrg.markDisabled` 只写一条停用便签（label/at/via），
+            // 全仓**没有任何恢复入口**（`withinRecoverWindow` 已不存在）。
+            // 用户看到"7 天内可恢复"就会以为有后悔药，7 天后发现没了。
+            // 现在与确认文案对齐：只说事实，不承诺能力。
+            showToastOrganized("已停用（本机已移除，锁端凭证仍需到门锁上手动删除）")
         }
     }
     func disableFp(_ f: LedgerFp) {
         guard busyKey == nil else { return }
         confirmDestructive("停用指纹「\(f.name)」",
-                          // 天数口径：同停用密码那一支 —— 7 天是 364 一键恢复窗口 (`withinRecoverWindow` 写死)，
-                          //   不是 497 那个可调的回收站保留期。
+                          // 2026-10-30 修正（第 71 轮）：同停用密码那一支 —— 回收站已整套移除，「7 天恢复窗口」不再存在。
+
                           "停用只移除本机台账（没有回收站，不可恢复）；锁端指纹仍然有效，必须到门锁上手动删除才会真正失效。",
                           confirmTitle: "停用") {
             DB.delFp(mac, f.batch)
             CredentialOrg.markDisabled(mac, kind: "fp", keys: [f.batch], label: "未填", via: disableVia(owner: f.owner))   // 361 同上, 如实记未填; 468 代管时补标注
-            showToastOrganized("已停用， 7 天内可恢复")   // 364 已停用
+            // 2026-10-30 修复（第 71 轮）：原句「已停用，7 天内可恢复」是**假承诺** ——
+            // 同一函数的确认文案明写「停用只移除本机台账（没有回收站，不可恢复）」，
+            // 而 `CredentialOrg.markDisabled` 只写一条停用便签（label/at/via），
+            // 全仓**没有任何恢复入口**（`withinRecoverWindow` 已不存在）。
+            // 用户看到"7 天内可恢复"就会以为有后悔药，7 天后发现没了。
+            // 现在与确认文案对齐：只说事实，不承诺能力。
+            showToastOrganized("已停用（本机已移除，锁端凭证仍需到门锁上手动删除）")
         }
     }
 
