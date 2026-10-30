@@ -69,6 +69,7 @@ const GATES = [
   ['destmap', []],
   ['uicoverage', []],
   ['kotlinshadow', []],
+  ['modifiercheck', []],
   ['privcheck', []],
   ['emptycheck', []],
   ['datefmtcheck', []],
