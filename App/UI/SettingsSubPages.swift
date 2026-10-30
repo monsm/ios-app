@@ -128,6 +128,13 @@ struct SafemodeIntroView: View {
                         }
                         .frame(minHeight: DS.Hit.min)
                         .vkFont(.footnote)
+                    } else if let s = app.status, s.verifyMode == 1, s.broadcastMode == 0 {
+                        // 2026-10-30 修复（第 124 轮）：C 模式（verifyMode=1 且 broadcastMode=0）也被下面的
+                        // `verifyMode == 1` 判成「当前已是 B 模式（双验）」，并给出「改回 A」按钮 —— 会误导用户降级。
+                        // B 模式的判据是 `verifyMode == 1 且 broadcastMode != 0`（与 LockSettingsView:106 同口径）。
+                        Text("当前是 C 模式（广播 + 验证）。本页只在 A / B 两档之间切换，C 模式请到「锁设置」里改。")
+                            .vkFont(.footnote)
+                            .foregroundStyle(DS.Palette.textSub)
                     } else if app.status?.verifyMode == 1 {
                         // 2026-10-29 补（用户拍板）：APK `page-setsafemode` 是 A/B 二选一，iOS 原先只给 A→B。
                         // 放宽方向保留二次确认与明确的安全等级警告 —— 不是无提示的降级。

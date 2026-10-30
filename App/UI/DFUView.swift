@@ -98,7 +98,14 @@ struct DFUView: View {
     }
 
     private func versionColor(target: String) -> Color {
-        let cur = app.current?.fw ?? app.status?.firmware ?? ""
+        // 2026-10-30 修复（第 124 轮）：`??` 只处理 nil、不处理空串 —— `app.current?.fw` 是空串时
+        // 不会回退到 `status.firmware`，`cur` 变成空串 ⇒ 版本色恒为中性，包版本既不红也不绿。
+        // 复用 `firmwareText` 的三档兜底（但那里兜底成「未读到」文案，这里要的是空串判据）。
+        let cur = {
+            if let fw = app.current?.fw, !fw.isEmpty { return fw }
+            if let fw = app.status?.firmware, !fw.isEmpty { return fw }
+            return ""
+        }()
         guard !cur.isEmpty else { return DS.Palette.text }
         return FirmwareKit.versionLt(target, cur) ? DS.Palette.danger : DS.Palette.ok
     }

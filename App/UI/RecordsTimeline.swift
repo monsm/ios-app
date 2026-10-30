@@ -478,7 +478,15 @@ struct RecDetailSheet: View {
             }
             VariantToggle(isOn: Binding(
                 get: { RecordOverlay.isFlagged(rec.mac, rec.key) },
-                set: { _ in RecordOverlay.toggleFlag(rec.mac, rec.key); tick += 1 })) {
+                // 2026-10-30 修复（第 124 轮）：`set: { _ in …toggleFlag… }` **丢弃了控件传来的新值**、只做翻转 ——
+                // 读屏/快速连点或 getter 尚未刷新时，第二次 set 会把刚写进去的旗标又翻回去。
+                // 改成「新值与当前值不同才写」。
+                set: { v in
+                    if v != RecordOverlay.isFlagged(rec.mac, rec.key) {
+                        RecordOverlay.toggleFlag(rec.mac, rec.key)
+                        tick += 1
+                    }
+                })) {
                 Label("标为异常： 时间线行左侧常显红旗", systemImage: "flag.fill")   // 188 标为异常
                     .vkFont(.subheadline)
             }
