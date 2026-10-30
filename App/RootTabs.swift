@@ -11,8 +11,11 @@ extension RootView {
                 .badge(handshakeDoneAway ? Text("✓") : nil)
             // 930 替代: 原句要的中尺寸"到期凭证 Widget"在免费账号读不到台账 (App Groups 禁),
             // 替代栏给的是"到期前 7/3/1 天三级本地通知 + 凭证页顶部红点" —— 通知在
-            // CredentialOrg.scheduleAlerts, 红点落在系统 Tab 角标上 (与记录 Tab 的 735 角标同一手法,
-            // 0 时系统自动隐藏)。口径与 363 月历格同源, 不另算一套。
+            // CredentialOrg.scheduleAlerts, 红点落在系统 Tab 角标上（0 时系统自动隐藏）。
+            // 2026-10-30 修正（第 82 轮）：原注释在这句后面还写着「与记录 Tab 的 735 角标同一手法」——
+            // 但**记录 Tab 现在没有 .badge**，`unhandledAlarmDays` 早已整族删除（全仓 0 命中）。
+            // 引用一个不存在的东西，会让维护者去记录 Tab 找一个不存在的角标。
+            // 口径与 363 月历格同源, 不另算一套。
             Tab("凭证", systemImage: "key.horizontal.fill", value: 1) { credentialsTabContent }
                 .badge(CredentialOrg.expiringSoonCount(macs: DB.keychains().map { $0.mac }))
             Tab("记录", systemImage: "list.bullet.rectangle.fill", value: 2) { recordsTabContent }
