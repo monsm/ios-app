@@ -36,7 +36,7 @@
         { "id": "bug.fakesuccess", "name": "假成功提示（说已发/已上传/可恢复但没做）", "status": "done", "evidence": "第 71/95/96 轮" },
         { "id": "bug.deadref", "name": "死引用（文件 / 行号 / 符号 / 模块）", "status": "done", "evidence": "第 99/100/101 轮；linerefcheck 闸门" },
         { "id": "bug.phantom", "name": "文档虚构能力（注释声称的功能不存在）", "status": "done", "evidence": "第 85-99 轮连续 8 处" },
-        { "id": "bug.dupimpl", "name": "同一语义两份实现静默漂移", "status": "partial", "evidence": "第 66/90 轮已清类型表；其它双实现（dayKey/parseStamp 等）已合并，但**未做全仓语义去重普查**" }
+        { "id": "bug.dupimpl", "name": "同一语义两份实现静默漂移", "status": "done", "evidence": "第 111 轮做全仓普查（D1 日期格式串 / D2 kf_ 键 / D3 同名函数）：D1 发现 17 处绕过 `DateFormats` 具名访问器直接传裸格式串（改一处会静默漂移），全部改用 `DF.stamp`/`DF.day`/`DF.shortDayTime` 并新增 datefmtcheck 闸门；D2 核实为不同角色（读/备份白名单/回滚族/UI 绑定），非重复实现；D3 无同语义同名函数。加上第 66/90 轮的类型表统一、dayKey/parseStamp 合并，本维度已收敛" }
       ]
     },
     {

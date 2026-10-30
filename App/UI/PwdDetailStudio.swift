@@ -304,7 +304,7 @@ struct PwdDetailStudio: View {
         guard let kc = app.current, let v = p.pwd, !renewing else { return }
         renewing = true
         defer { renewing = false }
-        let f = DF.cached("yyyy-MM-dd HH:mm:ss")
+        let f = DF.stamp
         let fromS = f.string(from: Date())
         // 2026-10-30 修复（日历日）：续期「+7 天」的语义是日历日，原 24 小时×7 在夏令时切换日差一小时。
         let toS = f.string(from: WeekCal.shifted(Date(), days: 7))

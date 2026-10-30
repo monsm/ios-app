@@ -345,7 +345,7 @@ struct TempCodeStudio: View {
         prefix + d.formatted(.dateTime.month().day().hour().minute())
     }
     private func iso(_ d: Date) -> String {
-        let f = DF.cached("yyyy-MM-dd HH:mm:ss")
+        let f = DF.stamp
         return f.string(from: d)
     }
     private func submitBatch() async {
@@ -358,7 +358,7 @@ struct TempCodeStudio: View {
             // 178 逐条错峰: 每张码时段顺移 30 分钟, 锁端无批量命令
             let df = from.addingTimeInterval(TimeInterval(i * 1800))
             let dt = to.addingTimeInterval(TimeInterval(i * 1800))
-            let f = DF.cached("yyyy-MM-dd HH:mm:ss")
+            let f = DF.stamp
             do {
                 try await app.lock.ensureConnected(mac: kc.mac)
                 let alias = try await app.lock.pwdAdd(pwd: pwd, validFrom: f.string(from: df), validTo: f.string(from: dt))

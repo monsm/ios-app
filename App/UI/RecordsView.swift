@@ -386,7 +386,7 @@ struct RecordsView: View {
         }
     }
     static let stamp: DateFormatter = {
-        let f = DF.cached("MM-dd HH:mm")
+        let f = DF.shortDayTime
         return f
     }()
     func lastSyncAt() -> Date? {

@@ -73,7 +73,7 @@ struct CredExtendView: View {
 
     private func apply() {
         busy = true
-        let f = DF.cached("yyyy-MM-dd HH:mm:ss")
+        let f = DF.stamp
         let r = CredentialOrg.batchExtend(mac, aliases, f.string(from: from), f.string(from: to))
         busy = false
         // 2026-10-27 (D-58)：把"选中了但没找到"的条目如实报出来，不静默跳过

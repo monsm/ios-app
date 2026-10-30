@@ -93,7 +93,7 @@ enum ExportKit {
         }
         let text = out
         guard !text.isEmpty else { return nil }
-        let f = DF.cached("yyyy-MM-dd")
+        let f = DF.day
         let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("exports", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)

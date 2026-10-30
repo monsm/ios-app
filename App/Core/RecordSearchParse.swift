@@ -129,7 +129,7 @@ extension RecordSearch {
 
     static func rangeLabel(_ r: (from: Date, to: Date)?) -> String {
         guard let r = r else { return "" }
-        let f = DF.cached("MM-dd HH:mm")
+        let f = DF.shortDayTime
         return f.string(from: r.from) + " – " + f.string(from: r.to)
     }
 

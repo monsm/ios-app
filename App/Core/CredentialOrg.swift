@@ -448,7 +448,7 @@ enum CredentialOrg {
     static func earlyExpiryNote(_ mac: String, _ p: LedgerPwd) -> String {
         let m = earlyExpireMin(mac, p.alias)
         guard m > 0, let e = effectiveExpiry(mac, p) else { return "" }
-        let f = DF.cached("MM-dd HH:mm")
+        let f = DF.shortDayTime
         return " · 本机提前 " + String(m) + " 分钟 (约 " + f.string(from: e) + ", 锁端未改)"
     }
     static func earlyExpireMin(_ mac: String, _ alias: Int) -> Int {

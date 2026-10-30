@@ -115,7 +115,7 @@ extension CredentialOrg {
     // 【保留未接 2026-10-29】停用原因回显（用户 B1 未选，保留待接：凭证详情页的停用行）
     static func disableMarkText(_ mac: String, kind: String, key: Int) -> String? {
         guard let d = disableMark(mac, kind: kind, key: key) else { return nil }
-        let f = DF.cached("MM-dd HH:mm")
+        let f = DF.shortDayTime
         return "停用原因 \(d.label) · \(f.string(from: Date(timeIntervalSince1970: d.at))) · \(d.via)"   // 361 停用原因
     }
 

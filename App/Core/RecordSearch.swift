@@ -328,7 +328,7 @@ enum RecordSearch {
 
     static func dateOf(_ r: Rec) -> Date? {
         if !r.timeStr.isEmpty {
-            let f = DF.cached("yyyy-MM-dd HH:mm:ss")
+            let f = DF.stamp
             return f.date(from: r.timeStr)
         }
         return nil

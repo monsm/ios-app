@@ -339,7 +339,7 @@ enum ProtoTime {
     static func localStr(_ sec: Int64) -> String {
         guard sec > 0 else { return "" }
         let d = Date(timeIntervalSince1970: ZKProtocol.protoSecondsToUnix(sec))
-        let f = DF.cached("yyyy-MM-dd HH:mm:ss")
+        let f = DF.stamp
         return f.string(from: d)
     }
 }

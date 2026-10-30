@@ -273,7 +273,7 @@ enum LockStats {
     }
     static func sampleTimeText(_ at: Double) -> String {
         guard at > 0 else { return "" }
-        let f = DF.cached("MM-dd HH:mm")
+        let f = DF.shortDayTime
         return "采样于 " + f.string(from: Date(timeIntervalSince1970: at / 1000))
     }
 

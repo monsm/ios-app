@@ -180,7 +180,7 @@ struct MobileKeyView: View {
         guard !busy, let m = members.first(where: { $0.id == memberID }) else { return }
         busy = true
         defer { busy = false }
-        let fmt = DF.cached("yyyy-MM-dd HH:mm:ss")
+        let fmt = DF.stamp
         do {
             _ = try await MobileKeyService.issue(app,
                                                  kc: kc,
@@ -238,7 +238,7 @@ struct MobileKeyView: View {
     private func dateText(_ ms: Double) -> String {
         // 必须钉公元历：非公历系统历法（佛历/回历）下 "MM-dd" 会算出异 era 的年份。
         // 仓里同类写法统一用 en_US_POSIX（见 swiftlint 的「日期格式没钉历法」那条）。
-        let f = DF.cached("MM-dd HH:mm")
+        let f = DF.shortDayTime
         return f.string(from: Date(timeIntervalSince1970: ms / 1000))
     }
 }
