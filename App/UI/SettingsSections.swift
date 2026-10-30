@@ -133,25 +133,28 @@ extension SettingsView {
     }
     @ViewBuilder
     var credCareSection: some View {
-        // 2026-10-30 性能：`CredentialOrg.quota(mac)` 与 `aliasDisplay` 各被读 2 次（标签 + Binding.get）。
-        // 一次读出来共用。
-        let quota = CredentialOrg.quota(mac)
-        let aliasOn = CredentialOrg.aliasDisplay
+        // 2026-10-30 **撤销**第 36 轮那处「一次读出来共用」的优化：
+        // 那个写法把 `quota` / `aliasOn` 提成了**局部常量**，而 `Binding.get` 读的正是这两个常量 ——
+        // 于是 `set` 只把新值写进 UserDefaults，`get` 仍返回进入本页时捕获的旧值 ⇒
+        // **拨动开关/步进器后界面不动**（值其实已经存进去了，退出重进才看到变化）。
+        // 这两处读开销极小（`getInt` / `getBool` 都是一次 UserDefaults 查询），不值得为它牺牲即时反馈。
+        // 正确写法：`get` 里直接调 `CredentialOrg.quota(mac)` / `CredentialOrg.aliasDisplay`，
+        // 配合 `app.setUnlockOption`（它会 bump prefSeed / applyAppearance 触发重算）。
         return Section {
             // 2026-10-14 走查: 原标签「历史版本配额 N 版/凭证」的量纲读不出来 —— "版/凭证" 是
             // "每凭证几版" 还是 "总共几版"? 同一节下面的「回收站保留 N 天」是单值, 两个 Stepper
             // 单位不同却并列, 更容易读岔。改成一句能直接念出来的话。
-            Stepper("每个凭证保留 \(quota) 个历史版本", value: Binding(   // 491 历史版本配额
-                get: { quota },
-                set: { DB.store.set("kf_ccred_quota", $0) }), in: 3...30, step: 1)
+            Stepper("每个凭证保留 \(CredentialOrg.quota(mac)) 个历史版本", value: Binding(   // 491 历史版本配额
+                get: { CredentialOrg.quota(mac) },
+                set: { app.setUnlockOption("kf_ccred_quota", $0) }), in: 3...30, step: 1)
                 .fixedSize(horizontal: false, vertical: true)
             // 2026-10-26 精简：回收站保留天数设置已删（回收站整套移除）。
             // 2026-10-14: 去掉标签里的内部规格编号 "(919: …)"。它把一行标签撑成两行、把右侧开关挤到
             // 第二行居中，而用户看到的是一串跟自己无关的编号 —— 本仓"乱源治理"清过 1037 处同类，这一处漏了。
             // 语义说明挪进本节 footer，标签回归一行 (截图里折行撑歪开关就是这条)。
             VariantToggle("成员别名显示", isOn: Binding(
-                get: { aliasOn },
-                set: { DB.store.set("kf_calias_display", $0) }))
+                get: { CredentialOrg.aliasDisplay },
+                set: { app.setUnlockOption("kf_calias_display", $0) }))
                 .fixedSize(horizontal: false, vertical: true)
         } header: {
             Text("凭证整理")
