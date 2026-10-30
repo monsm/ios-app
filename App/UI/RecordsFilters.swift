@@ -204,13 +204,16 @@ extension RecordsView {
                                                       set: { RecordSearch.setNightFrom($0) })) {
                         ForEach(0..<24, id: \.self) { Text("\($0) 时").tag($0) }
                     }
-                    .labelsHidden().pickerStyle(.menu).frame(width: 96)
+                    // 2026-10-31（第 48 轮 · 极端字号）：原来是 `.frame(width: 96)` —— **固定宽度**。
+                    // 内容只有「23 时」这类短文本，但用户把系统字号调到最大时 96pt 装不下，
+                    // 而 Picker 的菜单标签会被截断成「…」。改成 `minWidth` 让它按内容自然撑开。
+                    .labelsHidden().pickerStyle(.menu).frame(minWidth: 96)
                     Text("→").vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                     Picker("终点", selection: Binding(get: { RecordSearch.nightTo },
                                                      set: { RecordSearch.setNightTo($0) })) {
                         ForEach(0..<24, id: \.self) { Text("\($0) 时").tag($0) }
                     }
-                    .labelsHidden().pickerStyle(.menu).frame(width: 96)
+                    .labelsHidden().pickerStyle(.menu).frame(minWidth: 96)
                 }
                 .frame(minHeight: DS.Hit.min)
                 if RecordSearch.nightWindowDegenerate {
