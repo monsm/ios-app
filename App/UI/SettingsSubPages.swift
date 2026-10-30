@@ -88,7 +88,8 @@ struct SafemodeIntroView: View {
             if isOtp {
                 Section("临时密码 (ZOTP) 介绍") {
                     Text("ZOTP 是临时开锁密码：6 位数字密码，每 30 分钟更换一次，同一窗口内最多 99 个。").vkFont(.footnote)
-                    Text("生成前请先校准门锁时间 (0E)，否则手机与锁时间窗不同步会导致密码不匹配。").vkFont(.footnote)
+                    // 2026-10-30 修复（第 74 轮）：`(0E)` 是协议命令号，说明页不该让用户看到内部编号。
+                    Text("生成前请先校准门锁时间，否则手机与锁的时间窗不同步会导致密码不匹配。").vkFont(.footnote)
                 }
             } else {
                 Section("怎么设置门锁的安全模式？") {

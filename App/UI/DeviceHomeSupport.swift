@@ -19,7 +19,7 @@ struct SyncTimeView: View {
         Form {
             Section {
                 if app.current != nil {
-                    Text("将手机时间同步到门锁内 (cmd 0E)。校准前会先读锁钟并补偿偏差。")
+                    Text("将手机时间同步到门锁内。校准前会先读锁钟并补偿偏差。")
                         .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                     LabeledRow("锁钟", app.status?.lockTime.map { ProtoTime.localStr($0) } ?? "—")

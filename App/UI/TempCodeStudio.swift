@@ -232,7 +232,7 @@ struct TempCodeStudio: View {
                     Task { await submitBatch() }
                 }
                 .disabled(!pwdOK || to <= from)
-                Text("请将手机靠近门锁; 批量走既有 0A 逐条下发， 锁端无批量命令， 失败逐条报。")   // 178 请将手机靠近门锁
+                Text("请将手机靠近门锁。门锁只能一条一条接收，批量会逐条下发、失败逐条报。")   // 178 请将手机靠近门锁
                     .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)

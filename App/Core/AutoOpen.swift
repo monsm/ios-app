@@ -509,7 +509,9 @@ final class AutoOpenController {
             case 5:
                 // G3 times 语义未确证: 只提示, 不自动重签 (方案 §3.3 前置实验未过前保持保守)
                 AutoOpen.audit(mac, "rc=5 次数用完 — 提示联系主人换钥， 不自动重签")
-                app.showToast("凭证次数用完 (rc=5) — 请联系主人换钥， 不自动重签")
+                // 2026-10-30 修复（第 74 轮）：`rc=5` 是协议返回码，用户读不懂也不该读 ——
+                // 审计日志里保留（排查用），用户文案只说人话。
+                app.showToast("凭证次数已用完 — 请联系主人重新发一把钥匙")
             case 25:
                 AutoOpen.audit(mac, "rc=25 锁正忙， 拒绝自动开锁")
             case 26:
