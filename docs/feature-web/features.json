@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T20:02:11.915Z",
+    "generated": "2026-10-30T20:12:54.570Z",
     "sources": [
       {
         "scout": "android-native",
@@ -4638,7 +4638,7 @@
           "line": 537,
           "symbol": "coldStartScan()",
           "note": "",
-          "text": "/// RSSI 档位: -55 满 / -65 近 / -75 中 / -85 远"
+          "text": "nonisolated(unsafe) static var hostRef: AppState?"
         },
         {
           "platform": "ios",
@@ -4823,7 +4823,7 @@
           "line": 419,
           "symbol": "struct FailKind",
           "note": "",
-          "text": "/// Swift 6 不允许非隔离的可变全局状态 —— 值必须由 `Locked` 持有（见 Locked.swift 头注）。"
+          "text": "// 也就是说「开关关着」的时候也在白建 Task、白排队。MainActor 忙（渲染/滚动）时这些 Task 会堆积。"
         },
         {
           "platform": "ios",
@@ -4831,7 +4831,7 @@
           "line": 425,
           "symbol": "icon 计算属性",
           "note": "",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -4839,7 +4839,7 @@
           "line": 435,
           "symbol": "classifyFailure",
           "note": "",
-          "text": "func coldStartScan() {"
+          "text": "/// 冷启动扫描的任务句柄。2026-10-26: 原来是裸 Task —— 视图销毁后它照跑，"
         }
       ],
       "platformEvidence": {
@@ -7274,7 +7274,7 @@
           "line": 492,
           "symbol": "func scan(mac:timeoutMs:)",
           "note": "",
-          "text": "var holdMinutes: Int {"
+          "text": "let t = ms >= 0 ? \", 首台 \\(ms)ms 可见\" : \"\""
         },
         {
           "platform": "ios",
@@ -7282,7 +7282,7 @@
           "line": 504,
           "symbol": "300ms 轮询 + 取消判据",
           "note": "",
-          "text": "/// 与 enterPage() 的区别只是**发起时机**:"
+          "text": "// ---------- 268 状态变化历史: 最近 5 次链路三态切换 (长按胶囊时间线) ----------"
         },
         {
           "platform": "ios",
@@ -7290,7 +7290,7 @@
           "line": 519,
           "symbol": "noteScannedRssi",
           "note": "",
-          "text": "}"
+          "text": "guard !mac.isEmpty else { return }"
         },
         {
           "platform": "ios",
@@ -7298,7 +7298,7 @@
           "line": 525,
           "symbol": "saveRssi / rssiFor",
           "note": "",
-          "text": "/// 全 App 唯一的 AppState 弱引用入口 (由 RootView 挂载时赋值)。"
+          "text": "guard !Task.isCancelled else { return }"
         }
       ],
       "platformEvidence": {

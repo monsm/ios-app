@@ -413,7 +413,15 @@ final class LinkSense: ObservableObject {
         }
         LinkSense.shared.updateRssi(rssi)
         // 靠近自动开锁 (AUTOOPEN): 每个 RSSI 事件都喂入滤波 (未开主开关 = 零开销, 控制器内 guard)。
-        Task { @MainActor in AutoOpenController.shared.feedRssi(mac: mac, rssi: rssi) }
+        // 2026-10-31（第 68 轮，**Task 洪泛**）：原写法是每个 RSSI 事件都 `Task { @MainActor in ... }`。
+        // 扫描时 RSSI 事件每秒可达 5~10 次，每个都新建一个 Task 并 hop 到 MainActor ——
+        // 而 `feedRssi` 内部的 `guard AutoOpen.on` 是在 **Task 里**才检查的，
+        // 也就是说「开关关着」的时候也在白建 Task、白排队。MainActor 忙（渲染/滚动）时这些 Task 会堆积。
+        // 修法：**先在当前上下文同步判** `AutoOpen.on`（这是个 `DB.store` 读，很便宜且已在缓存里），
+        // 只有开着才创建 Task。开关关着 ⇒ 零 Task、零 hop，与注释里承诺的「零开销」一致。
+        if AutoOpen.on {
+            Task { @MainActor in AutoOpenController.shared.feedRssi(mac: mac, rssi: rssi) }
+        }
     }
     /// 2026-10-30（提速，第 5 项）: 每把锁最近一次「落盘 RSSI」的时刻，用于节流。
     /// Swift 6 不允许非隔离的可变全局状态 —— 值必须由 `Locked` 持有（见 Locked.swift 头注）。
