@@ -46,7 +46,14 @@ extension RecordSearch {
             return d.timeIntervalSince1970 >= now - 30 * 86400
         }
         var c: [String: Int] = [:]
-        let typeToKind: [Int: String] = [3: "fp", 2: "pwd", 4: "temp", 1: "key"]
+        // 2026-10-30 修复（第 90 轮）：这里原来写的是 **[3: "fp", 2: "pwd", 4: "temp", 1: "key"]** ——
+        // 那是**旧/错**的类型表。本仓权威映射在 `Attribution.openKind`：
+        //   [11: "key", 16: "temp", 17: "pwd", 19: "fp"]（与 `StatsKit.openTypes = [11,16,17,19]` 一致）
+        // 同文件的 `outOfWindow` 早有一条注释点明「临时码开门是 16，旧值 4 是消息中心枚举」。
+        // 用旧表的后果：真实开门（11/16/17/19）**一条都不计**，这个「活跃凭证」页永远是空的；
+        // 而万一日志里出现 1/2/3/4 这些消息中心类型，又会被**错误归成** key/pwd/fp/temp。
+        // 现在直接用权威表，不再另抄一份。
+        let typeToKind: [Int: String] = Attribution.openKind
         for l in logs { if let k = typeToKind[l.type] { c[k + "#" + String(l.idxRaw), default: 0] += 1 } }
         let lg = DB.ledger(mac)
         return c.sorted { $0.value > $1.value }.map { key, n in
