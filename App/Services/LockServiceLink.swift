@@ -33,7 +33,14 @@ extension LockService {
     func ensureConnected(mac: String) async throws {
         let m = mac.lowercased()
         guard !m.isEmpty else { throw BLEErrorX.msg("未选择门锁 (缺少 MAC)") }
-        if connectedMAC == m, ble.connectedPeripheralId == connectedDeviceId, !connectedDeviceId.isEmpty {
+        // 2026-10-30 修复（第 164 轮，**「重新获取」报「解析数据失败」的根因**）：
+        // 快路径原来只比 ID（connectedPeripheralId == connectedDeviceId），**不看特征还在不在**。
+        // 断链/重连后 ID 可能仍相等，而 `writeChar` / `device` 已被清空 ——
+        // 于是这里返回"已连接"，紧接着 `writeFrameHex` 的 `guard let ch = writeChar` 抛 `.parseFail`，
+        // 界面上就成了莫名其妙的「解析数据失败」（其实一个字节都没解析）。
+        // 现在把特征也纳入判据：缺任何一个就落到下面走真正的重连。
+        if connectedMAC == m, ble.connectedPeripheralId == connectedDeviceId, !connectedDeviceId.isEmpty,
+           ble.device != nil, ble.writeChar != nil {
             // 已在目标锁上也要绑 curMac: 否则紧随其后的无 mac 参数命令 (setZotp/readLockTime…) 会用
             // **上一次会话留下的另一把锁**的 skey 成帧 —— 第三条成功出口 (扫描解析) 一直是绑的，这两条漏了。
             curMac = m
@@ -253,6 +260,8 @@ extension LockService {
                 // 断链自愈: 写失败 OR 连接已断 (断链后 writeChar/device 被清 → writeFrameHex 抛 parseFail)
                 var brokenLink = ble.connectedPeripheralId.isEmpty || connectedDeviceId.isEmpty
                 if case BLEErrorX.code(.writeFailed) = error { brokenLink = true }
+                // 2026-10-30：写通道未就绪同样是「链路断了」，必须触发下面的自愈重连。
+                if case BLEErrorX.code(.linkNotReady) = error { brokenLink = true }
                 if brokenLink {
                     // 2026-10-14: disconnect() 会把 curMac 清空, 旧写法 `if !curMac.isEmpty` 紧随其后 =>
                     // 恒为 false, 自愈重连是死代码 (首个 hiccup 后连接不再恢复)。先存下再断。

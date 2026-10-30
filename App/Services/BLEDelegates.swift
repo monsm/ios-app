@@ -61,7 +61,7 @@ extension BLEService: CBPeripheralDelegate {
     public func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
         guard let services = peripheral.services else {
             let cb = connectCompletion; connectCompletion = nil
-            cb?(.failure(BLEErrorX.code(.parseFail)))
+            cb?(.failure(BLEErrorX.msg("未发现门锁服务，请靠近门锁重试")))
             return
         }
         // NUS 优先, 网关 FE90 回退 (与 JS discover 同序)
@@ -88,7 +88,7 @@ extension BLEService: CBPeripheralDelegate {
         let n = chars.first { $0.uuid == nTarget }
         guard let wc = w else {
             let cb = connectCompletion; connectCompletion = nil
-            cb?(.failure(BLEErrorX.code(.parseFail)))
+            cb?(.failure(BLEErrorX.msg("未找到门锁写入特征，请断开后重连")))
             return
         }
         guard let nc = n else {

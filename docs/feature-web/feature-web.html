@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T13:16:12.526Z",
+    "generated": "2026-10-30T13:21:01.551Z",
     "sources": [
       {
         "scout": "android-native",
@@ -44154,7 +44154,7 @@ const DATA = {
           "line": 415,
           "symbol": "writeChunk",
           "note": "超时抛 writeFailed",
-          "text": "// 第九十一批删掉 `ensureNotify(deviceId:)`：它是 `func ensureNotify… { _ = deviceId }` 这种"
+          "text": "// ---------- 底层连接辅助 (GateWayConnector/BleLockConnector 流程) ----------"
         },
         {
           "platform": "apk",
@@ -44540,7 +44540,7 @@ const DATA = {
           "line": 362,
           "symbol": "releaseWriteSlot",
           "note": "",
-          "text": "readyCont = c"
+          "text": "readyCont?.resume()"
         },
         {
           "platform": "ios",
@@ -44623,7 +44623,7 @@ const DATA = {
           "line": 326,
           "symbol": "writeFrameHex",
           "note": "",
-          "text": "/// 前者的 continuation 永不完成 (挂死)。已在写的情况下把调用方排进等待队列。"
+          "text": "/// 取写槽 (FIFO): 同一特征值的 with-response 写必须串行, 否则 writeAckCont 单槽被后者覆盖,"
         },
         {
           "platform": "ios",
@@ -44631,7 +44631,7 @@ const DATA = {
           "line": 339,
           "symbol": "writeFrameHex",
           "note": "逐片 await writeChunk",
-          "text": "s.waiters.append(c)"
+          "text": "if !s.busy { s.busy = true; return true }"
         },
         {
           "platform": "ios",
@@ -44639,7 +44639,7 @@ const DATA = {
           "line": 423,
           "symbol": "writeChunk",
           "note": "8.0 秒 ack 超时",
-          "text": "// MARK: - CBPeripheralDelegate"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -44647,7 +44647,7 @@ const DATA = {
           "line": 396,
           "symbol": "writeChunk",
           "note": "withoutResponse 回退",
-          "text": "guard let self, self.writeAckLock.withLock({ $0 != nil }) else { return }"
+          "text": "let work = DispatchWorkItem { [weak self] in"
         }
       ],
       "platformEvidence": {

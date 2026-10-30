@@ -307,7 +307,8 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
 
     // ---------- 写 (20B 分片, 与 JS writeFrame 一致) ----------
     func writeFrameHex(_ hex: String) async throws {
-        guard let device, let ch = writeChar else { throw BLEErrorX.code(.parseFail) }
+        // 2026-10-30：这里原来是 `.parseFail`（→ 界面显示「解析数据失败」），但真实原因是**写通道未就绪**。
+        guard let device, let ch = writeChar else { throw BLEErrorX.code(.linkNotReady) }
         let bytes = HexKit.bytes(hex)
         var i = 0
         let chunk = 20
