@@ -87,7 +87,7 @@ struct RecDetailSheet: View {
     // ---------- 全字段 ----------
     @ViewBuilder
     private var fieldSection: some View {
-        let who = MemberHub.aliasName(rec.whoId) ?? rec.whoName ?? "未归属 (推断不出成员时如实显示)"
+        let who = MemberHub.aliasName(rec.whoId) ?? rec.whoName ?? "未归属"   // 2026-10-30：原兜底值把开发说明「推断不出成员时如实显示」写进了用户可见文案
         let kindWord = rec.kind.map { Attribution.words[$0] ?? $0 } ?? "—"
         Section("时间线与归属") {
             fieldRow("锁", rec.lockName + (scopeAll ? "" : " (当前锁)"))
@@ -231,7 +231,7 @@ struct RecDetailSheet: View {
                     .font(.system(size: DS.Icon.sm))
                     .foregroundStyle(DS.Palette.textSub)
                     .accessibilityHidden(true)
-                Text("响应时长： 积累中 — 处置记录够多后自动出分布")   // 742 响应时长
+                Text("响应时长： 暂未统计（本机只记处置结果，不记处置耗时）")   // 2026-10-30：原句承诺「够多后自动出分布」，全仓没有任何处置耗时/分布的计算
                     .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)

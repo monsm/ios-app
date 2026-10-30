@@ -51,7 +51,9 @@ struct FpDetailStudio: View {
                     }
                     Section {
                         fpRow("名称", f.name)
-                        fpRow("归属", CredentialOrg.ownerName(f.owner).isEmpty ? "未归属" : CredentialOrg.ownerName(f.owner))
+                        // 2026-10-30：`ownerName` 原来算两遍（判空一次、取值一次），每次都是一次成员字典解码。
+                        let ownerName = CredentialOrg.ownerName(f.owner)
+                        fpRow("归属", ownerName.isEmpty ? "未归属" : ownerName)
                         fpRow("备注", f.note.isEmpty ? "无" : f.note)
                         fpRow("来源", f.src == "app" ? "本机录入" : "锁端发现")
                         fpRow("预警", f.isAlarm == true ? "预警指纹" : "普通")
