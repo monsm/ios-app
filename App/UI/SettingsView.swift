@@ -299,7 +299,7 @@ struct SettingsView: View {
             if app.current == nil {
                 GuidedEmptyView(systemImage: "lock",
                                 title: "还没有添加门锁",
-                                message: "添加后这一段才会出现锁档案与删除。三步走： 连锁 → 录凭证 → 开门。",
+                                message: "添加后这一段才会出现锁档案与删除。三步走： 连上锁 → 录凭证 → 开门。",
                                 step: 1, stepTotal: 3,
                                 primaryTitle: "去设备页添加",
                                 primary: { goAddDevice() },
@@ -329,7 +329,7 @@ struct SettingsView: View {
     }
 
     /// 2026-10-14: 设置项小字注解。口径"简洁明了" —— 只说用户决策需要的那一句
-    /// (这一项是干什么的 / 要不要连锁 / 有什么后果), 不铺陈实现细节 (那些留在注释里)。
+    /// (这一项是干什么的 / 要不要连上锁 / 有什么后果), 不铺陈实现细节 (那些留在注释里)。
     func note(_ s: String) -> some View {
         Text(s)
             .vkFont(.caption)

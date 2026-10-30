@@ -55,7 +55,7 @@ struct TailgateView: View {
             } header: {
                 Text("开锁后自动上锁等待时长")
             } footer: {
-                Text("门锁默认使用蓝牙钥匙、密码、指纹等电控方式开锁，等待6秒后会自动上锁。您可以根据您的使用习惯设置等待时长，防止坏人利用等待时间尾随入室。")
+                Text("门锁默认使用蓝牙钥匙、密码、指纹等电控方式开锁，等待 6 秒后会自动上锁。您可以根据您的使用习惯设置等待时长，防止坏人利用等待时间尾随入室。")
             }
             Section {
                 BusyButton(title: "设置", systemImage: "timer", isBusy: busy) {

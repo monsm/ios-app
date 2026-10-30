@@ -119,7 +119,7 @@ struct MemberDetail360View: View {
             }
         }
         return Section {
-            Text("密码 \(pwdCount) 条 · 指纹 \(fpCount) 条 · 未归属转未分配不在此列")   // 261 密码
+            Text("密码 \(pwdCount) 条 · 指纹 \(fpCount) 条 · 未归属的凭证不在此列")   // 2026-10-30：「转为未分配」这个动作并不存在，原句读不通   // 261 密码
                 .vkFont(.subheadline)
                 .foregroundStyle(DS.Palette.text)
             // 261 清单本体: 只有计数没有名目时, 用户没法核对"名下到底有哪几把"

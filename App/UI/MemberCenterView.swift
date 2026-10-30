@@ -8,7 +8,7 @@
 // 绝不写入锁端凭证表; 推断类数据 (活跃度/摘录) 一律带"约"。
 import SwiftUI
 import UIKit
-import Charts
+// 2026-10-30 删除（第 121 轮）：`import Charts` —— 本文件已无任何 Chart/BarMark/LineMark 用法（图表那批已删）。
 
 // ================= 成员中心 (788 总表入口 · 264 排序 · 630 分组 · 793 访客 · 794 隐私) =================
 struct MemberCenterView: View {
