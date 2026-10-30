@@ -141,9 +141,12 @@ struct MobileKeyView: View {
                         }
                         Button {
                             Clip.set(k.ekey)
-                            app.showToast("ekey 已复制")
+                            // 2026-10-30（界面全维度 · 文案）：原来写「ekey 已复制」——
+                            // `ekey` 是协议内部名，用户不知道它是什么（`writing.md › Terminology`）。
+                            // 说清楚「复制的是什么、拿去干什么」。
+                            app.showToast("开锁凭证已复制 — 粘贴给对方即可开门")
                         } label: {
-                            Label("只复制 ekey", systemImage: "doc.on.doc")
+                            Label("只复制开锁凭证", systemImage: "doc.on.doc")
                         }
                         Button(role: .destructive) { confirmRevoke(kc, k) } label: {
                             Label("撤销此钥匙", systemImage: "trash")
