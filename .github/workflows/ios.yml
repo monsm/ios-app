@@ -62,6 +62,9 @@ jobs:
       - name: 'SwiftUI 修饰符挂载闸门 (判失败: if/else 等语句块后直接挂 .xxx —— 编译必红)'
         run: node tools/modifiercheck.js
 
+      - name: 'Swift 声明作用域闸门 (判失败: 计算属性被放进 func/init 体内 —— 编译必红)'
+        run: node tools/scopecheck.js
+
       - name: 金标漂移校验 (committed 必须等于 JS 核心输出; 改 vendor 后须重生成并提交)
         run: node tools/golden.js --check
 
