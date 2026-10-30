@@ -58,7 +58,7 @@
         { "id": "inc.wording", "name": "措辞不一致（签发/已发/交付）", "status": "done", "evidence": "第 95 轮" },
         { "id": "inc.punct", "name": "中文标点不统一", "status": "done", "evidence": "第 102 轮 cnpunctcheck 闸门；394 处已统一" },
         { "id": "inc.comment", "name": "注释漂移（代码对注释错）", "status": "done", "evidence": "贯穿 1-102 轮，持续清理" },
-        { "id": "inc.term", "name": "决策台账与代码的一致性", "status": "partial", "evidence": "第 105 轮核实 DECISION-C-TERMS 的 14 项：发现 927（Widget 声称已落地，实际已随 3d28ff7 删除）与 742（引用已删的 AlarmCenterView）两处漂移，已改；**其余 12 项未逐条核实**" }
+        { "id": "inc.term", "name": "决策台账与代码的一致性", "status": "done", "evidence": "第 105-106 轮逐条核实 DECISION-C-TERMS 全 14 项：发现并修正 6 处漂移 —— 927 Widget（已随 3d28ff7 删）、742 AlarmCenterView（已删）、165 与 949 的 AppIntents（已随 d6c3ca9 删 518 行）、569 kf_fevents_（零读零写，非「已有」）、671 节假日表（只有 2026 非 2026-2027）、673 StatsKit 春节近似（已不存在）。其余 7 项代码事实成立" }
       ]
     },
     {
