@@ -399,7 +399,7 @@ struct MemberGroupSheet: View {
                             MemberHub.saveExt(mid, e)
                         }
                         onSaved()
-                        app.showToast("分组已保存")
+                        app.showToast("分组已保存（\(tags.count) 位成员）")   // 2026-10-30：原来零改动也弹「已保存」，是假回执；现在带实际条数
                         dismiss()
                     } label: {
                         Text("保存分组")
@@ -407,6 +407,7 @@ struct MemberGroupSheet: View {
                             .frame(minHeight: DS.Hit.min)
                     }
                     .buttonStyle(PrimaryActionStyle())
+                    .disabled(tags.isEmpty)   // 没有任何改动时按钮不可点（原来点了会弹「已保存」）
                 }
             }
             .navigationTitle("分组标签")   // 630 分组标签
