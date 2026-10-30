@@ -44,7 +44,8 @@ object AutoOpenKit {
         val hi = kotlin.math.ceil(rank).toInt()
         val frac = rank - lo
         if (lo == hi) return a[lo]
-        return (a[lo] + (a[hi] - a[lo]) * frac).roundToInt()
+        val v = a[lo].toDouble() + (a[hi].toDouble() - a[lo].toDouble()) * frac
+        return v.roundToInt()
     }
     fun armThreshold(base: Int = BASE): Int = base
 
