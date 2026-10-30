@@ -366,7 +366,15 @@ struct MemberGroupSheet: View {
         NavigationStack {
             Form {
                 Section("成员分组标签") {   // 630 成员分组标签
-                    ForEach(DB.members(), id: \.id) { m in
+                    // 2026-10-30 补（第 119 轮，**空态**）：零成员时只剩分组标题和保存按钮。
+                    // 2026-10-30：一次取，避免视图里多一次 DB 调用（viewdbcheck 棘轮）
+                    let allMembers = DB.members()
+                    if allMembers.isEmpty {
+                        EmptyState(systemImage: "person.2",
+                                   title: "还没有成员",
+                                   message: "先到成员中心建一个成员，再回来给 TA 设分组。")
+                    }
+                    ForEach(allMembers, id: \.id) { m in
                         Picker(MemberHub.display(m), selection: Binding(
                             get: { tags[m.id] ?? MemberHub.ext(m.id).groupTag },
                             set: { tags[m.id] = $0 })

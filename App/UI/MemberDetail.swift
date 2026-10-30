@@ -176,7 +176,7 @@ struct MemberDetail360View: View {
                 Text("成员").tag("member")
                 Text("访客").tag("guest")
             }
-            ForEach(["main", "member", "guest"], id: \.self) { r in
+            ForEach(MemberHub.roles, id: \.self) { r in   // 2026-10-30：原硬编码数组与 MemberHub.roles 重复
                 roleExample(r, current: role)
             }
             ForEach(matrix, id: \.name) { row in

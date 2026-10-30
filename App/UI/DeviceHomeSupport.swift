@@ -60,6 +60,7 @@ struct SyncTimeView: View {
         syncTicket += 1
         let ticket = syncTicket
         busy = true
+        defer { if ticket == syncTicket { busy = false } }
         failed = false
         result = ""
         // 第八十八批: 校时页原先不先绑锁就直接 syncTime (服务层按自己的 curMac 取钥)，
@@ -85,7 +86,9 @@ struct SyncTimeView: View {
             failed = true
             result = "同步失败：\(error.localizedDescription)"
         }
-        if ticket == syncTicket { busy = false }
+        // 2026-10-30 修复（第 119 轮，**按钮永久卡在「处理中…」**）：原来 busy 复位写在函数末尾，
+        // 而上面两处「过期丢弃」都是 `guard … else { return }` —— 中途切锁就直接返回、跳过复位。
+        // 改用 defer，任何出口都会复位。
     }
 }
 

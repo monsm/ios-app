@@ -150,6 +150,9 @@ struct CredentialCalendarView: View {
     }
 
     private var summaryLine: String {
+        // 2026-10-30 修复（第 119 轮）：无锁时 `mac` 是空串、`deadlines` 恒空，
+        // 原文案会把「没有锁」说成「这个月没有凭证到期」。
+        guard !mac.isEmpty else { return "还没有添加门锁 —— 先在设备页添加一把锁。" }
         let total = deadlines.values.reduce(0, +)
         if total == 0 { return "这个月没有凭证到期。" }
         let days = deadlines.count

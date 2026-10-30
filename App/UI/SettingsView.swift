@@ -278,6 +278,15 @@ struct SettingsView: View {
                 }
             }
         }
+        // 2026-10-30 补（第 119 轮，**空态**）：搜索零结果时整块不渲染，用户无法区分
+        // 「搜了没结果」和「搜索坏了」。
+        if !query.trimmingCharacters(in: .whitespaces).isEmpty && searchHits.isEmpty {
+            Section {
+                Text("没有找到「\(query)」")
+                    .vkFont(.footnote)
+                    .foregroundStyle(DS.Palette.textSub)
+            }
+        }
     }
     var lockSection: some View {
         Section("门锁") {
