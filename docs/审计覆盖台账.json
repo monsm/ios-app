@@ -1,0 +1,97 @@
+{
+  "_说明": "审计覆盖台账 —— 每条是一个『检查维度』，不是一次修复。status: done=已完整核查并修完 / partial=已核查但有已知缺口 / todo=尚未系统核查 / blocked=本机做不了(需真机/外部信息)",
+  "_更新": "每轮结束更新对应条目的 status 与 evidence",
+  "categories": [
+    {
+      "id": "perf",
+      "name": "性能",
+      "items": [
+        { "id": "perf.nplus1", "name": "循环内 DB 读（N+1）", "status": "done", "evidence": "第 88/93 轮；perfscan R2" },
+        { "id": "perf.dup", "name": "同一份数据算多遍", "status": "done", "evidence": "第 88/93 轮；dupscan" },
+        { "id": "perf.fullscan", "name": "全表扫描 / dictionaryRepresentation 进热路径", "status": "done", "evidence": "第 93 轮 alertTable" },
+        { "id": "perf.dateformatter", "name": "DateFormatter 新建", "status": "done", "evidence": "48 处 → 0；perfscan R1" },
+        { "id": "perf.viewdb", "name": "视图计算属性内读库", "status": "done", "evidence": "viewdbcheck 棘轮" },
+        { "id": "perf.foreachdb", "name": "ForEach 内 DB 读", "status": "done", "evidence": "perfscan R3" },
+        { "id": "perf.timer", "name": "内联 Timer 每次 body 新建", "status": "done", "evidence": "perfscan R4" },
+        { "id": "perf.published", "name": "@Published 无条件赋值", "status": "done", "evidence": "第 97 轮复查，仅 1 处且合理" },
+        { "id": "perf.writeonly", "name": "只写不读的 @State/@Published", "status": "done", "evidence": "writeonlystate 闸门" },
+        { "id": "perf.on2", "name": "O(N²) 算法", "status": "done", "evidence": "第 90 轮 QuickPool / CredNavIndex" },
+        { "id": "perf.writedisk", "name": "写路径无谓落盘", "status": "done", "evidence": "第 2 轮 P1-5/P1-4" },
+        { "id": "perf.cache", "name": "缓存失效逻辑正确性", "status": "done", "evidence": "第 93 轮核对 invalidateCache" },
+        { "id": "perf.coldstart", "name": "冷启动链", "status": "done", "evidence": "第 22/40 轮" },
+        { "id": "perf.measure", "name": "**实测性能数字**（非推导）", "status": "blocked", "evidence": "本机无 Swift 工具链，只有 CI 编译；需真机 Instruments" }
+      ]
+    },
+    {
+      "id": "bug",
+      "name": "缺陷",
+      "items": [
+        { "id": "bug.typemap", "name": "日志类型映射表错误", "status": "done", "evidence": "第 90 轮 BUG-45；typepred 闸门" },
+        { "id": "bug.codable", "name": "Codable 容错解码", "status": "done", "evidence": "第 5-9 轮 17 个模型；codablecheck 棘轮" },
+        { "id": "bug.notify", "name": "通知生命周期（删实体不取消排程）", "status": "done", "evidence": "第 94 轮 BUG-49/50" },
+        { "id": "bug.data", "name": "数据完整性（删设备/恢复/回滚）", "status": "done", "evidence": "第 97/98 轮五维度核查" },
+        { "id": "bug.race", "name": "竞态（世代号 / TOCTOU）", "status": "done", "evidence": "第 44/97 轮" },
+        { "id": "bug.crash", "name": "崩溃风险（force unwrap / 越界 / 除零）", "status": "done", "evidence": "第 94 轮：try!/as! 0 处；第 22 轮 [0] 全查" },
+        { "id": "bug.boundary", "name": "边界条件（0 时间戳 / 空数组 / 回绕）", "status": "done", "evidence": "第 24/60 轮" },
+        { "id": "bug.fakesuccess", "name": "假成功提示（说已发/已上传/可恢复但没做）", "status": "done", "evidence": "第 71/95/96 轮" },
+        { "id": "bug.deadref", "name": "死引用（文件 / 行号 / 符号 / 模块）", "status": "done", "evidence": "第 99/100/101 轮；linerefcheck 闸门" },
+        { "id": "bug.phantom", "name": "文档虚构能力（注释声称的功能不存在）", "status": "done", "evidence": "第 85-99 轮连续 8 处" },
+        { "id": "bug.dupimpl", "name": "同一语义两份实现静默漂移", "status": "partial", "evidence": "第 66/90 轮已清类型表；其它双实现（dayKey/parseStamp 等）已合并，但**未做全仓语义去重普查**" }
+      ]
+    },
+    {
+      "id": "unreasonable",
+      "name": "不合理",
+      "items": [
+        { "id": "un.entry", "name": "入口指向已删功能", "status": "done", "evidence": "第 85/86/96 轮" },
+        { "id": "un.unreachable", "name": "功能存在但不可达（零调用）", "status": "done", "evidence": "第 99 轮零调用扫描（修正版）" },
+        { "id": "un.empty", "name": "空态缺失", "status": "partial", "evidence": "第 92 轮补活跃凭证、第 103 轮修 MergeMembersView 判据写错（== nil 应为 isEmpty）；已自动扫全部 74 View 的集合渲染点，剩 ~49 个未逐页人工审" },
+        { "id": "un.deadkey", "name": "死开关（kf_ 键无写点）", "status": "done", "evidence": "keydead 闸门 + 第 26 轮" },
+        { "id": "un.noconsume", "name": "生成但无消费", "status": "done", "evidence": "第 98 轮回滚点" }
+      ]
+    },
+    {
+      "id": "inconsistent",
+      "name": "不统一",
+      "items": [
+        { "id": "inc.number", "name": "UI 数字 vs 代码常量矛盾", "status": "done", "evidence": "第 92 轮 BUG-47" },
+        { "id": "inc.wording", "name": "措辞不一致（签发/已发/交付）", "status": "done", "evidence": "第 95 轮" },
+        { "id": "inc.punct", "name": "中文标点不统一", "status": "done", "evidence": "第 102 轮 cnpunctcheck 闸门；394 处已统一" },
+        { "id": "inc.comment", "name": "注释漂移（代码对注释错）", "status": "done", "evidence": "贯穿 1-102 轮，持续清理" },
+        { "id": "inc.term", "name": "术语表一致性", "status": "partial", "evidence": "DECISION-C-TERMS 有表；**未做全仓术语扫描**" }
+      ]
+    },
+    {
+      "id": "ui",
+      "name": "界面（打开方式 / 构成）",
+      "items": [
+        { "id": "ui.route", "name": "界面打开方式（4 Tab + 28 sheet + 深链）", "status": "done", "evidence": "uicoverage / destmap / sheetcover 闸门；第 103 轮盘点 74 View 零孤儿" },
+        { "id": "ui.hig", "name": "**逐页 HIG 构成审核（74 个 View）**", "status": "partial", "evidence": "已审 ~25 个（设备页/凭证/记录/设置/布防/DFU/手机钥匙…）；**剩余 ~49 个未逐页审**" },
+        { "id": "ui.state", "name": "三态齐备（空/错/加载）", "status": "partial", "evidence": "同 un.empty（第 103 轮自动扫过：10 个渲染集合的 View 里 6 个是固定尺寸组件、3 个是 Picker、1 个真缺陷已修）" },
+        { "id": "ui.dynamictype", "name": "动态字体", "status": "done", "evidence": "dynamictype 闸门" },
+        { "id": "ui.contrast", "name": "对比度", "status": "done", "evidence": "contrast 闸门" },
+        { "id": "ui.touch", "name": "触达区域 ≥44pt", "status": "done", "evidence": "DS.Hit.min + 第 30 轮" },
+        { "id": "ui.icon", "name": "图标一致性", "status": "done", "evidence": "iconmap --strict 闸门" },
+        { "id": "ui.a11y", "name": "无障碍标签 / VoiceOver", "status": "partial", "evidence": "A11Y-FREQUENCY 有清单；第 102 轮修了 2 处朗读标点；**未逐控件核 label**" }
+      ]
+    },
+    {
+      "id": "process",
+      "name": "构建与流程",
+      "items": [
+        { "id": "pr.build30", "name": "构建等待 ≤30 秒", "status": "done", "evidence": "ci.ps1 轮询间隔 25s，每轮实测均 <30s" },
+        { "id": "pr.push", "name": "推送节奏（~1 小时 / 构建失败例外）", "status": "done", "evidence": "执行中" },
+        { "id": "pr.gates", "name": "闸门自身正确性（正控+反控）", "status": "partial", "evidence": "第 101/102 轮给 2 道新闸门做了正反控；**其余 52 道未逐个验证能抓到真问题**" }
+      ]
+    },
+    {
+      "id": "blocked",
+      "name": "本机做不了",
+      "items": [
+        { "id": "blk.device", "name": "真锁 / 真机验证（7 条协议语义 + 三项功能）", "status": "blocked", "evidence": "需硬件" },
+        { "id": "blk.xctest", "name": "441 行单测实际执行", "status": "blocked", "evidence": "需 macOS + Xcode" },
+        { "id": "blk.holiday2027", "name": "2027 节假日表", "status": "blocked", "evidence": "国务院公告未发布" }
+      ]
+    }
+  ]
+}

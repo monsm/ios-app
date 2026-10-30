@@ -234,7 +234,12 @@ struct MergeMembersView: View {
                         }
                     }
                     .pickerStyle(.inline)
-                    if secondaryID == nil {
+                    // 2026-10-30 修复（第 103 轮）：空态判据原本是 `secondaryID == nil`（= 还没选），
+                    // 而正确判据是 `secondaryCandidates.isEmpty`（= 真的没有同名成员）。
+                    // 原写法的后果：**有 2 个同名成员时**，上面选择器列出两条候选，
+                    // 下面同时显示「没有同名成员。若只是称呼重复，请在成员页重命名其一。」—— 自相矛盾，
+                    // 用户会以为这个功能坏了。
+                    if secondaryCandidates.isEmpty {
                         Text("没有同名成员。若只是称呼重复， 请在成员页重命名其一。")
                             .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
