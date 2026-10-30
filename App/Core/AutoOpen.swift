@@ -91,6 +91,19 @@ enum AutoOpen {
     static func autocal(_ mac: String) -> AutoCal? {
         DB.store.get(AutoCal.self, "kf_autocal_" + mac)
     }
+
+    /// 2026-10-31（第 29 轮，**F3 标定的写入口**）：`AutoCal` 此前**只被读、从不被写** ——
+    /// 于是「标定」这个功能在代码里存在、在用户手里从未启用过，`rssiBase` 永远走 `fallbackBase(-40)`。
+    /// 这两条把它闭环：采样够了就存 P95，用户也能清掉重标。
+    static func saveAutocal(_ mac: String, samples: [Int]) -> Int? {
+        guard let p95 = AutoOpenKit.p95(samples) else { return nil }   // 样本 < 5 不写（没统计意义）
+        let cal = AutoCal(rssiP95: p95, at: Date().timeIntervalSince1970)
+        DB.store.setCodable("kf_autocal_" + mac, cal)
+        return p95
+    }
+    static func clearAutocal(_ mac: String) {
+        DB.store.remove("kf_autocal_" + mac)
+    }
     /// 删除设备时随每锁数据族清 (DB.removeDevice 已按族清 kf_autocal_/kf_autoopen_audit_/kf_autoopen_suspend_until_ 前缀键)
 
     /// §3.4 标准档风险披露文案 (强制展示, 不得弱化)
@@ -591,6 +604,8 @@ final class AutoOpenController {
 // ================= 设置 Section (§4 原文 + §3.4 强制风险披露) =================
 struct AutoOpenSection: View {
     var mac: String
+    // 2026-10-31（第 29 轮）：标定采样面板的开关（`calibrationBlock` 里的按钮置 true）。
+    @State private var calibrating = false
     var body: some View {
         Section {
             VariantToggle("走近自动开门", isOn: Binding(
@@ -623,12 +638,132 @@ struct AutoOpenSection: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityElement(children: .combine)
                 }
+                // 2026-10-31（第 29 轮）：**F3 距离标定**的 UI 入口。
+                // 此前 `AutoCal` 只被读、从不被写 ⇒ 标定功能对用户从未存在过，永远走 -40 兜底线。
+                // 不同型号门锁发射功率差异很大：固定 -40 在强锁上会"走廊里就开"（误开），
+                // 在弱锁上会"站到门口还不够"（不开）。标定就是按这把锁的实测 P95 定线。
+                calibrationBlock
+
             }
         } header: {
             Text("靠近自动开锁")
         } footer: {
             Text("仅 App 在前台且门不在布防时段生效; 布防时段与防拆事件自动关闭自动开锁。睡觉场景请确认布防时段覆盖夜间。")
                 .vkFont(.caption)
+                .foregroundStyle(DS.Palette.textSub)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        // 2026-10-31（第 29 轮）：标定采样面板。原来 `calibrating` 没有消费方 —— 点了没反应。
+        .sheet(isPresented: $calibrating) {
+            AutoCalibrateSheet(mac: mac) { calibrating = false }
+        }
+    }
+
+
+/// 2026-10-31（第 29 轮）：F3 标定采样面板。
+/// 现场采样：人站在「平时想让它自动开锁的那个位置」，按住开始，边看计数边等它采够。
+/// 采够 5 个样本才写盘（`AutoOpenKit.p95` 对 <5 返回 nil —— 3 个样本的 95 分位没有统计意义）。
+struct AutoCalibrateSheet: View {
+    var mac: String
+    var onDone: () -> Void
+
+    @State private var samples: [Int] = []
+    @State private var running = false
+    @State private var saved: Int?
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Text("站到平时想让它自动开锁的位置，然后点「开始采样」。采 20 秒左右即可。")
+                        .vkFont(.footnote)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if samples.isEmpty {
+                        // 2026-10-31（第 29 轮 · 空态）：还没开始采样时，别只显示"已采 0 个样本"——
+                        // 那是数字，不是下一步该做什么。
+                        Text("还没有样本 —— 点下面的「开始采样」，站在你想让它开锁的位置别动")
+                            .vkFont(.footnote)
+                            .foregroundStyle(DS.Palette.textSub)
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        Text("已采 \(samples.count) 个样本")
+                            .vkFont(.subheadline.monospacedDigit())
+                    }
+                    if let saved {
+                        Text("已保存：基准 \(saved) dBm")
+                            .vkFont(.subheadline, weight: .semibold)
+                            .foregroundStyle(DS.Palette.ok)
+                    } else if samples.count > 0, samples.count < 5 {
+                        Text("还差 \(5 - samples.count) 个样本才能保存")
+                            .vkFont(.caption)
+                            .foregroundStyle(DS.Palette.textSub)
+                    }
+                }
+                Section {
+                    if running {
+                        Button("停止采样") { running = false }
+                            .frame(minHeight: DS.Hit.min)
+                    } else {
+                        Button("开始采样") { samples = []; saved = nil; running = true }
+                            .frame(minHeight: DS.Hit.min)
+                        if samples.count >= 5 {
+                            Button("保存这个基准") {
+                                saved = AutoOpen.saveAutocal(mac, samples: samples)
+                                running = false
+                            }
+                            .frame(minHeight: DS.Hit.min)
+                        }
+                    }
+                }
+            }
+            .navigationTitle("标定距离基准")
+            .navigationBarTitleDisplayMode(.inline)
+            .dsScreenBackground()
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("关闭") { onDone(); dismiss() }
+                }
+            }
+            // 采样驱动: 与自动开锁用同一个 RSSI 来源 (每 0.5s 一拍), 采样期间持续累积。
+            .task(id: running) {
+                guard running else { return }
+                while running, !Task.isCancelled {
+                    if let r = LinkSense.rssiFor(mac) { samples.append(r) }
+                    try? await Task.sleep(for: .milliseconds(500))
+                    if samples.count >= 40 { running = false }   // 20 秒够了
+                }
+            }
+        }
+    }
+}
+    /// 2026-10-31（第 29 轮）：F3 标定区块。
+    /// 交互：按住「开始标定」= 现场采样（人站在平时想让它开锁的那个位置）；
+    /// 采够 5 个样本才写盘（`AutoOpenKit.p95` 对 <5 返回 nil），并显示实际 P95。
+    /// 已标定时显示当前基准 + 可清除（回到 -40 兜底）。
+    @ViewBuilder
+    private var calibrationBlock: some View {
+        let cur = AutoOpen.autocal(mac)?.rssiP95
+        if let cur {
+            HStack {
+                Text("距离基准：\(cur) dBm（已标定）")
+                    .vkFont(.footnote)
+                Spacer(minLength: 0)
+                Button("重新标定") { calibrating = true }
+                    .vkFont(.footnote, weight: .medium)
+                    .frame(minHeight: DS.Hit.min)
+                Button("清除", role: .destructive) { AutoOpen.clearAutocal(mac) }
+                    .vkFont(.footnote)
+                    .frame(minHeight: DS.Hit.min)
+            }
+        } else {
+            Button { calibrating = true } label: {
+                Label("标定距离基准（可选）", systemImage: "dot.radiowaves.left.and.right")
+                    .vkFont(.footnote)
+                    .frame(minHeight: DS.Hit.min)
+            }
+            Text("不标定也能用：默认按 \(AutoOpenKit.fallbackBase) dBm 触发。若发现「走廊里就开」或「站到门口不开」，标定一次更准。")
+                .vkFont(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
