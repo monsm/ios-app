@@ -13,9 +13,9 @@
 | 672 | 假日异常阈值顺延 | `RecordSearch:349 extendedEndHour`(+2h 可关) | A 保持 +2h 并在文案写明"经验值"；B 让用户在设置里调阈值 | 写成"官方口径"才是造假 | A 无 / B 低 |
 | 673 | 春节区间注记 | `StatsKit:604` 静态近似区间并已明示"近似" | A 用 671 表算真春节区间；B 保持近似 + 现有"近似"标注 | 已合规 | A 低 |
 | 737 | 试错累计视图 | `RecordSearch:272` 只用日志条数；协议 `keyboardErrCount` 语义未确证 | A 只统计日志里的失败/告警条数并写明"本机推断"；B 用 16#xx keyboardErrCount 字段（语义存疑）；C 划掉 | **B 有造假风险**：字段语义未确证 | A 低 |
-| 742 | 响应时长分布图 | `AlarmCenterView:485-507` 已占位"积累中" | A 保持占位（已合规）；B 用告警首末时刻差近似并标"约" | B 须带"约" | 低 |
+| 742 | 响应时长分布图 | ⚠ **2026-10-30 核实（第 105 轮）：原写的 `AlarmCenterView:485-507` 已不存在** —— `AlarmCenterView.swift` 已整文件删除（`RecordSearch.swift:543` 自己注着「原住 AlarmCenterView (已删)」）。现在"积累中"占位是否还在，需在 `RecordsTimeline` 侧重新确认。| A 保持占位（若已随页删除则此条作废）；B 用告警首末时刻差近似并标「约」 | B 须带「约」 | 低 |
 | 748 | 连接成功率图表 | `DiagKit:213 BleTelemetry.recordAttempt` 遥测已在 | A 直接用遥测出图（真数据）；B 继续挂起 | 无 | 低（**推荐做**） |
 | 749 | 记录完整性校验 | 字典注 16#04 surplus=剩余条数；跨会话游标稳定未确证 | A 只做"本次会话内 surplus 与已取条数对账"；B 声称"全量完整性校验"（**不可选**） | B 造假 | A 低 |
 | 757 | 断点续传进度 | 16 有分页字段，跨会话游标未确证 | A 会话内续取（不承诺跨会话断点）；B 存游标到键位并声称跨会话可续（未确证） | B 造假 | A 低 |
-| 927 | 交互开锁 Widget | **已拍板 B 并落地（第七十批）**：`Widget/LockWidget.swift` + `project.yml` 的 `OfflineLockWidget` target；只经 `kf://device` 拉起 App | A 划掉；B 哑按钮拉起 App（需建 target）；C 保持现状文案 | 组件文案已写"本组件不执行开锁"，也不显示状态/电量 → 无冒充 | 已发生：多一个 app-extension target。侧载（AltStore/Sideloadly）对嵌入扩展的签名影响**只能真机定论**，已写进验收单 |
+| 927 | 交互开锁 Widget | ⚠ **2026-10-30 核实（第 105 轮）：已不存在** —— 曾按 B 落地（第七十批），但已随 `3d28ff7`（波2b「删桌面小组件 + 开锁实时活动」）**整族删除**。现在 `project.yml` 只有 `OfflineLock` 与 `OfflineLockTests` 两个 target，无 `LockWidget.swift`。| A 划掉（现状）；B 重建 target（需重新评估免费账号侧载签名） | 无 | 重建 = 高 |
 | 949 | 焦点确认加严 | 无 FocusKit 实现，仅 `AppIntents:241` 文案提及 | A 删掉该文案（不再承诺）；B 真接 FocusStatus（需 entitlement + 授权流，免费账号可用面待实测） | A 无 / 现状文案已是小假承诺 | B 高 |

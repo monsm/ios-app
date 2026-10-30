@@ -58,8 +58,11 @@ struct LockProfileView: View {
                     .autocorrectionDisabled()
                     .submitLabel(.next)
                 // 920 安装位置字段 = 这一行 (原句的"玄关/车库"就是这里的占位例子)。
-                // 它同时是 Hero 卡副标题与"全部锁总览"的行副标题; **Widget 那一半做不到** ——
-                // 免费账号无 App Groups，组件读不到本机档案 (CONSTRAINTS ❌ 表)，所以那里只显示静态文案。
+                // 它同时是 Hero 卡副标题与"全部锁总览"的行副标题。
+                // 2026-10-30 修正（第 105 轮）：原句写「**Widget 那一半做不到** —— 免费账号无 App Groups，
+                // 组件读不到本机档案…所以那里只显示静态文案」，读起来像是"Widget 存在但只显示静态文案"。
+                // 实际上桌面小组件已随 `3d28ff7`（波2b）**整族删除** —— 现在没有 Widget target、没有 LockWidget.swift。
+                // 别再让读者去找一个不存在的组件。
                 TextField("场所副标题 (如 玄关 / 车库)", text: $place)
                     .autocorrectionDisabled()
                     .submitLabel(.next)
