@@ -61,12 +61,22 @@ struct DFUView: View {
 
     // MARK: - 版本
 
+    /// 2026-10-30 补（第 120 轮）：锁内固件名的三档兜底（档案 fw → 实时 status.firmware → "未读到"）。
+    /// 原来只对 `fw` 判了空串、`firmware` 用 `??` —— 而 `??` 只处理 nil，不处理空串，锁端回空串时这一行**留白**。
+    private var firmwareText: String {
+        if let fw = app.current?.fw, !fw.isEmpty { return fw }
+        if let fw = app.status?.firmware, !fw.isEmpty { return fw }
+        return "未读到"
+    }
+
     private var versionSection: some View {
         Section {
             HStack {
                 Text("锁内固件").foregroundStyle(DS.Palette.textSub)
                 Spacer()
-                Text(app.current?.fw.isEmpty == false ? (app.current?.fw ?? "—") : (app.status?.firmware ?? "未读到"))
+                // 2026-10-30 修复（第 120 轮）：原来只对 `fw` 判了空串，`status.firmware` 用了 `??`
+                // —— 而 `??` 只处理 nil，不处理空串 ⇒ 锁端回空串时这一行**留白**，用户看到的不是「未读到」。
+                Text(firmwareText)
                     .monospacedDigit()
             }
             .frame(minHeight: DS.Hit.min)

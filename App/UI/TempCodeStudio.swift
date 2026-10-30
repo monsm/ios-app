@@ -381,9 +381,9 @@ struct TempCodeStudio: View {
         }
         if let r = last {
             result = r
-            // 整条批量链都用入口捕获的 kc.mac，这一行原先落到**活读**的 mac:
-            // 批量下发以十秒计，中途当前锁被改掉就会清掉另一把锁的草稿 (tools/macpin.js 抓到的)
-            CredentialOrg.clearDraft(kc.mac)
+            // 2026-10-30 删除（第 120 轮）：这里原来调 `CredentialOrg.clearDraft(kc.mac)` ——
+            // 但**本页从不写草稿**（全文件无 saveDraft），而草稿键 `kf_cdraft_<mac>` 与 PwdStudio 共用，
+            // 等于「在临时码页下发成功后，把密码工坊里没填完的草稿清掉」。删掉这一行。
             if failed > 0 { app.showToast("批量完成， \(failed) 张失败， 稍后可在凭证页重试") }
         }
     }
