@@ -395,6 +395,13 @@ final class AutoOpenController {
     private var wasInBackground = true   // 冷启动视为「从后台来」
     private var inFlight = false
 
+    /// 2026-10-31（第 63 轮，**自动/手动并发缺口**）：自动链在途时 `unlockState` 仍是 `.idle`
+    /// （`dispatch` 不走 `AppState.runUnlock`，不设 `.connecting/.opening`），
+    /// 于是手动链的 `guard unlockState == .connecting || .opening` **拦不住** ——
+    /// 用户在自动开锁在途时点圆盘，两路会同时下发 04。
+    /// 这里暴露一个只读位，供 `requestUnlock()` 加闸。
+    var isDispatching: Bool { inFlight }
+
     init(face: FaceService = SystemFaceService()) {
         self.face = face
     }

@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T19:01:08.113Z",
+    "generated": "2026-10-30T19:44:36.407Z",
     "sources": [
       {
         "scout": "android-native",
@@ -4002,7 +4002,7 @@ const DATA = {
           "line": 431,
           "symbol": "chosenPinIndex(_:)",
           "note": "",
-          "text": "lastMsg = StatusParser.rcFriendly(rc)   // 84 人话直读"
+          "text": "if rc == 22 {"
         },
         {
           "platform": "ios",
@@ -8042,7 +8042,7 @@ const DATA = {
           "line": 497,
           "symbol": "AutoCalView",
           "note": "",
-          "text": "autoOpenOn: true,"
+          "text": "AutoOpen.audit(mac, \"拒开： 伪装会话期间禁止自动下发 04\")"
         },
         {
           "platform": "ios",
@@ -8333,7 +8333,7 @@ const DATA = {
           "line": 397,
           "symbol": "if DB.hasPasscode(), let t = lastUnlockSuccessAt, now.timeIntervalSince(t) \u003c 30",
           "note": "",
-          "text": "let i = chosenPinIndex(kc.mac)"
+          "text": "/// 存的是**下标**而不是 PIN 本身 —— 口令留在钥匙串 (kc.pins) 里, 不落 UserDefaults。"
         },
         {
           "platform": "ios",
@@ -8341,7 +8341,7 @@ const DATA = {
           "line": 368,
           "symbol": "开锁语义注释",
           "note": "",
-          "text": "}"
+          "text": "lastDispatch = now"
         },
         {
           "platform": "ios",
@@ -8349,7 +8349,7 @@ const DATA = {
           "line": 371,
           "symbol": "requestUnlock",
           "note": "",
-          "text": "// 同上：startUnlock 那层 guard 也已删（同一个恒 false 的只读模式判据）。"
+          "text": "showGate = true"
         },
         {
           "platform": "ios",
@@ -9094,7 +9094,7 @@ const DATA = {
           "line": 423,
           "symbol": "private func dispatch",
           "note": "",
-          "text": "// 退后台必须收全部传感器与会话状态"
+          "text": "wasInBackground = false"
         },
         {
           "platform": "ios",
@@ -9102,7 +9102,7 @@ const DATA = {
           "line": 428,
           "symbol": "app.lock.unlock(mac:)",
           "note": "",
-          "text": "promptStartedAt = nil"
+          "text": "func onBackground() {"
         },
         {
           "platform": "ios",
@@ -9110,7 +9110,7 @@ const DATA = {
           "line": 441,
           "symbol": "verifyMode==1 双验提示",
           "note": "",
-          "text": "}"
+          "text": "func feedRssi(mac: String, rssi: Int) {"
         },
         {
           "platform": "ios",
@@ -9118,7 +9118,7 @@ const DATA = {
           "line": 453,
           "symbol": "rc=25 / rc=26 分支",
           "note": "",
-          "text": "let farAway = rssi \u003c AutoOpenKit.disarmThreshold(base: base) - 3"
+          "text": "if rssiHistory.count > 3 { rssiHistory.removeLast(rssiHistory.count - 3) }"
         }
       ],
       "platformEvidence": {
@@ -9842,7 +9842,7 @@ const DATA = {
           "line": 457,
           "symbol": "setSuspendUntil(+24h)",
           "note": "",
-          "text": "// 而该界面从未接到任何入口上，所以 intensive 恒为 false，**这一行从未执行过**。"
+          "text": "// （下方 case 0），于是信号落进回差带 (-43..-40) 就会执行本行把闩锁放开 ——"
         },
         {
           "platform": "ios",
@@ -10910,7 +10910,7 @@ const DATA = {
           "line": 371,
           "symbol": "func requestUnlock",
           "note": "",
-          "text": "// 同上：startUnlock 那层 guard 也已删（同一个恒 false 的只读模式判据）。"
+          "text": "showGate = true"
         },
         {
           "platform": "ios",
@@ -10918,7 +10918,7 @@ const DATA = {
           "line": 374,
           "symbol": "guard SecurityPolicy.allows(.unlock)",
           "note": "",
-          "text": "}"
+          "text": "startUnlock()"
         },
         {
           "platform": "ios",
@@ -10926,7 +10926,7 @@ const DATA = {
           "line": 375,
           "symbol": "denialMessage",
           "note": "",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -10934,7 +10934,7 @@ const DATA = {
           "line": 404,
           "symbol": "func startUnlock",
           "note": "",
-          "text": "var lastMsg = \"\""
+          "text": "let i = chosenPinIndex(kc.mac)"
         }
       ],
       "platformEvidence": {
@@ -11557,7 +11557,7 @@ const DATA = {
           "line": 431,
           "symbol": "eventFired.insert(mac)",
           "note": "",
-          "text": "}"
+          "text": "// 退后台: 清武装态 (F0 同时失效, 双保险) + 清一次性/面容在途位"
         }
       ],
       "platformEvidence": {
@@ -11649,7 +11649,7 @@ const DATA = {
           "line": 412,
           "symbol": "defendControl: d?.control ?? 0",
           "note": "",
-          "text": "// `.inactive → .active`（下拉控制中心、来电横幅）不算 —— 否则反复进出会把"
+          "text": "guard !AutoOpen.isSuspended(mac: mac) else {"
         }
       ],
       "platformEvidence": {
@@ -11816,7 +11816,7 @@ const DATA = {
           "line": 406,
           "symbol": "facePendingPrompt 计算",
           "note": "",
-          "text": "AutoOpen.audit(mac, \"拒开 rc=26 防拆挂起中， 面容不刷新\")"
+          "text": "self.face = face"
         }
       ],
       "platformEvidence": {
@@ -11883,7 +11883,7 @@ const DATA = {
           "line": 402,
           "symbol": "f0Foreground",
           "note": "",
-          "text": "// ---------- F0/F1: 进前台 (RootView scenePhase .active) ----------"
+          "text": "/// 这里暴露一个只读位，供 `requestUnlock()` 加闸。"
         },
         {
           "platform": "ios",
@@ -11952,7 +11952,7 @@ const DATA = {
           "line": 419,
           "symbol": "lockReady: snap != nil && snap?.rc != 25 && snap?.rc != 26",
           "note": "",
-          "text": "}"
+          "text": "// `.inactive → .active`（下拉控制中心、来电横幅）不算 —— 否则反复进出会把"
         },
         {
           "platform": "ios",
@@ -12184,7 +12184,7 @@ const DATA = {
           "line": 469,
           "symbol": "selfHealTime",
           "note": "",
-          "text": "/// 静置判定已删 —— 信号达标即唯一条件 (与 F3 门控口径一致)。"
+          "text": "// 早判定只是把「同样的判定」提前到广播到达那一刻，不新增任何放行路径。"
         },
         {
           "platform": "ios",
@@ -12192,7 +12192,7 @@ const DATA = {
           "line": 476,
           "symbol": "ntpConfirmed: false",
           "note": "",
-          "text": "guard AutoOpen.on, !inFlight else { return }"
+          "text": "/// 静置判定已删 —— 信号达标即唯一条件 (与 F3 门控口径一致)。"
         }
       ],
       "platformEvidence": {
@@ -12267,7 +12267,7 @@ const DATA = {
           "line": 415,
           "symbol": "rssiArmed: armed",
           "note": "",
-          "text": "promptStartedAt = Date()"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -13709,7 +13709,7 @@ const DATA = {
           "line": 439,
           "symbol": "private func runUnlock",
           "note": "",
-          "text": "// 超时不自动重试: 指令可能已生效 (门已开只是没回执), 再发一次就是第二次开锁动作"
+          "text": "} catch is CancellationError {"
         },
         {
           "platform": "ios",
@@ -13717,7 +13717,7 @@ const DATA = {
           "line": 441,
           "symbol": "attempts = kf_auto_retry ? 3 : 1",
           "note": "",
-          "text": "failStreak += 1   // 87 三连败排查清单按尝试次数累计"
+          "text": "} catch {"
         },
         {
           "platform": "ios",
@@ -13725,7 +13725,7 @@ const DATA = {
           "line": 445,
           "symbol": "phase = 1",
           "note": "",
-          "text": "for w in stride(from: attempt == 1 ? 2 : 5, through: 1, by: -1) {"
+          "text": "if Task.isCancelled { return }"
         },
         {
           "platform": "ios",
@@ -13733,7 +13733,7 @@ const DATA = {
           "line": 453,
           "symbol": "lock.unlock(mac:pinDec:)",
           "note": "",
-          "text": "}"
+          "text": "retryWait = w"
         },
         {
           "platform": "ios",
@@ -13741,7 +13741,7 @@ const DATA = {
           "line": 455,
           "symbol": "if rc == 0",
           "note": "",
-          "text": "if Task.isCancelled { return }"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -14134,7 +14134,7 @@ const DATA = {
           "line": 428,
           "symbol": "246 本次用哪条 PIN 注释",
           "note": "",
-          "text": "return"
+          "text": "settleUnlockSuccess()"
         },
         {
           "platform": "ios",
@@ -14142,7 +14142,7 @@ const DATA = {
           "line": 431,
           "symbol": "func chosenPinIndex",
           "note": "",
-          "text": "lastMsg = StatusParser.rcFriendly(rc)   // 84 人话直读"
+          "text": "if rc == 22 {"
         },
         {
           "platform": "ios",
@@ -14150,7 +14150,7 @@ const DATA = {
           "line": 432,
           "symbol": "kf_pinpick_ + mac",
           "note": "",
-          "text": "} catch is CancellationError {"
+          "text": "unlockState = .doubleVerify"
         },
         {
           "platform": "ios",
@@ -14158,7 +14158,7 @@ const DATA = {
           "line": 434,
           "symbol": "func chosenPin",
           "note": "",
-          "text": "} catch {"
+          "text": "finishDwell(.doubleVerify)"
         },
         {
           "platform": "ios",
@@ -33785,7 +33785,7 @@ const DATA = {
           "line": 525,
           "symbol": "外观变更注释",
           "note": "",
-          "text": "guard let kc = current else { return [] }"
+          "text": "let hour = WeekCal.gregorian.component(.hour, from: Date())"
         },
         {
           "platform": "ios",
@@ -33809,7 +33809,7 @@ const DATA = {
           "line": 527,
           "symbol": "private func applyAppearance",
           "note": "",
-          "text": "let logs = DB.readLogs(kc.mac).prefix(n)"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -34890,7 +34890,7 @@ const DATA = {
           "line": 624,
           "symbol": "func setUnlockOption(_ key: String, _ v: Any)",
           "note": "",
-          "text": ""
+          "text": "/// iOS 上 surface/canvas 的明度差已经足够表达层级, 描边反而是重复劳动。"
         },
         {
           "platform": "ios",
@@ -37581,7 +37581,7 @@ const DATA = {
           "line": 356,
           "symbol": "func showToast",
           "note": "",
-          "text": "// 244 指令去重: 1.2s 内的重复触发只提示, 不重复入队"
+          "text": "if unlockState == .opening,"
         },
         {
           "platform": "ios",
@@ -37589,7 +37589,7 @@ const DATA = {
           "line": 357,
           "symbol": "withAnimation spring",
           "note": "",
-          "text": "guard now.timeIntervalSince(lastDispatch) > 1.2 else {"
+          "text": "Date().timeIntervalSince(dispatchAt) \u003c 0.8 || retryWait != nil {"
         },
         {
           "platform": "ios",
@@ -37597,7 +37597,7 @@ const DATA = {
           "line": 359,
           "symbol": "let stay = msg.count > 20 ?",
           "note": "",
-          "text": "return"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -37916,7 +37916,7 @@ const DATA = {
           "line": 598,
           "symbol": "static let behaviorKeys",
           "note": "",
-          "text": "LinkSense.shared.startReconnectLoop()"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -37924,7 +37924,7 @@ const DATA = {
           "line": 620,
           "symbol": "无障碍键并入",
           "note": "",
-          "text": "// 2026-10-16: 从 `private` 放开成 internal —— 第二个消费点在 App/Core/VariantGrammar.swift 的"
+          "text": "/// 内层 Button 保留全部系统行为, 只有 trigger() 走闸; 闸状态是每个按钮各自的 @State, 不跨按钮误伤。"
         },
         {
           "platform": "ios",
@@ -37932,7 +37932,7 @@ const DATA = {
           "line": 624,
           "symbol": "func setUnlockOption",
           "note": "",
-          "text": ""
+          "text": "/// iOS 上 surface/canvas 的明度差已经足够表达层级, 描边反而是重复劳动。"
         },
         {
           "platform": "ios",
@@ -37940,7 +37940,7 @@ const DATA = {
           "line": 626,
           "symbol": "if behaviorKeys.contains",
           "note": "",
-          "text": ""
+          "text": "/// `tint` 给\"需要处理\"的卡混入语义色底 (8%), 让异常自带色温而不靠描边。"
         }
       ],
       "platformEvidence": {
@@ -38033,7 +38033,7 @@ const DATA = {
           "line": 629,
           "symbol": "894 恢复带外观段注释",
           "note": "",
-          "text": ""
+          "text": "// **只此一处定义**是刻意的：另抄一份阴影色，两套变体迟早会在这一步上分家。"
         },
         {
           "platform": "ios",
@@ -40051,7 +40051,7 @@ const DATA = {
           "line": 358,
           "symbol": "长文案多停留注释",
           "note": "",
-          "text": "showToast(\"指令已收到， 正在执行\")"
+          "text": "cancelUnlock(notify: true)"
         },
         {
           "platform": "ios",
@@ -40059,7 +40059,7 @@ const DATA = {
           "line": 359,
           "symbol": "stay 计算",
           "note": "",
-          "text": "return"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -40067,7 +40067,7 @@ const DATA = {
           "line": 362,
           "symbol": "if toast == msg",
           "note": "",
-          "text": "// 250: 同一锁 30 秒内再次开锁, 先过应用锁验证 (未设本机密码则无此闸)"
+          "text": "let now = Date()"
         },
         {
           "platform": "ios",
@@ -40075,7 +40075,7 @@ const DATA = {
           "line": 363,
           "symbol": "DS.Duration.quick",
           "note": "",
-          "text": "if DB.hasPasscode(), let t = lastUnlockSuccessAt, now.timeIntervalSince(t) \u003c 30 {"
+          "text": "// 244 指令去重: 1.2s 内的重复触发只提示, 不重复入队"
         }
       ],
       "platformEvidence": {
@@ -40769,7 +40769,7 @@ const DATA = {
           "line": 466,
           "symbol": "lastMsg = StatusParser.rcFriendly(rc)",
           "note": "",
-          "text": "let dwell: UInt64"
+          "text": "UINotificationFeedbackGenerator().notificationOccurred(.error)"
         },
         {
           "platform": "apk",
@@ -58196,7 +58196,7 @@ const DATA = {
           "line": 598,
           "symbol": "behaviorKeys",
           "note": "",
-          "text": "LinkSense.shared.startReconnectLoop()"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -58204,7 +58204,7 @@ const DATA = {
           "line": 431,
           "symbol": "kf_pinpick_",
           "note": "",
-          "text": "lastMsg = StatusParser.rcFriendly(rc)   // 84 人话直读"
+          "text": "if rc == 22 {"
         },
         {
           "platform": "ios",
@@ -58212,7 +58212,7 @@ const DATA = {
           "line": 520,
           "symbol": "kf_unlock_hint_day",
           "note": "",
-          "text": ""
+          "text": "// 只在非双验时报\"成功\", 双验那条上面已经给了实话。"
         }
       ],
       "platformEvidence": {
@@ -63916,7 +63916,7 @@ const DATA = {
           "line": 518,
           "symbol": "unlockReturnedHint",
           "note": "",
-          "text": "let hour = WeekCal.gregorian.component(.hour, from: Date())"
+          "text": "} else {"
         },
         {
           "platform": "ios",
@@ -63924,7 +63924,7 @@ const DATA = {
           "line": 520,
           "symbol": "kf_unlock_hint_day",
           "note": "",
-          "text": ""
+          "text": "// 只在非双验时报\"成功\", 双验那条上面已经给了实话。"
         }
       ],
       "platformEvidence": {

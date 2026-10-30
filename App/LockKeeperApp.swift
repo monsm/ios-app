@@ -342,6 +342,13 @@ final class AppState: ObservableObject {
         // 2026-10-26: 这里原有 guard SecurityPolicy.allows(.unlock) 拦截（296 只读安全模式）。
         // readOnly 读的 SecKey.safeModeOn 从来没有写点（设置页无此开关）⇒ 恒 false ⇒ guard 永远放行，已删。
         guard current != nil else { return }
+        // 2026-10-31（第 63 轮，**自动/手动并发缺口**）：自动链在途时 `unlockState` 仍是 `.idle`，
+        // 下面那条 `unlockState == .connecting || .opening` 拦不住它 —— 用户此时点圆盘会让
+        // 两路同时下发 04（一次接近、两次开门）。这里补一道闸：自动在途时提示并拒绝手动。
+        if AutoOpenController.shared.isDispatching {
+            showToast("自动开锁进行中，请稍候")
+            return
+        }
         if unlockState == .connecting || unlockState == .opening {
             // 56: 指令发出后 0.8s 内轻点圆盘 = 撤销 — 拦截回执等待与自动重试链
             // (BLE 字节一旦发出无法撤回, 与 244/250 共同构成防误触保险, 不虚构"已撤回指令");
