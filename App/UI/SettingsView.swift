@@ -408,7 +408,8 @@ struct SettingsView: View {
         return s
     }
 
-/// 机械计数样式数字 (idea 1006): 每位一格, 等宽数字
+    // 2026-10-30 删除（第 147 轮）：这里原有一句「机械计数样式数字 (idea 1006): 每位一格, 等宽数字」，
+    // 但它挂在 `presentSetPasscodeAlert()` 上 —— 两者毫无关系（机械计数那套组件全仓不存在）。
     func presentSetPasscodeAlert() {
         let alert = UIAlertController(title: "设置本机密码", message: "4 位以上纯数字（本机密码用于解锁 App 与确认高危操作）", preferredStyle: .alert)   // 2026-10-30：原句「随机键位需要数字键盘」—— 随机键位功能全仓不存在
         alert.addTextField { $0.isSecureTextEntry = true; $0.keyboardType = .numberPad }

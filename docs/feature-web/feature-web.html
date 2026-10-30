@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T11:20:43.614Z",
+    "generated": "2026-10-30T11:36:41.199Z",
     "sources": [
       {
         "scout": "android-native",
@@ -34716,7 +34716,7 @@ const DATA = {
           "line": 423,
           "symbol": "timeSection",
           "note": "",
-          "text": "DB.setPasscode(f1)"
+          "text": "guard f1.allSatisfy({ $0.isNumber }) else { app.showToast(\"只能使用数字\"); return }"
         },
         {
           "platform": "ios",
@@ -34724,7 +34724,7 @@ const DATA = {
           "line": 425,
           "symbol": "Picker(\"时间制式\", selection:)",
           "note": "",
-          "text": "})"
+          "text": "app.showToast(\"已设置\")"
         },
         {
           "platform": "ios",
@@ -34732,7 +34732,7 @@ const DATA = {
           "line": 432,
           "symbol": "VariantToggle(\"显示秒\", isOn:)",
           "note": "",
-          "text": "let alert = UIAlertController("
+          "text": "guard ok else { return }"
         }
       ],
       "platformEvidence": {
@@ -34882,7 +34882,7 @@ const DATA = {
           "line": 445,
           "symbol": "unlockSection",
           "note": "",
-          "text": "alert.addAction(UIAlertAction(title: \"确定\", style: .default) { _ in"
+          "text": "}"
         },
         {
           "platform": "ios",
