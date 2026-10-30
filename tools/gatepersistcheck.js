@@ -65,6 +65,33 @@ const ok = [];
       else ok.push('iOS F6: 快照无条件写入');
     }
 
+    // ⑥ F6 快照**同步回 AppState**（2026-10-31 第 11 轮修复，第 62 轮补断言）
+    // F6 判据读的是 `app.snapshot`，而 `refreshStatusQuietly` 原来只写 `status` 不写 `snapshot` ——
+    // `snapshot` 只在初始化与 `select()` 赋值 ⇒ 冷启动直接进设备页时 `snapshot == nil` ⇒ F6 永远拒
+    // ⇒ 自动开锁一次都不触发。
+    {
+      const appP = path.join(ROOT, "App", "LockKeeperApp.swift");
+      if (!fs.existsSync(appP)) {
+        ok.push("iOS F6 同步: 找不到 LockKeeperApp.swift（跳过）");
+      } else {
+        const app = fs.readFileSync(appP, "utf8");
+        // 找 refreshStatusQuietly 函数体，确认里面有 snapshot 赋值
+        const fnIdx = app.indexOf("func refreshStatusQuietly");
+        if (fnIdx < 0) {
+          bad.push("iOS F6 同步: 找不到 refreshStatusQuietly（结构变了，先更新本闸门）");
+        } else {
+          // 取该函数体（粗取到下一个 func）
+          const nextFn = app.indexOf("\n    func ", fnIdx + 10);
+          const body = app.slice(fnIdx, nextFn > fnIdx ? nextFn : fnIdx + 2000);
+          if (!/snapshot = DB\.readStatus\(/.test(body)) {
+            bad.push("iOS F6 同步: `refreshStatusQuietly` 成功后没有 `snapshot = DB.readStatus(...)` —— F6 判据读到 nil ⇒ 自动开锁永不触发");
+          } else {
+            ok.push("iOS F6: 快照已同步回 AppState（F6 可读到真实锁态）");
+          }
+        }
+      }
+    }
+
     // ⑤ F5 写入**时机**：闩锁与冷却必须在 `ensureConnected` **之前**落（2026-10-31 第 55 轮）
     // 原来它们在 `ensureConnected` 之后 —— 建连失败走 catch 时两者都不置位，
     // 站门口信号抖动会让 tick 每拍重试「建连 + 判定」；一旦建连成功立刻真发 04。
