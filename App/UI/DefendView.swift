@@ -21,7 +21,17 @@ struct DefendView: View {
     var body: some View { vkBody.destined(.defend) }
     var vkBody: some View {
         Form {
-            if !DefendService.allowed(app) {
+            // 2026-10-30 修复（第 138 轮）：`DefendService.allowed` 在**没选门锁**时也返回 false，
+            // 于是页面把「还没选锁」说成「这把锁的固件不支持布防」—— 与真实原因不符。
+            if app.current == nil {
+                Section {
+                    Text("请先在设备页选择一把门锁。")   // 2026-10-30 补：无锁与「不支持」要分开说
+                        .vkFont(.footnote)
+                        .foregroundStyle(DS.Palette.textSub)
+                } header: {
+                    Text("不可用")
+                }
+            } else if !DefendService.allowed(app) {
                 Section {
                     Text("这把锁的固件不支持布防（或型号不在布防白名单里）。")
                         .vkFont(.footnote)

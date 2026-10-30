@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T11:11:07.742Z",
+    "generated": "2026-10-30T11:13:13.010Z",
     "sources": [
       {
         "scout": "android-native",
@@ -28731,7 +28731,7 @@
           "line": 56,
           "symbol": "statusSection",
           "note": "",
-          "text": "VStack(alignment: .leading, spacing: DS.Space.xxs) {"
+          "text": ""
         },
         {
           "platform": "apk",
