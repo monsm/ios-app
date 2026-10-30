@@ -243,9 +243,12 @@ struct DeviceInfoView: View {
         do {
             try await app.lock.ensureConnected(mac: kc.mac)
             status = try await app.lock.getStatus()
-                    // 2026-10-30 修复（第 138 轮）：`ensureConnected` 与 `getStatus` 两次 await 之间若用户切了锁，
-                    // 本页 body 的 kc 已是新锁、`status` 却是旧锁读数 —— 同一屏混两把锁的数据。不一致就丢弃。
+            // 2026-10-30 修复（第 151 轮，**只更新本页**）：本页原来只写自己的 @State，从不回写 `app.status` ——
+            // 而锁设置页的 footer 明确让用户「来设备信息页点重新读取」刷新快照，返回后看到的仍是旧值。
+            // 2026-10-30 修复（第 138 轮）：`ensureConnected` 与 `getStatus` 两次 await 之间若用户切了锁，
+            // 本页 body 的 kc 已是新锁、`status` 却是旧锁读数 —— 同一屏混两把锁的数据。不一致就丢弃。
             guard app.currentMac == kc.mac else { return }
+            if let st = status { app.applyStatus(st) }
             // 47: 状态读回瞬间锁钟与手机时钟的差 (协议秒基准换算)
             if let lt = status?.lockTime {
                 clockDrift = Int(lt - ZKProtocol.nowProtoSeconds())
@@ -259,6 +262,7 @@ struct DeviceInfoView: View {
                 if let res = try? await app.lock.syncTime() {
                     app.lock.log("info", "自动校时完成： 校前偏差 \(res.before)s, 校后偏差 \(res.after)s")
                     status = try await app.lock.getStatus()
+                    if let st = status { app.applyStatus(st) }   // 同上：校时后的新读数也要回写
                     // （本轮补：缩进对齐到 if let res 块内）
                     // 同一处保护：自动校时后重读 status 也要复核当前锁（本轮补缩进）。
                     guard app.currentMac == kc.mac else { return }
