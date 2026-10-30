@@ -154,6 +154,13 @@ struct MemberWizardView: View {
             return
         }
         guard let id = newID ?? createMember() else { dismiss(); return }
+        // 2026-10-30 修复（第 115 轮，**第 1 步的选择被静默丢弃**）：
+        // `createMember()` 只在第 0 步（L91-92）跑一次，那时用户还没选角色/备注（它们在下一步）；
+        // 而 submit 因为 newID 已存在不再调 createMember ⇒ 用户选的主理人/访客与备注**从未落库**。
+        // 这里补一次：把当前 role/remark/emoji 写回同一个成员档案。
+        var e2 = MemberHub.ext(id)
+        e2.emoji = emoji; e2.role = role; e2.remark = remark
+        MemberHub.saveExt(id, e2)
         guard makePwd, pwdOK() else {
             onDone()
             dismiss()
@@ -206,10 +213,7 @@ struct MergeMembersView: View {
     /// 2026-10-29 性能：副档选择器每行要显示"名下 N 条"。
     /// 原来每行调一次 `MemberHub.activity(m.id)` —— 那是「遍历全部锁 × 读全部日志 × Attribution 分类」，
     /// 3 个候选就是 3 次全量扫描。现在一次算完（复用 activityBundle，它本来就是为这个场景加的）。
-    private var ownsTable: [String: Int] {
-        let bundle = MemberHub.activityBundle(secondaryCandidates.map { $0.id })
-        return bundle.table.mapValues { $0.owns }
-    }
+    @State private var ownsTable: [String: Int] = [:]
 
     var body: some View { vkBody.destined(.mergeMembers) }
     var vkBody: some View {
@@ -255,6 +259,13 @@ struct MergeMembersView: View {
                     .buttonStyle(PrimaryActionStyle())
                     .disabled(secondaryID == nil)
                 }
+            }
+            // 2026-10-30 修复（第 115 轮，**性能修复失效**）：`ownsTable` 原来是**计算属性**，
+            // 而它被放在 `ForEach` 行内取下标 —— 每渲染一行就重跑一次 `MemberHub.activityBundle`
+            // （遍历全部锁 × 读全部日志 × 归属分类）。注释写着"一次算完"，实际是每行一次。
+            .task {
+                let ids = secondaryCandidates.map { $0.id }
+                ownsTable = MemberHub.activityBundle(ids).table.mapValues { $0.owns }
             }
             .navigationTitle("重复合并")   // 462 重复合并
             .navigationBarTitleDisplayMode(.inline)

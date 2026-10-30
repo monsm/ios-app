@@ -27,9 +27,9 @@ struct CredentialCalendarView: View {
     private var year: Int { cal.component(.year, from: monthAnchor) }
     private var month: Int { cal.component(.month, from: monthAnchor) }
 
-    private var deadlines: [Date: Int] {
-        CredentialOrg.monthDeadlines(mac, year: year, month: month)
-    }
+    /// 2026-10-30 修复（第 115 轮，**性能**）：`deadlines` 原来是计算属性（内部 `monthDeadlines` 每次遍历台账 + 逐条解析日期），
+    /// 却被 31 个日格逐个取下标、footer 再读一次 ⇒ 一次渲染 30+ 次台账扫描。改 @State 按月缓存。
+    @State private var deadlines: [Date: Int] = [:]
 
     /// 当月 1 号是周几（1 = 周日 … 7 = 周六），用于补前置空格。
     private var leadingBlanks: Int {
@@ -94,6 +94,9 @@ struct CredentialCalendarView: View {
                     }
                 }
             }
+        .task(id: monthAnchor) {
+            deadlines = CredentialOrg.monthDeadlines(mac, year: year, month: month)
+        }
             .navigationTitle("到期月历")
             .variantList()
             .dsScreenBackground()

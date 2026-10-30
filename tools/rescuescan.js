@@ -116,6 +116,10 @@ const SYS_NAMES = new Set([
   // rescuescan 的 DEF_RE 会把 `let isCurrent = ...` / `let created = ...` 这类局部声明
   // 也收进定义集，删掉外层函数后就误判成「悬空引用」。
   "isCurrent", "created", "image",
+  // 2026-10-30 第 115 轮：同一条局限的又一例 —— `let bundle = MemberHub.activityBundle(...)`
+  // 是 MergeMembersView 里的**局部变量**，优化掉之后被当成「删了一个叫 bundle 的定义」，
+  // 而 BackupStudioKit 里同名的**参数** bundle 就成了「悬空引用」（6 处误报）。
+  "bundle",
 ]);
 
 function stripCode(line) {

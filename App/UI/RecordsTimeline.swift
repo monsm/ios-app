@@ -463,7 +463,11 @@ struct RecDetailSheet: View {
                 // 于是草稿框里残留的是**上一条**的备注，点「保存备注」会写到错的行。
                 // 现在按 rec.key 变化同步刷新（翻页即换草稿）。
                 .onAppear { noteDraft = RecordOverlay.note(rec.mac, rec.key) }
-                .onChange(of: rec.key) { _, _ in noteDraft = RecordOverlay.note(rec.mac, rec.key) }
+                // 2026-10-30 修复（第 115 轮）：原来监听 `rec.key` —— 而 `Rec.key` 是 `String(idxRaw)`，
+                // **不含 mac**；「全部锁」范围下两把锁的日志序号常常相同 ⇒ 翻到另一把锁的同号行时
+                // 监听不触发，草稿框留着上一把锁的备注，点「保存备注」会写到错的行。
+                // `rec.id` 是 `mac + "#" + key`（Rec 模型里定义），才是真正的行身份。
+                .onChange(of: rec.id) { _, _ in noteDraft = RecordOverlay.note(rec.mac, rec.key) }
             HStack(spacing: DS.Space.m) {
                 Button("保存备注") { saveNote() }
                     .vkFont(.subheadline, weight: .medium)

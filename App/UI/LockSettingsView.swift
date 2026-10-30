@@ -89,7 +89,11 @@ struct LockSettingsView: View {
 
     private var driftLabel: String {
         guard let t = app.status?.lockTime, t > 0 else { return "—" }
-        let dev = Int(Date().timeIntervalSince1970) - Int(t)
+        // 2026-10-30 修复（第 115 轮，**数值级错误**）：`status.lockTime` 是**协议秒**（2010-01-01 基准），
+        // 不是 Unix 秒。原来拿 `Date().timeIntervalSince1970`（Unix 秒）直接相减 —— 两者基准差约 12.6 亿秒，
+        // 于是这一行在任何正常锁上都会显示「1262304000s 左右」，用户看到的结论是「锁钟彻底坏了」。
+        // 同文件 72 行的 `ProtoTime.localStr` 用的是正确换算；这里照 DeviceInfoView:256 的写法改成协议秒相减。
+        let dev = Int(t - ZKProtocol.nowProtoSeconds())
         return dev == 0 ? "同步" : "\(dev)s"
     }
 

@@ -28,10 +28,16 @@ struct MechCounter: View {
 // ---------- 防尾随 (tailgate: cmd24 档位 = 秒数，2~6 秒（APK 索引即秒数）) ----------
 struct TailgateView: View {
     @EnvironmentObject var app: AppState
-    @State private var seconds = 6
+    @State private var seconds = 6          // 初值 6 = APK 默认档；进页时用已存配置覆盖（见 .task）
     @State private var busy = false
 
     var body: some View { vkBody.destined(.tailgate) }
+    /// 2026-10-30 补（第 115 轮）：本页原来**从不读 `DB.tailgate(mac)`** —— `seconds` 恒为初值 6。
+    /// 后果：之前设成 3 秒的用户再进来看到的是 6 秒，直接点「设置」就把存值**改回 6 秒**（防尾随时间变长，安全相关）。
+    private func loadSaved() {
+        guard let mac = app.current?.mac, !mac.isEmpty, let c = DB.tailgate(mac) else { return }
+        if (2...6).contains(c.interval) { seconds = c.interval }
+    }
     var vkBody: some View {
         Form {
             Section {
@@ -57,6 +63,7 @@ struct TailgateView: View {
                 }
             }
         }
+        .task { loadSaved() }
         .navigationTitle("防尾随入室")
         .variantList()
         .dsScreenBackground()

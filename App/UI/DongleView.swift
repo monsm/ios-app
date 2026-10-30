@@ -14,9 +14,7 @@ import SwiftUI
 struct DongleView: View {
     @EnvironmentObject var app: AppState
     /// 2026-10-29 性能：钥匙串名字一次建表，避免 ForEach 里逐行 DB.keychain（逐行全表解码）。
-    private var keychainNameByMac: [String: String] {
-        Dictionary(DB.keychains().map { ($0.mac, LockArchive.displayName($0)) }, uniquingKeysWith: { a, _ in a })
-    }
+    @State private var keychainNameByMac: [String: String] = [:]
     @State private var busy = false
     @State private var scanning = false
     @State private var error = ""
@@ -66,6 +64,12 @@ struct DongleView: View {
             } header: {
                 Text("这是什么")
             }
+        }
+        // 2026-10-30 修复（第 115 轮，**性能修复失效**）：`keychainNameByMac` 原来是计算属性，
+        // 却被放在 `ForEach` 行内取下标 —— 每行都重跑一次 `DB.keychains()`（整表 fromDict + 每锁 4 次 Keychain 读）。
+        .task {
+            keychainNameByMac = Dictionary(DB.keychains().map { ($0.mac, LockArchive.displayName($0)) },
+                                           uniquingKeysWith: { a, _ in a })
         }
         .navigationTitle("蓝牙钥匙串")
         .variantList()

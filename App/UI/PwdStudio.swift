@@ -77,6 +77,17 @@ struct PwdStudio: View {
         } }
         .onAppear {
             checkClipboard()
+            // 2026-10-30 修复（第 115 轮，**改造模式静默丢改动**）：本页从不把 `editing` 回填到 @State ——
+            // 于是「改造密码」时第 0 步默认「长期密码」、第 2 步不显示有效期，提交时又用 `e.from`/`e.to` 原窗口，
+            // 用户在第 0/2 步做的任何改动都被忽略（而界面上看着是改成功了）。
+            if let e = editing {
+                kind = e.temp ? 1 : 0
+                owner = e.owner
+                pwd = e.pwd ?? ""
+                if let d = DF.stamp.date(from: e.from) { from = d }
+                if let d = DF.stamp.date(from: e.to) { to = d }
+                note = e.note
+            }
         }
         .onDisappear { saveDraft() }   // 518: 侧滑/push 退出也留稿
     }
