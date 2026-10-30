@@ -36,28 +36,13 @@ jobs:
         with:
           fetch-depth: 2   # rescuescan/orphanscan 需要 HEAD~1 作基线; 默认 depth:1 取不到
 
-      - name: '工作流自检 (step 名里的裸冒号会让严格 YAML 解析器拒收整份工作流)'
-        run: |
-          # 为什么判失败：`- name: 资源纪律检查 (219: 位图…)` 这种写法 GitHub 容忍、
-          # 严格解析器报 "mapping values are not allowed here" —— 于是 actionlint / 编辑器 / 任何
-          # 标准工具眼里的这份工作流一直是坏的。第一百三十七批加新步骤时自己就踩了一次,
-          # 是 `python -c "import yaml; yaml.safe_load(...)"` 当场抓出来的 (那条正控现在写在下面)。
-          if grep -nE '^      - name: [^'"'"].*: .*' .github/workflows/ios.yml; then
-            echo "::error file=.github/workflows/ios.yml::上面的 step 名里有未加单引号的冒号, 请给整条名字加引号"
-            exit 1
-          fi
-          echo "工作流 step 名检查 ✓"
-
-      # 2026-10-30 新增（第 109 轮）：本轮的「插入 step」脚本把新 step 插到了 `run: |` 块头
-      # 和它的缩进体之间，GitHub 在**解析阶段**就 0 job —— 而本地 56 道闸门全绿（它们不读 workflow）。
-      # 下面这道闸门补上那个缺口。注意：它自己也是**用脚本插进来的**，所以插完必须立刻跑一次。
-      - name: '工作流结构闸门 (判失败: run: | 块体被截断 / step 名裸冒号 / 同 job 内 step 重名)'
-        run: node tools/workflowcheck.js
-
       - name: Setup Node (金标漂移校验用)
         uses: actions/setup-node@v7
         with:
           node-version: "24"
+
+      - name: '工作流自检 (step 名裸冒号 / 块体截断 / 重名 —— 统一交给 workflowcheck.js)'
+        run: node tools/workflowcheck.js
 
       - name: 金标漂移校验 (committed 必须等于 JS 核心输出; 改 vendor 后须重生成并提交)
         run: node tools/golden.js --check
@@ -228,9 +213,9 @@ jobs:
 
       - name: '死白名单闸门 (判失败: 白名单/注释引用了已删文件或越界行号 —— 豁免约定的可信度)'
         run: node tools/deadallowlist.js
+
       - name: '注释行号引用闸门 (判失败: 注释里 `Xxx.swift:123` 的行号超出该文件当前行数 —— 文件拆分后行号不会自动跟)'
         run: node tools/linerefcheck.js
-
 
       - name: 'sheet 盖住切 Tab 收摊检查 (判失败: 被 sheet/fullScreenCover 端出来的页面里换 Tab, 动作附近必须有 dismiss(); requestTab 只过访客门禁、不算修好; 正控 fixtures/sheetcover/fire 3 条, 反控 ok/ 4 形 0 条)'
         run: |
@@ -632,4 +617,3 @@ jobs:
             echo "## 直链产物"
             gh release view "$TAG" --json assets -q '.assets[] | "- [\(.name)](\(.url))  \(.size) 字节"'
           } >> "$GITHUB_STEP_SUMMARY"
-
