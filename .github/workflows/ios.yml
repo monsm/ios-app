@@ -593,7 +593,26 @@ jobs:
     needs: [stamp, build, android]
     if: github.event_name != 'pull_request'   # PR 不发版: 每次 PR 都建 Release 会淹掉真正的构建
     steps:
-      - name: 下载本次构建的两端产物
+      # 2026-10-31（第 59 轮）：`5acf893` 的 Release 作业因 `Artifact download failed after 5 retries`
+      # 失败 —— 那是 GitHub blob 存储的**瞬时抖动**，同一时段前后两个 run 的 release 都成功。
+      # 两个 Build 作业本身全绿，只是最后打包下载失败，却把整个 run 判成 failure。
+      # `download-artifact@v5` 不支持 `retry` 参数（那是 v4 的），所以在 shell 层重试：
+      # 第一次失败不判红，等 10 秒再下第二次；两次都失败才算真失败。
+      - name: 下载本次构建的两端产物（第 1 次）
+        id: dl1
+        continue-on-error: true
+        uses: actions/download-artifact@v5
+        with:
+          path: dist
+
+      - name: 等待后重试下载（仅第 1 次失败时）
+        if: steps.dl1.outcome == 'failure'
+        run: |
+          echo "第 1 次下载失败（GitHub artifact 存储瞬时抖动），等 10 秒后重试"
+          sleep 10
+
+      - name: 下载本次构建的两端产物（第 2 次，重试）
+        if: steps.dl1.outcome == 'failure'
         uses: actions/download-artifact@v5
         with:
           path: dist
