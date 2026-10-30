@@ -200,7 +200,7 @@ struct RecDetailSheet: View {
                     .background((disp != nil ? DS.Palette.ok : DS.Palette.danger).opacity(0.10), in: Capsule())
             }
             .padding(.vertical, DS.Space.xs)
-            .background(rec.alarm ? RecordSearch.toneColor(for: rec.type).opacity(0.08) : Color.clear)
+            .background(RecordSearch.toneColor(for: rec.type).opacity(0.08))   // 2026-10-30：本段只在 `if rec.alarm` 时渲染（L49），`rec.alarm ? … : Color.clear` 的 else 分支永远走不到
 
             // 2026-10-27 三轮精简：防撬检查清单已删（告警处置层移除）。
 

@@ -141,9 +141,8 @@ struct MemberDetail360View: View {
                     Spacer(minLength: 0)
                 }
             }
-                    // 2026-10-26 精简：借用登记入口已删。
-            // 2026-10-30 清理：这里原来还挂着 `.buttonStyle(PlainButtonStyle())` 与 `.foregroundStyle(...)` ——
-            // 它们挂在只读的 ForEach 上，没有任何效果（按钮已删、没有可点的东西），删掉。
+            // 2026-10-30 清理：借用登记入口已删（2026-10-26），此后这里还挂着 `.buttonStyle` / `.foregroundStyle`
+            // 两个无主修饰符 —— 它们挂在只读的 ForEach 上、没有任何效果，本轮一并删掉。
         } header: {
             Text("名下凭证")   // 261 名下凭证
         }
