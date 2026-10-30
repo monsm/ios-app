@@ -9,6 +9,7 @@ struct TempCodeStudio: View {
     @Environment(\.dismiss) var dismiss
     @State private var pwd = ""
     @State private var batchCount = 1      // 178 批量临时码
+    @State private var batchFailed = 0          // 178 批量里失败几张（完成卡如实报）
     @State private var from = Date()
     @State private var to = Date().addingTimeInterval(3600)   // 同上: 默认窗口 1 小时, 与第一个快捷档一致
     @State private var owner: String? = nil
@@ -269,7 +270,11 @@ struct TempCodeStudio: View {
                 CodeBigCard(title: "\(lockName) · 临时码", code: result?.pwd ?? pwd,
                             window: "\(isoShort(from)) ~ \(isoShort(to)) 生效",
                             note: note,
-                            extraFoot: batchCount > 1 ? "批量共 \(batchCount) 张， 其余已逐张下发" : "")
+                            // 2026-10-30 修复（第 116 轮，**假回执**）：原文无条件写「其余已逐张下发」，即使 failed>0 也照写。
+                            extraFoot: batchCount > 1
+                                ? "批量共 \(batchCount) 张： 成功 \(batchCount - batchFailed) 张 · 失败 \(batchFailed) 张"
+                                  + (batchFailed > 0 ? "（失败的请重新下发）" : "")
+                                : "")
                 if MemberHub.elderMode {
                     // 486 代际完成页切换: 长辈模式下完成页默认形态 = 口述卡 (页标题也切到「口述卡」) + 一枚大「完成」;
                     // 486 代际完成页切换: 长辈模式下完成页默认形态 = 口述卡 (页标题也切到「口述卡」) + 一枚大「完成」。
@@ -354,6 +359,7 @@ struct TempCodeStudio: View {
         defer { busy = false }
         var last: LedgerPwd?
         var failed = 0
+        batchFailed = 0
         for i in 0..<max(batchCount, 1) {
             // 178 逐条错峰: 每张码时段顺移 30 分钟, 锁端无批量命令
             let df = from.addingTimeInterval(TimeInterval(i * 1800))
@@ -369,6 +375,7 @@ struct TempCodeStudio: View {
                 app.showToast("第 \(i + 1)/\(max(batchCount, 1)) 张已下发 (别名 #\(alias))")
             } catch {
                 failed += 1
+                batchFailed = failed
                 app.showToast("第 \(i + 1) 张下发失败： \(error.localizedDescription)")   // 178 张下发失败
             }
         }

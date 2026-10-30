@@ -227,7 +227,12 @@ struct MemberCenterView: View {
             }
             ForEach(list) { m in
                 NavigationLink { MemberDetail360View(memberID: m.id, onChanged: { tick += 1 }) } label: {
-                    MemberRow(member: m, act: activity.table[m.id])
+                    MemberRow(member: m, act: activity.table[m.id], onArchive: {
+                        var e = MemberHub.ext(m.id)
+                        e.archived = true
+                        MemberHub.saveExt(m.id, e)
+                        tick += 1
+                    })
                 }
                 .swipeActions {
                     // 460/795 归档不蒸发: 左滑归档保留历史不删除 (再次左滑恢复在归档列表)
@@ -352,7 +357,10 @@ struct MemberRow: View {
     let member: Member
     /// 2026-10-29 性能：由父视图一次算好传入，行内不再调 MemberHub.activity（那会重扫全锁日志）。
     var act: MemberHub.Activity?
-    @State var tick = 0
+    /// 2026-10-30 修复（第 116 轮，**归档后列表不刷新**）：这里原来有个**只写不读**的 `@State var tick` ——
+    /// 长按归档写库后 `tick += 1`，但本视图没有 `.id(tick)`/onChange 读它 ⇒ 已归档成员仍留在名单里。
+    /// 同一动作在 swipeActions 走的是**父层** tick，会刷新 —— 两条路径行为不一致。现在统一走父层回调。
+    var onArchive: () -> Void = {}
 
 
     var body: some View {
@@ -376,10 +384,7 @@ struct MemberRow: View {
         .accessibilityElement(children: .combine)
         .contextMenu {
             Button {   // 460/795 归档
-                var e = MemberHub.ext(member.id)
-                e.archived = true
-                MemberHub.saveExt(member.id, e)
-                tick += 1
+                onArchive()
             } label: {
                 Label("归档", systemImage: "archivebox")
             }

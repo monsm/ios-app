@@ -402,7 +402,9 @@ struct FpStudio: View {
                 // 还原时第一百五十二批的 reclaim 会把这条还没发出去的 del_fp 一并收回。
                 DB.delFp(em, f.batch)
             }
-            app.showToast("旧指纹已从本机台账移除 (备注/归属保留)")
+            // 2026-10-30 修复（第 116 轮，**假承诺**）：`DB.delFp` 是**整条删除**（含 note/owner），
+            // 而原文案写「(备注/归属保留)」—— 同一文件 L300 的 Toggle 文案又写「备注/归属也不会保留」，两处相反。
+            app.showToast("旧指纹已从本机台账移除 (备注/归属一并删除， 不可恢复)")
         }
         withAnimation(DS.Motion.standard) { step = 3 }
     }

@@ -118,7 +118,10 @@ struct PwdStudio: View {
         .padding(.horizontal, DS.Space.s)
         .padding(.vertical, DS.Space.xs)
         .variantCallout(DS.Palette.warn, .control, wash: 0.10)
-        .accessibilityElement(children: .combine)
+        // 2026-10-30 修复（第 116 轮，**无障碍**）：原来是 `children: .combine` —— 会把「继续」与「丢弃」
+        // 两个 Button 合并成**一个**无障碍元素，读屏只剩一句朗读，两个动作都激活不了。
+        // 改成 `.contain`：容器仍读那句说明，两个按钮各自可聚焦可点。
+        .accessibilityElement(children: .contain)
         .accessibilityLabel("草稿续填： 上次填到第 \(d.step + 1) 步， 点继续可回填")   // 518 草稿续填
     }
 

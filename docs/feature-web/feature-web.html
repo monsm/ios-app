@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T07:44:05.792Z",
+    "generated": "2026-10-30T09:57:51.892Z",
     "sources": [
       {
         "scout": "android-native",
@@ -23762,7 +23762,7 @@ const DATA = {
           "line": 304,
           "symbol": "archivedSection",
           "note": "归档入口（计数）",
-          "text": "}"
+          "text": ".contentShape(Rectangle())"
         },
         {
           "platform": "ios",
@@ -24372,7 +24372,7 @@ const DATA = {
           "line": 321,
           "symbol": "sceneSection",
           "note": "本周主责与便签",
-          "text": "if !MemberHub.ext(m.id).note.isEmpty {"
+          "text": "Text(\"本周主责： 未安排 — 在成员的详情页里设置\")   // 481 本周主责"
         },
         {
           "platform": "ios",
@@ -24380,7 +24380,7 @@ const DATA = {
           "line": 323,
           "symbol": "dutyThisWeek",
           "note": "主责读取",
-          "text": "Text(MemberHub.ext(m.id).note)"
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         },
         {
           "platform": "ios",
@@ -24513,7 +24513,7 @@ const DATA = {
           "line": 252,
           "symbol": "visitorSection",
           "note": "虚拟分组行",
-          "text": ""
+          "text": "+ \"「久未用」判的是近 30 天没有可证明归属的开门， 标在每行行尾; \"   // 262/466 久未用"
         },
         {
           "platform": "ios",
@@ -24529,7 +24529,7 @@ const DATA = {
           "line": 256,
           "symbol": "pendingRecordsFilter",
           "note": "跳记录页过滤",
-          "text": "let temps = activity.visitorTemps"
+          "text": "/// 264/466 排序用的活跃度表: 一次算完全员, 不在比较式里逐次重扫全锁日志。"
         },
         {
           "platform": "ios",
@@ -24537,7 +24537,7 @@ const DATA = {
           "line": 285,
           "symbol": "visitorOpenCount",
           "note": "未归属临时码计数",
-          "text": "}"
+          "text": ".accessibilityLabel(\"访客虚拟分组， 约 \\(opens) 条未归属临时码记录\")"
         },
         {
           "platform": "ios",
@@ -24545,7 +24545,7 @@ const DATA = {
           "line": 299,
           "symbol": "visitorOwns",
           "note": "名下临时码条数",
-          "text": ".contentShape(Rectangle())"
+          "text": "Button { showArchived = true } label: {"
         }
       ],
       "platformEvidence": {
@@ -25035,7 +25035,7 @@ const DATA = {
           "line": 367,
           "symbol": "struct MemberRow",
           "note": "行声明",
-          "text": "}"
+          "text": "HStack(spacing: DS.Space.s) {"
         },
         {
           "platform": "ios",
@@ -25043,7 +25043,7 @@ const DATA = {
           "line": 380,
           "symbol": "MemberRow",
           "note": "称呼（备注）双层文本",
-          "text": "e.archived = true"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -25051,7 +25051,7 @@ const DATA = {
           "line": 385,
           "symbol": "MemberRow",
           "note": "同名待合并",
-          "text": "}"
+          "text": ".contextMenu {"
         },
         {
           "platform": "ios",
@@ -25059,7 +25059,7 @@ const DATA = {
           "line": 432,
           "symbol": "subLine",
           "note": "副行四段",
-          "text": "/// 994: 这段原先写在 body 里的 `var base = …; if … { base = … }` 提到独立计算属性 ——"
+          "text": "let member: Member"
         },
         {
           "platform": "ios",
@@ -25067,7 +25067,7 @@ const DATA = {
           "line": 448,
           "symbol": "staleTag",
           "note": "久未用/活跃 (约)",
-          "text": "let e = MemberHub.ext(member.id)"
+          "text": "avatarCircle(base: baseColor)"
         }
       ],
       "platformEvidence": {
