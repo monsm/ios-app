@@ -22,6 +22,10 @@ const NEED = {
   'delay': 'kotlinx.coroutines.delay',
   'launch': 'kotlinx.coroutines.launch',
   'JSONObject': 'org.json.JSONObject',
+  // 2026-10-31（第 39 轮，Android 界面无障碍）：加 semantics / contentDescription ——
+  // 本仓第一次用 Compose 语义，漏 import 就是 unresolved reference。
+  'semantics': 'androidx.compose.ui.semantics.semantics',
+  'contentDescription': 'androidx.compose.ui.semantics.contentDescription',
 };
 
 if (!fs.existsSync(KT)) {

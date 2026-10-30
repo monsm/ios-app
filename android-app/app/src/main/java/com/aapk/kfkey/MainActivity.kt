@@ -62,6 +62,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -934,7 +936,9 @@ private fun ProximityCard(
                 fontSize = 13.sp,
                 modifier = Modifier
                     .clickable { onRescan() }
-                    .padding(vertical = 6.dp)
+                    // 2026-10-31（第 39 轮 · 触达）：13sp 文字 + 6dp×2 ≈ 29dp，**低于 44dp 最小可点区**。
+                    // 改成 14dp×2 ⇒ 17+28 = 45dp，且视觉上仍是一行文字按钮（与「完成」的 10dp 同口径）。
+                    .padding(vertical = 14.dp)
             )
             Text(
                 "解绑",
@@ -942,7 +946,9 @@ private fun ProximityCard(
                 fontSize = 13.sp,
                 modifier = Modifier
                     .clickable { onUnbind() }
-                    .padding(vertical = 6.dp)
+                    // 2026-10-31（第 39 轮 · 触达）：13sp 文字 + 6dp×2 ≈ 29dp，**低于 44dp 最小可点区**。
+                    // 改成 14dp×2 ⇒ 17+28 = 45dp，且视觉上仍是一行文字按钮（与「完成」的 10dp 同口径）。
+                    .padding(vertical = 14.dp)
             )
         }
     }
@@ -1053,18 +1059,25 @@ private fun AirTagLayer(
         }
         // 左下: 收起 (回到手动底层)
         Box(Modifier.align(Alignment.BottomStart).padding(28.dp)) {
-            CircleIconButton(label = "✕", onClick = onClose)
+                CircleIconButton(label = "✕", contentDescription = "关闭", onClick = onClose)
         }
         // 右下: 提示音开关
         Box(Modifier.align(Alignment.BottomEnd).padding(28.dp)) {
-            CircleIconButton(label = if (soundOn) "🔊" else "🔇", onClick = onToggleSound)
+                CircleIconButton(
+                    label = if (soundOn) "🔊" else "🔇",
+                    contentDescription = if (soundOn) "关闭提示音" else "打开提示音",
+                    onClick = onToggle,
+                )
         }
     }
     ProximityBeep(active = true, fill = fill, soundOn = soundOn, foreground = foreground)
 }
 
+// 2026-10-31（第 39 轮 · 无障碍）：原来只有 `label`（"✕"/"🔊"/"🔇"）—— 屏幕阅读器会把
+// 这些符号**念成字符名或干脆不念**，视障用户不知道这个按钮做什么。
+// 加 `contentDescription`（人话），label 仍用于视觉显示。
 @Composable
-private fun CircleIconButton(label: String, onClick: () -> Unit) {
+private fun CircleIconButton(label: String, contentDescription: String, onClick: () -> Unit) {
     Box(
         Modifier
             .size(52.dp)
@@ -1073,7 +1086,12 @@ private fun CircleIconButton(label: String, onClick: () -> Unit) {
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onClick() },
         contentAlignment = Alignment.Center
     ) {
-        Text(label, color = Color.White, fontSize = 20.sp)
+        Text(
+            label, color = Color.White, fontSize = 20.sp,
+            // 符号本身对读屏无意义: 用语义把它替换成人话（`clearAndSetSemantics` 会连符号一起抹掉，
+            // 这里用 `semantics` 保留视觉文本、只补描述）。
+            modifier = Modifier.semantics { this.contentDescription = contentDescription },
+        )
     }
 }
 
