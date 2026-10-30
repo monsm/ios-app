@@ -446,6 +446,9 @@ jobs:
       # 一个字节 → 自己那行长度守卫成立 → 令牌被静默丢掉 → 04 裸发。gradle 永远看不出这件事。
       # 这一支排在 gradle **之前**: 只要 node, 秒级出结果, 不必等三分多钟的 APK 构建。
       # (步骤名不含裸冒号, 与上面那条工作流自检的 grep 兼容。)
+      - name: '自动开锁门控数据源闸门 (判失败: 门判据读到重启会清零的变量 —— 该拦不拦/双开)'
+        run: node tools/gatepersistcheck.js
+
       - name: 'Kotlin/Swift 语法差异闸门 (判失败: .isEmpty 缺 () 等 —— 从 Swift 搬 Kotlin 的高危区)'
         run: node tools/kotlinsyntaxcheck.js
 
