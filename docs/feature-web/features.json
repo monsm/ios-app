@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T12:14:52.035Z",
+    "generated": "2026-10-30T13:16:12.526Z",
     "sources": [
       {
         "scout": "android-native",
@@ -14756,7 +14756,7 @@
           "line": 69,
           "symbol": "vkBody",
           "note": "body = vkBody.destined(.credentials)",
-          "text": "// 与 922 批量整理共用同一个 editMode，不另做一套\"选中后的浮动条\"。"
+          "text": ".safeAreaInset(edge: .bottom) {"
         },
         {
           "platform": "ios",
@@ -14764,7 +14764,7 @@
           "line": 88,
           "symbol": "vkBody",
           "note": "三条通知条互斥取一",
-          "text": ".sheet(isPresented: $showCalendar) { CredentialCalendarView() }"
+          "text": "// 2026-10-26 精简：整理建议中心 sheet 已删。"
         }
       ],
       "platformEvidence": {
@@ -17736,7 +17736,7 @@
           "line": 67,
           "symbol": "isBusy",
           "note": "",
-          "text": ".safeAreaInset(edge: .bottom) {"
+          "text": "mainList"
         },
         {
           "platform": "ios",
@@ -17820,7 +17820,7 @@
           "line": 73,
           "symbol": "vkBody",
           "note": "无锁空态",
-          "text": "}"
+          "text": "if editMode { batchBar }"
         }
       ],
       "platformEvidence": {
@@ -17882,7 +17882,7 @@
           "line": 374,
           "symbol": "headerToolbar",
           "note": "",
-          "text": "Clip.set(text)"
+          "text": "// 口令不进剪贴板: 明文凭证包与口令必须分开交付。"
         },
         {
           "platform": "ios",
@@ -17890,7 +17890,7 @@
           "line": 389,
           "symbol": "headerToolbar",
           "note": "选择按钮",
-          "text": "func presentSecretOnce(_ s: String) { secretOnce = s }"
+          "text": "/// 而是弹一个可手动关闭的对话框 —— 用户在自己准备好时才看。"
         },
         {
           "platform": "ios",
@@ -17898,7 +17898,7 @@
           "line": 396,
           "symbol": "headerToolbar",
           "note": "Menu 溢出",
-          "text": "// 2026-10-27 (D-58)：batchDisable 现在返回 (done, failedPwds, failedFps) ——"
+          "text": "Task { @MainActor in"
         }
       ],
       "platformEvidence": {
@@ -18051,7 +18051,7 @@
           "line": 449,
           "symbol": "headerToolbar",
           "note": "segCount",
-          "text": "func goAddDevice() {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -18059,7 +18059,7 @@
           "line": 462,
           "symbol": "segChip",
           "note": "",
-          "text": "_ message: String,"
+          "text": "@MainActor"
         },
         {
           "platform": "ios",
@@ -18067,7 +18067,7 @@
           "line": 492,
           "symbol": "countForSeg",
           "note": "",
-          "text": "}"
+          "text": "}, for: .editingChanged)"
         }
       ],
       "platformEvidence": {
@@ -21282,7 +21282,7 @@
           "line": 406,
           "symbol": "headerToolbar",
           "note": "toggle + setGroupMode",
-          "text": "app.showToast(\"所选凭证已不在台账\")"
+          "text": "reload()"
         }
       ],
       "platformEvidence": {

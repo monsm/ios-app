@@ -223,7 +223,7 @@ enum MemberHub {
             let pwds = DB.listPwds(kc.mac)
             let fps = DB.listFps(kc.mac)
             let rows = Attribution.classify(
-                logs: logs.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,
+                logs: logs.map { LogEntry(type: $0.type, typeName: $0.displayTypeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,
                                           lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") },
                 pwds: pwds, fps: fps,
                 status: status.map { ($0.fpStock, $0.pwdStock, $0.lockTime) })
@@ -257,7 +257,7 @@ enum MemberHub {
         for kc in DB.keychains() {
             let logs = DB.readLogs(kc.mac).filter { StatsKit.openTypes.contains($0.type) }
             let rows = Attribution.classify(
-                logs: logs.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,
+                logs: logs.map { LogEntry(type: $0.type, typeName: $0.displayTypeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,
                                           lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") },
                 pwds: DB.listPwds(kc.mac), fps: DB.listFps(kc.mac),
                 status: DB.readStatus(kc.mac).map { ($0.fpStock, $0.pwdStock, $0.lockTime) })
@@ -291,7 +291,7 @@ enum MemberHub {
             let logs = DB.readLogs(kc.mac).filter { StatsKit.openTypes.contains($0.type) }
             let status = DB.readStatus(kc.mac)
             let rows = Attribution.classify(
-                logs: logs.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,
+                logs: logs.map { LogEntry(type: $0.type, typeName: $0.displayTypeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,
                                           lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") },
                 pwds: DB.listPwds(kc.mac), fps: DB.listFps(kc.mac),
                 status: status.map { ($0.fpStock, $0.pwdStock, $0.lockTime) })

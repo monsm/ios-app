@@ -156,7 +156,12 @@ extension DeviceHomeView {
     /// Hero 卡指标行：电量（恒显）+ 固件 / 锁钟（可按 909 隐藏）+ 钥匙有效期。
     @ViewBuilder
     private func heroStatsRow(_ kc: Keychain) -> some View {
-        HStack(spacing: DS.Space.s) {
+        // 2026-10-30 修复（第 163 轮，**4 格挤到看不见字**）：原来是 `HStack` 把 4 个 HeroStat 硬排一行 ——
+        // 每格还要吃 `padding(.horizontal, Space.m)`，窄屏上值的可用宽度只剩几十点，
+        // `lineLimit(1)` + `minimumScaleFactor(0.7)` 把「锁钟」「固件」这类长值压到几乎看不见。
+        // 改成 2 列网格（与 `quickActions` 的注释「4 格一屏」口径一致：2×2）。
+        LazyVGrid(columns: [GridItem(.flexible(), spacing: DS.Space.s), GridItem(.flexible(), spacing: DS.Space.s)],
+                  spacing: DS.Space.s) {
         HeroStat(systemImage: battTier(for: kc).icon,
                  label: "电量",
                  value: batteryText(for: kc),

@@ -61,7 +61,7 @@ enum StatsKit {
                 return ("", ["上周 (" + head + ") 没有本机读到的开门记录 — 缓存只留最近 300 条， 更早的翻不到不代表没发生。"])
             }
             let cls = Attribution.classify(
-                logs: week.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,
+                logs: week.map { LogEntry(type: $0.type, typeName: $0.displayTypeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,
                                           lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") },
                 pwds: DB.listPwds(mac), fps: DB.listFps(mac),
                 status: DB.readStatus(mac).map { ($0.fpStock, $0.pwdStock, $0.lockTime) })

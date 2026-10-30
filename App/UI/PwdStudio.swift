@@ -74,12 +74,16 @@ struct PwdStudio: View {
         .background(DS.Gradient.screen.ignoresSafeArea())
         .navigationTitle(editing == nil ? "添加密码" : "改造密码 #\(editAlias ?? 0)")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItem(placement: .navigationBarLeading) {
-            Button("关闭") {
-                saveDraft()
-                if !embedded { dismiss() }
+        // 2026-10-30 修复（第 163 轮，**push 页上出现死的「关闭」**）：本页被 `NavigationLink` push 进来时
+        // 系统已经有返回键，而这条 `.navigationBarLeading` 会排在返回键**右侧**；更糟的是
+        // 按钮里的 `dismiss()` 被 `if !embedded` 跳过 ⇒ **点了没反应**。embedded 时整条不渲染。
+        .toolbar {
+            if !embedded {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("关闭") { saveDraft(); dismiss() }
+                }
             }
-        } }
+        }
         .onAppear {
             checkClipboard()
             editing = editAlias.flatMap { DB.getPwd(mac, $0) }

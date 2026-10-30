@@ -203,7 +203,7 @@ extension RecordsView {
         if allRows.isEmpty {
             let cached = DB.readLogs(mac)
             if !cached.isEmpty {
-                render(cached.map { LogEntry(type: $0.type, typeName: $0.typeName,
+                render(cached.map { LogEntry(type: $0.type, typeName: $0.displayTypeName,
                                                idx: $0.idxRaw, idxRaw: $0.idxRaw,
                                                lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr,
                                                body: "") }, offline: true)
@@ -295,7 +295,7 @@ extension RecordsView {
             if !events.isEmpty { DB.writeLogs(kc.mac, events) }
             let cached = DB.readLogs(kc.mac)
             if !cached.isEmpty {
-                render(cached.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw, lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") }, offline: true)
+                render(cached.map { LogEntry(type: $0.type, typeName: $0.displayTypeName, idx: $0.idxRaw, idxRaw: $0.idxRaw, lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") }, offline: true)
             } else {
                 app.showToast("读取失败： \(error.localizedDescription)")
             }

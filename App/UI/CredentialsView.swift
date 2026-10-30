@@ -56,13 +56,15 @@ struct CredentialsView: View {
                                message: "凭证台账要绑定到具体门锁。请先在门锁键盘上长按重置键恢复出厂，再回来添加设备（需要开启蓝牙）。",
                                actionTitle: "去添加门锁") { goAddDevice() }
                 } else {
-                    VStack(spacing: 0) {
-                        headerToolbar
-                        if editMode {
-                            editList
-                        } else {
-                            mainList
-                        }
+                    // 2026-10-30 统一框架（第 163 轮）：原来这里是
+                    //     VStack(spacing: 0) { headerToolbar; if editMode { editList } else { mainList } }
+                    // 而**其他三个 Tab 都是「NavigationStack → 列表/滚动」两层**，凭证页多了一层固定工具条，
+                    // 视觉上像少了一屏、且工具条不随内容滚动。现在把 headerToolbar 移进 `mainList` 的 List 里，
+                    // 四个 Tab 的骨架就一致了（导航栏 → 内容），工具条也随列表滚走。
+                    if editMode {
+                        editList
+                    } else {
+                        mainList
                     }
                     .safeAreaInset(edge: .bottom) {
                         // 29 上下文工具栏 (Photos 式): 选中态才出现的这条 batchBar 就是它——

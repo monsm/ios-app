@@ -51,6 +51,11 @@ extension CredentialsView {
     // ---------- 主列表 ----------
     var mainList: some View {
         List {
+            headerToolbar
+                .listRowInsets(EdgeInsets(top: DS.Space.xs, leading: DS.Space.gutter,
+                                            bottom: DS.Space.xs, trailing: DS.Space.gutter))
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
             listBody
         }
         .listRowSpacing(DS.Space.xs)   // 批量操作行距保持宽松 (纪律: 批量行距)

@@ -112,7 +112,13 @@ struct FpStudio: View {
         }
         .navigationTitle("录入指纹")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }
+            // 2026-10-30 修复（第 163 轮）：同上 —— embedded（被 NavigationLink push）时系统已有返回键，
+            // 再挂一条 `.navigationBarLeading` 的「关闭」会并排在返回键右侧，且 dismiss 行为重复。
+            .toolbar {
+                if !embedded {
+                    ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } }
+                }
+            }
         // 317/319: 进场取走带回的预选值 (成员页建完档 / 详情页重录)
         .onAppear { consumePendingOwner(); consumePrefill() }
         // 挂在**页面最外层** (不是 immersive 上) —— 挂在步骤子视图上会在录入成功切到第 2 步时

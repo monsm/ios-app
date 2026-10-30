@@ -31,7 +31,7 @@ extension RecordSearch {
             let pws = DB.listPwds(mac)
             let fps = DB.listFps(mac)
             let snap = DB.readStatus(mac)
-            let entries = logs.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw, lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") }
+            let entries = logs.map { LogEntry(type: $0.type, typeName: $0.displayTypeName, idx: $0.idxRaw, idxRaw: $0.idxRaw, lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") }
             let cls = Attribution.classify(logs: entries, pwds: pws, fps: fps, status: snap.map { ($0.fpStock, $0.pwdStock, $0.lockTime) })  // StatusSnapshotData.lockTime 非可选
             for (i, e) in entries.enumerated() {
                 guard i < cls.count else { continue }
