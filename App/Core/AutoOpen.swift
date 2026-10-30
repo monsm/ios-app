@@ -39,6 +39,18 @@ enum AutoOpen {
         return t > 0 && Double(t) / 1000.0 > now
     }
 
+    // ---------- F5 冷却的跨会话持久化 (2026-10-31 第 52 轮) ----------
+    /// 为什么需要它：`lastDispatch` 与 `eventFired` 都是内存态。App 被杀后重启，
+    /// 两者清零 ⇒ 站在门口立刻满足「冷却已过 + 未发过」⇒ 再发一帧 04。
+    /// 若上一次 04 其实已经开门（App 在开锁瞬间被杀），这就是**双开**。
+    /// 存 `lastDispatch` 就够 —— `coolReady` 是唯一跨事件也生效的闸（6s 窗）。
+    static func persistedLastDispatch(_ mac: String) -> TimeInterval {
+        DB.store.getDouble("kf_autoopen_lastdispatch_" + mac)
+    }
+    static func setPersistedLastDispatch(_ mac: String, _ t: TimeInterval) {
+        DB.store.setDouble("kf_autoopen_lastdispatch_" + mac, t)
+    }
+
     // ---------- 审计: 只记哪道门拒了, 永不记密钥材料; 尾段 500 条 ----------
     struct AuditEntry: Codable {
         var at: String        // 手机侧 mm-dd HH:mm
@@ -365,7 +377,13 @@ final class AutoOpenController {
     let face: FaceService
     private var armed = false
     private var armedMac = ""
-    private var lastDispatch: [String: TimeInterval] = [:]   // F5: 按锁记上次下发时刻
+    /// F5 冷却基准: 按锁记上次下发时刻（epoch 秒）。
+    /// 2026-10-31（第 52 轮，**跨重启的双开风险**）：原来是纯内存 `[String: TimeInterval]` ——
+    /// App 被杀/重启后清零 ⇒ `lastDispatch == 0` ⇒ `coolReady` 直接放行 ⇒
+    /// 若上一次 04 已经开门、App 在开锁瞬间被杀，重启后站门口会**立刻再发一帧 04**（双开）。
+    /// 一次性闩锁 `eventFired` 也是内存态，同样清零。两者都要靠持久化兜住。
+    /// 现在：内存仍作快路径，落盘键 `kf_autoopen_lastdispatch_<mac>` 作跨会话真值。
+    private var lastDispatch: [String: TimeInterval] = [:]
     private var eventFired: Set<String> = []                 // F5: 本次接近事件已发过 04 (掉回解除线才放开)
     private var promptStartedAt: Date?                       // F1 严格档: 本次进前台是否已发起弹窗
     /// 2026-10-27 审核修复 (AUDIT-D D-49)：上一次 scenePhase 是否真的进过后台。
@@ -492,7 +510,8 @@ final class AutoOpenController {
 
     private func makeContext(mac: String, app: AppState) -> AutoOpenGate {
         let d = DB.defend(mac)
-        let lastAt = lastDispatch[mac] ?? 0
+        // 2026-10-31（第 52 轮）：内存命中优先；未命中回落持久化值（跨重启有效）。
+        let lastAt = lastDispatch[mac] ?? AutoOpen.persistedLastDispatch(mac)
         let snap = app.snapshot
         let coolReady = AutoOpenKit.coolReady(lastDispatch: lastAt, now: Date().timeIntervalSince1970)
         return AutoOpenGate(
@@ -530,6 +549,7 @@ final class AutoOpenController {
             // 站在门口链路抖动时会每 6 秒重试一次真实开门（手动路径明确禁止这么做）。
             eventFired.insert(mac)
             lastDispatch[mac] = Date().timeIntervalSince1970
+            AutoOpen.setPersistedLastDispatch(mac, lastDispatch[mac]!)   // 跨重启保持冷却
             let rc = try await app.lock.unlock(mac: mac)
             switch rc {
             case 0:
