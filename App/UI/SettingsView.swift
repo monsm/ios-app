@@ -105,9 +105,16 @@ struct SettingsView: View {
     /// 于是 `pendingDiag` 只剩写入、没有消费者，长按菜单那颗按钮点了没反应。
     /// 现在如实落到**设备页该锁**（电量、状态、快捷操作都在那里），
     /// 与 `landPendingCare` 同构；不再假装能跳到已不存在的页面。
+    /// 2026-10-30（第 155 轮）：本函数与下面的 `landPendingCare` 原来**逐字相同**（只差清的字段名），
+    /// 改一处必漂 —— 抽出共用落点 `landLock`，两个入口各清自己的字段（清空仍在选锁之前，保持原顺序）。
     func landPendingDiag(_ m: String?) {
         guard let m, !m.isEmpty else { return }
         app.pendingDiag = nil
+        landLock(m)
+    }
+
+    /// 落到「设备页该锁」—— 两个 pending 落点的共用实现。
+    private func landLock(_ m: String) {
         if m != app.currentMac { app.select(m) }
         app.requestRoute(.device)
     }
@@ -119,8 +126,7 @@ struct SettingsView: View {
     func landPendingCare(_ m: String?) {
         guard let m, !m.isEmpty else { return }
         app.pendingCare = nil
-        if m != app.currentMac { app.select(m) }
-        app.requestRoute(.device)
+        landLock(m)
     }
 
     /// 2026-10-15 落点: 设置 Tab **栈内**子页带回来的"到了之后开什么"。
