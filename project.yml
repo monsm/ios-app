@@ -62,8 +62,11 @@ targets:
         NSBluetoothAlwaysUsageDescription: 需要蓝牙连接并管理你的智能门锁 (扫描/配网/开锁/固件升级)。
         NSBluetoothPeripheralUsageDescription: 需要蓝牙连接并管理你的智能门锁。
         # 缺这条 = 首启引导第 4 步「权限说明」点继续即被系统终止进程 (TCC 对缺键不弹窗, 直接杀)。
-        # 缺这条 = 一弹面容就废：本仓已有四处调 LAContext.evaluatePolicy
-        # (AuthKit 877 口令连败大字键 / AutoOpen 严格档 F1 门控 / CredentialCenterView 502 彻底删除双验)。
+        # 缺这条 = 一弹面容就废：本仓已有**两处**调 LAContext.evaluatePolicy
+        # (AuthKit 877 口令连败大字键 / AutoOpen 严格档 F1 门控)。
+        # 2026-10-30 核实（第 87 轮）：原文写「四处」并列了 CredentialCenterView 502「彻底删除双验」——
+        # 但那处调用点已随「彻底删除双验」一起移除（全仓 grep `evaluatePolicy` 只剩 2 处真调用）。
+        # 计数写错会让审核误判「声明了比实际更多的能力」，也误导后续维护者去找不存在的第三处。
         # 2026-10-27 审核删除 (AUDIT-D D-43)：定位与相机两条 usage description 已移除。
         # 依据：全仓 0 处 CLLocationManager / requestWhenInUse / AVCaptureDevice / VNDocumentCamera。
         # 备份导入走 fileImporter（选文件），二维码用 CoreImage 解码已选中的图，都不用相机。
@@ -72,7 +75,7 @@ targets:
         NSPhotoLibraryAddUsageDescription: 将成就分享卡保存到相册 (完全本地生成, 不上传)。
         # 2026-10-27 审核核对 (AUDIT-E 8.4)：剩下的 4 条权限**都有真实消费方** ——
         #   · Bluetooth ×2 → BLEService 全程（扫描/连接/开锁/DFU）
-        #   · FaceID      → AuthKit / AutoOpen 严格档 / CredentialCenterView 四处 evaluatePolicy
+        #   · FaceID      → AuthKit / AutoOpen 严格档，共 2 处 evaluatePolicy（2026-10-30 核实）
         #   · PhotoLibraryAdd → 成就分享卡存相册（ExportShares）
         # 原先还有定位与相机两条，已在本批删除（全仓 0 处 CLLocationManager / AVCaptureDevice）。
         ITSAppUsesNonExemptEncryption: false
