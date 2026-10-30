@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T02:01:33.765Z",
+    "generated": "2026-10-30T02:10:13.377Z",
     "sources": [
       {
         "scout": "android-native",
@@ -15084,7 +15084,7 @@ const DATA = {
           "line": 69,
           "symbol": "vkBody",
           "note": "body = vkBody.destined(.credentials)",
-          "text": "}"
+          "text": "// 与 922 批量整理共用同一个 editMode，不另做一套\"选中后的浮动条\"。"
         },
         {
           "platform": "ios",
@@ -15092,7 +15092,7 @@ const DATA = {
           "line": 88,
           "symbol": "vkBody",
           "note": "三条通知条互斥取一",
-          "text": "// 同上: CredExtendView 里那颗按钮写的是「关闭」, 而它过去只 reload()"
+          "text": ".sheet(isPresented: $showCalendar) { CredentialCalendarView() }"
         }
       ],
       "platformEvidence": {
@@ -18056,7 +18056,7 @@ const DATA = {
           "line": 23,
           "symbol": "busyKey",
           "note": "键语义",
-          "text": "@State var otpPwd = \"******\""
+          "text": "@State var otpOn = false"
         },
         {
           "platform": "ios",
@@ -18064,7 +18064,7 @@ const DATA = {
           "line": 67,
           "symbol": "isBusy",
           "note": "",
-          "text": "// 未选中时整条不占位: 常驻工具栏会让用户以为那些按钮现在也能点。"
+          "text": ".safeAreaInset(edge: .bottom) {"
         },
         {
           "platform": "ios",
@@ -18148,7 +18148,7 @@ const DATA = {
           "line": 73,
           "symbol": "vkBody",
           "note": "无锁空态",
-          "text": ".variantList()"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -18210,7 +18210,7 @@ const DATA = {
           "line": 374,
           "symbol": "headerToolbar",
           "note": "",
-          "text": "UIApplication.topViewController()?.present(av, animated: true)"
+          "text": "Clip.set(text)"
         },
         {
           "platform": "ios",
@@ -18218,7 +18218,7 @@ const DATA = {
           "line": 389,
           "symbol": "headerToolbar",
           "note": "选择按钮",
-          "text": "guard busyKey == nil else { return }"
+          "text": "func presentSecretOnce(_ s: String) { secretOnce = s }"
         },
         {
           "platform": "ios",
@@ -18226,7 +18226,7 @@ const DATA = {
           "line": 396,
           "symbol": "headerToolbar",
           "note": "Menu 溢出",
-          "text": "if r.done > 0 {"
+          "text": "// 2026-10-27 (D-58)：batchDisable 现在返回 (done, failedPwds, failedFps) ——"
         }
       ],
       "platformEvidence": {
@@ -18379,7 +18379,7 @@ const DATA = {
           "line": 449,
           "symbol": "headerToolbar",
           "note": "segCount",
-          "text": "}"
+          "text": "func goAddDevice() {"
         },
         {
           "platform": "ios",
@@ -18387,7 +18387,7 @@ const DATA = {
           "line": 462,
           "symbol": "segChip",
           "note": "",
-          "text": "let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)"
+          "text": "_ message: String,"
         },
         {
           "platform": "ios",
@@ -18395,7 +18395,7 @@ const DATA = {
           "line": 492,
           "symbol": "countForSeg",
           "note": "",
-          "text": "static func topViewController() -> UIViewController? {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -21602,7 +21602,7 @@ const DATA = {
           "line": 31,
           "symbol": "memberView",
           "note": "初始值取 groupMode",
-          "text": "@State var memberView = CredentialOrg.groupMode == .owner   // 355 按成员视图"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -21610,7 +21610,7 @@ const DATA = {
           "line": 406,
           "symbol": "headerToolbar",
           "note": "toggle + setGroupMode",
-          "text": "}"
+          "text": "app.showToast(\"所选凭证已不在台账\")"
         }
       ],
       "platformEvidence": {

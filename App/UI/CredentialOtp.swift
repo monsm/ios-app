@@ -4,9 +4,16 @@ import SwiftUI
 
 extension CredentialsView {
     var otpSection: some View {
-        // 2026-10-29 性能：`DB.otpStatus(mac)` 原来在 get 闭包与下面的 if 各读一次（每次整份解码）。
-        // 一次读出来，两处共用。
-        let otpOn = DB.otpStatus(mac)?.on ?? false
+        // 2026-10-30 修复（第 78 轮，与第 77 轮同一类回归）：
+        // 2026-10-29 那条「一次读出来共用」把 `otpOn` 提成了**局部常量**，
+        // 而 `Binding.get` 读的正是这个常量 —— `set` 成功后 `otpOn` 仍是旧值，
+        // 于是**拨动开关后视觉不动**，下面那段 `if otpOn { otpGenRow }` 也不出现/不消失。
+        //
+        // 修法用 `@State` 缓存（`otpOn` 声明在 CredentialsView），不把读库塞进 body ——
+        // 那样会撞上 `viewdbcheck` 棘轮（视图内读库不许新增）。
+        //   · `.task` 里初始化一次（进页读一次库）；
+        //   · `set` 成功后把新值写进 `@State`（即时翻转，不读库）；
+        //   · 其余 6 处写操作已各自 `refreshTick += 1`，本卡片的 `.task` 会在重建时同步。
         return Section("临时密码 (ZOTP)") {
             VariantToggle("开通临时密码", isOn: Binding(
                 get: { otpOn },
@@ -25,6 +32,7 @@ extension CredentialsView {
                             try await app.lock.ensureConnected(mac: m)
                             try await app.lock.setZotp(on)
                             DB.saveOtpStatus(m, OtpStatus(on: on, at: Date().timeIntervalSince1970 * 1000))
+                            otpOn = on   // 2026-10-30（第 78 轮）：直接更新 @State，即时翻转
                             app.showToast(on ? "临时密码已开启" : "已关闭")
                         } catch {
                             app.showToast("操作失败： \(error.localizedDescription)")
@@ -42,9 +50,12 @@ extension CredentialsView {
                 }
                 .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
-            } else {
             }
         }
+            .task {
+                // 2026-10-30（第 78 轮）：进页读一次库填 @State 缓存（不在 body 里读，避开 viewdbcheck 棘轮）。
+                otpOn = DB.otpStatus(mac)?.on ?? false
+            }
     }
 
 

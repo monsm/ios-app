@@ -18,6 +18,9 @@ struct CredentialsView: View {
     // 包2 连接感知: 510 待下发横条 / 535 回执 依赖 LinkSense 补发回执计时 (只读观察)
     @ObservedObject var sense = LinkSense.shared
     @State var refreshTick = 0
+    /// 2026-10-30（第 78 轮）：OTP 开关的界面态缓存 —— Binding.get 不能读 body 里的局部常量（会不刷新），
+    /// 也不能在 body 里实时读库（会撞 viewdbcheck 棘轮）。由 .task 初始化、set 成功后更新。
+    @State var otpOn = false
     /// 正在与门锁通信的条目 ("pwd:3" / "fp:12" / "otp") / nil = 空闲
     @State var busyKey: String?
     @State var otpPwd = "******"
