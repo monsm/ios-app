@@ -67,6 +67,19 @@ function p95(samples) {
   if (lo === hi) return a[lo];
   return round(a[lo] + (a[hi] - a[lo]) * frac);
 }
+
+// 2026-10-31（第 61 轮，**补 F5/F6 的断言缺口**）：本影子此前只测 F1/F3/F4 —— 而第 51-55 轮
+// 修的三处缺陷全在 F5/F6 上，没有断言就等于"修完没人验"。
+// 逐行对齐 Swift:
+//   coolReady: `lastDispatch == 0 || now - lastDispatch > cooldownSeconds(=6)`
+//   lockReady: `snap != nil && snap.rc != 25 && snap.rc != 26`（makeContext 内联）
+const COOLDOWN = 6;
+function coolReady(lastDispatch, now) {
+  return lastDispatch === 0 || now - lastDispatch > COOLDOWN;
+}
+function lockReady(snap) {
+  return snap !== null && snap !== undefined && snap.rc !== 25 && snap.rc !== 26;
+}
 // 测试 helper: utc(dayTick) = 基准日 + tick/2 秒  (形参曾是 daySecond —— 那正是 §10.43 那个谎)
 const tickToRealSec = (tick) => tick / 2;
 
@@ -130,6 +143,22 @@ push('F3', '已武装 cur 跌破解除线立刻解除 (不看中值)', rssiArmed
 push('F3', '空窗返回原态 (不发明数据)', rssiArmedByMedian(false, [], -60), false);
 push('F3', '单样本 -60 恰在武装线 ⇒ 武装', rssiArmedByMedian(false, [-60], -60), true);
 
+// ---------- F5 冷却 (第 61 轮补) ----------
+// 用户口径 2026-10-17: 开完锁等 6 秒恢复自动监测。旧值 60s。
+push('F5', '从未下发过 ⇒ 放行', coolReady(0, 1000), true);
+push('F5', '5s 前下发 ⇒ 仍在冷却', coolReady(100, 105), false);
+push('F5', '恰 6s ⇒ 仍冷却 (> 不是 >=)', coolReady(100, 106), false);
+push('F5', '7s 前下发 ⇒ 放行', coolReady(100, 107), true);
+
+// ---------- F6 锁态门 (第 61 轮补) ----------
+// fail-closed: 无快照 ⇒ 拒；rc=25(忙)/26(被撬) ⇒ 拒；其余放行。
+push('F6', '无快照 ⇒ 拒 (fail-closed)', lockReady(null), false);
+push('F6', 'rc=25 锁忙 ⇒ 拒', lockReady({ rc: 25 }), false);
+push('F6', 'rc=26 被撬 ⇒ 拒', lockReady({ rc: 26 }), false);
+push('F6', 'rc=0 正常 ⇒ 放行', lockReady({ rc: 0 }), true);
+push('F6', 'rc=3 命令过期 ⇒ 放行 (不是锁态问题)', lockReady({ rc: 3 }), true);
+push('F6', 'rc=24 录入超时 ⇒ 放行 (不是锁态问题)', lockReady({ rc: 24 }), true);
+
 // F3 P95
 push('P95', '样本不足 = nil', p95([-60, -58, -55, -62]), null);
 push('P95', '全同 -60', p95(Array(100).fill(-60)), -60);
@@ -179,8 +208,14 @@ for (const c of CASES) {
 // 存在性自检：凡断言里测的函数名，必须在 Swift 源码里找得到。
 // 实现改名/删除时立刻红，而不是静默继续测旧代码。
 {
+  // 2026-10-31（第 61 轮）：补 coolReady（F5）与 lockReady 的复刻 —— 它们此前没被断言也没被本闸门盯着。
+  // 注意 `lockReady` 在 Swift 里是 `makeContext` 内联的表达式，不是独立 func —— 用 `snap != nil &&` 作它的存在性判据。
   const REPLICATED = ["faceFresh", "defendActive", "armThreshold", "disarmThreshold",
-                      "rssiSample", "rssiArmedByMedian", "p95"];
+                      "rssiSample", "rssiArmedByMedian", "p95", "coolReady"];
+  // `lockReady` 是内联表达式，单独查它的特征串
+  const INLINE_CHECKS = [
+    ["F6 lockReady 判据", /lockReady: snap != nil && snap\?\.rc != 25 && snap\?\.rc != 26/],
+  ];
   const _fs = require("fs");
   const _path = require("path");
   const SWIFT_SRC = _fs.readFileSync(_path.join(__dirname, "..", "App", "Core", "AutoOpen.swift"), "utf8");
@@ -190,6 +225,14 @@ for (const c of CASES) {
     console.log("✗ REPLICA_GUARD: 以下函数在 App/Core/AutoOpen.swift 里已不存在 — " + missing.join(", "));
     console.log("  本影子的复刻与实现已漂开，先更新复刻再谈对拍。");
   } else {
+  // 内联表达式检查（不在 func 清单里的判据）
+  const inlineMissing = INLINE_CHECKS.filter(([name, re]) => !re.test(SWIFT_SRC)).map(([name]) => name);
+  if (inlineMissing.length) {
+    bad++;
+    console.log("✗ REPLICA_GUARD: 以下内联判据在 Swift 源码里已不存在 — " + inlineMissing.join(", "));
+  } else {
+    console.log("ok    REPLICA_GUARD 内联判据 " + INLINE_CHECKS.length + " 条都在");
+  }
     console.log("ok    REPLICA_GUARD 复刻的 " + REPLICATED.length + " 个函数在 Swift 源码里都存在");
   }
 
