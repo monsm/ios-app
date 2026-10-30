@@ -10,7 +10,7 @@ const files = [];
   }
 })('App');
 // Tests 目录整体纳入 (旧实现硬编码两个文件名 → 新增测试文件根本不进闸门)
-// Widget 目录 (927 哑按钮扩展) 同样必须进来: 闸门只扫 App/ 就是让第二个 target 裸奔。
+  // 2026-10-30 修正（第 110 轮）：原注释写「Widget 目录 (927 哑按钮扩展) 同样必须进来」，但该扩展已随 `3d28ff7`（波2b「删桌面小组件」）**整族删除**（`project.yml` 现在只有 `OfflineLock` 与 `OfflineLockTests`）。数组里保留 `Widget` 无害（`existsSync` 会跳过），但注释不该让人去找一个不存在的目录。
 (function walkMore(dirs) {
   for (const d of dirs) {
     if (!fs.existsSync(d)) continue;

@@ -69,6 +69,7 @@ const GATES = [
   ['destmap', []],
   ['uicoverage', []],
   ['kotlinshadow', []],
+  ['gateaudit', []],
 ];
 
 let fail = [];

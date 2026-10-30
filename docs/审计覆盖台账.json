@@ -81,7 +81,7 @@
       "items": [
         { "id": "pr.build30", "name": "构建等待 ≤30 秒", "status": "done", "evidence": "ci.ps1 轮询间隔 25s，每轮实测均 <30s" },
         { "id": "pr.push", "name": "推送节奏（~1 小时 / 构建失败例外）", "status": "done", "evidence": "执行中" },
-        { "id": "pr.gates", "name": "闸门自身正确性（正控+反控）", "status": "partial", "evidence": "第 101/102/104 轮给 3 道新闸门（linerefcheck/cnpunctcheck/higaudit）做了正反控，其中 higaudit 正控抓出「判据匹配到注释文本」的工具 bug 并修掉；**其余 52 道未逐个验证**" }
+        { "id": "pr.gates", "name": "闸门自身正确性（正控+反控）", "status": "done", "evidence": "第 110 轮新增 gateaudit：对全部 58 道做**静态自检**（G1 有失败出口 / G2 读源码 / G3 实质判据 / G4 不只 exit(0)），结果 43 硬闸门全过、15 顾问型（头注写明不判失败）单列；顺手把 citecheck 从「闸门」改名为「顾问级」（它永不失败，与 CI 步骤名不一致）。另有 8 道做过**逐道正控**（linerefcheck/cnpunctcheck/higaudit/a11ycheck/workflowcheck/attrcheck/gateaudit 自身 + 假闸门注入）。残余：其余 35 道只过了静态自检，未逐道注入合成违规验证判据本身对不对" }
       ]
     },
     {
