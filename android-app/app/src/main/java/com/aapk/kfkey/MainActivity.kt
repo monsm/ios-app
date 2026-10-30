@@ -579,7 +579,8 @@ private fun KfApp(unlocker: BleUnlocker) {
             title = { Text("标定距离基准", fontWeight = FontWeight.Medium) },
             text = {
                 Column {
-                    if (calSamples.isEmpty) {
+        // 2026-10-31（第 46 轮，**编译错误**）：Kotlin 的 `isEmpty` 是**方法**，必须带括号； Swift 里它是属性。从 Swift 搬过来时极易漏掉 `()`。
+                    if (calSamples.isEmpty()) {
                         // 空态: 别只显示"已采 0 个" —— 那是数字, 不是下一步该做什么。
                         Text("点「开始采样」后站在你想让它开锁的位置别动，采 20 秒左右。")
                     } else if (p95 == null) {

@@ -71,6 +71,7 @@ const GATES = [
   ['copynum', ['App']],
   ['destmap', []],
   ['uicoverage', []],
+  ['kotlinsyntaxcheck', []],
   ['kotlincontrast', []],
   ['kotlinimportcheck', []],
   ['kotlinmathcheck', []],

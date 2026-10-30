@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T18:11:19.928Z",
+    "generated": "2026-10-30T18:25:07.453Z",
     "sources": [
       {
         "scout": "android-native",
@@ -1267,7 +1267,7 @@
           "line": 684,
           "symbol": "ProximityCard",
           "note": "private fun ProximityCard(on, onToggle, onRescan, onUnbind, onClose)",
-          "text": "animationSpec = tween(100, easing = CubicBezierEasing(0.42f, 0f, 0.58f, 1f)),"
+          "text": "targetValue = if (pressed) 0.972f else 1f,"
         },
         {
           "platform": "android",
@@ -1275,7 +1275,7 @@
           "line": 693,
           "symbol": "ProximityCard",
           "note": "clip(RoundedCornerShape(KfTokens.Radius.card)).background(colors.surface).padding(KfTokens.Space.l)",
-          "text": "listOf(colors.accent.copy(alpha = 0.16f), Color.Transparent),"
+          "text": "brush = Brush.radialGradient("
         }
       ],
       "platformEvidence": {
@@ -6213,7 +6213,7 @@
           "line": 902,
           "symbol": "ProximityBeep",
           "note": "if (!active || !soundOn || level < 0 || !foreground) return@LaunchedEffect",
-          "text": "// 未标定显示\"可选精修\"入口，并说明默认兜底线（数值从 AutoOpenKit 取，不写死）。"
+          "text": "// 2026-10-31（第 37 轮）：F3 距离标定。已标定显示基准值 + 重标/清除；"
         }
       ],
       "platformEvidence": {
@@ -6710,7 +6710,7 @@
           "line": 654,
           "symbol": "EmptyState",
           "note": "private fun EmptyState(onScan: () -> Unit)",
-          "text": "fontSize = if (lock == null) 22.sp else 26.sp,"
+          "text": "color = colors.ink,"
         },
         {
           "platform": "android",
@@ -6718,7 +6718,7 @@
           "line": 658,
           "symbol": "EmptyState",
           "note": "Canvas(Modifier.size(120.dp)) { ... 四个角 corner(...) }",
-          "text": "if (lock != null) {"
+          "text": ")"
         },
         {
           "platform": "android",
@@ -6726,7 +6726,7 @@
           "line": 674,
           "symbol": "EmptyState",
           "note": "Text(\"在 iOS 端「设置 → 门锁 → 分享给安卓」生成二维码,\\n扫一次即可。之后开锁不再需要它。\")",
-          "text": "/** 开锁圆盘: 自绘 (不用现成图标), 环 + 钥匙孔, 按下时整盘轻微收缩。 */"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -6793,7 +6793,7 @@
           "line": 764,
           "symbol": "GearButton",
           "note": "private fun GearButton(modifier: Modifier = Modifier, onClick: () -> Unit)",
-          "text": "close()"
+          "text": "lineTo(cx - g * 0.38f, top + g * 1.0f)"
         },
         {
           "platform": "android",
@@ -6801,7 +6801,7 @@
           "line": 768,
           "symbol": "GearButton",
           "note": ".size(56.dp).clip(CircleShape).background(colors.surface.copy(alpha = 0.92f)).clickable { onClick() }",
-          "text": ""
+          "text": ")"
         },
         {
           "platform": "android",
@@ -6809,7 +6809,7 @@
           "line": 778,
           "symbol": "GearButton",
           "note": "for (k in 0 until 8) { val a = Math.toRadians((k * 45).toDouble()) ... }",
-          "text": ")"
+          "text": "style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)"
         }
       ],
       "platformEvidence": {
@@ -7450,7 +7450,7 @@
           "line": 742,
           "symbol": "ProximityCard",
           "note": "Text(\"重新扫码绑定\", color = colors.accent.copy(alpha = 0.9f), ... .clickable { onRescan() })",
-          "text": "drawArc("
+          "text": "// 第 3 层: 斜向镜面高光"
         }
       ],
       "platformEvidence": {
@@ -7594,7 +7594,7 @@
           "line": 717,
           "symbol": "ProximityCard",
           "note": "Switch(checked = on, onCheckedChange = onToggle, colors = SwitchDefaults.colors(...))",
-          "text": "0f to Color(0xFFFEFDFB),"
+          "text": "brush = Brush.sweepGradient("
         },
         {
           "platform": "android",
@@ -7602,7 +7602,7 @@
           "line": 720,
           "symbol": "ProximityCard",
           "note": "checkedThumbColor = colors.bgTop, checkedTrackColor = colors.accent, uncheckedTrackColor = colors.inkSub.copy(alpha = 0.30f)",
-          "text": "0.44f to Color(0xFFB6AFA4),"
+          "text": "0.26f to Color(0xFFFBF9F5),"
         }
       ],
       "platformEvidence": {
@@ -7872,7 +7872,7 @@
           "line": 583,
           "symbol": "UnlockDial",
           "note": "第 1 层 金属倒角 Brush.sweepGradient",
-          "text": "// 空态: 别只显示\"已采 0 个\" —— 那是数字, 不是下一步该做什么。"
+          "text": "if (calSamples.isEmpty()) {"
         }
       ],
       "platformEvidence": {
@@ -8504,7 +8504,7 @@
           "line": 811,
           "symbol": "AirTagLayer",
           "note": "private fun AirTagLayer(name, rssi, armed, busy, azimuthDeg, peakDeg, pitch, roll, soundOn, foreground, onToggleSound, onClose)",
-          "text": "\"在 iOS 端「设置 → 工具 → 分享给安卓 (扫码开锁)」生成二维码，\\n扫一次即可。之后开锁不再需要它。\","
+          "text": "// 另外 iOS 设置页里没有叫「门锁」的段 —— 那是「管理这把锁」的入口名。"
         },
         {
           "platform": "android",
@@ -8512,7 +8512,7 @@
           "line": 839,
           "symbol": "AirTagLayer",
           "note": ".background(if (armed) Color(0xFF0E7A42) else Color(0xFF0B6B3A))",
-          "text": "val colors = LocalKfColors.current"
+          "text": "// 2026-10-20: 这张卡此前整块读 Theme.kt 的固定暗色值 —— 浅色模式下是浅底 + 暗卡 + 浅字。"
         }
       ],
       "platformEvidence": {
@@ -10787,7 +10787,7 @@
           "line": 750,
           "symbol": "ProximityCard",
           "note": "Text(\"解绑\", ... .clickable { onUnbind() })",
-          "text": "useCenter = false,"
+          "text": "sweepAngle = 90f,"
         }
       ],
       "platformEvidence": {
@@ -10925,7 +10925,7 @@
           "line": 893,
           "symbol": "ProximityBeep",
           "note": "private fun ProximityBeep(active, fill, soundOn, foreground)",
-          "text": "checkedThumbColor = colors.bgTop,"
+          "text": "colors = SwitchDefaults.colors("
         },
         {
           "platform": "android",
@@ -10933,7 +10933,7 @@
           "line": 894,
           "symbol": "ProximityBeep",
           "note": "val level = when { fill > 0.85f -> 3; fill > 0.6f -> 2; fill > 0.3f -> 1; fill > 0.05f -> 0; else -> -1 }",
-          "text": "checkedTrackColor = colors.accent,"
+          "text": "checkedThumbColor = colors.bgTop,"
         },
         {
           "platform": "android",
@@ -10941,7 +10941,7 @@
           "line": 901,
           "symbol": "ProximityBeep",
           "note": "LaunchedEffect(active, soundOn, level, foreground) { if (!active || !soundOn || level < 0 || !foreground) return }",
-          "text": "// 2026-10-31（第 37 轮）：F3 距离标定。已标定显示基准值 + 重标/清除；"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -10949,7 +10949,7 @@
           "line": 904,
           "symbol": "ProximityBeep",
           "note": "val period = when (level) { 3 -> 240L; 2 -> 420L; 1 -> 700L; else -> 1100L }",
-          "text": "Row(verticalAlignment = Alignment.CenterVertically) {"
+          "text": "Spacer(Modifier.height(10.dp))"
         }
       ],
       "platformEvidence": {
@@ -11108,7 +11108,7 @@
           "line": 842,
           "symbol": "AirTagLayer",
           "note": "Text(\"正在查找\") + Text(name, 30.sp, Bold)",
-          "text": ".fillMaxWidth()"
+          "text": "Modifier"
         },
         {
           "platform": "android",
@@ -11116,7 +11116,7 @@
           "line": 866,
           "symbol": "AirTagLayer",
           "note": "CircleIconButton(label = \"✕\", onClick = onClose)",
-          "text": "checked = on,"
+          "text": "Switch("
         },
         {
           "platform": "android",
@@ -11124,7 +11124,7 @@
           "line": 871,
           "symbol": "AirTagLayer",
           "note": "CircleIconButton(label = if (soundOn) \"🔊\" else \"🔇\", onClick = onToggleSound)",
-          "text": "uncheckedThumbColor = colors.inkSub,"
+          "text": "checkedTrackColor = colors.accent,"
         },
         {
           "platform": "android",
@@ -12001,7 +12001,7 @@
           "line": 679,
           "symbol": "EmptyState",
           "note": "PillButton(\"扫码添加门锁\", onScan)",
-          "text": "val pressed by interaction.collectIsPressedAsState()"
+          "text": "val interaction = remember { MutableInteractionSource() }"
         },
         {
           "platform": "android",
@@ -12017,7 +12017,7 @@
           "line": 742,
           "symbol": "ProximityCard",
           "note": "Text(\"重新扫码绑定\", ... .clickable { onRescan() })",
-          "text": "drawArc("
+          "text": "// 第 3 层: 斜向镜面高光"
         }
       ],
       "platformEvidence": {
@@ -12639,7 +12639,7 @@
           "line": 637,
           "symbol": "UnlockDial",
           "note": "if (busy) drawArc(startAngle = -90f, sweepAngle = 300f)",
-          "text": "roll = roll,"
+          "text": "pitch = pitch,"
         },
         {
           "platform": "android",
@@ -13078,7 +13078,7 @@
           "line": 863,
           "symbol": "AirTagLayer",
           "note": "Text(directionLabel(bearing), fontSize = 26.sp)",
-          "text": ")"
+          "text": "color = colors.inkSub, fontSize = 12.sp, lineHeight = 17.sp,"
         },
         {
           "platform": "android",
@@ -13162,7 +13162,7 @@
           "line": 828,
           "symbol": "AirTagLayer",
           "note": "val distText = when { dist < 0f -> \"测距中…\"; dist < 1f -> 厘米; else -> 米 }",
-          "text": "defendOn: Boolean,"
+          "text": "// 极简版不下发 cmd25（那需要 skey 会话），只做本机侧否决。"
         }
       ],
       "platformEvidence": {
@@ -13933,7 +13933,7 @@
           "line": 707,
           "symbol": "ProximityCard",
           "note": "\"开着它: 手机解了锁、App 在前台时, 靠近到 \" + AutoOpenKit.BASE + \" dBm 以内会自动开一次。\"",
-          "text": ") {"
+          "text": "contentAlignment = Alignment.Center"
         },
         {
           "platform": "android",
@@ -14048,7 +14048,7 @@
           "line": 712,
           "symbol": "ProximityCard",
           "note": "\"一次靠近只开一次: 要走开让信号掉到 \" + AutoOpenKit.disarmThreshold() + \" dBm 以下, 隔 6 秒后再靠近才会再开。\"",
-          "text": "val rOuter = dim.minDimension / 2 - 1.dp.toPx()"
+          "text": "val cy = size.height / 2"
         }
       ],
       "platformEvidence": {
