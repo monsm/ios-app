@@ -26,7 +26,7 @@ struct MemberCenterView: View {
     /// 「已添加15个成员，无法再添加」（数组含一个"自己"占位，实际上限 15）。
     func openWizard() {
         if DB.members().count >= 15 {
-            app.showToast("已添加 15 个成员，无法再添加（锁端槽位上限）")
+            app.showToast("已添加 15 个成员，无法再添加（本机成员上限；成员表存在本机 kf_members， 不占用锁端槽位）")   // 2026-10-30：成员表是本机 kf_members，锁端没有成员槽位
             return
         }
         showWizard = true

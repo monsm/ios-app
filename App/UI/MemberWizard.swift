@@ -129,7 +129,7 @@ struct MemberWizardView: View {
         // 2026-10-30 补（第 123 轮）：成员上限（锁端槽位 15）。放在这里而不是视图 body ——
         // `viewdbcheck` 棘轮不允许视图计算属性里新增 DB 调用。
         if DB.members().count >= 15 {
-            app.showToast("已添加 15 个成员，无法再添加（锁端槽位上限）")
+            app.showToast("已添加 15 个成员，无法再添加（本机成员上限）")   // 2026-10-30：与 MemberCenterView 同口径
             return nil
         }
         let n = name.trimmingCharacters(in: .whitespaces)

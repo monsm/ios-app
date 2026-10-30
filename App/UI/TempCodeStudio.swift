@@ -385,7 +385,7 @@ struct TempCodeStudio: View {
             // 2026-10-30 删除（第 120 轮）：这里原来调 `CredentialOrg.clearDraft(kc.mac)` ——
             // 但**本页从不写草稿**（全文件无 saveDraft），而草稿键 `kf_cdraft_<mac>` 与 PwdStudio 共用，
             // 等于「在临时码页下发成功后，把密码工坊里没填完的草稿清掉」。删掉这一行。
-            if failed > 0 { app.showToast("批量完成， \(failed) 张失败， 稍后可在凭证页重试") }
+            if failed > 0 { app.showToast("批量完成， \(failed) 张失败 —— 本页可直接重新下发， 无需换页") }   // 2026-10-30：原写「可在凭证页重试」，而下发队列已删、凭证页没有重试入口
         }
     }
 }

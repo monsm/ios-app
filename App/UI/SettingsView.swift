@@ -406,7 +406,7 @@ struct SettingsView: View {
 
 /// 机械计数样式数字 (idea 1006): 每位一格, 等宽数字
     func presentSetPasscodeAlert() {
-        let alert = UIAlertController(title: "设置本机密码", message: "4 位以上纯数字 (随机键位需要数字键盘， 含字母会失去该保护)", preferredStyle: .alert)
+        let alert = UIAlertController(title: "设置本机密码", message: "4 位以上纯数字（本机密码用于解锁 App 与确认高危操作）", preferredStyle: .alert)   // 2026-10-30：原句「随机键位需要数字键盘」—— 随机键位功能全仓不存在
         alert.addTextField { $0.isSecureTextEntry = true; $0.keyboardType = .numberPad }
         alert.addTextField { $0.isSecureTextEntry = true; $0.placeholder = "再次输入"; $0.keyboardType = .numberPad }
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
