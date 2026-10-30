@@ -15,8 +15,15 @@ extension LockService {
             r = try await exec(ZKCmdBuilder.cmd03StatusPlain(), needToken: false)
         }
         let st = StatusParser.parseStatus(r.klvs)
+        // 2026-10-31（第 51 轮，**F6 锁态门的设计缺陷**）：原来是 `if st.rc == 0 { DB.writeStatus(...) }` ——
+        // 即**只在成功时写快照**。而 F6 的判据是 `snap?.rc != 25 && snap?.rc != 26`：
+        // 锁报 rc=25（忙）/ rc=26（被撬）时**根本不写快照**，快照保持旧值（多半是 rc=0）
+        // ⇒ F6 判据通过 ⇒ 照样下发 04。**这道门在最该拦的时候永远不拦。**
+        //
+        // 现在：**无论 rc 是什么都写快照**（rc 本身就是锁态的一部分）。
+        // 电量采样仍只在 rc==0 时做：rc≠0 的回包里 powerLevel 不可信（锁可能没真读状态）。
+        DB.writeStatus(curMac, st) // 离线快照 (随时可读) —— 含 rc，供 F6 判据
         if st.rc == 0 {
-            DB.writeStatus(curMac, st) // 离线快照 (随时可读)
             BatteryCare.sample(curMac, pct: st.powerLevel)   // 包4/45: 电量本地采样埋点 (90 天截断)
         }
         return st

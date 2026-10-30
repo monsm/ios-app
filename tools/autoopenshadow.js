@@ -192,6 +192,41 @@ for (const c of CASES) {
   } else {
     console.log("ok    REPLICA_GUARD 复刻的 " + REPLICATED.length + " 个函数在 Swift 源码里都存在");
   }
+
+// 2026-10-31（第 51 轮，**F6 门控的数据源完整性**）：
+// F6 判据是 `snap?.rc != 25 && snap?.rc != 26`，而快照由 `getStatus()` 写入。
+// 第 51 轮发现原实现是 `if st.rc == 0 { DB.writeStatus(...) }` —— **只在成功时写快照**，
+// 于是锁报 rc=25/26 时快照保持旧值（多半 rc=0）⇒ F6 永远通过 ⇒ 这道门在最该拦时不拦。
+//
+// 判据：`DB.writeStatus` 的调用**不得**被 `st.rc == 0` / `rc == 0` 之类的条件包裹。
+{
+  const _fs = require("fs");
+  const _path = require("path");
+  const opsPath = _path.join(__dirname, "..", "App", "Services", "LockServiceOps.swift");
+  if (!_fs.existsSync(opsPath)) {
+    bad++; console.log("✗ F6 数据链: 找不到 LockServiceOps.swift");
+  } else {
+    const ops = _fs.readFileSync(opsPath, "utf8");
+    const lines = ops.split(/\r?\n/);
+    let guarded = false;
+    for (let k = 0; k < lines.length; k++) {
+      if (!/DB\.writeStatus\s*\(/.test(lines[k])) continue;
+      // 2026-10-31（第 51 轮）：判据取最简形态 —— 只看**紧邻的前一个非注释行**。
+      // 若它是 `if ... rc == 0 {` 就说明这次写入被"只在成功时写"的条件包住了。
+      // （前两版分别用"往上 3 行"/"往上 8 行遇到 } 才停"，都被注释行干扰而误报。）
+      let j = k - 1;
+      while (j >= 0 && /^\s*(\/\/|\*)/.test(lines[j])) j--;
+      if (j >= 0 && /if\s+.*\.rc\s*==\s*0\s*\{/.test(lines[j])) guarded = true;
+    }
+    if (guarded) {
+      bad++;
+      console.log("✗ F6 数据链: DB.writeStatus 被 rc==0 条件包裹 —— 锁报 rc=25/26 时不写快照,");
+      console.log("   F6 判据读到旧值 ⇒ 这道门在最该拦的时候永远不拦。");
+    } else {
+      console.log("ok    F6 数据链: 快照无条件写入 (含 rc), F6 判据可读到真实锁态");
+    }
+  }
+}
 }
 
 const total = CASES.length;
