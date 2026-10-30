@@ -397,8 +397,8 @@ struct FpStudio: View {
             let staleFps = DB.listFps(em).filter { $0.owner == owner && $0.batch != Int(b) }
             for f in staleFps {
                 // 确认口径：这一刀是用户在上一步**自己勾上**的 (录入第 2 步那条 Toggle 的文案就把后果写全了：
-                // 「录入成功后将旧指纹移入回收站 (319 重录继承, 保留原备注/归属)」) ⇒ 勾选即知情同意，
-                // 再弹一次确认是把同一句话问两遍。可逆性也在那里兜住：addToBin 在前、锁端删除只是入队，
+                // 当前 Toggle 文案是「本机没有回收站，不可恢复；备注/归属也不会保留」) ⇒ 勾选即知情同意，
+                // 再弹一次确认是把同一句话问两遍。**不可逆**：本仓没有回收站、没有下发队列（addToBin 从未存在），
                 // 还原时第一百五十二批的 reclaim 会把这条还没发出去的 del_fp 一并收回。
                 DB.delFp(em, f.batch)
             }

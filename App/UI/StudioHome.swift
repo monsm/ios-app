@@ -37,7 +37,7 @@ struct StudioHome: View {
                 fanoutRow("key.fill", "密码", "剪贴板即建 · 逐位回显 · 重复拦截 · 生成器",
                           label: "添加密码") { sheet = .pwd }
                 fanoutRow("timer", "临时码",
-                          "五场景 · 重叠检测 · 装修黄条 · 批量",
+                          "重叠检测 · 时段错峰 · 批量",   // 2026-10-30 修正（第 117 轮）：原文「五场景 · 装修黄条」两项功能已删，只剩注释
                           label: "添加临时码") { sheet = .temp }
                 fanoutRow("touchid", "指纹",
                           "归属先行 · 沉浸式录入 · 删除双签",

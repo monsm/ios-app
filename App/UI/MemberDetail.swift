@@ -38,7 +38,7 @@ struct MemberDetail360View: View {
             .toolbar { ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {
                     Button { editProfile(m); onChanged() } label: {
-                        Label("补全档案 (关系/电话/生日/代号/分组/便签)", systemImage: "person.text.rectangle")
+                        Label("补全档案 (关系/代号/分组/便签)", systemImage: "person.text.rectangle")   // 2026-10-30：电话/生日从未实现，从文案删掉
                     }
                     Button { showMerge = true } label: {   // 462 重复合并
                         Label("重复合并", systemImage: "arrow.triangle.merge")
@@ -87,7 +87,7 @@ struct MemberDetail360View: View {
         } header: {
             Text("最近开锁（\(items.count) 条）")
         } footer: {
-            Text("只取本机缓存的开锁类日志，按时间倒序。要看全部请到记录页按 TA 筛选。")
+            Text("只取本机缓存的开锁类日志，按时间正序（旧→新）。要看全部请到记录页按 TA 筛选。")   // 2026-10-30：实现是 .suffix(n).reversed()，实际正序
         }
     }
 

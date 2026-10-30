@@ -134,10 +134,10 @@ struct SafemodeIntroView: View {
                         Text("当前已是 B 模式（双验）。可以改回 A 模式（更宽松）。")
                             .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.ok)
-                        Button(switching ? "切换中…" : "改回 A 模式（单验，更宽松）(cmd 20)") {
+                        Button(switching ? "切换中…" : "改回 A 模式（单验，更宽松）") {
                             confirmDestructive("改回 A 模式（单验）",
-                                "锁端将只需**单一方式**验证就能开锁 (cmd 20)：原来要两种组合，改回后一种即可。"
-                                + "这是**降低**安全等级，请确认你确实需要这样。切换后请先实测。",
+                                "锁端将只需单一方式验证就能开锁：原来要两种组合，改回后一种即可。"
+                                + "这是降低安全等级，请确认你确实需要这样。切换后请先实测。",
                                 confirmTitle: "改回 A 模式") {
                                 switching = true
                                 Task { await switchToSingleVerify() }
@@ -148,9 +148,9 @@ struct SafemodeIntroView: View {
                         .disabled(switching)
                         .frame(minHeight: DS.Hit.min)
                     } else {
-                        Button(switching ? "切换中…" : "切换到 B 模式（双验，更严）(cmd 20)") {
+                        Button(switching ? "切换中…" : "切换到 B 模式（双验，更严）") {
                             confirmDestructive("切换到 B 模式（双验）",
-                                "锁端将要求两种不同方式组合验证才能开锁 (cmd 20)。这一步会改变锁的验证策略："
+                                "锁端将要求两种不同方式组合验证才能开锁。这一步会改变锁的验证策略："
                                 + "切换后请先实测一次组合方式能开锁，再让其他人使用。可以随时用同一入口改回 A 模式（会二次确认）。",
                                 confirmTitle: "切到 B 模式") {
                                 switching = true

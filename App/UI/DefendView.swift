@@ -56,7 +56,7 @@ struct DefendView: View {
                 VStack(alignment: .leading, spacing: DS.Space.xxs) {
                     Text(DefendKit.summary(DefendService.current(app)))
                         .vkFont(.subheadline, weight: .medium)
-                    Text("布防期间，自动开锁会被 F4 一票否决；已在布防时段内时，靠近门锁不会自动开门。")
+                    Text("布防期间，自动开锁会被布防规则一票否决；已在布防时段内时，靠近门锁不会自动开门。")   // 2026-10-30：用户文案不写内部编号 F4
                         .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
@@ -179,7 +179,7 @@ struct DefendView: View {
             detail = "门锁将进入不定期布防，直到你手动撤防。布防期间自动开锁会被否决。"
         case .period:
             detail = "时段 \(minuteLabel(startMinute)) – \(minuteLabel(endMinute)) 内布防；"
-                   + "时段内自动开锁会被 F4 一票否决。"
+                   + "时段内自动开锁会被布防规则一票否决。"
         }
         let title = mode == .off ? "确认撤防" : "确认布防"
         confirmDestructive(title, detail, confirmTitle: title) {

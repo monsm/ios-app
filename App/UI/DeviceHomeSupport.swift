@@ -10,7 +10,8 @@ struct SyncTimeView: View {
     /// 2026-10-27 (D-50)：冷却剩余秒数（0 = 无冷却）。
     /// 2026-10-30：校时的世代号 —— 只有最新那次有权写结果（与 AppState.statusTicket 同款）。
     @State private var syncTicket = 0
-    @State private var coolLeft = 0
+    // 2026-10-30 删除（第 117 轮）：这里原有一个 `@State private var coolLeft = 0` ——
+    // 本页（SyncTimeView）从未读写它，上面那句「冷却剩余秒数」的注释描述的是 UnlockGateView 的机制。
 
     private var resultTone: ToneColor { failed ? .danger : .ok }
 

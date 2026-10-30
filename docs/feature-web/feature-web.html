@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T09:57:51.892Z",
+    "generated": "2026-10-30T10:02:04.205Z",
     "sources": [
       {
         "scout": "android-native",
@@ -22580,7 +22580,7 @@ const DATA = {
           "line": 205,
           "symbol": "activeSection",
           "note": "排序四档与列表",
-          "text": "// 2026-10-30 修复（与凭证页空态同族）：`list` 是**过滤后**的集合 ——"
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -22596,7 +22596,7 @@ const DATA = {
           "line": 222,
           "symbol": "NavigationLink",
           "note": "进 360 详情",
-          "text": "EmptyState(systemImage: \"line.3.horizontal.decrease.circle\","
+          "text": "actionTitle: \"查看归档\") { showArchived = true }"
         },
         {
           "platform": "ios",
@@ -22604,7 +22604,7 @@ const DATA = {
           "line": 225,
           "symbol": "swipeActions",
           "note": "左滑归档",
-          "text": "actionTitle: \"清除筛选\") { groupFilter = \"\" }"
+          "text": "title: \"这个分组下没有成员\","
         },
         {
           "platform": "ios",
@@ -22612,7 +22612,7 @@ const DATA = {
           "line": 30,
           "symbol": "members",
           "note": "排除归档 + 分组过滤",
-          "text": "showWizard = true"
+          "text": "return"
         }
       ],
       "platformEvidence": {
@@ -22975,7 +22975,7 @@ const DATA = {
           "line": 12,
           "symbol": "struct MemberCenterView",
           "note": "页面声明与五块职责注释",
-          "text": "struct MemberCenterView: View {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -22983,7 +22983,7 @@ const DATA = {
           "line": 42,
           "symbol": "body",
           "note": "七段列表顺序",
-          "text": "let extTable = MemberHub.allExt()"
+          "text": "// groupTag 那步仍按成员取 ext (要的是值不是集合), 至少砍掉一半重复解码。"
         },
         {
           "platform": "ios",
@@ -22991,7 +22991,7 @@ const DATA = {
           "line": 56,
           "symbol": "toolbar",
           "note": "右上菜单四项",
-          "text": "archivedSection"
+          "text": "activeSection(sortKey)"
         },
         {
           "platform": "ios",
@@ -22999,7 +22999,7 @@ const DATA = {
           "line": 134,
           "symbol": ".id(tick)",
           "note": "写库后重建",
-          "text": ".fixedSize(horizontal: false, vertical: true)"
+          "text": ".vkFont(.caption)"
         }
       ],
       "platformEvidence": {
@@ -23155,7 +23155,7 @@ const DATA = {
           "line": 86,
           "symbol": "showFamilySettings",
           "note": "父级 sheet 挂载",
-          "text": "// 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.5pt (\u003c 44)。"
+          "text": "Image(systemName: \"ellipsis.circle\").accessibilityLabel(\"成员中心菜单\")"
         }
       ],
       "platformEvidence": {
@@ -23341,7 +23341,7 @@ const DATA = {
           "line": 99,
           "symbol": "showRoster sheet",
           "note": "结果 sheet 与空态",
-          "text": "app.pendingMemberAdd = false"
+          "text": ".onAppear {"
         },
         {
           "platform": "ios",
@@ -23762,7 +23762,7 @@ const DATA = {
           "line": 304,
           "symbol": "archivedSection",
           "note": "归档入口（计数）",
-          "text": ".contentShape(Rectangle())"
+          "text": ".frame(maxWidth: .infinity, alignment: .leading)"
         },
         {
           "platform": "ios",
@@ -24098,7 +24098,7 @@ const DATA = {
           "line": 36,
           "symbol": "members",
           "note": "groupTag 过滤生效点",
-          "text": "@State var showRoster = false"
+          "text": "// 415 名册导出: ShareLink 要在渲染期就有 URL, 所以点菜单时先按需生成再开面板 (不在 body 里写盘)"
         },
         {
           "platform": "ios",
@@ -24372,7 +24372,7 @@ const DATA = {
           "line": 321,
           "symbol": "sceneSection",
           "note": "本周主责与便签",
-          "text": "Text(\"本周主责： 未安排 — 在成员的详情页里设置\")   // 481 本周主责"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -24380,7 +24380,7 @@ const DATA = {
           "line": 323,
           "symbol": "dutyThisWeek",
           "note": "主责读取",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": "Text(\"本周主责： 未安排 — 在成员的详情页里设置\")   // 481 本周主责"
         },
         {
           "platform": "ios",
@@ -24513,7 +24513,7 @@ const DATA = {
           "line": 252,
           "symbol": "visitorSection",
           "note": "虚拟分组行",
-          "text": "+ \"「久未用」判的是近 30 天没有可证明归属的开门， 标在每行行尾; \"   // 262/466 久未用"
+          "text": "} footer: {"
         },
         {
           "platform": "ios",
@@ -24529,7 +24529,7 @@ const DATA = {
           "line": 256,
           "symbol": "pendingRecordsFilter",
           "note": "跳记录页过滤",
-          "text": "/// 264/466 排序用的活跃度表: 一次算完全员, 不在比较式里逐次重扫全锁日志。"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -24537,7 +24537,7 @@ const DATA = {
           "line": 285,
           "symbol": "visitorOpenCount",
           "note": "未归属临时码计数",
-          "text": ".accessibilityLabel(\"访客虚拟分组， 约 \\(opens) 条未归属临时码记录\")"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -24545,7 +24545,7 @@ const DATA = {
           "line": 299,
           "symbol": "visitorOwns",
           "note": "名下临时码条数",
-          "text": "Button { showArchived = true } label: {"
+          "text": "if !arch.isEmpty {"
         }
       ],
       "platformEvidence": {
@@ -25035,7 +25035,7 @@ const DATA = {
           "line": 367,
           "symbol": "struct MemberRow",
           "note": "行声明",
-          "text": "HStack(spacing: DS.Space.s) {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -25051,7 +25051,7 @@ const DATA = {
           "line": 385,
           "symbol": "MemberRow",
           "note": "同名待合并",
-          "text": ".contextMenu {"
+          "text": ".frame(minHeight: DS.Hit.min)"
         },
         {
           "platform": "ios",
@@ -25059,7 +25059,7 @@ const DATA = {
           "line": 432,
           "symbol": "subLine",
           "note": "副行四段",
-          "text": "let member: Member"
+          "text": "// 2026-10-30 修正（第 117 轮）：原文写「全仓 12 处（本文件 8 + DeviceHomeView 4）」，实测只有 3 处。"
         },
         {
           "platform": "ios",
@@ -25067,7 +25067,7 @@ const DATA = {
           "line": 448,
           "symbol": "staleTag",
           "note": "久未用/活跃 (约)",
-          "text": "avatarCircle(base: baseColor)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -25735,7 +25735,7 @@ const DATA = {
           "line": 216,
           "symbol": "EmptyState",
           "note": "空态建档向导按钮",
-          "text": "} else if groupFilter.isEmpty {"
+          "text": "message: \"建档向导分三步： 称呼 → 角色 → 初始凭证。\","
         },
         {
           "platform": "ios",
@@ -25743,7 +25743,7 @@ const DATA = {
           "line": 89,
           "symbol": "onAppear",
           "note": "pendingMemberAdd 一次性消费",
-          "text": ".contentShape(Rectangle())"
+          "text": "// 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。"
         },
         {
           "platform": "ios",
@@ -25751,7 +25751,7 @@ const DATA = {
           "line": 80,
           "symbol": "sheet(isPresented: $showWizard)",
           "note": "向导 sheet 挂载",
-          "text": "} label: {"
+          "text": "rosterURL = ExportKit.writeRoster()"
         }
       ],
       "platformEvidence": {
@@ -25966,7 +25966,7 @@ const DATA = {
           "line": 13,
           "symbol": "struct RecDetailSheet",
           "note": "sheet 声明与职责注释",
-          "text": "struct RecDetailSheet: View {"
+          "text": "/// + 580 上下条翻看 + 584 邻近横滑 + 585 引用深链 + 587 低电跳诊断"
         },
         {
           "platform": "ios",
@@ -25982,7 +25982,7 @@ const DATA = {
           "line": 22,
           "symbol": "rec",
           "note": "结果集内第 at 条 + 越界夹回",
-          "text": "private var rec: Rec {"
+          "text": "/// 越界一律夹回合法档 (调用方给的 siblings 可能在翻页途中被筛选改短)"
         },
         {
           "platform": "ios",
@@ -25990,7 +25990,7 @@ const DATA = {
           "line": 42,
           "symbol": "body",
           "note": "各段顺序",
-          "text": "var body: some View {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -25998,7 +25998,7 @@ const DATA = {
           "line": 60,
           "symbol": ".task(id: rec.id)",
           "note": "分享卡渲染一次",
-          "text": ".toolbar {"
+          "text": ".dsScreenBackground()"
         }
       ],
       "platformEvidence": {
@@ -26634,7 +26634,7 @@ const DATA = {
           "line": 168,
           "symbol": "alarmSection",
           "note": "段结构与处置键",
-          "text": ".frame(maxWidth: .infinity, alignment: .leading)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -26642,7 +26642,7 @@ const DATA = {
           "line": 180,
           "symbol": "AlarmMeta.levelName",
           "note": "严重级",
-          "text": "let disp = RecordOverlay.disposition(rec.mac, rec.key)   // 2026-10-28: 接回真实处置存储"
+          "text": "let dkey = RecordOverlay.oid(mac: rec.mac, rowKey: rec.key)"
         },
         {
           "platform": "ios",
@@ -26650,7 +26650,7 @@ const DATA = {
           "line": 185,
           "symbol": "alarmSection",
           "note": "已处置/未处置徽标",
-          "text": ".foregroundStyle(RecordSearch.toneColor(for: rec.type))"
+          "text": ".font(.system(size: DS.Icon.sm))"
         },
         {
           "platform": "ios",
@@ -26658,7 +26658,7 @@ const DATA = {
           "line": 48,
           "symbol": "body",
           "note": "if rec.alarm 才渲染",
-          "text": "if rec.alarm { alarmSection }"
+          "text": "noteSection     // 186 备注 / 188 标旗"
         }
       ],
       "platformEvidence": {
@@ -26737,7 +26737,7 @@ const DATA = {
           "line": 77,
           "symbol": "fieldSection",
           "note": "字段清单",
-          "text": "/// 抽成函数而不是写在 ViewBuilder 里 —— ViewBuilder 只收 View 表达式，"
+          "text": "/// 2026-10-29：时段标签（自然时段词 + 工作日通勤判断）。"
         },
         {
           "platform": "ios",
@@ -26745,7 +26745,7 @@ const DATA = {
           "line": 88,
           "symbol": "fieldSection",
           "note": "650 时间来源 + 色点",
-          "text": "private var fieldSection: some View {"
+          "text": "@ViewBuilder"
         },
         {
           "platform": "ios",
@@ -26753,7 +26753,7 @@ const DATA = {
           "line": 116,
           "symbol": "fieldSection",
           "note": "凭证维度 (约)",
-          "text": "// 917 同分钟连开注记 (拍板 2026-10-10: **不折叠时间线的行**，只在这里说明)。"
+          "text": "fieldRow(\"开门方式\", kindWord)"
         },
         {
           "platform": "ios",
@@ -26761,7 +26761,7 @@ const DATA = {
           "line": 131,
           "symbol": "fieldSection",
           "note": "归属强度",
-          "text": "if near {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -26769,7 +26769,7 @@ const DATA = {
           "line": 139,
           "symbol": "fieldSection",
           "note": "行标识与 idxRaw",
-          "text": "fieldRow(\"失败原因 (手机侧)\", rec.failMsg)"
+          "text": "if !rec.failMsg.isEmpty {"
         }
       ],
       "platformEvidence": {
@@ -60704,7 +60704,7 @@ const DATA = {
           "line": 228,
           "symbol": "MemberHub.saveExt",
           "note": "归档写入示例",
-          "text": "ForEach(list) { m in"
+          "text": "}"
         },
         {
           "platform": "ios",
