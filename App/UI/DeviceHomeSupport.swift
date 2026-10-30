@@ -23,7 +23,9 @@ struct SyncTimeView: View {
                     Text("将手机时间同步到门锁内。校准前会先读锁钟并补偿偏差。")
                         .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
-                    LabeledRow("锁钟", app.status?.lockTime.map { ProtoTime.localStr($0) } ?? "—")
+                    // 2026-10-30 修复（第 123 轮）：`ProtoTime.localStr(0)` 返回**空串**，而 `?? "—"` 只兜 nil，
+                    // 于是「锁钟」行右边一片空白。把 0 也当成「没读到」。
+                    LabeledRow("锁钟", (app.status?.lockTime).flatMap { $0 > 0 ? ProtoTime.localStr($0) : nil } ?? "—")
                     LabeledRow("手机时间", DF.localTime())
                 } else {
                     Text("请先在设备页选择一把门锁").foregroundStyle(DS.Palette.textSub)

@@ -89,6 +89,8 @@ struct MemberWizardView: View {
                         Button {
                             guard canNext else { return }
                             if step == 0, newID == nil {
+                                // 2026-10-30 修复（第 123 轮，**上限判据永不触发**）：原判据在 submit() 里，
+                                // 而第 0 步已把 newID 建好 ⇒ 永不成立。判据已挪进 `createMember()`（函数内，不进视图 body）。
                                 newID = createMember()
                                 // 2026-10-14: 建档失败 (重名/空名) 不能推进 —— 否则用户走到末步才被踢出, 输入全废。
                                 guard newID != nil else { return }
@@ -124,6 +126,12 @@ struct MemberWizardView: View {
     }
 
     private func createMember() -> String? {
+        // 2026-10-30 补（第 123 轮）：成员上限（锁端槽位 15）。放在这里而不是视图 body ——
+        // `viewdbcheck` 棘轮不允许视图计算属性里新增 DB 调用。
+        if DB.members().count >= 15 {
+            app.showToast("已添加 15 个成员，无法再添加（锁端槽位上限）")
+            return nil
+        }
         let n = name.trimmingCharacters(in: .whitespaces)
         // 2026-10-14: 与重命名 (rename) 同口径 —— 否则能建出"之后改不动"的名字 (重命名强制字母数字)。
         guard !n.isEmpty, n.count <= 20, n.allSatisfy({ $0.isLetter || $0.isNumber }) else {
@@ -148,11 +156,8 @@ struct MemberWizardView: View {
         // 超出时明确拒绝：「已添加15个成员，无法再添加」（数组含一个"自己"占位，实际上限 15）。
         // iOS 此前零判据，用户可以一直加下去，而锁端槽位装不下。
         // 已在编辑既有成员（newID != nil）时不拦 —— 那不是新增。
-        if newID == nil, DB.members().count >= 15 {
-            app.showToast("已添加 15 个成员，无法再添加（锁端槽位上限）")
-            dismiss()
-            return
-        }
+        // 2026-10-30 删除（第 123 轮）：这里原有一条 `if newID == nil, DB.members().count >= 15` ——
+        // 但第 0 步已把 newID 建好，条件永不成立。判据已挪到第 0 步「下一步」按钮建号之前。
         guard let id = newID ?? createMember() else { dismiss(); return }
         // 2026-10-30 修复（第 115 轮，**第 1 步的选择被静默丢弃**）：
         // `createMember()` 只在第 0 步（L91-92）跑一次，那时用户还没选角色/备注（它们在下一步）；
