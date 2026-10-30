@@ -244,6 +244,13 @@ enum CredentialOrg {
         CredGroupMode(rawValue: DB.store.getInt("kf_ccred_prefs", 0) & 1) ?? .type
     }
     static var aliasDisplay: Bool { DB.store.getBool("kf_calias_display", true) }
+    /// 2026-10-30 修复（第 68 轮）：写入口**被删了**，但 UI 的分组切换还在（`memberView.toggle()`）。
+    /// 后果：用户在凭证页切到「按成员分组」，重启 App 后回到「按类型」—— 看着能用，实际不生效。
+    /// `kf_ccred_prefs` 只有 bit0 是分组模式（见上），其余位留给后续偏好，所以这里用掩码写。
+    static func setGroupMode(_ m: CredGroupMode) {
+        let cur = DB.store.getInt("kf_ccred_prefs", 0)
+        DB.store.set("kf_ccred_prefs", (cur & ~1) | m.rawValue)
+    }
 
     // ---------- 182/352 拖拽排序序: "p"/"f" 段各自存 index→元素 数组 ----------
     static func seq(_ mac: String) -> [String: [Int]] {

@@ -189,7 +189,10 @@ struct CredentialsView: View {
                         // 2026-10-27 三轮精简：排序入口已删（排序四档移除）。
                         Button {
                             memberView.toggle()
-            // 2026-10-26 精简：分组模式持久化已删（整理功能移除）。
+                            // 2026-10-30 修复（第 68 轮）：写入口此前被删（下面那行注释记的就是这事），
+                            // 于是这个按钮只在内存里切、重启回到默认。`kf_ccred_prefs` 的读侧一直在，
+                            // 只是没人写 —— 典型的「功能看着能用、实际不生效」。现在接回持久化。
+                            CredentialOrg.setGroupMode(memberView ? .owner : .type)
                         } label: {
                             Label(memberView ? "按类型分组" : "按成员分组", systemImage: "person.2")
                         }

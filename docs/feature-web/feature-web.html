@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T00:05:29.435Z",
+    "generated": "2026-10-30T00:35:08.030Z",
     "sources": [
       {
         "scout": "android-native",
@@ -18210,7 +18210,7 @@ const DATA = {
           "line": 374,
           "symbol": "headerToolbar",
           "note": "",
-          "text": "// 可再次查看的对话框里（用户在交接时自己决定什么时候看）。"
+          "text": "UIApplication.topViewController()?.present(av, animated: true)"
         },
         {
           "platform": "ios",
@@ -18218,7 +18218,7 @@ const DATA = {
           "line": 389,
           "symbol": "headerToolbar",
           "note": "选择按钮",
-          "text": "defer { busyKey = nil; editMode = false; selPwds = []; selFps = [] }"
+          "text": "guard busyKey == nil else { return }"
         },
         {
           "platform": "ios",
@@ -18226,7 +18226,7 @@ const DATA = {
           "line": 396,
           "symbol": "headerToolbar",
           "note": "Menu 溢出",
-          "text": "let extra = (r.failedPwds.count + r.failedFps.count) > 0 ? \" · ⚠ 有 \\(r.failedPwds.count + r.failedFps.count) 条已不在台账\" : \"\""
+          "text": "if r.done > 0 {"
         }
       ],
       "platformEvidence": {
@@ -18379,7 +18379,7 @@ const DATA = {
           "line": 449,
           "symbol": "headerToolbar",
           "note": "segCount",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -18387,7 +18387,7 @@ const DATA = {
           "line": 462,
           "symbol": "segChip",
           "note": "",
-          "text": "UIApplication.topViewController()?.present(alert, animated: true)"
+          "text": "let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)"
         },
         {
           "platform": "ios",
@@ -18395,7 +18395,7 @@ const DATA = {
           "line": 492,
           "symbol": "countForSeg",
           "note": "",
-          "text": "while let presented = vc?.presentedViewController { vc = presented }"
+          "text": "static func topViewController() -> UIViewController? {"
         }
       ],
       "platformEvidence": {
@@ -21246,7 +21246,7 @@ const DATA = {
           "line": 451,
           "symbol": "canEvaluatePolicy",
           "note": "guard ctx.canEvaluatePolicy(...)",
-          "text": "var kind: Int          // 0 密码 / 1 临时码"
+          "text": "static func setEarlyExpireMin(_ mac: String, _ alias: Int, _ m: Int) {"
         },
         {
           "platform": "ios",
@@ -21254,7 +21254,7 @@ const DATA = {
           "line": 460,
           "symbol": "onDeniedPresentFallback",
           "note": "if ok { commit() } else { onDeniedPresentFallback(commit) }",
-          "text": "var at: Double"
+          "text": "var permanent: Bool"
         }
       ],
       "platformEvidence": {
@@ -21610,7 +21610,7 @@ const DATA = {
           "line": 406,
           "symbol": "headerToolbar",
           "note": "toggle + setGroupMode",
-          "text": "/// 922 批量删除: 逐条复用单条「彻底删除」那一支 (锁内直删 + 回收站留档), 不做物理删;"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -60258,7 +60258,7 @@ const DATA = {
           "line": 472,
           "symbol": "reclaimDays()",
           "note": "",
-          "text": "let c = try decoder.container(keyedBy: CodingKeys.self)"
+          "text": "init(step: Int, kind: Int, pwd: String, permanent: Bool, fromISO: String, toISO: String,"
         },
         {
           "platform": "ios",
