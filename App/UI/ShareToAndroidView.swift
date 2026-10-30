@@ -54,7 +54,7 @@ struct ShareToAndroidView: View {
                             .fixedSize(horizontal: false, vertical: true)
 
                         Label {
-                            Text("这张码等于一把钥匙： 只当面给自己人扫， 不要发群里、不要截图外传。")
+                            Text("这张码等于一把钥匙： 只发给自己人（当面扫或单独发给本人）， 不要发群里、不要发到公开场合。")   // 2026-10-30：本页下面就有「分享二维码」按钮，原句「不要截图外传」与它自相矛盾
                                 .fixedSize(horizontal: false, vertical: true)
                         } icon: {
                             Image(systemName: "exclamationmark.shield.fill").accessibilityHidden(true)

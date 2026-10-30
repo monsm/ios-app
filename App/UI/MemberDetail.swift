@@ -321,11 +321,11 @@ struct MemberDetail360View: View {
         //   · 两个按钮的实际行为因此**完全相同** —— 保留「连锁端一起收回」只会让人以为更彻底。
         // 现在只留一个按钮，并把真实后果说清楚。
         let msg = preview.isEmpty
-            ? "确定要删除「" + m.name + "」吗? TA 名下没有台账凭证。本机记录删除后不可恢复。"
-            : "删除「" + m.name + "」后， 名下 " + String(preview.count) + " 条凭证将从**本机台账移除**"
+            ? "确定要删除「" + m.name + "」吗？ TA 名下没有台账凭证。本机记录删除后不可恢复。"   // 2026-10-30：半角「?」统一为全角「？」
+            : "删除「" + m.name + "」后， 名下 " + String(preview.count) + " 条凭证将从本机台账移除"   // 2026-10-30：UIAlertController 不渲染 markdown，星号会原样显示
               + "（本机没有回收站，删除后不可恢复）:\n"
               + preview.prefix(5).joined(separator: "\n") + (preview.count > 5 ? "\n…" : "")
-              + "\n\n⚠ 锁端凭证不受影响 —— 这些密码/指纹在门锁上**仍然有效**，"
+              + "\n\n⚠ 锁端凭证不受影响 —— 这些密码/指纹在门锁上仍然有效，"
               + "必须到门锁键盘上手动删除才会真正失效。指纹一旦在锁端删掉就无法远程补录，只能本人到锁前重录。"
         let alert = UIAlertController(title: "删除成员", message: msg, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "移除档案（锁端需另删）", style: .destructive) { _ in

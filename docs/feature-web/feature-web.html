@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T10:59:44.175Z",
+    "generated": "2026-10-30T11:05:03.185Z",
     "sources": [
       {
         "scout": "android-native",
@@ -19453,7 +19453,7 @@ const DATA = {
           "line": 375,
           "symbol": "pwdClear",
           "note": "",
-          "text": ""
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -28838,7 +28838,7 @@ const DATA = {
           "line": 353,
           "symbol": "PidMap.canTailgate(app.current?.pid ?? 0, fw:)",
           "note": "",
-          "text": "// （全仓无队列类型、无回收站存储），原来只是硬编码 0 凑文案。"
+          "text": "// 2026-10-28：删掉「待下发 N 项 / 回收站 N 条」—— 这两套功能都不存在"
         }
       ],
       "platformEvidence": {
@@ -34716,7 +34716,7 @@ const DATA = {
           "line": 423,
           "symbol": "timeSection",
           "note": "",
-          "text": "})"
+          "text": "app.showToast(\"已设置\")"
         },
         {
           "platform": "ios",
@@ -34724,7 +34724,7 @@ const DATA = {
           "line": 425,
           "symbol": "Picker(\"时间制式\", selection:)",
           "note": "",
-          "text": "}"
+          "text": "UIApplication.topViewController()?.present(alert, animated: true)"
         },
         {
           "platform": "ios",
@@ -34732,7 +34732,7 @@ const DATA = {
           "line": 432,
           "symbol": "VariantToggle(\"显示秒\", isOn:)",
           "note": "",
-          "text": "message: \"被胁迫时输入这个码，App 进入空壳模式：门能开，但凭证与记录显示为空。\\n\\n⚠ 必须与正常密码不同 —— 相同就等于把正常密码当胁迫码用。\","
+          "text": "title: DB.hasDuressCode() ? \"更改胁迫码\" : \"设置胁迫码\","
         }
       ],
       "platformEvidence": {
@@ -34882,7 +34882,7 @@ const DATA = {
           "line": 445,
           "symbol": "unlockSection",
           "note": "",
-          "text": "let f2 = alert.textFields?[1].text ?? \"\""
+          "text": "let f1 = alert.textFields?[0].text ?? \"\""
         },
         {
           "platform": "ios",
@@ -36381,7 +36381,7 @@ const DATA = {
           "line": 358,
           "symbol": "confirmDestructive(\"清空密码\", …)",
           "note": "",
-          "text": "DB.removeDevice(kc.mac)"
+          "text": "confirmDestructiveTyped(\"删除设备\", consequence, requireWord: name, confirmTitle: \"确认删除\") {"
         },
         {
           "platform": "ios",
@@ -36389,7 +36389,7 @@ const DATA = {
           "line": 376,
           "symbol": "DB.saveLedger(m, Ledger())",
           "note": "",
-          "text": "func setPasscode() {"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -36475,7 +36475,7 @@ const DATA = {
           "line": 381,
           "symbol": "deleteDevice()",
           "note": "",
-          "text": "guard ok else { return }"
+          "text": "promptOldPasscode { ok in"
         },
         {
           "platform": "ios",
@@ -36483,7 +36483,7 @@ const DATA = {
           "line": 395,
           "symbol": "confirmDestructiveTyped(\"删除设备\", … requireWord: name)",
           "note": "",
-          "text": "alert.addAction(UIAlertAction(title: \"验证\", style: .default) { _ in"
+          "text": "alert.addAction(UIAlertAction(title: \"取消\", style: .cancel) { _ in then(false) })"
         }
       ],
       "platformEvidence": {
@@ -38718,7 +38718,7 @@ const DATA = {
           "line": 384,
           "symbol": "let pws = DB.listPwds(kc.mac).count",
           "note": "",
-          "text": "return"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -38726,7 +38726,7 @@ const DATA = {
           "line": 392,
           "symbol": "连带删除: 密码台账 … 回收站 … 开门记录 …",
           "note": "",
-          "text": "preferredStyle: .alert)"
+          "text": "message: \"修改或关闭本机密码前需要先验证。\","
         },
         {
           "platform": "ios",
@@ -38734,7 +38734,7 @@ const DATA = {
           "line": 395,
           "symbol": "requireWord: name",
           "note": "",
-          "text": "alert.addAction(UIAlertAction(title: \"验证\", style: .default) { _ in"
+          "text": "alert.addAction(UIAlertAction(title: \"取消\", style: .cancel) { _ in then(false) })"
         }
       ],
       "platformEvidence": {
