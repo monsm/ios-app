@@ -331,12 +331,15 @@ final class LinkSense: ObservableObject {
         // 只取 4 字及以上的码文案: "丢包"/"溢出" 这类两字词出现在别的串里会误判。
         let rcTexts = StatusParser.rcMsg.filter { $0.key != 0 && $0.value.count >= 4 }.map { $0.value }
         if rcTexts.contains(where: { m.contains($0) }) || m.hasPrefix("错误码 ") {
-            return FailKind(name: "指令被拒", hint: "锁端拒绝了这条指令 — 到诊断页「错误码对照表」按码处置; 多为权限/状态不满足， 可重试一次")   // 159 锁端拒绝了这条指令
+            return FailKind(name: "指令被拒", hint: // 2026-10-30 修复（第 86 轮）：原句写「到诊断页『错误码对照表』」——
+// 但诊断页已随十三轮精简**整族删除**（见 SettingsView 自述），用户找不到它。
+// 改指向真实存在的「设置-锁段-协议自测」（ProtocolTestView，可发回声探测确认链路）。
+"锁端拒绝了这条指令 — 多为权限/状态不满足， 可重试一次; 反复失败可到「设置-锁段-协议自测」查链路")   // 159 锁端拒绝了这条指令
         }
         if m.contains("未发现") || m.contains("扫描") || m.contains("超时") {
             return FailKind(name: "设备类", hint: "确认门锁通电并靠近 1 米内; 频繁失败先查电量")
         }
-        return FailKind(name: "协议类", hint: "会话/指令异常 — 到诊断页跑一键体检， 或重置重配该锁")
+        return FailKind(name: "协议类", hint: "会话/指令异常 — 到「设置-锁段-协议自测」确认链路， 或重置重配该锁")
     }
 
 

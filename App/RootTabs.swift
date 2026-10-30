@@ -125,10 +125,11 @@ extension RootView {
         // 冷启动必跑（原入口的触发条件"appUnlocked 变为 true"在删掉启动门禁后永不成立）。
         app.restoreLastTab()          // 161: 回到上次停留的 Tab（内部见 pendingRoute 就避让）
         app.applyPendingRoute()       // 落地挂起的深链
-        let selfCheckBad = app.runSelfCheck397()
-        if selfCheckBad > 0 {
-            app.showToast("本机自检发现 \(selfCheckBad) 项异常，详见「设置-诊断」")   // 397 本机自检发现
-        }
+        // 2026-10-30 修复（第 86 轮）：`runSelfCheck397()` 恒返回 0（SelfCheck 三项检查已随诊断族移除），
+        // 所以这个 `if` 分支**永不执行**，而它的文案还指向已删除的「设置-诊断」——
+        // 两重死代码（永不触发的分支 + 指向不存在的页面）。
+        // 删掉整段：真需要自检时再恢复 `SelfCheck`，届时一并恢复这里的提示。
+        // 保留调用本身（无副作用，恒 0）会让读代码的人以为"冷启动有自检"—— 所以连调用一起去。
         RootView.registerHost(app)   // 包2: LinkSense 宿主注册 + 回连/巡检循环
         LinkSense.shared.coldStartScan()   // 包2/134 冷启动先扫描 (定位可见锁, 不连接)
         // 2026-10-18 冷启动预连接（用户口径："打开 app 1 秒内做完一遍"）。
@@ -217,7 +218,7 @@ extension RootView {
         }
         // 2026-10-26: 这里原本是 `.onChange(of: app.appUnlocked)`，承接三件事：
         //   · 解锁后 restoreLastTab() —— 回到上次停留的 Tab
-        //   · 解锁后 runSelfCheck397() —— 本机库体自检（异常才出声）
+    //   · 解锁后自检 —— SelfCheck 与 runSelfCheck397 已在第 86 轮删除（诊断族移除后只剩空壳）
         //   · 锁落下时 revokeSessionGrants() —— 这条**已改挂** scenePhase == .background（见 handleScenePhase）
         // 2026-10-17 拍板删掉启动门禁后 init() 里 `appUnlocked = true`，此后它**再也不会变**，
         // 于是这个 onChange 一次都不触发 —— 三件事全部静默失效（"回到上次停留"与自检一直没跑）。
