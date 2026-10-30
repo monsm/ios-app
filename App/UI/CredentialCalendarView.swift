@@ -6,7 +6,9 @@
 // 设计取向：
 //   · 只做「到期」这一件事，不把日历做成第二个台账列表；
 //   · 格子里只有数字角标，点开才出当天清单（避免一屏几百条）；
-//   · 到期判断走 `CredentialOrg.expiryDate`（与凭证列表的「已过期/即将过期」同一口径）。
+//   · 到期判断只走 `CredentialOrg.expiryDate`（按「到期日」）；凭证列表那侧还多一档
+//     `isEarlyExpired` / `effectiveExpiry`（提前 N 分钟失效），本页**不含**那一档 ——
+//     2026-10-30 修正原注释「与凭证列表同一口径」的夸大说法。
 import SwiftUI
 
 struct CredentialCalendarView: View {
