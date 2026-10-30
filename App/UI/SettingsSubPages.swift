@@ -93,6 +93,9 @@ struct SafemodeIntroView: View {
     var mode = "safe"
     @EnvironmentObject var app: AppState
     @State private var switching = false      // 拍板 #2: cmd20 下发中, 防止连点重复改锁端策略
+    /// 2026-10-30 标注（第 148 轮）：`mode == "otp"` 分支**全仓不可达** —— 两个调用点
+    /// （`LockSettingsView:121` 与 `QuickPool:182`）传的都是 `SafemodeIntroView()`，没有任何地方传 `mode: "otp"`。
+    /// 临时码说明已并入 `TempCodeStudio`，这个分支是历史残留（保留代码，标注以免误以为在用）。
     private var isOtp: Bool { mode == "otp" }
 
     var body: some View { vkBody.destined(.safemodeIntro) }
