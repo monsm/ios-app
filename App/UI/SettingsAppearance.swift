@@ -232,6 +232,13 @@ extension SettingsView {
                 }
             }
             .pickerStyle(.menu)
+            // 2026-10-30 修复（第 69 轮）：`kf_quiet_night` **只有读点、没有写点，也没有开关 UI** ——
+            // 于是 CareSchedule.quietOn 永远取默认 true，用户无法关掉夜间免扰。
+            // 而它唯一消费点（UnlockDial:238）是「夜间静音低电提示音」：
+            // 想听见提示的人没有任何办法打开。补上这枚开关，与低电阈值同组（都是低电关怀的一部分）。
+            VariantToggle("夜间免扰 (22:00–08:00 静音提示音)", isOn: Binding(
+                get: { CareSchedule.quietOn },
+                set: { app.setUnlockOption("kf_quiet_night", $0) }))
             Button { app.resetAppearance() } label: {
                 Label("恢复默认外观", systemImage: "arrow.uturn.backward.circle")
             }
