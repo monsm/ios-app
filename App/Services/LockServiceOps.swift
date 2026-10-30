@@ -48,7 +48,7 @@ extension LockService {
             connectedDeviceId = ""
             connectedMAC = ""
             sessionTokenHex = "0000"
-            tokenExpiryMs = 0
+            tokenExpiryMs = 0; tokenFetchedAtMs = 0
             if hadLink { log("warn", "探测用临时链路已撤下 — 原有链路需按需重连") }
         }
         return try await sendEcho(valueHex)

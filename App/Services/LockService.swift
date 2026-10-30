@@ -22,6 +22,9 @@ final class LockService: ObservableObject {
     let ble = BLEService.shared
     var sessionTokenHex: String = "0000"   // 锁端上报令牌的原始 hex — 整串透传 (JS utils/session.js:15 保存 k.val 全串)
     var tokenExpiryMs: Int64 = 0
+    /// 2026-10-30（提速）: 令牌**取到的那一刻**（epoch ms）。有界复用的年龄判据用它 ——
+    /// `tokenExpiryMs` 是锁端 TTL 的绝对到期，回答不了"这枚令牌有多旧"。
+    var tokenFetchedAtMs: Int64 = 0
     var curMac: String = ""
     var pairMac: String?
     var connectedDeviceId: String = ""  // BLE deviceId (UUID); connectedMAC = 解析出的锁 MAC

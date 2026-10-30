@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T14:20:57.072Z",
+    "generated": "2026-10-30T14:39:54.233Z",
     "sources": [
       {
         "scout": "android-native",
@@ -41514,7 +41514,7 @@
           "line": 68,
           "symbol": "disconnect",
           "note": "断链复位令牌与 ttl",
-          "text": "var collectorCmd: UInt8 = 0"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -44396,7 +44396,7 @@
           "line": 72,
           "symbol": "ensureConnected",
           "note": "",
-          "text": "// rc 所在 KLV key (JS lock.js RC_KLV, 勘误后权威表)"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -44404,7 +44404,7 @@
           "line": 75,
           "symbol": "ensureConnected",
           "note": "已连也要绑 curMac",
-          "text": "0x15, 0x16, 0x18, 0x19, 0x20, 0x21, 0x22, 0x24,"
+          "text": "// rc 所在 KLV key (JS lock.js RC_KLV, 勘误后权威表)"
         },
         {
           "platform": "ios",
@@ -44412,7 +44412,7 @@
           "line": 107,
           "symbol": "ensureConnected",
           "note": "pid 不符断开",
-          "text": ""
+          "text": "/// 全看这个钟, 所以这个空操作会把后面每一类命令都拖进时间问题里。"
         },
         {
           "platform": "ios",
@@ -44420,7 +44420,7 @@
           "line": 122,
           "symbol": "ensureConnected",
           "note": "复核通过才写缓存",
-          "text": ""
+          "text": "struct LogPage { var surplus: Int?; var logs: [LogEntry] }"
         }
       ],
       "platformEvidence": {
@@ -52736,7 +52736,7 @@
           "line": 62,
           "symbol": "disconnect",
           "note": "断链清 collector",
-          "text": "var cmd: UInt8"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -52828,7 +52828,7 @@
           "line": 62,
           "symbol": "disconnect",
           "note": "",
-          "text": "var cmd: UInt8"
+          "text": ""
         }
       ],
       "platformEvidence": {

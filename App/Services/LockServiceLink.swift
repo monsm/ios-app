@@ -22,7 +22,7 @@ extension LockService {
         connectedMAC = ""
         curMac = ""
         sessionTokenHex = "0000"
-        tokenExpiryMs = 0
+        tokenExpiryMs = 0; tokenFetchedAtMs = 0
     }
 
     // 幂等按需连接: 已连同一把 → 直接; 缓存 bleId → 直连; 失败 → MAC 扫描解析 (回写缓存)
@@ -138,6 +138,20 @@ extension LockService {
         // 原实现缓存令牌 45s 复用，而 vendor `lock.js:247-250` 明确废除过这个口径（V81：无条件刷新）。
         // 加上 iOS 原先不重试 rc=13，就成了三端唯一「复用 + 不重试」的组合 —— 没有兜底。
         // 代价是多一次 cmd01 往返（约 100ms），换来的是不会拿过期令牌去发写命令。
+        // 2026-10-30（提速，**省一次蓝牙往返 ≈100ms**）：有界复用。
+        // 2026-10-27 曾把 45s 复用整个删掉，理由是「复用 + 不重试 rc=13」没有兜底。
+        // 现在 `exec` 已有 rc=3 / rc=13 的「刷令牌重试一次」（见 exec 开头），兜底在了。
+        // 恢复**短窗**复用：只认 20 秒内取到的令牌，且锁端 TTL 未到（留 2s 余量）。
+        // 20s 远小于锁端常见 45s TTL —— 不存在"拿快过期的令牌去发写命令"。
+        // 复用命中 = 开锁链从「cmd01 + cmd04 两次往返」变成「cmd04 一次往返」。
+        let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+        let tokenFresh = tokenExpiryMs > nowMs + 2000
+        let tokenYoung = tokenFetchedAtMs > 0 && nowMs - tokenFetchedAtMs < 20_000
+        let tokenReal = sessionTokenHex != "0000" && !sessionTokenHex.isEmpty
+        if tokenFresh, tokenYoung, tokenReal {
+            log("info", "复用会话令牌 (年龄 \(nowMs - tokenFetchedAtMs)ms) — 省一次 cmd01 往返")
+            return
+        }
         log("info", "刷新会话令牌 (cmd 01)")
         let f = try await request(ZKCmdBuilder.cmd01Session(), cmd: 0x01, needToken: false, retries: 3)
         guard let k = f.klvs.first(where: { $0.key == 0x02 }) else {
@@ -160,6 +174,7 @@ extension LockService {
         // 安全类型编为 2 字节 (如 "0200"→512&3=0) 或缺 KLV#01 的固件配网必败, 而小程序正常。
         // 旧实现 readU16LE 把令牌截成 2 字节: 锁若上报 4B 令牌, 注入值就是错的 → 所有需令牌写命令必失败
         sessionTokenHex = k.val.lowercased()
+        tokenFetchedAtMs = Int64(Date().timeIntervalSince1970 * 1000)   // 提速: 记下取到时刻供有界复用
         let secs = f.klvs.first(where: { $0.key == 0x03 }).map { UInt16(truncatingIfNeeded: HexKit.readU16LE($0.val, byteOffset: 0)) } ?? 0
         // JS session.js: ttl=0 保留默认 45s — now+0+2s 会立即过期
         // ⚠️ 2026-10-18: 这一行**必须**保持原样（`Int64(secs) * 1000 + 2000`）。
