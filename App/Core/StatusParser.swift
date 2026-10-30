@@ -214,3 +214,13 @@ enum StatusParser {
 
     static func rcFriendly(_ rc: Int) -> String { rcHint(rc) ?? rcMessage(rc) }
 }
+
+extension LockStatus {
+    /// 安全模式显示名（A/B/C）。**全仓唯一口径**。
+    /// 2026-10-30（第 140 轮）：此前有三份拷贝（DeviceInfoView 与 LockSettingsView 各写一份，后者还写了两处），
+    /// 且空格不一致 —— DeviceInfoView 写「C模式」，LockSettingsView 写「C 模式」。现在统一带空格。
+    var modeText: String {
+        if verifyMode == 1 && broadcastMode == 0 { return "C 模式" }
+        return verifyMode == 0 ? "A 模式" : "B 模式"
+    }
+}

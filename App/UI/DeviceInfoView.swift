@@ -233,17 +233,8 @@ struct DeviceInfoView: View {
         let p = BatteryCare.displayPct(kc?.mac ?? "", snapshot: status?.powerLevel ?? app.snapshot?.powerLevel ?? -1)
         return p < 0 ? "—" : (p > 80 ? ">80%" : "\(p)%")
     }
-    private var modeText: String {
-        guard let s = status else { return "—" }
-        // 2026-10-28 补 C 模式：APK 的判据链是
-        //   0 == verifyMode                    → "A模式"
-        //   1 == verifyMode                    → "B模式"
-        //   1 == verifyMode && 0 == broadcastMode → "C模式"（覆盖前一条）
-        // iOS 此前只做前两条，于是 KX 进 C 级后仍显示 B —— 用户解释不了"为什么收不到通知"。
-        // broadcastMode 早已在 StatusParser.swift:77 解析，只是零消费。
-        if s.verifyMode == 1 && s.broadcastMode == 0 { return "C模式" }
-        return s.verifyMode == 0 ? "A模式" : "B模式"
-    }
+    /// 2026-10-30：判据链已抽到 `LockStatus.modeText`（全仓唯一一份）。
+    private var modeText: String { status?.modeText ?? "—" }
 
     private func reload() async {
         guard let kc = app.current, !busy else { return }

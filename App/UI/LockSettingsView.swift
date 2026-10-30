@@ -68,7 +68,7 @@ struct LockSettingsView: View {
             LabeledRow("锁钟偏差", driftLabel)
             LabeledRow("门锁电量", batteryLabel)
             if let s = app.status {
-                LabeledRow("安全模式", modeLabel(s))
+                LabeledRow("安全模式", s.modeText)
                 LabeledRow("锁内时间", s.lockTime.map { ProtoTime.localStr($0) } ?? "—")
             }
             // 2026-10-29 入口去重：锁信息名片收进「概览」底部（唯一入口）。
@@ -102,10 +102,7 @@ struct LockSettingsView: View {
         return p < 0 ? "—" : (p > 80 ? ">80%" : "\(p)%")
     }
 
-    private func modeLabel(_ s: LockStatus) -> String {
-        if s.verifyMode == 1 && s.broadcastMode == 0 { return "C 模式" }
-        return s.verifyMode == 0 ? "A 模式" : "B 模式"
-    }
+    // 2026-10-30：`modeLabel` 已删 —— 判据抽到 `LockStatus.modeText`（全仓唯一一份）。
 
     // MARK: - 能力（6 项，按 pid 裁剪）
 
@@ -215,11 +212,8 @@ struct LockSettingsView: View {
     }
 
     /// 安全模式 A/B/C：与 `DeviceInfoView.modeText` 同一判据链。
-    private var safemodeText: String {
-        guard let s = app.status else { return "" }
-        if s.verifyMode == 1 && s.broadcastMode == 0 { return "C 模式" }
-        return s.verifyMode == 0 ? "A 模式" : "B 模式"
-    }
+    /// 安全模式 A/B/C —— 2026-10-30：改用 `LockStatus.modeText`（与 DeviceInfoView 同一份）。
+    private var safemodeText: String { app.status?.modeText ?? "" }
 
     private var driftText: String {
         guard let d = app.status?.lockTime, d > 0 else { return "" }
