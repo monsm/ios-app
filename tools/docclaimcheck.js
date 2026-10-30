@@ -42,12 +42,36 @@ const CLAIMS = [
     proofNeedle: 'android {',
     why: 'android-app/ 是真实可编译的 Kotlin 工程，CI 的 Build (Android 13+, APK) 每次构建',
   },
+  {
+    doc: "docs/最终验收清单.md",
+    claim: "闸门数",
+    dynamic: "gateCount",
+    why: "闸门数是 allgates.js 实际调度的条目数，可机器算",
+  },
 ];
 
 const bad = [];
 const okList = [];
 
 for (const c of CLAIMS) {
+  // 动态判据单独处理（不依赖 proofFile/proofNeedle）
+  if (c.dynamic === "gateCount") {
+    const agSrc = fs.readFileSync(path.join(ROOT, "tools", "allgates.js"), "utf8");
+    const realCount = [...agSrc.matchAll(/\['(\w+)',\s*\[/g)].length;
+    const docP2 = path.join(ROOT, c.doc);
+    if (!fs.existsSync(docP2)) { okList.push(c.claim + ": 文档不存在，跳过"); continue; }
+    const docSrc2 = fs.readFileSync(docP2, "utf8");
+    const claimed = [...docSrc2.matchAll(/闸门 (\d+) 道/g)].map(m => parseInt(m[1]));
+    const wrong = claimed.filter(n => n !== realCount);
+    if (wrong.length) {
+      bad.push(c.doc + ": 写着「闸门 " + wrong[0] + " 道」，而 allgates 实际调度 " + realCount + " 道（" + c.why + "）");
+    } else if (claimed.length) {
+      okList.push(c.claim + ": 文档写 " + claimed[0] + " 道，与 allgates 实际一致");
+    } else {
+      okList.push(c.claim + ": 文档未写闸门数（跳过）");
+    }
+    continue;
+  }
   const docP = path.join(ROOT, c.doc);
   const proofP = path.join(ROOT, c.proofFile);
 
