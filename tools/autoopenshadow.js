@@ -170,6 +170,30 @@ for (const c of CASES) {
     bad++; console.log("✗ Swift 源码漂移: BLEService 没有连接层测距 → 连上锁之后没有 RSSI 样本, armed 回不来");
   }
 }
+// REPLICA_GUARD —— 2026-10-31（第 26 轮，结构性改进）：
+//
+// 本文件是 Swift `AutoOpenKit` 的 **JS 复刻**。复刻与实现是两个真相来源，会漂：
+// 第 13 轮把 Swift 的 `feedRssi` 改成调 `rssiArmedByMedian`，而这里仍在测旧的
+// `rssiSample` —— 闸门输出 ✓，验的却是历史代码。那种"假安心"比没有闸门更危险。
+//
+// 存在性自检：凡断言里测的函数名，必须在 Swift 源码里找得到。
+// 实现改名/删除时立刻红，而不是静默继续测旧代码。
+{
+  const REPLICATED = ["faceFresh", "defendActive", "armThreshold", "disarmThreshold",
+                      "rssiSample", "rssiArmedByMedian", "p95"];
+  const _fs = require("fs");
+  const _path = require("path");
+  const SWIFT_SRC = _fs.readFileSync(_path.join(__dirname, "..", "App", "Core", "AutoOpen.swift"), "utf8");
+  const missing = REPLICATED.filter(fn => !new RegExp("func\\s+" + fn + "\\s*\\(").test(SWIFT_SRC));
+  if (missing.length) {
+    bad++;
+    console.log("✗ REPLICA_GUARD: 以下函数在 App/Core/AutoOpen.swift 里已不存在 — " + missing.join(", "));
+    console.log("  本影子的复刻与实现已漂开，先更新复刻再谈对拍。");
+  } else {
+    console.log("ok    REPLICA_GUARD 复刻的 " + REPLICATED.length + " 个函数在 Swift 源码里都存在");
+  }
+}
+
 const total = CASES.length;
 console.log(`AUTOOPEN 影子对拍: ${total - bad}/${total} 条与 Swift 期望表一致`
   + (bad ? ` ⇒ ✗ ${bad} 条漂开 (改一侧时另一侧要跟上；或复刻本身与 Swift 源码不符)` : ' ✓'));

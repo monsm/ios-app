@@ -421,5 +421,19 @@ const RB = parseInt(BASE_M[1], 10);   // 真实武装线
 }
 console.log('--- C 公式校验: BASE=' + RB + ' 武装线=' + arm(RB) + ' 解除线=' + disarm(RB) + ' ---');
 
+// REPLICA_GUARD —— 2026-10-31（第 26 轮，与 autoopenshadow 同一条结构性改进）：
+// 本文件是 Kotlin `AutoOpenKit` 的 JS 复刻；复刻与实现会漂（第 23 轮 Kotlin 改中值后
+// 这里仍在测旧单样本）。凡断言里测的函数名，必须在 AutoOpenKit.kt 里找得到。
+{
+  const REPLICATED = ["armThreshold", "disarmThreshold", "rssiSample", "rssiArmedByMedian", "coolReady"];
+  const missing = REPLICATED.filter(fn => !new RegExp("fun\\s+" + fn + "\\s*\\(").test(KT_SRC));
+  if (missing.length) {
+    bad("REPLICA_GUARD: 以下函数在 AutoOpenKit.kt 里已不存在 — " + missing.join(", ") +
+        "（本影子的复刻与实现已漂开，先更新复刻）");
+  } else {
+    good("REPLICA_GUARD 复刻的 " + REPLICATED.length + " 个函数在 Kotlin 源码里都存在");
+  }
+}
+
 console.log(fails ? '\n影子对拍不通过 (' + fails + ')' : '\n全部通过');
 process.exit(fails ? 1 : 0);
