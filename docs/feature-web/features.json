@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T11:07:13.180Z",
+    "generated": "2026-10-30T11:11:07.742Z",
     "sources": [
       {
         "scout": "android-native",
@@ -19101,7 +19101,7 @@
           "line": 332,
           "symbol": "Button 清空密码",
           "note": "",
-          "text": "}"
+          "text": "app.showToast(\"在设备页点「管理这把锁」进入锁设置\")"
         },
         {
           "platform": "ios",
@@ -28502,7 +28502,7 @@
           "line": 327,
           "symbol": "if canTailgate { NavigationLink(\"防尾随入室\") }",
           "note": "",
-          "text": "/// 2026-10-29：锁设置只有设备页「管理这把锁」一个入口。"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -28510,7 +28510,7 @@
           "line": 353,
           "symbol": "PidMap.canTailgate(app.current?.pid ?? 0, fw:)",
           "note": "",
-          "text": "// 2026-10-28：删掉「待下发 N 项 / 回收站 N 条」—— 这两套功能都不存在"
+          "text": "if pws + fps + recs > 0 {"
         }
       ],
       "platformEvidence": {
@@ -28723,7 +28723,7 @@
           "line": 332,
           "symbol": "布防行状态",
           "note": "",
-          "text": "}"
+          "text": "app.showToast(\"在设备页点「管理这把锁」进入锁设置\")"
         },
         {
           "platform": "ios",
@@ -33605,7 +33605,7 @@
           "line": 278,
           "symbol": "lockSection",
           "note": "",
-          "text": "} label: {"
+          "text": "h.go()"
         },
         {
           "platform": "ios",
@@ -33613,7 +33613,7 @@
           "line": 287,
           "symbol": "if app.current == nil { GuidedEmptyView(…) }",
           "note": "",
-          "text": "Section {"
+          "text": "if !query.trimmingCharacters(in: .whitespaces).isEmpty && searchHits.isEmpty {"
         },
         {
           "platform": "ios",
@@ -33621,7 +33621,7 @@
           "line": 337,
           "symbol": "Button { showAdd = true } label: { Label(\"添加另一把锁\") }",
           "note": "",
-          "text": "Text(s)"
+          "text": "func note(_ s: String) -> some View {"
         }
       ],
       "platformEvidence": {
@@ -34388,7 +34388,7 @@
           "line": 423,
           "symbol": "timeSection",
           "note": "",
-          "text": "app.showToast(\"已设置\")"
+          "text": "DB.setPasscode(f1)"
         },
         {
           "platform": "ios",
@@ -34396,7 +34396,7 @@
           "line": 425,
           "symbol": "Picker(\"时间制式\", selection:)",
           "note": "",
-          "text": "UIApplication.topViewController()?.present(alert, animated: true)"
+          "text": "})"
         },
         {
           "platform": "ios",
@@ -34404,7 +34404,7 @@
           "line": 432,
           "symbol": "VariantToggle(\"显示秒\", isOn:)",
           "note": "",
-          "text": "title: DB.hasDuressCode() ? \"更改胁迫码\" : \"设置胁迫码\","
+          "text": "let alert = UIAlertController("
         }
       ],
       "platformEvidence": {
@@ -34554,7 +34554,7 @@
           "line": 445,
           "symbol": "unlockSection",
           "note": "",
-          "text": "let f1 = alert.textFields?[0].text ?? \"\""
+          "text": "alert.addAction(UIAlertAction(title: \"确定\", style: .default) { _ in"
         },
         {
           "platform": "ios",
@@ -35884,7 +35884,7 @@
           "line": 254,
           "symbol": "return all.filter { $0.title.localizedCaseInsensitiveContains(q) || $0.id.hasSuffix(q) }",
           "note": "",
-          "text": "// 2026-10-28 界面审核修复：删掉重复的 `s.backupstudio` 搜索项 ——"
+          "text": "SearchHit(id: \"s.backup\", title: \"备份与恢复\", icon: \"externaldrive\") { showBackup = true },"
         }
       ],
       "platformEvidence": {
@@ -36037,7 +36037,7 @@
           "line": 332,
           "symbol": "Button(\"清空密码\", role: .destructive) { clearPwd() }",
           "note": "",
-          "text": "}"
+          "text": "app.showToast(\"在设备页点「管理这把锁」进入锁设置\")"
         },
         {
           "platform": "ios",
@@ -36053,7 +36053,7 @@
           "line": 358,
           "symbol": "confirmDestructive(\"清空密码\", …)",
           "note": "",
-          "text": "confirmDestructiveTyped(\"删除设备\", consequence, requireWord: name, confirmTitle: \"确认删除\") {"
+          "text": "consequence += \" 删除后若未做过备份将无法找回。\""
         },
         {
           "platform": "ios",
@@ -36061,7 +36061,7 @@
           "line": 376,
           "symbol": "DB.saveLedger(m, Ledger())",
           "note": "",
-          "text": ""
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -36139,7 +36139,7 @@
           "line": 338,
           "symbol": "Button(\"删除设备\", role: .destructive) { deleteDevice() }",
           "note": "",
-          "text": ".vkFont(.caption)"
+          "text": "Text(s)"
         },
         {
           "platform": "ios",
@@ -36147,7 +36147,7 @@
           "line": 381,
           "symbol": "deleteDevice()",
           "note": "",
-          "text": "promptOldPasscode { ok in"
+          "text": "if DB.hasPasscode() {"
         },
         {
           "platform": "ios",
@@ -36155,7 +36155,7 @@
           "line": 395,
           "symbol": "confirmDestructiveTyped(\"删除设备\", … requireWord: name)",
           "note": "",
-          "text": "alert.addAction(UIAlertAction(title: \"取消\", style: .cancel) { _ in then(false) })"
+          "text": "alert.addTextField { $0.isSecureTextEntry = true; $0.keyboardType = .numberPad }"
         }
       ],
       "platformEvidence": {
@@ -36224,7 +36224,7 @@
           "line": 305,
           "symbol": "VariantToggle(\"静音模式\", isOn:)",
           "note": "",
-          "text": "message: \"添加后这一段才会出现锁档案与删除。三步走： 连上锁 → 录凭证 → 开门。\","
+          "text": "title: \"还没有添加门锁\","
         },
         {
           "platform": "ios",
@@ -36240,7 +36240,7 @@
           "line": 314,
           "symbol": "try await app.lock.setSilent(silent)",
           "note": "",
-          "text": "}"
+          "text": "Label(\"锁档案 (昵称/符号/色标/备注)\", systemImage: \"person.text.rectangle\")"
         },
         {
           "platform": "ios",
@@ -36248,7 +36248,7 @@
           "line": 342,
           "symbol": "muteStored",
           "note": "",
-          "text": ""
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -36325,7 +36325,7 @@
           "line": 299,
           "symbol": "NavigationLink(\"锁档案 (昵称/符号/色标/备注)\") { LockProfileView() }",
           "note": "",
-          "text": "//   · 锁设置       → 设备页「管理这把锁」是唯一入口（本页不再重复）"
+          "text": "//   · 锁信息名片   → 已收进「锁设置 → 概览」底部一行（唯一入口）"
         },
         {
           "platform": "ios",
@@ -36333,7 +36333,7 @@
           "line": 301,
           "symbol": "NavigationLink(\"连接与预握手 (自动预热/成功率)\") { LinkPrefsView(mac: mac) }",
           "note": "",
-          "text": "// 留下的是**只有设置页才有**的三项：锁档案 / 分享给安卓 / 删除设备。"
+          "text": "//   · 添加另一把锁 → 设备页右上角「+」是唯一入口"
         },
         {
           "platform": "ios",
@@ -36341,7 +36341,7 @@
           "line": 303,
           "symbol": "Button(\"锁信息名片\") { showDeviceInfo = true }",
           "note": "",
-          "text": "GuidedEmptyView(systemImage: \"lock\","
+          "text": "if app.current == nil {"
         }
       ],
       "platformEvidence": {
@@ -36407,7 +36407,7 @@
           "line": 325,
           "symbol": "NavigationLink(\"校准门锁时间\") { SyncTimeView() }",
           "note": "",
-          "text": "}"
+          "text": "app.showToast(\"在设备页右上角点「+」添加门锁\")"
         },
         {
           "platform": "ios",
@@ -36415,7 +36415,7 @@
           "line": 326,
           "symbol": "note(\"锁端时钟不准时，临时码和有效期会失效。\")",
           "note": "",
-          "text": ""
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -38307,7 +38307,7 @@
           "line": 262,
           "symbol": "if let a = h.anchor { groupFilter = a.group; … scrollTo }",
           "note": "",
-          "text": "}"
+          "text": "return all.filter { $0.title.localizedCaseInsensitiveContains(q) || $0.id.hasSuffix(q) }"
         },
         {
           "platform": "ios",
@@ -38315,7 +38315,7 @@
           "line": 270,
           "symbol": "h.go()",
           "note": "",
-          "text": "// ① 先把该节所属的分组切过去 —— 否则这一节可能压根没被渲染, scrollTo 会落空"
+          "text": "if let a = h.anchor {"
         },
         {
           "platform": "ios",
@@ -38390,7 +38390,7 @@
           "line": 384,
           "symbol": "let pws = DB.listPwds(kc.mac).count",
           "note": "",
-          "text": "}"
+          "text": "presentSetPasscodeAlert()"
         },
         {
           "platform": "ios",
@@ -38398,7 +38398,7 @@
           "line": 392,
           "symbol": "连带删除: 密码台账 … 回收站 … 开门记录 …",
           "note": "",
-          "text": "message: \"修改或关闭本机密码前需要先验证。\","
+          "text": "let alert = UIAlertController(title: \"验证原密码\","
         },
         {
           "platform": "ios",
@@ -38406,7 +38406,7 @@
           "line": 395,
           "symbol": "requireWord: name",
           "note": "",
-          "text": "alert.addAction(UIAlertAction(title: \"取消\", style: .cancel) { _ in then(false) })"
+          "text": "alert.addTextField { $0.isSecureTextEntry = true; $0.keyboardType = .numberPad }"
         }
       ],
       "platformEvidence": {

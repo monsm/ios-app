@@ -285,7 +285,7 @@ struct MemberCenterView: View {
                 .frame(minHeight: DS.Hit.min)
             }
             .buttonStyle(PlainButtonStyle())
-            .accessibilityLabel("访客虚拟分组， 约 \(opens) 条未归属临时码记录")
+            .accessibilityLabel("访客虚拟分组， 约 \(opens) 条未归属临时码记录， 名下临时码 \(temps) 条")   // 2026-10-30：可见文本报了「未归属记录」与「名下临时码」两个数，a11y 覆盖后只播前一个
         } header: {
             Text("访客 (虚拟分组)")
         } footer: {

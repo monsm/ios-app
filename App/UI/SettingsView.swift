@@ -236,10 +236,11 @@ struct SettingsView: View {
             // 2026-10-26: 今日新增的四项补进搜索索引 —— 入口在门锁段/工具段里，但索引此前没登记，
             // 于是搜「布防」「手机钥匙」「固件升级」「只读」都是零结果。
             //
-            // ⚠ 这四个页面是 NavigationLink push 进去的，SearchHit 只能"滚动定位"到某一节，
-            //    没有程序化 push 的入口（设置页用的是 NavigationLink 声明式，不是 path 栈）。
-            //    所以这里只给 anchor（保证滚到对应段，用户看到那一行再点），
-            //    **不给 go** —— 给一个空的 go 会让人以为点搜索就直接进页面，实际只滚动。
+            // ⚠ 2026-10-30 修正（第 137 轮）：原注释说这四项「只给 anchor，不给 go」——
+            //    但实际 243（布防）与 245（固件升级）都给的是 `{ openLockSettings() }`，只有
+            //    244（手机钥匙）与 246（只读试验）是纯 anchor。照实写：
+            //    · 能从本页直接打开 sheet 的 → 给 go；
+            //    · 只能滚动定位到某一节、要用户自己再点那一行的 → 只给 anchor（给空的 go 会让人以为点搜索就进页面）。
             SearchHit(id: "s.defend", title: "布防 (时段内否决自动开锁)", icon: "shield.lefthalf.filled") { openLockSettings() },
             SearchHit(id: "s.mobilekey", title: "手机钥匙 (给成员发数字钥匙)", icon: "iphone.gen3", anchor: .family),
             SearchHit(id: "s.dfu", title: "固件升级 (Nordic DFU)", icon: "arrow.up.circle") { openLockSettings() },
