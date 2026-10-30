@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T15:17:52.142Z",
+    "generated": "2026-10-30T15:34:12.690Z",
     "sources": [
       {
         "scout": "android-native",
@@ -58880,7 +58880,7 @@ const DATA = {
           "line": 292,
           "symbol": "highContrast",
           "note": "",
-          "text": ".frame(maxWidth: .infinity, alignment: .leading)"
+          "text": "// 207 电量数字滚动 = 这一处 contentTransition(.numericText()): 读数换值时逐位滚过去而不是硬跳。"
         },
         {
           "platform": "ios",
@@ -58996,7 +58996,7 @@ const DATA = {
           "line": 287,
           "symbol": "isAMOLED",
           "note": "",
-          "text": ".fontDesign(DS.Metric.digitDesign)   // 902 数字字体两档: 圆体/默认体走令牌 (设置-外观可切), 中文自动回退苹方"
+          "text": "// 苹方数字是比例宽度: 9%→10% 会让整块宽度跳动, 必须等宽"
         },
         {
           "platform": "ios",
@@ -59004,7 +59004,7 @@ const DATA = {
           "line": 292,
           "symbol": "highContrast",
           "note": "",
-          "text": ".frame(maxWidth: .infinity, alignment: .leading)"
+          "text": "// 207 电量数字滚动 = 这一处 contentTransition(.numericText()): 读数换值时逐位滚过去而不是硬跳。"
         },
         {
           "platform": "ios",
@@ -59012,7 +59012,7 @@ const DATA = {
           "line": 381,
           "symbol": "amoledOverride",
           "note": "",
-          "text": "// 248: 22 点后光源与圆盘同档降峰值"
+          "text": "Circle()"
         },
         {
           "platform": "ios",
@@ -59020,7 +59020,7 @@ const DATA = {
           "line": 324,
           "symbol": "hairlineStrong",
           "note": "",
-          "text": ".lineLimit(1)"
+          "text": ".foregroundStyle(tint ?? DS.heroFg.opacity(0.85))"
         }
       ],
       "platformEvidence": {
@@ -59173,7 +59173,7 @@ const DATA = {
           "line": 485,
           "symbol": "darkenTo",
           "note": "",
-          "text": "}"
+          "text": ".vkFont(.caption)"
         },
         {
           "platform": "ios",
@@ -59189,7 +59189,7 @@ const DATA = {
           "line": 397,
           "symbol": "key == nil 才用自定义色",
           "note": "",
-          "text": "}"
+          "text": "if reduceTransparency {"
         }
       ],
       "platformEvidence": {
@@ -59481,7 +59481,7 @@ const DATA = {
           "line": 556,
           "symbol": "Gradient.hero",
           "note": "",
-          "text": "let title: String"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -59489,7 +59489,7 @@ const DATA = {
           "line": 572,
           "symbol": "screenMesh 3×3",
           "note": "",
-          "text": "}"
+          "text": "Image(systemName: systemImage).font(.system(size: DS.Icon.sm, weight: .semibold))"
         },
         {
           "platform": "ios",
@@ -59902,7 +59902,7 @@ const DATA = {
           "line": 337,
           "symbol": "themeTable",
           "note": "",
-          "text": ".frame(maxWidth: .infinity, alignment: .leading)"
+          "text": ".monospacedDigit()"
         },
         {
           "platform": "ios",
@@ -59910,7 +59910,7 @@ const DATA = {
           "line": 386,
           "symbol": "effectiveKey 默认 brass",
           "note": "",
-          "text": "RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous)"
+          "text": ".offset(x: drift ? 54 : 46, y: drift ? -51 : -44)"
         },
         {
           "platform": "ios",
@@ -59918,7 +59918,7 @@ const DATA = {
           "line": 393,
           "symbol": "themed(role:key:)",
           "note": "",
-          "text": "if reduceTransparency {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -63335,7 +63335,7 @@ const DATA = {
           "line": 418,
           "symbol": "895 命名理由",
           "note": "",
-          "text": "self.title = title"
+          "text": "var action: (() -> Void)?"
         },
         {
           "platform": "ios",
@@ -63343,7 +63343,7 @@ const DATA = {
           "line": 421,
           "symbol": "enum FriendlyPreset",
           "note": "",
-          "text": ""
+          "text": "self.systemImage = systemImage"
         },
         {
           "platform": "ios",
@@ -63351,7 +63351,7 @@ const DATA = {
           "line": 422,
           "symbol": "apply 六键",
           "note": "",
-          "text": "init(systemImage: String, title: String, message: String, actionTitle: String, action: @escaping () -> Void) {"
+          "text": "self.title = title"
         }
       ],
       "platformEvidence": {

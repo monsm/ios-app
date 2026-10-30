@@ -279,7 +279,11 @@ struct MetricTile: View {
                 .vkFont(emphasized ? .subheadline.weight(.semibold) : .subheadline)
                 .foregroundStyle(emphasized ? DS.Palette.text : DS.Palette.textSub)
                 .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                // 2026-10-30（界面全维度）：`0.7` 会把数值压到原字号的 70% —— 这正是用户报的
+                // 「4 个小格子的字全被挤得看不见」的成因之一。已改 2×2 网格腾出宽度，这里再收紧到 0.85：
+                // 只允许 15% 的压缩（应对超长固件号/时钟串），而不是把字压成蚂蚁。
+                // 若仍放不下，宁可换行也不要继续缩 —— `lineLimit(1)` 保留是因为数值列必须单行对齐。
+                .minimumScaleFactor(0.85)
                 // 苹方数字是比例宽度: 9%→10% 会让整块宽度跳动, 必须等宽
                 // 663 等宽数字 (原句"财经数字排版"): 读数换值时字宽不跳，与 207 的逐位滚动是一对 ——
                 // 滚动负责"看见变化"，等宽负责"变化时布局不抖"。
