@@ -446,6 +446,9 @@ jobs:
       # 一个字节 → 自己那行长度守卫成立 → 令牌被静默丢掉 → 04 裸发。gradle 永远看不出这件事。
       # 这一支排在 gradle **之前**: 只要 node, 秒级出结果, 不必等三分多钟的 APK 构建。
       # (步骤名不含裸冒号, 与上面那条工作流自检的 grep 兼容。)
+      - name: '热路径 Task 闸门 (判失败: 每事件新建裸 Task 会洪泛 MainActor)'
+        run: node tools/hotpathcheck.js
+
       - name: '文档断言一致性 (判失败: 文档里的绝对化断言与代码事实矛盾)'
         run: node tools/docclaimcheck.js
 

@@ -40,6 +40,7 @@ const GATES = [
   ['delsweep', []],
   ['lockpair', []],
   ['typepred', []],
+  ['hotpathcheck', []],
   ['docclaimcheck', []],
   ['gateaudit2', []],
   ['gatepersistcheck', []],
