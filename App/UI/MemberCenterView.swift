@@ -130,7 +130,7 @@ struct MemberCenterView: View {
                                         .frame(minHeight: DS.Hit.min)
                                 }
                             } else {
-                                Text("本机还没有成员档案，名册是空的")   // 415 本机还没有成员档案
+                                Text("名册未生成 —— 可能是本机还没有成员，或写盘失败（上面那行会写明是哪一种）")   // 2026-10-30：nil 同时代表「没成员」和「写盘失败」
                                     .vkFont(.caption)
                                     .foregroundStyle(DS.Palette.warn)
                                     .fixedSize(horizontal: false, vertical: true)

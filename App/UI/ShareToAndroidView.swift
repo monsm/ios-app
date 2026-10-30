@@ -110,7 +110,7 @@ struct ShareToAndroidView: View {
             return
         }
         guard let img = Self.qrImage(p) else {
-            failed = "二维码生成失败 (文本过长或系统滤镜不可用), 请重试。"
+            failed = "二维码生成失败 (文本过长或系统滤镜不可用), 请退出本页重进（重新生成）。"
             return
         }
         qr = img
