@@ -160,7 +160,10 @@ struct DeviceInfoView: View {
         }
     }
 
-    private var meta: LockMeta { LockArchive.meta(kc?.mac ?? "") }
+    /// 2026-10-30 修复（第 153 轮）：电池型号/换电日期保存只写 `LockArchive`，没有任何 @State 变更 ——
+    /// body 里的 `meta` 不会因此重算，弹窗关闭后行内仍显示旧值。加一个 tick 让 `meta` 成为可失效的依赖。
+    @State private var metaTick = 0
+    private var meta: LockMeta { let _ = metaTick; return LockArchive.meta(kc?.mac ?? "") }
     private var firmwareText: String {
         if let fw = status?.firmware, !fw.isEmpty { return fw }
         let fw = kc?.fw ?? ""
@@ -277,24 +280,24 @@ struct DeviceInfoView: View {
         let alert = UIAlertController(title: "电池型号", message: "如 CR123A × 2", preferredStyle: .alert)
         alert.addTextField { $0.text = meta.batteryModel; $0.placeholder = "型号" }
         alert.addAction(UIAlertAction(title: "清除", style: .destructive) { _ in
-            var m = meta; m.batteryModel = ""; LockArchive.save(kc?.mac ?? "", m)
+            var m = meta; m.batteryModel = ""; LockArchive.save(kc?.mac ?? "", m); metaTick += 1
         })
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         alert.addAction(UIAlertAction(title: "保存", style: .default) { _ in
             var m = meta; m.batteryModel = alert.textFields?.first?.text ?? ""
-            LockArchive.save(kc?.mac ?? "", m)
+            LockArchive.save(kc?.mac ?? "", m); metaTick += 1
         })
         UIApplication.topViewController()?.present(alert, animated: true)
     }
     private func editBatteryDate() {
         let alert = UIAlertController(title: "上次换电", message: "将把换电日期记为今天", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "清除", style: .destructive) { _ in
-            var m = meta; m.batteryChangedAt = 0; LockArchive.save(kc?.mac ?? "", m)
+            var m = meta; m.batteryChangedAt = 0; LockArchive.save(kc?.mac ?? "", m); metaTick += 1
         })
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         alert.addAction(UIAlertAction(title: "记为今天", style: .default) { _ in
             var m = meta; m.batteryChangedAt = Date().timeIntervalSince1970
-            LockArchive.save(kc?.mac ?? "", m)
+            LockArchive.save(kc?.mac ?? "", m); metaTick += 1
         })
         UIApplication.topViewController()?.present(alert, animated: true)
     }
