@@ -54,6 +54,13 @@ struct UnlockDial: View {
     var rssi: Int? = nil               // 66 最近一次扫到的锁内信号, 驱动呼吸速率
     var action: () -> Void             // 手势确认 / VO 直开 → AppState.requestUnlock
     var cancelAction: () -> Void = {}  // 89 握手超时提前取消
+    /// 2026-10-30（提速，第 4 项）：**手指落下就预热连接**。
+    /// 原来连接要等 `fire()`（按住完成 / 松手 / 上滑过阈值）才开始 ——
+    /// 而按住确认本身要 1.2s、上滑也要几百 ms，那段时间链路一直是空的。
+    /// 现在 `pressing` 由 false→true 的那一拍就发起 `ensureConnected`，把建连（0.5–2s）
+    /// **藏进用户的按压时间里**；等 `fire()` 真下发 cmd04 时链路通常已就绪。
+    /// 只建链不执行（96 铁律）；用户中途取消时连接保留即可，下次开锁更快，且不会多下发任何指令。
+    var preconnectAction: () -> Void = {}
 
     @State var pop = false
     @State var shock = false
@@ -324,6 +331,10 @@ struct UnlockDial: View {
                 guard startInside else { return }   // 61: 边缘起手忽略
                 if !pressing {
                     pressing = true
+                    // 2026-10-30（提速，第 4 项）：落手即预热连接。
+                    // 放在 `pressing = true` 之后而不是 `onChanged` 开头 —— 要先过起手围栏(61)与
+                    // 误触围栏(62)，避免边缘误触也去建链。
+                    preconnectAction()
                     firedThisTouch = false
                     swipePeakUp = 0
                     if holdConfirmOn {

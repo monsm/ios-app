@@ -361,7 +361,14 @@ extension DeviceHomeView {
                        batteryText: app.current.map { batteryText(for: $0) } ?? "未知",
                        rssi: LinkSense.rssiFor(app.currentMac),
                        action: { dialAction() },
-                       cancelAction: { app.cancelUnlock(notify: true) })
+                       cancelAction: { app.cancelUnlock(notify: true) },
+                       // 2026-10-30（提速，第 4 项）：落手即预热连接 —— 把建连耗时藏进按压时间里。
+                       // 只建链不发指令（96 铁律：预热绝不执行）；失败静默，不打扰用户。
+                       preconnectAction: {
+                           let m = app.currentMac
+                           guard !m.isEmpty, LockService.shared.connectedMAC != m else { return }
+                           Task { @MainActor in try? await LockService.shared.ensureConnected(mac: m) }
+                       })
             // 包15 字幕式过程条 (881): 连接/开锁过程逐字文案条给听障用户 (设置-辅助可关)
             CaptionStepBar(phase: app.phase, unlockState: app.unlockState)
                 .transition(.opacity)
