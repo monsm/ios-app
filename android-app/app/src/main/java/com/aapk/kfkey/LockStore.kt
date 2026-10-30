@@ -22,6 +22,11 @@ data class LockInfo(
     // 0 = 未标定 ⇒ 用 AutoOpenKit.BASE(-40)，与 iOS `fallbackBase` 同值（iOS 注释也写明"与安卓同值"）。
     // 标定过则用这把锁的实际 P95 —— 不同型号门锁发射功率差异很大，固定线要么过松(误开)要么过紧(不开)。
     val rssiP95: Int = 0,
+    // 2026-10-31（第 53 轮，**与 iOS 第 52 轮同型**）：F5 冷却基准跨重启持久化。
+    // 原来 `lastAuto` 是纯内存 `mutableStateOf(0L)` —— App 被杀后重启清零 ⇒
+    // 站门口立刻满足「冷却已过」⇒ 若上一次 04 已开门（App 在开锁瞬间被杀），这就是**双开**。
+    // 0L = 从未下发过（与 iOS `lastDispatch == 0` 同语义）。
+    val lastAutoMs: Long = 0L,
 ) {
     val macText: String
         get() = mac.chunked(2).joinToString(":").uppercase()
@@ -50,6 +55,7 @@ object LockStore {
                 defendEndHour = o.optInt("de", 7),
                 lastRc = o.optInt("lr", 0),
                 rssiP95 = o.optInt("p95", 0),
+                lastAutoMs = o.optLong("la", 0L),
             )
         }.getOrNull()?.takeIf { it.mac.length == 12 && it.ekey.isNotEmpty() }
     }
@@ -65,6 +71,7 @@ object LockStore {
             .put("de", lock.defendEndHour)
             .put("lr", lock.lastRc)
             .put("p95", lock.rssiP95)
+            .put("la", lock.lastAutoMs)
         ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit().putString(KEY, o.toString()).apply()
     }
 

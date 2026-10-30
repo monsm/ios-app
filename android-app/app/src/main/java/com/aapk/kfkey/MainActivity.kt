@@ -124,7 +124,8 @@ private fun KfApp(unlocker: BleUnlocker) {
     var proximity by remember { mutableStateOf(LockStore.loadProximity(ctx)) }
     var rssi by remember { mutableStateOf<Int?>(null) }
     var pending by remember { mutableStateOf<LockInfo?>(null) }   // 待二次确认的绑定
-    var lastAuto by remember { mutableStateOf(0L) }                 // 上次自动下发时刻 (冷却基准)
+    // 2026-10-31（第 53 轮）：初值从已加载的 lock 读回 —— 与 `lastRc` 同口径（第 27 轮）。
+    var lastAuto by remember { mutableStateOf(lock?.lastAutoMs ?: 0L) }   // 上次自动下发时刻 (冷却基准)
     // 2026-10-27 审核补齐 (C-A1)：iOS 有 F6 锁态门（rc=25 锁忙 / rc=26 被撬 → 拒绝自动开），
     // Android 原先没有。这里缓存上次开锁回包的 rc，供 maybeAutoUnlock 做 F6 判断。
     // 2026-10-31（第 27 轮修复，**F6 跨会话失效**）：原来是 `mutableStateOf(0)` —— 初值恒 0，
@@ -348,6 +349,8 @@ private fun KfApp(unlocker: BleUnlocker) {
         if (busy) return
         fired = true
         lastAuto = now
+        // 2026-10-31（第 53 轮）：写内存态之外**也落盘** —— 否则重启后冷却清零，可能双开。
+        lock?.let { l -> LockStore.save(ctx, l.copy(lastAutoMs = now)) }
         doUnlock(auto = true)
     }
 
