@@ -12,6 +12,10 @@
 //   · 分隔/边框类不做（本工程无独立 hairline 令牌）
 //
 // 两套主题都查：KfDarkColors / KfLightColors。
+// 正控：把浅色 accent 从 `#8F6119` 改回 `#B8862F` ⇒ 报出 3 条不达标（2.69~3.26:1）。
+//      把「门锁设置」标题改回 `inkSub.copy(alpha = 0.6f)` ⇒ 报出「正文用了 alpha 稀释色」。
+// 负控：32 条调色板断言全达标，alpha 检查零误报（开关轨道/边框已排除）。
+
 const fs = require('fs');
 const path = require('path');
 

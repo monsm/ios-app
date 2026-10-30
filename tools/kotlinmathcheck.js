@@ -18,6 +18,9 @@
 //
 //   为把误报降到 0：只扫**不含 Compose 绘图 API**的文件（drawCircle/Offset/Path 这些
 //   天然全是 Float，不在本闸门的关注范围）。本仓的纯逻辑文件是 AutoOpenKit.kt / KfProtocol.kt。
+// 正控：把 `(base.toDouble() + 10 * log10(0.5))` 改回 `(base + 10 * log10(0.5))` ⇒ 精确报出 `AutoOpenKit.kt:56`。
+// 负控：排除 Compose 绘图文件后零误报（第一版曾误报 25 处 Float 运算）。
+
 const fs = require('fs');
 const path = require('path');
 

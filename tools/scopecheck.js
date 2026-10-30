@@ -1,3 +1,6 @@
+// 正控：把 `displayTypeName` 塞回 `init` 体内 ⇒ 精确报出 `StoreModels.swift:297`。
+// 负控：全仓零误报（局部 `var err: NSError? = nil` 不算类型级声明）。
+
 const fs = require('fs');
 const path = require('path');
 // 2026-10-31（第 35 轮，**闸门自身导致 CI 红**）：硬编码 `D:/aapk/ios-app` 在 CI 上不存在

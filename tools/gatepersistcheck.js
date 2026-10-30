@@ -16,6 +16,10 @@
 //     · `lastRc` 声明必须从 `lock?.lastRc` 取初值
 //
 // 不查：F0 前台态（瞬时，本就该是内存）、F1 面容（fail-closed，重启保守拒）
+// 正控：① 去掉 iOS 的 `persistedLastDispatch` 回落 ⇒ 报出「lastAt 没有持久化回落」；
+//      ② 把 `eventFired.insert` 移到 `ensureConnected` 之后 ⇒ 报出「行 556 > 554」。
+// 负控：9 条检查全 ok（F0 前台态 / F1 面容按设计豁免）。
+
 const fs = require('fs');
 const path = require('path');
 
@@ -130,7 +134,9 @@ if (bad.length) {
   console.log('  · 该拦不拦（F6 读到旧 rc=0）');
   console.log('  · 双开（F5 冷却清零后立刻再发 04）');
   console.log('这类缺陷**门本身写得对**，错的是喂门的数据。');
-  process.exit(1);
+    console.log("\n修法：门控判据读的变量必须有持久化路径（`DB.store` / `LockStore`），");
+  console.log("      且写入要在**可能失败的调用之前**（判定一旦采纳即消费）。");
+process.exit(1);
 }
 ok.forEach(x => console.log('ok    ' + x));
 console.log('\n✓ 自动开锁门控数据源跨会话齐备');

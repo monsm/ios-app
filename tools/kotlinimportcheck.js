@@ -1,3 +1,6 @@
+// 正控：移除 `import androidx.compose.runtime.mutableStateListOf` ⇒ 报出 `MainActivity.kt 用到 mutableStateListOf 但缺 import`。
+// 负控：全仓零误报。
+
 const fs = require('fs');
 const path = require('path');
 // 2026-10-31（第 35 轮，**闸门自身导致 CI 红**）：原来硬编码 `D:/aapk/...` 本地绝对路径，
@@ -68,6 +71,7 @@ for (const f of files) {
 if (problems.length) {
   console.log(`✗ 缺失 import ${problems.length} 处（编译必拒：unresolved reference）：`);
   problems.forEach(p => console.log('  ' + p));
-  process.exit(1);
+    console.log("\n修法：在文件头补 `import <包名>`，或用全限定名（`androidx.compose.runtime.xxx`）。");
+process.exit(1);
 }
 console.log('✓ 未发现缺失 import');

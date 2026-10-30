@@ -13,6 +13,9 @@
 //   ② 必须在 CI 里跑的闸门不得依赖 `process.cwd()`（runner 的 cwd 与本地不同）。
 //
 // 白名单：`add_ci_step.js` 这类**不参与 CI** 的开发工具（显式列在下面）。
+// 正控：往 `scopecheck.js` 注入 `const TEST_BAD = 'D:/aapk/ios-app/App';` ⇒ 精确报出该行。
+// 负控：69 个闸门文件零命中（`apkshadow.js` 的开发机回退已白名单）。
+
 const fs = require('fs');
 const path = require('path');
 

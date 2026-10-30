@@ -17,6 +17,9 @@
 //
 // 为什么不误报正常的 `VStack { … }.padding()`：那种 `}` 闭合的是 `容器名 {`，
 // 容器调用本身是**表达式**，接修饰符合法。只有控制流语句块不行。
+// 正控：把 `Group { … }` 收口删掉还原成 `if/else` 直挂 `.safeAreaInset` ⇒ 精确报出 `CredentialsView.swift:72`。
+// 负控：全仓 146 个 Swift 文件零误报（`VStack { … }.padding()` 这类容器调用不报）。
+
 const fs = require('fs');
 const path = require('path');
 

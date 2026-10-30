@@ -18,6 +18,9 @@
 // 不查的（Kotlin 合法或有歧义）：
 //   · `.count` —— 本仓无 List.count 用法，但 `it.count` 可能是 data class 属性
 //   · `.first` / `.last` —— `Pair.first` 是合法属性
+// 正控：把 `calSamples.isEmpty()` 改回 `calSamples.isEmpty` ⇒ 报出 `MainActivity.kt:583 .isEmpty 必须带 ()`。
+// 负控：全仓零误报（`.first`/`.count` 不查，因为 `Pair.first` 是合法属性）。
+
 const fs = require('fs');
 const path = require('path');
 
@@ -63,6 +66,8 @@ for (const f of fs.readdirSync(KT_DIR).filter(x => x.endsWith('.kt'))) {
 if (bad.length) {
   console.log(`✗ Kotlin 里混进 Swift 写法 ${bad.length} 处（编译必拒）：`);
   bad.forEach(x => console.log('  ' + x));
-  process.exit(1);
+    console.log("\n修法：Swift 里是属性的（isEmpty/reversed），Kotlin 里是方法要加 ()；");
+  console.log("      Swift 名（uppercased/hasPrefix）改成 Kotlin 名（uppercase/startsWith）。");
+process.exit(1);
 }
 console.log('✓ 未发现 Swift 写法混入 Kotlin');
