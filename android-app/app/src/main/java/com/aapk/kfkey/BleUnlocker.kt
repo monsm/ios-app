@@ -322,6 +322,13 @@ data class Outcome(val ok: Boolean, val message: String, val trace: String = "",
         try {
             if (buildLink(s, device)) {
                 warm = s   // 身份复核留给真正开锁那一次 (prewarm 不碰 03, 少一个往返)
+                // 2026-10-30（提速，与 iOS `prefetchSession` 同源）：**预热期预取会话令牌**。
+                // 预热发生在"人还没到门口"的时候（prewarmLineDbm = BASE-24，约一两米外），
+                // 这里多发一次 01 不占用户时间；等真越过武装线时令牌已在 20s 复用窗内，
+                // 开锁链就从「01+04」变成只剩「04」—— 与 iOS 第 3 轮同一条优化。
+                // 只发 01（会话令牌），**不碰 03**（身份复核仍留给真正开锁那一次）。
+                // 失败静默：预热失败不该让链路不可用，开锁时还会按需重刷。
+                prefetchToken(s)
             } else {
                 teardown(s)
             }
@@ -337,6 +344,28 @@ data class Outcome(val ok: Boolean, val message: String, val trace: String = "",
 
     /** outcome=null = "帧没出手机"级别的失败, 外层可以安全拆链重建。 */
     private class Attempt(val outcome: Outcome?, val linkBroken: Boolean)
+
+    /**
+     * 2026-10-30（提速）: 预热期预取会话令牌。只发 01，不改锁状态、不碰身份。
+     * 与 `runUnlock` 里的刷新分支同一口径（含 TTL 解析），失败静默。
+     */
+    private suspend fun prefetchToken(s: Session) {
+        val g = s.gatt ?: return
+        val write = s.write ?: return
+        try {
+            if (!writeChunked(g, write, KfProtocol.bytes(KfProtocol.tokenFrame()), s)) return
+            val f = awaitFrame(s.notes, 0x01, 8_000) ?: return
+            val t = f.first(0x02) ?: return
+            val ttlSec = f.first(0x03)?.let { KfProtocol.intHex(it) } ?: 0
+            s.tokenHex = t
+            s.tokenFetchedAt = System.currentTimeMillis()
+            s.tokenTtlMs = if (ttlSec > 0) ttlSec.toLong() * 1000L else 0L
+        } catch (ce: CancellationException) {
+            throw ce
+        } catch (_: Exception) {
+            // 预热期取令牌失败不影响后续: 开锁时 runUnlock 会自己再刷一次
+        }
+    }
 
     private suspend fun runUnlock(s: Session, lock: LockInfo, trace: StringBuilder): Attempt {
         val g = s.gatt ?: return Attempt(null, false)
