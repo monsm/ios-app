@@ -157,7 +157,8 @@ struct MemberCenterView: View {
     var groupChipSection: some View {
         // 2026-10-29 性能：逐成员 ext() = 逐成员整表解码；一次取表。
         let extTable = MemberHub.allExt()
-        let tags = Array(Set(DB.members().map { MemberHub.ext($0.id, in: extTable).groupTag })).filter { !$0.isEmpty }.sorted()
+        let archived = MemberHub.archivedIDs(extTable)   // 2026-10-30：chips 原来取 DB.members()（含归档），会出现「只有归档成员的分组」—— 点进去必然空态
+        let tags = Array(Set(DB.members().filter { !archived.contains($0.id) }.map { MemberHub.ext($0.id, in: extTable).groupTag })).filter { !$0.isEmpty }.sorted()
         if !tags.isEmpty {
             Section {
                 ScrollView(.horizontal, showsIndicators: false) {

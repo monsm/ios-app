@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T11:05:03.185Z",
+    "generated": "2026-10-30T11:07:13.180Z",
     "sources": [
       {
         "scout": "android-native",
@@ -22580,7 +22580,7 @@ const DATA = {
           "line": 205,
           "symbol": "activeSection",
           "note": "排序四档与列表",
-          "text": "}"
+          "text": "default: list = members.sorted { $0.at \u003c $1.at }"
         },
         {
           "platform": "apk",
@@ -22596,7 +22596,7 @@ const DATA = {
           "line": 222,
           "symbol": "NavigationLink",
           "note": "进 360 详情",
-          "text": "actionTitle: \"查看归档\") { showArchived = true }"
+          "text": "message: \"归档的成员仍在档案里，可随时恢复。\","
         },
         {
           "platform": "ios",
@@ -22604,7 +22604,7 @@ const DATA = {
           "line": 225,
           "symbol": "swipeActions",
           "note": "左滑归档",
-          "text": "title: \"这个分组下没有成员\","
+          "text": "EmptyState(systemImage: \"line.3.horizontal.decrease.circle\","
         },
         {
           "platform": "ios",
@@ -23762,7 +23762,7 @@ const DATA = {
           "line": 304,
           "symbol": "archivedSection",
           "note": "归档入口（计数）",
-          "text": ".frame(maxWidth: .infinity, alignment: .leading)"
+          "text": ".vkFont(.subheadline)"
         },
         {
           "platform": "ios",
@@ -24090,7 +24090,7 @@ const DATA = {
           "line": 167,
           "symbol": "groupChipSection",
           "note": "chip 过滤",
-          "text": "}"
+          "text": "ForEach(tags, id: \\.self) { t in groupChip(t, t) }"
         },
         {
           "platform": "ios",
@@ -24372,7 +24372,7 @@ const DATA = {
           "line": 321,
           "symbol": "sceneSection",
           "note": "本周主责与便签",
-          "text": "}"
+          "text": ".foregroundStyle(DS.Palette.accentText)"
         },
         {
           "platform": "ios",
@@ -24380,7 +24380,7 @@ const DATA = {
           "line": 323,
           "symbol": "dutyThisWeek",
           "note": "主责读取",
-          "text": "Text(\"本周主责： 未安排 — 在成员的详情页里设置\")   // 481 本周主责"
+          "text": "} else {"
         },
         {
           "platform": "ios",
@@ -24513,7 +24513,7 @@ const DATA = {
           "line": 252,
           "symbol": "visitorSection",
           "note": "虚拟分组行",
-          "text": "} footer: {"
+          "text": "Text(\"成员 (\\(list.count))\")"
         },
         {
           "platform": "ios",
@@ -24529,7 +24529,7 @@ const DATA = {
           "line": 256,
           "symbol": "pendingRecordsFilter",
           "note": "跳记录页过滤",
-          "text": "}"
+          "text": "+ \"要看谁这段时间开得多， 上方选「近 30 天开门次数」那一档。\")"
         },
         {
           "platform": "ios",
@@ -24537,7 +24537,7 @@ const DATA = {
           "line": 285,
           "symbol": "visitorOpenCount",
           "note": "未归属临时码计数",
-          "text": "}"
+          "text": ".frame(minHeight: DS.Hit.min)"
         },
         {
           "platform": "ios",
@@ -24545,7 +24545,7 @@ const DATA = {
           "line": 299,
           "symbol": "visitorOwns",
           "note": "名下临时码条数",
-          "text": "if !arch.isEmpty {"
+          "text": "let arch = DB.members().filter { MemberHub.ext($0.id, in: extTable).archived }"
         }
       ],
       "platformEvidence": {
@@ -25035,7 +25035,7 @@ const DATA = {
           "line": 367,
           "symbol": "struct MemberRow",
           "note": "行声明",
-          "text": "var onArchive: () -> Void = {}"
+          "text": "/// 同一动作在 swipeActions 走的是**父层** tick，会刷新 —— 两条路径行为不一致。现在统一走父层回调。"
         },
         {
           "platform": "ios",
@@ -25043,7 +25043,7 @@ const DATA = {
           "line": 380,
           "symbol": "MemberRow",
           "note": "称呼（备注）双层文本",
-          "text": "subLine"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -25051,7 +25051,7 @@ const DATA = {
           "line": 385,
           "symbol": "MemberRow",
           "note": "同名待合并",
-          "text": ".padding(.vertical, DS.Space.xs)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -25059,7 +25059,7 @@ const DATA = {
           "line": 432,
           "symbol": "subLine",
           "note": "副行四段",
-          "text": "// 影响面: 改 MemberAvatar 会影响成员中心（本文件 2 处）与建档向导（MemberWizard 1 处），共 3 处。"
+          "text": "// 457 首字符号头像 + 916 emoji 代号: 零图片资源 (本地绘制)"
         },
         {
           "platform": "ios",
@@ -25067,7 +25067,7 @@ const DATA = {
           "line": 448,
           "symbol": "staleTag",
           "note": "久未用/活跃 (约)",
-          "text": "return Color(hex: v)"
+          "text": "if member.color.hasPrefix(\"#\"), let v = UInt32(member.color.dropFirst(), radix: 16) {"
         }
       ],
       "platformEvidence": {
@@ -25735,7 +25735,7 @@ const DATA = {
           "line": 216,
           "symbol": "EmptyState",
           "note": "空态建档向导按钮",
-          "text": "message: \"建档向导分三步： 称呼 → 角色 → 初始凭证。\","
+          "text": "title: \"还没有成员\","
         },
         {
           "platform": "ios",
@@ -60704,7 +60704,7 @@ const DATA = {
           "line": 228,
           "symbol": "MemberHub.saveExt",
           "note": "归档写入示例",
-          "text": "}"
+          "text": "actionTitle: \"清除筛选\") { groupFilter = \"\" }"
         },
         {
           "platform": "ios",

@@ -218,7 +218,7 @@ struct TempCodeStudio: View {
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("归属 " + m.name + (owner == m.id ? ", 已选" : ""))
+                        .accessibilityLabel("归属 " + m.name + (owner == m.id ? "， 已选" : ""))   // 2026-10-30：半角逗号统一为全角「， 」
                     }
                     TextField("给谁 · 哪扇门 · 用多久 (可长按调听写)", text: $note,
                               prompt: Text("如： 钟点工·大门·仅上午场"))
