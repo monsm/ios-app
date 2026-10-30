@@ -10,6 +10,10 @@ struct MemberDetail360View: View {
     @EnvironmentObject var app: AppState
     @State var tick = 0
     @State var showMerge = false
+    // 2026-10-30（第 159 轮，**性能**）：`weekSentence` 与 `recentExcerpts` 各跑一次「遍历全部锁 × 读全部日志 × 归属分类」，
+    // 而它们都在 body 里 —— 任何状态变化（切换角色、拨开关）都会重跑两遍。缓存到 @State，`.task(id: tick)` 里算一次。
+    @State private var weekLine: String? = nil
+    @State private var excerpts: [MemberHub.Excerpt] = []
 
     var member: Member? { DB.member(memberID) }
 
@@ -21,7 +25,7 @@ struct MemberDetail360View: View {
     @ViewBuilder var vkBody: some View {
         if let m = member {
             List {
-                if let line = MemberHub.weekSentence(m.id) {
+                if let line = weekLine {
                     Section { Label(line, systemImage: "calendar.badge.clock")
                         .vkFont(.footnote).foregroundStyle(DS.Palette.text)
                         .fixedSize(horizontal: false, vertical: true) }
@@ -35,6 +39,10 @@ struct MemberDetail360View: View {
             .navigationTitle(MemberHub.display(m))
             .variantList()
             .dsScreenBackground()
+            .task(id: tick) {
+                weekLine = MemberHub.weekSentence(m.id)
+                excerpts = MemberHub.recentExcerpts(m.id, 8)
+            }
             .toolbar { ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {
                     Button { editProfile(m); onChanged() } label: {
@@ -65,7 +73,7 @@ struct MemberDetail360View: View {
     // 成员 360 页看不到「这个人最近开过哪把锁」。补一个板块，只读本机缓存的开锁类日志。
     @ViewBuilder
     func excerptSection(_ m: Member) -> some View {
-        let items = MemberHub.recentExcerpts(m.id, 8)
+            let items = excerpts   // 2026-10-30：改用 `.task(id: tick)` 缓存值
         Section {
             if items.isEmpty {
                 Text("还没有这位成员的开锁记录（或记录页还没拉取过日志）。")
