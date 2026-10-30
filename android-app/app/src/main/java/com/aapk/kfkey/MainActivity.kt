@@ -62,7 +62,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.LocalContext
@@ -750,7 +749,6 @@ private fun UnlockDial(busy: Boolean, onClick: () -> Unit) {
             // 补语义（用 `semantics` 而不是 `clearAndSetSemantics`：后者会把按压态的语义也抹掉）。
             .semantics {
                 contentDescription = if (busy) "正在开锁" else "点一下开锁"
-                role = Role.Button
             },
             contentAlignment = Alignment.Center
         ) {
@@ -1040,7 +1038,7 @@ private fun GearButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
             .background(colors.surface.copy(alpha = 0.92f))
             .clickable { onClick() }
             // 2026-10-31（第 72 轮 · 无障碍）：齿轮也是自绘 Canvas，读屏读不出来 → 补语义。
-            .semantics { contentDescription = "门锁设置"; role = Role.Button },
+            .semantics { contentDescription = "门锁设置" },
         contentAlignment = Alignment.Center,
     ) {
         // 自绘齿轮 (8 齿 + 内圈 + 轴心): 与首页圆盘、空态二维码框同一路子, 不借现成图标。

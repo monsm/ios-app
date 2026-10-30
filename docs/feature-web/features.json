@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T20:31:34.523Z",
+    "generated": "2026-10-30T20:49:28.361Z",
     "sources": [
       {
         "scout": "android-native",
@@ -449,7 +449,7 @@
           "line": 338,
           "symbol": "KfApp",
           "note": "Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(colors.bgTop, colors.bgBottom))))",
-          "text": "// 所以这里必须当场取一个非空局部量, 否则 prewarm(target) 是类型不匹配 = 编译不过。"
+          "text": "val target = lock ?: return"
         },
         {
           "platform": "android",
@@ -489,7 +489,7 @@
           "line": 343,
           "symbol": "KfApp",
           "note": "Column(fillMaxSize().padding(horizontal = 24.dp, vertical = 28.dp), CenterHorizontally)",
-          "text": "// 里的 stopScan 才是真的把射频放掉)。不等就是\"边扫边连\", 133 的成因之一。"
+          "text": "delay(220)"
         },
         {
           "platform": "android",
@@ -497,7 +497,7 @@
           "line": 411,
           "symbol": "KfApp",
           "note": "if (lock != null) GearButton(Modifier.align(Alignment.BottomEnd).padding(24.dp))",
-          "text": "}"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -1251,7 +1251,7 @@
           "line": 417,
           "symbol": "KfApp",
           "note": "AnimatedVisibility(visible = showSettings && lock != null, enter = fadeIn(160)+slideInVertically(220) { it/3 }, exit = fadeOut(140)+slideOutVertically(200) { it/3 })",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "apk",
@@ -1267,7 +1267,7 @@
           "line": 684,
           "symbol": "ProximityCard",
           "note": "private fun ProximityCard(on, onToggle, onRescan, onUnbind, onClose)",
-          "text": ")"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -1275,7 +1275,7 @@
           "line": 693,
           "symbol": "ProximityCard",
           "note": "clip(RoundedCornerShape(KfTokens.Radius.card)).background(colors.surface).padding(KfTokens.Space.l)",
-          "text": "Text("
+          "text": "text = lock?.name ?: \"离线锁钥匙\","
         }
       ],
       "platformEvidence": {
@@ -1356,7 +1356,7 @@
           "line": 85,
           "symbol": "MainActivity.unlocker",
           "note": "private val unlocker by lazy { BleUnlocker(this) }",
-          "text": "class MainActivity : ComponentActivity() {"
+          "text": "// 只在 unlocker 需要时建一次: KfApp() 是 Composable, remember 的状态跟着组合走,"
         },
         {
           "platform": "android",
@@ -1364,7 +1364,7 @@
           "line": 93,
           "symbol": "MainActivity.onDestroy",
           "note": "onDestroy() { val u = unlocker; Thread { runBlocking { u.release() } }.start() }",
-          "text": "// 2026-10-18: 外层包 KfTheme 下发深浅双模色板 (跟随系统 isSystemInDarkTheme)。"
+          "text": "setContent { KfTheme { KfApp(unlocker) } }"
         },
         {
           "platform": "android",
@@ -1372,7 +1372,7 @@
           "line": 230,
           "symbol": "KfApp",
           "note": "DisposableEffect(lifecycleOwner) { val obs = LifecycleEventObserver { _, ev -> when (ev) { ON_RESUME -> ...; ON_PAUSE -> ... } }; onDispose { removeObserver(obs) } }",
-          "text": "return@launch"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -1558,7 +1558,7 @@
           "line": 159,
           "symbol": "KfApp",
           "note": "注释：minSdk=33 ⇒ 三项都是运行时权限, 没有版本分支",
-          "text": "var peakAz by remember { mutableStateOf<Float?>(null) }"
+          "text": "var showSettings by remember { mutableStateOf(false) }   // 二级菜单: 靠近开关 / 重新扫码 / 解绑"
         },
         {
           "platform": "android",
@@ -1855,7 +1855,7 @@
           "line": 197,
           "symbol": "doUnlock",
           "note": "if (r.ok) KfHaptics.ok(ctx) else KfHaptics.fail(ctx)",
-          "text": ")"
+          "text": "val perms = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->"
         },
         {
           "platform": "android",
@@ -2531,7 +2531,7 @@
           "line": 114,
           "symbol": "KfApp",
           "note": "var lock by remember { mutableStateOf(LockStore.load(ctx)) }",
-          "text": "val scope = rememberCoroutineScope()"
+          "text": "// unlocker 由 Activity 持有 (而不是在这里 remember 一个): 热链路要能被 onDestroy 拆掉。"
         },
         {
           "platform": "android",
@@ -2547,7 +2547,7 @@
           "line": 351,
           "symbol": "KfApp",
           "note": "if (lock == null) { EmptyState(onScan = { launchScan() }) } else { ... }",
-          "text": "}"
+          "text": "// 2026-10-30（提速）: 维护最近 3 个样本（最新在前），供中值武装判据用。"
         }
       ],
       "platformEvidence": {
@@ -6113,7 +6113,7 @@
           "line": 85,
           "symbol": "MainActivity.unlocker",
           "note": "private val unlocker by lazy { BleUnlocker(this) }",
-          "text": "class MainActivity : ComponentActivity() {"
+          "text": "// 只在 unlocker 需要时建一次: KfApp() 是 Composable, remember 的状态跟着组合走,"
         },
         {
           "platform": "android",
@@ -6129,7 +6129,7 @@
           "line": 96,
           "symbol": "MainActivity.onDestroy",
           "note": "val u = unlocker; Thread { try { runBlocking { u.release() } } catch (_: Exception) {} }.start()",
-          "text": ""
+          "text": "override fun onDestroy() {"
         }
       ],
       "platformEvidence": {
@@ -6197,7 +6197,7 @@
           "line": 242,
           "symbol": "KfApp",
           "note": "Lifecycle.Event.ON_PAUSE -> { foreground = false; armed = false; prewarmStarted = false; scope.launch { unlocker.release() } }",
-          "text": "val r = unlocker.unlock(l)"
+          "text": "// 2026-10-27 审核补齐：把 rc 落到状态里，供下一次自动开锁做 F6 锁态门判断。"
         },
         {
           "platform": "android",
@@ -6205,7 +6205,7 @@
           "line": 246,
           "symbol": "KfApp",
           "note": "scope.launch { unlocker.release() }",
-          "text": "lock?.takeIf { it.mac == l.mac }?.let { LockStore.save(ctx, it.copy(lastRc = r.rc)) }"
+          "text": "busy = false"
         },
         {
           "platform": "android",
@@ -6213,7 +6213,7 @@
           "line": 902,
           "symbol": "ProximityBeep",
           "note": "if (!active || !soundOn || level < 0 || !foreground) return@LaunchedEffect",
-          "text": "Spacer(Modifier.height(3.dp))"
+          "text": "// (这一句原来写的是 -38/-41, 阈值早就挪到 -40/-43 了, 界面却还在按旧数字承诺)。"
         }
       ],
       "platformEvidence": {
@@ -6281,7 +6281,7 @@
           "line": 233,
           "symbol": "KfApp",
           "note": "Lifecycle.Event.ON_RESUME -> { foreground = true; prewarmStarted = false; fired = false; airTagDismissed = false }",
-          "text": "// 而 `release()` 与 `unlock()` 拿的是**同一把 mutex** —— 所以它排在在途开锁之后，"
+          "text": "// 不会中断那一次：判定已采纳、建连进行中时退后台，unlock 仍会跑完并真发 04"
         },
         {
           "platform": "android",
@@ -6289,7 +6289,7 @@
           "line": 309,
           "symbol": "KfApp",
           "note": "LaunchedEffect(proximity, lock?.mac, busy, warming, foreground) { ... observeSignal(l).collect { ... } }",
-          "text": "lifecycleOwner.lifecycle.addObserver(obs)"
+          "text": "onDispose { lifecycleOwner.lifecycle.removeObserver(obs) }"
         },
         {
           "platform": "android",
@@ -6297,7 +6297,7 @@
           "line": 312,
           "symbol": "KfApp",
           "note": "开锁在途或预热在途都撤下监测；撤下后 rssi 保持最后读数不抹成 null",
-          "text": ""
+          "text": "// ---------- 靠近自动开锁: 回差 + 一次性闩锁 + 冷却 (对齐 iOS AutoOpenKit F3/F5) ----------"
         }
       ],
       "platformEvidence": {
@@ -6365,7 +6365,7 @@
           "line": 161,
           "symbol": "KfApp",
           "note": "val permNames = mapOf(BLUETOOTH_SCAN to \"蓝牙扫描\", BLUETOOTH_CONNECT to \"蓝牙连接\", CAMERA to \"相机\")",
-          "text": "var pitch by remember { mutableStateOf(0f) }              // 手机俯仰 (AirTag 层 3D 视差)"
+          "text": "var roll by remember { mutableStateOf(0f) }               // 手机横滚 (同上)"
         },
         {
           "platform": "android",
@@ -6373,7 +6373,7 @@
           "line": 167,
           "symbol": "KfApp",
           "note": "val denied = result.filterValues { !it }.keys; if (denied.isNotEmpty()) { ... say(\"缺少权限: \" + names.joinToString(\"、\") + \" — 扫码与开锁会失败, 请到系统设置里允许\", true) }",
-          "text": "// Q20 (2026-10-20): 返回键处理。此前全仓零 BackHandler —— 二级菜单与 AirTag 全屏层都是"
+          "text": "// 手写 AnimatedVisibility, 没有人消费返回键 ⇒ 按返回会冒泡到 ComponentActivity.finish(),"
         }
       ],
       "platformEvidence": {
@@ -6435,7 +6435,7 @@
           "line": 173,
           "symbol": "KfApp",
           "note": "LaunchedEffect(Unit) { perms.launch(listOf(BLUETOOTH_SCAN, BLUETOOTH_CONNECT, CAMERA).toTypedArray()) }",
-          "text": "BackHandler(enabled = airTagLayerUp || showSettings) {"
+          "text": "if (airTagLayerUp) { airTagDismissed = true } else if (showSettings) { showSettings = false }"
         },
         {
           "platform": "android",
@@ -6443,7 +6443,7 @@
           "line": 166,
           "symbol": "KfApp",
           "note": "rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions())",
-          "text": ""
+          "text": "// Q20 (2026-10-20): 返回键处理。此前全仓零 BackHandler —— 二级菜单与 AirTag 全屏层都是"
         }
       ],
       "platformEvidence": {
@@ -6513,7 +6513,7 @@
           "line": 90,
           "symbol": "MainActivity.onCreate",
           "note": "setContent { KfTheme { KfApp(unlocker) } }",
-          "text": ""
+          "text": "override fun onCreate(savedInstanceState: Bundle?) {"
         },
         {
           "platform": "android",
@@ -6710,7 +6710,7 @@
           "line": 654,
           "symbol": "EmptyState",
           "note": "private fun EmptyState(onScan: () -> Unit)",
-          "text": "},"
+          "text": "dismissButton = {"
         },
         {
           "platform": "android",
@@ -6718,7 +6718,7 @@
           "line": 658,
           "symbol": "EmptyState",
           "note": "Canvas(Modifier.size(120.dp)) { ... 四个角 corner(...) }",
-          "text": ")"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -6726,7 +6726,7 @@
           "line": 674,
           "symbol": "EmptyState",
           "note": "Text(\"在 iOS 端「设置 → 门锁 → 分享给安卓」生成二维码,\\n扫一次即可。之后开锁不再需要它。\")",
-          "text": "armed = armed,"
+          "text": "busy = busy,"
         }
       ],
       "platformEvidence": {
@@ -6793,7 +6793,7 @@
           "line": 764,
           "symbol": "GearButton",
           "note": "private fun GearButton(modifier: Modifier = Modifier, onClick: () -> Unit)",
-          "text": "drawCircle("
+          "text": "0f to Color(0xFFFEFDFB),"
         },
         {
           "platform": "android",
@@ -6801,7 +6801,7 @@
           "line": 768,
           "symbol": "GearButton",
           "note": ".size(56.dp).clip(CircleShape).background(colors.surface.copy(alpha = 0.92f)).clickable { onClick() }",
-          "text": "0.26f to Color(0xFFFBF9F5),"
+          "text": "0.58f to Color(0xFFEFEBE3),"
         },
         {
           "platform": "android",
@@ -6809,7 +6809,7 @@
           "line": 778,
           "symbol": "GearButton",
           "note": "for (k in 0 until 8) { val a = Math.toRadians((k * 45).toDouble()) ... }",
-          "text": ""
+          "text": "val inset = 9.dp.toPx()"
         }
       ],
       "platformEvidence": {
@@ -6876,7 +6876,7 @@
           "line": 522,
           "symbol": "Header",
           "note": "Text(text = lock?.name ?: \"离线锁钥匙\", fontSize = if (lock == null) 22.sp else 26.sp, Light)",
-          "text": "if (lock != null) {"
+          "text": "ProximityCard("
         },
         {
           "platform": "android",
@@ -6892,7 +6892,7 @@
           "line": 529,
           "symbol": "Header",
           "note": "if (lock != null) { ... Text(text = lock.macText, monospace, letterSpacing = 1.5.sp) }",
-          "text": "},"
+          "text": "onRescan = {"
         }
       ],
       "platformEvidence": {
@@ -7373,7 +7373,7 @@
           "line": 149,
           "symbol": "KfApp",
           "note": "val airTagLayerUp = proximity && rssi != null && !airTagDismissed",
-          "text": "var fired by remember { mutableStateOf(false) }                // 本次接近事件是否已发过 04"
+          "text": "var prewarmStarted by remember { mutableStateOf(false) }       // 本次靠近是否已预热过"
         },
         {
           "platform": "android",
@@ -7381,7 +7381,7 @@
           "line": 150,
           "symbol": "KfApp",
           "note": "BackHandler(enabled = airTagLayerUp || showSettings) { if (airTagLayerUp) { airTagDismissed = true } else if (showSettings) { showSettings = false } }",
-          "text": "var prewarmStarted by remember { mutableStateOf(false) }       // 本次靠近是否已预热过"
+          "text": "var warming by remember { mutableStateOf(false) }              // 预热建链在途 (要让监测撤下)"
         }
       ],
       "platformEvidence": {
@@ -7442,7 +7442,7 @@
           "line": 440,
           "symbol": "ProximityCard",
           "note": "onRescan = { showSettings = false; launchScan() }",
-          "text": "EmptyState(onScan = { launchScan() })"
+          "text": "} else {"
         },
         {
           "platform": "android",
@@ -7450,7 +7450,7 @@
           "line": 742,
           "symbol": "ProximityCard",
           "note": "Text(\"重新扫码绑定\", color = colors.accent.copy(alpha = 0.9f), ... .clickable { onRescan() })",
-          "text": "Box("
+          "text": "Modifier"
         }
       ],
       "platformEvidence": {
@@ -7511,7 +7511,7 @@
           "line": 425,
           "symbol": "KfApp",
           "note": ".background(Color(0xB3050709))",
-          "text": "val colors = LocalKfColors.current"
+          "text": "Box("
         },
         {
           "platform": "android",
@@ -7519,7 +7519,7 @@
           "line": 427,
           "symbol": "KfApp",
           "note": ".clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { showSettings = false }",
-          "text": "Modifier"
+          "text": ".fillMaxSize()"
         },
         {
           "platform": "android",
@@ -7527,7 +7527,7 @@
           "line": 454,
           "symbol": "ProximityCard",
           "note": "onClose = { showSettings = false }（“完成”按钮）",
-          "text": "pitchDeg = pitch,"
+          "text": "rollDeg = roll,"
         }
       ],
       "platformEvidence": {
@@ -7594,7 +7594,7 @@
           "line": 717,
           "symbol": "ProximityCard",
           "note": "Switch(checked = on, onCheckedChange = onToggle, colors = SwitchDefaults.colors(...))",
-          "text": "@Composable"
+          "text": "private fun UnlockDial(busy: Boolean, onClick: () -> Unit) {"
         },
         {
           "platform": "android",
@@ -7602,7 +7602,7 @@
           "line": 720,
           "symbol": "ProximityCard",
           "note": "checkedThumbColor = colors.bgTop, checkedTrackColor = colors.accent, uncheckedTrackColor = colors.inkSub.copy(alpha = 0.30f)",
-          "text": "val interaction = remember { MutableInteractionSource() }"
+          "text": "val pressed by interaction.collectIsPressedAsState()"
         }
       ],
       "platformEvidence": {
@@ -7832,7 +7832,7 @@
           "line": 544,
           "symbol": "UnlockDial",
           "note": "private fun UnlockDial(busy: Boolean, onClick: () -> Unit)",
-          "text": "defendOn = lock?.defendOn ?: false,"
+          "text": "onDefendToggle = { on ->"
         },
         {
           "platform": "apk",
@@ -7856,7 +7856,7 @@
           "line": 558,
           "symbol": "UnlockDial",
           "note": "Canvas(Modifier.size(300.dp)) 外圈柔光",
-          "text": "lock?.let { l ->"
+          "text": "val upd = l.copy(rssiP95 = 0)"
         },
         {
           "platform": "android",
@@ -7864,7 +7864,7 @@
           "line": 568,
           "symbol": "UnlockDial",
           "note": "Box .size(232.dp).clip(CircleShape).clickable(...)",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "android",
@@ -7872,7 +7872,7 @@
           "line": 583,
           "symbol": "UnlockDial",
           "note": "第 1 层 金属倒角 Brush.sweepGradient",
-          "text": "\"换成「${p.name}」(${p.macText}) 之后, 原来那把锁要从这台手机重新扫码才能再用。\""
+          "text": ")"
         }
       ],
       "platformEvidence": {
@@ -8143,7 +8143,7 @@
           "line": 271,
           "symbol": "maybeAutoUnlock",
           "note": "fun maybeAutoUnlock(r: Int)",
-          "text": "} else {"
+          "text": "pending = parsed   // 已有绑定 → 弹确认"
         },
         {
           "platform": "android",
@@ -8151,7 +8151,7 @@
           "line": 317,
           "symbol": "KfApp",
           "note": "unlocker.observeSignal(l).collect { r -> rssi = r; ...; maybeAutoUnlock(r) }",
-          "text": "//   ① 回差 (F3 rssiSample): 越过武装线才武装, 掉到解除线以下才解除 —— 门口来回走不翻转;"
+          "text": "//   ② 一次性闩锁 (F5): 一次\"接近事件\"只发一次, 解除后才放开;"
         },
         {
           "platform": "android",
@@ -8159,7 +8159,7 @@
           "line": 301,
           "symbol": "maybeAutoUnlock",
           "note": "doUnlock(auto = true)",
-          "text": "foreground = false"
+          "text": "armed = false              // 回前台必须由新的信号样本重新武决, 不沿用后台前的判断"
         },
         {
           "platform": "android",
@@ -8167,7 +8167,7 @@
           "line": 311,
           "symbol": "KfApp",
           "note": "if (!proximity) { rssi = null; armed = false; fired = false; prewarmStarted = false; peakRssi = null; peakAz = null; airTagDismissed = false }",
-          "text": "}"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -8334,7 +8334,7 @@
           "line": 357,
           "symbol": "KfApp",
           "note": "AnimatedVisibility(visible = proximity && !airTagShowing) { SignalArrow(...) }",
-          "text": "armed = AutoOpenKit.rssiArmedByMedian(prevArmed = armed, history = rssiHistory, base = armBase)"
+          "text": "// 信号掉回解除线以下 = 这一次接近事件结束 → 放开闩锁与预热位, 下次靠近重来一遍"
         },
         {
           "platform": "android",
@@ -8411,7 +8411,7 @@
           "line": 202,
           "symbol": "scan",
           "note": "val scan = rememberLauncherForActivityResult(ScanContract())",
-          "text": "say(\"缺少权限: \" + names.joinToString(\"、\") + \" — 扫码与开锁会失败, 请到系统设置里允许\", true)"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -8427,7 +8427,7 @@
           "line": 222,
           "symbol": "launchScan",
           "note": "setPrompt(\"对准 iOS 上的钥匙二维码\")（218-226 整段 ScanOptions 配置）",
-          "text": "scope.launch {"
+          "text": "// 2026-10-31（第 64 轮，**切锁竞态**）：`l` 是进入 `doUnlock` 时捕获的引用，"
         }
       ],
       "platformEvidence": {
@@ -8496,7 +8496,7 @@
           "line": 493,
           "symbol": "KfApp",
           "note": "AnimatedVisibility(visible = airTagShowing, enter = fadeIn(180)+slideInVertically(260))",
-          "text": ")"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -8504,7 +8504,7 @@
           "line": 811,
           "symbol": "AirTagLayer",
           "note": "private fun AirTagLayer(name, rssi, armed, busy, azimuthDeg, peakDeg, pitch, roll, soundOn, foreground, onToggleSound, onClose)",
-          "text": "lineTo(cx + g * 0.38f, top + g * 1.0f)"
+          "text": "close()"
         },
         {
           "platform": "android",
@@ -8512,7 +8512,7 @@
           "line": 839,
           "symbol": "AirTagLayer",
           "note": ".background(if (armed) Color(0xFF0E7A42) else Color(0xFF0B6B3A))",
-          "text": "Canvas(Modifier.size(120.dp)) {"
+          "text": "val len = 26.dp.toPx()"
         }
       ],
       "platformEvidence": {
@@ -8581,7 +8581,7 @@
           "line": 462,
           "symbol": "KfApp",
           "note": "val same = p.mac == lock?.mac",
-          "text": "text = status.ifBlank { \"点一下开锁\" },"
+          "text": "color = when {"
         },
         {
           "platform": "android",
@@ -8589,7 +8589,7 @@
           "line": 463,
           "symbol": "KfApp",
           "note": "AlertDialog(onDismissRequest = { pending = null }, ...)",
-          "text": "color = when {"
+          "text": "statusBad -> colors.bad"
         },
         {
           "platform": "android",
@@ -8597,7 +8597,7 @@
           "line": 482,
           "symbol": "KfApp",
           "note": "Text(if (same) \"覆盖\" else \"换绑\", color = colors.accent)",
-          "text": "fontFamily = FontFamily.Monospace"
+          "text": ")"
         }
       ],
       "platformEvidence": {
@@ -8667,7 +8667,7 @@
           "line": 182,
           "symbol": "doUnlock",
           "note": "fun doUnlock(auto: Boolean)",
-          "text": "// 2026-10-31（第 66 轮）：拒绝类文案的节流 —— 同一句 10s 内不重复写状态行。"
+          "text": "fun sayReject(text: String) {"
         },
         {
           "platform": "android",
@@ -8675,7 +8675,7 @@
           "line": 186,
           "symbol": "doUnlock",
           "note": "say(if (auto) \"已靠近, 正在开锁…\" else \"正在开锁…\")",
-          "text": "lastRejectSaid = text"
+          "text": "lastRejectAt = now"
         },
         {
           "platform": "android",
@@ -8683,7 +8683,7 @@
           "line": 193,
           "symbol": "doUnlock",
           "note": "say(if (r.ok) (if (auto) \"自动开锁成功 — \" else \"手动开锁成功 — \") + r.message else r.message, !r.ok)",
-          "text": "val permNames = mapOf("
+          "text": "Manifest.permission.BLUETOOTH_SCAN to \"蓝牙扫描\","
         },
         {
           "platform": "android",
@@ -8691,7 +8691,7 @@
           "line": 371,
           "symbol": "KfApp",
           "note": "onClick = { doUnlock(auto = false) }",
-          "text": "val hour = cal.get(java.util.Calendar.HOUR_OF_DAY)"
+          "text": "val st = lock?.defendStartHour ?: 22"
         }
       ],
       "platformEvidence": {
@@ -10771,7 +10771,7 @@
           "line": 444,
           "symbol": "ProximityCard",
           "note": "onUnbind = { LockStore.clear(ctx); lock = null; proximity = false; showSettings = false; ... say(\"已解绑\") }",
-          "text": "// 所以箭头指\"转动手机时信号最强的那个朝向\", 不谎称指针自动指向门 (见 SignalArrow 头注)。"
+          "text": "AnimatedVisibility(visible = proximity && !airTagShowing) {"
         },
         {
           "platform": "android",
@@ -10779,7 +10779,7 @@
           "line": 451,
           "symbol": "ProximityCard",
           "note": "scope.launch { unlocker.release() }",
-          "text": "rssi = rssi,"
+          "text": "armed = armed,"
         },
         {
           "platform": "android",
@@ -10787,7 +10787,7 @@
           "line": 750,
           "symbol": "ProximityCard",
           "note": "Text(\"解绑\", ... .clickable { onUnbind() })",
-          "text": "// 补语义（用 `semantics` 而不是 `clearAndSetSemantics`：后者会把按压态的语义也抹掉）。"
+          "text": ".semantics {"
         }
       ],
       "platformEvidence": {
@@ -10854,7 +10854,7 @@
           "line": 332,
           "symbol": "KfApp",
           "note": "val airTagShowing = proximity && rssi != null && !airTagDismissed",
-          "text": "// 预热不排队、不抢锁: prewarm 内部 mutex 会排在建链后面, 而开锁那一趟优先级更高,"
+          "text": "// 所以只在\"没在开锁 && 还没有热链路\"时发起, 避免和开锁抢同一次 startScan。"
         },
         {
           "platform": "android",
@@ -10862,7 +10862,7 @@
           "line": 149,
           "symbol": "KfApp",
           "note": "val airTagLayerUp = proximity && rssi != null && !airTagDismissed（返回键判据）",
-          "text": "var fired by remember { mutableStateOf(false) }                // 本次接近事件是否已发过 04"
+          "text": "var prewarmStarted by remember { mutableStateOf(false) }       // 本次靠近是否已预热过"
         }
       ],
       "platformEvidence": {
@@ -10925,7 +10925,7 @@
           "line": 893,
           "symbol": "ProximityBeep",
           "note": "private fun ProximityBeep(active, fill, soundOn, foreground)",
-          "text": "Modifier"
+          "text": ".clip(RoundedCornerShape(KfTokens.Radius.card))"
         },
         {
           "platform": "android",
@@ -10933,7 +10933,7 @@
           "line": 894,
           "symbol": "ProximityBeep",
           "note": "val level = when { fill > 0.85f -> 3; fill > 0.6f -> 2; fill > 0.3f -> 1; fill > 0.05f -> 0; else -> -1 }",
-          "text": ".fillMaxWidth()"
+          "text": ".background(colors.surface)"
         },
         {
           "platform": "android",
@@ -10941,7 +10941,7 @@
           "line": 901,
           "symbol": "ProximityBeep",
           "note": "LaunchedEffect(active, soundOn, level, foreground) { if (!active || !soundOn || level < 0 || !foreground) return }",
-          "text": "Text(\"靠近自动开锁\", color = colors.ink, fontSize = 15.sp)"
+          "text": "// 文案里的数值一律从 AutoOpenKit 取: 写死数字的注释/文案, 在阈值改动那天就变成假话"
         },
         {
           "platform": "android",
@@ -10949,7 +10949,7 @@
           "line": 904,
           "symbol": "ProximityBeep",
           "note": "val period = when (level) { 3 -> 240L; 2 -> 420L; 1 -> 700L; else -> 1100L }",
-          "text": "// (这一句原来写的是 -38/-41, 阈值早就挪到 -40/-43 了, 界面却还在按旧数字承诺)。"
+          "text": "\"开着它: 手机解了锁、App 在前台时, 靠近到 \" + AutoOpenKit.BASE + \" dBm 以内会自动开一次。\","
         }
       ],
       "platformEvidence": {
@@ -11023,7 +11023,7 @@
           "line": 512,
           "symbol": "KfApp",
           "note": "onClose = { airTagDismissed = true }",
-          "text": "Column("
+          "text": "Modifier"
         },
         {
           "platform": "android",
@@ -11031,7 +11031,7 @@
           "line": 150,
           "symbol": "KfApp",
           "note": "BackHandler(enabled = airTagLayerUp || showSettings) { if (airTagLayerUp) airTagDismissed = true else if (showSettings) showSettings = false }",
-          "text": "var prewarmStarted by remember { mutableStateOf(false) }       // 本次靠近是否已预热过"
+          "text": "var warming by remember { mutableStateOf(false) }              // 预热建链在途 (要让监测撤下)"
         },
         {
           "platform": "android",
@@ -11039,7 +11039,7 @@
           "line": 240,
           "symbol": "KfApp",
           "note": "ON_RESUME -> { ... airTagDismissed = false }",
-          "text": "return@launch"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -11108,7 +11108,7 @@
           "line": 842,
           "symbol": "AirTagLayer",
           "note": "Text(\"正在查找\") + Text(name, 30.sp, Bold)",
-          "text": "val c = colors.accent.copy(alpha = 0.85f)"
+          "text": "drawLine(c, Offset(x, y), Offset(x + dx * len, y), strokeWidth = w, cap = StrokeCap.Round)"
         },
         {
           "platform": "android",
@@ -11116,7 +11116,7 @@
           "line": 866,
           "symbol": "AirTagLayer",
           "note": "CircleIconButton(label = \"✕\", onClick = onClose)",
-          "text": "Spacer(Modifier.height(28.dp))"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -11124,7 +11124,7 @@
           "line": 871,
           "symbol": "AirTagLayer",
           "note": "CircleIconButton(label = if (soundOn) \"🔊\" else \"🔇\", onClick = onToggleSound)",
-          "text": "@Composable"
+          "text": "on: Boolean,"
         },
         {
           "platform": "android",
@@ -11132,7 +11132,7 @@
           "line": 141,
           "symbol": "KfApp",
           "note": "var findSound by remember { mutableStateOf(true) }",
-          "text": "// 现在初值从已加载的 lock 里取回，重启后 F6 仍然有效。"
+          "text": "var lastRc by remember { mutableStateOf(lock?.lastRc ?: 0) }"
         }
       ],
       "platformEvidence": {
@@ -12001,7 +12001,7 @@
           "line": 679,
           "symbol": "EmptyState",
           "note": "PillButton(\"扫码添加门锁\", onScan)",
-          "text": "roll = roll,"
+          "text": "soundOn = findSound,"
         },
         {
           "platform": "android",
@@ -12009,7 +12009,7 @@
           "line": 440,
           "symbol": "ProximityCard",
           "note": "onRescan = { showSettings = false; launchScan() }",
-          "text": "EmptyState(onScan = { launchScan() })"
+          "text": "} else {"
         },
         {
           "platform": "android",
@@ -12017,7 +12017,7 @@
           "line": 742,
           "symbol": "ProximityCard",
           "note": "Text(\"重新扫码绑定\", ... .clickable { onRescan() })",
-          "text": "Box("
+          "text": "Modifier"
         }
       ],
       "platformEvidence": {
@@ -12084,7 +12084,7 @@
           "line": 209,
           "symbol": "scan",
           "note": "if (lock == null) { LockStore.save(ctx, parsed); lock = parsed; say(\"已绑定「${parsed.name}」\") }",
-          "text": "Manifest.permission.CAMERA,"
+          "text": ")"
         },
         {
           "platform": "android",
@@ -12316,7 +12316,7 @@
           "line": 205,
           "symbol": "scan",
           "note": "say(\"这不是本 App 的钥匙码 — 请让 iOS 端重新生成\", true)",
-          "text": "LaunchedEffect(Unit) {"
+          "text": "val need = listOf("
         }
       ],
       "platformEvidence": {
@@ -12483,7 +12483,7 @@
           "line": 472,
           "symbol": "KfApp",
           "note": "\"本机现在绑定的是「${lock?.name ?: \"\"}」(${lock?.macText ?: \"\"})。\\n\" + \"换成「${p.name}」(${p.macText}) 之后, 原来那把锁要从这台手机重新扫码才能再用。\"",
-          "text": "Spacer(Modifier.height(6.dp))"
+          "text": "Text("
         },
         {
           "platform": "android",
@@ -12491,7 +12491,7 @@
           "line": 478,
           "symbol": "KfApp",
           "note": "LockStore.save(ctx, p); lock = p; pending = null; say(\"已绑定「${p.name}」\")",
-          "text": "},"
+          "text": "// 2026-10-31（第 42 轮 · 对比度）：近场提示 —— 用户靠它判断该不该继续走；去掉 alpha（0.7 叠底后 <4.5:1）"
         }
       ],
       "platformEvidence": {
@@ -12553,7 +12553,7 @@
           "line": 468,
           "symbol": "KfApp",
           "note": "Text(if (same) \"更新这把锁的凭证?\" else \"换一把锁?\")",
-          "text": "},"
+          "text": "fontSize = 15.sp,"
         },
         {
           "platform": "android",
@@ -12561,7 +12561,7 @@
           "line": 471,
           "symbol": "KfApp",
           "note": "if (same) \"本机已绑定「${p.name}」。用新扫到的凭证覆盖它?\"",
-          "text": ")"
+          "text": "Spacer(Modifier.height(6.dp))"
         }
       ],
       "platformEvidence": {
@@ -12623,7 +12623,7 @@
           "line": 573,
           "symbol": "UnlockDial",
           "note": "clickable(interactionSource = interaction, indication = null, enabled = !busy)",
-          "text": "AlertDialog("
+          "text": "onDismissRequest = { pending = null },"
         },
         {
           "platform": "android",
@@ -12639,7 +12639,7 @@
           "line": 637,
           "symbol": "UnlockDial",
           "note": "if (busy) drawArc(startAngle = -90f, sweepAngle = 300f)",
-          "text": "}"
+          "text": "},"
         },
         {
           "platform": "android",
@@ -12647,7 +12647,7 @@
           "line": 119,
           "symbol": "KfApp",
           "note": "var busy by remember { mutableStateOf(false) }",
-          "text": "var status by remember { mutableStateOf(\"\") }"
+          "text": "/// 失败时的过程留痕 (令牌前缀 / rc) —— 真机排障就靠这一行, 平时不占地方"
         }
       ],
       "platformEvidence": {
@@ -12789,7 +12789,7 @@
           "line": 547,
           "symbol": "UnlockDial",
           "note": "val pressed by interaction.collectIsPressedAsState()",
-          "text": "val upd = l.copy(defendOn = on)"
+          "text": "lock = upd"
         },
         {
           "platform": "android",
@@ -12805,7 +12805,7 @@
           "line": 550,
           "symbol": "UnlockDial",
           "note": "animateFloatAsState(0.972f, tween(100, CubicBezierEasing(0.42f,0f,0.58f,1f)))",
-          "text": "say(if (on) \"布防已开：22:00–07:00 不自动开锁\" else \"布防已关\")"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -12981,7 +12981,7 @@
           "line": 326,
           "symbol": "KfApp",
           "note": "LaunchedEffect(foreground) { if (!foreground) return@LaunchedEffect; HeadingSense.attitude(ctx).collect { ... } }",
-          "text": "// 用 PREWARM 这个固定值而不是标定值: 安卓端没有标定页 (见 AutoOpenKit 注释)。"
+          "text": "// 2026-10-31（第 28 轮）：预热线跟着标定基准走 —— 固定 BASE-24 在标定后就不成比例了。"
         },
         {
           "platform": "android",
@@ -13078,7 +13078,7 @@
           "line": 863,
           "symbol": "AirTagLayer",
           "note": "Text(directionLabel(bearing), fontSize = 26.sp)",
-          "text": "// Compose 默认行高（约 1.2~1.5 倍字号）会随 fontScale 自动算，比固定值稳。"
+          "text": ")"
         },
         {
           "platform": "android",
@@ -13303,7 +13303,7 @@
           "line": 319,
           "symbol": "KfApp",
           "note": "val (br, bp, changed) = peakUpdate(peakRssi, peakAz, r, azimuth); if (changed) { peakRssi = br; peakAz = bp }",
-          "text": "//   ③ 冷却 (F5 coolReady): 上次下发距今 >60s 才允许下一次 (跨事件也拦)。"
+          "text": "// 写成局部函数而不是塞进 collect 的 lambda: collect 外面已经套着 LaunchedEffect 一层"
         },
         {
           "platform": "android",
@@ -13622,7 +13622,7 @@
           "line": 184,
           "symbol": "doUnlock",
           "note": "if (busy) return",
-          "text": "val now = System.currentTimeMillis()"
+          "text": "if (text == lastRejectSaid && now - lastRejectAt < 10_000L) return"
         },
         {
           "platform": "android",
@@ -13630,7 +13630,7 @@
           "line": 185,
           "symbol": "doUnlock",
           "note": "busy = true",
-          "text": "if (text == lastRejectSaid && now - lastRejectAt < 10_000L) return"
+          "text": "lastRejectSaid = text"
         },
         {
           "platform": "android",
@@ -13638,7 +13638,7 @@
           "line": 189,
           "symbol": "doUnlock",
           "note": "busy = false",
-          "text": "}"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -13707,7 +13707,7 @@
           "line": 193,
           "symbol": "doUnlock",
           "note": "say(... !r.ok)",
-          "text": "val permNames = mapOf("
+          "text": "Manifest.permission.BLUETOOTH_SCAN to \"蓝牙扫描\","
         },
         {
           "platform": "android",
@@ -13933,7 +13933,7 @@
           "line": 707,
           "symbol": "ProximityCard",
           "note": "\"开着它: 手机解了锁、App 在前台时, 靠近到 \" + AutoOpenKit.BASE + \" dBm 以内会自动开一次。\"",
-          "text": "color = colors.inkSub,"
+          "text": "fontSize = 12.sp,"
         },
         {
           "platform": "android",
@@ -14032,7 +14032,7 @@
           "line": 297,
           "symbol": "maybeAutoUnlock",
           "note": "if (!AutoOpenKit.coolReady(lastAuto, now)) return",
-          "text": "fired = false"
+          "text": "airTagDismissed = false"
         },
         {
           "platform": "android",
@@ -14122,7 +14122,7 @@
           "line": 275,
           "symbol": "maybeAutoUnlock",
           "note": "if (!foreground) return   // 后台不预热",
-          "text": ""
+          "text": "fun launchScan() {"
         },
         {
           "platform": "android",
@@ -14130,7 +14130,7 @@
           "line": 314,
           "symbol": "KfApp",
           "note": "if (!proximity || busy || warming || !foreground) return@LaunchedEffect",
-          "text": "// 旧口径是\"RSSI ≥ -38 且距上次 >8 秒\"→ 人站在门口不动时, 每 8 秒再发一次 04。"
+          "text": "// iOS 那条链早就裁定过这件事 (\"每个接近事件只发一次 04\"), 理由是 04 驱动执行器:"
         },
         {
           "platform": "android",
@@ -14138,7 +14138,7 @@
           "line": 309,
           "symbol": "KfApp",
           "note": "LaunchedEffect(proximity, lock?.mac, busy, warming, foreground)",
-          "text": "lifecycleOwner.lifecycle.addObserver(obs)"
+          "text": "onDispose { lifecycleOwner.lifecycle.removeObserver(obs) }"
         }
       ],
       "platformEvidence": {
@@ -14215,7 +14215,7 @@
           "line": 293,
           "symbol": "maybeAutoUnlock",
           "note": "armed = AutoOpenKit.rssiSample(prevArmed = armed, rssi = r)",
-          "text": "// 填进缓存 → maybeAutoUnlock 顺势预热。这里**不另起扫描** (安卓同时只跑"
+          "text": "// 一路扫描, 自己扫一次反而会把刚挂上的监测顶掉)。"
         },
         {
           "platform": "android",
@@ -14223,7 +14223,7 @@
           "line": 244,
           "symbol": "KfApp",
           "note": "Lifecycle.Event.ON_PAUSE -> { foreground = false; armed = false; ... }",
-          "text": "// 2026-10-31（第 27 轮）：写内存态之外**也要落盘** —— 否则下次启动读回的还是旧值。"
+          "text": "lastRc = r.rc"
         }
       ],
       "platformEvidence": {
@@ -14292,7 +14292,7 @@
           "line": 295,
           "symbol": "maybeAutoUnlock",
           "note": "if (!armed) { fired = false; prewarmStarted = false }",
-          "text": "foreground = true"
+          "text": "prewarmStarted = false"
         },
         {
           "platform": "android",
@@ -14300,7 +14300,7 @@
           "line": 296,
           "symbol": "maybeAutoUnlock",
           "note": "if (!armed || fired) return",
-          "text": "prewarmStarted = false"
+          "text": "fired = false"
         },
         {
           "platform": "android",
@@ -14308,7 +14308,7 @@
           "line": 299,
           "symbol": "maybeAutoUnlock",
           "note": "fired = true; lastAuto = now",
-          "text": "}"
+          "text": "Lifecycle.Event.ON_PAUSE -> {"
         },
         {
           "platform": "android",
@@ -14316,7 +14316,7 @@
           "line": 126,
           "symbol": "KfApp",
           "note": "var fired by remember { mutableStateOf(false) }",
-          "text": "var rssi by remember { mutableStateOf<Int?>(null) }"
+          "text": "var pending by remember { mutableStateOf<LockInfo?>(null) }   // 待二次确认的绑定"
         }
       ],
       "platformEvidence": {
@@ -14392,7 +14392,7 @@
           "line": 276,
           "symbol": "maybeAutoUnlock",
           "note": "if (!prewarmStarted && !busy && !warming && r >= prewarmLineDbm && lock != null)",
-          "text": "fun launchScan() {"
+          "text": "scan.launch("
         },
         {
           "platform": "android",
@@ -14408,7 +14408,7 @@
           "line": 283,
           "symbol": "maybeAutoUnlock",
           "note": "warming = true; delay(220); try { unlocker.prewarm(target) } finally { warming = false }",
-          "text": ")"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -14495,7 +14495,7 @@
           "line": 269,
           "symbol": "KfApp",
           "note": "val prewarmLineDbm = AutoOpenKit.BASE - 24",
-          "text": "lock = parsed"
+          "text": "say(\"已绑定「${parsed.name}」\")"
         },
         {
           "platform": "android",
@@ -14503,7 +14503,7 @@
           "line": 276,
           "symbol": "maybeAutoUnlock",
           "note": "if (!prewarmStarted && !busy && !warming && r >= prewarmLineDbm && lock != null)",
-          "text": "fun launchScan() {"
+          "text": "scan.launch("
         }
       ],
       "platformEvidence": {
@@ -14565,7 +14565,7 @@
           "line": 435,
           "symbol": "ProximityCard",
           "note": "onToggle = { proximity = it; LockStore.saveProximity(ctx, it); if (!it) rssi = null }",
-          "text": "horizontalAlignment = Alignment.CenterHorizontally"
+          "text": ") {"
         },
         {
           "platform": "android",
@@ -14581,7 +14581,7 @@
           "line": 121,
           "symbol": "KfApp",
           "note": "var proximity by remember { mutableStateOf(LockStore.loadProximity(ctx)) }",
-          "text": "var detail by remember { mutableStateOf(\"\") }"
+          "text": "var statusBad by remember { mutableStateOf(false) }"
         }
       ],
       "platformEvidence": {
@@ -63689,7 +63689,7 @@
           "line": 445,
           "symbol": "ProximityCard",
           "note": "onUnbind 首行 LockStore.clear(ctx)",
-          "text": "AnimatedVisibility(visible = proximity && !airTagShowing) {"
+          "text": "SignalArrow("
         }
       ],
       "platformEvidence": {
