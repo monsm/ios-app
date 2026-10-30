@@ -53,7 +53,7 @@ private struct CaptureShieldModifier: ViewModifier {
                     Text(message)
                         .vkFont(.footnote)
                         .multilineTextAlignment(.center)
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, DS.Space.xl)
                 }
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)

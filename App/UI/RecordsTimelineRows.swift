@@ -114,7 +114,7 @@ extension RecordsView {
                         }
                     }
                     .padding(.horizontal, DS.Space.s)
-                    .padding(.vertical, 2)
+                    .padding(.vertical, DS.Space.xxs)
                     .background(hasAlarm ? DS.Palette.danger.opacity(0.10) : DS.Palette.surfaceAlt, in: Capsule())
                 }
                 HStack(spacing: DS.Space.s) {
@@ -260,7 +260,7 @@ extension RecordsView {
             .vkFont(.caption.monospacedDigit())
             .foregroundStyle(DS.Palette.textSub)
             .frame(width: 42, alignment: .trailing)
-            .padding(.top, 2)
+            .padding(.top, DS.Space.xxs)
 
         ZStack(alignment: .top) {
             // 连接线: 留半格让线自然收在圆点上下 (592 展开态内也保持贯通)

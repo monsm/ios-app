@@ -206,7 +206,7 @@ extension CredentialsView {
                 .disabled(isBusy)
                 .padding(.top, DS.Space.xs)
             }
-            .padding(.vertical, 2)
+            .padding(.vertical, DS.Space.xxs)
         }
     }
 

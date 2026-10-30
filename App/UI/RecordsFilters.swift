@@ -52,7 +52,7 @@ extension RecordsView {
                                     .lineLimit(1)
                                     .foregroundStyle(DS.Palette.accentText)
                                     .padding(.horizontal, DS.Space.xs + 2)
-                                    .padding(.vertical, 2)
+                                    .padding(.vertical, DS.Space.xxs)
                                     .variantPlate(DS.Palette.accentText.opacity(0.10), .capsule)
                                     .frame(maxWidth: 160)
                             }

@@ -155,7 +155,7 @@ extension RecordsView {
                 .vkFont(.subheadline, weight: .medium)
                 .lineLimit(1)
                 .padding(.horizontal, DS.Space.l)
-                .padding(.vertical, 12)   // 撑到 ≥44pt 触达
+                .padding(.vertical, DS.Space.m)   // 撑到 ≥44pt 触达
                 .background(on ? DS.Palette.accent : DS.Palette.surfaceAlt, in: Capsule())
                 .overlay(Capsule().strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
                 .foregroundStyle(on ? DS.Palette.onAccent : DS.Palette.text)

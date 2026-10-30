@@ -23,6 +23,14 @@ extension DS {
         static var card: CGFloat { r(22) }
         static var control: CGFloat { r(16) }
         static var tile: CGFloat { r(18) }
+        // 2026-10-31（UI/UX 第 2 轮）：补两个**真实容器**需要的刻度 —— 它们此前是硬编码的，
+        // 不随「圆角档」设置变化（用户在设置页调 soft/plump 时它们保持原样，视觉不一致）。
+        //   chip  8pt  → 日历格（`CredentialCalendarView` 的 40pt 高格子）
+        //   badge 13pt → 快捷格（`DeviceHomeQuick` 的 48×48 圆角方块）
+        // 刻意**不**把装饰性小圆角（信号格 1pt / 刻度点 3pt / 色板预览 4pt / 22pt 控制零件 5pt）纳入 ——
+        // 那些是「零件本身的形状」，不是「容器的圆角」，跟着档位变会让零件变形。
+        static var chip: CGFloat { r(8) }
+        static var badge: CGFloat { r(13) }
     }
     enum Hit { static let min: CGFloat = 44 }
     @MainActor

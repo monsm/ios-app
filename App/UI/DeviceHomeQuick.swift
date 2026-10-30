@@ -119,7 +119,7 @@ extension DeviceHomeView {
                 .foregroundStyle(DS.Palette.accentText)
                 .frame(width: big ? 48 : 40, height: big ? 48 : 40)
                 .background(DS.Palette.accentText.opacity(0.12),
-                            in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                            in: RoundedRectangle(cornerRadius: DS.Radius.badge, style: .continuous))
             Text(label)
                 .vkFont(big ? .callout : .caption)
                 .foregroundStyle(DS.Palette.text)

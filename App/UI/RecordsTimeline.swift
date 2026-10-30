@@ -212,7 +212,7 @@ struct RecDetailSheet: View {
                     .vkFont(.caption, weight: .medium)
                     .lineLimit(1)
                     .foregroundStyle(disp != nil ? DS.Palette.ok : DS.Palette.danger)
-                    .padding(.horizontal, 8)
+                    .padding(.horizontal, DS.Space.s)
                     .padding(.vertical, DS.Space.xs)
                     .background((disp != nil ? DS.Palette.ok : DS.Palette.danger).opacity(0.10), in: Capsule())
             }

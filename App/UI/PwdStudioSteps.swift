@@ -118,7 +118,7 @@ extension PwdStudio {
                     .contentShape(Rectangle())
                 }
                 .padding(.horizontal, DS.Space.s)
-                .padding(.vertical, 4)
+                .padding(.vertical, DS.Space.xs)
                 .variantCallout(DS.Palette.warn, .control, wash: 0.10)
                 .accessibilityLabel("码值来自剪贴板， 点清除可移除")
             }
@@ -187,7 +187,7 @@ extension PwdStudio {
                     .contentShape(Rectangle())
                 }
                 .padding(.horizontal, DS.Space.s)
-                .padding(.vertical, 4)
+                .padding(.vertical, DS.Space.xs)
                 .variantCallout(DS.Palette.warn, .control, wash: 0.10)
                 .accessibilityElement(children: .combine)
             }
@@ -298,7 +298,7 @@ extension PwdStudio {
                             .contentShape(Rectangle())
                         }
                     }
-                    .padding(.vertical, 2)
+                    .padding(.vertical, DS.Space.xxs)
                 }
                 TextField("如： 钟点工·大门·仅上午场", text: $note,   // 523 钟点工
                           prompt: Text("给谁 · 哪扇门 · 用多久"))
@@ -326,7 +326,7 @@ extension PwdStudio {
                 .vkFont(.caption, weight: .medium)
                 .foregroundStyle(DS.Palette.accentText)
                 .padding(.horizontal, DS.Space.s)
-                .padding(.vertical, 4)
+                .padding(.vertical, DS.Space.xs)
                 .variantPlate(DS.Palette.accentText.opacity(0.10), .capsule)
                 .frame(minHeight: DS.Hit.min)
                 .contentShape(Rectangle())

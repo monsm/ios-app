@@ -167,7 +167,7 @@ struct FpStudio: View {
             .vkFont(.caption)
             .foregroundStyle(DS.Palette.warn)
             .padding(.horizontal, DS.Space.s)
-            .padding(.vertical, 4)
+            .padding(.vertical, DS.Space.xs)
             .variantCallout(DS.Palette.warn, .control, wash: 0.10)
         }
         // 317 归属先行: 选择器自带"空态就地新建" —— 一个成员都没有时直接弹新增, 不再把人赶去成员中心。
@@ -282,7 +282,7 @@ struct FpStudio: View {
                                 .minimumScaleFactor(0.8)
                                 .foregroundStyle(name == sug ? DS.Palette.onAccent : DS.Palette.accentText)
                                 .padding(.horizontal, DS.Space.s)
-                                .padding(.vertical, 4)
+                                .padding(.vertical, DS.Space.xs)
                                 .background(name == sug ? DS.Palette.accent : DS.Palette.accentText.opacity(0.10), in: Capsule())
                                 .frame(minHeight: DS.Hit.min)
                                 .contentShape(Rectangle())

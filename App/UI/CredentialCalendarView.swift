@@ -68,7 +68,7 @@ struct CredentialCalendarView: View {
                         ForEach(0..<leadingBlanks, id: \.self) { _ in Color.clear.frame(height: 40) }
                         ForEach(1...dayCount, id: \.self) { d in dayCell(d) }
                     }
-                    .padding(.vertical, 2)
+                    .padding(.vertical, DS.Space.xxs)
                 } footer: {
                     Text(summaryLine)
                 }
@@ -143,7 +143,7 @@ struct CredentialCalendarView: View {
             }
             .frame(maxWidth: .infinity, minHeight: 40)
             .background(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                RoundedRectangle(cornerRadius: DS.Radius.chip, style: .continuous)
                     .fill(on ? DS.Palette.accent : (n > 0 ? DS.Palette.warn.opacity(0.12) : DS.Palette.surfaceAlt))
             )
         }

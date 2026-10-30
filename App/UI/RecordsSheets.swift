@@ -162,7 +162,7 @@ struct OutWinSheet: View {
                                     .lineLimit(1)
                                     .foregroundStyle(DS.Palette.accentText)
                                     .padding(.horizontal, DS.Space.s)
-                                    .padding(.vertical, 2)
+                                    .padding(.vertical, DS.Space.xxs)
                                     .variantPlate(DS.Palette.accentText.opacity(0.10), .capsule)
                                 Text(w.rec.timeStr)
                                     .vkFont(.footnote.monospacedDigit())
@@ -173,7 +173,7 @@ struct OutWinSheet: View {
                                 .foregroundStyle(DS.Palette.warn)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
-                        .padding(.vertical, 2)
+                        .padding(.vertical, DS.Space.xxs)
                         .accessibilityElement(children: .combine)
                     }
                 } header: {

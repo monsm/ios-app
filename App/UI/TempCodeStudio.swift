@@ -82,7 +82,7 @@ struct TempCodeStudio: View {
                                 .contentShape(Rectangle())
                         }
                         .padding(.horizontal, DS.Space.s)
-                        .padding(.vertical, 4)
+                        .padding(.vertical, DS.Space.xs)
                         .variantCallout(DS.Palette.warn, .control, wash: 0.10)
                         .accessibilityLabel("码值来自剪贴板， 点清除可移除")
                     }
@@ -254,7 +254,7 @@ struct TempCodeStudio: View {
                 .vkFont(.caption, weight: .medium)
                 .foregroundStyle(DS.Palette.accentText)
                 .padding(.horizontal, DS.Space.s)
-                .padding(.vertical, 4)
+                .padding(.vertical, DS.Space.xs)
                 .variantPlate(DS.Palette.accentText.opacity(0.10), .capsule)
                 .frame(minHeight: DS.Hit.min)
                 .contentShape(Rectangle())

@@ -41,6 +41,9 @@ jobs:
         with:
           node-version: "24"
 
+      - name: '设计令牌闸门 (判失败: 硬编码间距/圆角不随「密度」「圆角」设置变化)'
+        run: node tools/uitokencheck.js
+
       - name: '页面壳一致性闸门 (判失败: Tab 根 View 缺 NavigationStack / navigationTitle)'
         run: node tools/uishellcheck.js
 
