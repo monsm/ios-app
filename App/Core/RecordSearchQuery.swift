@@ -25,7 +25,7 @@ extension RecordSearch {
             perMac[mac] = wins
         }
         // 2026-10-29 修正：临时码开门在 APK We 表里是 16（旧值 4 是消息中心枚举）。
-        for r in buildRecs(macs: macs, includeFails: false, includeCare: false) where r.type == 16 {
+        for r in buildRecs(macs: macs) where r.type == 16 {
             guard let d = dateOf(r), let temps = perMac[r.mac], !temps.isEmpty else { continue }
             let ts = Int64(d.timeIntervalSince1970)
             // 这条开门落在**任一**临时码窗口内 = 正常；全都不在窗内才报越界（取第一条窗口做展示）

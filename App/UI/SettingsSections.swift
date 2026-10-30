@@ -138,14 +138,14 @@ extension SettingsView {
         // 于是 `set` 只把新值写进 UserDefaults，`get` 仍返回进入本页时捕获的旧值 ⇒
         // **拨动开关/步进器后界面不动**（值其实已经存进去了，退出重进才看到变化）。
         // 这两处读开销极小（`getInt` / `getBool` 都是一次 UserDefaults 查询），不值得为它牺牲即时反馈。
-        // 正确写法：`get` 里直接调 `CredentialOrg.quota(mac)` / `CredentialOrg.aliasDisplay`，
+        // 正确写法：`get` 里直接调 `CredentialOrg.quota()` / `CredentialOrg.aliasDisplay`，
         // 配合 `app.setUnlockOption`（它会 bump prefSeed / applyAppearance 触发重算）。
         return Section {
             // 2026-10-14 走查: 原标签「历史版本配额 N 版/凭证」的量纲读不出来 —— "版/凭证" 是
             // "每凭证几版" 还是 "总共几版"? 同一节下面的「回收站保留 N 天」是单值, 两个 Stepper
             // 单位不同却并列, 更容易读岔。改成一句能直接念出来的话。
-            Stepper("每个凭证保留 \(CredentialOrg.quota(mac)) 个历史版本", value: Binding(   // 491 历史版本配额
-                get: { CredentialOrg.quota(mac) },
+            Stepper("每个凭证保留 \(CredentialOrg.quota()) 个历史版本", value: Binding(   // 491 历史版本配额
+                get: { CredentialOrg.quota() },
                 set: { app.setUnlockOption("kf_ccred_quota", $0) }), in: 3...30, step: 1)
                 .fixedSize(horizontal: false, vertical: true)
             // 2026-10-26 精简：回收站保留天数设置已删（回收站整套移除）。

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T02:42:46.130Z",
+    "generated": "2026-10-30T03:11:20.877Z",
     "sources": [
       {
         "scout": "android-native",
@@ -20918,7 +20918,7 @@
           "line": 451,
           "symbol": "canEvaluatePolicy",
           "note": "guard ctx.canEvaluatePolicy(...)",
-          "text": "static func setEarlyExpireMin(_ mac: String, _ alias: Int, _ m: Int) {"
+          "text": "static func earlyExpireMin(_ mac: String, _ alias: Int) -> Int {"
         },
         {
           "platform": "ios",
@@ -20926,7 +20926,7 @@
           "line": 460,
           "symbol": "onDeniedPresentFallback",
           "note": "if ok { commit() } else { onDeniedPresentFallback(commit) }",
-          "text": "var permanent: Bool"
+          "text": "var step: Int"
         }
       ],
       "platformEvidence": {
@@ -59922,7 +59922,7 @@
           "line": 140,
           "symbol": "histKey(_:_:_:)",
           "note": "",
-          "text": "/// 2026-10-30：一次取该锁的全部**密码**提醒（键格式见 `alertKey`：`kf_calert_<mac>_pwd_<alias>`）。"
+          "text": "DB.get(CredAlert.self, alertKey(mac, \"pwd\", p.alias)) ?? CredAlert()"
         },
         {
           "platform": "ios",
@@ -59930,7 +59930,7 @@
           "line": 472,
           "symbol": "reclaimDays()",
           "note": "",
-          "text": "init(step: Int, kind: Int, pwd: String, permanent: Bool, fromISO: String, toISO: String,"
+          "text": "enum CodingKeys: String, CodingKey {"
         },
         {
           "platform": "ios",
@@ -61226,7 +61226,7 @@
           "line": 51,
           "symbol": "CredBinEntry",
           "note": "",
-          "text": "let neu: String"
+          "text": "var id: String { label }"
         }
       ],
       "platformEvidence": {

@@ -4,7 +4,16 @@ import Foundation
 
 extension RecordSearch {
     // ---------- 数据源: 聚合多锁 + 手机侧事件 (561/770 跨锁范围切换) ----------
-    static func buildRecs(macs: [String], includeFails: Bool = true, includeCare: Bool = true) -> [Rec] {
+    /// 2026-10-30 修复（第 85 轮）：原签名带 `includeFails` / `includeCare` 两个参数，
+    /// 但函数体**从未使用它们** —— 而三个调用点都在认真传值（`includeFails: false, includeCare: false`），
+    /// 读代码的人会以为「这个开关控制失败/保养行是否进结果」。
+    ///
+    /// 实际能力边界：本函数只读**锁端日志缓存**（`DB.readLogs`），
+    /// 而手机侧失败事件（`kf_fevents_`）与保养打点（`kf_care_marks`）是**另一份本机数据**，
+    /// 只在单锁路径 `RecordsRows.render` 里被合并进时间线（92/1028）。
+    /// 跨锁搜索不做这个合并，是有意的：那两份数据没有跨锁统一的行身份。
+    /// 所以把两个假参数删掉，让签名与能力一致 —— 不虚构「可以按开关纳入」的能力。
+    static func buildRecs(macs: [String]) -> [Rec] {
         var out = [Rec]()
         let members = DB.members()
         // 2026-10-30 性能：`memberName` 原来对每次调用都 `members.first(where:)` 线性查找 ——
@@ -88,7 +97,7 @@ extension RecordSearch {
     /// 736 前后事件上下文: 告警前后 10 分钟同锁记录 (前 3 条 / 后 3 条)
     // 【保留未接 2026-10-29】告警前后 10 分钟同锁记录（前3/后3）—— 记录详情「前后事件」区
     static func context(mac: String, aroundKey: String, minutes: Int = 10, n: Int = 3) -> (before: [Rec], after: [Rec]) {
-        let recs = buildRecs(macs: [mac], includeFails: false, includeCare: false)
+        let recs = buildRecs(macs: [mac])
         guard let mid = recs.first(where: { $0.key == aroundKey }), let md = dateOf(mid) else { return ([], []) }
         let win = Double(minutes) * 60
         let t0 = md.timeIntervalSince1970

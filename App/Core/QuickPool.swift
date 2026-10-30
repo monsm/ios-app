@@ -121,12 +121,33 @@ enum QuickPool {
         return out
     }
 
-    /// 921「再开一次」的目标: 星标密码 > 星标指纹 > 921 高频推断 (临时码, 标"约")。
-    /// 返回 (显示名, 深链载荷); 一个都没有 = nil —— 调用方给"先去点亮星标"的空态, 不替用户猜一条。
-    /// 354: 已归档的条目不再作为直达目标 —— 收起的东西不许从快捷入口"复活"
+    /// 921「再开一次」的目标 —— 2026-10-30 修复（第 85 轮）：**原实现恒返回 nil**。
+    ///
+    /// 原代码是 `let stars: Set<Int> = []  // 星标已删` + `return nil` —— 星标整套移除后，
+    /// 这个函数就再也没恢复过逻辑，但入口一直留着：用户点「再开一次」**永远**得到
+    /// 「还没有星标凭证 —— 先在凭证页给最常用的那条点亮星标」，而星标功能**已经不存在**，
+    /// 照着提示做也做不到。这是「入口在、指引指向已删功能」的典型。
+    ///
+    /// 现在改成**真实可用的口径**：星标已删 ⇒ 只剩「高频推断」这一档。
+    /// 数据源是 `CredentialOrg.recentUseCount`（按开门日志推断近 30 天使用次数，
+    /// UI 侧文案本来就带「约」字）。挑次数最多、且有归属的那条；一条都推不出就返回 nil，
+    /// 调用方照旧给空态提示 —— 不替用户猜一条。
     static func repeatTarget(_ mac: String) -> (name: String, nav: String)? {
-        let stars: Set<Int> = []   // 2026-10-26: 星标已删
-        return nil
+        guard !mac.isEmpty else { return nil }
+        let ledger = DB.ledger(mac)
+        // 已归档成员的口令不再作为直达目标 —— 收起的东西不许从快捷入口"复活"（354 同款纪律）。
+        let archived = MemberHub.archivedIDs()
+        var best: (alias: Int, name: String, count: Int)?
+        for p in ledger.pwds where !p.temp {
+            if let o = p.owner, archived.contains(o) { continue }
+            guard let n = CredentialOrg.recentUseCount(mac, pwdAlias: p.alias, days: 30), n > 0 else { continue }
+            if best == nil || n > best!.count {
+                best = (p.alias, "#\(p.alias)", n)
+            }
+        }
+        guard let b = best else { return nil }
+        // 载荷走 577 深链同一套：`pwd:<alias>` 由 CredentialsView 的 pendingCredNav 消费。
+        return (b.name, "pwd:\(b.alias)")
     }
 }
 

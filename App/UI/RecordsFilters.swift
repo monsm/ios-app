@@ -355,7 +355,7 @@ extension RecordsView {
     func applyFilter() {
         // 576/580/583/585 —— Rec 池是「点行开详情、详情上下翻页、引用深链定位」唯一的判据来源,
         // **两种范围都要喂**。`macs` 自己就按范围给出 [当前锁] / [全部锁], 所以一次拉取两路共用。
-        let recs = RecordSearch.buildRecs(macs: macs, includeFails: true, includeCare: true)
+        let recs = RecordSearch.buildRecs(macs: macs)
         recPool = recs
         let pool = buildPool(recs)
         computeDayTotals(pool)

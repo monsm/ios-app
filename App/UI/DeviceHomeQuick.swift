@@ -140,8 +140,10 @@ extension DeviceHomeView {
         .contentShape(Rectangle())
     }
 
-    /// 921「再开一次」格: 目标 = QuickPool.repeatTarget (星标密码 > 星标指纹 > 高频推断)。
-    /// 星标集为空且推不出一条时, 点按给"先去点亮星标"的指路 toast —— 不猜、不假装能开。
+    /// 921「再开一次」格: 目标 = QuickPool.repeatTarget。
+    /// 2026-10-30 修正（第 85 轮）：星标功能已整套移除，原注释与空态文案还在教用户「去点亮星标」——
+    /// 照做也做不到。现在口径是**高频推断**（按开门日志近 30 天使用次数），
+    /// 推不出一条时才给空态提示，且提示改成用户真能做的事（多开几次门 / 先建凭证）。
     @ViewBuilder
     var againTile: some View {
         let target = QuickPool.repeatTarget(app.currentMac)
@@ -153,14 +155,14 @@ extension DeviceHomeView {
                 app.requestRoute(.credentials)   // 2026-10-14 走查: 原为直写 tabSelection, 访客态会绕过 377 门禁
                 app.showToast("已跳到凭证页定位「" + t.name + "」")   // 921 界面文案
             } else {
-                app.showToast("还没有星标凭证 —— 先在凭证页给最常用的那条点亮星标")   // 921 还没有星标凭证
+                app.showToast("还没有能推断的凭证 —— 先用这把锁开几次门， 或到凭证页建一条")
             }
         } label: {
             quickTileBody(icon: "arrow.counterclockwise", label: "再开一次")
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityLabel("再开一次")   // 921 再开一次
-        .accessibilityHint(target.map { "跳到凭证页定位 " + $0.name } ?? "还没有星标凭证， 先去凭证页点亮星标")
+        .accessibilityHint(target.map { "跳到凭证页定位 " + $0.name } ?? "还没有能推断的凭证， 先用这把锁开几次门")
     }
 
 
