@@ -195,6 +195,11 @@ extension DB {
         let m = mac.replacingOccurrences(of: ":", with: "").lowercased()
         removeKeychain(m)
         clearPendingPair(m)   // 删设备 = 连"未完成的配网记录"一起删 (否则下次配对先撞上一份过期密钥)
+        // 2026-10-30 修复（第 94 轮）：**先把该设备全部凭证的到期提醒取消，再删数据**。
+        // 下面那圈键族会删掉 `kf_calert_<mac>_` —— 但已排程的本地通知**不会随键消失**，
+        // 删完设备后它们仍会按原时间弹出「密码临期」，指向一把已经不存在的锁。
+        // 必须在删数据之前读台账（删完就读不到了）。
+        for p in ledger(m).pwds { CredentialOrg.cancelAlerts(mac: m, alias: p.alias) }
         for p in ["kf_ledger_", "kf_snap_", "kf_logcache_", "kf_defend_", "kf_tailgate_", "kf_synctime_", "otpStatus_", "otpIdx_", "kf_fevents_", "kf_lockmeta_", "kf_migok_",
                   "kf_batt_", "kf_batt_state_", "kf_mevents_", "kf_maint_", "kf_fwsince_", "kf_clock_notify_", "kf_damp_last_", "kf_fp_last_", "kf_care_notify_",
                   "kf_cbin_", "kf_calert_", "kf_clists_", "kf_cseq_",
