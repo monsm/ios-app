@@ -35,7 +35,6 @@ enum BLEError: Int {
     case unsupportedToken = 1008   // 2026-10-28 补：APK bleCodeMsg[1008]「不支持的ssToken方式」
     case connectTimeout = 2003
     case parseFail = 5001
-    case linkNotReady = 5002     // 2026-10-30：写通道未就绪（device/writeChar 为空）—— 原来误报成 parseFail
     case writeTimeout = 6001
     case underlying = 6004
     case writeFailed = 6005
@@ -48,7 +47,6 @@ enum BLEError: Int {
         case .unsupportedToken: return "不支持的ssToken方式"
         case .connectTimeout: return "连接设备超时"
         case .parseFail: return "解析数据失败"
-        case .linkNotReady: return "门锁连接未就绪，请断开后重连"
         case .writeTimeout: return "超时未等到Rx写入确认"
         case .underlying: return "蓝牙底层失败"
         case .writeFailed: return "发送命令失败"

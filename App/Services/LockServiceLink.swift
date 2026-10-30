@@ -22,7 +22,7 @@ extension LockService {
         connectedMAC = ""
         curMac = ""
         sessionTokenHex = "0000"
-        tokenExpiryMs = 0; tokenFetchedAtMs = 0
+        tokenExpiryMs = 0
     }
 
     // 幂等按需连接: 已连同一把 → 直接; 缓存 bleId → 直连; 失败 → MAC 扫描解析 (回写缓存)
@@ -33,14 +33,7 @@ extension LockService {
     func ensureConnected(mac: String) async throws {
         let m = mac.lowercased()
         guard !m.isEmpty else { throw BLEErrorX.msg("未选择门锁 (缺少 MAC)") }
-        // 2026-10-30 修复（第 164 轮，**「重新获取」报「解析数据失败」的根因**）：
-        // 快路径原来只比 ID（connectedPeripheralId == connectedDeviceId），**不看特征还在不在**。
-        // 断链/重连后 ID 可能仍相等，而 `writeChar` / `device` 已被清空 ——
-        // 于是这里返回"已连接"，紧接着 `writeFrameHex` 的 `guard let ch = writeChar` 抛 `.parseFail`，
-        // 界面上就成了莫名其妙的「解析数据失败」（其实一个字节都没解析）。
-        // 现在把特征也纳入判据：缺任何一个就落到下面走真正的重连。
-        if connectedMAC == m, ble.connectedPeripheralId == connectedDeviceId, !connectedDeviceId.isEmpty,
-           ble.device != nil, ble.writeChar != nil {
+        if connectedMAC == m, ble.connectedPeripheralId == connectedDeviceId, !connectedDeviceId.isEmpty {
             // 已在目标锁上也要绑 curMac: 否则紧随其后的无 mac 参数命令 (setZotp/readLockTime…) 会用
             // **上一次会话留下的另一把锁**的 skey 成帧 —— 第三条成功出口 (扫描解析) 一直是绑的，这两条漏了。
             curMac = m
@@ -131,13 +124,6 @@ extension LockService {
     }
 
     // ---------- 令牌 ----------
-    /// 2026-10-30（提速，第 2 轮）：预热期预取会话令牌 —— 把「首次开锁的 cmd01 往返」挪到用户点击之前。
-    /// 只在无命令在飞时调用（调用方已判 `waiter == nil`）；失败静默（预热失败不该打扰用户）。
-    func prefetchSession() async throws {
-        if waiter != nil { return }
-        try await ensureToken()
-    }
-
     func ensureToken() async throws {
         // 2026-10-18 性能: **令牌复用**。原来每次 needToken 都无条件重发 cmd01,
         // 而 cmd01 是一次完整往返（写 20B + 等回包）。开锁链上它是纯开销:
@@ -152,22 +138,6 @@ extension LockService {
         // 原实现缓存令牌 45s 复用，而 vendor `lock.js:247-250` 明确废除过这个口径（V81：无条件刷新）。
         // 加上 iOS 原先不重试 rc=13，就成了三端唯一「复用 + 不重试」的组合 —— 没有兜底。
         // 代价是多一次 cmd01 往返（约 100ms），换来的是不会拿过期令牌去发写命令。
-        // 2026-10-30（提速，**省一次蓝牙往返 ≈100ms**）：有界复用。
-        // 背景：2026-10-27 曾把 45s 复用整个删掉，理由是「复用 + 不重试 rc=13」没有兜底。
-        // 现在 `exec` 已经有 rc=3 / rc=13 的「刷令牌重试一次」（见 exec 开头），兜底在了。
-        // 所以恢复**短窗**复用：只认 20 秒内取到的令牌，且锁端 TTL 还没到（留 2s 余量）。
-        // 20s 远小于锁端常见 45s TTL —— 不存在"拿快过期的令牌去发写命令"。
-        // 复用命中 = 开锁链从「cmd01 + cmd04 两次往返」变成「cmd04 一次往返」。
-        do {
-            let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
-            let fresh = tokenExpiryMs > nowMs + 2000
-            let young = tokenFetchedAtMs > 0 && nowMs - tokenFetchedAtMs < 20_000
-            let real = sessionTokenHex != "0000" && !sessionTokenHex.isEmpty
-            if fresh, young, real {
-                log("info", "复用会话令牌 (年龄 \(nowMs - tokenFetchedAtMs)ms) — 省一次 cmd01 往返")
-                return
-            }
-        }
         log("info", "刷新会话令牌 (cmd 01)")
         let f = try await request(ZKCmdBuilder.cmd01Session(), cmd: 0x01, needToken: false, retries: 3)
         guard let k = f.klvs.first(where: { $0.key == 0x02 }) else {
@@ -190,7 +160,6 @@ extension LockService {
         // 安全类型编为 2 字节 (如 "0200"→512&3=0) 或缺 KLV#01 的固件配网必败, 而小程序正常。
         // 旧实现 readU16LE 把令牌截成 2 字节: 锁若上报 4B 令牌, 注入值就是错的 → 所有需令牌写命令必失败
         sessionTokenHex = k.val.lowercased()
-        tokenFetchedAtMs = Int64(Date().timeIntervalSince1970 * 1000)   // 提速: 记下取到时刻供有界复用
         let secs = f.klvs.first(where: { $0.key == 0x03 }).map { UInt16(truncatingIfNeeded: HexKit.readU16LE($0.val, byteOffset: 0)) } ?? 0
         // JS session.js: ttl=0 保留默认 45s — now+0+2s 会立即过期
         // ⚠️ 2026-10-18: 这一行**必须**保持原样（`Int64(secs) * 1000 + 2000`）。
@@ -284,8 +253,6 @@ extension LockService {
                 // 断链自愈: 写失败 OR 连接已断 (断链后 writeChar/device 被清 → writeFrameHex 抛 parseFail)
                 var brokenLink = ble.connectedPeripheralId.isEmpty || connectedDeviceId.isEmpty
                 if case BLEErrorX.code(.writeFailed) = error { brokenLink = true }
-                // 2026-10-30：写通道未就绪同样是「链路断了」，必须触发下面的自愈重连。
-                if case BLEErrorX.code(.linkNotReady) = error { brokenLink = true }
                 if brokenLink {
                     // 2026-10-14: disconnect() 会把 curMac 清空, 旧写法 `if !curMac.isEmpty` 紧随其后 =>
                     // 恒为 false, 自愈重连是死代码 (首个 hiccup 后连接不再恢复)。先存下再断。

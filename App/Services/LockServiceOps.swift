@@ -48,7 +48,7 @@ extension LockService {
             connectedDeviceId = ""
             connectedMAC = ""
             sessionTokenHex = "0000"
-            tokenExpiryMs = 0; tokenFetchedAtMs = 0
+            tokenExpiryMs = 0
             if hadLink { log("warn", "探测用临时链路已撤下 — 原有链路需按需重连") }
         }
         return try await sendEcho(valueHex)
@@ -66,8 +66,6 @@ extension LockService {
 
     // ---------- 开锁 ----------
     func unlock(mac: String? = nil, pinDec: String? = nil) async throws -> Int {
-        // 2026-10-30（提速）: 分段计时 —— 没有数就没有优化。凭证构建 vs 蓝牙往返分开看。
-        let _t0 = CFAbsoluteTimeGetCurrent()
         if let mac { curMac = mac.lowercased() }
         guard let kc = DB.keychain(curMac), !kc.skey.isEmpty else { throw BLEErrorX.msg("无钥匙串， 无法开锁") }
         let cred: String
@@ -79,9 +77,7 @@ extension LockService {
             cred = ZKCmdBuilder.buildEkeyOpen(kc.skey.lowercased(), kc.mac.lowercased(), pin)
         }
         guard !cred.isEmpty else { throw BLEErrorX.msg("开锁凭证为空 (ekey/PIN 签发失败), 已中止下发") }
-        let _tCred = Int((CFAbsoluteTimeGetCurrent() - _t0) * 1000)
         let r = try await exec(ZKCmdBuilder.cmd04Open(cred, klv01Hex: "0000"), retries: 2)
-        log("info", "开锁耗时: 凭证构建 \(_tCred)ms · 下发+\(r.rc) \(Int((CFAbsoluteTimeGetCurrent() - _t0) * 1000) - _tCred)ms")
         return r.rc  // 0 成功; 22 双验继续
     }
 

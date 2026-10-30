@@ -174,13 +174,6 @@ final class LinkSense: ObservableObject {
             markReady(ms: ms, rssi: lastRssi)
             BleTelemetry.recordAttempt(mac: mac, ok: true, reason: "进页预热 \(ms)ms")
             BleTelemetry.recordEvent("握手完成 (进页预热)", ok: true)
-            // 2026-10-30（提速，第 2 轮）：**把首次开锁的两次往返挪到预热里**。
-            // 预热本来就在"用户还没点开锁"的时候发生，这里多做 cmd01（+可选 cmd03）不占用户时间；
-            // 等真点开锁时令牌已在 20s 窗口内 ⇒ 首次开锁也只剩 cmd04 一次往返。
-            // 只在"无命令在飞"时预取 —— 用户若已在开锁，waiter 单槽会被撞，宁可不预取也不拖慢真实操作。
-            if lockSvc.waiter == nil {
-                try? await lockSvc.prefetchSession()
-            }
         } catch {
             BleTelemetry.recordAttempt(mac: mac, ok: false, reason: classifyFailure(error).name + " " + error.localizedDescription)
             BleTelemetry.recordEvent("握手失败 " + classifyFailure(error).name, ok: false)
@@ -205,10 +198,7 @@ final class LinkSense: ObservableObject {
                 guard let self else { return }
                 self.autoReconnectTick()
                 self.syncBtOn()
-                // 2026-10-30（提速，**自动开锁最大延迟源**）：连上后门锁停止广播，RSSI 只能靠这一拍主动读，
-                // 原来 2s 一拍 ⇒ 到场判定最多滞后 2 秒。开着自动开锁时提到 0.5s（4×），把「走到门口→开锁」压到 0.5s 内。
-                // 只在 autoOpen 开启时提速；关着时保持 2s，不为一个没用到的功能付电量。
-                try? await Task.sleep(for: .seconds(AutoOpen.on ? 0.5 : 2))
+                try? await Task.sleep(for: .seconds(2))
             }
         }
     }
@@ -394,29 +384,11 @@ final class LinkSense: ObservableObject {
 
     // ---------- 每锁 RSSI 记忆 (71 设备列表迷你信号格 / 129 极限距离) ----------
     static func saveRssi(mac: String, rssi: Int) {
-        // 2026-10-30（提速，第 5 轮，**判定链前的同步写盘**）：原来每个 RSSI 样本都无条件
-        // `DB.store.set(...)` —— 那是 `JSONSerialization` + `defaults.set` + 缓存失效，**同步**。
-        // 开着自动开锁时 RSSI 每 0.5s 一次（第 1 轮提速后），等于每 0.5s 在判定链前插一次写盘。
-        // 而这个值只是「设备列表迷你信号格 / 极限距离提示」的展示记忆，**丢一次无所谓**。
-        // 现在节流：同一把锁 **≥3s** 才落一次盘；信号骤变（≥10dBm，走近/走远）立刻落。
-        // 内存里的 `lastRssi` 与自动开锁的 feedRssi **不受节流影响**，判定链零延迟。
-        let now = Date()
-        let key = "kf_linkrssi_" + mac
-        let prev = DB.store.get(Int.self, key)
-        let jump = prev == nil || abs(rssi - (prev ?? rssi)) >= 10
-        let due = Self.lastRssiPersistAt.withLock { $0[mac] }.map { now.timeIntervalSince($0) >= 3 } ?? true
-        if jump || due {
-            DB.store.set(key, rssi)
-            Self.lastRssiPersistAt.withLock { $0[mac] = now }
-        }
+        DB.store.set("kf_linkrssi_" + mac, rssi)
         LinkSense.shared.updateRssi(rssi)
-        // 靠近自动开锁 (AUTOOPEN): 每个 RSSI 事件都喂入滤波 (未开主开关 = 零开销, 控制器内 guard)。
-        // 这一条**不节流** —— 它是判定链本身，节流会让"到场"变慢，与提速目标相反。
+        // 靠近自动开锁 (AUTOOPEN): 每个 RSSI 事件喂入回差滤波 (未开主开关 = 零开销, 控制器内 guard)
         Task { @MainActor in AutoOpenController.shared.feedRssi(mac: mac, rssi: rssi) }
     }
-    /// 2026-10-30（提速，第 5 轮）: 每把锁最近一次「落盘 RSSI」的时刻，用于节流（见 saveRssi）。
-    /// Swift 6 不允许"非隔离的可变全局状态" —— 值必须由 `Locked` 持有（见 Locked.swift 头注）。
-    private static let lastRssiPersistAt = Locked([String: Date]())
     /// 上次扫到的该锁 RSSI; nil = 从未扫到
     static func rssiFor(_ mac: String) -> Int? {
         DB.store.get(Int.self, "kf_linkrssi_" + mac)
