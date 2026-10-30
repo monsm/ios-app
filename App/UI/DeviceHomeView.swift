@@ -110,7 +110,7 @@ struct DeviceHomeView: View {
                     // 当前锁不在翻页序列 (如沉睡锁从胶囊选中) → 重建序列并落位
                     if let i = pageOrder.firstIndex(of: new) { pageIndex = i }
                 }
-                // 2026-10-30 修复（第 89 轮）：两个**与锁绑定**的过程态原先切锁后不复位 ——
+                // 2026-10-30 修复（第 88 轮）：两个**与锁绑定**的过程态原先切锁后不复位 ——
                 //   · `autoLockLeft`：39 自动上锁倒计时。倒计时读的是 `DB.tailgate(app.currentMac)`，
                 //     在锁 A 上开锁后 5 秒内切到锁 B，B 的页面会继续显示 A 的倒计时并在到点时
                 //     弹出「已自动上锁」—— 对 B 完全是假信息。

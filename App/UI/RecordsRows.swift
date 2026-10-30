@@ -330,7 +330,7 @@ extension RecordsView {
         // 2026-10-29 性能：原先每行调两次 DB.member(id)（各自从字典重建一次 Member）。
         // 300 行 = 600 次重建；这里一次建表。
         let memberByID = Dictionary(DB.members().map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
-        // 2026-10-30 性能（第 89 轮）：`credNav` 原来对每行做 `pwds.first(where:)` / `fps.first(where:)`，
+        // 2026-10-30 性能（第 88 轮）：`credNav` 原来对每行做 `pwds.first(where:)` / `fps.first(where:)`，
         // 300 行 × 几十条凭证 = 上万次线性比较，且这是时间线渲染热路径。
         // 先建「按归属取第一条」的索引，循环里 O(1) 查表。语义与 credNav 原实现逐条对齐：
         //   · 非临时密码：`!p.temp`，who == nil 时取全表第一条；否则取该 owner 的第一条
@@ -377,7 +377,7 @@ extension RecordsView {
         applyFilter()
     }
     /// 577 凭证深链: kind+归属 → pwd:<alias> / fp:<batch>; 台账无命中留空 (不深跳)
-    /// 2026-10-30 性能（第 89 轮）：`credNav` 从「每次线性扫数组」改成「先建索引再 O(1) 查」。
+    /// 2026-10-30 性能（第 88 轮）：`credNav` 从「每次线性扫数组」改成「先建索引再 O(1) 查」。
     /// 语义与旧实现逐条对齐（旧签名保留为便利入口，内部走索引）。
     struct CredNavIndex {
         private let nonTempAny: LedgerPwd?
