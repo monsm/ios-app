@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T13:42:31.689Z",
+    "generated": "2026-10-30T13:49:36.914Z",
     "sources": [
       {
         "scout": "android-native",
@@ -7816,7 +7816,7 @@
           "line": 219,
           "symbol": "struct UnlockDial",
           "note": "",
-          "text": "// 59 演练层只在\"从没真手势过\"时浮现一次"
+          "text": ".padding(.horizontal, DS.Space.xl)"
         },
         {
           "platform": "ios",
@@ -7848,7 +7848,7 @@
           "line": 274,
           "symbol": "dial = AXFlags.axStackLayout ? 128 : DS.Metric.dial",
           "note": "",
-          "text": "Task {"
+          "text": "shake()   // 74"
         },
         {
           "platform": "android",
@@ -9604,7 +9604,7 @@
           "line": 299,
           "symbol": "failStreak >= 2 ? \"antenna.radiowaves.left.and.right\" : \"exclamationmark.triangle.fill\"",
           "note": "",
-          "text": "}"
+          "text": "func shake() {"
         },
         {
           "platform": "ios",
@@ -9612,7 +9612,7 @@
           "line": 481,
           "symbol": ".sensoryFeedback(trigger: state)",
           "note": "",
-          "text": "// 2026-10-13 run 68: `.symbolEffect(.replace.downUp, value:)` 报 \"requires that"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -9680,7 +9680,7 @@
           "line": 279,
           "symbol": "insideFence(_:)",
           "note": "",
-          "text": "}"
+          "text": "withAnimation(.spring(response: 0.32, dampingFraction: 0.45)) { pop = true }"
         },
         {
           "platform": "ios",
@@ -9696,7 +9696,7 @@
           "line": 455,
           "symbol": "误触围栏开启中: 先从圆盘边缘拖到中心",
           "note": "",
-          "text": "var contentColor: Color {"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -9764,7 +9764,7 @@
           "line": 491,
           "symbol": ".sensoryFeedback(trigger: connected)",
           "note": "",
-          "text": "/// 圆盘按钮的标签 (从 body 内联的 Button label 里抽出 —— 巨型表达式报 type-check 超时)"
+          "text": "// 2026-10-13 run 68: `.symbolEffect(.replace.downUp, value:)` 报 \"requires that"
         },
         {
           "platform": "ios",
@@ -9772,7 +9772,7 @@
           "line": 496,
           "symbol": ".task(id: state) 心跳循环",
           "note": "",
-          "text": "Text(title)"
+          "text": "// VariableColorSymbolEffect 是**持续**效果 ⇒ 只配 `isActive:` (原写又带 value: 已去掉)。"
         },
         {
           "platform": "ios",
@@ -9780,7 +9780,7 @@
           "line": 498,
           "symbol": "CareSchedule.quietOn && CareSchedule.isQuietHour()",
           "note": "",
-          "text": ".foregroundStyle(contentColor)"
+          "text": "isActive: !reduceMotion && searching)"
         }
       ],
       "platformEvidence": {
@@ -9857,7 +9857,7 @@
           "line": 398,
           "symbol": "Circle().trim(from: 0, to: holdProgress)",
           "note": "",
-          "text": "if marks > ticked, p < 1 {"
+          "text": "/// 按住充能循环: 0.9s 线性填充 + 三成/六成两记刻度触感, 填满自动触发"
         },
         {
           "platform": "ios",
@@ -9865,7 +9865,7 @@
           "line": 257,
           "symbol": "holdConfirmOn = DB.store.getBool(\"kf_hold_confirm\", true)",
           "note": "",
-          "text": "// 连开两次时上一段 0.72s 的动画余帧会接着播，看着像\"涟漪只出现了一半\"。"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -9934,7 +9934,7 @@
           "line": 350,
           "symbol": "guard !reduceMotion else { return }",
           "note": "",
-          "text": "action()"
+          "text": "swipeReady = true"
         },
         {
           "platform": "ios",
@@ -9942,7 +9942,7 @@
           "line": 523,
           "symbol": "if case .failed = s, !reduceMotion { shake() }",
           "note": "",
-          "text": ".scaleEffect(pop ? 1.04 : 1)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -9950,7 +9950,7 @@
           "line": 284,
           "symbol": "private var dim: CGFloat { 1 }",
           "note": "",
-          "text": ""
+          "text": "withAnimation(DS.Motion.soft) { pop = false; shock = false }"
         }
       ],
       "platformEvidence": {
@@ -10027,7 +10027,7 @@
           "line": 464,
           "symbol": "已暂缓这一次: 离门锁再走近一步",
           "note": "",
-          "text": "var dialGlow: Color {"
+          "text": "/// 成功/警告/失败沿用 onAccent 的明暗自适应语义 (深色模式压近黑墨色)"
         }
       ],
       "platformEvidence": {
@@ -10089,7 +10089,7 @@
           "line": 176,
           "symbol": "private struct PhaseBar",
           "note": "",
-          "text": "Button(\"取消等待\", action: cancelAction)"
+          "text": "// 80 三段进度细条"
         },
         {
           "platform": "ios",
@@ -10097,7 +10097,7 @@
           "line": 516,
           "symbol": "slowTask = Task … sleep 4s → slowConnect = true",
           "note": "",
-          "text": ".overlay {"
+          "text": ".contentShape(Circle().inset(by: -10))"
         },
         {
           "platform": "ios",
@@ -10105,7 +10105,7 @@
           "line": 434,
           "symbol": "Button(\"取消等待\", action: cancelAction)",
           "note": "",
-          "text": "}"
+          "text": "// 原句是\"提示再走近一步并暂缓发指令\"，暂缓不等于把人不关在门外，所以不做硬拦。"
         }
       ],
       "platformEvidence": {
@@ -10174,7 +10174,7 @@
           "line": 290,
           "symbol": "iconName",
           "note": "",
-          "text": "/// 左右位移正是最该被压掉的那类动效（前庭敏感用户会不适）。"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -10182,7 +10182,7 @@
           "line": 302,
           "symbol": "title",
           "note": "",
-          "text": "}"
+          "text": "for x in [CGFloat(-12), 12, -8, 8, -4, 4, 0] {"
         },
         {
           "platform": "ios",
@@ -10190,7 +10190,7 @@
           "line": 326,
           "symbol": "dotColor",
           "note": "",
-          "text": "pressing = true"
+          "text": "armed = false"
         },
         {
           "platform": "ios",
