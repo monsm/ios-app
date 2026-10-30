@@ -213,6 +213,16 @@ private fun KfApp(unlocker: BleUnlocker) {
                 say("门锁已切换，本次开锁已取消")
                 return@launch
             }
+            // 2026-10-31（第 65 轮，**退后台边界**）：`ON_PAUSE` 只做 `unlocker.release()`，
+            // 而 `release()` 与 `unlock()` 拿的是**同一把 mutex** —— 所以它排在在途开锁之后，
+            // 不会中断那一次：判定已采纳、建连进行中时退后台，unlock 仍会跑完并真发 04
+            // （门开了而 App 在后台），违反 F0「前台」门的设计意图。
+            // 这里在下发前复查 foreground —— 与 iOS 的 backgroundGeneration 同一条纪律。
+            if (!foreground) {
+                busy = false
+                say("已切到后台，本次开锁已取消")
+                return@launch
+            }
             val r = unlocker.unlock(l)
             // 2026-10-27 审核补齐：把 rc 落到状态里，供下一次自动开锁做 F6 锁态门判断。
             // 2026-10-31（第 27 轮）：写内存态之外**也要落盘** —— 否则下次启动读回的还是旧值。

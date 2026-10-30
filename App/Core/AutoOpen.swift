@@ -395,6 +395,14 @@ final class AutoOpenController {
     private var wasInBackground = true   // 冷启动视为「从后台来」
     private var inFlight = false
 
+    /// 2026-10-31（第 65 轮，**退后台边界**）：`onBackground()` 原来只清 `armed` / `eventFired`，
+    /// **不取消在途的 `dispatch` Task** —— 若判定已采纳、建连进行中时用户退后台，
+    /// Task 会继续跑完并**真发一帧 04**（门开了而 App 在后台），违反 F0「前台」门的设计意图。
+    /// 用世代号：每次退后台 +1，`dispatch` 在下发前比对；不一致就放弃。
+    /// 为什么不用 Task 句柄取消：`dispatch` 里 `ensureConnected` / `unlock` 是 BLE 异步调用，
+    /// 取消只会让它们抛 `CancellationError`，而 04 可能已经出去了 —— 世代号在**下发前**复查更可靠。
+    private var backgroundGeneration = 0
+
     /// 2026-10-31（第 63 轮，**自动/手动并发缺口**）：自动链在途时 `unlockState` 仍是 `.idle`
     /// （`dispatch` 不走 `AppState.runUnlock`，不设 `.connecting/.opening`），
     /// 于是手动链的 `guard unlockState == .connecting || .opening` **拦不住** ——
@@ -432,6 +440,8 @@ final class AutoOpenController {
         wasInBackground = true   // 2026-10-27 (D-49)：下次 .active 才算真的从后台回来
         armed = false
         eventFired.removeAll()
+        // 2026-10-31（第 65 轮）：退后台 → 在途的自动下发必须作废（见 backgroundGeneration 注释）。
+        backgroundGeneration += 1
         promptStartedAt = nil
         // 旧实现从不调 stop(): 回前台 start() 因 mgr != nil 幂等早退, 而传感器流已被系统停止
         // → met() 用陈旧 stillSince 恒判"已停留" (fail-open)
@@ -555,6 +565,8 @@ final class AutoOpenController {
         // 而这里仍按旧 `mac` 下发 ⇒ 可能开错锁、或钥匙串与锁对不上导致 rc=12。
         // 复查放在 `do` 之前：此时还没写任何状态（eventFired/lastDispatch 在 do 内），
         // 提前 return 不会污染 F5 冷却。
+        // 2026-10-31（第 65 轮）：记下进入时的世代号，下发前比对（退后台就作废）。
+        let genAtEntry = backgroundGeneration
         guard app.currentMac == mac, !mac.isEmpty else {
             AutoOpen.audit(mac, "下发前复查：当前锁已切换，放弃本次自动开锁")
             return
@@ -574,6 +586,11 @@ final class AutoOpenController {
 
             try await app.lock.ensureConnected(mac: mac)
 
+            // 2026-10-31（第 65 轮）：建连期间退后台 ⇒ 作废本次下发（F0 前台门的实质要求）。
+            guard backgroundGeneration == genAtEntry else {
+                AutoOpen.audit(mac, "建连期间退后台，放弃本次自动开锁")
+                return
+            }
             let rc = try await app.lock.unlock(mac: mac)
             switch rc {
             case 0:
