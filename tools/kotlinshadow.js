@@ -111,9 +111,12 @@ else good('A4 令牌通道 KLV#0xEE');
   else good('A8 武装位跨样本回灌 (单样本或中值)');
   // ② 一次性闩锁: 2026-10-27 审核后改成「信号掉到解除线以下 3dB 才放开」（与 iOS 同口径）。
   //    旧写法是「!armed 就放开」—— 而 armed 在回差带内就会变 false，退半步再进一步会再开一次。
-  if (!/if\s*\(r < AutoOpenKit\.disarmThreshold\(\)\s*-\s*3\)\s*\{\s*fired = false/.test(ma))
+  // 2026-10-31（第 28 轮）：判据放宽为「disarmThreshold() 或 disarmThreshold(<基准>)」——
+  //    第 28 轮 Android 接了 F3 标定，走远判据必须用与武装判据**同一个基准**，
+  //    否则标定后解除线仍按 -40 算、回差带对不上。闸门若只认无参形式就等于禁止标定。
+  if (!/if\s*\(r < AutoOpenKit\.disarmThreshold\(\w*\)\s*-\s*3\)\s*\{\s*fired = false/.test(ma))
     bad("A8 缺少「走远放开闩锁」那一步 (一次事件之后再也开不了，或被回差带内抖动放开)");
-  else good('A8 走远才放开闩锁');
+  else good("A8 走远才放开闩锁 (基准可为默认或标定值)");
   if (!/if \(!armed \|\| fired\) return/.test(ma)) bad('A8 缺少 fired 拦截 (人站在门口会反复下发 04)');
   else good('A8 一次接近事件只发一次');
   if (!/AutoOpenKit\.coolReady\(lastAuto, now\)/.test(ma)) bad('A8 没读 60s 冷却');

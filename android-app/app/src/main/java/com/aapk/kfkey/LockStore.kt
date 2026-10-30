@@ -18,6 +18,10 @@ data class LockInfo(
     val defendStartHour: Int = 22,
     val defendEndHour: Int = 7,
     val lastRc: Int = 0,
+    // 2026-10-31（第 28 轮）：**F3 距离标定**。iOS 有 `AutoCal.rssiP95` 按锁标定，Android 原先只有固定线 -40。
+    // 0 = 未标定 ⇒ 用 AutoOpenKit.BASE(-40)，与 iOS `fallbackBase` 同值（iOS 注释也写明"与安卓同值"）。
+    // 标定过则用这把锁的实际 P95 —— 不同型号门锁发射功率差异很大，固定线要么过松(误开)要么过紧(不开)。
+    val rssiP95: Int = 0,
 ) {
     val macText: String
         get() = mac.chunked(2).joinToString(":").uppercase()
@@ -45,6 +49,7 @@ object LockStore {
                 defendStartHour = o.optInt("ds", 22),
                 defendEndHour = o.optInt("de", 7),
                 lastRc = o.optInt("lr", 0),
+                rssiP95 = o.optInt("p95", 0),
             )
         }.getOrNull()?.takeIf { it.mac.length == 12 && it.ekey.isNotEmpty() }
     }
@@ -59,6 +64,7 @@ object LockStore {
             .put("ds", lock.defendStartHour)
             .put("de", lock.defendEndHour)
             .put("lr", lock.lastRc)
+            .put("p95", lock.rssiP95)
         ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit().putString(KEY, o.toString()).apply()
     }
 

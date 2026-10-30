@@ -282,7 +282,8 @@ private fun KfApp(unlocker: BleUnlocker) {
     // 越过它就在后台把链路建好 (prewarm 只建链, 一个命令都不发), 等越过武装线时只剩
     // 01+04 两个往返 —— "秒开"靠的是这一步, 不是把协议改快。
     // 用 PREWARM 这个固定值而不是标定值: 安卓端没有标定页 (见 AutoOpenKit 注释)。
-    val prewarmLineDbm = AutoOpenKit.BASE - 24
+    // 2026-10-31（第 28 轮）：预热线跟着标定基准走 —— 固定 BASE-24 在标定后就不成比例了。
+    val prewarmLineDbm = AutoOpenKit.rssiBase(lock?.rssiP95 ?: 0) - 24
 
     fun maybeAutoUnlock(r: Int) {
         val now = System.currentTimeMillis()
@@ -309,13 +310,16 @@ private fun KfApp(unlocker: BleUnlocker) {
         // 2026-10-30（提速）: 维护最近 3 个样本（最新在前），供中值武装判据用。
         rssiHistory.add(0, r)
         while (rssiHistory.size > 3) { rssiHistory.removeAt(rssiHistory.size - 1) }
-        armed = AutoOpenKit.rssiArmedByMedian(prevArmed = armed, history = rssiHistory)
+        // 2026-10-31（第 28 轮）：基准优先用标定值（未标定退回 BASE = -40，与 iOS fallbackBase 同值）。
+        val armBase = AutoOpenKit.rssiBase(lock?.rssiP95 ?: 0)
+        armed = AutoOpenKit.rssiArmedByMedian(prevArmed = armed, history = rssiHistory, base = armBase)
         // 信号掉回解除线以下 = 这一次接近事件结束 → 放开闩锁与预热位, 下次靠近重来一遍
         // 2026-10-27 审核 (C-A3)：原写法「!armed 就放开闩锁」，而 armed 在回差带内就会变 false
         // ⇒ 退半步再进一步可能再开一次。与 iOS 同口径：只在信号掉到解除线**以下 3dB**（真走远）才放开。
         // 同时保留原行为：未武装时清 prewarmStarted（预热位该跟着复位）。
         if (!armed) { prewarmStarted = false }
-        if (r < AutoOpenKit.disarmThreshold() - 3) { fired = false }
+        // 2026-10-31（第 28 轮）：走远判据必须用**同一基准** —— 否则标定后解除线仍按 -40 算，回差带对不上。
+        if (r < AutoOpenKit.disarmThreshold(armBase) - 3) { fired = false }
         if (!armed || fired) return
         // 2026-10-27 审核补齐 (C-A1)：iOS 有 7 道门，Android 原先只有 4 道 ——
         // 缺的正好是三道**否决门**，导致「在 iPhone 上开布防 → Android 手机照常自动开门」。

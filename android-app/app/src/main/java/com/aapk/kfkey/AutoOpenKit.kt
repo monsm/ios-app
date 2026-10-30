@@ -23,6 +23,29 @@ object AutoOpenKit {
      * 旧式 0.7×base / 0.5×base 在 base=-60 时会算出"解除线比武装线更强"→ 无回差、逐样本翻转。
      * iOS 那段教训 (AutoOpen.swift 里 F3 注释) 原样保留。base=-38 → -38 + 10·log10(0.5) ≈ -41。
      */
+    /**
+     * 2026-10-31（第 28 轮，与 iOS `AutoOpenKit.rssiBase` 同式）：标定基准。
+     *
+     * `p95 == 0` = 未标定 ⇒ 退回 BASE(-40)。**不能**把"未标定"当一票否决 ——
+     * iOS 那条注释记着旧写法的后果：未标定 ⇒ armed 永不置位 ⇒ 自动开锁对没标定过的用户永不触发。
+     * 标定是"可选精修"，不是"能不能开"的硬条件。
+     */
+    fun rssiBase(p95: Int): Int = if (p95 != 0) p95 else BASE
+
+    /**
+     * P95 取法（线性插值）—— 逐行搬 iOS `AutoOpenKit.p95`。
+     * 样本不足 5 个返回 null（与 iOS 同）：3 个样本的"95 分位"没有统计意义。
+     */
+    fun p95(samples: List<Int>): Int? {
+        if (samples.size < 5) return null
+        val a = samples.sorted()
+        val rank = (a.size - 1) * 0.95
+        val lo = kotlin.math.floor(rank).toInt()
+        val hi = kotlin.math.ceil(rank).toInt()
+        val frac = rank - lo
+        if (lo == hi) return a[lo]
+        return (a[lo] + (a[hi] - a[lo]) * frac).roundToInt()
+    }
     fun armThreshold(base: Int = BASE): Int = base
 
     fun disarmThreshold(base: Int = BASE): Int =
