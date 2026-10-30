@@ -126,6 +126,8 @@ private fun KfApp(unlocker: BleUnlocker) {
     // Android 原先没有。这里缓存上次开锁回包的 rc，供 maybeAutoUnlock 做 F6 判断。
     var lastRc by remember { mutableStateOf(0) }
     var armed by remember { mutableStateOf(false) }                // 回差滤波后的"已武装"位
+    // 2026-10-30（提速，与 iOS 同式）: 最近 RSSI 样本（最新在前，最多 3 个）—— 中值武装判据用。
+    val rssiHistory = remember { mutableStateListOf<Int>() }
     var fired by remember { mutableStateOf(false) }                // 本次接近事件是否已发过 04
     var prewarmStarted by remember { mutableStateOf(false) }       // 本次靠近是否已预热过
     var warming by remember { mutableStateOf(false) }              // 预热建链在途 (要让监测撤下)
@@ -298,7 +300,10 @@ private fun KfApp(unlocker: BleUnlocker) {
                 }
             }
         }
-        armed = AutoOpenKit.rssiSample(prevArmed = armed, rssi = r)
+        // 2026-10-30（提速）: 维护最近 3 个样本（最新在前），供中值武装判据用。
+        rssiHistory.add(0, r)
+        while (rssiHistory.size > 3) { rssiHistory.removeAt(rssiHistory.size - 1) }
+        armed = AutoOpenKit.rssiArmedByMedian(prevArmed = armed, history = rssiHistory)
         // 信号掉回解除线以下 = 这一次接近事件结束 → 放开闩锁与预热位, 下次靠近重来一遍
         // 2026-10-27 审核 (C-A3)：原写法「!armed 就放开闩锁」，而 armed 在回差带内就会变 false
         // ⇒ 退半步再进一步可能再开一次。与 iOS 同口径：只在信号掉到解除线**以下 3dB**（真走远）才放开。
@@ -337,7 +342,7 @@ private fun KfApp(unlocker: BleUnlocker) {
     // "当前信号"再也不更新, 用户只能关掉开关再打开。
     LaunchedEffect(proximity, lock?.mac, busy, warming, foreground) {
         val l = lock ?: return@LaunchedEffect
-        if (!proximity) { rssi = null; armed = false; fired = false; prewarmStarted = false; peakRssi = null; peakAz = null; airTagDismissed = false }
+        if (!proximity) { rssi = null; armed = false; fired = false; prewarmStarted = false; rssiHistory.clear(); peakRssi = null; peakAz = null; airTagDismissed = false }
         // 开锁在途 **或预热在途** 都撤下监测: 安卓同时只跑一路扫描, 而且边扫边连极易 133。
         // 撤下后 rssi 保持最后一次的读数 (不抹成 null), 免得界面在预热那一瞬闪成"正在寻找门锁…"
         if (!proximity || busy || warming || !foreground) return@LaunchedEffect

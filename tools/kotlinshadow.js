@@ -102,10 +102,13 @@ else good('A4 令牌通道 KLV#0xEE');
   else good('A8 rssiSample 回差双阈值');
 
   const ma = kt('MainActivity.kt');
-  // ① 武装位必须**回灌**给下一次判定 (局部 val 就等于没滤波)
-  if (!/armed = AutoOpenKit\.rssiSample\(prevArmed = armed/.test(ma))
-    bad('A8 MainActivity 没有把 armed 回灌给 rssiSample (回差滤波等于没接)');
-  else good('A8 武装位跨样本回灌');
+  //    2026-10-30：判据放宽为「单样本 rssiSample 或 3 样本中值 rssiArmedByMedian」——
+  //    两者都必须是 `armed = AutoOpenKit.<fn>(prevArmed = armed …)` 这个回灌形状，
+  //    否则回差滤波等于没接。放宽是因为 iOS 侧已升级到中值（Android 同步），
+  //    闸门若只认旧函数名，就等于逼着实现不许进步。
+  if (!/armed = AutoOpenKit\.(rssiSample|rssiArmedByMedian)\(prevArmed = armed/.test(ma))
+    bad('A8 MainActivity 没有把 armed 回灌给回差/中值判据 (滤波等于没接)');
+  else good('A8 武装位跨样本回灌 (单样本或中值)');
   // ② 一次性闩锁: 2026-10-27 审核后改成「信号掉到解除线以下 3dB 才放开」（与 iOS 同口径）。
   //    旧写法是「!armed 就放开」—— 而 armed 在回差带内就会变 false，退半步再进一步会再开一次。
   if (!/if\s*\(r < AutoOpenKit\.disarmThreshold\(\)\s*-\s*3\)\s*\{\s*fired = false/.test(ma))

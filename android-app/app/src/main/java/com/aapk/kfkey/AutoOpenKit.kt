@@ -36,6 +36,28 @@ object AutoOpenKit {
     }
 
     /**
+     * 2026-10-30（提速，与 iOS `rssiArmedByMedian` 同式）：**中值滤波的武装判据**。
+     *
+     * `rssiSample` 是**单样本**判定 —— 一个抖动样本就能让 armed 翻转：
+     *   · 走近时被一次 -85 尖峰打断 ⇒ 不武装，用户要在门口多站一拍（"时灵时不灵"的成因）；
+     *   · 已武装后被一次假强信号维持 ⇒ 走开了还留着 armed。
+     * 现在取最近 3 个样本的**中位数**再判：单个尖峰被吃掉，而真的走近时**仍然 1 个样本就能过**
+     * （3 样本窗里 2 个达线即中位数达线）⇒ 不会变慢，只会变稳。
+     *
+     * @param history 最近的样本，**最新的在前**（调用方维护，最多 3 个）。
+     */
+    fun rssiArmedByMedian(prevArmed: Boolean, history: List<Int>, base: Int = BASE): Boolean {
+        val cur = history.firstOrNull() ?: return prevArmed
+        val arm = armThreshold(base)
+        val disarm = disarmThreshold(base)
+        // 已武装 → 解除: **单样本**跌破解除线就解除（走开要快，不能被中值拖住）
+        if (prevArmed && cur <= disarm) return false
+        // 未武装 → 武装: 用 3 样本中值，抗单点尖峰
+        val med = history.take(3).sorted()[history.take(3).size / 2]
+        return if (prevArmed) med > disarm else med >= arm
+    }
+
+    /**
      * F5 冷却: 上次下发距今 >6s 才允许下一次。
      *
      * 旧值 60s 是"每个接近事件只发一次 04"之外的第二道闸。用户口径 (2026-10-17) 改成 6s:
