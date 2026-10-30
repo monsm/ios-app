@@ -139,7 +139,12 @@ struct BackupView: View {
                         .foregroundStyle(DS.Palette.accentText)
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
                         Text("还没有备份").vkFont(.subheadline, weight: .medium)   // 822 还没有备份
-                        Text("本机从未生成过备份文本，也没有上传成功记录。手机丢失或重装即不可恢复。")
+                        // 2026-10-30 修复（第 96 轮）：原句写「也没有**上传成功**记录」——
+                        // 但 WebDAV/坚果云同步整节已于 2026-10-27 六轮精简**整族删除**（见本文件 :225），
+                        // 全仓也没有任何「上传成功」的数据源（`kf_backup_hist` 只记**生成成功**的时刻）。
+                        // 用户读这句会以为「本 App 本该自动上传」，从而去找一个不存在的同步功能。
+                        // 现在只说真实存在的事实：本机从未生成过备份。
+                        Text("本机从未生成过备份。手机丢失或重装即不可恢复 —— 建议现在就做一次。")
                             .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }

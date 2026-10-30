@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T04:39:43.670Z",
+    "generated": "2026-10-30T04:43:00.530Z",
     "sources": [
       {
         "scout": "android-native",
@@ -30870,7 +30870,7 @@ const DATA = {
           "line": 214,
           "symbol": "cloudSection",
           "note": "",
-          "text": "showFilePicker = true"
+          "text": "// 而「从剪贴板粘贴」恰恰是 importText 为空时才需要按的那一枚。"
         },
         {
           "platform": "ios",
@@ -30894,7 +30894,7 @@ const DATA = {
           "line": 239,
           "symbol": "TextField 坚果云账号",
           "note": "",
-          "text": "let (p, _) = try BackupStudio.parsePreview(text: importText, password: importPw.isEmpty ? nil : importPw)"
+          "text": "// 就点了确认 —— 那不是知情同意，是盲签。"
         }
       ],
       "platformEvidence": {
@@ -31676,7 +31676,7 @@ const DATA = {
           "line": 189,
           "symbol": "Button 从剪贴板粘贴",
           "note": "",
-          "text": ".textInputAutocapitalization(.never)"
+          "text": "Text(\"粘贴备份文本后导入。导入是**合并**（只增不删）—— 本机已有的凭证会保留，同名冲突取本机。若想整表回滚到备份状态，请先手动清空该锁台账再导入。门锁本身无需重置。\")"
         },
         {
           "platform": "ios",
@@ -31684,7 +31684,7 @@ const DATA = {
           "line": 190,
           "symbol": "UIPasteboard.general.string",
           "note": "",
-          "text": ".autocorrectionDisabled()"
+          "text": ".vkFont(.caption).foregroundStyle(DS.Palette.textSub)"
         },
         {
           "platform": "ios",
@@ -31692,7 +31692,7 @@ const DATA = {
           "line": 193,
           "symbol": "剪贴板是空的",
           "note": "",
-          "text": ".vkFont(.caption.monospaced())"
+          "text": "SecureField(\"备份密码（导出时设过的才需要填）\", text: $importPw)"
         },
         {
           "platform": "ios",
@@ -31700,7 +31700,7 @@ const DATA = {
           "line": 199,
           "symbol": ".disabled(busy || importText.isEmpty)",
           "note": "",
-          "text": "if let s = UIPasteboard.general.string, !s.isEmpty {"
+          "text": ".lineLimit(3...6)"
         }
       ],
       "platformEvidence": {
@@ -31775,7 +31775,7 @@ const DATA = {
           "line": 267,
           "symbol": "confirmImport",
           "note": "",
-          "text": "// 改成走 parsePreview 这**唯一**入口 (先解密 → 再校验哈希 → 再走升级链), 哈希不过就拦,"
+          "text": "// 2026-10-13 对抗式排查: 原写直接 `JSONDecoder().decode(BackupBundle.self)` + restoreAll,"
         },
         {
           "platform": "ios",
@@ -31783,7 +31783,7 @@ const DATA = {
           "line": 268,
           "symbol": "请先粘贴备份文本",
           "note": "",
-          "text": "// 与云端路径同一套判据。加密备份仍需口令 (本页只收明文粘贴, 与改动前一致)。"
+          "text": "// 把云端那套**口令层 + 453 内容哈希层**整个绕过:"
         },
         {
           "platform": "ios",
@@ -31791,7 +31791,7 @@ const DATA = {
           "line": 274,
           "symbol": "confirmDestructive 导入备份",
           "note": "",
-          "text": "// 于是界面承诺「其它设备保留」而本机在备份之后新加的凭证会丢 —— 正是"
+          "text": "do {"
         },
         {
           "platform": "ios",
@@ -31799,7 +31799,7 @@ const DATA = {
           "line": 275,
           "symbol": "口令会被替换成它",
           "note": "",
-          "text": "// `BackupStudioKit:297-298` 注释里描述的那个 bug。修复版一直写在隔壁（带 merge/keep/skip、"
+          "text": "// 2026-10-13 修 CI: `BackupStudioKit` 是**文件名**, 类型名是 `BackupStudio` (enum)。"
         },
         {
           "platform": "ios",
@@ -31807,7 +31807,7 @@ const DATA = {
           "line": 276,
           "symbol": "confirmTitle: 导入",
           "note": "",
-          "text": "// 冲突裁决、421 回滚点），但**零调用**。现在接上。"
+          "text": "let (_, bundle) = try BackupStudio.parsePreview(text: importText, password: importPw.isEmpty ? nil : importPw)"
         }
       ],
       "platformEvidence": {
@@ -31952,7 +31952,7 @@ const DATA = {
           "line": 201,
           "symbol": "Button 从文件选择",
           "note": "",
-          "text": "} else {"
+          "text": ".autocorrectionDisabled()"
         },
         {
           "platform": "ios",
@@ -32065,7 +32065,7 @@ const DATA = {
           "line": 280,
           "symbol": "doImport",
           "note": "",
-          "text": "if bundle.globals?.appearance != nil { app.reloadAppearance() }   // 894 带外观段才刷, 免得白重建一次全树"
+          "text": "// `BackupStudioKit:297-298` 注释里描述的那个 bug。修复版一直写在隔壁（带 merge/keep/skip、"
         },
         {
           "platform": "ios",
@@ -32073,7 +32073,7 @@ const DATA = {
           "line": 288,
           "symbol": "do 块",
           "note": "",
-          "text": "}"
+          "text": "app.showToast(\"导入完成： 新增 \\(r.imported), 合并 \\(r.overwritten)\" + (r.skipped > 0 ? \", 跳过 \\(r.skipped)\" : \"\"))"
         },
         {
           "platform": "ios",
