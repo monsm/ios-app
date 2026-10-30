@@ -242,7 +242,11 @@ enum DB {
     static func setMemberInfo(_ id: String, _ info: [String: String]) {
         var map = store.getDict("kf_members")
         if var d = map[id] as? [String: Any] {
-            for (k, v) in info where !v.isEmpty { d[k] = v }
+            // 2026-10-30 修复（第 122 轮，**清空保存无效**）：原来写 `for (k, v) in info where !v.isEmpty`，
+            // 于是用户把「关系」清空后点保存，旧值仍在（成员行继续显示旧称呼）。
+            // 已审计全部 3 个调用方（MemberDetail:304 / MembersView:131 / BackupStudioKit:435）——
+            // 三者都是「传什么就写什么」的语义，空串应当**真的清空**，没有一处依赖「空值=不改」。
+            for (k, v) in info { d[k] = v }
             map[id] = d
         }
         store.set("kf_members", map)

@@ -324,7 +324,8 @@ struct MemberCenterView: View {
                     .vkFont(.subheadline)
                     .foregroundStyle(DS.Palette.textSub)
             }
-            ForEach(members.prefix(4)) { m in
+            // 2026-10-30 修复（第 122 轮）：原来只看前 4 位成员的便签，第 5 位及以后**永远不显示**且无任何说明。
+            ForEach(members) { m in
                 if !MemberHub.ext(m.id).note.isEmpty {
                     LabeledContent("便签 · " + MemberHub.display(m)) {
                         Text(MemberHub.ext(m.id).note)

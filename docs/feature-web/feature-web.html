@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-30T10:17:06.903Z",
+    "generated": "2026-10-30T10:23:58.812Z",
     "sources": [
       {
         "scout": "android-native",
@@ -25035,7 +25035,7 @@ const DATA = {
           "line": 367,
           "symbol": "struct MemberRow",
           "note": "行声明",
-          "text": ""
+          "text": "var onArchive: () -> Void = {}"
         },
         {
           "platform": "ios",
@@ -25043,7 +25043,7 @@ const DATA = {
           "line": 380,
           "symbol": "MemberRow",
           "note": "称呼（备注）双层文本",
-          "text": "}"
+          "text": "subLine"
         },
         {
           "platform": "ios",
@@ -25051,7 +25051,7 @@ const DATA = {
           "line": 385,
           "symbol": "MemberRow",
           "note": "同名待合并",
-          "text": ".frame(minHeight: DS.Hit.min)"
+          "text": ".padding(.vertical, DS.Space.xs)"
         },
         {
           "platform": "ios",
@@ -25059,7 +25059,7 @@ const DATA = {
           "line": 432,
           "symbol": "subLine",
           "note": "副行四段",
-          "text": "// 2026-10-30 修正（第 117 轮）：原文写「全仓 12 处（本文件 8 + DeviceHomeView 4）」，实测只有 3 处。"
+          "text": "// 影响面: 改 MemberAvatar 会影响成员中心（本文件 2 处）与建档向导（MemberWizard 1 处），共 3 处。"
         },
         {
           "platform": "ios",
@@ -25067,7 +25067,7 @@ const DATA = {
           "line": 448,
           "symbol": "staleTag",
           "note": "久未用/活跃 (约)",
-          "text": "}"
+          "text": "return Color(hex: v)"
         }
       ],
       "platformEvidence": {
@@ -57298,7 +57298,7 @@ const DATA = {
           "line": 439,
           "symbol": "kf_ledger_",
           "note": "族删前缀清单起点",
-          "text": ""
+          "text": "if verifyPasscode(code) { return false }"
         }
       ],
       "platformEvidence": {
@@ -57361,7 +57361,7 @@ const DATA = {
           "line": 374,
           "symbol": "saveKeychain",
           "note": "密钥不再明文写 plist, 改存系统 Keychain",
-          "text": "}"
+          "text": "static let pcIter = 60_000"
         }
       ],
       "platformEvidence": {
@@ -60536,7 +60536,7 @@ const DATA = {
           "line": 435,
           "symbol": "removeDevice(_:)",
           "note": "",
-          "text": "if verifyPasscode(code) { return false }"
+          "text": "store.remove(duressKey)"
         },
         {
           "platform": "ios",
@@ -60544,7 +60544,7 @@ const DATA = {
           "line": 469,
           "symbol": "ord",
           "note": "kf_lock_order 剪枝",
-          "text": ""
+          "text": "// ---------- Codable ↔ [String: Any] 桥 (小程序的 Map 结构) ----------"
         },
         {
           "platform": "ios",
@@ -61450,7 +61450,7 @@ const DATA = {
           "line": 290,
           "symbol": "DefendCfg",
           "note": "",
-          "text": "static func saveDongle(_ d: Dongle) {"
+          "text": "let m = mac.replacingOccurrences(of: \":\", with: \"\").lowercased()"
         },
         {
           "platform": "ios",
@@ -61458,7 +61458,7 @@ const DATA = {
           "line": 261,
           "symbol": "DongleStat",
           "note": "",
-          "text": "// 2026-10-14: 认领映射 (kf_mclaim_) 里指向该成员的条目必须删掉 —— 否则记录页 whoId 指向"
+          "text": "var changed = false"
         },
         {
           "platform": "ios",
@@ -61466,7 +61466,7 @@ const DATA = {
           "line": 272,
           "symbol": "Gateway",
           "note": "",
-          "text": "}"
+          "text": "// 档案扩展 / 徽章 / 生日 (均以成员 id 为键) 与值班周表: 删成员后成永久孤儿键, 一并清。"
         }
       ],
       "platformEvidence": {
@@ -62090,7 +62090,7 @@ const DATA = {
           "line": 350,
           "symbol": "migrateSecretsToKeychain()",
           "note": "",
-          "text": "/// 是否设了本机密码。"
+          "text": "store.set(\"kf_gateways\", map)"
         },
         {
           "platform": "ios",
@@ -62098,7 +62098,7 @@ const DATA = {
           "line": 361,
           "symbol": "stored",
           "note": "stored || set 成功才 removeValue",
-          "text": "let hasStrong = !(rec[\"d2\"] ?? \"\").isEmpty"
+          "text": "static func hasPasscode() -> Bool {"
         }
       ],
       "platformEvidence": {
@@ -62248,7 +62248,7 @@ const DATA = {
           "line": 374,
           "symbol": "saveKeychain(_:)",
           "note": "",
-          "text": "}"
+          "text": "static let pcIter = 60_000"
         },
         {
           "platform": "ios",
@@ -62256,7 +62256,7 @@ const DATA = {
           "line": 425,
           "symbol": "removeKeychain(_:)",
           "note": "",
-          "text": "/// 设置胁迫码。传 nil 或空串 = 清除。"
+          "text": "static func hasDuressCode() -> Bool {"
         },
         {
           "platform": "ios",
@@ -62264,7 +62264,7 @@ const DATA = {
           "line": 438,
           "symbol": "removeDevice",
           "note": "clearPendingPair",
-          "text": "}"
+          "text": "guard code.count >= 4, code.allSatisfy({ $0.isNumber }) else { return false }"
         }
       ],
       "platformEvidence": {
@@ -63834,7 +63834,7 @@ const DATA = {
           "line": 462,
           "symbol": "k.contains(m)",
           "note": "for k in store.keys() where k.contains(m)",
-          "text": "}"
+          "text": "Store.shared.setCodable(k, v)"
         }
       ],
       "platformEvidence": {
