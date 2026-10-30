@@ -237,7 +237,9 @@ struct DFUView: View {
             try await app.lock.enableDfu()
             app.lock.disconnect()
             // 给锁 2 秒重启并开始广播 ZkDFU
-            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            // 2026-10-30 修复（第 73 轮）：原来这里 `try?` 吞掉取消，用户中途退页后仍会跑完整条刷写链。
+            // 刷机是**不可中断**的高危动作（半完成态 = 锁可能停在 bootloader），所以取消必须立刻停。
+            do { try await Task.sleep(nanoseconds: 2_000_000_000) } catch { phase = .failed; return }
 
             // 2) 跑 DFU 传输
             let session = DFUSession(macHex: kc.mac, pid: kc.pid, pkg: p)   // pid 用于按 APK 的 BleDfu 判据过滤广播
@@ -253,7 +255,9 @@ struct DFUView: View {
             phase = .done
             stateText = "升级完成"
             // 3) 回读一次，确认版本真的变了（与 cmd20 的回读校验同口径）
-            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            // 2026-10-30 修复（第 73 轮）：同上 —— 用户已离开页面就别再写 stateText / 弹 toast，
+            // 否则会往一个已经消失的视图里写状态（SwiftUI 里表现为"退出后闪一下"）。
+            do { try await Task.sleep(nanoseconds: 1_500_000_000) } catch { return }
             await app.refreshStatusQuietly(manual: true)
             let after = app.status?.firmware ?? app.current?.fw ?? "未读到"
             stateText = "完成 · 锁内版本 \(after)"
