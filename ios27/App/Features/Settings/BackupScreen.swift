@@ -286,6 +286,13 @@ struct BackupScreen: View {
     private func readBackupFile(_ url: URL) {
         let access = url.startAccessingSecurityScopedResource()
         defer { if access { url.stopAccessingSecurityScopedResource() } }
+        // SEC-30：先查大小再读内容。`String(contentsOf:)` 会**整份读进内存**，
+        // 而 parsePreview 里那道 32MB 闸发生在读完之后 —— 选了个超大文件就已经把内存吃满了。
+        let size = ((try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize) ?? 0
+        guard size <= BackupStudio.maxImportBytes else {
+            restoreError = "这个文件 \(size / 1_048_576) MB，超过 \(BackupStudio.maxImportBytes / 1_048_576) MB 上限 —— 正常备份远小于此，请确认选对了文件。"
+            return
+        }
         do {
             let text = try String(contentsOf: url, encoding: .utf8)
             guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {

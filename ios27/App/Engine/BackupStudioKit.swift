@@ -222,6 +222,11 @@ enum BackupStudio {
 
 
 
+    /// SEC-30：导入体积上限。正常全量备份是几百 KB 量级，32MB 已经留了三个数量级余量；
+    /// 超过就当不是备份拒绝掉，免得一个超大文件在 JSONDecoder 之前就把内存吃满。
+    /// 界面上选文件时也要用同一个常量**先查大小再读内容**（见 BackupScreen.readBackupFile）。
+    nonisolated static let maxImportBytes = 32 * 1024 * 1024
+
     /// 453 哈希层判定: 与 verifyChecksum 共用一套算法 (新语义 + 旧语义两条都认)
     enum ChecksumState: Equatable { case ok, mismatch, absent }
 
@@ -260,7 +265,7 @@ enum BackupStudio {
         // 2026-10-14: 交接包等文本前面带给人看的 // 说明行 (1048) —— 先剥掉再判机器部分,
         // 否则 JSONDecoder 直接解不出, 本 App 自己导出的交接包反而导不回来。
         // SEC-30：先做长度闸。一个几 GB 的「备份」会在 JSONDecoder 阶段把内存吃光。
-        guard text.count <= 32 * 1024 * 1024 else {
+        guard text.count <= Self.maxImportBytes else {
             throw DFUError.msg("备份文本过大（>32MB）—— 正常备份远小于此，请确认选对了文件")
         }
         var body = stripCommentHeader(text)
