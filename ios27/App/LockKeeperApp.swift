@@ -34,7 +34,11 @@ struct RootView: View {
         }
         .animation(T.M.move, value: app.unlocked)
         // 装配：把路由注入 AppModel —— 这是 Engine 唯一能触达界面的出口（EngineHost）。
-        .onAppear { app.router = router }
+        // 同时注册到 EngineHostRegistry，供通知回调这类没有视图上下文的路径取用。
+        .onAppear {
+            app.router = router
+            EngineHostRegistry.register(app)
+        }
         // 只读试验模式必须常驻：用户第二天会忘了自己开过它，然后以为 App 坏了。
         .safeAreaInset(edge: .top, spacing: 0) {
             if app.trialGuard { TrialGuardBanner() }

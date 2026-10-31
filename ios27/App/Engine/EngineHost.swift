@@ -18,3 +18,18 @@ protocol EngineHost: AnyObject {
     /// 请求把界面切到「钥匙」页并定位到某条凭证。
     func requestCredentialRoute(alias: Int?)
 }
+/// 宿主注册点。
+///
+/// 为什么需要它：通知回调（`UNUserNotificationCenterDelegate`）没有视图上下文，
+/// 拿不到 `AppModel`；但"点通知 → 定位到那条凭证"这条链必须落到界面上。
+/// 由 App 启动时注册一次，引擎侧按需取用。
+@MainActor
+enum EngineHostRegistry {
+    private static weak var current: (any EngineHost)?
+
+    static func register(_ host: any EngineHost) {
+        current = host
+    }
+
+    static var host: (any EngineHost)? { current }
+}

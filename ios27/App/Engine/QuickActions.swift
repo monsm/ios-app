@@ -51,7 +51,10 @@ final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate, @u
                                             withCompletionHandler completionHandler: @escaping () -> Void) {
         let id = response.notification.request.identifier
         if let action = CredentialOrg.handleNotificationAction(id) {
-            Task { @MainActor in CredentialOrg.applyNotification(action) }
+            Task { @MainActor in
+                guard let host = EngineHostRegistry.host else { return }
+                CredentialOrg.applyNotification(action, host: host)
+            }
         }
         completionHandler()
     }
