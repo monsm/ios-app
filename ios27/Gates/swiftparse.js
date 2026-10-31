@@ -45,6 +45,7 @@ for (const f of files) {
   //
   // 盲区 A: `if let x = try await f()` / `try? await` —— 语法不接受 try 与 await 同时出现在 if-let 初始化式里。
   // 盲区 B: `cb?(.success(()))` —— 可选链调用里嵌套隐式成员调用，会让解析器整体错位。
+  // 盲区 C: `return .success(())` —— 隐式成员 + 空元组，语法树判成 MISSING（合法 Swift）。
   //
   // 处理方式：**把这几行换成同形状占位再解析**（保持行号不变），而不是按行号豁免 ——
   // 按行豁免会连带豁免掉同一行上的其它真错误；换源再解析则其余行仍然逐字受检。
@@ -61,6 +62,12 @@ for (const f of files) {
       blindCount++;
     } else if (BLIND_B.test(line)) {
       srcLines[i] = line.replace(/^(\s*)(\w+)\?\(.*\)\s*$/g, '$1$2');
+      blindCount++;
+    }
+    // 盲区 C: `return .success(())` —— 隐式成员 + 空元组，语法树判成 MISSING。
+    // 换成 .success(Void()) 再解析（语义等价，只是给解析器一个它认得的形状）。
+    if (/\.success\(\s*\(\s*\)\s*\)/.test(srcLines[i])) {
+      srcLines[i] = srcLines[i].replace(/\.success\(\s*\(\s*\)\s*\)/g, '.success(Void())');
       blindCount++;
     }
   }

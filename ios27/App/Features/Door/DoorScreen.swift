@@ -42,6 +42,8 @@ struct DoorScreen: View {
                 .accessibilityLabel("添加门锁")
             }
         }
+        // 进页面即从 Engine 重载（并顺带读一次 cmd03 —— 门页要看真电量/固件）。
+        .task { await app.reload(refreshStatus: true) }
         .onGeometryChange(for: CGFloat.self) { proxy in
             proxy.size.width
         } action: { width in

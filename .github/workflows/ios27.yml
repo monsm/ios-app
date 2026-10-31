@@ -105,25 +105,47 @@ jobs:
             SWIFT_COMPILATION_MODE=wholemodule \
             CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" | tee build/build.log
 
+      - name: Archive（出可安装的未签名 IPA）
+        run: |
+          set -o pipefail
+          xcodebuild archive \
+            -project LockKeeper.xcodeproj \
+            -scheme LockKeeper \
+            -sdk iphoneos \
+            -configuration Release \
+            -archivePath build/LockKeeper.xcarchive \
+            SWIFT_COMPILATION_MODE=wholemodule \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" | tee build/archive.log
+          mkdir -p build/Payload
+          cp -R "build/LockKeeper.xcarchive/Products/Applications/LockKeeper.app" build/Payload/
+          # 文件名带上构建时刻：安装台上堆三份 "LockKeeper.ipa" 时，装错版本比不装更糟
+          STAMP=$(TZ=Asia/Shanghai date +%Y%m%d.%H%M%S)
+          cd build && zip -qry "LockKeeper-$STAMP-unsigned.ipa" Payload
+          ls -lh LockKeeper-*-unsigned.ipa
+
       - name: 编译失败时把错误行转成注解（不登录也能读）
         if: failure()
         run: |
-          if [ -f build/build.log ]; then
-            grep -E "error: " build/build.log | sed "s#^#::error file=ios27/build/build.log::#" || true
-          fi
+          for L in build/build.log build/archive.log; do
+            [ -f "$L" ] || continue
+            grep -E "error: " "$L" | sed "s#^#::error file=ios27/$L::#" || true
+          done
           {
             echo "## 编译错误摘录（全量，去重）"
-            if grep -hE "error: " build/build.log 2>/dev/null | sed -E 's#^/[^ ]*/##' | sort -u; then
+            if grep -hE "error: " build/build.log build/archive.log 2>/dev/null | sed -E 's#^/[^ ]*/##' | sort -u; then
               :
             else
               echo "（日志里没有 error: 行 —— 那多半是环境/签名问题，不是源码）"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: 上传编译日志
+      - name: 上传编译日志 + IPA
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: ios27-build-log
-          path: ios27/build/build.log
+          name: ios27-build
+          path: |
+            ios27/build/build.log
+            ios27/build/archive.log
+            ios27/build/LockKeeper-*-unsigned.ipa
           if-no-files-found: ignore

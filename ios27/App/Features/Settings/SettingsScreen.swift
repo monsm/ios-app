@@ -37,6 +37,7 @@ struct SettingsScreen: View {
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("设置")
+        .task { await app.reload(refreshStatus: true) }
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $deleteRequested) {
             DeleteDeviceSheet()

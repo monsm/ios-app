@@ -115,6 +115,7 @@ struct RecordsScreen: View {
             }
         }
         .navigationTitle("台账")
+        .task { await app.reload(refreshStatus: false) }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -472,9 +473,15 @@ struct RecordsScreen: View {
         }
         reading = true
         readNote = nil
-        try? await Task.sleep(for: .milliseconds(600))
-        if app.lock?.isConnected == true {
-            let now = Int64(Date().timeIntervalSince1970 * 1000)
+        // 真链路：ensureConnected → cmd16 逐页拉取（最多 20 页 × 5 条）→ 落 kf_logcache_。
+        // 失败时 AppModel 会把原因放进 lastError；这里回退到缓存并如实播报，不谎报"已读"。
+        await app.readLogs()
+        let now = Int64(Date().timeIntervalSince1970 * 1000)
+        if let err = app.lastError {
+            reload()
+            readNote = "读取失败 · " + err + "（下面是上次读到的那一份）"
+            app.lastError = nil
+        } else if app.lock?.isConnected == true {
             RecordsSource.markSynced(mac: mac, at: now)
             reload()
             readNote = untimed > 0

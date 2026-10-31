@@ -105,6 +105,7 @@ struct HouseholdScreen: View {
         .onAppear(perform: consume)
         .onChange(of: router.pending) { _, _ in consume() }
         .navigationTitle("家")
+        .task { await app.reload(refreshStatus: false) }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {

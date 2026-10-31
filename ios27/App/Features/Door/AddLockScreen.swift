@@ -41,6 +41,8 @@ struct AddLockScreen: View {
     @State private var echoResult: String?
     /// 中止请求：链在两帧之间检查它，命中就走回滚，而不是假装跑完。
     @State private var abortRequested = false
+    /// 配网成功拿到的钥匙串（commitName 要拿它落名字）。
+    @State private var pairedKeychain: Keychain?
 
     private static let stepTitles = ["发现", "校验", "初始化", "命名"]
 
@@ -417,17 +419,33 @@ struct AddLockScreen: View {
         banner = nil
         echoResult = nil
         candidates = []
-        // TODO(engine): 真实链路是 BLEService.startScan(allowDuplicates:true, timeoutMs:10000)
-        // 后按「广播可解析 + 服务 UUID + 名字关键字」评分，再按 RSSI 排序；这里给可替换的样本。
-        try? await Task.sleep(for: .milliseconds(900))
-        candidates = [
-            Candidate(id: "d1", name: "前门锁", mac: "A4:C1:38:11:22:33", model: "KX 系列",
-                      rssi: -48, inReset: true, alreadyAdded: false),
-            Candidate(id: "d2", name: "ZK-LOCK", mac: "B8:27:EB:44:55:66", model: "V1 系列",
-                      rssi: -71, inReset: true, alreadyAdded: false),
-            Candidate(id: "d3", name: "前门锁", mac: "A4:C1:38:11:22:33", model: "KX 系列",
-                      rssi: -83, inReset: false, alreadyAdded: true),
-        ]
+        do {
+            // 真链路：BLEService 扫 6 秒（allowDuplicates 让 RSSI 持续刷新），
+            // 只保留广播厂商段能解析出 MAC 的设备 —— 解析不出 MAC 的连不上，列出来只会误导。
+            try await BLEService.shared.startScan(allowDuplicates: true, timeoutMs: 6000)
+            let found = BLEService.shared.allDiscovered()
+            var list: [Candidate] = []
+            for d in found {
+                guard let adv = ZKProtocol.parseAdv(d.advertisHex),
+                      let mac = ZKProtocol.lockMac(fromAdv: adv) else { continue }
+                let model = PidMap.productNames[adv.pid] ?? "智能门锁"
+                list.append(Candidate(
+                    id: d.deviceId,
+                    name: d.name.isEmpty ? model : d.name,
+                    mac: mac,
+                    model: PidMap.modelName(adv.pid),
+                    rssi: d.rssi,
+                    inReset: true,
+                    alreadyAdded: DB.keychain(mac) != nil
+                ))
+            }
+            candidates = list.sorted { $0.rssi > $1.rssi }
+            if candidates.isEmpty {
+                banner = "没搜到门锁。确认手机蓝牙已开、锁已在重置态（长按后面板 RESET 到三声嘀），再点「重新搜索」。"
+            }
+        } catch {
+            banner = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
         phase = .ready
     }
 
@@ -457,36 +475,26 @@ struct AddLockScreen: View {
     }
 
     @MainActor
+    @MainActor
     private func runChain(_ c: Candidate) async {
         abortRequested = false
         banner = nil
         steps = []
         nickname = c.model
         phase = .pairing(step: 1)
-        steps.append("01 已连接 \(c.name)（\(c.mac)）")
-        // TODO(engine): 下面每一条对应 cmd23 → cmd05 → cmd08 ×4 → cmd21 → cmd03 的真实帧序列；
-        // 本机只跑相位机，不伪造锁端回执。
-        try? await Task.sleep(for: .milliseconds(500))
-        guard !abortRequested else { return rollback("在第 1 步中止，锁未被改动。") }
-        phase = .pairing(step: 2)
-        steps.append("02 换钥方式已确认（cmd23）")
-        try? await Task.sleep(for: .milliseconds(500))
-        guard !abortRequested else { return rollback("在换钥前中止，锁未被改动。") }
-        steps.append("03 已生成密钥（skey / bkey / 64 PIN）")
-        try? await Task.sleep(for: .milliseconds(500))
-        guard !abortRequested else { return rollback("在换钥前中止，锁未被改动。") }
-        phase = .pairing(step: 3)
-        steps.append("04 换钥完成（cmd05）")
-        try? await Task.sleep(for: .milliseconds(400))
-        guard !abortRequested else { return rollback("换钥已完成但 PIN 池未写完，请重新做一次键盘重置再配。") }
-        steps.append("05 PIN 池已写满 4 批（cmd08）")
-        try? await Task.sleep(for: .milliseconds(400))
-        guard !abortRequested else { return rollback("PIN 池已写入但 bkey 未写，请重新做一次键盘重置再配。") }
-        steps.append("06 beacon key 已写入（cmd21）")
-        try? await Task.sleep(for: .milliseconds(400))
-        guard !abortRequested else { return rollback("bkey 已写入但状态未校验，请到读数页核对固件与凭证数。") }
-        steps.append("07 状态校验通过（cmd03）")
-        phase = .naming
+        steps.append("01 正在连接 " + c.name + "（" + c.mac + "）")
+        do {
+            // 真链路：cmd23 → cmd05 → cmd08×4 → cmd21 → cmd03，全部由 LockService.pair 编排。
+            // progress 回调在后台线程，跳主 actor 再追加，避免跨线程改 @State。
+            let kc = try await LockService.shared.pair(deviceId: c.id, mac: c.mac) { msg in
+                Task { @MainActor in self.steps.append(msg) }
+            }
+            pairedKeychain = kc
+            steps.append("07 状态校验通过（cmd03）—— 这把锁已经是你的了")
+            phase = .naming
+        } catch {
+            rollback((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+        }
     }
 
     @MainActor
@@ -501,22 +509,19 @@ struct AddLockScreen: View {
     private func commitName() {
         let name = nickname.trimmingCharacters(in: .whitespaces)
         guard !name.isEmpty else { return }
-        // TODO(engine): 真实现落 Keychain + 锁档案（场所副标题），并 op=addLock 落库。
-        let mac = picked?.mac ?? "A4:C1:38:11:22:33"
-        app.lock = LockSummary(
-            id: mac,
-            name: name,
-            model: picked?.model ?? "KX 系列",
-            battery: 100,
-            signal: 3,
-            firmware: "1.4.2",
-            keyCount: 0,
-            isConnected: true,
-            safeMode: false,
-            muted: false
-        )
+        let mac = pairedKeychain?.mac ?? picked?.mac ?? ""
+        guard !mac.isEmpty else { phase = .ready; return }
+        // 落库：钥匙串改名 + 设为当前锁，然后让 AppModel 从 Engine 重载。
+        if var kc = DB.keychain(mac) {
+            kc.name = name
+            DB.saveKeychain(kc)
+        }
+        DB.currentMac = mac
         banner = nil
-        phase = .done
+        Task {
+            await app.reload(refreshStatus: false)
+            phase = .done
+        }
     }
 
     private func pad2(_ value: Int) -> String {

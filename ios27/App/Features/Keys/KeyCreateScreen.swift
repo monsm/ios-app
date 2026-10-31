@@ -22,6 +22,8 @@ struct KeyCreateScreen: View {
     @State var confirmCode = ""
     @State var errorText: String?
     @State var editingID: String?
+    /// 下发中（防重复提交）。
+    @State var busy = false
 
     let stepLabels = ["类型归属", "码值", "有效期", "确认"]
 
@@ -205,22 +207,30 @@ struct KeyCreateScreen: View {
         } else {
             finalName = note.isEmpty ? "密码 \(app.keys.filter { $0.kind == .password }.count + 1)" : note
         }
-        // TODO(engine): 下发 cmd0A/0B（密码体）与 cmd13/cmd14（指纹录入）。链路未接 ——
-        // 这里只写本机台账；页面不假装已下发，回执文案只说「已记入本机」。
-        let item = KeyItem(
-            id: editingID ?? "local-\(Int(Date().timeIntervalSince1970 * 1000))",
-            kind: kind,
-            name: finalName,
-            owner: owner,
-            code: kind == .fingerprint ? nil : code,
-            expiresAt: kind == .temp ? expiryMillis : nil,
-            disabled: false
-        )
-        if editingID != nil {
-            app.keys = KeysState.replace(item, in: app.keys)
-        } else {
-            app.keys.append(item)
+        // 指纹录入要人握着锁按住指纹头（cmd13 起始 → 逐帧 press → cmd14 确认），
+        // 这条链路本版没接。**不假装**：直接如实说，并给一条真能走的路（先用密码）。
+        if kind == .fingerprint {
+            errorText = "指纹录入要握着门锁按指纹头，这条链路还没接。先用密码开门吧。"
+            return
         }
-        router.keysPath = []
+        // 真链路：ensureConnected → cmd0A（临时码/密码同一构造器，用起止时间区分）→ 成功才写台账。
+        let df = DateFormats.cached("yyyy-MM-dd HH:mm")
+        let fromStr = df.string(from: Date())
+        let toStr: String = {
+            if kind == .temp { return df.string(from: Date(timeIntervalSince1970: Double(expiryMillis) / 1000)) }
+            return "2118-12-31 23:59"   // 永久档：与协议 2118 截止同口径
+        }()
+        busy = true
+        errorText = nil
+        Task {
+            let result = await app.addPassword(code, from: fromStr, to: toStr)
+            busy = false
+            switch result {
+            case .success:
+                router.keysPath = []
+            case .failure(let e):
+                errorText = (e as? LocalizedError)?.errorDescription ?? e.localizedDescription
+            }
+        }
     }
 }

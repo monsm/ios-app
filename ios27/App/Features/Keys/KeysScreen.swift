@@ -48,6 +48,7 @@ struct KeysScreen: View {
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("钥匙")
+        .task { await app.reload(refreshStatus: false) }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {

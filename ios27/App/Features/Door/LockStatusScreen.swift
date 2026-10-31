@@ -10,8 +10,10 @@ struct LockStatusScreen: View {
     @Environment(AppModel.self) private var app
     @Environment(Router.self) private var router
 
-    /// 本机已记下、还没下发到锁的写项（靠锁时自动补发，见 device.link.resync）。
-    @State private var pendingWrites: Set<String> = []
+    /// 正在下发（防重复触发）。
+    @State private var writing = false
+    /// 最近一次写入的回执文案。
+    @State private var outcome: String?
     /// 放宽安全模式前的二次确认：放宽方向会降低校验等级（只许 A→B 变严是常态）。
     @State private var confirmRelax = false
 
@@ -172,25 +174,32 @@ struct LockStatusScreen: View {
         .frame(minHeight: T.Hit.min)
     }
 
+    /// 写回执行：成功说结果，失败说原因。**不再有"待下发"** —— 写入是真的，
+    /// 要么锁端确认了、要么当场报错，不留一个"本机以为改了"的中间态。
     private var pendingLine: some View {
         HStack(spacing: T.S.s) {
-            StateDot(tone: pendingWrites.isEmpty ? .neutral : .attention,
-                     word: pendingWrites.isEmpty ? "无待下发" : "待下发")
-            Text(pendingWrites.isEmpty ? "本机记录与锁端一致" : "改动已记在本机，靠锁时补发")
-                .font(T.F.caption)
-                .foregroundStyle(pendingWrites.isEmpty ? Ink.inkSub : State.attention)
-                .fixedSize(horizontal: false, vertical: true)
-            if !pendingWrites.isEmpty {
-                Reading(value: "\(pendingWrites.count)", unit: "项", size: 13, tint: State.attention, animated: false)
+            if writing {
+                ProgressView().controlSize(.small)
+                Text("正在下发…").font(T.F.caption).foregroundStyle(Ink.inkSub)
+            } else if let outcome {
+                StateDot(tone: outcome.contains("失败") || outcome.contains("错") ? .attention : .ok, word: outcome)
+                Text(outcome)
+                    .font(T.F.caption)
+                    .foregroundStyle(Ink.inkSub)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                StateDot(tone: .neutral, word: "未改动")
+                Text("改动会立即下发到门锁，回执成功才改这一页的读数")
+                    .font(T.F.caption)
+                    .foregroundStyle(Ink.inkSub)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
-            if !pendingWrites.isEmpty {
-                Button("重试") { retryPending() }
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.ink)
-                    .frame(minHeight: T.Hit.min)
-                    .accessibilityLabel("重试下发待写项")
-            }
+            Button("重读") { reread() }
+                .font(T.F.caption)
+                .foregroundStyle(Ink.ink)
+                .frame(minHeight: T.Hit.min)
+                .accessibilityLabel("重新读取锁实况")
         }
         .padding(.top, T.S.xs)
         .accessibilityElement(children: .combine)
@@ -260,27 +269,45 @@ struct LockStatusScreen: View {
 
     // MARK: 写入
 
+    /// 安全模式：真链路 cmd20 SETVALIDATIONMODE（1 = 双验）。回包 rc=0 才回写。
     private func writeSafeMode(_ on: Bool) {
-        guard let lock = app.lock else { return }
-        // TODO(engine): 真实链路是 cmd20 SETVALIDATIONMODE（1 = 双验）；回包 rc=0 才回写锁端状态。
-        // 这里只改本机记录并标"待下发"，不假装锁端已经变严。
-        app.lock = copy(lock, safeMode: on, muted: lock.muted)
-        pendingWrites.insert("安全模式")
+        guard app.lock != nil, !writing else { return }
+        writing = true
+        Task {
+            let r = await app.setSafeMode(on)
+            writing = false
+            if case .failure(let e) = r {
+                outcome = (e as? LocalizedError)?.errorDescription ?? e.localizedDescription
+            } else {
+                outcome = on ? "已切到双验（A/B 模式）" : "已切回单验"
+            }
+        }
     }
 
+    /// 静音：真链路 cmd18（vol 1B：0 = 有声 / 1 = 静音）。
     private func writeMuted(_ on: Bool) {
-        guard let lock = app.lock else { return }
-        // TODO(engine): 真实链路是 cmd18（vol 1B：0 = 有声 / 1 = 静音）。
-        app.lock = copy(lock, safeMode: lock.safeMode, muted: on)
-        pendingWrites.insert("静音")
+        guard app.lock != nil, !writing else { return }
+        writing = true
+        Task {
+            let r = await app.setMuted(on)
+            writing = false
+            if case .failure(let e) = r {
+                outcome = (e as? LocalizedError)?.errorDescription ?? e.localizedDescription
+            } else {
+                outcome = on ? "已静音：键盘与开锁不提示音" : "已恢复提示音"
+            }
+        }
     }
 
-    /// 待下发项的重试出口：真的去补发一次，成功就把账清掉。
-    private func retryPending() {
-        // TODO(engine): 真实链路是 ensureConnected → 逐项补发（cmd20 / cmd18）→ 按回执清队列。
-        guard let lock = app.lock else { return }
-        if lock.isConnected {
-            pendingWrites.removeAll()
+    /// 读一次锁状态（cmd03），刷新这一页的全部读数。
+    private func reread() {
+        guard !writing else { return }
+        writing = true
+        Task {
+            await app.refreshStatus()
+            writing = false
+            outcome = app.lastError == nil ? "已重新读取锁实况" : app.lastError
+            app.lastError = nil
         }
     }
 
