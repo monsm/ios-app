@@ -45,7 +45,10 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
         if Thread.isMainThread { apply() } else { DispatchQueue.main.async(execute: apply) }
     }
 
-    var manager: CBCentralManager!
+    /// 2026-10-31 审核修复（P2）：隐式解包 CBCentralManager 改为可选。
+    /// 创建只在 bootstrap() 里发生一次，之后永不为 nil —— 但隐式解包让"任何一次未来改动
+    /// 在 bootstrap 之前读它"变成一次真机崩溃，而不是一个可读的 guard。
+    private(set) var manager: CBCentralManager?
     var scanTimer: Timer?
     // 2026-10-27 审核修复 (AUDIT-D D-25)：扫描引用计数。
     // 原先 `startScan` 先 `stopScanInternal()` 再开、`stopScan` 直接停 ——
@@ -165,6 +168,7 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
         scanRefLock.withLock { $0 += 1 }
         discovered.removeAll()
         scanning = true
+        guard let manager else { throw BLEErrorX.code(.notReady) }
         manager.scanForPeripherals(withServices: nil,
                                    options: [CBCentralManagerScanOptionAllowDuplicatesKey: allowDuplicates])
         scanTimer?.invalidate()
@@ -193,7 +197,7 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     /// 会把另一张还没用完的票也清掉，恰好复现 D-25 要防的「先结束的把还在用的扫描停掉」）。
     /// 物理停扫描仍照旧（isScanning 为假时系统调用是幂等的）。
     func stopScanInternal() {
-        guard manager != nil else { return }
+        guard let manager else { return }
         scanRefLock.withLock { $0 = max(0, $0 - 1) }
         if manager.isScanning { manager.stopScan() }
         scanTimer?.invalidate()
@@ -211,6 +215,7 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
         if connectedPeripheralId == deviceId, device?.state == .connected { return }
         disconnect()
         guard let devUUID = UUID(uuidString: deviceId) else { throw BLEErrorX.code(.notFound) }
+        guard let manager else { throw BLEErrorX.code(.notReady) }
         guard let target = manager.retrievePeripherals(withIdentifiers: [devUUID]).first
                 ?? manager.retrieveConnectedPeripherals(withServices: [BLEUUID.svcMain, BLEUUID.svcGW]).first(where: { $0.identifier.uuidString == deviceId }) else {
             throw BLEErrorX.code(.notFound)
@@ -231,7 +236,7 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
                 let work = DispatchWorkItem { [weak self] in
                     guard let self, self.connectCompletion != nil else { return }
                     self.connectCompletion = nil
-                    self.manager.cancelPeripheralConnection(target)
+                    self.manager?.cancelPeripheralConnection(target)
                     cont.resume(throwing: BLEErrorX.code(.connectTimeout))
                 }
                 self.connectTimeoutWork = work
@@ -268,7 +273,7 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
             return q
         }
         for c in queued { c.resume() }
-        if let d = device { manager.cancelPeripheralConnection(d) }
+        if let d = device { manager?.cancelPeripheralConnection(d) }
         device = nil
         writeChar = nil
         notifyChar = nil
