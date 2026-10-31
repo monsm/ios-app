@@ -297,6 +297,13 @@ enum BackupCanonical {
                 }
                 if !ov.isEmpty { gp.append(("deviceOrg", .obj(ov))) }
             }
+            // SEC-07：胁迫码进 canonical（字母序 deviceOrg < duress < gatewayList）。
+            // BackupBundle 从 2026-10-30 起就带 duress，但 canonical 一直没写它 ——
+            // 导出文本里没有该段，恢复分支永远收不到值，换机后
+            // 「被胁迫时进空壳模式」这条安全承诺会静默失效。
+            if let dc = g.duress, !dc.s.isEmpty, !dc.d.isEmpty {
+                gp.append(("duress", .obj([("s", .str(dc.s)), ("d", .str(dc.d))])))
+            }
             if let list = g.gatewayList, !list.isEmpty {
                 gp.append(("gatewayList", .arr(list.map(gatewayValue))))
             }
@@ -307,6 +314,7 @@ enum BackupCanonical {
             if let pc = g.passcode, !pc.s.isEmpty, !pc.d.isEmpty {
                 gp.append(("passcode", .obj([("s", .str(pc.s)), ("d", .str(pc.d))])))
             }
+
             if let tr = g.trace, let lines = tr.lines, !lines.isEmpty {
                 gp.append(("trace", .obj([
                     ("savedAt", .num(tr.savedAt ?? 0)),

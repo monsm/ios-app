@@ -157,7 +157,7 @@ struct MobileKeyScreen: View {
             VReading(value: read.value, unit: read.unit, font: V.F.number15, tint: read.tint, animated: false)
             Menu {
                 Button {
-                    UIPasteboard.general.string = key.code ?? key.id
+                    Clip.set(key.code ?? key.id)
                 } label: {
                     Label("复制开锁凭证", systemImage: "doc.on.doc")
                 }

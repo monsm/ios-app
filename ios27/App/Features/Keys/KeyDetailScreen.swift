@@ -109,7 +109,7 @@ struct KeyDetailScreen: View {
                         .padding(.vertical, V.S.gapXS)
                     HStack(spacing: V.S.gapS) {
                         VOutlineButton(title: "复制整条", systemImage: "doc.on.doc") {
-                            UIPasteboard.general.string = code
+                            Clip.set(code)
                         }
                         VOutlineButton(title: "复遮", systemImage: "eye.slash") {
                             revealed = []
@@ -140,7 +140,7 @@ struct KeyDetailScreen: View {
             HStack(spacing: V.S.gapS) {
                 ForEach(Array(KeysCode.segments(code).enumerated()), id: \.offset) { pair in
                     Button {
-                        UIPasteboard.general.string = pair.element
+                        Clip.set(pair.element)
                         copiedSegment = pair.offset
                     } label: {
                         Text(pair.element)

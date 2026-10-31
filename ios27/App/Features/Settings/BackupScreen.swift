@@ -166,7 +166,8 @@ struct BackupScreen: View {
                                 .textSelection(.enabled)
                             HStack(spacing: V.S.gapS) {
                                 VOutlineButton(title: "复制备份文本", systemImage: "doc.on.doc") {
-                                    UIPasteboard.general.string = exportText
+                                    // SEC-05：备份文本可能含全部 skey —— 走带 90 秒过期的统一入口。
+                                    Clip.set(exportText)
                                 }
                                 VOutlineButton(title: "存到文件", systemImage: "square.and.arrow.up") {
                                     exportDoc = BackupDoc(text: exportText)
@@ -245,12 +246,15 @@ struct BackupScreen: View {
         exporting = true
         defer { exporting = false }
         do {
-            // 真链路：collectAll（全部 kf_* 表）→ canonical（与小程序互通）→ 可选加密信封。
+            // 真链路：collectAll（全部 kf_* 表）→ canonical（与小程序互通）→ 加密信封。
+            // SEC-02：备份包里是整库 skey/pins/ekey —— 不允许「没设密码 = 明文」。
             let bundle = BackupKit.collectAll()
             let plain = BackupCanonical.exportText(bundle)
-            exportText = store.encryptBackup
-                ? try CryptoBox.encryptText(plain, password: exportPassword)
-                : plain
+            guard !exportPassword.isEmpty else {
+                restoreError = "请先设一个备份密码：这份备份包含能开门的密钥，不允许以明文生成。"
+                return
+            }
+            exportText = try CryptoBox.encryptText(plain, password: exportPassword)
             // 980：只有真正生成成功才记一次备份（失败不记）。
             Milestones.recordBackup()
         } catch {

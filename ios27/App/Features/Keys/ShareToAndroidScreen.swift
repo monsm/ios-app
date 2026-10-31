@@ -143,7 +143,7 @@ struct ShareToAndroidScreen: View {
                     title: copied ? "已复制" : "复制配对串",
                     systemImage: copied ? "checkmark" : "doc.on.doc"
                 ) {
-                    UIPasteboard.general.string = payloadText
+                    Clip.set(payloadText)
                     copied = true
                 }
                 Text("这串是安卓配对码（含 mac / pid / ekey，刻意不含 skey）。当面扫、单独发给本人，不要发群里。")

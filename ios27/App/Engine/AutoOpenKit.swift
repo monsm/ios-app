@@ -119,10 +119,13 @@ enum AutoOpenKit {
         return true
     }
 
+    /// 严格档「本人刚验证过」判据。
+    /// 2026-10-31 安全审核修复（SEC-04）：旧实现把 `pendingPrompt`（Face ID 提示**正在等待**）
+    /// 直接当作已通过 —— 提示还没成功、甚至即将失败时也能开门。现在「提示进行中」= 未认证。
     static func faceFresh(tier: Int, lastFace: Date?, now: Date, pendingPrompt: Bool,
                           strictSince: Date? = nil) -> Bool {
         if !isStrict(tier) { return true }
-        if pendingPrompt { return true }
+        if pendingPrompt { return false }
         guard let lastFace, let strictSince else { return false }
         return lastFace >= strictSince
     }
@@ -287,6 +290,8 @@ final class AutoOpenController {
     }
 
     private func pollOnce() async {
+        // SEC-04：本机未解锁 / 空壳模式时彻底停止轮询，连 RSSI 都不采（不留可推断的无线电痕迹）。
+        guard AppLock.shared.unlocked, !AppLock.shared.decoy else { armed = false; return }
         guard AutoOpen.on, let host = EngineHostRegistry.host,
               let mac = host.currentKeychain?.mac, !mac.isEmpty else { return }
         if LockService.shared.connectedMAC.lowercased() != mac.lowercased() {
@@ -359,7 +364,12 @@ final class AutoOpenController {
         let lastAt = lastDispatch[mac] ?? AutoOpen.persistedLastDispatch(mac)
         let snap = host.lastStatus
         return AutoOpenGate(
-            f0Foreground: UIApplication.shared.applicationState == .active && !AppLock.shared.decoy,
+            // 2026-10-31 安全审核修复（SEC-04）：自动开锁必须同时满足「前台 + 本机已解锁 + 非空壳」。
+            // 旧实现只看 applicationState 与 decoy，冷启动还停在 LockGate 时就能下发 cmd04，
+            // 等于绕过本机密码闸；空壳（胁迫码）模式也不该自动开门。
+            f0Foreground: UIApplication.shared.applicationState == .active
+                && AppLock.shared.unlocked
+                && !AppLock.shared.decoy,
             faceTier: AutoOpen.faceTier,
             lastFace: AutoOpenKit.lastFace(),
             facePendingPrompt: AutoOpenKit.facePromptInFlight(startedAt: promptStartedAt,

@@ -203,17 +203,20 @@ struct VChip: View {
                     Text(title)
                         .font(V.F.chipLabel)
                         .foregroundStyle(V.C.text4)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                     Text(value)
                         .font(V.F.chipValue)
                         .foregroundStyle(V.C.text1)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 0)
             }
         }
         .padding(.horizontal, style == .square ? 0 : V.S.chipPadH)
-        .frame(width: style.width, height: V.S.chipH)
+        .frame(width: style.width)
+        .frame(minHeight: V.S.chipH)
         .background(
             LinearGradient(
                 gradient: Gradient(colors: [top, bottom]),
@@ -627,12 +630,16 @@ struct VTabItem: Identifiable {
 
     var id: Int { slot.rawValue }
 
+    /// 五个顶层 Tab：门 / 钥匙 / 台账 / 家 / 设置。
+    /// 2026-10-31 审核修复：家（household）此前只存在于 TabSlot 与 Router，没有 tab 按钮 ——
+    /// 进入 household 后整条 tab bar 无高亮、也无法从 tab 返回家页；与 README「5 个 Tab」不符。
     static var all: [VTabItem] {
         [
-            VTabItem(slot: .door, title: "设备", symbol: "shield.fill"),
-            VTabItem(slot: .keys, title: "凭证", symbol: "lock.fill"),
-            VTabItem(slot: .records, title: "记录", symbol: "list.bullet"),
-            VTabItem(slot: .settings, title: "设置", symbol: "gearshape.fill")
+            VTabItem(slot: .door, title: "门", symbol: TabSlot.door.symbol),
+            VTabItem(slot: .keys, title: "钥匙", symbol: TabSlot.keys.symbol),
+            VTabItem(slot: .records, title: "台账", symbol: TabSlot.records.symbol),
+            VTabItem(slot: .household, title: "家", symbol: TabSlot.household.symbol),
+            VTabItem(slot: .settings, title: "设置", symbol: TabSlot.settings.symbol)
         ]
     }
 }
@@ -641,6 +648,12 @@ struct VTabItem: Identifiable {
 struct VFloatingTabBar: View {
     @Binding var selection: TabSlot
     var items: [VTabItem] = VTabItem.all
+    @Environment(\.accessibilityReduceTransparency) private var systemReduceTransparency
+
+    /// 系统「减少透明度」或 App 内同档开关任一开启，玻璃退化为不透明面板。
+    private var solidTabBar: Bool {
+        systemReduceTransparency || SettingsStore.shared.reduceTransparency
+    }
 
     var body: some View {
         HStack(spacing: 0) {
@@ -693,10 +706,10 @@ struct VFloatingTabBar: View {
         .frame(width: V.Tab.width, height: V.Tab.height)
         .background {
             RoundedRectangle(cornerRadius: V.R.tab, style: .continuous)
-                .fill(.ultraThinMaterial)
+                .fill(solidTabBar ? AnyShapeStyle(V.C.card) : AnyShapeStyle(.ultraThinMaterial))
                 .overlay {
                     RoundedRectangle(cornerRadius: V.R.tab, style: .continuous)
-                        .fill(V.C.tabGlass)
+                        .fill(solidTabBar ? Color.clear : V.C.tabGlass)
                 }
                 .overlay {
                     RoundedRectangle(cornerRadius: V.R.tab, style: .continuous)
@@ -723,7 +736,7 @@ struct VActionButton: View {
         Button(action: action) {
             HStack(spacing: V.S.gapS) {
                 if busy {
-                    ProgressView().controlSize(.small).tint(V.C.text1)
+                    ProgressView().controlSize(.small).tint(V.C.onBlue)
                 } else if let systemImage {
                     Image(systemName: systemImage)
                         .font(V.F.actionIcon)
@@ -732,7 +745,7 @@ struct VActionButton: View {
                 Text(title)
                     .font(V.F.bodyStrong)
             }
-            .foregroundStyle(V.C.text1)
+            .foregroundStyle(V.C.onBlue)
             .frame(maxWidth: .infinity)
             .frame(height: V.Action.height)
             .background(tint, in: .rect(cornerRadius: V.R.action, style: .continuous))
@@ -767,10 +780,12 @@ struct VSectionLabel: View {
     }
 }
 
-/// 卡头：11pt/500 #A2A1A6 + 右侧 chevron（参考 B 每张卡的「门锁 ›」）。
+/// 卡头：11pt/500 #A2A1A6 + 可选 chevron。
+/// 2026-10-31 HIG 审核：chevron 是「可下钻」的明确暗示；本仓 VCard 本身不是 Button，
+/// 56 处卡头都不可点，默认画 chevron 等于假入口。默认关闭，只有真入口才显式传 true。
 struct VCardHeader: View {
     let title: String
-    var showsChevron: Bool = true
+    var showsChevron: Bool = false
 
     var body: some View {
         HStack(spacing: V.S.gapXS) {

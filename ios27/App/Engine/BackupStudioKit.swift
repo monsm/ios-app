@@ -32,6 +32,11 @@ enum BackupStudio {
         let base = documentsURL
             .appendingPathComponent("lockkeeper-backups", isDirectory: true)
         try? FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
+        // SEC-02/SEC-10：备份目录里装的是完整 skey/pins/ekey，绝不能随 iCloud/iTunes 备份出机。
+        var v = URLResourceValues()
+        v.isExcludedFromBackup = true
+        var mutable = base
+        try? mutable.setResourceValues(v)
         return base
     }
     /// 回滚快照点的是**整库 Keychain (skey/ivKey 明文)**, 旧版把它放在导出目录的 `rollback/` 子目录里:
@@ -168,8 +173,9 @@ enum BackupStudio {
         // "value of tuple type '()' has no member 'path'"。URL 单独算, 写盘结果只判成败。
         // 2026-10-14: 秒级时间戳同一秒两次快照会同名覆盖 -> 改毫秒。
         let rollURL = rollbackDir.appendingPathComponent("roll-\(Int(Date().timeIntervalSince1970 * 1000)).json")
+        // SEC-09/SEC-10：快照里有整库 skey/pins 明文 —— 必须「锁屏即不可读」。
         guard let data = try? JSONEncoder().encode(snap),
-              (try? data.write(to: rollURL, options: .atomic)) != nil else { return false }
+              (try? data.write(to: rollURL, options: [.atomic, .completeFileProtection])) != nil else { return false }
         pruneRollback(keep: 4)
         return true
     }

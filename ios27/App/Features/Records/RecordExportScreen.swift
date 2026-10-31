@@ -446,7 +446,7 @@ struct RecordExportScreen: View {
     /// 真写剪贴板（与 CSV 走分享是两条不同通路，不混）。
     private func copyDigest() {
         let text = digest.lines.joined(separator: "\n") + "\n\n" + digest.csv
-        UIPasteboard.general.string = text
+        Clip.set(text)
         copied = "已复制 " + String(digest.lines.count) + " 句摘要 + " + String(digest.rows) + " 行 CSV"
     }
 }

@@ -265,7 +265,7 @@ struct RecordsStudioScreen: View {
                         .lineLimit(8)
                         .textSelection(.enabled)
                     VOutlineButton(title: "复制全部帧（已脱敏）", systemImage: "doc.on.doc") {
-                        UIPasteboard.general.string = frames.joined(separator: "\n")
+                        Clip.set(frames.joined(separator: "\n"))
                         outcome = "已复制 \(frames.count) 条脱敏帧"
                     }
                 }

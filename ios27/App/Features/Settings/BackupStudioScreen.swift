@@ -274,9 +274,18 @@ struct BackupStudioScreen: View {
         do {
             let bundle = BackupKit.collectAll()
             let plain = BackupCanonical.exportText(bundle)
-            let text = password.isEmpty ? plain : try CryptoBox.encryptText(plain, password: password)
+            // SEC-02：备份包里是整库 skey/pins/ekey —— 不允许「留空口令 = 明文落盘」。
+            // 旧实现默认明文，一次点击就把「家门万能钥匙」写成可被系统备份带走的文件。
+            guard !password.isEmpty else {
+                outcome = "未设置备份口令 · 已拒绝写入明文备份。请先在上方设一个口令再生成（换机迁移同样需要它）。"
+                AppToast.shared.show("未设口令，未生成备份", tone: .warn)
+                return
+            }
+            let text = try CryptoBox.encryptText(plain, password: password)
             let name = "backup-" + Self.stamp() + ".json"
-            try Data(text.utf8).write(to: BackupStudio.dir.appendingPathComponent(name), options: .atomic)
+            // SEC-10：含密钥的文件必须「设备锁屏即不可读」。
+            try Data(text.utf8).write(to: BackupStudio.dir.appendingPathComponent(name),
+                                      options: [.atomic, .completeFileProtection])
             DB.store.set("kf_bk_base", SelfCheck.fingerprint())
             Milestones.recordBackup()
             reloadFiles()
@@ -367,7 +376,7 @@ struct BackupStudioScreen: View {
         do {
             let plain = BackupCanonical.exportText(BackupKit.collectAll())
             let text = password.isEmpty ? plain : try CryptoBox.encryptText(plain, password: password)
-            UIPasteboard.general.string = text
+            Clip.set(text)
             outcome = "换机包已复制到剪贴板（\(text.count) 字符）"
         } catch {
             outcome = "生成失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)

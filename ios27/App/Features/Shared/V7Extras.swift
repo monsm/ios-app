@@ -278,7 +278,7 @@ struct VTag: View {
     var body: some View {
         Text(text)
             .font(V.F.footnote)
-            .foregroundStyle(filled ? V.C.text1 : tint)
+            .foregroundStyle(filled ? V.C.onBlue : tint)
             .padding(.horizontal, V.S.gapM)
             .padding(.vertical, V.S.gapXS)
             .background(filled ? tint : Color.clear, in: Capsule())
@@ -365,7 +365,7 @@ struct VChipRow<Item: Hashable>: View {
                             .font(V.F.footnote)
                             .foregroundStyle(on ? V.C.text1 : V.C.text3)
                             .padding(.horizontal, V.S.gapMS)
-                            .frame(height: V.H.chip)
+                            .frame(minHeight: V.H.chip)
                             .background(on ? V.C.blue.opacity(0.16) : Color.clear, in: .capsule)
                             .overlay {
                                 Capsule().strokeBorder(

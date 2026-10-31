@@ -77,71 +77,92 @@ enum V {
             Color(red: r / 255, green: g / 255, blue: b / 255, opacity: a)
         }
 
-        static let bg = rgb(0, 0, 0)             // #000000 画布
-        static let card = rgb(35, 34, 39)        // #232227 参考 B 卡底
-        static let cardAlt = rgb(28, 28, 30)     // #1C1C1E 参考 C 卡底
-        static let cardWarm = rgb(40, 35, 34)    // #282322 参考 B 卡 2
-        static let chipTop = rgb(38, 38, 38)     // #262626 R1 芯片渐变上
-        static let chipBottom = rgb(28, 28, 28)  // #1C1C1C R1 芯片渐变下
-        static let chipTopB = rgb(41, 41, 43)    // #29292B R2 芯片渐变上
-        static let chipBottomB = rgb(32, 32, 34) // #202022 R2 芯片渐变下
+        /// 明暗自适应色：浅色/深色两套独立取值（DESIGN-CONTRACT §3），
+        /// 跟随 preferredColorScheme / 系统外观即时切换。深色值保持 V7 参考图原值，
+        /// 浅色值取自契约的 cold-paper 体系，保证「浅色主题」不是黑页。
+        static func dual(_ light: UInt32, _ dark: UInt32,
+                         lightAlpha: Double = 1, darkAlpha: Double = 1) -> Color {
+            Color(UIColor { trait in
+                let isDark = trait.userInterfaceStyle == .dark
+                let hex = isDark ? dark : light
+                return UIColor(
+                    red: CGFloat((hex >> 16) & 0xFF) / 255,
+                    green: CGFloat((hex >> 8) & 0xFF) / 255,
+                    blue: CGFloat(hex & 0xFF) / 255,
+                    alpha: CGFloat(isDark ? darkAlpha : lightAlpha)
+                )
+            })
+        }
 
-        static let text1 = rgb(255, 255, 255)
-        static let text2 = rgb(145, 144, 150)    // #919096 正文（#828282 在卡底上只有 4.11:1）
-        static let text3 = rgb(142, 142, 147)    // #8E8E93 次文本
+        /// 页面底：浅色冷纸 / 深色纯黑（参考图 V7 是深色画布，浅色用契约纸色）
+        static let bg = dual(0xF2F2EF, 0x000000)
+        static let card = dual(0xFFFFFF, 0x232227)   // 参考 B 卡底（浅色白卡）
+        static let cardAlt = dual(0xE9E9E4, 0x1C1C1E) // 参考 C 卡底（浅色凹槽）
+        static let cardWarm = dual(0xFAF7F2, 0x282322) // 参考 B 卡 2
+        static let chipTop = dual(0xFFFFFF, 0x262626)  // R1 芯片渐变上
+        static let chipBottom = dual(0xE9E9E4, 0x1C1C1C) // R1 芯片渐变下
+        static let chipTopB = dual(0xFFFFFF, 0x29292B) // R2 芯片渐变上
+        static let chipBottomB = dual(0xE9E9E4, 0x202022) // R2 芯片渐变下
+
+        static let text1 = dual(0x14161A, 0xFFFFFF)   // 主文本
+        static let text2 = dual(0x4A5057, 0x919096)   // 正文（#828282 在卡底上只有 4.11:1）
+        static let text3 = dual(0x61676E, 0x8E8E93)   // 次文本
         /// 原 #6D6D6D 在 #262626 芯片底上只有 2.92:1（11pt 正文要求 4.5:1）。
         /// 提亮到 #9A9A9F：同一灰阶族，5.40:1 达标。
-        static let text4 = rgb(154, 154, 159)
+        static let text4 = dual(0x5B6169, 0x9A9A9F)
         /// 原 #48525B 在 #000 上只有 2.63:1。提亮到 #8E98A3：保留蓝灰倾向，7.17:1 达标。
-        static let text5 = rgb(142, 152, 163)
-        static let text6 = rgb(199, 199, 204)    // #C7C7CC 卡标题
-        static let text7 = rgb(210, 208, 208)    // #D2D0D0 脚注
-        static let text8 = rgb(162, 161, 166)    // #A2A1A6 卡头
-        static let text9 = rgb(145, 144, 150)    // #919096 参考 B 正文
+        static let text5 = dual(0x5B6169, 0x8E98A3)
+        static let text6 = dual(0x2C3035, 0xC7C7CC)   // 卡标题
+        static let text7 = dual(0x3A3F45, 0xD2D0D0)   // 脚注
+        static let text8 = dual(0x4A5057, 0xA2A1A6)   // 卡头
+        static let text9 = dual(0x4A5057, 0x919096)   // 参考 B 正文
         /// 图表轴标。原 #4E4E50 在 #000 上只有 2.53:1（8.6pt 正文），换成 #8E8E93（6.44:1）。
-        static let axisLabel = rgb(142, 142, 147)
+        static let axisLabel = dual(0x61676E, 0x8E8E93)
 
-        static let blue = rgb(63, 142, 244)      // #3F8EF4 主环数字 / 折线
-        static let blueCursor = rgb(63, 142, 243)// #3F8EF3 游标
-        static let blueBand = rgb(47, 111, 192)  // #2F6FC0 区间带
-        static let grid = rgb(58, 58, 60)        // #3A3A3C 柱图网格
-        static let chartGrid = rgb(46, 46, 48)   // #2E2E30 点线
-        static let rule1 = rgb(38, 38, 38)       // #262626 横线
-        static let rule2 = rgb(57, 57, 57)       // #393939 中线
-        static let tick = rgb(56, 64, 100)       // #384064 顶部刻度
+        static let blue = dual(0x1F6FEB, 0x3F8EF4)    // 主环数字 / 折线
+        /// 压在高亮填充（蓝/红/自定义强调色）上的文字：浅色用白、深色用近黑墨，
+        /// 因为 #3F8EF4 白字只有 3.29:1（13pt 不够 4.5:1），而近黑墨有 5.20:1。
+        static let onBlue = dual(0xFFFFFF, 0x06201A)
+        static let blueCursor = dual(0x1F6FEB, 0x3F8EF3) // 游标
+        static let blueBand = dual(0x9CC3F5, 0x2F6FC0) // 区间带
+        static let grid = dual(0xD8D8D0, 0x3A3A3C)    // 柱图网格
+        static let chartGrid = dual(0xE0E0D8, 0x2E2E30) // 点线
+        static let rule1 = dual(0xDEDED6, 0x262626)   // 横线
+        static let rule2 = dual(0xCFCFC7, 0x393939)   // 中线
+        static let tick = dual(0xB7C3D6, 0x384064)    // 顶部刻度
 
-        static let disc0 = rgb(3, 16, 26)        // #03101A 内盘亮心
-        static let disc1 = rgb(2, 14, 24)        // #020E18 内盘中段
-        static let disc2 = rgb(1, 9, 15)         // #01090F 内盘边缘
+        static let disc0 = dual(0xFFFFFF, 0x03101A)    // 内盘亮心
+        static let disc1 = dual(0xF2F2EF, 0x020E18)    // 内盘中段
+        static let disc2 = dual(0xE9E9E4, 0x01090F)    // 内盘边缘
 
-        static let infoBG = rgb(29, 29, 33)      // #1D1D21 i 按钮底
+        static let infoBG = dual(0xE9E9E4, 0x1D1D21)  // i 按钮底
         /// 原 #5D5D62 在 #1D1D21 上只有 2.57:1（非文本要求 3:1）。提亮到 #8E8E93，5.15:1。
-        static let infoGlyph = rgb(142, 142, 147)
+        static let infoGlyph = dual(0x61676E, 0x8E8E93)
 
-        static let hairline = rgb(255, 255, 255, 0.14) // 卡内分隔线
-        static let hairlineSoft = rgb(255, 255, 255, 0.08) // 芯片内描边
-        static let tabGlass = rgb(32, 32, 32, 0.72)
-        static let tabEdge = rgb(120, 150, 160, 0.35)
-        static let tabPill = rgb(0, 0, 0, 0.82)
-        static let tabPillEdge = rgb(255, 255, 255, 0.14)
+        static let hairline = dual(0x000000, 0xFFFFFF, lightAlpha: 0.10, darkAlpha: 0.14) // 卡内分隔线
+        static let hairlineSoft = dual(0x000000, 0xFFFFFF, lightAlpha: 0.07, darkAlpha: 0.08) // 芯片内描边
+        static let tabGlass = dual(0xFFFFFF, 0x202020, lightAlpha: 0.72, darkAlpha: 0.72)
+        static let tabEdge = dual(0x4A5057, 0x7896A0, lightAlpha: 0.28, darkAlpha: 0.35)
+        static let tabPill = dual(0xFFFFFF, 0x000000, lightAlpha: 0.92, darkAlpha: 0.82)
+        static let tabPillEdge = dual(0x000000, 0xFFFFFF, lightAlpha: 0.10, darkAlpha: 0.14)
 
-        static let pink = rgb(240, 55, 95)       // #F0375F 参考 C 三环粉
+        static let pink = dual(0xC81E4A, 0xFF6A7A)   // 参考 C 三环粉（深色提亮到 4.5:1）
         static let green = rgb(193, 248, 100)    // #C1F864 参考 C 三环绿
         static let cyan = rgb(99, 237, 231)      // #63EDE7 参考 C 三环青
         static let purple = rgb(155, 143, 217)   // #9B8FD9 参考 C 微卡紫
         static let miniBlue = rgb(92, 169, 232)  // #5CA9E8 参考 C 微卡蓝
         static let lime = rgb(194, 246, 106)     // #C2F66A 参考 C 事件绿
-        static let red = rgb(255, 55, 95)        // #FF375F
+        static let red = dual(0xC81E3C, 0xFF375F)    // #FF375F（浅色压深）
         /// 参考 C 红环渐变两端：(103,0,0) → (255,53,135)。
         static let redDeep = rgb(103, 0, 0)
         static let redBright = rgb(255, 53, 135)
-        static let rewardGreen = rgb(48, 209, 88) // #30D158
-        static let rewardBlue = rgb(10, 132, 255) // #0A84FF
+        static let rewardGreen = dual(0x1D6F5F, 0x30D158) // 正常/成功
+        static let rewardBlue = dual(0x1F6FEB, 0x0A84FF)
 
         // 语义色（V7 调色板内承接旧 State.*；不是装饰色）
-        static let warning = rgb(226, 166, 58)   // #E2A63A
-        static let critical = rgb(255, 106, 92)  // #FF6A5C
-        static let ok = rgb(48, 209, 88)         // #30D158
+        static let warning = dual(0x8A5A0B, 0xE2A63A) // 注意
+        static let critical = dual(0xA32B22, 0xFF6A5C) // 危险
+        static let ok = dual(0x1D6F5F, 0x30D158)
 
         // 参考 B 分段环三段（R2-credentials.html SEG）
         static let mint = rgb(100, 216, 197)     // #64D8C5
@@ -149,9 +170,9 @@ enum V {
         static let indigo = rgb(74, 100, 247)    // #4A64F7
 
         // 参考 C 活动环暗轨（TOKENS 第 45 行：红 #33080F / 绿 #2E4A12 / 青 #16283A）
-        static let ringTrackRed = rgb(51, 8, 15)
-        static let ringTrackGreen = rgb(46, 74, 18)
-        static let ringTrackCyan = rgb(22, 40, 58)
+        static let ringTrackRed = dual(0xF7DDE2, 0x33080F)
+        static let ringTrackGreen = dual(0xE5EFD3, 0x2E4A12)
+        static let ringTrackCyan = dual(0xD8E8F2, 0x16283A)
 
         /// 同色「55% 亮度」：把颜色的 RGB 直接乘 0.55，而不是把半透明色叠在卡片上。
         /// UIColor(color) 取到的分量是显示无关的 sRGB 分量，乘亮度不会引入卡片底色。
@@ -198,10 +219,10 @@ enum V {
         static let chipValue = sans(13.5, weight: .semibold) // 芯片值 13.5/600
         static let statLabel = sans(12.5)                  // VStatPair 标签 12.5 #828282
         static let statValue = sans(17, weight: .semibold) // VStatPair 值 17/600
-        static let small = sans(10.7, weight: .medium, relativeTo: .caption)     // 分组小标题 10.7/500
-        static let micro = sans(10, relativeTo: .caption2)                        // 微标签 10
-        static let microMedium = sans(10, weight: .medium, relativeTo: .caption2)
-        static let microSmall = sans(9.5, relativeTo: .caption2)
+        static let small = sans(11, weight: .medium, relativeTo: .caption)       // 分组小标题 11/500（iOS 最小 11pt）
+        static let micro = sans(11, relativeTo: .caption2)                        // 微标签 11
+        static let microMedium = sans(11, weight: .medium, relativeTo: .caption2)
+        static let microSmall = sans(11, relativeTo: .caption2)
         static let footnote = sans(13, relativeTo: .footnote)                     // 脚注（16.5px 的可用档）
         static let unit = sans(11, relativeTo: .caption)
         static let section = sans(20, weight: .bold, relativeTo: .title3)         // 区块标题 20/700
@@ -224,7 +245,7 @@ enum V {
         static let number22 = sans(22, weight: .bold, relativeTo: .title2)        // 数字大值 22/700
         static let number26 = sans(26, weight: .medium, relativeTo: .title)       // 读数 26
         static let number30 = sans(30, weight: .medium, relativeTo: .title)       // 读数 30
-        static let tab = sans(9, weight: .semibold, relativeTo: .caption2)        // Tab 标签 9/600
+        static let tab = sans(11, weight: .semibold, relativeTo: .caption2)       // Tab 标签 11/600
         static let tabIcon = sans(20, relativeTo: .title3)                        // Tab 图标 20
         static let chevron = sans(13, weight: .semibold, relativeTo: .footnote)
         static let pageLead = sans(17, relativeTo: .body)                         // 参考 B/C 页导语 17
@@ -237,7 +258,7 @@ enum V {
         static let cardBodyStrong = sans(16, weight: .semibold, relativeTo: .body)
         static let actionIcon = sans(16, weight: .semibold, relativeTo: .body)
         static let rowIcon = sans(15, weight: .medium, relativeTo: .body)
-        static let chartTick = sans(8.6, relativeTo: .caption2)
+        static let chartTick = sans(11, relativeTo: .caption2)
         static let axisTick = sans(11, relativeTo: .caption)
         static let stamp = sans(12, weight: .medium, design: .monospaced, relativeTo: .footnote)
         static let heroGlyph56 = sans(56, relativeTo: .largeTitle)
@@ -384,17 +405,17 @@ enum V {
         /// TOKENS.md：角向连续渐变 bearing 0→360°。
         static var gradient: [Gradient.Stop] {
             [
-            .init(color: C.rgb(25, 29, 46), location: 0.0 / 360.0),
-            .init(color: C.rgb(21, 26, 37), location: 45.0 / 360.0),
-            .init(color: C.rgb(25, 29, 36), location: 90.0 / 360.0),
-            .init(color: C.rgb(32, 40, 47), location: 135.0 / 360.0),
-            .init(color: C.rgb(40, 63, 69), location: 202.0 / 360.0),
-            .init(color: C.rgb(45, 78, 97), location: 230.0 / 360.0),
-            .init(color: C.rgb(55, 101, 143), location: 270.0 / 360.0),
-            .init(color: C.rgb(58, 121, 199), location: 282.0 / 360.0),
-            .init(color: C.rgb(46, 72, 103), location: 300.0 / 360.0),
-            .init(color: C.rgb(31, 40, 59), location: 340.0 / 360.0),
-            .init(color: C.rgb(25, 29, 46), location: 360.0 / 360.0),
+            .init(color: C.dual(0xB9BCC4, 0x191D2E), location: 0.0 / 360.0),
+            .init(color: C.dual(0xB7BAC1, 0x151A25), location: 45.0 / 360.0),
+            .init(color: C.dual(0xB7BABE, 0x191D24), location: 90.0 / 360.0),
+            .init(color: C.dual(0xBCBFC2, 0x20282F), location: 135.0 / 360.0),
+            .init(color: C.dual(0xC3C6C8, 0x283F45), location: 202.0 / 360.0),
+            .init(color: C.dual(0xD6DEE2, 0x2D4E61), location: 230.0 / 360.0),
+            .init(color: C.dual(0xC3D1DE, 0x37658F), location: 270.0 / 360.0),
+            .init(color: C.dual(0xA6C4E7, 0x3A79C7), location: 282.0 / 360.0),
+            .init(color: C.dual(0xC0CCD9, 0x2E4867), location: 300.0 / 360.0),
+            .init(color: C.dual(0xBABEC5, 0x1F283B), location: 340.0 / 360.0),
+            .init(color: C.dual(0xB9BCC4, 0x191D2E), location: 360.0 / 360.0),
             ]
         }
     }

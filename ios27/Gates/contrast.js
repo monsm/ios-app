@@ -27,11 +27,15 @@ for (const m of src.matchAll(/static let (\w+)\s*=\s*Color\.dual\(light:\s*0x([0
   DUAL[m[1]] = { light: m[2].toUpperCase(), dark: m[3].toUpperCase() };
 }
 
-// 解析 V7 色板：static let token = rgb(r, g, b[, a])
+// 解析 V7 色板：① rgb(r,g,b[,a]) 固定值；② dual(light:0xX, dark:0xY[, alpha])
+// dual 令牌在两种外观下各有一套值，对比度必须分别在对应底色上核算。
 const V7 = {};
 for (const m of v7src.matchAll(/static let (\w+)\s*=\s*rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([0-9.]+)\s*)?\)/g)) {
   const hex = [m[2], m[3], m[4]].map((v) => parseInt(v, 10).toString(16).padStart(2, '0')).join('').toUpperCase();
-  V7[m[1]] = { hex, a: m[5] === undefined ? 1 : parseFloat(m[5]) };
+  V7[m[1]] = { hex, a: m[5] === undefined ? 1 : parseFloat(m[5]), dual: false };
+}
+for (const m of v7src.matchAll(/static let (\w+)\s*=\s*dual\(\s*0x([0-9A-Fa-f]{6})\s*,\s*0x([0-9A-Fa-f]{6})(?:\s*,\s*lightAlpha:\s*([0-9.]+)\s*,\s*darkAlpha:\s*([0-9.]+))?\s*\)/g)) {
+  V7[m[1]] = { light: m[2].toUpperCase(), dark: m[3].toUpperCase(), lightA: m[4] === undefined ? 1 : parseFloat(m[4]), darkA: m[5] === undefined ? 1 : parseFloat(m[5]), dual: true };
 }
 
 // V7 低对比黑名单：参考图里的视觉值，但 < 4.5:1（11pt 文本）或 < 3:1（非文本）。
@@ -126,13 +130,20 @@ check('层级 ink / inkSub 至少 1.3:1', 'ink', 'inkSub', 1.3);
 check('层级 inkSub / inkFaint 至少 1.4:1', 'inkSub', 'inkFaint', 1.4);
 
 // —— V7 色板（真实 rgb 值，不再让 V7 逃逸）
+function v7Hex(token, mode) {
+  const t = V7[token];
+  if (!t) return undefined;
+  return t.dual ? t[mode] : t.hex;
+}
 function checkV7(name, fg, bg, min) {
-  const f = V7[fg]?.hex;
-  const b = V7[bg]?.hex;
-  if (!f || !b) { fails.push(`V7 ${name}: 令牌缺失 ${!f ? fg : bg}`); return; }
-  const r = ratio(f, b);
-  if (r >= min) pass++;
-  else fails.push(`V7 ${name} ${fg}#${f} on ${bg}#${b} = ${r.toFixed(2)}:1 < ${min}:1`);
+  for (const mode of MODES) {
+    const f = v7Hex(fg, mode);
+    const b = v7Hex(bg, mode);
+    if (!f || !b) { fails.push(`V7 ${name} [${mode}]: 令牌缺失 ${!f ? fg : bg}`); continue; }
+    const r = ratio(f, b);
+    if (r >= min) pass++;
+    else fails.push(`V7 ${name} [${mode}] ${fg}#${f} on ${bg}#${b} = ${r.toFixed(2)}:1 < ${min}:1`);
+  }
 }
 
 checkV7('正文 text2 / bg', 'text2', 'bg', 4.5);
@@ -154,7 +165,7 @@ checkV7('按钮白字 text1 / red（17pt 粗体按大字号 3:1）', 'text1', 'r
 
 // —— 黑名单：V7 色板里出现旧的低对比值 → 必须换达标替代
 for (const [hex, info] of Object.entries(BANNED_V7)) {
-  const hit = Object.entries(V7).find(([, v]) => v.hex === hex);
+  const hit = Object.entries(V7).find(([, v]) => (v.dual ? [v.light, v.dark].includes(hex) : v.hex === hex));
   if (hit) {
     fails.push(`V7 低对比色 #${hex} 仍作为 V.C.${hit[0]} 存在（原 ${info.was}，${info.ratio}）→ 必须换成 ${info.fix}`);
   } else {

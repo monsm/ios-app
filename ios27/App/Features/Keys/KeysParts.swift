@@ -109,6 +109,9 @@ enum KeysState {
 
 /// 打开凭证详情。Router.request(.key(id:)) 只切 Tab 不 push（那是 Shell 的口径），
 /// 所以这里两步走：先按 Dest push，再把定位上下文挂上去 —— 不裸改 Shell。
+/// @MainActor：Router 是主线程隔离的 UI 状态机（CI 报 ActorIsolatedCall），
+/// 这个辅助函数必须在同一隔离域里调它；调用点都在 SwiftUI 视图体内，天然满足。
+@MainActor
 enum KeysRoute {
     static func openDetail(_ id: String, router: Router) {
         router.request(.dest(.keyDetail))

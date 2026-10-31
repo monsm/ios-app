@@ -360,7 +360,7 @@ struct CredentialStudioScreen: View {
                 if !packageText.isEmpty {
                     VValueRow(label: "凭证包", value: "\(packageText.count) 字符")
                     VOutlineButton(title: "复制凭证包", systemImage: "doc.on.doc") {
-                        UIPasteboard.general.string = packageText
+                        Clip.set(packageText)
                     }
                 }
             }
