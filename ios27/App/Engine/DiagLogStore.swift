@@ -14,10 +14,31 @@ import Foundation
 enum DiagLogStore {
     private static let legacyKey = "kf_diag_logs"
 
-    private static var fileURL: URL? {
+    private static var fileURL: URL? { fileURL("kf_diag_logs.json") }
+
+    /// 通用「Caches + 排除备份」文件口。诊断日志与遥测都用它 ——
+    /// UserDefaults 无法单键排除备份，整包会随 iCloud/iTunes 出机（SEC-13）。
+    static func fileURL(_ name: String) -> URL? {
         guard let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
         else { return nil }
-        return dir.appendingPathComponent("kf_diag_logs.json")
+        return dir.appendingPathComponent(name)
+    }
+
+    /// 写一份 Codable 数组到 Caches 文件（原子 + 文件保护 + 排除备份）。
+    static func writeJSON<T: Encodable>(_ list: [T], name: String) {
+        guard let url = fileURL(name) else { return }
+        guard let data = try? JSONEncoder().encode(list) else { return }
+        try? data.write(to: url, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+        var v = URLResourceValues()
+        v.isExcludedFromBackup = true
+        var mut = url
+        try? mut.setResourceValues(v)
+    }
+
+    static func readJSON<T: Decodable>(_ type: [T].Type, name: String) -> [T] {
+        guard let url = fileURL(name), let data = try? Data(contentsOf: url),
+              let list = try? JSONDecoder().decode(type, from: data) else { return [] }
+        return list
     }
 
     static func load() -> [DiagLogEntry] {

@@ -234,34 +234,62 @@ enum BleTelemetry {
     private static let eventDirty = Locked(false)
     private static let attemptDirty = Locked(false)
 
+    // SEC-13：遥测改落 Caches 文件（排除备份），不再进 UserDefaults。
+    // 理由：UserDefaults 无法单键排除备份 —— 整包随 iCloud/iTunes 出机，
+    // 而台账变更记录里可能带锁名/成员名/备注（即便已去掉明文，仍是可关联信息）。
+    private static let eventsFile = "kf_ble_events.json"
+    private static let attemptsFile = "kf_conn_attempts.json"
+    private static let legacyEventsKey = "kf_ble_events"
+    private static let legacyAttemptsKey = "kf_conn_attempts"
+
     static func recordEvent(_ what: String, ok: Bool) {
-        var list = eventCache.withLock { $0 } ?? DB.store.get([BleEvent].self, "kf_ble_events") ?? []
+        var list = eventCache.withLock { $0 } ?? loadEvents()
         list.insert(BleEvent(at: DiagTime.mmddHHmm(), what: what, ok: ok), at: 0)
         if list.count > 200 { list = Array(list.prefix(200)) }
         eventCache.withLock { $0 = list }
         scheduleFlush(eventDirty)
     }
     static var events: [BleEvent] {
-        eventCache.withLock { $0 } ?? DB.store.get([BleEvent].self, "kf_ble_events") ?? []
+        eventCache.withLock { $0 } ?? loadEvents()
     }
     static func recordAttempt(mac: String, ok: Bool, reason: String) {
-        var list = attemptCache.withLock { $0 } ?? DB.store.get([ConnAttempt].self, "kf_conn_attempts") ?? []
+        var list = attemptCache.withLock { $0 } ?? loadAttempts()
         list.insert(ConnAttempt(t: DiagTime.mmddHHmmss(), mac: mac, ok: ok, reason: reason), at: 0)
         if list.count > 300 { list = Array(list.prefix(300)) }
         attemptCache.withLock { $0 = list }
         scheduleFlush(attemptDirty)
     }
     static var attempts: [ConnAttempt] {
-        attemptCache.withLock { $0 } ?? DB.store.get([ConnAttempt].self, "kf_conn_attempts") ?? []
+        attemptCache.withLock { $0 } ?? loadAttempts()
+    }
+
+    /// 首次读：优先文件；文件没有则把旧 UserDefaults 键搬过来并删旧键（一次性迁移）。
+    private static func loadEvents() -> [BleEvent] {
+        let list = DiagLogStore.readJSON([BleEvent].self, name: eventsFile)
+        if list.isEmpty, let old = DB.store.get([BleEvent].self, legacyEventsKey), !old.isEmpty {
+            DiagLogStore.writeJSON(old, name: eventsFile)
+            DB.store.remove(legacyEventsKey)
+            return old
+        }
+        return list
+    }
+    private static func loadAttempts() -> [ConnAttempt] {
+        let list = DiagLogStore.readJSON([ConnAttempt].self, name: attemptsFile)
+        if list.isEmpty, let old = DB.store.get([ConnAttempt].self, legacyAttemptsKey), !old.isEmpty {
+            DiagLogStore.writeJSON(old, name: attemptsFile)
+            DB.store.remove(legacyAttemptsKey)
+            return old
+        }
+        return list
     }
 
     /// 立刻把内存里的遥测写盘（进后台 / 退出前调用）。
     static func flush() {
         if eventDirty.withLock({ d -> Bool in let h = d; d = false; return h }) {
-            DB.store.setCodable("kf_ble_events", eventCache.withLock { $0 } ?? [])
+            DiagLogStore.writeJSON(eventCache.withLock { $0 } ?? [], name: eventsFile)
         }
         if attemptDirty.withLock({ d -> Bool in let h = d; d = false; return h }) {
-            DB.store.setCodable("kf_conn_attempts", attemptCache.withLock { $0 } ?? [])
+            DiagLogStore.writeJSON(attemptCache.withLock { $0 } ?? [], name: attemptsFile)
         }
     }
     private static func scheduleFlush(_ flag: Locked<Bool>) {

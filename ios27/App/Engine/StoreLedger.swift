@@ -149,15 +149,17 @@ extension DB {
             guard let o = op.first(where: { $0.alias == p.alias }) else { d[tag] = ["", "新增"]; continue }
             if o.pwd != p.pwd { d[tag + "·口令"] = [HashKit.fingerprint(o.pwd ?? ""), HashKit.fingerprint(p.pwd ?? "")] }
             if o.from != p.from || o.to != p.to { d[tag + "·有效期"] = [o.from + "~" + o.to, p.from + "~" + p.to] }
-            if o.note != p.note { d[tag + "·备注"] = [o.note, p.note] }
-            if o.owner != p.owner { d[tag + "·归属"] = [o.owner ?? "", p.owner ?? ""] }
+            // SEC-13：备注与归属**不进审计链**。用户备注常含「给谁、哪扇门、备用码提示」，
+            // 而 kf_ble_events 落 UserDefaults、随 iCloud/iTunes 备份出机。只记"变了没变"。
+            if o.note != p.note { d[tag + "·备注"] = ["已改", "已改"] }
+            if o.owner != p.owner { d[tag + "·归属"] = ["已改", "已改"] }
         }
         for o in op where !new.pwds.contains(where: { $0.alias == o.alias }) { d["密码#\(o.alias)"] = ["删除", ""] }
         for f in new.fps {
             let tag = "指纹#\(f.batch)"
             guard let o = of.first(where: { $0.batch == f.batch }) else { d[tag] = ["", "新增"]; continue }
-            if o.name != f.name { d[tag + "·名称"] = [o.name, f.name] }
-            if o.note != f.note { d[tag + "·备注"] = [o.note, f.note] }
+            if o.name != f.name { d[tag + "·名称"] = ["已改", "已改"] }
+            if o.note != f.note { d[tag + "·备注"] = ["已改", "已改"] }
             if o.isAlarm != f.isAlarm { d[tag + "·防拆"] = [(o.isAlarm ?? false) ? "开" : "关", (f.isAlarm ?? false) ? "开" : "关"] }
         }
         for o in of where !new.fps.contains(where: { $0.batch == o.batch }) { d["指纹#\(o.batch)"] = ["删除", ""] }
