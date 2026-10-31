@@ -87,19 +87,19 @@ struct HouseholdScreen: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: T.S.l) {
+            VStack(spacing: V.S.gap16) {
                 header
                 overviewPanel
                 if !tags.isEmpty {
-                    ChipRow(items: [""] + tags, title: { $0.isEmpty ? "全部" : $0 }, selection: $group)
-                        .animation(reduceMotion ? nil : T.M.snap, value: group)
+                    VChipRow(items: [""] + tags, title: { $0.isEmpty ? "全部" : $0 }, selection: $group)
+                        .animation(reduceMotion ? nil : V.M.snap, value: group)
                 }
                 rosterPanel
                 if archivedCount > 0 { archivePanel }
                 scenePanel
                 if !activeMembers.isEmpty { createPanel }
             }
-            .padding(.vertical, T.S.l)
+            .padding(.vertical, V.S.gap16)
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
@@ -147,17 +147,17 @@ struct HouseholdScreen: View {
 
     // MARK: 主角：这一台面板就是家的读数
     private var overviewPanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "家庭概览", trailing: "本周")
-                ReadingGrid(items: [
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "家庭概览", trailing: "本周")
+                VReadingGrid(items: [
                     .init(label: "成员", value: "\(activeMembers.count)", unit: "位"),
                     .init(label: "名下凭证", value: "\(HHStats.ownedKeys(activeMembers))", unit: "枚"),
                     .init(label: "本周开门（约）", value: "\(weekOpens)", unit: "次"),
                     .init(label: "归档", value: "\(archivedCount)", unit: "位",
-                          tint: archivedCount == 0 ? Ink.ink : Ink.inkSub),
+                          tint: archivedCount == 0 ? V.C.text1 : V.C.text2),
                 ])
-                .padding(.top, T.S.xs)
+                .padding(.top, V.S.gapXS)
 
                 HHRule()
 
@@ -169,26 +169,26 @@ struct HouseholdScreen: View {
                         }
                     }
                 } label: {
-                    HStack(spacing: T.S.m) {
+                    HStack(spacing: V.S.gapMS) {
                         Text("本周主责")
-                            .font(T.F.body)
-                            .foregroundStyle(Ink.inkSub)
-                        Spacer(minLength: T.S.s)
+                            .font(V.F.body)
+                            .foregroundStyle(V.C.text2)
+                        Spacer(minLength: V.S.gapS)
                         if let dutyMember {
                             Text(HHDisplay.name(dutyMember, extras: roster.extras(for: dutyMember.id)))
-                                .font(T.F.bodyStrong)
-                                .foregroundStyle(Ink.ink)
+                                .font(V.F.bodyStrong)
+                                .foregroundStyle(V.C.text1)
                         } else {
                             Text("未安排 · 点这里指人")
-                                .font(T.F.caption)
-                                .foregroundStyle(Ink.inkSub)
+                                .font(V.F.footnote)
+                                .foregroundStyle(V.C.text2)
                         }
                         Image(systemName: "chevron.up.chevron.down")
                             .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                            .font(T.F.icon(T.Icon.s, weight: .medium))
-                            .foregroundStyle(Ink.inkFaint)
+                            .font(V.F.icon15Medium)
+                            .foregroundStyle(V.C.text3)
                     }
-                    .frame(minHeight: T.Hit.min)
+                    .frame(minHeight: V.Hit.min)
                     .contentShape(.rect)
                 }
                 .accessibilityLabel(dutyMember.map { "本周主责 \($0.name)" } ?? "本周主责未安排，点这里指人")
@@ -204,7 +204,7 @@ struct HouseholdScreen: View {
                 )
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     /// 临时码且无归属的开门条数（793 访客虚拟分组：只在展示层，不写入锁端凭证表）。
@@ -218,34 +218,34 @@ struct HouseholdScreen: View {
     // MARK: 名册
     private var rosterPanel: some View {
         let list = shown
-        return Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: group.isEmpty ? "成员名册" : "成员名册 · \(group)", trailing: "\(list.count) 位 · " + sort.title)
+        return VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: group.isEmpty ? "成员名册" : "成员名册 · \(group)", trailing: "\(list.count) 位 · " + sort.title)
                 if shown.isEmpty {
                     if activeMembers.isEmpty {
-                        EmptyPanel(
+                        VEmptyState(
                             title: "还没有成员",
                             message: "建档向导四步：称呼 → 角色 → 档案 → 初始凭证。建完就能把密码和指纹归属到人。",
                             actionTitle: "新建成员",
                             systemImage: "person.2.slash",
                             action: { router.request(.dest(.memberCreate)) }
                         )
-                        .padding(.vertical, T.S.xxl)
+                        .padding(.vertical, V.S.gapXXL)
                     } else {
-                        VStack(alignment: .leading, spacing: T.S.s) {
+                        VStack(alignment: .leading, spacing: V.S.gapS) {
                             Text("这个分组下没有人")
-                                .font(T.F.body)
-                                .foregroundStyle(Ink.ink)
+                                .font(V.F.body)
+                                .foregroundStyle(V.C.text1)
                             Text("当前按「\(group)」筛选。清除筛选可回到全部成员。")
-                                .font(T.F.caption)
-                                .foregroundStyle(Ink.inkSub)
+                                .font(V.F.footnote)
+                                .foregroundStyle(V.C.text2)
                                 .fixedSize(horizontal: false, vertical: true)
-                            FieldRow(label: "全部成员", value: "\(activeMembers.count)", unit: "位")
-                            SecondaryAction(title: "清除筛选", systemImage: "line.3.horizontal.decrease.circle") {
+                            VFieldRow(label: "全部成员", value: "\(activeMembers.count)", unit: "位")
+                            VOutlineButton(title: "清除筛选", systemImage: "line.3.horizontal.decrease.circle") {
                                 group = ""
                             }
                         }
-                        .frame(minHeight: T.Hit.min)
+                        .frame(minHeight: V.Hit.min)
                     }
                 } else {
                     VStack(spacing: 0) {
@@ -257,7 +257,7 @@ struct HouseholdScreen: View {
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func rosterRow(_ member: MemberCard) -> some View {
@@ -278,7 +278,7 @@ struct HouseholdScreen: View {
 
     // MARK: 归档入口
     private var archivePanel: some View {
-        Panel {
+        VCard {
             HHRowButton(
                 title: "归档成员 · 保留历史",
                 symbol: "archivebox",
@@ -287,14 +287,14 @@ struct HouseholdScreen: View {
                 action: { router.request(.dest(.memberArchive)) }
             )
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 家庭场景（本周主责 + 便签）
     private var scenePanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "家庭场景")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "家庭场景")
                 // 来源：原 App/Core/MemberHub.swift（移交 / 借用 / 家政窗 / 轮值）。
                 HHRowButton(
                     title: "成员流转 · 移交 / 借用 / 家政窗",
@@ -306,25 +306,25 @@ struct HouseholdScreen: View {
                 HHRule()
                 if dutyMember == nil {
                     Text("本周主责还没安排 —— 打开任意成员的 360，在「家庭场景」里点「设为本周主责」。")
-                        .font(T.F.caption)
-                        .foregroundStyle(Ink.inkSub)
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text2)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 if noteMembers.isEmpty {
                     Text("还没有人写便签。便签写在成员 360 的档案里（如「周六换锁芯」）。")
-                        .font(T.F.caption)
-                        .foregroundStyle(Ink.inkSub)
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text2)
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
                     ForEach(noteMembers.prefix(3), id: \.id) { m in
-                        VStack(alignment: .leading, spacing: T.S.xxs) {
+                        VStack(alignment: .leading, spacing: V.S.gapXXS) {
                             Text(HHDisplay.name(m, extras: roster.extras(for: m.id)))
-                                .font(T.F.unit)
-                                .foregroundStyle(Ink.inkFaint)
+                                .font(V.F.unit)
+                                .foregroundStyle(V.C.text3)
                                 .tracking(0.6)
                             Text(roster.extras(for: m.id).note)
-                                .font(T.F.caption)
-                                .foregroundStyle(Ink.ink)
+                                .font(V.F.footnote)
+                                .foregroundStyle(V.C.text1)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -333,7 +333,7 @@ struct HouseholdScreen: View {
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     /// 写了便签的成员（家庭场景只读前 3 位，不做第二份名单）。
@@ -343,8 +343,8 @@ struct HouseholdScreen: View {
 
     // MARK: 主动作（同屏只此一处 signal 填充）
     private var createPanel: some View {
-        VStack(spacing: T.S.s) {
-            PrimaryAction(title: "新建成员", systemImage: "person.badge.plus") {
+        VStack(spacing: V.S.gapS) {
+            VActionButton(title: "新建成员", systemImage: "person.badge.plus") {
                 router.request(.dest(.memberCreate))
             }
             .disabled(atLimit)
@@ -352,14 +352,14 @@ struct HouseholdScreen: View {
             Text(atLimit
                  ? "已到本机成员上限 15 位 —— 先归档一位再建新人（归档不删历史）。"
                  : "成员表存在本机，不占锁端槽位；建完在成员 360 里给 TA 配凭证。")
-                .font(T.F.unit)
-                .foregroundStyle(Ink.inkFaint)
+                .font(V.F.unit)
+                .foregroundStyle(V.C.text3)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, T.S.m)
+                .padding(.horizontal, V.S.gapMS)
         }
-        .padding(.horizontal, T.S.gutter)
-        .padding(.top, T.S.s)
+        .padding(.horizontal, V.S.pageGutter)
+        .padding(.top, V.S.gapS)
     }
 
     /// 消费 Router 带来的 .member(id:) 上下文：落到那位成员的 360。

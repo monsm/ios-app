@@ -85,7 +85,7 @@ struct ZotpScreen: View {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VCardHeader(title: "当前动态码", showsChevron: false)
                 Text(code.isEmpty ? "······" : code)
-                    .font(V.F.sans(AXSettings.bigOTP ? 44 : 34, weight: .semibold).monospacedDigit())
+                    .font((AXSettings.bigOTP ? V.F.otpBig : V.F.otpRegular).monospacedDigit())
                     .foregroundStyle(V.C.text1)
                     .contentTransition(.numericText())
                     .textSelection(.enabled)

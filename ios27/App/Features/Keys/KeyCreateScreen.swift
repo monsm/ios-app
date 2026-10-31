@@ -49,11 +49,11 @@ struct KeyCreateScreen: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: T.S.l) {
+            VStack(spacing: V.S.gap16) {
                 header
                 KeysStepDots(total: 4, index: step, labels: stepLabels)
                 if busy, kind == .fingerprint {
-                    BusyRow(text: "指纹录入中 · 已按 \(fpCount)/8 — 请把手指按在指纹头上再抬起")
+                    VBusyRow(text: "指纹录入中 · 已按 \(fpCount)/8 — 请把手指按在指纹头上再抬起")
                 }
                 switch step {
                 case 0: typeStep
@@ -63,7 +63,7 @@ struct KeyCreateScreen: View {
                 }
                 navRow
             }
-            .padding(.vertical, T.S.l)
+            .padding(.vertical, V.S.gap16)
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
@@ -78,24 +78,24 @@ struct KeyCreateScreen: View {
     // MARK: 页头
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: T.S.xs) {
+        VStack(alignment: .leading, spacing: V.S.gapXS) {
             Text(isEdit ? "改造凭证" : "新增凭证")
-                .font(T.F.display())
-                .foregroundStyle(Ink.ink)
+                .font(V.F.displayHome)
+                .foregroundStyle(V.C.text1)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            HStack(spacing: T.S.s) {
-                StateDot(tone: app.lock == nil ? .neutral : .ok,
+            HStack(spacing: V.S.gapS) {
+                VStateDot(tone: app.lock == nil ? .neutral : .ok,
                          word: app.lock == nil ? "未添加门锁" : "门锁在场")
                 Text(app.lock == nil
                      ? "还没有门锁 —— 凭证要挂在具体一把锁上"
                      : "\(app.lock?.name ?? "") · \(app.lock?.model ?? "")")
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                     .lineLimit(1)
                 Spacer(minLength: 0)
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
     }
@@ -131,15 +131,15 @@ struct KeyCreateScreen: View {
     // MARK: 步间导航（真拦：坏值出不了这一步）
 
     private var navRow: some View {
-        HStack(spacing: T.S.s) {
+        HStack(spacing: V.S.gapS) {
             if step > 0 {
                 Button {
-                    withAnimation(reduceMotion ? nil : T.M.move) { step -= 1 }
+                    withAnimation(reduceMotion ? nil : V.M.move) { step -= 1 }
                 } label: {
                     Text("上一步")
-                        .font(T.F.body)
-                        .foregroundStyle(Ink.inkSub)
-                        .frame(minHeight: T.Hit.min)
+                        .font(V.F.body)
+                        .foregroundStyle(V.C.text2)
+                        .frame(minHeight: V.Hit.min)
                         .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
@@ -150,24 +150,24 @@ struct KeyCreateScreen: View {
                 Button {
                     advance()
                 } label: {
-                    HStack(spacing: T.S.xs) {
+                    HStack(spacing: V.S.gapXS) {
                         Text(nextTitle)
-                            .font(T.F.bodyStrong)
+                            .font(V.F.bodyStrong)
                         Image(systemName: "chevron.right")
                             .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                            .font(T.F.icon(T.Icon.s, weight: .medium))
+                            .font(V.F.icon15Medium)
                     }
-                    .foregroundStyle(Signal.on)
-                    .padding(.horizontal, T.S.l)
-                    .frame(minHeight: T.Hit.min)
-                    .background(Signal.base, in: .rect(cornerRadius: T.R.control))
+                    .foregroundStyle(V.C.text1)
+                    .padding(.horizontal, V.S.gap16)
+                    .frame(minHeight: V.Hit.min)
+                    .background(V.C.blue, in: .rect(cornerRadius: V.R.control))
                     .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(nextTitle)
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var nextTitle: String {
@@ -197,7 +197,7 @@ struct KeyCreateScreen: View {
             break
         }
         errorText = nil
-        withAnimation(reduceMotion ? nil : T.M.move) { step += 1 }
+        withAnimation(reduceMotion ? nil : V.M.move) { step += 1 }
     }
 
     // MARK: 提交（写本机台账）

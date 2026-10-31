@@ -26,6 +26,9 @@ enum Destinations {
         case .batteryProfile: BatteryProfileScreen()
         case .lockProfile: LockProfileScreen()
         case .lockPortfolio: LockPortfolioScreen()
+        case .deviceInfo: DeviceInfoScreen()
+        case .unlockGate: UnlockGateScreen()
+        case .moduleOrder: ModuleOrderScreen()
 
         case .keyDetail: KeyDetailScreen()
         case .keyCreate: KeyCreateScreen()
@@ -38,6 +41,7 @@ enum Destinations {
         case .recordDetail: RecordDetailScreen()
         case .recordExport: RecordExportScreen()
         case .recordsStudio: RecordsStudioScreen()
+        case .alarmKinds: AlarmKindsScreen()
 
         case .memberDetail: MemberDetailScreen()
         case .memberCreate: MemberCreateScreen()

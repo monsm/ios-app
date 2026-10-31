@@ -45,31 +45,31 @@ private struct RecordShareCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: T.S.m) {
+        VStack(alignment: .leading, spacing: V.S.gapMS) {
             Image(systemName: isAlarm ? "exclamationmark.triangle.fill" : "lock.open.fill")
-                .font(T.F.icon(T.Icon.xl, weight: .semibold))
-                .foregroundStyle(isAlarm ? State.critical : Ink.ink)
+                .font(V.F.icon28Semibold)
+                .foregroundStyle(isAlarm ? V.C.critical : V.C.text1)
                 .accessibilityHidden(true)
             Text(entry.event)
-                .font(T.F.display(22))
-                .foregroundStyle(Ink.ink)
+                .font(V.F.display22)
+                .foregroundStyle(V.C.text1)
                 .fixedSize(horizontal: false, vertical: true)
             Text(thirdLine)
-                .font(T.F.caption)
-                .foregroundStyle(Ink.inkSub)
+                .font(V.F.footnote)
+                .foregroundStyle(V.C.text2)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
             Text("离线锁管家 · 单条记录 · 仅含本条数据")
-                .font(T.F.unit)
-                .foregroundStyle(Ink.inkFaint)
+                .font(V.F.unit)
+                .foregroundStyle(V.C.text3)
                 .tracking(0.6)
         }
-        .padding(T.S.xl)
+        .padding(V.S.gap24)
         .frame(width: CardSize.width, height: CardSize.height, alignment: .topLeading)
-        .background(Ink.plate, in: .rect(cornerRadius: T.R.plate))
+        .background(V.C.card, in: .rect(cornerRadius: V.R.panel))
         .overlay {
-            RoundedRectangle(cornerRadius: T.R.plate, style: .continuous)
-                .strokeBorder(Ink.hairline, lineWidth: T.Stroke.hair)
+            RoundedRectangle(cornerRadius: V.R.panel, style: .continuous)
+                .strokeBorder(V.C.hairline, lineWidth: V.S.hair)
         }
         .accessibilityElement(children: .combine)
     }
@@ -133,7 +133,7 @@ struct RecordExportScreen: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: T.S.l) {
+            VStack(spacing: V.S.gap16) {
                 header
                 if entries.isEmpty {
                     emptyBlock
@@ -145,7 +145,7 @@ struct RecordExportScreen: View {
                     if let copied { copiedBlock(copied) }
                 }
             }
-            .padding(.vertical, T.S.l)
+            .padding(.vertical, V.S.gap16)
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
@@ -161,90 +161,90 @@ struct RecordExportScreen: View {
     // MARK: - 页头
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: T.S.xs) {
+        VStack(alignment: .leading, spacing: V.S.gapXS) {
             Text("导出")
-                .font(T.F.display())
-                .foregroundStyle(Ink.ink)
+                .font(V.F.displayHome)
+                .foregroundStyle(V.C.text1)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            HStack(spacing: T.S.s) {
-                StateDot(tone: entries.isEmpty ? .neutral : .ok,
+            HStack(spacing: V.S.gapS) {
+                VStateDot(tone: entries.isEmpty ? .neutral : .ok,
                          word: entries.isEmpty ? "无可导出" : "可导出")
                 Text(entries.isEmpty
                      ? "台账里还没有记录"
                      : String(entries.count) + " 条 · " + String(days.count) + " 天 · 全走分享，不上传")
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                     .lineLimit(1)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
         .accessibilityElement(children: .combine)
     }
 
     // MARK: - 主角：单条记录分享卡（看到的就是分享出去的）
 
     private var cardBlock: some View {
-        VStack(spacing: T.S.m) {
-            SectionLabel(text: "单条记录卡", trailing: "仅含本条数据")
+        VStack(spacing: V.S.gapMS) {
+            VSectionLabel(text: "单条记录卡", trailing: "仅含本条数据")
             ScrollView(.horizontal) {
-                HStack(spacing: T.S.l) {
+                HStack(spacing: V.S.gap16) {
                     ForEach(entries.prefix(12)) { entry in
                         Button {
                             selectedID = entry.id
                         } label: {
-                            VStack(alignment: .leading, spacing: T.S.xs) {
+                            VStack(alignment: .leading, spacing: V.S.gapXS) {
                                 Text(entry.event)
-                                    .font(T.F.caption)
-                                    .foregroundStyle(Ink.ink)
+                                    .font(V.F.footnote)
+                                    .foregroundStyle(V.C.text1)
                                     .lineLimit(1)
                                 Text(TimeFormat.dayShort(entry.at) + " " + TimeDisplay.clock(entry.at))
-                                    .font(T.F.unit)
-                                    .foregroundStyle(Ink.inkFaint)
+                                    .font(V.F.unit)
+                                    .foregroundStyle(V.C.text3)
                                     .monospacedDigit()
                             }
-                            .padding(.horizontal, T.S.m)
-                            .frame(minHeight: T.Hit.min)
-                            .background(entry.id == selected?.id ? Ink.plate : Ink.plateAlt,
-                                        in: .rect(cornerRadius: T.R.control))
+                            .padding(.horizontal, V.S.gapMS)
+                            .frame(minHeight: V.Hit.min)
+                            .background(entry.id == selected?.id ? V.C.card : V.C.cardAlt,
+                                        in: .rect(cornerRadius: V.R.control))
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel(entry.event)
                         .accessibilityAddTraits(entry.id == selected?.id ? [.isButton, .isSelected] : .isButton)
                     }
                 }
-                .padding(.horizontal, T.S.gutter)
+                .padding(.horizontal, V.S.pageGutter)
             }
             .scrollIndicators(.hidden)
 
             if let entry = selected {
-                Panel {
-                    VStack(spacing: T.S.m) {
+                VCard {
+                    VStack(spacing: V.S.gapMS) {
                         RecordShareCard(entry: entry, lockName: lockName)
                         if let png {
                             ShareLink(
                                 item: RecordCardImage(data: png),
                                 preview: SharePreview("记录卡", image: cardPreview)
                             ) {
-                                HStack(spacing: T.S.s) {
+                                HStack(spacing: V.S.gapS) {
                                     Image(systemName: "square.and.arrow.up")
                                         .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                                        .font(T.F.icon(T.Icon.m, weight: .medium))
+                                        .font(V.F.icon18Medium)
                                     Text("分享这张卡")
-                                        .font(T.F.bodyStrong)
+                                        .font(V.F.bodyStrong)
                                 }
-                                .foregroundStyle(Signal.on)
+                                .foregroundStyle(V.C.text1)
                                 .frame(maxWidth: .infinity)
-                                .frame(height: T.H.action)
-                                .background(Signal.base, in: .rect(cornerRadius: T.R.control))
+                                .frame(height: V.H.action)
+                                .background(V.C.blue, in: .rect(cornerRadius: V.R.control))
                             }
                             .accessibilityLabel("分享这张记录卡")
                         } else {
-                            BusyRow(text: "正在生成卡片图…")
+                            VBusyRow(text: "正在生成卡片图…")
                         }
                     }
                 }
-                .padding(.horizontal, T.S.gutter)
+                .padding(.horizontal, V.S.pageGutter)
             }
         }
     }
@@ -252,26 +252,26 @@ struct RecordExportScreen: View {
     // MARK: - 按天勾选的 CSV
 
     private var daysBlock: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "按天导出 CSV", trailing: String(pickedDays.count) + " 天")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "按天导出 CSV", trailing: String(pickedDays.count) + " 天")
                 ForEach(days, id: \.key) { day in
                     Button {
                         toggleDay(day.key)
                     } label: {
-                        HStack(spacing: T.S.m) {
+                        HStack(spacing: V.S.gapMS) {
                             Image(systemName: pickedDays.contains(day.key) ? "checkmark.circle.fill" : "circle")
-                                .font(T.F.icon(T.Icon.m, weight: .regular))
-                                .foregroundStyle(pickedDays.contains(day.key) ? Ink.ink : Ink.inkFaint)
+                                .font(V.F.icon18)
+                                .foregroundStyle(pickedDays.contains(day.key) ? V.C.text1 : V.C.text3)
                                 .accessibilityHidden(true)
                             Text(TimeFormat.dayTitle(day.key))
-                                .font(T.F.body)
-                                .foregroundStyle(Ink.ink)
-                            Spacer(minLength: T.S.s)
-                            Reading(value: String(day.count), unit: "条", size: 13, weight: .regular,
-                                    tint: Ink.inkFaint, animated: false)
+                                .font(V.F.body)
+                                .foregroundStyle(V.C.text1)
+                            Spacer(minLength: V.S.gapS)
+                            VReading(value: String(day.count), unit: "条", font: V.F.number13,
+                                    tint: V.C.text3, animated: false)
                         }
-                        .frame(minHeight: T.Hit.min)
+                        .frame(minHeight: V.Hit.min)
                         .contentShape(.rect)
                     }
                     .buttonStyle(.plain)
@@ -280,122 +280,122 @@ struct RecordExportScreen: View {
                 }
                 if !pickedDays.isEmpty {
                     ShareLink(item: pickedCSV, preview: SharePreview("台账 CSV")) {
-                        HStack(spacing: T.S.s) {
+                        HStack(spacing: V.S.gapS) {
                             Image(systemName: "tablecells")
                                 .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                                .font(T.F.icon(T.Icon.m, weight: .medium))
+                                .font(V.F.icon18Medium)
                             Text("分享 CSV · " + String(RecordCSV.rowCount(pickedCSV)) + " 行")
-                                .font(T.F.bodyStrong)
+                                .font(V.F.bodyStrong)
                         }
-                        .foregroundStyle(Ink.ink)
+                        .foregroundStyle(V.C.text1)
                         .frame(maxWidth: .infinity)
-                        .frame(height: T.H.action)
+                        .frame(height: V.H.action)
                         .overlay {
-                            RoundedRectangle(cornerRadius: T.R.control, style: .continuous)
-                                .strokeBorder(Ink.hairline, lineWidth: T.Stroke.hair)
+                            RoundedRectangle(cornerRadius: V.R.control, style: .continuous)
+                                .strokeBorder(V.C.hairline, lineWidth: V.S.hair)
                         }
                     }
                     .accessibilityLabel("分享选中日期的 CSV")
                 }
-                HStack(spacing: T.S.m) {
+                HStack(spacing: V.S.gapMS) {
                     Button("全选") { pickedDays = Set(days.map { $0.key }) }
-                        .font(T.F.caption)
-                        .foregroundStyle(Ink.ink)
-                        .frame(minHeight: T.Hit.min)
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text1)
+                        .frame(minHeight: V.Hit.min)
                         .accessibilityLabel("全选所有日期")
                     Button("清空") { pickedDays = [] }
-                        .font(T.F.caption)
-                        .foregroundStyle(Ink.inkSub)
-                        .frame(minHeight: T.Hit.min)
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text2)
+                        .frame(minHeight: V.Hit.min)
                         .disabled(pickedDays.isEmpty)
                         .accessibilityLabel("清空日期选择")
                 }
                 Text("CSV 列：日期, 时间, 内容, 成员, 锁。成员不可证明时写「未归属」—— 不猜。")
-                    .font(T.F.unit)
-                    .foregroundStyle(Ink.inkFaint)
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: - 成员名册
 
     private var rosterBlock: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "成员名册", trailing: "vCard 3.0")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "成员名册", trailing: "vCard 3.0")
                 if app.members.isEmpty {
                     Text("还没有成员可导出。先到「家」页建一位成员，名册才有内容。")
-                        .font(T.F.caption)
-                        .foregroundStyle(Ink.inkSub)
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text2)
                         .fixedSize(horizontal: false, vertical: true)
-                        .frame(minHeight: T.Hit.min)
+                        .frame(minHeight: V.Hit.min)
                 } else {
-                    ReadingGrid(items: [
+                    VReadingGrid(items: [
                         .init(label: "成员", value: String(app.members.filter { !$0.archived }.count), unit: "位"),
                         .init(label: "凭证", value: String(app.members.reduce(0) { $0 + $1.keyCount }), unit: "枚")
                     ], columns: 2)
                     ShareLink(item: roster, preview: SharePreview("成员名册")) {
-                        HStack(spacing: T.S.s) {
+                        HStack(spacing: V.S.gapS) {
                             Image(systemName: "person.2")
                                 .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                                .font(T.F.icon(T.Icon.m, weight: .medium))
+                                .font(V.F.icon18Medium)
                             Text("分享名册")
-                                .font(T.F.bodyStrong)
+                                .font(V.F.bodyStrong)
                         }
-                        .foregroundStyle(Ink.ink)
+                        .foregroundStyle(V.C.text1)
                         .frame(maxWidth: .infinity)
-                        .frame(height: T.H.action)
+                        .frame(height: V.H.action)
                         .overlay {
-                            RoundedRectangle(cornerRadius: T.R.control, style: .continuous)
-                                .strokeBorder(Ink.hairline, lineWidth: T.Stroke.hair)
+                            RoundedRectangle(cornerRadius: V.R.control, style: .continuous)
+                                .strokeBorder(V.C.hairline, lineWidth: V.S.hair)
                         }
                     }
                     .accessibilityLabel("分享成员名册")
                 }
                 Text("名册只带称呼与角色；电话与备注留在本机（TODO(engine) 待接成员扩展档案）。")
-                    .font(T.F.unit)
-                    .foregroundStyle(Ink.inkFaint)
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: - 上周小结（三句人话 + CSV，一起进剪贴板）
 
     private var digestBlock: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "上周小结", trailing: String(digest.rows) + " 条")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "上周小结", trailing: String(digest.rows) + " 条")
                 ForEach(digest.lines.indices, id: \.self) { index in
                     Text(digest.lines[index])
-                        .font(T.F.body)
-                        .foregroundStyle(Ink.ink)
+                        .font(V.F.body)
+                        .foregroundStyle(V.C.text1)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                SecondaryAction(title: copied == nil ? "复制小结与 CSV" : "已复制到剪贴板",
+                VOutlineButton(title: copied == nil ? "复制小结与 CSV" : "已复制到剪贴板",
                                 systemImage: "doc.on.clipboard") {
                     copyDigest()
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func copiedBlock(_ text: String) -> some View {
-        Panel {
-            StatusLine(tone: .ok, text: text)
+        VCard {
+            VStatusLine(tone: .ok, text: text)
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: - 空态（必须给出路）
 
     private var emptyBlock: some View {
-        Panel {
-            EmptyPanel(
+        VCard {
+            VEmptyState(
                 title: "还没有可导出的记录",
                 message: "导出的都是台账里的真记录。先到「门」页开一次门，或回台账读取锁内日志。",
                 actionTitle: "去读取台账",
@@ -403,9 +403,9 @@ struct RecordExportScreen: View {
             ) {
                 router.recordsPath = []
             }
-            .padding(.vertical, T.S.xxl)
+            .padding(.vertical, V.S.gapXXL)
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: - 动作

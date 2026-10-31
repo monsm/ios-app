@@ -35,19 +35,19 @@ private struct CaptureShieldModifier: ViewModifier {
             content
                 .opacity(watcher.isCaptured ? 0 : 1)
             if watcher.isCaptured {
-                VStack(spacing: T.S.s) {
+                VStack(spacing: V.S.gapS) {
                     Image(systemName: "eye.slash.fill")
-                        .font(T.F.icon(T.Icon.l, weight: .regular))
-                        .foregroundStyle(Ink.inkSub)
+                        .font(V.F.icon22)
+                        .foregroundStyle(V.C.text2)
                         .accessibilityHidden(true)
                     Text(message)
-                        .font(T.F.body)
-                        .foregroundStyle(Ink.ink)
+                        .font(V.F.body)
+                        .foregroundStyle(V.C.text1)
                         .multilineTextAlignment(.center)
                 }
-                .padding(T.S.l)
+                .padding(V.S.gap16)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Ink.plate)
+                .background(V.C.card)
                 .accessibilityElement(children: .combine)
             }
         }

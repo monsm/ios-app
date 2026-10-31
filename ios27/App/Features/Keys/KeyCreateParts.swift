@@ -11,67 +11,67 @@ extension KeyCreateScreen {
     // MARK: 第一步：类型与归属
 
     var typeStep: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "这一枚是什么")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "这一枚是什么")
                 KeysChips(items: kinds, title: { $0.rawValue }, selection: Binding(
                     get: { kind },
                     set: { kindIndex = kinds.firstIndex(of: $0) ?? 0 }
                 ))
                 Text(kindHint)
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Divider().overlay(Ink.hairline)
+                Divider().overlay(V.C.hairline)
 
                 // 来源：原 App/UI/CredentialOtp.swift「临时密码 (ZOTP)」独立入口。
                 // 动态密码不是一条台账凭证，而是按窗口现算的六位码 —— 单独一页，工坊这里只放入口。
-                SectionLabel(text: "动态密码", trailing: "ZOTP")
+                VSectionLabel(text: "动态密码", trailing: "ZOTP")
                 KeysInlineNote(tone: .neutral, text: "按锁端周期自动更换的 6 位临时码，不用提前添加凭证。适合给快递、访客当场报码。")
                 Button {
                     router.request(.dest(.zotp))
                 } label: {
-                    HStack(spacing: T.S.s) {
+                    HStack(spacing: V.S.gapS) {
                         Image(systemName: "clock.badge.questionmark")
                             .accessibilityHidden(true)
-                            .font(T.F.icon(T.Icon.s, weight: .regular))
+                            .font(V.F.icon15)
                         Text("打开动态密码")
-                            .font(T.F.bodyStrong)
+                            .font(V.F.bodyStrong)
                         Spacer(minLength: 0)
                         Image(systemName: "chevron.right")
                             .accessibilityHidden(true)
-                            .font(T.F.icon(T.Icon.s, weight: .medium))
+                            .font(V.F.icon15Medium)
                     }
-                    .foregroundStyle(Ink.ink)
-                    .frame(minHeight: T.Hit.min)
+                    .foregroundStyle(V.C.text1)
+                    .frame(minHeight: V.Hit.min)
                     .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("打开动态密码")
 
-                Divider().overlay(Ink.hairline)
+                Divider().overlay(V.C.hairline)
 
-                SectionLabel(text: "归谁", trailing: owner ?? "必选")
+                VSectionLabel(text: "归谁", trailing: owner ?? "必选")
                 let active = app.members.filter { !$0.archived }
                 if active.isEmpty {
                     KeysInlineNote(tone: .attention, text: "还没有成员。先去「家」建一位成员；也可以先用未归属把凭证建起来。")
                     Button {
                         owner = nil
                         errorText = nil
-                        withAnimation(reduceMotion ? nil : T.M.move) { step = 1 }
+                        withAnimation(reduceMotion ? nil : V.M.move) { step = 1 }
                     } label: {
                         Text("先用未归属继续")
-                            .font(T.F.bodyStrong)
-                            .foregroundStyle(Ink.ink)
+                            .font(V.F.bodyStrong)
+                            .foregroundStyle(V.C.text1)
                             .frame(maxWidth: .infinity)
-                            .frame(minHeight: T.Hit.min)
+                            .frame(minHeight: V.Hit.min)
                             .contentShape(.rect)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("先用未归属继续")
                 } else {
-                    VStack(spacing: T.S.xxs) {
+                    VStack(spacing: V.S.gapXXS) {
                         ForEach(active) { member in
                             KeysOwnerRow(
                                 name: member.name,
@@ -89,7 +89,7 @@ extension KeyCreateScreen {
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     var kindHint: String {
@@ -104,24 +104,24 @@ extension KeyCreateScreen {
     // MARK: 第二步：码值
 
     var codeStep: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
                 if kind == .fingerprint {
-                    SectionLabel(text: "指纹没有码值")
+                    VSectionLabel(text: "指纹没有码值")
                     KeysInlineNote(tone: .neutral, text: "指纹录入要在门锁的指纹头上按 8 次（锁端命令 cmd13 启动、cmd14 确认）。本机这条链路还没接，下一步先把这条登记进台账。")
                     TextField("给这枚指纹起个名字", text: $name)
-                        .font(T.F.body)
-                        .frame(minHeight: T.Hit.min)
+                        .font(V.F.body)
+                        .frame(minHeight: V.Hit.min)
                         .autocorrectionDisabled()
                 } else {
-                    SectionLabel(text: "码值", trailing: codeValid ? "位数合规" : "6~8 位数字")
+                    VSectionLabel(text: "码值", trailing: codeValid ? "位数合规" : "6~8 位数字")
                     if !code.isEmpty {
-                        Reading(value: String(repeating: "•", count: code.count), size: 26)
+                        VReading(value: String(repeating: "•", count: code.count), font: V.F.number26)
                     }
                     TextField("输入 6~8 位数字", text: $code)
-                        .font(T.F.reading(20, weight: .medium))
+                        .font(V.F.number20)
                         .keyboardType(.numberPad)
-                        .frame(minHeight: T.Hit.min)
+                        .frame(minHeight: V.Hit.min)
                         .autocorrectionDisabled()
                         .onChange(of: code) { _, new in
                             if errorText != nil { errorText = nil }
@@ -131,20 +131,20 @@ extension KeyCreateScreen {
                     if fromClipboard {
                         KeysInlineNote(tone: .attention, text: "这串数字是从剪贴板识别来的。不对就重填，别让一段旧密码混进来。")
                     }
-                    HStack(spacing: T.S.s) {
+                    HStack(spacing: V.S.gapS) {
                         ForEach([6, 7, 8], id: \.self) { digits in
                             Button {
                                 code = KeysCode.digits(digits)
                                 fromClipboard = false
                             } label: {
                                 Text("生成 \(digits) 位")
-                                    .font(T.F.caption)
-                                    .foregroundStyle(Ink.ink)
-                                    .padding(.horizontal, T.S.m)
-                                    .frame(minHeight: T.Hit.min)
+                                    .font(V.F.footnote)
+                                    .foregroundStyle(V.C.text1)
+                                    .padding(.horizontal, V.S.gapMS)
+                                    .frame(minHeight: V.Hit.min)
                                     .overlay {
-                                        RoundedRectangle(cornerRadius: T.R.control, style: .continuous)
-                                            .strokeBorder(Ink.hairline, lineWidth: T.Stroke.hair)
+                                        RoundedRectangle(cornerRadius: V.R.control, style: .continuous)
+                                            .strokeBorder(V.C.hairline, lineWidth: V.S.hair)
                                     }
                                     .contentShape(.rect)
                             }
@@ -163,22 +163,22 @@ extension KeyCreateScreen {
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     var strengthRow: some View {
-        HStack(spacing: T.S.s) {
-            HStack(spacing: T.S.xxs) {
+        HStack(spacing: V.S.gapS) {
+            HStack(spacing: V.S.gapXXS) {
                 ForEach(0 ..< 3, id: \.self) { index in
                     Capsule()
-                        .fill(index < strength.score ? (strength.score <= 1 ? State.attention : Signal.base) : Ink.plateAlt)
-                        .frame(width: T.Icon.l, height: T.S.xs)
+                        .fill(index < strength.score ? (strength.score <= 1 ? V.C.warning : V.C.blue) : V.C.cardAlt)
+                        .frame(width: V.Icon.l, height: V.S.gapXS)
                 }
             }
             .accessibilityHidden(true)
             Text(strength.hint)
-                .font(T.F.unit)
-                .foregroundStyle(strength.score <= 1 ? State.attention : Ink.inkSub)
+                .font(V.F.unit)
+                .foregroundStyle(strength.score <= 1 ? V.C.warning : V.C.text2)
             Spacer(minLength: 0)
         }
         .accessibilityElement(children: .combine)
@@ -210,21 +210,21 @@ extension KeyCreateScreen {
     // MARK: 第三步：有效期与备注
 
     var periodStep: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "有效期", trailing: kind == .temp ? "到期自动失效" : "长期有效")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "有效期", trailing: kind == .temp ? "到期自动失效" : "长期有效")
                 if kind == .temp {
-                    HStack(spacing: T.S.s) {
+                    HStack(spacing: V.S.gapS) {
                         ForEach([1, 3, 7, 30], id: \.self) { days in
                             Button {
                                 durationDays = days
                             } label: {
                                 Text("\(days) 天")
-                                    .font(T.F.caption)
-                                    .foregroundStyle(Ink.ink)
-                                    .padding(.horizontal, T.S.m)
-                                    .frame(minHeight: T.Hit.min)
-                                    .background(durationDays == days ? Signal.wash : Ink.plateAlt, in: .capsule)
+                                    .font(V.F.footnote)
+                                    .foregroundStyle(V.C.text1)
+                                    .padding(.horizontal, V.S.gapMS)
+                                    .frame(minHeight: V.Hit.min)
+                                    .background(durationDays == days ? V.C.blue.opacity(0.16) : V.C.cardAlt, in: .capsule)
                                     .contentShape(.rect)
                             }
                             .buttonStyle(.plain)
@@ -233,7 +233,7 @@ extension KeyCreateScreen {
                         }
                         Spacer(minLength: 0)
                     }
-                    ReadingGrid(items: [
+                    VReadingGrid(items: [
                         .init(label: "生效", value: TimeFormat.dayShort(KeysState.now())),
                         .init(label: "到期", value: TimeFormat.dayShort(expiryMillis)),
                     ])
@@ -241,29 +241,29 @@ extension KeyCreateScreen {
                     Text(kind == .fingerprint
                          ? "指纹一直有效，除非你在详情里停用它。"
                          : "长期密码没有到期点；要限期就回第一步改成临时码。")
-                        .font(T.F.body)
-                        .foregroundStyle(Ink.inkSub)
+                        .font(V.F.body)
+                        .foregroundStyle(V.C.text2)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                Divider().overlay(Ink.hairline)
+                Divider().overlay(V.C.hairline)
 
-                SectionLabel(text: "备注")
+                VSectionLabel(text: "备注")
                 TextField("给谁 · 哪扇门 · 用多久", text: $note)
-                    .font(T.F.body)
-                    .frame(minHeight: T.Hit.min)
+                    .font(V.F.body)
+                    .frame(minHeight: V.Hit.min)
                     .autocorrectionDisabled()
-                HStack(spacing: T.S.s) {
+                HStack(spacing: V.S.gapS) {
                     ForEach(["仅白天", "勿外传", "长期有效"], id: \.self) { phrase in
                         Button {
                             note = note.isEmpty ? phrase : note + " · " + phrase
                         } label: {
                             Text(phrase)
-                                .font(T.F.caption)
-                                .foregroundStyle(Ink.inkSub)
-                                .padding(.horizontal, T.S.m)
-                                .frame(minHeight: T.Hit.min)
-                                .background(Ink.plateAlt, in: .capsule)
+                                .font(V.F.footnote)
+                                .foregroundStyle(V.C.text2)
+                                .padding(.horizontal, V.S.gapMS)
+                                .frame(minHeight: V.Hit.min)
+                                .background(V.C.cardAlt, in: .capsule)
                                 .contentShape(.rect)
                         }
                         .buttonStyle(.plain)
@@ -273,7 +273,7 @@ extension KeyCreateScreen {
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     var expiryMillis: Int64 {
@@ -287,28 +287,28 @@ extension KeyCreateScreen {
     // MARK: 第四步：确认与二次输入
 
     var confirmStep: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "即将写入")
-                FieldRow(label: "类型", value: kind.rawValue, mono: false)
-                FieldRow(label: "归属", value: owner ?? "未归属", mono: false)
-                FieldRow(label: "码值", value: kind == .fingerprint ? "无（按指纹）" : String(repeating: "•", count: code.count), mono: false)
-                FieldRow(label: "到期", value: kind == .temp ? TimeFormat.dayShort(expiryMillis) : "永久")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "即将写入")
+                VFieldRow(label: "类型", value: kind.rawValue, mono: false)
+                VFieldRow(label: "归属", value: owner ?? "未归属", mono: false)
+                VFieldRow(label: "码值", value: kind == .fingerprint ? "无（按指纹）" : String(repeating: "•", count: code.count), mono: false)
+                VFieldRow(label: "到期", value: kind == .temp ? TimeFormat.dayShort(expiryMillis) : "永久")
                 if !note.isEmpty {
-                    FieldRow(label: "备注", value: note, mono: false)
+                    VFieldRow(label: "备注", value: note, mono: false)
                 }
-                Divider().overlay(Ink.hairline)
+                Divider().overlay(V.C.hairline)
                 if kind == .fingerprint {
                     KeysInlineNote(tone: .attention, text: "本机链路未接，这一步只把这条登记进台账（待录入）。连上锁后再去门锁上按 8 次。")
-                    PrimaryAction(title: isEdit ? "保存改造" : "记入本机台账", systemImage: "key.fill") {
+                    VActionButton(title: isEdit ? "保存改造" : "记入本机台账", systemImage: "key.fill") {
                         submit()
                     }
                 } else {
-                    SectionLabel(text: "再输一遍码值")
+                    VSectionLabel(text: "再输一遍码值")
                     TextField("重输一遍", text: $confirmCode)
-                        .font(T.F.reading(18, weight: .medium))
+                        .font(V.F.number18)
                         .keyboardType(.numberPad)
-                        .frame(minHeight: T.Hit.min)
+                        .frame(minHeight: V.Hit.min)
                         .autocorrectionDisabled()
                     if !confirmCode.isEmpty && confirmCode != code {
                         KeysInlineNote(tone: .critical, text: "两次输入不一致 —— 下发前会被拦下来，不会带着错值发出去。")
@@ -316,17 +316,17 @@ extension KeyCreateScreen {
                     if let errorText {
                         KeysInlineNote(tone: .critical, text: errorText)
                     }
-                    PrimaryAction(title: isEdit ? "保存改造" : "写入台账", systemImage: "key.fill") {
+                    VActionButton(title: isEdit ? "保存改造" : "写入台账", systemImage: "key.fill") {
                         submit()
                     }
                     .disabled(confirmCode != code || !codeValid)
                     Text("写入会真下发到门锁（cmd0A 添加 + 0B 设有效期）；回执成功才记入本机台账，失败会留在这一页报原因。")
-                        .font(T.F.unit)
-                        .foregroundStyle(Ink.inkFaint)
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text3)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 }

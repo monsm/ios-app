@@ -121,7 +121,7 @@ struct BackupStudioScreen: View {
     private func fileRow(_ file: BackupFile) -> some View {
         HStack(spacing: V.S.gapS) {
             Image(systemName: "doc.zipper")
-                .font(V.F.sans(16))
+                .font(V.F.rowTitle)
                 .foregroundStyle(V.C.text3)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: V.S.gapXXS) {

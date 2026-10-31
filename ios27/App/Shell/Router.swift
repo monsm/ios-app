@@ -26,6 +26,9 @@ enum Dest: String, CaseIterable, Identifiable, Hashable {
     case batteryProfile    // 电池档案
     case lockProfile       // 锁档案
     case lockPortfolio     // 全部锁（多锁统计）
+    case deviceInfo        // 锁信息名片（诊断）
+    case unlockGate        // 30 秒内二次开锁的本机密码闸
+    case moduleOrder       // 设备页模块排序与显隐
 
     // 钥匙
     case keyDetail         // 凭证详情
@@ -40,6 +43,7 @@ enum Dest: String, CaseIterable, Identifiable, Hashable {
     case recordDetail      // 记录详情
     case recordExport      // 导出
     case recordsStudio     // 记录工作室（检索/统计/hex）
+    case alarmKinds        // 告警类型多选
 
     // 家
     case memberDetail      // 成员 360
@@ -79,6 +83,9 @@ enum Dest: String, CaseIterable, Identifiable, Hashable {
         case .batteryProfile: return "电池档案"
         case .lockProfile: return "锁档案"
         case .lockPortfolio: return "全部锁"
+        case .deviceInfo: return "锁信息名片"
+        case .unlockGate: return "再次确认"
+        case .moduleOrder: return "模块排序"
         case .keyDetail: return "凭证详情"
         case .keyCreate: return "新增凭证"
         case .keyCalendar: return "到期月历"
@@ -89,6 +96,7 @@ enum Dest: String, CaseIterable, Identifiable, Hashable {
         case .recordDetail: return "记录详情"
         case .recordExport: return "导出"
         case .recordsStudio: return "记录工作室"
+        case .alarmKinds: return "告警类型"
         case .memberDetail: return "成员"
         case .memberCreate: return "新建成员"
         case .memberArchive: return "归档"
@@ -109,10 +117,11 @@ enum Dest: String, CaseIterable, Identifiable, Hashable {
     var tab: TabSlot {
         switch self {
         case .door, .lockStatus, .addLock, .gateway, .syncTime, .defend, .dfu,
-             .lockSettings, .tailgate, .safeMode, .batteryProfile, .lockProfile, .lockPortfolio: return .door
+             .lockSettings, .tailgate, .safeMode, .batteryProfile, .lockProfile, .lockPortfolio,
+             .deviceInfo, .unlockGate, .moduleOrder: return .door
         case .keys, .keyDetail, .keyCreate, .keyCalendar, .mobileKey, .shareToAndroid,
              .credentialStudio, .zotp: return .keys
-        case .records, .recordDetail, .recordExport, .recordsStudio: return .records
+        case .records, .recordDetail, .recordExport, .recordsStudio, .alarmKinds: return .records
         case .household, .memberDetail, .memberCreate, .memberArchive, .memberOps: return .household
         case .settings, .appearance, .security, .backup, .autoOpen, .hardware, .protocolTest, .about,
              .accessibility, .backupStudio: return .settings

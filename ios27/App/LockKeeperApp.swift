@@ -9,6 +9,7 @@ import LocalAuthentication
 struct LockKeeperApp: App {
     @State private var app = AppModel()
     @State private var router = Router()
+    @State private var settings = SettingsStore.shared
     @UIApplicationDelegateAdaptor(QuickActionDelegate.self) private var appDelegate
 
     var body: some Scene {
@@ -16,7 +17,7 @@ struct LockKeeperApp: App {
             RootView()
                 .environment(app)
                 .environment(router)
-                .tint(Signal.base)
+                .tint(settings.accentColor)
         }
     }
 }
@@ -41,7 +42,7 @@ struct RootView: View {
         .preferredColorScheme(colorScheme)
         .dynamicTypeSize(settings.axBigText ? .accessibility2 : .large)
         // 减弱动态：解锁闸门 → 主界面的切换改成直接出现，而不是淡入
-        .animation(reduceMotion ? nil : T.M.move, value: app.unlocked)
+        .animation(reduceMotion ? nil : V.M.move, value: app.unlocked)
         // 装配：把路由注入 AppModel —— 这是 Engine 唯一能触达界面的出口（EngineHost）。
         // 同时注册到 EngineHostRegistry，供通知回调这类没有视图上下文的路径取用。
         .onAppear {
@@ -95,30 +96,24 @@ struct RootView: View {
         .overlay(alignment: .top) { ToastHost() }
     }
 
-    private var colorScheme: ColorScheme? {
-        switch settings.theme {
-        case .dark: return .dark
-        case .light: return .light
-        case .system: return nil
-        }
-    }
+    private var colorScheme: ColorScheme? { settings.theme.colorScheme }
 }
 
 /// 只读试验模式常驻条。
 struct TrialGuardBanner: View {
     var body: some View {
-        HStack(spacing: T.S.s) {
+        HStack(spacing: V.S.gapS) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                .font(T.F.icon(T.Icon.s, weight: .medium))
+                .font(V.F.icon15Medium)
             Text("只读试验模式 · 所有写入都不会下发到门锁")
-                .font(T.F.unit)
+                .font(V.F.unit)
             Spacer(minLength: 0)
         }
-        .foregroundStyle(State.critical)
-        .padding(.horizontal, T.S.gutter)
-        .padding(.vertical, T.S.xs)
-        .background(State.critical.opacity(0.12))
+        .foregroundStyle(V.C.critical)
+        .padding(.horizontal, V.S.pageGutter)
+        .padding(.vertical, V.S.gapXS)
+        .background(V.C.critical.opacity(0.12))
         .accessibilityElement(children: .combine)
     }
 }
@@ -136,40 +131,40 @@ struct LockGateScreen: View {
     var body: some View {
         ZStack {
             CanvasBackground()
-            VStack(spacing: T.S.xl) {
+            VStack(spacing: V.S.gap24) {
                 Spacer()
                 Image(systemName: "lock.shield")
                     .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                    .font(T.F.icon(T.Icon.xl, weight: .light))
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.icon22Light)
+                    .foregroundStyle(V.C.text2)
                 Text("输入本机密码")
-                    .font(T.F.display(24))
-                    .foregroundStyle(Ink.ink)
+                    .font(V.F.display24)
+                    .foregroundStyle(V.C.text1)
                 Text("本机数据保护开着。密码只存在这台手机上。")
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                     .multilineTextAlignment(.center)
 
                 SecureField("本机密码", text: $code)
                     .textFieldStyle(.plain)
-                    .font(T.F.reading(20))
+                    .font(V.F.number20)
                     .multilineTextAlignment(.center)
                     .focused($focused)
-                    .frame(height: T.H.action)
-                    .background(Ink.plate, in: .rect(cornerRadius: T.R.control))
+                    .frame(height: V.H.action)
+                    .background(V.C.card, in: .rect(cornerRadius: V.R.control))
                     .overlay {
-                        RoundedRectangle(cornerRadius: T.R.control, style: .continuous)
-                            .strokeBorder(failed ? State.critical : Ink.hairline, lineWidth: T.Stroke.hair)
+                        RoundedRectangle(cornerRadius: V.R.control, style: .continuous)
+                            .strokeBorder(failed ? V.C.critical : V.C.hairline, lineWidth: V.S.hair)
                     }
-                    .padding(.horizontal, T.S.xxl)
+                    .padding(.horizontal, V.S.gapXXL)
 
                 if failed {
                     Text(gateMessage)
-                        .font(T.F.caption)
-                        .foregroundStyle(State.critical)
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.critical)
                 }
 
-                PrimaryAction(title: "解锁", busy: false) {
+                VActionButton(title: "解锁", busy: false) {
                     switch AppLock.shared.verify(code) {
                     case .success:
                         app.decoyMode = false
@@ -188,30 +183,30 @@ struct LockGateScreen: View {
                         gateMessage = "冷却中 · (remaining) 秒后再试"
                     }
                 }
-                .padding(.horizontal, T.S.xxl)
+                .padding(.horizontal, V.S.gapXXL)
 
                 if bioAvailable {
                     Button {
                         Task { await unlockByBiometric() }
                     } label: {
-                        HStack(spacing: T.S.s) {
+                        HStack(spacing: V.S.gapS) {
                             Image(systemName: "faceid")
                                 .accessibilityHidden(true)
                             Text(bioBusy ? "正在验证…" : "用面容 / 指纹解锁")
-                                .font(T.F.bodyStrong)
+                                .font(V.F.bodyStrong)
                         }
-                        .foregroundStyle(Ink.ink)
+                        .foregroundStyle(V.C.text1)
                         .frame(maxWidth: .infinity)
-                        .frame(height: T.H.action)
+                        .frame(height: V.H.action)
                         .overlay {
-                            RoundedRectangle(cornerRadius: T.R.control, style: .continuous)
-                                .strokeBorder(Ink.hairline, lineWidth: T.Stroke.hair)
+                            RoundedRectangle(cornerRadius: V.R.control, style: .continuous)
+                                .strokeBorder(V.C.hairline, lineWidth: V.S.hair)
                         }
                         .contentShape(.rect)
                     }
                     .buttonStyle(.plain)
                     .disabled(bioBusy)
-                    .padding(.horizontal, T.S.xxl)
+                    .padding(.horizontal, V.S.gapXXL)
                     .accessibilityLabel("用面容或指纹解锁")
                 }
 

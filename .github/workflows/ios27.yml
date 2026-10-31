@@ -192,41 +192,4 @@ jobs:
             ios27/build/build.log
             ios27/build/archive.log
             ios27/build/LockKeeper-*-unsigned.ipa
-          if-no-files-found: ignore || true); do
-            gh release delete-asset ios27-latest "$old" -y || true
-          done
-          gh release upload ios27-latest "$IPA"
-          gh release edit ios27-latest --notes "$NOTE"
-
-      - name: 失败时把日志挂到 Release（公开可读，用于无鉴权排查）
-        if: failure()
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set +e
-          mkdir -p build
-          for f in build/build.log build/archive.log; do
-            [ -f "$f" ] && cp "$f" "build/$(basename "$f" .log)-run${{ github.run_id }}.log"
-          done
-          if ! gh release view ios27-diag >/dev/null 2>&1; then
-            gh release create ios27-diag --title "ios27 构建诊断" --notes "失败构建的日志（自动发布）" --prerelease || true
-          fi
-          for f in build/*-run${{ github.run_id }}.log; do
-            [ -f "$f" ] && gh release upload ios27-diag "$f" --clobber
-          done
-          # 没有日志文件时也留一条，避免"看不到"被误读成"没失败"
-          if ! ls build/*-run${{ github.run_id }}.log >/dev/null 2>&1; then
-            echo "本次失败没有产生 build.log / archive.log（多半红在更早的步骤）" > build/note-run${{ github.run_id }}.txt
-            gh release upload ios27-diag "build/note-run${{ github.run_id }}.txt" --clobber || true
-          fi
-
-      - name: 上传编译日志 + IPA
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: ios27-build
-          path: |
-            ios27/build/build.log
-            ios27/build/archive.log
-            ios27/build/LockKeeper-*-unsigned.ipa
           if-no-files-found: ignore

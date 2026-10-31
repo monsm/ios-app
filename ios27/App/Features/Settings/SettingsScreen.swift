@@ -73,7 +73,7 @@ struct SettingsScreen: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: V.Page.titleToBody) {
             Text("设置")
-                .font(V.F.sans(34, weight: .bold))
+                .font(V.F.displayHome)
                 .foregroundStyle(V.C.text1)
             Text("这台锁的全部行为都在本机完成，不上传云端。")
                 .font(V.F.pageLead)
@@ -99,12 +99,12 @@ struct SettingsScreen: View {
                             .lineLimit(1)
                         Spacer(minLength: 0)
                         Image(systemName: "chevron.right")
-                            .font(V.F.sans(11, weight: .semibold))
+                            .font(V.F.chipLabelStrong)
                             .foregroundStyle(V.C.text3)
                             .accessibilityHidden(true)
                     }
                     Text(app.lock?.isConnected == true ? "已连接" : "未连接")
-                        .font(V.F.sans(20, weight: .bold))
+                        .font(V.F.section)
                         .foregroundStyle(V.C.text1)
                     Text("固件 \(app.lock?.firmware ?? "--") · 信号 \(app.lock?.signal ?? 0)")
                         .font(V.F.footnote)
@@ -120,12 +120,12 @@ struct SettingsScreen: View {
                             .foregroundStyle(V.C.text3)
                         Spacer(minLength: 0)
                         Image(systemName: "chevron.right")
-                            .font(V.F.sans(11, weight: .semibold))
+                            .font(V.F.chipLabelStrong)
                             .foregroundStyle(V.C.text3)
                             .accessibilityHidden(true)
                     }
                     Text(app.lock?.firmware ?? "--")
-                        .font(V.F.sans(20, weight: .bold))
+                        .font(V.F.section)
                         .foregroundStyle(V.C.text1)
                     Text("当前版本")
                         .font(V.F.footnote)
@@ -374,6 +374,21 @@ struct DeleteDeviceSheet: View {
     private var lockName: String { app.lock?.name ?? "" }
     private var canDelete: Bool { !lockName.isEmpty && typed == lockName }
 
+    /// 真删除：钥匙串 + 该锁全部本机数据族（台账 / 日志缓存 / 快照 / 布防 / 自动上锁 /
+    /// 锁档案 / 电池采样 / 校时 / OTP / 到期提醒…）一次清干净。
+    /// 只执行 app.lock = nil 的旧实现会让数据留在本机 —— 用户以为删了，密钥还在。
+    private func deleteLocalData() {
+        let mac = app.lock?.id ?? app.currentMac
+        guard !mac.isEmpty else { return }
+        DB.removeDevice(mac)
+        app.lock = nil
+        app.keys = []
+        app.entries = []
+        app.lastStatus = nil
+        AppToast.shared.show("已删除这台锁的本机数据（锁端不变）", tone: .ok)
+        Task { await app.reload(refreshStatus: false) }
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -387,7 +402,7 @@ struct DeleteDeviceSheet: View {
                     VCard {
                         VStack(alignment: .leading, spacing: V.S.gapS) {
                             Text("会被删除")
-                                .font(V.F.sans(15, weight: .semibold))
+                                .font(V.F.cardTitle)
                                 .foregroundStyle(V.C.text6)
                             VStatPair(items: [
                                 ("凭证", "\(app.keys.count) 枚"),
@@ -403,7 +418,7 @@ struct DeleteDeviceSheet: View {
                     VCard {
                         VStack(alignment: .leading, spacing: V.S.gapS) {
                             Text("键入锁名确认")
-                                .font(V.F.sans(15, weight: .semibold))
+                                .font(V.F.cardTitle)
                                 .foregroundStyle(V.C.text6)
                             TextField(lockName, text: $typed)
                                 .font(V.F.body)
@@ -415,7 +430,7 @@ struct DeleteDeviceSheet: View {
                                 .accessibilityLabel("键入锁名")
                             Rectangle().fill(V.C.hairline).frame(height: V.S.hair)
                             VActionButton(title: "删除本机数据", systemImage: "trash", tint: V.C.red) {
-                                app.lock = nil
+                                deleteLocalData()
                                 dismiss()
                             }
                             .disabled(!canDelete)

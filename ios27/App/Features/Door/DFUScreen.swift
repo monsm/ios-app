@@ -27,7 +27,7 @@ struct DFUScreen: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: T.S.l) {
+            VStack(spacing: V.S.gap16) {
                 header
                 if app.lock == nil {
                     noLockPanel
@@ -38,7 +38,7 @@ struct DFUScreen: View {
                     runPanel
                 }
             }
-            .padding(.vertical, T.S.l)
+            .padding(.vertical, V.S.gap16)
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
@@ -53,21 +53,21 @@ struct DFUScreen: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: T.S.xs) {
+        VStack(alignment: .leading, spacing: V.S.gapXS) {
             Text("固件升级")
-                .font(T.F.display())
-                .foregroundStyle(Ink.ink)
-            HStack(spacing: T.S.s) {
-                StateDot(tone: headerTone, word: headerWord)
+                .font(V.F.displayHome)
+                .foregroundStyle(V.C.text1)
+            HStack(spacing: V.S.gapS) {
+                VStateDot(tone: headerTone, word: headerWord)
                 Text(headerText)
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var headerTone: Tone {
@@ -94,75 +94,75 @@ struct DFUScreen: View {
     }
 
     private var versionPanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "版本", trailing: "cmd03")
-                ReadingGrid(items: [
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "版本", trailing: "cmd03")
+                VReadingGrid(items: [
                     .init(label: "锁内固件", value: firmwareText),
                     .init(label: "包内版本", value: pkg?.version ?? "未识别",
                           tint: versionColor),
                 ], columns: 2)
-                .padding(.top, T.S.xs)
+                .padding(.top, V.S.gapXS)
                 SettingsNote(text: "本机离线，只能比对本地包与锁内版本；原版的服务端版本检查在离线版没有对应物。")
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var versionColor: Color {
-        guard let target = pkg?.version else { return Ink.ink }
-        if FirmwareKit.versionLt(target, firmwareText) { return State.critical }
-        return State.ok
+        guard let target = pkg?.version else { return V.C.text1 }
+        if FirmwareKit.versionLt(target, firmwareText) { return V.C.critical }
+        return V.C.rewardGreen
     }
 
     private var packagePanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "固件包", trailing: pkg == nil ? nil : fileName)
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "固件包", trailing: pkg == nil ? nil : fileName)
                 if phase == .running {
-                    BusyRow(text: "升级进行中 · 请保持手机靠近门锁、不要切后台")
+                    VBusyRow(text: "升级进行中 · 请保持手机靠近门锁、不要切后台")
                 } else {
-                    SecondaryAction(title: pkg == nil ? "选择固件包 (.zip)" : "重新选择固件包",
+                    VOutlineButton(title: pkg == nil ? "选择固件包 (.zip)" : "重新选择固件包",
                                     systemImage: "doc.badge.arrow.up") {
                         importing = true
                     }
                 }
                 SettingsNote(text: "包内需要 manifest.json + bin + dat；解包后逐项校验 CRC 与尺寸。本仓没有厂商签名校验能力（锁内没有公钥），包的来源请自己确认。")
                 if !error.isEmpty {
-                    StatusLine(tone: .critical, text: error)
+                    VStatusLine(tone: .critical, text: error)
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func packageDetailPanel(_ p: FirmwarePackage) -> some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "包内容")
-                FieldRow(label: "固件主体", value: "\(p.binSize) B")
-                FieldRow(label: "init packet", value: "\(p.datSize) B")
-                FieldRow(label: "包内版本", value: p.version ?? "未识别")
-                FieldRow(label: "来源文件", value: p.sourceName, mono: false)
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "包内容")
+                VFieldRow(label: "固件主体", value: "\(p.binSize) B")
+                VFieldRow(label: "init packet", value: "\(p.datSize) B")
+                VFieldRow(label: "包内版本", value: p.version ?? "未识别")
+                VFieldRow(label: "来源文件", value: p.sourceName, mono: false)
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var runPanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "升级", trailing: "cmd22 / DFU")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "升级", trailing: "cmd22 / DFU")
                 if phase == .running {
                     ProgressView(value: progress)
                     Text("\(Int(progress * 100))% · \(stateText)")
-                        .font(T.F.caption)
-                        .foregroundStyle(Ink.inkSub)
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text2)
                         .accessibilityElement(children: .ignore)
                         .accessibilityLabel("固件升级进度")
                         .accessibilityValue("\(Int(progress * 100))%，\(stateText)")
                 } else {
-                    PrimaryAction(title: phase == .done ? "再次升级" : "开始升级",
+                    VActionButton(title: phase == .done ? "再次升级" : "开始升级",
                                   systemImage: "arrow.up.circle") {
                         confirmStart()
                     }
@@ -170,25 +170,25 @@ struct DFUScreen: View {
                     .opacity(pkg == nil ? 0.4 : 1)
                 }
                 if phase == .done {
-                    StatusLine(tone: .ok, text: "升级完成。请回锁实况读一次，确认版本已变化。")
+                    VStatusLine(tone: .ok, text: "升级完成。请回锁实况读一次，确认版本已变化。")
                 }
                 SettingsNote(text: "过程：校验包 → 下发 22 让锁进 DFU（会断开连接，属预期）→ 连 ZkDFU 广播 → 传固件 → 校验。全程请保持手机靠近门锁、不要切后台。")
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var noLockPanel: some View {
-        Panel {
-            EmptyPanel(title: "还没有门锁可以升级",
+        VCard {
+            VEmptyState(title: "还没有门锁可以升级",
                        message: "固件升级是写给门锁的：先添加门锁，再回这一页选固件包。",
                        actionTitle: "添加门锁",
                        systemImage: "arrow.up.circle") {
                 router.request(.dest(.addLock))
             }
-            .padding(.vertical, T.S.xxl)
+            .padding(.vertical, V.S.gapXXL)
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func handleImport(_ result: Result<[URL], Error>) {

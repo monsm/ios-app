@@ -4,14 +4,16 @@
 // 判什么：
 //   ① 图标按钮（label 只有 Image(systemName:)）必须有 .accessibilityLabel
 //   ② 触达：.frame(width:/height:) 小于 44 的可点区判失败
-//   ③ 裸 .font 直接写在 Text 上（绕过 T.F.*）判失败 —— 上一版"加粗文本开关失效"就是这个
-//   ④ 装饰性图标必须 .accessibilityHidden(true)
+//   ③ VListRow 的 accessibilityLabel 必须拼上 value（设置页右侧读数不能对 VoiceOver 消失）
+//   ④ 图表组件（VRingStack / VMiniBars / VAreaChart / VSegmentedRing）必须有 accessibilityValue 描述数据
+//   ⑤ 装饰性图标必须 .accessibilityHidden(true)
 'use strict';
 const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
 const APP = path.join(ROOT, 'App');
+const V7_COMPONENTS = path.join(APP, 'Design', 'V7', 'V7Components.swift');
 
 function walk(dir, out = []) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -22,6 +24,21 @@ function walk(dir, out = []) {
   return out;
 }
 
+function structBlock(src, name) {
+  const start = src.search(new RegExp('struct\\s+' + name + '\\b'));
+  if (start < 0) return null;
+  const open = src.indexOf('{', start);
+  let depth = 0;
+  for (let i = open; i < src.length; i++) {
+    if (src[i] === '{') depth++;
+    else if (src[i] === '}') {
+      depth--;
+      if (depth === 0) return src.slice(start, i + 1);
+    }
+  }
+  return null;
+}
+
 const files = walk(APP);
 const findings = [];
 
@@ -30,19 +47,16 @@ for (const f of files) {
   const src = fs.readFileSync(f, 'utf8');
   const lines = src.split(/\r?\n/);
 
-  // ① 图标按钮缺 label：向后 8 行内没有 accessibilityLabel
+  // ① 图标按钮缺 label：向后 30 行内没有 accessibilityLabel
   lines.forEach((line, i) => {
     const t = line.trim();
     if (t.startsWith('//') || t.startsWith('///')) return;
 
     if (/Button\s*\{/.test(line) || /Button\(action:/.test(line) || /Button\s*\(/.test(line)) {
-      // 只看这个 Button 的 label 块：从 Button 起到第一个同级收尾，最多 30 行。
-      // 判据要准 —— 误报会让下一个人把真问题当噪音忽略（上一版的教训）。
       const win = lines.slice(i, i + 30).join('\n');
       const hasImage = /Image\(systemName:/.test(win);
-      const hasTextish = /Text\(|Label\(|FieldRow\(|Reading\(/.test(win);
+      const hasTextish = /Text\(|Label\(|FieldRow\(|Reading\(|VTextFieldRow\(|VValueRow\(|VReading\(/.test(win);
       const hasLabel = /accessibilityLabel/.test(win);
-      // 图标按钮 = 只有 Image、没有任何文字承载
       if (hasImage && !hasTextish && !hasLabel) {
         findings.push({ file: rel, line: i + 1, why: '图标按钮缺 accessibilityLabel（无任何文字承载）' });
       }
@@ -59,11 +73,36 @@ for (const f of files) {
   });
 }
 
+// ③ VListRow 必须把 value 拼进 accessibilityLabel
+const v7src = fs.readFileSync(V7_COMPONENTS, 'utf8');
+const listRow = structBlock(v7src, 'VListRow');
+if (!listRow) {
+  findings.push({ file: 'Design/V7/V7Components.swift', line: 0, why: '找不到 VListRow 组件' });
+} else {
+  const hasLabel = /accessibilityLabel\(/.test(listRow);
+  const hasValueInLabel = /a11yLabel[\s\S]*value/.test(listRow) || /accessibilityLabel\([^)]*value/.test(listRow);
+  if (!hasLabel || !hasValueInLabel) {
+    findings.push({ file: 'Design/V7/V7Components.swift', line: 0, why: 'VListRow 的 accessibilityLabel 未拼上 value（VoiceOver 会吞掉右侧读数）' });
+  }
+}
+
+// ④ 图表组件必须有 accessibilityValue 描述数据
+for (const name of ['VRingStack', 'VMiniBars', 'VAreaChart', 'VSegmentedRing']) {
+  const block = structBlock(v7src, name);
+  if (!block) {
+    findings.push({ file: 'Design/V7/V7Components.swift', line: 0, why: `找不到图表组件 ${name}` });
+    continue;
+  }
+  if (!/\.accessibilityValue\(/.test(block)) {
+    findings.push({ file: 'Design/V7/V7Components.swift', line: 0, why: `${name} 缺 accessibilityValue（图表数据对 VoiceOver 不可读）` });
+  }
+}
+
 console.log(`a11y: 扫 ${files.length} 个文件`);
 if (findings.length === 0) {
-  console.log('a11y: OK — 图标按钮都有 label，无 <44pt 可点区');
+  console.log('a11y: OK — 图标按钮都有 label，无 <44pt 可点区，VListRow value 与图表数据均可朗读');
   process.exit(0);
 }
-console.log(`a11y: FAIL — ${findings.length} 处\n`);
+console.log('a11y: FAIL — ' + findings.length + ' 处\n');
 for (const f of findings) console.log(`  ${f.file}:${f.line}  ${f.why}`);
 process.exit(1);

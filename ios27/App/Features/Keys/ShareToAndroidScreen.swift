@@ -14,7 +14,7 @@ struct ShareToAndroidScreen: View {
     @Environment(Router.self) private var router
 
     /// 二维码显示边长：由间距令牌推导（8 × 32），不写裸数值。
-    private var qrMaxSide: CGFloat { T.S.xxl * 8 }
+    private var qrMaxSide: CGFloat { V.S.gapXXL * 8 }
 
     @State private var qr: UIImage?
     @State private var payloadText = ""
@@ -33,7 +33,7 @@ struct ShareToAndroidScreen: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: T.S.l) {
+            VStack(spacing: V.S.gap16) {
                 header
                 if app.lock == nil {
                     noLockBlock
@@ -45,7 +45,7 @@ struct ShareToAndroidScreen: View {
                 }
                 riskBlock
             }
-            .padding(.vertical, T.S.l)
+            .padding(.vertical, V.S.gap16)
         }
         .captureShield("这张二维码是开锁钥匙\n屏幕正在被录制或截图，已遮挡")
         .background(CanvasBackground())
@@ -72,21 +72,21 @@ struct ShareToAndroidScreen: View {
     // MARK: 页头
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: T.S.xs) {
+        VStack(alignment: .leading, spacing: V.S.gapXS) {
             Text("分享给安卓")
-                .font(T.F.display())
-                .foregroundStyle(Ink.ink)
+                .font(V.F.displayHome)
+                .foregroundStyle(V.C.text1)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            HStack(spacing: T.S.s) {
-                StateDot(tone: qr == nil ? .attention : .ok,
+            HStack(spacing: V.S.gapS) {
+                VStateDot(tone: qr == nil ? .attention : .ok,
                          word: qr == nil ? "还不能分享" : "可以扫码导入")
                 Text(qr == nil ? "本机还没有可交付的钥匙" : "让对方的安卓 App 扫这张码")
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                 Spacer(minLength: 0)
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
     }
@@ -94,52 +94,52 @@ struct ShareToAndroidScreen: View {
     // MARK: 主角：二维码
 
     private func qrBlock(_ image: UIImage) -> some View {
-        Panel {
-            VStack(spacing: T.S.m) {
+        VCard {
+            VStack(spacing: V.S.gapMS) {
                 Image(uiImage: image)
                     .interpolation(.none)          // 二维码放大必须硬边，插值会糊掉模块
                     .resizable()
                     .scaledToFit()
                     .frame(maxWidth: qrMaxSide)
                     .accessibilityLabel("这把锁的配对二维码")
-                ReadingGrid(items: [
+                VReadingGrid(items: [
                     .init(label: "锁", value: app.lock?.name ?? "—"),
                     .init(label: "型号", value: app.lock?.model ?? "—"),
                     .init(label: "MAC", value: app.lock?.id ?? "—"),
                     .init(label: "载荷", value: "mac / pid / ekey"),
                 ])
                 Text("扫完这台安卓就能开这把锁 —— 不用再走一次配网。")
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity)
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var shareBlock: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
                 // SharePreview 的 image 必须是 Image（要 Transferable），挂不了无障碍修饰符 ——
                 // 它是分享卡缩略图（系统渲染），语义由 title "配对码" 承载，本来就不进 VoiceOver 焦点。
                 ShareLink(item: payloadText,
                           preview: SharePreview("配对码", image: Image(systemName: "qrcode"))) {
-                    HStack(spacing: T.S.s) {
+                    HStack(spacing: V.S.gapS) {
                         Image(systemName: "square.and.arrow.up")
                             .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                            .font(T.F.icon(T.Icon.m, weight: .medium))
+                            .font(V.F.icon18Medium)
                         Text("分享这段配对串")
-                            .font(T.F.bodyStrong)
+                            .font(V.F.bodyStrong)
                     }
-                    .foregroundStyle(Signal.on)
+                    .foregroundStyle(V.C.text1)
                     .frame(maxWidth: .infinity)
-                    .frame(minHeight: T.Hit.min + T.S.s)
-                    .background(Signal.base, in: .rect(cornerRadius: T.R.control))
+                    .frame(minHeight: V.Hit.min + V.S.gapS)
+                    .background(V.C.blue, in: .rect(cornerRadius: V.R.control))
                 }
                 .accessibilityLabel("分享配对串")
-                SecondaryAction(
+                VOutlineButton(
                     title: copied ? "已复制" : "复制配对串",
                     systemImage: copied ? "checkmark" : "doc.on.doc"
                 ) {
@@ -147,53 +147,53 @@ struct ShareToAndroidScreen: View {
                     copied = true
                 }
                 Text("这串是安卓配对码（含 mac / pid / ekey，刻意不含 skey）。当面扫、单独发给本人，不要发群里。")
-                    .font(T.F.unit)
-                    .foregroundStyle(Ink.inkFaint)
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 未就绪：说清缺什么 + 给下一步
 
     private var blockedBlock: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "就绪度", trailing: "缺 1 样")
-                ReadingGrid(items: [
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "就绪度", trailing: "缺 1 样")
+                VReadingGrid(items: [
                     .init(label: "锁", value: app.lock?.model ?? "—"),
-                    .init(label: "手机钥匙", value: "缺", tint: State.attention),
+                    .init(label: "手机钥匙", value: "缺", tint: V.C.warning),
                 ])
-                Divider().overlay(Ink.hairline)
+                Divider().overlay(V.C.hairline)
                 KeysInlineNote(tone: .attention, text: "安卓端要拿到一把本机签发的手机钥匙才能开门。现在一把都没有，所以这里不放一张开不了门的码。")
                 KeysInlineNote(tone: .neutral, text: "手机钥匙 = 锁里一个 PIN 签出的开锁凭证。签完回到这一页，码就出来了。")
-                PrimaryAction(title: "去签一把手机钥匙", systemImage: "iphone.gen3.badge.key") {
+                VActionButton(title: "去签一把手机钥匙", systemImage: "iphone.gen3.badge.key") {
                     router.request(.dest(.mobileKey))
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 风险说明（真状态，不是装饰）
 
     private var riskBlock: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.s) {
-                SectionLabel(text: "这张码等于一把钥匙")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapS) {
+                VSectionLabel(text: "这张码等于一把钥匙")
                 Text("谁扫到它，谁就能开这把锁。只当面扫，或单独发给本人；别截图存相册、别发到群里。")
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var noLockBlock: some View {
-        Panel {
-            EmptyPanel(
+        VCard {
+            VEmptyState(
                 title: "还没有添加门锁",
                 message: "分享是把这把锁的钥匙递给安卓。先添加门锁并走完配网，这里才有东西可分享。",
                 actionTitle: "添加门锁",
@@ -201,9 +201,9 @@ struct ShareToAndroidScreen: View {
             ) {
                 router.request(.dest(.addLock))
             }
-            .padding(.vertical, T.S.xxl)
+            .padding(.vertical, V.S.gapXXL)
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 }
 
@@ -221,7 +221,7 @@ enum KeysQR {
         // 静区与白底烘进图里：扫码规范要求四周留白，深色模式下也必须白底黑码 ——
         // 这不是配色选择，是「能不能扫出来」。所以白只存在于这一张位图里，不进颜色令牌。
         // （HIG 审计把 CIColor(red:1,green:1,blue:1) 标为硬编码颜色 —— 这里是位图素材，
-        //  不是界面颜色，不能走 Ink.plate：深色模式下 Ink.plate 是深灰，扫不出来。）
+        //  不是界面颜色，不能走 V.C.card：深色模式下 V.C.card 是深灰，扫不出来。）
         let quiet: CGFloat = scale * 4
         let canvas = scaled.extent.insetBy(dx: -quiet, dy: -quiet)
         let paper = CIImage(color: CIColor(red: 1, green: 1, blue: 1, alpha: 1)).cropped(to: canvas)

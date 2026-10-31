@@ -15,43 +15,43 @@ struct MemberMergeSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: T.S.l) {
-                    Panel {
-                        VStack(alignment: .leading, spacing: T.S.m) {
-                            SectionLabel(text: "主档（保留）")
+                VStack(spacing: V.S.gap16) {
+                    VCard {
+                        VStack(alignment: .leading, spacing: V.S.gapMS) {
+                            VSectionLabel(text: "主档（保留）")
                             Text(primary.name)
-                                .font(T.F.bodyStrong)
-                                .foregroundStyle(Ink.ink)
+                                .font(V.F.bodyStrong)
+                                .foregroundStyle(V.C.text1)
                             SettingsNote(text: "副档名下的密码/指纹归属会迁到这位成员；认领覆盖层一起改判，然后删除副档。")
                         }
                     }
-                    .padding(.horizontal, T.S.gutter)
+                    .padding(.horizontal, V.S.pageGutter)
 
-                    Panel {
-                        VStack(alignment: .leading, spacing: T.S.m) {
-                            SectionLabel(text: "副档（将被删除）", trailing: candidates.isEmpty ? "无" : "\(candidates.count) 位")
+                    VCard {
+                        VStack(alignment: .leading, spacing: V.S.gapMS) {
+                            VSectionLabel(text: "副档（将被删除）", trailing: candidates.isEmpty ? "无" : "\(candidates.count) 位")
                             if candidates.isEmpty {
                                 Text("没有同名成员。若只是称呼重复，请先改名再合并。")
-                                    .font(T.F.body)
-                                    .foregroundStyle(Ink.inkSub)
+                                    .font(V.F.body)
+                                    .foregroundStyle(V.C.text2)
                                     .fixedSize(horizontal: false, vertical: true)
                             } else {
                                 ForEach(candidates) { m in
                                     Button {
                                         secondaryID = m.id
                                     } label: {
-                                        HStack(spacing: T.S.s) {
+                                        HStack(spacing: V.S.gapS) {
                                             Text(m.name)
-                                                .font(T.F.body)
-                                                .foregroundStyle(Ink.ink)
+                                                .font(V.F.body)
+                                                .foregroundStyle(V.C.text1)
                                             Spacer(minLength: 0)
                                             if secondaryID == m.id {
                                                 Image(systemName: "checkmark.circle.fill")
-                                                    .foregroundStyle(Signal.base)
+                                                    .foregroundStyle(V.C.blue)
                                                     .accessibilityHidden(true)
                                             }
                                         }
-                                        .frame(minHeight: T.Hit.min)
+                                        .frame(minHeight: V.Hit.min)
                                         .contentShape(.rect)
                                     }
                                     .buttonStyle(.plain)
@@ -59,18 +59,18 @@ struct MemberMergeSheet: View {
                                 }
                             }
                             if let error {
-                                StatusLine(tone: .critical, text: error)
+                                VStatusLine(tone: .critical, text: error)
                             }
-                            PrimaryAction(title: "执行合并", systemImage: "arrow.triangle.merge") {
+                            VActionButton(title: "执行合并", systemImage: "arrow.triangle.merge") {
                                 merge()
                             }
                             .disabled(secondaryID == nil)
                             .opacity(secondaryID == nil ? 0.4 : 1)
                         }
                     }
-                    .padding(.horizontal, T.S.gutter)
+                    .padding(.horizontal, V.S.pageGutter)
                 }
-                .padding(.vertical, T.S.l)
+                .padding(.vertical, V.S.gap16)
             }
             .background(CanvasBackground())
             .navigationTitle("重复合并")

@@ -48,7 +48,7 @@ struct AddLockScreen: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: T.S.l) {
+            VStack(spacing: V.S.gap16) {
                 header
                 if let banner { bannerPanel(banner) }
                 switch phase {
@@ -66,7 +66,7 @@ struct AddLockScreen: View {
                     donePanel
                 }
             }
-            .padding(.vertical, T.S.l)
+            .padding(.vertical, V.S.gap16)
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
@@ -84,22 +84,22 @@ struct AddLockScreen: View {
     // MARK: 页头
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: T.S.xs) {
+        VStack(alignment: .leading, spacing: V.S.gapXS) {
             Text("添加门锁")
-                .font(T.F.display())
-                .foregroundStyle(Ink.ink)
-            HStack(spacing: T.S.s) {
-                StateDot(tone: headerTone, word: headerWord)
+                .font(V.F.displayHome)
+                .foregroundStyle(V.C.text1)
+            HStack(spacing: V.S.gapS) {
+                VStateDot(tone: headerTone, word: headerWord)
                 Text(headerText)
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                     // 状态行最多两行：宁可换行，不要截断或缩字（缩字会把 13pt 压到 10pt，低于可读下限）
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var headerTone: Tone {
@@ -142,7 +142,7 @@ struct AddLockScreen: View {
     }
 
     private var ladderPanel: some View {
-        Panel {
+        VCard {
             VStack(spacing: 0) {
                 ForEach(Array(Self.stepTitles.enumerated()), id: \.offset) { index, title in
                     if index > 0 { hairline }
@@ -150,36 +150,36 @@ struct AddLockScreen: View {
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func ladderRow(index: Int, title: String) -> some View {
         let done = index < currentStep || phase == .done
         let current = index == currentStep && phase != .done
-        return HStack(spacing: T.S.m) {
+        return HStack(spacing: V.S.gapMS) {
             Text(pad2(index + 1))
-                .font(T.F.reading(13, weight: .medium))
-                .foregroundStyle(done ? Ink.ink : Ink.inkFaint)
+                .font(V.F.number13)
+                .foregroundStyle(done ? V.C.text1 : V.C.text3)
                 .monospacedDigit()
-                .frame(width: T.Icon.xl, alignment: .leading)
+                .frame(width: V.Icon.xl, alignment: .leading)
             Text(title)
-                .font(T.F.body)
-                .foregroundStyle(done ? Ink.ink : (current ? Ink.ink : Ink.inkFaint))
-            Spacer(minLength: T.S.s)
+                .font(V.F.body)
+                .foregroundStyle(done ? V.C.text1 : (current ? V.C.text1 : V.C.text3))
+            Spacer(minLength: V.S.gapS)
             if done {
                 Image(systemName: "checkmark")
                     .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                    .font(T.F.icon(T.Icon.s, weight: .semibold))
-                    .foregroundStyle(Ink.ink)
+                    .font(V.F.icon15Semibold)
+                    .foregroundStyle(V.C.text1)
             } else if current {
-                StateDot(tone: .live, word: "进行中")
+                VStateDot(tone: .live, word: "进行中")
             } else {
                 Text("待")
-                    .font(T.F.unit)
-                    .foregroundStyle(Ink.inkFaint)
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
             }
         }
-        .frame(minHeight: T.Hit.min)
+        .frame(minHeight: V.Hit.min)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("第 \(index + 1) 步 \(title)，\(done ? "已完成" : (current ? "进行中" : "未开始"))")
     }
@@ -187,35 +187,35 @@ struct AddLockScreen: View {
     // MARK: 扫描（进页即扫，可重扫；扫描中给加载态）
 
     private var scanPanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "准备", trailing: "RESET 三声嘀")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "准备", trailing: "RESET 三声嘀")
                 Text("1. 从后面板下方打开板盖。\n2. 长按左侧 RESET 键，直到「嘀嘀嘀」三声后松开。\n3. 保持这一页，等它出现在下面的列表里。")
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                     .fixedSize(horizontal: false, vertical: true)
                 hairline
                 if phase == .scanning {
-                    BusyRow(text: "正在搜索门锁…")
+                    VBusyRow(text: "正在搜索门锁…")
                 } else {
-                    SecondaryAction(title: "重新扫描", systemImage: "arrow.clockwise") {
+                    VOutlineButton(title: "重新扫描", systemImage: "arrow.clockwise") {
                         Task { await scan() }
                     }
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var listPanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "发现的设备", trailing: candidates.isEmpty ? nil : "\(candidates.count) 台")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "发现的设备", trailing: candidates.isEmpty ? nil : "\(candidates.count) 台")
                 if candidates.isEmpty {
                     if phase == .scanning {
-                        BusyRow(text: "10 秒内还没听到广播")
+                        VBusyRow(text: "10 秒内还没听到广播")
                     } else {
-                        EmptyPanel(
+                        VEmptyState(
                             title: "附近没有可配网的锁",
                             message: "先把锁做到重置态（长按 RESET 到三声嘀），手机贴到 2 米内，再点下面的重新扫描。",
                             actionTitle: "重新扫描",
@@ -223,7 +223,7 @@ struct AddLockScreen: View {
                         ) {
                             Task { await scan() }
                         }
-                        .padding(.vertical, T.S.xl)
+                        .padding(.vertical, V.S.gap24)
                     }
                 } else {
                     VStack(spacing: 0) {
@@ -235,36 +235,36 @@ struct AddLockScreen: View {
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func candidateRow(_ c: Candidate) -> some View {
         Button {
             tap(c)
         } label: {
-            HStack(alignment: .top, spacing: T.S.m) {
-                VStack(alignment: .leading, spacing: T.S.xxs) {
+            HStack(alignment: .top, spacing: V.S.gapMS) {
+                VStack(alignment: .leading, spacing: V.S.gapXXS) {
                     Text(c.name)
-                        .font(T.F.bodyStrong)
-                        .foregroundStyle(Ink.ink)
+                        .font(V.F.bodyStrong)
+                        .foregroundStyle(V.C.text1)
                         .lineLimit(1)
                     Text("\(c.mac) · \(c.model)")
-                        .font(T.F.unit)
-                        .foregroundStyle(Ink.inkFaint)
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text3)
                     Text(c.alreadyAdded
                          ? "本机已有这把锁，点它直接去读数页"
                          : (c.inReset ? "重置态 · 可以换钥" : "不在重置态 · 请先做键盘重置"))
-                        .font(T.F.unit)
-                        .foregroundStyle(c.alreadyAdded || c.inReset ? Ink.inkSub : State.attention)
+                        .font(V.F.unit)
+                        .foregroundStyle(c.alreadyAdded || c.inReset ? V.C.text2 : V.C.warning)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                Spacer(minLength: T.S.s)
-                VStack(alignment: .trailing, spacing: T.S.xxs) {
-                    Reading(value: "\(c.rssi)", unit: "dBm", size: 13, tint: Ink.inkSub, animated: false)
-                    StateDot(tone: rowTone(c), word: rowWord(c))
+                Spacer(minLength: V.S.gapS)
+                VStack(alignment: .trailing, spacing: V.S.gapXXS) {
+                    VReading(value: "\(c.rssi)", unit: "dBm", font: V.F.number13, tint: V.C.text2, animated: false)
+                    VStateDot(tone: rowTone(c), word: rowWord(c))
                 }
             }
-            .frame(minHeight: T.Hit.min)
+            .frame(minHeight: V.Hit.min)
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
@@ -291,25 +291,25 @@ struct AddLockScreen: View {
     // MARK: 写锁链（真序列；失败/中止都回滚）
 
     private var chainPanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "写入进度", trailing: picked?.mac)
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "写入进度", trailing: picked?.mac)
                 if let echoResult {
                     Text(echoResult)
-                        .font(T.F.unit)
-                        .foregroundStyle(Ink.inkSub)
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text2)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                VStack(alignment: .leading, spacing: T.S.s) {
+                VStack(alignment: .leading, spacing: V.S.gapS) {
                     ForEach(Array(steps.enumerated()), id: \.offset) { _, line in
-                        HStack(spacing: T.S.s) {
+                        HStack(spacing: V.S.gapS) {
                             Image(systemName: "checkmark")
                                 .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                                .font(T.F.icon(T.Icon.s, weight: .semibold))
-                                .foregroundStyle(Ink.ink)
+                                .font(V.F.icon15Semibold)
+                                .foregroundStyle(V.C.text1)
                             Text(line)
-                                .font(T.F.caption)
-                                .foregroundStyle(Ink.inkSub)
+                                .font(V.F.footnote)
+                                .foregroundStyle(V.C.text2)
                                 .fixedSize(horizontal: false, vertical: true)
                             Spacer(minLength: 0)
                         }
@@ -317,40 +317,40 @@ struct AddLockScreen: View {
                 }
                 hairline
                 Text("写入期间不要离开这一页，也不要走远。任何一步失败，本机会断开链路并清掉半成品，锁不会被改动一半就留着。")
-                    .font(T.F.unit)
-                    .foregroundStyle(Ink.inkFaint)
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
-                SecondaryAction(title: "中止并回滚", systemImage: "xmark") {
+                VOutlineButton(title: "中止并回滚", systemImage: "xmark") {
                     abortRequested = true
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 命名步
 
     private var namingPanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "给锁起个名字", trailing: "必填")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "给锁起个名字", trailing: "必填")
                 TextField("昵称（如 婆婆家·入户门）", text: $nickname)
-                    .font(T.F.body)
+                    .font(V.F.body)
                     .textFieldStyle(.plain)
                     .submitLabel(.next)
-                    .frame(minHeight: T.Hit.min)
+                    .frame(minHeight: V.Hit.min)
                 hairline
                 TextField("场所副标题（如 玄关 / 车库，可留空）", text: $place)
-                    .font(T.F.body)
+                    .font(V.F.body)
                     .textFieldStyle(.plain)
                     .submitLabel(.done)
-                    .frame(minHeight: T.Hit.min)
+                    .frame(minHeight: V.Hit.min)
                 hairline
                 Text("昵称会出现在「门」页的页头与读数页；场所副标题用来区分同一栋楼里的几道门。")
-                    .font(T.F.unit)
-                    .foregroundStyle(Ink.inkFaint)
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
-                PrimaryAction(
+                VActionButton(
                     title: "完成添加",
                     systemImage: "checkmark",
                     busy: false
@@ -361,58 +361,58 @@ struct AddLockScreen: View {
                 .disabled(nickname.trimmingCharacters(in: .whitespaces).isEmpty)
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 完成步（给下一步出路）
 
     private var donePanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "已添加", trailing: picked?.mac)
-                StatusLine(tone: .ok, text: "密钥已写入，锁端已应答")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "已添加", trailing: picked?.mac)
+                VStatusLine(tone: .ok, text: "密钥已写入，锁端已应答")
                 hairline
                 Text("立刻做一次全量备份：本机密钥只存在这台手机上，换机或卸载前必须备份。")
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                     .fixedSize(horizontal: false, vertical: true)
                 Text("下一步：回「门」页成功开一次锁，锁端会给这一次打上「链路已验证」标记 —— 之后才谈得上自动开锁与临时码。")
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                     .fixedSize(horizontal: false, vertical: true)
                 hairline
-                PrimaryAction(title: "去门页开一次锁", systemImage: "door.left.hand.closed") {
+                VActionButton(title: "去门页开一次锁", systemImage: "door.left.hand.closed") {
                     router.request(.none)
                     router.select(.door)
                 }
-                SecondaryAction(title: "去读锁实况", systemImage: "gauge.with.dots.needle.50percent") {
+                VOutlineButton(title: "去读锁实况", systemImage: "gauge.with.dots.needle.50percent") {
                     router.request(.dest(.lockStatus))
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func bannerPanel(_ text: String) -> some View {
-        Panel {
-            HStack(alignment: .top, spacing: T.S.s) {
+        VCard {
+            HStack(alignment: .top, spacing: V.S.gapS) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                    .font(T.F.icon(T.Icon.s, weight: .semibold))
-                    .foregroundStyle(State.attention)
-                VStack(alignment: .leading, spacing: T.S.xxs) {
+                    .font(V.F.icon15Semibold)
+                    .foregroundStyle(V.C.warning)
+                VStack(alignment: .leading, spacing: V.S.gapXXS) {
                     Text("这一次没有配完")
-                        .font(T.F.bodyStrong)
-                        .foregroundStyle(Ink.ink)
+                        .font(V.F.bodyStrong)
+                        .foregroundStyle(V.C.text1)
                     Text(text)
-                        .font(T.F.caption)
-                        .foregroundStyle(Ink.inkSub)
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text2)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 0)
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 交互
@@ -540,7 +540,7 @@ struct AddLockScreen: View {
 
     private var hairline: some View {
         Rectangle()
-            .fill(Ink.hairline)
-            .frame(height: T.Stroke.hair)
+            .fill(V.C.hairline)
+            .frame(height: V.S.hair)
     }
 }

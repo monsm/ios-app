@@ -17,7 +17,7 @@ struct HardwareScreen: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: T.S.l) {
+            VStack(spacing: V.S.gap16) {
                 SettingsHeader(title: "钥匙串 / 硬件", tone: tone, status: status)
                 if store.dongles.isEmpty {
                     emptyPanel
@@ -27,7 +27,7 @@ struct HardwareScreen: View {
                 }
                 scopePanel
             }
-            .padding(.vertical, T.S.l)
+            .padding(.vertical, V.S.gap16)
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
@@ -56,61 +56,61 @@ struct HardwareScreen: View {
 
     // MARK: 台账（一台一段读数，不是卡片堆）
     private var ledgerPanel: some View {
-        VStack(spacing: T.S.s) {
-            SectionLabel(text: "已登记", trailing: store.lastScanAt.map { TimeFormat.ago($0) })
+        VStack(spacing: V.S.gapS) {
+            VSectionLabel(text: "已登记", trailing: store.lastScanAt.map { TimeFormat.ago($0) })
             ForEach(store.dongles) { d in
-                Panel {
-                    VStack(alignment: .leading, spacing: T.S.m) {
-                        HStack(alignment: .firstTextBaseline, spacing: T.S.s) {
+                VCard {
+                    VStack(alignment: .leading, spacing: V.S.gapMS) {
+                        HStack(alignment: .firstTextBaseline, spacing: V.S.gapS) {
                             Text(d.name)
-                                .font(T.F.bodyStrong)
-                                .foregroundStyle(Ink.ink)
-                            Spacer(minLength: T.S.s)
-                            StateDot(
+                                .font(V.F.bodyStrong)
+                                .foregroundStyle(V.C.text1)
+                            Spacer(minLength: V.S.gapS)
+                            VStateDot(
                                 tone: d.holdsThisLock ? .ok : .attention,
                                 word: d.holdsThisLock ? "已写这把锁" : "未写这把锁"
                             )
                             Text(d.holdsThisLock ? "已写这把锁" : "未写这把锁")
-                                .font(T.F.unit)
-                                .foregroundStyle(d.holdsThisLock ? Ink.inkSub : State.attention)
+                                .font(V.F.unit)
+                                .foregroundStyle(d.holdsThisLock ? V.C.text2 : V.C.warning)
                         }
                         Text(d.mac)
-                            .font(T.F.stamp)
-                            .foregroundStyle(Ink.inkFaint)
+                            .font(V.F.stamp)
+                            .foregroundStyle(V.C.text3)
                             .monospacedDigit()
                         SettingRule()
-                        ReadingGrid(items: [
+                        VReadingGrid(items: [
                             .init(label: "电量", value: "\(d.battery)", unit: "%",
-                                  tint: d.battery < 20 ? State.attention : Ink.ink),
+                                  tint: d.battery < 20 ? V.C.warning : V.C.text1),
                             .init(label: "钥匙", value: "\(d.keys)", unit: "把"),
                             .init(label: "固件", value: d.firmware),
                         ], columns: 3)
-                        .padding(.top, T.S.xs)
+                        .padding(.top, V.S.gapXS)
                         SettingRule()
                         if writingId == d.id {
-                            BusyRow(text: "正在写入 · 钥匙串请贴近手机")
+                            VBusyRow(text: "正在写入 · 钥匙串请贴近手机")
                         } else if d.holdsThisLock {
-                            SecondaryAction(title: "撤销这把锁的钥匙", systemImage: "key.slash") {
+                            VOutlineButton(title: "撤销这把锁的钥匙", systemImage: "key.slash") {
                                 revoke(d)
                             }
                         } else {
                             // 同屏只有一处 signal 填充（扫描面板那颗）。这里的写入是描边动作。
-                            SecondaryAction(title: "把「\(app.lock?.name ?? "这把锁")」的钥匙写进去",
+                            VOutlineButton(title: "把「\(app.lock?.name ?? "这把锁")」的钥匙写进去",
                                             systemImage: "key.horizontal") {
                                 write(d)
                             }
                         }
                     }
                 }
-                .padding(.horizontal, T.S.gutter)
+                .padding(.horizontal, V.S.pageGutter)
             }
         }
     }
 
     // MARK: 空态（给出路：扫描 —— 这是这一屏唯一的第一步）
     private var emptyPanel: some View {
-        Panel {
-            EmptyPanel(
+        VCard {
+            VEmptyState(
                 title: "还没有登记钥匙串",
                 message: "下一步：把钥匙串拿到手机旁，点「扫描钥匙串」。只认厂商的钥匙串（型号 ZKBBV1），扫描 15 秒，认不到就是没电或没在广播。",
                 actionTitle: "扫描钥匙串",
@@ -118,57 +118,57 @@ struct HardwareScreen: View {
             ) {
                 scan()
             }
-            .padding(.vertical, T.S.xl)
+            .padding(.vertical, V.S.gap24)
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 扫描
     private var scanPanel: some View {
-        VStack(spacing: T.S.s) {
-            SectionLabel(text: "扫描")
-            Panel {
-                VStack(alignment: .leading, spacing: T.S.m) {
+        VStack(spacing: V.S.gapS) {
+            VSectionLabel(text: "扫描")
+            VCard {
+                VStack(alignment: .leading, spacing: V.S.gapMS) {
                     if scanning {
-                        BusyRow(text: "正在扫描 · 15 秒内把钥匙串放在手机旁")
+                        VBusyRow(text: "正在扫描 · 15 秒内把钥匙串放在手机旁")
                     } else {
-                        ReadingGrid(items: [
+                        VReadingGrid(items: [
                             .init(label: "上次扫描",
                                   value: store.lastScanAt.map { TimeFormat.clock($0) } ?? "从未"),
                             .init(label: "已登记", value: "\(store.dongles.count)", unit: "台"),
                         ], columns: 2)
-                        .padding(.top, T.S.xs)
+                        .padding(.top, V.S.gapXS)
                         SettingRule()
-                        PrimaryAction(title: "扫描钥匙串", systemImage: "dot.radiowaves.left.and.right") {
+                        VActionButton(title: "扫描钥匙串", systemImage: "dot.radiowaves.left.and.right") {
                             scan()
                         }
                     }
                     SettingsNote(text: "扫描只认 pid 16289 且广播里带 MAC 的设备。扫不到时先确认钥匙串有电（按一下按键看灯），再靠近手机 30 厘米内。")
                 }
             }
-            .padding(.horizontal, T.S.gutter)
+            .padding(.horizontal, V.S.pageGutter)
         }
     }
 
     // MARK: 能力边界（诚实说明这一屏不管什么）
     private var scopePanel: some View {
-        VStack(spacing: T.S.s) {
-            SectionLabel(text: "边界")
-            Panel {
-                VStack(alignment: .leading, spacing: T.S.m) {
+        VStack(spacing: V.S.gapS) {
+            VSectionLabel(text: "边界")
+            VCard {
+                VStack(alignment: .leading, spacing: V.S.gapMS) {
                     SettingsNote(text: "钥匙串是独立硬件：它把某把锁的 ekey 写进去，之后不带手机也能开门。它不等于「手机钥匙」—— 手机钥匙是发给成员手机的，写入对象是账号。")
                     SettingRule()
                     SettingRow(
                         label: "手机钥匙（发给成员）",
                         value: "在家 · 成员",
-                        tint: Ink.inkSub,
+                        tint: V.C.text2,
                         mono: false,
                         symbol: "iphone.gen3",
                         note: "给成员发数字钥匙的入口在「家」那一页。"
                     ) { router.request(.dest(.household)) }
                 }
             }
-            .padding(.horizontal, T.S.gutter)
+            .padding(.horizontal, V.S.pageGutter)
         }
     }
 

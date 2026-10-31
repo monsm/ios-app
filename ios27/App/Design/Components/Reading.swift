@@ -10,23 +10,23 @@ struct Reading: View {
     var unit: String? = nil
     var size: CGFloat = 17
     var weight: Font.Weight = .medium
-    var tint: Color = Ink.ink
+    var tint: Color = V.C.text1
     /// 变化时是否做数字滚动（reduceMotion 下自动关）。
     var animated: Bool = true
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: T.S.xs) {
+        HStack(alignment: .firstTextBaseline, spacing: V.S.gapXS) {
             Text(value)
-                .font(T.F.reading(size, weight: weight))
+                .font(V.F.sans(size, weight: weight))
                 .foregroundStyle(tint)
                 .monospacedDigit()
                 .contentTransition(reduceMotion || !animated ? .identity : .numericText())
             if let unit {
                 Text(unit)
-                    .font(T.F.unit)
-                    .foregroundStyle(Ink.inkFaint)
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
                     .tracking(0.6)
             }
         }
@@ -39,25 +39,25 @@ struct FieldRow: View {
     let label: String
     let value: String
     var unit: String? = nil
-    var tint: Color = Ink.ink
+    var tint: Color = V.C.text1
     var mono: Bool = true
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: T.S.m) {
+        HStack(alignment: .firstTextBaseline, spacing: V.S.gapMS) {
             Text(label)
-                .font(T.F.body)
-                .foregroundStyle(Ink.inkSub)
-            Spacer(minLength: T.S.s)
+                .font(V.F.body)
+                .foregroundStyle(V.C.text2)
+            Spacer(minLength: V.S.gapS)
             if mono {
                 Reading(value: value, unit: unit, size: 15, tint: tint, animated: false)
             } else {
                 Text(value)
-                    .font(T.F.bodyStrong)
+                    .font(V.F.bodyStrong)
                     .foregroundStyle(tint)
                     .multilineTextAlignment(.trailing)
             }
         }
-        .frame(minHeight: T.Hit.min - T.S.s)
+        .frame(minHeight: V.Hit.min - V.S.gapS)
         .accessibilityElement(children: .combine)
     }
 }
@@ -69,7 +69,7 @@ struct ReadingGrid: View {
         let label: String
         let value: String
         var unit: String? = nil
-        var tint: Color = Ink.ink
+        var tint: Color = V.C.text1
     }
 
     let items: [Item]
@@ -86,16 +86,16 @@ struct ReadingGrid: View {
             ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
                 if index > 0 {
                     Rectangle()
-                        .fill(Ink.hairline)
-                        .frame(height: T.Stroke.hair)
-                        .padding(.vertical, T.S.m)
+                        .fill(V.C.hairline)
+                        .frame(height: V.S.hair)
+                        .padding(.vertical, V.S.gapMS)
                 }
-                HStack(alignment: .top, spacing: T.S.m) {
+                HStack(alignment: .top, spacing: V.S.gapMS) {
                     ForEach(row) { item in
-                        VStack(alignment: .leading, spacing: T.S.xs) {
+                        VStack(alignment: .leading, spacing: V.S.gapXS) {
                             Text(item.label)
-                                .font(T.F.unit)
-                                .foregroundStyle(Ink.inkFaint)
+                                .font(V.F.unit)
+                                .foregroundStyle(V.C.text3)
                                 .tracking(0.6)
                             Reading(value: item.value, unit: item.unit, size: 22, tint: item.tint)
                         }

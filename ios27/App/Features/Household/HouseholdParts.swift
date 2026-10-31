@@ -1,6 +1,6 @@
 // HouseholdParts.swift —— 家域私有的小零件（不进 Design/，避免与 lead 的组件库冲突）。
 //
-// 纪律：只组合已有令牌（T./Ink./Signal./State.），不发明第二种行语法。
+// 纪律：只组合 V7 令牌（V.C / V.F / V.S），不发明第二种行语法。
 // 家域的行一律「符号 → 文字 → 右侧读数/箭头」，与 DoorScreen 的 shortcutRow 同形。
 import SwiftUI
 import UIKit
@@ -9,13 +9,13 @@ import UIKit
 
 enum HHMetric {
     /// 行内头像：与 18pt 图标同视觉重量。
-    static let avatarRow: CGFloat = T.Icon.xl + T.S.s
+    static let avatarRow: CGFloat = V.Icon.xl + V.S.gapS
     /// 页头头像：与 34pt 标题同排，需要 44 触达那一档。
-    static let avatarHero: CGFloat = T.Icon.xl + T.S.l
+    static let avatarHero: CGFloat = V.Icon.xl + V.S.gap16
     /// 行内读数字号：比正文读数小一档，与右侧「活跃/久未用」小字同排。
-    static let readingRow: CGFloat = T.Icon.s
+    static let readingRow: CGFloat = V.Icon.s
     /// 序列刻度字号（向导 01/02/03/04）：与读数网格 22 之下的一档。
-    static let readingStep: CGFloat = T.Icon.m
+    static let readingStep: CGFloat = V.Icon.m
 }
 
 // MARK: - 头像（首字 / emoji 代号，零图片资源）
@@ -25,16 +25,16 @@ struct HHAvatar: View {
     var emoji: String = ""
     var size: CGFloat = HHMetric.avatarRow
     /// emoji 代号的字号：调用方按头像档位给一个令牌字号，不在视图里算比例。
-    var glyph: Font = T.F.body
+    var glyph: VFont = V.F.body
 
     var body: some View {
         ZStack {
-            Circle().fill(Ink.plateAlt)
-            Circle().strokeBorder(Ink.hairline, lineWidth: T.Stroke.hair)
+            Circle().fill(V.C.cardAlt)
+            Circle().strokeBorder(V.C.hairline, lineWidth: V.S.hair)
             if emoji.isEmpty {
                 Text(initial)
-                    .font(T.F.bodyStrong)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.bodyStrong)
+                    .foregroundStyle(V.C.text2)
             } else {
                 Text(emoji)
                     .font(glyph)
@@ -57,14 +57,14 @@ struct HHRoleMark: View {
     var compact: Bool = false
 
     var body: some View {
-        HStack(spacing: T.S.xs) {
+        HStack(spacing: V.S.gapXS) {
             Image(systemName: symbol)
                 .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                .font(T.F.icon(T.Icon.s, weight: .regular))
+                .font(V.F.icon15)
             Text(role.rawValue)
-                .font(compact ? T.F.unit : T.F.caption)
+                .font(compact ? V.F.unit : V.F.footnote)
         }
-        .foregroundStyle(Ink.inkSub)
+        .foregroundStyle(V.C.text2)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("角色 \(role.rawValue)")
     }
@@ -83,8 +83,8 @@ struct HHRoleMark: View {
 struct HHRule: View {
     var body: some View {
         Rectangle()
-            .fill(Ink.hairline)
-            .frame(height: T.Stroke.hair)
+            .fill(V.C.hairline)
+            .frame(height: V.S.hair)
     }
 }
 
@@ -102,34 +102,34 @@ struct HHRowButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: T.S.m) {
+            HStack(spacing: V.S.gapMS) {
                 if let symbol {
                     Image(systemName: symbol)
                         .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                        .font(T.F.icon(T.Icon.m, weight: .regular))
-                        .foregroundStyle(Ink.inkSub)
-                        .frame(width: T.Icon.xl, alignment: .leading)
+                        .font(V.F.icon18)
+                        .foregroundStyle(V.C.text2)
+                        .frame(width: V.Icon.xl, alignment: .leading)
                 }
                 Text(title)
-                    .font(T.F.body)
-                    .foregroundStyle(Ink.ink)
-                Spacer(minLength: T.S.s)
+                    .font(V.F.body)
+                    .foregroundStyle(V.C.text1)
+                Spacer(minLength: V.S.gapS)
                 if let readingValue {
-                    Reading(value: readingValue, unit: readingUnit, size: HHMetric.readingRow, tint: Ink.ink, animated: false)
+                    VReading(value: readingValue, unit: readingUnit, font: V.F.number15, tint: V.C.text1, animated: false)
                 } else if let detail {
                     Text(detail)
-                        .font(T.F.caption)
-                        .foregroundStyle(Ink.inkSub)
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text2)
                         .multilineTextAlignment(.trailing)
                 }
                 if showsChevron {
                     Image(systemName: "chevron.right")
                         .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                        .font(T.F.icon(T.Icon.s, weight: .medium))
-                        .foregroundStyle(Ink.inkFaint)
+                        .font(V.F.icon15Medium)
+                        .foregroundStyle(V.C.text3)
                 }
             }
-            .frame(minHeight: T.Hit.min)
+            .frame(minHeight: V.Hit.min)
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
@@ -149,15 +149,15 @@ struct HHPill: View {
     let allowed: Bool
 
     var body: some View {
-        HStack(spacing: T.S.xs) {
+        HStack(spacing: V.S.gapXS) {
             Image(systemName: allowed ? "checkmark.circle" : "xmark.circle")
                 .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                .font(T.F.icon(T.Icon.s, weight: .regular))
+                .font(V.F.icon15)
             Text(allowed ? "允许" : "禁用")
-                .font(T.F.unit)
+                .font(V.F.unit)
                 .tracking(0.6)
         }
-        .foregroundStyle(allowed ? Ink.ink : Ink.inkFaint)
+        .foregroundStyle(allowed ? V.C.text1 : V.C.text3)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(allowed ? "允许" : "禁用")
     }
@@ -172,30 +172,30 @@ struct HHPageHeader: View {
     let status: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: T.S.xs) {
+        VStack(alignment: .leading, spacing: V.S.gapXS) {
             if let overline {
                 Text(overline)
-                    .font(T.F.unit)
-                    .foregroundStyle(Ink.inkFaint)
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
                     .tracking(0.6)
             }
             Text(title)
-                .font(T.F.display())
-                .foregroundStyle(Ink.ink)
+                .font(V.F.displayHome)
+                .foregroundStyle(V.C.text1)
                 // 标题最多两行；缩字只收到 0.85（0.6 会把 34pt 压成 20pt，中文长名字会糊）
                 .lineLimit(2)
                 .minimumScaleFactor(0.85)
-            HStack(spacing: T.S.s) {
-                StateDot(tone: tone, word: status)
+            HStack(spacing: V.S.gapS) {
+                VStateDot(tone: tone, word: status)
                 Text(status)
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
         .accessibilityElement(children: .combine)
     }
 }
@@ -209,23 +209,23 @@ struct HHTextField: View {
     var keyboard: UIKeyboardType = .default
 
     var body: some View {
-        VStack(alignment: .leading, spacing: T.S.xs) {
+        VStack(alignment: .leading, spacing: V.S.gapXS) {
             Text(label)
-                .font(T.F.unit)
-                .foregroundStyle(Ink.inkFaint)
+                .font(V.F.unit)
+                .foregroundStyle(V.C.text3)
                 .tracking(0.6)
             TextField(placeholder, text: $text)
-                .font(T.F.body)
-                .foregroundStyle(Ink.ink)
+                .font(V.F.body)
+                .foregroundStyle(V.C.text1)
                 .textFieldStyle(.plain)
                 .autocorrectionDisabled()
                 .keyboardType(keyboard)
-                .padding(.horizontal, T.S.m)
-                .frame(minHeight: T.Hit.min)
-                .background(Ink.plateAlt, in: .rect(cornerRadius: T.R.control))
+                .padding(.horizontal, V.S.gapMS)
+                .frame(minHeight: V.Hit.min)
+                .background(V.C.cardAlt, in: .rect(cornerRadius: V.R.control))
                 .overlay {
-                    RoundedRectangle(cornerRadius: T.R.control, style: .continuous)
-                        .strokeBorder(Ink.hairline, lineWidth: T.Stroke.hair)
+                    RoundedRectangle(cornerRadius: V.R.control, style: .continuous)
+                        .strokeBorder(V.C.hairline, lineWidth: V.S.hair)
                 }
         }
         .accessibilityElement(children: .contain)
@@ -243,32 +243,32 @@ struct HHMemberRow: View {
     var status: HHMemberStatus = .active
 
     var body: some View {
-        HStack(spacing: T.S.m) {
+        HStack(spacing: V.S.gapMS) {
             HHAvatar(name: member.name, emoji: extras.emoji)
-            VStack(alignment: .leading, spacing: T.S.xxs) {
-                HStack(spacing: T.S.s) {
+            VStack(alignment: .leading, spacing: V.S.gapXXS) {
+                HStack(spacing: V.S.gapS) {
                     Text(HHDisplay.name(member, extras: extras))
-                        .font(T.F.bodyStrong)
-                        .foregroundStyle(Ink.ink)
+                        .font(V.F.bodyStrong)
+                        .foregroundStyle(V.C.text1)
                         .lineLimit(1)
                     HHRoleMark(role: member.role, compact: true)
                     Spacer(minLength: 0)
                 }
                 Text(subline)
-                    .font(T.F.unit)
-                    .foregroundStyle(status == .stale || status == .archived ? Ink.inkFaint : Ink.inkSub)
+                    .font(V.F.unit)
+                    .foregroundStyle(status == .stale || status == .archived ? V.C.text3 : V.C.text2)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Spacer(minLength: T.S.s)
-            VStack(alignment: .trailing, spacing: T.S.xxs) {
-                Reading(value: "\(member.keyCount)", unit: "枚", size: HHMetric.readingRow, tint: Ink.ink, animated: false)
+            Spacer(minLength: V.S.gapS)
+            VStack(alignment: .trailing, spacing: V.S.gapXXS) {
+                VReading(value: "\(member.keyCount)", unit: "枚", font: V.F.number15, tint: V.C.text1, animated: false)
                 Text(status == .stale ? "久未用" : "活跃")
-                    .font(T.F.unit)
-                    .foregroundStyle(status == .stale ? Ink.inkFaint : State.ok)
+                    .font(V.F.unit)
+                    .foregroundStyle(status == .stale ? V.C.text3 : V.C.rewardGreen)
             }
         }
-        .frame(minHeight: T.Hit.min + T.S.s)
+        .frame(minHeight: V.Hit.min + V.S.gapS)
         .contentShape(.rect)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(HHDisplay.a11y(member, extras: extras, subline: subline))
@@ -323,27 +323,27 @@ struct HHToggleRow: View {
 
     var body: some View {
         Button(action: toggle) {
-            HStack(spacing: T.S.m) {
-                VStack(alignment: .leading, spacing: T.S.xxs) {
+            HStack(spacing: V.S.gapMS) {
+                VStack(alignment: .leading, spacing: V.S.gapXXS) {
                     Text(title)
-                        .font(T.F.body)
-                        .foregroundStyle(enabled ? Ink.ink : Ink.inkFaint)
+                        .font(V.F.body)
+                        .foregroundStyle(enabled ? V.C.text1 : V.C.text3)
                     if let detail {
                         Text(detail)
-                            .font(T.F.unit)
-                            .foregroundStyle(Ink.inkFaint)
+                            .font(V.F.unit)
+                            .foregroundStyle(V.C.text3)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
-                Spacer(minLength: T.S.s)
-                HStack(spacing: T.S.s) {
-                    StateDot(tone: isOn ? .live : .neutral, word: isOn ? "开" : "关")
+                Spacer(minLength: V.S.gapS)
+                HStack(spacing: V.S.gapS) {
+                    VStateDot(tone: isOn ? .live : .neutral, word: isOn ? "开" : "关")
                     Text(isOn ? "开" : "关")
-                        .font(T.F.caption)
-                        .foregroundStyle(isOn ? Ink.ink : Ink.inkSub)
+                        .font(V.F.footnote)
+                        .foregroundStyle(isOn ? V.C.text1 : V.C.text2)
                 }
             }
-            .frame(minHeight: T.Hit.min)
+            .frame(minHeight: V.Hit.min)
             .contentShape(.rect)
         }
         .buttonStyle(.plain)

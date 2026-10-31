@@ -324,6 +324,10 @@ final class RecordsRoute {
     var flashID: String?
     /// 详情页「搜这类记录」带回来的检索词。
     var searchSeed: String?
+    /// 告警类型多选（空 = 不限）。记录页与「告警类型」页共用这一份。
+    var alarmKinds: Set<Int> = []
+    /// 访客过滤（家页「访客 · 临时码未归属」带过来的上下文）。
+    var visitorOnly = false
 }
 
 // MARK: - 导出行模型（record.export.fields）

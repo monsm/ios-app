@@ -46,11 +46,32 @@ final class AppModel {
     /// 最近一次失败的原因（页面就地展示）。
     var lastError: String?
 
+    // MARK: - 开锁链的可见状态（原版 UnlockDial 的进度 / 失败链 / 自动上锁倒计时）
+
+    /// 开锁链三段进度：0 待机 / 1 握手 / 2 鉴权下发 / 3 等回执。
+    var unlockPhase: Int = 0
+    /// 连续失败次数（失败终态显示三项自查清单）。
+    var failStreak: Int = 0
+    /// 退避重试的倒计时文案（2s / 5s）。
+    var retryHint: String?
+    /// 自动上锁倒计时（秒）。nil = 不显示。
+    var autoLockLeft: Int?
+    /// 最近一次开锁成功的时刻（毫秒）。30 秒内再次开锁要过本机密码闸。
+    var lastUnlockSuccessAt: Int64?
+    @ObservationIgnored private var autoLockTask: Task<Void, Never>?
+
     /// 弱引用路由：EngineHost 的唯一跳转出口。由 RootView 在装配时注入。
     @ObservationIgnored weak var router: Router?
 
     /// 当前锁的 MAC（没锁时回落本机偏好锁；DB.preferredMac 内部会做归一化）。
-    var currentMac: String { lock?.id ?? DB.preferredMac() }
+    /// 「锁档案 · 设为启动默认锁」的真实消费点：冷启动 app.lock 还是 nil 时先落默认锁，
+    /// 默认锁不存在（已解绑）才回退上次停留的那把。
+    var currentMac: String {
+        if let lock { return lock.id }
+        let def = LockArchive.defaultMac
+        if !def.isEmpty, DB.keychain(def) != nil { return def }
+        return DB.preferredMac()
+    }
 
     // MARK: - 载入
 
@@ -125,7 +146,7 @@ final class AppModel {
                 owner: p.owner,
                 code: p.pwd.map { String(repeating: "•", count: max(4, $0.count)) },
                 expiresAt: Self.epochMillis(p.to),
-                disabled: false
+                disabled: CredentialLocalState.isDisabled(mac: m, id: "pwd:\(p.alias)")
             ))
         }
         for f in l.fps {
@@ -136,7 +157,7 @@ final class AppModel {
                 owner: f.owner,
                 code: nil,
                 expiresAt: nil,   // 指纹台账没有到期字段（LedgerFp 只有 batch/name/at/note/src/owner/isAlarm）
-                disabled: false
+                disabled: CredentialLocalState.isDisabled(mac: m, id: "fp:\(f.batch)")
             ))
         }
         for k in MobileKeyService.list(m) {
@@ -147,7 +168,7 @@ final class AppModel {
                 owner: k.memberName,
                 code: k.ekey,
                 expiresAt: k.forever ? nil : Self.epochMillis(k.validTo),
-                disabled: false
+                disabled: CredentialLocalState.isDisabled(mac: m, id: "mkey:\(k.id)")
             ))
         }
         keys = out
@@ -192,9 +213,13 @@ final class AppModel {
         }
     }
 
-    // MARK: - 开锁（真链路）
+    // MARK: - 开锁（真链路 + 失败重试链 + 自动上锁倒计时）
 
     /// 开锁链：ensureConnected → cmd04 → 回执。刻度盘的进度弧跟着真实阶段走。
+    /// 失败处理链（原版 DeviceHomeBlocks.swift:403-519）：
+    ///   · 自动重试 2 次（2s / 5s 退避）；超时不重试 —— 门口反复广播比失败更糟；
+    ///   · 连续失败累计 failStreak，第三次起由门页显示三项自查清单与「再试一次」；
+    ///   · 成功才记 lastUnlockSuccessAt / Milestones，并起自动上锁倒计时。
     func runUnlockChain() async {
         guard dialPhase == .idle || dialPhase.isFailed else { return }
         let mac = currentMac
@@ -202,30 +227,89 @@ final class AppModel {
             dialPhase = .failed("还没有添加门锁")
             return
         }
-        dialPhase = .reaching
+        let maxAttempts = SettingsStore.shared.autoRetry ? 3 : 1
         lastError = nil
-        do {
-            try await LockService.shared.ensureConnected(mac: mac)
-            dialPhase = .sending
-            let rc = try await LockService.shared.unlock(mac: mac)
-            dialPhase = .waiting
-            // rc 0 = 成功；22 = 需要双验（本机没有第二因子时按"已下发"处理并如实说）
-            if rc == 0 || rc == 22 {
-                dialPhase = .opened
-                lastActionAt = Int64(Date().timeIntervalSince1970 * 1000)
-                Milestones.recordUnlockSuccess()
-                await reload(refreshStatus: false)
-                try? await Task.sleep(for: .milliseconds(900))
-                if dialPhase == .opened { dialPhase = .idle }
-            } else {
-                let msg = StatusParser.rcFriendly(rc)
+        retryHint = nil
+        for attempt in 0 ..< maxAttempts {
+            if Task.isCancelled { break }
+            do {
+                unlockPhase = 1
+                dialPhase = .reaching
+                try await LockService.shared.ensureConnected(mac: mac)
+                unlockPhase = 2
+                dialPhase = .sending
+                // 「锁档案 · 开锁 PIN」的真实消费点：选过第 N 枚就传第 N 枚，
+                // 没选（-1）交给 LockService 用第一枚（与旧版自动档同义）。
+                let rc = try await LockService.shared.unlock(mac: mac, pinDec: chosenPin(mac))
+                unlockPhase = 3
+                dialPhase = .waiting
+                if rc == 0 || rc == 22 {
+                    dialPhase = .opened
+                    unlockPhase = 3
+                    let now = Int64(Date().timeIntervalSince1970 * 1000)
+                    lastActionAt = now
+                    lastUnlockSuccessAt = now
+                    failStreak = 0
+                    retryHint = nil
+                    Milestones.recordUnlockSuccess()
+                    await reload(refreshStatus: false)
+                    startAutoLockCountdown()
+                    try? await Task.sleep(for: .milliseconds(900))
+                    if dialPhase == .opened { dialPhase = .idle; unlockPhase = 0 }
+                    return
+                }
+                throw BLEErrorX.msg(StatusParser.rcFriendly(rc))
+            } catch {
+                let msg = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                let timeout = msg.contains("超时") || msg.lowercased().contains("timeout")
+                failStreak += 1
+                if attempt + 1 < maxAttempts, !timeout {
+                    retryHint = "第 \(attempt + 1) 次没成 · \(attempt == 0 ? 2 : 5) 秒后自动重试"
+                    dialPhase = .reaching
+                    unlockPhase = 1
+                    try? await Task.sleep(for: .seconds(attempt == 0 ? 2 : 5))
+                    if Task.isCancelled { break }
+                    continue
+                }
                 lastError = msg
+                retryHint = nil
+                unlockPhase = 0
                 dialPhase = .failed(msg)
+                return
             }
-        } catch {
-            let msg = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            lastError = msg
-            dialPhase = .failed(msg)
+        }
+    }
+
+    /// 中途撤销等待（原版「轻点圆盘可撤销」）：只回到待机，不补发任何命令。
+    func cancelUnlock() {
+        autoLockTask?.cancel()
+        autoLockTask = nil
+        retryHint = nil
+        unlockPhase = 0
+        if dialPhase.isBusy { dialPhase = .idle }
+    }
+
+    /// 锁档案里选的那枚 PIN；-1 / 越界 = 交给 LockService 的自动档。
+    private func chosenPin(_ mac: String) -> String? {
+        let idx = DB.store.getInt("kf_chosen_pin_" + mac, -1)
+        guard idx >= 0, let kc = DB.keychain(mac), idx < kc.pins.count else { return nil }
+        return kc.pins[idx]
+    }
+
+    /// 自动上锁倒计时：档位取 cmd24 的本机记忆（kf_tailgate_），没设过按厂商默认 6 秒。
+    /// 这是本地回放，不是门磁读数 —— 文案写「约 N 秒后自动上锁 · 请确认门已关好」。
+    func startAutoLockCountdown() {
+        autoLockTask?.cancel()
+        let interval = DB.tailgate(currentMac)?.interval ?? 6
+        let total = max(2, interval + 1)
+        autoLockLeft = total
+        autoLockTask = Task { @MainActor in
+            for left in stride(from: total, through: 1, by: -1) {
+                if Task.isCancelled { return }
+                autoLockLeft = left
+                try? await Task.sleep(for: .seconds(1))
+            }
+            autoLockLeft = nil
         }
     }
 
@@ -284,6 +368,29 @@ final class AppModel {
                 alias: alias, from: from, to: to, temp: false,
                 at: Date().timeIntervalSince1970 * 1000,
                 pwd: pwd, owner: nil, note: "密码 \(alias)"
+            ))
+            DB.saveLedger(mac, l)
+            reloadKeys(mac)
+            return .success(alias)
+        } catch {
+            return .failure(error)
+        }
+    }
+
+    /// 向导 / 临时码：cmd0A 真下发（起止时间区分临时档），成功才写台账并标记 temp。
+    /// 成员向导第 4 步用它把「10 分钟临时码」真正落库（旧实现只 append 内存，刷新即消失）。
+    func addTempCode(_ pwd: String, from: String, to: String,
+                     owner: String, note: String) async -> Result<Int, Error> {
+        let mac = currentMac
+        guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
+        do {
+            try await LockService.shared.ensureConnected(mac: mac)
+            let alias = try await LockService.shared.pwdAdd(pwd: pwd, validFrom: from, validTo: to)
+            var l = DB.ledger(mac)
+            l.pwds.append(LedgerPwd(
+                alias: alias, from: from, to: to, temp: true,
+                at: Date().timeIntervalSince1970 * 1000,
+                pwd: pwd, owner: owner, note: note
             ))
             DB.saveLedger(mac, l)
             reloadKeys(mac)
@@ -420,6 +527,32 @@ final class AppModel {
             if let d = df.date(from: s) { return Int64(d.timeIntervalSince1970 * 1000) }
         }
         return nil
+    }
+}
+
+// MARK: - 凭证的本机停用位（不删锁端）
+//
+// 原版「停用/恢复使用」是**本机状态**：锁端凭证仍在，只是本机台账把它标成停用并可恢复。
+// ios27 旧实现误调 deletePassword/deleteFingerprint（真删锁端），用户点一下「停用」，
+// 那枚密码就从锁里消失且不可逆 —— 这是 AUDIT-A §7-B8 的数据事故。
+// 这里把停用位落成本机键（按锁分族），KeyDetail 只改它，锁端一条命令都不发。
+enum CredentialLocalState {
+    static func key(_ mac: String) -> String { "kf_v7_disabled_" + DB.normalizeMac(mac) }
+
+    static func isDisabled(mac: String, id: String) -> Bool {
+        let list = DB.store.get([String].self, key(mac)) ?? []
+        return list.contains(id)
+    }
+
+    static func setDisabled(mac: String, id: String, _ off: Bool) {
+        guard !mac.isEmpty, !id.isEmpty else { return }
+        var list = DB.store.get([String].self, key(mac)) ?? []
+        if off {
+            if !list.contains(id) { list.append(id) }
+        } else {
+            list.removeAll { $0 == id }
+        }
+        if list.isEmpty { DB.store.remove(key(mac)) } else { DB.store.set(key(mac), list) }
     }
 }
 

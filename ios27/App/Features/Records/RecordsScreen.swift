@@ -136,7 +136,7 @@ struct RecordsScreen: View {
                     .font(V.F.titleC)
                     .foregroundStyle(V.C.text1)
                 Text(dateLine)
-                    .font(V.F.sans(11.5))
+                    .font(V.F.bedLabel)
                     .foregroundStyle(V.C.text3)
             }
             Spacer(minLength: 0)
@@ -144,7 +144,7 @@ struct RecordsScreen: View {
                 Circle()
                     .fill(V.C.rewardGreen.opacity(0.22))
                 Text("我")
-                    .font(V.F.sans(13, weight: .semibold))
+                    .font(V.F.rowDetailStrong)
                     .foregroundStyle(V.C.text1)
             }
             .frame(width: V.Metric.avatar, height: V.Metric.avatar)
@@ -173,7 +173,7 @@ struct RecordsScreen: View {
                 HStack(alignment: .center, spacing: V.S.gapL) {
                     VRingStack(rings: activityRings, size: V.Ring.referenceOuter)
                     VStack(alignment: .leading, spacing: V.S.gapM) {
-                        legendRow(title: "开锁", value: "\(todayOpenCount)", total: 24, unit: "次", color: V.C.pink)
+                        legendRow(title: "开锁", value: "\(todayOpenCount)", total: 24, unit: "次", color: V.C.red)
                         legendRow(title: "家庭", value: "\(todayFamilyCount)", total: 12, unit: "次", color: V.C.green)
                         legendRow(title: "临时", value: "\(todayTempCount)", total: 4, unit: "次", color: V.C.cyan)
                     }
@@ -186,7 +186,7 @@ struct RecordsScreen: View {
 
     private var activityRings: [(Double, Color)] {
         [
-            (min(1, Double(todayOpenCount) / 24), V.C.pink),
+            (min(1, Double(todayOpenCount) / 24), V.C.red),
             (min(1, Double(todayFamilyCount) / 12), V.C.green),
             (min(1, Double(todayTempCount) / 4), V.C.cyan)
         ]
@@ -229,7 +229,7 @@ struct RecordsScreen: View {
                         .foregroundStyle(V.C.text1)
                     Spacer(minLength: 0)
                     Image(systemName: "chevron.right")
-                        .font(V.F.sans(11, weight: .semibold))
+                        .font(V.F.chipLabelStrong)
                         .foregroundStyle(V.C.text3)
                         .accessibilityHidden(true)
                 }
@@ -285,7 +285,7 @@ struct RecordsScreen: View {
                         .foregroundStyle(V.C.text1)
                     Spacer(minLength: 0)
                     Image(systemName: "chevron.right")
-                        .font(V.F.sans(11, weight: .semibold))
+                        .font(V.F.chipLabelStrong)
                         .foregroundStyle(V.C.text3)
                         .accessibilityHidden(true)
                 }
@@ -294,17 +294,17 @@ struct RecordsScreen: View {
                         Circle()
                             .fill(V.C.rewardGreen.opacity(0.16))
                         Image(systemName: "figure.walk")
-                            .font(V.F.sans(17, weight: .medium))
+                            .font(V.F.bodyMedium)
                             .foregroundStyle(V.C.rewardGreen)
                     }
                     .frame(width: V.Metric.eventIcon, height: V.Metric.eventIcon)
                     .padding(.top, V.S.gapS)
                     Text(latest.event)
-                        .font(V.F.sans(14.5))
+                        .font(V.F.bodySmall)
                         .foregroundStyle(V.C.text7)
                         .lineLimit(1)
                     Text(TimeDisplay.clock(latest.at))
-                        .font(V.F.sans(28, weight: .semibold))
+                        .font(V.F.displayESemibold)
                         .foregroundStyle(V.C.lime)
                         .monospacedDigit()
                     Text(TimeFormat.dayTitle(TimeFormat.dayKey(latest.at)))
@@ -331,7 +331,7 @@ struct RecordsScreen: View {
                         .foregroundStyle(V.C.text1)
                     Spacer(minLength: 0)
                     Image(systemName: "chevron.right")
-                        .font(V.F.sans(11, weight: .semibold))
+                        .font(V.F.chipLabelStrong)
                         .foregroundStyle(V.C.text3)
                         .accessibilityHidden(true)
                 }
@@ -354,11 +354,11 @@ struct RecordsScreen: View {
                 .frame(maxWidth: .infinity)
                 .padding(.top, V.S.gapS)
                 Text("连续 \(streakDays) 天")
-                    .font(V.F.sans(10, weight: .medium))
+                    .font(V.F.microMedium)
                     .foregroundStyle(V.C.text7)
                     .frame(maxWidth: .infinity)
                 Text("无异常")
-                    .font(V.F.sans(9.5))
+                    .font(V.F.microSmall)
                     .foregroundStyle(V.C.text3)
                     .frame(maxWidth: .infinity)
                 Spacer(minLength: 0)
@@ -391,7 +391,7 @@ struct RecordsScreen: View {
             VStack(alignment: .leading, spacing: V.S.gapM) {
                 HStack(alignment: .firstTextBaseline, spacing: V.S.gapS) {
                     Text("检索")
-                        .font(V.F.sans(15, weight: .semibold))
+                        .font(V.F.cardTitle)
                         .foregroundStyle(V.C.text6)
                     Spacer(minLength: 0)
                     Button("工作室") { router.request(.dest(.recordsStudio)) }
@@ -408,7 +408,7 @@ struct RecordsScreen: View {
                 }
                 HStack(spacing: V.S.gapS) {
                     Image(systemName: "magnifyingglass")
-                        .font(V.F.sans(15))
+                        .font(V.F.cardBody)
                         .foregroundStyle(V.C.text3)
                         .accessibilityHidden(true)
                     TextField("成员 / 凭证 / +指纹 -临时码", text: $query)
@@ -423,7 +423,7 @@ struct RecordsScreen: View {
                             query = ""
                         } label: {
                             Image(systemName: "xmark.circle.fill")
-                                .font(V.F.sans(15))
+                                .font(V.F.cardBody)
                                 .foregroundStyle(V.C.text3)
                         }
                         .accessibilityLabel("清空检索")
@@ -453,7 +453,7 @@ struct RecordsScreen: View {
                 }
                 HStack(alignment: .firstTextBaseline, spacing: V.S.gapS) {
                     Text("\(filtered.count)")
-                        .font(V.F.sans(22, weight: .bold))
+                        .font(V.F.number22)
                         .foregroundStyle(V.C.text1)
                         .monospacedDigit()
                     Text("条")
@@ -498,7 +498,7 @@ struct RecordsScreen: View {
                 VStack(alignment: .leading, spacing: V.S.gapS) {
                     HStack(alignment: .firstTextBaseline, spacing: V.S.gapS) {
                         Text(TimeFormat.dayTitle(group.dayKey))
-                            .font(V.F.sans(15, weight: .semibold))
+                            .font(V.F.cardTitle)
                             .foregroundStyle(V.C.text1)
                         Spacer(minLength: 0)
                         Text("\(group.items.count) 条")
@@ -532,7 +532,7 @@ struct RecordsScreen: View {
         VCard {
             HStack(spacing: V.S.gapS) {
                 Image(systemName: "calendar")
-                    .font(V.F.sans(15))
+                    .font(V.F.cardBody)
                     .foregroundStyle(V.C.text3)
                     .accessibilityHidden(true)
                 Text("只看 " + TimeFormat.dayTitle(day))
@@ -630,7 +630,7 @@ struct RecordsScreen: View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 Text("本机标注")
-                    .font(V.F.sans(15, weight: .semibold))
+                    .font(V.F.cardTitle)
                     .foregroundStyle(V.C.text6)
                 VStatPair(items: [
                     ("备注", "\(overlay.notes.count) 条"),
@@ -739,7 +739,7 @@ private struct V7RecordRow: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: V.S.gapM) {
             Text(TimeDisplay.clock(entry.at))
-                .font(V.F.sans(13, weight: .semibold))
+                .font(V.F.rowDetailStrong)
                 .foregroundStyle(V.C.text1)
                 .monospacedDigit()
                 .frame(width: 48, alignment: .leading)

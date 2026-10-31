@@ -135,7 +135,7 @@ struct AccessibilityScreen: View {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VCardHeader(title: "样例")
                 Text("开门成功")
-                    .font(V.F.sans(bigText ? 28 : 20, weight: .semibold))
+                    .font((bigText ? V.F.axTitleBig : V.F.axTitle))
                     .foregroundStyle(V.C.text1)
                 Text("这一行会跟随全局大字档变化。")
                     .font(V.F.body)

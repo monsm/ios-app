@@ -8,11 +8,11 @@ enum Tone: Hashable {
 
     var color: Color {
         switch self {
-        case .ok: return State.ok
-        case .attention: return State.attention
-        case .critical: return State.critical
-        case .neutral: return Ink.inkFaint
-        case .live: return Signal.base
+        case .ok: return V.C.rewardGreen
+        case .attention: return V.C.warning
+        case .critical: return V.C.critical
+        case .neutral: return V.C.text3
+        case .live: return V.C.blue
         }
     }
 }
@@ -60,11 +60,11 @@ struct StatusLine: View {
     let text: String
 
     var body: some View {
-        HStack(spacing: T.S.s) {
+        HStack(spacing: V.S.gapS) {
             StateDot(tone: tone, word: text)
             Text(text)
-                .font(T.F.caption)
-                .foregroundStyle(tone == .neutral ? Ink.inkSub : tone.color)
+                .font(V.F.footnote)
+                .foregroundStyle(tone == .neutral ? V.C.text2 : tone.color)
             Spacer(minLength: 0)
         }
         .accessibilityElement(children: .combine)
@@ -79,22 +79,22 @@ struct ChipRow<Item: Hashable>: View {
 
     var body: some View {
         ScrollView(.horizontal) {
-            HStack(spacing: T.S.s) {
+            HStack(spacing: V.S.gapS) {
                 ForEach(items, id: \.self) { item in
                     let on = item == selection
                     Button {
                         selection = item
                     } label: {
                         Text(title(item))
-                            .font(T.F.caption)
-                            .foregroundStyle(on ? Ink.ink : Ink.inkSub)
-                            .padding(.horizontal, T.S.m)
-                            .frame(height: T.H.chip)
-                            .background(on ? Signal.wash : Color.clear, in: .capsule)
+                            .font(V.F.footnote)
+                            .foregroundStyle(on ? V.C.text1 : V.C.text2)
+                            .padding(.horizontal, V.S.gapMS)
+                            .frame(height: V.H.chip)
+                            .background(on ? V.C.blue.opacity(0.16) : Color.clear, in: .capsule)
                             .overlay {
                                 Capsule().strokeBorder(
-                                    on ? Signal.edge : Ink.hairline,
-                                    lineWidth: T.Stroke.hair
+                                    on ? V.C.blue.opacity(0.75) : V.C.hairline,
+                                    lineWidth: V.S.hair
                                 )
                             }
                     }
@@ -102,7 +102,7 @@ struct ChipRow<Item: Hashable>: View {
                     .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
                 }
             }
-            .padding(.horizontal, T.S.gutter)
+            .padding(.horizontal, V.S.pageGutter)
         }
         .scrollIndicators(.hidden)
     }
@@ -117,18 +117,18 @@ struct PrimaryAction: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: T.S.s) {
+            HStack(spacing: V.S.gapS) {
                 if busy {
-                    ProgressView().controlSize(.small).tint(Signal.on)
+                    ProgressView().controlSize(.small).tint(V.C.text1)
                 } else if let systemImage {
-                    Image(systemName: systemImage).accessibilityHidden(true).font(T.F.icon(T.Icon.m, weight: .medium))
+                    Image(systemName: systemImage).accessibilityHidden(true).font(V.F.icon18Medium)
                 }
-                Text(title).font(T.F.bodyStrong)
+                Text(title).font(V.F.bodyStrong)
             }
-            .foregroundStyle(Signal.on)
+            .foregroundStyle(V.C.text1)
             .frame(maxWidth: .infinity)
-            .frame(height: T.H.action)
-            .background(Signal.base, in: .rect(cornerRadius: T.R.control))
+            .frame(height: V.H.action)
+            .background(V.C.blue, in: .rect(cornerRadius: V.R.control))
         }
         .buttonStyle(PressStyle())
         .disabled(busy)
@@ -144,18 +144,18 @@ struct SecondaryAction: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: T.S.s) {
+            HStack(spacing: V.S.gapS) {
                 if let systemImage {
-                    Image(systemName: systemImage).accessibilityHidden(true).font(T.F.icon(T.Icon.m, weight: .medium))
+                    Image(systemName: systemImage).accessibilityHidden(true).font(V.F.icon18Medium)
                 }
-                Text(title).font(T.F.bodyStrong)
+                Text(title).font(V.F.bodyStrong)
             }
-            .foregroundStyle(Ink.ink)
+            .foregroundStyle(V.C.text1)
             .frame(maxWidth: .infinity)
-            .frame(height: T.H.action)
+            .frame(height: V.H.action)
             .overlay {
-                RoundedRectangle(cornerRadius: T.R.control, style: .continuous)
-                    .strokeBorder(Ink.hairline, lineWidth: T.Stroke.hair)
+                RoundedRectangle(cornerRadius: V.R.control, style: .continuous)
+                    .strokeBorder(V.C.hairline, lineWidth: V.S.hair)
             }
         }
         .buttonStyle(PressStyle())
@@ -169,7 +169,7 @@ struct PressStyle: ButtonStyle {
         configuration.label
             .opacity(configuration.isPressed ? 0.72 : 1)
             .scaleEffect(configuration.isPressed ? 0.985 : 1)
-            .animation(T.M.snap, value: configuration.isPressed)
+            .animation(V.M.snap, value: configuration.isPressed)
     }
 }
 
@@ -198,11 +198,11 @@ struct BusyRow: View {
     let text: String
 
     var body: some View {
-        HStack(spacing: T.S.s) {
+        HStack(spacing: V.S.gapS) {
             ProgressView().controlSize(.small)
-            Text(text).font(T.F.caption).foregroundStyle(Ink.inkSub)
+            Text(text).font(V.F.footnote).foregroundStyle(V.C.text2)
             Spacer(minLength: 0)
         }
-        .frame(minHeight: T.Hit.min)
+        .frame(minHeight: V.Hit.min)
     }
 }

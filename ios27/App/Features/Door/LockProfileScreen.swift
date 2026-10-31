@@ -81,14 +81,14 @@ struct LockProfileScreen: View {
                 VCardHeader(title: "身份")
                 HStack(spacing: V.S.gapM) {
                     Image(systemName: symbol.isEmpty ? "lock.fill" : symbol)
-                        .font(V.F.sans(26))
+                        .font(V.F.displayD)
                         .foregroundStyle(swatchColor)
                         .frame(width: V.List.iconSize * 2, height: V.List.iconSize * 2)
                         .background(V.C.cardAlt, in: Circle())
                         .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: V.S.gapXXS) {
                         Text(name.isEmpty ? "未命名" : name)
-                            .font(V.F.sans(20, weight: .bold)).foregroundStyle(V.C.text1)
+                            .font(V.F.section).foregroundStyle(V.C.text1)
                         Text(place.isEmpty ? "未填场所" : place)
                             .font(V.F.footnote).foregroundStyle(V.C.text3)
                     }
@@ -162,7 +162,7 @@ struct LockProfileScreen: View {
                         Button { symbol = item.name } label: {
                             VStack(spacing: V.S.gapXXS) {
                                 Image(systemName: item.name)
-                                    .font(V.F.sans(18, weight: .medium))
+                                    .font(V.F.bodyLargeMedium)
                                     .foregroundStyle(symbol == item.name ? V.C.blue : V.C.text3)
                                     .frame(width: V.List.iconSize * 1.6, height: V.List.iconSize * 1.6)
                                     .background(symbol == item.name ? V.C.blue.opacity(0.14) : V.C.cardAlt, in: Circle())

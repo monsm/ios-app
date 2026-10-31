@@ -15,14 +15,14 @@ struct AboutScreen: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: T.S.l) {
+            VStack(spacing: V.S.gap16) {
                 SettingsHeader(title: "关于", tone: .neutral, status: status)
                 counterPanel
                 buildPanel
                 versionPanel
                 declarationPanel
             }
-            .padding(.vertical, T.S.l)
+            .padding(.vertical, V.S.gap16)
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
@@ -37,30 +37,30 @@ struct AboutScreen: View {
 
     // MARK: 主角：累计开锁机械计数器（每位一格，等宽）
     private var counterPanel: some View {
-        VStack(spacing: T.S.s) {
-            SectionLabel(text: "累计开锁", trailing: "本机")
-            Panel {
-                VStack(alignment: .leading, spacing: T.S.m) {
-                    HStack(spacing: T.S.xs) {
+        VStack(spacing: V.S.gapS) {
+            VSectionLabel(text: "累计开锁", trailing: "本机")
+            VCard {
+                VStack(alignment: .leading, spacing: V.S.gapMS) {
+                    HStack(spacing: V.S.gapXS) {
                         ForEach(Array(String(store.unlockTotal).enumerated()), id: \.offset) { _, ch in
                             Text(String(ch))
-                                .font(T.F.reading(22))
-                                .foregroundStyle(Ink.ink)
+                                .font(V.F.number22)
+                                .foregroundStyle(V.C.text1)
                                 .monospacedDigit()
-                                .frame(width: T.Icon.xl + T.S.xs, height: T.Icon.xl + T.S.m)
-                                .background(Ink.plateAlt, in: .rect(cornerRadius: T.R.control))
+                                .frame(width: V.Icon.xl + V.S.gapXS, height: V.Icon.xl + V.S.gapMS)
+                                .background(V.C.cardAlt, in: .rect(cornerRadius: V.R.control))
                         }
-                        Spacer(minLength: T.S.s)
+                        Spacer(minLength: V.S.gapS)
                         Text("次")
-                            .font(T.F.unit)
-                            .foregroundStyle(Ink.inkFaint)
+                            .font(V.F.unit)
+                            .foregroundStyle(V.C.text3)
                             .tracking(0.6)
                     }
                     SettingRule()
                     SettingsNote(text: "每位一格，换位不跳宽。这个数只统计本机成功开锁回执 —— 失败与被否决的尝试不计数。")
                 }
             }
-            .padding(.horizontal, T.S.gutter)
+            .padding(.horizontal, V.S.pageGutter)
             .accessibilityElement(children: .combine)
             .accessibilityLabel("累计开锁 \(store.unlockTotal) 次")
         }
@@ -68,40 +68,40 @@ struct AboutScreen: View {
 
     // MARK: 构建
     private var buildPanel: some View {
-        VStack(spacing: T.S.s) {
-            SectionLabel(text: "构建")
-            Panel {
+        VStack(spacing: V.S.gapS) {
+            VSectionLabel(text: "构建")
+            VCard {
                 VStack(spacing: 0) {
-                    FieldRow(label: "构建号", value: SettingsFacts.build)
+                    VFieldRow(label: "构建号", value: SettingsFacts.build)
                     SettingRule()
                     // TODO(engine) 主题套数应由外观令牌表给出（现在只有浅色 / 深色两套取值）。
-                    FieldRow(label: "主题套数", value: "2", unit: "套")
+                    VFieldRow(label: "主题套数", value: "2", unit: "套")
                     SettingRule()
-                    FieldRow(label: "遥测", value: "无", tint: Ink.inkSub, mono: false)
+                    VFieldRow(label: "遥测", value: "无", tint: V.C.text2, mono: false)
                 }
             }
-            .padding(.horizontal, T.S.gutter)
+            .padding(.horizontal, V.S.pageGutter)
         }
     }
 
     // MARK: 版本行（连点 10 次才展开彩蛋）
     private var versionPanel: some View {
-        VStack(spacing: T.S.s) {
-            SectionLabel(text: "版本")
-            Panel {
-                VStack(alignment: .leading, spacing: T.S.m) {
+        VStack(spacing: V.S.gapS) {
+            VSectionLabel(text: "版本")
+            VCard {
+                VStack(alignment: .leading, spacing: V.S.gapMS) {
                     Button {
                         versionTaps += 1
                         if versionTaps >= 10, !eggShown { eggShown = true }
                     } label: {
-                        HStack(alignment: .firstTextBaseline, spacing: T.S.s) {
+                        HStack(alignment: .firstTextBaseline, spacing: V.S.gapS) {
                             Text("当前版本")
-                                .font(T.F.body)
-                                .foregroundStyle(Ink.inkSub)
-                            Spacer(minLength: T.S.s)
-                            Reading(value: SettingsFacts.version, size: 15, tint: Ink.ink, animated: false)
+                                .font(V.F.body)
+                                .foregroundStyle(V.C.text2)
+                            Spacer(minLength: V.S.gapS)
+                            VReading(value: SettingsFacts.version, font: V.F.number15, tint: V.C.text1, animated: false)
                         }
-                        .frame(minHeight: T.Hit.min)
+                        .frame(minHeight: V.Hit.min)
                         .contentShape(.rect)
                     }
                     .buttonStyle(.plain)
@@ -110,11 +110,11 @@ struct AboutScreen: View {
 
                     if eggShown {
                         SettingRule()
-                        StatusLine(tone: .ok, text: "已展开：构建信息与离线声明")
+                        VStatusLine(tone: .ok, text: "已展开：构建信息与离线声明")
                         SettingRule()
-                        FieldRow(label: "构建", value: "release · \(SettingsFacts.build)")
+                        VFieldRow(label: "构建", value: "release · \(SettingsFacts.build)")
                         SettingRule()
-                        FieldRow(label: "遥测", value: "无 · 全程离线", tint: Ink.ink, mono: false)
+                        VFieldRow(label: "遥测", value: "无 · 全程离线", tint: V.C.text1, mono: false)
                         SettingRule()
                         SettingsNote(text: "这不是一句宣传：App 里没有任何上报地址、没有账号、没有云同步。锁的协议帧只走蓝牙，数据只落这台手机。")
                             .transition(.opacity)
@@ -123,23 +123,23 @@ struct AboutScreen: View {
                     }
                 }
             }
-            .padding(.horizontal, T.S.gutter)
-            .animation(reduceMotion ? nil : T.M.move, value: eggShown)
+            .padding(.horizontal, V.S.pageGutter)
+            .animation(reduceMotion ? nil : V.M.move, value: eggShown)
         }
     }
 
     // MARK: 离线声明
     private var declarationPanel: some View {
-        VStack(spacing: T.S.s) {
-            SectionLabel(text: "说明")
-            Panel {
-                VStack(alignment: .leading, spacing: T.S.m) {
+        VStack(spacing: V.S.gapS) {
+            VSectionLabel(text: "说明")
+            VCard {
+                VStack(alignment: .leading, spacing: V.S.gapMS) {
                     SettingsNote(text: "厂商已停服的智能锁离线管理端。门锁数据、密码台账、家人档案全部保存在这台手机上，换新手机用「备份与恢复」转移 —— 门锁本身不需要重置。")
                     SettingRule()
                     SettingsNote(text: "协议层与密码学沿用已验证实现；界面是本版重写的。App 不联网、不注册账号、不做任何上传。")
                 }
             }
-            .padding(.horizontal, T.S.gutter)
+            .padding(.horizontal, V.S.pageGutter)
         }
     }
 }

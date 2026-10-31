@@ -1,7 +1,7 @@
 // KeysParts.swift —— 钥匙域内的共享小件（只在 Features/Keys 里用）。
 //
 // 纪律：不新增 Design/Components 语义（那是 lead 的地盘，会冲突）；
-// 这些件一律 Keys 前缀，避免与其他域撞名。样式全部走 T./Ink./Signal./State.，零字面量。
+// 这些件一律 Keys 前缀，避免与其他域撞名。样式全部走 V7 令牌（V.C / V.F / V.S），零字面量。
 import SwiftUI
 
 // MARK: - 类型分段
@@ -73,11 +73,11 @@ enum KeysState {
 
     /// 行尾读数：永久不写数；有限期写剩余天数，单位是天。
     static func expiryReading(_ key: KeyItem, now: Int64) -> (value: String, unit: String?, tint: Color) {
-        if key.disabled { return ("—", nil, Ink.inkFaint) }
-        guard let days = daysLeft(key, now: now) else { return ("永久", nil, Ink.inkSub) }
-        if days < 0 { return ("过期", nil, State.critical) }
-        if days <= 3 { return ("\(days)", "天", State.attention) }
-        return ("\(days)", "天", Ink.ink)
+        if key.disabled { return ("—", nil, V.C.text3) }
+        guard let days = daysLeft(key, now: now) else { return ("永久", nil, V.C.text2) }
+        if days < 0 { return ("过期", nil, V.C.critical) }
+        if days <= 3 { return ("\(days)", "天", V.C.warning) }
+        return ("\(days)", "天", V.C.text1)
     }
 
     /// 到期时刻拆成日期 + 时刻两个读数位；永久返回 (永久, nil)。
@@ -122,8 +122,8 @@ enum KeysRoute {
 struct KeysDivider: View {
     var body: some View {
         Rectangle()
-            .fill(Ink.hairline)
-            .frame(height: T.Stroke.hair)
+            .fill(V.C.hairline)
+            .frame(height: V.S.hair)
     }
 }
 
@@ -143,22 +143,22 @@ struct KeysRow: View {
 
     var body: some View {
         let read = KeysState.expiryReading(key, now: now)
-        HStack(alignment: .center, spacing: T.S.m) {
-            StateDot(tone: KeysState.tone(key, now: now), word: KeysState.word(key, now: now))
-            VStack(alignment: .leading, spacing: T.S.xxs) {
+        HStack(alignment: .center, spacing: V.S.gapMS) {
+            VStateDot(tone: KeysState.tone(key, now: now), word: KeysState.word(key, now: now))
+            VStack(alignment: .leading, spacing: V.S.gapXXS) {
                 Text(key.name)
-                    .font(T.F.body)
-                    .foregroundStyle(key.disabled ? Ink.inkSub : Ink.ink)
+                    .font(V.F.body)
+                    .foregroundStyle(key.disabled ? V.C.text2 : V.C.text1)
                     .lineLimit(1)
                 Text(subtitle)
-                    .font(T.F.unit)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text2)
                     .lineLimit(1)
             }
-            Spacer(minLength: T.S.s)
-            Reading(value: read.value, unit: read.unit, size: 15, tint: read.tint, animated: false)
+            Spacer(minLength: V.S.gapS)
+            VReading(value: read.value, unit: read.unit, font: V.F.number15, tint: read.tint, animated: false)
         }
-        .frame(minHeight: T.Hit.min + T.S.s)
+        .frame(minHeight: V.Hit.min + V.S.gapS)
         .contentShape(.rect)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(key.name)，\(key.kind.rawValue)，\(KeysState.word(key, now: now))")

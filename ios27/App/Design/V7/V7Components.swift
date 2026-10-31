@@ -44,6 +44,8 @@ struct VGauge: View {
     let label: String
     let fraction: Double
     var tint: Color = V.C.blue
+    /// 中心读数的字体档（外观「主控读数数字字体」：圆体 / 系统默认体）。
+    var numberFont: VFont = V.F.gaugeNumber
 
     private var clamped: Double {
         max(0, min(1, fraction))
@@ -79,16 +81,16 @@ struct VGauge: View {
                 )
                 .frame(width: V.Gauge.discDiameter, height: V.Gauge.discDiameter)
 
-            // 底环：完整 322° 角向渐变（暗层）。
+            // 底环：完整 308.2° 角向渐变（暗层；与 R1 JS 的 A0/A1 一致）。
             VBearingArc(
                 startBearing: V.Gauge.gapStart,
-                endBearing: V.Gauge.gapEnd + 360,
+                endBearing: V.Gauge.gapStart + V.Gauge.sweepDegrees,
                 inset: V.Gauge.stroke / 2
             )
             .stroke(ringGradient, style: StrokeStyle(lineWidth: V.Gauge.stroke, lineCap: .round))
             .opacity(V.Gauge.baseOpacity)
 
-            // 亮环：同一角向渐变按 fraction 遮罩，长度 = 322° × fraction。
+            // 亮环：同一角向渐变按 fraction 遮罩，长度 = 308.2° × fraction。
             VBearingArc(
                 startBearing: V.Gauge.gapStart,
                 endBearing: V.Gauge.gapStart + V.Gauge.sweepDegrees * clamped,
@@ -112,7 +114,7 @@ struct VGauge: View {
 
             // i 按钮：20.7pt 圆 #1D1D21，字形 #5D5D62，位于屏幕 (325,337)。
             Text("i")
-                .font(V.F.sans(11.5, weight: .semibold))
+                .font(V.F.bedValue)
                 .italic()
                 .foregroundStyle(V.C.infoGlyph)
                 .frame(width: V.Gauge.infoSize, height: V.Gauge.infoSize)
@@ -125,7 +127,7 @@ struct VGauge: View {
 
             VStack(spacing: V.S.gapXS + 2) {
                 Text(center)
-                    .font(V.F.gaugeNumber)
+                    .font(numberFont)
                     .foregroundStyle(tint)
                     .monospacedDigit()
                     .tracking(V.Gauge.numberTracking)
@@ -191,7 +193,7 @@ struct VChip: View {
         HStack(spacing: V.S.chipIconGap) {
             if let systemImage {
                 Image(systemName: systemImage)
-                    .font(V.F.sans(17, weight: .medium))
+                    .font(V.F.bodyMedium)
                     .foregroundStyle(style == .square ? V.C.text1 : tint)
                     .frame(width: V.S.chipIconBox, height: V.S.chipIconBox)
                     .accessibilityHidden(true)
@@ -342,7 +344,8 @@ struct VSegmentedRing: View {
                     endBearing: pair.element.end,
                     inset: V.Segmented.width / 2
                 )
-                .stroke(pair.element.color.opacity(0.55), style: StrokeStyle(lineWidth: V.Segmented.width, lineCap: .round))
+                .stroke(V.C.dimmed(pair.element.color, by: V.Segmented.dimBrightness),
+                        style: StrokeStyle(lineWidth: V.Segmented.width, lineCap: .round))
             }
             ForEach(Array(arcs.enumerated()), id: \.offset) { pair in
                 VBearingArc(
@@ -360,72 +363,136 @@ struct VSegmentedRing: View {
         .frame(width: V.Segmented.diameter, height: V.Segmented.diameter)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("分段环")
-        .accessibilityValue(center)
+        .accessibilityValue(a11yValue)
+    }
+
+    private var a11yValue: String {
+        let parts = segments.enumerated().map { index, segment in
+            "第\(index + 1)段 \(Int((max(0, min(1, segment.0)) * 100).rounded()))%"
+        }
+        return "总计 \(center)" + (parts.isEmpty ? "" : "，" + parts.joined(separator: "，"))
     }
 }
 
 // MARK: - 同心活动环（参考 C 活动卡）
 
-/// 同心环组：环宽 14、间隙 1.2、全部 12 点起顺时针、圆头。
+/// 同心环组：参考 C 外径 133.7 / 环宽 14 / 间隙 1.2，全部 12 点起顺时针、圆头。
+/// 小尺寸（如 88pt）按 size*0.09 收线宽，保证三条环仍有可分辨的间隙。
 struct VRingStack: View {
     /// (进度 0...1, 环颜色)，数组顺序为外 → 内。
     let rings: [(Double, Color)]
     let size: CGFloat
 
+    private var lineWidth: CGFloat { V.Ring.lineWidth(for: size) }
+
+    private func ringGradient(_ color: Color) -> AngularGradient? {
+        guard color == V.C.red || color == V.C.pink else { return nil }
+        return AngularGradient(
+            gradient: Gradient(colors: [V.C.redDeep, V.C.redBright, V.C.redDeep]),
+            center: .center
+        )
+    }
+
     var body: some View {
         ZStack {
             ForEach(Array(rings.enumerated()), id: \.offset) { pair in
-                let width = V.Ring.width
-                let diameter = size - width - CGFloat(pair.offset) * (width + V.Ring.gap) * 2
+                let diameter = size - lineWidth - CGFloat(pair.offset) * (lineWidth + V.Ring.gap) * 2
                 Circle()
-                    .stroke(pair.element.1.opacity(V.Ring.trackOpacity), lineWidth: width)
-                    .frame(width: max(width, diameter), height: max(width, diameter))
+                    .stroke(V.Ring.track(for: pair.element.1), lineWidth: lineWidth)
+                    .frame(width: max(lineWidth, diameter), height: max(lineWidth, diameter))
                 Circle()
                     .trim(from: 0, to: max(0.001, min(1, pair.element.0)))
-                    .stroke(pair.element.1, style: StrokeStyle(lineWidth: width, lineCap: .round))
-                    .frame(width: max(width, diameter), height: max(width, diameter))
+                    .stroke(
+                        ringGradient(pair.element.1).map { AnyShapeStyle($0) } ?? AnyShapeStyle(pair.element.1),
+                        style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
+                    )
+                    .frame(width: max(lineWidth, diameter), height: max(lineWidth, diameter))
                     .rotationEffect(.degrees(-90))
             }
+
+            // 起点方向箭头（参考 C：红 →、绿 »、青 ↑），放在 12 点附近，纯装饰。
+            HStack(spacing: max(2, lineWidth * 0.35)) {
+                ForEach(Array(rings.enumerated()), id: \.offset) { pair in
+                    Text(arrow(for: pair.element.1))
+                        .font(V.F.chartTick)
+                        .foregroundStyle(pair.element.1)
+                }
+            }
+            .offset(y: -size / 2 + lineWidth * 0.5)
+            .accessibilityHidden(true)
         }
         .frame(width: size, height: size)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("活动环")
+        .accessibilityValue(a11yValue)
+    }
+
+    private func arrow(for color: Color) -> String {
+        if color == V.C.red || color == V.C.pink { return "→" }
+        if color == V.C.green || color == V.C.rewardGreen { return "»" }
+        if color == V.C.cyan || color == V.C.rewardBlue { return "↑" }
+        return "•"
+    }
+
+    private var a11yValue: String {
+        rings.enumerated().map { index, ring in
+            "第\(index + 1)环 \(Int((max(0, min(1, ring.0)) * 100).rounded()))%"
+        }.joined(separator: "，")
     }
 }
 
 // MARK: - 迷你柱图（参考 C 微卡）
 
-/// 24 格通高网格线（1pt #3A3A3C、高 57）+ 数据柱（宽 1.8、r0.9、带发光）。
+/// 24 格通高网格线（1pt #3A3A3C、高 57）+ 数据柱（宽 1.8、r0.9、带发光）+ 轴标。
 struct VMiniBars: View {
     let values: [Double]
     var tint: Color = V.C.purple
 
+    private var peakValue: Double { max(values.max() ?? 1, 0.0001) }
+
     var body: some View {
-        GeometryReader { proxy in
-            let count = V.Mini.gridCount
-            let slot = proxy.size.width / CGFloat(max(count, 1))
-            let peak = max(values.max() ?? 1, 0.0001)
-            ZStack(alignment: .bottomLeading) {
-                ForEach(0 ..< count, id: \.self) { index in
-                    Rectangle()
-                        .fill(V.C.grid)
-                        .frame(width: V.Mini.gridW, height: V.Mini.gridH)
-                        .offset(x: CGFloat(index) * slot)
+        VStack(alignment: .leading, spacing: V.Mini.axisLabelGap) {
+            GeometryReader { proxy in
+                let count = V.Mini.gridCount
+                let slot = proxy.size.width / CGFloat(max(count, 1))
+                ZStack(alignment: .bottomLeading) {
+                    ForEach(0 ..< count, id: \.self) { index in
+                        Rectangle()
+                            .fill(V.C.grid)
+                            .frame(width: V.Mini.gridW, height: V.Mini.gridH)
+                            .offset(x: CGFloat(index) * slot)
+                    }
+                    ForEach(Array(values.prefix(count).enumerated()), id: \.offset) { pair in
+                        let height = max(V.Mini.minBarH, V.Mini.gridH * CGFloat(pair.element / peakValue))
+                        RoundedRectangle(cornerRadius: V.Mini.barRadius, style: .continuous)
+                            .fill(tint)
+                            .frame(width: V.Mini.barW, height: height)
+                            .shadow(color: tint.opacity(0.7), radius: V.Mini.glowRadius)
+                            .offset(x: CGFloat(pair.offset) * slot + (slot - V.Mini.barW) / 2)
+                    }
                 }
-                ForEach(Array(values.prefix(count).enumerated()), id: \.offset) { pair in
-                    let height = max(V.Mini.minBarH, V.Mini.gridH * CGFloat(pair.element / peak))
-                    RoundedRectangle(cornerRadius: V.Mini.barRadius, style: .continuous)
-                        .fill(tint)
-                        .frame(width: V.Mini.barW, height: height)
-                        .shadow(color: tint.opacity(0.7), radius: V.Mini.glowRadius)
-                        .offset(x: CGFloat(pair.offset) * slot + (slot - V.Mini.barW) / 2)
+                .frame(width: proxy.size.width, height: V.Mini.gridH, alignment: .bottomLeading)
+            }
+            .frame(height: V.Mini.gridH)
+
+            // 轴标：0 / 6 / 12 / 18 / 24 时（TOKENS：11px #8E8E93）。
+            HStack {
+                ForEach(["0", "6", "12", "18", "24"], id: \.self) { label in
+                    Text(label)
+                        .font(V.F.axisTick)
+                        .foregroundStyle(V.C.axisLabel)
+                    if label != "24" { Spacer(minLength: 0) }
                 }
             }
-            .frame(width: proxy.size.width, height: V.Mini.gridH, alignment: .bottomLeading)
         }
-        .frame(height: V.Mini.gridH)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("柱状图")
+        .accessibilityValue(a11yValue)
+    }
+
+    private var a11yValue: String {
+        let total = values.reduce(0, +)
+        return "共 24 格，峰值 \(Int(peakValue.rounded()))，合计 \(Int(total.rounded()))"
     }
 }
 
@@ -453,9 +520,9 @@ struct VAreaChart: View {
                 context.stroke(line, with: .color(rule.1), lineWidth: V.S.hair)
             }
 
-            // 6 条竖向点线（1pt 亮 / 2.4 暗 的点线节奏）。
+            // 6 条竖向点线：实测间距 43pt，首条距绘图区左沿 14.4pt（TOKENS 52 行）。
             for index in 0 ..< V.Chart.verticals {
-                let x = size.width * CGFloat(index) / CGFloat(max(V.Chart.verticals - 1, 1))
+                let x = V.Chart.firstInset + CGFloat(index) * V.Chart.verticalSpacing
                 var line = Path()
                 line.move(to: CGPoint(x: x, y: 0))
                 line.addLine(to: CGPoint(x: x, y: size.height))
@@ -523,8 +590,29 @@ struct VAreaChart: View {
             context.fill(dot, with: .color(V.C.blue))
         }
         .frame(height: V.Chart.height)
+        .overlay(alignment: .bottomLeading) {
+            Text("0 时")
+                .font(V.F.chartTick)
+                .foregroundStyle(V.C.axisLabel)
+                .offset(x: V.S.gapXS, y: -V.S.gapXS)
+        }
+        .overlay(alignment: .bottomTrailing) {
+            VStack(alignment: .trailing, spacing: V.S.gapXXS) {
+                Text("高峰")
+                Text("平时")
+            }
+            .font(V.F.chartTick)
+            .foregroundStyle(V.C.axisLabel)
+            .offset(x: -V.S.gapXS, y: -V.S.gapXS)
+        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("面积图")
+        .accessibilityValue(a11yValue)
+    }
+
+    private var a11yValue: String {
+        guard let first = values.first, let last = values.last, let peak = values.max() else { return "无数据" }
+        return "起点 \(Int(first.rounded()))，终点 \(Int(last.rounded()))，峰值 \(Int(peak.rounded()))，共 \(values.count) 个采样"
     }
 }
 
@@ -615,14 +703,17 @@ struct VActionButton: View {
     let title: String
     var systemImage: String? = nil
     var tint: Color = V.C.blue
+    var busy: Bool = false
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: V.S.gapS) {
-                if let systemImage {
+                if busy {
+                    ProgressView().controlSize(.small).tint(V.C.text1)
+                } else if let systemImage {
                     Image(systemName: systemImage)
-                        .font(V.F.sans(16, weight: .semibold))
+                        .font(V.F.actionIcon)
                         .accessibilityHidden(true)
                 }
                 Text(title)
@@ -648,8 +739,8 @@ struct VSectionLabel: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: V.S.gapS) {
             Text(text)
-                .font(V.F.section)
-                .foregroundStyle(V.C.text1)
+                .font(V.F.small)
+                .foregroundStyle(V.C.text3)
             Spacer(minLength: 0)
             if let trailing {
                 Text(trailing)
@@ -675,7 +766,7 @@ struct VCardHeader: View {
                 .foregroundStyle(V.C.text8)
             if showsChevron {
                 Image(systemName: "chevron.right")
-                    .font(V.F.sans(9, weight: .semibold))
+                    .font(V.F.tab)
                     .foregroundStyle(V.C.text3)
                     .accessibilityHidden(true)
             }
@@ -698,7 +789,7 @@ struct VListRow: View {
             HStack(spacing: V.S.gapM) {
                 if let systemImage {
                     Image(systemName: systemImage)
-                        .font(V.F.sans(15, weight: .medium))
+                        .font(V.F.rowIcon)
                         .foregroundStyle(V.C.text1)
                         .frame(width: V.List.iconSize, height: V.List.iconSize)
                         .background(tint, in: Circle())
@@ -733,8 +824,16 @@ struct VListRow: View {
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(title + (detail.map { "，" + $0 } ?? ""))
+        .accessibilityLabel(a11yLabel)
         .accessibilityAddTraits(.isButton)
+    }
+
+    /// 右侧读数是设置页最关键的结论（82% / 已设 / 从未备份），必须进 VoiceOver。
+    private var a11yLabel: String {
+        var parts = [title]
+        if let detail, !detail.isEmpty { parts.append(detail) }
+        if let value, !value.isEmpty { parts.append("当前 " + value) }
+        return parts.joined(separator: "，")
     }
 }
 

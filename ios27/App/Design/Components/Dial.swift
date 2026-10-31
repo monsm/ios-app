@@ -101,8 +101,8 @@ struct Dial: View {
                 let length: CGFloat = major ? 10 : 5
                 let lit = i <= litTicks && phase.progress > 0
                 let color: Color = lit
-                    ? (phase.isFailed ? State.critical : Signal.base)
-                    : Ink.inkFaint.opacity(major ? 0.4 : 0.2)
+                    ? (phase.isFailed ? V.C.critical : V.C.blue)
+                    : V.C.text3.opacity(major ? 0.4 : 0.2)
                 let inner = outer - length
                 let p1 = CGPoint(x: center.x + cos(angle.radians) * inner,
                                  y: center.y + sin(angle.radians) * inner)
@@ -126,18 +126,18 @@ struct Dial: View {
         ZStack {
             // 轨道只在推进时出现。静止时画一圈灰环，读起来像"装饰圆"而不是"待触发的仪器"。
             Circle()
-                .stroke(Ink.hairline, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                .stroke(V.C.hairline, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
                 .frame(width: diameter - 28, height: diameter - 28)
                 .opacity(phase.progress > 0 ? 1 : 0)
             Circle()
                 .trim(from: 0, to: max(0.0001, phase.progress))
                 .stroke(
-                    phase.isFailed ? State.critical : Signal.base,
+                    phase.isFailed ? V.C.critical : V.C.blue,
                     style: StrokeStyle(lineWidth: 2.5, lineCap: .round)
                 )
                 .rotationEffect(.degrees(90))
                 .frame(width: diameter - 28, height: diameter - 28)
-                .animation(reduceMotion ? nil : T.M.sweep, value: phase.progress)
+                .animation(reduceMotion ? nil : V.M.sweep, value: phase.progress)
         }
         .accessibilityHidden(true)
     }
@@ -147,20 +147,20 @@ struct Dial: View {
     // 失败时中心词跟着变红：三处（红弧 / 中心词 / 横幅）如果只有弧在变，
     // 眼睛要先读到弧才明白"出事了"，而词还是黑的 —— 那是把最重要的信息放最后。
     private var hub: some View {
-        VStack(spacing: T.S.xs) {
+        VStack(spacing: V.S.gapXS) {
             Text(phase.word)
-                .font(T.F.reading(30, weight: .medium))
-                .foregroundStyle(phase.isFailed ? State.critical : (enabled ? Ink.ink : Ink.inkFaint))
+                .font(V.F.number30)
+                .foregroundStyle(phase.isFailed ? V.C.critical : (enabled ? V.C.text1 : V.C.text3))
                 .contentTransition(reduceMotion ? .identity : .numericText())
-                .animation(reduceMotion ? nil : T.M.snap, value: phase.word)
+                .animation(reduceMotion ? nil : V.M.snap, value: phase.word)
             Text(footnote)
-                .font(T.F.unit)
-                .foregroundStyle(Ink.inkFaint)
+                .font(V.F.unit)
+                .foregroundStyle(V.C.text3)
                 .tracking(0.6)
             Text(hint)
-                .font(T.F.caption)
-                .foregroundStyle(enabled ? Ink.inkSub : Ink.inkFaint)
-                .padding(.top, T.S.s)
+                .font(V.F.footnote)
+                .foregroundStyle(enabled ? V.C.text2 : V.C.text3)
+                .padding(.top, V.S.gapS)
         }
         .frame(width: diameter * 0.52)
     }
@@ -171,7 +171,7 @@ struct DialPressStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.972 : 1)
-            .animation(T.M.snap, value: configuration.isPressed)
+            .animation(V.M.snap, value: configuration.isPressed)
     }
 }
 

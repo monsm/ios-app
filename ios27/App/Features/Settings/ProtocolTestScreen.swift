@@ -25,13 +25,13 @@ struct ProtocolTestScreen: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: T.S.l) {
+            VStack(spacing: V.S.gap16) {
                 header
                 scanPanel
                 listPanel
                 notePanel
             }
-            .padding(.vertical, T.S.l)
+            .padding(.vertical, V.S.gap16)
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
@@ -41,95 +41,95 @@ struct ProtocolTestScreen: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: T.S.xs) {
+        VStack(alignment: .leading, spacing: V.S.gapXS) {
             Text("协议测试")
-                .font(T.F.display())
-                .foregroundStyle(Ink.ink)
-            HStack(spacing: T.S.s) {
-                StateDot(tone: scanning ? .live : (devices.isEmpty ? .neutral : .ok),
+                .font(V.F.displayHome)
+                .foregroundStyle(V.C.text1)
+            HStack(spacing: V.S.gapS) {
+                VStateDot(tone: scanning ? .live : (devices.isEmpty ? .neutral : .ok),
                          word: scanning ? "扫描中" : "空闲")
                 Text("只做扫描与 cmd12 回声；不改锁、不写台账")
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                 Spacer(minLength: 0)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var scanPanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "附近设备", trailing: "\(devices.count) 台")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "附近设备", trailing: "\(devices.count) 台")
                 if scanning {
-                    BusyRow(text: "正在扫描 8 秒 · 把要测的设备放在手机旁")
+                    VBusyRow(text: "正在扫描 8 秒 · 把要测的设备放在手机旁")
                 } else {
-                    PrimaryAction(title: "重新扫描", systemImage: "antenna.radiowaves.left.and.right") {
+                    VActionButton(title: "重新扫描", systemImage: "antenna.radiowaves.left.and.right") {
                         Task { await scan() }
                     }
                 }
                 if let error {
-                    StatusLine(tone: .critical, text: error)
+                    VStatusLine(tone: .critical, text: error)
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var listPanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "扫描结果")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "扫描结果")
                 if devices.isEmpty {
                     Text("没有扫到设备。确认蓝牙已开、设备在广播；门锁被连上后会停止广播，先断开再扫。")
-                        .font(T.F.caption)
-                        .foregroundStyle(Ink.inkSub)
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text2)
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
                     ForEach(devices) { d in
-                        VStack(alignment: .leading, spacing: T.S.xs) {
-                            HStack(alignment: .firstTextBaseline, spacing: T.S.s) {
+                        VStack(alignment: .leading, spacing: V.S.gapXS) {
+                            HStack(alignment: .firstTextBaseline, spacing: V.S.gapS) {
                                 Text(d.name)
-                                    .font(T.F.bodyStrong)
-                                    .foregroundStyle(Ink.ink)
+                                    .font(V.F.bodyStrong)
+                                    .foregroundStyle(V.C.text1)
                                 Spacer(minLength: 0)
                                 Text("\(d.rssi) dBm")
-                                    .font(T.F.stamp)
-                                    .foregroundStyle(Ink.inkSub)
+                                    .font(V.F.stamp)
+                                    .foregroundStyle(V.C.text2)
                             }
                             Text("pid \(d.pid) · \(d.mac.isEmpty ? "无 MAC" : d.mac)\(d.dfu ? " · DFU" : "")")
-                                .font(T.F.unit)
-                                .foregroundStyle(Ink.inkFaint)
-                            SecondaryAction(title: probing == d.id ? "探测中…" : "发送回声探测 (cmd12)",
+                                .font(V.F.unit)
+                                .foregroundStyle(V.C.text3)
+                            VOutlineButton(title: probing == d.id ? "探测中…" : "发送回声探测 (cmd12)",
                                             systemImage: "waveform.path") {
                                 probe(d)
                             }
                             .disabled(probing != nil)
                             if let result, probing == nil {
                                 Text(result)
-                                    .font(T.F.caption)
-                                    .foregroundStyle(Ink.inkSub)
+                                    .font(V.F.footnote)
+                                    .foregroundStyle(V.C.text2)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                         }
-                        .padding(.vertical, T.S.xs)
-                        .frame(minHeight: T.Hit.min)
+                        .padding(.vertical, V.S.gapXS)
+                        .frame(minHeight: V.Hit.min)
                     }
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var notePanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "边界")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "边界")
                 SettingsNote(text: "cmd12 免令牌、不改锁内任何东西、不写本机台账 —— 对还没配对的设备也发得出去。本页不提供任何写命令（配对/改密/删指纹等）。")
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     @MainActor

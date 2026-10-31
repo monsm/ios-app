@@ -26,7 +26,7 @@ struct MobileKeyScreen: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: T.S.l) {
+            VStack(spacing: V.S.gap16) {
                 header
                 if app.members.isEmpty {
                     noMemberBlock
@@ -35,7 +35,7 @@ struct MobileKeyScreen: View {
                 }
                 issuedBlock
             }
-            .padding(.vertical, T.S.l)
+            .padding(.vertical, V.S.gap16)
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
@@ -49,21 +49,21 @@ struct MobileKeyScreen: View {
     // MARK: 页头
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: T.S.xs) {
+        VStack(alignment: .leading, spacing: V.S.gapXS) {
             Text("手机钥匙")
-                .font(T.F.display())
-                .foregroundStyle(Ink.ink)
+                .font(V.F.displayHome)
+                .foregroundStyle(V.C.text1)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            HStack(spacing: T.S.s) {
-                StateDot(tone: app.lock == nil ? .attention : (issued.isEmpty ? .neutral : .ok),
+            HStack(spacing: V.S.gapS) {
+                VStateDot(tone: app.lock == nil ? .attention : (issued.isEmpty ? .neutral : .ok),
                          word: issued.isEmpty ? "还没有签发" : "已签发 \(issued.count) 把")
                 Text("本机签了 \(issuedCount) 把 · 锁里 PIN 池的占用要连上锁才知道")
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                 Spacer(minLength: 0)
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
     }
@@ -71,10 +71,10 @@ struct MobileKeyScreen: View {
     // MARK: 主角：签发表单
 
     private var issueBlock: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "给谁签", trailing: owner ?? "必选")
-                VStack(spacing: T.S.xxs) {
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "给谁签", trailing: owner ?? "必选")
+                VStack(spacing: V.S.gapXXS) {
                     ForEach(app.members.filter { !$0.archived }) { member in
                         KeysOwnerRow(
                             name: member.name,
@@ -87,47 +87,47 @@ struct MobileKeyScreen: View {
                     }
                 }
 
-                Divider().overlay(Ink.hairline)
+                Divider().overlay(V.C.hairline)
 
-                SectionLabel(text: "有效期")
+                VSectionLabel(text: "有效期")
                 KeysChips(items: [true, false], title: { $0 ? "永久有效" : "自定义" }, selection: $forever)
                 if !forever {
                     DatePicker("到期时间", selection: $validTo, in: Date()...,
                                displayedComponents: [.date, .hourAndMinute])
-                        .font(T.F.body)
-                        .frame(minHeight: T.Hit.min)
+                        .font(V.F.body)
+                        .frame(minHeight: V.Hit.min)
                 }
 
                 if let errorText {
                     KeysInlineNote(tone: .critical, text: errorText)
                 }
 
-                PrimaryAction(title: "签发一把手机钥匙", systemImage: "iphone.gen3.badge.key") {
+                VActionButton(title: "签发一把手机钥匙", systemImage: "iphone.gen3.badge.key") {
                     issue()
                 }
                 if let justIssued {
-                    StatusLine(tone: .ok, text: "已签发给 \(justIssued) —— 到下面的钥匙行里点「⋯ → 复制开锁凭证」交给对方。")
+                    VStatusLine(tone: .ok, text: "已签发给 \(justIssued) —— 到下面的钥匙行里点「⋯ → 复制开锁凭证」交给对方。")
                 }
                 Text(forever
                      ? "永久档与锁端「永久」同口径。签发只写本机台账 —— 还要点下面那把钥匙行里的「交付」交给对方。"
                      : "自定义档到期后这把钥匙自动失效，不用手动撤销。")
-                    .font(T.F.unit)
-                    .foregroundStyle(Ink.inkFaint)
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 已签发
 
     private var issuedBlock: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.s) {
-                SectionLabel(text: "本机签发的钥匙", trailing: "\(issued.count) 把")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapS) {
+                VSectionLabel(text: "本机签发的钥匙", trailing: "\(issued.count) 把")
                 if issued.isEmpty {
                     KeysInlineNote(tone: .neutral, text: "还没有签发过。选一位成员、点上面的签发按钮 —— 签完这里会多一行，长按可以复制或撤销。")
-                        .frame(minHeight: T.Hit.min)
+                        .frame(minHeight: V.Hit.min)
                 } else {
                     VStack(spacing: 0) {
                         ForEach(Array(issued.enumerated()), id: \.offset) { pair in
@@ -138,23 +138,23 @@ struct MobileKeyScreen: View {
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func issuedRow(_ key: KeyItem) -> some View {
         let read = KeysState.expiryReading(key, now: KeysState.now())
-        return HStack(alignment: .center, spacing: T.S.m) {
-            StateDot(tone: KeysState.tone(key, now: KeysState.now()), word: KeysState.word(key, now: KeysState.now()))
-            VStack(alignment: .leading, spacing: T.S.xxs) {
+        return HStack(alignment: .center, spacing: V.S.gapMS) {
+            VStateDot(tone: KeysState.tone(key, now: KeysState.now()), word: KeysState.word(key, now: KeysState.now()))
+            VStack(alignment: .leading, spacing: V.S.gapXXS) {
                 Text(key.owner ?? key.name)
-                    .font(T.F.body)
-                    .foregroundStyle(Ink.ink)
+                    .font(V.F.body)
+                    .foregroundStyle(V.C.text1)
                 Text("手机钥匙 · \(KeysState.word(key, now: KeysState.now()))")
-                    .font(T.F.unit)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text2)
             }
-            Spacer(minLength: T.S.s)
-            Reading(value: read.value, unit: read.unit, size: 15, tint: read.tint, animated: false)
+            Spacer(minLength: V.S.gapS)
+            VReading(value: read.value, unit: read.unit, font: V.F.number15, tint: read.tint, animated: false)
             Menu {
                 Button {
                     UIPasteboard.general.string = key.code ?? key.id
@@ -169,22 +169,22 @@ struct MobileKeyScreen: View {
             } label: {
                 Image(systemName: "ellipsis")
                     .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                    .font(T.F.icon(T.Icon.m, weight: .medium))
-                    .foregroundStyle(Ink.inkSub)
-                    .frame(width: T.Hit.min, height: T.Hit.min)
+                    .font(V.F.icon18Medium)
+                    .foregroundStyle(V.C.text2)
+                    .frame(width: V.Hit.min, height: V.Hit.min)
                     .contentShape(.rect)
             }
             .accessibilityLabel("钥匙操作：复制或撤销")
         }
-        .frame(minHeight: T.Hit.min + T.S.s)
+        .frame(minHeight: V.Hit.min + V.S.gapS)
         .accessibilityElement(children: .contain)
     }
 
     // MARK: 空态（没有成员时先给去处）
 
     private var noMemberBlock: some View {
-        Panel {
-            EmptyPanel(
+        VCard {
+            VEmptyState(
                 title: "还没有成员",
                 message: "手机钥匙要签给具体某个人。先去「家」建一位成员，回来就能签。",
                 actionTitle: "去新建成员",
@@ -192,9 +192,9 @@ struct MobileKeyScreen: View {
             ) {
                 router.request(.dest(.memberCreate))
             }
-            .padding(.vertical, T.S.xxl)
+            .padding(.vertical, V.S.gapXXL)
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 真动作

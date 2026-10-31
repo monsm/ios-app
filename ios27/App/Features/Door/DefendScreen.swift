@@ -55,7 +55,7 @@ struct DefendScreen: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: T.S.l) {
+            VStack(spacing: V.S.gap16) {
                 header
                 if app.lock == nil {
                     noLockPanel
@@ -69,7 +69,7 @@ struct DefendScreen: View {
                     effectPanel
                 }
             }
-            .padding(.vertical, T.S.l)
+            .padding(.vertical, V.S.gap16)
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
@@ -87,22 +87,22 @@ struct DefendScreen: View {
     // MARK: 页头
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: T.S.xs) {
+        VStack(alignment: .leading, spacing: V.S.gapXS) {
             Text("布防")
-                .font(T.F.display())
-                .foregroundStyle(Ink.ink)
-            HStack(spacing: T.S.s) {
-                StateDot(tone: headerTone, word: headerWord)
+                .font(V.F.displayHome)
+                .foregroundStyle(V.C.text1)
+            HStack(spacing: V.S.gapS) {
+                VStateDot(tone: headerTone, word: headerWord)
                 Text(headerText)
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                     // 状态行最多两行：宁可换行，不要截断或缩字（缩字会把 13pt 压到 10pt，低于可读下限）
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var savedMode: Mode {
@@ -137,40 +137,40 @@ struct DefendScreen: View {
     // MARK: 现状（这一屏的主角：布防状态本身）
 
     private var statusPanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "当前布防", trailing: "cmd25")
-                HStack(alignment: .firstTextBaseline, spacing: T.S.m) {
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "当前布防", trailing: "cmd25")
+                HStack(alignment: .firstTextBaseline, spacing: V.S.gapMS) {
                     Text(savedMode.title)
-                        .font(T.F.display(26))
-                        .foregroundStyle(Ink.ink)
-                    Spacer(minLength: T.S.s)
-                    StateDot(tone: isActiveNow ? .attention : .neutral,
+                        .font(V.F.display26)
+                        .foregroundStyle(V.C.text1)
+                    Spacer(minLength: V.S.gapS)
+                    VStateDot(tone: isActiveNow ? .attention : .neutral,
                              word: isActiveNow ? "布防中" : "未布防")
                 }
                 hairline
-                ReadingGrid(items: [
+                VReadingGrid(items: [
                     .init(label: "方式", value: savedMode.title),
                     .init(label: "时段", value: savedMode == .period
                           ? "\(clockLabel(config?.startMinute ?? startMinute)) – \(clockLabel(config?.endMinute ?? endMinute))"
                           : "—"),
                     .init(label: "此刻", value: isActiveNow ? "布防内" : "布防外",
-                          tint: isActiveNow ? State.attention : Ink.ink),
+                          tint: isActiveNow ? V.C.warning : V.C.text1),
                     .init(label: "上次改动", value: config?.updatedAt.map { TimeFormat.clock($0) } ?? "—",
-                          tint: Ink.inkSub),
+                          tint: V.C.text2),
                 ], columns: 2)
-                .padding(.top, T.S.xs)
+                .padding(.top, V.S.gapXS)
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 三档（真交互：点了就换选中态，并决定下面的表单出不出）
 
     private var modePanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "布防方式", trailing: "三选一")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "布防方式", trailing: "三选一")
                 VStack(spacing: 0) {
                     ForEach(Array(Mode.allCases.enumerated()), id: \.element.id) { index, m in
                         if index > 0 { hairline }
@@ -179,7 +179,7 @@ struct DefendScreen: View {
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func modeRow(_ m: Mode) -> some View {
@@ -188,24 +188,24 @@ struct DefendScreen: View {
             mode = m
             outcome = nil
         } label: {
-            HStack(alignment: .top, spacing: T.S.m) {
+            HStack(alignment: .top, spacing: V.S.gapMS) {
                 Image(systemName: on ? "largecircle.fill.circle" : "circle")
                     .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                    .font(T.F.icon(T.Icon.m, weight: .regular))
-                    .foregroundStyle(on ? Ink.ink : Ink.inkFaint)
-                    .frame(width: T.Icon.l, alignment: .leading)
-                VStack(alignment: .leading, spacing: T.S.xxs) {
+                    .font(V.F.icon18)
+                    .foregroundStyle(on ? V.C.text1 : V.C.text3)
+                    .frame(width: V.Icon.l, alignment: .leading)
+                VStack(alignment: .leading, spacing: V.S.gapXXS) {
                     Text(m.title)
-                        .font(T.F.bodyStrong)
-                        .foregroundStyle(Ink.ink)
+                        .font(V.F.bodyStrong)
+                        .foregroundStyle(V.C.text1)
                     Text(m.note)
-                        .font(T.F.caption)
-                        .foregroundStyle(Ink.inkSub)
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text2)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 0)
             }
-            .frame(minHeight: T.Hit.min)
+            .frame(minHeight: V.Hit.min)
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
@@ -216,29 +216,29 @@ struct DefendScreen: View {
     // MARK: 时段（两个步进器，改了就真改；校验不通过就说清）
 
     private var periodPanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "每日时段", trailing: "每 15 分钟一档")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "每日时段", trailing: "每 15 分钟一档")
                 stepRow(title: "开始", minutes: $startMinute)
                 hairline
                 stepRow(title: "结束", minutes: $endMinute)
                 hairline
                 Text(periodNote)
-                    .font(T.F.caption)
-                    .foregroundStyle(periodValid ? Ink.inkSub : State.critical)
+                    .font(V.F.footnote)
+                    .foregroundStyle(periodValid ? V.C.text2 : V.C.critical)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func stepRow(title: String, minutes: Binding<Int>) -> some View {
-        HStack(spacing: T.S.m) {
+        HStack(spacing: V.S.gapMS) {
             Text(title)
-                .font(T.F.body)
-                .foregroundStyle(Ink.inkSub)
-            Spacer(minLength: T.S.s)
-            Reading(value: clockLabel(minutes.wrappedValue), size: 17)
+                .font(V.F.body)
+                .foregroundStyle(V.C.text2)
+            Spacer(minLength: V.S.gapS)
+            VReading(value: clockLabel(minutes.wrappedValue), font: V.F.number17)
             stepButton("minus", label: "\(title)提前 15 分钟") {
                 minutes.wrappedValue = wrapMinutes(minutes.wrappedValue - Self.minuteStep)
             }
@@ -246,16 +246,16 @@ struct DefendScreen: View {
                 minutes.wrappedValue = wrapMinutes(minutes.wrappedValue + Self.minuteStep)
             }
         }
-        .frame(minHeight: T.Hit.min)
+        .frame(minHeight: V.Hit.min)
     }
 
     private func stepButton(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
                 .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                .font(T.F.icon(T.Icon.s, weight: .semibold))
-                .foregroundStyle(Ink.ink)
-                .frame(width: T.Hit.min, height: T.Hit.min)
+                .font(V.F.icon15Semibold)
+                .foregroundStyle(V.C.text1)
+                .frame(width: V.Hit.min, height: V.Hit.min)
                 .contentShape(.rect)
         }
         .buttonStyle(PressStyle())
@@ -279,13 +279,13 @@ struct DefendScreen: View {
     // MARK: 主动作
 
     private var actionPanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "下发", trailing: "cmd25")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "下发", trailing: "cmd25")
                 if busy {
-                    BusyRow(text: mode == .off ? "正在撤防…" : "正在布防…")
+                    VBusyRow(text: mode == .off ? "正在撤防…" : "正在布防…")
                 } else {
-                    PrimaryAction(
+                    VActionButton(
                         title: actionTitle,
                         systemImage: "shield.lefthalf.filled",
                         busy: false
@@ -297,19 +297,19 @@ struct DefendScreen: View {
                 }
                 if !canApply {
                     Text("先把时段设成两个不同的时刻，再执行。")
-                        .font(T.F.unit)
-                        .foregroundStyle(Ink.inkFaint)
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text3)
                 }
                 if let outcome {
-                    StatusLine(tone: .ok, text: outcome)
+                    VStatusLine(tone: .ok, text: outcome)
                 }
                 Text("rc=0 只说明锁收了命令。锁端状态帧不带布防字段，所以这里不宣称「锁已进入布防」，只记本机与回执。")
-                    .font(T.F.unit)
-                    .foregroundStyle(Ink.inkFaint)
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var canApply: Bool {
@@ -338,23 +338,23 @@ struct DefendScreen: View {
     // MARK: 后果（把布防的语义写清：它否决的是自动开锁，不是手动开锁）
 
     private var effectPanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "布防期间会发生什么")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "布防期间会发生什么")
                 effectLine("靠近自动开锁：被否决。站在门口不会自己开 —— 这正是布防的意义。")
                 effectLine("手动开锁：照常。你自己按刻度盘开门不受影响，否则人就被锁在门外了。")
                 effectLine("布防不能远程设置，也不能远程解除：必须站在门锁旁边做。")
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func effectLine(_ text: String) -> some View {
-        HStack(alignment: .top, spacing: T.S.s) {
-            StateDot(tone: .neutral, word: "须知")
+        HStack(alignment: .top, spacing: V.S.gapS) {
+            VStateDot(tone: .neutral, word: "须知")
             Text(text)
-                .font(T.F.caption)
-                .foregroundStyle(Ink.inkSub)
+                .font(V.F.footnote)
+                .foregroundStyle(V.C.text2)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
@@ -363,8 +363,8 @@ struct DefendScreen: View {
     // MARK: 空态
 
     private var noLockPanel: some View {
-        Panel {
-            EmptyPanel(
+        VCard {
+            VEmptyState(
                 title: "还没有门锁可以布防",
                 message: "布防是写给门锁的：先添加门锁，再回这一页设时段。不是所有型号都支持布防，网关一律不支持。",
                 actionTitle: "添加门锁",
@@ -372,9 +372,9 @@ struct DefendScreen: View {
             ) {
                 router.request(.dest(.addLock))
             }
-            .padding(.vertical, T.S.xxl)
+            .padding(.vertical, V.S.gapXXL)
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 读写
@@ -451,7 +451,7 @@ struct DefendScreen: View {
 
     private var hairline: some View {
         Rectangle()
-            .fill(Ink.hairline)
-            .frame(height: T.Stroke.hair)
+            .fill(V.C.hairline)
+            .frame(height: V.S.hair)
     }
 }

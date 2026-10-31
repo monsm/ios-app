@@ -11,10 +11,10 @@ struct QuickPoolEditSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: T.S.l) {
-                    Panel {
-                        VStack(alignment: .leading, spacing: T.S.s) {
-                            SectionLabel(text: "显示哪些格子")
+                VStack(spacing: V.S.gap16) {
+                    VCard {
+                        VStack(alignment: .leading, spacing: V.S.gapS) {
+                            VSectionLabel(text: "显示哪些格子")
                             ForEach(QuickPool.all) { a in
                                 Toggle(isOn: Binding(
                                     get: { picked.contains(a.id) },
@@ -22,52 +22,52 @@ struct QuickPoolEditSheet: View {
                                         if on { picked.insert(a.id) } else { picked.remove(a.id) }
                                     }
                                 )) {
-                                    HStack(spacing: T.S.s) {
+                                    HStack(spacing: V.S.gapS) {
                                         Image(systemName: a.icon)
-                                            .font(T.F.icon(T.Icon.m, weight: .regular))
-                                            .foregroundStyle(Ink.inkSub)
-                                            .frame(width: T.Icon.l)
+                                            .font(V.F.icon18)
+                                            .foregroundStyle(V.C.text2)
+                                            .frame(width: V.Icon.l)
                                             .accessibilityHidden(true)
                                         Text(a.label)
-                                            .font(T.F.body)
-                                            .foregroundStyle(Ink.ink)
+                                            .font(V.F.body)
+                                            .foregroundStyle(V.C.text1)
                                     }
                                 }
-                                .tint(Signal.base)
-                                .frame(minHeight: T.Hit.min)
+                                .tint(V.C.blue)
+                                .frame(minHeight: V.Hit.min)
                             }
                         }
                     }
-                    .padding(.horizontal, T.S.gutter)
+                    .padding(.horizontal, V.S.pageGutter)
 
-                    Panel {
-                        VStack(alignment: .leading, spacing: T.S.s) {
-                            SectionLabel(text: "顺序")
+                    VCard {
+                        VStack(alignment: .leading, spacing: V.S.gapS) {
+                            VSectionLabel(text: "顺序")
                             Toggle(isOn: $smart) {
-                                VStack(alignment: .leading, spacing: T.S.xxs) {
+                                VStack(alignment: .leading, spacing: V.S.gapXXS) {
                                     Text("按使用次数排前")
-                                        .font(T.F.body)
-                                        .foregroundStyle(Ink.ink)
+                                        .font(V.F.body)
+                                        .foregroundStyle(V.C.text1)
                                     Text("开关关闭时按你在这里的勾选顺序；开启后点得多的格子排前面。")
-                                        .font(T.F.caption)
-                                        .foregroundStyle(Ink.inkSub)
+                                        .font(V.F.footnote)
+                                        .foregroundStyle(V.C.text2)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
                             }
-                            .tint(Signal.base)
-                            .frame(minHeight: T.Hit.min)
+                            .tint(V.C.blue)
+                            .frame(minHeight: V.Hit.min)
                         }
                     }
-                    .padding(.horizontal, T.S.gutter)
+                    .padding(.horizontal, V.S.pageGutter)
 
-                    PrimaryAction(title: "保存", systemImage: "checkmark") {
+                    VActionButton(title: "保存", systemImage: "checkmark") {
                         QuickPool.setSelected(Array(picked))
                         QuickPool.setSmartFirst(smart)
                         dismiss()
                     }
-                    .padding(.horizontal, T.S.gutter)
+                    .padding(.horizontal, V.S.pageGutter)
                 }
-                .padding(.vertical, T.S.l)
+                .padding(.vertical, V.S.gap16)
             }
             .background(CanvasBackground())
             .navigationTitle("编辑快捷操作")

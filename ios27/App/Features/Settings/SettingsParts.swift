@@ -14,22 +14,22 @@ struct SettingsHeader: View {
     let status: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: T.S.xs) {
+        VStack(alignment: .leading, spacing: V.S.gapXS) {
             Text(title)
-                .font(T.F.display())
-                .foregroundStyle(Ink.ink)
+                .font(V.F.displayHome)
+                .foregroundStyle(V.C.text1)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            HStack(spacing: T.S.s) {
-                StateDot(tone: tone, word: status)
+            HStack(spacing: V.S.gapS) {
+                VStateDot(tone: tone, word: status)
                 Text(status)
-                    .font(T.F.caption)
-                    .foregroundStyle(tone == .neutral ? Ink.inkSub : tone.color)
+                    .font(V.F.footnote)
+                    .foregroundStyle(tone == .neutral ? V.C.text2 : tone.color)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
     }
@@ -39,8 +39,8 @@ struct SettingsHeader: View {
 struct SettingRule: View {
     var body: some View {
         Rectangle()
-            .fill(Ink.hairline)
-            .frame(height: T.Stroke.hair)
+            .fill(V.C.hairline)
+            .frame(height: V.S.hair)
             .accessibilityHidden(true)
     }
 }
@@ -51,7 +51,7 @@ struct SettingRow: View {
     let label: String
     let value: String
     var unit: String? = nil
-    var tint: Color = Ink.ink
+    var tint: Color = V.C.text1
     /// 值是数字 / 时间时走等宽；值是词（「已设」「跟随系统」）时关掉，否则会读成读数。
     var mono: Bool = true
     var symbol: String? = nil
@@ -62,33 +62,33 @@ struct SettingRow: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(alignment: .center, spacing: T.S.s) {
+            HStack(alignment: .center, spacing: V.S.gapS) {
                 if let symbol {
                     // 装饰性图标：语义由相邻文字承载（只标一次，重复标是噪音）
                     Image(systemName: symbol)
                         .accessibilityHidden(true)
-                        .font(T.F.icon(T.Icon.m, weight: .regular))
-                        .foregroundStyle(Ink.inkSub)
-                        .frame(width: T.Icon.xl, alignment: .leading)
+                        .font(V.F.icon18)
+                        .foregroundStyle(V.C.text2)
+                        .frame(width: V.Icon.xl, alignment: .leading)
                 }
-                VStack(alignment: .leading, spacing: T.S.xxs) {
-                    FieldRow(label: label, value: value, unit: unit, tint: tint, mono: mono)
+                VStack(alignment: .leading, spacing: V.S.gapXXS) {
+                    VFieldRow(label: label, value: value, unit: unit, tint: tint, mono: mono)
                     if let note {
                         Text(note)
-                            .font(T.F.unit)
-                            .foregroundStyle(Ink.inkFaint)
+                            .font(V.F.unit)
+                            .foregroundStyle(V.C.text3)
                             .fixedSize(horizontal: false, vertical: true)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
                 if chevron {
                     Image(systemName: "chevron.right")
-                        .font(T.F.icon(T.Icon.s, weight: .medium))
-                        .foregroundStyle(Ink.inkFaint)
+                        .font(V.F.icon15Medium)
+                        .foregroundStyle(V.C.text3)
                         .accessibilityHidden(true)
                 }
             }
-            .frame(minHeight: T.Hit.min)
+            .frame(minHeight: V.Hit.min)
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
@@ -105,18 +105,18 @@ struct SettingToggle: View {
     @Binding var isOn: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: T.S.xxs) {
+        VStack(alignment: .leading, spacing: V.S.gapXXS) {
             Toggle(isOn: $isOn) {
                 Text(label)
-                    .font(T.F.body)
-                    .foregroundStyle(Ink.ink)
+                    .font(V.F.body)
+                    .foregroundStyle(V.C.text1)
             }
-            .tint(Ink.inkSub)
-            .frame(minHeight: T.Hit.min)
+            .tint(V.C.text2)
+            .frame(minHeight: V.Hit.min)
             if let note {
                 Text(note)
-                    .font(T.F.unit)
-                    .foregroundStyle(Ink.inkFaint)
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -132,13 +132,13 @@ struct SettingDangerRow: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: T.S.s) {
+            HStack(spacing: V.S.gapS) {
                 Text(title)
-                    .font(T.F.body)
-                    .foregroundStyle(State.critical)
+                    .font(V.F.body)
+                    .foregroundStyle(V.C.critical)
                 Spacer(minLength: 0)
             }
-            .frame(minHeight: T.Hit.min)
+            .frame(minHeight: V.Hit.min)
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
@@ -148,7 +148,7 @@ struct SettingDangerRow: View {
 
 /// 破坏性主动作：填 critical，不是填 signal。
 /// 用铜锈绿去按「删除」是把品牌色当装饰，也把危险动作画成了安全动作 —— 这里换成语义色。
-/// 压填充的文字走 Ink.paper（浅色档是纸白、深色档是近黑），正好是两档 critical 上的可读色。
+/// 压填充的文字走 V.C.text1（白），在 critical 上有足够对比度。
 struct DangerAction: View {
     let title: String
     var busy: Bool = false
@@ -156,16 +156,16 @@ struct DangerAction: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: T.S.s) {
+            HStack(spacing: V.S.gapS) {
                 if busy {
-                    ProgressView().controlSize(.small).tint(Ink.paper)
+                    ProgressView().controlSize(.small).tint(V.C.bg)
                 }
-                Text(title).font(T.F.bodyStrong)
+                Text(title).font(V.F.bodyStrong)
             }
-            .foregroundStyle(Ink.paper)
+            .foregroundStyle(V.C.bg)
             .frame(maxWidth: .infinity)
-            .frame(height: T.H.action)
-            .background(State.critical, in: .rect(cornerRadius: T.R.control))
+            .frame(height: V.H.action)
+            .background(V.C.critical, in: .rect(cornerRadius: V.R.control))
         }
         .buttonStyle(PressStyle())
         .disabled(busy)
@@ -179,8 +179,8 @@ struct SettingsNote: View {
 
     var body: some View {
         Text(text)
-            .font(T.F.caption)
-            .foregroundStyle(Ink.inkSub)
+            .font(V.F.footnote)
+            .foregroundStyle(V.C.text2)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -223,6 +223,7 @@ struct PasscodeSheet: View {
     @Environment(\.dismiss) private var dismiss
     private var store: SettingsStore { SettingsStore.shared }
 
+    @State private var oldCode = ""
     @State private var first = ""
     @State private var second = ""
     @State private var error: String?
@@ -237,41 +238,53 @@ struct PasscodeSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: T.S.l) {
+                VStack(spacing: V.S.gap16) {
                     SettingsHeader(
                         title: (isChange ? "更改" : "设置") + kind.title,
                         tone: error == nil ? .neutral : .attention,
                         status: error ?? "4 位以上纯数字 · 两次输入必须一致"
                     )
 
-                    Panel {
-                        VStack(alignment: .leading, spacing: T.S.m) {
-                            Inset {
+                    VCard {
+                        VStack(alignment: .leading, spacing: V.S.gapMS) {
+                            if isChange {
+                                VInset {
+                                    SecureField("原" + kind.title, text: $oldCode)
+                                        .font(V.F.body)
+                                        .keyboardType(.numberPad)
+                                        .textContentType(.password)
+                                        .accessibilityLabel("原" + kind.title)
+                                }
+                                Text("先验证当前\(kind.title) —— 只验本机摘要，不联网。")
+                                    .font(V.F.unit)
+                                    .foregroundStyle(V.C.text3)
+                            }
+                            VInset {
                                 SecureField(kind.fieldPlaceholder, text: $first)
-                                    .font(T.F.body)
+                                    .font(V.F.body)
                                     .keyboardType(.numberPad)
                                     .textContentType(.newPassword)
                                     .accessibilityLabel(kind.fieldPlaceholder)
                             }
-                            Inset {
+                            VInset {
                                 SecureField("再次输入", text: $second)
-                                    .font(T.F.body)
+                                    .font(V.F.body)
                                     .keyboardType(.numberPad)
                                     .accessibilityLabel("再次输入")
                             }
-                            PrimaryAction(title: "确定") { commit() }
-                                .padding(.top, T.S.xs)
+                            VActionButton(title: "确定") { commit() }
+                                .padding(.top, V.S.gapXS)
                         }
                     }
-                    .padding(.horizontal, T.S.gutter)
+                    .padding(.horizontal, V.S.pageGutter)
 
-                    SecondaryAction(title: "取消") { dismiss() }
-                        .padding(.horizontal, T.S.gutter)
+                    VOutlineButton(title: "取消") { dismiss() }
+                        .padding(.horizontal, V.S.pageGutter)
 
                     SettingsNote(text: kind.note)
-                        .padding(.horizontal, T.S.gutter)
+                        .padding(.horizontal, V.S.pageGutter)
                 }
-                .padding(.vertical, T.S.l)
+                .padding(.vertical, V.S.gap16)
             }
             .background(CanvasBackground())
             .scrollEdgeEffectStyle(.soft, for: .top)
@@ -281,6 +294,14 @@ struct PasscodeSheet: View {
     }
 
     private func commit() {
+        if isChange {
+            let ok: Bool
+            switch kind {
+            case .passcode: ok = DB.verifyPasscode(oldCode)
+            case .duress: ok = DB.verifyDuress(oldCode)
+            }
+            guard ok else { error = "原\(kind.title)不对"; return }
+        }
         guard first.count >= 4 else { error = "需 4 位以上"; return }
         guard first.allSatisfy({ $0.isNumber }) else { error = "只能输入数字"; return }
         guard first == second else { error = "两次输入不一致"; return }
@@ -319,6 +340,62 @@ func trialGuardBinding(_ app: AppModel) -> Binding<Bool> {
     )
 }
 
+/// 只验证旧密码的 sheet：关闭本机密码 / 关闭胁迫码前必须过这一道。
+/// 它不写任何状态 —— 验证通过才执行调用方给的 action（关闭动作本身）。
+struct VerifyPasscodeSheet: View {
+    let title: String
+    let note: String
+    let onVerified: () -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var code = ""
+    @State private var error: String?
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: V.S.gap16) {
+                    SettingsHeader(title: title, tone: error == nil ? .neutral : .attention,
+                                   status: error ?? note)
+                    VCard {
+                        VStack(alignment: .leading, spacing: V.S.gapMS) {
+                            VInset {
+                                SecureField("当前本机密码", text: $code)
+                                    .font(V.F.body)
+                                    .keyboardType(.numberPad)
+                                    .textContentType(.password)
+                                    .accessibilityLabel("当前本机密码")
+                            }
+                            VActionButton(title: "验证并继续", systemImage: "lock.open") { verify() }
+                                .disabled(code.count < 4)
+                                .opacity(code.count < 4 ? 0.45 : 1)
+                            VOutlineButton(title: "取消") { dismiss() }
+                        }
+                    }
+                    .padding(.horizontal, V.S.pageGutter)
+                    SettingsNote(text: "验证的是这台手机上的摘要；不改锁端任何设置。")
+                        .padding(.horizontal, V.S.pageGutter)
+                }
+                .padding(.vertical, V.S.gap16)
+            }
+            .background(CanvasBackground())
+            .scrollEdgeEffectStyle(.soft, for: .top)
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+
+    private func verify() {
+        guard DB.verifyPasscode(code) else {
+            error = "密码不对 · 再试一次"
+            code = ""
+            return
+        }
+        onVerified()
+        dismiss()
+    }
+}
+
 /// 面板内的档位 chip 行。ChipRow 自带页面级 gutter 内边距，嵌进面板时要把它收回来，
 /// 否则面板内再吃一层 16pt，读数与档位对不齐。收回量走令牌，不写字面量。
 struct SettingChips<Item: Hashable>: View {
@@ -327,7 +404,7 @@ struct SettingChips<Item: Hashable>: View {
     @Binding var selection: Item
 
     var body: some View {
-        ChipRow(items: items, title: title, selection: $selection)
-            .padding(.horizontal, -T.S.gutter)
+        VChipRow(items: items, title: title, selection: $selection)
+            .padding(.horizontal, -V.S.pageGutter)
     }
 }

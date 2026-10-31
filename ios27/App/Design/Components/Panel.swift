@@ -6,32 +6,32 @@ import SwiftUI
 
 /// 内容面板。同心圆角：外 20 → 内 16 → 控件 12。
 struct Panel<Content: View>: View {
-    var inset: CGFloat = T.S.l
-    var radius: CGFloat = T.R.plate
+    var inset: CGFloat = V.S.gap16
+    var radius: CGFloat = V.R.panel
     @ViewBuilder var content: Content
 
     var body: some View {
         content
             .padding(inset)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Ink.plate, in: .rect(cornerRadius: radius))
+            .background(V.C.card, in: .rect(cornerRadius: radius))
             .overlay {
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .strokeBorder(Ink.hairline, lineWidth: T.Stroke.hair)
+                    .strokeBorder(V.C.hairline, lineWidth: V.S.hair)
             }
     }
 }
 
 /// 凹槽块：放在 Panel 内部的次级分组（刻度底、读数条、内嵌列表）。
 struct Inset<Content: View>: View {
-    var inset: CGFloat = T.S.m
+    var inset: CGFloat = V.S.gapMS
     @ViewBuilder var content: Content
 
     var body: some View {
         content
             .padding(inset)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Ink.plateAlt, in: .rect(cornerRadius: T.R.inset))
+            .background(V.C.cardAlt, in: .rect(cornerRadius: V.R.inset))
     }
 }
 
@@ -41,19 +41,19 @@ struct SectionLabel: View {
     var trailing: String? = nil
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: T.S.s) {
+        HStack(alignment: .firstTextBaseline, spacing: V.S.gapS) {
             Text(text)
-                .font(T.F.section)
-                .foregroundStyle(Ink.inkSub)
-            Spacer(minLength: T.S.s)
+                .font(V.F.section)
+                .foregroundStyle(V.C.text2)
+            Spacer(minLength: V.S.gapS)
             if let trailing {
                 Text(trailing)
-                    .font(T.F.unit)
-                    .foregroundStyle(Ink.inkFaint)
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
                     .monospacedDigit()
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
     }
@@ -66,6 +66,6 @@ struct SectionLabel: View {
 /// 内容层不忽略安全区 —— 它们都在 ScrollView 里，由系统自动避让。
 struct CanvasBackground: View {
     var body: some View {
-        Ink.paper.ignoresSafeArea(.container, edges: .all)
+        V.C.bg.ignoresSafeArea(.container, edges: .all)
     }
 }

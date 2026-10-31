@@ -45,7 +45,7 @@ struct GatewayScreen: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: T.S.l) {
+            VStack(spacing: V.S.gap16) {
                 header
                 if let banner { bannerPanel(banner) }
                 listPanel
@@ -54,7 +54,7 @@ struct GatewayScreen: View {
                 }
                 notePanel
             }
-            .padding(.vertical, T.S.l)
+            .padding(.vertical, V.S.gap16)
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
@@ -75,22 +75,22 @@ struct GatewayScreen: View {
     // MARK: 页头
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: T.S.xs) {
+        VStack(alignment: .leading, spacing: V.S.gapXS) {
             Text("网关")
-                .font(T.F.display())
-                .foregroundStyle(Ink.ink)
-            HStack(spacing: T.S.s) {
-                StateDot(tone: headerTone, word: headerWord)
+                .font(V.F.displayHome)
+                .foregroundStyle(V.C.text1)
+            HStack(spacing: V.S.gapS) {
+                VStateDot(tone: headerTone, word: headerWord)
                 Text(headerText)
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                     // 状态行最多两行：宁可换行，不要截断或缩字（缩字会把 13pt 压到 10pt，低于可读下限）
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var onlineCount: Int { rows.filter { $0.online }.count }
@@ -115,19 +115,19 @@ struct GatewayScreen: View {
     // MARK: 主角：我的网关（一行一台，读数是真字段）
 
     private var listPanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "我的网关", trailing: rows.isEmpty ? nil : "\(rows.count) 台")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "我的网关", trailing: rows.isEmpty ? nil : "\(rows.count) 台")
                 if rows.isEmpty {
                     if showProvision || phase != .idle {
                         // 配网面板已经展开时不再放第二个主动作（同屏只许一个 PrimaryAction）。
                         Text("还没有已配好的网关。走完下面五步，这台网关就会出现在这里。")
-                            .font(T.F.caption)
-                            .foregroundStyle(Ink.inkSub)
+                            .font(V.F.footnote)
+                            .foregroundStyle(V.C.text2)
                             .fixedSize(horizontal: false, vertical: true)
-                            .frame(minHeight: T.Hit.min)
+                            .frame(minHeight: V.Hit.min)
                     } else {
-                        EmptyPanel(
+                        VEmptyState(
                             title: "还没有添加网关",
                             message: "先把网关通电、捅一下重置孔到橙灯闪烁，再点下面的「配网网关」走完五步。网关不是开锁的必需品：没有它也能开门，只是拿不到远程告警。",
                             actionTitle: "配网网关",
@@ -135,7 +135,7 @@ struct GatewayScreen: View {
                         ) {
                             openProvision()
                         }
-                        .padding(.vertical, T.S.xl)
+                        .padding(.vertical, V.S.gap24)
                     }
                 } else {
                     VStack(spacing: 0) {
@@ -147,32 +147,32 @@ struct GatewayScreen: View {
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func gatewayRow(_ g: GatewayRow) -> some View {
-        VStack(alignment: .leading, spacing: T.S.s) {
-            HStack(spacing: T.S.s) {
+        VStack(alignment: .leading, spacing: V.S.gapS) {
+            HStack(spacing: V.S.gapS) {
                 Text(g.name)
-                    .font(T.F.bodyStrong)
-                    .foregroundStyle(Ink.ink)
+                    .font(V.F.bodyStrong)
+                    .foregroundStyle(V.C.text1)
                     .lineLimit(1)
-                StateDot(tone: g.rebooting ? .live : (g.online ? .ok : .attention),
+                VStateDot(tone: g.rebooting ? .live : (g.online ? .ok : .attention),
                          word: g.rebooting ? "重启中" : (g.online ? "已联网" : "未联网"))
                 Text(g.rebooting ? "重启中" : (g.online ? "已联网" : "未联网"))
-                    .font(T.F.unit)
-                    .foregroundStyle(g.online && !g.rebooting ? Ink.inkSub : State.attention)
+                    .font(V.F.unit)
+                    .foregroundStyle(g.online && !g.rebooting ? V.C.text2 : V.C.warning)
                 Spacer(minLength: 0)
             }
-            ReadingGrid(items: [
+            VReadingGrid(items: [
                 .init(label: "ROM", value: g.rom.isEmpty ? "—" : g.rom),
                 .init(label: "WiFi", value: g.ssid.isEmpty ? "—" : g.ssid,
-                      tint: g.online ? Ink.ink : Ink.inkFaint),
+                      tint: g.online ? V.C.text1 : V.C.text3),
                 .init(label: "上次核对", value: g.lastCheckedAt.map { TimeFormat.clock($0) } ?? "—",
-                      tint: Ink.inkSub),
+                      tint: V.C.text2),
             ], columns: 3)
         }
-        .frame(minHeight: T.Hit.min)
+        .frame(minHeight: V.Hit.min)
         .contentShape(.rect)
         .contextMenu {
             Button {
@@ -200,69 +200,69 @@ struct GatewayScreen: View {
     // MARK: 配网（五步真序列）
 
     private var provisionPanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "配网网关", trailing: phase.isRunning ? "写入中" : "五步")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "配网网关", trailing: phase.isRunning ? "写入中" : "五步")
                 Text("接通电源 → 捅重置孔约 5 秒 → 指示灯变橙 → 点开始。写入过程中网关会重启并清空原有网络配置。")
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                     .fixedSize(horizontal: false, vertical: true)
                 hairline
-                HStack(spacing: T.S.s) {
+                HStack(spacing: V.S.gapS) {
                     Toggle("橙灯闪烁中", isOn: $armed)
-                        .font(T.F.body)
-                        .tint(Ink.ink)
+                        .font(V.F.body)
+                        .tint(V.C.text1)
                         .accessibilityLabel("网关指示灯已变橙")
                     Spacer(minLength: 0)
-                    StateDot(tone: armed ? .ok : .attention, word: armed ? "已就绪" : "待重置")
+                    VStateDot(tone: armed ? .ok : .attention, word: armed ? "已就绪" : "待重置")
                 }
-                .frame(minHeight: T.Hit.min)
+                .frame(minHeight: V.Hit.min)
 
                 hairline
                 TextField("WiFi 名称（只支持 2.4GHz）", text: $ssid)
-                    .font(T.F.body)
+                    .font(V.F.body)
                     .textFieldStyle(.plain)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .submitLabel(.next)
-                    .frame(minHeight: T.Hit.min)
+                    .frame(minHeight: V.Hit.min)
                 hairline
                 SecureField("WiFi 密码", text: $pwd)
-                    .font(T.F.body)
+                    .font(V.F.body)
                     .textFieldStyle(.plain)
                     .submitLabel(.done)
-                    .frame(minHeight: T.Hit.min)
+                    .frame(minHeight: V.Hit.min)
                 Text("iOS 不允许 App 读当前 WiFi 名，请手动输入；要换网先去「设置 → Wi-Fi」连上目标网络再回来。")
-                    .font(T.F.unit)
-                    .foregroundStyle(Ink.inkFaint)
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
 
                 hairline
                 ladder
 
                 if case .failed(let reason) = phase {
-                    StatusLine(tone: .critical, text: reason)
+                    VStatusLine(tone: .critical, text: reason)
                 } else if phase == .succeeded {
-                    StatusLine(tone: .ok, text: "指令已被网关接受 · 联网状态稍后在这里复核")
+                    VStatusLine(tone: .ok, text: "指令已被网关接受 · 联网状态稍后在这里复核")
                 }
 
                 if phase.isRunning {
-                    BusyRow(text: "正在写入，请勿断电")
+                    VBusyRow(text: "正在写入，请勿断电")
                 } else {
-                    PrimaryAction(title: "开始配网", systemImage: "wifi", busy: false) {
+                    VActionButton(title: "开始配网", systemImage: "wifi", busy: false) {
                         Task { await provision() }
                     }
                     .opacity(canProvision ? 1 : 0.5)
                     .disabled(!canProvision)
                     if !canProvision {
                         Text("要先勾上「橙灯闪烁中」，并填好 WiFi 名称与密码。")
-                            .font(T.F.unit)
-                            .foregroundStyle(Ink.inkFaint)
+                            .font(V.F.unit)
+                            .foregroundStyle(V.C.text3)
                     }
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var canProvision: Bool {
@@ -280,42 +280,42 @@ struct GatewayScreen: View {
         VStack(spacing: 0) {
             ForEach(Array(Self.stepTitles.enumerated()), id: \.offset) { index, title in
                 if index > 0 { hairline }
-                HStack(spacing: T.S.m) {
+                HStack(spacing: V.S.gapMS) {
                     Text(pad2(index + 1))
-                        .font(T.F.reading(13, weight: .medium))
-                        .foregroundStyle(stepReached(index) ? Ink.ink : Ink.inkFaint)
+                        .font(V.F.number13)
+                        .foregroundStyle(stepReached(index) ? V.C.text1 : V.C.text3)
                         .monospacedDigit()
-                        .frame(width: T.Icon.xl, alignment: .leading)
+                        .frame(width: V.Icon.xl, alignment: .leading)
                     Text(title)
-                        .font(T.F.body)
-                        .foregroundStyle(stepReached(index) ? Ink.ink : Ink.inkFaint)
-                    Spacer(minLength: T.S.s)
+                        .font(V.F.body)
+                        .foregroundStyle(stepReached(index) ? V.C.text1 : V.C.text3)
+                    Spacer(minLength: V.S.gapS)
                     if index < currentStep || phase == .succeeded {
                         Image(systemName: "checkmark")
                             .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                            .font(T.F.icon(T.Icon.s, weight: .semibold))
-                            .foregroundStyle(Ink.ink)
+                            .font(V.F.icon15Semibold)
+                            .foregroundStyle(V.C.text1)
                     } else if index == currentStep, phase.isRunning {
-                        StateDot(tone: .live, word: "进行中")
+                        VStateDot(tone: .live, word: "进行中")
                     } else {
-                        Text("待").font(T.F.unit).foregroundStyle(Ink.inkFaint)
+                        Text("待").font(V.F.unit).foregroundStyle(V.C.text3)
                     }
                 }
-                .frame(minHeight: T.Hit.min)
+                .frame(minHeight: V.Hit.min)
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("第 \(index + 1) 步 \(title)")
             }
             if !steps.isEmpty {
                 hairline
-                VStack(alignment: .leading, spacing: T.S.xxs) {
+                VStack(alignment: .leading, spacing: V.S.gapXXS) {
                     ForEach(Array(steps.enumerated()), id: \.offset) { _, line in
                         Text(line)
-                            .font(T.F.unit)
-                            .foregroundStyle(Ink.inkSub)
+                            .font(V.F.unit)
+                            .foregroundStyle(V.C.text2)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
-                .padding(.top, T.S.s)
+                .padding(.top, V.S.gapS)
             }
         }
     }
@@ -327,43 +327,43 @@ struct GatewayScreen: View {
     // MARK: 须知（能力边界：别让用户以为能远程开门）
 
     private var notePanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "网关能做什么")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "网关能做什么")
                 noteLine("建议离门锁不超过五米，中间不要有承重墙阻隔。")
                 noteLine("无需和门锁配对；配网时 IoT 凭据随 WiFi 一起写进网关。")
                 noteLine("只能接收门锁状态与告警，无法远程操作门锁 —— 开门永远只在门口发生。")
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func noteLine(_ text: String) -> some View {
-        HStack(alignment: .top, spacing: T.S.s) {
-            StateDot(tone: .neutral, word: "须知")
+        HStack(alignment: .top, spacing: V.S.gapS) {
+            VStateDot(tone: .neutral, word: "须知")
             Text(text)
-                .font(T.F.caption)
-                .foregroundStyle(Ink.inkSub)
+                .font(V.F.footnote)
+                .foregroundStyle(V.C.text2)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
     }
 
     private func bannerPanel(_ text: String) -> some View {
-        Panel {
-            HStack(alignment: .top, spacing: T.S.s) {
+        VCard {
+            HStack(alignment: .top, spacing: V.S.gapS) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                    .font(T.F.icon(T.Icon.s, weight: .semibold))
-                    .foregroundStyle(State.attention)
+                    .font(V.F.icon15Semibold)
+                    .foregroundStyle(V.C.warning)
                 Text(text)
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 交互
@@ -459,7 +459,7 @@ struct GatewayScreen: View {
 
     private var hairline: some View {
         Rectangle()
-            .fill(Ink.hairline)
-            .frame(height: T.Stroke.hair)
+            .fill(V.C.hairline)
+            .frame(height: V.S.hair)
     }
 }

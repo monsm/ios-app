@@ -2,7 +2,7 @@
 //
 // 实测来源：芯片行 left 14.67 / 芯片 53、102、120 三档宽 / 高 53.3 r14；大标题 29pt/700 left 29.67；
 // 正文 17/23 #919096；卡片 #232227 r27 内边距 16.3；分段环 Ø92 环宽 20.3 段间 4–5°；
-// 三环 Ø88 环宽 11（Swift 版统一用 14/1.2）；卡头 11pt/500 #A2A1A6。
+// 三环 Ø88 按 V.Ring.lineWidth = min(14, size*0.09) 自适应环宽；卡头 11pt/500 #A2A1A6。
 // 数据绑定保持原口径：AppModel.keys / lock / members、KeysState、KeysRoute、Router 跳转不变。
 import SwiftUI
 
@@ -118,7 +118,7 @@ struct KeysScreen: View {
             Text("家人、临时客人与服务人员\n共用一把门锁；过期自动失效，\n随时可撤销。")
                 .font(V.F.pageLead)
                 .foregroundStyle(V.C.text9)
-                .lineSpacing(V.Page.bodySpacing)
+                .lineSpacing(V.Page.bodyLineSpacing)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.horizontal, V.S.pageGutterB)
@@ -136,7 +136,7 @@ struct KeysScreen: View {
                 HStack(alignment: .top, spacing: V.S.gapM) {
                     VStack(alignment: .leading, spacing: V.S.gapXXS) {
                         Text("凭证有效")
-                            .font(V.F.sans(13.5, weight: .semibold))
+                            .font(V.F.chipValue)
                             .foregroundStyle(V.C.text1)
                         Text("总数")
                             .font(V.F.micro)
@@ -236,7 +236,7 @@ struct KeysScreen: View {
                 .font(V.F.legendLabel)
                 .foregroundStyle(V.C.text1)
             Text("\(count)")
-                .font(V.F.sans(19, weight: .bold))
+                .font(V.F.displayC)
                 .foregroundStyle(V.C.text1)
                 .monospacedDigit()
             Text("枚")
@@ -271,7 +271,7 @@ struct KeysScreen: View {
                 HStack(alignment: .center, spacing: V.S.gapM) {
                     VStack(alignment: .leading, spacing: V.S.gapXXS) {
                         Text("已启用")
-                            .font(V.F.sans(13.5, weight: .semibold))
+                            .font(V.F.chipValue)
                             .foregroundStyle(V.C.text1)
                         Text("范围")
                             .font(V.F.micro)
@@ -282,7 +282,7 @@ struct KeysScreen: View {
                     }
                     Spacer(minLength: 0)
                     Image(systemName: "checkmark.shield.fill")
-                        .font(V.F.sans(56))
+                        .font(V.F.heroGlyph56)
                         .foregroundStyle(
                             LinearGradient(
                                 gradient: Gradient(colors: [V.C.red.opacity(0.75), V.C.pink]),
@@ -342,7 +342,7 @@ struct KeysScreen: View {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 HStack {
                     Text(filter == .all ? "全部凭证" : filter.title)
-                        .font(V.F.sans(15, weight: .semibold))
+                        .font(V.F.cardTitle)
                         .foregroundStyle(V.C.text6)
                     Spacer(minLength: 0)
                     Text("\(filtered.count) 枚")

@@ -26,7 +26,7 @@ struct SyncTimeScreen: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: T.S.l) {
+            VStack(spacing: V.S.gap16) {
                 header
                 if app.lock == nil {
                     noLockPanel
@@ -36,7 +36,7 @@ struct SyncTimeScreen: View {
                     whyPanel
                 }
             }
-            .padding(.vertical, T.S.l)
+            .padding(.vertical, V.S.gap16)
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
@@ -49,22 +49,22 @@ struct SyncTimeScreen: View {
     // MARK: 页头
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: T.S.xs) {
+        VStack(alignment: .leading, spacing: V.S.gapXS) {
             Text("校时")
-                .font(T.F.display())
-                .foregroundStyle(Ink.ink)
-            HStack(spacing: T.S.s) {
-                StateDot(tone: headerTone, word: headerWord)
+                .font(V.F.displayHome)
+                .foregroundStyle(V.C.text1)
+            HStack(spacing: V.S.gapS) {
+                VStateDot(tone: headerTone, word: headerWord)
                 Text(headerText)
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                     // 状态行最多两行：宁可换行，不要截断或缩字（缩字会把 13pt 压到 10pt，低于可读下限）
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var drift: Int? {
@@ -93,10 +93,10 @@ struct SyncTimeScreen: View {
     // MARK: 主角：三个数并排摊开（偏差是本屏的游标）
 
     private var driftPanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "时间对照", trailing: "cmd03 / cmd0E")
-                ReadingGrid(items: [
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "时间对照", trailing: "cmd03 / cmd0E")
+                VReadingGrid(items: [
                     .init(label: "锁内时间", value: lockAt.map { TimeFormat.clock($0) } ?? "—"),
                     .init(label: "手机时间",
                           value: TimeFormat.clock(Int64(Date().timeIntervalSince1970 * 1000))),
@@ -105,27 +105,27 @@ struct SyncTimeScreen: View {
                           unit: drift == nil ? nil : "秒",
                           tint: driftTint),
                 ], columns: 3)
-                .padding(.top, T.S.xs)
+                .padding(.top, V.S.gapXS)
 
                 hairline
 
                 Text(driftNote)
-                    .font(T.F.caption)
-                    .foregroundStyle(drift == nil ? Ink.inkSub : driftTint)
+                    .font(V.F.footnote)
+                    .foregroundStyle(drift == nil ? V.C.text2 : driftTint)
                     .fixedSize(horizontal: false, vertical: true)
 
                 if let lastSyncedAt {
                     hairline
-                    FieldRow(label: "上次校时", value: TimeFormat.ago(lastSyncedAt), mono: false)
+                    VFieldRow(label: "上次校时", value: TimeFormat.ago(lastSyncedAt), mono: false)
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var driftTint: Color {
-        guard let drift else { return Ink.inkFaint }
-        return abs(drift) <= Self.driftThreshold ? Ink.ink : State.attention
+        guard let drift else { return V.C.text3 }
+        return abs(drift) <= Self.driftThreshold ? V.C.text1 : V.C.warning
     }
 
     private var driftNote: String {
@@ -141,52 +141,52 @@ struct SyncTimeScreen: View {
     // MARK: 主动作
 
     private var actionPanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "下发", trailing: "cmd0E")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "下发", trailing: "cmd0E")
                 if busy {
-                    BusyRow(text: "正在把手机时间写进锁…")
+                    VBusyRow(text: "正在把手机时间写进锁…")
                 } else {
-                    PrimaryAction(title: "同步到锁内", systemImage: "clock.arrow.circlepath", busy: false) {
+                    VActionButton(title: "同步到锁内", systemImage: "clock.arrow.circlepath", busy: false) {
                         Task { await sync() }
                     }
                 }
                 if let result {
-                    StatusLine(tone: result.ok ? .ok : .critical, text: result.text)
+                    VStatusLine(tone: result.ok ? .ok : .critical, text: result.text)
                 }
                 hairline
-                SecondaryAction(title: "重新读取", systemImage: "arrow.clockwise") {
+                VOutlineButton(title: "重新读取", systemImage: "arrow.clockwise") {
                     Task { await read() }
                 }
                 Text("写入的是手机当前时间，不做偏差补偿 —— 所以先确认手机自己的时间是准的。")
-                    .font(T.F.unit)
-                    .foregroundStyle(Ink.inkFaint)
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 为什么这件事重要（把后果写清，不写空洞说明）
 
     private var whyPanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "锁钟偏了会怎样")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "锁钟偏了会怎样")
                 whyLine("临时码有「有效期窗口」，锁钟偏了，码在窗口外就整段打不开。")
                 whyLine("开锁命令本身带有效期，锁钟偏太多会回 rc=3「命令已过期」—— 此时只有校时能救。")
                 whyLine("每次读状态时本机都会算一次偏差，超过 2 秒才写；所以这一页平时只是看一眼。")
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func whyLine(_ text: String) -> some View {
-        HStack(alignment: .top, spacing: T.S.s) {
-            StateDot(tone: .neutral, word: "须知")
+        HStack(alignment: .top, spacing: V.S.gapS) {
+            VStateDot(tone: .neutral, word: "须知")
             Text(text)
-                .font(T.F.caption)
-                .foregroundStyle(Ink.inkSub)
+                .font(V.F.footnote)
+                .foregroundStyle(V.C.text2)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
@@ -195,8 +195,8 @@ struct SyncTimeScreen: View {
     // MARK: 空态（给下一步出路）
 
     private var noLockPanel: some View {
-        Panel {
-            EmptyPanel(
+        VCard {
+            VEmptyState(
                 title: "还没有门锁可以校",
                 message: "校时是写给锁内时钟的，得先有一把锁。先添加门锁，再回这一页对时。",
                 actionTitle: "添加门锁",
@@ -204,9 +204,9 @@ struct SyncTimeScreen: View {
             ) {
                 router.request(.dest(.addLock))
             }
-            .padding(.vertical, T.S.xxl)
+            .padding(.vertical, V.S.gapXXL)
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 读写
@@ -250,7 +250,7 @@ struct SyncTimeScreen: View {
 
     private var hairline: some View {
         Rectangle()
-            .fill(Ink.hairline)
-            .frame(height: T.Stroke.hair)
+            .fill(V.C.hairline)
+            .frame(height: V.S.hair)
     }
 }

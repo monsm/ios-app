@@ -42,37 +42,37 @@ struct LedgerRow: View {
     var showDay: Bool = false
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: T.S.m) {
+        HStack(alignment: .firstTextBaseline, spacing: V.S.gapMS) {
             VStack(alignment: .leading, spacing: 0) {
                 Text(TimeFormat.clock(entry.at))
-                    .font(T.F.stamp)
-                    .foregroundStyle(Ink.ink)
+                    .font(V.F.stamp)
+                    .foregroundStyle(V.C.text1)
                     .monospacedDigit()
                 if showDay {
                     Text(TimeFormat.dayShort(entry.at))
-                        .font(T.F.unit)
-                        .foregroundStyle(Ink.inkFaint)
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text3)
                         .monospacedDigit()
                 }
             }
             .frame(width: showDay ? 58 : 48, alignment: .leading)
 
-            VStack(alignment: .leading, spacing: T.S.xxs) {
+            VStack(alignment: .leading, spacing: V.S.gapXXS) {
                 Text(entry.event)
-                    .font(T.F.body)
-                    .foregroundStyle(Ink.ink)
+                    .font(V.F.body)
+                    .foregroundStyle(V.C.text1)
                 if let owner = entry.owner, !owner.isEmpty {
                     Text(owner)
-                        .font(T.F.unit)
-                        .foregroundStyle(Ink.inkSub)
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text2)
                 }
             }
 
-            Spacer(minLength: T.S.s)
+            Spacer(minLength: V.S.gapS)
 
             StateDot(tone: entry.tone, word: entry.event)
         }
-        .frame(minHeight: T.Hit.min + T.S.s)
+        .frame(minHeight: V.Hit.min + V.S.gapS)
         .contentShape(.rect)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
@@ -88,16 +88,16 @@ struct LedgerDayHeader: View {
     let count: Int
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: T.S.s) {
+        HStack(alignment: .firstTextBaseline, spacing: V.S.gapS) {
             Text(TimeFormat.dayTitle(dayKey))
-                .font(T.F.section)
-                .foregroundStyle(Ink.ink)
-            Spacer(minLength: T.S.s)
-            Reading(value: "\(count)", unit: "条", size: 13, weight: .regular, tint: Ink.inkFaint, animated: false)
+                .font(V.F.section)
+                .foregroundStyle(V.C.text1)
+            Spacer(minLength: V.S.gapS)
+            Reading(value: "\(count)", unit: "条", size: 13, weight: .regular, tint: V.C.text3, animated: false)
         }
-        .padding(.horizontal, T.S.gutter)
-        .padding(.top, T.S.l)
-        .padding(.bottom, T.S.xs)
+        .padding(.horizontal, V.S.pageGutter)
+        .padding(.top, V.S.gap16)
+        .padding(.bottom, V.S.gapXS)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
     }

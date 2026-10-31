@@ -102,7 +102,7 @@ struct RecordsStudioScreen: View {
                 VCardHeader(title: "自然语言检索", showsChevron: false)
                 HStack(spacing: V.S.gapS) {
                     Image(systemName: "magnifyingglass")
-                        .font(V.F.sans(15)).foregroundStyle(V.C.text3)
+                        .font(V.F.cardBody).foregroundStyle(V.C.text3)
                         .accessibilityHidden(true)
                     TextField("如：上周 指纹 -临时码 / 昨晚 告警", text: $query)
                         .font(V.F.body)

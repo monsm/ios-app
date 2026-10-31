@@ -25,7 +25,7 @@ struct KeyDetailScreen: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: T.S.l) {
+            VStack(spacing: V.S.gap16) {
                 if let key {
                     header(key)
                     codeBlock(key)
@@ -36,7 +36,7 @@ struct KeyDetailScreen: View {
                     missingBlock
                 }
             }
-            .padding(.vertical, T.S.l)
+            .padding(.vertical, V.S.gap16)
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
@@ -72,21 +72,21 @@ struct KeyDetailScreen: View {
     // MARK: 页头
 
     private func header(_ key: KeyItem) -> some View {
-        VStack(alignment: .leading, spacing: T.S.xs) {
+        VStack(alignment: .leading, spacing: V.S.gapXS) {
             Text(key.name)
-                .font(T.F.display())
-                .foregroundStyle(Ink.ink)
+                .font(V.F.displayHome)
+                .foregroundStyle(V.C.text1)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .lineLimit(2)
-            HStack(spacing: T.S.s) {
-                StateDot(tone: KeysState.tone(key, now: now), word: KeysState.word(key, now: now))
+            HStack(spacing: V.S.gapS) {
+                VStateDot(tone: KeysState.tone(key, now: now), word: KeysState.word(key, now: now))
                 Text("\(key.kind.rawValue) · \(KeysState.word(key, now: now))")
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                 Spacer(minLength: 0)
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
     }
@@ -94,17 +94,17 @@ struct KeyDetailScreen: View {
     // MARK: 主角：码值
 
     private func codeBlock(_ key: KeyItem) -> some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: key.kind == .fingerprint ? "指纹" : "码值", trailing: key.code == nil ? nil : "逐位点开")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: key.kind == .fingerprint ? "指纹" : "码值", trailing: key.code == nil ? nil : "逐位点开")
                 if let code = key.code, !code.isEmpty {
                     KeysMaskedCode(value: code, size: 24, revealed: $revealed)
-                        .padding(.vertical, T.S.xs)
-                    HStack(spacing: T.S.s) {
-                        SecondaryAction(title: "复制整条", systemImage: "doc.on.doc") {
+                        .padding(.vertical, V.S.gapXS)
+                    HStack(spacing: V.S.gapS) {
+                        VOutlineButton(title: "复制整条", systemImage: "doc.on.doc") {
                             UIPasteboard.general.string = code
                         }
-                        SecondaryAction(title: "复遮", systemImage: "eye.slash") {
+                        VOutlineButton(title: "复遮", systemImage: "eye.slash") {
                             revealed = []
                         }
                     }
@@ -113,8 +113,8 @@ struct KeyDetailScreen: View {
                     }
                 } else if key.kind == .fingerprint {
                     Text("指纹没有码值。它在门锁上按 8 次录进去，开门时按手指就行。")
-                        .font(T.F.body)
-                        .foregroundStyle(Ink.inkSub)
+                        .font(V.F.body)
+                        .foregroundStyle(V.C.text2)
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
                     KeysInlineNote(tone: .attention, text: "这条当时没留存明文。可在门锁键盘上核对后重填，或直接改造一次密码值。")
@@ -122,28 +122,28 @@ struct KeyDetailScreen: View {
             }
         }
         .captureShield("这枚凭证含码值\n屏幕正在被录制或截图，已遮挡")
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func segmentRow(_ code: String) -> some View {
-        VStack(alignment: .leading, spacing: T.S.s) {
+        VStack(alignment: .leading, spacing: V.S.gapS) {
             Text("按 4 位分段转述 · 点一段只复制那一段")
-                .font(T.F.unit)
-                .foregroundStyle(Ink.inkFaint)
-            HStack(spacing: T.S.s) {
+                .font(V.F.unit)
+                .foregroundStyle(V.C.text3)
+            HStack(spacing: V.S.gapS) {
                 ForEach(Array(KeysCode.segments(code).enumerated()), id: \.offset) { pair in
                     Button {
                         UIPasteboard.general.string = pair.element
                         copiedSegment = pair.offset
                     } label: {
                         Text(pair.element)
-                            .font(T.F.reading(17, weight: .medium))
-                            .foregroundStyle(Ink.ink)
-                            .padding(.horizontal, T.S.m)
-                            .frame(minHeight: T.Hit.min)
+                            .font(V.F.number17)
+                            .foregroundStyle(V.C.text1)
+                            .padding(.horizontal, V.S.gapMS)
+                            .frame(minHeight: V.Hit.min)
                             .background(
-                                copiedSegment == pair.offset ? Signal.wash : Ink.plateAlt,
-                                in: .rect(cornerRadius: T.R.control)
+                                copiedSegment == pair.offset ? V.C.blue.opacity(0.16) : V.C.cardAlt,
+                                in: .rect(cornerRadius: V.R.control)
                             )
                             .contentShape(.rect)
                     }
@@ -160,35 +160,35 @@ struct KeyDetailScreen: View {
     private func factsBlock(_ key: KeyItem) -> some View {
         let expiry = KeysState.expiryLine(key)
         let remaining = KeysState.expiryReading(key, now: now)
-        return Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "档案")
-                FieldRow(label: "类型", value: key.kind.rawValue, mono: false)
-                FieldRow(label: "归属", value: key.owner ?? "未归属", mono: false)
-                ReadingGrid(items: [
+        return VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "档案")
+                VFieldRow(label: "类型", value: key.kind.rawValue, mono: false)
+                VFieldRow(label: "归属", value: key.owner ?? "未归属", mono: false)
+                VReadingGrid(items: [
                     .init(label: "到期日", value: expiry.value, unit: expiry.unit),
                     .init(label: "剩余", value: remaining.value, unit: remaining.unit, tint: remaining.tint),
                 ])
-                Divider().overlay(Ink.hairline)
+                Divider().overlay(V.C.hairline)
                 KeysInlineNote(tone: .neutral, text: "改到期日走 cmd0B 真下发到锁，回执成功才改本机台账 —— 不再只是本机备注。")
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 真动作
 
     private func actionsBlock(_ key: KeyItem) -> some View {
-        Panel {
+        VCard {
             VStack(alignment: .leading, spacing: 0) {
-                SectionLabel(text: "能做的事")
-                    .padding(.bottom, T.S.s)
+                VSectionLabel(text: "能做的事")
+                    .padding(.bottom, V.S.gapS)
                 expiryMenu(key)
                 KeysDivider()
                 KeysActionRow(
                     title: key.disabled ? "恢复使用" : "停用这枚凭证",
                     symbol: key.disabled ? "play.circle" : "pause.circle",
-                    tint: key.disabled ? Ink.ink : State.attention
+                    tint: key.disabled ? V.C.text1 : V.C.warning
                 ) {
                     toggleDisabled(key)
                 }
@@ -201,7 +201,7 @@ struct KeyDetailScreen: View {
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     /// 改到期：四档快捷 + 永久。都是真写台账（AppModel.keys），不是摆样子。
@@ -216,26 +216,26 @@ struct KeyDetailScreen: View {
                 Button("提前到今天结束") { setExpiry(key, days: 0) }
             }
             if let actionError {
-                Text(actionError).font(T.F.caption).foregroundStyle(State.critical)
+                Text(actionError).font(V.F.footnote).foregroundStyle(V.C.critical)
             }
         } label: {
-            HStack(spacing: T.S.m) {
+            HStack(spacing: V.S.gapMS) {
                 Image(systemName: "calendar.badge.clock")
                     .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                    .font(T.F.icon(T.Icon.m, weight: .regular))
-                    .foregroundStyle(Ink.inkSub)
-                    .frame(width: T.Icon.xl, alignment: .leading)
+                    .font(V.F.icon18)
+                    .foregroundStyle(V.C.text2)
+                    .frame(width: V.Icon.xl, alignment: .leading)
                     .accessibilityHidden(true)
                 Text("改到期日")
-                    .font(T.F.body)
-                    .foregroundStyle(Ink.ink)
-                Spacer(minLength: T.S.s)
+                    .font(V.F.body)
+                    .foregroundStyle(V.C.text1)
+                Spacer(minLength: V.S.gapS)
                 Image(systemName: "chevron.up.chevron.down")
-                    .font(T.F.icon(T.Icon.s, weight: .medium))
-                    .foregroundStyle(Ink.inkFaint)
+                    .font(V.F.icon15Medium)
+                    .foregroundStyle(V.C.text3)
                     .accessibilityHidden(true)
             }
-            .frame(minHeight: T.Hit.min)
+            .frame(minHeight: V.Hit.min)
             .contentShape(.rect)
         }
         .accessibilityLabel("改到期日")
@@ -244,27 +244,27 @@ struct KeyDetailScreen: View {
     // MARK: 危险动作
 
     private func dangerBlock(_ key: KeyItem) -> some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.s) {
-                SectionLabel(text: "不可逆")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapS) {
+                VSectionLabel(text: "不可逆")
                 Text("删除会同时从门锁和本机台账里移除这枚凭证，没有回收站。")
-                    .font(T.F.unit)
-                    .foregroundStyle(Ink.inkFaint)
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
                 // 危险动作用语义色（State.critical），不用 signal 填充 —— 同屏的 signal 只留给主动作。
-                KeysActionRow(title: "彻底删除", symbol: "trash", tint: State.critical) {
+                KeysActionRow(title: "彻底删除", symbol: "trash", tint: V.C.critical) {
                     confirmDelete = true
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 不存在空态（凭证被删/被移走后仍可能有人跳过来）
 
     private var missingBlock: some View {
-        Panel {
-            EmptyPanel(
+        VCard {
+            VEmptyState(
                 title: "这枚凭证已经不在了",
                 message: "它可能刚被删除或停用。回钥匙列表看看还剩哪些凭证，或再新增一枚。",
                 actionTitle: "回钥匙列表",
@@ -272,9 +272,9 @@ struct KeyDetailScreen: View {
             ) {
                 router.keysPath = []
             }
-            .padding(.vertical, T.S.xxl)
+            .padding(.vertical, V.S.gapXXL)
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 写台账（值语义：改就是换一条）

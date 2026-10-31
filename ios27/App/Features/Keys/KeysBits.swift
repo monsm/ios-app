@@ -1,7 +1,7 @@
 // KeysBits.swift —— 钥匙域里的交互小件（打码 / 归属行 / 入口行 / 分步点 / 提示 / 本地码值工具）。
 //
 // 与 KeysParts.swift 分开的理由：那边是「读数与台账行」，这边是「能点的控件」。
-// 纪律：不改 Design/Components；样式全部走 T./Ink./Signal./State.。
+// 纪律：不改 Design/Components；样式全部走 V7 令牌（V.C / V.F / V.S）。
 import SwiftUI
 
 // MARK: - 打码码值
@@ -13,7 +13,7 @@ struct KeysMaskedCode: View {
     @Binding var revealed: Set<Int>
 
     var body: some View {
-        HStack(spacing: T.S.xs) {
+        HStack(spacing: V.S.gapXS) {
             ForEach(Array(value.enumerated()), id: \.offset) { item in
                 let index = item.offset
                 let char = item.element
@@ -26,9 +26,9 @@ struct KeysMaskedCode: View {
                     }
                 } label: {
                     Text(on ? String(char) : "•")
-                        .font(T.F.reading(size, weight: .medium))
-                        .foregroundStyle(on ? Ink.ink : Ink.inkSub)
-                        .frame(minWidth: T.S.xxl, minHeight: T.Hit.min)
+                        .font(V.F.sans(size, weight: .medium))
+                        .foregroundStyle(on ? V.C.text1 : V.C.text2)
+                        .frame(minWidth: V.S.gapXXL, minHeight: V.Hit.min)
                         .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
@@ -50,22 +50,22 @@ struct KeysChips<Item: Hashable>: View {
 
     var body: some View {
         ScrollView(.horizontal) {
-            HStack(spacing: T.S.s) {
+            HStack(spacing: V.S.gapS) {
                 ForEach(items, id: \.self) { item in
                     let on = item == selection
                     Button {
                         selection = item
                     } label: {
                         Text(title(item))
-                            .font(T.F.caption)
-                            .foregroundStyle(on ? Ink.ink : Ink.inkSub)
-                            .padding(.horizontal, T.S.m)
-                            .frame(height: T.Hit.min - T.S.m)
-                            .background(on ? Signal.wash : Color.clear, in: .capsule)
+                            .font(V.F.footnote)
+                            .foregroundStyle(on ? V.C.text1 : V.C.text2)
+                            .padding(.horizontal, V.S.gapMS)
+                            .frame(height: V.Hit.min - V.S.gapMS)
+                            .background(on ? V.C.blue.opacity(0.16) : Color.clear, in: .capsule)
                             .overlay {
                                 Capsule().strokeBorder(
-                                    on ? Signal.edge : Ink.hairline,
-                                    lineWidth: T.Stroke.hair
+                                    on ? V.C.blue.opacity(0.75) : V.C.hairline,
+                                    lineWidth: V.S.hair
                                 )
                             }
                     }
@@ -89,21 +89,21 @@ struct KeysOwnerRow: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: T.S.m) {
+            HStack(spacing: V.S.gapMS) {
                 Text(name)
-                    .font(T.F.body)
-                    .foregroundStyle(Ink.ink)
+                    .font(V.F.body)
+                    .foregroundStyle(V.C.text1)
                     .lineLimit(1)
-                Spacer(minLength: T.S.s)
-                Reading(value: "\(keyCount)", unit: "枚", size: 13, weight: .regular, tint: Ink.inkFaint, animated: false)
+                Spacer(minLength: V.S.gapS)
+                VReading(value: "\(keyCount)", unit: "枚", font: V.F.number13, tint: V.C.text3, animated: false)
                 Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                    .font(T.F.icon(T.Icon.m, weight: .medium))
-                    .foregroundStyle(selected ? Ink.ink : Ink.inkFaint)
+                    .font(V.F.icon18Medium)
+                    .foregroundStyle(selected ? V.C.text1 : V.C.text3)
                     .accessibilityHidden(true)
             }
-            .padding(.horizontal, T.S.s)
-            .frame(minHeight: T.Hit.min)
-            .background(selected ? Signal.wash : Color.clear, in: .rect(cornerRadius: T.R.control))
+            .padding(.horizontal, V.S.gapS)
+            .frame(minHeight: V.Hit.min)
+            .background(selected ? V.C.blue.opacity(0.16) : Color.clear, in: .rect(cornerRadius: V.R.control))
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
@@ -123,29 +123,29 @@ struct KeysShortcutRow: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: T.S.m) {
+            HStack(spacing: V.S.gapMS) {
                 Image(systemName: symbol)
                     .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                    .font(T.F.icon(T.Icon.m, weight: .regular))
-                    .foregroundStyle(Ink.inkSub)
-                    .frame(width: T.Icon.xl, alignment: .leading)
+                    .font(V.F.icon18)
+                    .foregroundStyle(V.C.text2)
+                    .frame(width: V.Icon.xl, alignment: .leading)
                     .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: T.S.xxs) {
+                VStack(alignment: .leading, spacing: V.S.gapXXS) {
                     Text(title)
-                        .font(T.F.body)
-                        .foregroundStyle(Ink.ink)
+                        .font(V.F.body)
+                        .foregroundStyle(V.C.text1)
                     Text(detail)
-                        .font(T.F.unit)
-                        .foregroundStyle(Ink.inkSub)
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text2)
                         .lineLimit(1)
                 }
-                Spacer(minLength: T.S.s)
+                Spacer(minLength: V.S.gapS)
                 Image(systemName: "chevron.right")
-                    .font(T.F.icon(T.Icon.s, weight: .medium))
-                    .foregroundStyle(Ink.inkFaint)
+                    .font(V.F.icon15Medium)
+                    .foregroundStyle(V.C.text3)
                     .accessibilityHidden(true)
             }
-            .frame(minHeight: T.Hit.min)
+            .frame(minHeight: V.Hit.min)
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
@@ -158,33 +158,33 @@ struct KeysShortcutRow: View {
 struct KeysActionRow: View {
     let title: String
     let symbol: String
-    var tint: Color = Ink.ink
+    var tint: Color = V.C.text1
     var value: String? = nil
     var unit: String? = nil
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: T.S.m) {
+            HStack(spacing: V.S.gapMS) {
                 Image(systemName: symbol)
                     .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                    .font(T.F.icon(T.Icon.m, weight: .regular))
-                    .foregroundStyle(tint == Ink.ink ? Ink.inkSub : tint)
-                    .frame(width: T.Icon.xl, alignment: .leading)
+                    .font(V.F.icon18)
+                    .foregroundStyle(tint == V.C.text1 ? V.C.text2 : tint)
+                    .frame(width: V.Icon.xl, alignment: .leading)
                     .accessibilityHidden(true)
                 Text(title)
-                    .font(T.F.body)
+                    .font(V.F.body)
                     .foregroundStyle(tint)
-                Spacer(minLength: T.S.s)
+                Spacer(minLength: V.S.gapS)
                 if let value {
-                    Reading(value: value, unit: unit, size: 13, weight: .regular, tint: Ink.inkFaint, animated: false)
+                    VReading(value: value, unit: unit, font: V.F.number13, tint: V.C.text3, animated: false)
                 }
                 Image(systemName: "chevron.right")
-                    .font(T.F.icon(T.Icon.s, weight: .medium))
-                    .foregroundStyle(Ink.inkFaint)
+                    .font(V.F.icon15Medium)
+                    .foregroundStyle(V.C.text3)
                     .accessibilityHidden(true)
             }
-            .frame(minHeight: T.Hit.min)
+            .frame(minHeight: V.Hit.min)
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
@@ -201,21 +201,21 @@ struct KeysStepDots: View {
     let labels: [String]
 
     var body: some View {
-        HStack(spacing: T.S.xs) {
+        HStack(spacing: V.S.gapXS) {
             ForEach(0 ..< total, id: \.self) { i in
                 Circle()
-                    .fill(i <= index ? Signal.base : Ink.hairline)
-                    .frame(width: T.S.s, height: T.S.s)
+                    .fill(i <= index ? V.C.blue : V.C.hairline)
+                    .frame(width: V.S.gapS, height: V.S.gapS)
                     .accessibilityHidden(true)
             }
             Text("第 \(index + 1) 步 · \(labels.indices.contains(index) ? labels[index] : "")")
-                .font(T.F.caption)
-                .foregroundStyle(Ink.inkSub)
-                .padding(.leading, T.S.xs)
+                .font(V.F.footnote)
+                .foregroundStyle(V.C.text2)
+                .padding(.leading, V.S.gapXS)
                 .lineLimit(1)
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("表单进度：第 \(index + 1) 步，共 \(total) 步")
     }
@@ -229,12 +229,12 @@ struct KeysInlineNote: View {
     let text: String
 
     var body: some View {
-        HStack(alignment: .top, spacing: T.S.s) {
-            StateDot(tone: tone, word: text)
-                .padding(.top, T.S.xs)
+        HStack(alignment: .top, spacing: V.S.gapS) {
+            VStateDot(tone: tone, word: text)
+                .padding(.top, V.S.gapXS)
             Text(text)
-                .font(T.F.caption)
-                .foregroundStyle(tone == .neutral ? Ink.inkSub : tone.color)
+                .font(V.F.footnote)
+                .foregroundStyle(tone == .neutral ? V.C.text2 : tone.color)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }

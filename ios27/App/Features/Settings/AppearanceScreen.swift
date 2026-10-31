@@ -14,7 +14,7 @@ struct AppearanceScreen: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: T.S.l) {
+            VStack(spacing: V.S.gap16) {
                 SettingsHeader(title: "外观", tone: tone, status: status)
                 themePanel
                 rhythmPanel
@@ -22,7 +22,7 @@ struct AppearanceScreen: View {
                 quickPanel
                 resetPanel
             }
-            .padding(.vertical, T.S.l)
+            .padding(.vertical, V.S.gap16)
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
@@ -49,10 +49,10 @@ struct AppearanceScreen: View {
 
     // MARK: 主题
     private var themePanel: some View {
-        VStack(spacing: T.S.s) {
-            SectionLabel(text: "主题")
-            Panel {
-                VStack(alignment: .leading, spacing: T.S.m) {
+        VStack(spacing: V.S.gapS) {
+            VSectionLabel(text: "主题")
+            VCard {
+                VStack(alignment: .leading, spacing: V.S.gapMS) {
                     SettingChips(items: AppearanceTheme.allCases,
                                  title: { $0.title },
                                  selection: settingsBinding(\.theme))
@@ -72,19 +72,19 @@ struct AppearanceScreen: View {
                     SettingsNote(text: "深色不是浅色的反相 —— 两套独立取值。深色底不是纯黑，留一点抬升空间给面板。")
                 }
             }
-            .padding(.horizontal, T.S.gutter)
+            .padding(.horizontal, V.S.pageGutter)
         }
     }
 
     // MARK: 密度与动效
     private var rhythmPanel: some View {
-        VStack(spacing: T.S.s) {
-            SectionLabel(text: "节奏")
-            Panel {
-                VStack(alignment: .leading, spacing: T.S.m) {
+        VStack(spacing: V.S.gapS) {
+            VSectionLabel(text: "节奏")
+            VCard {
+                VStack(alignment: .leading, spacing: V.S.gapMS) {
                     Text("布局密度")
-                        .font(T.F.unit)
-                        .foregroundStyle(Ink.inkFaint)
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text3)
                         .tracking(0.6)
                     SettingChips(items: LayoutDensity.allCases,
                                  title: { $0.title },
@@ -92,8 +92,8 @@ struct AppearanceScreen: View {
                     SettingsNote(text: "只改间距节奏，字号与 44pt 触达不动 —— 压小按钮不是「紧凑」，是点不准。")
                     SettingRule()
                     Text("动效强度")
-                        .font(T.F.unit)
-                        .foregroundStyle(Ink.inkFaint)
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text3)
                         .tracking(0.6)
                     SettingChips(items: MotionTier.allCases,
                                  title: { $0.title },
@@ -103,16 +103,16 @@ struct AppearanceScreen: View {
                                  : "克制档取消数字滚动与逐格点亮；开锁进度弧在任何档位都保留 —— 它量的是真命令链。")
                 }
             }
-            .padding(.horizontal, T.S.gutter)
+            .padding(.horizontal, V.S.pageGutter)
         }
     }
 
     // MARK: 时间显示（全 App 唯一出口）
     private var timePanel: some View {
-        VStack(spacing: T.S.s) {
-            SectionLabel(text: "时间显示", trailing: "全局")
-            Panel {
-                VStack(alignment: .leading, spacing: T.S.m) {
+        VStack(spacing: V.S.gapS) {
+            VSectionLabel(text: "时间显示", trailing: "全局")
+            VCard {
+                VStack(alignment: .leading, spacing: V.S.gapMS) {
                     SettingChips(items: TimeDisplayStyle.allCases,
                                  title: { $0.title },
                                  selection: settingsBinding(\.timeStyle))
@@ -133,31 +133,31 @@ struct AppearanceScreen: View {
                     timePreview
                 }
             }
-            .padding(.horizontal, T.S.gutter)
+            .padding(.horizontal, V.S.pageGutter)
         }
     }
 
     // MARK: 时间样例：档位真的改了读数（不是摆设）
     private var timePreview: some View {
-        VStack(alignment: .leading, spacing: T.S.xs) {
+        VStack(alignment: .leading, spacing: V.S.gapXS) {
             Text("样例读数")
-                .font(T.F.unit)
-                .foregroundStyle(Ink.inkFaint)
+                .font(V.F.unit)
+                .foregroundStyle(V.C.text3)
                 .tracking(0.6)
-            HStack(alignment: .firstTextBaseline, spacing: T.S.s) {
+            HStack(alignment: .firstTextBaseline, spacing: V.S.gapS) {
                 Text(previewClock)
-                    .font(T.F.stamp)
-                    .foregroundStyle(Ink.ink)
+                    .font(V.F.stamp)
+                    .foregroundStyle(V.C.text1)
                     .monospacedDigit()
                     .contentTransition(.numericText())
                     // 这里用 systemReduceMotion（本文件的环境值名）：
                     // 与 store 里的"App 内动效档"是两个独立开关 —— 系统的是硬约束，App 内的是偏好。
-                    .animation(systemReduceMotion ? nil : T.M.snap, value: previewClock)
+                    .animation(systemReduceMotion ? nil : V.M.snap, value: previewClock)
                 Spacer(minLength: 0)
                 if let dayLine = TimeDisplay.dayLine(now) {
                     Text(dayLine)
-                        .font(T.F.unit)
-                        .foregroundStyle(Ink.inkFaint)
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text3)
                         .monospacedDigit()
                 }
             }
@@ -174,25 +174,25 @@ struct AppearanceScreen: View {
 
     // MARK: 快捷格（首页快捷操作 10 选 N + 智能排序）
     private var quickPanel: some View {
-        VStack(spacing: T.S.s) {
-            SectionLabel(text: "快捷操作")
-            Panel {
-                VStack(alignment: .leading, spacing: T.S.m) {
+        VStack(spacing: V.S.gapS) {
+            VSectionLabel(text: "快捷操作")
+            VCard {
+                VStack(alignment: .leading, spacing: V.S.gapMS) {
                     Text("首页显示几枚")
-                        .font(T.F.unit)
-                        .foregroundStyle(Ink.inkFaint)
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text3)
                         .tracking(0.6)
-                    HStack(spacing: T.S.s) {
+                    HStack(spacing: V.S.gapS) {
                         ForEach([4, 6, 8], id: \.self) { n in
                             Button {
                                 store.quickGridCount = n
                             } label: {
                                 Text("\(n) 枚")
-                                    .font(T.F.bodyStrong)
-                                    .foregroundStyle(store.quickGridCount == n ? Signal.on : Ink.ink)
-                                    .padding(.horizontal, T.S.m)
-                                    .frame(minHeight: T.Hit.min)
-                                    .background(store.quickGridCount == n ? Signal.base : Ink.plateAlt, in: .rect(cornerRadius: T.R.control))
+                                    .font(V.F.bodyStrong)
+                                    .foregroundStyle(store.quickGridCount == n ? V.C.text1 : V.C.text1)
+                                    .padding(.horizontal, V.S.gapMS)
+                                    .frame(minHeight: V.Hit.min)
+                                    .background(store.quickGridCount == n ? V.C.blue : V.C.cardAlt, in: .rect(cornerRadius: V.R.control))
                             }
                             .buttonStyle(.plain)
                             .accessibilityAddTraits(store.quickGridCount == n ? [.isButton, .isSelected] : .isButton)
@@ -207,10 +207,10 @@ struct AppearanceScreen: View {
                     )
                     SettingRule()
                     Text("快捷池（10 选 6，至少留 1 项）")
-                        .font(T.F.unit)
-                        .foregroundStyle(Ink.inkFaint)
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text3)
                         .tracking(0.6)
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: T.S.s), count: 2), spacing: T.S.s) {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: V.S.gapS), count: 2), spacing: V.S.gapS) {
                         ForEach(QuickPool.all) { action in
                             quickToggle(action)
                         }
@@ -218,7 +218,7 @@ struct AppearanceScreen: View {
                     SettingsNote(text: "勾选结果即时生效到「门」页的快捷操作卡；这里只管显示与排序，不发任何锁端命令。")
                 }
             }
-            .padding(.horizontal, T.S.gutter)
+            .padding(.horizontal, V.S.pageGutter)
         }
     }
 
@@ -234,20 +234,20 @@ struct AppearanceScreen: View {
             }
             QuickPool.setSelected(ids)
         } label: {
-            HStack(spacing: T.S.s) {
+            HStack(spacing: V.S.gapS) {
                 Image(systemName: selected ? "checkmark.circle.fill" : "circle")
                     .accessibilityHidden(true)
-                    .font(T.F.icon(T.Icon.s, weight: .medium))
-                    .foregroundStyle(selected ? Signal.base : Ink.inkFaint)
+                    .font(V.F.icon15Medium)
+                    .foregroundStyle(selected ? V.C.blue : V.C.text3)
                 Text(action.label)
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.ink)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text1)
                     .lineLimit(1)
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, T.S.s)
-            .frame(minHeight: T.Hit.min)
-            .background(Ink.plateAlt, in: .rect(cornerRadius: T.R.control))
+            .padding(.horizontal, V.S.gapS)
+            .frame(minHeight: V.Hit.min)
+            .background(V.C.cardAlt, in: .rect(cornerRadius: V.R.control))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(action.label)
@@ -256,17 +256,17 @@ struct AppearanceScreen: View {
 
     // MARK: 恢复默认
     private var resetPanel: some View {
-        VStack(spacing: T.S.s) {
-            SectionLabel(text: "恢复")
-            Panel {
-                VStack(alignment: .leading, spacing: T.S.m) {
-                    SecondaryAction(title: "恢复默认外观", systemImage: "arrow.uturn.backward") {
+        VStack(spacing: V.S.gapS) {
+            VSectionLabel(text: "恢复")
+            VCard {
+                VStack(alignment: .leading, spacing: V.S.gapMS) {
+                    VOutlineButton(title: "恢复默认外观", systemImage: "arrow.uturn.backward") {
                         showResetConfirm = true
                     }
                     SettingsNote(text: "只重置这一屏的偏好。本机密码、备份、钥匙串与门锁数据一项都不动。")
                 }
             }
-            .padding(.horizontal, T.S.gutter)
+            .padding(.horizontal, V.S.pageGutter)
         }
     }
 }

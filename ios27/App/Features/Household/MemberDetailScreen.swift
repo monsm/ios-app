@@ -25,7 +25,7 @@ struct MemberDetailScreen: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: T.S.l) {
+            VStack(spacing: V.S.gap16) {
                 if let member {
                     header(member)
                     HHMemberWeekPanel(
@@ -65,7 +65,7 @@ struct MemberDetailScreen: View {
                     missingBlock
                 }
             }
-            .padding(.vertical, T.S.l)
+            .padding(.vertical, V.S.gap16)
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
@@ -103,38 +103,38 @@ struct MemberDetailScreen: View {
     // MARK: 重复合并（462）
 
     private func mergePanel(_ member: MemberCard) -> some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "重复档案")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "重复档案")
                 Text("发现同名成员。合并会保留这一位，把另一位名下的凭证归属迁过来后删除它。")
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                     .fixedSize(horizontal: false, vertical: true)
-                SecondaryAction(title: "合并同名成员", systemImage: "arrow.triangle.merge") {
+                VOutlineButton(title: "合并同名成员", systemImage: "arrow.triangle.merge") {
                     showMerge = true
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 页头（大标题 + 一行状态）
     private func header(_ member: MemberCard) -> some View {
-        VStack(alignment: .leading, spacing: T.S.m) {
-            HStack(spacing: T.S.m) {
-                HHAvatar(name: member.name, emoji: draft.emoji, size: HHMetric.avatarHero, glyph: T.F.display(T.S.xl))
-                VStack(alignment: .leading, spacing: T.S.xxs) {
+        VStack(alignment: .leading, spacing: V.S.gapMS) {
+            HStack(spacing: V.S.gapMS) {
+                HHAvatar(name: member.name, emoji: draft.emoji, size: HHMetric.avatarHero, glyph: V.F.display24)
+                VStack(alignment: .leading, spacing: V.S.gapXXS) {
                     Text(HHDisplay.name(member, extras: draft))
-                        .font(T.F.display())
-                        .foregroundStyle(Ink.ink)
+                        .font(V.F.displayHome)
+                        .foregroundStyle(V.C.text1)
                         // 标题最多两行；缩字只收到 0.85（0.6 会把 34pt 压成 20pt，中文长名字会糊）
                         .lineLimit(2)
                         .minimumScaleFactor(0.85)
-                    HStack(spacing: T.S.s) {
-                        StateDot(tone: statusTone(member), word: statusWord(member))
+                    HStack(spacing: V.S.gapS) {
+                        VStateDot(tone: statusTone(member), word: statusWord(member))
                         Text(statusLine(member))
-                            .font(T.F.caption)
-                            .foregroundStyle(Ink.inkSub)
+                            .font(V.F.footnote)
+                            .foregroundStyle(V.C.text2)
                         Spacer(minLength: 0)
                     }
                 }
@@ -142,7 +142,7 @@ struct MemberDetailScreen: View {
             .accessibilityElement(children: .combine)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func statusTone(_ member: MemberCard) -> Tone {
@@ -164,16 +164,16 @@ struct MemberDetailScreen: View {
 
     // MARK: 主角：角色三档 + 权限矩阵（点一下当场看得见哪几行亮/灭）
     private func rolePanel(_ member: MemberCard) -> some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "角色与权限", trailing: "本机判据")
-                HStack(spacing: T.S.s) {
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "角色与权限", trailing: "本机判据")
+                HStack(spacing: V.S.gapS) {
                     ForEach(MemberCard.Role.allCases, id: \.self) { role in
                         roleChip(role, current: member.role)
                     }
                     Spacer(minLength: 0)
                 }
-                .padding(.top, T.S.xxs)
+                .padding(.top, V.S.gapXXS)
 
                 VStack(spacing: 0) {
                     ForEach(HHPerm.rows.indices, id: \.self) { index in
@@ -181,16 +181,16 @@ struct MemberDetailScreen: View {
                         permRow(HHPerm.rows[index], role: member.role)
                     }
                 }
-                .animation(reduceMotion ? nil : T.M.snap, value: member.role)
+                .animation(reduceMotion ? nil : V.M.snap, value: member.role)
 
                 Text(HHPerm.scene(member.role))
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text("矩阵管的是本机 UI：锁端没有角色字段，这三档不改任何发往门锁的字节，备份包也不带角色。")
-                    .font(T.F.unit)
-                    .foregroundStyle(Ink.inkFaint)
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
 
                 HHRule()
@@ -209,18 +209,18 @@ struct MemberDetailScreen: View {
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func permRow(_ cap: String, role: MemberCard.Role) -> some View {
-        HStack(spacing: T.S.m) {
+        HStack(spacing: V.S.gapMS) {
             Text(cap)
-                .font(T.F.body)
-                .foregroundStyle(Ink.ink)
-            Spacer(minLength: T.S.s)
+                .font(V.F.body)
+                .foregroundStyle(V.C.text1)
+            Spacer(minLength: V.S.gapS)
             HHPill(allowed: HHPerm.allows(role, cap))
         }
-        .frame(minHeight: T.Hit.min - T.S.s)
+        .frame(minHeight: V.Hit.min - V.S.gapS)
         .accessibilityElement(children: .combine)
     }
 
@@ -229,20 +229,20 @@ struct MemberDetailScreen: View {
         return Button {
             setRole(role)
         } label: {
-            HStack(spacing: T.S.xs) {
+            HStack(spacing: V.S.gapXS) {
                 HHRoleMark(role: role, compact: true)
                 if on {
                     Text("当前")
-                        .font(T.F.unit)
-                        .foregroundStyle(Ink.inkSub)
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text2)
                 }
             }
-            .foregroundStyle(on ? Ink.ink : Ink.inkSub)
-            .padding(.horizontal, T.S.m)
-            .frame(minHeight: T.Hit.min)
-            .background(on ? Signal.wash : Color.clear, in: .capsule)
+            .foregroundStyle(on ? V.C.text1 : V.C.text2)
+            .padding(.horizontal, V.S.gapMS)
+            .frame(minHeight: V.Hit.min)
+            .background(on ? V.C.blue.opacity(0.16) : Color.clear, in: .capsule)
             .overlay {
-                Capsule().strokeBorder(on ? Signal.edge : Ink.hairline, lineWidth: T.Stroke.hair)
+                Capsule().strokeBorder(on ? V.C.blue.opacity(0.75) : V.C.hairline, lineWidth: V.S.hair)
             }
         }
         .buttonStyle(.plain)
@@ -252,9 +252,9 @@ struct MemberDetailScreen: View {
 
     // MARK: 档案扩展（角色不在这里改 —— 上面单选是唯一真相源）
     private func profilePanel(_ member: MemberCard) -> some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "档案", trailing: saved ? "已保存" : "本机")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "档案", trailing: saved ? "已保存" : "本机")
                 HHTextField(label: "与你的关系", text: $draft.relation, placeholder: "母亲 / 妹妹 / 钟点工")
                 HHTextField(label: "备注名", text: $draft.remark, placeholder: "记录条目显示「称呼（备注）」")
                 HHTextField(label: "分组标签", text: $draft.groupTag, placeholder: "家人 / 访客 / 服务人员")
@@ -262,23 +262,23 @@ struct MemberDetailScreen: View {
                 HHTextField(label: "紧急联系", text: $draft.emergency, placeholder: "姓名 + 电话")
 
                 Text("emoji 代号")
-                    .font(T.F.unit)
-                    .foregroundStyle(Ink.inkFaint)
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
                     .tracking(0.6)
                 emojiRow(member)
 
-                PrimaryAction(title: saved ? "档案已保存" : "保存档案", systemImage: "checkmark") {
+                VActionButton(title: saved ? "档案已保存" : "保存档案", systemImage: "checkmark") {
                     save(member)
                 }
-                .padding(.top, T.S.xs)
+                .padding(.top, V.S.gapXS)
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func emojiRow(_ member: MemberCard) -> some View {
         ScrollView(.horizontal) {
-            HStack(spacing: T.S.s) {
+            HStack(spacing: V.S.gapS) {
                 ForEach(Self.emojiOptions.indices, id: \.self) { index in
                     let e = Self.emojiOptions[index]
                     let on = draft.emoji == e
@@ -287,13 +287,13 @@ struct MemberDetailScreen: View {
                         roster.update(member.id) { $0.emoji = e }
                     } label: {
                         Text(e.isEmpty ? "首字" : e)
-                            .font(e.isEmpty ? T.F.unit : T.F.body)
-                            .foregroundStyle(on ? Ink.ink : Ink.inkSub)
-                            .frame(width: T.Hit.min, height: T.Hit.min)
-                            .background(on ? Signal.wash : Ink.plateAlt, in: .circle)
+                            .font(e.isEmpty ? V.F.unit : V.F.body)
+                            .foregroundStyle(on ? V.C.text1 : V.C.text2)
+                            .frame(width: V.Hit.min, height: V.Hit.min)
+                            .background(on ? V.C.blue.opacity(0.16) : V.C.cardAlt, in: .circle)
                             .overlay {
-                                Circle().strokeBorder(on ? Signal.edge : Ink.hairline,
-                                                      lineWidth: T.Stroke.hair)
+                                Circle().strokeBorder(on ? V.C.blue.opacity(0.75) : V.C.hairline,
+                                                      lineWidth: V.S.hair)
                             }
                     }
                     .buttonStyle(.plain)
@@ -308,8 +308,8 @@ struct MemberDetailScreen: View {
     private static let emojiOptions = ["", "🐻", "🐱", "🐸", "🐙", "🦊", "🐧", "🐯"]
 
     private var missingBlock: some View {
-        Panel {
-            EmptyPanel(
+        VCard {
+            VEmptyState(
                 title: "还没选成员",
                 message: "从「家」的成员名册里点一位成员进来，这里会显示 TA 的档案、凭证与权限。",
                 actionTitle: "回到名册",
@@ -317,9 +317,9 @@ struct MemberDetailScreen: View {
             ) {
                 router.request(.tab(.household))
             }
-            .padding(.vertical, T.S.xxl)
+            .padding(.vertical, V.S.gapXXL)
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 真动作（档案扩展写 kf_member_ext、本周主责写 kf_duty_week，都是真落盘）

@@ -68,7 +68,7 @@ struct BatteryProfileScreen: View {
                 VCardHeader(title: "当前电量")
                 HStack(alignment: .firstTextBaseline, spacing: V.S.gapS) {
                     Image(systemName: tier.icon)
-                        .font(V.F.sans(28))
+                        .font(V.F.displayE)
                         .foregroundStyle(tierColor)
                         .accessibilityHidden(true)
                     Text(BatteryCare.faceText(pct))

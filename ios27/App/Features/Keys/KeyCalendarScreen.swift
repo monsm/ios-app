@@ -51,7 +51,7 @@ struct KeyCalendarScreen: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: T.S.l) {
+            VStack(spacing: V.S.gap16) {
                 header
                 if app.keys.filter({ $0.expiresAt != nil }).isEmpty {
                     emptyBlock
@@ -62,7 +62,7 @@ struct KeyCalendarScreen: View {
                     }
                 }
             }
-            .padding(.vertical, T.S.l)
+            .padding(.vertical, V.S.gap16)
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
@@ -73,21 +73,21 @@ struct KeyCalendarScreen: View {
     // MARK: 页头
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: T.S.xs) {
+        VStack(alignment: .leading, spacing: V.S.gapXS) {
             Text("到期月历")
-                .font(T.F.display())
-                .foregroundStyle(Ink.ink)
+                .font(V.F.displayHome)
+                .foregroundStyle(V.C.text1)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            HStack(spacing: T.S.s) {
-                StateDot(tone: monthTotal > 0 ? .attention : .neutral,
+            HStack(spacing: V.S.gapS) {
+                VStateDot(tone: monthTotal > 0 ? .attention : .neutral,
                          word: monthTotal > 0 ? "本月有到期" : "本月无到期")
                 Text(monthTotal > 0 ? "\(year) 年 \(month) 月 · \(monthTotal) 条到期" : "\(year) 年 \(month) 月 · 这个月没有凭证到期")
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                 Spacer(minLength: 0)
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
     }
@@ -95,42 +95,42 @@ struct KeyCalendarScreen: View {
     // MARK: 主角：月历
 
     private var calendarPanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                HStack(spacing: T.S.s) {
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                HStack(spacing: V.S.gapS) {
                     Button {
                         shift(-1)
                     } label: {
                         Image(systemName: "chevron.left")
                             .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                            .font(T.F.icon(T.Icon.m, weight: .medium))
-                            .foregroundStyle(Ink.ink)
-                            .frame(width: T.Hit.min, height: T.Hit.min)
+                            .font(V.F.icon18Medium)
+                            .foregroundStyle(V.C.text1)
+                            .frame(width: V.Hit.min, height: V.Hit.min)
                             .contentShape(.rect)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("上一个月")
                     Spacer(minLength: 0)
-                    Reading(value: String(format: "%04d-%02d", year, month), size: 17)
+                    VReading(value: String(format: "%04d-%02d", year, month), font: V.F.number17)
                     Spacer(minLength: 0)
                     Button {
                         shift(1)
                     } label: {
                         Image(systemName: "chevron.right")
                             .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                            .font(T.F.icon(T.Icon.m, weight: .medium))
-                            .foregroundStyle(Ink.ink)
-                            .frame(width: T.Hit.min, height: T.Hit.min)
+                            .font(V.F.icon18Medium)
+                            .foregroundStyle(V.C.text1)
+                            .frame(width: V.Hit.min, height: V.Hit.min)
                             .contentShape(.rect)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("下一个月")
                 }
                 weekdayHeader
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: T.S.xs), count: 7),
-                          spacing: T.S.xs) {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: V.S.gapXS), count: 7),
+                          spacing: V.S.gapXS) {
                     ForEach(0 ..< leadingBlanks, id: \.self) { _ in
-                        Color.clear.frame(height: T.Hit.min)
+                        Color.clear.frame(height: V.Hit.min)
                     }
                     ForEach(1 ... dayCount, id: \.self) { day in
                         dayCell(day)
@@ -138,15 +138,15 @@ struct KeyCalendarScreen: View {
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var weekdayHeader: some View {
-        HStack(spacing: T.S.xs) {
+        HStack(spacing: V.S.gapXS) {
             ForEach(["日", "一", "二", "三", "四", "五", "六"], id: \.self) { word in
                 Text(word)
-                    .font(T.F.unit)
-                    .foregroundStyle(Ink.inkFaint)
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
                     .frame(maxWidth: .infinity)
             }
         }
@@ -160,22 +160,22 @@ struct KeyCalendarScreen: View {
         return Button {
             pickedDay = selected ? nil : dayKey
         } label: {
-            VStack(spacing: T.S.xxs) {
-                Reading(value: "\(day)", size: 13, weight: .regular,
-                        tint: selected ? Ink.ink : Ink.inkSub, animated: false)
+            VStack(spacing: V.S.gapXXS) {
+                VReading(value: "\(day)", font: V.F.number13,
+                        tint: selected ? V.C.text1 : V.C.text2, animated: false)
                 if count > 0 {
-                    Reading(value: "\(count)", size: 11, weight: .medium,
-                            tint: selected ? Ink.ink : State.attention, animated: false)
+                    VReading(value: "\(count)", font: V.F.number11,
+                            tint: selected ? V.C.text1 : V.C.warning, animated: false)
                 } else {
-                    Color.clear.frame(height: T.S.m)
+                    Color.clear.frame(height: V.S.gapMS)
                 }
             }
-            .frame(maxWidth: .infinity, minHeight: T.Hit.min)
-            .background(selected ? Signal.wash : (count > 0 ? Ink.plateAlt : Color.clear),
-                        in: .rect(cornerRadius: T.R.control))
+            .frame(maxWidth: .infinity, minHeight: V.Hit.min)
+            .background(selected ? V.C.blue.opacity(0.16) : (count > 0 ? V.C.cardAlt : Color.clear),
+                        in: .rect(cornerRadius: V.R.control))
             .overlay {
-                RoundedRectangle(cornerRadius: T.R.control, style: .continuous)
-                    .strokeBorder(selected ? Signal.edge : Color.clear, lineWidth: T.Stroke.hair)
+                RoundedRectangle(cornerRadius: V.R.control, style: .continuous)
+                    .strokeBorder(selected ? V.C.blue.opacity(0.75) : Color.clear, lineWidth: V.S.hair)
             }
             .contentShape(.rect)
         }
@@ -187,9 +187,9 @@ struct KeyCalendarScreen: View {
     // MARK: 当天清单
 
     private func dayPanel(_ dayKey: String) -> some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.s) {
-                SectionLabel(text: TimeFormat.dayTitle(dayKey), trailing: "\(pickedItems.count) 条")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapS) {
+                VSectionLabel(text: TimeFormat.dayTitle(dayKey), trailing: "\(pickedItems.count) 条")
                 if pickedItems.isEmpty {
                     KeysInlineNote(tone: .neutral, text: "这一天没有到期的凭证。点别的有数字的格子看看。")
                 } else {
@@ -208,14 +208,14 @@ struct KeyCalendarScreen: View {
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 空态（给出路）
 
     private var emptyBlock: some View {
-        Panel {
-            EmptyPanel(
+        VCard {
+            VEmptyState(
                 title: "还没有有限期的凭证",
                 message: "月历只画有限期的东西。给保洁发一张 7 天临时码，或把某枚密码设成有到期日，这里就会有格子亮起来。",
                 actionTitle: "新增临时码",
@@ -223,9 +223,9 @@ struct KeyCalendarScreen: View {
             ) {
                 router.request(.dest(.keyCreate))
             }
-            .padding(.vertical, T.S.xxl)
+            .padding(.vertical, V.S.gapXXL)
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func shift(_ delta: Int) {

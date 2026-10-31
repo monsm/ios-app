@@ -13,13 +13,13 @@ struct HHMemberKeysPanel: View {
     let createKey: () -> Void
 
     var body: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "名下凭证", trailing: "\(keys.count) 枚")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "名下凭证", trailing: "\(keys.count) 枚")
                 if keys.isEmpty {
                     Text("TA 名下还没有凭证。到「钥匙」页新建一枚，归属选 \(member.name)。")
-                        .font(T.F.caption)
-                        .foregroundStyle(Ink.inkSub)
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text2)
                         .fixedSize(horizontal: false, vertical: true)
                     HHRowButton(title: "去新建凭证", symbol: "plus.circle",
                                 detail: nil, action: createKey)
@@ -33,40 +33,40 @@ struct HHMemberKeysPanel: View {
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func keyRow(_ key: KeyItem) -> some View {
         Button {
             openKey(key.id)
         } label: {
-            HStack(spacing: T.S.m) {
+            HStack(spacing: V.S.gapMS) {
                 Text(key.kind.rawValue)
-                    .font(T.F.unit)
-                    .foregroundStyle(Ink.inkFaint)
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
                     .tracking(0.6)
-                    .frame(width: T.Hit.min + T.S.xl, alignment: .leading)
+                    .frame(width: V.Hit.min + V.S.gap24, alignment: .leading)
                 Text(key.name)
-                    .font(T.F.body)
-                    .foregroundStyle(Ink.ink)
+                    .font(V.F.body)
+                    .foregroundStyle(V.C.text1)
                     .lineLimit(1)
-                Spacer(minLength: T.S.s)
+                Spacer(minLength: V.S.gapS)
                 if key.disabled {
                     Text("已停用")
-                        .font(T.F.unit)
-                        .foregroundStyle(State.critical)
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.critical)
                 } else if let exp = key.expiresAt {
                     Text(TimeFormat.dayShort(exp))
-                        .font(T.F.stamp)
-                        .foregroundStyle(Ink.inkSub)
+                        .font(V.F.stamp)
+                        .foregroundStyle(V.C.text2)
                         .monospacedDigit()
                 }
                 Image(systemName: "chevron.right")
                     .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                    .font(T.F.icon(T.Icon.s, weight: .medium))
-                    .foregroundStyle(Ink.inkFaint)
+                    .font(V.F.icon15Medium)
+                    .foregroundStyle(V.C.text3)
             }
-            .frame(minHeight: T.Hit.min)
+            .frame(minHeight: V.Hit.min)
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
@@ -81,13 +81,13 @@ struct HHMemberExcerptsPanel: View {
     let openRecords: () -> Void
 
     var body: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "最近开门", trailing: "约")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "最近开门", trailing: "约")
                 if entries.isEmpty {
                     Text("台账里还没有可证明归属到 TA 的开门。锁端日志没有身份字段，只有归属明确的条目才会出现在这里。")
-                        .font(T.F.caption)
-                        .foregroundStyle(Ink.inkSub)
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text2)
                         .fixedSize(horizontal: false, vertical: true)
                     HHRowButton(title: "去台账按 TA 筛", symbol: "line.3.horizontal.decrease.circle",
                                 detail: nil, action: openRecords)
@@ -95,13 +95,13 @@ struct HHMemberExcerptsPanel: View {
                     VStack(spacing: 0) {
                         ForEach(entries.indices, id: \.self) { index in
                             if index > 0 { HHRule() }
-                            LedgerRow(entry: entries[index], showDay: true)
+                            VLedgerRow(entry: entries[index], showDay: true)
                         }
                     }
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 }
 
@@ -115,25 +115,25 @@ struct HHMemberWeekPanel: View {
 
     var body: some View {
         let sentence = HHStats.weekSentence(member, entries: entries)
-        return Panel {
-            VStack(alignment: .leading, spacing: T.S.s) {
-                SectionLabel(text: "这一周", trailing: "约")
+        return VCard {
+            VStack(alignment: .leading, spacing: V.S.gapS) {
+                VSectionLabel(text: "这一周", trailing: "约")
                 if let sentence {
                     Text(sentence)
-                        .font(T.F.body)
-                        .foregroundStyle(Ink.ink)
+                        .font(V.F.body)
+                        .foregroundStyle(V.C.text1)
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
                     Text("这一周还没有可证明归属到 TA 的开门。锁端日志没有身份字段，只有归属明确的条目才会算进来。")
-                        .font(T.F.caption)
-                        .foregroundStyle(Ink.inkSub)
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text2)
                         .fixedSize(horizontal: false, vertical: true)
                     HHRowButton(title: "去台账看全部记录", symbol: "list.bullet.rectangle.portrait",
                                 detail: nil, action: openRecords)
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 }
 
@@ -146,43 +146,43 @@ struct HHMemberScenePanel: View {
     let toggleDuty: () -> Void
 
     var body: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "家庭场景")
-                HStack(spacing: T.S.m) {
-                    VStack(alignment: .leading, spacing: T.S.xxs) {
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "家庭场景")
+                HStack(spacing: V.S.gapMS) {
+                    VStack(alignment: .leading, spacing: V.S.gapXXS) {
                         Text("本周主责")
-                            .font(T.F.body)
-                            .foregroundStyle(Ink.ink)
+                            .font(V.F.body)
+                            .foregroundStyle(V.C.text1)
                         Text(isDuty ? "本周的家里事归 TA。" : "把这一周的事指给 TA；下周可重新指。")
-                            .font(T.F.unit)
-                            .foregroundStyle(Ink.inkFaint)
+                            .font(V.F.unit)
+                            .foregroundStyle(V.C.text3)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    Spacer(minLength: T.S.s)
+                    Spacer(minLength: V.S.gapS)
                     Button(action: toggleDuty) {
                         Text(isDuty ? "取消主责" : "设为本周主责")
-                            .font(T.F.bodyStrong)
-                            .foregroundStyle(Ink.ink)
-                            .padding(.horizontal, T.S.m)
-                            .frame(minHeight: T.Hit.min)
+                            .font(V.F.bodyStrong)
+                            .foregroundStyle(V.C.text1)
+                            .padding(.horizontal, V.S.gapMS)
+                            .frame(minHeight: V.Hit.min)
                             .overlay {
-                                RoundedRectangle(cornerRadius: T.R.control, style: .continuous)
-                                    .strokeBorder(Ink.hairline, lineWidth: T.Stroke.hair)
+                                RoundedRectangle(cornerRadius: V.R.control, style: .continuous)
+                                    .strokeBorder(V.C.hairline, lineWidth: V.S.hair)
                             }
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(isDuty ? "取消本周主责" : "设为本周主责")
                 }
-                .frame(minHeight: T.Hit.min)
+                .frame(minHeight: V.Hit.min)
 
                 if !note.isEmpty {
                     HHRule()
-                    FieldRow(label: "便签", value: note, mono: false)
+                    VFieldRow(label: "便签", value: note, mono: false)
                 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 }
 
@@ -194,9 +194,9 @@ struct HHMemberClosingPanel: View {
     let askDelete: () -> Void
 
     var body: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "档案收尾")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "档案收尾")
                 HHRowButton(
                     title: member.archived ? "恢复进名册" : "归档（保留历史）",
                     symbol: "archivebox",
@@ -205,29 +205,29 @@ struct HHMemberClosingPanel: View {
                 )
                 HHRule()
                 Button(action: askDelete) {
-                    HStack(spacing: T.S.m) {
+                    HStack(spacing: V.S.gapMS) {
                         Image(systemName: "trash")
                             .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                            .font(T.F.icon(T.Icon.m, weight: .regular))
-                            .foregroundStyle(State.critical)
-                            .frame(width: T.Icon.xl, alignment: .leading)
+                            .font(V.F.icon18)
+                            .foregroundStyle(V.C.critical)
+                            .frame(width: V.Icon.xl, alignment: .leading)
                         Text("删除成员")
-                            .font(T.F.body)
-                            .foregroundStyle(State.critical)
+                            .font(V.F.body)
+                            .foregroundStyle(V.C.critical)
                         Spacer(minLength: 0)
                     }
-                    .frame(minHeight: T.Hit.min)
+                    .frame(minHeight: V.Hit.min)
                     .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("删除成员")
 
                 Text("归档只从名册与统计里收起，不删任何历史；删除会移走 TA 的档案与名下凭证归属。指纹一旦在锁端删掉就无法远程补录，只能本人到锁前重录。")
-                    .font(T.F.unit)
-                    .foregroundStyle(Ink.inkFaint)
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 }

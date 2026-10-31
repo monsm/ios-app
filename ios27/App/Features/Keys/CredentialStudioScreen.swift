@@ -238,7 +238,7 @@ struct CredentialStudioScreen: View {
                 if selected { selectedPwds.remove(pwd.alias) } else { selectedPwds.insert(pwd.alias) }
             } label: {
                 Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                    .font(V.F.sans(18))
+                    .font(V.F.bodyLarge)
                     .foregroundStyle(selected ? V.C.blue : V.C.text3)
                     .frame(width: V.List.iconSize, height: V.List.iconSize)
             }
@@ -248,7 +248,7 @@ struct CredentialStudioScreen: View {
                 HStack(spacing: V.S.gapXS) {
                     Text(CredentialOrg.displayPwd(pwd)).font(V.F.rowTitle).foregroundStyle(V.C.text1).lineLimit(1)
                     if CredStarStore.isStarred(studioMac, id) {
-                        Image(systemName: "star.fill").font(V.F.sans(11)).foregroundStyle(V.C.coral)
+                        Image(systemName: "star.fill").font(V.F.chipLabel).foregroundStyle(V.C.coral)
                     }
                 }
                 Text("#\(pwd.alias) · \(CredentialOrg.expiryLabel(pwd.to)) · \(CredentialOrg.stateLabel(CredentialOrg.pwdState(pwd)))")
@@ -260,7 +260,7 @@ struct CredentialStudioScreen: View {
                 tick += 1
             } label: {
                 Image(systemName: CredStarStore.isStarred(studioMac, id) ? "star.fill" : "star")
-                    .font(V.F.sans(15))
+                    .font(V.F.cardBody)
                     .foregroundStyle(V.C.coral)
             }
             .buttonStyle(.plain)
@@ -278,7 +278,7 @@ struct CredentialStudioScreen: View {
                 if selected { selectedFps.remove(fp.batch) } else { selectedFps.insert(fp.batch) }
             } label: {
                 Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                    .font(V.F.sans(18))
+                    .font(V.F.bodyLarge)
                     .foregroundStyle(selected ? V.C.blue : V.C.text3)
                     .frame(width: V.List.iconSize, height: V.List.iconSize)
             }

@@ -169,7 +169,7 @@ struct LinkSenseBar: View {
                         HStack(spacing: V.S.gapS) {
                             stateDot
                             Text(model.phase.rawValue)
-                                .font(V.F.sans(15, weight: .semibold))
+                                .font(V.F.cardTitle)
                                 .foregroundStyle(V.C.text1)
                             if let ms = model.connectMs {
                                 Text("\(ms)ms · \(model.connectSource)")
@@ -189,7 +189,7 @@ struct LinkSenseBar: View {
                 if !model.bluetoothOn {
                     HStack(spacing: V.S.gapS) {
                         Image(systemName: "antenna.radiowaves.left.and.right.slash")
-                            .font(V.F.sans(13, weight: .semibold))
+                            .font(V.F.rowDetailStrong)
                             .foregroundStyle(V.C.pink)
                             .accessibilityHidden(true)
                         Text("蓝牙已关闭 —— 打开系统蓝牙后门锁才能被唤醒。")

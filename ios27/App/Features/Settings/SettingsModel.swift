@@ -7,6 +7,7 @@
 //
 // 诚实：标 TODO(engine) 的字段本版只在本机内存里成立（重进 App 回默认值），界面不假装已落盘。
 import SwiftUI
+import UIKit
 
 // MARK: - 外观档位
 
@@ -15,6 +16,8 @@ enum AppearanceTheme: String, CaseIterable, Identifiable {
     case system
     case light
     case dark
+    /// 纯黑（AMOLED）：深色底再压到 #000，夜间与 OLED 省电档。
+    case black
 
     var id: String { rawValue }
 
@@ -23,6 +26,15 @@ enum AppearanceTheme: String, CaseIterable, Identifiable {
         case .system: return "跟随系统"
         case .light: return "浅色"
         case .dark: return "深色"
+        case .black: return "纯黑"
+        }
+    }
+
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light: return .light
+        case .dark, .black: return .dark
         }
     }
 }
@@ -48,6 +60,8 @@ enum LayoutDensity: String, CaseIterable, Identifiable {
 enum MotionTier: String, CaseIterable, Identifiable {
     case calm
     case standard
+    /// 活泼档：结果态允许一次轻微弹跳（进度弧仍走线性，不拿弹簧骗人）。
+    case lively
 
     var id: String { rawValue }
 
@@ -55,6 +69,15 @@ enum MotionTier: String, CaseIterable, Identifiable {
         switch self {
         case .calm: return "克制"
         case .standard: return "标准"
+        case .lively: return "活泼"
+        }
+    }
+
+    var resultAnimation: Animation? {
+        switch self {
+        case .calm: return nil
+        case .standard: return V.M.snap
+        case .lively: return V.M.settle
         }
     }
 }
@@ -259,6 +282,111 @@ final class SettingsStore {
         set { DB.store.set("kf_quick_grid", newValue); revision &+= 1 }
     }
 
+    // MARK: 外观 13 项（AUDIT-A §5 #28-#33 的真实写点与读点）
+
+    /// 品牌色六套（kf_accent）。空 = indigo。
+    var accent: String {
+        get { _ = revision; return DB.store.getString("kf_accent") }
+        set { DB.store.set("kf_accent", newValue); revision &+= 1 }
+    }
+
+    /// 自定义强调色（kf_accent_custom，0xRRGGBB；0 = 未启用）。
+    var customAccent: Int {
+        get { _ = revision; return DB.store.getInt("kf_accent_custom", 0) }
+        set { DB.store.set("kf_accent_custom", newValue); revision &+= 1 }
+    }
+
+    var radius: String {
+        get { _ = revision; return DB.store.getString("kf_radius") }
+        set { DB.store.set("kf_radius", newValue); revision &+= 1 }
+    }
+
+    var rowHeight: String {
+        get { _ = revision; return DB.store.getString("kf_row_h") }
+        set { DB.store.set("kf_row_h", newValue); revision &+= 1 }
+    }
+
+    var timelineGap: String {
+        get { _ = revision; return DB.store.getString("kf_tl_gap") }
+        set { DB.store.set("kf_tl_gap", newValue); revision &+= 1 }
+    }
+
+    var digitFont: String {
+        get { _ = revision; return DB.store.getString("kf_digit_font") }
+        set { DB.store.set("kf_digit_font", newValue); revision &+= 1 }
+    }
+
+    var recentCount: Int {
+        get { _ = revision; return DB.store.getInt("kf_recent_count", 5) }
+        set { DB.store.set("kf_recent_count", newValue); revision &+= 1 }
+    }
+
+    /// 记录页开场策略（kf_filter_default，QueryFilters.policy 的唯一 UI 写点）。
+    var recordPolicy: String {
+        get { _ = revision; return QueryFilters.policy }
+        set { QueryFilters.setPolicy(newValue); revision &+= 1 }
+    }
+
+    /// 开锁确认：长按时长（秒，0.4–1.6）。
+    var holdDuration: Double {
+        get { _ = revision; return min(1.6, max(0.4, DB.store.getDouble("kf_ax_hold", 0.9))) }
+        set { DB.store.set("kf_ax_hold", min(1.6, max(0.4, newValue))); revision &+= 1 }
+    }
+
+    /// 双击直开（kf_tap_direct）：按住档下双击绕过按住确认。
+    var tapDirect: Bool {
+        get { _ = revision; return DB.store.getBool("kf_tap_direct") }
+        set { DB.store.set("kf_tap_direct", newValue); revision &+= 1 }
+    }
+
+    /// 误触围栏（kf_fence）：先从边缘拖到中心解锁围栏。
+    var fence: Bool {
+        get { _ = revision; return DB.store.getBool("kf_fence") }
+        set { DB.store.set("kf_fence", newValue); revision &+= 1 }
+    }
+
+    /// 双击防抖（kf_dbltap_guard，默认开）。
+    var dbltapGuard: Bool {
+        get { _ = revision; return DB.store.getBool("kf_dbltap_guard", true) }
+        set { DB.store.set("kf_dbltap_guard", newValue); revision &+= 1 }
+    }
+
+    /// 夜间免扰（kf_quiet_night）：22:00–08:00 静音提示音。
+    var quietNight: Bool {
+        get { _ = revision; return CareSchedule.quietOn }
+        set { DB.store.set("kf_quiet_night", newValue); revision &+= 1 }
+    }
+
+    /// 强调色解析：自定义色优先，其次六套预设。
+    var accentColor: Color {
+        _ = revision
+        if customAccent != 0 { return Self.color(hex: customAccent) }
+        switch accent {
+        case "forest": return Self.color(hex: 0x1D6F5F)
+        case "amber": return Self.color(hex: 0xB45309)
+        case "graphite": return Self.color(hex: 0x5B6169)
+        case "rose": return Self.color(hex: 0xBE123C)
+        case "aurora": return Self.color(hex: 0x0E7490)
+        default: return Self.color(hex: 0x4F46E5)
+        }
+    }
+
+    static func color(hex: Int) -> Color {
+        Color(red: Double((hex >> 16) & 0xFF) / 255,
+              green: Double((hex >> 8) & 0xFF) / 255,
+              blue: Double(hex & 0xFF) / 255)
+    }
+
+    /// 把 ColorPicker 的 Color 存成 0xRRGGBB（不做透明度；强调色必须压得住白字）。
+    func setCustomAccent(_ color: Color) {
+        let ui = UIColor(color)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        ui.getRed(&r, green: &g, blue: &b, alpha: &a)
+        customAccent = (Int((r * 255).rounded()) << 16) | (Int((g * 255).rounded()) << 8) | Int((b * 255).rounded())
+    }
+
+    func clearCustomAccent() { customAccent = 0 }
+
     // MARK: 锁端时钟
 
     /// 上次校准门锁时间的时刻。nil = 从未校准。
@@ -279,6 +407,20 @@ final class SettingsStore {
         timeStyle = .system
         showSeconds = false
         twoLineDate = false
+        accent = ""
+        customAccent = 0
+        radius = ""
+        rowHeight = ""
+        timelineGap = ""
+        digitFont = ""
+        recentCount = 5
+        recordPolicy = ""
+        holdDuration = 0.9
+        tapDirect = false
+        fence = false
+        dbltapGuard = true
+        quietNight = true
+        HeroStats.setVisible(HeroStats.all)
     }
 }
 

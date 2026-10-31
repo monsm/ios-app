@@ -67,7 +67,7 @@ struct MemberCreateScreen: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: T.S.l) {
+            VStack(spacing: V.S.gap16) {
                 header
                 stepScale
                 stepPanel
@@ -78,7 +78,7 @@ struct MemberCreateScreen: View {
                 actionPanel
                 cancelNote
             }
-            .padding(.vertical, T.S.l)
+            .padding(.vertical, V.S.gap16)
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
@@ -90,7 +90,7 @@ struct MemberCreateScreen: View {
                     .accessibilityLabel("取消建档")
             }
         }
-        .animation(reduceMotion ? nil : T.M.move, value: step)
+        .animation(reduceMotion ? nil : V.M.move, value: step)
     }
 
     // MARK: 页头（大标题 + 一行状态）
@@ -107,27 +107,27 @@ struct MemberCreateScreen: View {
 
     // MARK: 刻度
     private var stepScale: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
                 HHCreationStepScale(steps: Self.steps.map { $0.no }, current: step)
                 Text(current.hint)
-                    .font(T.F.caption)
-                    .foregroundStyle(Ink.inkSub)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 当前步的输入
     private var stepPanel: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: current.no + " · " + current.title, trailing: step == 3 ? "可选" : "必填")
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: current.no + " · " + current.title, trailing: step == 3 ? "可选" : "必填")
                 stepBody
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     @ViewBuilder
@@ -180,45 +180,45 @@ struct MemberCreateScreen: View {
 
     // MARK: 步进（同屏唯一 signal 填充）
     private var actionPanel: some View {
-        VStack(spacing: T.S.s) {
+        VStack(spacing: V.S.gapS) {
             if step < 3 {
-                PrimaryAction(title: "下一步", systemImage: "arrow.right", busy: false) { advance() }
+                VActionButton(title: "下一步", systemImage: "arrow.right", busy: false) { advance() }
                     .disabled(!canAdvance)
                     .opacity(canAdvance ? 1 : 0.5)
             } else {
-                PrimaryAction(title: "完成建档", systemImage: "checkmark.seal", busy: false) { finish() }
+                VActionButton(title: "完成建档", systemImage: "checkmark.seal", busy: false) { finish() }
                     .disabled(!canAdvance)
                     .opacity(canAdvance ? 1 : 0.5)
             }
             if step > 0 {
-                SecondaryAction(title: "上一步", systemImage: "arrow.left") { step -= 1 }
+                VOutlineButton(title: "上一步", systemImage: "arrow.left") { step -= 1 }
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var cancelNote: some View {
         Text("第一步按「下一步」时才会真正建号；中途取消不会留下半个人（已建的号会在取消时一并撤回）。")
-            .font(T.F.unit)
-            .foregroundStyle(Ink.inkFaint)
+            .font(V.F.unit)
+            .foregroundStyle(V.C.text3)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
-            .padding(.horizontal, T.S.l)
+            .padding(.horizontal, V.S.gap16)
     }
 
     private func errorBlock(_ text: String) -> some View {
-        HStack(spacing: T.S.s) {
+        HStack(spacing: V.S.gapS) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                .font(T.F.icon(T.Icon.s))
-                .foregroundStyle(State.critical)
+                .font(V.F.icon15)
+                .foregroundStyle(V.C.critical)
             Text(text)
-                .font(T.F.caption)
-                .foregroundStyle(State.critical)
+                .font(V.F.footnote)
+                .foregroundStyle(V.C.critical)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutter)
         .accessibilityElement(children: .combine)
     }
 
