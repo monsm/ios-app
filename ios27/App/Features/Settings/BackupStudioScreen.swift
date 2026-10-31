@@ -360,7 +360,9 @@ struct BackupStudioScreen: View {
         defer { busy = false }
         do {
             let plain = BackupCanonical.exportText(BackupKit.collectAll())
-            let text = password.isEmpty ? plain : try CryptoBox.encryptText(plain, password: password)
+            // SEC-02：上云的包必须加密 —— 走明文等于把母钥发给 WebDAV 服务器。
+            guard !password.isEmpty else { throw BLEErrorX.msg("请先设备份口令：上云的备份必须加密") }
+            let text = try CryptoBox.encryptText(plain, password: password)
             let msg = try await WebDAV.upload(text: text, base: davURL, path: davPath, user: davUser, password: davPassword)
             DB.store.set("kf_bk_base", SelfCheck.fingerprint())
             Milestones.recordBackup()
@@ -375,7 +377,12 @@ struct BackupStudioScreen: View {
     private func makeMigration() async {
         do {
             let plain = BackupCanonical.exportText(BackupKit.collectAll())
-            let text = password.isEmpty ? plain : try CryptoBox.encryptText(plain, password: password)
+            // SEC-02：换机包同样必须加密（它会被复制到剪贴板，可能经通用剪贴板同步到别的设备）。
+            guard !password.isEmpty else {
+                outcome = "未设口令 · 已拒绝生成明文换机包"
+                return
+            }
+            let text = try CryptoBox.encryptText(plain, password: password)
             Clip.set(text)
             outcome = "换机包已复制到剪贴板（\(text.count) 字符）"
         } catch {
