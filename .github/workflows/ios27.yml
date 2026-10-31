@@ -222,6 +222,7 @@ jobs:
           path: |
             ios27/build/build.log
             ios27/build/archive.log
+            ios27/build/test.log
             ios27/build/LockKeeper-*-unsigned.ipa
           if-no-files-found: ignore
 
@@ -235,8 +236,12 @@ jobs:
           mkdir -p /tmp/ciout
           [ -f build/build.log ] && cp build/build.log /tmp/ciout/build.log
           [ -f build/archive.log ] && cp build/archive.log /tmp/ciout/archive.log
+          # 测试日志也要发：G-07 的金标差分是"协议层有没有被改坏"的唯一证据，
+          # 不发布它就等于本机永远看不到测试结果（只能靠 job 红绿猜）。
+          [ -f build/test.log ] && cp build/test.log /tmp/ciout/test.log
           grep -E "error:" build/build.log 2>/dev/null | sed "s|.*/ios27/||" | sort -u > /tmp/ciout/errors.txt
           grep -E "error:" build/archive.log 2>/dev/null | sed "s|.*/ios27/||" | sort -u >> /tmp/ciout/errors.txt
+          grep -E "error:|Testing failed:" build/test.log 2>/dev/null | sed "s|.*/ios27/||" | sort -u >> /tmp/ciout/errors.txt
           echo "commit=$(git rev-parse HEAD)" > /tmp/ciout/meta.txt
           echo "run=$GITHUB_RUN_ID" >> /tmp/ciout/meta.txt
           echo "job=$GITHUB_JOB" >> /tmp/ciout/meta.txt
