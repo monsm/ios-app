@@ -69,15 +69,17 @@ jobs:
           if-no-files-found: ignore
 
   # ================= 金标差分测试（引擎层回归，G-07）=================
-  # 为什么单独一个 job 而不是塞进 build：`xcode-27` 镜像**没有 iOS 模拟器 runtime**
-  # （只有 macOS / tvOS / visionOS / watchOS），在里面跑 xcodebuild test 必然
-  # "Unable to find a device matching the provided destination"。
-  # 而 `macos-latest` 带 iOS 模拟器 —— 测试只需要"能跑单元测试"，不需要 iOS 27 SDK。
+  # 引擎层的回归保护（G-07）。旧仓的 fixtures/golden.json（40 条命令帧 / NIST AES /
+  # 状态与日志解析 / ZOTP / 归属推断）在本仓一直"存在但没人跑"。
+  #
+  # 放在 xcode-27 而不是 macos-latest：后者只有 Xcode 26.6（最高 iOS 26.x runtime），
+  # 而本工程部署目标是 iOS 27.0 ⇒ 那个镜像上**永远**没有合法 destination。
+  # xcode-27 有 iOS 27 SDK；runtime 若缺失就显式下载，仍拿不到则如实标 test_executed=no。
   golden:
     name: 金标差分测试（引擎回归）
-    runs-on: macos-latest
+    runs-on: xcode-27
     needs: gates
-    timeout-minutes: 40
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -93,26 +95,39 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p build
-          echo "== Xcode 版本 =="; xcodebuild -version
-
-          # CI 的两个镜像都没有 iOS 27 模拟器 runtime（xcode-27 只有 macOS/tvOS/visionOS/watchOS，
-          # macos-latest 最高 iOS 26.x），而本工程部署目标是 iOS 27.0 ⇒ iOS 上的
-          # xcodebuild test 必然 "Unable to find a destination"，**一条断言都跑不了**。
-          # 所以这里先如实判断，再决定跑还是明确标注"未执行" —— 绝不静默通过。
-          RUNTIME=$(xcrun simctl list runtimes 2>/dev/null | grep -oE "iOS [0-9]+\.[0-9]+" | sort -V | tail -1 | sed "s/iOS //")
-          echo "镜像最高 iOS runtime: ${RUNTIME:-none}（部署目标 27.0）"
-          MAJOR=$(echo "${RUNTIME:-0}" | cut -d. -f1)
-          if [ "${MAJOR:-0}" -lt 27 ]; then
+          echo "== Xcode =="; xcodebuild -version
+          has_runtime() { xcrun simctl list runtimes 2>/dev/null | grep -qE "iOS (2[7-9]|[3-9][0-9])\."; }
+          if ! has_runtime; then
+            echo "== 无 iOS 27+ 模拟器 runtime，尝试下载 =="
+            xcodebuild -downloadPlatform iOS 2>&1 | tail -25 || true
+          fi
+          echo "== 可用 runtime =="; xcrun simctl list runtimes || true
+          if ! has_runtime; then
             echo "test_executed=no" >> "$GITHUB_OUTPUT"
-            echo "::warning::镜像最高只有 iOS ${RUNTIME:-无} runtime，本工程部署目标是 iOS 27.0 —— 金标测试本轮**未执行**（不是通过）。"
-            echo "本机跑法：xcodebuild test -scheme LockKeeper -destination 'platform=iOS Simulator,name=<设备>'（需 iOS 27 runtime）" | tee build/test.log
+            echo "::warning::仍无 iOS 27+ 模拟器 runtime —— 金标测试本轮**未执行**（不是通过）。"
+            echo '本机跑法：xcodebuild test -scheme LockKeeper -destination "platform=iOS Simulator,name=<设备>"' | tee build/test.log
             exit 0
           fi
+          # 取一台真可用的 iPhone。用 simctl 的 JSON，**不要用 sed 的 s**：
+          # BSD sed 不支持它，上一版因此把整行当成设备名，一条断言都没跑。
+          DEV=$(xcrun simctl list devices available -j 2>/dev/null | python3 -c '
+          import json, sys
+          d = json.load(sys.stdin)
+          names = [n["name"] for v in d.get("devices", {}).values() for n in v
+                   if n.get("isAvailable") and n.get("name", "").startswith("iPhone")]
+          print(names[0] if names else "")
+          ')
+          if [ -z "$DEV" ]; then
+            echo "test_executed=no" >> "$GITHUB_OUTPUT"
+            echo "::warning::有 runtime 但取不到可用 iPhone 设备 —— 金标测试本轮**未执行**。"
+            exit 0
+          fi
+          echo "测试设备: $DEV"
           echo "test_executed=yes" >> "$GITHUB_OUTPUT"
           xcodebuild test \
             -project LockKeeper.xcodeproj \
             -scheme LockKeeper \
-            -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+            -destination "platform=iOS Simulator,name=$DEV" \
             -derivedDataPath build/DerivedData \
             -configuration Debug \
             SWIFT_COMPILATION_MODE=wholemodule \

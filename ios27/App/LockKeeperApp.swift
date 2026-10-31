@@ -29,6 +29,14 @@ struct RootView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
     @State private var settings = SettingsStore.shared
+    /// SEC-24：深链要求切换的锁（等用户确认后才真的写 currentMac）。nil = 无待确认。
+    @State private var pendingSwitchMac: String?
+
+    /// 弹窗文案用的锁名（未命名时由 displayName 兜底成"门锁 · MAC 后 4 位"，不会是空串）。
+    private var lockNameForSwitch: String {
+        guard let mac = pendingSwitchMac else { return "—" }
+        return LockArchive.displayName(DB.keychain(mac) ?? Keychain(mac: mac, skey: ""))
+    }
 
     var body: some View {
         ZStack {
@@ -62,14 +70,21 @@ struct RootView: View {
             case "device":
                 if let m = items.first(where: { $0.name == "mac" })?.value, !m.isEmpty {
                     let mac = DB.normalizeMac(m)
-                    if DB.keychain(mac) != nil { DB.currentMac = mac }
+                    if DB.keychain(mac) != nil { pendingSwitchMac = mac }   // SEC-24：见下方确认弹窗
                 }
                 router.select(.door)
             case "credentials":
                 router.select(.keys)
             case "records":
                 if let k = items.first(where: { $0.name == "k" })?.value, !k.isEmpty {
-                    router.request(.record(id: k))
+                    // SEC-24：行 id 的格式是 `<mac>#<序号>`，而本页所有查询都以「当前锁」为作用域 ——
+                    // 一个指向**别的锁**的 id 只会解析成"这条记录没找到"，没有任何越权读，
+                    // 但也没必要把脏输入往查询里塞。校验形状，不对就当没带参数。
+                    if k.contains("#"), k.split(separator: "#", omittingEmptySubsequences: false).count == 2 {
+                        router.request(.record(id: k))
+                    } else {
+                        router.select(.records)
+                    }
                 } else {
                     router.select(.records)
                 }
@@ -78,6 +93,22 @@ struct RootView: View {
             default:
                 break
             }
+        }
+        // SEC-24：切换当前锁**要确认**。旧实现点一下外部来源的链接（备忘录、聊天记录、
+        // 别人递过来的二维码）就把 A 锁的界面切成 B 锁，用户可能拿着 B 的电量/台账
+        // 去按 A 的门 —— 这正是本 App 最怕的"看着对、其实错"。
+        .alert("切换到这把锁？", isPresented: Binding(
+            get: { pendingSwitchMac != nil },
+            set: { if !$0 { pendingSwitchMac = nil } }
+        )) {
+            Button("切换") {
+                if let mac = pendingSwitchMac { DB.currentMac = mac }
+                pendingSwitchMac = nil
+                Task { await app.reload(refreshStatus: false) }
+            }
+            Button("保留当前锁", role: .cancel) { pendingSwitchMac = nil }
+        } message: {
+            Text("链接指定了一把锁：\(lockNameForSwitch)。确认后才切换，避免误看另一把锁的读数。")
         }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
