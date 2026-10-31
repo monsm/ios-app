@@ -404,7 +404,7 @@ enum RecordCSV {
 
 enum MemberVCard {
     static func escape(_ value: String) -> String {
-        // SEC-12： 也必须转义，否则可伪造额外的 vCard 行（注入 TEL/EMAIL 等字段）。
+        // SEC-12：回车符也必须转义，否则可伪造额外的 vCard 行（注入 TEL/EMAIL 等字段）。
         value.replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: ";", with: "\\;")
             .replacingOccurrences(of: ",", with: "\\,")
