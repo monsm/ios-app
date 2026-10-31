@@ -8,7 +8,7 @@
   暖金 + 「一扇门」隐喻      冷石墨/冷纸 + 「一台仪器」读数
   76 个目的地平铺            5 个 Tab + 按域分层的子页
   47 个页面各自写死样式     面板/读数/刻度/台账四种语法统一
-  1.94 MB / 139 文件        1.12 MB / 113 文件（界面层全部新写）
+  1.94 MB / 139 文件        1.35 MB / 148 文件（界面层全部新写）
 ```
 
 ---
@@ -38,7 +38,8 @@
 **最新构建（公开直链，未签名 IPA）：**
 
 打开 https://github.com/monsm/ios-app/releases/tag/ios27-latest 下载其中的 `.ipa`
-（每次构建只保留最新一个，文件名带构建时刻，如 `LockKeeper-20261031.130056-unsigned.ipa`）。
+（每次构建只保留最新一个，文件名带构建时刻）。
+> ⚠️ 请**只点 Release 页**，不要收藏/引用具体文件名 —— 每次构建都会删旧传新，写死的文件名必然 404。
 
 > 未签名 = 用你自己的 Apple ID 签一次才能装。任选其一：
 > - **AltStore / Sidekick**：装到手机，7 天自动续签（免费账号）
@@ -80,7 +81,7 @@ xcodebuild build -project LockKeeper.xcodeproj -scheme LockKeeper \
 
 ---
 
-## 十一道机器闸门
+## 十六道机器闸门
 
 每道都有**正控**（故意注入缺陷确认它会红），不是"写了就算数"。
 
@@ -97,20 +98,21 @@ xcodebuild build -project LockKeeper.xcodeproj -scheme LockKeeper \
 | `callsig2` | 调用标签/参数个数/构造签名/@MainActor 隔离/let 赋值/tuple 成员/静态成员（callsig 已退役：旧版恒 0 处检查，是 no-op） | ✅ |
 | `lineage` | **与上一版切割**：18 个旧设计系统符号零残留 | ✅ |
 | `destmap` | Dest 台账 ↔ View 实现一一对应 | ✅ |
+| `privacy` | **隐私/安全回归（判红）**：剪贴板直写 / 备份明文 / 空壳模式读与写 / 帧脱敏只处理首个 hex= / WebDAV http / 密钥文件无文件保护 / CSV 公式注入 / 隐私清单 XML 合法性 | ✅ |
 
 ```
 $ node Gates/allgates.js
-swiftparse: OK — 113 个 Swift 文件无语法错误（已知语法盲区豁免 4 处）
-types:      OK — 260 个顶层类型无重复声明，Engine 无未解析引用
-swiftcheck: OK — 113 个文件括号/字符串/注释全部平衡
-tokens:     OK — 113 个 Swift 文件，0 处硬编码样式字面量
-contrast:   48 条断言全部达标
+swiftparse: OK — 148 个 Swift 文件无语法错误（已知语法盲区豁免 14 处）
+types:      OK — 368 个顶层类型无重复声明，Engine 无未解析引用
+swiftcheck: OK — 148 个文件括号/字符串/注释全部平衡，无裸控制字符
+tokens:     OK — 148 个 Swift 文件，0 处硬编码样式字面量
+contrast:   88 条断言全部达标（V7 色板已改为明暗双取值）
 glass:      OK — 玻璃只在功能层，同屏 ≤2，无叠玻璃
 motion:     OK — 全部动画带 value，无裸时长
 a11y:       OK — 图标按钮都有 label，无 <44pt 可点区
-callsig:    OK — 204 处组件调用实参顺序符合声明
-lineage:    OK — 0 处上一版设计系统残留
-destmap:    OK — 台账与实现一一对应
+callsig2:   OK — 2082 处调用实参/构造签名/隔离符合声明
+privacy:    OK — 9 类隐私/安全回归判据（含空壳隔离与隐私清单 XML）
+destmap:    OK — 44 个 Dest ↔ 44 个 View 一一对应
 ```
 
 ---
@@ -156,7 +158,7 @@ App/Design/Tokens.swift ──解析──▶ CSS 变量（颜色/间距/圆角/
 
 | 项 | 状态 | 说明 |
 |---|---|---|
-| 真机编译 | ✅ **CI 已通过** | [run 41161655697](https://github.com/monsm/ios-app/actions/runs/41161655697) · `xcode-27` 镜像 · 闸门 + 编译两个 job 全绿 |
+| 真机编译 | ✅ **CI 已通过** | [run 41219938500](https://github.com/monsm/ios-app/actions/runs/41219938500)（commit `a8416aa`）· `xcode-27` 镜像 · 16 道闸门 + BUILD SUCCEEDED + ARCHIVE SUCCEEDED + errors=0 |
 | 真机手感 | ⚠️ **未验证** | 刻度盘按压跟手度、进度弧节奏、触觉 |
 | 真实玻璃折射 | ⚠️ **未验证** | DesignLab 用 `backdrop-filter` 近似 |
 | 动态字体极端值 | ⚠️ **未验证** | 静态只保证字号走令牌；最大字号下截断需真机 |
