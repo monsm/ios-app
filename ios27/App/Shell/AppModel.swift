@@ -168,7 +168,8 @@ final class AppModel {
         entries = logs.compactMap { c -> LedgerEntry? in
             // lockTime == 0 = 锁端没读到时钟，这条不该假装有时间
             guard c.lockTime > 0 else { return nil }
-            let ms = ZKProtocol.protoSecondsToUnix(c.lockTime) * 1000
+            // protoSecondsToUnix 返回的是**秒**（Double）；台账口径是毫秒（Int64）。量纲要显式换。
+            let ms = Int64((ZKProtocol.protoSecondsToUnix(c.lockTime) * 1000).rounded())
             let tone: Tone = AlarmMeta.damageTypes.contains(c.type) ? .critical
                 : (LockStats.openTypes.contains(c.type) ? .ok : .neutral)
             return LedgerEntry(

@@ -24,7 +24,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  # Release 资产是公开直链可下载的；artifact 下载要登录，所以 IPA 必须挂 Release。
+  contents: write
 
 defaults:
   run:
@@ -138,6 +139,25 @@ jobs:
               echo "（日志里没有 error: 行 —— 那多半是环境/签名问题，不是源码）"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 发布到 Release（公开直链下载 IPA）
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          IPA=$(ls build/LockKeeper-*-unsigned.ipa | head -1)
+          echo "IPA: $IPA"
+          if ! gh release view ios27-latest >/dev/null 2>&1; then
+            gh release create ios27-latest \
+              --title "iOS 27 · 最新构建" \
+              --notes "离线锁管家 iOS 27 全新建屏 · 未签名 IPA（用 AltStore / Sideloadly 自签后安装）。
+构建自 commit ${{ github.sha }}。" \
+              --prerelease
+          fi
+          gh release upload ios27-latest "$IPA" --clobber
+          gh release edit ios27-latest --notes "离线锁管家 iOS 27 全新建屏 · 未签名 IPA（用 AltStore / Sideloadly 自签后安装）。
+最新构建：${{ github.sha }} · ${{ github.run_id }}"
 
       - name: 上传编译日志 + IPA
         if: always()
