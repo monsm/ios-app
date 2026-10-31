@@ -60,9 +60,9 @@ final class TimeBasisTests: XCTestCase {
 
     /// 锁钟 0 = "没有时间"，必须渲染成空串 —— 不能变成 2010-01-01 08:00:00。
     func testProtoTimeZeroMeansNoTime() {
-        XCTAssertEqual(ZKProtocol.ProtoTime.localStr(0), "",
+        XCTAssertEqual(ProtoTime.localStr(0), "",
                        "lockTime == 0 是占位值，不能渲染成协议纪元")
-        XCTAssertFalse(ZKProtocol.ProtoTime.localStr(123456).isEmpty)
+        XCTAssertFalse(ProtoTime.localStr(123456).isEmpty)
     }
 
     /// 协议秒 → Unix 秒的换算必须无漂移（epoch 是整千毫秒）。
