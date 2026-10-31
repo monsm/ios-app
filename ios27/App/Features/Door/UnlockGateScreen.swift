@@ -6,9 +6,13 @@
 import SwiftUI
 
 struct UnlockGateScreen: View {
-    /// 验证通过后要执行的动作（门页传 runUnlockChain；作为 Dest 打开时为空）。
+    /// 验证通过后要执行的动作（门页传 runUnlockChain）。
+    /// E-15：作为 `Dest` 打开时（例如从门页的「再次确认」入口进来）以前是 nil ⇒
+    /// 用户输对了密码、页面直接关掉，**门根本没开**，而且没有任何提示 ——
+    /// 这正是"看着成功、其实没做"的一类。现在缺省值就是真开锁。
     var onPass: (() -> Void)? = nil
 
+    @Environment(AppModel.self) private var app
     @Environment(\.dismiss) private var dismiss
     @State private var code = ""
     @State private var error: String?
@@ -101,7 +105,8 @@ struct UnlockGateScreen: View {
         switch AppLock.shared.verify(code) {
         case .success:
             error = nil
-            onPass?()
+            // E-15：没有显式回调时执行真正的开锁链 —— 而不是静默关页。
+            if let onPass { onPass() } else { Task { await app.runUnlockChain() } }
             dismiss()
         case .decoy:
             // 胁迫码不该在这里放行：这道闸的目的正是「手机被拿走后再开一次要确认是本人」。
@@ -127,5 +132,10 @@ struct UnlockGateScreen: View {
 }
 
 #Preview("UnlockGateScreen") {
+    // 这个屏现在需要 AppModel（缺省动作要真开锁），预览也得注入环境，
+    // 否则 Preview 直接崩在 "No Observable object of type AppModel found"。
+    // 与 Shell.swift 的预览同一写法（直接构造，不引入 @Previewable 这个全仓唯一用法）。
     NavigationStack { UnlockGateScreen() }
+        .environment(AppModel())
+        .environment(Router())
 }
