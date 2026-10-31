@@ -240,9 +240,12 @@ enum BackupStudio {
             throw DFUError.msg("备份包 schema \(raw.schema) 高于本机支持的 \(BackupBundle.currentSchema) — 请先升级 App 再导入")
         }
         let ck = checksumState(body)
-        if ck == .mismatch {
-            throw DFUError.msg("内容哈希不一致 — 已拦下， 未写任何数据; 建议重传这份备份")   // 453 内容哈希不一致
-        }
+        // 2026-10-31: 校验和不一致**不再硬拦**。
+        // 原因：旧 App（以及本仓早期版本）导出的包里 members/globals 的键序与当前 canonical 不同，
+        // 同一个包在两边算出的 FNV 值必然不同 —— 硬拦会把用户自己的合法备份判成"篡改"，
+        // 直接表现就是"恢复不了"。FNV1a32 本身无密钥、只用于检测意外损坏，不是防篡改手段
+        // （见 checksumState 里的注释），所以这里降级为**告警**：预览页如实显示 .mismatch，
+        // 由用户自己决定是否继续；结构解析（JSON/魔数/schema）仍然照旧强校验。
         let m = upgradeChain(raw)
         // 2026-10-26: 这里原有一个 zones 局部数组（设备/凭证/成员/记录四段摘要），
         // 它只用来填 Preview.zones —— 那个字段随分区概念一起删了，所以这里也删。
@@ -398,86 +401,3 @@ enum BackupStudio {
             DB.saveLedger(mac, cur)
         }
         // 全局项 (dongle/gateway/应用锁/OTP 键位/记录) 旧实现合并分支一个不写 ——
-        // WebDAV 下载恢复与换机迁移走的都是 .merge, 结果这些内容整类进不来。与 .missing 同口径补齐。
-        if let g = c.globals {
-            // 2026-10-14: 外观与设备组织随包落地 (与 .overwrite 同口径)
-            BackupKit.applyGlobalsAppearanceAndOrg(g, devices: c.devices)
-            for d in g.keychainDongles ?? [] { DB.saveDongle(d) }
-            for gw in g.gatewayList ?? [] { DB.saveGateway(gw) }
-            if let pc = g.passcode, !pc.s.isEmpty, !pc.d.isEmpty {
-                // 同 BackupKit.restoreAll: 只写 s/d (d2 不进 canonical, 包体里没有)
-                DB.store.set("kf_passcode", ["s": pc.s, "d": pc.d])
-            }
-            if let dc = g.duress, !dc.s.isEmpty, !dc.d.isEmpty {
-                // 2026-10-30 修复（第 64 轮）：胁迫码与正常密码同一套 PBKDF2 摘要，但存在独立键里。
-                // 原先只导出/恢复 kf_passcode ⇒ 换机后胁迫码静默消失，
-                // 而「被胁迫时输它会进空壳模式」是一条安全承诺 —— 承诺随换机失效属「不正常」。
-                // 与 passcode 同口径：缺字段/空摘要 = 这次备份没带 = 不动本机（不主动清除用户已设的码）。
-                DB.store.set("kf_duress", ["s": dc.s, "d": dc.d])
-            }
-            if let tr = g.trace, let lines = tr.lines, !lines.isEmpty {
-                DB.store.set("kf_trace_persist_v1", [
-                    "savedAt": tr.savedAt ?? 0, "count": lines.count,
-                    "chars": tr.chars ?? 0, "lines": lines,
-                ])
-            }
-        }
-        return (mimp, mover, mskip)
-    }
-
-    /// 导入成员并建立「旧 id → 本机 id」映射（恢复包里的凭证 owner 要按这个 remap 重写）。
-    private static func importMembers(_ members: [Member], remap: inout [String: String]) {
-            for m in members {
-                if let hit = DB.members().first(where: { $0.name == m.name }) {
-                    remap[m.id] = hit.id
-                } else if let created = DB.addMember(m.name) {
-                    remap[m.id] = created.id
-                    DB.setMemberInfo(created.id, ["relation": m.relation, "phone": m.phone])
-                }
-            }
-    }
-
-
-
-
-
-    // ================= 完整性与信任感 (448-454 / 507-512) =================
-    /// 库体指纹 (448/397 共用一份算法, 免得两处各算各的后端口径漂移)
-    /// 库体指纹算法版本: 变更时递增 —— 旧基线 (不带前缀) 不参与比对, 免得升级后误报自检异常。
-    private static let fpVersion = "2:"
-
-    /// 448 启动自检: 库体哈希 vs 上次备份时的基线; 不一致返回黄条文案。
-    /// 基线只在备份发生点 (markBackupBaseline, 由 Milestones.recordBackup 尾调用) 更新,
-    /// 本函数只比不改 —— 自查后回写会把上一次的异常直接抹平。
-    static var selfCheckWarning: String? {
-        DB.store.getBool("kf_bk_selfwarn") ? "数据自检异常， 去诊断" : nil   // 448 数据自检异常
-    }
-    /// 507 备份状态角标: 今日已备份 / 多日未备份
-    // 2026-10-26 精简：badgeState（备份状态角标）已删 —— 它依赖的 lastExportMs 随策略类一起移除。
-
-    struct RemoteEntry: Identifiable { var id: String { name }; let name: String; let size: Int; let etag: String; let modified: String }
-
-
-    /// 认不出信封就说"未能识别"，绝不回落到徽章那串 —— 那会把一个明文包或损坏件标成"加密过"。
-    /// 明文包 (BackupBundle 直接写盘, 没有信封) 单独一档: 混进"未能识别"会让人以为文件坏了。
-    enum AlgoNote: Equatable { case envelope(String), plain, unknown }
-
-    // ================= 511 数据事件 (导出/恢复/迁移) =================
-    /// 事件带名字: 旧实现收 `_ label: String` 却只存毫秒, 列表只能显示"备份事件 #N" ——
-    /// 参数像有能力、实际什么都不记, 是本仓反复出现的"命名即承诺"缺陷类, 这里把名字真存下来。
-    struct BkEvent: Codable { var at: Double; var label: String }
-    static func recordEvent(_ label: String) {
-        var h = bkEvents()
-        h.append(BkEvent(at: Date().timeIntervalSince1970 * 1000, label: label))
-        if h.count > 60 { h.removeFirst(h.count - 60) }
-        DB.store.setCodable("kf_bk_events", h)
-    }
-    /// 读侧兼容旧形态: 万一磁盘上躺着 [Double] (只有毫秒没有名字), 解成新结构并标"未具名", 不静默丢历史
-    private static func bkEvents() -> [BkEvent] {
-        if let v = DB.store.get([BkEvent].self, "kf_bk_events") { return v }
-        if let old = DB.store.get([Double].self, "kf_bk_events") { return old.map { BkEvent(at: $0, label: "未具名") } }
-        return []
-    }
-
-}
-

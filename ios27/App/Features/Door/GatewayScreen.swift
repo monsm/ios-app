@@ -415,10 +415,13 @@ struct GatewayScreen: View {
 
     @MainActor
     private func refresh(_ g: GatewayRow) async {
-        guard let index = rows.firstIndex(where: { $0.id == g.id }) else { return }
+        guard rows.contains(where: { $0.id == g.id }) else { return }
         do {
             // 真链路：cmd38 读状态（ssid / romVer / eCtrlVer / netState）。
             let st = try await HardwareService.shared.readGatewayState(mac: g.mac)
+            // await 期间 rows 可能被「移除网关 / 重扫」改短：下标必须在 await 之后重取，
+            // 复用 await 前的 index 是典型的越界崩溃（EXC_BAD_ACCESS / fatal error: Index out of range）。
+            guard let index = rows.firstIndex(where: { $0.id == g.id }) else { return }
             rows[index].lastCheckedAt = Int64(Date().timeIntervalSince1970 * 1000)
             rows[index].online = st.netState == 1
             rows[index].ssid = st.ssid

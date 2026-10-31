@@ -165,7 +165,8 @@ enum CredentialOrg {
         let c = UNMutableNotificationContent()
         c.title = title
         c.body = body
-        c.sound = .default
+        // 夜间免扰：按预定送达时刻判（22:00–08:00 只留横幅）。
+        c.sound = CareSchedule.sound(at: date)
         let comps = WeekCal.gregorian.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
         let req = UNNotificationRequest(identifier: id, content: c, trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: false))
         // 2026-10-13 对抗式排查: 原写 `Task { try? await … }` —— 排期失败被静默吞掉,

@@ -166,7 +166,8 @@ enum BatteryCare {
             let content = UNMutableNotificationContent()
             content.title = level == 2 ? "门锁电量告急" : "门锁电量偏低"
             content.body = body
-            content.sound = .default
+            // 夜间免扰（kf_quiet_night）：即时通知按“现在”判。
+            content.sound = CareSchedule.sound(at: Date())
             let req = UNNotificationRequest(identifier: "c6.batt.\(mac).l\(level)", content: content, trigger: nil)
             UNUserNotificationCenter.current().add(req) { err in
                 if let err { CredentialOrg.notifyLog.error("低电通知发送失败 mac=\(mac, privacy: .public) err=\(String(describing: err), privacy: .public)") }
@@ -205,6 +206,12 @@ enum CareSchedule {
     static func isQuietHour(_ d: Date = Date()) -> Bool {
         let h = WeekCal.gregorian.component(.hour, from: d)
         return h >= 22 || h < 8
+    }
+
+    /// 夜间免扰的真正消费点：开关开着且**送达时刻**落在 22:00–08:00 → 只留横幅，不响提示音。
+    /// 排程类通知按「预定送达时刻」判（不是按排程时刻），否则晚上排的白天提醒会被误静音。
+    static func sound(at date: Date = Date()) -> UNNotificationSound? {
+        (quietOn && isQuietHour(date)) ? nil : .default
     }
 
 
