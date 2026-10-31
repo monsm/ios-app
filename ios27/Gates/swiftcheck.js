@@ -26,6 +26,16 @@ for (const f of files) {
   const src = fs.readFileSync(f, 'utf8');
   const lines = src.split(/\r?\n/);
 
+  // ① 源码里的裸控制字符（CR / NUL / VT 等）—— Swift 会把它当语句分隔，报
+  //    "Consecutive statements on a line must be separated by ';'" 这种看不懂的错。
+  //    2026-10-31 真踩过：注释里混进一个裸 CR，本地三道闸全绿，CI 红 4 条。
+  lines.forEach((line, i) => {
+    if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(line)) {
+      console.log(`  ${rel}:${i + 1}  源码含裸控制字符（CR/NUL/VT 等）—— Swift 会当语句分隔`);
+      bad++;
+    }
+  });
+
   // 逐行扫描：剥掉行注释与字符串内容，再数括号
   let depth = 0;
   let inBlockComment = false;
@@ -77,7 +87,7 @@ for (const f of files) {
 }
 
 if (bad === 0) {
-  console.log(`swiftcheck: OK — ${files.length} 个文件括号/字符串/注释全部平衡`);
+  console.log(`swiftcheck: OK — ${files.length} 个文件括号/字符串/注释全部平衡，无裸控制字符`);
   process.exit(0);
 }
 console.log(`swiftcheck: FAIL — ${bad} 处不平衡`);
