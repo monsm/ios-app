@@ -243,6 +243,10 @@ enum BackupStudio {
     static func parsePreview(text: String, password: String?) throws -> (preview: Preview, bundle: BackupBundle) {
         // 2026-10-14: 交接包等文本前面带给人看的 // 说明行 (1048) —— 先剥掉再判机器部分,
         // 否则 JSONDecoder 直接解不出, 本 App 自己导出的交接包反而导不回来。
+        // SEC-30：先做长度闸。一个几 GB 的「备份」会在 JSONDecoder 阶段把内存吃光。
+        guard text.count <= 32 * 1024 * 1024 else {
+            throw DFUError.msg("备份文本过大（>32MB）—— 正常备份远小于此，请确认选对了文件")
+        }
         var body = stripCommentHeader(text)
         if password != nil || looksEncrypted(body) {
             body = try decryptAny(body, password: password)
@@ -252,6 +256,13 @@ enum BackupStudio {
             throw DFUError.msg("口令错误或内容不是备份 (口令层与文件头层都过不了)")
         }
         // 2026-10-14: 比本机新的 schema 直接拒绝 —— 否则字段可能被误读且无任何告警。
+        // SEC-30：类型与规模闸 —— 只接受本 App 的备份包，且设备数有上限。
+        guard raw.type == "kf-bundle" else {
+            throw DFUError.msg("这不是锁管家备份包（type=\(raw.type)）")
+        }
+        guard raw.devices.count <= 64 else {
+            throw DFUError.msg("备份包含 \(raw.devices.count) 把锁，超过上限 64 —— 拒绝导入")
+        }
         guard raw.schema <= BackupBundle.currentSchema else {
             throw DFUError.msg("备份包 schema \(raw.schema) 高于本机支持的 \(BackupBundle.currentSchema) — 请先升级 App 再导入")
         }

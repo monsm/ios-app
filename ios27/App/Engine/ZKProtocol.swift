@@ -240,9 +240,17 @@ enum ZKProtocol {
     // ---------- 粘包/多帧重组 (JS services/ble.js makeAssembler 逐行移植) ----------
     final class FrameAssembler {
         private var buf = ""
+        /// SEC-16：重组缓冲上限。协议最大帧远小于此；超出说明对面在灌残帧（
+        /// 「87 + 声明一个很大的 len」可以让 buf 无限增长），直接把缓冲丢掉并记遥测。
+        private let maxBufHex = 64 * 1024
         func reset() { buf = "" }
         func push(_ chunkHex: String) -> [ParsedFrame] {
             buf += chunkHex
+            if buf.count > maxBufHex {
+                buf = ""
+                BleTelemetry.recordEvent("帧重组缓冲超限（>64KB），已丢弃残帧", ok: false)
+                return []
+            }
             var frames = [ParsedFrame]()
             while true {
                 guard let idx = buf.range(of: "87") else { buf = ""; break }
