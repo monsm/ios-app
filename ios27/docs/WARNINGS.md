@@ -1,9 +1,9 @@
 # WARNINGS · 编译告警分类与评估
 
-> 数据来源：`origin/ci-log:build.log`（commit `2991cbe`，run `41207309291`，BUILD SUCCEEDED / errors=0）。
-> 统计口径：`: warning:` 行，剔除 Xcode 的镜像回显行。
-> 结论：**0 error；89 条 warning（1 条项目级 + 88 条源码 warning，与 BUILD-FIX-2 记录的 88 条一致），去重后 84 个唯一位置。**
-> `SWIFT_TREAT_WARNINGS_AS_ERRORS = NO` 且语言模式为 Swift 5，所以它们**不阻断构建**；但 `SWIFT_STRICT_CONCURRENCY = complete` 已开，切到 Swift 6 时其中大部分会变成 error（见评估列）。
+> 数据来源：`origin/ci-log:build.log`（commit `a24bcac`，run `41209905485`，BUILD SUCCEEDED / errors=0）。
+> 统计口径：`文件:行:列: warning:` 的**源码告警**；不含 Xcode 镜像回显行（`| ... warning:`）、不含 `UIRequiresFullScreen` 的项目级提示与 `appintentsmetadataprocessor` 的工具提示。
+> 结论：**88 条源码 warning（去重后 83 个唯一位置）+ 1 条项目级 + 1 条工具提示；0 error。**
+> `SWIFT_TREAT_WARNINGS_AS_ERRORS = NO` 且语言模式为 Swift 5，所以它们**不阻断构建**；但 `SWIFT_STRICT_CONCURRENCY = complete` 已开，切到 Swift 6 时其中 62 条并发告警会变成 error。
 
 ## 一、按类型汇总
 
@@ -12,7 +12,7 @@
 | 并发 / Swift 6 迁移 | 62 | `call to main actor-isolated initializer 'init()' in a synchronous nonisolated context`（43 条，集中在 `App/Shell/Destinations.swift`） | **中**：当前 Swift 5 不阻断；切 Swift 6 会成片变 error。`Destinations.view(for:)` 是非隔离静态函数里构造 @MainActor View，目前只在主线程被调用，不会现场崩 | 给 `Destinations.view(for:)` 标 `@MainActor`；`Router` / `SettingsStore` / `RecordsOverlay` / `RecordsRoute` 标 `@MainActor`；闭包捕获改 `[weak self]` 或 `@Sendable` 安全捕获 |
 | 未使用值 / 变量 | 19 | `result of call to 'execOk(_:needToken:retries:)' is unused`（13 条） | **低**：不改变行为；但 `execOk` 的返回值被丢弃说明这些调用点不检查回执码 —— 需逐个确认是“确实不需要”还是漏判 | 确认后改 `_ = try await execOk(...)` 或检查返回值；其余 `let x` 未使用改 `_` |
 | Deprecated（iOS 26 API） | 2 | `'main' was deprecated in iOS 26.0`（`CaptureShield.swift` 2 处） | **低**：仅未来 SDK 移除风险；当前功能正常 | 改 `UIScreen.main` → 由 `view.window?.windowScene?.screen` 或 traitCollection 取；短期可保留 |
-| 其他（项目级） | 1 | `'UIRequiresFullScreen' has been deprecated starting in iOS 26.0` | **低**：Info.plist 键被忽略，不影响竖屏锁定（`UISupportedInterfaceOrientations` 仍生效） | 从 project.yml/Info.plist 移除该键，或用 `UISupportedInterfaceOrientations` 表达 |
+| 其他（源码外） | 2 | 项目级 `'UIRequiresFullScreen' ... deprecated`；工具级 `appintentsmetadataprocessor ... Metadata extraction skipped` | **低**：Info.plist 键被忽略，不影响竖屏锁定（`UISupportedInterfaceOrientations` 仍生效）；AppIntents 未用是预期 | 从 project.yml/Info.plist 移除该键；工具提示无需处理 |
 
 ## 二、按文件 Top
 
@@ -26,7 +26,6 @@
 | `App/Features/Settings/SettingsParts.swift` | 4 | 并发 / Swift 6 迁移 |
 | `App/Features/Records/RecordsModels.swift` | 2 | 并发 / Swift 6 迁移 |
 | `App/Design/Components/ScreenAwake.swift` | 2 | 并发 / Swift 6 迁移 |
-| `(project)` | 1 | 其他 |
 | `App/Engine/AutoOpenKit.swift` | 1 | 未使用值 / 变量 |
 | `App/Engine/CredentialOrgBatch.swift` | 1 | 未使用值 / 变量 |
 | `App/Engine/CredentialOrgState.swift` | 1 | 并发 / Swift 6 迁移 |
@@ -36,11 +35,7 @@
 | `App/Features/Door/SafeModeScreen.swift` | 1 | 未使用值 / 变量 |
 | `App/Features/Settings/SettingsModel.swift` | 1 | 并发 / Swift 6 迁移 |
 
-## 三、逐条明细（去重后 84 个唯一位置）
-
-### 其他（1）
-
-- `(project):0` — 'UIRequiresFullScreen' has been deprecated starting in iOS 26.0 and will be ignored in a future release. See the UIRequiresFullScreen documentation for more details. (in target 'LockKeeper' from project 'LockKeeper')
+## 三、逐条明细（去重后 83 个唯一位置）
 
 ### 未使用值 / 变量（19）
 
