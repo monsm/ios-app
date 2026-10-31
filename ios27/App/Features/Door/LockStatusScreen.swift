@@ -144,6 +144,37 @@ struct LockStatusScreen: View {
         .padding(.horizontal, V.S.pageGutter)
     }
 
+    /// 带本地状态的政策开关：手指动作立刻反映，锁端写入结果回来后再覆盖。
+    /// 为什么必须独立成视图：@State 不能声明在函数体里，而把 isOn（值快照）
+    /// 直接塞进 Binding(get:set:) 会让 Toggle 拨了不动（E-O4）。
+    private struct PolicyToggle: View {
+        let isOn: Bool
+        let onWord: String
+        let offWord: String
+        let write: (Bool) -> Void
+
+        @State private var localOn: Bool
+
+        init(isOn: Bool, onWord: String, offWord: String, write: @escaping (Bool) -> Void) {
+            self.isOn = isOn
+            self.onWord = onWord
+            self.offWord = offWord
+            self.write = write
+            _localOn = State(initialValue: isOn)
+        }
+
+        var body: some View {
+            Toggle("", isOn: $localOn)
+                .labelsHidden()
+                .tint(V.C.text1)
+                .accessibilityValue(localOn ? onWord : offWord)
+                .onChange(of: localOn) { _, new in
+                    if new != isOn { write(new) }
+                }
+                .onChange(of: isOn) { _, new in localOn = new }
+        }
+    }
+
     private func switchRow(
         title: String,
         note: String,
@@ -166,11 +197,11 @@ struct LockStatusScreen: View {
                     .foregroundStyle(V.C.text3)
             }
             Spacer(minLength: V.S.gapS)
-            Toggle(title, isOn: Binding(get: { isOn }, set: { write($0) }))
-                .labelsHidden()
-                .tint(V.C.text1)
+            // E-O4：`isOn` 是函数参数（值快照）。直接 `Binding(get: { isOn }, set: { write($0) })`
+            // 会让 Toggle 拨动后既不前进也不回弹 —— 弱信号下（写入要几秒）用户以为开关坏了。
+            // 现在交给一个独立小视图持有 @State：拨动立刻可见，写入结果回来再覆盖。
+            PolicyToggle(isOn: isOn, onWord: onWord, offWord: offWord, write: write)
                 .accessibilityLabel(title)
-                .accessibilityValue(isOn ? onWord : offWord)
         }
         .frame(minHeight: V.Hit.min)
     }
