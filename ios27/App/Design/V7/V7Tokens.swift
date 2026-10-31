@@ -326,11 +326,13 @@ enum V {
         ///
         /// 这里只缩放**间距节奏**（不是字号、不是命中区）—— 与枚举注释的口径一致：
         /// "只缩放间距节奏，字号与 44pt 触达不动"。紧凑 -12%，宽松 +12%，标准 1.0。
-        /// 读 `SettingsStore.shared.density`（而不是直接读 UserDefaults）——
-        /// 那是 @Observable，改档位会触发依赖它的视图重算。直接读 DB 的话，
-        /// 间距变了但界面不会重绘，用户仍看到"改了没反应"。
+        /// 必须用 **nonisolated** 的 `SettingsStore.densityFromStore` 而不是 `SettingsStore.shared.density`：
+        /// 这些间距令牌在 `body`、`init`、非隔离 `static let` 里都会被求值，那些位置拿不到 MainActor，
+        /// 直接读 @MainActor 属性会报 "main actor-isolated property can not be referenced from a
+        /// nonisolated context"（CI 实测 4 条错）。
+        /// 重绘由设置页自身的 binding 驱动（它读 `store.density`，是 @Observable 依赖）。
         static var densityScale: CGFloat {
-            switch SettingsStore.shared.density {
+            switch SettingsStore.densityFromStore {
             case .compact: return 0.88
             case .relaxed: return 1.12
             case .standard: return 1.0
@@ -547,17 +549,6 @@ enum V {
         static let iconSize: CGFloat = 30
         static let rowMinHeight: CGFloat = 54
 
-        /// 时间线行距（D-09 残余修复）。
-        /// 2026-11-01：`timelineGap`（紧凑/标准/宽松）原本**没有任何消费点** ——
-        /// 界面上给了三档、进了备份，但记录页行距恒定。这里接上：只改行间距，
-        /// 不改字号、不改 44pt 命中区（与设置页那句 note 的口径一致）。
-        static var rowGap: CGFloat {
-            switch SettingsStore.shared.timelineGap {
-            case "tight": return 4
-            case "loose": return 14
-            default: return 7.7
-            }
-        }
         /// 凭证行「舒适」档额外高度（外观 → 凭证行高）。
         static let rowTallExtra: CGFloat = 16
         static let toggleMinHeight: CGFloat = 50

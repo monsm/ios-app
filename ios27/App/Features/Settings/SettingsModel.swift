@@ -168,8 +168,18 @@ final class SettingsStore {
     }
 
     var density: LayoutDensity {
-        get { _ = revision; return LayoutDensity(rawValue: DB.store.getString("kf_density")) ?? .standard }
+        get { _ = revision; return Self.densityFromStore }
         set { DB.store.set("kf_density", newValue.rawValue); revision &+= 1 }
+    }
+
+    /// **nonisolated** 直读版本：给 `V.S` 这类非隔离的布局令牌用。
+    /// 为什么需要它：`V.S.gapM` 在 `body`、`init`、非隔离 `static let` 里都会被求值，
+    /// 而那些位置拿不到 MainActor。直接把 `SettingsStore.shared.density` 写进令牌会报
+    /// "main actor-isolated property can not be referenced from a nonisolated context"（CI 实测）。
+    /// 这里只读 UserDefaults（线程安全），不碰 `revision`，所以可以 nonisolated。
+    /// 重绘仍由视图侧的 `settings.density` 读法驱动（见 AppearanceScreen 的 binding）。
+    nonisolated static var densityFromStore: LayoutDensity {
+        LayoutDensity(rawValue: DB.store.getString("kf_density")) ?? .standard
     }
 
     var motion: MotionTier {
