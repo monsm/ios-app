@@ -193,3 +193,27 @@ jobs:
             ios27/build/archive.log
             ios27/build/LockKeeper-*-unsigned.ipa
           if-no-files-found: ignore
+
+      - name: 发布构建日志到 ci-log 分支（供本地无网络时排查）
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          mkdir -p /tmp/ciout
+          [ -f build/build.log ] && cp build/build.log /tmp/ciout/build.log
+          [ -f build/archive.log ] && cp build/archive.log /tmp/ciout/archive.log
+          grep -E "error:" build/build.log 2>/dev/null | sed "s|.*/ios27/||" | sort -u > /tmp/ciout/errors.txt
+          grep -E "error:" build/archive.log 2>/dev/null | sed "s|.*/ios27/||" | sort -u >> /tmp/ciout/errors.txt
+          echo "commit=$(git rev-parse HEAD)" > /tmp/ciout/meta.txt
+          echo "run=$GITHUB_RUN_ID" >> /tmp/ciout/meta.txt
+          echo "job=$GITHUB_JOB" >> /tmp/ciout/meta.txt
+          echo "errors=$(wc -l < /tmp/ciout/errors.txt 2>/dev/null || echo 0)" >> /tmp/ciout/meta.txt
+          cd /tmp/ciout
+          git init -q .
+          git checkout -q -b ci-log
+          git config user.name ci
+          git config user.email ci@local
+          git add -A
+          git commit -q -m "ci log $GITHUB_RUN_ID" || true
+          git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" ci-log || true
