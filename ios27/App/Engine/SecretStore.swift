@@ -57,8 +57,15 @@ enum SecretStore {
         return String(data: d, encoding: .utf8)
     }
 
-    static func remove(_ account: String) {
-        SecItemDelete(baseQuery(account) as CFDictionary)
+    /// 删除并**返回是否真的删掉了**（SEC-29：旧实现丢弃 SecItemDelete 的返回值，
+    /// 删失败时界面照样显示"已删除"，而密钥仍留在 Keychain 里）。
+    /// errSecItemNotFound 视为成功（本来就没有 = 目标状态已达成）。
+    @discardableResult
+    static func remove(_ account: String) -> Bool {
+        let st = SecItemDelete(baseQuery(account) as CFDictionary)
+        if st == errSecSuccess || st == errSecItemNotFound { return true }
+        BleTelemetry.recordEvent("Keychain 删除失败 ((st)) @" + account, ok: false)
+        return false
     }
 
 }

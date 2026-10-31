@@ -60,11 +60,14 @@ enum ZKProtocol {
         // 处置：超长时**显式截到 255 字节**并记一条遥测（不用 assertionFailure ——
         // `project.yml` 的 Release 配置显式关断言，那种写法在真机包上等于没有校验）。
         // 截断而不是返回空串：空串会让上层构造出载荷为空的帧，反而更难定位。
-        var v = valHex
+        let v = valHex
         let rawLen = v.count / 2
+        // SEC-31：超长不再**静默截断**。协议 KLV 长度字段只有 1 字节，截断后发出去的是
+        // 一个"看着成功、实际是半截口令"的帧（例如超长 WiFi 密码 → 网关永远连不上）。
+        // 返回空串：调用方的成帧收口会把它判成"构帧失败"并抛错，用户看到的是原因而不是假成功。
         if rawLen > 0xFF {
-            v = String(v.prefix(0xFF * 2))
-            BleTelemetry.recordEvent("buildKLV 超长截断： key=\(key) \(rawLen)→255 字节", ok: false)
+            BleTelemetry.recordEvent("buildKLV 超长拒绝： key=\(key) \(rawLen)>255 字节", ok: false)
+            return ""
         }
         let len = v.count / 2
         return HexKit.hexPair(UInt32(key)) + HexKit.hexPair(UInt32(len)) + v
