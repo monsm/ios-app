@@ -25,6 +25,7 @@ final class TimeBasisTests: XCTestCase {
         XCTAssertGreaterThan(local, 0)
         XCTAssertGreaterThan(utc, 0)
         // 同一个墙钟串：按 UTC 解析得到的 Unix 秒比按本地解析**大**一个时区偏移。
+        // 在 UTC runner 上偏移是 0 —— 这是正确结果，不是 bug。
         let offset = Int64(TimeZone.current.secondsFromGMT(for: Date(timeIntervalSince1970: TimeInterval(local))))
         XCTAssertEqual(utc - local, offset, "两个解析口径必须正好相差一个时区偏移")
     }
@@ -38,9 +39,12 @@ final class TimeBasisTests: XCTestCase {
         let logSec = try XCTUnwrap(RecordSearch.dateOf(rec)).timeIntervalSince1970
         XCTAssertEqual(Int64(logSec), RecordSearch.parseLocal(sample),
                        "日志行与台账窗口必须用同一时基，否则越界判定整体偏移")
-        // 反例：若这里用 parseStamp（UTC），两者会差一个时区偏移 —— 断言会失败。
-        XCTAssertNotEqual(Int64(logSec), RecordSearch.parseStamp(sample),
-                          "若相等，说明两个 formatter 变成了同一个时区（本仓不该如此）")
+        // 与 UTC 口径的关系：差值必须**正好**是时区偏移（在 UTC runner 上偏移为 0，两者自然相等）。
+        // 注意：这里**不能**断言"两个口径必须不同" —— CI runner 就是 UTC，那时它们本来就相等，
+        // 那样的断言只在东八区开发机上成立，会把正确实现判成红（本轮实测踩到）。
+        let offset = Int64(TimeZone.current.secondsFromGMT(for: Date(timeIntervalSince1970: TimeInterval(logSec))))
+        XCTAssertEqual(RecordSearch.parseStamp(sample) - Int64(logSec), offset,
+                       "本地口径与 UTC 口径必须正好相差一个时区偏移")
     }
 
     /// 窗口是闭区间：起点与终点都算"在窗口内"。
