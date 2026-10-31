@@ -93,10 +93,19 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     override init() {
         super.init()
     }
+    /// G-12：central 的**恢复标识**。带它之后，App 在后台被系统回收、
+    /// 又因蓝牙事件被唤起时，系统会重建 central 并把已知外设交回来（willRestoreState）。
+    /// 不带标识 ⇒ 进程一死连接上下文全丢，DFU 这种分钟级传输只能"尽力不被打断"，
+    /// 永远做不到"断了能续"。
+    static let restoreId = "com.aapk.lockkeeper.central"
+
     // manager 必须延迟创建 (init 时主线程尚未就绪)
     func bootstrap() {
         if manager == nil {
-            manager = CBCentralManager(delegate: self, queue: .main, options: [CBCentralManagerOptionShowPowerAlertKey: false])
+            manager = CBCentralManager(delegate: self, queue: .main, options: [
+                CBCentralManagerOptionShowPowerAlertKey: false,
+                CBCentralManagerOptionRestoreIdentifierKey: Self.restoreId
+            ])
         }
     }
     /// 供体检/诊断读**真实**蓝牙状态。nil = 中心管理尚未创建。

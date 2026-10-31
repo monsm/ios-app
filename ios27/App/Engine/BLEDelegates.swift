@@ -4,6 +4,23 @@ import Foundation
 @preconcurrency import CoreBluetooth
 
 extension BLEService: CBCentralManagerDelegate {
+    /// G-12：系统在后台唤起 App 时，会把「已经连上的外设」在这里交还。
+    /// 必须接住并**恢复 device/notifyChar 引用** —— 否则后续 writeFrameHex 会看到
+    /// `device == nil` 直接判"未连接"，用户看到的是"升级莫名其妙中断"。
+    /// 这里刻意不重放业务动作（重连/继续传输由上层决定）：底层只负责"承认这条连接还在"。
+    public func centralManager(_ central: CBCentralManager, willRestoreState dict: [String: Any]) {
+        let peripherals = dict[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral] ?? []
+        let connected = dict[CBCentralManagerRestoredStatePeripheralsKey] != nil
+            ? peripherals.filter { $0.state == .connected }
+            : []
+        guard let p = connected.first else { return }
+        p.delegate = self
+        device = p
+        connectedPeripheralId = p.identifier.uuidString
+        // 恢复后重新发现服务，notifyChar/writeChar 才能在回调里被重新赋值。
+        p.discoverServices(nil)
+    }
+
     public func centralManagerDidUpdateState(_ central: CBCentralManager) {
         DispatchQueue.main.async {
             self.isPoweredOn = (central.state == .poweredOn)

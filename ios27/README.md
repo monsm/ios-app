@@ -47,6 +47,13 @@
 > - **Xcode**：`xcodebuild` 打开 `ios27/project.yml` 生成工程后 ⌘R（需 Mac）
 >
 > 系统要求：**iOS 27.0+**（本 App 编译时把最低部署版本钉在 27.0）。
+>
+> **关于签名（G-08）**：`project.yml` 里是 `CODE_SIGN_STYLE: Automatic`，**没有写死**
+> `DEVELOPMENT_TEAM` —— 写死就等于把某个人的 Team ID 强加给所有人。所以：
+>
+> - **⌘R 之前**要先在 Xcode 的 *Signing & Capabilities* 里选自己的 Team（一次即可，写进本地 xcconfig，不进仓库）；
+> - 不选会报 `Signing for "LockKeeper" requires a development team` —— 这是**预期行为**，不是工程坏了；
+> - CI 的 build/archive 全程 `CODE_SIGNING_ALLOWED=NO`，所以它不需要 Team 也能产出未签名产物。
 
 ## 快速开始
 
