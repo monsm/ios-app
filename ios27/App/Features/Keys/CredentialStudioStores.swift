@@ -20,7 +20,9 @@ enum CredBinStore {
     static func key(_ mac: String) -> String { "kf_cbin_ui_" + mac }
 
     static func all(_ mac: String) -> [CredBinItem] {
-        (DB.store.get([CredBinItem].self, key(mac)) ?? []).sorted { $0.at > $1.at }
+        // SEC-03 残余：空壳不列回收站（条目里带明文 pwd/fp）。
+        if DB.isDecoy { return [] }
+        return (DB.store.get([CredBinItem].self, key(mac)) ?? []).sorted { $0.at > $1.at }
     }
 
     static func addPwds(_ mac: String, _ list: [LedgerPwd], batchId: String, source: String) {
@@ -78,7 +80,9 @@ enum CredHistoryStore {
     static func key(_ mac: String) -> String { "kf_chist_ui_" + mac }
 
     static func all(_ mac: String) -> [CredSnapshot] {
-        (DB.store.get([CredSnapshot].self, key(mac)) ?? []).sorted { $0.at > $1.at }
+        // SEC-03 残余：空壳不列版本历史（快照里带整份台账副本）。
+        if DB.isDecoy { return [] }
+        return (DB.store.get([CredSnapshot].self, key(mac)) ?? []).sorted { $0.at > $1.at }
     }
 
     static func capture(_ mac: String, note: String) {

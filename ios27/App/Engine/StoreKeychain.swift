@@ -28,6 +28,9 @@ extension DB {
     }
 
     static func keychain(_ mac: String) -> Keychain? {
+        // SEC-03 残余：空壳模式不返回钥匙串（含 skey/bkey/ekey/pins）。
+        // AppModel.currentKeychain 从这里取，Zotp / ShareToAndroid / MobileKey 都靠它。
+        if isDecoy { return nil }
         let m = normalizeMac(mac)
         if let hit = keychainCache.withLock({ $0[m] }) { return hit }
         let map = store.getDict("kf_keychains")

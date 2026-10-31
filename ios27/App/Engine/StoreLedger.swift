@@ -34,6 +34,14 @@ extension DB {
     ///   · D-20：原先算出 `ledgerDiff` 却只拿它判断"非空"，diff 内容本身被丢弃 ——
     ///     而 379/380 承诺"增删改会自动记入管理流水"。现在把 diff 真的记进去。
     static func saveLedger(_ mac: String, _ l: Ledger) {
+        // N-01（安全审计复核发现，P1）：空壳模式下 ledger(mac) 返回**空台账**，
+        // 而写入路径没有对应守卫 —— 空壳里任何一次 saveLedger 都会用「只有这一条」的空表
+        // 覆盖真实台账，其余凭证全部丢失（可达链路：回收站「还原」→ addPwd → saveLedger）。
+        // 空壳模式本来就禁止写入，这里直接拒绝，并记一条遥测（不静默）。
+        if isDecoy {
+            BleTelemetry.recordEvent("空壳模式下拒绝台账写入 @" + String(mac.prefix(6)), ok: false)
+            return
+        }
         ledgerWriteLock.withLock { _ in
             // 已判定为不可解的台账一律拒写: 宁可界面显示陈旧数据, 也不要把用户的记录抹掉
             guard !isLedgerCorrupt(mac) else {

@@ -154,6 +154,10 @@ final class AppLock: ObservableObject {
         guard isEnabled else { return }
         unlocked = false
         decoy = false
+        // N-02（安全复核）：上锁必须同时把数据层的空壳标志复位 ——
+        // 否则从胁迫码进入、再走一次「上锁」，DB.isDecoy 会永远停在 true，
+        // 之后正常解锁也读不到任何数据（表现为"App 数据全没了"）。
+        DB.setDecoy(false)
         // SEC-27：上锁即丢弃内存里的母钥缓存与令牌，别让它们常驻进程。
         DB.dropKeychainCache()
         LockService.shared.disconnect()

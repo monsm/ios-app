@@ -292,6 +292,7 @@ enum DB {
 
     // 钥匙串硬件
     static func dongles() -> [Dongle] {
+        if isDecoy { return [] }   // SEC-03 残余：空壳不暴露钥匙串硬件
         let map = store.getDict("kf_keychain_dongles")
         return map.values.compactMap { $0 as? [String: Any] }.compactMap(Dongle.fromDict)
     }
@@ -324,6 +325,7 @@ enum DB {
 
     // 网关
     static func gateways() -> [Gateway] {
+        if isDecoy { return [] }   // SEC-03 残余：空壳不暴露网关
         let map = store.getDict("kf_gateways")
         return map.values.compactMap { $0 as? [String: Any] }.compactMap(Gateway.fromDict)
     }

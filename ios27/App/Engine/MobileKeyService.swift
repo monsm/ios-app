@@ -58,7 +58,9 @@ enum MobileKeyService {
     private static func storeKey(_ mac: String) -> String { "kf_mkey_" + mac }
 
     static func list(_ mac: String) -> [MobileKey] {
-        DB.store.get([MobileKey].self, storeKey(mac)) ?? []
+        // SEC-03 残余：空壳不返回手机钥匙（含 ekey/pin）。
+        if DB.isDecoy { return [] }
+        return DB.store.get([MobileKey].self, storeKey(mac)) ?? []
     }
 
     static func save(_ mac: String, _ keys: [MobileKey]) {

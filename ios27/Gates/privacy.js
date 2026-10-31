@@ -105,6 +105,29 @@ for (const f of files) {
         note(f.rel, i + 1, '备份目录未标记 isExcludedFromBackup', '设 URLResourceValues.isExcludedFromBackup = true');
       }
     }
+    // 9. 空壳（decoy）模式必须在**数据读取口**生效（N-01/SEC-03 残余）。
+    //    这些函数都是"把真实凭证/密钥交给界面"的出口，缺守卫就等于胁迫者仍能看见。
+    const DECOY_READERS = [
+      'static func keychain(', 'static func dongles(', 'static func gateways(',
+      'static func list(_ mac: String) -> [MobileKey]',
+      'static func all(_ mac: String) -> [CredBinItem]',
+      'static func all(_ mac: String) -> [CredSnapshot]',
+      'static func notes(_ mac: String) -> [String: String]',
+      'static func ledger(_ mac: String) -> Ledger'
+    ];
+    if (DECOY_READERS.some((sig) => line.includes(sig))) {
+      const window = f.lines.slice(i, i + 12).join('\n');
+      if (!/isDecoy/.test(window)) {
+        note(f.rel, i + 1, '空壳模式下仍返回真实数据（缺 isDecoy 守卫）', '函数体首行加 if isDecoy { return 空集 }');
+      }
+    }
+    // 10. 空壳模式下**禁止写台账**（N-01：空台账会覆盖真实台账，凭证全丢）。
+    if (f.rel === 'Engine/StoreLedger.swift' && /static func saveLedger\(/.test(line)) {
+      const window = f.lines.slice(i, i + 6).join('\n');
+      if (!/isDecoy/.test(window)) {
+        note(f.rel, i + 1, 'saveLedger 缺空壳守卫（空表会覆盖真实台账）', '函数体首行加 if isDecoy { return }');
+      }
+    }
     // 8. CSV 导出必须防公式注入。
     if (f.rel === 'Features/Records/RecordsModels.swift' && /static func field\(_ value: String\)/.test(line)) {
       const window = f.masked.slice(i, i + 10).join(' ');
@@ -121,7 +144,7 @@ for (const f of files) {
 
 console.log('privacy: 扫 ' + files.length + ' 个 Swift 文件');
 if (fails.length === 0) {
-  console.log('privacy: OK — 剪贴板/备份加密/空壳隔离/帧脱敏/WebDAV/文件保护/CSV 注入 7 类回归判据全部通过');
+  console.log('privacy: OK — 剪贴板/备份加密/空壳隔离(读+写)/帧脱敏/WebDAV/文件保护/CSV 注入 9 类回归判据全部通过');
   process.exit(0);
 }
 console.log('privacy: FAIL — ' + fails.length + ' 处回归\n');

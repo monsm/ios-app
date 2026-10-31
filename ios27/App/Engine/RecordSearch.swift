@@ -29,7 +29,8 @@ enum RecordOverlay {
         rowKey.hasPrefix(mac + "#") ? rowKey : mac + "#" + rowKey
     }
     static func notes(_ mac: String) -> [String: String] {
-        DB.store.get([String: String].self, noteKey(mac)) ?? [:]
+        if DB.isDecoy { return [:] }   // SEC-03 残余：空壳不暴露记录备注
+        return DB.store.get([String: String].self, noteKey(mac)) ?? [:]
     }
     static func note(_ mac: String, _ rowKey: String) -> String {
         notes(mac)[oid(mac: mac, rowKey: rowKey)] ?? ""
