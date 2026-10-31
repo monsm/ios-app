@@ -121,7 +121,7 @@ destmap     OK — 26 个 Dest ↔ 26 个 View 一一对应
 
 | 项 | 状态 | 说明 |
 |---|---|---|
-| **真机编译** | ⚠️ **未验证** | 本机 Windows 无 Xcode。CI 用 `macos-26` + 最新 Xcode，**必须等 CI 绿才算过编译** |
+| **真机编译** | ✅ **CI 已通过** | 本机 Windows 无 Xcode；改用 `xcode-27` 镜像。run [41161655697](https://github.com/monsm/ios-app/actions/runs/41161655697)：闸门 11 道 + 编译全绿 |
 | **真机手感** | ⚠️ **未验证** | 刻度盘按压跟手度、进度弧节奏、触觉反馈 |
 | **真实玻璃折射** | ⚠️ **未验证** | DesignLab 用 `backdrop-filter` 近似 |
 | **动态字体极端值** | ⚠️ **未验证** | 静态只保证字号走令牌；最大字号截断需真机 |
@@ -141,7 +141,8 @@ destmap     OK — 26 个 Dest ↔ 26 个 View 一一对应
 
 ## 六、怎么继续
 
-1. **先把 CI 跑绿**（`git push` → GitHub Actions → `macos-26` + `xcodegen` + `xcodebuild`）。编译错误大概率还有（静态闸门只能抓语法与类型名，抓不到类型不匹配/协议不符）。
+1. ~~先把 CI 跑绿~~ **已完成**（run 41161655697）。三轮迭代修掉了 6 类真编译错误：泛型参数与 `enum T` 撞名、`some View` 上挂 `.fill()`、`Tone` 缺 Hashable、`stale` 未定义、静态 `shared` 非 Sendable、通知回调缺 `host`。
+   语言模式暂用 Swift 5（并发问题是告警），下一步按告警清单迁到 Swift 6。
 2. **真机跑一遍门页**：刻度盘尺寸、按压跟手度、深色观感。
 3. **按 `TODO(engine)` 清单逐条接线**：开锁链 → 凭证下发 → 记录读取 → 配网 → 备份。
 4. **每接一条，跑一次 `node Gates/allgates.js`** —— 闸门会挡住回退。
