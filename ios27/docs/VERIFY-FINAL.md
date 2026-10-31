@@ -43,11 +43,11 @@
 | 2 | 30 秒内二次开锁闸 | UnlockGateScreen.swift:8 | DoorScreen `needsGate`（585）读 `lastUnlockSuccessAt` + `DB.hasPasscode`；sheet 绑定 `showUnlockGate`（579）；密码走 `DB.verifyPasscode`（UnlockGateScreen.swift:99），3 次失败冷却 30 秒 | 成立 |
 | 3 | 模块排序与显隐 | ModuleOrderSheet.swift:8 | 三槽排序 `DevLayout.order` 被 DoorScreen:48 消费；快捷格勾选写 `QuickPool.setSelected`；**但 `groupChips` 与 `statusIcons` 两个开关原先只写 `kf_dev_hidden`、门页无任何读点** → 本轮补了「多锁状态图标行」与「按组切换 chips」（DoorScreen:38/42） | **不成立→已修** |
 | 4 | 记录告警类型多选 | AlarmKindsSheet.swift:8 | RecordsScreen:423 按钮打开 sheet；`Set<Int> alarmKinds` 写 `RecordsRoute`、进 `LedgerFilter.apply`（RecordsModels:93）；列表显示已选类型 | 成立 |
-| 5 | 设备页异常提醒卡 | DoorScreen.swift:152 | `attentionCard` 现在在 226 行（上方插入了新的状态行）；四类判据：密钥未绑定 / 30 天未校时 / 低电阈值 / 2h 内到期凭证 | 成立 |
-| 6 | 设备页最近开门 | DoorScreen.swift:817 | `recentBlock` 在 891 行；条数读 `SettingsStore.recentCount`（`kf_recent_count`），行点按 `.record(id:)` 进记录页，右上「查看全部」 | 成立（行点按落详情，不是原版的按归属过滤列表） |
+| 5 | 设备页异常提醒卡 | DoorScreen.swift:152 | `attentionCard` 现在在 226 行（原标注 152，本轮在它之前插入了状态行）（上方插入了新的状态行）；四类判据：密钥未绑定 / 30 天未校时 / 低电阈值 / 2h 内到期凭证 | 成立 |
+| 6 | 设备页最近开门 | DoorScreen.swift:817 | `recentBlock` 在 891 行（原标注 817）；条数读 `SettingsStore.recentCount`（`kf_recent_count`），行点按 `.record(id:)` 进记录页，右上「查看全部」 | 成立（行点按落详情，不是原版的按归属过滤列表） |
 | 7 | 设备页下拉重扫 | DoorScreen.swift:76 | .refreshable 在 82 行，调 `rescan()`（预热 + refreshStatus + 失败文案） | 成立 |
-| 8 | 空态从备份恢复 | DoorScreen.swift:966 | `noLockBlock` 在 1038 行，第二按钮「从备份恢复」在 1053 行 → `.backup` | 成立 |
-| 9 | 快捷操作网格 | DoorScreen.swift:709 | `quickBlock` 在 783 行；`LazyVGrid` 2/3 列由 `AXSettings.bigTile` 决定；无指纹时追加虚线「待添加指纹」格；长按 0.5s 打开 QuickPoolEditSheet | 成立 |
+| 8 | 空态从备份恢复 | DoorScreen.swift:966 | `noLockBlock` 在 1040 行，第二按钮「从备份恢复」在 1053 行 → `.backup` | 成立 |
+| 9 | 快捷操作网格 | DoorScreen.swift:709 | `quickBlock` 在 783 行（原标注 709）；`LazyVGrid` 2/3 列由 `AXSettings.bigTile` 决定；无指纹时追加虚线「待添加指纹」格；长按 0.5s 打开 QuickPoolEditSheet | 成立 |
 | 10 | 自动上锁倒计时 | AppModel.swift:312 | `startAutoLockCountdown()` 真起 Task，秒级递减；DoorScreen:381 显示「约 N 秒后自动上锁」 | 成立 |
 | 11 | 开锁失败处理链 | AppModel.swift:231 | `runUnlockChain` 三段进度 + 2s/5s 退避 + 超时不重试 + failStreak；DoorScreen `failureChain`（408）三项自查 + 再试一次 | 成立 |
 | 12 | 开锁手势圆盘 | DoorScreen.swift:390 | `dialGesture`（464）：DragGesture 按住进度（beginHold 532）+ 上滑 56pt + 误触围栏（需从边缘拖入，4 秒武装）+ 双击（handleDoubleTap 558）+ 双击防抖 + 轻点撤销；`kf_*` 每个键都有写点（SecurityScreen / AccessibilityScreen）与读点（DoorScreen 520-528 / AppModel:238） | 成立 |
