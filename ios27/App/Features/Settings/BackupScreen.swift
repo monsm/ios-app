@@ -22,6 +22,8 @@ struct BackupScreen: View {
     @State private var exporting = false
     @State private var importing = false
     @State private var showRestoreConfirm = false
+    /// SEC-08：恢复会改写本机密码摘要，所以要先验当前本机密码。
+    @State private var currentPasscode = ""
     @State private var restoreDone: (added: Int, merged: Int)?
     /// 恢复被拦下的原因。不写「失败了」三个字，写清是哪一道闸拦的。
     @State private var restoreError: String?
@@ -214,6 +216,15 @@ struct BackupScreen: View {
                             .font(V.F.body)
                             .accessibilityLabel("备份密码")
                     }
+                    if DB.hasPasscode() {
+                        // SEC-08：导入会替换本机密码摘要 —— 先验当前密码。
+                        VInset {
+                            SecureField("当前本机密码（导入会改写它，需先验证）", text: $currentPasscode)
+                                .font(V.F.body)
+                                .keyboardType(.numberPad)
+                                .accessibilityLabel("当前本机密码")
+                        }
+                    }
                     HStack(spacing: V.S.gapS) {
                         VOutlineButton(title: "从文件选择", systemImage: "folder") {
                             showImporter = true
@@ -289,6 +300,15 @@ struct BackupScreen: View {
 
     private func runImport() {
         guard !importText.isEmpty, !importing else { return }
+        // SEC-08：恢复会改写本机密码摘要 —— 必须先用**当前**本机密码确认是本人。
+        // 旧实现没有任何前置验证：一份构造过的备份就能装一个攻击者已知的 App 登录密码（持久后门）。
+        if DB.hasPasscode(), !DB.verifyPasscode(currentPasscode) {
+            restoreError = currentPasscode.isEmpty
+                ? "导入备份会替换本机密码。请先在下面填「当前本机密码」再恢复。"
+                : "当前本机密码不对 —— 恢复会改写本机密码，必须先验证是本人。"
+            restoreDone = nil
+            return
+        }
         guard importText.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("{") else {
             restoreError = "这段文本不是备份 —— 备份以 { 开头。可能粘错了内容，或复制时被截断。"
             restoreDone = nil

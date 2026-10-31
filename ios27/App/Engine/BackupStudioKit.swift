@@ -367,7 +367,19 @@ enum BackupStudio {
         if let members = c.members { importMembers(members, remap: &remap) }
         var mimp = 0, mover = 0, mskip = 0
         for d in c.devices {
-            guard HexKit.bytes(d.mac).count == 6, !d.kc.skey.isEmpty else { continue }
+            // SEC-08：不只看"非空" —— 非 32 位十六进制的 skey 会覆盖 Keychain 里的真密钥，
+            // 此后所有加密帧用错密钥，原锁再也开不了（软砖）。pin 必须是 8 位十六进制。
+            guard HexKit.bytes(d.mac).count == 6, CryptoBox.isHex(d.kc.skey, len: 32) else {
+                BleTelemetry.recordEvent("备份里有非法 skey，已跳过该锁 @" + String(d.mac.prefix(6)), ok: false)
+                mskip += 1
+                continue
+            }
+            let badPins = d.kc.pins.filter { !CryptoBox.isHex($0, len: 8) }
+            guard badPins.isEmpty else {
+                BleTelemetry.recordEvent("备份里有非法 pin，已跳过该锁 @" + String(d.mac.prefix(6)), ok: false)
+                mskip += 1
+                continue
+            }
             let mac = DB.normalizeMac(d.mac)
             // 441 逐把确认: merge(默认) = 钥匙串与凭证都并; keep = 保留本机台账, 只迁直连参数; skip = 整锁跳过
             let act = lockActs[mac] ?? "merge"
