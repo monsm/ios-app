@@ -89,20 +89,31 @@ jobs:
         run: xcodegen generate
 
       - name: 金标差分测试
+        id: golden
         run: |
           set -o pipefail
           mkdir -p build
-          # 不写死机型：镜像里的模拟器型号会变。写死具体型号时 xcodebuild 直接
-          # "Unable to find a destination"，一行测试都不跑 —— 比红更糟的是**静默跳过**。
+          echo "== Xcode 版本 =="; xcodebuild -version
+          # 本工程最低部署版本是 iOS 27.0。镜像自带的模拟器 runtime 常常比它旧，
+          # 于是 xcodebuild 报 "Unable to find a destination" 而**一行测试都不跑**。
+          # 这里先尝试把 iOS 平台 runtime 装上（幂等，失败不致命但要如实记录）。
+          if ! xcrun simctl list runtimes 2>/dev/null | grep -q "iOS 27"; then
+            echo "== 下载 iOS 平台 runtime =="
+            xcodebuild -downloadPlatform iOS 2>&1 | tail -20 || true
+          fi
+          echo "== 可用 runtime =="; xcrun simctl list runtimes || true
+          # 取一台真可用的 iPhone 设备；取不到就**明确标记"未执行"**并写进 meta，
+          # 绝不静默通过 —— 否则本机看到的会是"绿"，而实际上一条断言都没跑。
           DEV=$(xcrun simctl list devices available 2>/dev/null \
-                | grep -E "^\s+(iPhone|iPad)" | head -1 \
-                | sed -E "s/^\s+([^(]*)\s*\(.*/\1/" | sed "s/ *$//")
+                | grep -E "^\s+iPhone" | head -1 \
+                | sed -E "s/^\s+(iPhone[^(]*)\(.*/\1/" | sed "s/ *$//")
           if [ -z "$DEV" ]; then
-            echo "::error::没有可用的 iOS 模拟器 —— 金标测试无法运行（环境问题，不等于测试通过）"
-            xcrun simctl list devices available || true
-            exit 1
+            echo "test_executed=no" >> "$GITHUB_OUTPUT"
+            echo "::warning::镜像没有可用的 iOS 模拟器 runtime（部署目标 iOS 27.0）—— 金标测试本轮**未执行**。这不是通过。"
+            exit 0
           fi
           echo "测试设备: $DEV"
+          echo "test_executed=yes" >> "$GITHUB_OUTPUT"
           # 2>&1 必须带上：只 tee stdout 时，destination 解析失败只留下 6 行调用头。
           xcodebuild test \
             -project LockKeeper.xcodeproj \
@@ -143,7 +154,11 @@ jobs:
           echo "test_log=$([ -f /tmp/citest/test.log ] && echo yes || echo no)" >> /tmp/citest/meta.txt
           echo "test_ok=$(grep -c "TEST SUCCEEDED" /tmp/citest/test.log 2>/dev/null || echo 0)" >> /tmp/citest/meta.txt
           echo "test_failed=$(grep -cE "TEST FAILED|Testing failed:" /tmp/citest/test.log 2>/dev/null || echo 0)" >> /tmp/citest/meta.txt
+          # 本机判断"到底验没验"的依据：缺 runtime 时一条断言都没跑，
+          # 只看 test_ok=0 会误读成"测试通过"。
+          echo "test_executed=${{ steps.golden.outputs.test_executed }}" >> /tmp/citest/meta.txt
           echo "tests_executed=$(grep -cE "Test Case .* passed|Test Case .* failed" /tmp/citest/test.log 2>/dev/null || echo 0)" >> /tmp/citest/meta.txt
+
           cd /tmp/citest
           git init -q .
           git checkout -q -b ci-test
