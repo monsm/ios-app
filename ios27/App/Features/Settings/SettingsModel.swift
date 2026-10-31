@@ -149,6 +149,9 @@ struct DongleRecord: Identifiable, Hashable {
 // MARK: - 本机偏好
 
 /// 设置域的本机偏好。本机生效、不上传、不写进锁。
+/// @MainActor：全仓 8 个 @Observable 里最后一个补上的（E-04）。它被 20+ 视图从主线程读写，
+/// 不标就没有编译期保证；切 Swift 6 语言模式时 static let shared 的非 Sendable 可变状态即报错。
+@MainActor
 @Observable
 final class SettingsStore {
     static let shared = SettingsStore()

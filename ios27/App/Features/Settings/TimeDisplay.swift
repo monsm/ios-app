@@ -5,6 +5,7 @@
 // 这里按 SettingsStore 的档位在**界面层**换写法：制式不做时区换算，锁端键盘几点就显示几点。
 import Foundation
 
+@MainActor
 enum TimeDisplay {
     static var store: SettingsStore { SettingsStore.shared }
 

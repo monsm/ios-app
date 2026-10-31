@@ -317,6 +317,7 @@ struct PasscodeSheet: View {
 /// 偏好 Binding。用 KeyPath 而不是 `$store.xxx`：`store` 在页面里是计算属性，
 /// `@Bindable` 只对局部变量成立；KeyPath 写法让每个开关都指向同一个 SettingsStore 单例，
 /// 页面之间不会出现"两页各存一份副本、显示两个值"。
+@MainActor
 func settingsBinding<Value>(_ keyPath: ReferenceWritableKeyPath<SettingsStore, Value>) -> Binding<Value> {
     Binding(
         get: { SettingsStore.shared[keyPath: keyPath] },
@@ -325,6 +326,9 @@ func settingsBinding<Value>(_ keyPath: ReferenceWritableKeyPath<SettingsStore, V
 }
 
 /// 只读试验模式的 Binding。两个设置页都挂这个开关 —— 抽出来，免得一处改了另一处漂。
+/// @MainActor：Binding 的 get/set 在 Swift 6 下按 @Sendable 检查，捕获 AppModel / keyPath
+/// 会直接报错（E-05）。标上隔离后捕获落在同一 actor 内，合法。
+@MainActor
 func trialGuardBinding(_ app: AppModel) -> Binding<Bool> {
     Binding(
         get: { app.trialGuard },

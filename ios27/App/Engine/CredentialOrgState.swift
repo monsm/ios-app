@@ -53,12 +53,12 @@ extension CredentialOrg {
         let c = UNUserNotificationCenter.current()
         c.getPendingNotificationRequests { reqs in
             let stale = reqs.map(\.identifier).filter { $0 == id || $0.hasPrefix(id + ".") }
-            let afterRemove: () -> Void = { scheduleAlertsNow(id: id, p: p, a: a, mac: mac) }
-            if stale.isEmpty { afterRemove(); return }
-            c.removePendingNotificationRequests(withIdentifiers: stale)
-            // removePendingNotificationRequests 没有完成回调，但它与 add 都在同一串行队列上；
-            // 为了让「删」先于「加」在语义上确定，排新动作再跳一次主队列。
-            DispatchQueue.main.async(execute: afterRemove)
+            // E-06：不再把闭包跨隔离域交给 DispatchQueue.main.async（Swift 6 下非 Sendable 函数值直接报错）。
+            // 只捕获 id / p / a / mac 这些值，在主 actor 里重建动作 —— 删先于加的顺序语义不变。
+            if !stale.isEmpty { c.removePendingNotificationRequests(withIdentifiers: stale) }
+            Task { @MainActor in
+                scheduleAlertsNow(id: id, p: p, a: a, mac: mac)
+            }
         }
     }
 

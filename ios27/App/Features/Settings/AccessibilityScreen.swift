@@ -7,6 +7,7 @@
 // 主动作：无 —— 全是档位开关，不写门锁。
 import SwiftUI
 
+@MainActor
 enum AXSettings {
     static var bigText: Bool { SettingsStore.shared.axBigText }
     static var bigOTP: Bool { DB.store.getBool("kf_ax_bigotp") }

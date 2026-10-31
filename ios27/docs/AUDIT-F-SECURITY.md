@@ -637,13 +637,65 @@ App 上锁/退后台后，所有锁的母钥仍常驻进程内存；被调试器
 
 ---
 
-## 4. 修复优先级建议
+## 4. 复核表（对照 HEAD `f50e34f`，2026-10-31）
 
-1. **立即（发布阻断）**：SEC-01、SEC-02、SEC-03、SEC-04。这四项任意一项都足以否定“离线锁管家”的安全承诺。
-2. **本次迭代**：SEC-05、SEC-06、SEC-07、SEC-08、SEC-09、SEC-10、SEC-17、SEC-18、SEC-19、SEC-21。它们涉及凭据泄露、撤销失效、数据破坏与登录保护。
-3. **随后**：SEC-11~16、SEC-20、SEC-22~32；其中 SEC-15/SEC-16 是 Engine 正确性核心，建议优先于 UI 层加固。
+> 复核方式：逐条在 `f50e34f` 上重读代码 + grep 全仓；每行给出**复核后的行号**（旧报告行号可能因修复提交位移）。
+> 判定口径：**已修** = 该条描述的可利用路径已不存在；**部分修** = 主路径已收紧但仍存在可触发的残余路径；**仍存在** = 代码未变或只改了文案。
+> 汇总：已修 **10** · 部分修 **4** · 仍存在 **18** ⇒ **未闭环 22 项**。
 
-## 5. 附：审计覆盖与限制
+| 编号 | 严重度 | 复核结论 | 修复提交 | 复核证据（当前行号） |
+|---|---|---|---|---|
+| SEC-01 | P1 | **仍存在** | — | `StoreModels.swift:64` `var pwd: String?` 仍在；`StoreLedger.swift:45` `set(l,"kf_ledger_"+mac)` → `Store.swift:79` `defaults.set(d,forKey:)`；`MobileKeyService.swift:17` `var pin`；`CredentialStudioStores.swift:15` `var pwd: LedgerPwd?`。全仓 `Store.swift` 无 CryptoKit/加密。 |
+| SEC-02 | P1 | **已修** | fd3e73a | `BackupScreen.swift:253` 空口令即拒绝生成；`BackupStudioScreen.swift:279/364/381` 本机文件、WebDAV 上传、换机包三路均强制口令；`BackupStudioKit.swift:37` `isExcludedFromBackup=true`；`BackupStudioScreen.swift:288` `.completeFileProtection`。**残余（P3 级）**：`BackupScreen.swift:98/107-109/128-130` 仍显示「加密/明文」档与「默认关闭」，UI 文案与「强制加密」不一致。 |
+| SEC-03 | P1 | **部分修** | a1c7df5 | 已加数据层门禁：`StoreKeychain.swift:20`、`StoreLedger.swift:21`、`StoreState.swift:61`、`Store.swift:209`；`AppModel.swift:142` 广播。**残余漏洞**：①`StoreKeychain.swift:30` `keychain(mac)` **未判 decoy** ⇒ `AppModel.currentKeychain` 仍返回真钥匙串，ZotpScreen/ShareToAndroid/MobileKey 可用；②`Store.swift:294/326` `dongles()/gateways()` 未判 decoy；③`MobileKeyService.swift:60`、`CredentialStudioStores.swift:22/80`、`RecordSearch.swift:31`（备注）未判 decoy；④`AppLock.swift:153` `lock()` 只置 `decoy=false`，**不回写 `DB.setDecoy(false)`**，胁迫码后上锁再正常解锁会停在空壳数据层。 |
+| SEC-04 | P1 | **已修** | fd3e73a / a1c7df5 | `AutoOpenKit.swift:128` `pendingPrompt → return false`；`:294` `guard AppLock.shared.unlocked, !decoy`；`:371` `f0Foreground` 增加 unlocked。**残余**：`:395` dispatch 下发前复查仍只判 `AutoOpen.on + applicationState`，attempt→dispatch 之间若上锁仍有窄竞态（`lock()` 会 `disconnect()`，实际多被链路断开拦住）。 |
+| SEC-05 | P2 | **已修** | fd3e73a | 10 处写入全部改 `Clip.set`：`KeyDetailScreen.swift`(2 处)、`MobileKeyScreen.swift`、`ShareToAndroidScreen.swift`、`CredentialStudioScreen.swift`、`RecordExportScreen.swift`、`RecordsStudioScreen.swift`、`BackupScreen.swift`、`BackupStudioScreen.swift`；grep `UIPasteboard` 只剩 `Clip.swift` 自身 + 两处**读取**（`KeyCreateScreen.swift:124`、`BackupScreen.swift:222`）。 |
+| SEC-06 | P2 | **仍存在** | — | `BackupKit.swift:189/193` 仍只取 `s/d`；`BackupBundle.swift:133` `PasscodeRec {s,d}`；`BackupCanonical.swift:307-315` 只写 `passcode`（无 `d2`）；`Store.swift:383` `pcIter = 60_000`；`BackupStudioKit.swift:432` 恢复只写 s/d。grep `d2` 在备份链路 0 命中。 |
+| SEC-07 | P2 | **已修** | fd3e73a | `BackupCanonical.swift:305` 新增 `gp.append(("duress", …))`，字母序落在 `deviceOrg` 与 `gatewayList` 之间；`BackupStudioKit.swift:436` 恢复分支因此可收到值。 |
+| SEC-08 | P2 | **仍存在** | — | `BackupStudioKit.swift:360` 仍为 `guard HexKit.bytes(d.mac).count == 6, !d.kc.skey.isEmpty`（只判非空，无 32 hex 校验）；`:432` 仍无条件 `DB.store.set("kf_passcode", …)`；恢复前无本机密码验证。 |
+| SEC-09 | P2 | **部分修** | fd3e73a | `BackupStudioKit.swift:178` 已加 `.completeFileProtection`；但 `makeRollbackPoint`（:152）仍把 `Keychain` 明文 JSON 直接编码（`RollbackBundle.keychains` 未加密），无密钥保护，仍是"明文母钥文件"。 |
+| SEC-10 | P2 | **部分修** | fd3e73a | 备份文件（`BackupStudioScreen.swift:288`）与 rollback（`BackupStudioKit.swift:178`）已用 `.completeFileProtection`；`BackupStudioKit.swift:37` 备份目录已 `isExcludedFromBackup`。**残余**：`BackupScreen.swift:47` `fileExporter` 导出的文件仍无保护等级；目录级保护未设（仅文件级）。 |
+| SEC-11 | P2 | **仍存在** | — | `CaptureShield.swift:3/38` 仍只监听 `UIScreen.capturedDidChangeNotification`；grep `userDidTakeScreenshotNotification` 全仓 0 命中；挂载点仍只有 `KeyDetailScreen.swift:131` 与 `ShareToAndroidScreen.swift:50`；`ZotpScreen`/`BackupScreen`/`BackupStudioScreen` 未挂。 |
+| SEC-12 | P2 | **已修** | b0368f8 | `RecordsModels.swift:373` 首字符 `= + - @ \t \r` 前置单引号；`:376` `\r` 归一；`MemberVCard.escape`（:406-413）已转义 `\r`。**残余（P3）**：`StatsKit.swift:68` `lastWeekDigest` 的 `esc` 仍是旧规则（仅处理逗号/引号），该函数输出的 CSV 会被 `RecordExportScreen.swift:448` 拼进"上周小结"并复制到剪贴板。 |
+| SEC-13 | P2 | **仍存在** | — | `StoreLedger.swift:66/74` 仍写 `[o.note, p.note]`；`:67` 仍写 owner 原文；`:53` 仍 `BleTelemetry.recordEvent("台账变更 …")` → `DiagKit` `kf_ble_events`（UserDefaults）。 |
+| SEC-14 | P2 | **仍存在** | — | `BackupCanonical.swift:61/78` 仍是 FNV1a32 / legacy；`BackupStudioKit.swift:258` `let ck = checksumState(body)` 仅用于预览，:281 `checksum: ck`；无 `throw`，仍不硬拦；明文包仍无 HMAC。 |
+| SEC-15 | P2 | **仍存在** | — | `LockServiceLink.swift:111` 仍 `frame.cmd == w.cmd`；`HardwareService.swift:35` 仍同款；`BLEService.swift:124-126` 仍广播给全部订阅者；无连接代次/仲裁器（grep `generation` 在该路径 0 命中）。 |
+| SEC-16 | P2 | **仍存在** | — | `ZKProtocol.swift:245` 仍 `buf += chunkHex`，:244-265 无长度上限；`:72-73` `parseKLV` 仍用宽容 `HexKit.bytes`；`HexKit.swift:12` `strictBytes` 仍"保留未接"。 |
+| SEC-17 | P2 | **已修** | b0368f8 | `StoreLedger.swift:15` 新增 `clearLedgerCorrupt(mac)`；`BackupStudioKit.swift:348-351` 改为只清本次 `devices` 且非 `skip` 的锁；`clearAllLedgerCorrupt` 仅剩定义（grep 无调用点）。 |
+| SEC-18 | P2 | **仍存在** | — | `KeyDetailScreen.swift:380` 仍 `app.keys.removeAll { $0.id == key.id }`，分支未调 `MobileKeyService.revoke`（grep 该文件 0 命中）。 |
+| SEC-19 | P2 | **仍存在** | — | `StoreKeychain.swift:202-241` `removeDevice` 仍不清 `BackupStudio.dir`/`rollbackDir`；`SecretStore.swift:57-59` `remove` 仍无返回值；grep `BackupStudio` 在 StoreKeychain 0 命中。 |
+| SEC-20 | P2 | **已修** | f50e34f | `BackupStudioScreen.swift:485-493` `normalized` 拒绝非回环 `http://`（`:490` 仅 `localhost`/`127.0.0.1` 例外），其余强制升级 `https://`。**残余（P3）**：`URLSession.shared` 仍跟随重定向且未剥离 `Authorization`（跨 host 时 Basic 头可能被带走）。 |
+| SEC-21 | P2 | **已修** | a1c7df5 | `AppLock.swift:139` `didEnterBackground`、`:147` `willEnterForeground(lockAfter:30)`；`LockKeeperApp.swift:88-91` scenePhase 已接线；`AppLock.swift:153-160` `lock()` 现在会被调用（并 `dropKeychainCache`+`disconnect`）。 |
+| SEC-22 | P3 | **仍存在** | — | `AESKit.swift:6-23` 仍 AES-128-ECB + ZeroPadding；`ZKProtocol.swift:170-178` 仍无 IV/MAC；`ZKCmdBuilder.swift:140-147` ekey 仍静态。协议层未变（属固件侧待改）。 |
+| SEC-23 | P3 | **已修** | 140f8b1 | `FrameRedact.swift:23-24` 改为 `while let r = msg.range(of:"hex=", range:)` 逐段处理；:27-34 每段 hex 全部吞掉并按长度脱敏，短 hex → `<redacted>`，不再把剩余 hex 放回。 |
+| SEC-24 | P3 | **仍存在** | — | `LockKeeperApp.swift:62-67` 仍 `case "device":` 直接 `DB.currentMac = mac`，无来源确认/无二次确认弹窗。 |
+| SEC-25 | P3 | **已修** | 140f8b1 | `ZOTP.swift:31` `let period = (1...120).contains(periodMin) ? periodMin : 30`，:32-34 异常值记遥测；`assert` 已删除。 |
+| SEC-26 | P3 | **仍存在** | — | `PrivacyInfo.xcprivacy:20` 仍写「全部数据留在本机，不上传服务器」，`NSPrivacyCollectedDataTypes` 仍为空；`project.yml:77` 仍 `ITSAppUsesNonExemptEncryption: NO`。（WebDAV 已强制 HTTPS，但隐私声明文字未更新） |
+| SEC-27 | P3 | **部分修** | a1c7df5 | `StoreKeychain.swift:13` 新增 `dropKeychainCache()`，`AppLock.swift:158` 在 `lock()` 时调用并 `LockService.shared.disconnect()`。**残余**：仍无 `memset_s`/`resetBytes`（grep 0 命中）；`SecretStore.get` 仍返回不可清零的 `String`；`sessionTokenHex` 仅在 `disconnect` 清，进程内其余拷贝（`Keychain` 值类型副本、SwiftUI `@State`）未处理。 |
+| SEC-28 | P3 | **仍存在** | — | `AppLock.swift:126` `recordFailure` 仍零调用（grep 仅定义处）；`SettingsParts.swift` `VerifyPasscodeSheet` 与 `UnlockGateScreen.swift:15` `@State failures` 仍各自为政。 |
+| SEC-29 | P3 | **仍存在** | — | `SecretStore.swift:57` `remove` 仍返回 Void；`BackupStudioScreen.swift:341` 仍 `_ = SecretStore.set(davPassword, …)` 且下一行无条件提示"成功"。 |
+| SEC-30 | P3 | **仍存在** | — | `BackupStudioKit.swift:243-257` `parsePreview` 仍无 `body.count` 上限、无 `bundle.type == "kf-bundle"` 校验（grep 0 命中）；`BackupScreen.swift:277` 仍 `String(contentsOf:)` 整读。 |
+| SEC-31 | P3 | **仍存在** | — | `ZKProtocol.swift:52-71` `buildKLV` 仍返回 `String` 并在 `rawLen > 0xFF` 时 `prefix(0xFF*2)` 截断（:65-68）。 |
+| SEC-32 | P3 | **仍存在** | — | `CredentialOrgState.swift:24/42/52` 仍是两个独立 `getPendingNotificationRequests` 异步回调，无串行调度器（grep `NotificationScheduler` 0 命中）。 |
+
+### 4.1 复核中发现的**新增**问题（由修复引入，不计入原 32 项）
+
+| 编号 | 严重度 | 位置 | 说明 |
+|---|---|---|---|
+| N-01 | P3 | `AppLock.swift:153-160` + `Store.swift:206` | `lock()` 只置 `decoy=false` 但**不调用 `DB.setDecoy(false)`**：若用户在胁迫码（空壳）会话里被 30 秒后台超时上锁，再以正常密码解锁，数据层 `isDecoy` 仍为 true（直到下一次 `AppModel.reload()`），界面会继续显示空数据。属 fail-closed 的可用性缺陷，但"解锁后看不到自己的凭证"很容易被误报成丢数据。建议 `lock()` 内同步 `DB.setDecoy(false)`。 |
+| N-02 | P3 | `BackupScreen.swift:98/107-130` | 强制加密已生效，但 UI 仍显示「加密 / 明文」档位标签、仍可关闭「加密备份」开关、说明文字仍写「所以默认关闭」。用户会以为还能生成明文备份，点下去却报错。建议删除该开关或改成不可关闭的"必须设置口令"说明。 |
+| N-03 | P3 | `StatsKit.swift:68` | CSV 注入修复只覆盖 `RecordsModels.RecordCSV`/`MemberVCard`，`lastWeekDigest` 内联的 `esc` 未同步，仍会把成员名/锁名原样拼进 CSV（该文本经 `RecordExportScreen.swift:448` 进剪贴板）。建议复用 `RecordCSV.field`。 |
+
+## 5. 修复优先级建议（按复核后的剩余项重排）
+
+1. **立即（发布阻断，仍未闭环的 P1）**：**SEC-01**（门锁密码明文、手机钥匙 pin/ekey、回收站/历史副本落 UserDefaults）、**SEC-03**（空壳残余：`keychain(mac)`/`dongles()`/`gateways()`/`MobileKeyService.list`/`CredBinStore.all`/`CredHistoryStore.all`/`RecordSearch.notes` 未判 decoy + `lock()` 不回写 `setDecoy(false)`）。
+   - SEC-02 / SEC-04 主路径已修（fd3e73a / a1c7df5），但 SEC-02 的 UI 文案不一致（N-02）建议一并收尾。
+2. **本次迭代（P2 剩余 11 项）**：SEC-06（`d2` 进备份）、SEC-08（恢复校验 skey/密码）、SEC-09（rollback 加密）、SEC-10（fileExporter 保护）、SEC-11（截图检测）、SEC-13（遥测脱敏）、SEC-14（校验和 fail-closed/HMAC）、SEC-15（BLE 单仲裁器）、SEC-16（FrameAssembler 上限 + strictBytes）、SEC-18（手机钥匙撤销）、SEC-19（删设备清备份 + `SecretStore.remove` 返回值）。
+3. **随后（P3 剩余 8 项 + 3 项新增 N-01/N-02/N-03）**：SEC-22、SEC-24、SEC-26、SEC-28、SEC-29、SEC-30、SEC-31、SEC-32；其中 SEC-15/SEC-16 是 Engine 正确性核心，建议优先于纯 UI 加固。
+
+**已闭环、不需要再动的**：SEC-02、SEC-04、SEC-05、SEC-07、SEC-12、SEC-17、SEC-20、SEC-21、SEC-23、SEC-25（10 项，证据见 §4）。
+
+## 6. 附：审计覆盖与限制
 
 - 已读 Engine 69/69 个 `App/Engine/*.swift`；重点页面见 §1。未修改任何源码；本文件是唯一输出。
 - 未做动态验证：无 macOS/Xcode/iOS 真机，无法运行 BLE 抓包、Keychain 取证、文件保护属性实测；建议在真机/模拟器上补：
@@ -652,4 +704,4 @@ App 上锁/退后台后，所有锁的母钥仍常驻进程内存；被调试器
   - AutoOpen 的门控矩阵测试（locked/decoy/pendingPrompt/lastFace）；
   - 恶意备份（超大/非 hex skey/篡改 passcode/duress）导入测试；
   - BLE 双服务并发测试。
-- 报告中的行号基于 `git HEAD 35fe751`；如后续提交移动代码，请按符号名/代码片段复核。
+- §2 的行号基于初次审计快照 `35fe751`（保留原始证据）；§4 复核表已按 `f50e34f` 重取行号。如后续提交再移动代码，请按符号名/代码片段复核。
