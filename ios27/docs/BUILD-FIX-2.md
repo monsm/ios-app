@@ -234,6 +234,8 @@ $ git show origin/ci-log:archive.log | grep SUCCEEDED
 
 88 条 warning 的具体构成不在本轮范围内（那是 `SWIFT_STRICT_CONCURRENCY: complete` 的迁移待办表，见 AUDIT-C 的 R-01）；`SWIFT_TREAT_WARNINGS_AS_ERRORS: NO` 意味着它们不阻断编译。
 
+**同时证明了 gates job 也是绿的**：`build` 的 `needs: gates`，而 build 真的跑起来了 —— 也就是说 CI 上用 Node 24 + `npm ci` 装了 tree-sitter 之后，**16 道闸门（含新加的 callsig2）全部通过**。闸门不是只在 Windows 本地绿。
+
 > 说明：`f8020cc` 是并行会话提交的（三处 `import`、`project.yml`、`callsig2` 初版都在这个 commit 里）；`d2f9bde` 是本会话补的 workflow / allgates / callsig2 成员链与一批误报修正。两个 commit 都在远端。
 
 ---
