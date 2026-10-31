@@ -1,0 +1,129 @@
+# ios27 云编译 —— 全新 iOS 27 App 的闸门 + 编译
+#
+# 镜像: `xcode-27`（Public preview, macOS 27 arm64）—— 带 iOS 27.0/27.1/27.2 SDK。
+#   与仓库里既有的 ios.yml 同一个镜像；它抽风时把 runs-on 改回 macos-latest 即可。
+#
+# 为什么需要云端：开发机是 Windows，没有 Xcode，也没有 iOS 模拟器。
+# 本地能跑的是 11 道静态闸门 + DesignLab 截图；真编译只能在这里做。
+#
+# 关键技巧（从既有 ios.yml 学来的）：SWIFT_COMPILATION_MODE=wholemodule
+#   默认增量模式下一个文件失败就停，只能一轮挤一个错。整模块单次调用会把**全仓所有** error
+#   一次列出来 —— 这个 App 还没在真编译器上跑过，第一轮大概率有一批，必须一次看全。
+name: ios27
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "ios27/**"
+      - ".github/workflows/ios27.yml"
+  pull_request:
+    paths:
+      - "ios27/**"
+      - ".github/workflows/ios27.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: ios27
+
+jobs:
+  # ================= 静态闸门（本地同款，先红就别浪费编译时间）=================
+  gates:
+    name: 静态闸门（11 道）
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: 安装 tree-sitter（真 Swift 语法树闸门依赖）
+        run: |
+          npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+
+      - name: 闸门脚本自身语法检查（工具也是代码）
+        run: for f in Gates/*.js DesignLab/*.js; do node --check "$f" || exit 1; done
+
+      - name: 跑全部闸门
+        run: node Gates/allgates.js
+
+      - name: DesignLab 生成（只生成 HTML，不截图 —— CI 上没有 Edge）
+        run: node DesignLab/run.js --html-only
+
+      - name: 上传 DesignLab 预览页
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios27-designlab
+          path: ios27/DesignLab/out
+          if-no-files-found: ignore
+
+  # ================= 真编译 =================
+  build:
+    name: 编译（iOS 27 SDK）
+    runs-on: xcode-27
+    needs: gates
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: 环境信息
+        run: |
+          xcodebuild -version
+          xcode-select -p
+
+      - name: 安装 XcodeGen
+        run: |
+          if ! command -v xcodegen >/dev/null 2>&1; then
+            brew install xcodegen
+          fi
+          xcodegen --version
+
+      - name: 生成工程
+        run: |
+          xcodegen generate
+          ls -la
+          test -d LockKeeper.xcodeproj || { echo "::error::XcodeGen 没有生成 LockKeeper.xcodeproj"; exit 1; }
+
+      - name: 编译（整模块单次调用，一次列出全仓所有 error）
+        run: |
+          mkdir -p build
+          set -o pipefail
+          xcodebuild build \
+            -project LockKeeper.xcodeproj \
+            -scheme LockKeeper \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/DerivedData \
+            -configuration Debug \
+            SWIFT_COMPILATION_MODE=wholemodule \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" | tee build/build.log
+
+      - name: 编译失败时把错误行转成注解（不登录也能读）
+        if: failure()
+        run: |
+          if [ -f build/build.log ]; then
+            grep -E "error: " build/build.log | sed "s#^#::error file=ios27/build/build.log::#" || true
+          fi
+          {
+            echo "## 编译错误摘录（全量，去重）"
+            if grep -hE "error: " build/build.log 2>/dev/null | sed -E 's#^/[^ ]*/##' | sort -u; then
+              :
+            else
+              echo "（日志里没有 error: 行 —— 那多半是环境/签名问题，不是源码）"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 上传编译日志
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios27-build-log
+          path: ios27/build/build.log
+          if-no-files-found: ignore

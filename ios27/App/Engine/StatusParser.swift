@@ -1,0 +1,226 @@
+// 03 状态 / 16 日志 响应解析 — JS utils/status.js 移植
+//   03 KLV: 01=sKeyStatus 03=rc 04=lockTime 05=zotpPeriod 06=keyboardFreeze 07=keyboardErrCount
+//           08=securityLevel 11=powerLevel 14=soundVolumn 21..29=容量族 31..35=版本族
+//   16 日志: rc@03, surplus@04, 每条 KLV#05 = [type 1B][len 1B][idx 4B LE][lockTime 4B LE]...
+// 差分基准: golden.parse.*
+import Foundation
+
+struct LockStatus: Equatable {
+    var rc: Int = -1
+    var sKeyStatus: Int = -1
+    var powerLevel: Int = -1
+    var lockTime: Int64? = nil
+    var pid: Int = 0
+    var pidName: String = "未知"
+    var firmware: String = ""
+    var keyboardFreeze: Int = 0
+    var keyboardErrCount: Int = 0
+    var securityLevel: Int = 0
+    var verifyMode: Int = 0
+    var broadcastMode: Int = 0
+    var tempPwdMode: Int = 0
+    var zotpPeriod: Int = 0
+    var soundVolumn: Int = 0
+    var pinInfoCapacity: Int = 0, pinStock: Int = 0, pinInfoBinding: Int = 0
+    var pwdInfoCapacity: Int = 0, pwdStock: Int = 0, pwdInfoMaxLen: Int = 0
+    var fpInfoCapacity: Int = 0, fpStock: Int = 0, fpInfoBatchNumber: Int = 0
+    var verDFU: Int = 0
+    var verKeyboard: Int = 0
+    var eCtrlVer: String = ""
+}
+
+struct LogEntry {
+    var type: Int
+    var typeName: String
+    var idx: UInt32
+    var idxRaw: UInt32
+    var lockTime: Int64
+    var lockTimeStr: String
+    var body: String
+}
+
+enum StatusParser {
+    /// 2026-10-27 审核说明 (AUDIT-A F-15)：`intHex` 的「前缀 hex」语义 ——
+    /// Android 与 vendor JS 一致（`parseInt(val||"0",16)||0`：取前缀，遇非 hex 截断，空串→0）；
+    /// 本仓也是这个口径。差异在**负数/超长值**上：JS 会走浮点、本仓用 & 掩码钳到 u32。
+    /// 协议里的 rc/pid/序号都在 u32 范围内，不触发。
+    static func intHex(_ val: String) -> Int { Int(val.isEmpty ? "0" : val, radix: 16) ?? 0 }
+    static func leHexToU32(_ val: String) -> UInt32 {
+        let b = HexKit.bytes(val)
+        var v: UInt32 = 0
+        for i in stride(from: b.count - 1, through: 0, by: -1) { v = v &* 256 &+ UInt32(b[i]) }
+        return v
+    }
+
+    static func parseStatus(_ klvs: [ZKLV]) -> LockStatus {
+        var s = LockStatus()
+        for k in klvs {
+            let vlen = k.vlen
+            switch k.key {
+            case 0x04: // lockTime 4B LE 协议秒
+                // JS: leHexToU32(...) || null — 上报 0 视为无效, 否则校时会把锁钟写成 2010
+                let lt = leHexToU32(k.val)
+                s.lockTime = lt == 0 ? nil : Int64(lt)
+            case 0x03:
+                s.rc = intHex(k.val)
+            case 0x01:
+                s.sKeyStatus = intHex(k.val)
+            case 0x05: // zotpPeriod u16 LE
+                s.zotpPeriod = vlen >= 2 ? Int(leHexToU32(k.val)) : intHex(k.val)
+            case 0x06:
+                s.keyboardFreeze = intHex(k.val)
+            case 0x07:
+                s.keyboardErrCount = intHex(k.val)
+            case 0x08: // bit0=verifyMode bit1=broadcastMode bit2=tempPwdMode
+                s.securityLevel = intHex(k.val)
+                s.verifyMode = s.securityLevel & 0x01
+                s.broadcastMode = (s.securityLevel >> 1) & 0x01
+                s.tempPwdMode = (s.securityLevel >> 2) & 0x01
+            case 0x11:
+                s.powerLevel = intHex(k.val)
+            case 0x14:
+                s.soundVolumn = intHex(k.val)
+            case 0x21: s.pinInfoCapacity = intHex(k.val)
+            case 0x22: s.pinStock = intHex(k.val)
+            case 0x23: s.pinInfoBinding = intHex(k.val)
+            case 0x24: s.pwdInfoCapacity = intHex(k.val)
+            case 0x25: s.pwdStock = intHex(k.val)
+            case 0x26: s.pwdInfoMaxLen = intHex(k.val)
+            case 0x27: s.fpInfoCapacity = intHex(k.val)
+            case 0x28: s.fpStock = intHex(k.val)
+            case 0x29: s.fpInfoBatchNumber = intHex(k.val)
+            case 0x31: // 固件 3B: 反转后直读 p0.p1.p2
+                let o = HexKit.reversePairs(k.val)
+                if vlen == 3 && o.count == 6 {
+                    let p0 = Int(o.prefix(2), radix: 16) ?? 0
+                    let p1 = Int(o.dropFirst(2).prefix(2), radix: 16) ?? 0
+                    let p2 = Int(o.dropFirst(4).prefix(2), radix: 16) ?? 0
+                    s.firmware = "\(p2).\(p1).\(p0)"
+                }
+            case 0x32:
+                s.verDFU = intHex(k.val)
+            case 0x33:
+                s.verKeyboard = vlen >= 2 ? Int(leHexToU32(k.val)) : intHex(k.val)
+            case 0x34:
+                s.pid = Int(leHexToU32(k.val))
+                s.pidName = PidMap.modelName(s.pid)
+            case 0x35: // ASCII
+                if vlen > 0 {
+                    var t = ""
+                    for x in HexKit.bytes(k.val) { t.append(Character(UnicodeScalar(x))) }
+                    s.eCtrlVer = t
+                }
+            default:
+                break
+            }
+        }
+        return s
+    }
+
+    // 日志类型 (App Rn 枚举; main.js resultCode 表)
+    // 日志类型 (APK `main.js` 的 `We` 表 —— **这是锁端日志帧 byte[0] 的唯一权威表**)。
+    //
+    // ⚠ 2026-10-29 重大修正：此前这里抄的是 APK 里另一个枚举 `Rn`（消息中心 mType：
+    //   DigitalKeyOpen=1 / PasswordOpen=2 / FPOpen=3 / TempPwdOpen=4 / NFCOpen=5 /
+    //   PowerLower=6 / Lockpicking=7 / WarningFP=13 / Thekeyboardislocked=224）。
+    //   那个枚举全仓只有 `Rn.WarningFP` 一处被消息列表用到，**与日志帧无关**。
+    //   日志条目解析器 (`Ge`/`Fi`) 用的名字表是 `We`，即下面这张。
+    //
+    // 后果对照（修前 → 修后）：
+    //   · 锁报 17「密码开门」→ iOS 显示「未知(17)」；
+    //   · 锁报 19「指纹开门」→ iOS 显示「未知(19)」；
+    //   · 锁报 13「交换秘钥」→ iOS 误判成「指纹告警」；
+    //   · 锁报 4「静态电量」→ iOS 误判成「临时密码开门」（还会被算进开门次数）。
+    static let logTypes: [Int: String] = [
+        4: "静态电量", 8: "重新上电", 9: "DFU 成功后版本号", 10: "多次密码开门失败锁定",
+        11: "数字钥匙开门", 12: "授时", 13: "交换秘钥", 14: "同步 PIN", 15: "同步密码",
+        16: "一次性密码开门", 17: "密码开门", 19: "指纹开门", 20: "添加指纹", 21: "删除指纹",
+        22: "设置安全级别", 23: "开关事件、状态广播", 24: "设置单、双验", 25: "开通临时密码",
+        26: "设置音量", 27: "设置 zkBeacom 密钥",
+    ]
+    static func parseLogEntry(_ hex: String) -> LogEntry? {
+        guard hex.count >= 20 else { return nil }
+        let b = HexKit.bytes(hex)
+        let type = Int(b[0])
+        let idx = leHexToU32(String(hex.dropFirst(4).prefix(8)))
+        let lockTime = Int64(leHexToU32(String(hex.dropFirst(12).prefix(8))))
+        return LogEntry(type: type,
+                        typeName: logTypes[type] ?? ("未知(\(type))"),
+                        idx: idx, idxRaw: idx,
+                        lockTime: lockTime,
+                        lockTimeStr: lockTime != 0 ? ProtoTime.localStr(lockTime) : "",
+                        body: String(hex.dropFirst(20)))
+    }
+    static func parseLogs(_ klvs: [ZKLV]) -> [LogEntry] {
+        klvs.filter { $0.key == 0x05 }.compactMap { parseLogEntry($0.val) }
+    }
+    /// 声明长度与实际长度不符的条数 —— 基线对每条日志做这个强校验
+    /// (vendor status.js:130 `invalid: len !== hex.length/2 - 2`，`len` 就是字节 1 那个声明长度)。
+    /// Swift 侧**没有把 `invalid` 建进 `LogEntry`**：那要在 20 处构造点各补一个参数
+    /// (七属性全无默认值，少传一个就编译不过 —— DiagKit（原 :560，该文件已拆分，行号失效） 记着这件事)，在没有编译器的一晚里不划算。
+    /// 所以这里只把"这一页里有几条被截断/超长"数出来交给调用点记进诊断日志：
+    /// 翻页边界上截半条是真实会发生的，而它现在的表现是一条看起来正常的记录，
+    /// 事后没人能解释"为什么这条的时间和类型对不上" (§10.46)。
+    static func truncatedLogCount(_ klvs: [ZKLV]) -> Int {
+        klvs.filter { $0.key == 0x05 }.filter { e in
+            e.val.count / 2 < 2 ? true : intHex(String(e.val.dropFirst(2).prefix(2))) != e.val.count / 2 - 2
+        }.count
+    }
+
+    // 锁端返回码文案 (JS lock.js RC_MSG, 与 App resultCodeToMessage 一致)
+    /// rc → 人话。**这张表要与 vendor `status.js` 逐字一致**（`tools/parseshadow.js` 会对拍），
+    /// 改文案会让闸门红 —— 想补提示请用 `rcHint(rc:)`。
+    ///
+    /// 2026-10-27 审核说明 (AUDIT-C A9)：27 条里只有 1 条与 Android 不同 ——
+    /// `rc=0` 本仓「成功」/ Android「已开锁」。语义相同（Android 只发开锁类命令，
+    /// 所以它的 rc=0 恒等于"开锁成功"），措辞不同不算缺陷。
+    static let rcMsg: [Int: String] = [
+        0: "成功", 1: "解密失败", 2: "无效的PIN码", 3: "命令过期", 5: "次数使用完毕",
+        6: "开锁指令已绑定其他设备", 7: "执行的操作不在指定的状态", 8: "溢出", 9: "时间误差过大",
+        10: "未知错误", 11: "解密失败", 12: "mac地址不正确", 13: "通讯过期", 14: "不支持的秘钥交换方式",
+        15: "未知协议", 16: "参数不在范围内", 17: "丢包", 18: "不能设置重复的值", 19: "找不到指定的值",
+        20: "指纹传感器错误", 21: "门锁处于反锁状态", 22: "不能重复验证", 23: "无法获取有效的指纹图片",
+        24: "录入指纹超时", 25: "锁正忙，请稍后重试", 26: "门锁被撬", 27: "您的门锁处于布防状态"
+    ]
+    static func rcMessage(_ rc: Int) -> String { rcMsg[rc] ?? ("错误码 \(rc)") }
+
+    // idea 84 (包1): 高频失败码的人话直读 — rcMessage 回答"是什么", 这里补"该怎么办"。
+    // 纯文案层映射, 不新增/不改动任何协议命令; 未命中的码回落 rcMessage。
+    static func rcHint(_ rc: Int) -> String? {
+        switch rc {
+        case 1, 11: return "通讯受干扰， 请靠近门锁再试一次"
+        case 3: return "指令已过期， 多为锁内时钟不准 — 先到快捷操作校准时间再试"
+        case 5: return "这条凭证的使用次数已用完， 请换一条或重新添加"
+        case 6: return "这条开锁凭证已绑定到别的设备， 请重新下发凭证"
+        case 9: return "锁内时间与手机偏差过大 — 先校准时间再试"
+        // 2026-10-27 审核补 (AUDIT-A F-12)：Android 有这句，iOS 原先没有 ——
+        // 用户看到 rc=13「通讯过期」不知道下一步做什么。
+        // 不改 rcMsg 表（那张要与 vendor status.js 逐字一致，parseshadow 会对拍）。
+        case 13: return "会话已失效，本机已自动重取令牌仍被拒 —— 多半是锁内时间偏差过大，请到设备页做一次「同步时间」"
+        case 21: return "门从里面反锁了， 先解除反锁再试"
+        case 23: return "这一下没取到有效指纹图像 (按太快/手指太湿/重复同一位置) — 换一个位置重按"
+        case 24: return "锁已结束录入 (两次按压之间超过 15 秒) — 请重新开始录入"
+        case 25: return "锁正忙 (可能刚有人操作过), 等两秒再试"
+        case 27: return "门锁处于布防状态， 请先解除布防再开锁"
+        default: return nil
+        }
+    }
+    /// 2026-10-27 审核说明 (AUDIT-A F-11/F-14)：rc 的三种边界在三端语义不同，这里是本机的口径 ——
+    ///   · rc = 0    → 成功（vendor 与 iOS 一致；Android 按"开锁成功"措辞，语义相同只是文案不同）
+    ///   · rc = -1   → 回包无 KLV#03，**结果未知**（不是失败，也不是成功）。本机按"无法确认"处理：
+    ///                 写命令不当作成功、读命令仍取回包里能拿到的字段。
+    ///   · rc > 27   → 超出协议表，按未知错误码展示原值。
+    /// 差异本身是历史包袱（三端各自演进），但**本机口径必须写清**，否则后来者会以为是 bug。
+
+    static func rcFriendly(_ rc: Int) -> String { rcHint(rc) ?? rcMessage(rc) }
+}
+
+extension LockStatus {
+    /// 安全模式显示名（A/B/C）。**全仓唯一口径**。
+    /// 2026-10-30（第 140 轮）：此前有三份拷贝（DeviceInfoView 与 LockSettingsView 各写一份，后者还写了两处），
+    /// 且空格不一致 —— DeviceInfoView 写「C模式」，LockSettingsView 写「C 模式」。现在统一带空格。
+    var modeText: String {
+        if verifyMode == 1 && broadcastMode == 0 { return "C 模式" }
+        return verifyMode == 0 ? "A 模式" : "B 模式"
+    }
+}

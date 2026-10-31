@@ -1,0 +1,17 @@
+{
+  "name": "lockkeeper-ios27",
+  "version": "1.0.0",
+  "private": true,
+  "description": "离线锁管家 · iOS 27 全新建屏（设计契约 + 静态闸门 + 视觉验收台）",
+  "type": "commonjs",
+  "scripts": {
+    "gates": "node Gates/allgates.js",
+    "lab": "node DesignLab/run.js",
+    "lab:door": "node DesignLab/run.js door",
+    "check": "node Gates/allgates.js && node DesignLab/run.js"
+  },
+  "devDependencies": {
+    "tree-sitter": "^0.22.4",
+    "tree-sitter-swift": "^0.7.1"
+  }
+}

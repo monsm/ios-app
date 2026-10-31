@@ -1,0 +1,7 @@
+# 生成的预览页（Node 每次跑都会重建；截图才是要留的证据）
+DesignLab/out/
+# 编译产物
+build/
+*.xcodeproj
+# 依赖
+node_modules/

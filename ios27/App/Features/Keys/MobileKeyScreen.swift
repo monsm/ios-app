@@ -1,0 +1,234 @@
+// MobileKeyScreen.swift —— 手机钥匙（数字钥匙）的签发与撤销。
+//
+// 这一屏干什么：给某位成员签一把手机钥匙（选有效期 → 分配一个未占用的 PIN → 交给对方），
+// 并列出本机签过的钥匙。措辞纪律：「签发」只写本机台账，「交付」是把钥匙内容给对方 —— 两件事不混。
+// 数据从哪来：AppModel.keys 里 kind == .mobile 的条目；成员来自 AppModel.members。
+// 主动作：签发一把手机钥匙（唯一会真正增加一条台账的动作）。
+import SwiftUI
+import UIKit
+
+struct MobileKeyScreen: View {
+    @Environment(AppModel.self) private var app
+    @Environment(Router.self) private var router
+
+    @State private var owner: String?
+    @State private var forever = true
+    @State private var validTo = Date().addingTimeInterval(8 * 3600)
+    @State private var errorText: String?
+    /// 刚签发的那一条（用来给一次真回执，而不是一句空 toast）。
+    @State private var justIssued: String?
+
+    private var issued: [KeyItem] { app.keys.filter { $0.kind == .mobile } }
+
+    /// 本机已签发的把数。真实的 PIN 池占用要问锁（deviceData.pins + ekey=1 的成员去重），
+    /// 那条链路未接 —— 所以页头只说「本机签了几把」，不假装知道池里剩几个。
+    private var issuedCount: Int { issued.count }
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: T.S.l) {
+                header
+                if app.members.isEmpty {
+                    noMemberBlock
+                } else {
+                    issueBlock
+                }
+                issuedBlock
+            }
+            .padding(.vertical, T.S.l)
+        }
+        .background(CanvasBackground())
+        .scrollEdgeEffectStyle(.soft, for: .top)
+        .navigationTitle("手机钥匙")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            if owner == nil { owner = app.members.first { !$0.archived }?.name }
+        }
+    }
+
+    // MARK: 页头
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: T.S.xs) {
+            Text("手机钥匙")
+                .font(T.F.display())
+                .foregroundStyle(Ink.ink)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            HStack(spacing: T.S.s) {
+                StateDot(tone: app.lock == nil ? .attention : (issued.isEmpty ? .neutral : .ok),
+                         word: issued.isEmpty ? "还没有签发" : "已签发 \(issued.count) 把")
+                Text("本机签了 \(issuedCount) 把 · 锁里 PIN 池的占用要连上锁才知道")
+                    .font(T.F.caption)
+                    .foregroundStyle(Ink.inkSub)
+                Spacer(minLength: 0)
+            }
+        }
+        .padding(.horizontal, T.S.gutter)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
+    }
+
+    // MARK: 主角：签发表单
+
+    private var issueBlock: some View {
+        Panel {
+            VStack(alignment: .leading, spacing: T.S.m) {
+                SectionLabel(text: "给谁签", trailing: owner ?? "必选")
+                VStack(spacing: T.S.xxs) {
+                    ForEach(app.members.filter { !$0.archived }) { member in
+                        KeysOwnerRow(
+                            name: member.name,
+                            keyCount: app.keys.filter { $0.owner == member.name }.count,
+                            selected: owner == member.name
+                        ) {
+                            owner = member.name
+                            errorText = nil
+                        }
+                    }
+                }
+
+                Divider().overlay(Ink.hairline)
+
+                SectionLabel(text: "有效期")
+                KeysChips(items: [true, false], title: { $0 ? "永久有效" : "自定义" }, selection: $forever)
+                if !forever {
+                    DatePicker("到期时间", selection: $validTo, in: Date()...,
+                               displayedComponents: [.date, .hourAndMinute])
+                        .font(T.F.body)
+                        .frame(minHeight: T.Hit.min)
+                }
+
+                if let errorText {
+                    KeysInlineNote(tone: .critical, text: errorText)
+                }
+
+                PrimaryAction(title: "签发一把手机钥匙", systemImage: "iphone.gen3.badge.key") {
+                    issue()
+                }
+                if let justIssued {
+                    StatusLine(tone: .ok, text: "已签发给 \(justIssued) —— 到下面的钥匙行里点「⋯ → 复制开锁凭证」交给对方。")
+                }
+                Text(forever
+                     ? "永久档与锁端「永久」同口径。签发只写本机台账 —— 还要点下面那把钥匙行里的「交付」交给对方。"
+                     : "自定义档到期后这把钥匙自动失效，不用手动撤销。")
+                    .font(T.F.unit)
+                    .foregroundStyle(Ink.inkFaint)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.horizontal, T.S.gutter)
+    }
+
+    // MARK: 已签发
+
+    private var issuedBlock: some View {
+        Panel {
+            VStack(alignment: .leading, spacing: T.S.s) {
+                SectionLabel(text: "本机签发的钥匙", trailing: "\(issued.count) 把")
+                if issued.isEmpty {
+                    KeysInlineNote(tone: .neutral, text: "还没有签发过。选一位成员、点上面的签发按钮 —— 签完这里会多一行，长按可以复制或撤销。")
+                        .frame(minHeight: T.Hit.min)
+                } else {
+                    VStack(spacing: 0) {
+                        ForEach(Array(issued.enumerated()), id: \.offset) { pair in
+                            if pair.offset > 0 { KeysDivider() }
+                            issuedRow(pair.element)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, T.S.gutter)
+    }
+
+    private func issuedRow(_ key: KeyItem) -> some View {
+        let read = KeysState.expiryReading(key, now: KeysState.now())
+        return HStack(alignment: .center, spacing: T.S.m) {
+            StateDot(tone: KeysState.tone(key, now: KeysState.now()), word: KeysState.word(key, now: KeysState.now()))
+            VStack(alignment: .leading, spacing: T.S.xxs) {
+                Text(key.owner ?? key.name)
+                    .font(T.F.body)
+                    .foregroundStyle(Ink.ink)
+                Text("手机钥匙 · \(KeysState.word(key, now: KeysState.now()))")
+                    .font(T.F.unit)
+                    .foregroundStyle(Ink.inkSub)
+            }
+            Spacer(minLength: T.S.s)
+            Reading(value: read.value, unit: read.unit, size: 15, tint: read.tint, animated: false)
+            Menu {
+                Button {
+                    UIPasteboard.general.string = key.code ?? key.id
+                } label: {
+                    Label("复制开锁凭证", systemImage: "doc.on.doc")
+                }
+                Button(role: .destructive) {
+                    revoke(key)
+                } label: {
+                    Label("撤销这把钥匙", systemImage: "trash")
+                }
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.system(size: T.Icon.m, weight: .medium))
+                    .foregroundStyle(Ink.inkSub)
+                    .frame(width: T.Hit.min, height: T.Hit.min)
+                    .contentShape(.rect)
+            }
+            .accessibilityLabel("钥匙操作：复制或撤销")
+        }
+        .frame(minHeight: T.Hit.min + T.S.s)
+        .accessibilityElement(children: .contain)
+    }
+
+    // MARK: 空态（没有成员时先给去处）
+
+    private var noMemberBlock: some View {
+        Panel {
+            EmptyPanel(
+                title: "还没有成员",
+                message: "手机钥匙要签给具体某个人。先去「家」建一位成员，回来就能签。",
+                actionTitle: "去新建成员",
+                systemImage: "person.2"
+            ) {
+                router.request(.dest(.memberCreate))
+            }
+            .padding(.vertical, T.S.xxl)
+        }
+        .padding(.horizontal, T.S.gutter)
+    }
+
+    // MARK: 真动作
+
+    private func issue() {
+        guard let owner else {
+            errorText = "先选一位成员 —— 钥匙要归到某个人名下。"
+            return
+        }
+        guard issuedCount < 16 else {
+            errorText = "本机已签满 16 把。先撤销一把不用的，再来签新的。"
+            return
+        }
+        // TODO(engine): 真实现是 getAvailablePin → ekey = AES(skey)(0x04 包络 + PIN LE4 + 00 00)
+        // → op=updateShareDevice action=add。链路未接：本机只留一条「已签发」台账，
+        // code 存本地生成的开锁凭证串，交付动作要用户自己把这一串给对方。
+        let pin = KeysCode.digits(4)
+        let credential = "ekey-\(app.lock?.id.prefix(8) ?? "lock")-\(pin)"
+        let expiresAt: Int64? = forever ? nil : Int64(validTo.timeIntervalSince1970 * 1000)
+        let item = KeyItem(
+            id: "mobile-\(Int(Date().timeIntervalSince1970))",
+            kind: .mobile,
+            name: "\(owner) 的手机钥匙",
+            owner: owner,
+            code: credential,
+            expiresAt: expiresAt,
+            disabled: false
+        )
+        app.keys.append(item)
+        justIssued = owner
+        errorText = nil
+    }
+
+    private func revoke(_ key: KeyItem) {
+        // TODO(engine): 撤销要同时把 pin 从锁里删（cmd08 delPins）；只删本地记录的话旧 pin 仍能开门。
+        app.keys.removeAll { $0.id == key.id }
+    }
+}
