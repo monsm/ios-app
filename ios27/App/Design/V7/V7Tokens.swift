@@ -139,9 +139,24 @@ enum V {
         /// 原 #5D5D62 在 #1D1D21 上只有 2.57:1（非文本要求 3:1）。提亮到 #8E8E93，5.15:1。
         static let infoGlyph = dual(0x61676E, 0x8E8E93)
 
-        static let hairline = dual(0x000000, 0xFFFFFF, lightAlpha: 0.10, darkAlpha: 0.14) // 卡内分隔线
-        static let hairlineSoft = dual(0x000000, 0xFFFFFF, lightAlpha: 0.07, darkAlpha: 0.08) // 芯片内描边
-        static let tabGlass = dual(0xFFFFFF, 0x202020, lightAlpha: 0.72, darkAlpha: 0.72)
+        /// D-09：高对比档的真实生效点。开启后描边更实、次级文字更亮 ——
+        /// 旧实现里这个开关只写 `kf_hc`，全仓零消费者（"死开关"）。
+        static var highContrastOn: Bool { DB.store.getBool("kf_hc") }
+
+        static var hairline: Color {   // 卡内分隔线
+            highContrastOn ? dual(0x000000, 0xFFFFFF, lightAlpha: 0.26, darkAlpha: 0.34)
+                           : dual(0x000000, 0xFFFFFF, lightAlpha: 0.10, darkAlpha: 0.14)
+        }
+        static var hairlineSoft: Color {   // 芯片内描边
+            highContrastOn ? dual(0x000000, 0xFFFFFF, lightAlpha: 0.22, darkAlpha: 0.26)
+                           : dual(0x000000, 0xFFFFFF, lightAlpha: 0.07, darkAlpha: 0.08)
+        }
+        /// D-09：减少透明档的真实生效点（标签栏玻璃退化为不透明面板）。
+        static var tabGlass: Color {
+            let solid = DB.store.getBool("kf_reduce_trans")
+            return solid ? dual(0xFFFFFF, 0x1A1A1C, lightAlpha: 0.99, darkAlpha: 0.99)
+                         : dual(0xFFFFFF, 0x202020, lightAlpha: 0.72, darkAlpha: 0.72)
+        }
         static let tabEdge = dual(0x4A5057, 0x7896A0, lightAlpha: 0.28, darkAlpha: 0.35)
         static let tabPill = dual(0xFFFFFF, 0x000000, lightAlpha: 0.92, darkAlpha: 0.82)
         static let tabPillEdge = dual(0x000000, 0xFFFFFF, lightAlpha: 0.10, darkAlpha: 0.14)
