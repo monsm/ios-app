@@ -17,7 +17,7 @@ struct MemberDetailScreen: View {
 
     private var roster: HouseholdRoster { HouseholdRoster.shared }
 
-    private var member: MemberCard? {
+    internal var member: MemberCard? {
         guard let id = roster.focusMember else { return nil }
         return app.members.first { $0.id == id }
     }
@@ -325,7 +325,7 @@ struct MemberDetailScreen: View {
         saved = true
     }
 
-    private func toggleArchive() {
+    internal func toggleArchive() {
         guard let m = member, let i = app.members.firstIndex(where: { $0.id == m.id }) else { return }
         app.members[i] = m.hh(archived: !m.archived)
         roster.mirrorArchived(m.id, !m.archived)

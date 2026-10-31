@@ -8,9 +8,9 @@
 import SwiftUI
 
 struct SettingsScreen: View {
-    @Environment(AppModel.self) private var app
+    @Environment(AppModel.self) internal var app
     @Environment(Router.self) private var router
-    private var store: SettingsStore { SettingsStore.shared }
+    internal var store: SettingsStore { SettingsStore.shared }
 
     @State private var deleteRequested = false
 
@@ -263,8 +263,8 @@ struct SettingsScreen: View {
 
 /// 删除本机这把锁的数据。两道闸：先列出会连带删掉什么，再要求键入锁名原文。
 struct DeleteDeviceSheet: View {
-    @Environment(AppModel.self) private var app
-    @Environment(\.dismiss) private var dismiss
+    @Environment(AppModel.self) internal var app
+    @Environment(\.dismiss) internal var dismiss
     @State private var typed = ""
 
     private var lockName: String { app.lock?.name ?? "" }
@@ -325,5 +325,5 @@ struct DeleteDeviceSheet: View {
         }
     }
 
-    private var store: SettingsStore { SettingsStore.shared }
+    internal var store: SettingsStore { SettingsStore.shared }
 }

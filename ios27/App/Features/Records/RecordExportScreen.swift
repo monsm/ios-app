@@ -120,10 +120,11 @@ struct RecordExportScreen: View {
     private var roster: String { MemberVCard.build(app.members) }
 
     /// SharePreview 的缩略图：拿到真图就用真图，拿不到退回符号，不留空白。
-    /// 这是分享卡预览位（系统渲染），语义由 SharePreview 的 title 承载 —— 标装饰。
+    /// 返回类型必须是 Image（要 Transferable），挂不了无障碍修饰符 ——
+    /// 这是分享卡预览位（系统渲染），语义由 SharePreview 的 title 承载，不进 VoiceOver 焦点。
     private var cardPreview: Image {
         if let png, let image = UIImage(data: png) { return Image(uiImage: image) }
-        return Image(systemName: "doc.richtext").accessibilityHidden(true)
+        return Image(systemName: "doc.richtext")
     }
 
     private var digest: WeeklyDigest.Digest {

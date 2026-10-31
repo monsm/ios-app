@@ -8,33 +8,36 @@ import SwiftUI
 import UIKit
 
 struct MemberCreateScreen: View {
+    // @State 一律 internal：向导四步视图住在 MemberCreateParts.swift 的 extension 里，
+    // 跨文件要能读写。private 在另一文件不可见，编译器报 inaccessible ——
+    // 这类错只在那个分支被实例化时才暴露，很容易漏到 CI 才红。
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(AppModel.self) private var app
     @Environment(Router.self) private var router
 
-    @State private var step: Int = 0
-    @State private var name = ""
-    @State private var emoji = ""
-    @State private var role: MemberCard.Role = .member
-    @State private var remark = ""
-    @State private var relation = ""
-    @State private var groupTag = ""
-    @State private var emergency = ""
-    @State private var makeCode = false
-    @State private var code = ""
-    @State private var newID: String?
-    @State private var errorLine: String?
+    @State var step: Int = 0
+    @State var name = ""
+    @State var emoji = ""
+    @State var role: MemberCard.Role = .member
+    @State var remark = ""
+    @State var relation = ""
+    @State var groupTag = ""
+    @State var emergency = ""
+    @State var makeCode = false
+    @State var code = ""
+    @State var newID: String?
+    @State var errorLine: String?
 
     private var roster: HouseholdRoster { HouseholdRoster.shared }
 
-    private static let steps: [(no: String, title: String, hint: String)] = [
+    static let steps: [(no: String, title: String, hint: String)] = [
         ("01", "称呼与代号", "名字会出现在每一条台账上，所以先定称呼。"),
         ("02", "角色与备注", "角色决定这台手机上 TA 能做什么；备注只影响记录怎么显示。"),
         ("03", "档案", "关系、分组、紧急联系 —— 这一档纯本机，不上锁。"),
         ("04", "初始凭证", "顺路建一张 10 分钟临时码，或稍后到「钥匙」页再配。"),
     ]
 
-    private var current: (no: String, title: String, hint: String) { Self.steps[step] }
+    internal var current: (no: String, title: String, hint: String) { Self.steps[step] }
 
     private var trimmedName: String { name.trimmingCharacters(in: .whitespaces) }
 
@@ -48,7 +51,7 @@ struct MemberCreateScreen: View {
         app.members.contains { $0.name == trimmedName && $0.id != newID }
     }
 
-    private var codeOK: Bool {
+    internal var codeOK: Bool {
         code.count >= 6 && code.count <= 8 && code.allSatisfy { $0.isNumber }
     }
 
@@ -170,7 +173,7 @@ struct MemberCreateScreen: View {
         HHCodePanel(makeCode: $makeCode, code: $code, codeOK: codeOK, expiryText: expiryText)
     }
 
-    private var expiryText: String {
+    internal var expiryText: String {
         let at = Int64(Date().timeIntervalSince1970 * 1000) + 600_000
         return TimeFormat.clock(at)
     }

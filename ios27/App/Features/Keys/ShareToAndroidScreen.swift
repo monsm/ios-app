@@ -134,10 +134,10 @@ struct ShareToAndroidScreen: View {
     private var shareBlock: some View {
         Panel {
             VStack(alignment: .leading, spacing: T.S.m) {
-                // SharePreview 的 image 是分享卡缩略图（系统渲染），不是界面图标；
-                // 它的语义由 title "配对码" 承载，所以显式标装饰（HIG 审计会把它当 image-without-a11y）。
+                // SharePreview 的 image 必须是 Image（要 Transferable），挂不了无障碍修饰符 ——
+                // 它是分享卡缩略图（系统渲染），语义由 title "配对码" 承载，本来就不进 VoiceOver 焦点。
                 ShareLink(item: payloadText,
-                          preview: SharePreview("配对码", image: Image(systemName: "qrcode").accessibilityHidden(true))) {
+                          preview: SharePreview("配对码", image: Image(systemName: "qrcode"))) {
                     HStack(spacing: T.S.s) {
                         Image(systemName: "square.and.arrow.up")
                             .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载

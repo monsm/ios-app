@@ -8,9 +8,9 @@ import SwiftUI
 
 struct KeysScreen: View {
     @Environment(AppModel.self) private var app
-    @Environment(Router.self) private var router
+    @Environment(Router.self) internal var router
     @State private var filter: KeysFilter = .all
-    @State private var now: Int64 = KeysState.now()
+    @State internal var now: Int64 = KeysState.now()
 
     private var filtered: [KeyItem] {
         app.keys.filter { filter.matches($0) }

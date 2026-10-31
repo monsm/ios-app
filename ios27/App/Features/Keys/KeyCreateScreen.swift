@@ -7,8 +7,10 @@ import SwiftUI
 import UIKit
 
 struct KeyCreateScreen: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    // internal（不是 private）：四步视图在 KeyCreateParts.swift 的 extension 里，跨文件要可见。
+    // internal（不是 private）：四步视图住在 KeyCreateParts.swift 的 extension 里，
+    // 跨文件要能读到这个环境值（private 在别的文件不可见，编译会报 inaccessible）。
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
+    // 同理：@Environment 一律 internal，跨文件的 extension 才用得上。
     @Environment(AppModel.self) var app
     @Environment(Router.self) var router
 
