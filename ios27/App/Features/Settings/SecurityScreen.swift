@@ -18,6 +18,10 @@ struct SecurityScreen: View {
     @State private var showDisableDuressConfirm = false
     @State private var showVerifyPass = false
     @State private var showVerifyDuress = false
+    /// 待呈现的验证框。对话框关闭后才消费 —— 避免"对话框还没退场就弹 sheet"被 SwiftUI 丢弃。
+    @State private var pendingVerify: PendingVerify?
+
+    private enum PendingVerify { case pass, duress }
 
     var body: some View {
         ScrollView {
@@ -55,16 +59,36 @@ struct SecurityScreen: View {
             ) { _ = DB.setDuressCode(nil) }
         }
         .confirmationDialog("关闭胁迫码？", isPresented: $showDisableDuressConfirm, titleVisibility: .visible) {
-            Button("继续验证", role: .destructive) { showVerifyDuress = true }
+            // 不能在对话框**还在退场**时立刻置 sheet 布尔：SwiftUI 会丢掉那次呈现，
+            // 用户点了「继续验证」却什么都没弹（HIG sheets：一次只呈现一个模态）。
+            // 处置：等对话框的 isPresented 真的落回 false，再呈现验证框。
+            Button("继续验证", role: .destructive) { pendingVerify = .duress }
             Button("取消", role: .cancel) {}
         } message: {
             Text("关闭后，被胁迫时输错密码不会进入空壳模式 —— 门会打不开，数据照常显示。")
         }
         .confirmationDialog("关闭本机密码？", isPresented: $showDisableConfirm, titleVisibility: .visible) {
-            Button("继续验证", role: .destructive) { showVerifyPass = true }
+            Button("继续验证", role: .destructive) { pendingVerify = .pass }
             Button("取消", role: .cancel) {}
         } message: {
             Text("关闭后冷启动不再需要密码。锁内凭证与门锁数据不受影响，但任何拿到这台手机的人都能直接打开 App。")
+        }
+        // 对话框**真的关掉之后**再呈现验证框（见 pendingVerify 的说明）。
+        .onChange(of: showDisableConfirm) { _, open in
+            if !open { consumePendingVerify() }
+        }
+        .onChange(of: showDisableDuressConfirm) { _, open in
+            if !open { consumePendingVerify() }
+        }
+    }
+
+    /// 对话框退场后消费待呈现的验证框。
+    private func consumePendingVerify() {
+        guard let pending = pendingVerify else { return }
+        pendingVerify = nil
+        switch pending {
+        case .pass: showVerifyPass = true
+        case .duress: showVerifyDuress = true
         }
     }
 

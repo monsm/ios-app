@@ -13,7 +13,8 @@ const path = require('path');
 // feedback 是第 18 道：用户动作里的 `try? await` 必须有错误通道。
 // 依据 HIG `feedback`："Show people when a command can't be carried out and help them understand why."
 // 这一类缺陷不崩不报错，只让用户"点了没反应"——本轮实测两处。
-const GATES = ['swiftparse', 'types', 'swiftcheck', 'tokens', 'contrast', 'glass', 'motion', 'a11y', 'dynamictype', 'reducedmotion', 'crosprivate', 'callsig2', 'lineage', 'workflow', 'destmap', 'privacy', 'tests', 'feedback'];
+// modal 是第 19 道：对话框里直接抢 sheet 会被 SwiftUI 静默丢弃（HIG sheets：一次只呈现一个模态）。
+const GATES = ['swiftparse', 'types', 'swiftcheck', 'tokens', 'contrast', 'glass', 'motion', 'a11y', 'dynamictype', 'reducedmotion', 'crosprivate', 'callsig2', 'lineage', 'workflow', 'destmap', 'privacy', 'tests', 'feedback', 'modal'];
 
 let failed = 0;
 for (const g of GATES) {
