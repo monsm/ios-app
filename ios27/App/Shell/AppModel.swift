@@ -89,8 +89,10 @@ final class AppModel {
             isConnected: LockService.shared.connectedMAC == mac,
             // 安全模式 / 静音：按 cmd03 的 securityLevel / soundVolumn 映射。
             // TODO(真机核对)：这两条的语义需要在真锁上对一次（A/B 双验 与 提示音开关）。
-            safeMode: (snap?.securityLevel ?? 0) != 0,
-            muted: (snap?.soundVolumn ?? -1) == 0
+            // 安全模式 = 双验（cmd20 SETVALIDATIONMODE 对应快照的 verifyMode）。
+            safeMode: (snap?.verifyMode ?? 0) != 0,
+            // 静音：cmd03 快照里没有这一项，读本机镜像键（只在 cmd18 写成功后落）。
+            muted: DB.store.getBool("kf_muted_" + mac)
         )
         lastStatus = DB.get(StatusSnapshot.self, "kf_snap_" + mac)
 
@@ -163,7 +165,7 @@ final class AppModel {
         let m = mac ?? currentMac
         guard !m.isEmpty else { entries = []; return }
         let logs = DB.readLogs(m)
-        entries = logs.compactMap { c in
+        entries = logs.compactMap { c -> LedgerEntry? in
             // lockTime == 0 = 锁端没读到时钟，这条不该假装有时间
             guard c.lockTime > 0 else { return nil }
             let ms = ZKProtocol.protoSecondsToUnix(c.lockTime) * 1000
@@ -313,6 +315,7 @@ final class AppModel {
         do {
             try await LockService.shared.ensureConnected(mac: currentMac)
             try await LockService.shared.setSilent(on)
+            DB.store.set("kf_muted_" + currentMac, on)
             await refreshStatus()
             return .success(())
         } catch { return .failure(error) }
@@ -334,7 +337,7 @@ final class AppModel {
     static func epochMillis(_ s: String) -> Int64? {
         guard !s.isEmpty else { return nil }
         for f in ["yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm", "yyyy-MM-dd"] {
-            let df = DateFormats.cached(f)
+            let df = DF.cached(f)
             if let d = df.date(from: s) { return Int64(d.timeIntervalSince1970 * 1000) }
         }
         return nil

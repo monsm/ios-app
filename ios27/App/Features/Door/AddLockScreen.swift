@@ -475,7 +475,6 @@ struct AddLockScreen: View {
     }
 
     @MainActor
-    @MainActor
     private func runChain(_ c: Candidate) async {
         abortRequested = false
         banner = nil

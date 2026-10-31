@@ -214,7 +214,7 @@ struct KeyCreateScreen: View {
             return
         }
         // 真链路：ensureConnected → cmd0A（临时码/密码同一构造器，用起止时间区分）→ 成功才写台账。
-        let df = DateFormats.cached("yyyy-MM-dd HH:mm")
+        let df = DF.cached("yyyy-MM-dd HH:mm")
         let fromStr = df.string(from: Date())
         let toStr: String = {
             if kind == .temp { return df.string(from: Date(timeIntervalSince1970: Double(expiryMillis) / 1000)) }
