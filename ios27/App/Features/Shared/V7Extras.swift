@@ -270,6 +270,13 @@ struct VTextFieldRow: View {
 }
 
 /// 小标签胶囊（分组 / 状态词）。形状 + 文字双通道，不单靠颜色。
+///
+/// D-04：视觉上它是 26pt 高的小胶囊，但**常被直接当作 Button 的 label**
+/// （`AccessibilityScreen` 的圆盘尺寸、`TailgateScreen` 的模式选择、
+/// `RecordsStudioScreen` 的成员筛选等）—— 那些地方的点击区域只有 26pt，
+/// 远低于 HIG 的 44×44pt（最低 28pt）。
+/// 处置：胶囊**视觉尺寸不变**（设计稿要求小），用 `.contentShape` + 透明外扩
+/// 把命中区撑到 `V.Hit.min`。这样外观不动、手指够得着。
 struct VTag: View {
     let text: String
     var tint: Color = V.C.text1
@@ -285,6 +292,9 @@ struct VTag: View {
             .overlay {
                 Capsule().strokeBorder(filled ? Color.clear : V.C.tabEdge, lineWidth: V.S.hair)
             }
+            // 命中区至少 44pt（D-04）：视觉仍是小胶囊，可点区域外扩且不占布局。
+            .frame(minHeight: V.Hit.min)
+            .contentShape(.rect)
             .accessibilityLabel(text)
     }
 }

@@ -243,9 +243,14 @@ jobs:
             CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" | tee build/archive.log
           mkdir -p build/Payload
           cp -R "build/LockKeeper.xcarchive/Products/Applications/LockKeeper.app" build/Payload/
-          # 文件名带上构建时刻：安装台上堆三份 "LockKeeper.ipa" 时，装错版本比不装更糟
+          # 文件名带上构建时刻 + 运行号 + commit 短哈希（G-14）。
+          # 只带时刻的话，拿到一个 ipa 无法反查它是哪个 commit 出的 —— 装错版本比不装更糟，
+          # 而"这包是哪次构建"恰恰是排查"我明明推了修复却没生效"的第一现场证据。
           STAMP=$(TZ=Asia/Shanghai date +%Y%m%d.%H%M%S)
-          cd build && zip -qry "LockKeeper-$STAMP-unsigned.ipa" Payload
+          SHORT=$(git rev-parse --short=7 HEAD)
+          NAME="LockKeeper-$STAMP-r${{ github.run_number }}-$SHORT-unsigned.ipa"
+          echo "IPA 名称: $NAME"
+          cd build && zip -qry "$NAME" Payload
           ls -lh LockKeeper-*-unsigned.ipa
 
       - name: 编译失败时把错误行转成注解（不登录也能读）
@@ -274,7 +279,9 @@ jobs:
           set -e
           IPA=$(ls build/LockKeeper-*-unsigned.ipa | head -1)
           echo "IPA: $IPA"
-          NOTE="离线锁管家 iOS 27 全新建屏 · 未签名 IPA（用 AltStore / Sideloadly 自签后安装）· 构建 ${{ github.sha }}"
+          NOTE="离线锁管家 iOS 27 · 未签名 IPA（用 AltStore / Sideloadly 自签后安装）"
+          NOTE="$NOTE"$'\n'"构建: ${{ github.sha }}（run #${{ github.run_number }}）"
+          NOTE="$NOTE"$'\n'"产物: $(basename "$IPA")"
           if ! gh release view ios27-latest >/dev/null 2>&1; then
             gh release create ios27-latest --title "iOS 27 · 最新构建" --notes "$NOTE" --prerelease
           fi
