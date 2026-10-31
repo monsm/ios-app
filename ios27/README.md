@@ -37,7 +37,8 @@
 
 **最新构建（公开直链，未签名 IPA）：**
 
-https://github.com/monsm/ios-app/releases/download/ios27-latest/LockKeeper-20261031.112404-unsigned.ipa
+打开 https://github.com/monsm/ios-app/releases/tag/ios27-latest 下载其中的 `.ipa`
+（每次构建只保留最新一个，文件名带构建时刻，如 `LockKeeper-20261031.130056-unsigned.ipa`）。
 
 > 未签名 = 用你自己的 Apple ID 签一次才能装。任选其一：
 > - **AltStore / Sidekick**：装到手机，7 天自动续签（免费账号）
