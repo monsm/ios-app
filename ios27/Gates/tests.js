@@ -57,6 +57,27 @@ if (!/testGoldenFixtureLoaded/.test(allTestSrc) || !/XCTAssertFalse\(.*golden\.i
 } else ok.push('有夹具加载前置断言（资源缺失即红）');
 
 // 覆盖关键面：每条都要在测试源码里真实出现
+// 安全/正确性回归（本轮修的 P0/P1 必须有可执行断言，不能只靠静态闸门查形状）
+const SECURITY_COVERAGE = [
+  ['KLV 超长拒绝（SEC-31）', /buildKLV/],
+  ['帧脱敏多 hex（SEC-23）', /FrameRedact\.apply/],
+  ['CSV 公式注入（SEC-12）', /RecordCSV\.field/],
+  ['vCard 行注入（SEC-12）', /MemberVCard\.escape/],
+  ['备份摘要不降级（SEC-06）', /mergedPasscodeRecord/],
+  ['备份 CodingKeys 完整性（SEC-06/外观段）', /Appearance\.self/],
+  ['校验和不一致可判定（SEC-14）', /checksumState/],
+  ['帧归属路由（SEC-15）', /setFrameOwner/],
+  ['严格 hex 解析（SEC-16）', /strictBytes/],
+  ['口令 Keychain 往返（SEC-01）', /pwdSecretAccount/],
+  ['空壳模式读写隔离（SEC-03/N-01）', /setDecoy/],
+  ['导入类型/规模闸（SEC-30）', /maxImportBytes/],
+  ['失败计数持久化（SEC-28）', /kf_lock_fail/],
+];
+for (const [name, re] of SECURITY_COVERAGE) {
+  if (re.test(allTestSrc)) ok.push('安全回归：' + name);
+  else fails.push('缺安全回归断言「' + name + '」—— 这条修复改回去不会被任何测试发现');
+}
+
 const COVERAGE = [
   ['AES / NIST 向量', /AESKit\.encryptHex/],
   ['命令帧字节级对拍', /ZKCmdBuilder\.cmd0ASyncPwd/],
