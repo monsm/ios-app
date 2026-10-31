@@ -48,9 +48,11 @@ struct MemberArchiveScreen: View {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
                 VSectionLabel(text: "归档名单", trailing: "\(archived.count) 位")
                 VStack(spacing: 0) {
-                    ForEach(archived.indices, id: \.self) { index in
-                        if index > 0 { HHRule().padding(.vertical, V.S.gapS) }
-                        archivedRow(archived[index])
+                    // E-11：用**成员 id** 做身份，不用下标 —— 归档/恢复会让数组重排，
+                    // 下标身份会让 SwiftUI 复用错行（表现为"点 A 却打开 B"）。
+                    ForEach(archived, id: \.id) { member in
+                        if member.id != archived.first?.id { HHRule().padding(.vertical, V.S.gapS) }
+                        archivedRow(member)
                     }
                 }
             }

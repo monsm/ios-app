@@ -253,9 +253,10 @@ struct HouseholdScreen: View {
                     }
                 } else {
                     VStack(spacing: 0) {
-                        ForEach(list.indices, id: \.self) { index in
-                            if index > 0 { HHRule() }
-                            rosterRow(list[index])
+                        // E-11：同上 —— 成员增删/排序会重排数组，下标身份会复用错行。
+                        ForEach(list, id: \.id) { member in
+                            if member.id != list.first?.id { HHRule() }
+                            rosterRow(member)
                         }
                     }
                 }

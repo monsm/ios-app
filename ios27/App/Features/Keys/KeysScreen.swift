@@ -92,6 +92,15 @@ struct KeysScreen: View {
             now = KeysState.now()
             routeFromContext()
         }
+        // E-12：`now` 只在 onAppear 刷新 ⇒ 跨过零点后"还剩 N 天"的角标与颜色不更新
+        // （App 在前台挂着过夜是很常见的）。这里按分钟重算一次，成本只有一次 Date()。
+        .task(id: "clock") {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(60))
+                if Task.isCancelled { break }
+                now = KeysState.now()
+            }
+        }
     }
 
     // MARK: - 芯片行（R2：left 14.67 / 三档宽度）
