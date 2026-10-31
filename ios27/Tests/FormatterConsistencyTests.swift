@@ -1,0 +1,71 @@
+// FormatterConsistencyTests.swift —— 两个日期工厂必须**产出同一结果**。
+//
+// 这个仓库有两套日期格式化入口，都在用，都有正当理由：
+//   · `DF.cached`    —— 按 (format, timezone, locale) 缓存的通用工厂（Engine 层用）。
+//   · `TimeFormat`   —— 时间口径的唯一出口（UI 层 90 处用），钉公历 + POSIX + 本地时区。
+//
+// 危险：两套各写一遍格式串，**改一处忘另一处**就会出现"同一个时刻在两页显示不同"。
+// 这类不一致不会崩、不会报错，只在用户眼里显得"App 算错了"。
+// 本文件把两条路径的产出钉在一起。
+import XCTest
+@testable import LockKeeper
+
+final class FormatterConsistencyTests: XCTestCase {
+
+    /// 覆盖常见时刻 + 边界（闰年 2 月 29、跨年零点、月末）。
+    private let samples: [Int64] = [
+        0,                              // 1970 epoch
+        1_767_225_600_000,              // 2026-01-01 00:00:00 UTC
+        1_709_164_800_000,              // 2024-02-29（闰日）
+        1_735_689_600_000,              // 2025-01-01 00:00:00 UTC
+        2_147_483_647_000,              // 2038 边界附近
+    ]
+
+    /// HH:mm 必须一致。
+    func testClockFormatAgrees() {
+        for ms in samples {
+            let viaTimeFormat = TimeFormat.clock(ms)
+            let viaDF = DF.cached("HH:mm").string(from: Date(timeIntervalSince1970: Double(ms) / 1000))
+            XCTAssertEqual(viaTimeFormat, viaDF, "HH:mm 在两个工厂间不一致（ms=\(ms)）")
+        }
+    }
+
+    /// 自然日键 yyyy-MM-dd 必须一致 —— 分组、检索、比较全靠它。
+    func testDayKeyFormatAgrees() {
+        for ms in samples {
+            let viaTimeFormat = TimeFormat.dayKey(ms)
+            let viaDF = DF.cached("yyyy-MM-dd").string(from: Date(timeIntervalSince1970: Double(ms) / 1000))
+            XCTAssertEqual(viaTimeFormat, viaDF, "dayKey 不一致（ms=\(ms)）—— 会让同一天的记录分到两组")
+        }
+    }
+
+    /// 短日期 MM-dd 必须一致。
+    func testDayShortFormatAgrees() {
+        for ms in samples {
+            let viaTimeFormat = TimeFormat.dayShort(ms)
+            let viaDF = DF.cached("MM-dd").string(from: Date(timeIntervalSince1970: Double(ms) / 1000))
+            XCTAssertEqual(viaTimeFormat, viaDF, "dayShort 不一致（ms=\(ms)）")
+        }
+    }
+
+    /// `TimeFormat.calendar` 必须是公历 —— 用户把系统历法切成佛历/农历时，
+    /// `Calendar.current` 会算出异 era 年份（2026 变 2569）。
+    func testTimeFormatCalendarIsGregorian() {
+        XCTAssertEqual(TimeFormat.calendar.identifier, .gregorian,
+                       "时间口径必须钉公历，不能用 Calendar.current")
+        // 直接验算：公历下 2026 年就是 2026，不会变成佛历 2569。
+        let comps = TimeFormat.calendar.dateComponents([.year], from: Date(timeIntervalSince1970: 1_767_225_600))
+        XCTAssertEqual(comps.year, 2026, "公历年份算错（历法被系统设置带跑）")
+    }
+
+    /// 毫秒 → 秒的换算不能丢精度或错位（`TimeFormat.date` 是唯一入口）。
+    func testEpochMillisToDate() {
+        for ms in samples {
+            XCTAssertEqual(TimeFormat.date(ms).timeIntervalSince1970, Double(ms) / 1000, accuracy: 0.001,
+                           "毫秒→秒换算错位（ms=\(ms)）")
+        }
+        // 秒被误当毫秒喂进来会得到 1970 年 —— 这条断言守住"单位不混用"。
+        XCTAssertLessThan(TimeFormat.date(1_767_225_600).timeIntervalSince1970, 100_000,
+                          "秒被当成毫秒 ⇒ 时间塌回 1970 附近")
+    }
+}

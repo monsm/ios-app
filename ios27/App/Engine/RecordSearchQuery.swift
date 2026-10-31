@@ -6,10 +6,12 @@ extension RecordSearch {
     static func outOfWindow(macs: [String]) -> [OutWin] {
         var out = [OutWin]()
         // 2026-10-30 性能：临时码窗口先统一解析成秒对（标签也一并拼好）——
-        // 原来在内层对每条开门日志各 parseStamp 两遍：日志 × 凭证 × 2 次字符串解析，
-        // parseStamp 是一次 DateFormatter 解析，300 条日志 × 20 张临时码 = 1.2 万次。
+        // 原来在内层对每条开门日志各解析两遍：日志 × 凭证 × 2 次字符串解析，
+        // 一次 DateFormatter 解析就是一次 ICU 装配，300 条日志 × 20 张临时码 = 1.2 万次。
         // 现在每张临时码只解析一次；日志循环里只剩整数比较。
-        // parseStamp 返回 Int64（DateFormatter 解析出的秒），窗口对齐用它
+        //
+        // 2026-11-01：这里用的必须是 `parseLocal`（本地墙钟），**不是** UTC 口径 ——
+        // 见下面 for 循环里的时基说明。原注释写的 `parseStamp` 已随该修复一起作废。
         struct TempWin { let from: Int64; let to: Int64; let label: String }
         var perMac: [String: [TempWin]] = [:]
         for mac in macs {

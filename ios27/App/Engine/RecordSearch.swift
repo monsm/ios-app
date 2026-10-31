@@ -310,6 +310,15 @@ enum RecordSearch {
         var rec: Rec
         var window: String     // "约 10-01 08:00 – 10-02 08:00"
     }
+    /// ⚠ **生产代码零调用**（2026-11-01 起只剩测试用）。
+    ///
+    /// 它实现的是 `Attribution.ms` 那条 JS 互操作语义（本地串按 UTC 读），那个语义本身没错，
+    /// 但**不能**用在"台账窗口 vs 日志时间"的比较里 —— 那两边的串都是本地墙钟，
+    /// 混用会整体平移一个时区（东八区 8 小时），把正常开门判成"越界/伪造"。
+    /// 那个调用点已改走 `parseLocal`；本函数保留是因为 `TimeBasisTests` 用它
+    /// 断言"两个口径的关系"（差值必须正好是时区偏移）。
+    ///
+    /// 若将来确认无人需要，可以连同测试一起删 —— 但删之前先读上面这段。
     static func parseStamp(_ s: String) -> Int64 {
         // 与 Attribution.ms 同语义 (JS 生态把本地串按 UTC 读)。
         // 2026-10-29 性能：改用共享的 UTC 变体 —— **不能**对缓存实例改 timeZone，那会污染所有其它使用者。
@@ -324,7 +333,11 @@ enum RecordSearch {
     /// 在东八区相当于把窗口整体平移 -8 小时：一条落在窗口内 8 小时处的开门会被判成"越界"，
     /// 而"越界"页面的文案是「可能是伪造或时钟偏差」—— 把正常开门诬告成攻击，比不显示更糟。
     static func parseLocal(_ s: String) -> Int64 {
-        Int64(DF.stamp.date(from: s)?.timeIntervalSince1970 ?? 0)
+        // 复用 `CredentialOrg.parseLocal`：那里已经做了 `prefix(19)`（台账串可能带毫秒/时区尾巴），
+        // 并且明确钉在 `DF.stamp`（本地墙钟）。两份实现各写一遍迟早会漂 ——
+        // 2026-11-01 合并时它们已经不一致了（一份截断、一份不截断）。
+        guard let d = CredentialOrg.parseLocal(s) else { return 0 }
+        return Int64(d.timeIntervalSince1970)
     }
 
 
