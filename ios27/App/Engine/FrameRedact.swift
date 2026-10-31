@@ -15,19 +15,30 @@ enum FrameRedact {
     /// 把一条日志里的 `hex=<长串>` 遮成 `hex=<头>…(N bytes)`。
     /// 不含 `hex=` 或 hex 太短（不是帧）时原样返回。
     static func apply(_ msg: String) -> String {
-        guard let r = msg.range(of: "hex=") else { return msg }
-        let head = String(msg[msg.startIndex..<r.upperBound])
-        let tail = String(msg[r.upperBound...])
-        // 只取到最后一个 hex 字符（后面可能还有 " (12ms)" 这类尾巴）
-        var hexPart = ""
-        var rest = ""
-        for ch in tail {
-            if ch.isHexDigit, hexPart.count < 4096, rest.isEmpty { hexPart.append(ch) }
-            else { rest.append(ch) }
+        guard msg.contains("hex=") else { return msg }
+        // SEC-23：逐段处理**每一个** hex=（旧实现只处理第一个，第二个原样落盘）；
+        // 且不再用「4096 字符后把剩余 hex 塞进 rest」的写法 —— 那样超长帧的后半段会明文输出。
+        var out = ""
+        var cursor = msg.startIndex
+        while let r = msg.range(of: "hex=", range: cursor..<msg.endIndex) {
+            out += msg[cursor..<r.upperBound]
+            var i = r.upperBound
+            var hexPart = ""
+            while i < msg.endIndex, msg[i].isHexDigit {
+                hexPart.append(msg[i])
+                i = msg.index(after: i)
+            }
+            if hexPart.count >= 16 {
+                let hdr = String(hexPart.prefix(16))          // 8 字节帧头（cmd 与长度，够排查）
+                let payloadBytes = (hexPart.count - 16) / 2
+                out += hdr + "…(\(payloadBytes) bytes 已脱敏)"
+            } else {
+                // 短 hex 也可能承载凭据（例如只打了一个 4 字节 PIN）—— 一并遮掉，不留明文。
+                out += hexPart.isEmpty ? "" : "<redacted>"
+            }
+            cursor = i
         }
-        guard hexPart.count >= 16 else { return msg }   // 不足一个帧头就不是帧
-        let hdr = String(hexPart.prefix(16))           // 8 字节帧头
-        let payloadBytes = (hexPart.count - 16) / 2
-        return head + hdr + "…(\(payloadBytes) bytes 已脱敏)" + rest
+        out += msg[cursor..<msg.endIndex]
+        return out
     }
 }

@@ -25,10 +25,14 @@ enum ZOTP {
     // 该 assert 已随 ZOTP 精简删除（不是"保留但无效"）。若将来要恢复入参校验，
     // 必须写成 `guard ... else { return nil }` 而不是 assert。
     static func generate(macHex: String, skeyHex: String, periodMin: Int, idx: Int, nowSec: Int64? = nil) -> String {
-        // 断言单位：锁端真实窗口在 1–120 分钟量级；若有人误传秒（如 1800），这里明确崩而不是静默错窗。
-        assert(periodMin <= 0 || (1...120).contains(periodMin),
-               "periodMin 单位是分钟；传入 \(periodMin) 看起来像秒 —— 请确认调用点")
-        let t = periodMin > 0 ? periodMin : 30
+        // SEC-25：Release 关断言，assert 在真机包上等于不存在（而 Debug 反而会崩）。
+        // 锁端异常固件可能回 0xFFFF/负值 → 生成一个注定开不了锁的码，用户会反复试。
+        // 因此按注释里写过的纪律改成 clamp（并记一条遥测），保持"看着对就一定对"。
+        let period = (1...120).contains(periodMin) ? periodMin : 30
+        if periodMin != period, periodMin > 0 {
+            BleTelemetry.recordEvent("ZOTP 周期异常 \(periodMin)，已按 30 分钟处理", ok: false)
+        }
+        let t = period
         let now = nowSec ?? ZKProtocol.nowProtoSeconds()
         let u = String(format: "%llx", now / Int64(60 * t)).uppercased()
         let uPadded = String(repeating: "0", count: max(0, 8 - u.count)) + u
