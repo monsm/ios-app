@@ -392,8 +392,16 @@ final class SettingsStore {
 
     // MARK: 锁端时钟
 
-    /// 上次校准门锁时间的时刻。nil = 从未校准。
-    var lockClockSyncedAt: Int64? = nil
+    /// 上次校准门锁时间的时刻。**唯一真值在 DB.syncTime(mac)**（持久），
+    /// 这里只是给页面读的便捷投影 —— 旧实现把它做成纯内存存储属性，
+    /// 重启后恒「从未」，与门页「超 30 天未校时」提醒卡的判据互相矛盾（E-10）。
+    var lockClockSyncedAt: Int64? {
+        let v = DB.syncTime(currentMacForClock)
+        return v > 0 ? Int64(v) : nil
+    }
+
+    /// 时钟读点用的 MAC：与 AppModel.currentMac 同源（DB.preferredMac 已做归一化）。
+    private var currentMacForClock: String { DB.preferredMac() }
 
     // MARK: 累计
 

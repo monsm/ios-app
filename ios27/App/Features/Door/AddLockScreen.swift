@@ -39,8 +39,9 @@ struct AddLockScreen: View {
     @State private var place = ""
     @State private var askConfirm = false
     @State private var echoResult: String?
-    /// 中止请求：链在两帧之间检查它，命中就走回滚，而不是假装跑完。
-    @State private var abortRequested = false
+    /// 配网链的 Task 句柄。「中止并回滚」直接 cancel 它 —— 旧实现只置了一个全仓零读取的
+    /// `abortRequested` 布尔，按钮点了没有任何效果（E-09）。
+    @State private var pairTask: Task<Void, Never>?
     /// 配网成功拿到的钥匙串（commitName 要拿它落名字）。
     @State private var pairedKeychain: Keychain?
 
@@ -321,7 +322,10 @@ struct AddLockScreen: View {
                     .foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
                 VOutlineButton(title: "中止并回滚", systemImage: "xmark") {
-                    abortRequested = true
+                    // 真取消：runChain 在每个 await 之后检查 Task.isCancelled 并走回滚。
+                    pairTask?.cancel()
+                    pairTask = nil
+                    rollback("已中止：链路已断开，锁没有被改一半就留着。")
                 }
             }
         }
@@ -484,12 +488,11 @@ struct AddLockScreen: View {
 
     private func startPairing() {
         guard let c = picked else { return }
-        Task { await runChain(c) }
+        pairTask = Task { await runChain(c) }
     }
 
     @MainActor
     private func runChain(_ c: Candidate) async {
-        abortRequested = false
         banner = nil
         steps = []
         nickname = c.model
@@ -501,10 +504,12 @@ struct AddLockScreen: View {
             let kc = try await LockService.shared.pair(deviceId: c.id, mac: c.mac) { msg in
                 Task { @MainActor in self.steps.append(msg) }
             }
+            if Task.isCancelled { rollback("已中止：配网没有跑完，锁未被改动。"); return }
             pairedKeychain = kc
             steps.append("07 状态校验通过（cmd03）—— 这把锁已经是你的了")
             phase = .naming
         } catch {
+            if Task.isCancelled { rollback("已中止：配网没有跑完，锁未被改动。"); return }
             rollback((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
         }
     }

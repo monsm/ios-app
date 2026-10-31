@@ -12,11 +12,21 @@
 
 **初次审计（`35fe751`）：P0 = 0 · P1 = 4 · P2 = 17 · P3 = 11 · 合计 32 项。**
 
-**复核（`f50e34f`）：完全修复 10 项 · 部分修复 4 项 · 仍存在 18 项 ⇒ 未闭环 22 项**（P1 未闭环 2、P2 未闭环 11、P3 未闭环 9）。逐项证据与行号见 §6。
+**复核（`f50e34f`）：完全修复 10 项 · 部分修复 4 项 · 仍存在 18 项 ⇒ 原 32 项中未闭环 22 项**（P1 2、P2 11、P3 9）。
+**另发现 4 项由修复引入的新问题（§4.1）：N-01 为 P1（空壳模式下"还原"会抹掉真实台账），N-02/N-03/N-04 为 P3。**
+**⇒ 当前仍需处理合计 26 项（其中 P1 共 3 项：SEC-01、SEC-03 残余、N-01）。**
 
 没有发现可从网络无认证直接控制门锁的 P0 路径：本 App 没有云端账号，门锁命令只经 BLE；真正的风险集中在**本机秘密的落盘方式、备份/导出通路，以及“本应保护数据”的模式是否真被执行**这四件事上。
 
-最重的四项：
+**当前最重的三项（按 `f50e34f` 复核后）**：
+
+1. **N-01（P1，本轮修复引入）**：空壳模式下 `ledger(mac)` 返回空台账，但 `saveLedger` 没有 decoy 守卫 —— 胁迫者在"凭证工作室 → 回收站 → 还原"点一下，就会用空台账整表覆盖真实 `kf_ledger_<mac>`，**全部凭证永久丢失**。
+2. **SEC-01（P1）**：门锁密码、手机钥匙 pin/ekey、回收站/历史副本仍明文存在 `NSUserDefaults`。
+3. **SEC-03（P1，部分修）**：数据层 decoy 门禁只覆盖了 `keychains/ledger/readLogs/members`，`keychain(mac)`、`dongles()`、`gateways()`、`MobileKeyService.list`、`CredBinStore.all`、`CredHistoryStore.all`、`RecordSearch.notes` 仍未判 decoy。
+
+---
+
+初次审计（`35fe751`）时最重的四项（保留原始结论，其中 SEC-02/SEC-04 已修）：
 
 1. **SEC-01（P1）**：Keychain 只保护了 `skey/bkey/ekey/pins`，而**门锁密码明文、手机钥匙 pin/ekey、回收站与版本历史副本**仍在 `NSUserDefaults` plist 里；一份 iTunes/iCloud 备份或一次容器取证即可拿到可直接开门的凭据。
 2. **SEC-02（P1）**：备份默认**不加密**，落到 `Documents/lockkeeper-backups`，该目录既没有 `isExcludedFromBackup` 也没有 `.completeFileProtection`；包内含 `skey/bkey/pins/ekey`，即一键生成“家门万能钥匙文件”。
@@ -641,13 +651,13 @@ App 上锁/退后台后，所有锁的母钥仍常驻进程内存；被调试器
 
 > 复核方式：逐条在 `f50e34f` 上重读代码 + grep 全仓；每行给出**复核后的行号**（旧报告行号可能因修复提交位移）。
 > 判定口径：**已修** = 该条描述的可利用路径已不存在；**部分修** = 主路径已收紧但仍存在可触发的残余路径；**仍存在** = 代码未变或只改了文案。
-> 汇总：已修 **10** · 部分修 **4** · 仍存在 **18** ⇒ **未闭环 22 项**。
+> 汇总：已修 **10** · 部分修 **4** · 仍存在 **18** ⇒ **原 32 项未闭环 22 项**；另有 §4.1 的 4 项新问题（N-01 P1 + N-02~N-04 P3）⇒ **当前待处理合计 26 项**。
 
 | 编号 | 严重度 | 复核结论 | 修复提交 | 复核证据（当前行号） |
 |---|---|---|---|---|
 | SEC-01 | P1 | **仍存在** | — | `StoreModels.swift:64` `var pwd: String?` 仍在；`StoreLedger.swift:45` `set(l,"kf_ledger_"+mac)` → `Store.swift:79` `defaults.set(d,forKey:)`；`MobileKeyService.swift:17` `var pin`；`CredentialStudioStores.swift:15` `var pwd: LedgerPwd?`。全仓 `Store.swift` 无 CryptoKit/加密。 |
 | SEC-02 | P1 | **已修** | fd3e73a | `BackupScreen.swift:253` 空口令即拒绝生成；`BackupStudioScreen.swift:279/364/381` 本机文件、WebDAV 上传、换机包三路均强制口令；`BackupStudioKit.swift:37` `isExcludedFromBackup=true`；`BackupStudioScreen.swift:288` `.completeFileProtection`。**残余（P3 级）**：`BackupScreen.swift:98/107-109/128-130` 仍显示「加密/明文」档与「默认关闭」，UI 文案与「强制加密」不一致。 |
-| SEC-03 | P1 | **部分修** | a1c7df5 | 已加数据层门禁：`StoreKeychain.swift:20`、`StoreLedger.swift:21`、`StoreState.swift:61`、`Store.swift:209`；`AppModel.swift:142` 广播。**残余漏洞**：①`StoreKeychain.swift:30` `keychain(mac)` **未判 decoy** ⇒ `AppModel.currentKeychain` 仍返回真钥匙串，ZotpScreen/ShareToAndroid/MobileKey 可用；②`Store.swift:294/326` `dongles()/gateways()` 未判 decoy；③`MobileKeyService.swift:60`、`CredentialStudioStores.swift:22/80`、`RecordSearch.swift:31`（备注）未判 decoy；④`AppLock.swift:153` `lock()` 只置 `decoy=false`，**不回写 `DB.setDecoy(false)`**，胁迫码后上锁再正常解锁会停在空壳数据层。 |
+| SEC-03 | P1 | **部分修** | a1c7df5 | 已加数据层门禁：`StoreKeychain.swift:20`、`StoreLedger.swift:21`、`StoreState.swift:61`、`Store.swift:209`；`AppModel.swift:142` 广播。**残余漏洞**：①`StoreKeychain.swift:30` `keychain(mac)` **未判 decoy** ⇒ `AppModel.currentKeychain` 仍返回真钥匙串，ZotpScreen/ShareToAndroid/MobileKey 可用；②`Store.swift:294/326` `dongles()/gateways()` 未判 decoy；③`MobileKeyService.swift:60`、`CredentialStudioStores.swift:22/80`、`RecordSearch.swift:31`（备注）未判 decoy；④`AppLock.swift:153` `lock()` 只置 `decoy=false`，**不回写 `DB.setDecoy(false)`**，胁迫码后上锁再正常解锁会停在空壳数据层；⑤ 与 decoy 早退叠加出 **N-01 数据销毁路径**（见 §4.1）。 |
 | SEC-04 | P1 | **已修** | fd3e73a / a1c7df5 | `AutoOpenKit.swift:128` `pendingPrompt → return false`；`:294` `guard AppLock.shared.unlocked, !decoy`；`:371` `f0Foreground` 增加 unlocked。**残余**：`:395` dispatch 下发前复查仍只判 `AutoOpen.on + applicationState`，attempt→dispatch 之间若上锁仍有窄竞态（`lock()` 会 `disconnect()`，实际多被链路断开拦住）。 |
 | SEC-05 | P2 | **已修** | fd3e73a | 10 处写入全部改 `Clip.set`：`KeyDetailScreen.swift`(2 处)、`MobileKeyScreen.swift`、`ShareToAndroidScreen.swift`、`CredentialStudioScreen.swift`、`RecordExportScreen.swift`、`RecordsStudioScreen.swift`、`BackupScreen.swift`、`BackupStudioScreen.swift`；grep `UIPasteboard` 只剩 `Clip.swift` 自身 + 两处**读取**（`KeyCreateScreen.swift:124`、`BackupScreen.swift:222`）。 |
 | SEC-06 | P2 | **仍存在** | — | `BackupKit.swift:189/193` 仍只取 `s/d`；`BackupBundle.swift:133` `PasscodeRec {s,d}`；`BackupCanonical.swift:307-315` 只写 `passcode`（无 `d2`）；`Store.swift:383` `pcIter = 60_000`；`BackupStudioKit.swift:432` 恢复只写 s/d。grep `d2` 在备份链路 0 命中。 |
@@ -678,20 +688,22 @@ App 上锁/退后台后，所有锁的母钥仍常驻进程内存；被调试器
 | SEC-31 | P3 | **仍存在** | — | `ZKProtocol.swift:52-71` `buildKLV` 仍返回 `String` 并在 `rawLen > 0xFF` 时 `prefix(0xFF*2)` 截断（:65-68）。 |
 | SEC-32 | P3 | **仍存在** | — | `CredentialOrgState.swift:24/42/52` 仍是两个独立 `getPendingNotificationRequests` 异步回调，无串行调度器（grep `NotificationScheduler` 0 命中）。 |
 
-### 4.1 复核中发现的**新增**问题（由修复引入，不计入原 32 项）
+### 4.1 复核中发现的**新增**问题（修复引入，不计入原 32 项）
 
 | 编号 | 严重度 | 位置 | 说明 |
 |---|---|---|---|
-| N-01 | P3 | `AppLock.swift:153-160` + `Store.swift:206` | `lock()` 只置 `decoy=false` 但**不调用 `DB.setDecoy(false)`**：若用户在胁迫码（空壳）会话里被 30 秒后台超时上锁，再以正常密码解锁，数据层 `isDecoy` 仍为 true（直到下一次 `AppModel.reload()`），界面会继续显示空数据。属 fail-closed 的可用性缺陷，但"解锁后看不到自己的凭证"很容易被误报成丢数据。建议 `lock()` 内同步 `DB.setDecoy(false)`。 |
-| N-02 | P3 | `BackupScreen.swift:98/107-130` | 强制加密已生效，但 UI 仍显示「加密 / 明文」档位标签、仍可关闭「加密备份」开关、说明文字仍写「所以默认关闭」。用户会以为还能生成明文备份，点下去却报错。建议删除该开关或改成不可关闭的"必须设置口令"说明。 |
-| N-03 | P3 | `StatsKit.swift:68` | CSV 注入修复只覆盖 `RecordsModels.RecordCSV`/`MemberVCard`，`lastWeekDigest` 内联的 `esc` 未同步，仍会把成员名/锁名原样拼进 CSV（该文本经 `RecordExportScreen.swift:448` 进剪贴板）。建议复用 `RecordCSV.field`。 |
+| N-01 | **P1** | `StoreLedger.swift:20-27`（decoy 早退）+ `:36-45`（saveLedger 无 decoy 守卫）+ `StoreLedger.swift:89-93/96-99/143-147` + `CredentialStudioStores.swift:22/46-53` + `CredentialStudioParts.swift:149` | **空壳模式下"还原"会抹掉真实台账（数据销毁）。** `ledger(mac)` 在 decoy 时提前 `return Ledger()`（:21），但 `saveLedger` **没有 decoy 守卫**（:36-45 只判 `isLedgerCorrupt`），而 decoy 下又从不 `markLedgerCorrupt` ⇒ 任何"读-改-写"都会用空台账整表覆盖 `kf_ledger_<mac>`。可达路径（已核实）：`KeysScreen.swift:83` 常驻渲染 `shortcutsBlock` → 凭证工作室 → `CredentialStudioScreen.swift:80` `binCard` 常驻 → `:423` 打开回收站 → `CredBinStore.all` **未判 decoy**（`CredentialStudioStores.swift:22`）⇒ 列出真实条目 → 点"还原"（`CredentialStudioParts.swift:109`）→ `DB.addPwd`（`StoreLedger.swift:89`）→ `saveLedger` 用"只有这 1 条"的空台账覆盖 ⇒ **其余凭证全部丢失**。版本历史 `restore`（`CredentialStudioStores.swift:46-53`/`:93-98`）同理。 |
+| N-02 | P3 | `AppLock.swift:153-160` + `Store.swift:206` | `lock()` 只置 `decoy=false`，**不调用 `DB.setDecoy(false)`**：在胁迫码（空壳）会话里被 30 秒后台超时上锁，再以正常密码解锁，数据层 `isDecoy` 仍为 true（直到下一次 `AppModel.reload()`），界面继续显示空数据。fail-closed 的可用性缺陷，但"解锁后看不到自己的凭证"极易被误报成丢数据。建议 `lock()` 内同步 `DB.setDecoy(false)`。 |
+| N-03 | P3 | `BackupScreen.swift:98/107-130` | 强制加密已生效，但 UI 仍显示「加密 / 明文」档位标签、仍可关闭「加密备份」开关、说明文字仍写「所以默认关闭」。用户以为还能生成明文备份，点下去却报错。建议删除该开关或改成不可关闭的"必须设置口令"说明。 |
+| N-04 | P3 | `StatsKit.swift:68` | CSV 注入修复只覆盖 `RecordsModels.RecordCSV`/`MemberVCard`；`lastWeekDigest` 内联的 `esc` 未同步，仍把成员名/锁名原样拼进 CSV，该文本经 `RecordExportScreen.swift:448` 进剪贴板。建议复用 `RecordCSV.field`。 |
 
 ## 5. 修复优先级建议（按复核后的剩余项重排）
 
-1. **立即（发布阻断，仍未闭环的 P1）**：**SEC-01**（门锁密码明文、手机钥匙 pin/ekey、回收站/历史副本落 UserDefaults）、**SEC-03**（空壳残余：`keychain(mac)`/`dongles()`/`gateways()`/`MobileKeyService.list`/`CredBinStore.all`/`CredHistoryStore.all`/`RecordSearch.notes` 未判 decoy + `lock()` 不回写 `setDecoy(false)`）。
-   - SEC-02 / SEC-04 主路径已修（fd3e73a / a1c7df5），但 SEC-02 的 UI 文案不一致（N-02）建议一并收尾。
+1. **立即（发布阻断，仍未闭环的 P1）**：**N-01**（空壳下还原抹台账）、**SEC-01**（门锁密码明文、手机钥匙 pin/ekey、回收站/历史副本落 UserDefaults）、**SEC-03**（空壳残余：`keychain(mac)`/`dongles()`/`gateways()`/`MobileKeyService.list`/`CredBinStore.all`/`CredHistoryStore.all`/`RecordSearch.notes` 未判 decoy + `lock()` 不回写 `setDecoy(false)`）。
+   - **N-01（P1，新引入）必须与 SEC-03 同一批修**：给 `saveLedger` 加 `if isDecoy { return }` 守卫（或让 decoy 走独立只读副本），否则"空壳下点还原 = 抹掉全部凭证"。
+   - SEC-02 / SEC-04 主路径已修（fd3e73a / a1c7df5），但 SEC-02 的 UI 文案不一致（N-03）建议一并收尾。
 2. **本次迭代（P2 剩余 11 项）**：SEC-06（`d2` 进备份）、SEC-08（恢复校验 skey/密码）、SEC-09（rollback 加密）、SEC-10（fileExporter 保护）、SEC-11（截图检测）、SEC-13（遥测脱敏）、SEC-14（校验和 fail-closed/HMAC）、SEC-15（BLE 单仲裁器）、SEC-16（FrameAssembler 上限 + strictBytes）、SEC-18（手机钥匙撤销）、SEC-19（删设备清备份 + `SecretStore.remove` 返回值）。
-3. **随后（P3 剩余 8 项 + 3 项新增 N-01/N-02/N-03）**：SEC-22、SEC-24、SEC-26、SEC-28、SEC-29、SEC-30、SEC-31、SEC-32；其中 SEC-15/SEC-16 是 Engine 正确性核心，建议优先于纯 UI 加固。
+3. **随后（P3 剩余 8 项 + 新增 N-02/N-03/N-04）**：SEC-22、SEC-24、SEC-26、SEC-28、SEC-29、SEC-30、SEC-31、SEC-32；其中 SEC-15/SEC-16 是 Engine 正确性核心，建议优先于纯 UI 加固。
 
 **已闭环、不需要再动的**：SEC-02、SEC-04、SEC-05、SEC-07、SEC-12、SEC-17、SEC-20、SEC-21、SEC-23、SEC-25（10 项，证据见 §4）。
 
