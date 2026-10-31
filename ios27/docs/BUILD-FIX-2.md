@@ -10,6 +10,7 @@
 3. **新增第 16 道闸门 `Gates/callsig2.js`**：1030 个 func、264 个构造签名、2068 处调用点，判 7 类（标签/个数/构造签名/@MainActor 隔离/let 赋值/无标签 tuple 成员/类型成员）。注入 5 类真编译错自测 **5/5 命中**。
 4. **审计 C 列三项落地**：构建号可注入（`CFBundleVersion` 走构建设置）、3 个显式 `import`、删掉没有消费方的相机键、蓝牙文案与 WebDAV 的实际能力对齐。
 5. 推送：`f8020cc..d2f9bde`，第 1 次尝试即成功（流程里仍保留最多 4 次重试）。
+6. **推送之后 CI 真跑了一轮并且是绿的**：run `41206628092`（commit `d2f9bde`）—— `** BUILD SUCCEEDED **`、`** ARCHIVE SUCCEEDED **`、`errors.txt` 为空、`build.log` 1684 行里 `: error:` 0 条（`: warning:` 88 条，是 Swift 5 + strict concurrency 的既有迁移债，`SWIFT_TREAT_WARNINGS_AS_ERRORS: NO` 不阻断）。详见 §6.1。
 
 ---
 
@@ -201,7 +202,37 @@ f8020cc..d2f9bde  main -> main
 PUSH OK    （第 1 次尝试；脚本保留最多 4 次重试）
 ```
 
-远端 `main` = `d2f9bdedc4437a8514e9550c4afcc9a9dfdb550d`。
+远端 `main` 依次推进到 `389ae32`（报告）与 `c305494`（构建号自检降级为 warning）。
+
+### 6.1 推送之后 CI 真跑了一轮（本报告最硬的一条）
+
+| 项 | 值 |
+|---|---|
+| run | `41206628092` |
+| commit | `d2f9bde` |
+| build | `** BUILD SUCCEEDED **` |
+| archive | `** ARCHIVE SUCCEEDED **` |
+| `ci-log:errors.txt` | 空（`meta.txt` 里 `errors=0`） |
+| `ci-log:build.log` | 1684 行；`: error:` **0** 条，`: warning:` 88 条 |
+
+**build job 绿了。** 这一条不是推断，是从 `ci-log` 分支里读到的真日志末尾：
+
+```text
+$ git fetch origin --quiet
+$ git show origin/ci-log:meta.txt
+commit=d2f9bdedc4437a8514e9550c4afcc9a9dfdb550d
+run=41206628092
+job=build
+errors=       0
+
+$ git show origin/ci-log:build.log | tail -1
+** BUILD SUCCEEDED **
+
+$ git show origin/ci-log:archive.log | grep SUCCEEDED
+** ARCHIVE SUCCEEDED **
+```
+
+88 条 warning 的具体构成不在本轮范围内（那是 `SWIFT_STRICT_CONCURRENCY: complete` 的迁移待办表，见 AUDIT-C 的 R-01）；`SWIFT_TREAT_WARNINGS_AS_ERRORS: NO` 意味着它们不阻断编译。
 
 > 说明：`f8020cc` 是并行会话提交的（三处 `import`、`project.yml`、`callsig2` 初版都在这个 commit 里）；`d2f9bde` 是本会话补的 workflow / allgates / callsig2 成员链与一批误报修正。两个 commit 都在远端。
 
