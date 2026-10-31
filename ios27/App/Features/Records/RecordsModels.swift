@@ -366,8 +366,16 @@ struct RecordExportRow {
 
 enum RecordCSV {
     static func field(_ value: String) -> String {
-        guard value.contains(",") || value.contains("\"") || value.contains("\n") else { return value }
-        return "\"" + value.replacingOccurrences(of: "\"", with: "\"\"") + "\""
+        // SEC-12：CSV 公式注入。成员名/备注可来自导入的备份，被构造为 "=HYPERLINK(...)" 或
+        // "+cmd|..." 时，用户在 Excel/Numbers 打开导出文件就会触发公式/DDE。
+        // 处置：首字符是 = + - @ 或制表符/回车时前置单引号，并把 \r 与 \n 一并按换行转义。
+        var v = value
+        if let first = v.first, ["=", "+", "-", "@", "\t", "\r"].contains(String(first)) {
+            v = "'" + v
+        }
+        v = v.replacingOccurrences(of: "\r", with: " ")
+        guard v.contains(",") || v.contains("\"") || v.contains("\n") else { return v }
+        return "\"" + v.replacingOccurrences(of: "\"", with: "\"\"") + "\""
     }
 
     /// 列：日期, 时间, 内容, 成员, 锁。成员不可证明写「未归属」，不猜。
@@ -396,9 +404,11 @@ enum RecordCSV {
 
 enum MemberVCard {
     static func escape(_ value: String) -> String {
+        // SEC-12： 也必须转义，否则可伪造额外的 vCard 行（注入 TEL/EMAIL 等字段）。
         value.replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: ";", with: "\\;")
             .replacingOccurrences(of: ",", with: "\\,")
+            .replacingOccurrences(of: "\r", with: "\\r")
             .replacingOccurrences(of: "\n", with: "\\n")
     }
 

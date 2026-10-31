@@ -11,6 +11,9 @@ extension DB {
     /// 否则一次解码失败会让整个会话里所有 ledger 写入（含恢复时的凭证导入）静默失败。
     static func clearAllLedgerCorrupt() { ledgerLock.withLock { $0.removeAll() } }
 
+    /// 只清一把锁的损坏标记（备份恢复按锁清理时用，见 SEC-17）。
+    static func clearLedgerCorrupt(_ mac: String) { ledgerLock.withLock { $0.remove(mac) } }
+
     /// SEC-03：空壳（胁迫码）模式下所有凭证读取返回空台账。
     /// 数据层强制，而不是只靠页面清 @State —— 凭证工作室/备份工作室/记录工作室都直接读 DB。
     /// 写入路径不受影响（空壳里不做写入），退出空壳后立刻恢复真实数据。

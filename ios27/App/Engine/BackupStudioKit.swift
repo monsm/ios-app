@@ -342,9 +342,13 @@ enum BackupStudio {
         var b = bundle
         b.currentMac = ""   // 首验清 currentMac, 避免指向另一台设备的锁
         let c = prune(b)
-        // 2026-10-29：恢复是用户显式选择"以这份备份为准"的动作 —— 允许它清掉台账损坏标记。
-        // 否则一次解码失败会让整个会话里的凭证导入（内部走 saveLedger）全部静默失败。
-        DB.clearAllLedgerCorrupt()
+        // SEC-17：只清**本次真要恢复的那些锁**的损坏标记。
+        // 旧实现无条件 clearAllLedgerCorrupt()：用户只为 A 锁导入备份，却把 B 锁
+        // "解不出但可人工恢复"的台账标记一起清掉，B 锁下一次 saveLedger 就会按空表覆盖 —— 数据永久丢失。
+        for d in c.devices {
+            let mac = DB.normalizeMac(d.mac)
+            if (lockActs[mac] ?? "merge") != "skip" { DB.clearLedgerCorrupt(mac) }
+        }
         // 421 恢复回滚点: 执行前自动全库快照
         if makeSnapshot { _ = makeRollbackPoint() }
         // 合并 = **只增不删**。旧实现把 .merge 并入 .overwrite 走 restoreAll,
