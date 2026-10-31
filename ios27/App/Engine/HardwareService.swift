@@ -30,7 +30,7 @@ final class HardwareService: ObservableObject {
     }
 
     init() {
-        ble.onFrame { [weak self] frame in
+        ble.onFrame(owner: "hardware") { [weak self] frame in
             Task { @MainActor in
                 guard let self, let w = self.waiter, frame.cmd == w.cmd else { return }
                 // 2026-10-29 修复：原来这里只清 waiter、**不取消超时定时器**。
@@ -192,6 +192,9 @@ final class HardwareService: ObservableObject {
                     cont.resume(throwing: BLEErrorX.msg("已有命令在等待响应"))
                     return
                 }
+                // SEC-15：声明这条连接归 hardware —— 否则 LockService 同时发的同 cmd
+                // 命令的回包会被本服务的 waiter 收下（硬件页显示错读数）。
+                ble.setFrameOwner("hardware")
                 DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(timeoutMs), execute: timer)
                 self.waiter = Waiter(cmd: cmdObj.cmd, cont: cont, timer: timer)
             }
@@ -200,6 +203,7 @@ final class HardwareService: ObservableObject {
             if debugRaw { log("TX hex=\(cmdObj.hex)") }
             try await ble.writeFrameHex(cmdObj.hex)
         } catch {
+            ble.setFrameOwner(nil)   // 失败路径同样释放
             if let w = waiter, w.cmd == cmdObj.cmd {
                 w.timer?.cancel()
                 waiter = nil
@@ -209,6 +213,7 @@ final class HardwareService: ObservableObject {
         }
         let frame = try await task.value
         if debugRaw { log("RX cmd=\(String(format: "%02x", frame.cmd)) hex=\(frame.raw)") }
+        ble.setFrameOwner(nil)   // 结束即释放归属
         return frame
     }
 

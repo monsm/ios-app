@@ -88,7 +88,7 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
 
     // 帧重组 + 订阅
     let assembler = ZKProtocol.FrameAssembler()
-    var frameSubscribers: [(ZKProtocol.ParsedFrame) -> Void] = []
+    var frameSubscribers: [(owner: String, cb: (ZKProtocol.ParsedFrame) -> Void)] = []
 
     override init() {
         super.init()
@@ -121,11 +121,28 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     }
 
     // ---------- 帧订阅 ----------
-    func onFrame(_ cb: @escaping (ZKProtocol.ParsedFrame) -> Void) {
-        frameSubscribers.append(cb)
+    /// SEC-15：命令归属。LockService 与 HardwareService 共用这一条 BLE 连接、
+    /// 各自维护自己的 waiter，而两个 waiter 只按 `cmd` 号匹配 —— 同时发同一条命令时
+    /// （例如门页 cmd03 与硬件页 cmd03），回包会被**错的那个**消费者拿走：
+    /// 结果是把 A 的目标状态写进 B 的快照、或一方等满超时。
+    /// 处置：发命令前声明"这条连接现在归谁"，`emit` 只把帧投给归属方。
+    private let frameOwner = Locked<String?>(nil)
+
+    /// 声明当前命令的归属（nil = 释放，所有订阅者都能看到）。
+    func setFrameOwner(_ owner: String?) { frameOwner.withLock { $0 = owner } }
+    func frameOwnerNow() -> String? { frameOwner.withLock { $0 } }
+
+    /// 订阅者带**身份**（不靠数组下标 —— 注册顺序不是契约）。
+    func onFrame(owner: String, _ cb: @escaping (ZKProtocol.ParsedFrame) -> Void) {
+        frameSubscribers.append((owner, cb))
     }
     func emit(_ f: ZKProtocol.ParsedFrame) {
-        for cb in frameSubscribers { cb(f) }
+        let owner = frameOwner.withLock { $0 }
+        for (name, cb) in frameSubscribers {
+            // 有归属时只投给归属方；无归属时照旧广播（配网期两边都要看状态帧）。
+            if let owner, name != owner { continue }
+            cb(f)
+        }
     }
 
     // ---------- 扫描 ----------

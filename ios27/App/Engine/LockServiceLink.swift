@@ -221,6 +221,9 @@ extension LockService {
                 // 而 writeFrameHex 在 Task 外无条件执行 => 判为"忙"时帧**照样发出去**, 第二条命令的响应
                 // 被第一条的 waiter 收下 = 错帧 (cmd08 批量 13 分片最危险)。这里同步判, 忙即不发。
                 if waiter != nil { throw BLEErrorX.msg("已有命令在等待响应") }
+                // SEC-15：在挂 waiter 之前**声明这条连接归 lock** —— 否则 HardwareService
+                // 同时发的同 cmd 命令的回包会被本服务的 waiter 收下（错帧），反之亦然。
+                ble.setFrameOwner("lock")
                 // 先挂 waiter 再写 (防响应早于 waiter 注册)
                 let respTask = Task<ZKProtocol.ParsedFrame, Error> { @MainActor in
                     try await withCheckedThrowingContinuation { (cont: CheckedContinuation<ZKProtocol.ParsedFrame, Error>) in
@@ -253,6 +256,8 @@ extension LockService {
                 }
                 frame = try await respTask.value
                 if debugRaw { log("info", "RX cmd=\(String(format: "%02x", frame.cmd)) hex=\(frame.raw)") }
+                // 命令结束即释放归属，让下一方（可能是 HardwareService）能收到自己的帧。
+                ble.setFrameOwner(nil)
                 return frame
             } catch {
                 lastErr = error
@@ -270,6 +275,9 @@ extension LockService {
                         break
                     }
                 }
+                // 失败路径也必须释放归属：否则下一次由 HardwareService 发的命令，
+                // 它的回包会被本服务的残留 owner 过滤掉（表现为"硬件页永远超时"）。
+                ble.setFrameOwner(nil)
                 // 只清自己 cmd 的 waiter (JS lock.js 按 ww.cmd === cmd 清理), 不误杀并发中的其他请求
                 if let w = waiter, w.cmd == cmd { w.timer?.cancel(); waiter = nil }
                 // 断链自愈: 写失败 OR 连接已断 (断链后 writeChar/device 被清 → writeFrameHex 抛 parseFail)

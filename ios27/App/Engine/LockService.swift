@@ -30,7 +30,7 @@ final class LockService: ObservableObject {
     var connectedDeviceId: String = ""  // BLE deviceId (UUID); connectedMAC = 解析出的锁 MAC
 
     init() {
-        ble.onFrame { [weak self] frame in
+        ble.onFrame(owner: "lock") { [weak self] frame in
             Task { @MainActor in self?.handle(frame) }
         }
         ble.bootstrap()
