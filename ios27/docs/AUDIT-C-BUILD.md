@@ -1,7 +1,7 @@
 # AUDIT-C-BUILD · ios27 编译与交付风险审计
 
 > 审计立场：默认“有遗漏”，只报有证据的问题。  
-> 审计快照：2026-10-31 20:35 +08:00，`HEAD = 1f87607`（工作树另有 2 个未提交修改），`App` 下 148 个 `.swift`。  
+> 审计快照：2026-10-31 20:40 +08:00，`HEAD = 1f87607`（工作树另有 14 个未提交修改；审计期间有并发修复），`App` 下 148 个 `.swift`。  
 > 限制：本机是 Windows，没有 xcodebuild；真编译结论取自同一 commit 的 GitHub Actions run **41201710690** 的 job/annotation。未修改被审计源码，只新增本报告。
 
 ## 结论（先看这一段）
@@ -17,7 +17,7 @@
 
 ### C-01 当前 HEAD 的 5 条编译错误（CI build job 已红）
 
-证据：run [41201710690](https://github.com/monsm/ios-app/actions/runs/41201710690)，commit `1f87607`；job「编译（iOS 27 SDK）」第 6 步失败，第 7 步 Archive、第 9 步 Release 均 skipped。GitHub annotation 原文（节选）：
+证据：run [41201710690](https://github.com/monsm/ios-app/actions/runs/41201710690)，commit `1f87607`；job「编译（iOS 27 SDK）」第 6 步失败，第 7 步 Archive、第 9 步 Release 均 skipped。GitHub annotation 原文（节选；**表内行号均指 1f87607，本地快照已修复，见下方补充**）：
 
 | # | 文件:行:列 | 编译器错误 | 本地核对 |
 |---|---|---|---|
@@ -27,7 +27,9 @@
 | 4 | `App/Engine/AutoOpenKit.swift:353:99` | `missing argument label 'mac:' in call` | 第 353 行 `Self.doorName(mac)`；声明是 `static func doorName(mac: String)`（同文件 `:426`） |
 | 5 | `App/Shell/AppModel.swift:445:51` | `cannot convert value of type 'Int' to expected argument type 'UInt32'` | 第 445 行 `fpDelete(batch)`；签名是 `func fpDelete(_ batchNumber: UInt32)`（`Engine/LockServiceCredentials.swift:211`） |
 
-**后果**：当前 commit 不可能产出新 IPA；任何依赖“CI 已通过”的交付声明都不成立。  
+**补充（审计快照的未提交工作树）**：上述 5 处已经在工作树中出现对应修复——`DoorScreen.swift:180/555` 改成 `.status.…`、`BackupStudioScreen.swift:429` 给 `fingerprint()` 加 `@MainActor`、`AutoOpenKit.swift:353` 改成 `doorName(mac: mac)`、`AppModel.swift:446` 改成 `fpDelete(UInt32(batch))`。但这些修改尚未提交，也没有新的 CI run；**不能把“本地已改”当成“已通过”**。
+
+**后果**：1f87607 这个 commit 不可能产出新 IPA；任何依赖“CI 已通过”的交付声明都不成立。  
 **最小修法**：
 - 1/2：`app.lastStatus?.status.sKeyStatus`、`app.lastStatus?.status.lockTime`（或给 `StatusSnapshot` 加转发属性，但不要在 UI 里再写错一层）。
 - 3：`SelfCheck.fingerprint()` 标 `@MainActor`，或把 `BackupKit.collectAll()` 调用移进 `Task { @MainActor in ... }` / 让 `SelfCheck` 整体 `@MainActor`。
@@ -114,23 +116,14 @@ GitHub Release `ios27-latest` 实测（API）：
 
 - `README.md:41` 仍写“每次构建只保留最新一个”，实际是 3 个；
 - `docs/COMPLETION.md:124` 直链的是 `112404`（最旧的一个），不是最新的 `130056`；
-- 最新资产 `130056` 是 e45c804（113 文件）时构建的；当前 1f87607（148 文件、v7）的 build 已经红（C-01），没有新 IPA 上传。
+- 最新资产 `130056` 是 e45c804（113 文件）时构建的；当前工作树（148 文件、v7）在 1f87607 的 CI build 已经红（C-01），没有新 IPA 上传。
 - 影响：用户按文档下载到旧包；v7 的界面改动没有进入可安装产物。
 
-### C-09 5 个未跟踪的 Swift 文件是当前 Destinations 的编译依赖
+### C-09 未提交文件 / Destinations 依赖（已修复，保留回归检查）
 
-实测当前工作树：
-
-```text
-?? ios27/App/Features/Door/DeviceInfoScreen.swift
-?? ios27/App/Features/Door/DoorLayout.swift
-?? ios27/App/Features/Door/ModuleOrderSheet.swift
-?? ios27/App/Features/Door/UnlockGateScreen.swift
-?? ios27/App/Features/Records/AlarmKindsSheet.swift
-```
-
-而 `App/Shell/Destinations.swift:29-31,44` 已经引用 `DeviceInfoScreen`、`UnlockGateScreen`、`ModuleOrderScreen`、`AlarmKindsScreen`。  
-影响：如果提交时只 `git add -u` / 只提交 tracked 修改，这 5 个文件不会进 commit，当前 Destinations 直接编译失败；必须确认 `git status` 里这 5 个文件一起提交。
+- 审计早期这 5 个文件确实是 untracked：`DeviceInfoScreen.swift`、`DoorLayout.swift`、`ModuleOrderSheet.swift`、`UnlockGateScreen.swift`、`AlarmKindsSheet.swift`；而 `App/Shell/Destinations.swift:29-31,44` 已引用它们。
+- 1f87607 已把这 5 个文件纳入 tracked；审计快照的 `git status` 里没有 untracked Swift，只有 14 个未提交修改。
+- 仍要防的回归：当前工作树有 14 个未提交修改；如果只提交部分文件，Destinations 会引用不存在的 View。提交前用 `git status` + `node Gates/destmap.js` 对账。
 
 ### C-10 Bundle ID 从旧工程默认值改成新值，升级/钥匙串数据不连续
 

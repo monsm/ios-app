@@ -519,7 +519,11 @@ struct SettingsScreen: View {
         }
     }
 
-    private var pkgVersion: String { "" }
+    /// 固件升级行右侧读数：没有包目录可读时给锁内当前固件版本（读不到就写「未读到」，不留空白）。
+    private var pkgVersion: String {
+        guard let fw = app.lock?.firmware else { return "未添加" }
+        return fw.isEmpty ? "未读到" : fw
+    }
 
     private var deleteSection: some View {
         VStack(alignment: .leading, spacing: V.S.gapS) {

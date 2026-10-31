@@ -515,12 +515,44 @@ struct DoorScreen: View {
 
     // MARK: - 标题 / 读数
 
+    /// Hero 卡（原 DeviceHomeBlocks.swift:48-195）：身份 / 三态胶囊 / 信号 / 指标 / 钥匙有效期。
     private func summaryBlock(_ lock: LockSummary) -> some View {
-        VStack(alignment: .leading, spacing: V.S.gapL) {
-            VStack(alignment: .leading, spacing: V.Page.titleToBody) {
-                Text(lock.name)
-                    .font(V.F.displayA)
-                    .foregroundStyle(V.C.text1)
+        let kc = app.currentKeychain
+        let meta = LockArchive.meta(lock.id)
+        return VCard {
+            VStack(alignment: .leading, spacing: V.S.gapM) {
+                HStack(alignment: .top, spacing: V.S.gapM) {
+                    Image(systemName: LockArchive.symbolName(meta))
+                        .font(V.F.icon22)
+                        .foregroundStyle(swatch(meta.colorKey))
+                        .frame(width: V.Icon.xl * 1.6, height: V.Icon.xl * 1.6)
+                        .background(V.C.cardAlt, in: Circle())
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: V.S.gapXXS) {
+                        Text(lock.name)
+                            .font(V.F.section)
+                            .foregroundStyle(V.C.text1)
+                            .lineLimit(1)
+                        Text(kc.map { LockArchive.subtitle($0) } ?? lock.model)
+                            .font(V.F.footnote)
+                            .foregroundStyle(V.C.text3)
+                            .lineLimit(1)
+                    }
+                    Spacer(minLength: V.S.gapS)
+                    VStack(alignment: .trailing, spacing: V.S.gapXXS) {
+                        HStack(spacing: V.S.gapXS) {
+                            VStateDot(tone: heroTone(lock), word: heroWord(lock))
+                            Text(heroWord(lock))
+                                .font(V.F.unit)
+                                .foregroundStyle(heroTone(lock).color)
+                        }
+                        Text(link.lastRSSI.map { "\($0) dBm · \(link.rssiWord)" } ?? "信号未读")
+                            .font(V.F.unit)
+                            .foregroundStyle(V.C.text3)
+                            .monospacedDigit()
+                    }
+                }
+
                 Text(statusWord(lock))
                     .font(V.F.displayA)
                     .foregroundStyle(V.C.text1)
@@ -529,25 +561,46 @@ struct DoorScreen: View {
                     .foregroundStyle(V.C.text2)
                     .lineSpacing(V.Page.bodyLineSpacing)
                     .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(.horizontal, V.S.pageGutterA)
 
-            VStatPair(items: [
-                ("预计可用", estimateText(lock)),
-                ("建议更换", replaceText(lock))
-            ])
-            .padding(.horizontal, V.S.pageGutterA)
-
-            // 909 指标位显隐的真实消费点：电量恒显，固件 / 锁钟可按外观设置收起。
-            if HeroStats.shows("firmware") || HeroStats.shows("lockclock") {
+                VDivider()
                 VReadingGrid(items: heroItems(lock), columns: 2)
-                    .padding(.horizontal, V.S.pageGutterA)
+                VStatPair(items: [
+                    ("预计可用", estimateText(lock)),
+                    ("建议更换", replaceText(lock))
+                ])
             }
+        }
+        .padding(.horizontal, V.S.cardGutter)
+    }
+
+    private func heroTone(_ lock: LockSummary) -> Tone {
+        if !lock.isConnected { return .attention }
+        if lock.battery >= 0, lock.battery < 20 { return .attention }
+        return .ok
+    }
+
+    private func heroWord(_ lock: LockSummary) -> String {
+        if !lock.isConnected { return "未连接" }
+        if lock.battery >= 0, lock.battery < 20 { return "电量偏低" }
+        return "全部正常"
+    }
+
+    private func swatch(_ key: String) -> Color {
+        switch key {
+        case "ok": return V.C.rewardGreen
+        case "warn": return V.C.coral
+        case "danger": return V.C.red
+        case "neutral": return V.C.text3
+        default: return V.C.blue
         }
     }
 
     private func heroItems(_ lock: LockSummary) -> [VReadingGrid.Item] {
-        var items: [VReadingGrid.Item] = []
+        var items: [VReadingGrid.Item] = [
+            .init(label: "电量", value: lock.battery >= 0 ? "\(lock.battery)%" : "--",
+                  tint: lock.battery >= 0 && lock.battery < 20 ? V.C.warning : V.C.text1),
+            .init(label: "信号", value: link.lastRSSI.map { "\($0)" } ?? "--", unit: "dBm")
+        ]
         if HeroStats.shows("firmware") {
             items.append(.init(label: "固件", value: lock.firmware.isEmpty ? "未知" : lock.firmware))
         }
@@ -898,3 +951,59 @@ struct DoorScreen: View {
                     VListRow(
                         title: "成员",
                         detail: "家人与访客",
+                        systemImage: "person.2.fill",
+                        tint: V.C.rewardGreen
+                    ) { router.request(.dest(.household)) }
+                }
+            }
+        }
+        .padding(.horizontal, V.S.cardGutter)
+        .padding(.top, V.S.gapL)
+    }
+
+    // MARK: - 空态（必须给出路：添加 + 从备份恢复）
+
+    private var noLockBlock: some View {
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapM) {
+                Text("还没有添加门锁")
+                    .font(V.F.displayB)
+                    .foregroundStyle(V.C.text1)
+                Text("把锁的后面板打开，长按 RESET 直到三声嘀，然后在这里添加。换过手机的话，也可以先从备份恢复。")
+                    .font(V.F.body)
+                    .foregroundStyle(V.C.text2)
+                    .fixedSize(horizontal: false, vertical: true)
+                VActionButton(title: "添加门锁", systemImage: "plus") {
+                    router.request(.dest(.addLock))
+                }
+                VOutlineButton(title: "从备份恢复", systemImage: "arrow.down.doc") {
+                    router.request(.dest(.backup))
+                }
+            }
+        }
+        .padding(.horizontal, V.S.pageGutterA)
+        .padding(.top, V.S.gapL)
+    }
+
+    // MARK: - 下拉重扫
+
+    private func rescan() async {
+        await link.preheat()
+        await app.refreshStatus()
+        if let err = app.lastError {
+            refreshNote = "重扫失败 · \(err)"
+            app.lastError = nil
+        } else {
+            let now = Int64(Date().timeIntervalSince1970 * 1000)
+            refreshNote = "已重新扫描 · \(TimeFormat.clock(now))"
+        }
+    }
+}
+
+#Preview("DoorScreen") {
+    NavigationStack {
+        DoorScreen()
+    }
+    .environment(AppModel())
+    .environment(Router())
+}

@@ -5,6 +5,8 @@
 > 审计立场：默认「有遗漏」；结论只写有文件/行号或实测数字支撑的项。
 > 审计口径：**用户能否从 App 根界面点到该功能，并且点下去真的发生该功能描述的结果**。只有引擎存在、没有页面/按钮，或按钮存在但无消费者，一律不算「已覆盖」。
 > 审计对象未修改：本报告只写 ios27/docs/AUDIT-A-OMISSION.md。
+>
+> 修复状态（2026-10-31）：§5 的 34 项与 §7 的 8 项均已修复，并在对应行标注「✅ 已修复 · 文件:行」；完整清单与剩余项见 docs/FIX-REPORT.md。
 
 ---
 
@@ -358,14 +360,14 @@
 
 | 编号 | 问题 | 证据 |
 |---|---|---|
-| B1 | **开锁偏好开关全部是假开关**：holdConfirm/autoRetry 在 SecurityScreen.swift:214-237 写入 kf_*，但 DoorScreen 的 runUnlockChain 不读；dialSize/gestureMode 在 AccessibilityScreen.swift:81-118 写入，但 Dial.swift 未被使用（Dial( 0 命中），DoorScreen 固定 VGauge；kf_fence/kf_tap_direct 全仓 0 命中；kf_auto_retry 只在 SettingsModel.swift:197-200 有 getter/setter，无解锁链读点 | grep kf_hold_confirm 命中只在 Settings/Backup；grep kf_fence/kf_tap_direct = 0；grep Dial( = 0；DoorScreen.swift:94-107 普通 Button |
-| B2 | **删除设备不删数据**：DeleteDeviceSheet 的「删除本机数据」只执行 app.lock = nil，没有调用 DB.removeDevice（Engine 已有 StoreKeychain.swift:194）；删除后 keychain/台账/日志全部留在本机，页面即刻显示为「已删除」 | SettingsScreen.swift:417-420；StoreKeychain.swift:194-236；ios27 全仓 removeDevice 仅 Engine 定义 |
-| B3 | **成员向导初始临时码只写内存**：MemberCreateScreen.finish 只 app.keys.append(KeyItem(...))，id 以 "k-" + expires 生成；没有 DB.saveLedger、没有 app.addPassword、没有 cmd0A 下发。退出/刷新后 reloadKeys 从 DB.ledger 重建，向导码消失 | MemberCreateScreen.swift:279-301；AppModel.swift:115-154 |
-| B4 | **锁档案的「启动默认锁」「开锁 PIN」是假设置**：LockProfileScreen.save 写 kf_default_mac/kf_chosen_pin_<mac>；但 AppModel.currentMac 只读 lock?.id ?? DB.preferredMac()（AppModel.swift:53），DB.preferredMac 读 kf_current_mac 不是 default；AppModel.runUnlockChain 调用 LockService.unlock(mac:) 未传 pinDec，chosenPin 0 命中 | LockProfileScreen.swift:260-288；AppModel.swift:53,198-230；StoreKeychain.swift:241-244；grep chosenPin = 0 |
-| B5 | **HardwareScreen「手机钥匙」错误跳到家页**：scopePanel 的「手机钥匙（发给成员）」行 action 为 router.request(.dest(.household))，但 Household 全仓无 mobileKey 入口（0 命中）。正确落点为 .mobileKey | HardwareScreen.swift:161-169；grep mobileKey Features/Household = 0 |
-| B6 | **快捷操作 3 个图标指向错误页面**：DoorScreen.runQuick 把 otp→.keyCreate（应为 .zotp），tailgate→.lockStatus（应为 .tailgate），safemode→.lockStatus（应为 .safeMode）；QuickPool 原版 quickDestination 对应 TempCodeStudio/TailgateView/SafemodeIntroView | DoorScreen.swift:282-308；QuickPool.swift:167-186（原） |
-| B7 | **设置页 DFU「版本」值恒空**：SettingsScreen.pkgVersion 直接返回 ""，固件升级行右侧永远空白；原版 DFUView 显示包版本/锁内版本 | SettingsScreen.swift:316 |
-| B8 | **凭证「停用/恢复使用」实际是删除**：KeyDetailScreen 的 toggleDisabled 对密码调用 app.deletePassword、对指纹调用 app.deleteFingerprint（KeyDetailScreen.swift:309-319），不是把 disabled 置位；用户点「停用这枚凭证」后该凭证直接从锁端和本机台账消失 | KeyDetailScreen.swift:186-201,309-319；AppModel.swift:296-345 |
+| B1 | **开锁偏好开关全部是假开关**：holdConfirm/autoRetry 在 SecurityScreen.swift:214-237 写入 kf_*，但 DoorScreen 的 runUnlockChain 不读；dialSize/gestureMode 在 AccessibilityScreen.swift:81-118 写入，但 Dial.swift 未被使用（Dial( 0 命中），DoorScreen 固定 VGauge；kf_fence/kf_tap_direct 全仓 0 命中；kf_auto_retry 只在 SettingsModel.swift:197-200 有 getter/setter，无解锁链读点 | grep kf_hold_confirm 命中只在 Settings/Backup；grep kf_fence/kf_tap_direct = 0；grep Dial( = 0；DoorScreen.swift:94-107 普通 Button  **✅ 已修复** · `App/Features/Door/DoorScreen.swift:448` |
+| B2 | **删除设备不删数据**：DeleteDeviceSheet 的「删除本机数据」只执行 app.lock = nil，没有调用 DB.removeDevice（Engine 已有 StoreKeychain.swift:194）；删除后 keychain/台账/日志全部留在本机，页面即刻显示为「已删除」 | SettingsScreen.swift:417-420；StoreKeychain.swift:194-236；ios27 全仓 removeDevice 仅 Engine 定义  **✅ 已修复** · `App/Features/Settings/SettingsScreen.swift:590` |
+| B3 | **成员向导初始临时码只写内存**：MemberCreateScreen.finish 只 app.keys.append(KeyItem(...))，id 以 "k-" + expires 生成；没有 DB.saveLedger、没有 app.addPassword、没有 cmd0A 下发。退出/刷新后 reloadKeys 从 DB.ledger 重建，向导码消失 | MemberCreateScreen.swift:279-301；AppModel.swift:115-154  **✅ 已修复** · `App/Features/Household/MemberCreateScreen.swift:280` |
+| B4 | **锁档案的「启动默认锁」「开锁 PIN」是假设置**：LockProfileScreen.save 写 kf_default_mac/kf_chosen_pin_<mac>；但 AppModel.currentMac 只读 lock?.id ?? DB.preferredMac()（AppModel.swift:53），DB.preferredMac 读 kf_current_mac 不是 default；AppModel.runUnlockChain 调用 LockService.unlock(mac:) 未传 pinDec，chosenPin 0 命中 | LockProfileScreen.swift:260-288；AppModel.swift:53,198-230；StoreKeychain.swift:241-244；grep chosenPin = 0  **✅ 已修复** · `App/Shell/AppModel.swift:294` |
+| B5 | **HardwareScreen「手机钥匙」错误跳到家页**：scopePanel 的「手机钥匙（发给成员）」行 action 为 router.request(.dest(.household))，但 Household 全仓无 mobileKey 入口（0 命中）。正确落点为 .mobileKey | HardwareScreen.swift:161-169；grep mobileKey Features/Household = 0  **✅ 已修复** · `App/Features/Settings/HardwareScreen.swift:222` |
+| B6 | **快捷操作 3 个图标指向错误页面**：DoorScreen.runQuick 把 otp→.keyCreate（应为 .zotp），tailgate→.lockStatus（应为 .tailgate），safemode→.lockStatus（应为 .safeMode）；QuickPool 原版 quickDestination 对应 TempCodeStudio/TailgateView/SafemodeIntroView | DoorScreen.swift:282-308；QuickPool.swift:167-186（原）  **✅ 已修复** · `App/Features/Door/DoorScreen.swift:787` |
+| B7 | **设置页 DFU「版本」值恒空**：SettingsScreen.pkgVersion 直接返回 ""，固件升级行右侧永远空白；原版 DFUView 显示包版本/锁内版本 | SettingsScreen.swift:316  **✅ 已修复** · `App/Features/Settings/SettingsScreen.swift:523` |
+| B8 | **凭证「停用/恢复使用」实际是删除**：KeyDetailScreen 的 toggleDisabled 对密码调用 app.deletePassword、对指纹调用 app.deleteFingerprint（KeyDetailScreen.swift:309-319），不是把 disabled 置位；用户点「停用这枚凭证」后该凭证直接从锁端和本机台账消失 | KeyDetailScreen.swift:186-201,309-319；AppModel.swift:296-345  **✅ 已修复** · `App/Features/Keys/KeyDetailScreen.swift:327` |
 
 ---
 

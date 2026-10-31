@@ -249,13 +249,13 @@ struct PasscodeSheet: View {
                         VStack(alignment: .leading, spacing: V.S.gapMS) {
                             if isChange {
                                 VInset {
-                                    SecureField("原" + kind.title, text: $oldCode)
+                                    SecureField("原本机密码", text: $oldCode)
                                         .font(V.F.body)
                                         .keyboardType(.numberPad)
                                         .textContentType(.password)
-                                        .accessibilityLabel("原" + kind.title)
+                                        .accessibilityLabel("原本机密码")
                                 }
-                                Text("先验证当前\(kind.title) —— 只验本机摘要，不联网。")
+                                Text("先验证当前本机密码 —— 只验本机摘要，不联网。")
                                     .font(V.F.unit)
                                     .foregroundStyle(V.C.text3)
                             }
@@ -295,12 +295,7 @@ struct PasscodeSheet: View {
 
     private func commit() {
         if isChange {
-            let ok: Bool
-            switch kind {
-            case .passcode: ok = DB.verifyPasscode(oldCode)
-            case .duress: ok = DB.verifyDuress(oldCode)
-            }
-            guard ok else { error = "原\(kind.title)不对"; return }
+            guard DB.verifyPasscode(oldCode) else { error = "原本机密码不对"; return }
         }
         guard first.count >= 4 else { error = "需 4 位以上"; return }
         guard first.allSatisfy({ $0.isNumber }) else { error = "只能输入数字"; return }
