@@ -185,13 +185,16 @@ enum BackupKit {
         }
         let dongles = DB.dongles()
         let gws = DB.gateways()
-        let passcode = DB.get([String: String].self, "kf_passcode").map {
-            BackupBundle.Globals.PasscodeRec(s: $0["s"] ?? "", d: $0["d"] ?? "")
+        // SEC-06：d2（PBKDF2 强摘要）一并导出 —— 只带 d（32 位 FNV）等于把 App 密码降级成可秒破。
+        func passcodeRec(_ key: String) -> BackupBundle.Globals.PasscodeRec? {
+            guard let rec = DB.get([String: String].self, key) else { return nil }
+            return BackupBundle.Globals.PasscodeRec(s: rec["s"] ?? "",
+                                                    d: rec["d"] ?? "",
+                                                    d2: (rec["d2"] ?? "").isEmpty ? nil : rec["d2"])
         }
+        let passcode = passcodeRec("kf_passcode")
         // 2026-10-30 修复：胁迫码同口径导出（缺省 = 没设过 = 恢复时不动本机）。
-        let duress = DB.get([String: String].self, "kf_duress").map {
-            BackupBundle.Globals.PasscodeRec(s: $0["s"] ?? "", d: $0["d"] ?? "")
-        }
+        let duress = passcodeRec("kf_duress")
         let trace = DB.get(BackupBundle.Globals.TraceRec.self, "kf_trace_persist_v1")
         return BackupBundle(
             at: DF.iso().string(from: Date()),

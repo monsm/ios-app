@@ -130,7 +130,27 @@ struct BackupBundle: Codable {
             var hidden: [String]?     // kf_lock_hidden_<mac> = true 的 mac
             struct GroupRec: Codable { var mac: String; var name: String }
         }
-        struct PasscodeRec: Codable { var s: String; var d: String }
+        /// 门禁口令摘要。**d2 是主验证路径**（PBKDF2-HMAC-SHA256 6 万轮），
+        /// d 只是旧版 32 位 FNV（跨端迁移兼容用）。
+        ///
+        /// SEC-06：旧版备份只带 s/d —— 一份明文/被解密的备份里，App 密码只剩 32 位 FNV，
+        /// 离线穷举 10^4 个四位码是毫秒级；恢复后系统还会用这份弱摘要验证，直到用户再次成功输入。
+        /// 现在 d2 也进包（Optional：缺字段 = 旧包 = 恢复时保留本机 d2，不降级）。
+        struct PasscodeRec: Codable {
+            var s: String
+            var d: String
+            var d2: String?
+
+            init(s: String, d: String, d2: String? = nil) {
+                self.s = s; self.d = d; self.d2 = d2
+            }
+            init(from decoder: Decoder) throws {
+                let c = try decoder.container(keyedBy: CodingKeys.self)
+                s = try c.decodeIfPresent(String.self, forKey: .s) ?? ""
+                d = try c.decodeIfPresent(String.self, forKey: .d) ?? ""
+                d2 = try c.decodeIfPresent(String.self, forKey: .d2)
+            }
+        }
         struct TraceRec: Codable { var savedAt: Double?; var count: Int?; var chars: Int?; var lines: [String]? }
     }
     var checksum: String?

@@ -302,7 +302,9 @@ enum BackupCanonical {
             // 导出文本里没有该段，恢复分支永远收不到值，换机后
             // 「被胁迫时进空壳模式」这条安全承诺会静默失效。
             if let dc = g.duress, !dc.s.isEmpty, !dc.d.isEmpty {
-                gp.append(("duress", .obj([("s", .str(dc.s)), ("d", .str(dc.d))])))
+                var dv: [(String, JValue)] = [("s", .str(dc.s)), ("d", .str(dc.d))]
+                if let d2 = dc.d2, !d2.isEmpty { dv.append(("d2", .str(d2))) }
+                gp.append(("duress", .obj(dv.sorted { $0.0 < $1.0 })))
             }
             if let list = g.gatewayList, !list.isEmpty {
                 gp.append(("gatewayList", .arr(list.map(gatewayValue))))
@@ -312,7 +314,10 @@ enum BackupCanonical {
             }
             // 181 OTP 段进校验和: 键按字典序排, 值随键走 (否则同一包体两次导出会得到不同 canonical)
             if let pc = g.passcode, !pc.s.isEmpty, !pc.d.isEmpty {
-                gp.append(("passcode", .obj([("s", .str(pc.s)), ("d", .str(pc.d))])))
+                // SEC-06：d2（强摘要）也进校验和；缺 d2 的旧包照旧只 emit s/d（canonical 稳定）。
+                var pv: [(String, JValue)] = [("s", .str(pc.s)), ("d", .str(pc.d))]
+                if let d2 = pc.d2, !d2.isEmpty { pv.append(("d2", .str(d2))) }
+                gp.append(("passcode", .obj(pv.sorted { $0.0 < $1.0 })))
             }
 
             if let tr = g.trace, let lines = tr.lines, !lines.isEmpty {

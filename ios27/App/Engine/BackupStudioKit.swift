@@ -438,15 +438,16 @@ enum BackupStudio {
             for d in g.keychainDongles ?? [] { DB.saveDongle(d) }
             for gw in g.gatewayList ?? [] { DB.saveGateway(gw) }
             if let pc = g.passcode, !pc.s.isEmpty, !pc.d.isEmpty {
-                // 同 BackupKit.restoreAll: 只写 s/d (d2 不进 canonical, 包体里没有)
-                DB.store.set("kf_passcode", ["s": pc.s, "d": pc.d])
+                // SEC-06：包里有 d2（强摘要）就写 d2 —— 只写 d 等于把 App 密码降级成 32 位 FNV。
+                // 旧包没有 d2 时：若本机已有 d2，**保留本机 d2**（不要把强摘要降级成弱摘要）。
+                DB.store.set("kf_passcode", Self.mergedPasscodeRecord(pc, key: "kf_passcode"))
             }
             if let dc = g.duress, !dc.s.isEmpty, !dc.d.isEmpty {
                 // 2026-10-30 修复（第 64 轮）：胁迫码与正常密码同一套 PBKDF2 摘要，但存在独立键里。
                 // 原先只导出/恢复 kf_passcode ⇒ 换机后胁迫码静默消失，
                 // 而「被胁迫时输它会进空壳模式」是一条安全承诺 —— 承诺随换机失效属「不正常」。
                 // 与 passcode 同口径：缺字段/空摘要 = 这次备份没带 = 不动本机（不主动清除用户已设的码）。
-                DB.store.set("kf_duress", ["s": dc.s, "d": dc.d])
+                DB.store.set("kf_duress", Self.mergedPasscodeRecord(dc, key: "kf_duress"))
             }
             if let tr = g.trace, let lines = tr.lines, !lines.isEmpty {
                 DB.store.set("kf_trace_persist_v1", [
@@ -456,6 +457,21 @@ enum BackupStudio {
             }
         }
         return (mimp, mover, mskip)
+    }
+
+    /// SEC-06：合并包内口令摘要与本机既有摘要，**绝不把强摘要降级成弱摘要**。
+    /// - 包里有 d2（新包）→ 直接用包的（s/d/d2 必须成对，salt 也随包走）。
+    /// - 包里没有 d2（旧包）→ 若本机同一 salt 下已有 d2，保留本机 d2；否则只写 s/d。
+    static func mergedPasscodeRecord(_ pc: BackupBundle.Globals.PasscodeRec, key: String) -> [String: String] {
+        var rec: [String: String] = ["s": pc.s, "d": pc.d]
+        if let d2 = pc.d2, !d2.isEmpty {
+            rec["d2"] = d2
+        } else if let local = DB.get([String: String].self, key),
+                  (local["s"] ?? "") == pc.s,
+                  let localD2 = local["d2"], !localD2.isEmpty {
+            rec["d2"] = localD2
+        }
+        return rec
     }
 
     /// 导入成员并建立「旧 id → 本机 id」映射（恢复包里的凭证 owner 要按这个 remap 重写）。
