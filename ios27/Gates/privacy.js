@@ -142,7 +142,43 @@ for (const f of files) {
   });
 }
 
-console.log('privacy: 扫 ' + files.length + ' 个 Swift 文件');
+// ---------- 11. 隐私清单必须是合法 plist（G-01：非法 XML 会被原样打进 IPA，清单等于没交）----------
+// 不用第三方库：只做标签配对（<key>/<string>/<array>/<dict>/<true|false>），
+// 足以抓住"多一个 </dict> / 少一个 </array>"这类错误，而且不依赖 plutil。
+(function checkPrivacyManifest() {
+  const p = path.join(APP, 'PrivacyInfo.xcprivacy');
+  if (!fs.existsSync(p)) {
+    fails.push('App/PrivacyInfo.xcprivacy 缺失（App Store 要求 Required Reason API 申报）');
+    return;
+  }
+  const src = fs.readFileSync(p, 'utf8').replace(/<!--[\s\S]*?-->/g, '');
+  const stack = [];
+  const VOID = new Set(['true', 'false']);
+  // 属性（如 <plist version="1.0">）与自闭合（<true/>）都要认。
+  const re = /<\/([a-zA-Z]+)>|<([a-zA-Z]+)[^>]*>/g;
+  let m;
+  while ((m = re.exec(src)) !== null) {
+    if (m[1]) {
+      const want = stack.pop();
+      if (want !== m[1]) {
+        fails.push('App/PrivacyInfo.xcprivacy — 标签不配对：期望 </' + want + '> 实得 </' + m[1] + '>（会被原样打进 IPA，隐私清单失效）');
+        return;
+      }
+    } else if (!VOID.has(m[2]) && !m[0].endsWith('/>') && !m[2].toLowerCase().includes('xml') && m[2] !== 'DOCTYPE') {
+      stack.push(m[2]);
+    }
+  }
+  if (stack.length !== 0) {
+    fails.push('App/PrivacyInfo.xcprivacy — 未闭合标签：' + stack.join(' > '));
+    return;
+  }
+  const must = ['NSPrivacyTracking', 'NSPrivacyAccessedAPITypes', 'NSPrivacyCollectedDataTypes'];
+  for (const k of must) {
+    if (!src.includes('<key>' + k + '</key>')) fails.push('App/PrivacyInfo.xcprivacy — 缺少必需键 ' + k);
+  }
+})();
+
+console.log('privacy: 扫 ' + files.length + ' 个 Swift 文件 + PrivacyInfo.xcprivacy');
 if (fails.length === 0) {
   console.log('privacy: OK — 剪贴板/备份加密/空壳隔离(读+写)/帧脱敏/WebDAV/文件保护/CSV 注入 9 类回归判据全部通过');
   process.exit(0);

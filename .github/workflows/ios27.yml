@@ -4,7 +4,7 @@
 #   与仓库里既有的 ios.yml 同一个镜像；它抽风时把 runs-on 改回 macos-latest 即可。
 #
 # 为什么需要云端：开发机是 Windows，没有 Xcode，也没有 iOS 模拟器。
-# 本地能跑的是 11 道静态闸门 + DesignLab 截图；真编译只能在这里做。
+# 本地能跑的是 16 道静态闸门 + DesignLab 截图；真编译只能在这里做。
 #
 # 关键技巧（从既有 ios.yml 学来的）：SWIFT_COMPILATION_MODE=wholemodule
 #   默认增量模式下一个文件失败就停，只能一轮挤一个错。整模块单次调用会把**全仓所有** error
@@ -152,7 +152,9 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: 发布到 Release（公开直链下载 IPA）
-        if: success()
+        # G-02：只在 main 的 push 上发布。PR（尤其 fork PR）不得改写公开 Release，
+        # 也不该因为 token 只读而把整条 build job 弄红。
+        if: github.event_name == 'push' && success()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -206,7 +208,8 @@ jobs:
           if-no-files-found: ignore
 
       - name: 发布构建日志到 ci-log 分支（供本地无网络时排查）
-        if: always()
+        # G-02：ci-log 是 force-push 的孤儿分支，PR 不许推它（否则任何 PR 都能改写排查基线）。
+        if: github.event_name == 'push' && always()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
