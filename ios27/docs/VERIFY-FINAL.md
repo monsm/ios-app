@@ -160,7 +160,10 @@
 
 | 阶段 | commit | run | 结论 |
 |---|---|---|---|
-| docs 收尾 | `294da3e` | `41210571077` | **绿**：BUILD SUCCEEDED + ARCHIVE SUCCEEDED，errors=0 |
+| docs 收尾 #1 | `294da3e` | `41210571077` | **绿**：BUILD SUCCEEDED + ARCHIVE SUCCEEDED，errors=0 |
+| docs 收尾 #2 | `f73f1c1` | `41211265098` | **绿**：BUILD SUCCEEDED + ARCHIVE SUCCEEDED，errors=0 |
+| docs 收尾 #3 | `a3138c3` | `41211332702` | **绿**：BUILD SUCCEEDED + ARCHIVE SUCCEEDED，errors=0 |
+| docs 收尾 #4（本轮最后一次可读 ci-log） | `244dd60` | `41212062522` | **绿**：BUILD SUCCEEDED + ARCHIVE SUCCEEDED，errors=0 |
 
 > 说明：本轮工作期间有并行会话在同一工作树提交（`64acaa4` / `7a4feeb`），其中 `64acaa4` 曾把 `BackupStudioKit.swift` 截断导致 `swiftparse` 红；`7a4feeb` 已恢复并在 HEAD 保留 FNV 校验降级为告警的意图。本报告以本轮最终提交为准。
 
@@ -187,7 +190,7 @@
 | 已修 BUG | **P1 1 + P2 1（代码）+ P2 0（记录项另列）**；#3/#26/#32 三处功能缺口另计 |
 | 清理项 | callsig 退役（16→15）、IPA 链接更新、WARNINGS.md、help 分组、两个静态检查脚本 |
 | 本地闸门 | **15 / 15** |
-| 最终 CI | **`a24bcac` / run `41209905485`：BUILD SUCCEEDED + ARCHIVE SUCCEEDED，errors=0；静态闸门 job 成功**（本文件自身的后续 docs 提交见 §5.3） |
+| 最终 CI | **源码提交 `a24bcac` / run `41209905485`：BUILD SUCCEEDED + ARCHIVE SUCCEEDED，errors=0；静态闸门 job 成功。** 其后 docs-only 收尾链 `294da3e → f73f1c1 → a3138c3 → 244dd60` 全部同口径绿（ci-log `244dd60` / run `41212062522`，errors=0，见 §5.3） |
 
 ### 7.1 复现命令
 
