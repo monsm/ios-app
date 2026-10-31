@@ -137,15 +137,27 @@ final class SecurityRegressionTests: XCTestCase {
     // MARK: - SEC-14：校验和不一致必须能被判定出来
 
     func testChecksumMismatchIsDetected() {
-        let bundle = BackupKit.collectAll()
+        // 测试宿主里没有任何锁，collectAll() 会给出空包 —— 那样"改 MAC"就无从谈起。
+        // 这里**显式构造**一个含单把锁的包：既确定有数据可改，也不依赖测试宿主的存储状态。
+        let mac = "aabbccddeeff"
+        let kc = Keychain(mac: mac, pid: 16289, pidName: "ZKBBV1", name: "前门",
+                          skey: "00112233445566778899aabbccddeeff")
+        var ledger = Ledger()
+        ledger.pwds = [LedgerPwd(alias: 1, from: "2026-01-01 00:00:00", to: "2118-01-01 00:00:00",
+                                 temp: false, at: 0, pwd: "123456", owner: "m1", note: "门锁密码")]
+        let bundle = BackupBundle(at: "2026-01-01T00:00:00Z", currentMac: mac,
+                                  devices: [BackupBundle.Device(mac: mac, kc: kc, ledger: ledger,
+                                                                     meta: nil)],
+                                  members: nil, globals: nil)
         let text = BackupCanonical.exportText(bundle)
+        XCTAssertFalse(text.isEmpty, "导出文本不能为空")
         XCTAssertEqual(BackupStudio.checksumState(text), .ok, "自己导出的包必须自校验通过")
 
-        // 改**数据**（不是格式）：canonical 会把 JSON 重新序列化，所以往空格里插字节不会改变校验和。
-        // 必须改一个真正进入 canonical 的值。这里改设备 MAC。
+        // 改**数据**（不是格式）：canonical 会把 JSON 重新序列化，往空格里插字节不改变校验和。
+        // 必须改一个真正进入 canonical 的值 —— 这里改设备 MAC。
         var tampered = text
         guard let macRange = tampered.range(of: "\"aabbccddeeff\"") else {
-            return XCTFail("夹具包里没有预期 MAC，测试前提不成立")
+            return XCTFail("导出的包里没有预期 MAC，测试前提不成立")
         }
         tampered.replaceSubrange(macRange, with: "\"aabbccddee00\"")
         XCTAssertEqual(BackupStudio.checksumState(tampered), .mismatch,
