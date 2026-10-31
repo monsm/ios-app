@@ -507,9 +507,11 @@ final class AppModel {
     // MARK: - 校时 / 静音 / 安全模式
 
     func syncTime() async -> Result<(Int, Int), Error> {
-        guard !currentMac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
+        // E-07：currentMac 是计算属性，await 期间换锁会校到另一把锁。
+        let mac = currentMac
+        guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
         do {
-            try await LockService.shared.ensureConnected(mac: currentMac)
+            try await LockService.shared.ensureConnected(mac: mac)
             let r = try await LockService.shared.syncTime()
             await reload(refreshStatus: false)
             return .success((r.before, r.after))
@@ -517,20 +519,22 @@ final class AppModel {
     }
 
     func setMuted(_ on: Bool) async -> Result<Void, Error> {
-        guard !currentMac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
+        let mac = currentMac   // E-07：静音位必须落在下发时那把锁上
+        guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
         do {
-            try await LockService.shared.ensureConnected(mac: currentMac)
+            try await LockService.shared.ensureConnected(mac: mac)
             try await LockService.shared.setSilent(on)
-            DB.store.set("kf_muted_" + currentMac, on)
+            DB.store.set("kf_muted_" + mac, on)
             await refreshStatus()
             return .success(())
         } catch { return .failure(error) }
     }
 
     func setSafeMode(_ on: Bool) async -> Result<Void, Error> {
-        guard !currentMac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
+        let mac = currentMac   // E-07
+        guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
         do {
-            try await LockService.shared.ensureConnected(mac: currentMac)
+            try await LockService.shared.ensureConnected(mac: mac)
             try await LockService.shared.setValidationMode(on)
             await refreshStatus()
             return .success(())

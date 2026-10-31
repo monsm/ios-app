@@ -367,6 +367,8 @@ struct DeviceInfoScreen: View {
     // MARK: 真链路
 
     private func reload() async {
+        // E-07：await 期间换锁会把快照/电池采样写到另一把锁。
+        let mac = self.mac
         guard !mac.isEmpty, !busy else { return }
         busy = true
         outcome = nil

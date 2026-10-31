@@ -171,6 +171,8 @@ struct ZotpScreen: View {
     }
 
     private func writeEnable(_ on: Bool) {
+        // E-07：await 期间换锁会把 otpStatus_ 写到另一把锁。
+        let mac = self.mac
         guard !mac.isEmpty, !busy else { return }
         busy = true
         Task {

@@ -313,6 +313,9 @@ struct LockSettingsScreen: View {
     // MARK: - 写
 
     private func writeOtp(_ on: Bool) {
+        // E-07：进函数先把 MAC 固定成局部常量。mac 是计算属性（app.lock?.id），
+        // await 期间用户换锁会让结果写到新锁的 kf_otp_ 键上。
+        let mac = self.mac
         guard !mac.isEmpty, !busy else { return }
         busy = true
         outcome = nil
@@ -333,6 +336,8 @@ struct LockSettingsScreen: View {
     }
 
     private func writeMuted(_ on: Bool) {
+        // E-07：同上 —— 静音位写到错误的锁是"用户以为给 A 静音，实际是 B 静音"。
+        let mac = self.mac
         guard !mac.isEmpty, !busy else { return }
         busy = true
         outcome = nil
@@ -352,6 +357,7 @@ struct LockSettingsScreen: View {
     }
 
     private func runClearPwd() async {
+        let mac = self.mac   // E-07：await 期间换锁不能把清空动作落到另一把锁的台账
         guard !mac.isEmpty, !busy else { return }
         busy = true
         outcome = nil

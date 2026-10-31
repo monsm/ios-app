@@ -120,6 +120,8 @@ struct SafeModeScreen: View {
     }
 
     private func setMode(_ double: Bool) async {
+        // E-07：await 期间换锁会把 kf_snap_ 写到另一把锁。
+        let mac = self.mac
         guard !mac.isEmpty, !busy else { return }
         busy = true
         outcome = nil
