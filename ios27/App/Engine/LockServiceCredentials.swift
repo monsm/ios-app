@@ -172,7 +172,7 @@ extension LockService {
                     log("warn", "13 录指纹已 \(Int(silent))s 无新帧 (锁端按压窗口 15s), 判定锁已退出录入")
                     break
                 }
-                try? await Task.sleep(nanoseconds: 200_000_000)
+                try? await Task.sleep(for: .milliseconds(200))
             }
             if broken { break }
         }

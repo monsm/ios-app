@@ -134,7 +134,7 @@ final class HardwareService: ObservableObject {
                 ble.stopScan()
                 return d.deviceId
             }
-            try? await Task.sleep(nanoseconds: 300_000_000)
+            try? await Task.sleep(for: .milliseconds(300))
         }
         throw BLEErrorX.code(.notFound)
     }
@@ -169,7 +169,7 @@ final class HardwareService: ObservableObject {
                 log("找到钥匙串： \(a.macDisplay ?? mac) (\(d.name))")
                 return rec
             }
-            try? await Task.sleep(nanoseconds: 300_000_000)
+            try? await Task.sleep(for: .milliseconds(300))
         }
         throw BLEErrorX.msg("搜索设备超时")
     }

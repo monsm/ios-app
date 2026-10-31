@@ -108,7 +108,7 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
         let deadline = Date().addingTimeInterval(Double(timeoutMs) / 1000.0)
         while manager == nil || !isPoweredOn {
             if Date() > deadline { throw BLEErrorX.msg(readyMessage()) }
-            try? await Task.sleep(nanoseconds: 100_000_000)
+            try? await Task.sleep(for: .milliseconds(100))
         }
     }
     func readyMessage() -> String {

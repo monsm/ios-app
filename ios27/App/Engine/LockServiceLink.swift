@@ -99,7 +99,7 @@ extension LockService {
                 log("info", "扫描命中 MAC=\(target) → \(d.deviceId)")
                 return d.deviceId
             }
-            try? await Task.sleep(nanoseconds: 300_000_000)
+            try? await Task.sleep(for: .milliseconds(300))
         }
         ble.stopScan()
         throw BLEErrorX.code(.notFound)
