@@ -89,6 +89,9 @@ struct DoorScreen: View {
                 Task { await app.runUnlockChain() }
             }
             .environment(\.dialDiameter, dialSize)
+            // 开锁成功是"一天只有几次"的高情绪时刻 —— 用 settle 档（420ms、0.95 阻尼，无过冲）。
+            // 高频动作（按压/切 chip）仍走 snap 档，不能让"每天几十次"的操作变慢。
+            .animation(reduceMotion ? nil : T.M.settle, value: app.dialPhase == .opened)
             .padding(.top, T.S.s)
 
             if case .failed(let reason) = app.dialPhase {

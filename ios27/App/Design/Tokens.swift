@@ -106,12 +106,24 @@ enum T {
         }
     }
 
-    // MARK: - 动效（Premium：精密、克制、无回弹）
+    // MARK: - 动效
+    //
+    // 人格：**精密（Precision）** —— 不是 Premium 的"奢华慢"，也不是 Playful 的回弹。
+    // 这个 App 的使用场景决定了两件事：
+    //   · 用户在门口、可能着急 → 高频交互必须**快**（snap 220ms）
+    //   · 设备要显得可托付 → 结果反馈要**稳**（settle 420ms，无过冲）
+    // 所以是"短时长 + 高阻尼"的组合，而不是套用某一档现成模板。
     enum M {
+        /// 高频反馈：按压、chip 选中、行内切换。220ms 是"手指离开就已经到位"的上限。
         static let snap = Animation.spring(response: 0.22, dampingFraction: 0.92)
+        /// 页面内位移：卡片进出、步骤推进。320ms。
         static let move = Animation.spring(response: 0.32, dampingFraction: 0.88)
-        /// 只给刻度盘的真实进度弧。弹簧过冲会让"进度"撒谎。
+        /// 结果时刻：开锁成功、配网完成这类**一天只有几次**的高情绪点。
+        /// 420ms + 0.95 阻尼（几乎无过冲）—— 慢是给它"分量"，不是给它"弹跳"。
+        static let settle = Animation.spring(response: 0.42, dampingFraction: 0.95)
+        /// 只给刻度盘的真实进度弧。弹簧过冲会让"进度"撒谎，所以这里用曲线不用弹簧。
         static let sweep = Animation.timingCurve(0.32, 0, 0.16, 1, duration: 0.6)
+        /// 消失永远比出现快 30-50%：用户关心"出现"，不在乎"走开"。
         static let exit = Animation.easeOut(duration: 0.18)
         /// 逐格点亮：每格 8ms，最多 60 格 = 480ms 上限。
         static let tickStep: Double = 0.008
