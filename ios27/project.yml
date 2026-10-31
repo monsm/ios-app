@@ -107,10 +107,34 @@ targets:
         # 隐私清单
         ITSAppUsesNonExemptEncryption: NO
 
+  # G-07：引擎层的**回归保护**。旧仓的 fixtures/golden.json（40 条命令帧 / NIST AES 向量 /
+  # 状态与日志解析 / ZOTP 窗口）在本仓一直"存在但没人跑" —— README 却写着"已验证"。
+  # 这个测试目标把金标真正接进 CI：`xcodebuild test` 跑不过就是红。
+  LockKeeperTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+      # 金标夹具必须打进测试 bundle —— 否则 testGoldenFixtureLoaded 之外的断言会
+      # 在空集合上"静默通过"（那比红更糟）。
+      - path: ../fixtures/golden.json
+        buildPhase: resources
+    dependencies:
+      - target: LockKeeper
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.aapk.lockkeeper.tests
+
 schemes:
   LockKeeper:
     build:
       targets:
         LockKeeper: all
+        LockKeeperTests: [test]
     run:
       config: Debug
+    test:
+      config: Debug
+      targets:
+        - LockKeeperTests

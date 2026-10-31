@@ -120,6 +120,20 @@ jobs:
             CURRENT_PROJECT_VERSION=${{ github.run_number }} \
             CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" | tee build/build.log
 
+      - name: 金标差分测试（引擎层回归，G-07）
+        # 40 条命令帧 / NIST AES / 状态与日志解析 / ZOTP / 归属推断 逐字节对拍。
+        # 这些断言一旦红，说明协议层被改坏了 —— 比"能不能编译"重要得多。
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project LockKeeper.xcodeproj \
+            -scheme LockKeeper \
+            -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+            -derivedDataPath build/DerivedData \
+            -configuration Debug \
+            SWIFT_COMPILATION_MODE=wholemodule \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" | tee build/test.log
+
       - name: Archive（出可安装的未签名 IPA）
         run: |
           set -o pipefail
