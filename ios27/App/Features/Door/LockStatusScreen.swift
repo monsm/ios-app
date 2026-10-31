@@ -153,15 +153,10 @@ struct LockStatusScreen: View {
         let offWord: String
         let write: (Bool) -> Void
 
-        @State private var localOn: Bool
-
-        init(isOn: Bool, onWord: String, offWord: String, write: @escaping (Bool) -> Void) {
-            self.isOn = isOn
-            self.onWord = onWord
-            self.offWord = offWord
-            self.write = write
-            _localOn = State(initialValue: isOn)
-        }
+        /// 初值 false；进入时由 `.task`/onChange 从 `isOn` 播种，之后双向同步。
+        /// 不用自定义 init：在 struct 的 init 里构造 State 会报「无可用初始化器」
+        /// （CI 41225887928 实测）。默认值 + onAppear 播种是更稳的写法。
+        @State private var localOn = false
 
         var body: some View {
             Toggle("", isOn: $localOn)
@@ -172,6 +167,7 @@ struct LockStatusScreen: View {
                     if new != isOn { write(new) }
                 }
                 .onChange(of: isOn) { _, new in localOn = new }
+                .onAppear { localOn = isOn }
         }
     }
 

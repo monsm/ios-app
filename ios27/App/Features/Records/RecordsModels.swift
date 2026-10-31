@@ -370,7 +370,9 @@ struct RecordExportRow {
 enum RecordCSV {
     // 说明：build() 走 TimeDisplay.clock（主 actor 隔离），所以本枚举也隔离。
 
-    static func field(_ value: String) -> String {
+    /// 单元格转义是**纯函数**，不碰 UI 状态 —— 标 nonisolated 让 Engine 层
+    /// （StatsKit 的周报）也能复用同一份口径，不必再抄一遍。
+    nonisolated static func field(_ value: String) -> String {
         // SEC-12：CSV 公式注入。成员名/备注可来自导入的备份，被构造为 "=HYPERLINK(...)" 或
         // "+cmd|..." 时，用户在 Excel/Numbers 打开导出文件就会触发公式/DDE。
         // 处置：首字符是 = + - @ 或制表符/回车时前置单引号，并把 \r 与 \n 一并按换行转义。
