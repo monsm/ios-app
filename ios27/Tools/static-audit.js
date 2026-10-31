@@ -139,12 +139,13 @@ for (const f of files) {
 }
 
 // ---------- E. 密钥/密码进日志 ----------
-const secretWord = /(pwd|password|passcode|skey|ekey|bkey|secret|token|pin|duress|密码|密钥|口令)/i;
+// 只判「插值进日志的变量本身是敏感值」；不按消息里的中文/英文关键字判（"PIN 批次"这类是文案不是数据）。
+const secretVar = /\\\(\s*(?:[A-Za-z_][\w.]*\.)?(pwd|password|passcode|skey|ekey|bkey|secret|token|pin|duress|code)\b(?!\s*(\.count|\.length))\s*\)/;
 for (const f of files) {
   f.lines.forEach((line, i) => {
     if (!/\b(print|debugPrint|NSLog|os_log|logger\.\w+|log)\s*\(/.test(line)) return;
-    if (!secretWord.test(line)) return;
-    if (/\b(count|长度|位数|len|length|shape|fingerprint|hash)\b/i.test(line)) return; // 只打长度/指纹的放行
+    if (!secretVar.test(line)) return;
+    if (/\b(count|长度|位数|len|length|shape|fingerprint|hash)\b/i.test(line)) return;
     if (/privacy:\s*\.private/.test(line)) return;
     add('E/secret-log', 'P1', f.rel, i + 1, line, '删除该行或只打长度/指纹；OSLog 用 privacy: .private');
   });
@@ -155,8 +156,9 @@ for (const f of files) {
   const isView = /\bstruct\s+\w+\s*:\s*View\b/.test(f.raw);
   f.masked.forEach((line, i) => {
     if (/Task\.detached/.test(line)) add('F/concurrency', 'P2', f.rel, i + 1, f.lines[i], '确认无 UI 状态写入；否则改 Task { @MainActor in }');
-    if (/@Observable/.test(f.lines[i]) && !/@MainActor/.test(f.lines.slice(Math.max(0, i - 3), i + 1).join(' '))) {
-      add('F/concurrency', 'P1', f.rel, i + 1, f.lines[i], '@Observable 类加 @MainActor（UI 状态必须主线程隔离）');
+    if (/^\s*@Observable\s*$/.test(f.masked[i])) {
+      const ctx = f.masked.slice(Math.max(0, i - 3), i + 1).join(' ');
+      if (!/@MainActor/.test(ctx)) add('F/concurrency', 'P2', f.rel, i + 1, f.lines[i], '@Observable 类建议加 @MainActor（UI 状态应在主线程隔离）');
     }
     if (/Task\s*\{\s*$/.test(line) && isView) {
       // 视图里的 Task 默认继承 MainActor（SwiftUI View 是 @MainActor）；只提示，不判红

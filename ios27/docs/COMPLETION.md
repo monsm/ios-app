@@ -120,8 +120,9 @@ destmap     OK — 26 个 Dest ↔ 26 个 View 一一对应
 ## 四·补、当前可安装包与已接线范围
 
 **IPA（未签名，公开直链）：**
-https://github.com/monsm/ios-app/releases/download/ios27-latest/LockKeeper-20261031.112404-unsigned.ipa
-（sha256 `4473adbe9fee6b98e8f9d8d27f27dd3238e5c5b68d091aaf2060d38ea02af82f` · 1.15 MB · Payload/LockKeeper.app 内可执行文件 2.8 MB）
+https://github.com/monsm/ios-app/releases/download/ios27-latest/LockKeeper-20261031.215249-unsigned.ipa
+（sha256 `7669b79b7bbbaacba445d9c03a08bb0eff6fe1cc9186d16ecf594ea97de3a066` · 2,597,954 bytes / 2.48 MB · 2026-10-31 21:52 构建）
+> Release 页（始终指最新一份）：https://github.com/monsm/ios-app/releases/tag/ios27-latest
 
 **真的接到引擎的动作**
 

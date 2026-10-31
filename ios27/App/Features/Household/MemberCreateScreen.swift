@@ -307,6 +307,9 @@ struct MemberCreateScreen: View {
             case .success:
                 app.reloadMembers()
                 roster.focusMember = id
+                // 建档已落库并下发成功：清掉 newID，避免用户返回本页再点「取消」时
+                // cancel() 的「取消=回滚删除」分支把刚建好的成员删掉（凭证却留在台账里）。
+                newID = nil
                 router.request(.dest(.memberDetail))
             case .failure(let e):
                 let msg = (e as? LocalizedError)?.errorDescription ?? e.localizedDescription

@@ -47,17 +47,19 @@ struct SettingsScreen: View {
                 if !search.trimmingCharacters(in: .whitespaces).isEmpty {
                     searchResults
                 } else if app.lock != nil {
-                    statusGrid
-                    lockSection
-                    securitySection
-                    lookSection
-                    dataSection
-                    deleteSection
+                    // 五组 chip 在「浏览」态也要真的过滤节 —— 旧实现只在搜索命中里用 groupFilter，
+                    // 不搜时点任何分组都毫无反应（假筛选）。
+                    if inGroup(.daily) { statusGrid; lockSection }
+                    if inGroup(.keys) { securitySection }
+                    if inGroup(.look) { lookSection }
+                    if inGroup(.data) { dataSection; deleteSection }
+                    if inGroup(.help) { helpSection }
                 } else {
                     noLockCard
-                    securitySection
-                    lookSection
-                    dataSection
+                    if inGroup(.keys) { securitySection }
+                    if inGroup(.look) { lookSection }
+                    if inGroup(.data) { dataSection }
+                    if inGroup(.help) { helpSection }
                 }
             }
             .padding(.top, V.Page.topSpace)
@@ -499,7 +501,14 @@ struct SettingsScreen: View {
                     tint: V.C.coral,
                     value: "\(store.dongles.count) 台"
                 ) { router.request(.dest(.hardware)) }
-                VDivider()
+            }
+        }
+    }
+
+    /// 帮助组（原 SettingsGroups 的 help 档）：协议测试与关于。
+    private var helpSection: some View {
+        section("帮助") {
+            VStack(spacing: 0) {
                 VListRow(
                     title: "协议测试",
                     detail: "附近设备与 cmd12 回声",
@@ -517,6 +526,11 @@ struct SettingsScreen: View {
                 ) { router.request(.dest(.about)) }
             }
         }
+    }
+
+    /// 分组 chip 的浏览态判据（搜索态由 searchResults 自己按 hit.group 过滤）。
+    private func inGroup(_ group: SettingsGroup) -> Bool {
+        groupFilter == nil || groupFilter == group
     }
 
     /// 固件升级行右侧读数：没有包目录可读时给锁内当前固件版本（读不到就写「未读到」，不留空白）。

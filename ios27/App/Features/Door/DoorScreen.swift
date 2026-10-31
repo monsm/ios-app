@@ -35,7 +35,13 @@ struct DoorScreen: View {
                 if !DevModuleStore.hidden.contains(DevModule.linkSense.rawValue) {
                     LinkSenseBar(model: link)
                 }
+                if !DevModuleStore.hidden.contains(DevModule.statusIcons.rawValue) {
+                    statusIconsRow
+                }
                 chips
+                if !DevModuleStore.hidden.contains(DevModule.groupChips.rawValue) {
+                    groupChipsRow
+                }
                 if let note = refreshNote { refreshLine(note) }
                 if let lock = app.lock {
                     attentionCard
@@ -111,6 +117,74 @@ struct DoorScreen: View {
             .padding(.horizontal, V.S.chipLeftA)
         }
         .scrollIndicators(.hidden)
+    }
+
+    /// 多锁状态图标行（原 764）：每把锁一颗芯片，电量/连接状态一眼可见，点按切换当前锁。
+    /// 模块显隐面板里的「多锁状态图标行」开关的真实消费点；只有一把锁时整行不出现。
+    @ViewBuilder
+    private var statusIconsRow: some View {
+        let locks = DB.keychains()
+        if locks.count > 1 {
+            ScrollView(.horizontal) {
+                HStack(spacing: V.S.gapS) {
+                    ForEach(locks, id: \.mac) { kc in
+                        Button { switchLock(kc) } label: {
+                            VChip(
+                                title: LockArchive.displayName(kc),
+                                value: batteryWord(kc.mac),
+                                tint: DB.normalizeMac(kc.mac) == DB.normalizeMac(app.currentMac) ? V.C.blue : V.C.text3,
+                                style: .compact,
+                                systemImage: LockArchive.symbolName(LockArchive.meta(kc.mac))
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("切换到 \(LockArchive.displayName(kc))")
+                    }
+                }
+                .padding(.horizontal, V.S.chipLeftA)
+            }
+            .scrollIndicators(.hidden)
+        }
+    }
+
+    /// 按组切换 chips（原 767）：只在存在分组且组数 > 1 时出现；点组切到该组第一把锁。
+    /// 模块显隐面板里的「按组切换」开关的真实消费点。
+    @ViewBuilder
+    private var groupChipsRow: some View {
+        let groups = LockArchive.grouped(DB.keychains()).filter { !$0.name.isEmpty }
+        if groups.count > 1 {
+            ScrollView(.horizontal) {
+                HStack(spacing: V.S.gapS) {
+                    ForEach(groups) { group in
+                        let active = group.locks.contains { DB.normalizeMac($0.mac) == DB.normalizeMac(app.currentMac) }
+                        Button {
+                            if let first = group.locks.first { switchLock(first) }
+                        } label: {
+                            VTag(text: group.name, tint: active ? V.C.blue : V.C.text3, filled: active)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("按组切换到 \(group.name)")
+                        .accessibilityAddTraits(active ? [.isButton, .isSelected] : .isButton)
+                    }
+                }
+                .padding(.horizontal, V.S.chipLeftA)
+            }
+            .scrollIndicators(.hidden)
+        }
+    }
+
+    private func batteryWord(_ mac: String) -> String {
+        guard let p = DB.readStatus(mac)?.powerLevel, p >= 0 else { return "--" }
+        return "\(p)%"
+    }
+
+    /// 切锁：与记录页同一口径 —— 先清旧投影，再让 AppModel 按 overrideMac 重建。
+    private func switchLock(_ kc: Keychain) {
+        guard DB.normalizeMac(kc.mac) != DB.normalizeMac(app.currentMac) else { return }
+        DB.currentMac = kc.mac
+        app.overrideMac = kc.mac
+        app.lock = nil
+        Task { @MainActor in await app.reload(refreshStatus: false) }
     }
 
     private var overviewWord: String {

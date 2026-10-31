@@ -94,7 +94,7 @@ xcodebuild build -project LockKeeper.xcodeproj -scheme LockKeeper \
 | `glass` | 内容层不许玻璃；同屏玻璃 ≤2 | ✅ |
 | `motion` | `.animation` 必带 `value:`；无裸时长；无裸 `repeatForever` | ✅ |
 | `a11y` | 图标按钮必有 label；可点区 ≥44pt | ✅ |
-| `callsig` | 组件调用的实参顺序必须符合声明 | ✅ |
+| `callsig2` | 调用标签/参数个数/构造签名/@MainActor 隔离/let 赋值/tuple 成员/静态成员（callsig 已退役：旧版恒 0 处检查，是 no-op） | ✅ |
 | `lineage` | **与上一版切割**：18 个旧设计系统符号零残留 | ✅ |
 | `destmap` | Dest 台账 ↔ View 实现一一对应 | ✅ |
 

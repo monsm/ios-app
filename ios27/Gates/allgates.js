@@ -4,7 +4,9 @@
 const { execFileSync } = require('child_process');
 const path = require('path');
 
-const GATES = ['swiftparse', 'types', 'swiftcheck', 'tokens', 'contrast', 'glass', 'motion', 'a11y', 'dynamictype', 'reducedmotion', 'crosprivate', 'callsig', 'callsig2', 'lineage', 'workflow', 'destmap'];
+// callsig 已退役（2026-10-31）：它只扫 App/Design/Components 的旧组件，V7 页面根本不调用它们，
+// 实测恒为「检查 0 处具名调用」= no-op。真正的调用签名闸门是 callsig2（7 类判据 + 成员表）。
+const GATES = ['swiftparse', 'types', 'swiftcheck', 'tokens', 'contrast', 'glass', 'motion', 'a11y', 'dynamictype', 'reducedmotion', 'crosprivate', 'callsig2', 'lineage', 'workflow', 'destmap'];
 
 let failed = 0;
 for (const g of GATES) {
