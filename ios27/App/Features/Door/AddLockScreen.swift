@@ -426,8 +426,8 @@ struct AddLockScreen: View {
         do {
             // 真链路：BLEService 扫 6 秒（allowDuplicates 让 RSSI 持续刷新），
             // 只保留广播厂商段能解析出 MAC 的设备 —— 解析不出 MAC 的连不上，列出来只会误导。
-            try await BLEService.shared.startScan(allowDuplicates: true, timeoutMs: 6000)
-            let found = BLEService.shared.allDiscovered()
+            // 扫满 6 秒窗口再取快照（旧实现 startScan 后立刻读，列表恒空）。
+            let found = try await BLEService.shared.scanWindow(allowDuplicates: true, timeoutMs: 6000)
             var list: [Candidate] = []
             for d in found {
                 guard let adv = ZKProtocol.parseAdv(d.advertisHex),
@@ -439,7 +439,9 @@ struct AddLockScreen: View {
                     mac: mac,
                     model: PidMap.modelName(adv.pid),
                     rssi: d.rssi,
-                    inReset: true,
+                    // E-08：重置位来自广播帧（ZKProtocol.parseAdv 已解析），不能写死 true ——
+                    // 否则每把扫到的锁都标「可换钥」，:475 的重置态守卫成了死分支。
+                    inReset: adv.resetStatus != 0,
                     alreadyAdded: DB.keychain(mac) != nil
                 ))
             }

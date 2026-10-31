@@ -358,7 +358,16 @@ final class AppModel {
 
     // MARK: - 凭证写入
 
-    func addPassword(_ pwd: String, from: String, to: String) async -> Result<Int, Error> {
+    /// 新增一条密码/临时码。
+    /// - Parameters:
+    ///   - owner: 归属成员名（E-03：旧实现写死 nil，工坊里选的归属被丢弃，
+    ///     导致新密码永远落「未归属」组、成员 360 的「名下凭证」恒空）。
+    ///   - replacingAlias: 「改造密码值」（E-02）传旧 alias —— 先成功建新，再删旧，
+    ///     顺序不能反（反了会在弱信号下把人关在门外）。旧实现忽略这个参数，
+    ///     改造变成了「再多一把仍能开门的旧码」。
+    func addPassword(_ pwd: String, from: String, to: String,
+                     owner: String? = nil, note: String? = nil,
+                     replacingAlias: Int? = nil) async -> Result<Int, Error> {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
         do {
@@ -369,8 +378,17 @@ final class AppModel {
             l.pwds.append(LedgerPwd(
                 alias: alias, from: from, to: to, temp: false,
                 at: Date().timeIntervalSince1970 * 1000,
-                pwd: pwd, owner: nil, note: "密码 \(alias)"
+                pwd: pwd, owner: owner, note: note ?? "密码 \(alias)"
             ))
+            if let old = replacingAlias, old != alias {
+                // 新码已落库 → 再删旧码。删失败不改台账（锁端仍有旧码，界面如实显示两条）。
+                do {
+                    try await LockService.shared.pwdDelete(old)
+                    l.pwds.removeAll { $0.alias == old }
+                } catch {
+                    lastError = "新码已写入，但旧码（#\(old)）没能删除 —— 请到凭证详情再删一次。"
+                }
+            }
             DB.saveLedger(mac, l)
             reloadKeys(mac)
             return .success(alias)

@@ -176,6 +176,22 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
             self?.stopScanInternal()
         }
     }
+    /// 扫满一个窗口并返回快照。
+    /// 2026-10-31 审核修复（E-01）：`startScan` 只是"启动扫描 + 挂定时器"就返回，
+    /// 内部刚 `discovered.removeAll()` —— 页面紧接着读 `allDiscovered()` 拿到的是空表，
+    /// 于是「添加门锁」与「协议测试」两个入口事实上永远搜不到设备。
+    /// 这里把「等窗口走完」收成一处，页面只调它（与 HardwareService/LockService 的 deadline 轮询同语义）。
+    @MainActor
+    func scanWindow(allowDuplicates: Bool = true, timeoutMs: Int = 6000) async throws -> [BLEAdvDevice] {
+        try await startScan(allowDuplicates: allowDuplicates, timeoutMs: timeoutMs)
+        defer { stopScan() }
+        let deadline = Date().addingTimeInterval(Double(timeoutMs) / 1000.0)
+        while Date() < deadline {
+            try? await Task.sleep(for: .milliseconds(150))
+        }
+        return allDiscovered()
+    }
+
     func stopScan() {
         // 引用计数减到 0 才真停 —— 见 scanRefLock 的注释
         let left = scanRefLock.withLock { n -> Int in

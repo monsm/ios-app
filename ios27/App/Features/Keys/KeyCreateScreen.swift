@@ -256,8 +256,16 @@ struct KeyCreateScreen: View {
         }()
         busy = true
         errorText = nil
+        // E-02：改造路径必须把旧 alias 传下去（先建新、成功后再删旧），
+        // 否则「改造密码值」实际只是多追加一条，旧码仍能开门。
+        let oldAlias: Int? = {
+            guard let editingID, editingID.hasPrefix("pwd:") else { return nil }
+            return Int(editingID.dropFirst(4))
+        }()
         Task {
-            let result = await app.addPassword(code, from: fromStr, to: toStr)
+            let result = await app.addPassword(code, from: fromStr, to: toStr,
+                                               owner: ownerName, note: finalName,
+                                               replacingAlias: oldAlias)
             busy = false
             switch result {
             case .success:

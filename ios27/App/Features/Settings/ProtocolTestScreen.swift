@@ -139,9 +139,10 @@ struct ProtocolTestScreen: View {
         error = nil
         devices = []
         do {
-            try await BLEService.shared.startScan(allowDuplicates: true, timeoutMs: 8000)
+            // 扫满 8 秒窗口再取快照（旧实现 startScan 后立刻读，列表恒空）。
+            let found = try await BLEService.shared.scanWindow(allowDuplicates: true, timeoutMs: 8000)
             var out: [Candidate] = []
-            for d in BLEService.shared.allDiscovered() {
+            for d in found {
                 guard let adv = ZKProtocol.parseAdv(d.advertisHex) else { continue }
                 let mac = ZKProtocol.lockMac(fromAdv: adv) ?? ""
                 out.append(Candidate(id: d.deviceId,
