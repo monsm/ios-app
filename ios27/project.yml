@@ -45,6 +45,8 @@ targets:
         CFBundleDisplayName: 锁管家
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "1"
+        # 构建号由 CI 注入（github.run_number），避免每次都是 1
+        # 本地构建时回落到 1
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
@@ -64,6 +66,10 @@ targets:
         # DFU 升级期间需要后台保持蓝牙连接
         UIBackgroundModes:
           - bluetooth-central
+        # 局域网/WebDAV：备份工作室允许用户连自建 HTTP 服务器
+        NSLocalNetworkUsageDescription: 备份工作室需要访问你在局域网内的 WebDAV 服务器。
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
         # 隐私清单
         ITSAppUsesNonExemptEncryption: NO
 
