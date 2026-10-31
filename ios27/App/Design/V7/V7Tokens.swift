@@ -316,16 +316,41 @@ enum V {
         static let cardPad: CGFloat = 16.3
         static let miniPad: CGFloat = 14.7
 
-        static let gapXXS: CGFloat = 2
-        static let gapXS: CGFloat = 4
-        static let gapS: CGFloat = 7.7
-        static let gapMS: CGFloat = 12
-        static let gapM: CGFloat = 14.3
-        static let gap16: CGFloat = 16
-        static let gapL: CGFloat = 20
-        static let gapXL: CGFloat = 22
-        static let gap24: CGFloat = 24
-        static let gapXXL: CGFloat = 32
+        /// 布局密度系数（D-09 残余修复）。
+        ///
+        /// 2026-11-01：`LayoutDensity`（紧凑/标准/宽松）原本**是个死开关** ——
+        /// 存了、进了备份、界面上也给了三档，但全仓**没有任何地方读它**，
+        /// 改档位界面上一点变化都没有。HIG `settings` 明确要求
+        /// "Avoid using settings to ask for setup information you can get in other ways"，
+        /// 更基本的是：**给了开关就必须有效果**，否则比不给更糟（用户会以为 App 坏了）。
+        ///
+        /// 这里只缩放**间距节奏**（不是字号、不是命中区）—— 与枚举注释的口径一致：
+        /// "只缩放间距节奏，字号与 44pt 触达不动"。紧凑 -12%，宽松 +12%，标准 1.0。
+        /// 读 `SettingsStore.shared.density`（而不是直接读 UserDefaults）——
+        /// 那是 @Observable，改档位会触发依赖它的视图重算。直接读 DB 的话，
+        /// 间距变了但界面不会重绘，用户仍看到"改了没反应"。
+        static var densityScale: CGFloat {
+            switch SettingsStore.shared.density {
+            case .compact: return 0.88
+            case .relaxed: return 1.12
+            case .standard: return 1.0
+            }
+        }
+
+        /// 间距统一过密度系数。**命中区（V.Hit.min）与字号绝不经过这里** ——
+        /// 压小按钮不是"紧凑"，是点不准（44pt 是 HIG 下限，不是可调参数）。
+        private static func d(_ base: CGFloat) -> CGFloat { (base * densityScale).rounded() }
+
+        static var gapXXS: CGFloat { d(2) }
+        static var gapXS: CGFloat { d(4) }
+        static var gapS: CGFloat { d(7.7) }
+        static var gapMS: CGFloat { d(12) }
+        static var gapM: CGFloat { d(14.3) }
+        static var gap16: CGFloat { d(16) }
+        static var gapL: CGFloat { d(20) }
+        static var gapXL: CGFloat { d(22) }
+        static var gap24: CGFloat { d(24) }
+        static var gapXXL: CGFloat { d(32) }
         static let statGap: CGFloat = 16
         static let statLabelGap: CGFloat = 2
         static let statValueGap: CGFloat = 1
@@ -521,6 +546,18 @@ enum V {
     enum List {
         static let iconSize: CGFloat = 30
         static let rowMinHeight: CGFloat = 54
+
+        /// 时间线行距（D-09 残余修复）。
+        /// 2026-11-01：`timelineGap`（紧凑/标准/宽松）原本**没有任何消费点** ——
+        /// 界面上给了三档、进了备份，但记录页行距恒定。这里接上：只改行间距，
+        /// 不改字号、不改 44pt 命中区（与设置页那句 note 的口径一致）。
+        static var rowGap: CGFloat {
+            switch SettingsStore.shared.timelineGap {
+            case "tight": return 4
+            case "loose": return 14
+            default: return 7.7
+            }
+        }
         /// 凭证行「舒适」档额外高度（外观 → 凭证行高）。
         static let rowTallExtra: CGFloat = 16
         static let toggleMinHeight: CGFloat = 50
