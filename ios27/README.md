@@ -174,7 +174,11 @@ App/Design/Tokens.swift ──解析──▶ CSS 变量（颜色/间距/圆角/
 `App/Engine/` 的 57 个文件是从 `ios-app/App/Core`+`Services` 照搬的**纯逻辑**：
 ZK 协议帧 / KLV / AES-128-ECB / 0x88 EKey 包络 / 会话令牌 / 状态与日志解析 /
 CoreBluetooth 链路 / 存储 / 备份信封 / DFU。它们有**字节级差分金标**
-（40 条命令帧、NIST AES 向量、状态/日志解析、真实固件包解析），已验证。
+（40 条命令帧、NIST AES 向量、状态/日志解析、ZOTP、归属推断、固件包解析）。
+
+> **这些金标现在是真跑的**：CI 的 `golden` job 在 `xcode-27` 镜像上下载 iOS 27 模拟器 runtime 后
+> 执行 `xcodebuild test`，run `41238960936` 的 `test.log` 记着 **Executed 16 tests, with 0 failures**。
+> 在这之前它们只是"写了但没人跑"—— 完整记录在 `docs/AUDIT-ROUND-2.md` / `AUDIT-ROUND-3.md`。
 
 重写它们等于把"不要 BUG"的保证丢掉。**界面层则是彻底的新东西** ——
 `Gates/lineage.js` 用 18 个旧符号做机器证明：新 App 里 0 处残留。

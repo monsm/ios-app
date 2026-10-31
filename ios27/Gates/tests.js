@@ -83,9 +83,10 @@ if (asserts < 40) {
 console.log('tests: ' + testFiles.length + ' 个测试文件，' + asserts + ' 条断言');
 if (fails.length === 0) {
   console.log('tests: OK — ' + ok.length + ' 条判据全部通过');
-  console.log('tests: 注意 —— 这是**静态**证明（目标存在 + 夹具接线 + 覆盖关键面），不等于"跑过了"。');
-  console.log('        真跑需要带 iOS 27 模拟器 runtime 的机器（CI 的两个镜像都没有，golden job 会如实标注 test_executed=no）：');
-  console.log('        xcodebuild test -project LockKeeper.xcodeproj -scheme LockKeeper -destination "platform=iOS Simulator,name=<设备>"');
+  console.log('tests: 注意 —— 这是**静态**证明（目标存在 + 夹具接线 + 覆盖关键面）。');
+  console.log('        真跑由 CI 的 golden job 负责（xcode-27 镜像下载 iOS 27 runtime 后执行 xcodebuild test）。');
+  console.log('        本机复现：xcodebuild test -project LockKeeper.xcodeproj -scheme LockKeeper \\');
+  console.log('                  -destination "platform=iOS Simulator,name=<设备>"');
   process.exit(0);
 }
 console.log('tests: FAIL — ' + fails.length + ' 处问题\n');
