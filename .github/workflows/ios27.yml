@@ -104,9 +104,11 @@ jobs:
           echo "== 可用 runtime =="; xcrun simctl list runtimes || true
           # 取一台真可用的 iPhone 设备；取不到就**明确标记"未执行"**并写进 meta，
           # 绝不静默通过 —— 否则本机看到的会是"绿"，而实际上一条断言都没跑。
-          DEV=$(xcrun simctl list devices available 2>/dev/null \
-                | grep -E "^\s+iPhone" | head -1 \
-                | sed -E "s/^\s+(iPhone[^(]*)\(.*/\1/" | sed "s/ *$//")
+          # 用 simctl 的 JSON 输出取设备名。**不要用 sed 的 \s**：BSD sed 不支持它，
+          # 上一版因此把整行「    iPhone 17 Pro (UDID) (Shutdown)」当成设备名，
+          # xcodebuild 找不到设备、一条断言都没跑（本轮实测踩到）。
+          DEV=$(xcrun simctl list devices available -j 2>/dev/null | python3 -c \
+          "import json,sys;d=json.load(sys.stdin);names=[n for v in d.get(\"devices\",{}).values() for n in v if n.get(\"isAvailable\") and \"iPhone\" in n.get(\"name\",\"\")];print(names[0][\"name\"] if names else \"\")")
           if [ -z "$DEV" ]; then
             echo "test_executed=no" >> "$GITHUB_OUTPUT"
             echo "::warning::镜像没有可用的 iOS 模拟器 runtime（部署目标 iOS 27.0）—— 金标测试本轮**未执行**。这不是通过。"

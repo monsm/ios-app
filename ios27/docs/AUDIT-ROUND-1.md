@@ -113,8 +113,17 @@ $ git show origin/ci-log:archive.log  # ** ARCHIVE SUCCEEDED **
 
 ## 5. 仍未闭环（下一轮的输入）
 
-### P1（1 项）
-- **SEC-01**：门锁密码明文、手机钥匙 `pin/ekey`、回收站与版本历史副本仍在 `NSUserDefaults`（plist）。Keychain 迁移只覆盖 `skey/bkey/ekey/pins`。修法：用 Keychain 里的随机数据密钥做信封加密（AES-GCM）后再存这四类结构。
+> **第二轮（2026-11-01）更新**：下面这些已在本轮修掉 —— SEC-01（口令/手机钥匙/回收站/快照搬进 Keychain + 启动迁移）、
+> SEC-06（备份带 PBKDF2 d2，恢复不降级强摘要）、SEC-08（恢复校验 skey/pins 形状 + 要当前本机密码）、
+> SEC-11（普通截图也遮挡）、SEC-13（遥测改落 Caches 并去掉备注/归属原文）、SEC-19（删设备连备份与还原点一起清）、
+> SEC-28（口令验证走 AppLock 持久冷却）、SEC-29（SecretStore.remove 返回成败）、SEC-31（KLV 超长拒绝而非截断）、
+> G-07（**真测试目标 + 金标差分接进 CI**）、G-09/G-10/G-11/G-13、D-09（高对比/减少透明变成真消费者）、E-O4（政策开关不再卡住）。
+> 当前未闭环见 §7。
+
+### P1（本轮已清零）
+- ~~SEC-01~~ **已修**：门锁密码、手机钥匙 `pin/ekey`、回收站与版本历史副本全部搬进 Keychain；
+  plist 只留非密字段，启动时一次性迁移并抹掉旧明文。
+  （实现与 `saveKeychain` 同一纪律：先写 Keychain 成功才允许抹明文，写失败保留明文并记遥测。）
 
 ### P2（约 12 项）
 - SEC-06（备份把 App 密码降级成 32 位 FNV、PBKDF2 仅 60k 轮）、SEC-08（恢复无条件信任包内 passcode/skey，只判非空）、SEC-11（截图保护只覆盖 2 个视图且 `isCaptured` 检测不到普通截图）、SEC-13（遥测把备注/成员名写进 UserDefaults 随备份出机）、SEC-14（备份无 HMAC，校验和 mismatch 只警告）、SEC-15（LockService/HardwareService 共用 BLE 单连接、响应可能被错消费者拿走）、SEC-19（删设备不清理备份/回滚快照/全局遥测）、SEC-28（`VerifyPasscodeSheet`/`UnlockGateScreen` 失败计数不持久）、SEC-29（`SecretStore.remove` 忽略 `SecItemDelete` 结果）、SEC-31（`buildKLV` 超 255 字节静默截断）、SEC-32（通知排期跨队列竞态）。
