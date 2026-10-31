@@ -11,8 +11,8 @@ struct GatewayScreen: View {
         let id: String
         let name: String
         let mac: String
-        let rom: String
-        let ssid: String
+        var rom: String
+        var ssid: String
         var online: Bool
         var lastCheckedAt: Int64?
         var rebooting: Bool = false

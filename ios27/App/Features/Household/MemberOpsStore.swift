@@ -76,7 +76,7 @@ enum MemberOpsStore {
 
     // MARK: - 成员级联删除（凭证进回收站）
     /// 先在界面层把名下凭证原样存进回收站，再走 Engine 的 cascadeBinMember（它只删台账）。
-    static func cascadeDelete(mac: String, memberID: String) -> Int {
+    @MainActor static func cascadeDelete(mac: String, memberID: String) -> Int {
         let pwds = DB.listPwds(mac).filter { $0.owner == memberID }
         let fps = DB.listFps(mac).filter { $0.owner == memberID }
         let batchId = UUID().uuidString

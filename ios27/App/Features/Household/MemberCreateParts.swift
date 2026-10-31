@@ -24,7 +24,7 @@ struct HHCreationStepScale: View {
         return VStack(alignment: .leading, spacing: V.S.gapXS) {
             VReading(
                 value: steps[index],
-                size: HHMetric.readingStep,
+                font: V.F.sans(HHMetric.readingStep, weight: .semibold),
                 tint: on ? V.C.text1 : (past ? V.C.text2 : V.C.text3),
                 animated: false
             )

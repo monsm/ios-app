@@ -239,7 +239,7 @@ struct SyncTimeScreen: View {
             result = SyncOutcome(ok: false, text: "同步失败：\(msg)")
         case .success(let pair):
             let now = Int64(Date().timeIntervalSince1970 * 1000)
-            lockAt = Int64((ZKProtocol.protoSecondsToUnix(Int64(pair.after)) * 1000).rounded())
+            lockAt = Int64((ZKProtocol.protoSecondsToUnix(Int64(pair.1)) * 1000).rounded())
             lastSyncedAt = now
             SettingsStore.shared.lockClockSyncedAt = now
             let residual = Int((Int64(Date().timeIntervalSince1970 * 1000) - (lockAt ?? now)) / 1000)
