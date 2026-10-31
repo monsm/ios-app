@@ -11,12 +11,15 @@ struct AppearanceScreen: View {
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
     @State private var showResetConfirm = false
+    /// 换图标失败原因（G-06：8 套备选图标接线后才有这个状态）。
+    @State private var iconError: String?
 
     var body: some View {
         ScrollView {
             VStack(spacing: V.S.gap16) {
                 SettingsHeader(title: "外观", tone: tone, status: status)
                 themePanel
+                iconPanel
                 accentPanel
                 rhythmPanel
                 geometryPanel
@@ -140,6 +143,89 @@ struct AppearanceScreen: View {
                 }
             }
             .padding(.horizontal, V.S.pageGutter)
+        }
+    }
+
+    // MARK: 应用图标（G-06：8 套 appiconset 原本是死资产）
+
+    private var iconPanel: some View {
+        VStack(spacing: V.S.gapS) {
+            VSectionLabel(text: "应用图标", trailing: "8 套")
+            VCard {
+                VStack(alignment: .leading, spacing: V.S.gapMS) {
+                    SettingsNote(text: "换图标只改桌面上的样子，不改 App 名与任何数据。系统会弹一次「已更换」提示。")
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: V.S.gapS), count: 3), spacing: V.S.gapS) {
+                        ForEach(Array(Self.alternateIcons.enumerated()), id: \.offset) { pair in
+                            let item = pair.element
+                            let on = alternateIconName == item.key
+                            Button {
+                                setAlternateIcon(item.key)
+                            } label: {
+                                HStack(spacing: V.S.gapS) {
+                                    Image(systemName: item.symbol)
+                                        .font(V.F.icon15)
+                                        .foregroundStyle(on ? V.C.blue : V.C.text3)
+                                        .accessibilityHidden(true)
+                                    Text(item.title)
+                                        .font(V.F.footnote)
+                                        .foregroundStyle(V.C.text1)
+                                    Spacer(minLength: 0)
+                                    if on {
+                                        Image(systemName: "checkmark")
+                                            .font(V.F.icon15)
+                                            .foregroundStyle(V.C.text1)
+                                            .accessibilityHidden(true)
+                                    }
+                                }
+                                .padding(.horizontal, V.S.gapS)
+                                .frame(minHeight: V.Hit.min)
+                                .background(on ? V.C.cardAlt : Color.clear, in: .rect(cornerRadius: V.R.control))
+                                .contentShape(.rect)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("应用图标 \(item.title)")
+                            .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
+                        }
+                    }
+                    if let iconError {
+                        VStatusLine(tone: .critical, text: iconError)
+                    }
+                }
+            }
+            .padding(.horizontal, V.S.pageGutter)
+        }
+    }
+
+    private static let alternateIcons: [(key: String, title: String, symbol: String)] = [
+        ("AppIcon", "默认", "app.badge"),
+        ("AppIcon-Bell", "门铃", "bell.fill"),
+        ("AppIcon-Guard", "守护", "shield.lefthalf.filled"),
+        ("AppIcon-Heart", "家人", "heart.fill"),
+        ("AppIcon-Home", "归家", "house.fill"),
+        ("AppIcon-Key", "钥匙", "key.horizontal.fill"),
+        ("AppIcon-Pin", "密码", "number.square.fill"),
+        ("AppIcon-Ring", "刻度", "circle.dashed"),
+        ("AppIcon-Shield", "盾牌", "shield.fill")
+    ]
+
+    /// nil = 默认图标（setAlternateIconName(nil)）。
+    private var alternateIconName: String? { UIApplication.shared.alternateIconName }
+
+    private func setAlternateIcon(_ key: String) {
+        iconError = nil
+        let target: String? = key == "AppIcon" ? nil : key
+        guard UIApplication.shared.supportsAlternateIcons else {
+            iconError = "这台设备不支持换图标。"
+            return
+        }
+        UIApplication.shared.setAlternateIconName(target) { error in
+            Task { @MainActor in
+                if let error {
+                    iconError = "换图标失败：" + error.localizedDescription
+                } else {
+                    AppToast.shared.show(target == nil ? "已恢复默认图标" : "图标已更换", tone: .ok)
+                }
+            }
         }
     }
 

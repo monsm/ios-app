@@ -69,10 +69,41 @@ targets:
         # DFU 升级期间需要后台保持蓝牙连接
         UIBackgroundModes:
           - bluetooth-central
-        # 局域网/WebDAV：备份工作室允许用户连自建 HTTP 服务器
-        NSLocalNetworkUsageDescription: 备份工作室需要访问你在局域网内的 WebDAV 服务器。
+        # 局域网/WebDAV：备份工作室连用户自建的 WebDAV（**只接受 https**，见 WebDAV.normalized）。
+        # NSAllowsLocalNetworking 现在的正当理由只剩「localhost 回环调试」这一条。
+        NSLocalNetworkUsageDescription: 备份工作室需要访问你在局域网内的 WebDAV 服务器（https）。
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
+        # 备选 App 图标（G-06）：8 套 icon 原本是死资产 —— 这里登记后，
+        # 设置页的「换图标」才真的能调 setAlternateIconName 生效。
+        CFBundleIcons:
+          CFBundlePrimaryIcon:
+            CFBundleIconName: AppIcon
+          CFBundleAlternateIcons:
+            AppIcon-Bell:
+              CFBundleIconFiles:
+                - AppIcon-Bell
+            AppIcon-Guard:
+              CFBundleIconFiles:
+                - AppIcon-Guard
+            AppIcon-Heart:
+              CFBundleIconFiles:
+                - AppIcon-Heart
+            AppIcon-Home:
+              CFBundleIconFiles:
+                - AppIcon-Home
+            AppIcon-Key:
+              CFBundleIconFiles:
+                - AppIcon-Key
+            AppIcon-Pin:
+              CFBundleIconFiles:
+                - AppIcon-Pin
+            AppIcon-Ring:
+              CFBundleIconFiles:
+                - AppIcon-Ring
+            AppIcon-Shield:
+              CFBundleIconFiles:
+                - AppIcon-Shield
         # 隐私清单
         ITSAppUsesNonExemptEncryption: NO
 
