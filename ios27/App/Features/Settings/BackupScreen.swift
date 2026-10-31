@@ -324,6 +324,11 @@ struct BackupScreen: View {
             do {
                 // 真链路：解密（若带口令）→ schema 升级 → checksum 校验 → 合并恢复（只增不删）。
                 let parsed = try BackupStudio.parsePreview(text: importText, password: password)
+                // SEC-14：校验和对不上 = 包被截断/改动过 —— 拒绝覆盖本机数据。
+                guard parsed.preview.checksum != .mismatch else {
+                    restoreError = "这份备份的校验和对不上 —— 可能被截断或改动过。已拒绝恢复。"
+                    return
+                }
                 let r = BackupStudio.restore(parsed.bundle)
                 restoreDone = (added: r.imported, merged: r.overwritten)
                 importText = ""

@@ -305,6 +305,13 @@ struct BackupStudioScreen: View {
             let url = BackupStudio.dir.appendingPathComponent(file.name)
             let text = try String(contentsOf: url, encoding: .utf8)
             let parsed = try BackupStudio.parsePreview(text: text, password: password.isEmpty ? nil : password)
+            // SEC-14：校验和不一致说明这份包**被改过或损坏过**（FNV 无密钥，只能测意外损坏，
+            // 但"意外损坏"恰恰是最该拦的情况：拿半截包覆盖真数据比拒绝更糟）。
+            // 旧实现只把 .mismatch 显示在预览卡上，恢复动作照旧往下走。
+            guard parsed.preview.checksum != .mismatch else {
+                outcome = "这份备份的校验和对不上 —— 可能被截断或改动过。已拒绝恢复，请换一份备份。"
+                return
+            }
             let r = BackupStudio.restore(parsed.bundle)
             outcome = "已恢复 \(file.name)：新增 \(r.imported) 项，覆盖 \(r.overwritten) 项"
             Task { await app.reload(refreshStatus: false) }
@@ -402,6 +409,11 @@ struct BackupStudioScreen: View {
     private func runMigration() async {
         do {
             let parsed = try BackupStudio.parsePreview(text: migrateText, password: password.isEmpty ? nil : password)
+            // SEC-14：换机包同样拒绝校验和不一致的包。
+            guard parsed.preview.checksum != .mismatch else {
+                outcome = "换机包校验和对不上 —— 可能被截断或改动过。已拒绝导入。"
+                return
+            }
             let r = BackupStudio.restore(parsed.bundle, lockActs: lockActs)
             outcome = "迁移完成：新增 \(r.imported) 项，覆盖 \(r.overwritten) 项，跳过 \(r.skipped) 把锁"
             migrateText = ""
