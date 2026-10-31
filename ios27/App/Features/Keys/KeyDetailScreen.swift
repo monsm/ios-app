@@ -375,9 +375,22 @@ struct KeyDetailScreen: View {
                 r = await app.deleteFingerprint(batch: batch)
             } else if let alias = alias(of: key) {
                 r = await app.deletePassword(alias: alias)
+            } else if key.kind == .mobile, let kc = app.currentKeychain,
+                      let mk = MobileKeyService.list(kc.mac).first(where: { "mkey:\($0.id)" == key.id }) {
+                // SEC-18：手机钥匙的「彻底删除」必须真撤销 —— cmd08 删锁端 PIN 再删本机记录。
+                // 旧实现只 app.keys.removeAll（内存投影），重启后钥匙还在、锁端 PIN 仍有效，
+                // 旧的 ekey 照样能开门 —— 与「彻底删除」的语义完全相反。
+                do {
+                    try await MobileKeyService.revoke(host: app, kc: kc, key: mk)
+                    app.reloadKeys(kc.mac)
+                    r = .success(())
+                } catch {
+                    r = .failure(error)
+                }
             } else {
-                // 手机钥匙：本机台账撤销（锁端 pin 由 MobileKey 页的 revoke 走 cmd08）。
+                // 既不是指纹/密码/可撤销手机钥匙：只从本机列表移除，并如实说明锁端仍有效。
                 app.keys.removeAll { $0.id == key.id }
+                actionError = "已从本机列表移除；锁端凭证未变（这条没有可下发的撤销命令）。"
                 r = .success(())
             }
             if case .failure(let e) = r {
