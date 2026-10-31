@@ -127,6 +127,31 @@ jobs:
           path: ios27/build/test.log
           if-no-files-found: ignore
 
+      # 与 build job 的 ci-log 分开：两个 job 并发，同时 force-push 同一个孤儿分支
+      # 会互相覆盖。用独立的 ci-test 分支，本地 git fetch 就能读到测试结论。
+      - name: 发布测试结果到 ci-test 分支
+        if: github.event_name == 'push' && always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          mkdir -p /tmp/citest
+          [ -f build/test.log ] && cp build/test.log /tmp/citest/test.log
+          echo "commit=$(git rev-parse HEAD)" > /tmp/citest/meta.txt
+          echo "run=$GITHUB_RUN_ID" >> /tmp/citest/meta.txt
+          echo "job=$GITHUB_JOB" >> /tmp/citest/meta.txt
+          echo "test_log=$([ -f /tmp/citest/test.log ] && echo yes || echo no)" >> /tmp/citest/meta.txt
+          echo "test_ok=$(grep -c "TEST SUCCEEDED" /tmp/citest/test.log 2>/dev/null || echo 0)" >> /tmp/citest/meta.txt
+          echo "test_failed=$(grep -cE "TEST FAILED|Testing failed:" /tmp/citest/test.log 2>/dev/null || echo 0)" >> /tmp/citest/meta.txt
+          echo "tests_executed=$(grep -cE "Test Case .* passed|Test Case .* failed" /tmp/citest/test.log 2>/dev/null || echo 0)" >> /tmp/citest/meta.txt
+          cd /tmp/citest
+          git init -q .
+          git checkout -q -b ci-test
+          git config user.name ci
+          git config user.email ci@local
+          git add -A && git commit -q -m "ci test log run=$GITHUB_RUN_ID" || true
+          git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" ci-test || true
+
   # ================= 真编译 =================
   build:
     name: 编译（iOS 27 SDK）
