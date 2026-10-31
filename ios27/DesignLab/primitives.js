@@ -51,7 +51,7 @@ const dial = (word, footnote, hint, progress, failed, size) => {
     '<svg width="' + S + '" height="' + S + '" viewBox="0 0 ' + S + ' ' + S + '" aria-hidden="true">' + ticks +
     (progress > 0 ? '<circle cx="' + R + '" cy="' + R + '" r="' + arcR + '" fill="none" stroke="var(--hairline)" stroke-width="2.5" stroke-linecap="round"/>' : '') +
     '<circle cx="' + R + '" cy="' + R + '" r="' + arcR + '" fill="none" stroke="' + (failed ? 'var(--critical)' : 'var(--base)') + '" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="' + circ + '" stroke-dashoffset="' + (circ * (1 - Math.max(progress, 0.0001))) + '" transform="rotate(-90 ' + R + ' ' + R + ')"/></svg>' +
-    '<div class="hub"><b>' + H(word) + '</b><em>' + H(footnote) + '</em><p>' + H(hint) + '</p></div></div>';
+    '<div class="hub"><b style="' + (failed ? 'color:var(--critical)' : '') + '">' + H(word) + '</b><em>' + H(footnote) + '</em><p>' + H(hint) + '</p></div></div>';
 };
 
 // 四步梯：只在真序列上用（配网 / 建档向导 / 开锁链）。这是契约 §11 唯一允许 01/02/03 的地方。

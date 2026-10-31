@@ -143,11 +143,14 @@ struct Dial: View {
     }
 
     // MARK: 中心读数
+    //
+    // 失败时中心词跟着变红：三处（红弧 / 中心词 / 横幅）如果只有弧在变，
+    // 眼睛要先读到弧才明白"出事了"，而词还是黑的 —— 那是把最重要的信息放最后。
     private var hub: some View {
         VStack(spacing: T.S.xs) {
             Text(phase.word)
                 .font(T.F.reading(30, weight: .medium))
-                .foregroundStyle(enabled ? Ink.ink : Ink.inkFaint)
+                .foregroundStyle(phase.isFailed ? State.critical : (enabled ? Ink.ink : Ink.inkFaint))
                 .contentTransition(reduceMotion ? .identity : .numericText())
                 .animation(reduceMotion ? nil : T.M.snap, value: phase.word)
             Text(footnote)

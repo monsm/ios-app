@@ -82,7 +82,7 @@ const SCREENS = [
     nav: '门',
     tab: 0,
     body: doorHeader + '<div class="gap"></div>' + P.dial('失败', '上次 3 小时前', '轻点重试', 0.72, true, 260) +
-      '<div class="gap-m"></div><div class="banner">&#9888; 门锁未响应，请靠近门锁后重试</div><div class="gap"></div>' + doorReadings,
+      '<div class="gap-m"></div><div style="display:flex;gap:var(--sp-s);align-items:flex-start;margin:0 var(--sp-gutter);padding:var(--sp-m) var(--sp-l);border-radius:var(--r-control);background:color-mix(in srgb,var(--critical) 10%,transparent)"><span style="color:var(--critical)">&#9888;</span><span style="color:var(--ink);font-size:var(--f-caption)">门锁未响应，请靠近门锁后重试</span></div><div class="gap"></div>' + doorReadings,
   },
   {
     id: 'door-empty',

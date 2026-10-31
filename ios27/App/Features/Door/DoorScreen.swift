@@ -94,17 +94,23 @@ struct DoorScreen: View {
             .animation(reduceMotion ? nil : T.M.settle, value: app.dialPhase == .opened)
             .padding(.top, T.S.s)
 
+            // 失败横幅只说**原因与下一步**，不再重复"失败"这个词 ——
+            // 那个词已经在刻度盘中心（并且变红了）。同一件事说三遍是噪音，不是强调。
             if case .failed(let reason) = app.dialPhase {
-                HStack(spacing: T.S.s) {
+                HStack(alignment: .top, spacing: T.S.s) {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                        .accessibilityHidden(true)
                         .font(T.F.icon(T.Icon.s))
                         .foregroundStyle(State.critical)
                     Text(reason)
                         .font(T.F.caption)
-                        .foregroundStyle(State.critical)
+                        .foregroundStyle(Ink.ink)
+                        .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
                 }
+                .padding(.horizontal, T.S.l)
+                .padding(.vertical, T.S.m)
+                .background(State.critical.opacity(0.10), in: .rect(cornerRadius: T.R.control))
                 .padding(.horizontal, T.S.gutter)
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
