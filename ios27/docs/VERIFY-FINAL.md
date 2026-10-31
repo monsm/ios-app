@@ -43,7 +43,7 @@
 | 2 | 30 秒内二次开锁闸 | UnlockGateScreen.swift:8 | DoorScreen `needsGate`（585）读 `lastUnlockSuccessAt` + `DB.hasPasscode`；sheet 绑定 `showUnlockGate`（579）；密码走 `DB.verifyPasscode`（UnlockGateScreen.swift:99），3 次失败冷却 30 秒 | 成立 |
 | 3 | 模块排序与显隐 | ModuleOrderSheet.swift:8 | 三槽排序 `DevLayout.order` 被 DoorScreen:48 消费；快捷格勾选写 `QuickPool.setSelected`；**但 `groupChips` 与 `statusIcons` 两个开关原先只写 `kf_dev_hidden`、门页无任何读点** → 本轮补了「多锁状态图标行」与「按组切换 chips」（DoorScreen:38/42） | **不成立→已修** |
 | 4 | 记录告警类型多选 | AlarmKindsSheet.swift:8 | RecordsScreen:423 按钮打开 sheet；`Set<Int> alarmKinds` 写 `RecordsRoute`、进 `LedgerFilter.apply`（RecordsModels:93）；列表显示已选类型 | 成立 |
-| 5 | 设备页异常提醒卡 | DoorScreen.swift:152 | `attentionCard` 现在在 226 行（原标注 152，本轮在它之前插入了状态行）（上方插入了新的状态行）；四类判据：密钥未绑定 / 30 天未校时 / 低电阈值 / 2h 内到期凭证 | 成立 |
+| 5 | 设备页异常提醒卡 | DoorScreen.swift:152 | 定义在 226 行、页面里在 body 第 47 行被渲染（原标注 152 因本轮新增两行状态条而下移）；四类判据：密钥未绑定 / 30 天未校时 / 低电阈值 / 2h 内到期凭证 | 成立 |
 | 6 | 设备页最近开门 | DoorScreen.swift:817 | `recentBlock` 在 891 行（原标注 817）；条数读 `SettingsStore.recentCount`（`kf_recent_count`），行点按 `.record(id:)` 进记录页，右上「查看全部」 | 成立（行点按落详情，不是原版的按归属过滤列表） |
 | 7 | 设备页下拉重扫 | DoorScreen.swift:76 | .refreshable 在 82 行，调 `rescan()`（预热 + refreshStatus + 失败文案） | 成立 |
 | 8 | 空态从备份恢复 | DoorScreen.swift:966 | `noLockBlock` 在 1040 行，第二按钮「从备份恢复」在 1053 行 → `.backup` | 成立 |
