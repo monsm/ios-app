@@ -65,11 +65,11 @@ enum StatsKit {
                                           lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") },
                 pwds: DB.listPwds(mac), fps: DB.listFps(mac),
                 status: DB.readStatus(mac).map { ($0.fpStock, $0.pwdStock, $0.lockTime) })
-            func esc(_ s: String) -> String {
-                s.contains(",") || s.contains("\"") ? "\"" + s.replacingOccurrences(of: "\"", with: "\"\"") + "\"" : s
-            }
+            // SEC-12：与 RecordCSV.field 同一套口径（公式注入 + 换行 + 引号），别写第二份。
+            func esc(_ s: String) -> String { RecordCSV.field(s) }
             var per = [String: Int]()
-            var rows = ["时间，类型，成员"]
+            // 表头必须是半角逗号 —— 旧实现写的是全角「，」，列数与数据行对不上（Excel 会并成一列）。
+            var rows = ["时间,类型,成员"]
             // 2026-10-29 性能：循环里每行调一次 DB.member（各自解析一份成员字典）。
             // 上周小结是一次性导出，但一条记录一行、几十行时仍会重复解析几十次。一次建表。
             let memberNames = Dictionary(DB.members().map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
