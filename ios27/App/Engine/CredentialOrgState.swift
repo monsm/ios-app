@@ -41,23 +41,70 @@ extension CredentialOrg {
     /// 用户会以为删除没生效，或者被一条指向空气的提醒反复打扰。
     static func cancelAlerts(mac: String, alias: Int) {
         let id = "c6.alert.\(mac).p\(alias)"
-        let c = UNUserNotificationCenter.current()
-        c.getPendingNotificationRequests { reqs in
-            let stale = reqs.map(\.identifier).filter { $0 == id || $0.hasPrefix(id + ".") }
-            if !stale.isEmpty { c.removePendingNotificationRequests(withIdentifiers: stale) }
+        // SEC-32：取消与排期必须走**同一条串行链**。旧实现两者各起一条
+        // getPendingNotificationRequests 异步序列：删除凭证时「取消」还在飞，
+        // 同一时刻的「排新」已经把新通知写进 pending —— 取消回调再把它一起删掉，
+        // 表现为"删了凭证，但提醒还在（或反之：改期后一条都不响）"。
+        enqueue {
+            let c = UNUserNotificationCenter.current()
+            c.getPendingNotificationRequests { reqs in
+                let stale = reqs.map(\.identifier).filter { $0 == id || $0.hasPrefix(id + ".") }
+                if !stale.isEmpty { c.removePendingNotificationRequests(withIdentifiers: stale) }
+                advance()
+            }
         }
+    }
+
+    // MARK: - SEC-32 通知排期的唯一串行链
+
+    /// 「删旧 / 排新 / 取消」三类动作全部排进同一条队列，逐个完成后再取下一个。
+    /// 旧实现让 cancelAlerts 与 scheduleAlertsOrdered 各自起异步序列，两条序列互相
+    /// 看不到对方的中间态 —— 删凭证与改期同时发生时，先删后加的顺序不成立。
+    private static let notifyQueue = Locked<[(@escaping () -> Void) -> Void]>([])
+    private static let notifyBusy = Locked(false)
+
+    /// 入队一个"完成时调 done()"的异步动作；队列空闲则立刻开跑。
+    static func enqueue(_ job: @escaping (@escaping () -> Void) -> Void) {
+        let start: Bool = notifyQueue.withLock { q in
+            q.append(job)
+            return !notifyBusy.withLock { b in
+                if b { return false }
+                b = true
+                return true
+            }
+        }
+        if start { runNextNotify() }
+    }
+
+    /// 取队首执行；队列空则释放忙标志。**任何路径都必须调 advance()**，否则整条链会卡死。
+    private static func runNextNotify() {
+        let job: ((@escaping () -> Void) -> Void)? = notifyQueue.withLock { q in
+            q.isEmpty ? nil : q.removeFirst()
+        }
+        guard let job else {
+            notifyBusy.withLock { $0 = false }
+            return
+        }
+        job { advance() }
+    }
+
+    /// 一个动作完成：继续下一个（或释放忙标志）。
+    private static func advance() {
+        Task { @MainActor in runNextNotify() }
     }
 
     /// 删旧 → 排新，严格串行（见 scheduleAlerts 的竞态说明）。
     private static func scheduleAlertsOrdered(id: String, p: LedgerPwd, a: CredAlert, mac: String) {
-        let c = UNUserNotificationCenter.current()
-        c.getPendingNotificationRequests { reqs in
-            let stale = reqs.map(\.identifier).filter { $0 == id || $0.hasPrefix(id + ".") }
-            // E-06：不再把闭包跨隔离域交给 DispatchQueue.main.async（Swift 6 下非 Sendable 函数值直接报错）。
-            // 只捕获 id / p / a / mac 这些值，在主 actor 里重建动作 —— 删先于加的顺序语义不变。
-            if !stale.isEmpty { c.removePendingNotificationRequests(withIdentifiers: stale) }
-            Task { @MainActor in
-                scheduleAlertsNow(id: id, p: p, a: a, mac: mac)
+        enqueue { done in
+            let c = UNUserNotificationCenter.current()
+            c.getPendingNotificationRequests { reqs in
+                let stale = reqs.map(\.identifier).filter { $0 == id || $0.hasPrefix(id + ".") }
+                // E-06：只捕获值，在主 actor 里重建动作 —— 删先于加的顺序语义不变。
+                if !stale.isEmpty { c.removePendingNotificationRequests(withIdentifiers: stale) }
+                Task { @MainActor in
+                    scheduleAlertsNow(id: id, p: p, a: a, mac: mac)
+                    done()
+                }
             }
         }
     }
