@@ -14,7 +14,7 @@
 |---|---|
 | 34 + 8 项复验 | **42 / 42 复核完毕**：37 项直接成立；2 项「成立但受限」（#28 品牌色、#33 纯黑，见 §2 注）；3 项**标注已修但实际不成立**（#3 模块显隐两项空开关、#26 设置分组 chip 不过滤、#32 夜间免扰无消费者），**已当场修掉** |
 | 新发现 BUG | **P0 = 0；P1 = 1；P2 = 3；P3 = 4**（§3），P1/P2 全部修掉，P3 记录 |
-| 收尾清理 | `callsig.js` 已退役（allgates 16 → 15，保留 `callsig2`）；`COMPLETION.md` 的旧 IPA `112404` → 最新 `20261031.215249`；新增 `docs/WARNINGS.md`（88 条源码 warning 分类） |
+| 收尾清理 | `callsig.js` 已退役（allgates 16 → 15，保留 `callsig2`）；`COMPLETION.md` 的旧 IPA `112404` → 最新 `20261031.223629`（对应 `a24bcac` 的 CI 产物）；新增 `docs/WARNINGS.md`（88 条源码 warning 分类） |
 | 静态检查 | 新增 `Tools/static-audit.js`（6 类高危模式）与 `Tools/parity-28.js`（原 28 Destination ↔ 现路由，28/28） |
 | 本地闸门 | `node Gates/allgates.js` → **15 / 15 通过** |
 | 最终 CI | 见 §5；末尾 §7 给最终数字 |
@@ -132,7 +132,7 @@
 | 项 | 处理 | 证据 |
 |---|---|---|
 | 退役 no-op `Gates/callsig.js` | 删除文件 + 从 `allgates.js` 的 GATES 摘除；保留 `callsig2.js`。allgates 16 → **15 道** | `Gates/allgates.js` 的 GATES 注释；`Tools/parity-28.js` 与 allgates 均绿 |
-| `docs/COMPLETION.md` 旧 IPA 链接 | `112404` → 最新 `LockKeeper-20261031.215249-unsigned.ipa`（Release `ios27-latest`，2,597,954 B，sha256 `7669b79b…a066`），并补「始终指最新」的 Release 页链接 | COMPLETION.md §四·补 |
+| `docs/COMPLETION.md` 旧 IPA 链接 | `112404` → 最新 `LockKeeper-20261031.223629-unsigned.ipa`（Release `ios27-latest`，2,609,539 B，sha256 `933579aa…a88e`，对应 `a24bcac` 的 CI 产物），并补「始终指最新」的 Release 页链接 | COMPLETION.md §四·补 |
 | 88 条 warning 分类 | 新增 `docs/WARNINGS.md`：88 条源码（去重 83 个位置）+ 1 项目级 + 1 工具提示，按并发/Swift 6（62）、未使用值（19）、Deprecated（2）分类，逐条列 file:line 与评估 | `docs/WARNINGS.md` |
 | 设置页 help 分组 | 五组 chip 之前无「帮助」节 → 把协议测试/关于拆成独立「帮助」节，分组过滤才完整 | SettingsScreen.swift:508-529 |
 | 新增静态检查 | `Tools/static-audit.js`（六类高危模式，报告型；`--strict` 时 P0 红）、`Tools/parity-28.js`（28/28） | 两脚本均可本地跑 |
@@ -160,7 +160,7 @@
 
 | 阶段 | commit | run | 结论 |
 |---|---|---|---|
-| docs 收尾 | `__DOCS_COMMIT__` | `__DOCS_RUN__` | `__DOCS_VERDICT__` |
+| docs 收尾 | `294da3e` | `41210571077` | **绿**：BUILD SUCCEEDED + ARCHIVE SUCCEEDED，errors=0 |
 
 > 说明：本轮工作期间有并行会话在同一工作树提交（`64acaa4` / `7a4feeb`），其中 `64acaa4` 曾把 `BackupStudioKit.swift` 截断导致 `swiftparse` 红；`7a4feeb` 已恢复并在 HEAD 保留 FNV 校验降级为告警的意图。本报告以本轮最终提交为准。
 
