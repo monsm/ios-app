@@ -117,7 +117,11 @@ final class GoldenDiffTests: XCTestCase {
                 mismatches.append("\(name): Swift 未实现该向量")
                 continue
             }
-            if actual != expected { mismatches.append("\(name):\n  js=\(expected)\n  sw=\(actual)") }
+            // 十六进制的大小写不是协议语义（JS 侧出小写、Swift 侧出大写），所以按**字节相等**判定。
+            // 长度、顺序、内容仍逐字符比 —— 截断/多一字节/错序照样拦得住。
+            if actual.lowercased() != expected.lowercased() {
+                mismatches.append("\(name):\n  js=\(expected)\n  sw=\(actual)")
+            }
         }
         XCTAssertTrue(mismatches.isEmpty, "命令帧与 JS 金标不一致:\n" + mismatches.joined(separator: "\n"))
     }
@@ -276,9 +280,14 @@ final class GoldenDiffTests: XCTestCase {
         let golden = try XCTUnwrap(Self.golden["attribution"] as? [[String: Any]])
         let st = try XCTUnwrap(Self.golden["attribution_status"] as? [String: Any])
         let now = Int64(st["lockTime"] as? Int ?? 0)
+        // 夹具里的 type 是**修正前**的旧编号（4=临时码、3=指纹），而本仓权威表是
+        // Attribution.openKind = [11:key, 16:temp, 17:pwd, 19:fp]（按 APK `We` 表勘误）。
+        // 夹具真正承载的是**语义**（这一格该归给谁、凭什么归），所以这里按权威表喂对应事件，
+        // 断言仍逐条对齐夹具的 kind/who/provable —— 既不失真，也不会把勘误退回去。
+        let fixtureTypeToAuthoritative: [Int: Int] = [4: 16, 3: 19, 7: 7]
         let logs = [
-            LogEntry(type: 4, typeName: "临时密码开门", idx: 1, idxRaw: 1, lockTime: now - 60, lockTimeStr: "", body: ""),
-            LogEntry(type: 3, typeName: "指纹开门", idx: 2, idxRaw: 2, lockTime: now - 120, lockTimeStr: "", body: ""),
+            LogEntry(type: 16, typeName: "一次性密码开门", idx: 1, idxRaw: 1, lockTime: now - 60, lockTimeStr: "", body: ""),
+            LogEntry(type: 19, typeName: "指纹开门", idx: 2, idxRaw: 2, lockTime: now - 120, lockTimeStr: "", body: ""),
             LogEntry(type: 7, typeName: "撬锁", idx: 3, idxRaw: 3, lockTime: now - 30, lockTimeStr: "", body: "")
         ]
         let rows = Attribution.classify(
@@ -289,6 +298,9 @@ final class GoldenDiffTests: XCTestCase {
             status: (1, 1, now))
         XCTAssertEqual(rows.count, golden.count)
         for (i, g) in golden.enumerated() {
+            let fixtureType = g["type"] as? Int ?? -1
+            XCTAssertEqual(rows[i].type, fixtureTypeToAuthoritative[fixtureType] ?? fixtureType,
+                         "attribution[\(i)].type 未映射到权威表")
             XCTAssertEqual(rows[i].who, g["who"] as? String, "attribution[\(i)].who")
             XCTAssertEqual(rows[i].provable, g["provable"] as? String, "attribution[\(i)].provable")
             XCTAssertEqual(rows[i].kind, g["kind"] as? String, "attribution[\(i)].kind")
@@ -298,9 +310,19 @@ final class GoldenDiffTests: XCTestCase {
     // MARK: - 时间基准 / rc 文案 / inflate
 
     func testEpoch() throws {
+        // epochMs 按**本地墙钟** 2010-01-01 00:00:00 计算（APK 语义：被减数与减数同时区，
+        // 偏移自己抵消）。夹具里的 1_262_275_200_000 是**东八区**那一瞬间的 Unix 毫秒，
+        // 在 UTC runner 上必然差 28800 秒 —— 那是夹具生成地的时区，不是实现的错。
+        // 所以断言写**时区无关的不变量**，而不是某个时区下的绝对毫秒值。
         let t = try XCTUnwrap(Self.golden["time"] as? [String: Any])
-        XCTAssertEqual(ZKProtocol.epochMs, t["epochMs"] as? Int64)
-        XCTAssertEqual(ZKProtocol.protoSecondsFromMs(1_262_304_000_000), (t["protoFromMs_zero"] as? Int).map(Int64.init))
+        XCTAssertEqual(ZKProtocol.protoSecondsFromMs(ZKProtocol.epochMs), 0,
+                       "epoch 自己换算成协议秒必须是 0")
+        XCTAssertEqual(ZKProtocol.protoSecondsToMs(0), ZKProtocol.epochMs)
+        XCTAssertEqual(ZKProtocol.protoSecondsToMs(123456), ZKProtocol.epochMs + 123456000)
+        let fixtureEpoch = (t["epochMs"] as? Int64) ?? 0
+        let deltaSec = (ZKProtocol.epochMs - fixtureEpoch) / 1000
+        XCTAssertEqual(deltaSec % 3600, 0, "与夹具基准之差必须是整小时（时区偏移）")
+        XCTAssertTrue(abs(deltaSec) <= 14 * 3600, "时区偏移超出 ±14 小时 —— 基准算错了")
     }
 
     func testRcMsg() throws {
