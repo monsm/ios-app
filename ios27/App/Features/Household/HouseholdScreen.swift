@@ -4,6 +4,7 @@
 // 数据从哪来：AppModel.members（锁端可证字段）+ HouseholdRoster（本机档案扩展与本周主责）+ AppModel.entries（台账）。
 // 主动作：新建成员（走建档向导）。次入口：归档、访客虚拟分组、家庭场景。
 import SwiftUI
+import UIKit
 
 /// 名册排序四档（264/466）。全部按本机可读字段排，不假装有服务端排序。
 enum HHMemberSort: CaseIterable, Hashable {
@@ -200,7 +201,10 @@ struct HouseholdScreen: View {
                     symbol: "person.badge.clock",
                     readingValue: "\(visitorOpens)",
                     readingUnit: "条",
-                    action: { router.request(.dest(.records)) }
+                    action: {
+                        RecordsRoute.shared.visitorOnly = true
+                        router.request(.tab(.records))
+                    }
                 )
             }
         }
@@ -272,6 +276,9 @@ struct HouseholdScreen: View {
         .buttonStyle(.plain)
         .contextMenu {
             Button { open(member) } label: { Label("成员 360", systemImage: "person.text.rectangle") }
+            if let phone = DB.member(member.id)?.phone, !phone.isEmpty {
+                Button { call(phone) } label: { Label("呼叫 \(phone)", systemImage: "phone") }
+            }
             Button { archive(member) } label: { Label("归档", systemImage: "archivebox") }
         }
     }
@@ -375,6 +382,13 @@ struct HouseholdScreen: View {
     private func open(_ member: MemberCard) {
         roster.focusMember = member.id
         router.request(.dest(.memberDetail))
+    }
+
+    /// 一键呼叫：清洗非数字，少于 3 位不给（不是电话号码）。没有电话字段时入口不出现。
+    private func call(_ phone: String) {
+        let digits = phone.filter(\.isNumber)
+        guard digits.count >= 3, let url = URL(string: "tel://" + digits) else { return }
+        UIApplication.shared.open(url)
     }
 
     private func archive(_ member: MemberCard) {

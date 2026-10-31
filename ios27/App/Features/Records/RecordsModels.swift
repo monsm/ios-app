@@ -8,6 +8,14 @@
 // 拉取链路（cmd16 翻页）仍待 Engine 接线，见 RecordsScreen.read() 的 TODO(engine)。
 import SwiftUI
 
+/// 记录的锁范围（原 RecordsFilters.swift:105-140）：当前锁 / 全部锁。
+enum RecordLockScope: String, CaseIterable, Identifiable {
+    case current = "当前锁"
+    case all = "全部锁"
+
+    var id: String { rawValue }
+}
+
 // MARK: - 台账档位（record.filter.fields 在台账模型上可用的子集）
 
 /// 只按 LedgerEntry 真有的语义色分档，不按事件文字猜类型。
@@ -74,12 +82,17 @@ enum LedgerFilter {
                       scope: LedgerScope,
                       member: String,
                       query: LedgerQuery,
-                      dayFocus: String?) -> [LedgerEntry] {
+                      dayFocus: String?,
+                      alarmKinds: Set<Int> = [],
+                      visitorOnly: Bool = false) -> [LedgerEntry] {
         entries.filter { entry in
             scope.matches(entry)
                 && (member.isEmpty || (entry.owner ?? "") == member)
                 && query.matches(entry)
                 && (dayFocus == nil || TimeFormat.dayKey(entry.at) == dayFocus)
+                && (alarmKinds.isEmpty || (entry.rawType.map { alarmKinds.contains($0) } ?? false))
+                && (!visitorOnly || ((entry.owner ?? "").isEmpty
+                                     && (entry.event.contains("临时") || entry.event.contains("一次性"))))
         }
     }
 
@@ -260,7 +273,8 @@ enum RecordsSource {
                 event: log.displayTypeName,
                 owner: owner(log, members: members),
                 tone: tone(log),
-                detail: detail(log, lockName: lockName)
+                detail: detail(log, lockName: lockName),
+                rawType: log.type
             ))
         }
         return Load(entries: timed.sorted { $0.at > $1.at }, untimed: untimed)

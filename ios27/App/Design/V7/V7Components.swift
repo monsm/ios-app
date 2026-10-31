@@ -622,6 +622,8 @@ struct VTabItem: Identifiable {
     let slot: TabSlot
     let title: String
     let symbol: String
+    /// 右上角角标（凭证 Tab 的近 7 日到期数）。nil / 0 = 不画。
+    var badge: Int? = nil
 
     var id: Int { slot.rawValue }
 
@@ -652,6 +654,17 @@ struct VFloatingTabBar: View {
                             .font(V.F.tabIcon)
                             .foregroundStyle(selected ? V.C.text1 : V.C.text3)
                             .accessibilityHidden(true)
+                            .overlay(alignment: .topTrailing) {
+                                if let badge = item.badge, badge > 0 {
+                                    Text(badge > 9 ? "9+" : "\(badge)")
+                                        .font(V.F.microSmall)
+                                        .foregroundStyle(V.C.text1)
+                                        .padding(.horizontal, V.S.gapXS)
+                                        .background(V.C.red, in: Capsule())
+                                        .offset(x: V.S.gapMS, y: -V.S.gapS)
+                                        .accessibilityHidden(true)
+                                }
+                            }
                         Text(item.title)
                             .font(V.F.tab)
                             .foregroundStyle(selected ? V.C.text1 : V.C.text3)
@@ -672,7 +685,7 @@ struct VFloatingTabBar: View {
                     .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(item.title)
+                .accessibilityLabel(item.badge.map { $0 > 0 ? "\(item.title)，\($0) 条近 7 日到期" : item.title } ?? item.title)
                 .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
             }
         }

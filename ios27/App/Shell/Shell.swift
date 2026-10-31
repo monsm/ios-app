@@ -20,13 +20,21 @@ struct Shell: View {
 
             VStack(spacing: 0) {
                 Spacer(minLength: 0)
-                VFloatingTabBar(selection: $router.tab)
+                VFloatingTabBar(selection: $router.tab, items: tabItems)
                     .padding(.bottom, V.Tab.bottom)
             }
             .ignoresSafeArea(.container, edges: .bottom)
         }
         .background(V.C.bg.ignoresSafeArea())
         .sensoryFeedback(.selection, trigger: router.tab)
+    }
+
+    /// 凭证 Tab 的近 7 日到期角标：读 Engine 的 expiringSoonCount（跨全部锁）。
+    private var tabItems: [VTabItem] {
+        var items = VTabItem.all
+        let badge = CredentialOrg.expiringSoonCount(macs: DB.keychains().map(\.mac))
+        if let i = items.firstIndex(where: { $0.slot == .keys }) { items[i].badge = badge }
+        return items
     }
 
     @ViewBuilder

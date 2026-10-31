@@ -221,6 +221,10 @@ struct LockSettingsScreen: View {
             Text("更多").font(V.F.section).foregroundStyle(V.C.text1)
             VCard {
                 VStack(spacing: 0) {
+                    VListRow(title: "锁信息名片", detail: "固件 / 容量 / 电量采样 / 链路验证", systemImage: "info.circle", tint: V.C.miniBlue) {
+                        router.request(.dest(.deviceInfo))
+                    }
+                    VDivider()
                     VListRow(title: "电池档案", detail: "电量采样 / 五档 / 电池型号与换电日期", systemImage: "battery.75percent", tint: V.C.rewardGreen) {
                         router.request(.dest(.batteryProfile))
                     }

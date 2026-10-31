@@ -42,7 +42,7 @@ struct RootView: View {
         .preferredColorScheme(colorScheme)
         .dynamicTypeSize(settings.axBigText ? .accessibility2 : .large)
         // 减弱动态：解锁闸门 → 主界面的切换改成直接出现，而不是淡入
-        .animation(reduceMotion ? nil : V.M.move, value: app.unlocked)
+        .animation(reduceMotion ? nil : (settings.motion == .calm ? nil : (settings.motion == .lively ? V.M.settle : V.M.move)), value: app.unlocked)
         // 装配：把路由注入 AppModel —— 这是 Engine 唯一能触达界面的出口（EngineHost）。
         // 同时注册到 EngineHostRegistry，供通知回调这类没有视图上下文的路径取用。
         .onAppear {
@@ -97,6 +97,7 @@ struct RootView: View {
     }
 
     private var colorScheme: ColorScheme? { settings.theme.colorScheme }
+
 }
 
 /// 只读试验模式常驻条。

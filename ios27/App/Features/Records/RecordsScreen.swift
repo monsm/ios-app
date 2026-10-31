@@ -17,6 +17,12 @@ struct RecordsScreen: View {
     @State private var query = ""
     @State private var scope: LedgerScope = .all
     @State private var member = ""
+    @State private var lockScope: RecordLockScope = .current
+    @State private var selectedMac = ""
+    @State private var alarmKinds: Set<Int> = []
+    @State private var visitorOnly = false
+    @State private var showAlarmKinds = false
+    @State private var hydrated = false
     @State private var entries: [LedgerEntry] = []
     @State private var untimed = 0
     @State private var readAt: Int64?
@@ -31,10 +37,15 @@ struct RecordsScreen: View {
                            scope: scope,
                            member: member,
                            query: LedgerQuery(query),
-                           dayFocus: route.dayFocus)
+                           dayFocus: route.dayFocus,
+                           alarmKinds: alarmKinds,
+                           visitorOnly: visitorOnly)
     }
 
-    private var mac: String { app.lock?.id ?? "" }
+    private var mac: String {
+        if lockScope == .all { return "" }
+        return selectedMac.isEmpty ? (app.lock?.id ?? "") : selectedMac
+    }
     private var groups: [LedgerDayGroup] { LedgerDayGroup.make(LedgerGrouping.group(filtered)) }
     private var lockName: String { app.lock?.name ?? "门锁" }
 
@@ -43,6 +54,8 @@ struct RecordsScreen: View {
         if scope != .all { count += 1 }
         if !member.isEmpty { count += 1 }
         if !LedgerQuery(query).isEmpty { count += 1 }
+        if !alarmKinds.isEmpty { count += 1 }
+        if visitorOnly { count += 1 }
         return count
     }
 
@@ -86,6 +99,7 @@ struct RecordsScreen: View {
                         miniGrid
                         secondGrid
                         searchCard
+                        if visitorOnly { visitorCard }
                         if let day = route.dayFocus { dayFocusCard(day) }
                         if reading {
                             busyCard
@@ -125,6 +139,10 @@ struct RecordsScreen: View {
             }
         }
         .task { await app.reload(refreshStatus: false) }
+        .sheet(isPresented: $showAlarmKinds) { AlarmKindsSheet() }
+        .onChange(of: scope) { _, _ in saveFilters() }
+        .onChange(of: member) { _, _ in saveFilters() }
+        .onChange(of: alarmKinds) { _, _ in saveFilters() }
     }
 
     // MARK: - 头部（R3：标题 22/600 + 日期 11.5 + 头像 Ø34）
@@ -394,6 +412,10 @@ struct RecordsScreen: View {
                         .font(V.F.cardTitle)
                         .foregroundStyle(V.C.text6)
                     Spacer(minLength: 0)
+                    Button("告警类型") { showAlarmKinds = true }
+                        .font(V.F.footnote)
+                        .foregroundStyle(alarmKinds.isEmpty ? V.C.blue : V.C.warning)
+                        .accessibilityLabel(alarmKinds.isEmpty ? "告警类型筛选" : "告警类型已选 \(alarmKinds.count) 项")
                     Button("工作室") { router.request(.dest(.recordsStudio)) }
                         .font(V.F.footnote)
                         .foregroundStyle(V.C.blue)
@@ -441,6 +463,34 @@ struct RecordsScreen: View {
                     }
                 }
                 .scrollIndicators(.hidden)
+                HStack(spacing: V.S.gapS) {
+                    ForEach(RecordLockScope.allCases) { item in
+                        chip(title: item.rawValue, selected: item == lockScope) {
+                            lockScope = item
+                            reload()
+                        }
+                    }
+                    Spacer(minLength: 0)
+                    Menu {
+                        ForEach(DB.keychains()) { kc in
+                            Button(LockArchive.displayName(kc) + (DB.normalizeMac(kc.mac) == DB.normalizeMac(mac) ? " ✓" : "")) {
+                                switchLock(kc)
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: V.S.gapXS) {
+                            Text("换锁")
+                                .font(V.F.footnote)
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(V.F.chevron)
+                                .accessibilityHidden(true)
+                        }
+                        .foregroundStyle(V.C.blue)
+                        .frame(minHeight: V.Hit.min)
+                        .contentShape(.rect)
+                    }
+                    .accessibilityLabel("切换当前锁")
+                }
                 if memberOptions.count > 1 {
                     ScrollView(.horizontal) {
                         HStack(spacing: V.S.gapS) {
@@ -450,6 +500,12 @@ struct RecordsScreen: View {
                         }
                     }
                     .scrollIndicators(.hidden)
+                }
+                if !alarmKinds.isEmpty {
+                    Text("告警类型 " + alarmKinds.sorted().map { RecordVerbs.alarmVerb[$0] ?? "#\($0)" }.joined(separator: " / "))
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.warning)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 HStack(alignment: .firstTextBaseline, spacing: V.S.gapS) {
                     Text("\(filtered.count)")
@@ -493,7 +549,7 @@ struct RecordsScreen: View {
     // MARK: - 时间线（按自然日分组）
 
     private var timeline: some View {
-        LazyVStack(alignment: .leading, spacing: V.S.gapM) {
+        LazyVStack(alignment: .leading, spacing: timelineSpacing) {
             ForEach(groups) { group in
                 VStack(alignment: .leading, spacing: V.S.gapS) {
                     HStack(alignment: .firstTextBaseline, spacing: V.S.gapS) {
@@ -656,21 +712,104 @@ struct RecordsScreen: View {
         query = ""
         scope = .all
         member = ""
+        alarmKinds = []
+        visitorOnly = false
         route.dayFocus = nil
     }
 
     private func reload() {
-        guard !mac.isEmpty else {
+        guard lockScope == .all || !mac.isEmpty else {
             entries = []
             untimed = 0
             readAt = nil
             return
         }
-        overlay.hydrate(mac: mac)
-        let load = RecordsSource.load(mac: mac, lockName: lockName, members: app.members)
-        entries = load.entries
-        untimed = load.untimed
-        readAt = RecordsSource.lastSync(mac: mac)
+        overlay.hydrate(mac: mac.isEmpty ? app.currentMac : mac)
+        let targets: [Keychain] = lockScope == .all
+            ? DB.keychains()
+            : DB.keychains().filter { DB.normalizeMac($0.mac) == DB.normalizeMac(mac) }
+        var merged: [LedgerEntry] = []
+        var untimedTotal = 0
+        var synced: Int64?
+        for kc in targets {
+            let load = RecordsSource.load(mac: kc.mac,
+                                          lockName: LockArchive.displayName(kc),
+                                          members: app.members)
+            merged.append(contentsOf: load.entries)
+            untimedTotal += load.untimed
+            if lockScope == .current { synced = RecordsSource.lastSync(mac: kc.mac) }
+        }
+        entries = merged.sorted { $0.at > $1.at }
+        untimed = untimedTotal
+        readAt = synced
+    }
+
+    /// 开场策略：QueryFilters.load 已按 kf_filter_default 裁决「记住上次 / 每次空白 / 每次只看告警」。
+    private func hydrateFilters() {
+        guard !hydrated else { return }
+        hydrated = true
+        let m = mac.isEmpty ? app.currentMac : mac
+        guard !m.isEmpty else { return }
+        let saved = QueryFilters.load(mac: m)
+        if saved.failedOnly { scope = .failed }
+        else if saved.alarmOnly { scope = .alarm }
+        else { scope = .all }
+        member = saved.member
+        alarmKinds = saved.alarmKinds
+    }
+
+    /// 过滤组合按锁记住（kf_rflt_<mac>），切回「记住上次」时用户设过的那份还在。
+    private func saveFilters() {
+        let m = mac.isEmpty ? app.currentMac : mac
+        guard !m.isEmpty, hydrated else { return }
+        var f = QueryFilters()
+        f.alarmOnly = scope == .alarm
+        f.failedOnly = scope == .failed
+        f.member = member
+        f.alarmKinds = alarmKinds
+        f.save(mac: m)
+    }
+
+    private func switchLock(_ kc: Keychain) {
+        selectedMac = kc.mac
+        DB.currentMac = kc.mac
+        lockScope = .current
+        Task { @MainActor in
+            await app.reload(refreshStatus: false)
+            reload()
+        }
+    }
+
+    private var visitorCard: some View {
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapS) {
+                HStack(spacing: V.S.gapS) {
+                    VStateDot(tone: .attention, word: "访客过滤")
+                    Text("只看访客 · 临时码未归属")
+                        .font(V.F.bodyStrong)
+                        .foregroundStyle(V.C.text1)
+                    Spacer(minLength: 0)
+                    Button("清除") { visitorOnly = false }
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.blue)
+                        .frame(minHeight: V.Hit.min)
+                        .accessibilityLabel("清除访客过滤")
+                }
+                Text("这里只显示临时码 / 一次性密码且没有归属人的开门记录 —— 与「家」页访客卡的口径一致。")
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.horizontal, V.S.cardGutter)
+    }
+
+    private var timelineSpacing: CGFloat {
+        switch DB.store.getString("kf_tl_gap") {
+        case "tight": return V.S.gapS
+        case "loose": return V.S.gapL
+        default: return V.S.gapM
+        }
     }
 
     @MainActor
@@ -679,6 +818,14 @@ struct RecordsScreen: View {
         guard !mac.isEmpty else {
             readNote = "还没有门锁，没有可读的台账"
             return
+        }
+        if lockScope == .all {
+            readNote = "全部锁模式只展示已缓存记录；要读锁内日志，先切到具体一把锁。"
+            return
+        }
+        if !selectedMac.isEmpty, selectedMac != app.lock?.id {
+            DB.currentMac = selectedMac
+            await app.reload(refreshStatus: false)
         }
         reading = true
         readNote = nil
@@ -702,6 +849,11 @@ struct RecordsScreen: View {
     }
 
     private func consume() {
+        hydrateFilters()
+        if route.visitorOnly {
+            visitorOnly = true
+            route.visitorOnly = false
+        }
         reload()
         let context = router.consume()
         switch context {

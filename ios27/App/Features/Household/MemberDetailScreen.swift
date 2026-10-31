@@ -4,6 +4,7 @@
 // 数据从哪来：AppModel.members 里那一位 + HouseholdRoster（档案扩展与本周主责）+ AppModel.entries（摘录）。
 // 主动作：保存档案（同屏唯一 signal 填充）。角色是点一下即生效的真交互，矩阵当场跟着亮灭。
 import SwiftUI
+import UIKit
 
 struct MemberDetailScreen: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -11,6 +12,7 @@ struct MemberDetailScreen: View {
     @Environment(Router.self) private var router
 
     @State private var draft: HHMemberExtras = HHMemberExtras()
+    @State private var phone = ""
     @State private var loadedID: String?
     @State private var confirmDelete = false
     @State private var saved = false
@@ -260,6 +262,11 @@ struct MemberDetailScreen: View {
                 HHTextField(label: "分组标签", text: $draft.groupTag, placeholder: "家人 / 访客 / 服务人员")
                 HHTextField(label: "家庭便签", text: $draft.note, placeholder: "如：周六换锁芯")
                 HHTextField(label: "紧急联系", text: $draft.emergency, placeholder: "姓名 + 电话")
+                HHTextField(label: "电话（用于一键呼叫）", text: $phone, placeholder: "如 138 0000 0000")
+                if !phone.isEmpty {
+                    VOutlineButton(title: "呼叫 \(phone)", systemImage: "phone") { call() }
+                        .disabled(phone.filter(\.isNumber).count < 3)
+                }
 
                 Text("emoji 代号")
                     .font(V.F.unit)
@@ -327,6 +334,7 @@ struct MemberDetailScreen: View {
         guard let m = member else { return }
         if loadedID != m.id {
             draft = roster.extras(for: m.id)
+            phone = DB.member(m.id)?.phone ?? ""
             loadedID = m.id
             saved = false
         }
@@ -347,7 +355,16 @@ struct MemberDetailScreen: View {
             e.emergency = draft.emergency.trimmingCharacters(in: .whitespaces)
             e.emoji = draft.emoji
         }
+        // 电话是 Engine Member 的独立字段（kf_members），不走 MemberExt。
+        DB.setMemberInfo(member.id, ["phone": phone.trimmingCharacters(in: .whitespaces)])
         saved = true
+    }
+
+    /// 一键呼叫：清洗非数字，少于 3 位不给。
+    private func call() {
+        let digits = phone.filter(\.isNumber)
+        guard digits.count >= 3, let url = URL(string: "tel://" + digits) else { return }
+        UIApplication.shared.open(url)
     }
 
     internal func toggleArchive() {

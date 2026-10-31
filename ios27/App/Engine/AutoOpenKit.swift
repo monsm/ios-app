@@ -350,7 +350,7 @@ final class AutoOpenController {
             inFlight = true
             Task { await self.dispatch(mac: mac) }
         default:
-            AutoOpen.audit(mac, "拒开 " + AutoOpenGate.rejectText(rej) + " · " + Self.doorName(mac))
+            AutoOpen.audit(mac, "拒开 " + AutoOpenGate.rejectText(rej) + " · " + Self.doorName(mac: mac))
         }
     }
 

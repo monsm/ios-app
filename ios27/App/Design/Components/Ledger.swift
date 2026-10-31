@@ -17,6 +17,8 @@ struct LedgerEntry: Identifiable, Hashable {
     let tone: Tone
     /// 详情（展开后可见）。
     var detail: String? = nil
+    /// 锁端日志类型（cmd16 的 type 字节）。告警类型多选按它筛，不从事件文案猜。
+    var rawType: Int? = nil
 }
 
 extension LedgerEntry {

@@ -657,7 +657,7 @@ private struct V7KeyRow: View {
                 .foregroundStyle(V.C.text4)
                 .accessibilityHidden(true)
         }
-        .frame(minHeight: V.List.rowMinHeight)
+        .frame(minHeight: V.List.rowMinHeight + (SettingsStore.shared.rowHeight == "tall" ? V.List.rowTallExtra : 0))
         .contentShape(.rect)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(key.name)，\(key.kind.rawValue)，\(KeysState.word(key, now: now))")

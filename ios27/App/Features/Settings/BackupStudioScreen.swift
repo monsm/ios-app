@@ -426,7 +426,7 @@ struct BackupStudioScreen: View {
 // MARK: - 库体指纹
 
 enum SelfCheck {
-    static func fingerprint() -> String {
+    @MainActor static func fingerprint() -> String {
         BackupCanonical.fnv1a32Hex(BackupCanonical.exportText(BackupKit.collectAll()))
     }
 }

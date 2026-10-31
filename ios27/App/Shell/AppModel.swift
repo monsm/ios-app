@@ -208,7 +208,8 @@ final class AppModel {
                 at: ms,
                 event: c.displayTypeName,
                 owner: nil,
-                tone: tone
+                tone: tone,
+                rawType: c.type
             )
         }
     }
@@ -442,7 +443,7 @@ final class AppModel {
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
-            try await LockService.shared.fpDelete(batch)
+            try await LockService.shared.fpDelete(UInt32(batch))
             var l = DB.ledger(mac)
             l.fps.removeAll { $0.batch == batch }
             DB.saveLedger(mac, l)

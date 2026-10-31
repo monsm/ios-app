@@ -177,7 +177,7 @@ struct DoorScreen: View {
     private var attentionItems: [(text: String, icon: String, tone: Tone)] {
         var out: [(String, String, Tone)] = []
         let mac = app.currentMac
-        if (app.lastStatus?.sKeyStatus ?? 0) != 0 {
+        if (app.lastStatus?.status.sKeyStatus ?? 0) != 0 {
             out.append(("密钥尚未绑定，这把锁可能还没完成配网", "exclamationmark.triangle.fill", .attention))
         }
         let lastSync = DB.syncTime(mac)
@@ -552,7 +552,7 @@ struct DoorScreen: View {
             items.append(.init(label: "固件", value: lock.firmware.isEmpty ? "未知" : lock.firmware))
         }
         if HeroStats.shows("lockclock") {
-            let clock = app.lastStatus.map { ProtoTime.localStr($0.lockTime) } ?? "未读到"
+            let clock = app.lastStatus.map { ProtoTime.localStr($0.status.lockTime) } ?? "未读到"
             items.append(.init(label: "锁钟", value: clock))
         }
         items.append(.init(label: "钥匙", value: app.currentKeychain?.ekey.isEmpty == false ? "永久" : "未生成"))
@@ -898,59 +898,3 @@ struct DoorScreen: View {
                     VListRow(
                         title: "成员",
                         detail: "家人与访客",
-                        systemImage: "person.2.fill",
-                        tint: V.C.rewardGreen
-                    ) { router.request(.dest(.household)) }
-                }
-            }
-        }
-        .padding(.horizontal, V.S.cardGutter)
-        .padding(.top, V.S.gapL)
-    }
-
-    // MARK: - 空态（必须给出路：添加 + 从备份恢复）
-
-    private var noLockBlock: some View {
-        VCard {
-            VStack(alignment: .leading, spacing: V.S.gapM) {
-                Text("还没有添加门锁")
-                    .font(V.F.displayB)
-                    .foregroundStyle(V.C.text1)
-                Text("把锁的后面板打开，长按 RESET 直到三声嘀，然后在这里添加。换过手机的话，也可以先从备份恢复。")
-                    .font(V.F.body)
-                    .foregroundStyle(V.C.text2)
-                    .fixedSize(horizontal: false, vertical: true)
-                VActionButton(title: "添加门锁", systemImage: "plus") {
-                    router.request(.dest(.addLock))
-                }
-                VOutlineButton(title: "从备份恢复", systemImage: "arrow.down.doc") {
-                    router.request(.dest(.backup))
-                }
-            }
-        }
-        .padding(.horizontal, V.S.pageGutterA)
-        .padding(.top, V.S.gapL)
-    }
-
-    // MARK: - 下拉重扫
-
-    private func rescan() async {
-        await link.preheat()
-        await app.refreshStatus()
-        if let err = app.lastError {
-            refreshNote = "重扫失败 · \(err)"
-            app.lastError = nil
-        } else {
-            let now = Int64(Date().timeIntervalSince1970 * 1000)
-            refreshNote = "已重新扫描 · \(TimeFormat.clock(now))"
-        }
-    }
-}
-
-#Preview("DoorScreen") {
-    NavigationStack {
-        DoorScreen()
-    }
-    .environment(AppModel())
-    .environment(Router())
-}
