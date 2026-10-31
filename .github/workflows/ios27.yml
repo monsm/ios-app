@@ -94,45 +94,16 @@ jobs:
           set -o pipefail
           mkdir -p build
           echo "== Xcode 版本 =="; xcodebuild -version
-          # 本工程最低部署版本是 iOS 27.0。镜像自带的模拟器 runtime 常常比它旧，
-          # 于是 xcodebuild 报 "Unable to find a destination" 而**一行测试都不跑**。
-          # 这里先尝试把 iOS 平台 runtime 装上（幂等，失败不致命但要如实记录）。
-          if ! xcrun simctl list runtimes 2>/dev/null | grep -q "iOS 27"; then
-            echo "== 下载 iOS 平台 runtime =="
-            xcodebuild -downloadPlatform iOS 2>&1 | tail -20 || true
-          fi
-          echo "== 可用 runtime =="; xcrun simctl list runtimes || true
-          # 取一台真可用的 iPhone 设备；取不到就**明确标记"未执行"**并写进 meta，
-          # 绝不静默通过 —— 否则本机看到的会是"绿"，而实际上一条断言都没跑。
-          # 用 simctl 的 JSON 输出取设备名。**不要用 sed 的 \s**：BSD sed 不支持它，
-          # 上一版因此把整行「    iPhone 17 Pro (UDID) (Shutdown)」当成设备名，
-          # xcodebuild 找不到设备、一条断言都没跑（本轮实测踩到）。
-          DEV=$(xcrun simctl list devices available -j 2>/dev/null | python3 -c \
-          "import json,sys;d=json.load(sys.stdin);names=[n for v in d.get(\"devices\",{}).values() for n in v if n.get(\"isAvailable\") and \"iPhone\" in n.get(\"name\",\"\")];print(names[0][\"name\"] if names else \"\")")
-          if [ -z "$DEV" ]; then
-            echo "test_executed=no" >> "$GITHUB_OUTPUT"
-            echo "::warning::镜像没有可用的 iOS 模拟器 runtime（部署目标 iOS 27.0）—— 金标测试本轮**未执行**。这不是通过。"
-            exit 0
-          fi
-          # 关键判据：镜像里的 iOS runtime 必须 >= 部署目标（iOS 27.0）。
-          # xcode-27 / macos-latest 两个镜像都常常只有 iOS 26.x runtime ——
-          # 那种情况下 xcodebuild 一定 "Unable to find a destination"，
-          # 而**一条断言都没跑**。这里如实标成"未执行"，不静默通过、也不假红。
-          RUNTIME=$(xcrun simctl list runtimes 2>/dev/null | grep -oE "iOS [0-9]+\.[0-9]+" | sort -V | tail -1 | sed "s/iOS //")
-          echo "镜像最高 iOS runtime: ${RUNTIME:-none}（部署目标 27.0）"
-          MAJOR=$(echo "${RUNTIME:-0}" | cut -d. -f1)
-          if [ "${MAJOR:-0}" -lt 27 ]; then
-            echo "test_executed=no" >> "$GITHUB_OUTPUT"
-            echo "::warning::镜像最高只有 iOS ${RUNTIME:-无} runtime，而本工程部署目标是 iOS 27.0 —— 金标测试本轮**未执行**（不是通过）。需在带 iOS 27 模拟器的机器上跑 xcodebuild test。"
-            exit 0
-          fi
-          echo "测试设备: $DEV"
+          # 协议层只依赖 Foundation + CommonCrypto + Compression（无 UIKit / CoreBluetooth），
+          # 所以把同一批源文件编进 **macOS** 测试 bundle 就能在 macos-latest 上真跑。
+          # 这是 CI 上唯一能真正执行金标的路径：两个镜像都没有 iOS 27 模拟器 runtime
+          # （xcode-27 只有 macOS/tvOS/visionOS/watchOS；macos-latest 最高 iOS 26.x），
+          # 而本工程部署目标是 iOS 27.0 ⇒ iOS 上的 xcodebuild test 必然找不到 destination。
           echo "test_executed=yes" >> "$GITHUB_OUTPUT"
-          # 2>&1 必须带上：只 tee stdout 时，destination 解析失败只留下 6 行调用头。
           xcodebuild test \
             -project LockKeeper.xcodeproj \
-            -scheme LockKeeper \
-            -destination "platform=iOS Simulator,name=$DEV" \
+            -scheme CoreGolden \
+            -destination 'platform=macOS' \
             -derivedDataPath build/DerivedData \
             -configuration Debug \
             SWIFT_COMPILATION_MODE=wholemodule \
