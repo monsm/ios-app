@@ -472,9 +472,17 @@ enum WebDAV {
         return path
     }
 
+    /// SEC-20：只接受 https。旧实现允许 http:// —— 局域网下 WebDAV 账号与
+    /// 完整备份（含 skey）会以明文过 Wi-Fi，同一网络的攻击者可直接读走。
+    /// 例外只有本机回环（用户自建调试服务器），且仍会显示"明文"提示。
     private static func normalized(_ s: String) -> String {
         let t = s.trimmingCharacters(in: .whitespaces)
-        if t.hasPrefix("http://") || t.hasPrefix("https://") { return t }
+        if t.hasPrefix("https://") { return t }
+        if t.hasPrefix("http://") {
+            let host = URL(string: t)?.host?.lowercased() ?? ""
+            if host == "localhost" || host == "127.0.0.1" { return t }
+            return "https://" + t.dropFirst("http://".count)
+        }
         return "https://" + t
     }
 
