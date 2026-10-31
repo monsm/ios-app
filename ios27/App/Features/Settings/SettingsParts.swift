@@ -64,11 +64,12 @@ struct SettingRow: View {
         Button(action: action) {
             HStack(alignment: .center, spacing: T.S.s) {
                 if let symbol {
+                    // 装饰性图标：语义由相邻文字承载（只标一次，重复标是噪音）
                     Image(systemName: symbol)
-                        .font(.system(size: T.Icon.m, weight: .regular))
+                        .accessibilityHidden(true)
+                        .font(T.F.icon(T.Icon.m, weight: .regular))
                         .foregroundStyle(Ink.inkSub)
                         .frame(width: T.Icon.xl, alignment: .leading)
-                        .accessibilityHidden(true)
                 }
                 VStack(alignment: .leading, spacing: T.S.xxs) {
                     FieldRow(label: label, value: value, unit: unit, tint: tint, mono: mono)
@@ -82,7 +83,7 @@ struct SettingRow: View {
                 }
                 if chevron {
                     Image(systemName: "chevron.right")
-                        .font(.system(size: T.Icon.s, weight: .medium))
+                        .font(T.F.icon(T.Icon.s, weight: .medium))
                         .foregroundStyle(Ink.inkFaint)
                         .accessibilityHidden(true)
                 }

@@ -23,6 +23,7 @@ struct LockKeeperApp: App {
 struct RootView: View {
     @Environment(AppModel.self) private var app
     @Environment(Router.self) private var router
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack {
@@ -32,7 +33,8 @@ struct RootView: View {
                 LockGateScreen()
             }
         }
-        .animation(T.M.move, value: app.unlocked)
+        // 减弱动态：解锁闸门 → 主界面的切换改成直接出现，而不是淡入
+        .animation(reduceMotion ? nil : T.M.move, value: app.unlocked)
         // 装配：把路由注入 AppModel —— 这是 Engine 唯一能触达界面的出口（EngineHost）。
         // 同时注册到 EngineHostRegistry，供通知回调这类没有视图上下文的路径取用。
         .onAppear {
@@ -51,7 +53,8 @@ struct TrialGuardBanner: View {
     var body: some View {
         HStack(spacing: T.S.s) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: T.Icon.s, weight: .medium))
+                .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                .font(T.F.icon(T.Icon.s, weight: .medium))
             Text("只读试验模式 · 所有写入都不会下发到门锁")
                 .font(T.F.unit)
             Spacer(minLength: 0)
@@ -77,7 +80,8 @@ struct LockGateScreen: View {
             VStack(spacing: T.S.xl) {
                 Spacer()
                 Image(systemName: "lock.shield")
-                    .font(.system(size: T.Icon.xl, weight: .light))
+                    .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                    .font(T.F.icon(T.Icon.xl, weight: .light))
                     .foregroundStyle(Ink.inkSub)
                 Text("输入本机密码")
                     .font(T.F.display(24))

@@ -121,7 +121,7 @@ struct PrimaryAction: View {
                 if busy {
                     ProgressView().controlSize(.small).tint(Signal.on)
                 } else if let systemImage {
-                    Image(systemName: systemImage).font(.system(size: T.Icon.m, weight: .medium))
+                    Image(systemName: systemImage).accessibilityHidden(true).font(T.F.icon(T.Icon.m, weight: .medium))
                 }
                 Text(title).font(T.F.bodyStrong)
             }
@@ -146,7 +146,7 @@ struct SecondaryAction: View {
         Button(action: action) {
             HStack(spacing: T.S.s) {
                 if let systemImage {
-                    Image(systemName: systemImage).font(.system(size: T.Icon.m, weight: .medium))
+                    Image(systemName: systemImage).accessibilityHidden(true).font(T.F.icon(T.Icon.m, weight: .medium))
                 }
                 Text(title).font(T.F.bodyStrong)
             }

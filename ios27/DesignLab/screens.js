@@ -97,6 +97,7 @@ const SCREENS = [
     id: 'keys',
     name: '钥匙 · 台账',
     nav: '钥匙',
+    trailing: '&#43;&nbsp;&nbsp;&#9638;',
     tab: 1,
     body: P.pageHeader('钥匙', P.statusLine('neutral', '9 枚有效 · 1 枚 2 天后到期')) + '<div class="gap"></div>' +
       P.chipRow(['全部', '密码', '指纹', '临时码', '手机钥匙'], '全部') + '<div class="gap-m"></div>' +
@@ -108,7 +109,7 @@ const SCREENS = [
           '<div style="font-size:var(--f-unit);color:var(--ink-sub)">' + P.H(k.k + (k.o ? ' · ' + k.o : '')) + '</div></div>' +
           (k.code ? P.reading(k.code, null, 'var(--f-caption)', 'var(--ink-sub)') : '') +
           (k.exp ? P.badge(k.exp, 'warn') : '') + '</div>').join('')
-      ) + '<div class="gap"></div>' + P.panel(P.primary('新增凭证')) + '<div class="gap-m"></div>' +
+      ) + '<div class="gap"></div>' +
       P.panel(P.shortcut('到期月历', '&#9638;') + P.shortcut('手机钥匙', '&#9741;') + P.shortcut('分享给安卓', '&#8594;')),
   },
   {
@@ -127,7 +128,7 @@ const SCREENS = [
     tab: 2,
     body: P.pageHeader('台账', P.statusLine('neutral', '今天 4 条 · 昨天 2 条')) + '<div class="gap"></div>' +
       P.chipRow(['全部', '开锁', '告警', '异常'], '全部') + '<div class="gap-s"></div>' +
-      P.panel('<div style="display:flex;align-items:center;gap:var(--sp-s);color:var(--ink-faint);font-size:var(--f-caption)">&#9906; 检索时刻、人、事件</div>') +
+      P.panel(P.sectionLabel('检索', '命中 6 条') + '<div style="display:flex;align-items:center;gap:var(--sp-s);color:var(--ink-faint);font-size:var(--f-caption);min-height:44px">&#9906;&nbsp;成员 / 凭证 / +指纹 -临时码</div>' + '<hr class="hair" style="margin:0">') +
       P.dayHeader('今天', 4) + P.panel(ENTRIES.slice(0, 4).map((e, i) => (i ? '<hr class="hair">' : '') + P.ledgerRow(e.t, e.e, e.o, e.tone)).join('')) +
       P.dayHeader('昨天', 2) + P.panel(ENTRIES.slice(4).map((e, i) => (i ? '<hr class="hair">' : '') + P.ledgerRow(e.t, e.e, e.o, e.tone)).join('')),
   },

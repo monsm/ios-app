@@ -8,6 +8,7 @@ import SwiftUI
 import UIKit
 
 struct MemberCreateScreen: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(AppModel.self) private var app
     @Environment(Router.self) private var router
 
@@ -86,7 +87,7 @@ struct MemberCreateScreen: View {
                     .accessibilityLabel("取消建档")
             }
         }
-        .animation(T.M.move, value: step)
+        .animation(reduceMotion ? nil : T.M.move, value: step)
     }
 
     // MARK: 页头（大标题 + 一行状态）
@@ -205,7 +206,8 @@ struct MemberCreateScreen: View {
     private func errorBlock(_ text: String) -> some View {
         HStack(spacing: T.S.s) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: T.Icon.s))
+                .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                .font(T.F.icon(T.Icon.s))
                 .foregroundStyle(State.critical)
             Text(text)
                 .font(T.F.caption)

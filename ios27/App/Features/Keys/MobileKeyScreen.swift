@@ -168,7 +168,8 @@ struct MobileKeyScreen: View {
                 }
             } label: {
                 Image(systemName: "ellipsis")
-                    .font(.system(size: T.Icon.m, weight: .medium))
+                    .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                    .font(T.F.icon(T.Icon.m, weight: .medium))
                     .foregroundStyle(Ink.inkSub)
                     .frame(width: T.Hit.min, height: T.Hit.min)
                     .contentShape(.rect)

@@ -108,31 +108,27 @@ struct SettingsScreen: View {
                         tint: (app.lock?.battery ?? 0) < 20 ? State.attention : Ink.ink,
                         mono: true,
                         symbol: "gauge.with.dots.needle.50percent",
-                        note: "电量读数。信号、固件与锁内时钟都在那一页。"
                     ) { router.request(.dest(.lockStatus)) }
                     SettingRule()
                     SettingRow(label: "校准门锁时间",
                                value: store.lockClockSyncedAt.map { TimeFormat.ago($0) } ?? "从未校准",
                                tint: store.lockClockSyncedAt == nil ? State.attention : Ink.ink,
                                mono: false,
-                               symbol: "clock.arrow.circlepath",
-                               note: "锁端时钟不准时，临时码与有效期会提前失效。") {
+                               symbol: "clock.arrow.circlepath",) {
                         router.request(.dest(.syncTime))
                     }
                     SettingRule()
                     // TODO(engine) 「未绑定」应读 kf_gateways 台账（op=getDeviceStatus 刷新），本版无数据源。
                     SettingRow(label: "智能网关", value: "未绑定", unit: nil,
                                tint: Ink.inkSub, mono: false,
-                               symbol: "antenna.radiowaves.left.and.right",
-                               note: "网关只能收状态与通知，不能远程开门。") {
+                               symbol: "antenna.radiowaves.left.and.right",) {
                         router.request(.dest(.gateway))
                     }
                     SettingRule()
                     // TODO(engine) 布防状态应读 op=getDeviceSetting（defenceControl / StartTime / EndTime）。
                     SettingRow(label: "布防", value: "未布防", unit: nil,
                                tint: Ink.inkSub, mono: false,
-                               symbol: "shield.lefthalf.filled",
-                               note: "布防时段内，靠近自动开锁会被否决。") {
+                               symbol: "shield.lefthalf.filled",) {
                         router.request(.dest(.defend))
                     }
                 }
@@ -153,7 +149,6 @@ struct SettingsScreen: View {
                         tint: store.hasPasscode ? Ink.ink : State.attention,
                         mono: false,
                         symbol: "lock.shield",
-                        note: "冷启动、查看密码明文、导出备份前会要求输入。"
                     ) { router.request(.dest(.security)) }
                     SettingRule()
                     SettingRow(
@@ -162,7 +157,6 @@ struct SettingsScreen: View {
                         tint: store.autoOpenEnabled ? Ink.ink : Ink.inkSub,
                         mono: false,
                         symbol: "figure.walk",
-                        note: "默认关。开启后可要求每次刷面容确认。"
                     ) { router.request(.dest(.autoOpen)) }
                     SettingRule()
                     SettingToggle(
@@ -187,7 +181,6 @@ struct SettingsScreen: View {
                         value: store.theme.title,
                         mono: false,
                         symbol: "paintbrush",
-                        note: "主题、密度、动效强度与高对比都在那一页。"
                     ) { router.request(.dest(.appearance)) }
                     SettingRule()
                     SettingRow(
@@ -195,7 +188,6 @@ struct SettingsScreen: View {
                         value: store.timeStyle.title,
                         mono: false,
                         symbol: "clock",
-                        note: "全局制式。记录、详情、导出都跟它走，页面不许各自覆盖。"
                     ) { router.request(.dest(.appearance)) }
                 }
             }
@@ -215,7 +207,6 @@ struct SettingsScreen: View {
                         tint: store.lastBackupAt == nil ? State.attention : Ink.ink,
                         mono: false,
                         symbol: "externaldrive",
-                        note: "手机丢失或重装即不可恢复。备份文件含明文门锁密钥，别发聊天软件。"
                     ) { router.request(.dest(.backup)) }
                     SettingRule()
                     SettingRow(
@@ -224,14 +215,12 @@ struct SettingsScreen: View {
                         unit: "台",
                         mono: true,
                         symbol: "key.horizontal",
-                        note: "随身钥匙串：不带手机也能开门。"
                     ) { router.request(.dest(.hardware)) }
                     SettingRule()
                     SettingRow(
                         label: "关于",
                         value: SettingsFacts.version,
                         symbol: "info.circle",
-                        note: "版本、构建号、累计开锁次数。"
                     ) { router.request(.dest(.about)) }
                 }
             }

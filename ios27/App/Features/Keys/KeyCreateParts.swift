@@ -5,6 +5,9 @@ import SwiftUI
 
 extension KeyCreateScreen {
 
+    // 减弱动态：四步视图住在扩展里，环境值由主文件（KeyCreateScreen.swift）声明，
+    // 扩展直接读同一个属性 —— extension 不能声明存储属性，所以不在这一侧重复声明。
+
     // MARK: 第一步：类型与归属
 
     var typeStep: some View {
@@ -29,7 +32,7 @@ extension KeyCreateScreen {
                     Button {
                         owner = nil
                         errorText = nil
-                        withAnimation(T.M.move) { step = 1 }
+                        withAnimation(reduceMotion ? nil : T.M.move) { step = 1 }
                     } label: {
                         Text("先用未归属继续")
                             .font(T.F.bodyStrong)

@@ -134,10 +134,14 @@ struct ShareToAndroidScreen: View {
     private var shareBlock: some View {
         Panel {
             VStack(alignment: .leading, spacing: T.S.m) {
-                ShareLink(item: payloadText, preview: SharePreview("配对码", image: Image(systemName: "qrcode"))) {
+                // SharePreview 的 image 是分享卡缩略图（系统渲染），不是界面图标；
+                // 它的语义由 title "配对码" 承载，所以显式标装饰（HIG 审计会把它当 image-without-a11y）。
+                ShareLink(item: payloadText,
+                          preview: SharePreview("配对码", image: Image(systemName: "qrcode").accessibilityHidden(true))) {
                     HStack(spacing: T.S.s) {
                         Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: T.Icon.m, weight: .medium))
+                            .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                            .font(T.F.icon(T.Icon.m, weight: .medium))
                         Text("分享这段配对串")
                             .font(T.F.bodyStrong)
                     }
@@ -228,6 +232,8 @@ enum KeysQR {
         let scaled = output.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
         // 静区与白底烘进图里：扫码规范要求四周留白，深色模式下也必须白底黑码 ——
         // 这不是配色选择，是「能不能扫出来」。所以白只存在于这一张位图里，不进颜色令牌。
+        // （HIG 审计把 CIColor(red:1,green:1,blue:1) 标为硬编码颜色 —— 这里是位图素材，
+        //  不是界面颜色，不能走 Ink.plate：深色模式下 Ink.plate 是深灰，扫不出来。）
         let quiet: CGFloat = scale * 4
         let canvas = scaled.extent.insetBy(dx: -quiet, dy: -quiet)
         let paper = CIImage(color: CIColor(red: 1, green: 1, blue: 1, alpha: 1)).cropped(to: canvas)

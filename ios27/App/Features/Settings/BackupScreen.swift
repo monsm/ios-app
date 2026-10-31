@@ -64,7 +64,7 @@ struct BackupScreen: View {
                     // 危险说明放最上面：这一屏最重要的信息不是"怎么点按钮"
                     HStack(alignment: .top, spacing: T.S.s) {
                         Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.system(size: T.Icon.s))
+                            .font(T.F.icon(T.Icon.s))
                             .foregroundStyle(State.critical)
                             .accessibilityHidden(true)
                         Text(store.encryptBackup

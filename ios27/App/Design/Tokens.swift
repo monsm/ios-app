@@ -59,23 +59,51 @@ enum T {
     }
 
     // MARK: - 字体
+    //
+    // **全部走语义字阶（TextStyle），不写死 point size。** 这样 Dynamic Type 才是真的生效：
+    // 用户在「设置 → 辅助功能 → 更大字体」里调大一档，整屏文字会一起跟着长大，
+    // 而不是只有系统控件动、我们的文字纹丝不动（那是最常见的一类"假适配"）。
+    //
+    // 设计上要的 34 / 22 / 17 / 15 / 13 / 11 这些档位，在默认字号下**正好**等于系统
+    // largeTitle / title2 / body / subheadline / footnote / caption2 —— 所以视觉不变，
+    // 只是从"写死"变成"可缩放"。
     enum F {
+        /// 把设计稿上的字号映射到最接近的系统字阶。只影响"用哪个字阶"，不改变默认视觉。
+        static func style(for size: CGFloat) -> Font.TextStyle {
+            switch size {
+            case ..<12: return .caption2      // 11
+            case 12..<14: return .footnote    // 13
+            case 14..<16: return .subheadline // 15
+            case 16..<18: return .body        // 17
+            case 18..<21: return .title3      // 20
+            case 21..<25: return .title2      // 22
+            case 25..<32: return .title       // 28
+            default: return .largeTitle       // 34
+            }
+        }
+
         /// 显示标题。中文最高 semibold —— 苹方无 Bold，.bold() 会静默回退。
-        static func display(_ size: CGFloat = 34) -> Font { .system(size: size, weight: .semibold) }
+        static func display(_ size: CGFloat = 34) -> Font {
+            .system(style(for: size), weight: .semibold)
+        }
         /// 小节标题（中文不加 tracking；只有全大写拉丁才加）。
-        static let section = Font.system(size: 13, weight: .semibold)
+        static let section = Font.system(.footnote, weight: .semibold)
         /// 正文。中文正文下限 12pt。
-        static let body = Font.system(size: 15, weight: .regular)
-        static let bodyStrong = Font.system(size: 15, weight: .medium)
-        static let caption = Font.system(size: 13, weight: .regular)
+        static let body = Font.system(.subheadline, weight: .regular)
+        static let bodyStrong = Font.system(.subheadline, weight: .medium)
+        static let caption = Font.system(.footnote, weight: .regular)
         /// 单位小字：只出现在读数旁，从不单独成句。
-        static let unit = Font.system(size: 11, weight: .regular)
+        static let unit = Font.system(.caption2, weight: .regular)
         /// 读数：等宽。所有数字走这个，换值不跳宽。
         static func reading(_ size: CGFloat = 17, weight: Font.Weight = .medium) -> Font {
-            .system(size: size, weight: weight, design: .monospaced)
+            .system(style(for: size), design: .monospaced, weight: weight)
         }
         /// 等宽时刻（台账行用）。
-        static let stamp = Font.system(size: 13, weight: .medium, design: .monospaced)
+        static let stamp = Font.system(.footnote, design: .monospaced, weight: .medium)
+        /// 图标字号（Image(systemName:) 用）：同样走字阶，才能随 Dynamic Type 缩放。
+        static func icon(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
+            .system(style(for: size), weight: weight)
+        }
     }
 
     // MARK: - 动效（Premium：精密、克制、无回弹）

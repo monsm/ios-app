@@ -38,6 +38,7 @@ struct DoorScreen: View {
                     router.request(.dest(.addLock))
                 } label: {
                     Image(systemName: "plus")
+                        .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字/按钮标签承载
                 }
                 .accessibilityLabel("添加门锁")
             }
@@ -93,7 +94,8 @@ struct DoorScreen: View {
             if case .failed(let reason) = app.dialPhase {
                 HStack(spacing: T.S.s) {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: T.Icon.s))
+                        .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                        .font(T.F.icon(T.Icon.s))
                         .foregroundStyle(State.critical)
                     Text(reason)
                         .font(T.F.caption)
@@ -186,13 +188,15 @@ struct DoorScreen: View {
         } label: {
             HStack(spacing: T.S.m) {
                 Image(systemName: symbol)
-                    .font(.system(size: T.Icon.m, weight: .regular))
+                    .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                    .font(T.F.icon(T.Icon.m, weight: .regular))
                     .foregroundStyle(Ink.inkSub)
                     .frame(width: T.Icon.xl, alignment: .leading)
                 Text(title).font(T.F.body).foregroundStyle(Ink.ink)
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right")
-                    .font(.system(size: T.Icon.s, weight: .medium))
+                    .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                    .font(T.F.icon(T.Icon.s, weight: .medium))
                     .foregroundStyle(Ink.inkFaint)
             }
             .frame(minHeight: T.Hit.min)

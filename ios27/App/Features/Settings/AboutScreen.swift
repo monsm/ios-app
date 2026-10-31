@@ -7,6 +7,7 @@
 import SwiftUI
 
 struct AboutScreen: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private var store: SettingsStore { SettingsStore.shared }
 
     @State private var versionTaps = 0
@@ -123,7 +124,7 @@ struct AboutScreen: View {
                 }
             }
             .padding(.horizontal, T.S.gutter)
-            .animation(T.M.move, value: eggShown)
+            .animation(reduceMotion ? nil : T.M.move, value: eggShown)
         }
     }
 

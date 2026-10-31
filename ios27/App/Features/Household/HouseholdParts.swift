@@ -59,7 +59,8 @@ struct HHRoleMark: View {
     var body: some View {
         HStack(spacing: T.S.xs) {
             Image(systemName: symbol)
-                .font(.system(size: T.Icon.s, weight: .regular))
+                .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                .font(T.F.icon(T.Icon.s, weight: .regular))
             Text(role.rawValue)
                 .font(compact ? T.F.unit : T.F.caption)
         }
@@ -104,7 +105,8 @@ struct HHRowButton: View {
             HStack(spacing: T.S.m) {
                 if let symbol {
                     Image(systemName: symbol)
-                        .font(.system(size: T.Icon.m, weight: .regular))
+                        .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                        .font(T.F.icon(T.Icon.m, weight: .regular))
                         .foregroundStyle(Ink.inkSub)
                         .frame(width: T.Icon.xl, alignment: .leading)
                 }
@@ -122,7 +124,8 @@ struct HHRowButton: View {
                 }
                 if showsChevron {
                     Image(systemName: "chevron.right")
-                        .font(.system(size: T.Icon.s, weight: .medium))
+                        .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                        .font(T.F.icon(T.Icon.s, weight: .medium))
                         .foregroundStyle(Ink.inkFaint)
                 }
             }
@@ -148,7 +151,8 @@ struct HHPill: View {
     var body: some View {
         HStack(spacing: T.S.xs) {
             Image(systemName: allowed ? "checkmark.circle" : "xmark.circle")
-                .font(.system(size: T.Icon.s, weight: .regular))
+                .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                .font(T.F.icon(T.Icon.s, weight: .regular))
             Text(allowed ? "允许" : "禁用")
                 .font(T.F.unit)
                 .tracking(0.6)

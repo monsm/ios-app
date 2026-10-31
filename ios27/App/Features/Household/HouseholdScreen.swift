@@ -20,6 +20,7 @@ enum HHMemberSort: CaseIterable, Hashable {
 }
 
 struct HouseholdScreen: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(AppModel.self) private var app
     @Environment(Router.self) private var router
     @State private var group: String = ""
@@ -91,7 +92,7 @@ struct HouseholdScreen: View {
                 overviewPanel
                 if !tags.isEmpty {
                     ChipRow(items: [""] + tags, title: { $0.isEmpty ? "全部" : $0 }, selection: $group)
-                        .animation(T.M.snap, value: group)
+                        .animation(reduceMotion ? nil : T.M.snap, value: group)
                 }
                 rosterPanel
                 if archivedCount > 0 { archivePanel }
@@ -115,6 +116,7 @@ struct HouseholdScreen: View {
                     }
                 } label: {
                     Image(systemName: "arrow.up.arrow.down")
+                        .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字/按钮标签承载
                 }
                 .accessibilityLabel("排序方式，当前 \(sort.title)")
             }
@@ -123,6 +125,7 @@ struct HouseholdScreen: View {
                     router.request(.dest(.memberCreate))
                 } label: {
                     Image(systemName: "person.badge.plus")
+                        .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字/按钮标签承载
                 }
                 .accessibilityLabel("新建成员")
                 .disabled(atLimit)
@@ -181,7 +184,8 @@ struct HouseholdScreen: View {
                                 .foregroundStyle(Ink.inkSub)
                         }
                         Image(systemName: "chevron.up.chevron.down")
-                            .font(.system(size: T.Icon.s, weight: .medium))
+                            .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                            .font(T.F.icon(T.Icon.s, weight: .medium))
                             .foregroundStyle(Ink.inkFaint)
                     }
                     .frame(minHeight: T.Hit.min)

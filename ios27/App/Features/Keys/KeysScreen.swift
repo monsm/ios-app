@@ -39,7 +39,6 @@ struct KeysScreen: View {
                 } else {
                     ChipRow(items: KeysFilter.allCases, title: { chipTitle($0) }, selection: $filter)
                     ledgerBlock
-                    primaryBlock
                 }
                 shortcutsBlock
             }
@@ -51,6 +50,14 @@ struct KeysScreen: View {
         .task { await app.reload(refreshStatus: false) }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    router.request(.dest(.keyCreate))
+                } label: {
+                    Image(systemName: "plus")
+                }
+                .accessibilityLabel("新增凭证")
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     router.request(.dest(.keyCalendar))
@@ -169,19 +176,11 @@ struct KeysScreen: View {
 
     // MARK: 唯一主动作
 
+    // 主动作放在导航栏，不放在列表中间 —— 这是 iOS 的做法：
+    // 整条填充色的按钮夹在两块面板之间是 Web 的形态，iOS 里主动作属于工具栏，
+    // 或者最多在滚动到列表末尾时出现一次。列表本身保持连续可扫读。
     private var primaryBlock: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                PrimaryAction(title: "新增凭证", systemImage: "plus.circle.fill") {
-                    router.request(.dest(.keyCreate))
-                }
-                Text("密码与临时码直接下发到锁；指纹要在门锁上按 8 次，手机钥匙只签在本机。")
-                    .font(T.F.unit)
-                    .foregroundStyle(Ink.inkFaint)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .padding(.horizontal, T.S.gutter)
+        EmptyView()
     }
 
     // MARK: 空态（必须给出路）

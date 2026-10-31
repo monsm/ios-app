@@ -27,7 +27,7 @@ function page(screen, mode) {
     '<div class="phone" data-mode="' + mode + '">' +
     '<div class="statusbar"><span>9:41</span><span>&#9679;&#9679;&#9679; &#9650;</span></div>' +
     '<div class="scroll">' +
-    '<div class="navbar">' + screen.nav + '<span class="tr">&#43;</span></div>' +
+    '<div class="navbar">' + screen.nav + '<span class="tr">' + (screen.trailing || '&#43;') + '</span></div>' +
     '<div style="height:8px"></div>' +
     screen.body +
     '<div class="foot">' + screen.id + ' · ' + mode + '</div>' +

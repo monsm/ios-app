@@ -106,7 +106,8 @@ struct HHRoleOptionRow: View {
                 }
                 Spacer(minLength: T.S.s)
                 Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: T.Icon.m, weight: .regular))
+                    .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                    .font(T.F.icon(T.Icon.m, weight: .regular))
                     .foregroundStyle(selected ? Ink.ink : Ink.inkFaint)
             }
             .frame(minHeight: T.Hit.min + T.S.s)

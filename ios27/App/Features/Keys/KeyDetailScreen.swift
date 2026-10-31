@@ -219,7 +219,8 @@ struct KeyDetailScreen: View {
         } label: {
             HStack(spacing: T.S.m) {
                 Image(systemName: "calendar.badge.clock")
-                    .font(.system(size: T.Icon.m, weight: .regular))
+                    .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                    .font(T.F.icon(T.Icon.m, weight: .regular))
                     .foregroundStyle(Ink.inkSub)
                     .frame(width: T.Icon.xl, alignment: .leading)
                     .accessibilityHidden(true)
@@ -228,7 +229,7 @@ struct KeyDetailScreen: View {
                     .foregroundStyle(Ink.ink)
                 Spacer(minLength: T.S.s)
                 Image(systemName: "chevron.up.chevron.down")
-                    .font(.system(size: T.Icon.s, weight: .medium))
+                    .font(T.F.icon(T.Icon.s, weight: .medium))
                     .foregroundStyle(Ink.inkFaint)
                     .accessibilityHidden(true)
             }

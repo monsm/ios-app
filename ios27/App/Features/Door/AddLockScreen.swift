@@ -167,7 +167,8 @@ struct AddLockScreen: View {
             Spacer(minLength: T.S.s)
             if done {
                 Image(systemName: "checkmark")
-                    .font(.system(size: T.Icon.s, weight: .semibold))
+                    .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                    .font(T.F.icon(T.Icon.s, weight: .semibold))
                     .foregroundStyle(Ink.ink)
             } else if current {
                 StateDot(tone: .live, word: "进行中")
@@ -302,7 +303,8 @@ struct AddLockScreen: View {
                     ForEach(Array(steps.enumerated()), id: \.offset) { _, line in
                         HStack(spacing: T.S.s) {
                             Image(systemName: "checkmark")
-                                .font(.system(size: T.Icon.s, weight: .semibold))
+                                .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                                .font(T.F.icon(T.Icon.s, weight: .semibold))
                                 .foregroundStyle(Ink.ink)
                             Text(line)
                                 .font(T.F.caption)
@@ -394,7 +396,8 @@ struct AddLockScreen: View {
         Panel {
             HStack(alignment: .top, spacing: T.S.s) {
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: T.Icon.s, weight: .semibold))
+                    .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                    .font(T.F.icon(T.Icon.s, weight: .semibold))
                     .foregroundStyle(State.attention)
                 VStack(alignment: .leading, spacing: T.S.xxs) {
                     Text("这一次没有配完")

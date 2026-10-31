@@ -60,8 +60,12 @@ struct SectionLabel: View {
 }
 
 /// 页面底。所有页面统一用这个，保证底色不散。
+///
+/// 这里 `ignoresSafeArea` 是**有意的、也是唯一允许的**：页面底色必须铺到屏幕四边，
+/// 否则刘海与 Home 指示条周围会露出一条系统底色，形成"内嵌窗口"的错觉。
+/// 内容层不忽略安全区 —— 它们都在 ScrollView 里，由系统自动避让。
 struct CanvasBackground: View {
     var body: some View {
-        Ink.paper.ignoresSafeArea()
+        Ink.paper.ignoresSafeArea(.container, edges: .all)
     }
 }

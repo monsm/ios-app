@@ -102,7 +102,8 @@ struct KeyCalendarScreen: View {
                         shift(-1)
                     } label: {
                         Image(systemName: "chevron.left")
-                            .font(.system(size: T.Icon.m, weight: .medium))
+                            .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                            .font(T.F.icon(T.Icon.m, weight: .medium))
                             .foregroundStyle(Ink.ink)
                             .frame(width: T.Hit.min, height: T.Hit.min)
                             .contentShape(.rect)
@@ -116,7 +117,8 @@ struct KeyCalendarScreen: View {
                         shift(1)
                     } label: {
                         Image(systemName: "chevron.right")
-                            .font(.system(size: T.Icon.m, weight: .medium))
+                            .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                            .font(T.F.icon(T.Icon.m, weight: .medium))
                             .foregroundStyle(Ink.ink)
                             .frame(width: T.Hit.min, height: T.Hit.min)
                             .contentShape(.rect)

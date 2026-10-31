@@ -290,7 +290,8 @@ struct GatewayScreen: View {
                     Spacer(minLength: T.S.s)
                     if index < currentStep || phase == .succeeded {
                         Image(systemName: "checkmark")
-                            .font(.system(size: T.Icon.s, weight: .semibold))
+                            .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                            .font(T.F.icon(T.Icon.s, weight: .semibold))
                             .foregroundStyle(Ink.ink)
                     } else if index == currentStep, phase.isRunning {
                         StateDot(tone: .live, word: "进行中")
@@ -350,7 +351,8 @@ struct GatewayScreen: View {
         Panel {
             HStack(alignment: .top, spacing: T.S.s) {
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: T.Icon.s, weight: .semibold))
+                    .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                    .font(T.F.icon(T.Icon.s, weight: .semibold))
                     .foregroundStyle(State.attention)
                 Text(text)
                     .font(T.F.caption)

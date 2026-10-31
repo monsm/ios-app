@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct MemberDetailScreen: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(AppModel.self) private var app
     @Environment(Router.self) private var router
 
@@ -71,6 +72,7 @@ struct MemberDetailScreen: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { toggleArchive() } label: {
                         Image(systemName: member?.archived == true ? "archivebox.circle.fill" : "archivebox")
+                            .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字/按钮标签承载
                     }
                     .accessibilityLabel(member?.archived == true ? "恢复成员" : "归档成员")
                 }
@@ -153,7 +155,7 @@ struct MemberDetailScreen: View {
                         permRow(HHPerm.rows[index], role: member.role)
                     }
                 }
-                .animation(T.M.snap, value: member.role)
+                .animation(reduceMotion ? nil : T.M.snap, value: member.role)
 
                 Text(HHPerm.scene(member.role))
                     .font(T.F.caption)

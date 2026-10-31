@@ -47,7 +47,7 @@ private struct RecordShareCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: T.S.m) {
             Image(systemName: isAlarm ? "exclamationmark.triangle.fill" : "lock.open.fill")
-                .font(.system(size: T.Icon.xl, weight: .semibold))
+                .font(T.F.icon(T.Icon.xl, weight: .semibold))
                 .foregroundStyle(isAlarm ? State.critical : Ink.ink)
                 .accessibilityHidden(true)
             Text(entry.event)
@@ -120,9 +120,10 @@ struct RecordExportScreen: View {
     private var roster: String { MemberVCard.build(app.members) }
 
     /// SharePreview 的缩略图：拿到真图就用真图，拿不到退回符号，不留空白。
+    /// 这是分享卡预览位（系统渲染），语义由 SharePreview 的 title 承载 —— 标装饰。
     private var cardPreview: Image {
         if let png, let image = UIImage(data: png) { return Image(uiImage: image) }
-        return Image(systemName: "doc.richtext")
+        return Image(systemName: "doc.richtext").accessibilityHidden(true)
     }
 
     private var digest: WeeklyDigest.Digest {
@@ -226,7 +227,8 @@ struct RecordExportScreen: View {
                             ) {
                                 HStack(spacing: T.S.s) {
                                     Image(systemName: "square.and.arrow.up")
-                                        .font(.system(size: T.Icon.m, weight: .medium))
+                                        .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                                        .font(T.F.icon(T.Icon.m, weight: .medium))
                                     Text("分享这张卡")
                                         .font(T.F.bodyStrong)
                                 }
@@ -258,7 +260,7 @@ struct RecordExportScreen: View {
                     } label: {
                         HStack(spacing: T.S.m) {
                             Image(systemName: pickedDays.contains(day.key) ? "checkmark.circle.fill" : "circle")
-                                .font(.system(size: T.Icon.m, weight: .regular))
+                                .font(T.F.icon(T.Icon.m, weight: .regular))
                                 .foregroundStyle(pickedDays.contains(day.key) ? Ink.ink : Ink.inkFaint)
                                 .accessibilityHidden(true)
                             Text(TimeFormat.dayTitle(day.key))
@@ -279,7 +281,8 @@ struct RecordExportScreen: View {
                     ShareLink(item: pickedCSV, preview: SharePreview("台账 CSV")) {
                         HStack(spacing: T.S.s) {
                             Image(systemName: "tablecells")
-                                .font(.system(size: T.Icon.m, weight: .medium))
+                                .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                                .font(T.F.icon(T.Icon.m, weight: .medium))
                             Text("分享 CSV · " + String(RecordCSV.rowCount(pickedCSV)) + " 行")
                                 .font(T.F.bodyStrong)
                         }
@@ -335,7 +338,8 @@ struct RecordExportScreen: View {
                     ShareLink(item: roster, preview: SharePreview("成员名册")) {
                         HStack(spacing: T.S.s) {
                             Image(systemName: "person.2")
-                                .font(.system(size: T.Icon.m, weight: .medium))
+                                .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                                .font(T.F.icon(T.Icon.m, weight: .medium))
                             Text("分享名册")
                                 .font(T.F.bodyStrong)
                         }

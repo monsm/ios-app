@@ -7,10 +7,14 @@ import SwiftUI
 import UIKit
 
 struct KeyCreateScreen: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     // internal（不是 private）：四步视图在 KeyCreateParts.swift 的 extension 里，跨文件要可见。
     @Environment(AppModel.self) var app
     @Environment(Router.self) var router
 
+    // 以下 @State 一律 internal（不是 private）：四步视图住在 KeyCreateParts.swift 的 extension 里，
+    // 跨文件要能读写。HIG 审计会把"非 private 的 @State"标为线索 —— 这里是**必要**的，
+    // 而不是封装疏漏；要收窄只能把四步视图搬回同一个文件（那会让文件超 400 行）。
     @State var step = 0
     @State var kindIndex = 0
     @State var owner: String?
@@ -118,7 +122,7 @@ struct KeyCreateScreen: View {
         HStack(spacing: T.S.s) {
             if step > 0 {
                 Button {
-                    withAnimation(T.M.move) { step -= 1 }
+                    withAnimation(reduceMotion ? nil : T.M.move) { step -= 1 }
                 } label: {
                     Text("上一步")
                         .font(T.F.body)
@@ -138,7 +142,8 @@ struct KeyCreateScreen: View {
                         Text(nextTitle)
                             .font(T.F.bodyStrong)
                         Image(systemName: "chevron.right")
-                            .font(.system(size: T.Icon.s, weight: .medium))
+                            .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                            .font(T.F.icon(T.Icon.s, weight: .medium))
                     }
                     .foregroundStyle(Signal.on)
                     .padding(.horizontal, T.S.l)
@@ -180,7 +185,7 @@ struct KeyCreateScreen: View {
             break
         }
         errorText = nil
-        withAnimation(T.M.move) { step += 1 }
+        withAnimation(reduceMotion ? nil : T.M.move) { step += 1 }
     }
 
     // MARK: 提交（写本机台账）

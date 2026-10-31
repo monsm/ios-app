@@ -149,7 +149,7 @@ struct AppearanceScreen: View {
                     .foregroundStyle(Ink.ink)
                     .monospacedDigit()
                     .contentTransition(.numericText())
-                    .animation(T.M.snap, value: previewClock)
+                    .animation(reduceMotion ? nil : T.M.snap, value: previewClock)
                 Spacer(minLength: 0)
                 if store.twoLineDate {
                     Text(TimeFormat.dayShort(now))

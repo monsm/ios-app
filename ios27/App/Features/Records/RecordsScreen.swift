@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct RecordsScreen: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(AppModel.self) private var app
     @Environment(Router.self) private var router
 
@@ -105,12 +106,12 @@ struct RecordsScreen: View {
             .onChange(of: route.flashID) { _, new in
                 guard let new else { return }
                 flash = new
-                withAnimation(T.M.move) { proxy.scrollTo(new, anchor: .center) }
+                withAnimation(reduceMotion ? nil : T.M.move) { proxy.scrollTo(new, anchor: .center) }
             }
             .task(id: flash) {
                 guard flash != nil else { return }
                 try? await Task.sleep(for: .milliseconds(1200))
-                withAnimation(T.M.exit) { flash = nil }
+                withAnimation(reduceMotion ? nil : T.M.exit) { flash = nil }
                 route.flashID = nil
             }
         }
@@ -123,6 +124,7 @@ struct RecordsScreen: View {
                     router.request(.dest(.recordExport))
                 } label: {
                     Image(systemName: "square.and.arrow.up")
+                        .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字/按钮标签承载
                 }
                 .accessibilityLabel("导出记录")
             }
@@ -131,6 +133,7 @@ struct RecordsScreen: View {
                     Task { await read() }
                 } label: {
                     Image(systemName: "arrow.clockwise")
+                        .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字/按钮标签承载
                 }
                 .disabled(reading)
                 .accessibilityLabel("重新读取锁内日志")
@@ -185,11 +188,13 @@ struct RecordsScreen: View {
     private var filterPanel: some View {
         Panel {
             VStack(alignment: .leading, spacing: T.S.m) {
+                // 检索行：不是表单输入框，是**过滤条**。所以不用圆角胶囊/Inset 凹槽
+                // （那是"要填的东西"的形状），改用一条蚀刻下划线 —— 它读起来像"正在筛"。
                 SectionLabel(text: "检索", trailing: "命中 " + String(filtered.count) + " 条")
-                Inset {
+                VStack(spacing: T.S.xs) {
                     HStack(spacing: T.S.s) {
                         Image(systemName: "magnifyingglass")
-                            .font(.system(size: T.Icon.s, weight: .regular))
+                            .font(T.F.icon(T.Icon.s, weight: .regular))
                             .foregroundStyle(Ink.inkFaint)
                             .accessibilityHidden(true)
                         TextField("成员 / 凭证 / +指纹 -临时码", text: $query)
@@ -202,13 +207,19 @@ struct RecordsScreen: View {
                                 query = ""
                             } label: {
                                 Image(systemName: "xmark.circle.fill")
-                                    .font(.system(size: T.Icon.s, weight: .regular))
+                                    .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                                    .font(T.F.icon(T.Icon.s, weight: .regular))
                                     .foregroundStyle(Ink.inkFaint)
                             }
                             .accessibilityLabel("清空检索")
                         }
                     }
                     .frame(minHeight: T.Hit.min)
+                    // 蚀刻下划线：过滤条的"仪表"形态，替代表单输入框的圆角胶囊
+                    Rectangle()
+                        .fill(Ink.hairline)
+                        .frame(height: T.Stroke.hair)
+                        .accessibilityHidden(true)
                 }
 
                 HStack(alignment: .firstTextBaseline, spacing: T.S.m) {
@@ -250,7 +261,7 @@ struct RecordsScreen: View {
         Panel {
             HStack(spacing: T.S.s) {
                 Image(systemName: "calendar")
-                    .font(.system(size: T.Icon.s, weight: .regular))
+                    .font(T.F.icon(T.Icon.s, weight: .regular))
                     .foregroundStyle(Ink.inkSub)
                     .accessibilityHidden(true)
                 Text("只看 " + TimeFormat.dayTitle(key))
@@ -307,29 +318,33 @@ struct RecordsScreen: View {
 
     // MARK: - 主角：按自然日分组的时间线
 
+    // 台账可能有几百行（锁端缓存上限 300 条）。用 LazyVStack 让它按需构造：
+    // 非 Lazy 的 VStack 会在首帧把全部行都建出来，滚动时又要重算，是记录页最容易卡的地方。
     private var timeline: some View {
-        ForEach(groups) { group in
-            VStack(spacing: 0) {
-                LedgerDayHeader(dayKey: group.dayKey, count: group.items.count)
-                Panel(inset: 0) {
-                    VStack(spacing: 0) {
-                        ForEach(group.items.indices, id: \.self) { index in
-                            let entry = group.items[index]
-                            if index > 0 { rowDivider }
-                            Button {
-                                open(entry)
-                            } label: {
-                                LedgerRow(entry: entry)
-                                    .padding(.horizontal, T.S.l)
-                                    .background(flash == entry.id ? Signal.wash : Color.clear)
+        LazyVStack(spacing: 0, pinnedViews: []) {
+            ForEach(groups) { group in
+                VStack(spacing: 0) {
+                    LedgerDayHeader(dayKey: group.dayKey, count: group.items.count)
+                    Panel(inset: 0) {
+                        VStack(spacing: 0) {
+                            ForEach(group.items.indices, id: \.self) { index in
+                                let entry = group.items[index]
+                                if index > 0 { rowDivider }
+                                Button {
+                                    open(entry)
+                                } label: {
+                                    LedgerRow(entry: entry)
+                                        .padding(.horizontal, T.S.l)
+                                        .background(flash == entry.id ? Signal.wash : Color.clear)
+                                }
+                                .buttonStyle(.plain)
+                                .id(entry.id)
+                                .accessibilityHint("打开这条记录的详情")
                             }
-                            .buttonStyle(.plain)
-                            .id(entry.id)
-                            .accessibilityHint("打开这条记录的详情")
                         }
                     }
+                    .padding(.horizontal, T.S.gutter)
                 }
-                .padding(.horizontal, T.S.gutter)
             }
         }
     }

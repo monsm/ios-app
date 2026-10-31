@@ -7,6 +7,7 @@
 import SwiftUI
 
 struct MemberArchiveScreen: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(AppModel.self) private var app
     @Environment(Router.self) private var router
 
@@ -28,7 +29,7 @@ struct MemberArchiveScreen: View {
         .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("归档")
         .navigationBarTitleDisplayMode(.inline)
-        .animation(T.M.move, value: archived.count)
+        .animation(reduceMotion ? nil : T.M.move, value: archived.count)
     }
 
     private var header: some View {
@@ -132,7 +133,8 @@ struct MemberArchiveScreen: View {
     private func impactRow(_ text: String, symbol: String) -> some View {
         HStack(spacing: T.S.m) {
             Image(systemName: symbol)
-                .font(.system(size: T.Icon.m, weight: .regular))
+                .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                .font(T.F.icon(T.Icon.m, weight: .regular))
                 .foregroundStyle(Ink.inkSub)
                 .frame(width: T.Icon.xl, alignment: .leading)
             Text(text)

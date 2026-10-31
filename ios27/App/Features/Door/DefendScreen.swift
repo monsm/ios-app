@@ -189,7 +189,8 @@ struct DefendScreen: View {
         } label: {
             HStack(alignment: .top, spacing: T.S.m) {
                 Image(systemName: on ? "largecircle.fill.circle" : "circle")
-                    .font(.system(size: T.Icon.m, weight: .regular))
+                    .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                    .font(T.F.icon(T.Icon.m, weight: .regular))
                     .foregroundStyle(on ? Ink.ink : Ink.inkFaint)
                     .frame(width: T.Icon.l, alignment: .leading)
                 VStack(alignment: .leading, spacing: T.S.xxs) {
@@ -250,7 +251,8 @@ struct DefendScreen: View {
     private func stepButton(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: T.Icon.s, weight: .semibold))
+                .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                .font(T.F.icon(T.Icon.s, weight: .semibold))
                 .foregroundStyle(Ink.ink)
                 .frame(width: T.Hit.min, height: T.Hit.min)
                 .contentShape(.rect)
