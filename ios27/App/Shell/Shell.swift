@@ -9,6 +9,11 @@ import SwiftUI
 struct Shell: View {
     @Environment(Router.self) private var router
     @Environment(AppModel.self) private var app
+    /// E-16：角标数缓存在 @State 里，不在 `body` 里算。
+    /// 旧实现把 `CredentialOrg.expiringSoonCount(macs: DB.keychains()…)` 写在 `tabItems`，
+    /// 而 `tabItems` 每次 body 重算都会求值 —— 等于**每次界面刷新都读一遍 UserDefaults
+    /// 并遍历全部锁的台账**（切 Tab、开 sheet、任何 @Observable 变化都会触发）。
+    @State private var keysBadge: Int = 0
 
     var body: some View {
         @Bindable var router = router
@@ -27,14 +32,22 @@ struct Shell: View {
         }
         .background(V.C.bg.ignoresSafeArea())
         .sensoryFeedback(.selection, trigger: router.tab)
+        // E-16：只在真正可能变化时重算角标，不在每次 body 求值时读库。
+        .task { refreshBadge() }
+        .onChange(of: router.tab) { _, _ in refreshBadge() }
+        .onChange(of: app.currentMac) { _, _ in refreshBadge() }
     }
 
     /// 凭证 Tab 的近 7 日到期角标：读 Engine 的 expiringSoonCount（跨全部锁）。
+    /// 数值由 `refreshBadge()` 在出现/切 Tab/台账变更时写入 @State —— 见 E-16 说明。
     private var tabItems: [VTabItem] {
         var items = VTabItem.all
-        let badge = CredentialOrg.expiringSoonCount(macs: DB.keychains().map(\.mac))
-        if let i = items.firstIndex(where: { $0.slot == .keys }) { items[i].badge = badge }
+        if let i = items.firstIndex(where: { $0.slot == .keys }) { items[i].badge = keysBadge }
         return items
+    }
+
+    private func refreshBadge() {
+        keysBadge = CredentialOrg.expiringSoonCount(macs: DB.keychains().map(\.mac))
     }
 
     @ViewBuilder
