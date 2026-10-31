@@ -224,9 +224,11 @@ extension LockService {
             throw BLEErrorX.msg(Self.pairWarning(resumable, "配对校验失败 rc=\(stR.rc) (\(StatusParser.rcMessage(stR.rc)))"))
         }
 
+        // 同 persistPendingKey：`pins[0]` 的越界是 crash 不是 throw。
+        let firstPin = pins.first ?? ""
         let kc = Keychain(version: 1, mac: m, pid: st.pid, pidName: st.pidName,
                           skey: skey, bkey: bkey, pins: pins,
-                          ekey: ZKCmdBuilder.buildEkeyOpen(skey, m, pins[0]),
+                          ekey: ZKCmdBuilder.buildEkeyOpen(skey, m, firstPin),
                           trackid: trackid, bleId: deviceId, fw: st.firmware,
                           pairedAt: DF.iso().string(from: Date()))
         DB.saveKeychain(kc)
@@ -261,8 +263,14 @@ extension LockService {
 
     /// 留存换钥后的密钥（尾链若中断，再点一次配网即续配，无需键盘重置）。
     private func persistPendingKey(m: String, skey: String, bkey: String, pins: [String], deviceId: String) -> (Keychain, Bool) {
+        // 空 pins 会让下面 `pins[0]` 直接崩进程（越界是 crash 不是 throw）。
+        // 今天的唯一调用点喂的是 `KeyGen.genPins(64)`（它要么返回 64 条、要么 throw），
+        // 所以现在不会触发 —— 但这是**调用点隐式约定**，不是函数自己的保证。
+        // 配网是"用户正拿着手机站在门边"的场景，崩进程的代价极高；这里显式收口：
+        // 空 pins 视为无法生成 ekey，用空串（上层会判 rc 失败并给出可读原因）。
+        let firstPin = pins.first ?? ""
         let pending = Keychain(version: 1, mac: m, skey: skey, bkey: bkey, pins: pins,
-                               ekey: ZKCmdBuilder.buildEkeyOpen(skey, m, pins[0]),
+                               ekey: ZKCmdBuilder.buildEkeyOpen(skey, m, firstPin),
                                trackid: String(KeyGen.genTrackId()), bleId: deviceId, fw: "",
                                pairedAt: DF.iso().string(from: Date()))
         let resumable = DB.savePendingPair(pending)
