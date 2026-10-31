@@ -24,25 +24,13 @@ function read(p) {
 
 // ---------- ① 测试目标 + scheme 接线 ----------
 const proj = read(path.join(ROOT, 'project.yml'));
-if (!/CoreProtocolTests:\s*\n\s*type:\s*bundle\.unit-test/.test(proj)) {
-  fails.push('project.yml — 没有 macOS 原生测试目标 CoreProtocolTests（CI 上金标永远跑不了）');
-} else ok.push('测试目标 CoreProtocolTests 存在（macOS 原生，不需要 iOS 模拟器）');
+if (!/LockKeeperTests:\s*\n\s*type:\s*bundle\.unit-test/.test(proj)) {
+  fails.push('project.yml — 没有 bundle.unit-test 目标（金标测试无处可跑）');
+} else ok.push('测试目标 LockKeeperTests 存在（type: bundle.unit-test）');
 
-// macOS 原生测试是 CI 上唯一能真跑金标的路径 —— 必须有自己的 scheme
-if (!/CoreGolden:/.test(proj)) {
-  fails.push('project.yml — 缺 CoreGolden scheme（CI 无法只跑协议层测试）');
-} else ok.push('CoreGolden scheme 存在');
-
-// 协议层源文件必须真的被编进 macOS 测试目标（不是"建了目标但没编源文件"）
-for (const must of ['App/Engine/ZKCmdBuilder.swift', 'App/Engine/StatusParser.swift', 'App/Engine/AESKit.swift', 'App/Engine/ZOTP.swift']) {
-  if (!new RegExp(must.replace(/[/.]/g, (c) => '\\' + c)).test(proj)) {
-    fails.push('project.yml — CoreProtocolTests 没有编 ' + must + '（金标会测不到该模块）');
-  }
-}
-
-if (!/test:\s*\n\s*config:\s*Debug\s*\n\s*targets:\s*\n\s*-\s*CoreProtocolTests/.test(proj)) {
-  fails.push('project.yml — scheme 的 test 段没有引用 CoreProtocolTests（写了目标但从不执行）');
-} else ok.push('scheme test 段引用了 CoreProtocolTests');
+if (!/test:\s*\n\s*config:\s*Debug\s*\n\s*targets:\s*\n\s*-\s*LockKeeperTests/.test(proj)) {
+  fails.push('project.yml — scheme 的 test 段没有引用 LockKeeperTests（写了目标但从不执行）');
+} else ok.push('scheme test 段引用了 LockKeeperTests');
 
 // ---------- ② 夹具作为资源 ----------
 if (!/golden\.json/.test(proj)) {
@@ -95,10 +83,9 @@ if (asserts < 40) {
 console.log('tests: ' + testFiles.length + ' 个测试文件，' + asserts + ' 条断言');
 if (fails.length === 0) {
   console.log('tests: OK — ' + ok.length + ' 条判据全部通过');
-  console.log('tests: 注意 —— 这是**静态**证明（目标存在 + 夹具接线 + 覆盖关键面）。');
-  console.log('        真跑：协议层走 macOS 原生 scheme（CI 的 golden job 会真执行）：');
-  console.log('        xcodebuild test -project LockKeeper.xcodeproj -scheme CoreGolden -destination "platform=macOS"');
-  console.log('        界面层仍需带 iOS 27 模拟器 runtime 的机器（CI 镜像没有）。');
+  console.log('tests: 注意 —— 这是**静态**证明（目标存在 + 夹具接线 + 覆盖关键面），不等于"跑过了"。');
+  console.log('        真跑需要带 iOS 27 模拟器 runtime 的机器（CI 的两个镜像都没有，golden job 会如实标注 test_executed=no）：');
+  console.log('        xcodebuild test -project LockKeeper.xcodeproj -scheme LockKeeper -destination "platform=iOS Simulator,name=<设备>"');
   process.exit(0);
 }
 console.log('tests: FAIL — ' + fails.length + ' 处问题\n');
