@@ -12,7 +12,7 @@ struct AlarmKindsSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                AlarmKindsPanel(selection: Binding(
+                AlarmKindsCard(selection: Binding(
                     get: { route.alarmKinds },
                     set: { route.alarmKinds = $0 }
                 ))
@@ -43,7 +43,7 @@ struct AlarmKindsScreen: View {
 
     var body: some View {
         ScrollView {
-            AlarmKindsPanel(selection: Binding(
+            AlarmKindsCard(selection: Binding(
                 get: { route.alarmKinds },
                 set: { route.alarmKinds = $0 }
             ))
@@ -56,7 +56,7 @@ struct AlarmKindsScreen: View {
     }
 }
 
-struct AlarmKindsPanel: View {
+struct AlarmKindsCard: View {
     @Binding var selection: Set<Int>
 
     private var types: [Int] {

@@ -58,7 +58,7 @@ struct KeyCalendarScreen: View {
                 } else {
                     calendarPanel
                     if let pickedDay {
-                        dayPanel(pickedDay)
+                        dayCard(pickedDay)
                     }
                 }
             }
@@ -186,7 +186,7 @@ struct KeyCalendarScreen: View {
 
     // MARK: 当天清单
 
-    private func dayPanel(_ dayKey: String) -> some View {
+    private func dayCard(_ dayKey: String) -> some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VSectionLabel(text: TimeFormat.dayTitle(dayKey), trailing: "\(pickedItems.count) 条")

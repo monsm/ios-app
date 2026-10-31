@@ -34,7 +34,7 @@ struct DFUScreen: View {
                 } else {
                     versionPanel
                     packagePanel
-                    if let pkg { packageDetailPanel(pkg) }
+                    if let pkg { packageDetailCard(pkg) }
                     runPanel
                 }
             }
@@ -136,7 +136,7 @@ struct DFUScreen: View {
         .padding(.horizontal, V.S.pageGutter)
     }
 
-    private func packageDetailPanel(_ p: FirmwarePackage) -> some View {
+    private func packageDetailCard(_ p: FirmwarePackage) -> some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
                 VSectionLabel(text: "包内容")

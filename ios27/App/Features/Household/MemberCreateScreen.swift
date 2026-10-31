@@ -27,6 +27,7 @@ struct MemberCreateScreen: View {
     @State var code = ""
     @State var newID: String?
     @State var errorLine: String?
+    @State var creating = false
 
     private var roster: HouseholdRoster { HouseholdRoster.shared }
 
@@ -170,7 +171,7 @@ struct MemberCreateScreen: View {
 
     // MARK: 第四步：临时码
     private var codePanel: some View {
-        HHCodePanel(makeCode: $makeCode, code: $code, codeOK: codeOK, expiryText: expiryText)
+        HHCodeCard(makeCode: $makeCode, code: $code, codeOK: codeOK, expiryText: expiryText)
     }
 
     internal var expiryText: String {
@@ -186,9 +187,9 @@ struct MemberCreateScreen: View {
                     .disabled(!canAdvance)
                     .opacity(canAdvance ? 1 : 0.5)
             } else {
-                VActionButton(title: "完成建档", systemImage: "checkmark.seal", busy: false) { finish() }
-                    .disabled(!canAdvance)
-                    .opacity(canAdvance ? 1 : 0.5)
+                VActionButton(title: creating ? "正在建档…" : "完成建档", systemImage: "checkmark.seal", busy: creating) { finish() }
+                    .disabled(!canAdvance || creating)
+                    .opacity(canAdvance && !creating ? 1 : 0.5)
             }
             if step > 0 {
                 VOutlineButton(title: "上一步", systemImage: "arrow.left") { step -= 1 }
@@ -277,27 +278,41 @@ struct MemberCreateScreen: View {
     }
 
     private func finish() {
-        guard canAdvance, let id = newID else { return }
+        guard canAdvance, let id = newID, !creating else { return }
         writeProfile()
         let memberName = trimmedName
+        // 不建码：直接进成员 360。
+        guard makeCode && codeOK else {
+            roster.focusMember = id
+            router.request(.dest(.memberDetail))
+            return
+        }
         // 建码要先有锁：没有门锁时如实说明「已建档、码未建」，不假装成功。
-        let hasLock = app.lock != nil
-        if makeCode && codeOK && hasLock {
-            let expires = Int64(Date().timeIntervalSince1970 * 1000) + 600_000
-            app.keys.append(KeyItem(id: "k-" + String(expires), kind: .temp, name: "向导临时码 · " + memberName,
-                                    owner: memberName, code: code, expiresAt: expires, disabled: false))
-            if let i = app.members.firstIndex(where: { $0.id == id }) {
-                let m = app.members[i]
-                app.members[i] = MemberCard(id: m.id, name: m.name, role: m.role, keyCount: m.keyCount + 1,
-                                            lastActiveAt: m.lastActiveAt, archived: m.archived)
-            }
-        } else if makeCode && codeOK && !hasLock {
-            // 已建档但没锁可下发：如实说明，不假装建了码。
+        guard app.lock != nil else {
             errorLine = "已建档，但临时码没建：本机还没有添加门锁。先到「门」页添加门锁，再回来补一枚。"
             return
         }
-        roster.focusMember = id
-        router.request(.dest(.memberDetail))
+        creating = true
+        errorLine = nil
+        // 真链路：cmd0A 下发 10 分钟临时码 → 成功才写台账（temp=true + 归属）→ 刷新名册。
+        // 旧实现只 append 到 app.keys（内存投影），退出页面后 reloadKeys 从 DB 重建，向导码消失。
+        Task { @MainActor in
+            defer { creating = false }
+            let df = DF.cached("yyyy-MM-dd HH:mm")
+            let from = df.string(from: Date())
+            let to = df.string(from: Date().addingTimeInterval(600))
+            let r = await app.addTempCode(code, from: from, to: to,
+                                          owner: memberName, note: "向导临时码 · " + memberName)
+            switch r {
+            case .success:
+                app.reloadMembers()
+                roster.focusMember = id
+                router.request(.dest(.memberDetail))
+            case .failure(let e):
+                let msg = (e as? LocalizedError)?.errorDescription ?? e.localizedDescription
+                errorLine = "已建档，但临时码没建成：" + msg + "（可到「钥匙」页重试）"
+            }
+        }
     }
 
     private func cancel() {

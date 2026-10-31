@@ -139,7 +139,7 @@ struct HHFieldNote: View {
 
 // MARK: - 第四步：临时码（6~8 位纯数字）
 
-struct HHCodePanel: View {
+struct HHCodeCard: View {
     @Binding var makeCode: Bool
     @Binding var code: String
     let codeOK: Bool

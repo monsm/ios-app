@@ -22,8 +22,8 @@ struct LockStatusScreen: View {
             VStack(spacing: V.S.gap16) {
                 header
                 if let lock = app.lock {
-                    readingsPanel(lock)
-                    policyPanel(lock)
+                    readingsCard(lock)
+                    policyCard(lock)
                     entriesPanel
                 } else {
                     noLockPanel
@@ -81,7 +81,7 @@ struct LockStatusScreen: View {
 
     // MARK: 主角：这台锁的读数
 
-    private func readingsPanel(_ lock: LockSummary) -> some View {
+    private func readingsCard(_ lock: LockSummary) -> some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
                 VSectionLabel(text: "运行状态", trailing: "cmd03")
@@ -112,7 +112,7 @@ struct LockStatusScreen: View {
 
     // MARK: 锁端策略：两枚开关就是本屏的主动作
 
-    private func policyPanel(_ lock: LockSummary) -> some View {
+    private func policyCard(_ lock: LockSummary) -> some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
                 VSectionLabel(text: "锁端策略", trailing: "即点即写")

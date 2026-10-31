@@ -11,9 +11,34 @@ struct KeysScreen: View {
     @Environment(Router.self) internal var router
     @State private var filter: KeysFilter = .all
     @State internal var now: Int64 = KeysState.now()
+    @State private var search = ""
+    @State private var groupByOwner = CredentialOrg.groupMode == .owner
+
+    private var searchText: String {
+        search.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
 
     private var filtered: [KeyItem] {
-        app.keys.filter { filter.matches($0) }
+        app.keys.filter { key in
+            guard filter.matches(key) else { return false }
+            guard !searchText.isEmpty else { return true }
+            let hay = [key.name, key.owner ?? "", key.kind.rawValue, key.code ?? ""]
+                .joined(separator: " ")
+                .lowercased()
+            return hay.contains(searchText)
+        }
+    }
+
+    /// 按成员分组（原 CredentialActions.swift:349-408）：没有归属的归到「未归属」，不猜。
+    private var grouped: [(owner: String, items: [KeyItem])] {
+        var order: [String] = []
+        var buckets: [String: [KeyItem]] = [:]
+        for key in filtered {
+            let owner = (key.owner?.isEmpty == false) ? (key.owner ?? "") : "未归属"
+            if buckets[owner] == nil { order.append(owner) }
+            buckets[owner, default: []].append(key)
+        }
+        return order.map { ($0, buckets[$0] ?? []) }
     }
 
     private var validCount: Int {
@@ -304,6 +329,50 @@ struct KeysScreen: View {
             Text("全部凭证")
                 .font(V.F.section)
                 .foregroundStyle(V.C.text1)
+            HStack(spacing: V.S.gapS) {
+                Image(systemName: "magnifyingglass")
+                    .font(V.F.icon15)
+                    .foregroundStyle(V.C.text3)
+                    .accessibilityHidden(true)
+                TextField("搜名称 / 归属 / 类型", text: $search)
+                    .font(V.F.body)
+                    .foregroundStyle(V.C.text1)
+                    .textFieldStyle(.plain)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                    .accessibilityLabel("搜索凭证")
+                    .onSubmit { CredentialOrg.pushSearchHistory(search) }
+                if !search.isEmpty {
+                    Button { search = "" } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(V.F.icon15)
+                            .foregroundStyle(V.C.text3)
+                    }
+                    .accessibilityLabel("清空凭证搜索")
+                }
+            }
+            .padding(.horizontal, V.S.gapM)
+            .frame(minHeight: V.Metric.searchRow)
+            .background(V.C.cardAlt, in: .rect(cornerRadius: V.R.control))
+
+            if search.isEmpty, !CredentialOrg.searchHistory().isEmpty {
+                ScrollView(.horizontal) {
+                    HStack(spacing: V.S.gapS) {
+                        Text("最近搜索")
+                            .font(V.F.unit)
+                            .foregroundStyle(V.C.text3)
+                        ForEach(CredentialOrg.searchHistory(), id: \.self) { term in
+                            Button { search = term } label: {
+                                VTag(text: term, tint: V.C.text2, filled: false)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("搜索 \(term)")
+                        }
+                    }
+                }
+                .scrollIndicators(.hidden)
+            }
+
             ScrollView(.horizontal) {
                 HStack(spacing: V.S.gapS) {
                     ForEach(KeysFilter.allCases.filter { !MemberHub.elderMode || $0 == .all || $0 == .password || $0 == .fingerprint }, id: \.self) { item in
@@ -324,6 +393,23 @@ struct KeysScreen: View {
                         .buttonStyle(.plain)
                         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
                     }
+                    Button {
+                        groupByOwner.toggle()
+                        CredentialOrg.setGroupMode(groupByOwner ? .owner : .type)
+                    } label: {
+                        Text(groupByOwner ? "按成员分组" : "按类型分组")
+                            .font(V.F.footnote)
+                            .foregroundStyle(groupByOwner ? V.C.text1 : V.C.text3)
+                            .padding(.horizontal, V.S.gapM)
+                            .padding(.vertical, V.S.gapS)
+                            .background(groupByOwner ? V.C.card : Color.clear, in: Capsule())
+                            .overlay {
+                                Capsule().strokeBorder(groupByOwner ? V.C.tabEdge : V.C.hairline, lineWidth: V.S.hair)
+                            }
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("切换为\(groupByOwner ? "按类型" : "按成员")分组")
+                    .accessibilityAddTraits(groupByOwner ? [.isButton, .isSelected] : .isButton)
                 }
             }
             .scrollIndicators(.hidden)
@@ -351,27 +437,58 @@ struct KeysScreen: View {
                         .monospacedDigit()
                 }
                 if filtered.isEmpty {
-                    Text(emptyFilterText)
-                        .font(V.F.footnote)
-                        .foregroundStyle(V.C.text3)
-                        .fixedSize(horizontal: false, vertical: true)
-                } else {
-                    VStack(spacing: 0) {
-                        ForEach(Array(filtered.enumerated()), id: \.offset) { pair in
-                            if pair.offset > 0 { VDivider() }
-                            Button {
-                                KeysRoute.openDetail(pair.element.id, router: router)
-                            } label: {
-                                V7KeyRow(key: pair.element, now: now)
+                    VStack(alignment: .leading, spacing: V.S.gapS) {
+                        Text(searchText.isEmpty ? emptyFilterText : "没有找到「\(search)」")
+                            .font(V.F.footnote)
+                            .foregroundStyle(V.C.text3)
+                            .fixedSize(horizontal: false, vertical: true)
+                        if !searchText.isEmpty {
+                            VOutlineButton(title: "清空搜索", systemImage: "xmark.circle") { search = "" }
+                            VOutlineButton(title: "改为按成员分组重搜", systemImage: "person.2") {
+                                groupByOwner = true
+                                CredentialOrg.setGroupMode(.owner)
                             }
-                            .buttonStyle(.plain)
-                            .accessibilityHint("打开凭证详情")
                         }
                     }
+                } else if groupByOwner {
+                    VStack(alignment: .leading, spacing: V.S.gapM) {
+                        ForEach(Array(grouped.enumerated()), id: \.offset) { pair in
+                            VStack(alignment: .leading, spacing: V.S.gapS) {
+                                HStack(spacing: V.S.gapS) {
+                                    Text(pair.element.owner)
+                                        .font(V.F.cardTitle)
+                                        .foregroundStyle(V.C.text6)
+                                    Spacer(minLength: 0)
+                                    Text("\(pair.element.items.count) 枚")
+                                        .font(V.F.unit)
+                                        .foregroundStyle(V.C.text3)
+                                        .monospacedDigit()
+                                }
+                                rows(pair.element.items)
+                            }
+                        }
+                    }
+                } else {
+                    rows(filtered)
                 }
             }
         }
         .padding(.horizontal, V.S.cardGutter)
+    }
+
+    private func rows(_ items: [KeyItem]) -> some View {
+        VStack(spacing: 0) {
+            ForEach(Array(items.enumerated()), id: \.offset) { pair in
+                if pair.offset > 0 { VDivider() }
+                Button {
+                    KeysRoute.openDetail(pair.element.id, router: router)
+                } label: {
+                    V7KeyRow(key: pair.element, now: now)
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("打开凭证详情")
+            }
+        }
     }
 
     private var emptyFilterText: String {

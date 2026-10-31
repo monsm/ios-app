@@ -47,7 +47,7 @@ struct GatewayScreen: View {
         ScrollView {
             VStack(spacing: V.S.gap16) {
                 header
-                if let banner { bannerPanel(banner) }
+                if let banner { bannerCard(banner) }
                 listPanel
                 if showProvision || phase != .idle {
                     provisionPanel
@@ -349,7 +349,7 @@ struct GatewayScreen: View {
         }
     }
 
-    private func bannerPanel(_ text: String) -> some View {
+    private func bannerCard(_ text: String) -> some View {
         VCard {
             HStack(alignment: .top, spacing: V.S.gapS) {
                 Image(systemName: "exclamationmark.triangle.fill")

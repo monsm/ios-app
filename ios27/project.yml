@@ -56,6 +56,14 @@ targets:
         NSFaceIDUsageDescription: 用面容解锁本机数据保护。
         # 相册/相机：仅用于"分享给安卓"的二维码
         NSCameraUsageDescription: 扫描二维码以从安卓手机导入凭证。
+        # 深链：kf://（通知点开、分享导入）
+        CFBundleURLTypes:
+          - CFBundleURLName: com.aapk.lockkeeper
+            CFBundleURLSchemes:
+              - kf
+        # DFU 升级期间需要后台保持蓝牙连接
+        UIBackgroundModes:
+          - bluetooth-central
         # 隐私清单
         ITSAppUsesNonExemptEncryption: NO
 

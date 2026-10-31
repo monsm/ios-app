@@ -17,7 +17,12 @@ struct AppearanceScreen: View {
             VStack(spacing: V.S.gap16) {
                 SettingsHeader(title: "外观", tone: tone, status: status)
                 themePanel
+                accentPanel
                 rhythmPanel
+                geometryPanel
+                readoutPanel
+                recordPanel
+                carePanel
                 timePanel
                 quickPanel
                 resetPanel
@@ -70,6 +75,236 @@ struct AppearanceScreen: View {
                     )
                     SettingRule()
                     SettingsNote(text: "深色不是浅色的反相 —— 两套独立取值。深色底不是纯黑，留一点抬升空间给面板。")
+                }
+            }
+            .padding(.horizontal, V.S.pageGutter)
+        }
+    }
+
+    // MARK: 品牌色六套 + 自定义强调色（#28）
+
+    private var accentPanel: some View {
+        VStack(spacing: V.S.gapS) {
+            VSectionLabel(text: "品牌色", trailing: store.customAccent == 0 ? "六套预设" : "自定义")
+            VCard {
+                VStack(alignment: .leading, spacing: V.S.gapMS) {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: V.S.gapS), count: 3), spacing: V.S.gapS) {
+                        ForEach(Array(Self.accents.enumerated()), id: \.offset) { pair in
+                            let item = pair.element
+                            let on = store.customAccent == 0 && store.accent == item.key
+                            Button {
+                                store.accent = item.key
+                                store.customAccent = 0
+                            } label: {
+                                HStack(spacing: V.S.gapS) {
+                                    Circle()
+                                        .fill(SettingsStore.color(hex: item.hex))
+                                        .frame(width: V.Icon.s, height: V.Icon.s)
+                                    Text(item.title)
+                                        .font(V.F.footnote)
+                                        .foregroundStyle(V.C.text1)
+                                    Spacer(minLength: 0)
+                                    if on {
+                                        Image(systemName: "checkmark")
+                                            .font(V.F.icon15)
+                                            .foregroundStyle(V.C.text1)
+                                            .accessibilityHidden(true)
+                                    }
+                                }
+                                .padding(.horizontal, V.S.gapS)
+                                .frame(minHeight: V.Hit.min)
+                                .background(on ? V.C.cardAlt : Color.clear, in: .rect(cornerRadius: V.R.control))
+                                .contentShape(.rect)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("品牌色 \(item.title)")
+                            .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
+                        }
+                    }
+                    SettingRule()
+                    ColorPicker("自定义强调色（会盖过六套预设）",
+                                selection: Binding(
+                                    get: { store.accentColor },
+                                    set: { store.setCustomAccent($0) }
+                                ),
+                                supportsOpacity: false)
+                        .font(V.F.body)
+                        .foregroundStyle(V.C.text1)
+                        .frame(minHeight: V.Hit.min)
+                    if store.customAccent != 0 {
+                        VOutlineButton(title: "取消自定义，回到六套预设", systemImage: "arrow.uturn.backward") {
+                            store.clearCustomAccent()
+                        }
+                    }
+                    SettingsNote(text: "强调色只影响系统 tint 与主控卡读数；文字与语义色仍走令牌。选到很亮的颜色时会压到能看清白字的亮度带。")
+                }
+            }
+            .padding(.horizontal, V.S.pageGutter)
+        }
+    }
+
+    private static let accents: [(key: String, title: String, hex: Int)] = [
+        ("indigo", "靛蓝", 0x4F46E5),
+        ("forest", "森林", 0x1D6F5F),
+        ("amber", "琥珀", 0xB45309),
+        ("graphite", "石墨", 0x5B6169),
+        ("rose", "玫红", 0xBE123C),
+        ("aurora", "极光", 0x0E7490)
+    ]
+
+    // MARK: 圆角 / 行高 / 时间线行距（#29 #30）
+
+    private var geometryPanel: some View {
+        VStack(spacing: V.S.gapS) {
+            VSectionLabel(text: "几何")
+            VCard {
+                VStack(alignment: .leading, spacing: V.S.gapMS) {
+                    Text("圆角")
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text3)
+                        .tracking(0.6)
+                    SettingChips(items: ["", "soft", "plump"],
+                                 title: { $0.isEmpty ? "标准" : ($0 == "soft" ? "偏硬朗" : "偏柔和") },
+                                 selection: settingsBinding(\.radius))
+                    SettingRule()
+                    Text("凭证行高")
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text3)
+                        .tracking(0.6)
+                    SettingChips(items: ["", "tall"],
+                                 title: { $0.isEmpty ? "紧凑" : "舒适" },
+                                 selection: settingsBinding(\.rowHeight))
+                    SettingRule()
+                    Text("时间线行距")
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text3)
+                        .tracking(0.6)
+                    SettingChips(items: ["tight", "", "loose"],
+                                 title: { $0 == "tight" ? "紧凑" : ($0 == "loose" ? "宽松" : "标准") },
+                                 selection: settingsBinding(\.timelineGap))
+                    SettingsNote(text: "圆角只动卡片 / 控件 / 面板三档，胶囊不参与；行高与行距不改字号与 44pt 触达。")
+                }
+            }
+            .padding(.horizontal, V.S.pageGutter)
+        }
+    }
+
+    // MARK: 主控读数 / 指标位 / 最近开门条数（#30 #31）
+
+    private var readoutPanel: some View {
+        VStack(spacing: V.S.gapS) {
+            VSectionLabel(text: "主控读数")
+            VCard {
+                VStack(alignment: .leading, spacing: V.S.gapMS) {
+                    Text("数字字体")
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text3)
+                        .tracking(0.6)
+                    SettingChips(items: ["", "plain"],
+                                 title: { $0 == "plain" ? "系统默认体" : "圆体" },
+                                 selection: settingsBinding(\.digitFont))
+                    SettingRule()
+                    VToggleRow(title: "主控卡显示固件位", detail: "电量不参与隐藏 —— 它决定还能不能开锁。", isOn: Binding(
+                        get: { HeroStats.shows("firmware") },
+                        set: { on in
+                            var ids = Array(HeroStats.visible)
+                            if on { if !ids.contains("firmware") { ids.append("firmware") } }
+                            else { ids.removeAll { $0 == "firmware" } }
+                            HeroStats.setVisible(ids)
+                        }
+                    ))
+                    SettingRule()
+                    VToggleRow(title: "主控卡显示锁钟位", detail: "锁钟是临时码有效性的判据，可以收起。", isOn: Binding(
+                        get: { HeroStats.shows("lockclock") },
+                        set: { on in
+                            var ids = Array(HeroStats.visible)
+                            if on { if !ids.contains("lockclock") { ids.append("lockclock") } }
+                            else { ids.removeAll { $0 == "lockclock" } }
+                            HeroStats.setVisible(ids)
+                        }
+                    ))
+                    SettingRule()
+                    Text("最近开门条数")
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text3)
+                        .tracking(0.6)
+                    HStack(spacing: V.S.gapS) {
+                        ForEach([3, 5, 10], id: \.self) { n in
+                            Button {
+                                store.recentCount = n
+                            } label: {
+                                VTag(text: "\(n) 条", tint: store.recentCount == n ? V.C.blue : V.C.text3,
+                                     filled: store.recentCount == n)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("最近开门显示 \(n) 条")
+                            .accessibilityAddTraits(store.recentCount == n ? [.isButton, .isSelected] : .isButton)
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .frame(minHeight: V.Hit.min)
+                }
+            }
+            .padding(.horizontal, V.S.pageGutter)
+        }
+    }
+
+    // MARK: 记录页开场策略（#31）
+
+    private var recordPanel: some View {
+        VStack(spacing: V.S.gapS) {
+            VSectionLabel(text: "记录页")
+            VCard {
+                VStack(alignment: .leading, spacing: V.S.gapMS) {
+                    SettingChips(items: ["", "fresh", "alarm"],
+                                 title: { $0 == "fresh" ? "每次全部" : ($0 == "alarm" ? "每次只看告警" : "记住上次") },
+                                 selection: settingsBinding(\.recordPolicy))
+                    SettingsNote(text: "只改进入记录页时的起点；手动改过的过滤仍按锁保留，不会删任何记录。")
+                }
+            }
+            .padding(.horizontal, V.S.pageGutter)
+        }
+    }
+
+    // MARK: 长按时长 / 双击防抖 / 夜间免扰（#32）
+
+    private var carePanel: some View {
+        VStack(spacing: V.S.gapS) {
+            VSectionLabel(text: "开锁与关怀")
+            VCard {
+                VStack(alignment: .leading, spacing: V.S.gapMS) {
+                    Text("长按确认时长")
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text3)
+                        .tracking(0.6)
+                    HStack(spacing: V.S.gapS) {
+                        ForEach([0.4, 0.6, 0.9, 1.2, 1.6], id: \.self) { seconds in
+                            Button {
+                                store.holdDuration = seconds
+                            } label: {
+                                VTag(text: String(format: "%.1f", seconds),
+                                     tint: abs(store.holdDuration - seconds) < 0.01 ? V.C.blue : V.C.text3,
+                                     filled: abs(store.holdDuration - seconds) < 0.01)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(String(format: "长按 %.1f 秒", seconds))
+                            .accessibilityAddTraits(abs(store.holdDuration - seconds) < 0.01 ? [.isButton, .isSelected] : .isButton)
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .frame(minHeight: V.Hit.min)
+                    SettingRule()
+                    SettingToggle(
+                        label: "双击防抖（0.3 秒内忽略重复触发）",
+                        note: "门口手抖连点两下只算一次，避免重复下发开锁。",
+                        isOn: settingsBinding(\.dbltapGuard)
+                    )
+                    SettingRule()
+                    SettingToggle(
+                        label: "夜间免扰（22:00–08:00 静音提示音）",
+                        note: "夜间低电等提醒只留横幅，不响提示音。",
+                        isOn: settingsBinding(\.quietNight)
+                    )
                 }
             }
             .padding(.horizontal, V.S.pageGutter)

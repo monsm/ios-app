@@ -17,6 +17,7 @@ struct KeyDetailScreen: View {
     @State private var confirmDelete = false
     @State private var copiedSegment: Int?
     @State private var actionError: String?
+    @State private var showReEnroll = false
 
     private var key: KeyItem? {
         guard let keyID else { return nil }
@@ -30,6 +31,7 @@ struct KeyDetailScreen: View {
                     header(key)
                     codeBlock(key)
                     factsBlock(key)
+                    earlyExpireCard(key)
                     actionsBlock(key)
                     dangerBlock(key)
                 } else {
@@ -47,6 +49,11 @@ struct KeyDetailScreen: View {
             consumeRoute()
         }
         .onDisappear { revealed = [] }
+        .sheet(isPresented: $showReEnroll) {
+            if let key, key.kind == .fingerprint {
+                FingerprintReEnrollSheet(key: key)
+            }
+        }
         .confirmationDialog("彻底删除这枚凭证？", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("删除", role: .destructive) { deleteKey() }
             Button("取消", role: .cancel) {}
@@ -192,6 +199,15 @@ struct KeyDetailScreen: View {
                 ) {
                     toggleDisabled(key)
                 }
+                if key.disabled {
+                    KeysInlineNote(tone: .neutral, text: "停用只是本机状态：锁端凭证仍然有效，恢复使用即回到可用。要真正作废请用下面的「彻底删除」。")
+                }
+                if key.kind == .fingerprint {
+                    KeysDivider()
+                    KeysActionRow(title: "重录一枚替换它", symbol: "touchid") {
+                        showReEnroll = true
+                    }
+                }
                 if key.kind == .password || key.kind == .temp {
                     KeysDivider()
                     KeysActionRow(title: "改造密码值", symbol: "pencil") {
@@ -306,16 +322,47 @@ struct KeyDetailScreen: View {
         }
     }
 
+    /// 停用 / 恢复使用：只改本机停用位（可恢复），**不发任何锁端删除命令**。
+    /// 旧实现调 deletePassword/deleteFingerprint —— 用户点「停用」，锁端凭证直接消失且不可逆。
     private func toggleDisabled(_ key: KeyItem) {
         actionError = nil
-        Task { @MainActor in
-            if key.kind == .fingerprint, let batch = fpBatch(of: key) {
-                let r = await app.deleteFingerprint(batch: batch)
-                if case .failure(let e) = r { actionError = e.localizedDescription }
-            } else if let alias = alias(of: key) {
-                let r = await app.deletePassword(alias: alias)
-                if case .failure(let e) = r { actionError = e.localizedDescription }
+        let mac = app.currentMac
+        CredentialLocalState.setDisabled(mac: mac, id: key.id, !key.disabled)
+        app.reloadKeys(mac)
+    }
+
+    /// 临时码 / 密码的「提前失效」滑杆：只在本机台账提示，不改锁端有效期（锁端仍按 0B 的 to）。
+    @ViewBuilder
+    private func earlyExpireCard(_ key: KeyItem) -> some View {
+        if let alias = alias(of: key), key.kind == .temp || key.kind == .password {
+            VCard {
+                VStack(alignment: .leading, spacing: V.S.gapS) {
+                    VSectionLabel(text: "提前失效提示", trailing: "\(CredentialOrg.earlyExpireMin(app.currentMac, alias)) 分钟")
+                    Slider(
+                        value: Binding(
+                            get: { Double(CredentialOrg.earlyExpireMin(app.currentMac, alias)) },
+                            set: { CredentialOrg.setEarlyExpireMin(app.currentMac, alias, Int($0.rounded())) }
+                        ),
+                        in: 0 ... 120,
+                        step: 5
+                    )
+                    .tint(V.C.blue)
+                    .accessibilityLabel("提前失效分钟数")
+                    .accessibilityValue("\(CredentialOrg.earlyExpireMin(app.currentMac, alias)) 分钟")
+                    Text("只在本机把到期提示提前 N 分钟（0 = 不提前）。锁端有效期不变 —— 这枚凭证在锁上仍然有效到原本的到期时刻。")
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text3)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if let pwd = DB.ledger(app.currentMac).pwds.first(where: { $0.alias == alias }),
+                       CredentialOrg.earlyExpireMin(app.currentMac, alias) > 0 {
+                        Text(CredentialOrg.earlyExpiryNote(app.currentMac, pwd))
+                            .font(V.F.footnote)
+                            .foregroundStyle(V.C.text2)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
             }
+            .padding(.horizontal, V.S.pageGutter)
         }
     }
 
@@ -349,5 +396,102 @@ struct KeyDetailScreen: View {
     private func fpBatch(of key: KeyItem) -> Int? {
         guard key.id.hasPrefix("fp:") else { return nil }
         return Int(key.id.dropFirst(3))
+    }
+}
+
+// MARK: - 指纹重录替换（原 FpDetailStudio.swift:12,65-72）
+
+/// 重录一枚指纹并替换旧批次：先走 cmd13/14 录新的，成功后才删旧批次。
+/// 失败时旧批次保留 —— 不出现「旧的删了、新的没录上」这种把人关在门外的中间态。
+struct FingerprintReEnrollSheet: View {
+    let key: KeyItem
+
+    @Environment(\.dismiss) private var dismiss
+    @Environment(AppModel.self) private var app
+    @State private var name = ""
+    @State private var owner: String?
+    @State private var busy = false
+    @State private var fpCount = 0
+    @State private var error: String?
+
+    private var batch: Int? {
+        guard key.id.hasPrefix("fp:") else { return nil }
+        return Int(key.id.dropFirst(3))
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: V.S.gap16) {
+                    SettingsHeader(
+                        title: "重录指纹",
+                        tone: error == nil ? .neutral : .attention,
+                        status: error ?? (busy ? "请按 8 次指纹头 · 已按 \(fpCount)/8" : "录新的，成功后替换「\(key.name)」")
+                    )
+                    VCard {
+                        VStack(alignment: .leading, spacing: V.S.gapMS) {
+                            VTextFieldRow(label: "指纹名称", text: $name, placeholder: key.name)
+                            VFieldRow(label: "归属", value: key.owner ?? "未归属", mono: false)
+                            if busy {
+                                VBusyRow(text: "指纹录入中 · 已按 \(fpCount)/8 — 请把手指按在指纹头上再抬起")
+                            }
+                            VActionButton(title: busy ? "录入中…" : "开始重录", systemImage: "touchid") {
+                                start()
+                            }
+                            .disabled(busy)
+                            VOutlineButton(title: "取消") { dismiss() }
+                        }
+                    }
+                    .padding(.horizontal, V.S.pageGutter)
+                    SettingsNote(text: "重录会先下发新指纹；成功后才删除旧批次。失败时旧指纹原样保留，不会把人关在门外。")
+                        .padding(.horizontal, V.S.pageGutter)
+                }
+                .padding(.vertical, V.S.gap16)
+            }
+            .background(CanvasBackground())
+            .scrollEdgeEffectStyle(.soft, for: .top)
+            .navigationTitle("重录指纹")
+            .navigationBarTitleDisplayMode(.inline)
+            .onAppear {
+                name = key.name
+                owner = key.owner
+            }
+        }
+    }
+
+    private func start() {
+        guard !busy, let old = batch else {
+            error = "这枚凭证没有指纹批次号"
+            return
+        }
+        busy = true
+        fpCount = 0
+        error = nil
+        Task { @MainActor in
+            ScreenCare.keepingAwake(true)
+            let result = await app.enrollFingerprint(
+                name: name.isEmpty ? key.name : name,
+                owner: owner,
+                note: "重录替换 #\(old)"
+            ) { n in
+                fpCount = n
+            }
+            ScreenCare.keepingAwake(false)
+            busy = false
+            switch result {
+            case .success(let newBatch):
+                if newBatch != old {
+                    let deleted = await app.deleteFingerprint(batch: old)
+                    if case .failure(let e) = deleted {
+                        error = "新指纹已录好，但旧批次删除失败：\(e.localizedDescription)"
+                        return
+                    }
+                }
+                AppToast.shared.show("指纹已重录并替换", tone: .ok)
+                dismiss()
+            case .failure(let e):
+                error = (e as? LocalizedError)?.errorDescription ?? e.localizedDescription
+            }
+        }
     }
 }

@@ -14,6 +14,9 @@ struct HardwareScreen: View {
 
     @State private var scanning = false
     @State private var writingId: String?
+    @State private var busyId: String?
+    @State private var keysByDongle: [String: [String]] = [:]
+    @State private var errorText: String?
 
     var body: some View {
         ScrollView {
@@ -26,6 +29,10 @@ struct HardwareScreen: View {
                     scanPanel
                 }
                 scopePanel
+                if let errorText {
+                    VStatusLine(tone: .attention, text: errorText)
+                        .padding(.horizontal, V.S.pageGutter)
+                }
             }
             .padding(.vertical, V.S.gap16)
         }
@@ -89,16 +96,63 @@ struct HardwareScreen: View {
                         SettingRule()
                         if writingId == d.id {
                             VBusyRow(text: "正在写入 · 钥匙串请贴近手机")
-                        } else if d.holdsThisLock {
-                            VOutlineButton(title: "撤销这把锁的钥匙", systemImage: "key.slash") {
-                                revoke(d)
-                            }
+                        } else if busyId == d.id {
+                            VBusyRow(text: "正在与钥匙串通信 · 请贴近手机")
                         } else {
-                            // 同屏只有一处 signal 填充（扫描面板那颗）。这里的写入是描边动作。
-                            VOutlineButton(title: "把「\(app.lock?.name ?? "这把锁")」的钥匙写进去",
-                                            systemImage: "key.horizontal") {
-                                write(d)
+                            if d.holdsThisLock {
+                                VOutlineButton(title: "撤销这把锁的钥匙", systemImage: "key.slash") {
+                                    revoke(d)
+                                }
+                            } else {
+                                // 同屏只有一处 signal 填充（扫描面板那颗）。这里的写入是描边动作。
+                                VOutlineButton(title: "把「\(app.lock?.name ?? "这把锁")」的钥匙写进去",
+                                                systemImage: "key.horizontal") {
+                                    write(d)
+                                }
                             }
+                            HStack(spacing: V.S.gapS) {
+                                VOutlineButton(title: "读取状态", systemImage: "arrow.clockwise") {
+                                    readState(d)
+                                }
+                                VOutlineButton(title: "查看已写入的钥匙", systemImage: "list.bullet") {
+                                    loadKeys(d)
+                                }
+                            }
+                            VOutlineButton(title: "写入一把未知钥匙（随机 PIN，永久）",
+                                           systemImage: "questionmark.key.filled") {
+                                writeFault(d)
+                            }
+                            if let keys = keysByDongle[d.id] {
+                                if keys.isEmpty {
+                                    Text("这把钥匙串里还没有写入任何锁的钥匙。")
+                                        .font(V.F.footnote)
+                                        .foregroundStyle(V.C.text3)
+                                } else {
+                                    VStack(alignment: .leading, spacing: V.S.gapXXS) {
+                                        ForEach(keys, id: \.self) { mac in
+                                            HStack(spacing: V.S.gapS) {
+                                                Text(shortMAC(mac))
+                                                    .font(V.F.stamp)
+                                                    .foregroundStyle(V.C.text1)
+                                                    .monospacedDigit()
+                                                Spacer(minLength: 0)
+                                                Text(DB.keychain(mac).map { LockArchive.displayName($0) } ?? "本机无这把锁的档案")
+                                                    .font(V.F.unit)
+                                                    .foregroundStyle(DB.keychain(mac) == nil ? V.C.warning : V.C.text3)
+                                            }
+                                        }
+                                    }
+                                    .padding(.top, V.S.gapXS)
+                                }
+                            }
+                            SettingRule()
+                            VOutlineButton(title: "从本机解绑", systemImage: "minus.circle", tint: V.C.critical) {
+                                unbind(d)
+                            }
+                            Text("解绑只删本机记录，不删钥匙串里已写入的钥匙 —— 那把实体钥匙仍然能开对应锁。")
+                                .font(V.F.unit)
+                                .foregroundStyle(V.C.text3)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                     }
                 }
@@ -160,12 +214,12 @@ struct HardwareScreen: View {
                     SettingRule()
                     SettingRow(
                         label: "手机钥匙（发给成员）",
-                        value: "在家 · 成员",
+                        value: "去签发",
                         tint: V.C.text2,
                         mono: false,
                         symbol: "iphone.gen3",
-                        note: "给成员发数字钥匙的入口在「家」那一页。"
-                    ) { router.request(.dest(.household)) }
+                        note: "给成员手机签一把开锁钥匙。"
+                    ) { router.request(.dest(.mobileKey)) }
                 }
             }
             .padding(.horizontal, V.S.pageGutter)
@@ -220,7 +274,70 @@ struct HardwareScreen: View {
                 // 真链路：同一条 cmd41 下发空 ekey 即删除。
                 try await HardwareService.shared.deleteDongleKey(dongleMac: d.mac, lock: kc)
                 if var rec = DB.dongle(d.mac) { rec.lastKeyLock = ""; DB.saveDongle(rec) }
-            } catch {}
+            } catch {
+                errorText = "撤销失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+            }
         }
+    }
+
+    /// 手动读状态（cmd43）：旧实现只在写钥后自动调一次，用户想单独看电量/钥匙数没有入口。
+    private func readState(_ d: DongleRecord) {
+        guard busyId == nil else { return }
+        busyId = d.id
+        errorText = nil
+        Task { @MainActor in
+            defer { busyId = nil }
+            do {
+                let stat = try await HardwareService.shared.readDongleState(mac: d.mac)
+                if var rec = DB.dongle(d.mac) { rec.stat = stat; DB.saveDongle(rec) }
+                AppToast.shared.show("状态已更新", tone: .ok)
+            } catch {
+                errorText = "读状态失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+            }
+        }
+    }
+
+    /// 查看这把钥匙串里存了哪些锁的钥匙（cmd44）。
+    private func loadKeys(_ d: DongleRecord) {
+        guard busyId == nil else { return }
+        busyId = d.id
+        errorText = nil
+        Task { @MainActor in
+            defer { busyId = nil }
+            do {
+                keysByDongle[d.id] = try await HardwareService.shared.dongleKeys(dongleMac: d.mac, lockMac: nil)
+            } catch {
+                errorText = "查钥匙失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+            }
+        }
+    }
+
+    /// 写入未知/假钥匙：随机 PIN、永久、不绑成员 —— 它开不了锁，只验证钥匙串本身能收钥。
+    private func writeFault(_ d: DongleRecord) {
+        guard let kc = app.currentKeychain, busyId == nil else { return }
+        busyId = d.id
+        errorText = nil
+        Task { @MainActor in
+            defer { busyId = nil }
+            do {
+                try await HardwareService.shared.writeFaultDongleKey(dongleMac: d.mac, lock: kc)
+                AppToast.shared.show("未知钥匙已写入（随机 PIN，开不了锁）", tone: .ok)
+            } catch {
+                errorText = "写假钥匙失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+            }
+        }
+    }
+
+    /// 从本机解绑：只删本机台账，不动实体钥匙里已写入的钥匙。
+    private func unbind(_ d: DongleRecord) {
+        DB.removeDongle(d.mac)
+        keysByDongle[d.id] = nil
+        AppToast.shared.show("已从本机解绑（钥匙串里的钥匙不受影响）", tone: .ok)
+    }
+
+    private func shortMAC(_ m: String) -> String {
+        let h = DB.normalizeMac(m)
+        guard h.count == 12 else { return m }
+        return String(h.suffix(6)).uppercased()
     }
 }

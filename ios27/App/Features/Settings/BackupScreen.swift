@@ -6,6 +6,7 @@
 // 主动作：唯一 signal 填充是「生成备份」。恢复是破坏性动作，走描边 + 二次确认。
 import SwiftUI
 import UIKit
+import UniformTypeIdentifiers
 
 struct BackupScreen: View {
     @Environment(AppModel.self) private var app
@@ -24,6 +25,10 @@ struct BackupScreen: View {
     @State private var restoreDone: (added: Int, merged: Int)?
     /// 恢复被拦下的原因。不写「失败了」三个字，写清是哪一道闸拦的。
     @State private var restoreError: String?
+    /// 系统文件选择器：导出到「文件 / iCloud 云盘」，或从文件导入。
+    @State private var showExporter = false
+    @State private var showImporter = false
+    @State private var exportDoc: BackupDoc?
 
     var body: some View {
         ScrollView {
@@ -39,6 +44,22 @@ struct BackupScreen: View {
         .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("备份与恢复")
         .navigationBarTitleDisplayMode(.inline)
+        .fileExporter(isPresented: $showExporter, document: exportDoc,
+                      contentType: .plainText, defaultFilename: backupFileName) { result in
+            switch result {
+            case .success(let url):
+                AppToast.shared.show("已存到 \(url.lastPathComponent)", tone: .ok)
+            case .failure(let e):
+                restoreError = "存文件失败：" + e.localizedDescription
+            }
+        }
+        .fileImporter(isPresented: $showImporter,
+                      allowedContentTypes: [.plainText, .json]) { result in
+            switch result {
+            case .success(let url): readBackupFile(url)
+            case .failure(let e): restoreError = "选文件失败：" + e.localizedDescription
+            }
+        }
         .confirmationDialog("恢复这份备份？", isPresented: $showRestoreConfirm, titleVisibility: .visible) {
             Button("恢复（合并，只增不删）") { runImport() }
             Button("取消", role: .cancel) {}
@@ -143,8 +164,14 @@ struct BackupScreen: View {
                                 .lineLimit(4)
                                 .truncationMode(.tail)
                                 .textSelection(.enabled)
-                            VOutlineButton(title: "复制备份文本", systemImage: "doc.on.doc") {
-                                UIPasteboard.general.string = exportText
+                            HStack(spacing: V.S.gapS) {
+                                VOutlineButton(title: "复制备份文本", systemImage: "doc.on.doc") {
+                                    UIPasteboard.general.string = exportText
+                                }
+                                VOutlineButton(title: "存到文件", systemImage: "square.and.arrow.up") {
+                                    exportDoc = BackupDoc(text: exportText)
+                                    showExporter = true
+                                }
                             }
                         }
                     }
@@ -186,9 +213,14 @@ struct BackupScreen: View {
                             .font(V.F.body)
                             .accessibilityLabel("备份密码")
                     }
-                    VOutlineButton(title: "从剪贴板粘贴", systemImage: "doc.on.clipboard") {
-                        if let s = UIPasteboard.general.string, !s.isEmpty {
-                            importText = s
+                    HStack(spacing: V.S.gapS) {
+                        VOutlineButton(title: "从文件选择", systemImage: "folder") {
+                            showImporter = true
+                        }
+                        VOutlineButton(title: "从剪贴板粘贴", systemImage: "doc.on.clipboard") {
+                            if let s = UIPasteboard.general.string, !s.isEmpty {
+                                importText = s
+                            }
                         }
                     }
                     VOutlineButton(title: "恢复这份备份", systemImage: "arrow.down.doc") {
@@ -226,6 +258,31 @@ struct BackupScreen: View {
         }
     }
 
+    /// 导出文件名：锁名 + 日期，避免「文件」里出现一叠同名 backup.txt。
+    private var backupFileName: String {
+        let name = app.lock?.name ?? "锁管家"
+        let day = TimeFormat.dayKey(Int64(Date().timeIntervalSince1970 * 1000))
+        return "lockkeeper-" + name + "-" + day
+    }
+
+    /// 从系统文件选择器读回一段备份文本（安全作用域 URL 必须成对开关）。
+    private func readBackupFile(_ url: URL) {
+        let access = url.startAccessingSecurityScopedResource()
+        defer { if access { url.stopAccessingSecurityScopedResource() } }
+        do {
+            let text = try String(contentsOf: url, encoding: .utf8)
+            guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                restoreError = "这个文件是空的 —— 可能不是备份文件。"
+                return
+            }
+            importText = text
+            restoreError = nil
+            AppToast.shared.show("已读入 \(url.lastPathComponent)", tone: .ok)
+        } catch {
+            restoreError = "读文件失败：" + error.localizedDescription
+        }
+    }
+
     private func runImport() {
         guard !importText.isEmpty, !importing else { return }
         guard importText.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("{") else {
@@ -250,5 +307,27 @@ struct BackupScreen: View {
                 restoreDone = nil
             }
         }
+    }
+}
+
+// MARK: - 系统文件导出（FileDocument）
+
+/// 备份文本的 FileDocument 包装：导出的就是用户看到的那段 JSON / 加密信封。
+struct BackupDoc: FileDocument {
+    static var readableContentTypes: [UTType] { [.plainText, .json] }
+    var text: String
+
+    init(text: String) { self.text = text }
+
+    init(configuration: ReadConfiguration) throws {
+        guard let data = configuration.file.regularFileContents,
+              let text = String(data: data, encoding: .utf8) else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
+        self.text = text
+    }
+
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        FileWrapper(regularFileWithContents: Data(text.utf8))
     }
 }

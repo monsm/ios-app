@@ -16,6 +16,8 @@ struct SecurityScreen: View {
     @State private var showDuress = false
     @State private var showDisableConfirm = false
     @State private var showDisableDuressConfirm = false
+    @State private var showVerifyPass = false
+    @State private var showVerifyDuress = false
 
     var body: some View {
         ScrollView {
@@ -40,14 +42,26 @@ struct SecurityScreen: View {
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showPasscode) { PasscodeSheet(kind: .passcode) }
         .sheet(isPresented: $showDuress) { PasscodeSheet(kind: .duress) }
+        .sheet(isPresented: $showVerifyPass) {
+            VerifyPasscodeSheet(
+                title: "关闭本机密码",
+                note: "关闭前先验证当前本机密码。"
+            ) { DB.setPasscode(nil) }
+        }
+        .sheet(isPresented: $showVerifyDuress) {
+            VerifyPasscodeSheet(
+                title: "关闭胁迫码",
+                note: "关闭前先验证当前本机密码。"
+            ) { _ = DB.setDuressCode(nil) }
+        }
         .confirmationDialog("关闭胁迫码？", isPresented: $showDisableDuressConfirm, titleVisibility: .visible) {
-            Button("关闭胁迫码", role: .destructive) { _ = DB.setDuressCode(nil) }
+            Button("继续验证", role: .destructive) { showVerifyDuress = true }
             Button("取消", role: .cancel) {}
         } message: {
             Text("关闭后，被胁迫时输错密码不会进入空壳模式 —— 门会打不开，数据照常显示。")
         }
         .confirmationDialog("关闭本机密码？", isPresented: $showDisableConfirm, titleVisibility: .visible) {
-            Button("关闭本机密码", role: .destructive) { DB.setPasscode(nil) }
+            Button("继续验证", role: .destructive) { showVerifyPass = true }
             Button("取消", role: .cancel) {}
         } message: {
             Text("关闭后冷启动不再需要密码。锁内凭证与门锁数据不受影响，但任何拿到这台手机的人都能直接打开 App。")
@@ -225,11 +239,23 @@ struct SecurityScreen: View {
                     SettingRule()
                     SettingToggle(
                         label: "失败自动重试",
-                        note: "一次没开成时自动重试一次。连续两次都失败就停下，不再试 —— 免得在门口反复广播。",
+                        note: "一次没开成时自动重试两次（2 秒 / 5 秒退避）。超时不重试 —— 免得在门口反复广播。",
                         isOn: settingsBinding(\.autoRetry)
                     )
                     SettingRule()
-                    SettingsNote(text: "这两项只管「怎么算确认」，不改锁端策略。安全模式（A / B）是锁端的事，改它要连上锁并回读确认。")
+                    SettingToggle(
+                        label: "误触围栏",
+                        note: "开启后要先把手指从圆盘边缘拖到中心解锁围栏，开锁手势才响应 —— 防口袋里误触。",
+                        isOn: settingsBinding(\.fence)
+                    )
+                    SettingRule()
+                    SettingToggle(
+                        label: "双击直开",
+                        note: "按住档下，双击圆盘绕过按住确认直接开。方便，但误触风险也更高；默认关。",
+                        isOn: settingsBinding(\.tapDirect)
+                    )
+                    SettingRule()
+                    SettingsNote(text: "这几项只管「怎么算确认」，不改锁端策略。安全模式（A / B）是锁端的事，改它要连上锁并回读确认。")
                 }
             }
             .padding(.horizontal, V.S.pageGutter)

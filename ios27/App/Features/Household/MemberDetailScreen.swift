@@ -28,24 +28,24 @@ struct MemberDetailScreen: View {
             VStack(spacing: V.S.gap16) {
                 if let member {
                     header(member)
-                    HHMemberWeekPanel(
+                    HHMemberWeekCard(
                         member: member,
                         entries: app.entries,
                         openRecords: { router.request(.dest(.records)) }
                     )
-                    rolePanel(member)
-                    profilePanel(member)
-                    HHMemberKeysPanel(
+                    roleCard(member)
+                    profileCard(member)
+                    HHMemberKeysCard(
                         member: member,
                         keys: app.keys.filter { $0.owner == member.name },
                         openKey: { id in router.request(.key(id: id)) },
                         createKey: { router.request(.dest(.keyCreate)) }
                     )
-                    HHMemberExcerptsPanel(
+                    HHMemberExcerptsCard(
                         entries: Array(app.entries.filter { $0.owner == member.name }.prefix(5)),
                         openRecords: { router.request(.dest(.records)) }
                     )
-                    HHMemberScenePanel(
+                    HHMemberSceneCard(
                         member: member,
                         note: draft.note,
                         isDuty: roster.dutyID() == member.id,
@@ -53,13 +53,13 @@ struct MemberDetailScreen: View {
                             roster.setDuty(roster.dutyID() == member.id ? nil : member.id)
                         }
                     )
-                    HHMemberClosingPanel(
+                    HHMemberClosingCard(
                         member: member,
                         toggleArchive: { toggleArchive() },
                         askDelete: { confirmDelete = true }
                     )
                     if !MemberMergeKit.candidates(primaryID: member.id).isEmpty {
-                        mergePanel(member)
+                        mergeCard(member)
                     }
                 } else {
                     missingBlock
@@ -102,7 +102,7 @@ struct MemberDetailScreen: View {
 
     // MARK: 重复合并（462）
 
-    private func mergePanel(_ member: MemberCard) -> some View {
+    private func mergeCard(_ member: MemberCard) -> some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
                 VSectionLabel(text: "重复档案")
@@ -163,7 +163,7 @@ struct MemberDetailScreen: View {
     }
 
     // MARK: 主角：角色三档 + 权限矩阵（点一下当场看得见哪几行亮/灭）
-    private func rolePanel(_ member: MemberCard) -> some View {
+    private func roleCard(_ member: MemberCard) -> some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
                 VSectionLabel(text: "角色与权限", trailing: "本机判据")
@@ -251,7 +251,7 @@ struct MemberDetailScreen: View {
     }
 
     // MARK: 档案扩展（角色不在这里改 —— 上面单选是唯一真相源）
-    private func profilePanel(_ member: MemberCard) -> some View {
+    private func profileCard(_ member: MemberCard) -> some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
                 VSectionLabel(text: "档案", trailing: saved ? "已保存" : "本机")

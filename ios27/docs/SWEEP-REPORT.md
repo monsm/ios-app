@@ -15,7 +15,7 @@
 | 全仓非 Engine / 非令牌定义层的旧令牌 | **0**（唯一保留的是 `Design/Tokens.swift` 自身的定义） |
 | `V.F.sans(<数字>)` | 页面/组件层 **0 处**；只有 `V7Tokens.swift` 的 81 个命名档定义 |
 | V7 常量纠偏 | 19 条中 18 条落地；脚注 16.5px 因 TOKENS 自身 px/pt 混用保留 13pt 可读档（见 §6 豁免 7） |
-| 本轮改动 | **59 个设计相关文件**（46 Features + LockKeeperApp + 6 Design/Components + 2 Design/V7 + 4 Gates），+2,874 / −2,151 行 |
+| 本轮改动 | **59 个设计相关文件**（46 Features + LockKeeperApp + 6 Design/Components + 2 Design/V7 + 4 Gates） |
 
 > 注：`App/Shell/AppModel.swift` 的改动是并行的功能改动，不属于本次设计迁移，未计入上面的 59 个文件与行数。
 
@@ -80,6 +80,8 @@
 | 18 | 分组小标题 10.7/500 #8E8E93 | `VSectionLabel` 改用 `V.F.small` + `V.C.text3` |
 | 19 | 正文行高 23pt | `V.Page.bodyLine = 23`；`bodyLineGap = bodyLine - 20.3`；根页 `.lineSpacing(V.Page.bodyLineSpacing)`（不再用 lineSpacing(6)） |
 
+附加 P0：主环缺口按 R1 JS 实测 `A0=208.4 / A1=516.6` → `sweepDegrees = 308.2`；两端圆头帽各吃 8.58°，可见缺口约 34.6°，与像素实测 34.4° 一致（AUDIT 建议的 339.2 与圆头帽方向相反，未采用）。
+
 附加（AUDIT-B P1 #8）：`VRingStack` 线宽改为 `V.Ring.lineWidth(for: size) = min(14, size * 0.09)`；`size: 88` 时 7.92pt，三环半径 80.08 / 61.84 / 43.6，不再退化成实心点。
 
 `lock27-preview/v7/TOKENS.md` 已同步：活动环 133.7/14/1.2、选中胶囊 60、图表 111/43/14.4、轴标 #8E8E93 的替代说明。
@@ -90,7 +92,7 @@
 
 ### 3.1 迁移方式
 - 逐文件把 `T.S/R/H/Stroke/Icon/F/M`、`Ink.*`、`Signal.*`、`State.*` 换成 `V.S/R/H/Stroke/Icon/F/M`、`V.C.*`、`V.M.*`。
-- `Panel {}` → `VCard {}`；`Inset {}` → `VInset {}`；`SectionLabel` → `VSectionLabel`；`ReadingGrid` → `VReadingGrid`；`Reading` → `VReading`；`FieldRow` → `VFieldRow`；`StatusLine` → `VStatusLine`；`StateDot` → `VStateDot`；`PrimaryAction` → `VActionButton`；`SecondaryAction` → `VOutlineButton`；`EmptyPanel` → `VEmptyPanel`；`BusyRow` → `VBusyRow`；`ChipRow` → `VChipRow`；`LedgerRow` → `VLedgerRow`。
+- `Panel {}` → `VCard {}`；`Inset {}` → `VInset {}`；`SectionLabel` → `VSectionLabel`；`ReadingGrid` → `VReadingGrid`；`Reading` → `VReading`；`FieldRow` → `VFieldRow`；`StatusLine` → `VStatusLine`；`StateDot` → `VStateDot`；`PrimaryAction` → `VActionButton`；`SecondaryAction` → `VOutlineButton`；`EmptyPanel` → `VEmptyState`；`BusyRow` → `VBusyRow`；`ChipRow` → `VChipRow`；`LedgerRow` → `VLedgerRow`。
 - 保留业务逻辑、数据绑定、路由、动效守卫不动；只换设计系统。
 
 ### 3.2 33 个文件（全部清零）
@@ -113,7 +115,7 @@ Settings（8）：`SecurityScreen` `AppearanceScreen` `BackupScreen` `AutoOpenSc
 ### 3.4 额外归一
 - 4 个根页（Door / Keys / Records / Settings）：字号字面量归一到 `V.F.xxx` 命名档，正文改用 `V.Page.bodyLineSpacing`。
 - 8 个原本已是 V7 的页面（CredentialStudio / LinkSense / LockProfile / BatteryProfile / RecordsStudio / Accessibility / Zotp / BackupStudio）：仅做 `V.F.sans(<数字>)` → 命名档归一。
-- `V7Extras.swift`：补齐 `VReading` / `VFieldRow` / `VValueRow` / `VReadingGrid` / `VStatusLine` / `VStateDot` / `VEmptyPanel` / `VBusyRow` / `VChipRow` / `VInset` / `VLedgerRow`，并全部只用 V 令牌。
+- `V7Extras.swift`：补齐 `VReading` / `VFieldRow` / `VValueRow` / `VReadingGrid` / `VStatusLine` / `VStateDot` / `VEmptyState` / `VBusyRow` / `VChipRow` / `VInset` / `VLedgerRow`，并全部只用 V 令牌。
 
 ---
 
@@ -123,23 +125,25 @@ Settings（8）：`SecurityScreen` `AppearanceScreen` `BackupScreen` `AutoOpenSc
 ```
 $ node Gates/allgates.js
 swiftparse: OK — 148 个 Swift 文件无语法错误（已知语法盲区豁免 14 处）
-types: 148 个文件，363 个顶层类型，SDK 白名单 332 项
+types: 148 个文件，367 个顶层类型，SDK 白名单 332 项
 swiftcheck: OK — 148 个文件括号/字符串/注释全部平衡
 tokens: OK — 148 个 Swift 文件，0 处硬编码样式字面量（含 V7 字号/色板）
 contrast: 解析到 11 个旧色令牌 × 2 模式 + 57 个 V7 色令牌
 glass: 扫 148 个文件，自定义玻璃面 0 处
 motion: 扫 148 个文件，.animation 调用 13 处
 a11y: 扫 148 个文件
-dynamictype: 148 个文件，756 处走令牌字号（其中 V7 756 处经 VFont/@ScaledMetric）
+dynamictype: 148 个文件，772 处走令牌字号（其中 V7 772 处经 VFont/@ScaledMetric）
 reducedmotion: 21 处已守卫
 crosprivate: 检查 7 组 Screen+Parts 拆分
 callsig: 跟踪 14 个组件，检查 0 处具名调用
 lineage: OK — 148 个文件，0 处上一版设计系统残留
 workflow: 检查 1 个文件
-destmap: Dest 44 项，映射 44 项，已声明 View 145 个
+destmap: Dest 44 项，映射 44 项，已声明 View 147 个
 
 allgates: 全部 15 道闸门通过
 ```
+
+> 并行分支仍在新增页面，文件/调用计数会随验收时刻变化；**15/15 的闸门结论不变**。
 
 ### 4.2 旧令牌 grep
 ```
@@ -165,6 +169,8 @@ V.F.sans(<数字>) 在 V7Tokens.swift 之外 = 0
 | **合计** | **59** | |
 
 另：`lock27-preview/v7/TOKENS.md` 更新（不在 ios27 仓内）。
+
+> 仓库中另有并行的功能改动（`AppModel.swift`、`Destinations.swift`、`Router.swift`、新增 Door/Records 页面等），不属于本次设计迁移。
 
 ---
 

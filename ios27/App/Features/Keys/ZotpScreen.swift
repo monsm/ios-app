@@ -16,6 +16,10 @@ struct ZotpScreen: View {
     @State private var window = ""
     @State private var busy = false
     @State private var outcome: String?
+    /// 防窥挡片（原 CredentialOtp.swift:86-108）：默认关；开着时长按才揭开。
+    @State private var shieldOn = false
+    @State private var revealed = false
+    @State private var bigCode = false
 
     private var mac: String { app.lock?.id ?? "" }
     private var kc: Keychain? { app.currentKeychain }
@@ -38,7 +42,10 @@ struct ZotpScreen: View {
         .background(V.C.bg.ignoresSafeArea())
         .navigationTitle("动态密码")
         .navigationBarTitleDisplayMode(.inline)
-        .task { otpOn = DB.otpStatus(mac)?.on ?? false }
+        .task {
+            otpOn = DB.otpStatus(mac)?.on ?? false
+            shieldOn = DB.store.getBool("kf_otp_shield", false)
+        }
     }
 
     private var header: some View {
@@ -84,15 +91,25 @@ struct ZotpScreen: View {
         VCard(style: .warm) {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VCardHeader(title: "当前动态码", showsChevron: false)
-                Text(code.isEmpty ? "······" : code)
-                    .font((AXSettings.bigOTP ? V.F.otpBig : V.F.otpRegular).monospacedDigit())
+                Text(displayCode)
+                    .font(((AXSettings.bigOTP || bigCode) ? V.F.otpBig : V.F.otpRegular).monospacedDigit())
                     .foregroundStyle(V.C.text1)
                     .contentTransition(.numericText())
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, V.S.gapM)
                     .background(V.C.cardAlt, in: .rect(cornerRadius: V.R.card, style: .continuous))
-                    .accessibilityLabel(code.isEmpty ? "还没有生成动态密码" : "动态密码 \(code)")
+                    .onLongPressGesture(minimumDuration: 0.2, pressing: { pressing in
+                        if shieldOn { revealed = pressing }
+                    }, perform: {})
+                    .onTapGesture(count: 2) { bigCode.toggle() }
+                    .accessibilityLabel(code.isEmpty ? "还没有生成动态密码" : (shieldOn && !revealed ? "动态密码已遮挡，长按揭开" : "动态密码 \(code)"))
+                    .accessibilityHint(shieldOn ? "长按揭开挡片，双击切换字号" : "双击切换字号")
+                if shieldOn, !code.isEmpty {
+                    Text(revealed ? "松开手指会重新遮住" : "长按可揭开挡片 · 双击可切换字号")
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text3)
+                }
                 if !window.isEmpty {
                     Text("于 \(window) 失效，失效前仅可使用一次")
                         .font(V.F.footnote).foregroundStyle(V.C.text3)
@@ -109,6 +126,19 @@ struct ZotpScreen: View {
                         outcome = "已复制动态密码"
                     }
                 }
+                VRowDivider()
+                VToggleRow(
+                    title: "防窥挡片",
+                    detail: "开启后动态码默认显示为圆点，长按才揭开；松手复位。旁边有人时更安全。",
+                    isOn: Binding(
+                        get: { shieldOn },
+                        set: { on in
+                            shieldOn = on
+                            DB.store.set("kf_otp_shield", on)
+                            if !on { revealed = false }
+                        }
+                    )
+                )
                 if let outcome {
                     Text(outcome).font(V.F.footnote)
                         .foregroundStyle(outcome.hasPrefix("已") ? V.C.rewardGreen : V.C.pink)
@@ -117,6 +147,12 @@ struct ZotpScreen: View {
             }
         }
         .padding(.horizontal, V.S.cardGutter)
+    }
+
+    private var displayCode: String {
+        if code.isEmpty { return "······" }
+        if shieldOn && !revealed { return "••••••" }
+        return code
     }
 
     private var helpCard: some View {

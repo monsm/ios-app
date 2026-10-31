@@ -6,7 +6,7 @@ import SwiftUI
 
 // MARK: - 名下凭证
 
-struct HHMemberKeysPanel: View {
+struct HHMemberKeysCard: View {
     let member: MemberCard
     let keys: [KeyItem]
     let openKey: (String) -> Void
@@ -76,7 +76,7 @@ struct HHMemberKeysPanel: View {
 
 // MARK: - 最近开门（归属可证明才进，展示带「约」）
 
-struct HHMemberExcerptsPanel: View {
+struct HHMemberExcerptsCard: View {
     let entries: [LedgerEntry]
     let openRecords: () -> Void
 
@@ -108,7 +108,7 @@ struct HHMemberExcerptsPanel: View {
 
 // MARK: - 这一周（有才显示；没有就如实说出路）
 
-struct HHMemberWeekPanel: View {
+struct HHMemberWeekCard: View {
     let member: MemberCard
     let entries: [LedgerEntry]
     let openRecords: () -> Void
@@ -139,7 +139,7 @@ struct HHMemberWeekPanel: View {
 
 // MARK: - 家庭场景（本周主责 + 便签回显）
 
-struct HHMemberScenePanel: View {
+struct HHMemberSceneCard: View {
     let member: MemberCard
     let note: String
     let isDuty: Bool
@@ -188,7 +188,7 @@ struct HHMemberScenePanel: View {
 
 // MARK: - 收尾（归档不删历史；删除的两种后果写在同一屏）
 
-struct HHMemberClosingPanel: View {
+struct HHMemberClosingCard: View {
     let member: MemberCard
     let toggleArchive: () -> Void
     let askDelete: () -> Void

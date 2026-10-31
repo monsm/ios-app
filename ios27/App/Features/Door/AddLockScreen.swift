@@ -50,7 +50,7 @@ struct AddLockScreen: View {
         ScrollView {
             VStack(spacing: V.S.gap16) {
                 header
-                if let banner { bannerPanel(banner) }
+                if let banner { bannerCard(banner) }
                 switch phase {
                 case .scanning, .ready:
                     ladderPanel
@@ -393,7 +393,7 @@ struct AddLockScreen: View {
         .padding(.horizontal, V.S.pageGutter)
     }
 
-    private func bannerPanel(_ text: String) -> some View {
+    private func bannerCard(_ text: String) -> some View {
         VCard {
             HStack(alignment: .top, spacing: V.S.gapS) {
                 Image(systemName: "exclamationmark.triangle.fill")

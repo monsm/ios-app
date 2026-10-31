@@ -10,7 +10,7 @@ struct ModuleOrderSheet: View {
 
     var body: some View {
         NavigationStack {
-            ModuleOrderPanel()
+            ModuleOrderCard()
                 .background(CanvasBackground())
                 .navigationTitle("模块排序与显隐")
                 .navigationBarTitleDisplayMode(.inline)
@@ -28,7 +28,7 @@ struct ModuleOrderSheet: View {
 struct ModuleOrderScreen: View {
     var body: some View {
         ScrollView {
-            ModuleOrderPanel()
+            ModuleOrderCard()
                 .padding(.vertical, V.S.gap16)
         }
         .background(CanvasBackground())
@@ -37,7 +37,7 @@ struct ModuleOrderScreen: View {
     }
 }
 
-struct ModuleOrderPanel: View {
+struct ModuleOrderCard: View {
     @State private var order: [DevSlot] = DevLayout.order
     @State private var hidden: Set<String> = DevModuleStore.hidden
     @State private var quickIDs: Set<String> = Set(QuickPool.selected.map(\.id))
