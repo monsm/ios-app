@@ -93,7 +93,7 @@ struct ChipRow<Item: Hashable>: View {
                             .background(on ? Signal.wash : Color.clear, in: .capsule)
                             .overlay {
                                 Capsule().strokeBorder(
-                                    on ? Signal.base.opacity(0.35) : Ink.hairline,
+                                    on ? Signal.edge : Ink.hairline,
                                     lineWidth: T.Stroke.hair
                                 )
                             }

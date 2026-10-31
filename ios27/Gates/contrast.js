@@ -87,6 +87,27 @@ check('单位小字 inkFaint / paper', 'inkFaint', 'paper', 4.5);
 check('单位小字 inkFaint / plateAlt', 'inkFaint', 'plateAlt', 4.5);
 check('次文本 inkSub / plateAlt', 'inkSub', 'plateAlt', 4.5);
 
+// —— 选中态描边（Signal.edge = base @ 75% 叠在 plate/paper 上）：UI 组件要 ≥3:1。
+// 这条是实测补的：原来用 35%，浅色下只有 1.69:1 —— 强光下等于没有选中态。
+function blend(fg, bg, a) {
+  const f = rgb(fg), b = rgb(bg);
+  const o = f.map((c, i) => Math.round(c * a + b[i] * (1 - a)));
+  return ((o[0] << 16) | (o[1] << 8) | o[2]).toString(16).padStart(6, '0').toUpperCase();
+}
+function checkEdge(name, bgName, alpha, min) {
+  for (const mode of MODES) {
+    const base = DUAL['base']?.[mode];
+    const bg = DUAL[bgName]?.[mode];
+    if (!base || !bg) { fails.push(name + ': 令牌缺失'); continue; }
+    const mixed = blend(base, bg, alpha);
+    const r = ratio(mixed, bg);
+    if (r >= min) pass++;
+    else fails.push(`${name} [${mode}] base@${Math.round(alpha * 100)}% on ${bgName} = ${r.toFixed(2)}:1 < ${min}:1（实测 #${mixed}）`);
+  }
+}
+checkEdge('选中描边 edge / plate', 'plate', 0.75, 3);
+checkEdge('选中描边 edge / paper', 'paper', 0.75, 3);
+
 // —— 层级差（"次要"必须看得出次要：ink 与 inkSub、inkSub 与 inkFaint 之间要有可辨差异）
 check('层级 ink / inkSub 至少 1.3:1', 'ink', 'inkSub', 1.3);
 check('层级 inkSub / inkFaint 至少 1.4:1', 'inkSub', 'inkFaint', 1.4);

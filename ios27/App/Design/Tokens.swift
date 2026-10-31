@@ -169,7 +169,12 @@ enum Signal {
     /// 压填充上的文字。深色用近黑墨色（白字压高亮浅色只有 3:1）。
     static let on = Color.dual(light: 0xFFFFFF, dark: 0x06201A)
     /// 弱化版：选中底 / 微光。由 base 调透明度得到，不另取色。
-    static var wash: Color { base.opacity(0.12) }
+    /// 选中底。16% —— 12% 在浅色纸上只有约 1.05:1，等于看不出来；
+    /// 16% 给到约 1.15:1，配合下面 75% 的描边才构成"选中"。
+    static var wash: Color { base.opacity(0.16) }
+    /// 选中描边。**75% 不是 35%**：35% 实测只有 1.69:1（浅色）/ 2.13:1（深色），
+    /// 低于 UI 组件 3:1 的下限 —— 在楼道强光下等于没有选中态。75% 是 3.55:1 / 4.87:1。
+    static var edge: Color { base.opacity(0.75) }
 }
 
 enum State {

@@ -182,8 +182,9 @@ struct HHPageHeader: View {
             Text(title)
                 .font(T.F.display())
                 .foregroundStyle(Ink.ink)
-                .lineLimit(1)
-                .minimumScaleFactor(0.6)
+                // 标题最多两行；缩字只收到 0.85（0.6 会把 34pt 压成 20pt，中文长名字会糊）
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
             HStack(spacing: T.S.s) {
                 StateDot(tone: tone, word: status)
                 Text(status)

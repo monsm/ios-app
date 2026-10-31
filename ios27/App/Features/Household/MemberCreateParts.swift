@@ -72,7 +72,7 @@ struct HHEmojiPicker: View {
                 .frame(width: T.Hit.min, height: T.Hit.min)
                 .background(on ? Signal.wash : Ink.plateAlt, in: .circle)
                 .overlay {
-                    Circle().strokeBorder(on ? Signal.base.opacity(0.35) : Ink.hairline,
+                    Circle().strokeBorder(on ? Signal.edge : Ink.hairline,
                                           lineWidth: T.Stroke.hair)
                 }
         }

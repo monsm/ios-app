@@ -93,8 +93,9 @@ struct AddLockScreen: View {
                 Text(headerText)
                     .font(T.F.caption)
                     .foregroundStyle(Ink.inkSub)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    // 状态行最多两行：宁可换行，不要截断或缩字（缩字会把 13pt 压到 10pt，低于可读下限）
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

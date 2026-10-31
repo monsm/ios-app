@@ -96,7 +96,7 @@ const cssBody = [
   '.sub{color:var(--ink-sub)}',
   '.chips{display:flex;gap:var(--sp-s);padding:0 var(--sp-gutter);overflow:hidden}',
   '.chip{height:var(--h-chip);padding:0 var(--sp-m);border-radius:999px;border:var(--stroke-hair) solid var(--hairline);background:transparent;font:inherit;font-size:var(--f-caption);color:var(--ink-sub)}',
-  '.chip.on{background:color-mix(in srgb,var(--base) 12%,transparent);border-color:color-mix(in srgb,var(--base) 35%,transparent);color:var(--ink)}',
+  '.chip.on{background:color-mix(in srgb,var(--base) 16%,transparent);border-color:color-mix(in srgb,var(--base) 75%,transparent);color:var(--ink)}',
   '.btn{height:var(--h-action);border-radius:var(--r-control);border:0;font:inherit;font-size:var(--f-body);font-weight:500;width:100%}',
   '.btn.primary{background:var(--base);color:var(--on)}',
   '.btn.secondary{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 var(--stroke-hair) var(--hairline)}',

@@ -102,8 +102,9 @@ struct MemberDetailScreen: View {
                     Text(HHDisplay.name(member, extras: draft))
                         .font(T.F.display())
                         .foregroundStyle(Ink.ink)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.6)
+                        // 标题最多两行；缩字只收到 0.85（0.6 会把 34pt 压成 20pt，中文长名字会糊）
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.85)
                     HStack(spacing: T.S.s) {
                         StateDot(tone: statusTone(member), word: statusWord(member))
                         Text(statusLine(member))
@@ -216,7 +217,7 @@ struct MemberDetailScreen: View {
             .frame(minHeight: T.Hit.min)
             .background(on ? Signal.wash : Color.clear, in: .capsule)
             .overlay {
-                Capsule().strokeBorder(on ? Signal.base.opacity(0.35) : Ink.hairline, lineWidth: T.Stroke.hair)
+                Capsule().strokeBorder(on ? Signal.edge : Ink.hairline, lineWidth: T.Stroke.hair)
             }
         }
         .buttonStyle(.plain)
@@ -266,7 +267,7 @@ struct MemberDetailScreen: View {
                             .frame(width: T.Hit.min, height: T.Hit.min)
                             .background(on ? Signal.wash : Ink.plateAlt, in: .circle)
                             .overlay {
-                                Circle().strokeBorder(on ? Signal.base.opacity(0.35) : Ink.hairline,
+                                Circle().strokeBorder(on ? Signal.edge : Ink.hairline,
                                                       lineWidth: T.Stroke.hair)
                             }
                     }

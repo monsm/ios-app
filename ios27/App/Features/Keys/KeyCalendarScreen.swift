@@ -175,7 +175,7 @@ struct KeyCalendarScreen: View {
                         in: .rect(cornerRadius: T.R.control))
             .overlay {
                 RoundedRectangle(cornerRadius: T.R.control, style: .continuous)
-                    .strokeBorder(selected ? Signal.base.opacity(0.35) : Color.clear, lineWidth: T.Stroke.hair)
+                    .strokeBorder(selected ? Signal.edge : Color.clear, lineWidth: T.Stroke.hair)
             }
             .contentShape(.rect)
         }
