@@ -51,10 +51,21 @@ final class SecurityRegressionTests: XCTestCase {
 
     // MARK: - SEC-12：CSV 公式注入 / vCard 行注入
 
+    /// 取出单元格的**实际内容**（去掉 CSV 外层引号与内部转义），
+    /// 这样断言的是"Excel 会看到什么"，而不是"字符串长什么样"。
+    private func csvCellValue(_ field: String) -> String {
+        guard field.hasPrefix("\""), field.hasSuffix("\""), field.count >= 2 else { return field }
+        let inner = String(field.dropFirst().dropLast())
+        return inner.replacingOccurrences(of: "\"\"", with: "\"")
+    }
+
     func testCSVFieldBlocksFormulaInjection() {
         for dangerous in ["=HYPERLINK(\"http://x\")", "+cmd|' /C calc'!A0", "-2+3", "@SUM(A1)"] {
-            let out = RecordCSV.field(dangerous)
-            XCTAssertTrue(out.hasPrefix("'"), "首字符 = + - @ 时必须前置单引号：\(dangerous)")
+            let cell = csvCellValue(RecordCSV.field(dangerous))
+            // 关键：Excel/Numbers 拿到的单元格内容必须以单引号开头（那才是"按文本处理"），
+            // 而不是断言原始 field 字符串 —— 含逗号/引号的值还会被外层加引号，
+            // 直接 hasPrefix("'") 会误判。
+            XCTAssertTrue(cell.hasPrefix("'"), "单元格内容必须以单引号开头：\(dangerous) → \(cell)")
         }
         // 普通值不应被加引号前缀（不能为了安全把正常数据弄脏）
         XCTAssertEqual(RecordCSV.field("门锁"), "门锁")
@@ -130,13 +141,15 @@ final class SecurityRegressionTests: XCTestCase {
         let text = BackupCanonical.exportText(bundle)
         XCTAssertEqual(BackupStudio.checksumState(text), .ok, "自己导出的包必须自校验通过")
 
-        // 改一个字节 → 必须变成 .mismatch（而不是 .ok 或 .absent）
+        // 改**数据**（不是格式）：canonical 会把 JSON 重新序列化，所以往空格里插字节不会改变校验和。
+        // 必须改一个真正进入 canonical 的值。这里改设备 MAC。
         var tampered = text
-        if let r = tampered.range(of: "\"schema\":") {
-            tampered.insert(" ", at: r.upperBound)   // 插入空格，JSON 仍合法，但 canonical 变了
+        guard let macRange = tampered.range(of: "\"aabbccddeeff\"") else {
+            return XCTFail("夹具包里没有预期 MAC，测试前提不成立")
         }
+        tampered.replaceSubrange(macRange, with: "\"aabbccddee00\"")
         XCTAssertEqual(BackupStudio.checksumState(tampered), .mismatch,
-                       "被改过的包必须判 mismatch —— 恢复路径据此拒绝覆盖真数据")
+                       "被改过数据的包必须判 mismatch —— 恢复路径据此拒绝覆盖真数据")
     }
 
     // MARK: - SEC-15：帧归属路由（两个服务共用一条连接）
@@ -176,15 +189,25 @@ final class SecurityRegressionTests: XCTestCase {
         XCTAssertNil(ZKProtocol.parseKLV("0a05aabbcc"))
     }
 
-    // MARK: - 台账口令：Keychain 往返（SEC-01 的核心行为）
+    // MARK: - 台账口令：密钥库 往返（SEC-01 的核心行为）
 
-    func testLedgerPasswordRoundTripsThroughKeychain() {
+    /// 密钥库 在**未签名**的单元测试宿主里通常不可用（errSecMissingEntitlement）。
+    /// 所以这组断言在 密钥库 不可用时会显式跳过，而不是"失败"或"假装通过" ——
+    /// 静默通过比红更糟，无差别红也会掩盖真问题。
+    private var keychainAvailable: Bool {
+        SecretStore.set("probe", for: "test.keychain.probe")
+    }
+
+    func testLedgerPasswordRoundTripsThroughKeychain() throws {
+        try XCTSkipUnless(keychainAvailable,
+                          "密钥库 在本测试宿主不可用（未签名 bundle）—— 跳过而非假通过")
+        SecretStore.remove("test.keychain.probe")
         let mac = "aabbccddeeff"
         let account = DB.pwdSecretAccount(mac, 7)
         XCTAssertEqual(account, "ledger.aabbccddeeff.pwd.7")
 
-        // 写：口令进 Keychain，plist 副本里 pwd 变 nil
-        XCTAssertTrue(SecretStore.set("123456", for: account), "Keychain 写入应成功（模拟器允许）")
+        // 写：口令进 密钥库，plist 副本里 pwd 变 nil
+        XCTAssertTrue(SecretStore.set("123456", for: account), "密钥库 写入应成功（模拟器允许）")
         XCTAssertEqual(SecretStore.get(account), "123456")
 
         var ledger = Ledger()
@@ -192,9 +215,9 @@ final class SecurityRegressionTests: XCTestCase {
                                  temp: false, at: 0, pwd: "123456", owner: "m1", note: "门锁密码")]
         DB.saveLedger(mac, ledger)
 
-        // 读：ledger() 必须把口令从 Keychain 回填出来
+        // 读：ledger() 必须把口令从 密钥库 回填出来
         let read = DB.ledger(mac)
-        XCTAssertEqual(read.pwds.first?.pwd, "123456", "读路径必须从 Keychain 回填明文")
+        XCTAssertEqual(read.pwds.first?.pwd, "123456", "读路径必须从 密钥库 回填明文")
         XCTAssertEqual(read.pwds.first?.owner, "m1")
 
         // plist 副本（不经过 ledger()）里不该再有明文
