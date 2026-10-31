@@ -59,14 +59,21 @@ final class AppModel {
     /// 最近一次开锁成功的时刻（毫秒）。30 秒内再次开锁要过本机密码闸。
     var lastUnlockSuccessAt: Int64?
     @ObservationIgnored private var autoLockTask: Task<Void, Never>?
+    /// 用户在等待中轻点圆盘撤销：命令已发就等回执，未发就立刻停（不发下一帧）。
+    @ObservationIgnored private var unlockCancelled = false
 
     /// 弱引用路由：EngineHost 的唯一跳转出口。由 RootView 在装配时注入。
     @ObservationIgnored weak var router: Router?
+
+    /// 用户在「全部锁 / 换锁」里显式选中的锁。它优先于启动默认锁，直到进程重启。
+    /// 没有它，冷启动的默认锁会把「刚刚手动切到的另一把」一直盖回去。
+    var overrideMac: String?
 
     /// 当前锁的 MAC（没锁时回落本机偏好锁；DB.preferredMac 内部会做归一化）。
     /// 「锁档案 · 设为启动默认锁」的真实消费点：冷启动 app.lock 还是 nil 时先落默认锁，
     /// 默认锁不存在（已解绑）才回退上次停留的那把。
     var currentMac: String {
+        if let overrideMac, DB.keychain(overrideMac) != nil { return overrideMac }
         if let lock { return lock.id }
         let def = LockArchive.defaultMac
         if !def.isEmpty, DB.keychain(def) != nil { return def }
@@ -229,6 +236,7 @@ final class AppModel {
             return
         }
         let maxAttempts = SettingsStore.shared.autoRetry ? 3 : 1
+        unlockCancelled = false
         lastError = nil
         retryHint = nil
         for attempt in 0 ..< maxAttempts {
@@ -237,6 +245,7 @@ final class AppModel {
                 unlockPhase = 1
                 dialPhase = .reaching
                 try await LockService.shared.ensureConnected(mac: mac)
+                if unlockCancelled { dialPhase = .idle; unlockPhase = 0; return }
                 unlockPhase = 2
                 dialPhase = .sending
                 // 「锁档案 · 开锁 PIN」的真实消费点：选过第 N 枚就传第 N 枚，
@@ -269,7 +278,7 @@ final class AppModel {
                     dialPhase = .reaching
                     unlockPhase = 1
                     try? await Task.sleep(for: .seconds(attempt == 0 ? 2 : 5))
-                    if Task.isCancelled { break }
+                    if Task.isCancelled || unlockCancelled { return }
                     continue
                 }
                 lastError = msg
@@ -283,6 +292,7 @@ final class AppModel {
 
     /// 中途撤销等待（原版「轻点圆盘可撤销」）：只回到待机，不补发任何命令。
     func cancelUnlock() {
+        unlockCancelled = true
         autoLockTask?.cancel()
         autoLockTask = nil
         retryHint = nil

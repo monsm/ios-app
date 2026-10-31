@@ -144,6 +144,7 @@ struct LockPortfolioScreen: View {
         VStack(alignment: .leading, spacing: V.S.gapXS) {
             Button {
                 DB.currentMac = item.mac
+                app.overrideMac = item.mac
                 Task { await app.reload(refreshStatus: true) }
             } label: {
                 HStack(spacing: V.S.gapS) {

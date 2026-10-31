@@ -773,7 +773,11 @@ struct RecordsScreen: View {
     private func switchLock(_ kc: Keychain) {
         selectedMac = kc.mac
         DB.currentMac = kc.mac
+        app.overrideMac = kc.mac
         lockScope = .current
+        // AppModel.currentMac 先读 app.lock，再回落默认锁/偏好锁；换锁要先把旧投影清掉，
+        // 否则 reload 仍会按旧锁重建（DB.currentMac 只在 app.lock == nil 时参与解析）。
+        app.lock = nil
         Task { @MainActor in
             await app.reload(refreshStatus: false)
             reload()
@@ -825,6 +829,8 @@ struct RecordsScreen: View {
         }
         if !selectedMac.isEmpty, selectedMac != app.lock?.id {
             DB.currentMac = selectedMac
+            app.overrideMac = selectedMac
+            app.lock = nil
             await app.reload(refreshStatus: false)
         }
         reading = true
