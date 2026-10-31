@@ -236,6 +236,16 @@ $ git show origin/ci-log:archive.log | grep SUCCEEDED
 
 **同时证明了 gates job 也是绿的**：`build` 的 `needs: gates`，而 build 真的跑起来了 —— 也就是说 CI 上用 Node 24 + `npm ci` 装了 tree-sitter 之后，**16 道闸门（含新加的 callsig2）全部通过**。闸门不是只在 Windows 本地绿。
 
+随后两个 commit 也各自跑了一轮（用于确认 workflow 改动本身没把 build 弄红）：
+
+| run | commit | 内容 | 结果 |
+|---|---|---|---|
+| 41206628092 | d2f9bde | callsig2 + allgates + workflow 构建号注入 + 三处 import | BUILD/ARCHIVE SUCCEEDED，errors=0 |
+| 41206804118 | 389ae32 | 本报告 | errors=0 |
+| 41206883585 | c305494 | 构建号自检降级为 warning | BUILD/ARCHIVE SUCCEEDED，errors=0 |
+
+最后两个 commit（2d4a718 / 9d29d3b）只改本文档，不含代码。
+
 > 说明：`f8020cc` 是并行会话提交的（三处 `import`、`project.yml`、`callsig2` 初版都在这个 commit 里）；`d2f9bde` 是本会话补的 workflow / allgates / callsig2 成员链与一批误报修正。两个 commit 都在远端。
 
 ---
