@@ -107,43 +107,11 @@ targets:
         # 隐私清单
         ITSAppUsesNonExemptEncryption: NO
 
-  # G-07（真跑起来的那一半）：协议层的差分回归，**macOS 原生，不需要 iOS 模拟器**。
-  # 为什么能这么做：协议层只依赖 Foundation + CommonCrypto + Compression，
-  # 没有一行 UIKit / CoreBluetooth。所以把同一批源文件直接编进 macOS 测试 bundle，
-  # 在 macos-latest 上就能真跑 —— CI 的两个镜像都没有 iOS 27 模拟器 runtime（第一轮实测），
-  # 那是"金标从未执行"的根因。
-  #
-  # 注意：这里**不建 framework**。iOS framework 不能作为 macOS 测试目标的依赖；
-  # 单元测试 bundle 自己编源文件反而更简单（也不需要 @testable import）。
-  CoreProtocolTests:
-    type: bundle.unit-test
-    platform: macOS
-    sources:
-      - path: TestsCore
-      - path: ../fixtures/golden.json
-        buildPhase: resources
-      # 协议层源码（与 App 用的是同一份文件，不是拷贝 —— 改了这里就一起变）
-      - path: App/Engine/AESKit.swift
-      - path: App/Engine/HexKit.swift
-      - path: App/Engine/Locked.swift
-      - path: App/Engine/ZKProtocol.swift
-      - path: App/Engine/ZKCmdBuilder.swift
-      - path: App/Engine/StatusParser.swift
-      - path: App/Engine/ZOTP.swift
-      - path: App/Engine/KeyGen.swift
-      - path: App/Engine/PidMap.swift
-      - path: App/Engine/Attribution.swift
-      - path: App/Engine/ZipKit.swift
-      - path: App/Engine/HardwareService.swift
-      - path: App/Engine/BLETypes.swift
-      - path: App/Engine/StoreModels.swift
-      - path: App/Engine/Store.swift
-      - path: App/Engine/BackupKit.swift
-    settings:
-      base:
-        GENERATE_INFOPLIST_FILE: YES
-        PRODUCT_BUNDLE_IDENTIFIER: com.aapk.lockkeeper.coretests
-        MACOSX_DEPLOYMENT_TARGET: "14.0"
+  # G-07 说明：试过把协议层单独编成 macOS 测试 bundle（那样 CI 不需要 iOS 模拟器）。
+  # 实测不可行：ZKProtocol 依赖 BleTelemetry → DiagKit（UIKit + CoreBluetooth + UserNotifications），
+  # Store 依赖 SecretStore/Security，闭包一路拖到整个 DB 层。硬抽出来要么改生产代码，
+  # 要么写一堆假实现 —— 后者等于测假货，比不测更糟。所以保持 iOS 目标，
+  # 并由 golden job 如实报告"本轮是否真的执行了"（test_executed）。
 
   # 界面层的冒烟测试：**需要 iOS 27 模拟器**，CI 上通常跑不了（如实标注，不假装通过）。
   LockKeeperTests:
@@ -166,22 +134,9 @@ schemes:
       targets:
         LockKeeper: all
         LockKeeperTests: [test]
-        CoreProtocolTests: [test]
     run:
       config: Debug
     test:
       config: Debug
       targets:
         - LockKeeperTests
-        - CoreProtocolTests
-
-  # 专供 CI 的金标 scheme：只跑 macOS 上的协议层测试。
-  # 这样 macos-latest 不需要 iOS 模拟器也能**真执行** 40 条命令帧 / NIST AES / 解析 / ZOTP。
-  CoreGolden:
-    build:
-      targets:
-        CoreProtocolTests: [test]
-    test:
-      config: Debug
-      targets:
-        - CoreProtocolTests
