@@ -381,29 +381,40 @@ struct DefendScreen: View {
 
     private func load() {
         guard config == nil else { return }
-        // TODO(engine): 真实链路是 op=getDeviceSetting key=defenceControl, defenceStartTime, defenceEndTime。
-        // 默认按"从未设过布防"处理（control 0），不拒任何自动开锁。
-        config = DefendConfig(control: 0, startMinute: 22 * 60, endMinute: 7 * 60, updatedAt: nil)
-        mode = .off
+        guard let kc = app.currentKeychain else { return }
+        if let c = DB.defend(kc.mac) {
+            config = DefendConfig(control: c.control,
+                                  startMinute: DefendKit.secFromProto(c.startSec) / 60,
+                                  endMinute: DefendKit.secFromProto(c.endSec) / 60,
+                                  updatedAt: Int64(c.at))
+            mode = Mode(rawValue: c.control) ?? .off
+        } else {
+            config = DefendConfig(control: 0, startMinute: 22 * 60, endMinute: 7 * 60, updatedAt: nil)
+            mode = .off
+        }
     }
 
     @MainActor
     private func apply() async {
-        guard !busy, canApply else { return }
+        guard !busy, canApply, let kc = app.currentKeychain else { return }
         busy = true
         outcome = nil
-        // TODO(engine): 真实链路是 ensureConnected → cmd25（control + startSec + endSec，半秒刻度）→ 回写三键。
-        try? await Task.sleep(for: .milliseconds(600))
-        let now = Int64(Date().timeIntervalSince1970 * 1000)
-        config = DefendConfig(
-            control: mode.rawValue,
-            startMinute: startMinute,
-            endMinute: endMinute,
-            updatedAt: now
-        )
-        outcome = mode == .off
-            ? "撤防命令已下发（锁端是否生效以现场为准）"
-            : "布防命令已下发（锁端是否生效以现场为准）"
+        let dm = DefendMode(rawValue: mode.rawValue) ?? .off
+        let startSec = mode == .period ? startMinute * 60 : 0
+        let endSec = mode == .period ? endMinute * 60 : 0
+        do {
+            // 真链路：cmd25 下发（半秒刻度由 DefendKit 换算）→ 成功才写本地 kf_defend_。
+            try await DefendService.apply(host: app, mode: dm, startSec: startSec, endSec: endSec)
+            let now = Int64(Date().timeIntervalSince1970 * 1000)
+            config = DefendConfig(control: mode.rawValue,
+                                  startMinute: startMinute,
+                                  endMinute: endMinute,
+                                  updatedAt: now)
+            outcome = mode == .off ? "已撤防（锁端回执成功）" : "已布防（锁端回执成功）"
+            _ = kc
+        } catch {
+            outcome = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
         busy = false
     }
 

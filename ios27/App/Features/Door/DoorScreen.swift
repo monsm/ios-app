@@ -1,233 +1,410 @@
-// DoorScreen.swift —— 门（Tab 1）。本设计的旗舰屏。
+// DoorScreen.swift —— 门（Tab 1）。v7 结构重写，参考 R1-device.html / TOKENS.md 参考 A。
 //
-// 一屏一个主角：刻度盘。它下面是这台锁的读数（电量 / 信号 / 凭证数 / 固件），
-// 再下面是最新一条台账。所有数字都来自真实协议字段，没有装饰性读数。
+// 布局全部取自实测：芯片行 left 19.3 / 芯片 178×53.3 r14；主环外径 279.3、描边 36.3、
+// 缺口 163–201°、游标 289°、中心数字 73pt；标题 30pt/700 left 37.3；正文 17/23 #828282；
+// 双列读数 12.5/17；图表区 282.4×125（6 条点线 + 3 条横线 + 蓝色区间带）。
+// 数据绑定保持原口径：AppModel.lock / entries / dialPhase / runUnlockChain()；Router 跳转不变。
 import SwiftUI
 
 struct DoorScreen: View {
     @Environment(AppModel.self) private var app
     @Environment(Router.self) private var router
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    /// 刻度盘直径随屏宽收缩（小屏 375pt 上 260pt 会顶到读数区）。
-    /// 取 min(260, 屏宽 × 0.62)：260 是设计值，0.62 保证左右各留 19% 的呼吸。
-    @State private var dialSize: CGFloat = 260
+    @State private var showQuickEdit = false
+    /// 连接感知（原 LinkSenseKit 的预热/回连阶梯/RSSI 历史）。
+    @State private var link = LinkSenseModel()
 
     var body: some View {
         ScrollView {
-            VStack(spacing: T.S.l) {
-                header
+            VStack(alignment: .leading, spacing: V.S.gapL) {
+                LinkSenseBar(model: link)
+                chips
                 if let lock = app.lock {
-                    dialBlock(lock)
-                    readingsBlock(lock)
-                    recentBlock
-                    shortcuts
+                    gaugeBlock(lock)
+                    summaryBlock(lock)
+                    chartBlock
+                    quickBlock
+                    shortcutsBlock
                 } else {
                     noLockBlock
                 }
             }
-            .padding(.vertical, T.S.l)
+            .padding(.top, V.Page.topSpace)
+            .padding(.bottom, V.S.gapL)
         }
-        .background(CanvasBackground())
-        .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("门")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    router.request(.dest(.addLock))
-                } label: {
-                    Image(systemName: "plus")
-                        .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字/按钮标签承载
-                }
-                .accessibilityLabel("添加门锁")
-            }
+        .background(V.C.bg.ignoresSafeArea())
+        .toolbar(.hidden, for: .navigationBar)
+        .task {
+            await app.reload(refreshStatus: true)
+            link.update(mac: app.currentMac)
+            if app.lock != nil { await link.preheat() }
         }
-        // 进页面即从 Engine 重载（并顺带读一次 cmd03 —— 门页要看真电量/固件）。
-        .task { await app.reload(refreshStatus: true) }
-        .onGeometryChange(for: CGFloat.self) { proxy in
-            proxy.size.width
-        } action: { width in
-            dialSize = min(260, max(180, width * 0.62))
-        }
+        .onChange(of: app.lock?.id) { _, _ in link.update(mac: app.currentMac) }
         .sensoryFeedback(.success, trigger: app.dialPhase == .opened) { _, new in new }
         .sensoryFeedback(.error, trigger: app.dialPhase.isFailed) { _, new in new }
+        .sheet(isPresented: $showQuickEdit) { QuickPoolEditSheet() }
     }
 
-    // MARK: 页头：锁名 + 连接状态（状态三通道）
-    private var header: some View {
-        VStack(alignment: .leading, spacing: T.S.xs) {
-            HStack(alignment: .firstTextBaseline, spacing: T.S.s) {
-                Text(app.lock?.name ?? "未添加门锁")
-                    .font(T.F.display())
-                    .foregroundStyle(Ink.ink)
-                Spacer(minLength: 0)
+    // MARK: - 芯片行（R1：left 19.3 / gap 7.7）
+
+    private var chips: some View {
+        ScrollView(.horizontal) {
+            HStack(spacing: V.S.chipGap) {
+                VChip(
+                    title: "概览",
+                    value: overviewWord,
+                    tint: overviewTint,
+                    style: .standard,
+                    systemImage: "circle.hexagongrid.fill"
+                )
+                VChip(
+                    title: "电量",
+                    value: batteryChipValue,
+                    tint: V.C.blue,
+                    style: .standard,
+                    systemImage: "battery.75percent"
+                )
             }
-            if let lock = app.lock {
-                HStack(spacing: T.S.s) {
-                    StateDot(tone: lock.isConnected ? .ok : .attention,
-                             word: lock.isConnected ? "已连接" : "未连接")
-                    Text(lock.isConnected ? "已连接 · \(lock.model)" : "未连接 · \(lock.model)")
-                        .font(T.F.caption)
-                        .foregroundStyle(Ink.inkSub)
-                }
-            }
+            .padding(.horizontal, V.S.chipLeftA)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, T.S.gutter)
+        .scrollIndicators(.hidden)
     }
 
-    // MARK: 主角：刻度盘
-    private func dialBlock(_ lock: LockSummary) -> some View {
-        VStack(spacing: T.S.l) {
-            Dial(
-                phase: app.dialPhase,
-                footnote: footnote,
-                hint: app.dialPhase.isBusy ? "正在开锁，请不要离开" : (lock.isConnected ? "轻点开锁" : "未连接，轻点重试"),
-                enabled: !app.dialPhase.isBusy
-            ) {
-                Task { await app.runUnlockChain() }
-            }
-            .environment(\.dialDiameter, dialSize)
-            // 开锁成功是"一天只有几次"的高情绪时刻 —— 用 settle 档（420ms、0.95 阻尼，无过冲）。
-            // 高频动作（按压/切 chip）仍走 snap 档，不能让"每天几十次"的操作变慢。
-            .animation(reduceMotion ? nil : T.M.settle, value: app.dialPhase == .opened)
-            .padding(.top, T.S.s)
+    private var overviewWord: String {
+        guard let lock = app.lock else { return "未添加" }
+        if !lock.isConnected { return "未连接" }
+        if lock.battery >= 0, lock.battery < 20 { return "电量偏低" }
+        return "全部正常"
+    }
 
-            // 失败横幅只说**原因与下一步**，不再重复"失败"这个词 ——
-            // 那个词已经在刻度盘中心（并且变红了）。同一件事说三遍是噪音，不是强调。
+    private var overviewTint: Color {
+        guard let lock = app.lock else { return V.C.text3 }
+        if !lock.isConnected || (lock.battery >= 0 && lock.battery < 20) { return V.C.pink }
+        return V.C.rewardGreen
+    }
+
+    private var batteryChipValue: String {
+        guard let lock = app.lock, lock.battery >= 0 else { return "--" }
+        return "\(lock.battery)%"
+    }
+
+    // MARK: - 主角：主环（点击 = 真实开锁链）
+
+    private func gaugeBlock(_ lock: LockSummary) -> some View {
+        VStack(spacing: V.S.gapM) {
+            Button {
+                Task { await app.runUnlockChain() }
+            } label: {
+                VGauge(
+                    center: batteryNumber(lock),
+                    label: "电量",
+                    fraction: batteryFraction(lock),
+                    tint: V.C.blue
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(app.dialPhase.isBusy)
+            .accessibilityLabel("开锁")
+            .accessibilityValue(app.dialPhase.word)
+
             if case .failed(let reason) = app.dialPhase {
-                HStack(alignment: .top, spacing: T.S.s) {
+                HStack(alignment: .top, spacing: V.S.gapS) {
                     Image(systemName: "exclamationmark.triangle.fill")
+                        .font(V.F.sans(13))
+                        .foregroundStyle(V.C.pink)
                         .accessibilityHidden(true)
-                        .font(T.F.icon(T.Icon.s))
-                        .foregroundStyle(State.critical)
                     Text(reason)
-                        .font(T.F.caption)
-                        .foregroundStyle(Ink.ink)
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text1)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
                 }
-                .padding(.horizontal, T.S.l)
-                .padding(.vertical, T.S.m)
-                .background(State.critical.opacity(0.10), in: .rect(cornerRadius: T.R.control))
-                .padding(.horizontal, T.S.gutter)
-                .transition(.opacity.combined(with: .move(edge: .top)))
+                .padding(V.S.gapM)
+                .background(V.C.pink.opacity(0.12), in: .rect(cornerRadius: V.R.action, style: .continuous))
+                .padding(.horizontal, V.S.pageGutterA)
             }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, V.S.gapM)
+    }
+
+    private func batteryNumber(_ lock: LockSummary) -> String {
+        lock.battery >= 0 ? String(lock.battery) : "--"
+    }
+
+    private func batteryFraction(_ lock: LockSummary) -> Double {
+        guard lock.battery >= 0 else { return 0 }
+        return Double(max(0, min(100, lock.battery))) / 100
+    }
+
+    // MARK: - 标题 / 正文 / 双列读数（R1：left 37.3、30pt/700）
+
+    private func summaryBlock(_ lock: LockSummary) -> some View {
+        VStack(alignment: .leading, spacing: V.S.gapL) {
+            VStack(alignment: .leading, spacing: V.Page.titleToBody) {
+                Text(lock.name)
+                    .font(V.F.displayA)
+                    .foregroundStyle(V.C.text1)
+                Text(statusWord(lock))
+                    .font(V.F.displayA)
+                    .foregroundStyle(V.C.text1)
+                Text(bodyText(lock))
+                    .font(V.F.body)
+                    .foregroundStyle(V.C.text2)
+                    .lineSpacing(V.Page.bodySpacing)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.horizontal, V.S.pageGutterA)
+
+            VStatPair(items: [
+                ("预计可用", estimateText(lock)),
+                ("建议更换", replaceText(lock))
+            ])
+            .padding(.horizontal, V.S.pageGutterA)
         }
     }
 
-    private var footnote: String {
-        guard let at = app.lastActionAt else { return "还没有开锁记录" }
-        return "上次 \(TimeFormat.ago(at))"
+    private func statusWord(_ lock: LockSummary) -> String {
+        if !lock.isConnected { return "未连接" }
+        if lock.battery >= 0, lock.battery < 20 { return "电量偏低" }
+        return "状态良好"
     }
 
-    // MARK: 读数区：这台锁的实况
-    private func readingsBlock(_ lock: LockSummary) -> some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "锁实况")
-                ReadingGrid(items: [
-                    .init(label: "电量", value: "\(lock.battery)", unit: "%",
-                          tint: lock.battery < 20 ? State.attention : Ink.ink),
-                    .init(label: "信号", value: "\(lock.signal)", unit: "/ 4",
-                          tint: lock.signal <= 1 ? State.attention : Ink.ink),
-                    .init(label: "凭证", value: "\(lock.keyCount)", unit: "枚"),
-                    .init(label: "固件", value: lock.firmware),
-                ])
-                .padding(.top, T.S.xs)
-                Divider().overlay(Ink.hairline)
-                HStack(spacing: T.S.m) {
-                    StatusLine(tone: lock.safeMode ? .attention : .neutral,
-                               text: lock.safeMode ? "安全模式 开" : "安全模式 关")
-                    StatusLine(tone: .neutral, text: lock.muted ? "静音 开" : "静音 关")
+    private func bodyText(_ lock: LockSummary) -> String {
+        let opens = todayOpenCount
+        let batteryPart = lock.battery >= 0 ? "电量 \(lock.battery)%" : "电量未知"
+        let linkPart = lock.isConnected ? "蓝牙已连接" : "蓝牙未连接"
+        return "\(batteryPart)，\(linkPart)，\(lock.keyCount) 枚凭证在册。今天已开锁 \(opens) 次。按日均 3 次估算，约可用 \(estimateMonths(lock))。"
+    }
+
+    private func estimateMonths(_ lock: LockSummary) -> String {
+        guard lock.battery >= 0 else { return "未知" }
+        let months = max(1, Int((Double(lock.battery) / 0.68 / 30).rounded()))
+        return "\(months) 个月"
+    }
+
+    private func estimateText(_ lock: LockSummary) -> String {
+        estimateMonths(lock)
+    }
+
+    private func replaceText(_ lock: LockSummary) -> String {
+        guard lock.battery >= 0 else { return "未知" }
+        let days = Double(lock.battery) / 0.68
+        let date = Date().addingTimeInterval(days * 86_400)
+        let parts = TimeFormat.calendar.dateComponents([.month, .day], from: date)
+        return "\(parts.month ?? 1) 月 \(parts.day ?? 1) 日"
+    }
+
+    // MARK: - 图表（R1：282.4×125，6 条点线 + 3 条横线 + 区间带）
+
+    private var chartBlock: some View {
+        VStack(alignment: .leading, spacing: V.Page.chartTop) {
+            Text("今天的开锁")
+                .font(V.F.sans(18, weight: .bold))
+                .foregroundStyle(V.C.text1)
+            if todayOpenCount > 0 {
+                HStack(alignment: .top, spacing: V.S.gapS) {
+                    VAreaChart(values: chartValues)
+                        .frame(width: V.Chart.plotWidth, height: V.Chart.height)
+                    VStack(alignment: .leading) {
+                        Text("高峰")
+                        Spacer(minLength: 0)
+                        Text("平时")
+                    }
+                    .font(V.F.sans(8.6))
+                    .foregroundStyle(V.C.text4)
+                    .frame(height: V.Chart.height)
+                    .padding(.top, V.S.gapS)
                 }
-                .padding(.top, T.S.s)
+            } else {
+                Text("今天还没有开锁记录。轻点上方主环开一次门，曲线就会出现在这里。")
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text3)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, T.S.gutter)
+        .padding(.horizontal, V.S.pageGutterA)
     }
 
-    // MARK: 最近一条
-    private var recentBlock: some View {
-        Panel {
-            VStack(alignment: .leading, spacing: T.S.m) {
-                SectionLabel(text: "最近", trailing: "全部")
-                if let e = app.entries.first {
-                    LedgerRow(entry: e)
-                } else {
-                    Text("还没有记录")
-                        .font(T.F.caption)
-                        .foregroundStyle(Ink.inkSub)
-                        .frame(minHeight: T.Hit.min)
-                }
-            }
+    private var todayOpenCount: Int {
+        todayEntries.filter { $0.tone == .ok || $0.tone == .live }.count
+    }
+
+    private var todayEntries: [LedgerEntry] {
+        let start = TimeFormat.calendar.startOfDay(for: Date())
+        let startMillis = Int64(start.timeIntervalSince1970 * 1000)
+        return app.entries.filter { $0.at >= startMillis }
+    }
+
+    /// 今天 24 小时 → 15 个桶，供面积图使用（没有记录就是 0，不编造形状）。
+    private var chartValues: [Double] {
+        var bins = Array(repeating: 0.0, count: 15)
+        let calendar = TimeFormat.calendar
+        for entry in todayEntries {
+            let hour = calendar.component(.hour, from: TimeFormat.date(entry.at))
+            let index = min(14, max(0, hour * 15 / 24))
+            bins[index] += 1
         }
-        .padding(.horizontal, T.S.gutter)
-        // 「最近」整块可点 → 切到台账 Tab（不是裸切：走唯一漏斗，且带 .none 上下文 = 停在台账根）。
-        .contentShape(.rect)
-        .onTapGesture { router.request(.tab(.records)) }
-        .accessibilityElement(children: .contain)
-        .accessibilityAction(named: "打开台账") { router.request(.tab(.records)) }
+        return bins
     }
 
-    // MARK: 快捷入口（最多 4 个，不堆）
-    private var shortcuts: some View {
-        Panel {
-            VStack(spacing: 0) {
-                shortcutRow("锁实况", "gauge.with.dots.needle.50percent", .lockStatus)
-                divider
-                shortcutRow("新增凭证", "plus.circle", .keyCreate)
-                divider
-                shortcutRow("成员", "person.2", .household)
-                divider
-                shortcutRow("校时", "clock.arrow.circlepath", .syncTime)
-            }
-        }
-        .padding(.horizontal, T.S.gutter)
-    }
+    // MARK: - 快捷操作（QuickPool：10 选 N / 常用排前 / 再开一次）
 
-    private var divider: some View {
-        Rectangle().fill(Ink.hairline).frame(height: T.Stroke.hair)
-    }
-
-    private func shortcutRow(_ title: String, _ symbol: String, _ dest: Dest) -> some View {
-        Button {
-            router.request(.dest(dest))
-        } label: {
-            HStack(spacing: T.S.m) {
-                Image(systemName: symbol)
-                    .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                    .font(T.F.icon(T.Icon.m, weight: .regular))
-                    .foregroundStyle(Ink.inkSub)
-                    .frame(width: T.Icon.xl, alignment: .leading)
-                Text(title).font(T.F.body).foregroundStyle(Ink.ink)
+    private var quickBlock: some View {
+        VStack(alignment: .leading, spacing: V.S.gapS) {
+            HStack(alignment: .firstTextBaseline, spacing: V.S.gapS) {
+                Text("快捷操作")
+                    .font(V.F.section)
+                    .foregroundStyle(V.C.text1)
                 Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
-                    .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                    .font(T.F.icon(T.Icon.s, weight: .medium))
-                    .foregroundStyle(Ink.inkFaint)
+                Button("编辑") { showQuickEdit = true }
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text3)
+                    .frame(minHeight: V.List.rowMinHeight)
+                    .accessibilityLabel("编辑快捷操作")
             }
-            .frame(minHeight: T.Hit.min)
-            .contentShape(.rect)
+            VCard {
+                VStack(spacing: 0) {
+                    ForEach(Array(QuickPool.ordered().prefix(SettingsStore.shared.quickGridCount).enumerated()), id: \.element.id) { index, action in
+                        if index > 0 { VDivider() }
+                        VListRow(
+                            title: action.label,
+                            systemImage: action.icon,
+                            tint: V.C.rewardBlue
+                        ) { runQuick(action) }
+                    }
+                }
+            }
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(title)
+        .padding(.horizontal, V.S.cardGutter)
+        .padding(.top, V.S.gapL)
     }
 
-    // MARK: 空态（必须给出路）
-    private var noLockBlock: some View {
-        Panel {
-            EmptyPanel(
-                title: "还没有添加门锁",
-                message: "把锁的后面板打开，长按 RESET 直到三声嘀，然后在这里添加。",
-                actionTitle: "添加门锁",
-                systemImage: "door.left.hand.closed"
-            ) {
-                router.request(.dest(.addLock))
+    private func runQuick(_ action: QuickAction) {
+        QuickPool.recordTap(action.id)
+        switch action.id {
+        case "addPwd", "addFp", "studio":
+            router.request(.dest(.keyCreate))
+        case "otp":
+            router.request(.dest(.keyCreate))
+        case "syncTime":
+            router.request(.dest(.syncTime))
+        case "again":
+            if let t = QuickPool.repeatTarget(app.lock?.id ?? "") {
+                router.request(.key(id: t.keyID))
+            } else {
+                router.request(.dest(.keys))
             }
-            .padding(.vertical, T.S.xxl)
+        case "backup":
+            router.request(.dest(.backup))
+        case "tailgate":
+            router.request(.dest(.lockStatus))
+        case "safemode":
+            router.request(.dest(.lockStatus))
+        case "dfu":
+            router.request(.dest(.dfu))
+        default:
+            break
         }
-        .padding(.horizontal, T.S.gutter)
     }
+
+    // MARK: - 快捷入口（保留原有全部 Router 入口）
+
+    private var shortcutsBlock: some View {
+        VStack(alignment: .leading, spacing: V.S.gapS) {
+            Text("门锁与入口")
+                .font(V.F.section)
+                .foregroundStyle(V.C.text1)
+            VCard {
+                VStack(spacing: 0) {
+                    VListRow(
+                        title: "锁实况",
+                        detail: "电量 / 信号 / 固件",
+                        systemImage: "gauge.with.dots.needle.50percent",
+                        tint: V.C.rewardBlue
+                    ) { router.request(.dest(.lockStatus)) }
+                    VDivider()
+                    // 来源：原 App/UI/LockSettingsView.swift（锁设置）。
+                    VListRow(
+                        title: "锁设置",
+                        detail: "临时码开关 / 自动上锁 / 清空密码",
+                        systemImage: "slider.horizontal.3",
+                        tint: V.C.coral
+                    ) { router.request(.dest(.lockSettings)) }
+                    VDivider()
+                    VListRow(
+                        title: "添加门锁",
+                        detail: "配网并绑定这把锁",
+                        systemImage: "plus",
+                        tint: V.C.rewardGreen
+                    ) { router.request(.dest(.addLock)) }
+                    VDivider()
+                    VListRow(
+                        title: "智能网关",
+                        detail: "远程访问与转发",
+                        systemImage: "antenna.radiowaves.left.and.right",
+                        tint: V.C.purple
+                    ) { router.request(.dest(.gateway)) }
+                    VDivider()
+                    VListRow(
+                        title: "校准门锁时间",
+                        detail: "让锁内时钟与手机一致",
+                        systemImage: "clock.arrow.circlepath",
+                        tint: V.C.miniBlue
+                    ) { router.request(.dest(.syncTime)) }
+                    VDivider()
+                    VListRow(
+                        title: "布防",
+                        detail: "离家后监控门锁状态",
+                        systemImage: "shield.lefthalf.filled",
+                        tint: V.C.pink
+                    ) { router.request(.dest(.defend)) }
+                    VDivider()
+                    VListRow(
+                        title: "新增凭证",
+                        detail: "密码 / 指纹 / 临时码",
+                        systemImage: "key.horizontal.fill",
+                        tint: V.C.coral
+                    ) { router.request(.dest(.keyCreate)) }
+                    VDivider()
+                    VListRow(
+                        title: "成员",
+                        detail: "家人与访客",
+                        systemImage: "person.2.fill",
+                        tint: V.C.rewardGreen
+                    ) { router.request(.dest(.household)) }
+                }
+            }
+        }
+        .padding(.horizontal, V.S.cardGutter)
+        .padding(.top, V.S.gapL)
+    }
+
+    // MARK: - 空态（必须给出路）
+
+    private var noLockBlock: some View {
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapM) {
+                Text("还没有添加门锁")
+                    .font(V.F.displayB)
+                    .foregroundStyle(V.C.text1)
+                Text("把锁的后面板打开，长按 RESET 直到三声嘀，然后在这里添加。")
+                    .font(V.F.body)
+                    .foregroundStyle(V.C.text2)
+                    .fixedSize(horizontal: false, vertical: true)
+                VActionButton(title: "添加门锁", systemImage: "plus") {
+                    router.request(.dest(.addLock))
+                }
+            }
+        }
+        .padding(.horizontal, V.S.pageGutterA)
+        .padding(.top, V.S.gapL)
+    }
+}
+
+#Preview("DoorScreen") {
+    NavigationStack {
+        DoorScreen()
+    }
+    .environment(AppModel())
+    .environment(Router())
 }

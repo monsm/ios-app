@@ -175,40 +175,52 @@ struct HardwareScreen: View {
     // MARK: - 动作
 
     private func scan() {
+        guard !scanning else { return }
         scanning = true
-        // TODO(engine) 真实现走 BLE 扫描 15 秒，只认 pid 16289 且广播带 MAC，写 kf_keychain_dongles。
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(1500))
-            if !store.dongles.contains(where: { $0.id == DongleRecord.discovered.id }) {
-                store.dongles.append(DongleRecord.discovered)
+            defer { scanning = false }
+            do {
+                // 真链路：全扫 15s，只认 pid 16289 且广播带 MAC，落 kf_keychain_dongles。
+                let d = try await HardwareService.shared.scanForDongle()
+                var rec = DB.dongle(d.mac) ?? Dongle(mac: d.mac, name: d.name)
+                if rec.boundAt.isEmpty { rec.boundAt = DF.iso().string(from: Date()) }
+                rec.lastSeenAt = DF.iso().string(from: Date())
+                DB.saveDongle(rec)
+                store.lastScanAt = Int64(Date().timeIntervalSince1970 * 1000)
+            } catch {
+                // 扫描没找到不算"永久失败"：页面空态仍给下一步，这里只记时刻。
+                store.lastScanAt = Int64(Date().timeIntervalSince1970 * 1000)
             }
-            store.lastScanAt = Int64(Date().timeIntervalSince1970 * 1000)
-            scanning = false
         }
     }
 
     private func write(_ d: DongleRecord) {
+        guard let kc = app.currentKeychain, writingId == nil else { return }
         writingId = d.id
-        // TODO(engine) 真实现走 cmd41（生成 2010~2118 的 ekey 写入），再 cmd43/44 回读状态与钥匙信息。
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(900))
-            store.dongles = store.dongles.map { item in
-                guard item.id == d.id else { return item }
-                return DongleRecord(id: item.id, name: item.name, mac: item.mac,
-                                    battery: item.battery, keys: item.keys + 1,
-                                    firmware: item.firmware, holdsThisLock: true)
+            defer { writingId = nil }
+            do {
+                // 真链路：cmd41 写 ekey（2010~2118 窗口），再 cmd43/44 回读状态与钥匙信息。
+                try await HardwareService.shared.writeDongleKey(dongleMac: d.mac, lock: kc,
+                                                               trackId: UInt32.random(in: 1...0x7fff_ffff))
+                if let stat = try? await HardwareService.shared.readDongleState(mac: d.mac) {
+                    if var rec = DB.dongle(d.mac) { rec.stat = stat; rec.lastKeyLock = kc.mac
+                        rec.lastKeyAt = DF.iso().string(from: Date()); DB.saveDongle(rec) }
+                }
+            } catch {
+                // 失败已在按钮文案/状态中体现；不写假状态。
             }
-            writingId = nil
         }
     }
 
     private func revoke(_ d: DongleRecord) {
-        // TODO(engine) 真实现同一条 cmd41 下发空 ekey 即删除。
-        store.dongles = store.dongles.map { item in
-            guard item.id == d.id else { return item }
-            return DongleRecord(id: item.id, name: item.name, mac: item.mac,
-                                battery: item.battery, keys: max(0, item.keys - 1),
-                                firmware: item.firmware, holdsThisLock: false)
+        guard let kc = app.currentKeychain else { return }
+        Task { @MainActor in
+            do {
+                // 真链路：同一条 cmd41 下发空 ekey 即删除。
+                try await HardwareService.shared.deleteDongleKey(dongleMac: d.mac, lock: kc)
+                if var rec = DB.dongle(d.mac) { rec.lastKeyLock = ""; DB.saveDongle(rec) }
+            } catch {}
         }
     }
 }

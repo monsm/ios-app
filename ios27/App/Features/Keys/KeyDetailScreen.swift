@@ -16,6 +16,7 @@ struct KeyDetailScreen: View {
     @State private var now: Int64 = KeysState.now()
     @State private var confirmDelete = false
     @State private var copiedSegment: Int?
+    @State private var actionError: String?
 
     private var key: KeyItem? {
         guard let keyID else { return nil }
@@ -120,6 +121,7 @@ struct KeyDetailScreen: View {
                 }
             }
         }
+        .captureShield("这枚凭证含码值\n屏幕正在被录制或截图，已遮挡")
         .padding(.horizontal, T.S.gutter)
     }
 
@@ -168,10 +170,7 @@ struct KeyDetailScreen: View {
                     .init(label: "剩余", value: remaining.value, unit: remaining.unit, tint: remaining.tint),
                 ])
                 Divider().overlay(Ink.hairline)
-                // 用量与开门数要读 cmd16 日志与锁内计数，本机现在拿不到 —— 如实标出来，不编数字。
-                KeysInlineNote(tone: .neutral, text: "用量与近 30 天开门次数要读锁内日志（cmd16），本机还没有这条链路。")
-                // 改期写的是本机台账；锁端要重发 0B 才真的改到锁上 —— 这句话放在读数区，不藏在代码里。
-                KeysInlineNote(tone: .neutral, text: "改到期日只写本机台账。要让门锁也认新时段，还得重发一次 0B。")
+                KeysInlineNote(tone: .neutral, text: "改到期日走 cmd0B 真下发到锁，回执成功才改本机台账 —— 不再只是本机备注。")
             }
         }
         .padding(.horizontal, T.S.gutter)
@@ -215,6 +214,9 @@ struct KeyDetailScreen: View {
             Button("改为永久有效") { setExpiry(key, days: nil) }
             if key.expiresAt != nil {
                 Button("提前到今天结束") { setExpiry(key, days: 0) }
+            }
+            if let actionError {
+                Text(actionError).font(T.F.caption).foregroundStyle(State.critical)
             }
         } label: {
             HStack(spacing: T.S.m) {
@@ -278,31 +280,74 @@ struct KeyDetailScreen: View {
     // MARK: 写台账（值语义：改就是换一条）
 
     private func setExpiry(_ key: KeyItem, days: Int?) {
-        let expiresAt: Int64?
-        if let days {
-            let cal = TimeFormat.calendar
-            let base = cal.startOfDay(for: Date())
-            let shifted = cal.date(byAdding: .day, value: days, to: base) ?? base
-            // 到期落在当天 23:59，避免「今天到期」在中午就被判过期。
-            let end = cal.date(byAdding: .second, value: 86399, to: shifted) ?? shifted
-            expiresAt = Int64(end.timeIntervalSince1970 * 1000)
-        } else {
-            expiresAt = nil
+        guard key.kind == .password || key.kind == .temp, let alias = alias(of: key) else {
+            actionError = "只有密码/临时码有到期日"
+            return
         }
-        // TODO(engine): 改期要重发 0B（写新起止时间到锁）。链路未接，这里只改本机台账。
-        app.keys = KeysState.replace(KeysState.withExpiry(key, expiresAt), in: app.keys)
-        now = KeysState.now()
+        let cal = TimeFormat.calendar
+        let start = cal.startOfDay(for: Date())
+        let df = DF.cached("yyyy-MM-dd HH:mm")
+        let from = df.string(from: Date())
+        let to: String
+        if let days {
+            let shifted = cal.date(byAdding: .day, value: days, to: start) ?? start
+            let end = cal.date(byAdding: .second, value: 86399, to: shifted) ?? shifted
+            to = df.string(from: end)
+        } else {
+            to = "2118-12-31 23:59"
+        }
+        actionError = nil
+        Task { @MainActor in
+            let r = await app.setPasswordExpiry(alias: alias, from: from, to: to)
+            if case .failure(let e) = r {
+                actionError = (e as? LocalizedError)?.errorDescription ?? e.localizedDescription
+            }
+            now = KeysState.now()
+        }
     }
 
     private func toggleDisabled(_ key: KeyItem) {
-        // TODO(engine): 停用 = 本地移除 + 排锁端删除（cmd 删除凭证）。链路未接，这里只翻本机状态。
-        app.keys = KeysState.replace(KeysState.withDisabled(key, !key.disabled), in: app.keys)
+        actionError = nil
+        Task { @MainActor in
+            if key.kind == .fingerprint, let batch = fpBatch(of: key) {
+                let r = await app.deleteFingerprint(batch: batch)
+                if case .failure(let e) = r { actionError = e.localizedDescription }
+            } else if let alias = alias(of: key) {
+                let r = await app.deletePassword(alias: alias)
+                if case .failure(let e) = r { actionError = e.localizedDescription }
+            }
+        }
     }
 
     private func deleteKey() {
         guard let key else { return }
-        // TODO(engine): 彻底删除要先下发锁端删除命令，成功才摘台账。链路未接，这里只摘本机。
-        app.keys.removeAll { $0.id == key.id }
-        router.keysPath = []
+        actionError = nil
+        Task { @MainActor in
+            let r: Result<Void, Error>
+            if key.kind == .fingerprint, let batch = fpBatch(of: key) {
+                r = await app.deleteFingerprint(batch: batch)
+            } else if let alias = alias(of: key) {
+                r = await app.deletePassword(alias: alias)
+            } else {
+                // 手机钥匙：本机台账撤销（锁端 pin 由 MobileKey 页的 revoke 走 cmd08）。
+                app.keys.removeAll { $0.id == key.id }
+                r = .success(())
+            }
+            if case .failure(let e) = r {
+                actionError = (e as? LocalizedError)?.errorDescription ?? e.localizedDescription
+            } else {
+                router.keysPath = []
+            }
+        }
+    }
+
+    private func alias(of key: KeyItem) -> Int? {
+        guard key.id.hasPrefix("pwd:") else { return nil }
+        return Int(key.id.dropFirst(4))
+    }
+
+    private func fpBatch(of key: KeyItem) -> Int? {
+        guard key.id.hasPrefix("fp:") else { return nil }
+        return Int(key.id.dropFirst(3))
     }
 }

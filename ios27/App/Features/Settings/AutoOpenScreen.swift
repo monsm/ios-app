@@ -18,7 +18,7 @@ struct AutoOpenScreen: View {
             VStack(spacing: T.S.l) {
                 SettingsHeader(title: "靠近自动开锁", tone: tone, status: status)
                 mainPanel
-                if store.autoOpenEnabled {
+                if AutoOpen.on {
                     confirmPanel
                     calibrationPanel
                     rejectPanel
@@ -32,17 +32,18 @@ struct AutoOpenScreen: View {
         .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("靠近自动开锁")
         .navigationBarTitleDisplayMode(.inline)
+        .task { syncAutoOpenState() }
     }
 
     // MARK: 页头
     private var tone: Tone {
-        store.autoOpenEnabled ? (app.lock?.isConnected == true ? .ok : .attention) : .neutral
+        AutoOpen.on ? (app.lock?.isConnected == true ? .ok : .attention) : .neutral
     }
 
     private var status: String {
-        guard store.autoOpenEnabled else { return "关闭 · 走到门前仍需手动点开锁" }
+        guard AutoOpen.on else { return "关闭 · 走到门前仍需手动点开锁" }
         guard app.lock?.isConnected == true else { return "已开启 · 但锁未连接，自动开锁不会触发" }
-        return "已开启 · \(store.faceConfirm.title) · 仅前台生效"
+        return "已开启 · \(faceTier.title) · 仅前台生效"
     }
 
     // MARK: 主角：主开关
@@ -54,12 +55,12 @@ struct AutoOpenScreen: View {
                     SettingToggle(
                         label: "走近自动开门",
                         note: "默认关。开启后 App 在前台且靠近门时自动下发开锁 —— 这是唯一一个不需要你动手就会开门的功能，所以它默认不生效。",
-                        isOn: settingsBinding(\.autoOpenEnabled)
+                        isOn: autoOpenBinding
                     )
                     SettingRule()
                     HStack(spacing: T.S.m) {
-                        StatusLine(tone: store.autoOpenEnabled ? .live : .neutral,
-                                   text: store.autoOpenEnabled ? "自动开锁 开" : "自动开锁 关")
+                        StatusLine(tone: AutoOpen.on ? .live : .neutral,
+                                   text: AutoOpen.on ? "自动开锁 开" : "自动开锁 关")
                         StatusLine(tone: app.lock?.isConnected == true ? .ok : .attention,
                                    text: app.lock?.isConnected == true ? "锁已连接" : "锁未连接")
                     }
@@ -96,10 +97,10 @@ struct AutoOpenScreen: View {
                 VStack(alignment: .leading, spacing: T.S.m) {
                     SettingChips(items: FaceConfirmTier.allCases,
                                  title: { $0.title },
-                                 selection: settingsBinding(\.faceConfirm))
-                    SettingsNote(text: store.faceConfirm.note)
+                                 selection: faceTierBinding)
+                    SettingsNote(text: faceTier.note)
                     SettingRule()
-                    FieldRow(label: "当前档位", value: store.faceConfirm.title, mono: false)
+                    FieldRow(label: "当前档位", value: faceTier.title, mono: false)
                 }
             }
             .padding(.horizontal, T.S.gutter)
@@ -114,9 +115,9 @@ struct AutoOpenScreen: View {
                 VStack(alignment: .leading, spacing: T.S.m) {
                     ReadingGrid(items: [
                         .init(label: "上次标定",
-                              value: store.calibrationAt.map { TimeFormat.dayShort($0) } ?? "未标定",
-                              tint: store.calibrationAt == nil ? State.attention : Ink.ink),
-                        .init(label: "触发距离", value: store.calibrationAt == nil ? "默认" : "已校准",
+                              value: calibrationAt.map { TimeFormat.dayShort($0) } ?? "未标定",
+                              tint: calibrationAt == nil ? State.attention : Ink.ink),
+                        .init(label: "触发距离", value: calibrationAt == nil ? "默认（-40 dBm）" : "已校准",
                               tint: Ink.inkSub),
                     ], columns: 2)
                     .padding(.top, T.S.xs)
@@ -125,7 +126,7 @@ struct AutoOpenScreen: View {
                     if calibrating {
                         BusyRow(text: "正在采集信号 · 请保持站在门外")
                     } else {
-                        PrimaryAction(title: store.calibrationAt == nil ? "开始标定" : "重新标定",
+                        PrimaryAction(title: calibrationAt == nil ? "开始标定" : "重新标定",
                                       systemImage: "dot.radiowaves.left.and.right") {
                             calibrate()
                         }
@@ -142,7 +143,7 @@ struct AutoOpenScreen: View {
             SectionLabel(text: "上一次")
             Panel {
                 VStack(alignment: .leading, spacing: T.S.m) {
-                    if let reason = store.lastSkipReason {
+                    if let reason = lastSkipReason {
                         StatusLine(tone: .attention, text: reason)
                         SettingRule()
                         SettingsNote(text: "这条是这次没自动开的原因。想看每一次的开锁结果，去台账页。")
@@ -161,12 +162,59 @@ struct AutoOpenScreen: View {
     // MARK: - 动作
 
     private func calibrate() {
+        guard let mac = app.lock?.id, !calibrating else { return }
         calibrating = true
-        // TODO(engine) 真实现要连上锁、按 RSSI 采样 3~5 秒取中位数作为门槛，并把门槛写进本机。
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(1200))
-            store.calibrationAt = Int64(Date().timeIntervalSince1970 * 1000)
+            // 真链路：连上锁后读 5 次当前链路 RSSI，取 P95 作为这把锁的距离门槛。
+            try? await LockService.shared.ensureConnected(mac: mac)
+            var samples: [Int] = []
+            for _ in 0 ..< 5 {
+                let r: Int? = await withCheckedContinuation { cont in
+                    BLEService.shared.readLinkRSSI(timeoutMs: 1200) { cont.resume(returning: $0) }
+                }
+                if let r { samples.append(r) }
+                try? await Task.sleep(for: .milliseconds(250))
+            }
+            if AutoOpen.saveAutocal(mac, samples: samples) != nil {
+                store.calibrationAt = Int64(Date().timeIntervalSince1970 * 1000)
+            } else {
+                store.calibrationAt = nil
+            }
             calibrating = false
         }
+    }
+
+    // MARK: - AutoOpen 真值桥接
+
+    private var autoOpenBinding: Binding<Bool> {
+        Binding(get: { AutoOpen.on }, set: { store.autoOpenEnabled = $0; AutoOpen.on = $0 })
+    }
+
+    private var faceTier: FaceConfirmTier {
+        AutoOpen.faceTier == 0 ? .free : .strict
+    }
+
+    private var faceTierBinding: Binding<FaceConfirmTier> {
+        Binding(get: { faceTier },
+                set: { v in
+                    store.faceConfirm = v
+                    AutoOpen.faceTier = (v == .strict) ? 1 : 0
+                })
+    }
+
+    private var calibrationAt: Int64? {
+        guard let cal = AutoOpen.autocal(app.lock?.id ?? "") else { return nil }
+        return Int64(cal.at * 1000)
+    }
+
+    private var lastSkipReason: String? {
+        AutoOpen.lastReject(app.lock?.id ?? "")?.reason
+    }
+
+    private func syncAutoOpenState() {
+        store.autoOpenEnabled = AutoOpen.on
+        store.faceConfirm = faceTier
+        if let cal = AutoOpen.autocal(app.lock?.id ?? "") { store.calibrationAt = Int64(cal.at * 1000) }
+        store.lastSkipReason = lastSkipReason
     }
 }

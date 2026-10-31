@@ -455,8 +455,15 @@ struct AddLockScreen: View {
 
     @MainActor
     private func probe(_ c: Candidate) async {
-        // TODO(engine): 真实链路是 cmd12 免令牌明文回声（连接 → 发 123456 → 拆链路），不改锁内任何东西。
-        echoResult = "回声：\(c.name) 往返 84 ms · 回显与发出值一致"
+        // 真链路：cmd12 免令牌明文回声（临时连接 → 发 123456 → 拆链路），不改锁内任何东西。
+        do {
+            let r = try await LockService.shared.probeEcho(deviceId: c.id)
+            echoResult = r.matched
+                ? "回声：\(c.name) 往返 \(r.ms) ms · 回显与发出值一致"
+                : "回声不匹配：\(c.name) 往返 \(r.ms) ms · rc=\(r.rc)"
+        } catch {
+            echoResult = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
     }
 
     private func tap(_ c: Candidate) {

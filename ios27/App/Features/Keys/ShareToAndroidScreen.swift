@@ -37,8 +37,8 @@ struct ShareToAndroidScreen: View {
                 header
                 if app.lock == nil {
                     noLockBlock
-                } else if let key = deliverable, let image = qr {
-                    qrBlock(image, key)
+                } else if let image = qr {
+                    qrBlock(image)
                     shareBlock
                 } else {
                     blockedBlock
@@ -47,37 +47,26 @@ struct ShareToAndroidScreen: View {
             }
             .padding(.vertical, T.S.l)
         }
+        .captureShield("这张二维码是开锁钥匙\n屏幕正在被录制或截图，已遮挡")
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("分享给安卓")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear(perform: build)
-        .onChange(of: deliverable?.id) { _, _ in build() }
+        .onChange(of: app.lock?.id) { _, _ in build() }
     }
 
     // MARK: 生成载荷（会话级口令 + 锁身份 + 钥匙）
 
     private func build() {
-        guard let lock = app.lock, let key = deliverable else {
+        guard let kc = app.currentKeychain, let p = AndroidPair.payload(kc) else {
             qr = nil
             payloadText = ""
             return
         }
-        if passphrase.isEmpty {
-            passphrase = KeysCode.digits(8)
-        }
-        // TODO(engine): 真实信封是 CredPackage{v,mac,lockName,pwds,fps,at} 用口令做 AES 加密后的密文。
-        // 加密引擎未接 —— 这里拼的是**明文配对串**，页面上如实写「未经加密，只能当面交给本人」。
-        payloadText = [
-            "OLK1",
-            lock.id,
-            lock.model,
-            key.id,
-            key.code ?? "",
-            passphrase,
-            "\(KeysState.now())",
-        ].joined(separator: "|")
-        qr = KeysQR.image(payloadText)
+        // 真链路：AndroidPair.payload = {mac, pid, ekey}（刻意不带 skey，理由见 AndroidPair 头注）。
+        payloadText = p
+        qr = KeysQR.image(p)
     }
 
     // MARK: 页头
@@ -104,7 +93,7 @@ struct ShareToAndroidScreen: View {
 
     // MARK: 主角：二维码
 
-    private func qrBlock(_ image: UIImage, _ key: KeyItem) -> some View {
+    private func qrBlock(_ image: UIImage) -> some View {
         Panel {
             VStack(spacing: T.S.m) {
                 Image(uiImage: image)
@@ -114,11 +103,10 @@ struct ShareToAndroidScreen: View {
                     .frame(maxWidth: qrMaxSide)
                     .accessibilityLabel("这把锁的配对二维码")
                 ReadingGrid(items: [
-                    .init(label: "锁", value: app.lock?.model ?? "—"),
-                    .init(label: "给谁", value: key.owner ?? "未归属"),
-                    .init(label: "口令", value: String(repeating: "•", count: passphrase.count)),
-                    .init(label: "有效期", value: KeysState.expiryReading(key, now: KeysState.now()).value,
-                          unit: KeysState.expiryReading(key, now: KeysState.now()).unit),
+                    .init(label: "锁", value: app.lock?.name ?? "—"),
+                    .init(label: "型号", value: app.lock?.model ?? "—"),
+                    .init(label: "MAC", value: app.lock?.id ?? "—"),
+                    .init(label: "载荷", value: "mac / pid / ekey"),
                 ])
                 Text("扫完这台安卓就能开这把锁 —— 不用再走一次配网。")
                     .font(T.F.caption)
@@ -158,7 +146,7 @@ struct ShareToAndroidScreen: View {
                     UIPasteboard.general.string = payloadText
                     copied = true
                 }
-                Text("这串还没加密（加密信封要等引擎接上）。当面扫、单独发给本人，不要发群里。")
+                Text("这串是安卓配对码（含 mac / pid / ekey，刻意不含 skey）。当面扫、单独发给本人，不要发群里。")
                     .font(T.F.unit)
                     .foregroundStyle(Ink.inkFaint)
                     .fixedSize(horizontal: false, vertical: true)

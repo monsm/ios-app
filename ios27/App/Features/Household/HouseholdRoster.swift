@@ -18,6 +18,12 @@ struct HHMemberExtras: Hashable {
     var note: String = ""
     var emergency: String = ""
     var emergencyAdmin: Bool = false
+    /// 480 孩子码关怀文案（家人打开的关怀便签）。
+    var careText: String = ""
+    /// 484 访客欢迎语（归属靠时间推断，展示带「约」）。
+    var welcome: String = ""
+    /// 468 代管标记（管理员代操作时在停用便签里补一句）。
+    var proxy: Bool = false
 }
 
 @MainActor
@@ -119,6 +125,9 @@ final class HouseholdRoster {
         ext.groupTag = e.groupTag
         ext.note = e.note
         ext.emergencyAdmin = e.emergencyAdmin
+        ext.careText = e.careText
+        ext.welcome = e.welcome
+        ext.proxy = e.proxy
         MemberHub.saveExt(id, ext)
         // 关系另有独立的成员字段（旧仓 DB.setMemberInfo(["relation": …]) 同一口径）：
         // 成员已在 kf_members 里就写那边；同时写本机覆盖层，样例成员也能存住。
@@ -136,7 +145,10 @@ final class HouseholdRoster {
                        groupTag: e.groupTag,
                        note: e.note,
                        emergency: e.emergency,
-                       emergencyAdmin: e.emergencyAdmin)
+                       emergencyAdmin: e.emergencyAdmin,
+                       careText: e.careText,
+                       welcome: e.welcome,
+                       proxy: e.proxy)
     }
 
     /// 展示底稿：只在成员还没写过任何档案时兜底，让首屏不是一片空白。

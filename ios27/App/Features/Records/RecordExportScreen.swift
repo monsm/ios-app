@@ -37,7 +37,7 @@ private struct RecordShareCard: View {
 
     private var thirdLine: String {
         let who = member.isEmpty ? lockName : lockName + " · " + member
-        return who + " · " + TimeFormat.dayKey(entry.at) + " " + TimeFormat.clock(entry.at)
+        return who + " · " + TimeFormat.dayKey(entry.at) + " " + TimeDisplay.clock(entry.at)
     }
 
     private var isAlarm: Bool {
@@ -198,7 +198,7 @@ struct RecordExportScreen: View {
                                     .font(T.F.caption)
                                     .foregroundStyle(Ink.ink)
                                     .lineLimit(1)
-                                Text(TimeFormat.dayShort(entry.at) + " " + TimeFormat.clock(entry.at))
+                                Text(TimeFormat.dayShort(entry.at) + " " + TimeDisplay.clock(entry.at))
                                     .font(T.F.unit)
                                     .foregroundStyle(Ink.inkFaint)
                                     .monospacedDigit()

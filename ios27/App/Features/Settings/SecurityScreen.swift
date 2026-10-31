@@ -5,6 +5,7 @@
 // 数据从哪来：SettingsStore.shared（本机密码位）+ AppModel.trialGuard + Router（跳锁端页面）。
 // 主动作：唯一 signal 填充是「设置本机密码」/「更改本机密码」—— 同一位置、同一个动作，换词不换位。
 import SwiftUI
+import LocalAuthentication
 
 struct SecurityScreen: View {
     @Environment(AppModel.self) private var app
@@ -21,6 +22,7 @@ struct SecurityScreen: View {
             VStack(spacing: T.S.l) {
                 SettingsHeader(title: "安全", tone: tone, status: status)
                 passcodePanel
+                biometricPanel
                 if store.hasPasscode {
                     duressPanel
                 } else {
@@ -39,13 +41,13 @@ struct SecurityScreen: View {
         .sheet(isPresented: $showPasscode) { PasscodeSheet(kind: .passcode) }
         .sheet(isPresented: $showDuress) { PasscodeSheet(kind: .duress) }
         .confirmationDialog("关闭胁迫码？", isPresented: $showDisableDuressConfirm, titleVisibility: .visible) {
-            Button("关闭胁迫码", role: .destructive) { store.hasDuressCode = false }
+            Button("关闭胁迫码", role: .destructive) { _ = DB.setDuressCode(nil) }
             Button("取消", role: .cancel) {}
         } message: {
             Text("关闭后，被胁迫时输错密码不会进入空壳模式 —— 门会打不开，数据照常显示。")
         }
         .confirmationDialog("关闭本机密码？", isPresented: $showDisableConfirm, titleVisibility: .visible) {
-            Button("关闭本机密码", role: .destructive) { store.hasPasscode = false }
+            Button("关闭本机密码", role: .destructive) { DB.setPasscode(nil) }
             Button("取消", role: .cancel) {}
         } message: {
             Text("关闭后冷启动不再需要密码。锁内凭证与门锁数据不受影响，但任何拿到这台手机的人都能直接打开 App。")
@@ -96,6 +98,43 @@ struct SecurityScreen: View {
             }
             .padding(.horizontal, T.S.gutter)
         }
+    }
+
+    // MARK: 生物识别（Face ID / Touch ID）
+    private var biometricPanel: some View {
+        VStack(spacing: T.S.s) {
+            SectionLabel(text: "生物识别")
+            Panel {
+                VStack(alignment: .leading, spacing: T.S.m) {
+                    FieldRow(label: "硬件", value: biometricName, mono: false)
+                    SettingRule()
+                    SettingToggle(
+                        label: "允许面容 / 指纹解锁",
+                        note: store.hasDuressCode
+                            ? "已设胁迫码时本开关自动停用 —— 刷脸会暴露「这不是伪装模式」。"
+                            : "冷启动时可用 Face ID / Touch ID 解锁；失败仍可输本机密码。",
+                        isOn: settingsBinding(\.bioUnlock)
+                    )
+                    .disabled(store.hasDuressCode)
+                    .opacity(store.hasDuressCode ? 0.45 : 1)
+                }
+            }
+            .padding(.horizontal, T.S.gutter)
+        }
+    }
+
+    private var biometricName: String {
+        let ctx = LAContext()
+        var error: NSError?
+        if ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
+            switch ctx.biometryType {
+            case .faceID: return "Face ID"
+            case .touchID: return "Touch ID"
+            case .opticID: return "Optic ID"
+            default: return "生物识别"
+            }
+        }
+        return "不可用（未录入或设备不支持）"
     }
 
     // MARK: 胁迫码（只在已设本机密码时可设 —— 它替代的是同一个输入框）

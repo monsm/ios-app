@@ -130,45 +130,144 @@ struct DongleRecord: Identifiable, Hashable {
 final class SettingsStore {
     static let shared = SettingsStore()
 
-    // MARK: 外观
-    var theme: AppearanceTheme = .system            // TODO(engine) 生效需 Design 令牌按档重建
-    var density: LayoutDensity = .standard          // TODO(engine) 同上（只缩放间距）
-    var motion: MotionTier = .standard              // TODO(engine) 同上
-    var highContrast = false                        // TODO(engine) 与系统「增加对比度」并联
-    var reduceTransparency = false                  // TODO(engine) 玻璃退化由系统材质层承担
-    var timeStyle: TimeDisplayStyle = .system       // TODO(engine) TimeFormat 需读它（现在是常量格式）
-    var showSeconds = false                         // TODO(engine) 只在日志原文真带秒时显示，缺位不补 :00
-    var twoLineDate = false                         // TODO(engine) 台账行第二行完整日期
+    /// 观察代次：@Observable 不能给带 didSet 的存储属性做追踪（宏会把属性改成计算属性），
+    /// 所以这里用「计算属性 + revision」这一等价写法：setter 写库并 ++，getter 读它建立观察依赖。
+    private var revision = 0
 
-    // MARK: 安全
-    var hasPasscode = false                         // TODO(engine) 摘要落 SecretStore（PBKDF2-HMAC-SHA256）
-    var hasDuressCode = false                       // TODO(engine) 胁迫码空壳模式未接
+    // MARK: 外观（全部落盘：kf_theme / kf_density / …）
+
+    var theme: AppearanceTheme {
+        get { _ = revision; return AppearanceTheme(rawValue: DB.store.getString("kf_theme")) ?? .system }
+        set { DB.store.set("kf_theme", newValue.rawValue); revision &+= 1 }
+    }
+
+    var density: LayoutDensity {
+        get { _ = revision; return LayoutDensity(rawValue: DB.store.getString("kf_density")) ?? .standard }
+        set { DB.store.set("kf_density", newValue.rawValue); revision &+= 1 }
+    }
+
+    var motion: MotionTier {
+        get { _ = revision; return MotionTier(rawValue: DB.store.getString("kf_motion")) ?? .standard }
+        set { DB.store.set("kf_motion", newValue.rawValue); revision &+= 1 }
+    }
+
+    var highContrast: Bool {
+        get { _ = revision; return DB.store.getBool("kf_hc") }
+        set { DB.store.set("kf_hc", newValue); revision &+= 1 }
+    }
+
+    var reduceTransparency: Bool {
+        get { _ = revision; return DB.store.getBool("kf_reduce_trans") }
+        set { DB.store.set("kf_reduce_trans", newValue); revision &+= 1 }
+    }
+
+    var timeStyle: TimeDisplayStyle {
+        get { _ = revision; return TimeDisplayStyle(rawValue: DB.store.getString("kf_time_style")) ?? .system }
+        set { DB.store.set("kf_time_style", newValue.rawValue); revision &+= 1 }
+    }
+
+    var showSeconds: Bool {
+        get { _ = revision; return DB.store.getBool("kf_show_seconds") }
+        set { DB.store.set("kf_show_seconds", newValue); revision &+= 1 }
+    }
+
+    var twoLineDate: Bool {
+        get { _ = revision; return DB.store.getBool("kf_two_line_date") }
+        set { DB.store.set("kf_two_line_date", newValue); revision &+= 1 }
+    }
+
+    // MARK: 安全（唯一真值在 DB 的 kf_passcode / kf_duress）
+
+    /// 生物识别解锁开关（有胁迫码时 LockGate 自动不提供）。
+    var bioUnlock: Bool {
+        get { _ = revision; return DB.store.getBool("kf_bio_unlock", true) }
+        set { DB.store.set("kf_bio_unlock", newValue); revision &+= 1 }
+    }
+
+    var hasPasscode: Bool { _ = revision; return DB.hasPasscode() }
+    var hasDuressCode: Bool { _ = revision; return DB.hasDuressCode() }
 
     // MARK: 开锁确认（防误触）
-    var holdConfirm = true                          // 按住确认开锁；关掉后退回轻点直开
-    var autoRetry = true                            // 开锁失败后自动重试一次
+
+    var holdConfirm: Bool {
+        get { _ = revision; return DB.store.getBool("kf_hold_confirm", true) }
+        set { DB.store.set("kf_hold_confirm", newValue); revision &+= 1 }
+    }
+
+    var autoRetry: Bool {
+        get { _ = revision; return DB.store.getBool("kf_auto_retry", true) }
+        set { DB.store.set("kf_auto_retry", newValue); revision &+= 1 }
+    }
 
     // MARK: 备份
-    var encryptBackup = false
-    var lastBackupAt: Int64? = nil                  // TODO(engine) 上次成功备份时刻（kf_backup_hist）
+
+    var encryptBackup: Bool {
+        get { _ = revision; return DB.store.getBool("kf_encrypt_backup") }
+        set { DB.store.set("kf_encrypt_backup", newValue); revision &+= 1 }
+    }
+
+    /// 上次成功备份时刻（kf_backup_hist，Milestones 唯一真值）。
+    var lastBackupAt: Int64? {
+        _ = revision
+        return Milestones.lastBackupAt.map { Int64($0.timeIntervalSince1970 * 1000) }
+    }
 
     // MARK: 靠近自动开锁
-    var autoOpenEnabled = false                     // 默认关（fail-closed）
-    var faceConfirm: FaceConfirmTier = .free
+
+    var autoOpenEnabled: Bool {
+        get { _ = revision; return DB.store.getBool("kf_autoopen") }
+        set { DB.store.set("kf_autoopen", newValue); revision &+= 1 }
+    }
+
+    var faceConfirm: FaceConfirmTier {
+        get { _ = revision; return DB.store.getInt("kf_autoopen_face", 0) == 1 ? .strict : .free }
+        set { DB.store.setInt("kf_autoopen_face", newValue == .strict ? 1 : 0); revision &+= 1 }
+    }
+
     var calibrationAt: Int64? = nil                 // TODO(engine) 距离标定要真采 RSSI 门槛
     var lastSkipReason: String? = nil               // TODO(engine) 上次没自动开的原因由 core-auto 记账
 
     // MARK: 硬件
-    var dongles: [DongleRecord] = DongleRecord.sample
+
+    /// 钥匙串台账：直接读 Engine 的 kf_keychain_dongles（空字段回落"未知"，不编造读数）。
+    var dongles: [DongleRecord] {
+        _ = revision
+        return DB.dongles().map { d in
+            DongleRecord(id: d.mac,
+                         name: d.name.isEmpty ? "钥匙串 \(String(d.mac.prefix(4)))" : d.name,
+                         mac: d.mac,
+                         battery: d.stat?.power ?? -1,
+                         keys: d.stat?.ekeyCount ?? 0,
+                         firmware: d.stat?.firmware ?? "—",
+                         holdsThisLock: !d.lastKeyLock.isEmpty)
+        }
+    }
+
     var lastScanAt: Int64? = nil
 
+    // MARK: 无障碍（大字档位参与 RootView 的 dynamicTypeSize）
+
+    var axBigText: Bool {
+        get { _ = revision; return DB.store.getBool("kf_ax_bigtext") }
+        set { DB.store.set("kf_ax_bigtext", newValue); revision &+= 1 }
+    }
+
+    // MARK: 快捷格（首页快捷操作 10 选 N；与 QuickPool 的选中集合同一份存储）
+
+    var quickGridCount: Int {
+        get { _ = revision; return DB.store.getInt("kf_quick_grid", 6) }
+        set { DB.store.set("kf_quick_grid", newValue); revision &+= 1 }
+    }
+
     // MARK: 锁端时钟
-    /// 上次校准门锁时间的时刻。nil = 从未校准。TODO(engine) 真实现读 cmd0E 回执后写本机。
+
+    /// 上次校准门锁时间的时刻。nil = 从未校准。
     var lockClockSyncedAt: Int64? = nil
 
     // MARK: 累计
-    /// 累计开锁次数（机械计数器）。TODO(engine) 真实现读 Milestones.unlockTotal。
-    var unlockTotal = 1284
+
+    /// 累计开锁次数（机械计数器）。真实现读 Milestones 的持久计数。
+    var unlockTotal: Int { Milestones.unlockTotal }
 
     /// 恢复默认外观：只重置外观偏好，不动安全 / 备份 / 硬件，也不动任何门锁数据。
     func resetAppearance() {

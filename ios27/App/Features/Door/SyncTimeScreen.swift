@@ -214,9 +214,14 @@ struct SyncTimeScreen: View {
     @MainActor
     private func read() async {
         guard app.lock != nil, !busy else { return }
-        // TODO(engine): 真实链路是 ensureConnected → cmd03 取 lockTime；
-        // 这里用「手机时间 + 37 秒」作可替换的锁钟样本，让偏差这一列真的有数可看。
-        lockAt = Int64(Date().timeIntervalSince1970 * 1000) - 37_000
+        busy = true
+        defer { busy = false }
+        await app.refreshStatus()
+        if let t = app.lastStatus?.status.lockTime, t > 0 {
+            lockAt = Int64((ZKProtocol.protoSecondsToUnix(Int64(t)) * 1000).rounded())
+        } else {
+            lockAt = nil
+        }
         result = nil
     }
 
@@ -225,24 +230,22 @@ struct SyncTimeScreen: View {
         guard !busy, app.lock != nil else { return }
         busy = true
         result = nil
-        // TODO(engine): 真实链路是 ensureConnected → cmd0E（SYNCTIME）→ 回读 cmd03 复核偏差。
-        try? await Task.sleep(for: .milliseconds(700))
-        let now = Int64(Date().timeIntervalSince1970 * 1000)
-        // 先写、再回读：结论只能来自写完之后的锁钟。
-        // 没连上锁时 0E 根本发不出去，锁钟保持原值 —— 这时偏差不会归零，如实报失败。
-        if app.lock?.isConnected == true {
-            lockAt = now
-            lastSyncedAt = now
-        }
-        let residual = Int((Int64(Date().timeIntervalSince1970 * 1000) - (lockAt ?? now)) / 1000)
-        if abs(residual) <= Self.driftThreshold {
-            result = SyncOutcome(ok: true, text: "同步完成 · 回读偏差 \(residual) 秒")
-        } else if app.lock?.isConnected != true {
-            result = SyncOutcome(ok: false, text: "没连上锁，0E 发不出去 · 回读偏差仍是 \(residual) 秒。走近门锁再试。")
-        } else {
-            result = SyncOutcome(ok: false, text: "命令已下发，但回读偏差仍是 \(residual) 秒 —— 再试一次")
-        }
+        // 真链路：ensureConnected → cmd0E → 回读 cmd03 复核偏差（AppModel 已封装）。
+        let r = await app.syncTime()
         busy = false
+        switch r {
+        case .failure(let e):
+            let msg = (e as? LocalizedError)?.errorDescription ?? e.localizedDescription
+            result = SyncOutcome(ok: false, text: "同步失败：\(msg)")
+        case .success(let pair):
+            let now = Int64(Date().timeIntervalSince1970 * 1000)
+            lockAt = Int64((ZKProtocol.protoSecondsToUnix(Int64(pair.after)) * 1000).rounded())
+            lastSyncedAt = now
+            SettingsStore.shared.lockClockSyncedAt = now
+            let residual = Int((Int64(Date().timeIntervalSince1970 * 1000) - (lockAt ?? now)) / 1000)
+            result = SyncOutcome(ok: abs(residual) <= Self.driftThreshold,
+                                 text: "同步完成 · 回读偏差 \(residual) 秒")
+        }
     }
 
     private var hairline: some View {

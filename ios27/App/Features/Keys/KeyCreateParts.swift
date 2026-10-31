@@ -25,6 +25,33 @@ extension KeyCreateScreen {
 
                 Divider().overlay(Ink.hairline)
 
+                // 来源：原 App/UI/CredentialOtp.swift「临时密码 (ZOTP)」独立入口。
+                // 动态密码不是一条台账凭证，而是按窗口现算的六位码 —— 单独一页，工坊这里只放入口。
+                SectionLabel(text: "动态密码", trailing: "ZOTP")
+                KeysInlineNote(tone: .neutral, text: "按锁端周期自动更换的 6 位临时码，不用提前添加凭证。适合给快递、访客当场报码。")
+                Button {
+                    router.request(.dest(.zotp))
+                } label: {
+                    HStack(spacing: T.S.s) {
+                        Image(systemName: "clock.badge.questionmark")
+                            .accessibilityHidden(true)
+                            .font(T.F.icon(T.Icon.s, weight: .regular))
+                        Text("打开动态密码")
+                            .font(T.F.bodyStrong)
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.right")
+                            .accessibilityHidden(true)
+                            .font(T.F.icon(T.Icon.s, weight: .medium))
+                    }
+                    .foregroundStyle(Ink.ink)
+                    .frame(minHeight: T.Hit.min)
+                    .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("打开动态密码")
+
+                Divider().overlay(Ink.hairline)
+
                 SectionLabel(text: "归谁", trailing: owner ?? "必选")
                 let active = app.members.filter { !$0.archived }
                 if active.isEmpty {
@@ -158,19 +185,24 @@ extension KeyCreateScreen {
         .accessibilityLabel("密码强度：\(strength.hint)")
     }
 
-    /// 重复与前缀冲突：同值查本锁台账，前 4 位相同提示口头易混。
+    /// 重复 / 前缀冲突 / 弱口令：全部走 Engine 的同一套判据（CredentialOrg），页面不再各写一份。
     @ViewBuilder
     var duplicateNote: some View {
-        let same = codeValid ? app.keys.filter { $0.code == code && $0.id != editingID } : []
-        if let first = same.first {
-            KeysInlineNote(tone: .attention, text: "本机台账里已经有 \(same.count) 枚凭证用了同一串数字（\(first.name)）。同一把锁上重复，等于多留一条能被猜中的入口。")
-        } else if codeValid {
-            let prefixClash = app.keys.first { key in
-                guard let other = key.code, other.count >= 4, code.count >= 4, key.id != editingID else { return false }
-                return other.prefix(4) == code.prefix(4)
-            }
-            if let clash = prefixClash {
-                KeysInlineNote(tone: .attention, text: "前 4 位和「\(clash.name)」一样，口头转述时容易说混。")
+        let mac = app.currentMac
+        if let weak = CredentialOrg.weakReason(code), codeValid {
+            KeysInlineNote(tone: .attention, text: "弱口令：\(weak) —— 建议换一串更难猜的数字。")
+        }
+        if !mac.isEmpty, codeValid {
+            let excluding = Int(String(editingID?.split(separator: ":").last ?? "")) ?? 0
+            let same = CredentialOrg.duplicatePwdValues(mac, code, excluding: excluding)
+            let otherLocks = CredentialOrg.duplicatePwdLockNames(code, excludingMac: mac)
+            let prefix = CredentialOrg.prefixConflict(mac, code, excluding: excluding)
+            if !same.isEmpty {
+                KeysInlineNote(tone: .attention, text: "本机台账里已经有 \(same.count) 枚密码用了同一串数字（#\(same[0].alias)）。同一把锁上重复，等于多留一条能被猜中的入口。")
+            } else if !otherLocks.isEmpty {
+                KeysInlineNote(tone: .attention, text: "另外 \(otherLocks.count) 把锁（\(otherLocks.joined(separator: "、"))）也用了同一串数字 —— 一处泄露会牵连多扇门。")
+            } else if let clash = prefix.first {
+                KeysInlineNote(tone: .attention, text: "前 4 位和密码 #\(clash.alias) 一样，口头转述时容易说混。")
             }
         }
     }
@@ -288,7 +320,7 @@ extension KeyCreateScreen {
                         submit()
                     }
                     .disabled(confirmCode != code || !codeValid)
-                    Text("写入后这条会出现在钥匙台账里。锁端下发链路未接，页面上不会假装已经发到锁。")
+                    Text("写入会真下发到门锁（cmd0A 添加 + 0B 设有效期）；回执成功才记入本机台账，失败会留在这一页报原因。")
                         .font(T.F.unit)
                         .foregroundStyle(Ink.inkFaint)
                         .fixedSize(horizontal: false, vertical: true)

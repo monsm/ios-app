@@ -9,6 +9,7 @@ import UIKit
 
 struct BackupScreen: View {
     @Environment(AppModel.self) private var app
+    @Environment(Router.self) private var router
     private var store: SettingsStore { SettingsStore.shared }
 
     @State private var exportText = ""
@@ -28,6 +29,7 @@ struct BackupScreen: View {
         ScrollView {
             VStack(spacing: T.S.l) {
                 SettingsHeader(title: "备份与恢复", tone: tone, status: status)
+                studioEntry
                 exportPanel
                 importPanel
             }
@@ -43,6 +45,20 @@ struct BackupScreen: View {
         } message: {
             Text("导入是合并：本机已有的凭证会保留，同名冲突取本机。若备份里带本机密码摘要，本机密码会被替换成它（可能回滚到旧值）。")
         }
+    }
+
+    // MARK: 备份工作室入口（WebDAV / 多份保留 / 换机迁移 / 自检）
+    private var studioEntry: some View {
+        Panel {
+            VStack(alignment: .leading, spacing: T.S.m) {
+                SectionLabel(text: "备份工作室")
+                SettingsNote(text: "本机多份备份文件、WebDAV 同步、换机迁移包与数据自检都在工作室里。")
+                SecondaryAction(title: "打开备份工作室", systemImage: "square.stack.3d.up") {
+                    router.request(.dest(.backupStudio))
+                }
+            }
+        }
+        .padding(.horizontal, T.S.gutter)
     }
 
     // MARK: 页头
@@ -193,33 +209,46 @@ struct BackupScreen: View {
     // MARK: - 动作
 
     private func generate() {
+        guard !exporting else { return }
         exporting = true
-        // TODO(engine) 真实现走 CryptoBox（PBKDF2-HMAC-SHA256 + AES-CBC + HMAC）与 canonical 序列化。
-        let stub = "{ \"type\": \"kf-bundle\", \"bundleVer\": 2, \"schema\": 5 }"
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(320))
-            exportText = store.encryptBackup ? "\(stub) [encrypted]" : stub
-            store.lastBackupAt = Int64(Date().timeIntervalSince1970 * 1000)
-            exporting = false
+        defer { exporting = false }
+        do {
+            // 真链路：collectAll（全部 kf_* 表）→ canonical（与小程序互通）→ 可选加密信封。
+            let bundle = BackupKit.collectAll()
+            let plain = BackupCanonical.exportText(bundle)
+            exportText = store.encryptBackup
+                ? try CryptoBox.encryptText(plain, password: exportPassword)
+                : plain
+            // 980：只有真正生成成功才记一次备份（失败不记）。
+            Milestones.recordBackup()
+        } catch {
+            restoreError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
     }
 
     private func runImport() {
-        // 第一道闸是真能判的：备份是一段 JSON，不是 JSON 就不是备份 —— 就地拦下，不写库。
-        guard !importText.isEmpty else { return }
+        guard !importText.isEmpty, !importing else { return }
         guard importText.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("{") else {
             restoreError = "这段文本不是备份 —— 备份以 { 开头。可能粘错了内容，或复制时被截断。"
             restoreDone = nil
             return
         }
-        // TODO(engine) 真实现要先解密 → 校验内容哈希 → 再走升级链，哈希不过就拦下不写库。
+        let password = importPassword.isEmpty ? nil : importPassword
         restoreError = nil
         importing = true
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(320))
-            restoreDone = (added: 3, merged: 1)
-            importText = ""
-            importing = false
+            defer { importing = false }
+            do {
+                // 真链路：解密（若带口令）→ schema 升级 → checksum 校验 → 合并恢复（只增不删）。
+                let parsed = try BackupStudio.parsePreview(text: importText, password: password)
+                let r = BackupStudio.restore(parsed.bundle)
+                restoreDone = (added: r.imported, merged: r.overwritten)
+                importText = ""
+                await app.reload(refreshStatus: false)
+            } catch {
+                restoreError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                restoreDone = nil
+            }
         }
     }
 }

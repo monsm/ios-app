@@ -19,26 +19,40 @@ enum Destinations {
         case .gateway: GatewayScreen()
         case .syncTime: SyncTimeScreen()
         case .defend: DefendScreen()
+        case .dfu: DFUScreen()
+        case .lockSettings: LockSettingsScreen()
+        case .tailgate: TailgateScreen()
+        case .safeMode: SafeModeScreen()
+        case .batteryProfile: BatteryProfileScreen()
+        case .lockProfile: LockProfileScreen()
+        case .lockPortfolio: LockPortfolioScreen()
 
         case .keyDetail: KeyDetailScreen()
         case .keyCreate: KeyCreateScreen()
         case .keyCalendar: KeyCalendarScreen()
         case .mobileKey: MobileKeyScreen()
         case .shareToAndroid: ShareToAndroidScreen()
+        case .credentialStudio: CredentialStudioScreen()
+        case .zotp: ZotpScreen()
 
         case .recordDetail: RecordDetailScreen()
         case .recordExport: RecordExportScreen()
+        case .recordsStudio: RecordsStudioScreen()
 
         case .memberDetail: MemberDetailScreen()
         case .memberCreate: MemberCreateScreen()
         case .memberArchive: MemberArchiveScreen()
+        case .memberOps: MemberOpsScreen()
 
         case .appearance: AppearanceScreen()
         case .security: SecurityScreen()
         case .backup: BackupScreen()
         case .autoOpen: AutoOpenScreen()
         case .hardware: HardwareScreen()
+        case .protocolTest: ProtocolTestScreen()
         case .about: AboutScreen()
+        case .accessibility: AccessibilityScreen()
+        case .backupStudio: BackupStudioScreen()
         }
     }
 }

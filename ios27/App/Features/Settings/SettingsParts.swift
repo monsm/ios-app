@@ -286,11 +286,11 @@ struct PasscodeSheet: View {
         guard first == second else { error = "两次输入不一致"; return }
         switch kind {
         case .passcode:
-            // TODO(engine) 真实现要把 PBKDF2-HMAC-SHA256 摘要落 SecretStore（旧摘要验过即静默升级）。
-            store.hasPasscode = true
+            // 真摘要：PBKDF2-HMAC-SHA256 落 kf_passcode（DB 内部实现，旧摘要验过即静默升级）。
+            DB.setPasscode(first)
         case .duress:
-            // TODO(engine) 胁迫码摘要与真密码分开落盘；空壳模式的读取判据在 LockGate。
-            store.hasDuressCode = true
+            // 胁迫码独立键 kf_duress；空壳模式的读取判据在 AppLock/LockGate。
+            _ = DB.setDuressCode(first)
         }
         dismiss()
     }
@@ -310,7 +310,13 @@ func settingsBinding<Value>(_ keyPath: ReferenceWritableKeyPath<SettingsStore, V
 
 /// 只读试验模式的 Binding。两个设置页都挂这个开关 —— 抽出来，免得一处改了另一处漂。
 func trialGuardBinding(_ app: AppModel) -> Binding<Bool> {
-    Binding(get: { app.trialGuard }, set: { app.trialGuard = $0 })
+    Binding(
+        get: { app.trialGuard },
+        set: { v in
+            app.trialGuard = v
+            TrialGuard.set(v)   // 写 kf_trial_guard：LockService.assertReadOnly 读的就是这个键
+        }
+    )
 }
 
 /// 面板内的档位 chip 行。ChipRow 自带页面级 gutter 内边距，嵌进面板时要把它收回来，

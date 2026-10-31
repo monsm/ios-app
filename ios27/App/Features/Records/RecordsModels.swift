@@ -157,11 +157,22 @@ final class RecordsOverlay {
     static let shared = RecordsOverlay()
     private init() {}
 
+    /// 内存镜像只用于本页计数与即时刷新；真值落 Engine 的 kf_rnote_ / kf_rflag_ / kf_rdisp_（按锁分族）。
     private(set) var notes: [String: String] = [:]
     private(set) var flagged: Set<String> = []
     private(set) var disposed: [String: Int64] = [:]
 
     var noteCount: Int { notes.count }
+
+    /// 进页时把当前锁的持久覆盖层读进内存（重启后仍能看到之前写的备注/旗标/处置）。
+    func hydrate(mac: String) {
+        guard !mac.isEmpty else { return }
+        for (key, value) in RecordOverlay.notes(mac) { notes[key] = value }
+        for key in RecordOverlay.flags(mac) { flagged.insert(key) }
+        for (key, value) in RecordOverlay.dispositions(mac) {
+            disposed[key] = Int64(value.at * 1000)
+        }
+    }
 
     func note(for id: String) -> String { notes[id] ?? "" }
 
@@ -172,6 +183,8 @@ final class RecordsOverlay {
         } else {
             notes[id] = trimmed
         }
+        let parts = split(id)
+        RecordOverlay.setNote(parts.mac, parts.row, trimmed)
     }
 
     func isFlagged(_ id: String) -> Bool { flagged.contains(id) }
@@ -182,15 +195,32 @@ final class RecordsOverlay {
         } else {
             flagged.insert(id)
         }
+        let parts = split(id)
+        _ = RecordOverlay.toggleFlag(parts.mac, parts.row)
     }
 
     func isDisposed(_ id: String) -> Bool { disposed[id] != nil }
 
     func disposedAt(_ id: String) -> Int64? { disposed[id] }
 
-    func dispose(_ id: String, at: Int64) { disposed[id] = at }
+    func dispose(_ id: String, at: Int64) {
+        disposed[id] = at
+        let parts = split(id)
+        RecordOverlay.setDisposition(parts.mac, parts.row,
+                                     RecordSearch.Disposition(at: Double(at) / 1000, verdict: "已处置"))
+    }
 
-    func undoDispose(_ id: String) { disposed[id] = nil }
+    func undoDispose(_ id: String) {
+        disposed[id] = nil
+        let parts = split(id)
+        RecordOverlay.setDisposition(parts.mac, parts.row, nil)
+    }
+
+    /// 行 id 口径 = "mac#idxRaw"（与 RecordsSource 同一份行身份）。
+    private func split(_ id: String) -> (mac: String, row: String) {
+        guard let i = id.firstIndex(of: "#") else { return ("", id) }
+        return (String(id[..<i]), String(id[id.index(after: i)...]))
+    }
 }
 
 // MARK: - 真数据入口（锁内日志缓存 → 台账条目）
@@ -327,7 +357,7 @@ enum RecordCSV {
             let member = row.member.isEmpty ? "未归属" : row.member
             let cells = [
                 field(row.dayKey),
-                field(TimeFormat.clock(row.at)),
+                field(TimeDisplay.clock(row.at)),
                 field(row.entry.event),
                 field(member),
                 field(row.lockName)

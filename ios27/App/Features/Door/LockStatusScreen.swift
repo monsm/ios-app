@@ -211,6 +211,9 @@ struct LockStatusScreen: View {
     private var entriesPanel: some View {
         Panel {
             VStack(spacing: 0) {
+                // 来源：原 App/UI/LockSettingsView.swift（锁设置）。
+                entryRow("锁设置", "slider.horizontal.3", "临时码开关 / 自动上锁 / 清空密码", .lockSettings)
+                hairline
                 entryRow("校时", "clock.arrow.circlepath", "锁钟偏了，临时码与时间窗凭证会失效", .syncTime)
                 hairline
                 entryRow("布防", "shield.lefthalf.filled", "布防时段内，靠近门锁不会自动开门", .defend)

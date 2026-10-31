@@ -19,6 +19,7 @@ struct AppearanceScreen: View {
                 themePanel
                 rhythmPanel
                 timePanel
+                quickPanel
                 resetPanel
             }
             .padding(.vertical, T.S.l)
@@ -153,8 +154,8 @@ struct AppearanceScreen: View {
                     // 与 store 里的"App 内动效档"是两个独立开关 —— 系统的是硬约束，App 内的是偏好。
                     .animation(systemReduceMotion ? nil : T.M.snap, value: previewClock)
                 Spacer(minLength: 0)
-                if store.twoLineDate {
-                    Text(TimeFormat.dayShort(now))
+                if let dayLine = TimeDisplay.dayLine(now) {
+                    Text(dayLine)
                         .font(T.F.unit)
                         .foregroundStyle(Ink.inkFaint)
                         .monospacedDigit()
@@ -168,16 +169,89 @@ struct AppearanceScreen: View {
 
     private var now: Int64 { Int64(Date().timeIntervalSince1970 * 1000) }
 
-    /// 12 小时档在 HH:mm 的基础上换 12 小时写法，不另造一套时间口径。
-    private var previewClock: String {
-        let base = TimeFormat.clock(now)
-        let hh = Int(base.prefix(2)) ?? 0
-        let mm = String(base.suffix(2))
-        let seconds = store.showSeconds ? ":00" : ""
-        guard store.timeStyle != .system else { return base + seconds }
-        let isPM = hh >= 12
-        let h12 = hh % 12 == 0 ? 12 : hh % 12
-        return "\(h12):\(mm)\(seconds) \(isPM ? "PM" : "AM")"
+    /// 制式由 TimeDisplay 统一算（12/24 + 秒），这一屏只负责展示与改档。
+    private var previewClock: String { TimeDisplay.clock(now) }
+
+    // MARK: 快捷格（首页快捷操作 10 选 N + 智能排序）
+    private var quickPanel: some View {
+        VStack(spacing: T.S.s) {
+            SectionLabel(text: "快捷操作")
+            Panel {
+                VStack(alignment: .leading, spacing: T.S.m) {
+                    Text("首页显示几枚")
+                        .font(T.F.unit)
+                        .foregroundStyle(Ink.inkFaint)
+                        .tracking(0.6)
+                    HStack(spacing: T.S.s) {
+                        ForEach([4, 6, 8], id: \.self) { n in
+                            Button {
+                                store.quickGridCount = n
+                            } label: {
+                                Text("\(n) 枚")
+                                    .font(T.F.bodyStrong)
+                                    .foregroundStyle(store.quickGridCount == n ? Signal.on : Ink.ink)
+                                    .padding(.horizontal, T.S.m)
+                                    .frame(minHeight: T.Hit.min)
+                                    .background(store.quickGridCount == n ? Signal.base : Ink.plateAlt, in: .rect(cornerRadius: T.R.control))
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityAddTraits(store.quickGridCount == n ? [.isButton, .isSelected] : .isButton)
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    SettingRule()
+                    SettingToggle(
+                        label: "常用操作自动排前",
+                        note: "按你实际点过的次数排序（存本机，不上传）。关掉后按下面勾选的顺序。",
+                        isOn: Binding(get: { QuickPool.smartFirst }, set: { QuickPool.setSmartFirst($0) })
+                    )
+                    SettingRule()
+                    Text("快捷池（10 选 6，至少留 1 项）")
+                        .font(T.F.unit)
+                        .foregroundStyle(Ink.inkFaint)
+                        .tracking(0.6)
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: T.S.s), count: 2), spacing: T.S.s) {
+                        ForEach(QuickPool.all) { action in
+                            quickToggle(action)
+                        }
+                    }
+                    SettingsNote(text: "勾选结果即时生效到「门」页的快捷操作卡；这里只管显示与排序，不发任何锁端命令。")
+                }
+            }
+            .padding(.horizontal, T.S.gutter)
+        }
+    }
+
+    private func quickToggle(_ action: QuickAction) -> some View {
+        let selected = QuickPool.selected.contains { $0.id == action.id }
+        return Button {
+            var ids = QuickPool.selected.map(\.id)
+            if selected {
+                guard ids.count > 1 else { return }
+                ids.removeAll { $0 == action.id }
+            } else {
+                ids.append(action.id)
+            }
+            QuickPool.setSelected(ids)
+        } label: {
+            HStack(spacing: T.S.s) {
+                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                    .accessibilityHidden(true)
+                    .font(T.F.icon(T.Icon.s, weight: .medium))
+                    .foregroundStyle(selected ? Signal.base : Ink.inkFaint)
+                Text(action.label)
+                    .font(T.F.caption)
+                    .foregroundStyle(Ink.ink)
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, T.S.s)
+            .frame(minHeight: T.Hit.min)
+            .background(Ink.plateAlt, in: .rect(cornerRadius: T.R.control))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(action.label)
+        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
     }
 
     // MARK: 恢复默认

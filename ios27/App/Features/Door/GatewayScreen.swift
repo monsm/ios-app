@@ -60,6 +60,7 @@ struct GatewayScreen: View {
         .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("网关")
         .navigationBarTitleDisplayMode(.inline)
+        .task { loadRows() }
         .alert("删除这个网关？", isPresented: Binding(
             get: { confirmDelete != nil },
             set: { if !$0 { confirmDelete = nil } }
@@ -372,6 +373,18 @@ struct GatewayScreen: View {
         banner = nil
     }
 
+    private func loadRows() {
+        rows = DB.gateways().map { g in
+            GatewayRow(id: g.mac,
+                       name: g.name.isEmpty ? "智能网关 \(String(g.mac.prefix(4)))" : g.name,
+                       mac: g.mac,
+                       rom: g.romVer,
+                       ssid: g.ssid.isEmpty ? g.lastWifi : g.ssid,
+                       online: g.netState == 1,
+                       lastCheckedAt: Int64(Date().timeIntervalSince1970 * 1000))
+        }
+    }
+
     @MainActor
     private func provision() async {
         guard canProvision, !phase.isRunning else { return }
@@ -384,61 +397,57 @@ struct GatewayScreen: View {
             return
         }
         phase = .running(step: 0)
-        steps.append("已连上网关（FE90 / FE91 / FE92）")
-        // TODO(engine): 真实链路是 cmd30 读设备名 → op=checkDeviceBinding → cmd38 读网关状态
-        // → cmd31 写 WiFi → op=addGateway 换 IoT 三元组 → cmd32 写 IoT → cmd35 重启 → 落库。
-        try? await Task.sleep(for: .milliseconds(500))
-        phase = .running(step: 1)
-        steps.append("读到设备名与 wifiMac（cmd30）")
-        try? await Task.sleep(for: .milliseconds(500))
-        phase = .running(step: 2)
-        steps.append("WiFi「\(sentSsid)」已写入（cmd31）")
-        try? await Task.sleep(for: .milliseconds(500))
-        phase = .running(step: 3)
-        steps.append("IoT 三元组已换回并写入（cmd32）")
-        try? await Task.sleep(for: .milliseconds(500))
-        phase = .running(step: 4)
-        steps.append("重启指令已下发（cmd35）")
-        try? await Task.sleep(for: .milliseconds(600))
-        rows.append(GatewayRow(
-            id: "g\(rows.count + 1)",
-            name: "智能网关 \(rows.count + 1)",
-            mac: "B8:27:EB:44:55:66",
-            rom: "1.0.2",
-            ssid: sentSsid,
-            online: false,
-            lastCheckedAt: Int64(Date().timeIntervalSince1970 * 1000)
-        ))
-        ssid = ""
-        pwd = ""
-        armed = false
-        phase = .succeeded
-        banner = "配网指令已被网关接受。它正在用「\(sentSsid)」重连，联网状态看上面那一行 —— 橙色就是还没连上。"
+        do {
+            // 真链路：扫描网关 → cmd38 状态 → cmd31 写 WiFi → cmd35 重启 → 落库（HardwareService）。
+            let rec = try await HardwareService.shared.provisionGateway(ssid: sentSsid, password: pwd) { msg in
+                Task { @MainActor in self.steps.append(msg) }
+            }
+            ssid = ""
+            pwd = ""
+            armed = false
+            phase = .succeeded
+            loadRows()
+            banner = "配网指令已被网关接受（\(rec.lastWifi)）。它正在用新 WiFi 重连，联网状态看上面那一行 —— 橙色就是还没连上。"
+        } catch {
+            phase = .failed((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+        }
     }
 
     @MainActor
     private func refresh(_ g: GatewayRow) async {
-        // TODO(engine): 真实链路是 op=getDeviceStatus 拉 dStatus / sName。
         guard let index = rows.firstIndex(where: { $0.id == g.id }) else { return }
-        rows[index].lastCheckedAt = Int64(Date().timeIntervalSince1970 * 1000)
-        rows[index].online = true
-        banner = nil
+        do {
+            // 真链路：cmd38 读状态（ssid / romVer / eCtrlVer / netState）。
+            let st = try await HardwareService.shared.readGatewayState(mac: g.mac)
+            rows[index].lastCheckedAt = Int64(Date().timeIntervalSince1970 * 1000)
+            rows[index].online = st.netState == 1
+            rows[index].ssid = st.ssid
+            rows[index].rom = st.romVer
+            banner = nil
+        } catch {
+            banner = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
     }
 
     @MainActor
     private func reboot(_ g: GatewayRow) async {
-        // TODO(engine): 真实链路是 cmd35 重启；重启期间网关短暂离线。
         guard let index = rows.firstIndex(where: { $0.id == g.id }) else { return }
         rows[index].rebooting = true
         rows[index].online = false
-        try? await Task.sleep(for: .milliseconds(1200))
+        do {
+            // 真链路：cmd35 重启；重启期间网关短暂离线（状态由下一次刷新确认）。
+            try await HardwareService.shared.rebootGateway(mac: g.mac)
+            banner = "重启指令已被网关接受；它重启期间会短暂离线，稍后刷新状态即可。"
+        } catch {
+            banner = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
         guard let done = rows.firstIndex(where: { $0.id == g.id }) else { return }
         rows[done].rebooting = false
-        rows[done].online = true
         rows[done].lastCheckedAt = Int64(Date().timeIntervalSince1970 * 1000)
     }
 
     private func remove(_ g: GatewayRow) {
+        DB.removeGateway(g.mac)
         rows.removeAll { $0.id == g.id }
         confirmDelete = nil
         banner = "已从本机台账移除「\(g.name)」。网关硬件里的凭据还在，要重配得先把它重置回橙灯。"

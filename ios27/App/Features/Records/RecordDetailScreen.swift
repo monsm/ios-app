@@ -100,7 +100,7 @@ struct RecordDetailScreen: View {
         Panel {
             VStack(alignment: .leading, spacing: T.S.m) {
                 SectionLabel(text: "这条记录", trailing: "行 " + shortKey(entry))
-                FieldRow(label: "时刻", value: TimeFormat.clock(entry.at), unit: "HH:mm")
+                FieldRow(label: "时刻", value: TimeDisplay.clock(entry.at), unit: "HH:mm")
                 divider
                 FieldRow(label: "日期", value: TimeFormat.dayKey(entry.at))
                 divider
@@ -141,7 +141,7 @@ struct RecordDetailScreen: View {
                         .foregroundStyle(disposed ? Ink.ink : State.critical)
                     Spacer(minLength: T.S.s)
                     if let at = overlay.disposedAt(entry.id) {
-                        Text(TimeFormat.clock(at))
+                        Text(TimeDisplay.clock(at))
                             .font(T.F.stamp)
                             .foregroundStyle(Ink.inkSub)
                             .monospacedDigit()
@@ -339,6 +339,7 @@ struct RecordDetailScreen: View {
             entries = []
             return
         }
+        overlay.hydrate(mac: mac)
         entries = RecordsSource.load(mac: mac, lockName: lockName, members: app.members).entries
     }
 

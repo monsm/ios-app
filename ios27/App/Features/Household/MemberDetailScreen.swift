@@ -14,6 +14,7 @@ struct MemberDetailScreen: View {
     @State private var loadedID: String?
     @State private var confirmDelete = false
     @State private var saved = false
+    @State private var showMerge = false
 
     private var roster: HouseholdRoster { HouseholdRoster.shared }
 
@@ -57,6 +58,9 @@ struct MemberDetailScreen: View {
                         toggleArchive: { toggleArchive() },
                         askDelete: { confirmDelete = true }
                     )
+                    if !MemberMergeKit.candidates(primaryID: member.id).isEmpty {
+                        mergePanel(member)
+                    }
                 } else {
                     missingBlock
                 }
@@ -84,6 +88,9 @@ struct MemberDetailScreen: View {
             }
             load()
         }
+        .sheet(isPresented: $showMerge) {
+            if let member { MemberMergeSheet(primary: member) }
+        }
         .confirmationDialog("删除成员", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("只移除档案（锁端凭证仍有效）", role: .destructive) { remove(cascade: false) }
             Button("连本机凭证一起移除（锁端仍需线下删）", role: .destructive) { remove(cascade: true) }
@@ -91,6 +98,24 @@ struct MemberDetailScreen: View {
         } message: {
             Text(deleteMessage)
         }
+    }
+
+    // MARK: 重复合并（462）
+
+    private func mergePanel(_ member: MemberCard) -> some View {
+        Panel {
+            VStack(alignment: .leading, spacing: T.S.m) {
+                SectionLabel(text: "重复档案")
+                Text("发现同名成员。合并会保留这一位，把另一位名下的凭证归属迁过来后删除它。")
+                    .font(T.F.caption)
+                    .foregroundStyle(Ink.inkSub)
+                    .fixedSize(horizontal: false, vertical: true)
+                SecondaryAction(title: "合并同名成员", systemImage: "arrow.triangle.merge") {
+                    showMerge = true
+                }
+            }
+        }
+        .padding(.horizontal, T.S.gutter)
     }
 
     // MARK: 页头（大标题 + 一行状态）

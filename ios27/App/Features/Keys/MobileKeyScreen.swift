@@ -208,28 +208,46 @@ struct MobileKeyScreen: View {
             errorText = "本机已签满 16 把。先撤销一把不用的，再来签新的。"
             return
         }
-        // TODO(engine): 真实现是 getAvailablePin → ekey = AES(skey)(0x04 包络 + PIN LE4 + 00 00)
-        // → op=updateShareDevice action=add。链路未接：本机只留一条「已签发」台账，
-        // code 存本地生成的开锁凭证串，交付动作要用户自己把这一串给对方。
-        let pin = KeysCode.digits(4)
-        let credential = "ekey-\(app.lock?.id.prefix(8) ?? "lock")-\(pin)"
-        let expiresAt: Int64? = forever ? nil : Int64(validTo.timeIntervalSince1970 * 1000)
-        let item = KeyItem(
-            id: "mobile-\(Int(Date().timeIntervalSince1970))",
-            kind: .mobile,
-            name: "\(owner) 的手机钥匙",
-            owner: owner,
-            code: credential,
-            expiresAt: expiresAt,
-            disabled: false
-        )
-        app.keys.append(item)
-        justIssued = owner
-        errorText = nil
+        guard let kc = app.currentKeychain else {
+            errorText = "还没有添加门锁"
+            return
+        }
+        guard let member = DB.members().first(where: { $0.name == owner }) else {
+            errorText = "找不到这位成员"
+            return
+        }
+        let df = DF.cached("yyyy-MM-dd HH:mm")
+        let fromText = df.string(from: Date())
+        let toText = df.string(from: validTo)
+        Task { @MainActor in
+            do {
+                // 真链路：从锁 PIN 池分配 → buildEkeyShare 签 ekey → 落 kf_mobilekeys。
+                _ = try await MobileKeyService.issue(kc: kc, member: member,
+                                                     forever: forever,
+                                                     validFrom: fromText, validTo: toText)
+                app.reloadKeys(kc.mac)
+                justIssued = owner
+                errorText = nil
+            } catch {
+                errorText = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            }
+        }
     }
 
     private func revoke(_ key: KeyItem) {
-        // TODO(engine): 撤销要同时把 pin 从锁里删（cmd08 delPins）；只删本地记录的话旧 pin 仍能开门。
-        app.keys.removeAll { $0.id == key.id }
+        guard let kc = app.currentKeychain else { return }
+        guard let mk = MobileKeyService.list(kc.mac).first(where: { "mkey:\($0.id)" == key.id }) else {
+            app.keys.removeAll { $0.id == key.id }
+            return
+        }
+        Task { @MainActor in
+            do {
+                // 真链路：cmd08 delPins 把 pin 从锁里删掉，再删本机记录。
+                try await MobileKeyService.revoke(host: app, kc: kc, key: mk)
+                app.reloadKeys(kc.mac)
+            } catch {
+                errorText = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            }
+        }
     }
 }

@@ -29,9 +29,12 @@ final class AppModel {
     // MARK: - 界面态
 
     /// 本机数据保护是否已解锁（冷启动才要求）。
-    var unlocked: Bool = true
+    var unlocked: Bool = !DB.hasPasscode()
+    /// 胁迫码进入的空壳模式：数据区显示为空（开锁能力保留）。
+    var decoyMode: Bool = false
     /// 只读试验模式（顶部常驻红条，必须常驻 —— 用户第二天会忘了自己开过它）。
-    var trialGuard: Bool = false
+    /// 初值从 kf_trial_guard 读；开关写回由 trialGuardBinding 负责。
+    var trialGuard: Bool = DB.store.getBool("kf_trial_guard", false)
     /// 开锁链相位（门页刻度盘读它）。
     var dialPhase: DialPhase = .idle
     /// 最近一次动作的时刻（毫秒 epoch）。
@@ -99,6 +102,13 @@ final class AppModel {
         reloadKeys(mac)
         reloadMembers()
         reloadEntries(mac)
+        // 胁迫码进入的空壳模式：门照样能开，但数据区（凭证 / 成员 / 台账）显示为空。
+        // 只清界面投影，不动任何真实存储 —— 退出空壳模式（杀进程后正常密码解锁）即恢复。
+        if decoyMode {
+            keys = []
+            members = []
+            entries = []
+        }
     }
 
     /// 只重建凭证（增删改之后调，比重载全部便宜）。
@@ -135,7 +145,7 @@ final class AppModel {
                 kind: .mobile,
                 name: k.memberName.isEmpty ? "手机钥匙" : k.memberName + " 的手机钥匙",
                 owner: k.memberName,
-                code: nil,
+                code: k.ekey,
                 expiresAt: k.forever ? nil : Self.epochMillis(k.validTo),
                 disabled: false
             ))
@@ -203,6 +213,7 @@ final class AppModel {
             if rc == 0 || rc == 22 {
                 dialPhase = .opened
                 lastActionAt = Int64(Date().timeIntervalSince1970 * 1000)
+                Milestones.recordUnlockSuccess()
                 await reload(refreshStatus: false)
                 try? await Task.sleep(for: .milliseconds(900))
                 if dialPhase == .opened { dialPhase = .idle }
@@ -297,6 +308,73 @@ final class AppModel {
         } catch {
             return .failure(error)
         }
+    }
+
+    // MARK: - 凭证改期 / 删除（真下发）
+
+    /// 改一条密码的生效窗口：0B（pwdExpire）真下发，成功才改本机台账。
+    func setPasswordExpiry(alias: Int, from: String, to: String) async -> Result<Void, Error> {
+        let mac = currentMac
+        guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
+        do {
+            try await LockService.shared.ensureConnected(mac: mac)
+            try await LockService.shared.pwdExpire(alias, from, to)
+            var l = DB.ledger(mac)
+            if let i = l.pwds.firstIndex(where: { $0.alias == alias }) {
+                l.pwds[i].from = from; l.pwds[i].to = to
+                DB.saveLedger(mac, l)
+            }
+            reloadKeys(mac)
+            return .success(())
+        } catch { return .failure(error) }
+    }
+
+    /// 删除一枚指纹：15（fpDelete）真下发，成功才摘台账。
+    func deleteFingerprint(batch: Int) async -> Result<Void, Error> {
+        let mac = currentMac
+        guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
+        do {
+            try await LockService.shared.ensureConnected(mac: mac)
+            try await LockService.shared.fpDelete(batch)
+            var l = DB.ledger(mac)
+            l.fps.removeAll { $0.batch == batch }
+            DB.saveLedger(mac, l)
+            reloadKeys(mac)
+            return .success(())
+        } catch { return .failure(error) }
+    }
+
+    /// 指纹录入：cmd13 多帧（用户按 8 次）→ cmd14 确认窗口 → 成功才写台账。
+    func enrollFingerprint(name: String, owner: String?, note: String,
+                           onProgress: @escaping @MainActor (Int) -> Void) async -> Result<Int, Error> {
+        let mac = currentMac
+        guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
+        do {
+            try await LockService.shared.ensureConnected(mac: mac)
+            var pressCount = 0
+            let presses = try await LockService.shared.fpStart { p in
+                if p.orderIdx != nil {
+                    pressCount += 1
+                    let n = pressCount
+                    Task { @MainActor in onProgress(n) }
+                }
+            }
+            guard let last = presses.last, let batch = last.batchNumber else {
+                return .failure(BLEErrorX.msg("指纹录入没有拿到批次号 — 请重新录入"))
+            }
+            let df = DF.cached("yyyy-MM-dd HH:mm")
+            let from = "2010-01-01 00:00"
+            let to = df.string(from: Date().addingTimeInterval(100 * 365 * 86400))
+            try await LockService.shared.fpConfirm(batch, validFrom: from, validTo: to)
+            var l = DB.ledger(mac)
+            l.fps.append(LedgerFp(batch: Int(batch),
+                                  name: name.isEmpty ? "指纹 \(batch)" : name,
+                                  at: Date().timeIntervalSince1970 * 1000,
+                                  note: note, src: nil, owner: owner, isAlarm: false))
+            DB.saveLedger(mac, l)
+            reloadKeys(mac)
+            return .success(Int(batch))
+        } catch { return .failure(error) }
     }
 
     // MARK: - 校时 / 静音 / 安全模式

@@ -152,9 +152,14 @@ jobs:
           if ! gh release view ios27-latest >/dev/null 2>&1; then
             gh release create ios27-latest --title "iOS 27 · 最新构建" --notes "$NOTE" --prerelease
           fi
-          # 只留最新一个 IPA：安装台上堆多份"看起来都一样"的包，装错版本比不装更糟。
-          # 先删掉旧资产，再上传新的。
-          for old in $(gh release view ios27-latest --json assets --jq '.assets[].name' | grep -E '\.ipa
+          # 只留最新一个 IPA：安装台上堆多份「看起来都一样」的包，装错版本比不装更糟。
+          # 先删旧资产，再上传新的。注意管道里 grep 无匹配时不能因 set -e 让整步失败。
+          OLD=$(gh release view ios27-latest --json assets --jq '.assets[].name' 2>/dev/null | grep -E '\.ipa$' || true)
+          for old in $OLD; do
+            gh release delete-asset ios27-latest "$old" -y || true
+          done
+          gh release upload ios27-latest "$IPA"
+          gh release edit ios27-latest --notes "$NOTE"
 
       - name: 失败时把日志挂到 Release（公开可读，用于无鉴权排查）
         if: failure()

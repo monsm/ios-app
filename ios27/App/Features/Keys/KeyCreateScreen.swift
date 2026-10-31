@@ -30,6 +30,8 @@ struct KeyCreateScreen: View {
     @State var editingID: String?
     /// 下发中（防重复提交）。
     @State var busy = false
+    /// 指纹录入已收到的按压次数（0…8）。
+    @State var fpCount = 0
 
     let stepLabels = ["类型归属", "码值", "有效期", "确认"]
 
@@ -50,6 +52,9 @@ struct KeyCreateScreen: View {
             VStack(spacing: T.S.l) {
                 header
                 KeysStepDots(total: 4, index: step, labels: stepLabels)
+                if busy, kind == .fingerprint {
+                    BusyRow(text: "指纹录入中 · 已按 \(fpCount)/8 — 请把手指按在指纹头上再抬起")
+                }
                 switch step {
                 case 0: typeStep
                 case 1: codeStep
@@ -93,6 +98,11 @@ struct KeyCreateScreen: View {
         .padding(.horizontal, T.S.gutter)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
+    }
+
+    private var ownerName: String? {
+        guard let owner else { return nil }
+        return app.members.first { $0.id == owner }?.name ?? DB.member(owner)?.name
     }
 
     private func consumeRoute() {
@@ -214,10 +224,27 @@ struct KeyCreateScreen: View {
         } else {
             finalName = note.isEmpty ? "密码 \(app.keys.filter { $0.kind == .password }.count + 1)" : note
         }
-        // 指纹录入要人握着锁按住指纹头（cmd13 起始 → 逐帧 press → cmd14 确认），
-        // 这条链路本版没接。**不假装**：直接如实说，并给一条真能走的路（先用密码）。
+        // 指纹录入：cmd13 多帧（用户按 8 次）→ cmd14 确认窗口 → 成功才写台账。
         if kind == .fingerprint {
-            errorText = "指纹录入要握着门锁按指纹头，这条链路还没接。先用密码开门吧。"
+            guard let kc = app.currentKeychain else { errorText = "还没有添加门锁"; return }
+            busy = true
+            fpCount = 0
+            errorText = nil
+            Task { @MainActor in
+                ScreenCare.keepingAwake(true)
+                let r = await app.enrollFingerprint(name: finalName, owner: ownerName, note: note) { n in
+                    fpCount = n
+                }
+                ScreenCare.keepingAwake(false)
+                busy = false
+                switch r {
+                case .success:
+                    _ = kc
+                    router.keysPath = []
+                case .failure(let e):
+                    errorText = (e as? LocalizedError)?.errorDescription ?? e.localizedDescription
+                }
+            }
             return
         }
         // 真链路：ensureConnected → cmd0A（临时码/密码同一构造器，用起止时间区分）→ 成功才写台账。

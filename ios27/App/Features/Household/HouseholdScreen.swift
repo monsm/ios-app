@@ -295,6 +295,15 @@ struct HouseholdScreen: View {
         Panel {
             VStack(alignment: .leading, spacing: T.S.m) {
                 SectionLabel(text: "家庭场景")
+                // 来源：原 App/Core/MemberHub.swift（移交 / 借用 / 家政窗 / 轮值）。
+                HHRowButton(
+                    title: "成员流转 · 移交 / 借用 / 家政窗",
+                    symbol: "arrow.left.arrow.right",
+                    readingValue: "\(activeMembers.count)",
+                    readingUnit: "位",
+                    action: { router.request(.dest(.memberOps)) }
+                )
+                HHRule()
                 if dutyMember == nil {
                     Text("本周主责还没安排 —— 打开任意成员的 360，在「家庭场景」里点「设为本周主责」。")
                         .font(T.F.caption)

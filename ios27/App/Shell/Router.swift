@@ -19,6 +19,13 @@ enum Dest: String, CaseIterable, Identifiable, Hashable {
     case gateway           // 网关
     case syncTime          // 校时
     case defend            // 布防
+    case dfu               // 固件升级
+    case lockSettings      // 锁设置（cmd19 / cmd24 / 清空密码）
+    case tailgate          // 防尾随 / 自动上锁
+    case safeMode          // 安全模式说明
+    case batteryProfile    // 电池档案
+    case lockProfile       // 锁档案
+    case lockPortfolio     // 全部锁（多锁统计）
 
     // 钥匙
     case keyDetail         // 凭证详情
@@ -26,15 +33,19 @@ enum Dest: String, CaseIterable, Identifiable, Hashable {
     case keyCalendar       // 到期月历
     case mobileKey         // 手机钥匙
     case shareToAndroid    // 分享给安卓
+    case credentialStudio  // 凭证工作室
+    case zotp              // 动态临时密码（ZOTP）
 
     // 台账
     case recordDetail      // 记录详情
     case recordExport      // 导出
+    case recordsStudio     // 记录工作室（检索/统计/hex）
 
     // 家
     case memberDetail      // 成员 360
     case memberCreate      // 建档向导
     case memberArchive     // 归档
+    case memberOps         // 成员流转（移交/借用/家政窗/长辈）
 
     // 设置
     case appearance        // 外观
@@ -42,7 +53,10 @@ enum Dest: String, CaseIterable, Identifiable, Hashable {
     case backup            // 备份与恢复
     case autoOpen          // 靠近自动开锁
     case hardware          // 钥匙串 / 硬件
+    case protocolTest      // 协议测试（回声探测）
     case about             // 关于
+    case accessibility     // 无障碍与操作辅助
+    case backupStudio      // 备份工作室（WebDAV/多份/迁移/自检）
 
     var id: String { rawValue }
 
@@ -58,33 +72,50 @@ enum Dest: String, CaseIterable, Identifiable, Hashable {
         case .gateway: return "网关"
         case .syncTime: return "校时"
         case .defend: return "布防"
+        case .dfu: return "固件升级"
+        case .lockSettings: return "锁设置"
+        case .tailgate: return "防尾随"
+        case .safeMode: return "安全模式"
+        case .batteryProfile: return "电池档案"
+        case .lockProfile: return "锁档案"
+        case .lockPortfolio: return "全部锁"
         case .keyDetail: return "凭证详情"
         case .keyCreate: return "新增凭证"
         case .keyCalendar: return "到期月历"
         case .mobileKey: return "手机钥匙"
         case .shareToAndroid: return "分享给安卓"
+        case .credentialStudio: return "凭证工作室"
+        case .zotp: return "动态密码"
         case .recordDetail: return "记录详情"
         case .recordExport: return "导出"
+        case .recordsStudio: return "记录工作室"
         case .memberDetail: return "成员"
         case .memberCreate: return "新建成员"
         case .memberArchive: return "归档"
+        case .memberOps: return "成员流转"
         case .appearance: return "外观"
         case .security: return "安全"
         case .backup: return "备份与恢复"
         case .autoOpen: return "靠近自动开锁"
         case .hardware: return "硬件"
+        case .protocolTest: return "协议测试"
         case .about: return "关于"
+        case .accessibility: return "无障碍"
+        case .backupStudio: return "备份工作室"
         }
     }
 
     /// 该目的地归属哪个 Tab（决定跳转时切到哪一页）。
     var tab: TabSlot {
         switch self {
-        case .door, .lockStatus, .addLock, .gateway, .syncTime, .defend: return .door
-        case .keys, .keyDetail, .keyCreate, .keyCalendar, .mobileKey, .shareToAndroid: return .keys
-        case .records, .recordDetail, .recordExport: return .records
-        case .household, .memberDetail, .memberCreate, .memberArchive: return .household
-        case .settings, .appearance, .security, .backup, .autoOpen, .hardware, .about: return .settings
+        case .door, .lockStatus, .addLock, .gateway, .syncTime, .defend, .dfu,
+             .lockSettings, .tailgate, .safeMode, .batteryProfile, .lockProfile, .lockPortfolio: return .door
+        case .keys, .keyDetail, .keyCreate, .keyCalendar, .mobileKey, .shareToAndroid,
+             .credentialStudio, .zotp: return .keys
+        case .records, .recordDetail, .recordExport, .recordsStudio: return .records
+        case .household, .memberDetail, .memberCreate, .memberArchive, .memberOps: return .household
+        case .settings, .appearance, .security, .backup, .autoOpen, .hardware, .protocolTest, .about,
+             .accessibility, .backupStudio: return .settings
         }
     }
 }

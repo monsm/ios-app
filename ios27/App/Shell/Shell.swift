@@ -1,8 +1,9 @@
-// Shell.swift —— App 外壳：5 个 Tab。
+// Shell.swift —— App 外壳：v7 浮动玻璃标签栏（4 项：设备 / 凭证 / 记录 / 设置）。
 //
-// 纪律：Tab 只导航不执行（开锁只在「门」页的刻度盘上）。
-// Tab 数固定 5（不含 More）：HIG《Tab bars》要求避免溢出，375pt 宽机型上 6 项就溢出。
-// iOS 26+ 的 `Tab` 声明式 API + `.tabBarMinimizeBehavior`，让内容顶到玻璃下面。
+// 参考 TOKENS.md「浮动标签栏（统一规格，4 项）」：268×57pt、居中、bottom 19.7pt、圆角 28.5pt；
+// 材质 rgba(32,32,32,.72) + blur(20) saturate(180%) + inset 0 0 0 .5px rgba(120,150,160,.35)；
+// 选中项 56×49 黑胶囊 + inset 亮边。
+// 导航仍是 Router 的唯一漏斗：标签栏只改 router.tab；每个 Tab 的 NavigationStack 路径各自保留。
 import SwiftUI
 
 struct Shell: View {
@@ -11,42 +12,49 @@ struct Shell: View {
 
     var body: some View {
         @Bindable var router = router
+        ZStack(alignment: .bottom) {
+            tabContent(router)
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    Color.clear.frame(height: V.Tab.contentInset)
+                }
 
-        TabView(selection: $router.tab) {
-            Tab(TabSlot.door.title, systemImage: TabSlot.door.symbol, value: TabSlot.door) {
-                NavigationStack(path: router.path(for: .door)) {
-                    DoorScreen().withDestinations()
-                }
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
+                VFloatingTabBar(selection: $router.tab)
+                    .padding(.bottom, V.Tab.bottom)
             }
-            Tab(TabSlot.keys.title, systemImage: TabSlot.keys.symbol, value: TabSlot.keys) {
-                NavigationStack(path: router.path(for: .keys)) {
-                    KeysScreen().withDestinations()
-                }
-            }
-            Tab(TabSlot.records.title, systemImage: TabSlot.records.symbol, value: TabSlot.records) {
-                NavigationStack(path: router.path(for: .records)) {
-                    RecordsScreen().withDestinations()
-                }
-            }
-            Tab(TabSlot.household.title, systemImage: TabSlot.household.symbol, value: TabSlot.household) {
-                NavigationStack(path: router.path(for: .household)) {
-                    HouseholdScreen().withDestinations()
-                }
-            }
-            Tab(TabSlot.settings.title, systemImage: TabSlot.settings.symbol, value: TabSlot.settings) {
-                NavigationStack(path: router.path(for: .settings)) {
-                    SettingsScreen().withDestinations()
-                }
-            }
-            // 为什么没有独立的 Search Tab（iOS 26 的 Tab(role: .search)）：
-            // 本 App 已经有 5 个 Tab（门/钥匙/台账/家/设置），再加一个就是 6 个。
-            // HIG《Tab bars》明确说要避免溢出 More —— 375pt 宽的机型上 6 个项会溢出，
-            // 而被塞进 More 的内容既难被看见也难被找到。
-            // 检索按域放在各自页面里（台账搜事件、钥匙搜凭证），这才是它真正的作用范围。
+            .ignoresSafeArea(.container, edges: .bottom)
         }
-        .tabBarMinimizeBehavior(.onScrollDown)
-        .tint(Signal.base)
+        .background(V.C.bg.ignoresSafeArea())
         .sensoryFeedback(.selection, trigger: router.tab)
+    }
+
+    @ViewBuilder
+    private func tabContent(_ router: Router) -> some View {
+        switch router.tab {
+        case .door:
+            NavigationStack(path: router.path(for: .door)) {
+                DoorScreen().withDestinations()
+            }
+        case .keys:
+            NavigationStack(path: router.path(for: .keys)) {
+                KeysScreen().withDestinations()
+            }
+        case .records:
+            NavigationStack(path: router.path(for: .records)) {
+                RecordsScreen().withDestinations()
+            }
+        case .household:
+            // 家庭页保留在 Router 里（门页「成员」入口与 .member(id:) 深链仍可达）；
+            // v7 参考图只有 4 个标签，因此它不在浮动标签栏上常驻。
+            NavigationStack(path: router.path(for: .household)) {
+                HouseholdScreen().withDestinations()
+            }
+        case .settings:
+            NavigationStack(path: router.path(for: .settings)) {
+                SettingsScreen().withDestinations()
+            }
+        }
     }
 }
 
@@ -57,4 +65,10 @@ extension View {
             Destinations.view(for: dest)
         }
     }
+}
+
+#Preview("Shell") {
+    Shell()
+        .environment(AppModel())
+        .environment(Router())
 }
