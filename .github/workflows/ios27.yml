@@ -114,6 +114,18 @@ jobs:
             echo "::warning::镜像没有可用的 iOS 模拟器 runtime（部署目标 iOS 27.0）—— 金标测试本轮**未执行**。这不是通过。"
             exit 0
           fi
+          # 关键判据：镜像里的 iOS runtime 必须 >= 部署目标（iOS 27.0）。
+          # xcode-27 / macos-latest 两个镜像都常常只有 iOS 26.x runtime ——
+          # 那种情况下 xcodebuild 一定 "Unable to find a destination"，
+          # 而**一条断言都没跑**。这里如实标成"未执行"，不静默通过、也不假红。
+          RUNTIME=$(xcrun simctl list runtimes 2>/dev/null | grep -oE "iOS [0-9]+\.[0-9]+" | sort -V | tail -1 | sed "s/iOS //")
+          echo "镜像最高 iOS runtime: ${RUNTIME:-none}（部署目标 27.0）"
+          MAJOR=$(echo "${RUNTIME:-0}" | cut -d. -f1)
+          if [ "${MAJOR:-0}" -lt 27 ]; then
+            echo "test_executed=no" >> "$GITHUB_OUTPUT"
+            echo "::warning::镜像最高只有 iOS ${RUNTIME:-无} runtime，而本工程部署目标是 iOS 27.0 —— 金标测试本轮**未执行**（不是通过）。需在带 iOS 27 模拟器的机器上跑 xcodebuild test。"
+            exit 0
+          fi
           echo "测试设备: $DEV"
           echo "test_executed=yes" >> "$GITHUB_OUTPUT"
           # 2>&1 必须带上：只 tee stdout 时，destination 解析失败只留下 6 行调用头。

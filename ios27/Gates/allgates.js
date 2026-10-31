@@ -8,7 +8,9 @@ const path = require('path');
 // 实测恒为「检查 0 处具名调用」= no-op。真正的调用签名闸门是 callsig2（7 类判据 + 成员表）。
 // privacy 是第 16 道（2026-10-31 安全审计后新增）：把 AUDIT-F 的 7 类回归判据做成**判红**闸门 ——
 // 剪贴板直写 / 备份明文 / 空壳只清界面 / 帧脱敏只处理首个 hex= / WebDAV http / 密钥文件无文件保护 / CSV 公式注入。
-const GATES = ['swiftparse', 'types', 'swiftcheck', 'tokens', 'contrast', 'glass', 'motion', 'a11y', 'dynamictype', 'reducedmotion', 'crosprivate', 'callsig2', 'lineage', 'workflow', 'destmap', 'privacy'];
+// tests 是第 17 道（G-07）：证明测试目标存在、金标夹具真的打进 bundle、且覆盖了协议层关键面。
+// CI 镜像缺 iOS 27 模拟器 runtime，xcodebuild test 在那边跑不了 —— 这道闸门是本地可证的代理。
+const GATES = ['swiftparse', 'types', 'swiftcheck', 'tokens', 'contrast', 'glass', 'motion', 'a11y', 'dynamictype', 'reducedmotion', 'crosprivate', 'callsig2', 'lineage', 'workflow', 'destmap', 'privacy', 'tests'];
 
 let failed = 0;
 for (const g of GATES) {
