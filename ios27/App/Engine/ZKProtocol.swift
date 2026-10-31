@@ -73,7 +73,9 @@ enum ZKProtocol {
         return HexKit.hexPair(UInt32(key)) + HexKit.hexPair(UInt32(len)) + v
     }
     static func parseKLV(_ hex: String) -> [ZKLV]? {
-        let b = HexKit.bytes(hex)
+        // SEC-16：协议解析必须用**严格** hex。宽容版 `bytes()` 会把噪声读成 0，
+        // 于是一个含脏字符的帧会"成功"解析成垃圾 KLV，而不是显式失败。
+        guard let b = HexKit.strictBytes(hex) else { return nil }
         var out = [ZKLV]()
         var off = 0
         while off < b.count {
@@ -190,7 +192,8 @@ enum ZKProtocol {
         // 2026-10-27 审核说明 (AUDIT-A F-08)：cmd 字节位置在三种帧头（8/7/10 字节）下**都写死字节 4**。
         // 三端（iOS / Android / vendor JS）在此完全一致 —— 这是协议事实：长度字段恒在字节 2-3，
         // 所以 cmd 恒在 4。7 字节头的差异只在 KLV 起始位置，不在 cmd 位置。
-        let cmd = HexKit.bytes(hex)[4]
+        guard let cmdBytes = HexKit.strictBytes(hex), cmdBytes.count >= 5 else { return hex }
+        let cmd = cmdBytes[4]
         let header10 = hex.count >= 20 + len * 2
         let bodyStart = header10 ? 20 : 16
         guard hex.count >= bodyStart + len * 2 else { return hex }
@@ -210,7 +213,7 @@ enum ZKProtocol {
     }
     static func parseResponse(_ hex: String) -> ParsedFrame {
         guard hex.count >= 14 else { return ParsedFrame(ok: false, cmd: 0, header: 0, klvs: [], raw: hex) }
-        let b = HexKit.bytes(hex)
+        guard let b = HexKit.strictBytes(hex) else { return ParsedFrame(ok: false, cmd: 0, header: 0, klvs: [], raw: hex) }
         let versionByte = Int(b[1])
         let len = HexKit.readU16LE(hex, byteOffset: 2)
         var orders: [Int]
@@ -260,7 +263,8 @@ enum ZKProtocol {
                 if idx.lowerBound > buf.startIndex { buf = String(buf[idx.lowerBound...]) }
                 if buf.count < 14 { break }
                 let len = HexKit.readU16LE(buf, byteOffset: 2)
-                let vb = Int(HexKit.bytes(buf)[1])
+                guard let vbBytes = HexKit.strictBytes(buf), vbBytes.count >= 2 else { break }
+                let vb = Int(vbBytes[1])
                 // 8B 头设首选 (Java 恒按 8B 消费), vb=0x01 帧若实为 8B 不被 7B 试切提前截断
                 let prefs: [Int] = (vb == 0x01) ? [8 + len, 7 + len, 10 + len] : [8 + len, 10 + len, 7 + len]
                 var cut = 0
@@ -313,11 +317,14 @@ enum ZKProtocol {
         guard advHex.count - from >= 24 else { return nil }
         let seg = String(advHex.dropFirst(from + 4)) // seg[0]=fc seg[1]=b3 seg[2..3]=pid seg[4..9]=MAC
         guard seg.count >= 20 else { return nil }
-        let frameCtrl = Int(HexKit.bytes(String(seg.prefix(2)))[0])
+        guard let fcBytes = HexKit.strictBytes(String(seg.prefix(2))), let fc = fcBytes.first else { return nil }
+        let frameCtrl = Int(fc)
         guard (frameCtrl & 0x0c) == 0x0c else { return nil } // Java 门禁: containPid(bit2)+containMac(bit3)
         // JS: pid = seg[4..5] | seg[6..7]<<8 (LE u16); macRaw = seg[8..19]
-        let pidLo = Int(HexKit.bytes(String(seg.dropFirst(4).prefix(2)))[0])
-        let pidHi = Int(HexKit.bytes(String(seg.dropFirst(6).prefix(2)))[0])
+        guard let loBytes = HexKit.strictBytes(String(seg.dropFirst(4).prefix(2))), let lo = loBytes.first else { return nil }
+        let pidLo = Int(lo)
+        guard let hiBytes = HexKit.strictBytes(String(seg.dropFirst(6).prefix(2))), let hi = hiBytes.first else { return nil }
+        let pidHi = Int(hi)
         let pid = pidLo | (pidHi << 8)
         let macRaw = String(seg.dropFirst(8).prefix(12))
         var macDisplay = ""
