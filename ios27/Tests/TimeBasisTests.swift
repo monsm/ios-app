@@ -25,7 +25,7 @@ final class TimeBasisTests: XCTestCase {
         XCTAssertGreaterThan(local, 0)
         XCTAssertGreaterThan(utc, 0)
         // 同一个墙钟串：按 UTC 解析得到的 Unix 秒比按本地解析**大**一个时区偏移。
-        let offset = Int64(TimeZone.current.secondsFromGMT(for: Date(timeIntervalSince1970: TimeInterval(local)))
+        let offset = Int64(TimeZone.current.secondsFromGMT(for: Date(timeIntervalSince1970: TimeInterval(local))))
         XCTAssertEqual(utc - local, offset, "两个解析口径必须正好相差一个时区偏移")
     }
 

@@ -8,7 +8,11 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
+// 2026-11-01：原来只扫 App/ —— `Tests/` 完全没被检查。
+// 结果是我自己写的测试里少一个右括号，本地 17 道闸门全绿，CI 真编译器才报
+// 「Expected ',' separator」。测试也是代码，必须过同一道闸。
 const APP = path.join(ROOT, 'App');
+const TESTS = path.join(ROOT, 'Tests');
 
 function walk(dir, out = []) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -21,6 +25,8 @@ function walk(dir, out = []) {
 
 let bad = 0;
 const files = walk(APP);
+// 测试目录可能不存在（老分支），存在就一并检查。
+try { if (fs.statSync(TESTS).isDirectory()) walk(TESTS, files); } catch { /* 没有 Tests/ */ }
 for (const f of files) {
   const rel = path.relative(ROOT, f).split(path.sep).join('/');
   const src = fs.readFileSync(f, 'utf8');
