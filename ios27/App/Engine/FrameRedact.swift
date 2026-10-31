@@ -8,6 +8,9 @@
 // 只保留头（cmd 号与长度对排查足够），载荷整段替换成 `…(N bytes)`。
 //
 // 保留完整帧的只有内存里的 `recentFrames` 环形缓冲（诊断页即时查看，不落盘、不可复制）。
+// String.range(of:) 是 Foundation 的扩展；本文件原先一个 import 都没有，靠 wholemodule 隐式可见
+import Foundation
+
 enum FrameRedact {
     /// 把一条日志里的 `hex=<长串>` 遮成 `hex=<头>…(N bytes)`。
     /// 不含 `hex=` 或 hex 太短（不是帧）时原样返回。

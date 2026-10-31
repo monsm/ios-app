@@ -147,7 +147,7 @@ struct VFieldRow: View {
                     .multilineTextAlignment(.trailing)
             }
         }
-        .frame(minHeight: V.List.searchRow)
+        .frame(minHeight: V.Metric.searchRow)
         .accessibilityElement(children: .combine)
     }
 }
@@ -414,6 +414,6 @@ struct VBusyRow: View {
             Text(text).font(V.F.footnote).foregroundStyle(V.C.text2)
             Spacer(minLength: 0)
         }
-        .frame(minHeight: V.List.searchRow)
+        .frame(minHeight: V.Metric.searchRow)
     }
 }

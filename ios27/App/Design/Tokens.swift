@@ -5,6 +5,8 @@
 //
 // 色彩族只有两个：石墨（无彩）+ 铜锈（唯一品牌色）。状态色是语义色，不作装饰。
 import SwiftUI
+// UIColor（动态色桥接）属 UIKit，不靠 SwiftUI 的隐式再导出
+import UIKit
 
 enum T {
 

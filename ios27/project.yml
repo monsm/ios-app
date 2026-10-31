@@ -39,25 +39,27 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         SUPPORTS_MACCATALYST: NO
         SWIFT_TREAT_WARNINGS_AS_ERRORS: NO
+        # 构建号：本地默认 1；CI 用 CURRENT_PROJECT_VERSION=github.run_number 覆盖
+        # （xcodebuild 命令行设置优先于工程设置；Info.plist 里的 $(CURRENT_PROJECT_VERSION) 打包时展开）
+        CURRENT_PROJECT_VERSION: "1"
     info:
       path: App/Info.plist
       properties:
         CFBundleDisplayName: 锁管家
         CFBundleShortVersionString: "1.0"
-        CFBundleVersion: "1"
-        # 构建号由 CI 注入（github.run_number），避免每次都是 1
-        # 本地构建时回落到 1
+        # 构建号可被 CI 注入：XcodeGen 不做环境变量替换，所以这里写**构建设置引用**，
+        # 由 xcodebuild 在打包时展开（CI 传 CURRENT_PROJECT_VERSION=github.run_number，本地回落 1）。
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         UIUserInterfaceStyle: Automatic
         UIRequiresFullScreen: true
-        # 蓝牙：本 App 唯一的对外通信通道
-        NSBluetoothAlwaysUsageDescription: 需要蓝牙连接你的门锁。App 不联网、不上传任何数据。
+        # 蓝牙：门锁通信的唯一通道。备份工作室可选用 URLSession 连用户自建的 WebDAV，
+        # 所以不能写「App 不联网」—— 隐私文案必须与实际能力一致。
+        NSBluetoothAlwaysUsageDescription: 需要蓝牙连接你的门锁。门锁通信不经过网络；备份工作室可选连你自建的 WebDAV。
         NSBluetoothPeripheralUsageDescription: 需要蓝牙连接你的门锁。
         NSFaceIDUsageDescription: 用面容解锁本机数据保护。
-        # 相册/相机：仅用于"分享给安卓"的二维码
-        NSCameraUsageDescription: 扫描二维码以从安卓手机导入凭证。
         # 深链：kf://（通知点开、分享导入）
         CFBundleURLTypes:
           - CFBundleURLName: com.aapk.lockkeeper

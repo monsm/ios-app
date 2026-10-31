@@ -15,6 +15,8 @@
 // 隐藏的是数据（凭证台账、成员、备份），不是开锁能力 —— 门照样能开，这是保命的前提。
 import Foundation
 import CryptoKit
+// ObservableObject / @Published 属 Combine（不靠 SwiftUI 的隐式再导出）
+import Combine
 
 @MainActor
 final class AppLock: ObservableObject {
