@@ -125,27 +125,28 @@ jobs:
         # 这些断言一旦红，说明协议层被改坏了 —— 比"能不能编译"重要得多。
         run: |
           set -o pipefail
-          # 不写死机型：镜像里的模拟器型号会变（写死 "iPhone 17 Pro" 时 xcodebuild
-          # 会直接 "Unable to find a destination" 而一行测试都不跑 —— 比红更糟的是静默跳过）。
-          # 用 generic 的模拟器 destination：任意可用 iOS 模拟器即可，测试本身不依赖机型。
-          DEST=$(xcodebuild -project LockKeeper.xcodeproj -scheme LockKeeper \
-                   -showdestinations 2>/dev/null \
-                 | grep -o "platform:iOS Simulator.*id:[^,]*" | head -1 \
-                 | sed "s/.*id:/id=/")
-          if [ -z "$DEST" ]; then
-            echo "::error::找不到可用的 iOS 模拟器 destination —— 金标测试无法运行"
-            xcodebuild -project LockKeeper.xcodeproj -scheme LockKeeper -showdestinations || true
+          # 不写死机型：镜像里的模拟器型号会变。写死 "iPhone 17 Pro" 时 xcodebuild 直接
+          # "Unable to find a destination"，一行测试都不跑 —— 比红更糟的是**静默跳过**。
+          # 这里从 simctl 取一台真实可用的设备名，取不到就直接红（绝不静默）。
+          DEV=$(xcrun simctl list devices available 2>/dev/null \
+                | grep -E "^\s+(iPhone|iPad)" | head -1 \
+                | sed -E "s/^\s+([^(]*)\s*\(.*/\1/" | sed "s/ *$//")
+          if [ -z "$DEV" ]; then
+            echo "::error::镜像里没有可用的 iOS 模拟器 —— 金标测试无法运行（这是环境问题，不是测试通过）"
+            xcrun simctl list devices available || true
             exit 1
           fi
-          echo "测试 destination: $DEST"
+          echo "测试设备: $DEV"
+          # 2>&1 必须带上：旧写法只 tee 了 stdout，destination 解析失败时日志里只剩
+          # 6 行调用头，本机完全看不出为什么红（本轮真的踩到了）。
           xcodebuild test \
             -project LockKeeper.xcodeproj \
             -scheme LockKeeper \
-            -destination "$DEST" \
+            -destination "platform=iOS Simulator,name=$DEV" \
             -derivedDataPath build/DerivedData \
             -configuration Debug \
             SWIFT_COMPILATION_MODE=wholemodule \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" | tee build/test.log
+            CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" 2>&1 | tee build/test.log
 
       - name: Archive（出可安装的未签名 IPA）
         run: |
