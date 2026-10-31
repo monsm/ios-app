@@ -117,6 +117,28 @@ destmap     OK — 26 个 Dest ↔ 26 个 View 一一对应
 
 ---
 
+## 四·补、当前可安装包与已接线范围
+
+**IPA（未签名，公开直链）：**
+https://github.com/monsm/ios-app/releases/download/ios27-latest/LockKeeper-20261031.112404-unsigned.ipa
+（sha256 `4473adbe9fee6b98e8f9d8d27f27dd3238e5c5b68d091aaf2060d38ea02af82f` · 1.15 MB · Payload/LockKeeper.app 内可执行文件 2.8 MB）
+
+**真的接到引擎的动作**
+
+| 动作 | 链路 |
+|---|---|
+| 配网 | BLE 扫描 → 广播解析 mac/pid → cmd23→05→08×4→21→03 |
+| 开锁 | ensureConnected → cmd04 → 按 rc 判成败 |
+| 读锁状态 | cmd03 → 落快照 |
+| 读记录 | cmd16 逐页（≤20 页×5 条）→ kf_logcache_ |
+| 新增/删除密码 | cmd0A / cmd08 |
+| 校时 | cmd0E + 回读复核 |
+| 静音 / 安全模式 | cmd18 / cmd20 |
+| 数据来源 | 锁/凭证/成员/台账全部读 DB，不再是种子数据 |
+
+**还没接的（页面里如实标 `TODO(engine)`，不假装）**
+指纹录入（cmd13/14 需握着锁按指纹头）· 布防下发 · 网关配网 · DFU · 备份加密信封 · 手机钥匙签发 · 分享给安卓 · 靠近自动开锁。
+
 ## 五、诚实的边界（未验的就是未验）
 
 | 项 | 状态 | 说明 |

@@ -33,6 +33,19 @@
 
 ---
 
+## 下载安装（不需要 Mac）
+
+**最新构建（公开直链，未签名 IPA）：**
+
+https://github.com/monsm/ios-app/releases/download/ios27-latest/LockKeeper-20261031.112404-unsigned.ipa
+
+> 未签名 = 用你自己的 Apple ID 签一次才能装。任选其一：
+> - **AltStore / Sidekick**：装到手机，7 天自动续签（免费账号）
+> - **Sideloadly**（Windows/Mac）：拖入 ipa，输 Apple ID，签完直接装
+> - **Xcode**：`xcodebuild` 打开 `ios27/project.yml` 生成工程后 ⌘R（需 Mac）
+>
+> 系统要求：**iOS 27.0+**（本 App 编译时把最低部署版本钉在 27.0）。
+
 ## 快速开始
 
 ```bash

@@ -4,7 +4,7 @@
 const { execFileSync } = require('child_process');
 const path = require('path');
 
-const GATES = ['swiftparse', 'types', 'swiftcheck', 'tokens', 'contrast', 'glass', 'motion', 'a11y', 'callsig', 'lineage', 'destmap'];
+const GATES = ['swiftparse', 'types', 'swiftcheck', 'tokens', 'contrast', 'glass', 'motion', 'a11y', 'callsig', 'lineage', 'workflow', 'destmap'];
 
 let failed = 0;
 for (const g of GATES) {
