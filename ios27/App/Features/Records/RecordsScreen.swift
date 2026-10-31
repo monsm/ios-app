@@ -142,7 +142,13 @@ struct RecordsScreen: View {
         .sheet(isPresented: $showAlarmKinds) { AlarmKindsSheet() }
         .onChange(of: scope) { _, _ in saveFilters() }
         .onChange(of: member) { _, _ in saveFilters() }
-        .onChange(of: alarmKinds) { _, _ in saveFilters() }
+        .onChange(of: alarmKinds) { _, _ in
+            RecordsRoute.shared.alarmKinds = alarmKinds
+            saveFilters()
+        }
+        .onChange(of: route.alarmKinds) { _, new in
+            if new != alarmKinds { alarmKinds = new }
+        }
     }
 
     // MARK: - 头部（R3：标题 22/600 + 日期 11.5 + 头像 Ø34）
@@ -412,7 +418,10 @@ struct RecordsScreen: View {
                         .font(V.F.cardTitle)
                         .foregroundStyle(V.C.text6)
                     Spacer(minLength: 0)
-                    Button("告警类型") { showAlarmKinds = true }
+                    Button("告警类型") {
+                        RecordsRoute.shared.alarmKinds = alarmKinds
+                        showAlarmKinds = true
+                    }
                         .font(V.F.footnote)
                         .foregroundStyle(alarmKinds.isEmpty ? V.C.blue : V.C.warning)
                         .accessibilityLabel(alarmKinds.isEmpty ? "告警类型筛选" : "告警类型已选 \(alarmKinds.count) 项")
@@ -713,6 +722,7 @@ struct RecordsScreen: View {
         scope = .all
         member = ""
         alarmKinds = []
+        RecordsRoute.shared.alarmKinds = []
         visitorOnly = false
         route.dayFocus = nil
     }
@@ -756,6 +766,7 @@ struct RecordsScreen: View {
         else { scope = .all }
         member = saved.member
         alarmKinds = saved.alarmKinds
+        RecordsRoute.shared.alarmKinds = saved.alarmKinds
     }
 
     /// 过滤组合按锁记住（kf_rflt_<mac>），切回「记住上次」时用户设过的那份还在。
@@ -856,6 +867,7 @@ struct RecordsScreen: View {
 
     private func consume() {
         hydrateFilters()
+        if route.alarmKinds != alarmKinds { alarmKinds = route.alarmKinds }
         if route.visitorOnly {
             visitorOnly = true
             route.visitorOnly = false
