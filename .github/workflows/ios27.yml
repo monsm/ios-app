@@ -148,16 +148,12 @@ jobs:
           set -e
           IPA=$(ls build/LockKeeper-*-unsigned.ipa | head -1)
           echo "IPA: $IPA"
+          NOTE="离线锁管家 iOS 27 全新建屏 · 未签名 IPA（用 AltStore / Sideloadly 自签后安装）· 构建 ${{ github.sha }}"
           if ! gh release view ios27-latest >/dev/null 2>&1; then
-            gh release create ios27-latest \
-              --title "iOS 27 · 最新构建" \
-              --notes "离线锁管家 iOS 27 全新建屏 · 未签名 IPA（用 AltStore / Sideloadly 自签后安装）。
-构建自 commit ${{ github.sha }}。" \
-              --prerelease
+            gh release create ios27-latest --title "iOS 27 · 最新构建" --notes "$NOTE" --prerelease
           fi
           gh release upload ios27-latest "$IPA" --clobber
-          gh release edit ios27-latest --notes "离线锁管家 iOS 27 全新建屏 · 未签名 IPA（用 AltStore / Sideloadly 自签后安装）。
-最新构建：${{ github.sha }} · ${{ github.run_id }}"
+          gh release edit ios27-latest --notes "$NOTE"
 
       - name: 失败时把日志挂到 Release（公开可读，用于无鉴权排查）
         if: failure()
