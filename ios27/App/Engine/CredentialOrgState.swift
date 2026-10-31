@@ -45,12 +45,12 @@ extension CredentialOrg {
         // getPendingNotificationRequests 异步序列：删除凭证时「取消」还在飞，
         // 同一时刻的「排新」已经把新通知写进 pending —— 取消回调再把它一起删掉，
         // 表现为"删了凭证，但提醒还在（或反之：改期后一条都不响）"。
-        enqueue {
+        enqueue { done in
             let c = UNUserNotificationCenter.current()
             c.getPendingNotificationRequests { reqs in
                 let stale = reqs.map(\.identifier).filter { $0 == id || $0.hasPrefix(id + ".") }
                 if !stale.isEmpty { c.removePendingNotificationRequests(withIdentifiers: stale) }
-                advance()
+                done()
             }
         }
     }
