@@ -233,6 +233,9 @@ extension DB {
         // 判据: 键名里含本锁 MAC (大小写不敏感) 即属该锁数据族。
         let up = m.uppercased()
         for k in store.keys() where k.contains(m) || k.contains(up) { store.remove(k) }
+        // SEC-19：删设备必须连**本机备份文件与还原点**一起清 —— 它们含该锁的 skey/pins 明文，
+        // 否则「删了这把锁」之后，旧备份仍能把母钥恢复出来（并随系统备份出机）。
+        BackupStudio.purgeLocalArtifacts(mac: m)
         // 指针类全局键: 删除后不得悬空
         let defWasThis = store.getString("kf_default_mac") == m
         if defWasThis { store.remove("kf_default_mac") }

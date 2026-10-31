@@ -147,6 +147,23 @@ enum BackupStudio {
         /// 旧快照没这个字段也照样解得开 (可选字段), 不至于"升级后回滚点全失效"。
         var extras: [String: String]? = nil
     }
+    /// SEC-19：删设备时清理含该 MAC 的本机备份文件与还原点。
+    /// 判据：备份是 canonical JSON，文件里出现该 MAC（小写或大写）即视为含这把锁的数据。
+    /// 宁可多删一个「可能含它的」文件，也不要留下一个能恢复母钥的包。
+    nonisolated static func purgeLocalArtifacts(mac: String) {
+        let m = DB.normalizeMac(mac)
+        guard !m.isEmpty else { return }
+        for dir in [dir, rollbackDir] {
+            let files = (try? FileManager.default.contentsOfDirectory(at: dir,
+                        includingPropertiesForKeys: nil)) ?? []
+            for f in files where f.pathExtension == "json" {
+                guard let data = try? Data(contentsOf: f),
+                      let text = String(data: data, encoding: .utf8) else { continue }
+                if text.lowercased().contains(m) { try? FileManager.default.removeItem(at: f) }
+            }
+        }
+    }
+
     @discardableResult
     nonisolated static func makeRollbackPoint() -> Bool {
         // 421: 先收"分区之外的内容族" (原样字节 → base64), 再打包六分区
