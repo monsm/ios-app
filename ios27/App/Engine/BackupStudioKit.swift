@@ -5,7 +5,6 @@
 import Foundation
 import UIKit
 import CoreImage.CIFilterBuiltins
-import BackgroundTasks
 @preconcurrency import UserNotifications   // 通知中心对象是系统侧线程安全的, SDK 未标 Sendable
 
 

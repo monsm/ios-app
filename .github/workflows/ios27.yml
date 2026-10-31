@@ -36,6 +36,8 @@ jobs:
   gates:
     name: 静态闸门（16 道）
     runs-on: ubuntu-latest
+    # G-11：镜像抽风时不要按默认 6 小时占着跑。
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -71,6 +73,8 @@ jobs:
     name: 编译（iOS 27 SDK）
     runs-on: xcode-27
     needs: gates
+    # G-11：xcode-27 是 preview 镜像，历史上抽风过（见文件头注释）。
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v7

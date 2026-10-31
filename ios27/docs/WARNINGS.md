@@ -1,5 +1,11 @@
 # WARNINGS · 编译告警分类与评估
 
+> **状态更新（2026-11-01）**：本文件是**历史快照**（commit `a24bcac`，88 条告警）。
+> 当前构建 run `41219938500`（`a8416aa`）的 `build.log` 里 `: warning:` **0 条** ——
+> 并发迁移（`Destinations`/`Router`/`RecordsModels`/`CaptureShield`/`ScreenAwake`/
+> `SettingsStore`/`SettingsParts`/`CredentialOrgState` 全部 `@MainActor` 化）已完成。
+> 下面的分类账保留作为迁移过程的记录，不再是待办。
+
 > 数据来源：`origin/ci-log:build.log`（commit `a24bcac`，run `41209905485`，BUILD SUCCEEDED / errors=0）。
 > 统计口径：`文件:行:列: warning:` 的**源码告警**；不含 Xcode 镜像回显行（`| ... warning:`）、不含 `UIRequiresFullScreen` 的项目级提示与 `appintentsmetadataprocessor` 的工具提示。
 > 结论：**88 条源码 warning（去重后 83 个唯一位置）+ 1 条项目级 + 1 条工具提示；0 error。**

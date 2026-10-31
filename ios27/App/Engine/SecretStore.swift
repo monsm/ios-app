@@ -17,6 +17,9 @@ import Foundation
 import Security
 
 enum SecretStore {
+    /// ⚠️ 历史值，**禁止改动**：这是旧工程（bundle id `com.aapk.OfflineLock`）写下的 Keychain service 名。
+    /// 改成新 bundle id 会让所有老用户的 skey/bkey/ekey/pins 读不出来 —— 表现为"配过的锁全丢了"。
+    /// 新旧 bundle id 并存是刻意的（新 id 装成另一个 App，但共用同一批密钥条目）。
     private static let service = "com.aapk.OfflineLock.secrets"
 
     private static func baseQuery(_ account: String) -> [String: Any] {

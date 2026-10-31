@@ -26,7 +26,7 @@ enum CredentialOrg {
     /// 2026-10-13 对抗式排查: 凭证通知排期失败的可见出口。
     /// 原先 `Task { try? await UNUserNotificationCenter…add(req) }` 把失败静默吞掉, 界面照显"已排程"。
     /// 凭证到期预警是这条链唯一的提醒出口, 静默失败 = "说要提醒但没人提醒"。
-    static let notifyLog = Logger(subsystem: "com.aapk.OfflineLock", category: "credentialNotify")
+    static let notifyLog = Logger(subsystem: "com.aapk.lockkeeper", category: "credentialNotify")
 
     static func alertKey(_ mac: String, _ kind: String, _ key: Int) -> String { "kf_calert_\(mac)_\(kind)_\(key)" }
     static func seqKey(_ mac: String) -> String { "kf_cseq_" + mac }

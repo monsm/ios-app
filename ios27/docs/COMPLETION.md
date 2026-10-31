@@ -10,13 +10,13 @@
 
 | 项 | 数量 | 说明 |
 |---|---|---|
-| Swift 文件 | **113** | 界面层全部新写 |
-| 代码量 | **≈1.12 MB / 21,775 行** | 上一版 1.94 MB（其中大量是注释与重复结构） |
+| Swift 文件 | **148** | 界面层全部新写 |
+| 代码量 | **≈1.35 MB / 36,874 行** | 上一版 1.94 MB（其中大量是注释与重复结构） |
 | 目的地（屏幕） | **26** | 5 个 Tab 根 + 21 个子页 |
 | 设计组件 | **14** | Panel / Reading / ReadingGrid / FieldRow / Dial / StateDot / StatusLine / ChipRow / PrimaryAction / SecondaryAction / EmptyPanel / BusyRow / LedgerRow / LedgerDayHeader |
-| 静态闸门 | **11** | 每道都有正控 |
+| 静态闸门 | **16** | 每道都有正控（新增 callsig2 / privacy 等） |
 | 视觉验收截图 | **54 张** | 27 屏 × 明暗双模 |
-| 引擎文件 | **66** | 协议/密码学/存储/BLE，从上一版照搬（已验证）+ 依赖补齐 |
+| 引擎文件 | **69** | 协议/密码学/存储/BLE，从上一版照搬 + 依赖补齐 |
 
 ---
 
@@ -119,10 +119,10 @@ destmap     OK — 26 个 Dest ↔ 26 个 View 一一对应
 
 ## 四·补、当前可安装包与已接线范围
 
-**IPA（未签名，公开直链）：**
-https://github.com/monsm/ios-app/releases/download/ios27-latest/LockKeeper-20261031.223629-unsigned.ipa
-（sha256 `933579aabdb7c28e69b81e60434d6a8efb5f5ee4be295ff2efedc47049dba88e` · 2,609,539 bytes / 2.49 MB · 2026-10-31 22:36 构建，对应 commit `a24bcac` 的 CI 产物）
-> Release 页（始终指最新一份）：https://github.com/monsm/ios-app/releases/tag/ios27-latest
+**IPA（未签名）：** 只从 Release 页取最新一份 ——
+https://github.com/monsm/ios-app/releases/tag/ios27-latest
+> 不要引用具体文件名：每次构建都会删旧传新，写死的文件名必然 404（AUDIT-G G-03）。
+> 资产名与 sha256 可在 Release 页或 GitHub API 的 `assets[].digest` 上核对。
 
 **真的接到引擎的动作**
 
@@ -144,7 +144,7 @@ https://github.com/monsm/ios-app/releases/download/ios27-latest/LockKeeper-20261
 
 | 项 | 状态 | 说明 |
 |---|---|---|
-| **真机编译** | ✅ **CI 已通过** | 本机 Windows 无 Xcode；改用 `xcode-27` 镜像。run [41161655697](https://github.com/monsm/ios-app/actions/runs/41161655697)：闸门 11 道 + 编译全绿 |
+| **真机编译** | ✅ **CI 已通过** | 本机 Windows 无 Xcode；改用 `xcode-27` 镜像。run [41219938500](https://github.com/monsm/ios-app/actions/runs/41219938500)（`a8416aa`）：16 道闸门 + BUILD SUCCEEDED + ARCHIVE SUCCEEDED + errors=0 + 0 warning |
 | **真机手感** | ⚠️ **未验证** | 刻度盘按压跟手度、进度弧节奏、触觉反馈 |
 | **真实玻璃折射** | ⚠️ **未验证** | DesignLab 用 `backdrop-filter` 近似 |
 | **动态字体极端值** | ⚠️ **未验证** | 静态只保证字号走令牌；最大字号截断需真机 |
