@@ -57,15 +57,46 @@ enum MobileKeyService {
 
     private static func storeKey(_ mac: String) -> String { "kf_mkey_" + mac }
 
+    /// SEC-01：一把手机钥匙两个秘密字段（pin 与 ekey）各一个 Keychain 账户。
+    static func pinAccount(_ mac: String, _ id: String) -> String { "mkey." + mac + ".pin." + id }
+    static func ekeyAccount(_ mac: String, _ id: String) -> String { "mkey." + mac + ".ekey." + id }
+
     static func list(_ mac: String) -> [MobileKey] {
         // SEC-03 残余：空壳不返回手机钥匙（含 ekey/pin）。
         if DB.isDecoy { return [] }
-        return DB.store.get([MobileKey].self, storeKey(mac)) ?? []
+        let raw = DB.store.get([MobileKey].self, storeKey(mac)) ?? []
+        // SEC-01：plist 里只剩 id/归属/有效期，pin 与 ekey 从 Keychain 回填。
+        return raw.map { k in
+            var copy = k
+            if copy.pin.isEmpty { copy.pin = SecretStore.get(pinAccount(mac, k.id)) ?? "" }
+            if copy.ekey.isEmpty { copy.ekey = SecretStore.get(ekeyAccount(mac, k.id)) ?? "" }
+            return copy
+        }
     }
 
     static func save(_ mac: String, _ keys: [MobileKey]) {
+        // SEC-01：先写 Keychain（写成功才抹掉 plist 明文），与 saveKeychain 同一纪律。
+        var safe = keys
+        for i in safe.indices {
+            if !keys[i].pin.isEmpty, SecretStore.set(keys[i].pin, for: pinAccount(mac, keys[i].id)) {
+                safe[i].pin = ""
+            }
+            if !keys[i].ekey.isEmpty, SecretStore.set(keys[i].ekey, for: ekeyAccount(mac, keys[i].id)) {
+                safe[i].ekey = ""
+            }
+        }
         // 注意参数序：DB.store.setCodable 是**键在前、值在后**（与 DB.setCodable 相反）。
-        DB.store.setCodable(storeKey(mac), keys)
+        DB.store.setCodable(storeKey(mac), safe)
+    }
+
+    /// SEC-01 迁移：旧版本把 pin/ekey 明文写在 kf_mkey_ 里，搬进 Keychain 后抹掉明文。幂等。
+    static func migrateSecrets() {
+        for kc in DB.keychains() {
+            let mac = DB.normalizeMac(kc.mac)
+            guard let raw = DB.store.get([MobileKey].self, storeKey(mac)),
+                  raw.contains(where: { !$0.pin.isEmpty || !$0.ekey.isEmpty }) else { continue }
+            save(mac, raw)
+        }
     }
 
     /// 从锁的 PIN 池里挑第一个没被本机记录占用的 pin。
@@ -132,6 +163,9 @@ enum MobileKeyService {
     static func revoke(host: any EngineHost, kc: Keychain, key: MobileKey) async throws {
         try await host.lockLink.ensureConnected(mac: kc.mac)
         try await host.lockLink.deletePins([key.pin])
+        // SEC-01：撤销后清掉这把钥匙的 Keychain 秘密副本，否则残留的 ekey 仍可读。
+        SecretStore.remove(pinAccount(kc.mac, key.id))
+        SecretStore.remove(ekeyAccount(kc.mac, key.id))
         save(kc.mac, list(kc.mac).filter { $0.id != key.id })
     }
 

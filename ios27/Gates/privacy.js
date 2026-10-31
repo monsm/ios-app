@@ -121,6 +121,29 @@ for (const f of files) {
         note(f.rel, i + 1, '空壳模式下仍返回真实数据（缺 isDecoy 守卫）', '函数体首行加 if isDecoy { return 空集 }');
       }
     }
+    // 12. SEC-01：凭证/手机钥匙/回收站/快照的**明文口令不许进 plist**。
+    //     判据：这些结构体的写入口必须经过 SecretStore（Keychain）。
+    //     台账：saveLedger 必须走 ledgerForPlist；手机钥匙：save 必须写 Keychain；
+    //     回收站/快照：写盘前必须过 safeForPlist / SecretStore.set。
+    if (f.rel === 'Engine/StoreLedger.swift' && /static func saveLedger\(/.test(line)) {
+      const window = f.lines.slice(i, i + 20).join('\n');
+      if (!/ledgerForPlist\(/.test(window)) {
+        note(f.rel, i + 1, 'saveLedger 直接把明文口令写进 plist', '先过 ledgerForPlist（Keychain）再落盘');
+      }
+    }
+    if (f.rel === 'Engine/MobileKeyService.swift' && /static func save\(/.test(line)) {
+      const window = f.lines.slice(i, i + 18).join('\n');
+      if (!/SecretStore\.set/.test(window)) {
+        note(f.rel, i + 1, '手机钥匙 pin/ekey 直接写进 plist', '先 SecretStore.set 再落盘');
+      }
+    }
+    if (f.rel === 'Features/Keys/CredentialStudioStores.swift' && /DB\.store\.setCodable\(key\(mac\)/.test(line)) {
+      const window = f.lines.slice(Math.max(0, i - 8), i + 2).join('\n');
+      if (!/safeForPlist|SecretStore\.set|SecretStore\.remove/.test(window)) {
+        note(f.rel, i + 1, '回收站/版本历史把明文口令写进 plist', '写盘前过 safeForPlist / SecretStore');
+      }
+    }
+
     // 10. 空壳模式下**禁止写台账**（N-01：空台账会覆盖真实台账，凭证全丢）。
     if (f.rel === 'Engine/StoreLedger.swift' && /static func saveLedger\(/.test(line)) {
       const window = f.lines.slice(i, i + 6).join('\n');
@@ -180,7 +203,7 @@ for (const f of files) {
 
 console.log('privacy: 扫 ' + files.length + ' 个 Swift 文件 + PrivacyInfo.xcprivacy');
 if (fails.length === 0) {
-  console.log('privacy: OK — 剪贴板/备份加密/空壳隔离(读+写)/帧脱敏/WebDAV/文件保护/CSV 注入 9 类回归判据全部通过');
+  console.log('privacy: OK — 剪贴板/备份加密/空壳隔离(读+写)/明文口令不进 plist/帧脱敏/WebDAV/文件保护/CSV 注入/隐私清单 XML 10 类回归判据全部通过');
   process.exit(0);
 }
 console.log('privacy: FAIL — ' + fails.length + ' 处回归\n');

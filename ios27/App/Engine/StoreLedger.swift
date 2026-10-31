@@ -17,9 +17,85 @@ extension DB {
     /// SEC-03：空壳（胁迫码）模式下所有凭证读取返回空台账。
     /// 数据层强制，而不是只靠页面清 @State —— 凭证工作室/备份工作室/记录工作室都直接读 DB。
     /// 写入路径不受影响（空壳里不做写入），退出空壳后立刻恢复真实数据。
+    /// SEC-01：门锁密码明文的 Keychain 账户名。
+    /// 每条密码一个账户（不用"整表一个串"）：单条更新只碰一个 Keychain 项，
+    /// 不必为了改一条而整份台账重写。
+    static func pwdSecretAccount(_ mac: String, _ alias: Int) -> String {
+        "ledger." + normalizeMac(mac) + ".pwd." + String(alias)
+    }
+
+    /// 把台账里的明文口令搬进 Keychain，**返回一份 pwd 字段被清空的副本**给 plist。
+    ///
+    /// 与 `saveKeychain` 的既有纪律完全一致：
+    ///   · 先写 Keychain，写成功才允许抹掉明文；写失败就保留明文（宁可有明文也不能丢口令）。
+    ///   · 空口令（nil / ""）不进 Keychain，并把历史条目删掉。
+    private static func ledgerForPlist(_ mac: String, _ l: Ledger) -> Ledger {
+        var safe = l
+        var failed: [Int] = []
+        for i in safe.pwds.indices {
+            guard let pwd = safe.pwds[i].pwd, !pwd.isEmpty else {
+                SecretStore.remove(pwdSecretAccount(mac, safe.pwds[i].alias))
+                continue
+            }
+            if SecretStore.set(pwd, for: pwdSecretAccount(mac, safe.pwds[i].alias)) {
+                safe.pwds[i].pwd = nil
+            } else {
+                failed.append(safe.pwds[i].alias)
+            }
+        }
+        if !failed.isEmpty {
+            BleTelemetry.recordEvent("凭证口令未能进 Keychain，暂留本机明文： #"
+                                     + failed.map(String.init).joined(separator: "/")
+                                     + " @ " + String(mac.prefix(6)), ok: false)
+        }
+        return safe
+    }
+
+    /// 从 plist 解出的台账 + Keychain 里的口令 → 完整台账（读侧的唯一回填点）。
+    private static func ledgerWithSecrets(_ mac: String, _ l: Ledger) -> Ledger {
+        var full = l
+        for i in full.pwds.indices where full.pwds[i].pwd == nil {
+            full.pwds[i].pwd = SecretStore.get(pwdSecretAccount(mac, full.pwds[i].alias))
+        }
+        return full
+    }
+
+    /// SEC-01：回收站条目的 Keychain 账户名（条目 id 里已含 alias/batch 与时刻，天然唯一）。
+    static func binSecretAccount(_ mac: String, _ itemID: String) -> String {
+        "ledger." + normalizeMac(mac) + ".bin." + itemID
+    }
+
+    /// SEC-01：读回收站条目的口令副本（写侧已搬进 Keychain，plist 里只剩 nil）。
+    static func binSecret(_ mac: String, _ itemID: String) -> String? {
+        SecretStore.get(binSecretAccount(mac, itemID))
+    }
+
+    /// SEC-01：版本历史快照的 Keychain 账户名（快照 id 是 UUID，天然唯一）。
+    static func snapshotSecretAccount(_ mac: String, _ snapshotID: String, _ alias: Int) -> String {
+        "ledger." + normalizeMac(mac) + ".snap." + snapshotID + "." + String(alias)
+    }
+
+    static func snapshotSecret(_ mac: String, _ snapshotID: String, _ alias: Int) -> String? {
+        SecretStore.get(snapshotSecretAccount(mac, snapshotID, alias))
+    }
+
+    /// SEC-01 迁移：把旧版本留在 plist 里的明文口令搬进 Keychain，然后**把明文从 plist 抹掉**。
+    /// 幂等：已经搬过的条目在 plist 里已经没有 pwd，本函数对它是 no-op。
+    static func migrateLedgerSecrets() {
+        for kc in keychains() {
+            let mac = normalizeMac(kc.mac)
+            guard let raw = get(Ledger.self, "kf_ledger_" + mac) else { continue }
+            guard raw.pwds.contains(where: { ($0.pwd ?? "").isEmpty == false }) else { continue }
+            let safe = ledgerForPlist(mac, raw)
+            guard safe.pwds.contains(where: { $0.pwd == nil }) else { continue }
+            set(safe, "kf_ledger_" + mac)
+            BleTelemetry.recordEvent("台账口令已迁入 Keychain @" + String(mac.prefix(6)), ok: true)
+        }
+    }
+
     static func ledger(_ mac: String) -> Ledger {
         if DB.isDecoy { return Ledger() }
-        if let l = get(Ledger.self, "kf_ledger_" + mac) { return l }
+        if let l = get(Ledger.self, "kf_ledger_" + mac) { return ledgerWithSecrets(mac, l) }
         // get 返回 nil 有两种语义: ①该键不存在 (真空台账) ②有键但解码抛错 (字段缺任一即整表抛)。
         // 旧实现在 ②下返回空 Ledger, 调用方 (addPwd/addFp/…) 紧接着 save → **台账被空表整表覆盖清空**。
         if store.has("kf_ledger_" + mac) { markLedgerCorrupt(mac) }
@@ -50,7 +126,9 @@ extension DB {
                 return
             }
             let old = get(Ledger.self, "kf_ledger_" + mac)
-            set(l, "kf_ledger_" + mac)
+            // SEC-01：明文口令先搬进 Keychain，plist 只落非密字段。
+            // 写失败时 `ledgerForPlist` 会保留明文并记遥测 —— 宁可有明文，也不能丢口令。
+            set(ledgerForPlist(mac, l), "kf_ledger_" + mac)
             let changes = ledgerDiff(old, l)
             guard !changes.isEmpty else { return }
             let name = keychain(mac).map { LockArchive.displayName($0) } ?? mac

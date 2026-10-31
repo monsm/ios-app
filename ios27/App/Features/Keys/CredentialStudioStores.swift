@@ -22,7 +22,26 @@ enum CredBinStore {
     static func all(_ mac: String) -> [CredBinItem] {
         // SEC-03 残余：空壳不列回收站（条目里带明文 pwd/fp）。
         if DB.isDecoy { return [] }
-        return (DB.store.get([CredBinItem].self, key(mac)) ?? []).sorted { $0.at > $1.at }
+        let raw = DB.store.get([CredBinItem].self, key(mac)) ?? []
+        // SEC-01：回收站条目里同样存过 LedgerPwd —— 明文口令要回填（写侧已搬进 Keychain）。
+        return raw.map { item in
+            var copy = item
+            if var p = copy.pwd, p.pwd == nil { p.pwd = DB.binSecret(mac, item.id); copy.pwd = p }
+            return copy
+        }.sorted { $0.at > $1.at }
+    }
+
+    /// 写回收站：明文口令进 Keychain，plist 副本不带 pwd。与台账同一套纪律。
+    private static func safeForPlist(_ mac: String, _ items: [CredBinItem]) -> [CredBinItem] {
+        var out = items
+        for i in out.indices {
+            guard var p = out[i].pwd, let pwd = p.pwd, !pwd.isEmpty else { continue }
+            if SecretStore.set(pwd, for: DB.binSecretAccount(mac, out[i].id)) {
+                p.pwd = nil
+                out[i].pwd = p
+            }
+        }
+        return out
     }
 
     static func addPwds(_ mac: String, _ list: [LedgerPwd], batchId: String, source: String) {
@@ -32,7 +51,7 @@ enum CredBinStore {
             items.append(CredBinItem(id: "p:\(p.alias):\(Int(now))", batchId: batchId, at: now,
                                      source: source, pwd: p, fp: nil))
         }
-        DB.store.setCodable(key(mac), items)
+        DB.store.setCodable(key(mac), safeForPlist(mac, items))
     }
 
     static func addFps(_ mac: String, _ list: [LedgerFp], batchId: String, source: String) {
@@ -42,7 +61,7 @@ enum CredBinStore {
             items.append(CredBinItem(id: "f:\(f.batch):\(Int(now))", batchId: batchId, at: now,
                                      source: source, pwd: nil, fp: f))
         }
-        DB.store.setCodable(key(mac), items)
+        DB.store.setCodable(key(mac), safeForPlist(mac, items))
     }
 
     static func restore(_ mac: String, _ item: CredBinItem) -> Bool {
@@ -51,17 +70,22 @@ enum CredBinStore {
         if let p = item.pwd { DB.addPwd(mac, p) }
         if let f = item.fp { DB.addFp(mac, f) }
         items.remove(at: index)
-        DB.store.setCodable(key(mac), items)
+        // 还原/彻底删除：条目离开回收站，它的 Keychain 口令副本也一并清掉。
+        SecretStore.remove(DB.binSecretAccount(mac, item.id))
+        DB.store.setCodable(key(mac), safeForPlist(mac, items))
         return true
     }
 
     static func purge(_ mac: String, _ item: CredBinItem) {
         var items = all(mac)
         items.removeAll { $0.id == item.id }
-        DB.store.setCodable(key(mac), items)
+        SecretStore.remove(DB.binSecretAccount(mac, item.id))
+        DB.store.setCodable(key(mac), safeForPlist(mac, items))
     }
 
     static func clear(_ mac: String) {
+        // 清空回收站 = 连 Keychain 里的口令副本一起清（否则残留可读的开门口令）。
+        for item in all(mac) { SecretStore.remove(DB.binSecretAccount(mac, item.id)) }
         DB.store.remove(key(mac))
     }
 }
@@ -82,15 +106,35 @@ enum CredHistoryStore {
     static func all(_ mac: String) -> [CredSnapshot] {
         // SEC-03 残余：空壳不列版本历史（快照里带整份台账副本）。
         if DB.isDecoy { return [] }
-        return (DB.store.get([CredSnapshot].self, key(mac)) ?? []).sorted { $0.at > $1.at }
+        let raw = (DB.store.get([CredSnapshot].self, key(mac)) ?? [])
+        // SEC-01：快照是整份台账的副本 —— 明文口令回填（写侧已搬进 Keychain）。
+        return raw.map { snap in
+            var copy = snap
+            for i in copy.pwds.indices where copy.pwds[i].pwd == nil {
+                copy.pwds[i].pwd = DB.snapshotSecret(mac, snap.id, copy.pwds[i].alias)
+            }
+            return copy
+        }.sorted { $0.at > $1.at }
     }
 
     static func capture(_ mac: String, note: String) {
         var list = all(mac)
         let l = DB.ledger(mac)
-        list.insert(CredSnapshot(id: UUID().uuidString, at: Date().timeIntervalSince1970 * 1000,
-                                 note: note, pwds: l.pwds, fps: l.fps), at: 0)
-        if list.count > 10 { list = Array(list.prefix(10)) }
+        var snap = CredSnapshot(id: UUID().uuidString, at: Date().timeIntervalSince1970 * 1000,
+                                note: note, pwds: l.pwds, fps: l.fps)
+        // SEC-01：先写 Keychain，写成功才抹掉快照里的明文（与台账同一纪律）。
+        for i in snap.pwds.indices {
+            guard let pwd = snap.pwds[i].pwd, !pwd.isEmpty else { continue }
+            if SecretStore.set(pwd, for: DB.snapshotSecretAccount(mac, snap.id, snap.pwds[i].alias)) {
+                snap.pwds[i].pwd = nil
+            }
+        }
+        list.insert(snap, at: 0)
+        // 只留 10 份：被裁掉的快照的 Keychain 副本也一并清（否则口令无限堆积）。
+        while list.count > 10 {
+            let dropped = list.removeLast()
+            for p in dropped.pwds { SecretStore.remove(DB.snapshotSecretAccount(mac, dropped.id, p.alias)) }
+        }
         DB.store.setCodable(key(mac), list)
     }
 

@@ -12,6 +12,12 @@ final class QuickActionDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         DB.migrateSecretsToKeychain()
+        // SEC-01：旧版本把门锁密码明文写在 plist 的 kf_ledger_ 里。搬进 Keychain 之后
+        // 才能把明文抹掉 —— 否则一份 iTunes/iCloud 备份就能读走全部开门口令。
+        // 幂等：搬过的条目在 plist 里已经没有 pwd，再调是 no-op。
+        DB.migrateLedgerSecrets()
+        // SEC-01：手机钥匙的 pin/ekey 同样从 plist 搬进 Keychain。
+        MobileKeyService.migrateSecrets()
         DB.hydrateMacOrders()   // 0x88 包络 MAC 字节序: 把已裁定的顺序灌回协议层 (2026-10-17)
         // 2026-10-28 修复：全仓**从未调用 requestAuthorization**，也没设过
         // UNUserNotificationCenterDelegate —— 于是 CredentialOrg.scheduleAlerts 排的 6 条

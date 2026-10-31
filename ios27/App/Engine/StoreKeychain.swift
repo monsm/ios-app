@@ -211,6 +211,9 @@ extension DB {
         // 删完设备后它们仍会按原时间弹出「密码临期」，指向一把已经不存在的锁。
         // 必须在删数据之前读台账（删完就读不到了）。
         for p in ledger(m).pwds { CredentialOrg.cancelAlerts(mac: m, alias: p.alias) }
+        // SEC-01：台账口令已搬进 Keychain（每条一个账户），删设备必须一并删 ——
+        // 否则「删了这把锁」之后，它的开门口令还留在 Keychain 里。
+        for p in ledger(m).pwds { SecretStore.remove(pwdSecretAccount(m, p.alias)) }
         for p in ["kf_ledger_", "kf_snap_", "kf_logcache_", "kf_defend_", "kf_tailgate_", "kf_synctime_", "otpStatus_", "otpIdx_", "kf_fevents_", "kf_lockmeta_", "kf_migok_",
                   "kf_batt_", "kf_batt_state_", "kf_mevents_", "kf_maint_", "kf_fwsince_", "kf_clock_notify_", "kf_damp_last_", "kf_fp_last_", "kf_care_notify_",
                   "kf_cbin_", "kf_calert_", "kf_clists_", "kf_cseq_",
