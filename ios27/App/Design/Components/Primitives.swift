@@ -2,7 +2,8 @@
 // 色觉障碍用户靠形状与文字就能分辨；颜色只是第三通道，不是唯一通道。
 import SwiftUI
 
-enum Tone {
+/// 语义语气。Hashable 是必须的：LedgerEntry 等数据模型把它当字段并存进 Set/Dictionary。
+enum Tone: Hashable {
     case ok, attention, critical, neutral, live
 
     var color: Color {
@@ -23,24 +24,22 @@ struct StateDot: View {
     let word: String
 
     var body: some View {
-        shape
-            .fill(tone.color)
-            .frame(width: 7, height: 7)
-            .accessibilityLabel(word)
-    }
-
-    @ViewBuilder
-    private var shape: some View {
-        switch tone {
-        case .critical:
-            // 方块 = 危险（最重的形状）
-            RoundedRectangle(cornerRadius: 1.2, style: .continuous)
-        case .attention:
-            // 三角 = 注意
-            Triangle()
-        default:
-            Circle()
+        // 不能用「返回 some View 的形状再 .fill()」—— .fill 只在 Shape 上有，
+        // 而 @ViewBuilder 的 some View 已经不是 Shape 了。所以每个分支各自 fill 完再交给 Group。
+        Group {
+            switch tone {
+            case .critical:
+                // 方块 = 危险（最重的形状）
+                RoundedRectangle(cornerRadius: 1.2, style: .continuous).fill(tone.color)
+            case .attention:
+                // 三角 = 注意
+                Triangle().fill(tone.color)
+            default:
+                Circle().fill(tone.color)
+            }
         }
+        .frame(width: 7, height: 7)
+        .accessibilityLabel(word)
     }
 }
 
@@ -73,10 +72,10 @@ struct StatusLine: View {
 }
 
 /// 分段 / chip 行。选中 = signal 微光底 + 墨色文字；未选 = 透明 + 次墨。
-struct ChipRow<T: Hashable>: View {
-    let items: [T]
-    let title: (T) -> String
-    @Binding var selection: T
+struct ChipRow<Item: Hashable>: View {
+    let items: [Item]
+    let title: (Item) -> String
+    @Binding var selection: Item
 
     var body: some View {
         ScrollView(.horizontal) {

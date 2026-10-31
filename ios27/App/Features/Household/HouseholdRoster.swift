@@ -20,6 +20,7 @@ struct HHMemberExtras: Hashable {
     var emergencyAdmin: Bool = false
 }
 
+@MainActor
 @Observable
 final class HouseholdRoster {
     static let shared = HouseholdRoster()

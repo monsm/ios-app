@@ -300,7 +300,7 @@ struct PasscodeSheet: View {
 /// 偏好 Binding。用 KeyPath 而不是 `$store.xxx`：`store` 在页面里是计算属性，
 /// `@Bindable` 只对局部变量成立；KeyPath 写法让每个开关都指向同一个 SettingsStore 单例，
 /// 页面之间不会出现"两页各存一份副本、显示两个值"。
-func settingsBinding<T>(_ keyPath: ReferenceWritableKeyPath<SettingsStore, T>) -> Binding<T> {
+func settingsBinding<Value>(_ keyPath: ReferenceWritableKeyPath<SettingsStore, Value>) -> Binding<Value> {
     Binding(
         get: { SettingsStore.shared[keyPath: keyPath] },
         set: { SettingsStore.shared[keyPath: keyPath] = $0 }
@@ -314,10 +314,10 @@ func trialGuardBinding(_ app: AppModel) -> Binding<Bool> {
 
 /// 面板内的档位 chip 行。ChipRow 自带页面级 gutter 内边距，嵌进面板时要把它收回来，
 /// 否则面板内再吃一层 16pt，读数与档位对不齐。收回量走令牌，不写字面量。
-struct SettingChips<T: Hashable>: View {
-    let items: [T]
-    let title: (T) -> String
-    @Binding var selection: T
+struct SettingChips<Item: Hashable>: View {
+    let items: [Item]
+    let title: (Item) -> String
+    @Binding var selection: Item
 
     var body: some View {
         ChipRow(items: items, title: title, selection: $selection)

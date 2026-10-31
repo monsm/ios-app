@@ -43,10 +43,10 @@ struct KeysMaskedCode: View {
 
 /// 面板内分段：与 ChipRow 同一套选中语法（signal 微光底 + 墨色文字），
 /// 但**不带页面边距** —— ChipRow 自带 gutter，放进 Panel 里会二次缩进、和上面的小节标题错开。
-struct KeysChips<T: Hashable>: View {
-    let items: [T]
-    let title: (T) -> String
-    @Binding var selection: T
+struct KeysChips<Item: Hashable>: View {
+    let items: [Item]
+    let title: (Item) -> String
+    @Binding var selection: Item
 
     var body: some View {
         ScrollView(.horizontal) {

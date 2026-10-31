@@ -11,7 +11,14 @@ options:
 
 settings:
   base:
-    SWIFT_VERSION: "6.0"
+    # ============ 语言模式 ============
+    # 引擎层（66 文件）是从上一版照搬的 Swift 6 代码，本来就在 Swift 6 + strict concurrency 下编译过。
+    # 界面层（47 文件）是这次新写的，还没做并发迁移 —— 直接开 Swift 6 会因"静态属性非 Sendable"
+    # 这类问题整片报错。所以按老仓验证过的两步走：
+    #   ① 先 SWIFT_VERSION 5.0 + strict concurrency complete —— 并发问题是**告警**，工程照常编译，
+    #      而告警清单就是完整的迁移待办表；
+    #   ② 按清单逐条修完再切 6.0（这一步还没做，见 docs/COMPLETION.md 的"未闭环"）。
+    SWIFT_VERSION: "5.0"
     SWIFT_STRICT_CONCURRENCY: complete
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     CODE_SIGN_STYLE: Automatic

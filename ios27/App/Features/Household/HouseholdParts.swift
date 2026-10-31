@@ -258,9 +258,9 @@ struct HHMemberRow: View {
             Spacer(minLength: T.S.s)
             VStack(alignment: .trailing, spacing: T.S.xxs) {
                 Reading(value: "\(member.keyCount)", unit: "枚", size: HHMetric.readingRow, tint: Ink.ink, animated: false)
-                Text(stale ? "久未用" : "活跃")
+                Text(status == .stale ? "久未用" : "活跃")
                     .font(T.F.unit)
-                    .foregroundStyle(stale ? Ink.inkFaint : State.ok)
+                    .foregroundStyle(status == .stale ? Ink.inkFaint : State.ok)
             }
         }
         .frame(minHeight: T.Hit.min + T.S.s)
