@@ -125,10 +125,23 @@ jobs:
         # 这些断言一旦红，说明协议层被改坏了 —— 比"能不能编译"重要得多。
         run: |
           set -o pipefail
+          # 不写死机型：镜像里的模拟器型号会变（写死 "iPhone 17 Pro" 时 xcodebuild
+          # 会直接 "Unable to find a destination" 而一行测试都不跑 —— 比红更糟的是静默跳过）。
+          # 用 generic 的模拟器 destination：任意可用 iOS 模拟器即可，测试本身不依赖机型。
+          DEST=$(xcodebuild -project LockKeeper.xcodeproj -scheme LockKeeper \
+                   -showdestinations 2>/dev/null \
+                 | grep -o "platform:iOS Simulator.*id:[^,]*" | head -1 \
+                 | sed "s/.*id:/id=/")
+          if [ -z "$DEST" ]; then
+            echo "::error::找不到可用的 iOS 模拟器 destination —— 金标测试无法运行"
+            xcodebuild -project LockKeeper.xcodeproj -scheme LockKeeper -showdestinations || true
+            exit 1
+          fi
+          echo "测试 destination: $DEST"
           xcodebuild test \
             -project LockKeeper.xcodeproj \
             -scheme LockKeeper \
-            -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+            -destination "$DEST" \
             -derivedDataPath build/DerivedData \
             -configuration Debug \
             SWIFT_COMPILATION_MODE=wholemodule \
