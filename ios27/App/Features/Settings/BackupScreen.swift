@@ -166,6 +166,8 @@ struct BackupScreen: View {
                                 .lineLimit(4)
                                 .truncationMode(.tail)
                                 .textSelection(.enabled)
+                                // SEC-11：备份文本含全部 skey —— 录屏/截图时一并遮挡。
+                                .captureShield("这里是一份可开门的备份\n屏幕正在被录制或截图，已遮挡")
                             HStack(spacing: V.S.gapS) {
                                 VOutlineButton(title: "复制备份文本", systemImage: "doc.on.doc") {
                                     // SEC-05：备份文本可能含全部 skey —— 走带 90 秒过期的统一入口。

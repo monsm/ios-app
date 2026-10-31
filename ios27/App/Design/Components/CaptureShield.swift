@@ -12,12 +12,18 @@ import UIKit
 private struct CaptureShieldModifier: ViewModifier {
     let message: String
     @State private var isCaptured = false
+    /// SEC-11：普通截图**不会**触发 isCaptured —— 只在按下快门那一刻发一个通知。
+    /// 收到就遮一小段时间，让「截图里带上敏感内容」这条路也走不通。
+    @State private var screenshotFlash = false
+    @State private var flashTask: Task<Void, Never>?
+
+    private var hidden: Bool { isCaptured || screenshotFlash }
 
     func body(content: Content) -> some View {
         ZStack {
             content
-                .opacity(isCaptured ? 0 : 1)
-            if isCaptured {
+                .opacity(hidden ? 0 : 1)
+            if hidden {
                 VStack(spacing: V.S.gapS) {
                     Image(systemName: "eye.slash.fill")
                         .font(V.F.icon22)
@@ -38,6 +44,21 @@ private struct CaptureShieldModifier: ViewModifier {
         .onReceive(NotificationCenter.default.publisher(for: UIScreen.capturedDidChangeNotification)) { _ in
             refresh()
         }
+        // 普通截图：系统只发通知，不会把 isCaptured 置真。遮 3 秒再恢复。
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.userDidTakeScreenshotNotification)) { _ in
+            flashAfterScreenshot()
+        }
+        .onDisappear { flashTask?.cancel(); flashTask = nil }
+    }
+
+    private func flashAfterScreenshot() {
+        flashTask?.cancel()
+        screenshotFlash = true
+        flashTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(3))
+            guard !Task.isCancelled else { return }
+            screenshotFlash = false
+        }
     }
 
     /// 只读当前激活的前台 WindowScene 的 screen；找不到时按未捕获处理（不误遮挡）。
@@ -52,7 +73,8 @@ private struct CaptureShieldModifier: ViewModifier {
 
 extension View {
     /// 截图/录屏时遮挡敏感内容；停止后自动恢复。
-    func captureShield(_ message: String = "屏幕正在被录制或被截图\n敏感内容已遮挡，停止后自动恢复") -> some View {
+    /// SEC-11：文案不再承诺"防截图"（做不到）—— 如实说：录屏时遮挡，截图会被检测并遮一下。
+    func captureShield(_ message: String = "屏幕正在被录制或被截图\n敏感内容已遮挡，稍后自动恢复") -> some View {
         modifier(CaptureShieldModifier(message: message))
     }
 }

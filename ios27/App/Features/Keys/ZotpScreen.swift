@@ -88,6 +88,8 @@ struct ZotpScreen: View {
     }
 
     private var generateCard: some View {
+        // SEC-11：整张卡（含动态码）在录屏/截图时被遮挡 —— 修饰符必须包住真正敏感的内容，
+        // 不能挂在旁边的空视图上（那是假实现）。
         VCard(style: .warm) {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VCardHeader(title: "当前动态码", showsChevron: false)
@@ -105,6 +107,8 @@ struct ZotpScreen: View {
                     .onTapGesture(count: 2) { bigCode.toggle() }
                     .accessibilityLabel(code.isEmpty ? "还没有生成动态密码" : (shieldOn && !revealed ? "动态密码已遮挡，长按揭开" : "动态密码 \(code)"))
                     .accessibilityHint(shieldOn ? "长按揭开挡片，双击切换字号" : "双击切换字号")
+                    // SEC-11：码值本体在录屏/截图时被遮挡（修饰符包住的就是这枚码）。
+                    .captureShield("这是一枚可开门的动态码\n屏幕正在被录制或截图，已遮挡")
                 if shieldOn, !code.isEmpty {
                     Text(revealed ? "松开手指会重新遮住" : "长按可揭开挡片 · 双击可切换字号")
                         .font(V.F.unit)
@@ -114,6 +118,7 @@ struct ZotpScreen: View {
                     Text("于 \(window) 失效，失效前仅可使用一次")
                         .font(V.F.footnote).foregroundStyle(V.C.text3)
                 }
+
                 HStack(spacing: V.S.gapS) {
                     VActionButton(title: busy ? "生成中…" : "生成动态密码", systemImage: "clock.badge.questionmark") {
                         generate()
