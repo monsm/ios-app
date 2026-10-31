@@ -64,8 +64,19 @@ final class FormatterConsistencyTests: XCTestCase {
             XCTAssertEqual(TimeFormat.date(ms).timeIntervalSince1970, Double(ms) / 1000, accuracy: 0.001,
                            "毫秒→秒换算错位（ms=\(ms)）")
         }
-        // 秒被误当毫秒喂进来会得到 1970 年 —— 这条断言守住"单位不混用"。
-        XCTAssertLessThan(TimeFormat.date(1_767_225_600).timeIntervalSince1970, 100_000,
-                          "秒被当成毫秒 ⇒ 时间塌回 1970 附近")
+        // 单位混用的后果要**具体**验算，不能凭直觉写阈值。
+        // 把 1_767_225_600 秒当成毫秒喂进去 ⇒ 得到 1_767_225.6 秒 ≈ 1970-01-21，
+        // 也就是"时间塌回 1970 年代"；而正确喂 1_767_225_600_000 毫秒才是 2026-01-01。
+        let fedSecondsAsMs = TimeFormat.date(1_767_225_600).timeIntervalSince1970
+        XCTAssertLessThan(fedSecondsAsMs, 1_767_225_600, "单位混用必然得到一个更小的时刻")
+        // 注意：dayKey 用**本地时区**（这是对的，用户看的是本地日历）。
+        // 所以这里不能断言字面 "2026-01-01" —— 在 UTC+8 上那是 2026-01-01 08:00，
+        // 在 UTC-5 上则是 2025-12-31 19:00。断言**年份**即可，跨时区都成立。
+        XCTAssertTrue(TimeFormat.dayKey(1_767_225_600_000).hasPrefix("2026")
+                      || TimeFormat.dayKey(1_767_225_600_000).hasPrefix("2025"),
+                      "2026-01-01T00:00Z 在本地日历上应落在 2025 末或 2026 初")
+        // 混用后年份塌到 1970 年代 —— 用同一个 dayKey 出口证明，而不是拍一个阈值。
+        XCTAssertTrue(TimeFormat.dayKey(1_767_225_600).hasPrefix("1970"),
+                      "秒当毫秒 ⇒ 日期塌回 1970 年代")
     }
 }
