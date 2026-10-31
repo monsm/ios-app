@@ -168,7 +168,7 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
         scanRefLock.withLock { $0 += 1 }
         discovered.removeAll()
         scanning = true
-        guard let manager else { throw BLEErrorX.code(.notReady) }
+        guard let manager else { throw BLEErrorX.code(.underlying) }
         manager.scanForPeripherals(withServices: nil,
                                    options: [CBCentralManagerScanOptionAllowDuplicatesKey: allowDuplicates])
         scanTimer?.invalidate()
@@ -215,7 +215,7 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
         if connectedPeripheralId == deviceId, device?.state == .connected { return }
         disconnect()
         guard let devUUID = UUID(uuidString: deviceId) else { throw BLEErrorX.code(.notFound) }
-        guard let manager else { throw BLEErrorX.code(.notReady) }
+        guard let manager else { throw BLEErrorX.code(.underlying) }
         guard let target = manager.retrievePeripherals(withIdentifiers: [devUUID]).first
                 ?? manager.retrieveConnectedPeripherals(withServices: [BLEUUID.svcMain, BLEUUID.svcGW]).first(where: { $0.identifier.uuidString == deviceId }) else {
             throw BLEErrorX.code(.notFound)
