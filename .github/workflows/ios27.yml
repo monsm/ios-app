@@ -34,7 +34,7 @@ defaults:
 jobs:
   # ================= 静态闸门（本地同款，先红就别浪费编译时间）=================
   gates:
-    name: 静态闸门（11 道）
+    name: 静态闸门（16 道）
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -92,6 +92,10 @@ jobs:
           xcodegen generate
           ls -la
           test -d LockKeeper.xcodeproj || { echo "::error::XcodeGen 没有生成 LockKeeper.xcodeproj"; exit 1; }
+          # 构建号链路自检：Info.plist 里必须是构建设置引用，写死 "1" 会让注入静默失效
+          grep -q "CFBundleVersion" App/Info.plist || { echo "::error::Info.plist 缺 CFBundleVersion"; exit 1; }
+          grep -A1 CFBundleVersion App/Info.plist | grep -q "CURRENT_PROJECT_VERSION" \
+            || { echo "::error::CFBundleVersion 不是构建设置引用，构建号注入会失效"; exit 1; }
 
       - name: 编译（整模块单次调用，一次列出全仓所有 error）
         run: |
@@ -104,6 +108,7 @@ jobs:
             -derivedDataPath build/DerivedData \
             -configuration Debug \
             SWIFT_COMPILATION_MODE=wholemodule \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
             CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" | tee build/build.log
 
       - name: Archive（出可安装的未签名 IPA）
@@ -116,6 +121,7 @@ jobs:
             -configuration Release \
             -archivePath build/LockKeeper.xcarchive \
             SWIFT_COMPILATION_MODE=wholemodule \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
             CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" | tee build/archive.log
           mkdir -p build/Payload
           cp -R "build/LockKeeper.xcarchive/Products/Applications/LockKeeper.app" build/Payload/

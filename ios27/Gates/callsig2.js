@@ -629,23 +629,41 @@ for (const f of FILES) {
   for (const m of f.code.matchAll(/([A-Za-z_]\w*)\s*:\s*([A-Z][A-Za-z0-9_]*)\s*[,)]/g)) {
     if (!localTypes.has(m[1]) && SIMPLE.has(m[2]) && !EXT_ONLY.has(m[2])) localTypes.set(m[1], m[2]);
   }
-  for (const m of f.code.matchAll(/([A-Za-z_]\w*)\s*\.\s*([A-Za-z_]\w*)/g)) {
-    const base = m[1], prop = m[2];
+  // 成员访问按**链**解析：V.List.searchRow 要拆成 V -> List -> searchRow，
+  // 早期版本只匹配两个标识符，(V.List).searchRow 的第二段整个被跳过 —— CI 就是这么漏掉的。
+  for (const m of f.code.matchAll(/([A-Za-z_]\w*)((?:\s*\.\s*[A-Za-z_]\w*)+)/g)) {
+    const base = m[1];
+    const segs = m[2].split('.').map((s) => s.trim()).filter(Boolean);
+    if (!segs.length) continue;
+    const prop = segs[0];
     if (prop.startsWith('$') || prop.startsWith('_')) continue;
     if (SYNTH.has(prop)) continue;
     const where = f.rel + ':' + lineOf(f.code, m.index);
 
-    // R6：base 是仓内类型名 -> 静态访问
+    // R6：base 是仓内类型名 -> 沿链逐段查
     if (/^[A-Z]/.test(base) && SIMPLE.has(base)) {
       const keys = SIMPLE.get(base);
-      if (keys.length === 1) {
-        const key = keys[0];
-        if (!EXT_ONLY.has(key)) {
-          const mem = MEMBERS.get(key);
-          if (mem && !mem.stored.has(prop) && !mem.computed.has(prop) && !mem.cases.has(prop) && !mem.funcs.has(prop) && !mem.nested.has(prop)) {
-            findings1.push(where + '  ' + base + '.' + prop + ' —— ' + key + ' 没有成员 ' + prop);
-          }
+      if (keys.length !== 1) continue;
+      let key = keys[0];
+      if (EXT_ONLY.has(key)) continue;
+      for (let si = 0; si < segs.length; si++) {
+        const seg = segs[si];
+        if (SYNTH.has(seg)) break;
+        const mem = MEMBERS.get(key);
+        if (!mem) break;
+        const path = base + '.' + segs.slice(0, si + 1).join('.');
+        const isMember = mem.stored.has(seg) || mem.computed.has(seg) || mem.cases.has(seg) || mem.funcs.has(seg);
+        if (mem.nested.has(seg)) {
+          const child = key + '.' + seg;
+          if (!TYPES.has(child)) { findings1.push(where + '  ' + path + ' —— ' + key + ' 的嵌套类型 ' + seg + ' 只有 extension 没有声明'); break; }
+          key = child;
+          continue;
         }
+        if (!isMember) {
+          findings1.push(where + '  ' + path + ' —— ' + key + ' 没有成员 ' + seg);
+          break;
+        }
+        break;   // 命中的是属性/方法，再往下没有类型信息
       }
       continue;
     }
