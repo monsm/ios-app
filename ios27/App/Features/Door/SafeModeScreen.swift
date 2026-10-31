@@ -101,7 +101,7 @@ struct SafeModeScreen: View {
     }
 
     private var modeText: String {
-        guard let st = status else { return "未读取" }
+        guard status != nil else { return "未读取" }
         if isB { return "B · 双验" }
         if isC { return "C · 广播+验证" }
         return "A · 单验"

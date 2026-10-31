@@ -347,6 +347,7 @@ struct KeysScreen: View {
                         Image(systemName: "xmark.circle.fill")
                             .font(V.F.icon15)
                             .foregroundStyle(V.C.text3)
+                            .accessibilityHidden(true)
                     }
                     .accessibilityLabel("清空凭证搜索")
                 }

@@ -235,6 +235,18 @@ enum BackupKit {
         }
         let stats = HeroStats.visible
         let recent = DB.store.getInt("kf_recent_count", 5)
+        // 圆盘尺寸在本版 UI 存的是命名档（small/standard/large），而备份 schema 是旧版的
+        // 直径数字（160/176/200，给小程序端互通）。这里做一次显式映射，不能直接 getInt：
+        // 旧实现把 "standard" 当 Int 读，包里的 dialSize 要么是假默认 176，要么整项丢失。
+        let dialRaw = DB.store.getString("kf_dial_size")
+        let dialLegacy: Int? = {
+            switch dialRaw {
+            case "small": return 160
+            case "standard": return 176
+            case "large": return 200
+            default: return Int(dialRaw).flatMap { [160, 176, 200].contains($0) ? $0 : nil }
+            }
+        }()
         return BackupBundle.Globals.Appearance(
             theme: enumVal("kf_theme"),
             accent: enumVal("kf_accent"),
@@ -255,7 +267,7 @@ enum BackupKit {
             axBigPreview: DB.store.has("kf_ax_bigpreview") ? DB.store.getBool("kf_ax_bigpreview") : nil,
             axHold: DB.store.has("kf_ax_hold") ? DB.store.getString("kf_ax_hold") : nil,
             bigTile: DB.store.has("kf_bigtile") ? DB.store.getBool("kf_bigtile") : nil,
-            dialSize: DB.store.has("kf_dial_size") ? DB.store.getInt("kf_dial_size", 176) : nil,
+            dialSize: dialLegacy,
             digitFont: DB.store.has("kf_digit_font") ? DB.store.getString("kf_digit_font") : nil,
             gestureMode: DB.store.has("kf_gesture_mode") ? DB.store.getString("kf_gesture_mode") : nil,
             holdConfirm: DB.store.has("kf_hold_confirm") ? DB.store.getBool("kf_hold_confirm", true) : nil,
@@ -345,7 +357,10 @@ enum BackupKit {
         // kf_ax_hold 存的是字符串形态的秒数（"0.9"），恢复时先校验可解析再写
         if let v = a.axHold, Double(v) != nil { DB.store.set("kf_ax_hold", v) }
         if let v = a.bigTile { DB.store.set("kf_bigtile", v) }
-        if let n = a.dialSize, [160, 176, 200].contains(n) { DB.store.set("kf_dial_size", n) }
+        // 备份 schema 存的是旧版直径数字；本版读的是命名档，恢复时反向映射。
+        if let n = a.dialSize, [160, 176, 200].contains(n) {
+            DB.store.set("kf_dial_size", n == 160 ? "small" : (n == 200 ? "large" : "standard"))
+        }
         if let v = a.digitFont, ["", "plain"].contains(v) { DB.store.set("kf_digit_font", v) }
         if let v = a.gestureMode { DB.store.set("kf_gesture_mode", v) }
         if let v = a.holdConfirm { DB.store.set("kf_hold_confirm", v) }

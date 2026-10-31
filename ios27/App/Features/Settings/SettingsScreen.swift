@@ -140,6 +140,7 @@ struct SettingsScreen: View {
                         Image(systemName: "xmark.circle.fill")
                             .font(V.F.icon15)
                             .foregroundStyle(V.C.text3)
+                            .accessibilityHidden(true)
                     }
                     .accessibilityLabel("清空设置搜索")
                 }

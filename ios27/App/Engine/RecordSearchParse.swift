@@ -68,15 +68,20 @@ extension RecordSearch {
     static func timePhrases(joined: String) -> [(String, (from: Date, to: Date)?)] {
         let now = Date()
         let cal = WeekCal.gregorian
+        /// Calendar 对「加减一天/一个月」这类合法运算不会失败；仍给出确定性兜底，
+        /// 不让搜索框在极端日历环境（自定义 firstWeekday / 时区跳变）下因 `!` 崩溃。
+        func addDays(_ d: Date, _ n: Int) -> Date {
+            cal.date(byAdding: .day, value: n, to: d) ?? d.addingTimeInterval(Double(n) * 86_400)
+        }
         func dayRange(_ d: Date) -> (Date, Date) {
             let s = cal.startOfDay(for: d)
-            return (s, cal.date(byAdding: .day, value: 1, to: s)!)
+            return (s, addDays(s, 1))
         }
         var out: [(String, (from: Date, to: Date)?)] = []
-        if joined.contains("昨天") { out.append(("昨天", dayRange(cal.date(byAdding: .day, value: -1, to: now)!))) }
+        if joined.contains("昨天") { out.append(("昨天", dayRange(addDays(now, -1)))) }
         else if joined.contains("今天") || joined.contains("今日") { out.append(("今天", dayRange(now))) }
         if joined.contains("昨晚") {
-            let y = cal.date(byAdding: .day, value: -1, to: now)!
+            let y = addDays(now, -1)
             let s = cal.startOfDay(for: y)
             out.append(("昨晚", (s, s.addingTimeInterval(4 * 3600))))
         }
@@ -84,21 +89,19 @@ extension RecordSearch {
             let s = cal.startOfDay(for: now)
             out.append(("凌晨", (s, s.addingTimeInterval(5 * 3600))))
         }
-        if joined.contains("上周") {
+        if joined.contains("上周"), let curWeek = WeekCal.calendar.dateInterval(of: .weekOfYear, for: now) {
             // 912: 周界走 WeekCal (只影响 firstWeekday / 最小周天数，日与月的边界不动)
-            let curWeek = WeekCal.calendar.dateInterval(of: .weekOfYear, for: now)!
             out.append(("上周", (WeekCal.shifted(curWeek.start, days: -7), curWeek.start)))
         }
-        if joined.contains("本周") {
-            let curWeek = WeekCal.calendar.dateInterval(of: .weekOfYear, for: now)!
+        if joined.contains("本周"), let curWeek = WeekCal.calendar.dateInterval(of: .weekOfYear, for: now) {
             out.append(("本周", (curWeek.start, now)))
         }
-        if joined.contains("上月") {
-            let m = cal.dateInterval(of: .month, for: cal.date(byAdding: .month, value: -1, to: now)!)!
+        if joined.contains("上月"),
+           let prevMonth = cal.date(byAdding: .month, value: -1, to: now),
+           let m = cal.dateInterval(of: .month, for: prevMonth) {
             out.append(("上月", (m.start, m.end)))
         }
-        if joined.contains("本月") {
-            let m = cal.dateInterval(of: .month, for: now)!
+        if joined.contains("本月"), let m = cal.dateInterval(of: .month, for: now) {
             out.append(("本月", (m.start, now)))
         }
         if let n = intAfter(joined, "最近"), n > 0 {

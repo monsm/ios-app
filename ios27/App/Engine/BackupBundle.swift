@@ -102,7 +102,15 @@ struct BackupBundle: Codable {
             /// 字段名 recentCount 在 BackupKit / BackupStudioKit 里被多处引用，改名牵连面大；
             /// 而问题本质是 "JSON 键名与 Swift 名不同"，正是 CodingKeys 的用途。
             enum CodingKeys: String, CodingKey {
+                // 注意：一旦手写 CodingKeys，**没列出的字段会被 Codable 完全忽略**。
+                // 2026-10-31 审核发现旧版只列了 9 个字段，导致 motion/heroTex/plain/heroStats
+                // 与全部无障碍字段（axBigOtp/axBigPreview/axHold/bigTile/dialSize/digitFont/
+                // gestureMode/holdConfirm/dbltapGuard/elderMode）既不编码也不解码 ——
+                // 备份包里从未真正带上它们，恢复自然永远无效。这里必须全量列出。
                 case theme, accent, density, radius, hc, weekStart, rowH, tlGap
+                case motion, heroTex, plain, heroStats
+                case axBigOtp, axBigPreview, axHold, bigTile, dialSize, digitFont
+                case gestureMode, holdConfirm, dbltapGuard, elderMode
                 case recentCount = "recent"
             }
         }

@@ -101,7 +101,7 @@ extension LockService {
         } else {
             log("warn", "读锁钟失败 (不影响下发： 0E 用手机当前时间)")
         }
-        try await execOk(ZKCmdBuilder.cmd0ESyncTime(m, sk, now))
+        _ = try await execOk(ZKCmdBuilder.cmd0ESyncTime(m, sk, now))
         DB.saveSyncTime(m, Date().timeIntervalSince1970 * 1000)
         var after = 0
         if let lockSec = try? await readLockTime() {
@@ -124,24 +124,24 @@ extension LockService {
 
     func setSilent(_ on: Bool) async throws {
         let (m, sk) = try keys()
-        try await execOk(ZKCmdBuilder.cmd18Volume(m, sk, on))
+        _ = try await execOk(ZKCmdBuilder.cmd18Volume(m, sk, on))
     }
 
     /// cmd 20 验证模式 (A/B)。入口在设置-安全模式说明 (拍板 #2, 第六十六批)：**只允许 A→B 变严**,
     /// 且调用方必须回读 verifyMode 才能报成功 (rc=0 只证明命令被接收, 不证明策略变了)。不给 B→A。
     func setValidationMode(_ bMode: Bool) async throws {
         let (m, sk) = try keys()
-        try await execOk(ZKCmdBuilder.cmd20ValidationMode(m, sk, bMode))
+        _ = try await execOk(ZKCmdBuilder.cmd20ValidationMode(m, sk, bMode))
     }
 
     func setAutoLock(_ interval: Int) async throws {
         let (m, sk) = try keys()
-        try await execOk(ZKCmdBuilder.cmd24AutoLock(m, sk, interval))
+        _ = try await execOk(ZKCmdBuilder.cmd24AutoLock(m, sk, interval))
     }
 
     func setZotp(_ on: Bool) async throws {
         let (m, sk) = try keys()
-        try await execOk(ZKCmdBuilder.cmd19OpenZotp(m, sk, on))
+        _ = try await execOk(ZKCmdBuilder.cmd19OpenZotp(m, sk, on))
     }
 
     // ---------- 布防 (cmd25 SETDEFENCE) —— 补齐 iOS 侧缺失的入口 ----------
@@ -152,7 +152,7 @@ extension LockService {
     /// 且重试也不会自愈，所以把 needToken 写出来而不是靠默认值。
     func setDefence(control: Int, startSec: Int, endSec: Int) async throws {
         let (m, sk) = try keys()
-        try await execOk(ZKCmdBuilder.cmd25Defence(m, sk, control, startSec, endSec), needToken: true)
+        _ = try await execOk(ZKCmdBuilder.cmd25Defence(m, sk, control, startSec, endSec), needToken: true)
         log("info", "布防已下发 (25): control=\(control) start=\(startSec) end=\(endSec)")
     }
 
@@ -164,7 +164,7 @@ extension LockService {
     func enableDfu(param: Int = 0) async throws {
         let (m, sk) = try keys()
         // 超时给短一点：锁可能在回 rc 后立刻开始重启，等太久只会拿到断链错误。
-        try await execOk(ZKCmdBuilder.cmd22EnableDfu(m, sk, param), needToken: true, retries: 1)
+        _ = try await execOk(ZKCmdBuilder.cmd22EnableDfu(m, sk, param), needToken: true, retries: 1)
         log("info", "已下发 22 进 DFU: param=\(param)（随后断链属预期）")
     }
 

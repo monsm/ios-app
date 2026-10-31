@@ -97,16 +97,23 @@ struct LockSettingsScreen: View {
         let kc = app.currentKeychain
         let snap = DB.readStatus(mac)
         let st = status
+        let firmware: String = {
+            if let f = st?.firmware, !f.isEmpty { return f }
+            if let f = kc?.fw, !f.isEmpty { return f }
+            return "未知"
+        }()
+        let bootText = (st?.verDFU ?? 0) > 0 ? "\(st?.verDFU ?? 0)" : "该固件未上报"
+        let keyboardText = (st?.verKeyboard ?? 0) > 0 ? "\(st?.verKeyboard ?? 0)" : "该固件未上报"
         return VCard {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VCardHeader(title: "这台锁")
                 VValueRow(label: "型号", value: PidMap.productName(kc?.pid ?? 0), mono: false)
                 VRowDivider()
-                VValueRow(label: "固件", value: st?.firmware.isEmpty == false ? st!.firmware : (kc?.fw.isEmpty == false ? kc!.fw : "未知"))
+                VValueRow(label: "固件", value: firmware)
                 VRowDivider()
-                VValueRow(label: "Boot 版本", value: (st?.verDFU ?? 0) > 0 ? "\(st!.verDFU)" : "该固件未上报")
+                VValueRow(label: "Boot 版本", value: bootText)
                 VRowDivider()
-                VValueRow(label: "键盘版本", value: (st?.verKeyboard ?? 0) > 0 ? "\(st!.verKeyboard)" : "该固件未上报")
+                VValueRow(label: "键盘版本", value: keyboardText)
                 VRowDivider()
                 VValueRow(label: "密码容量", value: capacityText(used: (snap?.pwdCap ?? 0) - (snap?.pwdStock ?? 0), cap: snap?.pwdCap ?? 0))
                 VRowDivider()

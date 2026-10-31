@@ -179,6 +179,7 @@ enum RouteContext: Hashable {
 }
 
 /// 路由状态。整个 App 只有这一个入口改它。
+@MainActor
 @Observable
 final class Router {
     var tab: TabSlot = .door

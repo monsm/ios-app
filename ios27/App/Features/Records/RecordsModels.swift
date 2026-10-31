@@ -165,6 +165,7 @@ struct LedgerDayGroup: Identifiable, Hashable {
 /// 键 = LedgerEntry.id（「哪把锁的哪一行」），与详情、深链、导出共用同一份行身份。
 /// TODO(engine) 真实现落 kf_roverlay_（备注/旗标）与 kf_rdispo（处置结论 + 时刻），
 /// 删设备时按族清除；这里先用进程内存储，跨屏共用同一份。
+@MainActor
 @Observable
 final class RecordsOverlay {
     static let shared = RecordsOverlay()
@@ -325,6 +326,7 @@ enum RecordsSource {
 
 // MARK: - 跨屏上下文（落到哪一条、只看哪一天，由这里承载）
 
+@MainActor
 @Observable
 final class RecordsRoute {
     static let shared = RecordsRoute()

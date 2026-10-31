@@ -4,6 +4,7 @@
 // ③ Gates/destmap.js 会对账，少一条就红（避免"某页不存在却有人跳过去"）。
 import SwiftUI
 
+@MainActor
 enum Destinations {
     @ViewBuilder
     static func view(for dest: Dest) -> some View {

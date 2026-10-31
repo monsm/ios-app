@@ -320,6 +320,7 @@ struct RecordsScreen: View {
                         Image(systemName: "figure.walk")
                             .font(V.F.bodyMedium)
                             .foregroundStyle(V.C.rewardGreen)
+                            .accessibilityHidden(true)
                     }
                     .frame(width: V.Metric.eventIcon, height: V.Metric.eventIcon)
                     .padding(.top, V.S.gapS)
@@ -456,6 +457,7 @@ struct RecordsScreen: View {
                             Image(systemName: "xmark.circle.fill")
                                 .font(V.F.cardBody)
                                 .foregroundStyle(V.C.text3)
+                                .accessibilityHidden(true)
                         }
                         .accessibilityLabel("清空检索")
                     }
@@ -830,7 +832,10 @@ struct RecordsScreen: View {
     @MainActor
     private func read() async {
         guard !reading else { return }
-        guard !mac.isEmpty else {
+        // 进入函数时把锁 MAC 固定下来：读日志是 await 长任务，期间用户可能切锁，
+        // 后面的 markSynced 必须记在这次真正读取的那把锁上（旧实现用计算属性 mac，会记到新锁）。
+        let readMac = mac
+        guard !readMac.isEmpty else {
             readNote = "还没有门锁，没有可读的台账"
             return
         }
@@ -853,7 +858,7 @@ struct RecordsScreen: View {
             readNote = "读取失败 · " + err + "（下面是上次读到的那一份）"
             app.lastError = nil
         } else if app.lock?.isConnected == true {
-            RecordsSource.markSynced(mac: mac, at: now)
+            RecordsSource.markSynced(mac: readMac, at: now)
             reload()
             readNote = untimed > 0
                 ? "已读取 \(entries.count) 条（另 \(untimed) 条锁端未回时刻，无法定位到某一天）"

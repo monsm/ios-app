@@ -124,13 +124,17 @@ struct LockProfileScreen: View {
                                     .font(V.F.body).foregroundStyle(V.C.text1)
                                 Spacer(minLength: 0)
                                 if pinIndex == pair.offset {
-                                    Image(systemName: "checkmark").foregroundStyle(V.C.blue)
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(V.C.blue)
+                                        .accessibilityHidden(true)
                                 }
                             }
                             .frame(minHeight: V.List.rowMinHeight)
                             .contentShape(.rect)
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("第 \(pair.offset + 1) 枚 PIN")
+                        .accessibilityAddTraits(pinIndex == pair.offset ? [.isButton, .isSelected] : .isButton)
                     }
                     Button {
                         pinIndex = -1
@@ -138,12 +142,18 @@ struct LockProfileScreen: View {
                         HStack {
                             Text("自动（第一枚）").font(V.F.body).foregroundStyle(V.C.text1)
                             Spacer(minLength: 0)
-                            if pinIndex == -1 { Image(systemName: "checkmark").foregroundStyle(V.C.blue) }
+                            if pinIndex == -1 {
+                                Image(systemName: "checkmark")
+                                    .foregroundStyle(V.C.blue)
+                                    .accessibilityHidden(true)
+                            }
                         }
                         .frame(minHeight: V.List.rowMinHeight)
                         .contentShape(.rect)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("自动使用第一枚 PIN")
+                    .accessibilityAddTraits(pinIndex == -1 ? [.isButton, .isSelected] : .isButton)
                 } else {
                     Text("这把锁只有一枚 PIN，或还没读到 PIN 池 —— 不需要选。")
                         .font(V.F.footnote).foregroundStyle(V.C.text3)
@@ -162,6 +172,7 @@ struct LockProfileScreen: View {
                         Button { symbol = item.name } label: {
                             VStack(spacing: V.S.gapXXS) {
                                 Image(systemName: item.name)
+                                    .accessibilityHidden(true)
                                     .font(V.F.bodyLargeMedium)
                                     .foregroundStyle(symbol == item.name ? V.C.blue : V.C.text3)
                                     .frame(width: V.List.iconSize * 1.6, height: V.List.iconSize * 1.6)

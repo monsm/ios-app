@@ -416,7 +416,7 @@ final class AutoOpenController {
         }
         let phone = ZKProtocol.nowProtoSeconds()
         if AutoOpenKit.dualTimeSync(phoneProto: phone, lockProto: lockSec, ntpConfirmed: false) {
-            try? await LockService.shared.syncTime()
+            _ = try? await LockService.shared.syncTime()
             AutoOpen.audit(mac, "rc=3 → 已自动校时（0E 双确认）")
         } else {
             AutoOpen.audit(mac, "rc=3 → 偏差超出双确认窗，只提示不写")

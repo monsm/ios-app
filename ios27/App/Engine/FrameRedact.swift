@@ -28,6 +28,6 @@ enum FrameRedact {
         guard hexPart.count >= 16 else { return msg }   // 不足一个帧头就不是帧
         let hdr = String(hexPart.prefix(16))           // 8 字节帧头
         let payloadBytes = (hexPart.count - 16) / 2
-        return head + hdr + "…((payloadBytes) bytes 已脱敏)" + rest
+        return head + hdr + "…(\(payloadBytes) bytes 已脱敏)" + rest
     }
 }

@@ -5,8 +5,10 @@
 // 系统就挂起本进程，蓝牙链路当场断，而屏上还停在「正在传输」。
 import UIKit
 
+@MainActor
 enum ScreenCare {
     /// 只覆写 isIdleTimerDisabled 一个公开开关；离开页面或任务结束必须复位。
+    /// @MainActor：UIApplication.shared 是主线程隔离的系统单例，Swift 6 下非隔离访问会报错。
     static func keepingAwake(_ active: Bool) {
         UIApplication.shared.isIdleTimerDisabled = active
     }

@@ -1,40 +1,23 @@
 // CaptureShield.swift —— 截图/录屏遮罩：检测到屏幕被捕获时自动遮挡敏感内容。
 //
-// 判据：UIScreen.main.isCaptured（iOS 11+）。监听 UIScreen.capturedDidChangeNotification，
-// 不轮询。挂在含敏感内容的视图上：KeyDetail 的码值卡、ShareToAndroid 的二维码。
+// 判据：UIScreen.isCaptured（iOS 11+）。监听 UIScreen.capturedDidChangeNotification，不轮询。
+// 挂在含敏感内容的视图上：KeyDetail 的码值卡、ShareToAndroid 的二维码。
+//
+// 2026-10-31 iOS 27 审核：不再使用已废弃的 UIScreen.main。屏幕实例从当前前台
+// UIWindowScene 取（scene.screen），观察者也只跟这一块屏；SwiftUI 的 onReceive
+// 直接驱动 @State，避免 ObservableObject 在 Sendable 闭包里捕获非 Sendable 的 self。
 import SwiftUI
 import UIKit
 
-/// 监听 UIScreen.isCaptured 的观察者。
-final class CaptureWatcher: ObservableObject {
-    @Published private(set) var isCaptured: Bool = UIScreen.main.isCaptured
-
-    private var token: NSObjectProtocol?
-
-    init() {
-        token = NotificationCenter.default.addObserver(
-            forName: UIScreen.capturedDidChangeNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            self?.isCaptured = UIScreen.main.isCaptured
-        }
-    }
-
-    deinit {
-        if let token { NotificationCenter.default.removeObserver(token) }
-    }
-}
-
 private struct CaptureShieldModifier: ViewModifier {
     let message: String
-    @StateObject private var watcher = CaptureWatcher()
+    @State private var isCaptured = false
 
     func body(content: Content) -> some View {
         ZStack {
             content
-                .opacity(watcher.isCaptured ? 0 : 1)
-            if watcher.isCaptured {
+                .opacity(isCaptured ? 0 : 1)
+            if isCaptured {
                 VStack(spacing: V.S.gapS) {
                     Image(systemName: "eye.slash.fill")
                         .font(V.F.icon22)
@@ -51,6 +34,19 @@ private struct CaptureShieldModifier: ViewModifier {
                 .accessibilityElement(children: .combine)
             }
         }
+        .onAppear { refresh() }
+        .onReceive(NotificationCenter.default.publisher(for: UIScreen.capturedDidChangeNotification)) { _ in
+            refresh()
+        }
+    }
+
+    /// 只读当前激活的前台 WindowScene 的 screen；找不到时按未捕获处理（不误遮挡）。
+    private func refresh() {
+        let screen = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first(where: { $0.activationState == .foregroundActive })?
+            .screen
+        isCaptured = screen?.isCaptured ?? false
     }
 }
 

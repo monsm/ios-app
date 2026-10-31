@@ -53,7 +53,7 @@ extension LockService {
             throw BLEErrorX.msg("这条密码在本机台账里没有有效的锁端编号 (0 = 协议里的「不指定」)，无法按编号删除 — 请用「清空密码」或在门锁上处理")
         }
         let (m, sk) = try keys()
-        try await execOk(try ZKCmdBuilder.cmd0ASyncPwd(m, sk, delAlias: alias))
+        _ = try await execOk(try ZKCmdBuilder.cmd0ASyncPwd(m, sk, delAlias: alias))
         // 2026-10-27 审核修复 (AUDIT-D D-54)：回包**无完整性校验** —— 伪造一个 rc=0 回包，
         // App 就会报「已删除」而凭证在锁里仍然有效。协议层没有 MAC，无法根治；
         // 能做的是删除后重读一次本机台账，确认那一条真的不在了。
@@ -66,7 +66,7 @@ extension LockService {
 
     func pwdClear() async throws {
         let (m, sk) = try keys()
-        try await execOk(try ZKCmdBuilder.cmd0ASyncPwd(m, sk, delAlias: 0xFFFF))
+        _ = try await execOk(try ZKCmdBuilder.cmd0ASyncPwd(m, sk, delAlias: 0xFFFF))
     }
 
     // ---------- PIN 池单条删除 (cmd08 delPins) —— 撤销手机钥匙要用 ----------
@@ -84,7 +84,7 @@ extension LockService {
             guard let c = ZKCmdBuilder.cmd08SyncPinsBatch(m, sk, [], delPins: batch) else {
                 throw BLEErrorX.msg("PIN 删除批次构建失败")
             }
-            try await execOk(c)
+            _ = try await execOk(c)
             log("info", "已删除 \(batch.count) 个 PIN (08 delPins)")
             i += 20
         }
@@ -92,7 +92,7 @@ extension LockService {
 
     func pwdExpire(_ alias: Int, _ from: String, _ to: String) async throws {
         let (m, sk) = try keys()
-        try await execOk(ZKCmdBuilder.cmd0BSyncPwdExpire(m, sk, alias, from, to))
+        _ = try await execOk(ZKCmdBuilder.cmd0BSyncPwdExpire(m, sk, alias, from, to))
         log("info", "凭证#\(alias) 有效期已设置 (0B)")
     }
 
@@ -204,13 +204,13 @@ extension LockService {
 
     func fpConfirm(_ batchNumber: UInt32, validFrom: String, validTo: String) async throws {
         let (m, sk) = try keys()
-        try await execOk(ZKCmdBuilder.cmd14FpConfirm(m, sk, batchNumber, validFrom, validTo))
+        _ = try await execOk(ZKCmdBuilder.cmd14FpConfirm(m, sk, batchNumber, validFrom, validTo))
         log("info", "指纹#\(batchNumber) 已确认并设置有效期")   // 14 指纹
     }
 
     func fpDelete(_ batchNumber: UInt32) async throws {
         let (m, sk) = try keys()
-        try await execOk(ZKCmdBuilder.cmd15DeleteFp(m, sk, batchNumber))
+        _ = try await execOk(ZKCmdBuilder.cmd15DeleteFp(m, sk, batchNumber))
         // 2026-10-27 审核修复 (D-54)：同 pwdDelete —— 删除后重读复核。
         if DB.ledger(m).fps.contains(where: { $0.batch == batchNumber }) {
             log("warn", "删除复核失败： 指纹#\(batchNumber) 仍存在于锁端 — 可能收到伪造回包")

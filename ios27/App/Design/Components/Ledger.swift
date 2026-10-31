@@ -108,7 +108,6 @@ struct LedgerDayHeader: View {
 /// 台账容器：把条目按自然日分组的纯逻辑（可测）。
 enum LedgerGrouping {
     static func group(_ entries: [LedgerEntry]) -> [(dayKey: String, items: [LedgerEntry])] {
-        let cal = TimeFormat.calendar
         var buckets: [String: [LedgerEntry]] = [:]
         for e in entries {
             let key = TimeFormat.dayKey(e.at)

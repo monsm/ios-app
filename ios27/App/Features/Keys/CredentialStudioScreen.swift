@@ -241,6 +241,7 @@ struct CredentialStudioScreen: View {
                     .font(V.F.bodyLarge)
                     .foregroundStyle(selected ? V.C.blue : V.C.text3)
                     .frame(width: V.List.iconSize, height: V.List.iconSize)
+                    .accessibilityHidden(true)
             }
             .buttonStyle(.plain)
             .accessibilityLabel(selected ? "取消选择" : "选择")
@@ -248,7 +249,10 @@ struct CredentialStudioScreen: View {
                 HStack(spacing: V.S.gapXS) {
                     Text(CredentialOrg.displayPwd(pwd)).font(V.F.rowTitle).foregroundStyle(V.C.text1).lineLimit(1)
                     if CredStarStore.isStarred(studioMac, id) {
-                        Image(systemName: "star.fill").font(V.F.chipLabel).foregroundStyle(V.C.coral)
+                        Image(systemName: "star.fill")
+                            .font(V.F.chipLabel)
+                            .foregroundStyle(V.C.coral)
+                            .accessibilityLabel("已星标")
                     }
                 }
                 Text("#\(pwd.alias) · \(CredentialOrg.expiryLabel(pwd.to)) · \(CredentialOrg.stateLabel(CredentialOrg.pwdState(pwd)))")
@@ -262,9 +266,10 @@ struct CredentialStudioScreen: View {
                 Image(systemName: CredStarStore.isStarred(studioMac, id) ? "star.fill" : "star")
                     .font(V.F.cardBody)
                     .foregroundStyle(V.C.coral)
+                    .accessibilityHidden(true)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("星标")
+            .accessibilityLabel(CredStarStore.isStarred(studioMac, id) ? "取消星标" : "设为星标")
             Button("提醒") { alertTarget = pwd }
                 .font(V.F.footnote).foregroundStyle(V.C.blue)
         }
@@ -281,6 +286,7 @@ struct CredentialStudioScreen: View {
                     .font(V.F.bodyLarge)
                     .foregroundStyle(selected ? V.C.blue : V.C.text3)
                     .frame(width: V.List.iconSize, height: V.List.iconSize)
+                    .accessibilityHidden(true)
             }
             .buttonStyle(.plain)
             .accessibilityLabel(selected ? "取消选择" : "选择")

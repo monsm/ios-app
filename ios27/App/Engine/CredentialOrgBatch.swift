@@ -54,8 +54,9 @@ extension CredentialOrg {
         var n = 0
         var failedPwds: [Int] = []
         var failedFps: [Int] = []
-        let batchId = UUID().uuidString   // 353: 一次批量停用 = 一个批次, 回收站里可整组还原
         // 2026-10-29 性能：同 batchExtend —— 循环里每轮整份解码台账。
+        // 353 的「同一批次可整组还原」由界面层 CredentialStudioScreen 生成 batchId 并写入 CredBinStore；
+        // Engine 这层只负责删台账，不再生成无人消费的 batchId（旧变量是死代码，编译告警）。
         let existingAliases = Set(DB.ledger(mac).pwds.map(\.alias))
         for a in pwdAliases {
             guard existingAliases.contains(a) else {

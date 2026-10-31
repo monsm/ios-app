@@ -54,7 +54,8 @@ targets:
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         UIUserInterfaceStyle: Automatic
-        UIRequiresFullScreen: true
+        # UIRequiresFullScreen 在 iOS 26 起已被系统忽略且 deprecated；竖屏锁定由
+        # UISupportedInterfaceOrientations 单独保证，此键删除（消除项目级告警）。
         # 蓝牙：门锁通信的唯一通道。备份工作室可选用 URLSession 连用户自建的 WebDAV，
         # 所以不能写「App 不联网」—— 隐私文案必须与实际能力一致。
         NSBluetoothAlwaysUsageDescription: 需要蓝牙连接你的门锁。门锁通信不经过网络；备份工作室可选连你自建的 WebDAV。

@@ -199,26 +199,14 @@ final class AppModel {
     }
 
     /// 只重建台账。
+    /// 唯一映射口径 → RecordsSource.load：归属人、detail、告警色、未回时刻过滤都在那一处，
+    /// 这里不能再写第二份（旧实现 owner 恒为 nil，门页「最近开门」永远显示「未归属」，
+    /// 且与记录页对同一条日志给出不同的 tint/detail）。
     func reloadEntries(_ mac: String? = nil) {
         let m = mac ?? currentMac
         guard !m.isEmpty else { entries = []; return }
-        let logs = DB.readLogs(m)
-        entries = logs.compactMap { c -> LedgerEntry? in
-            // lockTime == 0 = 锁端没读到时钟，这条不该假装有时间
-            guard c.lockTime > 0 else { return nil }
-            // protoSecondsToUnix 返回的是**秒**（Double）；台账口径是毫秒（Int64）。量纲要显式换。
-            let ms = Int64((ZKProtocol.protoSecondsToUnix(c.lockTime) * 1000).rounded())
-            let tone: Tone = AlarmMeta.damageTypes.contains(c.type) ? .critical
-                : (LockStats.openTypes.contains(c.type) ? .ok : .neutral)
-            return LedgerEntry(
-                id: m + "#" + String(c.idxRaw),
-                at: ms,
-                event: c.displayTypeName,
-                owner: nil,
-                tone: tone,
-                rawType: c.type
-            )
-        }
+        let load = RecordsSource.load(mac: m, lockName: lock?.name ?? "门锁", members: members)
+        entries = load.entries
     }
 
     // MARK: - 开锁（真链路 + 失败重试链 + 自动上锁倒计时）

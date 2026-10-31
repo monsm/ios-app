@@ -16,10 +16,20 @@ import BackgroundTasks
 @MainActor
 enum BackupStudio {
     // ================= 路径与命名 (409/410) =================
+    /// FileManager 在 iOS 上必然返回一个 documentDirectory；取 .first 加兜底只是
+    /// 为了避免任何未来环境（沙箱/测试宿主）下的空数组下标崩溃。
+    nonisolated private static var documentsURL: URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: "/tmp", isDirectory: true).appendingPathComponent("Documents", isDirectory: true)
+    }
+    nonisolated private static var appSupportURL: URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: "/tmp", isDirectory: true).appendingPathComponent("Library/Application Support", isDirectory: true)
+    }
     // nonisolated: makeRollbackPoint/pruneRollback 本就是 nonisolated 而引用了这两个路径,
     // 挂在 @MainActor 枚举上会直接编译不过 (纯 FileManager, 无 actor 状态)
     nonisolated static var dir: URL {
-        let base = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let base = documentsURL
             .appendingPathComponent("lockkeeper-backups", isDirectory: true)
         try? FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
         return base
@@ -29,14 +39,14 @@ enum BackupStudio {
     /// 而 413 的分享流程又把同一个目录当作用户可见的备份文件夹。现移入 Application Support 并标记不备份,
     /// 同时把旧目录里已经落盘的明文快照一次性删掉。
     nonisolated static var rollbackDir: URL {
-        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        let base = appSupportURL
             .appendingPathComponent("lockkeeper-rollback", isDirectory: true)
         try? FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
         var v = URLResourceValues()
         v.isExcludedFromBackup = true
         var mutable = base
         try? mutable.setResourceValues(v)
-        let legacy = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let legacy = documentsURL
             .appendingPathComponent("lockkeeper-backups/rollback", isDirectory: true)
         if FileManager.default.fileExists(atPath: legacy.path) {
             try? FileManager.default.removeItem(at: legacy)

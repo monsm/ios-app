@@ -40,7 +40,9 @@ struct RootView: View {
         }
         // 外观与无障碍档位：主题跟随系统/浅色/深色 + 全局大字档（原 AXPrefs 的真实生效点）。
         .preferredColorScheme(colorScheme)
-        .dynamicTypeSize(settings.axBigText ? .accessibility2 : .large)
+        // 关键：不开 App 内「全局大字」时**不要**写死 .large —— 那会把系统设置里的
+        // 更大字号整体压回 Large，等于无视 Dynamic Type。只有 App 档开启时才强制 accessibility2。
+        .modifier(AXTextSizeModifier(enabled: settings.axBigText))
         // 减弱动态：解锁闸门 → 主界面的切换改成直接出现，而不是淡入
         .animation(reduceMotion ? nil : (settings.motion == .calm ? nil : (settings.motion == .lively ? V.M.settle : V.M.move)), value: app.unlocked)
         // 装配：把路由注入 AppModel —— 这是 Engine 唯一能触达界面的出口（EngineHost）。
@@ -98,6 +100,22 @@ struct RootView: View {
 
     private var colorScheme: ColorScheme? { settings.theme.colorScheme }
 
+}
+
+/// App 内「全局大字」档：关闭时完全交还系统 Dynamic Type（不覆写大小），
+/// 开启时把整棵视图树压到 Accessibility 2。
+private struct AXTextSizeModifier: ViewModifier {
+    let enabled: Bool
+
+    func body(content: Content) -> some View {
+        Group {
+            if enabled {
+                content.dynamicTypeSize(.accessibility2)
+            } else {
+                content
+            }
+        }
+    }
 }
 
 /// 只读试验模式常驻条。
@@ -178,10 +196,10 @@ struct LockGateScreen: View {
                         failed = false
                     case .wrong(let remaining):
                         failed = true
-                        gateMessage = remaining > 0 ? "密码不对 · 冷却 (remaining) 秒后再试" : "密码不对"
+                        gateMessage = remaining > 0 ? "密码不对 · 冷却 \(remaining) 秒后再试" : "密码不对"
                     case .cooling(let remaining):
                         failed = true
-                        gateMessage = "冷却中 · (remaining) 秒后再试"
+                        gateMessage = "冷却中 · \(remaining) 秒后再试"
                     }
                 }
                 .padding(.horizontal, V.S.gapXXL)

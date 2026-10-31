@@ -458,7 +458,7 @@ extension DFUSession: CBCentralManagerDelegate, CBPeripheralDelegate {
         guard let data = characteristic.value, !data.isEmpty else { return }
         let bytes = [UInt8](data)
         // Secure DFU 应答：0x60 + 操作码 + 结果码；Legacy：0x10 + 结果码
-        if bytes[0] == 0x60 && bytes.count >= 3 {
+        if bytes.count >= 3 && bytes[0] == 0x60 {
             let result = bytes[2]
             if result == 1 {          // 1 = 成功
                 if let c = ackCont { c.resume(); ackCont = nil } else { ackBuffer = bytes }
@@ -467,7 +467,7 @@ extension DFUSession: CBCentralManagerDelegate, CBPeripheralDelegate {
                 ackCont?.resume(throwing: DFUTransportError.protocolError("锁端返回结果码 \(result)"))
                 ackCont = nil
             }
-        } else if bytes[0] == 0x10 && bytes.count >= 2 {
+        } else if bytes.count >= 2 && bytes[0] == 0x10 {
             if let c = ackCont { c.resume(); ackCont = nil } else { ackBuffer = bytes }
         }
     }
