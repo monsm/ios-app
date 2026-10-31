@@ -149,7 +149,9 @@ struct AppearanceScreen: View {
                     .foregroundStyle(Ink.ink)
                     .monospacedDigit()
                     .contentTransition(.numericText())
-                    .animation(reduceMotion ? nil : T.M.snap, value: previewClock)
+                    // 这里用 systemReduceMotion（本文件的环境值名）：
+                    // 与 store 里的"App 内动效档"是两个独立开关 —— 系统的是硬约束，App 内的是偏好。
+                    .animation(systemReduceMotion ? nil : T.M.snap, value: previewClock)
                 Spacer(minLength: 0)
                 if store.twoLineDate {
                     Text(TimeFormat.dayShort(now))

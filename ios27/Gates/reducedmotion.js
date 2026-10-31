@@ -36,7 +36,8 @@ for (const f of walk(APP)) {
     if (t.startsWith('//') || t.startsWith('///')) return;
     if (!/\.animation\(/.test(line) && !/withAnimation\(/.test(line)) return;
     if (/configuration\.isPressed/.test(line)) return;
-    if (/reduceMotion/.test(line)) { guarded++; return; }
+    // 环境值可能叫 reduceMotion / systemReduceMotion / axReduceMotion 等 —— 认"含 ReduceMotion 的标识符"
+    if (/[A-Za-z_]\w*[Rr]educeMotion/.test(line) || /reduceMotion/.test(line)) { guarded++; return; }
     findings.push(rel + ':' + (i + 1) + ' 动效没尊重减弱动态: ' + t.slice(0, 80));
   });
 }
