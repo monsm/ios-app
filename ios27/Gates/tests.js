@@ -73,6 +73,19 @@ const SECURITY_COVERAGE = [
   ['导入类型/规模闸（SEC-30）', /maxImportBytes/],
   ['失败计数持久化（SEC-28）', /kf_lock_fail/],
 ];
+// 并发地基：全仓 @unchecked Sendable 都以 Locked 真的互斥为前提。
+// 这个前提一旦破了，编译器不会报错（@unchecked 就是"我保证过"），
+// 表现是偶发丢计数/丢日志 —— 最难查的一类。
+const CONCURRENCY_COVERAGE = [
+  ['Locked 并发自增不丢', /testLockedIncrementIsAtomic/],
+  ['Locked 读-判-写不可分', /testLockedReadModifyWriteIsIndivisible/],
+  ['Locked 异常路径解锁', /testLockedUnlocksOnThrownError/],
+];
+for (const [name, re] of CONCURRENCY_COVERAGE) {
+  if (re.test(allTestSrc)) ok.push('并发：' + name);
+  else fails.push('缺并发断言「' + name + '」—— 去掉锁这类改动将无人发现');
+}
+
 for (const [name, re] of SECURITY_COVERAGE) {
   if (re.test(allTestSrc)) ok.push('安全回归：' + name);
   else fails.push('缺安全回归断言「' + name + '」—— 这条修复改回去不会被任何测试发现');
