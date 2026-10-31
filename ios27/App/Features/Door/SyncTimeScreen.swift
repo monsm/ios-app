@@ -243,7 +243,7 @@ struct SyncTimeScreen: View {
             lastSyncedAt = now
             // E-10：落盘到 kf_synctime_<mac>（与门页「超 30 天未校时」提醒卡同一真值），
             // 不再只写内存投影（重启后设置页恒显示「从未」）。
-            DB.saveSyncTime(mac, now)
+            DB.saveSyncTime(app.currentMac, Double(now))
             let residual = Int((Int64(Date().timeIntervalSince1970 * 1000) - (lockAt ?? now)) / 1000)
             result = SyncOutcome(ok: abs(residual) <= Self.driftThreshold,
                                  text: "同步完成 · 回读偏差 \(residual) 秒")

@@ -368,6 +368,8 @@ struct RecordExportRow {
 /// 让枚举本身也隔离，调用点（RecordExportScreen 的 body、WeeklyDigest）天然满足。
 @MainActor
 enum RecordCSV {
+    // 说明：build() 走 TimeDisplay.clock（主 actor 隔离），所以本枚举也隔离。
+
     static func field(_ value: String) -> String {
         // SEC-12：CSV 公式注入。成员名/备注可来自导入的备份，被构造为 "=HYPERLINK(...)" 或
         // "+cmd|..." 时，用户在 Excel/Numbers 打开导出文件就会触发公式/DDE。
@@ -382,6 +384,8 @@ enum RecordCSV {
     }
 
     /// 列：日期, 时间, 内容, 成员, 锁。成员不可证明写「未归属」，不猜。
+    /// 显式 @MainActor：TimeDisplay.clock 是主 actor 隔离的（CI 41218914864 报 ActorIsolatedCall）。
+    @MainActor
     static func build(_ rows: [RecordExportRow]) -> String {
         var out = ["日期,时间,内容,成员,锁"]
         for row in rows.sorted(by: { $0.at < $1.at }) {
