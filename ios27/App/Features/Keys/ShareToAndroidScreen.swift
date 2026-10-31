@@ -59,6 +59,14 @@ struct ShareToAndroidScreen: View {
     // MARK: 生成载荷（会话级口令 + 锁身份 + 钥匙）
 
     private func build() {
+        // E-14：`deliverable` 之前是**死代码** —— 页面文案说「本机还没有可交付的钥匙」，
+        // 而 build() 只看 currentKeychain，于是"停用/已过期/没有 ekey 的手机钥匙"
+        // 照样生成二维码并给出"可以扫码导入"。这里把闸门接上。
+        guard deliverable != nil else {
+            qr = nil
+            payloadText = ""
+            return
+        }
         guard let kc = app.currentKeychain, let p = AndroidPair.payload(kc) else {
             qr = nil
             payloadText = ""
