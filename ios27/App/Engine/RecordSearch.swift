@@ -315,6 +315,17 @@ enum RecordSearch {
         // 2026-10-29 性能：改用共享的 UTC 变体 —— **不能**对缓存实例改 timeZone，那会污染所有其它使用者。
         return Int64(DF.stampUTC.date(from: s)?.timeIntervalSince1970 ?? 0)
     }
+    /// 按**本地墙钟**解析 `yyyy-MM-dd HH:mm:ss`。
+    ///
+    /// 2026-11-01 新增（越界窗口时基修复）：临时码的 from/to 由 `DF.cached(...)` 写出，
+    /// 那个默认时区是 `TimeZone.current` ⇒ 它们是**本地串**；而开门日志的 `lockTimeStr`
+    /// 走 `ProtoTime.localStr`（也是 `DF.stamp`，本地）。两边都是本地串，
+    /// 所以比较时**必须**都用本地解析。原先窗口侧用了 `parseStamp`（UTC），
+    /// 在东八区相当于把窗口整体平移 -8 小时：一条落在窗口内 8 小时处的开门会被判成"越界"，
+    /// 而"越界"页面的文案是「可能是伪造或时钟偏差」—— 把正常开门诬告成攻击，比不显示更糟。
+    static func parseLocal(_ s: String) -> Int64 {
+        Int64(DF.stamp.date(from: s)?.timeIntervalSince1970 ?? 0)
+    }
 
 
     /// 737 今日试错判据 (唯一一份): 锁定类事件行 (type 10) 且落在今日 —— 计数与逐次明细共用

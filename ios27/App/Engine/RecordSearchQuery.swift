@@ -17,7 +17,10 @@ extension RecordSearch {
             guard !pws.isEmpty else { continue }
             var wins = [TempWin]()
             for p in pws {
-                let f = parseStamp(p.from), to = parseStamp(p.to)   // parseStamp 失败给 0，下面 f>0 判据兜住
+                // 时基必须与日志侧一致（见下方 2026-11-01 修复说明）。
+                // 临时码的 from/to 是**本地墙钟串**（`DF.cached(...)` 默认 TimeZone.current 写出），
+                // 所以这里也要按本地解析 —— 不能用 parseStamp（它按 UTC 解析）。
+                let f = parseLocal(p.from), to = parseLocal(p.to)   // 失败给 0，下面 f>0 判据兜住
                 guard f > 0, to > 0 else { continue }
                 let label = "约 " + String(p.from.dropFirst(5).prefix(11)) + " – " + String(p.to.dropFirst(5).prefix(11))
                 wins.append(TempWin(from: f, to: to, label: label))
