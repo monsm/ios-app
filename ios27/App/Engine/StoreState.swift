@@ -57,7 +57,9 @@ extension DB {
     }
 
     static func readLogs(_ mac: String) -> [CachedLog] {
-        get(LogCache.self, "kf_logcache_" + mac)?.logs ?? []
+        // SEC-03：空壳模式不返回任何锁内日志（记录页/门页/导出都读这里）。
+        if DB.isDecoy { return [] }
+        return get(LogCache.self, "kf_logcache_" + mac)?.logs ?? []
     }
 
     /// 2026-10-30 性能：`readLogs(mac).count` 的专用口 —— 只数条数，不解码每一条。

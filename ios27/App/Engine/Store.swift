@@ -197,7 +197,16 @@ enum DB {
     /// 2026-10-29 性能：`members()` 会把整张 kf_members 字典逐条 `Member.fromDict` 重建，
     /// 而它被 55 处调用（记录页/成员页/统计/导出都在热路径）。结果缓存，失效挂在 `kf_members` 的写入上
     /// （见 `Store.invalidateCache`）。
+    // MARK: - 空壳模式（SEC-03）
+
+    /// 空壳（胁迫码）标志。由 AppModel 在解密/上锁时同步；
+    /// 数据层据此对凭证、成员、记录、锁名一律返回空集，而不是只清界面投影。
+    private static let decoyFlag = Locked(false)
+    static var isDecoy: Bool { decoyFlag.withLock { $0 } }
+    static func setDecoy(_ on: Bool) { decoyFlag.withLock { $0 = on } }
+
     static func members() -> [Member] {
+        if isDecoy { return [] }
         if let hit = store.derivedCache.withLock({ $0["members"] }) as? [Member] { return hit }
         let map = store.getDict("kf_members")
         let list = map.values.compactMap { $0 as? [String: Any] }.compactMap(Member.fromDict)

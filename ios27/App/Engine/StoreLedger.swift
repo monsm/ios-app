@@ -11,7 +11,11 @@ extension DB {
     /// 否则一次解码失败会让整个会话里所有 ledger 写入（含恢复时的凭证导入）静默失败。
     static func clearAllLedgerCorrupt() { ledgerLock.withLock { $0.removeAll() } }
 
+    /// SEC-03：空壳（胁迫码）模式下所有凭证读取返回空台账。
+    /// 数据层强制，而不是只靠页面清 @State —— 凭证工作室/备份工作室/记录工作室都直接读 DB。
+    /// 写入路径不受影响（空壳里不做写入），退出空壳后立刻恢复真实数据。
     static func ledger(_ mac: String) -> Ledger {
+        if DB.isDecoy { return Ledger() }
         if let l = get(Ledger.self, "kf_ledger_" + mac) { return l }
         // get 返回 nil 有两种语义: ①该键不存在 (真空台账) ②有键但解码抛错 (字段缺任一即整表抛)。
         // 旧实现在 ②下返回空 Ledger, 调用方 (addPwd/addFp/…) 紧接着 save → **台账被空表整表覆盖清空**。

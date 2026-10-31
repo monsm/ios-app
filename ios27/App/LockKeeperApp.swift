@@ -82,10 +82,12 @@ struct RootView: View {
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .active:
+                // SEC-21：退后台超过 30 秒就重新要求本机密码（lock() 内部会清内存母钥缓存）。
+                AppLock.shared.willEnterForeground()
                 app.unlocked = AppLock.shared.unlocked
-                if let mac = app.currentKeychain?.mac { AutoOpenController.shared.onForeground(mac: mac) }
+                if app.unlocked, let mac = app.currentKeychain?.mac { AutoOpenController.shared.onForeground(mac: mac) }
             case .background:
-                AutoOpenController.shared.onBackground()
+                AppLock.shared.didEnterBackground()
             default:
                 break
             }

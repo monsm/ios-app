@@ -132,10 +132,31 @@ final class AppLock: ObservableObject {
         return cd > 0 ? Int(cd) : 0
     }
 
+    /// 退到后台的时刻（用于回前台超时上锁）。0 = 未记录。
+    private var backgroundedAt: Double = 0
+
+    /// 进入后台：记时刻并立即收起自动开锁武装。
+    func didEnterBackground(now: Date = Date()) {
+        backgroundedAt = now.timeIntervalSince1970
+        AutoOpenController.shared.onBackground()
+    }
+
+    /// 回前台：超过 30 秒就重新要求本机密码（手机被拿走、放在别人手里时的真实场景），
+    /// 30 秒内来回切（接个电话、看一眼通知）不打断。
+    /// 2026-10-31 安全审核修复（SEC-21）：旧实现 lock() 全仓零调用点，解锁一次后进程不退出就再也不上锁。
+    func willEnterForeground(now: Date = Date(), lockAfter: Double = 30) {
+        defer { backgroundedAt = 0 }
+        guard isEnabled, backgroundedAt > 0 else { return }
+        if now.timeIntervalSince1970 - backgroundedAt >= lockAfter { lock() }
+    }
+
     func lock() {
         guard isEnabled else { return }
         unlocked = false
         decoy = false
+        // SEC-27：上锁即丢弃内存里的母钥缓存与令牌，别让它们常驻进程。
+        DB.dropKeychainCache()
+        LockService.shared.disconnect()
     }
 
     // 胁迫码的存储与验证在 `DB` 里（`setDuressCode` / `hasDuressCode` / `verifyDuress`）——

@@ -8,8 +8,16 @@ import Foundation
 private let keychainCache = Locked<[String: Keychain]>([:])
 
 extension DB {
+    /// SEC-27：清空内存里的整份 Keychain 缓存（含 skey/bkey/ekey/pins）。
+    /// App 上锁时必须调用 —— 否则手机被拿走、App 还在后台时，母钥仍常驻进程可被内存取证读走。
+    static func dropKeychainCache() {
+        keychainCache.withLock { $0.removeAll() }
+    }
+
     // 钥匙串 (多锁)
     static func keychains() -> [Keychain] {
+        // SEC-03：空壳模式不暴露锁名/锁清单（备份工作室与多锁统计都从这里取）。
+        if isDecoy { return [] }
         let map = store.getDict("kf_keychains")
         let list = map.values.compactMap { $0 as? [String: Any] }
             .compactMap { Keychain.fromDict($0) }
