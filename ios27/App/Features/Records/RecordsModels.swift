@@ -364,6 +364,9 @@ struct RecordExportRow {
 
 // MARK: - CSV（record.rangePick 的列口径）
 
+/// @MainActor：build() 走 TimeDisplay.clock（已是主 actor 隔离），
+/// 让枚举本身也隔离，调用点（RecordExportScreen 的 body、WeeklyDigest）天然满足。
+@MainActor
 enum RecordCSV {
     static func field(_ value: String) -> String {
         // SEC-12：CSV 公式注入。成员名/备注可来自导入的备份，被构造为 "=HYPERLINK(...)" 或
@@ -430,6 +433,7 @@ enum MemberVCard {
 
 // MARK: - 上周小结（record.digest：上一个完整自然周，周一–周日）
 
+@MainActor
 enum WeeklyDigest {
     struct Digest {
         let lines: [String]

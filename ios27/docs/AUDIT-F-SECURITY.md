@@ -2,7 +2,7 @@
 
 > 审计对象：`D:\\aapk\\ios-app\\ios27`（SwiftUI iOS App，App/Engine 69 个纯逻辑文件 + App/Shell/AppModel + 备份/设置/硬件页面）
 > 审计日期：2026-10-31
-> 审计快照：初次审计 `35fe751`；复核快照 `f50e34f`（2026-10-31 修复轮，逐项复核见 §6）
+> 审计快照：初次审计 `35fe751`；复核快照 `f50e34f`，并在 `c2e0ec5` 上逐行重取行号（§4 表中的行号均以 `c2e0ec5` 为准）
 > 本报告只写本文件，未修改任何 Swift 源码。
 > 审计立场：默认「不安全」；只写有文件:行号、代码或 grep 证据支撑的项。P0 = 无需用户交互的远程/未授权全量失陷；P1 = 高影响凭据泄露或安全控制可绕过；P2 = 需本地/用户动作的纵深防御、完整性、隐私或数据破坏问题；P3 = 低风险加固项。
 
@@ -647,9 +647,10 @@ App 上锁/退后台后，所有锁的母钥仍常驻进程内存；被调试器
 
 ---
 
-## 4. 复核表（对照 HEAD `f50e34f`，2026-10-31）
+## 4. 复核表（对照 HEAD `c2e0ec5`，2026-10-31）
 
-> 复核方式：逐条在 `f50e34f` 上重读代码 + grep 全仓；每行给出**复核后的行号**（旧报告行号可能因修复提交位移）。
+> 复核方式：逐条在 `c2e0ec5` 上重读代码 + grep 全仓；每行给出**复核后的行号**（§2 的行号基于 `35fe751`，可能因修复提交位移）。
+> 复核期间 HEAD 又前进了 6 个提交（`2150434` 新增第 16 道 `Gates/privacy.js` 回归闸门，`13a2afd`/`626ab77`/`162b977`/`c2e0ec5` 为 AUDIT-E 的 Swift6 与 E-01~E-10 修复）——**均不改变下表任何一条的判定**（已逐条复核）。
 > 判定口径：**已修** = 该条描述的可利用路径已不存在；**部分修** = 主路径已收紧但仍存在可触发的残余路径；**仍存在** = 代码未变或只改了文案。
 > 汇总：已修 **10** · 部分修 **4** · 仍存在 **18** ⇒ **原 32 项未闭环 22 项**；另有 §4.1 的 4 项新问题（N-01 P1 + N-02~N-04 P3）⇒ **当前待处理合计 26 项**。
 
@@ -675,7 +676,7 @@ App 上锁/退后台后，所有锁的母钥仍常驻进程内存；被调试器
 | SEC-18 | P2 | **仍存在** | — | `KeyDetailScreen.swift:380` 仍 `app.keys.removeAll { $0.id == key.id }`，分支未调 `MobileKeyService.revoke`（grep 该文件 0 命中）。 |
 | SEC-19 | P2 | **仍存在** | — | `StoreKeychain.swift:202-241` `removeDevice` 仍不清 `BackupStudio.dir`/`rollbackDir`；`SecretStore.swift:57-59` `remove` 仍无返回值；grep `BackupStudio` 在 StoreKeychain 0 命中。 |
 | SEC-20 | P2 | **已修** | f50e34f | `BackupStudioScreen.swift:485-493` `normalized` 拒绝非回环 `http://`（`:490` 仅 `localhost`/`127.0.0.1` 例外），其余强制升级 `https://`。**残余（P3）**：`URLSession.shared` 仍跟随重定向且未剥离 `Authorization`（跨 host 时 Basic 头可能被带走）。 |
-| SEC-21 | P2 | **已修** | a1c7df5 | `AppLock.swift:139` `didEnterBackground`、`:147` `willEnterForeground(lockAfter:30)`；`LockKeeperApp.swift:88-91` scenePhase 已接线；`AppLock.swift:153-160` `lock()` 现在会被调用（并 `dropKeychainCache`+`disconnect`）。 |
+| SEC-21 | P2 | **已修** | a1c7df5 | `AppLock.swift:139` `didEnterBackground`、`:147` `willEnterForeground(lockAfter:30)`；`LockKeeperApp.swift:86`（active → `willEnterForeground()`）/ `:90`（background → `didEnterBackground()`）scenePhase 已接线；`AppLock.swift:153-160` `lock()` 现在会被调用（并 `dropKeychainCache`+`disconnect`）。 |
 | SEC-22 | P3 | **仍存在** | — | `AESKit.swift:6-23` 仍 AES-128-ECB + ZeroPadding；`ZKProtocol.swift:170-178` 仍无 IV/MAC；`ZKCmdBuilder.swift:140-147` ekey 仍静态。协议层未变（属固件侧待改）。 |
 | SEC-23 | P3 | **已修** | 140f8b1 | `FrameRedact.swift:23-24` 改为 `while let r = msg.range(of:"hex=", range:)` 逐段处理；:27-34 每段 hex 全部吞掉并按长度脱敏，短 hex → `<redacted>`，不再把剩余 hex 放回。 |
 | SEC-24 | P3 | **仍存在** | — | `LockKeeperApp.swift:62-67` 仍 `case "device":` 直接 `DB.currentMac = mac`，无来源确认/无二次确认弹窗。 |
