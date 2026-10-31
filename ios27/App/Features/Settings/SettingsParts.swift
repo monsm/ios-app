@@ -385,13 +385,23 @@ struct VerifyPasscodeSheet: View {
     }
 
     private func verify() {
-        guard DB.verifyPasscode(code) else {
-            error = "密码不对 · 再试一次"
+        // SEC-28：失败计数必须走 AppLock（持久 + 冷却），不能只在本地 @State 里数。
+        // 旧实现关掉 sheet 就清零 —— 拿到已解锁手机的人可以无限次试 4 位数字密码。
+        switch AppLock.shared.verify(code) {
+        case .success:
+            onVerified()
+            dismiss()
+        case .decoy:
+            // 胁迫码：本机密码类的确认动作一律**不放行**（否则被胁迫者能借它关掉数据保护）。
+            error = "这个输入不能用于本操作"
             code = ""
-            return
+        case .wrong(let remaining):
+            error = remaining > 0 ? "密码不对 · 冷却 \(remaining) 秒" : "密码不对 · 再试一次"
+            code = ""
+        case .cooling(let remaining):
+            error = "冷却中 · \(remaining) 秒后再试"
+            code = ""
         }
-        onVerified()
-        dismiss()
     }
 }
 

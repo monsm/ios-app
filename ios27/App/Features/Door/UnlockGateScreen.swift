@@ -96,20 +96,32 @@ struct UnlockGateScreen: View {
 
     private func verify() {
         guard canSubmit else { return }
-        if DB.verifyPasscode(code) {
+        // SEC-28：走 AppLock 的**持久**失败计数与冷却。旧实现的 `failures` 是 @State ——
+        // 关掉 sheet 就清零，拿到已解锁手机的人可以无限次重试 4 位数字密码。
+        switch AppLock.shared.verify(code) {
+        case .success:
             error = nil
             onPass?()
             dismiss()
-        } else {
-            failures += 1
+        case .decoy:
+            // 胁迫码不该在这里放行：这道闸的目的正是「手机被拿走后再开一次要确认是本人」。
+            error = "这个输入不能用于本操作"
             code = ""
-            if failures >= 3 {
-                cooldownUntil = Date().addingTimeInterval(30)
+        case .wrong(let remaining):
+            failures = AppLock.shared.failStreak
+            code = ""
+            if remaining > 0 {
+                cooldownUntil = Date().addingTimeInterval(Double(remaining))
                 now = Date()
-                error = "密码不对 · 已连续 3 次，冷却 30 秒"
+                error = "密码不对 · 冷却 \(remaining) 秒"
             } else {
-                error = "密码不对 · 还可试 \(3 - failures) 次"
+                error = "密码不对 · 还可试 \(max(0, 3 - failures)) 次"
             }
+        case .cooling(let remaining):
+            cooldownUntil = Date().addingTimeInterval(Double(remaining))
+            now = Date()
+            code = ""
+            error = "冷却中 · \(remaining) 秒后再试"
         }
     }
 }
