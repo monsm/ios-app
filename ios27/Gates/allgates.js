@@ -10,7 +10,10 @@ const path = require('path');
 // 剪贴板直写 / 备份明文 / 空壳只清界面 / 帧脱敏只处理首个 hex= / WebDAV http / 密钥文件无文件保护 / CSV 公式注入。
 // tests 是第 17 道（G-07）：证明测试目标存在、金标夹具真的打进 bundle、且覆盖了协议层关键面。
 // CI 镜像缺 iOS 27 模拟器 runtime，xcodebuild test 在那边跑不了 —— 这道闸门是本地可证的代理。
-const GATES = ['swiftparse', 'types', 'swiftcheck', 'tokens', 'contrast', 'glass', 'motion', 'a11y', 'dynamictype', 'reducedmotion', 'crosprivate', 'callsig2', 'lineage', 'workflow', 'destmap', 'privacy', 'tests'];
+// feedback 是第 18 道：用户动作里的 `try? await` 必须有错误通道。
+// 依据 HIG `feedback`："Show people when a command can't be carried out and help them understand why."
+// 这一类缺陷不崩不报错，只让用户"点了没反应"——本轮实测两处。
+const GATES = ['swiftparse', 'types', 'swiftcheck', 'tokens', 'contrast', 'glass', 'motion', 'a11y', 'dynamictype', 'reducedmotion', 'crosprivate', 'callsig2', 'lineage', 'workflow', 'destmap', 'privacy', 'tests', 'feedback'];
 
 let failed = 0;
 for (const g of GATES) {

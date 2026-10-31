@@ -12,6 +12,12 @@ struct AutoOpenScreen: View {
     private var store: SettingsStore { SettingsStore.shared }
 
     @State private var calibrating = false
+    /// 标定失败时给用户看的原因。
+    /// 旧实现用 `try? await ensureConnected(...)` 把连不上**静默吞掉**，然后照样往下采 5 次 RSSI ——
+    /// 一次都采不到时 `saveAutocal` 返回 nil，界面只是把「已标定」退回「未标定」，
+    /// 用户看到的是"点了按钮、转了一会儿、什么都没变"。HIG `feedback` 明确要求：
+    /// "Show people when a command can't be carried out and help them understand why."
+    @State private var calibrationError: String?
 
     var body: some View {
         ScrollView {
@@ -131,6 +137,10 @@ struct AutoOpenScreen: View {
                             calibrate()
                         }
                     }
+                    // 标定失败要说清楚为什么 —— 否则用户只知道"点了没用"。
+                    if let calibrationError {
+                        VStatusLine(tone: .attention, text: calibrationError)
+                    }
                 }
             }
             .padding(.horizontal, V.S.pageGutter)
@@ -164,9 +174,17 @@ struct AutoOpenScreen: View {
     private func calibrate() {
         guard let mac = app.lock?.id, !calibrating else { return }
         calibrating = true
+        calibrationError = nil
         Task { @MainActor in
+            defer { calibrating = false }
             // 真链路：连上锁后读 5 次当前链路 RSSI，取 P95 作为这把锁的距离门槛。
-            try? await LockService.shared.ensureConnected(mac: mac)
+            // 连不上必须**说出来**：旧实现用 `try?` 吞掉，用户只看到转圈然后什么都没变。
+            do {
+                try await LockService.shared.ensureConnected(mac: mac)
+            } catch {
+                calibrationError = "连不上门锁，没法标定：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+                return
+            }
             var samples: [Int] = []
             for _ in 0 ..< 5 {
                 let r: Int? = await withCheckedContinuation { cont in
@@ -177,10 +195,12 @@ struct AutoOpenScreen: View {
             }
             if AutoOpen.saveAutocal(mac, samples: samples) != nil {
                 store.calibrationAt = Int64(Date().timeIntervalSince1970 * 1000)
+                calibrationError = nil
             } else {
                 store.calibrationAt = nil
+                // 采不到样本 = 没标定成功。别让"未标定"这个状态自己解释自己。
+                calibrationError = "这次只采到 \(samples.count)/5 个信号样本，不足以标定。请站在门外一步的位置、保持手机朝向门锁，再试一次。"
             }
-            calibrating = false
         }
     }
 

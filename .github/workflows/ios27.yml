@@ -4,7 +4,7 @@
 #   与仓库里既有的 ios.yml 同一个镜像；它抽风时把 runs-on 改回 macos-latest 即可。
 #
 # 为什么需要云端：开发机是 Windows，没有 Xcode，也没有 iOS 模拟器。
-# 本地能跑的是 16 道静态闸门 + DesignLab 截图；真编译只能在这里做。
+# 本地能跑的是 18 道静态闸门 + DesignLab 截图；真编译只能在这里做。
 #
 # 关键技巧（从既有 ios.yml 学来的）：SWIFT_COMPILATION_MODE=wholemodule
 #   默认增量模式下一个文件失败就停，只能一轮挤一个错。整模块单次调用会把**全仓所有** error
@@ -34,7 +34,7 @@ defaults:
 jobs:
   # ================= 静态闸门（本地同款，先红就别浪费编译时间）=================
   gates:
-    name: 静态闸门（16 道）
+    name: 静态闸门（18 道）
     runs-on: ubuntu-latest
     # G-11：镜像抽风时不要按默认 6 小时占着跑。
     timeout-minutes: 15

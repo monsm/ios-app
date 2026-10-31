@@ -384,12 +384,20 @@ struct DeviceInfoScreen: View {
             clockDrift = drift
             // 进页自动校时：只在真漂移 (>2s) 时写，与 APK 的无条件写终态一致但少一次广播。
             if let drift, abs(drift) > 2 {
-                if let res = try? await LockService.shared.syncTime() {
+                // 检测到漂移却校时失败时，**必须说出来**。
+                // 旧实现用 `try?` 吞掉错误，outcome 保持空串 —— 用户看到的是
+                // "偏差 37 秒"却什么也没发生，也无从知道校时没成功（HIG feedback：
+                // 命令没做成要说清原因）。
+                do {
+                    let res = try await LockService.shared.syncTime()
                     st = try await LockService.shared.getStatus(mac: mac)
                     DB.writeStatus(mac, st)
                     status = st
                     clockDrift = st.lockTime.map { Int($0 - ZKProtocol.nowProtoSeconds()) }
                     outcome = "已自动校时 · 校前偏差 \(res.before) 秒 / 校后 \(res.after) 秒"
+                } catch {
+                    outcome = "检测到锁钟偏差 \(drift) 秒，但自动校时失败："
+                        + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
                 }
             } else {
                 outcome = "已重新读取锁信息"
