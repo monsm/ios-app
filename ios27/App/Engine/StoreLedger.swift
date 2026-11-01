@@ -194,6 +194,19 @@ extension DB {
         // 这里是全仓所有 `DB.delPwd` 的唯一落点（停用/彻底删除/批量/换槽/恢复都走它），
         // 所以取消放在这一处即可覆盖全部删除路径。
         CredentialOrg.cancelAlerts(mac: mac, alias: alias)
+        // 2026-11-01（Round 227）：**派生数据也要随删** —— 星标与拖拽顺序里都还留着这个别名的条目。
+        // 锁端会复用别名（删掉再新增常常拿到同一个 #N），于是新凭证会"自带旧星标 / 排到旧位置"，
+        // 用户完全看不出原因。删除是唯一落点，清在这里即可覆盖全部路径。
+        var stars = CredStarStore.all(mac)
+        if stars.remove("pwd:\(alias)") != nil { CredStarStore.set(mac, stars) }
+        // 「本机停用位」也是同一族的派生数据（键同样是 `pwd:<别名>`）。
+        CredentialLocalState.setDisabled(mac: mac, id: "pwd:\(alias)", false)
+        var sq = CredentialOrg.seq(mac)
+        if var p = sq["p"], let i = p.firstIndex(of: alias) {
+            p.remove(at: i)
+            sq["p"] = p
+            CredentialOrg.setSeq(mac, sq)
+        }
     }
 
     static func rePwd(_ mac: String, _ alias: Int, _ pwd: String) {
@@ -253,6 +266,16 @@ extension DB {
         var l = ledger(mac)
         l.fps.removeAll { $0.batch == batch }
         saveLedger(mac, l)
+        // 同 `delPwd`：指纹的星标与拖拽顺序同样要随删（批次号也会被锁端复用）。
+        var stars = CredStarStore.all(mac)
+        if stars.remove("fp:\(batch)") != nil { CredStarStore.set(mac, stars) }
+        CredentialLocalState.setDisabled(mac: mac, id: "fp:\(batch)", false)
+        var sq = CredentialOrg.seq(mac)
+        if var p = sq["f"], let i = p.firstIndex(of: batch) {
+            p.remove(at: i)
+            sq["f"] = p
+            CredentialOrg.setSeq(mac, sq)
+        }
     }
 
     static func renameFp(_ mac: String, _ batch: Int, _ name: String) {
