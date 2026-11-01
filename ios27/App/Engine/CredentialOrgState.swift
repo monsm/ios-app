@@ -60,14 +60,18 @@ extension CredentialOrg {
     /// 「删旧 / 排新 / 取消」三类动作全部排进同一条队列，逐个完成后再取下一个。
     /// 旧实现让 cancelAlerts 与 scheduleAlertsOrdered 各自起异步序列，两条序列互相
     /// 看不到对方的中间态 —— 删凭证与改期同时发生时，先删后加的顺序不成立。
-    private static let notifyQueue = Locked<[(@escaping () -> Void) -> Void]>([])
+    // 与 `enqueue` 的签名保持一致（外层 job 也必须 @Sendable，见那里的说明）。
+    private static let notifyQueue = Locked<[(@escaping @Sendable (@escaping @Sendable () -> Void) -> Void)]>([])
     private static let notifyBusy = Locked(false)
 
     /// 入队一个"完成时调 done()"的异步动作；队列空闲则立刻开跑。
-        /// 回调参数标 `@Sendable`：它只被异步 API（`UNUserNotificationCenter.getPendingNotificationRequests`
-    /// 等）的 `@Sendable` 闭包捕获，本身不碰任何隔离状态 —— 不标就会出
-    /// `capture of 'done' with non-Sendable type` 告警（CI build.log 里 4 条，切 Swift 6 会变 error）。
-    static func enqueue(_ job: @escaping (@escaping @Sendable () -> Void) -> Void) {
+    ///
+    /// **两个 `@Sendable` 都是必要的**（2026-11-01，两轮才补齐）：
+    ///   · 内层 `done` —— 它被 `UNUserNotificationCenter` 的 `@Sendable` 闭包捕获；
+    ///   · 外层 `job` —— 它被存进 `notifyQueue` 并在 `Task { @MainActor in … }` 里被调用。
+    /// 只标内层会得到一条新告警 `passing non-Sendable parameter 'job'`（我上一轮就只标了内层，
+    /// CI 从 6 条降到 1 条而不是 0 条，正是这条）。
+    static func enqueue(_ job: @escaping @Sendable (@escaping @Sendable () -> Void) -> Void) {
         let start: Bool = notifyQueue.withLock { q in
             q.append(job)
             return !notifyBusy.withLock { b in
@@ -81,7 +85,7 @@ extension CredentialOrg {
 
     /// 取队首执行；队列空则释放忙标志。**任何路径都必须调 advance()**，否则整条链会卡死。
     private static func runNextNotify() {
-        let job: ((@escaping () -> Void) -> Void)? = notifyQueue.withLock { q in
+        let job: (@Sendable (@escaping @Sendable () -> Void) -> Void)? = notifyQueue.withLock { q in
             q.isEmpty ? nil : q.removeFirst()
         }
         guard let job else {
