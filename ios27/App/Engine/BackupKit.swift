@@ -181,7 +181,12 @@ enum BackupKit {
                     recNotes: RecordOverlay.notes(mac).isEmpty ? nil : RecordOverlay.notes(mac),
                     recFlags: RecordOverlay.flags(mac).isEmpty ? nil : Array(RecordOverlay.flags(mac)).sorted(),
                     recDisps: RecordOverlay.dispositions(mac).isEmpty ? nil
-                        : RecordOverlay.dispositions(mac).mapValues { $0.verdict }))
+                        : RecordOverlay.dispositions(mac).mapValues { $0.verdict },
+                    // 2026-11-01：到期提醒档位同口径导出；全关的条目省略（不写等价空表进备份）。
+                    alerts: {
+                        let t = CredentialOrg.alertTable(mac).filter { $0.value != CredAlert() }
+                        return t.isEmpty ? nil : t
+                    }()))
         }
         let dongles = DB.dongles()
         let gws = DB.gateways()

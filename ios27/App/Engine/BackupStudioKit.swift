@@ -445,6 +445,14 @@ enum BackupStudio {
                 if let n = meta.recNotes { RecordOverlay.setNotes(mac, n) }
                 if let f = meta.recFlags { RecordOverlay.setFlags(mac, Set(f)) }
                 if let dd = meta.recDisps { RecordOverlay.setDispositions(mac, dd) }
+                // 2026-11-01：到期提醒档位回写（键形如 `pwd:<alias>`）。
+                // 缺字段 = 这次备份没带 = 不动本机（与上面几族同口径）。
+                if let al = meta.alerts {
+                    for (k, a) in al {
+                        guard k.hasPrefix("pwd:"), let alias = Int(k.dropFirst(4)) else { continue }
+                        DB.setCodable(a, CredentialOrg.alertKey(mac, "pwd", alias))
+                    }
+                }
             }
             guard act != "keep", let l = d.ledger else { continue }
             var cur = DB.ledger(mac)

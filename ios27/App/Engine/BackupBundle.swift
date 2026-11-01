@@ -39,6 +39,11 @@ struct BackupBundle: Codable {
             /// 这三族此前既不进备份、也不进回滚。restore 会整表替换台账 / 重建成员 ⇒ 行键全部失效，
             /// 不收就等于「备注和旗标凭空没了」。缺省 = 这次备份没带 = 恢复时不动本机。
             var recNotes: [String: String]?
+            /// 凭证到期提醒档位（`kf_calert_<mac>_pwd_<alias>`：day/d3/d1/h24/h2）。
+            /// 2026-11-01 补：这一族此前**完全不在备份里** —— 换机或导入备份后，
+            /// 每条凭证的提醒档位静默归零，用户不会收到任何到期提醒，也没有提示。
+            /// 键形如 `pwd:<alias>`；缺省 = 这次备份没带 = 不动本机。
+            var alerts: [String: CredAlert]?
             var recFlags: [String]?
             var recDisps: [String: String]?
         }

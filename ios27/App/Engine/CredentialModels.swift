@@ -2,7 +2,8 @@
 // 2026-10-29 从 CredentialOrg.swift（743 行）拆出。
 import Foundation
 
-struct CredAlert: Codable {
+// Equatable 只用于「这条提醒是否仍是全关」（导出时把全关的条目省略，不写等价空表进备份）。
+struct CredAlert: Codable, Equatable {
     var day: Bool = false
     var d3: Bool = false       // 930: 到期前 3 天
     var d1: Bool = false       // 930: 到期前 1 天
