@@ -42,6 +42,10 @@ final class AppToast {
 /// 顶部悬浮提示条（v7 卡片语言；不遮导航标题，只压在上缘安全区内）。
 struct ToastHost: View {
     @State private var toast = AppToast.shared
+    /// 2026-11-01 修复：提示条的 `transition(.move)` **没有减弱动态守卫** ——
+    /// 用户开了「减弱动态效果」后它仍然从顶部滑入。`reducedmotion` 闸门只扫 `.animation(`，
+    /// `transition(` 是它覆盖不到的第二类（已同步扩判据）。
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack {
@@ -67,7 +71,7 @@ struct ToastHost: View {
                 }
                 .padding(.horizontal, V.S.cardGutter)
                 .padding(.top, V.S.gapS)
-                .transition(.move(edge: .top).combined(with: .opacity))
+                .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel(message)
             }

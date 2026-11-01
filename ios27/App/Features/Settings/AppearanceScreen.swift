@@ -470,7 +470,7 @@ struct AppearanceScreen: View {
                     .font(V.F.stamp)
                     .foregroundStyle(V.C.text1)
                     .monospacedDigit()
-                    .contentTransition(.numericText())
+                    .contentTransition(systemReduceMotion ? .identity : .numericText())
                     // 这里用 systemReduceMotion（本文件的环境值名）：
                     // 与 store 里的"App 内动效档"是两个独立开关 —— 系统的是硬约束，App 内的是偏好。
                     .animation(systemReduceMotion ? nil : V.M.snap, value: previewClock)

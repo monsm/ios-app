@@ -34,8 +34,15 @@ for (const f of walk(APP)) {
   lines.forEach((line, i) => {
     const t = line.trim();
     if (t.startsWith('//') || t.startsWith('///')) return;
-    if (!/\.animation\(/.test(line) && !/withAnimation\(/.test(line)) return;
+    // 2026-11-01 扩判据：`.transition(` 与 `.animation(` / `withAnimation(` 是同一类东西 ——
+    // 它同样会产生内容滑动。`ToastCenter` 的提示条就是从顶部滑入的，此前一直没被这道闸门看见。
+    // `.contentTransition(` 一并纳入（数字滚动也是动效）。
+    const isMotion = /\.animation\(/.test(line) || /withAnimation\(/.test(line)
+      || /\.transition\(/.test(line) || /\.contentTransition\(/.test(line);
+    if (!isMotion) return;
     if (/configuration\.isPressed/.test(line)) return;
+    // 纯透明度过渡不产生位移/缩放 —— 减弱动态针对的是"动起来"，不是"淡入淡出"。
+    if (/\.transition\(\.opacity\)/.test(line)) return;
     // 环境值可能叫 reduceMotion / systemReduceMotion / axReduceMotion 等 —— 认"含 ReduceMotion 的标识符"
     if (/[A-Za-z_]\w*[Rr]educeMotion/.test(line) || /reduceMotion/.test(line)) { guarded++; return; }
     findings.push(rel + ':' + (i + 1) + ' 动效没尊重减弱动态: ' + t.slice(0, 80));

@@ -10,6 +10,7 @@ import SwiftUI
 
 struct ZotpScreen: View {
     @Environment(AppModel.self) private var app
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var otpOn = false
     @State private var code = ""
@@ -96,7 +97,8 @@ struct ZotpScreen: View {
                 Text(displayCode)
                     .font(((AXSettings.bigOTP || bigCode) ? V.F.otpBig : V.F.otpRegular).monospacedDigit())
                     .foregroundStyle(V.C.text1)
-                    .contentTransition(.numericText())
+                    // 减弱动态下不做数字滚动（纯换字）。
+                    .contentTransition(reduceMotion ? .identity : .numericText())
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, V.S.gapM)
