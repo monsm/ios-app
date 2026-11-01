@@ -346,6 +346,10 @@ jobs:
           # errors=0 只说明**编译**没有 error 行 —— 它不等于 job 绿。
           # 测试步骤失败时 archive 不会跑（archive.log 根本不存在），而 errors 仍是 0。
           # 所以把每一步的产物与结论都记下来，让本地能独立判断"到底绿没绿"。
+          # 2026-11-01：`build_log=no` 时本地只能猜"红在更早的步骤"（xcodegen/brew/checkout）。
+          # 把**工程是否生成**与**源码文件数**也记进来 —— 一眼能分开"xcodegen 挂了"与"根本没 checkout 到"。
+          echo "project=$([ -d LockKeeper.xcodeproj ] && echo yes || echo no)" >> /tmp/ciout/meta.txt
+          echo "swift_files=$(find App -name "*.swift" 2>/dev/null | wc -l | tr -d " ")" >> /tmp/ciout/meta.txt
           echo "build_log=$([ -f /tmp/ciout/build.log ] && echo yes || echo no)" >> /tmp/ciout/meta.txt
           echo "archive_log=$([ -f /tmp/ciout/archive.log ] && echo yes || echo no)" >> /tmp/ciout/meta.txt
           echo "build_ok=$(grep -c "BUILD SUCCEEDED" /tmp/ciout/build.log 2>/dev/null || echo 0)" >> /tmp/ciout/meta.txt
