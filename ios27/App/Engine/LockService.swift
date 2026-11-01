@@ -36,12 +36,20 @@ final class LockService: ObservableObject {
         ble.bootstrap()
     }
 
-    /// 打开后 `TX hex=` / `RX hex=` 日志才会产生（`HardwareService` / `LockServiceLink` 同键同判）。
-    /// 注意（2026-11-01 核实）：**本仓当前没有任何 UI 写这个键**，所以诊断页的
-    /// `recentFrames`（原始帧环形缓冲）在正常使用中**恒为空** ——
-    /// 不是"没抓到帧"，而是"根本没记录"。要看原始帧，需外部改 UserDefaults
-    /// （`kf_debug_raw = true`）。这条写在这里，是为了不让人把"空的原始帧列表"误读成"链路没数据"。
+    /// 打开后 `TX hex=` / `RX hex=` **日志行**才会产生（`HardwareService` / `LockServiceLink` 同键同判）。
+    /// 注意（2026-11-01 核实）：**本仓当前没有任何 UI 写这个键**（需外部改 UserDefaults）。
+    /// 但这不影响诊断页的 `recentFrames`：帧现在由 `recordFrame(_:)` **无条件**记录
+    /// （只进内存环形缓冲、不落盘），`debugRaw` 只控制是否额外打一条 hex 日志。
     var debugRaw: Bool { DB.store.getBool("kf_debug_raw") }
+
+    /// 只把原始帧放进内存环形缓冲（**不落盘、不可复制**，见 `log` 里的注释）。
+    /// 2026-11-01：诊断页的「原始帧」面板此前恒为空 —— 因为帧只在 `debugRaw` 打开时才进缓冲，
+    /// 而那个开关没有 UI（外部改 defaults 才行）。这里把"记录帧"与"打印 hex 日志"拆开：
+    /// 帧照常进内存供诊断，日志仍受 `debugRaw` 控制（避免刷屏）。
+    func recordFrame(_ msg: String) {
+        recentFrames.append(msg)
+        if recentFrames.count > 60 { recentFrames.removeFirst(recentFrames.count - 60) }
+    }
 
     func log(_ level: String, _ msg: String) {
         // 同一份时间戳口径收进 DiagTime (hhmmss 此前零调用, 而这里手写了一份重复实现)

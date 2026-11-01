@@ -244,6 +244,7 @@ extension LockService {
                 }
                 do {
                     if debugRaw { log("info", "TX hex=\(hex)") }
+                    else { recordFrame("TX hex=\(hex)") }
                     try await ble.writeFrameHex(hex)
                 } catch {
                     // 写失败: 显式续跑挂起的 waiter (防 continuation 泄漏), 交由上层重试
@@ -256,6 +257,7 @@ extension LockService {
                 }
                 frame = try await respTask.value
                 if debugRaw { log("info", "RX cmd=\(String(format: "%02x", frame.cmd)) hex=\(frame.raw)") }
+                else { recordFrame("RX cmd=\(String(format: "%02x", frame.cmd)) hex=\(frame.raw)") }
                 // 命令结束即释放归属，让下一方（可能是 HardwareService）能收到自己的帧。
                 ble.setFrameOwner(nil)
                 return frame
