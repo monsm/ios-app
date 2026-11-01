@@ -446,7 +446,12 @@ console.log('privacy: 扫 ' + files.length + ' 个 Swift 文件 + PrivacyInfo.xc
 
 
 if (fails.length === 0) {
-  console.log('privacy: OK — 剪贴板/备份加密/空壳隔离(读+写)/明文口令不进 plist/帧脱敏/WebDAV/文件保护/CSV 注入/隐私清单 XML 10 类回归判据全部通过');
+  // 2026-11-01：输出里**不再写条数**。
+// 原因：这个数字曾经是"10 类"，扩到 21 条时没跟上，而三处文档各写了不同数字（10 / 14 / 21）。
+// 我试过"从规则注释里数出来"，但规则 1–10 是早期写的、没有 `// N)` 编号 ⇒ 数到 11 而不是 21。
+// 按本段原则（不可靠的判据不做），改为**只列覆盖面、不报条数** —— 条数由 ARCHITECTURE 维护，
+// 而 `workflow.js` 对账的是"闸门数"而不是"每道闸门的判据数"。
+console.log('privacy: OK — 剪贴板/备份加密/空壳隔离(读+写)/明文口令/帧脱敏/WebDAV/文件保护/CSV 注入/隐私清单/胁迫码/披露/常亮复位 —— 全部通过');
   process.exit(0);
 }
 console.log('privacy: FAIL — ' + fails.length + ' 处回归\n');
