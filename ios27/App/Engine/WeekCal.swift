@@ -32,6 +32,15 @@ enum WeekCal {
     }
 
     /// kf_week_start: "" 跟随系统 / "mon" 周一 / "sun" 周日 / "sat" 周六
+    ///
+    /// 【保留未接 2026-11-01】912 周起始日偏好 —— **当前无 UI 写入点**：
+    /// 全仓只有 `WeekCal.key` 读它、备份里枚举它（`BackupKit` 的白名单 `["", "mon", "sun", "sat"]`），
+    /// 设置页（`AppearanceScreen`）没有对应选项 ⇒ 现网恒为空串 ⇒ `weekdayMap` 那条分支永不执行。
+    /// 接线点：外观页「记录页」分区（`VSectionLabel(text: "记录页")` 那一段）。
+    ///
+    /// 接线时**必须**同时处理一个副作用：`HouseholdRoster.weekKey` / `MemberHub` 的轮值键
+    /// 都是 `String(yearForWeekOfYear) + "-W" + String(weekOfYear)` —— 中途切档位会让周号变化，
+    /// 于是"本周轮值"看起来丢了一周。接之前要先定好"切档位时怎么迁移已有的 duty 表"。
     /// 三个显式档的映射表。刻意不做"任意数字"输入：Sunday=1…Saturday=7 是 Calendar 的内部约定，
     /// 把它暴露成设置项等于让用户猜数字。
     private static let weekdayMap: [String: Int] = ["sun": 1, "mon": 2, "sat": 7]

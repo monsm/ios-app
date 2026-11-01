@@ -26,6 +26,11 @@
 > 第 14–16 条是 2026-11-01 用"可达性"扫描（而非引用计数）找出来的：它们对外零引用，
 > 但实现完整、有需求编号，属**保留未接**，已在源码处加 `【保留未接】` 标记。
 
+### 存储键级的「保留未接」（不是函数，`reserved.js` 闸门不查这一类）
+
+| 键 | 文件 | 功能 | 接线点 | 接线成本 |
+|---|---|---|---|---|
+| `kf_week_start` | `WeekCal` | 912 周起始日偏好（`""`/`mon`/`sun`/`sat`） | 外观页「记录页」分区 | **高** —— 接之前必须定好"切档位时 `duty` 表怎么迁移"：`HouseholdRoster.weekKey` 与 `MemberHub` 的轮值键都是 `yearForWeekOfYear + "-W" + weekOfYear`，中途换档会让周号变化，看起来"丢了一周" |
 > 同批被**删除**的（真死，不是保留）：`MemberHub.aliasName`（被 `CredentialOrg.ownerName` 取代）、
 > `MemberHub.display`+`unnamedLabel`+`doubleLine`（封闭死簇）、`BatteryCare.facePct`
 > （三个界面都直接用 `displayPct`）。
