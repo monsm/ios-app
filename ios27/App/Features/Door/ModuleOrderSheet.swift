@@ -51,18 +51,6 @@ struct ModuleOrderCard: View {
             resetPanel
         }
         .padding(.vertical, V.S.gap16)
-        .confirmationDialog("恢复默认版面？", isPresented: $resetConfirm, titleVisibility: .visible) {
-            Button("恢复默认", role: .destructive) {
-                DevLayout.reset()
-                order = DevLayout.order
-                hidden = DevModuleStore.hidden
-                quickIDs = Set(QuickPool.selected.map(\.id))
-                AppToast.shared.show("已恢复默认版面", tone: .ok)
-            }
-            Button("取消", role: .cancel) {}
-        } message: {
-            Text("槽位顺序、模块显隐与快捷格勾选都会回到出厂默认；不动门锁、凭证与记录。")
-        }
     }
 
     // MARK: 三槽排序
@@ -207,6 +195,22 @@ struct ModuleOrderCard: View {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VOutlineButton(title: "恢复默认版面", systemImage: "arrow.uturn.backward") {
                     resetConfirm = true
+                }
+                // 2026-11-01：`confirmationDialog` 从根视图挪到**触发它的按钮**上。
+                // 判据（`swiftui-pro` navigation.md）：挂在触发控件上，「液态玻璃才会从正确的位置展开」。
+                // 挂在根视图上时，iPad / Liquid Glass 会从屏幕中部弹出，
+                // 用户看不出"是哪颗按钮要重置什么"。
+                .confirmationDialog("恢复默认版面？", isPresented: $resetConfirm, titleVisibility: .visible) {
+                    Button("恢复默认", role: .destructive) {
+                        DevLayout.reset()
+                        order = DevLayout.order
+                        hidden = DevModuleStore.hidden
+                        quickIDs = Set(QuickPool.selected.map(\.id))
+                        AppToast.shared.show("已恢复默认版面", tone: .ok)
+                    }
+                    Button("取消", role: .cancel) {}
+                } message: {
+                    Text("槽位顺序、模块显隐与快捷格勾选都会回到出厂默认；不动门锁、凭证与记录。")
                 }
                 SettingsNote(text: "只重置版面：槽位顺序、模块显隐、快捷格勾选。门锁、凭证、记录一项都不动。")
             }

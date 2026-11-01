@@ -36,12 +36,6 @@ struct AppearanceScreen: View {
         .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("外观")
         .navigationBarTitleDisplayMode(.inline)
-        .confirmationDialog("恢复默认外观？", isPresented: $showResetConfirm, titleVisibility: .visible) {
-            Button("恢复默认外观", role: .destructive) { store.resetAppearance() }
-            Button("取消", role: .cancel) {}
-        } message: {
-            Text("只重置主题、密度、动效、高对比与时间显示。不动本机密码、备份、钥匙串与任何门锁数据。")
-        }
     }
 
     // MARK: 页头
@@ -583,6 +577,14 @@ struct AppearanceScreen: View {
                 VStack(alignment: .leading, spacing: V.S.gapMS) {
                     VOutlineButton(title: "恢复默认外观", systemImage: "arrow.uturn.backward") {
                         showResetConfirm = true
+                    }
+                    // 2026-11-01：同 `ModuleOrderSheet` —— 对话框挂在**触发它的按钮**上，
+                    // 液态玻璃才会从按钮位置展开，而不是从屏幕中部。
+                    .confirmationDialog("恢复默认外观？", isPresented: $showResetConfirm, titleVisibility: .visible) {
+                        Button("恢复默认外观", role: .destructive) { store.resetAppearance() }
+                        Button("取消", role: .cancel) {}
+                    } message: {
+                        Text("只重置主题、密度、动效、高对比与时间显示。不动本机密码、备份、钥匙串与任何门锁数据。")
                     }
                     SettingsNote(text: "只重置这一屏的偏好。本机密码、备份、钥匙串与门锁数据一项都不动。")
                 }
