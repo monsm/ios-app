@@ -310,7 +310,13 @@ final class AppModel {
                     nonRetryable = true
                     throw BLEErrorX.msg("门锁要求第二种验证方式（B 模式双验）—— 请再用指纹或密码验证一次")
                 }
-                nonRetryable = [1, 2, 6, 11].contains(rc)
+                // 2026-11-01（Round 250）：除凭证类（1/2/6/11）外，**3 / 5 / 26 也是确定性失败**，
+                // 原来它们会被重试 —— 而重试必然同样结果：
+                //   · 3  命令过期（锁钟漂）—— 本路径**不会先校时**，原样重发必然再过期（自动开锁那条会先校时再重试）
+                //   · 5  次数用完 —— 这枚钥匙已经废了，重试只是白耗电
+                //   · 26 防拆事件 —— 锁主动拒绝，重试同样被拒
+                // 仍可重试的：25（锁忙，等一下就好）、超时/断连（已在下面单独处理）。
+                nonRetryable = [1, 2, 3, 5, 6, 11, 26].contains(rc)
                 throw BLEErrorX.msg(StatusParser.rcFriendly(rc))
             } catch {
                 let msg = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
