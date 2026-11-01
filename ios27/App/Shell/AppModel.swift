@@ -418,9 +418,11 @@ final class AppModel {
                 // vendor 同款：`surplus > 0 && logCount < 100` 才继续 —— surplus 为 0 表示已经到底。
                 if let s = page.surplus, s <= 0 { break }
                 if page.logs.count < 5 { break }
-                // 往回退：末条 idx - 1（idx 是 32 位，先判 0 防下溢）
-                guard let last = page.logs.last, last.idxRaw > 0 else { break }
-                startIdx = last.idxRaw - 1
+                // 往回退：取**页内最小 idx** 再 -1（idx 是 32 位，先判 0 防下溢）。
+                // vendor 写的是"页内最后一条"，那隐含假设了固件按降序返回 —— 用 `min()` 等价，
+                // 但即使某固件在页内升序也不会跑飞（`last` 会变成最大 idx，翻页直接原地打转）。
+                guard let low = page.logs.map(\.idxRaw).min(), low > 0 else { break }
+                startIdx = low - 1
             }
             // **只在读满 20 页（可能被截断）时才报剩余数。**
             // 原因：不同固件对 KLV#04 的语义可能是"剩余"也可能是"总数"，
