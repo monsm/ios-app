@@ -1,29 +1,36 @@
-# AUDIT-ROUND-198 · 第 198 轮：把单飞改成**零并发告警**的写法
+# AUDIT-ROUND-198 · 第 198 轮：单飞改成 continuation（并纠正上一版的判断）
 
-## 1. 为什么要改
+## 1. 先纠错
 
-`project.yml` 写得很清楚：
+我在改这版时的理由是"`Task { [self] }` 会产生并发告警"，**这个判断是错的**。
 
-```yaml
-SWIFT_VERSION: "5.0"
-SWIFT_STRICT_CONCURRENCY: complete
-SWIFT_TREAT_WARNINGS_AS_ERRORS: NO
+`b49eebd`（就是 Task 版本）的 CI 回执：
+
+```
+build_ok=1  archive_ok=1  errors=0  warnings=0
 ```
 
-并发问题在 Swift 5 模式下是**告警**，不会让构建失败 ——
-**但 CI 的回执口径是 `warnings=0`**（每一轮 meta.txt 都记着 `warnings=…`）。
+**`warnings=0`** —— 那句 `Task { [self] … }` **没有**产生并发告警。
+原因大概是 `LockService` 已经是 `@MainActor`，而 `Task { }` 在 MainActor 上下文里继承隔离，
+捕获 self 不构成跨 actor 传递，所以 `strict concurrency: complete` 也不报。
 
-而我上一版写的是：
+我把"理论上可能报"当成了"一定会报"。**这是推测当证据。**
 
-```swift
-let task = Task { [self] in try await ensureConnectedInner(mac: m) }
-```
+## 2. 那为什么保留 continuation 版本
 
-`Task` 的闭包是 `@Sendable`，捕获 `LockService`（非 Sendable 类）⇒
-`strict concurrency: complete` 下会报「capture of non-Sendable self」。
-**构建能过，但会多一条告警** —— 等于把 `warnings=0` 的卫生记录弄脏。
+既然 Task 版本是绿的，continuation 版本不是"修复"，是**等价但更显式**的写法：
 
-## 2. 改成 continuation
+| 维度 | `Task { [self] }` | continuation |
+|---|---|---|
+| 语义 | 后来者 `await` 同一个 Task | 后来者挂在 `connectWaiters` 上被唤醒 |
+| 中断安全 | 靠 MainActor 保证 | 靠 MainActor 保证（同样无 await 间隙） |
+| 额外对象 | 每次连接建一个 `Task` | 无 |
+| 可读性 | 藏一层 | 显式：谁在等、什么时候唤醒 |
+
+两者都正确。保留 continuation 的理由只是**没有额外对象、边界更清楚**，
+而不是"Task 版本有问题"。
+
+## 3. 代码
 
 ```swift
 if connectingMac == m {
@@ -32,6 +39,7 @@ if connectingMac == m {
     }
     return
 }
+connectingMac = m
 …
 private func settleConnecting(_ error: Error?) {
     connectingMac = ""
@@ -41,29 +49,17 @@ private func settleConnecting(_ error: Error?) {
 }
 ```
 
-| 方案 | 并发告警 | 说明 |
-|---|---|---|
-| 存 `Task { [self] … }` | **1 条** | 捕获非 Sendable self |
-| **continuation** | **0** | 不跨 actor 传递，只是挂起/唤醒 |
-
-## 3. 正确性没变
-
-`LockService` 是 `@MainActor`：
-
-| 步骤 | 是否可被打断 |
-|---|---|
-| `if connectingMac == m` → `connectWaiters.append(c)` | **否**（中间没有 await） |
-| `connectingMac = m` | **否** |
-| `settleConnecting` 清标记 + 唤醒全部 | **否** |
-
-所以"检查 + 登记"仍是原子的，单飞的语义与上一版一致。
+`LockService` 是 `@MainActor`，所以「检查 + 登记」与「清标记 + 唤醒」都不会被打断，单飞语义成立。
 
 ## 4. 方法论
 
-**"能编译"和"没弄脏卫生线"是两件事。**
+**「可能」不是「会」—— 而我这次把"可能"写成了"会"。**
 
-`SWIFT_TREAT_WARNINGS_AS_ERRORS: NO` 只保证构建不因告警失败 ——
-但它**不保证告警不会增加**。而 `warnings=0` 这个记录本身就是资产：
-一旦允许它变成 1，下一个人就会允许它变成 10。
+| 我说的 | 实际 |
+|---|---|
+| "`Task { [self] }` 在 strict concurrency 下会报告警" | CI 回执 `warnings=0`，没报 |
 
-判据：**改代码时，除了"能不能过"，还要问"会不会多一条告警"。**
+正确的做法是：**改之前就说"不确定，等回执"；改之后如果回执证明我错了，把错的那句改掉**
+—— 而不是让"听起来很合理的推断"留在文档里变成下一个人的依据。
+
+这条比代码本身重要。
