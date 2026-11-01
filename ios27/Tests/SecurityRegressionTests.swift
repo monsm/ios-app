@@ -514,6 +514,26 @@ final class SecurityRegressionTests: XCTestCase {
         RecordOverlay.setDispositions(mac, [:])   // 清理
     }
 
+    // MARK: - 删设备必须清掉四族钥匙串副本
+
+    /// `kf_mkey_<mac>` 这个 plist 键被删掉，**不等于**钥匙串里的 pin/ekey 副本也没了。
+    /// `purgeSecretsForDevice` 负责后者 —— 少了它，删了锁之后它签出去的手机钥匙 ekey
+    /// 仍留在本机钥匙串里（可读的开门口令）。
+    func testMobileKeyPurgeRemovesSecretCopies() throws {
+        let mac = "aabbccddeeff"
+        let k = MobileKey(id: "k9", pin: "11223344", ekey: "aabbccdd",
+                          memberID: "m1", memberName: "甲", forever: true,
+                          validFrom: "", validTo: "", at: 0)
+        MobileKeyService.save(mac, [k])
+        // 与 `testLedgerPasswordRoundTripsThroughKeychain` 同口径：
+        // 未签名测试宿主没有钥匙串权限，此时本用例没有可验证的前提 —— 跳过而非假通过。
+        try XCTSkipUnless(keychainAvailable, "密钥库 在本测试宿主不可用（未签名 bundle）—— 跳过而非假通过")
+
+        MobileKeyService.purgeSecretsForDevice(mac)
+        XCTAssertNil(SecretStore.get(MobileKeyService.pinAccount(mac, "k9")), "purge 后 pin 副本必须清掉")
+        XCTAssertNil(SecretStore.get(MobileKeyService.ekeyAccount(mac, "k9")), "purge 后 ekey 副本必须清掉")
+    }
+
     // MARK: - 备份：类型/规模闸（SEC-30）
 
     func testBackupImportRejectsForeignAndOversizedPayloads() throws {

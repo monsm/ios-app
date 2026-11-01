@@ -218,6 +218,7 @@ extension DB {
         // 它们的 plist 键会被下面那圈前缀删掉，但钥匙串副本不会 —— 不显式清，删设备就等于没删干净。
         CredBinStore.purgeSecretsForDevice(m)
         CredHistoryStore.purgeSecretsForDevice(m)
+        MobileKeyService.purgeSecretsForDevice(m)   // 手机钥匙的 pin/ekey 副本（第四族）
         for p in ["kf_ledger_", "kf_snap_", "kf_logcache_", "kf_defend_", "kf_tailgate_", "kf_synctime_", "otpStatus_", "otpIdx_", "kf_fevents_", "kf_lockmeta_", "kf_migok_",
                   "kf_batt_", "kf_batt_state_", "kf_mevents_", "kf_maint_", "kf_fwsince_", "kf_clock_notify_", "kf_damp_last_", "kf_fp_last_", "kf_care_notify_",
                   "kf_cbin_", "kf_calert_", "kf_clists_", "kf_cseq_",

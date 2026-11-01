@@ -97,6 +97,19 @@ enum MobileKeyService {
         DB.store.setCodable(storeKey(mac), safe)
     }
 
+    /// 删设备时调用：把本锁**全部手机钥匙**的 pin/ekey 在 Keychain 里的副本清掉。
+    ///
+    /// 2026-11-01 补：`Store.removeDevice` 会删 `kf_mkey_<mac>` 这个 plist 键，
+    /// 但钥匙串里的 `mkey.<mac>.pin.<id>` / `mkey.<mac>.ekey.<id>` **不会随键消失** ——
+    /// 不显式清就是"删了这把锁，它签出去的手机钥匙 ekey 还留在本机"
+    /// （与台账口令 / 回收站 / 版本快照那三族同源，见 `removeDevice` 的注释）。
+    static func purgeSecretsForDevice(_ mac: String) {
+        for k in rawList(mac) {
+            SecretStore.remove(pinAccount(mac, k.id))
+            SecretStore.remove(ekeyAccount(mac, k.id))
+        }
+    }
+
     /// SEC-01 迁移：旧版本把 pin/ekey 明文写在 kf_mkey_ 里，搬进 Keychain 后抹掉明文。幂等。
     static func migrateSecrets() {
         for kc in DB.keychains() {
