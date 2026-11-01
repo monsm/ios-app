@@ -9,6 +9,29 @@
 >
 > **一条规则只有在引用到具体页面/条目时才算"核对过"**；凭印象写的不算。
 
+## 0. 结论
+
+**这份 objective 的四个方面，凡是在没有 iOS 27 真机的条件下能做的，都做完了。**
+
+| 方面 | 状态 | 主要证据 |
+|---|---|---|
+| 原生控件优先 | ✅ 完成 | `Picker(.segmented)`（10 处）、`LabeledContent`（55 处）、**iOS 27 `reorderable()`**（编译已验）、原生玻璃（2 处）；`Toggle`/`ProgressView`/`ContentUnavailableView`/`ShareLink`/`Menu`/`Stepper`/`Slider`/`DatePicker`/`sensoryFeedback` 本来就是原生 |
+| 液态玻璃原生化 | ✅ 完成 | `.glassEffect` 从 **0 → 2 处**，收敛到唯一入口 `VGlassSurface`；Reduce Transparency / **Increase Contrast** / Reduce Motion 三档退化齐全；`glass` 闸门收紧为「Material 只许出现在唯一入口」 |
+| 控件大小考虑实际文字 | ✅ 完成 | 9 处固定尺寸改下限 / 换行 / 自适应；`ReadingGrid`(18 调用) 与 `VStatPair`(12 调用) 在无障碍字号下改单列/竖排；2 条闸门固化 |
+| 合理布局 | ✅ 完成 | Tab 栏留白改为 `onGeometryChange` **实测**；`confirmationDialog` 挂到触发控件；`PressStyle` 按压反馈覆盖约 176 处调用并补 Reduce Motion 守卫 |
+
+**验证方式（可复现）**：
+
+```
+node Gates/allgates.js   →  全部 22 道闸门通过
+node Gates/tests.js      →  8 个测试文件，329 条断言
+CI (origin/ci-log)       →  build_ok=1  archive_ok=1  errors=0  warnings=0
+CI (origin/ci-test)      →  test_ok=1  test_failed=0  84 tests / 2 skipped / 0 failures
+```
+
+**剩余 4 条已知偏差**（见 §5）全部是「没有真机无法验证」或「需要重做导航层」的类别，
+不是"还没做"。逐条写了严重度、引用与不修的理由。
+
 ## 1. 原生控件
 
 | 规则（出处） | 本仓状态 | 证据 |
