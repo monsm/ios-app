@@ -534,8 +534,15 @@ enum WebDAV {
     }
 
     static func upload(text: String, base: String, path: String, user: String, password: String) async throws -> String {
-        let target = base.hasSuffix("/") ? base + path : base + "/" + path
-        guard let url = URL(string: normalized(target)) else { throw BLEErrorX.msg("WebDAV 远端地址不是合法 URL") }
+        // 2026-11-01（Round 234）：原来用**字符串拼接** `base + "/" + path` 再 `URL(string:)` ——
+        // 路径里一旦有空格或中文（备份文件名完全可能），`URL(string:)` 直接返回 nil，
+        // 报出来的是「WebDAV 远端地址不是合法 URL」，而用户看着地址明明是对的。
+        // 改用 URLComponents：`path` 接受未转义字符串，取 `.url` 时自动百分号编码。
+        guard var comps = URLComponents(string: normalized(base)) else { throw BLEErrorX.msg("WebDAV 远端地址不是合法 URL") }
+        let basePath = comps.path.hasSuffix("/") ? comps.path : comps.path + "/"
+        let cleanPath = path.hasPrefix("/") ? String(path.dropFirst()) : path
+        comps.path = basePath + cleanPath
+        guard let url = comps.url else { throw BLEErrorX.msg("WebDAV 远端地址不是合法 URL") }
         var req = URLRequest(url: url)
         req.httpMethod = "PUT"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
