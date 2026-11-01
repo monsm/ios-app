@@ -499,6 +499,34 @@ enum CredentialOrg {
         DB.store.remove("kf_cestudy_earlyexp_" + mac + "_" + String(alias))
     }
 
+    /// **彻底删除**一条凭证时，清掉所有「按 id 挂在外面的状态」。
+    ///
+    /// 2026-11-01（Round 229）：这些状态原来没人清，别名/批次号被锁端复用后，
+    /// 新凭证会「自带旧星标 / 排到旧位置 / 一出现就是停用 / 提前量导致误判失效」。
+    /// 清理点必须在**彻底删除**（`CredBinStore.purge`/`clear`）而不是 `DB.delPwd` ——
+    /// 后者是「移入回收站」，回收站可还原，提前清就会让还原丢状态。
+    static func purgeDerivedState(mac: String, pwdAlias: Int?, fpBatch: Int?) {
+        if let a = pwdAlias {
+            var stars = CredStarStore.all(mac)
+            if stars.remove("pwd:\(a)") != nil { CredStarStore.set(mac, stars) }
+            CredentialLocalState.setDisabled(mac: mac, id: "pwd:\(a)", false)
+            clearEarlyExpireMin(mac, a)
+            var sq = seq(mac)
+            if var list = sq["p"], let i = list.firstIndex(of: a) {
+                list.remove(at: i); sq["p"] = list; setSeq(mac, sq)
+            }
+        }
+        if let b = fpBatch {
+            var stars = CredStarStore.all(mac)
+            if stars.remove("fp:\(b)") != nil { CredStarStore.set(mac, stars) }
+            CredentialLocalState.setDisabled(mac: mac, id: "fp:\(b)", false)
+            var sq = seq(mac)
+            if var list = sq["f"], let i = list.firstIndex(of: b) {
+                list.remove(at: i); sq["f"] = list; setSeq(mac, sq)
+            }
+        }
+    }
+
     // ---------- 341/343/346 OTP 独立口令组与静态备份码 (纯本地, 不走锁端) ----------
     struct StudioDraft: Codable {
         var step: Int

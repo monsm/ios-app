@@ -114,6 +114,9 @@ enum CredBinStore {
         items.removeAll { $0.id == item.id }
         SecretStore.remove(DB.binSecretAccount(mac, item.id))
         commit(mac, items)
+        // 2026-11-01：**彻底删除**才清派生状态（星标/停用位/提前量/拖拽顺序）。
+        // 放在这里而不是 `DB.delPwd`：后者是「移入回收站」，可整组还原。
+        CredentialOrg.purgeDerivedState(mac: mac, pwdAlias: item.pwd?.alias, fpBatch: item.fp?.batch)
     }
 
     /// 删设备时调用：把本锁**回收站条目**在 Keychain 里的口令副本全部清掉。
@@ -126,8 +129,11 @@ enum CredBinStore {
     static func clear(_ mac: String) {
         // 清空回收站 = 连 Keychain 里的口令副本一起清（否则残留可读的开门口令）。
         // 用 stored()：空壳里 all() 返回空，那样会把密钥留下而条目被删（孤儿密钥）。
-        for item in stored(mac) { SecretStore.remove(DB.binSecretAccount(mac, item.id)) }
+        let items = stored(mac)
+        for item in items { SecretStore.remove(DB.binSecretAccount(mac, item.id)) }
         DB.store.remove(key(mac))
+        // 清空 = 全部彻底删除，派生状态一并清。
+        for item in items { CredentialOrg.purgeDerivedState(mac: mac, pwdAlias: item.pwd?.alias, fpBatch: item.fp?.batch) }
     }
 }
 
