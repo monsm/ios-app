@@ -38,34 +38,11 @@ enum DiagTime {
     }
 }
 
-// ---------- 156 本次会话操作序列 (⚠ 降级: 仅本会话, 跨会话采集 DEFERRED) ----------
-struct DiagOp: Codable, Identifiable {
-    var t: String            // MM-dd HH:mm:ss
-    var label: String
-    var id: String { t + label }
-
-    enum CodingKeys: String, CodingKey { case t, label }
-    init(t: String, label: String) { self.t = t; self.label = label }
-    init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        t = try c.decodeIfPresent(String.self, forKey: .t) ?? ""
-        label = try c.decodeIfPresent(String.self, forKey: .label) ?? ""
-    }
-}
-enum DiagOps {
-    static let on = "kf_diag_ops_on"      // 156 开关 (诊断页)
-    static let maxCount = 50
-    // 计算属性声明不能带参数列表 → 语法非法
-    static func isOn() -> Bool { DB.store.getBool(on, true) }
-    static func record(_ label: String) {
-        guard isOn() else { return }
-        var list = DB.store.get([DiagOp].self, "kf_diag_ops") ?? []
-        list.insert(DiagOp(t: DiagTime.mmddHHmmss(), label: label), at: 0)
-        if list.count > maxCount { list = Array(list.prefix(maxCount)) }
-        DB.store.setCodable("kf_diag_ops", list)
-    }
-    static func list() -> [DiagOp] { DB.store.get([DiagOp].self, "kf_diag_ops") ?? [] }
-}
+// 156「本次会话操作序列」`struct DiagOp` + `enum DiagOps`：**已删除**（2026-11-01）。
+// 与 `quota()` / `DiagFlags.silent` / `struct Advice` 同一族：
+// `DiagOps.record` 与 `DiagOps.list` 全仓**零调用**，开关 `kf_diag_ops_on` 也**零写入** ——
+// 也就是这条"操作序列"从未记录过一条，也从没被任何界面读过。
+// 真要做，需要先决定"记哪些操作、给谁看、怎么脱敏"，而不是先建一个存储壳。
 
 
 // ---------- 218 / 221 写入合并队列 —— 第九十二批整引擎已删 (原本就是个空转的壳) ----------
