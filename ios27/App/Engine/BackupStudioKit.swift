@@ -400,6 +400,9 @@ enum BackupStudio {
         // 而 restoreAll 用 DB.saveLedger 整表替换 (BackupKit.swift:206) → 选"合并"仍删掉本机新增凭证。
         var remap = [String: String]()
         if let members = c.members { importMembers(members, remap: &remap) }
+        // 成员档案扩展（角色/备注/关怀文案/…）按同一张 remap 写回。
+        // 只在目标成员**仍是全默认档案**时写：已存在的成员保留本机现状，不被旧包覆盖。
+        if let ext = c.globals?.memberExt { importMemberExt(ext, remap: remap) }
         var mimp = 0, mover = 0, mskip = 0
         for d in c.devices {
             // SEC-08：不只看"非空" —— 非 32 位十六进制的 skey 会覆盖 Keychain 里的真密钥，
@@ -522,6 +525,16 @@ enum BackupStudio {
     }
 
     /// 导入成员并建立「旧 id → 本机 id」映射（恢复包里的凭证 owner 要按这个 remap 重写）。
+    /// 写回成员档案扩展。`remap` 是旧 id → 本机 id（`importMembers` 建的）。
+    /// 判据是「目标成员仍是全默认档案」—— 这样二次恢复同一个包不会覆盖用户此后改过的内容。
+    private static func importMemberExt(_ table: [String: MemberExt], remap: [String: String]) {
+        for (oldID, e) in table {
+            guard let newID = remap[oldID], DB.member(newID) != nil else { continue }
+            guard MemberHub.ext(newID) == MemberExt() else { continue }
+            MemberHub.saveExt(newID, e)
+        }
+    }
+
     private static func importMembers(_ members: [Member], remap: inout [String: String]) {
             for m in members {
                 if let hit = DB.members().first(where: { $0.name == m.name }) {

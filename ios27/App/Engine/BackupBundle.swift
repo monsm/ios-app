@@ -44,6 +44,12 @@ struct BackupBundle: Codable {
         }
     }
     struct Globals: Codable {
+        /// 成员档案扩展（`kf_member_ext`：角色/备注/关怀文案/欢迎语/分组/归档/代管 …）。
+        /// 2026-11-01 补：`Member` 只带 id/名字/关系/电话/色/时间，
+        /// 而这些扩展此前**既不在备份包里、也不在恢复流程里** ——
+        /// 换机迁移后成员还在，但「备注、关怀文案、归档标记」全丢，且没有任何提示。
+        /// 缺省 = 这次备份没带 = 恢复时不动本机（与其它可选字段同口径）。
+        var memberExt: [String: MemberExt]? = nil
         var keychainDongles: [Dongle]?
         var gatewayList: [Gateway]?
         var passcode: PasscodeRec?   // JS 包互通: {s,d} 应用锁摘要

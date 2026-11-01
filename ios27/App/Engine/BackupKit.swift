@@ -208,7 +208,9 @@ enum BackupKit {
                 duress: duress,
                 trace: trace,
                 appearance: collectAppearance(),
-                deviceOrg: collectDeviceOrg()))
+                deviceOrg: collectDeviceOrg(),
+                // 成员档案扩展：与 members 同一批走，恢复时按 id remap 写回。
+                memberExt: MemberHub.allExt().isEmpty ? nil : MemberHub.allExt()))
     }
     /// 894 收集外观档。只收**枚举过的档位值**，读到没见过的值就当没这项 (nil)，
     /// 免得把一台机器上的脏数据搬到另一台去。
