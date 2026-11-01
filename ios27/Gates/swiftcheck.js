@@ -99,6 +99,25 @@ for (const f of files) {
     console.log(`  ${rel}  空或近空的 Swift 文件（去掉注释与空白后仅 ${body.length} 字符）—— 删掉它，或补上内容`);
     bad++;
   }
+  // 2026-11-01：`DateFormatter()` 必须显式钉公历。
+  // 不设 `calendar` 时它跟随 `Calendar.current` —— 用户把系统历法切成佛历/民国历/农历，
+  // 输出年份就变成 2569 之类，而 `TimeFormat` 一直输出公历 ⇒ 同一时刻两处显示不同年份。
+  // 这个缺陷从 ROUND-1 起就在（`DF.cached` / `localTime` / `localCached` / 备份文件名共 4 处），
+  // 而"两个工厂比对"型测试**结构上发现不了**（两边都错得一样时永远相等）。
+  // 只看代码行（去掉 `//` 注释），且接受任何形式的 `calendar = ...` 赋值
+  // （`TimeFormat` 写的是 `f.calendar = calendar`，变量名不同但同样正确）。
+  const codeLines = src.split(/\r?\n/).filter((l) => {
+    const t = l.trim();
+    return !t.startsWith("//") && !t.startsWith("///");
+  });
+  const code = codeLines.join("\n");
+  // 只数 `DateFormatter()`，不数 `ISO8601DateFormatter()`（后者是固定格式，不受历法影响）。
+  const dfCount = (code.match(/\bDateFormatter\(\)/g) || []).length;
+  const calCount = (code.match(/\.calendar = /g) || []).length;
+  if (dfCount > 0 && calCount < dfCount) {
+    console.log(`  ${rel}  有 ${dfCount} 处 DateFormatter() 但只有 ${calCount} 处设置 calendar —— 未设的会跟随系统历法`);
+    bad++;
+  }
 }
 
 if (bad === 0) {

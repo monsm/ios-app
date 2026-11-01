@@ -374,6 +374,8 @@ struct BackupStudioScreen: View {
     private static func stamp() -> String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
+        // 钉公历：否则系统历法切成佛历时文件名会变成 `25691101-…`（备份文件名要能被排序与人工识别）。
+        f.calendar = Calendar(identifier: .gregorian)
         f.dateFormat = "yyyyMMdd-HHmmss"
         return f.string(from: Date())
     }

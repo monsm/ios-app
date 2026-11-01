@@ -60,6 +60,8 @@ enum DF {
         let dict = Thread.current.threadDictionary
         if let f = dict[key] as? DateFormatter { return f.string(from: d) }
         let f = DateFormatter()
+        // 同 `cached`：钉公历（`dateStyle` 也会被系统历法带跑）。
+        f.calendar = Calendar(identifier: .gregorian)
         f.dateStyle = .none
         f.timeStyle = .medium
         dict[key] = f
@@ -78,6 +80,7 @@ enum DF {
         let dict = Thread.current.threadDictionary
         if let f = dict[key] as? DateFormatter { return f.string(from: d) }
         let f = DateFormatter()
+        f.calendar = Calendar(identifier: .gregorian)   // 同 `cached`：钉公历
         cfg(f)
         dict[key] = f
         return f.string(from: d)
