@@ -520,7 +520,10 @@ enum SelfCheck {
 
 enum WebDAV {
     static func test(base: String, user: String, password: String) async throws -> String {
-        guard let url = URL(string: normalized(base)) else { throw BLEErrorX.msg("WebDAV 地址不是合法 URL") }
+        // 2026-11-01（Round 235）：与 `upload` 同一个坑 —— `URL(string:)` 遇到空格/中文返回 nil。
+        // 走 `URLComponents` 让它负责百分号编码（用户粘贴的地址里带空格并不罕见）。
+        guard let comps = URLComponents(string: normalized(base)), let url = comps.url
+        else { throw BLEErrorX.msg("WebDAV 地址不是合法 URL") }
         var req = URLRequest(url: url)
         req.httpMethod = "PROPFIND"
         req.setValue("0", forHTTPHeaderField: "Depth")
