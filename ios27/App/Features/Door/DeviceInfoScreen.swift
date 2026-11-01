@@ -126,7 +126,15 @@ struct DeviceInfoScreen: View {
                 VDivider()
                 VFieldRow(label: "密码容量", value: capacityText(used: pwdUsed, cap: status?.pwdInfoCapacity ?? 0))
                 VFieldRow(label: "指纹容量", value: capacityText(used: fpUsed, cap: status?.fpInfoCapacity ?? 0))
+                // 2026-11-01：把「锁端存量」与「本机池」并排 —— 排障 rc=2 时第一眼看的就是这两个数：
+                // 锁端已用 64 而本机池只有 20 ⇒ 池子被恢复/迁移污染或两台 App 打架，现签必败。
                 VFieldRow(label: "PIN 容量", value: capacityText(used: pinUsed, cap: status?.pinInfoCapacity ?? 0))
+                if let note = localPinNote {
+                    Text(note)
+                        .font(V.F.unit)
+                        .foregroundStyle(localPinMismatch ? V.C.warning : V.C.text3)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 VDivider()
                 Text("Boot / 键盘版本只在锁上报时出现；缺失表示该固件不报这两支，不是读取失败。")
                     .font(V.F.unit)
@@ -343,6 +351,22 @@ struct DeviceInfoScreen: View {
     private var fpUsed: Int {
         if let cap = status?.fpInfoCapacity, cap > 0 { return max(cap - (status?.fpStock ?? 0), 0) }
         return DB.ledger(mac).fps.count
+    }
+
+    /// 本机钥匙串的 PIN 数与锁端存量的对照说明（不一致 = 池子污染/两台 App 打架）。
+    private var localPinNote: String? {
+        let local = kc?.pins.filter { !$0.isEmpty }.count ?? 0
+        guard let stock = status?.pinStock, let cap = status?.pinInfoCapacity, cap > 0 else { return nil }
+        let onLock = max(cap - stock, 0)
+        if local == 0 { return "本机池为空" }
+        if local == onLock { return "本机池 \(local) 枚 · 与锁端一致" }
+        return "本机池 \(local) 枚 · 锁端已用 \(onLock) 枚 —— 不一致，现签凭证会被拒（rc=2）"
+    }
+
+    private var localPinMismatch: Bool {
+        let local = kc?.pins.filter { !$0.isEmpty }.count ?? 0
+        guard let stock = status?.pinStock, let cap = status?.pinInfoCapacity, cap > 0 else { return false }
+        return local != max(cap - stock, 0)
     }
 
     private var pinUsed: Int {
