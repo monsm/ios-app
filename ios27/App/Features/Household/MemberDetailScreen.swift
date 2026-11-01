@@ -369,8 +369,15 @@ struct MemberDetailScreen: View {
 
     internal func toggleArchive() {
         guard let m = member, let i = app.members.firstIndex(where: { $0.id == m.id }) else { return }
-        app.members[i] = m.hh(archived: !m.archived)
-        roster.mirrorArchived(m.id, !m.archived)
+        let next = !m.archived
+        app.members[i] = m.hh(archived: next)
+        roster.mirrorArchived(m.id, next)
+        // 归档会改变"成员数 / 统计是否包含他 / 名单里还看不看得到"，是有后果的动作，
+        // 而旧实现改完什么都不说 —— 用户点一下图标，界面只是变了个形状。
+        // 按 HIG feedback，这类动作必须给回执；文案顺带说清"历史仍在"。
+        AppToast.shared.show(next ? "已归档 · 历史仍在，记录页仍能筛到 TA"
+                                    : "已恢复为在册成员",
+                             tone: .ok)
     }
 
     /// 删除前的级联预告：先列名下凭证（最多 5 条），再写两种后果。
