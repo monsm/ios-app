@@ -185,6 +185,11 @@ extension DB {
         var l = ledger(mac)
         l.pwds.removeAll { $0.alias == alias }
         saveLedger(mac, l)
+        // SEC-01 残余（2026-11-01）：口令明文在 Keychain 里另存一份（`ledger.<mac>.pwd.<alias>`）。
+        // `ledgerForPlist` 只处理"仍在数组里的条目"，条目一旦被移除，那份副本就再没人碰过 ——
+        // 于是**每删一条凭证，钥匙串里就永久多一份可读的开门口令**。
+        // 这里是全仓所有删除路径的唯一落点（见下方注释），所以清理放这一处就够。
+        SecretStore.remove(pwdSecretAccount(mac, alias))
         // 2026-10-30 修复（第 94 轮）：删凭证必须一并取消它的到期提醒。
         // 这里是全仓所有 `DB.delPwd` 的唯一落点（停用/彻底删除/批量/换槽/恢复都走它），
         // 所以取消放在这一处即可覆盖全部删除路径。

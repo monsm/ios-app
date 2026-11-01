@@ -269,6 +269,28 @@ console.log('privacy: 扫 ' + files.length + ' 个 Swift 文件 + PrivacyInfo.xc
   }
 }
 
+
+// 15) 删凭证必须清掉钥匙串里的口令副本（2026-11-01）。
+// ledgerForPlist 只处理"仍在台账数组里的条目"；条目被移除后那份副本再没人碰过，
+// 于是每删一条凭证就在钥匙串里永久多一份可读的开门口令。
+{
+  const target = 'Engine/StoreLedger.swift';
+  const f = files.find(function (x) { return x.rel === target; });
+  if (f) {
+    const i = f.lines.findIndex(function (l) { return l.indexOf('static func delPwd(') >= 0; });
+    if (i >= 0) {
+      let body = '';
+      for (let j = i; j < Math.min(f.lines.length, i + 24); j++) {
+        if (j > i && /^\s{4}(private )?(static )?func /.test(f.lines[j])) break;
+        body += f.lines[j] + '\n';
+      }
+      if (body.indexOf('pwdSecretAccount') < 0) {
+        note(f.rel, i + 1, 'delPwd 没有清理钥匙串里的口令副本', '加 SecretStore.remove(pwdSecretAccount(mac, alias))');
+      }
+    }
+  }
+}
+
 if (fails.length === 0) {
   console.log('privacy: OK — 剪贴板/备份加密/空壳隔离(读+写)/明文口令不进 plist/帧脱敏/WebDAV/文件保护/CSV 注入/隐私清单 XML 10 类回归判据全部通过');
   process.exit(0);
