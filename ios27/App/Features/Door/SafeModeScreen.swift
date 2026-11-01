@@ -132,6 +132,11 @@ struct SafeModeScreen: View {
             let st = try await LockService.shared.getStatus(mac: mac)
             status = st
             DB.writeStatus(mac, st)
+            // 2026-11-01 修复：`DB.writeStatus` 只落盘，**没刷新 `AppModel.lock`** ——
+            // 而 `LockStatusScreen` 读的是 `lock.safeMode`（投影），于是这一页切了模式后，
+            // 那一页仍显示旧值（与 ROUND-147 的静音是同一类：绕过封装 ⇒ 少了最后一步）。
+            // 这里保留本页自己的"回读确认"逻辑（它比 `refreshStatus` 更严格），只补投影刷新。
+            await app.refreshStatus()
             let ok = double ? (st.verifyMode == 1 && st.broadcastMode != 0) : (st.verifyMode == 0)
             outcome = ok ? (double ? "已切到 B 模式（双验），回读确认" : "已切回 A 模式（单验），回读确认") : "命令已下发，但回读显示未生效 —— 请重读后再试"
         } catch {
