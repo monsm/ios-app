@@ -1,8 +1,16 @@
 // 包6 凭证列表·批量·流转 — 本地组织层 (纯本地数据, 不碰协议命令集, 不读 vendor/)
-// 新增表全部 kf_ 前缀, 与既有 kf_ledger_ / kf_members 同库, 不进备份包 schema (492 留包8 勾选):
+// 新增表全部 kf_ 前缀, 与既有 kf_ledger_ / kf_members 同库, 不进备份包 schema (492 留包8 勾选)。
+//
+// 2026-11-01 核对：下面这份清单原来有两条是**假的**（只在本注释里出现，全仓零代码）：
+//   · `kf_cqueue_<mac>`「下发状态队列」—— 从未实现。批量操作只改本机台账，
+//     锁端删除/下发都没有队列（同一个坑在 CredentialOrgBatch.swift 的注释里也说过）。
+//   · `kf_cbin_reclaim_days`「回收站保留天数（设置可改）」—— 没有这个设置，也没有按天裁剪；
+//     回收站只受条数上限约束（`CredBinStore.maxItems`）。
+// 其余九条均已核对存在（读或写至少一处真实代码）。
+//
+// 现存表：
 //   kf_chist_<mac>        487/488 版本快照 (保存自动快照 + 自动还原点置顶标记)
-//   kf_cbin_<mac>        497-506 回收站 (来源过滤 / 剩余天数 / 彻底删除)
-//   kf_cqueue_<mac>      365 下发状态队列 (本地容错步条: 待下发→已下发→锁端确认, 不改协议层)
+//   kf_cbin_<mac>        497-506 回收站 (来源过滤 / 剩余天数显示 / 彻底删除)
 //   kf_cstar_<mac>       526/921 置顶星标 + 921 高频标记
 //   kf_calert_<mac>      359 三档预警设定
 //   kf_clists_<mac>      527 命名智能列表
@@ -10,7 +18,6 @@
 //   kf_ccred_prefs       355/914 双视图分组与四维排序的持久化
 //   kf_calias_display    919 别名显示切换 (全局)
 //   kf_csearch_hist      531 最近搜索词
-//   kf_cbin_reclaim_days 497 回收站保留天数 (设置可改)
 // 展示层语义: 一次性/周期/暂停锁端协议未定义 (CAPABILITY §4) — 全部按时间窗推断, 标注"约"。
 import Foundation
 import SwiftUI
