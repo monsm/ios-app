@@ -11,6 +11,18 @@ import XCTest
 
 final class ConcurrencyTests: XCTestCase {
 
+    /// 自动开锁的 6 秒冷却：**未来时间戳不能让冷却永久生效**。
+    /// 旧实现 `now - lastDispatch > 6` 在 lastDispatch 超前时恒为 false ⇒ 自动开锁被永久拒，
+    /// 且界面无任何解释（用户只会觉得"自动开门坏了"）。
+    func testCooldownIgnoresFutureTimestamps() {
+        let now = 1_700_000_000.0
+        XCTAssertTrue(AutoOpenKit.coolReady(lastDispatch: 0, now: now), "没开过 → 可以开")
+        XCTAssertFalse(AutoOpenKit.coolReady(lastDispatch: now - 3, now: now), "3 秒前开过 → 冷却中")
+        XCTAssertTrue(AutoOpenKit.coolReady(lastDispatch: now - 7, now: now), "7 秒前开过 → 可以开")
+        XCTAssertTrue(AutoOpenKit.coolReady(lastDispatch: now + 3600, now: now),
+                      "时间戳在未来（系统时钟被调过）不该把冷却变成永久封禁")
+    }
+
     /// 并发自增不丢：2000 次 × 8 线程，结果必须正好等于总次数。
     /// 若临界区失效，这个计数器会明显偏小（经典 lost update）。
     func testLockedIncrementIsAtomic() {

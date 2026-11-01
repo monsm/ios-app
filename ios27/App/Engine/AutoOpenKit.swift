@@ -167,7 +167,14 @@ enum AutoOpenKit {
 
     static let cooldownSeconds: Double = 6
     static func coolReady(lastDispatch: Double, now: Double) -> Bool {
-        lastDispatch == 0 || now - lastDispatch > cooldownSeconds
+        // 2026-11-01：`lastDispatch` 若在**未来**（用户调过系统时间、或跨设备同步过时钟），
+        // `now - lastDispatch` 为负 ⇒ 恒 false ⇒ **自动开锁被永久拒绝**，而界面上没有任何解释。
+        // 冷却只是"6 秒内别连开两次"的节流，不是一个能长期生效的封禁开关；
+        // 时间戳明显超前时就当它无效（fail-open 到"可以开"，与 fail-closed 的防拆挂起不同 ——
+        // 那条走的是 `isSuspended`，有独立的 24h 语义）。
+        guard lastDispatch > 0 else { return true }
+        if lastDispatch > now + cooldownSeconds { return true }
+        return now - lastDispatch > cooldownSeconds
     }
 
     /// 0E 双确认：30s < |偏差| < 24h 才写；≥24h 仅 NTP 对表一致时放宽到 48h。
