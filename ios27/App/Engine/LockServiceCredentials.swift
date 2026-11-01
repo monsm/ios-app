@@ -3,7 +3,20 @@
 import Foundation
 
 extension LockService {
+    /// 锁端声明的密码最大长度（cmd03 KLV#26 `pwdInfoMaxLen`）。
+    ///
+    /// 2026-11-01：这个字段**解析了但零消费** —— 本仓只按写死的 8 位校验（`cmd0ASyncPwd` 里那条 guard）。
+    /// 若某固件只支持 6 位，用户输 8 位会被锁拒，而报出来的是一句与长度无关的 rc 文案，
+    /// 用户完全不知道"是我的密码太长了"。改成发之前先问锁要上限。
+    private func lockPwdMaxLen() async -> Int? {
+        guard let v = (try? await getStatus())?.pwdInfoMaxLen, v > 0 else { return nil }   // 读不到就不拦
+        return v
+    }
+
     func pwdAdd(pwd: String, validFrom: String, validTo: String) async throws -> Int {
+        if let max = await lockPwdMaxLen(), pwd.utf16.count > max {
+            throw BLEErrorX.msg("这把锁的密码最长 \(max) 位（锁端上报），当前 \(pwd.utf16.count) 位")
+        }
         let (m, sk) = try keys()
         let r = try await execOk(try ZKCmdBuilder.cmd0ASyncPwd(m, sk, delAlias: 0, addPwd: pwd, validFrom: validFrom, validTo: validTo))
         guard let alias = aliasFrom(r) else {
@@ -35,6 +48,9 @@ extension LockService {
         guard alias > 0 else {
             log("warn", "pwdModify 收到保留编号 0，已中止 (这条台账没有锁端编号)")
             throw BLEErrorX.msg("这条密码在本机台账里没有有效的锁端编号 (0 = 协议里的「不指定」)，改写会只在锁里多加一条而删不掉旧的 — 请先删除再重新添加")
+        }
+        if let max = await lockPwdMaxLen(), pwd.utf16.count > max {
+            throw BLEErrorX.msg("这把锁的密码最长 \(max) 位（锁端上报），当前 \(pwd.utf16.count) 位")
         }
         let (m, sk) = try keys()
         let r = try await execOk(try ZKCmdBuilder.cmd0ASyncPwd(m, sk, delAlias: alias, addPwd: pwd, validFrom: validFrom, validTo: validTo))
