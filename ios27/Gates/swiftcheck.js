@@ -132,6 +132,32 @@ for (const f of files) {
     console.log(`  ${rel}  用了断言（assert / assertionFailure / precondition）—— 本仓一律用防御式 guard`);
     bad++;
   }
+  // 2026-11-01：`app.lastStatus?.status.X` 引用的 X 必须真的在 `StatusSnapshotData` 里。
+  //
+  // 我第二次因为"引用了模型上不存在的字段"把 CI 弄红（第一次是扩展里的存储属性）。
+  // 这类错误本地闸门本该能看见 —— `StatusSnapshotData` 的字段表就在源码里，对一下即可。
+  // 同一个坑踩两次，就说明它不是"不小心"，而是缺一道检查。
+  {
+    const sm = fs.readFileSync(path.join(ROOT, "App/Engine/StoreModels.swift"), "utf8");
+    const start = sm.indexOf("struct StatusSnapshotData");
+    if (start >= 0) {
+      let depth = 0, end = start;
+      for (let i = start; i < sm.length; i++) {
+        if (sm[i] === "{") depth++;
+        else if (sm[i] === "}") { depth--; if (depth === 0) { end = i; break; } }
+      }
+      const body = sm.slice(start, end);
+      const fields = new Set(Array.from(body.matchAll(/var\s+(\w+)\s*:/g)).map(m => m[1]));
+      const re = /lastStatus\?\.status\.(\w+)/g;
+      for (const m of src.matchAll(re)) {
+        const name = m[1];
+        if (!fields.has(name)) {
+          console.log(`  ${rel}  引用了 app.lastStatus?.status.${name}，但 StatusSnapshotData 没有这个字段`);
+          bad++;
+        }
+      }
+    }
+  }
   // 2026-11-01：**不许用文案内容决定状态色**（`tone:` / `tint:` 实参里出现 `.contains(`）。
   // 本仓已三次踩坑：CredentialStudio 的「已」前缀（把"已…失败 N 条"涂绿）、
   // KeyCreate 的前缀猜测、LockStatus 的 `outcome.contains("失败")`（"锁忙，请稍后再试"一个
