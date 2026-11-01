@@ -103,10 +103,16 @@ enum MobileKeyService {
     /// 但钥匙串里的 `mkey.<mac>.pin.<id>` / `mkey.<mac>.ekey.<id>` **不会随键消失** ——
     /// 不显式清就是"删了这把锁，它签出去的手机钥匙 ekey 还留在本机"
     /// （与台账口令 / 回收站 / 版本快照那三族同源，见 `removeDevice` 的注释）。
-    static func purgeSecretsForDevice(_ mac: String) {
-        for k in rawList(mac) {
-            SecretStore.remove(pinAccount(mac, k.id))
-            SecretStore.remove(ekeyAccount(mac, k.id))
+    /// `nonisolated`：`Store.removeDevice` 是 nonisolated 的（删设备会被后台/非主线程路径调到），
+    /// 而本枚举整体标了 `@MainActor`。这里只做钥匙串删除、不碰任何 actor 状态，
+    /// 所以标 `nonisolated` 是安全的（与 `BackupStudio.purgeLocalArtifacts` 同一处置）。
+    nonisolated static func purgeSecretsForDevice(_ mac: String) {
+        // 不调 `rawList`：它在本 `@MainActor` 枚举里，从 nonisolated 上下文调会编译不过。
+        // 这里只需要 id 列表，直接读存储即可（少了"回填密钥"那一步 —— 反正马上要删）。
+        let raw = DB.store.get([MobileKey].self, "kf_mkey_" + mac) ?? []
+        for k in raw {
+            SecretStore.remove("mkey." + mac + ".pin." + k.id)
+            SecretStore.remove("mkey." + mac + ".ekey." + k.id)
         }
     }
 
