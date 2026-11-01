@@ -146,6 +146,9 @@ final class AppModel {
             // 只在**真的从空壳退出来**时重建一次（reload 会被频繁调用）。
             CredentialOrg.resetDecoyNotificationGuard()
             CredentialOrg.rescheduleAllAlerts()
+            // 自动开锁的轮询在空壳里是停的（`pollOnce` 达标即 `stop()`），退出后要恢复 ——
+            // 否则用户会以为"自动开门坏了"，而且没有任何提示。
+            if let mac = currentKeychain?.mac { AutoOpenController.shared.onForeground(mac: mac) }
         }
         // ↑ SEC-03 同一族的**通知面**：数据层清空了，但已排/已送达的到期提醒还带着
         //   真实凭证名（「密码临期 · 前门密码」）—— 胁迫者一看通知中心就知道了。

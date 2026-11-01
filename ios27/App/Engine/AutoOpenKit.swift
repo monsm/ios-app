@@ -299,8 +299,14 @@ final class AutoOpenController {
     }
 
     private func pollOnce() async {
-        // SEC-04：本机未解锁 / 空壳模式时彻底停止轮询，连 RSSI 都不采（不留可推断的无线电痕迹）。
-        guard AppLock.shared.unlocked, !AppLock.shared.decoy else { armed = false; return }
+        // SEC-04：本机未解锁 / 空壳模式时**不采任何无线电**（不留可推断的痕迹）。
+        // 2026-11-01：原注释写"彻底停止轮询"，但实现只是每 2 秒醒一次再返回 ——
+        // 任务没停。现在锁屏/空壳时直接 `stop()`，由解锁/回前台时的 `start()` 恢复。
+        guard AppLock.shared.unlocked, !AppLock.shared.decoy else {
+            armed = false
+            stop()
+            return
+        }
         guard AutoOpen.on, let host = EngineHostRegistry.host,
               let mac = host.currentKeychain?.mac, !mac.isEmpty else { return }
         if LockService.shared.connectedMAC.lowercased() != mac.lowercased() {
@@ -320,6 +326,10 @@ final class AutoOpenController {
             return
         }
         eventFired.removeAll()
+        // 回前台恢复轮询（`onBackground` / 空壳分支会把它停掉）。
+        // 空壳模式**不恢复**：`pollOnce` 会立刻再停一次，来回启停只是抖动；
+        // 退出空壳时 `unlocked` 仍是 true，但那条路径走的是 `LockKeeperApp:119` 的 onChange。
+        if !AppLock.shared.decoy { start() }
         if AutoOpenKit.isStrict(AutoOpen.faceTier), wasInBackground {
             promptStartedAt = Date()
             wasInBackground = false
@@ -332,6 +342,17 @@ final class AutoOpenController {
         armed = false
         eventFired.removeAll()
         promptStartedAt = nil
+        // 2026-11-01：**真的停掉轮询任务**。
+        // `pollOnce` 里的注释写着"本机未解锁/空壳时彻底停止轮询，连 RSSI 都不采（不留可推断的无线电痕迹）"，
+        // 但那时只是每 2 秒醒一次然后 `armed = false` 就返回 —— 任务仍在跑、仍在醒。
+        // 切到后台就更不该继续：既耗电，也与"不留无线电痕迹"这条安全承诺不符。
+        stop()
+    }
+
+    /// 停止轮询（幂等）。再次 `start()` 可恢复。
+    func stop() {
+        pollTask?.cancel()
+        pollTask = nil
     }
 
     // ---------- F3 喂入 ----------
