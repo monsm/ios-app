@@ -46,6 +46,8 @@ struct ToastHost: View {
     /// 用户开了「减弱动态效果」后它仍然从顶部滑入。`reducedmotion` 闸门只扫 `.animation(`，
     /// `transition(` 是它覆盖不到的第二类（已同步扩判据）。
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// 「减少透明度」：系统设置或 App 内同档开关任一开启，玻璃退化为不透明卡片。
+    @Environment(\.accessibilityReduceTransparency) private var systemReduceTransparency
 
     var body: some View {
         VStack {
@@ -58,16 +60,28 @@ struct ToastHost: View {
                     Text(message)
                         .font(V.F.footnote)
                         .foregroundStyle(V.C.text1)
-                        .lineLimit(2)
+                        // 2026-11-01：`lineLimit(2)` → `4`。
+                        // 最长的一条 toast 是 45 字（「已归档 · 历史留在记录页，可随时恢复 TA」这类），
+                        // 默认字号下 2 行刚好放下；但 `V.F.footnote` 随 Dynamic Type 缩放，
+                        // AX 档下同一句要 4 行 —— 而 toast **会自己消失**，被截掉的部分用户永远读不到。
+                        // 宁可多占两行，也不要把一条临时消息截断。
+                        .lineLimit(4)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
                 }
                 .padding(.horizontal, V.S.gapM)
                 .padding(.vertical, V.S.gapS)
-                .background(V.C.tabGlass, in: .rect(cornerRadius: V.R.action, style: .continuous))
-                .overlay {
-                    RoundedRectangle(cornerRadius: V.R.action, style: .continuous)
-                        .strokeBorder(V.C.tabEdge, lineWidth: V.S.hair)
+                // 2026-11-01：改用**原生液态玻璃**（与浮动 Tab 栏同一入口 `VGlassSurface`）。
+                // 提示条是"浮在内容之上的临时层"，正是 Liquid Glass 的设计场景；
+                // 旧的 `V.C.tabGlass` 只是一层半透明色，没有折射与高光。
+                // 「减少透明度」时退化为不透明卡片（与 Tab 栏同一判据，不另写一套）。
+                .background {
+                    VGlassSurface(solid: systemReduceTransparency || SettingsStore.shared.reduceTransparency,
+                                  cornerRadius: V.R.action,
+                                  tint: V.C.tabGlass,
+                                  stroke: V.C.tabEdge) {
+                        Color.clear
+                    }
                 }
                 .padding(.horizontal, V.S.cardGutter)
                 .padding(.top, V.S.gapS)
