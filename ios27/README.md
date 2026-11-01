@@ -85,6 +85,11 @@ xcodebuild build -project LockKeeper.xcodeproj -scheme LockKeeper \
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 目录、数据流、导航、组件库、闸门与视觉验收台 |
 | [docs/IMPLEMENTATION-BRIEF.md](docs/IMPLEMENTATION-BRIEF.md) | 令牌/组件 API 清单与 10 条硬纪律（给下一个实施者） |
 | [docs/PROGRESS-*.md](docs/) | 各域交付清单与未接真数据的部分 |
+| [docs/DESIGN-CONFORMANCE.md](docs/DESIGN-CONFORMANCE.md) | **iOS 27 设计符合性报告** —— 原生控件 / 液态玻璃七条清单 / 文字占用 / 布局，逐条带引用，含 4 条已知偏差与不修的理由 |
+| [docs/AUDIT-METHOD.md](docs/AUDIT-METHOD.md) | 审计方法论：9 条找缺陷的判据（每条都标了实战出处）+ 闸门做/不做标准 |
+| [docs/AUDIT-COVERAGE.md](docs/AUDIT-COVERAGE.md) | 覆盖矩阵、15 类缺陷形态、逐文件审计台账 |
+| [docs/AUDIT-CLOSING.md](docs/AUDIT-CLOSING.md) | 审计收尾结论：做完了什么、还剩什么、为什么剩下的做不了 |
+| [docs/RESERVED.md](docs/RESERVED.md) | 保留未接清单（6 条，每条标了接线成本与前置条件） |
 
 ---
 
