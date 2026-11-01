@@ -28,6 +28,10 @@ struct BackupScreen: View {
     /// 已按**内容指纹**确认过校验和不一致的那一份（只用一次，恢复后作废）。
     @State private var ackedChecksumFor: String?
     @State private var showRestoreConfirm = false
+    /// 选文件后**先解析一次**得到的预演摘要（凭证条数 / 会被跳过的锁数）。
+    /// 2026-11-01：原来确认对话框在"选完文件"时就弹，此时还没解析 —— 用户看不到
+    /// "包里 8 条、实际只写 3 条"这种差额（SEC-08 会整把锁跳过非法密钥）。
+    @State private var importPreviewNote = ""
     /// SEC-08：恢复会改写本机密码摘要，所以要先验当前本机密码。
     @State private var currentPasscode = ""
     @State private var restoreDone: (added: Int, merged: Int)?
@@ -72,11 +76,12 @@ struct BackupScreen: View {
             Button("恢复（合并，只增不删）") { runImport() }
             Button("取消", role: .cancel) {}
         } message: {
+            // 先报"这次会写进多少"（预演摘要），再说合并语义与风险。
             if importChecksumMismatch {
                 // 如实说两种可能，并给出可操作建议 —— 不吓唬，也不轻描淡写。
-                Text("这份备份的校验和对不上。可能是本 App 旧版本导出的包（键序不同，属正常），也可能真的被截断或改动过。\n\n导入是合并：本机已有的凭证会保留，同名冲突取本机。仍要继续吗？")
+                Text(importPreviewNote + "这份备份的校验和对不上。可能是本 App 旧版本导出的包（键序不同，属正常），也可能真的被截断或改动过。\n\n导入是合并：本机已有的凭证会保留，同名冲突取本机。仍要继续吗？")
             } else {
-                Text("导入是合并：本机已有的凭证会保留，同名冲突取本机。若备份里带本机密码摘要，本机密码会被替换成它（可能回滚到旧值）。")
+                Text(importPreviewNote + "导入是合并：本机已有的凭证会保留，同名冲突取本机。若备份里带本机密码摘要，本机密码会被替换成它（可能回滚到旧值）。")
             }
         }
     }
@@ -315,6 +320,16 @@ struct BackupScreen: View {
             }
             importText = text
             restoreError = nil
+            // 选完就先解析一次（不恢复），把"这次会写进多少"算出来，供确认对话框如实告知。
+            // 解析失败不阻断：真正的错误会在点「恢复」时由 runImport 报出来。
+            importPreviewNote = ""
+            if let p = try? BackupStudio.parsePreview(text: text, password: importPassword.isEmpty ? nil : importPassword) {
+                var note = "这份备份含 \(p.preview.pwdCount) 条密码 / \(p.preview.fpCount) 枚指纹。\n\n"
+                if p.preview.skippedLocks > 0 {
+                    note += "其中 \(p.preview.skippedLocks) 把锁的密钥格式非法，恢复时会整把跳过（这些锁的凭证不会写进本机）。\n\n"
+                }
+                importPreviewNote = note
+            }
             AppToast.shared.show("已读入 \(url.lastPathComponent)", tone: .ok)
         } catch {
             restoreError = "读文件失败：" + error.localizedDescription
@@ -361,6 +376,7 @@ struct BackupScreen: View {
                 let r = BackupStudio.restore(parsed.bundle)
                 restoreDone = (added: r.imported, merged: r.overwritten)
                 importText = ""
+                importPreviewNote = ""   // 一次性：恢复完就作废，免得下次选文件前残留旧摘要
                 await app.reload(refreshStatus: false)
             } catch {
                 restoreError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
