@@ -46,10 +46,19 @@ struct ReadingGrid: View {
 
     let items: [Item]
     var columns: Int = 2
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    /// 无障碍字号下强制单列。
+    ///
+    /// 2026-11-01：读数是 `size: 22` 起的等宽数字，随 Dynamic Type 放大后
+    /// 在 2–3 列里会被压成"两个字一行"甚至截断；而读数恰恰是**必须读准**的内容
+    /// （电量 82% 与 8% 只差一位）。单列让每个读数都有整行宽度。
+    /// 用原生 `DynamicTypeSize.isAccessibilitySize` 判定，不自己算缩放比。
+    private var effectiveColumns: Int { typeSize.isAccessibilitySize ? 1 : max(columns, 1) }
 
     private var rows: [[Item]] {
-        stride(from: 0, to: items.count, by: columns).map {
-            Array(items[$0 ..< min($0 + columns, items.count)])
+        stride(from: 0, to: items.count, by: effectiveColumns).map {
+            Array(items[$0 ..< min($0 + effectiveColumns, items.count)])
         }
     }
 
@@ -73,8 +82,8 @@ struct ReadingGrid: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    if row.count < columns {
-                        ForEach(0 ..< (columns - row.count), id: \.self) { _ in
+                    if row.count < effectiveColumns {
+                        ForEach(0 ..< (effectiveColumns - row.count), id: \.self) { _ in
                             Color.clear.frame(maxWidth: .infinity)
                         }
                     }

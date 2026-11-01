@@ -299,9 +299,17 @@ struct VDivider: View {
 /// 标签 12.5pt #828282 / 值 17pt 600。
 struct VStatPair: View {
     let items: [(String, String)]
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
-        HStack(alignment: .top, spacing: V.S.statGap) {
+        // 2026-11-01：无障碍字号下从「横排两列」改成「竖排」。
+        // 横排时每列只有一半宽度，而 `V.F.statValue` 是 17pt 且随 `.body` 缩放，
+        // AX 档下两个值会互相挤到换行（"近 30 天 / 12 次"变成四行）。
+        // 用原生 `AnyLayout` 切换布局，**内容只写一遍**（不用复制两份视图树）。
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: V.S.statGap))
+            : AnyLayout(HStackLayout(alignment: .top, spacing: V.S.statGap))
+        layout {
             ForEach(Array(items.enumerated()), id: \.offset) { pair in
                 VStack(alignment: .leading, spacing: V.S.statLabelGap) {
                     Text(pair.element.0)
