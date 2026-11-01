@@ -56,7 +56,12 @@ enum DevLayout {
     }
 
     static func setOrder(_ slots: [DevSlot]) {
-        let clean = DevSlot.allCases.filter { slots.contains($0) }
+        // 2026-11-01 修复：旧实现是 `DevSlot.allCases.filter { slots.contains($0) }` ——
+        // 那**按枚举声明顺序**输出，把用户拖拽出来的顺序整个丢掉。
+        // 后果：模块排序表里拖动"快捷格"到第一位，松手后它又跳回原位置（排序功能实际无效）。
+        // 正确做法是保留传入顺序，只做去重与白名单过滤。
+        var seen = Set<DevSlot>()
+        let clean = slots.filter { seen.insert($0).inserted }
         if clean == DevSlot.allCases { DB.store.remove(orderKey) }
         else { DB.store.set(orderKey, clean.map(\.rawValue)) }
     }

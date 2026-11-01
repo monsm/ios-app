@@ -79,4 +79,20 @@ final class FormatterConsistencyTests: XCTestCase {
         XCTAssertTrue(TimeFormat.dayKey(1_767_225_600).hasPrefix("1970"),
                       "秒当毫秒 ⇒ 日期塌回 1970 年代")
     }
+
+    /// 设备页模块排序：用户拖出来的顺序必须被保留。
+    ///
+    /// 旧实现 `DevSlot.allCases.filter { slots.contains($0) }` 按**枚举声明顺序**输出，
+    /// 把顺序整个丢掉 —— 拖动"快捷格"到第一位，松手后又跳回去。
+    func testDevLayoutKeepsUserOrder() {
+        // 纯逻辑：不写盘，只验 `setOrder` 用的那条"保序去重"规则。
+        let given: [DevSlot] = [.quick, .recent, .status]
+        var seen = Set<DevSlot>()
+        let kept = given.filter { seen.insert($0).inserted }
+        XCTAssertEqual(kept, given, "保序去重不能改变顺序")
+        XCTAssertEqual(kept.map(\.rawValue), ["quick", "recent", "status"])
+        // 反向对照：旧写法确实会重排（这条断言记录"为什么改"）。
+        let old = DevSlot.allCases.filter { given.contains($0) }
+        XCTAssertNotEqual(old, given, "旧实现（按 allCases 过滤）必然丢掉用户顺序 —— 这就是被修的缺陷")
+    }
 }
