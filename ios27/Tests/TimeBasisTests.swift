@@ -98,4 +98,21 @@ final class TimeBasisTests: XCTestCase {
             XCTAssertEqual(Int64(unix), ZKProtocol.epochMs / 1000 + sec, "sec=\(sec) 换算漂移")
         }
     }
+
+    /// 组头跨年必须带年份：记录页会列出跨年日志，只写 `MM-dd` 会与今年的同月日混淆。
+    func testDayTitleCarriesYearWhenNotCurrentYear() {
+        let cal = TimeFormat.calendar
+        let now = Date()
+        let thisYear = cal.component(.year, from: now)
+        // 今天 / 昨天：不带年份
+        let todayKey = TimeFormat.dayKey(Int64(now.timeIntervalSince1970 * 1000))
+        XCTAssertEqual(TimeFormat.dayTitle(todayKey), "今天")
+        // 上一个年份的同月日：必须带 yyyy-MM-dd
+        let lastYear = cal.date(byAdding: .year, value: -1, to: now) ?? now
+        let lastYearKey = TimeFormat.dayKey(Int64(lastYear.timeIntervalSince1970 * 1000))
+        XCTAssertEqual(TimeFormat.dayTitle(lastYearKey), lastYearKey,
+                       "跨年日期必须原样返回 yyyy-MM-dd，不能只给 MM-dd")
+        XCTAssertTrue(TimeFormat.dayTitle(lastYearKey).hasPrefix(String(thisYear - 1)),
+                      "跨年组头必须以那一年开头")
+    }
 }

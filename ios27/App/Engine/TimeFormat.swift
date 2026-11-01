@@ -60,14 +60,21 @@ enum TimeFormat {
         dayShortFmt.string(from: date(epochMillis))
     }
 
-    /// 组头：今天 / 昨天 / MM-dd。
+    /// 组头：今天 / 昨天 / MM-dd / **跨年时 yyyy-MM-dd**。
+    ///
+    /// 2026-11-01 修复：旧实现一律 `MM-dd`。而记录页会列出**跨年**的日志（锁端日志最多能读到
+    /// 几十上百条，跨年是常态），于是「12-25」既可能是去年也可能是今年 —— 用户无法判断，
+    /// 也无法在两个年份相同的月日之间做比较。非当年一律带年份。
     static func dayTitle(_ dayKey: String) -> String {
         let today = dayKeyFmt.string(from: Date())
         if dayKey == today { return "今天" }
         guard let d = dayKeyFmt.date(from: dayKey) else { return dayKey }
         let yesterday = calendar.date(byAdding: .day, value: -1, to: Date()) ?? Date()
         if dayKeyFmt.string(from: yesterday) == dayKey { return "昨天" }
-        return dayTitleFmt.string(from: d)
+        // 与「今天」同一年 → MM-dd；否则 yyyy-MM-dd。
+        let thisYear = calendar.component(.year, from: Date())
+        let thatYear = calendar.component(.year, from: d)
+        return thatYear == thisYear ? dayTitleFmt.string(from: d) : dayKey
     }
 
     /// 相对距今（「刚刚」「12 分钟前」「3 小时前」「2 天前」）。
