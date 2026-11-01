@@ -90,13 +90,21 @@ extension LockService {
         // 现在：显式选了 PIN 就**现签**（"选它"的意义就在于此）；没选才回落到配网 ekey。
         let chosen = (pinDec ?? "").trimmingCharacters(in: .whitespaces)
         var cred = ""
+        // 2026-11-01：把**凭证来源**写进交互流水。
+        // 排查「总是 rc=2」时，第一件要知道的就是"这帧用的是配网存的那枚 ekey，还是现签的"。
+        // 前者失效是本仓已知的软肋（换 PIN / 换管理员 / 锁被重刷后它就永久不可用）。
+        var credSource = "无"
         if !chosen.isEmpty {
             cred = signed(chosen)
+            credSource = "用户选定的 PIN 现签"
         } else if !kc.ekey.isEmpty {
             cred = kc.ekey                                     // 配网时已签发
+            credSource = "配网时存的 ekey"
         } else if let first = kc.pins.first(where: { !$0.isEmpty }) {
             cred = signed(first)
+            credSource = "PIN 池第 1 枚现签"
         }
+        log("info", "开锁凭证来源 = \(credSource)（本机 PIN 池 \(kc.pins.count) 枚）")
         if kc.ekey.isEmpty, kc.pins.isEmpty, chosen.isEmpty {
             throw BLEErrorX.msg("这把锁还没有可用的开锁凭证 — 请先在「凭证」页添加一条密码，或重新配对这把锁")
         }
