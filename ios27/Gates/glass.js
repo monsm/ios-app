@@ -44,9 +44,13 @@ for (const f of files) {
         findings.push({ file: rel, line: i + 1, why: '内容层出现 glassEffect（玻璃只属于功能层）' });
       }
     }
-    if (/\.background\(\s*\.(ultraThin|thin|regular|thick)Material\s*\)/.test(line)) {
-      if (!rel.startsWith('Shell/')) {
-        findings.push({ file: rel, line: i + 1, why: '内容层出现 Material 底（内容层必须不透明）' });
+    // 2026-11-01 收紧：Material 只允许出现在**唯一的玻璃入口**里。
+    // 为什么：本轮把浮动 Tab 栏从 `.ultraThinMaterial` + 自家染色换成了原生 `.glassEffect`
+    // —— 前者只是"模糊 + 一层半透明色"，后者才采样背后内容做折射。
+    // 若允许各处再用 Material 搓玻璃，两种观感会混在同一屏里，且「减少透明度」的退化判断会散掉。
+    if (/\.(ultraThin|thin|regular|thick)Material\b/.test(line)) {
+      if (!rel.includes('Components/GlassSurface.swift')) {
+        findings.push({ file: rel, line: i + 1, why: 'Material 只允许出现在 Components/GlassSurface.swift（玻璃的唯一入口）' });
       }
     }
     // 自己铺半透明底当滚动边缘（应该用 .scrollEdgeEffectStyle）

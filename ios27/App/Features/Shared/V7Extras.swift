@@ -26,7 +26,9 @@ struct VOutlineButton: View {
             }
             .foregroundStyle(tint)
             .frame(maxWidth: .infinity)
-            .frame(height: V.Action.height)
+            // 同 `VActionButton`：标题随 Dynamic Type 放大，固定 50pt 会裁字。
+            .padding(.vertical, V.S.gapS)
+            .frame(minHeight: V.Action.height)
             .overlay {
                 RoundedRectangle(cornerRadius: V.R.action, style: .continuous)
                     .strokeBorder(V.C.tabEdge, lineWidth: V.S.hair)

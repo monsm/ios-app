@@ -917,7 +917,10 @@ private struct V7RecordRow: View {
                 .font(V.F.rowDetailStrong)
                 .foregroundStyle(V.C.text1)
                 .monospacedDigit()
-                .frame(width: 48, alignment: .leading)
+                // 2026-11-01：`width: 48` → `minWidth: 48`。时间串用 `V.F.rowDetailStrong`
+                // （13pt，随 `.footnote` 缩放）—— 大字号下「23:59」会超过 48pt 被裁。
+                // `minWidth` 保住了默认档的对齐列宽，字号大时列随之变宽。
+                .frame(minWidth: 48, alignment: .leading)
             VStack(alignment: .leading, spacing: V.S.gapXXS) {
                 Text(entry.event)
                     .font(V.F.rowTitle)

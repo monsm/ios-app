@@ -681,17 +681,32 @@ struct VFloatingTabBar: View {
                         Text(item.title)
                             .font(V.F.tab)
                             .foregroundStyle(selected ? V.C.text1 : V.C.text3)
+                            // `V.F.tab` 是 `sans(11, relativeTo: .caption2)` —— 它**走 Dynamic Type**，
+                            // 放大字号下 2 个汉字会超出 268/5 ≈ 53.6pt 的槽位。
+                            // 允许缩到 0.75 而不是直接裁掉（裁掉会只剩半个字）。
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
                     }
                     .frame(maxWidth: .infinity)
-                    .frame(height: V.Tab.height)
+                    // 2026-11-01 修复：原来是 `frame(height: V.Tab.height)`（固定 57pt）。
+                    // 图标 20 + 间距 2 + 标签 11pt 在默认档刚好，但标签**走 Dynamic Type**，
+                    // 放大后固定高度会把文字裁掉（用户看到"门"字下半截被切）。改 `minHeight`：
+                    // 栏随文字长高，视觉不变，字号大时不再裁。
+                    .frame(minHeight: V.Tab.height)
                     .background {
                         if selected {
                             RoundedRectangle(cornerRadius: V.R.tabSelected, style: .continuous)
                                 .fill(V.C.tabPill)
-                                .frame(width: V.Tab.selectedW, height: V.Tab.selectedH)
+                                // 2026-11-01 修复：去掉固定 `60 × 49`。那个尺寸的前提是
+                                // "标签是 2 个 11pt 汉字"，而字号一旦放大，胶囊就盖不住文字 ——
+                                // 看起来像"选中态破了"。改为按内容自适应：四周留内边距，形状跟着标签走。
+                                .padding(.horizontal, V.S.gapS)
+                                .padding(.vertical, V.S.gapXXS)
                                 .overlay {
                                     RoundedRectangle(cornerRadius: V.R.tabSelected, style: .continuous)
                                         .strokeBorder(V.C.tabPillEdge, lineWidth: V.S.hair)
+                                        .padding(.horizontal, V.S.gapS)
+                                        .padding(.vertical, V.S.gapXXS)
                                 }
                         }
                     }
@@ -703,20 +718,21 @@ struct VFloatingTabBar: View {
             }
         }
         .padding(.horizontal, V.S.gapS)
-        .frame(width: V.Tab.width, height: V.Tab.height)
+        // 高度同样是下限：栏内的标签走 Dynamic Type，固定 57pt 在放大字号下会裁字。
+        .frame(width: V.Tab.width)
+        .frame(minHeight: V.Tab.height)
+        // 2026-11-01：表面改用 `VGlassSurface` —— **原生液态玻璃**（`.glassEffect`）。
+        // 旧实现是 `.ultraThinMaterial` + 自家染色，那是"模糊 + 一层半透明色"，
+        // 而原生玻璃会采样背后内容做折射与高光，这才是"液态玻璃原生化"。
+        // 表面逻辑（含「减少透明度」退化为不透明卡片）收在 `Design/Components/GlassSurface.swift` 一处。
         .background {
-            RoundedRectangle(cornerRadius: V.R.tab, style: .continuous)
-                .fill(solidTabBar ? AnyShapeStyle(V.C.card) : AnyShapeStyle(.ultraThinMaterial))
-                .overlay {
-                    RoundedRectangle(cornerRadius: V.R.tab, style: .continuous)
-                        .fill(solidTabBar ? Color.clear : V.C.tabGlass)
-                }
-                .overlay {
-                    RoundedRectangle(cornerRadius: V.R.tab, style: .continuous)
-                        .strokeBorder(V.C.tabEdge, lineWidth: V.S.hair)
-                }
+            VGlassSurface(solid: solidTabBar,
+                          cornerRadius: V.R.tab,
+                          tint: solidTabBar ? nil : V.C.tabGlass,
+                          stroke: V.C.tabEdge) {
+                Color.clear
+            }
         }
-        .clipShape(.rect(cornerRadius: V.R.tab, style: .continuous))
         .shadow(color: V.C.bg.opacity(0.5), radius: 12, y: 8)
         .accessibilityElement(children: .contain)
     }
@@ -747,7 +763,12 @@ struct VActionButton: View {
             }
             .foregroundStyle(V.C.onBlue)
             .frame(maxWidth: .infinity)
-            .frame(height: V.Action.height)
+            // 2026-11-01：`height` → `minHeight` + 垂直内边距。
+            // `V.F.bodyStrong` 是 17pt 且**随 Dynamic Type 缩放**（`VFont.relativeTo` 默认 `.body`），
+            // 大字号下 17pt 会长到 27–53pt，固定 50pt 会把标题裁掉（或压成半行）。
+            // `minHeight` 保证默认档仍是 50pt 的视觉，字号大时按钮随文字长高。
+            .padding(.vertical, V.S.gapS)
+            .frame(minHeight: V.Action.height)
             .background(tint, in: .rect(cornerRadius: V.R.action, style: .continuous))
         }
         .buttonStyle(.plain)
