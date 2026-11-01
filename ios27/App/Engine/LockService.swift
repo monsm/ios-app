@@ -59,6 +59,14 @@ final class LockService: ObservableObject {
     /// 仍然只拿得到 `FrameRedact.apply(...)` 之后的脱敏文本。
     private(set) var rawTrace: [String] = []
 
+    /// 同一把锁的**在建连接**（供 `ensureConnected` 单飞）。
+    ///
+    /// 2026-11-01：必须声明在类体里 —— `LockServiceLink.swift` 是 `extension LockService`，
+    /// 而 **Swift 扩展不能有存储属性**（我第一次加在扩展里，CI 直接报
+    /// `extensions must not contain stored properties`）。
+    /// 用 internal 而不是 private：扩展在另一个文件里要读写它。
+    var connecting: (mac: String, task: Task<Void, Error>)?
+
     func log(_ level: String, _ msg: String) {
         // 同一份时间戳口径收进 DiagTime (hhmmss 此前零调用, 而这里手写了一份重复实现)
         let t = DiagTime.hhmmss()

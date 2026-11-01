@@ -43,7 +43,8 @@ extension LockService {
     /// 同时在建连接**，而后进入 `ensureConnectedInner` 的那个会先 `disconnect()` 掉
     /// 前一个正在建立的连接，于是两边都白跑一趟、多花 2–3 秒才靠扫描解析连上。
     /// 现在同 mac 的并发调用只建一次，后来者直接等同一个 Task。
-    private var connecting: (mac: String, task: Task<Void, Error>)?
+    /// 存储属性 `connecting` 声明在 `LockService.swift` 的**类体**里 ——
+    /// 本文件是 `extension LockService`，**扩展不能有存储属性**（2026-11-01 CI 红过这一次）。
 
     func ensureConnected(mac: String) async throws {
         let m = mac.lowercased()
