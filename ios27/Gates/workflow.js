@@ -72,6 +72,8 @@ for (const f of FILES) {
       [path.join(ROOT, '..', '.github', 'workflows', 'ios27.yml'), /静态闸门（([一-鿿0-9]+)\s*道）/],
       [path.join(ROOT, 'docs', 'ARCHITECTURE.md'), /当前共 ([一-鿿0-9]+)\s*道/],
       [path.join(ROOT, 'docs', 'COMPLETION.md'), /3\.1 ([一-鿿0-9]+)\s*道机器闸门/],
+      // 2026-11-01 补：AUDIT-COVERAGE 也声称闸门数，此前不在对账名单里 —— 它就是这样过期的。
+      [path.join(ROOT, 'docs', 'AUDIT-COVERAGE.md'), /-> ([一-鿿0-9]+)\s*道闸门全部通过/],
     ];
     for (const t of targets) {
       const file = t[0];
