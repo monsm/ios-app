@@ -202,6 +202,25 @@ extension DB {
     /// 实测该键在当前代码里**不存在**（指纹名存在 `LedgerFp.name` 里，不单独落键）。
     /// 且第 496 行的兜底清理 `k.contains(m)` 已覆盖所有含本锁 MAC 的键，
     /// 所以没有遗漏。跨端差异在于：vendor 用独立键存指纹名，本仓存在台账里。
+    // MARK: 数据族清单（**新增一族数据时必须回来加一行**）
+    //
+    // `removeDevice` 是"删掉一把锁"的唯一入口。每加一族与锁绑定的数据，都要在这里登记：
+    // 「plist 键怎么清」与「钥匙串副本怎么清」是**两件独立的事** ——
+    // 删了 plist 键**不会**删掉 Keychain 里的副本（这一点已经在四族上各踩过一次）。
+    //
+    // | 数据族 | plist 键 | Keychain 副本 | 清副本的调用 |
+    // |---|---|---|---|
+    // | 台账口令 | `kf_ledger_<mac>` | `ledger.<mac>.pwd.<alias>` | 循环 `pwdSecretAccount` |
+    // | 台账指纹 | 同上（在 Ledger 内） | —（指纹无副本） | — |
+    // | 回收站 | `kf_cbin_ui_<mac>` | `ledger.<mac>.bin.<id>` | `CredBinStore.purgeSecretsForDevice` |
+    // | 版本快照 | `kf_chist_ui_<mac>` | `ledger.<mac>.snap.<id>.<alias>` | `CredHistoryStore.purgeSecretsForDevice` |
+    // | 手机钥匙 | `kf_mkey_<mac>` | `mkey.<mac>.pin.<id>` / `.ekey.<id>` | `MobileKeyService.purgeSecretsForDevice` |
+    // | 锁母钥/蓝牙钥/PIN | `kf_keychain_<mac>` | `kc.<mac>.skey` / `.bkey` / `.ekey` / `.pins` | `removeKeychain` |
+    // | 未完成配网 | `kf_pending_pair_<mac>` | `kc.<mac>.pending.<字段>` | `clearPendingPair` |
+    // | 通知排程 | `kf_calert_<mac>_*` | —（在系统通知中心） | 循环 `cancelAlerts` |
+    // | 其余每锁键族 | 见下方前缀列表 + 兜底 `k.contains(m)` | — | — |
+    //
+    // 判据：**新加一族时，上表要么加一行，要么在"Keychain 副本"列写 `—` 并说明为什么没有。**
     static func removeDevice(_ mac: String) {
         let m = mac.replacingOccurrences(of: ":", with: "").lowercased()
         removeKeychain(m)
