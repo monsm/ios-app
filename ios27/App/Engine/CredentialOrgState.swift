@@ -61,7 +61,10 @@ extension CredentialOrg {
     /// 旧实现让 cancelAlerts 与 scheduleAlertsOrdered 各自起异步序列，两条序列互相
     /// 看不到对方的中间态 —— 删凭证与改期同时发生时，先删后加的顺序不成立。
     // 与 `enqueue` 的签名保持一致（外层 job 也必须 @Sendable，见那里的说明）。
-    private static let notifyQueue = Locked<[(@escaping @Sendable (@escaping @Sendable () -> Void) -> Void)]>([])
+    // 注意：这里**不能写 `@escaping`** —— 它只能出现在函数参数位置，放进泛型实参是编译错误
+    // （CI `063ee8f` 就是这么红的：`'@escaping' may only be used in function parameter position`）。
+    // 存进容器后本来就"逃逸"了，`@Sendable` 足以表达跨并发域的约束。
+    private static let notifyQueue = Locked<[(@Sendable (@Sendable () -> Void) -> Void)]>([])
     private static let notifyBusy = Locked(false)
 
     /// 入队一个"完成时调 done()"的异步动作；队列空闲则立刻开跑。
@@ -85,7 +88,7 @@ extension CredentialOrg {
 
     /// 取队首执行；队列空则释放忙标志。**任何路径都必须调 advance()**，否则整条链会卡死。
     private static func runNextNotify() {
-        let job: (@Sendable (@escaping @Sendable () -> Void) -> Void)? = notifyQueue.withLock { q in
+        let job: (@Sendable (@Sendable () -> Void) -> Void)? = notifyQueue.withLock { q in
             q.isEmpty ? nil : q.removeFirst()
         }
         guard let job else {
