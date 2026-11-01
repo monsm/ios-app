@@ -121,7 +121,7 @@ RootView
 | 9 | `dynamictype` | 字号必须走令牌（`V.F.*`），不许写死数值字号 | 令牌层豁免（那是字面量的家） |
 | 10 | `reducedmotion` | 动效必须带减少动态守卫 | — |
 | 11 | `crosprivate` | Screen + Parts 跨文件 private 可达性 | — |
-| 12 | `callsig2` | 调用标签/参数个数/构造签名/@MainActor 隔离 | — |
+| 12 | `callsig2` | 调用标签/参数个数/构造签名/@MainActor 隔离 | **只覆盖裸调用与构造器**：`类型.方法(...)` 因无类型推断被整段跳过（见文件头「已知盲区」） |
 | 13 | `lineage` | 与上一版切割（18 个旧符号零残留） | 无 |
 | 14 | `workflow` | GitHub Actions 结构；**文档声称的闸门数必须等于真实数量** | 无 |
 | 15 | `destmap` | Dest 台账 ↔ View 实现一一对应 | 无 |
