@@ -85,7 +85,8 @@ struct MemberDetailScreen: View {
             }
         }
         .onAppear {
-            if case .member(let id) = router.consume() {
+            if let ctx = router.consume(if: { if case .member = $0 { return true }; return false }),
+               case .member(let id) = ctx {
                 roster.focusMember = id
             }
             load()

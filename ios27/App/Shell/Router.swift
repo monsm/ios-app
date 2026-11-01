@@ -238,8 +238,16 @@ final class Router {
         }
     }
 
-    /// 消费挂起上下文（页面 onAppear 调用）。
-    func consume() -> RouteContext {
+    /// 消费挂起上下文 —— **只有当它与调用方相关时才取走**。
+    ///
+    /// 2026-11-01 修复：原来是无条件 `consume()`（取走并清空一切）。
+    /// 而 `HouseholdScreen` / `RecordsScreen` / `KeyCreateScreen` / `KeyDetailScreen` /
+    /// `MemberDetailScreen` **五处**都在监听同一个 `pending` —— 谁先跑谁就把对方的跳转
+    /// **吃掉并丢弃**（`.record` 被 Household 的 guard 丢掉、`.member` 被 Records 的 default 丢掉）。
+    /// 表现是"通知点开没反应""从钥匙页跳记录页落在空白"这类**看起来像随机**的失效。
+    /// 现在各自只取自己认识的那几种，不认识的**留在原地**等对的人来取。
+    func consume(if matches: (RouteContext) -> Bool) -> RouteContext? {
+        guard matches(pending) else { return nil }
         let p = pending
         pending = .none
         return p

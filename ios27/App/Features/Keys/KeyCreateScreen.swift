@@ -106,8 +106,8 @@ struct KeyCreateScreen: View {
     }
 
     private func consumeRoute() {
-        let context = router.consume()
-        guard case .key(let id) = context else { return }
+        guard let context = router.consume(if: { if case .key = $0 { return true }; return false }),
+              case .key(let id) = context else { return }
         guard let existing = app.keys.first(where: { $0.id == id }) else { return }
         editingID = id
         kindIndex = kinds.firstIndex(of: existing.kind) ?? 0

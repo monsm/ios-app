@@ -373,7 +373,8 @@ struct HouseholdScreen: View {
     /// 消费 Router 带来的 .member(id:) 上下文：落到那位成员的 360。
     /// 用完即清（consume() 会把 pending 置回 none）。
     private func consume() {
-        guard case .member(let id) = router.consume() else { return }
+        guard let ctx = router.consume(if: { if case .member = $0 { return true }; return false }),
+              case .member(let id) = ctx else { return }
         guard app.members.contains(where: { $0.id == id }) else { return }
         roster.focusMember = id
         router.request(.dest(.memberDetail))

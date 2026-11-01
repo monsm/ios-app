@@ -902,17 +902,20 @@ struct RecordsScreen: View {
             route.visitorOnly = false
         }
         reload()
-        let context = router.consume()
-        switch context {
-        case .record(let id):
-            route.focusID = id
-            route.flashID = id
-            route.dayFocus = nil
-        case .day(let key):
-            route.dayFocus = key
-            route.focusID = nil
-        default:
-            break
+        // 只取 `.record` / `.day` —— 别的一律留给对的人（`consume` 不再无条件清空）。
+        // **不能 early-return**：下面 `searchSeed` 的处理与路由无关，每次 consume 都要跑。
+        if let context = router.consume(if: { if case .record = $0 { return true }; if case .day = $0 { return true }; return false }) {
+            switch context {
+            case .record(let id):
+                route.focusID = id
+                route.flashID = id
+                route.dayFocus = nil
+            case .day(let key):
+                route.dayFocus = key
+                route.focusID = nil
+            default:
+                break
+            }
         }
         if let seed = route.searchSeed {
             query = seed

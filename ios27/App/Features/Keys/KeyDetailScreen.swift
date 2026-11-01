@@ -65,16 +65,15 @@ struct KeyDetailScreen: View {
     // MARK: 消费路由上下文（.key(id:) 是唯一漏斗带过来的定位）
 
     private func consumeRoute() {
-        let context = router.consume()
-        switch context {
-        case .key(let id):
-            keyID = id
         // 2026-11-01：原来 `.dest(.keyDetail)` 与 `default` 两个分支**体完全相同**（复制粘贴留下的），
         // 而且 `default` 会把任何其它路由也吞进来、默默选中第一枚凭证。
-        // 合并成一个：除了明确指定 id 的 `.key(id)`，其余一律"没定位到就用第一枚"。
-        default:
-            if keyID == nil { keyID = app.keys.first?.id }
+        // 现在：只取 `.key(id)`；其余情况（含 `pending == .none` 的直接进入）走"没定位到就用第一枚"。
+        if let context = router.consume(if: { if case .key = $0 { return true }; return false }),
+           case .key(let id) = context {
+            keyID = id
+            return
         }
+        if keyID == nil { keyID = app.keys.first?.id }
     }
 
     // MARK: 页头
