@@ -130,6 +130,24 @@ extension CredentialOrg {
         }
     }
 
+    /// 退出空壳后**重建全部到期提醒**（2026-11-01）。
+    ///
+    /// 为什么需要它：`cancelAllForDecoy()` 会清掉整族通知，
+    /// 而本仓**没有**任何"全量重排"入口 —— 不清回来，用户退出空壳后会永久失去
+    /// 所有凭证的到期提醒，直到他逐条重新保存提醒开关。那是一种静默的功能丢失：
+    /// 界面照旧显示"已排程"，实际一条都不会响。
+    ///
+    /// 逐条走 `scheduleAlerts`（内部经串行队列），只排用户确实开过档位的那几条。
+    static func rescheduleAllAlerts() {
+        for mac in DB.keychains().map(\.mac) {
+            for p in DB.listPwds(mac) where !p.to.hasPrefix("2118") {
+                let a = alert(mac, p)
+                let any = a.day || a.d3 || a.d1 || a.h24 || a.h2
+                if any { scheduleAlerts(mac, p, a) }
+            }
+        }
+    }
+
     /// 退出空壳时复位，让下一次进入能再清一次。
     static func resetDecoyNotificationGuard() { decoyCleared.withLock { $0 = false } }
 

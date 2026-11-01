@@ -232,6 +232,17 @@ console.log('privacy: 扫 ' + files.length + ' 个 Swift 文件 + PrivacyInfo.xc
     }
   }
 }
+
+// 13) 清掉通知就必须有重建路径（2026-11-01）。
+// cancelAllForDecoy 会把整族通知清掉；本仓没有其它全量重排入口，
+// 不重建就是静默功能丢失：界面显示已排程，实际一条都不响。
+{
+  const am = files.find(function (x) { return x.rel === 'Shell/AppModel.swift'; });
+  if (am && am.raw.indexOf('cancelAllForDecoy') >= 0 && am.raw.indexOf('rescheduleAllAlerts') < 0) {
+    note(am.rel, 1, '清空通知后没有重建路径', '退出空壳时调用 CredentialOrg.rescheduleAllAlerts()');
+  }
+}
+
 if (fails.length === 0) {
   console.log('privacy: OK — 剪贴板/备份加密/空壳隔离(读+写)/明文口令不进 plist/帧脱敏/WebDAV/文件保护/CSV 注入/隐私清单 XML 10 类回归判据全部通过');
   process.exit(0);
