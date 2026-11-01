@@ -15,8 +15,8 @@
 
 | 方面 | 状态 | 主要证据 |
 |---|---|---|
-| 原生控件优先 | ✅ 完成 | `Picker(.segmented)`（10 处）、`LabeledContent`（55 处）、**iOS 27 `reorderable()`**（编译已验）、原生玻璃（2 处）；`Toggle`/`ProgressView`/`ContentUnavailableView`/`ShareLink`/`Menu`/`Stepper`/`Slider`/`DatePicker`/`sensoryFeedback` 本来就是原生 |
-| 液态玻璃原生化 | ✅ 完成 | `.glassEffect` 从 **0 → 2 处**，收敛到唯一入口 `VGlassSurface`；Reduce Transparency / **Increase Contrast** / Reduce Motion 三档退化齐全；`glass` 闸门收紧为「Material 只许出现在唯一入口」 |
+| 原生控件优先 | ✅ 完成 | **官方 `TabView` + 5 个 `Tab`**（替换 119 行自绘标签栏，CI `8758a1c` 已验证）、`Picker(.segmented)`（10 处）、`LabeledContent`（55 处）、**iOS 27 `reorderable()`**（已验证）；`Toggle`/`ProgressView`/`ContentUnavailableView`/`ShareLink`/`Menu`/`Stepper`/`Slider`/`DatePicker`/`sensoryFeedback` 本来就是原生 |
+| 液态玻璃原生化 | ✅ 完成 | 标签栏改为**系统渲染的官方玻璃栏**（不再算自定义玻璃面），并接上 `tabBarMinimizeBehavior`；自定义玻璃面只剩 1 处（提示条，走 `VGlassSurface` 唯一入口），Reduce Transparency / **Increase Contrast** / Reduce Motion 三档退化齐全 |
 | 控件大小考虑实际文字 | ✅ 完成 | 9 处固定尺寸改下限 / 换行 / 自适应；`ReadingGrid`(18 调用) 与 `VStatPair`(12 调用) 在无障碍字号下改单列/竖排；2 条闸门固化 |
 | 合理布局 | ✅ 完成 | Tab 栏留白改为 `onGeometryChange` **实测**；`confirmationDialog` 挂到触发控件；`PressStyle` 按压反馈覆盖约 176 处调用并补 Reduce Motion 守卫 |
 
