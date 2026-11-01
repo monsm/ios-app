@@ -498,6 +498,22 @@ final class SecurityRegressionTests: XCTestCase {
         DB.setCodable([String](), "kf_csearch_hist")
     }
 
+    // MARK: - 备份整表写入必须有取值白名单
+
+    /// `setDispositions` 只供备份恢复用，收到的 verdict 来自**外部包**。
+    /// 旧实现原样收下任意字符串 —— 而界面把 `disposed.count`（键数）当「已处置 N 条」显示，
+    /// 于是构造一个包就能让统计数字虚高，导出的 CSV 里也会出现任意文本。
+    func testDispositionRestoreRejectsUnknownVerdicts() {
+        let mac = "aabbccddeeff"
+        RecordOverlay.setDispositions(mac, ["a": "已处置", "b": "随便写的", "c": "误报"])
+        let d = RecordOverlay.dispositions(mac)
+        XCTAssertEqual(d.count, 2, "未知结论应被丢弃，只留白名单内的两种")
+        XCTAssertEqual(d["a"]?.verdict, "已处置")
+        XCTAssertEqual(d["c"]?.verdict, "误报")
+        XCTAssertNil(d["b"], "构造过的结论不该进表")
+        RecordOverlay.setDispositions(mac, [:])   // 清理
+    }
+
     // MARK: - 备份：类型/规模闸（SEC-30）
 
     func testBackupImportRejectsForeignAndOversizedPayloads() throws {

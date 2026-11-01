@@ -112,10 +112,19 @@ enum RecordOverlay {
         DB.store.setCodable(dispKey(mac), m)
     }
     /// 2026-10-30（第 66 轮）：整表写入 —— 只供备份恢复用（备份包里存的是 verdict 字符串）。
+    /// 合法处置结论（唯一一份）。`Disposition.verdict` 的注释列了这五种，
+    /// 而实现里只有 `RecordDetailScreen` 写「已处置」；其余是设计意图。
+    static let verdicts: Set<String> = ["已处理", "误报", "已处置", "测试", "已人工检查"]
+
     static func setDispositions(_ mac: String, _ table: [String: String]) {
         var m = [String: RecordSearch.Disposition]()
         for (k, verdict) in table {
-            m[k] = RecordSearch.Disposition(at: 0, verdict: verdict)
+            // 与 `setNotes` 同一条纪律：整表写入来自**外部备份包**，所以要做白名单。
+            // 旧实现原样收下任意字符串 —— 一份构造过的备份能往处置表里塞任意文本，
+            // 而界面会把它当"处置结论"显示（xlsx/csv 导出里也一样）。
+            let v = verdict.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard verdicts.contains(v) else { continue }
+            m[k] = RecordSearch.Disposition(at: 0, verdict: v)
         }
         DB.store.setCodable(dispKey(mac), m)
     }
