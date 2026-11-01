@@ -34,10 +34,14 @@ enum AndroidPair {
         // 两端不逐字节一致，但都能被对方解析（字段名匹配，不依赖顺序）。
         // 若将来要严格互操作，得改成手工拼串对齐 vendor 的字段序。
     // 2026-10-27 审核说明 (AUDIT-C A14)：二维码载荷生成/解析两端各写一遍 ——
-    // 本仓这里生成，Android `LockStore.kt` 解析。字段名对得上（v/n/m/p/e），
-    // 唯一的形态差异是 **Android 做了本仓没做的上界校验**（ekey ≤ 510 字节，
-    // 因为 KLV 长度字段只有 1 字节）。这条校验应该反向回填到本仓 ——
-    // 见 AUDIT-A F-42；改它需要同步 golden，故留待与 Android 一起改。
+    // 本仓这里生成，Android `LockStore.kt` 解析。字段名对得上（v/n/m/p/e）。
+    //
+    // 2026-11-01 更正：原文写「Android 做了本仓没做的上界校验（ekey ≤ 510 字节），
+    // 这条校验应该反向回填到本仓」—— **这个结论错了**。核对后：
+    //   · 本仓是**生成侧**，`buildEkeyOpen` 产出的是 AES 加密结果（16 字节明文 → 32 hex 字符），
+    //     **长度结构上固定**，不可能超过 510；
+    //   · 那条上界是**解析侧**的防御（对方要接受任意输入），本仓没有"解析他人 ekey"这条路径。
+    // 所以本仓不需要这条校验 —— 是注释的措辞（"应该反向回填"）在指一条不存在的待办。
     static func payload(_ kc: Keychain) -> String? {
         guard let e = ekey(for: kc) else { return nil }
         // 2026-10-30 清理（第 76 轮）：`LockArchive.displayName` 本身已是「name 非空用 name、否则型号」

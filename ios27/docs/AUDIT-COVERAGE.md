@@ -87,6 +87,14 @@ CI  ：build（xcode-27，BUILD + ARCHIVE + errors=0）· golden（iOS 27 模拟
 | `TimeFormat.swift` | 75 | 117 | **发现缺陷**（跨年组头只显示月日） |
 | `DateFormats.swift` | 84 | 125/126 | **发现缺陷**（4 处未钉公历） |
 | `WeekCal.swift` | 66 | 120 | **发现**：`kf_week_start` 无 UI 写入点（已登记 RESERVED） |
+| `BatteryCare.swift` | 226 | 136 | **发现缺陷**（低电缓存从不作废） |
+| `HouseholdRoster.swift` | 294 | 135 | **发现缺陷**（「23–24 点」不存在的小时） |
+| `RecordSearchBuild.swift` | 135 | 139 | **发现缺陷**（跨锁时间线静默吞掉无时刻的行） |
+| `EngineHost.swift` | 35 | 140 | **发现缺陷**（冷启动点通知动作丢失） |
+| `DoorLayout.swift` | 83 | 141 | **发现缺陷**（`move(by:)` 只对 ±1 正确） |
+| `LockStats.swift` | 332 | 137 | **发现缺陷**（`isSleeping` 缺未来时间戳保护） |
+| `AndroidPair.swift` | 66 | 142 | 无代码缺陷；**更正了一处误导性注释**（指向一条不存在的待办） |
+| `BLETypes.swift` | 67 | 142 | 无缺陷（UUID / 错误码 / 错误包装均正确） |
 
 ### 尚未专门审过的文件（差集，13 个）
 
