@@ -190,6 +190,10 @@ enum BackupCanonical {
                 ]))
             })))
         }
+        // 2026-11-01：星标同样进 canonical（与 alerts 同族，字母序 alerts < stars）。
+        if let st = meta.stars, !st.isEmpty {
+            pairs.append(("stars", .arr(st.sorted().map { JValue.str($0) })))
+        }
         return pairs.isEmpty ? .null : .obj(pairs)
     }
     private static func dongleValue(_ d: Dongle) -> JValue {

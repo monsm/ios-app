@@ -212,6 +212,12 @@ enum CredStarStore {
 
     static func isStarred(_ mac: String, _ id: String) -> Bool { all(mac).contains(id) }
 
+    /// 整表写入 —— 只供备份恢复用（与 `RecordOverlay.setNotes` 同一口径：
+    /// 逐条 toggle 会把整表解码 N 遍，而且可能把"要不要清空"的语义搞错）。
+    static func set(_ mac: String, _ ids: Set<String>) {
+        DB.store.set(key(mac), ids.sorted())
+    }
+
     @discardableResult
     static func toggle(_ mac: String, _ id: String) -> Bool {
         var set = all(mac)

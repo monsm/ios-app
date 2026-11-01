@@ -186,7 +186,9 @@ enum BackupKit {
                     alerts: {
                         let t = CredentialOrg.alertTable(mac).filter { $0.value != CredAlert() }
                         return t.isEmpty ? nil : t
-                    }()))
+                    }(),
+                    // 2026-11-01：星标同口径导出（空表置 nil，不写等价空表进备份）。
+                    stars: CredStarStore.all(mac).isEmpty ? nil : Array(CredStarStore.all(mac)).sorted()))
         }
         let dongles = DB.dongles()
         let gws = DB.gateways()

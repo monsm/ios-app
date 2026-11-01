@@ -46,7 +46,13 @@ struct BackupBundle: Codable {
             /// 每条凭证的提醒档位静默归零，用户不会收到任何到期提醒，也没有提示。
             /// 键形如 `pwd:<alias>`；缺省 = 这次备份没带 = 不动本机。
             var alerts: [String: CredAlert]?
+            /// 星标 / 高频标记（`kf_cstar_ui_<mac>`）。
+            /// 2026-11-01 补：与 `alerts` 同族 —— 用户手动标出来的"最常用的那几条"，
+            /// 换机后全部丢失，且没有任何提示（凭证还在，只是"哪几条最重要"这个信息没了）。
+            /// 元素形如 `p:<alias>` / `f:<batch>`；缺省 = 这次备份没带 = 恢复时不动本机。
+            var stars: [String]?
         }
+
     }
     struct Globals: Codable {
         var keychainDongles: [Dongle]?
