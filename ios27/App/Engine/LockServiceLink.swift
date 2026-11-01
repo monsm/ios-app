@@ -42,29 +42,44 @@ extension LockService {
     /// 「缓存 deviceId 直连失败（连接已取消）/（连接已断开）」—— 说明**预热与开锁两条路径
     /// 同时在建连接**，而后进入 `ensureConnectedInner` 的那个会先 `disconnect()` 掉
     /// 前一个正在建立的连接，于是两边都白跑一趟、多花 2–3 秒才靠扫描解析连上。
-    /// 现在同 mac 的并发调用只建一次，后来者直接等同一个 Task。
-    /// 存储属性 `connecting` 声明在 `LockService.swift` 的**类体**里 ——
+    /// 现在同 mac 的并发调用只建一次，后来者挂上去等。
+    /// 存储属性 `connectingMac` / `connectWaiters` 声明在 `LockService.swift` 的**类体**里 ——
     /// 本文件是 `extension LockService`，**扩展不能有存储属性**（2026-11-01 CI 红过这一次）。
-
+    ///
+    /// 用 continuation 而不是存一个 `Task`：本工程是 `SWIFT_VERSION 5.0` +
+    /// `strict concurrency complete`，`Task { [self] … }` 会捕获非 Sendable 的 self 而产生
+    /// 并发**告警**，而 CI 的口径是 `warnings=0`。continuation 不跨 actor 传递，零告警。
     func ensureConnected(mac: String) async throws {
         let m = mac.lowercased()
         let alreadyConnected = (connectedMAC == m && ble.connectedPeripheralId == connectedDeviceId && !connectedDeviceId.isEmpty)
-        // 已经有人在连这把锁 → 等它，别再拆一次。
-        if let c = connecting, c.mac == m {
-            try await c.task.value
+        // 已经有人在连这把锁 → 挂上去等它，别再拆一次。
+        if connectingMac == m {
+            try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
+                connectWaiters.append(c)
+            }
             return
         }
-        let task = Task { [self] in try await ensureConnectedInner(mac: m) }
-        connecting = (m, task)
+        connectingMac = m
         do {
-            try await task.value
-            if connecting?.mac == m { connecting = nil }
+            try await ensureConnectedInner(mac: m)
+            settleConnecting(nil)
             // 本来就连着的不算一次"尝试"，不记（否则每次命令都会刷一条）。
             if !alreadyConnected { BleTelemetry.recordAttempt(mac: m, ok: true, reason: "已连接") }
         } catch {
-            if connecting?.mac == m { connecting = nil }
+            settleConnecting(error)
             BleTelemetry.recordAttempt(mac: m, ok: false, reason: error.localizedDescription)
             throw error
+        }
+    }
+
+    /// 收尾一次在建连接：清标记并把所有等着的调用者唤醒（成功或同一个错误）。
+    /// 本类是 `@MainActor`，所以「检查 + 登记」与「清标记 + 唤醒」都不会被打断。
+    private func settleConnecting(_ error: Error?) {
+        connectingMac = ""
+        let waiters = connectWaiters
+        connectWaiters = []
+        for w in waiters {
+            if let error { w.resume(throwing: error) } else { w.resume() }
         }
     }
 

@@ -65,7 +65,12 @@ final class LockService: ObservableObject {
     /// 而 **Swift 扩展不能有存储属性**（我第一次加在扩展里，CI 直接报
     /// `extensions must not contain stored properties`）。
     /// 用 internal 而不是 private：扩展在另一个文件里要读写它。
-    var connecting: (mac: String, task: Task<Void, Error>)?
+    var connectingMac: String = ""
+    /// 等在同一次在建连接上的调用者。用 continuation 而不是存 `Task` ——
+    /// 本工程是 `SWIFT_VERSION 5.0` + `strict concurrency complete`，
+    /// 存 `Task { [self] … }` 会捕获非 Sendable 的 self 而产生并发**告警**，
+    /// 而 CI 的口径是 `warnings=0`。continuation 不涉及跨 actor 传递，零告警。
+    var connectWaiters: [CheckedContinuation<Void, Error>] = []
 
     func log(_ level: String, _ msg: String) {
         // 同一份时间戳口径收进 DiagTime (hhmmss 此前零调用, 而这里手写了一份重复实现)
