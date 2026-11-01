@@ -88,7 +88,7 @@ xcodebuild build -project LockKeeper.xcodeproj -scheme LockKeeper \
 
 ---
 
-## 二十道机器闸门
+## 二十一道机器闸门
 
 每道都有**正控**（故意注入缺陷确认它会红），不是"写了就算数"。
 

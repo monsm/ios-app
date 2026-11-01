@@ -243,6 +243,8 @@ enum CredentialOrg {
     // 因为"功能已由 `KeyCalendarScreen` 更完整地实现"而删除，不再适合作例子。）
     // 但注释必须改成实话：现在写的是"三处都在用"，下一个人会据此以为它已被接上。
     static func disReasonKey(_ mac: String) -> String { "kf_cdisrea_" + mac }
+    // 【保留未接 2026-11-01】停用原因**写入**（361 的采集侧）—— 接线点：停用凭证时的必填原因弹窗。
+    // 与 `CredentialOrgState.disableMark` / `disableMarkText`（读侧）成对，两边都没接。
     static func markDisabled(_ mac: String, kind: String, keys: [Int], label: String, via: String) {
         guard !keys.isEmpty else { return }
         var m = DB.store.get([String: DisableMark].self, disReasonKey(mac)) ?? [:]

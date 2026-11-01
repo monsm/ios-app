@@ -130,8 +130,9 @@ RootView
 | 18 | `feedback` | 用户动作里的 `try? await` 必须有错误通道（HIG feedback） | 排除 `Task.sleep` 与 `throws` 函数 |
 | 19 | `modal` | 对话框不许直接抢 sheet（HIG sheets：一次只呈现一个模态） | 多入口只提示不判红 |
 | 20 | `settings` | 给了开关就必须有效果（**warn-only**：只追一层直接消费） | 间接消费追不到，故只提示 |
+| 21 | `reserved` | `RESERVED.md` 清单与源码 `【保留未接` 标记对账（两向） | 只查“登记了就必须有标记”，不判功能本身是否该保留 |
 
-**当前共 20 道**（这个数字由 `Gates/workflow.js` 对账，写错会本地判红）。
+**当前共 21 道**（这个数字由 `Gates/workflow.js` 对账，写错会本地判红）。
 
 ### 5.1 每道闸门的已知边界（**绿 ≠ 没问题**）
 

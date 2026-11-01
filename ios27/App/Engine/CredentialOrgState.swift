@@ -216,6 +216,8 @@ extension CredentialOrg {
         return n
     }
 
+    // 【保留未接 2026-11-01】停用原因**读取与回显**（361）—— 接线点：凭证详情页的停用行。
+    // 与 `CredentialOrg.markDisabled`（写侧）成对；两边都没接，所以整条链目前是死的。
     static func disableMark(_ mac: String, kind: String, key: Int) -> DisableMark? {
         (DB.store.get([String: DisableMark].self, disReasonKey(mac)) ?? [:])["\(kind):\(key)"]
     }
