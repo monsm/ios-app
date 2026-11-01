@@ -60,6 +60,45 @@ CI  ：build（xcode-27，BUILD + ARCHIVE + errors=0）· golden（iOS 27 模拟
 注意：闸门数现为 **22**（第 21 道 `reserved` 是新增的闸门文件）；`privacy` / `a11y` 则是在已有闸门里加判据。
 闸门数对账由 `Gates/workflow.js` 盯着 6 个文档。
 
+## 2.5 逐文件审计状态（2026-11-01 地毯审计后）
+
+判据：**一个文件算"已审"，当且仅当它的文件名出现在某轮 `AUDIT-*.md` 里**。
+这条判据可以机械计算（`App/` 下 147 个 `.swift` 的文件名 vs 全部报告正文的差集）。
+
+### 本轮已专门审过、且**未发现缺陷**的文件（结论如实记录，不假装有产出）
+
+| 文件 | 行数 | 轮次 | 结论 |
+|---|---:|---|---|
+| `RecordSearchQuery.swift` | 74 | 116 | 时基/偏移/stride 边界均正确 |
+| `StatusParser.swift` | 217 | 116 | 字节偏移、`intHex`/`leHexToU32` 语义正确 |
+| `Attribution.swift` | 80 | 116 | 与 `StatsKit.openTypes` 一致 |
+| `Reading.swift` | 104 | 117 | `FieldRow` 是纯展示行，不受 44pt 约束 |
+| `DefendService.swift` | 50 | 123 | 半秒单位、枚举 rawValue、失败不落盘三项均正确 |
+| `BackgroundGuard.swift` | 35 | 124 | `expirationHandler` 在 main 线程，无竞态 |
+| `AuditChain.swift` | 43 | 124 | 头注已自我更正 DestroyKit 的不实声明 |
+| `HeroStats.swift` | 23 | 128 | 空集合回退全开 + 白名单过滤正确 |
+| `RecordModels.swift` | 32 | 128 | 仅 `Rec` 结构定义 |
+| `LockGuard.swift` | 31 | 122 | 五枚开关的处置已在头注写明理由 |
+| `HouseholdParts.swift` | 355 | 133 | **发现缺陷**（四态枚举被写成二分支） |
+| `KeysBits.swift` | 299 | 131/132 | **发现缺陷**（命中区 32pt、重复修饰符） |
+| `ToastCenter.swift` | 78 | 118 | **发现缺陷**（`transition` 无减弱动态守卫） |
+| `PidMap.swift` | 55 | 122 | **发现缺陷**（未知 pid 兜底文案撒谎） |
+| `TimeFormat.swift` | 75 | 117 | **发现缺陷**（跨年组头只显示月日） |
+| `DateFormats.swift` | 84 | 125/126 | **发现缺陷**（4 处未钉公历） |
+| `WeekCal.swift` | 66 | 120 | **发现**：`kf_week_start` 无 UI 写入点（已登记 RESERVED） |
+
+### 尚未专门审过的文件（差集，13 个）
+
+```
+AndroidPair.swift  BLETypes.swift  BatteryCare.swift  DoorLayout.swift
+EngineHost.swift   HouseholdRoster.swift  LockStats.swift
+RecordSearchBuild.swift
+```
+
+> 注：`HouseholdParts` / `KeysBits` / `DoorLayout` / `ToastCenter` / `HeroStats` / `RecordModels`
+> 在本轮已审并记录（见上表），但它们的文件名只出现在**这一节**，所以机械差集仍会列它们 ——
+> 这正是"报告里没写文件名"导致指标失真的例子。**上表是本轮之后的事实来源。**
+
 ## 3. 明确**没有**覆盖的部分（不要当成已验证）
 
 | 项 | 为什么没覆盖 | 谁能验 |
