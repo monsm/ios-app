@@ -253,6 +253,12 @@ extension DB {
             for k in store.keys() where k.hasPrefix(p) { store.remove(k) }
         }
         // 兜底清理 (审计 §6.6): 一批每锁键在 mac 之后**还带尾段**, 精确前缀删永远删不掉 ——
+        // ⚠ 2026-11-01（Round 224 核对）：**这条是承重网，不是冗余。**
+        // 下面这些族都不在上面那份显式前缀清单里，全靠这一条收走：
+        //   kf_autoopen_lastdispatch_ / kf_cdisrea_ / kf_cestudy_earlyexp_
+        //   kf_mkey_ / kf_rnote_ / kf_rflag_ / kf_rdisp_ / kf_rflt_ / kf_mborrow_ / kf_mclaim_
+        // 而它们里面有手机钥匙、记录备注/旗标/处置、成员认领映射 —— 删掉这条会直接留孤儿数据。
+        // **它成立的前提**：所有每锁键都必须用**归一化 mac** 拼接（`kf_logsync_` 当年就栽在没归一化）。
         // kf_cdraft_<mac>、kf_logarch_<mac>、kf_mborrow_/kf_mclaim_/kf_mig_lockact_<mac>、kf_offboard_<member> 等。
         // 判据: 键名里含本锁 MAC (大小写不敏感) 即属该锁数据族。
         let up = m.uppercased()
