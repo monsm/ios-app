@@ -306,7 +306,14 @@ struct PasscodeSheet: View {
             DB.setPasscode(first)
         case .duress:
             // 胁迫码独立键 kf_duress；空壳模式的读取判据在 AppLock/LockGate。
-            _ = DB.setDuressCode(first)
+            // 2026-11-01（Round 258）：`setDuressCode` 返回 Bool，其中一条失败条件是
+            // **胁迫码与本机密码相同**（`verifyPasscode(code)` 命中就 return false，什么也不写）。
+            // 原来用 `_ =` 丢掉结果、直接 `dismiss()` —— 用户以为设好了，实际根本没设，
+            // 而且要到"真需要用胁迫码"那一刻才会发现。这一条是安全功能，不能静默失败。
+            guard DB.setDuressCode(first) else {
+                error = "胁迫码不能与本机密码相同；请换一个 4 位以上数字"
+                return
+            }
         }
         dismiss()
     }
