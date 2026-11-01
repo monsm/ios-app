@@ -13,6 +13,28 @@
 import XCTest
 @testable import LockKeeper
 
+// MARK: - 持久化时间戳的可信性（未来值会让"现在 − 时间戳"类判断被永久钉死）
+
+final class TimestampPlausibilityTests: XCTestCase {
+
+    func testFutureStampsAreRejectedButSmallDriftIsNot() {
+        let now = 1_700_000_000.0
+        XCTAssertTrue(TimeFormat.timestampIsPlausible(0, now: now), "0 = 没有记录，不算不可信")
+        XCTAssertTrue(TimeFormat.timestampIsPlausible(now - 10, now: now))
+        XCTAssertTrue(TimeFormat.timestampIsPlausible(now + 30, now: now), "小幅时钟漂移容忍")
+        XCTAssertFalse(TimeFormat.timestampIsPlausible(now + 3600, now: now), "真·未来值不可信")
+        XCTAssertFalse(TimeFormat.timestampIsPlausible(now + 86400 * 30, now: now))
+    }
+
+    /// 使用点：`AutoOpenKit.coolReady` 的冷却（`LockStats` 的连接节流同理）。
+    func testCooldownAndTouchThrottleIgnoreFutureStamps() {
+        let now = 1_700_000_000.0
+        XCTAssertTrue(AutoOpenKit.coolReady(lastDispatch: now + 3600, now: now),
+                      "未来时间戳不该把 6 秒冷却变成永久封禁")
+        XCTAssertFalse(AutoOpenKit.coolReady(lastDispatch: now - 3, now: now))
+    }
+}
+
 final class TimeBasisTests: XCTestCase {
 
     private let sample = "2026-01-01 00:00:00"

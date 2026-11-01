@@ -5,6 +5,20 @@
 import Foundation
 
 enum TimeFormat {
+    /// 持久化的时间戳是否可信（**不超过"现在"太多**）。
+    ///
+    /// 为什么需要它：本仓多处用 `now - t` 做判断（冷却、节流、沉睡），而 `t` 来自 UserDefaults。
+    /// 用户调过系统时间、或换机后带过来另一个设备的时钟时，`t` 可能**在未来** ——
+    /// 于是 `now - t` 为负，判断结果被永久钉在一侧：
+    ///   · `AutoOpenKit.coolReady`：冷却永久生效 ⇒ **自动开锁无声失效**（已修）；
+    ///   · `LockStats.touchConnection`：`now - last < 300` 恒真 ⇒ **"最近连接时间"再也不更新**，
+    ///     而那个字段喂给"30 天未连 → 沉睡"判定。
+    /// 这里给一个容忍窗口（默认 60s）：小幅时钟漂移不算超前，真·未来值才算。
+    static func timestampIsPlausible(_ t: Double, now: Double = Date().timeIntervalSince1970,
+                                     tolerance: Double = 60) -> Bool {
+        t <= 0 || t <= now + tolerance
+    }
+
     /// 固定公历。取年月日一律走它，不走 Calendar.current。
     static let calendar: Calendar = {
         var c = Calendar(identifier: .gregorian)

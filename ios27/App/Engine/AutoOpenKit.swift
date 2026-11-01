@@ -173,7 +173,8 @@ enum AutoOpenKit {
         // 时间戳明显超前时就当它无效（fail-open 到"可以开"，与 fail-closed 的防拆挂起不同 ——
         // 那条走的是 `isSuspended`，有独立的 24h 语义）。
         guard lastDispatch > 0 else { return true }
-        if lastDispatch > now + cooldownSeconds { return true }
+        // 与 `LockStats.touchConnection` 共用同一个"时间戳可信"判据（TimeFormat）。
+        guard TimeFormat.timestampIsPlausible(lastDispatch, now: now) else { return true }
         return now - lastDispatch > cooldownSeconds
     }
 

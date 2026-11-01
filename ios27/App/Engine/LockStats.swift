@@ -86,7 +86,9 @@ enum LockArchive {
         // "最近连接时间"只用于沉睡判定（按天/按周的量级），5 分钟的精度完全够，故加节流。
         let now = Date().timeIntervalSince1970
         var m = meta(mac)
-        if now - m.lastConnectedAt < 300 { return }
+        // 上限保护同 `AutoOpenKit.coolReady`：`lastConnectedAt` 若在未来，
+        // `now - last < 300` 会**恒真** ⇒ 这个字段再也不更新，而它喂给"30 天未连 → 沉睡"判定。
+        if TimeFormat.timestampIsPlausible(m.lastConnectedAt, now: now), now - m.lastConnectedAt < 300 { return }
         m.lastConnectedAt = now
         save(mac, m)
     }
