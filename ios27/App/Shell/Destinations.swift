@@ -42,7 +42,6 @@ enum Destinations {
         case .recordDetail: RecordDetailScreen()
         case .recordExport: RecordExportScreen()
         case .recordsStudio: RecordsStudioScreen()
-        case .alarmKinds: AlarmKindsScreen()
 
         case .memberDetail: MemberDetailScreen()
         case .memberCreate: MemberCreateScreen()

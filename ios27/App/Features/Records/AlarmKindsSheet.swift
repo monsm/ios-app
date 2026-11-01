@@ -37,24 +37,10 @@ struct AlarmKindsSheet: View {
     }
 }
 
-/// 目的地页版本（Dest .alarmKinds）。与 sheet 共用同一个面板与同一份 route 状态。
-struct AlarmKindsScreen: View {
-    @State private var route = RecordsRoute.shared
-
-    var body: some View {
-        ScrollView {
-            AlarmKindsCard(selection: Binding(
-                get: { route.alarmKinds },
-                set: { route.alarmKinds = $0 }
-            ))
-            .padding(.vertical, V.S.gap16)
-        }
-        .background(CanvasBackground())
-        .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("告警类型")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
+// 2026-11-01（Round 248）：这里原本还有一个 `AlarmKindsScreen`（`Dest .alarmKinds` 的目的地页版本）。
+// 核实：全仓**没有任何** `.dest(.alarmKinds)` 跳转 —— 「告警类型多选」的真实入口是记录页那个
+// `.sheet { AlarmKindsSheet() }`。同一功能留两份实现、其中一份不可达，只会让人改错地方，故删除。
+// `AlarmKindsCard` 保留（sheet 在用）。
 
 struct AlarmKindsCard: View {
     @Binding var selection: Set<Int>

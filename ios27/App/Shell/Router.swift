@@ -43,7 +43,10 @@ enum Dest: String, CaseIterable, Identifiable, Hashable {
     case recordDetail      // 记录详情
     case recordExport      // 导出
     case recordsStudio     // 记录工作室（检索/统计/hex）
-    case alarmKinds        // 告警类型多选
+    // 2026-11-01（Round 248）：`case alarmKinds` 已删 —— 它是**死路由**。
+    // 「告警类型多选」的真实入口是 `RecordsScreen` 里的 **sheet**（`.sheet { AlarmKindsSheet() }`），
+    // 全仓没有任何 `.dest(.alarmKinds)` 跳转，对应的 `AlarmKindsScreen` 也一并删除。
+    // 同一功能留两份实现、其中一份不可达，比只留一份更容易让人改错地方。
 
     // 家
     case memberDetail      // 成员 360
@@ -96,7 +99,6 @@ enum Dest: String, CaseIterable, Identifiable, Hashable {
         case .recordDetail: return "记录详情"
         case .recordExport: return "导出"
         case .recordsStudio: return "记录工作室"
-        case .alarmKinds: return "告警类型"
         case .memberDetail: return "成员"
         case .memberCreate: return "新建成员"
         case .memberArchive: return "归档"
@@ -121,7 +123,7 @@ enum Dest: String, CaseIterable, Identifiable, Hashable {
              .deviceInfo, .unlockGate, .moduleOrder: return .door
         case .keys, .keyDetail, .keyCreate, .keyCalendar, .mobileKey, .shareToAndroid,
              .credentialStudio, .zotp: return .keys
-        case .records, .recordDetail, .recordExport, .recordsStudio, .alarmKinds: return .records
+        case .records, .recordDetail, .recordExport, .recordsStudio: return .records
         case .household, .memberDetail, .memberCreate, .memberArchive, .memberOps: return .household
         case .settings, .appearance, .security, .backup, .autoOpen, .hardware, .protocolTest, .about,
              .accessibility, .backupStudio: return .settings
