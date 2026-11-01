@@ -84,6 +84,18 @@ final class BackupRoundTripTests: XCTestCase {
         b.devices = [dev]
         let text2 = BackupCanonical.exportText(b)
         XCTAssertTrue(text2.contains("alerts"), "提醒档位没进导出文本（canonical 白名单漏了）")
+
+        // 星标与拖拽排序同样必须出现在导出文本里（同一族，同一失败方式：静默丢）。
+        let meta2 = BackupBundle.Device.Meta(defend: nil, tailgate: nil, synctime: nil,
+                                            otpStatus: nil, otpIdx: nil, mobileKeys: nil,
+                                            recNotes: nil, recFlags: nil, recDisps: nil,
+                                            alerts: nil, seq: ["p": [3, 1, 2]], stars: ["p:3", "f:1"])
+        b.devices = [BackupBundle.Device(mac: mac, kc: b.devices[0].kc, ledger: nil, meta: meta2)]
+        let text3 = BackupCanonical.exportText(b)
+        XCTAssertTrue(text3.contains("stars"), "星标没进导出文本")
+        XCTAssertTrue(text3.contains("\"seq\""), "拖拽排序没进导出文本")
+        // 顺序本身是数据：导出文本里 3,1,2 不能被排序成 1,2,3
+        XCTAssertTrue(text3.contains("[3,1,2]"), "拖拽序被排序了 —— 顺序是数据，不能 sort")
     }
 
     /// 导出 → 解析 → 恢复：凭证条数与内容必须回来。

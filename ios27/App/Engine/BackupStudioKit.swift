@@ -456,6 +456,7 @@ enum BackupStudio {
                 if let dd = meta.recDisps { RecordOverlay.setDispositions(mac, dd) }
                 // 2026-11-01：到期提醒档位回写（键形如 `pwd:<alias>`）。
                 // 缺字段 = 这次备份没带 = 不动本机（与上面几族同口径）。
+                if let sq = meta.seq { CredentialOrg.setSeq(mac, sq) }
                 if let st = meta.stars { CredStarStore.set(mac, Set(st)) }
                 if let al = meta.alerts {
                     for (k, a) in al {

@@ -187,7 +187,9 @@ enum BackupKit {
                         let t = CredentialOrg.alertTable(mac).filter { $0.value != CredAlert() }
                         return t.isEmpty ? nil : t
                     }(),
-                    // 2026-11-01：星标同口径导出（空表置 nil，不写等价空表进备份）。
+                    // 2026-11-01：拖拽排序与星标同口径导出。顺序必须与 Meta 字段声明一致
+                    // （alerts < seq < stars）—— 否则又是一次"实参顺序"编译错。
+                    seq: CredentialOrg.seq(mac).isEmpty ? nil : CredentialOrg.seq(mac),
                     stars: CredStarStore.all(mac).isEmpty ? nil : Array(CredStarStore.all(mac)).sorted()))
         }
         let dongles = DB.dongles()

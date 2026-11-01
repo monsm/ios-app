@@ -191,6 +191,13 @@ enum BackupCanonical {
             })))
         }
         // 2026-11-01：星标同样进 canonical（与 alerts 同族，字母序 alerts < stars）。
+        // 2026-11-01：拖拽排序也进 canonical（字母序 alerts < seq < stars）。
+        // 内层按段名排序；**数组保持用户顺序**（顺序本身就是数据，不能 sort）。
+        if let sq = meta.seq, !sq.isEmpty {
+            pairs.append(("seq", .obj(sq.sorted { $0.key < $1.key }.map { (k, v) in
+                (k, JValue.arr(v.map { JValue.num(Double($0)) }))
+            })))
+        }
         if let st = meta.stars, !st.isEmpty {
             pairs.append(("stars", .arr(st.sorted().map { JValue.str($0) })))
         }

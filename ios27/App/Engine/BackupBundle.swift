@@ -46,6 +46,11 @@ struct BackupBundle: Codable {
             /// 每条凭证的提醒档位静默归零，用户不会收到任何到期提醒，也没有提示。
             /// 键形如 `pwd:<alias>`；缺省 = 这次备份没带 = 不动本机。
             var alerts: [String: CredAlert]?
+            /// 拖拽排序序（`kf_cseq_<mac>`：`["p": [别名…], "f": [批次…]]`）。
+            /// 2026-11-01 补：用户的**手动排序**同样是"只有他自己知道"的信息，换机后回到默认序。
+            /// 缺省 = 这次备份没带 = 恢复时不动本机。字段顺序按字母序（alerts < seq < stars），
+            /// 因为 canonical 与结构体都要按同一顺序 emit（见 BackupCanonical.metaValue）。
+            var seq: [String: [Int]]?
             /// 星标 / 高频标记（`kf_cstar_ui_<mac>`）。
             /// 2026-11-01 补：与 `alerts` 同族 —— 用户手动标出来的"最常用的那几条"，
             /// 换机后全部丢失，且没有任何提示（凭证还在，只是"哪几条最重要"这个信息没了）。
