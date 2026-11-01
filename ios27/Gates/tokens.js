@@ -77,6 +77,9 @@ for (const f of files) {
 
 // dead-token check (added 2026-11-01)
 const TOKEN_FILE = 'App/Design/V7/V7Tokens.swift';
+// Also check the F (font) enum: it had the same blind spot (dynamictype.js exempts the
+// token file, so nobody checked whether font tokens are used). 3 dead ones found 2026-11-01.
+const FONT_ENUM = 'enum F {';
 const tokenSrc = fs.readFileSync(path.join(APP, 'Design', 'V7', 'V7Tokens.swift'), 'utf8');
 const cStart = tokenSrc.indexOf('enum C {');
 let depthC = 0, cEnd = cStart;
@@ -128,14 +131,36 @@ for (const n of colourNames) {
   if (!outside) deadTokens.push(n);
 }
 
+// font tokens
+const fStart = tokenSrc.indexOf(FONT_ENUM);
+let depthF = 0, fEnd = fStart;
+for (let i = fStart; i < tokenSrc.length; i++) {
+  if (tokenSrc[i] === '{') depthF++;
+  else if (tokenSrc[i] === '}') { depthF--; if (depthF === 0) { fEnd = i; break; } }
+}
+const fBlock = tokenSrc.slice(fStart, fEnd);
+const fontNames = Array.from(fBlock.matchAll(/static (?:let|var)\s+([a-zA-Z][A-Za-z0-9_]*)/g)).map(function (x) { return x[1]; });
+const NON_FONT = new Set(['sans', 'serif', 'mono', 'gaugeNumber', 'gaugeNumberPlain']);
+for (const n of fontNames) {
+  if (NON_FONT.has(n)) continue;
+  const re = new RegExp('\\b' + n + '\\b');
+  let used = false;
+  for (const f of files) {
+    const rel = path.relative(ROOT, f).split(path.sep).join('/');
+    if (rel === TOKEN_FILE) continue;
+    if (re.test(fs.readFileSync(f, 'utf8'))) { used = true; break; }
+  }
+  if (!used) deadTokens.push('F.' + n);
+}
+
 // 输出
 if (findings.length === 0 && deadTokens.length === 0) {
   console.log(`tokens: OK — ${files.length} 个 Swift 文件，0 处硬编码样式字面量（含 V7 字号/色板）`);
   process.exit(0);
 }
 if (deadTokens.length > 0) {
-  console.log(`tokens: FAIL — ${deadTokens.length} 个颜色令牌全仓零消费点（定义了却没人用）`);
-  for (const n of deadTokens) console.log(`  C.${n}`);
+  console.log(`tokens: FAIL - ${deadTokens.length} token(s) with zero consumers`);
+  for (const n of deadTokens) console.log(`  ${n.indexOf('F.') === 0 ? n : 'C.' + n}`);
   console.log(`  处置：要么用起来，要么删掉 —— 留着会让人以为它有意义。\n`);
 }
 console.log(`tokens: FAIL — ${findings.length} 处硬编码\n`);

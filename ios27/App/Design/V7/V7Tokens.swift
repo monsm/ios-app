@@ -220,7 +220,7 @@ enum V {
         static let display22 = sans(22, weight: .regular, relativeTo: .title2)
         static let display26 = sans(26, weight: .regular, relativeTo: .title)
         static let titleC = sans(22, weight: .semibold, relativeTo: .title2)        // 参考 C 头部标题 22/600
-        static let title20 = sans(20, weight: .bold, relativeTo: .title3)
+        // title20 (20/700) removed 2026-11-01: zero consumers across the whole repo.
         static let body = sans(17)                         // 正文 17
         static let bodyStrong = sans(17, weight: .semibold)
         static let bodyMedium = sans(17, weight: .medium)
@@ -271,7 +271,7 @@ enum V {
         static let rowTitle = sans(16, relativeTo: .body)
         static let rowDetail = sans(13, relativeTo: .footnote)
         static let rowDetailStrong = sans(13, weight: .semibold, relativeTo: .footnote)
-        static let cardBodyStrong = sans(16, weight: .semibold, relativeTo: .body)
+        // cardBodyStrong (16/600) removed 2026-11-01: zero consumers.
         static let actionIcon = sans(16, weight: .semibold, relativeTo: .body)
         static let rowIcon = sans(15, weight: .medium, relativeTo: .body)
         static let chartTick = sans(11, relativeTo: .caption2)
@@ -285,7 +285,7 @@ enum V {
         static let icon18Medium = sans(18, weight: .medium, relativeTo: .body)
         static let icon22 = sans(22, relativeTo: .title2)
         static let icon22Light = sans(22, weight: .light, relativeTo: .title2)
-        static let icon22Medium = sans(22, weight: .medium, relativeTo: .title2)
+        // icon22Medium (22/500) removed 2026-11-01: zero consumers.
         static let icon28Semibold = sans(28, weight: .semibold, relativeTo: .title)
         static let otpBig = sans(44, weight: .semibold, relativeTo: .largeTitle)
         static let otpRegular = sans(34, weight: .semibold, relativeTo: .largeTitle)
