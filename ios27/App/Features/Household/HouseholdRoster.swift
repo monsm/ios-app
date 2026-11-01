@@ -257,7 +257,7 @@ enum HHStats {
         }
         let name = member.name.isEmpty ? "成员" : member.name
         if let peak = byHour.max(by: { $0.value < $1.value })?.key {
-            return "\(name) 近 7 天开门约 \(mine.count) 次，工作日 \(peak)–\(peak + 1) 点最活跃。"
+            return "\(name) 近 7 天开门约 \(mine.count) 次，工作日 \(HHStats.hourSpan(peak)) 最活跃。"
         }
         return "\(name) 近 7 天开门约 \(mine.count) 次（工作日样本不足）。"
     }
@@ -278,6 +278,14 @@ enum HHStats {
     }
 
     static func stale(_ member: MemberCard) -> Bool { status(member) == .stale }
+
+    /// 小时段的显示：`23` 的下一个小时是 **次日 0 点**，不是「24 点」。
+    /// 2026-11-01 修复：`weekSentence` 原来直接写 `\(peak)–\(peak + 1) 点`，
+    /// 于是在 23 点开门最频繁的成员会被写成「23–24 点最活跃」—— 24 点不存在。
+    static func hourSpan(_ hour: Int) -> String {
+        let next = (hour + 1) % 24
+        return next == 0 ? "\(hour)–次日 0 点" : "\(hour)–\(next) 点"
+    }
 }
 
 // MARK: - 成员值替换（MemberCard 的字段是 let，改角色/归档要换一个值，不就地改）

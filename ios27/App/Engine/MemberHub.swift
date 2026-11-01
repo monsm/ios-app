@@ -262,7 +262,12 @@ enum MemberHub {
         guard n > 0 else { return nil }
         let name = DB.member(id)?.name ?? "成员"
         if let b = byHour.max(by: { $0.value < $1.value }) {
-            return "\(name)近 7 天开门约 \(n) 次， 工作日 \(b.key)–\(b.key + 1) 点最活跃。"
+            // 2026-11-01 修复：原来直接写 `\(b.key)–\(b.key + 1) 点`，
+            // 于是 23 点最活跃的成员会被写成「23–24 点」—— 24 点不存在。
+            // 与 `HHStats.hourSpan` 同口径（那一个是界面域的，Engine 不反向依赖界面域，故内联）。
+            let next = (b.key + 1) % 24
+            let span = next == 0 ? "\(b.key)–次日 0 点" : "\(b.key)–\(next) 点"
+            return "\(name)近 7 天开门约 \(n) 次， 工作日 \(span) 最活跃。"
         }
         return "\(name)近 7 天开门约 \(n) 次 (工作日样本不足)。"
     }
