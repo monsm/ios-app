@@ -61,9 +61,11 @@ enum MobileKeyService {
     static func pinAccount(_ mac: String, _ id: String) -> String { "mkey." + mac + ".pin." + id }
     static func ekeyAccount(_ mac: String, _ id: String) -> String { "mkey." + mac + ".ekey." + id }
 
-    static func list(_ mac: String) -> [MobileKey] {
-        // SEC-03 残余：空壳不返回手机钥匙（含 ekey/pin）。
-        if DB.isDecoy { return [] }
+    /// 读**原始存储**（不判空壳）：只给写路径用。
+    /// 写路径若走 `list()`，空壳里会拿到 `[]` —— `issue` 会写成"只剩新的一条"、
+    /// `revoke` 会写成"空表"，两种都是把整批手机钥匙静默抹掉。
+    /// 与 CredentialStudioStores 的 `stored()` / RecordOverlay 的 `rawNotes` 同一纪律。
+    static func rawList(_ mac: String) -> [MobileKey] {
         let raw = DB.store.get([MobileKey].self, storeKey(mac)) ?? []
         // SEC-01：plist 里只剩 id/归属/有效期，pin 与 ekey 从 Keychain 回填。
         return raw.map { k in
@@ -72,6 +74,12 @@ enum MobileKeyService {
             if copy.ekey.isEmpty { copy.ekey = SecretStore.get(ekeyAccount(mac, k.id)) ?? "" }
             return copy
         }
+    }
+
+    static func list(_ mac: String) -> [MobileKey] {
+        // SEC-03 残余：空壳不返回手机钥匙（含 ekey/pin）。**仅展示层**用这个。
+        if DB.isDecoy { return [] }
+        return rawList(mac)
     }
 
     static func save(_ mac: String, _ keys: [MobileKey]) {
@@ -128,7 +136,8 @@ enum MobileKeyService {
                       forever: Bool,
                       validFrom: String,
                       validTo: String) async throws -> MobileKey {
-        let used = list(kc.mac)
+        // 写路径必须用 rawList：空壳里 list() 返回 []，会既选错 PIN 又把整批钥匙覆盖掉。
+        let used = rawList(kc.mac)
         guard let pin = availablePin(kc, used: used) else {
             throw BLEErrorX.msg("这把锁的 PIN 池已用尽（\(kc.pins.count) 个都发完了），无法再发手机钥匙")
         }
@@ -166,7 +175,7 @@ enum MobileKeyService {
         // SEC-01：撤销后清掉这把钥匙的 Keychain 秘密副本，否则残留的 ekey 仍可读。
         SecretStore.remove(pinAccount(kc.mac, key.id))
         SecretStore.remove(ekeyAccount(kc.mac, key.id))
-        save(kc.mac, list(kc.mac).filter { $0.id != key.id })
+        save(kc.mac, rawList(kc.mac).filter { $0.id != key.id })
     }
 
     /// 展示用：永久 / 到期时间（前 4 位是 2118 判永久 —— 与 APK page-delblekey 同判据）。

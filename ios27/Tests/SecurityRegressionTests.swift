@@ -354,6 +354,33 @@ final class SecurityRegressionTests: XCTestCase {
         RecordOverlay.setNote(mac, "2", "")
     }
 
+    // MARK: - 手机钥匙：空壳一致性与写路径
+
+    /// `list()` 是展示层（空壳返回空）；`rawList()` 是写路径用的原始读。
+    /// 旧实现里 `issue` / `revoke` 都用 `list()` —— 空壳里一次发放或撤销，
+    /// 会把整批手机钥匙覆盖成"只剩新的一条"或空表。
+    func testMobileKeyRawListSurvivesDecoy() {
+        let mac = "aabbccddeeff"
+        MobileKeyService.save(mac, [])
+        let k = MobileKey(id: "k1", pin: "11223344", ekey: "aabb",
+                          memberID: "m1", memberName: "甲", forever: true,
+                          validFrom: "2026-01-01 00:00:00", validTo: "2118-01-01 00:00:00",
+                          at: 0)
+        MobileKeyService.save(mac, [k])
+        XCTAssertEqual(MobileKeyService.rawList(mac).count, 1)
+
+        DB.setDecoy(true)
+        XCTAssertTrue(MobileKeyService.list(mac).isEmpty, "空壳不该暴露手机钥匙")
+        XCTAssertEqual(MobileKeyService.rawList(mac).count, 1,
+                       "写路径必须能读到真实存储（否则 issue/revoke 会整批覆盖）")
+        DB.setDecoy(false)
+
+        // 清理
+        MobileKeyService.save(mac, [])
+        SecretStore.remove(MobileKeyService.pinAccount(mac, "k1"))
+        SecretStore.remove(MobileKeyService.ekeyAccount(mac, "k1"))
+    }
+
     // MARK: - 备份：类型/规模闸（SEC-30）
 
     func testBackupImportRejectsForeignAndOversizedPayloads() throws {

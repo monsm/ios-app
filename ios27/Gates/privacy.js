@@ -316,6 +316,28 @@ console.log('privacy: 扫 ' + files.length + ' 个 Swift 文件 + PrivacyInfo.xc
   }
 }
 
+
+// 17) MobileKeyService 的写路径不许用 list()（2026-11-01，同一族第三处）。
+// list() 在空壳返回 []；issue 会写成"只剩新的一条"、revoke 会写成空表 —— 整批手机钥匙被静默抹掉。
+{
+  const target = 'Engine/MobileKeyService.swift';
+  const f = files.find(function (x) { return x.rel === target; });
+  if (f) {
+    for (let i = 0; i < f.lines.length; i++) {
+      const w = ['issue', 'revoke'].find(function (n) { return f.lines[i].indexOf('func ' + n + '(') >= 0; });
+      if (!w) continue;
+      let body = '';
+      for (let j = i; j < Math.min(f.lines.length, i + 40); j++) {
+        if (j > i && /^\s{4}(private )?(static )?func /.test(f.lines[j])) break;
+        body += f.lines[j] + '\n';
+      }
+      if (/\blist\(kc\.mac\)|\blist\(mac\)/.test(body)) {
+        note(f.rel, i + 1, w + ' 用 list() 读存储：空壳下返回空会把整批手机钥匙覆盖', '改用 rawList()');
+      }
+    }
+  }
+}
+
 if (fails.length === 0) {
   console.log('privacy: OK — 剪贴板/备份加密/空壳隔离(读+写)/明文口令不进 plist/帧脱敏/WebDAV/文件保护/CSV 注入/隐私清单 XML 10 类回归判据全部通过');
   process.exit(0);
