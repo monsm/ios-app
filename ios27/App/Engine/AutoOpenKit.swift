@@ -433,12 +433,26 @@ final class AutoOpenController {
                 armed = false
                 AutoOpen.audit(mac, "自动开锁成功")
             case 3:
-                await selfHealTime(mac: mac)
+                // 2026-11-01：rc=3「命令过期」= 锁**没有执行**这条开锁，多半是锁钟漂了。
+                // 原来这里只校时、不重试 —— 用户站在门口，什么都没发生，只在审计里留一句。
+                // 自动开锁的全部意义就是"不用用户动手"，校时成功后就该补一次。
+                // （rc=3 保证锁没执行，所以重试不会双开。）
+                if await selfHealTime(mac: mac) {
+                    let rc2 = (try? await LockService.shared.unlock(mac: mac)) ?? -1
+                    if rc2 == 0 {
+                        armed = false
+                        AutoOpen.audit(mac, "rc=3 校时后重试开锁成功")
+                    } else {
+                        AutoOpen.audit(mac, "rc=3 校时后重试仍失败 rc=\(rc2)")
+                    }
+                }
             case 5:
                 AutoOpen.audit(mac, "rc=5 次数用完 — 提示联系主人换钥，不自动重签")
             case 25:
                 AutoOpen.audit(mac, "rc=25 锁正忙，拒绝自动开锁")
             case 26:
+                // 防拆事件 ⇒ 连"武装"一起解掉：否则后续每次靠近都会走到闸门被拒、刷一条审计。
+                armed = false
                 AutoOpen.setSuspendUntil(mac, Int64(Date().timeIntervalSince1970 * 1000) + 24 * 3600 * 1000)
                 AutoOpen.audit(mac, "rc=26 防拆事件 → 自动关自动开锁 24h")
             default:
@@ -450,10 +464,13 @@ final class AutoOpenController {
         }
     }
 
-    private func selfHealTime(mac: String) async {
+    /// 返回**是否真的校时成功** —— 调用方据此决定要不要重试开锁。
+    /// 2026-11-01：原来返回 Void，调用方无法区分"校好了"与"没校成"，只能一律不重试。
+    @discardableResult
+    private func selfHealTime(mac: String) async -> Bool {
         guard let lockSec = try? await LockService.shared.readLockTime() else {
             AutoOpen.audit(mac, "rc=3 读锁钟失败，未自动校时")
-            return
+            return false
         }
         let phone = ZKProtocol.nowProtoSeconds()
         if AutoOpenKit.dualTimeSync(phoneProto: phone, lockProto: lockSec, ntpConfirmed: false) {
@@ -471,11 +488,14 @@ final class AutoOpenController {
             }
             if let syncError {
                 AutoOpen.audit(mac, "rc=3 → 自动校时失败：" + syncError)
+                return false
             } else {
                 AutoOpen.audit(mac, "rc=3 → 已自动校时（0E 双确认）")
+                return true
             }
         } else {
             AutoOpen.audit(mac, "rc=3 → 偏差超出双确认窗，只提示不写")
+            return false
         }
     }
 
