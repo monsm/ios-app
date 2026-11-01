@@ -226,8 +226,15 @@ enum BleTelemetry {
         eventCache.withLock { $0 = list }
         scheduleFlush(eventDirty)
     }
+    /// 2026-11-01 修复：原来写成 `eventCache.withLock { $0 } ?? loadEvents()` ——
+    /// 缓存为 nil 时**每次都重新解析 JSON 文件**，且不回填缓存（性能与一致性两个问题：
+    /// `recordEvent` 走的是"读缓存→改→写回"，而读路径永远看到磁盘，两者会短暂不一致）。
+    /// 现在首次读回填，后续都走内存。
     static var events: [BleEvent] {
-        eventCache.withLock { $0 } ?? loadEvents()
+        if let c = eventCache.withLock({ $0 }) { return c }
+        let loaded = loadEvents()
+        eventCache.withLock { $0 = loaded }
+        return loaded
     }
     static func recordAttempt(mac: String, ok: Bool, reason: String) {
         var list = attemptCache.withLock { $0 } ?? loadAttempts()
@@ -236,8 +243,12 @@ enum BleTelemetry {
         attemptCache.withLock { $0 = list }
         scheduleFlush(attemptDirty)
     }
+    /// 同 `events`：首次读回填缓存，避免每次重新解析 JSON 且与写路径不一致。
     static var attempts: [ConnAttempt] {
-        attemptCache.withLock { $0 } ?? loadAttempts()
+        if let c = attemptCache.withLock({ $0 }) { return c }
+        let loaded = loadAttempts()
+        attemptCache.withLock { $0 = loaded }
+        return loaded
     }
 
     /// 首次读：优先文件；文件没有则把旧 UserDefaults 键搬过来并删旧键（一次性迁移）。
