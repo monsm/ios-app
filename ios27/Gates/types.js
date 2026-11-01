@@ -81,6 +81,16 @@ for (const [rel, code] of byRel) {
   for (const m of code.matchAll(/<\s*([A-Z]\w*)/g)) known.add(m[1]);
   // 泛型参数带约束的写法：<Type: Codable>
   for (const m of code.matchAll(/<\s*([A-Z]\w*)\s*:/g)) known.add(m[1]);
+  // 2026-11-01：**`where` 子句里声明的泛型参数**也是已知名字。
+  // 例：`extension ReorderDifference where CollectionID == ReorderableSingleCollectionIdentifier`
+  // 与 `where Items.Element.ID == ItemID` —— `CollectionID` / `ItemID` 都是泛型参数，
+  // 但它们没有 `<...>` 声明处，旧判据于是把它们当成"不存在的类型"报红，
+  // 逼人把泛型参数名塞进 SDK 白名单（那是污染白名单）。
+  // 收口方式：把 `where` 到 `{` 之间的标识符都算已知 —— 这个区间里本来就只会出现
+  // 泛型参数与协议名，不会出现项目内的具体类型。
+  for (const m of code.matchAll(/\bwhere\b([^{]*)\{/g)) {
+    for (const n of m[1].matchAll(/\b([A-Z]\w*)\b/g)) known.add(n[1]);
+  }
 }
 for (const [name, places] of decls) {
   if (places.length > 1) findings.push('重复声明 ' + name + ' → ' + places.join(' + '));

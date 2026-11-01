@@ -72,39 +72,51 @@ struct ModuleOrderCard: View {
             VSectionLabel(text: "槽位顺序", trailing: "从上到下")
             VCard {
                 VStack(spacing: 0) {
-                    ForEach(Array(order.enumerated()), id: \.element) { pair in
-                        if pair.offset > 0 { VDivider() }
+                    // 2026-11-01：改用 **iOS 27 原生拖拽排序**（`reorderable()` + `reorderContainer(for:)`）。
+                    // 旧实现只有「上移 / 下移」两个按钮 —— 三个槽要挪到对面得点两次，
+                    // 而且这套手势是自造的，VoiceOver 只能逐个按钮念。
+                    // 原生排序自带拖起动画、自动滚动、以及与系统一致的朗读语义。
+                    // **上移/下移按钮保留**：对不便做拖拽手势的人（运动障碍、单手持机）它们仍是必需路径 ——
+                    // 原生拖拽是**新增**一条路，不是替换掉那条。
+                    ForEach(order) { slot in
+                        let idx = order.firstIndex(of: slot) ?? 0
+                        if idx > 0 { VDivider() }
                         HStack(spacing: V.S.gapM) {
-                            Image(systemName: pair.element.symbol)
+                            Image(systemName: slot.symbol)
                                 .font(V.F.icon18)
                                 .foregroundStyle(V.C.text2)
                                 .frame(width: V.Icon.xl, alignment: .leading)
                                 .accessibilityHidden(true)
                             VStack(alignment: .leading, spacing: V.S.gapXXS) {
-                                Text("\(pair.offset + 1) · \(pair.element.title)")
+                                Text("\(idx + 1) · \(slot.title)")
                                     .font(V.F.rowTitle)
                                     .foregroundStyle(V.C.text1)
-                                Text(pair.element.note)
+                                Text(slot.note)
                                     .font(V.F.rowDetail)
                                     .foregroundStyle(V.C.text3)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                             Spacer(minLength: V.S.gapS)
-                            Button("上移") { move(pair.element, by: -1) }
+                            Button("上移") { move(slot, by: -1) }
                                 .font(V.F.footnote)
-                                .foregroundStyle(pair.offset == 0 ? V.C.text4 : V.C.blue)
+                                .foregroundStyle(idx == 0 ? V.C.text4 : V.C.blue)
                                 .frame(minHeight: V.Hit.min)
-                                .disabled(pair.offset == 0)
-                                .accessibilityLabel("把\(pair.element.title)上移")
-                            Button("下移") { move(pair.element, by: 1) }
+                                .disabled(idx == 0)
+                                .accessibilityLabel("把\(slot.title)上移")
+                            Button("下移") { move(slot, by: 1) }
                                 .font(V.F.footnote)
-                                .foregroundStyle(pair.offset == order.count - 1 ? V.C.text4 : V.C.blue)
+                                .foregroundStyle(idx == order.count - 1 ? V.C.text4 : V.C.blue)
                                 .frame(minHeight: V.Hit.min)
-                                .disabled(pair.offset == order.count - 1)
-                                .accessibilityLabel("把\(pair.element.title)下移")
+                                .disabled(idx == order.count - 1)
+                                .accessibilityLabel("把\(slot.title)下移")
                         }
                         .frame(minHeight: V.List.rowMinHeight)
                     }
+                    .reorderable()
+                }
+                .reorderContainer(for: DevSlot.self) { change in
+                    change.apply(to: &order)
+                    DevLayout.setOrder(order)
                 }
             }
             .padding(.horizontal, V.S.pageGutter)
