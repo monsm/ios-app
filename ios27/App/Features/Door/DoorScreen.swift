@@ -708,7 +708,8 @@ struct DoorScreen: View {
             items.append(.init(label: "固件", value: lock.firmware.isEmpty ? "未知" : lock.firmware))
         }
         if HeroStats.shows("lockclock") {
-            let clock = app.lastStatus.map { ProtoTime.localStr($0.status.lockTime) } ?? "未读到"
+            // 0 = 锁端没回时钟；`localStr(0)` 是空串，会显示成一片空白。
+            let clock = app.lastStatus.flatMap { $0.status.lockTime > 0 ? ProtoTime.localStr($0.status.lockTime) : nil } ?? "未读到"
             items.append(.init(label: "锁钟", value: clock))
         }
         items.append(.init(label: "钥匙", value: app.currentKeychain?.ekey.isEmpty == false ? "永久" : "未生成"))

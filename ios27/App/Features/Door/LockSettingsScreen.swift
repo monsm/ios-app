@@ -147,7 +147,8 @@ struct LockSettingsScreen: View {
     }
 
     private func driftText(_ st: LockStatus?) -> String {
-        guard let t = st?.lockTime else { return "未读到锁钟" }
+        // 0 = 锁端没回时钟 —— 不能拿它算偏差（会得到 ≈ -531260264 秒，正是用户报过的那个数字）。
+        guard let t = st?.lockTime, t > 0 else { return "未读到锁钟" }
         let dev = Int(t - ZKProtocol.nowProtoSeconds())
         if dev == 0 { return "与手机一致" }
         return (dev > 0 ? "+" : "") + "\(dev) 秒"

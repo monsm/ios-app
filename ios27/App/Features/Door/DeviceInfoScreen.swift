@@ -324,7 +324,8 @@ struct DeviceInfoScreen: View {
     }
 
     private var lockTimeText: String {
-        guard let t = status?.lockTime else { return "—" }
+        // 0 = 锁端没回时钟（不是 2010-01-01）；`ProtoTime.localStr(0)` 返回空串，直接显示会是**一片空白**。
+        guard let t = status?.lockTime, t > 0 else { return "—" }
         return ProtoTime.localStr(t)
     }
 
@@ -404,7 +405,12 @@ struct DeviceInfoScreen: View {
             DB.writeStatus(mac, st)
             status = st
             samples = BatteryCare.samples(mac)
-            let drift = st.lockTime.map { Int($0 - ZKProtocol.nowProtoSeconds()) }
+            // 2026-11-01（Round 245）：**`lockTime == 0` 是「锁端没回时钟」的占位值**（`StatusParser` 把 0 原样存 0）。
+            // 直接算 `0 - nowProtoSeconds()` 会得到 ≈ **-531260264 秒**的假偏差 —— 正是用户报的「偏差 531260264 秒」。
+            // 更糟的是下面 `abs(drift) > 2` 会因此**每次进设备页都自动写一次锁钟**（一个会改锁的操作），
+            // 而写成功之后读数仍是 0（固件没回）⇒ 偏差照旧 ⇒ 每次进页都写一遍。
+            // 正确语义：读不到时钟就是「不知道」，不显示偏差、不自动校时。
+            let drift = (st.lockTime ?? 0) > 0 ? Int((st.lockTime ?? 0) - ZKProtocol.nowProtoSeconds()) : nil
             clockDrift = drift
             // 进页自动校时：只在真漂移 (>2s) 时写，与 APK 的无条件写终态一致但少一次广播。
             if let drift, abs(drift) > 2 {
@@ -417,7 +423,7 @@ struct DeviceInfoScreen: View {
                     st = try await LockService.shared.getStatus(mac: mac)
                     DB.writeStatus(mac, st)
                     status = st
-                    clockDrift = st.lockTime.map { Int($0 - ZKProtocol.nowProtoSeconds()) }
+                    clockDrift = (st.lockTime ?? 0) > 0 ? Int((st.lockTime ?? 0) - ZKProtocol.nowProtoSeconds()) : nil
                     outcome = "已自动校时 · 校前偏差 \(res.before) 秒 / 校后 \(res.after) 秒"
                 } catch {
                     outcome = "检测到锁钟偏差 \(drift) 秒，但自动校时失败："
