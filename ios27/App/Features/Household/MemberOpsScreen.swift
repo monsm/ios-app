@@ -403,12 +403,20 @@ struct MemberOpsScreen: View {
 
     private func performDelete() {
         guard let m = member else { return }
+        // 先数一下"其它锁"上这家伙名下的条目 —— 级联只处理当前这把锁，
+        // 而 `DB.removeMember` 会把其它锁上的 owner 一并清空（凭证/指纹仍在、锁端照旧有效）。
+        // 不提示的话，用户会以为"删除成员"已经把他所有权限都处理了。
+        let otherLocks = DB.keychains().filter { $0.mac != mac }.reduce(0) { acc, kc in
+            acc + DB.listPwds(kc.mac).filter { $0.owner == m.id }.count
+                + DB.listFps(kc.mac).filter { $0.owner == m.id }.count
+        }
         let n = MemberOpsStore.cascadeDelete(mac: mac, memberID: m.id)
         DB.removeMember(m.id)
         roster.forget(m.id)
         memberID = members.first(where: { $0.id != m.id })?.id ?? ""
         deleteTyped = ""
         outcome = "已删除成员，\(n) 枚凭证进入回收站"
+            + (otherLocks > 0 ? "；另有 \(otherLocks) 条在其它锁上，已转为无归属（锁端仍然有效，需要时请到那把锁上单独删除）" : "")
         Task { await app.reload(refreshStatus: false) }
     }
 }

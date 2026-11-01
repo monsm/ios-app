@@ -82,7 +82,7 @@ enum MemberOpsStore {
         let batchId = UUID().uuidString
         CredBinStore.addPwds(mac, pwds, batchId: batchId, source: "成员删除级联")
         CredBinStore.addFps(mac, fps, batchId: batchId, source: "成员删除级联")
-        _ = CredentialOrg.cascadeBinMember(mac, memberID, revokeLocks: true)
+        CredentialOrg.cascadeBinMember(mac, memberID)
         return pwds.count + fps.count
     }
 }
