@@ -29,7 +29,8 @@ struct CredAlertSheet: View {
                             VCardHeader(title: "到期预警")
                             Text(CredentialOrg.displayPwd(pwd) + " · #\(pwd.alias)")
                                 .font(V.F.body).foregroundStyle(V.C.text1)
-                            if pwd.to.hasPrefix("2118") {
+                            // 与引擎同口径（`expiryDate == nil` 即永久），不自己写 `hasPrefix`。
+                            if CredentialOrg.expiryDate(pwd) == nil {
                                 Text("长期有效密码没有到期点，不适用预警。")
                                     .font(V.F.footnote).foregroundStyle(V.C.text3)
                             } else {

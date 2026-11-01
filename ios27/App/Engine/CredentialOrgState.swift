@@ -156,7 +156,9 @@ extension CredentialOrg {
     /// 逐条走 `scheduleAlerts`（内部经串行队列），只排用户确实开过档位的那几条。
     static func rescheduleAllAlerts() {
         for mac in DB.keychains().map(\.mac) {
-            for p in DB.listPwds(mac) where !p.to.hasPrefix("2118") {
+            // 2026-11-01：改用 `expiryDate`（`nil` = 永久），不再自己写 `hasPrefix("2118")`。
+            // 同一判据两处各写一遍，改一处就会漂 —— `expiryDate` 是本文件里的唯一口径。
+            for p in DB.listPwds(mac) where expiryDate(p) != nil {
                 let a = alert(mac, p)
                 let any = a.day || a.d3 || a.d1 || a.h24 || a.h2
                 if any { scheduleAlerts(mac, p, a) }
