@@ -444,6 +444,7 @@ console.log('privacy: 扫 ' + files.length + ' 个 Swift 文件 + PrivacyInfo.xc
   }
 }
 
+
 if (fails.length === 0) {
   console.log('privacy: OK — 剪贴板/备份加密/空壳隔离(读+写)/明文口令不进 plist/帧脱敏/WebDAV/文件保护/CSV 注入/隐私清单 XML 10 类回归判据全部通过');
   process.exit(0);

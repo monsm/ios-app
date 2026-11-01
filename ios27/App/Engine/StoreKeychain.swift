@@ -216,7 +216,7 @@ extension DB {
     // | 版本快照 | `kf_chist_ui_<mac>` | `ledger.<mac>.snap.<id>.<alias>` | `CredHistoryStore.purgeSecretsForDevice` |
     // | 手机钥匙 | `kf_mkey_<mac>` | `mkey.<mac>.pin.<id>` / `.ekey.<id>` | `MobileKeyService.purgeSecretsForDevice` |
     // | 锁母钥/蓝牙钥/PIN | `kf_keychain_<mac>` | `kc.<mac>.skey` / `.bkey` / `.ekey` / `.pins` | `removeKeychain` |
-    // | 未完成配网 | `kf_pending_pair_<mac>` | `kc.<mac>.pending.<字段>` | `clearPendingPair` |
+    // | 未完成配网 | `kf_pending_pair_<mac>` | `pair.<mac>.skey` / `.bkey` / `.ekey` / `.pins` | `clearPendingPair` |
     // | 通知排程 | `kf_calert_<mac>_*` | —（在系统通知中心） | 循环 `cancelAlerts` |
     // | 其余每锁键族 | 见下方前缀列表 + 兜底 `k.contains(m)` | — | — |
     //
