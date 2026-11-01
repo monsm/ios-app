@@ -113,6 +113,10 @@ enum BatteryCare {
         if let last = list.last, nowMs - last.t < 60_000, last.pct == pct { return false }
         list.append(BattSample(t: nowMs, pct: pct))
         DB.store.setCodable("kf_batt_" + mac, list)
+        // 2026-11-01 修复：`appLowBattery` 有一份按 mac 缓存，而它**只在自己内部写入** ——
+        // 电量从 15% 充到 80% 后，缓存仍是 (mac, true)，于是全 App 动效继续被压在 calm 档，
+        // 直到别的原因让缓存 miss（例如切锁）。这里记了新点就作废缓存，让它下次重新算。
+        lowCacheLock.withLock { $0 = ("", false) }
         evaluateLowBattery(mac, pct: pct)
         return true
     }
