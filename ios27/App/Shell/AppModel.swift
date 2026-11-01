@@ -201,7 +201,10 @@ final class AppModel {
                 id: "mkey:\(k.id)",
                 kind: .mobile,
                 name: k.memberName.isEmpty ? "手机钥匙" : k.memberName + " 的手机钥匙",
-                owner: k.memberName,
+                // 2026-11-01（Round 238）：密码/指纹的 `owner` 是**成员 id**，而这里原来存的是**名字** ——
+                // 同一个 `KeyItem.owner` 字段两种口径（Round 237 修了写入侧与计数，这里补齐投影侧）。
+                // 旧手机钥匙记录可能没有 memberID，那时回落名字（读侧 `ownerName` 已有名字回退）。
+                owner: k.memberID.isEmpty ? k.memberName : k.memberID,
                 code: k.ekey,
                 expiresAt: k.forever ? nil : Self.epochMillis(k.validTo),
                 disabled: CredentialLocalState.isDisabled(mac: m, id: "mkey:\(k.id)")
