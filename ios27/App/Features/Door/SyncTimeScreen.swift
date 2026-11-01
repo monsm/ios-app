@@ -239,12 +239,21 @@ struct SyncTimeScreen: View {
             result = SyncOutcome(ok: false, text: "同步失败：\(msg)")
         case .success(let pair):
             let now = Int64(Date().timeIntervalSince1970 * 1000)
-            lockAt = Int64((ZKProtocol.protoSecondsToUnix(Int64(pair.1)) * 1000).rounded())
+            // 2026-11-01 修复（用户实测：校时后显示"回读偏差 531260264 秒"）：
+            // `AppModel.syncTime()` 返回的 `(before, after)` 是**偏差（秒）**，不是绝对时间戳 ——
+            // 见 `LockServiceOps.syncTime`：`after = lockSec - nowProtoSeconds()`，同步成功时≈0。
+            // 旧写法却把 `pair.1` 当协议秒去 `protoSecondsToUnix` 换算，等于把"偏差 0 秒"
+            // 翻成 **2010-01-01**，再与现在相减 ⇒ 5.3 亿秒（≈16.8 年）的假偏差。
+            // 正确口径：锁内时间 ≈ 手机现在 + 偏差。
+            let drift = pair.1
+            lockAt = now + Int64(drift) * 1000
             lastSyncedAt = now
             // E-10：落盘到 kf_synctime_<mac>（与门页「超 30 天未校时」提醒卡同一真值），
             // 不再只写内存投影（重启后设置页恒显示「从未」）。
             DB.saveSyncTime(app.currentMac, Double(now))
-            let residual = Int((Int64(Date().timeIntervalSince1970 * 1000) - (lockAt ?? now)) / 1000)
+            // 符号要与上面的「偏差」读数一致：那个算的是"手机 − 锁"（正 = 手机快）。
+            // 而 `pair.1` 是"锁 − 手机"，所以这里取反，页面两处才不会一个 +5 一个 −5。
+            let residual = -drift
             result = SyncOutcome(ok: abs(residual) <= Self.driftThreshold,
                                  text: "同步完成 · 回读偏差 \(residual) 秒")
         }
