@@ -111,17 +111,37 @@ RootView
 | # | 闸门 | 判什么 | 会不会误报 |
 |---|---|---|---|
 | 1 | `swiftparse` | **真语法树**（tree-sitter-swift）的 ERROR/MISSING 节点 | 3 个已知语法盲区做了**换源再解析**（不是按行豁免），其余逐字受检 |
-| 2 | `swiftcheck` | 括号 / 字符串 / 块注释平衡 | 无（纯计数） |
-| 3 | `tokens` | 硬编码颜色/间距/圆角/字号 | 白名单只有 2 条，都写了理由 |
-| 4 | `contrast` | 从 Tokens.swift 解析色值，48 条 WCAG 断言（明暗各一套） | 无（纯计算） |
-| 5 | `glass` | 内容层不许 `glassEffect`；同屏玻璃 ≤2；不许自铺半透明底 | — |
-| 6 | `motion` | `.animation` 必带 `value:`；不许 `.linear`；不许裸时长；`repeatForever` 必独立视图 | — |
-| 7 | `a11y` | 图标按钮必有 label；可点区 ≥44pt | 判据是"只有 Image 且无任何文字承载"，避免误报 |
-| 8 | `lineage` | 与上一版切割（18 个旧符号零残留） | 无 |
-| 9 | `destmap` | Dest 台账 ↔ View 实现一一对应 | 无 |
+| 2 | `types` | 顶层类型重复声明 / Engine 引用不存在的类型 | SDK 类型走白名单（`Gates/sdk-types.txt`） |
+| 3 | `swiftcheck` | 括号 / 字符串 / 块注释平衡；**`Tests/` 也在扫描范围** | 无（纯计数） |
+| 4 | `tokens` | 硬编码颜色/间距/圆角/字号；**颜色/字号/动效令牌必须有消费点** | 只豁免 3 个文件（令牌层两个 + Dial 的 Canvas 几何），每条都写了理由 |
+| 5 | `contrast` | 从 `Tokens.swift` / `V7Tokens.swift` 现场解析色值做 WCAG 断言（明暗各一套） | 无（纯计算）。**不钉死断言条数**（色板一变就过期） |
+| 6 | `glass` | 内容层不许 `glassEffect`；同屏玻璃 ≤2；不许自铺半透明底 | — |
+| 7 | `motion` | `.animation` 必带 `value:`；不许 `.linear`；不许裸时长；`repeatForever` 必独立视图 | — |
+| 8 | `a11y` | 图标按钮必有 label；可点区 ≥44pt；**DesignLab 生成器不许产出无 alt 的 img** | 判据是"只有 Image 且无任何文字承载"，避免误报 |
+| 9 | `dynamictype` | 字号必须走令牌（`V.F.*`），不许写死数值字号 | 令牌层豁免（那是字面量的家） |
+| 10 | `reducedmotion` | 动效必须带减少动态守卫 | — |
+| 11 | `crosprivate` | Screen + Parts 跨文件 private 可达性 | — |
+| 12 | `callsig2` | 调用标签/参数个数/构造签名/@MainActor 隔离 | — |
+| 13 | `lineage` | 与上一版切割（18 个旧符号零残留） | 无 |
+| 14 | `workflow` | GitHub Actions 结构；**文档声称的闸门数必须等于真实数量** | 无 |
+| 15 | `destmap` | Dest 台账 ↔ View 实现一一对应 | 无 |
+| 16 | `privacy` | 隐私/安全回归（判红，14 条判据） | 每条都写了"为什么这么判" |
+| 17 | `tests` | 测试目标 + 金标夹具接线 + 协议/安全/并发覆盖面的静态证明 | 它只证"接线对"，不等于"跑过了" |
+| 18 | `feedback` | 用户动作里的 `try? await` 必须有错误通道（HIG feedback） | 排除 `Task.sleep` 与 `throws` 函数 |
+| 19 | `modal` | 对话框不许直接抢 sheet（HIG sheets：一次只呈现一个模态） | 多入口只提示不判红 |
+| 20 | `settings` | 给了开关就必须有效果（**warn-only**：只追一层直接消费） | 间接消费追不到，故只提示 |
 
-**每道闸门都有正控**（故意注入一个缺陷，确认它会红）。做过正控的：
-`swiftparse`（少一个右括号）、`tokens`（`.frame(height: 32)`）、`contrast`（单位小字 3.22:1）、`a11y`（图标按钮无 label）。
+**当前共 20 道**（这个数字由 `Gates/workflow.js` 对账，写错会本地判红）。
+
+**正控 = 故意注入一个缺陷，确认它会红**（只测「能判红」不够，还要确认修好后会转绿）。
+
+已做过正控：`swiftparse`（少一个右括号）· `tokens`（`.frame(height: 32)`；以及塞一个死令牌）·
+`contrast`（单位小字 3.22:1）· `a11y`（图标按钮无 label；以及 `DesignLab` 的 `<img>` 去掉 alt）·
+`privacy`（备份校验和改成硬拒绝；`addCalendar` 改回同步）· `feedback`（去掉 `do/catch`）·
+`modal`（对话框里直接置 sheet 布尔）· `settings`（塞一个没人读的开关）· `workflow`（把闸门数写错）。
+
+注：`settings` 是 **warn-only**（只追一层直接消费，间接消费追不到），它报的是「请人工确认」，
+不是「可证明已死」—— 宁可不判红，也不产生假红。
 
 ---
 

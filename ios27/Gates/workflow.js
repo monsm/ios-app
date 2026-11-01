@@ -70,6 +70,7 @@ for (const f of FILES) {
     const targets = [
       [path.join(ROOT, 'README.md'), /## ([一-鿿0-9]+)\s*道机器闸门/],
       [path.join(ROOT, '..', '.github', 'workflows', 'ios27.yml'), /静态闸门（([一-鿿0-9]+)\s*道）/],
+      [path.join(ROOT, 'docs', 'ARCHITECTURE.md'), /当前共 ([一-鿿0-9]+)\s*道/],
     ];
     for (const t of targets) {
       const file = t[0];
