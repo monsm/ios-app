@@ -153,6 +153,27 @@ for (const n of fontNames) {
   if (!used) deadTokens.push('F.' + n);
 }
 
+// motion tokens (V.M): an unused animation is worse than an unused colour -
+// it implies a designed transition that never shipped. exit was found dead 2026-11-01.
+const mStart = tokenSrc.indexOf("enum M {");
+let depthM = 0, mEnd = mStart;
+for (let i = mStart; i < tokenSrc.length; i++) {
+  if (tokenSrc[i] === "{") depthM++;
+  else if (tokenSrc[i] === "}") { depthM--; if (depthM === 0) { mEnd = i; break; } }
+}
+const mBlock = tokenSrc.slice(mStart, mEnd);
+const motionNames = Array.from(mBlock.matchAll(/static (?:let|var)\s+([a-zA-Z][A-Za-z0-9_]*)/g)).map(function (x) { return x[1]; });
+for (const n of motionNames) {
+  const re = new RegExp("\\b" + n + "\\b");
+  let used = false;
+  for (const f of files) {
+    const rel = path.relative(ROOT, f).split(path.sep).join("/");
+    if (rel === TOKEN_FILE) continue;
+    if (re.test(fs.readFileSync(f, "utf8"))) { used = true; break; }
+  }
+  if (!used) deadTokens.push("M." + n);
+}
+
 // 输出
 if (findings.length === 0 && deadTokens.length === 0) {
   console.log(`tokens: OK — ${files.length} 个 Swift 文件，0 处硬编码样式字面量（含 V7 字号/色板）`);
@@ -160,7 +181,7 @@ if (findings.length === 0 && deadTokens.length === 0) {
 }
 if (deadTokens.length > 0) {
   console.log(`tokens: FAIL - ${deadTokens.length} token(s) with zero consumers`);
-  for (const n of deadTokens) console.log(`  ${n.indexOf('F.') === 0 ? n : 'C.' + n}`);
+  for (const n of deadTokens) console.log(`  ${n.indexOf('.') >= 0 && n.length > 2 && n[1] === '.' ? n : 'C.' + n}`);
   console.log(`  处置：要么用起来，要么删掉 —— 留着会让人以为它有意义。\n`);
 }
 console.log(`tokens: FAIL — ${findings.length} 处硬编码\n`);

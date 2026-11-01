@@ -13,6 +13,16 @@
 //
 // 纪律：v7 的组件与页面只引用 V.*，不写样式字面量。
 //
+// 2026-11-01 死令牌清理：删掉 24 个"定义了但全仓零消费点"的令牌
+// （颜色 C.blueCursor；字号 F.title20 / cardBodyStrong / icon22Medium；动效 M.exit；
+//   布局 S.screenH / cardGap / statValueGap、Gauge.gapEnd、Segmented.numberSize、
+//   Tab.selectedRadius、List.chevronSize / badgeSize、Metric.miniCardW / miniChartW、
+//   Page 的 sectionGap / headerGap / bodySpacing / cardHeaderGap / dividerY / statTop / sparklineH）。
+// 为什么必须删：令牌文件被 tokens.js / dynamictype.js **整体豁免**（它是字面量的家），
+// 于是没有任何闸门检查"令牌是否被使用"；这些令牌看起来完全合理，
+// 后来的人会以为它们是设计系统的一部分、不敢删、甚至照着它们挑新值。
+// 现在 tokens.js 对 C / F / M 三个枚举逐令牌检查消费点，再堆积会当场判红。
+//
 // 动态字号：V.F 的每个命名档位都是 VFont（size + weight + relativeTo），
 // 由 VScaledFontModifier 的 @ScaledMetric 在渲染时按 Dynamic Type 缩放 —— 默认字号下
 // 仍是参考图的像素值，用户调大字号时跟着长大。页面里不允许再出现 V.F.sans(<数字>)。
@@ -296,7 +306,6 @@ enum V {
     // MARK: - 间距 / 画布（TOKENS.md 布局栅格）
     enum S {
         static let screenW: CGFloat = 402
-        static let screenH: CGFloat = 874
         static let hair: CGFloat = 0.5
 
         static let chipLeftA: CGFloat = 19.3
@@ -313,7 +322,6 @@ enum V {
         static let pageGutterC: CGFloat = 21
         static let pageGutter: CGFloat = 16
         static let cardGutter: CGFloat = 14.67
-        static let cardGap: CGFloat = 14.3
         static let cardPad: CGFloat = 16.3
         static let miniPad: CGFloat = 14.7
 
@@ -364,7 +372,6 @@ enum V {
         static var gapXXL: CGFloat { d(32) }
         static let statGap: CGFloat = 16
         static let statLabelGap: CGFloat = 2
-        static let statValueGap: CGFloat = 1
     }
 
     // MARK: - 圆角
@@ -421,7 +428,8 @@ enum V {
         static let move = Animation.spring(response: 0.32, dampingFraction: 0.88)
         static let settle = Animation.spring(response: 0.42, dampingFraction: 0.95)
         static let sweep = Animation.timingCurve(0.32, 0, 0.16, 1, duration: 0.6)
-        static let exit = Animation.easeOut(duration: 0.18)
+        // exit (easeOut 0.18) removed 2026-11-01: zero consumers. An unused animation is
+        // worse than an unused colour - it implies a designed exit transition that never shipped.
     }
 
     // MARK: - 主环（参考 A / R1-device.html 实测）
@@ -432,7 +440,6 @@ enum V {
         static let radius: CGFloat = 121.5
         /// 缺口：bearing 163°–201°（宽 38°）。
         static let gapStart: Double = 201
-        static let gapEnd: Double = 163
         /// R1 JS 实测 A0=208.4 / A1=516.6 → 中心线扫过 308.2°；两端圆头各吃 8.58°，
         /// 可见缺口 = 360 - 308.2 - 17.16 ≈ 34.6°（与像素实测 34.4° 一致）。
         static let sweepDegrees: Double = 308.2
@@ -478,7 +485,6 @@ enum V {
         static let coreWidth: CGFloat = 14
         static let gapDegrees: Double = 4.5
         static let startBearing: Double = 258
-        static let numberSize: CGFloat = 21.3
         /// 中心线半径 = (92 - 20.3) / 2 = 35.85。
         static let radius: CGFloat = 35.85
         /// 暗层 = 同色 55% 亮度（不是把 55% 不透明度叠在卡面上）。
@@ -547,7 +553,6 @@ enum V {
         /// TOKENS.md：选中黑胶囊 60×49。
         static let selectedW: CGFloat = 60
         static let selectedH: CGFloat = 49
-        static let selectedRadius: CGFloat = 24.5
         static let iconSize: CGFloat = 20
         static let labelGap: CGFloat = 2
         static let contentInset: CGFloat = 92
@@ -564,19 +569,15 @@ enum V {
         static let dotSize: CGFloat = 8
         static let stateDotSize: CGFloat = 7
         static let ringDotSize: CGFloat = 12.5
-        static let chevronSize: CGFloat = 14
-        static let badgeSize: CGFloat = 26
     }
 
     // MARK: - 页面度量（参考 C 记录页 / 参考 R4 设置页）
     enum Metric {
         static let avatar: CGFloat = 34
         static let miniCardH: CGFloat = 178
-        static let miniCardW: CGFloat = 170.7
         static let eventIcon: CGFloat = 36
         static let medal: CGFloat = 76
         static let searchRow: CGFloat = 44
-        static let miniChartW: CGFloat = 143
     }
 
     // MARK: - 动作按钮（v7 没有参考按钮；沿用 14pt 圆角的卡片语言）
@@ -588,19 +589,12 @@ enum V {
     // MARK: - 页面局部节奏（四个根页共用）
     enum Page {
         static let topSpace: CGFloat = 8
-        static let sectionGap: CGFloat = 22
-        static let headerGap: CGFloat = 7
         static let chipToTitle: CGFloat = 26
         static let titleToBody: CGFloat = 6
         /// 正文行高 23pt（17pt 字体系统行高约 20.3pt，差值为 lineSpacing）。
         static let bodyLine: CGFloat = 23
         static let bodyLineGap: CGFloat = bodyLine - 20.3
         static var bodyLineSpacing: CGFloat { bodyLineGap }
-        static let bodySpacing: CGFloat = 6
-        static let cardHeaderGap: CGFloat = 6
-        static let dividerY: CGFloat = 14
-        static let statTop: CGFloat = 12
-        static let sparklineH: CGFloat = 72
         static let chartTop: CGFloat = 10
     }
 }
