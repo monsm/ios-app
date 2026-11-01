@@ -60,13 +60,11 @@ extension CredentialOrg {
     /// 「删旧 / 排新 / 取消」三类动作全部排进同一条队列，逐个完成后再取下一个。
     /// 旧实现让 cancelAlerts 与 scheduleAlertsOrdered 各自起异步序列，两条序列互相
     /// 看不到对方的中间态 —— 删凭证与改期同时发生时，先删后加的顺序不成立。
-    // 与 `enqueue` 的签名保持一致（外层 job 也必须 @Sendable，见那里的说明）。
-    // 注意：这里**不能写 `@escaping`** —— 它只能出现在函数参数位置，放进泛型实参是编译错误
-    // （CI `063ee8f` 就是这么红的：`'@escaping' may only be used in function parameter position`）。
-    // 存进容器后本来就"逃逸"了，`@Sendable` 足以表达跨并发域的约束。
-    // 队列元素类型：**保留 `@escaping`**（这是原始代码 `86f4617` 就有的写法，CI 已验证可编译）——
-    // `@escaping` 标的是"这个闭包参数在函数体内会逃逸"，而这里它正是函数类型的参数位，合法。
-    // 只补 `@Sendable`（跨并发域传递的约束）。
+    // 队列元素类型：**`@escaping` 保持原样**（`86f4617` 就有、CI 已验证可编译），只补 `@Sendable`。
+    //
+    // 我一度写注释说"这里不能写 `@escaping`" —— 那是错的：它标的是"该闭包参数在函数体内会逃逸"，
+    // 而这里正是函数类型的参数位。删掉它会得到
+    // `escaping closure captures non-escaping parameter 'done'`（6 处）—— 反证它必须保留。
     private static let notifyQueue = Locked<[(@escaping @Sendable () -> Void) -> Void]>([])
     private static let notifyBusy = Locked(false)
 
