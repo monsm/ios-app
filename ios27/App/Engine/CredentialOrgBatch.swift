@@ -83,11 +83,16 @@ extension CredentialOrg {
         return (n, failedPwds, failedFps)
     }
 
-    // ---------- 524/526/528 计数与三态 ----------
-    static func typeCounts(_ mac: String) -> (all: Int, pwd: Int, fp: Int, otp: Int) {
-        let pwds = DB.listPwds(mac), fps = DB.listFps(mac)
-        return (pwds.count + fps.count, pwds.count, fps.count, DB.otpStatus(mac)?.on == true ? 1 : 0)
-    }
+    // 524/526/528「计数与三态」`typeCounts(_:)`：**已删除**（2026-11-01）。
+    //
+    // 它零调用，而**功能已经存在** —— 只是由界面自己算：
+    // `KeysScreen.chipTitle` 里 `app.keys.filter { item.matches($0) }.count`
+    // 就是分段控件的"全部 N / 密码 N / 指纹 N"徽标。
+    //
+    // 所以它不是"保留未接"，而是**未被采用的重复实现**（同 `MemberHub.display` 那一簇）。
+    //
+    // 另注：它返回的 `otp` 是 **0/1 开关态**，与其余三个（条目数）量纲不同 ——
+    // 这种"把开关混进计数元组"的形状本身也容易诱导调用方加成总数。
 
     /// 返回 (Base64 信封文本, 口令)。UI 用 ShareLink 发文本 + 口令单列展示, 不与凭证混排。
     static func exportPackage(_ mac: String, pwdAliases: [Int], fpBatches: [Int], password: String) -> (data: Data, size: Int)? {
