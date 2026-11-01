@@ -429,6 +429,21 @@ struct DoorScreen: View {
 
     @ViewBuilder
     private var failureChain: some View {
+        // 2026-11-01（Round 252）：**开锁失败的真实原因从来没显示过。**
+        // `runUnlockChain` 把 `StatusParser.rcFriendly(rc)`（例如「无效的PIN码」+ 该怎么办）写进 `app.lastError`，
+        // 而门页此前只显示通用的「再试一次，别着急」与一份静态自查清单 —— 用户点了圆盘、失败、不知道原因。
+        // 本会话最初那条「手动开锁总是失败」正是卡在这里：连 rc 是多少都看不到。
+        // 只在**本次确实失败**时显示，避免把别处操作留下的旧错误挂到门页。
+        if app.dialPhase.isFailed, let err = app.lastError, !err.isEmpty {
+            VCard {
+                Text(err)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text1)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.horizontal, V.S.pageGutterA)
+        }
         if app.failStreak > 0 {
             VStack(spacing: V.S.gapS) {
                 Text(app.failStreak < 3 ? "再试一次，别着急" : "连着几次没成，逐项自查一遍：")
