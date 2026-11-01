@@ -243,8 +243,12 @@ struct BackupStudioScreen: View {
                 VValueRow(label: "当前指纹", value: SelfCheck.fingerprint())
                 VValueRow(label: "上次备份基线", value: DB.store.getString("kf_bk_base", "尚未建立"))
                 if let selfCheck {
+                    // 三种状态三种颜色：一致=绿、不一致=红、还没基线=中性（不是错误）。
+                    // 旧实现用二分支 `hasPrefix("一致") ? 绿 : 红`，把"还没有备份基线"也涂成红色 ——
+                    // 一个纯状态被画成了故障。
                     Text(selfCheck).font(V.F.footnote)
-                        .foregroundStyle(selfCheck.hasPrefix("一致") ? V.C.rewardGreen : V.C.pink)
+                        .foregroundStyle(selfCheck.hasPrefix("一致") ? V.C.rewardGreen
+                                         : (selfCheck.hasPrefix("还没有") ? V.C.text3 : V.C.pink))
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 HStack(spacing: V.S.gapS) {

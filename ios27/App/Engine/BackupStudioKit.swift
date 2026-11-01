@@ -542,12 +542,12 @@ enum BackupStudio {
     /// 库体指纹算法版本: 变更时递增 —— 旧基线 (不带前缀) 不参与比对, 免得升级后误报自检异常。
     private static let fpVersion = "2:"
 
-    /// 448 启动自检: 库体哈希 vs 上次备份时的基线; 不一致返回黄条文案。
-    /// 基线只在备份发生点 (markBackupBaseline, 由 Milestones.recordBackup 尾调用) 更新,
-    /// 本函数只比不改 —— 自查后回写会把上一次的异常直接抹平。
-    static var selfCheckWarning: String? {
-        DB.store.getBool("kf_bk_selfwarn") ? "数据自检异常， 去诊断" : nil   // 448 数据自检异常
-    }
+    // 448「数据自检异常」常驻黄条：**已删除**（2026-11-01）。
+    // 原实现读 `kf_bk_selfwarn`，而全仓**没有任何地方写这个键** —— 一条永远不会出现的警告，
+    // 属于本文件下面自己命名的"命名即承诺"缺陷类。
+    // 而且它想表达的是"上次备份后数据有变化"，那在正常使用中是**常态**（改一条凭证就会变），
+    // 做成常驻黄条只会天天喊狼来了。
+    // 真正有用的是**按需自检**：`BackupStudioScreen.runSelfCheck()` 用 `kf_bk_base` 基线现算现报。
     /// 507 备份状态角标: 今日已备份 / 多日未备份
     // 2026-10-26 精简：badgeState（备份状态角标）已删 —— 它依赖的 lastExportMs 随策略类一起移除。
 
