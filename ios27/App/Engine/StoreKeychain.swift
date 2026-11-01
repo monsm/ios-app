@@ -214,6 +214,10 @@ extension DB {
         // SEC-01：台账口令已搬进 Keychain（每条一个账户），删设备必须一并删 ——
         // 否则「删了这把锁」之后，它的开门口令还留在 Keychain 里。
         for p in ledger(m).pwds { SecretStore.remove(pwdSecretAccount(m, p.alias)) }
+        // 同上，另有两族「整份副本」也住在 Keychain：回收站条目（最多 100 条）与版本快照（最多 10 份）。
+        // 它们的 plist 键会被下面那圈前缀删掉，但钥匙串副本不会 —— 不显式清，删设备就等于没删干净。
+        CredBinStore.purgeSecretsForDevice(m)
+        CredHistoryStore.purgeSecretsForDevice(m)
         for p in ["kf_ledger_", "kf_snap_", "kf_logcache_", "kf_defend_", "kf_tailgate_", "kf_synctime_", "otpStatus_", "otpIdx_", "kf_fevents_", "kf_lockmeta_", "kf_migok_",
                   "kf_batt_", "kf_batt_state_", "kf_mevents_", "kf_maint_", "kf_fwsince_", "kf_clock_notify_", "kf_damp_last_", "kf_fp_last_", "kf_care_notify_",
                   "kf_cbin_", "kf_calert_", "kf_clists_", "kf_cseq_",

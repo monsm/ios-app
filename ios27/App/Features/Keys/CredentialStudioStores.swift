@@ -116,6 +116,13 @@ enum CredBinStore {
         commit(mac, items)
     }
 
+    /// 删设备时调用：把本锁**回收站条目**在 Keychain 里的口令副本全部清掉。
+    /// `removeDevice` 会删掉 `kf_cbin_<mac>` 这个键，但**不会碰钥匙串** —— 不清就是"删了锁，
+    /// 它的开门口令还留在钥匙串里"（与台账口令那条同族，见 AUDIT-ROUND-27）。
+    static func purgeSecretsForDevice(_ mac: String) {
+        for item in stored(mac) { SecretStore.remove(DB.binSecretAccount(mac, item.id)) }
+    }
+
     static func clear(_ mac: String) {
         // 清空回收站 = 连 Keychain 里的口令副本一起清（否则残留可读的开门口令）。
         // 用 stored()：空壳里 all() 返回空，那样会把密钥留下而条目被删（孤儿密钥）。
@@ -176,6 +183,14 @@ enum CredHistoryStore {
             for p in dropped.pwds { SecretStore.remove(DB.snapshotSecretAccount(mac, dropped.id, p.alias)) }
         }
         DB.store.setCodable(key(mac), list)
+    }
+
+    /// 删设备时调用：把本锁**全部版本快照**的口令副本清掉。
+    /// 一份快照就是整份台账的副本（最多 10 份）—— 不清等于"删了锁，10 份开门口令全留着"。
+    static func purgeSecretsForDevice(_ mac: String) {
+        for snap in stored(mac) {
+            for p in snap.pwds { SecretStore.remove(DB.snapshotSecretAccount(mac, snap.id, p.alias)) }
+        }
     }
 
     static func restore(_ mac: String, _ snap: CredSnapshot) {
