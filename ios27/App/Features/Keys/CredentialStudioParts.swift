@@ -109,6 +109,9 @@ struct CredBinSheet: View {
                                             if CredBinStore.restore(mac, item) {
                                                 outcome = "已还原"
                                                 reload()
+                                            } else if let a = item.pwd?.alias {
+                                                // 失败必须说原因：静默失败会让人以为"点了没反应"。
+                                                outcome = "还原失败：编号 #\(a) 已被其它凭证占用（锁端会复用删除后的槽位），请先在锁上处理那一条"
                                             }
                                         }
                                         .font(V.F.footnote).foregroundStyle(V.C.blue)

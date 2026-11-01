@@ -433,6 +433,32 @@ final class SecurityRegressionTests: XCTestCase {
         CredBinStore.clear(mac)
     }
 
+    // MARK: - 回收站还原不许覆盖同别名的新凭证
+
+    /// 别名由锁端分配，删除后的槽位会被新凭证复用。
+    /// 旧实现 `DB.addPwd` 用 `removeAll { alias == p.alias }` ——
+    /// 还原旧 #3 会把新 #3 **静默覆盖**（不可逆）。
+    func testBinRestoreRefusesAliasCollision() {
+        let mac = "aabbccddeeff"
+        CredBinStore.clear(mac)
+        let newOne = LedgerPwd(alias: 3, from: "", to: "2118-01-01 00:00:00", temp: false,
+                               at: 0, pwd: nil, owner: nil, note: "新凭证")
+        var l = Ledger()
+        l.pwds = [newOne]
+        DB.saveLedger(mac, l)
+
+        let oldOne = LedgerPwd(alias: 3, from: "", to: "2118-01-01 00:00:00", temp: false,
+                               at: 0, pwd: nil, owner: nil, note: "旧凭证")
+        CredBinStore.addPwds(mac, [oldOne], batchId: "b", source: "测试")
+        guard let item = CredBinStore.all(mac).first else { return XCTFail("回收站应有条目") }
+
+        XCTAssertFalse(CredBinStore.restore(mac, item), "同别名占用时必须拒绝还原")
+        XCTAssertEqual(DB.listPwds(mac).first?.note, "新凭证", "新凭证不能被旧凭证覆盖")
+
+        CredBinStore.clear(mac)
+        DB.saveLedger(mac, Ledger())
+    }
+
     // MARK: - 备份：类型/规模闸（SEC-30）
 
     func testBackupImportRejectsForeignAndOversizedPayloads() throws {

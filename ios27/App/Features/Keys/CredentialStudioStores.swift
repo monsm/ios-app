@@ -95,6 +95,11 @@ enum CredBinStore {
     static func restore(_ mac: String, _ item: CredBinItem) -> Bool {
         var items = stored(mac)
         guard let index = items.firstIndex(where: { $0.id == item.id }) else { return false }
+        // 别名由**锁端**分配（`pwdAdd` 返回槽位），删除后该槽位会被下一把新钥匙复用。
+        // 于是"先删 #3、再加一条（又拿到 #3）、再还原回收站里的旧 #3"这条路径上，
+        // `DB.addPwd` 会 `removeAll { alias == p.alias }` —— **把新凭证静默覆盖掉**。
+        // 这里直接拒绝还原，让界面说清原因，而不是替用户做一次不可逆的覆盖。
+        if let p = item.pwd, DB.listPwds(mac).contains(where: { $0.alias == p.alias }) { return false }
         if let p = item.pwd { DB.addPwd(mac, p) }
         if let f = item.fp { DB.addFp(mac, f) }
         items.remove(at: index)
