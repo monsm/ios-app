@@ -137,6 +137,7 @@ RootView
 
 已做过正控：`swiftparse`（少一个右括号）· `tokens`（`.frame(height: 32)`；以及塞一个死令牌）·
 `contrast`（单位小字 3.22:1）· `a11y`（图标按钮无 label；以及 `DesignLab` 的 `<img>` 去掉 alt）·
+`motion`（把带 `value:` 的动画换成裸 `.animation(.easeInOut)`）·
 `privacy`（备份校验和改成硬拒绝；`addCalendar` 改回同步）· `feedback`（去掉 `do/catch`）·
 `modal`（对话框里直接置 sheet 布尔）· `settings`（塞一个没人读的开关）· `workflow`（把闸门数写错）。
 
