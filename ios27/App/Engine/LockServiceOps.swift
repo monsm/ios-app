@@ -76,19 +76,49 @@ extension LockService {
     func unlock(mac: String? = nil, pinDec: String? = nil) async throws -> Int {
         if let mac { curMac = mac.lowercased() }
         guard let kc = DB.keychain(curMac), !kc.skey.isEmpty else { throw BLEErrorX.msg("无钥匙串， 无法开锁") }
-        let cred: String
-        if !kc.ekey.isEmpty {
+
+        func signed(_ pin: String) -> String {
+            ZKCmdBuilder.buildEkeyOpen(kc.skey.lowercased(), kc.mac.lowercased(), pin)
+        }
+
+        // 2026-11-01 修复：**「锁档案 · 开锁 PIN」这个设置在开锁时是完全无效的。**
+        // 旧实现是「只要 kc.ekey 非空就用它，pinDec 一律忽略」，而配网后 kc.ekey 基本都非空，
+        // 于是两件事同时发生：
+        //   ① 用户选了第 N 枚 PIN，实际用的仍是配网那枚；
+        //   ② 配网那枚 ekey 一旦失效（换 PIN / 换管理员 / 锁被重刷 / 绑定到了别的设备），
+        //      **每一次开锁都会失败，而且本机没有任何路径能现签一枚新的** —— 即"手动开锁总是失败"。
+        // 现在：显式选了 PIN 就**现签**（"选它"的意义就在于此）；没选才回落到配网 ekey。
+        let chosen = (pinDec ?? "").trimmingCharacters(in: .whitespaces)
+        var cred = ""
+        if !chosen.isEmpty {
+            cred = signed(chosen)
+        } else if !kc.ekey.isEmpty {
             cred = kc.ekey                                     // 配网时已签发
-        } else {
-            let pin = pinDec ?? kc.pins.first
-            // 2026-10-30（同上）：说清"去哪补"。
-            guard let pin, !pin.isEmpty else { throw BLEErrorX.msg("这把锁还没有可用的开锁凭证 — 请先在「凭证」页添加一条密码，或重新配对这把锁") }
-            cred = ZKCmdBuilder.buildEkeyOpen(kc.skey.lowercased(), kc.mac.lowercased(), pin)
+        } else if let first = kc.pins.first(where: { !$0.isEmpty }) {
+            cred = signed(first)
+        }
+        if kc.ekey.isEmpty, kc.pins.isEmpty, chosen.isEmpty {
+            throw BLEErrorX.msg("这把锁还没有可用的开锁凭证 — 请先在「凭证」页添加一条密码，或重新配对这把锁")
         }
         // 2026-10-30（同上）：不暴露 ekey/PIN 术语。
         guard !cred.isEmpty else { throw BLEErrorX.msg("没能生成开锁凭证 — 请重新配对这把锁，或改用「凭证」页里的密码开锁") }
-        let r = try await exec(ZKCmdBuilder.cmd04Open(cred, klv01Hex: "0000"), retries: 2)
-        return r.rc  // 0 成功; 22 双验继续
+
+        var r = try await exec(ZKCmdBuilder.cmd04Open(cred, klv01Hex: "0000"), retries: 2)
+        if r.rc == 0 || r.rc == 22 { return r.rc }   // 0 成功; 22 双验继续
+
+        // 2026-11-01：**凭证被拒时的自愈回落。**
+        // 1/11 解密失败、2 PIN 无效、6 已绑定其他设备 —— 这四个码都指向"这枚 ekey 不可用"，
+        // 而不是"锁忙(25)/布防(27)/反锁(21)/时间偏差(3,9,13)"这类环境问题。
+        // 旧实现在这里直接返回 rc，用户看到"无效的PIN码"却没有任何自救办法；
+        // 现在若手上还有 PIN，就现签一枚再试一次，把"每次都失败"变成"有机会成功"。
+        let credentialRejected = [1, 2, 6, 11].contains(r.rc)
+        if credentialRejected, let pin = kc.pins.first(where: { !$0.isEmpty }) {
+            let fresh = signed(pin)
+            if !fresh.isEmpty {
+                r = try await exec(ZKCmdBuilder.cmd04Open(fresh, klv01Hex: "0000"), retries: 1)
+            }
+        }
+        return r.rc
     }
 
     func syncTime() async throws -> (before: Int, after: Int) {

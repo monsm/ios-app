@@ -438,6 +438,21 @@ struct RecordsScreen: View {
                         .foregroundStyle(V.C.blue)
                         .disabled(reading)
                 }
+                // 2026-11-01：**把"台账是手动拉的"这件事写出来。**
+                // `readAt` 一直有值（`reload()` 从 `RecordsSource.lastSync` 取），但**从未显示过** ——
+                // 于是用户既不知道记录需要手动读，也不知道上一次读到什么时候，
+                // 只会觉得"记录怎么一直是旧的/怎么没有刷新按钮"。
+                HStack(spacing: V.S.gapXS) {
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text3)
+                        .accessibilityHidden(true)
+                    Text(readAt.map { "上次读取 · " + TimeFormat.ago($0) } ?? "还没读取过锁内日志")
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text3)
+                    Spacer(minLength: 0)
+                }
+                .accessibilityElement(children: .combine)
                 HStack(spacing: V.S.gapS) {
                     Image(systemName: "magnifyingglass")
                         .font(V.F.cardBody)
