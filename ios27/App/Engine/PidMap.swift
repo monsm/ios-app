@@ -25,7 +25,11 @@ enum PidMap {
         if let n = names[pid] { return n }
         return "未知型号(pid=\(pid))"
     }
-    static func productName(_ pid: Int) -> String { productNames[pid] ?? ("智能门锁 (pid=\(pid))") }
+    /// 未知 pid 是**预期场景**（新品固件先上市、App 表后更新 —— `canDefend` 注释里的实测 49408 就是）。
+    /// 兜底文案要能被支持人员定位：给"未收录的型号"这个词 + 原始 pid，而不是伪装成已知产品。
+    static func productName(_ pid: Int) -> String {
+        productNames[pid] ?? "未收录的型号 (pid=\(pid))"
+    }
     private static func isKnown(_ pid: Int) -> Bool { names[pid] != nil }
     private static func isGW(_ pid: Int) -> Bool { gws.contains(pid) }
     // 布防: 仅 KX/V1_Pro; 未知 pid (新品固件, 如实测 49408) 按 KX 家族放行
