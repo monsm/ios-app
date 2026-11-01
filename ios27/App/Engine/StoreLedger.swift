@@ -214,10 +214,16 @@ extension DB {
         saveLedger(mac, l)
     }
 
-    static func setPwdOwner(_ mac: String, _ alias: Int, _ owner: String?) {
+    /// 返回**是否真的改到了**一条（找不到编号时静默不写，调用方要能区分）。
+    /// 2026-11-01：原来返回 Void —— 于是 `applyTransfer` 按"选中数"报「已移交 N 项」，
+    /// 而台账里已被删掉的编号一条都没改，用户看到的数字是假的（与 D-58 同族）。
+    @discardableResult
+    static func setPwdOwner(_ mac: String, _ alias: Int, _ owner: String?) -> Bool {
         var l = ledger(mac)
-        for i in l.pwds.indices where l.pwds[i].alias == alias { l.pwds[i].owner = owner }
-        saveLedger(mac, l)
+        var hit = false
+        for i in l.pwds.indices where l.pwds[i].alias == alias { l.pwds[i].owner = owner; hit = true }
+        if hit { saveLedger(mac, l) }
+        return hit
     }
 
     /// 2026-10-30（第 161 轮）：一次读改写完成 `pwd` / `note` / `owner` 三处修改。
@@ -258,10 +264,14 @@ extension DB {
         saveLedger(mac, l)
     }
 
-    static func setFpOwner(_ mac: String, _ batch: Int, _ owner: String?) {
+    /// 同 `setPwdOwner`：返回是否真的改到了。
+    @discardableResult
+    static func setFpOwner(_ mac: String, _ batch: Int, _ owner: String?) -> Bool {
         var l = ledger(mac)
-        for i in l.fps.indices where l.fps[i].batch == batch { l.fps[i].owner = owner }
-        saveLedger(mac, l)
+        var hit = false
+        for i in l.fps.indices where l.fps[i].batch == batch { l.fps[i].owner = owner; hit = true }
+        if hit { saveLedger(mac, l) }
+        return hit
     }
 
     static func setFpAlarm(_ mac: String, _ batch: Int, _ on: Bool) {

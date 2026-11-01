@@ -506,10 +506,21 @@ struct CredentialStudioScreen: View {
     }
 
     private func applyTransfer() {
-        for alias in selectedPwds { DB.setPwdOwner(studioMac, alias, transferOwner) }
-        for batch in selectedFps { DB.setFpOwner(studioMac, batch, transferOwner) }
-        studioOutcomeBad = false
-        studioOutcome = "已移交 \(selectedPwds.count + selectedFps.count) 项"
+        // 2026-11-01：按**实际改到的**条数报告。原来用 `selectedPwds.count + selectedFps.count` ——
+        // 若某编号在台账里已被删掉（别处删过），`setPwdOwner` 静默不写，界面照样把它算进"已移交"，
+        // 用户以为全转过去了，实际有人的名下还是空的（与 D-58「静默跳过」同族）。
+        var ok = 0
+        var missing: [String] = []
+        for alias in selectedPwds {
+            if DB.setPwdOwner(studioMac, alias, transferOwner) { ok += 1 }
+            else { missing.append("密码#\(alias)") }
+        }
+        for batch in selectedFps {
+            if DB.setFpOwner(studioMac, batch, transferOwner) { ok += 1 }
+            else { missing.append("指纹#\(batch)") }
+        }
+        studioOutcomeBad = !missing.isEmpty
+        studioOutcome = "已移交 \(ok) 项" + (missing.isEmpty ? "" : "；本机找不到 \(missing.count) 项（\(missing.joined(separator: "/"))）")
         tick += 1
     }
 
