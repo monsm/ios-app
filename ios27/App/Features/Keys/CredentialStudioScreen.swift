@@ -451,10 +451,20 @@ struct CredentialStudioScreen: View {
         // 引擎只改本机台账；对每条再真下发 0B，失败如实回报。
         Task {
             var ok = 0
+            var remoteFailed = 0
             for alias in r.done {
                 if case .success = await app.setPasswordExpiry(alias: alias, from: from, to: to) { ok += 1 }
+                else { remoteFailed += 1 }
             }
-            studioOutcome = "已延期 \(ok) 条（本机 \(r.done.count) 条，失败 \(r.failed.count) 条）"
+            // 两类失败必须分开说，别混成一个数字：
+            //   · `r.failed` = 台账里找不到该编号（本机就没这条）；
+            //   · `remoteFailed` = 本机改了但**下发到锁失败**（锁端仍是旧有效期）。
+            // 旧文案只报前者，于是"3 条成功、2 条下发失败"会显示成「已延期 3 条…失败 0 条」，
+            // 用户以为全好了，实际锁上有 2 条仍按旧日期失效。
+            var msg = "已延期 \(ok) 条"
+            if r.failed.count > 0 { msg += "；本机找不到 \(r.failed.count) 条（编号 \(r.failed.map { String($0) }.joined(separator: "/"))）" }
+            if remoteFailed > 0 { msg += "；下发到锁失败 \(remoteFailed) 条（本机已改，锁端仍是旧有效期，请重试）" }
+            studioOutcome = msg
             tick += 1
         }
     }
