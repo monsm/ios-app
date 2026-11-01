@@ -541,6 +541,16 @@ struct AddLockScreen: View {
             kc.name = name
             DB.saveKeychain(kc)
         }
+        // 2026-11-01 修复：配网页的「场所副标题」输入框此前**只绑定了 UI、从不落库** ——
+        // `place` 在全文件里只出现在那一个 `TextField(text: $place)` 上，`commitName()` 完全没用它，
+        // 于是用户填了等于白填（而且界面上看不出没保存）。
+        // 这里与「锁档案」页的保存口径一致：写进 LockArchive.meta 的 place。
+        let trimmedPlace = place.trimmingCharacters(in: .whitespaces)
+        if !trimmedPlace.isEmpty {
+            var m = LockArchive.meta(mac)
+            m.place = trimmedPlace
+            LockArchive.save(mac, m)
+        }
         DB.currentMac = mac
         banner = nil
         Task {

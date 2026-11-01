@@ -5,7 +5,8 @@
 // ③ CSV / vCard / 上周小结文本生成 —— 导出页三处真动作的数据来源
 //
 // 数据来源：DB.readLogs(mac) 的锁内日志缓存（经 RecordsSource.load 映射成 LedgerEntry）。
-// 拉取链路（cmd16 翻页）仍待 Engine 接线，见 RecordsScreen.read() 的 TODO(engine)。
+// 拉取链路已接线：`RecordsScreen.read()` → `AppModel.readLogs()` → cmd16 翻页（最多 20 页 × 5 条）。
+// 本文件只负责**解析与合并缓存**，不碰蓝牙。
 import SwiftUI
 
 /// 记录的锁范围（原 RecordsFilters.swift:105-140）：当前锁 / 全部锁。

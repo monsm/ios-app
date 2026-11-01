@@ -18,7 +18,6 @@ struct ShareToAndroidScreen: View {
 
     @State private var qr: UIImage?
     @State private var payloadText = ""
-    @State private var passphrase = ""
     @State private var copied = false
 
     /// 可交付的钥匙：本机签发、未停用、未过期。
