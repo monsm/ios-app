@@ -39,24 +39,24 @@ struct BackupBundle: Codable {
             /// 这三族此前既不进备份、也不进回滚。restore 会整表替换台账 / 重建成员 ⇒ 行键全部失效，
             /// 不收就等于「备注和旗标凭空没了」。缺省 = 这次备份没带 = 恢复时不动本机。
             var recNotes: [String: String]?
+            var recFlags: [String]?
+            var recDisps: [String: String]?
             /// 凭证到期提醒档位（`kf_calert_<mac>_pwd_<alias>`：day/d3/d1/h24/h2）。
             /// 2026-11-01 补：这一族此前**完全不在备份里** —— 换机或导入备份后，
             /// 每条凭证的提醒档位静默归零，用户不会收到任何到期提醒，也没有提示。
             /// 键形如 `pwd:<alias>`；缺省 = 这次备份没带 = 不动本机。
             var alerts: [String: CredAlert]?
-            var recFlags: [String]?
-            var recDisps: [String: String]?
         }
     }
     struct Globals: Codable {
+        var keychainDongles: [Dongle]?
+        var gatewayList: [Gateway]?
         /// 成员档案扩展（`kf_member_ext`：角色/备注/关怀文案/欢迎语/分组/归档/代管 …）。
         /// 2026-11-01 补：`Member` 只带 id/名字/关系/电话/色/时间，
         /// 而这些扩展此前**既不在备份包里、也不在恢复流程里** ——
         /// 换机迁移后成员还在，但「备注、关怀文案、归档标记」全丢，且没有任何提示。
         /// 缺省 = 这次备份没带 = 恢复时不动本机（与其它可选字段同口径）。
         var memberExt: [String: MemberExt]? = nil
-        var keychainDongles: [Dongle]?
-        var gatewayList: [Gateway]?
         var passcode: PasscodeRec?   // JS 包互通: {s,d} 应用锁摘要
         /// 胁迫码摘要（kf_duress，与 passcode 同结构）。
         /// 2026-10-30 修复（第 64 轮）：这一项**从来没进过备份** —— 用户换机后胁迫码直接丢，

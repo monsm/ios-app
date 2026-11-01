@@ -209,13 +209,14 @@ enum BackupKit {
             globals: BackupBundle.Globals(
                 keychainDongles: dongles.isEmpty ? nil : dongles,
                 gatewayList: gws.isEmpty ? nil : gws,
+                // 成员档案扩展：与 members 同一批走，恢复时按 id remap 写回。
+                // 顺序必须与 `Globals` 的字段声明一致（Swift 成员构造按声明序校验实参）。
+                memberExt: MemberHub.allExt().isEmpty ? nil : MemberHub.allExt(),
                 passcode: passcode,
                 duress: duress,
                 trace: trace,
                 appearance: collectAppearance(),
-                deviceOrg: collectDeviceOrg(),
-                // 成员档案扩展：与 members 同一批走，恢复时按 id remap 写回。
-                memberExt: MemberHub.allExt().isEmpty ? nil : MemberHub.allExt()))
+                deviceOrg: collectDeviceOrg()))
     }
     /// 894 收集外观档。只收**枚举过的档位值**，读到没见过的值就当没这项 (nil)，
     /// 免得把一台机器上的脏数据搬到另一台去。
