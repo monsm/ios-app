@@ -34,7 +34,10 @@ struct StateDot: View {
             case .attention:
                 // 三角 = 注意
                 Triangle().fill(tone.color)
-            default:
+            // 2026-11-01：原来这里是 `default:`。`Tone` 有 5 个 case，
+            // 用 `default` 会把 .ok/.neutral/.live 悄悄归成圆点，将来新增档位也不会报错。
+            // 穷尽列出，新增 case 时编译器会强制我们决定它的形状。
+            case .ok, .neutral, .live:
                 Circle().fill(tone.color)
             }
         }

@@ -69,8 +69,9 @@ struct KeyDetailScreen: View {
         switch context {
         case .key(let id):
             keyID = id
-        case .dest(.keyDetail):
-            if keyID == nil { keyID = app.keys.first?.id }
+        // 2026-11-01：原来 `.dest(.keyDetail)` 与 `default` 两个分支**体完全相同**（复制粘贴留下的），
+        // 而且 `default` 会把任何其它路由也吞进来、默默选中第一枚凭证。
+        // 合并成一个：除了明确指定 id 的 `.key(id)`，其余一律"没定位到就用第一枚"。
         default:
             if keyID == nil { keyID = app.keys.first?.id }
         }

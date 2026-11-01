@@ -116,7 +116,9 @@ struct AddLockScreen: View {
         case .pairing: return .live
         case .done: return .ok
         case .naming: return .attention
-        default: return candidates.isEmpty ? .neutral : .ok
+        // 穷尽列出（`Phase` 五个 case）—— 原来用 `default` 把 .scanning/.ready 兜在一起，
+        // 新增相位时会静默落进这里。
+        case .scanning, .ready: return candidates.isEmpty ? .neutral : .ok
         }
     }
 

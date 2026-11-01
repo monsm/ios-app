@@ -331,7 +331,8 @@ struct VStateDot: View {
                 RoundedRectangle(cornerRadius: 1.2, style: .continuous).fill(tone.color)
             case .attention:
                 VTriangle().fill(tone.color)
-            default:
+            // 同 `StateDot`：穷尽列出（`Tone` 五个 case），不靠 `default` 兜。
+            case .ok, .neutral, .live:
                 Circle().fill(tone.color)
             }
         }

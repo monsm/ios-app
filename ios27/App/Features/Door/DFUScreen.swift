@@ -75,7 +75,8 @@ struct DFUScreen: View {
         case .running: return .live
         case .failed: return .critical
         case .done: return .ok
-        default: return app.lock == nil ? .neutral : .attention
+        // 穷尽列出（`Phase` 五个 case）—— 不靠 `default` 兜 .idle/.ready。
+        case .idle, .ready: return app.lock == nil ? .neutral : .attention
         }
     }
 
@@ -84,7 +85,7 @@ struct DFUScreen: View {
         case .running: return "升级中"
         case .failed: return "失败"
         case .done: return "完成"
-        default: return pkg == nil ? "待选择固件包" : "包已就绪"
+        case .idle, .ready: return pkg == nil ? "待选择固件包" : "包已就绪"
         }
     }
 
