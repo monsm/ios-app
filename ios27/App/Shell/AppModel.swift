@@ -258,6 +258,10 @@ final class AppModel {
         retryHint = nil
         for attempt in 0 ..< maxAttempts {
             if Task.isCancelled { break }
+            // 2026-11-01（真机日志驱动）：凭证类 rc（1/2/6/11）是**确定性**失败 ——
+            // 同一枚凭证再发一次必然同样结果。日志里能看到自动重试把同一条 cmd04 连发了 6 次，
+            // 白耗电，还可能踩到锁端的防重放。这种情况**不再自动重试**，直接如实报错。
+            var nonRetryable = false
             do {
                 unlockPhase = 1
                 dialPhase = .reaching
@@ -285,12 +289,13 @@ final class AppModel {
                     if dialPhase == .opened { dialPhase = .idle; unlockPhase = 0 }
                     return
                 }
+                nonRetryable = [1, 2, 6, 11].contains(rc)
                 throw BLEErrorX.msg(StatusParser.rcFriendly(rc))
             } catch {
                 let msg = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
                 let timeout = msg.contains("超时") || msg.lowercased().contains("timeout")
                 failStreak += 1
-                if attempt + 1 < maxAttempts, !timeout {
+                if attempt + 1 < maxAttempts, !timeout, !nonRetryable {
                     retryHint = "第 \(attempt + 1) 次没成 · \(attempt == 0 ? 2 : 5) 秒后自动重试"
                     dialPhase = .reaching
                     unlockPhase = 1

@@ -117,13 +117,24 @@ extension LockService {
         // 旧实现在这里直接返回 rc，用户看到"无效的PIN码"却没有任何自救办法；
         // 现在若手上还有 PIN，就现签一枚再试一次，把"每次都失败"变成"有机会成功"。
         let credentialRejected = [1, 2, 6, 11].contains(r.rc)
-        if credentialRejected, let pin = kc.pins.first(where: { !$0.isEmpty }) {
-            let fresh = signed(pin)
-            if !fresh.isEmpty {
-                log("info", "开锁回执是凭证类失败，改用本机 PIN 现签的一枚再试一次")
+        if credentialRejected {
+            // 2026-11-01（**真机日志驱动**）：原来只试 `kc.pins.first` ——
+            // 而那枚往往正是当初签"存储 ekey"用的同一枚 PIN，
+            // AES-ECB 没有随机数 ⇒ 现签出来的密文与刚才那帧**逐字节相同**
+            // （真机日志里两次 TX hex 一模一样），于是"自愈重试"完全是空转。
+            // 现在把本机 PIN 池**逐个**试：密文与已发过的相同就跳过，
+            // 一旦出现非凭证类错误（锁忙/布防/时间偏差）立刻停下 —— 那种情况再换 PIN 也没用。
+            var tried: Set<String> = [cred]
+            for (idx, pin) in kc.pins.enumerated() where !pin.isEmpty {
+                let fresh = signed(pin)
+                if fresh.isEmpty || tried.contains(fresh) { continue }
+                tried.insert(fresh)
+                log("info", "开锁回执是凭证类失败 → 改用本机 PIN 池第 \(idx + 1) 枚现签重试")
                 r = try await exec(ZKCmdBuilder.cmd04Open(fresh, klv01Hex: "0000"), retries: 1)
                 log(r.rc == 0 || r.rc == 22 ? "info" : "warn",
-                    "开锁回执(重试后) rc=\(r.rc) · \(StatusParser.rcMessage(r.rc))")
+                    "开锁回执(PIN #\(idx + 1)) rc=\(r.rc) · \(StatusParser.rcMessage(r.rc))")
+                if r.rc == 0 || r.rc == 22 { break }
+                if ![1, 2, 6, 11].contains(r.rc) { break }
             }
         }
         return r.rc
