@@ -45,7 +45,10 @@ for (const f of files) {
   // 逐行扫描：剥掉行注释与字符串内容，再数括号
   let depth = 0;
   let inBlockComment = false;
+  const stripped = [];      // 剥掉注释与字符串后的代码（供下面几条"看代码"的规则共用）
+  const depthBefore = [];   // 每行**行首**的花括号深度
   lines.forEach((line, i) => {
+    depthBefore[i] = depth;
     let out = '';
     let j = 0;
     let inStr = false;
@@ -72,6 +75,7 @@ for (const f of files) {
       out += c;
       j++;
     }
+    stripped[i] = out;
     for (const c of out) {
       if (c === '{' || c === '(' || c === '[') depth++;
       if (c === '}' || c === ')' || c === ']') depth--;
@@ -135,6 +139,29 @@ for (const f of files) {
   if (/\b365\s*\*\s*86400|86400\s*\*\s*365/.test(code)) {
     console.log(`  ${rel}  用 365*86400 近似年 —— 闰年会差近一个月，请用 calendar.date(byAdding: .year, ...)`);
     bad++;
+  }
+  // 2026-11-01：**`extension` 里不许有存储属性**（Swift 硬约束）。
+  // 我自己刚踩过：把 `var connecting: (mac:task:)` 写进了 `extension LockService { … }`，
+  // 本地 22 道闸门全绿，CI 真编译器报 `extensions must not contain stored properties`，
+  // 整条流水线红了一轮。本仓没有 Mac，这条检查就是那个错误的本地等价物。
+  {
+    // 只判**实例**存储属性：`static let/var` 在扩展里是合法的（它是全局存储，不是实例布局）。
+    const PROP = /^\s*(?:private|fileprivate|internal|public|private\(set\))?\s*(?:var|let)\s+\w+\s*(?::\s*[^={]+(?:=\s*[^{]+)?|=\s*[^{]+)$/;
+    // 用**行首深度**判"是否在 extension 体内"：`extension X {` 那一行记下它的父深度，
+    // 之后所有行首深度 > 该值的行都在体内；出现行首深度 <= 该值的行即已离开。
+    // （用花括号计数会被字符串/注释里的括号带偏 —— 我第一版就是这样误报 256 处。）
+    const extAt = [];
+    for (let i = 0; i < lines.length; i++) {
+      const s = stripped[i] || "";
+      while (extAt.length && depthBefore[i] <= extAt[extAt.length - 1]) extAt.pop();
+      if (/^\s*extension\s+[A-Za-z_][\w.]*\s*\{/.test(s)) extAt.push(depthBefore[i]);
+      // 只判**直接体内**（父深度 + 1）：函数体里的 `let x = …` 是局部变量，不是存储属性。
+      const atBodyLevel = extAt.length > 0 && depthBefore[i] === extAt[extAt.length - 1] + 1;
+      if (atBodyLevel && PROP.test(s)) {
+        console.log(`  ${rel}:${i + 1}  extension 里声明了存储属性 —— Swift 不允许（extensions must not contain stored properties）`);
+        bad++;
+      }
+    }
   }
 }
 
