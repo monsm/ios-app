@@ -105,6 +105,8 @@ struct UnlockGateScreen: View {
         switch AppLock.shared.verify(code) {
         case .success:
             error = nil
+            // 记「刚通过闸门」：承诺「输对一次后 30 秒内不再重复询问」的落地处（见 `DoorScreen.needsGate`）。
+            app.gatePassedAt = Int64(Date().timeIntervalSince1970 * 1000)
             // E-15：没有显式回调时执行真正的开锁链 —— 而不是静默关页。
             if let onPass { onPass() } else { Task { await app.runUnlockChain() } }
             dismiss()

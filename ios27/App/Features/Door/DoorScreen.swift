@@ -602,7 +602,13 @@ struct DoorScreen: View {
 
     private var needsGate: Bool {
         guard DB.hasPasscode(), let last = app.lastUnlockSuccessAt else { return false }
-        return Date().timeIntervalSince1970 * 1000 - Double(last) < 30_000
+        let now = Date().timeIntervalSince1970 * 1000
+        // 2026-11-01 修复：闸门页说明承诺「输对一次后 30 秒内不再重复询问」，
+        // 但旧实现只看 `lastUnlockSuccessAt` —— 每开一次门它就刷新一次，
+        // 于是**连续开门会一直弹密码**（永远落在 30 秒窗口内）。
+        // 现在：刚通过闸门的 30 秒内直接放行，兑现那句说明。
+        if let passed = app.gatePassedAt, now - Double(passed) < 30_000 { return false }
+        return now - Double(last) < 30_000
     }
 
     // MARK: - 标题 / 读数

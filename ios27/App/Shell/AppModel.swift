@@ -58,6 +58,13 @@ final class AppModel {
     var autoLockLeft: Int?
     /// 最近一次开锁成功的时刻（毫秒）。30 秒内再次开锁要过本机密码闸。
     var lastUnlockSuccessAt: Int64?
+    /// 通过「30 秒内二次开锁」密码闸的时刻（ms）。
+    ///
+    /// 2026-11-01 修复：闸门页的说明写着「输对一次后 30 秒内不再重复询问」，
+    /// 但 `needsGate` 只看 `lastUnlockSuccessAt` —— 而每次开锁都会刷新它，
+    /// 于是**连续开门会一直弹密码**（每开一次就重置 30 秒窗口），说明文案是假的。
+    /// 这里记「刚通过闸门」的时刻，供 `needsGate` 给一个真正的宽限窗。
+    var gatePassedAt: Int64?
     @ObservationIgnored private var autoLockTask: Task<Void, Never>?
     /// 用户在等待中轻点圆盘撤销：命令已发就等回执，未发就立刻停（不发下一帧）。
     @ObservationIgnored private var unlockCancelled = false
