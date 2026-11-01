@@ -57,7 +57,12 @@ enum QuickPool {
     static var recordingOn: Bool { !DB.store.getBool(smartSetKey) || smartFirst }
     static var reached30d: Bool {
         guard let since = DB.store.get(Double.self, sinceKey) else { return false }
-        return Date().timeIntervalSince1970 - since >= 30 * 86400
+        let now = Date().timeIntervalSince1970
+        // 2026-11-01：与 `LockStats.isSleeping` / `touchConnected` 同口径 ——
+        // `since` 若在未来（用户调过系统时间 / 换机带来别的设备的时钟），
+        // `now - since` 为负 ⇒ 这里恒 false（"永远攒不够 30 天"），智能排序永不启用。
+        guard TimeFormat.timestampIsPlausible(since, now: now) else { return false }
+        return now - since >= 30 * 86400
     }
     static var counts: [String: Int] { DB.store.get([String: Int].self, freqKey) ?? [:] }
 

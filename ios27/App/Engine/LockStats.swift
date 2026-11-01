@@ -102,10 +102,19 @@ enum LockArchive {
     }
     static func isVerified(_ mac: String) -> Bool { meta(mac).verifiedAt > 0 }
     /// 292: 30 天未连接 → 沉睡
+    ///
+    /// 2026-11-01 修复：与同文件的 `touchConnected` 对齐 —— 那边已有未来时间戳保护
+    /// （`timestampIsPlausible`），这里却没有。后果：若 `lastConnectedAt` 落在未来
+    /// （用户调过系统时间、或换机带来另一个设备的时钟），`now - t` 为负 ⇒ **永不沉睡**。
+    /// 方向是 fail-open（只是少标一次"沉睡"，不涉及安全），但同族两处口径不一致本身就是缺陷 ——
+    /// 下一处改动很容易把这条当成"已处理"而跳过。
     static func isSleeping(_ mac: String) -> Bool {
         let t = meta(mac).lastConnectedAt
         guard t > 0 else { return false }   // 从未连接过的不算沉睡 (新绑定/只导入)
-        return Date().timeIntervalSince1970 - t > 30 * 86400
+        let now = Date().timeIntervalSince1970
+        // 不可信的未来值 ⇒ 按"刚连过"处理（不判沉睡），与 touchConnected 的取舍一致。
+        guard TimeFormat.timestampIsPlausible(t, now: now) else { return false }
+        return now - t > 30 * 86400
     }
     /// 108 手动隐藏的锁: 退出横滑翻页与胶囊主列表，只从"已隐藏"区可达并可当场恢复。
     /// 为什么不复用上面 isSleeping 那条自动判据: 隐藏是**用户明确说过的**，沉睡是推断出来的 ——
