@@ -31,6 +31,15 @@ struct CredentialStudioScreen: View {
     @State private var packagePassword = ""
     @State private var packageText = ""
     @State private var studioOutcome: String?
+    /// 2026-11-01：**成功/失败不再从文案前缀猜。**
+    ///
+    /// 旧写法是 `.foregroundStyle(studioOutcome.hasPrefix("已") ? 绿 : 粉)` ——
+    /// 而本页有三条文案是"以『已』开头、但里面含失败计数"：
+    ///   · 「已延期 N 条…；下发到锁失败 M 条」
+    ///   · 「已停用 N 项…（失败 M 项）」
+    /// 它们全被涂成绿色，用户看到一片绿却写着"失败 M 条"。
+    /// 现在由产生文案的地方显式置位。
+    @State private var studioOutcomeBad = false
     @State private var alertTarget: LedgerPwd?
     @State private var binOpen = false
     @State private var historyOpen = false
@@ -167,7 +176,8 @@ struct CredentialStudioScreen: View {
                     .buttonStyle(.plain)
                     Button {
                         CredHistoryStore.capture(studioMac, note: "手动快照")
-                        studioOutcome = "已保存当前台账快照"
+                        studioOutcomeBad = false
+            studioOutcome = "已保存当前台账快照"
                         tick += 1
                     } label: {
                         VTag(text: "保存版本快照", tint: V.C.text1)
@@ -221,7 +231,7 @@ struct CredentialStudioScreen: View {
                 }
                 if let studioOutcome {
                     Text(studioOutcome).font(V.F.footnote)
-                        .foregroundStyle(studioOutcome.hasPrefix("已") ? V.C.rewardGreen : V.C.pink)
+                        .foregroundStyle(studioOutcomeBad ? V.C.pink : V.C.rewardGreen)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -468,6 +478,7 @@ struct CredentialStudioScreen: View {
             var msg = "已延期 \(ok) 条"
             if r.failed.count > 0 { msg += "；本机找不到 \(r.failed.count) 条（编号 \(r.failed.map { String($0) }.joined(separator: "/"))）" }
             if remoteFailed > 0 { msg += "；下发到锁失败 \(remoteFailed) 条（本机已改，锁端仍是旧有效期，请重试）" }
+            studioOutcomeBad = r.failed.count > 0 || remoteFailed > 0
             studioOutcome = msg
             tick += 1
         }
@@ -482,12 +493,14 @@ struct CredentialStudioScreen: View {
         let r = CredentialOrg.batchDisable(studioMac, pwdAliases: Array(selectedPwds), fpBatches: Array(selectedFps))
         selectedPwds = []
         selectedFps = []
+        studioOutcomeBad = r.failedPwds.count + r.failedFps.count > 0
         studioOutcome = "已停用 \(r.done) 项并移入回收站（失败 \(r.failedPwds.count + r.failedFps.count) 项）"
         tick += 1
     }
 
     private func applyPrefix() {
         let r = CredentialOrg.batchPrefixNote(studioMac, pwdAliases: Array(selectedPwds), fpBatches: Array(selectedFps), prefix: prefixText)
+        studioOutcomeBad = false
         studioOutcome = "已给 \(r) 条凭证加前缀备注"
         tick += 1
     }
@@ -495,6 +508,7 @@ struct CredentialStudioScreen: View {
     private func applyTransfer() {
         for alias in selectedPwds { DB.setPwdOwner(studioMac, alias, transferOwner) }
         for batch in selectedFps { DB.setFpOwner(studioMac, batch, transferOwner) }
+        studioOutcomeBad = false
         studioOutcome = "已移交 \(selectedPwds.count + selectedFps.count) 项"
         tick += 1
     }
@@ -504,10 +518,12 @@ struct CredentialStudioScreen: View {
                                                        pwdAliases: Array(selectedPwds),
                                                        fpBatches: Array(selectedFps),
                                                        password: packagePassword) else {
+            studioOutcomeBad = true
             studioOutcome = "导出失败：没有可导出的凭证"
             return
         }
         packageText = String(data: result.data, encoding: .utf8) ?? ""
+        studioOutcomeBad = false
         studioOutcome = "已生成凭证包（\(result.size) 条）"
     }
 }
