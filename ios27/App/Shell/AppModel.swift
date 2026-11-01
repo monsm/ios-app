@@ -181,6 +181,7 @@ final class AppModel {
                 owner: f.owner,
                 code: nil,
                 expiresAt: nil,   // 指纹台账没有到期字段（LedgerFp 只有 batch/name/at/note/src/owner/isAlarm）
+                createdAt: f.at,  // 但 `at`（录入时刻）有 —— 填上，详情页才有「已使用 N 天」
                 disabled: CredentialLocalState.isDisabled(mac: m, id: "fp:\(f.batch)")
             ))
         }

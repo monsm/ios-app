@@ -406,8 +406,10 @@ struct MemberDetailScreen: View {
         } else {
             for i in app.keys.indices where app.keys[i].owner == m.name {
                 let k = app.keys[i]
+                // `createdAt` 必须一起带过来：漏了它，解除归属会把「已使用 N 天」清零（默认值 0 不报错）。
                 app.keys[i] = KeyItem(id: k.id, kind: k.kind, name: k.name, owner: nil,
-                                      code: k.code, expiresAt: k.expiresAt, disabled: k.disabled)
+                                      code: k.code, expiresAt: k.expiresAt,
+                                      createdAt: k.createdAt, disabled: k.disabled)
             }
         }
         roster.forget(m.id)

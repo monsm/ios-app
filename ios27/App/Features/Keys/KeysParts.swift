@@ -88,14 +88,18 @@ enum KeysState {
 
     // 台账是值语义数组，改一条要整条重建（KeyItem 字段都是 let，这是有意的：改就是换一条）。
 
+    /// 2026-11-01 修复：这两个"重建一条 KeyItem"的辅助函数**漏传了 `createdAt`** ——
+    /// 而 `createdAt` 有默认值 0，所以编译不报错、但语义悄悄丢了：
+    /// 用户一旦停用凭证或改到期日，详情页的「已使用 N 天」就消失（回到"未知"）。
+    /// 凡是"逐字段重建"的辅助函数，新增字段时必须回来加一行。
     static func withDisabled(_ key: KeyItem, _ off: Bool) -> KeyItem {
         KeyItem(id: key.id, kind: key.kind, name: key.name, owner: key.owner,
-                code: key.code, expiresAt: key.expiresAt, disabled: off)
+                code: key.code, expiresAt: key.expiresAt, createdAt: key.createdAt, disabled: off)
     }
 
     static func withExpiry(_ key: KeyItem, _ at: Int64?) -> KeyItem {
         KeyItem(id: key.id, kind: key.kind, name: key.name, owner: key.owner,
-                code: key.code, expiresAt: at, disabled: key.disabled)
+                code: key.code, expiresAt: at, createdAt: key.createdAt, disabled: key.disabled)
     }
 
     static func replace(_ updated: KeyItem, in keys: [KeyItem]) -> [KeyItem] {
