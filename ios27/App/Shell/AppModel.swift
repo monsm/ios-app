@@ -127,7 +127,10 @@ final class AppModel {
             // `LinkSenseModel.level` 早就有同一个 0–4 映射（0 = 不可测），直接复用。
             signal: LinkSenseModel.level(LinkSenseModel.savedRSSI(mac)),
             firmware: snap?.firmware ?? kc.fw,
-            keyCount: DB.ledger(mac).pwds.count + DB.ledger(mac).fps.count,
+            // 2026-11-01（Round 240）：原来只数 `pwds + fps`，**不含手机钥匙** ——
+            // 而凭证页的「全部 N」芯片数的是 `keys`（含手机钥匙），成员行也是。
+            // 于是门页说「5 枚凭证在册」、点进去列表却有 7 条。这里与 `keys` 对齐。
+            keyCount: DB.ledger(mac).pwds.count + DB.ledger(mac).fps.count + MobileKeyService.list(mac).count,
             isConnected: LockService.shared.connectedMAC == mac,
             // 安全模式 / 静音：按 cmd03 的 securityLevel / soundVolumn 映射。
             // TODO(真机核对)：这两条的语义需要在真锁上对一次（A/B 双验 与 提示音开关）。
