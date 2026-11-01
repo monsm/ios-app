@@ -28,6 +28,13 @@ enum DF {
         if let hit = dict[key] as? DateFormatter { return hit }
         let f = DateFormatter()
         f.locale = Locale(identifier: locale)
+        // 2026-11-01 修复：**必须钉公历**。
+        // `DateFormatter` 不设 `calendar` 时用的是 `Calendar.current` ——
+        // 用户把系统历法切成佛历/民国历/农历，这里就会输出异 era 年份（2026 变 2569），
+        // 而 `TimeFormat.machine` 早就钉了公历 ⇒ **同一个时刻在两处显示不同年份**。
+        // `FormatterConsistencyTests` 之所以一直绿，是因为 CI 机器是公历：
+        // 两边都输出公历，差异只在"用户改了历法"时才现形（那正是本仓 §10 反复强调的场景）。
+        f.calendar = Calendar(identifier: .gregorian)
         f.dateFormat = format
         f.timeZone = tz
         dict[key] = f

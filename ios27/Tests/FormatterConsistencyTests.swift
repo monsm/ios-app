@@ -58,6 +58,23 @@ final class FormatterConsistencyTests: XCTestCase {
         XCTAssertEqual(comps.year, 2026, "公历年份算错（历法被系统设置带跑）")
     }
 
+    /// 两个工厂都必须**钉公历** —— 这是上一条测试的盲区：
+    /// `testDayKeyFormatAgrees` 在当前历法下比对两者，而 CI 机器是公历，
+    /// 所以"两边都跟着系统历法跑"这种情况它永远发现不了。
+    /// 这里直接查 formatter 自身的 `calendar`，不依赖运行环境。
+    func testBothFormattersPinGregorian() {
+        XCTAssertEqual(TimeFormat.calendar.identifier, .gregorian)
+        XCTAssertEqual(DF.cached("yyyy-MM-dd").calendar.identifier, .gregorian,
+                       "DF 也必须钉公历，否则用户切佛历后它输出 2569 而 TimeFormat 输出 2026")
+        XCTAssertEqual(DF.stamp.calendar.identifier, .gregorian)
+        // 显式验证：佛历下同一时刻的年份确实不同 —— 说明"钉公历"不是形式主义。
+        var thai = Calendar(identifier: .buddhist)
+        thai.timeZone = TimeFormat.calendar.timeZone
+        let yThai = thai.component(.year, from: Date(timeIntervalSince1970: 1_767_225_600))
+        let yGreg = TimeFormat.calendar.component(.year, from: Date(timeIntervalSince1970: 1_767_225_600))
+        XCTAssertNotEqual(yThai, yGreg, "佛历与公历的年份本就该不同（证明历法会影响输出）")
+    }
+
     /// 毫秒 → 秒的换算不能丢精度或错位（`TimeFormat.date` 是唯一入口）。
     func testEpochMillisToDate() {
         for ms in samples {
