@@ -13,6 +13,17 @@ extension RecordSearch {
     /// 只在单锁路径 `RecordsRows.render` 里被合并进时间线（92/1028）。
     /// 跨锁搜索不做这个合并，是有意的：那两份数据没有跨锁统一的行身份。
     /// 所以把两个假参数删掉，让签名与能力一致 —— 不虚构「可以按开关纳入」的能力。
+    /// 跨锁时间线里**有多少条日志没有时刻**（`lockTime == 0`）。
+    ///
+    /// 单锁路径（`RecordsModels.Load.untimed`）会把"有 N 条没读到锁端时钟"告诉用户；
+    /// 跨锁路径此前既不显示、也不提示，用户只会看到"记录变少了"。这里补一个计数口，
+    /// 让页面能说同一句话。
+    static func untimedCount(macs: [String]) -> Int {
+        macs.reduce(0) { n, mac in
+            n + DB.readLogs(mac).filter { $0.lockTime == 0 }.count
+        }
+    }
+
     static func buildRecs(macs: [String]) -> [Rec] {
         var out = [Rec]()
         let members = DB.members()
@@ -35,6 +46,14 @@ extension RecordSearch {
             let cls = Attribution.classify(logs: entries, pwds: pws, fps: fps, status: snap.map { ($0.fpStock, $0.pwdStock, $0.lockTime) })  // StatusSnapshotData.lockTime 非可选
             for (i, e) in entries.enumerated() {
                 guard i < cls.count else { continue }
+                // 2026-11-01 修复：**跳过 `lockTime == 0` 的行**（锁端没读到时钟）。
+                // 单锁路径（`RecordsModels:265`）早就这么做了（"没有时刻就不进时间线"），
+                // 但跨锁搜索这条路没做 —— 于是这些行的 `timeStr` 是空串：
+                //   · `out.sort { $0.timeStr > $1.timeStr }` 把它们排到列表最底（降序里空串最小）；
+                //   · `RecordsStudioScreen.inSegment` 用 `DF.stamp.date(from: "")` 解析失败 → 返回 false，
+                //     于是**时段筛选会静默丢弃**它们（用户以为"这个时段没有记录"）。
+                // 与单锁路径同口径：没有时刻的行不进跨锁时间线。
+                guard e.lockTime != 0 else { continue }
                 let c = cls[i]
                 let who = memberName(c.who)
                 let cred = credLabel(kind: c.kind, who: who, pws: pws, fps: fps, e: e)

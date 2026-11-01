@@ -24,6 +24,8 @@ struct RecordsStudioScreen: View {
     @State private var kind = ""
     @State private var outOfWindowOnly = false
     @State private var recs: [Rec] = []
+    /// 跨锁时间线里"锁端没读到时钟"的条数（单锁路径会告知，这里此前不告知）。
+    @State private var untimed = 0
     @State private var digest: [String] = []
     @State private var activeCreds: [(kind: String, word: String, count: Int)] = []
     @State private var frames: [String] = []
@@ -70,6 +72,11 @@ struct RecordsStudioScreen: View {
                 searchCard
                 filterCard
                 statsCard
+                // 2026-11-01：跨锁时间线此前**不告知**"有 N 条日志锁端没回时刻"（单锁路径会说）。
+                // 这些行被 `buildRecs` 跳过（没有时刻就不进时间线），用户只会看到"记录变少了"。
+                if untimed > 0 {
+                    VStatusLine(tone: .attention, text: "另有 \(untimed) 条日志锁端没回时刻，未进时间线（不是丢失，是锁钟未读到）。")
+                }
                 if filtered.isEmpty {
                     emptyCard
                 } else {
@@ -281,6 +288,7 @@ struct RecordsStudioScreen: View {
 
     private func reload() {
         recs = RecordSearch.buildRecs(macs: macs)
+        untimed = RecordSearch.untimedCount(macs: macs)
         if !mac.isEmpty {
             digest = StatsKit.build(mac: mac).lastWeekDigest().lines
             activeCreds = RecordSearch.activeCredentials(mac: mac)
