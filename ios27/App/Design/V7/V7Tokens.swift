@@ -341,7 +341,15 @@ enum V {
 
         /// 间距统一过密度系数。**命中区（V.Hit.min）与字号绝不经过这里** ——
         /// 压小按钮不是"紧凑"，是点不准（44pt 是 HIG 下限，不是可调参数）。
-        private static func d(_ base: CGFloat) -> CGFloat { (base * densityScale).rounded() }
+        ///
+        /// **不要 `.rounded()`**。设计令牌是刻意的**亚像素**值（7.7 / 14.3 / 16.3 / 14.67），
+        /// 取整会在**默认档（标准，系数 1.0）**就把设计参考值改掉：
+        ///   7.7 → 8、14.3 → 14、16.3 → 16、14.67 → 15。
+        /// 也就是说"什么都没选"的状态不再是设计稿，而这是最常被看到的状态。
+        /// 另外取整还会把最小的两档压平：gapXXS(2) 与 gapXS(4) 在三档下都取整成同一个值，
+        /// 用户改档位时**最小的间距纹丝不动** —— 观感上像"只改了一半"。
+        /// SwiftUI 的布局是浮点运算，亚像素值本来就合法（与设计稿逐值一致）。
+        private static func d(_ base: CGFloat) -> CGFloat { base * densityScale }
 
         static var gapXXS: CGFloat { d(2) }
         static var gapXS: CGFloat { d(4) }
