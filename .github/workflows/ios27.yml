@@ -350,6 +350,11 @@ jobs:
           echo "archive_log=$([ -f /tmp/ciout/archive.log ] && echo yes || echo no)" >> /tmp/ciout/meta.txt
           echo "build_ok=$(grep -c "BUILD SUCCEEDED" /tmp/ciout/build.log 2>/dev/null || echo 0)" >> /tmp/ciout/meta.txt
           echo "archive_ok=$(grep -c "ARCHIVE SUCCEEDED" /tmp/ciout/archive.log 2>/dev/null || echo 0)" >> /tmp/ciout/meta.txt
+          # 2026-11-01：把**源码告警数**也记进来。此前只记 errors/build_ok/archive_ok，
+          # 于是「build.log 里有 6 条 warning」这件事从来没人看 —— 而其中一条是真缺陷
+          # （AppLock 的 return 之后有死代码，刷脸成功永不清冷却）。
+          # 口径：只数源码告警行（路径以 App/ 开头），排除 Xcode 回显（"| ... warning:"）与工具提示。
+          echo "warnings=$(grep -cE "^/Users/runner/work/ios-app/ios-app/ios27/App/.*: warning:" /tmp/ciout/build.log 2>/dev/null || echo 0)" >> /tmp/ciout/meta.txt
           cd /tmp/ciout
           git init -q .
           git checkout -q -b ci-log

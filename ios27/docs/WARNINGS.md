@@ -1,9 +1,21 @@
 # WARNINGS · 编译告警分类与评估
 
-> **状态更新（2026-11-01）**：本文件是**历史快照**（commit `a24bcac`，88 条告警）。
-> 当前构建 run `41219938500`（`a8416aa`）的 `build.log` 里 `: warning:` **0 条** ——
-> 并发迁移（`Destinations`/`Router`/`RecordsModels`/`CaptureShield`/`ScreenAwake`/
-> `SettingsStore`/`SettingsParts`/`CredentialOrgState` 全部 `@MainActor` 化）已完成。
+> **状态更新（2026-11-01，第二次）**：本文件是**历史快照**（commit `a24bcac`，88 条告警）。
+>
+> ⚠ **上一版这句「`: warning:` 0 条」是错的**：它引的是 run `41219938500`（`a8416aa`），
+> 而后续提交又引入了 6 条新告警，直到 2026-11-01 才被读出来（见 `AUDIT-ROUND-108`）：
+>
+> | 位置 | 告警 | 性质 |
+> |---|---|---|
+> | `AppLock.swift:125` | `code after 'return' will never be executed` | **真缺陷** —— 刷脸成功永不清冷却 |
+> | `CredentialOrgState.swift:53/128/166` | `capture of 'done' with non-Sendable type` ×3 | 类型标注缺失 |
+> | `CredentialOrgState.swift:166` | `sending 'done' risks causing data races` | 同上 |
+> | `CredentialOrgState.swift:166` | `... in an isolated closure; this is an error in the Swift 6 language mode` | 同上 |
+>
+> 两处均已在 `86f4617` 修复。**但真正的问题是流程**：此前核对 CI 只看 `errors=` 与
+> `build_ok`，从不看 `: warning:` —— 所以「0 条」这个说法一直没有被复核。
+> 现在 `ci-log:meta.txt` 多了一行 `warnings=N`（源码告警计数），每次核对都该读它。
+>
 > 下面的分类账保留作为迁移过程的记录，不再是待办。
 
 > 数据来源：`origin/ci-log:build.log`（commit `a24bcac`，run `41209905485`，BUILD SUCCEEDED / errors=0）。
