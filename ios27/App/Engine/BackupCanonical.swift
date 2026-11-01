@@ -179,6 +179,17 @@ enum BackupCanonical {
         if let dd = meta.recDisps, !dd.isEmpty {
             pairs.append(("recDisps", .obj(dd.sorted { $0.key < $1.key }.map { (k, v) in (k, JValue.str(v)) })))
         }
+        // 2026-11-01：到期提醒档位也进 canonical —— 与 mobileKeys/recNotes 同一条纪律：
+        // 字段存在但这里不序列化 ⇒ 导出文本里没有它 ⇒ 换机后提醒档位全丢，
+        // 而且这段不受校验和覆盖，改包也发现不了。键序固定（pwd:<alias> 排序，内层字段固定序）。
+        if let al = meta.alerts, !al.isEmpty {
+            pairs.append(("alerts", .obj(al.sorted { $0.key < $1.key }.map { (k, a) in
+                (k, JValue.obj([
+                    ("day", .bool(a.day)), ("d3", .bool(a.d3)), ("d1", .bool(a.d1)),
+                    ("h24", .bool(a.h24)), ("h2", .bool(a.h2))
+                ]))
+            })))
+        }
         return pairs.isEmpty ? .null : .obj(pairs)
     }
     private static func dongleValue(_ d: Dongle) -> JValue {
@@ -311,6 +322,26 @@ enum BackupCanonical {
             }
             if let list = g.keychainDongles, !list.isEmpty {
                 gp.append(("keychainDongles", .arr(list.map(dongleValue))))
+            }
+            // 2026-11-01：成员档案扩展进 canonical。字母序 keychainDongles < memberExt < passcode。
+            // 内层字段按字母序 emit，成员 id 排序 —— 保证「同一份备份两次导出得到同一 canonical」。
+            if let mx = g.memberExt, !mx.isEmpty {
+                gp.append(("memberExt", .obj(mx.sorted { $0.key < $1.key }.map { (k, e) in
+                    (k, JValue.obj([
+                        ("archived", .bool(e.archived)),
+                        ("careText", .str(e.careText)),
+                        ("commonLocks", .arr(e.commonLocks.sorted().map { JValue.str($0) })),
+                        ("emergency", .str(e.emergency)),
+                        ("emergencyAdmin", .bool(e.emergencyAdmin)),
+                        ("emoji", .str(e.emoji)),
+                        ("groupTag", .str(e.groupTag)),
+                        ("note", .str(e.note)),
+                        ("proxy", .bool(e.proxy)),
+                        ("remark", .str(e.remark)),
+                        ("role", .str(e.role)),
+                        ("welcome", .str(e.welcome))
+                    ]))
+                })))
             }
             // 181 OTP 段进校验和: 键按字典序排, 值随键走 (否则同一包体两次导出会得到不同 canonical)
             if let pc = g.passcode, !pc.s.isEmpty, !pc.d.isEmpty {
