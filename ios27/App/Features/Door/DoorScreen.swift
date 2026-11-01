@@ -65,7 +65,7 @@ struct DoorScreen: View {
             .padding(.bottom, V.S.gapL)
         }
         .background(V.C.bg.ignoresSafeArea())
-        .toolbar(.hidden, for: .navigationBar)
+        .toolbarVisibility(.hidden, for: .navigationBar)
         .task {
             await app.reload(refreshStatus: true)
             link.update(mac: app.currentMac)

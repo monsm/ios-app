@@ -89,7 +89,7 @@ struct KeysScreen: View {
             .padding(.bottom, V.S.gapL)
         }
         .background(V.C.bg.ignoresSafeArea())
-        .toolbar(.hidden, for: .navigationBar)
+        .toolbarVisibility(.hidden, for: .navigationBar)
         .task { await app.reload(refreshStatus: false) }
         .onAppear {
             now = KeysState.now()

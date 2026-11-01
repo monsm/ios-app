@@ -118,7 +118,7 @@ struct RecordsScreen: View {
                 .padding(.bottom, V.S.gapL)
             }
             .background(V.C.bg.ignoresSafeArea())
-            .toolbar(.hidden, for: .navigationBar)
+            .toolbarVisibility(.hidden, for: .navigationBar)
             .onAppear {
                 reload()
                 consume()
