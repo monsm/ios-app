@@ -261,6 +261,9 @@ struct BackupScreen: View {
                         // 点开的这一刻就知道校验和状态（checksumState 不需要口令，只解 JSON）：
                         // 明文包能判出来，加密包返回 .absent（那由口令层负责，不归这里判）。
                         importChecksumMismatch = (BackupStudio.checksumState(importText) == .mismatch)
+                        // 预演摘要也在这里算：这是**唯一**能同时覆盖"从文件选"与"粘贴"两条入口的位置。
+                        // 放在读文件那一刻只能覆盖前者 —— 而粘贴过来的文本不会经过 readBackupFile。
+                        importPreviewNote = BackupScreen.previewNote(text: importText, password: importPassword)
                         showRestoreConfirm = true
                     }
                     .disabled(importText.isEmpty)
@@ -324,20 +327,24 @@ struct BackupScreen: View {
             }
             importText = text
             restoreError = nil
-            // 选完就先解析一次（不恢复），把"这次会写进多少"算出来，供确认对话框如实告知。
-            // 解析失败不阻断：真正的错误会在点「恢复」时由 runImport 报出来。
-            importPreviewNote = ""
-            if let p = try? BackupStudio.parsePreview(text: text, password: importPassword.isEmpty ? nil : importPassword) {
-                var note = "这份备份含 \(p.preview.pwdCount) 条密码 / \(p.preview.fpCount) 枚指纹。\n\n"
-                if p.preview.skippedLocks > 0 {
-                    note += "其中 \(p.preview.skippedLocks) 把锁的密钥格式非法，恢复时会整把跳过（这些锁的凭证不会写进本机）。\n\n"
-                }
-                importPreviewNote = note
-            }
+            // 预演摘要不在这里算 —— 统一放到"点恢复、弹确认之前"那一处（见 restore 按钮），
+            // 那样"从文件选"和"粘贴"两条入口都能覆盖到。
             AppToast.shared.show("已读入 \(url.lastPathComponent)", tone: .ok)
         } catch {
             restoreError = "读文件失败：" + error.localizedDescription
         }
+    }
+
+    /// 预演摘要：把"这次会写进多少"变成一句人话，供确认对话框开头展示。
+    /// 解析失败返回空串（预演只是提前告知，不该阻断 —— 真正的错误由 runImport 报）。
+    private static func previewNote(text: String, password: String) -> String {
+        guard !text.isEmpty,
+              let p = try? BackupStudio.parsePreview(text: text, password: password.isEmpty ? nil : password) else { return "" }
+        var note = "这份备份含 \(p.preview.pwdCount) 条密码 / \(p.preview.fpCount) 枚指纹。\n\n"
+        if p.preview.skippedLocks > 0 {
+            note += "其中 \(p.preview.skippedLocks) 把锁的密钥格式非法，恢复时会整把跳过（这些锁的凭证不会写进本机）。\n\n"
+        }
+        return note
     }
 
     private func runImport() {
