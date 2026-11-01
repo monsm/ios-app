@@ -128,6 +128,28 @@ private var opaque: Bool { solid || contrast == .increased }
 | 3 | `ConcentricRectangle` 未使用 | `design.md`：贴边形状用它，远离边界的可继续用 `.rect` | 本仓卡片都内缩 `pageGutter`，属"远离边界"，规则允许 `.rect` |
 | 4 | `RoundedRectangle` 到处显式写 `style: .continuous` | `design.md`：那是默认值，不必写 | 纯冗余，非缺陷；批量改会制造无意义的 diff |
 
+## 5.1 补充核对：审过无缺陷（逐条留证，避免下一轮重复扫）
+
+| 检查 | 方法 | 结果 |
+|---|---|---|
+| 裸数字 padding（应走 `V.S` 令牌） | `grep ".padding("` 后排除含 `V.S.`/`V.R.`/`V.Hit` 的行 | **0 处** ✅ |
+| `.offset()` 用于布局（不参与布局计算，易重叠） | `grep ".offset("` | 9 处，**全在绘图组件**（`VMiniBars` 柱位、`VGauge` 游标、Tab 角标），属画布内定位 ✅ |
+| 工具栏里有 `Spacer()` 分隔项 | 逐个读 9 处 `.toolbar {` | **0** ✅ |
+| 工具栏图标无标题（`Image(systemName:)` 单独出现） | 同上 | **0** ✅ |
+| App 自建「省略号」溢出菜单 | 同上 | **0** ✅ |
+| `scrollEdgeEffectStyle` 缺失 | 17 个滚动页没有显式写 | **不是缺陷** —— 默认即 `.automatic`，系统自带边缘效果；显式 `.soft` 只是风格偏好，17 处全部不动 |
+
+## 5.2 交互反馈（`PressStyle` 的「有实现、没接上」）
+
+| 项 | 数值 |
+|---|---|
+| `.buttonStyle(.plain)`（iOS 上无按压反馈） | 101 处 |
+| `PressStyle()`（透明度 + 0.985 缩放） | 原来 **4** 处 |
+| 接入后覆盖 | `VActionButton` ~60 + `VOutlineButton` ~76 + `VListRow` ~43 ≈ **176 处** |
+
+`PressStyle` 同时补了「减弱动态」守卫：该档只保留透明度、不做缩放。
+（原实现用 `V.M.snap`，是普通弹簧，自身不判减弱动态 —— 只有 4 处用时影响小，铺到 176 处就是放大 44 倍。）
+
 ## 6. 怎么复核这份报告
 
 ```bash
