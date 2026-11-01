@@ -11,6 +11,8 @@ struct DoorScreen: View {
     @Environment(Router.self) private var router
 
     @State private var showQuickEdit = false
+    /// 「再开一次」的目标编号（一次算好，供 `quickLabel` 逐磁贴复用）。
+    @State private var repeatTargetName: String? = nil
     @State private var showModuleOrder = false
     @State private var showUnlockGate = false
     @State private var refreshNote: String?
@@ -66,8 +68,13 @@ struct DoorScreen: View {
             await app.reload(refreshStatus: true)
             link.update(mac: app.currentMac)
             if app.lock != nil { await link.preheat() }
+            // 只算一次：「再开一次」的目标编号（`repeatTarget` 要扫日志，不能在 ForEach 里逐磁贴算）。
+            repeatTargetName = QuickPool.repeatTarget(app.lock?.id ?? "")?.name
         }
-        .onChange(of: app.lock?.id) { _, _ in link.update(mac: app.currentMac) }
+        .onChange(of: app.lock?.id) { _, _ in
+            link.update(mac: app.currentMac)
+            repeatTargetName = QuickPool.repeatTarget(app.lock?.id ?? "")?.name   // 换锁要重算
+        }
         .sensoryFeedback(.success, trigger: app.dialPhase == .opened) { _, new in new }
         .sensoryFeedback(.error, trigger: app.dialPhase.isFailed) { _, new in new }
         .sheet(isPresented: $showQuickEdit) { QuickPoolEditSheet() }
@@ -809,7 +816,10 @@ struct DoorScreen: View {
                     }
                     .buttonStyle(.plain)
                     .onLongPressGesture(minimumDuration: 0.5) { showQuickEdit = true }
-                    .accessibilityLabel(pair.element.label)
+                    // 「再开一次」的真实语义是"跳到那条高频凭证"，不是"立刻再开一次门" ——
+                    // 把目标编号拼进去，VoiceOver 与视觉用户都能知道会去哪一条。
+                    // （`repeatTarget` 的 `name` 成员此前被算出来却从未使用。）
+                    .accessibilityLabel(quickLabel(pair.element))
                     .accessibilityHint("轻点执行，长按编辑快捷操作")
                 }
                 if app.currentKeychain.map({ DB.listFps($0.mac).isEmpty }) == true {
@@ -865,6 +875,19 @@ struct DoorScreen: View {
             RoundedRectangle(cornerRadius: V.R.mini, style: .continuous)
                 .strokeBorder(V.C.hairline, style: StrokeStyle(lineWidth: V.S.hair, dash: [V.S.gapXS, V.S.gapXS]))
         }
+    }
+
+    /// 快捷操作的展示名：「再开一次」带上目标编号，其余用池子里的标签。
+    /// 只给无障碍标签用（视觉上磁贴空间不够，且编号会随高频目标变化）。
+    ///
+    /// 缓存：`repeatTarget` 会过滤该锁的历史日志，而本函数在 `ForEach` 里逐磁贴调用 ——
+    /// 不缓存就是"每次渲染重扫一遍日志"（本仓在 `alertTable` 上吃过同样的亏）。
+    /// 用 `@State` 存一次，`tick` 变化时由 SwiftUI 重新求值。
+    private func quickLabel(_ action: QuickAction) -> String {
+        guard action.id == "again" else { return action.label }
+        let target = repeatTargetName ?? QuickPool.repeatTarget(app.lock?.id ?? "")?.name
+        guard let target else { return action.label }
+        return action.label + "：" + target
     }
 
     private func runQuick(_ action: QuickAction) {
