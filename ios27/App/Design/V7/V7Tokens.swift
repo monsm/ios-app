@@ -123,7 +123,8 @@ enum V {
         /// 压在高亮填充（蓝/红/自定义强调色）上的文字：浅色用白、深色用近黑墨，
         /// 因为 #3F8EF4 白字只有 3.29:1（13pt 不够 4.5:1），而近黑墨有 5.20:1。
         static let onBlue = dual(0xFFFFFF, 0x06201A)
-        static let blueCursor = dual(0x1F6FEB, 0x3F8EF3) // 游标
+        // blueCursor（游标色）已于 2026-11-01 删除：全仓零消费点，且与 blue 只差最后一个半字节
+        // （#3F8EF3 vs #3F8EF4）—— 那种"几乎一样但没人用"的令牌只会让后来的人以为它有意义。
         static let blueBand = dual(0x9CC3F5, 0x2F6FC0) // 区间带
         static let grid = dual(0xD8D8D0, 0x3A3A3C)    // 柱图网格
         static let chartGrid = dual(0xE0E0D8, 0x2E2E30) // 点线

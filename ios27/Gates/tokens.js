@@ -74,10 +74,69 @@ for (const f of files) {
   });
 }
 
+
+// dead-token check (added 2026-11-01)
+const TOKEN_FILE = 'App/Design/V7/V7Tokens.swift';
+const tokenSrc = fs.readFileSync(path.join(APP, 'Design', 'V7', 'V7Tokens.swift'), 'utf8');
+const cStart = tokenSrc.indexOf('enum C {');
+let depthC = 0, cEnd = cStart;
+for (let i = cStart; i < tokenSrc.length; i++) {
+  if (tokenSrc[i] === '{') depthC++;
+  else if (tokenSrc[i] === '}') { depthC--; if (depthC === 0) { cEnd = i; break; } }
+}
+const cBlock = tokenSrc.slice(cStart, cEnd);
+const colourNames = Array.from(cBlock.matchAll(/static (?:let|var)\s+([a-zA-Z][A-Za-z0-9_]*)/g)).map(function (x) { return x[1]; });
+const NON_COLOUR = new Set(['rgb', 'dual', 'dimmed', 'trackOf', 'highContrastOn']);
+const deadTokens = [];
+for (const n of colourNames) {
+  if (NON_COLOUR.has(n)) continue;
+  const re = new RegExp('\\b' + n + '\\b');
+  let outside = false;
+  for (const f of files) {
+    const rel = path.relative(ROOT, f).split(path.sep).join('/');
+    if (rel === TOKEN_FILE) continue;
+    if (re.test(fs.readFileSync(f, 'utf8'))) { outside = true; break; }
+  }
+  // In-file use counts ONLY IF the token is referenced from the BODY of a function
+  // that is itself used outside this file. (The helper may live in a SIBLING enum:
+  // ringTrackRed is used by V.Ring.track(for:), not by anything inside V.C.)
+  if (!outside) {
+    const fnRe2 = /static func ([a-zA-Z][A-Za-z0-9_]*)/g;
+    let fm;
+    while ((fm = fnRe2.exec(tokenSrc)) !== null) {
+      const fnName = fm[1];
+      const bodyStart = tokenSrc.indexOf('{', fm.index);
+      if (bodyStart < 0) continue;
+      let d2 = 0, bodyEnd = bodyStart;
+      for (let k = bodyStart; k < tokenSrc.length; k++) {
+        if (tokenSrc[k] === '{') d2++;
+        else if (tokenSrc[k] === '}') { d2--; if (d2 === 0) { bodyEnd = k; break; } }
+      }
+      const body = tokenSrc.slice(bodyStart, bodyEnd + 1);
+      const tokRe = new RegExp('\\b' + n + '\\b');
+      if (!tokRe.test(body)) continue;
+      const usedRe = new RegExp('\\b' + fnName + '\\b');
+      let fnUsed = false;
+      for (const f of files) {
+        const rel = path.relative(ROOT, f).split(path.sep).join('/');
+        if (rel === TOKEN_FILE) continue;
+        if (usedRe.test(fs.readFileSync(f, 'utf8'))) { fnUsed = true; break; }
+      }
+      if (fnUsed) { outside = true; break; }
+    }
+  }
+  if (!outside) deadTokens.push(n);
+}
+
 // 输出
-if (findings.length === 0) {
+if (findings.length === 0 && deadTokens.length === 0) {
   console.log(`tokens: OK — ${files.length} 个 Swift 文件，0 处硬编码样式字面量（含 V7 字号/色板）`);
   process.exit(0);
+}
+if (deadTokens.length > 0) {
+  console.log(`tokens: FAIL — ${deadTokens.length} 个颜色令牌全仓零消费点（定义了却没人用）`);
+  for (const n of deadTokens) console.log(`  C.${n}`);
+  console.log(`  处置：要么用起来，要么删掉 —— 留着会让人以为它有意义。\n`);
 }
 console.log(`tokens: FAIL — ${findings.length} 处硬编码\n`);
 for (const f of findings) {
