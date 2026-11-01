@@ -141,8 +141,7 @@ final class AppModel {
         )
         lastStatus = DB.get(StatusSnapshot.self, "kf_snap_" + mac)
 
-        reloadKeys(mac)
-        reloadMembers()
+        reloadKeys(mac)      // 内部已顺带 reloadMembers()（见该函数的注释）
         reloadEntries(mac)
         // 胁迫码进入的空壳模式：门照样能开，但数据区（凭证 / 成员 / 台账）显示为空。
         // 只清界面投影，不动任何真实存储 —— 退出空壳模式（杀进程后正常密码解锁）即恢复。
@@ -214,6 +213,11 @@ final class AppModel {
             ))
         }
         keys = out
+        // 2026-11-01（Round 244）：**`MemberCard.keyCount` 是从 `keys` 派生的**，所以只要凭证变了，
+        // 成员计数就必须跟着重建。原来只有 `reload()` 会顺带调 `reloadMembers()`，
+        // 而六个单独写入点（增密码 / 录指纹 / 向导临时码 / 删密码 / 换钥 / 手机钥匙）只调了 `reloadKeys` ——
+        // 于是刚给某人加完凭证，「家」页那个「名下 N 枚」还是旧数字，直到下一次整页 reload。
+        reloadMembers()
     }
 
     /// 只重建成员。
