@@ -66,6 +66,22 @@ const files = walk(APP).map((f) => {
   return { rel, raw, masked: mask(raw).split(/\r?\n/), lines: raw.split(/\r?\n/) };
 });
 
+
+// 2026-11-01：按缩进找到函数体结束。
+// 固定行数窗口（slice(i, i + N)）会因注释长短而失效 —— 注释一长，守卫就被推出窗口，
+// 正确代码被判红（AUDIT-ROUND-68）。结构性划界不受注释影响。
+function bodyEndOf(lines, i) {
+  const base = lines[i].length - lines[i].trimStart().length;
+  let j = i + 1;
+  while (j < lines.length) {
+    const l = lines[j];
+    const ind = l.length - l.trimStart().length;
+    if (l.trim() === '}' && ind === base) break;
+    j++;
+  }
+  return j;
+}
+
 const fails = [];
 const note = (rel, line, why, fix) => fails.push(rel + ':' + line + ' — ' + why + ' → ' + fix);
 
@@ -100,7 +116,7 @@ for (const f of files) {
     }
     // 7. 备份目录必须排除系统备份。
     if (f.rel === 'Engine/BackupStudioKit.swift' && /appendingPathComponent\("lockkeeper-backups"/.test(line)) {
-      const window = f.masked.slice(i, i + 8).join(' ');
+      const window = f.masked.slice(i, bodyEndOf(f.masked, i) + 1).join(' ');
       if (!/isExcludedFromBackup/.test(window)) {
         note(f.rel, i + 1, '备份目录未标记 isExcludedFromBackup', '设 URLResourceValues.isExcludedFromBackup = true');
       }
@@ -116,7 +132,7 @@ for (const f of files) {
       'static func ledger(_ mac: String) -> Ledger'
     ];
     if (DECOY_READERS.some((sig) => line.includes(sig))) {
-      const window = f.lines.slice(i, i + 12).join('\n');
+      const window = f.lines.slice(i, bodyEndOf(f.lines, i) + 1).join('\n');
       if (!/isDecoy/.test(window)) {
         note(f.rel, i + 1, '空壳模式下仍返回真实数据（缺 isDecoy 守卫）', '函数体首行加 if isDecoy { return 空集 }');
       }
@@ -126,13 +142,13 @@ for (const f of files) {
     //     台账：saveLedger 必须走 ledgerForPlist；手机钥匙：save 必须写 Keychain；
     //     回收站/快照：写盘前必须过 safeForPlist / SecretStore.set。
     if (f.rel === 'Engine/StoreLedger.swift' && /static func saveLedger\(/.test(line)) {
-      const window = f.lines.slice(i, i + 20).join('\n');
+      const window = f.lines.slice(i, bodyEndOf(f.lines, i) + 1).join('\n');
       if (!/ledgerForPlist\(/.test(window)) {
         note(f.rel, i + 1, 'saveLedger 直接把明文口令写进 plist', '先过 ledgerForPlist（Keychain）再落盘');
       }
     }
     if (f.rel === 'Engine/MobileKeyService.swift' && /static func save\(/.test(line)) {
-      const window = f.lines.slice(i, i + 18).join('\n');
+      const window = f.lines.slice(i, bodyEndOf(f.lines, i) + 1).join('\n');
       if (!/SecretStore\.set/.test(window)) {
         note(f.rel, i + 1, '手机钥匙 pin/ekey 直接写进 plist', '先 SecretStore.set 再落盘');
       }
@@ -146,7 +162,7 @@ for (const f of files) {
 
     // 10. 空壳模式下**禁止写台账**（N-01：空台账会覆盖真实台账，凭证全丢）。
     if (f.rel === 'Engine/StoreLedger.swift' && /static func saveLedger\(/.test(line)) {
-      const window = f.lines.slice(i, i + 6).join('\n');
+      const window = f.lines.slice(i, bodyEndOf(f.lines, i) + 1).join('\n');
       if (!/isDecoy/.test(window)) {
         note(f.rel, i + 1, 'saveLedger 缺空壳守卫（空表会覆盖真实台账）', '函数体首行加 if isDecoy { return }');
       }
