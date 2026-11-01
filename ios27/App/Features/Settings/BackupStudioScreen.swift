@@ -21,8 +21,10 @@ struct BackupStudioScreen: View {
     @State private var password = ""
     @State private var outcome: String?
     @State private var busy = false
-    /// 校验和不一致时的二次确认位（见 BackupStudio.checksumNeedsAck 的说明）。
-    @State private var checksumAcked = false
+    /// 已确认过校验和不一致的那份**内容**的指纹（不是布尔）。
+    /// 布尔一旦置真就永远为真 —— 用户换一份坏包也会被静默放行，保护随之失效。
+    /// 记指纹 = 只对用户刚才看过并同意的那一份放行；内容一变就必须重新确认。
+    @State private var ackedChecksumFor: String?
 
     // WebDAV
     @State private var davURL = DB.store.getString("kf_bk_dav_url")
@@ -311,12 +313,16 @@ struct BackupStudioScreen: View {
             // 不硬拦的理由：本 App 旧版本导出的包用的是旧键序 canonical，FNV 必然对不上 ——
             // 硬拒绝等于把用户自己的合法备份挡在门外（"恢复不了"比"被截断包覆盖"更糟）。
             // 不提示也不行：那会让半截包静默覆盖真数据。二次确认同时满足两边。
-            if BackupStudio.checksumNeedsAck(parsed.preview.checksum) && !checksumAcked {
-                checksumAcked = true
+            // 按**内容指纹**确认：只对用户刚看过并同意的那一份放行。
+            // 用布尔会永久放行 —— 换一份坏包也不再提示，保护就失效了。
+            let fp = BackupCanonical.fnv1a32Hex(text)
+            if BackupStudio.checksumNeedsAck(parsed.preview.checksum), ackedChecksumFor != fp {
+                ackedChecksumFor = fp
                 outcome = "校验和对不上：可能是本 App 旧版本导出的包（键序不同，属正常），也可能真被截断/改动过。确认要继续请再点一次恢复。"
                 return
             }
             let r = BackupStudio.restore(parsed.bundle)
+            ackedChecksumFor = nil   // 一次性确认：恢复完作废，下一次重新判断
             outcome = "已恢复 \(file.name)：新增 \(r.imported) 项，覆盖 \(r.overwritten) 项"
             Task { await app.reload(refreshStatus: false) }
         } catch {
@@ -414,8 +420,9 @@ struct BackupStudioScreen: View {
         do {
             let parsed = try BackupStudio.parsePreview(text: migrateText, password: password.isEmpty ? nil : password)
             // SEC-14：换机包同样走二次确认（理由见 restoreFile 里的说明）。
-            if BackupStudio.checksumNeedsAck(parsed.preview.checksum) && !checksumAcked {
-                checksumAcked = true
+            let fp = BackupCanonical.fnv1a32Hex(migrateText)
+            if BackupStudio.checksumNeedsAck(parsed.preview.checksum), ackedChecksumFor != fp {
+                ackedChecksumFor = fp
                 outcome = "换机包校验和对不上：可能是旧版本生成（属正常），也可能被截断/改动过。确认要导入请再点一次。"
                 return
             }

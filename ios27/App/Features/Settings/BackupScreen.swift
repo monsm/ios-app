@@ -21,8 +21,12 @@ struct BackupScreen: View {
     @State private var importPassword = ""
     @State private var exporting = false
     @State private var importing = false
-    /// 校验和不一致时的二次确认位（见 BackupStudio.checksumNeedsAck 的说明）。
-    @State private var checksumAcked = false
+    /// 这份内容是否已知校验和不一致（在**已有的**确认对话框里如实告知，不额外加一步）。
+    /// 这里不存布尔确认位：BackupScreen 本来就有 confirmationDialog，
+    /// 把风险写进那个对话框即可 —— 用户看到风险再点「恢复」就是一次知情确认。
+    @State private var importChecksumMismatch = false
+    /// 已按**内容指纹**确认过校验和不一致的那一份（只用一次，恢复后作废）。
+    @State private var ackedChecksumFor: String?
     @State private var showRestoreConfirm = false
     /// SEC-08：恢复会改写本机密码摘要，所以要先验当前本机密码。
     @State private var currentPasscode = ""
@@ -68,7 +72,12 @@ struct BackupScreen: View {
             Button("恢复（合并，只增不删）") { runImport() }
             Button("取消", role: .cancel) {}
         } message: {
-            Text("导入是合并：本机已有的凭证会保留，同名冲突取本机。若备份里带本机密码摘要，本机密码会被替换成它（可能回滚到旧值）。")
+            if importChecksumMismatch {
+                // 如实说两种可能，并给出可操作建议 —— 不吓唬，也不轻描淡写。
+                Text("这份备份的校验和对不上。可能是本 App 旧版本导出的包（键序不同，属正常），也可能真的被截断或改动过。\n\n导入是合并：本机已有的凭证会保留，同名冲突取本机。仍要继续吗？")
+            } else {
+                Text("导入是合并：本机已有的凭证会保留，同名冲突取本机。若备份里带本机密码摘要，本机密码会被替换成它（可能回滚到旧值）。")
+            }
         }
     }
 
@@ -240,6 +249,9 @@ struct BackupScreen: View {
                         }
                     }
                     VOutlineButton(title: "恢复这份备份", systemImage: "arrow.down.doc") {
+                        // 点开的这一刻就知道校验和状态（checksumState 不需要口令，只解 JSON）：
+                        // 明文包能判出来，加密包返回 .absent（那由口令层负责，不归这里判）。
+                        importChecksumMismatch = (BackupStudio.checksumState(importText) == .mismatch)
                         showRestoreConfirm = true
                     }
                     .disabled(importText.isEmpty)
@@ -333,13 +345,19 @@ struct BackupScreen: View {
             do {
                 // 真链路：解密（若带口令）→ schema 升级 → checksum 校验 → 合并恢复（只增不删）。
                 let parsed = try BackupStudio.parsePreview(text: importText, password: password)
-                // SEC-14：校验和对不上时**要求二次确认**（不是硬拦 —— 旧版本导出的包
-                // 本来就算不出同一个 FNV，硬拦会把用户自己的合法备份挡死）。
-                if BackupStudio.checksumNeedsAck(parsed.preview.checksum) && !checksumAcked {
-                    checksumAcked = true
-                    restoreError = "校验和对不上：可能是本 App 旧版本导出的包（键序不同，属正常），也可能真被截断/改动过。确认要继续请再点一次恢复。"
+                // SEC-14：校验和对不上**不硬拦**（旧版本导出的包本来就算不出同一个 FNV），
+                // 但也不能静默继续。两道覆盖：
+                //   · 明文包：确认对话框里已如实告知（importChecksumMismatch 驱动）；
+                //   · 加密包：校验和只有**解密后**才算得出来，对话框那条够不到 ——
+                //     所以这里再兜一次，按内容指纹要求确认（内容一变就重新问）。
+                let fp = BackupCanonical.fnv1a32Hex(importText)
+                if BackupStudio.checksumNeedsAck(parsed.preview.checksum), ackedChecksumFor != fp {
+                    ackedChecksumFor = fp
+                    restoreError = "这份备份的校验和对不上：可能是本 App 旧版本导出的包（键序不同，属正常），也可能真被截断或改动过。确认要继续请再点一次「恢复这份备份」。"
                     return
                 }
+                importChecksumMismatch = false
+                ackedChecksumFor = nil   // 一次性：这次恢复完就作废，下次重新判断
                 let r = BackupStudio.restore(parsed.bundle)
                 restoreDone = (added: r.imported, merged: r.overwritten)
                 importText = ""

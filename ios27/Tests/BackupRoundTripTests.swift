@@ -134,6 +134,17 @@ final class BackupRoundTripTests: XCTestCase {
                        "没有校验和字段（更早的包）同样不该被硬拦")
     }
 
+    /// 确认必须**绑定内容**：换一份包就要重新问。
+    /// 第一版我用一个 Bool 做确认位 —— 它一旦置真就永远放行，
+    /// 用户换一份坏包也不再提示，保护等于没有。改成按内容指纹后就要求这条性质。
+    func testAckIsBoundToContentNotAToggle() {
+        let a = BackupCanonical.fnv1a32Hex("{\"type\":\"kf-bundle\",\"n\":1}")
+        let b = BackupCanonical.fnv1a32Hex("{\"type\":\"kf-bundle\",\"n\":2}")
+        XCTAssertNotEqual(a, b, "不同内容必须得到不同指纹，否则确认会跨文件泄漏")
+        XCTAssertEqual(a, BackupCanonical.fnv1a32Hex("{\"type\":\"kf-bundle\",\"n\":1}"),
+                       "同一内容指纹必须稳定（否则每次都要重新确认）")
+    }
+
     /// 非法 skey 的锁必须**整把跳过**，不能写进钥匙串（否则是软砖）。
     func testInvalidSkeyIsSkipped() throws {
         var b = sampleBundle()
