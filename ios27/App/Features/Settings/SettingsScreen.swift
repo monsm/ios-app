@@ -37,6 +37,8 @@ struct SettingsScreen: View {
     @State private var search = ""
     @State private var groupFilter: SettingsGroup?
     @State private var notifyOff = false
+    /// 交互流水（排障）：与门锁的原始 TX/RX 帧头 + 分级日志，可一键复制。
+    @State private var showDiagStream = false
 
     var body: some View {
         ScrollView {
@@ -71,6 +73,7 @@ struct SettingsScreen: View {
             await app.reload(refreshStatus: true)
             notifyOff = NotifyAuth.isOff
         }
+        .sheet(isPresented: $showDiagStream) { DiagStreamScreen() }
         .sheet(isPresented: $deleteRequested) {
             DeleteDeviceSheet()
         }
@@ -517,6 +520,16 @@ struct SettingsScreen: View {
                     tint: V.C.text3,
                     value: ""
                 ) { router.request(.dest(.protocolTest)) }
+                VDivider()
+                // 2026-11-01 新增：把 `DiagLogs` 接出来。此前它每行都在写，但**没有任何界面读**，
+                // 用户遇到"开锁失败"时无法把现场交互复制出来。
+                VListRow(
+                    title: "交互流水（排障）",
+                    detail: "与门锁的原始 TX/RX 帧头，可复制发给开发者",
+                    systemImage: "waveform.path",
+                    tint: V.C.text3,
+                    value: "\(DiagLogs.all().count) 行"
+                ) { showDiagStream = true }
                 VDivider()
                 VListRow(
                     title: "关于",

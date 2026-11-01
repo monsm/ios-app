@@ -104,6 +104,11 @@ extension LockService {
         guard !cred.isEmpty else { throw BLEErrorX.msg("没能生成开锁凭证 — 请重新配对这把锁，或改用「凭证」页里的密码开锁") }
 
         var r = try await exec(ZKCmdBuilder.cmd04Open(cred, klv01Hex: "0000"), retries: 2)
+        // 2026-11-01：把 rc **明文**写进交互流水（`DiagLogs` → 设置页「交互流水」可复制）。
+        // 为什么：TX/RX 帧里的载荷会被 `FrameRedact` 脱敏，而 **rc 在载荷里** ——
+        // 用户复制出来的流水若只有帧头，就看不出"锁到底为什么拒绝"。rc 是协议码，不是凭据。
+        log(r.rc == 0 || r.rc == 22 ? "info" : "warn",
+            "开锁回执 rc=\(r.rc) · \(StatusParser.rcMessage(r.rc))")
         if r.rc == 0 || r.rc == 22 { return r.rc }   // 0 成功; 22 双验继续
 
         // 2026-11-01：**凭证被拒时的自愈回落。**
@@ -115,7 +120,10 @@ extension LockService {
         if credentialRejected, let pin = kc.pins.first(where: { !$0.isEmpty }) {
             let fresh = signed(pin)
             if !fresh.isEmpty {
+                log("info", "开锁回执是凭证类失败，改用本机 PIN 现签的一枚再试一次")
                 r = try await exec(ZKCmdBuilder.cmd04Open(fresh, klv01Hex: "0000"), retries: 1)
+                log(r.rc == 0 || r.rc == 22 ? "info" : "warn",
+                    "开锁回执(重试后) rc=\(r.rc) · \(StatusParser.rcMessage(r.rc))")
             }
         }
         return r.rc
