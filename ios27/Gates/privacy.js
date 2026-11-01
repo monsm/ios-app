@@ -153,13 +153,19 @@ for (const f of files) {
     }
     // 8. CSV 导出必须防公式注入。
     if (f.rel === 'Features/Records/RecordsModels.swift' && /static func field\(_ value: String\)/.test(line)) {
-      const window = f.masked.slice(i, i + 10).join(' ');
-      if (!/HYPERLINK|"'"|\+"'"\+/.test(window) && !/\+ "'"/.test(window)) {
-        // 以源码实际内容判定：必须出现前置单引号的写法
-        const srcWindow = f.lines.slice(i, i + 10).join('\n');
-        if (!/v = "'" \+ v|"'" \+ v/.test(srcWindow)) {
-          note(f.rel, i + 1, 'CSV 单元格未防公式注入', '首字符 = + - @ 时前置单引号');
-        }
+      // 2026-11-01 修正：原来只看"函数签名后 10 行"—— 注释一写长，防护那行就被推出窗口，
+      // 于是正确代码被判红（上一轮我只能靠缩短注释绕过）。现在扫到函数体结束。
+      let end = i + 1;
+      const baseIndent = line.length - line.trimStart().length;
+      while (end < f.lines.length) {
+        const l = f.lines[end];
+        const ind = l.length - l.trimStart().length;
+        if (l.trim() === '}' && ind === baseIndent) break;
+        end++;
+      }
+      const srcBody = f.lines.slice(i, end + 1).join('\n');
+      if (!/v = "'" \+ v|"'" \+ v/.test(srcBody)) {
+        note(f.rel, i + 1, 'CSV 单元格未防公式注入', '首字符 = + - @ 时前置单引号');
       }
     }
   });
