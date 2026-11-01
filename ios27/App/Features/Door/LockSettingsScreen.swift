@@ -344,9 +344,12 @@ struct LockSettingsScreen: View {
         Task {
             defer { busy = false }
             do {
-                try await LockService.shared.ensureConnected(mac: mac)
-                try await LockService.shared.setSilent(on)
-                DB.store.set("kf_muted_" + mac, on)
+                // 2026-11-01 修复：原来这里自己 `LockService.setSilent` + `DB.store.set`，
+                // **绕过了 `AppModel.setMuted`** —— 而后者会 `await refreshStatus()` 刷新投影。
+                // 于是这一页切了静音后，`LockStatusScreen`（读 `app.lock.muted`）仍显示旧状态，
+                // 直到下次有人手动重读状态。改走 AppModel 那条唯一路径。
+                let r = await app.setMuted(on)
+                if case .failure(let e) = r { throw e }
                 muted = on
                 outcome = on ? "已静音" : "已恢复提示音"
             } catch {
