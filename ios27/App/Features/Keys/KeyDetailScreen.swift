@@ -482,6 +482,7 @@ struct FingerprintReEnrollSheet: View {
         error = nil
         Task { @MainActor in
             ScreenCare.keepingAwake(true)
+            defer { ScreenCare.keepingAwake(false) }   // 同 KeyCreateScreen：异常路径也必须复位
             let result = await app.enrollFingerprint(
                 name: name.isEmpty ? key.name : name,
                 owner: owner,
@@ -489,7 +490,6 @@ struct FingerprintReEnrollSheet: View {
             ) { n in
                 fpCount = n
             }
-            ScreenCare.keepingAwake(false)
             busy = false
             switch result {
             case .success(let newBatch):

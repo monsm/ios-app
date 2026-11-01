@@ -422,6 +422,28 @@ console.log('privacy: 扫 ' + files.length + ' 个 Swift 文件 + PrivacyInfo.xc
   }
 }
 
+
+// 21) `keepingAwake(true)` 必须配 `defer` 复位（2026-11-01）。
+// 「末尾调一次 false」在抛错/取消路径上不会执行 —— 屏幕会一直亮着（耗电 + 绕过熄屏）。
+// 允许两种形态：紧跟 `defer { ... }`，或同函数内稍后出现 `defer`。
+{
+  for (const f of files) {
+    f.lines.forEach(function (line, i) {
+      if (line.indexOf('keepingAwake(true)') < 0) return;
+      if (/^\s*\/\//.test(line)) return;
+      // 同函数体内找 defer（向后 30 行内）
+      let hasDefer = false;
+      for (let j = i + 1; j < Math.min(f.lines.length, i + 30); j++) {
+        if (/defer\s*\{/.test(f.lines[j])) { hasDefer = true; break; }
+        if (/^\s2,4}(private )?(static )?func /.test(f.lines[j])) break;   // 出函数了
+      }
+      if (!hasDefer) {
+        note(f.rel, i + 1, 'keepingAwake(true) 没有 defer 复位', '异常路径不会执行末尾复位 → 屏幕常亮');
+      }
+    });
+  }
+}
+
 if (fails.length === 0) {
   console.log('privacy: OK — 剪贴板/备份加密/空壳隔离(读+写)/明文口令不进 plist/帧脱敏/WebDAV/文件保护/CSV 注入/隐私清单 XML 10 类回归判据全部通过');
   process.exit(0);

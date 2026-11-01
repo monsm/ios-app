@@ -232,10 +232,13 @@ struct KeyCreateScreen: View {
             errorText = nil
             Task { @MainActor in
                 ScreenCare.keepingAwake(true)
+                // defer 而不是"末尾调一次"：`enrollFingerprint` 若抛错或任务被取消，
+                // 末尾那句就不会执行 —— 屏幕会一直亮着（耗电，且熄屏策略被永久绕开）。
+                // `DFUScreen` 那处一直是 defer，这两处漏了（同一族的纪律不一致）。
+                defer { ScreenCare.keepingAwake(false) }
                 let r = await app.enrollFingerprint(name: finalName, owner: ownerName, note: note) { n in
                     fpCount = n
                 }
-                ScreenCare.keepingAwake(false)
                 busy = false
                 switch r {
                 case .success:
