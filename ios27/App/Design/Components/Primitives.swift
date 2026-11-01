@@ -169,12 +169,30 @@ struct SecondaryAction: View {
 }
 
 /// 统一按压：只做 transform，不改 bounds。
+///
+/// 2026-11-01：补上「减弱动态效果」守卫，并把它接到设计系统的主按钮上（此前只有 4 处用）。
+/// 现在它覆盖约 176 处调用，所以这条守卫必须自己具备，而不是指望调用方处理。
+///
+/// 实现说明：`ButtonStyle.makeBody` 不是 `View.body`，`@Environment` 写在外层结构体里
+/// 不保证被注入；所以把实际操作放进一个内层 `View`，由它读环境 —— 这是确定生效的写法。
 struct PressStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .opacity(configuration.isPressed ? 0.72 : 1)
-            .scaleEffect(configuration.isPressed ? 0.985 : 1)
-            .animation(V.M.snap, value: configuration.isPressed)
+        PressBody(configuration: configuration)
+    }
+
+    private struct PressBody: View {
+        // `ButtonStyle.Configuration` 是协议关联类型；这里直接写它的**实际类型**
+        // `ButtonStyleConfiguration`，比 `PressStyle.Configuration` 更明确（也更好搜）。
+        let configuration: ButtonStyleConfiguration
+        @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+        var body: some View {
+            configuration.label
+                .opacity(configuration.isPressed ? 0.72 : 1)
+                // 减弱动态：**只保留透明度**，不做缩放（与 `accessibility.md` 的"换成淡入淡出"一致）。
+                .scaleEffect(reduceMotion ? 1 : (configuration.isPressed ? 0.985 : 1))
+                .animation(reduceMotion ? nil : V.M.snap, value: configuration.isPressed)
+        }
     }
 }
 

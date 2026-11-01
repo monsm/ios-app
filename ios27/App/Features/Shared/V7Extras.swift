@@ -35,7 +35,8 @@ struct VOutlineButton: View {
             }
             .contentShape(.rect)
         }
-        .buttonStyle(.plain)
+        // 2026-11-01：同 `VActionButton` —— `.plain` 在 iOS 上无按压反馈；76 处次要按钮一次覆盖。
+        .buttonStyle(PressStyle())
         .accessibilityLabel(title)
     }
 }

@@ -779,7 +779,10 @@ struct VActionButton: View {
             .frame(minHeight: V.Action.height)
             .background(tint, in: .rect(cornerRadius: V.R.action, style: .continuous))
         }
-        .buttonStyle(.plain)
+        // 2026-11-01：`.plain` 在 iOS 上**没有任何按压反馈**（不亮、不缩），
+        // 用户点下去得不到确认。本仓早就定义了 `PressStyle`（透明度 + 0.985 缩放），
+        // 但只有 4 处用上 —— 这里接到设计系统的主按钮上，60 处调用一次覆盖。
+        .buttonStyle(PressStyle())
         .accessibilityLabel(title)
     }
 }
@@ -895,7 +898,8 @@ struct VListRow: View {
             .frame(minHeight: V.List.rowMinHeight)
             .contentShape(.rect)
         }
-        .buttonStyle(.plain)
+        // 同 `VActionButton`：`.plain` 无按压反馈；43 处设置行一次覆盖。
+        .buttonStyle(PressStyle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel(a11yLabel)
         .accessibilityAddTraits(.isButton)
