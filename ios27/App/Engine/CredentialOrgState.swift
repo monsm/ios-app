@@ -228,32 +228,18 @@ extension CredentialOrg {
         return "停用原因 \(d.label) · \(f.string(from: Date(timeIntervalSince1970: d.at))) · \(d.via)"   // 361 停用原因
     }
 
-    // ---------- 363 月历到期 (每日格右上角当日到期凭证数) ----------
-    // 【保留未接 2026-10-29】月历到期角标（用户 B1 未选，保留待接：凭证页月历视图）
-    static func monthDeadlines(_ mac: String, year: Int, month: Int) -> [Date: Int] {
-        var cal = WeekCal.gregorian
-        cal.timeZone = TimeZone.current
-        guard let start = cal.date(from: DateComponents(year: year, month: month, day: 1)) else { return [:] }
-        var out: [Date: Int] = [:]
-        for p in DB.listPwds(mac) {
-            guard let to = expiryDate(p),
-                  cal.component(.year, from: to) == year,
-                  cal.component(.month, from: to) == month,
-                  let key = cal.date(from: DateComponents(year: year, month: month, day: cal.component(.day, from: to))) else { continue }
-            out[key, default: 0] += 1
-            _ = start
-        }
-        return out
-    }
-
-    // 【保留未接 2026-10-29】某天到期凭证列表 —— monthDeadlines 的配套读侧，同日历一起接
-    static func dayDeadlines(_ mac: String, _ date: Date) -> [LedgerPwd] {
-        let cal = WeekCal.gregorian
-        return DB.listPwds(mac).filter { p in
-            guard let to = expiryDate(p) else { return false }
-            return cal.isDate(to, inSameDayAs: date)
-        }
-    }
+    // 363「月历到期」`monthDeadlines(_:year:month:)` + `dayDeadlines(_:_:)`：**已删除**（2026-11-01）。
+    //
+    // 它们零调用，而**功能已经存在** —— 由 `KeyCalendarScreen` 自己算：
+    //   · `deadlines`（按 dayKey 分桶）→ 每格到期条数；
+    //   · `pickedItems` → 当天清单；
+    //   · `monthTotal` → 页头「本月 N 条到期」。
+    //
+    // 而且界面那版**覆盖面更广**：它用 `app.keys`（含指纹与手机钥匙），
+    // 而这里只遍历 `DB.listPwds`（仅密码/临时码）。
+    //
+    // 所以这不是"保留未接"，是**数据源更窄的旧实现**（同 `typeCounts` / `MemberHub.display` 一族）。
+    // 留此说明是为了不让人去 Engine 里找月历逻辑（它在 KeyCalendarScreen）。
 
     /// 弱口令三条判据 (都可证伪; 不评"强度分"): 少于 6 位 / 全部同一位 / 连续递增递减
     // 【保留未接 2026-10-29】弱口令判据（少于6位/全同位/连续）—— 新密码输入时可用于即时提示
