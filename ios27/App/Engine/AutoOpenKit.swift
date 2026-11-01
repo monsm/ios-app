@@ -87,6 +87,7 @@ enum AutoOpen {
         DB.store.setCodable("kf_autocal_" + mac, AutoCal(rssiP95: p95, at: Date().timeIntervalSince1970))
         return p95
     }
+    // 【保留未接 2026-11-01】清掉某把锁的自动校准值 —— 接线点：自动开门设置页的「重新校准」。
     static func clearAutocal(_ mac: String) {
         DB.store.remove("kf_autocal_" + mac)
     }

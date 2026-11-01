@@ -28,6 +28,17 @@
 | 11 | `sameTypeCount(mac:type:exceptKey:)` | `RecordSearchBuild` | 同类型记录计数（「本周第 3 次撬锁」） | 记录详情 |
 | 12 | `context(mac:aroundKey:minutes:n:)` | `RecordSearchBuild` | 告警前后 10 分钟同锁记录（前 3 / 后 3） | 记录详情「前后事件」区 |
 
+| 13 | `removeSearchHistory(_:)` | `CredentialOrg` | 搜索历史单条删除（531 配套） | 搜索历史行的「删掉这条」 |
+| 14 | `recentUseCount(_:pwdAlias:days:)` | `CredentialOrg` | 近 N 天使用次数（529 组尾统计） | 凭证详情/列表行尾（文案带"约"） |
+| 15 | `pwdAgeDays(_:)` | `CredentialOrg` | 密码年龄（天） | 凭证详情「已使用 N 天」一行 |
+| 16 | `clearAutocal(_:)` | `AutoOpenKit` | 清掉某把锁的自动校准值 | 自动开门设置页的「重新校准」 |
+
+> 第 13–16 条是 2026-11-01 用"可达性"扫描（而非引用计数）找出来的：它们对外零引用，
+> 但实现完整、有需求编号，属**保留未接**，已在源码处加 `【保留未接】` 标记。
+
+> 同批被**删除**的（真死，不是保留）：`MemberHub.aliasName`（被 `CredentialOrg.ownerName` 取代）、
+> `MemberHub.display`+`unnamedLabel`+`doubleLine`（封闭死簇）、`BatteryCare.facePct`
+> （三个界面都直接用 `displayPct`）。
 ## 怎么判定「保留未接」而不是「死代码」
 
 | 特征 | 保留未接 | 死代码 |

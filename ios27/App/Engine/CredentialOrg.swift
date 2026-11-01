@@ -294,6 +294,7 @@ enum CredentialOrg {
         list.insert(q, at: 0)
         DB.setCodable(list, "kf_csearch_hist")
     }
+    // 【保留未接 2026-11-01】搜索历史的单条删除（531 的配套）—— 界面暂无「删掉这一条」入口。
     static func removeSearchHistory(_ q: String) {
         DB.setCodable(searchHistory().filter { $0 != q }, "kf_csearch_hist")
     }
@@ -301,6 +302,7 @@ enum CredentialOrg {
 
 
     // ---------- 529 组尾统计 (基于台账推断, 标"约") ----------
+    // 【保留未接 2026-11-01】组尾统计的读侧 —— 接线点：凭证详情/列表行尾（UI 必须带"约"字）。
     /// 近 N 天使用次数: 临时密码按时间窗命中开门日志 (type2/4) 计, 长期密码只在
     /// 锁内唯一且有归属时计 (推断口径, UI 必须带"约"字)。日志缺失返回 nil (不出行)。
     static func recentUseCount(_ mac: String, pwdAlias: Int, days: Int = 30) -> Int? {
@@ -378,6 +380,7 @@ enum CredentialOrg {
     // 展示层语义纪律: 锁端一次性/周期/暂停未定义 (CAPABILITY §4), 所有推断值 UI 必须带"约"字。
 
 
+    // 【保留未接 2026-11-01】密码年龄（天）—— 接线点：凭证详情「已使用 N 天」一行。
     static func pwdAgeDays(_ p: LedgerPwd) -> Int? {
         guard p.at > 0 else { return nil }
         // 单位口径：毫秒 —— LedgerPwd.at 写的是 `timeIntervalSince1970 * 1000` (见 CredentialStudio 提交那两处)，先除回秒再算天数。

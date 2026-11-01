@@ -125,12 +125,12 @@ enum BatteryCare {
         return s.t >= snapAt ? s.pct : snapshot // 快照已知 → 谁更新用谁
     }
 
-    /// 界面上的那一格电量: 会话实时读数优先, 无则走 displayPct 的采样/快照口径。
-    /// `live` 传 -1 表示"这次没有实时读数" —— 只有正在连着的那把锁才有实时读数, 别的锁必须传 -1,
-    /// 否则 A 锁的电量会被安到 B 锁头上 (设备页那侧的同名判据)。
-    static func facePct(_ mac: String, live: Int = -1) -> Int {
-        live >= 0 ? live : displayPct(mac, snapshot: DB.readStatus(mac)?.powerLevel ?? -1)
-    }
+    // 「界面那一格电量」`facePct(_:live:)`：**已删除**（2026-11-01）。
+    // 它是 `displayPct` 外再包一层的重复实现，而**三个界面（DeviceInfoScreen /
+    // LockSettingsScreen / BatteryProfileScreen）都直接用 `displayPct`** —— 本函数零调用。
+    // 注释里描述的那条"别的锁必须传 -1，否则 A 锁电量会安到 B 锁头上"的纪律仍然成立，
+    // 它现在由调用方自己把 `snapshot` 传对来保证（三处都是这么写的）。
+    // 留此说明，是为了不让人以为"实时读数优先"这一层逻辑被删掉了 —— 它从来没被接上过。
     /// 电量的界面写法 (<0 未读到 → "--"; >80 只报 ">80%", 锁侧这个量本身就是粗估档)。
     static func faceText(_ p: Int) -> String {
         if p < 0 { return "--" }
