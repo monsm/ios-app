@@ -45,7 +45,9 @@ struct HardwareScreen: View {
     // MARK: 页头
     private var tone: Tone {
         if store.dongles.isEmpty { return .neutral }
-        let low = store.dongles.contains { $0.battery < 20 }
+        // `battery < 0` 是「没读到电量」的哨兵（`SettingsModel.dongles` 用 `?? -1`）——
+        // 不排除的话 `-1 < 20` 恒真 ⇒ 页头永远涂成警告色，而其实一台都没读到过电量。
+        let low = store.dongles.contains { $0.battery >= 0 && $0.battery < 20 }
         return low ? .attention : .ok
     }
 
@@ -53,7 +55,7 @@ struct HardwareScreen: View {
         if store.dongles.isEmpty {
             return "没有登记任何钥匙串 · 不带手机开门需要一台"
         }
-        let low = store.dongles.filter { $0.battery < 20 }.count
+        let low = store.dongles.filter { $0.battery >= 0 && $0.battery < 20 }.count
         let unbound = store.dongles.filter { !$0.holdsThisLock }.count
         var parts = ["已登记 \(store.dongles.count) 台"]
         if low > 0 { parts.append("低电 \(low) 台") }
@@ -87,9 +89,12 @@ struct HardwareScreen: View {
                             .monospacedDigit()
                         SettingRule()
                         VReadingGrid(items: [
-                            .init(label: "电量", value: "\(d.battery)", unit: "%",
-                                  tint: d.battery < 20 ? V.C.warning : V.C.text1),
-                            .init(label: "钥匙", value: "\(d.keys)", unit: "把"),
+                            // 2026-11-01（Round 246）：两个字段都有「未知」哨兵，不能直接拼进字符串：
+                            //   · `battery = -1`（没读到电量）⇒ 原来显示「-1 %」并涂警告色；
+                            //   · `keys = -1`（没读到钥匙数）⇒ 原来显示「0 把」，与"真的 0 把"分不开。
+                            .init(label: "电量", value: d.battery >= 0 ? "\(d.battery)" : "—", unit: d.battery >= 0 ? "%" : "",
+                                  tint: d.battery >= 0 && d.battery < 20 ? V.C.warning : V.C.text1),
+                            .init(label: "钥匙", value: d.keys >= 0 ? "\(d.keys)" : "—", unit: d.keys >= 0 ? "把" : ""),
                             .init(label: "固件", value: d.firmware),
                         ], columns: 3)
                         .padding(.top, V.S.gapXS)

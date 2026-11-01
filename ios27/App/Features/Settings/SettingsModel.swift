@@ -279,7 +279,8 @@ final class SettingsStore {
                          name: d.name.isEmpty ? "钥匙串 \(String(d.mac.prefix(4)))" : d.name,
                          mac: d.mac,
                          battery: d.stat?.power ?? -1,
-                         keys: d.stat?.ekeyCount ?? 0,
+                         // `-1` = 没读到（`HardwareService` 读不到 0x24 就写 -1）；`0` 是合法值（一把都没签）。
+                         keys: d.stat?.ekeyCount ?? -1,
                          firmware: d.stat?.firmware ?? "—",
                          holdsThisLock: !d.lastKeyLock.isEmpty)
         }
