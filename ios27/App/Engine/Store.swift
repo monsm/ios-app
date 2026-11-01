@@ -312,6 +312,13 @@ enum DB {
                 store.setCodable(key, keep)
             }
         }
+        // 2026-11-01（Round 230）：**借用登记**（`kf_mborrow_<mac>`，键 = memberID）同族 ——
+        // 删了成员，条目还在 ⇒ 借用列表里出现「借用人：<已删除的 id>」，且这条锁的借用记录永远占着。
+        // 与上面手机钥匙一样遍历**存储键**而不是 keychains()，钥匙串被删但键还在时也能清。
+        for key in store.keys() where key.hasPrefix("kf_mborrow_") {
+            var map = store.get([String: MemberBorrow].self, key) ?? [:]
+            if map.removeValue(forKey: id) != nil { store.setCodable(key, map) }
+        }
     }
 
     // 钥匙串硬件
