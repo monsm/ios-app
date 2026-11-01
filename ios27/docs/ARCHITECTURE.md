@@ -213,8 +213,8 @@ App/Design/Tokens.swift  ──解析──▶  DesignLab/lab.js（令牌 → CS
 
 | 项 | 状态 | 说明 |
 |---|---|---|
-| 真机编译 | ❌ 未验 | 本机无 Xcode；CI 用 `macos-26` + 最新 Xcode。**必须等 CI 绿才算过编译** |
+| 真机编译 | ✅ **CI 已通过** | 本机 Windows 无 Xcode；CI 用 `xcode-27` 镜像 BUILD/ARCHIVE SUCCEEDED。**不钉 run 号**（钉死会被后续提交甩开），查当前：`git show origin/ci-log:meta.txt` |
 | 真机手感 | ❌ 未验 | 刻度盘按压、进度弧跟手度、触觉 |
-| Engine 与页面的接线 | ⚠️ 部分 | 页面里 `TODO(engine)` 标注的字段目前是 AppModel 种子数据 |
+| Engine 与页面的接线 | ✅ **主要链路已接** | 开锁/凭证/记录/配网/备份/校时/布防/网关/DFU 全走真协议；剩余零星 `TODO(engine)` 见 `COMPLETION.md` 的「未接项」表（次要字段，非主链路） |
 | 动态字体极端值 | ⚠️ 未验 | 静态只保证字号走令牌；最大字号下的截断需真机 |
 | 横屏 / iPad | ❌ 不支持 | 本仓锁竖屏（`UISupportedInterfaceOrientations` 只给 Portrait） |

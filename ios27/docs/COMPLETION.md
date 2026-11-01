@@ -157,7 +157,22 @@ https://github.com/monsm/ios-app/releases/tag/ios27-latest
 | 数据来源 | 锁/凭证/成员/台账全部读 DB，不再是种子数据 |
 
 **还没接的（页面里如实标 `TODO(engine)`，不假装）**
-指纹录入（cmd13/14 需握着锁按指纹头）· 布防下发 · 网关配网 · DFU · 备份加密信封 · 手机钥匙签发 · 分享给安卓 · 靠近自动开锁。
+
+> 2026-11-01 更正：这一行此前列的是「指纹录入 · 布防下发 · 网关配网 · DFU · 备份加密信封 · 手机钥匙签发 · 分享给安卓 · 靠近自动开锁」，
+> 而这些**全部已经接上了**（`cmd13/14`、`DefendService`、`cmd30-35`、`GUFD`、`CryptoBox.encryptText`、`MobileKeyService.issue`、分享页、`AutoOpenController`）。
+> 真机交互流水里能看到 cmd04/cmd03/cmd16 的真实收发，这条文档却在说「没接」—— 过期文档比没有文档更危险。
+> 下面按代码里**现存**的 `TODO(engine)` 重列。
+
+| 未接项 | 现状 |
+|---|---|
+| 家族页的活动 / 访客判定 | `HouseholdScreen`、`HouseholdRoster` 只认台账里已归属的行，未接 `MemberHub.activityBundle` 与 `Attribution.classify` |
+| 成员扩展档案导出 | `RecordExportScreen` 的名册只带称呼与角色，电话/备注留在本机 |
+| 硬件钥匙串台账 | `SettingsModel.dongles` 仍是示例数据，未读 `kf_keychain_dongles` |
+| 靠近自动开锁的距离标定 | `calibrationAt` / `lastSkipReason` 只在本机内存成立 |
+| 布防状态回读 | `SecurityScreen` 未读 `op=getDeviceSetting`（下发链路是通的，回读没接） |
+| 记录页覆盖层 / 归属 | `RecordsModels` 的备注、旗标、处置、凭证槽位归属仍是 TODO |
+| 配网失败回滚 | `AddLockScreen` 未断开链路、未清半成品台账与 `lastDevice` 指针 |
+| 成员删除的锁端队列 | `MemberDetailScreen` 只动本机台账（锁端凭证需手动删） |
 
 ## 五、诚实的边界（未验的就是未验）
 
@@ -168,17 +183,13 @@ https://github.com/monsm/ios-app/releases/tag/ios27-latest
 | **真机手感** | ⚠️ **未验证** | 刻度盘按压跟手度、进度弧节奏、触觉反馈 |
 | **真实玻璃折射** | ⚠️ **未验证** | DesignLab 用 `backdrop-filter` 近似 |
 | **动态字体极端值** | ⚠️ **未验证** | 静态只保证字号走令牌；最大字号截断需真机 |
-| **Engine ↔ 页面接线** | 🔧 **部分** | 页面里 `TODO(engine)` 标注的字段是 AppModel 种子数据；引擎已可编译并解耦 |
+| **Engine ↔ 页面接线** | ✅ **主要链路已接** | 开锁 / 凭证 / 记录 / 配网 / 备份 / 校时 / 布防 / 网关 / DFU 全部走真协议；剩余零星 `TODO(engine)` 见下一节（都是次要字段，不是主链路） |
 | **横屏 / iPad** | ❌ **不支持** | 锁竖屏（`UISupportedInterfaceOrientations` 只有 Portrait） |
 
-### 未接真数据的部分（页面里都如实标了 `TODO(engine)`）
+### 未接真数据的部分 —— 见上一节的表
 
-- 开锁链：现在是相位机（`runUnlockChain`），接 `LockService` 的真 cmd04 链
-- 凭证写入：cmd0A/0B/13/14 未下发，页面写"已加入本机台账，待下发"
-- 记录读取：cmd16 翻页未接，只装载 `kf_logcache_`
-- 配网：`AddLockScreen` 的 7 条写锁帧是逐条留痕的相位机，未真连 BLE
-- 备份：`CryptoBox`（PBKDF2+AES-CBC+HMAC）已搬进 Engine，但 UI 侧只做了明文导出
-- 布防/校时/网关：`DefendService`/`cmd0E`/`cmd30-35` 已在 Engine 就位，UI 侧未接线
+> 这一小节此前列了 6 条「未接线」，2026-11-01 核实**全部已接**（真机流水可见 cmd04/cmd03/cmd16 收发）。
+> 内容已并入上一节的「未接项」表，此处不再重复维护两份清单 —— 两份清单必然分叉，而分叉的那一天起就有一份在撒谎。
 
 ---
 
