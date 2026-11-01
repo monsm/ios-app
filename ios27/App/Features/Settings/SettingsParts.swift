@@ -405,15 +405,31 @@ struct VerifyPasscodeSheet: View {
     }
 }
 
-/// 面板内的档位 chip 行。ChipRow 自带页面级 gutter 内边距，嵌进面板时要把它收回来，
-/// 否则面板内再吃一层 16pt，读数与档位对不齐。收回量走令牌，不写字面量。
+/// 面板内的档位选择。
+///
+/// 2026-11-01 改造：**改用原生 `Picker` + `.segmented`**，不再用自定义 chip 行。
+/// 为什么（对应本轮 objective 的「尽可能有原生控件就用原生控件」）：
+///   · 这里全部是 3–4 档的枚举（主题 4 / 密度 3 / 动效 3 / 时间 3 / 面容 3），
+///     正是 `.segmented` 的标准场景；
+///   · 原生分段控件自带：系统外观（iOS 26 起是液态玻璃材质）、VoiceOver 的
+///     「adjustable / 第 N 项，共 M 项」语义、Switch Control 支持、Dynamic Type 适配 ——
+///     这些自定义 chip 行都要自己写，且很难写全；
+///   · 视觉上仍走系统控件，浅色/深色、强调色、无障碍「减少透明度」全部自动跟随。
+///
+/// 保留自定义 `VChipRow` 给**档位多到放不下**的场景（如家页的分组标签、凭证页的类型筛选）——
+/// 那种情况分段控件会被压扁，反而是 `ScrollView` 里的 chip 行更合适。
 struct SettingChips<Item: Hashable>: View {
     let items: [Item]
     let title: (Item) -> String
     @Binding var selection: Item
 
     var body: some View {
-        VChipRow(items: items, title: title, selection: $selection)
-            .padding(.horizontal, -V.S.pageGutter)
+        Picker("", selection: $selection) {
+            ForEach(items, id: \.self) { item in
+                Text(title(item)).tag(item)
+            }
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
     }
 }

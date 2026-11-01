@@ -127,6 +127,15 @@ struct VLedgerRow: View {
 }
 
 /// 卡内读数行：左标签、右读数（等宽数字）。
+///
+/// 2026-11-01 改造：**改用原生 `LabeledContent`**（55 处调用一次覆盖）。
+/// 为什么（对应 objective 的「原生控件优先」+「控件大小考虑实际文字占用」）：
+///   · `LabeledContent` 是系统为「标签 + 值」这一对准备的容器，自带正确的
+///     VoiceOver 语义（读成"型号，K1"而不是两个独立元素）；
+///   · 布局上它**先给标签让位**：标签长 / 字号大时会换行，而不是把右侧数值挤出去
+///     —— 旧写法 `HStack { Text; Spacer(minLength:); 值 }` 在长标签 + 大字号下
+///     会让数值被压缩甚至截断；
+///   · RTL、Dynamic Type、系统强调色全部自动跟随。
 struct VFieldRow: View {
     let label: String
     let value: String
@@ -135,11 +144,7 @@ struct VFieldRow: View {
     var mono: Bool = true
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: V.S.gapMS) {
-            Text(label)
-                .font(V.F.body)
-                .foregroundStyle(V.C.text2)
-            Spacer(minLength: V.S.gapS)
+        LabeledContent {
             if mono {
                 VReading(value: value, unit: unit, font: V.F.number15, tint: tint, animated: false)
             } else {
@@ -148,9 +153,12 @@ struct VFieldRow: View {
                     .foregroundStyle(tint)
                     .multilineTextAlignment(.trailing)
             }
+        } label: {
+            Text(label)
+                .font(V.F.body)
+                .foregroundStyle(V.C.text2)
         }
         .frame(minHeight: V.Metric.searchRow)
-        .accessibilityElement(children: .combine)
     }
 }
 

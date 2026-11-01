@@ -34,34 +34,6 @@ struct Reading: View {
     }
 }
 
-/// 左标签 / 右读数的表单行。仪器面板的骨架：标签靠左，读数贴右。
-struct FieldRow: View {
-    let label: String
-    let value: String
-    var unit: String? = nil
-    var tint: Color = V.C.text1
-    var mono: Bool = true
-
-    var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: V.S.gapMS) {
-            Text(label)
-                .font(V.F.body)
-                .foregroundStyle(V.C.text2)
-            Spacer(minLength: V.S.gapS)
-            if mono {
-                Reading(value: value, unit: unit, size: 15, tint: tint, animated: false)
-            } else {
-                Text(value)
-                    .font(V.F.bodyStrong)
-                    .foregroundStyle(tint)
-                    .multilineTextAlignment(.trailing)
-            }
-        }
-        .frame(minHeight: V.Hit.min - V.S.gapS)
-        .accessibilityElement(children: .combine)
-    }
-}
-
 /// 读数网格：2~3 列等宽读数，仪器面板式的读数区。
 struct ReadingGrid: View {
     struct Item: Identifiable {
