@@ -156,33 +156,20 @@ enum MemberHub {
         return DB.members().filter { all[$0.id]?.emergencyAdmin == true }
     }
 
-    // 666 成员名兜底: 超长名中段截断 (头像取首字由 UI 层做)
-    static func display(_ m: Member) -> String {
-        var n = m.name.isEmpty ? unnamedLabel(m.id) : m.name
-        if n.count > 6 {
-            n = String(n.prefix(3)) + "…" + String(n.suffix(2))
-        }
-        return n
-    }
-    /// 666 编号兜底: 未命名成员不再一律叫"成员" —— 多位未命名时同名分不出人,
-    /// 归属、代管开关、记录行都认不出是谁。按名册自然序号给"成员 N" (序号与成员页行序同源)。
-    private static func unnamedLabel(_ id: String) -> String {
-        let roster = DB.members()
-        guard let i = roster.firstIndex(where: { $0.id == id }) else { return "成员" }
-        return "成员 \(i + 1)"
-    }
-    /// 461 双层文本: "称呼（备注）"
-    static func doubleLine(_ m: Member) -> String {
-        let r = ext(m.id).remark
-        return r.isEmpty ? display(m) : display(m) + "（" + r + "）"
-    }
-    /// 919 时间线别名: 开关开且该成员 relation 非空 → 返回关系称呼 (如「老妈」), 否则 nil (调用方回退真名)。
-    /// 只做显示替换 —— 匹配与凭证深链仍走裸名 (owner == whoName 的相等判定不能被别名污染)。
-    static func aliasName(_ whoId: String?) -> String? {
-        guard let whoId, !whoId.isEmpty, CredentialOrg.aliasDisplay,
-              let m = DB.member(whoId), !m.relation.isEmpty else { return nil }
-        return m.relation
-    }
+    // 666 成员名兜底 `display(_:)` / `unnamedLabel(_:)` + 461 双层文本 `doubleLine(_:)`：
+    // **已整簇删除**（2026-11-01）。这三个构成一个封闭引用链
+    // （`doubleLine` → `display` → `unnamedLabel`），而**簇外零调用** ——
+    // 也就是说没有任何界面会用到它们。"名字超长中段截断"与"未命名成员叫成员 N"这两条规则，
+    // 实际生效的是 UI 层自己的实现（`MemberCard` 那一套），不是这里。
+    //
+    // 与 ROUND-71 的 `aliasName` 是同一族：**同一个显示规则在两层各有一份实现，
+    // 只有一份是活的**，另一份留着只会让后来人改错地方（改了这份，界面毫无变化）。
+    // 919 时间线别名 `aliasName(_:)`：**已删除**（2026-11-01）。
+    // 它不是"从未写过"，而是**被取代**：同一件事在 `CredentialOrg.ownerName(_:)` 里
+    // 有一份活的实现（同样判 `aliasDisplay` 与 `relation`，空则回退真名），
+    // 全仓显示路径走的都是那一份；本函数零调用。
+    // 两份同义实现留着，早晚会出现"改了活的、改了这份、两边显示不一致"。
+    // 保留此说明，是为了不让人去 `MemberHub` 里找别名逻辑（它在 CredentialOrg）。
 
     // ---------- 活跃度推断 (⚠262/459/466: 台账口径, 必须带"约") ----------
     struct Activity {

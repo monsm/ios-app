@@ -495,7 +495,8 @@ extension Member {
     static func fromDict(_ d: [String: Any]) -> Member? { Member(fromDict: d) }
     init?(fromDict d: [String: Any]) {
         // 2026-10-29：原来还要求 name 必须存在 —— 缺名成员会被**整条丢弃**，
-        // 名下凭证随之变成"未归属"（而 MemberHub.display 本来就有 unnamedLabel 兜底）。
+        // 名下凭证随之变成"未归属"（缺名成员在 UI 层有"成员 N"兜底；
+        // MemberHub 里那份 display/unnamedLabel 已于 2026-11-01 删除 —— 簇外零调用）。
         // 这里只把 id 当必需（没有 id 无法归属），name 允许空。
         guard let id = d["id"] as? String else { return nil }
         self.id = id
