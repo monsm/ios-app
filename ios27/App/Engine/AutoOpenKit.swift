@@ -431,6 +431,10 @@ final class AutoOpenController {
             switch rc {
             case 0:
                 armed = false
+                // 2026-11-01：`Milestones.recordUnlockSuccess()` 此前**只有手动开锁那一条链在调**，
+                // 于是「累计开锁 N 次」（设置页 / 关于页，无任何限定词）**完全不计自动开锁** ——
+                // 天天靠自动开锁进门的人会永远看到 0。两条开锁路径必须同一口径。
+                Milestones.recordUnlockSuccess()
                 AutoOpen.audit(mac, "自动开锁成功")
             case 3:
                 // 2026-11-01：rc=3「命令过期」= 锁**没有执行**这条开锁，多半是锁钟漂了。

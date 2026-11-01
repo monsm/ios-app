@@ -38,9 +38,8 @@ enum Milestones {
         DB.store.set("kf_unlock_count", unlockTotal + 1)
     }
 
-    // ---------- 1007 整理计数 ----------
-    static var organizeTotal: Int { DB.store.getInt("kf_organize_count") }
-    static func recordOrganize() {
-        DB.store.set("kf_organize_count", organizeTotal + 1)
-    }
+    // 1007「整理计数」`organizeTotal` / `recordOrganize` 于 2026-11-01（Round 225）**删除**：
+    // 全仓零读零调用 —— `organizeTotal` 只有定义处，`recordOrganize` 没有任何调用点，
+    // 也没有任何界面显示它。按本仓纪律（无接线点 + 无 【保留未接】 标记 = 真死代码）删掉。
+    // 与 `quota` / `DiagFlags.silent` / `Advice` / `DiagOp` 同一处置。
 }
