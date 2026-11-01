@@ -31,9 +31,11 @@ import Foundation
 import SwiftUI
 @preconcurrency import UserNotifications   // 通知中心对象是系统侧线程安全的, SDK 未标 Sendable
 import os   // 2026-10-13 对抗式排查: 凭证通知排期失败要能查 (原先 try? 静默吞掉)
-// 502 彻底删除的统一门槛口 (guardedPurge) 要问生物识别, 所以本文件也吃这一套系统框架;
-// 与 AccessibilityKit 的 AuthKit (877) 同源, 那边不复用的理由写在 guardedPurge 上方。
-import LocalAuthentication
+// 2026-11-01 更正：原注释写「502 彻底删除的统一门槛口 (guardedPurge) 要问生物识别」，
+// 但全仓**没有 `guardedPurge` 这个函数** —— 它只在注释里出现过。
+// 实际情况：回收站的「彻底删除」就是直接删（`CredBinStore.purge`），没有生物识别门槛。
+// 相应地，本文件也从未用到 LocalAuthentication（`LAContext` 只在 AutoOpenKit /
+// SecurityScreen / LockKeeperApp 三处出现），所以删掉了那条 import。
 
 
 // ================= 组织层 =================
