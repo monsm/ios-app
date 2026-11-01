@@ -13,23 +13,21 @@
 >
 > 接线后请从本表删掉该行，并去掉代码里的标记。
 
-| # | 符号 | 文件 | 功能 | 接线点（注释里写的） |
-|---|---|---|---|---|
-| 1 | `markDisabled(_:kind:keys:label:via:)` | `CredentialOrg` | 停用原因**写入** | 停用时采集原因（与 #2 成对） |
-| 2 | `disableMark(_:kind:key:)` / `disableMarkText(_:kind:key:)` | `CredentialOrgState` | 停用原因**读取与回显** | 凭证详情页的停用行 |
-| 3 | `monthDeadlines(_:year:month:)` | `CredentialOrgState` | 月历到期角标 | 凭证页月历视图 |
-| 4 | `dayDeadlines(_:_:)` | `CredentialOrgState` | 某天到期凭证列表（#3 的配套读侧） | 同上，一起接 |
-| 5 | `weakReason(_:)` | `CredentialOrgState` | 弱口令判据（少于 6 位 / 全同位 / 连续） | 新密码输入时即时提示 |
-| 6 | `batchPrefixNote(_:pwdAliases:fpBatches:prefix:)` | `CredentialOrgBatch` | 批量加同一前缀备注 | 凭证页多选菜单 |
-| 7 | `strictBytes(_:)` | `HexKit` | 严格十六进制解析（坏输入显式失败） | 协议解析路径（现用宽容版 `bytes()`） |
-| 8 | `recentExcerpts(_:_:)` | `MemberHub` | 成员详情「最近记录摘录」 | 成员页空档补位 |
-| 9 | `CommuteLabel.tag(date:hour:)` | `RecordSearch` | 通勤时段标签（工作日 7-9 / 17-19） | 记录页时段分组 |
-| 10 | `TimeWord.word(_:)` | `RecordSearch` | 自然时段词（清晨 / 上午 / 午间…） | 记录组头与行级小字 |
-| 11 | `sameTypeCount(mac:type:exceptKey:)` | `RecordSearchBuild` | 同类型记录计数（「本周第 3 次撬锁」） | 记录详情 |
-| 12 | `context(mac:aroundKey:minutes:n:)` | `RecordSearchBuild` | 告警前后 10 分钟同锁记录（前 3 / 后 3） | 记录详情「前后事件」区 |
-
-| 14 | `recentUseCount(_:pwdAlias:days:)` | `CredentialOrg` | 近 N 天使用次数（529 组尾统计） | 凭证详情/列表行尾（文案带"约"） |
-| 17 | `overlapWindows(_:from:to:owner:excluding:)` | `CredentialOrg` | 租期重叠检测（327） | 凭证创建页时间段字段下方 |
+| # | 符号 | 文件 | 功能 | 接线点（注释里写的） | 接线成本 |
+|---|---|---|---|---|---|
+| 1 | `markDisabled(_:kind:keys:label:via:)` | `CredentialOrg` | 停用原因**写入** | 停用时采集原因（与 #2 成对） | 中（要与 #2 成对） |
+| 2 | `disableMark` / `disableMarkText` | `CredentialOrgState` | 停用原因**读取与回显** | 凭证详情页的停用行 | 中（同 #1） |
+| 3 | `monthDeadlines(_:year:month:)` | `CredentialOrgState` | 月历到期角标 | 凭证页月历视图 | 高（要建月历视图） |
+| 4 | `dayDeadlines(_:_:)` | `CredentialOrgState` | 某天到期凭证列表（#3 配套读侧） | 同上，一起接 | 高（同 #3） |
+| 5 | `weakReason(_:)` | `CredentialOrgState` | 弱口令判据（少于 6 位 / 全同位 / 连续） | 新密码输入时即时提示 | **低**（一行提示，与输入同粒度） |
+| 6 | `batchPrefixNote(_:pwdAliases:fpBatches:prefix:)` | `CredentialOrgBatch` | 批量加同一前缀备注 | 凭证页多选菜单 | 中（要在多选菜单加一项） |
+| 7 | `strictBytes(_:)` | `HexKit` | 严格十六进制解析（坏输入显式失败） | 协议解析路径（现用宽容版 `bytes()`） | **高**（20+ 调用点，换严格版会改变所有路径行为） |
+| 8 | `recentExcerpts(_:_:)` | `MemberHub` | 成员详情「最近记录摘录」 | 成员页空档补位 | 中（要加一个区块） |
+| 10 | `TimeWord.word(_:)` | `RecordSearch` | 自然时段词（清晨 / 上午 / 午间…） | 记录组头与行级小字 | **高**（按小时 vs 按天分组，粒度不匹配） |
+| 11 | `sameTypeCount(mac:type:exceptKey:)` | `RecordSearchBuild` | 同类型记录计数（「本周第 3 次撬锁」） | 记录详情 | **低**（加一行，与行数据同粒度） |
+| 12 | `context(mac:aroundKey:minutes:n:)` | `RecordSearchBuild` | 告警前后 10 分钟同锁记录（前 3 / 后 3） | 记录详情「前后事件」区 | 中（要加一个区块） |
+| 14 | `recentUseCount(_:pwdAlias:days:)` | `CredentialOrg` | 近 N 天使用次数（529 组尾统计） | 凭证详情/列表行尾（文案带"约"） | 中（要扫日志，且文案要带"约"） |
+| 17 | `overlapWindows(_:from:to:owner:excluding:)` | `CredentialOrg` | 租期重叠检测（327） | 凭证创建页时间段字段下方 | 中（要加时间窗校验与提示） |
 
 > 第 13 条（`removeSearchHistory`）已于 2026-11-01 **接线**：搜索历史标签支持长按删除（`KeysScreen`）。
 > 第 14–16 条是 2026-11-01 用"可达性"扫描（而非引用计数）找出来的：它们对外零引用，
@@ -38,6 +36,7 @@
 > 同批被**删除**的（真死，不是保留）：`MemberHub.aliasName`（被 `CredentialOrg.ownerName` 取代）、
 > `MemberHub.display`+`unnamedLabel`+`doubleLine`（封闭死簇）、`BatteryCare.facePct`
 > （三个界面都直接用 `displayPct`）。
+
 ## 怎么判定「保留未接」而不是「死代码」
 
 | 特征 | 保留未接 | 死代码 |
