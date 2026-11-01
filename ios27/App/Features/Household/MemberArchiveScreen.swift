@@ -165,5 +165,8 @@ struct MemberArchiveScreen: View {
         guard let i = app.members.firstIndex(where: { $0.id == member.id }) else { return }
         app.members[i] = member.hh(archived: false)
         roster.mirrorArchived(member.id, false)
+        // 恢复同样是"改变可见性"的动作：他会重新出现在成员名单与统计里，
+        // 静默执行的话用户只能靠"这个人在不在列表里"自己推断 —— 与归档那一处保持同一回执口径。
+        AppToast.shared.show("已恢复为在册成员", tone: .ok)
     }
 }

@@ -396,5 +396,7 @@ struct HouseholdScreen: View {
         guard let i = app.members.firstIndex(where: { $0.id == member.id }) else { return }
         app.members[i] = member.hh(archived: true)
         roster.mirrorArchived(member.id, true)
+        // 与成员详情页、归档页同一口径：归档会改统计与名单可见性，必须给回执。
+        AppToast.shared.show("已归档 · 历史仍在，记录页仍能筛到 TA", tone: .ok)
     }
 }
