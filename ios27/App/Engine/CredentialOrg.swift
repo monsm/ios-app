@@ -200,14 +200,10 @@ enum CredentialOrg {
         }.sorted { abs($0.1.timeIntervalSince1970 - nowSec) < abs($1.1.timeIntervalSince1970 - nowSec) }.map { $0.0 }
     }
 
-    // ---------- 358/505 整理建议中心 ----------
-    struct Advice: Identifiable {
-        let id: String
-        let title: String
-        let sub: String
-        let icon: String
-        let action: String   // "expired" / "dups" / "noowner" / "bin" / "memberExpired" (471)
-    }
+    // 358/505「整理建议中心」`struct Advice`：**已删除**（2026-11-01）。
+    // 它全仓只有两处出现：CredentialModels.swift 的注释、以及这个声明本身 —— 零生产者、零消费者。
+    // 也就是说这个"建议中心"从未建成，但结构体留在那，让人以为有这套功能（同 quota / DiagFlags 一族）。
+    // 真要建，应当连着"建议从哪来、点了做什么"一起设计，而不是先留一个数据壳。
 
 
     // ---------- 361 停用原因回溯 (逐条存, 由 313 的必填原因采集) ----------

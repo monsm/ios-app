@@ -1,4 +1,4 @@
-// 凭证模型 · CredAlert / Diff / Advice / DisableMark / CredPackage / StudioDraft
+// 凭证模型 · CredAlert / Diff / DisableMark / CredPackage / StudioDraft
 // 2026-10-29 从 CredentialOrg.swift（743 行）拆出。
 import Foundation
 
