@@ -114,7 +114,9 @@ struct AccessibilityScreen: View {
                 HStack(spacing: V.S.gapS) {
                     ForEach(Array([(key: "hold", label: "按住开锁"), (key: "tap", label: "轻点开锁"), (key: "double", label: "双击开锁")].enumerated()), id: \.offset) { pair in
                         let item = pair.element
-                        Button { gestureMode = item.key; DB.store.set("kf_gesture_mode", item.key) } label: {
+                        // 2026-11-01（Round 254）：走 `SettingsStore`（会 bump `revision`），不要只写 DB 键 ——
+                        // 门页读的是可观察属性，直写拿不到这次变更，改档后手势不生效。
+                        Button { gestureMode = item.key; SettingsStore.shared.gestureMode = item.key } label: {
                             VTag(text: item.label, tint: gestureMode == item.key ? V.C.blue : V.C.text3, filled: gestureMode == item.key)
                         }
                         .buttonStyle(.plain)
@@ -124,7 +126,7 @@ struct AccessibilityScreen: View {
                 VRowDivider()
                 VToggleRow(title: "按住确认开锁", detail: "关掉后退回轻点直开，单手更省力但误触也会开门。", isOn: Binding(
                     get: { holdConfirm },
-                    set: { on in holdConfirm = on; DB.store.set("kf_hold_confirm", on) }
+                    set: { on in holdConfirm = on; SettingsStore.shared.holdConfirm = on }   // 同上：必须 bump revision
                 ))
             }
         }

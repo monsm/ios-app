@@ -241,6 +241,16 @@ final class SettingsStore {
         set { DB.store.set("kf_auto_retry", newValue); revision &+= 1 }
     }
 
+    /// 开锁手势档：`hold` / `tap` / `double`（`kf_gesture_mode`）。
+    ///
+    /// 2026-11-01（Round 254）：门页 `effectiveGesture` 原来直接读 `AXSettings.gestureMode`（**静态 DB 读**），
+    /// 而 `@Observable` 只跟踪这里 —— 于是无障碍页改档后门页**不会重算**，要等下一次别的原因刷新才生效。
+    /// 收进 `SettingsStore` 后，改档即 bump `revision`，门页立刻跟上。
+    var gestureMode: String {
+        get { _ = revision; return DB.store.getString("kf_gesture_mode", "hold") }
+        set { DB.store.set("kf_gesture_mode", newValue); revision &+= 1 }
+    }
+
     // MARK: 备份
 
     var encryptBackup: Bool {

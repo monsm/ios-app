@@ -570,7 +570,7 @@ struct DoorScreen: View {
 
     private var effectiveGesture: String {
         if !SettingsStore.shared.holdConfirm { return "tap" }
-        let mode = AXSettings.gestureMode
+        let mode = SettingsStore.shared.gestureMode   // 走可观察属性，改档后门页立刻重算（Round 254）
         return ["hold", "tap", "double"].contains(mode) ? mode : "hold"
     }
 
