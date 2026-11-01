@@ -103,6 +103,12 @@ enum BatteryCare {
         let nowMs = Date().timeIntervalSince1970 * 1000
         let cutoff = nowMs - 90 * 24 * 3600 * 1000
         list.removeAll { $0.t < cutoff }
+        // 2026-11-01：90 天是**时间**上限，不是**条数**上限。
+        // 一次开锁会连读几遍状态、每天多次连接的话，90 天内可能攒到几千条；
+        // 而本函数每次都要"整表解码 + 整表写回"，成本随条数线性涨（同 `alertTable` 那把尺）。
+        // 留最近 720 条（≈ 每天 8 次 × 90 天，够画趋势），超出丢最旧的。
+        let maxSamples = 720
+        if list.count > maxSamples { list = Array(list.suffix(maxSamples)) }
         // 同一分钟同一读数不重复记（一次开锁会连读两三遍状态）。
         if let last = list.last, nowMs - last.t < 60_000, last.pct == pct { return false }
         list.append(BattSample(t: nowMs, pct: pct))
