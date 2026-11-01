@@ -368,7 +368,13 @@ final class AppModel {
                 if let last = page.logs.last { startIdx = last.idxRaw &+ 1 }
             }
             DB.writeLogs(mac, collected)
-            DB.store.set("kf_logsync_" + mac, Int(Date().timeIntervalSince1970 * 1000))
+            // 2026-11-01 修复：这一行原先写 `"kf_logsync_" + mac`（**未归一化**）且值是 **Int**，
+            // 而读取方 `RecordsSource.lastSync` 用的是 `DB.normalizeMac(mac)` + `getString`。
+            // 两处口径不一致 ⇒ 只要 mac 带冒号或大写，或者这条读取路径不是经由
+            // `RecordsScreen.read()`（那里会补一次 `markSynced`），"上次读取时间"就永远读不到，
+            // 界面恒显示「还没读取过锁内日志」—— 而其实刚刚读过。
+            // 现在写/读/补记三处统一为：**归一化键 + 毫秒字符串**。
+            DB.store.set("kf_logsync_" + DB.normalizeMac(mac), String(Int(Date().timeIntervalSince1970 * 1000)))
             await reload(refreshStatus: false)
         } catch {
             lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
