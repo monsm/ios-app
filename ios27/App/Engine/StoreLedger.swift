@@ -201,6 +201,8 @@ extension DB {
         if stars.remove("pwd:\(alias)") != nil { CredStarStore.set(mac, stars) }
         // 「本机停用位」也是同一族的派生数据（键同样是 `pwd:<别名>`）。
         CredentialLocalState.setDisabled(mac: mac, id: "pwd:\(alias)", false)
+        // 「提前失效分钟数」同族：不清会让复用别名的新凭证被误判成已失效。
+        CredentialOrg.clearEarlyExpireMin(mac, alias)
         var sq = CredentialOrg.seq(mac)
         if var p = sq["p"], let i = p.firstIndex(of: alias) {
             p.remove(at: i)

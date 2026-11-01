@@ -490,6 +490,14 @@ enum CredentialOrg {
     static func setEarlyExpireMin(_ mac: String, _ alias: Int, _ m: Int) {
         DB.store.set("kf_cestudy_earlyexp_" + mac + "_" + String(alias), m)
     }
+    /// 删凭证时清掉「提前失效」设置。
+    ///
+    /// 2026-11-01（Round 228）：这是**按别名挂在外面的状态**，别名被锁端复用时，
+    /// 新凭证会继承旧的提前量 ⇒ `isEarlyExpired` 直接把它判成「已失效」——
+    /// 一条明明还在有效期内的凭证会变灰、被过滤，而界面上看不出任何原因。
+    static func clearEarlyExpireMin(_ mac: String, _ alias: Int) {
+        DB.store.remove("kf_cestudy_earlyexp_" + mac + "_" + String(alias))
+    }
 
     // ---------- 341/343/346 OTP 独立口令组与静态备份码 (纯本地, 不走锁端) ----------
     struct StudioDraft: Codable {
