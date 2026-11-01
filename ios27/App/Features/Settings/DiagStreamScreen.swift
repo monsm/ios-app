@@ -23,6 +23,16 @@ struct DiagStreamScreen: View {
     /// 最新在前。
     private var lines: [DiagLogEntry] { DiagLogs.all().reversed() }
 
+    /// 事件台账（`BleTelemetry.recordEvent`）—— 这些**一直是只写不读**：
+    /// 备份跳过非法密钥、台账解不出、钥匙串写失败、恢复时归属找不到…… 全记在这，却没有任何界面显示。
+    /// 它们不含密钥（只写"发生了什么"），所以两种复制模式都带上。
+    private var events: [BleEvent] { Array(BleTelemetry.events.prefix(40)) }
+
+    private var eventsText: String {
+        guard !events.isEmpty else { return "" }
+        return "\n\n=== 事件台账 ===\n" + events.map { "\($0.at) [\($0.ok ? "OK" : "!!")] \($0.what)" }.joined(separator: "\n")
+    }
+
     private var exportText: String {
         lines.map { "\($0.date) \($0.time) [\($0.level)] \($0.msg)" }.joined(separator: "\n")
     }
@@ -69,7 +79,7 @@ struct DiagStreamScreen: View {
                     VActionButton(title: includeRaw ? "复制原始流水（含密钥）" : "复制脱敏流水",
                                   systemImage: "doc.on.doc") {
                         let raw = LockService.shared.rawTrace
-                        let text = includeRaw ? raw.joined(separator: "\n") : exportText
+                        let text = (includeRaw ? raw.joined(separator: "\n") : exportText) + eventsText
                         Clip.set(text)
                         AppToast.shared.show(includeRaw ? "已复制 \(raw.count) 行原始流水"
                                              : "已复制 \(lines.count) 行脱敏流水", tone: .ok)
@@ -80,6 +90,24 @@ struct DiagStreamScreen: View {
                     if includeRaw, LockService.shared.rawTrace.isEmpty {
                         SettingsNote(text: "内存里还没有原始流水 —— 上面的「记录原始交互帧」要先打开，"
                                      + "然后再复现一次开锁，这里才会有内容。")
+                        .padding(.horizontal, V.S.cardGutter)
+                    }
+
+                    if !events.isEmpty {
+                        VCard {
+                            VStack(alignment: .leading, spacing: V.S.gapXS) {
+                                VCardHeader(title: "事件台账（\(events.count) 条）")
+                                // 用 enumerated 而不是 ForEach(events)：`BleEvent.id` = at+what+ok，
+                                // 同一分钟内重复发生的事件会产生重复 id（SwiftUI 未定义行为）。
+                                ForEach(Array(events.enumerated()), id: \.offset) { pair in
+                                    Text("\(pair.element.at)  \(pair.element.what)")
+                                        .font(V.F.stamp)
+                                        .foregroundStyle(pair.element.ok ? V.C.text2 : V.C.warning)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .textSelection(.enabled)
+                                }
+                            }
+                        }
                         .padding(.horizontal, V.S.cardGutter)
                     }
 
