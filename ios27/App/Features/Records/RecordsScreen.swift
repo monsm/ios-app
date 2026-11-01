@@ -923,6 +923,15 @@ private struct V7RecordRow: View {
                     .font(V.F.rowTitle)
                     .foregroundStyle(V.C.text1)
                     .lineLimit(1)
+                // 通勤时段标签（`CommuteLabel.tag`，674 一直零调用）：
+                // 工作日 7-9 / 17-19 的开门是"规律性行为"，与随机开门在排查上意义不同，
+                // 标出来能让用户一眼分辨"这是我上班那次"还是"别的什么"。
+                if let commute = CommuteLabel.tag(date: TimeFormat.date(entry.at),
+                                                  hour: TimeFormat.calendar.component(.hour, from: TimeFormat.date(entry.at))) {
+                    Text(commute)
+                        .font(V.F.chipLabel)
+                        .foregroundStyle(V.C.blue)
+                }
                 if let owner = entry.owner, !owner.isEmpty {
                     Text(owner)
                         .font(V.F.rowDetail)
