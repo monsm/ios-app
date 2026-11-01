@@ -64,7 +64,10 @@ extension CredentialOrg {
     private static let notifyBusy = Locked(false)
 
     /// 入队一个"完成时调 done()"的异步动作；队列空闲则立刻开跑。
-    static func enqueue(_ job: @escaping (@escaping () -> Void) -> Void) {
+        /// 回调参数标 `@Sendable`：它只被异步 API（`UNUserNotificationCenter.getPendingNotificationRequests`
+    /// 等）的 `@Sendable` 闭包捕获，本身不碰任何隔离状态 —— 不标就会出
+    /// `capture of 'done' with non-Sendable type` 告警（CI build.log 里 4 条，切 Swift 6 会变 error）。
+    static func enqueue(_ job: @escaping (@escaping @Sendable () -> Void) -> Void) {
         let start: Bool = notifyQueue.withLock { q in
             q.append(job)
             return !notifyBusy.withLock { b in

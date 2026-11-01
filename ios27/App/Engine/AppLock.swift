@@ -119,13 +119,18 @@ final class AppLock: ObservableObject {
         // 都不该绕开这条判断 —— 有胁迫码时刷脸会直接暴露"这不是伪装模式"，
         // 是胁迫场景里最危险的一种破绽。
         guard !DB.hasDuressCode() else { return false }
-        unlocked = true
-        decoy = false
-        return true
+        // 2026-11-01 修复（CI 告警 `code after return will never be executed` 抓到的真缺陷）：
+        // 我把这四行清理**留在了 `return true` 之后** —— 于是它们永远不会执行，
+        // 也就是"刷脸解锁成功"从来不清失败计数与冷却。后果：
+        // 用密码错几次进入冷却 → 改用刷脸成功解锁 → 冷却仍然生效，
+        // 下次刷脸会被立刻拒绝（用户看到"刚解锁过却又要等"）。
         failStreak = 0
         cooldownUntil = 0
         DB.store.setInt(failStreakKey, 0)
         DB.store.setDouble(cooldownKey, 0)
+        unlocked = true
+        decoy = false
+        return true
     }
 
     /// 手动上锁（设置页「立即锁定」、或回前台超时）。
