@@ -30,7 +30,26 @@ extension LockService {
     /// 加它的理由：广播里的 MAC 谁都能伪造，而状态帧的响应难伪造得多（见下方注释）。
     /// 代价：老配对（未登记 pid）只能记警告不拦 —— 宁可放过老用户，也不能把正常人挡在门外。
     /// 这是**有意的偏离**，不是"iOS 比 vendor 多做了点什么"的偶然。
+    /// 连接漏斗（唯一入口）。
+    ///
+    /// 2026-11-01：**在这里记一次连接尝试。** `BleTelemetry.recordAttempt` 此前**零调用** ——
+    /// 那张 300 条的环形表从来没被写过，读端 `BleTelemetry.attempts` 也没人用。
+    /// 而"BLE 连不上 / 超时 / 缓存 deviceId 失效"正是开锁失败最常见的原因，
+    /// 没有这份记录就只能靠用户口述。
     func ensureConnected(mac: String) async throws {
+        let m = mac.lowercased()
+        let alreadyConnected = (connectedMAC == m && ble.connectedPeripheralId == connectedDeviceId && !connectedDeviceId.isEmpty)
+        do {
+            try await ensureConnectedInner(mac: m)
+            // 本来就连着的不算一次"尝试"，不记（否则每次命令都会刷一条）。
+            if !alreadyConnected { BleTelemetry.recordAttempt(mac: m, ok: true, reason: "已连接") }
+        } catch {
+            BleTelemetry.recordAttempt(mac: m, ok: false, reason: error.localizedDescription)
+            throw error
+        }
+    }
+
+    private func ensureConnectedInner(mac: String) async throws {
         let m = mac.lowercased()
         guard !m.isEmpty else { throw BLEErrorX.msg("未选择门锁 (缺少 MAC)") }
         if connectedMAC == m, ble.connectedPeripheralId == connectedDeviceId, !connectedDeviceId.isEmpty {

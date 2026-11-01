@@ -17,6 +17,8 @@ struct DiagStreamScreen: View {
     @Environment(\.dismiss) private var dismiss
     /// 记录原始交互帧（写 `kf_debug_raw`，与 `LockService`/`HardwareService` 同键同判）。
     @State private var rawOn = DB.store.getBool("kf_debug_raw")
+    /// 复制时是否带上**原始载荷**（含 skey/ekey/PIN）。默认关；本机调试时由用户显式打开。
+    @State private var includeRaw = false
 
     /// 最新在前。
     private var lines: [DiagLogEntry] { DiagLogs.all().reversed() }
@@ -46,12 +48,40 @@ struct DiagStreamScreen: View {
                     }
                     .padding(.horizontal, V.S.cardGutter)
 
-                    VActionButton(title: "复制全部流水", systemImage: "doc.on.doc") {
-                        Clip.set(exportText)
-                        AppToast.shared.show("已复制 \(lines.count) 行", tone: .ok)
+                    VCard {
+                        VStack(alignment: .leading, spacing: V.S.gapS) {
+                            VCardHeader(title: "复制内容")
+                            Toggle(isOn: $includeRaw) {
+                                Text("包含原始载荷（含密钥，勿外传）")
+                                    .font(V.F.body)
+                                    .foregroundStyle(V.C.text1)
+                            }
+                            .tint(V.C.critical)
+                            SettingsNote(text: includeRaw
+                                         ? "当前复制的是**内存里的原始帧**：里面含 skey / ekey / PIN / 密码明文。"
+                                           + "只用于本机调试，不要发到公开渠道。App 不会把它落盘或写进备份。"
+                                         : "默认复制的是**脱敏**版本：保留帧头与 KLV 结构（字段号 + 长度），载荷值遮掉。"
+                                           + "排查「结构对不对」够用，也方便直接贴出来。")
+                        }
                     }
-                    .disabled(lines.isEmpty)
                     .padding(.horizontal, V.S.cardGutter)
+
+                    VActionButton(title: includeRaw ? "复制原始流水（含密钥）" : "复制脱敏流水",
+                                  systemImage: "doc.on.doc") {
+                        let raw = LockService.shared.rawTrace
+                        let text = includeRaw ? raw.joined(separator: "\n") : exportText
+                        Clip.set(text)
+                        AppToast.shared.show(includeRaw ? "已复制 \(raw.count) 行原始流水"
+                                             : "已复制 \(lines.count) 行脱敏流水", tone: .ok)
+                    }
+                    .disabled(includeRaw ? LockService.shared.rawTrace.isEmpty : lines.isEmpty)
+                    .padding(.horizontal, V.S.cardGutter)
+
+                    if includeRaw, LockService.shared.rawTrace.isEmpty {
+                        SettingsNote(text: "内存里还没有原始流水 —— 上面的「记录原始交互帧」要先打开，"
+                                     + "然后再复现一次开锁，这里才会有内容。")
+                        .padding(.horizontal, V.S.cardGutter)
+                    }
 
                     if lines.isEmpty {
                         VCard {

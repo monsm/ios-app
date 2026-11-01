@@ -51,6 +51,14 @@ final class LockService: ObservableObject {
         if recentFrames.count > 60 { recentFrames.removeFirst(recentFrames.count - 60) }
     }
 
+    /// **原始（未脱敏）交互轨迹** —— 只活在内存，不落盘、不进备份。
+    ///
+    /// 2026-11-01（用户要求本机调试）：`recentFrames` 只有帧、没有时间戳，无法与分级日志对齐。
+    /// 这里按行记录「时间 + 级别 + 原文」，供「交互流水」页在**用户显式打开开关**时复制。
+    /// 安全边界不变：它**只在内存**（进程退出即失），任何持久化路径（`DiagLogs` / `logs` / 导出）
+    /// 仍然只拿得到 `FrameRedact.apply(...)` 之后的脱敏文本。
+    private(set) var rawTrace: [String] = []
+
     func log(_ level: String, _ msg: String) {
         // 同一份时间戳口径收进 DiagTime (hhmmss 此前零调用, 而这里手写了一份重复实现)
         let t = DiagTime.hhmmss()
@@ -63,6 +71,10 @@ final class LockService: ObservableObject {
             recentFrames.append(msg)
             if recentFrames.count > 60 { recentFrames.removeFirst(recentFrames.count - 60) }
         }
+        // **内存**原始轨迹：只有用户在「交互流水」页显式打开「包含原始载荷」时才会被复制出去。
+        // 不进 `DiagLogs`、不进 `logs`、不进导出 —— 落盘与导出的永远只有下面那行 `shown`。
+        rawTrace.append("\(t) [\(level)] \(msg)")
+        if rawTrace.count > 300 { rawTrace.removeFirst(rawTrace.count - 300) }
         // 2026-10-27 审核恢复 (AUDIT-A F-03)：帧脱敏回来了。含 hex= 的日志只留 8 字节帧头，
         // 载荷（skey / 密码 / PIN / ekey）整段遮掉。完整帧只留在内存 recentFrames（不落盘、不可复制）。
         let shown = rawFrame ? FrameRedact.apply(msg) : msg
