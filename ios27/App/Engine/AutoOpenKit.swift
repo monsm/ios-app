@@ -458,6 +458,12 @@ final class AutoOpenController {
         let phone = ZKProtocol.nowProtoSeconds()
         if AutoOpenKit.dualTimeSync(phoneProto: phone, lockProto: lockSec, ntpConfirmed: false) {
             _ = try? await LockService.shared.syncTime()
+            // 2026-11-01 修复：自动校时后**必须重读快照** —— 否则 `app.lastStatus.status.lockTime`
+            // 仍是校时前的值（门页「锁钟」读数就是它）。这与 `AppModel.syncTime` 是同一个缺陷的另一处；
+            // 引擎层不能调 AppModel，所以直接写快照（`refreshStatus` 做的也是这一句）。
+            if let st = try? await LockService.shared.getStatus(mac: mac) {
+                DB.writeStatus(mac, st)
+            }
             AutoOpen.audit(mac, "rc=3 → 已自动校时（0E 双确认）")
         } else {
             AutoOpen.audit(mac, "rc=3 → 偏差超出双确认窗，只提示不写")
