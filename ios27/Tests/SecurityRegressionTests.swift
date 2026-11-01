@@ -287,6 +287,40 @@ final class SecurityRegressionTests: XCTestCase {
         XCTAssertFalse(CredentialOrg.isOwnNotification(""))
     }
 
+    // MARK: - 回收站/版本历史的写路径（空壳下不许覆盖）
+
+    /// 写路径必须读**原始存储**。旧实现在 addPwds 里用 `all(mac)`，
+    /// 而 `all()` 在空壳模式返回 `[]` ⇒ 空壳里一次删除级联会把整个回收站覆盖成只剩新条目。
+    /// 这条用例直接在空壳下写一次，确认既有条目仍在。
+    func testBinWriteDoesNotWipeHistoryInDecoyMode() {
+        let mac = "aabbccddeeff"
+        CredBinStore.clear(mac)
+        let p1 = LedgerPwd(alias: 1, from: "2026-01-01 00:00:00", to: "2118-01-01 00:00:00",
+                           temp: false, at: 0, pwd: nil, owner: nil, note: "旧条目")
+        CredBinStore.addPwds(mac, [p1], batchId: "b1", source: "测试")
+        XCTAssertEqual(CredBinStore.all(mac).count, 1)
+
+        // 进空壳后再写一条（模拟空壳中的删除级联）
+        DB.setDecoy(true)
+        let p2 = LedgerPwd(alias: 2, from: "2026-01-01 00:00:00", to: "2118-01-01 00:00:00",
+                           temp: false, at: 0, pwd: nil, owner: nil, note: "空壳里删的")
+        CredBinStore.addPwds(mac, [p2], batchId: "b2", source: "测试")
+        DB.setDecoy(false)
+
+        let items = CredBinStore.all(mac)
+        XCTAssertEqual(items.count, 2, "空壳里的写入把既有回收站条目覆盖掉了（写路径误用了展示层过滤）")
+        XCTAssertTrue(items.contains { $0.pwd?.note == "旧条目" }, "旧条目必须还在")
+        CredBinStore.clear(mac)
+    }
+
+    /// 回收站必须有上限（与版本历史的 10 份同一族：都是"最近删除"）。
+    /// 旧实现无上限 ⇒ plist 数组与 Keychain 口令副本一起无限堆积。
+    func testBinHasRetentionCap() {
+        XCTAssertGreaterThan(CredBinStore.maxItems, 0)
+        XCTAssertLessThanOrEqual(CredBinStore.maxItems, 500,
+                                 "回收站上限过大就等于没有上限（口令副本会一起堆积）")
+    }
+
     // MARK: - 备份：类型/规模闸（SEC-30）
 
     func testBackupImportRejectsForeignAndOversizedPayloads() throws {

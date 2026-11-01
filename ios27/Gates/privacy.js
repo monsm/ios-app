@@ -243,6 +243,32 @@ console.log('privacy: 扫 ' + files.length + ' 个 Swift 文件 + PrivacyInfo.xc
   }
 }
 
+
+// 14) 写路径不许走空壳过滤后的读（2026-11-01）。
+// CredBinStore / CredHistoryStore 的 all() 在空壳模式返回 []，那是**展示层**语义。
+// 写路径若用它，空壳里一次删除/快照就会把整段历史覆盖成只剩新条目（静默数据丢失）。
+{
+  const target = 'Features/Keys/CredentialStudioStores.swift';
+  const f = files.find(function (x) { return x.rel === target; });
+  if (f) {
+    const writers = ['addPwds', 'addFps', 'restore', 'purge', 'clear', 'capture'];
+    for (let i = 0; i < f.lines.length; i++) {
+      const line = f.lines[i];
+      const w = writers.find(function (n) { return line.indexOf('func ' + n + '(') >= 0; });
+      if (!w) continue;
+      // 该函数体内（到下一个 func 或文件末，最多 40 行）不许出现 `all(mac)`
+      let body = '';
+      for (let j = i; j < Math.min(f.lines.length, i + 40); j++) {
+        if (j > i && /^\s{4}(private )?(static )?func /.test(f.lines[j])) break;
+        body += f.lines[j] + '\n';
+      }
+      if (/\ball\(mac\)/.test(body)) {
+        note(f.rel, i + 1, w + ' 用 all(mac) 读存储：空壳下会返回空并把历史覆盖掉', '改用 stored(mac) 读原始存储');
+      }
+    }
+  }
+}
+
 if (fails.length === 0) {
   console.log('privacy: OK — 剪贴板/备份加密/空壳隔离(读+写)/明文口令不进 plist/帧脱敏/WebDAV/文件保护/CSV 注入/隐私清单 XML 10 类回归判据全部通过');
   process.exit(0);

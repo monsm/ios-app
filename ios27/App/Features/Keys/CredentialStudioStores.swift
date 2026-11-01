@@ -19,16 +19,39 @@ struct CredBinItem: Codable, Identifiable {
 enum CredBinStore {
     static func key(_ mac: String) -> String { "kf_cbin_ui_" + mac }
 
+    /// **读原始存储**（不判空壳、不排序）：只给写路径用。
+    /// 写路径绝不能走 `all()` —— 那个在空壳模式会返回 `[]`，
+    /// 于是"空壳里做一次删除级联"会把整个回收站**覆盖成只剩新条目**（静默数据丢失）。
+    /// 空壳过滤是**展示层**语义，不是存储层语义。
+    private static func stored(_ mac: String) -> [CredBinItem] {
+        DB.store.get([CredBinItem].self, key(mac)) ?? []
+    }
+
+    /// 回收站上限（与版本历史的 10 份同一族：都是"最近删除"，不该无限增长）。
+    /// 历史上这里**没有**上限，于是 plist 数组与 Keychain 里的口令副本一起无限堆积。
+    static let maxItems = 100
+
     static func all(_ mac: String) -> [CredBinItem] {
         // SEC-03 残余：空壳不列回收站（条目里带明文 pwd/fp）。
         if DB.isDecoy { return [] }
-        let raw = DB.store.get([CredBinItem].self, key(mac)) ?? []
+        let raw = stored(mac)
         // SEC-01：回收站条目里同样存过 LedgerPwd —— 明文口令要回填（写侧已搬进 Keychain）。
         return raw.map { item in
             var copy = item
             if var p = copy.pwd, p.pwd == nil { p.pwd = DB.binSecret(mac, item.id); copy.pwd = p }
             return copy
         }.sorted { $0.at > $1.at }
+    }
+
+    /// 写入时统一收口：裁到上限，并把被裁掉条目的 Keychain 副本一并清掉。
+    private static func commit(_ mac: String, _ items: [CredBinItem]) {
+        var list = items
+        if list.count > maxItems {
+            let dropped = list.suffix(from: maxItems)
+            for item in dropped { SecretStore.remove(DB.binSecretAccount(mac, item.id)) }
+            list = Array(list.prefix(maxItems))
+        }
+        DB.store.setCodable(key(mac), safeForPlist(mac, list))
     }
 
     /// 写回收站：明文口令进 Keychain，plist 副本不带 pwd。与台账同一套纪律。
@@ -45,47 +68,48 @@ enum CredBinStore {
     }
 
     static func addPwds(_ mac: String, _ list: [LedgerPwd], batchId: String, source: String) {
-        var items = all(mac)
+        var items = stored(mac)
         let now = Date().timeIntervalSince1970 * 1000
         for p in list {
             items.append(CredBinItem(id: "p:\(p.alias):\(Int(now))", batchId: batchId, at: now,
                                      source: source, pwd: p, fp: nil))
         }
-        DB.store.setCodable(key(mac), safeForPlist(mac, items))
+        commit(mac, items)
     }
 
     static func addFps(_ mac: String, _ list: [LedgerFp], batchId: String, source: String) {
-        var items = all(mac)
+        var items = stored(mac)
         let now = Date().timeIntervalSince1970 * 1000
         for f in list {
             items.append(CredBinItem(id: "f:\(f.batch):\(Int(now))", batchId: batchId, at: now,
                                      source: source, pwd: nil, fp: f))
         }
-        DB.store.setCodable(key(mac), safeForPlist(mac, items))
+        commit(mac, items)
     }
 
     static func restore(_ mac: String, _ item: CredBinItem) -> Bool {
-        var items = all(mac)
+        var items = stored(mac)
         guard let index = items.firstIndex(where: { $0.id == item.id }) else { return false }
         if let p = item.pwd { DB.addPwd(mac, p) }
         if let f = item.fp { DB.addFp(mac, f) }
         items.remove(at: index)
         // 还原/彻底删除：条目离开回收站，它的 Keychain 口令副本也一并清掉。
         SecretStore.remove(DB.binSecretAccount(mac, item.id))
-        DB.store.setCodable(key(mac), safeForPlist(mac, items))
+        commit(mac, items)
         return true
     }
 
     static func purge(_ mac: String, _ item: CredBinItem) {
-        var items = all(mac)
+        var items = stored(mac)
         items.removeAll { $0.id == item.id }
         SecretStore.remove(DB.binSecretAccount(mac, item.id))
-        DB.store.setCodable(key(mac), safeForPlist(mac, items))
+        commit(mac, items)
     }
 
     static func clear(_ mac: String) {
         // 清空回收站 = 连 Keychain 里的口令副本一起清（否则残留可读的开门口令）。
-        for item in all(mac) { SecretStore.remove(DB.binSecretAccount(mac, item.id)) }
+        // 用 stored()：空壳里 all() 返回空，那样会把密钥留下而条目被删（孤儿密钥）。
+        for item in stored(mac) { SecretStore.remove(DB.binSecretAccount(mac, item.id)) }
         DB.store.remove(key(mac))
     }
 }
@@ -103,6 +127,12 @@ struct CredSnapshot: Codable, Identifiable {
 enum CredHistoryStore {
     static func key(_ mac: String) -> String { "kf_chist_ui_" + mac }
 
+    /// 同 CredBinStore.stored：写路径必须读**原始存储**，不能走空壳过滤后的 `all()`，
+    /// 否则空壳里做一次 capture 会把整段版本历史覆盖成只剩这一份。
+    private static func stored(_ mac: String) -> [CredSnapshot] {
+        DB.store.get([CredSnapshot].self, key(mac)) ?? []
+    }
+
     static func all(_ mac: String) -> [CredSnapshot] {
         // SEC-03 残余：空壳不列版本历史（快照里带整份台账副本）。
         if DB.isDecoy { return [] }
@@ -118,7 +148,7 @@ enum CredHistoryStore {
     }
 
     static func capture(_ mac: String, note: String) {
-        var list = all(mac)
+        var list = stored(mac)
         let l = DB.ledger(mac)
         var snap = CredSnapshot(id: UUID().uuidString, at: Date().timeIntervalSince1970 * 1000,
                                 note: note, pwds: l.pwds, fps: l.fps)
