@@ -217,6 +217,11 @@ enum DB {
     /// 逐条 `Member.fromDict` 重建一遍，再 linear search。全仓 55 个调用点，其中记录页是逐行调。
     /// 现在直接按 id 取那一条。
     static func member(_ id: String?) -> Member? {
+        // SEC-03 一致性：`members()` 判空壳，这个单条读取器原本**不判** ——
+        // 于是空壳里凡是用 `member(id)` 取名字的界面都会把真实成员名显示出来。
+        // 写路径不走这里（`addMember`/`renameMember`/`setMemberInfo`/`removeMember`
+        // 都直接用 `getDict("kf_members")` 读原始字典），所以加过滤不影响写入。
+        if isDecoy { return nil }
         guard let id, !id.isEmpty else { return nil }
         let map = store.getDict("kf_members")
         guard let d = map[id] as? [String: Any] else { return nil }
@@ -296,15 +301,21 @@ enum DB {
         let map = store.getDict("kf_keychain_dongles")
         return map.values.compactMap { $0 as? [String: Any] }.compactMap(Dongle.fromDict)
     }
-    static func dongle(_ mac: String) -> Dongle? {
+    /// 读原始存储（不判空壳）：只给写路径合并旧值用。
+    private static func rawDongle(_ mac: String) -> Dongle? {
         let m = mac.replacingOccurrences(of: ":", with: "").lowercased()
         if let d = store.getDict("kf_keychain_dongles")[m] as? [String: Any] { return Dongle.fromDict(d) }
         return nil
     }
+    static func dongle(_ mac: String) -> Dongle? {
+        // SEC-03 一致性：`dongles()` 判空壳，单条读取器原本不判。
+        if isDecoy { return nil }
+        return rawDongle(mac)
+    }
     static func saveDongle(_ d: Dongle) {
         var map = store.getDict("kf_keychain_dongles")
         var merged = d
-        if let old = dongle(d.mac) {
+        if let old = rawDongle(d.mac) {
             merged = Dongle(mac: d.mac,
                             name: d.name.isEmpty ? old.name : d.name,
                             bleId: d.bleId.isEmpty ? old.bleId : d.bleId,
@@ -329,15 +340,20 @@ enum DB {
         let map = store.getDict("kf_gateways")
         return map.values.compactMap { $0 as? [String: Any] }.compactMap(Gateway.fromDict)
     }
-    static func gateway(_ mac: String) -> Gateway? {
+    /// 读原始存储（不判空壳）：只给写路径合并旧值用。
+    private static func rawGateway(_ mac: String) -> Gateway? {
         let m = mac.replacingOccurrences(of: ":", with: "").lowercased()
         if let d = store.getDict("kf_gateways")[m] as? [String: Any] { return Gateway.fromDict(d) }
         return nil
     }
+    static func gateway(_ mac: String) -> Gateway? {
+        if isDecoy { return nil }
+        return rawGateway(mac)
+    }
     static func saveGateway(_ g: Gateway) {
         var map = store.getDict("kf_gateways")
         var merged = g
-        if let old = gateway(g.mac) {
+        if let old = rawGateway(g.mac) {
             merged = Gateway(mac: g.mac,
                              name: g.name.isEmpty ? old.name : g.name,
                              pid: g.pid != 0 ? g.pid : old.pid,

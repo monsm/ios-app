@@ -338,6 +338,27 @@ console.log('privacy: 扫 ' + files.length + ' 个 Swift 文件 + PrivacyInfo.xc
   }
 }
 
+
+// 18) 单条读取器也必须与列表读取器同口径判空壳（2026-11-01）。
+// members()/dongles()/gateways() 都判了，而 member(id)/dongle(mac)/gateway(mac) 原本没判 ——
+// 空壳里凡是用单条读取器取名字的界面都会显示真实数据。
+{
+  const target = 'Engine/Store.swift';
+  const f = files.find(function (x) { return x.rel === target; });
+  if (f) {
+    const singles = ['member', 'dongle', 'gateway'];
+    for (let i = 0; i < f.lines.length; i++) {
+      const n = singles.find(function (s) { return f.lines[i].indexOf('static func ' + s + '(') >= 0 && f.lines[i].indexOf('private') < 0; });
+      if (!n) continue;
+      let body = '';
+      for (let j = i; j < Math.min(f.lines.length, i + 8); j++) body += f.lines[j] + '\n';
+      if (body.indexOf('isDecoy') < 0) {
+        note(f.rel, i + 1, n + '() 没有空壳过滤（列表读取器有，单条没有 → 不一致泄露）', '加 if isDecoy { return nil }，写路径改用 raw 版本');
+      }
+    }
+  }
+}
+
 if (fails.length === 0) {
   console.log('privacy: OK — 剪贴板/备份加密/空壳隔离(读+写)/明文口令不进 plist/帧脱敏/WebDAV/文件保护/CSV 注入/隐私清单 XML 10 类回归判据全部通过');
   process.exit(0);
