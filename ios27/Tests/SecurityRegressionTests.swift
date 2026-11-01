@@ -534,6 +534,29 @@ final class SecurityRegressionTests: XCTestCase {
         XCTAssertNil(SecretStore.get(MobileKeyService.ekeyAccount(mac, "k9")), "purge 后 ekey 副本必须清掉")
     }
 
+    /// 删成员时，他名下签出去的手机钥匙必须一起清掉（否则显示成"归属不存在的孤儿"）。
+    ///
+    /// 用**空 pin/ekey** 是为了不依赖钥匙串权限：`save` 只在 pin/ekey 非空时才碰 Keychain，
+    /// 所以这条用例在未签名测试宿主上也能真跑 —— 与上一条形成互补（那条测副本，这条测条目）。
+    func testRemoveMemberDropsTheirMobileKeys() {
+        let mac = "aabbccddee11"
+        guard let m = DB.addMember("测试成员-\(mac)") else {
+            XCTFail("建档失败（同名成员已存在？）")
+            return
+        }
+        MobileKeyService.save(mac, [
+            MobileKey(id: "mk-owned", memberID: m.id, memberName: m.name),
+            MobileKey(id: "mk-other", memberID: "someone-else", memberName: "别人"),
+        ])
+        XCTAssertEqual(MobileKeyService.rawList(mac).count, 2, "前置：两把钥匙都写进去了")
+
+        DB.removeMember(m.id)
+
+        XCTAssertEqual(MobileKeyService.rawList(mac).map(\.id), ["mk-other"],
+                       "只应删掉属于被删成员的那把，别人的必须留着")
+        MobileKeyService.save(mac, [])   // 清理，避免污染其它用例
+    }
+
     // MARK: - 备份：类型/规模闸（SEC-30）
 
     func testBackupImportRejectsForeignAndOversizedPayloads() throws {

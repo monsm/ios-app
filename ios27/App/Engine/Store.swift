@@ -298,15 +298,18 @@ enum DB {
         // `pin`/`ekey` 的钥匙串副本也在），显示成一个归属不存在的孤儿。
         // 注意：这里只清**本机记录**，锁端那张钥匙是否真的吊销要走 `MobileKeyService.revoke`
         // （需要 BLE），而删成员是本地操作 —— 与"解除归属但保留凭证"的既有取舍一致。
-        for kc in keychains() {
-            let raw = store.get([MobileKey].self, "kf_mkey_" + kc.mac) ?? []
+        // 遍历**存储键**而不是 `keychains()`：`kf_mkey_<mac>` 可能存在而对应钥匙串已被删
+        // （那种情况下遍历 keychains 会漏掉）。与 `removeDevice` 里"按前缀整族清"同一思路。
+        for key in store.keys() where key.hasPrefix("kf_mkey_") {
+            let mac = String(key.dropFirst("kf_mkey_".count))
+            let raw = store.get([MobileKey].self, key) ?? []
             let keep = raw.filter { $0.memberID != id }
             if keep.count != raw.count {
                 for k in raw where k.memberID == id {
-                    SecretStore.remove("mkey." + kc.mac + ".pin." + k.id)
-                    SecretStore.remove("mkey." + kc.mac + ".ekey." + k.id)
+                    SecretStore.remove("mkey." + mac + ".pin." + k.id)
+                    SecretStore.remove("mkey." + mac + ".ekey." + k.id)
                 }
-                store.setCodable("kf_mkey_" + kc.mac, keep)
+                store.setCodable(key, keep)
             }
         }
     }
