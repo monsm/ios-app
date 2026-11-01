@@ -293,6 +293,22 @@ enum DB {
         // 2026-10-14: 该表是 weekKey → memberId (MemberHub), 上一版误按 key 过滤 → 恒不命中, 值班记录成孤儿。
         duty = duty.filter { $0.value != id }
         if duty.count != dbefore { store.setCodable("kf_duty_week", duty) }
+        // 2026-11-01 补：**手机钥匙**（`kf_mkey_<mac>`）里 `memberID` 指向该成员的条目也要清。
+        // 漏了它的后果与上面几族同源：删了成员，他名下签出去的手机钥匙仍在列表里（且
+        // `pin`/`ekey` 的钥匙串副本也在），显示成一个归属不存在的孤儿。
+        // 注意：这里只清**本机记录**，锁端那张钥匙是否真的吊销要走 `MobileKeyService.revoke`
+        // （需要 BLE），而删成员是本地操作 —— 与"解除归属但保留凭证"的既有取舍一致。
+        for kc in keychains() {
+            let raw = store.get([MobileKey].self, "kf_mkey_" + kc.mac) ?? []
+            let keep = raw.filter { $0.memberID != id }
+            if keep.count != raw.count {
+                for k in raw where k.memberID == id {
+                    SecretStore.remove("mkey." + kc.mac + ".pin." + k.id)
+                    SecretStore.remove("mkey." + kc.mac + ".ekey." + k.id)
+                }
+                store.setCodable("kf_mkey_" + kc.mac, keep)
+            }
+        }
     }
 
     // 钥匙串硬件
