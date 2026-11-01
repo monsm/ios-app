@@ -532,7 +532,11 @@ final class AppModel {
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             let r = try await LockService.shared.syncTime()
-            await reload(refreshStatus: false)
+            // 2026-11-01 修复：原来是 `refreshStatus: false` —— 校时的意义正是"把锁钟改对"，
+            // 而门页的「锁钟」读数取 `app.lastStatus.status.lockTime`（见 `DoorScreen:700`）。
+            // 不重读 cmd03 ⇒ 校时成功后**门页仍显示校时前的锁钟**。
+            // 校时是本段唯一一处"改了锁钟却不重读"的地方（其余写入路径都已刷新）。
+            await reload(refreshStatus: true)
             return .success((r.before, r.after))
         } catch { return .failure(error) }
     }
