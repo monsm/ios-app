@@ -111,6 +111,20 @@ extension LockService {
         // 2026-10-30（同上）：不暴露 ekey/PIN 术语。
         guard !cred.isEmpty else { throw BLEErrorX.msg("没能生成开锁凭证 — 请重新配对这把锁，或改用「凭证」页里的密码开锁") }
 
+        // 2026-11-01（第 203 轮三方对比驱动）：锁端有「连续错 PIN → 键盘冻结」机制
+        // （cmd03 KLV#06 freeze / #07 errCount），此前**解析了但零消费** ——
+        // 上一个版本在 rc=2 时把 64 枚 PIN 逐个试了一遍，每一条失败都在加深锁端计数，
+        // 而本机完全不知道。现在开锁前先读一次状态：
+        //   · freeze > 0 ⇒ 不发命令，直接告诉用户"锁键盘已被冻结，请等 X 秒"（发了也必败）
+        //   · errCount 高 ⇒ 提示"锁端已记 N 次试错"，并把逐枚试错的额度收窄到 3 枚
+        var maxPinRetries = kc.pins.count
+        if let st = try? await getStatus(), st.keyboardFreeze > 0 {
+            throw BLEErrorX.msg("锁端键盘已冻结（试错过多），约 \(st.keyboardFreeze) 秒后再试")
+        } else if let st = try? await getStatus(), st.keyboardErrCount > 0 {
+            // 锁端已记过试错：把逐枚试错的额度收窄，别把整池刷完（那只会加深冻结）。
+            maxPinRetries = min(maxPinRetries, 3)
+        }
+
         var r = try await exec(ZKCmdBuilder.cmd04Open(cred, klv01Hex: "0000"), retries: 2)
         // 2026-11-01：把 rc **明文**写进交互流水（`DiagLogs` → 设置页「交互流水」可复制）。
         // 为什么：TX/RX 帧里的载荷会被 `FrameRedact` 脱敏，而 **rc 在载荷里** ——
@@ -134,7 +148,7 @@ extension LockService {
             // 现在把本机 PIN 池**逐个**试：密文与已发过的相同就跳过，
             // 一旦出现非凭证类错误（锁忙/布防/时间偏差）立刻停下 —— 那种情况再换 PIN 也没用。
             var tried: Set<String> = [cred]
-            for (idx, pin) in kc.pins.enumerated() where !pin.isEmpty {
+            for (idx, pin) in kc.pins.enumerated() where !pin.isEmpty && idx < maxPinRetries {   // 冻结保护：不把整池刷完
                 let fresh = signed(pin)
                 if fresh.isEmpty || tried.contains(fresh) { continue }
                 tried.insert(fresh)
