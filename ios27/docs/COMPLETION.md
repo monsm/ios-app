@@ -144,7 +144,8 @@ https://github.com/monsm/ios-app/releases/tag/ios27-latest
 
 | 项 | 状态 | 说明 |
 |---|---|---|
-| **真机编译** | ✅ **CI 已通过** | 本机 Windows 无 Xcode；改用 `xcode-27` 镜像。run [41219938500](https://github.com/monsm/ios-app/actions/runs/41219938500)（`a8416aa`）：16 道闸门 + BUILD SUCCEEDED + ARCHIVE SUCCEEDED + errors=0 + 0 warning |
+| **真机编译** | ✅ **CI 已通过** | 本机 Windows 无 Xcode；改用 `xcode-27` 镜像：BUILD SUCCEEDED + ARCHIVE SUCCEEDED + errors=0，金标 `test_ok=1`。 |
+|  |  | **刻意不钉 run 号** —— 钉死某个 run 会被后续提交甩开，把旧绿当成当前绿（见 AUDIT-G 的 G-05）。查当前：`git fetch origin && git show origin/ci-log:meta.txt` |
 | **真机手感** | ⚠️ **未验证** | 刻度盘按压跟手度、进度弧节奏、触觉反馈 |
 | **真实玻璃折射** | ⚠️ **未验证** | DesignLab 用 `backdrop-filter` 近似 |
 | **动态字体极端值** | ⚠️ **未验证** | 静态只保证字号走令牌；最大字号截断需真机 |

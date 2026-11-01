@@ -57,6 +57,35 @@ for (const f of FILES) {
   });
 }
 
+
+// ④ README / 工作流里声称的闸门数，必须等于 allgates.js 真实的 GATES 数量。
+// 这条是被真实事故逼出来的：README 曾写「9 道」「16 道」而实际已经 20 道；
+// 另有一处把钉死的 run 号当成当前状态（见 AUDIT-G 的 G-05）。
+{
+  const ag = fs.readFileSync(path.join(__dirname, 'allgates.js'), 'utf8');
+  const gm = ag.match(/const GATES = \[([^\]]*)\]/);
+  if (gm) {
+    const real = gm[1].split(",").filter(function (x) { return x.trim(); }).length;
+    const CN = { "九": 9, "十一": 11, "十二": 12, "十三": 13, "十四": 14, "十五": 15, "十六": 16, "十七": 17, "十八": 18, "十九": 19, "二十": 20 };
+    const targets = [
+      [path.join(ROOT, 'README.md'), /## ([一-鿿0-9]+)\s*道机器闸门/],
+      [path.join(ROOT, '..', '.github', 'workflows', 'ios27.yml'), /静态闸门（([一-鿿0-9]+)\s*道）/],
+    ];
+    for (const t of targets) {
+      const file = t[0];
+      if (!fs.existsSync(file)) continue;
+      const txt = fs.readFileSync(file, 'utf8');
+      const hit = txt.match(t[1]);
+      if (!hit) { findings.push(path.relative(ROOT, file) + ' 找不到闸门数声明'); continue; }
+      const raw = hit[1];
+      const claimed = /^[0-9]+$/.test(raw) ? parseInt(raw, 10) : (CN[raw] || -1);
+      if (claimed !== real) {
+        findings.push(path.relative(ROOT, file) + ' 声称 ' + raw + ' 道，实际 ' + real + ' 道（与 allgates.js 的 GATES 不一致）');
+      }
+    }
+  }
+}
+
 if (checked === 0) {
   console.log('workflow: SKIP — 没找到 .github/workflows/ios27.yml');
   process.exit(0);

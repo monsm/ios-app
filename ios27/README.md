@@ -60,7 +60,7 @@
 ```bash
 cd ios27
 
-# 1. 跑 9 道静态闸门（本地，不需要 Mac）
+# 1. 跑全部静态闸门（本地，不需要 Mac；当前 20 道）
 npm install
 node Gates/allgates.js
 
@@ -88,7 +88,7 @@ xcodebuild build -project LockKeeper.xcodeproj -scheme LockKeeper \
 
 ---
 
-## 十六道机器闸门
+## 二十道机器闸门
 
 每道都有**正控**（故意注入缺陷确认它会红），不是"写了就算数"。
 
@@ -98,28 +98,45 @@ xcodebuild build -project LockKeeper.xcodeproj -scheme LockKeeper \
 | `types` | 顶层类型重复声明 / Engine 未解析类型引用 | ✅ |
 | `swiftcheck` | 括号 / 字符串 / 块注释平衡 | ✅ |
 | `tokens` | 硬编码颜色/间距/圆角/字号 | ✅ |
-| `contrast` | 48 条 WCAG 断言（明暗各一套，从 Tokens.swift 实解析） | ✅ |
+| `contrast` | WCAG 断言，**明暗各一套**，令牌数量从 `Tokens.swift` / `V7Tokens.swift` 现场解析（数量随色板变动，故不钉死；实跑那行会打印解析到多少条） | ✅ |
 | `glass` | 内容层不许玻璃；同屏玻璃 ≤2 | ✅ |
 | `motion` | `.animation` 必带 `value:`；无裸时长；无裸 `repeatForever` | ✅ |
 | `a11y` | 图标按钮必有 label；可点区 ≥44pt | ✅ |
 | `callsig2` | 调用标签/参数个数/构造签名/@MainActor 隔离/let 赋值/tuple 成员/静态成员（callsig 已退役：旧版恒 0 处检查，是 no-op） | ✅ |
 | `lineage` | **与上一版切割**：18 个旧设计系统符号零残留 | ✅ |
+| `dynamictype` | 字号必须走令牌（`V.F.*`），不许写死数值字号 | ✅ |
+| `reducedmotion` | 动效必须带减少动态守卫 | ✅ |
+| `crosprivate` | Screen + Parts 跨文件 private 可达性 | ✅ |
 | `destmap` | Dest 台账 ↔ View 实现一一对应 | ✅ |
-| `privacy` | **隐私/安全回归（判红）**：剪贴板直写 / 备份明文 / 空壳模式读与写 / 帧脱敏只处理首个 hex= / WebDAV http / 密钥文件无文件保护 / CSV 公式注入 / 隐私清单 XML 合法性 | ✅ |
+| `privacy` | **隐私/安全回归（判红）**：剪贴板直写 / 备份明文 / 空壳模式读与写 / 帧脱敏只处理首个 hex= / WebDAV http / 密钥文件无文件保护 / CSV 公式注入 / 隐私清单 XML / 备份校验和禁止硬拒绝 / 通知排程必须可 await | ✅ |
+| `tests` | 测试目标存在 + 金标夹具真进了 bundle + 覆盖协议层与安全回归面 | ✅ |
+| `feedback` | 用户动作里的 `try? await` 必须有错误通道（HIG feedback：命令失败要说原因） | ✅ |
+| `modal` | 对话框不许直接抢 sheet（HIG sheets：一次只呈现一个模态） | ✅ |
+| `settings` | 给了开关就必须有效果（**warn-only**：只追一层直接消费） | ✅ |
 
 ```
 $ node Gates/allgates.js
 swiftparse: OK — 148 个 Swift 文件无语法错误（已知语法盲区豁免 14 处）
-types:      OK — 368 个顶层类型无重复声明，Engine 无未解析引用
-swiftcheck: OK — 148 个文件括号/字符串/注释全部平衡，无裸控制字符
-tokens:     OK — 148 个 Swift 文件，0 处硬编码样式字面量
-contrast:   88 条断言全部达标（V7 色板已改为明暗双取值）
-glass:      OK — 玻璃只在功能层，同屏 ≤2，无叠玻璃
-motion:     OK — 全部动画带 value，无裸时长
-a11y:       OK — 图标按钮都有 label，无 <44pt 可点区
-callsig2:   OK — 2082 处调用实参/构造签名/隔离符合声明
-privacy:    OK — 9 类隐私/安全回归判据（含空壳隔离与隐私清单 XML）
-destmap:    OK — 44 个 Dest ↔ 44 个 View 一一对应
+types: 148 个文件，368 个顶层类型，SDK 白名单 335 项
+swiftcheck: OK — 156 个文件括号/字符串/注释全部平衡，无裸控制字符
+tokens: OK — 148 个 Swift 文件，0 处硬编码样式字面量（含 V7 字号/色板）
+contrast: 解析到 11 个旧色令牌 × 2 模式 + 54 个 V7 色令牌
+glass: 扫 148 个文件，自定义玻璃面 0 处
+motion: 扫 148 个文件，.animation 调用 13 处
+a11y: 扫 148 个文件
+dynamictype: 148 个文件，805 处走令牌字号（其中 V7 805 处经 VFont/@ScaledMetric）
+reducedmotion: 21 处已守卫
+crosprivate: 检查 7 组 Screen+Parts 拆分
+callsig2: 148 个文件，1071 个 func，267 个构造签名，检查 2091 处调用
+lineage: OK — 148 个文件，0 处上一版设计系统残留
+workflow: 检查 1 个文件
+destmap: Dest 44 项，映射 44 项，已声明 View 149 个
+privacy: 扫 148 个 Swift 文件 + PrivacyInfo.xcprivacy
+tests: 8 个测试文件，255 条断言
+feedback: OK — 用户动作里的 try? await 都有错误通道
+settings: OK - 30 settings all have a direct consumer
+
+allgates: 全部 20 道闸门通过
 ```
 
 ---
@@ -165,7 +182,8 @@ App/Design/Tokens.swift ──解析──▶ CSS 变量（颜色/间距/圆角/
 
 | 项 | 状态 | 说明 |
 |---|---|---|
-| 真机编译 | ✅ **CI 已通过** | [run 41219938500](https://github.com/monsm/ios-app/actions/runs/41219938500)（commit `a8416aa`）· `xcode-27` 镜像 · 16 道闸门 + BUILD SUCCEEDED + ARCHIVE SUCCEEDED + errors=0 |
+| 真机编译 | ✅ **CI 已通过** | `xcode-27` 镜像：BUILD SUCCEEDED + ARCHIVE SUCCEEDED + errors=0，金标测试 `test_ok=1`。
+|  |  | **不在此钉死 run 号**（钉死必然过期，见 AUDIT-G G-05）。当前状态自查：`git fetch origin && git show origin/ci-log:meta.txt` 与 `origin/ci-test:meta.txt`（看 `build_ok` / `archive_ok` / `test_executed` / `test_ok`，**不要只看 errors=0**）。 |
 | 真机手感 | ⚠️ **未验证** | 刻度盘按压跟手度、进度弧节奏、触觉 |
 | 真实玻璃折射 | ⚠️ **未验证** | DesignLab 用 `backdrop-filter` 近似 |
 | 动态字体极端值 | ⚠️ **未验证** | 静态只保证字号走令牌；最大字号下截断需真机 |
