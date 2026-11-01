@@ -14,19 +14,30 @@ struct Shell: View {
     /// 而 `tabItems` 每次 body 重算都会求值 —— 等于**每次界面刷新都读一遍 UserDefaults
     /// 并遍历全部锁的台账**（切 Tab、开 sheet、任何 @Observable 变化都会触发）。
     @State private var keysBadge: Int = 0
+    /// 浮动标签栏的**实测高度**。
+    ///
+    /// 2026-11-01：原来底部留白写死 `V.Tab.contentInset`（92pt）。
+    /// 而 ROUND-158 把栏体从 `frame(height:)` 改成了 `frame(minHeight:)`
+    /// —— 字号放大时栏会变高，**固定 92pt 就不够了**，最后一屏内容会被压在栏下面
+    /// （用户滚到底也看不到）。改成实测：栏多高，留白就多高。
+    /// 用原生 `onGeometryChange` 量，而不是自己按字号估。
+    @State private var tabBarHeight: CGFloat = V.Tab.contentInset
 
     var body: some View {
         @Bindable var router = router
         ZStack(alignment: .bottom) {
             tabContent(router)
                 .safeAreaInset(edge: .bottom, spacing: 0) {
-                    Color.clear.frame(height: V.Tab.contentInset)
+                    Color.clear.frame(height: max(V.Tab.contentInset, tabBarHeight + V.Tab.bottom + V.S.gapS))
                 }
 
             VStack(spacing: 0) {
                 Spacer(minLength: 0)
                 VFloatingTabBar(selection: $router.tab, items: tabItems)
                     .padding(.bottom, V.Tab.bottom)
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { h in
+                        tabBarHeight = h
+                    }
             }
             .ignoresSafeArea(.container, edges: .bottom)
         }

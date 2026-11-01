@@ -81,6 +81,16 @@ for (const f of files) {
       // `V.Hit.min - V.S.gapX` 永远小于 44 —— 除非那一行同时有 minHeight 兜底。
       if (!/minHeight/.test(line)) bad = `V.Hit.min - ${mMinus[1]}`;
     }
+    // 2026-11-01：`V.Action.height` / `V.Tab.height` 是**下限**，不许当固定高度用。
+    // 背景：`V.F.bodyStrong`（17pt）与 `V.F.tab`（11pt）都随 Dynamic Type 缩放，
+    // 固定高度在大字号下会把文字裁掉（ROUND-158 修过 4 处）。
+    // 这条判据很窄（只认这两个令牌名），所以假红率为 0 —— 新增控件请用 minHeight。
+    const mFixedH = /\.frame\(\s*height:\s*V\.(Action|Tab)\.height\s*\)/.exec(line);
+    if (mFixedH) {
+      findings.push({ file: rel, line: i + 1, why: 'V.' + mFixedH[1] + '.height 是下限，请改用 minHeight（固定高度会在大字号下裁字）' });
+      bad++;
+      return;
+    }
     if (bad && !rel.includes('Components/')) {
       findings.push({ file: rel, line: i + 1, why: `可点区 ${bad} < 44pt` });
     }
