@@ -11,8 +11,10 @@ struct DoorScreen: View {
     @Environment(Router.self) private var router
 
     @State private var showQuickEdit = false
-    /// 「再开一次」的目标编号（一次算好，供 `quickLabel` 逐磁贴复用）。
-    @State private var repeatTargetName: String? = nil
+    /// 「再开一次」的目标（一次算好，供 `quickLabel` 与 `runQuick` 共用）。
+    /// 存 `keyID` 而不是 `name`：`keyID` 是"去哪"（跳转要用），`name` 只是它的显示形式，
+    /// 两个成员都从同一个确定性输入算出来，存一份即可。
+    @State private var repeatTargetKey: String? = nil
     @State private var showModuleOrder = false
     @State private var showUnlockGate = false
     @State private var refreshNote: String?
@@ -69,11 +71,11 @@ struct DoorScreen: View {
             link.update(mac: app.currentMac)
             if app.lock != nil { await link.preheat() }
             // 只算一次：「再开一次」的目标编号（`repeatTarget` 要扫日志，不能在 ForEach 里逐磁贴算）。
-            repeatTargetName = QuickPool.repeatTarget(app.lock?.id ?? "")?.name
+            repeatTargetKey = QuickPool.repeatTarget(app.lock?.id ?? "")?.keyID
         }
         .onChange(of: app.lock?.id) { _, _ in
             link.update(mac: app.currentMac)
-            repeatTargetName = QuickPool.repeatTarget(app.lock?.id ?? "")?.name   // 换锁要重算
+            repeatTargetKey = QuickPool.repeatTarget(app.lock?.id ?? "")?.keyID   // 换锁要重算
         }
         .sensoryFeedback(.success, trigger: app.dialPhase == .opened) { _, new in new }
         .sensoryFeedback(.error, trigger: app.dialPhase.isFailed) { _, new in new }
@@ -884,10 +886,10 @@ struct DoorScreen: View {
     /// 不缓存就是"每次渲染重扫一遍日志"（本仓在 `alertTable` 上吃过同样的亏）。
     /// 用 `@State` 存一次，`tick` 变化时由 SwiftUI 重新求值。
     private func quickLabel(_ action: QuickAction) -> String {
-        guard action.id == "again" else { return action.label }
-        let target = repeatTargetName ?? QuickPool.repeatTarget(app.lock?.id ?? "")?.name
-        guard let target else { return action.label }
-        return action.label + "：" + target
+        guard action.id == "again", let key = repeatTargetKey else { return action.label }
+        // keyID 形如 "pwd:3" → 显示成 "#3"（与 `repeatTarget` 的 name 同形）。
+        let n = key.split(separator: ":").last.map(String.init) ?? key
+        return action.label + "：#" + n
     }
 
     private func runQuick(_ action: QuickAction) {
@@ -900,8 +902,9 @@ struct DoorScreen: View {
         case "syncTime":
             router.request(.dest(.syncTime))
         case "again":
-            if let t = QuickPool.repeatTarget(app.lock?.id ?? "") {
-                router.request(.key(id: t.keyID))
+            // 复用上面算好的目标，不再重扫日志。
+            if let key = repeatTargetKey {
+                router.request(.key(id: key))
             } else {
                 router.request(.dest(.keys))
             }
