@@ -26,10 +26,25 @@ protocol EngineHost: AnyObject {
 @MainActor
 enum EngineHostRegistry {
     private static weak var current: (any EngineHost)?
+    /// 宿主还没就绪时收到的动作（**冷启动点通知**就会这样：系统先起 App、再回调，
+    /// 而 `RootView.onAppear` 还没跑到）。
+    ///
+    /// 2026-11-01 修复：旧实现里 `QuickActions` 拿到 `host == nil` 就 `return` ——
+    /// 用户点了「密码临期」通知，App 启动了，但**没有跳到那条凭证**，且没有任何提示。
+    /// 现在先存起来，等 `register` 时立刻消费。
+    private static var pending: [@MainActor (any EngineHost) -> Void] = []
 
     static func register(_ host: any EngineHost) {
         current = host
+        let queued = pending
+        pending = []
+        for run in queued { run(host) }
     }
 
     static var host: (any EngineHost)? { current }
+
+    /// 宿主未就绪时把动作排进队列；已就绪则立刻执行。
+    static func whenReady(_ run: @escaping @MainActor (any EngineHost) -> Void) {
+        if let host = current { run(host) } else { pending.append(run) }
+    }
 }

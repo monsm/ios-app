@@ -58,8 +58,13 @@ final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate, @u
         let id = response.notification.request.identifier
         if let action = CredentialOrg.handleNotificationAction(id) {
             Task { @MainActor in
-                guard let host = EngineHostRegistry.host else { return }
-                CredentialOrg.applyNotification(action, host: host)
+                // 2026-11-01 修复：冷启动点通知时宿主还没 onAppear 注册，
+                // 旧写法 `guard let host ... else { return }` 会**静默丢弃**这次点击 ——
+                // 用户看到 App 打开了，但没跳到那条凭证。改走 `whenReady`：
+                // 未就绪就排队，注册时立刻消费。
+                EngineHostRegistry.whenReady { host in
+                    CredentialOrg.applyNotification(action, host: host)
+                }
             }
         }
         completionHandler()
