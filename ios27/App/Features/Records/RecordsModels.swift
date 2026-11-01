@@ -361,8 +361,10 @@ struct RecordExportRow {
     var member: String { entry.owner ?? "" }
     var isAlarm: Bool { entry.tone == .attention || entry.tone == .critical }
     var dayKey: String { TimeFormat.dayKey(entry.at) }
-    /// TODO(engine) 协议帧 hex：缓存层存了才原样带出，否则留空。
-    var hex: String { "" }
+    // 2026-11-01（Round 233）：这里原本有一个 `var hex: String { "" }`（恒空）+ 一条 TODO，
+    // 说"缓存层存了才原样带出"。核实：**全仓零读取**（`RecordCSV` 用的是 `RecordExportRow`，不是这个类型），
+    // 而 `CachedLog` 里也确实没有协议帧 hex 字段 —— 一个永远返回空串、又没人读的属性。
+    // 删除（与 `quota` / `organizeTotal` 同处置）。真要做"导出协议帧"是独立功能，不是补一个空 getter。
     var key: String { entry.id }
 }
 
