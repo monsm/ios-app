@@ -840,6 +840,17 @@ struct VListRow: View {
     var tint: Color = V.C.rewardBlue
     var value: String? = nil
     let action: () -> Void
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    /// 右侧读数。无障碍字号下改到标题下方（见 `body` 里的说明）。
+    @ViewBuilder private var valueText: some View {
+        if let value {
+            Text(value)
+                .font(V.F.rowDetail)
+                .foregroundStyle(V.C.text3)
+                .monospacedDigit()
+        }
+    }
 
     var body: some View {
         Button(action: action) {
@@ -868,14 +879,14 @@ struct VListRow: View {
                             // 允许换到第二行：不改变短说明的观感，只让长说明能读完。
                             .lineLimit(2)
                     }
+                    // 2026-11-01：**无障碍字号下读数换到标题下方**。
+                    // 横排时"图标 + 标题 + 说明 + 读数 + chevron"五个元素挤一行，
+                    // AX 档下每段都放大 2–3 倍，读数会被挤到换行或截断。
+                    // 这也与系统一致：`Form` 里的 `LabeledContent` 在大字号下正是把值换到下一行。
+                    if typeSize.isAccessibilitySize { valueText }
                 }
                 Spacer(minLength: V.S.gapS)
-                if let value {
-                    Text(value)
-                        .font(V.F.rowDetail)
-                        .foregroundStyle(V.C.text3)
-                        .monospacedDigit()
-                }
+                if !typeSize.isAccessibilitySize { valueText }
                 Image(systemName: "chevron.right")
                     .font(V.F.chevron)
                     .foregroundStyle(V.C.text4)
