@@ -373,14 +373,16 @@ enum RecordCSV {
     /// 单元格转义是**纯函数**，不碰 UI 状态 —— 标 nonisolated 让 Engine 层
     /// （StatsKit 的周报）也能复用同一份口径，不必再抄一遍。
     nonisolated static func field(_ value: String) -> String {
-        // SEC-12：CSV 公式注入。成员名/备注可来自导入的备份，被构造为 "=HYPERLINK(...)" 或
-        // "+cmd|..." 时，用户在 Excel/Numbers 打开导出文件就会触发公式/DDE。
-        // 处置：首字符是 = + - @ 或制表符/回车时前置单引号，并把 \r 与 \n 一并按换行转义。
-        var v = value
-        if let first = v.first, ["=", "+", "-", "@", "\t", "\r"].contains(String(first)) {
+        // SEC-12：防公式注入（= + - @ 制表符开头时前置单引号）。
+        // 2026-11-01 修正顺序错：原来先判首字符加引号、后把 \r 换空格，\r 开头会得到
+        // `' =x`（防护引号留在中间）。先规整 \r 再判；\n 不动（下方 guard 处理）。
+        var v = value.replacingOccurrences(of: "\r", with: " ")
+        // 判首字符时**跳开前导空格**：`" =1+1"` 在 Excel/Numbers 里可能先 trim 再当公式解析，
+        // 只看 `v.first` 会漏。\t 仍算危险字符（不跳过）。
+        let probe = v.drop { $0 == " " }
+        if let first = probe.first, ["=", "+", "-", "@", "\t"].contains(String(first)) {
             v = "'" + v
         }
-        v = v.replacingOccurrences(of: "\r", with: " ")
         guard v.contains(",") || v.contains("\"") || v.contains("\n") else { return v }
         return "\"" + v.replacingOccurrences(of: "\"", with: "\"\"") + "\""
     }

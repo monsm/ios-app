@@ -459,6 +459,24 @@ final class SecurityRegressionTests: XCTestCase {
         DB.saveLedger(mac, Ledger())
     }
 
+    // MARK: - CSV 转义顺序（SEC-12）
+
+    /// 先规整 `\r`、再判首字符。旧实现顺序相反：`\r=x` 会变成 `' =x` ——
+    /// 防护单引号被留在中间（不再是合法防护形态），内容还被多改一个字符。
+    func testCSVEscapingNormalisesCarriageReturnFirst() {
+        // `\r` 先规整成空格；跳开前导空格后看到 `=` ⇒ 仍要加防护引号（Excel 可能先 trim 再解析）。
+        XCTAssertEqual(RecordCSV.field("\r=1+1"), "' =1+1")
+        XCTAssertEqual(RecordCSV.field(" =1+1"), "' =1+1", "前导空格不能绕过公式防护")
+        XCTAssertEqual(RecordCSV.field("  +cmd"), "'  +cmd")
+        // 真正的公式前缀仍要防住
+        XCTAssertEqual(RecordCSV.field("=1+1"), "'=1+1")
+        XCTAssertEqual(RecordCSV.field("+cmd"), "'+cmd")
+        XCTAssertEqual(RecordCSV.field("-2"), "'-2")
+        XCTAssertEqual(RecordCSV.field("@x"), "'@x")
+        // 换行仍按 CSV 规则用引号包裹（不能被空格吃掉）
+        XCTAssertEqual(RecordCSV.field("a\nb"), "\"a\nb\"")
+    }
+
     // MARK: - 备份：类型/规模闸（SEC-30）
 
     func testBackupImportRejectsForeignAndOversizedPayloads() throws {
