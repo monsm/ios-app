@@ -866,7 +866,10 @@ struct RecordsScreen: View {
         }
         reading = true
         readNote = nil
-        await app.readLogs()
+        // 2026-11-01：拿下"锁端还剩多少条更早的记录"（协议 KLV#04 的 surplus）。
+        // 此前这个字段解析出来却没人用，20 页封顶后静默停止 —— 用户看到"已读取 100 条"
+        // 会以为读全了，而锁里可能还有几百条。现在如实说明还剩多少。
+        let remaining = await app.readLogs()
         let now = Int64(Date().timeIntervalSince1970 * 1000)
         if let err = app.lastError {
             reload()
@@ -875,9 +878,10 @@ struct RecordsScreen: View {
         } else if app.lock?.isConnected == true {
             RecordsSource.markSynced(mac: readMac, at: now)
             reload()
+            let more = (remaining ?? 0) > 0 ? "；锁端还有 \(remaining ?? 0) 条更早的记录未读（点「读取」可继续）" : ""
             readNote = untimed > 0
-                ? "已读取 \(entries.count) 条（另 \(untimed) 条锁端未回时刻，无法定位到某一天）"
-                : "已读取 \(entries.count) 条 · \(TimeDisplay.clock(now))"
+                ? "已读取 \(entries.count) 条（另 \(untimed) 条锁端未回时刻，无法定位到某一天）" + more
+                : "已读取 \(entries.count) 条 · \(TimeDisplay.clock(now))" + more
         } else {
             reload()
             readNote = "门锁未连接 · 下面是上次读到的那一份"

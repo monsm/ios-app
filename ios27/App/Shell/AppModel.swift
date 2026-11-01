@@ -358,9 +358,16 @@ final class AppModel {
     // MARK: - 读日志（cmd16 翻页）
 
     /// 读锁内日志：最多 20 页 × 5 条，逐页落缓存。
-    func readLogs() async {
+    ///
+    /// 返回值 = **锁端还剩多少条更早的记录没读**（`nil` = 固件没报，不知道）。
+    ///
+    /// 2026-11-01：`LogPage.surplus` 早就从协议的 KLV#04 解析出来了，**但全仓没有任何消费者** ——
+    /// 于是 20 页封顶（100 条）之后循环静默停止，用户看到「已读取 100 条」会以为读全了，
+    /// 而锁里可能还有几百条更早的记录。这里把 surplus 带出去，让界面如实说明。
+    @discardableResult
+    func readLogs() async -> Int? {
         let mac = currentMac
-        guard !mac.isEmpty, busyMessage == nil else { return }
+        guard !mac.isEmpty, busyMessage == nil else { return nil }
         busyMessage = "正在读门锁记录…"
         defer { busyMessage = nil }
         // 同 `refreshStatus`：开工先清错误槽，否则记录页会把上一次别处留下的旧错误
@@ -370,13 +377,22 @@ final class AppModel {
             try await LockService.shared.ensureConnected(mac: mac)
             var startIdx: UInt32 = 0
             var collected: [LogEntry] = []
+            var lastSurplus: Int?
+            var pagesRead = 0
             for _ in 0 ..< 20 {
                 let page = try await LockService.shared.getLogs(startIdx: startIdx, pageSize: 5)
+                pagesRead += 1
+                // 每页都带 surplus（协议 KLV#04）；以最后一页的为准。
+                if let s = page.surplus { lastSurplus = s }
                 if page.logs.isEmpty { break }
                 collected.append(contentsOf: page.logs)
                 if page.logs.count < 5 { break }
                 if let last = page.logs.last { startIdx = last.idxRaw &+ 1 }
             }
+            // **只在读满 20 页（可能被截断）时才报剩余数。**
+            // 原因：不同固件对 KLV#04 的语义可能是"剩余"也可能是"总数"，
+            // 若提前读完（页数 < 20）还报一个数字，宁可不说也不要误报。
+            let remaining: Int? = pagesRead >= 20 ? lastSurplus : nil
             DB.writeLogs(mac, collected)
             // 2026-11-01 修复：这一行原先写 `"kf_logsync_" + mac`（**未归一化**）且值是 **Int**，
             // 而读取方 `RecordsSource.lastSync` 用的是 `DB.normalizeMac(mac)` + `getString`。
@@ -386,8 +402,10 @@ final class AppModel {
             // 现在写/读/补记三处统一为：**归一化键 + 毫秒字符串**。
             DB.store.set("kf_logsync_" + DB.normalizeMac(mac), String(Int(Date().timeIntervalSince1970 * 1000)))
             await reload(refreshStatus: false)
+            return remaining
         } catch {
             lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            return nil
         }
     }
 
