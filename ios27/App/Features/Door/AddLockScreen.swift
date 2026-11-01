@@ -526,7 +526,14 @@ struct AddLockScreen: View {
 
     @MainActor
     private func rollback(_ reason: String) {
-        // TODO(engine): 真实回滚还要断开链路并清掉半成品台账与 lastDevice 指针。
+        // 2026-11-01（Round 256）：这里原来只重置界面，而横幅文案写的是「已中止：**链路已断开**」——
+        // 实际根本没调 `LockService.disconnect()`。文案断言了一件没做的事，而且链路真的还连着，
+        // 用户再点一次配网会撞上"已有连接"。现在把断开放进来，让那句文案成立。
+        //
+        // **不清未完成的配网记录**（原 TODO 说要清，与既有设计相反）：`DB.clearPendingPair` 的注释写明
+        // 那份记录正是"再点一次配网就能接着配完"的依据（2026-10-17 真机截图里的承诺）。
+        // `lastDevice` 指针同理 —— 它指向的是已配好的锁，不是半成品。
+        LockService.shared.disconnect()
         steps = []
         picked = nil
         banner = reason
