@@ -413,6 +413,26 @@ final class SecurityRegressionTests: XCTestCase {
         DB.saveLedger(mac, Ledger())
     }
 
+    // MARK: - 回收站上限必须保留「最新」
+
+    /// 回收站数组是插入顺序（旧→新）。超限时必须丢**最旧的**。
+    /// 自查发现的回归：上一版丢的是尾部 —— 刚删掉的凭证被立刻丢弃、远古条目反而留着。
+    func testBinCapKeepsNewest() {
+        let mac = "aabbccddeeff"
+        CredBinStore.clear(mac)
+        let n = CredBinStore.maxItems
+        for i in 1...(n + 1) {
+            let p = LedgerPwd(alias: i, from: "", to: "2118-01-01 00:00:00", temp: false,
+                              at: 0, pwd: nil, owner: nil, note: "n\(i)")
+            CredBinStore.addPwds(mac, [p], batchId: "b\(i)", source: "测试")
+        }
+        let items = CredBinStore.all(mac)
+        XCTAssertEqual(items.count, n, "应裁到上限")
+        XCTAssertFalse(items.contains { $0.pwd?.note == "n1" }, "最旧的那条应被裁掉")
+        XCTAssertTrue(items.contains { $0.pwd?.note == "n\(n + 1)" }, "最新写入的那条必须还在")
+        CredBinStore.clear(mac)
+    }
+
     // MARK: - 备份：类型/规模闸（SEC-30）
 
     func testBackupImportRejectsForeignAndOversizedPayloads() throws {

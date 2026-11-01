@@ -47,9 +47,14 @@ enum CredBinStore {
     private static func commit(_ mac: String, _ items: [CredBinItem]) {
         var list = items
         if list.count > maxItems {
-            let dropped = list.suffix(from: maxItems)
+            // 数组是**插入顺序**（旧→新）：`addPwds` 把新条目 append 在末尾。
+            // 所以超限时必须丢**前缀**（最旧的），保留后缀（最新的）。
+            // 2026-11-01 自查修复：上一版写成 `suffix(from: maxItems)` 丢掉尾部，
+            // 等于"刚删掉的凭证被立刻丢弃、远古条目反而留着" —— 回收站彻底失去意义。
+            let excess = list.count - maxItems
+            let dropped = list.prefix(excess)
             for item in dropped { SecretStore.remove(DB.binSecretAccount(mac, item.id)) }
-            list = Array(list.prefix(maxItems))
+            list = Array(list.suffix(maxItems))
         }
         DB.store.setCodable(key(mac), safeForPlist(mac, list))
     }
