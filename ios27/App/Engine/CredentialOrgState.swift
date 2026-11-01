@@ -64,7 +64,10 @@ extension CredentialOrg {
     // 注意：这里**不能写 `@escaping`** —— 它只能出现在函数参数位置，放进泛型实参是编译错误
     // （CI `063ee8f` 就是这么红的：`'@escaping' may only be used in function parameter position`）。
     // 存进容器后本来就"逃逸"了，`@Sendable` 足以表达跨并发域的约束。
-    private static let notifyQueue = Locked<[(@Sendable (@Sendable () -> Void) -> Void)]>([])
+    // 队列元素类型：**保留 `@escaping`**（这是原始代码 `86f4617` 就有的写法，CI 已验证可编译）——
+    // `@escaping` 标的是"这个闭包参数在函数体内会逃逸"，而这里它正是函数类型的参数位，合法。
+    // 只补 `@Sendable`（跨并发域传递的约束）。
+    private static let notifyQueue = Locked<[(@escaping @Sendable () -> Void) -> Void]>([])
     private static let notifyBusy = Locked(false)
 
     /// 入队一个"完成时调 done()"的异步动作；队列空闲则立刻开跑。
@@ -75,12 +78,11 @@ extension CredentialOrg {
     /// 只标内层会得到一条新告警 `passing non-Sendable parameter 'job'`（我上一轮就只标了内层，
     /// CI 从 6 条降到 1 条而不是 0 条，正是这条）。
     ///
-    /// 签名里**只有最外层一个 `@escaping`**：它标"这个参数会逃逸"。
-    /// 内层 `(@escaping @Sendable () -> Void)` 是**非法**的 —— `@escaping` 只能标参数本身，
-    /// 不能标"参数类型里的嵌套函数类型"（CI `32736b9` 报的就是这个：
-    /// `converting non-escaping parameter 'job' to generic parameter 'Element' may allow it to escape`，
-    /// 因为内层非法属性让整个参数类型没被正确当成逃逸）。
-    static func enqueue(_ job: @escaping @Sendable (@Sendable () -> Void) -> Void) {
+    /// `@escaping` 的位置**保持原始写法**（内外两层都标）—— 这是 `86f4617` 就有、且 CI 验证过可编译的形状。
+    /// 我一度以为"内层 `@escaping` 非法"并删掉它，结果得到
+    /// `converting non-escaping parameter 'job' to generic parameter 'Element' may allow it to escape`
+    /// —— 恰恰是因为删掉之后 `job` 不再被当成逃逸。
+    static func enqueue(_ job: @escaping @Sendable (@escaping @Sendable () -> Void) -> Void) {
         let start: Bool = notifyQueue.withLock { q in
             q.append(job)
             return !notifyBusy.withLock { b in
@@ -94,7 +96,7 @@ extension CredentialOrg {
 
     /// 取队首执行；队列空则释放忙标志。**任何路径都必须调 advance()**，否则整条链会卡死。
     private static func runNextNotify() {
-        let job: (@Sendable (@Sendable () -> Void) -> Void)? = notifyQueue.withLock { q in
+        let job: ((@escaping @Sendable () -> Void) -> Void)? = notifyQueue.withLock { q in
             q.isEmpty ? nil : q.removeFirst()
         }
         guard let job else {
