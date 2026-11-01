@@ -506,7 +506,11 @@ final class AppModel {
             }
             let df = DF.cached("yyyy-MM-dd HH:mm")
             let from = "2010-01-01 00:00"
-            let to = df.string(from: Date().addingTimeInterval(100 * 365 * 86400))
+            // 2026-11-01 修复：原来写 `addingTimeInterval(100 * 365 * 86400)` —— 用**固定 365 天/年**，
+            // 而 100 年里有 24–25 个闰日，实际会差近一个月（`WeekCal.shifted` 的注释里已经写过
+            // "别用 `addingTimeInterval` 数日历日"这条纪律，这里是同一类）。
+            // 指纹有效期是"近似永久"，差一个月不影响行为，但**用日历加法才是对的写法**。
+            let to = df.string(from: TimeFormat.calendar.date(byAdding: .year, value: 100, to: Date()) ?? Date())
             try await LockService.shared.fpConfirm(batch, validFrom: from, validTo: to)
             var l = DB.ledger(mac)
             l.fps.append(LedgerFp(batch: Int(batch),

@@ -128,6 +128,14 @@ for (const f of files) {
     console.log(`  ${rel}  用了断言（assert / assertionFailure / precondition）—— 本仓一律用防御式 guard`);
     bad++;
   }
+  // 2026-11-01：不许用"固定 365 天"近似年。
+  // 100 年里有 24–25 个闰日 ⇒ `N * 365 * 86400` 会差近一个月。
+  // `WeekCal.shifted` 的注释已经写过这条纪律（"别用 `addingTimeInterval` 数日历日"），
+  // 而 `AppModel` 里给指纹写 100 年有效期时又犯了一次。正确写法是 `calendar.date(byAdding: .year, ...)`。
+  if (/\b365\s*\*\s*86400|86400\s*\*\s*365/.test(code)) {
+    console.log(`  ${rel}  用 365*86400 近似年 —— 闰年会差近一个月，请用 calendar.date(byAdding: .year, ...)`);
+    bad++;
+  }
 }
 
 if (bad === 0) {
