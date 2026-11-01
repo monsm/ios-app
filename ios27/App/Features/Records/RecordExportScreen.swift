@@ -235,7 +235,7 @@ struct RecordExportScreen: View {
                                 }
                                 .foregroundStyle(V.C.text1)
                                 .frame(maxWidth: .infinity)
-                                .frame(height: V.H.action)
+                                .frame(minHeight: V.H.action)
                                 .background(V.C.blue, in: .rect(cornerRadius: V.R.control))
                             }
                             .accessibilityLabel("分享这张记录卡")
@@ -289,7 +289,7 @@ struct RecordExportScreen: View {
                         }
                         .foregroundStyle(V.C.text1)
                         .frame(maxWidth: .infinity)
-                        .frame(height: V.H.action)
+                        .frame(minHeight: V.H.action)
                         .overlay {
                             RoundedRectangle(cornerRadius: V.R.control, style: .continuous)
                                 .strokeBorder(V.C.hairline, lineWidth: V.S.hair)
@@ -346,7 +346,7 @@ struct RecordExportScreen: View {
                         }
                         .foregroundStyle(V.C.text1)
                         .frame(maxWidth: .infinity)
-                        .frame(height: V.H.action)
+                        .frame(minHeight: V.H.action)
                         .overlay {
                             RoundedRectangle(cornerRadius: V.R.control, style: .continuous)
                                 .strokeBorder(V.C.hairline, lineWidth: V.S.hair)

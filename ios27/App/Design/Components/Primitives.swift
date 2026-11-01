@@ -127,7 +127,9 @@ struct PrimaryAction: View {
             }
             .foregroundStyle(V.C.text1)
             .frame(maxWidth: .infinity)
-            .frame(height: V.H.action)
+            // minHeight 而非 height：44pt 是**下限**（HIG 可点区），不是上限。
+            // 写死高度会让最大动态字号下的按钮标题被裁掉（文字超出容器不会报错，只会看不见）。
+            .frame(minHeight: V.H.action)
             .background(V.C.blue, in: .rect(cornerRadius: V.R.control))
         }
         .buttonStyle(PressStyle())
@@ -152,7 +154,8 @@ struct SecondaryAction: View {
             }
             .foregroundStyle(V.C.text1)
             .frame(maxWidth: .infinity)
-            .frame(height: V.H.action)
+            // 同 PrimaryAction：44pt 是下限，允许随字号变高。
+            .frame(minHeight: V.H.action)
             .overlay {
                 RoundedRectangle(cornerRadius: V.R.control, style: .continuous)
                     .strokeBorder(V.C.hairline, lineWidth: V.S.hair)

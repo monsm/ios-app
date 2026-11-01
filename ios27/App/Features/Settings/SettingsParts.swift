@@ -164,7 +164,7 @@ struct DangerAction: View {
             }
             .foregroundStyle(V.C.bg)
             .frame(maxWidth: .infinity)
-            .frame(height: V.H.action)
+            .frame(minHeight: V.H.action)
             .background(V.C.critical, in: .rect(cornerRadius: V.R.control))
         }
         .buttonStyle(PressStyle())

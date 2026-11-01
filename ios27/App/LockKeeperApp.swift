@@ -202,7 +202,7 @@ struct LockGateScreen: View {
                     .font(V.F.number20)
                     .multilineTextAlignment(.center)
                     .focused($focused)
-                    .frame(height: V.H.action)
+                    .frame(minHeight: V.H.action)
                     .background(V.C.card, in: .rect(cornerRadius: V.R.control))
                     .overlay {
                         RoundedRectangle(cornerRadius: V.R.control, style: .continuous)
@@ -249,7 +249,7 @@ struct LockGateScreen: View {
                         }
                         .foregroundStyle(V.C.text1)
                         .frame(maxWidth: .infinity)
-                        .frame(height: V.H.action)
+                        .frame(minHeight: V.H.action)
                         .overlay {
                             RoundedRectangle(cornerRadius: V.R.control, style: .continuous)
                                 .strokeBorder(V.C.hairline, lineWidth: V.S.hair)
