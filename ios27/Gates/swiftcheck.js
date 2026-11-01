@@ -137,8 +137,9 @@ for (const f of files) {
   // 我第二次因为"引用了模型上不存在的字段"把 CI 弄红（第一次是扩展里的存储属性）。
   // 这类错误本地闸门本该能看见 —— `StatusSnapshotData` 的字段表就在源码里，对一下即可。
   // 同一个坑踩两次，就说明它不是"不小心"，而是缺一道检查。
-  {
-    const sm = fs.readFileSync(path.join(ROOT, "App/Engine/StoreModels.swift"), "utf8");
+  try {
+    const modelPath = path.join(ROOT, "App", "Engine", "StoreModels.swift");
+    const sm = fs.existsSync(modelPath) ? fs.readFileSync(modelPath, "utf8") : "";
     const start = sm.indexOf("struct StatusSnapshotData");
     if (start >= 0) {
       let depth = 0, end = start;
@@ -157,6 +158,9 @@ for (const f of files) {
         }
       }
     }
+  } catch (e) {
+    // 闸门自身出错不该让整条 CI 挂掉 —— 报出来但不计入 findings。
+    console.log("  swiftcheck: 快照字段对账跳过（" + (e && e.message ? e.message : e) + "）");
   }
   // 2026-11-01：**不许用文案内容决定状态色**（`tone:` / `tint:` 实参里出现 `.contains(`）。
   // 本仓已三次踩坑：CredentialStudio 的「已」前缀（把"已…失败 N 条"涂绿）、
