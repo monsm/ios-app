@@ -19,7 +19,7 @@
 | 3 | `monthDeadlines(_:year:month:)` | `CredentialOrgState` | 月历到期角标 | 凭证页月历视图 | 高（要建月历视图） |
 | 4 | `dayDeadlines(_:_:)` | `CredentialOrgState` | 某天到期凭证列表（#3 配套读侧） | 同上，一起接 | 高（同 #3） |
 | 10 | `TimeWord.word(_:)` | `RecordSearch` | 自然时段词（清晨 / 上午 / 午间…） | 记录组头与行级小字 | **高**（按小时 vs 按天分组，粒度不匹配） |
-| 11 | `sameTypeCount(mac:type:exceptKey:)` | `RecordSearchBuild` | 同类型记录计数（「本周第 3 次撬锁」） | 记录详情 | **低**（加一行，与行数据同粒度） |
+| 11 | `sameTypeCount(mac:type:exceptKey:)` | `RecordSearchBuild` | 同类型记录计数（「本周第 N 次」） | 记录详情 | 中（需先给 `LedgerEntry` 加 `idxRaw`，当前结构拿不到 exceptKey） |
 | 12 | `context(mac:aroundKey:minutes:n:)` | `RecordSearchBuild` | 告警前后 10 分钟同锁记录（前 3 / 后 3） | 记录详情「前后事件」区 | 中（要加一个区块） |
 | 14 | `recentUseCount(_:pwdAlias:days:)` | `CredentialOrg` | 近 N 天使用次数（529 组尾统计） | 凭证详情/列表行尾（文案带"约"） | 中（要扫日志，且文案要带"约"） |
 | 17 | `overlapWindows(_:from:to:owner:excluding:)` | `CredentialOrg` | 租期重叠检测（327） | 凭证创建页时间段字段下方 | 中（要加时间窗校验与提示） |
