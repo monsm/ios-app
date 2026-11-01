@@ -272,6 +272,15 @@ struct KeyCreateScreen: View {
             busy = false
             switch result {
             case .success:
+                // 2026-11-01：`addPassword` 的**部分成功**会在 `app.lastError` 里留一条提醒
+                //（「新码已写入，但旧码（#N）没能删除 —— 请到凭证详情再删一次」）。
+                // 旧实现成功分支直接跳走，于是这条提醒**永远不会被看到** ——
+                // 而它残留下来还会被记录页/门页误当成自己的失败（那条已随 `lastError` 开工清槽修掉）。
+                // 这里在成功后立刻取一次：有内容就当警告提示出来，再清槽。
+                if let warn = app.lastError {
+                    AppToast.shared.show(warn, tone: .warn)
+                    app.lastError = nil
+                }
                 router.keysPath = []
             case .failure(let e):
                 errorText = (e as? LocalizedError)?.errorDescription ?? e.localizedDescription

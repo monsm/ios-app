@@ -339,6 +339,13 @@ final class AppModel {
     func refreshStatus() async {
         let mac = currentMac
         guard !mac.isEmpty else { return }
+        // 2026-11-01 修复：`lastError` 是**跨功能共用的单一错误槽**，而三个页面
+        // （`DoorScreen:1102` / `LockStatusScreen:351` / `RecordsScreen:871`）都靠
+        // 「`lastError` 非 nil」判断"本次操作失败"。此前本函数只在 catch 里写、成功时不清，
+        // 于是上一次操作留下的旧错误（例如改密码时的"旧码没能删除"）会被下一个页面
+        // 当成**它自己**的失败显示出来 —— 一次成功刷新却弹出别人的错误。
+        // 与 `runUnlockChain` 同口径：开工先清槽，失败再写。
+        lastError = nil
         do {
             let st = try await LockService.shared.getStatus(mac: mac)
             DB.writeStatus(mac, st)
@@ -356,6 +363,9 @@ final class AppModel {
         guard !mac.isEmpty, busyMessage == nil else { return }
         busyMessage = "正在读门锁记录…"
         defer { busyMessage = nil }
+        // 同 `refreshStatus`：开工先清错误槽，否则记录页会把上一次别处留下的旧错误
+        // 当成"读取失败 · …"显示。
+        lastError = nil
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             var startIdx: UInt32 = 0
