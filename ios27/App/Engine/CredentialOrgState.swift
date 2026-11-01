@@ -242,7 +242,8 @@ extension CredentialOrg {
     // 留此说明是为了不让人去 Engine 里找月历逻辑（它在 KeyCalendarScreen）。
 
     /// 弱口令三条判据 (都可证伪; 不评"强度分"): 少于 6 位 / 全部同一位 / 连续递增递减
-    // 【保留未接 2026-10-29】弱口令判据（少于6位/全同位/连续）—— 新密码输入时可用于即时提示
+    /// 接线点：`KeyCreateParts.duplicateNote`（新密码输入时的即时提示）。**已接线** ——
+    /// 原标记「保留未接 2026-10-29」已过期并删掉（它导致我把这个函数误判成未接，见 AUDIT-ROUND-97）。
     static func weakReason(_ v: String) -> String? {
         guard !v.isEmpty else { return nil }
         if v.count < 6 { return "少于 6 位" }

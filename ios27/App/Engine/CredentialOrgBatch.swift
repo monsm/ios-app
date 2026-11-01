@@ -30,7 +30,8 @@ extension CredentialOrg {
     }
 
     /// 357 前缀批量备注
-    // 【保留未接 2026-10-29】批量给多条凭证加同一个前缀备注（用户 B1 未选，保留待接：凭证页多选菜单可挂）
+    // **已接线**：`CredentialStudioScreen.applyPrefix()`（凭证页多选后的「应用前缀」）。
+    // （原标记已过期并删掉，见 AUDIT-ROUND-97。）
     static func batchPrefixNote(_ mac: String, pwdAliases: [Int], fpBatches: [Int], prefix: String) -> Int {
         var n = 0
         var l = DB.ledger(mac)

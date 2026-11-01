@@ -238,8 +238,9 @@ enum CredentialOrg {
     // 而真实存在的 `markDisabled`（写）与 `disableMark` / `disableMarkText`（读）**也全是零调用**。
     // 也就是说：整条「停用原因回溯」链目前是死的 —— 没有任何路径会写它，也没有任何界面读它。
     //
-    // 为什么不删：它与旁边 `monthDeadlines` 等一样标着「保留未接（用户 B1 未选）」——
-    // 是**有意保留待接**的功能，不是遗忘的死代码。删掉会把将来要接的东西一起删了。
+    // 为什么不删：它标着「保留未接（用户 B1 未选）」，是**有意保留待接**的功能，不是遗忘的死代码。
+    // 删掉会把将来要接的东西一起删了。（原句拿 `monthDeadlines` 作类比 —— 那个已于 2026-11-01
+    // 因为"功能已由 `KeyCalendarScreen` 更完整地实现"而删除，不再适合作例子。）
     // 但注释必须改成实话：现在写的是"三处都在用"，下一个人会据此以为它已被接上。
     static func disReasonKey(_ mac: String) -> String { "kf_cdisrea_" + mac }
     static func markDisabled(_ mac: String, kind: String, keys: [Int], label: String, via: String) {
@@ -299,7 +300,8 @@ enum CredentialOrg {
         list.insert(t, at: 0)
         DB.setCodable(list, "kf_csearch_hist")
     }
-    // 【保留未接 2026-11-01】搜索历史的单条删除（531 的配套）—— 界面暂无「删掉这一条」入口。
+    // **已接线**：`KeysScreen` 的「最近搜索」标签支持长按删除（531 的配套）。
+    // （原标记已过期并删掉，见 AUDIT-ROUND-92。）
     static func removeSearchHistory(_ q: String) {
         DB.setCodable(searchHistory().filter { $0 != q }, "kf_csearch_hist")
     }

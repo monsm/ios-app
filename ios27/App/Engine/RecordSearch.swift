@@ -166,7 +166,8 @@ extension RecordSearch {
 
 
 /// 674 通勤时段标签: 工作日 7-9 / 17-19 实时计算, 无需积累
-// 【保留未接 2026-10-29】通勤时段标签（工作日 7-9 / 17-19 实时计算）—— 记录页时段分组用
+/// **已接线**：`RecordsScreen` 的行级标签（通勤时段开门会标「通勤」）。
+/// （原标记「保留未接 2026-10-29」已过期并删掉，见 AUDIT-ROUND-95。）
 enum CommuteLabel {
     static func tag(date: Date, hour: Int) -> String? {
         // 原写法用 `Calendar(identifier: .chinese)` 取 weekday, 而它的注释写"周一=2, 周日=7"、代码却排除 1 和 7 ——
