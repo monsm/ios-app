@@ -207,6 +207,12 @@ struct BackupStudioScreen: View {
                     VValueRow(label: "凭证", value: "\(p.pwdCount) 密码 · \(p.fpCount) 指纹")
                     VValueRow(label: "成员", value: "\(p.memberCount) 位")
                     VValueRow(label: "校验和", value: checksumText(p.checksum))
+                    // 预演就把"会被跳过的锁"报出来：否则用户看到"8 密码"、点确认后只回来 3 条，
+                    // 会以为备份坏了（SEC-08 会整把锁跳过非法 skey/pin）。
+                    if p.skippedLocks > 0 {
+                        VValueRow(label: "将被跳过",
+                                  value: "\(p.skippedLocks) 把（密钥格式非法，SEC-08 拒绝写入）")
+                    }
                     ForEach(p.macs, id: \.self) { mac in
                         HStack(spacing: V.S.gapS) {
                             Text(LockArchive.displayName(DB.keychain(mac) ?? Keychain(mac: mac, skey: "")))

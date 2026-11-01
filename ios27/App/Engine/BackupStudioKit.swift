@@ -240,6 +240,11 @@ enum BackupStudio {
         var sampleOk: Int
         var previewTrace: [String]?
         var checksum: ChecksumState = .absent   // 453 哈希层: 解析时算一次, 预览卡直接显示
+        /// 恢复时**会被跳过**的锁数（非法 skey / 非法 pin）。
+        /// 2026-11-01 补：`pwdCount` 统计的是"包里声明了多少条"，而恢复时 SEC-08 会整把锁跳过 ——
+        /// 预演若只说"包里有 8 条"，用户点确认后实际只回来 3 条，会以为备份坏了。
+        /// 预演阶段就把这个数报出来，用户可在确认前决定。
+        var skippedLocks: Int = 0
     }
 
     /// SEC-14 与"旧版本包校验和本就该不同"之间的**折中：二次确认，不是硬拦**（2026-11-01）。
@@ -323,7 +328,11 @@ enum BackupStudio {
                          memberCount: m.members?.count ?? 0,
                          sampleOk: sample,
                          previewTrace: Array((m.globals?.trace?.lines ?? []).prefix(5)),
-                         checksum: ck)
+                         checksum: ck,
+                         skippedLocks: m.devices.filter { d in
+                             !(HexKit.bytes(d.mac).count == 6 && CryptoBox.isHex(d.kc.skey, len: 32))
+                                 || d.kc.pins.contains { !CryptoBox.isHex($0, len: 8) }
+                         }.count)
         return (pv, m)
     }
     /// 1048: 剥掉开头连续的 // 说明行与空行 (交接包头部), 返回机器可读部分; 没有头部则原样返回。
