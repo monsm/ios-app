@@ -400,6 +400,28 @@ console.log('privacy: 扫 ' + files.length + ' 个 Swift 文件 + PrivacyInfo.xc
   }
 }
 
+
+// 20) 风险披露文案不许只定义不显示（2026-11-01）。
+// `AutoOpen.riskDisclosure` 的注释写着「强制展示，不弱化」，但它曾经全仓零引用 ——
+// 也就是说"别人拿你已解锁的手机仍可能自动开门"这句风险，从未出现在任何界面上。
+// 这是安全承诺级的前置说明，不是可选文案。
+{
+  const decl = 'Engine/AutoOpenKit.swift';
+  const user = 'Features/Settings/AutoOpenScreen.swift';
+  const d = files.find(function (x) { return x.rel === decl; });
+  if (d && /static let riskDisclosure/.test(d.raw)) {
+    const u = files.find(function (x) { return x.rel === user; });
+    // 必须排除注释：文案名会出现在注释里（本条规则自己的注释就写了它），
+    // 只数 raw.indexOf 会把注释当成展示。
+    const usedInCode = u ? u.lines.some(function (l) {
+      return l.indexOf('riskDisclosure') >= 0 && !/^\s*\/\//.test(l);
+    }) : false;
+    if (!usedInCode) {
+      note(user, 1, '风险披露文案定义了却没有任何界面显示', '在自动开门设置页展示 AutoOpen.riskDisclosure');
+    }
+  }
+}
+
 if (fails.length === 0) {
   console.log('privacy: OK — 剪贴板/备份加密/空壳隔离(读+写)/明文口令不进 plist/帧脱敏/WebDAV/文件保护/CSV 注入/隐私清单 XML 10 类回归判据全部通过');
   process.exit(0);

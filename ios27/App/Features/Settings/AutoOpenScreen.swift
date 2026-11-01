@@ -71,6 +71,11 @@ struct AutoOpenScreen: View {
                                    text: app.lock?.isConnected == true ? "锁已连接" : "锁未连接")
                     }
                     SettingRule()
+                    // 风险披露（`AutoOpen.riskDisclosure` —— 它的注释写着"强制展示，不弱化"，
+                    // 而它**全仓零引用** —— 那段文案此前从未出现在任何界面上）。
+                    // 这是安全承诺级的内容：功能"不需要动手就开门"，必须先讲清它意味着什么。
+                    VStatusLine(tone: .attention, text: AutoOpen.riskDisclosure)
+                    SettingRule()
                     SettingsNote(text: "门控边界：只在 App 在前台时生效；布防时段内、以及防拆事件之后，自动开锁会被自动关掉 —— 这些否决不给你留提示，所以下面会记「上次没自动开的原因」。")
                 }
             }
