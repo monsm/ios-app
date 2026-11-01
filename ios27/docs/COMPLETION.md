@@ -61,17 +61,17 @@
 
 ```
 swiftparse: OK — 148 个 Swift 文件无语法错误（已知语法盲区豁免 14 处）
-types: 148 个文件，368 个顶层类型，SDK 白名单 335 项
+types: 148 个文件，365 个顶层类型，SDK 白名单 335 项
 swiftcheck: OK — 156 个文件括号/字符串/注释全部平衡，无裸控制字符
 tokens: OK — 148 个 Swift 文件，0 处硬编码样式字面量（含 V7 字号/色板）
 contrast: 解析到 11 个旧色令牌 × 2 模式 + 54 个 V7 色令牌
 glass: 扫 148 个文件，自定义玻璃面 0 处
 motion: 扫 148 个文件，.animation 调用 13 处
 a11y: 扫 148 个文件
-dynamictype: 148 个文件，805 处走令牌字号（其中 V7 805 处经 VFont/@ScaledMetric）
+dynamictype: 148 个文件，806 处走令牌字号（其中 V7 806 处经 VFont/@ScaledMetric）
 reducedmotion: 21 处已守卫
 crosprivate: 检查 7 组 Screen+Parts 拆分
-callsig2: 148 个文件，1076 个 func，267 个构造签名，检查 2091 处调用
+callsig2: 148 个文件，1079 个 func，264 个构造签名，检查 2100 处调用
 lineage: OK — 148 个文件，0 处上一版设计系统残留
 workflow: 检查 1 个文件
 destmap: Dest 44 项，映射 44 项，已声明 View 149 个

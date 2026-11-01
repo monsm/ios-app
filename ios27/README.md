@@ -60,7 +60,7 @@
 ```bash
 cd ios27
 
-# 1. 跑全部静态闸门（本地，不需要 Mac；当前 20 道）
+# 1. 跑全部静态闸门（本地，不需要 Mac；当前 21 道）
 npm install
 node Gates/allgates.js
 
@@ -117,7 +117,7 @@ xcodebuild build -project LockKeeper.xcodeproj -scheme LockKeeper \
 ```
 $ node Gates/allgates.js
 swiftparse: OK — 148 个 Swift 文件无语法错误（已知语法盲区豁免 14 处）
-types: 148 个文件，368 个顶层类型，SDK 白名单 335 项
+types: 148 个文件，365 个顶层类型，SDK 白名单 335 项
 swiftcheck: OK — 156 个文件括号/字符串/注释全部平衡，无裸控制字符
 tokens: OK — 148 个 Swift 文件，0 处硬编码样式字面量（含 V7 字号/色板）
 contrast: 解析到 11 个旧色令牌 × 2 模式 + 54 个 V7 色令牌

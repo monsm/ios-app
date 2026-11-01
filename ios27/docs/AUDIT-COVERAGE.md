@@ -57,8 +57,8 @@
 CI  ：build（xcode-27，BUILD + ARCHIVE + errors=0）· golden（iOS 27 模拟器真跑，72+ tests / 0 失败）
 ```
 
-注意：闸门数仍是 **20** —— `privacy` / `a11y` 是**在已有闸门里加判据**，
-不是新增闸门文件（闸门数对账由 `Gates/workflow.js` 盯着 4 个文档）。
+注意：闸门数现为 **21**（第 21 道 `reserved` 是新增的闸门文件）；`privacy` / `a11y` 则是在已有闸门里加判据。
+闸门数对账由 `Gates/workflow.js` 盯着 6 个文档。
 
 ## 3. 明确**没有**覆盖的部分（不要当成已验证）
 
