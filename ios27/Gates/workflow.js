@@ -75,6 +75,22 @@ for (const f of FILES) {
       // 2026-11-01 补：AUDIT-COVERAGE 也声称闸门数，此前不在对账名单里 —— 它就是这样过期的。
       [path.join(ROOT, 'docs', 'AUDIT-COVERAGE.md'), /-> ([一-鿿0-9]+)\s*道闸门全部通过/],
     ];
+    // 2026-11-01 再补：**示例输出块里的 `allgates: 全部 N 道闸门通过`** 同样会过期 ——
+    // README 与 COMPLETION 的标题已改成 21，而块里仍写 20，上面那组正则只盯标题所以漏了。
+    const outputBlocks = [
+      path.join(ROOT, 'README.md'),
+      path.join(ROOT, 'docs', 'COMPLETION.md'),
+    ];
+    for (const file of outputBlocks) {
+      if (!fs.existsSync(file)) continue;
+      const txt = fs.readFileSync(file, 'utf8');
+      const m = txt.match(/allgates: 全部 ([一-鿿0-9]+)\s*道闸门通过/);
+      if (!m) { findings.push(path.relative(ROOT, file) + ' 找不到示例输出里的闸门数'); continue; }
+      const claimed = /^[0-9]+$/.test(m[1]) ? parseInt(m[1], 10) : (CN[m[1]] || -1);
+      if (claimed !== real) {
+        findings.push(path.relative(ROOT, file) + ' 示例输出声称 ' + m[1] + ' 道，实际 ' + real + ' 道');
+      }
+    }
     for (const t of targets) {
       const file = t[0];
       if (!fs.existsSync(file)) continue;

@@ -136,7 +136,7 @@ tests: 8 个测试文件，255 条断言
 feedback: OK — 用户动作里的 try? await 都有错误通道
 settings: OK - 30 settings all have a direct consumer
 
-allgates: 全部 20 道闸门通过
+allgates: 全部 21 道闸门通过
 ```
 
 ---
