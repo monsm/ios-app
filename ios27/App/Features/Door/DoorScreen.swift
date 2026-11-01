@@ -434,7 +434,18 @@ struct DoorScreen: View {
         // 而门页此前只显示通用的「再试一次，别着急」与一份静态自查清单 —— 用户点了圆盘、失败、不知道原因。
         // 本会话最初那条「手动开锁总是失败」正是卡在这里：连 rc 是多少都看不到。
         // 只在**本次确实失败**时显示，避免把别处操作留下的旧错误挂到门页。
-        if app.dialPhase.isFailed, let err = app.lastError, !err.isEmpty {
+        // 2026-11-01（Round 253）：改从 `dialPhase.failed(msg)` 取文案，而不是 `app.lastError`。
+        // 原因：`lastError` 是**跨功能共用的单一错误槽**，`refreshStatus()` 开工就 `lastError = nil` ——
+        // 开锁失败后只要有一次状态刷新（回到前台/下拉重扫），这条原因就会被**悄悄清掉**。
+        // 而 `dialPhase` 只由开锁流程改写，是这条失败真正的归属地；
+        // 顺带让 `DialPhase.failed(String)` 那个此前零消费的关联值有了用处。
+        // `lastError` 仅作兜底（理论上两者同值）。
+        let failReason: String? = {
+            if case .failed(let m) = app.dialPhase, !m.isEmpty { return m }
+            if let e = app.lastError, !e.isEmpty { return e }
+            return nil
+        }()
+        if app.dialPhase.isFailed, let err = failReason {
             VCard {
                 Text(err)
                     .font(V.F.footnote)
