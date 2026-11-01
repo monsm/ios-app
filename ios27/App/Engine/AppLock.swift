@@ -109,9 +109,19 @@ final class AppLock: ObservableObject {
     /// **只在没设胁迫码时可用**（调用方 `LockScreen` 用 `!DB.hasDuressCode()` 把关）：
     /// 密码解锁可以输胁迫码进伪装模式，Face ID 不能 —— 若同时提供，被胁迫时刷脸会
     /// 直接暴露「这不是伪装模式」。宁可少一个便利入口，也不给胁迫场景留破绽。
-    func unlockByBiometric() {
+    /// 返回是否真的解锁。调用方**必须**据此决定是否置 app 的解锁态 ——
+    /// 旧实现是 Void，`LockKeeperApp` 无论这里做了什么都会 `app.unlocked = true`，
+    /// 于是"模型层拒绝"根本传不出去。
+    @discardableResult
+    func unlockByBiometric() -> Bool {
+        // 纵深防御：UI 只在没有胁迫码时提供入口（`LockKeeperApp:271` 的 bioAvailable），
+        // 但"入口隐藏"不等于"能力禁用"。任何新调用点（小组件 / 深链 / 未来改动）
+        // 都不该绕开这条判断 —— 有胁迫码时刷脸会直接暴露"这不是伪装模式"，
+        // 是胁迫场景里最危险的一种破绽。
+        guard !DB.hasDuressCode() else { return false }
         unlocked = true
         decoy = false
+        return true
         failStreak = 0
         cooldownUntil = 0
         DB.store.setInt(failStreakKey, 0)

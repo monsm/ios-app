@@ -359,6 +359,25 @@ console.log('privacy: 扫 ' + files.length + ' 个 Swift 文件 + PrivacyInfo.xc
   }
 }
 
+
+// 19) 生物识别解锁必须在**模型层**再判一次胁迫码（2026-11-01）。
+// UI 的 bioAvailable 只是"入口隐藏"；模型层没有守卫时，任何新调用点都能绕开，
+// 而有胁迫码时刷脸会直接暴露"这不是伪装模式"。
+{
+  const target = 'Engine/AppLock.swift';
+  const f = files.find(function (x) { return x.rel === target; });
+  if (f) {
+    const i = f.lines.findIndex(function (l) { return l.indexOf('func unlockByBiometric(') >= 0; });
+    if (i >= 0) {
+      let body = '';
+      for (let j = i; j < Math.min(f.lines.length, i + 14); j++) body += f.lines[j] + '\n';
+      if (body.indexOf('hasDuressCode') < 0) {
+        note(f.rel, i + 1, 'unlockByBiometric 没有在模型层判胁迫码', '加 guard !DB.hasDuressCode() else { return false }');
+      }
+    }
+  }
+}
+
 if (fails.length === 0) {
   console.log('privacy: OK — 剪贴板/备份加密/空壳隔离(读+写)/明文口令不进 plist/帧脱敏/WebDAV/文件保护/CSV 注入/隐私清单 XML 10 类回归判据全部通过');
   process.exit(0);

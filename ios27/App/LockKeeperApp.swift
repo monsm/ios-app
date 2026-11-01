@@ -288,7 +288,13 @@ struct LockGateScreen: View {
             let ok = try await ctx.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics,
                                                  localizedReason: "解锁本机数据")
             if ok {
-                AppLock.shared.unlockByBiometric()
+                // 只有模型层真的解锁了才放行。有胁迫码时 `unlockByBiometric()` 会返回 false，
+                // 这里必须跟着拒绝 —— 否则"模型拒绝、界面照开"就是假门（本仓历史上翻过车）。
+                guard AppLock.shared.unlockByBiometric() else {
+                    failed = true
+                    gateMessage = "当前设置下不能用生物识别 · 请用本机密码"
+                    return
+                }
                 app.decoyMode = false
                 app.unlocked = true
                 failed = false
