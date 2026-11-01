@@ -62,18 +62,11 @@ enum CredentialOrg {
     // （全仓零调用点，`kf_ccred_quota` 也没有任何写入方）。2026-11-01：删除。
     // 留一段说明而不是静默消失 —— 否则下一个人看到备份/文档里提过"配额"会到处找它。
 
-    // ---------- 489 修订着色 diff (删除红/新增绿/修改黄, 逐字段对齐) ----------
-    struct Diff: Identifiable {
-        var id: String { label }
-        let label: String
-        let old: String
-        let neu: String
-        var kind: String {
-            if old.isEmpty { return "add" }
-            if neu.isEmpty { return "del" }
-            return old == neu ? "same" : "mod"
-        }
-    }
+    // 489「修订着色 diff」（删除红/新增绿/修改黄，逐字段对齐）`struct Diff`：**已删除**（2026-11-01）。
+    // 与 quota / DiagFlags / Advice / DiagOps 同一族：全仓只有声明与文件头注释，零生产者、零消费者。
+    // 也就是说"保存前逐字段对比并着色"这个功能从未建成 —— 真要做得连着 UI 一起设计，
+    // 而不是先留一个数据结构（`kind` 里那三个字符串没有任何地方读过）。
+    // 注意：`digitDiff(old:new:)`（307 的数字位差异）是**另一个函数**，仍在使用，不要一起删。
 
 
 
