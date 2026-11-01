@@ -62,13 +62,27 @@ for (const f of files) {
       }
     }
 
-    // ② 触达小于 44（只查明确的可点区 frame）
-    const m = /\.frame\(\s*width:\s*([0-9]+)\s*,\s*height:\s*([0-9]+)\s*\)/.exec(line);
-    if (m) {
-      const w = +m[1], h = +m[2];
-      if ((w < 44 || h < 44) && !rel.includes('Components/')) {
-        findings.push({ file: rel, line: i + 1, why: `可点区 ${w}×${h} < 44pt` });
-      }
+    // ② 触达小于 44。
+    // 2026-11-01 扩判据：旧实现只匹配 `.frame(width: N, height: N)`（**两个数字字面量**），
+    // 于是完全看不到这两种写法：
+    //   · `.frame(height: 32)`            —— 只有 height，且是字面量
+    //   · `.frame(height: V.Hit.min - V.S.gapMS)` —— 令牌表达式（44-12=32）
+    // `KeysBits.KeysChips` 就是后者：胶囊高 32pt，命中区实际只有 32pt，而闸门说"无 <44pt 可点区"。
+    const mPair = /\.frame\(\s*width:\s*([0-9]+)\s*,\s*height:\s*([0-9]+)\s*\)/.exec(line);
+    const mH = /\.frame\(\s*height:\s*([0-9]+)\s*\)/.exec(line);
+    const mMinus = /\.frame\(\s*height:\s*V\.Hit\.min\s*-\s*(V\.S\.\w+)\s*\)/.exec(line);
+    let bad = null;
+    if (mPair) {
+      const w = +mPair[1], h = +mPair[2];
+      if (w < 44 || h < 44) bad = `${w}×${h}`;
+    } else if (mH && +mH[1] < 44) {
+      bad = `h=${mH[1]}`;
+    } else if (mMinus) {
+      // `V.Hit.min - V.S.gapX` 永远小于 44 —— 除非那一行同时有 minHeight 兜底。
+      if (!/minHeight/.test(line)) bad = `V.Hit.min - ${mMinus[1]}`;
+    }
+    if (bad && !rel.includes('Components/')) {
+      findings.push({ file: rel, line: i + 1, why: `可点区 ${bad} < 44pt` });
     }
   });
 }

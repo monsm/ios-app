@@ -60,7 +60,11 @@ struct KeysChips<Item: Hashable>: View {
                             .font(V.F.footnote)
                             .foregroundStyle(on ? V.C.text1 : V.C.text2)
                             .padding(.horizontal, V.S.gapMS)
-                            .frame(height: V.Hit.min - V.S.gapMS)
+                            // 2026-11-01 修复：原来写 `.frame(height: V.Hit.min - V.S.gapMS)`（44-12=32），
+                            // 胶囊只有 32pt 高 —— **命中区实际不足 44pt**，而 `a11y` 闸门当时只匹配
+                            // `.frame(width: N, height: N)` 两个字面量的写法，完全看不到令牌表达式。
+                            // 改用 `minHeight` + 垂直内边距：视觉仍是紧凑胶囊，但可点区回到 44pt。
+                            .frame(minHeight: V.Hit.min)
                             .background(on ? V.C.blue.opacity(0.16) : Color.clear, in: .capsule)
                             .overlay {
                                 Capsule().strokeBorder(
