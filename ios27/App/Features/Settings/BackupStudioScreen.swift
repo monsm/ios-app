@@ -352,6 +352,7 @@ struct BackupStudioScreen: View {
             // 跳过数同样要报（`restore` 一直返回它，这里此前只报新增/覆盖）。
             outcome = "已恢复 \(file.name)：新增 \(r.imported) 项，覆盖 \(r.overwritten) 项"
                 + (r.skipped > 0 ? "，跳过 \(r.skipped) 把锁（密钥格式非法）" : "")
+                + (r.unlinkedOwners > 0 ? "；\(r.unlinkedOwners) 项凭证的归属在本机找不到（已置为未归属）" : "")
             Task { await app.reload(refreshStatus: false) }
         } catch {
             outcome = "恢复失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)

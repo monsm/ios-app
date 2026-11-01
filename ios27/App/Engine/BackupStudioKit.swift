@@ -392,7 +392,7 @@ enum BackupStudio {
     static func restore(_ bundle: BackupBundle, 
                         lockActs: [String: String] = [:],
                         conflictTakeBackup: Set<String> = [],
-                        makeSnapshot: Bool = true) -> (imported: Int, overwritten: Int, skipped: Int) {
+                        makeSnapshot: Bool = true) -> (imported: Int, overwritten: Int, skipped: Int, unlinkedOwners: Int) {
         var b = bundle
         b.currentMac = ""   // 首验清 currentMac, 避免指向另一台设备的锁
         let c = prune(b)
@@ -413,6 +413,8 @@ enum BackupStudio {
         // 只在目标成员**仍是全默认档案**时写：已存在的成员保留本机现状，不被旧包覆盖。
         if let ext = c.globals?.memberExt { importMemberExt(ext, remap: remap) }
         var mimp = 0, mover = 0, mskip = 0
+        // 2026-11-01：恢复后「归属找不到」的条数 —— 用户报「成员和凭证不关联」时，这是唯一可见的证据。
+        var unlinkedOwners = 0
         for d in c.devices {
             // SEC-08：不只看"非空" —— 非 32 位十六进制的 skey 会覆盖 Keychain 里的真密钥，
             // 此后所有加密帧用错密钥，原锁再也开不了（软砖）。pin 必须是 8 位十六进制。
@@ -470,7 +472,21 @@ enum BackupStudio {
             let haveP = Set(cur.pwds.map { $0.alias }), haveF = Set(cur.fps.map { $0.batch })
             for p0 in l.pwds {
                 var p = p0
-                if let o = p.owner { p.owner = remap[o] ?? (DB.member(o) != nil ? o : nil) }
+                // 2026-11-01（用户报「全新恢复后成员和凭证不关联」）：原来只有两条路 ——
+                //   ① remap[旧 id]（本机新建成员时建过映射）  ② 旧值恰好就是本机已存在的 id。
+                // 两条都落空就**把 owner 抹成 nil**，关联信息不可逆地丢掉。
+                // 而更老的包里 `owner` 存的是**成员名字**（不是 id），于是 remap 与 DB.member(名字) 双双落空。
+                // 现在补第三条：按**名字**找回成员；仍找不到才置 nil，并记一条遥测（不静默）。
+                if let o = p.owner {
+                    if let newID = remap[o] { p.owner = newID }
+                    else if DB.member(o) != nil { p.owner = o }
+                    else if let byName = DB.members().first(where: { $0.name == o }) { p.owner = byName.id }
+                    else {
+                        BleTelemetry.recordEvent("恢复：凭证 #\(p0.alias) 的归属「\(o)」在本机找不到（既不是 id 也不是名字），已置空", ok: false)
+                        unlinkedOwners += 1
+                        p.owner = nil
+                    }
+                }
                 if haveP.contains(p0.alias) {
                     // 419 同 ID 凭证冲突: 只有用户裁决为"取备份"才覆盖, 未裁决默认保本机 (只增不删)
                     guard conflictTakeBackup.contains("\(mac):p:\(p0.alias)") else { continue }
@@ -485,7 +501,12 @@ enum BackupStudio {
             }
             for f0 in l.fps {
                 var f = f0
-                if let o = f.owner { f.owner = remap[o] ?? (DB.member(o) != nil ? o : nil) }
+                if let o = f.owner {
+                    if let newID = remap[o] { f.owner = newID }
+                    else if DB.member(o) != nil { f.owner = o }
+                    else if let byName = DB.members().first(where: { $0.name == o }) { f.owner = byName.id }
+                    else { unlinkedOwners += 1; f.owner = nil }
+                }
                 if haveF.contains(f0.batch) {
                     guard conflictTakeBackup.contains("\(mac):f:\(f0.batch)") else { continue }
                     if let i = cur.fps.firstIndex(where: { $0.batch == f0.batch }) {
@@ -525,7 +546,7 @@ enum BackupStudio {
                 ])
             }
         }
-        return (mimp, mover, mskip)
+        return (mimp, mover, mskip, unlinkedOwners)
     }
 
     /// SEC-06：合并包内口令摘要与本机既有摘要，**绝不把强摘要降级成弱摘要**。
