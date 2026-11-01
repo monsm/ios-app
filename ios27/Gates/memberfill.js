@@ -18,10 +18,15 @@ const WATCHED = {
   KeyItem: ['createdAt'],
 };
 
-// 允许不传的构造点（file:line 前缀），每条都要有理由
-const EXEMPT = [
+// 允许不传的构造点。
+//
+// 2026-11-01 改进：**原来按 `file:line` 豁免**，而任何在文件上方插入一行的编辑都会让行号失配 ——
+// 我自己改 `AppModel` 的 `signal` 时就撞上了（闸门报「193 行没传 createdAt」，而那条本来就是豁免项）。
+// 现在按**构造内容特征**豁免：手机钥匙那条的实参里有 `kind: .mobile`。
+// 这样它挪到哪里都仍然豁免，而别的构造点不会误豁免。
+const EXEMPT_PATTERNS = [
   // 手机钥匙没有「创建时刻」这个概念 —— 保持默认 0 是对的。
-  'App/Shell/AppModel.swift:189',
+  { why: '手机钥匙无创建时刻', re: /kind:\s*\.mobile/ },
 ];
 
 function walk(dir, out = []) {
@@ -55,7 +60,7 @@ for (const f of walk(APP)) {
         }
         if (started && depth === 0) break;
       }
-      const exempt = EXEMPT.some((e) => (rel + ':' + (i + 1)).startsWith(e));
+      const exempt = EXEMPT_PATTERNS.some((p) => p.re.test(buf));
       if (exempt) continue;
       checked++;
       for (const field of fields) {

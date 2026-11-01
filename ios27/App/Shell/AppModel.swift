@@ -114,7 +114,11 @@ final class AppModel {
             name: kc.name.isEmpty ? (kc.pidName.isEmpty ? "我的门锁" : kc.pidName) : kc.name,
             model: kc.pidName.isEmpty ? "未知型号" : kc.pidName,
             battery: snap?.powerLevel ?? -1,
-            signal: 0,
+            // 2026-11-01 修复：原来硬编码 `signal: 0`，而 `LockSummary.signal` 的注释写着「0 = 未知」。
+            // `LockStatusScreen:91` 把它显示成「信号 0 / 4」并涂成警告色（`<= 1` ⇒ 永远警告），
+            // 用户看到的是"信号极差"，而实际上**从未测过**。
+            // `LinkSenseModel.level` 早就有同一个 0–4 映射（0 = 不可测），直接复用。
+            signal: LinkSenseModel.level(LinkSenseModel.savedRSSI(mac)),
             firmware: snap?.firmware ?? kc.fw,
             keyCount: DB.ledger(mac).pwds.count + DB.ledger(mac).fps.count,
             isConnected: LockService.shared.connectedMAC == mac,
