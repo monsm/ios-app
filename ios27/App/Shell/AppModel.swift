@@ -458,6 +458,18 @@ final class AppModel {
 
     // MARK: - 凭证写入
 
+    /// 把「归属成员」统一成**成员 id**。
+    ///
+    /// 2026-11-01（Round 243）：`addPassword`（Round 237）与 `enrollFingerprint` 都要做这件事，
+    /// 抽出来共用 —— 两处各写一遍这类换算，迟早只改一处。
+    /// 入参可以是 id（成员管理指派 / 合并 / 恢复走这条）或成员名（工作室的成员行给的），
+    /// 都不是就返回 nil（宁可留空也不写一个解析不出的字符串进 `owner`）。
+    private func memberID(for owner: String?) -> String? {
+        guard let owner, !owner.isEmpty else { return nil }
+        if DB.member(owner) != nil { return owner }
+        return DB.members().first { $0.name == owner }?.id
+    }
+
     /// 新增一条密码/临时码。
     /// - Parameters:
     ///   - owner: 归属成员 —— **传 id 或成员名都可以**，内部统一换算成 id 再落库。
@@ -479,12 +491,8 @@ final class AppModel {
             // 2026-11-01（Round 237）：调用方（凭证工作室的成员行）传的是**成员名**，
             // 而台账 `owner` 在全仓其它路径（成员管理指派 / 成员合并 / 备份恢复）里存的都是**成员 id**。
             // 两种口径混进同一字段 ⇒ 工作室创建的凭证在列表里恒显示「未归属」（`ownerName` 按 id 查）。
-            // 这里统一成 id：已经是 id 就原样保留，是名字就换成对应成员的 id。
-            let ownerID: String? = {
-                guard let owner, !owner.isEmpty else { return nil }
-                if DB.member(owner) != nil { return owner }
-                return DB.members().first { $0.name == owner }?.id
-            }()
+            // 这里统一成 id（换算逻辑见 `memberID(for:)`）。
+            let ownerID = memberID(for: owner)
             var l = DB.ledger(mac)
             l.pwds.append(LedgerPwd(
                 alias: alias, from: from, to: to, temp: false,
@@ -518,10 +526,12 @@ final class AppModel {
             try await LockService.shared.ensureConnected(mac: mac)
             let alias = try await LockService.shared.pwdAdd(pwd: pwd, validFrom: from, validTo: to)
             var l = DB.ledger(mac)
+            // 2026-11-01（Round 243）：调用方（成员向导第 4 步）传的是**成员名**，
+            // 与 `addPassword` / `enrollFingerprint` 同一个坑 —— 统一换算成 id 再落库。
             l.pwds.append(LedgerPwd(
                 alias: alias, from: from, to: to, temp: true,
                 at: Date().timeIntervalSince1970 * 1000,
-                pwd: pwd, owner: owner, note: note
+                pwd: pwd, owner: memberID(for: owner), note: note
             ))
             DB.saveLedger(mac, l)
             reloadKeys(mac)
@@ -609,10 +619,13 @@ final class AppModel {
             let to = df.string(from: TimeFormat.calendar.date(byAdding: .year, value: 100, to: Date()) ?? Date())
             try await LockService.shared.fpConfirm(batch, validFrom: from, validTo: to)
             var l = DB.ledger(mac)
+            // 2026-11-01（Round 243）：同 `addPassword` —— 调用方（工作室的成员行 / 详情页重录）
+            // 传的是**成员名**，而台账 `owner` 在其它路径里存的是**成员 id**。
+            // 不换算的话，录完指纹在列表里恒显示「未归属」。
             l.fps.append(LedgerFp(batch: Int(batch),
                                   name: name.isEmpty ? "指纹 \(batch)" : name,
                                   at: Date().timeIntervalSince1970 * 1000,
-                                  note: note, src: nil, owner: owner, isAlarm: false))
+                                  note: note, src: nil, owner: memberID(for: owner), isAlarm: false))
             DB.saveLedger(mac, l)
             reloadKeys(mac)
             return .success(Int(batch))
