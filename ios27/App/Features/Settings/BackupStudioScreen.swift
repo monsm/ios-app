@@ -17,6 +17,9 @@ struct BackupStudioScreen: View {
     @Environment(AppModel.self) private var app
 
     @State private var files: [BackupFile] = []
+    /// 备份目录**读取失败**的原因（nil = 读取正常）。与"目录为空"是两件事：
+    /// 前者要报错，后者是正常的首次状态。
+    @State private var filesError: String?
     @State private var keepCount = 5
     @State private var password = ""
     @State private var outcome: String?
@@ -102,7 +105,10 @@ struct BackupStudioScreen: View {
                     Spacer(minLength: 0)
                 }
                 VRowDivider()
-                if files.isEmpty {
+                // 读取失败与"没有备份"必须分开显示（前者要说原因，后者是正常的首次状态）。
+                if let filesError {
+                    VStatusLine(tone: .attention, text: filesError)
+                } else if files.isEmpty {
                     Text("还没有本机备份文件。点上面「生成一份本机备份」—— 它会把锁 / 凭证 / 成员 / 设置打成一份可恢复的文件。")
                         .font(V.F.footnote).foregroundStyle(V.C.text3)
                         .fixedSize(horizontal: false, vertical: true)
@@ -270,7 +276,18 @@ struct BackupStudioScreen: View {
 
     private func reloadFiles() {
         let fm = FileManager.default
-        let urls = (try? fm.contentsOfDirectory(at: BackupStudio.dir, includingPropertiesForKeys: [.fileSizeKey, .contentModificationDateKey])) ?? []
+        // 2026-11-01：读取目录失败与"目录为空"必须区分开。
+        // 旧实现 `?? []` 把失败当成空 —— 界面上就是"还没有本机备份"；
+        // 而真实原因可能是沙箱/权限/目录损坏，用户会以为备份丢了（然后去重新生成，覆盖 keep 配额）。
+        let urls: [URL]
+        do {
+            urls = try fm.contentsOfDirectory(at: BackupStudio.dir,
+                                              includingPropertiesForKeys: [.fileSizeKey, .contentModificationDateKey])
+            filesError = nil
+        } catch {
+            urls = []
+            filesError = "读取备份目录失败：" + error.localizedDescription
+        }
         files = urls.filter { $0.pathExtension == "json" }
             .compactMap { url in
                 let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
