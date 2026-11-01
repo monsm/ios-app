@@ -229,6 +229,14 @@ final class SettingsStore {
     var hasPasscode: Bool { _ = revision; return DB.hasPasscode() }
     var hasDuressCode: Bool { _ = revision; return DB.hasDuressCode() }
 
+    /// 外部路径（备份恢复 / 迁移 / 重置）**直接写过底层存储**之后调用它，
+    /// 让所有观察 `SettingsStore` 的视图重新取数。
+    ///
+    /// 2026-11-01（Round 255）：恢复路径直接写了一批可观察键（手势档 / 按住确认 / 大字 / 表盘尺寸…），
+    /// 却从不 bump `revision` —— 恢复完成后设置页仍显示旧值，要等 App 重启才对。
+    /// 直写存储只允许出现在这类非界面路径，但**必须**在这里补一次通知。
+    func notifyChanged() { revision &+= 1 }
+
     // MARK: 开锁确认（防误触）
 
     var holdConfirm: Bool {

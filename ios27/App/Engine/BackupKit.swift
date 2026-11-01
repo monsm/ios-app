@@ -381,5 +381,11 @@ enum BackupKit {
         if let v = a.holdConfirm { DB.store.set("kf_hold_confirm", v) }
         if let v = a.dbltapGuard { DB.store.set("kf_dbltap_guard", v) }
         if let v = a.elderMode { DB.store.set("kf_elder_mode", v) }
+        // 2026-11-01（Round 255）：上面这一串都是**直写可观察键**（`SettingsStore` 里各有同名属性）。
+        // 直写本身没错（恢复路径不面向界面），但必须补一次通知 —— 否则恢复完设置页还是旧值。
+        // 本函数是 `DB` 的**非隔离静态函数**，而 `SettingsStore` 是 `@MainActor`：
+        // 直接调用会产生并发告警（CI 要求源码 0 warning），所以用 `Task { @MainActor in … }` 投递。
+        // 恢复本身是同步长任务，这次通知会在下一轮 runloop 落地，远早于用户打开设置页。
+        Task { @MainActor in SettingsStore.shared.notifyChanged() }
     }
 }
