@@ -122,7 +122,12 @@ struct RecordsStudioScreen: View {
                 if !parsed.parsedTags.isEmpty {
                     ScrollView(.horizontal) {
                         HStack(spacing: V.S.gapS) {
-                            ForEach(parsed.parsedTags, id: \.self) { tag in
+                            // 2026-11-01 修复：`parsedTags` 是按输入 token 逐个 append 的，
+                            // 用户写 `+指纹 +指纹`（或重复一个时间范围）就会出现**重复项**，
+                            // 而 `ForEach(id: \.self)` 的 ID 必须唯一 —— 重复会让 SwiftUI 报
+                            // "ID occurs multiple times within the collection" 并可能让标签错位。
+                            // 显示前按首次出现去重（解析结果本身不动，语义不受影响）。
+                            ForEach(uniqueTags, id: \.self) { tag in
                                 VTag(text: tag, tint: V.C.blue)
                             }
                         }
@@ -284,6 +289,12 @@ struct RecordsStudioScreen: View {
     }
 
     // MARK: - 数据
+
+    /// `parsedTags` 去重后的显示用列表（保持首次出现的顺序）。
+    private var uniqueTags: [String] {
+        var seen = Set<String>()
+        return parsed.parsedTags.filter { seen.insert($0).inserted }
+    }
 
     private func reload() {
         recs = RecordSearch.buildRecs(macs: macs)
