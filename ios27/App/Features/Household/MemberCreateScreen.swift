@@ -56,7 +56,10 @@ struct MemberCreateScreen: View {
         code.count >= 6 && code.count <= 8 && code.allSatisfy { $0.isNumber }
     }
 
-    private var atLimit: Bool { app.members.count >= HHStats.memberLimit }
+    /// 同 `HouseholdScreen.atLimit`：只数**在册**成员 —— 归档不占名额，与提示文案一致。
+    /// （2026-11-01 Round 241：原来数 `app.members.count` 含已归档，于是文案让用户"归档一位再建"，
+    /// 归档后依然建不了。）
+    private var atLimit: Bool { HHStats.active(app.members).count >= HHStats.memberLimit }
 
     private var canAdvance: Bool {
         switch step {

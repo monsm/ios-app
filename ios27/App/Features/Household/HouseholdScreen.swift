@@ -84,7 +84,11 @@ struct HouseholdScreen: View {
         return app.members.first { $0.id == id }
     }
 
-    private var atLimit: Bool { app.members.count >= HHStats.memberLimit }
+    /// 2026-11-01（Round 241）：原来数的是 `app.members.count`（**含已归档**），
+    /// 而提示文案写的是「已到上限 —— **先归档一位再建新人**」—— 归档根本不减这个数，
+    /// 用户照做之后**依然建不了**，而屏幕上显示的「成员 N 位」也从来没到过 15。
+    /// 现在只数在册成员，与显示、与文案三方一致。
+    private var atLimit: Bool { activeMembers.count >= HHStats.memberLimit }
 
     var body: some View {
         ScrollView {
