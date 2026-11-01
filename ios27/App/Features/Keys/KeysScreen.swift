@@ -93,6 +93,10 @@ struct KeysScreen: View {
         .task { await app.reload(refreshStatus: false) }
         .onAppear {
             now = KeysState.now()
+            // 2026-11-01（Round 239）：老人模式会**隐藏**「临时码 / 手机钥匙」两个芯片，
+            // 而 `filter` 仍可能是它们（在开启老人模式之前选的）—— 于是列表被一个**看不见的筛选**卡住，
+            // 用户只看到几条凭证却没有任何芯片是高亮的。回落到「全部」。
+            if !visibleFilters.contains(filter) { filter = .all }
             routeFromContext()
         }
         // E-12：`now` 只在 onAppear 刷新 ⇒ 跨过零点后"还剩 N 天"的角标与颜色不更新
@@ -107,6 +111,12 @@ struct KeysScreen: View {
     }
 
     // MARK: - 芯片行（R2：left 14.67 / 三档宽度）
+
+    /// 当前可见的筛选芯片（老人模式只留 全部/密码/指纹）。
+    /// 芯片行与 `onAppear` 的回落都用它 —— 两处各写一遍那个过滤式必然会分叉。
+    private var visibleFilters: [KeysFilter] {
+        KeysFilter.allCases.filter { !MemberHub.elderMode || $0 == .all || $0 == .password || $0 == .fingerprint }
+    }
 
     private var chips: some View {
         ScrollView(.horizontal) {
@@ -401,7 +411,7 @@ struct KeysScreen: View {
 
             ScrollView(.horizontal) {
                 HStack(spacing: V.S.gapS) {
-                    ForEach(KeysFilter.allCases.filter { !MemberHub.elderMode || $0 == .all || $0 == .password || $0 == .fingerprint }, id: \.self) { item in
+                    ForEach(visibleFilters, id: \.self) { item in
                         let selected = item == filter
                         Button {
                             filter = item
