@@ -861,7 +861,12 @@ struct VListRow: View {
                         Text(detail)
                             .font(V.F.rowDetail)
                             .foregroundStyle(V.C.text3)
-                            .lineLimit(1)
+                            // 2026-11-01：`lineLimit(1)` → `lineLimit(2)`。
+                            // `detail` 是 15–20 字的中文说明（「电量采样 / 五档 / 电池型号与换电日期」），
+                            // 而这一行在 393pt 屏上减去图标与右侧读数后只剩约 250pt ——
+                            // **默认字号下就已经被截**，大字号下更糟。
+                            // 允许换到第二行：不改变短说明的观感，只让长说明能读完。
+                            .lineLimit(2)
                     }
                 }
                 Spacer(minLength: V.S.gapS)
