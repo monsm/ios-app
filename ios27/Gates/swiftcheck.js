@@ -118,6 +118,16 @@ for (const f of files) {
     console.log(`  ${rel}  有 ${dfCount} 处 DateFormatter() 但只有 ${calCount} 处设置 calendar —— 未设的会跟随系统历法`);
     bad++;
   }
+  // 2026-11-01：本仓**不用断言**（`assert` / `assertionFailure` / `precondition`）。
+  // 依据是两处既有处置：`ZKProtocol:60`（超长时显式截断 + 遥测，不用 assertionFailure）、
+  // `ZOTP:23`（原 `assert(periodMin <= 120)` 已移除）。
+  // 理由：Release 版断言被编译掉 ⇒ 静默继续；Debug 版崩 ⇒ 用户看到闪退。两种都不可取，
+  // 本仓一律用防御式 `guard ... else { return }`。
+  // 我自己在 ROUND-140 一度写了 `assertionFailure`，被这条自查纠正。
+  if (/\bassertionFailure\(|\bassert\(|\bprecondition\(/.test(code)) {
+    console.log(`  ${rel}  用了断言（assert / assertionFailure / precondition）—— 本仓一律用防御式 guard`);
+    bad++;
+  }
 }
 
 if (bad === 0) {

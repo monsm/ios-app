@@ -66,7 +66,16 @@ enum DevLayout {
         else { DB.store.set(orderKey, clean.map(\.rawValue)) }
     }
 
+    /// 移动一个槽位。**实现是"交换相邻"**，因此只对 `delta == ±1` 正确 ——
+    /// 当前唯一调用方（`ModuleOrderSheet` 的上移/下移按钮）正好只传 ±1。
+    ///
+    /// 2026-11-01：原签名 `by delta: Int` 允许任意值，而 `swapAt(i, j)` 在 `delta == ±2` 时
+    /// 会**交换**而不是**移动**（`[A,B,C]` 把 A 上移两位应得 `[B,C,A]`，`swapAt(0,2)` 却给 `[C,B,A]`）。
+    /// 现在把约束写进签名前的断言，未来加"移到顶部"这类操作时不会静默用错。
     static func move(_ slot: DevSlot, by delta: Int) {
+        // 本仓**不用 `assertionFailure`**（见 `ZKProtocol:60` 与 `ZOTP:23` 的处置说明：
+        // 宁可防御式返回，也不要让 Release 版静默继续、Debug 版崩）。
+        guard delta == -1 || delta == 1 else { return }
         var list = order
         guard let i = list.firstIndex(of: slot) else { return }
         let j = i + delta
