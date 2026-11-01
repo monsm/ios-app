@@ -54,6 +54,10 @@ struct Shell: View {
                 }
             }
         }
+        // 2026-11-01：官方标签栏的**液态玻璃行为**之一 —— 向下滚动时标签栏最小化、
+        // 向上滚回来时展开。这是 iOS 26 起系统标签栏的标准动作（`latest-apis.md › Tab Bar`），
+        // 自己画的栏做不出这个。
+        .tabBarMinimizeBehavior(.onScrollDown)
         .background(V.C.bg.ignoresSafeArea())
         .sensoryFeedback(.selection, trigger: router.tab)
         // E-16：只在真正可能变化时重算角标，不在每次 body 求值时读库。
