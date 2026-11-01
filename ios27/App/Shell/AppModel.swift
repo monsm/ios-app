@@ -386,8 +386,13 @@ final class AppModel {
     /// 2026-11-01：`LogPage.surplus` 早就从协议的 KLV#04 解析出来了，**但全仓没有任何消费者** ——
     /// 于是 20 页封顶（100 条）之后循环静默停止，用户看到「已读取 100 条」会以为读全了，
     /// 而锁里可能还有几百条更早的记录。这里把 surplus 带出去，让界面如实说明。
+    /// 返回 **本次实际从锁内读到的条数** 与（若被 20 页上限截断）锁端剩余条数。
+    ///
+    /// 2026-11-01：原来只返回 `Int?`（剩余）。而界面用 `entries.count`（**合并后的缓存总数**，
+    /// 在「全部锁」范围下还是多把锁之和）当"本次读取数" —— 于是这次一条都没读到也会显示
+    /// 「已读取 300 条」。现在把"本次读到几条"如实带出来。
     @discardableResult
-    func readLogs() async -> Int? {
+    func readLogs() async -> (read: Int, remaining: Int?)? {
         let mac = currentMac
         guard !mac.isEmpty, busyMessage == nil else { return nil }
         busyMessage = "正在读门锁记录…"
@@ -437,7 +442,7 @@ final class AppModel {
             // 现在写/读/补记三处统一为：**归一化键 + 毫秒字符串**。
             DB.store.set("kf_logsync_" + DB.normalizeMac(mac), String(Int(Date().timeIntervalSince1970 * 1000)))
             await reload(refreshStatus: false)
-            return remaining
+            return (read: collected.count, remaining: remaining)
         } catch {
             lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             return nil

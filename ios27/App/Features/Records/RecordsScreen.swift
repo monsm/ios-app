@@ -869,7 +869,10 @@ struct RecordsScreen: View {
         // 2026-11-01：拿下"锁端还剩多少条更早的记录"（协议 KLV#04 的 surplus）。
         // 此前这个字段解析出来却没人用，20 页封顶后静默停止 —— 用户看到"已读取 100 条"
         // 会以为读全了，而锁里可能还有几百条。现在如实说明还剩多少。
-        let remaining = await app.readLogs()
+        let fetched = await app.readLogs()
+        // 本次**实际**读到的条数（不是合并后的缓存总数 —— 后者在「全部锁」范围下还是多把锁之和）。
+        let readCount = fetched?.read ?? 0
+        let remaining = fetched?.remaining
         let now = Int64(Date().timeIntervalSince1970 * 1000)
         if let err = app.lastError {
             reload()
@@ -879,9 +882,11 @@ struct RecordsScreen: View {
             RecordsSource.markSynced(mac: readMac, at: now)
             reload()
             let more = (remaining ?? 0) > 0 ? "；锁端还有 \(remaining ?? 0) 条更早的记录未读（点「读取」可继续）" : ""
+            // 「本次读取」与「记录页共多少条」分开说：两者常常不等（缓存是合并的、还可能跨多把锁）。
+            let cacheNote = entries.count == readCount ? "" : "（记录页共 \(entries.count) 条）"
             readNote = untimed > 0
-                ? "已读取 \(entries.count) 条（另 \(untimed) 条锁端未回时刻，无法定位到某一天）" + more
-                : "已读取 \(entries.count) 条 · \(TimeDisplay.clock(now))" + more
+                ? "本次读取 \(readCount) 条" + cacheNote + "（另 \(untimed) 条锁端未回时刻，无法定位到某一天）" + more
+                : "本次读取 \(readCount) 条" + cacheNote + " · \(TimeDisplay.clock(now))" + more
         } else {
             reload()
             readNote = "门锁未连接 · 下面是上次读到的那一份"
