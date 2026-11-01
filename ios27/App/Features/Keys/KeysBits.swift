@@ -129,10 +129,10 @@ struct KeysShortcutRow: View {
         Button(action: action) {
             HStack(spacing: V.S.gapMS) {
                 Image(systemName: symbol)
-                    .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
                     .font(V.F.icon18)
                     .foregroundStyle(V.C.text2)
                     .frame(width: V.Icon.xl, alignment: .leading)
+                    // 装饰性图标：语义由相邻文字承载（此前这里写了两遍 `accessibilityHidden`）
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: V.S.gapXXS) {
                     Text(title)
