@@ -182,9 +182,14 @@ struct DoorScreen: View {
         }
     }
 
+    /// 门页的电量读数。
+    ///
+    /// 2026-11-01（Round 236）：这里原来**直接读原始 `powerLevel`** 并自己拼 `"\(p)%"` ——
+    /// 而其它四处（设备信息 / 锁设置 / 电池档案 / 电量档案）都走 `BatteryCare.displayPct` + `faceText`。
+    /// 后果：**同一块电量在门页与设备页显示两个数字**（采样与快照谁新谁胜的规则只在 displayPct 里），
+    /// 而且门页会把锁侧粗估档报成精确值（`>80%` 被写成 `87%`）。
     private func batteryWord(_ mac: String) -> String {
-        guard let p = DB.readStatus(mac)?.powerLevel, p >= 0 else { return "--" }
-        return "\(p)%"
+        BatteryCare.faceText(BatteryCare.displayPct(mac, snapshot: DB.readStatus(mac)?.powerLevel ?? -1))
     }
 
     /// 切锁：与记录页同一口径 —— 先清旧投影，再让 AppModel 按 overrideMac 重建。
