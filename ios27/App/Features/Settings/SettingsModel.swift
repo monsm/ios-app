@@ -73,10 +73,16 @@ enum MotionTier: String, CaseIterable, Identifiable {
         }
     }
 
+    /// 开锁成功后的结果动画。
+    ///
+    /// 2026-11-01：这个映射此前**零调用**，而且取值与真正的消费点（`LockKeeperApp` 里那段嵌套三元）
+    /// **已经漂了** —— 这里 standard 给 `.snap`，线上给 `.move`。
+    /// 现在把它对齐到线上实际行为，并让 `LockKeeperApp` 改为调用它：
+    /// 一来映射只有一处，二来消掉了那段「枚举用嵌套三元」的写法（本仓纪律要求用 `switch`）。
     var resultAnimation: Animation? {
         switch self {
         case .calm: return nil
-        case .standard: return V.M.snap
+        case .standard: return V.M.move
         case .lively: return V.M.settle
         }
     }

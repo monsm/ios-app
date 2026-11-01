@@ -66,7 +66,7 @@ enum BatteryCare {
     static func isLow(_ pct: Int) -> Bool { (0...20).contains(pct) }
 
     // ---------- 120 全 App 低电分支 ----------
-    /// 最近一次读到的电量 (当前锁) 内存缓存: 动效令牌 (DesignSystem.Motion) 每次求值都问这里,
+    /// 最近一次读到的电量 (当前锁) 内存缓存: 动效令牌 (`V.M` / `V.Motion`) 每次求值都问这里,
     /// 不能每次都解快照 JSON。sample() 每次读 03 后喂新值; 冷启动首问回源一次统一读数。
     private static let lowCacheLock = Locked((mac: "", low: false))
     /// 120: 当前锁电量 ≤20% (= 低于两成) 时为 true —— 设计令牌据此把全 App 动效压到 calm。

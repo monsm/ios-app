@@ -52,7 +52,7 @@ struct RootView: View {
         // 更大字号整体压回 Large，等于无视 Dynamic Type。只有 App 档开启时才强制 accessibility2。
         .modifier(AXTextSizeModifier(enabled: settings.axBigText))
         // 减弱动态：解锁闸门 → 主界面的切换改成直接出现，而不是淡入
-        .animation(reduceMotion ? nil : (settings.motion == .calm ? nil : (settings.motion == .lively ? V.M.settle : V.M.move)), value: app.unlocked)
+        .animation(reduceMotion ? nil : settings.motion.resultAnimation, value: app.unlocked)
         // 装配：把路由注入 AppModel —— 这是 Engine 唯一能触达界面的出口（EngineHost）。
         // 同时注册到 EngineHostRegistry，供通知回调这类没有视图上下文的路径取用。
         .onAppear {
