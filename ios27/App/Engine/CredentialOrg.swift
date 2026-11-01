@@ -160,7 +160,8 @@ enum CredentialOrg {
         DB.setCodable(a, alertKey(mac, "pwd", p.alias))
     }
 
-    static func addCalendar(id: String, date: Date, title: String, body: String) {
+    /// async：排程必须被 await，否则外层串行队列会在 add 落地前就放行下一个动作。
+    static func addCalendar(id: String, date: Date, title: String, body: String) async {
         guard date > Date() else { return }
         let c = UNMutableNotificationContent()
         c.title = title
@@ -172,10 +173,14 @@ enum CredentialOrg {
         // 2026-10-13 对抗式排查: 原写 `Task { try? await … }` —— 排期失败被静默吞掉,
         // 而界面照样显示"已排程/已设定"。凭证到期预警是这条链唯一的提醒出口, 静默失败
         // 等于"账单说要扣钱但没人扣"。改成 catch 里写 os 日志 (authFail/log 之外唯一可见出口)。
-        Task {
-            do { try await UNUserNotificationCenter.current().add(req) }
-            catch { CredentialOrg.notifyLog.error("凭证通知排期失败 id=\(id, privacy: .public) err=\(String(describing: error), privacy: .public)") }
-        }
+        // 2026-11-01（本轮修复）：这里原来是 `Task { ... }` —— **分离异步、不等待**。
+        // 而外层那条"删旧→排新"的串行队列在 `scheduleAlertsNow` 返回后立刻 `done()`，
+        // 于是 add 还在飞的时候，队列已经放下一个动作（可能是 cancelAlerts 的删除）。
+        // 结果就是第 3 轮想修的竞态**根本没被修掉**：删除可能落在 add 之后，把刚排的提醒删掉；
+        // 也可能 add 落在删除之后，凭证已删而提醒还活着。
+        // 现在改成 async 并让调用方 await —— 队列的 done() 必须等排程**真正落地**。
+        do { try await UNUserNotificationCenter.current().add(req) }
+        catch { CredentialOrg.notifyLog.error("凭证通知排期失败 id=\(id, privacy: .public) err=\(String(describing: error), privacy: .public)") }
     }
     /// App 内 2 小时档: 到期前 2 小时且开了 h2 的条 (设备 Tab Hero 卡下插提醒行)
     /// 359: 提醒行点按要跳最近一条的详情 —— 名单与计数必须同源同一个 filter, 抽出来共用

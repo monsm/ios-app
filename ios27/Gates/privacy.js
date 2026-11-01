@@ -216,6 +216,22 @@ console.log('privacy: 扫 ' + files.length + ' 个 Swift 文件 + PrivacyInfo.xc
   }
 }
 
+
+// 12) 通知排程必须可 await（2026-11-01）。
+// addCalendar 曾经是 sync + 内部 Task{ add }（分离异步），而外层串行队列
+// 在 add 落地前就 done() 了 —— 所谓 删旧→排新 的顺序根本没生效。
+// 现在它必须是 async 并被 await。这条防止它被改回去。
+{
+  const target = 'Engine/CredentialOrg.swift';
+  const f = files.find(function (x) { return x.rel === target; });
+  if (f) {
+    const m = f.raw.match(/static func addCalendar\s*\([^)]*\)\s*(async)?/);
+    if (!m || !m[1]) {
+      const line = m ? f.raw.slice(0, f.raw.indexOf(m[0])).split('\n').length : 1;
+      note(f.rel, line, 'addCalendar 不是 async：通知排程会回到分离异步，串行队列失效', '改成 async 并由调用方 await');
+    }
+  }
+}
 if (fails.length === 0) {
   console.log('privacy: OK — 剪贴板/备份加密/空壳隔离(读+写)/明文口令不进 plist/帧脱敏/WebDAV/文件保护/CSV 注入/隐私清单 XML 10 类回归判据全部通过');
   process.exit(0);

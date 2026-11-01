@@ -102,7 +102,9 @@ extension CredentialOrg {
                 // E-06：只捕获值，在主 actor 里重建动作 —— 删先于加的顺序语义不变。
                 if !stale.isEmpty { c.removePendingNotificationRequests(withIdentifiers: stale) }
                 Task { @MainActor in
-                    scheduleAlertsNow(id: id, p: p, a: a, mac: mac)
+                    // 必须 await 到六条提醒**全部**排进系统，再放行队列的下一个动作。
+                    // 否则下一个动作（取消/重排）可能与这些 add 交错，竞态重现。
+                    await scheduleAlertsNow(id: id, p: p, a: a, mac: mac)
                     done()
                 }
             }
@@ -110,32 +112,34 @@ extension CredentialOrg {
     }
 
     /// 真正排六条提醒（原 scheduleAlerts 的函数体）。
-    private static func scheduleAlertsNow(id: String, p: LedgerPwd, a: CredAlert, mac: String) {
+    /// async：必须 await 到每条提醒**真正排进系统**才返回，
+    /// 否则外层串行队列的 done() 会提前放行下一个动作（删除/取消），竞态重现。
+    private static func scheduleAlertsNow(id: String, p: LedgerPwd, a: CredAlert, mac: String) async {
         // "到期时"不看单档开关: 开了任何一档 = 在意这条凭证的到期, 到点本身最该说话。
         let any = a.day || a.d3 || a.d1 || a.h24 || a.h2
         guard let to = expiryDate(p), any else { return }
         let name = displayPwd(p)
         // 天数档是**日历日** ⇒ 走 WeekCal.shifted; 小时档说的是"还有 N 小时" = 时长。
         // 两种口径在这里不是一回事 (§10.33), 混用会让 -1 天那条在夏令时切换日多/少一小时。
-        func dayTier(_ on: Bool, _ k: Int, _ suf: String, _ tail: String) {
-            if on {
-                addCalendar(id: id + suf, date: WeekCal.shifted(to, days: -k),
-                            title: "密码临期", body: "\(name) 距到期还有 \(k) 天。" + tail)
-            }
+        // 逐条 await：每条**落地**后才排下一条，且整组完成后调用方才会 done()。
+        func dayTier(_ on: Bool, _ k: Int, _ suf: String, _ tail: String) async {
+            guard on else { return }
+            await addCalendar(id: id + suf, date: WeekCal.shifted(to, days: -k),
+                              title: "密码临期", body: "\(name) 距到期还有 \(k) 天。" + tail)
         }
-        dayTier(a.day, 7, ".d7", "记得续期或停用。")
-        dayTier(a.d3, 3, ".d3", "")
-        dayTier(a.d1, 1, ".d1", "明天就失效了。")
+        await dayTier(a.day, 7, ".d7", "记得续期或停用。")
+        await dayTier(a.d3, 3, ".d3", "")
+        await dayTier(a.d1, 1, ".d1", "明天就失效了。")
         if a.h24 {
-            addCalendar(id: id + ".h24", date: to.addingTimeInterval(-86400),
-                        title: "密码临期", body: "\(name) 距到期不足 24 小时。")
+            await addCalendar(id: id + ".h24", date: to.addingTimeInterval(-86400),
+                              title: "密码临期", body: "\(name) 距到期不足 24 小时。")
         }
         if a.h2 {
-            addCalendar(id: id + ".h2", date: to.addingTimeInterval(-7200),
-                        title: "密码临期", body: "\(name) 距到期还有 2 小时。")
+            await addCalendar(id: id + ".h2", date: to.addingTimeInterval(-7200),
+                              title: "密码临期", body: "\(name) 距到期还有 2 小时。")
         }
-        addCalendar(id: id + ".t0", date: to, title: "已到期",
-                    body: "\(name) 到期了， 锁端到这个时刻后不再放行这条凭证。")
+        await addCalendar(id: id + ".t0", date: to, title: "已到期",
+                          body: "\(name) 到期了， 锁端到这个时刻后不再放行这条凭证。")
     }
 
     /// 930 凭证 Tab 角标: 近 7 日内到期的条数。
