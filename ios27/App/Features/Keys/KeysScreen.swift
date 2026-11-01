@@ -13,6 +13,9 @@ struct KeysScreen: View {
     @State internal var now: Int64 = KeysState.now()
     @State private var search = ""
     @State private var groupByOwner = CredentialOrg.groupMode == .owner
+    /// 只为"删除一条搜索历史"这种**不在视图状态里**的改动触发重绘
+    /// （搜索历史存在 UserDefaults，不由任何 @State 承载 —— 与其它页的 `tick` 同一用途）。
+    @State private var tick = 0
 
     private var searchText: String {
         search.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
@@ -373,12 +376,23 @@ struct KeysScreen: View {
                         Text("最近搜索")
                             .font(V.F.unit)
                             .foregroundStyle(V.C.text3)
+                        // `searchHistory()` 读的是 UserDefaults，不由任何 @State 承载 ——
+                        // 删除后视图不会自动重绘。在闭包首行读一次 `tick` 建立依赖（最小侵入）。
                         ForEach(CredentialOrg.searchHistory(), id: \.self) { term in
+                            let _ = tick   // 读取以建立依赖
                             Button { search = term } label: {
                                 VTag(text: term, tint: V.C.text2, filled: false)
                             }
                             .buttonStyle(.plain)
+                            // 长按删除这一条 —— `CredentialOrg.removeSearchHistory` 早在 531 就写好了，
+                            // 一直没有入口（记为「保留未接」）。这里接上，与 DoorScreen 快捷磁贴的
+                            // "轻点执行、长按编辑"同一套手势约定。
+                            .onLongPressGesture(minimumDuration: 0.5) {
+                                CredentialOrg.removeSearchHistory(term)
+                                tick += 1
+                            }
                             .accessibilityLabel("搜索 \(term)")
+                            .accessibilityHint("长按可删除这条搜索记录")
                         }
                     }
                 }
