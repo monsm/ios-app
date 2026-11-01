@@ -404,7 +404,10 @@ enum CredentialOrg {
         return ch
     }
 
-    // ---------- 327 租期重叠检测 ----------
+    // 327 租期重叠检测
+    // 【保留未接 2026-11-01】新建/编辑凭证时提示"与某条已有租期重叠" —— 接线点：
+    // 凭证创建页的时间段字段下方（`excluding` 传当前正在编辑的别名）。
+    // 判为保留未接而非死代码的依据：有需求编号、实现完整（含同归属人过滤与半开区间判定）。
     static func overlapWindows(_ mac: String, from: String, to: String, owner: String?, excluding: Int) -> [LedgerPwd] {
         guard let f = parseLocal(from), let t = parseLocal(to) else { return [] }
         return DB.listPwds(mac).filter { p in
