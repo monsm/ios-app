@@ -6,6 +6,7 @@
 > 快照时间：2026-11-01（第二轮地毯审计结束时）。
 > 轮次报告：`docs/AUDIT-{A..G}-*.md`（首轮四路并审）+ `docs/AUDIT-ROUND-1..85.md`（本段 55 轮增量）。
 > 待接功能清单：`docs/RESERVED.md`。
+> **怎么找缺陷**（方法论与判据）：`docs/AUDIT-METHOD.md`。
 
 ## 1. 覆盖矩阵
 
