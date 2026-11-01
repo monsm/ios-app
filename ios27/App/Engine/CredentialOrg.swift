@@ -41,10 +41,9 @@ enum CredentialOrg {
     }
     static var nowSec: Double { Date().timeIntervalSince1970 }
 
-    /// 2026-10-30 修复（第 85 轮）：原签名是 `quota(_ mac: String)` —— 但 `mac` **完全没用到**。
-    /// 配额键 `kf_ccred_quota` 是**全局单值**（不按锁区分），签名却暗示「每把锁各自的配额」，
-    /// 会让调用方以为换锁会换配额。去掉参数，让签名与事实一致。
-    static func quota() -> Int { DB.store.getInt("kf_ccred_quota", 10) }
+    // 2026-10-30 那次修复把 `quota(_ mac:)` 的假参数去掉了，但**函数本身从来没被调用过**
+    // （全仓零调用点，`kf_ccred_quota` 也没有任何写入方）。2026-11-01：删除。
+    // 留一段说明而不是静默消失 —— 否则下一个人看到备份/文档里提过"配额"会到处找它。
 
     // ---------- 489 修订着色 diff (删除红/新增绿/修改黄, 逐字段对齐) ----------
     struct Diff: Identifiable {

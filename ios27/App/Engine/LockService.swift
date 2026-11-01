@@ -36,6 +36,11 @@ final class LockService: ObservableObject {
         ble.bootstrap()
     }
 
+    /// 打开后 `TX hex=` / `RX hex=` 日志才会产生（`HardwareService` / `LockServiceLink` 同键同判）。
+    /// 注意（2026-11-01 核实）：**本仓当前没有任何 UI 写这个键**，所以诊断页的
+    /// `recentFrames`（原始帧环形缓冲）在正常使用中**恒为空** ——
+    /// 不是"没抓到帧"，而是"根本没记录"。要看原始帧，需外部改 UserDefaults
+    /// （`kf_debug_raw = true`）。这条写在这里，是为了不让人把"空的原始帧列表"误读成"链路没数据"。
     var debugRaw: Bool { DB.store.getBool("kf_debug_raw") }
 
     func log(_ level: String, _ msg: String) {
