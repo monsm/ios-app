@@ -74,6 +74,14 @@ struct AddLockScreen: View {
         .navigationTitle("添加门锁")
         .navigationBarTitleDisplayMode(.inline)
         .task { await scan() }
+        // 配网链必须随页面消失中止：`runChain` 里那两处 `Task.isCancelled` 判定
+        // 此前**永远不会触发**（没有任何地方 cancel 这个任务），而配网会真的改锁端密钥槽。
+        // 界面文案也写着"中途不要离开这一页" —— 既然离开了，就该按"已中止"收尾。
+        .onDisappear {
+            guard pairTask != nil else { return }
+            pairTask?.cancel()
+            pairTask = nil
+        }
         .alert("开始添加这把锁？", isPresented: $askConfirm) {
             Button("取消") { picked = nil }
             Button("开始添加") { startPairing() }
