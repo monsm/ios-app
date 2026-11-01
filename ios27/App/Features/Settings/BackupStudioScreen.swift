@@ -358,16 +358,30 @@ struct BackupStudioScreen: View {
         }
     }
 
+    /// 2026-11-01：原来 `try?` 吞掉删除结果，**无论成功失败都报"已删除"** ——
+    /// 删除失败（文件被占用 / 目录只读）时界面说已删、`reloadFiles()` 之后文件又出现在列表里，
+    /// 用户会以为"删了又自己回来了"。现在按真实结果报。
     private func deleteFile(_ file: BackupFile) {
-        try? FileManager.default.removeItem(at: BackupStudio.dir.appendingPathComponent(file.name))
+        do {
+            try FileManager.default.removeItem(at: BackupStudio.dir.appendingPathComponent(file.name))
+            outcome = "已删除 \(file.name)"
+        } catch {
+            outcome = "删除失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+        }
         reloadFiles()
-        outcome = "已删除 \(file.name)"
     }
 
     private func pruneFiles() {
         let extra = files.dropFirst(max(keepCount, 1))
-        for file in extra { try? FileManager.default.removeItem(at: BackupStudio.dir.appendingPathComponent(file.name)) }
-        if !extra.isEmpty { reloadFiles() }
+        guard !extra.isEmpty else { return }
+        var failed = 0
+        for file in extra {
+            do { try FileManager.default.removeItem(at: BackupStudio.dir.appendingPathComponent(file.name)) }
+            catch { failed += 1 }
+        }
+        reloadFiles()
+        outcome = failed == 0 ? "已清理 \(extra.count) 份旧备份"
+                              : "已清理 \(extra.count - failed) 份，\(failed) 份删除失败"
     }
 
     private static func stamp() -> String {
