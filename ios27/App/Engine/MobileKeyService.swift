@@ -133,10 +133,21 @@ enum MobileKeyService {
     ///   · 本机离线，只能看到**自己发的**（kf_mkey_），所以这里的判据是"本机没发过"。
     ///   · 因此额外用锁端状态帧的 pinInfoBinding（KLV#23，已绑定数）做交叉提示：
     ///     若 binding > 本机已发数，说明有别人的钥匙占着 pin，提示用户去服务端核对。
+    /// 挑一枚还没被占用的 PIN。
+    ///
+    /// 2026-11-01：原来 `taken` 收的是**全部**钥匙（含早已过期的），于是 64 枚用完就永远发不出新的 ——
+    /// 而实际上一把过期钥匙的 ekey 已过 validTo，锁端不会再认，那枚 PIN 完全可以回收。
+    /// 现在：优先未占用的；**池子用尽时**才回收「已过期」那批里最早到期的一枚。
+    /// （永久档 validTo 是 2118，解析出来远大于 now ⇒ 不会被回收；解析不出的按"未过期"处理。）
     static func availablePin(_ kc: Keychain, used: [MobileKey]) -> String? {
         let taken = Set(used.map { $0.pin })
-        for p in kc.pins where !p.isEmpty && !taken.contains(p) { return p }
-        return nil
+        if let free = kc.pins.first(where: { !$0.isEmpty && !taken.contains($0) }) { return free }
+        let now = ZKProtocol.nowProtoSeconds()
+        let reusable = used
+            .filter { !$0.pin.isEmpty }
+            .filter { (ZKCmdBuilder.protoSecOrNil($0.validTo) ?? Int64.max) < now }
+            .sorted { $0.validTo < $1.validTo }
+        return reusable.first?.pin
     }
 
     /// 锁端「已绑定 pin 数」与本机已发数的差额 —— 用来提示"还有别人的钥匙"。

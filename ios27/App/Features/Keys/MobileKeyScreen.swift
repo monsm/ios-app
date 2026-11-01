@@ -46,6 +46,12 @@ struct MobileKeyScreen: View {
         }
     }
 
+    /// 见下方说明：`foreignKeyHint` 此前零调用。拿不到锁状态（没连上）时返回 nil —— 不给无依据的断言。
+    private var foreignHint: String? {
+        guard let kc = app.currentKeychain else { return nil }
+        return MobileKeyService.foreignKeyHint(pinInfoBinding: app.lastStatus?.status.pinInfoBinding ?? 0, kc: kc)
+    }
+
     // MARK: 页头
 
     private var header: some View {
@@ -61,6 +67,12 @@ struct MobileKeyScreen: View {
                     .font(V.F.footnote)
                     .foregroundStyle(V.C.text2)
                 Spacer(minLength: 0)
+            }
+            // 2026-11-01：`MobileKeyService.foreignKeyHint` 早就写好了却**从没被调用过**（全仓仅定义处）——
+            // 它算的是「锁端已绑定 N 个 PIN、本机只记 M 个」的差额，提示差额可能是别人发的钥匙。
+            // 删除钥匙前这条提示很重要（删错别人的钥匙 = 让别人进不了门），接上。
+            if let foreignHint {
+                KeysInlineNote(tone: .attention, text: foreignHint)
             }
         }
         .padding(.horizontal, V.S.pageGutter)
