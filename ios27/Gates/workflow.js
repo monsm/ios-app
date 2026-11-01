@@ -9,6 +9,8 @@
 //   ① 文件里不许有 TAB（YAML 禁止）
 //   ② `run: |` 块内每一行的缩进必须**大于**该 run 键的缩进（裸换行会掉到 0）
 //   ③ 顶层必须只有 name / on / permissions / defaults / jobs 这些已知键
+//   ④ README / 工作流 / 架构 / 完成度 / 覆盖表里声称的**闸门数**必须等于 allgates.js 的真实数量
+//   ⑤ 界面「数字承诺」与它的**代码锚点**必须同时存在（任一侧被改就红，逼人重新核对）
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -101,6 +103,41 @@ for (const f of FILES) {
       const claimed = /^[0-9]+$/.test(raw) ? parseInt(raw, 10) : (CN[raw] || -1);
       if (claimed !== real) {
         findings.push(path.relative(ROOT, file) + ' 声称 ' + raw + ' 道，实际 ' + real + ' 道（与 allgates.js 的 GATES 不一致）');
+      }
+    }
+  }
+}
+
+// ⑤ 界面「数字承诺」与它的**代码锚点**必须同时存在。
+//
+// 这条被 ROUND-188 的事故逼出来：密码闸的说明写着「输对一次后 30 秒内不再重复询问」，
+// 而 `needsGate` 只判 `lastUnlockSuccessAt` —— 文案与判据各写各的，
+// 谁也不知道对方改了，于是承诺静默失效了一整段时间。
+//
+// 本闸门**不判断对错**（那需要人读代码）。它只判断"两边都还在"：
+// 任一侧被改或被删就红，逼人回来把这一对重新对一遍。
+// 加新条目时：把文案里的原句、和真正实现它的那行代码，各截一个**稳定子串**。
+{
+  const PAIRS = [
+    { copy: 'App/Features/Door/TailgateScreen.swift', text: '2–6 秒',
+      code: 'App/Features/Door/TailgateScreen.swift', anchor: 'ForEach(2 ... 6' },
+    { copy: 'App/Features/Door/LinkSense.swift', text: '5 / 15 / 30 / 60 / 90',
+      code: 'App/Features/Door/LinkSense.swift', anchor: '[5, 15, 30, 60, 90]' },
+    { copy: 'App/Features/Door/DeviceInfoScreen.swift', text: '偏差超过 2 秒',
+      code: 'App/Features/Door/DeviceInfoScreen.swift', anchor: 'abs(drift) > 2' },
+    { copy: 'App/Features/Settings/AboutScreen.swift', text: '连点 10 次',
+      code: 'App/Features/Settings/AboutScreen.swift', anchor: 'versionTaps >= 10' },
+    { copy: 'App/Features/Door/UnlockGateScreen.swift', text: '30 秒内不再重复询问',
+      code: 'App/Features/Door/DoorScreen.swift', anchor: 'app.gatePassedAt' },
+  ];
+  for (const p of PAIRS) {
+    for (const side of ['copy', 'code']) {
+      const relPath = p[side];
+      const needle = side === 'copy' ? p.text : p.anchor;
+      const abs = path.join(ROOT, relPath);
+      if (!fs.existsSync(abs)) { findings.push(relPath + " 不存在（承诺对账）"); continue; }
+      if (fs.readFileSync(abs, "utf8").indexOf(needle) < 0) {
+        findings.push(relPath + " 里找不到「" + needle + "」—— 承诺或判据被改过，请重新核对这一对");
       }
     }
   }
