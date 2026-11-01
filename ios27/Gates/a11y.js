@@ -98,6 +98,23 @@ for (const name of ['VRingStack', 'VMiniBars', 'VAreaChart', 'VSegmentedRing']) 
   }
 }
 
+
+// ⑤ DesignLab 生成器不许产出无 alt 的 <img>（D-14）。
+// 设计总览是给人看/给屏幕阅读器读的页面；27 张无 alt 的图在 VoiceOver 下等于 27 个匿名图形。
+{
+  const labDir = path.join(ROOT, 'DesignLab');
+  if (fs.existsSync(labDir)) {
+    for (const name of fs.readdirSync(labDir).filter(function (n) { return n.endsWith('.js'); })) {
+      const src = fs.readFileSync(path.join(labDir, name), 'utf8');
+      const re = /<img(?![^>]*\balt=)[^>]*>/g;
+      let m;
+      while ((m = re.exec(src)) !== null) {
+        const line = src.slice(0, m.index).split('\n').length;
+        findings.push({ file: 'DesignLab/' + name, line: line, why: '<img> 缺 alt（屏幕阅读器只读到匿名图形）' });
+      }
+    }
+  }
+}
 console.log(`a11y: 扫 ${files.length} 个文件`);
 if (findings.length === 0) {
   console.log('a11y: OK — 图标按钮都有 label，无 <44pt 可点区，VListRow value 与图表数据均可朗读');

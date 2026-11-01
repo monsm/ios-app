@@ -21,7 +21,9 @@ const mode='light';
 const cards=[];
 for(const g of groups){
   const imgs=g.ids.filter(id=>fs.existsSync(path.join(SHOTS,id+'.'+mode+'.png')))
-    .map(id=>'<figure><img src="'+path.join('..','shots',id+'.'+mode+'.png').replace(/\\/g,'/')+'"><figcaption>'+id+'</figcaption></figure>').join('');
+    // alt 必须有：设计总览是给人看/给屏幕阅读器读的页面，27 张无 alt 的 img
+    // 在 VoiceOver 下等于 27 个匿名图形（D-14）。标题已含屏名，alt 用「屏名 + 明暗」就够。
+    .map(id=>'<figure><img alt="'+id+' '+mode+' 截图" src="'+path.join('..','shots',id+'.'+mode+'.png').replace(/\\/g,'/')+'"><figcaption>'+id+'</figcaption></figure>').join('');
   cards.push('<section><h2>'+g.title+'</h2><div class="row">'+imgs+'</div></section>');
 }
 const html='<!doctype html><html lang="zh"><head><meta charset="utf-8"><title>ios27 · 设计总览</title><style>'
