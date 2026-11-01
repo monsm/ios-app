@@ -162,6 +162,24 @@ for (const f of files) {
     // 闸门自身出错不该让整条 CI 挂掉 —— 报出来但不计入 findings。
     console.log("  swiftcheck: 快照字段对账跳过（" + (e && e.message ? e.message : e) + "）");
   }
+  // 2026-11-01：**`try?` 丢弃结果 + 紧跟「已…」文案 = 假成功**。
+  //
+  // 这条已经抓到两个真 bug：
+  //   · 备份删除 `try? removeItem` 后无条件写「已删除」（Round 214）
+  //   · 自动校时 `_ = try? syncTime()` 后无条件写「已自动校时」（Round 215）
+  // 形状固定：语句式的 `try?`（结果不要了）后面 4 行内出现一个以「已」开头的字符串。
+  // 排除 `if let x = try? …` / `guard let x = try? …` —— 那种是有意用返回值。
+  {
+    for (let i = 0; i < lines.length; i++) {
+      const s = stripped[i] || "";
+      if (!/^\s*(_\s*=\s*)?try\?\s/.test(s)) continue;
+      const win = lines.slice(i, i + 5).join("\n");
+      if (/"[^"\n]*\u5df2/.test(win)) {
+        console.log(`  ${rel}:${i + 1}  try? 丢弃结果后紧跟「已…」文案 —— 失败也会写成成功`);
+        bad++;
+      }
+    }
+  }
   // 2026-11-01：**不许用文案内容决定状态色**（`tone:` / `tint:` 实参里出现 `.contains(`）。
   // 本仓已三次踩坑：CredentialStudio 的「已」前缀（把"已…失败 N 条"涂绿）、
   // KeyCreate 的前缀猜测、LockStatus 的 `outcome.contains("失败")`（"锁忙，请稍后再试"一个
