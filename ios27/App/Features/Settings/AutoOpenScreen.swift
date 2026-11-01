@@ -141,6 +141,16 @@ struct AutoOpenScreen: View {
                                       systemImage: "dot.radiowaves.left.and.right") {
                             calibrate()
                         }
+                        // 显式清除：标定错了（比如在门内标的）要能回到默认门槛。
+                        // 这与上面失败分支用的是同一个 `clearAutocal` —— 一处清理、两处触发。
+                        if calibrationAt != nil {
+                            VOutlineButton(title: "清除标定（回到默认门槛）", systemImage: "arrow.uturn.backward") {
+                                guard let mac = app.lock?.id else { return }
+                                AutoOpen.clearAutocal(mac)
+                                store.calibrationAt = nil
+                                calibrationError = nil
+                            }
+                        }
                     }
                     // 标定失败要说清楚为什么 —— 否则用户只知道"点了没用"。
                     if let calibrationError {
@@ -202,9 +212,12 @@ struct AutoOpenScreen: View {
                 store.calibrationAt = Int64(Date().timeIntervalSince1970 * 1000)
                 calibrationError = nil
             } else {
+                // 2026-11-01 修复：原来只把**界面状态**置空，`kf_autocal_<mac>` 里的旧门槛仍在生效 ——
+                // 用户看到"未标定"、又看到"标定失败"，但实际用的还是上一次的值（界面与行为不符）。
+                // `clearAutocal` 一直存在且零调用（RESERVED 第 16 条），这正是它该被用的地方。
+                AutoOpen.clearAutocal(mac)
                 store.calibrationAt = nil
-                // 采不到样本 = 没标定成功。别让"未标定"这个状态自己解释自己。
-                calibrationError = "这次只采到 \(samples.count)/5 个信号样本，不足以标定。请站在门外一步的位置、保持手机朝向门锁，再试一次。"
+                calibrationError = "这次只采到 \(samples.count)/5 个信号样本，不足以标定。旧门槛已清除，会回落到默认档；请站在门外一步的位置、保持手机朝向门锁，再试一次。"
             }
         }
     }
