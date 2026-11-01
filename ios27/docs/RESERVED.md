@@ -9,7 +9,6 @@
 > 判据：注释里带 `【保留未接】`。快照 2026-11-01。
 >
 > **编表时我按记忆写符号名，两个写错了**（`weakPasswordHint` / `strictHex` —— 真名是
-> `weakReason` / `strictBytes`）。所以本表以**符号名**为准（能被 grep 验证），行号只作参考。
 >
 > 接线后请从本表删掉该行，并去掉代码里的标记。
 
@@ -19,10 +18,6 @@
 | 2 | `disableMark` / `disableMarkText` | `CredentialOrgState` | 停用原因**读取与回显** | 凭证详情页的停用行 | 中（同 #1） |
 | 3 | `monthDeadlines(_:year:month:)` | `CredentialOrgState` | 月历到期角标 | 凭证页月历视图 | 高（要建月历视图） |
 | 4 | `dayDeadlines(_:_:)` | `CredentialOrgState` | 某天到期凭证列表（#3 配套读侧） | 同上，一起接 | 高（同 #3） |
-| 5 | `weakReason(_:)` | `CredentialOrgState` | 弱口令判据（少于 6 位 / 全同位 / 连续） | 新密码输入时即时提示 | **低**（一行提示，与输入同粒度） |
-| 6 | `batchPrefixNote(_:pwdAliases:fpBatches:prefix:)` | `CredentialOrgBatch` | 批量加同一前缀备注 | 凭证页多选菜单 | 中（要在多选菜单加一项） |
-| 7 | `strictBytes(_:)` | `HexKit` | 严格十六进制解析（坏输入显式失败） | 协议解析路径（现用宽容版 `bytes()`） | **高**（20+ 调用点，换严格版会改变所有路径行为） |
-| 8 | `recentExcerpts(_:_:)` | `MemberHub` | 成员详情「最近记录摘录」 | 成员页空档补位 | 中（要加一个区块） |
 | 10 | `TimeWord.word(_:)` | `RecordSearch` | 自然时段词（清晨 / 上午 / 午间…） | 记录组头与行级小字 | **高**（按小时 vs 按天分组，粒度不匹配） |
 | 11 | `sameTypeCount(mac:type:exceptKey:)` | `RecordSearchBuild` | 同类型记录计数（「本周第 3 次撬锁」） | 记录详情 | **低**（加一行，与行数据同粒度） |
 | 12 | `context(mac:aroundKey:minutes:n:)` | `RecordSearchBuild` | 告警前后 10 分钟同锁记录（前 3 / 后 3） | 记录详情「前后事件」区 | 中（要加一个区块） |
@@ -37,6 +32,27 @@
 > `MemberHub.display`+`unnamedLabel`+`doubleLine`（封闭死簇）、`BatteryCare.facePct`
 > （三个界面都直接用 `displayPct`）。
 
+## ⚠ 2026-11-01 的四次误判（必须记住）
+
+这份清单初版有 **4 条是错的** —— 它们标着 `【保留未接】`，但**界面已经在用**：
+
+| 符号 | 实际调用点 |
+|---|---|
+| `weakReason(_:)` | `KeyCreateParts.swift:192`（新密码弱口令提示） |
+| `strictBytes(_:)` | `ZKProtocol.swift` **7 处**（协议帧解析）+ 5 条测试 |
+| `batchPrefixNote(...)` | `CredentialStudioScreen.swift:491`（批量前缀备注） |
+| `recentExcerpts(_:_:)` | `MemberOpsScreen.swift:282`（成员活跃度摘录） |
+
+**根因**：我是按"注释里写了 `【保留未接】`"就采信的，没有逐个验证调用点。
+而标记本身会**过期** —— 接线的人忘了去掉标记，标记就成了假信息。
+
+### 判据修正（这条最重要）
+
+> **`【保留未接】` 标记只是一个"线索"，不是证据。**
+> 判定一个函数是否真的零调用，**必须 grep 它的名字并逐个看命中处是定义、注释还是真调用**。
+
+这条判据同样适用于别处：本仓所有"注释声称"的东西都要这样验（这正是本段前几十轮在做的事，
+只是这次我自己在文档里犯了同一个错）。
 ## 怎么判定「保留未接」而不是「死代码」
 
 | 特征 | 保留未接 | 死代码 |
