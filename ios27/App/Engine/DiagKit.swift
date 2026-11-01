@@ -19,22 +19,30 @@ import UserNotifications
 
 // ---------- 时间戳辅助 (locale 无关, 台账可比对) ----------
 enum DiagTime {
+    // 2026-11-01：四个格式器原来**在同一行里多次调用 `Date()`** —— 跨秒/跨天那一刻，
+    // 拼出来的时间戳可能是两个瞬间的拼接（例如「23:59:59」里第二次取已到 00:00:00）。
+    // 时间戳乱掉会让"按时间对齐交互流水"这件事失效，正是排查时最忌讳的。
+    // 口径：**一次取，多处用**。
     static func hhmmss() -> String {
         let c = WeekCal.gregorian
-        return String(format: "%02d:%02d:%02d", c.component(.hour, from: Date()), c.component(.minute, from: Date()), c.component(.second, from: Date()))
+        let now = Date()
+        return String(format: "%02d:%02d:%02d", c.component(.hour, from: now), c.component(.minute, from: now), c.component(.second, from: now))
     }
     static func mmddHHmm() -> String {
         let c = WeekCal.gregorian
-        return String(format: "%02d-%02d %02d:%02d", c.component(.month, from: Date()), c.component(.day, from: Date()), c.component(.hour, from: Date()), c.component(.minute, from: Date()))
+        let now = Date()
+        return String(format: "%02d-%02d %02d:%02d", c.component(.month, from: now), c.component(.day, from: now), c.component(.hour, from: now), c.component(.minute, from: now))
     }
     static func mmddHHmmss() -> String {
         let c = WeekCal.gregorian
-        return String(format: "%02d-%02d %02d:%02d:%02d", c.component(.month, from: Date()), c.component(.day, from: Date()), c.component(.hour, from: Date()), c.component(.minute, from: Date()), c.component(.second, from: Date()))
+        let now = Date()
+        return String(format: "%02d-%02d %02d:%02d:%02d", c.component(.month, from: now), c.component(.day, from: now), c.component(.hour, from: now), c.component(.minute, from: now), c.component(.second, from: now))
     }
     /// 纯文本备份 (753 二维码/复制用)
     static func full() -> String {
         let c = WeekCal.gregorian
-        return String(format: "%d-%02d-%02d %02d:%02d", c.component(.year, from: Date()), c.component(.month, from: Date()), c.component(.day, from: Date()), c.component(.hour, from: Date()), c.component(.minute, from: Date()))
+        let now = Date()
+        return String(format: "%d-%02d-%02d %02d:%02d", c.component(.year, from: now), c.component(.month, from: now), c.component(.day, from: now), c.component(.hour, from: now), c.component(.minute, from: now))
     }
 }
 
