@@ -51,6 +51,41 @@ final class BackupRoundTripTests: XCTestCase {
         XCTAssertFalse(BackupCanonical.exportText(b).isEmpty)
     }
 
+    /// 新加的两族（成员档案 / 到期提醒档位）必须真的**出现在导出文本里**。
+    /// 判据不是"结构体有这个字段"，而是"canonical 会 emit 它" ——
+    /// 本仓的导出文本由 `BackupCanonical.canonical` 逐字段构造，
+    /// 字段存在但白名单没列 ⇒ 导出文本里没有 ⇒ 换机全丢，且**不报错**。
+    func testNewFamiliesReachTheExportedText() throws {
+        var b = sampleBundle()
+        var ext = MemberExt()
+        ext.role = "guest"
+        ext.remark = "小张"
+        ext.archived = true
+        // 用"先建后赋值"而不是全参构造：成员逐一构造要求传齐所有字段，
+        // 且实参顺序必须与声明一致 —— 测试里那样写会脆得没法维护。
+        var g = b.globals ?? BackupBundle.Globals(keychainDongles: nil, gatewayList: nil,
+                                                 memberExt: nil, passcode: nil, duress: nil,
+                                                 trace: nil, appearance: nil, deviceOrg: nil)
+        g.memberExt = ["m1": ext]
+        b.globals = g
+        let text = BackupCanonical.exportText(b)
+        XCTAssertTrue(text.contains("memberExt"), "成员档案没进导出文本（canonical 白名单漏了）")
+        XCTAssertTrue(text.contains("小张"), "备注名没进导出文本")
+        XCTAssertTrue(text.contains("guest"), "角色没进导出文本")
+
+        // 提醒档位走 Device.Meta
+        var alert = CredAlert()
+        alert.h2 = true
+        let meta = BackupBundle.Device.Meta(defend: nil, tailgate: nil, synctime: nil,
+                                           otpStatus: nil, otpIdx: nil, mobileKeys: nil,
+                                           recNotes: nil, recFlags: nil, recDisps: nil,
+                                           alerts: ["pwd:1": alert])
+        let dev = BackupBundle.Device(mac: mac, kc: b.devices[0].kc, ledger: nil, meta: meta)
+        b.devices = [dev]
+        let text2 = BackupCanonical.exportText(b)
+        XCTAssertTrue(text2.contains("alerts"), "提醒档位没进导出文本（canonical 白名单漏了）")
+    }
+
     /// 导出 → 解析 → 恢复：凭证条数与内容必须回来。
     func testRestoreBringsBackCredentials() throws {
         let text = BackupCanonical.exportText(sampleBundle())
