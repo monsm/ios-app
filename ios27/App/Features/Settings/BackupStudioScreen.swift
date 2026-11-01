@@ -400,8 +400,13 @@ struct BackupStudioScreen: View {
         DB.store.set("kf_bk_dav_url", davURL.trimmingCharacters(in: .whitespaces))
         DB.store.set("kf_bk_dav_user", davUser)
         DB.store.set("kf_bk_dav_path", davPath.isEmpty ? "zklock-backup.json" : davPath)
-        _ = SecretStore.set(davPassword, for: "backup.webdav.password")
-        davState = "成功：WebDAV 配置已保存"
+        // 2026-11-01（Round 257）：`SecretStore.set` 返回 Bool（钥匙串写入成功与否），
+        // 原来用 `_ =` 把它丢掉，紧接着**无条件**报「配置已保存」—— 钥匙串写失败时密码其实没存下来，
+        // 用户下次上传会以"没有密码"的形态失败，而界面一直说已保存。
+        let pwOK = SecretStore.set(davPassword, for: "backup.webdav.password")
+        davState = pwOK
+            ? "成功：WebDAV 配置已保存"
+            : "配置已保存，但应用密码没能写进钥匙串 —— 请重试；若一直失败，检查系统钥匙串是否可用"
     }
 
     private func testDav() async {
