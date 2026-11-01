@@ -169,8 +169,6 @@ enum V {
                          : dual(0xFFFFFF, 0x202020, lightAlpha: 0.72, darkAlpha: 0.72)
         }
         static let tabEdge = dual(0x4A5057, 0x7896A0, lightAlpha: 0.28, darkAlpha: 0.35)
-        static let tabPill = dual(0xFFFFFF, 0x000000, lightAlpha: 0.92, darkAlpha: 0.82)
-        static let tabPillEdge = dual(0x000000, 0xFFFFFF, lightAlpha: 0.10, darkAlpha: 0.14)
 
         static let pink = dual(0xC81E4A, 0xFF6A7A)   // 参考 C 三环粉（深色提亮到 4.5:1）
         static let green = rgb(193, 248, 100)    // #C1F864 参考 C 三环绿
@@ -272,7 +270,6 @@ enum V {
         static let number26 = sans(26, weight: .medium, relativeTo: .title)       // 读数 26
         static let number30 = sans(30, weight: .medium, relativeTo: .title)       // 读数 30
         static let tab = sans(11, weight: .semibold, relativeTo: .caption2)       // Tab 标签 11/600
-        static let tabIcon = sans(20, relativeTo: .title3)                        // Tab 图标 20
         static let chevron = sans(13, weight: .semibold, relativeTo: .footnote)
         static let pageLead = sans(17, relativeTo: .body)                         // 参考 B/C 页导语 17
         static let cardHeader = sans(11, weight: .medium, relativeTo: .caption)   // 参考 B 卡头 11/500
@@ -388,8 +385,6 @@ enum V {
         static let chip: CGFloat = 14
         static var card: CGFloat { 27 * factor }
         static var mini: CGFloat { 16 * factor }
-        static let tab: CGFloat = 28.5
-        static let tabSelected: CGFloat = 24.5
         static var action: CGFloat { 14 * factor }
         static var panel: CGFloat { 20 * factor }
         static var inset: CGFloat { 16 * factor }
@@ -542,20 +537,6 @@ enum V {
         static let dash: [CGFloat] = [1, 2.6]
         static let plotWidth: CGFloat = 282.4
         static let axisLabelGap: CGFloat = 4
-    }
-
-    // MARK: - 浮动标签栏（TOKENS.md）
-    enum Tab {
-        static let width: CGFloat = 268
-        static let height: CGFloat = 57
-        static let radius: CGFloat = 28.5
-        static let bottom: CGFloat = 19.7
-        /// TOKENS.md：选中黑胶囊 60×49。
-        static let selectedW: CGFloat = 60
-        static let selectedH: CGFloat = 49
-        static let iconSize: CGFloat = 20
-        static let labelGap: CGFloat = 2
-        static let contentInset: CGFloat = 92
     }
 
     // MARK: - 列表行（设置 / 快捷入口）

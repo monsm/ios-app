@@ -85,7 +85,6 @@ struct RecordsStudioScreen: View {
                 hexCard
             }
             .padding(.top, V.Page.topSpace)
-            .padding(.bottom, V.Tab.contentInset)
         }
         .background(V.C.bg.ignoresSafeArea())
         .navigationTitle("记录工作室")

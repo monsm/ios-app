@@ -38,7 +38,6 @@ struct ZotpScreen: View {
                 }
             }
             .padding(.top, V.Page.topSpace)
-            .padding(.bottom, V.Tab.contentInset)
         }
         .background(V.C.bg.ignoresSafeArea())
         .navigationTitle("动态密码")

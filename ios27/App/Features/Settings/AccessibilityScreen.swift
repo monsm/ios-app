@@ -52,7 +52,6 @@ struct AccessibilityScreen: View {
                 previewCard
             }
             .padding(.top, V.Page.topSpace)
-            .padding(.bottom, V.Tab.contentInset)
         }
         .background(V.C.bg.ignoresSafeArea())
         .onAppear { syncFromStore() }   // E-13：从持久层重新同步，避免与外观页/重置动作不一致

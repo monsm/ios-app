@@ -665,7 +665,6 @@ struct DeleteDeviceSheet: View {
                     }
                 }
                 .padding(V.S.pageGutterC)
-                .padding(.bottom, V.Tab.contentInset)
             }
             .background(V.C.bg.ignoresSafeArea())
             .navigationTitle("删除设备")

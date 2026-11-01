@@ -8,7 +8,7 @@
 //   ③ iOS 26 起 `glassEffect` 是**真液态玻璃**：它采样背后的内容做折射与高光；
 //      而 `.ultraThinMaterial` 只是模糊。两者不是同一件事，前者才是"原生化"。
 //
-// 用法：`VGlassSurface(cornerRadius: V.R.tab) { 内容 }`，需要染色时传 `tint:`。
+// 用法：`VGlassSurface(cornerRadius: V.R.action) { 内容 }`，需要染色时传 `tint:`。
 import SwiftUI
 
 struct VGlassSurface<Content: View>: View {

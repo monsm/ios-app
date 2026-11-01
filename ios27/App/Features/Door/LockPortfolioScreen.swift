@@ -37,7 +37,6 @@ struct LockPortfolioScreen: View {
                 }
             }
             .padding(.top, V.Page.topSpace)
-            .padding(.bottom, V.Tab.contentInset)
         }
         .background(V.C.bg.ignoresSafeArea())
         .navigationTitle("全部锁")

@@ -74,7 +74,6 @@ struct TailgateScreen: View {
                 .padding(.horizontal, V.S.cardGutter)
             }
             .padding(.top, V.Page.topSpace)
-            .padding(.bottom, V.Tab.contentInset)
         }
         .background(V.C.bg.ignoresSafeArea())
         .navigationTitle("防尾随")

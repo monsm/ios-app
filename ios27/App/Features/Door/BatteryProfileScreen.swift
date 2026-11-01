@@ -35,7 +35,6 @@ struct BatteryProfileScreen: View {
                 }
             }
             .padding(.top, V.Page.topSpace)
-            .padding(.bottom, V.Tab.contentInset)
         }
         .background(V.C.bg.ignoresSafeArea())
         .navigationTitle("电池档案")
