@@ -53,28 +53,47 @@
 
 ## 三、验证：怎么证明它真的不一样
 
-### 3.1 十一一道机器闸门（本地可跑，CI 同款）
+### 3.1 二十道机器闸门（本地可跑，CI 同款）
+
+> 下面是**某一时刻的快照**（2026-11-01）。数字会随代码变动 ——
+> **以 `node Gates/allgates.js` 的实际输出为准**，不要把这里的数值当作当前值引用
+> （把旧快照当当前状态，正是 AUDIT-G 里 G-05 记的那类问题）。
 
 ```
-swiftparse  OK — 113 文件语法树无 ERROR（tree-sitter-swift 真解析）
-types       OK — 249 顶层类型无重复声明，Engine 无未解析类型引用
-swiftcheck  OK — 113 文件括号/字符串/注释平衡
-tokens      OK — 113 文件，0 处硬编码颜色/间距/圆角/字号
-contrast    OK — 48 条 WCAG 断言（明暗各一套）
-glass       OK — 内容层 0 处玻璃；同屏 ≤2
-motion      OK — 全部 .animation 带 value，无裸时长
-a11y        OK — 图标按钮有 label，无 <44pt 可点区
-callsig     OK — 全部组件调用实参顺序符合声明
-lineage     OK — 0 处上一版设计系统残留（18 个旧符号）
-destmap     OK — 26 个 Dest ↔ 26 个 View 一一对应
+swiftparse: OK — 148 个 Swift 文件无语法错误（已知语法盲区豁免 14 处）
+types: 148 个文件，368 个顶层类型，SDK 白名单 335 项
+swiftcheck: OK — 156 个文件括号/字符串/注释全部平衡，无裸控制字符
+tokens: OK — 148 个 Swift 文件，0 处硬编码样式字面量（含 V7 字号/色板）
+contrast: 解析到 11 个旧色令牌 × 2 模式 + 54 个 V7 色令牌
+glass: 扫 148 个文件，自定义玻璃面 0 处
+motion: 扫 148 个文件，.animation 调用 13 处
+a11y: 扫 148 个文件
+dynamictype: 148 个文件，805 处走令牌字号（其中 V7 805 处经 VFont/@ScaledMetric）
+reducedmotion: 21 处已守卫
+crosprivate: 检查 7 组 Screen+Parts 拆分
+callsig2: 148 个文件，1076 个 func，267 个构造签名，检查 2091 处调用
+lineage: OK — 148 个文件，0 处上一版设计系统残留
+workflow: 检查 1 个文件
+destmap: Dest 44 项，映射 44 项，已声明 View 149 个
+privacy: 扫 148 个 Swift 文件 + PrivacyInfo.xcprivacy
+tests: 8 个测试文件，266 条断言
+feedback: OK — 用户动作里的 try? await 都有错误通道
+settings: OK - 30 settings all have a direct consumer
+
+allgates: 全部 20 道闸门通过
 ```
 
-**每道闸门都做过正控**（故意注入缺陷，确认它会红）：
+**每道闸门都有正控**（故意注入缺陷确认会红，**并确认修好后会转绿**）。
+完整清单与判据见 `docs/ARCHITECTURE.md` §5；这里只列关键几例：
+
 - `swiftparse`：少一个右括号 → 红
 - `types`：同一类型声明两次 → 红
 - `contrast`：单位小字 3.22:1 → 红（据此把 inkFaint 从 #8A9098 改到 #61676E）
-- `callsig`：`Reading(tint:value:size:)` 顺序错 → 红
-- `a11y`：图标按钮无 label → 红
+- `callsig2`：调用实参顺序错 → 红
+- `a11y`：图标按钮无 label → 红；`DesignLab` 的 `<img>` 去掉 alt → 红
+- `privacy`：备份校验和改成硬拒绝 → 红；`addCalendar` 改回同步 → 红
+- `modal`：对话框里直接置 sheet 布尔 → 红
+- `workflow`：把闸门数写错 → 红
 
 ### 3.2 在这一轮里被闸门抓到的**真实编译阻塞**（全部已修）
 
