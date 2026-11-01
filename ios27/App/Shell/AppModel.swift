@@ -397,7 +397,14 @@ final class AppModel {
         lastError = nil
         do {
             try await LockService.shared.ensureConnected(mac: mac)
-            var startIdx: UInt32 = 0
+            // 2026-11-01 修复（第 203 轮三方对比）：**翻页方向原来是反的。**
+            // vendor（`main.js` 的 getLog）是：`getLog(0, startIdx = 0xFFFFFFFF)`，
+            // 收到一页后取**页内最后一条**的 idx，下一页 `startIdx = idx - 1` —— **从最新往回读**。
+            // 本仓此前从 `0` 开始、`last.idxRaw + 1` **递增**（从最旧往前读）。
+            // `orderType=0` 语义是"从 startIdx 往回"，所以从 0 开始只会读到 idx=0 那一条，
+            // 然后每页都在原地打转 ⇒ 用户看到"读取成功"但几乎没有记录。
+            // 本仓自己的金标 `GoldenDiffTests:87` 用的就是 0xFFFFFFFF，也只有这个方向对得上。
+            var startIdx: UInt32 = 0xFFFF_FFFF
             var collected: [LogEntry] = []
             var lastSurplus: Int?
             var pagesRead = 0
@@ -408,8 +415,12 @@ final class AppModel {
                 if let s = page.surplus { lastSurplus = s }
                 if page.logs.isEmpty { break }
                 collected.append(contentsOf: page.logs)
+                // vendor 同款：`surplus > 0 && logCount < 100` 才继续 —— surplus 为 0 表示已经到底。
+                if let s = page.surplus, s <= 0 { break }
                 if page.logs.count < 5 { break }
-                if let last = page.logs.last { startIdx = last.idxRaw &+ 1 }
+                // 往回退：末条 idx - 1（idx 是 32 位，先判 0 防下溢）
+                guard let last = page.logs.last, last.idxRaw > 0 else { break }
+                startIdx = last.idxRaw - 1
             }
             // **只在读满 20 页（可能被截断）时才报剩余数。**
             // 原因：不同固件对 KLV#04 的语义可能是"剩余"也可能是"总数"，
