@@ -132,6 +132,15 @@ for (const f of files) {
     console.log(`  ${rel}  用了断言（assert / assertionFailure / precondition）—— 本仓一律用防御式 guard`);
     bad++;
   }
+  // 2026-11-01：**不许用文案内容决定状态色**（`tone:` / `tint:` 实参里出现 `.contains(`）。
+  // 本仓已三次踩坑：CredentialStudio 的「已」前缀（把"已…失败 N 条"涂绿）、
+  // KeyCreate 的前缀猜测、LockStatus 的 `outcome.contains("失败")`（"锁忙，请稍后再试"一个
+  // 关键字都没有 ⇒ 绿点）。规则：颜色必须来自**显式的成败标志**，不来自消息文本。
+  // 注释里提到没关系 —— 只查代码行（`code` 已剥注释）。
+  if (/\b(tone|tint)\s*:[^,)]*\.contains\(/.test(code)) {
+    console.log(`  ${rel}  tone/tint 实参里用了 .contains(...) —— 文案猜颜色（失败文案不一定含关键字）`);
+    bad++;
+  }
   // 2026-11-01：不许用"固定 365 天"近似年。
   // 100 年里有 24–25 个闰日 ⇒ `N * 365 * 86400` 会差近一个月。
   // `WeekCal.shifted` 的注释已经写过这条纪律（"别用 `addingTimeInterval` 数日历日"），
