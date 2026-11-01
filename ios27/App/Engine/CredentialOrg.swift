@@ -233,8 +233,14 @@ enum CredentialOrg {
         via = try c.decodeIfPresent(String.self, forKey: .via) ?? ""
     }
     }
-    /// 2026-10-27 七轮：`kf_cdisrea_` 停用便签**保留** —— 它是停用功能的一部分，
-    /// 不是死键（disableMark / disableMarks / setDisableMark 三处都在用）。
+    // 2026-11-01 核实：上面这条注释说「不是死键（disableMark / disableMarks / setDisableMark 三处都在用）」——
+    // **这三个名字有两个根本不存在**（`disableMarks` / `setDisableMark` 全仓零命中），
+    // 而真实存在的 `markDisabled`（写）与 `disableMark` / `disableMarkText`（读）**也全是零调用**。
+    // 也就是说：整条「停用原因回溯」链目前是死的 —— 没有任何路径会写它，也没有任何界面读它。
+    //
+    // 为什么不删：它与旁边 `monthDeadlines` 等一样标着「保留未接（用户 B1 未选）」——
+    // 是**有意保留待接**的功能，不是遗忘的死代码。删掉会把将来要接的东西一起删了。
+    // 但注释必须改成实话：现在写的是"三处都在用"，下一个人会据此以为它已被接上。
     static func disReasonKey(_ mac: String) -> String { "kf_cdisrea_" + mac }
     static func markDisabled(_ mac: String, kind: String, keys: [Int], label: String, via: String) {
         guard !keys.isEmpty else { return }
