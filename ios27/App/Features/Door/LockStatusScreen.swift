@@ -85,11 +85,20 @@ struct LockStatusScreen: View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
                 VSectionLabel(text: "运行状态", trailing: "cmd03")
+                // 2026-11-01 修复：`battery == -1` 是「未读到」（`AppModel:116` 的 `?? -1`），
+                // 而旧写法直接渲染成「-1 %」并涂警告色 —— 与上一轮修的 `signal` 是同一类：
+                // **恒定的占位值被当真值渲染**。用户看到「-1 %」只会困惑，不会知道"没读到"。
+                // `signal` 侧的 0 已由 `LinkSenseModel.level` 的「不可测」语义覆盖（`levelWord` 有这个词），
+                // 这里同样按「未知」渲染而不是显示数字。
                 VReadingGrid(items: [
-                    .init(label: "电量", value: "\(lock.battery)", unit: "%",
-                          tint: lock.battery <= 20 ? V.C.warning : V.C.text1),
-                    .init(label: "信号", value: "\(lock.signal)", unit: "/ 4",
-                          tint: lock.signal <= 1 ? V.C.warning : V.C.text1),
+                    .init(label: "电量",
+                          value: lock.battery < 0 ? "未知" : "\(lock.battery)",
+                          unit: lock.battery < 0 ? nil : "%",
+                          tint: lock.battery >= 0 && lock.battery <= 20 ? V.C.warning : V.C.text1),
+                    .init(label: "信号",
+                          value: lock.signal <= 0 ? "未测" : "\(lock.signal)",
+                          unit: lock.signal <= 0 ? nil : "/ 4",
+                          tint: lock.signal == 1 ? V.C.warning : V.C.text1),
                     .init(label: "凭证", value: "\(lock.keyCount)", unit: "枚"),
                     .init(label: "固件", value: lock.firmware),
                 ], columns: 2)
