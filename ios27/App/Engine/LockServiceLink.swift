@@ -36,14 +36,32 @@ extension LockService {
     /// 那张 300 条的环形表从来没被写过，读端 `BleTelemetry.attempts` 也没人用。
     /// 而"BLE 连不上 / 超时 / 缓存 deviceId 失效"正是开锁失败最常见的原因，
     /// 没有这份记录就只能靠用户口述。
+    /// **同一把锁的连接单飞**：并发调用共享同一个 in-flight 任务。
+    ///
+    /// 2026-11-01（真机日志驱动）：日志开头连着两组
+    /// 「缓存 deviceId 直连失败（连接已取消）/（连接已断开）」—— 说明**预热与开锁两条路径
+    /// 同时在建连接**，而后进入 `ensureConnectedInner` 的那个会先 `disconnect()` 掉
+    /// 前一个正在建立的连接，于是两边都白跑一趟、多花 2–3 秒才靠扫描解析连上。
+    /// 现在同 mac 的并发调用只建一次，后来者直接等同一个 Task。
+    private var connecting: (mac: String, task: Task<Void, Error>)?
+
     func ensureConnected(mac: String) async throws {
         let m = mac.lowercased()
         let alreadyConnected = (connectedMAC == m && ble.connectedPeripheralId == connectedDeviceId && !connectedDeviceId.isEmpty)
+        // 已经有人在连这把锁 → 等它，别再拆一次。
+        if let c = connecting, c.mac == m {
+            try await c.task.value
+            return
+        }
+        let task = Task { [self] in try await ensureConnectedInner(mac: m) }
+        connecting = (m, task)
         do {
-            try await ensureConnectedInner(mac: m)
+            try await task.value
+            if connecting?.mac == m { connecting = nil }
             // 本来就连着的不算一次"尝试"，不记（否则每次命令都会刷一条）。
             if !alreadyConnected { BleTelemetry.recordAttempt(mac: m, ok: true, reason: "已连接") }
         } catch {
+            if connecting?.mac == m { connecting = nil }
             BleTelemetry.recordAttempt(mac: m, ok: false, reason: error.localizedDescription)
             throw error
         }
