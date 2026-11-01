@@ -18,7 +18,7 @@
 | **BLE 链路** | `BLEService` `BLEDelegates` `LockService*` `HardwareService` `DFUKit` | 帧归属路由（两服务共用连接）· 重连/恢复标识 · DFU 包校验与降级闸 · 写命令不重发 · 超时与陈旧定时器 | ROUND-3/6/16（SEC-15/G-12/D-23） | ✅ 静态已查；**真机未验** |
 | **设计系统** | `V7Tokens` `V7Components` `V7Extras` + 130 余个界面文件 | 浅色/深色双取值 · 对比度 · Dynamic Type · 减少动态 · 触达 44pt · 装饰图标 · 假 chevron · 死令牌 24 个 · 密度三档 · 圆角三档 | ROUND-1（AUDIT-D）+ ROUND-7/12/13/14/15/16 | ✅ 已查（数值层）；**观感未验** |
 | **安全与权限** | `SecretStore` `CryptoBox` `AppLock` `LockKeeperApp`（深链）`QuickActions` | Keychain 生命周期 · 空壳/胁迫码 · 失败计数持久化 · 深链切换确认 · 剪贴板 · 帧脱敏 · CSV/vCard 注入 · 备份明文 · 隐私清单 | AUDIT-F（SEC-01..32）+ ROUND-8/10/11/24/26 | ✅ 已查 |
-| **交付与 CI** | `.github/workflows/ios27.yml` `Gates/*` `docs/*` | 21 道闸门 · 正控 · CI 逐步骤证据（`build_ok`/`archive_ok`/`test_ok`）· 金标在 CI 真跑 · 文档闸门数对账（4 个文件） | ROUND-2/4/19/25/26 | ✅ 已查 |
+| **交付与 CI** | `.github/workflows/ios27.yml` `Gates/*` `docs/*` | 22 道闸门 · 正控 · CI 逐步骤证据（`build_ok`/`archive_ok`/`test_ok`）· 金标在 CI 真跑 · 文档闸门数对账（4 个文件） | ROUND-2/4/19/25/26 | ✅ 已查 |
 
 
 ### 1.1 第二轮地毯审计新增的**缺陷类别**（ROUND-31..85）
@@ -50,14 +50,14 @@
 ## 2. 自动化保证（当前）
 
 ```
-本地：node Gates/allgates.js  -> 21 道闸门全部通过
+本地：node Gates/allgates.js  -> 22 道闸门全部通过
       其中 privacy 已扩到 21 条判据（第 13–21 条是本段新增）
       a11y 新增第 ⑥ 条（下限令牌不得当固定尺寸）
 测试：8 个测试文件 / 317 条断言（金标 + 安全回归 + 并发 + 时基 + 备份往返 + 格式化一致性）
 CI  ：build（xcode-27，BUILD + ARCHIVE + errors=0）· golden（iOS 27 模拟器真跑，72+ tests / 0 失败）
 ```
 
-注意：闸门数现为 **21**（第 21 道 `reserved` 是新增的闸门文件）；`privacy` / `a11y` 则是在已有闸门里加判据。
+注意：闸门数现为 **22**（第 21 道 `reserved` 是新增的闸门文件）；`privacy` / `a11y` 则是在已有闸门里加判据。
 闸门数对账由 `Gates/workflow.js` 盯着 6 个文档。
 
 ## 3. 明确**没有**覆盖的部分（不要当成已验证）
@@ -76,4 +76,4 @@ CI  ：build（xcode-27，BUILD + ARCHIVE + errors=0）· golden（iOS 27 模拟
 
 - 想改某个子系统 → 先看它那一行的报告，那里写着**为什么这么做**（很多决定与反例都在注释里）；
 - 想判断"能不能发" → 看 §3；那里列的是**没验的**，不是"应该没问题"；
-- 想加新闸门 → 看 `docs/ARCHITECTURE.md` §5 的 21 道判据与正控清单，新闸门必须自己先做正控。
+- 想加新闸门 → 看 `docs/ARCHITECTURE.md` §5 的 22 道判据与正控清单，新闸门必须自己先做正控。
