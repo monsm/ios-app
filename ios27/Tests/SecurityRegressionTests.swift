@@ -381,6 +381,38 @@ final class SecurityRegressionTests: XCTestCase {
         SecretStore.remove(MobileKeyService.ekeyAccount(mac, "k1"))
     }
 
+    // MARK: - 到期提醒名单的口径
+
+    /// `dueSoonPwds` 的窗口是 [now-1h, now+2h]，**包含已过期 1 小时内**的条目；
+    /// 且列表必须按"离现在最近"排序 —— 门页横幅要说「最近一条 #alias」。
+    /// 旧实现直接返回台账顺序（按别名），那句话是假的。
+    func testDueSoonWindowAndNearestOrdering() {
+        let mac = "aabbccddeeff"
+        let df = DF.stamp
+        let now = Date()
+        let soonStr = df.string(from: now.addingTimeInterval(10 * 60))    // +10 分钟
+        let expiredStr = df.string(from: now.addingTimeInterval(-30 * 60)) // -30 分钟（窗口内）
+        let farStr = df.string(from: now.addingTimeInterval(5 * 3600))     // +5 小时（窗口外）
+
+        var l = Ledger()
+        l.pwds = [
+            LedgerPwd(alias: 1, from: "2026-01-01 00:00:00", to: expiredStr, temp: false, at: 0, pwd: nil, owner: nil, note: "已过期"),
+            LedgerPwd(alias: 2, from: "2026-01-01 00:00:00", to: soonStr, temp: false, at: 0, pwd: nil, owner: nil, note: "将到期"),
+            LedgerPwd(alias: 3, from: "2026-01-01 00:00:00", to: farStr, temp: false, at: 0, pwd: nil, owner: nil, note: "窗口外"),
+        ]
+        DB.saveLedger(mac, l)
+        var a = CredAlert()
+        a.h2 = true
+        for p in l.pwds { CredentialOrg.saveAlert(mac, p, a) }
+
+        let due = CredentialOrg.dueSoonPwds(mac)
+        XCTAssertEqual(due.count, 2, "窗口应含已过期 30 分钟与将到期 10 分钟，不含 5 小时后那条")
+        XCTAssertEqual(due.first?.alias, 2, "按离现在最近排序，+10 分钟那条应排第一")
+
+        // 清理
+        DB.saveLedger(mac, Ledger())
+    }
+
     // MARK: - 备份：类型/规模闸（SEC-30）
 
     func testBackupImportRejectsForeignAndOversizedPayloads() throws {

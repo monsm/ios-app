@@ -189,13 +189,16 @@ enum CredentialOrg {
     static func dueSoonPwds(_ mac: String) -> [LedgerPwd] {
         let soon = nowSec + 2 * 3600
         let alerts = alertTable(mac)
-        return DB.listPwds(mac).filter { p in
-            if let to = expiryDate(p) {
-                let a = alerts["pwd:" + String(p.alias)] ?? CredAlert()
-                return a.h2 && to.timeIntervalSince1970 <= soon && to.timeIntervalSince1970 >= nowSec - 3600
-            }
-            return false
-        }
+        // 按"离现在最近"（|到期时刻 − 现在| 升序）返回 —— 调用方（门页横幅）要说"最近一条 #alias"。
+        // `DB.listPwds` 是台账顺序（按别名），不是时间顺序；不排序那句话就是假的。
+        // 用绝对距离而不是"最早到期"：窗口里同时可能含已过期与将到期的条目，
+        // "最近"在两种情况下都应是离此刻最近的那条。
+        return DB.listPwds(mac).compactMap { p -> (LedgerPwd, Date)? in
+            guard let to = expiryDate(p) else { return nil }
+            let a = alerts["pwd:" + String(p.alias)] ?? CredAlert()
+            guard a.h2, to.timeIntervalSince1970 <= soon, to.timeIntervalSince1970 >= nowSec - 3600 else { return nil }
+            return (p, to)
+        }.sorted { abs($0.1.timeIntervalSince1970 - nowSec) < abs($1.1.timeIntervalSince1970 - nowSec) }.map { $0.0 }
     }
 
     // ---------- 358/505 整理建议中心 ----------

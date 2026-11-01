@@ -264,7 +264,16 @@ struct DoorScreen: View {
         }
         let due = CredentialOrg.dueSoonPwds(mac)
         if !due.isEmpty {
-            out.append(("有 \(due.count) 条凭证将在 2 小时内到期（最近一条 #\(due[0].alias)）— 需要续期请到凭证页", "clock.badge.exclamationmark.fill", .attention))
+            // 这个名单的窗口是 [now-1h, now+2h] —— **包含已过期 1 小时内**的条目。
+            // 旧文案一律写"将在 2 小时内到期"，对已经过期的那几条是**假的**：
+            // 它们早就不放行了，用户按"还有 2 小时"去安排会误事。
+            // 这里按最近一条（`due[0]`，按到期时间排序）判断该说"已过期"还是"将到期"。
+            let nearest = CredentialOrg.expiryDate(due[0])?.timeIntervalSince1970 ?? 0
+            let expired = nearest < Date().timeIntervalSince1970
+            let text = expired
+                ? "有 \(due.count) 条凭证已过期（最近一条 #\(due[0].alias)）— 锁端已不再放行，请到凭证页处理"
+                : "有 \(due.count) 条凭证将在 2 小时内到期（最近一条 #\(due[0].alias)）— 需要续期请到凭证页"
+            out.append((text, "clock.badge.exclamationmark.fill", .attention))
         }
         return out
     }
