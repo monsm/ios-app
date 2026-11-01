@@ -74,7 +74,13 @@ extension CredentialOrg {
     ///   · 外层 `job` —— 它被存进 `notifyQueue` 并在 `Task { @MainActor in … }` 里被调用。
     /// 只标内层会得到一条新告警 `passing non-Sendable parameter 'job'`（我上一轮就只标了内层，
     /// CI 从 6 条降到 1 条而不是 0 条，正是这条）。
-    static func enqueue(_ job: @escaping @Sendable (@escaping @Sendable () -> Void) -> Void) {
+    ///
+    /// 签名里**只有最外层一个 `@escaping`**：它标"这个参数会逃逸"。
+    /// 内层 `(@escaping @Sendable () -> Void)` 是**非法**的 —— `@escaping` 只能标参数本身，
+    /// 不能标"参数类型里的嵌套函数类型"（CI `32736b9` 报的就是这个：
+    /// `converting non-escaping parameter 'job' to generic parameter 'Element' may allow it to escape`，
+    /// 因为内层非法属性让整个参数类型没被正确当成逃逸）。
+    static func enqueue(_ job: @escaping @Sendable (@Sendable () -> Void) -> Void) {
         let start: Bool = notifyQueue.withLock { q in
             q.append(job)
             return !notifyBusy.withLock { b in
