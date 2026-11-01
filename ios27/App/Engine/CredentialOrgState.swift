@@ -93,6 +93,46 @@ extension CredentialOrg {
         Task { @MainActor in runNextNotify() }
     }
 
+    /// 本 App 自己排的通知标识前缀（`c6.` 全族）。集中一处，避免各处各写一遍。
+    ///
+    /// 族内有两个生产者，**两者文案都带真实名称**，所以空壳模式必须整族清掉：
+    ///   · `c6.alert.<mac>.p<alias>.<档位>` / `c6.monthly`（凭证到期提醒，带凭证名）
+    ///   · `c6.batt.<mac>.l<level>`（低电提醒，正文是「<锁名>」只剩 N%）
+    static func isOwnNotification(_ id: String) -> Bool { id.hasPrefix("c6.") }
+
+    /// 进入空壳模式时**抹掉通知面**（2026-11-01）。
+    ///
+    /// 为什么必须做：空壳模式（胁迫码进入）只清数据层投影（SEC-03），
+    /// 但**已排的到期提醒会带着真实凭证名弹出** ——
+    /// 「密码临期 · 前门密码」这种文案，等于当着胁迫者的面把"这人有哪些密码"念出来。
+    /// 已送达的同样带着名字，所以 pending 与 delivered 都要清。
+    /// 走同一条串行队列，避免与正在进行的排程/取消交错。
+    /// 幂等守卫：`reload` 会被频繁调用，每次入队没必要。
+    /// 只在"这次真的进入了空壳"时清一次；退出空壳时复位（见 AppModel 的 else 分支）。
+    private static let decoyCleared = Locked(false)
+
+    static func cancelAllForDecoy() {
+        let need = decoyCleared.withLock { already -> Bool in
+            if already { return false }
+            already = true
+            return true
+        }
+        guard need else { return }
+        enqueue { done in
+            let c = UNUserNotificationCenter.current()
+            c.getPendingNotificationRequests { reqs in
+                let stale = reqs.map(\.identifier).filter { isOwnNotification($0) }
+                if !stale.isEmpty { c.removePendingNotificationRequests(withIdentifiers: stale) }
+                // 已送达的那批同样带真实凭证名，留在通知中心一样会泄露。
+                c.removeAllDeliveredNotifications()
+                done()
+            }
+        }
+    }
+
+    /// 退出空壳时复位，让下一次进入能再清一次。
+    static func resetDecoyNotificationGuard() { decoyCleared.withLock { $0 = false } }
+
     /// 删旧 → 排新，严格串行（见 scheduleAlerts 的竞态说明）。
     private static func scheduleAlertsOrdered(id: String, p: LedgerPwd, a: CredAlert, mac: String) {
         enqueue { done in

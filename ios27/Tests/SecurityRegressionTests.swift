@@ -269,6 +269,24 @@ final class SecurityRegressionTests: XCTestCase {
                        "空壳模式下的写入必须被拒绝，真实台账不能被空表覆盖")
     }
 
+    // MARK: - 空壳模式的**通知面**（SEC-03 同一族的最后一个出口）
+
+    /// 空壳模式必须把本 App 的通知**整族**清掉，因为两个生产者的文案都带真实名称：
+    ///   · 凭证到期提醒 → 带凭证名（「密码临期 · 前门密码」）
+    ///   · 低电提醒 → 带锁名（「<锁名>」只剩 20%）
+    /// 数据层已清空（SEC-03），但通知中心还留着这些文案，等于当面把名字念出来。
+    func testOwnNotificationIDsAreRecognisable() {
+        // 真实标识形状（与生产者逐字一致）：
+        XCTAssertTrue(CredentialOrg.isOwnNotification("c6.alert.aabbccddeeff.p1.d7"))
+        XCTAssertTrue(CredentialOrg.isOwnNotification("c6.alert.aabbccddeeff.p12.t0"))
+        XCTAssertTrue(CredentialOrg.isOwnNotification("c6.monthly"))
+        XCTAssertTrue(CredentialOrg.isOwnNotification("c6.batt.aabbccddeeff.l2"),
+                      "低电提醒正文带锁名，也必须被清")
+        // 不是本 App 的标识不许被误杀
+        XCTAssertFalse(CredentialOrg.isOwnNotification("com.example.other"))
+        XCTAssertFalse(CredentialOrg.isOwnNotification(""))
+    }
+
     // MARK: - 备份：类型/规模闸（SEC-30）
 
     func testBackupImportRejectsForeignAndOversizedPayloads() throws {

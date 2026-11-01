@@ -140,6 +140,11 @@ final class AppModel {
         // SEC-03：把"当前是不是空壳"广播到数据层。凭证工作室 / 备份工作室 / 记录工作室
         // 这些直接读 DB 的页面必须据此返回空集，否则胁迫者能在空壳里看到并导出真实凭证。
         DB.setDecoy(decoyMode)
+        if decoyMode { CredentialOrg.cancelAllForDecoy() }
+        else { CredentialOrg.resetDecoyNotificationGuard() }
+        // ↑ SEC-03 同一族的**通知面**：数据层清空了，但已排/已送达的到期提醒还带着
+        //   真实凭证名（「密码临期 · 前门密码」）—— 胁迫者一看通知中心就知道了。
+        //   进空壳即整族清掉；退出后由正常排程重建。
     }
 
     /// 只重建凭证（增删改之后调，比重载全部便宜）。
