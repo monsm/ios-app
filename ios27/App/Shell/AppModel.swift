@@ -169,6 +169,7 @@ final class AppModel {
                 owner: p.owner,
                 code: p.pwd.map { String(repeating: "•", count: max(4, $0.count)) },
                 expiresAt: Self.epochMillis(p.to),
+                createdAt: p.at,   // LedgerPwd.at 是毫秒 epoch
                 disabled: CredentialLocalState.isDisabled(mac: m, id: "pwd:\(p.alias)")
             ))
         }
@@ -622,6 +623,9 @@ struct KeyItem: Identifiable, Hashable {
     let code: String?
     /// 到期时刻（毫秒 epoch）。nil = 永久。
     let expiresAt: Int64?
+    /// 创建时刻（毫秒 epoch）。0 = 未知（旧数据 / 手机钥匙等本身没有这个概念）。
+    /// 供 `CredentialOrg.pwdAgeDays` 显示「已使用 N 天」（327 那一族里唯一低成本的接线点）。
+    var createdAt: Double = 0
     let disabled: Bool
 }
 

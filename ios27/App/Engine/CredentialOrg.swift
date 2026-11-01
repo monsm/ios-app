@@ -385,11 +385,15 @@ enum CredentialOrg {
     // 展示层语义纪律: 锁端一次性/周期/暂停未定义 (CAPABILITY §4), 所有推断值 UI 必须带"约"字。
 
 
-    // 【保留未接 2026-11-01】密码年龄（天）—— 接线点：凭证详情「已使用 N 天」一行。
-    static func pwdAgeDays(_ p: LedgerPwd) -> Int? {
-        guard p.at > 0 else { return nil }
+    /// 凭证年龄（天）。参数是**毫秒 epoch**（`LedgerPwd.at` / `KeyItem.createdAt` 都是这个口径）。
+    ///
+    /// 2026-11-01 接线：凭证详情页「已使用 N 天」。
+    /// 签名从 `pwdAgeDays(_ p: LedgerPwd)` 改成收时间戳 —— 详情页只有 `KeyItem`（裁剪过的投影），
+    /// 为了调它去造一个假 `LedgerPwd` 比改签名更糟（我第一版就是这么写的，随即改掉）。
+    static func pwdAgeDays(_ millis: Double) -> Int? {
+        guard millis > 0 else { return nil }
         // 单位口径：毫秒 —— LedgerPwd.at 写的是 `timeIntervalSince1970 * 1000` (见 CredentialStudio 提交那两处)，先除回秒再算天数。
-        return Int(max(0, (nowSec - p.at / 1000)) / 86400)
+        return Int(max(0, (nowSec - millis / 1000)) / 86400)
     }
 
     // ---------- 307 保存前逐位 diff: 改动位集合 (1 起; 长度变化补 "·" 对齐) ----------

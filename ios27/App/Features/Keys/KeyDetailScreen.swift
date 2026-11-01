@@ -172,6 +172,11 @@ struct KeyDetailScreen: View {
                 VSectionLabel(text: "档案")
                 VFieldRow(label: "类型", value: key.kind.rawValue, mono: false)
                 VFieldRow(label: "归属", value: key.owner ?? "未归属", mono: false)
+                // 「已使用 N 天」：`CredentialOrg.pwdAgeDays` 早就写好且一直零调用（327 那一族），
+                // 这里接上 —— 只在拿得到创建时刻时才显示（手机钥匙 / 指纹没有这个概念）。
+                if let age = CredentialOrg.pwdAgeDays(key.createdAt) {
+                    VFieldRow(label: "已使用", value: "\(age) 天", mono: false)
+                }
                 VReadingGrid(items: [
                     .init(label: "到期日", value: expiry.value, unit: expiry.unit),
                     .init(label: "剩余", value: remaining.value, unit: remaining.unit, tint: remaining.tint),
