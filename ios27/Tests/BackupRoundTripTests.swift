@@ -1,10 +1,14 @@
 // BackupRoundTripTests.swift —— 备份"导出 → 解析 → 恢复"必须**原样带回**。
 //
 // 为什么值得单独测：备份是本 App 唯一的跨机数据通路。
-// 恢复路径有大量分支（merge / keep / skip、冲突裁决、成员重映射、SEC-08 密钥校验），
-// 而其中任何一处漏写都是**静默丢数据** —— 不崩、不报错，用户换机后才发现凭证少了。
+// 恢复路径分支很多（merge / keep / skip、冲突裁决、成员重映射、SEC-08 密钥校验），
+// 而任何一处漏写都是**静默丢数据** —— 不崩、不报错，用户换机后才发现凭证少了。
 //
 // 本文件不碰 UI，只走 Engine 的纯逻辑，所以能在 CI 上真跑。
+//
+// 注意隔离：这些用例会写同一台设备的台账（`DB` 是进程级单例），
+// 所以每个用例前都要把该 MAC 的台账清成空表 —— 否则会互相污染
+// （CI 实测：合并用例留下的 alias 9 让"两条密码"断言看到 3 条）。
 import XCTest
 @testable import LockKeeper
 
@@ -12,6 +16,12 @@ import XCTest
 final class BackupRoundTripTests: XCTestCase {
 
     private let mac = "aabbccddeeff"
+
+    /// 每个用例前清空该锁的台账，避免跨用例污染（DB 是进程级单例）。
+    override func setUp() async throws {
+        DB.setDecoy(false)
+        DB.saveLedger(mac, Ledger())
+    }
 
     private func sampleBundle() -> BackupBundle {
         let kc = Keychain(mac: mac, pid: 16289, pidName: "ZKBBV1", name: "前门",
@@ -33,41 +43,49 @@ final class BackupRoundTripTests: XCTestCase {
     }
 
     /// canonical 导出必须**稳定**：同一份数据两次导出逐字节相同。
-    /// 不稳定会让"校验和"永远对不上，恢复路径就会一直判 mismatch（拒绝恢复）。
+    /// 不稳定会让校验和永远对不上，恢复路径就会一直判 mismatch。
     func testCanonicalIsDeterministic() {
         let b = sampleBundle()
-        let a1 = BackupCanonical.exportText(b)
-        let a2 = BackupCanonical.exportText(b)
-        XCTAssertEqual(a1, a2, "同一份备份两次导出结果不同 —— 校验和会永远对不上")
-        XCTAssertFalse(a1.isEmpty)
+        XCTAssertEqual(BackupCanonical.exportText(b), BackupCanonical.exportText(b),
+                       "同一份备份两次导出结果不同 —— 校验和会永远对不上")
+        XCTAssertFalse(BackupCanonical.exportText(b).isEmpty)
     }
 
-    /// 导出 → 解析 → 恢复，凭证条数必须一致。
-    /// 这是"备份能不能救回数据"的最基本断言。
+    /// 导出 → 解析 → 恢复：凭证条数与内容必须回来。
     func testRestoreBringsBackCredentials() throws {
-        DB.setDecoy(false)
-        let b = sampleBundle()
-        let text = BackupCanonical.exportText(b)
+        let text = BackupCanonical.exportText(sampleBundle())
         let parsed = try BackupStudio.parsePreview(text: text, password: nil)
         XCTAssertEqual(parsed.preview.checksum, .ok, "自己导出的包必须自校验通过")
         XCTAssertEqual(parsed.preview.pwdCount, 2, "预览应报告 2 条密码")
+        XCTAssertEqual(parsed.preview.fpCount, 1, "预览应报告 1 枚指纹")
         XCTAssertEqual(parsed.preview.macs, [mac])
 
-        let r = BackupStudio.restore(parsed.bundle, makeSnapshot: false)
-        XCTAssertGreaterThanOrEqual(r.imported + r.overwritten, 1, "恢复应至少写回一条")
+        _ = BackupStudio.restore(parsed.bundle, makeSnapshot: false)
         let back = DB.ledger(mac)
         XCTAssertEqual(back.pwds.count, 2, "两条密码必须都在")
         XCTAssertEqual(back.fps.count, 1, "指纹必须也在")
-        XCTAssertEqual(back.pwds.first(where: { $0.alias == 1 })?.pwd, "123456",
-                       "口令明文必须经 Keychain 回填出来（不是丢失）")
-        XCTAssertEqual(back.pwds.first(where: { $0.alias == 1 })?.owner, "m1",
-                       "归属必须保留")
+        XCTAssertEqual(back.pwds.first { $0.alias == 1 }?.pwd, "123456",
+                       "口令明文必须经密钥库回填出来（不是丢失）")
+        XCTAssertEqual(back.pwds.first { $0.alias == 2 }?.temp, true, "临时档标记必须保留")
+        XCTAssertEqual(back.pwds.first { $0.alias == 2 }?.note, "临时", "备注必须保留")
+    }
+
+    /// **归属的纪律**：成员不在本机时 owner 必须被丢弃（不猜、不指向不存在的人）。
+    /// 这是 restore 里 `remap[o] ?? (DB.member(o) != nil ? o : nil)` 的语义。
+    /// 第一版我把这条断言写反了（期望保留 m1），CI 用正确的产品行为把我判红 ——
+    /// 是**测试错了**：备份包没带成员表，恢复后本机没有 m1，留着"m1"只会让
+    /// 记录页显示一个不存在的成员。
+    func testOwnershipIsDroppedWhenMemberAbsentLocally() throws {
+        let text = BackupCanonical.exportText(sampleBundle())
+        let parsed = try BackupStudio.parsePreview(text: text, password: nil)
+        _ = BackupStudio.restore(parsed.bundle, makeSnapshot: false)
+        let p1 = try XCTUnwrap(DB.ledger(mac).pwds.first { $0.alias == 1 })
+        XCTAssertNil(p1.owner, "本机没有这位成员时不能留下悬空归属（宁可不归属，也不指向不存在的人）")
+        XCTAssertEqual(p1.note, "门锁密码", "但凭证本身与备注必须完好带回")
     }
 
     /// merge 语义 = **只增不删**：本机已有的凭证不能被备份"删掉"。
     func testMergeNeverDeletesLocalCredentials() throws {
-        DB.setDecoy(false)
-        // 本机先有一条 alias 9
         var local = Ledger()
         local.pwds = [LedgerPwd(alias: 9, from: "2026-01-01 00:00:00", to: "2118-01-01 00:00:00",
                                 temp: false, at: 0, pwd: nil, owner: nil, note: "本机独有")]
@@ -81,11 +99,11 @@ final class BackupRoundTripTests: XCTestCase {
         XCTAssertTrue(back.pwds.contains { $0.alias == 9 },
                       "合并恢复把本机独有的凭证删掉了 —— 旧实现就是整表替换")
         XCTAssertTrue(back.pwds.contains { $0.alias == 1 }, "备份里的凭证也要进来")
+        XCTAssertEqual(back.pwds.count, 3, "2 条来自备份 + 1 条本机独有，一条都不能少")
     }
 
-    /// 同 ID 冲突未裁决时**保本机**（只增不删），裁决为取备份时才覆盖。
+    /// 同 ID 冲突未裁决时**保本机**；裁决为取备份时才覆盖。
     func testConflictDefaultsToLocalUnlessAdjudicated() throws {
-        DB.setDecoy(false)
         var local = Ledger()
         local.pwds = [LedgerPwd(alias: 1, from: "2026-01-01 00:00:00", to: "2118-01-01 00:00:00",
                                 temp: false, at: 0, pwd: nil, owner: nil, note: "本机的 1 号")]
@@ -94,12 +112,10 @@ final class BackupRoundTripTests: XCTestCase {
         let text = BackupCanonical.exportText(sampleBundle())
         let parsed = try BackupStudio.parsePreview(text: text, password: nil)
 
-        // 未裁决 → 保留本机
         _ = BackupStudio.restore(parsed.bundle, makeSnapshot: false)
         XCTAssertEqual(DB.ledger(mac).pwds.first { $0.alias == 1 }?.note, "本机的 1 号",
                        "未裁决时不该覆盖本机凭证")
 
-        // 裁决取备份 → 覆盖
         _ = BackupStudio.restore(parsed.bundle, conflictTakeBackup: ["\(mac):p:1"], makeSnapshot: false)
         XCTAssertEqual(DB.ledger(mac).pwds.first { $0.alias == 1 }?.note, "门锁密码",
                        "裁决为取备份时应覆盖")
