@@ -46,7 +46,10 @@ struct LedgerRow: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: V.S.gapMS) {
             VStack(alignment: .leading, spacing: 0) {
-                Text(TimeFormat.clock(entry.at))
+                // 2026-11-01：改用 `TimeDisplay.clock`，跟随用户 12/24 制式。
+                // 此前这里写死 `TimeFormat.clock`（恒 24 小时），于是「外观 → 时间显示」
+                // 只在记录页生效，台账行 / 校时页 / 硬件页等十余处都不跟随。
+                Text(TimeDisplay.clock(entry.at))
                     .font(V.F.stamp)
                     .foregroundStyle(V.C.text1)
                     .monospacedDigit()
@@ -57,7 +60,8 @@ struct LedgerRow: View {
                         .monospacedDigit()
                 }
             }
-            .frame(width: showDay ? 58 : 48, alignment: .leading)
+            // 12 小时制下「3:05 PM」比「15:05」宽得多，固定 48pt 会裁字 ⇒ 改为下限。
+            .frame(minWidth: showDay ? 58 : 48, alignment: .leading)
 
             VStack(alignment: .leading, spacing: V.S.gapXXS) {
                 Text(entry.event)
@@ -78,7 +82,7 @@ struct LedgerRow: View {
         .contentShape(.rect)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
-            "\(TimeFormat.clock(entry.at)) \(entry.event)" +
+            "\(TimeDisplay.clock(entry.at)) \(entry.event)" +
             (entry.owner.map { "，\($0)" } ?? "")
         )
     }

@@ -188,7 +188,7 @@ struct HardwareScreen: View {
                     } else {
                         VReadingGrid(items: [
                             .init(label: "上次扫描",
-                                  value: store.lastScanAt.map { TimeFormat.clock($0) } ?? "从未"),
+                                  value: store.lastScanAt.map { TimeDisplay.clock($0) } ?? "从未"),
                             .init(label: "已登记", value: "\(store.dongles.count)", unit: "台"),
                         ], columns: 2)
                         .padding(.top, V.S.gapXS)

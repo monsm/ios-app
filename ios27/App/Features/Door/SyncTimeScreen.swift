@@ -97,9 +97,9 @@ struct SyncTimeScreen: View {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
                 VSectionLabel(text: "时间对照", trailing: "cmd03 / cmd0E")
                 VReadingGrid(items: [
-                    .init(label: "锁内时间", value: lockAt.map { TimeFormat.clock($0) } ?? "—"),
+                    .init(label: "锁内时间", value: lockAt.map { TimeDisplay.clock($0) } ?? "—"),
                     .init(label: "手机时间",
-                          value: TimeFormat.clock(Int64(Date().timeIntervalSince1970 * 1000))),
+                          value: TimeDisplay.clock(Int64(Date().timeIntervalSince1970 * 1000))),
                     .init(label: "偏差",
                           value: drift.map { $0 == 0 ? "0" : (($0 > 0 ? "+" : "") + "\($0)") } ?? "—",
                           unit: drift == nil ? nil : "秒",

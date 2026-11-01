@@ -877,7 +877,7 @@ struct RecordsScreen: View {
             reload()
             readNote = untimed > 0
                 ? "已读取 \(entries.count) 条（另 \(untimed) 条锁端未回时刻，无法定位到某一天）"
-                : "已读取 \(entries.count) 条 · \(TimeFormat.clock(now))"
+                : "已读取 \(entries.count) 条 · \(TimeDisplay.clock(now))"
         } else {
             reload()
             readNote = "门锁未连接 · 下面是上次读到的那一份"

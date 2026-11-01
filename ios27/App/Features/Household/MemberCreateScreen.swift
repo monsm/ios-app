@@ -176,7 +176,7 @@ struct MemberCreateScreen: View {
 
     internal var expiryText: String {
         let at = Int64(Date().timeIntervalSince1970 * 1000) + 600_000
-        return TimeFormat.clock(at)
+        return TimeDisplay.clock(at)
     }
 
     // MARK: 步进（同屏唯一 signal 填充）

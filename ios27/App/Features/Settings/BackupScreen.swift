@@ -107,7 +107,7 @@ struct BackupScreen: View {
         guard let at = store.lastBackupAt else {
             return "本机从未生成过备份 · 手机丢失或重装即不可恢复"
         }
-        return "上次备份 \(TimeFormat.dayShort(at)) \(TimeFormat.clock(at)) · \(TimeFormat.ago(at))"
+        return "上次备份 \(TimeFormat.dayShort(at)) \(TimeDisplay.clock(at)) · \(TimeFormat.ago(at))"
     }
 
     // MARK: 主角：导出

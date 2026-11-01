@@ -156,7 +156,7 @@ struct DefendScreen: View {
                           : "—"),
                     .init(label: "此刻", value: isActiveNow ? "布防内" : "布防外",
                           tint: isActiveNow ? V.C.warning : V.C.text1),
-                    .init(label: "上次改动", value: config?.updatedAt.map { TimeFormat.clock($0) } ?? "—",
+                    .init(label: "上次改动", value: config?.updatedAt.map { TimeDisplay.clock($0) } ?? "—",
                           tint: V.C.text2),
                 ], columns: 2)
                 .padding(.top, V.S.gapXS)

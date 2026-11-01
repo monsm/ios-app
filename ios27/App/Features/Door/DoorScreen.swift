@@ -1104,7 +1104,7 @@ struct DoorScreen: View {
             app.lastError = nil
         } else {
             let now = Int64(Date().timeIntervalSince1970 * 1000)
-            refreshNote = "已重新扫描 · \(TimeFormat.clock(now))"
+            refreshNote = "已重新扫描 · \(TimeDisplay.clock(now))"
         }
     }
 }

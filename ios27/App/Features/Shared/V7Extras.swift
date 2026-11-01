@@ -90,7 +90,7 @@ struct VLedgerRow: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: V.S.gapMS) {
             VStack(alignment: .leading, spacing: 0) {
-                Text(TimeFormat.clock(entry.at))
+                Text(TimeDisplay.clock(entry.at))
                     .font(V.F.stamp)
                     .foregroundStyle(V.C.text1)
                     .monospacedDigit()
@@ -121,7 +121,7 @@ struct VLedgerRow: View {
         .contentShape(.rect)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
-            "\(TimeFormat.clock(entry.at)) \(entry.event)" +
+            "\(TimeDisplay.clock(entry.at)) \(entry.event)" +
             (entry.owner.map { "，\($0)" } ?? "")
         )
     }

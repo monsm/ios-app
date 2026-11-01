@@ -186,7 +186,7 @@ struct CredHistorySheet: View {
                                         VStack(alignment: .leading, spacing: V.S.gapXXS) {
                                             Text(snap.note.isEmpty ? "快照" : snap.note)
                                                 .font(V.F.rowTitle).foregroundStyle(V.C.text1)
-                                            Text("\(TimeFormat.dayShort(Int64(snap.at))) \(TimeFormat.clock(Int64(snap.at))) · \(snap.pwds.count) 密码 / \(snap.fps.count) 指纹")
+                                            Text("\(TimeFormat.dayShort(Int64(snap.at))) \(TimeDisplay.clock(Int64(snap.at))) · \(snap.pwds.count) 密码 / \(snap.fps.count) 指纹")
                                                 .font(V.F.rowDetail).foregroundStyle(V.C.text3)
                                         }
                                         Spacer(minLength: V.S.gapS)

@@ -81,9 +81,13 @@ enum KeysState {
     }
 
     /// 到期时刻拆成日期 + 时刻两个读数位；永久返回 (永久, nil)。
+    /// 2026-11-01：加 `@MainActor` —— 时刻改用 `TimeDisplay.clock`（跟随用户 12/24 制式），
+    /// 而 `TimeDisplay` 是 `@MainActor`（它读 `@MainActor` 的 `SettingsStore`）。
+    /// 唯一调用点是 `KeyDetailScreen` 的 View body，本来就是主线程。
+    @MainActor
     static func expiryLine(_ key: KeyItem) -> (value: String, unit: String?) {
         guard let expiresAt = key.expiresAt else { return ("永久", nil) }
-        return (TimeFormat.dayShort(expiresAt), TimeFormat.clock(expiresAt))
+        return (TimeFormat.dayShort(expiresAt), TimeDisplay.clock(expiresAt))
     }
 
     // 台账是值语义数组，改一条要整条重建（KeyItem 字段都是 let，这是有意的：改就是换一条）。

@@ -168,7 +168,7 @@ struct GatewayScreen: View {
                 .init(label: "ROM", value: g.rom.isEmpty ? "—" : g.rom),
                 .init(label: "WiFi", value: g.ssid.isEmpty ? "—" : g.ssid,
                       tint: g.online ? V.C.text1 : V.C.text3),
-                .init(label: "上次核对", value: g.lastCheckedAt.map { TimeFormat.clock($0) } ?? "—",
+                .init(label: "上次核对", value: g.lastCheckedAt.map { TimeDisplay.clock($0) } ?? "—",
                       tint: V.C.text2),
             ], columns: 3)
         }
