@@ -293,7 +293,12 @@ struct CredentialStudioScreen: View {
             VStack(alignment: .leading, spacing: V.S.gapXXS) {
                 Text(fp.name.isEmpty ? "指纹 \(fp.batch)" : fp.name)
                     .font(V.F.rowTitle).foregroundStyle(V.C.text1).lineLimit(1)
-                Text("#\(fp.batch) · \(CredentialOrg.ownerName(fp.owner))")
+                // 归属人为空（成员已删）时不能留下悬空的 " · "：
+                // 同仓 `namingTemplate` / `fpNameSuggestion` 都做了 isEmpty 兜底，只有这里漏了。
+                Text({
+                    let who = CredentialOrg.ownerName(fp.owner)
+                    return who.isEmpty ? "指纹 #\(fp.batch)" : "#\(fp.batch) · \(who)"
+                }())
                     .font(V.F.rowDetail).foregroundStyle(V.C.text3).lineLimit(1)
             }
             Spacer(minLength: 0)
