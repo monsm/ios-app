@@ -34,7 +34,7 @@ struct BackupScreen: View {
     @State private var importPreviewNote = ""
     /// SEC-08：恢复会改写本机密码摘要，所以要先验当前本机密码。
     @State private var currentPasscode = ""
-    @State private var restoreDone: (added: Int, merged: Int)?
+    @State private var restoreDone: (added: Int, merged: Int, skipped: Int)?
     /// 恢复被拦下的原因。不写「失败了」三个字，写清是哪一道闸拦的。
     @State private var restoreError: String?
     /// 系统文件选择器：导出到「文件 / iCloud 云盘」，或从文件导入。
@@ -217,7 +217,11 @@ struct BackupScreen: View {
                         SettingRule()
                     }
                     if let r = restoreDone {
-                        VStatusLine(tone: .ok, text: "已恢复：新增 \(r.added) 项，合并 \(r.merged) 项")
+                        // 跳过数必须显示：`restore` 本来就会返回它（SEC-08 拒写非法密钥的锁），
+                        // 旧文案只报"新增/合并"，用户看到数字偏小会以为备份不全。
+                        VStatusLine(tone: r.skipped > 0 ? .attention : .ok,
+                                     text: "已恢复：新增 \(r.added) 项，合并 \(r.merged) 项"
+                                         + (r.skipped > 0 ? "，跳过 \(r.skipped) 把锁（密钥格式非法）" : ""))
                         SettingRule()
                     }
                     SettingsNote(text: "粘贴备份文本。导入是合并（只增不删）—— 本机已有的凭证会保留，同名冲突取本机。门锁本身无需重置。")
@@ -374,7 +378,7 @@ struct BackupScreen: View {
                 importChecksumMismatch = false
                 ackedChecksumFor = nil   // 一次性：这次恢复完就作废，下次重新判断
                 let r = BackupStudio.restore(parsed.bundle)
-                restoreDone = (added: r.imported, merged: r.overwritten)
+                restoreDone = (added: r.imported, merged: r.overwritten, skipped: r.skipped)
                 importText = ""
                 importPreviewNote = ""   // 一次性：恢复完就作废，免得下次选文件前残留旧摘要
                 await app.reload(refreshStatus: false)
