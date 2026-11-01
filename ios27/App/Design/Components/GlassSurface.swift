@@ -21,8 +21,21 @@ struct VGlassSurface<Content: View>: View {
     var stroke: Color? = nil
     @ViewBuilder var content: Content
 
+    /// 2026-11-01：**「增强对比度」也要退化成不透明**。
+    ///
+    /// `apple-design` 的 `hig/liquid-glass.md › Review checklist` 第 5 条：
+    /// > Reduce Transparency gets an opaque fallback, **Increase Contrast gets stronger fills and borders**,
+    /// > Reduce Motion drops morphing and refraction animation.
+    ///
+    /// 本轮之前只处理了 Reduce Transparency —— 开了「增强对比度」的用户看到的仍是半透明玻璃，
+    /// 而系统在那一档期望的是**更实的填充与更明显的描边**。
+    /// 玻璃的"半透明"在这一档就是可读性负担，所以直接走不透明分支（最强的一档）。
+    @Environment(\.colorSchemeContrast) private var contrast
+
+    private var opaque: Bool { solid || contrast == .increased }
+
     var body: some View {
-        if solid {
+        if opaque {
             content
                 .background(V.C.card, in: .rect(cornerRadius: cornerRadius, style: .continuous))
                 .overlay { border }
@@ -39,7 +52,8 @@ struct VGlassSurface<Content: View>: View {
     @ViewBuilder private var border: some View {
         if let stroke {
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .strokeBorder(stroke, lineWidth: V.S.hair)
+                // 增强对比度时描边加粗一倍 —— 与"更强的描边"一致。
+                .strokeBorder(stroke, lineWidth: contrast == .increased ? V.S.hair * 2 : V.S.hair)
         }
     }
 }
