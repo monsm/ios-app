@@ -306,7 +306,13 @@ extension CredentialOrg {
 
     // ---------- 显示层辅助 (919 别名显示切换: 成员"别名"字段 = relation 备注, 空则回退真名) ----------
     static func ownerName(_ id: String?) -> String {
-        guard let id, let m = DB.member(id) else { return "" }
+        // 2026-11-01（Round 237）：**`owner` 这个字段历史上存过两种东西** ——
+        // 成员 id（成员管理指派 / 合并 / 恢复走这条）与成员**名字**（凭证工作室创建时 `owner = member.name`）。
+        // 而 `DB.member(_:)` 只按 id 查 ⇒ 名字那批永远解析不出人，界面显示「未归属」。
+        // 读侧先按 id、再按名字回退；写侧已在 `AppModel.addPassword` 统一成 id（见那里的注释）。
+        guard let id, !id.isEmpty else { return "" }
+        let m = DB.member(id) ?? DB.members().first(where: { $0.name == id })
+        guard let m else { return "" }
         if aliasDisplay, !m.relation.isEmpty { return m.relation }
         return m.name
     }

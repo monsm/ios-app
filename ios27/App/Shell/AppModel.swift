@@ -220,7 +220,8 @@ final class AppModel {
                 id: m.id,
                 name: m.name.isEmpty ? "未命名" : m.name,
                 role: role,
-                keyCount: keys.filter { $0.owner == m.name }.count,
+                // `owner` 历史上有 id 与名字两种口径（见 `addPassword`），计数两种都认。
+            keyCount: keys.filter { $0.owner == m.id || $0.owner == m.name }.count,
                 lastActiveAt: nil,
                 archived: ext.archived
             )
@@ -453,8 +454,10 @@ final class AppModel {
 
     /// 新增一条密码/临时码。
     /// - Parameters:
-    ///   - owner: 归属成员名（E-03：旧实现写死 nil，工坊里选的归属被丢弃，
-    ///     导致新密码永远落「未归属」组、成员 360 的「名下凭证」恒空）。
+    ///   - owner: 归属成员 —— **传 id 或成员名都可以**，内部统一换算成 id 再落库。
+    ///     （E-03：旧实现写死 nil，工坊里选的归属被丢弃，导致新密码永远落「未归属」组；
+    ///     Round 237：旧实现把调用方给的**名字**原样存进 `owner`，而读侧 `ownerName` 按 id 查 ⇒
+    ///     工作室创建的凭证恒显示「未归属」。现在写侧统一成 id，读侧另留名字回退以兼容旧数据。）
     ///   - replacingAlias: 「改造密码值」（E-02）传旧 alias —— 先成功建新，再删旧，
     ///     顺序不能反（反了会在弱信号下把人关在门外）。旧实现忽略这个参数，
     ///     改造变成了「再多一把仍能开门的旧码」。
@@ -467,11 +470,20 @@ final class AppModel {
             try await LockService.shared.ensureConnected(mac: mac)
             let alias = try await LockService.shared.pwdAdd(pwd: pwd, validFrom: from, validTo: to)
             // 下发成功才写台账 —— 失败不写，避免"本机以为加了、锁里没有"。
+            // 2026-11-01（Round 237）：调用方（凭证工作室的成员行）传的是**成员名**，
+            // 而台账 `owner` 在全仓其它路径（成员管理指派 / 成员合并 / 备份恢复）里存的都是**成员 id**。
+            // 两种口径混进同一字段 ⇒ 工作室创建的凭证在列表里恒显示「未归属」（`ownerName` 按 id 查）。
+            // 这里统一成 id：已经是 id 就原样保留，是名字就换成对应成员的 id。
+            let ownerID: String? = {
+                guard let owner, !owner.isEmpty else { return nil }
+                if DB.member(owner) != nil { return owner }
+                return DB.members().first { $0.name == owner }?.id
+            }()
             var l = DB.ledger(mac)
             l.pwds.append(LedgerPwd(
                 alias: alias, from: from, to: to, temp: false,
                 at: Date().timeIntervalSince1970 * 1000,
-                pwd: pwd, owner: owner, note: note ?? "密码 \(alias)"
+                pwd: pwd, owner: ownerID, note: note ?? "密码 \(alias)"
             ))
             if let old = replacingAlias, old != alias {
                 // 新码已落库 → 再删旧码。删失败不改台账（锁端仍有旧码，界面如实显示两条）。

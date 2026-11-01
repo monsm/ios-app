@@ -90,7 +90,7 @@ struct MobileKeyScreen: View {
                     ForEach(app.members.filter { !$0.archived }) { member in
                         KeysOwnerRow(
                             name: member.name,
-                            keyCount: app.keys.filter { $0.owner == member.name }.count,
+                            keyCount: app.keys.filter { $0.owner == member.id || $0.owner == member.name }.count,   // owner 有 id / 名字两种历史口径
                             selected: owner == member.name
                         ) {
                             owner = member.name
