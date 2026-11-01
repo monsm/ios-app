@@ -14,6 +14,13 @@ struct LockStatusScreen: View {
     @State private var writing = false
     /// 最近一次写入的回执文案。
     @State private var outcome: String?
+    /// 结果行是否成功。**不再从文案里猜**（`outcome.contains("失败")` 那类判据会漏）：
+    /// 例如失败文案「锁忙，请稍后再试」一个"失败/错"字都没有，却会被判成绿色。
+    @State private var outcomeOK = true
+    /// 每次写入（成功或失败）都 +1：`PolicyToggle` 靠它重新对齐 `isOn`。
+    /// 没有它的话，写入失败时 `isOn` 不变 ⇒ `.onChange(of: isOn)` 不触发 ⇒ 开关停在
+    /// 用户拨到的位置，界面显示"已开启"而锁端还是关的。
+    @State private var policyRev = 0
     /// 放宽安全模式前的二次确认：放宽方向会降低校验等级（只许 A→B 变严是常态）。
     @State private var confirmRelax = false
 
@@ -161,6 +168,11 @@ struct LockStatusScreen: View {
         let onWord: String
         let offWord: String
         let write: (Bool) -> Void
+        /// 父视图的写入序列号：每次写入（成功或失败）都会变。
+        /// 变了就重新用 `isOn` 校准 —— 这是"写失败时开关要弹回去"的唯一可靠触发点
+        /// （失败时 `isOn` 不变，`onChange(of: isOn)` 不会触发）。
+        /// 声明顺序必须在 `write` 之后：调用点的实参顺序要与成员逐一初始化器一致（callsig2 会查）。
+        let revision: Int
 
         /// 初值 false；进入时由 `.task`/onChange 从 `isOn` 播种，之后双向同步。
         /// 不用自定义 init：在 struct 的 init 里构造 State 会报「无可用初始化器」
@@ -176,6 +188,7 @@ struct LockStatusScreen: View {
                     if new != isOn { write(new) }
                 }
                 .onChange(of: isOn) { _, new in localOn = new }
+                .onChange(of: revision) { _, _ in localOn = isOn }   // 写入结束（含失败）后对齐真实值
                 .onAppear { localOn = isOn }
         }
     }
@@ -205,7 +218,7 @@ struct LockStatusScreen: View {
             // E-O4：`isOn` 是函数参数（值快照）。直接 `Binding(get: { isOn }, set: { write($0) })`
             // 会让 Toggle 拨动后既不前进也不回弹 —— 弱信号下（写入要几秒）用户以为开关坏了。
             // 现在交给一个独立小视图持有 @State：拨动立刻可见，写入结果回来再覆盖。
-            PolicyToggle(isOn: isOn, onWord: onWord, offWord: offWord, write: write)
+            PolicyToggle(isOn: isOn, onWord: onWord, offWord: offWord, write: write, revision: policyRev)
                 .accessibilityLabel(title)
         }
         .frame(minHeight: V.Hit.min)
@@ -219,7 +232,7 @@ struct LockStatusScreen: View {
                 ProgressView().controlSize(.small)
                 Text("正在下发…").font(V.F.footnote).foregroundStyle(V.C.text2)
             } else if let outcome {
-                VStateDot(tone: outcome.contains("失败") || outcome.contains("错") ? .attention : .ok, word: outcome)
+                VStateDot(tone: outcomeOK ? .ok : .attention, word: outcome)   // 用显式标志，不猜文案
                 Text(outcome)
                     .font(V.F.footnote)
                     .foregroundStyle(V.C.text2)
@@ -318,9 +331,12 @@ struct LockStatusScreen: View {
         Task {
             let r = await app.setSafeMode(on)
             writing = false
+            policyRev += 1
             if case .failure(let e) = r {
+                outcomeOK = false
                 outcome = (e as? LocalizedError)?.errorDescription ?? e.localizedDescription
             } else {
+                outcomeOK = true
                 outcome = on ? "已切到双验（A/B 模式）" : "已切回单验"
             }
         }
@@ -333,9 +349,12 @@ struct LockStatusScreen: View {
         Task {
             let r = await app.setMuted(on)
             writing = false
+            policyRev += 1
             if case .failure(let e) = r {
+                outcomeOK = false
                 outcome = (e as? LocalizedError)?.errorDescription ?? e.localizedDescription
             } else {
+                outcomeOK = true
                 outcome = on ? "已静音：键盘与开锁不提示音" : "已恢复提示音"
             }
         }
@@ -348,6 +367,7 @@ struct LockStatusScreen: View {
         Task {
             await app.refreshStatus()
             writing = false
+            outcomeOK = app.lastError == nil
             outcome = app.lastError == nil ? "已重新读取锁实况" : app.lastError
             app.lastError = nil
         }
