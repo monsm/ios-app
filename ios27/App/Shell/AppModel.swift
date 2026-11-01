@@ -274,7 +274,7 @@ final class AppModel {
                 let rc = try await LockService.shared.unlock(mac: mac, pinDec: chosenPin(mac))
                 unlockPhase = 3
                 dialPhase = .waiting
-                if rc == 0 || rc == 22 {
+                if rc == 0 {
                     dialPhase = .opened
                     unlockPhase = 3
                     let now = Int64(Date().timeIntervalSince1970 * 1000)
@@ -288,6 +288,16 @@ final class AppModel {
                     try? await Task.sleep(for: .milliseconds(900))
                     if dialPhase == .opened { dialPhase = .idle; unlockPhase = 0 }
                     return
+                }
+                // 2026-11-01：`rc == 22` 此前**也被当成成功**（显示「已开锁」、记 lastUnlockSuccessAt、
+                // 起自动上锁倒计时、记里程碑）。但 `StatusParser.rcMsg[22]` 的注释明确写着
+                // 「这张表要与 vendor status.js 逐字一致」，而 22 = **「不能重复验证」**；
+                // Android 侧也是把它当错误文案弹给用户的。**没有任何证据表明 22 等于"门开了"。**
+                // 若 22 实际是"还需要第二种验证"，旧行为就是**把失败显示成成功**，还会开始自动上锁倒计时。
+                // 现在改成如实提示，且不记成功、不起倒计时。（B 模式双验属可选档，需真机再确认一次文案。）
+                if rc == 22 {
+                    nonRetryable = true
+                    throw BLEErrorX.msg("门锁要求第二种验证方式（B 模式双验）—— 请再用指纹或密码验证一次")
                 }
                 nonRetryable = [1, 2, 6, 11].contains(rc)
                 throw BLEErrorX.msg(StatusParser.rcFriendly(rc))

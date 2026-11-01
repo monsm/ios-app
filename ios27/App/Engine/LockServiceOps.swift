@@ -117,7 +117,8 @@ extension LockService {
         // 用户复制出来的流水若只有帧头，就看不出"锁到底为什么拒绝"。rc 是协议码，不是凭据。
         log(r.rc == 0 || r.rc == 22 ? "info" : "warn",
             "开锁回执 rc=\(r.rc) · \(StatusParser.rcMessage(r.rc))")
-        if r.rc == 0 || r.rc == 22 { return r.rc }   // 0 成功; 22 双验继续
+        // 0 = 成功。22 = 「不能重复验证」（vendor status.js 原文）—— **不再当成功**，交上层如实提示。
+        if r.rc == 0 { return r.rc }
 
         // 2026-11-01：**凭证被拒时的自愈回落。**
         // 1/11 解密失败、2 PIN 无效、6 已绑定其他设备 —— 这四个码都指向"这枚 ekey 不可用"，
