@@ -164,8 +164,11 @@ struct LedgerDayGroup: Identifiable, Hashable {
 // MARK: - 本机覆盖层（备注 / 标旗 / 处置）
 
 /// 键 = LedgerEntry.id（「哪把锁的哪一行」），与详情、深链、导出共用同一份行身份。
-/// TODO(engine) 真实现落 kf_roverlay_（备注/旗标）与 kf_rdispo（处置结论 + 时刻），
-/// 删设备时按族清除；这里先用进程内存储，跨屏共用同一份。
+///
+/// 2026-11-01（Round 232）：这里原本挂着一条 `TODO(engine) 真实现落 kf_roverlay_…先用进程内存储` ——
+/// **它已经过期**，而且与下面第 175 行的注释自相矛盾（那行写的是"真值落 kf_rnote_/kf_rflag_/kf_rdisp_"）。
+/// 事实：持久层早已实现（`RecordOverlay`，按锁分族，删设备时由 `removeDevice` 的族表清），
+/// 这个类只是**内存镜像**（用于页内计数与即时刷新），`hydrate` 会从持久层读回来。
 @MainActor
 @Observable
 final class RecordsOverlay {
