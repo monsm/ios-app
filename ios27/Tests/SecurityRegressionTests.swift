@@ -477,6 +477,27 @@ final class SecurityRegressionTests: XCTestCase {
         XCTAssertEqual(RecordCSV.field("a\nb"), "\"a\nb\"")
     }
 
+    // MARK: - 搜索历史不接受空串
+
+    /// `.onSubmit` 在输入框为空时也会触发，旧实现会把 "" 存进历史 ——
+    /// 「最近搜索」下会多出一个标签为空白、看不见的按钮。
+    func testSearchHistoryRejectsEmptyTerms() {
+        DB.setCodable([String](), "kf_csearch_hist")
+        CredentialOrg.pushSearchHistory("")
+        CredentialOrg.pushSearchHistory("   ")
+        CredentialOrg.pushSearchHistory("\n")
+        XCTAssertTrue(CredentialOrg.searchHistory().isEmpty, "空/纯空白查询不该进历史")
+
+        CredentialOrg.pushSearchHistory("  前门  ")
+        XCTAssertEqual(CredentialOrg.searchHistory(), ["前门"], "应去掉首尾空白后再存")
+
+        // 大写语义 + 去重 + 上限 5 条
+        for t in ["a", "b", "c", "d", "e", "f"] { CredentialOrg.pushSearchHistory(t) }
+        XCTAssertEqual(CredentialOrg.searchHistory().count, 5, "最多留 5 条")
+        XCTAssertEqual(CredentialOrg.searchHistory().first, "f", "最新的在最前")
+        DB.setCodable([String](), "kf_csearch_hist")
+    }
+
     // MARK: - 备份：类型/规模闸（SEC-30）
 
     func testBackupImportRejectsForeignAndOversizedPayloads() throws {

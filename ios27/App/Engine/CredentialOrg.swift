@@ -290,8 +290,13 @@ enum CredentialOrg {
         DB.get([String].self, "kf_csearch_hist") ?? []
     }
     static func pushSearchHistory(_ q: String) {
-        var list = Array(searchHistory().filter { $0 != q }.prefix(4))
-        list.insert(q, at: 0)
+        // 空查询不入历史：`.onSubmit` 在输入框为空时也会触发（用户按键盘的"搜索"键），
+        // 旧实现会把 "" 存进去 —— 然后「最近搜索」下多出一个**看不见的按钮**（标签为空白），
+        // 点它等于把搜索框设成空。同一个空串还会永久占掉 5 个槽位之一。
+        let t = q.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { return }
+        var list = Array(searchHistory().filter { $0 != t }.prefix(4))
+        list.insert(t, at: 0)
         DB.setCodable(list, "kf_csearch_hist")
     }
     // 【保留未接 2026-11-01】搜索历史的单条删除（531 的配套）—— 界面暂无「删掉这一条」入口。

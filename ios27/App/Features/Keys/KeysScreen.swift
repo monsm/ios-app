@@ -350,7 +350,9 @@ struct KeysScreen: View {
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
                     .accessibilityLabel("搜索凭证")
-                    .onSubmit { CredentialOrg.pushSearchHistory(search) }
+                    // 函数内已挡空串；这里再挡一次是为了不产生"提交了但什么都没发生"的感觉 ——
+                    // 空搜索本来就没有可记的东西。
+                    .onSubmit { if !search.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { CredentialOrg.pushSearchHistory(search) } }
                 if !search.isEmpty {
                     Button { search = "" } label: {
                         Image(systemName: "xmark.circle.fill")
