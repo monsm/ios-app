@@ -21,6 +21,8 @@ struct BackupStudioScreen: View {
     @State private var password = ""
     @State private var outcome: String?
     @State private var busy = false
+    /// 校验和不一致时的二次确认位（见 BackupStudio.checksumNeedsAck 的说明）。
+    @State private var checksumAcked = false
 
     // WebDAV
     @State private var davURL = DB.store.getString("kf_bk_dav_url")
@@ -305,11 +307,13 @@ struct BackupStudioScreen: View {
             let url = BackupStudio.dir.appendingPathComponent(file.name)
             let text = try String(contentsOf: url, encoding: .utf8)
             let parsed = try BackupStudio.parsePreview(text: text, password: password.isEmpty ? nil : password)
-            // SEC-14：校验和不一致说明这份包**被改过或损坏过**（FNV 无密钥，只能测意外损坏，
-            // 但"意外损坏"恰恰是最该拦的情况：拿半截包覆盖真数据比拒绝更糟）。
-            // 旧实现只把 .mismatch 显示在预览卡上，恢复动作照旧往下走。
-            guard parsed.preview.checksum != .mismatch else {
-                outcome = "这份备份的校验和对不上 —— 可能被截断或改动过。已拒绝恢复，请换一份备份。"
+            // SEC-14：校验和对不上时**要求二次确认**。
+            // 不硬拦的理由：本 App 旧版本导出的包用的是旧键序 canonical，FNV 必然对不上 ——
+            // 硬拒绝等于把用户自己的合法备份挡在门外（"恢复不了"比"被截断包覆盖"更糟）。
+            // 不提示也不行：那会让半截包静默覆盖真数据。二次确认同时满足两边。
+            if BackupStudio.checksumNeedsAck(parsed.preview.checksum) && !checksumAcked {
+                checksumAcked = true
+                outcome = "校验和对不上：可能是本 App 旧版本导出的包（键序不同，属正常），也可能真被截断/改动过。确认要继续请再点一次恢复。"
                 return
             }
             let r = BackupStudio.restore(parsed.bundle)
@@ -409,9 +413,10 @@ struct BackupStudioScreen: View {
     private func runMigration() async {
         do {
             let parsed = try BackupStudio.parsePreview(text: migrateText, password: password.isEmpty ? nil : password)
-            // SEC-14：换机包同样拒绝校验和不一致的包。
-            guard parsed.preview.checksum != .mismatch else {
-                outcome = "换机包校验和对不上 —— 可能被截断或改动过。已拒绝导入。"
+            // SEC-14：换机包同样走二次确认（理由见 restoreFile 里的说明）。
+            if BackupStudio.checksumNeedsAck(parsed.preview.checksum) && !checksumAcked {
+                checksumAcked = true
+                outcome = "换机包校验和对不上：可能是旧版本生成（属正常），也可能被截断/改动过。确认要导入请再点一次。"
                 return
             }
             let r = BackupStudio.restore(parsed.bundle, lockActs: lockActs)

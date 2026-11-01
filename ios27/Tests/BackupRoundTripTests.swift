@@ -121,6 +121,19 @@ final class BackupRoundTripTests: XCTestCase {
                        "裁决为取备份时应覆盖")
     }
 
+    /// 校验和不一致时**只要求二次确认，不硬拒绝**。
+    /// 我第 8 轮把它写成硬拒绝，那是过度收紧的回归：本仓早期版本导出的包用旧键序
+    /// canonical，FNV 必然对不上，硬拒绝会把用户自己的合法备份彻底挡在门外。
+    /// 这条断言把"旧版本包仍可恢复"这个性质钉住。
+    func testMismatchRequiresAckNotHardBlock() {
+        // .mismatch 必须是"需要确认"而不是"禁止恢复"
+        XCTAssertTrue(BackupStudio.checksumNeedsAck(.mismatch),
+                      "mismatch 应走二次确认（不能硬拒绝，也不能完全不提示）")
+        XCTAssertFalse(BackupStudio.checksumNeedsAck(.ok), "校验和正常时不该多问一句")
+        XCTAssertFalse(BackupStudio.checksumNeedsAck(.absent),
+                       "没有校验和字段（更早的包）同样不该被硬拦")
+    }
+
     /// 非法 skey 的锁必须**整把跳过**，不能写进钥匙串（否则是软砖）。
     func testInvalidSkeyIsSkipped() throws {
         var b = sampleBundle()

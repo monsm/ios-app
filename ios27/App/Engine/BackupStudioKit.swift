@@ -242,6 +242,19 @@ enum BackupStudio {
         var checksum: ChecksumState = .absent   // 453 哈希层: 解析时算一次, 预览卡直接显示
     }
 
+    /// SEC-14 与"旧版本包校验和本就该不同"之间的**折中：二次确认，不是硬拦**（2026-11-01）。
+    ///
+    /// 我第 8 轮把 .mismatch 改成了直接拒绝恢复 —— 那是**过度收紧的回归**：
+    /// 本仓早期版本导出的包用的是旧键序 canonical，算出的 FNV 必然与当前不同
+    /// （见 checksumState 里 2026-10-14 的注释，那里已明确"按 schema 判会把用户已有
+    /// 备份误判成篡改"）。硬拒绝的实际后果是把用户自己的合法备份挡在门外 ——
+    /// "恢复不了"比"被半截包覆盖"更糟，因为它让唯一的数据出口失效。
+    ///
+    /// 但完全不提示也不对。所以：第一次点只要求确认，第二次点才真恢复。
+    /// 既防误触与截断包意外覆盖，又不摧毁兼容性。
+    /// 真要防篡改得换带密钥的 MAC（另立项），FNV 无密钥本就不是防篡改手段。
+    static func checksumNeedsAck(_ state: ChecksumState) -> Bool { state == .mismatch }
+
     static func checksumState(_ text: String) -> ChecksumState {
         guard let data = text.data(using: .utf8),
               let b = try? JSONDecoder().decode(BackupBundle.self, from: data) else { return .absent }

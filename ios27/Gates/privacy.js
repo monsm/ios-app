@@ -202,6 +202,20 @@ for (const f of files) {
 })();
 
 console.log('privacy: 扫 ' + files.length + ' 个 Swift 文件 + PrivacyInfo.xcprivacy');
+
+// 11) 校验和不一致禁止硬拒绝恢复（2026-11-01，我第 8 轮的过度收紧回归）。
+// 本仓早期版本导出的包用旧键序 canonical，FNV 必然对不上；
+// 硬拒绝会把用户自己的合法备份挡在门外——"恢复不了"比"被截断包覆盖"更糙。
+{
+  const re = /guard\s+parsed\.preview\.checksum\s*!=\s*\.mismatch\s+else/;
+  for (const f of files) {
+    const idx = f.raw.search(re);
+    if (idx < 0) continue;
+    const line = f.raw.slice(0, idx).split('\n').length;
+    note(f.rel, line, '硬拒绝校验和不一致的备份', '改用 BackupStudio.checksumNeedsAck 做二次确认');
+  }
+}
+
 if (fails.length === 0) {
   console.log('privacy: OK — 剪贴板/备份加密/空壳隔离(读+写)/明文口令不进 plist/帧脱敏/WebDAV/文件保护/CSV 注入/隐私清单 XML 10 类回归判据全部通过');
   process.exit(0);

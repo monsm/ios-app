@@ -21,6 +21,8 @@ struct BackupScreen: View {
     @State private var importPassword = ""
     @State private var exporting = false
     @State private var importing = false
+    /// 校验和不一致时的二次确认位（见 BackupStudio.checksumNeedsAck 的说明）。
+    @State private var checksumAcked = false
     @State private var showRestoreConfirm = false
     /// SEC-08：恢复会改写本机密码摘要，所以要先验当前本机密码。
     @State private var currentPasscode = ""
@@ -331,9 +333,11 @@ struct BackupScreen: View {
             do {
                 // 真链路：解密（若带口令）→ schema 升级 → checksum 校验 → 合并恢复（只增不删）。
                 let parsed = try BackupStudio.parsePreview(text: importText, password: password)
-                // SEC-14：校验和对不上 = 包被截断/改动过 —— 拒绝覆盖本机数据。
-                guard parsed.preview.checksum != .mismatch else {
-                    restoreError = "这份备份的校验和对不上 —— 可能被截断或改动过。已拒绝恢复。"
+                // SEC-14：校验和对不上时**要求二次确认**（不是硬拦 —— 旧版本导出的包
+                // 本来就算不出同一个 FNV，硬拦会把用户自己的合法备份挡死）。
+                if BackupStudio.checksumNeedsAck(parsed.preview.checksum) && !checksumAcked {
+                    checksumAcked = true
+                    restoreError = "校验和对不上：可能是本 App 旧版本导出的包（键序不同，属正常），也可能真被截断/改动过。确认要继续请再点一次恢复。"
                     return
                 }
                 let r = BackupStudio.restore(parsed.bundle)
