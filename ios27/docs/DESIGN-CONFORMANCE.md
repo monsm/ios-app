@@ -82,6 +82,22 @@ CI (origin/ci-test)      →  test_ok=1  test_failed=0  84 tests / 2 skipped / 0
 | 6 | **滚动边缘**：内容与栏交界处淡出，不铺不透明底 | ✅ | 页面用 `.scrollEdgeEffectStyle`；玻璃下面没有实色底 |
 | 7 | **点击区**：玻璃不缩小点击区（44×44） | ✅ | `a11y` 闸门在守 |
 
+### 2.0 官方玻璃 API 的采用状态（逐条，含"为什么不用"）
+
+| 官方 API | 本仓 | 说明 |
+|---|---|---|
+| **`TabView` + `Tab`** | ✅ **已采用**（1 个 `TabView` / 5 个 `Tab`） | 标签栏由系统渲染，材质/形变/适配/语义全归系统。CI `8758a1c` 已验证：build+archive 绿、84 tests / 0 failures |
+| **`tabBarMinimizeBehavior(_:)`** | ✅ 已采用 `.onScrollDown` | 系统标签栏的玻璃行为：向下滚动最小化、向上展开。自绘栏做不到 |
+| `.glassEffect(_:in:)` | ✅ 已采用（`VGlassSurface` 唯一入口，1 处：提示条） | 系统没有"提示条"控件，所以这里对自绘形状用官方材质 API 是正确做法 |
+| `.buttonStyle(.glass)` / `.glassProminent` | ❌ 不用 | 本仓按钮都在**内容卡片里**；`liquid-glass.md` 第 1 条把"卡片上的玻璃"列为**缺陷**。系统没有"卡片内玻璃按钮"这种设计 |
+| `GlassEffectContainer` | ❌ 不用 | 它的用途是**把多块玻璃放进同一采样区**。本仓自定义玻璃面只剩 1 处（提示条），无玻璃可分组 |
+| `tabViewBottomAccessory` | ❌ 不用 | 用于标签栏上方的**常驻**控件（如 MiniPlayer）。本仓提示条是瞬时的，不是常驻配件 |
+| `Tab(role: .search)` | ❌ 不用 | 独立搜索标签，选中时形变为搜索框。本仓搜索是"凭证页内过滤"（带历史 chips、与类型筛选联动），做成独立标签会让凭证同时出现在两个标签里 |
+| `.searchable(_:)` | ❌ 不用 | 需要可见的导航栏承载搜索框；本仓各页用 `.toolbarVisibility(.hidden, for: .navigationBar)` + 页内自定义头部（含计数与筛选），改成 `.searchable` 等于换掉整套页面头部 |
+
+> 这张表的作用：**把"评估过但不用"的官方 API 也写下来**，
+> 否则下一轮会重新评估一遍，或者更糟 —— 为了"用上官方 API"而用错场景。
+
 ### 2.1 本轮修掉的缺口：Increase Contrast 没处理
 
 `VGlassSurface` 原来只判 `accessibilityReduceTransparency`。开了「增强对比度」的用户看到的仍是半透明玻璃，
