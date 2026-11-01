@@ -256,16 +256,21 @@ struct HHMemberRow: View {
                 }
                 Text(subline)
                     .font(V.F.unit)
-                    .foregroundStyle(status == .stale || status == .archived ? V.C.text3 : V.C.text2)
+                    // 四态里只有 `active` 用主色：`never`（还没用过）与 `archived` 同属「不是活跃」。
+                    .foregroundStyle(status == .active ? V.C.text2 : V.C.text3)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: V.S.gapS)
             VStack(alignment: .trailing, spacing: V.S.gapXXS) {
                 VReading(value: "\(member.keyCount)", unit: "枚", font: V.F.number15, tint: V.C.text1, animated: false)
-                Text(status == .stale ? "久未用" : "活跃")
+                // 2026-11-01 修复：这里原来是二分支 `status == .stale ? "久未用" : "活跃"`，
+                // 而 `HHMemberStatus` 有**四个值** —— `never`（还没用过）与 `archived`（已归档）
+                // 都会被显示成「活跃」。同一份语义在 `HHDisplay.statusWord` 里已有完整四分支，
+                // 这里改用它（两处各写一套正是这类缺陷的温床）。
+                Text(HHDisplay.statusWord(status))
                     .font(V.F.unit)
-                    .foregroundStyle(status == .stale ? V.C.text3 : V.C.rewardGreen)
+                    .foregroundStyle(status == .active ? V.C.rewardGreen : V.C.text3)
             }
         }
         .frame(minHeight: V.Hit.min + V.S.gapS)
