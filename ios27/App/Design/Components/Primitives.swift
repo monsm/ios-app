@@ -89,7 +89,9 @@ struct ChipRow<Item: Hashable>: View {
                             .font(V.F.footnote)
                             .foregroundStyle(on ? V.C.text1 : V.C.text2)
                             .padding(.horizontal, V.S.gapMS)
-                            .frame(height: V.H.chip)
+                            // minHeight：chip 高度是下限，大字号下文字变高时容器要跟着长，
+                            // 否则标题被裁（同 PrimaryAction / SecondaryAction）。
+                            .frame(minHeight: V.H.chip)
                             .background(on ? V.C.blue.opacity(0.16) : Color.clear, in: .capsule)
                             .overlay {
                                 Capsule().strokeBorder(

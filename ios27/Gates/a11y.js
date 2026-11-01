@@ -115,6 +115,23 @@ for (const name of ['VRingStack', 'VMiniBars', 'VAreaChart', 'VSegmentedRing']) 
     }
   }
 }
+
+// ⑥ 下限令牌不许当固定尺寸用（2026-11-01）。
+// V.H.min / V.H.action 是**可点区下限**；写成 `.frame(height: V.H.action)` 就变成上限，
+// 最大动态字号下按钮标题会被裁掉（SwiftUI 不报错，只是看不见字）。
+// 正确写法是 `.frame(minHeight: ...)`。
+{
+  for (const fp of files) {
+    const src = fs.readFileSync(fp, 'utf8');
+    const rel = path.relative(ROOT, fp).split(path.sep).join('/');
+    src.split(/\r?\n/).forEach((line, i) => {
+      if (line.trim().startsWith('//')) return;
+      if (!/\.frame\(\s*(height|width)\s*:\s*V\.H\./.test(line)) return;
+      findings.push({ file: rel, line: i + 1, why: '下限令牌被当作固定尺寸（大字号会裁字）：改用 minHeight/minWidth' });
+    });
+  }
+}
+
 console.log(`a11y: 扫 ${files.length} 个文件`);
 if (findings.length === 0) {
   console.log('a11y: OK — 图标按钮都有 label，无 <44pt 可点区，VListRow value 与图表数据均可朗读');
