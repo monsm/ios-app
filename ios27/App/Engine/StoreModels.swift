@@ -228,18 +228,23 @@ struct StatusSnapshotData: Codable, Equatable {
     var pinCap: Int?
     var pwdCap: Int?
     var fpCap: Int?
+    /// 03 KLV#23「已绑定 PIN 数」—— 手机钥匙页用它算「锁端比本机多几把别人的钥匙」。
+    /// Optional 与其他容量字段同口径：旧快照缺键解码为 nil，不破坏历史数据。
+    var pinInfoBinding: Int?
 
-    enum CodingKeys: String, CodingKey { case rc, powerLevel, firmware, lockTime, pinStock, pwdStock, fpStock, verifyMode, broadcastMode, tempPwdMode, securityLevel, sKeyStatus, zotpPeriod, pinCap, pwdCap, fpCap }
+    enum CodingKeys: String, CodingKey { case rc, powerLevel, firmware, lockTime, pinStock, pwdStock, fpStock, verifyMode, broadcastMode, tempPwdMode, securityLevel, sKeyStatus, zotpPeriod, pinCap, pwdCap, fpCap, pinInfoBinding }
 
     init(rc: Int = 0, powerLevel: Int = 0, firmware: String = "", lockTime: Int64 = 0,
          pinStock: Int = 0, pwdStock: Int = 0, fpStock: Int = 0, verifyMode: Int = 0,
          broadcastMode: Int = 0, tempPwdMode: Int = 0, securityLevel: Int = 0, sKeyStatus: Int = 0,
-         zotpPeriod: Int? = nil, pinCap: Int? = nil, pwdCap: Int? = nil, fpCap: Int? = nil) {
+         zotpPeriod: Int? = nil, pinCap: Int? = nil, pwdCap: Int? = nil, fpCap: Int? = nil,
+         pinInfoBinding: Int? = nil) {
         self.rc = rc; self.powerLevel = powerLevel; self.firmware = firmware; self.lockTime = lockTime
         self.pinStock = pinStock; self.pwdStock = pwdStock; self.fpStock = fpStock
         self.verifyMode = verifyMode; self.broadcastMode = broadcastMode; self.tempPwdMode = tempPwdMode
         self.securityLevel = securityLevel; self.sKeyStatus = sKeyStatus
         self.zotpPeriod = zotpPeriod; self.pinCap = pinCap; self.pwdCap = pwdCap; self.fpCap = fpCap
+        self.pinInfoBinding = pinInfoBinding
     }
 
     /// 容错解码（2026-10-29）：缺字段回落默认值。
@@ -263,6 +268,7 @@ struct StatusSnapshotData: Codable, Equatable {
         pinCap = try c.decodeIfPresent(Int.self, forKey: .pinCap)
         pwdCap = try c.decodeIfPresent(Int.self, forKey: .pwdCap)
         fpCap = try c.decodeIfPresent(Int.self, forKey: .fpCap)
+        pinInfoBinding = try c.decodeIfPresent(Int.self, forKey: .pinInfoBinding)
     }
 }
 struct LogCache: Codable {

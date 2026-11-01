@@ -13,7 +13,8 @@ extension DB {
             zotpPeriod: st.zotpPeriod > 0 ? st.zotpPeriod : nil,
             pinCap: st.pinInfoCapacity > 0 ? st.pinInfoCapacity : nil,
             pwdCap: st.pwdInfoCapacity > 0 ? st.pwdInfoCapacity : nil,
-            fpCap: st.fpInfoCapacity > 0 ? st.fpInfoCapacity : nil)
+            fpCap: st.fpInfoCapacity > 0 ? st.fpInfoCapacity : nil,
+            pinInfoBinding: st.pinInfoBinding > 0 ? st.pinInfoBinding : nil)
         // 2026-10-29 性能：每次 getStatus 成功都会走到这里，而状态大多时候没变。
         // 原先无条件 set → 每次都是一次 JSONSerialization + UserDefaults(plist) 落盘。
         //
