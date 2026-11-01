@@ -321,6 +321,39 @@ final class SecurityRegressionTests: XCTestCase {
                                  "回收站上限过大就等于没有上限（口令副本会一起堆积）")
     }
 
+    // MARK: - 记录页覆盖层：空壳一致性与写路径
+
+    /// 备注/旗标/处置三族必须与空壳同口径（都按行键存在，都泄露"有这条记录"）。
+    /// 旧实现里 `notes()` 判空壳、`flags()` 不判 —— 同一份数据两种待遇。
+    func testRecordOverlayIsDecoyConsistent() {
+        let mac = "aabbccddeeff"
+        RecordOverlay.setNote(mac, "1", "备注甲")
+        _ = RecordOverlay.toggleFlag(mac, "1")
+        DB.setDecoy(true)
+        defer { DB.setDecoy(false) }
+        XCTAssertTrue(RecordOverlay.notes(mac).isEmpty, "空壳不该暴露备注")
+        XCTAssertTrue(RecordOverlay.flags(mac).isEmpty, "空壳不该暴露旗标（旧实现这里漏了）")
+        XCTAssertTrue(RecordOverlay.dispositions(mac).isEmpty, "空壳不该暴露处置")
+        DB.setDecoy(false)
+        _ = RecordOverlay.toggleFlag(mac, "1")   // 清掉，避免污染其它用例
+    }
+
+    /// 空壳里改一条备注，**不能**把整张备注表覆盖成只剩这一条。
+    /// 旧实现 `setNote` 用 `notes(mac)` 读，而它在空壳返回 [:] —— 整表被抹。
+    func testOverlayWriteInDecoyDoesNotWipeTable() {
+        let mac = "aabbccddeeff"
+        RecordOverlay.setNote(mac, "1", "旧备注")
+        DB.setDecoy(true)
+        RecordOverlay.setNote(mac, "2", "空壳里写的")
+        DB.setDecoy(false)
+        let table = RecordOverlay.notes(mac)
+        XCTAssertEqual(table[RecordOverlay.oid(mac: mac, rowKey: "1")], "旧备注", "旧备注被抹掉了（写路径误用展示层读取器）")
+        XCTAssertEqual(table[RecordOverlay.oid(mac: mac, rowKey: "2")], "空壳里写的")
+        // 清理，避免污染其它用例
+        RecordOverlay.setNote(mac, "1", "")
+        RecordOverlay.setNote(mac, "2", "")
+    }
+
     // MARK: - 备份：类型/规模闸（SEC-30）
 
     func testBackupImportRejectsForeignAndOversizedPayloads() throws {

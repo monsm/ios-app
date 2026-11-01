@@ -291,6 +291,31 @@ console.log('privacy: 扫 ' + files.length + ' 个 Swift 文件 + PrivacyInfo.xc
   }
 }
 
+
+// 16) RecordOverlay 的写路径同样不许走空壳过滤后的读（2026-11-01）。
+// setNote / toggleFlag / setDisposition 若用 notes()/flags()/dispositions()，
+// 空壳里改一条就会把整表覆盖成只剩这一条。
+{
+  const target = 'Engine/RecordSearch.swift';
+  const f = files.find(function (x) { return x.rel === target; });
+  if (f) {
+    const writers = ['setNote', 'toggleFlag', 'setDisposition'];
+    const forbidden = /(notes|flags|dispositions)\(mac\)/;
+    for (let i = 0; i < f.lines.length; i++) {
+      const w = writers.find(function (n) { return f.lines[i].indexOf('func ' + n + '(') >= 0; });
+      if (!w) continue;
+      let body = '';
+      for (let j = i; j < Math.min(f.lines.length, i + 20); j++) {
+        if (j > i && /^\s{4}(private )?(static )?func /.test(f.lines[j])) break;
+        body += f.lines[j] + '\n';
+      }
+      if (forbidden.test(body)) {
+        note(f.rel, i + 1, w + ' 用展示层读取器（空壳下返回空会把整表覆盖）', '改用 rawNotes/rawFlags/rawDispositions');
+      }
+    }
+  }
+}
+
 if (fails.length === 0) {
   console.log('privacy: OK — 剪贴板/备份加密/空壳隔离(读+写)/明文口令不进 plist/帧脱敏/WebDAV/文件保护/CSV 注入/隐私清单 XML 10 类回归判据全部通过');
   process.exit(0);

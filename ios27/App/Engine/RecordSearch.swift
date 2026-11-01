@@ -28,16 +28,29 @@ enum RecordOverlay {
     static func oid(mac: String, rowKey: String) -> String {
         rowKey.hasPrefix(mac + "#") ? rowKey : mac + "#" + rowKey
     }
+    // 写路径必须读**原始存储**：空壳模式下 `notes()` 返回 [:]（展示层语义），
+    // 写路径若用它，空壳里改一条备注就会把**整张备注表覆盖成只剩这一条**。
+    // 与 CredentialStudioStores 的 stored() 同一纪律（见 AUDIT-ROUND-23）。
+    private static func rawNotes(_ mac: String) -> [String: String] {
+        DB.store.get([String: String].self, noteKey(mac)) ?? [:]
+    }
+    private static func rawFlags(_ mac: String) -> Set<String> {
+        Set(DB.store.get([String].self, flagKey(mac)) ?? [])
+    }
+    private static func rawDispositions(_ mac: String) -> [String: RecordSearch.Disposition] {
+        DB.store.get([String: RecordSearch.Disposition].self, dispKey(mac)) ?? [:]
+    }
+
     static func notes(_ mac: String) -> [String: String] {
         if DB.isDecoy { return [:] }   // SEC-03 残余：空壳不暴露记录备注
-        return DB.store.get([String: String].self, noteKey(mac)) ?? [:]
+        return rawNotes(mac)
     }
     static func note(_ mac: String, _ rowKey: String) -> String {
         notes(mac)[oid(mac: mac, rowKey: rowKey)] ?? ""
     }
     /// 空文本 = 删键 (不留 kf_rnote 里的空壳, 否则完整性自查会数出无意义的条目)
     static func setNote(_ mac: String, _ rowKey: String, _ text: String) {
-        var m = notes(mac)
+        var m = rawNotes(mac)
         let k = oid(mac: mac, rowKey: rowKey)
         let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
         if t.isEmpty { m.removeValue(forKey: k) } else { m[k] = String(t.prefix(60)) }   // 60 字上限: 行下灰字一行放得下
@@ -61,14 +74,16 @@ enum RecordOverlay {
     }
 
     static func flags(_ mac: String) -> Set<String> {
-        Set(DB.store.get([String].self, flagKey(mac)) ?? [])
+        // SEC-03 一致性：备注与处置都随空壳清空，旗标没有理由例外（它同样泄露"有记录"）。
+        if DB.isDecoy { return [] }
+        return rawFlags(mac)
     }
     static func isFlagged(_ mac: String, _ rowKey: String) -> Bool {
         flags(mac).contains(oid(mac: mac, rowKey: rowKey))
     }
     @discardableResult
     static func toggleFlag(_ mac: String, _ rowKey: String) -> Bool {
-        var set = flags(mac)
+        var set = rawFlags(mac)
         let k = oid(mac: mac, rowKey: rowKey)
         if set.contains(k) { set.remove(k) } else { set.insert(k) }
         DB.store.setCodable(flagKey(mac), set.sorted())
@@ -84,13 +99,14 @@ enum RecordOverlay {
     // 所以按与备注/旗标同一套本机覆盖层补上，不新建第二套存储。
     static func dispKey(_ mac: String) -> String { "kf_rdisp_" + mac }
     static func dispositions(_ mac: String) -> [String: RecordSearch.Disposition] {
-        DB.store.get([String: RecordSearch.Disposition].self, dispKey(mac)) ?? [:]
+        if DB.isDecoy { return [:] }   // 与 notes 同口径：处置记录同样泄露"有这条记录"
+        return rawDispositions(mac)
     }
     static func disposition(_ mac: String, _ rowKey: String) -> RecordSearch.Disposition? {
         dispositions(mac)[oid(mac: mac, rowKey: rowKey)]
     }
     static func setDisposition(_ mac: String, _ rowKey: String, _ d: RecordSearch.Disposition?) {
-        var m = dispositions(mac)
+        var m = rawDispositions(mac)
         let k = oid(mac: mac, rowKey: rowKey)
         if let d { m[k] = d } else { m.removeValue(forKey: k) }
         DB.store.setCodable(dispKey(mac), m)
