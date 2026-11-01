@@ -90,6 +90,15 @@ for (const f of files) {
     console.log(`  ${rel}  块注释未闭合`);
     bad++;
   }
+  // 2026-11-01：空 / 近空 Swift 文件。
+  // `App/Engine/HintOnce.swift` 曾是一个 **0 字节**文件，从首次提交起就如此，零引用，
+  // 却因为 `project.yml` 用 `sources: - path: App` 目录通配而被编进工程 ——
+  // 它什么都编译不出来，也没人会发现。
+  const body = src.replace(/\/\/.*$/gm, "").replace(/\s+/g, "");
+  if (body.length < 20) {
+    console.log(`  ${rel}  空或近空的 Swift 文件（去掉注释与空白后仅 ${body.length} 字符）—— 删掉它，或补上内容`);
+    bad++;
+  }
 }
 
 if (bad === 0) {
