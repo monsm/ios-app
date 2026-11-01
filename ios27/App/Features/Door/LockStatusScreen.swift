@@ -353,21 +353,6 @@ struct LockStatusScreen: View {
         }
     }
 
-    private func copy(_ lock: LockSummary, safeMode: Bool, muted: Bool) -> LockSummary {
-        LockSummary(
-            id: lock.id,
-            name: lock.name,
-            model: lock.model,
-            battery: lock.battery,
-            signal: lock.signal,
-            firmware: lock.firmware,
-            keyCount: lock.keyCount,
-            isConnected: lock.isConnected,
-            safeMode: safeMode,
-            muted: muted
-        )
-    }
-
     private var hairline: some View {
         Rectangle()
             .fill(V.C.hairline)
