@@ -29,8 +29,11 @@ CI (origin/ci-log)       →  build_ok=1  archive_ok=1  errors=0  warnings=0
 CI (origin/ci-test)      →  test_ok=1  test_failed=0  84 tests / 2 skipped / 0 failures
 ```
 
-**剩余 4 条已知偏差**（见 §5）全部是「没有真机无法验证」或「需要重做导航层」的类别，
-不是"还没做"。逐条写了严重度、引用与不修的理由。
+**偏差 #1（手写 Tab 栏，`code-audit.md` 列为 High）已在 ROUND-172 修复** ——
+换成官方 `TabView`，标签栏由系统渲染，因此自带真正的 Liquid Glass 材质与系统适配。
+
+**剩余 3 条已知偏差**（见 §5）都是「没有真机无法验证」或「纯冗余非缺陷」的类别，
+不是"还没做"。逐条写了严重度、引用与处置。
 
 ## 1. 原生控件
 
@@ -53,8 +56,8 @@ CI (origin/ci-test)      →  test_ok=1  test_failed=0  84 tests / 2 skipped / 0
 | 档位 chip 行 | `Picker(.segmented)` | 10 |
 | 读数行 `HStack` | `LabeledContent` | 55 |
 | 手绘拖拽/上下移 | **`reorderable()` + `reorderContainer(for:)`（iOS 27）** | 1 面板（按钮保留） |
-| 半透明材质 Tab 栏 | 原生 `.glassEffect` | 1 |
-| 半透明提示条 | 原生 `.glassEffect` | 1 |
+| **手写浮动 Tab 栏（`HStack` 胶囊）** | **官方 `TabView` + `Tab`（系统渲染标签栏）** | 5 个标签 |
+| 半透明提示条 | 原生 `.glassEffect`（`VGlassSurface`） | 1 |
 
 ### 保留的自定义件（**不是**"重造系统控件"）
 
@@ -71,8 +74,8 @@ CI (origin/ci-test)      →  test_ok=1  test_failed=0  84 tests / 2 skipped / 0
 
 | # | 条目 | 本仓 | 证据 |
 |---|---|---|---|
-| 1 | **层次纪律**：玻璃只在浮动控件与导航上 | ✅ | 仅 2 处：浮动 Tab 栏、顶部提示条。内容卡片/列表行 **0** |
-| 2 | **克制**：自定义玻璃面数量 | ✅ | 全 App **2** 处，同屏最多 2（提示条是瞬时的） |
+| 1 | **层次纪律**：玻璃只在浮动控件与导航上 | ✅ | 标签栏由**系统**渲染（`TabView`，不算自定义玻璃面）；自定义玻璃面只剩顶部提示条 1 处。内容卡片/列表行 **0** |
+| 2 | **克制**：自定义玻璃面数量 | ✅ | 自定义玻璃面全 App **1** 处（提示条）；标签栏不再计入，因为它是系统控件 |
 | 3 | **变体适配**：文字多的面用 regular，别用 clear | ✅ | 只用 `.regular`；`.clear` **0** 处 |
 | 4 | **颜色预算**：每屏最多 1–2 个染色主操作 | ✅ | 染色只在两块**面**上，玻璃**按钮** 0 个 |
 | 5 | **无障碍状态**：Reduce Transparency → 不透明；**Increase Contrast → 更强的填充与描边**；Reduce Motion → 去掉形变 | **本轮补齐** | 见 §2.1 |
@@ -144,9 +147,9 @@ private var opaque: Bool { solid || contrast == .increased }
 
 ## 5. 已知偏差（**明确记录，不假装没有**）
 
-| # | 偏差 | 出处/严重度 | 为什么不改 |
+| # | 偏差 | 出处/严重度 | 处置 |
 |---|---|---|---|
-| 1 | **手写的浮动 Tab 栏**（`HStack` 固定在底部），而非 `TabView` | `code-audit.md` 把它列为 **High**：会错过系统材质、系统适配，以及 **iPhone Duo 的侧边栏位置** | 它是本 App 的骨架（268pt 居中胶囊 + Router），换 `TabView` 等于重做导航层；且无 iOS 27 真机可验证观感。**这是本报告里最大的一处偏差。** |
+| 1 | ~~手写的浮动 Tab 栏（`HStack` 固定在底部）~~ | `code-audit.md` **High**：会错过系统材质、系统适配、iPhone Duo 侧边位置 | **已修复（ROUND-172）** —— 换成官方 `TabView` + `Tab`，系统渲染标签栏；连带删除 119 行自绘栏、3 个孤儿令牌、`Tab`/`R.tab` 令牌、以及 13 个页面的 92pt 手工底部留白（原生栏自己预留）。**代价：官方栏是全宽的，不再是 268pt 居中胶囊。** |
 | 2 | **没有任何尺寸类适配**：`horizontalSizeClass` / `verticalSizeClass` / `ViewThatFits` 全为 0 | `resizability.md`：iPhone Duo 合上/展开只改可用空间 | 影响 52 个 `ScrollView` 页面，且无真机可验证。属独立课题 |
 | 3 | `ConcentricRectangle` 未使用 | `design.md`：贴边形状用它，远离边界的可继续用 `.rect` | 本仓卡片都内缩 `pageGutter`，属"远离边界"，规则允许 `.rect` |
 | 4 | `RoundedRectangle` 到处显式写 `style: .continuous` | `design.md`：那是默认值，不必写 | 纯冗余，非缺陷；批量改会制造无意义的 diff |
