@@ -204,8 +204,11 @@ extension DB {
 
     static func setPwdPeriod(_ mac: String, _ alias: Int, _ from: String, _ to: String) {
         var l = ledger(mac)
-        for i in l.pwds.indices where l.pwds[i].alias == alias { l.pwds[i].from = from; l.pwds[i].to = to }
+        var hit = false
+        for i in l.pwds.indices where l.pwds[i].alias == alias { l.pwds[i].from = from; l.pwds[i].to = to; hit = true }
         saveLedger(mac, l)
+        // 有效期变了 ⇒ 提醒必须按新日期重排（否则旧通知还在旧日期上）
+        if hit { CredentialOrg.rescheduleAlerts(mac: mac, alias: alias) }
     }
 
     static func setPwdNote(_ mac: String, _ alias: Int, _ note: String) {

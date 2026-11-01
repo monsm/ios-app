@@ -55,6 +55,18 @@ extension CredentialOrg {
         }
     }
 
+    /// 有效期变了 ⇒ 旧的到期提醒必须按新日期重排。
+    ///
+    /// 2026-11-01（Round 226）：`setPwdPeriod`（手动改期与批量延期都走它）此前**只改台账、从不重排提醒** ——
+    /// 于是把「11-10 到期」延到「次年 1-1」，通知仍会在 11-03 弹「即将到期」，用户以为密码快过期了。
+    /// 与上面 `cancelAlerts` 的注释是同一族：**改/删都要让通知跟着走**。
+    static func rescheduleAlerts(mac: String, alias: Int) {
+        guard let p = DB.listPwds(mac).first(where: { $0.alias == alias }) else { return }
+        cancelAlerts(mac: mac, alias: alias)
+        let a = alertTable(mac)["pwd:" + String(alias)] ?? CredAlert()
+        scheduleAlerts(mac, p, a)
+    }
+
     // MARK: - SEC-32 通知排期的唯一串行链
 
     /// 「删旧 / 排新 / 取消」三类动作全部排进同一条队列，逐个完成后再取下一个。
