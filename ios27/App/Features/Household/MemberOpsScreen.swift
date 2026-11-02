@@ -354,7 +354,11 @@ struct MemberOpsScreen: View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VCardHeader(title: "长辈模式", showsChevron: false)
-                VToggleRow(title: "开启长辈模式", detail: "凭证页只留全部/密码/指纹分段，隐藏批量与导出入口，行内字号放大。只影响凭证页这一档。", isOn: Binding(
+                // 2026-11-01（Round 271）：原文案写「行内字号放大」，但**代码里没有任何字号缩放** ——
+                // `elderMode` 全仓只用于「筛芯片只留全部/密码/指纹」与「隐藏凭证工作室/分享给安卓两行」。
+                // 真正的大字是另一套：「无障碍 → 大字档」（`kf_ax_bigtext` → `dynamicTypeSize`），全 App 生效。
+                // 承诺没做的事会让人开了长辈模式却觉得「字没变大、是不是坏了」，所以改准并指过去。
+                VToggleRow(title: "开启长辈模式", detail: "凭证页只留全部/密码/指纹分段，隐藏批量与导出入口。只影响凭证页这一档；想让字更大，请到「无障碍」开大字档。", isOn: Binding(
                     get: { MemberHub.elderMode },
                     set: { on in MemberHub.setElderMode(on); tick += 1 }
                 ))
