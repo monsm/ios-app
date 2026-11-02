@@ -28,9 +28,20 @@ extension DB {
     }
 
     static func keychain(_ mac: String) -> Keychain? {
-        // SEC-03 残余：空壳模式不返回钥匙串（含 skey/bkey/ekey/pins）。
-        // AppModel.currentKeychain 从这里取，Zotp / ShareToAndroid / MobileKey 都靠它。
-        if isDecoy { return nil }
+        // 2026-11-01（Round 314）：**空壳模式必须仍能取到这一把钥匙串。**
+        //
+        // 原实现这里有一句 `if isDecoy { return nil }`，注释理由是「不返回 skey/bkey/ekey/pins」。
+        // 但它同时把**开锁能力**一起藏了：`AppModel.currentKeychain` → nil ⇒ `app.lock` 为空 ⇒
+        // 门页显示「还没有添加门锁」，`LockServiceOps.unlock` 也拿不到 skey。
+        //
+        // 而 `AppLock` 的设计写得很明白（第 11、15 行）：
+        //   「胁迫码 → 空壳模式（**门能开**、数据看不见）… 隐藏的是数据（凭证台账、成员、备份），
+        //     **不是开锁能力 —— 门照样能开，这是保命的前提**。」
+        // 两者直接矛盾，且矛盾的方向是**危险的那一侧**：被胁迫者打不开门，伪装当场穿帮。
+        //
+        // 所以：**单把读取放行，列表读取（`keychains()`）继续隐藏** ——
+        // 后者才是「锁名/锁清单」的暴露面，前者是开锁必需的 `skey`。
+        // 数据区仍由 `ledger` / `members` / `entries` / `mobileKeys` / 回收站 各自的 decoy 守卫清空。
         let m = normalizeMac(mac)
         if let hit = keychainCache.withLock({ $0[m] }) { return hit }
         let map = store.getDict("kf_keychains")
