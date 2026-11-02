@@ -34,6 +34,17 @@ struct DiagStreamScreen: View {
     @State private var rawOn = DB.store.getBool("kf_debug_raw")
     /// 复制时是否带上**原始载荷**（含 skey/ekey/PIN）。默认关；本机调试时由用户显式打开。
     @State private var includeRaw = false
+    /// 2026-11-02（用户要求）：落盘条数上限档位 + 清空确认。
+    /// 原来写死 500 行 —— 一次开锁十几行，复现两三轮就把现场滚掉了。
+    @State private var maxLines = DiagLogs.maxLines
+    @State private var askClear = false
+    /// 界面最多渲染多少行：与落盘上限同步，但「不限」档为了不卡界面仍截到 5000。
+    /// 流水是 LazyVStack，理论上不限也行；这里设硬顶是因为一次全渲染 2 万行会让这一页明显卡。
+    private var shownLines: [DiagLogEntry] {
+        let all = DiagLogs.all().reversed()
+        let cap = maxLines > 0 ? maxLines : 5000
+        return Array(all.prefix(cap))
+    }
 
     /// List 段头：中文必须显式 textCase(nil)，否则系统会把段头拉成大写形态。
     private func sectionHeader(_ text: String) -> some View {
@@ -44,8 +55,8 @@ struct DiagStreamScreen: View {
             .accessibilityAddTraits(.isHeader)
     }
 
-    /// 最新在前。
-    private var lines: [DiagLogEntry] { DiagLogs.all().reversed() }
+    /// 最新在前。渲染与复制都走 `shownLines`（受上限档位约束）。
+    private var lines: [DiagLogEntry] { shownLines }
 
     /// 事件台账（`BleTelemetry.recordEvent`）—— 这些**一直是只写不读**：
     /// 备份跳过非法密钥、台账解不出、钥匙串写失败、恢复时归属找不到…… 全记在这，却没有任何界面显示。
@@ -89,6 +100,42 @@ struct DiagStreamScreen: View {
                     .diagCardRow()
                 } header: {
                     sectionHeader("记录范围")
+                }
+
+                // 2026-11-02（用户要求）：日志上限 + 清空。
+                // 「清空」的价值：出问题时先清、再复现，日志里就只剩这一次现场 ——
+                // 比在几百行里翻找第一帧要快得多。清空是破坏性动作，所以要二次确认。
+                Section {
+                    VCard {
+                        VStack(alignment: .leading, spacing: V.S.gapS) {
+                            VCardHeader(title: "保留行数")
+                            Picker("保留行数", selection: Binding(
+                                get: { maxLines },
+                                set: { v in
+                                    maxLines = v
+                                    DB.store.setInt(DiagLogs.maxKey, v)
+                                }
+                            )) {
+                                ForEach(DiagLogs.maxChoices, id: \.value) { c in
+                                    Text(c.label).tag(c.value)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                            .labelsHidden()
+                            SettingsNote(text: maxLines == 0
+                                         ? "不限行数 —— 只受「保留天数」约束。行数太多会让这一页变慢，也更容易把旧现场混进来。"
+                                         : "落盘保留最近 \(maxLines) 行。一次开锁约十几行，复现两三轮就会滚掉最早的帧；要保现场请调大或选「不限」。")
+                        }
+                    }
+                    .diagCardRow()
+
+                    VActionButton(title: "清空流水（\(lines.count) 行）", systemImage: "trash", tint: V.C.critical) {
+                        askClear = true
+                    }
+                    .disabled(lines.isEmpty)
+                    .diagCardRow()
+                } header: {
+                    sectionHeader("上限与清空")
                 }
 
                 Section {
@@ -197,6 +244,17 @@ struct DiagStreamScreen: View {
                     Button("完成") { dismiss() }
                         .accessibilityLabel("完成查看交互流水")
                 }
+            }
+            // 清空是破坏性动作：先问，再清。清掉的是**本机诊断流水**，不碰锁端日志、不碰台账。
+            .confirmationDialog("清空全部交互流水？", isPresented: $askClear, titleVisibility: .visible) {
+                Button("清空 \(lines.count) 行", role: .destructive) {
+                    let n = DiagLogs.clear()
+                    maxLines = DiagLogs.maxLines
+                    AppToast.shared.show("已清空 \(n) 行交互流水", tone: .ok)
+                }
+                Button("取消", role: .cancel) { }
+            } message: {
+                Text("只清本机这一份流水，不动锁内日志、不动台账、不动钥匙串。清完后复现一次，留下的就只有那一次的现场。")
             }
         }
         // 2026-11-01（Round 310）：**这一页是全 App 最敏感的一页** —— 打开「包含原始载荷」时，

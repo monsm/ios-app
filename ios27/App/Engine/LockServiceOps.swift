@@ -112,18 +112,39 @@ extension LockService {
         // 2026-10-30（同上）：不暴露 ekey/PIN 术语。
         guard !cred.isEmpty else { throw BLEErrorX.msg("没能生成开锁凭证 — 请重新配对这把锁，或改用「凭证」页里的密码开锁") }
 
-        // 2026-11-01（第 203 轮三方对比驱动）：锁端有「连续错 PIN → 键盘冻结」机制
-        // （cmd03 KLV#06 freeze / #07 errCount），此前**解析了但零消费** ——
-        // 上一个版本在 rc=2 时把 64 枚 PIN 逐个试了一遍，每一条失败都在加深锁端计数，
-        // 而本机完全不知道。现在开锁前先读一次状态：
-        //   · freeze > 0 ⇒ 不发命令，直接告诉用户"锁键盘已被冻结，请等 X 秒"（发了也必败）
-        //   · errCount 高 ⇒ 提示"锁端已记 N 次试错"，并把逐枚试错的额度收窄到 3 枚
+        // 2026-11-02（**真机日志驱动，修我第 203 轮自己引入的 P0**）：
+        //
+        // 第 203 轮我加了这条守卫，把 cmd03 KLV#06 当「冻结剩余秒数」：
+        //     if freeze > 0 { throw "锁端键盘已冻结，约 N 秒后再试" }
+        //
+        // 真机日志（21:21-21:27 那份 307 行）证明这是**误判**，而且后果是致命的：
+        //   · 4 次开锁尝试，**0 次发出 cmd04** —— 全在发命令前被这条守卫拦下；
+        //   · cmd03 回包解出来是 KLV#06 = 0x1e(30)、KLV#07 = 0x05(5)，
+        //     而这两个值在 20 次读取、跨 5 分钟内**一动不动**；
+        //   · 真正的「冻结倒计时」不可能不变。它们更像**阈值/配置**
+        //     （"连续错 5 次则冻结 30 秒"），不是"当前还剩 30 秒"。
+        //   · 原版 vendor `main.js` 里 KLV#06 的 getter 叫 `getKeyboardFreeze()`，
+        //     **全仓零处用它做判断** —— 原版 App 从来不用这个字段拦开锁。
+        //
+        // 结论：**不能拿 KLV#06/#07 当「现在被冻结」的判据**。锁真的冻结时，
+        // cmd04 会回 rc=2 或专门的错误码，那才是可判的事实；而"先读一个语义不明的
+        // 字段，非零就不发命令"只会把每一次开锁都变成"点了没反应"。
+        //
+        // 现在的处置：
+        //   · 不再抛错、不再拦开锁 —— 命令照发，让锁自己回答（rc 会如实告诉我们对错）；
+        //   · 但仍读一次 cmd03：errCount 非零时**收窄逐枚试错额度**（避免刷整池加深计数），
+        //     这是原版没有的保护，保留它是有价值的，且不会阻止第一次开锁；
+        //   · 冻结/试错计数**只作为诊断读数**写进交互流水，供排查时看。
         var maxPinRetries = kc.pins.count
-        if let st = try? await getStatus(), st.keyboardFreeze > 0 {
-            throw BLEErrorX.msg("锁端键盘已冻结（试错过多），约 \(st.keyboardFreeze) 秒后再试")
-        } else if let st = try? await getStatus(), st.keyboardErrCount > 0 {
-            // 锁端已记过试错：把逐枚试错的额度收窄，别把整池刷完（那只会加深冻结）。
-            maxPinRetries = min(maxPinRetries, 3)
+        if let st = try? await getStatus() {
+            if st.keyboardErrCount > 0 {
+                // 锁端已记过试错：收窄额度，别把整池刷完（那只会加深计数）。
+                maxPinRetries = min(maxPinRetries, 3)
+            }
+            // 只记读数，不据此拦截。字段语义未定（见上），所以措辞不带"已冻结"这种断言。
+            if st.keyboardFreeze > 0 || st.keyboardErrCount > 0 {
+                log("info", "锁端键盘计数读数 freeze=\(st.keyboardFreeze) errCount=\(st.keyboardErrCount)（仅诊断，不拦截开锁）")
+            }
         }
 
         var r = try await exec(ZKCmdBuilder.cmd04Open(cred, klv01Hex: "0000"), retries: 2)

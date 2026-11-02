@@ -13,7 +13,13 @@ struct LockStatus: Equatable {
     var pid: Int = 0
     var pidName: String = "未知"
     var firmware: String = ""
+    /// cmd03 KLV#06。**语义未定，不要当「当前冻结剩余秒数」用**（2026-11-02 真机日志纠正）：
+    /// 真机上这个值恒为 30、跨 5 分钟不动，而真正的倒计时不可能不变 —— 更像「连续错 N 次则冻结 M 秒」的**阈值**。
+    /// 原版 vendor 里只有 `getKeyboardFreeze()` 这个 getter，**零处消费**。
+    /// 曾有一版拿它 `> 0` 就拦开锁，导致 4 次开锁 0 次发出 cmd04。只可作诊断读数。
     var keyboardFreeze: Int = 0
+    /// cmd03 KLV#07。**同上，语义未定**：真机恒为 5 不动，更像「试错计数上限」而非「已错几次」。
+    /// 唯一可用的保守做法：非零时收窄逐枚试错额度（不拦第一次开锁）。只可作诊断读数。
     var keyboardErrCount: Int = 0
     var securityLevel: Int = 0
     var verifyMode: Int = 0

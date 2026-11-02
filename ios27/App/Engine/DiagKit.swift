@@ -140,10 +140,35 @@ enum DiagLogs {
         return loadIntoCache().filter { $0.date == d }
     }
     /// 由 LockService 分级日志调用: date/time 取自行内已有时序, 落持久台账
+    /// 落盘条数上限（2026-11-02 用户要求「日志解锁最大行数」）。
+    /// 原来写死 500：一次开锁十几行、复现几轮就滚掉现场，排障时最需要的第一帧反而先丢。
+    /// 现在由用户在「交互流水」页选档（500 / 2000 / 5000 / 不限），存在 `kf_diag_max`。
+    static let maxKey = "kf_diag_max"
+    /// 档位：0 = 不限（仍受保留天数约束）。
+    static var maxLines: Int {
+        let v = DB.store.getInt(maxKey)
+        return v > 0 ? v : (DB.store.has(maxKey) ? 0 : 500)   // 未设过 = 默认 500
+    }
+    static let maxChoices: [(label: String, value: Int)] = [
+        ("500 行", 500), ("2000 行", 2000), ("5000 行", 5000), ("不限", 0)
+    ]
+
+    /// 清空全部交互流水（内存 + 落盘）。返回清掉的条数。
+    /// 用户要求：出问题时先清空再复现，日志里就只剩这一次的现场 —— 比在几百行里翻要快得多。
+    @discardableResult
+    static func clear() -> Int {
+        let n = loadIntoCache().count
+        entryCache.withLock { $0 = [] }
+        DiagLogStore.save([])
+        savePending.withLock { $0 = false }   // 已经写过了，别让防抖任务再写一次空表
+        return n
+    }
+
     static func append(_ level: String, _ msg: String, date: String, time: String) {
         var list = loadIntoCache()
         list.append(DiagLogEntry(date: date, time: time, level: level, msg: msg))
-        if list.count > 500 { list = Array(list.suffix(500)) }
+        let cap = maxLines
+        if cap > 0, list.count > cap { list = Array(list.suffix(cap)) }
         if let days = retentionDays {
             let cs = localDay(WeekCal.shifted(Date(), days: -days))
             list = list.filter { $0.date >= cs }
