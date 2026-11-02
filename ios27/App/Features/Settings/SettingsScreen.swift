@@ -45,7 +45,7 @@ struct SettingsScreen: View {
             VStack(alignment: .leading, spacing: V.S.gapM) {
                 chips
                 header
-                searchBlock
+                groupChipsBlock
                 if !search.trimmingCharacters(in: .whitespaces).isEmpty {
                     searchResults
                 } else if app.lock != nil {
@@ -69,7 +69,13 @@ struct SettingsScreen: View {
         }
         .background(V.C.bg.ignoresSafeArea())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .toolbarVisibility(.hidden, for: .navigationBar)
+        // 2026-11-02：系统大标题 + 系统搜索栏 —— 两者都是「原生控件自带材质」的入口，
+        // 大标题随滚动收成 inline 时导航栏出现液态玻璃，搜索栏自带系统玻璃背景。
+        .navigationTitle("设置")
+        .navigationBarTitleDisplayMode(.large)
+        .searchable(text: $search,
+                    placement: .navigationBarDrawer(displayMode: .always),
+                    prompt: "搜设置：备份 / 外观 / 密码…")
         .task {
             await app.reload(refreshStatus: true)
             notifyOff = NotifyAuth.isOff
@@ -109,9 +115,8 @@ struct SettingsScreen: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: V.Page.titleToBody) {
-            Text("设置")
-                .font(V.F.displayHome)
-                .foregroundStyle(V.C.text1)
+            // 2026-11-02：标题改由系统导航栏的大标题承担（见 body 上的 .navigationTitle）——
+            // 自己再画一遍就是同一屏两个「设置」。
             Text("这台锁的全部行为都在本机完成，不上传云端。")
                 .font(V.F.pageLead)
                 .foregroundStyle(V.C.text3)
@@ -125,33 +130,11 @@ struct SettingsScreen: View {
 
     // MARK: - 搜索 + 五组筛选（原 SettingsView.swift:17,65,226-269）
 
-    private var searchBlock: some View {
+    /// 2026-11-02：搜索框交给系统 `.searchable`（见 body 上的修饰符）——
+    /// 系统搜索栏自带取消按钮、键盘处理、滚动收起，以及 **液态玻璃** 的搜索栏背景；
+    /// 自绘的 TextField 这些都拿不到。这里只剩分组芯片（它是筛选，不是搜索）。
+    private var groupChipsBlock: some View {
         VStack(alignment: .leading, spacing: V.S.gapS) {
-            HStack(spacing: V.S.gapS) {
-                Image(systemName: "magnifyingglass")
-                    .font(V.F.icon15)
-                    .foregroundStyle(V.C.text3)
-                    .accessibilityHidden(true)
-                TextField("搜设置：备份 / 外观 / 密码…", text: $search)
-                    .font(V.F.body)
-                    .foregroundStyle(V.C.text1)
-                    .textFieldStyle(.plain)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.never)
-                    .accessibilityLabel("搜索设置")
-                if !search.isEmpty {
-                    Button { search = "" } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(V.F.icon15)
-                            .foregroundStyle(V.C.text3)
-                            .accessibilityHidden(true)
-                    }
-                    .accessibilityLabel("清空设置搜索")
-                }
-            }
-            .padding(.horizontal, V.S.gapM)
-            .frame(minHeight: V.Metric.searchRow)
-            .background(V.C.cardAlt, in: .rect(cornerRadius: V.R.control))
             ScrollView(.horizontal) {
                 HStack(spacing: V.S.gapS) {
                     groupChip(nil, title: "全部")
