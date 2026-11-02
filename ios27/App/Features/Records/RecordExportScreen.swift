@@ -334,7 +334,11 @@ struct RecordExportScreen: View {
                 } else {
                     VReadingGrid(items: [
                         .init(label: "成员", value: String(app.members.filter { !$0.archived }.count), unit: "位"),
-                        .init(label: "凭证", value: String(app.members.reduce(0) { $0 + $1.keyCount }), unit: "枚")
+                        // 2026-11-01（Round 266）：原来「凭证」这一格对**全部成员**求和（含已归档），
+                        // 而同一张卡里的「成员」只数在册、导出的 vCard 名册也只含在册成员 ——
+                        // 于是这个数字**描述的不是它旁边那份导出内容**（归档成员名下的凭证被算进来了）。
+                        // 与 `HouseholdScreen` 的 `HHStats.ownedKeys(activeMembers)` 口径对齐。
+                        .init(label: "凭证", value: String(app.members.filter { !$0.archived }.reduce(0) { $0 + $1.keyCount }), unit: "枚")
                     ], columns: 2)
                     ShareLink(item: roster, preview: SharePreview("成员名册")) {
                         HStack(spacing: V.S.gapS) {
