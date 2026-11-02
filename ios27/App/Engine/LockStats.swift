@@ -67,7 +67,12 @@ struct LockGroup: Identifiable {
 
 enum LockArchive {
     static func meta(_ mac: String) -> LockMeta {
-        DB.get(LockMeta.self, "kf_lockmeta_" + mac) ?? LockMeta()
+        // 2026-11-01（Round 316）：**空壳模式不暴露锁档案**。
+        // `LockMeta.note` 是用户手写的自由文本（「给谁、哪扇门、备用码提示」—— 正是 SEC-13
+        // 明令不进审计链的那类信息），`place` / `grp` 同样是「这把锁在哪」。
+        // 而 `LockProfileScreen` 从门页就能进（空壳下门页是刻意可用的），所以这里必须返回空档案。
+        if DB.isDecoy { return LockMeta() }
+        return DB.get(LockMeta.self, "kf_lockmeta_" + mac) ?? LockMeta()
     }
     // ---------- 分组与手工排序的键位 ----------
     private static let orderKey = "kf_lock_order"
@@ -76,6 +81,9 @@ enum LockArchive {
     /// 该锁所属分组（空串 = 未分组）
     static func group(_ mac: String) -> String { meta(mac).grp }
     static func save(_ mac: String, _ m: LockMeta) {
+        // 写侧同样要拦：空壳下 `meta()` 返回的是空档案，若照常保存就会**用空值覆盖真实备注** ——
+        // 那是「空壳只隐藏、不破坏」的反面（AUDIT-F N-01 的同一课）。
+        guard !DB.isDecoy else { return }
         DB.store.setCodable("kf_lockmeta_" + mac, m)
     }
     /// 292: 连接成功即刷新基准 (开锁成功也会走到这里)
