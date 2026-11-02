@@ -347,7 +347,7 @@ struct BackupStudioScreen: View {
                 outcome = "校验和对不上：可能是本 App 旧版本导出的包（键序不同，属正常），也可能真被截断/改动过。确认要继续请再点一次恢复。"
                 return
             }
-            let r = BackupStudio.restore(parsed.bundle)
+            let r = try BackupStudio.restore(parsed.bundle)
             ackedChecksumFor = nil   // 一次性确认：恢复完作废，下一次重新判断
             // 跳过数同样要报（`restore` 一直返回它，这里此前只报新增/覆盖）。
             outcome = "已恢复 \(file.name)：新增 \(r.imported) 项，覆盖 \(r.overwritten) 项"
@@ -476,7 +476,7 @@ struct BackupStudioScreen: View {
                 outcome = "换机包校验和对不上：可能是旧版本生成（属正常），也可能被截断/改动过。确认要导入请再点一次。"
                 return
             }
-            let r = BackupStudio.restore(parsed.bundle, lockActs: lockActs)
+            let r = try BackupStudio.restore(parsed.bundle, lockActs: lockActs)
             outcome = "迁移完成：新增 \(r.imported) 项，覆盖 \(r.overwritten) 项，跳过 \(r.skipped) 把锁"
             migrateText = ""
             migratePreview = nil

@@ -392,7 +392,15 @@ enum BackupStudio {
     static func restore(_ bundle: BackupBundle, 
                         lockActs: [String: String] = [:],
                         conflictTakeBackup: Set<String> = [],
-                        makeSnapshot: Bool = true) -> (imported: Int, overwritten: Int, skipped: Int, unlinkedOwners: Int) {
+                        makeSnapshot: Bool = true) throws -> (imported: Int, overwritten: Int, skipped: Int, unlinkedOwners: Int) {
+        // 2026-11-01（Round 270）：**只读试验模式的强制点原本只在 BLE 命令层**（`ZKProtocol.assertReadOnly`），
+        // 而「导入备份」是本机写操作（整表改写台账/成员/凭证）—— 它根本不经过那条链路，
+        // 于是试验模式下照样能导入，而开关的说明文案写着「导入导出全部被拦下」。
+        // 导入会覆盖本机数据，属于该拦的写；导出是读，仍放行（文案已同步改准）。
+        // 这里是三条导入路径（旧备份页 / 工作室文本 / 换机迁移）的**唯一入口**，拦一处即可全覆盖。
+        guard !TrialGuard.isOn else {
+            throw BLEErrorX.msg("只读试验模式已开启 —— 导入备份会改写本机台账，已拒绝。请先到「安全」页关闭它。")
+        }
         var b = bundle
         b.currentMac = ""   // 首验清 currentMac, 避免指向另一台设备的锁
         let c = prune(b)

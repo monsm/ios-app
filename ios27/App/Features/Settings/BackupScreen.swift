@@ -398,7 +398,7 @@ struct BackupScreen: View {
                 }
                 importChecksumMismatch = false
                 ackedChecksumFor = nil   // 一次性：这次恢复完就作废，下次重新判断
-                let r = BackupStudio.restore(parsed.bundle)
+                let r = try BackupStudio.restore(parsed.bundle)
                 restoreDone = (added: r.imported, merged: r.overwritten, skipped: r.skipped, unlinked: r.unlinkedOwners)
                 importText = ""
                 importPreviewNote = ""   // 一次性：恢复完就作废，免得下次选文件前残留旧摘要
