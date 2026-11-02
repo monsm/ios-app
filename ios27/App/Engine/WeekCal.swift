@@ -42,12 +42,18 @@ enum WeekCal {
     /// 都是 `String(yearForWeekOfYear) + "-W" + String(weekOfYear)` —— 中途切档位会让周号变化，
     /// 于是"本周轮值"看起来丢了一周。接之前要先定好"切档位时怎么迁移已有的 duty 表"。
     ///
-    /// 2026-11-01（Round 268）补：接线时还要**统一这两个 accessor**。全仓周计算分两拨：
+    /// 2026-11-01（Round 268）补：全仓周计算原先分两拨 ——
     ///   · 走 `WeekCal.calendar`（会应用本偏好）：`MemberHub.weekKey`、`HouseholdRoster`、
     ///     `RecordSearchParse` 的「本周/上周」
     ///   · 走 `WeekCal.gregorian`（**忽略**本偏好）：`StatsKit.lastWeekDigest`（周报的周界）
-    /// 今天两者等价（偏好无人写入），所以不是缺陷；一旦接上，**周报会和"本周轮值/本周记录"错开一周**。
-    /// 接线动作里必须包含：把 `StatsKit.lastWeekDigest` 的 `WeekCal.gregorian` 改成 `WeekCal.calendar`。
+    ///
+    /// 2026-11-01（Round 312）**已统一**：`StatsKit.lastWeekDigest` 改用 `WeekCal.calendar`。
+    /// 偏好为空时两者完全等价，所以那次改动**今天零行为变化**；但它拆掉了一个真雷 ——
+    /// 备份恢复（`BackupKit:356`）其实**已经能写** `kf_week_start`，一旦某份备份带了这个字段，
+    /// 周报的周界就会和「本周」搜索错开一天。
+    ///
+    /// 所以：**不要再往这块加 `WeekCal.gregorian` 的周区间计算** —— 周相关的加减一律用 `calendar`；
+    /// `gregorian` 只用于「取年月日时分」这类与周起始无关的场合（`DF` / `DiagTime` / 电池采样）。
     /// 三个显式档的映射表。刻意不做"任意数字"输入：Sunday=1…Saturday=7 是 Calendar 的内部约定，
     /// 把它暴露成设置项等于让用户猜数字。
     private static let weekdayMap: [String: Int] = ["sun": 1, "mon": 2, "sat": 7]

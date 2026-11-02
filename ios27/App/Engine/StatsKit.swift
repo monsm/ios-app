@@ -47,7 +47,12 @@ enum StatsKit {
         let pwds: [LedgerPwd]
 
         func lastWeekDigest() -> (csv: String, lines: [String]) {
-            let cal = WeekCal.gregorian
+            // 2026-11-01（Round 312）：**与「本周」搜索统一到同一把尺。**
+            // 原来用 `WeekCal.gregorian`（忽略 `kf_week_start`），而 `RecordSearchParse` 的
+            // 「本周 / 上周」用 `WeekCal.calendar`（应用该偏好）—— 一旦偏好被设上（备份恢复会写这个键，
+            // 见 `BackupKit:356`），周报的周界就会和「本周」搜索差一天。
+            // 偏好为空时 `calendar` 与 `gregorian` 完全等价，所以这行改动**今天零行为变化**，只是把口径接上。
+            let cal = WeekCal.calendar
             let today = Date()
             guard let thisWeek = cal.dateInterval(of: .weekOfYear, for: today),
                   let from = cal.date(byAdding: .day, value: -7, to: thisWeek.start),
