@@ -39,7 +39,10 @@ final class Store: @unchecked Sendable {
         // 2026-10-27 审核修复 (D-07)：原来解码失败也返回 [:] —— 而 saveKeychain 会拿它
         // 整表写回，于是「一次无关的保存」会把所有其它设备的钥匙串抹掉。
         // 与 ledger() 同一类失效（有数据但解不出来），但后果更重：那不是空台账，是丢密钥。
-        // 现在失败时返回带哨兵键的字典，调用方（saveKeychain）见哨兵即放弃写入。
+        //
+        // 2026-11-01（Round 321）更正：这里原写「失败时返回带哨兵键的字典，调用方见哨兵即放弃写入」——
+        // **那句话是假的**：既没有哨兵键，`saveKeychain` 也从来没检查过（它因此一直在抹别人的锁）。
+        // 真实机制是：解码失败 → 记进 `corruptKeys` → 调用方用 `isDictCorrupt(k)` 判断后放弃写入。
         if let o = (try? JSONSerialization.jsonObject(with: d)) as? [String: Any] {
             valueCache.withLock { $0[k, default: [:]]["dict"] = o }
             return o

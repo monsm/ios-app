@@ -144,6 +144,16 @@ extension DB {
         // 原先没有同步：两个线程同时保存不同设备的钥匙串时，后写的那个用的是
         // 自己那份旧快照，会把对方刚加的键覆盖掉 —— 表现是「配了两把锁只剩一把」。
         keychainWriteLock.withLock { _ in
+            // 2026-11-01（Round 321）：**损坏时绝不能写回。**
+            // `getDict` 解码失败会返回 `[:]`（并把键记进 `corruptKeys`），
+            // 而这里若照常 `map[mac] = …; store.set(...)`，写回去的就是「只有这一把锁」的整表 ——
+            // **其它锁的档案全部消失**（密钥还在 Keychain 里，但 plist 里没有它们，界面再也列不出来）。
+            // 这正是 `migrateSecretsToKeychain` 早就防住的那种事故（它第一行就查这个），
+            // 而本函数一直没查。宁可这次保存不生效，也不能抹掉别人的锁。
+            guard !store.isDictCorrupt("kf_keychains") else {
+                BleTelemetry.recordEvent("钥匙串表不可解，本次保存被拒 @ " + String(kc.mac.prefix(6)), ok: false)
+                return
+            }
             var map = store.getDict("kf_keychains")
             map[normalizeMac(kc.mac)] = kc.toDict()
             store.set("kf_keychains", map)
