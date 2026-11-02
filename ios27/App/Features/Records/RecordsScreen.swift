@@ -118,7 +118,7 @@ struct RecordsScreen: View {
                 .padding(.bottom, V.S.gapL)
             }
             .background(V.C.bg.ignoresSafeArea())
-        .scrollEdgeEffectStyle(.soft, for: .top)
+            .scrollEdgeEffectStyle(.soft, for: .top)
             .navigationTitle("记录")
             .navigationBarTitleDisplayMode(.large)
             .onAppear {
