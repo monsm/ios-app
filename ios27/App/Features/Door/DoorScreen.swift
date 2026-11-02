@@ -933,8 +933,13 @@ struct DoorScreen: View {
     private func runQuick(_ action: QuickAction) {
         QuickPool.recordTap(action.id)
         switch action.id {
-        case "addPwd", "addFp", "studio":
+        case "addPwd", "addFp":
             router.request(.dest(.keyCreate))
+        case "studio":
+            // 2026-11-01（Round 292）：原来它和 addPwd/addFp 挤在同一个 case 里，三者都去 `.keyCreate`（新增凭证）——
+            // 而这个快捷动作的标签是「**凭证工坊**」，点它却开「新增凭证」页。分组写法把语义差异藏了整整一版。
+            // 凭证工坊是另一个页面（`.credentialStudio`，凭证页那个入口也指向它）。
+            router.request(.dest(.credentialStudio))
         case "otp":
             router.request(.dest(.zotp))
         case "syncTime":
