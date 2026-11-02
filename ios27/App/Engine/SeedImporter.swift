@@ -11,6 +11,7 @@
 import Foundation
 
 enum SeedImporter {
+    @MainActor
     static func importIfPresent() {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: "/tmp", isDirectory: true)
