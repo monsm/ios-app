@@ -395,7 +395,10 @@ struct KeyDetailScreen: View {
             } else {
                 // 既不是指纹/密码/可撤销手机钥匙：只从本机列表移除，并如实说明锁端仍有效。
                 app.keys.removeAll { $0.id == key.id }
-                actionError = "已从本机列表移除；锁端凭证未变（这条没有可下发的撤销命令）。"
+                // 2026-11-01（Round 286）：这句话原来写进 `actionError`（**红色错误槽**），
+                // 而成功后紧接着 `router.keysPath = []` 弹回列表 —— 用户既看到红色，也根本来不及读完。
+                // 结果「锁端凭证未变、仍然有效」这条**最重要的警告从没到达用户**。改成 toast，在弹回前显示。
+                AppToast.shared.show("已从本机列表移除；锁端凭证未变，仍可开门（这条没有可下发的撤销命令）。", tone: .warn)
                 r = .success(())
             }
             if case .failure(let e) = r {
