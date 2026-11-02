@@ -47,7 +47,7 @@ struct LockProfileScreen: View {
             .padding(.top, V.Page.topSpace)
         }
         .background(V.C.bg.ignoresSafeArea())
-        .navigationTitle("锁档案")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear(perform: load)
     }

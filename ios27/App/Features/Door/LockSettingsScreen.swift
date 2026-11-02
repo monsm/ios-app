@@ -42,7 +42,7 @@ struct LockSettingsScreen: View {
             .padding(.top, V.Page.topSpace)
         }
         .background(V.C.bg.ignoresSafeArea())
-        .navigationTitle("锁设置")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
         .sheet(isPresented: $showSafeMode) { NavigationStack { SafeModeScreen() } }

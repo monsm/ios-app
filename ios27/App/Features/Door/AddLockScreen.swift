@@ -71,7 +71,7 @@ struct AddLockScreen: View {
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("添加门锁")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .task { await scan() }
         // 配网链必须随页面消失中止：`runChain` 里那两处 `Task.isCancelled` 判定

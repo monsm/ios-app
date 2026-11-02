@@ -149,7 +149,7 @@ struct RecordExportScreen: View {
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("导出")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             reload()

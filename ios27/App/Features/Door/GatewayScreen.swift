@@ -58,7 +58,7 @@ struct GatewayScreen: View {
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("网关")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .task { loadRows() }
         .alert("删除这个网关？", isPresented: Binding(

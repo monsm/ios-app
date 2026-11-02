@@ -39,7 +39,7 @@ struct LockPortfolioScreen: View {
             .padding(.top, V.Page.topSpace)
         }
         .background(V.C.bg.ignoresSafeArea())
-        .navigationTitle("全部锁")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { reload() }
         .alert("移动到分组", isPresented: $showGroupEdit) {

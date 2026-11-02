@@ -87,7 +87,7 @@ struct RecordsStudioScreen: View {
             .padding(.top, V.Page.topSpace)
         }
         .background(V.C.bg.ignoresSafeArea())
-        .navigationTitle("记录工作室")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { reload() }
     }

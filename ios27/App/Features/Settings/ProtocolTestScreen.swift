@@ -35,7 +35,7 @@ struct ProtocolTestScreen: View {
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("协议测试")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .task { await scan() }
     }

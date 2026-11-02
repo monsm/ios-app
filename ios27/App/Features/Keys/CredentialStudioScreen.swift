@@ -93,7 +93,7 @@ struct CredentialStudioScreen: View {
             .padding(.top, V.Page.topSpace)
         }
         .background(V.C.bg.ignoresSafeArea())
-        .navigationTitle("凭证工作室")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { tick += 1 }
         .sheet(item: $alertTarget) { pwd in

@@ -40,7 +40,7 @@ struct ZotpScreen: View {
             .padding(.top, V.Page.topSpace)
         }
         .background(V.C.bg.ignoresSafeArea())
-        .navigationTitle("动态密码")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .task {
             otpOn = DB.otpStatus(mac)?.on ?? false

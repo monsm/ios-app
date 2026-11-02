@@ -66,7 +66,7 @@ struct KeyCalendarScreen: View {
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("到期月历")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
     }
 

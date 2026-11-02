@@ -75,7 +75,7 @@ struct DefendScreen: View {
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("布防")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .task { load() }
         .alert(mode == .off ? "确认撤防？" : "确认布防？", isPresented: $askConfirm) {

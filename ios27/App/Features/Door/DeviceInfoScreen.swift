@@ -42,7 +42,7 @@ struct DeviceInfoScreen: View {
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("锁信息名片")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .task {
             batteryModel = meta.batteryModel

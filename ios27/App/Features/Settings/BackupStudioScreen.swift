@@ -63,7 +63,7 @@ struct BackupStudioScreen: View {
             .padding(.top, V.Page.topSpace)
         }
         .background(V.C.bg.ignoresSafeArea())
-        .navigationTitle("备份工作室")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { reloadFiles() }
     }

@@ -37,7 +37,7 @@ struct BatteryProfileScreen: View {
             .padding(.top, V.Page.topSpace)
         }
         .background(V.C.bg.ignoresSafeArea())
-        .navigationTitle("电池档案")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear(perform: load)
     }

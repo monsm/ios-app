@@ -42,7 +42,7 @@ struct DFUScreen: View {
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("固件升级")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .interactiveDismissDisabled(phase == .running)
         .fileImporter(isPresented: $importing,

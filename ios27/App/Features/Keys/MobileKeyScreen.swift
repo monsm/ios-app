@@ -39,7 +39,7 @@ struct MobileKeyScreen: View {
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("手机钥匙")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             if owner == nil { owner = app.members.first { !$0.archived }?.name }

@@ -40,7 +40,7 @@ struct LockStatusScreen: View {
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("锁实况")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .alert("放宽安全模式？", isPresented: $confirmRelax) {
             Button("取消") { }

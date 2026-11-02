@@ -54,7 +54,7 @@ struct MemberOpsScreen: View {
             .padding(.top, V.Page.topSpace)
         }
         .background(V.C.bg.ignoresSafeArea())
-        .navigationTitle("成员流转")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             if memberID.isEmpty { memberID = members.first?.id ?? "" }
