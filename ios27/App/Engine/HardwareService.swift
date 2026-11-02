@@ -175,6 +175,10 @@ final class HardwareService: ObservableObject {
     }
 
     private func send(_ cmdObj: ZKCmd, target: String, timeoutMs: Int = 8000) async throws -> ZKProtocol.ParsedFrame {
+        // 2026-11-01（Round 319）：**只读试验模式的守卫原先只在 `LockServiceLink.request` 里**，
+        // 而硬件页走的是本函数这条独立链路 —— 于是试验模式下照样能发 cmd41（写 ekey）/ cmd21（设 bkey）等写命令，
+        // 与开关文案「写入类命令全部停用」直接矛盾。判据与那边完全一致，照抄一行即可。
+        if DB.store.getBool("kf_trial_guard", false) { try ZKProtocol.assertReadOnly(cmdObj.cmd) }
         try await connectTarget(target)
         // 忙判必须在写之前 (与 LockService.request 同款修复, 2026-10-14): 旧判据在 Task 内,
         // 而 writeFrameHex 在 Task 外无条件执行 => 判忙时帧仍被发出 -> 错帧。

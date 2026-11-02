@@ -119,6 +119,13 @@ final class DFUSession: NSObject, @unchecked Sendable {
 
     /// 跑完整个升级。抛错即失败，成功返回时状态已推到 .completed。
     func run() async throws {
+        // 2026-11-01（Round 319）：**只读试验模式必须连固件升级一起拦。**
+        // 开关文案写着「固件升级…全部被拦下」，而 DFU 走的是本类这条独立 BLE 链路，
+        // 不经过 `LockServiceLink.request` 的 `assertReadOnly` —— 试验模式下照样能把锁刷成半砖，
+        // 而「刷一半断链」正是本仓 DFU 页最警告的失败态。这里是唯一执行入口，拦一处即全覆盖。
+        guard !TrialGuard.isOn else {
+            throw DFUTransportError.ble("只读试验模式已开启 —— 固件升级会改写门锁固件，已拒绝。请先到「安全」页关闭它。")
+        }
         emit(.connecting, "准备连接升级模式设备")
         // 2026-10-27 审核修复 (AUDIT-D D-23)：**失败路径必须断开连接**。
         // 原先 connect/discover/performTransfer 任一步抛错就直接退出，

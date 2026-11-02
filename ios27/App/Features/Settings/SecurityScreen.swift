@@ -300,7 +300,11 @@ struct SecurityScreen: View {
                     SettingRule()
                     VStatusLine(
                         tone: app.trialGuard ? .critical : .neutral,
-                        text: app.trialGuard ? "已开启 · 写入类操作全部停用" : "关闭 · 写入类操作可用"
+                        // 2026-11-01（Round 319）：原文案写「写入类操作全部停用」—— 比实现宽。
+                        // `TrialGuard` 拦的是**下发到门锁的写命令**（`ZKProtocol.assertReadOnly`）与导入备份；
+                        // 本机台账 / 成员 / 设置仍可编辑（上面那句 note 其实写对了：「写入类**命令**停用」）。
+                        // 三处文案按最窄的那条对齐，避免用户以为连本机都不能改。
+                        text: app.trialGuard ? "已开启 · 写入类命令全部停用（本机台账仍可编辑）" : "关闭 · 写入类命令可用"
                     )
                 }
             }
