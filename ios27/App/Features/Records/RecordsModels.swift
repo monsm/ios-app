@@ -182,15 +182,28 @@ final class RecordsOverlay {
 
     var noteCount: Int { notes.count }
 
-    /// 进页时把当前锁的持久覆盖层读进内存（重启后仍能看到之前写的备注/旗标/处置）。
-    func hydrate(mac: String) {
-        guard !mac.isEmpty else { return }
-        for (key, value) in RecordOverlay.notes(mac) { notes[key] = value }
-        for key in RecordOverlay.flags(mac) { flagged.insert(key) }
-        for (key, value) in RecordOverlay.dispositions(mac) {
-            disposed[key] = Int64(value.at * 1000)
+    /// 进页时把持久覆盖层读进内存（重启后仍能看到之前写的备注/旗标/处置）。
+    ///
+    /// 2026-11-01（Round 285）：**改成重建，而不是累加；并支持多把锁。**
+    ///   · 旧实现只 `insert` 不清理 ⇒ 切锁后「备注/标旗/已处置 N 条」把两把锁的条目加在一起（虚高）；
+    ///   · 旧实现只水合一把锁 ⇒ 「全部锁」模式下别的锁的行**看不到备注/标旗**，计数也偏小。
+    /// 内存镜像本来就只是本页投影，整份重建既简单又不会漂。
+    func hydrate(macs: [String]) {
+        var n: [String: String] = [:]
+        var f: Set<String> = []
+        var d: [String: Int64] = [:]
+        for mac in macs where !mac.isEmpty {
+            for (key, value) in RecordOverlay.notes(mac) { n[key] = value }
+            for key in RecordOverlay.flags(mac) { f.insert(key) }
+            for (key, value) in RecordOverlay.dispositions(mac) { d[key] = Int64(value.at * 1000) }
         }
+        notes = n
+        flagged = f
+        disposed = d
     }
+
+    /// 单锁便捷入口（记录详情页用）。
+    func hydrate(mac: String) { hydrate(macs: [mac]) }
 
     func note(for id: String) -> String { notes[id] ?? "" }
 

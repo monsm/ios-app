@@ -767,10 +767,12 @@ struct RecordsScreen: View {
             readAt = nil
             return
         }
-        overlay.hydrate(mac: mac.isEmpty ? app.currentMac : mac)
         let targets: [Keychain] = lockScope == .all
             ? DB.keychains()
             : DB.keychains().filter { DB.normalizeMac($0.mac) == DB.normalizeMac(mac) }
+        // 2026-11-01（Round 285）：水合**全部目标锁**并整份重建内存镜像 ——
+        // 「全部锁」模式下别的锁的备注/标旗此前根本不显示，切锁后计数还会把两把锁加在一起。
+        overlay.hydrate(macs: targets.map(\.mac))
         var merged: [LedgerEntry] = []
         var untimedTotal = 0
         var synced: Int64?
