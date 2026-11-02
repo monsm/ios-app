@@ -31,7 +31,7 @@ struct DeviceInfoScreen: View {
             if let kc {
                 identitySection(kc)
                 capacitySection
-                batteryCard.plainRow()
+                batteryCard().plainRow()
                 batteryEntrySection
                 environmentSection
                 reloadPanel.plainRow()

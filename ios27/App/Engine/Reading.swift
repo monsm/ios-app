@@ -43,6 +43,11 @@ enum Reading {
     // MARK: - 连接 / 信号
 
     /// 连接状态。全仓原本有 8 处各自判断（`isConnected` / `phase` / `connectedMAC` 三种来源）。
+    ///
+    /// `@MainActor`：`LockService` 是 `@MainActor` 类（`connectedMAC` 是它的 `@Published` 属性），
+    /// 从这里读它必须在主线程。本函数的所有调用点都是 SwiftUI View（`View` 的 `body` 是 `@MainActor`，
+    /// 整个 struct 因此被推断为 `@MainActor`），所以调用侧不需要 await。
+    @MainActor
     static func link(_ mac: String) -> Value {
         guard !mac.isEmpty else { return Value(text: "没有门锁", tone: .neutral) }
         if LockService.shared.connectedMAC == mac { return Value(text: "已连接", tone: .ok) }
@@ -51,12 +56,18 @@ enum Reading {
 
     /// 信号：dBm + 一个词。`nil` = 从未测到。
     /// 档位判据只写在 `LinkSenseModel.level` 一处（≥-55 满 / ≥-65 近 / ≥-75 中 / ≥-85 远 / 更弱不可测）。
+    ///
+    /// `@MainActor`：`LinkSenseModel` 是 `@MainActor` 类（`savedRSSI` / `level` / `levelWord` 都挂在它上面）。
+    @MainActor
     static func signal(_ mac: String) -> Value {
         rssiText(LinkSenseModel.savedRSSI(mac))
     }
 
     /// 任意一次 RSSI 采样 → dBm + 档位词。**不读库**，给「还没绑定的候选设备」用
     /// （配网候选列表 / 协议测试扫描 / 门页 live RSSI —— 这些设备没有 `kf_linkrssi_<mac>`）。
+    ///
+    /// `@MainActor`：档位判据 `LinkSenseModel.level` / `levelWord` 是 `@MainActor` 类的静态方法。
+    @MainActor
     static func rssiText(_ rssi: Int?) -> Value {
         guard let rssi else { return Value(text: "未测", tone: .neutral) }
         let level = LinkSenseModel.level(rssi)
