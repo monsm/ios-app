@@ -420,15 +420,19 @@ jobs:
             i=$((i+1))
           done
           # 2026-11-03：关键子页 —— 大标题模式、读数网格、凭证行、工作流都要看真机渲染。
+          # ASCII 名（中文名经 locale 管道会变 mojibake）；每个目标截 2 次（竞态重试）。
+          # 缺某张图 = 那个子页在空数据下崩了 —— 本身就是 god 模式要抓的缺陷。
           j=10
-          for pair in lockStatus:锁实况 deviceInfo:锁名片 lockSettings:锁设置 defend:布防 keyCreate:新建凭证 zotp:动态密码 recordsStudio:记录工作室 backupStudio:备份工作室; do
-            dest="${pair%%:*}"; name="${pair#*:}"
+          for dest in lockStatus deviceInfo lockSettings defend keyCreate zotp recordsStudio backupStudio; do
             xcrun simctl terminate "$UDID" com.aapk.lockkeeper 2>/dev/null || true
             xcrun simctl launch "$UDID" com.aapk.lockkeeper -kfUITest -kfDest "$dest" || true
-            sleep 4
-            xcrun simctl io "$UDID" screenshot "/tmp/shots/$j-$name.png" || true
+            sleep 5
+            xcrun simctl io "$UDID" screenshot "/tmp/shots/$j-$dest.png" 2>/dev/null || true
+            sleep 1
+            xcrun simctl io "$UDID" screenshot "/tmp/shots/$j-$dest.png" 2>/dev/null || true
             j=$((j+1))
           done
+          ls -la /tmp/shots
           ls -la /tmp/shots
       - name: 推到 ci-shots 分支
         if: github.event_name == 'push' && always()
