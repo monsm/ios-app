@@ -34,7 +34,7 @@ struct SafeModeScreen: View {
                     VStack(alignment: .leading, spacing: V.S.gapS) {
                         VCardHeader(title: "B 模式（双验）")
                         Text("需要两种不同方式组合验证：指纹+密码 / 指纹+手机 / 手机+密码。更安全，但每次开门要多一步。")
-                            .font(V.F.body).foregroundStyle(V.C.text9)
+                            .font(V.F.body).foregroundStyle(V.C.text2)
                             .fixedSize(horizontal: false, vertical: true)
                         Text("注意：只有 A 模式下临时开锁密码（ZOTP）才有效。")
                             .font(V.F.footnote).foregroundStyle(V.C.pink)

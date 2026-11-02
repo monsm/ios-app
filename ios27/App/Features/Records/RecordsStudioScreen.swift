@@ -200,7 +200,7 @@ struct RecordsStudioScreen: View {
                         .font(V.F.footnote).foregroundStyle(V.C.text3)
                 } else {
                     ForEach(digest, id: \.self) { line in
-                        Text(line).font(V.F.body).foregroundStyle(V.C.text9)
+                        Text(line).font(V.F.body).foregroundStyle(V.C.text2)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }

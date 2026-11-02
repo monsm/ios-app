@@ -201,7 +201,7 @@ struct VGauge: View {
                     .tracking(V.Gauge.numberTracking)
                 Text(label)
                     .font(V.F.gaugeLabel)
-                    .foregroundStyle(V.C.text5)
+                    .foregroundStyle(V.C.text4)
                     .tracking(V.Gauge.labelTracking)
             }
         }
@@ -772,7 +772,7 @@ struct VCardHeader: View {
         HStack(spacing: V.S.gapXS) {
             Text(title)
                 .font(V.F.cardHeader)
-                .foregroundStyle(V.C.text8)
+                .foregroundStyle(V.C.text2)
             if showsChevron {
                 Image(systemName: "chevron.right")
                     .font(V.F.tab)

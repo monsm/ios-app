@@ -131,11 +131,8 @@ enum V {
         /// 提亮到 #9A9A9F：同一灰阶族，5.40:1 达标。
         static let text4 = dual(0x5B6169, 0x9A9A9F)
         /// 原 #48525B 在 #000 上只有 2.63:1。提亮到 #8E98A3：保留蓝灰倾向，7.17:1 达标。
-        static let text5 = dual(0x5B6169, 0x8E98A3)
         static let text6 = dual(0x2C3035, 0xC7C7CC)   // 卡标题
         static let text7 = dual(0x3A3F45, 0xD2D0D0)   // 脚注
-        static let text8 = dual(0x4A5057, 0xA2A1A6)   // 卡头
-        static let text9 = dual(0x4A5057, 0x919096)   // 参考 B 正文
         /// 图表轴标。原 #4E4E50 在 #000 上只有 2.53:1（8.6pt 正文），换成 #8E8E93（6.44:1）。
         static let axisLabel = dual(0x61676E, 0x8E8E93)
 

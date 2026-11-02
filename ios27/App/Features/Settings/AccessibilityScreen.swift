@@ -153,7 +153,7 @@ struct AccessibilityScreen: View {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VCardHeader(title: "动效与对比")
                 Text("系统「减弱动态效果 / 增加对比度 / 减少透明度」与本页是并联关系：任一开启都生效。这里不重复开关，只如实告诉你当前系统状态。")
-                    .font(V.F.body).foregroundStyle(V.C.text9)
+                    .font(V.F.body).foregroundStyle(V.C.text2)
                     .fixedSize(horizontal: false, vertical: true)
                 AccessibilityStatusRows()
             }

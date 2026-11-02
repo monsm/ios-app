@@ -67,7 +67,7 @@ struct TailgateScreen: View {
                         VCardHeader(title: "为什么不是越长越好", showsChevron: false)
                         Text("等待时间就是尾随者能挤进门的那几秒。家里有老人小孩可以取 5–6 秒；独居或楼道常有陌生人时取 2–3 秒更稳。")
                             .font(V.F.body)
-                            .foregroundStyle(V.C.text9)
+                            .foregroundStyle(V.C.text2)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }

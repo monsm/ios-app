@@ -183,7 +183,7 @@ struct KeysScreen: View {
             // 而且自绘标题拿不到随滚动折叠、导航栏液态玻璃、无障碍标题语义。
             Text("家人、临时客人与服务人员\n共用一把门锁；过期自动失效，\n随时可撤销。")
                 .font(V.F.pageLead)
-                .foregroundStyle(V.C.text9)
+                .foregroundStyle(V.C.text3)
                 .lineSpacing(V.Page.bodyLineSpacing)
                 .fixedSize(horizontal: false, vertical: true)
         }

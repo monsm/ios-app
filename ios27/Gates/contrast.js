@@ -42,7 +42,7 @@ for (const m of v7src.matchAll(/static let (\w+)\s*=\s*dual\(\s*0x([0-9A-Fa-f]{6
 }
 
 // V7 低对比黑名单：参考图里的视觉值，但 < 4.5:1（11pt 文本）或 < 3:1（非文本）。
-// 命中即失败，必须提供达标替代（已落地：text4=#9A9A9F / text5=#8E98A3 / infoGlyph=#8E8E93 / axisLabel=#8E8E93）。
+// 命中即失败，必须提供达标替代（已落地：text4=#9A9A9F / infoGlyph=#8E8E93 / axisLabel=#8E8E93）。
 const BANNED_V7 = {
   '48525B': { was: 'V.C.text5 原值', ratio: '2.63:1 on #000', fix: 'V.C.text5 = #8E98A3（7.17:1）' },
   '6D6D6D': { was: 'V.C.text4 原值', ratio: '2.92:1 on #262626', fix: 'V.C.text4 = #9A9A9F（5.40:1）' },
@@ -159,11 +159,11 @@ checkV7('正文 text2 / bg', 'text2', 'bg', 4.5);
 checkV7('正文 text2 / card', 'text2', 'card', 4.5);
 checkV7('次文本 text3 / card', 'text3', 'card', 4.5);
 checkV7('芯片标签 text4 / chipTop', 'text4', 'chipTop', 4.5);
-checkV7('主环标签 text5 / bg', 'text5', 'bg', 4.5);
-checkV7('卡头 text8 / card', 'text8', 'card', 4.5);
+checkV7('主环标签 text4 / bg', 'text4', 'bg', 4.5);
+checkV7('卡头 text2 / card', 'text2', 'card', 4.5);
 checkV7('卡标题 text6 / card', 'text6', 'card', 3);
 checkV7('焦点 text7 / card', 'text7', 'card', 4.5);
-checkV7('正文 text9 / card', 'text9', 'card', 4.5);
+checkV7('正文 text2 / card', 'text2', 'card', 4.5);
 checkV7('i 字形 infoGlyph / infoBG（非文本）', 'infoGlyph', 'infoBG', 3);
 checkV7('图表轴标 axisLabel / bg', 'axisLabel', 'bg', 4.5);
 checkV7('警告 warning / bg（非文本）', 'warning', 'bg', 3);
