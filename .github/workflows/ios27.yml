@@ -410,6 +410,11 @@ jobs:
           xcrun simctl boot "$UDID" || true
           xcrun simctl bootstatus "$UDID" -b || true
           xcrun simctl install "$UDID" "$APP" || exit 1
+          # 预授权系统弹窗 —— 否则第一次启动的通知权限对话框会挡住截图（13 号截图实测被挡）。
+          xcrun simctl privacy "$UDID" grant notifications com.aapk.lockkeeper 2>/dev/null || true
+          xcrun simctl privacy "$UDID" grant user_tracking com.aapk.lockkeeper 2>/dev/null || true
+          xcrun simctl privacy "$UDID" grant localnetwork com.aapk.lockkeeper 2>/dev/null || true
+          xcrun simctl spawn "$UDID" defaults write com.aapk.lockkeeper NSUserNotificationUsageDescriptionIsUseless -bool YES 2>/dev/null || true
           mkdir -p /tmp/shots
           i=0
           for name in door keys records household settings; do
