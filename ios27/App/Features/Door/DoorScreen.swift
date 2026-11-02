@@ -350,6 +350,7 @@ struct DoorScreen: View {
             .accessibilityAction { requestUnlock() }
 
             phaseBar
+            unlockHintLine
             autoLockLine
             retryLine
             failureChain
@@ -397,6 +398,23 @@ struct DoorScreen: View {
         .frame(maxWidth: V.Gauge.outer * 0.56)
         .opacity(app.unlockPhase > 0 ? 1 : 0.35)
         .accessibilityHidden(true)
+    }
+
+    /// 2026-11-02（**真 UX 缺陷**）：圆盘是开锁主控件，但它的中心显示的是电量读数，
+    /// 屏上**没有任何一处写出"怎么开锁"** —— 「轻点开锁 / 按住 0.9 秒」只存在于
+    /// `dialHint`（无障碍提示）里，看得见屏幕的人反而看不到。
+    /// 首次使用的人只会以为那是个电量表。这里把提示显示出来；失败时让位给 failureChain。
+    @ViewBuilder
+    private var unlockHintLine: some View {
+        if !app.dialPhase.isFailed && !app.dialPhase.isBusy {
+            Text(dialHint)
+                .font(V.F.footnote)
+                .foregroundStyle(V.C.text3)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, V.S.pageGutterA)
+                // 圆盘自身已有 accessibilityHint，这里对读屏隐藏，避免同一句播报两遍。
+                .accessibilityHidden(true)
+        }
     }
 
     @ViewBuilder
