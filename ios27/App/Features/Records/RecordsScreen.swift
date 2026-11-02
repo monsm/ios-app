@@ -754,6 +754,13 @@ struct RecordsScreen: View {
     }
 
     private func reload() {
+        // 2026-11-01（Round 281）：**选中的锁可能已经被删掉**（在设置页删锁后回到记录页）。
+        // 此时 `selectedMac` 仍指向那个 mac ⇒ 记录页会一直筛一个不存在的锁（恒空），
+        // 而 `readLogs()` 每次都会把 `DB.currentMac` 指回那把已删的锁（再靠 preferredMac 兜回来）。
+        // 这里回落到「跟随当前锁」：删锁后记录页应当自动跟到剩下的那把。
+        if !selectedMac.isEmpty, DB.keychain(selectedMac) == nil {
+            selectedMac = ""
+        }
         guard lockScope == .all || !mac.isEmpty else {
             entries = []
             untimed = 0
