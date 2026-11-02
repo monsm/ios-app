@@ -17,7 +17,7 @@ struct AppearanceScreen: View {
     var body: some View {
         ScrollView {
             VStack(spacing: V.S.gap16) {
-                SettingsHeader(title: "外观", tone: tone, status: status)
+                SettingsHeader(title: "外观", tone: tone, status: status, showsTitle: false)
                 themePanel
                 iconPanel
                 accentPanel
@@ -34,9 +34,7 @@ struct AppearanceScreen: View {
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        // 2026-11-02：页内 SettingsHeader 已经画了「外观」大字标题（+ 状态行），
-        // 导航栏再写一遍就是同一屏两个标题。导航栏保留（返回按钮 + 滚动时的玻璃），只清空标题文字。
-        .navigationTitle("")
+        .navigationTitle("外观")
         .navigationBarTitleDisplayMode(.inline)
     }
 

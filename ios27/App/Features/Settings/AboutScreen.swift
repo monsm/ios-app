@@ -16,7 +16,7 @@ struct AboutScreen: View {
     var body: some View {
         ScrollView {
             VStack(spacing: V.S.gap16) {
-                SettingsHeader(title: "关于", tone: .neutral, status: status)
+                SettingsHeader(title: "关于", tone: .neutral, status: status, showsTitle: false)
                 counterPanel
                 buildPanel
                 versionPanel
@@ -26,9 +26,7 @@ struct AboutScreen: View {
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        // 2026-11-02：页内 SettingsHeader 已经画了「关于」大字标题（+ 状态行），
-        // 导航栏再写一遍就是同一屏两个标题。导航栏保留（返回按钮 + 滚动时的玻璃），只清空标题文字。
-        .navigationTitle("")
+        .navigationTitle("关于")
         .navigationBarTitleDisplayMode(.inline)
         .sensoryFeedback(.success, trigger: eggShown) { _, new in new }
     }

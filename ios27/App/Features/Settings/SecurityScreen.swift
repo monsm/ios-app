@@ -26,7 +26,7 @@ struct SecurityScreen: View {
     var body: some View {
         ScrollView {
             VStack(spacing: V.S.gap16) {
-                SettingsHeader(title: "安全", tone: tone, status: status)
+                SettingsHeader(title: "安全", tone: tone, status: status, showsTitle: false)
                 passcodePanel
                 biometricPanel
                 if store.hasPasscode {
@@ -42,9 +42,7 @@ struct SecurityScreen: View {
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        // 2026-11-02：页内 SettingsHeader 已经画了「安全」大字标题（+ 状态行），
-        // 导航栏再写一遍就是同一屏两个标题。导航栏保留（返回按钮 + 滚动时的玻璃），只清空标题文字。
-        .navigationTitle("")
+        .navigationTitle("安全")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showPasscode) { PasscodeSheet(kind: .passcode) }
         .sheet(isPresented: $showDuress) { PasscodeSheet(kind: .duress) }

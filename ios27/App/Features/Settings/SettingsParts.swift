@@ -12,13 +12,19 @@ struct SettingsHeader: View {
     let title: String
     let tone: Tone
     let status: String
+    /// 2026-11-03：标题是否由本组件绘制。
+    /// 设为 false 时标题交给系统导航栏的大标题 —— 页内只留状态行，
+    /// 省掉「空导航栏 44pt + 页内 34pt 标题」这两层重复的页面外壳。
+    var showsTitle: Bool = true
 
     var body: some View {
         VStack(alignment: .leading, spacing: V.S.gapXS) {
-            Text(title)
-                .font(V.F.displayHome)
-                .foregroundStyle(V.C.text1)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            if showsTitle {
+                Text(title)
+                    .font(V.F.displayHome)
+                    .foregroundStyle(V.C.text1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
             HStack(spacing: V.S.gapS) {
                 VStateDot(tone: tone, word: status)
                 Text(status)
