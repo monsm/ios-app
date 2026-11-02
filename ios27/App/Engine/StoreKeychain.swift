@@ -212,6 +212,9 @@ extension DB {
         SecretStore.remove(secretAccount(m, "ekey"))
         // 2026-10-27 (D-06)：pins 已进 Keychain，删除时一并清（否则删设备后 pin 池残留）。
         SecretStore.remove(secretAccount(m, "pins"))
+        // 2026-11-01（Round 322）：与 `saveKeychain` 同一条判据 —— 表解不出来时**不能写回**，
+        // 否则「删一把锁」会把其它锁的条目一起抹掉（写回的是只有"删除结果"的空表）。
+        guard store.canWriteDict("kf_keychains") else { return }
         var map = store.getDict("kf_keychains")
         map.removeValue(forKey: m)
         store.set("kf_keychains", map)

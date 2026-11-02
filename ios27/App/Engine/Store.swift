@@ -63,6 +63,17 @@ final class Store: @unchecked Sendable {
     /// 解码失败过的字典键。saveKeychain 写入前查这里，避免用空表覆盖真数据。
     private let corruptKeys = Locked(Set<String>())
     func isDictCorrupt(_ k: String) -> Bool { corruptKeys.withLock { $0.contains(k) } }
+    /// 2026-11-01（Round 322）：**读-改-写字典前的统一守卫。**
+    ///
+    /// 起因：`kf_members` / `kf_keychain_dongles` / `kf_gateways` 的 9 个写入点全是
+    /// 「`var map = getDict(k)` → 改一项 → `set(k, map)`」，而 `getDict` 在解码失败时返回 `[:]`。
+    /// 于是一次无关的保存就会用「只剩这一项」的空表覆盖整族 —— 成员全丢 / 网关全丢 / 硬件全丢。
+    /// （`kf_keychains` 上一轮刚补过同类守卫；这里把判据收成一处，新写入点只要走它就不会再漏。）
+    func canWriteDict(_ k: String) -> Bool {
+        guard isDictCorrupt(k) else { return true }
+        BleTelemetry.recordEvent("字典不可解，写入被拒：" + k, ok: false)
+        return false
+    }
     func getString(_ k: String, _ def: String = "") -> String {
         if let s = defaults.string(forKey: key(k)) { return s }
         if let v = get(k, String.self) { return v }
@@ -246,17 +257,20 @@ enum DB {
         let m = Member(id: UUID().uuidString.prefix(8).description, name: n,
                        color: color,   // 259: 建档即分配, 不再全员品牌靛蓝
                        at: Date().timeIntervalSince1970 * 1000)
+        guard store.canWriteDict("kf_members") else { return nil }
         var map = store.getDict("kf_members")
         map[m.id] = m.toDict()
         store.set("kf_members", map)
         return m
     }
     static func renameMember(_ id: String, _ name: String) {
+        guard store.canWriteDict("kf_members") else { return }
         var map = store.getDict("kf_members")
         if var d = map[id] as? [String: Any] { d["name"] = name; map[id] = d }
         store.set("kf_members", map)
     }
     static func setMemberInfo(_ id: String, _ info: [String: String]) {
+        guard store.canWriteDict("kf_members") else { return }
         var map = store.getDict("kf_members")
         if var d = map[id] as? [String: Any] {
             // 2026-10-30 修复（第 122 轮，**清空保存无效**）：原来写 `for (k, v) in info where !v.isEmpty`，
@@ -269,6 +283,7 @@ enum DB {
         store.set("kf_members", map)
     }
     static func removeMember(_ id: String) {
+        guard store.canWriteDict("kf_members") else { return }
         var map = store.getDict("kf_members")
         map.removeValue(forKey: id)
         store.set("kf_members", map)
@@ -342,6 +357,7 @@ enum DB {
         return rawDongle(mac)
     }
     static func saveDongle(_ d: Dongle) {
+        guard store.canWriteDict("kf_keychain_dongles") else { return }
         var map = store.getDict("kf_keychain_dongles")
         var merged = d
         if let old = rawDongle(d.mac) {
@@ -358,6 +374,7 @@ enum DB {
         store.set("kf_keychain_dongles", map)
     }
     static func removeDongle(_ mac: String) {
+        guard store.canWriteDict("kf_keychain_dongles") else { return }
         var map = store.getDict("kf_keychain_dongles")
         map.removeValue(forKey: mac.replacingOccurrences(of: ":", with: "").lowercased())
         store.set("kf_keychain_dongles", map)
@@ -380,6 +397,7 @@ enum DB {
         return rawGateway(mac)
     }
     static func saveGateway(_ g: Gateway) {
+        guard store.canWriteDict("kf_gateways") else { return }
         var map = store.getDict("kf_gateways")
         var merged = g
         if let old = rawGateway(g.mac) {
@@ -401,6 +419,7 @@ enum DB {
         store.set("kf_gateways", map)
     }
     static func removeGateway(_ mac: String) {
+        guard store.canWriteDict("kf_gateways") else { return }
         var map = store.getDict("kf_gateways")
         map.removeValue(forKey: mac.replacingOccurrences(of: ":", with: "").lowercased())
         store.set("kf_gateways", map)
