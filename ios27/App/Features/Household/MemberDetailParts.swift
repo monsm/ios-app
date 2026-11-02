@@ -1,6 +1,6 @@
 // MemberDetailParts.swift —— 成员 360 里两块可独立复用的列表（名下凭证 / 最近开门）。
 //
-// 为什么单独成文件：MembersDetailScreen 已过 400 行；这两块只吃数据 + 回调，不持有状态，
+// 为什么单独成文件：MemberDetailScreen 已过 400 行；这两块只吃数据 + 回调，不持有状态，
 // 拆出来以后将来「凭证页按成员筛」也能直接复用同一个形状。
 import SwiftUI
 

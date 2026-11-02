@@ -106,7 +106,8 @@ final class AppLock: ObservableObject {
 
     /// 2026-10-29 新增：Face ID / Touch ID 通过后解锁（与密码成功同一条收尾路径）。
     ///
-    /// **只在没设胁迫码时可用**（调用方 `LockScreen` 用 `!DB.hasDuressCode()` 把关）：
+    /// **只在没设胁迫码时可用**（调用方 `LockKeeperApp` 用 `!DB.hasDuressCode()` 把关；
+    /// 2026-11-01 Round 306：原注释写的是 `LockScreen` —— 全仓没有这个类型，读者会白找一趟）：
     /// 密码解锁可以输胁迫码进伪装模式，Face ID 不能 —— 若同时提供，被胁迫时刷脸会
     /// 直接暴露「这不是伪装模式」。宁可少一个便利入口，也不给胁迫场景留破绽。
     /// 返回是否真的解锁。调用方**必须**据此决定是否置 app 的解锁态 ——
