@@ -306,17 +306,6 @@ struct CachedLog: Codable {
         self.diff = diff
     }
 
-    init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        type = try c.decodeIfPresent(Int.self, forKey: .type) ?? 0
-        typeName = try c.decodeIfPresent(String.self, forKey: .typeName) ?? ""
-        idxRaw = try c.decodeIfPresent(UInt32.self, forKey: .idxRaw) ?? 0
-        lockTime = try c.decodeIfPresent(Int64.self, forKey: .lockTime) ?? 0
-        lockTimeStr = try c.decodeIfPresent(String.self, forKey: .lockTimeStr) ?? ""
-        diff = try c.decodeIfPresent(String.self, forKey: .diff)
-    }
-
-
     /// 2026-10-30 补（第 163 轮）：`typeName` 是**取日志那一刻快照下来的字符串**。
     /// 老版本写入的「未知(19)」会永久留在 `kf_logcache_` 里 —— 即使后来 `StatusParser.logTypes`
     /// 已经补上 `19: 指纹开门`，界面上仍显示「未知(19)」。**显示时总是用当前表重算**，缺失才回落缓存值。
@@ -331,6 +320,7 @@ struct CachedLog: Codable {
         idxRaw = try c.decodeIfPresent(UInt32.self, forKey: .idxRaw) ?? 0
         lockTime = try c.decodeIfPresent(Int64.self, forKey: .lockTime) ?? 0
         lockTimeStr = try c.decodeIfPresent(String.self, forKey: .lockTimeStr) ?? ""
+        diff = try c.decodeIfPresent(String.self, forKey: .diff)
     }
 }
 
