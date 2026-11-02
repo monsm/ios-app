@@ -498,6 +498,10 @@ final class AppModel {
                      replacingAlias: Int? = nil) async -> Result<Int, Error> {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
+        // 2026-11-01（Round 317）：**空壳模式必须在这里就失败，不能「假成功」。**
+        // `saveLedger` 在空壳下会拒写（只记一条遥测后 return），但调用方拿不到任何信号 ——
+        // 于是界面报「已添加」，退出空壳后那条凭证根本不存在。文案保持中性（不暴露空壳模式）。
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             let alias = try await LockService.shared.pwdAdd(pwd: pwd, validFrom: from, validTo: to)
@@ -536,6 +540,10 @@ final class AppModel {
                      owner: String, note: String) async -> Result<Int, Error> {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
+        // 2026-11-01（Round 317）：**空壳模式必须在这里就失败，不能「假成功」。**
+        // `saveLedger` 在空壳下会拒写（只记一条遥测后 return），但调用方拿不到任何信号 ——
+        // 于是界面报「已添加」，退出空壳后那条凭证根本不存在。文案保持中性（不暴露空壳模式）。
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             let alias = try await LockService.shared.pwdAdd(pwd: pwd, validFrom: from, validTo: to)
@@ -611,6 +619,10 @@ final class AppModel {
                            onProgress: @escaping @MainActor (Int) -> Void) async -> Result<Int, Error> {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
+        // 2026-11-01（Round 317）：**空壳模式必须在这里就失败，不能「假成功」。**
+        // `saveLedger` 在空壳下会拒写（只记一条遥测后 return），但调用方拿不到任何信号 ——
+        // 于是界面报「已添加」，退出空壳后那条凭证根本不存在。文案保持中性（不暴露空壳模式）。
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             var pressCount = 0
