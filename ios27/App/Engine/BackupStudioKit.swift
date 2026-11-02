@@ -604,8 +604,10 @@ enum BackupStudio {
     /// 507 备份状态角标: 今日已备份 / 多日未备份
     // 2026-10-26 精简：badgeState（备份状态角标）已删 —— 它依赖的 lastExportMs 随策略类一起移除。
 
-    struct RemoteEntry: Identifiable { var id: String { name }; let name: String; let size: Int; let etag: String; let modified: String }
-
+    // 2026-11-01（Round 261）：这里原本有一个 `RemoteEntry`（远端文件名/大小/etag/修改时刻）。
+    // 核实：全仓**只有定义、零构造零消费** —— WebDAV 的 PROPFIND 只在 `test()` 里用一次，
+    // 且只取状态码；「远端备份列表 + 远端清理」这个功能从未实现（`kf_bk_keep` 只 prune 本地文件）。
+    // 与 `quota` / `organizeTotal` / `Rec.hex` 同处置：删。真要做远端管理是独立功能，需要 PROPFIND 解析 + UI。
 
     /// 认不出信封就说"未能识别"，绝不回落到徽章那串 —— 那会把一个明文包或损坏件标成"加密过"。
     /// 明文包 (BackupBundle 直接写盘, 没有信封) 单独一档: 混进"未能识别"会让人以为文件坏了。
