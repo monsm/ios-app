@@ -30,7 +30,9 @@ final class LinkSenseModel {
     var lastEvent = "进页会自动预热一次，只建立连接，不开锁。"
     var bluetoothOn = BLEService.shared.isPoweredOn
 
-    private var mac = ""
+    /// 当前链路对应的锁 MAC。`private(set)` 而不是 `private`：`LinkSenseBar` 要把这个值交给
+    /// `Reading.signal(mac)`（信号口径的唯一出口），不能让视图自己再拼 dBm。
+    private(set) var mac = ""
 
     func update(mac newMac: String) {
         if mac != newMac {
@@ -179,11 +181,15 @@ struct LinkSenseBar: View {
                     }
                     Spacer(minLength: 0)
                     VStack(alignment: .trailing, spacing: V.S.gapXXS) {
+                        // 信号柱是自绘（系统无对应控件），保留；**读数文字**走 Reading.signal ——
+                        // dBm 与「满/近/中/远/不可测」的拼法全仓只有一处，不再在这里各写一遍。
                         RSSIBars(level: model.rssiLevel)
-                        Text(model.lastRSSI.map { "\($0) dBm · \(model.rssiWord)" } ?? "RSSI 未测")
+                        let signal = Reading.signal(model.mac)
+                        Text(signal.spoken)
                             .font(V.F.micro)
-                            .foregroundStyle(V.C.text3)
+                            .foregroundStyle(signal.tone.color)
                             .monospacedDigit()
+                            .accessibilityLabel("信号 " + signal.spoken)
                     }
                 }
                 if !model.bluetoothOn {

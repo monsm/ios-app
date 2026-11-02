@@ -24,6 +24,9 @@ struct DoorScreen: View {
 
     // 圆盘手势态（原 UnlockDial.swift:311-455）
     @State private var pressing = false
+    /// 本次触摸的起点时刻。用于把「上滑快捷开锁」限定成**快速一划**，
+    /// 避免与页面滚动混淆（2026-11-02：改 simultaneousGesture 后必须区分「划一下」和「滚一屏」）。
+    @State private var gestureStartedAt: Date?
     @State private var holdProgress: CGFloat = 0
     @State private var armed = false
     @State private var firedThisTouch = false
@@ -34,38 +37,55 @@ struct DoorScreen: View {
     private var store: SettingsStore { SettingsStore.shared }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: V.S.gapL) {
-                if !DevModuleStore.hidden.contains(DevModule.linkSense.rawValue) {
-                    LinkSenseBar(model: link)
-                }
-                if !DevModuleStore.hidden.contains(DevModule.statusIcons.rawValue) {
-                    statusIconsRow
-                }
-                chips
-                if !DevModuleStore.hidden.contains(DevModule.groupChips.rawValue) {
-                    groupChipsRow
-                }
-                if let note = refreshNote { refreshLine(note) }
-                if let lock = app.lock {
-                    attentionCard
-                    ForEach(DevLayout.order) { slot in
+        // 全换系统（2026-11-02）：整页容器是系统 `List`。
+        // 圆盘与各卡片仍然由自己渲染，但用 `plainRow()` 把 List 的行内边距/分隔线/背景全部抹掉 ——
+        // 视觉上它们还是原来的卡片，只是**容器**交给了系统。
+        // 为什么不再「ScrollView 里嵌一个固定高度的 List」：那样必须手算高度（9×54+8），
+        // 而 Dynamic Type 一大行就长高，第 9 行会被裁掉。整页一个 List 之后滚动由系统统一管，
+        // 既没有双滚，也没有魔法高度。
+        // 行修饰符按「这块是不是一张卡」分：
+        //   · LinkSenseBar / attentionCard / recentBlock / noLockBlock 内部是 VCard ⇒ cardRow()
+        //   · 芯片行 / 提示条 / statusSlot / quickBlock 是自带 padding 的整宽内容 ⇒ headerRow()
+        //     （它们原本靠自己的 .padding(.horizontal, …) 定位，改成 headerRow 后那段 padding 要删）
+        List {
+            if !DevModuleStore.hidden.contains(DevModule.linkSense.rawValue) {
+                LinkSenseBar(model: link).cardRow()
+            }
+            if !DevModuleStore.hidden.contains(DevModule.statusIcons.rawValue) {
+                statusIconsRow.headerRow(gutter: V.S.chipLeftA)
+            }
+            chips.headerRow(gutter: V.S.chipLeftA)
+            if !DevModuleStore.hidden.contains(DevModule.groupChips.rawValue) {
+                groupChipsRow.headerRow(gutter: V.S.chipLeftA)
+            }
+            if let note = refreshNote { refreshLine(note).headerRow(gutter: V.S.pageGutterA) }
+            if let lock = app.lock {
+                attentionCard.cardRow()
+                ForEach(DevLayout.order) { slot in
+                    // 三个分支的行修饰符不同：
+                    //   · statusSlot / quickBlock 的子元素各自带 padding（37.3 / 14.67），
+                    //     套 headerRow(16) 会叠加 ⇒ 按「不套 headerRow」处理，保留 plainRow 与原 padding。
+                    //   · recentBlock 内部是 VCard ⇒ cardRow()。
+                    Group {
                         switch slot {
-                        case .status: statusSlot(lock)
-                        case .quick: quickBlock
-                        case .recent: recentBlock
+                        case .status: statusSlot(lock).plainRow()
+                        case .quick: quickBlock.plainRow()
+                        case .recent: recentBlock.cardRow()
                         }
                     }
-                    shortcutsBlock
-                } else {
-                    noLockBlock
                 }
+                shortcutsSection
+            } else {
+                noLockBlock.cardRow()
             }
-            .padding(.top, V.Page.topSpace)
-            .padding(.bottom, V.S.gapL)
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .contentMargins(.top, V.Page.topSpace, for: .scrollContent)
+        .contentMargins(.bottom, V.S.gapL, for: .scrollContent)
         .background(V.C.bg.ignoresSafeArea())
-        .toolbarVisibility(.hidden, for: .navigationBar)
+        .navigationTitle("门")
+        .navigationBarTitleDisplayMode(.large)
         .task {
             await app.reload(refreshStatus: true)
             link.update(mac: app.currentMac)
@@ -79,14 +99,23 @@ struct DoorScreen: View {
         }
         .sensoryFeedback(.success, trigger: app.dialPhase == .opened) { _, new in new }
         .sensoryFeedback(.error, trigger: app.dialPhase.isFailed) { _, new in new }
-        .sheet(isPresented: $showQuickEdit) { QuickPoolEditSheet() }
-        .sheet(isPresented: $showModuleOrder) { ModuleOrderSheet() }
+        .sheet(isPresented: $showQuickEdit) {
+            QuickPoolEditSheet()
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showModuleOrder) {
+            ModuleOrderSheet()
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
         .sheet(isPresented: $showUnlockGate) {
             NavigationStack {
                 UnlockGateScreen {
                     Task { await app.runUnlockChain() }
                 }
             }
+            .presentationDetents([.large])
         }
         .refreshable { await rescan() }
         .onDisappear { holdTask?.cancel() }
@@ -104,13 +133,6 @@ struct DoorScreen: View {
                     style: .standard,
                     systemImage: "circle.hexagongrid.fill"
                 )
-                VChip(
-                    title: "电量",
-                    value: batteryChipValue,
-                    tint: V.C.blue,
-                    style: .standard,
-                    systemImage: "battery.75percent"
-                )
                 Button { showModuleOrder = true } label: {
                     VChip(
                         title: "版面",
@@ -123,7 +145,6 @@ struct DoorScreen: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("模块排序与显隐")
             }
-            .padding(.horizontal, V.S.chipLeftA)
         }
         .scrollIndicators(.hidden)
     }
@@ -150,7 +171,6 @@ struct DoorScreen: View {
                         .accessibilityLabel("切换到 \(LockArchive.displayName(kc))")
                     }
                 }
-                .padding(.horizontal, V.S.chipLeftA)
             }
             .scrollIndicators(.hidden)
         }
@@ -176,7 +196,6 @@ struct DoorScreen: View {
                         .accessibilityAddTraits(active ? [.isButton, .isSelected] : .isButton)
                     }
                 }
-                .padding(.horizontal, V.S.chipLeftA)
             }
             .scrollIndicators(.hidden)
         }
@@ -189,7 +208,8 @@ struct DoorScreen: View {
     /// 后果：**同一块电量在门页与设备页显示两个数字**（采样与快照谁新谁胜的规则只在 displayPct 里），
     /// 而且门页会把锁侧粗估档报成精确值（`>80%` 被写成 `87%`）。
     private func batteryWord(_ mac: String) -> String {
-        BatteryCare.faceText(BatteryCare.displayPct(mac, snapshot: DB.readStatus(mac)?.powerLevel ?? -1))
+        // 全仓电量唯一口径：Reading.battery（内部已做「>80 只报 >80%」的锁侧粗估处理）。
+        Reading.battery(mac, snapshot: DB.readStatus(mac)?.powerLevel ?? -1).spoken
     }
 
     /// 切锁：与记录页同一口径 —— 先清旧投影，再让 AppModel 按 overrideMac 重建。
@@ -201,22 +221,25 @@ struct DoorScreen: View {
         Task { @MainActor in await app.reload(refreshStatus: false) }
     }
 
+    /// ui-ia §4.1 R3：**全页状态词只有一个来源**。
+    /// 原来 overviewWord(:231) / heroWord(:756) / statusWord(:795) 三份几乎逐字相同
+    /// （两份写「全部正常」、一份写「状态良好」），任一处改判据就会与另两处分叉。
+    /// 现在统一走这里；「未添加」（没有锁）是页面级空态，由调用方自己判。
+    private func stateWord(_ lock: LockSummary) -> String {
+        if !lock.isConnected { return "未连接" }
+        if Reading.batteryIsLow(app.currentMac, snapshot: lock.battery) { return "电量偏低" }
+        return "全部正常"
+    }
+
     private var overviewWord: String {
         guard let lock = app.lock else { return "未添加" }
-        if !lock.isConnected { return "未连接" }
-        if lock.battery >= 0, lock.battery < 20 { return "电量偏低" }
-        return "全部正常"
+        return stateWord(lock)
     }
 
     private var overviewTint: Color {
         guard let lock = app.lock else { return V.C.text3 }
-        if !lock.isConnected || (lock.battery >= 0 && lock.battery < 20) { return V.C.pink }
+        if !lock.isConnected || Reading.batteryIsLow(app.currentMac, snapshot: lock.battery) { return V.C.pink }
         return V.C.rewardGreen
-    }
-
-    private var batteryChipValue: String {
-        guard let lock = app.lock, lock.battery >= 0 else { return "--" }
-        return "\(lock.battery)%"
     }
 
     private func refreshLine(_ text: String) -> some View {
@@ -231,7 +254,6 @@ struct DoorScreen: View {
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, V.S.pageGutterA)
     }
 
     // MARK: - 异常提醒卡（原 DeviceHomeBlocks.swift:196-247）
@@ -258,7 +280,6 @@ struct DoorScreen: View {
                     }
                 }
             }
-            .padding(.horizontal, V.S.cardGutter)
         }
     }
 
@@ -273,8 +294,11 @@ struct DoorScreen: View {
         if lastSync <= 0 || nowMs - lastSync > 30 * 86_400_000 {
             out.append(("超过 30 天未校时，临时密码可能失效 — 到快捷操作同步时间", "clock.badge.exclamationmark.fill", .attention))
         }
-        if let lock = app.lock, lock.battery >= 0, lock.battery <= CareSchedule.battThreshold {
-            out.append(("当前电量 \(lock.battery)%，已低于提醒阈值 (\(CareSchedule.battThreshold)%) — 建议备好电池", "battery.25percent", .attention))
+        if let lock = app.lock {
+            let batt = Reading.battery(mac, snapshot: lock.battery)
+            if let pct = battPct(mac, snapshot: lock.battery), pct <= CareSchedule.battThreshold {
+                out.append(("当前电量 \(batt.spoken)，已低于提醒阈值 (\(CareSchedule.battThreshold)%) — 建议备好电池", "battery.25percent", .attention))
+            }
         }
         let due = CredentialOrg.dueSoonPwds(mac)
         if !due.isEmpty {
@@ -335,7 +359,7 @@ struct DoorScreen: View {
             }
             .frame(width: V.Gauge.outer, height: V.Gauge.outer)
             .contentShape(.circle)
-            .highPriorityGesture(dialGesture)
+            .simultaneousGesture(dialGesture)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("开锁")
             .accessibilityValue(app.dialPhase.word)
@@ -530,13 +554,24 @@ struct DoorScreen: View {
                     return
                 }
                 guard inside(value.startLocation) else { return }
+                // 竖向向下拖 = 想滚页面，不是开锁手势：直接放行，交给 ScrollView。
+                if abs(value.translation.height) > abs(value.translation.width),
+                   value.translation.height > 0 {
+                    return
+                }
                 if !pressing {
                     pressing = true
                     firedThisTouch = false
                     holdProgress = 0
+                    gestureStartedAt = Date()
                     if effectiveGesture == "hold" { beginHold() }
                 }
-                if effectiveGesture == "hold", value.translation.height < -56 {
+                // 上滑快捷：必须同时满足「快速（<0.6s）+ 基本竖直 + 位移够」，
+                // 否则慢速上滑（= 想滚页面）会被当成开锁。滚动不再顺手把门打开。
+                if effectiveGesture == "hold",
+                   value.translation.height < -56,
+                   abs(value.translation.width) < 16,
+                   (gestureStartedAt.map { Date().timeIntervalSince($0) < 0.6 } ?? false) {
                     holdTask?.cancel()
                     holdTask = nil
                     holdProgress = 1
@@ -675,9 +710,13 @@ struct DoorScreen: View {
                                 .font(V.F.unit)
                                 .foregroundStyle(heroTone(lock).color)
                         }
-                        Text(link.lastRSSI.map { "\($0) dBm · \(link.rssiWord)" } ?? "信号未读")
+                        // Hero 卡的信号读数走 Reading：dBm + 档位词的拼法全仓只有一处。
+                        // 这里用 rssiText 而不是 signal(mac) —— 门页拿到的是本次 live RSSI（可能刚读到、
+                        // 也可能还没读到），而 signal(mac) 读的是已落库的 kf_linkrssi_<mac>。
+                        let sig = Reading.rssiText(link.lastRSSI)
+                        Text(sig.spoken)
                             .font(V.F.unit)
-                            .foregroundStyle(V.C.text3)
+                            .foregroundStyle(sig.tone == .attention ? V.C.warning : V.C.text3)
                             .monospacedDigit()
                     }
                 }
@@ -704,15 +743,11 @@ struct DoorScreen: View {
 
     private func heroTone(_ lock: LockSummary) -> Tone {
         if !lock.isConnected { return .attention }
-        if lock.battery >= 0, lock.battery < 20 { return .attention }
+        if Reading.batteryIsLow(app.currentMac, snapshot: lock.battery) { return .attention }
         return .ok
     }
 
-    private func heroWord(_ lock: LockSummary) -> String {
-        if !lock.isConnected { return "未连接" }
-        if lock.battery >= 0, lock.battery < 20 { return "电量偏低" }
-        return "全部正常"
-    }
+    private func heroWord(_ lock: LockSummary) -> String { stateWord(lock) }
 
     private func swatch(_ key: String) -> Color {
         switch key {
@@ -725,10 +760,13 @@ struct DoorScreen: View {
     }
 
     private func heroItems(_ lock: LockSummary) -> [VReadingGrid.Item] {
+        // ui-ia §4.1 R1：电量在本页只留 **2 处**（环心 + 正文一句）。
+        // 读数格里的「电量」已删 —— 它与环心是同一个数，只是换了个排版。
+        // 信号保留：环心画的是电量，信号没有第二个展示点。
+        let sig = Reading.rssiText(link.lastRSSI)
         var items: [VReadingGrid.Item] = [
-            .init(label: "电量", value: lock.battery >= 0 ? "\(lock.battery)%" : "--",
-                  tint: lock.battery >= 0 && lock.battery < 20 ? V.C.warning : V.C.text1),
-            .init(label: "信号", value: link.lastRSSI.map { "\($0)" } ?? "--", unit: "dBm")
+            .init(label: "信号", value: sig.text, unit: sig.unit,
+                  tint: sig.tone == .attention ? V.C.warning : V.C.text1)
         ]
         if HeroStats.shows("firmware") {
             items.append(.init(label: "固件", value: lock.firmware.isEmpty ? "未知" : lock.firmware))
@@ -742,23 +780,35 @@ struct DoorScreen: View {
         return items
     }
 
-    private func statusWord(_ lock: LockSummary) -> String {
-        if !lock.isConnected { return "未连接" }
-        if lock.battery >= 0, lock.battery < 20 { return "电量偏低" }
-        return "状态良好"
-    }
+    private func statusWord(_ lock: LockSummary) -> String { stateWord(lock) }
 
     private func bodyText(_ lock: LockSummary) -> String {
+        // ui-ia §4.1 R2：连接状态在本页只留 **1 处**（Hero 卡右上角的 VStateDot + stateWord）。
+        // 原来正文里还有一句「蓝牙已连接 / 蓝牙未连接」—— 同一个事实在同一张卡里说两遍，
+        // 且它与状态点可能不同步（状态点看 isConnected，正文也看 isConnected，重复而无用）。
         let opens = todayOpenCount
-        let batteryPart = lock.battery >= 0 ? "电量 \(lock.battery)%" : "电量未知"
-        let linkPart = lock.isConnected ? "蓝牙已连接" : "蓝牙未连接"
-        return "\(batteryPart)，\(linkPart)，\(lock.keyCount) 枚凭证在册。今天已开锁 \(opens) 次。按日均 3 次估算，约可用 \(estimateMonths(lock))。"
+        let batteryPart = "电量 " + Reading.battery(app.currentMac, snapshot: lock.battery).spoken
+        return "\(batteryPart)，\(lock.keyCount) 枚凭证在册。今天已开锁 \(opens) 次。按日均 3 次估算，约可用 \(estimateMonths(lock))。"
+    }
+
+    /// 估算可用寿命的入参：一律取 Reading.battery 解出的百分比。
+    /// 锁侧 >80% 只是粗估档（Reading 会报「>80」），所以按 80 算，并在文案前加「约」——不假装精确。
+    private func estimatePct(_ mac: String, snapshot: Int) -> Int? {
+        let pct = BatteryCare.displayPct(mac, snapshot: snapshot)
+        guard pct >= 0 else { return nil }
+        return min(pct, 80)
+    }
+
+    /// 与 estimatePct 同源：给「低电提醒阈值」判断用的原始 pct（不做 80 截顶）。
+    private func battPct(_ mac: String, snapshot: Int) -> Int? {
+        let pct = BatteryCare.displayPct(mac, snapshot: snapshot)
+        return pct >= 0 ? pct : nil
     }
 
     private func estimateMonths(_ lock: LockSummary) -> String {
-        guard lock.battery >= 0 else { return "未知" }
-        let months = max(1, Int((Double(lock.battery) / 0.68 / 30).rounded()))
-        return "\(months) 个月"
+        guard let pct = estimatePct(app.currentMac, snapshot: lock.battery) else { return "未知" }
+        let months = max(1, Int((Double(pct) / 0.68 / 30).rounded()))
+        return "约 \(months) 个月"
     }
 
     private func estimateText(_ lock: LockSummary) -> String {
@@ -766,20 +816,22 @@ struct DoorScreen: View {
     }
 
     private func replaceText(_ lock: LockSummary) -> String {
-        guard lock.battery >= 0 else { return "未知" }
-        let days = Double(lock.battery) / 0.68
+        guard let pct = estimatePct(app.currentMac, snapshot: lock.battery) else { return "未知" }
+        let days = Double(pct) / 0.68
         let date = Date().addingTimeInterval(days * 86_400)
         let parts = TimeFormat.calendar.dateComponents([.month, .day], from: date)
         return "\(parts.month ?? 1) 月 \(parts.day ?? 1) 日"
     }
 
+    /// 圆盘中心数字：取 Reading.battery 的 text（>80 时会是「>80」，与其余各处一致）。
     private func batteryNumber(_ lock: LockSummary) -> String {
-        lock.battery >= 0 ? String(lock.battery) : "--"
+        Reading.battery(app.currentMac, snapshot: lock.battery).text
     }
 
+    /// 圆盘进度：用原始 pct 画弧（text 可能是「>80」，不能直接转 Double）。
     private func batteryFraction(_ lock: LockSummary) -> Double {
-        guard lock.battery >= 0 else { return 0 }
-        return Double(max(0, min(100, lock.battery))) / 100
+        guard let pct = battPct(app.currentMac, snapshot: lock.battery) else { return 0 }
+        return Double(max(0, min(100, pct))) / 100
     }
 
     // MARK: - 图表
@@ -855,12 +907,15 @@ struct DoorScreen: View {
                         quickTile(pair.element)
                     }
                     .buttonStyle(.plain)
+                    .disabled(quickDisabled(pair.element))
                     .onLongPressGesture(minimumDuration: 0.5) { showQuickEdit = true }
                     // 「再开一次」的真实语义是"跳到那条高频凭证"，不是"立刻再开一次门" ——
                     // 把目标编号拼进去，VoiceOver 与视觉用户都能知道会去哪一条。
                     // （`repeatTarget` 的 `name` 成员此前被算出来却从未使用。）
                     .accessibilityLabel(quickLabel(pair.element))
-                    .accessibilityHint("轻点执行，长按编辑快捷操作")
+                    .accessibilityHint(quickDisabled(pair.element)
+                                       ? "还没有可复用的开门记录"
+                                       : "轻点执行，长按编辑快捷操作")
                 }
                 if app.currentKeychain.map({ DB.listFps($0.mac).isEmpty }) == true {
                     Button { router.request(.dest(.keyCreate)) } label: {
@@ -880,21 +935,35 @@ struct DoorScreen: View {
         return Array(repeating: GridItem(.flexible(), spacing: V.S.gapS), count: count)
     }
 
+    /// 「再开一次」在还没有可复用目标时必须是**明确不可用**，不能静默改道去凭证页。
+    private func quickDisabled(_ action: QuickAction) -> Bool {
+        action.id == "again" && repeatTargetKey == nil
+    }
+
     private func quickTile(_ action: QuickAction) -> some View {
-        VCard(style: .mini) {
+        let disabled = quickDisabled(action)
+        return VCard(style: .mini) {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 Image(systemName: action.icon)
                     .font(V.F.icon18)
-                    .foregroundStyle(V.C.blue)
+                    .foregroundStyle(disabled ? V.C.text3 : V.C.blue)
                     .accessibilityHidden(true)
                 Text(action.label)
                     .font(V.F.footnote)
-                    .foregroundStyle(V.C.text1)
+                    .foregroundStyle(disabled ? V.C.text3 : V.C.text1)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
+                if disabled {
+                    Text("还没有可复用的开门记录")
+                        .font(V.F.micro)
+                        .foregroundStyle(V.C.text3)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             .frame(maxWidth: .infinity, minHeight: V.Metric.searchRow, alignment: .leading)
         }
+        .opacity(disabled ? 0.55 : 1)
     }
 
     private var pendingFingerTile: some View {
@@ -933,7 +1002,14 @@ struct DoorScreen: View {
     private func runQuick(_ action: QuickAction) {
         QuickPool.recordTap(action.id)
         switch action.id {
-        case "addPwd", "addFp":
+        case "addPwd":
+            // 0 = 密码（默认第一步）
+            DB.store.setInt("kf_keycreate_kind", 0)
+            router.request(.dest(.keyCreate))
+        case "addFp":
+            // 2 = 指纹（kinds: [.password, .temp, .fingerprint]）—— 直接落到「录指纹」那一步，
+            // 不再像旧实现那样和 addPwd 挤在同一个 case 里、点了「录指纹」却落在「新增密码」。
+            DB.store.setInt("kf_keycreate_kind", 2)
             router.request(.dest(.keyCreate))
         case "studio":
             // 2026-11-01（Round 292）：原来它和 addPwd/addFp 挤在同一个 case 里，三者都去 `.keyCreate`（新增凭证）——
@@ -946,11 +1022,9 @@ struct DoorScreen: View {
             router.request(.dest(.syncTime))
         case "again":
             // 复用上面算好的目标，不再重扫日志。
-            if let key = repeatTargetKey {
-                router.request(.key(id: key))
-            } else {
-                router.request(.dest(.keys))
-            }
+            // 无目标时磁贴已置灰，这里只是兜底 —— 绝不静默改道去凭证页（那会让用户以为点错了）。
+            guard let key = repeatTargetKey else { return }
+            router.request(.key(id: key))
         case "backup":
             router.request(.dest(.backup))
         case "tailgate":
@@ -1000,7 +1074,6 @@ struct DoorScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
         .padding(.top, V.S.gapL)
     }
 
@@ -1019,7 +1092,8 @@ struct DoorScreen: View {
                     .font(V.F.rowTitle)
                     .foregroundStyle(V.C.text1)
                     .lineLimit(1)
-                Text(entry.owner ?? "未归属")
+                // 内部值出屏（2026-11-02）：`entry.owner` 是成员 id，必须过 ownerName 再显示。
+                Text(CredentialOrg.ownerName(entry.owner).isEmpty ? "未归属" : CredentialOrg.ownerName(entry.owner))
                     .font(V.F.rowDetail)
                     .foregroundStyle(V.C.text3)
                     .lineLimit(1)
@@ -1037,80 +1111,69 @@ struct DoorScreen: View {
 
     // MARK: - 快捷入口
 
-    private var shortcutsBlock: some View {
-        VStack(alignment: .leading, spacing: V.S.gapS) {
-            Text("门锁与入口")
-                .font(V.F.section)
-                .foregroundStyle(V.C.text1)
-            VCard {
-                VStack(spacing: 0) {
-                    VListRow(
+    /// 入口清单 = 系统 `Section`。整页已经是 List（见 `body`），所以这里**不再套第二层 List**：
+    /// 早先「ScrollView 里嵌固定高度 List」必须手算 9×54+8，Dynamic Type 一大就把最后一行裁掉。
+    private var shortcutsSection: some View {
+        Section {
+            VListRow(
                         title: "锁实况",
                         detail: "电量 / 信号 / 固件",
                         systemImage: "gauge.with.dots.needle.50percent",
                         tint: V.C.rewardBlue
                     ) { router.request(.dest(.lockStatus)) }
-                    VDivider()
                     VListRow(
                         title: "锁信息名片",
                         detail: "固件 / 容量 / 电量采样 / 链路验证",
                         systemImage: "info.circle",
                         tint: V.C.miniBlue
                     ) { router.request(.dest(.deviceInfo)) }
-                    VDivider()
                     VListRow(
                         title: "锁设置",
                         detail: "临时码开关 / 自动上锁 / 清空密码",
                         systemImage: "slider.horizontal.3",
                         tint: V.C.coral
                     ) { router.request(.dest(.lockSettings)) }
-                    VDivider()
                     VListRow(
                         title: "添加门锁",
                         detail: "配网并绑定这把锁",
                         systemImage: "plus",
                         tint: V.C.rewardGreen
                     ) { router.request(.dest(.addLock)) }
-                    VDivider()
                     VListRow(
                         title: "智能网关",
                         detail: "远程访问与转发",
                         systemImage: "antenna.radiowaves.left.and.right",
                         tint: V.C.purple
                     ) { router.request(.dest(.gateway)) }
-                    VDivider()
                     VListRow(
                         title: "校准门锁时间",
                         detail: "让锁内时钟与手机一致",
                         systemImage: "clock.arrow.circlepath",
                         tint: V.C.miniBlue
                     ) { router.request(.dest(.syncTime)) }
-                    VDivider()
                     VListRow(
                         title: "布防",
                         detail: "离家后监控门锁状态",
                         systemImage: "shield.lefthalf.filled",
                         tint: V.C.pink
                     ) { router.request(.dest(.defend)) }
-                    VDivider()
                     VListRow(
                         title: "新增凭证",
                         detail: "密码 / 指纹 / 临时码",
                         systemImage: "key.horizontal.fill",
                         tint: V.C.coral
                     ) { router.request(.dest(.keyCreate)) }
-                    VDivider()
                     VListRow(
                         title: "成员",
                         detail: "家人与访客",
                         systemImage: "person.2.fill",
                         tint: V.C.rewardGreen
                     ) { router.request(.dest(.household)) }
-                }
-            }
+        } header: {
+            Text("门锁与入口")
+                .font(V.F.section)
+                .foregroundStyle(V.C.text1)
         }
-        .padding(.horizontal, V.S.cardGutter)
-        .padding(.top, V.S.gapL)
     }
 
     // MARK: - 空态（必须给出路：添加 + 从备份恢复）
@@ -1133,7 +1196,6 @@ struct DoorScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.pageGutterA)
         .padding(.top, V.S.gapL)
     }
 

@@ -119,12 +119,15 @@ for (const f of FILES) {
 // 加新条目时：把文案里的原句、和真正实现它的那行代码，各截一个**稳定子串**。
 {
   const PAIRS = [
-    { copy: 'App/Features/Door/TailgateScreen.swift', text: '2–6 秒',
-      code: 'App/Features/Door/TailgateScreen.swift', anchor: 'ForEach(2 ... 6' },
+    // 2026-11-02「六页并两页」：防尾随页已并入锁设置页，承诺与代码锚点跟着搬家。
+    { copy: 'App/Features/Door/LockSettingsScreen.swift', text: '2–6 秒',
+      code: 'App/Features/Door/LockSettingsScreen.swift', anchor: 'ForEach(2 ... 6' },
     { copy: 'App/Features/Door/LinkSense.swift', text: '5 / 15 / 30 / 60 / 90',
       code: 'App/Features/Door/LinkSense.swift', anchor: '[5, 15, 30, 60, 90]' },
-    { copy: 'App/Features/Door/DeviceInfoScreen.swift', text: '偏差超过 2 秒',
-      code: 'App/Features/Door/DeviceInfoScreen.swift', anchor: 'abs(drift) > 2' },
+    // 同上：锁钟偏差读数已并入锁实况页；文案改成按 driftThreshold 动态措辞，
+    // 锚点也改成那个阈值常量（比写死的 `abs(drift) > 2` 更稳）。
+    { copy: 'App/Features/Door/LockStatusScreen.swift', text: '偏差已超过',
+      code: 'App/Features/Door/LockStatusScreen.swift', anchor: 'private static let driftThreshold = 2' },
     { copy: 'App/Features/Settings/AboutScreen.swift', text: '连点 10 次',
       code: 'App/Features/Settings/AboutScreen.swift', anchor: 'versionTaps >= 10' },
     { copy: 'App/Features/Door/UnlockGateScreen.swift', text: '30 秒内不再重复询问',

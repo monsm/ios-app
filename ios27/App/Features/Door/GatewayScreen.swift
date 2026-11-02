@@ -44,20 +44,25 @@ struct GatewayScreen: View {
     private static let stepTitles = ["连网关", "读设备名", "写 WiFi", "写 IoT", "重启上线"]
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: V.S.gap16) {
-                header
-                if let banner { bannerCard(banner) }
-                listPanel
-                if showProvision || phase != .idle {
-                    provisionPanel
-                }
-                notePanel
+        // 全换系统（2026-11-02）：整页容器是系统 `List`（与门页同一配方）。
+        // 「我的网关」是**行式内容**（一台一行、长按有菜单），改走 `Section` + 系统行；
+        // 配网五步与须知是卡片 → `cardRow()`（.plain 样式没有系统左右留白，cardRow 补回 pageGutter）；
+        // 页头与横幅是整宽内容 → `headerRow()`，与卡片同一条左基准线。
+        // 不再「ScrollView 里嵌 List」：那样要么双滚、要么手算行高，Dynamic Type 一大就裁。
+        List {
+            header.headerRow()
+            if let banner { bannerCard(banner).headerRow() }
+            gatewaysSection
+            if showProvision || phase != .idle {
+                provisionPanel.cardRow()
             }
-            .padding(.vertical, V.S.gap16)
+            notePanel.cardRow()
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .contentMargins(.top, V.S.gap16, for: .scrollContent)
+        .contentMargins(.bottom, V.S.gap16, for: .scrollContent)
         .background(CanvasBackground())
-        .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("网关")
         .navigationBarTitleDisplayMode(.inline)
         .task { loadRows() }
@@ -90,7 +95,6 @@ struct GatewayScreen: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var onlineCount: Int { rows.filter { $0.online }.count }
@@ -114,40 +118,47 @@ struct GatewayScreen: View {
 
     // MARK: 主角：我的网关（一行一台，读数是真字段）
 
-    private var listPanel: some View {
-        VCard {
-            VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VSectionLabel(text: "我的网关", trailing: rows.isEmpty ? nil : "\(rows.count) 台")
-                if rows.isEmpty {
-                    if showProvision || phase != .idle {
-                        // 配网面板已经展开时不再放第二个主动作（同屏只许一个 PrimaryAction）。
-                        Text("还没有已配好的网关。走完下面五步，这台网关就会出现在这里。")
-                            .font(V.F.footnote)
-                            .foregroundStyle(V.C.text2)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .frame(minHeight: V.Hit.min)
-                    } else {
-                        VEmptyState(
-                            title: "还没有添加网关",
-                            message: "先把网关通电、捅一下重置孔到橙灯闪烁，再点下面的「配网网关」走完五步。网关不是开锁的必需品：没有它也能开门，只是拿不到远程告警。",
-                            actionTitle: "配网网关",
-                            systemImage: "antenna.radiowaves.left.and.right"
-                        ) {
-                            openProvision()
-                        }
-                        .padding(.vertical, V.S.gap24)
-                    }
+    /// 「我的网关」= 系统 `Section`：一台一行。整页已是 List，这里不再套第二层。
+    private var gatewaysSection: some View {
+        Section {
+            if rows.isEmpty {
+                if showProvision || phase != .idle {
+                    // 配网面板已经展开时不再放第二个主动作（同屏只许一个 PrimaryAction）。
+                    Text("还没有已配好的网关。走完下面五步，这台网关就会出现在这里。")
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text2)
+                        .fixedSize(horizontal: false, vertical: true)
                 } else {
-                    VStack(spacing: 0) {
-                        ForEach(Array(rows.enumerated()), id: \.element.id) { index, g in
-                            if index > 0 { hairline }
-                            gatewayRow(g)
-                        }
+                    VEmptyState(
+                        title: "还没有添加网关",
+                        message: "先把网关通电、捅一下重置孔到橙灯闪烁，再点下面的「配网网关」走完五步。网关不是开锁的必需品：没有它也能开门，只是拿不到远程告警。",
+                        actionTitle: "配网网关",
+                        systemImage: "antenna.radiowaves.left.and.right"
+                    ) {
+                        openProvision()
                     }
+                    .plainRow()
+                }
+            } else {
+                ForEach(rows) { g in
+                    gatewayRow(g)
                 }
             }
+        } header: {
+            HStack(spacing: V.S.gapS) {
+                Text("我的网关")
+                    .font(V.F.section)
+                    .foregroundStyle(V.C.text1)
+                Spacer(minLength: 0)
+                if !rows.isEmpty {
+                    Text("\(rows.count) 台")
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text3)
+                        .monospacedDigit()
+                }
+            }
+            .textCase(nil)
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func gatewayRow(_ g: GatewayRow) -> some View {
@@ -168,7 +179,7 @@ struct GatewayScreen: View {
                 .init(label: "ROM", value: g.rom.isEmpty ? "—" : g.rom),
                 .init(label: "WiFi", value: g.ssid.isEmpty ? "—" : g.ssid,
                       tint: g.online ? V.C.text1 : V.C.text3),
-                .init(label: "上次核对", value: g.lastCheckedAt.map { TimeDisplay.clock($0) } ?? "—",
+                .init(label: "上次核对", value: g.lastCheckedAt.map { TimeDisplay.clock($0) } ?? "未核对",
                       tint: V.C.text2),
             ], columns: 3)
         }
@@ -195,6 +206,8 @@ struct GatewayScreen: View {
         .accessibilityLabel("\(g.name)，\(g.mac)，\(g.online ? "已联网" : "未联网")，ROM \(g.rom)，WiFi \(g.ssid)")
         .accessibilityAction(named: "刷新状态") { Task { await refresh(g) } }
         .accessibilityAction(named: "重启网关") { Task { await reboot(g) } }
+        // 进系统 List 后行内边距与卡片 gutter 对齐（非 List 容器里是 no-op）。
+        .listRowInsets(EdgeInsets(top: V.S.gapS, leading: V.S.cardPad, bottom: V.S.gapS, trailing: V.S.cardPad))
     }
 
     // MARK: 配网（五步真序列）
@@ -262,7 +275,6 @@ struct GatewayScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var canProvision: Bool {
@@ -335,7 +347,6 @@ struct GatewayScreen: View {
                 noteLine("只能接收门锁状态与告警，无法远程操作门锁 —— 开门永远只在门口发生。")
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func noteLine(_ text: String) -> some View {
@@ -363,7 +374,6 @@ struct GatewayScreen: View {
                 Spacer(minLength: 0)
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 交互
@@ -381,8 +391,15 @@ struct GatewayScreen: View {
                        rom: g.romVer,
                        ssid: g.ssid.isEmpty ? g.lastWifi : g.ssid,
                        online: g.netState == 1,
-                       lastCheckedAt: Int64(Date().timeIntervalSince1970 * 1000))
+                       lastCheckedAt: lastChecked(mac: g.mac))
         }
+    }
+
+    /// 「上次核对」只认**真读成功**的时刻（kf_gw_checked_<mac>）；从未核对过就是 nil，界面显示「未核对」。
+    /// 旧实现写的是 Date() ⇒ 每次进页面都显示"刚刚核对过"，是纯造的读数。
+    private func lastChecked(mac: String) -> Int64? {
+        let v = DB.store.getInt("kf_gw_checked_" + mac, 0)
+        return v > 0 ? Int64(v) : nil
     }
 
     @MainActor
@@ -407,7 +424,14 @@ struct GatewayScreen: View {
             armed = false
             phase = .succeeded
             loadRows()
-            banner = "配网指令已被网关接受（\(rec.lastWifi)）。它正在用新 WiFi 重连，联网状态看上面那一行 —— 橙色就是还没连上。"
+            banner = "配网指令已被网关接受（\(rec.lastWifi)）。它正在用新 WiFi 重连 —— 3 秒后会自动复核一次联网状态。"
+            // banner 承诺的「稍后复核」必须真的发生：延时自动 refresh 一次，而不是只写一句文案。
+            if let added = rows.first(where: { DB.normalizeMac($0.id) == DB.normalizeMac(rec.mac) }) {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(3))
+                    await refresh(added)
+                }
+            }
         } catch {
             phase = .failed((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
         }
@@ -422,7 +446,10 @@ struct GatewayScreen: View {
             // await 期间 rows 可能被「移除网关 / 重扫」改短：下标必须在 await 之后重取，
             // 复用 await 前的 index 是典型的越界崩溃（EXC_BAD_ACCESS / fatal error: Index out of range）。
             guard let index = rows.firstIndex(where: { $0.id == g.id }) else { return }
-            rows[index].lastCheckedAt = Int64(Date().timeIntervalSince1970 * 1000)
+            // 只有真读到状态才算「核对过」——这是 kf_gw_checked_<mac> 的唯一写点。
+            let checkedAt = Int64(Date().timeIntervalSince1970 * 1000)
+            DB.store.set("kf_gw_checked_" + g.mac, Int(checkedAt))
+            rows[index].lastCheckedAt = checkedAt
             rows[index].online = st.netState == 1
             rows[index].ssid = st.ssid
             rows[index].rom = st.romVer
@@ -446,7 +473,7 @@ struct GatewayScreen: View {
         }
         guard let done = rows.firstIndex(where: { $0.id == g.id }) else { return }
         rows[done].rebooting = false
-        rows[done].lastCheckedAt = Int64(Date().timeIntervalSince1970 * 1000)
+        // 重启只代表"指令被接受"，不是一次状态核对 —— 不写 kf_gw_checked，也不改「上次核对」。
     }
 
     private func remove(_ g: GatewayRow) {
@@ -461,8 +488,6 @@ struct GatewayScreen: View {
     }
 
     private var hairline: some View {
-        Rectangle()
-            .fill(V.C.hairline)
-            .frame(height: V.S.hair)
+        Divider()
     }
 }

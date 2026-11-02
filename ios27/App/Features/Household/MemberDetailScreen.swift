@@ -6,6 +6,13 @@
 import SwiftUI
 import UIKit
 
+
+/// List 里的「整块卡片」行（与 HouseholdScreen 的 hhCardRow() 同名风格，但独立命名避免重声明）。
+private extension View {
+    func memberCardRow() -> some View {
+        self.frame(maxWidth: .infinity, alignment: .leading).plainRow()
+    }
+}
 struct MemberDetailScreen: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(AppModel.self) private var app
@@ -26,27 +33,53 @@ struct MemberDetailScreen: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: V.S.gap16) {
-                if let member {
-                    header(member)
+        // 2026-11-02（R4 全换系统）：ScrollView + VStack → 系统 List + Section。
+        // 8 段按语义并成 5 组：档案 / 角色与权限 / 凭证与摘录 / 家庭场景 / 归档与删除。
+        // 角色权限矩阵（8 行 × 3 档）**保持表格形态**留在卡片里 —— 它是矩阵不是列表行，
+        // 塞进 List 行会变成 8 条彼此无关的「能力」行，反而读不出「同一件事在三个角色下分别允许吗」。
+        // 业务逻辑、跳转、读数、禁用态、无障碍标签一字未改。
+        List {
+            if let member {
+                Section {
+                    header(member).memberCardRow()
+                }
+                Section {
                     HHMemberWeekCard(
                         member: member,
                         entries: app.entries,
                         openRecords: { router.request(.dest(.records)) }
                     )
-                    roleCard(member)
-                    profileCard(member)
+                    .memberCardRow()
+                } header: {
+                    sectionHeader("本周")
+                }
+                Section {
+                    roleCard(member).memberCardRow()
+                } header: {
+                    sectionHeader("角色与权限")
+                }
+                Section {
+                    profileCard(member).memberCardRow()
+                } header: {
+                    sectionHeader("档案")
+                }
+                Section {
                     HHMemberKeysCard(
                         member: member,
                         keys: app.keys.filter { $0.owner == member.name },
                         openKey: { id in router.request(.key(id: id)) },
                         createKey: { router.request(.dest(.keyCreate)) }
                     )
+                    .memberCardRow()
                     HHMemberExcerptsCard(
                         entries: Array(app.entries.filter { $0.owner == member.name }.prefix(5)),
                         openRecords: { router.request(.dest(.records)) }
                     )
+                    .memberCardRow()
+                } header: {
+                    sectionHeader("凭证与摘录")
+                }
+                Section {
                     HHMemberSceneCard(
                         member: member,
                         note: draft.note,
@@ -55,22 +88,36 @@ struct MemberDetailScreen: View {
                             roster.setDuty(roster.dutyID() == member.id ? nil : member.id)
                         }
                     )
+                    .memberCardRow()
+                } header: {
+                    sectionHeader("家庭场景")
+                }
+                Section {
                     HHMemberClosingCard(
                         member: member,
                         toggleArchive: { toggleArchive() },
                         askDelete: { confirmDelete = true }
                     )
+                    .memberCardRow()
                     if !MemberMergeKit.candidates(primaryID: member.id).isEmpty {
-                        mergeCard(member)
+                        mergeCard(member).memberCardRow()
                     }
-                } else {
-                    missingBlock
+                } header: {
+                    sectionHeader("归档与删除")
+                }
+            } else {
+                Section {
+                    missingBlock.memberCardRow()
                 }
             }
-            .padding(.vertical, V.S.gap16)
         }
+        .listStyle(.insetGrouped)
+        .listSectionSpacing(V.S.gap16)
+        .scrollContentBackground(.hidden)
+        .contentMargins(.top, V.S.gap16, for: .scrollContent)
+        .contentMargins(.bottom, V.S.gapL, for: .scrollContent)
+        .scrollDismissesKeyboard(.interactively)
         .background(CanvasBackground())
-        .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("成员")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -94,6 +141,9 @@ struct MemberDetailScreen: View {
         .sheet(isPresented: $showMerge) {
             if let member { MemberMergeSheet(primary: member) }
         }
+        // 全换系统（2026-11-02）：系统 sheet 语义 —— 中/大两档 + 拖拽指示条。
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
         .confirmationDialog("删除成员", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("只移除档案（锁端凭证仍有效）", role: .destructive) { remove(cascade: false) }
             Button("连本机凭证一起移除（锁端仍需线下删）", role: .destructive) { remove(cascade: true) }
@@ -101,6 +151,15 @@ struct MemberDetailScreen: View {
         } message: {
             Text(deleteMessage)
         }
+    }
+
+    /// List 段头：中文必须显式 textCase(nil)，否则系统会把段头拉成大写形态。
+    private func sectionHeader(_ text: String) -> some View {
+        Text(text)
+            .font(V.F.small)
+            .foregroundStyle(V.C.text3)
+            .textCase(nil)
+            .accessibilityAddTraits(.isHeader)
     }
 
     // MARK: 重复合并（462）
@@ -118,7 +177,6 @@ struct MemberDetailScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 页头（大标题 + 一行状态）
@@ -145,7 +203,6 @@ struct MemberDetailScreen: View {
             .accessibilityElement(children: .combine)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func statusTone(_ member: MemberCard) -> Tone {
@@ -212,7 +269,6 @@ struct MemberDetailScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func permRow(_ cap: String, role: MemberCard.Role) -> some View {
@@ -281,7 +337,6 @@ struct MemberDetailScreen: View {
                 .padding(.top, V.S.gapXS)
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func emojiRow(_ member: MemberCard) -> some View {
@@ -327,7 +382,6 @@ struct MemberDetailScreen: View {
             }
             .padding(.vertical, V.S.gapXXL)
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 真动作（档案扩展写 kf_member_ext、本周主责写 kf_duty_week，都是真落盘）

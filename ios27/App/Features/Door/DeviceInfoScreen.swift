@@ -1,9 +1,10 @@
-// DeviceInfoScreen.swift —— 锁信息名片（原 DeviceInfoView.swift:6-307）。
+// DeviceInfoScreen.swift —— 锁信息名片（诊断页）。
 //
-// 这屏干什么：把这把锁的身份 / 运行读数 / 电量采样 / 电池档案 / 连接环境摊成一张诊断名片，
-//   进页自动读一次 cmd03；锁钟偏差 > 2 秒时自动校时（原 APK RominfoPage 的进页同步口径）。
+// 这屏干什么：只放**别处没有**的诊断事实 —— 身份（MAC / 型号 / 绑定于 / 链路验证）、容量族、
+//   电量采样走势、连接环境。**电量 / 固件 / 安全模式 / 锁钟偏差** 四类读数归「锁实况」，本页不再重复；
+//   电池型号与换电日期归「电池档案」，本页只留跳转入口。
 // 数据从哪来：LockService.getStatus（真链路）+ DB 快照 + BatteryCare 采样 + LockArchive 档案。
-// 主动作：「重新读取」；进页自动校时是隐式动作，完成后在页面上如实写「已自动校时」。
+// 主动作：「重新读取」（只读，不再隐式改锁 —— 进页自动校时已随「校时」并入锁实况）。
 import SwiftUI
 
 struct DeviceInfoScreen: View {
@@ -12,11 +13,8 @@ struct DeviceInfoScreen: View {
 
     @State private var status: LockStatus?
     @State private var samples: [BattSample] = []
-    @State private var clockDrift: Int?
     @State private var busy = false
     @State private var outcome: String?
-    @State private var batteryModel = ""
-    @State private var batterySaved = false
     @State private var link = LinkSenseModel()
 
     private var mac: String { app.lock?.id ?? "" }
@@ -24,30 +22,32 @@ struct DeviceInfoScreen: View {
     private var meta: LockMeta { LockArchive.meta(mac) }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: V.S.gap16) {
-                header
-                if let kc {
-                    identityCard(kc)
-                    statusCard(kc)
-                    batteryCard(kc)
-                    batteryArchiveCard
-                    environmentCard
-                    reloadPanel
-                } else {
-                    noLockCard
-                }
+        // 全换系统（2026-11-02）：整页容器是系统 `List`（与前几轮同一配方）。
+        // 身份 / 容量 / 电池档案入口 / 连接环境四段是**行式内容** → `Section`；
+        // 电量采样是图（VMiniBars），保持卡片用 `plainRow()`；动作与空态同理。
+        // 本页仍是第 2 轮瘦身后的诊断名片：电量 / 固件以外的安全模式 / 锁钟偏差不在这里。
+        List {
+            header.plainRow()
+            if let kc {
+                identitySection(kc)
+                capacitySection
+                batteryCard.plainRow()
+                batteryEntrySection
+                environmentSection
+                reloadPanel.plainRow()
+            } else {
+                noLockCard.plainRow()
             }
-            .padding(.vertical, V.S.gap16)
         }
+        .listStyle(.insetGrouped)
+        .listSectionSpacing(V.S.gap16)
+        .scrollContentBackground(.hidden)
+        .contentMargins(.top, V.S.gap16, for: .scrollContent)
+        .contentMargins(.bottom, V.S.gapL, for: .scrollContent)
         .background(CanvasBackground())
-        .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("锁信息名片")
         .navigationBarTitleDisplayMode(.inline)
-        .task {
-            batteryModel = meta.batteryModel
-            await reload()
-        }
+        .task { await reload() }
     }
 
     // MARK: 页头
@@ -62,92 +62,95 @@ struct DeviceInfoScreen: View {
                 .foregroundStyle(V.C.text2)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.horizontal, V.S.pageGutter)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
     }
 
     // MARK: 身份
 
-    private func identityCard(_ kc: Keychain) -> some View {
-        VCard {
-            VStack(alignment: .leading, spacing: V.S.gapS) {
-                HStack(spacing: V.S.gapM) {
-                    Image(systemName: LockArchive.symbolName(meta))
-                        .font(V.F.displayD)
-                        .foregroundStyle(swatch(meta.colorKey))
-                        .frame(width: V.Icon.xl * 2, height: V.Icon.xl * 2)
-                        .background(V.C.cardAlt, in: Circle())
-                        .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: V.S.gapXXS) {
-                        Text(LockArchive.displayName(kc))
-                            .font(V.F.section)
-                            .foregroundStyle(V.C.text1)
-                            .lineLimit(1)
-                        Text(LockArchive.subtitle(kc))
-                            .font(V.F.footnote)
-                            .foregroundStyle(V.C.text3)
-                            .lineLimit(1)
-                    }
-                    Spacer(minLength: 0)
+    private func identitySection(_ kc: Keychain) -> some View {
+        Section {
+            HStack(spacing: V.S.gapM) {
+                Image(systemName: LockArchive.symbolName(meta))
+                    .font(V.F.displayD)
+                    .foregroundStyle(swatch(meta.colorKey))
+                    .frame(width: V.Icon.xl * 2, height: V.Icon.xl * 2)
+                    .background(V.C.cardAlt, in: Circle())
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: V.S.gapXXS) {
+                    Text(LockArchive.displayName(kc))
+                        .font(V.F.section)
+                        .foregroundStyle(V.C.text1)
+                        .lineLimit(1)
+                    Text(LockArchive.subtitle(kc))
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text3)
+                        .lineLimit(1)
                 }
-                VDivider()
-                VFieldRow(label: "型号", value: PidMap.productName(kc.pid), mono: false)
-                VFieldRow(label: "固件版本", value: firmwareText(kc))
-                if let v = status?.verDFU, v > 0 {
-                    VFieldRow(label: "Boot 版本", value: "\(v)")
-                }
-                if let v = status?.verKeyboard, v > 0 {
-                    VFieldRow(label: "键盘版本", value: "\(v)")
-                }
-                VFieldRow(label: "固件服役", value: firmwareAge(kc))
-                VFieldRow(label: "MAC", value: kc.mac)
-                VFieldRow(label: "绑定于", value: boundText(kc))
-                VFieldRow(label: "链路验证", value: verifiedText)
-                VFieldRow(label: "锁钟偏差", value: driftText, tint: driftTint)
+                Spacer(minLength: 0)
             }
+            .listRowInsets(EdgeInsets(top: V.S.gapS, leading: V.S.cardPad, bottom: V.S.gapS, trailing: V.S.cardPad))
+            VFieldRow(label: "型号", value: PidMap.productName(kc.pid), mono: false)
+            if let v = status?.verDFU, v > 0 {
+                VFieldRow(label: "Boot 版本", value: "\(v)")
+            }
+            if let v = status?.verKeyboard, v > 0 {
+                VFieldRow(label: "键盘版本", value: "\(v)")
+            }
+            // 固件版本文字走 Reading.firmware（本页原先自己取 status?.firmware / kc.fw）。
+            VFieldRow(label: "固件", value: Reading.firmware(mac).text)
+            VFieldRow(label: "固件服役", value: firmwareAge(kc))
+            VFieldRow(label: "MAC", value: shortMAC(kc.mac))
+            VOutlineButton(title: "复制完整 MAC", systemImage: "doc.on.doc") {
+                Clip.set(kc.mac)
+            }
+            VFieldRow(label: "绑定于", value: boundText(kc))
+            VFieldRow(label: "链路验证", value: verifiedText)
+            Text("Boot / 键盘版本只在锁上报时出现；缺失表示该固件不报这两支，不是读取失败。")
+                .font(V.F.unit)
+                .foregroundStyle(V.C.text3)
+                .fixedSize(horizontal: false, vertical: true)
+        } header: {
+            Text("身份")
+                .font(V.F.section)
+                .foregroundStyle(V.C.text1)
+                .textCase(nil)
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
-    // MARK: 运行状态
+    // MARK: 容量族（锁端存量 / 本机池对照）
 
-    private func statusCard(_ kc: Keychain) -> some View {
-        VCard {
-            VStack(alignment: .leading, spacing: V.S.gapS) {
-                VSectionLabel(text: "运行状态", trailing: sampleText)
-                VReadingGrid(items: [
-                    .init(label: "门锁电量", value: batteryText, tint: batteryTint),
-                    .init(label: "安全模式", value: modeText),
-                    .init(label: "锁内时间", value: lockTimeText),
-                    .init(label: "信号", value: signalText),
-                ], columns: 2)
-                .padding(.top, V.S.gapXS)
-                VDivider()
-                VFieldRow(label: "密码容量", value: capacityText(used: pwdUsed, cap: status?.pwdInfoCapacity ?? 0))
-                VFieldRow(label: "指纹容量", value: capacityText(used: fpUsed, cap: status?.fpInfoCapacity ?? 0))
-                // 2026-11-01：把「锁端存量」与「本机池」并排 —— 排障 rc=2 时第一眼看的就是这两个数：
-                // 锁端已用 64 而本机池只有 20 ⇒ 池子被恢复/迁移污染或两台 App 打架，现签必败。
-                VFieldRow(label: "PIN 容量", value: capacityText(used: pinUsed, cap: status?.pinInfoCapacity ?? 0))
-                if let note = localPinNote {
-                    Text(note)
-                        .font(V.F.unit)
-                        .foregroundStyle(localPinMismatch ? V.C.warning : V.C.text3)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                VDivider()
-                Text("Boot / 键盘版本只在锁上报时出现；缺失表示该固件不报这两支，不是读取失败。")
+    private var capacitySection: some View {
+        Section {
+            VFieldRow(label: "密码容量", value: capacityText(used: pwdUsed, cap: status?.pwdInfoCapacity ?? 0))
+            VFieldRow(label: "指纹容量", value: capacityText(used: fpUsed, cap: status?.fpInfoCapacity ?? 0))
+            // 2026-11-01：把「锁端存量」与「本机池」并排 —— 排障 rc=2 时第一眼看的就是这两个数：
+            // 锁端已用 64 而本机池只有 20 ⇒ 池子被恢复/迁移污染或两台 App 打架，现签必败。
+            VFieldRow(label: "PIN 容量", value: capacityText(used: pinUsed, cap: status?.pinInfoCapacity ?? 0))
+            if let note = localPinNote {
+                Text(note)
                     .font(V.F.unit)
-                    .foregroundStyle(V.C.text3)
+                    .foregroundStyle(localPinMismatch ? V.C.warning : V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
             }
+        } header: {
+            HStack(spacing: V.S.gapS) {
+                Text("容量")
+                    .font(V.F.section)
+                    .foregroundStyle(V.C.text1)
+                    .textCase(nil)
+                Spacer(minLength: 0)
+                Text(sampleText)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text3)
+                    .textCase(nil)
+            }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 电量采样
 
-    private func batteryCard(_ kc: Keychain) -> some View {
+    private func batteryCard() -> some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VSectionLabel(text: "电量采样", trailing: "\(samples.count) 点")
@@ -167,12 +170,17 @@ struct DeviceInfoScreen: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 VDivider()
-                VFieldRow(label: "电量读数", value: batteryText, tint: batteryTint)
                 VFieldRow(label: "采样时间", value: sampleText)
-                VFieldRow(label: "耗材提醒", value: batteryModel.isEmpty ? "未记录型号" : batteryModel)
+                VFieldRow(label: "走势跨度", value: trendSpanText)
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
+    }
+
+    /// 走势跨度：采样点的首末时间差（没有采样就说没有，不编一个 0 天）。
+    private var trendSpanText: String {
+        guard let first = samples.first, let last = samples.last else { return "还没有采样" }
+        let days = max(1, Int((last.t - first.t) / 86_400_000) + 1)
+        return "跨 \(days) 天 · \(samples.count) 点"
     }
 
     private var sampleBars: [Double] {
@@ -187,50 +195,47 @@ struct DeviceInfoScreen: View {
         return "走势：\(samples.count) 个采样点 · 跨 \(days) 天 · 最低 \(lo)% / 最高 \(hi)%"
     }
 
-    // MARK: 电池档案（本机台账，可编辑）
+    // MARK: 电池档案（型号与换电日期归「电池档案」页，这里只留入口，不再第二处编辑同一字段）
 
-    private var batteryArchiveCard: some View {
-        VCard {
-            VStack(alignment: .leading, spacing: V.S.gapS) {
-                VSectionLabel(text: "电池档案", trailing: batterySaved ? "已保存" : "本机")
-                VTextFieldRow(label: "电池型号", text: $batteryModel, placeholder: "如 CR123A × 2")
-                VFieldRow(label: "上次换电", value: batteryDateText)
-                HStack(spacing: V.S.gapS) {
-                    VOutlineButton(title: "记为今天", systemImage: "calendar.badge.checkmark") {
-                        var m = meta
-                        m.batteryChangedAt = Date().timeIntervalSince1970
-                        m.batteryModel = batteryModel.trimmingCharacters(in: .whitespaces)
-                        LockArchive.save(mac, m)
-                        batterySaved = true
-                    }
-                    VOutlineButton(title: "保存型号", systemImage: "checkmark") {
-                        var m = meta
-                        m.batteryModel = batteryModel.trimmingCharacters(in: .whitespaces)
-                        LockArchive.save(mac, m)
-                        batterySaved = true
-                    }
-                }
+    private var batteryEntrySection: some View {
+        Section {
+            VFieldRow(label: "上次换电", value: batteryDateText)
+            VOutlineButton(title: "打开电池档案（型号 / 换电日 / 低电阈值）", systemImage: "battery.75percent") {
+                router.request(.dest(.batteryProfile))
+            }
+        } header: {
+            HStack(spacing: V.S.gapS) {
+                Text("电池档案")
+                    .font(V.F.section)
+                    .foregroundStyle(V.C.text1)
+                    .textCase(nil)
+                Spacer(minLength: 0)
+                Text(meta.batteryModel.isEmpty ? "未记录型号" : meta.batteryModel)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text3)
+                    .textCase(nil)
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 连接环境
 
-    private var environmentCard: some View {
-        VCard {
-            VStack(alignment: .leading, spacing: V.S.gapS) {
-                VSectionLabel(text: "连接环境")
-                VFieldRow(label: "当前链路", value: link.phase.rawValue)
-                VFieldRow(label: "最近信号", value: link.lastRSSI.map { "\($0) dBm · \(link.rssiWord)" } ?? "未读到")
-                VFieldRow(label: "握手耗时", value: link.connectMs.map { "\($0) ms" } ?? "未测")
-                Text("连接环境只看最近一次扫描与握手；读不到就写读不到，不拿邻近数值冒充。")
-                    .font(V.F.unit)
-                    .foregroundStyle(V.C.text3)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+    private var environmentSection: some View {
+        Section {
+            // 连接状态与信号都走 Reading：dBm + 档位词的拼法、已连接/未连接的判据全仓各只有一处。
+            VFieldRow(label: "当前链路", value: Reading.link(mac).text)
+            VFieldRow(label: "最近信号", value: Reading.signal(mac).spoken)
+            VFieldRow(label: "上次握手耗时", value: link.connectMs.map { "\($0) ms" } ?? "未测")
+            Text("连接环境只看最近一次扫描与握手；读不到就写读不到，不拿邻近数值冒充。")
+                .font(V.F.unit)
+                .foregroundStyle(V.C.text3)
+                .fixedSize(horizontal: false, vertical: true)
+        } header: {
+            Text("连接环境")
+                .font(V.F.section)
+                .foregroundStyle(V.C.text1)
+                .textCase(nil)
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var reloadPanel: some View {
@@ -246,9 +251,8 @@ struct DeviceInfoScreen: View {
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            SettingsNote(text: "进页会自动读一次 cmd03；锁钟偏差超过 2 秒时自动校时一次（与 APK RominfoPage 同口径）。静音、安全模式、校时、防尾随与固件升级在「锁设置」里。")
+            SettingsNote(text: "进页会自动读一次锁状态。本页只读：校时在「锁实况」，静音 / 安全模式 / 防尾随在「锁设置」，电池型号与换电日在「电池档案」。")
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var noLockCard: some View {
@@ -266,15 +270,9 @@ struct DeviceInfoScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 读数
-
-    private func firmwareText(_ kc: Keychain) -> String {
-        if let fw = status?.firmware, !fw.isEmpty { return fw }
-        return kc.fw.isEmpty ? "未知" : kc.fw
-    }
 
     private func firmwareAge(_ kc: Keychain) -> String {
         var fw = kc.fw
@@ -285,53 +283,21 @@ struct DeviceInfoScreen: View {
     }
 
     private func boundText(_ kc: Keychain) -> String {
-        let raw = String(kc.pairedAt.prefix(16)).replacingOccurrences(of: "T", with: " ")
-        return raw.isEmpty ? "—" : raw
+        guard let d = DF.iso().date(from: kc.pairedAt) else { return "—" }
+        return DF.localDate(d)
+    }
+
+    /// MAC 只显示后 6 位：整串 12 位 hex 对用户没有意义，需要核对时用上面的「复制完整 MAC」。
+    private func shortMAC(_ m: String) -> String {
+        let h = DB.normalizeMac(m)
+        guard h.count == 12 else { return m }
+        return String(h.suffix(6)).uppercased()
     }
 
     private var verifiedText: String {
         let t = meta.verifiedAt
         guard t > 0 else { return "待验证（成功开一次锁即打标）" }
         return "已验证 · " + DF.localShort(Date(timeIntervalSince1970: t))
-    }
-
-    private var driftText: String {
-        guard let d = clockDrift else { return "—" }
-        if d == 0 { return "与手机一致" }
-        return (d > 0 ? "+" : "") + "\(d) 秒"
-    }
-
-    private var driftTint: Color {
-        guard let d = clockDrift else { return V.C.text1 }
-        return abs(d) > 60 ? V.C.warning : V.C.text1
-    }
-
-    private var batteryText: String {
-        let p = BatteryCare.displayPct(mac, snapshot: status?.powerLevel ?? DB.readStatus(mac)?.powerLevel ?? -1)
-        return BatteryCare.faceText(p)
-    }
-
-    private var batteryTint: Color {
-        let p = BatteryCare.displayPct(mac, snapshot: status?.powerLevel ?? DB.readStatus(mac)?.powerLevel ?? -1)
-        return p >= 0 && p <= 20 ? V.C.warning : V.C.text1
-    }
-
-    private var modeText: String {
-        guard let st = status else { return "—" }
-        if st.verifyMode == 1 && st.broadcastMode != 0 { return "B · 双验" }
-        if st.verifyMode == 1 { return "C · 广播+验证" }
-        return "A · 单验"
-    }
-
-    private var lockTimeText: String {
-        // 0 = 锁端没回时钟（不是 2010-01-01）；`ProtoTime.localStr(0)` 返回空串，直接显示会是**一片空白**。
-        guard let t = status?.lockTime, t > 0 else { return "—" }
-        return ProtoTime.localStr(t)
-    }
-
-    private var signalText: String {
-        guard let r = link.lastRSSI else { return "—" }
-        return "\(r) dBm"
     }
 
     private var sampleText: String {
@@ -361,7 +327,7 @@ struct DeviceInfoScreen: View {
         let onLock = max(cap - stock, 0)
         if local == 0 { return "本机池为空" }
         if local == onLock { return "本机池 \(local) 枚 · 与锁端一致" }
-        return "本机池 \(local) 枚 · 锁端已用 \(onLock) 枚 —— 不一致，现签凭证会被拒（rc=2）"
+        return "本机池 \(local) 枚 · 锁端已用 \(onLock) 枚 —— 不一致，现签凭证会被拒（PIN 码无效）"
     }
 
     private var localPinMismatch: Bool {
@@ -401,37 +367,14 @@ struct DeviceInfoScreen: View {
         link.update(mac: mac)
         do {
             try await LockService.shared.ensureConnected(mac: mac)
-            var st = try await LockService.shared.getStatus(mac: mac)
+            let st = try await LockService.shared.getStatus(mac: mac)
             DB.writeStatus(mac, st)
             status = st
             samples = BatteryCare.samples(mac)
-            // 2026-11-01（Round 245）：**`lockTime == 0` 是「锁端没回时钟」的占位值**（`StatusParser` 把 0 原样存 0）。
-            // 直接算 `0 - nowProtoSeconds()` 会得到 ≈ **-531260264 秒**的假偏差 —— 正是用户报的「偏差 531260264 秒」。
-            // 更糟的是下面 `abs(drift) > 2` 会因此**每次进设备页都自动写一次锁钟**（一个会改锁的操作），
-            // 而写成功之后读数仍是 0（固件没回）⇒ 偏差照旧 ⇒ 每次进页都写一遍。
-            // 正确语义：读不到时钟就是「不知道」，不显示偏差、不自动校时。
-            let drift = (st.lockTime ?? 0) > 0 ? Int((st.lockTime ?? 0) - ZKProtocol.nowProtoSeconds()) : nil
-            clockDrift = drift
-            // 进页自动校时：只在真漂移 (>2s) 时写，与 APK 的无条件写终态一致但少一次广播。
-            if let drift, abs(drift) > 2 {
-                // 检测到漂移却校时失败时，**必须说出来**。
-                // 旧实现用 `try?` 吞掉错误，outcome 保持空串 —— 用户看到的是
-                // "偏差 37 秒"却什么也没发生，也无从知道校时没成功（HIG feedback：
-                // 命令没做成要说清原因）。
-                do {
-                    let res = try await LockService.shared.syncTime()
-                    st = try await LockService.shared.getStatus(mac: mac)
-                    DB.writeStatus(mac, st)
-                    status = st
-                    clockDrift = (st.lockTime ?? 0) > 0 ? Int((st.lockTime ?? 0) - ZKProtocol.nowProtoSeconds()) : nil
-                    outcome = "已自动校时 · 校前偏差 \(res.before) 秒 / 校后 \(res.after) 秒"
-                } catch {
-                    outcome = "检测到锁钟偏差 \(drift) 秒，但自动校时失败："
-                        + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
-                }
-            } else {
-                outcome = "已重新读取锁信息"
-            }
+            // 2026-11-02：**进页自动校时已删**。它是个会改锁的隐式动作（用户只是来看容量），
+            // 而「校时」已并入「锁实况」页、由那里的「同步门锁时间」按钮显式执行。
+            // 本页现在只读：读不到时钟就如实说读不到，不替用户写一次锁钟。
+            outcome = "已重新读取锁信息"
             await app.reload(refreshStatus: false)
         } catch {
             outcome = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription

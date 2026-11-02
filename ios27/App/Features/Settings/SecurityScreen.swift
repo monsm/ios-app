@@ -24,39 +24,60 @@ struct SecurityScreen: View {
     private enum PendingVerify { case pass, duress }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: V.S.gap16) {
-                SettingsHeader(title: "安全", tone: tone, status: status)
-                passcodePanel
-                biometricPanel
-                if store.hasPasscode {
-                    duressPanel
-                } else {
-                    unsetPanel
-                }
-                lockSidePanel
-                unlockConfirmPanel
-                trialPanel
+        // 全换系统（2026-11-02）：整页容器是系统 `List`（与门页同一配方）。
+        // 行式段落（本机密码 / 生物识别 / 胁迫码 / 锁端安全）走 `Section` + 系统行；
+        // 卡片式段落（开锁确认 4 个开关、排障、未设密码的出路）仍是一张 `VCard`，用 `cardRow()` 让它在 List 里保持原样
+        //（`.plain` 样式没有系统左右留白，cardRow 补回 pageGutter；plainRow 会让卡片贴边）。
+        // 不再「ScrollView 里嵌 List」：那样要么双滚、要么手算高度，Dynamic Type 一大就裁。
+        List {
+            // 同 BackupScreen：`SettingsHeader` 自带 16pt = 卡片 `cardRow()` 的 16pt，左右基准线已对齐；
+            // 行上不再补 gutter（`gutter: 0`），视觉等价于 plainRow()，语义标明「页头行、缩进自带」。
+            SettingsHeader(title: "安全", tone: tone, status: status).headerRow(gutter: 0)
+            passcodeSection
+            biometricSection
+            if store.hasPasscode {
+                duressSection
+            } else {
+                unsetPanel.cardRow()
             }
-            .padding(.vertical, V.S.gap16)
+            lockSideSection
+            // 这两个 var 本身是 `Section { VCard { … } }`（不是顶层卡片）——
+            // 加 .cardRow() 会把整个 Section 压成一行，所以保持原样不加修饰符。
+            unlockConfirmPanel
+            trialPanel
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .contentMargins(.top, V.S.gap16, for: .scrollContent)
+        .contentMargins(.bottom, V.S.gap16, for: .scrollContent)
         .background(CanvasBackground())
-        .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("安全")
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $showPasscode) { PasscodeSheet(kind: .passcode) }
-        .sheet(isPresented: $showDuress) { PasscodeSheet(kind: .duress) }
+        .sheet(isPresented: $showPasscode) {
+            PasscodeSheet(kind: .passcode)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showDuress) {
+            PasscodeSheet(kind: .duress)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+        }
         .sheet(isPresented: $showVerifyPass) {
             VerifyPasscodeSheet(
                 title: "关闭本机密码",
                 note: "关闭前先验证当前本机密码。"
             ) { DB.setPasscode(nil) }
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showVerifyDuress) {
             VerifyPasscodeSheet(
                 title: "关闭胁迫码",
                 note: "关闭前先验证当前本机密码。"
             ) { _ = DB.setDuressCode(nil) }
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
         }
         .confirmationDialog("关闭胁迫码？", isPresented: $showDisableDuressConfirm, titleVisibility: .visible) {
             // 不能在对话框**还在退场**时立刻置 sheet 布尔：SwiftUI 会丢掉那次呈现，
@@ -106,58 +127,48 @@ struct SecurityScreen: View {
     }
 
     // MARK: 主角：本机数据保护
-    private var passcodePanel: some View {
-        VStack(spacing: V.S.gapS) {
-            VSectionLabel(text: "本机数据保护")
-            VCard {
-                VStack(alignment: .leading, spacing: V.S.gapMS) {
-                    VReadingGrid(items: [
-                        .init(label: "本机密码", value: store.hasPasscode ? "已设" : "未设",
-                              tint: store.hasPasscode ? V.C.text1 : V.C.warning),
-                        .init(label: "胁迫码", value: store.hasDuressCode ? "已设" : "未设",
-                              tint: V.C.text1),
-                        .init(label: "冷启动", value: store.hasPasscode ? "要求" : "免输",
-                              tint: V.C.text1),
-                    ], columns: 3)
-                    .padding(.top, V.S.gapXS)
-                    SettingRule()
-                    SettingsNote(text: "4 位以上纯数字。密码只存这台手机（摘要落本机安全存储），不上传、不写进锁。它同时是查看密码明文与导出备份的前置屏障。")
-                    if store.hasPasscode {
-                        VActionButton(title: "更改本机密码", systemImage: "lock.rotation") {
-                            showPasscode = true
-                        }
-                        SettingDangerRow(title: "关闭本机密码") { showDisableConfirm = true }
-                    } else {
-                        VActionButton(title: "设置本机密码", systemImage: "lock.fill") {
-                            showPasscode = true
-                        }
-                    }
+    /// 行式段落 → 系统 `Section`：三条状态各占一行，底部是动作行。
+    private var passcodeSection: some View {
+        Section {
+            VValueRow(label: "本机密码", value: store.hasPasscode ? "已设" : "未设",
+                      tint: store.hasPasscode ? V.C.text1 : V.C.warning, mono: false)
+            VValueRow(label: "胁迫码", value: store.hasDuressCode ? "已设" : "未设", mono: false)
+            VValueRow(label: "冷启动", value: store.hasPasscode ? "要求" : "免输", mono: false)
+            SettingsNote(text: "4 位以上纯数字。密码只存这台手机（摘要落本机安全存储），不上传、不写进锁。它同时是查看密码明文与导出备份的前置屏障。")
+            if store.hasPasscode {
+                VActionButton(title: "更改本机密码", systemImage: "lock.rotation") {
+                    showPasscode = true
+                }
+                SettingDangerRow(title: "关闭本机密码") { showDisableConfirm = true }
+            } else {
+                VActionButton(title: "设置本机密码", systemImage: "lock.fill") {
+                    showPasscode = true
                 }
             }
-            .padding(.horizontal, V.S.pageGutter)
+        } header: {
+            Text("本机数据保护")
+                .font(V.F.section)
+                .foregroundStyle(V.C.text1)
         }
     }
 
     // MARK: 生物识别（Face ID / Touch ID）
-    private var biometricPanel: some View {
-        VStack(spacing: V.S.gapS) {
-            VSectionLabel(text: "生物识别")
-            VCard {
-                VStack(alignment: .leading, spacing: V.S.gapMS) {
-                    VFieldRow(label: "硬件", value: biometricName, mono: false)
-                    SettingRule()
-                    SettingToggle(
-                        label: "允许面容 / 指纹解锁",
-                        note: store.hasDuressCode
-                            ? "已设胁迫码时本开关自动停用 —— 刷脸会暴露「这不是伪装模式」。"
-                            : "冷启动时可用 Face ID / Touch ID 解锁；失败仍可输本机密码。",
-                        isOn: settingsBinding(\.bioUnlock)
-                    )
-                    .disabled(store.hasDuressCode)
-                    .opacity(store.hasDuressCode ? 0.45 : 1)
-                }
-            }
-            .padding(.horizontal, V.S.pageGutter)
+    private var biometricSection: some View {
+        Section {
+            VFieldRow(label: "硬件", value: biometricName, mono: false)
+            SettingToggle(
+                label: "允许面容 / 指纹解锁",
+                note: store.hasDuressCode
+                    ? "已设胁迫码时本开关自动停用 —— 刷脸会暴露「这不是伪装模式」。"
+                    : "冷启动时可用 Face ID / Touch ID 解锁；失败仍可输本机密码。",
+                isOn: settingsBinding(\.bioUnlock)
+            )
+            .disabled(store.hasDuressCode)
+            .opacity(store.hasDuressCode ? 0.45 : 1)
+        } header: {
+            Text("生物识别")
+                .font(V.F.section)
+                .foregroundStyle(V.C.text1)
         }
     }
 
@@ -176,30 +187,27 @@ struct SecurityScreen: View {
     }
 
     // MARK: 胁迫码（只在已设本机密码时可设 —— 它替代的是同一个输入框）
-    private var duressPanel: some View {
-        VStack(spacing: V.S.gapS) {
-            VSectionLabel(text: "胁迫码")
-            VCard {
-                VStack(alignment: .leading, spacing: V.S.gapMS) {
-                    VFieldRow(label: "当前状态", value: store.hasDuressCode ? "已设" : "未设",
-                             tint: store.hasDuressCode ? V.C.text1 : V.C.text2, mono: false)
-                    SettingRule()
-                    SettingsNote(text: store.hasDuressCode
-                                 ? "被胁迫时输入胁迫码：门照样能开，但凭证与记录显示为空 —— 不报警、不暴露。"
-                                 : "另设一个与真密码不同的数字。输入它时 App 进入空壳模式：门能开，数据看不见。")
-                    if store.hasDuressCode {
-                        VOutlineButton(title: "更改胁迫码", systemImage: "exclamationmark.shield") {
-                            showDuress = true
-                        }
-                        SettingDangerRow(title: "关闭胁迫码") { showDisableDuressConfirm = true }
-                    } else {
-                        VOutlineButton(title: "设置胁迫码", systemImage: "exclamationmark.shield") {
-                            showDuress = true
-                        }
-                    }
+    private var duressSection: some View {
+        Section {
+            VFieldRow(label: "当前状态", value: store.hasDuressCode ? "已设" : "未设",
+                      tint: store.hasDuressCode ? V.C.text1 : V.C.text2, mono: false)
+            SettingsNote(text: store.hasDuressCode
+                         ? "被胁迫时输入胁迫码：门照样能开，但凭证与记录显示为空 —— 不报警、不暴露。"
+                         : "另设一个与真密码不同的数字。输入它时 App 进入空壳模式：门能开，数据看不见。")
+            if store.hasDuressCode {
+                VOutlineButton(title: "更改胁迫码", systemImage: "exclamationmark.shield") {
+                    showDuress = true
+                }
+                SettingDangerRow(title: "关闭胁迫码") { showDisableDuressConfirm = true }
+            } else {
+                VOutlineButton(title: "设置胁迫码", systemImage: "exclamationmark.shield") {
+                    showDuress = true
                 }
             }
-            .padding(.horizontal, V.S.pageGutter)
+        } header: {
+            Text("胁迫码")
+                .font(V.F.section)
+                .foregroundStyle(V.C.text1)
         }
     }
 
@@ -216,43 +224,51 @@ struct SecurityScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
+    /// 布防真值：`DefendKit.isActive` 是唯一判据（与 DefendScreen:112 的 isActiveNow、门页 F4 同源）。
+    private var defendActive: Bool { DefendKit.isActive(DB.defend(app.currentMac)) }
+    private var defendWord: String { defendActive ? "布防中" : "未布防" }
+
     // MARK: 锁端安全（这两项不在本页改，只给入口 —— 改锁端策略必须到场连接）
-    private var lockSidePanel: some View {
-        VStack(spacing: V.S.gapS) {
-            VSectionLabel(text: "锁端安全", trailing: app.lock?.model)
-            VCard {
-                VStack(spacing: 0) {
-                    SettingRow(
-                        label: "安全模式",
-                        value: "在锁实况改",
-                        tint: V.C.text2,
-                        mono: false,
-                        symbol: "lock.rectangle.on.rectangle",
-                        note: "A 模式单验、B 模式双验。这是锁端策略：切换要连上锁，且切完要回读确认真的生效。"
-                    ) { router.request(.dest(.lockStatus)) }
-                    SettingRule()
-                    // TODO(engine) 布防状态应读 op=getDeviceSetting（defenceControl / StartTime / EndTime）。
-                    SettingRow(
-                        label: "布防",
-                        value: "未布防",
-                        tint: V.C.text2,
-                        mono: false,
-                        symbol: "shield.lefthalf.filled",
-                        note: "布防时段内，靠近自动开锁会被自动否决；防拆事件也会关掉自动开锁。"
-                    ) { router.request(.dest(.defend)) }
+    private var lockSideSection: some View {
+        Section {
+            SettingRow(
+                label: "安全模式",
+                value: "在锁实况改",
+                tint: V.C.text2,
+                mono: false,
+                symbol: "lock.rectangle.on.rectangle",
+                note: "A 模式单验、B 模式双验。这是锁端策略：切换要连上锁，且切完要回读确认真的生效。"
+            ) { router.request(.dest(.lockStatus)) }
+            // 布防状态读真值：`DefendKit.isActive` 与布防页页头、门页 F4 否决门同一口径
+            // （旧实现写死「未布防」，锁在布防时这一行会骗人）。
+            SettingRow(
+                label: "布防",
+                value: defendWord,
+                tint: defendActive ? V.C.warning : V.C.text2,
+                mono: false,
+                symbol: "shield.lefthalf.filled",
+                note: "布防时段内，靠近自动开锁会被自动否决；防拆事件也会关掉自动开锁。"
+            ) { router.request(.dest(.defend)) }
+        } header: {
+            HStack(spacing: V.S.gapS) {
+                Text("锁端安全")
+                    .font(V.F.section)
+                    .foregroundStyle(V.C.text1)
+                Spacer(minLength: 0)
+                if let model = app.lock?.model {
+                    Text(model)
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text3)
                 }
             }
-            .padding(.horizontal, V.S.pageGutter)
         }
     }
 
     // MARK: 开锁确认（防误触。这是"怎么算一次确认"的偏好，不是装饰开关）
     private var unlockConfirmPanel: some View {
-        VStack(spacing: V.S.gapS) {
-            VSectionLabel(text: "开锁确认")
+        Section {
             VCard {
                 VStack(alignment: .leading, spacing: V.S.gapMS) {
                     SettingToggle(
@@ -282,14 +298,16 @@ struct SecurityScreen: View {
                     SettingsNote(text: "这几项只管「怎么算确认」，不改锁端策略。安全模式（A / B）是锁端的事，改它要连上锁并回读确认。")
                 }
             }
-            .padding(.horizontal, V.S.pageGutter)
+        } header: {
+            Text("开锁确认")
+                .font(V.F.section)
+                .foregroundStyle(V.C.text1)
         }
     }
 
     // MARK: 只读试验模式（真交互：改 AppModel 状态，门页与设置页同步可见）
     private var trialPanel: some View {
-        VStack(spacing: V.S.gapS) {
-            VSectionLabel(text: "排障")
+        Section {
             VCard {
                 VStack(alignment: .leading, spacing: V.S.gapMS) {
                     SettingToggle(
@@ -308,7 +326,10 @@ struct SecurityScreen: View {
                     )
                 }
             }
-            .padding(.horizontal, V.S.pageGutter)
+        } header: {
+            Text("排障")
+                .font(V.F.section)
+                .foregroundStyle(V.C.text1)
         }
     }
 }

@@ -7,6 +7,14 @@
 // 主动作：「移交名下凭证」。
 import SwiftUI
 
+
+/// List 里的「整块卡片」行（与 HouseholdScreen 的 hhCardRow() / MemberDetailScreen 的 memberCardRow() 同用途）。
+/// 独立命名，避免同名扩展重声明。
+private extension View {
+    func opsCardRow() -> some View {
+        self.frame(maxWidth: .infinity, alignment: .leading).plainRow()
+    }
+}
 struct MemberOpsScreen: View {
     @Environment(AppModel.self) private var app
 
@@ -31,29 +39,48 @@ struct MemberOpsScreen: View {
     private var roster: HouseholdRoster { HouseholdRoster.shared }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: V.S.gapM) {
-                header
-                if members.isEmpty {
-                    emptyCard
-                } else {
-                    pickerCard
+        // 2026-11-02（R4 全换系统）：ScrollView + VStack → 系统 List + Section。
+        // 这一页原来把 10 件互不相关的事堆在一列卡片里（ui-ia.md §5.3 指出的问题）。
+        // 按语义拆成**两组 Section**（仍在同一页，不拆页、不动 Router）：
+        //   流转 —— 处理谁 / 摘要 / 移交 / 借用 / 家政窗（都是「把权限在成员之间挪动」）
+        //   关怀 —— 家庭场景 / 活跃度 / 访客 / 长辈模式 / 删除（都是「关于这个人的其他事」）
+        // 业务逻辑、写盘、禁用态、无障碍标签一字未改。
+        List {
+            header.opsCardRow()
+            if members.isEmpty {
+                emptyCard.opsCardRow()
+            } else {
+                Section {
+                    pickerCard.opsCardRow()
                     if let m = member {
-                        summaryCard(m)
-                        transferCard(m)
-                        borrowCard(m)
-                        windowCard
-                        sceneCard(m)
-                        activityCard(m)
-                        visitorCard
-                        elderCard
-                        deleteCard(m)
+                        summaryCard(m).opsCardRow()
+                        transferCard(m).opsCardRow()
+                        borrowCard(m).opsCardRow()
+                        windowCard.opsCardRow()
+                    }
+                } header: {
+                    sectionHeader("流转", note: "移交 · 借用 · 家政窗")
+                }
+                if let m = member {
+                    Section {
+                        sceneCard(m).opsCardRow()
+                        activityCard(m).opsCardRow()
+                        visitorCard.opsCardRow()
+                        elderCard.opsCardRow()
+                        deleteCard(m).opsCardRow()
+                    } header: {
+                        sectionHeader("关怀", note: "场景 · 活跃度 · 访客 · 长辈 · 删除")
                     }
                 }
             }
-            .padding(.top, V.Page.topSpace)
         }
-        .background(V.C.bg.ignoresSafeArea())
+        .listStyle(.insetGrouped)
+        .listSectionSpacing(V.S.gap16)
+        .scrollContentBackground(.hidden)
+        .contentMargins(.top, V.S.gap16, for: .scrollContent)
+        .contentMargins(.bottom, V.S.gapL, for: .scrollContent)
+        .scrollDismissesKeyboard(.interactively)
+        .background(CanvasBackground())
         .navigationTitle("成员流转")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -71,6 +98,22 @@ struct MemberOpsScreen: View {
         }
     }
 
+    /// List 段头：中文必须显式 textCase(nil)；两组各带一句「这组管什么」，
+    /// 让「10 件事」一眼分成两堆，而不是靠用户自己数。
+    private func sectionHeader(_ title: String, note: String) -> some View {
+        VStack(alignment: .leading, spacing: V.S.gapXXS) {
+            Text(title)
+                .font(V.F.small)
+                .foregroundStyle(V.C.text3)
+            Text(note)
+                .font(V.F.unit)
+                .foregroundStyle(V.C.text3)
+        }
+        .textCase(nil)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
+    }
+
     private var header: some View {
         VStack(alignment: .leading, spacing: V.S.gapXXS) {
             Text("成员流转")
@@ -78,7 +121,6 @@ struct MemberOpsScreen: View {
             Text("移交 · 借用 · 家政窗 · 轮值 · 关怀 · 访客 · 长辈")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }
-        .padding(.horizontal, V.S.pageGutterA)
     }
 
     private var emptyCard: some View {
@@ -87,7 +129,6 @@ struct MemberOpsScreen: View {
                 .font(V.F.body).foregroundStyle(V.C.text2)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     private var pickerCard: some View {
@@ -109,7 +150,6 @@ struct MemberOpsScreen: View {
                 .scrollIndicators(.hidden)
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     private func summaryCard(_ m: MemberCard) -> some View {
@@ -125,7 +165,6 @@ struct MemberOpsScreen: View {
                 VValueRow(label: "关系", value: ext.relation.isEmpty ? "未填" : ext.relation, mono: false)
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     // MARK: - 移交
@@ -160,7 +199,6 @@ struct MemberOpsScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     // MARK: - 借用
@@ -192,7 +230,6 @@ struct MemberOpsScreen: View {
                     .font(V.F.micro).foregroundStyle(V.C.text3)
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     // MARK: - 家政窗
@@ -242,7 +279,6 @@ struct MemberOpsScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     // MARK: - 家庭场景
@@ -270,7 +306,6 @@ struct MemberOpsScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     // MARK: - 活跃度
@@ -304,7 +339,6 @@ struct MemberOpsScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     // MARK: - 访客虚拟分组
@@ -345,7 +379,6 @@ struct MemberOpsScreen: View {
                     .font(V.F.micro).foregroundStyle(V.C.text3)
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     // MARK: - 长辈模式
@@ -364,7 +397,6 @@ struct MemberOpsScreen: View {
                 ))
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     // MARK: - 删除成员（级联凭证入回收站）
@@ -390,7 +422,6 @@ struct MemberOpsScreen: View {
                 .opacity(deleteTyped == "删除" ? 1 : 0.45)
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     // MARK: - 动作

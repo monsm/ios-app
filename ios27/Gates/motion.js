@@ -28,7 +28,7 @@ let animCount = 0;
 
 for (const f of files) {
   const rel = path.relative(ROOT, f).split(path.sep).join('/');
-  if (rel === 'Design/Tokens.swift') continue;
+  // 旧令牌层已删除，这里不再需要豁免。
   const src = fs.readFileSync(f, 'utf8');
   const lines = src.split(/\r?\n/);
 

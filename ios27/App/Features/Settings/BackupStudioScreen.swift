@@ -29,6 +29,18 @@ struct BackupStudioScreen: View {
     /// 记指纹 = 只对用户刚才看过并同意的那一份放行；内容一变就必须重新确认。
     @State private var ackedChecksumFor: String?
 
+    // 恢复 / 删除的二次确认（P0：与「备份与恢复」页同口径 —— 恢复会改写本机台账与本机密码摘要）
+    @State private var pendingRestore: BackupFile?
+    @State private var pendingDelete: BackupFile?
+    @State private var showRestoreConfirm = false
+    @State private var showDeleteConfirm = false
+    @State private var showRestorePasscode = false
+    /// 对话框退场后才消费的「要弹密码框」标记 —— 不能在 confirmationDialog 还在退场时
+    /// 立刻置 alert 的 isPresented（SwiftUI 会丢掉那次呈现，用户点了「继续恢复」却什么都没弹）。
+    /// 与 SecurityScreen.consumePendingVerify 同一处置。
+    @State private var pendingPasscodePrompt = false
+    @State private var currentPasscode = ""
+
     // WebDAV
     @State private var davURL = DB.store.getString("kf_bk_dav_url")
     @State private var davUser = DB.store.getString("kf_bk_dav_user")
@@ -52,20 +64,58 @@ struct BackupStudioScreen: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: V.S.gapM) {
-                header
-                fileCard
-                webdavCard
-                migrateCard
-                selfCheckCard
-            }
-            .padding(.top, V.Page.topSpace)
+        // 全换系统（2026-11-02）：整页容器是系统 List。
+        // 「本机备份」的文件清单是行式内容 → Section + 系统行 + .swipeActions（恢复/删除）；
+        // 其余三张卡（WebDAV / 换机迁移 / 自检）→ cardRow()（.plain 无系统留白）；
+        // 页头是整宽内容 → headerRow()。
+        List {
+            header.headerRow()
+            localBackupSection
+            fileListSection
+            webdavCard.cardRow()
+            migrateCard.cardRow()
+            selfCheckCard.cardRow()
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .contentMargins(.top, V.S.gap16, for: .scrollContent)
+        .contentMargins(.bottom, V.S.gap16, for: .scrollContent)
         .background(V.C.bg.ignoresSafeArea())
         .navigationTitle("备份工作室")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { reloadFiles() }
+        // P0：列表里的「恢复」以前点一下就直接覆盖本机台账，既无确认也不验本机密码 ——
+        // 而同一个动作在「备份与恢复」页是要先验密码的（BackupScreen.runImport）。
+        // 这里补齐同一道闸：确认（含文件名）→ 有本机密码则验证 → 才恢复。
+        .confirmationDialog("恢复这份备份？", isPresented: $showRestoreConfirm, titleVisibility: .visible) {
+            Button("继续恢复") { beginRestore() }
+            Button("取消", role: .cancel) { pendingRestore = nil }
+        } message: {
+            Text("会用「\(pendingRestore?.name ?? "")」覆盖本机台账（锁 / 凭证 / 成员 / 设置）。锁端不受影响，但本机现有数据会被替换。")
+        }
+        .confirmationDialog("删除这份备份？", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+            Button("删除", role: .destructive) {
+                if let file = pendingDelete { deleteFile(file) }
+                pendingDelete = nil
+            }
+            Button("取消", role: .cancel) { pendingDelete = nil }
+        } message: {
+            Text("会从本机永久删除「\(pendingDelete?.name ?? "")」，不能恢复（锁与凭证数据不受影响）。")
+        }
+        .alert("输入当前本机密码", isPresented: $showRestorePasscode) {
+            SecureField("当前本机密码", text: $currentPasscode)
+            Button("取消", role: .cancel) {
+                currentPasscode = ""
+                pendingRestore = nil
+            }
+            Button("恢复") { confirmRestoreWithPasscode() }
+        } message: {
+            Text("恢复会改写本机密码摘要，必须先验证是本人 —— 与「备份与恢复」页同一道闸。")
+        }
+        // 确认框真的关掉之后再呈现密码框（见 pendingPasscodePrompt 的说明）。
+        .onChange(of: showRestoreConfirm) { _, open in
+            if !open { consumePendingPasscodePrompt() }
+        }
     }
 
     private var header: some View {
@@ -75,58 +125,85 @@ struct BackupStudioScreen: View {
             Text("本机多份备份 · WebDAV · 换机迁移 · 数据自检")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }
-        .padding(.horizontal, V.S.pageGutterA)
     }
 
     // MARK: - 多份保留
 
-    private var fileCard: some View {
-        VCard {
-            VStack(alignment: .leading, spacing: V.S.gapS) {
-                VCardHeader(title: "本机备份")
-                Text("备份含门锁密钥，等同于家门钥匙。文件只留在本机 Documents，别发给别人。")
-                    .font(V.F.footnote).foregroundStyle(V.C.text3)
-                    .fixedSize(horizontal: false, vertical: true)
-                VTextFieldRow(label: "备份口令（可留空 = 明文）", text: $password, placeholder: "至少 8 位", secure: true)
-                VActionButton(title: busy ? "正在生成…" : "生成一份本机备份", systemImage: "externaldrive.badge.plus") {
-                    Task { await makeBackup() }
-                }
-                .disabled(busy)
-                VRowDivider()
-                VValueRow(label: "保留份数", value: "\(keepCount) 份", note: "超过会自动删最旧的一份，避免备份把手机塞满。")
-                HStack(spacing: V.S.gapS) {
-                    ForEach([3, 5, 10, 20], id: \.self) { n in
-                        Button { keepCount = n; DB.store.set("kf_bk_keep", n); pruneFiles() } label: {
-                            VTag(text: "\(n) 份", tint: keepCount == n ? V.C.blue : V.C.text3, filled: keepCount == n)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    Spacer(minLength: 0)
-                }
-                VRowDivider()
-                // 读取失败与"没有备份"必须分开显示（前者要说原因，后者是正常的首次状态）。
-                if let filesError {
-                    VStatusLine(tone: .attention, text: filesError)
-                } else if files.isEmpty {
-                    Text("还没有本机备份文件。点上面「生成一份本机备份」—— 它会把锁 / 凭证 / 成员 / 设置打成一份可恢复的文件。")
+    /// 「本机备份」的生成区（口令 + 生成按钮 + 保留份数）。文件清单拆到下面的 fileListSection。
+    private var localBackupSection: some View {
+        Section {
+            VCard {
+                VStack(alignment: .leading, spacing: V.S.gapS) {
+                    Text("备份含门锁密钥，等同于家门钥匙。文件只留在本机 Documents，别发给别人。")
                         .font(V.F.footnote).foregroundStyle(V.C.text3)
                         .fixedSize(horizontal: false, vertical: true)
-                } else {
-                    ForEach(files) { file in
-                        fileRow(file)
-                        VDivider()
+                    VTextFieldRow(label: "备份口令（可留空 = 明文）", text: $password, placeholder: "至少 8 位", secure: true)
+                    VActionButton(title: busy ? "正在生成…" : "生成一份本机备份", systemImage: "externaldrive.badge.plus") {
+                        Task { await makeBackup() }
+                    }
+                    .disabled(busy)
+                    VRowDivider()
+                    VValueRow(label: "保留份数", value: "\(keepCount) 份", note: "超过会自动删最旧的一份，避免备份把手机塞满。")
+                    HStack(spacing: V.S.gapS) {
+                        ForEach([3, 5, 10, 20], id: \.self) { n in
+                            Button { keepCount = n; DB.store.set("kf_bk_keep", n); pruneFiles() } label: {
+                                VTag(text: "\(n) 份", tint: keepCount == n ? V.C.blue : V.C.text3, filled: keepCount == n)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        Spacer(minLength: 0)
                     }
                 }
-                if let outcome {
-                    Text(outcome).font(V.F.footnote)
-                        .foregroundStyle(outcome.hasPrefix("已") ? V.C.rewardGreen : V.C.pink)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
             }
+        } header: {
+            Text("本机备份")
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
+    /// 文件清单：每份一行 + .swipeActions（恢复=普通，删除=destructive）。
+    /// 原来每行尾部两个文字按钮（恢复/删除），换成系统滑动动作后行更干净、且删除不会误触。
+    @ViewBuilder
+    private var fileListSection: some View {
+        Section {
+            // 读取失败与"没有备份"必须分开显示（前者要说原因，后者是正常的首次状态）。
+            if let filesError {
+                VStatusLine(tone: .attention, text: filesError)
+            } else if files.isEmpty {
+                Text("还没有本机备份文件。点上面「生成一份本机备份」—— 它会把锁 / 凭证 / 成员 / 设置打成一份可恢复的文件。")
+                    .font(V.F.footnote).foregroundStyle(V.C.text3)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                ForEach(files) { file in
+                    fileRow(file)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) { askDelete(file) } label: {
+                                Label("删除", systemImage: "trash")
+                            }
+                            Button { askRestore(file) } label: {
+                                Label("恢复", systemImage: "arrow.clockwise")
+                            }
+                            .tint(V.C.blue)
+                        }
+                }
+            }
+            if let outcome {
+                Text(outcome).font(V.F.footnote)
+                    .foregroundStyle(outcome.hasPrefix("已") ? V.C.rewardGreen : V.C.pink)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        } header: {
+            HStack(spacing: V.S.gapS) {
+                Text("备份文件")
+                Spacer(minLength: 0)
+                Text("\(files.count) 份")
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
+            }
+            .textCase(nil)
+        }
+    }
+
+    /// 一行一份备份：文件名 + 大小/时间。恢复与删除走 .swipeActions（见 fileListSection）。
     private func fileRow(_ file: BackupFile) -> some View {
         HStack(spacing: V.S.gapS) {
             Image(systemName: "doc.zipper")
@@ -139,12 +216,13 @@ struct BackupStudioScreen: View {
                     .font(V.F.micro).foregroundStyle(V.C.text3)
             }
             Spacer(minLength: 0)
-            Button("恢复") { restoreFile(file) }
-                .font(V.F.footnote).foregroundStyle(V.C.blue)
-            Button("删除") { deleteFile(file) }
-                .font(V.F.footnote).foregroundStyle(V.C.pink)
+            Image(systemName: "chevron.right")
+                .font(V.F.chevron)
+                .foregroundStyle(V.C.text4)
+                .accessibilityHidden(true)
         }
         .frame(minHeight: V.List.rowMinHeight)
+        .accessibilityHint("向左滑动可恢复或删除")
     }
 
     private func byteText(_ n: Int) -> String {
@@ -173,7 +251,8 @@ struct BackupStudioScreen: View {
                     }
                     .disabled(busy || davURL.isEmpty)
                 }
-                VActionButton(title: busy ? "上传中…" : "上传当前备份", systemImage: "icloud.and.arrow.up") {
+                // 主按钮全页只有一个（「生成一份本机备份」）；这里是描边动作。
+                VOutlineButton(title: busy ? "上传中…" : "上传当前备份", systemImage: "icloud.and.arrow.up") {
                     Task { await uploadDav() }
                 }
                 .disabled(busy || davURL.isEmpty)
@@ -184,7 +263,6 @@ struct BackupStudioScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     // MARK: - 换机迁移
@@ -196,7 +274,7 @@ struct BackupStudioScreen: View {
                 Text("换机包 = 一份含全部锁与凭证的备份。旧手机生成 → 新手机粘贴导入；逐把锁可选「合并 / 保留本机 / 跳过」。")
                     .font(V.F.footnote).foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
-                VActionButton(title: "生成换机包文本", systemImage: "arrow.left.arrow.right") {
+                VOutlineButton(title: "生成换机包文本", systemImage: "arrow.left.arrow.right") {
                     Task { await makeMigration() }
                 }
                 .disabled(busy)
@@ -232,14 +310,13 @@ struct BackupStudioScreen: View {
                             }
                         }
                     }
-                    VActionButton(title: "导入换机包", systemImage: "square.and.arrow.down") {
+                    VOutlineButton(title: "导入换机包", systemImage: "square.and.arrow.down") {
                         Task { await runMigration() }
                     }
                     .disabled(busy)
                 }
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     // MARK: - 自检
@@ -268,7 +345,6 @@ struct BackupStudioScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     // MARK: - 动作（多份备份）
@@ -338,6 +414,52 @@ struct BackupStudioScreen: View {
         } catch {
             outcome = "生成失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
         }
+    }
+
+    /// 点「恢复」：先弹确认，再决定要不要验本机密码。
+    private func askRestore(_ file: BackupFile) {
+        pendingRestore = file
+        showRestoreConfirm = true
+    }
+
+    /// 确认之后：本机设了密码就必须先验（恢复会改写密码摘要），没设就直接恢复。
+    private func beginRestore() {
+        guard let file = pendingRestore else { return }
+        if DB.hasPasscode() {
+            currentPasscode = ""
+            pendingPasscodePrompt = true
+        } else {
+            restoreFile(file)
+            pendingRestore = nil
+        }
+    }
+
+    /// 对话框退场后消费待呈现的密码框。
+    private func consumePendingPasscodePrompt() {
+        guard pendingPasscodePrompt else { return }
+        pendingPasscodePrompt = false
+        showRestorePasscode = true
+    }
+
+    /// 本机密码校验：不对就留在确认框里说明原因，不要带着"以为验过了"的错觉继续。
+    private func confirmRestoreWithPasscode() {
+        guard let file = pendingRestore else { return }
+        guard DB.verifyPasscode(currentPasscode) else {
+            outcome = currentPasscode.isEmpty
+                ? "恢复会改写本机密码：请先在确认框里输入当前本机密码"
+                : "当前本机密码不对 —— 恢复会改写本机密码，必须先验证是本人"
+            currentPasscode = ""
+            return
+        }
+        currentPasscode = ""
+        restoreFile(file)
+        pendingRestore = nil
+    }
+
+    /// 点「删除」：先弹确认（文件名进文案），确认后才真删。
+    private func askDelete(_ file: BackupFile) {
+        pendingDelete = file
+        showDeleteConfirm = true
     }
 
     private func restoreFile(_ file: BackupFile) {

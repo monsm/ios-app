@@ -9,33 +9,62 @@ import SwiftUI
 struct AppearanceScreen: View {
     private var store: SettingsStore { SettingsStore.shared }
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+    /// M1（ui-ia §4.1）：快捷格原来在本页有**第二套写入口**（枚数 / 智能排序 / 勾选池），
+    /// 与门页的 `QuickPoolEditSheet` 重复。本页改成只读摘要 + 一行跳转，写入口只留门页那一处。
+    @Environment(Router.self) private var router
 
     @State private var showResetConfirm = false
     /// 换图标失败原因（G-06：8 套备选图标接线后才有这个状态）。
     @State private var iconError: String?
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: V.S.gap16) {
-                SettingsHeader(title: "外观", tone: tone, status: status)
-                themePanel
-                iconPanel
-                accentPanel
-                rhythmPanel
-                geometryPanel
-                readoutPanel
-                recordPanel
-                carePanel
-                timePanel
-                quickPanel
-                resetPanel
-            }
-            .padding(.vertical, V.S.gap16)
+        // 全换系统（2026-11-02）：整页容器是系统 List。
+        // 11 段按 ui-ia §5.3 分成三组：「外观」5 段 / 「操作」5 段 / 「恢复默认」单独一段（破坏性，放最后）。
+        // 组标题是 List 里的一行（groupHeader），每段自己是独立 Section + 一张 VCard（Section 不可嵌套）。
+        List {
+            SettingsHeader(title: "外观", tone: tone, status: status).plainRow()
+
+            groupHeader("外观")
+            themePanel
+            iconPanel
+            accentPanel
+            geometryPanel
+            rhythmPanel
+
+            groupHeader("操作")
+            readoutPanel
+            recordPanel
+            carePanel
+            timePanel
+            quickPanel
+
+            resetPanel
         }
+        .listStyle(.insetGrouped)
+        .listSectionSpacing(V.S.gap16)
+        .scrollContentBackground(.hidden)
+        .contentMargins(.top, V.S.gap16, for: .scrollContent)
+        .contentMargins(.bottom, V.S.gapL, for: .scrollContent)
         .background(CanvasBackground())
-        .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("外观")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    // MARK: 分组标题（同一页，不拆页 —— 见 _audit/ui-ia.md §5.3）
+    //
+    // 注意：这里**不能**用「Section { 一组 Section }」—— SwiftUI 的 Section 不允许嵌套，
+    // 套起来会渲染异常。所以分组标题做成 List 里的**一行**（样式与系统 Section header 一致），
+    // 11 个 panel 各自仍是独立 Section，平铺在 List 里。
+
+    /// 组标题行：与系统 Section header 同一套字号/颜色/大小写。
+    private func groupHeader(_ title: String) -> some View {
+        Text(title)
+            .font(V.F.section)
+            .foregroundStyle(V.C.text1)
+            .textCase(nil)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, V.S.gapS)
+            .plainRow()
     }
 
     // MARK: 页头
@@ -51,8 +80,7 @@ struct AppearanceScreen: View {
 
     // MARK: 主题
     private var themePanel: some View {
-        VStack(spacing: V.S.gapS) {
-            VSectionLabel(text: "主题")
+        Section {
             VCard {
                 VStack(alignment: .leading, spacing: V.S.gapMS) {
                     SettingChips(items: AppearanceTheme.allCases,
@@ -74,15 +102,18 @@ struct AppearanceScreen: View {
                     SettingsNote(text: "深色不是浅色的反相 —— 两套独立取值。深色底不是纯黑，留一点抬升空间给面板。")
                 }
             }
-            .padding(.horizontal, V.S.pageGutter)
+        } header: {
+            HStack(spacing: V.S.gapS) {
+                Text("主题")
+            }
+            .textCase(nil)
         }
     }
 
     // MARK: 品牌色六套 + 自定义强调色（#28）
 
     private var accentPanel: some View {
-        VStack(spacing: V.S.gapS) {
-            VSectionLabel(text: "品牌色", trailing: store.customAccent == 0 ? "六套预设" : "自定义")
+        Section {
             VCard {
                 VStack(alignment: .leading, spacing: V.S.gapMS) {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: V.S.gapS), count: 3), spacing: V.S.gapS) {
@@ -136,15 +167,22 @@ struct AppearanceScreen: View {
                     SettingsNote(text: "强调色只影响系统 tint 与主控卡读数；文字与语义色仍走令牌。选到很亮的颜色时会压到能看清白字的亮度带。")
                 }
             }
-            .padding(.horizontal, V.S.pageGutter)
+        } header: {
+            HStack(spacing: V.S.gapS) {
+                Text("品牌色")
+                Spacer(minLength: 0)
+                Text(store.customAccent == 0 ? "六套预设" : "自定义")
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
+            }
+            .textCase(nil)
         }
     }
 
     // MARK: 应用图标（G-06：8 套 appiconset 原本是死资产）
 
     private var iconPanel: some View {
-        VStack(spacing: V.S.gapS) {
-            VSectionLabel(text: "应用图标", trailing: "8 套")
+        Section {
             VCard {
                 VStack(alignment: .leading, spacing: V.S.gapMS) {
                     SettingsNote(text: "换图标只改桌面上的样子，不改 App 名与任何数据。系统会弹一次「已更换」提示。")
@@ -186,7 +224,15 @@ struct AppearanceScreen: View {
                     }
                 }
             }
-            .padding(.horizontal, V.S.pageGutter)
+        } header: {
+            HStack(spacing: V.S.gapS) {
+                Text("应用图标")
+                Spacer(minLength: 0)
+                Text("8 套")
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
+            }
+            .textCase(nil)
         }
     }
 
@@ -235,8 +281,7 @@ struct AppearanceScreen: View {
     // MARK: 圆角 / 行高 / 时间线行距（#29 #30）
 
     private var geometryPanel: some View {
-        VStack(spacing: V.S.gapS) {
-            VSectionLabel(text: "几何")
+        Section {
             VCard {
                 VStack(alignment: .leading, spacing: V.S.gapMS) {
                     Text("圆角")
@@ -265,15 +310,18 @@ struct AppearanceScreen: View {
                     SettingsNote(text: "圆角只动卡片 / 控件 / 面板三档，胶囊不参与；行高与行距不改字号与 44pt 触达。")
                 }
             }
-            .padding(.horizontal, V.S.pageGutter)
+        } header: {
+            HStack(spacing: V.S.gapS) {
+                Text("几何")
+            }
+            .textCase(nil)
         }
     }
 
     // MARK: 主控读数 / 指标位 / 最近开门条数（#30 #31）
 
     private var readoutPanel: some View {
-        VStack(spacing: V.S.gapS) {
-            VSectionLabel(text: "主控读数")
+        Section {
             VCard {
                 VStack(alignment: .leading, spacing: V.S.gapMS) {
                     Text("数字字体")
@@ -325,15 +373,18 @@ struct AppearanceScreen: View {
                     .frame(minHeight: V.Hit.min)
                 }
             }
-            .padding(.horizontal, V.S.pageGutter)
+        } header: {
+            HStack(spacing: V.S.gapS) {
+                Text("主控读数")
+            }
+            .textCase(nil)
         }
     }
 
     // MARK: 记录页开场策略（#31）
 
     private var recordPanel: some View {
-        VStack(spacing: V.S.gapS) {
-            VSectionLabel(text: "记录页")
+        Section {
             VCard {
                 VStack(alignment: .leading, spacing: V.S.gapMS) {
                     SettingChips(items: ["", "fresh", "alarm"],
@@ -342,15 +393,18 @@ struct AppearanceScreen: View {
                     SettingsNote(text: "只改进入记录页时的起点；手动改过的过滤仍按锁保留，不会删任何记录。")
                 }
             }
-            .padding(.horizontal, V.S.pageGutter)
+        } header: {
+            HStack(spacing: V.S.gapS) {
+                Text("记录页")
+            }
+            .textCase(nil)
         }
     }
 
     // MARK: 长按时长 / 双击防抖 / 夜间免扰（#32）
 
     private var carePanel: some View {
-        VStack(spacing: V.S.gapS) {
-            VSectionLabel(text: "开锁与关怀")
+        Section {
             VCard {
                 VStack(alignment: .leading, spacing: V.S.gapMS) {
                     Text("长按确认时长")
@@ -387,14 +441,17 @@ struct AppearanceScreen: View {
                     )
                 }
             }
-            .padding(.horizontal, V.S.pageGutter)
+        } header: {
+            HStack(spacing: V.S.gapS) {
+                Text("开锁与关怀")
+            }
+            .textCase(nil)
         }
     }
 
     // MARK: 密度与动效
     private var rhythmPanel: some View {
-        VStack(spacing: V.S.gapS) {
-            VSectionLabel(text: "节奏")
+        Section {
             VCard {
                 VStack(alignment: .leading, spacing: V.S.gapMS) {
                     Text("布局密度")
@@ -418,14 +475,17 @@ struct AppearanceScreen: View {
                                  : "克制档取消数字滚动与逐格点亮；开锁进度弧在任何档位都保留 —— 它量的是真命令链。")
                 }
             }
-            .padding(.horizontal, V.S.pageGutter)
+        } header: {
+            HStack(spacing: V.S.gapS) {
+                Text("节奏")
+            }
+            .textCase(nil)
         }
     }
 
     // MARK: 时间显示（全 App 唯一出口）
     private var timePanel: some View {
-        VStack(spacing: V.S.gapS) {
-            VSectionLabel(text: "时间显示", trailing: "全局")
+        Section {
             VCard {
                 VStack(alignment: .leading, spacing: V.S.gapMS) {
                     SettingChips(items: TimeDisplayStyle.allCases,
@@ -441,14 +501,24 @@ struct AppearanceScreen: View {
                     SettingRule()
                     SettingToggle(
                         label: "记录行加第二行完整日期",
-                        note: "台账行在时刻下面补一行 MM-DD。跨年的记录才显示年。",
+                        // 真实行为：台账行在时刻下面补一行 MM-DD（不再声称"跨年显示年"——
+                        // TimeFormat.dayShort 只有月-日，年份由「按天分组」的组头承担）。
+                        note: "台账行在时刻下面补一行 MM-DD。年份看分组标题，这一行只补月日。",
                         isOn: settingsBinding(\.twoLineDate)
                     )
                     SettingRule()
                     timePreview
                 }
             }
-            .padding(.horizontal, V.S.pageGutter)
+        } header: {
+            HStack(spacing: V.S.gapS) {
+                Text("时间显示")
+                Spacer(minLength: 0)
+                Text("全局")
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
+            }
+            .textCase(nil)
         }
     }
 
@@ -488,91 +558,38 @@ struct AppearanceScreen: View {
     private var previewClock: String { TimeDisplay.clock(now) }
 
     // MARK: 快捷格（首页快捷操作 10 选 N + 智能排序）
+    // MARK: 快捷格（只读摘要 + 跳转到唯一写入口）
+    /// M1（ui-ia §4.1）：本页原来有快捷格的**第二套写入口**（显示枚数 / 智能排序 / 勾选池），
+    /// 与门页的 `QuickPoolEditSheet` 重复 —— 两处都能改同一份 `kf_quick_ids`，改一处另一处不刷新。
+    /// 现在本页只显示当前结果（只读），写入统一走门页「编辑」。
     private var quickPanel: some View {
-        VStack(spacing: V.S.gapS) {
-            VSectionLabel(text: "快捷操作")
+        Section {
             VCard {
                 VStack(alignment: .leading, spacing: V.S.gapMS) {
-                    Text("首页显示几枚")
-                        .font(V.F.unit)
-                        .foregroundStyle(V.C.text3)
-                        .tracking(0.6)
-                    HStack(spacing: V.S.gapS) {
-                        ForEach([4, 6, 8], id: \.self) { n in
-                            Button {
-                                store.quickGridCount = n
-                            } label: {
-                                Text("\(n) 枚")
-                                    .font(V.F.bodyStrong)
-                                    .foregroundStyle(store.quickGridCount == n ? V.C.text1 : V.C.text1)
-                                    .padding(.horizontal, V.S.gapMS)
-                                    .frame(minHeight: V.Hit.min)
-                                    .background(store.quickGridCount == n ? V.C.blue : V.C.cardAlt, in: .rect(cornerRadius: V.R.control))
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityAddTraits(store.quickGridCount == n ? [.isButton, .isSelected] : .isButton)
-                        }
-                        Spacer(minLength: 0)
-                    }
+                    VValueRow(label: "首页显示", value: "\(store.quickGridCount) 枚")
                     SettingRule()
-                    SettingToggle(
-                        label: "常用操作自动排前",
-                        note: "按你实际点过的次数排序（存本机，不上传）。关掉后按下面勾选的顺序。",
-                        isOn: Binding(get: { QuickPool.smartFirst }, set: { QuickPool.setSmartFirst($0) })
-                    )
+                    VValueRow(label: "排序", value: QuickPool.smartFirst ? "常用自动排前" : "按勾选顺序")
                     SettingRule()
-                    Text("快捷池（10 选 6，至少留 1 项）")
-                        .font(V.F.unit)
-                        .foregroundStyle(V.C.text3)
-                        .tracking(0.6)
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: V.S.gapS), count: 2), spacing: V.S.gapS) {
-                        ForEach(QuickPool.all) { action in
-                            quickToggle(action)
-                        }
+                    VValueRow(label: "快捷池", value: "\(QuickPool.selected.count) 项已启用")
+                    SettingRule()
+                    VOutlineButton(title: "到「门」页编辑快捷操作", systemImage: "square.grid.2x2") {
+                        router.request(.tab(.door))
                     }
-                    SettingsNote(text: "勾选结果即时生效到「门」页的快捷操作卡；这里只管显示与排序，不发任何锁端命令。")
+                    SettingsNote(text: "快捷操作的勾选与排序只在「门」页的「编辑」里改（那里是唯一写入口）；这一屏只显示当前结果。")
                 }
             }
-            .padding(.horizontal, V.S.pageGutter)
-        }
-    }
-
-    private func quickToggle(_ action: QuickAction) -> some View {
-        let selected = QuickPool.selected.contains { $0.id == action.id }
-        return Button {
-            var ids = QuickPool.selected.map(\.id)
-            if selected {
-                guard ids.count > 1 else { return }
-                ids.removeAll { $0 == action.id }
-            } else {
-                ids.append(action.id)
-            }
-            QuickPool.setSelected(ids)
-        } label: {
+        } header: {
             HStack(spacing: V.S.gapS) {
-                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                    .accessibilityHidden(true)
-                    .font(V.F.icon15Medium)
-                    .foregroundStyle(selected ? V.C.blue : V.C.text3)
-                Text(action.label)
-                    .font(V.F.footnote)
-                    .foregroundStyle(V.C.text1)
-                    .lineLimit(1)
-                Spacer(minLength: 0)
+                Text("快捷操作")
             }
-            .padding(.horizontal, V.S.gapS)
-            .frame(minHeight: V.Hit.min)
-            .background(V.C.cardAlt, in: .rect(cornerRadius: V.R.control))
+            .textCase(nil)
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(action.label)
-        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
     }
+    // quickToggle 随写入口一起删除（M1）：勾选逻辑现在只在 QuickPoolEditSheet 里。
 
     // MARK: 恢复默认
     private var resetPanel: some View {
-        VStack(spacing: V.S.gapS) {
-            VSectionLabel(text: "恢复")
+        Section {
             VCard {
                 VStack(alignment: .leading, spacing: V.S.gapMS) {
                     VOutlineButton(title: "恢复默认外观", systemImage: "arrow.uturn.backward") {
@@ -589,7 +606,11 @@ struct AppearanceScreen: View {
                     SettingsNote(text: "只重置这一屏的偏好。本机密码、备份、钥匙串与门锁数据一项都不动。")
                 }
             }
-            .padding(.horizontal, V.S.pageGutter)
+        } header: {
+            HStack(spacing: V.S.gapS) {
+                Text("恢复")
+            }
+            .textCase(nil)
         }
     }
 }

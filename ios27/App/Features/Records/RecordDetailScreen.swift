@@ -27,23 +27,29 @@ struct RecordDetailScreen: View {
     private var mac: String { app.lock?.id ?? "" }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: V.S.gap16) {
-                header
-                if let entry {
-                    momentBlock(entry)
-                    if isAlarm(entry) { alarmBlock(entry) }
-                    noteBlock(entry)
-                    contextBlock(entry)
-                    jumpBlock(entry)
-                } else {
-                    missingBlock
-                }
+        // 全换系统（2026-11-02）：整页容器是系统 `List`（与前几轮同一配方）。
+        // 时刻/归属、告警处置、同一天、回时间线四段是**行式内容** → `Section`；
+        // 备注段带输入框 + 两个控件，保持卡片用 `plainRow()`。
+        List {
+            header.plainRow()
+            if let entry {
+                momentSection(entry)
+                if isAlarm(entry) { alarmSection(entry) }
+                noteBlock(entry).plainRow()
+                contextSection(entry)
+                jumpSection(entry)
+            } else {
+                missingBlock.plainRow()
             }
-            .padding(.vertical, V.S.gap16)
         }
+        .listStyle(.insetGrouped)
+        .listSectionSpacing(V.S.gap16)
+        .scrollContentBackground(.hidden)
+        .contentMargins(.top, V.S.gap16, for: .scrollContent)
+        .contentMargins(.bottom, V.S.gapL, for: .scrollContent)
         .background(CanvasBackground())
-        .scrollEdgeEffectStyle(.soft, for: .top)
+        // 键盘避让：「开门附言」输入框在页面中部，键盘弹起会把下面的跳转出口顶走。
+        .scrollDismissesKeyboard(.interactively)
         .navigationTitle("记录详情")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -76,13 +82,19 @@ struct RecordDetailScreen: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, V.S.pageGutter)
         .accessibilityElement(children: .combine)
     }
 
     private func statusLine(_ entry: LedgerEntry) -> String {
-        let owner = entry.owner ?? "未归属"
+        let owner = ownerText(entry)
         return lockName + " · " + owner + " · " + TimeFormat.ago(entry.at)
+    }
+
+    /// 归属只显示解析后的人名（`owner` 字段里可能存的是成员 id）；解析不出才说「未归属」。
+    /// 旧实现直接把原始 id 印在界面上，等于把内部值出屏。
+    private func ownerText(_ entry: LedgerEntry) -> String {
+        let name = CredentialOrg.ownerName(entry.owner)
+        return name.isEmpty ? "未归属" : name
     }
 
     private func toneWord(_ entry: LedgerEntry) -> String {
@@ -96,77 +108,65 @@ struct RecordDetailScreen: View {
 
     // MARK: - 时刻与归属（全字段区，数字走 Reading）
 
-    private func momentBlock(_ entry: LedgerEntry) -> some View {
-        VCard {
-            VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VSectionLabel(text: "这条记录", trailing: "行 " + shortKey(entry))
-                VFieldRow(label: "时刻", value: TimeDisplay.clock(entry.at), unit: "HH:mm")
-                divider
-                VFieldRow(label: "日期", value: TimeFormat.dayKey(entry.at))
-                divider
-                VFieldRow(label: "归属", value: entry.owner ?? "未归属",
-                         tint: entry.owner == nil ? V.C.text2 : V.C.text1, mono: false)
-                divider
-                VFieldRow(label: "距今", value: TimeFormat.ago(entry.at), mono: false)
-                if let detail = entry.detail, !detail.isEmpty {
-                    divider
-                    VFieldRow(label: "说明", value: detail, mono: false)
-                }
+    private func momentSection(_ entry: LedgerEntry) -> some View {
+        Section {
+            VFieldRow(label: "时刻", value: TimeDisplay.clock(entry.at), unit: "HH:mm")
+            VFieldRow(label: "日期", value: TimeFormat.dayKey(entry.at))
+            VFieldRow(label: "归属", value: ownerText(entry),
+                      tint: ownerText(entry) == "未归属" ? V.C.text2 : V.C.text1, mono: false)
+            VFieldRow(label: "距今", value: TimeFormat.ago(entry.at), mono: false)
+            if let detail = entry.detail, !detail.isEmpty {
+                VFieldRow(label: "说明", value: detail, mono: false)
             }
+        } header: {
+            Text("这条记录")
+                .font(V.F.section)
+                .foregroundStyle(V.C.text1)
+                .textCase(nil)
         }
-        .padding(.horizontal, V.S.pageGutter)
-    }
-
-    private func shortKey(_ entry: LedgerEntry) -> String {
-        entry.id.count > 8 ? String(entry.id.suffix(8)) : entry.id
-    }
-
-    private var divider: some View {
-        Rectangle()
-            .fill(V.C.hairline)
-            .frame(height: V.S.hair)
     }
 
     // MARK: - 告警段：严重级 + 处置留痕（真实写入覆盖层）
 
-    private func alarmBlock(_ entry: LedgerEntry) -> some View {
+    private func alarmSection(_ entry: LedgerEntry) -> some View {
         let disposed = overlay.isDisposed(entry.id)
-        return VCard {
-            VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VSectionLabel(text: "处置")
-                HStack(spacing: V.S.gapS) {
-                    VStateDot(tone: disposed ? .ok : .critical, word: disposed ? "已处置" : "未处置")
-                    Text(disposed ? "已处置" : "未处置")
-                        .font(V.F.bodyStrong)
-                        .foregroundStyle(disposed ? V.C.text1 : V.C.critical)
-                    Spacer(minLength: V.S.gapS)
-                    if let at = overlay.disposedAt(entry.id) {
-                        Text(TimeDisplay.clock(at))
-                            .font(V.F.stamp)
-                            .foregroundStyle(V.C.text2)
-                            .monospacedDigit()
-                    }
+        return Section {
+            HStack(spacing: V.S.gapS) {
+                VStateDot(tone: disposed ? .ok : .critical, word: disposed ? "已处置" : "未处置")
+                Text(disposed ? "已处置" : "未处置")
+                    .font(V.F.bodyStrong)
+                    .foregroundStyle(disposed ? V.C.text1 : V.C.critical)
+                Spacer(minLength: V.S.gapS)
+                if let at = overlay.disposedAt(entry.id) {
+                    Text(TimeDisplay.clock(at))
+                        .font(V.F.stamp)
+                        .foregroundStyle(V.C.text2)
+                        .monospacedDigit()
                 }
-                if disposed {
-                    VOutlineButton(title: "撤销处置", systemImage: "arrow.uturn.backward") {
-                        withAnimation(reduceMotion ? nil : V.M.snap) {
-                            overlay.undoDispose(entry.id)
-                        }
-                    }
-                } else {
-                    VActionButton(title: "标记已处置", systemImage: "checkmark.circle") {
-                        withAnimation(reduceMotion ? nil : V.M.snap) {
-                            overlay.dispose(entry.id, at: Int64(Date().timeIntervalSince1970 * 1000))
-                        }
-                    }
-                }
-                Text("处置只落本机，作为「我看过了」的留痕；不改锁端日志，也不改这条记录的语义。")
-                    .font(V.F.unit)
-                    .foregroundStyle(V.C.text3)
-                    .fixedSize(horizontal: false, vertical: true)
             }
+            if disposed {
+                VOutlineButton(title: "撤销处置", systemImage: "arrow.uturn.backward") {
+                    withAnimation(reduceMotion ? nil : V.M.snap) {
+                        overlay.undoDispose(entry.id)
+                    }
+                }
+            } else {
+                VActionButton(title: "标记已处置", systemImage: "checkmark.circle") {
+                    withAnimation(reduceMotion ? nil : V.M.snap) {
+                        overlay.dispose(entry.id, at: Int64(Date().timeIntervalSince1970 * 1000))
+                    }
+                }
+            }
+            Text("处置只落本机，作为「我看过了」的留痕；不改锁端日志，也不改这条记录的语义。")
+                .font(V.F.unit)
+                .foregroundStyle(V.C.text3)
+                .fixedSize(horizontal: false, vertical: true)
+        } header: {
+            Text("处置")
+                .font(V.F.section)
+                .foregroundStyle(V.C.text1)
+                .textCase(nil)
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: - 备注 / 标旗（与时间线共用同一份本机覆盖层）
@@ -174,7 +174,7 @@ struct RecordDetailScreen: View {
     private func noteBlock(_ entry: LedgerEntry) -> some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VSectionLabel(text: "备注", trailing: overlay.isFlagged(entry.id) ? "已标异常" : nil)
+                VCardHeader(title: overlay.isFlagged(entry.id) ? "备注 · 已标异常" : "备注", showsChevron: false)
                 VInset {
                     TextField("开门附言 / 备注", text: $noteDraft)
                         .font(V.F.body)
@@ -217,67 +217,73 @@ struct RecordDetailScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: - 上下文：同一天前后各两条（record.detail 的前后上下文）
 
-    private func contextBlock(_ entry: LedgerEntry) -> some View {
+    private func contextSection(_ entry: LedgerEntry) -> some View {
         let dayKey = TimeFormat.dayKey(entry.at)
         let sameDay = entries
             .filter { TimeFormat.dayKey($0.at) == dayKey }
             .sorted { $0.at > $1.at }
         let neighbors = Array(sameDay.filter { $0.id != entry.id }.prefix(4))
-        return VCard {
-            VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VSectionLabel(text: "同一天", trailing: String(sameDay.count) + " 条")
-                if neighbors.isEmpty {
-                    Text("这一天只有这一条记录。")
-                        .font(V.F.footnote)
-                        .foregroundStyle(V.C.text2)
-                        .frame(minHeight: V.Hit.min)
-                } else {
-                    ForEach(neighbors.indices, id: \.self) { index in
-                        if index > 0 { divider }
-                        Button {
-                            route.focusID = neighbors[index].id
-                        } label: {
-                            VLedgerRow(entry: neighbors[index])
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityHint("切到这条记录")
+        return Section {
+            if neighbors.isEmpty {
+                Text("这一天只有这一条记录。")
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text2)
+                    .frame(minHeight: V.Hit.min)
+            } else {
+                ForEach(neighbors.indices, id: \.self) { index in
+                    Button {
+                        route.focusID = neighbors[index].id
+                    } label: {
+                        VLedgerRow(entry: neighbors[index])
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("切到这条记录")
                 }
             }
+        } header: {
+            HStack(spacing: V.S.gapS) {
+                Text("同一天")
+                    .font(V.F.section)
+                    .foregroundStyle(V.C.text1)
+                    .textCase(nil)
+                Spacer(minLength: 0)
+                Text(String(sameDay.count) + " 条")
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text3)
+                    .monospacedDigit()
+                    .textCase(nil)
+            }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: - 三个回到时间线的出口（真跳转，不是摆样子）
 
-    private func jumpBlock(_ entry: LedgerEntry) -> some View {
-        VCard {
-            VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VSectionLabel(text: "回到时间线")
-                jumpRow("在时间线里定位这条", "scope", "滚到这一条并闪一下") {
-                    back(toDay: nil, flash: entry.id)
-                }
-                divider
-                jumpRow("搜这类记录", "magnifyingglass", "用事件词作为检索词") {
-                    route.searchSeed = entry.event
-                    back(toDay: nil, flash: nil)
-                }
-                divider
-                jumpRow("查看当天全部", "calendar", "把显示范围收到这一天") {
-                    back(toDay: TimeFormat.dayKey(entry.at), flash: nil)
-                }
-                Text("前两个出口不改筛选条件；第三个只收窄显示范围，页顶有「看全部日子」可以退回来。")
-                    .font(V.F.unit)
-                    .foregroundStyle(V.C.text3)
-                    .fixedSize(horizontal: false, vertical: true)
+    private func jumpSection(_ entry: LedgerEntry) -> some View {
+        Section {
+            jumpRow("在时间线里定位这条", "scope", "滚到这一条并闪一下") {
+                back(toDay: nil, flash: entry.id)
             }
+            jumpRow("搜这类记录", "magnifyingglass", "用事件词作为检索词") {
+                route.searchSeed = entry.event
+                back(toDay: nil, flash: nil)
+            }
+            jumpRow("查看当天全部", "calendar", "把显示范围收到这一天") {
+                back(toDay: TimeFormat.dayKey(entry.at), flash: nil)
+            }
+            Text("前两个出口不改筛选条件；第三个只收窄显示范围，页顶有「看全部日子」可以退回来。")
+                .font(V.F.unit)
+                .foregroundStyle(V.C.text3)
+                .fixedSize(horizontal: false, vertical: true)
+        } header: {
+            Text("回到时间线")
+                .font(V.F.section)
+                .foregroundStyle(V.C.text1)
+                .textCase(nil)
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func jumpRow(_ title: String, _ symbol: String, _ note: String, action: @escaping () -> Void) -> some View {
@@ -324,7 +330,6 @@ struct RecordDetailScreen: View {
             }
             .padding(.vertical, V.S.gapXXL)
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: - 动作

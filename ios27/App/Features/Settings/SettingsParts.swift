@@ -35,13 +35,11 @@ struct SettingsHeader: View {
     }
 }
 
-/// 0.5pt 蚀刻分割线。面板内行与行之间用它，不用系统 Divider（那会画 1pt 的软线）。
+/// 面板内行分隔线。**全换系统（2026-11-02）**：改用系统 `Divider()` —— 1pt 软线是系统在内容层
+/// 的标准分隔语义，也不再需要自己维护 hairline 宽度。
 struct SettingRule: View {
     var body: some View {
-        Rectangle()
-            .fill(V.C.hairline)
-            .frame(height: V.S.hair)
-            .accessibilityHidden(true)
+        Divider()
     }
 }
 
@@ -125,50 +123,23 @@ struct SettingToggle: View {
     }
 }
 
-/// 破坏性动作行。语义红只随真实危险动作出现，不当装饰。
+/// 破坏性动作行。**全换系统（2026-11-02）**：改走 `Button(role: .destructive)` ——
+/// 系统红 + 系统按压反馈 + VoiceOver 的破坏性语义，本仓不再自绘红字与 chevron。
+/// 语义红只随真实危险动作出现，不当装饰；二次确认仍由调用方负责（本行只发起）。
 struct SettingDangerRow: View {
     let title: String
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
+        Button(role: .destructive, action: action) {
             HStack(spacing: V.S.gapS) {
                 Text(title)
                     .font(V.F.body)
-                    .foregroundStyle(V.C.critical)
                 Spacer(minLength: 0)
             }
             .frame(minHeight: V.Hit.min)
             .contentShape(.rect)
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(title)
-    }
-}
-
-/// 破坏性主动作：填 critical，不是填 signal。
-/// 用铜锈绿去按「删除」是把品牌色当装饰，也把危险动作画成了安全动作 —— 这里换成语义色。
-/// 压填充的文字走 V.C.text1（白），在 critical 上有足够对比度。
-struct DangerAction: View {
-    let title: String
-    var busy: Bool = false
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: V.S.gapS) {
-                if busy {
-                    ProgressView().controlSize(.small).tint(V.C.bg)
-                }
-                Text(title).font(V.F.bodyStrong)
-            }
-            .foregroundStyle(V.C.bg)
-            .frame(maxWidth: .infinity)
-            .frame(minHeight: V.H.action)
-            .background(V.C.critical, in: .rect(cornerRadius: V.R.control))
-        }
-        .buttonStyle(PressStyle())
-        .disabled(busy)
         .accessibilityLabel(title)
     }
 }
@@ -253,6 +224,8 @@ struct PasscodeSheet: View {
                                         .font(V.F.body)
                                         .keyboardType(.numberPad)
                                         .textContentType(.password)
+                                        // 三个密码框统一 44pt 高：HIG 可点下限，也让它们与下面两颗按钮对齐。
+                                        .frame(minHeight: V.Hit.min)
                                         .accessibilityLabel("原本机密码")
                                 }
                                 Text("先验证当前本机密码 —— 只验本机摘要，不联网。")
@@ -264,22 +237,24 @@ struct PasscodeSheet: View {
                                     .font(V.F.body)
                                     .keyboardType(.numberPad)
                                     .textContentType(.newPassword)
+                                    .frame(minHeight: V.Hit.min)
                                     .accessibilityLabel(kind.fieldPlaceholder)
                             }
                             VInset {
                                 SecureField("再次输入", text: $second)
                                     .font(V.F.body)
                                     .keyboardType(.numberPad)
+                                    .frame(minHeight: V.Hit.min)
                                     .accessibilityLabel("再次输入")
                             }
+                            // 主动作与取消**同列同宽**：旧实现「确定」在卡内、「取消」在卡外，
+                            // 两颗按钮左右边缘对不齐（换行后更明显）。
                             VActionButton(title: "确定") { commit() }
                                 .padding(.top, V.S.gapXS)
+                            VOutlineButton(title: "取消") { dismiss() }
                         }
                     }
                     .padding(.horizontal, V.S.pageGutter)
-
-                    VOutlineButton(title: "取消") { dismiss() }
-                        .padding(.horizontal, V.S.pageGutter)
 
                     SettingsNote(text: kind.note)
                         .padding(.horizontal, V.S.pageGutter)
@@ -288,9 +263,15 @@ struct PasscodeSheet: View {
             }
             .background(CanvasBackground())
             .scrollEdgeEffectStyle(.soft, for: .top)
+            // 键盘避让：三个密码框（原本机密码 / 新密码 / 再次输入）在页面中部，
+            // 数字键盘弹起会盖住「确定」。往下拖即可收键盘。
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle(kind.title)
             .navigationBarTitleDisplayMode(.inline)
         }
+        // 半屏 sheet 会被数字键盘整个盖住 —— 这里必须 .large，并给一个可见的拖拽指示。
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
     }
 
     private func commit() {
@@ -370,6 +351,8 @@ struct VerifyPasscodeSheet: View {
                                     .font(V.F.body)
                                     .keyboardType(.numberPad)
                                     .textContentType(.password)
+                                    // 同 PasscodeSheet：44pt 可点下限，与下面两颗按钮同宽同高。
+                                    .frame(minHeight: V.Hit.min)
                                     .accessibilityLabel("当前本机密码")
                             }
                             VActionButton(title: "验证并继续", systemImage: "lock.open") { verify() }
@@ -386,9 +369,14 @@ struct VerifyPasscodeSheet: View {
             }
             .background(CanvasBackground())
             .scrollEdgeEffectStyle(.soft, for: .top)
+            // 键盘避让：密码框 + 两个按钮在同一屏，数字键盘会盖住「验证并继续」。
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
         }
+        // 同 PasscodeSheet：验证框里有密码输入，必须全屏高度。
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
     }
 
     private func verify() {

@@ -66,29 +66,37 @@ struct RecordsStudioScreen: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: V.S.gapM) {
-                header
-                searchCard
-                filterCard
-                statsCard
-                // 2026-11-01：跨锁时间线此前**不告知**"有 N 条日志锁端没回时刻"（单锁路径会说）。
-                // 这些行被 `buildRecs` 跳过（没有时刻就不进时间线），用户只会看到"记录变少了"。
-                if untimed > 0 {
-                    VStatusLine(tone: .attention, text: "另有 \(untimed) 条日志锁端没回时刻，未进时间线（不是丢失，是锁钟未读到）。")
-                }
-                if filtered.isEmpty {
-                    emptyCard
-                } else {
-                    resultCard
-                }
-                hexCard
+        // 全换系统（2026-11-02）：整页容器是系统 `List`（与门页同一配方）。
+        // 检索框已交给 `.searchable`（第 2 轮），本页不再自绘搜索框 —— 这里只把五个段落装进 List。
+        // 结果列表是**行式内容** → `Section`；其余四段是卡片（筛选芯片组、统计摘要、原始帧），
+        // 用 `cardRow()`（`.plain` 样式没有系统左右留白，cardRow 补回 pageGutter）。
+        List {
+            header.headerRow()
+            searchCard.cardRow()
+            filterCard.cardRow()
+            statsCard.cardRow()
+            // 2026-11-01：跨锁时间线此前**不告知**"有 N 条日志锁端没回时刻"（单锁路径会说）。
+            // 这些行被 `buildRecs` 跳过（没有时刻就不进时间线），用户只会看到"记录变少了"。
+            // 状态行不是卡片，保留 plainRow()（它自带内边距，贴边也不违和）。
+            if untimed > 0 {
+                VStatusLine(tone: .attention, text: "另有 \(untimed) 条日志锁端没回时刻，未进时间线（不是丢失，是锁钟未读到）。")
+                    .plainRow()
             }
-            .padding(.top, V.Page.topSpace)
+            if filtered.isEmpty {
+                emptyCard.cardRow()
+            } else {
+                resultSection
+            }
+            hexCard.cardRow()
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .contentMargins(.top, V.Page.topSpace, for: .scrollContent)
+        .contentMargins(.bottom, V.S.gapL, for: .scrollContent)
         .background(V.C.bg.ignoresSafeArea())
         .navigationTitle("记录工作室")
         .navigationBarTitleDisplayMode(.inline)
+        .searchable(text: $query, prompt: Text("如：上周 指纹 -临时码 / 昨晚 告警"))
         .onAppear { reload() }
     }
 
@@ -99,26 +107,14 @@ struct RecordsStudioScreen: View {
             Text("自然语言检索 · 完整筛选 · 统计 · 原始帧")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }
-        .padding(.horizontal, V.S.pageGutterA)
     }
 
     private var searchCard: some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VCardHeader(title: "自然语言检索", showsChevron: false)
-                HStack(spacing: V.S.gapS) {
-                    Image(systemName: "magnifyingglass")
-                        .font(V.F.cardBody).foregroundStyle(V.C.text3)
-                        .accessibilityHidden(true)
-                    TextField("如：上周 指纹 -临时码 / 昨晚 告警", text: $query)
-                        .font(V.F.body)
-                        .foregroundStyle(V.C.text1)
-                        .textFieldStyle(.plain)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
-                }
-                .frame(minHeight: V.Metric.searchRow)
-                Rectangle().fill(V.C.hairline).frame(height: V.S.hair)
+                // 输入框已交给系统搜索栏（.searchable）——这里只留语法提示，不再自绘一个假搜索框。
+                Divider()
                 if !parsed.parsedTags.isEmpty {
                     ScrollView(.horizontal) {
                         HStack(spacing: V.S.gapS) {
@@ -139,7 +135,6 @@ struct RecordsStudioScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     private var filterCard: some View {
@@ -187,7 +182,6 @@ struct RecordsStudioScreen: View {
                 VToggleRow(title: "只看越界窗口的临时码开门", detail: "临时码开门落在所有临时码窗口之外 = 可能是伪造或时钟偏差。", isOn: $outOfWindowOnly)
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     private var statsCard: some View {
@@ -216,7 +210,6 @@ struct RecordsStudioScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     private var emptyCard: some View {
@@ -230,35 +223,39 @@ struct RecordsStudioScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
-    private var resultCard: some View {
-        VCard {
-            VStack(alignment: .leading, spacing: V.S.gapXS) {
-                HStack {
-                    VCardHeader(title: "结果", showsChevron: false)
-                    Spacer(minLength: 0)
-                    Text("\(filtered.count) 条").font(V.F.footnote).foregroundStyle(V.C.text3).monospacedDigit()
-                }
-                ForEach(Array(filtered.prefix(60).enumerated()), id: \.offset) { pair in
-                    HStack(spacing: V.S.gapS) {
-                        Circle().fill(pair.element.alarm ? V.C.coral : V.C.rewardGreen)
-                            .frame(width: V.List.dotSize, height: V.List.dotSize)
-                        VStack(alignment: .leading, spacing: V.S.gapXXS) {
-                            Text(pair.element.typeName).font(V.F.rowDetail).foregroundStyle(V.C.text1).lineLimit(1)
-                            Text("\(pair.element.timeStr) · \(pair.element.lockName) · \(pair.element.cred)")
-                                .font(V.F.micro).foregroundStyle(V.C.text3).lineLimit(1)
-                        }
-                        Spacer(minLength: 0)
-                        Text(pair.element.whoName ?? "未归属").font(V.F.micro).foregroundStyle(V.C.text3)
+    /// 结果 = 系统 `Section`：一条一行（上限 60 条，与旧版同口径）。
+    private var resultSection: some View {
+        Section {
+            ForEach(filtered.prefix(60)) { rec in
+                HStack(spacing: V.S.gapS) {
+                    Circle().fill(rec.alarm ? V.C.coral : V.C.rewardGreen)
+                        .frame(width: V.List.dotSize, height: V.List.dotSize)
+                    VStack(alignment: .leading, spacing: V.S.gapXXS) {
+                        Text(rec.typeName).font(V.F.rowDetail).foregroundStyle(V.C.text1).lineLimit(1)
+                        Text("\(rec.timeStr) · \(rec.lockName) · \(rec.cred)")
+                            .font(V.F.micro).foregroundStyle(V.C.text3).lineLimit(1)
                     }
-                    .frame(minHeight: V.List.rowMinHeight)
-                    VDivider()
+                    Spacer(minLength: 0)
+                    Text(rec.whoName ?? "未归属").font(V.F.micro).foregroundStyle(V.C.text3)
                 }
+                .frame(minHeight: V.List.rowMinHeight)
+                .listRowInsets(EdgeInsets(top: 0, leading: V.S.cardPad, bottom: 0, trailing: V.S.cardPad))
             }
+        } header: {
+            HStack(spacing: V.S.gapS) {
+                Text("结果")
+                    .font(V.F.section)
+                    .foregroundStyle(V.C.text1)
+                Spacer(minLength: 0)
+                Text("\(filtered.count) 条")
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text3)
+                    .monospacedDigit()
+            }
+            .textCase(nil)
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     private var hexCard: some View {
@@ -285,7 +282,6 @@ struct RecordsStudioScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     // MARK: - 数据

@@ -25,19 +25,29 @@ struct LockPortfolioScreen: View {
     @State private var usage: [LockUsage] = []
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: V.S.gapM) {
-                header
-                if usage.isEmpty {
-                    emptyCard
-                } else {
-                    summaryCard
-                    filterRow
-                    listCard
+        // 2026-11-02（R4 全换系统）：纯 ScrollView 换系统 List；锁列表单独成 Section（一把锁一行）。
+        // 分组筛选已是 Picker(.segmented)（第 2 轮改的），原样保留，只作为整块行放进来。
+        List {
+            header.headerRow()
+            if usage.isEmpty {
+                emptyCard.cardRow()
+            } else {
+                summaryCard.cardRow()
+                filterRow.headerRow()   // 筛选行是整宽内容（不是卡片）
+                Section {
+                    ForEach(shown, id: \.mac) { item in
+                        row(item)
+                    }
+                } header: {
+                    Text("门锁 · \(shown.count) 把")
+                    .textCase(nil)
                 }
             }
-            .padding(.top, V.Page.topSpace)
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .contentMargins(.top, V.S.gap16, for: .scrollContent)
+        .contentMargins(.bottom, V.S.gapL, for: .scrollContent)
         .background(V.C.bg.ignoresSafeArea())
         .navigationTitle("全部锁")
         .navigationBarTitleDisplayMode(.inline)
@@ -58,7 +68,6 @@ struct LockPortfolioScreen: View {
             Text("多锁统计、分组与排序")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }
-        .padding(.horizontal, V.S.pageGutterA)
     }
 
     private var emptyCard: some View {
@@ -70,7 +79,6 @@ struct LockPortfolioScreen: View {
                 VActionButton(title: "添加门锁", systemImage: "plus") { router.request(.dest(.addLock)) }
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     private var summaryCard: some View {
@@ -84,38 +92,74 @@ struct LockPortfolioScreen: View {
                 ])
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     private var groups: [String] {
         Array(Set(usage.map { groupOf($0.mac) })).sorted()
     }
 
+    /// 分组筛选是**单选**（`groupFilter` 一个 String，空 = 全部）⇒ 交给系统 `Picker(.segmented)`。
+    /// 档位数（含「全部」）超过 4 个时分段控件会被压扁（`SettingsParts.swift` 里已写明这条判据），
+    /// 那时回落到横向 chip 行 —— 两套都保留，但**默认走系统控件**。
+    @ViewBuilder
     private var filterRow: some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: V.S.gapS) {
-                Button { groupFilter = "" } label: {
-                    VTag(text: "全部", tint: groupFilter.isEmpty ? V.C.blue : V.C.text3, filled: groupFilter.isEmpty)
-                }
-                .buttonStyle(.plain)
-                ForEach(groups, id: \.self) { g in
-                    Button { groupFilter = g } label: {
-                        VTag(text: g, tint: groupFilter == g ? V.C.blue : V.C.text3, filled: groupFilter == g)
+        HStack(spacing: V.S.gapS) {
+            if groupOptions.count <= 4 {
+                Picker("分组", selection: $groupFilter) {
+                    ForEach(groupOptions, id: \.self) { g in
+                        Text(g.isEmpty ? "全部" : g).tag(g)
                     }
-                    .buttonStyle(.plain)
                 }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                // 分段控件是弹性宽度：给它整行剩余空间，否则会和后面的 Spacer 各抢一半、
+                // 把「全部 / 分组名」压成省略号。
+                .frame(maxWidth: .infinity)
+                .accessibilityLabel("按分组筛选")
+            } else {
+                ScrollView(.horizontal) {
+                    HStack(spacing: V.S.gapS) {
+                        ForEach(groupOptions, id: \.self) { g in
+                            Button { groupFilter = g } label: {
+                                VTag(text: g.isEmpty ? "全部" : g,
+                                     tint: groupFilter == g ? V.C.blue : V.C.text3,
+                                     filled: groupFilter == g)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityAddTraits(groupFilter == g ? [.isButton, .isSelected] : .isButton)
+                        }
+                    }
+                }
+                .scrollIndicators(.hidden)
                 Spacer(minLength: 0)
-                Menu {
-                    ForEach(Sort.allCases) { option in
-                        Button(option.rawValue) { sort = option }
-                    }
-                } label: {
-                    VTag(text: "排序 · " + sort.rawValue, tint: V.C.text1)
-                }
             }
-            .padding(.horizontal, V.S.cardGutter)
+            // 排序仍是 Menu（系统控件），只是把 label 从自绘 VTag 换成带图标的 Label。
+            Menu {
+                ForEach(Sort.allCases) { option in
+                    Button {
+                        sort = option
+                    } label: {
+                        if option == sort {
+                            Label(option.rawValue, systemImage: "checkmark")
+                        } else {
+                            Text(option.rawValue)
+                        }
+                    }
+                }
+            } label: {
+                Label("排序 · " + sort.rawValue, systemImage: "arrow.up.arrow.down")
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text1)
+                    .frame(minHeight: V.Hit.min)
+                    .contentShape(.rect)
+            }
+            .accessibilityLabel("排序方式，当前 \(sort.rawValue)")
         }
-        .scrollIndicators(.hidden)
+    }
+
+    /// 分组筛选的全部选项：第一个是空串（= 全部），后面是真实分组名。
+    private var groupOptions: [String] {
+        [""] + groups
     }
 
     private var shown: [LockUsage] {
@@ -125,18 +169,6 @@ struct LockPortfolioScreen: View {
         case .opens: return list.sorted { $0.opens30d > $1.opens30d }
         case .power: return list.sorted { $0.power > $1.power }
         }
-    }
-
-    private var listCard: some View {
-        VCard {
-            VStack(spacing: 0) {
-                ForEach(Array(shown.enumerated()), id: \.offset) { pair in
-                    if pair.offset > 0 { VDivider() }
-                    row(pair.element)
-                }
-            }
-        }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     private func row(_ item: LockUsage) -> some View {
@@ -174,20 +206,57 @@ struct LockPortfolioScreen: View {
             }
             .buttonStyle(.plain)
             HStack(spacing: V.S.gapS) {
-                Button("改分组") {
-                    groupEditMac = item.mac
-                    groupDraft = groupOf(item.mac) == LockArchive.ungroupedLabel ? "" : groupOf(item.mac)
-                    showGroupEdit = true
+                // 两个行内动作合成一个系统 Menu：同屏按钮数从 2 降到 1，
+                // 菜单项自带系统点击区与 VoiceOver 的「菜单」语义，不再自绘两个小号蓝字按钮。
+                Menu {
+                    Button {
+                        groupEditMac = item.mac
+                        groupDraft = groupOf(item.mac) == LockArchive.ungroupedLabel ? "" : groupOf(item.mac)
+                        showGroupEdit = true
+                    } label: {
+                        Label("改分组", systemImage: "folder.badge.gearshape")
+                    }
+                    Button {
+                        LockArchive.setDefaultMac(item.mac)
+                    } label: {
+                        Label("设为默认", systemImage: "pin")
+                    }
+                } label: {
+                    Label("更多操作", systemImage: "ellipsis.circle")
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.blue)
+                        .frame(minHeight: V.Hit.min)
+                        .contentShape(.rect)
                 }
-                .font(V.F.footnote).foregroundStyle(V.C.blue)
-                Button("设为默认") {
-                    LockArchive.setDefaultMac(item.mac)
-                }
-                .font(V.F.footnote).foregroundStyle(V.C.blue)
+                .accessibilityLabel("\(item.name) 的更多操作")
                 Spacer(minLength: 0)
             }
         }
         .frame(minHeight: V.List.rowMinHeight)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        // List 行：保留「更多操作」Menu，同时把两个动作也放上滑动动作
+        // （原实现只能点 ⋯ 菜单，行上没有快捷手势）。
+        .listRowInsets(EdgeInsets(top: V.S.gapS, leading: V.S.cardGutter,
+                                  bottom: V.S.gapS, trailing: V.S.cardGutter))
+        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+            Button {
+                LockArchive.setDefaultMac(item.mac)
+                AppToast.shared.show("已把「\(item.name)」设为默认锁", tone: .ok)
+            } label: {
+                Label("设为默认", systemImage: "pin")
+            }
+            .tint(V.C.blue)
+        }
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            Button {
+                groupEditMac = item.mac
+                groupDraft = groupOf(item.mac) == LockArchive.ungroupedLabel ? "" : groupOf(item.mac)
+                showGroupEdit = true
+            } label: {
+                Label("改分组", systemImage: "folder.badge.gearshape")
+            }
+            .tint(V.C.coral)
+        }
     }
 
     private func groupOf(_ mac: String) -> String {

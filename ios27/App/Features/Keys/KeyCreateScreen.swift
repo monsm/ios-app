@@ -48,29 +48,41 @@ struct KeyCreateScreen: View {
     var strength: (score: Int, hint: String) { KeysCode.strength(code) }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: V.S.gap16) {
-                header
-                KeysStepDots(total: 4, index: step, labels: stepLabels)
-                if busy, kind == .fingerprint {
-                    VBusyRow(text: "指纹录入中 · 已按 \(fpCount)/8 — 请把手指按在指纹头上再抬起")
-                }
+        // 全换系统（2026-11-02）：整页容器是系统 `List`（与前几轮同一配方）。
+        // 四步视图住在 `KeyCreateParts.swift` 的 extension 里（仍是 `VCard`），
+        // 所以这里只换**容器**：每步一张卡 → `plainRow()`；步进指示与导航行各占一行。
+        // 步间导航原来是贴着底部的横排，进 List 后作为最后一行（不再贴底，但仍在拇指可达区）。
+        List {
+            header.plainRow()
+            KeysStepDots(total: 4, index: step, labels: stepLabels)
+                .listRowInsets(EdgeInsets(top: 0, leading: V.S.cardPad, bottom: 0, trailing: V.S.cardPad))
+            if busy, kind == .fingerprint {
+                VBusyRow(text: "指纹录入中 · 已按 \(fpCount)/8 — 请把手指按在指纹头上再抬起")
+                    .listRowInsets(EdgeInsets(top: 0, leading: V.S.cardPad, bottom: 0, trailing: V.S.cardPad))
+            }
+            Group {
                 switch step {
                 case 0: typeStep
                 case 1: codeStep
                 case 2: periodStep
                 default: confirmStep
                 }
-                navRow
             }
-            .padding(.vertical, V.S.gap16)
+            .plainRow()
+            navRow
+                .listRowInsets(EdgeInsets(top: V.S.gapS, leading: V.S.cardPad, bottom: V.S.gapS, trailing: V.S.cardPad))
         }
+        .listStyle(.insetGrouped)
+        .listSectionSpacing(V.S.gap16)
+        .scrollContentBackground(.hidden)
+        .contentMargins(.top, V.S.gap16, for: .scrollContent)
+        .contentMargins(.bottom, V.S.gapL, for: .scrollContent)
         .background(CanvasBackground())
-        .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle(isEdit ? "改造凭证" : "新增凭证")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             consumeRoute()
+            consumeKindPreset()
             readClipboardOnce()
         }
     }
@@ -95,7 +107,6 @@ struct KeyCreateScreen: View {
                 Spacer(minLength: 0)
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
     }
@@ -103,6 +114,20 @@ struct KeyCreateScreen: View {
     private var ownerName: String? {
         guard let owner else { return nil }
         return app.members.first { $0.id == owner }?.name ?? DB.member(owner)?.name
+    }
+
+    /// 调用方预置「要新建哪一种凭证」的整型键（门页「录指纹」磁贴会置 2 = 指纹）。
+    /// 读完即清零 —— 否则下次从别处进「新增凭证」会莫名落在指纹那一步。
+    private static let kindPresetKey = "kf_keycreate_kind"
+
+    private func consumeKindPreset() {
+        guard !isEdit else { return }
+        let preset = DB.store.getInt(Self.kindPresetKey, 0)
+        guard preset != 0 else { return }
+        DB.store.setInt(Self.kindPresetKey, 0)        // 读完即清零
+        guard preset >= 0, preset < kinds.count else { return }
+        kindIndex = preset
+        step = 0
     }
 
     private func consumeRoute() {
@@ -167,7 +192,6 @@ struct KeyCreateScreen: View {
                 .accessibilityLabel(nextTitle)
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var nextTitle: String {

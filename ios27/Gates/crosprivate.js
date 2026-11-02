@@ -52,8 +52,12 @@ for (const f of files) {
   }
 
   for (const name of privates) {
-    // 在 Parts 里以成员访问形式出现（名字前后是词边界）
-    const re = new RegExp('\\b' + name + '\\b');
+    // 2026-11-02 修正：原来只要词边界命中就判失败，于是 `CredentialOrg.ownerName(...)` 这种
+    // **别的类型上的同名成员**会被误判成"跨文件访问 private"。真正会编译失败的只有
+    // 「裸引用」或 `self.name` 这两种形态 —— 被 `.` 前缀的（`X.name`）属于限定访问，不是本类型的成员。
+    // 2026-11-02 二次修正：`} header: {` / `{ header }` 是 SwiftUI 的 Section 语法糖，
+    // 不是成员访问。排除「名字后面紧跟冒号」的形态（那是标签而不是属性读取）。
+    const re = new RegExp('(?<![\\w.])' + name + '\\b(?![\\s]*:)');
     if (re.test(partsSrc)) {
       findings.push(path.relative(APP, f).split(path.sep).join('/') + ' 访问了 ' +
         path.relative(APP, ownerFile).split(path.sep).join('/') + ' 里 private 的 ' + name);

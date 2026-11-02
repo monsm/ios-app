@@ -29,14 +29,13 @@ struct VOutlineButton: View {
             // 同 `VActionButton`：标题随 Dynamic Type 放大，固定 50pt 会裁字。
             .padding(.vertical, V.S.gapS)
             .frame(minHeight: V.Action.height)
-            .overlay {
-                RoundedRectangle(cornerRadius: V.R.action, style: .continuous)
-                    .strokeBorder(V.C.tabEdge, lineWidth: V.S.hair)
-            }
             .contentShape(.rect)
         }
-        // 2026-11-01：同 `VActionButton` —— `.plain` 在 iOS 上无按压反馈；76 处次要按钮一次覆盖。
-        .buttonStyle(PressStyle())
+        // 全换系统（2026-11-02）：次级按钮交给系统 `GlassButtonStyle`（iOS 26+）。
+        // 描边/底色/按压反馈全部由系统给，本仓不再自绘 strokeBorder。
+        // 注意：同屏玻璃按钮要克制（HIG: use Liquid Glass sparingly），一屏 5–6 个描边按钮的
+        // 场景（BackupScreen / HardwareScreen）后续应合并成 Menu，不在本组件里一刀切。
+        .buttonStyle(GlassButtonStyle())
         .accessibilityLabel(title)
     }
 }
@@ -160,6 +159,8 @@ struct VFieldRow: View {
                 .foregroundStyle(V.C.text2)
         }
         .frame(minHeight: V.Metric.searchRow)
+        // 进系统 List 后行内边距与卡片 gutter 对齐（非 List 容器里是 no-op）。
+        .listRowInsets(EdgeInsets(top: 0, leading: V.S.cardPad, bottom: 0, trailing: V.S.cardPad))
     }
 }
 
@@ -172,25 +173,30 @@ struct VValueRow: View {
     var note: String? = nil
 
     var body: some View {
-        VStack(alignment: .leading, spacing: V.S.gapXXS) {
-            HStack(alignment: .firstTextBaseline, spacing: V.S.gapS) {
+        // 全换系统（2026-11-02）：标签/读数对交给系统 `LabeledContent` ——
+        // 左右对齐、基线、Dynamic Type 与 VoiceOver 的「标签 + 值」朗读语义都由系统给，
+        // 本仓不再用「Text + Spacer + Text」手工摆。
+        LabeledContent {
+            Text(value)
+                .font(mono ? V.F.legendLabelStrong.monospacedDigit() : V.F.legendLabel)
+                .foregroundStyle(tint)
+                .multilineTextAlignment(.trailing)
+        } label: {
+            VStack(alignment: .leading, spacing: V.S.gapXXS) {
                 Text(label)
                     .font(V.F.rowDetail)
                     .foregroundStyle(V.C.text3)
-                Spacer(minLength: V.S.gapS)
-                Text(value)
-                    .font(mono ? V.F.legendLabelStrong.monospacedDigit() : V.F.legendLabel)
-                    .foregroundStyle(tint)
-                    .multilineTextAlignment(.trailing)
-            }
-            if let note, !note.isEmpty {
-                Text(note)
-                    .font(V.F.footnote)
-                    .foregroundStyle(V.C.text3)
-                    .fixedSize(horizontal: false, vertical: true)
+                if let note, !note.isEmpty {
+                    Text(note)
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text3)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
         .frame(minHeight: V.List.rowMinHeight)
+        // 同 VListRow：List 里与卡片 gutter 对齐。
+        .listRowInsets(EdgeInsets(top: 0, leading: V.S.cardPad, bottom: 0, trailing: V.S.cardPad))
         .accessibilityElement(children: .combine)
     }
 }
@@ -218,9 +224,7 @@ struct VReadingGrid: View {
         VStack(spacing: 0) {
             ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
                 if index > 0 {
-                    Rectangle()
-                        .fill(V.C.hairline)
-                        .frame(height: V.S.hair)
+                    Divider()
                         .padding(.vertical, V.S.gapMS)
                 }
                 HStack(alignment: .top, spacing: V.S.gapMS) {
@@ -273,7 +277,7 @@ struct VTextFieldRow: View {
             .textFieldStyle(.plain)
             .autocorrectionDisabled()
             .textInputAutocapitalization(.never)
-            Rectangle().fill(V.C.hairline).frame(height: V.S.hair)
+            Divider()
         }
         .frame(minHeight: V.List.rowMinHeight)
         .accessibilityElement(children: .contain)
@@ -310,10 +314,10 @@ struct VTag: View {
     }
 }
 
-/// 卡内分隔线间距统一版：V7 的 VDivider 无内外边距，这里只包一层呼吸。
+/// 卡内分隔线间距统一版。**全换系统（2026-11-02）**：走系统 `Divider()`，只保留呼吸间距。
 struct VRowDivider: View {
     var body: some View {
-        VDivider().padding(.vertical, V.S.gapXXS)
+        Divider().padding(.vertical, V.S.gapXXS)
     }
 }
 
@@ -437,5 +441,50 @@ struct VBusyRow: View {
             Spacer(minLength: 0)
         }
         .frame(minHeight: V.Metric.searchRow)
+    }
+}
+// MARK: - List 行内嵌任意视图
+
+extension View {
+    /// 把任意视图放进系统 `List` 时，抹掉行内边距 / 分隔线 / 行背景 ——
+    /// 让「卡片」在 List 里仍保持原来的样子，而滚动与边缘效果交给系统。
+    ///
+    /// 用途：门页 / 设置页这类「整页一个 List、但每行是一张卡片」的布局。
+    /// 不用这个的话，卡片会被 List 的默认 inset 再缩一圈、并多出一条系统分隔线。
+    func plainRow() -> some View {
+        self
+            .listRowInsets(EdgeInsets())
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+    }
+
+    /// **带 gutter 的卡片行**：用于 `.listStyle(.plain)` 的页面。
+    ///
+    /// `.plain` 样式没有 insetGrouped 自带的左右留白，而 `plainRow()` 又把行内边距抹成 0 ——
+    /// 两者一起用会让卡片**贴到屏幕左右边缘**。这里补回页面 gutter，卡片内部再靠 `VCard` 自己的
+    /// `cardPad` 撑开文字，与改前的观感一致。
+    ///
+    /// 判据：页面是 `.listStyle(.plain)` + 卡片走 `plainRow()` ⇒ 用这个，不要用 `plainRow()`。
+    /// 页面是 `.listStyle(.insetGrouped)` ⇒ 系统已经给左右留白，用 `plainRow()` 即可。
+    func cardRow(gutter: CGFloat = V.S.pageGutter) -> some View {
+        self
+            .listRowInsets(EdgeInsets(top: 0, leading: gutter, bottom: 0, trailing: gutter))
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+    }
+
+    /// **页头行**：整宽内容（页头 / 芯片行 / 搜索框 / 提示条），但要与卡片**同一条左右基准线**。
+    ///
+    /// 为什么需要它：改前的 ScrollView 版里，页头和卡片都各自带 `.padding(.horizontal, pageGutter)`，
+    /// 所以两者左边线对齐在 16pt。换成 List 后卡片走 `cardRow()`（16pt）、页头走 `plainRow()`（0pt），
+    /// **页头会比卡片更靠边**。这里把 16pt 补回来，保持改前的对齐关系。
+    ///
+    /// 与 `cardRow()` 的区别只是语义：页头不是卡片，不该有"行"的视觉含义；实现上两者相同。
+    func headerRow(gutter: CGFloat = V.S.pageGutter) -> some View {
+        self
+            .padding(.horizontal, gutter)
+            .listRowInsets(EdgeInsets())
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
     }
 }

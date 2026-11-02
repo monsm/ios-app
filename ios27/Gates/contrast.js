@@ -16,9 +16,12 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
+// 2026-11-02：旧令牌层 Design/Tokens.swift 已删除（全仓 0 消费者，T/Ink/Signal/State 只剩定义）。
+// 保留常量名以免下面整段逻辑大改，但指向已不存在的路径时会自动跳过。
 const TOKENS = path.join(ROOT, 'App', 'Design', 'Tokens.swift');
 const V7_TOKENS = path.join(ROOT, 'App', 'Design', 'V7', 'V7Tokens.swift');
-const src = fs.readFileSync(TOKENS, 'utf8');
+// 旧令牌层已删除：文件不存在时视为「没有旧色对」，只核算 V7 色板。
+const src = fs.existsSync(TOKENS) ? fs.readFileSync(TOKENS, 'utf8') : '';
 const v7src = fs.readFileSync(V7_TOKENS, 'utf8');
 
 // 解析 Color.dual(light: 0xXXXXXX, dark: 0xXXXXXX)
@@ -80,31 +83,36 @@ function check(name, fg, bg, min) {
   }
 }
 
+// 旧令牌层已删除（2026-11-02）：以下整段「旧色对」核算在 DUAL 为空时自动跳过，
+// 因为那些令牌已不存在，继续核算只会报「令牌缺失」。V7 色板核算不受影响。
+const LEGACY = Object.keys(DUAL).length > 0;
+function legacyCheck(name, fg, bg, min) { if (LEGACY) check(name, fg, bg, min); }
+
 // —— 旧令牌正文（4.5:1）
-check('正文 ink / plate', 'ink', 'plate', 4.5);
-check('正文 ink / paper', 'ink', 'paper', 4.5);
-check('正文 ink / plateAlt', 'ink', 'plateAlt', 4.5);
-check('次文本 inkSub / plate', 'inkSub', 'plate', 4.5);
-check('次文本 inkSub / paper', 'inkSub', 'paper', 4.5);
-check('次文本 inkSub / plateAlt', 'inkSub', 'plateAlt', 4.5);
-check('品牌字 signal / plate', 'base', 'plate', 4.5);
-check('品牌字 signal / paper', 'base', 'paper', 4.5);
-check('注意字 attention / plate', 'attention', 'plate', 4.5);
-check('危险字 critical / plate', 'critical', 'plate', 4.5);
-check('onSignal / signal', 'on', 'base', 4.5);
+legacyCheck('正文 ink / plate', 'ink', 'plate', 4.5);
+legacyCheck('正文 ink / paper', 'ink', 'paper', 4.5);
+legacyCheck('正文 ink / plateAlt', 'ink', 'plateAlt', 4.5);
+legacyCheck('次文本 inkSub / plate', 'inkSub', 'plate', 4.5);
+legacyCheck('次文本 inkSub / paper', 'inkSub', 'paper', 4.5);
+legacyCheck('次文本 inkSub / plateAlt', 'inkSub', 'plateAlt', 4.5);
+legacyCheck('品牌字 signal / plate', 'base', 'plate', 4.5);
+legacyCheck('品牌字 signal / paper', 'base', 'paper', 4.5);
+legacyCheck('注意字 attention / plate', 'attention', 'plate', 4.5);
+legacyCheck('危险字 critical / plate', 'critical', 'plate', 4.5);
+legacyCheck('onSignal / signal', 'on', 'base', 4.5);
 
 // —— 旧令牌非文本 UI（3:1）
-check('描边 hairline / plate（UI 边界）', 'hairline', 'plate', 1.25);
-check('描边 hairline / paper（UI 边界）', 'hairline', 'paper', 1.25);
-check('状态点 attention / plate', 'attention', 'plate', 3);
-check('状态点 critical / plate', 'critical', 'plate', 3);
-check('状态点 signal / plate', 'base', 'plate', 3);
-check('读数 ink / plate（大字号）', 'ink', 'plate', 3);
-check('读数 attention / plate（大字号）', 'attention', 'plate', 3);
-check('单位小字 inkFaint / plate', 'inkFaint', 'plate', 4.5);
-check('单位小字 inkFaint / paper', 'inkFaint', 'paper', 4.5);
-check('单位小字 inkFaint / plateAlt', 'inkFaint', 'plateAlt', 4.5);
-check('次文本 inkSub / plateAlt', 'inkSub', 'plateAlt', 4.5);
+legacyCheck('描边 hairline / plate（UI 边界）', 'hairline', 'plate', 1.25);
+legacyCheck('描边 hairline / paper（UI 边界）', 'hairline', 'paper', 1.25);
+legacyCheck('状态点 attention / plate', 'attention', 'plate', 3);
+legacyCheck('状态点 critical / plate', 'critical', 'plate', 3);
+legacyCheck('状态点 signal / plate', 'base', 'plate', 3);
+legacyCheck('读数 ink / plate（大字号）', 'ink', 'plate', 3);
+legacyCheck('读数 attention / plate（大字号）', 'attention', 'plate', 3);
+legacyCheck('单位小字 inkFaint / plate', 'inkFaint', 'plate', 4.5);
+legacyCheck('单位小字 inkFaint / paper', 'inkFaint', 'paper', 4.5);
+legacyCheck('单位小字 inkFaint / plateAlt', 'inkFaint', 'plateAlt', 4.5);
+legacyCheck('次文本 inkSub / plateAlt', 'inkSub', 'plateAlt', 4.5);
 
 function blend(fg, bg, a) {
   const f = rgb(fg), b = rgb(bg);
@@ -112,6 +120,7 @@ function blend(fg, bg, a) {
   return ((o[0] << 16) | (o[1] << 8) | o[2]).toString(16).padStart(6, '0').toUpperCase();
 }
 function checkEdge(name, bgName, alpha, min) {
+  if (!LEGACY) return;
   for (const mode of MODES) {
     const base = DUAL['base']?.[mode];
     const bg = DUAL[bgName]?.[mode];
@@ -126,8 +135,8 @@ checkEdge('选中描边 edge / plate', 'plate', 0.75, 3);
 checkEdge('选中描边 edge / paper', 'paper', 0.75, 3);
 
 // —— 旧令牌层级差
-check('层级 ink / inkSub 至少 1.3:1', 'ink', 'inkSub', 1.3);
-check('层级 inkSub / inkFaint 至少 1.4:1', 'inkSub', 'inkFaint', 1.4);
+legacyCheck('层级 ink / inkSub 至少 1.3:1', 'ink', 'inkSub', 1.3);
+legacyCheck('层级 inkSub / inkFaint 至少 1.4:1', 'inkSub', 'inkFaint', 1.4);
 
 // —— V7 色板（真实 rgb 值，不再让 V7 逃逸）
 function v7Hex(token, mode) {

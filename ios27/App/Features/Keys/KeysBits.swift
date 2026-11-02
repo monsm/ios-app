@@ -13,26 +13,28 @@ struct KeysMaskedCode: View {
     @Binding var revealed: Set<Int>
 
     var body: some View {
-        HStack(spacing: V.S.gapXS) {
-            ForEach(Array(value.enumerated()), id: \.offset) { item in
-                let index = item.offset
-                let char = item.element
-                let on = revealed.contains(index)
-                Button {
-                    if on {
-                        revealed.remove(index)
-                    } else {
-                        revealed.insert(index)
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: V.S.gapXS) {
+                ForEach(Array(value.enumerated()), id: \.offset) { item in
+                    let index = item.offset
+                    let char = item.element
+                    let on = revealed.contains(index)
+                    Button {
+                        if on {
+                            revealed.remove(index)
+                        } else {
+                            revealed.insert(index)
+                        }
+                    } label: {
+                        Text(on ? String(char) : "•")
+                            .font(V.F.sans(size, weight: .medium))
+                            .foregroundStyle(on ? V.C.text1 : V.C.text2)
+                            .frame(minWidth: 0, minHeight: V.Hit.min)
+                            .contentShape(.rect)
                     }
-                } label: {
-                    Text(on ? String(char) : "•")
-                        .font(V.F.sans(size, weight: .medium))
-                        .foregroundStyle(on ? V.C.text1 : V.C.text2)
-                        .frame(minWidth: V.S.gapXXL, minHeight: V.Hit.min)
-                        .contentShape(.rect)
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(on ? "第 \(index + 1) 位，\(String(char))" : "第 \(index + 1) 位，点按显示")
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel(on ? "第 \(index + 1) 位，\(String(char))" : "第 \(index + 1) 位，点按显示")
             }
         }
         .accessibilityElement(children: .contain)
@@ -116,47 +118,10 @@ struct KeysOwnerRow: View {
     }
 }
 
-// MARK: - 次级入口 / 动作行
-
-/// 次级入口行：图标 + 标题 + 一行说明 + chevron。面板内一行一条。
-struct KeysShortcutRow: View {
-    let title: String
-    let detail: String
-    let symbol: String
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: V.S.gapMS) {
-                Image(systemName: symbol)
-                    .font(V.F.icon18)
-                    .foregroundStyle(V.C.text2)
-                    .frame(width: V.Icon.xl, alignment: .leading)
-                    // 装饰性图标：语义由相邻文字承载（此前这里写了两遍 `accessibilityHidden`）
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: V.S.gapXXS) {
-                    Text(title)
-                        .font(V.F.body)
-                        .foregroundStyle(V.C.text1)
-                    Text(detail)
-                        .font(V.F.unit)
-                        .foregroundStyle(V.C.text2)
-                        .lineLimit(1)
-                }
-                Spacer(minLength: V.S.gapS)
-                Image(systemName: "chevron.right")
-                    .font(V.F.icon15Medium)
-                    .foregroundStyle(V.C.text3)
-                    .accessibilityHidden(true)
-            }
-            .frame(minHeight: V.Hit.min)
-            .contentShape(.rect)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(title)
-        .accessibilityHint(detail)
-    }
-}
+// MARK: - 动作行
+//
+// 2026-11-02「全换系统」：`KeysShortcutRow`（自绘图标+标题+说明+chevron 的次级入口行）全仓 0 调用，
+// 已删 —— 活的实现是 `V7Extras.swift` 的 `VListRow`（换 `List` 后由系统画 chevron）。
 
 /// 动作行：图标 + 标题，tint 决定语义（危险动作用 State.critical）。右侧可带一枚读数。
 struct KeysActionRow: View {

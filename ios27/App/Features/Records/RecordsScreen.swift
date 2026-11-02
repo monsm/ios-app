@@ -28,6 +28,8 @@ struct RecordsScreen: View {
     @State private var readAt: Int64?
     @State private var reading = false
     @State private var readNote: String?
+    /// 「全部锁」模式下读取会被早退 —— 给一个直接切到当前锁并读取的出口，而不是只留一句话。
+    @State private var offerCurrentLockRead = false
     @State private var flash: String?
 
     // MARK: - 派生（全部是 RecordsModels 的纯函数）
@@ -89,36 +91,46 @@ struct RecordsScreen: View {
 
     var body: some View {
         ScrollViewReader { proxy in
-            ScrollView {
-                VStack(alignment: .leading, spacing: V.S.gapM) {
-                    header
+            // 2026-11-02（R2 全换系统）：页面容器从 ScrollView + VStack 换成系统 List。
+            // 台账时间线必须是 `Section(header:)` 的一天一段，而 List 不能嵌在 ScrollView 里
+            // （内层会自成滚动区）—— 所以整页统一进 List，其余卡片作为"整块行"放进来，
+            // 行内边距/底色/分隔线由 ledgerCardRow() 清掉，卡片外观保持不变。
+            List {
+                Section {
+                    header.ledgerCardRow()
                     if app.lock == nil {
-                        noLockCard
+                        noLockCard.ledgerCardRow()
                     } else {
-                        activityCard
-                        miniGrid
-                        secondGrid
-                        searchCard
-                        if visitorOnly { visitorCard }
-                        if let day = route.dayFocus { dayFocusCard(day) }
+                        activityCard.ledgerCardRow()
+                        miniGrid.ledgerCardRow()
+                        secondGrid.ledgerCardRow()
+                        searchCard.ledgerCardRow()
+                        if visitorOnly { visitorCard.ledgerCardRow() }
+                        if let day = route.dayFocus { dayFocusCard(day).ledgerCardRow() }
                         if reading {
-                            busyCard
+                            busyCard.ledgerCardRow()
                         } else if entries.isEmpty {
-                            emptyLedgerCard
+                            emptyLedgerCard.ledgerCardRow()
                         } else if filtered.isEmpty {
-                            emptyFilteredCard
-                        } else {
-                            timeline
+                            emptyFilteredCard.ledgerCardRow()
                         }
-                        if let note = readNote { noteCard(note) }
-                        overlayCard
                     }
                 }
-                .padding(.top, V.Page.topSpace)
-                .padding(.bottom, V.S.gapL)
+                if app.lock != nil, !reading, !entries.isEmpty, !filtered.isEmpty {
+                    timelineSections
+                }
+                if app.lock != nil {
+                    Section {
+                        if let note = readNote { noteCard(note).ledgerCardRow() }
+                        overlayCard.ledgerCardRow()
+                    }
+                }
             }
+            .listStyle(.insetGrouped)
+            .listSectionSpacing(sectionSpacing)
+            .scrollContentBackground(.hidden)
+            .contentMargins(.top, V.S.gapM, for: .scrollContent)
             .background(V.C.bg.ignoresSafeArea())
-            .toolbarVisibility(.hidden, for: .navigationBar)
             .onAppear {
                 reload()
                 consume()
@@ -147,8 +159,20 @@ struct RecordsScreen: View {
                 route.flashID = nil
             }
         }
+        .navigationTitle("台账")
+        .navigationBarTitleDisplayMode(.large)
+        .searchable(text: $query, prompt: Text("成员 / 凭证 / +指纹 -临时码"))
         .task { await app.reload(refreshStatus: false) }
-        .sheet(isPresented: $showAlarmKinds) { AlarmKindsSheet() }
+        .sheet(isPresented: $showAlarmKinds) {
+            AlarmKindsSheet()
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
+        // 换锁范围后，"切到当前锁并读取"这条出口就过期了 —— 先收起，避免留一个点不动的按钮。
+        .onChange(of: lockScope) { _, _ in
+            offerCurrentLockRead = false
+            reload()          // 换范围要重新装配 entries（原来是 chip 的点击闭包里调的）
+        }
         .onChange(of: scope) { _, _ in saveFilters() }
         .onChange(of: member) { _, _ in saveFilters() }
         .onChange(of: alarmKinds) { _, _ in
@@ -165,9 +189,7 @@ struct RecordsScreen: View {
     private var header: some View {
         HStack(alignment: .top, spacing: V.S.gapM) {
             VStack(alignment: .leading, spacing: V.S.gapXXS) {
-                Text("记录")
-                    .font(V.F.titleC)
-                    .foregroundStyle(V.C.text1)
+                // 页面标题由系统大标题（.navigationTitle("台账")）承担；页内只留日期与本人头像。
                 Text(dateLine)
                     .font(V.F.bedLabel)
                     .foregroundStyle(V.C.text3)
@@ -183,7 +205,6 @@ struct RecordsScreen: View {
             .frame(width: V.Metric.avatar, height: V.Metric.avatar)
             .accessibilityHidden(true)
         }
-        .padding(.horizontal, V.S.pageGutterC)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
     }
@@ -206,51 +227,65 @@ struct RecordsScreen: View {
                 HStack(alignment: .center, spacing: V.S.gapL) {
                     VRingStack(rings: activityRings, size: V.Ring.referenceOuter)
                     VStack(alignment: .leading, spacing: V.S.gapM) {
-                        legendRow(title: "开锁", value: "\(todayOpenCount)", total: 24, unit: "次", color: V.C.red)
-                        legendRow(title: "家庭", value: "\(todayFamilyCount)", total: 12, unit: "次", color: V.C.green)
-                        legendRow(title: "临时", value: "\(todayTempCount)", total: 4, unit: "次", color: V.C.cyan)
+                        // 分母不再是编造的 24/12/4：三环都是「该类占今日总记录的比例」，
+                        // 图例只报真实条数（旧实现把常数当上限，等于每天固定显示 24 次开锁额度）。
+                        legendRow(title: "开锁", value: "\(todayOpenCount)", share: activityShare(todayOpenCount), unit: "次", color: V.C.red)
+                        legendRow(title: "家庭", value: "\(todayFamilyCount)", share: activityShare(todayFamilyCount), unit: "次", color: V.C.green)
+                        legendRow(title: "临时", value: "\(todayTempCount)", share: activityShare(todayTempCount), unit: "次", color: V.C.cyan)
                     }
                 }
                 .padding(.top, V.S.gapS)
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
+    }
+
+    /// 今日记录总条数：三环与图例共用的唯一分母。
+    private var todayTotal: Int { max(todayEntries.count, 0) }
+
+    private func activityShare(_ count: Int) -> Double {
+        guard todayTotal > 0 else { return 0 }
+        return min(1, Double(count) / Double(todayTotal))
     }
 
     private var activityRings: [(Double, Color)] {
         [
-            (min(1, Double(todayOpenCount) / 24), V.C.red),
-            (min(1, Double(todayFamilyCount) / 12), V.C.green),
-            (min(1, Double(todayTempCount) / 4), V.C.cyan)
+            (activityShare(todayOpenCount), V.C.red),
+            (activityShare(todayFamilyCount), V.C.green),
+            (activityShare(todayTempCount), V.C.cyan)
         ]
     }
 
-    private func legendRow(title: String, value: String, total: Int, unit: String, color: Color) -> some View {
+    private func legendRow(title: String, value: String, share: Double, unit: String, color: Color) -> some View {
         VStack(alignment: .leading, spacing: V.S.gapXXS) {
             Text(title)
                 .font(V.F.legendLabel)
                 .foregroundStyle(V.C.text1)
             HStack(alignment: .firstTextBaseline, spacing: V.S.gapXS) {
-                Text("\(value)/\(String(total))")
+                Text(value)
                     .font(V.F.legendValue)
                     .foregroundStyle(color)
                     .monospacedDigit()
                 Text(unit)
                     .font(V.F.legendLabel)
                     .foregroundStyle(V.C.text7)
+                Text("\(Int((share * 100).rounded()))%")
+                    .font(V.F.legendLabel)
+                    .foregroundStyle(V.C.text3)
+                    .monospacedDigit()
             }
         }
         .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title) \(value) \(unit)，占今日 \(Int((share * 100).rounded()))%")
     }
 
     // MARK: - 2×2 微卡（R3）
 
+    /// R7（ui-ia §4.1）：原来这里还有一张「开锁次数」微卡，与上面三环卡的「开锁」图例（`:232`）
+    /// 是同一份数据、同一页出现两次 —— 已删微卡那处，只留三环图例（它带占比，信息量更大）。
     private var miniGrid: some View {
         HStack(alignment: .top, spacing: V.S.gapM) {
-            miniCard(title: "开锁次数", value: "\(todayOpenCount)", tint: V.C.purple, bars: todayBins)
             miniCard(title: "异常尝试", value: "\(todayAlarmCount)", tint: V.C.miniBlue, bars: alarmBins)
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     private func miniCard(title: String, value: String, tint: Color, bars: [Double]) -> some View {
@@ -261,10 +296,6 @@ struct RecordsScreen: View {
                         .font(V.F.miniTitle)
                         .foregroundStyle(V.C.text1)
                     Spacer(minLength: 0)
-                    Image(systemName: "chevron.right")
-                        .font(V.F.chipLabelStrong)
-                        .foregroundStyle(V.C.text3)
-                        .accessibilityHidden(true)
                 }
                 Text("今天")
                     .font(V.F.legendLabel)
@@ -282,10 +313,7 @@ struct RecordsScreen: View {
         .frame(maxWidth: .infinity)
     }
 
-    private var todayBins: [Double] {
-        bins(for: todayEntries)
-    }
-
+    // R7：`todayBins` 随「开锁次数」微卡一起删（那张卡是它唯一的消费者，留着就是死代码）。
     private var alarmBins: [Double] {
         bins(for: todayEntries.filter { $0.tone == .attention || $0.tone == .critical })
     }
@@ -306,7 +334,6 @@ struct RecordsScreen: View {
             recentEventCard
             streakCard
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     private var recentEventCard: some View {
@@ -317,10 +344,6 @@ struct RecordsScreen: View {
                         .font(V.F.miniTitle)
                         .foregroundStyle(V.C.text1)
                     Spacer(minLength: 0)
-                    Image(systemName: "chevron.right")
-                        .font(V.F.chipLabelStrong)
-                        .foregroundStyle(V.C.text3)
-                        .accessibilityHidden(true)
                 }
                 if let latest = entries.first {
                     ZStack {
@@ -364,36 +387,22 @@ struct RecordsScreen: View {
                         .font(V.F.miniTitle)
                         .foregroundStyle(V.C.text1)
                     Spacer(minLength: 0)
-                    Image(systemName: "chevron.right")
-                        .font(V.F.chipLabelStrong)
-                        .foregroundStyle(V.C.text3)
-                        .accessibilityHidden(true)
                 }
-                ZStack {
-                    Circle()
-                        .fill(
-                            AngularGradient(
-                                gradient: Gradient(colors: [V.C.red, V.C.pink, V.C.red]),
-                                center: .center
-                            )
-                        )
-                    Circle()
-                        .fill(V.C.cardAlt)
-                        .padding(V.S.gapS)
-                    Circle()
-                        .fill(V.C.text3.opacity(0.35))
-                        .padding(V.S.gapXL)
-                }
-                .frame(width: V.Metric.medal, height: V.Metric.medal)
-                .frame(maxWidth: .infinity)
-                .padding(.top, V.S.gapS)
-                Text("连续 \(streakDays) 天")
+                // Z2（ui-ia §4.4）：原三层同心圆奖牌是纯装饰 —— 没有数据源，只是「看起来像成绩」。
+                // 已删圆环，把「连续 N 天」升为这张微卡的主读数：真数、可读，占位不再靠圆。
+                Text("\(streakDays)")
+                    .font(V.F.miniBig)
+                    .foregroundStyle(V.C.text1)
+                    .monospacedDigit()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, V.S.gapXS)
+                Text("连续天数")
                     .font(V.F.microMedium)
-                    .foregroundStyle(V.C.text7)
-                    .frame(maxWidth: .infinity)
-                Text("无异常")
+                    .foregroundStyle(V.C.text4)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text(todayAlarmCount == 0 ? "今日无异常" : "今日异常 \(todayAlarmCount) 次")
                     .font(V.F.microSmall)
-                    .foregroundStyle(V.C.text3)
+                    .foregroundStyle(todayAlarmCount == 0 ? V.C.text3 : V.C.warning)
                     .frame(maxWidth: .infinity)
                 Spacer(minLength: 0)
             }
@@ -462,50 +471,25 @@ struct RecordsScreen: View {
                     Spacer(minLength: 0)
                 }
                 .accessibilityElement(children: .combine)
-                HStack(spacing: V.S.gapS) {
-                    Image(systemName: "magnifyingglass")
-                        .font(V.F.cardBody)
-                        .foregroundStyle(V.C.text3)
-                        .accessibilityHidden(true)
-                    TextField("成员 / 凭证 / +指纹 -临时码", text: $query)
-                        .font(V.F.body)
-                        .foregroundStyle(V.C.text1)
-                        .textFieldStyle(.plain)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
-                        .tint(V.C.blue)
-                    if !query.isEmpty {
-                        Button {
-                            query = ""
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(V.F.cardBody)
-                                .foregroundStyle(V.C.text3)
-                                .accessibilityHidden(true)
-                        }
-                        .accessibilityLabel("清空检索")
+                // 输入框已交给系统搜索栏（.searchable）——这里只留筛选与读数。
+                Divider()
+                // 范围档（4 档固定）→ 系统分段控件（原来是自绘 chip 行）。
+                Picker("范围", selection: $scope) {
+                    ForEach(LedgerScope.allCases) { item in
+                        Text(item.rawValue).tag(item)
                     }
                 }
-                .frame(minHeight: V.Metric.searchRow)
-                Rectangle()
-                    .fill(V.C.hairline)
-                    .frame(height: V.S.hair)
-                ScrollView(.horizontal) {
-                    HStack(spacing: V.S.gapS) {
-                        ForEach(LedgerScope.allCases) { item in
-                            chip(title: item.rawValue, selected: item == scope) { scope = item }
-                        }
-                    }
-                }
-                .scrollIndicators(.hidden)
+                .pickerStyle(.segmented)
+                .labelsHidden()
                 HStack(spacing: V.S.gapS) {
-                    ForEach(RecordLockScope.allCases) { item in
-                        chip(title: item.rawValue, selected: item == lockScope) {
-                            lockScope = item
-                            reload()
+                    // 锁范围（2 档固定）→ 系统分段控件；换锁仍走右侧 Menu。
+                    Picker("锁范围", selection: $lockScope) {
+                        ForEach(RecordLockScope.allCases) { item in
+                            Text(item.rawValue).tag(item)
                         }
                     }
-                    Spacer(minLength: 0)
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
                     Menu {
                         ForEach(DB.keychains()) { kc in
                             Button(LockArchive.displayName(kc) + (DB.normalizeMac(kc.mac) == DB.normalizeMac(mac) ? " ✓" : "")) {
@@ -562,7 +546,6 @@ struct RecordsScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     private func chip(title: String, selected: Bool, action: @escaping () -> Void) -> some View {
@@ -581,42 +564,97 @@ struct RecordsScreen: View {
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
     }
 
-    // MARK: - 时间线（按自然日分组）
+    // MARK: - 时间线（按自然日分组 → List 的一天一段）
 
-    private var timeline: some View {
-        LazyVStack(alignment: .leading, spacing: timelineSpacing) {
-            ForEach(groups) { group in
-                VStack(alignment: .leading, spacing: V.S.gapS) {
-                    HStack(alignment: .firstTextBaseline, spacing: V.S.gapS) {
-                        Text(TimeFormat.dayTitle(group.dayKey))
-                            .font(V.F.cardTitle)
-                            .foregroundStyle(V.C.text1)
-                        Spacer(minLength: 0)
-                        Text("\(group.items.count) 条")
-                            .font(V.F.footnote)
-                            .foregroundStyle(V.C.text3)
-                            .monospacedDigit()
-                    }
-                    VCard {
-                        VStack(spacing: 0) {
-                            ForEach(Array(group.items.enumerated()), id: \.offset) { pair in
-                                if pair.offset > 0 { VDivider() }
-                                Button {
-                                    open(pair.element)
-                                } label: {
-                                    V7RecordRow(entry: pair.element)
-                                        .background(flash == pair.element.id ? V.C.blue.opacity(0.12) : Color.clear)
-                                }
-                                .buttonStyle(.plain)
-                                .id(pair.element.id)
-                                .accessibilityHint("打开这条记录的详情")
-                            }
-                        }
-                    }
+    /// 一天一段 `Section`，段头是日期 + 条数；行保留原点击行为与 flash 高亮。
+    @ViewBuilder
+    private var timelineSections: some View {
+        ForEach(groups) { group in
+            Section {
+                ForEach(group.items) { entry in
+                    entryRow(entry)
                 }
+            } header: {
+                dayHeader(group)
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
+    }
+
+    private func dayHeader(_ group: LedgerDayGroup) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: V.S.gapS) {
+            Text(TimeFormat.dayTitle(group.dayKey))
+                .font(V.F.cardTitle)
+                .foregroundStyle(V.C.text1)
+            Spacer(minLength: 0)
+            Text("\(group.items.count) 条")
+                .font(V.F.footnote)
+                .foregroundStyle(V.C.text3)
+                .monospacedDigit()
+        }
+        .textCase(nil)
+        .accessibilityAddTraits(.isHeader)
+    }
+
+    /// 一行台账。滑动动作（本机标注，全部只改本机、不写门锁）：
+    /// 左滑出「标旗」；右滑出「处置 / 删除本机标注」。
+    /// 之前 `.swipeActions` 全仓 0 处 —— 本机标注只能在详情页逐条改，时间线上没有入口。
+    private func entryRow(_ entry: LedgerEntry) -> some View {
+        Button {
+            open(entry)
+        } label: {
+            V7RecordRow(entry: entry)
+                .background(flash == entry.id ? V.C.blue.opacity(0.12) : Color.clear)
+        }
+        .buttonStyle(.plain)
+        .listRowInsets(EdgeInsets(top: 0, leading: V.S.cardGutter, bottom: 0, trailing: V.S.cardGutter))
+        .listRowBackground(V.C.card)
+        .id(entry.id)
+        .accessibilityHint("打开这条记录的详情")
+        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+            Button {
+                overlay.toggleFlag(entry.id)
+                AppToast.shared.show(overlay.isFlagged(entry.id) ? "已标旗" : "已取消标旗", tone: .ok)
+            } label: {
+                Label(overlay.isFlagged(entry.id) ? "取消标旗" : "标旗", systemImage: "flag.fill")
+            }
+            .tint(V.C.coral)
+        }
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            Button {
+                toggleDispose(entry)
+            } label: {
+                Label(overlay.isDisposed(entry.id) ? "撤销处置" : "已处置", systemImage: "checkmark.circle.fill")
+            }
+            .tint(V.C.rewardGreen)
+            Button(role: .destructive) {
+                clearAnnotations(entry)
+            } label: {
+                Label("删除本机标注", systemImage: "trash")
+            }
+        }
+    }
+
+    /// 处置来回切（与详情页同一份 overlay，口径一致）。
+    private func toggleDispose(_ entry: LedgerEntry) {
+        if overlay.isDisposed(entry.id) {
+            overlay.undoDispose(entry.id)
+            AppToast.shared.show("已撤销处置", tone: .ok)
+        } else {
+            overlay.dispose(entry.id, at: Int64(Date().timeIntervalSince1970 * 1000))
+            AppToast.shared.show("已标记为已处置", tone: .ok)
+        }
+    }
+
+    /// 删除这条记录的**全部本机标注**（备注 / 标旗 / 处置）；锁内日志一条都不动。
+    private func clearAnnotations(_ entry: LedgerEntry) {
+        let hasNote = !overlay.note(for: entry.id).isEmpty
+        let hasFlag = overlay.isFlagged(entry.id)
+        let hasDisp = overlay.isDisposed(entry.id)
+        if hasNote { overlay.setNote("", for: entry.id) }
+        if hasFlag { overlay.toggleFlag(entry.id) }
+        if hasDisp { overlay.undoDispose(entry.id) }
+        AppToast.shared.show(hasNote || hasFlag || hasDisp ? "已删除这条记录的本机标注" : "这条记录没有本机标注",
+                             tone: hasNote || hasFlag || hasDisp ? .ok : .info)
     }
 
     private func dayFocusCard(_ day: String) -> some View {
@@ -635,7 +673,6 @@ struct RecordsScreen: View {
                     .foregroundStyle(V.C.blue)
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     // MARK: - 空态 / 加载 / 提示
@@ -655,7 +692,6 @@ struct RecordsScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     private var emptyLedgerCard: some View {
@@ -673,7 +709,6 @@ struct RecordsScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     private var emptyFilteredCard: some View {
@@ -691,7 +726,6 @@ struct RecordsScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     private var busyCard: some View {
@@ -704,17 +738,28 @@ struct RecordsScreen: View {
                 Spacer(minLength: 0)
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     private func noteCard(_ note: String) -> some View {
         VCard {
-            Text(note)
-                .font(V.F.footnote)
-                .foregroundStyle(note.hasPrefix("已") ? V.C.rewardGreen : V.C.coral)
-                .fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: V.S.gapS) {
+                Text(note)
+                    .font(V.F.footnote)
+                    .foregroundStyle(note.hasPrefix("已") ? V.C.rewardGreen : V.C.coral)
+                    .fixedSize(horizontal: false, vertical: true)
+                if offerCurrentLockRead {
+                    VOutlineButton(title: "切到当前锁并读取", systemImage: "arrow.clockwise") {
+                        offerCurrentLockRead = false
+                        lockScope = .current
+                        selectedMac = ""
+                        Task { @MainActor in
+                            await Task.yield()
+                            await read()
+                        }
+                    }
+                }
+            }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     private var overlayCard: some View {
@@ -733,7 +778,6 @@ struct RecordsScreen: View {
                     .foregroundStyle(V.C.text3)
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     // MARK: - 动作（全部真改状态或真跳转）
@@ -851,10 +895,11 @@ struct RecordsScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
-    private var timelineSpacing: CGFloat {
+    /// 外观页「时间线行距」（kf_tl_gap）的真实消费点：
+    /// 原来是 LazyVStack 的 spacing；换 List 后落到 `.listSectionSpacing`（一天一段之间的节奏）。
+    private var sectionSpacing: CGFloat {
         switch DB.store.getString("kf_tl_gap") {
         case "tight": return V.S.gapS
         case "loose": return V.S.gapL
@@ -874,8 +919,10 @@ struct RecordsScreen: View {
         }
         if lockScope == .all {
             readNote = "全部锁模式只展示已缓存记录；要读锁内日志，先切到具体一把锁。"
+            offerCurrentLockRead = true
             return
         }
+        offerCurrentLockRead = false
         if !selectedMac.isEmpty, selectedMac != app.lock?.id {
             DB.currentMac = selectedMac
             app.overrideMac = selectedMac
@@ -942,6 +989,16 @@ struct RecordsScreen: View {
     }
 }
 
+// MARK: - List 行辅助
+
+private extension View {
+    /// List 里的「整块卡片」行。修饰符组合只写在 `V7Extras.plainRow()` 一处，
+    /// 这里只补「占满宽度、左对齐」—— 三份同样的 listRowInsets/背景/分隔线不再各写一遍。
+    func ledgerCardRow() -> some View {
+        self.frame(maxWidth: .infinity, alignment: .leading).plainRow()
+    }
+}
+
 // MARK: - v7 台账行（保留 LedgerEntry 的语义色）
 
 private struct V7RecordRow: View {
@@ -958,10 +1015,20 @@ private struct V7RecordRow: View {
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: V.S.gapM) {
-            Text(TimeDisplay.clock(entry.at))
-                .font(V.F.rowDetailStrong)
-                .foregroundStyle(V.C.text1)
-                .monospacedDigit()
+            VStack(alignment: .leading, spacing: 0) {
+                Text(TimeDisplay.clock(entry.at))
+                    .font(V.F.rowDetailStrong)
+                    .foregroundStyle(V.C.text1)
+                    .monospacedDigit()
+                // 「记录行加第二行完整日期」开关（kf_two_line_date）的真实消费点：
+                // 旧实现只有外观页自己的样例在调 TimeDisplay.dayLine，全仓没有第二个消费点。
+                if let dayLine = TimeDisplay.dayLine(entry.at) {
+                    Text(dayLine)
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text3)
+                        .monospacedDigit()
+                }
+            }
                 // 2026-11-01：`width: 48` → `minWidth: 48`。时间串用 `V.F.rowDetailStrong`
                 // （13pt，随 `.footnote` 缩放）—— 大字号下「23:59」会超过 48pt 被裁。
                 // `minWidth` 保住了默认档的对齐列宽，字号大时列随之变宽。

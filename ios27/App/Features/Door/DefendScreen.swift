@@ -49,30 +49,35 @@ struct DefendScreen: View {
     @State private var busy = false
     @State private var askConfirm = false
     @State private var outcome: String?
+    /// 结果行是否成功。与 `LockStatusScreen` 同一写法：不从文案里猜「失败」二字。
+    @State private var outcomeOK = true
 
     /// 时段步进器的一档 = 15 分钟（96 档覆盖一天）。
     private static let minuteStep = 15
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: V.S.gap16) {
-                header
-                if app.lock == nil {
-                    noLockPanel
-                } else {
-                    statusPanel
-                    modePanel
-                    if mode == .period {
-                        periodPanel
-                    }
-                    actionPanel
-                    effectPanel
+        // 2026-11-02（R4 全换系统）：纯 ScrollView + VStack 换系统 List（List 不能嵌 ScrollView）。
+        // 六个段落各成一张卡 → cardRow()（.plain 样式没有系统左右留白，cardRow 补回 pageGutter）；
+        // 页头是整宽内容 → headerRow()，与卡片同一条左基准线。
+        List {
+            header.headerRow()
+            if app.lock == nil {
+                noLockPanel.cardRow()
+            } else {
+                statusPanel.cardRow()
+                modePanel.cardRow()
+                if mode == .period {
+                    periodPanel.cardRow()
                 }
+                actionPanel.cardRow()
+                effectPanel.cardRow()
             }
-            .padding(.vertical, V.S.gap16)
         }
-        .background(CanvasBackground())
-        .scrollEdgeEffectStyle(.soft, for: .top)
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .contentMargins(.top, V.S.gap16, for: .scrollContent)
+        .contentMargins(.bottom, V.S.gapL, for: .scrollContent)
+        .background(V.C.bg.ignoresSafeArea())
         .navigationTitle("布防")
         .navigationBarTitleDisplayMode(.inline)
         .task { load() }
@@ -102,7 +107,6 @@ struct DefendScreen: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var savedMode: Mode {
@@ -139,7 +143,7 @@ struct DefendScreen: View {
     private var statusPanel: some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VSectionLabel(text: "当前布防", trailing: "cmd25")
+                VSectionLabel(text: "当前布防")
                 HStack(alignment: .firstTextBaseline, spacing: V.S.gapMS) {
                     Text(savedMode.title)
                         .font(V.F.display26)
@@ -162,7 +166,6 @@ struct DefendScreen: View {
                 .padding(.top, V.S.gapXS)
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 三档（真交互：点了就换选中态，并决定下面的表单出不出）
@@ -179,7 +182,6 @@ struct DefendScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func modeRow(_ m: Mode) -> some View {
@@ -229,7 +231,6 @@ struct DefendScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func stepRow(title: String, minutes: Binding<Int>) -> some View {
@@ -281,7 +282,7 @@ struct DefendScreen: View {
     private var actionPanel: some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VSectionLabel(text: "下发", trailing: "cmd25")
+                VSectionLabel(text: "下发")
                 if busy {
                     VBusyRow(text: mode == .off ? "正在撤防…" : "正在布防…")
                 } else {
@@ -301,15 +302,14 @@ struct DefendScreen: View {
                         .foregroundStyle(V.C.text3)
                 }
                 if let outcome {
-                    VStatusLine(tone: .ok, text: outcome)
+                    VStatusLine(tone: outcomeOK ? .ok : .critical, text: outcome)
                 }
-                Text("rc=0 只说明锁收了命令。锁端状态帧不带布防字段，所以这里不宣称「锁已进入布防」，只记本机与回执。")
+                Text("门锁已收到指令。锁端状态帧不带布防字段，所以这里不宣称「锁已进入布防」，只记本机与回执。")
                     .font(V.F.unit)
                     .foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var canApply: Bool {
@@ -346,7 +346,6 @@ struct DefendScreen: View {
                 effectLine("布防不能远程设置，也不能远程解除：必须站在门锁旁边做。")
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func effectLine(_ text: String) -> some View {
@@ -374,7 +373,6 @@ struct DefendScreen: View {
             }
             .padding(.vertical, V.S.gapXXL)
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 读写
@@ -410,9 +408,11 @@ struct DefendScreen: View {
                                   startMinute: startMinute,
                                   endMinute: endMinute,
                                   updatedAt: now)
+            outcomeOK = true
             outcome = mode == .off ? "已撤防（锁端回执成功）" : "已布防（锁端回执成功）"
             _ = kc
         } catch {
+            outcomeOK = false
             outcome = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
         busy = false
@@ -450,8 +450,6 @@ struct DefendScreen: View {
     }
 
     private var hairline: some View {
-        Rectangle()
-            .fill(V.C.hairline)
-            .frame(height: V.S.hair)
+        Divider()
     }
 }

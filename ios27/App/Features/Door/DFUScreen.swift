@@ -26,22 +26,25 @@ struct DFUScreen: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: V.S.gap16) {
-                header
-                if app.lock == nil {
-                    noLockPanel
-                } else {
-                    versionPanel
-                    packagePanel
-                    if let pkg { packageDetailCard(pkg) }
-                    runPanel
-                }
+        // 2026-11-02（R4 全换系统）：纯 ScrollView 换系统 List；五段（版本 / 选包 / 包内容 / 升级）
+        // 各成一张卡，cardRow() 补回页面 gutter —— 卡片外观与改前一致。
+        List {
+            // A 类（整宽页头）：headerRow()
+            header.headerRow()
+            if app.lock == nil {
+                noLockPanel.cardRow()
+            } else {
+                versionPanel.cardRow()
+                packagePanel.cardRow()
+                if let pkg { packageDetailCard(pkg).cardRow() }
+                runPanel.cardRow()
             }
-            .padding(.vertical, V.S.gap16)
         }
-        .background(CanvasBackground())
-        .scrollEdgeEffectStyle(.soft, for: .top)
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .contentMargins(.top, V.S.gap16, for: .scrollContent)
+        .contentMargins(.bottom, V.S.gapL, for: .scrollContent)
+        .background(V.C.bg.ignoresSafeArea())
         .navigationTitle("固件升级")
         .navigationBarTitleDisplayMode(.inline)
         .interactiveDismissDisabled(phase == .running)
@@ -67,7 +70,6 @@ struct DFUScreen: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var headerTone: Tone {
@@ -97,7 +99,7 @@ struct DFUScreen: View {
     private var versionPanel: some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VSectionLabel(text: "版本", trailing: "cmd03")
+                VSectionLabel(text: "版本")
                 VReadingGrid(items: [
                     .init(label: "锁内固件", value: firmwareText),
                     .init(label: "包内版本", value: pkg?.version ?? "未识别",
@@ -107,7 +109,6 @@ struct DFUScreen: View {
                 SettingsNote(text: "本机离线，只能比对本地包与锁内版本；原版的服务端版本检查在离线版没有对应物。")
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var versionColor: Color {
@@ -134,26 +135,24 @@ struct DFUScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func packageDetailCard(_ p: FirmwarePackage) -> some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
                 VSectionLabel(text: "包内容")
-                VFieldRow(label: "固件主体", value: "\(p.binSize) B")
-                VFieldRow(label: "init packet", value: "\(p.datSize) B")
+                VFieldRow(label: "固件主体", value: byteText(p.binSize))
+                VFieldRow(label: "init packet", value: byteText(p.datSize))
                 VFieldRow(label: "包内版本", value: p.version ?? "未识别")
                 VFieldRow(label: "来源文件", value: p.sourceName, mono: false)
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var runPanel: some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VSectionLabel(text: "升级", trailing: "cmd22 / DFU")
+                VSectionLabel(text: "升级")
                 if phase == .running {
                     ProgressView(value: progress)
                     Text("\(Int(progress * 100))% · \(stateText)")
@@ -184,7 +183,6 @@ struct DFUScreen: View {
                 SettingsNote(text: "过程：校验包 → 下发 22 让锁进 DFU（会断开连接，属预期）→ 连 ZkDFU 广播 → 传固件 → 校验。全程请保持手机靠近门锁、不要切后台。")
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var noLockPanel: some View {
@@ -197,7 +195,6 @@ struct DFUScreen: View {
             }
             .padding(.vertical, V.S.gapXXL)
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func handleImport(_ result: Result<[URL], Error>) {
@@ -221,6 +218,13 @@ struct DFUScreen: View {
             pkg = nil
             phase = .failed
         }
+    }
+
+    /// 字节数换成人能读的单位。与备份工作室同一口径（那边是 private，故在本文件复制一份）。
+    private func byteText(_ n: Int) -> String {
+        if n >= 1_048_576 { return String(format: "%.1f MB", Double(n) / 1_048_576) }
+        if n >= 1024 { return String(format: "%.0f KB", Double(n) / 1024) }
+        return "\(n) B"
     }
 
     private func confirmStart() {

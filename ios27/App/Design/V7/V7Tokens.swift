@@ -23,6 +23,12 @@
 // 后来的人会以为它们是设计系统的一部分、不敢删、甚至照着它们挑新值。
 // 现在 tokens.js 对 C / F / M 三个枚举逐令牌检查消费点，再堆积会当场判红。
 //
+// 2026-11-02 R3 令牌清理：删掉 12 个「定义后零读取点」的令牌（判据：全仓 V.<ns>.<name> 读取 0，
+// 且枚举内部也没有裸名引用）：
+//   C.ok / F.titleC / F.chipLabelStrong / F.number30 / R.pill / H.row / Stroke.hair /
+//   M.sweep / Gauge.radius / Segmented.radius / Chart.axisLabelGap / Action.radius。
+// 其中 Stroke.hair 与 S.hair 曾经重复定义同一个 0.5pt —— 现在只留 S.hair（全 App 唯一线宽来源）。
+//
 // 动态字号：V.F 的每个命名档位都是 VFont（size + weight + relativeTo），
 // 由 VScaledFontModifier 的 @ScaledMetric 在渲染时按 Dynamic Type 缩放 —— 默认字号下
 // 仍是参考图的像素值，用户调大字号时跟着长大。页面里不允许再出现 V.F.sans(<数字>)。
@@ -113,6 +119,10 @@ enum V {
         static let chipBottom = dual(0xE9E9E4, 0x1C1C1C) // R1 芯片渐变下
         static let chipTopB = dual(0xFFFFFF, 0x29292B) // R2 芯片渐变上
         static let chipBottomB = dual(0xE9E9E4, 0x202022) // R2 芯片渐变下
+        // 参考 C 活动环暗轨（TOKENS 第 45 行：红 #33080F / 绿 #2E4A12 / 青 #16283A）
+        static let ringTrackRed = dual(0xF7DDE2, 0x33080F)
+        static let ringTrackGreen = dual(0xE5EFD3, 0x2E4A12)
+        static let ringTrackCyan = dual(0xD8E8F2, 0x16283A)
 
         static let text1 = dual(0x14161A, 0xFFFFFF)   // 主文本
         static let text2 = dual(0x4A5057, 0x919096)   // 正文（#828282 在卡底上只有 4.11:1）
@@ -186,17 +196,12 @@ enum V {
         // 语义色（V7 调色板内承接旧 State.*；不是装饰色）
         static let warning = dual(0x8A5A0B, 0xE2A63A) // 注意
         static let critical = dual(0xA32B22, 0xFF6A5C) // 危险
-        static let ok = dual(0x1D6F5F, 0x30D158)
 
         // 参考 B 分段环三段（R2-credentials.html SEG）
         static let mint = rgb(100, 216, 197)     // #64D8C5
         static let coral = rgb(238, 114, 88)     // #EE7258
         static let indigo = rgb(74, 100, 247)    // #4A64F7
 
-        // 参考 C 活动环暗轨（TOKENS 第 45 行：红 #33080F / 绿 #2E4A12 / 青 #16283A）
-        static let ringTrackRed = dual(0xF7DDE2, 0x33080F)
-        static let ringTrackGreen = dual(0xE5EFD3, 0x2E4A12)
-        static let ringTrackCyan = dual(0xD8E8F2, 0x16283A)
 
         /// 同色「55% 亮度」：把颜色的 RGB 直接乘 0.55，而不是把半透明色叠在卡片上。
         /// UIColor(color) 取到的分量是显示无关的 sRGB 分量，乘亮度不会引入卡片底色。
@@ -227,7 +232,6 @@ enum V {
         static let display24 = sans(24, weight: .regular, relativeTo: .title2)      // 冷启动闸门 24
         static let display22 = sans(22, weight: .regular, relativeTo: .title2)
         static let display26 = sans(26, weight: .regular, relativeTo: .title)
-        static let titleC = sans(22, weight: .semibold, relativeTo: .title2)        // 参考 C 头部标题 22/600
         // title20 (20/700) removed 2026-11-01: zero consumers across the whole repo.
         static let body = sans(17)                         // 正文 17
         static let bodyStrong = sans(17, weight: .semibold)
@@ -239,7 +243,6 @@ enum V {
         static let cardBig = sans(17, weight: .semibold)   // 卡主值 17/600
         static let cardBody = sans(15)
         static let chipLabel = sans(11)                    // 芯片标签 11
-        static let chipLabelStrong = sans(11, weight: .semibold)
         static let chipValue = sans(13.5, weight: .semibold) // 芯片值 13.5/600
         static let statLabel = sans(12.5)                  // VStatPair 标签 12.5 #828282
         static let statValue = sans(17, weight: .semibold) // VStatPair 值 17/600
@@ -268,7 +271,6 @@ enum V {
         static let number20 = sans(20, weight: .medium, relativeTo: .title3)      // 读数 20
         static let number22 = sans(22, weight: .bold, relativeTo: .title2)        // 数字大值 22/700
         static let number26 = sans(26, weight: .medium, relativeTo: .title)       // 读数 26
-        static let number30 = sans(30, weight: .medium, relativeTo: .title)       // 读数 30
         static let tab = sans(11, weight: .semibold, relativeTo: .caption2)       // Tab 标签 11/600
         static let chevron = sans(13, weight: .semibold, relativeTo: .footnote)
         static let pageLead = sans(17, relativeTo: .body)                         // 参考 B/C 页导语 17
@@ -284,7 +286,6 @@ enum V {
         static let chartTick = sans(11, relativeTo: .caption2)
         static let axisTick = sans(11, relativeTo: .caption)
         static let stamp = sans(12, weight: .medium, design: .monospaced, relativeTo: .footnote)
-        static let heroGlyph56 = sans(56, relativeTo: .largeTitle)
         static let icon15 = sans(15, relativeTo: .body)
         static let icon15Medium = sans(15, weight: .medium, relativeTo: .body)
         static let icon15Semibold = sans(15, weight: .semibold, relativeTo: .body)
@@ -292,8 +293,7 @@ enum V {
         static let icon18Medium = sans(18, weight: .medium, relativeTo: .body)
         static let icon22 = sans(22, relativeTo: .title2)
         static let icon22Light = sans(22, weight: .light, relativeTo: .title2)
-        // icon22Medium (22/500) removed 2026-11-01: zero consumers.
-        static let icon28Semibold = sans(28, weight: .semibold, relativeTo: .title)
+                static let icon28Semibold = sans(28, weight: .semibold, relativeTo: .title)
         static let otpBig = sans(44, weight: .semibold, relativeTo: .largeTitle)
         static let otpRegular = sans(34, weight: .semibold, relativeTo: .largeTitle)
         static let axTitleBig = sans(28, weight: .semibold, relativeTo: .title)
@@ -303,6 +303,7 @@ enum V {
     // MARK: - 间距 / 画布（TOKENS.md 布局栅格）
     enum S {
         static let screenW: CGFloat = 402
+        /// 0.5pt 蚀刻线：Retina 上就是 1 物理像素。全 App 唯一的分割线/描边粗细。
         static let hair: CGFloat = 0.5
 
         static let chipLeftA: CGFloat = 19.3
@@ -364,7 +365,6 @@ enum V {
         static var gapM: CGFloat { d(14.3) }
         static var gap16: CGFloat { d(16) }
         static var gapL: CGFloat { d(20) }
-        static var gapXL: CGFloat { d(22) }
         static var gap24: CGFloat { d(24) }
         static var gapXXL: CGFloat { d(32) }
         static let statGap: CGFloat = 16
@@ -389,7 +389,6 @@ enum V {
         static var panel: CGFloat { 20 * factor }
         static var inset: CGFloat { 16 * factor }
         static var control: CGFloat { 12 * factor }
-        static let pill: CGFloat = 999
     }
 
     // MARK: - 触达
@@ -401,12 +400,11 @@ enum V {
     enum H {
         static let chip: CGFloat = 32
         static let action: CGFloat = 50
-        static let row: CGFloat = 56
     }
 
     // MARK: - 描边 / 图标尺寸
     enum Stroke {
-        static let hair: CGFloat = 0.5
+        // hair 已删（2026-11-02 R3）：零读取点，全 App 的 0.5pt 线宽统一走 V.S.hair。
         static let focus: CGFloat = 1.5
     }
 
@@ -422,7 +420,6 @@ enum V {
         static let snap = Animation.spring(response: 0.22, dampingFraction: 0.92)
         static let move = Animation.spring(response: 0.32, dampingFraction: 0.88)
         static let settle = Animation.spring(response: 0.42, dampingFraction: 0.95)
-        static let sweep = Animation.timingCurve(0.32, 0, 0.16, 1, duration: 0.6)
         // exit (easeOut 0.18) removed 2026-11-01: zero consumers. An unused animation is
         // worse than an unused colour - it implies a designed exit transition that never shipped.
     }
@@ -432,7 +429,6 @@ enum V {
         static let outer: CGFloat = 279.3
         static let stroke: CGFloat = 36.3
         /// 中心线半径 = (279.3 - 36.3) / 2 = 121.5（R1 SVG 实测）。
-        static let radius: CGFloat = 121.5
         /// 缺口：bearing 163°–201°（宽 38°）。
         static let gapStart: Double = 201
         /// R1 JS 实测 A0=208.4 / A1=516.6 → 中心线扫过 308.2°；两端圆头各吃 8.58°，
@@ -481,7 +477,6 @@ enum V {
         static let gapDegrees: Double = 4.5
         static let startBearing: Double = 258
         /// 中心线半径 = (92 - 20.3) / 2 = 35.85。
-        static let radius: CGFloat = 35.85
         /// 暗层 = 同色 55% 亮度（不是把 55% 不透明度叠在卡面上）。
         static let dimBrightness: CGFloat = 0.55
     }
@@ -515,7 +510,6 @@ enum V {
         static let barRadius: CGFloat = 0.9
         static let glowRadius: CGFloat = 5
         static let minBarH: CGFloat = 3
-        static let axisLabelGap: CGFloat = 4
     }
 
     // MARK: - 面积图（参考 A）
@@ -557,14 +551,12 @@ enum V {
         static let avatar: CGFloat = 34
         static let miniCardH: CGFloat = 178
         static let eventIcon: CGFloat = 36
-        static let medal: CGFloat = 76
         static let searchRow: CGFloat = 44
     }
 
     // MARK: - 动作按钮（v7 没有参考按钮；沿用 14pt 圆角的卡片语言）
     enum Action {
         static let height: CGFloat = 50
-        static let radius: CGFloat = 14
     }
 
     // MARK: - 页面局部节奏（四个根页共用）
@@ -572,10 +564,61 @@ enum V {
         static let topSpace: CGFloat = 8
         static let chipToTitle: CGFloat = 26
         static let titleToBody: CGFloat = 6
+        static let chartTop: CGFloat = 10
         /// 正文行高 23pt（17pt 字体系统行高约 20.3pt，差值为 lineSpacing）。
         static let bodyLine: CGFloat = 23
         static let bodyLineGap: CGFloat = bodyLine - 20.3
         static var bodyLineSpacing: CGFloat { bodyLineGap }
-        static let chartTop: CGFloat = 10
+    }
+}
+
+// MARK: - 语义语气（与令牌同层）
+//
+// 2026-11-02 R3：从已删的 Design/Components/Primitives.swift 并入。
+// Tone 是语义色（不是品牌色），与 V.C 同层最合适；类型名与成员名一字未改（28 处引用零改动）。
+
+/// 语义语气。Hashable 是必须的：LedgerEntry 等数据模型把它当字段并存进 Set/Dictionary。
+enum Tone: Hashable {
+    case ok, attention, critical, neutral, live
+
+    var color: Color {
+        switch self {
+        case .ok: return V.C.rewardGreen
+        case .attention: return V.C.warning
+        case .critical: return V.C.critical
+        case .neutral: return V.C.text3
+        case .live: return V.C.blue
+        }
+    }
+}
+
+// MARK: - 统一按压反馈
+//
+// 同文件并入：PressStyle 仍在被零星自绘按钮使用（VListRow / DefendScreen / SettingsParts 等）；
+// 系统控件（.glassProminent / GlassButtonStyle）自带按压反馈，不需要它。
+
+/// 统一按压：只做 transform，不改 bounds。
+///
+/// 仍在被 `DefendScreen` / `SettingsParts` 等零星自绘按钮使用；系统控件（`.glassProminent` /
+/// `GlassButtonStyle`）自带按压反馈，不需要它。
+///
+/// 实现说明：`ButtonStyle.makeBody` 不是 `View.body`，`@Environment` 写在外层结构体里
+/// 不保证被注入；所以把实际操作放进一个内层 `View`，由它读环境 —— 这是确定生效的写法。
+struct PressStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        PressBody(configuration: configuration)
+    }
+
+    private struct PressBody: View {
+        let configuration: ButtonStyleConfiguration
+        @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+        var body: some View {
+            configuration.label
+                .opacity(configuration.isPressed ? 0.72 : 1)
+                // 减弱动态：**只保留透明度**，不做缩放（与 accessibility.md 的"换成淡入淡出"一致）。
+                .scaleEffect(reduceMotion ? 1 : (configuration.isPressed ? 0.985 : 1))
+                .animation(reduceMotion ? nil : V.M.snap, value: configuration.isPressed)
+        }
     }
 }

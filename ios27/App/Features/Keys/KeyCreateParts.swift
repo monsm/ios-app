@@ -291,7 +291,7 @@ extension KeyCreateScreen {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
                 VSectionLabel(text: "即将写入")
                 VFieldRow(label: "类型", value: kind.rawValue, mono: false)
-                VFieldRow(label: "归属", value: owner ?? "未归属", mono: false)
+                VFieldRow(label: "归属", value: CredentialOrg.ownerName(owner).isEmpty ? "未归属" : CredentialOrg.ownerName(owner), mono: false)
                 VFieldRow(label: "码值", value: kind == .fingerprint ? "无（按指纹）" : String(repeating: "•", count: code.count), mono: false)
                 VFieldRow(label: "到期", value: kind == .temp ? TimeFormat.dayShort(expiryMillis) : "永久")
                 if !note.isEmpty {
@@ -299,8 +299,10 @@ extension KeyCreateScreen {
                 }
                 Divider().overlay(V.C.hairline)
                 if kind == .fingerprint {
-                    KeysInlineNote(tone: .attention, text: "本机链路未接，这一步只把这条登记进台账（待录入）。连上锁后再去门锁上按 8 次。")
-                    VActionButton(title: isEdit ? "保存改造" : "记入本机台账", systemImage: "key.fill") {
+                    // 2026-11-02：原文案说「本机链路未接、只登记台账」—— 与实现相反：
+                    // submit() 的指纹分支走的是 app.enrollFingerprint（cmd13/14 多帧真下发）。
+                    KeysInlineNote(tone: .attention, text: "这一步会真连锁录入指纹：请把手指按在指纹头上再抬起，连续 8 次；成功后才记入本机台账。")
+                    VActionButton(title: isEdit ? "保存改造" : "开始录入指纹", systemImage: "key.fill") {
                         submit()
                     }
                 } else {
@@ -320,7 +322,7 @@ extension KeyCreateScreen {
                         submit()
                     }
                     .disabled(confirmCode != code || !codeValid)
-                    Text("写入会真下发到门锁（cmd0A 添加 + 0B 设有效期）；回执成功才记入本机台账，失败会留在这一页报原因。")
+                    Text("写入会真下发到门锁；回执成功才记入本机台账，失败会留在这一页报原因。")
                         .font(V.F.unit)
                         .foregroundStyle(V.C.text3)
                         .fixedSize(horizontal: false, vertical: true)

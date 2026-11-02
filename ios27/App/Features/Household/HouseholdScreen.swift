@@ -20,6 +20,15 @@ enum HHMemberSort: CaseIterable, Hashable {
     }
 }
 
+/// List 里的「整块卡片」行：清掉系统行内边距 / 行底色 / 分隔线 —— 卡片自己决定外观。
+/// 与 RecordsScreen 的 `ledgerCardRow()` 同一用途（两页都从 ScrollView 换到了 List）。
+private extension View {
+    /// 修饰符组合只写在 `V7Extras.plainRow()` 一处，这里只补「占满宽度、左对齐」。
+    func hhCardRow() -> some View {
+        self.frame(maxWidth: .infinity, alignment: .leading).plainRow()
+    }
+}
+
 struct HouseholdScreen: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(AppModel.self) private var app
@@ -91,21 +100,27 @@ struct HouseholdScreen: View {
     private var atLimit: Bool { activeMembers.count >= HHStats.memberLimit }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: V.S.gap16) {
-                header
-                overviewPanel
-                if !tags.isEmpty {
-                    VChipRow(items: [""] + tags, title: { $0.isEmpty ? "全部" : $0 }, selection: $group)
-                        .animation(reduceMotion ? nil : V.M.snap, value: group)
-                }
-                rosterPanel
-                if archivedCount > 0 { archivePanel }
-                scenePanel
-                if !activeMembers.isEmpty { createPanel }
+        // 2026-11-02（R2 全换系统）：整页容器从 ScrollView + VStack 换成系统 List ——
+        // 名册必须是 Section 行（List 不能嵌在 ScrollView 里，内层会自成滚动区）。
+        // 概览 / 归档 / 家庭场景 / 新建 这几块卡片内容一字未改，只是作为"整块行"放进 List，
+        // 行内边距与底色由 hhCardRow() 清掉，卡片外观保持不变。
+        List {
+            Section {
+                header.hhCardRow()
+                overviewPanel.hhCardRow()
+                if !tags.isEmpty { groupFilterRow.hhCardRow() }
             }
-            .padding(.vertical, V.S.gap16)
+            rosterSection
+            Section {
+                if archivedCount > 0 { archivePanel.hhCardRow() }
+                scenePanel.hhCardRow()
+                if !activeMembers.isEmpty { createPanel.hhCardRow() }
+            }
         }
+        .listStyle(.insetGrouped)
+        .listSectionSpacing(V.S.gap16)
+        .scrollContentBackground(.hidden)
+        .contentMargins(.top, V.S.gap16, for: .scrollContent)
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
         .onAppear(perform: consume)
@@ -212,7 +227,6 @@ struct HouseholdScreen: View {
                 )
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     /// 临时码且无归属的开门条数（793 访客虚拟分组：只在展示层，不写入锁端凭证表）。
@@ -223,52 +237,84 @@ struct HouseholdScreen: View {
         }.count
     }
 
-    // MARK: 名册
-    private var rosterPanel: some View {
-        let list = shown
-        return VCard {
-            VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VSectionLabel(text: group.isEmpty ? "成员名册" : "成员名册 · \(group)", trailing: "\(list.count) 位 · " + sort.title)
-                if shown.isEmpty {
-                    if activeMembers.isEmpty {
-                        VEmptyState(
-                            title: "还没有成员",
-                            message: "建档向导四步：称呼 → 角色 → 档案 → 初始凭证。建完就能把密码和指纹归属到人。",
-                            actionTitle: "新建成员",
-                            systemImage: "person.2.slash",
-                            action: { router.request(.dest(.memberCreate)) }
-                        )
-                        .padding(.vertical, V.S.gapXXL)
-                    } else {
-                        VStack(alignment: .leading, spacing: V.S.gapS) {
-                            Text("这个分组下没有人")
-                                .font(V.F.body)
-                                .foregroundStyle(V.C.text1)
-                            Text("当前按「\(group)」筛选。清除筛选可回到全部成员。")
-                                .font(V.F.footnote)
-                                .foregroundStyle(V.C.text2)
-                                .fixedSize(horizontal: false, vertical: true)
-                            VFieldRow(label: "全部成员", value: "\(activeMembers.count)", unit: "位")
-                            VOutlineButton(title: "清除筛选", systemImage: "line.3.horizontal.decrease.circle") {
-                                group = ""
-                            }
-                        }
-                        .frame(minHeight: V.Hit.min)
-                    }
-                } else {
-                    VStack(spacing: 0) {
-                        // E-11：同上 —— 成员增删/排序会重排数组，下标身份会复用错行。
-                        ForEach(list, id: \.id) { member in
-                            if member.id != list.first?.id { HHRule() }
-                            rosterRow(member)
-                        }
+    // MARK: 分组筛选（档位少走系统分段，多则保留 chip 行）
+    /// 分组标签是**动态档位**（由成员的分组标签决定，0–N 个）。1–3 个时用系统 `Picker(.segmented)`；
+    /// 4 个以上分段控件会被压扁（每段只剩 2–3 字），此时保留横向 chip 行 —— 与凭证页同一判据。
+    @ViewBuilder
+    private var groupFilterRow: some View {
+        if tags.count <= 3 {
+            VStack(alignment: .leading, spacing: V.S.gapS) {
+                VSectionLabel(text: "按分组筛选")
+                Picker("分组", selection: $group) {
+                    Text("全部").tag("")
+                    ForEach(tags, id: \.self) { tag in
+                        Text(tag).tag(tag)
                     }
                 }
+                .pickerStyle(.segmented)
+                .labelsHidden()
             }
+        } else {
+            VChipRow(items: [""] + tags, title: { $0.isEmpty ? "全部" : $0 }, selection: $group)
+                .animation(reduceMotion ? nil : V.M.snap, value: group)
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
+    // MARK: 名册（List Section：一位成员一行）
+
+    private var rosterSection: some View {
+        let list = shown
+        return Section {
+            if shown.isEmpty {
+                if activeMembers.isEmpty {
+                    VEmptyState(
+                        title: "还没有成员",
+                        message: "建档向导四步：称呼 → 角色 → 档案 → 初始凭证。建完就能把密码和指纹归属到人。",
+                        actionTitle: "新建成员",
+                        systemImage: "person.2.slash",
+                        action: { router.request(.dest(.memberCreate)) }
+                    )
+                    .padding(.vertical, V.S.gapXXL)
+                    .hhCardRow()
+                } else {
+                    VStack(alignment: .leading, spacing: V.S.gapS) {
+                        Text("这个分组下没有人")
+                            .font(V.F.body)
+                            .foregroundStyle(V.C.text1)
+                        Text("当前按「\(group)」筛选。清除筛选可回到全部成员。")
+                            .font(V.F.footnote)
+                            .foregroundStyle(V.C.text2)
+                            .fixedSize(horizontal: false, vertical: true)
+                        VFieldRow(label: "全部成员", value: "\(activeMembers.count)", unit: "位")
+                        VOutlineButton(title: "清除筛选", systemImage: "line.3.horizontal.decrease.circle") {
+                            group = ""
+                        }
+                    }
+                    .padding(V.S.cardPad)
+                    .hhCardRow()
+                }
+            } else {
+                // E-11：成员增删/排序会重排数组 —— 用 \.id 作行身份，不用下标。
+                ForEach(list, id: \.id) { member in
+                    rosterRow(member)
+                }
+            }
+        } header: {
+            HStack(alignment: .firstTextBaseline, spacing: V.S.gapS) {
+                Text(group.isEmpty ? "成员名册" : "成员名册 · \(group)")
+                Spacer(minLength: 0)
+                Text("\(list.count) 位 · " + sort.title)
+                    .monospacedDigit()
+            }
+            .font(V.F.small)
+            .foregroundStyle(V.C.text3)
+            .textCase(nil)
+            .accessibilityAddTraits(.isHeader)
+        }
+    }
+
+    /// 一位成员一行。List 行身份用 `.id`（不用下标）；点击/长按菜单/无障碍标签与原来一致，
+    /// 另把「归档」也放上滑动动作（名册上就能归档，不必先进 360）。
     private func rosterRow(_ member: MemberCard) -> some View {
         Button { open(member) } label: {
             HHMemberRow(
@@ -277,8 +323,20 @@ struct HouseholdScreen: View {
                 subline: HHDisplay.subline(member, extras: roster.extras(for: member.id)),
                 status: HHStats.status(member)
             )
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(.rect)
         }
         .buttonStyle(.plain)
+        .id(member.id)
+        .listRowInsets(EdgeInsets(top: 0, leading: V.S.pageGutter, bottom: 0, trailing: V.S.pageGutter))
+        .listRowBackground(V.C.card)
+        .accessibilityHint("打开成员 360")
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            Button { archive(member) } label: {
+                Label("归档", systemImage: "archivebox")
+            }
+            .tint(V.C.coral)
+        }
         .contextMenu {
             Button { open(member) } label: { Label("成员 360", systemImage: "person.text.rectangle") }
             if let phone = DB.member(member.id)?.phone, !phone.isEmpty {
@@ -299,7 +357,6 @@ struct HouseholdScreen: View {
                 action: { router.request(.dest(.memberArchive)) }
             )
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 家庭场景（本周主责 + 便签）
@@ -345,7 +402,6 @@ struct HouseholdScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     /// 写了便签的成员（家庭场景只读前 3 位，不做第二份名单）。
@@ -370,7 +426,6 @@ struct HouseholdScreen: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, V.S.gapMS)
         }
-        .padding(.horizontal, V.S.pageGutter)
         .padding(.top, V.S.gapS)
     }
 

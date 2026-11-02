@@ -181,104 +181,118 @@ struct LockGateScreen: View {
     @FocusState private var focused: Bool
 
     var body: some View {
+        // 2026-11-02（R5）：**这一屏保持 ScrollView，不换 List**。理由三条：
+        //   ① L1 的修复就是「冷启动第一屏必须能滚」—— 键盘弹起时内容比屏幕高，不能滚就会把密码框顶出屏幕；
+        //   ② 内容只有「图标 + 两句 + 一个密码框 + 两个按钮」，换成 List 会得到 5 个只有一行的 Section，
+        //      系统行内边距反而把这一屏撑得比现在更散；
+        //   ③ List 的行点击语义对「一个 SecureField + 一个主按钮」没有增益。
+        // 只做布局整理：`.defaultScrollAnchor(.center)` 让内容在放得下时**垂直居中**、放不下时照常滚动 ——
+        // 这正是原实现用 Spacer 想达到的效果，而且不需要手动算高度。
         ZStack {
             CanvasBackground()
-            VStack(spacing: V.S.gap24) {
-                Spacer()
-                Image(systemName: "lock.shield")
-                    .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                    .font(V.F.icon22Light)
-                    .foregroundStyle(V.C.text2)
-                Text("输入本机密码")
-                    .font(V.F.display24)
-                    .foregroundStyle(V.C.text1)
-                Text("本机数据保护开着。密码只存在这台手机上。")
-                    .font(V.F.footnote)
-                    .foregroundStyle(V.C.text2)
-                    .multilineTextAlignment(.center)
-
-                SecureField("本机密码", text: $code)
-                    .textFieldStyle(.plain)
-                    .font(V.F.number20)
-                    .multilineTextAlignment(.center)
-                    .focused($focused)
-                    .frame(minHeight: V.H.action)
-                    .background(V.C.card, in: .rect(cornerRadius: V.R.control))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: V.R.control, style: .continuous)
-                            .strokeBorder(failed ? V.C.critical : V.C.hairline, lineWidth: V.S.hair)
-                    }
-                    .padding(.horizontal, V.S.gapXXL)
-
-                if failed {
-                    Text(gateMessage)
-                        .font(V.F.footnote)
-                        .foregroundStyle(V.C.critical)
-                }
-
-                VActionButton(title: "解锁", busy: false) {
-                    switch AppLock.shared.verify(code) {
-                    case .success:
-                        app.decoyMode = false
-                        app.unlocked = true
-                        failed = false
-                    case .decoy:
-                        // 胁迫码：门照样能开，数据区显示为空 —— 不报警、不暴露。
-                        app.decoyMode = true
-                        // 2026-11-01（Round 313）：**立刻**把空壳落到数据层并清空内存投影。
-                        // 原实现只置 `app.decoyMode`，真正生效要等 `Shell()` 重建后首个页面
-                        // 的 `.task` 跑完 `reload()`（里面有 `DB.setDecoy(decoyMode)` 与清空三张表）。
-                        // 这中间存在一个窗口：`app.keys / members / entries` 仍是**真实数据**，
-                        // 而被胁迫者正盯着这一屏 —— 恰好是空壳模式最不该发生的暴露。
-                        // 三步都幂等：`DB.setDecoy(true)` 再设一次无害；三张表在 reload 里还会被再清一次。
-                        DB.setDecoy(true)
-                        app.keys = []
-                        app.members = []
-                        app.entries = []
-                        app.unlocked = true
-                        failed = false
-                    case .wrong(let remaining):
-                        failed = true
-                        gateMessage = remaining > 0 ? "密码不对 · 冷却 \(remaining) 秒后再试" : "密码不对"
-                    case .cooling(let remaining):
-                        failed = true
-                        gateMessage = "冷却中 · \(remaining) 秒后再试"
-                    }
-                }
-                .padding(.horizontal, V.S.gapXXL)
-
-                if bioAvailable {
-                    Button {
-                        Task { await unlockByBiometric() }
-                    } label: {
-                        HStack(spacing: V.S.gapS) {
-                            Image(systemName: "faceid")
-                                .accessibilityHidden(true)
-                            Text(bioBusy ? "正在验证…" : "用面容 / 指纹解锁")
-                                .font(V.F.bodyStrong)
-                        }
+            ScrollView {
+                VStack(spacing: V.S.gap24) {
+                    Image(systemName: "lock.shield")
+                        .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
+                        .font(V.F.icon22Light)
+                        .foregroundStyle(V.C.text2)
+                    Text("输入本机密码")
+                        .font(V.F.display24)
                         .foregroundStyle(V.C.text1)
-                        .frame(maxWidth: .infinity)
+                    Text("本机数据保护开着。密码只存在这台手机上。")
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text2)
+                        .multilineTextAlignment(.center)
+
+                    SecureField("本机密码", text: $code)
+                        .textFieldStyle(.plain)
+                        .font(V.F.number20)
+                        .multilineTextAlignment(.center)
+                        .focused($focused)
                         .frame(minHeight: V.H.action)
+                        .background(V.C.card, in: .rect(cornerRadius: V.R.control))
                         .overlay {
                             RoundedRectangle(cornerRadius: V.R.control, style: .continuous)
-                                .strokeBorder(V.C.hairline, lineWidth: V.S.hair)
+                                .strokeBorder(failed ? V.C.critical : V.C.hairline, lineWidth: V.S.hair)
                         }
-                        .contentShape(.rect)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(bioBusy)
-                    .padding(.horizontal, V.S.gapXXL)
-                    .accessibilityLabel("用面容或指纹解锁")
-                }
+                        .padding(.horizontal, V.S.gapXXL)
 
-                Spacer()
-                Spacer()
+                    if failed {
+                        Text(gateMessage)
+                            .font(V.F.footnote)
+                            .foregroundStyle(V.C.critical)
+                    }
+
+                    VActionButton(title: "解锁", busy: false) {
+                        switch AppLock.shared.verify(code) {
+                        case .success:
+                            app.decoyMode = false
+                            app.unlocked = true
+                            failed = false
+                        case .decoy:
+                            // 胁迫码：门照样能开，数据区显示为空 —— 不报警、不暴露。
+                            app.decoyMode = true
+                            // 2026-11-01（Round 313）：**立刻**把空壳落到数据层并清空内存投影。
+                            // 原实现只置 `app.decoyMode`，真正生效要等 `Shell()` 重建后首个页面
+                            // 的 `.task` 跑完 `reload()`（里面有 `DB.setDecoy(decoyMode)` 与清空三张表）。
+                            // 这中间存在一个窗口：`app.keys / members / entries` 仍是**真实数据**，
+                            // 而被胁迫者正盯着这一屏 —— 恰好是空壳模式最不该发生的暴露。
+                            // 三步都幂等：`DB.setDecoy(true)` 再设一次无害；三张表在 reload 里还会被再清一次。
+                            DB.setDecoy(true)
+                            app.keys = []
+                            app.members = []
+                            app.entries = []
+                            app.unlocked = true
+                            failed = false
+                        case .wrong(let remaining):
+                            failed = true
+                            gateMessage = remaining > 0 ? "密码不对 · 冷却 \(remaining) 秒后再试" : "密码不对"
+                        case .cooling(let remaining):
+                            failed = true
+                            gateMessage = "冷却中 · \(remaining) 秒后再试"
+                        }
+                    }
+                    .padding(.horizontal, V.S.gapXXL)
+
+                    if bioAvailable {
+                        Button {
+                            Task { await unlockByBiometric() }
+                        } label: {
+                            HStack(spacing: V.S.gapS) {
+                                Image(systemName: "faceid")
+                                    .accessibilityHidden(true)
+                                Text(bioBusy ? "正在验证…" : "用面容 / 指纹解锁")
+                                    .font(V.F.bodyStrong)
+                            }
+                            .foregroundStyle(V.C.text1)
+                            .frame(maxWidth: .infinity)
+                            .frame(minHeight: V.H.action)
+                            .overlay {
+                                RoundedRectangle(cornerRadius: V.R.control, style: .continuous)
+                                    .strokeBorder(V.C.hairline, lineWidth: V.S.hair)
+                            }
+                            .contentShape(.rect)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(bioBusy)
+                        .padding(.horizontal, V.S.gapXXL)
+                        .accessibilityLabel("用面容或指纹解锁")
+                    }
+                }
+                .padding(.vertical, V.S.gapXXL)
             }
+            .scrollDismissesKeyboard(.interactively)
+            // 放得下时垂直居中、放不下时照常滚动（等价于原来用 Spacer 的居中意图，但不用手算高度）。
+            .defaultScrollAnchor(.center)
         }
-        .onAppear {
-            focused = true
+        // 2026-11-02（R5）：**冷启动不要立刻弹键盘**。第 2 轮已把 UnlockGateScreen 改成延时 350ms；
+        // 这一屏同样是「一出现就聚焦」，键盘会在首帧就把内容顶上去（L1 那个问题的另一半）。
+        // 延时聚焦 + 生物识别可用性判定放在同一个 task 里，两者都只在页面出现时做一次。
+        .task {
             bioAvailable = !DB.hasDuressCode() && DB.store.getBool("kf_bio_unlock", true) && canUseBiometrics()
+            try? await Task.sleep(for: .milliseconds(350))
+            guard !Task.isCancelled else { return }
+            focused = true
         }
         .sensoryFeedback(.error, trigger: failed) { _, new in new }
     }

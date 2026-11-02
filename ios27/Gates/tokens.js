@@ -22,7 +22,6 @@ const APP = path.join(ROOT, 'App');
 
 // 白名单：相对路径 → 理由
 const EXEMPT = {
-  'Design/Tokens.swift': '旧令牌定义本身就是字面量的家',
   'Design/V7/V7Tokens.swift': 'V7 令牌层：rgb()/V.F.sans(数字) 只能在这里定义',
   'Design/Components/Dial.swift': 'Canvas 几何计算（刻度长度/角度），不是样式令牌',
 };
@@ -51,8 +50,7 @@ const RULES = [
   [/\bFont\.system\([^)\n]*\bsize:\s*[0-9]/, '硬编码字体 Font.system(size: 数字)', null],
   [/\bV\.C\.rgb\(/, 'V7 原始 RGB 只许出现在 V7Tokens.swift', 'Design/V7/V7Tokens.swift'],
   [/Color\.(red|blue|green|orange|yellow|purple|pink|gray|black|white)\b/, '系统颜色字面量（应走 Ink./Signal./State./V.C）', null],
-  [/Color\(hex:\s*0x/, 'Color(hex:) 只许出现在 Design/Tokens.swift', 'Design/Tokens.swift'],
-  [/\.foregroundStyle\(\s*\.(white|black|red|blue|green|gray)\s*\)/, '系统颜色字面量', null],
+    [/\.foregroundStyle\(\s*\.(white|black|red|blue|green|gray)\s*\)/, '系统颜色字面量', null],
 ];
 
 for (const f of files) {

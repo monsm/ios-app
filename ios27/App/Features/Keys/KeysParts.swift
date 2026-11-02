@@ -132,9 +132,7 @@ enum KeysRoute {
 /// 面板内极细分割线。台账行之间用它，不给每行套圆角卡。
 struct KeysDivider: View {
     var body: some View {
-        Rectangle()
-            .fill(V.C.hairline)
-            .frame(height: V.S.hair)
+        Divider()
     }
 }
 
@@ -147,7 +145,9 @@ struct KeysRow: View {
 
     private var subtitle: String {
         var bits: [String] = [key.kind.rawValue]
-        if let owner = key.owner, !owner.isEmpty { bits.append(owner) }
+        // 内部值出屏：owner 可能是成员 id，统一换成可读名字（空则跳过，不留悬空的 " · "）。
+        let owner = CredentialOrg.ownerName(key.owner)
+        if !owner.isEmpty { bits.append(owner) }
         if let code = key.code, !code.isEmpty { bits.append(String(repeating: "•", count: code.count)) }
         return bits.joined(separator: " · ")
     }

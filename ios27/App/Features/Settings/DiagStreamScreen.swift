@@ -21,12 +21,28 @@
 //   所以准确的表述是：**完整帧不会主动离开本机，但用户可以在知情的前提下复制它（限时 90 秒）。**
 import SwiftUI
 
+
+/// List 里的「整块卡片」行（与其它 List 化页面同用途）。独立命名，避免同名扩展重声明。
+private extension View {
+    func diagCardRow() -> some View {
+        self.frame(maxWidth: .infinity, alignment: .leading).plainRow()
+    }
+}
 struct DiagStreamScreen: View {
     @Environment(\.dismiss) private var dismiss
     /// 记录原始交互帧（写 `kf_debug_raw`，与 `LockService`/`HardwareService` 同键同判）。
     @State private var rawOn = DB.store.getBool("kf_debug_raw")
     /// 复制时是否带上**原始载荷**（含 skey/ekey/PIN）。默认关；本机调试时由用户显式打开。
     @State private var includeRaw = false
+
+    /// List 段头：中文必须显式 textCase(nil)，否则系统会把段头拉成大写形态。
+    private func sectionHeader(_ text: String) -> some View {
+        Text(text)
+            .font(V.F.small)
+            .foregroundStyle(V.C.text3)
+            .textCase(nil)
+            .accessibilityAddTraits(.isHeader)
+    }
 
     /// 最新在前。
     private var lines: [DiagLogEntry] { DiagLogs.all().reversed() }
@@ -47,8 +63,14 @@ struct DiagStreamScreen: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: V.S.gapM) {
+            // 2026-11-02（R5 全换系统）：ScrollView + VStack → 系统 List + Section。
+            // ⚠ `.captureShield` **留在外层**（与改前同一位置）：这一页在「包含原始载荷」时
+            // 是完整 TX/RX 帧（含 skey / PIN / ekey 明文 hex），录屏/截图必须遮挡。
+            // 流水本身仍放在卡片里（它是等宽多行的连续文本，不是一组可点的行），
+            // 拆成 List 行会让「一次会话的连续帧」被行分隔线切碎，排障时更难读。
+            // 业务逻辑、写盘键、禁用态、无障碍标签一字未改。
+            List {
+                Section {
                     VCard {
                         VStack(alignment: .leading, spacing: V.S.gapS) {
                             VCardHeader(title: "记录原始交互帧")
@@ -64,8 +86,12 @@ struct DiagStreamScreen: View {
                                          "完整帧一旦可复制，等于把开锁凭据交出去。")
                         }
                     }
-                    .padding(.horizontal, V.S.cardGutter)
+                    .diagCardRow()
+                } header: {
+                    sectionHeader("记录范围")
+                }
 
+                Section {
                     VCard {
                         VStack(alignment: .leading, spacing: V.S.gapS) {
                             VCardHeader(title: "复制内容")
@@ -82,7 +108,7 @@ struct DiagStreamScreen: View {
                                            + "排查「结构对不对」够用，也方便直接贴出来。")
                         }
                     }
-                    .padding(.horizontal, V.S.cardGutter)
+                    .diagCardRow()
 
                     VActionButton(title: includeRaw ? "复制原始流水（含密钥）" : "复制脱敏流水",
                                   systemImage: "doc.on.doc") {
@@ -93,15 +119,19 @@ struct DiagStreamScreen: View {
                                              : "已复制 \(lines.count) 行脱敏流水", tone: .ok)
                     }
                     .disabled(includeRaw ? LockService.shared.rawTrace.isEmpty : lines.isEmpty)
-                    .padding(.horizontal, V.S.cardGutter)
+                    .diagCardRow()
 
                     if includeRaw, LockService.shared.rawTrace.isEmpty {
                         SettingsNote(text: "内存里还没有原始流水 —— 上面的「记录原始交互帧」要先打开，"
                                      + "然后再复现一次开锁，这里才会有内容。")
-                        .padding(.horizontal, V.S.cardGutter)
+                        .diagCardRow()
                     }
+                } header: {
+                    sectionHeader("复制")
+                }
 
-                    if !events.isEmpty {
+                if !events.isEmpty {
+                    Section {
                         VCard {
                             VStack(alignment: .leading, spacing: V.S.gapXS) {
                                 VCardHeader(title: "事件台账（\(events.count) 条）")
@@ -116,9 +146,13 @@ struct DiagStreamScreen: View {
                                 }
                             }
                         }
-                        .padding(.horizontal, V.S.cardGutter)
+                        .diagCardRow()
+                    } header: {
+                        sectionHeader("事件台账")
                     }
+                }
 
+                Section {
                     if lines.isEmpty {
                         VCard {
                             VStack(alignment: .leading, spacing: V.S.gapXS) {
@@ -130,7 +164,7 @@ struct DiagStreamScreen: View {
                                     .foregroundStyle(V.C.text3)
                             }
                         }
-                        .padding(.horizontal, V.S.cardGutter)
+                        .diagCardRow()
                     } else {
                         VCard {
                             LazyVStack(alignment: .leading, spacing: V.S.gapXS) {
@@ -144,13 +178,18 @@ struct DiagStreamScreen: View {
                                 }
                             }
                         }
-                        .padding(.horizontal, V.S.cardGutter)
+                        .diagCardRow()
                     }
+                } header: {
+                    sectionHeader("流水（\(lines.count) 行，最新在前）")
                 }
-                .padding(.vertical, V.S.gap16)
             }
+            .listStyle(.insetGrouped)
+            .listSectionSpacing(V.S.gap16)
+            .scrollContentBackground(.hidden)
+            .contentMargins(.top, V.S.gap16, for: .scrollContent)
+            .contentMargins(.bottom, V.S.gapL, for: .scrollContent)
             .background(CanvasBackground())
-            .scrollEdgeEffectStyle(.soft, for: .top)
             .navigationTitle("交互流水")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

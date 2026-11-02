@@ -10,16 +10,19 @@ struct ModuleOrderSheet: View {
 
     var body: some View {
         NavigationStack {
-            ModuleOrderCard()
-                .background(CanvasBackground())
-                .navigationTitle("模块排序与显隐")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button("完成") { dismiss() }
-                            .accessibilityLabel("完成模块设置")
-                    }
+            ScrollView {
+                ModuleOrderCard()
+                    .padding(.vertical, V.S.gap16)
+            }
+            .background(CanvasBackground())
+            .navigationTitle("模块排序与显隐")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("完成") { dismiss() }
+                        .accessibilityLabel("完成模块设置")
                 }
+            }
         }
     }
 }

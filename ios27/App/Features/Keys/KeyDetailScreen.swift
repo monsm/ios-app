@@ -25,23 +25,28 @@ struct KeyDetailScreen: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: V.S.gap16) {
-                if let key {
-                    header(key)
-                    codeBlock(key)
-                    factsBlock(key)
-                    earlyExpireCard(key)
-                    actionsBlock(key)
-                    dangerBlock(key)
-                } else {
-                    missingBlock
-                }
+        // 2026-11-02（R5 全换系统）：纯 ScrollView 换系统 List。
+        // ⚠ 码值卡（codeBlock）**必须仍是 VCard + cardRow()**，不能拆成 List 行：
+        // 它挂 .captureShield（截屏/录屏遮挡），拆开后修饰符会落到行容器上、遮不住码值本身。
+        // 其余段（档案 / 提前失效 / 动作 / 危险区）同样作为整块卡行 —— 内部布局一字不动。
+        // .plain 样式没有系统左右留白 ⇒ 卡片用 cardRow()、页头用 headerRow()。
+        List {
+            if let key {
+                header(key).headerRow()
+                codeBlock(key).cardRow()
+                factsBlock(key).cardRow()
+                earlyExpireCard(key).cardRow()
+                actionsBlock(key).cardRow()
+                dangerBlock(key).cardRow()
+            } else {
+                missingBlock.cardRow()
             }
-            .padding(.vertical, V.S.gap16)
         }
-        .background(CanvasBackground())
-        .scrollEdgeEffectStyle(.soft, for: .top)
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .contentMargins(.top, V.S.gap16, for: .scrollContent)
+        .contentMargins(.bottom, V.S.gapL, for: .scrollContent)
+        .background(V.C.bg.ignoresSafeArea())
         .navigationTitle("凭证详情")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -93,7 +98,6 @@ struct KeyDetailScreen: View {
                 Spacer(minLength: 0)
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
     }
@@ -103,20 +107,38 @@ struct KeyDetailScreen: View {
     private func codeBlock(_ key: KeyItem) -> some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VSectionLabel(text: key.kind == .fingerprint ? "指纹" : "码值", trailing: key.code == nil ? nil : "逐位点开")
+                VSectionLabel(
+                    text: key.kind == .fingerprint ? "指纹" : (key.kind == .mobile ? "凭证指纹" : "码值"),
+                    trailing: (key.kind == .mobile || key.code == nil) ? nil : "逐位点开"
+                )
                 if let code = key.code, !code.isEmpty {
-                    KeysMaskedCode(value: code, size: 24, revealed: $revealed)
-                        .padding(.vertical, V.S.gapXS)
-                    HStack(spacing: V.S.gapS) {
-                        VOutlineButton(title: "复制整条", systemImage: "doc.on.doc") {
-                            Clip.set(code)
+                    if key.kind == .mobile {
+                        // 手机钥匙的 code 是 64 位 ekey（AES 密文 hex）。逐位铺开会横向溢出约 2300pt，
+                        // 且原始 ekey 属内部值 —— 这里只给「凭证指纹」摘要 + 复制整条。
+                        Text(String(code.prefix(8)) + "…" + String(code.suffix(8)))
+                            .font(V.F.number17)
+                            .foregroundStyle(V.C.text1)
+                            .textSelection(.enabled)
+                            .accessibilityLabel("凭证指纹")
+                        HStack(spacing: V.S.gapS) {
+                            VOutlineButton(title: "复制整条", systemImage: "doc.on.doc") {
+                                Clip.set(code)
+                            }
                         }
-                        VOutlineButton(title: "复遮", systemImage: "eye.slash") {
-                            revealed = []
+                    } else {
+                        KeysMaskedCode(value: code, size: 24, revealed: $revealed)
+                            .padding(.vertical, V.S.gapXS)
+                        HStack(spacing: V.S.gapS) {
+                            VOutlineButton(title: "复制整条", systemImage: "doc.on.doc") {
+                                Clip.set(code)
+                            }
+                            VOutlineButton(title: "复遮", systemImage: "eye.slash") {
+                                revealed = []
+                            }
                         }
-                    }
-                    if code.count >= 8 {
-                        segmentRow(code)
+                        if code.count >= 8 {
+                            segmentRow(code)
+                        }
                     }
                 } else if key.kind == .fingerprint {
                     Text("指纹没有码值。它在门锁上按 8 次录进去，开门时按手指就行。")
@@ -129,7 +151,6 @@ struct KeyDetailScreen: View {
             }
         }
         .captureShield("这枚凭证含码值\n屏幕正在被录制或截图，已遮挡")
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func segmentRow(_ code: String) -> some View {
@@ -185,7 +206,6 @@ struct KeyDetailScreen: View {
                 KeysInlineNote(tone: .neutral, text: "改到期日走 cmd0B 真下发到锁，回执成功才改本机台账 —— 不再只是本机备注。")
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 真动作
@@ -222,7 +242,6 @@ struct KeyDetailScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     /// 改到期：四档快捷 + 永久。都是真写台账（AppModel.keys），不是摆样子。
@@ -278,7 +297,6 @@ struct KeyDetailScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 不存在空态（凭证被删/被移走后仍可能有人跳过来）
@@ -295,7 +313,6 @@ struct KeyDetailScreen: View {
             }
             .padding(.vertical, V.S.gapXXL)
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 写台账（值语义：改就是换一条）
@@ -367,7 +384,6 @@ struct KeyDetailScreen: View {
                     }
                 }
             }
-            .padding(.horizontal, V.S.pageGutter)
         }
     }
 

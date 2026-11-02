@@ -26,19 +26,25 @@ struct ZotpScreen: View {
     private var kc: Keychain? { app.currentKeychain }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: V.S.gapM) {
-                header
-                if app.lock == nil || kc == nil {
-                    noLockCard
-                } else {
-                    enableCard
-                    if otpOn { generateCard }
-                    helpCard
-                }
+        // 全换系统（2026-11-02）：整页容器是系统 `List`（与门页同一配方）。
+        // **动态码那张卡必须留在 `VCard` 里**：它的 `captureShield` 是安全链路（录屏/截图遮挡），
+        // 拆成 List 行会让修饰符挂到行容器上、遮不住真正敏感的那枚码。
+        // 开关与须知两段是行式内容 → `Section`；码卡与空态卡用 `cardRow()`
+        //（`.plain` 样式没有系统左右留白，cardRow 补回 pageGutter）。**只换行修饰符，不拆卡**。
+        List {
+            header.headerRow()
+            if app.lock == nil || kc == nil {
+                noLockCard.cardRow()
+            } else {
+                enableSection
+                if otpOn { generateCard.cardRow() }
+                helpSection
             }
-            .padding(.top, V.Page.topSpace)
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .contentMargins(.top, V.Page.topSpace, for: .scrollContent)
+        .contentMargins(.bottom, V.S.gapL, for: .scrollContent)
         .background(V.C.bg.ignoresSafeArea())
         .navigationTitle("动态密码")
         .navigationBarTitleDisplayMode(.inline)
@@ -55,7 +61,6 @@ struct ZotpScreen: View {
             Text("ZOTP · 6 位数字，按锁端周期自动更换")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }
-        .padding(.horizontal, V.S.pageGutterA)
     }
 
     private var noLockCard: some View {
@@ -67,24 +72,24 @@ struct ZotpScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
-    private var enableCard: some View {
-        VCard {
-            VStack(alignment: .leading, spacing: V.S.gapS) {
-                VCardHeader(title: "锁端开关 · 命令 19")
-                VToggleRow(title: "开通临时密码", detail: otpOn ? "锁端会接受 ZOTP 动态码" : "关闭状态下生成的码不会被锁接受", isOn: Binding(
-                    get: { otpOn },
-                    set: { on in writeEnable(on) }
-                ))
-                if let outcome {
-                    Text(outcome).font(V.F.footnote).foregroundStyle(V.C.text3)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+    /// 锁端开关 = 系统 `Section`：一个开关一行，结果行跟在下面。
+    private var enableSection: some View {
+        Section {
+            VToggleRow(title: "开通临时密码", detail: otpOn ? "锁端会接受 ZOTP 动态码" : "关闭状态下生成的码不会被锁接受", isOn: Binding(
+                get: { otpOn },
+                set: { on in writeEnable(on) }
+            ))
+            if let outcome {
+                Text(outcome).font(V.F.footnote).foregroundStyle(V.C.text3)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+        } header: {
+            Text("锁端开关")
+                .font(V.F.section)
+                .foregroundStyle(V.C.text1)
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     private var generateCard: some View {
@@ -152,7 +157,6 @@ struct ZotpScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.cardGutter)
     }
 
     private var displayCode: String {
@@ -161,19 +165,19 @@ struct ZotpScreen: View {
         return code
     }
 
-    private var helpCard: some View {
-        VCard {
-            VStack(alignment: .leading, spacing: V.S.gapS) {
-                VCardHeader(title: "使用须知", showsChevron: false)
-                Text("· 生成前请先校准门锁时间（偏差 > 180 秒会导致锁侧校验失败）。")
-                Text("· 周期取锁端上报的 zotpPeriod（缺省 30 分钟）；同一窗口最多 100 个，超出请等下一个窗口。")
-                Text("· 只有 A 模式（单验）下临时密码才有效；B 模式下请改用密码或指纹。")
-            }
-            .font(V.F.footnote)
-            .foregroundStyle(V.C.text3)
-            .fixedSize(horizontal: false, vertical: true)
+    /// 使用须知 = 系统 `Section`：三条各占一行（原来是卡里三段紧贴的 Text）。
+    private var helpSection: some View {
+        Section {
+            Text("生成前请先校准门锁时间（偏差 > 180 秒会导致锁侧校验失败）。")
+            Text("周期由门锁决定（默认 30 分钟）；同一窗口最多 100 个，超出请等下一个窗口。")
+            Text("只有 A 模式（单验）下临时密码才有效；B 模式下请改用密码或指纹。")
+        } header: {
+            Text("使用须知")
+                .font(V.F.section)
+                .foregroundStyle(V.C.text1)
         }
-        .padding(.horizontal, V.S.cardGutter)
+        .font(V.F.footnote)
+        .foregroundStyle(V.C.text3)
     }
 
     private func writeEnable(_ on: Bool) {

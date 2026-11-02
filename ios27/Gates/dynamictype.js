@@ -19,7 +19,6 @@ const V7 = path.join(APP, 'Design', 'V7', 'V7Tokens.swift');
 
 // 豁免名单：相对路径 → 理由。只有令牌层可以出现数值字号。
 const EXEMPT = {
-  'Design/Tokens.swift': '旧令牌层：Font.TextStyle 语义字阶，不含 V7 字号',
   'Design/V7/V7Tokens.swift': 'V7 令牌层：V.F.sans(数字) 只在这里定义，并统一接 @ScaledMetric',
 };
 

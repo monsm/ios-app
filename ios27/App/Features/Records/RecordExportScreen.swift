@@ -86,6 +86,9 @@ struct RecordExportScreen: View {
     @State private var pickedDays: Set<String> = []
     @State private var copied: String?
     @State private var source: [LedgerEntry] = []
+    /// 屏上「单条记录卡」预览的缩放系数：容器实际宽 ÷ 360，上限 1。
+    /// 不用 V.S.screenW（那是写死的 402，等于把同一个写死宽度的病换个地方再犯）。
+    @State private var cardScale: CGFloat = 1
 
     private var entries: [LedgerEntry] { source.sorted { $0.at > $1.at } }
 
@@ -132,23 +135,28 @@ struct RecordExportScreen: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: V.S.gap16) {
-                header
-                if entries.isEmpty {
-                    emptyBlock
-                } else {
-                    cardBlock
-                    daysBlock
-                    rosterBlock
-                    digestBlock
-                    if let copied { copiedBlock(copied) }
-                }
+        // 全换系统（2026-11-02）：整页容器是系统 `List`（与前几轮同一配方）。
+        // 四件导出物按 `_audit/ui-ia.md` §2.4 拆成四段：单条卡 / 表格类(CSV) / 名册类 / 小结。
+        // 分享卡预览的**按容器宽缩放**（L5 溢出修复）保留：量的是卡片所在行的实际宽，
+        // 比原来的「页宽 − 2×pageGutter」更准，绝不会撑出屏幕。
+        List {
+            header.plainRow()
+            if entries.isEmpty {
+                emptyBlock.plainRow()
+            } else {
+                cardSection
+                daysSection
+                rosterSection
+                digestSection
+                if let copied { copiedBlock(copied).plainRow() }
             }
-            .padding(.vertical, V.S.gap16)
         }
+        .listStyle(.insetGrouped)
+        .listSectionSpacing(V.S.gap16)
+        .scrollContentBackground(.hidden)
+        .contentMargins(.top, V.S.gap16, for: .scrollContent)
+        .contentMargins(.bottom, V.S.gapL, for: .scrollContent)
         .background(CanvasBackground())
-        .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("导出")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -178,15 +186,14 @@ struct RecordExportScreen: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, V.S.pageGutter)
         .accessibilityElement(children: .combine)
     }
 
     // MARK: - 主角：单条记录分享卡（看到的就是分享出去的）
 
-    private var cardBlock: some View {
-        VStack(spacing: V.S.gapMS) {
-            VSectionLabel(text: "单条记录卡", trailing: "仅含本条数据")
+    /// ① 单条记录卡：横向选择器一行 + 预览卡（卡内含按容器宽缩放的预览与分享按钮）。
+    private var cardSection: some View {
+        Section {
             ScrollView(.horizontal) {
                 HStack(spacing: V.S.gap16) {
                     ForEach(entries.prefix(12)) { entry in
@@ -213,14 +220,32 @@ struct RecordExportScreen: View {
                         .accessibilityAddTraits(entry.id == selected?.id ? [.isButton, .isSelected] : .isButton)
                     }
                 }
-                .padding(.horizontal, V.S.pageGutter)
             }
             .scrollIndicators(.hidden)
+            .listRowInsets(EdgeInsets(top: 0, leading: V.S.cardPad, bottom: 0, trailing: V.S.cardPad))
 
             if let entry = selected {
                 VCard {
                     VStack(spacing: V.S.gapMS) {
-                        RecordShareCard(entry: entry, lockName: lockName)
+                        // 屏上预览按容器实际宽缩放；外面再套一层横向 ScrollView 只是为了兜底 ——
+                        // 卡片内边距由系统决定，缩放算得略保守时宁可能横移，也绝不撑出屏幕。
+                        // 量的是这一行实际宽（GeometryReader 挂在卡片里），比「页宽 − 2×gutter」更准。
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            RecordShareCard(entry: entry, lockName: lockName)
+                                .scaleEffect(cardScale, anchor: .topLeading)
+                                .frame(width: CardSize.width * cardScale,
+                                       height: CardSize.height * cardScale,
+                                       alignment: .topLeading)
+                        }
+                        // 量「这一行卡片的实际内容宽」：List 行的 inset 由系统决定，
+                        // 用容器宽反推比「页宽 − 2×gutter」更准（L5 溢出修复的同一口径）。
+                        .background {
+                            GeometryReader { proxy in
+                                Color.clear
+                                    .onAppear { updateCardScale(proxy.size.width) }
+                                    .onChange(of: proxy.size.width) { _, width in updateCardScale(width) }
+                            }
+                        }
                         if let png {
                             ShareLink(
                                 item: RecordCardImage(data: png),
@@ -244,17 +269,28 @@ struct RecordExportScreen: View {
                         }
                     }
                 }
-                .padding(.horizontal, V.S.pageGutter)
+                .plainRow()
+            }
+        } header: {
+            HStack(spacing: V.S.gapS) {
+                Text("单条记录卡")
+                    .font(V.F.section)
+                    .foregroundStyle(V.C.text1)
+                    .textCase(nil)
+                Spacer(minLength: 0)
+                Text("仅含本条数据")
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text3)
+                    .textCase(nil)
             }
         }
     }
 
     // MARK: - 按天勾选的 CSV
 
-    private var daysBlock: some View {
-        VCard {
-            VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VSectionLabel(text: "按天导出 CSV", trailing: String(pickedDays.count) + " 天")
+    /// ② 表格类：按天勾选 → CSV。行式内容（每天一行可勾）→ Section。
+    private var daysSection: some View {
+        Section {
                 ForEach(days, id: \.key) { day in
                     Button {
                         toggleDay(day.key)
@@ -314,17 +350,27 @@ struct RecordExportScreen: View {
                     .font(V.F.unit)
                     .foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
+        } header: {
+            HStack(spacing: V.S.gapS) {
+                Text("按天导出 CSV")
+                    .font(V.F.section)
+                    .foregroundStyle(V.C.text1)
+                    .textCase(nil)
+                Spacer(minLength: 0)
+                Text(String(pickedDays.count) + " 天")
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text3)
+                    .monospacedDigit()
+                    .textCase(nil)
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: - 成员名册
 
-    private var rosterBlock: some View {
-        VCard {
-            VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VSectionLabel(text: "成员名册", trailing: "vCard 3.0")
+    /// ③ 名册类：成员名册 vCard。
+    private var rosterSection: some View {
+        Section {
                 if app.members.isEmpty {
                     Text("还没有成员可导出。先到「家」页建一位成员，名册才有内容。")
                         .font(V.F.footnote)
@@ -362,37 +408,56 @@ struct RecordExportScreen: View {
                     .font(V.F.unit)
                     .foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
+        } header: {
+            HStack(spacing: V.S.gapS) {
+                Text("成员名册")
+                    .font(V.F.section)
+                    .foregroundStyle(V.C.text1)
+                    .textCase(nil)
+                Spacer(minLength: 0)
+                Text("vCard 3.0")
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text3)
+                    .textCase(nil)
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: - 上周小结（三句人话 + CSV，一起进剪贴板）
 
-    private var digestBlock: some View {
-        VCard {
-            VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VSectionLabel(text: "上周小结", trailing: String(digest.rows) + " 条")
-                ForEach(digest.lines.indices, id: \.self) { index in
-                    Text(digest.lines[index])
-                        .font(V.F.body)
-                        .foregroundStyle(V.C.text1)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                VOutlineButton(title: copied == nil ? "复制小结与 CSV" : "已复制到剪贴板",
-                                systemImage: "doc.on.clipboard") {
-                    copyDigest()
-                }
+    /// ④ 小结类：上周三句人话 + CSV，一起进剪贴板。
+    private var digestSection: some View {
+        Section {
+            ForEach(digest.lines.indices, id: \.self) { index in
+                Text(digest.lines[index])
+                    .font(V.F.body)
+                    .foregroundStyle(V.C.text1)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            VOutlineButton(title: copied == nil ? "复制小结与 CSV" : "已复制到剪贴板",
+                            systemImage: "doc.on.clipboard") {
+                copyDigest()
+            }
+        } header: {
+            HStack(spacing: V.S.gapS) {
+                Text("上周小结")
+                    .font(V.F.section)
+                    .foregroundStyle(V.C.text1)
+                    .textCase(nil)
+                Spacer(minLength: 0)
+                Text(String(digest.rows) + " 条")
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text3)
+                    .monospacedDigit()
+                    .textCase(nil)
             }
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func copiedBlock(_ text: String) -> some View {
         VCard {
             VStatusLine(tone: .ok, text: text)
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: - 空态（必须给出路）
@@ -409,7 +474,6 @@ struct RecordExportScreen: View {
             }
             .padding(.vertical, V.S.gapXXL)
         }
-        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: - 动作
@@ -433,6 +497,17 @@ struct RecordExportScreen: View {
         } else {
             pickedDays.insert(key)
         }
+    }
+
+    /// 可用宽 → 屏上预览缩放。
+    /// **2026-11-02（List 化）**：GeometryReader 现在挂在**卡片内部**的预览 ScrollView 上，
+    /// 量到的已经就是卡片内容宽（系统 GroupBox 的内边距已扣掉）—— 再减 2×cardPad 会二次扣除、
+    /// 把预览无谓缩小。所以这里直接用测量值；上限仍是 1（不放大）。
+    /// 只影响屏上预览；导出 PNG 走 renderCard() 的 ImageRenderer，版式仍是固定的 360×640。
+    private func updateCardScale(_ usable: CGFloat) {
+        guard usable > 0 else { return }
+        let next = min(1, usable / CardSize.width)
+        if abs(next - cardScale) > 0.0005 { cardScale = next }
     }
 
     /// 真渲染 PNG：ImageRenderer 出图，不是摆一个假按钮。

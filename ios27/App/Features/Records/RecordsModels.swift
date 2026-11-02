@@ -522,3 +522,40 @@ enum WeeklyDigest {
         }
     }
 }
+
+// MARK: - 台账数据模型（从已删的 Design/Components/Ledger.swift 并入）
+//
+// 2026-11-02 R3：LedgerEntry / LedgerGrouping 本来就是「台账域」的数据模型与纯逻辑，
+// 放在 RecordsModels.swift（台账域的唯一模型文件）比放在视图组件里更贴切。
+// 类型名与成员名一字未改（57 + 2 处引用零改动）。
+
+/// 一条台账记录（来自锁内 cmd16 日志或手机侧事件）。
+struct LedgerEntry: Identifiable, Hashable {
+    let id: String
+    /// 发生时刻（毫秒 epoch）。
+    let at: Int64
+    /// 事件短语（「指纹开锁」「密码错误」「门未关」）。
+    let event: String
+    /// 归属人（可空）。
+    let owner: String?
+    /// 语义色。
+    let tone: Tone
+    /// 详情（展开后可见）。
+    var detail: String? = nil
+    /// 锁端日志类型（cmd16 的 type 字节）。告警类型多选按它筛，不从事件文案猜。
+    var rawType: Int? = nil
+}
+
+/// 台账容器：把条目按自然日分组的纯逻辑（可测）。
+enum LedgerGrouping {
+    static func group(_ entries: [LedgerEntry]) -> [(dayKey: String, items: [LedgerEntry])] {
+        var buckets: [String: [LedgerEntry]] = [:]
+        for e in entries {
+            let key = TimeFormat.dayKey(e.at)
+            buckets[key, default: []].append(e)
+        }
+        return buckets
+            .map { (dayKey: $0.key, items: $0.value.sorted { $0.at > $1.at }) }
+            .sorted { $0.dayKey > $1.dayKey }
+    }
+}

@@ -17,12 +17,15 @@ enum Dest: String, CaseIterable, Identifiable, Hashable {
     case lockStatus        // 锁实况（电量/固件/锁内时间）
     case addLock           // 配网
     case gateway           // 网关
-    case syncTime          // 校时
+    // 2026-11-02（六页并两页）：下面三个 case 的**视图**已改指向吸收页（见 Destinations.swift），
+    // case 本身保留 —— 全仓仍有 `.dest(.syncTime)` / `.dest(.tailgate)` / `.dest(.safeMode)` 的调用点，
+    // 删掉会编译失败。标题文案也保留：它们现在是「进入合并页时会话上下文」的入口名。
+    case syncTime          // 校时 → 已并入「锁实况」的锁钟卡
     case defend            // 布防
     case dfu               // 固件升级
-    case lockSettings      // 锁设置（cmd19 / cmd24 / 清空密码）
-    case tailgate          // 防尾随 / 自动上锁
-    case safeMode          // 安全模式说明
+    case lockSettings      // 锁设置（临时码 / 防尾随 / 静音 / 清空密码）
+    case tailgate          // 防尾随 → 已并入「锁设置」的防尾随段
+    case safeMode          // 安全模式 → 已并入「锁实况」的安全模式卡
     case batteryProfile    // 电池档案
     case lockProfile       // 锁档案
     case lockPortfolio     // 全部锁（多锁统计）

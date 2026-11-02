@@ -27,7 +27,8 @@ struct CredAlertSheet: View {
                     VCard {
                         VStack(alignment: .leading, spacing: V.S.gapS) {
                             VCardHeader(title: "到期预警")
-                            Text(CredentialOrg.displayPwd(pwd) + " · #\(pwd.alias)")
+                            // displayPwd 已含「#alias」，再拼一次会显示成「… 的密码 #3 · #3」。
+                            Text(CredentialOrg.displayPwd(pwd))
                                 .font(V.F.body).foregroundStyle(V.C.text1)
                             // 与引擎同口径（`expiryDate == nil` 即永久），不自己写 `hasPrefix`。
                             if CredentialOrg.expiryDate(pwd) == nil {

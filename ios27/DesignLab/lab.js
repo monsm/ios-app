@@ -11,7 +11,9 @@
 const fs = require('fs');
 const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
-const TOKENS = path.join(ROOT, 'App', 'Design', 'Tokens.swift');
+// 2026-11-02：旧令牌层 App/Design/Tokens.swift 已删除（全换系统后全仓只剩 V7 令牌）。
+// 这里改读 V7Tokens.swift —— 它才是现在唯一的令牌来源，lab 的 HTML 镜像才不会与真机分叉。
+const TOKENS = path.join(ROOT, 'App', 'Design', 'V7', 'V7Tokens.swift');
 const src = fs.readFileSync(TOKENS, 'utf8');
 
 // 按 enum 块切分再解析 —— 否则 "s/m/l/xl" 在 Spacing 与 Icon 两个枚举里同名，会互相覆盖。
@@ -20,13 +22,30 @@ function enumBlock(name) {
   const m = re.exec(src);
   return m ? m[1] : '';
 }
+// V7 令牌用的是 `static var gapXXL: CGFloat { d(32) }` 形式（带密度系数），
+// 而旧令牌是 `static let xxl: CGFloat = 32`。这里两种都认，并映射到 lab 的 CSS 变量名。
 const SPACE = {}, RADIUS = {}, HEIGHT = {}, ICON = {}, STROKE = {};
-const collect = (block, re, into) => { for (const m of block.matchAll(re)) into[m[1]] = +m[2]; };
-collect(enumBlock('S'), /static let (xxs|xs|s|m|l|xl|xxl|gutter): CGFloat = ([\d.]+)/g, SPACE);
-collect(enumBlock('R'), /static let (plate|inset|control|pill): CGFloat = ([\d.]+)/g, RADIUS);
+const collect = (block, re, into, map) => {
+  for (const m of block.matchAll(re)) {
+    const key = map ? (map[m[1]] || m[1]) : m[1];
+    // 两种写法：`= 32`（第 2 组）与 `{ d(32) }`（第 3 组）
+    const val = m[2] !== undefined ? +m[2] : (m[3] !== undefined ? +m[3] : NaN);
+    if (!Number.isNaN(val)) into[key] = val;
+  }
+};
+// 间距：gapXXS→xxs … gapXXL→xxl，gap16/gap24 是 16/24 的直接别名
+const SPACE_MAP = { gapXXS: 'xxs', gapXS: 'xs', gapS: 's', gapMS: 'ms', gapM: 'm', gap16: 'l', gapL: 'lg',
+                    gapXL: 'xl', gap24: 'xxl', gapXXL: 'xxl', pageGutter: 'gutter', cardGutter: 'gutter' };
+collect(enumBlock('S'), /static (?:let|var) (\w+): CGFloat(?:\s*=\s*([\d.]+)|\s*\{\s*d\(([\d.]+)\))/g, SPACE, SPACE_MAP);
+for (const k of Object.keys(SPACE)) if (SPACE[k] === undefined || Number.isNaN(SPACE[k])) delete SPACE[k];
+// 圆角：V.R 的 card/action/inset/control/mini 都是 `27 * factor` 形式
+const RADIUS_MAP = { card: 'plate', action: 'control', inset: 'inset', control: 'control', mini: 'pill' };
+collect(enumBlock('R'), /static var (card|action|inset|control|mini): CGFloat \{ ([\d.]+) \* factor \}/g, RADIUS, RADIUS_MAP);
 collect(enumBlock('H'), /static let (chip|action|row): CGFloat = ([\d.]+)/g, HEIGHT);
 collect(enumBlock('Icon'), /static let (s|m|l|xl): CGFloat = ([\d.]+)/g, ICON);
 collect(enumBlock('Stroke'), /static let (hair|focus): CGFloat = ([\d.]+)/g, STROKE);
+// V7 把 0.5pt 蚀刻线放在 enum S 里（S.hair），补到 STROKE 供 CSS var 使用。
+if (STROKE.hair === undefined) { const hm = /static let hair: CGFloat = ([\d.]+)/.exec(enumBlock('S')); if (hm) STROKE.hair = +hm[1]; }
 
 const F = {};
 const num1 = (re, dflt) => { const m = re.exec(src); return m ? +m[1] : dflt; };
@@ -38,15 +57,34 @@ F.unit = num1(/static let unit = Font\.system\(size: (\d+)/, 11);
 F.stamp = num1(/static let stamp = Font\.system\(size: (\d+)/, 13);
 F.reading = num1(/func reading\(_ size: CGFloat = (\d+)/, 17);
 
+// 两种写法都认：旧 `Color.dual(light:dark:)` 与 V7 的 `dual(0xL, 0xD)`。
 const DUAL = {};
-for (const m of src.matchAll(/static let (\w+)\s*=\s*Color\.dual\(light:\s*0x([0-9A-Fa-f]{6}),\s*dark:\s*0x([0-9A-Fa-f]{6})\)/g)) {
+for (const m of src.matchAll(/static let (\w+)\s*=\s*(?:Color\.)?dual\(\s*(?:light:\s*)?0x([0-9A-Fa-f]{6}),\s*(?:dark:\s*)?0x([0-9A-Fa-f]{6})/g)) {
   DUAL[m[1]] = { light: m[2].toUpperCase(), dark: m[3].toUpperCase() };
 }
 const kebab = (v) => v.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase());
 
+// V7 的色名与旧 CSS 变量名不是一一对应（旧：ink/plate/paper/base；新：text1/card/bg/blue）。
+// 这里建一张别名表，让 cssBody 与 primitives.js 里那些 var(--ink) 之类的写法继续有效，
+// 值统一来自 V7 令牌 —— 这样 lab 的截图才与真机同源。
+const COLOR_ALIAS = {
+  base: 'blue', on: 'onBlue', ink: 'text1', 'ink-sub': 'text2', 'ink-faint': 'text3',
+  paper: 'bg', plate: 'card', 'plate-alt': 'cardAlt', attention: 'warning',
+};
+// 带透明度的令牌（V7 用 dual(..., lightAlpha:, darkAlpha:) 表达）不落在 DUAL 里，单独给值。
+const ALPHA_COLORS = {
+  hairline: { light: 'rgba(0,0,0,.10)', dark: 'rgba(255,255,255,.14)' },
+  'hairline-soft': { light: 'rgba(0,0,0,.07)', dark: 'rgba(255,255,255,.08)' },
+};
+
 function rootVars(mode) {
   const out = [];
   for (const k of Object.keys(DUAL)) out.push('--' + kebab(k) + ': #' + DUAL[k][mode] + ';');
+  for (const alias of Object.keys(COLOR_ALIAS)) {
+    const target = COLOR_ALIAS[alias];
+    if (DUAL[target]) out.push('--' + alias + ': #' + DUAL[target][mode] + ';');
+  }
+  for (const k of Object.keys(ALPHA_COLORS)) out.push('--' + k + ': ' + ALPHA_COLORS[k][mode] + ';');
   for (const k of Object.keys(SPACE)) out.push('--sp-' + k + ': ' + SPACE[k] + 'px;');
   for (const k of Object.keys(RADIUS)) out.push('--r-' + k + ': ' + RADIUS[k] + 'px;');
   for (const k of Object.keys(HEIGHT)) out.push('--h-' + k + ': ' + HEIGHT[k] + 'px;');
