@@ -77,7 +77,8 @@ final class LockService: ObservableObject {
         let t = DiagTime.hhmmss()
         // 原始帧 hex 只进内存环形 recentFrames (诊断页 740 即时查看用): 帧内携带 skey/ekey/PIN 明文
         // (cmd05 换钥 / cmd0A 写密码 / cmd13 录指纹)。任何持久化或可复制出口都必须先脱敏 ——
-        // logs 会被诊断页写进剪贴板, DiagLogs 落 kf_diag_logs (全仓无 isExcludedFromBackup → 随系统备份出机)
+        // logs 会被诊断页写进剪贴板, DiagLogs 落 kf_diag_logs；该文件现已迁到 Caches 并设 isExcludedFromBackup
+        // （2026-11-01 Round 318 更正：此处原写「全仓无 isExcludedFromBackup → 随系统备份出机」，那是修复前的状态）
         // 并被导出中心 rawHexLines + ShareLink 带走。违 AUTOOPEN-PLAN §1「永不记 ekey/skey 明文」。
         let rawFrame = msg.contains("hex=")
         if rawFrame {
