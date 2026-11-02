@@ -80,7 +80,7 @@ struct GodModeScreen: View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VCardHeader(title: "锁端实时读数 (cmd03)")
-                if let st {
+                if let st = status {
                     VFieldRow(label: "固件", value: st.firmware.isEmpty ? "未上报" : st.firmware)
                     VFieldRow(label: "电量", value: st.powerLevel >= 0 ? "\(st.powerLevel)%" : "未读到")
                     VFieldRow(label: "锁内时间", value: st.lockTime > 0 ? TimeFormat.clock(ZKProtocol.protoSecondsToMs(st.lockTime)) : "未读到")
@@ -110,7 +110,7 @@ struct GodModeScreen: View {
                 VFieldRow(label: "本机 PIN 池", value: "\(kc.pins.filter { !$0.isEmpty }.count) 枚（声明 \(kc.pins.count)）", mono: false)
                 VFieldRow(label: "本机密码", value: "\(DB.listPwds(kc.mac).count) 条", mono: false)
                 VFieldRow(label: "本机指纹", value: "\(DB.listFps(kc.mac).count) 枚", mono: false)
-                if let st {
+                if let st = status {
                     let used = max((st.pinCap ?? 0) - st.pinStock, 0)
                     let local = kc.pins.filter { !$0.isEmpty }.count
                     VFieldRow(label: "锁端已用 vs 本机池", value: "\(used) vs \(local)", mono: false)
