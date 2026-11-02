@@ -12,7 +12,7 @@ import SwiftUI
 struct GodModeScreen: View {
     @Environment(AppModel.self) private var app
     @Environment(Router.self) private var router
-    @State private var status: LockStatus?
+    @State private var status: StatusSnapshotData?
     @State private var busy = false
     @State private var message: String?
     @State private var askRepair = false
@@ -85,11 +85,10 @@ struct GodModeScreen: View {
                     VFieldRow(label: "电量", value: st.powerLevel >= 0 ? "\(st.powerLevel)%" : "未读到")
                     VFieldRow(label: "锁内时间", value: st.lockTime > 0 ? TimeFormat.clock(ZKProtocol.protoSecondsToMs(st.lockTime)) : "未读到")
                     VFieldRow(label: "安全模式", value: "verify=\(st.verifyMode) broadcast=\(st.broadcastMode) tempPwd=\(st.tempPwdMode)", mono: false)
-                    VFieldRow(label: "PIN 容量/剩余", value: "\(st.pinInfoCapacity)/\(st.pinStock)")
-                    VFieldRow(label: "→ 锁端已用 PIN", value: String(max((st.pinInfoCapacity) - st.pinStock, 0)))
-                    VFieldRow(label: "密码容量/剩余", value: "\(st.pwdInfoCapacity)/\(st.pwdStock)")
-                    VFieldRow(label: "指纹容量/剩余", value: "\(st.fpInfoCapacity)/\(st.fpStock)")
-                    VFieldRow(label: "键盘计数", value: "freeze=\(st.keyboardFreeze) err=\(st.keyboardErrCount)", mono: false)
+                    VFieldRow(label: "PIN 容量/剩余", value: "\(st.pinCap ?? -1)/\(st.pinStock)")
+                    VFieldRow(label: "→ 锁端已用 PIN", value: String(max((st.pinCap ?? 0) - st.pinStock, 0)))
+                    VFieldRow(label: "密码容量/剩余", value: "\(st.pwdCap ?? -1)/\(st.pwdStock)")
+                    VFieldRow(label: "指纹容量/剩余", value: "\(st.fpCap ?? -1)/\(st.fpStock)")
                     VFieldRow(label: "sKeyStatus", value: String(st.sKeyStatus))
                     VFieldRow(label: "ZOTP 周期", value: "\(st.zotpPeriod) 分钟")
                 } else {
@@ -112,7 +111,7 @@ struct GodModeScreen: View {
                 VFieldRow(label: "本机密码", value: "\(DB.listPwds(kc.mac).count) 条", mono: false)
                 VFieldRow(label: "本机指纹", value: "\(DB.listFps(kc.mac).count) 枚", mono: false)
                 if let st {
-                    let used = max((st.pinInfoCapacity) - st.pinStock, 0)
+                    let used = max((st.pinCap ?? 0) - st.pinStock, 0)
                     let local = kc.pins.filter { !$0.isEmpty }.count
                     VFieldRow(label: "锁端已用 vs 本机池", value: "\(used) vs \(local)", mono: false)
                     // 数量相等不能证明同批（两边都满池时恒等）—— 唯一的裁判是"开锁回 rc"。

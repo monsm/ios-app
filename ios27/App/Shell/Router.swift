@@ -113,6 +113,7 @@ enum Dest: String, CaseIterable, Identifiable, Hashable {
         case .autoOpen: return "靠近自动开锁"
         case .hardware: return "硬件"
         case .protocolTest: return "协议测试"
+        case .godMode: return "God 模式"
         case .about: return "关于"
         case .accessibility: return "无障碍"
         case .backupStudio: return "备份工作室"
@@ -130,7 +131,7 @@ enum Dest: String, CaseIterable, Identifiable, Hashable {
         case .records, .recordDetail, .recordExport, .recordsStudio: return .records
         case .household, .memberDetail, .memberCreate, .memberArchive, .memberOps: return .household
         case .settings, .appearance, .security, .backup, .autoOpen, .hardware, .protocolTest, .about,
-             .accessibility, .backupStudio: return .settings
+             .accessibility, .backupStudio, .godMode: return .settings
         }
     }
 }
