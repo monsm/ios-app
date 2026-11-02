@@ -23,6 +23,26 @@ enum SeedImporter {
             let raw = try Data(contentsOf: seed)
             let bundle = try JSONDecoder().decode(BackupBundle.self, from: raw)
             let result = try BackupStudio.restore(bundle)
+            // 合成一份锁状态快照：pid 落到 KX（PidMap 命中 → 门页标题「KX 系列」而非
+            // 「未收录的型号 (pid=0)」），电量 76，锁内时间 = 现在（校时横幅不出现）。
+            if let d = bundle.devices.first {
+                var st = LockStatus()
+                st.rc = 0
+                st.powerLevel = 76
+                st.firmware = "1.4.2"
+                st.lockTime = Int64(ZKProtocol.nowProtoSeconds())
+                st.pinStock = 0
+                st.pwdStock = 64
+                st.fpStock = 42
+                st.sKeyStatus = 3
+                st.zotpPeriod = 30
+                st.pinInfoCapacity = 64
+                st.pwdInfoCapacity = 64
+                st.fpInfoCapacity = 50
+                st.pid = 8098            // PidMap.KX
+                st.pidName = "KX"
+                DB.writeStatus(d.mac, st)
+            }
             try? raw.write(to: done)
             CredentialOrg.notifyLog.error("SeedImporter: 导入成功 新增\(result.imported) 覆盖\(result.overwritten)")
         } catch {
