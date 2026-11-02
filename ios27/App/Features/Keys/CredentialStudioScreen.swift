@@ -75,54 +75,35 @@ struct CredentialStudioScreen: View {
     }
 
     var body: some View {
-        // 全换系统（2026-11-02）：整页容器是系统 `List`（与门页同一配方）。
-        // 「密码」「指纹」两段是**行式内容**（可多选、带星标/提醒），改走 `Section` + 系统行；
-        // 其余段落是卡片 → `cardRow()`（.plain 样式没有系统左右留白，cardRow 补回 pageGutter）；
-        // 页头与结果提示条是整宽内容 → `headerRow()`。
-        List {
-            header.headerRow()
-            if app.lock == nil {
-                noLockCard.cardRow()
-            } else {
-                summaryCard.cardRow()
-                toolsCard.cardRow()
-                pwdSection
-                fpSection
-                if let studioOutcome {
-                    Text(studioOutcome)
-                        .font(V.F.footnote)
-                        .foregroundStyle(studioOutcomeBad ? V.C.pink : V.C.rewardGreen)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .headerRow()   // 结果提示条是整宽内容，不是卡片
+        ScrollView {
+            VStack(alignment: .leading, spacing: V.S.gapM) {
+                header
+                if app.lock == nil {
+                    noLockCard
+                } else {
+                    summaryCard
+                    toolsCard
+                    selectionCard
+                    batchCard
+                    auditCard
+                    binCard
+                    historyCard
                 }
-                batchCard.cardRow()
-                auditCard.cardRow()
-                binCard.cardRow()
-                historyCard.cardRow()
             }
+            .padding(.top, V.Page.topSpace)
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .contentMargins(.top, V.Page.topSpace, for: .scrollContent)
-        .contentMargins(.bottom, V.S.gapM, for: .scrollContent)
         .background(V.C.bg.ignoresSafeArea())
         .navigationTitle("凭证工作室")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { tick += 1 }
         .sheet(item: $alertTarget) { pwd in
             CredAlertSheet(mac: studioMac, pwd: pwd)
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $binOpen) {
             CredBinSheet(mac: studioMac) { tick += 1 }
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $historyOpen) {
             CredHistorySheet(mac: studioMac) { tick += 1 }
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
         }
         .alert("清空回收站？", isPresented: $showPurgeAll) {
             Button("取消", role: .cancel) {}
@@ -139,7 +120,7 @@ struct CredentialStudioScreen: View {
             Text("批量整理 · 回收站 · 版本 · 预警 · 导出")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }
-        // 页头走 headerRow()（自带 pageGutter）—— 原 pageGutterA 删掉，否则 16+16=32pt。
+        .padding(.horizontal, V.S.pageGutterA)
     }
 
     private var noLockCard: some View {
@@ -151,6 +132,7 @@ struct CredentialStudioScreen: View {
                 VActionButton(title: "添加门锁", systemImage: "plus") { router.request(.dest(.addLock)) }
             }
         }
+        .padding(.horizontal, V.S.cardGutter)
     }
 
     private var summaryCard: some View {
@@ -167,6 +149,7 @@ struct CredentialStudioScreen: View {
                     .font(V.F.micro).foregroundStyle(V.C.text3)
             }
         }
+        .padding(.horizontal, V.S.cardGutter)
     }
 
     // MARK: - 工具条：排序 / 分组 / 版本
@@ -204,68 +187,56 @@ struct CredentialStudioScreen: View {
                 }
             }
         }
+        .padding(.horizontal, V.S.cardGutter)
     }
 
     // MARK: - 选择列表
 
-    /// 「密码」段：行式内容 → 系统 `Section`。全选按钮放 header，行本身走 `pwdRow`。
-    private var pwdSection: some View {
-        Section {
-            if pwdRows.isEmpty {
-                Text("还没有密码凭证。去「新增凭证」加一枚。")
-                    .font(V.F.footnote)
-                    .foregroundStyle(V.C.text3)
-            } else {
-                ForEach(pwdRows) { pwd in
-                    pwdRow(pwd)
+    private var selectionCard: some View {
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapXS) {
+                HStack {
+                    VCardHeader(title: "密码", showsChevron: false)
+                    Spacer(minLength: 0)
+                    Button(selectedPwds.count == pwdRows.count ? "取消全选" : "全选") {
+                        selectedPwds = selectedPwds.count == pwdRows.count ? [] : Set(pwdRows.map(\.alias))
+                    }
+                    .font(V.F.footnote).foregroundStyle(V.C.blue)
+                }
+                if pwdRows.isEmpty {
+                    Text("还没有密码凭证。去「新增凭证」加一枚。")
+                        .font(V.F.footnote).foregroundStyle(V.C.text3)
+                } else {
+                    ForEach(pwdRows) { pwd in
+                        pwdRow(pwd)
+                        VDivider()
+                    }
+                }
+                HStack {
+                    VCardHeader(title: "指纹", showsChevron: false)
+                    Spacer(minLength: 0)
+                    Button(selectedFps.count == fpRows.count ? "取消全选" : "全选") {
+                        selectedFps = selectedFps.count == fpRows.count ? [] : Set(fpRows.map(\.batch))
+                    }
+                    .font(V.F.footnote).foregroundStyle(V.C.blue)
+                }
+                if fpRows.isEmpty {
+                    Text("还没有指纹。指纹要在门锁上按 8 次录入。")
+                        .font(V.F.footnote).foregroundStyle(V.C.text3)
+                } else {
+                    ForEach(fpRows) { fp in
+                        fpRow(fp)
+                        VDivider()
+                    }
+                }
+                if let studioOutcome {
+                    Text(studioOutcome).font(V.F.footnote)
+                        .foregroundStyle(studioOutcomeBad ? V.C.pink : V.C.rewardGreen)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
-        } header: {
-            sectionHeader(title: "密码", count: pwdRows.count,
-                          allSelected: selectedPwds.count == pwdRows.count) {
-                selectedPwds = selectedPwds.count == pwdRows.count ? [] : Set(pwdRows.map(\.alias))
-            }
         }
-    }
-
-    /// 「指纹」段：同上。
-    private var fpSection: some View {
-        Section {
-            if fpRows.isEmpty {
-                Text("还没有指纹。指纹要在门锁上按 8 次录入。")
-                    .font(V.F.footnote)
-                    .foregroundStyle(V.C.text3)
-            } else {
-                ForEach(fpRows) { fp in
-                    fpRow(fp)
-                }
-            }
-        } header: {
-            sectionHeader(title: "指纹", count: fpRows.count,
-                          allSelected: selectedFps.count == fpRows.count) {
-                selectedFps = selectedFps.count == fpRows.count ? [] : Set(fpRows.map(\.batch))
-            }
-        }
-    }
-
-    /// 段头：标题 + 条数 + 全选/取消全选。系统 Section header 只给一行文字位，
-    /// 所以把按钮放进 `HStack`（而不是自己再画一条卡头）。
-    private func sectionHeader(title: String, count: Int, allSelected: Bool,
-                               toggleAll: @escaping () -> Void) -> some View {
-        HStack(spacing: V.S.gapS) {
-            Text(title)
-                .font(V.F.section)
-                .foregroundStyle(V.C.text1)
-            Text("\(count)")
-                .font(V.F.footnote)
-                .foregroundStyle(V.C.text3)
-                .monospacedDigit()
-            Spacer(minLength: 0)
-            Button(allSelected ? "取消全选" : "全选", action: toggleAll)
-                .font(V.F.footnote)
-                .foregroundStyle(V.C.blue)
-                .textCase(nil)   // 系统 Section header 默认全大写，中文不该被改写成大写
-        }
+        .padding(.horizontal, V.S.cardGutter)
     }
 
     private func pwdRow(_ pwd: LedgerPwd) -> some View {
@@ -293,9 +264,7 @@ struct CredentialStudioScreen: View {
                             .accessibilityLabel("已星标")
                     }
                 }
-                // 内部值出屏：原来这里是裸的「#3」；改为归属人（空→未归属）+ 到期 + 状态。
-                // 行标题（上一行）已经是 CredentialOrg.displayPwd(pwd)，这里不再重复同一串。
-                Text("\(CredentialOrg.ownerName(pwd.owner).isEmpty ? "未归属" : CredentialOrg.ownerName(pwd.owner)) · \(CredentialOrg.expiryLabel(pwd.to)) · \(CredentialOrg.stateLabel(CredentialOrg.pwdState(pwd)))")
+                Text("#\(pwd.alias) · \(CredentialOrg.expiryLabel(pwd.to)) · \(CredentialOrg.stateLabel(CredentialOrg.pwdState(pwd)))")
                     .font(V.F.rowDetail).foregroundStyle(V.C.text3).lineLimit(1)
             }
             Spacer(minLength: V.S.gapS)
@@ -314,8 +283,6 @@ struct CredentialStudioScreen: View {
                 .font(V.F.footnote).foregroundStyle(V.C.blue)
         }
         .frame(minHeight: V.List.rowMinHeight)
-        // 进系统 List 后行内边距与卡片 gutter 对齐（非 List 容器里是 no-op）。
-        .listRowInsets(EdgeInsets(top: 0, leading: V.S.cardPad, bottom: 0, trailing: V.S.cardPad))
     }
 
     private func fpRow(_ fp: LedgerFp) -> some View {
@@ -333,12 +300,7 @@ struct CredentialStudioScreen: View {
             .buttonStyle(.plain)
             .accessibilityLabel(selected ? "取消选择" : "选择")
             VStack(alignment: .leading, spacing: V.S.gapXXS) {
-                Text({
-                    // 内部值出屏：没有昵称时不再只显示裸批次号，补上归属人（空则退回「指纹 #N」）。
-                    if !fp.name.isEmpty { return fp.name }
-                    let who = CredentialOrg.ownerName(fp.owner)
-                    return who.isEmpty ? "指纹 #\(fp.batch)" : "\(who) 的指纹 #\(fp.batch)"
-                }())
+                Text(fp.name.isEmpty ? "指纹 \(fp.batch)" : fp.name)
                     .font(V.F.rowTitle).foregroundStyle(V.C.text1).lineLimit(1)
                 // 归属人为空（成员已删）时不能留下悬空的 " · "：
                 // 同仓 `namingTemplate` / `fpNameSuggestion` 都做了 isEmpty 兜底，只有这里漏了。
@@ -354,7 +316,6 @@ struct CredentialStudioScreen: View {
             }
         }
         .frame(minHeight: V.List.rowMinHeight)
-        .listRowInsets(EdgeInsets(top: 0, leading: V.S.cardPad, bottom: 0, trailing: V.S.cardPad))
     }
 
     // MARK: - 批量动作
@@ -418,6 +379,7 @@ struct CredentialStudioScreen: View {
                 }
             }
         }
+        .padding(.horizontal, V.S.cardGutter)
     }
 
     // MARK: - 检测
@@ -433,8 +395,7 @@ struct CredentialStudioScreen: View {
                     ("重复组", "\(duplicates.count) 组")
                 ])
                 if !weak.isEmpty {
-                    // 内部值出屏：不再列裸编号，改列「谁的密码 / 临时密码 #N」（displayPwd 自带归属）。
-                    Text("弱口令：" + weak.map { CredentialOrg.displayPwd($0) }.joined(separator: "、"))
+                    Text("弱口令：" + weak.map { "#\($0.alias)" }.joined(separator: "、"))
                         .font(V.F.footnote).foregroundStyle(V.C.coral)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -452,6 +413,7 @@ struct CredentialStudioScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+        .padding(.horizontal, V.S.cardGutter)
     }
 
     private var duplicateGroups: [[String]] {
@@ -477,6 +439,7 @@ struct CredentialStudioScreen: View {
                 }
             }
         }
+        .padding(.horizontal, V.S.cardGutter)
     }
 
     private var historyCard: some View {
@@ -488,6 +451,7 @@ struct CredentialStudioScreen: View {
                 VOutlineButton(title: "打开版本历史", systemImage: "clock.arrow.circlepath") { historyOpen = true }
             }
         }
+        .padding(.horizontal, V.S.cardGutter)
     }
 
     // MARK: - 动作

@@ -33,17 +33,16 @@ struct KeysScreen: View {
     }
 
     /// 按成员分组（原 CredentialActions.swift:349-408）：没有归属的归到「未归属」，不猜。
-    /// 2026-11-02：**先归一再加桶**。`key.owner` 历史上存过成员 id 与成员名字两种值，
-    /// 直接拿原值当桶键会把同一个人拆成两组（"22C255CE" 一组、"张三" 一组）。
-    /// 归一只走 `CredentialOrg.ownerName`（它已处理 id / 名字两种口径），空则「未归属」。
     private var grouped: [(owner: String, items: [KeyItem])] {
         var order: [String] = []
         var buckets: [String: [KeyItem]] = [:]
         for key in filtered {
+            // 2026-11-02（真 bug）：`key.owner` 历史上存过「成员 id」与「成员名字」两种，
+            // 直接当显示名会露出内部 id。统一过 `CredentialOrg.ownerName`（两口径都认）。
             let resolved = CredentialOrg.ownerName(key.owner)
-            let bucket = resolved.isEmpty ? "未归属" : resolved
-            if buckets[bucket] == nil { order.append(bucket) }
-            buckets[bucket, default: []].append(key)
+            let owner = resolved.isEmpty ? "未归属" : resolved
+            if buckets[owner] == nil { order.append(owner) }
+            buckets[owner, default: []].append(key)
         }
         return order.map { ($0, buckets[$0] ?? []) }
     }
@@ -72,17 +71,10 @@ struct KeysScreen: View {
     }
 
     var body: some View {
-        // 全换系统：容器是系统 List，分组是系统 Section(header:)。
-        // V7KeyRow 保留原样（凭证行有状态点、逐位打码与到期读数，不是普通列表行）。
-        List {
-            Section {
+        ScrollView {
+            VStack(alignment: .leading, spacing: V.S.gapM) {
                 chips
-                    .listRowInsets(EdgeInsets())
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
-                // 页头自带 pageGutterB 的缩进改由 `headerRow(gutter:)` 表达（视觉不变，
-                // 但行对齐检查器能看见它）—— 否则它会被误判成「页头比卡片更靠边」。
-                header.headerRow(gutter: V.S.pageGutterB)
+                header
                 if app.ledgerCorrupt {
                     // 2026-11-01（Round 320）：台账读不出来时，写入会被静默拒绝 —— 必须让用户知道。
                     // 不写「损坏」这种吓人的词做断言（可能只是版本不兼容），只说清后果与出路。
@@ -95,65 +87,26 @@ struct KeysScreen: View {
                                          "请先到「备份工作室」从一份备份恢复，再继续操作。")
                         }
                     }
-                    .listRowInsets(EdgeInsets(top: 0, leading: V.S.cardGutter, bottom: 0, trailing: V.S.cardGutter))
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
+                    .padding(.horizontal, V.S.cardGutter)
                 }
-            }
-
-            if app.lock == nil {
-                Section {
+                if app.lock == nil {
                     noLockBlock
-                        .listRowInsets(EdgeInsets(top: 0, leading: V.S.cardGutter, bottom: 0, trailing: V.S.cardGutter))
-                        .listRowSeparator(.hidden)
-                        .listRowBackground(Color.clear)
-                }
-            } else if app.keys.isEmpty {
-                Section {
+                } else if app.keys.isEmpty {
                     emptyBlock
-                        .listRowInsets(EdgeInsets(top: 0, leading: V.S.cardGutter, bottom: 0, trailing: V.S.cardGutter))
-                        .listRowSeparator(.hidden)
-                        .listRowBackground(Color.clear)
-                }
-            } else {
-                Section {
+                } else {
                     validityCard
-                        .listRowInsets(EdgeInsets())
-                        .listRowSeparator(.hidden)
-                        .listRowBackground(Color.clear)
                     familyCard
-                        .listRowInsets(EdgeInsets())
-                        .listRowSeparator(.hidden)
-                        .listRowBackground(Color.clear)
-                    // 2026-11-02（R7 收尾）：原「本机安全」卡（securityCard）已删。
-                    // 它整张卡只有「已启用 / 范围 / 全量」三个**常量字面量** + 一个盾牌渐变图标 ——
-                    // 没有数据源、没有动作、没有跳转，是 ui-ia.md §4.4 的 Z1「纯装饰卡片」。
-                    // 真正的安全设置入口在「设置 → 安全中心」，那里有真开关与真读数。
+                    securityCard
                     filterBlock
-                        .listRowInsets(EdgeInsets())
-                        .listRowSeparator(.hidden)
-                        .listRowBackground(Color.clear)
+                    ledgerBlock
                 }
-                ledgerBlock
+                shortcutsBlock
             }
-
-            shortcutsBlock
+            .padding(.top, V.Page.topSpace)
+            .padding(.bottom, V.S.gapL)
         }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
         .background(V.C.bg.ignoresSafeArea())
-        // 全换系统：用系统导航栏 + 系统搜索，不再把大标题画在页面里、也不自绘搜索框。
-        .navigationTitle("钥匙")
-        .navigationBarTitleDisplayMode(.large)
-        .searchable(text: $search,
-                    placement: .navigationBarDrawer(displayMode: .always),
-                    prompt: "搜名称 / 归属 / 类型")
-        .onSubmit(of: .search) {
-            // 函数内已挡空串；这里再挡一次是为了不产生"提交了但什么都没发生"的感觉。
-            if !search.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                CredentialOrg.pushSearchHistory(search)
-            }
-        }
+        .toolbarVisibility(.hidden, for: .navigationBar)
         .task { await app.reload(refreshStatus: false) }
         .onAppear {
             now = KeysState.now()
@@ -193,13 +146,11 @@ struct KeysScreen: View {
                     systemImage: "line.3.horizontal"
                 )
                 VChip(
-                    // R6：原来这里写「凭证 N 枚」—— 与环心（:255）和列表头计数是同一个数。
-                    // 改成「有效 N」，是全页唯一一处「有效/总数」的对照读数（总数交给环心）。
-                    title: "有效",
-                    value: "\(validCount) 枚",
+                    title: "凭证",
+                    value: "\(app.keys.count) 枚",
                     tint: V.C.blue,
                     style: .compact,
-                    systemImage: "checkmark.seal.fill"
+                    systemImage: "circle.hexagongrid.fill"
                 )
                 VChip(
                     title: "生物识别",
@@ -221,16 +172,20 @@ struct KeysScreen: View {
         .scrollIndicators(.hidden)
     }
 
-    // MARK: - 导语（大标题交给系统导航栏，页内只留一句导语）
+    // MARK: - 标题 + 导语（R2：left 29.67 / 29pt / 17:23）
 
     private var header: some View {
         VStack(alignment: .leading, spacing: V.Page.titleToBody) {
-            Text("家人、临时客人与服务人员共用一把门锁；过期自动失效，随时可撤销。")
+            Text("凭证")
+                .font(V.F.displayB)
+                .foregroundStyle(V.C.text1)
+            Text("家人、临时客人与服务人员\n共用一把门锁；过期自动失效，\n随时可撤销。")
                 .font(V.F.pageLead)
                 .foregroundStyle(V.C.text9)
                 .lineSpacing(V.Page.bodyLineSpacing)
                 .fixedSize(horizontal: false, vertical: true)
         }
+        .padding(.horizontal, V.S.pageGutterB)
         .padding(.top, V.Page.chipToTitle)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
@@ -244,14 +199,15 @@ struct KeysScreen: View {
                 VCardHeader(title: "门锁")
                 HStack(alignment: .top, spacing: V.S.gapM) {
                     VStack(alignment: .leading, spacing: V.S.gapXXS) {
-                        // R6（ui-ia §4.1）：原来这里还写了一遍「总数 N 枚」，与右侧环心（:256）
-                        // 及下方「共 N 枚」是同一个数 —— 一页 5 次。现在只留环心 + 列表计数。
                         Text("凭证有效")
                             .font(V.F.chipValue)
                             .foregroundStyle(V.C.text1)
-                        Text("含密码 / 指纹 / 临时码 / 手机钥匙")
+                        Text("总数")
                             .font(V.F.micro)
                             .foregroundStyle(V.C.text4)
+                        Text("\(app.keys.count) 枚")
+                            .font(V.F.bedValue)
+                            .foregroundStyle(V.C.text1)
                     }
                     Spacer(minLength: 0)
                     VSegmentedRing(segments: kindSegments, center: "\(app.keys.count)")
@@ -266,6 +222,9 @@ struct KeysScreen: View {
                         Text("\(validCount) 枚")
                             .font(V.F.bedValue)
                             .foregroundStyle(V.C.text1)
+                        Text("共 \(app.keys.count) 枚")
+                            .font(V.F.micro)
+                            .foregroundStyle(V.C.text4)
                     }
                     Spacer(minLength: 0)
                     VStack(alignment: .leading, spacing: V.S.gapXXS) {
@@ -285,6 +244,7 @@ struct KeysScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+        .padding(.horizontal, V.S.cardGutter)
     }
 
     private var kindSegments: [(Double, Color)] {
@@ -322,14 +282,13 @@ struct KeysScreen: View {
                 ])
                 .padding(.top, V.S.gapXXS)
                 VDivider()
-                // R6：原来这句又写一遍 validCount（已是本页第 3 次）。改写成不带数字的说明 ——
-                // 计数统一由「芯片·有效」与「列表头·N 枚」承担。
-                Text("全部在本机核对，不联网。")
+                Text("今日已核验 \(validCount) 枚凭证，全部在本机核对。")
                     .font(V.F.footnote)
                     .foregroundStyle(V.C.text7)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+        .padding(.horizontal, V.S.cardGutter)
     }
 
     private func legendRow(title: String, count: Int, color: Color) -> some View {
@@ -367,12 +326,77 @@ struct KeysScreen: View {
         return TimeFormat.dayShort(first)
     }
 
+    // MARK: - 卡 3：本机安全
+
+    private var securityCard: some View {
+        VCard(style: .warm) {
+            VStack(alignment: .leading, spacing: V.S.gapS) {
+                VCardHeader(title: "本机安全")
+                HStack(alignment: .center, spacing: V.S.gapM) {
+                    VStack(alignment: .leading, spacing: V.S.gapXXS) {
+                        Text("已启用")
+                            .font(V.F.chipValue)
+                            .foregroundStyle(V.C.text1)
+                        Text("范围")
+                            .font(V.F.micro)
+                            .foregroundStyle(V.C.text4)
+                        Text("全量")
+                            .font(V.F.bedValue)
+                            .foregroundStyle(V.C.text1)
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: "checkmark.shield.fill")
+                        .font(V.F.heroGlyph56)
+                        .foregroundStyle(
+                            LinearGradient(
+                                gradient: Gradient(colors: [V.C.red.opacity(0.75), V.C.pink]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .accessibilityHidden(true)
+                }
+            }
+        }
+        .padding(.horizontal, V.S.cardGutter)
+    }
+
+    // MARK: - 筛选 + 凭证台账（保留原有数据绑定）
 
     private var filterBlock: some View {
         VStack(alignment: .leading, spacing: V.S.gapS) {
             Text("全部凭证")
                 .font(V.F.section)
                 .foregroundStyle(V.C.text1)
+            HStack(spacing: V.S.gapS) {
+                Image(systemName: "magnifyingglass")
+                    .font(V.F.icon15)
+                    .foregroundStyle(V.C.text3)
+                    .accessibilityHidden(true)
+                TextField("搜名称 / 归属 / 类型", text: $search)
+                    .font(V.F.body)
+                    .foregroundStyle(V.C.text1)
+                    .textFieldStyle(.plain)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                    .accessibilityLabel("搜索凭证")
+                    // 函数内已挡空串；这里再挡一次是为了不产生"提交了但什么都没发生"的感觉 ——
+                    // 空搜索本来就没有可记的东西。
+                    .onSubmit { if !search.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { CredentialOrg.pushSearchHistory(search) } }
+                if !search.isEmpty {
+                    Button { search = "" } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(V.F.icon15)
+                            .foregroundStyle(V.C.text3)
+                            .accessibilityHidden(true)
+                    }
+                    .accessibilityLabel("清空凭证搜索")
+                }
+            }
+            .padding(.horizontal, V.S.gapM)
+            .frame(minHeight: V.Metric.searchRow)
+            .background(V.C.cardAlt, in: .rect(cornerRadius: V.R.control))
+
             if search.isEmpty, !CredentialOrg.searchHistory().isEmpty {
                 ScrollView(.horizontal) {
                     HStack(spacing: V.S.gapS) {
@@ -443,6 +467,7 @@ struct KeysScreen: View {
             }
             .scrollIndicators(.hidden)
         }
+        .padding(.horizontal, V.S.cardGutter)
         .padding(.top, V.S.gapL)
     }
 
@@ -451,73 +476,73 @@ struct KeysScreen: View {
         return "\(item.title) \(count)"
     }
 
-    @ViewBuilder
     private var ledgerBlock: some View {
-        if filtered.isEmpty {
-            Section {
-                VStack(alignment: .leading, spacing: V.S.gapS) {
-                    Text(searchText.isEmpty ? emptyFilterText : "没有找到「\(search)」")
-                        .font(V.F.footnote)
-                        .foregroundStyle(V.C.text3)
-                        .fixedSize(horizontal: false, vertical: true)
-                    if !searchText.isEmpty {
-                        VOutlineButton(title: "清空搜索", systemImage: "xmark.circle") { search = "" }
-                        VOutlineButton(title: "改为按成员分组重搜", systemImage: "person.2") {
-                            groupByOwner = true
-                            CredentialOrg.setGroupMode(.owner)
-                        }
-                    }
-                }
-                .listRowInsets(EdgeInsets(top: 0, leading: V.S.cardGutter, bottom: 0, trailing: V.S.cardGutter))
-                .listRowSeparator(.hidden)
-                .listRowBackground(Color.clear)
-            } header: {
-                Text(searchText.isEmpty ? (filter == .all ? "全部凭证" : filter.title) : "搜索结果")
-            }
-        } else if groupByOwner {
-            ForEach(Array(grouped.enumerated()), id: \.offset) { pair in
-                Section {
-                    ForEach(Array(pair.element.items.enumerated()), id: \.offset) { row in
-                        keyRow(row.element)
-                    }
-                } header: {
-                    HStack(spacing: V.S.gapS) {
-                        // 桶键已是归一后的显示名；这里再走一次 ownerName 兜底（别名开关改动后仍正确）。
-                        Text(CredentialOrg.ownerName(pair.element.owner).isEmpty ? "未归属" : CredentialOrg.ownerName(pair.element.owner))
-                        Spacer(minLength: 0)
-                        Text("\(pair.element.items.count) 枚")
-                            .monospacedDigit()
-                    }
-                    .textCase(nil)
-                }
-            }
-        } else {
-            Section {
-                ForEach(Array(filtered.enumerated()), id: \.offset) { row in
-                    keyRow(row.element)
-                }
-            } header: {
-                HStack(spacing: V.S.gapS) {
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapS) {
+                HStack {
                     Text(filter == .all ? "全部凭证" : filter.title)
+                        .font(V.F.cardTitle)
+                        .foregroundStyle(V.C.text6)
                     Spacer(minLength: 0)
                     Text("\(filtered.count) 枚")
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text3)
                         .monospacedDigit()
                 }
-                .textCase(nil)
+                if filtered.isEmpty {
+                    VStack(alignment: .leading, spacing: V.S.gapS) {
+                        Text(searchText.isEmpty ? emptyFilterText : "没有找到「\(search)」")
+                            .font(V.F.footnote)
+                            .foregroundStyle(V.C.text3)
+                            .fixedSize(horizontal: false, vertical: true)
+                        if !searchText.isEmpty {
+                            VOutlineButton(title: "清空搜索", systemImage: "xmark.circle") { search = "" }
+                            VOutlineButton(title: "改为按成员分组重搜", systemImage: "person.2") {
+                                groupByOwner = true
+                                CredentialOrg.setGroupMode(.owner)
+                            }
+                        }
+                    }
+                } else if groupByOwner {
+                    VStack(alignment: .leading, spacing: V.S.gapM) {
+                        ForEach(Array(grouped.enumerated()), id: \.offset) { pair in
+                            VStack(alignment: .leading, spacing: V.S.gapS) {
+                                HStack(spacing: V.S.gapS) {
+                                    // 桶键已是归一后的显示名；这里再兜一次，别名开关改动后仍正确。
+                                    Text(CredentialOrg.ownerName(pair.element.owner).isEmpty ? "未归属" : CredentialOrg.ownerName(pair.element.owner))
+                                        .font(V.F.cardTitle)
+                                        .foregroundStyle(V.C.text6)
+                                    Spacer(minLength: 0)
+                                    Text("\(pair.element.items.count) 枚")
+                                        .font(V.F.unit)
+                                        .foregroundStyle(V.C.text3)
+                                        .monospacedDigit()
+                                }
+                                rows(pair.element.items)
+                            }
+                        }
+                    }
+                } else {
+                    rows(filtered)
+                }
             }
         }
+        .padding(.horizontal, V.S.cardGutter)
     }
 
-    /// 单条凭证行：V7KeyRow 原样保留，只把外层从「VCard 里的 VStack」换成 List 行。
-    @ViewBuilder
-    private func keyRow(_ item: KeyItem) -> some View {
-        Button {
-            KeysRoute.openDetail(item.id, router: router)
-        } label: {
-            V7KeyRow(key: item, now: now)
+    private func rows(_ items: [KeyItem]) -> some View {
+        VStack(spacing: 0) {
+            ForEach(Array(items.enumerated()), id: \.offset) { pair in
+                if pair.offset > 0 { VDivider() }
+                Button {
+                    KeysRoute.openDetail(pair.element.id, router: router)
+                } label: {
+                    V7KeyRow(key: pair.element, now: now)
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("打开凭证详情")
+            }
         }
-        .buttonStyle(.plain)
-        .accessibilityHint("打开凭证详情")
     }
 
     private var emptyFilterText: String {
@@ -547,6 +572,7 @@ struct KeysScreen: View {
                 }
             }
         }
+        .padding(.horizontal, V.S.pageGutterB)
         .padding(.top, V.S.gapL)
     }
 
@@ -565,57 +591,70 @@ struct KeysScreen: View {
                 }
             }
         }
+        .padding(.horizontal, V.S.pageGutterB)
         .padding(.top, V.S.gapL)
     }
 
     // MARK: - 次级入口（保留全部 Router 入口）
 
     private var shortcutsBlock: some View {
-        Section {
-            VListRow(
-                title: "新增凭证",
-                detail: "密码 / 指纹 / 临时码",
-                systemImage: "plus.circle.fill",
-                tint: V.C.rewardBlue
-            ) { router.request(.dest(.keyCreate)) }
-            // 来源：原 App/UI/CredentialOtp.swift（动态临时密码）+ CredentialCenterView（凭证整理）。
-            if !MemberHub.elderMode {
-                VListRow(
-                    title: "凭证工作室",
-                    detail: "批量 / 回收站 / 版本 / 预警 / 导出 / 检测",
-                    systemImage: "wrench.and.screwdriver.fill",
-                    tint: V.C.purple
-                ) { router.request(.dest(.credentialStudio)) }
-            }
-            VListRow(
-                title: "动态密码",
-                detail: "按锁端周期生成 6 位 ZOTP 码",
-                systemImage: "clock.badge.questionmark",
-                tint: V.C.miniBlue
-            ) { router.request(.dest(.zotp)) }
-            VListRow(
-                title: "到期月历",
-                detail: "看这个月哪天有凭证到期",
-                systemImage: "calendar",
-                tint: V.C.purple
-            ) { router.request(.dest(.keyCalendar)) }
-            VListRow(
-                title: "手机钥匙",
-                detail: "给家人的手机签一把钥匙",
-                systemImage: "iphone.gen3",
-                tint: V.C.rewardGreen
-            ) { router.request(.dest(.mobileKey)) }
-            if !MemberHub.elderMode {
-                VListRow(
-                    title: "分享给安卓",
-                    detail: "扫码把开锁凭证导到安卓手机",
-                    systemImage: "qrcode",
-                    tint: V.C.coral
-                ) { router.request(.dest(.shareToAndroid)) }
-            }
-        } header: {
+        VStack(alignment: .leading, spacing: V.S.gapS) {
             Text("凭证工具")
+                .font(V.F.section)
+                .foregroundStyle(V.C.text1)
+            VCard {
+                VStack(spacing: 0) {
+                    VListRow(
+                        title: "新增凭证",
+                        detail: "密码 / 指纹 / 临时码",
+                        systemImage: "plus.circle.fill",
+                        tint: V.C.rewardBlue
+                    ) { router.request(.dest(.keyCreate)) }
+                    VDivider()
+                    // 来源：原 App/UI/CredentialOtp.swift（动态临时密码）+ CredentialCenterView（凭证整理）。
+                    if !MemberHub.elderMode {
+                        VListRow(
+                            title: "凭证工作室",
+                            detail: "批量 / 回收站 / 版本 / 预警 / 导出 / 检测",
+                            systemImage: "wrench.and.screwdriver.fill",
+                            tint: V.C.purple
+                        ) { router.request(.dest(.credentialStudio)) }
+                        VDivider()
+                    }
+                    VListRow(
+                        title: "动态密码",
+                        detail: "按锁端周期生成 6 位 ZOTP 码",
+                        systemImage: "clock.badge.questionmark",
+                        tint: V.C.miniBlue
+                    ) { router.request(.dest(.zotp)) }
+                    VDivider()
+                    VListRow(
+                        title: "到期月历",
+                        detail: "看这个月哪天有凭证到期",
+                        systemImage: "calendar",
+                        tint: V.C.purple
+                    ) { router.request(.dest(.keyCalendar)) }
+                    VDivider()
+                    VListRow(
+                        title: "手机钥匙",
+                        detail: "给家人的手机签一把钥匙",
+                        systemImage: "iphone.gen3",
+                        tint: V.C.rewardGreen
+                    ) { router.request(.dest(.mobileKey)) }
+                    if !MemberHub.elderMode {
+                        VDivider()
+                        VListRow(
+                            title: "分享给安卓",
+                            detail: "扫码把开锁凭证导到安卓手机",
+                            systemImage: "qrcode",
+                            tint: V.C.coral
+                        ) { router.request(.dest(.shareToAndroid)) }
+                    }
+                }
+            }
         }
+        .padding(.horizontal, V.S.cardGutter)
+        .padding(.top, V.S.gapL)
     }
 
     /// 别的 Tab 用 .key(id:) 跳过来时，Router 只切 Tab 不 push —— 这里接住，推进详情。
@@ -633,9 +672,8 @@ private struct V7KeyRow: View {
 
     private var rowSubtitle: String {
         var bits: [String] = [key.kind.rawValue]
-        // 内部值出屏：key.owner 可能是成员 id，先换成可读名字；空/解析不到就不占位。
-        let owner = CredentialOrg.ownerName(key.owner)
-        if !owner.isEmpty { bits.append(owner) }
+        let ownerNameText = CredentialOrg.ownerName(key.owner)
+        if !ownerNameText.isEmpty { bits.append(ownerNameText) }
         if let code = key.code, !code.isEmpty { bits.append(code) }
         return bits.joined(separator: " · ")
     }

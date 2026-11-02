@@ -18,34 +18,24 @@ struct BatteryProfileScreen: View {
 
     private var mac: String { app.lock?.id ?? "" }
     private var samples: [BattSample] { BatteryCare.samples(mac) }
-    /// 图表 / 五档档位仍需要原始整数百分比 —— 这一层保留（Reading 只给展示文案，不给画图用的数）。
     private var pct: Int { BatteryCare.displayPct(mac, snapshot: DB.readStatus(mac)?.powerLevel ?? -1) }
     private var tier: BatteryCare.Tier { BatteryCare.tier(pct) }
-    /// 展示文案走全仓唯一口径（>80 只报 >80%，与门页/锁实况/设置页一致）。
-    private var batteryText: String {
-        Reading.battery(mac, snapshot: DB.readStatus(mac)?.powerLevel ?? -1).spoken
-    }
 
     var body: some View {
-        // 2026-11-02（R4 全换系统）：纯 ScrollView 换系统 List；五段（当前电量 / 走势 / 档案编辑 /
-        // 低电阈值）各成一张卡，cardRow() 补回页面 gutter —— 卡片外观与改前一致。
-        // 图表入参仍是 samples.map(\.pct)（原始整数百分比），与 Reading.battery 的展示文案分工不变。
-        List {
-            // A 类（整宽页头）：headerRow()
-            header.headerRow()
-            if app.lock == nil {
-                noLockCard.cardRow()
-            } else {
-                readingCard.cardRow()
-                trendCard.cardRow()
-                profileCard.cardRow()
-                alertCard.cardRow()
+        ScrollView {
+            VStack(alignment: .leading, spacing: V.S.gapM) {
+                header
+                if app.lock == nil {
+                    noLockCard
+                } else {
+                    readingCard
+                    trendCard
+                    profileCard
+                    alertCard
+                }
             }
+            .padding(.top, V.Page.topSpace)
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .contentMargins(.top, V.S.gap16, for: .scrollContent)
-        .contentMargins(.bottom, V.S.gapL, for: .scrollContent)
         .background(V.C.bg.ignoresSafeArea())
         .navigationTitle("电池档案")
         .navigationBarTitleDisplayMode(.inline)
@@ -59,6 +49,7 @@ struct BatteryProfileScreen: View {
             Text("采样只在本机，不上传；低电提醒由本机通知排程。")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }
+        .padding(.horizontal, V.S.pageGutterA)
     }
 
     private var noLockCard: some View {
@@ -67,6 +58,7 @@ struct BatteryProfileScreen: View {
                 .font(V.F.body).foregroundStyle(V.C.text2)
                 .fixedSize(horizontal: false, vertical: true)
         }
+        .padding(.horizontal, V.S.cardGutter)
     }
 
     private var readingCard: some View {
@@ -78,7 +70,7 @@ struct BatteryProfileScreen: View {
                         .font(V.F.displayE)
                         .foregroundStyle(tierColor)
                         .accessibilityHidden(true)
-                    Text(batteryText)
+                    Text(BatteryCare.faceText(pct))
                         .font(V.F.displayA)
                         .foregroundStyle(V.C.text1)
                         .monospacedDigit()
@@ -88,9 +80,10 @@ struct BatteryProfileScreen: View {
                 VRowDivider()
                 VValueRow(label: "最近采样", value: sampleTimeText)
                 VRowDivider()
-                VValueRow(label: "采样点数", value: "\(samples.count) 个", note: "每次读锁状态自动追加一条，保留 90 天。")
+                VValueRow(label: "采样点数", value: "\(samples.count) 个", note: "每次读锁状态（cmd03）自动追加一条，保留 90 天。")
             }
         }
+        .padding(.horizontal, V.S.cardGutter)
     }
 
     private var trendCard: some View {
@@ -109,6 +102,7 @@ struct BatteryProfileScreen: View {
                 }
             }
         }
+        .padding(.horizontal, V.S.cardGutter)
     }
 
     private var trendCaption: String {
@@ -137,6 +131,7 @@ struct BatteryProfileScreen: View {
                 }
             }
         }
+        .padding(.horizontal, V.S.cardGutter)
     }
 
     private var alertCard: some View {
@@ -157,6 +152,7 @@ struct BatteryProfileScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+        .padding(.horizontal, V.S.cardGutter)
     }
 
     private var tierColor: Color {

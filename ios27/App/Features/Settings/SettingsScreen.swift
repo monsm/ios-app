@@ -37,86 +37,45 @@ struct SettingsScreen: View {
     @State private var search = ""
     @State private var groupFilter: SettingsGroup?
     @State private var notifyOff = false
-    /// 通知权限与流水行数都在 body 里显示，但取值是同步/读文件的 —— 读一次缓存，不在每次 body 重算。
-    @State private var notifyLabel = ""
-    @State private var diagLineCount = 0
     /// 交互流水（排障）：与门锁的原始 TX/RX 帧头 + 分级日志，可一键复制。
     @State private var showDiagStream = false
 
     var body: some View {
-        // 全换系统：容器是系统 List，分组是系统 Section(header:)；
-        // 行本身仍由 settingsRow 渲染（entries 是搜索索引的唯一来源，一行都不动）。
-        List {
-            Section {
-                // 同 KeysScreen：页头的 pageGutterC 缩进由 `headerRow(gutter:)` 表达。
-                header.headerRow(gutter: V.S.pageGutterC)
+        ScrollView {
+            VStack(alignment: .leading, spacing: V.S.gapM) {
                 chips
-                    .listRowInsets(EdgeInsets())
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
+                header
                 searchBlock
-                    .listRowInsets(EdgeInsets())
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
-            }
-
-            if !search.trimmingCharacters(in: .whitespaces).isEmpty {
-                searchResults
-            } else if app.lock != nil {
-                // 五组 chip 在「浏览」态也要真的过滤节 —— 旧实现只在搜索命中里用 groupFilter，
-                // 不搜时点任何分组都毫无反应（假筛选）。
-                if inGroup(.daily) {
-                    Section {
-                        statusGrid
-                            .listRowInsets(EdgeInsets())
-                            .listRowSeparator(.hidden)
-                            .listRowBackground(Color.clear)
-                    }
-                    lockSection
-                }
-                if inGroup(.keys) { securitySection }
-                if inGroup(.look) { lookSection }
-                if inGroup(.data) {
-                    dataSection
-                    deleteSection
-                }
-                if inGroup(.help) { helpSection }
-            } else {
-                Section {
+                if !search.trimmingCharacters(in: .whitespaces).isEmpty {
+                    searchResults
+                } else if app.lock != nil {
+                    // 五组 chip 在「浏览」态也要真的过滤节 —— 旧实现只在搜索命中里用 groupFilter，
+                    // 不搜时点任何分组都毫无反应（假筛选）。
+                    if inGroup(.daily) { statusGrid; lockSection }
+                    if inGroup(.keys) { securitySection }
+                    if inGroup(.look) { lookSection }
+                    if inGroup(.data) { dataSection; deleteSection }
+                    if inGroup(.help) { helpSection }
+                } else {
                     noLockCard
-                        .listRowInsets(EdgeInsets(top: 0, leading: V.S.cardGutter, bottom: 0, trailing: V.S.cardGutter))
-                        .listRowSeparator(.hidden)
-                        .listRowBackground(Color.clear)
+                    if inGroup(.keys) { securitySection }
+                    if inGroup(.look) { lookSection }
+                    if inGroup(.data) { dataSection }
+                    if inGroup(.help) { helpSection }
                 }
-                if inGroup(.keys) { securitySection }
-                if inGroup(.look) { lookSection }
-                if inGroup(.data) { dataSection }
-                if inGroup(.help) { helpSection }
             }
+            .padding(.top, V.Page.topSpace)
+            .padding(.bottom, V.S.gapL)
         }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
         .background(V.C.bg.ignoresSafeArea())
-        // 系统导航栏 + 系统搜索栏：玻璃由系统在功能层自己加，不再自绘大标题与假搜索框。
-        .navigationTitle("设置")
-        .navigationBarTitleDisplayMode(.large)
-        .searchable(text: $search, prompt: Text("搜设置：备份 / 外观 / 密码…"))
+        .toolbarVisibility(.hidden, for: .navigationBar)
         .task {
             await app.reload(refreshStatus: true)
-            let auth = NotifyAuth.status
-            notifyLabel = NotifyAuth.labelFor(auth)
-            notifyOff = NotifyAuth.isOffFor(auth)
-            diagLineCount = DiagLogs.all().count
+            notifyOff = NotifyAuth.isOff
         }
-        .sheet(isPresented: $showDiagStream) {
-            DiagStreamScreen()
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
-        }
+        .sheet(isPresented: $showDiagStream) { DiagStreamScreen() }
         .sheet(isPresented: $deleteRequested) {
             DeleteDeviceSheet()
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
         }
     }
 
@@ -145,27 +104,53 @@ struct SettingsScreen: View {
         .scrollIndicators(.hidden)
     }
 
-    // MARK: - 导语（标题已交给系统大标题 .navigationTitle("设置")）
+    // MARK: - 标题（R4：34pt/700）
 
     private var header: some View {
         VStack(alignment: .leading, spacing: V.Page.titleToBody) {
-            // 2026-11-02（R7 收尾）：原文案「不上传云端」与实现不符 ——
-            // 备份工作室有 WebDAV 上传（BackupStudioScreen 的 uploadDav），是用户自己配置的出口。
-            // 承诺要么兑现要么改准：这里改成如实描述（默认不联网，唯一出口是你自己配的 WebDAV）。
-            Text("默认全部在本机完成，不连任何服务器。唯一可能离开本机的，是你自己在「备份工作室」里配置的 WebDAV。")
+            Text("设置")
+                .font(V.F.displayHome)
+                .foregroundStyle(V.C.text1)
+            Text("这台锁的全部行为都在本机完成，不上传云端。")
                 .font(V.F.pageLead)
                 .foregroundStyle(V.C.text3)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.top, V.S.gapS)
+        .padding(.horizontal, V.S.pageGutterC)
+        .padding(.top, V.Page.chipToTitle)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
     }
 
-    // MARK: - 五组筛选（搜索框已交给系统搜索栏 .searchable）
+    // MARK: - 搜索 + 五组筛选（原 SettingsView.swift:17,65,226-269）
 
     private var searchBlock: some View {
         VStack(alignment: .leading, spacing: V.S.gapS) {
+            HStack(spacing: V.S.gapS) {
+                Image(systemName: "magnifyingglass")
+                    .font(V.F.icon15)
+                    .foregroundStyle(V.C.text3)
+                    .accessibilityHidden(true)
+                TextField("搜设置：备份 / 外观 / 密码…", text: $search)
+                    .font(V.F.body)
+                    .foregroundStyle(V.C.text1)
+                    .textFieldStyle(.plain)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                    .accessibilityLabel("搜索设置")
+                if !search.isEmpty {
+                    Button { search = "" } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(V.F.icon15)
+                            .foregroundStyle(V.C.text3)
+                            .accessibilityHidden(true)
+                    }
+                    .accessibilityLabel("清空设置搜索")
+                }
+            }
+            .padding(.horizontal, V.S.gapM)
+            .frame(minHeight: V.Metric.searchRow)
+            .background(V.C.cardAlt, in: .rect(cornerRadius: V.R.control))
             ScrollView(.horizontal) {
                 HStack(spacing: V.S.gapS) {
                     groupChip(nil, title: "全部")
@@ -176,6 +161,7 @@ struct SettingsScreen: View {
             }
             .scrollIndicators(.hidden)
         }
+        .padding(.horizontal, V.S.pageGutter)
         .padding(.top, V.S.gapS)
     }
 
@@ -198,106 +184,46 @@ struct SettingsScreen: View {
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
 
-    /// 设置页唯一的数据源：**行渲染与搜索索引都从这份清单派生**。
-    /// 旧实现把 21 行与 16 条搜索索引各写一遍，同一句 detail 维护两处 —— 改一处必漂。
-    private struct SettingsEntry: Identifiable {
+    /// 搜索命中项：只列真的能点进去的设置行；标题/说明/关键词三者任一命中即可。
+    private struct SettingsHit: Identifiable {
         let id: String
-        let group: SettingsGroup
         let title: String
         let detail: String
         let symbol: String
-        let tint: Color
-        let value: String
-        var dest: Dest? = nil
-        var action: (() -> Void)? = nil
+        let dest: Dest
+        let group: SettingsGroup
     }
 
-    private var entries: [SettingsEntry] {
+    private var settingsHits: [SettingsHit] {
         [
-            // 门锁
-            .init(id: "lockStatus", group: .daily, title: "锁实况", detail: "电量 / 信号 / 固件",
-                  symbol: "gauge.with.dots.needle.50percent", tint: V.C.rewardBlue,
-                  value: batteryReading, dest: .lockStatus),
-            .init(id: "deviceInfo", group: .daily, title: "锁信息名片", detail: "固件 / 容量 / 电量采样 / 链路验证",
-                  symbol: "info.circle", tint: V.C.miniBlue, value: "", dest: .deviceInfo),
-            .init(id: "moduleOrder", group: .daily, title: "模块排序与显隐", detail: "设备页三槽顺序 / 模块显隐 / 快捷格",
-                  symbol: "square.grid.2x2", tint: V.C.purple, value: "", dest: .moduleOrder),
-            .init(id: "lockSettings", group: .daily, title: "锁设置", detail: "临时码开关 / 自动上锁 / 清空密码",
-                  symbol: "slider.horizontal.3", tint: V.C.coral, value: "", dest: .lockSettings),
-            .init(id: "syncTime", group: .daily, title: "校准门锁时间", detail: "让锁内时钟与手机一致",
-                  symbol: "clock.arrow.circlepath", tint: V.C.rewardGreen,
-                  value: store.lockClockSyncedAt.map { TimeFormat.ago($0) } ?? "从未", dest: .syncTime),
-            .init(id: "gateway", group: .daily, title: "智能网关", detail: "远程访问与转发",
-                  symbol: "antenna.radiowaves.left.and.right", tint: V.C.purple,
-                  value: DB.gateways().isEmpty ? "未绑定" : "\(DB.gateways().count) 台", dest: .gateway),
-            .init(id: "defend", group: .daily, title: "布防", detail: "离家后监控门锁状态",
-                  symbol: "shield.lefthalf.filled", tint: V.C.coral,
-                  value: DefendKit.summary(DB.defend(app.currentMac)), dest: .defend),
-            .init(id: "dfu", group: .daily, title: "固件升级", detail: "本地固件包 · Nordic DFU",
-                  symbol: "arrow.up.circle", tint: V.C.rewardGreen, value: pkgVersion, dest: .dfu),
-            // 安全
-            .init(id: "security", group: .keys, title: "本机数据保护", detail: "密码只存在这台手机",
-                  symbol: "lock.shield", tint: V.C.rewardBlue,
-                  value: store.hasPasscode ? "已设" : "未设", dest: .security),
-            .init(id: "autoOpen", group: .keys, title: "靠近自动开锁", detail: "走到门前自动开门",
-                  symbol: "figure.walk", tint: V.C.rewardGreen,
-                  value: store.autoOpenEnabled ? "开" : "关", dest: .autoOpen),
-            .init(id: "notify", group: .keys, title: "通知权限 · 到期提醒不会送达",
-                  detail: "系统里被拒绝或还没询问。点这里去系统设置打开。",
-                  symbol: "bell.slash", tint: V.C.warning, value: notifyLabel,
-                  action: {
-                      if let url = URL(string: UIApplication.openSettingsURLString) {
-                          UIApplication.shared.open(url)
-                      }
-                  }),
-            // 外观
-            .init(id: "appearance", group: .look, title: "外观", detail: "跟随系统 / 浅色 / 深色",
-                  symbol: "paintbrush", tint: V.C.purple, value: store.theme.title, dest: .appearance),
-            .init(id: "timeDisplay", group: .look, title: "时间显示", detail: "24 小时 / 12 小时",
-                  symbol: "clock", tint: V.C.miniBlue, value: store.timeStyle.title, dest: .appearance),
-            .init(id: "accessibility", group: .look, title: "无障碍与操作辅助", detail: "大字 / 圆盘尺寸 / 手势 / 大格",
-                  symbol: "figure.roll", tint: V.C.rewardGreen,
-                  value: AXSettings.bigText ? "大字" : "标准", dest: .accessibility),
-            // 数据
-            .init(id: "backup", group: .data, title: "备份与恢复", detail: "导出或恢复本机数据",
-                  symbol: "externaldrive", tint: V.C.rewardGreen,
-                  value: store.lastBackupAt.map { TimeFormat.ago($0) } ?? "从未备份", dest: .backup),
-            .init(id: "backupStudio", group: .data, title: "备份工作室", detail: "WebDAV / 多份保留 / 换机迁移 / 自检",
-                  symbol: "square.stack.3d.up.fill", tint: V.C.miniBlue,
-                  value: "\(backupFileCount) 份", dest: .backupStudio),
-            .init(id: "hardware", group: .data, title: "钥匙串 / 硬件", detail: "蓝牙钥匙串与固件",
-                  symbol: "key.horizontal", tint: V.C.coral,
-                  value: "\(store.dongles.count) 台", dest: .hardware),
-            // 帮助
-            .init(id: "protocolTest", group: .help, title: "协议测试", detail: "附近设备与 cmd12 回声",
-                  symbol: "waveform.path.ecg", tint: V.C.text3, value: "", dest: .protocolTest),
-            .init(id: "diagStream", group: .help, title: "交互流水（排障）", detail: "与门锁的原始 TX/RX 帧头，可复制发给开发者",
-                  symbol: "waveform.path", tint: V.C.text3,
-                  value: "\(diagLineCount) 行", action: { showDiagStream = true }),
-            .init(id: "about", group: .help, title: "关于", detail: "版本与构建",
-                  symbol: "info.circle", tint: V.C.text3, value: SettingsFacts.version, dest: .about)
+            .init(id: "lockStatus", title: "锁实况", detail: "电量 / 信号 / 固件", symbol: "gauge.with.dots.needle.50percent", dest: .lockStatus, group: .daily),
+            .init(id: "deviceInfo", title: "锁信息名片", detail: "固件 / 容量 / 电量采样 / 链路验证", symbol: "info.circle", dest: .deviceInfo, group: .daily),
+            .init(id: "lockSettings", title: "锁设置", detail: "临时码开关 / 自动上锁 / 清空密码", symbol: "slider.horizontal.3", dest: .lockSettings, group: .daily),
+            .init(id: "syncTime", title: "校准门锁时间", detail: "锁钟 / 临时码有效期", symbol: "clock.arrow.circlepath", dest: .syncTime, group: .daily),
+            .init(id: "gateway", title: "智能网关", detail: "远程访问与转发", symbol: "antenna.radiowaves.left.and.right", dest: .gateway, group: .daily),
+            .init(id: "defend", title: "布防", detail: "离家后监控门锁状态", symbol: "shield.lefthalf.filled", dest: .defend, group: .daily),
+            .init(id: "dfu", title: "固件升级", detail: "本地固件包 · Nordic DFU", symbol: "arrow.up.circle", dest: .dfu, group: .daily),
+            .init(id: "security", title: "本机数据保护", detail: "密码 / 胁迫码 / 生物识别", symbol: "lock.shield", dest: .security, group: .keys),
+            .init(id: "autoOpen", title: "靠近自动开锁", detail: "走到门前自动开门", symbol: "figure.walk", dest: .autoOpen, group: .keys),
+            .init(id: "appearance", title: "外观", detail: "主题 / 品牌色 / 圆角 / 行高 / 数字字体", symbol: "paintbrush", dest: .appearance, group: .look),
+            .init(id: "accessibility", title: "无障碍与操作辅助", detail: "大字 / 圆盘尺寸 / 手势", symbol: "figure.roll", dest: .accessibility, group: .look),
+            .init(id: "backup", title: "备份与恢复", detail: "导出 / 从文件恢复", symbol: "externaldrive", dest: .backup, group: .data),
+            .init(id: "backupStudio", title: "备份工作室", detail: "WebDAV / 多份 / 迁移 / 自检", symbol: "square.stack.3d.up.fill", dest: .backupStudio, group: .data),
+            .init(id: "hardware", title: "钥匙串 / 硬件", detail: "蓝牙钥匙串与固件", symbol: "key.horizontal", dest: .hardware, group: .data),
+            .init(id: "protocolTest", title: "协议测试", detail: "附近设备与 cmd12 回声", symbol: "waveform.path.ecg", dest: .protocolTest, group: .help),
+            .init(id: "about", title: "关于", detail: "版本与构建", symbol: "info.circle", dest: .about, group: .help)
         ]
     }
 
-    /// 只显示当前真的该出现的行（通知权限只在被拒/未询问时出现）。
-    private var visibleEntries: [SettingsEntry] {
-        entries.filter { $0.id != "notify" || (notifyOff && !notifyLabel.isEmpty) }
-    }
-
-    /// 搜索索引 = 同一份清单里"能点/能做"的行，不再单独维护第二份文案。
-    private var settingsHits: [SettingsEntry] {
-        visibleEntries.filter { $0.dest != nil || $0.action != nil }
-    }
-
-    @ViewBuilder
     private var searchResults: some View {
         let q = search.trimmingCharacters(in: .whitespaces).lowercased()
         let hits = settingsHits.filter { hit in
             (groupFilter == nil || hit.group == groupFilter)
                 && (hit.title.lowercased().contains(q) || hit.detail.lowercased().contains(q))
         }
-        if hits.isEmpty {
-            Section {
+        return VStack(alignment: .leading, spacing: V.S.gapS) {
+            VSectionLabel(text: "搜索结果", trailing: "\(hits.count) 项")
+            if hits.isEmpty {
                 VCard {
                     VStack(alignment: .leading, spacing: V.S.gapM) {
                         Text("没有找到「\(search)」")
@@ -310,45 +236,36 @@ struct SettingsScreen: View {
                         VOutlineButton(title: "清除搜索", systemImage: "xmark.circle") { search = "" }
                     }
                 }
-                .listRowInsets(EdgeInsets(top: 0, leading: V.S.pageGutter, bottom: 0, trailing: V.S.pageGutter))
-                .listRowSeparator(.hidden)
-                .listRowBackground(Color.clear)
-            } header: {
-                Text("搜索结果")
-            }
-        } else {
-            Section {
-                ForEach(hits) { hit in
-                    settingsRow(hit)
+                .padding(.horizontal, V.S.pageGutter)
+            } else {
+                VCard {
+                    VStack(spacing: 0) {
+                        ForEach(Array(hits.enumerated()), id: \.element.id) { pair in
+                            if pair.offset > 0 { VDivider() }
+                            VListRow(title: pair.element.title, detail: pair.element.detail,
+                                     systemImage: pair.element.symbol, tint: V.C.rewardBlue) {
+                                search = ""
+                                router.request(.dest(pair.element.dest))
+                            }
+                        }
+                    }
                 }
-            } header: {
-                Text("搜索结果 · \(hits.count) 项")
-                .textCase(nil)
+                .padding(.horizontal, V.S.pageGutter)
             }
         }
     }
 
+    private func groupFor(_ title: String) -> SettingsGroup {
+        switch title {
+        case "门锁": return .daily
+        case "安全": return .keys
+        case "外观与时间": return .look
+        case "数据与硬件", "这台锁的本地数据": return .data
+        default: return .help
+        }
+    }
+
     // MARK: - 锁状态双卡
-
-    /// 信号读数走全仓唯一口径 `Reading.signal`（dBm + 档位词）。
-    /// 旧实现按 `lock.signal`（0…4 档位）自己映射成「弱/中/强/满」，与门页/锁实况的 dBm 是两套说法；
-    /// 现在三处同一份文字。
-    private var signalReading: Reading.Value {
-        guard app.lock != nil else { return Reading.Value(text: "--", tone: .neutral) }
-        return Reading.signal(app.currentMac)
-    }
-
-    /// 固件读数走 `Reading.firmware`（空串 = 该固件不报这一项，显示「未上报」而不是空白）。
-    private var firmwareReading: Reading.Value {
-        guard app.lock != nil else { return Reading.Value(text: "--", tone: .neutral) }
-        return Reading.firmware(app.currentMac)
-    }
-
-    /// 电量读数走全仓唯一口径 Reading.battery（与门页/锁实况/电池档案同一处算），不直读 lock.battery。
-    private var batteryReading: String {
-        guard app.lock != nil else { return "--" }
-        return Reading.battery(app.currentMac, snapshot: DB.readStatus(app.currentMac)?.powerLevel ?? -1).spoken
-    }
 
     private var statusGrid: some View {
         HStack(alignment: .top, spacing: V.S.gapM) {
@@ -360,15 +277,17 @@ struct SettingsScreen: View {
                             .foregroundStyle(V.C.text3)
                             .lineLimit(1)
                         Spacer(minLength: 0)
+                        Image(systemName: "chevron.right")
+                            .font(V.F.chipLabelStrong)
+                            .foregroundStyle(V.C.text3)
+                            .accessibilityHidden(true)
                     }
-                    Text(Reading.link(app.currentMac).text)
+                    Text(app.lock?.isConnected == true ? "已连接" : "未连接")
                         .font(V.F.section)
                         .foregroundStyle(V.C.text1)
-                    // 固件只在右边那张卡里出现一次（旧实现两张卡都写固件，同一个值看两遍）。
-                    // 信号文字含 dBm 与档位词，与门页/锁实况同一份（Reading.signal）。
-                    Text("信号 " + signalReading.spoken)
+                    Text("固件 \(app.lock?.firmware ?? "--") · 信号 \(app.lock?.signal ?? 0)")
                         .font(V.F.footnote)
-                        .foregroundStyle(signalReading.tone == .attention ? V.C.warning : V.C.text3)
+                        .foregroundStyle(V.C.text3)
                 }
                 .frame(minHeight: V.Metric.miniCardH / 2, alignment: .top)
             }
@@ -379,8 +298,12 @@ struct SettingsScreen: View {
                             .font(V.F.footnote)
                             .foregroundStyle(V.C.text3)
                         Spacer(minLength: 0)
+                        Image(systemName: "chevron.right")
+                            .font(V.F.chipLabelStrong)
+                            .foregroundStyle(V.C.text3)
+                            .accessibilityHidden(true)
                     }
-                    Text(firmwareReading.text)
+                    Text(app.lock?.firmware ?? "--")
                         .font(V.F.section)
                         .foregroundStyle(V.C.text1)
                     Text("当前版本")
@@ -390,71 +313,233 @@ struct SettingsScreen: View {
                 .frame(minHeight: V.Metric.miniCardH / 2, alignment: .top)
             }
         }
+        .padding(.horizontal, V.S.cardGutter)
     }
 
-    // MARK: - 分组（VCard + VListRow，全部从 entries 派生）
+    // MARK: - 分组（VCard + VListRow）
 
     @ViewBuilder
-    private func section(_ title: String, group: SettingsGroup) -> some View {
-        let rows = visibleEntries.filter { $0.group == group }
-        if groupFilter == nil || groupFilter == group, !rows.isEmpty {
-            Section {
-                ForEach(rows) { row in
-                    settingsRow(row)
-                }
-            } header: {
+    private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+        if groupFilter == nil || groupFilter == groupFor(title) {
+            VStack(alignment: .leading, spacing: V.S.gapS) {
                 Text(title)
+                    .font(V.F.section)
+                    .foregroundStyle(V.C.text1)
+                VCard {
+                    content()
+                }
             }
-        }
-    }
-
-    /// 一行设置：行渲染与搜索命中行共用同一个实现。
-    @ViewBuilder
-    private func settingsRow(_ e: SettingsEntry) -> some View {
-        VListRow(title: e.title, detail: e.detail, systemImage: e.symbol, tint: e.tint, value: e.value) {
-            if let dest = e.dest {
-                router.request(.dest(dest))
-            } else {
-                e.action?()
-            }
+            .padding(.horizontal, V.S.cardGutter)
+            .padding(.top, V.S.gapS)
         }
     }
 
     private var lockSection: some View {
-        section("门锁", group: .daily)
+        section("门锁") {
+            VStack(spacing: 0) {
+                VListRow(
+                    title: "锁实况",
+                    detail: "电量 / 信号 / 固件",
+                    systemImage: "gauge.with.dots.needle.50percent",
+                    tint: V.C.rewardBlue,
+                    value: app.lock.map { "\($0.battery)%" } ?? "--"
+                ) { router.request(.dest(.lockStatus)) }
+                VDivider()
+                VListRow(
+                    title: "锁信息名片",
+                    detail: "固件 / 容量 / 电量采样 / 链路验证",
+                    systemImage: "info.circle",
+                    tint: V.C.miniBlue,
+                    value: ""
+                ) { router.request(.dest(.deviceInfo)) }
+                VDivider()
+                VListRow(
+                    title: "模块排序与显隐",
+                    detail: "设备页三槽顺序 / 模块显隐 / 快捷格",
+                    systemImage: "square.grid.2x2",
+                    tint: V.C.purple,
+                    value: ""
+                ) { router.request(.dest(.moduleOrder)) }
+                VDivider()
+                // 来源：原 App/UI/LockSettingsView.swift（锁设置：防尾随/静音/清空密码/固件）。
+                VListRow(
+                    title: "锁设置",
+                    detail: "临时码开关 / 自动上锁 / 清空密码",
+                    systemImage: "slider.horizontal.3",
+                    tint: V.C.coral,
+                    value: ""
+                ) { router.request(.dest(.lockSettings)) }
+                VDivider()
+                VListRow(
+                    title: "校准门锁时间",
+                    detail: "让锁内时钟与手机一致",
+                    systemImage: "clock.arrow.circlepath",
+                    tint: V.C.rewardGreen,
+                    value: store.lockClockSyncedAt.map { TimeFormat.ago($0) } ?? "从未"
+                ) { router.request(.dest(.syncTime)) }
+                VDivider()
+                VListRow(
+                    title: "智能网关",
+                    detail: "远程访问与转发",
+                    systemImage: "antenna.radiowaves.left.and.right",
+                    tint: V.C.purple,
+                    value: DB.gateways().isEmpty ? "未绑定" : "\(DB.gateways().count) 台"
+                ) { router.request(.dest(.gateway)) }
+                VDivider()
+                VListRow(
+                    title: "布防",
+                    detail: "离家后监控门锁状态",
+                    systemImage: "shield.lefthalf.filled",
+                    tint: V.C.coral,
+                    value: DefendKit.summary(DB.defend(app.currentMac))
+                ) { router.request(.dest(.defend)) }
+                VDivider()
+                VListRow(
+                    title: "固件升级",
+                    detail: "本地固件包 · Nordic DFU",
+                    systemImage: "arrow.up.circle",
+                    tint: V.C.rewardGreen,
+                    value: pkgVersion
+                ) { router.request(.dest(.dfu)) }
+            }
+        }
     }
 
-    /// 安全组比别的组多一行「只读试验模式」开关（它不是跳转行，没有 Dest）。
-    @ViewBuilder
     private var securitySection: some View {
-        let rows = visibleEntries.filter { $0.group == .keys }
-        if groupFilter == nil || groupFilter == .keys, !rows.isEmpty {
-            Section {
-                ForEach(rows) { row in
-                    settingsRow(row)
+        section("安全") {
+            VStack(spacing: 0) {
+                VListRow(
+                    title: "本机数据保护",
+                    detail: "密码只存在这台手机",
+                    systemImage: "lock.shield",
+                    tint: V.C.rewardBlue,
+                    value: store.hasPasscode ? "已设" : "未设"
+                ) { router.request(.dest(.security)) }
+                VDivider()
+                VListRow(
+                    title: "靠近自动开锁",
+                    detail: "走到门前自动开门",
+                    systemImage: "figure.walk",
+                    tint: V.C.rewardGreen,
+                    value: store.autoOpenEnabled ? "开" : "关"
+                ) { router.request(.dest(.autoOpen)) }
+                if notifyOff {
+                    VDivider()
+                    VListRow(
+                        title: "通知权限 · 到期提醒不会送达",
+                        detail: "系统里被拒绝或还没询问。点这里去系统设置打开。",
+                        systemImage: "bell.slash",
+                        tint: V.C.warning,
+                        value: NotifyAuth.label
+                    ) {
+                        if let url = URL(string: UIApplication.openSettingsURLString) {
+                            UIApplication.shared.open(url)
+                        }
+                    }
                 }
+                VDivider()
                 VToggleRow(
                     title: "只读试验模式",
                     detail: "真机排障用：所有写入类命令停用，只看不改。关掉 App 也不会自动恢复 —— 记得回来关。",
                     isOn: trialGuardBinding(app)
                 )
-            } header: {
-                Text("安全")
             }
         }
     }
 
     private var lookSection: some View {
-        section("外观与时间", group: .look)
+        section("外观与时间") {
+            VStack(spacing: 0) {
+                VListRow(
+                    title: "外观",
+                    detail: "跟随系统 / 浅色 / 深色",
+                    systemImage: "paintbrush",
+                    tint: V.C.purple,
+                    value: store.theme.title
+                ) { router.request(.dest(.appearance)) }
+                VDivider()
+                VListRow(
+                    title: "时间显示",
+                    detail: "24 小时 / 12 小时",
+                    systemImage: "clock",
+                    tint: V.C.miniBlue,
+                    value: store.timeStyle.title
+                ) { router.request(.dest(.appearance)) }
+                VDivider()
+                // 来源：原 App/Core/AccessibilityKit.swift（AXPrefs / 操作辅助）。
+                VListRow(
+                    title: "无障碍与操作辅助",
+                    detail: "大字 / 圆盘尺寸 / 手势 / 大格",
+                    systemImage: "figure.roll",
+                    tint: V.C.rewardGreen,
+                    value: AXSettings.bigText ? "大字" : "标准"
+                ) { router.request(.dest(.accessibility)) }
+            }
+        }
     }
 
     private var dataSection: some View {
-        section("数据与硬件", group: .data)
+        section("数据与硬件") {
+            VStack(spacing: 0) {
+                VListRow(
+                    title: "备份与恢复",
+                    detail: "导出或恢复本机数据",
+                    systemImage: "externaldrive",
+                    tint: V.C.rewardGreen,
+                    value: store.lastBackupAt.map { TimeFormat.ago($0) } ?? "从未备份"
+                ) { router.request(.dest(.backup)) }
+                VDivider()
+                // 来源：原 App/Services/BackupStudioKit.swift（WebDAV / 多份 / 迁移 / 自检）。
+                VListRow(
+                    title: "备份工作室",
+                    detail: "WebDAV / 多份保留 / 换机迁移 / 自检",
+                    systemImage: "square.stack.3d.up.fill",
+                    tint: V.C.miniBlue,
+                    value: "\(DB.store.getInt("kf_bk_keep", 5)) 份"
+                ) { router.request(.dest(.backupStudio)) }
+                VDivider()
+                VListRow(
+                    title: "钥匙串 / 硬件",
+                    detail: "蓝牙钥匙串与固件",
+                    systemImage: "key.horizontal",
+                    tint: V.C.coral,
+                    value: "\(store.dongles.count) 台"
+                ) { router.request(.dest(.hardware)) }
+            }
+        }
     }
 
-    /// 帮助组（原 SettingsGroups 的 help 档）：协议测试、交互流水与关于。
+    /// 帮助组（原 SettingsGroups 的 help 档）：协议测试与关于。
     private var helpSection: some View {
-        section("帮助", group: .help)
+        section("帮助") {
+            VStack(spacing: 0) {
+                VListRow(
+                    title: "协议测试",
+                    detail: "附近设备与 cmd12 回声",
+                    systemImage: "waveform.path.ecg",
+                    tint: V.C.text3,
+                    value: ""
+                ) { router.request(.dest(.protocolTest)) }
+                VDivider()
+                // 2026-11-01 新增：把 `DiagLogs` 接出来。此前它每行都在写，但**没有任何界面读**，
+                // 用户遇到"开锁失败"时无法把现场交互复制出来。
+                VListRow(
+                    title: "交互流水（排障）",
+                    detail: "与门锁的原始 TX/RX 帧头，可复制发给开发者",
+                    systemImage: "waveform.path",
+                    tint: V.C.text3,
+                    value: "\(DiagLogs.all().count) 行"
+                ) { showDiagStream = true }
+                VDivider()
+                VListRow(
+                    title: "关于",
+                    detail: "版本与构建",
+                    systemImage: "info.circle",
+                    tint: V.C.text3,
+                    value: SettingsFacts.version
+                ) { router.request(.dest(.about)) }
+            }
+        }
     }
 
     /// 分组 chip 的浏览态判据（搜索态由 searchResults 自己按 hit.group 过滤）。
@@ -462,47 +547,44 @@ struct SettingsScreen: View {
         groupFilter == nil || groupFilter == group
     }
 
-    /// 备份工作室行右侧读数：**真实 .json 份数**（旧实现读 kf_bk_keep = 保留份数设置，不是文件数）。
-    private var backupFileCount: Int {
-        let fm = FileManager.default
-        guard let urls = try? fm.contentsOfDirectory(at: BackupStudio.dir, includingPropertiesForKeys: nil) else { return 0 }
-        return urls.filter { $0.pathExtension == "json" }.count
-    }
-
-    /// 固件升级行右侧读数：走 `Reading.firmware`（读不到写「未上报」，不留空白）。
-    /// 与上面那张固件卡同一份文字 —— 旧实现这里是「未读到」、卡片里是「--」，同一件事两种说法。
+    /// 固件升级行右侧读数：没有包目录可读时给锁内当前固件版本（读不到就写「未读到」，不留空白）。
     private var pkgVersion: String {
-        guard app.lock != nil else { return "未添加" }
-        return firmwareReading.text
+        guard let fw = app.lock?.firmware else { return "未添加" }
+        return fw.isEmpty ? "未读到" : fw
     }
 
     private var deleteSection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: V.S.gapM) {
-                Button {
-                    deleteRequested = true
-                } label: {
-                    Text("删除这台锁的本机数据")
-                        .font(V.F.bodyStrong)
-                        .foregroundStyle(V.C.red)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .frame(minHeight: V.List.rowMinHeight)
-                        .contentShape(.rect)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("删除这台锁的本机数据")
-                // 2026-11-01（Round 283）：原文案写「未做备份则无法找回」，暗示"做过备份就安全" ——
-                // 但 `DB.removeDevice` 会调 `BackupStudio.purgeLocalArtifacts`，把**本机备份文件与还原点
-                // 一并删掉**（备份是整库包，里面含这把锁的母钥，留着等于没删干净，SEC-19）。
-                // 用户"先备份再删锁"会连备份一起丢 —— 必须说清，并给出真正的留档办法。
-                Text("只删本机：锁端密钥与锁内日志不变，重配即可再添加。注意：本机的备份文件与还原点也会一并删除（备份里含这把锁的母钥）；想留档请先把备份导出到别处（WebDAV 或复制文本）。")
-                    .font(V.F.footnote)
-                    .foregroundStyle(V.C.text3)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        } header: {
+        VStack(alignment: .leading, spacing: V.S.gapS) {
             Text("这台锁的本地数据")
+                .font(V.F.section)
+                .foregroundStyle(V.C.text1)
+            VCard {
+                VStack(alignment: .leading, spacing: V.S.gapM) {
+                    Button {
+                        deleteRequested = true
+                    } label: {
+                        Text("删除这台锁的本机数据")
+                            .font(V.F.bodyStrong)
+                            .foregroundStyle(V.C.red)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .frame(minHeight: V.List.rowMinHeight)
+                            .contentShape(.rect)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("删除这台锁的本机数据")
+                    // 2026-11-01（Round 283）：原文案写「未做备份则无法找回」，暗示"做过备份就安全" ——
+                    // 但 `DB.removeDevice` 会调 `BackupStudio.purgeLocalArtifacts`，把**本机备份文件与还原点
+                    // 一并删掉**（备份是整库包，里面含这把锁的母钥，留着等于没删干净，SEC-19）。
+                    // 用户"先备份再删锁"会连备份一起丢 —— 必须说清，并给出真正的留档办法。
+                    Text("只删本机：锁端密钥与锁内日志不变，重配即可再添加。注意：本机的备份文件与还原点也会一并删除（备份里含这把锁的母钥）；想留档请先把备份导出到别处（WebDAV 或复制文本）。")
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text3)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
         }
+        .padding(.horizontal, V.S.cardGutter)
+        .padding(.top, V.S.gapS)
     }
 
     private var noLockCard: some View {
@@ -520,6 +602,7 @@ struct SettingsScreen: View {
                 }
             }
         }
+        .padding(.horizontal, V.S.cardGutter)
     }
 }
 
@@ -590,7 +673,7 @@ struct DeleteDeviceSheet: View {
                                 .textInputAutocapitalization(.never)
                                 .frame(minHeight: V.Metric.searchRow)
                                 .accessibilityLabel("键入锁名")
-                            Divider()
+                            Rectangle().fill(V.C.hairline).frame(height: V.S.hair)
                             VActionButton(title: "删除本机数据", systemImage: "trash", tint: V.C.red) {
                                 deleteLocalData()
                                 dismiss()

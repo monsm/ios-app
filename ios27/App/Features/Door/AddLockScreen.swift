@@ -48,36 +48,29 @@ struct AddLockScreen: View {
     private static let stepTitles = ["发现", "校验", "初始化", "命名"]
 
     var body: some View {
-        // 全换系统（2026-11-02）：整页容器是系统 List。
-        // 步骤条（ladderPanel）是**全局进度**，留在 List 顶层、不放进任何 Section；
-        // 候选设备行是行式内容 → candidateSection；其余进度/命名/完成是卡片 → cardRow()。
-        List {
-            // A 类（整宽页头/横幅）：headerRow() —— 补回 16pt，与卡片同一条左边线
-            header.headerRow()
-            if let banner { bannerCard(banner).headerRow() }
-            switch phase {
-            case .scanning, .ready:
-                ladderPanel.cardRow()
-                scanPanel.cardRow()
-                candidateSection
-            case .pairing:
-                ladderPanel.cardRow()
-                chainPanel.cardRow()
-            case .naming:
-                ladderPanel.cardRow()
-                namingPanel.cardRow()
-            case .done:
-                donePanel.cardRow()
+        ScrollView {
+            VStack(spacing: V.S.gap16) {
+                header
+                if let banner { bannerCard(banner) }
+                switch phase {
+                case .scanning, .ready:
+                    ladderPanel
+                    scanPanel
+                    listPanel
+                case .pairing:
+                    ladderPanel
+                    chainPanel
+                case .naming:
+                    ladderPanel
+                    namingPanel
+                case .done:
+                    donePanel
+                }
             }
+            .padding(.vertical, V.S.gap16)
         }
-        .listStyle(.plain)
-        .listSectionSpacing(V.S.gap16)
-        .scrollContentBackground(.hidden)
-        .contentMargins(.top, V.S.gap16, for: .scrollContent)
-        .contentMargins(.bottom, V.S.gapL, for: .scrollContent)
         .background(CanvasBackground())
-        // 键盘避让：命名步骤的两个 TextField 在页面下半部，键盘弹起会盖住「保存」。
-        .scrollDismissesKeyboard(.interactively)
+        .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("添加门锁")
         .navigationBarTitleDisplayMode(.inline)
         .task { await scan() }
@@ -115,6 +108,7 @@ struct AddLockScreen: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var headerTone: Tone {
@@ -167,6 +161,7 @@ struct AddLockScreen: View {
                 }
             }
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func ladderRow(index: Int, title: String) -> some View {
@@ -220,43 +215,38 @@ struct AddLockScreen: View {
                 }
             }
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
-    /// 候选设备：行式内容 → Section + 系统行（每台一行，仍走 candidateRow）。
-    @ViewBuilder
-    private var candidateSection: some View {
-        Section {
-            if candidates.isEmpty {
-                if phase == .scanning {
-                    VBusyRow(text: "10 秒内还没听到广播")
-                } else {
-                    VEmptyState(
-                        title: "附近没有可配网的锁",
-                        message: "先把锁做到重置态（长按 RESET 到三声嘀），手机贴到 2 米内，再点下面的重新扫描。",
-                        actionTitle: "重新扫描",
-                        systemImage: "dot.radiowaves.left.and.right"
-                    ) {
-                        Task { await scan() }
+    private var listPanel: some View {
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "发现的设备", trailing: candidates.isEmpty ? nil : "\(candidates.count) 台")
+                if candidates.isEmpty {
+                    if phase == .scanning {
+                        VBusyRow(text: "10 秒内还没听到广播")
+                    } else {
+                        VEmptyState(
+                            title: "附近没有可配网的锁",
+                            message: "先把锁做到重置态（长按 RESET 到三声嘀），手机贴到 2 米内，再点下面的重新扫描。",
+                            actionTitle: "重新扫描",
+                            systemImage: "dot.radiowaves.left.and.right"
+                        ) {
+                            Task { await scan() }
+                        }
+                        .padding(.vertical, V.S.gap24)
                     }
-                    .padding(.vertical, V.S.gap24)
-                }
-            } else {
-                ForEach(candidates) { c in
-                    candidateRow(c)
-                }
-            }
-        } header: {
-            HStack(spacing: V.S.gapS) {
-                Text("发现的设备")
-                Spacer(minLength: 0)
-                if !candidates.isEmpty {
-                    Text("\(candidates.count) 台")
-                        .font(V.F.unit)
-                        .foregroundStyle(V.C.text3)
+                } else {
+                    VStack(spacing: 0) {
+                        ForEach(Array(candidates.enumerated()), id: \.element.id) { index, c in
+                            if index > 0 { hairline }
+                            candidateRow(c)
+                        }
+                    }
                 }
             }
-            .textCase(nil)
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func candidateRow(_ c: Candidate) -> some View {
@@ -269,7 +259,7 @@ struct AddLockScreen: View {
                         .font(V.F.bodyStrong)
                         .foregroundStyle(V.C.text1)
                         .lineLimit(1)
-                    Text("\(shortMAC(c.mac)) · \(c.model)")
+                    Text("\(c.mac) · \(c.model)")
                         .font(V.F.unit)
                         .foregroundStyle(V.C.text3)
                     Text(c.alreadyAdded
@@ -281,11 +271,7 @@ struct AddLockScreen: View {
                 }
                 Spacer(minLength: V.S.gapS)
                 VStack(alignment: .trailing, spacing: V.S.gapXXS) {
-                    // 候选设备是**还没绑定**的锁 —— 没有 kf_linkrssi_<mac>，所以走 rssiText(c.rssi)
-                    // 而不是 signal(mac)。dBm + 档位词的拼法仍只有 Reading 一处。
-                    let sig = Reading.rssiText(c.rssi)
-                    VReading(value: sig.text, unit: sig.unit, font: V.F.number13,
-                             tint: sig.tone == .attention ? V.C.warning : V.C.text2, animated: false)
+                    VReading(value: "\(c.rssi)", unit: "dBm", font: V.F.number13, tint: V.C.text2, animated: false)
                     VStateDot(tone: rowTone(c), word: rowWord(c))
                 }
             }
@@ -293,7 +279,7 @@ struct AddLockScreen: View {
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(c.name)，\(shortMAC(c.mac))，\(rowWord(c))，信号 " + Reading.rssiText(c.rssi).spoken)
+        .accessibilityLabel("\(c.name)，\(c.mac)，\(rowWord(c))，信号 \(c.rssi) dBm")
         .contextMenu {
             Button {
                 Task { await probe(c) }
@@ -318,7 +304,7 @@ struct AddLockScreen: View {
     private var chainPanel: some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VSectionLabel(text: "写入进度", trailing: picked.map { shortMAC($0.mac) })
+                VSectionLabel(text: "写入进度", trailing: picked?.mac)
                 if let echoResult {
                     Text(echoResult)
                         .font(V.F.unit)
@@ -353,6 +339,7 @@ struct AddLockScreen: View {
                 }
             }
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 命名步
@@ -388,6 +375,7 @@ struct AddLockScreen: View {
                 .disabled(nickname.trimmingCharacters(in: .whitespaces).isEmpty)
             }
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 完成步（给下一步出路）
@@ -395,7 +383,7 @@ struct AddLockScreen: View {
     private var donePanel: some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VSectionLabel(text: "已添加", trailing: picked.map { shortMAC($0.mac) })
+                VSectionLabel(text: "已添加", trailing: picked?.mac)
                 VStatusLine(tone: .ok, text: "密钥已写入，锁端已应答")
                 hairline
                 Text("立刻做一次全量备份：本机密钥只存在这台手机上，换机或卸载前必须备份。")
@@ -416,6 +404,7 @@ struct AddLockScreen: View {
                 }
             }
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func bannerCard(_ text: String) -> some View {
@@ -437,6 +426,7 @@ struct AddLockScreen: View {
                 Spacer(minLength: 0)
             }
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 交互
@@ -486,7 +476,7 @@ struct AddLockScreen: View {
             let r = try await LockService.shared.probeEcho(deviceId: c.id)
             echoResult = r.matched
                 ? "回声：\(c.name) 往返 \(r.ms) ms · 回显与发出值一致"
-                : "回声不匹配（锁没有应答）· \(r.ms) ms"
+                : "回声不匹配：\(c.name) 往返 \(r.ms) ms · rc=\(r.rc)"
         } catch {
             echoResult = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
@@ -494,7 +484,7 @@ struct AddLockScreen: View {
 
     private func tap(_ c: Candidate) {
         if c.alreadyAdded {
-            banner = "这把锁已经添加过了（\(shortMAC(c.mac))）。不需要再配一次网，直接去读数页即可。"
+            banner = "这把锁已经添加过了（\(c.mac)）。不需要再配一次网，直接去读数页即可。"
             router.request(.dest(.lockStatus))
             return
         }
@@ -517,7 +507,7 @@ struct AddLockScreen: View {
         steps = []
         nickname = c.model
         phase = .pairing(step: 1)
-        steps.append("01 正在连接 " + c.name + "（" + shortMAC(c.mac) + "）")
+        steps.append("01 正在连接 " + c.name + "（" + c.mac + "）")
         do {
             // 真链路：cmd23 → cmd05 → cmd08×4 → cmd21 → cmd03，全部由 LockService.pair 编排。
             // progress 回调在后台线程，跳主 actor 再追加，避免跨线程改 @State。
@@ -526,7 +516,7 @@ struct AddLockScreen: View {
             }
             if Task.isCancelled { rollback("已中止：配网没有跑完，锁未被改动。"); return }
             pairedKeychain = kc
-            steps.append("07 状态校验通过 —— 这把锁已经是你的了")
+            steps.append("07 状态校验通过（cmd03）—— 这把锁已经是你的了")
             phase = .naming
         } catch {
             if Task.isCancelled { rollback("已中止：配网没有跑完，锁未被改动。"); return }
@@ -578,18 +568,13 @@ struct AddLockScreen: View {
         }
     }
 
-    /// MAC 只显示后 6 位；整串 12 位 hex 对用户没有意义（也避免在截图里带走完整地址）。
-    private func shortMAC(_ m: String) -> String {
-        let h = DB.normalizeMac(m)
-        guard h.count == 12 else { return m }
-        return String(h.suffix(6)).uppercased()
-    }
-
     private func pad2(_ value: Int) -> String {
         value < 10 ? "0\(value)" : "\(value)"
     }
 
     private var hairline: some View {
-        Divider()
+        Rectangle()
+            .fill(V.C.hairline)
+            .frame(height: V.S.hair)
     }
 }

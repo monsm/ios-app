@@ -21,13 +21,6 @@
 //   所以准确的表述是：**完整帧不会主动离开本机，但用户可以在知情的前提下复制它（限时 90 秒）。**
 import SwiftUI
 
-
-/// List 里的「整块卡片」行（与其它 List 化页面同用途）。独立命名，避免同名扩展重声明。
-private extension View {
-    func diagCardRow() -> some View {
-        self.frame(maxWidth: .infinity, alignment: .leading).plainRow()
-    }
-}
 struct DiagStreamScreen: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppModel.self) private var app
@@ -39,24 +32,14 @@ struct DiagStreamScreen: View {
     /// 原来写死 500 行 —— 一次开锁十几行，复现两三轮就把现场滚掉了。
     @State private var maxLines = DiagLogs.maxLines
     @State private var askClear = false
-    /// 界面最多渲染多少行：与落盘上限同步，但「不限」档为了不卡界面仍截到 5000。
-    /// 流水是 LazyVStack，理论上不限也行；这里设硬顶是因为一次全渲染 2 万行会让这一页明显卡。
+    /// 界面最多渲染多少行：与落盘上限同步；「不限」档为不卡界面仍截到 5000。
     private var shownLines: [DiagLogEntry] {
         let all = DiagLogs.all().reversed()
         let cap = maxLines > 0 ? maxLines : 5000
         return Array(all.prefix(cap))
     }
 
-    /// List 段头：中文必须显式 textCase(nil)，否则系统会把段头拉成大写形态。
-    private func sectionHeader(_ text: String) -> some View {
-        Text(text)
-            .font(V.F.small)
-            .foregroundStyle(V.C.text3)
-            .textCase(nil)
-            .accessibilityAddTraits(.isHeader)
-    }
-
-    /// 最新在前。渲染与复制都走 `shownLines`（受上限档位约束）。
+    /// 最新在前。
     private var lines: [DiagLogEntry] { shownLines }
 
     /// 事件台账（`BleTelemetry.recordEvent`）—— 这些**一直是只写不读**：
@@ -75,14 +58,8 @@ struct DiagStreamScreen: View {
 
     var body: some View {
         NavigationStack {
-            // 2026-11-02（R5 全换系统）：ScrollView + VStack → 系统 List + Section。
-            // ⚠ `.captureShield` **留在外层**（与改前同一位置）：这一页在「包含原始载荷」时
-            // 是完整 TX/RX 帧（含 skey / PIN / ekey 明文 hex），录屏/截图必须遮挡。
-            // 流水本身仍放在卡片里（它是等宽多行的连续文本，不是一组可点的行），
-            // 拆成 List 行会让「一次会话的连续帧」被行分隔线切碎，排障时更难读。
-            // 业务逻辑、写盘键、禁用态、无障碍标签一字未改。
-            List {
-                Section {
+            ScrollView {
+                VStack(alignment: .leading, spacing: V.S.gapM) {
                     VCard {
                         VStack(alignment: .leading, spacing: V.S.gapS) {
                             VCardHeader(title: "记录原始交互帧")
@@ -98,15 +75,10 @@ struct DiagStreamScreen: View {
                                          "完整帧一旦可复制，等于把开锁凭据交出去。")
                         }
                     }
-                    .diagCardRow()
-                } header: {
-                    sectionHeader("记录范围")
-                }
+                    .padding(.horizontal, V.S.cardGutter)
 
-                // 2026-11-02（用户要求）：日志上限 + 清空。
-                // 「清空」的价值：出问题时先清、再复现，日志里就只剩这一次现场 ——
-                // 比在几百行里翻找第一帧要快得多。清空是破坏性动作，所以要二次确认。
-                Section {
+                    // 2026-11-02（用户要求）：日志上限 + 清空。
+                    // 「清空」的价值：出问题时先清、再复现，日志里就只剩这一次现场 —— 比在几百行里翻要快。
                     VCard {
                         VStack(alignment: .leading, spacing: V.S.gapS) {
                             VCardHeader(title: "保留行数")
@@ -128,18 +100,14 @@ struct DiagStreamScreen: View {
                                          : "落盘保留最近 \(maxLines) 行。一次开锁约十几行，复现两三轮就会滚掉最早的帧；要保现场请调大或选「不限」。")
                         }
                     }
-                    .diagCardRow()
+                    .padding(.horizontal, V.S.cardGutter)
 
-                    VActionButton(title: "清空流水（\(lines.count) 行）", systemImage: "trash", tint: V.C.critical) {
+                    VOutlineButton(title: "清空流水（\(lines.count) 行）", systemImage: "trash", tint: V.C.critical) {
                         askClear = true
                     }
                     .disabled(lines.isEmpty)
-                    .diagCardRow()
-                } header: {
-                    sectionHeader("上限与清空")
-                }
+                    .padding(.horizontal, V.S.cardGutter)
 
-                Section {
                     VCard {
                         VStack(alignment: .leading, spacing: V.S.gapS) {
                             VCardHeader(title: "复制内容")
@@ -156,7 +124,7 @@ struct DiagStreamScreen: View {
                                            + "排查「结构对不对」够用，也方便直接贴出来。")
                         }
                     }
-                    .diagCardRow()
+                    .padding(.horizontal, V.S.cardGutter)
 
                     VActionButton(title: includeRaw ? "复制原始流水（含密钥）" : "复制脱敏流水",
                                   systemImage: "doc.on.doc") {
@@ -167,17 +135,11 @@ struct DiagStreamScreen: View {
                                              : "已复制 \(lines.count) 行脱敏流水", tone: .ok)
                     }
                     .disabled(includeRaw ? LockService.shared.rawTrace.isEmpty : lines.isEmpty)
-                    .diagCardRow()
-
-                    if includeRaw, LockService.shared.rawTrace.isEmpty {
-                        SettingsNote(text: "内存里还没有原始流水 —— 上面的「记录原始交互帧」要先打开，"
-                                     + "然后再复现一次开锁，这里才会有内容。")
-                        .diagCardRow()
-                    }
+                    .padding(.horizontal, V.S.cardGutter)
 
                     // 2026-11-02（用户要求）：**只贴流水看不出锁端认什么**。
-                    // rc=2 这类「凭证被拒」必须两边一起看：锁端 PIN 容量/存量、剩余可验证次数，
-                    // 对本机 PIN 池条数、存的那枚 ekey 里嵌的 PIN。这个按钮一次给出全部。
+                    // rc=2 这类「凭证被拒」必须两边一起看：锁端 PIN 容量/存量/剩余可验证次数，
+                    // 对本机 PIN 池、存的那枚 ekey 里嵌的 PIN。这个按钮一次给出全部。
                     // 它**不含密钥明文**（skey/ekey/PIN 只打指纹），可以安全贴出来。
                     VActionButton(title: "复制双侧快照（锁端 + 本机，无密钥明文）", systemImage: "square.on.square") {
                         let snap = DiagSnapshot.build(mac: app.currentMac)
@@ -185,13 +147,15 @@ struct DiagStreamScreen: View {
                         AppToast.shared.show("已复制双侧快照（\(snap.split(separator: "\n").count) 行）", tone: .ok)
                     }
                     .disabled(app.currentMac.isEmpty)
-                    .diagCardRow()
-                } header: {
-                    sectionHeader("复制")
-                }
+                    .padding(.horizontal, V.S.cardGutter)
 
-                if !events.isEmpty {
-                    Section {
+                    if includeRaw, LockService.shared.rawTrace.isEmpty {
+                        SettingsNote(text: "内存里还没有原始流水 —— 上面的「记录原始交互帧」要先打开，"
+                                     + "然后再复现一次开锁，这里才会有内容。")
+                        .padding(.horizontal, V.S.cardGutter)
+                    }
+
+                    if !events.isEmpty {
                         VCard {
                             VStack(alignment: .leading, spacing: V.S.gapXS) {
                                 VCardHeader(title: "事件台账（\(events.count) 条）")
@@ -206,13 +170,9 @@ struct DiagStreamScreen: View {
                                 }
                             }
                         }
-                        .diagCardRow()
-                    } header: {
-                        sectionHeader("事件台账")
+                        .padding(.horizontal, V.S.cardGutter)
                     }
-                }
 
-                Section {
                     if lines.isEmpty {
                         VCard {
                             VStack(alignment: .leading, spacing: V.S.gapXS) {
@@ -224,7 +184,7 @@ struct DiagStreamScreen: View {
                                     .foregroundStyle(V.C.text3)
                             }
                         }
-                        .diagCardRow()
+                        .padding(.horizontal, V.S.cardGutter)
                     } else {
                         VCard {
                             LazyVStack(alignment: .leading, spacing: V.S.gapXS) {
@@ -238,18 +198,13 @@ struct DiagStreamScreen: View {
                                 }
                             }
                         }
-                        .diagCardRow()
+                        .padding(.horizontal, V.S.cardGutter)
                     }
-                } header: {
-                    sectionHeader("流水（\(lines.count) 行，最新在前）")
                 }
+                .padding(.vertical, V.S.gap16)
             }
-            .listStyle(.insetGrouped)
-            .listSectionSpacing(V.S.gap16)
-            .scrollContentBackground(.hidden)
-            .contentMargins(.top, V.S.gap16, for: .scrollContent)
-            .contentMargins(.bottom, V.S.gapL, for: .scrollContent)
             .background(CanvasBackground())
+            .scrollEdgeEffectStyle(.soft, for: .top)
             .navigationTitle("交互流水")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -258,7 +213,7 @@ struct DiagStreamScreen: View {
                         .accessibilityLabel("完成查看交互流水")
                 }
             }
-            // 清空是破坏性动作：先问，再清。清掉的是**本机诊断流水**，不碰锁端日志、不碰台账。
+            // 清空是破坏性动作：先问，再清。只清本机诊断流水，不碰锁端日志、不碰台账。
             .confirmationDialog("清空全部交互流水？", isPresented: $askClear, titleVisibility: .visible) {
                 Button("清空 \(lines.count) 行", role: .destructive) {
                     let n = DiagLogs.clear()

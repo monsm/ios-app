@@ -25,27 +25,20 @@ struct MobileKeyScreen: View {
     private var issuedCount: Int { issued.count }
 
     var body: some View {
-        // 全换系统（2026-11-02）：整页容器是系统 `List`（与门页同一配方）。
-        // 「给谁签」「有效期」「已签发」三段都是**行式内容**，各走 `Section` + 系统行；
-        // 空态卡与签发按钮区仍是卡片，用 `cardRow()`（`.plain` 样式没有系统左右留白，
-        // cardRow 补回 pageGutter；plainRow 会让卡片贴边）。
-        // 不再「ScrollView 里嵌 List」：那样要么双滚、要么手算行高，Dynamic Type 一大就裁。
-        List {
-            header.headerRow()
-            if app.members.isEmpty {
-                noMemberBlock.cardRow()
-            } else {
-                ownerSection
-                periodSection
-                issueActionCard.cardRow()
+        ScrollView {
+            VStack(spacing: V.S.gap16) {
+                header
+                if app.members.isEmpty {
+                    noMemberBlock
+                } else {
+                    issueBlock
+                }
+                issuedBlock
             }
-            issuedSection
+            .padding(.vertical, V.S.gap16)
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .contentMargins(.top, V.S.gap16, for: .scrollContent)
-        .contentMargins(.bottom, V.S.gapL, for: .scrollContent)
         .background(CanvasBackground())
+        .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("手机钥匙")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -82,60 +75,45 @@ struct MobileKeyScreen: View {
                 KeysInlineNote(tone: .attention, text: foreignHint)
             }
         }
+        .padding(.horizontal, V.S.pageGutter)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
     }
 
-    // MARK: 主角：签发表单（拆成「给谁签」「有效期」两个 Section + 一张动作卡）
+    // MARK: 主角：签发表单
 
-    private var ownerSection: some View {
-        Section {
-            ForEach(app.members.filter { !$0.archived }) { member in
-                KeysOwnerRow(
-                    name: member.name,
-                    keyCount: app.keys.filter { $0.owner == member.id || $0.owner == member.name }.count,   // owner 有 id / 名字两种历史口径
-                    selected: owner == member.name
-                ) {
-                    owner = member.name
-                    errorText = nil
-                }
-            }
-        } header: {
-            HStack(spacing: V.S.gapS) {
-                Text("给谁签")
-                    .font(V.F.section)
-                    .foregroundStyle(V.C.text1)
-                Spacer(minLength: 0)
-                Text(owner ?? "必选")
-                    .font(V.F.footnote)
-                    .foregroundStyle(owner == nil ? V.C.warning : V.C.text3)
-            }
-        }
-    }
-
-    private var periodSection: some View {
-        Section {
-            KeysChips(items: [true, false], title: { $0 ? "永久有效" : "自定义" }, selection: $forever)
-            if !forever {
-                DatePicker("到期时间", selection: $validTo, in: Date()...,
-                           displayedComponents: [.date, .hourAndMinute])
-                    .font(V.F.body)
-                    .frame(minHeight: V.Hit.min)
-            }
-        } header: {
-            Text("有效期")
-                .font(V.F.section)
-                .foregroundStyle(V.C.text1)
-        }
-    }
-
-    /// 动作 + 回执 + 说明：这三样是「一次签发」的上下文，留在一张卡里，不摊成 List 行。
-    private var issueActionCard: some View {
+    private var issueBlock: some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "给谁签", trailing: owner ?? "必选")
+                VStack(spacing: V.S.gapXXS) {
+                    ForEach(app.members.filter { !$0.archived }) { member in
+                        KeysOwnerRow(
+                            name: member.name,
+                            keyCount: app.keys.filter { $0.owner == member.id || $0.owner == member.name }.count,   // owner 有 id / 名字两种历史口径
+                            selected: owner == member.name
+                        ) {
+                            owner = member.name
+                            errorText = nil
+                        }
+                    }
+                }
+
+                Divider().overlay(V.C.hairline)
+
+                VSectionLabel(text: "有效期")
+                KeysChips(items: [true, false], title: { $0 ? "永久有效" : "自定义" }, selection: $forever)
+                if !forever {
+                    DatePicker("到期时间", selection: $validTo, in: Date()...,
+                               displayedComponents: [.date, .hourAndMinute])
+                        .font(V.F.body)
+                        .frame(minHeight: V.Hit.min)
+                }
+
                 if let errorText {
                     KeysInlineNote(tone: .critical, text: errorText)
                 }
+
                 VActionButton(title: "签发一把手机钥匙", systemImage: "iphone.gen3.badge.key") {
                     issue()
                 }
@@ -150,40 +128,29 @@ struct MobileKeyScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 已签发
 
-    /// 已签发 = 系统 `Section`：一行一把钥匙，行尾「⋯」保留，另加左滑撤销（destructive）。
-    private var issuedSection: some View {
-        Section {
-            if issued.isEmpty {
-                KeysInlineNote(tone: .neutral, text: "还没有签发过。选一位成员、点上面的签发按钮 —— 签完这里会多一行，点行尾的「⋯」可以复制或撤销。")
-            } else {
-                ForEach(issued) { key in
-                    issuedRow(key)
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            Button(role: .destructive) {
-                                revoke(key)
-                            } label: {
-                                Label("撤销", systemImage: "trash")
-                            }
+    private var issuedBlock: some View {
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapS) {
+                VSectionLabel(text: "本机签发的钥匙", trailing: "\(issued.count) 把")
+                if issued.isEmpty {
+                    KeysInlineNote(tone: .neutral, text: "还没有签发过。选一位成员、点上面的签发按钮 —— 签完这里会多一行，长按可以复制或撤销。")
+                        .frame(minHeight: V.Hit.min)
+                } else {
+                    VStack(spacing: 0) {
+                        ForEach(Array(issued.enumerated()), id: \.offset) { pair in
+                            if pair.offset > 0 { KeysDivider() }
+                            issuedRow(pair.element)
                         }
+                    }
                 }
             }
-        } header: {
-            HStack(spacing: V.S.gapS) {
-                Text("本机签发的钥匙")
-                    .font(V.F.section)
-                    .foregroundStyle(V.C.text1)
-                Spacer(minLength: 0)
-                Text("\(issued.count) 把")
-                    .font(V.F.footnote)
-                    .foregroundStyle(V.C.text3)
-                    .monospacedDigit()
-            }
-            .textCase(nil)
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func issuedRow(_ key: KeyItem) -> some View {
@@ -191,12 +158,7 @@ struct MobileKeyScreen: View {
         return HStack(alignment: .center, spacing: V.S.gapMS) {
             VStateDot(tone: KeysState.tone(key, now: KeysState.now()), word: KeysState.word(key, now: KeysState.now()))
             VStack(alignment: .leading, spacing: V.S.gapXXS) {
-                Text({
-                    // 内部值出屏：key.owner 是成员 id（历史数据也可能是名字），换成可读名字；
-                    // 解析不到时回落到这把钥匙自己的名字（不会出现一串十六进制）。
-                    let who = CredentialOrg.ownerName(key.owner)
-                    return who.isEmpty ? key.name : who
-                }())
+                Text(key.owner ?? key.name)
                     .font(V.F.body)
                     .foregroundStyle(V.C.text1)
                 Text("手机钥匙 · \(KeysState.word(key, now: KeysState.now()))")
@@ -227,7 +189,6 @@ struct MobileKeyScreen: View {
             .accessibilityLabel("钥匙操作：复制或撤销")
         }
         .frame(minHeight: V.Hit.min + V.S.gapS)
-        .listRowInsets(EdgeInsets(top: 0, leading: V.S.cardPad, bottom: 0, trailing: V.S.cardPad))
         .accessibilityElement(children: .contain)
     }
 
@@ -245,6 +206,7 @@ struct MobileKeyScreen: View {
             }
             .padding(.vertical, V.S.gapXXL)
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 真动作

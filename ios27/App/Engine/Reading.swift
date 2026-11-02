@@ -107,11 +107,32 @@ enum Reading {
         return Value(text: "\(abs(drift))", unit: "秒", tone: tone)
     }
 
-    /// 安全模式 A/B/C。文案唯一来源是 `LockMode`（`LockStatusScreen.swift`）。
+    /// 安全模式 A/B/C。文案唯一来源是 `LockMode`（本文件下方定义 —— 第 324 轮从
+    /// `LockStatusScreen` 挪出来：那个页面回退到原设计后不再需要它，而读数层需要，
+    /// 留在页面里会让"引擎依赖某个页面文件"这条倒挂关系留下来）。
     static func lockMode(_ mac: String) -> Value {
         let s = DB.readStatus(mac)
         let text = LockMode.text(verifyMode: Int(s?.verifyMode ?? -1),
                                  broadcastMode: Int(s?.broadcastMode ?? 0))
         return Value(text: text, tone: .neutral)
+    }
+}
+
+/// 安全模式 A/B/C 的唯一文案源。
+///
+/// 锁端只报两个 bit：`verifyMode`（是否双验）与 `broadcastMode`（是否广播）。
+/// `-1` 表示没读到（区别于读到 0）。
+///
+/// | verify | broadcast | 显示 |
+/// |---|---|---|
+/// | -1 | * | 未读到 |
+/// | 0 | 0 | A 模式（单验） |
+/// | 0 | 1 | B 模式（双验） |
+/// | 1 | * | C 模式（双验 + 广播） |
+enum LockMode {
+    static func text(verifyMode: Int, broadcastMode: Int) -> String {
+        guard verifyMode >= 0 else { return "未读到" }
+        if verifyMode == 1 { return "C 模式" }
+        return broadcastMode == 1 ? "B 模式" : "A 模式"
     }
 }

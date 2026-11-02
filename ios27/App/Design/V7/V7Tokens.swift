@@ -225,6 +225,10 @@ enum V {
         static let displayA = sans(30, weight: .bold, relativeTo: .largeTitle)      // 参考 A 大标题 30/700
         static let displayB = sans(29, weight: .bold, relativeTo: .largeTitle)      // 参考 B 大标题 29/700
         static let displayHome = sans(34, weight: .bold, relativeTo: .largeTitle)   // 设置/根页大标题 34/700
+    /// 参考 C 的 56pt 主图标字号。2026-11-02 恢复：第 324 轮曾把它当"零消费"删掉，
+    /// 但那是因为当时的页面被 List 化、图标改走系统样式；页面回退到原设计后又需要它。
+    static let heroGlyph56 = sans(56, relativeTo: .largeTitle)
+    static let titleC = sans(22, weight: .semibold, relativeTo: .title2)        // 参考 C 头部标题 22/600
         static let displayC = sans(19, weight: .bold, relativeTo: .title2)          // 二级页 19/700
         static let displayD = sans(26, weight: .regular, relativeTo: .title)        // 门锁档案 26
         static let displayE = sans(28, weight: .regular, relativeTo: .title)        // 电池档案 28
@@ -243,6 +247,7 @@ enum V {
         static let cardBig = sans(17, weight: .semibold)   // 卡主值 17/600
         static let cardBody = sans(15)
         static let chipLabel = sans(11)                    // 芯片标签 11
+    static let chipLabelStrong = sans(11, weight: .semibold)
         static let chipValue = sans(13.5, weight: .semibold) // 芯片值 13.5/600
         static let statLabel = sans(12.5)                  // VStatPair 标签 12.5 #828282
         static let statValue = sans(17, weight: .semibold) // VStatPair 值 17/600
@@ -365,6 +370,7 @@ enum V {
         static var gapM: CGFloat { d(14.3) }
         static var gap16: CGFloat { d(16) }
         static var gapL: CGFloat { d(20) }
+    static var gapXL: CGFloat { d(22) }
         static var gap24: CGFloat { d(24) }
         static var gapXXL: CGFloat { d(32) }
         static let statGap: CGFloat = 16
@@ -548,6 +554,7 @@ enum V {
 
     // MARK: - 页面度量（参考 C 记录页 / 参考 R4 设置页）
     enum Metric {
+        static let medal: CGFloat = 76
         static let avatar: CGFloat = 34
         static let miniCardH: CGFloat = 178
         static let eventIcon: CGFloat = 36
