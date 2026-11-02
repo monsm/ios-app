@@ -109,3 +109,40 @@ func headerRow(gutter: V.S.pageGutter)// 页头/横幅/芯片行
 | `.buttonStyle(.glassProminent)` | 改 `.buttonStyle(.borderedProminent)` |
 | `GlassButtonStyle()` | 改 `.buttonStyle(.bordered)` |
 | `GroupBox` | 回滚 `VCard` 一个 struct（注意：圆角会从 27 变成系统值，视觉会变） |
+
+## 12. 云端编译结果（这才是唯一真验证）
+
+本地 5 个检查器全绿之后推送，云端 `xcode-27` 第一次编译**红了** —— 10 个 error，全在新写的 `Reading.swift` 加一处调用点笔误：
+
+| error | 根因 |
+|---|---|
+| `Reading.swift:48` `connectedMAC` 从 nonisolated 上下文引用 | `LockService` 是 `@MainActor` 类 |
+| `Reading.swift:55/62/63` 调 `savedRSSI`/`level`/`levelWord` | `LinkSenseModel` 是 `@MainActor` 类 |
+| `DeviceInfoScreen.swift:34` `batteryCard` 当属性用 | 它是 `func`，漏了 `()` |
+
+**这两类都是同一个错误**：我写了一个「值格式化层」，却没核对它读的那些状态的 actor 归属。
+
+### 修法（刻意最小）
+
+只给真正碰 `@MainActor` 状态的三个函数加标注：`link(_:)` / `signal(_:)` / `rssiText(_:)`。
+**不给整个 enum 加** `@MainActor` —— `Value` 是纯数据类型，不该被 actor 绑定；
+`battery` / `firmware` / `lockClock` / `clockDrift` / `lockMode` 读的是 `DB`（`@unchecked Sendable` 单例），
+保持 nonisolated，任何地方都能调。
+
+**调用点零改动**：所有消费者都是 SwiftUI View，`View` 的 `body` 本身就是 `@MainActor`，所以调用发生在主线程、不需要 `await`。这也是编译器只报那三个访问器、不报它们调用点的原因。
+
+### 第二次编译（`aa87e487`）
+
+```
+errors=0  build_ok=1  archive_ok=1  warnings=1（AppIntents 元数据，与本仓无关）
+golden: test_ok=1  test_failed=0  tests_executed=82
+BUILD SUCCEEDED / ARCHIVE SUCCEEDED
+```
+
+### 方法论
+
+**「本地检查器全绿」不等于「能编译」。** 本轮 5 个检查器证明的是括号、符号解析、布局一致性 ——
+它们**看不见 actor isolation**，也看不见「func 当属性用」。这类错误只有真编译器能抓。
+
+判据：**凡是新增一个「跨层读取状态」的抽象（本例的 Reading），必须先核对被读状态的 actor 归属，
+再写第一行代码**；否则会在云端一次性爆出十条同类 error，而本地永远看不到。
