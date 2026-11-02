@@ -59,6 +59,19 @@ struct RootView: View {
             app.router = router
             EngineHostRegistry.register(app)
             app.unlocked = AppLock.shared.unlocked
+            // 2026-11-03（第 331 轮）：**给 CI 截图用的启动钩子**。
+            // 这台开发机没有 Xcode，唯一的"看见真机"的途径是 CI 上的 iOS 27 模拟器：
+            // workflow 会用 `simctl launch ... -kfUITest -kfTab N` 逐页截图，推到 ci-log 分支。
+            // 两个参数只由 CI 传入，用户正常启动永远不带 ⇒ 不改变任何线上行为。
+            // 判据：这是**测试脚手架**，不是功能；不要在任何业务判断里引用它。
+            let args = ProcessInfo.processInfo.arguments
+            if args.contains("-kfUITest") {
+                app.unlocked = true
+                if let i = args.firstIndex(of: "-kfTab"), i + 1 < args.count,
+                   let slot = Int(args[i + 1]), let tab = TabSlot(rawValue: slot) {
+                    router.tab = tab
+                }
+            }
             if let mac = app.currentKeychain?.mac { AutoOpenController.shared.onForeground(mac: mac) }
         }
         .task { await MainActor.run { AutoOpenController.shared.start() } }

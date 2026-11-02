@@ -367,3 +367,73 @@ jobs:
           git add -A
           git commit -q -m "ci log $GITHUB_RUN_ID" || true
           git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" ci-log || true
+
+  # ================= 真机截图（供本地无 Xcode 时"看见"界面）=================
+  # 开发机是 Windows，没有 Xcode / 模拟器 —— 这是唯一能拿到**真实渲染**的途径。
+  # 用 simctl 直接截屏，不需要 UI Test target（不改工程结构，坏了也不会拖垮编译）。
+  # continue-on-error: 截图是诊断能力，不能因为它失败就把整条流水线弄红。
+  shots:
+    name: 模拟器截图（诊断用）
+    runs-on: xcode-27
+    needs: gates
+    continue-on-error: true
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: 安装 XcodeGen
+        run: brew install xcodegen || true
+      - name: 生成工程
+        run: xcodegen generate
+      - name: 选一个可用模拟器
+        id: sim
+        run: |
+          set -e
+          LINE=$(xcrun simctl list devices available | grep -m1 "iPhone" || true)
+          echo "$LINE"
+          DEV=$(echo "$LINE" | grep -oE "[0-9A-Fa-f-]{36}" | head -1)
+          echo "udid=$DEV" >> "$GITHUB_OUTPUT"
+          test -n "$DEV"
+      - name: 编译到模拟器
+        run: |
+          set -o pipefail
+          xcodebuild build -project LockKeeper.xcodeproj -scheme LockKeeper \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -derivedDataPath build/Sim -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" | tail -40
+      - name: 逐 Tab 截图
+        run: |
+          set +e
+          UDID="${{ steps.sim.outputs.udid }}"
+          APP=$(find build/Sim/Build/Products -name "LockKeeper.app" -maxdepth 3 | head -1)
+          echo "APP=$APP"
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b || true
+          xcrun simctl install "$UDID" "$APP" || exit 1
+          mkdir -p /tmp/shots
+          i=0
+          for name in door keys records household settings; do
+            xcrun simctl terminate "$UDID" com.aapk.lockkeeper 2>/dev/null || true
+            xcrun simctl launch "$UDID" com.aapk.lockkeeper -kfUITest -kfTab $i || true
+            sleep 4
+            xcrun simctl io "$UDID" screenshot "/tmp/shots/$i-$name.png" || true
+            i=$((i+1))
+          done
+          ls -la /tmp/shots
+      - name: 推到 ci-shots 分支
+        if: github.event_name == 'push' && always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          cd /tmp/shots || exit 0
+          echo "commit=$(git -C "$GITHUB_WORKSPACE" rev-parse HEAD)" > meta.txt
+          echo "run=$GITHUB_RUN_ID" >> meta.txt
+          echo "count=$(ls *.png 2>/dev/null | wc -l | tr -d ' ')" >> meta.txt
+          git init -q .
+          git checkout -q -b ci-shots
+          git config user.name ci
+          git config user.email ci@local
+          git add -A
+          git commit -q -m "ci shots $GITHUB_RUN_ID" || true
+          git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" ci-shots || true
