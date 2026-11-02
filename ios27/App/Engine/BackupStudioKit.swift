@@ -134,7 +134,15 @@ enum BackupStudio {
         //   · 回滚：本名单（否则「撤销恢复」把大字/大格/圆盘大小停在错包的值）
         "kf_ax_bigotp", "kf_ax_bigpreview", "kf_ax_hold", "kf_bigtile",
         "kf_dial_size", "kf_digit_font", "kf_gesture_mode",
-        "kf_hold_confirm", "kf_dbltap_guard", "kf_elder_mode"
+        "kf_hold_confirm", "kf_dbltap_guard", "kf_elder_mode",
+        // 2026-11-01（Round 297）：**三族由 restore 写、而快照没收** —— 与上面几批完全同源：
+        //   · `kf_cstar_ui_` 星标（Credentials 的"哪几条最重要"）  ← restore 写（BackupStudioKit:470）
+        //   · `kf_calert_`   每条凭证的到期提醒档位                 ← restore 写（:471）
+        //   · `kf_mkey_`     手机钥匙记录（含归属/有效期）           ← restore 写（MobileKeyService.save）
+        // 后果同前面几批：导错备份再点「撤销恢复」，台账/成员都回去了，
+        // **星标、提醒档位、手机钥匙却停在错包的值上**。
+        // 判据仍是那两条：①恢复流程确实会改写它们 ②里面是用户自己攒的内容。
+        "kf_cstar_ui_", "kf_calert_", "kf_mkey_"
     ]
     struct RollbackBundle: Codable {
         var keychains: [String]      // JSON: [Keychain]
