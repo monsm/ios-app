@@ -65,7 +65,13 @@ struct DoorScreen: View {
             .padding(.bottom, V.S.gapL)
         }
         .background(V.C.bg.ignoresSafeArea())
-        .toolbarVisibility(.hidden, for: .navigationBar)
+        .scrollEdgeEffectStyle(.soft, for: .top)
+        // 2026-11-02（第 325 轮）：这一页此前**没有任何页面标题** —— 导航栏被整个关掉，
+        // 页内也没画标题，用户打开 App 不知道自己在控制哪把锁。
+        // 现在用系统导航栏的大标题承载锁名（它会随滚动收成 inline，并在内容滚到它下面时
+        // 出现系统那层液态玻璃）—— 这是"用原生控件拿到真材质"，而不是自己画一个标题。
+        .navigationTitle(app.currentKeychain.map { LockArchive.displayName($0) } ?? "门锁")
+        .navigationBarTitleDisplayMode(.large)
         .task {
             await app.reload(refreshStatus: true)
             link.update(mac: app.currentMac)

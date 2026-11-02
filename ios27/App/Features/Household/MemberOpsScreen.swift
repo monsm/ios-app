@@ -54,6 +54,7 @@ struct MemberOpsScreen: View {
             .padding(.top, V.Page.topSpace)
         }
         .background(V.C.bg.ignoresSafeArea())
+        .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {

@@ -54,6 +54,7 @@ struct AccessibilityScreen: View {
             .padding(.top, V.Page.topSpace)
         }
         .background(V.C.bg.ignoresSafeArea())
+        .scrollEdgeEffectStyle(.soft, for: .top)
         .onAppear { syncFromStore() }   // E-13：从持久层重新同步，避免与外观页/重置动作不一致
         .navigationTitle("无障碍")
         .navigationBarTitleDisplayMode(.inline)

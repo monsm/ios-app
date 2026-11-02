@@ -68,6 +68,7 @@ struct SettingsScreen: View {
             .padding(.bottom, V.S.gapL)
         }
         .background(V.C.bg.ignoresSafeArea())
+        .scrollEdgeEffectStyle(.soft, for: .top)
         .toolbarVisibility(.hidden, for: .navigationBar)
         .task {
             await app.reload(refreshStatus: true)

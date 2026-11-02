@@ -15,6 +15,7 @@ struct ModuleOrderSheet: View {
                     .padding(.vertical, V.S.gap16)
             }
             .background(CanvasBackground())
+        .scrollEdgeEffectStyle(.soft, for: .top)
             .navigationTitle("模块排序与显隐")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

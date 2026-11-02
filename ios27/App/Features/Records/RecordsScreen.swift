@@ -118,6 +118,7 @@ struct RecordsScreen: View {
                 .padding(.bottom, V.S.gapL)
             }
             .background(V.C.bg.ignoresSafeArea())
+        .scrollEdgeEffectStyle(.soft, for: .top)
             .toolbarVisibility(.hidden, for: .navigationBar)
             .onAppear {
                 reload()
