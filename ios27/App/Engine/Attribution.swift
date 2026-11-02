@@ -36,6 +36,11 @@ enum Attribution {
         return Int64(dd.timeIntervalSince1970 * 1000)
     }
 
+    /// **契约：返回数组与 `logs` 一一对应、顺序相同**（内部是 `logs.map`）。
+    /// 2026-11-01（Round 323）：这条契约此前没写下来，而至少三处调用方依赖它——
+    /// `StatsKit.lastWeekDigest`、`MemberHub` 的两处都在 `for (i, r) in rows.enumerated()` 里用 `logs[i]` 取值。
+    /// **将来若在这个函数里加入任何 filter / sort / 去重，这三处会立刻数组越界或错位**；
+    /// 要过滤请在调用方做（先过滤 `logs`，再交给本函数）。
     static func classify(logs: [LogEntry],
                          pwds: [LedgerPwd],
                          fps: [LedgerFp],

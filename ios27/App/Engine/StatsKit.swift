@@ -79,6 +79,10 @@ enum StatsKit {
             // 上周小结是一次性导出，但一条记录一行、几十行时仍会重复解析几十次。一次建表。
             let memberNames = Dictionary(DB.members().map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
             for (i, c) in cls.enumerated() {
+                // 2026-11-01（Round 323）：与 `RecordSearchBuild:48` 同款防御。
+                // `classify` 的契约是「与输入一一对应、保序」，目前成立；但这条契约是**隐含**的，
+                // 一旦有人在 `classify` 里加个 filter，这里就会数组越界崩溃（另一处已经有 guard）。
+                guard i < week.count else { continue }
                 let l = week[i]
                 if let who = c.who { per[who, default: 0] += 1 }
                 rows.append(esc(l.lockTimeStr) + "," + esc(l.typeName) + ","
