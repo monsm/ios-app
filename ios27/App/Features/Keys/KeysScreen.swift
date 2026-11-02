@@ -181,7 +181,9 @@ struct KeysScreen: View {
         VStack(alignment: .leading, spacing: V.Page.titleToBody) {
             // 2026-11-02：标题改由系统导航栏的大标题承担 —— 自己再画一遍就是同一屏两个「凭证」，
             // 而且自绘标题拿不到随滚动折叠、导航栏液态玻璃、无障碍标题语义。
-            Text("家人、临时客人与服务人员\n共用一把门锁；过期自动失效，\n随时可撤销。")
+            // 2026-11-03（真机截图）：原来写死三处 \n —— 大字号/窄屏下固定换行会错位。
+            // 改为自然流动（fixedSize(vertical) 保留，多行高度仍自适应）。
+            Text("家人、临时客人与服务人员共用一把门锁；过期自动失效，随时可撤销。")
                 .font(V.F.pageLead)
                 .foregroundStyle(V.C.text3)
                 .lineSpacing(V.Page.bodyLineSpacing)
