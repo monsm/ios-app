@@ -12,6 +12,12 @@ enum MemberMergeKit {
     }
 
     /// 执行合并，返回迁移的凭证条数。
+    ///
+    /// 2026-11-01（Round 288 修 Round 282 的编译错误）：本函数要调 `MobileKeyService.reassignMember`，
+    /// 而那个枚举是 `@MainActor` —— 非隔离上下文调用会报 `[#ActorIsolatedCall]`（CI 实测两条）。
+    /// 本函数唯一的调用点是 `MemberMergeSheet.merge()`（View 方法，本来就在主 actor 上），
+    /// 所以这里标 `@MainActor` 不改变任何调用方式。
+    @MainActor
     @discardableResult
     static func merge(primaryID: String, secondaryID: String) -> Int {
         guard primaryID != secondaryID,
