@@ -350,9 +350,15 @@ struct BackupStudioScreen: View {
             let r = try BackupStudio.restore(parsed.bundle)
             ackedChecksumFor = nil   // 一次性确认：恢复完作废，下一次重新判断
             // 跳过数同样要报（`restore` 一直返回它，这里此前只报新增/覆盖）。
-            outcome = "已恢复 \(file.name)：新增 \(r.imported) 项，覆盖 \(r.overwritten) 项"
-                + (r.skipped > 0 ? "，跳过 \(r.skipped) 把锁（密钥格式非法）" : "")
-                + (r.unlinkedOwners > 0 ? "；\(r.unlinkedOwners) 项凭证的归属在本机找不到（已置为未归属）" : "")
+            // 2026-11-01（Round 287）：状态色是按**文案前缀**决定的（`hasPrefix("已") ? 绿 : 粉`，全仓 10 处）。
+            // 而「跳过了 N 把锁」「N 项归属找不到」都是**部分失败** —— 原来一律以「已恢复」开头 ⇒ 涂绿。
+            // 改成部分失败时以「部分完成」开头：既保住可读性，又让颜色如实。
+            let partial = r.skipped > 0 || r.unlinkedOwners > 0
+            var summary = partial ? "部分完成 · \(file.name)：" : "已恢复 \(file.name)："
+            summary += "新增 \(r.imported) 项，覆盖 \(r.overwritten) 项"
+            if r.skipped > 0 { summary += "，跳过 \(r.skipped) 把锁（密钥格式非法）" }
+            if r.unlinkedOwners > 0 { summary += "；\(r.unlinkedOwners) 项凭证的归属在本机找不到（已置为未归属）" }
+            outcome = summary
             Task { await app.reload(refreshStatus: false) }
         } catch {
             outcome = "恢复失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
@@ -381,8 +387,9 @@ struct BackupStudioScreen: View {
             catch { failed += 1 }
         }
         reloadFiles()
+        // 同上：失败分支不能以「已」开头 —— 否则「N 份删除失败」会被前缀规则涂成绿色。
         outcome = failed == 0 ? "已清理 \(extra.count) 份旧备份"
-                              : "已清理 \(extra.count - failed) 份，\(failed) 份删除失败"
+                              : "\(failed) 份删除失败（已清理 \(extra.count - failed) 份）"
     }
 
     private static func stamp() -> String {
