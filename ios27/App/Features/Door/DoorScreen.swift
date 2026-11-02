@@ -61,7 +61,8 @@ struct DoorScreen: View {
                     noLockBlock
                 }
             }
-            .padding(.top, V.Page.topSpace)
+            // 2026-11-03（真机截图）：系统大标题自带视觉头部，再叠 topSpace 就是
+            // 标题上方一大段空白（截图实测约 200pt）。大标题模式下去掉手动顶部留白。
             .padding(.bottom, V.S.gapL)
         }
         .background(V.C.bg.ignoresSafeArea())

@@ -103,7 +103,7 @@ struct KeysScreen: View {
                 }
                 shortcutsBlock
             }
-            .padding(.top, V.Page.topSpace)
+            // 2026-11-03（真机截图）：同门页 —— 系统大标题自带视觉头部。
             .padding(.bottom, V.S.gapL)
         }
         .background(V.C.bg.ignoresSafeArea())
