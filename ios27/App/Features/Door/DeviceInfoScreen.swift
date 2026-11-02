@@ -42,8 +42,8 @@ struct DeviceInfoScreen: View {
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("锁信息名片")
+        .navigationBarTitleDisplayMode(.large)
         .task {
             batteryModel = meta.batteryModel
             await reload()
@@ -54,9 +54,7 @@ struct DeviceInfoScreen: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: V.S.gapXS) {
-            Text("锁信息名片")
-                .font(V.F.displayHome)
-                .foregroundStyle(V.C.text1)
+            // 2026-11-03：标题改由系统导航栏承担（大标题模式，与其他子页一致）。
             Text(app.lock.map { "\($0.name) · \($0.model)" } ?? "还没有门锁")
                 .font(V.F.footnote)
                 .foregroundStyle(V.C.text2)

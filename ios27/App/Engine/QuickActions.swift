@@ -19,16 +19,14 @@ final class QuickActionDelegate: NSObject, UIApplicationDelegate {
         // SEC-01：手机钥匙的 pin/ekey 同样从 plist 搬进 Keychain。
         MobileKeyService.migrateSecrets()
         DB.hydrateMacOrders()   // 0x88 包络 MAC 字节序: 把已裁定的顺序灌回协议层 (2026-10-17)
-        // 2026-10-28 修复：全仓**从未调用 requestAuthorization**，也没设过
-        // UNUserNotificationCenterDelegate —— 于是 CredentialOrg.scheduleAlerts 排的 6 条
-        // 到期通知即使送达也点不动（handleNotificationAction/applyNotification 零调用）。
-        // 这里补上：启动即申请授权 + 设 delegate。
+        // delegate 必须在启动时设好（点按通知的路由）。
         let nc = UNUserNotificationCenter.current()
         nc.delegate = NotificationDelegate.shared
-        nc.requestAuthorization(options: [.alert, .sound, .badge]) { granted, err in
-            if let err { CredentialOrg.notifyLog.error("通知授权失败： \(String(describing: err), privacy: .public)") }
-            else if !granted { CredentialOrg.notifyLog.error("用户未授予通知权限：到期提醒不会送达") }
-        }
+        // 2026-11-03（真机截图 + HIG《Notifications》）：**授权请求移出启动**。
+        // 原来这里 didFinishLaunching 就 requestAuthorization ⇒ 用户第一眼看到的是系统弹窗
+        // 而不是 App（CI 截图 6 张被子页全被它挡住）。HIG 要求在**上下文时机**请求 ——
+        // 本仓的上下文就是「第一次真的排了一条到期提醒」：CredentialOrg.scheduleAlerts 现在先调
+        // QuickActions.ensureNotificationAuthorization()，用户在"要收提醒"的那一刻才被问。
         return true
     }
 
@@ -42,6 +40,21 @@ final class QuickActionDelegate: NSObject, UIApplicationDelegate {
 /// 而 `UIApplicationDelegate` 的实现是 main-actor 隔离；两者混在同一个类上会报
 /// 「conformance crosses into main actor-isolated code」。
 /// 拆开之后：这个类整体 nonisolated，只在跳转那一步显式切回 MainActor。
+enum NotificationAuth {
+    private static let asked = Locked(false)
+    /// 幂等：一次会话只问一次；已授权时 requestAuthorization 立即返回 granted，无弹窗。
+    static func ensure() {
+        guard !asked.withLock({ $0 }) else { return }
+        asked.withLock { $0 = true }
+        let nc = UNUserNotificationCenter.current()
+        nc.requestAuthorization(options: [.alert, .sound, .badge]) { granted, err in
+            if let err { CredentialOrg.notifyLog.error("通知授权失败： \(String(describing: err), privacy: .public)") }
+            else if !granted { CredentialOrg.notifyLog.error("用户未授予通知权限：到期提醒不会送达") }
+        }
+    }
+}
+
+/// 2026-11-03：通知授权移出启动 —— 在用户**第一次排到期提醒**时才问。
 final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate, @unchecked Sendable {
     // 2026-10-28：@unchecked Sendable 是**有据**的 —— 这个类没有任何存储属性，
     // 两个方法都是 nonisolated 的纯函数式实现（不读写实例状态）。

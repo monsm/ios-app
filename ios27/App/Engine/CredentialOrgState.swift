@@ -22,6 +22,9 @@ extension CredentialOrg {
     /// 926/930 判 ❌ 后拍板按替代执行 —— 替代栏原话是"到期前 2 小时与到期时各发本地通知"。
     /// 排程扩到六条, 列表提醒行 (dueSoonPwds) **照旧保留**: 前台多一处提示不是坏事。
     static func scheduleAlerts(_ mac: String, _ p: LedgerPwd, _ a: CredAlert) {
+        // 2026-11-03（HIG Notifications）：通知授权在**第一次真的排提醒**时才请求，
+        // 不在启动时问（真机截图证实启动即弹窗挡住了 6 张子页）。
+        NotificationAuth.ensure()
         let id = "c6.alert.\(mac).p\(p.alias)"
         // 2026-10-29 修复（竞态）：原来的顺序是「异步查待处理 → 回调里删旧的」与「下面同步排新的」，
         // 而 getPendingNotificationRequests 的回调是**另一个线程、晚于本函数返回**才跑的 ——
