@@ -110,7 +110,9 @@ struct HouseholdScreen: View {
         .scrollEdgeEffectStyle(.soft, for: .top)
         .onAppear(perform: consume)
         .onChange(of: router.pending) { _, _ in consume() }
-        .navigationTitle("家")
+        // 2026-11-02（观感缺陷）：页内 HHPageHeader 已经画了「家」+ overline + 状态点，
+        // 导航栏再写一遍就是**同一屏两个标题**。导航栏留着（工具按钮 + 滚动时的玻璃），只清空标题文字。
+        .navigationTitle("")
         .task { await app.reload(refreshStatus: false) }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
