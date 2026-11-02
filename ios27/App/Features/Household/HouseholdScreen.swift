@@ -110,11 +110,11 @@ struct HouseholdScreen: View {
         .scrollEdgeEffectStyle(.soft, for: .top)
         .onAppear(perform: consume)
         .onChange(of: router.pending) { _, _ in consume() }
-        // 2026-11-02（观感缺陷）：页内 HHPageHeader 已经画了「家」+ overline + 状态点，
-        // 导航栏再写一遍就是**同一屏两个标题**。导航栏留着（工具按钮 + 滚动时的玻璃），只清空标题文字。
-        .navigationTitle("")
+        // 2026-11-02：与其余四个 Tab 根页一致 —— 标题由系统导航栏的大标题承担，
+        // 页内 HHPageHeader 只留 overline 与状态行（见下面的 showsTitle: false）。
+        .navigationTitle("家")
+        .navigationBarTitleDisplayMode(.large)
         .task { await app.reload(refreshStatus: false) }
-        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
@@ -148,7 +148,8 @@ struct HouseholdScreen: View {
             tone: archivedCount == 0 ? .ok : .neutral,
             status: archivedCount == 0
                 ? "全员都在名册里 · 归属与本周主责在下方面板"
-                : "有成员在归档里 · 归档不删历史，随时可恢复"
+                : "有成员在归档里 · 归档不删历史，随时可恢复",
+            showsTitle: false
         )
     }
 

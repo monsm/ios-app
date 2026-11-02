@@ -42,7 +42,9 @@ struct SecurityScreen: View {
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("安全")
+        // 2026-11-02：页内 SettingsHeader 已经画了「安全」大字标题（+ 状态行），
+        // 导航栏再写一遍就是同一屏两个标题。导航栏保留（返回按钮 + 滚动时的玻璃），只清空标题文字。
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showPasscode) { PasscodeSheet(kind: .passcode) }
         .sheet(isPresented: $showDuress) { PasscodeSheet(kind: .duress) }

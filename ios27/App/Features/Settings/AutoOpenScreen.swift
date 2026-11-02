@@ -36,7 +36,9 @@ struct AutoOpenScreen: View {
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("靠近自动开锁")
+        // 2026-11-02：页内 SettingsHeader 已经画了「靠近自动开锁」大字标题（+ 状态行），
+        // 导航栏再写一遍就是同一屏两个标题。导航栏保留（返回按钮 + 滚动时的玻璃），只清空标题文字。
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .task { syncAutoOpenState() }
     }

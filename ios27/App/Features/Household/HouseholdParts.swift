@@ -170,6 +170,10 @@ struct HHPageHeader: View {
     var overline: String? = nil
     let tone: Tone
     let status: String
+    /// 2026-11-02：标题是否由本组件绘制。
+    /// 「家」页把标题交给了系统导航栏的大标题（与其余四个 Tab 根页一致），
+    /// 这里只保留 overline 与状态行；两个子页仍由本组件画标题。
+    var showsTitle: Bool = true
 
     var body: some View {
         VStack(alignment: .leading, spacing: V.S.gapXS) {
@@ -179,12 +183,14 @@ struct HHPageHeader: View {
                     .foregroundStyle(V.C.text3)
                     .tracking(0.6)
             }
-            Text(title)
-                .font(V.F.displayHome)
-                .foregroundStyle(V.C.text1)
-                // 标题最多两行；缩字只收到 0.85（0.6 会把 34pt 压成 20pt，中文长名字会糊）
-                .lineLimit(2)
-                .minimumScaleFactor(0.85)
+            if showsTitle {
+                Text(title)
+                    .font(V.F.displayHome)
+                    .foregroundStyle(V.C.text1)
+                    // 标题最多两行；缩字只收到 0.85（0.6 会把 34pt 压成 20pt，中文长名字会糊）
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
+            }
             HStack(spacing: V.S.gapS) {
                 VStateDot(tone: tone, word: status)
                 Text(status)
