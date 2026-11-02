@@ -80,10 +80,11 @@ struct HHRoleMark: View {
 
 // MARK: - 通用行零件
 
-/// 行分隔线。**全换系统（2026-11-02）**：改走系统 `Divider()`。
 struct HHRule: View {
     var body: some View {
-        Divider()
+        Rectangle()
+            .fill(V.C.hairline)
+            .frame(height: V.S.hair)
     }
 }
 

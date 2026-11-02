@@ -50,26 +50,22 @@ struct KeyCalendarScreen: View {
     private var pickedItems: [KeyItem] { deadlines[pickedDay ?? ""] ?? [] }
 
     var body: some View {
-        // 全换系统（2026-11-02）：整页容器是系统 `List`（与门页同一配方）。
-        // 月历格子**保留自绘**（系统 `DatePicker` 不接受自定义格子：每格要显示到期条数），
-        // 所以月历仍是一张 `VCard`，用 `cardRow()` 放进 List（`.plain` 样式没有系统左右留白，
-        // cardRow 补回 pageGutter）；只有「当天清单」是行式内容 → `Section`。
-        List {
-            header.headerRow()
-            if app.keys.filter({ $0.expiresAt != nil }).isEmpty {
-                emptyBlock.cardRow()
-            } else {
-                calendarPanel.cardRow()
-                if let pickedDay {
-                    daySection(pickedDay)
+        ScrollView {
+            VStack(spacing: V.S.gap16) {
+                header
+                if app.keys.filter({ $0.expiresAt != nil }).isEmpty {
+                    emptyBlock
+                } else {
+                    calendarPanel
+                    if let pickedDay {
+                        dayCard(pickedDay)
+                    }
                 }
             }
+            .padding(.vertical, V.S.gap16)
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .contentMargins(.top, V.S.gap16, for: .scrollContent)
-        .contentMargins(.bottom, V.S.gapL, for: .scrollContent)
         .background(CanvasBackground())
+        .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("到期月历")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -91,6 +87,7 @@ struct KeyCalendarScreen: View {
                 Spacer(minLength: 0)
             }
         }
+        .padding(.horizontal, V.S.pageGutter)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
     }
@@ -141,6 +138,7 @@ struct KeyCalendarScreen: View {
                 }
             }
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var weekdayHeader: some View {
@@ -188,36 +186,29 @@ struct KeyCalendarScreen: View {
 
     // MARK: 当天清单
 
-    /// 当天清单 = 系统 `Section`：一行一枚凭证，点行进详情。
-    private func daySection(_ dayKey: String) -> some View {
-        Section {
-            if pickedItems.isEmpty {
-                KeysInlineNote(tone: .neutral, text: "这一天没有到期的凭证。点别的有数字的格子看看。")
-            } else {
-                ForEach(pickedItems) { key in
-                    Button {
-                        KeysRoute.openDetail(key.id, router: router)
-                    } label: {
-                        KeysRow(key: key, now: KeysState.now())
+    private func dayCard(_ dayKey: String) -> some View {
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapS) {
+                VSectionLabel(text: TimeFormat.dayTitle(dayKey), trailing: "\(pickedItems.count) 条")
+                if pickedItems.isEmpty {
+                    KeysInlineNote(tone: .neutral, text: "这一天没有到期的凭证。点别的有数字的格子看看。")
+                } else {
+                    VStack(spacing: 0) {
+                        ForEach(Array(pickedItems.enumerated()), id: \.offset) { pair in
+                            if pair.offset > 0 { KeysDivider() }
+                            Button {
+                                KeysRoute.openDetail(pair.element.id, router: router)
+                            } label: {
+                                KeysRow(key: pair.element, now: KeysState.now())
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityHint("打开凭证详情")
+                        }
                     }
-                    .buttonStyle(.plain)
-                    .listRowInsets(EdgeInsets(top: 0, leading: V.S.cardPad, bottom: 0, trailing: V.S.cardPad))
-                    .accessibilityHint("打开凭证详情")
                 }
             }
-        } header: {
-            HStack(spacing: V.S.gapS) {
-                Text(TimeFormat.dayTitle(dayKey))
-                    .font(V.F.section)
-                    .foregroundStyle(V.C.text1)
-                Spacer(minLength: 0)
-                Text("\(pickedItems.count) 条")
-                    .font(V.F.footnote)
-                    .foregroundStyle(V.C.text3)
-                    .monospacedDigit()
-            }
-            .textCase(nil)
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 空态（给出路）
@@ -234,6 +225,7 @@ struct KeyCalendarScreen: View {
             }
             .padding(.vertical, V.S.gapXXL)
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func shift(_ delta: Int) {

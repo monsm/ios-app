@@ -156,6 +156,15 @@ extension LockService {
         // 0 = 成功。22 = 「不能重复验证」（vendor status.js 原文）—— **不再当成功**，交上层如实提示。
         if r.rc == 0 { return r.rc }
 
+        // 2026-11-02（真机根因修复的另一半）：整池试完仍被拒 ⇒ 存的那枚 ekey 已**永久中毒**
+        // （它嵌的 PIN 已被 deletePins 摘掉，重试同一枚毫无意义）。重签一枚指向 pool[1] 的
+        // ekey 写回钥匙串 —— 本次开锁仍然失败，但**下一次**就有活凭证。这是"不重置锁"的唯一自救路径。
+        if credentialRejected, !kc.ekey.isEmpty {
+            if MobileKeyService.repairPairingEkey(kc: kc) {
+                log("warn", "存储的开锁凭证已失效（锁端已无这枚 PIN）— 已自动重签，请再按一次开锁")
+            }
+        }
+
         // 2026-11-01：**凭证被拒时的自愈回落。**
         // 1/11 解密失败、2 PIN 无效、6 已绑定其他设备 —— 这四个码都指向"这枚 ekey 不可用"，
         // 而不是"锁忙(25)/布防(27)/反锁(21)/时间偏差(3,9,13)"这类环境问题。

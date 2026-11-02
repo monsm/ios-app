@@ -35,11 +35,13 @@ struct SettingsHeader: View {
     }
 }
 
-/// 面板内行分隔线。**全换系统（2026-11-02）**：改用系统 `Divider()` —— 1pt 软线是系统在内容层
-/// 的标准分隔语义，也不再需要自己维护 hairline 宽度。
+/// 0.5pt 蚀刻分割线。面板内行与行之间用它，不用系统 Divider（那会画 1pt 的软线）。
 struct SettingRule: View {
     var body: some View {
-        Divider()
+        Rectangle()
+            .fill(V.C.hairline)
+            .frame(height: V.S.hair)
+            .accessibilityHidden(true)
     }
 }
 

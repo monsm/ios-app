@@ -6,15 +6,6 @@
 // 归档动作本身无确认：它不删任何东西，随时能恢复。
 import SwiftUI
 
-/// List 里的「整块卡片」行（与 HouseholdScreen 的 `hhCardRow()` 同用途）。
-/// 两个文件都从 ScrollView 换到了 List；helper 各自私有、名字独立，避免同名扩展重声明。
-private extension View {
-    /// 修饰符组合只写在 `V7Extras.plainRow()` 一处，这里只补「占满宽度、左对齐」。
-    func archiveCardRow() -> some View {
-        self.frame(maxWidth: .infinity, alignment: .leading).plainRow()
-    }
-}
-
 struct MemberArchiveScreen: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(AppModel.self) private var app
@@ -25,29 +16,17 @@ struct MemberArchiveScreen: View {
     private var active: [MemberCard] { HHStats.active(app.members) }
 
     var body: some View {
-        // 2026-11-02（R2 全换系统）：名单换成系统 List + Section（List 不能嵌在 ScrollView 里）。
-        // 影响面 / 回到名册两块卡片内容未改，只作为"整块行"放进 List。
-        List {
-            Section {
-                header.archiveCardRow()
+        ScrollView {
+            VStack(spacing: V.S.gap16) {
+                header
+                if archived.isEmpty { emptyBlock } else { listPanel }
+                impactPanel
+                backPanel
             }
-            if archived.isEmpty {
-                Section {
-                    emptyBlock.archiveCardRow()
-                }
-            } else {
-                archiveSection
-            }
-            Section {
-                impactPanel.archiveCardRow()
-                backPanel.archiveCardRow()
-            }
+            .padding(.vertical, V.S.gap16)
         }
-        .listStyle(.insetGrouped)
-        .listSectionSpacing(V.S.gap16)
-        .scrollContentBackground(.hidden)
-        .contentMargins(.top, V.S.gap16, for: .scrollContent)
         .background(CanvasBackground())
+        .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("归档")
         .navigationBarTitleDisplayMode(.inline)
         .animation(reduceMotion ? nil : V.M.move, value: archived.count)
@@ -64,26 +43,21 @@ struct MemberArchiveScreen: View {
         )
     }
 
-    /// 归档名单 → 一位成员一段 Section（段头写总数），行是原 `archivedRow`。
-    private var archiveSection: some View {
-        Section {
-            // E-11：用**成员 id** 做身份，不用下标 —— 归档/恢复会让数组重排，
-            // 下标身份会让 SwiftUI 复用错行（表现为"点 A 却打开 B"）。
-            ForEach(archived, id: \.id) { member in
-                archivedRow(member)
+    private var listPanel: some View {
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapMS) {
+                VSectionLabel(text: "归档名单", trailing: "\(archived.count) 位")
+                VStack(spacing: 0) {
+                    // E-11：用**成员 id** 做身份，不用下标 —— 归档/恢复会让数组重排，
+                    // 下标身份会让 SwiftUI 复用错行（表现为"点 A 却打开 B"）。
+                    ForEach(archived, id: \.id) { member in
+                        if member.id != archived.first?.id { HHRule().padding(.vertical, V.S.gapS) }
+                        archivedRow(member)
+                    }
+                }
             }
-        } header: {
-            HStack(alignment: .firstTextBaseline, spacing: V.S.gapS) {
-                Text("归档名单")
-                Spacer(minLength: 0)
-                Text("\(archived.count) 位")
-                    .monospacedDigit()
-            }
-            .font(V.F.small)
-            .foregroundStyle(V.C.text3)
-            .textCase(nil)
-            .accessibilityAddTraits(.isHeader)
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func archivedRow(_ member: MemberCard) -> some View {
@@ -118,10 +92,6 @@ struct MemberArchiveScreen: View {
             }
             .frame(minHeight: V.Hit.min)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, V.S.gapS)
-        .listRowInsets(EdgeInsets(top: 0, leading: V.S.pageGutter, bottom: 0, trailing: V.S.pageGutter))
-        .listRowBackground(V.C.card)
         .accessibilityElement(children: .contain)
     }
 
@@ -137,6 +107,7 @@ struct MemberArchiveScreen: View {
             }
             .padding(.vertical, V.S.gapXXL)
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     /// 影响面必须明写 —— 归档最容易被误读成「删掉了」。
@@ -158,6 +129,7 @@ struct MemberArchiveScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func impactRow(_ text: String, symbol: String) -> some View {
@@ -186,6 +158,7 @@ struct MemberArchiveScreen: View {
                 .foregroundStyle(V.C.text3)
                 .multilineTextAlignment(.center)
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func restore(_ member: MemberCard) {

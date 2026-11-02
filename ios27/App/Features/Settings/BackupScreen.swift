@@ -43,28 +43,17 @@ struct BackupScreen: View {
     @State private var exportDoc: BackupDoc?
 
     var body: some View {
-        // 2026-11-02（R5 全换系统）：纯 ScrollView 换系统 List（List 不能嵌 ScrollView）。
-        // 三段（工作室入口 / 全量备份 / 恢复）各成一张卡，用 cardRow()：
-        // `.plain` 样式没有系统左右留白，cardRow 补回 pageGutter（plainRow 会让卡片贴边）。
-        List {
-            // `SettingsHeader` 自带 `.padding(.horizontal, V.S.pageGutter)` = 16，与下面卡片的
-            // `cardRow()`（默认 gutter 同为 V.S.pageGutter = 16）**数值相同** ⇒ 左右基准线已对齐。
-            // 所以行上不再补 gutter（`gutter: 0`）：视觉与 plainRow() 完全等价，
-            // 但语义上标明「这是一行页头、缩进由页头自己带」，行对齐检查器据此判定基准线一致。
-            SettingsHeader(title: "备份与恢复", tone: tone, status: status)
-                .headerRow(gutter: 0)
-            studioEntry.cardRow()
-            exportPanel.cardRow()
-            importPanel.cardRow()
+        ScrollView {
+            VStack(spacing: V.S.gap16) {
+                SettingsHeader(title: "备份与恢复", tone: tone, status: status)
+                studioEntry
+                exportPanel
+                importPanel
+            }
+            .padding(.vertical, V.S.gap16)
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .contentMargins(.top, V.S.gap16, for: .scrollContent)
-        .contentMargins(.bottom, V.S.gapL, for: .scrollContent)
-        .background(V.C.bg.ignoresSafeArea())
-        // 键盘避让：导出密码 / 粘贴备份文本 / 导入密码 / 当前本机密码都在页面下半部，
-        // 不挂这个修饰符时数字键盘会盖住「恢复这份备份」。交互式收起 = 往下拖即收键盘。
-        .scrollDismissesKeyboard(.interactively)
+        .background(CanvasBackground())
+        .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("备份与恢复")
         .navigationBarTitleDisplayMode(.inline)
         .fileExporter(isPresented: $showExporter, document: exportDoc,
@@ -108,6 +97,7 @@ struct BackupScreen: View {
                 }
             }
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 页头
@@ -214,6 +204,7 @@ struct BackupScreen: View {
                     }
                 }
             }
+            .padding(.horizontal, V.S.pageGutter)
         }
     }
 
@@ -292,6 +283,7 @@ struct BackupScreen: View {
                     }
                 }
             }
+            .padding(.horizontal, V.S.pageGutter)
         }
     }
 

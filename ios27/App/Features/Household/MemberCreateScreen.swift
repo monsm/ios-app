@@ -7,15 +7,6 @@
 import SwiftUI
 import UIKit
 
-
-/// List 里的「整块卡片」行（与 HouseholdScreen 的 hhCardRow() / MemberArchiveScreen 的 archiveCardRow() 同用途）。
-/// 名字独立，避免同名扩展重声明（check2 会查）。
-private extension View {
-    func createCardRow() -> some View {
-        self.frame(maxWidth: .infinity, alignment: .leading).plainRow()
-    }
-}
-
 struct MemberCreateScreen: View {
     // @State 一律 internal：向导四步视图住在 MemberCreateParts.swift 的 extension 里，
     // 跨文件要能读写。private 在另一文件不可见，编译器报 inaccessible ——
@@ -79,37 +70,22 @@ struct MemberCreateScreen: View {
     }
 
     var body: some View {
-        // 2026-11-02（R4 全换系统）：ScrollView + VStack → 系统 List。
-        // 四步向导本身就是「一段一步」的结构：刻度与提示是页头块，当前步的输入是一段，
-        // 第四步的临时码是独立一段，步进按钮与取消说明各一段。
-        // 业务逻辑（advance / create / writeProfile / finish / cancel）、写盘键、
-        // 禁用判据、无障碍标签一字未改；HHCreationStepScale / HHEmojiPicker 保留自绘（系统无对应）。
-        List {
-            header.createCardRow()
-
-            Section {
-                stepScale.createCardRow()
-                stepPanel.createCardRow()
+        ScrollView {
+            VStack(spacing: V.S.gap16) {
+                header
+                stepScale
+                stepPanel
                 if let errorLine {
-                    errorBlock(errorLine).createCardRow()
+                    errorBlock(errorLine)
                 }
-                if step == 3 { codePanel.createCardRow() }
-            } header: {
-                sectionHeader("第 " + current.no + " 步 · " + current.title)
+                if step == 3 { codePanel }
+                actionPanel
+                cancelNote
             }
-
-            Section {
-                actionPanel.createCardRow()
-                cancelNote.createCardRow()
-            }
+            .padding(.vertical, V.S.gap16)
         }
-        .listStyle(.insetGrouped)
-        .listSectionSpacing(V.S.gap16)
-        .scrollContentBackground(.hidden)
-        .contentMargins(.top, V.S.gap16, for: .scrollContent)
-        .contentMargins(.bottom, V.S.gapL, for: .scrollContent)
-        .scrollDismissesKeyboard(.interactively)
         .background(CanvasBackground())
+        .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("新建成员")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -119,15 +95,6 @@ struct MemberCreateScreen: View {
             }
         }
         .animation(reduceMotion ? nil : V.M.move, value: step)
-    }
-
-    /// List 段头：中文必须显式 textCase(nil)，否则系统会把段头拉成大写形态。
-    private func sectionHeader(_ text: String) -> some View {
-        Text(text)
-            .font(V.F.small)
-            .foregroundStyle(V.C.text3)
-            .textCase(nil)
-            .accessibilityAddTraits(.isHeader)
     }
 
     // MARK: 页头（大标题 + 一行状态）
@@ -153,6 +120,7 @@ struct MemberCreateScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 当前步的输入
@@ -163,6 +131,7 @@ struct MemberCreateScreen: View {
                 stepBody
             }
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     @ViewBuilder
@@ -229,6 +198,7 @@ struct MemberCreateScreen: View {
                 VOutlineButton(title: "上一步", systemImage: "arrow.left") { step -= 1 }
             }
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var cancelNote: some View {
@@ -237,6 +207,7 @@ struct MemberCreateScreen: View {
             .foregroundStyle(V.C.text3)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, V.S.gap16)
     }
 
     private func errorBlock(_ text: String) -> some View {
@@ -251,6 +222,7 @@ struct MemberCreateScreen: View {
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
+        .padding(.horizontal, V.S.pageGutter)
         .accessibilityElement(children: .combine)
     }
 

@@ -500,7 +500,20 @@ enum DiagSnapshot {
         if let st {
             let lockUsed = max((st.pinCap ?? 0) - st.pinStock, 0)
             let localPool = kc?.pins.filter { !$0.isEmpty }.count ?? 0
-            out.append("  锁端已用 PIN \(lockUsed) vs 本机池 \(localPool) → \(lockUsed == localPool ? "一致" : "**不一致**（现签凭证会被拒）")")
+            out.append("  锁端已用 PIN \(lockUsed) vs 本机池 \(localPool)")
+            if lockUsed != localPool {
+                out.append("  → **数量不一致**：现签凭证必被拒。锁端存量与本机池不是同一批。")
+            } else {
+                // 2026-11-02 真机教训：数量相等**不能**推出「池子相同」。
+                // 两边都满池（64/64）时数量恒等，而 PIN 值可能完全不同 —— 真机就是这种情况：
+                // 64 vs 64 显示"一致"，但 cmd04 仍回 rc=2（解密成功、PIN 未命中）。
+                out.append("  → 数量一致，但**数量相等不能证明是同一批 PIN**。")
+                out.append("    判据：若开锁回 rc=2 且 skey 指纹与备份相同，则锁端 PIN 池已被换过（另一台 App 重新同步过）。")
+            }
+        }
+        if let kc, !kc.skey.isEmpty {
+            out.append("  提醒：rc=1/11 = skey 不匹配（解密失败）；rc=2 = **解密成功但 PIN 不在锁端表里**。")
+            out.append("        这两者指向完全不同的处置（重新配网 vs 从当前真源重导）。")
         }
         return out.joined(separator: "\n")
     }

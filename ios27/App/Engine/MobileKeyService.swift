@@ -162,7 +162,14 @@ enum MobileKeyService {
     /// （永久档 validTo 是 2118，解析出来远大于 now ⇒ 不会被回收；解析不出的按"未过期"处理。）
     static func availablePin(_ kc: Keychain, used: [MobileKey]) -> String? {
         let taken = Set(used.map { $0.pin })
-        if let free = kc.pins.first(where: { !$0.isEmpty && !taken.contains($0) }) { return free }
+        // 2026-11-02（真机 rc=2 根因）：**pool[0] 是配网 ekey 的那一枚，不能发给手机钥匙**。
+        // 配网时存的 ekey 里嵌的就是 pins[0]（真机解密证实：ekey 明文 pin = d2e26f70 = pool[0]）。
+        // 原实现从 pins[0] 开始分配 ⇒ 第一把手机钥匙拿走它；撤销那把钥匙时 cmd08 把
+        // d2e26f70 从锁里删掉 ⇒ 配网 ekey 永远 rc=2（锁解密成功但 PIN 已不在表里）。
+        // 修复：跳过第 0 枚，从 pins[1] 起分配。存量用户如果已经踩进去，走
+        // `repairPairingEkey`（重签配网 ekey 指向一枚仍然活着的 PIN）自救。
+        let reserved = kc.pins.first
+        if let free = kc.pins.dropFirst().first(where: { !$0.isEmpty && $0 != reserved && !taken.contains($0) }) { return free }
         let now = ZKProtocol.nowProtoSeconds()
         let reusable = used
             .filter { !$0.pin.isEmpty }
@@ -216,6 +223,27 @@ enum MobileKeyService {
                             at: Date().timeIntervalSince1970 * 1000)
         save(kc.mac, used + [key])
         return key
+    }
+
+    /// 2026-11-02 自救：**重签配网 ekey**，指向一枚"应当仍然活着"的 PIN。
+    ///
+    /// 背景：老版本把 pool[0] 同时用于「配网 ekey」和「第一把手机钥匙」。撤销那把钥匙时
+    /// `deletePins` 把 pool[0] 从锁里删掉，配网 ekey 从此永远 rc=2（解密成功、PIN 不在锁表）。
+    /// 本修复已让新发放跳过 pool[0]，但**已经踩进去的存量用户**钥匙串里的 ekey 仍是坏的那枚。
+    ///
+    /// 处置：用 `stillAlivePin`（默认 pool[1]，即最早发放、最不可能被单独撤销的一枚）现签一枚
+    /// 新的永久 ekey 写回 `kc.ekey`。锁端 pool[1] 若仍在（本机未对它做过 deletePins），开锁立即恢复。
+    /// 注意：这不与任何手机钥匙冲突 —— ekey 与手机钥匙用的是同一枚 PIN 的两张"票"，锁只认 PIN。
+    /// 返回 true = 已重签并落盘；false = 没有可用 PIN（需要重新配网）。
+    @discardableResult
+    static func repairPairingEkey(kc: Keychain) -> Bool {
+        guard !kc.skey.isEmpty, let pin = kc.pins.dropFirst().first(where: { !$0.isEmpty }) else { return false }
+        let ekey = ZKCmdBuilder.buildEkeyOpen(kc.skey.lowercased(), kc.mac.lowercased(), pin)
+        guard !ekey.isEmpty else { return false }
+        var fixed = kc
+        fixed.ekey = ekey
+        DB.saveKeychain(fixed)
+        return true
     }
 
     /// 撤销。APK 是先 op=updateShareDevice action=del 再删本地；本机离线只做本地撤销，

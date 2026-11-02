@@ -29,13 +29,14 @@ struct VOutlineButton: View {
             // 同 `VActionButton`：标题随 Dynamic Type 放大，固定 50pt 会裁字。
             .padding(.vertical, V.S.gapS)
             .frame(minHeight: V.Action.height)
+            .overlay {
+                RoundedRectangle(cornerRadius: V.R.action, style: .continuous)
+                    .strokeBorder(V.C.tabEdge, lineWidth: V.S.hair)
+            }
             .contentShape(.rect)
         }
-        // 全换系统（2026-11-02）：次级按钮交给系统 `GlassButtonStyle`（iOS 26+）。
-        // 描边/底色/按压反馈全部由系统给，本仓不再自绘 strokeBorder。
-        // 注意：同屏玻璃按钮要克制（HIG: use Liquid Glass sparingly），一屏 5–6 个描边按钮的
-        // 场景（BackupScreen / HardwareScreen）后续应合并成 Menu，不在本组件里一刀切。
-        .buttonStyle(GlassButtonStyle())
+        // 2026-11-01：同 `VActionButton` —— `.plain` 在 iOS 上无按压反馈；76 处次要按钮一次覆盖。
+        .buttonStyle(PressStyle())
         .accessibilityLabel(title)
     }
 }
@@ -173,30 +174,25 @@ struct VValueRow: View {
     var note: String? = nil
 
     var body: some View {
-        // 全换系统（2026-11-02）：标签/读数对交给系统 `LabeledContent` ——
-        // 左右对齐、基线、Dynamic Type 与 VoiceOver 的「标签 + 值」朗读语义都由系统给，
-        // 本仓不再用「Text + Spacer + Text」手工摆。
-        LabeledContent {
-            Text(value)
-                .font(mono ? V.F.legendLabelStrong.monospacedDigit() : V.F.legendLabel)
-                .foregroundStyle(tint)
-                .multilineTextAlignment(.trailing)
-        } label: {
-            VStack(alignment: .leading, spacing: V.S.gapXXS) {
+        VStack(alignment: .leading, spacing: V.S.gapXXS) {
+            HStack(alignment: .firstTextBaseline, spacing: V.S.gapS) {
                 Text(label)
                     .font(V.F.rowDetail)
                     .foregroundStyle(V.C.text3)
-                if let note, !note.isEmpty {
-                    Text(note)
-                        .font(V.F.footnote)
-                        .foregroundStyle(V.C.text3)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+                Spacer(minLength: V.S.gapS)
+                Text(value)
+                    .font(mono ? V.F.legendLabelStrong.monospacedDigit() : V.F.legendLabel)
+                    .foregroundStyle(tint)
+                    .multilineTextAlignment(.trailing)
+            }
+            if let note, !note.isEmpty {
+                Text(note)
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text3)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .frame(minHeight: V.List.rowMinHeight)
-        // 同 VListRow：List 里与卡片 gutter 对齐。
-        .listRowInsets(EdgeInsets(top: 0, leading: V.S.cardPad, bottom: 0, trailing: V.S.cardPad))
         .accessibilityElement(children: .combine)
     }
 }
@@ -277,7 +273,7 @@ struct VTextFieldRow: View {
             .textFieldStyle(.plain)
             .autocorrectionDisabled()
             .textInputAutocapitalization(.never)
-            Divider()
+            Rectangle().fill(V.C.hairline).frame(height: V.S.hair)
         }
         .frame(minHeight: V.List.rowMinHeight)
         .accessibilityElement(children: .contain)
@@ -314,10 +310,10 @@ struct VTag: View {
     }
 }
 
-/// 卡内分隔线间距统一版。**全换系统（2026-11-02）**：走系统 `Divider()`，只保留呼吸间距。
+/// 卡内分隔线间距统一版：V7 的 VDivider 无内外边距，这里只包一层呼吸。
 struct VRowDivider: View {
     var body: some View {
-        Divider().padding(.vertical, V.S.gapXXS)
+        VDivider().padding(.vertical, V.S.gapXXS)
     }
 }
 
@@ -449,10 +445,14 @@ extension View {
     /// 把任意视图放进系统 `List` 时，抹掉行内边距 / 分隔线 / 行背景 ——
     /// 让「卡片」在 List 里仍保持原来的样子，而滚动与边缘效果交给系统。
     ///
-    /// 用途：门页 / 设置页这类「整页一个 List、但每行是一张卡片」的布局。
-    /// 不用这个的话，卡片会被 List 的默认 inset 再缩一圈、并多出一条系统分隔线。
-    func plainRow() -> some View {
+    /// `vGap`：**行间垂直间距**。这是 List 化最容易毁观感的一处 ——
+    /// 改前是 `VStack(spacing: V.S.gap16)`，卡片间距由 VStack 统一给；
+    /// 换成 List 后这个间距**消失了**（行与行紧贴），于是整页从"分块的仪表盘"
+    /// 变成"一长条堆叠"，看起来七扭八歪。这里用对称的垂直内边距把原间距补回来：
+    /// 每行上下各加 `vGap / 2`，相邻两行合计 = 原来的 `vGap`。
+    func plainRow(vGap: CGFloat = 0) -> some View {
         self
+            .padding(.vertical, vGap / 2)
             .listRowInsets(EdgeInsets())
             .listRowSeparator(.hidden)
             .listRowBackground(Color.clear)

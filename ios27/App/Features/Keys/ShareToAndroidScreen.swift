@@ -9,13 +9,6 @@ import UIKit
 import Foundation
 import CoreImage.CIFilterBuiltins
 
-
-/// List 里的「整块卡片」行（与其它 List 化页面同用途）。独立命名，避免同名扩展重声明。
-private extension View {
-    func shareCardRow() -> some View {
-        self.frame(maxWidth: .infinity, alignment: .leading).plainRow()
-    }
-}
 struct ShareToAndroidScreen: View {
     @Environment(AppModel.self) private var app
     @Environment(Router.self) private var router
@@ -38,58 +31,28 @@ struct ShareToAndroidScreen: View {
     }
 
     var body: some View {
-        // 2026-11-02（R5 全换系统）：ScrollView + VStack → 系统 List + Section。
-        // ⚠ **二维码那张卡保持 VCard，不拆成 List 行**：它挂着 `.captureShield`（这张码等于一把钥匙，
-        // 录屏/截屏必须遮挡）。拆成行会让遮挡修饰符挂到行容器上、遮不住码本身 —— 这是安全链路，不动。
-        // `.captureShield` 仍挂在整个 List 上（与改前同一位置），所以整页（含码）被遮挡；
-        // 卡片再包一层 VCard 只是为了保住「一张码一个面」的边界。
-        // 业务逻辑、写盘、禁用态、无障碍标签一字未改。
-        List {
-            header.shareCardRow()
-            if app.lock == nil {
-                Section {
-                    noLockBlock.shareCardRow()
+        ScrollView {
+            VStack(spacing: V.S.gap16) {
+                header
+                if app.lock == nil {
+                    noLockBlock
+                } else if let image = qr {
+                    qrBlock(image)
+                    shareBlock
+                } else {
+                    blockedBlock
                 }
-            } else if let image = qr {
-                Section {
-                    qrBlock(image).shareCardRow()
-                    shareBlock.shareCardRow()
-                } header: {
-                    sectionHeader("配对二维码")
-                }
-            } else {
-                Section {
-                    blockedBlock.shareCardRow()
-                } header: {
-                    sectionHeader("还不能分享")
-                }
+                riskBlock
             }
-            Section {
-                riskBlock.shareCardRow()
-            } header: {
-                sectionHeader("这张码等于一把钥匙")
-            }
+            .padding(.vertical, V.S.gap16)
         }
-        .listStyle(.insetGrouped)
-        .listSectionSpacing(V.S.gap16)
-        .scrollContentBackground(.hidden)
-        .contentMargins(.top, V.S.gap16, for: .scrollContent)
-        .contentMargins(.bottom, V.S.gapL, for: .scrollContent)
         .captureShield("这张二维码是开锁钥匙\n屏幕正在被录制或截图，已遮挡")
         .background(CanvasBackground())
+        .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("分享给安卓")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear(perform: build)
         .onChange(of: app.lock?.id) { _, _ in build() }
-    }
-
-    /// List 段头：中文必须显式 textCase(nil)，否则系统会把段头拉成大写形态。
-    private func sectionHeader(_ text: String) -> some View {
-        Text(text)
-            .font(V.F.small)
-            .foregroundStyle(V.C.text3)
-            .textCase(nil)
-            .accessibilityAddTraits(.isHeader)
     }
 
     // MARK: 生成载荷（会话级口令 + 锁身份 + 钥匙）
@@ -130,6 +93,7 @@ struct ShareToAndroidScreen: View {
                 Spacer(minLength: 0)
             }
         }
+        .padding(.horizontal, V.S.pageGutter)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
     }
@@ -159,6 +123,7 @@ struct ShareToAndroidScreen: View {
             }
             .frame(maxWidth: .infinity)
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var shareBlock: some View {
@@ -194,6 +159,7 @@ struct ShareToAndroidScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 未就绪：说清缺什么 + 给下一步
@@ -214,6 +180,7 @@ struct ShareToAndroidScreen: View {
                 }
             }
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 风险说明（真状态，不是装饰）
@@ -221,12 +188,14 @@ struct ShareToAndroidScreen: View {
     private var riskBlock: some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapS) {
+                VSectionLabel(text: "这张码等于一把钥匙")
                 Text("谁扫到它，谁就能开这把锁。只当面扫，或单独发给本人；别截图存相册、别发到群里。")
                     .font(V.F.footnote)
                     .foregroundStyle(V.C.text2)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var noLockBlock: some View {
@@ -241,6 +210,7 @@ struct ShareToAndroidScreen: View {
             }
             .padding(.vertical, V.S.gapXXL)
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 }
 

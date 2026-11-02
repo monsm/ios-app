@@ -335,44 +335,30 @@ enum VCardStyle {
     }
 }
 
-/// 卡片：内容层容器。**全换系统（2026-11-02）**：`.regular` / `.warm` 走系统 `GroupBox`。
-///
-/// 为什么不是自绘背景 + `.glassEffect()`：
-///   · HIG `materials` 明确写 *Don't use Liquid Glass in the content layer* —— 卡片是内容层，
-///     永远不该自己刷玻璃；玻璃应由系统容器在**功能层**提供。
-///   · 内容层的系统对应物就是 `GroupBox` / `List` / `Form`：材质、圆角、内外边距、
-///     深色/浅色、增强对比度退化全部由系统负责，本仓不再维护一套。
-/// `.mini` 保留自绘：它是 170.7×178 的微卡网格（台账 2×2、门页快捷格），
-/// GroupBox 没有对应的小尺寸形态，换成系统容器会让网格塌掉。
+/// 卡片：默认 #232227 r27 内边距 16.3；mini 变体给参考 C 的 170.7×178 微卡用。
 struct VCard<Content: View>: View {
     var style: VCardStyle = .regular
     @ViewBuilder var content: Content
 
     var body: some View {
-        switch style {
-        case .regular:
-            GroupBox { content }
-                .frame(maxWidth: .infinity, alignment: .leading)
-        case .warm:
-            // `.warm` 是「同一张卡但用暖灰底」的语义。`GroupBox` 没有 tint 入口，
-            // 所以底色画在它外层 —— 系统的内边距/分隔线/对比度退化照旧生效，暖灰色也找得回来。
-            GroupBox { content }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(style.fill, in: .rect(cornerRadius: style.radius, style: .continuous))
-        case .mini:
-            content
-                .padding(style.inset)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(style.fill, in: .rect(cornerRadius: style.radius, style: .continuous))
-        }
+        content
+            .padding(style.inset)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(style.fill, in: .rect(cornerRadius: style.radius, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: style.radius, style: .continuous)
+                    .strokeBorder(V.C.hairlineSoft, lineWidth: V.S.hair)
+            }
     }
 }
 
-/// 卡内分隔线。**全换系统（2026-11-02）**：不再自绘 0.5pt 矩形，改交系统 `Divider()`
-/// —— 分隔线属于内容层的“语义分隔”，系统给的是随 Dynamic Type / 增强对比度自动加粗的那一条。
+/// 卡内分隔线（参考 B：左右距卡边 15.2，rgba(255,255,255,.14)）。
 struct VDivider: View {
     var body: some View {
-        Divider()
+        Rectangle()
+            .fill(V.C.hairline)
+            .frame(height: V.S.hair)
+            .accessibilityHidden(true)
     }
 }
 
@@ -723,7 +709,7 @@ struct VActionButton: View {
         Button(action: action) {
             HStack(spacing: V.S.gapS) {
                 if busy {
-                    ProgressView().controlSize(.small)
+                    ProgressView().controlSize(.small).tint(V.C.onBlue)
                 } else if let systemImage {
                     Image(systemName: systemImage)
                         .font(V.F.actionIcon)
@@ -732,17 +718,20 @@ struct VActionButton: View {
                 Text(title)
                     .font(V.F.bodyStrong)
             }
+            .foregroundStyle(V.C.onBlue)
             .frame(maxWidth: .infinity)
-            // 标题随 Dynamic Type 放大，固定 50pt 会裁字；minHeight 保住默认档 50pt 的视觉。
+            // 2026-11-01：`height` → `minHeight` + 垂直内边距。
+            // `V.F.bodyStrong` 是 17pt 且**随 Dynamic Type 缩放**（`VFont.relativeTo` 默认 `.body`），
+            // 大字号下 17pt 会长到 27–53pt，固定 50pt 会把标题裁掉（或压成半行）。
+            // `minHeight` 保证默认档仍是 50pt 的视觉，字号大时按钮随文字长高。
             .padding(.vertical, V.S.gapS)
             .frame(minHeight: V.Action.height)
+            .background(tint, in: .rect(cornerRadius: V.R.action, style: .continuous))
         }
-        // 全换系统（2026-11-02）：主按钮交给系统 `.glassProminent`（iOS 26+ 的 PrimitiveButtonStyle）。
-        // 系统负责液态玻璃材质、按压形变与「减少透明度/增强对比度」退化，本仓不再自绘填充；
-        // 品牌色仍通过 .tint 传入 —— 这也正是 HIG 要求的「用背景色强调主操作」。
-        .buttonStyle(.glassProminent)
-        .tint(tint)
-        .disabled(busy)
+        // 2026-11-01：`.plain` 在 iOS 上**没有任何按压反馈**（不亮、不缩），
+        // 用户点下去得不到确认。本仓早就定义了 `PressStyle`（透明度 + 0.985 缩放），
+        // 但只有 4 处用上 —— 这里接到设计系统的主按钮上，60 处调用一次覆盖。
+        .buttonStyle(PressStyle())
         .accessibilityLabel(title)
     }
 }

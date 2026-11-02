@@ -6,13 +6,6 @@
 // 主动作：唯一 signal 填充是「开始标定 / 重新标定」（开启后才有）；主开关本身走墨色 Toggle。
 import SwiftUI
 
-
-/// List 里的「整块卡片」行（与其它 List 化页面同用途）。独立命名，避免同名扩展重声明。
-private extension View {
-    func autoOpenCardRow() -> some View {
-        self.frame(maxWidth: .infinity, alignment: .leading).plainRow()
-    }
-}
 struct AutoOpenScreen: View {
     @Environment(AppModel.self) private var app
     @Environment(Router.self) private var router
@@ -27,54 +20,25 @@ struct AutoOpenScreen: View {
     @State private var calibrationError: String?
 
     var body: some View {
-        // 2026-11-02（R5 全换系统）：ScrollView + VStack → 系统 List + Section。
-        // 五段按语义并成四组：主开关 / 确认档 / 距离标定 / 上一次（关掉时只有主开关 + 关闭说明）。
-        // 「-40 dBm」是标定档位的**名字**（默认门槛），不是测量值 —— 原样保留，不当读数改。
-        // 业务逻辑、写盘、禁用态、无障碍标签一字未改。
-        List {
-            SettingsHeader(title: "靠近自动开锁", tone: tone, status: status).autoOpenCardRow()
-            Section {
-                mainPanel.autoOpenCardRow()
-                if !AutoOpen.on { offPanel.autoOpenCardRow() }
-            } header: {
-                sectionHeader("主开关")
-            }
-            if AutoOpen.on {
-                Section {
-                    confirmPanel.autoOpenCardRow()
-                } header: {
-                    sectionHeader("确认档")
-                }
-                Section {
-                    calibrationPanel.autoOpenCardRow()
-                } header: {
-                    sectionHeader("距离标定")
-                }
-                Section {
-                    rejectPanel.autoOpenCardRow()
-                } header: {
-                    sectionHeader("上一次")
+        ScrollView {
+            VStack(spacing: V.S.gap16) {
+                SettingsHeader(title: "靠近自动开锁", tone: tone, status: status)
+                mainPanel
+                if AutoOpen.on {
+                    confirmPanel
+                    calibrationPanel
+                    rejectPanel
+                } else {
+                    offPanel
                 }
             }
+            .padding(.vertical, V.S.gap16)
         }
-        .listStyle(.insetGrouped)
-        .listSectionSpacing(V.S.gap16)
-        .scrollContentBackground(.hidden)
-        .contentMargins(.top, V.S.gap16, for: .scrollContent)
-        .contentMargins(.bottom, V.S.gapL, for: .scrollContent)
         .background(CanvasBackground())
+        .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("靠近自动开锁")
         .navigationBarTitleDisplayMode(.inline)
         .task { syncAutoOpenState() }
-    }
-
-    /// List 段头：中文必须显式 textCase(nil)，否则系统会把段头拉成大写形态。
-    private func sectionHeader(_ text: String) -> some View {
-        Text(text)
-            .font(V.F.small)
-            .foregroundStyle(V.C.text3)
-            .textCase(nil)
-            .accessibilityAddTraits(.isHeader)
     }
 
     // MARK: 页头
@@ -90,30 +54,32 @@ struct AutoOpenScreen: View {
 
     // MARK: 主角：主开关
     private var mainPanel: some View {
-        // 段头已由 List 的 Section header 承担（「主开关」），这里不再自绘 VSectionLabel，
-        // 否则同一句标题会在段头上方再出现一次。
-        VCard {
-            VStack(alignment: .leading, spacing: V.S.gapMS) {
-                SettingToggle(
-                    label: "走近自动开门",
-                    note: "默认关。开启后 App 在前台且靠近门时自动下发开锁 —— 这是唯一一个不需要你动手就会开门的功能，所以它默认不生效。",
-                    isOn: autoOpenBinding
-                )
-                SettingRule()
-                HStack(spacing: V.S.gapMS) {
-                    VStatusLine(tone: AutoOpen.on ? .live : .neutral,
-                               text: AutoOpen.on ? "自动开锁 开" : "自动开锁 关")
-                    VStatusLine(tone: app.lock?.isConnected == true ? .ok : .attention,
-                               text: app.lock?.isConnected == true ? "锁已连接" : "锁未连接")
+        VStack(spacing: V.S.gapS) {
+            VSectionLabel(text: "主开关")
+            VCard {
+                VStack(alignment: .leading, spacing: V.S.gapMS) {
+                    SettingToggle(
+                        label: "走近自动开门",
+                        note: "默认关。开启后 App 在前台且靠近门时自动下发开锁 —— 这是唯一一个不需要你动手就会开门的功能，所以它默认不生效。",
+                        isOn: autoOpenBinding
+                    )
+                    SettingRule()
+                    HStack(spacing: V.S.gapMS) {
+                        VStatusLine(tone: AutoOpen.on ? .live : .neutral,
+                                   text: AutoOpen.on ? "自动开锁 开" : "自动开锁 关")
+                        VStatusLine(tone: app.lock?.isConnected == true ? .ok : .attention,
+                                   text: app.lock?.isConnected == true ? "锁已连接" : "锁未连接")
+                    }
+                    SettingRule()
+                    // 风险披露（`AutoOpen.riskDisclosure` —— 它的注释写着"强制展示，不弱化"，
+                    // 而它**全仓零引用** —— 那段文案此前从未出现在任何界面上）。
+                    // 这是安全承诺级的内容：功能"不需要动手就开门"，必须先讲清它意味着什么。
+                    VStatusLine(tone: .attention, text: AutoOpen.riskDisclosure)
+                    SettingRule()
+                    SettingsNote(text: "门控边界：只在 App 在前台时生效；布防时段内、以及防拆事件之后，自动开锁会被自动关掉 —— 这些否决不给你留提示，所以下面会记「上次没自动开的原因」。")
                 }
-                SettingRule()
-                // 风险披露（`AutoOpen.riskDisclosure` —— 它的注释写着"强制展示，不弱化"，
-                // 而它**全仓零引用** —— 那段文案此前从未出现在任何界面上）。
-                // 这是安全承诺级的内容：功能"不需要动手就开门"，必须先讲清它意味着什么。
-                VStatusLine(tone: .attention, text: AutoOpen.riskDisclosure)
-                SettingRule()
-                SettingsNote(text: "门控边界：只在 App 在前台时生效；布防时段内、以及防拆事件之后，自动开锁会被自动关掉 —— 这些否决不给你留提示，所以下面会记「上次没自动开的原因」。")
             }
+            .padding(.horizontal, V.S.pageGutter)
         }
     }
 
@@ -131,77 +97,90 @@ struct AutoOpenScreen: View {
                 }
             }
         }
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: 面容确认
     private var confirmPanel: some View {
-        VCard {
-            VStack(alignment: .leading, spacing: V.S.gapMS) {
-                SettingChips(items: FaceConfirmTier.allCases,
-                             title: { $0.title },
-                             selection: faceTierBinding)
-                SettingsNote(text: faceTier.note)
-                SettingRule()
-                VFieldRow(label: "当前档位", value: faceTier.title, mono: false)
+        VStack(spacing: V.S.gapS) {
+            VSectionLabel(text: "确认档")
+            VCard {
+                VStack(alignment: .leading, spacing: V.S.gapMS) {
+                    SettingChips(items: FaceConfirmTier.allCases,
+                                 title: { $0.title },
+                                 selection: faceTierBinding)
+                    SettingsNote(text: faceTier.note)
+                    SettingRule()
+                    VFieldRow(label: "当前档位", value: faceTier.title, mono: false)
+                }
             }
+            .padding(.horizontal, V.S.pageGutter)
         }
     }
 
     // MARK: 距离标定
     private var calibrationPanel: some View {
-        VCard {
-            VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VReadingGrid(items: [
-                    .init(label: "上次标定",
-                          value: calibrationAt.map { TimeFormat.dayShort($0) } ?? "未标定",
-                          tint: calibrationAt == nil ? V.C.warning : V.C.text1),
-                    .init(label: "触发距离", value: calibrationAt == nil ? "默认（-40 dBm）" : "已校准",
-                          tint: V.C.text2),
-                ], columns: 2)
-                .padding(.top, V.S.gapXS)
-                SettingRule()
-                SettingsNote(text: "标定方式：站在门外约一步的位置，点下面的按钮，App 会记下那一刻的信号强度作为门槛。没标定就打开自动开锁，门内走动也可能触发。")
-                if calibrating {
-                    VBusyRow(text: "正在采集信号 · 请保持站在门外")
-                } else {
-                    VActionButton(title: calibrationAt == nil ? "开始标定" : "重新标定",
-                                  systemImage: "dot.radiowaves.left.and.right") {
-                        calibrate()
-                    }
-                    // 显式清除：标定错了（比如在门内标的）要能回到默认门槛。
-                    // 这与上面失败分支用的是同一个 `clearAutocal` —— 一处清理、两处触发。
-                    if calibrationAt != nil {
-                        VOutlineButton(title: "清除标定（回到默认门槛）", systemImage: "arrow.uturn.backward") {
-                            guard let mac = app.lock?.id else { return }
-                            AutoOpen.clearAutocal(mac)
-                            store.calibrationAt = nil
-                            calibrationError = nil
+        VStack(spacing: V.S.gapS) {
+            VSectionLabel(text: "距离标定")
+            VCard {
+                VStack(alignment: .leading, spacing: V.S.gapMS) {
+                    VReadingGrid(items: [
+                        .init(label: "上次标定",
+                              value: calibrationAt.map { TimeFormat.dayShort($0) } ?? "未标定",
+                              tint: calibrationAt == nil ? V.C.warning : V.C.text1),
+                        .init(label: "触发距离", value: calibrationAt == nil ? "默认（-40 dBm）" : "已校准",
+                              tint: V.C.text2),
+                    ], columns: 2)
+                    .padding(.top, V.S.gapXS)
+                    SettingRule()
+                    SettingsNote(text: "标定方式：站在门外约一步的位置，点下面的按钮，App 会记下那一刻的信号强度作为门槛。没标定就打开自动开锁，门内走动也可能触发。")
+                    if calibrating {
+                        VBusyRow(text: "正在采集信号 · 请保持站在门外")
+                    } else {
+                        VActionButton(title: calibrationAt == nil ? "开始标定" : "重新标定",
+                                      systemImage: "dot.radiowaves.left.and.right") {
+                            calibrate()
+                        }
+                        // 显式清除：标定错了（比如在门内标的）要能回到默认门槛。
+                        // 这与上面失败分支用的是同一个 `clearAutocal` —— 一处清理、两处触发。
+                        if calibrationAt != nil {
+                            VOutlineButton(title: "清除标定（回到默认门槛）", systemImage: "arrow.uturn.backward") {
+                                guard let mac = app.lock?.id else { return }
+                                AutoOpen.clearAutocal(mac)
+                                store.calibrationAt = nil
+                                calibrationError = nil
+                            }
                         }
                     }
-                }
-                // 标定失败要说清楚为什么 —— 否则用户只知道"点了没用"。
-                if let calibrationError {
-                    VStatusLine(tone: .attention, text: calibrationError)
+                    // 标定失败要说清楚为什么 —— 否则用户只知道"点了没用"。
+                    if let calibrationError {
+                        VStatusLine(tone: .attention, text: calibrationError)
+                    }
                 }
             }
+            .padding(.horizontal, V.S.pageGutter)
         }
     }
 
     // MARK: 上次没自动开的原因（诚实：没记录就写没记录）
     private var rejectPanel: some View {
-        VCard {
-            VStack(alignment: .leading, spacing: V.S.gapMS) {
-                if let reason = lastSkipReason {
-                    VStatusLine(tone: .attention, text: reason)
-                    SettingRule()
-                    SettingsNote(text: "这条是这次没自动开的原因。想看每一次的开锁结果，去台账页。")
-                } else {
-                    Text("还没有「没自动开」的记录")
-                        .font(V.F.body)
-                        .foregroundStyle(V.C.text1)
-                    SettingsNote(text: "走到门前没开门时，这里会写清原因（信号太弱 / 在布防时段 / 面容未通过）。现在还没有这样的记录 —— 说明自动开锁还没被否决过。")
+        VStack(spacing: V.S.gapS) {
+            VSectionLabel(text: "上一次")
+            VCard {
+                VStack(alignment: .leading, spacing: V.S.gapMS) {
+                    if let reason = lastSkipReason {
+                        VStatusLine(tone: .attention, text: reason)
+                        SettingRule()
+                        SettingsNote(text: "这条是这次没自动开的原因。想看每一次的开锁结果，去台账页。")
+                    } else {
+                        Text("还没有「没自动开」的记录")
+                            .font(V.F.body)
+                            .foregroundStyle(V.C.text1)
+                        SettingsNote(text: "走到门前没开门时，这里会写清原因（信号太弱 / 在布防时段 / 面容未通过）。现在还没有这样的记录 —— 说明自动开锁还没被否决过。")
+                    }
                 }
             }
+            .padding(.horizontal, V.S.pageGutter)
         }
     }
 
