@@ -107,7 +107,7 @@ final class BackupRoundTripTests: XCTestCase {
         XCTAssertEqual(parsed.preview.fpCount, 1, "预览应报告 1 枚指纹")
         XCTAssertEqual(parsed.preview.macs, [mac])
 
-        _ = BackupStudio.restore(parsed.bundle, makeSnapshot: false)
+        _ = try BackupStudio.restore(parsed.bundle, makeSnapshot: false)
         let back = DB.ledger(mac)
         XCTAssertEqual(back.pwds.count, 2, "两条密码必须都在")
         XCTAssertEqual(back.fps.count, 1, "指纹必须也在")
@@ -125,7 +125,7 @@ final class BackupRoundTripTests: XCTestCase {
     func testOwnershipIsDroppedWhenMemberAbsentLocally() throws {
         let text = BackupCanonical.exportText(sampleBundle())
         let parsed = try BackupStudio.parsePreview(text: text, password: nil)
-        _ = BackupStudio.restore(parsed.bundle, makeSnapshot: false)
+        _ = try BackupStudio.restore(parsed.bundle, makeSnapshot: false)
         let p1 = try XCTUnwrap(DB.ledger(mac).pwds.first { $0.alias == 1 })
         XCTAssertNil(p1.owner, "本机没有这位成员时不能留下悬空归属（宁可不归属，也不指向不存在的人）")
         XCTAssertEqual(p1.note, "门锁密码", "但凭证本身与备注必须完好带回")
@@ -140,7 +140,7 @@ final class BackupRoundTripTests: XCTestCase {
 
         let text = BackupCanonical.exportText(sampleBundle())
         let parsed = try BackupStudio.parsePreview(text: text, password: nil)
-        _ = BackupStudio.restore(parsed.bundle, makeSnapshot: false)
+        _ = try BackupStudio.restore(parsed.bundle, makeSnapshot: false)
 
         let back = DB.ledger(mac)
         XCTAssertTrue(back.pwds.contains { $0.alias == 9 },
@@ -159,11 +159,11 @@ final class BackupRoundTripTests: XCTestCase {
         let text = BackupCanonical.exportText(sampleBundle())
         let parsed = try BackupStudio.parsePreview(text: text, password: nil)
 
-        _ = BackupStudio.restore(parsed.bundle, makeSnapshot: false)
+        _ = try BackupStudio.restore(parsed.bundle, makeSnapshot: false)
         XCTAssertEqual(DB.ledger(mac).pwds.first { $0.alias == 1 }?.note, "本机的 1 号",
                        "未裁决时不该覆盖本机凭证")
 
-        _ = BackupStudio.restore(parsed.bundle, conflictTakeBackup: ["\(mac):p:1"], makeSnapshot: false)
+        _ = try BackupStudio.restore(parsed.bundle, conflictTakeBackup: ["\(mac):p:1"], makeSnapshot: false)
         XCTAssertEqual(DB.ledger(mac).pwds.first { $0.alias == 1 }?.note, "门锁密码",
                        "裁决为取备份时应覆盖")
     }
@@ -199,7 +199,7 @@ final class BackupRoundTripTests: XCTestCase {
         let text = BackupCanonical.exportText(b)
         let parsed = try BackupStudio.parsePreview(text: text, password: nil)
         let before = DB.keychain(mac)?.skey
-        let r = BackupStudio.restore(parsed.bundle, makeSnapshot: false)
+        let r = try BackupStudio.restore(parsed.bundle, makeSnapshot: false)
         XCTAssertGreaterThanOrEqual(r.skipped, 1, "非法 skey 的锁必须计入 skipped")
         XCTAssertEqual(DB.keychain(mac)?.skey, before,
                        "非法 skey 绝不能覆盖本机真密钥（那会让锁再也开不了）")
