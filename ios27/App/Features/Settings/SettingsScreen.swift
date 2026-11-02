@@ -43,8 +43,10 @@ struct SettingsScreen: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: V.S.gapM) {
-                chips
+                // 2026-11-02：阅读顺序 = 标题（导航栏）→ 导语 → 控件。
+                // 原来是 chips → 导语 → 分组芯片，把一句解释夹在两排芯片中间。
                 header
+                chips
                 groupChipsBlock
                 if !search.trimmingCharacters(in: .whitespaces).isEmpty {
                     searchResults

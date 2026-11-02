@@ -73,8 +73,9 @@ struct KeysScreen: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: V.S.gapM) {
-                chips
+                // 2026-11-02：同上 —— 标题（导航栏）→ 导语 → 控件。
                 header
+                chips
                 if app.ledgerCorrupt {
                     // 2026-11-01（Round 320）：台账读不出来时，写入会被静默拒绝 —— 必须让用户知道。
                     // 不写「损坏」这种吓人的词做断言（可能只是版本不兼容），只说清后果与出路。
