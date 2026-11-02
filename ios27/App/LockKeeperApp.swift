@@ -225,6 +225,16 @@ struct LockGateScreen: View {
                     case .decoy:
                         // 胁迫码：门照样能开，数据区显示为空 —— 不报警、不暴露。
                         app.decoyMode = true
+                        // 2026-11-01（Round 313）：**立刻**把空壳落到数据层并清空内存投影。
+                        // 原实现只置 `app.decoyMode`，真正生效要等 `Shell()` 重建后首个页面
+                        // 的 `.task` 跑完 `reload()`（里面有 `DB.setDecoy(decoyMode)` 与清空三张表）。
+                        // 这中间存在一个窗口：`app.keys / members / entries` 仍是**真实数据**，
+                        // 而被胁迫者正盯着这一屏 —— 恰好是空壳模式最不该发生的暴露。
+                        // 三步都幂等：`DB.setDecoy(true)` 再设一次无害；三张表在 reload 里还会被再清一次。
+                        DB.setDecoy(true)
+                        app.keys = []
+                        app.members = []
+                        app.entries = []
                         app.unlocked = true
                         failed = false
                     case .wrong(let remaining):
