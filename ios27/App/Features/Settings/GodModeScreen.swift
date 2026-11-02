@@ -53,8 +53,7 @@ struct GodModeScreen: View {
             Button("重写 PIN 表（保留通信密钥）", role: .destructive) { Task { await repair() } }
             Button("取消", role: .cancel) {}
         } message: {
-            Text("把锁内 PIN 表整体重置为新的 64 枚，通信密钥 skey 不变 —— 别人手机里的钥匙不会因换钥变砖。"+
-                 "但锁内已有的旧 PIN（含别的手机钥匙）会全部失效。靠近门锁再执行。")
+            Text("把锁内 PIN 表整体重置为新的 64 枚，通信密钥 skey 不变 —— 别人手机里的钥匙不会因换钥变砖。但锁内已有的旧 PIN（含别的手机钥匙）会全部失效。靠近门锁再执行。")
         }
     }
 
@@ -164,8 +163,7 @@ struct GodModeScreen: View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VCardHeader(title: "修复")
-                Text("开锁永远 rc=2 且本机池与锁端无法对应时，用「修池」：保 skey 只重写 PIN 表，"+
-                     "然后自动重签开锁凭证。不用重置锁，也不用走到锁跟前。")
+                Text("开锁永远 rc=2 且本机池与锁端无法对应时，用「修池」：保 skey 只重写 PIN 表，然后自动重签开锁凭证。不用重置锁，也不用走到锁跟前。")
                     .font(V.F.footnote).foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
                 VActionButton(title: "修池（重写 PIN 表 · 保通信密钥）", systemImage: "wrench.and.screwdriver.fill") {
