@@ -71,6 +71,11 @@ struct RootView: View {
                    let slot = Int(args[i + 1]), let tab = TabSlot(rawValue: slot) {
                     router.tab = tab
                 }
+                // -kfDest <destRaw>：把一个子页压进当前 Tab 的导航栈（截图子页用）。
+                if let i = args.firstIndex(of: "-kfDest"), i + 1 < args.count,
+                   let dest = Dest(rawValue: args[i + 1]) {
+                    router.request(.dest(dest))
+                }
             }
             if let mac = app.currentKeychain?.mac { AutoOpenController.shared.onForeground(mac: mac) }
         }

@@ -419,6 +419,16 @@ jobs:
             xcrun simctl io "$UDID" screenshot "/tmp/shots/$i-$name.png" || true
             i=$((i+1))
           done
+          # 2026-11-03：关键子页 —— 大标题模式、读数网格、凭证行、工作流都要看真机渲染。
+          j=10
+          for pair in lockStatus:锁实况 deviceInfo:锁名片 lockSettings:锁设置 defend:布防 keyCreate:新建凭证 zotp:动态密码 recordsStudio:记录工作室 backupStudio:备份工作室; do
+            dest="${pair%%:*}"; name="${pair#*:}"
+            xcrun simctl terminate "$UDID" com.aapk.lockkeeper 2>/dev/null || true
+            xcrun simctl launch "$UDID" com.aapk.lockkeeper -kfUITest -kfDest "$dest" || true
+            sleep 4
+            xcrun simctl io "$UDID" screenshot "/tmp/shots/$j-$name.png" || true
+            j=$((j+1))
+          done
           ls -la /tmp/shots
       - name: 推到 ci-shots 分支
         if: github.event_name == 'push' && always()
