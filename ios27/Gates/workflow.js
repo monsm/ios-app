@@ -68,7 +68,7 @@ for (const f of FILES) {
   const gm = ag.match(/const GATES = \[([^\]]*)\]/);
   if (gm) {
     const real = gm[1].split(",").filter(function (x) { return x.trim(); }).length;
-    const CN = { "九": 9, "十一": 11, "十二": 12, "十三": 13, "十四": 14, "十五": 15, "十六": 16, "十七": 17, "十八": 18, "十九": 19, "二十": 20, "二十一": 21, "二十二": 22 };
+    const CN = { "九": 9, "十一": 11, "十二": 12, "十三": 13, "十四": 14, "十五": 15, "十六": 16, "十七": 17, "十八": 18, "十九": 19, "二十": 20, "二十一": 21, "二十二": 22, "二十三": 23, "二十四": 24, "二十五": 25 };
     const targets = [
       [path.join(ROOT, 'README.md'), /## ([一-鿿0-9]+)\s*道机器闸门/],
       [path.join(ROOT, '..', '.github', 'workflows', 'ios27.yml'), /静态闸门（([一-鿿0-9]+)\s*道）/],
