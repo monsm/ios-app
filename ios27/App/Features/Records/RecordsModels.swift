@@ -291,7 +291,7 @@ enum RecordsSource {
                 event: log.displayTypeName,
                 owner: owner(log, members: members),
                 tone: tone(log),
-                detail: detail(log, lockName: lockName),
+                detail: [detail(log, lockName: lockName), log.diff].compactMap { $0 }.joined(separator: " · "),
                 rawType: log.type
             ))
         }

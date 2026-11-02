@@ -50,7 +50,8 @@ extension DB {
         for l in cache.logs { byIdx[l.idxRaw] = l }
         for e in logs {
             byIdx[e.idxRaw] = CachedLog(type: e.type, typeName: e.typeName, idxRaw: e.idxRaw,
-                                       lockTime: e.lockTime, lockTimeStr: e.lockTimeStr)
+                                       lockTime: e.lockTime, lockTimeStr: e.lockTimeStr,
+                                       diff: e.diffDescription)
         }
         let merged = Array(byIdx.values).sorted { $0.idxRaw > $1.idxRaw }
         cache.logs = Array(merged.prefix(300))

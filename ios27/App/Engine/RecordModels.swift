@@ -27,6 +27,9 @@ struct Rec: Identifiable {
     var care: Bool         // 手机侧保养/换电事件 (1028) —— 预留未接
     /// ⚠ 同上（第 90 轮核实）：**预留未接** —— 全仓 kf_fevents_ 零读零写，本字段恒为空串。
     var failMsg: String    // 92 手机侧失败原因 —— 预留未接
+    /// 2026-11-03（god 模式）：凭证变更日志的锁端权威明细（type 14/15/20/21 解码），
+    /// 来自 `LogEntry.diffDescription`。nil = 该行没有可解码明细。
+    var diff: String? = nil
     var id: String { mac + "#" + key }
 }
 

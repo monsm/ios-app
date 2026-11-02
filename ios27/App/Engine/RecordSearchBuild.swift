@@ -61,7 +61,8 @@ extension RecordSearch {
                                typeName: e.typeName, idxRaw: e.idxRaw, lockTime: e.lockTime,
                                timeStr: e.lockTimeStr, whoId: c.who, whoName: who, kind: c.kind,
                                provable: c.provable, cred: cred,
-                               alarm: StatsKit.alarmTypes.contains(e.type), care: false, failMsg: ""))
+                               alarm: StatsKit.alarmTypes.contains(e.type), care: false, failMsg: "",
+                               diff: logs[i].diff))
             }
         }
         out.sort { $0.timeStr > $1.timeStr }   // 字符串序 = 时间倒序 (同格式)

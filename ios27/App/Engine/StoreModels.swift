@@ -293,12 +293,27 @@ struct CachedLog: Codable {
     var idxRaw: UInt32
     var lockTime: Int64
     var lockTimeStr: String
+    /// 2026-11-03（god 模式）：type 14/15/20/21 凭证变更日志的锁端权威明细
+    /// （`LogEntry.diffDescription` 的落盘副本）。nil = 旧缓存 / 非凭证变更类型。
+    /// Codable 缺省：旧缓存没有这个键也能解出 nil，不需要迁移。
+    var diff: String? = nil
 
-    enum CodingKeys: String, CodingKey { case type, typeName, idxRaw, lockTime, lockTimeStr }
+    enum CodingKeys: String, CodingKey { case type, typeName, idxRaw, lockTime, lockTimeStr, diff }
 
-    init(type: Int, typeName: String, idxRaw: UInt32, lockTime: Int64, lockTimeStr: String) {
+    init(type: Int, typeName: String, idxRaw: UInt32, lockTime: Int64, lockTimeStr: String, diff: String? = nil) {
         self.type = type; self.typeName = typeName; self.idxRaw = idxRaw
         self.lockTime = lockTime; self.lockTimeStr = lockTimeStr
+        self.diff = diff
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        type = try c.decodeIfPresent(Int.self, forKey: .type) ?? 0
+        typeName = try c.decodeIfPresent(String.self, forKey: .typeName) ?? ""
+        idxRaw = try c.decodeIfPresent(UInt32.self, forKey: .idxRaw) ?? 0
+        lockTime = try c.decodeIfPresent(Int64.self, forKey: .lockTime) ?? 0
+        lockTimeStr = try c.decodeIfPresent(String.self, forKey: .lockTimeStr) ?? ""
+        diff = try c.decodeIfPresent(String.self, forKey: .diff)
     }
 
 

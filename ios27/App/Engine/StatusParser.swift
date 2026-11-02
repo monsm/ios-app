@@ -43,6 +43,41 @@ struct LogEntry {
     var lockTime: Int64
     var lockTimeStr: String
     var body: String
+    // MARK: 2026-11-03（god 模式）：凭证变更日志的**锁端权威明细**。
+    // 这些字段把"谁在什么时候改了什么凭证"从「App 自己记的台账 diff」升级为
+    // 「锁端日志里的原始记录」—— 它不依赖 App 在场，是排查"密码/指纹对不上"的**第一手证据**。
+    // 解码口径逐字对齐 vendor main.js（parseDiffBody，En.toNormalByteOrder = LE→主机序）。
+    /// 操作者 trackId（改凭证的手机/网关是谁）
+    var track: UInt32? = nil
+    /// type14: opType（1=新增? / 其他=协议未定，原样显示）；type20/21: countFeature（特征点数）
+    var opType: Int? = nil
+    /// type14: 本枚 PIN 的数值（LE u32）
+    var pinValue: UInt32? = nil
+    /// type15: 删除的密码 alias / 新增的密码 alias
+    var delIdx: Int? = nil
+    var addIdx: Int? = nil
+    /// type20/21: 指纹批次号
+    var fpBatch: UInt32? = nil
+
+    /// 人读的差异行（nil = 该类型没有可解码的明细）。
+    var diffDescription: String? {
+        switch type {
+        case 14:
+            guard let t = track, let v = pinValue else { return nil }
+            return "PIN 值 \(v) · track \(t) · op \(opType.map(String.init) ?? "?")"
+        case 15:
+            guard let t = track, let d = delIdx, let a = addIdx else { return nil }
+            let del = d == 0 ? "无" : "#\(d)"
+            let add = a == 0 ? "无" : "#\(a)"
+            return "删密码 \(del) · 加密码 \(add) · track \(t)"
+        case 20, 21:
+            guard let b = fpBatch else { return nil }
+            let n = opType.map { " · 特征点 \($0)" } ?? ""
+            return "指纹批次 \(b)\(n) · track \(track.map(String.init) ?? "?")"
+        default:
+            return nil
+        }
+    }
 }
 
 enum StatusParser {
@@ -150,12 +185,48 @@ enum StatusParser {
         let type = Int(b[0])
         let idx = leHexToU32(String(hex.dropFirst(4).prefix(8)))
         let lockTime = Int64(leHexToU32(String(hex.dropFirst(12).prefix(8))))
+        let body = String(hex.dropFirst(20))
+        // 2026-11-03（god 模式）：type 14/15/20/21 的 diffBody 解码 —— 口径逐字对齐 vendor
+        // main.js 的 parseDiffBody（En.toNormalByteOrder = 字节反转为 LE→主机序）：
+        //   14 同步PIN    : track(4B) opType(1B) pin(4B)   = 18 hex
+        //   15 同步密码   : track(4B) delIdx(2B) addIdx(2B) = 16 hex
+        //   20/21 指纹增删: track(4B) fpBatch(4B) count(1B) = 18 hex
+        // 只有长度完全匹配才解 —— 半条（翻页边界截断）宁可不解也不给错数。
+        func le32(_ h: String) -> UInt32? {
+            guard h.count == 8, HexKit.bytes(h).count == 4 else { return nil }
+            return UInt32(HexKit.bytes(h).reduce(0) { $0 << 8 | UInt32($1) })
+        }
+        func le16(_ h: String) -> Int? {
+            guard h.count == 4, HexKit.bytes(h).count == 2 else { return nil }
+            return Int(HexKit.bytes(h).reduce(0) { $0 << 8 | UInt32($1) })
+        }
+        var track: UInt32? = nil, opType: Int? = nil, pinValue: UInt32? = nil
+        var delIdx: Int? = nil, addIdx: Int? = nil, fpBatch: UInt32? = nil
+        switch type {
+        case 14, 15, 20, 21:
+            guard body.count >= 16 else { break }
+            track = le32(String(body.prefix(8)))
+            if type == 14, body.count == 18 {
+                opType = le16(String(body.dropFirst(8).prefix(2)))
+                pinValue = le32(String(body.dropFirst(10).prefix(8)))
+            } else if type == 15, body.count == 16 {
+                delIdx = le16(String(body.dropFirst(8).prefix(4)))
+                addIdx = le16(String(body.dropFirst(12).prefix(4)))
+            } else if body.count == 18 {   // type 20 / 21
+                fpBatch = le32(String(body.dropFirst(8).prefix(8)))
+                opType = le16(String(body.dropFirst(16).prefix(2)))
+            }
+        default:
+            break
+        }
         return LogEntry(type: type,
                         typeName: logTypes[type] ?? ("未知(\(type))"),
                         idx: idx, idxRaw: idx,
                         lockTime: lockTime,
                         lockTimeStr: lockTime != 0 ? ProtoTime.localStr(lockTime) : "",
-                        body: String(hex.dropFirst(20)))
+                        body: body,
+                        track: track, opType: opType, pinValue: pinValue,
+                        delIdx: delIdx, addIdx: addIdx, fpBatch: fpBatch)
     }
     static func parseLogs(_ klvs: [ZKLV]) -> [LogEntry] {
         klvs.filter { $0.key == 0x05 }.compactMap { parseLogEntry($0.val) }
