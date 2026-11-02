@@ -105,7 +105,11 @@ struct HardwareScreen: View {
                             VBusyRow(text: "正在与钥匙串通信 · 请贴近手机")
                         } else {
                             if d.holdsThisLock {
-                                VOutlineButton(title: "撤销这把锁的钥匙", systemImage: "key.slash") {
+                                // 2026-11-03：god 模式入口 —— 锁端全量读数 / 双侧快照 / 凭证变更流水 / 修池。
+                VOutlineButton(title: "God 模式（全量读数 · 修池）", systemImage: "crown.fill") {
+                    router.request(.dest(.godMode))
+                }
+                VOutlineButton(title: "撤销这把锁的钥匙", systemImage: "key.slash") {
                                     revoke(d)
                                 }
                             } else {

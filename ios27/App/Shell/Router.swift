@@ -64,6 +64,7 @@ enum Dest: String, CaseIterable, Identifiable, Hashable {
     case autoOpen          // 靠近自动开锁
     case hardware          // 钥匙串 / 硬件
     case protocolTest      // 协议测试（回声探测）
+    case godMode           // 2026-11-03：god 模式 —— 锁端全量读数 + 双侧快照 + 修池
     case about             // 关于
     case accessibility     // 无障碍与操作辅助
     case backupStudio      // 备份工作室（WebDAV/多份/迁移/自检）

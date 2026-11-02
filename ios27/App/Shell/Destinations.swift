@@ -54,6 +54,7 @@ enum Destinations {
         case .autoOpen: AutoOpenScreen()
         case .hardware: HardwareScreen()
         case .protocolTest: ProtocolTestScreen()
+        case .godMode: GodModeScreen()
         case .about: AboutScreen()
         case .accessibility: AccessibilityScreen()
         case .backupStudio: BackupStudioScreen()
