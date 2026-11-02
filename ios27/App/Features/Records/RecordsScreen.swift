@@ -124,6 +124,15 @@ struct RecordsScreen: View {
                 consume()
             }
             .onChange(of: router.pending) { _, _ in consume() }
+            // 2026-11-01（Round 273）：**切锁后必须重新水合筛选。**
+            // `hydrateFilters()` 用 `guard !hydrated` 只跑一次，而 TabView 会保活这个视图 ——
+            // 于是 A 锁的筛选（分段/成员/告警类型/只看失败）会原样套到 B 锁上；
+            // 更糟的是随后任何一次改筛选都会把这份「继承来的状态」写进 **B 锁**的存储（`kf_rflt_<B>`），
+            // 污染 B 锁自己记住的那份。切锁即重置并重新水合。
+            .onChange(of: app.currentMac) { _, _ in
+                hydrated = false
+                consume()
+            }
             .onChange(of: route.flashID) { _, new in
                 guard let new else { return }
                 flash = new
