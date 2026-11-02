@@ -107,7 +107,8 @@ struct KeysScreen: View {
         }
         .background(V.C.bg.ignoresSafeArea())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .toolbarVisibility(.hidden, for: .navigationBar)
+        .navigationTitle("凭证")
+        .navigationBarTitleDisplayMode(.large)
         .task { await app.reload(refreshStatus: false) }
         .onAppear {
             now = KeysState.now()
@@ -177,9 +178,8 @@ struct KeysScreen: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: V.Page.titleToBody) {
-            Text("凭证")
-                .font(V.F.displayB)
-                .foregroundStyle(V.C.text1)
+            // 2026-11-02：标题改由系统导航栏的大标题承担 —— 自己再画一遍就是同一屏两个「凭证」，
+            // 而且自绘标题拿不到随滚动折叠、导航栏液态玻璃、无障碍标题语义。
             Text("家人、临时客人与服务人员\n共用一把门锁；过期自动失效，\n随时可撤销。")
                 .font(V.F.pageLead)
                 .foregroundStyle(V.C.text9)

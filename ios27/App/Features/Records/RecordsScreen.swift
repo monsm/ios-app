@@ -119,7 +119,8 @@ struct RecordsScreen: View {
             }
             .background(V.C.bg.ignoresSafeArea())
         .scrollEdgeEffectStyle(.soft, for: .top)
-            .toolbarVisibility(.hidden, for: .navigationBar)
+            .navigationTitle("记录")
+            .navigationBarTitleDisplayMode(.large)
             .onAppear {
                 reload()
                 consume()
@@ -166,9 +167,7 @@ struct RecordsScreen: View {
     private var header: some View {
         HStack(alignment: .top, spacing: V.S.gapM) {
             VStack(alignment: .leading, spacing: V.S.gapXXS) {
-                Text("记录")
-                    .font(V.F.titleC)
-                    .foregroundStyle(V.C.text1)
+                // 2026-11-02：标题改由系统导航栏承担（见 body 上的 .navigationTitle）。
                 Text(dateLine)
                     .font(V.F.bedLabel)
                     .foregroundStyle(V.C.text3)

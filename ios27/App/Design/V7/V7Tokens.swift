@@ -228,7 +228,6 @@ enum V {
     /// 参考 C 的 56pt 主图标字号。2026-11-02 恢复：第 324 轮曾把它当"零消费"删掉，
     /// 但那是因为当时的页面被 List 化、图标改走系统样式；页面回退到原设计后又需要它。
     static let heroGlyph56 = sans(56, relativeTo: .largeTitle)
-    static let titleC = sans(22, weight: .semibold, relativeTo: .title2)        // 参考 C 头部标题 22/600
         static let displayC = sans(19, weight: .bold, relativeTo: .title2)          // 二级页 19/700
         static let displayD = sans(26, weight: .regular, relativeTo: .title)        // 门锁档案 26
         static let displayE = sans(28, weight: .regular, relativeTo: .title)        // 电池档案 28
