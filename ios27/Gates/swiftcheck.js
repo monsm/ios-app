@@ -180,6 +180,52 @@ for (const f of files) {
       }
     }
   }
+  // 2026-11-01（Round 295）：**手写 `CodingKeys` 的宿主类型，存储属性必须全部出现在 case 里。**
+  //
+  // 依据：`BackupBundle.Globals.Appearance` 曾因 CodingKeys 只列了 9 个字段，导致
+  // motion/heroTex/plain/heroStats 与全部无障碍字段**既不编码也不解码** ——
+  // 备份包里从来没有它们，恢复时也永远读不到。
+  // 有回归测试，但它只断言「它显式设置的那批字段」能往返；**新增字段忘记加 CodingKeys 抓不到**，
+  // 而这条规则是静态的，能挡住整类。
+  {
+    for (let i = 0; i < lines.length; i++) {
+      if (!/enum\s+CodingKeys\s*:\s*String\s*,\s*CodingKey/.test(stripped[i] || "")) continue;
+      // 注意：本仓多数 `CodingKeys` 写在**同一行**（`enum CodingKeys: String, CodingKey { case a, b, c }`），
+      // 所以必须先处理本行 `{` 之后到 `}` 之前的部分，再决定要不要跨行续扫。
+      // （第一版从下一行开始扫 ⇒ 单行写法全被误判，实测 36 处假阳性。）
+      const keys = new Set();
+      const first = stripped[i] || "";
+      const afterBrace = first.slice(first.indexOf("{") + 1);
+      const inline = afterBrace.split("}")[0];
+      for (const m of inline.matchAll(/(?:case\s+|,)\s*([A-Za-z_]\w*)/g)) keys.add(m[1]);
+      if (!afterBrace.includes("}")) {
+        let j = i + 1;
+        while (j < lines.length) {
+          const s = stripped[j] || "";
+          for (const m of s.matchAll(/(?:case\s+|,)\s*([A-Za-z_]\w*)/g)) keys.add(m[1]);
+          if (/^\s*\}/.test(s)) break;
+          j++;
+        }
+      }
+      let host = -1;
+      for (let k = i - 1; k >= 0; k--) {
+        if (/^\s*(?:public |private |internal |final )*(?:struct|class|enum)\s+\w+.*\{/.test(stripped[k] || "")) { host = k; break; }
+      }
+      if (host < 0) continue;
+      const hostIndent = (lines[host].match(/^\s*/) || [""])[0].length;
+      for (let k = host + 1; k < i; k++) {
+        const s = stripped[k] || "";
+        const ind = (s.match(/^\s*/) || [""])[0].length;
+        if (ind !== hostIndent + 4) continue;
+        const m = s.match(/^\s*(?:private |fileprivate |internal |public )*(?:var|let)\s+([A-Za-z_]\w*)\s*:/);
+        if (!m) continue;
+        if (/\{/.test(s)) continue;
+        if (keys.has(m[1])) continue;
+        console.log(`  ${rel}:${k + 1}  ${m[1]} 没有出现在 CodingKeys 里 —— 该字段既不编码也不解码`);
+        bad++;
+      }
+    }
+  }
   // 2026-11-01：**不许用文案内容决定状态色**（`tone:` / `tint:` 实参里出现 `.contains(`）。
   // 本仓已三次踩坑：CredentialStudio 的「已」前缀（把"已…失败 N 条"涂绿）、
   // KeyCreate 的前缀猜测、LockStatus 的 `outcome.contains("失败")`（"锁忙，请稍后再试"一个
