@@ -229,9 +229,8 @@ enum MobileKeyService {
         save(kc.mac, rawList(kc.mac).filter { $0.id != key.id })
     }
 
-    /// 展示用：永久 / 到期时间（前 4 位是 2118 判永久 —— 与 APK page-delblekey 同判据）。
-    static func validityLabel(_ k: MobileKey) -> String {
-        if k.forever || k.validTo.hasPrefix("2118") { return "永久有效" }
-        return "有效至 \(k.validTo)"
-    }
+    // 2026-11-01（Round 284）：这里原本有一个 `validityLabel`（永久 / 有效至 <日期>）。
+    // 核实：**全仓零调用**（含 Tests）—— 手机钥匙的列表其实在凭证页，走 `KeyItem.expiresAt` + `KeysState`。
+    // 但它里面那条规则「`validTo` 前 4 位是 2118 判永久」是有价值的，只是从没被消费点用上，
+    // 现已搬到投影层 `AppModel.reloadKeys`（那里两个判据任一命中即视为永久）。函数本身删除。
 }

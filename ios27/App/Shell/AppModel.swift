@@ -208,7 +208,11 @@ final class AppModel {
                 // 旧手机钥匙记录可能没有 memberID，那时回落名字（读侧 `ownerName` 已有名字回退）。
                 owner: k.memberID.isEmpty ? k.memberName : k.memberID,
                 code: k.ekey,
-                expiresAt: k.forever ? nil : Self.epochMillis(k.validTo),
+                // 2026-11-01（Round 284）：**「2118 即永久」这条规则原本只写在死函数 `validityLabel` 里，
+                // 从没被真正的消费点用上。** 于是从厂商 App / 旧备份导入的手机钥匙
+                // （`forever == false` 但 `validTo` 是 `2118-01-01 …`）会被算成「约 33000 天后到期」，
+                // 而不是「永久有效」。这里把规则搬到投影层：两个判据任一命中即视为永久。
+                expiresAt: (k.forever || k.validTo.hasPrefix("2118")) ? nil : Self.epochMillis(k.validTo),
                 disabled: CredentialLocalState.isDisabled(mac: m, id: "mkey:\(k.id)")
             ))
         }
