@@ -8,6 +8,8 @@ import SwiftUI
 
 struct RecordsScreen: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// 头像圆的 Dynamic Type 缩放因子（见 body 里头像那段注释）。
+    @ScaledMetric(relativeTo: .body) private var avatarScale: CGFloat = 1
     @Environment(AppModel.self) private var app
     @Environment(Router.self) private var router
 
@@ -180,7 +182,8 @@ struct RecordsScreen: View {
                     .font(V.F.rowDetailStrong)
                     .foregroundStyle(V.C.text1)
             }
-            .frame(width: V.Metric.avatar, height: V.Metric.avatar)
+            // 2026-11-02（Dynamic Type）：同上 —— 固定直径的圆装不下放大后的「我」。
+            .frame(width: V.Metric.avatar * avatarScale, height: V.Metric.avatar * avatarScale)
             .accessibilityHidden(true)
         }
         .padding(.horizontal, V.S.pageGutterC)

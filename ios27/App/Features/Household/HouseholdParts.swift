@@ -27,6 +27,11 @@ struct HHAvatar: View {
     /// emoji 代号的字号：调用方按头像档位给一个令牌字号，不在视图里算比例。
     var glyph: VFont = V.F.body
 
+    /// 2026-11-02（Dynamic Type）：头像是**固定尺寸的圆**，而里面是**会随字号缩放的文字** ——
+    /// 系统字号调到「辅助功能」档时，首字会长到比圆还大、被裁掉。
+    /// 用 `@ScaledMetric` 让圆跟着文字一起长：HIG 要求容器随内容缩放，而不是把内容裁进容器。
+    @ScaledMetric(relativeTo: .body) private var textScale: CGFloat = 1
+
     var body: some View {
         ZStack {
             Circle().fill(V.C.cardAlt)
@@ -40,7 +45,7 @@ struct HHAvatar: View {
                     .font(glyph)
             }
         }
-        .frame(width: size, height: size)
+        .frame(width: size * textScale, height: size * textScale)
         .accessibilityHidden(true)
     }
 
