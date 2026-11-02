@@ -16,8 +16,18 @@ private struct CaptureShieldModifier: ViewModifier {
     /// 收到就遮一小段时间，让「截图里带上敏感内容」这条路也走不通。
     @State private var screenshotFlash = false
     @State private var flashTask: Task<Void, Never>?
+    /// 2026-11-01（Round 309）：**退到后台时的系统快照**。
+    /// `isCaptured` 只反映「正在录屏/被别的进程捕获」，按 Home 键并不会把它置真 ——
+    /// 于是 iOS 在应用切换器里留下的那张快照**照原样带着明文码值**（凭证详情/动态码/备份页都有）。
+    /// 这与「装遮挡是为了不让码值出现在别人的屏幕上」这个初衷自相矛盾，所以补上：非 active 即遮。
+    /// 用 `scenePhase` 而不是 `didEnterBackground` 通知：前者在 App 失活的第一时间就变，
+    /// 快照拍的是失活后的画面，能赶在快照之前遮住。
+    @Environment(\.scenePhase) private var scenePhase
 
-    private var hidden: Bool { isCaptured || screenshotFlash }
+    private var sceneHidden: Bool { scenePhase != .active }
+    private var hidden: Bool { isCaptured || screenshotFlash || sceneHidden }
+    /// 只因为「退到后台」而遮 ⇒ 换一句中性文案（此时并没有人在录屏）。
+    private var sceneOnly: Bool { sceneHidden && !isCaptured && !screenshotFlash }
 
     func body(content: Content) -> some View {
         ZStack {
@@ -25,11 +35,11 @@ private struct CaptureShieldModifier: ViewModifier {
                 .opacity(hidden ? 0 : 1)
             if hidden {
                 VStack(spacing: V.S.gapS) {
-                    Image(systemName: "eye.slash.fill")
+                    Image(systemName: sceneOnly ? "lock.fill" : "eye.slash.fill")
                         .font(V.F.icon22)
                         .foregroundStyle(V.C.text2)
                         .accessibilityHidden(true)
-                    Text(message)
+                    Text(sceneOnly ? "已隐藏" : message)
                         .font(V.F.body)
                         .foregroundStyle(V.C.text1)
                         .multilineTextAlignment(.center)
