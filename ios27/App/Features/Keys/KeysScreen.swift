@@ -72,6 +72,20 @@ struct KeysScreen: View {
             VStack(alignment: .leading, spacing: V.S.gapM) {
                 chips
                 header
+                if app.ledgerCorrupt {
+                    // 2026-11-01（Round 320）：台账读不出来时，写入会被静默拒绝 —— 必须让用户知道。
+                    // 不写「损坏」这种吓人的词做断言（可能只是版本不兼容），只说清后果与出路。
+                    VCard {
+                        VStack(alignment: .leading, spacing: V.S.gapS) {
+                            Text("本机凭证台账读不出来")
+                                .font(V.F.bodyStrong)
+                                .foregroundStyle(V.C.critical)
+                            SettingsNote(text: "当前会话里对凭证的改动**不会保存**（写入会被拒绝）。" +
+                                         "请先到「备份工作室」从一份备份恢复，再继续操作。")
+                        }
+                    }
+                    .padding(.horizontal, V.S.cardGutter)
+                }
                 if app.lock == nil {
                     noLockBlock
                 } else if app.keys.isEmpty {

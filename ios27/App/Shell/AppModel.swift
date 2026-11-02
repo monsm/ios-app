@@ -32,6 +32,11 @@ final class AppModel {
     var unlocked: Bool = !DB.hasPasscode()
     /// 胁迫码进入的空壳模式：数据区显示为空（开锁能力保留）。
     var decoyMode: Bool = false
+    /// 本机台账**读不出来**（解码失败，可能损坏或来自不兼容版本）。
+    /// 2026-11-01（Round 320）：`saveLedger` 在损坏时会**静默拒写**（只记一条遥测），
+    /// 而全仓没有任何界面显示这个状态 —— 用户会看到「已保存」，重启后改动消失。
+    /// 这里把它投影出来，凭证页据此挂一条说明，至少让用户知道「现在改的东西不会落盘」。
+    var ledgerCorrupt: Bool = false
     /// 只读试验模式（顶部常驻红条，必须常驻 —— 用户第二天会忘了自己开过它）。
     /// 初值从 kf_trial_guard 读；开关写回由 trialGuardBinding 负责。
     var trialGuard: Bool = DB.store.getBool("kf_trial_guard", false)
@@ -171,7 +176,8 @@ final class AppModel {
     /// 只重建凭证（增删改之后调，比重载全部便宜）。
     func reloadKeys(_ mac: String? = nil) {
         let m = mac ?? currentMac
-        guard !m.isEmpty else { keys = []; return }
+        guard !m.isEmpty else { keys = []; ledgerCorrupt = false; return }
+        ledgerCorrupt = DB.isLedgerCorrupt(m)
         let l = DB.ledger(m)
         var out: [KeyItem] = []
         for p in l.pwds {
