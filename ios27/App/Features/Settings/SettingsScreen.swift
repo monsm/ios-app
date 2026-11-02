@@ -572,7 +572,11 @@ struct SettingsScreen: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("删除这台锁的本机数据")
-                    Text("只删本机：锁端密钥与锁内日志不变，重配即可再添加。未做备份则无法找回本机的密码台账。")
+                    // 2026-11-01（Round 283）：原文案写「未做备份则无法找回」，暗示"做过备份就安全" ——
+                    // 但 `DB.removeDevice` 会调 `BackupStudio.purgeLocalArtifacts`，把**本机备份文件与还原点
+                    // 一并删掉**（备份是整库包，里面含这把锁的母钥，留着等于没删干净，SEC-19）。
+                    // 用户"先备份再删锁"会连备份一起丢 —— 必须说清，并给出真正的留档办法。
+                    Text("只删本机：锁端密钥与锁内日志不变，重配即可再添加。注意：本机的备份文件与还原点也会一并删除（备份里含这把锁的母钥）；想留档请先把备份导出到别处（WebDAV 或复制文本）。")
                         .font(V.F.footnote)
                         .foregroundStyle(V.C.text3)
                         .fixedSize(horizontal: false, vertical: true)
@@ -647,7 +651,10 @@ struct DeleteDeviceSheet: View {
                                 ("记录缓存", "\(app.entries.count) 条"),
                                 ("本机密码", SettingsStore.shared.hasPasscode ? "已设" : "未设")
                             ])
-                            Text("删除后若没做过备份，本机的密码台账与缓存记录无法找回。锁本身不需要重置，可以再次添加。")
+                            // 同上：备份文件会被这次删除一并清掉，不能暗示"有备份就安全"。
+                            Text("删除后本机的密码台账与缓存记录无法找回；本机的备份文件与还原点也会一并删除"
+                                 + "（备份里含这把锁的母钥，留着等于没删干净）。"
+                                 + "想留档请先把备份导出到别处（WebDAV 或复制文本）。锁本身不需要重置，可以再次添加。")
                                 .font(V.F.footnote)
                                 .foregroundStyle(V.C.text3)
                                 .fixedSize(horizontal: false, vertical: true)
