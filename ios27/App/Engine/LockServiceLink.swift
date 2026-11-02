@@ -93,7 +93,8 @@ extension LockService {
             return
         }
         if !connectedDeviceId.isEmpty { disconnect() }
-        guard let kc = DB.keychain(m) else { throw BLEErrorX.msg("找不到 MAC=\(m) 的钥匙串 (请先配对或导入)") }
+        // 开锁链路：空壳模式下也要拿得到 skey（见 `keychainForUnlock` 的说明）。
+        guard let kc = DB.keychainForUnlock(m) else { throw BLEErrorX.msg("找不到 MAC=\(m) 的钥匙串 (请先配对或导入)") }
         if !kc.bleId.isEmpty {
             do {
                 try await connect(deviceId: kc.bleId)

@@ -85,10 +85,10 @@ final class AppModel {
     /// 「锁档案 · 设为启动默认锁」的真实消费点：冷启动 app.lock 还是 nil 时先落默认锁，
     /// 默认锁不存在（已解绑）才回退上次停留的那把。
     var currentMac: String {
-        if let overrideMac, DB.keychain(overrideMac) != nil { return overrideMac }
+        if let overrideMac, DB.keychainForUnlock(overrideMac) != nil { return overrideMac }
         if let lock { return lock.id }
         let def = LockArchive.defaultMac
-        if !def.isEmpty, DB.keychain(def) != nil { return def }
+        if !def.isEmpty, DB.keychainForUnlock(def) != nil { return def }
         return DB.preferredMac()
     }
 
@@ -106,7 +106,8 @@ final class AppModel {
             lastStatus = nil
             return
         }
-        guard let kc = DB.keychain(mac) else {
+        // 用 `keychainForUnlock`：空壳模式下门页仍要能显示这把锁（设计：「门照样能开」）。
+        guard let kc = DB.keychainForUnlock(mac) else {
             lock = nil
             keys = []
             members = []
@@ -800,7 +801,8 @@ struct MemberCard: Identifiable, Hashable {
 extension AppModel: EngineHost {
     var currentKeychain: Keychain? {
         let mac = currentMac
-        return mac.isEmpty ? nil : DB.keychain(mac)
+        // 同上：空壳下也要给门页这把锁（`keychain()` 本身仍返回 nil，安全回归测试钉着）。
+        return mac.isEmpty ? nil : DB.keychainForUnlock(mac)
     }
 
     var lockLink: LockService { LockService.shared }

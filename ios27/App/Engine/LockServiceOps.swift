@@ -6,7 +6,7 @@ extension LockService {
     // ---------- 状态 ----------
     func getStatus(mac: String? = nil) async throws -> LockStatus {
         if let mac { curMac = mac.lowercased() }
-        let kc = DB.keychain(curMac)
+        let kc = DB.keychainForUnlock(curMac)
         var r: ExecResult
         if let kc, !kc.skey.isEmpty {
             let (m, sk) = try keys()
@@ -75,7 +75,8 @@ extension LockService {
     // ---------- 开锁 ----------
     func unlock(mac: String? = nil, pinDec: String? = nil) async throws -> Int {
         if let mac { curMac = mac.lowercased() }
-        guard let kc = DB.keychain(curMac), !kc.skey.isEmpty else { throw BLEErrorX.msg("无钥匙串， 无法开锁") }
+        // 空壳模式下开锁能力必须保留（设计：「门照样能开，这是保命的前提」）。
+        guard let kc = DB.keychainForUnlock(curMac), !kc.skey.isEmpty else { throw BLEErrorX.msg("无钥匙串， 无法开锁") }
 
         func signed(_ pin: String) -> String {
             ZKCmdBuilder.buildEkeyOpen(kc.skey.lowercased(), kc.mac.lowercased(), pin)
