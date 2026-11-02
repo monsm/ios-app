@@ -30,6 +30,7 @@ private extension View {
 }
 struct DiagStreamScreen: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppModel.self) private var app
     /// 记录原始交互帧（写 `kf_debug_raw`，与 `LockService`/`HardwareService` 同键同判）。
     @State private var rawOn = DB.store.getBool("kf_debug_raw")
     /// 复制时是否带上**原始载荷**（含 skey/ekey/PIN）。默认关；本机调试时由用户显式打开。
@@ -173,6 +174,18 @@ struct DiagStreamScreen: View {
                                      + "然后再复现一次开锁，这里才会有内容。")
                         .diagCardRow()
                     }
+
+                    // 2026-11-02（用户要求）：**只贴流水看不出锁端认什么**。
+                    // rc=2 这类「凭证被拒」必须两边一起看：锁端 PIN 容量/存量、剩余可验证次数，
+                    // 对本机 PIN 池条数、存的那枚 ekey 里嵌的 PIN。这个按钮一次给出全部。
+                    // 它**不含密钥明文**（skey/ekey/PIN 只打指纹），可以安全贴出来。
+                    VActionButton(title: "复制双侧快照（锁端 + 本机，无密钥明文）", systemImage: "square.on.square") {
+                        let snap = DiagSnapshot.build(mac: app.currentMac)
+                        Clip.set(snap)
+                        AppToast.shared.show("已复制双侧快照（\(snap.split(separator: "\n").count) 行）", tone: .ok)
+                    }
+                    .disabled(app.currentMac.isEmpty)
+                    .diagCardRow()
                 } header: {
                     sectionHeader("复制")
                 }

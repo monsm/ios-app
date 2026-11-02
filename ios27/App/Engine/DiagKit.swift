@@ -421,3 +421,109 @@ enum NotifyAuth {
         s == .denied || s == .notDetermined
     }
 }
+
+// MARK: - 双侧快照（锁内数据 + App 内数据）
+
+/// 2026-11-02（用户要求）：「日志只给了 App 侧，看不出锁端到底认什么」。
+///
+/// 排查 rc=2 这类「凭证被拒」时，必须同时看到两边的数：
+///   · **锁端**：cmd03 快照里的 PIN 容量/存量/已绑定、剩余可验证次数、剩余可开门次数、安全模式、锁钟；
+///   · **本机**：本机 PIN 池条数、存的那枚 ekey 里嵌的 PIN、当前选定的 PIN、skey 指纹（不打印明文）、MAC 序裁定。
+///
+/// 两边一比，「锁端已用 64 / 本机池 64」这种**数量对不上**或「锁端剩余可验证次数 = 0」立刻可见 ——
+/// 而只看流水时，这两条要人工从 cmd03 hex 里解 KLV 才能得到。
+///
+/// **安全边界**：这个快照**不含任何密钥明文** —— skey / ekey / PIN 一律只打指纹（前 4 + 后 4 位）
+/// 或长度，因为它是拿来贴到聊天里求助的。要看完整帧请用「复制原始流水」那条路（90 秒剪贴板过期）。
+enum DiagSnapshot {
+
+    /// 单行 `键 = 值` 的集合，按段分组。
+    static func build(mac: String) -> String {
+        var out: [String] = []
+        let kc = DB.keychain(mac)
+        let st = DB.readStatus(mac)
+        let stamp = DF.iso().string(from: Date())
+
+        out.append("=== 双侧快照 (stamp) ===")
+        out.append("说明：本快照不含密钥明文，skey/ekey/PIN 只打指纹。可安全贴出求助。")
+        out.append("")
+
+        // ---------- 锁端 ----------
+        out.append("【锁端】")
+        if let st {
+            out.append("  固件 = \(st.firmware.isEmpty ? "未上报" : st.firmware)")
+            out.append("  PID = \(st.pid)（\(PidMap.modelName(st.pid))）")
+            out.append("  电量 = \(st.powerLevel >= 0 ? "\(st.powerLevel)%" : "未读到")")
+            out.append("  锁内时间 = \(st.lockTime > 0 ? TimeFormat.clock(ZKProtocol.protoSecondsToMs(st.lockTime)) : "未读到")")
+            out.append("  安全模式 = verifyMode=\(st.verifyMode) broadcastMode=\(st.broadcastMode) tempPwdMode=\(st.tempPwdMode)")
+            out.append("  PIN 容量 = \(st.pinInfoCapacity ?? -1)  存量(剩余空位) = \(st.pinStock)  已绑定 = \(st.pinInfoBinding ?? -1)")
+            out.append("  → 锁端已用 PIN = \(max((st.pinInfoCapacity ?? 0) - st.pinStock, 0))")
+            out.append("  密码容量 = \(st.pwdInfoCapacity ?? -1) 存量 = \(st.pwdStock)")
+            out.append("  指纹容量 = \(st.fpInfoCapacity ?? -1) 存量 = \(st.fpStock)")
+            out.append("  键盘计数 = freeze=\(st.keyboardFreeze) errCount=\(st.keyboardErrCount)（语义未定，仅诊断）")
+            if let t = DB.statusTime(mac), t > 0 {
+                out.append("  快照时刻 = \(DF.iso().string(from: Date(timeIntervalSince1970: t / 1000)))")
+            }
+        } else {
+            out.append("  （还没有 cmd03 快照 —— 先连一次锁再导）")
+        }
+        out.append("")
+
+        // ---------- 本机 ----------
+        out.append("【本机】")
+        if let kc {
+            out.append("  MAC = \(DB.normalizeMac(kc.mac))  名称 = \(LockArchive.displayName(kc))")
+            out.append("  skey = 长度 \(kc.skey.count) hex，指纹 \(fingerprint(kc.skey))")
+            out.append("  ekey = 长度 \(kc.ekey.count) hex，指纹 \(fingerprint(kc.ekey))")
+            out.append("  本机 PIN 池 = \(kc.pins.filter { !$0.isEmpty }.count) 枚（声明 \(kc.pins.count)）")
+            out.append("  PIN 池指纹 = \(fingerprint(kc.pins.joined()))")
+            out.append("  存的那枚 ekey 里嵌的 PIN = \(ekeyPin(kc))")
+            out.append("  当前选定的 PIN = \(chosenPin(mac) ?? "（未选，回落配网 ekey）")")
+            out.append("  MAC 字节序裁定 = \(ZKProtocol.macOrder(kc.mac).rawValue)")
+            out.append("  trackid = \(kc.trackid)  fw = \(kc.fw)  pairedAt = \(kc.pairedAt)")
+        } else {
+            out.append("  （没有这把锁的钥匙串）")
+        }
+        let mkeys = MobileKeyService.list(mac)
+        out.append("  手机钥匙 = \(mkeys.count) 把（其中已停用 \(mkeys.filter { CredentialLocalState.isDisabled(mac: mac, id: "mkey:\($0.id)") }.count)）")
+        let ledger = DB.ledger(mac)
+        out.append("  台账：密码 \(ledger.pwds.count) 条 / 指纹 \(ledger.fps.count) 枚")
+        out.append("")
+
+        // ---------- 结论提示 ----------
+        out.append("【自动比对】")
+        if let st {
+            let lockUsed = max((st.pinInfoCapacity ?? 0) - st.pinStock, 0)
+            let localPool = kc?.pins.filter { !$0.isEmpty }.count ?? 0
+            out.append("  锁端已用 PIN \(lockUsed) vs 本机池 \(localPool) → \(lockUsed == localPool ? "一致" : "**不一致**（现签凭证会被拒）")")
+        }
+        return out.joined(separator: "\n")
+    }
+
+    /// 密钥/口令的**指纹**：前 4 + 后 4 位 + 总长。用于在两条记录之间比对「是不是同一份」，
+    /// 而不泄露任何可用内容。空串返回 `(空)`。
+    static func fingerprint(_ hex: String) -> String {
+        guard !hex.isEmpty else { return "(空)" }
+        if hex.count <= 8 { return "\(hex.prefix(2))…\(hex.suffix(2))/\(hex.count)" }
+        return "\(hex.prefix(4))…\(hex.suffix(4))/\(hex.count)"
+    }
+
+    /// 从存的那枚 ekey 里解出它嵌的 PIN（只用于比对，不打印 skey）。
+    static func ekeyPin(_ kc: Keychain) -> String {
+        guard !kc.ekey.isEmpty, !kc.skey.isEmpty else { return "(无 ekey)" }
+        // ekey = AES(skey)(88 00 MAC 4B + track 4B + vf 4B + vt 4B + cmd 1B + pin 4B + 0000)
+        // 明文 PIN 在字节偏移 21..24（hex 字符 42..49）。
+        guard let plain = try? AESKit.decryptHex(kc.ekey, keyHex: kc.skey), plain.count >= 50 else {
+            return "(解不开：skey 与 ekey 不配套)"
+        }
+        let pin = String(plain.dropFirst(42).prefix(8))
+        let idx = kc.pins.firstIndex(of: pin).map { "（本机池第 \($0 + 1) 枚）" } ?? "（**不在本机池里**）"
+        return "\(pin)\(idx)"
+    }
+
+    /// 当前选定的 PIN（`kf_chosen_pin_<mac>`）。
+    static func chosenPin(_ mac: String) -> String? {
+        let v = DB.store.getString("kf_chosen_pin_" + DB.normalizeMac(mac))
+        return v.isEmpty ? nil : v
+    }
+}
