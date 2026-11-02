@@ -151,6 +151,72 @@ extension LockService {
         log("warn", "清掉一份 MAC 顺序相反的幽灵台账 (\(twin)) — 旧版把广播线上序当锁 MAC 留下的")
     }
 
+    /// 2026-11-02「不重置锁」的修池：**保留 skey，只重写 PIN 池**，再重签配网 ekey。
+    ///
+    /// 背景（真机根因）：老版本把 pool[0] 同时给了配网 ekey 和第一把手机钥匙；撤销那把钥匙时
+    /// `deletePins` 把 pool[0] 从锁里摘掉，之后：
+    ///   · 配网 ekey 永远 rc=2（解密成功、PIN 不在锁表 —— skey 没换，rc 不是 1/11）；
+    ///   · 本机 64 枚池与锁端的对应关系**已不可知**（哪些还活着无法用任何读命令查）。
+    ///
+    /// 与「删除设备再重新配网」的区别：那条路要走 cmd05 **换钥**，换钥会把锁端密钥域整块擦掉，
+    /// 别人手里的钥匙全部作废；本函数**不动 skey**（没有 05），只把锁的 PIN 表整表重写成新 64 枚
+    /// （首批带 0xFFFFFFFF 哨兵，语义 =「重置成这 64 个」，与配网尾链同一句法）。
+    /// 锁端此前挂着的旧 PIN（含别人手机的钥匙）会被这次重写清掉 —— 这正是"修池"的语义，
+    /// 与重新配网的差别只在**通信密钥不变**，所以不必走到锁跟前按任何键。
+    ///
+    /// 前提：本机 skey 与锁一致（能解密成功）。已 rc=1/11 的锁不能走这条路（密钥不匹配，得重新配网）。
+    func repairPool(m: String, progress: @escaping (String) -> Void) async throws -> Keychain {
+        guard let kc = DB.keychain(m), !kc.skey.isEmpty else {
+            throw BLEErrorX.msg("本机没有这把锁的钥匙串，无法修池 — 请先配网")
+        }
+        try await ensureConnected(mac: m)
+        curMac = m
+        let skey = kc.skey
+        let bkey = kc.bkey
+        let pins = try KeyGen.genPins(64)
+        guard !pins.contains(where: { KeyGen.isAllZeroHex($0) }) else {
+            throw BLEErrorX.msg("随机源异常： 生成的 PIN 池含全零， 已中止 (锁未被改动)")
+        }
+        var fixed = kc
+        fixed.pins = pins
+        // 与 finishPairing 同一条尾链 (步骤5)：20/批 + 首批哨兵；字节序裁定也同源。
+        let batchSize = 20
+        var i = 0, n = 0
+        while i < pins.count {
+            n += 1
+            let batch = Array(pins[i..<min(i + batchSize, pins.count)])
+            let del = (i == 0) ? [KeyGen.delPinSentinel] : []
+            guard let c = ZKCmdBuilder.cmd08SyncPinsBatch(m, skey, batch, delPins: del) else {
+                throw BLEErrorX.msg("PIN 批次构建失败")
+            }
+            var rb = try await exec(c)
+            if rb.rc == 12, n == 1 {
+                let used = ZKProtocol.macOrder(m)
+                let other = ZKProtocol.flipped(used)
+                ZKProtocol.setMacOrder(m, other)
+                log("warn", "修池批次 1 rc=12 → 换字节序 (other.rawValue) 重发")
+                let rb2 = try await exec(c)
+                if rb2.rc == 0 || rb2.rc == 18 {
+                    if rb2.rc == 0 { DB.setMacOrder(m, other) } else { ZKProtocol.setMacOrder(m, used) }
+                    rb = rb2.rc == 0 ? rb2 : ExecResult(frame: rb2.frame, rc: 0, klvs: rb2.klvs)
+                } else {
+                    ZKProtocol.setMacOrder(m, used)
+                }
+            }
+            if rb.rc != 0 {
+                log("error", "修池批次 (n) 被拒： rc=(rb.rc) ((StatusParser.rcMessage(rb.rc)))")
+                throw BLEErrorX.msg("修池批次 (n) 失败 rc=(rb.rc) — 锁未被改动，可重试")
+            }
+            i += batchSize
+        }
+        // 重签配网 ekey：按新规跳过 pool[0]，用 pins[1]（它现在一定活着 —— 刚写进去的）。
+        let firstPin = pins[1]
+        fixed.ekey = ZKCmdBuilder.buildEkeyOpen(skey, m, firstPin)
+        DB.saveKeychain(fixed)
+        progress("修池完成： PIN 表已重置为新的 64 枚，开锁凭证已重签")
+        return fixed
+    }
+
     /// 配网尾链 (步骤 5~7 + 落库)。**完整配网与续配共用同一条尾链** ——
     /// 分开写迟早只改一条, 而"续配"漏一步的后果正好是软砖。
     func finishPairing(m: String, deviceId: String, skey: String, bkey: String, pins: [String],
