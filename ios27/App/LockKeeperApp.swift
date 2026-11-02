@@ -71,6 +71,11 @@ struct RootView: View {
                    let slot = Int(args[i + 1]), let tab = TabSlot(rawValue: slot) {
                     router.tab = tab
                 }
+                // -kfSeed：若 Documents/kf-seed.json 存在，按 kf-bundle 导入一份合成数据
+                //（gauge/凭证卡/时间线才有东西可渲染），成功后改名 .done 只生效一次。
+                if args.contains("-kfSeed") {
+                    SeedImporter.importIfPresent()
+                }
                 // -kfDest <destRaw>：把一个子页压进当前 Tab 的导航栈（截图子页用）。
                 if let i = args.firstIndex(of: "-kfDest"), i + 1 < args.count,
                    let dest = Dest(rawValue: args[i + 1]) {
