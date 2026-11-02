@@ -43,8 +43,8 @@
 |---|---|
 | `weakReason(_:)` | `KeyCreateParts.swift:192`（新密码弱口令提示） |
 | `strictBytes(_:)` | `ZKProtocol.swift` **7 处**（协议帧解析）+ 5 条测试 |
-| `batchPrefixNote(...)` | `CredentialStudioScreen.swift:491`（批量前缀备注） |
-| `recentExcerpts(_:_:)` | `MemberOpsScreen.swift:282`（成员活跃度摘录） |
+| `batchPrefixNote(...)` | `CredentialStudioScreen.swift`（批量前缀备注；2026-11-01 核实：搜 `batchPrefixNote` 即得，原写 `:491` 实为 `:502` —— 行号会漂，改留锚点） |
+| `recentExcerpts(_:_:)` | `MemberOpsScreen.swift`（成员活跃度摘录；2026-11-01 核实：搜 `recentExcerpts` 即得，原写 `:282` 实为 `:281`） |
 
 **根因**：我是按"注释里写了 `【保留未接】`"就采信的，没有逐个验证调用点。
 而标记本身会**过期** —— 接线的人忘了去掉标记，标记就成了假信息。
