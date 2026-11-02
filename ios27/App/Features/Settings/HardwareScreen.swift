@@ -256,6 +256,7 @@ struct HardwareScreen: View {
     private func write(_ d: DongleRecord) {
         guard let kc = app.currentKeychain, writingId == nil else { return }
         writingId = d.id
+        errorText = nil
         Task { @MainActor in
             defer { writingId = nil }
             do {
@@ -266,8 +267,13 @@ struct HardwareScreen: View {
                     if var rec = DB.dongle(d.mac) { rec.stat = stat; rec.lastKeyLock = kc.mac
                         rec.lastKeyAt = DF.iso().string(from: Date()); DB.saveDongle(rec) }
                 }
+                // 2026-11-01（Round 265）：原来**成功与失败都没有任何反馈** ——
+                // 成功分支只落库、失败分支是个空 `catch`（注释说"已在按钮文案中体现"，实际只停了转圈）。
+                // 同页另外五个动作（吊销/读状态/查钥匙/写假钥匙/解绑）都有 errorText 或 toast。
+                // 写钥匙是安全相关操作：用户必须知道这把锁的钥匙到底写进去没有。
+                AppToast.shared.show("钥匙已写入钥匙串", tone: .ok)
             } catch {
-                // 失败已在按钮文案/状态中体现；不写假状态。
+                errorText = "写入失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
             }
         }
     }
