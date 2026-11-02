@@ -438,31 +438,36 @@ enum NotifyAuth {
 enum DiagSnapshot {
 
     /// 单行 `键 = 值` 的集合，按段分组。
+    ///
+    /// `@MainActor`：`MobileKeyService.list` 是主线程隔离的，而本快照在 View 里同步生成。
+    @MainActor
     static func build(mac: String) -> String {
         var out: [String] = []
         let kc = DB.keychain(mac)
         let st = DB.readStatus(mac)
         let stamp = DF.iso().string(from: Date())
 
-        out.append("=== 双侧快照 (stamp) ===")
+        out.append("=== 双侧快照 \(stamp) ===")
         out.append("说明：本快照不含密钥明文，skey/ekey/PIN 只打指纹。可安全贴出求助。")
         out.append("")
 
         // ---------- 锁端 ----------
+        // 这里读的是 `StatusSnapshotData`（cmd03 快照的子集），
+        // 字段名与完整的 `LockStatus` 不同：pinCap / pwdCap / fpCap（不是 pinInfoCapacity）。
         out.append("【锁端】")
         if let st {
             out.append("  固件 = \(st.firmware.isEmpty ? "未上报" : st.firmware)")
-            out.append("  PID = \(st.pid)（\(PidMap.modelName(st.pid))）")
             out.append("  电量 = \(st.powerLevel >= 0 ? "\(st.powerLevel)%" : "未读到")")
             out.append("  锁内时间 = \(st.lockTime > 0 ? TimeFormat.clock(ZKProtocol.protoSecondsToMs(st.lockTime)) : "未读到")")
-            out.append("  安全模式 = verifyMode=\(st.verifyMode) broadcastMode=\(st.broadcastMode) tempPwdMode=\(st.tempPwdMode)")
-            out.append("  PIN 容量 = \(st.pinInfoCapacity ?? -1)  存量(剩余空位) = \(st.pinStock)  已绑定 = \(st.pinInfoBinding ?? -1)")
-            out.append("  → 锁端已用 PIN = \(max((st.pinInfoCapacity ?? 0) - st.pinStock, 0))")
-            out.append("  密码容量 = \(st.pwdInfoCapacity ?? -1) 存量 = \(st.pwdStock)")
-            out.append("  指纹容量 = \(st.fpInfoCapacity ?? -1) 存量 = \(st.fpStock)")
-            out.append("  键盘计数 = freeze=\(st.keyboardFreeze) errCount=\(st.keyboardErrCount)（语义未定，仅诊断）")
-            if let t = DB.statusTime(mac), t > 0 {
-                out.append("  快照时刻 = \(DF.iso().string(from: Date(timeIntervalSince1970: t / 1000)))")
+            out.append("  安全模式 = verify=\(st.verifyMode) broadcast=\(st.broadcastMode) tempPwd=\(st.tempPwdMode)")
+            out.append("  PIN 容量 = \(st.pinCap ?? -1)  剩余空位 = \(st.pinStock)  已绑定 = \(st.pinInfoBinding ?? -1)")
+            out.append("  → **锁端已用 PIN = \(max((st.pinCap ?? 0) - st.pinStock, 0))**")
+            out.append("  密码容量 = \(st.pwdCap ?? -1)  剩余空位 = \(st.pwdStock)")
+            out.append("  指纹容量 = \(st.fpCap ?? -1)  剩余空位 = \(st.fpStock)")
+            out.append("  sKeyStatus = \(st.sKeyStatus)  zotpPeriod = \(st.zotpPeriod.map { "\($0) 分钟" } ?? "未上报")")
+            let at = DB.statusTime(mac)
+            if at > 0 {
+                out.append("  快照时刻 = \(DF.iso().string(from: Date(timeIntervalSince1970: at / 1000)))")
             }
         } else {
             out.append("  （还没有 cmd03 快照 —— 先连一次锁再导）")
@@ -477,7 +482,7 @@ enum DiagSnapshot {
             out.append("  ekey = 长度 \(kc.ekey.count) hex，指纹 \(fingerprint(kc.ekey))")
             out.append("  本机 PIN 池 = \(kc.pins.filter { !$0.isEmpty }.count) 枚（声明 \(kc.pins.count)）")
             out.append("  PIN 池指纹 = \(fingerprint(kc.pins.joined()))")
-            out.append("  存的那枚 ekey 里嵌的 PIN = \(ekeyPin(kc))")
+            out.append("  **存的那枚 ekey 里嵌的 PIN = \(ekeyPin(kc))**")
             out.append("  当前选定的 PIN = \(chosenPin(mac) ?? "（未选，回落配网 ekey）")")
             out.append("  MAC 字节序裁定 = \(ZKProtocol.macOrder(kc.mac).rawValue)")
             out.append("  trackid = \(kc.trackid)  fw = \(kc.fw)  pairedAt = \(kc.pairedAt)")
@@ -485,7 +490,7 @@ enum DiagSnapshot {
             out.append("  （没有这把锁的钥匙串）")
         }
         let mkeys = MobileKeyService.list(mac)
-        out.append("  手机钥匙 = \(mkeys.count) 把（其中已停用 \(mkeys.filter { CredentialLocalState.isDisabled(mac: mac, id: "mkey:\($0.id)") }.count)）")
+        out.append("  手机钥匙 = \(mkeys.count) 把")
         let ledger = DB.ledger(mac)
         out.append("  台账：密码 \(ledger.pwds.count) 条 / 指纹 \(ledger.fps.count) 枚")
         out.append("")
@@ -493,7 +498,7 @@ enum DiagSnapshot {
         // ---------- 结论提示 ----------
         out.append("【自动比对】")
         if let st {
-            let lockUsed = max((st.pinInfoCapacity ?? 0) - st.pinStock, 0)
+            let lockUsed = max((st.pinCap ?? 0) - st.pinStock, 0)
             let localPool = kc?.pins.filter { !$0.isEmpty }.count ?? 0
             out.append("  锁端已用 PIN \(lockUsed) vs 本机池 \(localPool) → \(lockUsed == localPool ? "一致" : "**不一致**（现签凭证会被拒）")")
         }
