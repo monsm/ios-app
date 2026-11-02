@@ -328,6 +328,9 @@ struct MemberCreateScreen: View {
             roster.forget(id)
             if roster.dutyID() == id { roster.setDuty(nil) }
             roster.focusMember = nil
+            // 2026-11-01（Round 274）：向导第 4 步可能已生成过**归这名成员**的临时码，
+            // 撤销建档后它就成了孤儿归属 —— 只改 `app.members` 不动 `app.keys` 会一直显示旧归属。
+            app.reloadKeys()
         }
         router.request(.tab(.household))
     }

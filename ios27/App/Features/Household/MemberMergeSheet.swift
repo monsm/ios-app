@@ -90,7 +90,10 @@ struct MemberMergeSheet: View {
         guard let secondaryID else { return }
         let moved = MemberMergeKit.merge(primaryID: primary.id, secondaryID: secondaryID)
         if moved > 0 || DB.member(secondaryID) == nil {
-            app.reloadMembers()
+            // 2026-11-01（Round 274）：合并会把**凭证的 owner 改判给主档**，而原来只 `reloadMembers()` ——
+            // `app.keys` 没重建 ⇒ 凭证页那几条仍显示旧成员名，直到别的原因触发 `reloadKeys`。
+            // `reloadKeys()` 内部已顺带 `reloadMembers()`（Round 244），所以只调它一个就够。
+            app.reloadKeys()
             dismiss()
         } else {
             error = "合并失败：副档不存在或与主档不是同名"
