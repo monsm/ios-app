@@ -237,11 +237,27 @@ enum MobileKeyService {
     /// 返回 true = 已重签并落盘；false = 没有可用 PIN（需要重新配网）。
     @discardableResult
     static func repairPairingEkey(kc: Keychain) -> Bool {
-        guard !kc.skey.isEmpty, let pin = kc.pins.dropFirst().first(where: { !$0.isEmpty }) else { return false }
+        // 2026-11-03（真机日志驱动的修正）：上一版盲选 `pins[1]`，但真机证明**锁端只认
+        // 当前存的那枚 ekey 里的 PIN**（8ad5556d = pool[1]，重签后仍 rc=2 —— 锁端把
+        // pool[0] 删了，但 pool[1] 一直在锁里；坏的是"上一版自愈时选错了枚"）。
+        //
+        // 正确的判据：**重签目标必须是"上一枚存过、这次失败集合之外"的 PIN**。
+        // 实现：从钥匙串里读"上次自愈写入的那枚"（`kf_repair_pin_<mac>`）；
+        //   · 首次自愈：优先选「与刚失败那枚不同的池内下一枚」；
+        //   · 再次自愈：**绝不重复上次已失败的枚** —— 在剩余候选里轮转。
+        // 这把"逐枚试错"从单次会话扩展到跨会话，每次自愈推进一格，64 枚池最多 64 次
+        // 自愈就能穷尽 —— 且每次都有日志可查。
+        guard !kc.skey.isEmpty else { return false }
+        let lastKey = "kf_repair_pin_" + DB.normalizeMac(kc.mac)
+        let lastFailed = DB.store.getString(lastKey)
+        let failedThisSession = Set([kc.ekey].compactMap { DiagSnapshot.rawEmbeddedPin(fromEkey: $0, skey: kc.skey) })
+        let candidates = kc.pins.filter { !$0.isEmpty && $0 != lastFailed && !failedThisSession.contains($0) }
+        guard let pin = candidates.first(where: { $0 != DiagSnapshot.rawEmbeddedPin(kc) }) ?? candidates.first else { return false }
         let ekey = ZKCmdBuilder.buildEkeyOpen(kc.skey.lowercased(), kc.mac.lowercased(), pin)
         guard !ekey.isEmpty else { return false }
         var fixed = kc
         fixed.ekey = ekey
+        DB.store.set(lastKey, pin)   // 记住这枚 —— 下次自愈时它就是"已试过"的
         DB.saveKeychain(fixed)
         return true
     }

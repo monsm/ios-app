@@ -526,15 +526,30 @@ enum DiagSnapshot {
         return "\(hex.prefix(4))…\(hex.suffix(4))/\(hex.count)"
     }
 
-    /// 从存的那枚 ekey 里解出它嵌的 PIN（只用于比对，不打印 skey）。
-    static func ekeyPin(_ kc: Keychain) -> String {
-        guard !kc.ekey.isEmpty, !kc.skey.isEmpty else { return "(无 ekey)" }
+    /// 解出存的 ekey 里嵌的 PIN 原文（8 hex）。解不开（skey 不配套 / ekey 为空）返回 nil。
+    /// 2026-11-03 从 `ekeyPin` 拆出：开锁自愈逻辑（LockServiceOps）需要**裸 PIN 值**做比对，
+    /// 不能依赖带修饰文案的展示版。
+    static func rawEmbeddedPin(_ kc: Keychain) -> String? {
+        guard !kc.ekey.isEmpty, !kc.skey.isEmpty else { return nil }
         // ekey = AES(skey)(88 00 MAC 4B + track 4B + vf 4B + vt 4B + cmd 1B + pin 4B + 0000)
         // 明文 PIN 在字节偏移 21..24（hex 字符 42..49）。
-        guard let plain = try? AESKit.decryptHex(kc.ekey, keyHex: kc.skey), plain.count >= 50 else {
-            return "(解不开：skey 与 ekey 不配套)"
-        }
+        guard let plain = try? AESKit.decryptHex(kc.ekey, keyHex: kc.skey), plain.count >= 50 else { return nil }
         let pin = String(plain.dropFirst(42).prefix(8))
+        return pin.isEmpty ? nil : pin
+    }
+
+    /// 从**任意一枚 ekey**（不一定是钥匙串里存的那枚）解出嵌的 PIN。
+    /// 自愈逻辑用它判断"刚发出去的这帧用的是哪枚 PIN"。
+    static func rawEmbeddedPin(fromEkey ekeyHex: String, skey: String) -> String? {
+        guard !ekeyHex.isEmpty, !skey.isEmpty else { return nil }
+        guard let plain = try? AESKit.decryptHex(ekeyHex, keyHex: skey), plain.count >= 50 else { return nil }
+        let pin = String(plain.dropFirst(42).prefix(8))
+        return pin.isEmpty ? nil : pin
+    }
+
+    /// 从存的那枚 ekey 里解出它嵌的 PIN（只用于比对，不打印 skey）。
+    static func ekeyPin(_ kc: Keychain) -> String {
+        guard let pin = rawEmbeddedPin(kc) else { return "(解不开：skey 与 ekey 不配套)" }
         let idx = kc.pins.firstIndex(of: pin).map { "（本机池第 \($0 + 1) 枚）" } ?? "（**不在本机池里**）"
         return "\(pin)\(idx)"
     }
