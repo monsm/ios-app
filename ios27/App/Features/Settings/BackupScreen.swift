@@ -299,6 +299,11 @@ struct BackupScreen: View {
             exportText = try CryptoBox.encryptText(plain, password: exportPassword)
             // 980：只有真正生成成功才记一次备份（失败不记）。
             Milestones.recordBackup()
+            // 2026-11-01（Round 260）：备份工作室的自检用 `kf_bk_base` 基线判断"数据有没有坏"。
+            // 这条导出链**生成了同样有效的备份**，却原来不更新基线 ⇒ 用户在旧页导出后去工作室自检，
+            // 会看到「不一致：上次备份后本机数据有变化…请查存储是否损坏」—— 一个假警报。
+            // 与工作室的两条导出链（本地文件 :319 / WebDAV :434）同口径。
+            DB.store.set("kf_bk_base", SelfCheck.fingerprint())
         } catch {
             restoreError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
