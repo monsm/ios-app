@@ -30,6 +30,9 @@ enum MemberMergeKit {
             }
         }
         MemberHub.reassignClaims(from: secondaryID, to: primaryID)
+        // 2026-11-01（Round 282）：手机钥匙也要改判 —— 否则下面的 `removeMember` 会把它们删掉，
+        // 而锁端那把钥匙仍然有效，用户会失去管理/吊销入口（详见 `reassignMember` 的注释）。
+        MobileKeyService.reassignMember(from: secondaryID, to: primaryID)
         DB.removeMember(secondaryID)
         return moved
     }

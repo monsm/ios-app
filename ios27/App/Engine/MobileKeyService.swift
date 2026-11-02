@@ -82,6 +82,27 @@ enum MobileKeyService {
         return rawList(mac)
     }
 
+    /// 合并成员时，把**副档名下**的手机钥匙改判给主档。
+    ///
+    /// 2026-11-01（Round 282）：`MemberMergeKit.merge` 迁了密码 / 指纹 / 认领，**唯独没迁手机钥匙** ——
+    /// 而它随后调用的 `DB.removeMember` 会把 `memberID` 指向副档的手机钥匙**连同钥匙串里的 pin/ekey 副本一起删掉**。
+    /// 结果：合并两个同名成员，等于把副档签出去的那些手机钥匙在本机**静默抹掉** ——
+    /// 而锁端那把钥匙仍然有效，用户从此既看不到它、也无法再吊销。
+    /// 与密码/指纹同口径：改判，不删除。
+    static func reassignMember(from: String, to: String) {
+        guard !from.isEmpty, !to.isEmpty, from != to else { return }
+        for key in DB.store.keys() where key.hasPrefix("kf_mkey_") {
+            let mac = String(key.dropFirst("kf_mkey_".count))
+            var list = rawList(mac)
+            var hit = false
+            for i in list.indices where list[i].memberID == from {
+                list[i].memberID = to
+                hit = true
+            }
+            if hit { save(mac, list) }
+        }
+    }
+
     static func save(_ mac: String, _ keys: [MobileKey]) {
         // SEC-01：先写 Keychain（写成功才抹掉 plist 明文），与 saveKeychain 同一纪律。
         var safe = keys
