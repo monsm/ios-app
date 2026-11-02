@@ -409,6 +409,14 @@ enum BackupStudio {
         guard !TrialGuard.isOn else {
             throw BLEErrorX.msg("只读试验模式已开启 —— 导入备份会改写本机台账，已拒绝。请先到「安全」页关闭它。")
         }
+        // 2026-11-01（Round 315）：**空壳模式同样必须拒绝导入。**
+        // 判据与 TrialGuard 那条同源：导入是整表改写，属于「写」。
+        // 而空壳模式的设计是「只读、只隐藏，不破坏」—— 让被胁迫者在空壳里点一下「恢复」，
+        // 就会用一份旧备份覆盖掉真实台账（与 AUDIT-F 的 N-01「空壳点还原覆盖真实台账」同一类）。
+        // 此处是三条导入路径的唯一入口，拦一处即可全覆盖。
+        guard !DB.isDecoy else {
+            throw BLEErrorX.msg("当前模式下不能导入备份。")
+        }
         var b = bundle
         b.currentMac = ""   // 首验清 currentMac, 避免指向另一台设备的锁
         let c = prune(b)

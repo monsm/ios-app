@@ -274,6 +274,19 @@ struct BackupStudioScreen: View {
     // MARK: - 动作（多份备份）
 
     private func reloadFiles() {
+        // 2026-11-01（Round 315）：**空壳模式必须返回空集**。
+        // 本仓 SEC-03 的判据写得很清楚：「凭证工作室 / 备份工作室 / 记录工作室 这些直接读 DB 的页面
+        // 必须据此返回空集，否则胁迫者能在空壳里看到并导出真实凭证」。前两个都做了，这里漏了 ——
+        // 它读的是 Documents 目录（`FileManager` 直读，绕过了所有 `DB` 访问器），所以没有任何守卫。
+        //
+        // 后果不只是「看到文件名」：被胁迫者说「我这 App 里没东西」，界面上却列着十几份备份，伪装当场穿帮；
+        // 更糟的是可以点「恢复」，用旧备份覆盖真实台账。
+        if DB.isDecoy {
+            files = []
+            filesError = nil
+            keepCount = 0
+            return
+        }
         let fm = FileManager.default
         // 2026-11-01：读取目录失败与"目录为空"必须区分开。
         // 旧实现 `?? []` 把失败当成空 —— 界面上就是"还没有本机备份"；
