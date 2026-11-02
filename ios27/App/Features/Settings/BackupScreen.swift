@@ -139,6 +139,12 @@ struct BackupScreen: View {
                         .init(label: "记录缓存", value: "\(app.entries.count)", unit: "条"),
                     ], columns: 2)
                     .padding(.top, V.S.gapXS)
+                    // 2026-11-01（Round 267）：上面四个数字是**将要备份的内容**，所以「成员」数的是
+                    // `app.members.count`（**含已归档**）—— 归档成员及其凭证确实会进备份，这是对的。
+                    // 而家页的「成员 N 位」数的是在册成员，同一个词在这里会是另一个数字。
+                    // 改数字会失真（备份真的含归档），所以补一句口径说明，让两个数字不再互相矛盾。
+                    SettingsNote(text: "成员数含已归档 —— 归档成员及其名下凭证也会进备份。家页的「成员」只数在册。")
+                        .padding(.top, V.S.gapXS)
 
                     SettingRule()
 
