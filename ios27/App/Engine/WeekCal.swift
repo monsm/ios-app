@@ -41,6 +41,13 @@ enum WeekCal {
     /// 接线时**必须**同时处理一个副作用：`HouseholdRoster.weekKey` / `MemberHub` 的轮值键
     /// 都是 `String(yearForWeekOfYear) + "-W" + String(weekOfYear)` —— 中途切档位会让周号变化，
     /// 于是"本周轮值"看起来丢了一周。接之前要先定好"切档位时怎么迁移已有的 duty 表"。
+    ///
+    /// 2026-11-01（Round 268）补：接线时还要**统一这两个 accessor**。全仓周计算分两拨：
+    ///   · 走 `WeekCal.calendar`（会应用本偏好）：`MemberHub.weekKey`、`HouseholdRoster`、
+    ///     `RecordSearchParse` 的「本周/上周」
+    ///   · 走 `WeekCal.gregorian`（**忽略**本偏好）：`StatsKit.lastWeekDigest`（周报的周界）
+    /// 今天两者等价（偏好无人写入），所以不是缺陷；一旦接上，**周报会和"本周轮值/本周记录"错开一周**。
+    /// 接线动作里必须包含：把 `StatsKit.lastWeekDigest` 的 `WeekCal.gregorian` 改成 `WeekCal.calendar`。
     /// 三个显式档的映射表。刻意不做"任意数字"输入：Sunday=1…Saturday=7 是 Calendar 的内部约定，
     /// 把它暴露成设置项等于让用户猜数字。
     private static let weekdayMap: [String: Int] = ["sun": 1, "mon": 2, "sat": 7]
