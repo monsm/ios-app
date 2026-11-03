@@ -435,6 +435,10 @@ jobs:
           # 2026-11-04（diag 取证）：上一轮 diag 只写到 APP 那一行就断了 —— 说明卡在 boot/bootstatus，
           # 而这两句原本是 `|| true`，卡住时既不报错也不留痕，整个 job 被 40 分钟超时杀掉。
           # 给 bootstatus 一个有界等待，并逐段留痕。
+          # 2026-11-04（外观取证）：CI 模拟器默认**深色** —— `V.C.bg` 深色档是纯黑，
+          # 于是 full 截图左侧黑边、分组标题（text3 深灰）在黑底上不可见，
+          # 而产品的默认/推荐外观是浅色（契约纸色）。截图前钉成浅色，与视觉验收基准一致。
+          xcrun simctl ui "$UDID" appearance light >> "$DIAG" 2>&1 || true
           echo "stage=boot" >> "$DIAG"
           xcrun simctl boot "$UDID" >> "$DIAG" 2>&1 || true
           # 2026-11-04（第三次修正 · 上一版又卡住了）：后台 `bootstatus` + `kill -0` 轮询在
