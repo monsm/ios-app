@@ -46,7 +46,14 @@ struct HouseholdScreen: View {
     /// 或凭证数相同时，成员顺序每次进页面都可能变。截图里同一份数据两次渲染出的顺序
     /// （成员A/E/D… 与 成员C/D/A/E/B）就不一样。以 `id` 作决胜项，顺序从此确定。
     private func sorted(_ list: [MemberCard]) -> [MemberCard] {
-        func tie(_ a: MemberCard, _ b: MemberCard) -> Bool { a.id < b.id }
+        // 决胜项用**显示名**再落到 id：`MemberCard.id` 是导入时生成的 UUID，
+        // 拿它决胜虽然稳定、但顺序对人毫无意义（成员C 排在成员A 前面）。
+        // 全员"还没用过"时，按名字排才是用户能预期的确定顺序。
+        func tie(_ a: MemberCard, _ b: MemberCard) -> Bool {
+            let na = HHDisplay.name(a, extras: roster.extras(for: a.id))
+            let nb = HHDisplay.name(b, extras: roster.extras(for: b.id))
+            return na == nb ? a.id < b.id : na < nb
+        }
         switch sort {
         case .recent:
             return list.sorted { lhs, rhs in
