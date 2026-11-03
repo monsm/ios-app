@@ -81,7 +81,12 @@ struct RootView: View {
                 // 产物 Documents/kf-fullpage-<N>.png 由 workflow 拷出。
                 if args.contains("-kfFullPage"), let i = args.firstIndex(of: "-kfTab"),
                    i + 1 < args.count, let tab = Int(args[i + 1]) {
-                    FullPageCapture.capture(tab: tab)
+                    // 子页（-kfDest）压栈后要多等：push 动画 + 首帧布局完成后才撑得开 frame。
+                    FullPageCapture.capture(tab: tab,
+                                            delay: args.contains("-kfDest") ? 5.5 : 3.5,
+                                            name: args.firstIndex(of: "-kfDest").flatMap { k in
+                                                k + 1 < args.count ? args[k + 1] : nil
+                                            } ?? "tab")
                 }
                 // -kfDest <destRaw>：把一个子页压进当前 Tab 的导航栈（截图子页用）。
                 if let i = args.firstIndex(of: "-kfDest"), i + 1 < args.count,

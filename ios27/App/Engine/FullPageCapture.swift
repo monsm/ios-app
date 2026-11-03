@@ -12,8 +12,8 @@ import UIKit
 
 enum FullPageCapture {
     @MainActor
-    static func capture(tab: Int) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+    static func capture(tab: Int, delay: Double = 3.5, name: String = "tab") {
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
             guard let window = UIApplication.shared.connectedScenes
                 .compactMap({ $0 as? UIWindowScene })
                 .flatMap({ $0.windows })
@@ -36,8 +36,9 @@ enum FullPageCapture {
             if let data = img.pngData() {
                 let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
                     ?? URL(fileURLWithPath: "/tmp", isDirectory: true)
-                let name = "kf-fullpage-" + String(tab) + ".png"
-                try? data.write(to: docs.appendingPathComponent(name))
+                // 文件名带页面标识（tab 序号 + 可选的 dest 名），子页与根页各自一张。
+                let file = "kf-fullpage-" + String(tab) + "-" + name + ".png"
+                try? data.write(to: docs.appendingPathComponent(file))
             }
         }
     }
