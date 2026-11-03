@@ -677,7 +677,7 @@ struct DoorScreen: View {
     }
 
     private func batteryNumber(_ lock: LockSummary) -> String {
-        lock.battery >= 0 ? String(lock.battery) : "--"
+        lock.battery >= 0 ? String(lock.battery) : "—"
     }
 
     private func batteryFraction(_ lock: LockSummary) -> Double {

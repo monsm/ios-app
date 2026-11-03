@@ -273,7 +273,7 @@ struct SettingsScreen: View {
                     Text(app.lock?.isConnected == true ? "已连接" : "未连接")
                         .font(V.F.section)
                         .foregroundStyle(V.C.text1)
-                    Text("固件 \(app.lock?.firmware ?? "--") · 信号 \(app.lock?.signal ?? 0)")
+                    Text("固件 \(app.lock?.firmware ?? "—") · 信号 \(app.lock?.signal ?? 0)")
                         .font(V.F.footnote)
                         .foregroundStyle(V.C.text3)
                 }
@@ -291,7 +291,7 @@ struct SettingsScreen: View {
                             .foregroundStyle(V.C.text3)
                             .accessibilityHidden(true)
                     }
-                    Text(app.lock?.firmware ?? "--")
+                    Text(app.lock?.firmware ?? "—")
                         .font(V.F.section)
                         .foregroundStyle(V.C.text1)
                     Text("当前版本")
