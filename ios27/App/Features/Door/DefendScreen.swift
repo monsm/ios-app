@@ -139,7 +139,7 @@ struct DefendScreen: View {
     private var statusPanel: some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VSectionLabel(text: "当前布防", trailing: "cmd25")
+                VSectionLabel(text: "当前布防", trailing: "锁端策略")
                 HStack(alignment: .firstTextBaseline, spacing: V.S.gapMS) {
                     Text(savedMode.title)
                         .font(V.F.display26)
@@ -149,16 +149,27 @@ struct DefendScreen: View {
                              word: isActiveNow ? "布防中" : "未布防")
                 }
                 hairline
-                VReadingGrid(items: [
-                    .init(label: "方式", value: savedMode.title),
-                    .init(label: "时段", value: savedMode == .period
-                          ? "\(clockLabel(config?.startMinute ?? startMinute)) – \(clockLabel(config?.endMinute ?? endMinute))"
-                          : "—"),
-                    .init(label: "此刻", value: isActiveNow ? "布防内" : "布防外",
-                          tint: isActiveNow ? V.C.warning : V.C.text1),
-                    .init(label: "上次改动", value: config?.updatedAt.map { TimeDisplay.clock($0) } ?? "—",
-                          tint: V.C.text2),
-                ], columns: 2)
+                // 2026-11-03（整页截图实测）：撤防状态下这张卡的四格里，
+                // 「方式」与上面的大标题**完全重复**（都是「撤防」）、「时段」与「上次改动」都是「—」，
+                // 真正有信息的只有「此刻」。撤防时只留一行说明；布防中才展开完整四格。
+                if savedMode == .off {
+                    VReadingGrid(items: [
+                        .init(label: "此刻", value: "自动开锁照常",
+                              tint: V.C.text2),
+                    ], columns: 2)
+                    .padding(.top, V.S.gapXS)
+                } else {
+                    VReadingGrid(items: [
+                        .init(label: "此刻", value: isActiveNow ? "布防内" : "布防外",
+                              tint: isActiveNow ? V.C.warning : V.C.text1),
+                        .init(label: "时段", value: savedMode == .period
+                              ? clockLabel(config?.startMinute ?? startMinute) + " – " + clockLabel(config?.endMinute ?? endMinute)
+                              : "全天"),
+                        .init(label: "上次改动", value: config?.updatedAt.map { TimeDisplay.clock($0) } ?? "—",
+                              tint: V.C.text2),
+                    ], columns: 2)
+                    .padding(.top, V.S.gapXS)
+                }
                 .padding(.top, V.S.gapXS)
             }
         }
@@ -281,7 +292,7 @@ struct DefendScreen: View {
     private var actionPanel: some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VSectionLabel(text: "下发", trailing: "cmd25")
+                VSectionLabel(text: "下发", trailing: "立即生效")
                 if busy {
                     VBusyRow(text: mode == .off ? "正在撤防…" : "正在布防…")
                 } else {

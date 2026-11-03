@@ -90,7 +90,7 @@ struct LockStatusScreen: View {
     private func readingsCard(_ lock: LockSummary) -> some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VSectionLabel(text: "运行状态", trailing: "cmd03")
+                VSectionLabel(text: "运行状态", trailing: "锁端实时")
                 // 2026-11-01 修复：`battery == -1` 是「未读到」（`AppModel:116` 的 `?? -1`），
                 // 而旧写法直接渲染成「-1 %」并涂警告色 —— 与上一轮修的 `signal` 是同一类：
                 // **恒定的占位值被当真值渲染**。用户看到「-1 %」只会困惑，不会知道"没读到"。

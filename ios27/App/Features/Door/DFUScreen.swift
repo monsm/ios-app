@@ -105,7 +105,7 @@ struct DFUScreen: View {
     private var versionPanel: some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VSectionLabel(text: "版本", trailing: "cmd03")
+                VSectionLabel(text: "版本", trailing: "锁端读数")
                 VReadingGrid(items: [
                     .init(label: "锁内固件", value: firmwareText),
                     .init(label: "包内版本", value: pkg?.version ?? "未识别",
@@ -161,7 +161,7 @@ struct DFUScreen: View {
     private var runPanel: some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VSectionLabel(text: "升级", trailing: "cmd22 / DFU")
+                VSectionLabel(text: "升级", trailing: "Nordic DFU")
                 if phase == .running {
                     ProgressView(value: progress)
                     Text("\(Int(progress * 100))% · \(stateText)")

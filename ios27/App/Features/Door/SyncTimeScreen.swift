@@ -93,7 +93,7 @@ struct SyncTimeScreen: View {
     private var driftPanel: some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VSectionLabel(text: "时间对照", trailing: "cmd03 / cmd0E")
+                VSectionLabel(text: "时间对照", trailing: "本机 / 锁端")
                 VReadingGrid(items: [
                     .init(label: "锁内时间", value: lockAt.map { TimeDisplay.clock($0) } ?? "—"),
                     .init(label: "手机时间",
@@ -141,7 +141,7 @@ struct SyncTimeScreen: View {
     private var actionPanel: some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
-                VSectionLabel(text: "下发", trailing: "cmd0E")
+                VSectionLabel(text: "下发", trailing: "立即生效")
                 if busy {
                     VBusyRow(text: "正在把手机时间写进锁…")
                 } else {
