@@ -166,12 +166,22 @@ extension DB {
         return d
     }
 
+    // 2026-11-03（排序稳定性 · 第二批）：两处都只比 `at`（**秒级字符串**）。
+    // 批量导入 / 恢复备份时一整批凭证的 `at` 完全相同 ⇒ Swift 的不稳定排序
+    // 会让同一批凭证在凭证页每次刷新都换一个顺序。用 alias / batch 作决胜项
+    // （它们是锁端分配的稳定编号，天然唯一）。
     static func listPwds(_ mac: String) -> [LedgerPwd] {
-        ledger(mac).pwds.sorted { ($0.at) > ($1.at) }
+        ledger(mac).pwds.sorted { a, b in
+            if a.at != b.at { return a.at > b.at }
+            return a.alias > b.alias
+        }
     }
 
     static func listFps(_ mac: String) -> [LedgerFp] {
-        ledger(mac).fps.sorted { ($0.at) > ($1.at) }
+        ledger(mac).fps.sorted { a, b in
+            if a.at != b.at { return a.at > b.at }
+            return a.batch > b.batch
+        }
     }
 
     static func addPwd(_ mac: String, _ p: LedgerPwd) {
