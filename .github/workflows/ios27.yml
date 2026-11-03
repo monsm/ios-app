@@ -449,8 +449,8 @@ jobs:
             xcrun simctl launch "$UDID" com.aapk.lockkeeper -kfUITest -kfSeed -kfFullPage -kfTab $i || true
             sleep 7
             CONTAINER=$(xcrun simctl get_app_container "$UDID" com.aapk.lockkeeper data 2>/dev/null || true)
-            if [ -n "$CONTAINER" ] && [ -f "$CONTAINER/Documents/kf-fullpage-$i.png" ]; then
-              cp "$CONTAINER/Documents/kf-fullpage-$i.png" "/tmp/shots/$i-$name-full.png" || true
+            if [ -n "$CONTAINER" ] && [ -f "$CONTAINER/Documents/kf-fullpage-$i-tab.png" ]; then
+              cp "$CONTAINER/Documents/kf-fullpage-$i-tab.png" "/tmp/shots/$i-$name-full.png" || true
             else
               echo "fullpage missing for $name (tab $i)"
             fi
