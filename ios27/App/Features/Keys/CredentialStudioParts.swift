@@ -190,30 +190,7 @@ struct CredHistorySheet: View {
                         VCard {
                             VStack(spacing: 0) {
                                 ForEach(items) { snap in
-                                    HStack(spacing: V.S.gapS) {
-                                        VStack(alignment: .leading, spacing: V.S.gapXXS) {
-                                            Text(snap.note.isEmpty ? "快照" : snap.note)
-                                                .font(V.F.rowTitle).foregroundStyle(V.C.text1)
-                                            // 2026-11-03（编译事故）：这一行插值里套了四个调用 + 两个三元，
-                                            // 类型检查器直接放弃（"unable to type-check in reasonable time"）。
-                                            // 拆成局部常量后再拼 —— 与编译器要求的"break up the expression"一致。
-                                            let stamp = TimeFormat.dayShort(Int64(snap.at))
-                                            let clock = TimeDisplay.clock(Int64(snap.at))
-                                            let counts = "\(snap.pwds.count) 密码 / \(snap.fps.count) 指纹"
-                                            Text([stamp, clock, counts].joined(separator: " · "))
-                                                .font(V.F.rowDetail).foregroundStyle(V.C.text3)
-                                        }
-                                        Spacer(minLength: V.S.gapS)
-                                        Button("恢复") {
-                                            // 2026-11-03（全功能点排查）：**这一下会整表替换台账** ——
-                                            // 快照之后新增的凭证会从本机消失（锁端仍在，但 App 里看不到了）。
-                                            // 原来是单击直达、只回一句「已恢复这一版」。现在先确认，并在替换前
-                                            // 自动把**当前**状态存成一份快照 —— 恢复本身因此变成可撤销的。
-                                            restoreTarget = snap
-                                        }
-                                        .font(V.F.footnote).foregroundStyle(V.C.blue)
-                                    }
-                                    .frame(minHeight: V.List.rowMinHeight)
+                                    CredHistoryRow(snap: snap) { restoreTarget = snap }
                                     VDivider()
                                 }
                             }
@@ -336,5 +313,51 @@ struct PackageImportSheet: View {
         } catch {
             self.error = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
+    }
+}
+
+// MARK: - 版本历史的一行（独立视图）
+
+/// 2026-11-03（编译事故 · 第三次尝试）：这一行原本内联在 CredHistorySheet 的 ForEach 里，
+/// 内含两个 `let` + 四个函数调用 + 两处三元 —— 类型检查器直接报
+/// "unable to type-check this expression in reasonable time"。
+/// 把整行抽成**独立视图**是官方推荐的解法：检查器每次只面对一个简单表达式，
+/// 不必在 ViewBuilder 的泛型推导里同时展开所有分支。
+struct CredHistoryRow: View {
+    let snap: CredSnapshot
+    var askRestore: () -> Void
+
+    private var stampText: String {
+        TimeFormat.dayShort(Int64(snap.at))
+    }
+    private var clockText: String {
+        TimeDisplay.clock(Int64(snap.at))
+    }
+    private var countsText: String {
+        String(snap.pwds.count) + " 密码 / " + String(snap.fps.count) + " 指纹"
+    }
+    private var titleText: String {
+        snap.note.isEmpty ? "快照" : snap.note
+    }
+    private var detailText: String {
+        stampText + " " + clockText + " · " + countsText
+    }
+
+    var body: some View {
+        HStack(spacing: V.S.gapS) {
+            VStack(alignment: .leading, spacing: V.S.gapXXS) {
+                Text(titleText)
+                    .font(V.F.rowTitle)
+                    .foregroundStyle(V.C.text1)
+                Text(detailText)
+                    .font(V.F.rowDetail)
+                    .foregroundStyle(V.C.text3)
+            }
+            Spacer(minLength: V.S.gapS)
+            Button("恢复", action: askRestore)
+                .font(V.F.footnote)
+                .foregroundStyle(V.C.blue)
+        }
+        .frame(minHeight: V.List.rowMinHeight)
     }
 }

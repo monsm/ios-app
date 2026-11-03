@@ -218,3 +218,25 @@ App/Design/Tokens.swift  ──解析──▶  DesignLab/lab.js（令牌 → CS
 | Engine 与页面的接线 | ✅ **主要链路已接** | 开锁/凭证/记录/配网/备份/校时/布防/网关/DFU 全走真协议；剩余零星 `TODO(engine)` 见 `COMPLETION.md` 的「未接项」表（次要字段，非主链路） |
 | 动态字体极端值 | ⚠️ 未验 | 静态只保证字号走令牌；最大字号下的截断需真机 |
 | 横屏 / iPad | ❌ 不支持 | 本仓锁竖屏（`UISupportedInterfaceOrientations` 只给 Portrait） |
+
+## 类型检查器超时（无法静态预判，只能编译后修）
+
+2026-11-03 同一处连续三次报：
+
+```
+error: the compiler is unable to type-check this expression in reasonable time
+```
+
+**两次错误的修法**（我都试过，都没用）：
+
+1. 把一行插值拆成几个 `let` 局部常量 —— 无效。
+2. 把插值换成 `[a, b, c].joined(separator:)` —— 无效。
+
+**有效修法**：把整行抽成**独立视图**（`struct XXXRow: View`），让检查器每次只面对
+一个简单表达式，而不是在 ViewBuilder 的泛型推导里同时展开整个分支。
+
+**为什么不做静态闸门**：曾尝试写「一行内 ≥2 个 let 且 ≥2 处插值」的判据，
+全仓命中 11 处 —— 而这 11 处**全部编译通过**。该判据无法区分"会超时"与"不会超时"，
+留下它只会产出噪音（而噪音闸门会被忽略，比没有更糟）。**已放弃，不做闸门**。
+
+实用规则：**看到这条错误，直接把那个 ViewBuilder 分支抽成独立 View**，不要尝试局部拆解。
