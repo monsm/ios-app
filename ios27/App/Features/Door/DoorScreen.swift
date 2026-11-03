@@ -718,7 +718,7 @@ struct DoorScreen: View {
                     .padding(.top, V.S.gapS)
                 }
             } else {
-                Text("今天还没有开锁记录。按住上方圆盘开一次门，曲线就会出现在这里。")
+                Text("今天还没有开锁记录。滑一次底部的「滑动来开锁」，曲线就会出现在这里。")
                     .font(V.F.footnote)
                     .foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
@@ -762,6 +762,15 @@ struct DoorScreen: View {
                     .foregroundStyle(V.C.text3)
                     .frame(minHeight: V.Hit.min)
                     .accessibilityLabel("编辑快捷操作")
+            }
+            // 2026-11-03（整页截图暴露）：池子为空时这里只剩标题 + 一片空白。
+            // 空态给一句话说明，别让用户对着空气猜。
+            if QuickPool.ordered().isEmpty
+                && app.currentKeychain.map({ DB.listFps($0.mac).isEmpty }) != true {
+                Text("还没有快捷操作。点右上角「编辑」挑几枚常用凭证，之后一按就能开。")
+                    .font(V.F.footnote)
+                    .foregroundStyle(V.C.text3)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             LazyVGrid(columns: quickColumns, spacing: V.S.gapS) {
                 ForEach(Array(QuickPool.ordered().prefix(store.quickGridCount).enumerated()), id: \.element.id) { pair in
