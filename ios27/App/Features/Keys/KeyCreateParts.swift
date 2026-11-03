@@ -112,7 +112,11 @@ extension KeyCreateScreen {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
                 if kind == .fingerprint {
                     VSectionLabel(text: "指纹没有码值")
-                    KeysInlineNote(tone: .neutral, text: "指纹录入要在门锁的指纹头上按 8 次（由锁端启动与确认）。本机这条链路还没接，下一步先把这条登记进台账。")
+                    // 2026-11-04（读实现发现 · 与代码相反）：这句仍说「本机这条链路还没接」，
+                    // 而 `submit()` 的指纹分支走的是 `app.enrollFingerprint` —— cmd13 多帧 + cmd14 确认，
+                    // 是**真下发**。同一文件第 4 步（confirmStep:308）早就改成「会真连锁录入」了，
+                    // 只有第 2 步这一句漏改。用户在第 2 步会以为只是登记台账。
+                    KeysInlineNote(tone: .neutral, text: "指纹没有码值。下一步会真连锁录入：请把手指按在门锁的指纹头上再抬起，连续 8 次，成功后才记入本机台账。")
                     TextField("给这枚指纹起个名字", text: $name)
                         .font(V.F.body)
                         .frame(minHeight: V.Hit.min)
