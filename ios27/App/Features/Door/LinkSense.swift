@@ -205,30 +205,8 @@ struct LinkSenseBar: View {
                     .padding(V.S.gapS)
                     .background(V.C.pink.opacity(0.12), in: .rect(cornerRadius: V.R.action, style: .continuous))
                 }
-                HStack(spacing: V.S.gapS) {
-                    Button {
-                        Task { await model.preheat() }
-                    } label: {
-                        VTag(text: model.busy ? "预热中…" : "预热", tint: V.C.blue, filled: true)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(model.busy)
-                    Button {
-                        Task { await model.reconnect() }
-                    } label: {
-                        VTag(text: "重连 · \(Int(model.nextLadder))s", tint: V.C.text1)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(model.busy)
-                    Button {
-                        model.readRSSI()
-                        showHistory.toggle()
-                    } label: {
-                        VTag(text: "信号", tint: V.C.text1)
-                    }
-                    .buttonStyle(.plain)
-                    Spacer(minLength: 0)
-                }
+                // 2026-11-03（门页瘦身）：预热/重连/信号 三个按钮移到**导航栏工具位** ——
+                // 系统给工具项原生玻璃材质，且省下这一行 ~44pt 给刻度盘。
                 if showHistory {
                     VStack(alignment: .leading, spacing: V.S.gapXS) {
                         VRowDivider()

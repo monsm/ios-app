@@ -68,6 +68,38 @@ struct DoorScreen: View {
         // 出现系统那层液态玻璃）—— 这是"用原生控件拿到真材质"，而不是自己画一个标题。
         .navigationTitle(app.currentKeychain.map { LockArchive.displayName($0) } ?? "门")
         .navigationBarTitleDisplayMode(.large)
+        // 2026-11-03（门页瘦身 + 原生玻璃）：连接动作从卡片里提到**导航栏工具位**。
+        // 系统给工具项原生玻璃材质（功能层），并省下卡片里一行按钮的高度给刻度盘。
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    Task { await link.preheat() }
+                } label: {
+                    Image(systemName: "bolt.horizontal.circle")
+                        .font(V.F.icon18Medium)
+                }
+                .disabled(link.busy)
+                .accessibilityLabel(link.busy ? "预热中" : "预热连接")
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Button {
+                        Task { await link.reconnect() }
+                    } label: {
+                        Label("重连 · \(Int(link.nextLadder))s", systemImage: "arrow.clockwise")
+                    }
+                    Button {
+                        link.readRSSI()
+                    } label: {
+                        Label("读信号强度", systemImage: "antenna.radiowaves.left.and.right")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .font(V.F.icon18Medium)
+                }
+                .accessibilityLabel("连接操作")
+            }
+        }
         .task {
             await app.reload(refreshStatus: true)
             link.update(mac: app.currentMac)
@@ -357,9 +389,9 @@ struct DoorScreen: View {
         // 视觉上像"读数被挡住"。默认档收到 0.92 给滑块让位；用户选的档位仍在其上生效。
         let base: CGFloat
         switch AXSettings.dialSize {
-        case "small": base = 0.72
-        case "large": base = 0.95
-        default: base = 0.78
+        case "small": base = 0.78
+        case "large": base = 1.02
+        default: base = 0.88
         }
         return base
     }
