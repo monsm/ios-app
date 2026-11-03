@@ -654,8 +654,13 @@ struct DoorScreen: View {
     private func bodyText(_ lock: LockSummary) -> String {
         let opens = todayOpenCount
         let batteryPart = lock.battery >= 0 ? "电量 \(lock.battery)%" : "电量未知"
-        let linkPart = lock.isConnected ? "蓝牙已连接" : "蓝牙未连接"
-        return "\(batteryPart)，\(linkPart)，本机 \(lock.keyCount) 枚凭证在册。今天已开锁 \(opens) 次。按日均 3 次估算，约可用 \(estimateMonths(lock))。"
+        // 2026-11-03（全维度整理 · 表现方式）：这一段原来写"\(batteryPart)，蓝牙未连接，…"——
+        // 而卡片标题已经是「未连接」、页首还有一张「连接感知」卡也在说同一件事。
+        // 同一屏第四遍说"没连上"不提供任何新信息；这里换成**该做什么**：
+        // 断开时给可执行动作，连上时干脆不提链路（标题已经说了"状态良好"）。
+        let linkPart = lock.isConnected ? "" : "蓝牙未连接 —— 靠近门锁并确认系统蓝牙已打开，再下拉刷新。"
+        let head = "\(batteryPart)，本机 \(lock.keyCount) 枚凭证在册。今天已开锁 \(opens) 次。按日均 3 次估算，约可用 \(estimateMonths(lock))。"
+        return linkPart.isEmpty ? head : head + " " + linkPart
     }
 
     private func estimateMonths(_ lock: LockSummary) -> String {
