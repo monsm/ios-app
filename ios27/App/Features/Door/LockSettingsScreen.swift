@@ -18,6 +18,8 @@ struct LockSettingsScreen: View {
     @State private var autoLock = 6
     @State private var busy = false
     @State private var outcome: String?
+    /// 最近一次读取是成功还是失败 —— 决定 outcome 的语义色。
+    @State private var outcomeIsFailure = false
     @State private var clearConfirm = false
     @State private var clearTyped = ""
     @State private var showSafeMode = false
@@ -130,8 +132,9 @@ struct LockSettingsScreen: View {
                         ProgressView().controlSize(.small).tint(V.C.blue)
                         Text("正在与门锁通信…").font(V.F.footnote).foregroundStyle(V.C.text3)
                     } else if let outcome {
-                        Text(outcome).font(V.F.footnote).foregroundStyle(V.C.text3)
-                            .fixedSize(horizontal: false, vertical: true)
+                        // 2026-11-03（全维度整理）：原来成功/失败都是同一行灰字，
+                        // "解析数据失败"看着像普通说明。失败要走警示色 + 状态点。
+                        VStatusLine(tone: outcomeIsFailure ? .attention : .neutral, text: outcome)
                     }
                     Spacer(minLength: 0)
                 }
@@ -295,8 +298,10 @@ struct LockSettingsScreen: View {
             DB.writeStatus(mac, st)
             muted = st.soundVolumn > 0 || muted
             outcome = "已读取锁实况"
+            outcomeIsFailure = false
         } catch {
             outcome = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            outcomeIsFailure = true
         }
     }
 
@@ -309,6 +314,7 @@ struct LockSettingsScreen: View {
         guard !mac.isEmpty, !busy else { return }
         busy = true
         outcome = nil
+        outcomeIsFailure = false
         Task {
             defer { busy = false }
             do {
@@ -317,10 +323,12 @@ struct LockSettingsScreen: View {
                 DB.saveOtpStatus(mac, OtpStatus(on: on, at: Date().timeIntervalSince1970 * 1000))
                 otpOn = on
                 outcome = on ? "临时密码已开通" : "临时密码已关闭"
+                outcomeIsFailure = false
                 AppToast.shared.show(outcome ?? "", tone: .ok)
             } catch {
                 otpOn = !on
                 outcome = "设置失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+                outcomeIsFailure = true
             }
         }
     }
@@ -331,6 +339,7 @@ struct LockSettingsScreen: View {
         guard !mac.isEmpty, !busy else { return }
         busy = true
         outcome = nil
+        outcomeIsFailure = false
         Task {
             defer { busy = false }
             do {
@@ -342,9 +351,11 @@ struct LockSettingsScreen: View {
                 if case .failure(let e) = r { throw e }
                 muted = on
                 outcome = on ? "已静音" : "已恢复提示音"
+                outcomeIsFailure = false
             } catch {
                 muted = !on
                 outcome = "设置失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+                outcomeIsFailure = true
             }
         }
     }
@@ -354,6 +365,7 @@ struct LockSettingsScreen: View {
         guard !mac.isEmpty, !busy else { return }
         busy = true
         outcome = nil
+        outcomeIsFailure = false
         defer { busy = false }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
@@ -364,9 +376,11 @@ struct LockSettingsScreen: View {
             app.reloadKeys(mac)
             clearTyped = ""
             outcome = "已清空全部密码（指纹保留）"
+            outcomeIsFailure = false
             AppToast.shared.show("已清空全部密码", tone: .ok)
         } catch {
             outcome = "清空失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+            outcomeIsFailure = true
         }
     }
 }

@@ -46,7 +46,7 @@ enum BLEError: Int {
         case .responseTimeout: return "超时未收到返回数据"
         case .unsupportedToken: return "不支持的ssToken方式"
         case .connectTimeout: return "连接设备超时"
-        case .parseFail: return "解析数据失败"
+        case .parseFail: return "门锁返回的数据无法解析（可能固件版本不匹配）"
         case .writeTimeout: return "超时未等到Rx写入确认"
         case .underlying: return "蓝牙底层失败"
         case .writeFailed: return "发送命令失败"
