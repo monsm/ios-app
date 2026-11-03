@@ -358,6 +358,12 @@ struct AddLockScreen: View {
                     .submitLabel(.done)
                     .frame(minHeight: V.Hit.min)
                 hairline
+                // 2026-11-03（全功能点排查）：多锁家庭里昵称可以重复，而门页的切换芯片只显示
+                // `LockArchive.displayName`（= 昵称），两把同名锁在芯片上完全分不出来。
+                // 不硬拦（同一栋楼两道门叫"入户门"是合理的），但要在起名这一步就提醒。
+                if let duplicateNameHint {
+                    KeysInlineNote(tone: .attention, text: duplicateNameHint)
+                }
                 Text("昵称会出现在「门」页的页头与读数页；场所副标题用来区分同一栋楼里的几道门。")
                     .font(V.F.unit)
                     .foregroundStyle(V.C.text3)
@@ -536,6 +542,19 @@ struct AddLockScreen: View {
         picked = nil
         banner = reason
         phase = .ready
+    }
+
+    /// 已有同名锁时的提醒（不拦）。比对的是「显示名」，与门页切换芯片同一口径。
+    private var duplicateNameHint: String? {
+        let n = nickname.trimmingCharacters(in: .whitespaces)
+        guard !n.isEmpty else { return nil }
+        let selfMac = DB.normalizeMac(picked?.mac ?? pairedKeychain?.mac ?? "")
+        let others = DB.keychains().filter {
+            DB.normalizeMac($0.mac) != selfMac && LockArchive.displayName($0) == n
+        }
+        guard let first = others.first else { return nil }
+        let place = LockArchive.meta(first.mac).place
+        return "已经有另一把锁叫「\(n)」\(place.isEmpty ? "" : "（\(place)）")了 —— 门页的切换芯片只显示昵称，两把同名会分不出来。建议在地点副标题里写清是哪一个。"
     }
 
     private func commitName() {

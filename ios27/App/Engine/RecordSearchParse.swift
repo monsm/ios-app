@@ -81,9 +81,14 @@ extension RecordSearch {
         if joined.contains("昨天") { out.append(("昨天", dayRange(addDays(now, -1)))) }
         else if joined.contains("今天") || joined.contains("今日") { out.append(("今天", dayRange(now))) }
         if joined.contains("昨晚") {
+            // 2026-11-03（全功能点排查 · 语义）：原来返回的是「昨天 00:00–04:00」——
+            // 那是**昨天凌晨**，不是「昨晚」。中文里"昨晚"指昨天傍晚到午夜这一段，
+            // 而"凌晨"这个短语本来就已经单独覆盖了 00:00–05:00（下一个 if）。
+            // 现在改成「昨天 18:00 → 今天 00:00」，与"凌晨"拼起来正好覆盖一整个夜晚。
             let y = addDays(now, -1)
-            let s = cal.startOfDay(for: y)
-            out.append(("昨晚", (s, s.addingTimeInterval(4 * 3600))))
+            let evening = cal.startOfDay(for: y).addingTimeInterval(18 * 3600)
+            let midnight = cal.startOfDay(for: now)
+            out.append(("昨晚", (evening, midnight)))
         }
         if joined.contains("凌晨") {
             let s = cal.startOfDay(for: now)

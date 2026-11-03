@@ -499,9 +499,23 @@ struct CredentialStudioScreen: View {
     }
 
     private func applyPrefix() {
-        let r = CredentialOrg.batchPrefixNote(studioMac, pwdAliases: Array(selectedPwds), fpBatches: Array(selectedFps), prefix: prefixText)
-        studioOutcomeBad = false
-        studioOutcome = "已给 \(r) 条凭证加前缀备注"
+        // 2026-11-03（全功能点排查）：前缀为空时 `note.hasPrefix("")` 恒真 ⇒ 一条都不会改，
+        // 而界面照样弹「已给 0 条…」—— 用户以为点了没反应，其实是输入为空。
+        let p = prefixText.trimmingCharacters(in: .whitespaces)
+        guard !p.isEmpty else {
+            studioOutcomeBad = true
+            studioOutcome = "先填一个前缀再应用（例如「备用·」）"
+            return
+        }
+        guard !selectedPwds.isEmpty || !selectedFps.isEmpty else {
+            studioOutcomeBad = true
+            studioOutcome = "先勾选要加备注的凭证"
+            return
+        }
+        let r = CredentialOrg.batchPrefixNote(studioMac, pwdAliases: Array(selectedPwds), fpBatches: Array(selectedFps), prefix: p)
+        studioOutcomeBad = r == 0
+        // r == 0 只可能是"所选条目本来就以这个前缀开头"（空前缀已被上面拦住）。
+        studioOutcome = r == 0 ? "所选凭证本来就是这个前缀，没有改动" : "已给 \(r) 条凭证加前缀备注"
         tick += 1
     }
 
@@ -521,6 +535,9 @@ struct CredentialStudioScreen: View {
         }
         studioOutcomeBad = !missing.isEmpty
         studioOutcome = "已移交 \(ok) 项" + (missing.isEmpty ? "" : "；本机找不到 \(missing.count) 项（\(missing.joined(separator: "/"))）")
+        // 2026-11-03：与批量停用一致 —— 动作执行完就清选择，避免再点一次把同一批重做一遍。
+        selectedPwds = []
+        selectedFps = []
         tick += 1
     }
 
