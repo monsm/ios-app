@@ -166,7 +166,7 @@ struct AddLockScreen: View {
         let done = index < currentStep || phase == .done
         let current = index == currentStep && phase != .done
         return HStack(spacing: V.S.gapMS) {
-            Text(pad2(index + 1))
+            Text(DF.pad2(index + 1))
                 .font(V.F.number13)
                 .foregroundStyle(done ? V.C.text1 : V.C.text3)
                 .monospacedDigit()
@@ -595,9 +595,6 @@ struct AddLockScreen: View {
         }
     }
 
-    private func pad2(_ value: Int) -> String {
-        value < 10 ? "0\(value)" : "\(value)"
-    }
 
     private var hairline: some View {
         Rectangle()

@@ -453,7 +453,7 @@ struct DefendScreen: View {
         let m = wrapMinutes(minutes)
         let hh = m / 60
         let mm = m % 60
-        return "\(pad2(hh)):\(pad2(mm))"
+        return "\(DF.pad2(hh)):\(DF.pad2(mm))"
     }
 
     private func wrapMinutes(_ minutes: Int) -> Int {
@@ -474,9 +474,6 @@ struct DefendScreen: View {
         return now >= start || now < end
     }
 
-    private func pad2(_ value: Int) -> String {
-        value < 10 ? "0\(value)" : "\(value)"
-    }
 
     private var hairline: some View {
         Rectangle()

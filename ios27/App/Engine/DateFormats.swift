@@ -16,6 +16,12 @@
 import Foundation
 
 enum DF {
+    /// 两位补零（`7` → `"07"`）。2026-11-04：之前在 AddLockScreen / DefendScreen /
+    /// GatewayScreen 各有一份逐字相同的 `private func pad2` —— 三份拷贝改一处漏两处。
+    /// 布防时段的分钟、配网倒计时、网关时间都靠它，值得一份公共实现。
+    static func pad2(_ value: Int) -> String {
+        value < 10 ? "0\(value)" : "\(value)"
+    }
     /// 取（或按需创建）当前线程的格式化器。
     /// - Parameters:
     ///   - format: 如 `"yyyy-MM-dd"`。

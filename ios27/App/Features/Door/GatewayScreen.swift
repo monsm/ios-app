@@ -293,7 +293,7 @@ struct GatewayScreen: View {
             ForEach(Array(Self.stepTitles.enumerated()), id: \.offset) { index, title in
                 if index > 0 { hairline }
                 HStack(spacing: V.S.gapMS) {
-                    Text(pad2(index + 1))
+                    Text(DF.pad2(index + 1))
                         .font(V.F.number13)
                         .foregroundStyle(stepReached(index) ? V.C.text1 : V.C.text3)
                         .monospacedDigit()
@@ -473,9 +473,6 @@ struct GatewayScreen: View {
         banner = "已从本机台账移除「\(g.name)」。网关硬件里的凭据还在，要重配得先把它重置回橙灯。"
     }
 
-    private func pad2(_ value: Int) -> String {
-        value < 10 ? "0\(value)" : "\(value)"
-    }
 
     private var hairline: some View {
         Rectangle()
