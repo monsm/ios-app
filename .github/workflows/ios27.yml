@@ -490,7 +490,18 @@ jobs:
             xcrun simctl launch "$UDID" com.aapk.lockkeeper -kfUITest -kfSeed -kfTab $i || true
             sleep 4
             xcrun simctl io "$UDID" screenshot "/tmp/shots/$i-$name.png" >> "$DIAG" 2>&1 || true
-            if [ -f "/tmp/shots/$i-$name.png" ]; then echo "shot $i-$name=ok" >> "$DIAG"; else echo "shot $i-$name=missing" >> "$DIAG"; fi
+            # 2026-11-04（像素测量定位）：设置页的**单屏截图**连续多轮都是纯空白（只有状态栏），
+            # 而同一页的**整页截图**内容完整 —— 说明不是页面空白，是**第 5 次连续启动时
+            # 首帧还没画出来就截了**（每次 terminate+launch，第 5 轮模拟器最慢）。
+            # 判据用文件大小：正常截图 80-150KB，纯空白约 12KB。小于 40KB 就等 2 秒重截一次。
+            SZ=$(stat -f%z "/tmp/shots/$i-$name.png" 2>/dev/null || echo 0)
+            if [ "$SZ" -lt 40000 ]; then
+              echo "shot $i-$name=retry (size=$SZ)" >> "$DIAG"
+              sleep 2
+              xcrun simctl io "$UDID" screenshot "/tmp/shots/$i-$name.png" >> "$DIAG" 2>&1 || true
+              SZ=$(stat -f%z "/tmp/shots/$i-$name.png" 2>/dev/null || echo 0)
+            fi
+            if [ -f "/tmp/shots/$i-$name.png" ]; then echo "shot $i-$name=ok size=$SZ" >> "$DIAG"; else echo "shot $i-$name=missing" >> "$DIAG"; fi
             i=$((i+1))
           done
           # 整页截屏（**算法级**，不是滚到底）：App 把 ScrollView 的 frame 临时撑到
@@ -520,6 +531,12 @@ jobs:
             xcrun simctl io "$UDID" screenshot "/tmp/shots/$j-$dest.png" 2>/dev/null || true
             sleep 1
             xcrun simctl io "$UDID" screenshot "/tmp/shots/$j-$dest.png" 2>/dev/null || true
+            # 同 Tab 截图的空白重试（子页首帧更慢）。
+            SZ=$(stat -f%z "/tmp/shots/$j-$dest.png" 2>/dev/null || echo 0)
+            if [ "$SZ" -lt 40000 ]; then
+              sleep 2
+              xcrun simctl io "$UDID" screenshot "/tmp/shots/$j-$dest.png" 2>/dev/null || true
+            fi
             j=$((j+1))
           done
           # 子页整页截图：-kfDest 压栈 + -kfFullPage 整页成像（App 侧延迟 5.5s 等 push 完成）。
