@@ -424,12 +424,21 @@ jobs:
       - name: 逐 Tab 截图
         run: |
           set +e
+          mkdir -p /tmp/shots
+          DIAG=/tmp/shots/diag.txt
+          : > "$DIAG"
+          echo "udid=${{ steps.sim.outputs.udid }}" >> "$DIAG"
           UDID="${{ steps.sim.outputs.udid }}"
           APP=$(find build/Sim/Build/Products -name "LockKeeper.app" -maxdepth 3 | head -1)
+          echo "APP=${APP:-<not found>}" >> "$DIAG"
           echo "APP=$APP"
           xcrun simctl boot "$UDID" || true
           xcrun simctl bootstatus "$UDID" -b || true
-          xcrun simctl install "$UDID" "$APP" || exit 1
+          if ! xcrun simctl install "$UDID" "$APP" >> "$DIAG" 2>&1; then
+            echo "install=FAILED" >> "$DIAG"
+            exit 1
+          fi
+          echo "install=ok" >> "$DIAG"
           # 预授权系统弹窗 —— 否则第一次启动的通知权限对话框会挡住截图（13 号截图实测被挡）。
           xcrun simctl privacy "$UDID" grant notifications com.aapk.lockkeeper 2>/dev/null || true
           xcrun simctl privacy "$UDID" grant user_tracking com.aapk.lockkeeper 2>/dev/null || true
@@ -450,7 +459,8 @@ jobs:
             xcrun simctl terminate "$UDID" com.aapk.lockkeeper 2>/dev/null || true
             xcrun simctl launch "$UDID" com.aapk.lockkeeper -kfUITest -kfSeed -kfTab $i || true
             sleep 4
-            xcrun simctl io "$UDID" screenshot "/tmp/shots/$i-$name.png" || true
+            xcrun simctl io "$UDID" screenshot "/tmp/shots/$i-$name.png" >> "$DIAG" 2>&1 || true
+            if [ -f "/tmp/shots/$i-$name.png" ]; then echo "shot $i-$name=ok" >> "$DIAG"; else echo "shot $i-$name=missing" >> "$DIAG"; fi
             i=$((i+1))
           done
           # 整页截屏（**算法级**，不是滚到底）：App 把 ScrollView 的 frame 临时撑到
@@ -537,6 +547,12 @@ jobs:
           echo "commit=$(git -C "$GITHUB_WORKSPACE" rev-parse HEAD)" > meta.txt
           echo "run=$GITHUB_RUN_ID" >> meta.txt
           echo "count=$(ls *.png 2>/dev/null | wc -l | tr -d ' ')" >> meta.txt
+          # 2026-11-03：count=0 时 meta 里只有一个"0"，无法判断是没找到 App、装不上、还是截图空。
+          # 把截图步骤的诊断一并写进来。
+          if [ -f diag.txt ]; then
+            echo "--- diag ---" >> meta.txt
+            head -40 diag.txt >> meta.txt
+          fi
           git init -q .
           git checkout -q -b ci-shots
           git config user.name ci
