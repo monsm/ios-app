@@ -752,16 +752,25 @@ struct DoorScreen: View {
                     .frame(minHeight: V.Hit.min)
                     .accessibilityLabel("编辑快捷操作")
             }
-            // 2026-11-03（整页截图暴露）：池子为空时这里只剩标题 + 一片空白。
-            // 空态给一句话说明，别让用户对着空气猜。
-            // 2026-11-03（截图实测）：原来判「整池为空 且 指纹非空」—— 池子空而指纹也读不到时
-            // 两个条件都不成立，于是既不显示提示也没有格子，留下一整片空白。改判实际渲染的切片。
-            if quickShown.isEmpty && !pendingFingerTileShown {
-                Text("还没有快捷操作。点「编辑」挑几枚常用凭证，之后一按就能开。")
-                    .font(V.F.footnote)
-                    .foregroundStyle(V.C.text3)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+            // 2026-11-03（第三次修正，前两次都判错了原因）：
+            // 这块空白不是「空态没写」，也不是「格子颜色太淡」—— 是**格子数量为 0 时
+            // 网格仍占位、而空态又被 pending 布尔挡住**。现在把两件事彻底分开：
+            //   格子非空 → 只画格子；格子为空 → 一定画提示（外加"待添加指纹"入口）。
+            if quickShown.isEmpty {
+                VStack(alignment: .leading, spacing: V.S.gapS) {
+                    Text("还没有快捷操作。点右上角「编辑」挑几枚常用凭证，之后一按就能开。")
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text3)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if pendingFingerTileShown {
+                        Button { router.request(.dest(.keyCreate)) } label: {
+                            pendingFingerTile
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("去添加指纹")
+                    }
+                }
+            } else {
             LazyVGrid(columns: quickColumns, spacing: V.S.gapS) {
                 ForEach(Array(quickShown.enumerated()), id: \.element.id) { pair in
                     Button { runQuick(pair.element) } label: {
@@ -775,13 +784,7 @@ struct DoorScreen: View {
                     .accessibilityLabel(quickLabel(pair.element))
                     .accessibilityHint("轻点执行，长按编辑快捷操作")
                 }
-                if pendingFingerTileShown {
-                    Button { router.request(.dest(.keyCreate)) } label: {
-                        pendingFingerTile
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("待添加指纹")
-                }
+            }
             }
         }
         .padding(.horizontal, V.S.cardGutter)
