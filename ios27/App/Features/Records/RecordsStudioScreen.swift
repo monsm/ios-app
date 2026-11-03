@@ -168,10 +168,11 @@ struct RecordsStudioScreen: View {
                             GlassChip(title: "全部", selected: member.isEmpty) { member = "" }
                                 .buttonStyle(.plain)
                             ForEach(members, id: \.self) { name in
-                                Button { member = name } label: {
-                                    GlassChip(title: name, selected: member == name) { member = name }
-                                }
-                                .buttonStyle(.plain)
+                                // 2026-11-03（Liquid Glass 审计）：GlassChip **本身就是 Button**，
+                                // 外面再包一层是嵌套按钮 —— 内层动作会被外层接管，
+                                // 产生双重高亮与两个无障碍 button 元素。与「时段」行同一修法。
+                                GlassChip(title: name, selected: member == name) { member = name }
+                                    .buttonStyle(.plain)
                             }
                         }
                     }

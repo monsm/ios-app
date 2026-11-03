@@ -101,7 +101,9 @@ struct ZotpScreen: View {
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, V.S.gapM)
-                    .background(V.C.cardAlt, in: .rect(cornerRadius: V.R.card, style: .continuous))
+                    // 2026-11-03（Liquid Glass 审计 · 同心圆角）：外层 VCard 圆角 27、内边距 16.3，
+                // 内块应约 27-16.3 ≈ 10.7；原来又用 V.R.card(27) ⇒ 内外同半径，内块像贴上去的而不是嵌进去的。
+                .background(V.C.cardAlt, in: .rect(cornerRadius: max(0, V.R.card - V.S.cardGutter), style: .continuous))
                     .onLongPressGesture(minimumDuration: 0.2, pressing: { pressing in
                         if shieldOn { revealed = pressing }
                     }, perform: {})

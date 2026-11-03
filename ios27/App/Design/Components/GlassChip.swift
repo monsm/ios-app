@@ -38,6 +38,11 @@ struct GlassChip: View {
                     Capsule().strokeBorder(selected ? V.C.blue.opacity(0.35) : V.C.hairlineSoft,
                                            lineWidth: V.S.hair)
                 }
+                // 2026-11-03（Liquid Glass 审计 · HIG）：13pt 字 + 上下各 7.7pt 内边距 ≈ **31pt**，
+                // 低于 44pt 触达下限，且没有 contentShape —— 胶囊之外的点击会漏过去。
+                // 仓内 KeysBits 的芯片早已补过同一处（`.frame(minHeight: V.Hit.min)`）。
+                .frame(minHeight: V.Hit.min)
+                .contentShape(.rect)
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
