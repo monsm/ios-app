@@ -109,6 +109,38 @@ extension CredentialOrg {
         return (Data(enc.utf8), pwds.count + fps.count)
     }
 
+    /// 导入凭证包（`exportPackage` 的逆过程）。
+    ///
+    /// 2026-11-03（全功能点排查 · 功能闭环）：导出这条链路一直只有**出**没有**回** ——
+    /// `CredPackage` 能加密导出，但全仓没有任何地方解密/解析它，App 自己都读不回来。
+    /// 用户以为导出的是一份可恢复的备份，实际上是一份**只能看不能还原**的文本。
+    /// 这里补上导入：解密 → 解析 → 按 alias/batch **跳过冲突项**合并进当前台账。
+    ///
+    /// 冲突一律**跳过而不是覆盖**：包里的编号是旧锁分配的，覆盖会静默改掉本机同号凭证。
+    /// 返回 (写入, 跳过) 两个数，界面要如实报出来。
+    static func importPackage(_ text: String, password: String, into mac: String) throws -> (imported: Int, skipped: Int) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { throw BLEErrorX.msg("先粘贴凭证包文本") }
+        let plain = try CryptoBox.decryptEnvelope(trimmed, password: password)
+        guard let data = plain.data(using: .utf8),
+              let pkg = try? JSONDecoder().decode(CredPackage.self, from: data) else {
+            throw BLEErrorX.msg("这段文本不是有效的凭证包（或版本不兼容）")
+        }
+        var l = DB.ledger(mac)
+        var imported = 0, skipped = 0
+        for p in pkg.pwds {
+            if l.pwds.contains(where: { $0.alias == p.alias }) { skipped += 1; continue }
+            l.pwds.append(p); imported += 1
+        }
+        for f in pkg.fps {
+            if l.fps.contains(where: { $0.batch == f.batch }) { skipped += 1; continue }
+            l.fps.append(f); imported += 1
+        }
+        guard imported > 0 else { return (0, skipped) }
+        DB.saveLedger(mac, l)
+        return (imported, skipped)
+    }
+
     // ---------- 304 全库重复拦截 ----------
     static func duplicatePwdValues(_ mac: String, _ value: String, excluding: Int) -> [LedgerPwd] {
         DB.listPwds(mac).filter { $0.pwd == value && $0.alias != excluding }

@@ -29,6 +29,7 @@ struct CredentialStudioScreen: View {
     @State private var prefixText = ""
     @State private var transferOwner: String?
     @State private var packagePassword = ""
+    @State private var showPackageImport = false
     @State private var packageText = ""
     @State private var studioOutcome: String?
     /// 2026-11-01：**成功/失败不再从文案前缀猜。**
@@ -100,6 +101,7 @@ struct CredentialStudioScreen: View {
         .sheet(item: $alertTarget) { pwd in
             CredAlertSheet(mac: studioMac, pwd: pwd)
         }
+        .sheet(isPresented: $showPackageImport) { packageImportSheet }
         .sheet(isPresented: $binOpen) {
             CredBinSheet(mac: studioMac) { tick += 1 }
         }
@@ -377,9 +379,27 @@ struct CredentialStudioScreen: View {
                         Clip.set(packageText)
                     }
                 }
+                // 2026-11-03（功能闭环）：导出一直是单向的 —— App 自己读不回凭证包。
+                // 这里补导入入口，否则"导出的备份"其实不可恢复。
+                VRowDivider()
+                Text("凭证包导入")
+                    .font(V.F.chipLabel).foregroundStyle(V.C.text4)
+                VOutlineButton(title: "从凭证包导入…", systemImage: "square.and.arrow.down") {
+                    showPackageImport = true
+                }
             }
         }
         .padding(.horizontal, V.S.cardGutter)
+    }
+
+    // MARK: - 凭证包导入
+
+    private var packageImportSheet: some View {
+        PackageImportSheet(mac: studioMac) {
+            tick += 1
+            studioOutcomeBad = false
+            studioOutcome = "凭证包已导入（冲突项已跳过）"
+        }
     }
 
     // MARK: - 检测

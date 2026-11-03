@@ -256,3 +256,78 @@ struct CredHistorySheet: View {
         outcome = "已保存快照"
     }
 }
+
+// MARK: - 凭证包导入
+
+/// 粘贴一段工作室导出的加密文本 + 口令，合并进当前台账。
+/// 冲突项（同 alias / 同 batch）**跳过不覆盖** —— 包里的编号是导出那台锁分配的。
+struct PackageImportSheet: View {
+    let mac: String
+    var onImported: () -> Void = {}
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var text = ""
+    @State private var password = ""
+    @State private var error: String?
+    @State private var result: String?
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: V.S.gap16) {
+                    SettingsHeader(title: "导入凭证包", tone: error == nil ? .neutral : .attention,
+                                   status: error ?? "粘贴导出时拿到的整段文本，再输入当时设的口令")
+                    VCard {
+                        VStack(alignment: .leading, spacing: V.S.gapMS) {
+                            Text("凭证包文本")
+                                .font(V.F.unit).foregroundStyle(V.C.text3)
+                            TextEditor(text: $text)
+                                .font(V.F.stamp)
+                                .frame(minHeight: 140)
+                                .scrollContentBackground(.hidden)
+                                .padding(V.S.gapS)
+                                .background(V.C.cardAlt, in: .rect(cornerRadius: V.R.control))
+                                .accessibilityLabel("凭证包文本")
+                            VTextFieldRow(label: "包口令", text: $password, placeholder: "导出时设的口令", secure: true)
+                            if let error {
+                                VStatusLine(tone: .critical, text: error)
+                            }
+                            if let result {
+                                VStatusLine(tone: .ok, text: result)
+                            }
+                            VActionButton(title: "导入", systemImage: "square.and.arrow.down") {
+                                run()
+                            }
+                            .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || password.isEmpty)
+                            VOutlineButton(title: "关闭") { dismiss() }
+                        }
+                    }
+                    .padding(.horizontal, V.S.pageGutter)
+                    SettingsNote(text: "导入是**合并**：同编号的凭证会被跳过（不覆盖本机已有的），导入结果会如实报出写入与跳过的条数。")
+                        .padding(.horizontal, V.S.pageGutter)
+                }
+                .padding(.vertical, V.S.gap16)
+            }
+            .background(CanvasBg())
+            .scrollEdgeEffectStyle(.soft, for: .top)
+            .navigationTitle("导入凭证包")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+
+    private func run() {
+        error = nil
+        result = nil
+        do {
+            let r = try CredentialOrg.importPackage(text, password: password, into: mac)
+            if r.imported == 0 {
+                error = "没有可导入的凭证：\(r.skipped) 项与现有凭证编号冲突（已全部跳过）"
+                return
+            }
+            result = "已导入 \(r.imported) 项" + (r.skipped > 0 ? "，跳过 \(r.skipped) 项（编号冲突）" : "")
+            onImported()
+        } catch {
+            self.error = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
+    }
+}
