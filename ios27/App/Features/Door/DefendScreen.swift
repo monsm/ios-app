@@ -278,7 +278,20 @@ struct DefendScreen: View {
 
     private var periodNote: String {
         if !periodValid {
-            return "开始与结束不能是同一时刻 —— 那等于全天布防或全天不布防，协议里表达不出你的意思。"
+            // 2026-11-04（口径核对 · 文案与引擎不一致）：引擎 `DefendKit.isAllDay` 把
+            // `start == end` **明确定义为「全天布防」**，`AutoOpenKit.defendActive` 也按此实现
+            // （`guard startSec != endSec else { return true }`），`DefendKit.summary` 还会
+            // 显示「全天布防中」。三处都把同一件事读作全天布防。
+            // 而这里说"全天布防或全天不布防，协议表达不出" —— 与引擎相反，且是错的：
+            // 协议表达得出来，就是全天布防。文案改成引擎的语义。
+            // 2026-11-04（口径核对）：三处引擎对 start==end 的**语义**是「全天布防」
+            // （`DefendKit.isAllDay` / `AutoOpenKit.defendActive` / `summary()` 都这么读），
+            // 而 `DefendKit.validate` 与这里都**拒绝保存**这种配置 —— 两者并不矛盾：
+            //   · 语义层：已有的 start==end 配置按全天布防解释（可能是导入/厂商 App 写进来的）；
+            //   · 输入层：本页不让你**新建**这种配置，因为它没有"我想设 22:00–07:00"的表达力。
+            // 旧文案说"协议里表达不出你的意思"是错的（协议表达得出，是全天），会让用户以为
+            // 锁端行为不可知。改成如实说明两件事。
+            return "开始与结束相同 —— 锁端会把它当成全天布防。要设成某个时段，请把结束时间挪开一档。"
         }
         if endMinute < startMinute {
             return "跨午夜时段：\(clockLabel(startMinute)) 到次日 \(clockLabel(endMinute))。这段时间里靠近门锁不会自动开门。"
