@@ -149,13 +149,8 @@ struct DoorScreen: View {
                     style: .standard,
                     systemImage: "circle.hexagongrid.fill"
                 )
-                VChip(
-                    title: "电量",
-                    value: batteryChipValue,
-                    tint: V.C.blue,
-                    style: .standard,
-                    systemImage: "battery.75percent"
-                )
+                // 2026-11-03（同页去重·收尾）：刻度盘中心就是电量读数，且刻度盘不可隐藏；
+                // 芯片行再放一枚「电量 76%」等于同一数字说第二遍。删掉，电量只由刻度盘承担。
                 Button { showModuleOrder = true } label: {
                     VChip(
                         title: "版面",
@@ -259,12 +254,7 @@ struct DoorScreen: View {
         return V.C.rewardGreen
     }
 
-    private var batteryChipValue: String {
-        guard let lock = app.lock, lock.battery >= 0 else { return "--" }
-        return "\(lock.battery)%"
-    }
-
-    private func refreshLine(_ text: String) -> some View {
+        private func refreshLine(_ text: String) -> some View {
         HStack(spacing: V.S.gapS) {
             Image(systemName: "arrow.clockwise")
                 .font(V.F.icon15)
