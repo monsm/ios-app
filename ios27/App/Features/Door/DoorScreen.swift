@@ -804,7 +804,15 @@ struct DoorScreen: View {
     }
 
     /// 实际会渲染的快捷格（受 quickGridCount 限制）。
-    private var quickShown: [QuickAction] { Array(QuickPool.ordered().prefix(store.quickGridCount)) }
+    ///
+    /// 2026-11-03（整页截图实测 · 第四次）：kf_quick_grid 读到 0 时，prefix(0) 让
+    /// quickShown 变空 —— 而空态分支又只在"真的没有选中项"时才给提示，于是格子区
+    /// 只剩高度没有内容。上限是"最多显示几格"，不该把列表清零：下限钉在 1，
+    /// 上限仍按设置。
+    private var quickShown: [QuickAction] {
+        let cap = max(1, store.quickGridCount)
+        return Array(QuickPool.ordered().prefix(cap))
+    }
     /// 是否会出现「待添加指纹」那一格（指纹为空时才出现）。
     private var pendingFingerTileShown: Bool {
         app.currentKeychain.map { DB.listFps($0.mac).isEmpty } == true

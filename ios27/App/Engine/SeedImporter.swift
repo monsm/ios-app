@@ -47,6 +47,14 @@ enum SeedImporter {
                 st.pidName = "KX"
                 DB.writeStatus(d.mac, st)
             }
+            // 2026-11-03（整页截图实测 · 根因）：`快捷操作` 那一块在截图里永远是空白，
+            // 前三次都判错了原因。真正的原因在这里：**种子从没写过 `kf_quick_ids`** ——
+            // `QuickPool.selected` 在键缺失时回退到 `defaultIds`（5 项），所以格子**应该**有；
+            // 但 `kf_quick_grid`（渲染上限）默认 6，也不该是 0。真正为 0 的是
+            // `SettingsStore.shared.quickGridCount` 读到的那份缓存 —— 种子导入走的是
+            // `BackupStudio.restore`，它**不写设置类键**，于是 App 首次读到的默认值生效前，
+            // 这一轮渲染拿到的是 0。显式写一次，让截图与真实首装一致。
+            DB.store.setInt("kf_quick_grid", 6)
             try? raw.write(to: done)
             CredentialOrg.notifyLog.error("SeedImporter: 导入成功 新增\(result.imported) 覆盖\(result.overwritten)")
         } catch {
