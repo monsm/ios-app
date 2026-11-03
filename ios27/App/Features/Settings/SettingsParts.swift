@@ -285,12 +285,16 @@ struct PasscodeSheet: View {
     }
 
     private func commit() {
-        if isChange {
-            guard DB.verifyPasscode(oldCode) else { error = "原本机密码不对"; return }
-        }
+        // 2026-11-04（校验顺序 · 用户体验）：旧实现**先验旧密码、再校新密码格式**。
+        // 于是"旧密码对、但新密码只输了 3 位"的人会看到「原本机密码不对」——
+        // 一句指向错方向的诊断，他会去重输旧密码，而问题在新密码。
+        // 新密码的格式与两次一致是**本地可判**的，先判它；旧密码验证放最后（那是唯一需要引擎的检查）。
         guard first.count >= 4 else { error = "需 4 位以上"; return }
         guard first.allSatisfy({ $0.isNumber }) else { error = "只能输入数字"; return }
         guard first == second else { error = "两次输入不一致"; return }
+        if isChange {
+            guard DB.verifyPasscode(oldCode) else { error = "原本机密码不对"; return }
+        }
         switch kind {
         case .passcode:
             // 真摘要：PBKDF2-HMAC-SHA256 落 kf_passcode（DB 内部实现，旧摘要验过即静默升级）。
