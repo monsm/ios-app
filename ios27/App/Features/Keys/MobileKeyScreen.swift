@@ -12,6 +12,10 @@ struct MobileKeyScreen: View {
     @Environment(Router.self) private var router
 
     @State private var owner: String?
+    /// 2026-11-03（全功能点排查）：本屏原来**没有忙态** —— 连点两次「签发」会真的签两把，
+    /// 每把都要从锁的 PIN 池里占一个名额（池子只有 64 个）。同一处也没有撤销确认。
+    @State private var busy = false
+    @State private var revokeTarget: KeyItem?
     @State private var forever = true
     @State private var validTo = Date().addingTimeInterval(8 * 3600)
     @State private var errorText: String?
@@ -43,6 +47,15 @@ struct MobileKeyScreen: View {
         .navigationBarTitleDisplayMode(.large)
         .onAppear {
             if owner == nil { owner = app.members.first { !$0.archived }?.name }
+        }
+        .confirmationDialog("撤销这把手机钥匙？", isPresented: Binding(
+            get: { revokeTarget != nil },
+            set: { if !$0 { revokeTarget = nil } }
+        ), titleVisibility: .visible, presenting: revokeTarget) { key in
+            Button("撤销", role: .destructive) { revoke(key); revokeTarget = nil }
+            Button("取消", role: .cancel) { revokeTarget = nil }
+        } message: { key in
+            Text("「\(CredentialOrg.ownerName(key.owner).isEmpty ? key.name : CredentialOrg.ownerName(key.owner))」这把钥匙会立刻失效，对方再也开不了门。锁端的 PIN 名额不会自动收回。")
         }
     }
 
@@ -111,9 +124,10 @@ struct MobileKeyScreen: View {
                     KeysInlineNote(tone: .critical, text: errorText)
                 }
 
-                VActionButton(title: "签发一把手机钥匙", systemImage: "iphone.gen3.badge.key") {
+                VActionButton(title: busy ? "签发中…" : "签发一把手机钥匙", systemImage: "iphone.gen3.badge.key") {
                     issue()
                 }
+                .disabled(busy)
                 if let justIssued {
                     VStatusLine(tone: .ok, text: "已签发给 \(justIssued) —— 到下面的钥匙行里点「⋯ → 复制开锁凭证」交给对方。")
                 }
@@ -173,7 +187,9 @@ struct MobileKeyScreen: View {
                     Label("复制开锁凭证", systemImage: "doc.on.doc")
                 }
                 Button(role: .destructive) {
-                    revoke(key)
+                    // 2026-11-03：撤销是"让对方进不了门"的动作，原来一点就执行。
+                    // 改成先弹确认（带上钥匙归属与剩余有效期，让用户认得出是哪一把）。
+                    revokeTarget = key
                 } label: {
                     Label("撤销这把钥匙", systemImage: "trash")
                 }
@@ -211,6 +227,7 @@ struct MobileKeyScreen: View {
     // MARK: 真动作
 
     private func issue() {
+        guard !busy else { return }
         guard let owner else {
             errorText = "先选一位成员 —— 钥匙要归到某个人名下。"
             return
@@ -230,7 +247,9 @@ struct MobileKeyScreen: View {
         let df = DF.cached("yyyy-MM-dd HH:mm")
         let fromText = df.string(from: Date())
         let toText = df.string(from: validTo)
+        busy = true
         Task { @MainActor in
+            defer { busy = false }
             do {
                 // 真链路：从锁 PIN 池分配 → buildEkeyShare 签 ekey → 落 kf_mobilekeys。
                 _ = try await MobileKeyService.issue(kc: kc, member: member,

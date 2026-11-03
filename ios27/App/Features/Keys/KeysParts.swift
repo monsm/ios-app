@@ -94,6 +94,12 @@ enum KeysState {
     @MainActor
     static func expiryLine(_ key: KeyItem) -> (value: String, unit: String?) {
         guard let expiresAt = key.expiresAt else { return ("永久", nil) }
+        // 2026-11-03（全功能点排查）：这里漏了"永久哨兵"这一档 —— 永久密码的 expiresAt
+        // 是 2118-12-31 23:59，于是详情页「到期日」显示 2118-12-31、「剩余」却显示「永久」，
+        // 同一张卡里两行自相矛盾。与 daysLeft 用同一个阈值判定。
+        if TimeFormat.calendar.component(.year, from: TimeFormat.date(expiresAt)) >= permanentYearThreshold {
+            return ("永久", nil)
+        }
         return (TimeFormat.dayShort(expiresAt), TimeDisplay.clock(expiresAt))
     }
 

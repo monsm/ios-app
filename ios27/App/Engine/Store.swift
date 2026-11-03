@@ -285,14 +285,17 @@ enum DB {
     static func removeMember(_ id: String) {
         guard store.canWriteDict("kf_members") else { return }
         var map = store.getDict("kf_members")
+        // 2026-11-03：旧数据的台账 owner 存的是**成员名**。删成员时必须把名字口径也解绑，
+        // 否则那些行会指向一个已经不存在的名字 —— 界面显示「未归属」，但永远认不回来。
+        let legacyName = (map[id] as? [String: Any])?["name"] as? String ?? ""
         map.removeValue(forKey: id)
         store.set("kf_members", map)
         // 解除全部台账归属 (凭证保留)
         for kc in keychains() {
             var l = ledger(kc.mac)
             var changed = false
-            for i in l.pwds.indices where l.pwds[i].owner == id { l.pwds[i].owner = nil; changed = true }
-            for i in l.fps.indices where l.fps[i].owner == id { l.fps[i].owner = nil; changed = true }
+            for i in l.pwds.indices where l.pwds[i].owner == id || (!legacyName.isEmpty && l.pwds[i].owner == legacyName) { l.pwds[i].owner = nil; changed = true }
+            for i in l.fps.indices where l.fps[i].owner == id || (!legacyName.isEmpty && l.fps[i].owner == legacyName) { l.fps[i].owner = nil; changed = true }
             if changed { saveLedger(kc.mac, l) }
             // 2026-10-14: 认领映射 (kf_mclaim_) 里指向该成员的条目必须删掉 —— 否则记录页 whoId 指向
             // 已删 id 既显示不出人, 又因 claims 里仍有该 id 而**永远无法重新认领** (悬空引用)。

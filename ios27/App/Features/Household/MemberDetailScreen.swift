@@ -39,7 +39,8 @@ struct MemberDetailScreen: View {
                     profileCard(member)
                     HHMemberKeysCard(
                         member: member,
-                        keys: app.keys.filter { $0.owner == member.name },
+                        // 2026-11-03：同上 —— owner 存 id，只按名字筛会让「名下凭证」永远是空卡片。
+                        keys: app.keys.filter { $0.owner == member.id || $0.owner == member.name },
                         openKey: { id in router.request(.key(id: id)) },
                         createKey: { router.request(.dest(.keyCreate)) }
                     )
@@ -386,7 +387,9 @@ struct MemberDetailScreen: View {
     ///   文案里如实写「锁端仍需线下删」，不假装已经排了队列。
     private var deleteMessage: String {
         guard let m = member else { return "" }
-        let owned = app.keys.filter { $0.owner == m.name }
+        // 2026-11-03（全功能点排查）：owner 现在存**成员 id**（旧数据可能是名字）。
+        // 只按名字比会让"删除成员"的级联预告永远说"名下没有台账凭证"。
+        let owned = app.keys.filter { $0.owner == m.id || $0.owner == m.name }
         if owned.isEmpty {
             return "「\(m.name)」名下没有台账凭证。本机档案删除后不可恢复。"
         }
@@ -403,9 +406,9 @@ struct MemberDetailScreen: View {
         // Engine 侧删除：DB.removeMember 会连带解除台账里这些凭证的归属（凭证本身保留）。
         DB.removeMember(m.id)
         if cascade {
-            app.keys.removeAll { $0.owner == m.name }
+            app.keys.removeAll { $0.owner == m.id || $0.owner == m.name }
         } else {
-            for i in app.keys.indices where app.keys[i].owner == m.name {
+            for i in app.keys.indices where app.keys[i].owner == m.id || app.keys[i].owner == m.name {
                 let k = app.keys[i]
                 // `createdAt` 必须一起带过来：漏了它，解除归属会把「已使用 N 天」清零（默认值 0 不报错）。
                 app.keys[i] = KeyItem(id: k.id, kind: k.kind, name: k.name, owner: nil,

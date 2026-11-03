@@ -209,6 +209,11 @@ struct KeyCreateScreen: View {
     // MARK: 提交（写本机台账）
 
     func submit() {
+        // 2026-11-03（全功能点排查）：**没有忙守卫**。指纹录入最长 150 秒，期间再点一次
+        // 「开始录入指纹」会起第二个 fpStart —— 它覆盖 collector，而先结束的那个在自己的
+        // defer 里把 collector 置 nil，于是第二个永远收不到按压帧，等到超时。
+        // 同一屏的密码分支也有同类风险（重复下发 0A）。
+        guard !busy else { return }
         if kind != .fingerprint {
             guard codeValid else {
                 step = 1
