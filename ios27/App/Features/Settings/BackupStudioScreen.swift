@@ -24,6 +24,10 @@ struct BackupStudioScreen: View {
     @State private var password = ""
     @State private var outcome: String?
     @State private var busy = false
+    /// 2026-11-03（全功能点排查）：恢复与删除备份都是**不可逆**动作，原来点一下就执行。
+    /// 恢复会用文件覆盖当前台账；删除会抹掉唯一一份副本。这里改成先弹确认。
+    @State private var restoreTarget: BackupFile?
+    @State private var deleteTarget: BackupFile?
     /// 已确认过校验和不一致的那份**内容**的指纹（不是布尔）。
     /// 布尔一旦置真就永远为真 —— 用户换一份坏包也会被静默放行，保护随之失效。
     /// 记指纹 = 只对用户刚才看过并同意的那一份放行；内容一变就必须重新确认。
@@ -67,6 +71,22 @@ struct BackupStudioScreen: View {
         .navigationTitle("备份工作室")
         .navigationBarTitleDisplayMode(.large)
         .onAppear { reloadFiles() }
+        .confirmationDialog("恢复这份备份？", isPresented: Binding(
+            get: { restoreTarget != nil }, set: { if !$0 { restoreTarget = nil } }
+        ), titleVisibility: .visible, presenting: restoreTarget) { file in
+            Button("恢复", role: .destructive) { restoreFile(file); restoreTarget = nil }
+            Button("取消", role: .cancel) { restoreTarget = nil }
+        } message: { file in
+            Text("「\(file.name)」里的锁与凭证会**合并进**当前台账：同名项被覆盖，不存在的项新增。当前台账里那些备份中没有的条目不会被删除。")
+        }
+        .confirmationDialog("删除这份备份文件？", isPresented: Binding(
+            get: { deleteTarget != nil }, set: { if !$0 { deleteTarget = nil } }
+        ), titleVisibility: .visible, presenting: deleteTarget) { file in
+            Button("删除", role: .destructive) { deleteFile(file); deleteTarget = nil }
+            Button("取消", role: .cancel) { deleteTarget = nil }
+        } message: { file in
+            Text("「\(file.name)」会从本机删除且不可恢复。如果这是唯一一份备份，删掉就没有可回滚的副本了。")
+        }
     }
 
     private var header: some View {
@@ -139,9 +159,9 @@ struct BackupStudioScreen: View {
                     .font(V.F.micro).foregroundStyle(V.C.text3)
             }
             Spacer(minLength: 0)
-            Button("恢复") { restoreFile(file) }
+            Button("恢复") { restoreTarget = file }
                 .font(V.F.footnote).foregroundStyle(V.C.blue)
-            Button("删除") { deleteFile(file) }
+            Button("删除") { deleteTarget = file }
                 .font(V.F.footnote).foregroundStyle(V.C.pink)
         }
         .frame(minHeight: V.List.rowMinHeight)
