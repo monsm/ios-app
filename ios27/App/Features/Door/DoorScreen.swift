@@ -22,17 +22,6 @@ struct DoorScreen: View {
     /// 连接感知（原 LinkSenseKit 的预热/回连阶梯/RSSI 历史）。
     @State private var link = LinkSenseModel()
 
-    // 圆盘手势态（原 UnlockDial.swift:311-455）
-    @State private var pressing = false
-    @State private var holdProgress: CGFloat = 0
-    /// 滑动开锁：拖动起始角度（度，12 点为 0、顺时针）。
-    @State private var slideStartAngle: Double = 0
-    @State private var armed = false
-    @State private var firedThisTouch = false
-    @State private var lastFireAt: Date?
-    @State private var lastTapAt: Date?
-    @State private var holdTask: Task<Void, Never>?
-
     private var store: SettingsStore { SettingsStore.shared }
 
     var body: some View {
@@ -99,7 +88,6 @@ struct DoorScreen: View {
             }
         }
         .refreshable { await rescan() }
-        .onDisappear { holdTask?.cancel() }
     }
 
     // MARK: - 芯片行
@@ -324,37 +312,14 @@ struct DoorScreen: View {
                 )
                 .scaleEffect(dialScale)
 
-                // 按住进度环（信息型动效：reduceMotion 下仍然显示，只是不弹）
-                Circle()
-                    .trim(from: 0, to: holdProgress)
-                    .stroke(V.C.blue, style: StrokeStyle(lineWidth: V.S.gapXS, lineCap: .round))
-                    .frame(width: V.Gauge.outer * dialScale - V.S.gapL,
-                           height: V.Gauge.outer * dialScale - V.S.gapL)
-                    .rotationEffect(.degrees(-90))
-                    .opacity(holdProgress > 0.001 ? 0.95 : 0)
-                    .accessibilityHidden(true)
-
-                if armed {
-                    Circle()
-                        .strokeBorder(V.C.rewardGreen.opacity(0.75),
-                                      style: StrokeStyle(lineWidth: V.S.hair, dash: [V.S.gapXS, V.S.gapXS]))
-                        .frame(width: V.Gauge.outer * dialScale - V.S.gapL,
-                               height: V.Gauge.outer * dialScale - V.S.gapL)
-                        .accessibilityHidden(true)
-                }
             }
             .frame(width: V.Gauge.outer, height: V.Gauge.outer)
-            .contentShape(.circle)
-            .highPriorityGesture(dialGesture)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("开锁")
-            .accessibilityValue(app.dialPhase.word)
-            .accessibilityHint(dialHint)
-            .accessibilityAddTraits(.isButton)
-            .accessibilityAction { requestUnlock() }
 
+            // 2026-11-03：唯一的手动开锁方式 —— 原生来电滑块（替代按住/轻点/双击/环滑四套手势）。
+            GlassSlideToUnlock(onUnlock: { requestUnlock() },
+                               busy: app.dialPhase.isBusy)
+                .padding(.horizontal, V.S.pageGutterA)
             phaseBar
-            unlockHintLine
             autoLockLine
             retryLine
             failureChain
@@ -362,7 +327,6 @@ struct DoorScreen: View {
         .frame(maxWidth: .infinity)
         .padding(.top, V.S.gapM)
         .animation(reduceMotion ? nil : V.M.move, value: app.dialPhase)
-        .animation(reduceMotion ? nil : V.M.snap, value: armed)
     }
 
     private var dialScale: CGFloat {
@@ -377,19 +341,6 @@ struct DoorScreen: View {
         store.digitFont == "plain" ? V.F.gaugeNumberPlain : V.F.gaugeNumber
     }
 
-    private var dialHint: String {
-        if app.dialPhase.isBusy { return "开锁中 · 轻点圆盘可撤销等待" }
-        if fenceRequired && !armed { return "误触围栏开启：先从圆盘边缘拖到中心，再执行开锁手势" }
-        switch effectiveGesture {
-        case "tap": return "轻点开锁"
-        case "slide": return "按住游标沿圆环滑到底开锁"
-        case "double": return "双击开锁"
-        default: return "按住 \(String(format: "%.1f", holdDuration)) 秒确认开锁，也可上滑"
-        }
-    }
-
-    // MARK: 三段进度条（原版 80：握手 / 鉴权 / 执行）
-
     private var phaseBar: some View {
         HStack(spacing: V.S.gapXS) {
             ForEach(1 ... 3, id: \.self) { index in
@@ -403,23 +354,6 @@ struct DoorScreen: View {
         .frame(maxWidth: V.Gauge.outer * 0.56)
         .opacity(app.unlockPhase > 0 ? 1 : 0.35)
         .accessibilityHidden(true)
-    }
-
-    /// 2026-11-02（**真 UX 缺陷**）：圆盘是开锁主控件，但它的中心显示的是电量读数，
-    /// 屏上**没有任何一处写出"怎么开锁"** —— 「轻点开锁 / 按住 0.9 秒」只存在于
-    /// `dialHint`（无障碍提示）里，看得见屏幕的人反而看不到。
-    /// 首次使用的人只会以为那是个电量表。这里把提示显示出来；失败时让位给 failureChain。
-    @ViewBuilder
-    private var unlockHintLine: some View {
-        if !app.dialPhase.isFailed && !app.dialPhase.isBusy {
-            Text(dialHint)
-                .font(V.F.footnote)
-                .foregroundStyle(V.C.text3)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, V.S.pageGutterA)
-                // 圆盘自身已有 accessibilityHint，这里对读屏隐藏，避免同一句播报两遍。
-                .accessibilityHidden(true)
-        }
     }
 
     @ViewBuilder
@@ -537,145 +471,13 @@ struct DoorScreen: View {
         "门锁电量足够（低电时先换电池再试）"
     ]
 
-    // MARK: - 手势（按住 / 上滑 / 围栏 / 双击 / 轻点）
-
-    private var dialGesture: some Gesture {
-        DragGesture(minimumDistance: 0, coordinateSpace: .local)
-            .onChanged { value in
-                guard !app.dialPhase.isBusy else { return }
-                let center = CGPoint(x: V.Gauge.outer / 2, y: V.Gauge.outer / 2)
-                let radius = V.Gauge.outer / 2
-                func inside(_ point: CGPoint) -> Bool {
-                    hypot(point.x - center.x, point.y - center.y) < radius * 0.75
-                }
-                if fenceRequired && !armed {
-                    if !inside(value.startLocation), inside(value.location) {
-                        armed = true
-                        Task { @MainActor in
-                            try? await Task.sleep(for: .seconds(4))
-                            armed = false
-                        }
-                    }
-                    return
-                }
-                guard inside(value.startLocation) else { return }
-                if !pressing {
-                    pressing = true
-                    firedThisTouch = false
-                    holdProgress = 0
-                    if effectiveGesture == "hold" { beginHold() }
-                    if effectiveGesture == "slide" { slideStartAngle = angle(of: value.location) }
-                }
-                if effectiveGesture == "hold", value.translation.height < -56 {
-                    holdTask?.cancel()
-                    holdTask = nil
-                    holdProgress = 1
-                }
-                if effectiveGesture == "slide" {
-                    // 游标沿刻度环滑：从起点角度顺时针走多少度 = 进度。
-                    // 环有一个 34.6° 的缺口（gapStart 201°），可滑行程按 360-缺口 ≈ 325° 计。
-                    let a = angle(of: value.location)
-                    var delta = a - slideStartAngle
-                    while delta < -180 { delta += 360 }
-                    while delta > 180 { delta -= 360 }
-                    if delta < 0 { delta += 360 }   // 只认顺时针
-                    holdProgress = min(1, max(0, CGFloat(delta / 325.0)))
-                    if holdProgress >= 1, !firedThisTouch {
-                        firedThisTouch = true
-                        requestUnlock()
-                    }
-                }
-            }
-            .onEnded { value in
-                let moved = abs(value.translation.width) + abs(value.translation.height)
-                if app.dialPhase.isBusy {
-                    if moved < V.S.gapMS { app.cancelUnlock() }
-                    resetGesture()
-                    return
-                }
-                guard !firedThisTouch else { resetGesture(); return }
-                switch effectiveGesture {
-                case "tap":
-                    if moved < V.S.gapMS { requestUnlock() }
-                case "double":
-                    if moved < V.S.gapMS { handleDoubleTap() }
-                default:
-                    if holdProgress >= 1 {
-                        requestUnlock()
-                    } else if SettingsStore.shared.tapDirect, moved < V.S.gapMS {
-                        handleDoubleTap()
-                    }
-                }
-                resetGesture()
-            }
-    }
-
-    /// 本地点 → 12 点起顺时针角度（度）。数学角（x 右 y 下）转表盘角：atan2 后 +90° 再归一。
-    private func angle(of point: CGPoint) -> Double {
-        let c = Double(V.Gauge.outer / 2)
-        let dx = Double(point.x) - c, dy = Double(point.y) - c
-        var deg = (atan2(dy, dx) * 180 / .pi) + 90
-        if deg < 0 { deg += 360 }
-        return deg
-    }
-
-    private var fenceRequired: Bool { DB.store.getBool("kf_fence", false) }
-
-    private var effectiveGesture: String {
-        if !SettingsStore.shared.holdConfirm { return "tap" }
-        let mode = SettingsStore.shared.gestureMode   // 走可观察属性，改档后门页立刻重算（Round 254）
-        return ["hold", "slide", "tap", "double"].contains(mode) ? mode : "hold"
-    }
-
-    private var holdDuration: Double {
-        min(1.6, max(0.4, DB.store.getDouble("kf_ax_hold", 0.9)))
-    }
-
-    private func beginHold() {
-        holdTask?.cancel()
-        let start = Date()
-        let duration = holdDuration
-        holdTask = Task { @MainActor in
-            while !Task.isCancelled {
-                let p = min(1, Date().timeIntervalSince(start) / duration)
-                holdProgress = CGFloat(p)
-                if p >= 1 {
-                    requestUnlock()
-                    return
-                }
-                try? await Task.sleep(for: .milliseconds(16))
-            }
-        }
-    }
-
-    private func resetGesture() {
-        holdTask?.cancel()
-        holdTask = nil
-        pressing = false
-        withAnimation(reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 0.55)) {
-            holdProgress = 0
-        }
-    }
-
-    private func handleDoubleTap() {
-        let now = Date()
-        if let last = lastTapAt, now.timeIntervalSince(last) < 0.45 {
-            lastTapAt = nil
-            requestUnlock()
-        } else {
-            lastTapAt = now
-        }
-    }
-
     /// 唯一开锁入口：本机密码闸（30 秒内二次开锁）+ 双击防抖 + 真命令链。
     private func requestUnlock() {
         guard app.dialPhase == .idle || app.dialPhase.isFailed else { return }
-        guard !firedThisTouch else { return }
         if SettingsStore.shared.dbltapGuard,
            let last = lastFireAt, Date().timeIntervalSince(last) < 0.3 {
             return
         }
-        firedThisTouch = true
         lastFireAt = Date()
         if needsGate {
             showUnlockGate = true

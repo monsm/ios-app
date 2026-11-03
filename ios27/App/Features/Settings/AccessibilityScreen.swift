@@ -11,10 +11,8 @@ import SwiftUI
 enum AXSettings {
     static var bigText: Bool { SettingsStore.shared.axBigText }
     static var bigOTP: Bool { DB.store.getBool("kf_ax_bigotp") }
-    static var holdConfirm: Bool { DB.store.getBool("kf_hold_confirm", true) }
     static var bigTile: Bool { DB.store.getBool("kf_bigtile") }
     static var dialSize: String { DB.store.getString("kf_dial_size", "standard") }
-    static var gestureMode: String { DB.store.getString("kf_gesture_mode", "hold") }
 
     static var dynamicTypeSize: DynamicTypeSize {
         bigText ? .accessibility2 : .large
@@ -28,18 +26,14 @@ struct AccessibilityScreen: View {
     // 保留 @State 是为了点一下就有反馈；每次出现时从持久层重新同步一次。
     @State private var bigText = SettingsStore.shared.axBigText
     @State private var bigOTP = AXSettings.bigOTP
-    @State private var holdConfirm = AXSettings.holdConfirm
     @State private var bigTile = AXSettings.bigTile
     @State private var dialSize = AXSettings.dialSize
-    @State private var gestureMode = AXSettings.gestureMode
 
     private func syncFromStore() {
         bigText = SettingsStore.shared.axBigText
         bigOTP = AXSettings.bigOTP
-        holdConfirm = AXSettings.holdConfirm
         bigTile = AXSettings.bigTile
         dialSize = AXSettings.dialSize
-        gestureMode = AXSettings.gestureMode
     }
 
     var body: some View {
@@ -109,40 +103,6 @@ struct AccessibilityScreen: View {
                     }
                     Spacer(minLength: 0)
                 }
-                VRowDivider()
-                Text("开锁手势")
-                    .font(V.F.chipLabel).foregroundStyle(V.C.text4)
-                HStack(spacing: V.S.gapS) {
-                    ForEach(Array([(key: "hold", label: "按住开锁"), (key: "slide", label: "滑动开锁"), (key: "tap", label: "轻点开锁"), (key: "double", label: "双击开锁")].enumerated()), id: \.offset) { pair in
-                        let item = pair.element
-                        // 2026-11-01（Round 254）：走 `SettingsStore`（会 bump `revision`），不要只写 DB 键 ——
-                        // 门页读的是可观察属性，直写拿不到这次变更，改档后手势不生效。
-                        Button { gestureMode = item.key; SettingsStore.shared.gestureMode = item.key } label: {
-                            VTag(text: item.label, tint: gestureMode == item.key ? V.C.blue : V.C.text3, filled: gestureMode == item.key)
-                        }
-                        .buttonStyle(.plain)
-                        // 2026-11-01（Round 269）：**「按住确认」关闭时，门页的手势被强制成「轻点直开」**
-                        // （`DoorScreen.effectiveGesture` 第一行就 `if !holdConfirm { return "tap" }`）。
-                        // 而这里三个芯片一直可点、还会把「双击开锁」显示成已选中 ——
-                        // 用户以为双击在防误触，实际**轻点一下就开门**。安全语义被悄悄改掉，界面必须说实话。
-                        // 用**可观察**的 `SettingsStore` 值判禁用，而不是本地 `@State` ——
-                        // 这个开关在安全页也能改，本地镜像会滞后（`@State` 只在 onAppear 同步）。
-                        .disabled(!SettingsStore.shared.holdConfirm)
-                        .opacity(SettingsStore.shared.holdConfirm ? 1 : 0.45)
-                    }
-                    Spacer(minLength: 0)
-                }
-                if !SettingsStore.shared.holdConfirm {
-                    Text("「按住确认开锁」关闭时，手势固定为轻点直开 —— 想用按住或双击，请先打开下面的开关。")
-                        .font(V.F.micro)
-                        .foregroundStyle(V.C.text3)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                VRowDivider()
-                VToggleRow(title: "按住确认开锁", detail: "关掉后退回轻点直开，单手更省力但误触也会开门。", isOn: Binding(
-                    get: { holdConfirm },
-                    set: { on in holdConfirm = on; SettingsStore.shared.holdConfirm = on }   // 同上：必须 bump revision
-                ))
             }
         }
         .padding(.horizontal, V.S.cardGutter)

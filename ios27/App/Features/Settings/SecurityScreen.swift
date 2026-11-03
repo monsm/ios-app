@@ -256,12 +256,6 @@ struct SecurityScreen: View {
             VCard {
                 VStack(alignment: .leading, spacing: V.S.gapMS) {
                     SettingToggle(
-                        label: "按住确认开锁",
-                        note: "按住刻度盘才算确认。关掉后退回轻点直开 —— 单手时更省力，但误触也会开门。",
-                        isOn: settingsBinding(\.holdConfirm)
-                    )
-                    SettingRule()
-                    SettingToggle(
                         label: "失败自动重试",
                         note: "一次没开成时自动重试两次（2 秒 / 5 秒退避）。超时不重试 —— 免得在门口反复广播。",
                         isOn: settingsBinding(\.autoRetry)

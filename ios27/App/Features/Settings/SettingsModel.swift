@@ -239,11 +239,6 @@ final class SettingsStore {
 
     // MARK: 开锁确认（防误触）
 
-    var holdConfirm: Bool {
-        get { _ = revision; return DB.store.getBool("kf_hold_confirm", true) }
-        set { DB.store.set("kf_hold_confirm", newValue); revision &+= 1 }
-    }
-
     var autoRetry: Bool {
         get { _ = revision; return DB.store.getBool("kf_auto_retry", true) }
         set { DB.store.set("kf_auto_retry", newValue); revision &+= 1 }
