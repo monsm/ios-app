@@ -327,8 +327,20 @@ struct DoorScreen: View {
                 )
                 .scaleEffect(dialScale)
 
+                // 2026-11-03（控件改进）：开锁成功时圆盘中心浮出绿色对勾 ——
+                // 原来成功只靠 phaseBar 一行小字，用户眼睛在门上时根本看不到。
+                // 只覆盖中心区（不遮电量环），成功态淡出后回到电量读数。
+                if app.dialPhase == .opened {
+                    Image(systemName: "checkmark")
+                        .font(V.F.icon28Semibold)
+                        .foregroundStyle(V.C.rewardGreen)
+                        .transition(reduceMotion ? .opacity : .scale(scale: 0.6).combined(with: .opacity))
+                        .accessibilityHidden(true)
+                }
             }
             .frame(width: V.Gauge.outer, height: V.Gauge.outer)
+            .animation(reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.62),
+                       value: app.dialPhase == .opened)
 
             phaseBar
             autoLockLine
