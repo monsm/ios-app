@@ -284,8 +284,11 @@ struct HardwareScreen: View {
                 DB.saveDongle(rec)
                 store.lastScanAt = Int64(Date().timeIntervalSince1970 * 1000)
             } catch {
-                // 扫描没找到不算"永久失败"：页面空态仍给下一步，这里只记时刻。
-                store.lastScanAt = Int64(Date().timeIntervalSince1970 * 1000)
+                // 2026-11-03（交互 QA）：原来这里**只记时刻、不报错** —— 页头随后显示
+                // 「上次扫描 · 刚刚」，用户看到的是"扫过了、没找到"，而真实原因可能是
+                // 蓝牙没开 / 权限被拒 / 扫描超时。两种完全不同的处境被显示成同一句话。
+                // 失败必须说出来；成功才更新「上次扫描」。
+                errorText = "扫描失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
             }
         }
     }

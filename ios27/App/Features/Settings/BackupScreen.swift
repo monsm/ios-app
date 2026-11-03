@@ -113,7 +113,13 @@ struct BackupScreen: View {
     // MARK: 主角：导出
     private var exportPanel: some View {
         VStack(spacing: V.S.gapS) {
-            VSectionLabel(text: "全量备份", trailing: store.encryptBackup ? "加密" : "明文")
+            // 2026-11-03（交互 QA · 死路）：原来这里写「加密 / 明文」跟着一个「加密备份」开关走，
+            // 而 `generate()` 里是 **无条件** `guard !exportPassword.isEmpty` ——
+            // 开关默认关（getBool 缺省 false）⇒ 密码框不渲染 ⇒ 主按钮可点但必然报
+            // 「请先设一个备份密码」，而用户**没有任何地方能设这个密码**。
+            // 首次进页面 = 永远无法生成备份。SEC-02 本来就规定不许明文生成，
+            // 所以正确做法不是放开明文，而是**去掉这个假开关**：加密是唯一路径。
+            VSectionLabel(text: "全量备份", trailing: "加密")
             VCard {
                 VStack(alignment: .leading, spacing: V.S.gapMS) {
                     // 危险说明放最上面：这一屏最重要的信息不是"怎么点按钮"
@@ -122,9 +128,7 @@ struct BackupScreen: View {
                             .font(V.F.icon15)
                             .foregroundStyle(V.C.critical)
                             .accessibilityHidden(true)
-                        Text(store.encryptBackup
-                             ? "加密备份也要当密钥文件对待：口令一旦泄露，文件就是明文门锁密钥（skey / pin / 密码）。别发聊天软件，别放共享文件夹。"
-                             : "明文备份含门锁密钥（skey / pin / 密码）。任何人拿到它就能开你家门，不需要你的手机 —— 别发聊天软件，别放共享文件夹。")
+                        Text("备份文件含门锁密钥（skey / pin / 密码）。口令一旦泄露，文件就等于明文钥匙 —— 拿到它的人不需要你的手机就能开你家门。别发聊天软件，别放共享文件夹。")
                             .font(V.F.footnote)
                             .foregroundStyle(V.C.critical)
                             .fixedSize(horizontal: false, vertical: true)
@@ -148,28 +152,22 @@ struct BackupScreen: View {
 
                     SettingRule()
 
-                    SettingToggle(
-                        label: "加密备份",
-                        note: "开启后需要设一个密码才能生成。忘记密码 = 这份备份永久作废，所以默认关闭。",
-                        isOn: settingsBinding(\.encryptBackup)
-                    )
-
-                    if store.encryptBackup {
-                        VInset {
-                            SecureField("备份密码（至少 8 位）", text: $exportPassword)
-                                .font(V.F.body)
-                                .textContentType(.newPassword)
-                                .accessibilityLabel("备份密码")
-                        }
-                        if !exportPassword.isEmpty, exportPassword.count < 8 {
-                            VStatusLine(tone: .attention, text: "至少 8 位 —— 否则加密形同虚设")
-                        }
+                    // 备份**只能加密生成**（SEC-02）。密码框常驻，不再由开关决定是否出现。
+                    VInset {
+                        SecureField("备份密码（至少 8 位）", text: $exportPassword)
+                            .font(V.F.body)
+                            .textContentType(.newPassword)
+                            .accessibilityLabel("备份密码")
                     }
+                    if !exportPassword.isEmpty, exportPassword.count < 8 {
+                        VStatusLine(tone: .attention, text: "至少 8 位 —— 否则加密形同虚设")
+                    }
+                    SettingsNote(text: "忘记密码 = 这份备份永久作废。请把密码记在安全的地方，或另存一份到密码管理器。")
 
                     VActionButton(title: "生成备份", systemImage: "doc.text", busy: exporting) {
                         generate()
                     }
-                    .disabled(store.encryptBackup && exportPassword.count < 8)
+                    .disabled(exportPassword.count < 8)
 
                     if !exportText.isEmpty {
                         SettingRule()

@@ -48,7 +48,13 @@ struct DFUScreen: View {
         .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("固件升级")
         .navigationBarTitleDisplayMode(.large)
+        // 2026-11-03（交互 QA）：`.interactiveDismissDisabled` 只对**模态**生效，而本页是
+        // `navigationDestination` 推入的 —— 刷写中返回键仍然可用，一点就离开，
+        // 与页内「刷写过程不要离开本页…中途失败锁会停在升级模式」自相矛盾。
+        // 推入页要藏返回键，必须用 `navigationBarBackButtonHidden`。
         .interactiveDismissDisabled(phase == .running)
+        .navigationBarBackButtonHidden(phase == .running)
+        .toolbar(phase == .running ? .hidden : .visible, for: .navigationBar)
         .fileImporter(isPresented: $importing,
                       allowedContentTypes: [.zip, .data],
                       allowsMultipleSelection: false) { result in

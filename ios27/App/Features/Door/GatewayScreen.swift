@@ -391,7 +391,10 @@ struct GatewayScreen: View {
                        rom: g.romVer,
                        ssid: g.ssid.isEmpty ? g.lastWifi : g.ssid,
                        online: g.netState == 1,
-                       lastCheckedAt: Int64(Date().timeIntervalSince1970 * 1000))
+                       // 2026-11-03（交互 QA）：这里把「上次核对」直接赋成**当前时间** ——
+                    // 于是每次进页面/重扫，那一行都显示「刚刚」，但它不是任何一次真实核对。
+                    // 新建记录时留空（显示「—」），真正的核对在 refresh() 里写。
+                    lastCheckedAt: nil)
         }
     }
 

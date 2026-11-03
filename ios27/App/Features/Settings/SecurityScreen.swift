@@ -245,10 +245,11 @@ struct SecurityScreen: View {
                         note: "A 模式单验、B 模式双验。这是锁端策略：切换要连上锁，且切完要回读确认真的生效。"
                     ) { router.request(.dest(.lockStatus)) }
                     SettingRule()
-                    // TODO(engine) 布防状态应读 op=getDeviceSetting（defenceControl / StartTime / EndTime）。
+                    // 2026-11-03（交互 QA）：这里原来写死「未布防」—— 用户在布防页开启布防后
+                    // 回到本页仍然看到「未布防」。改用 DefendKit 的同一个判据（DefendScreen 也用它）。
                     SettingRow(
                         label: "布防",
-                        value: "未布防",
+                        value: DefendKit.isActive(DB.defend(app.currentMac)) ? "布防中" : "未布防",
                         tint: V.C.text2,
                         mono: false,
                         symbol: "shield.lefthalf.filled",

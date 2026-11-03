@@ -247,6 +247,12 @@ struct RecordsStudioScreen: View {
                     Spacer(minLength: 0)
                     Text("\(filtered.count) 条").font(V.F.footnote).foregroundStyle(V.C.text3).monospacedDigit()
                 }
+                // 2026-11-03（交互 QA）：这里只渲染前 60 条，标题却写 `filtered.count` 条，
+                // 且**没有任何提示** —— 多出来的记录用户会以为不存在。补一行说明。
+                if filtered.count > 60 {
+                    VStatusLine(tone: .attention,
+                                text: "共 \(filtered.count) 条，下面只列最近 60 条 —— 用上面的搜索词缩小范围。")
+                }
                 ForEach(Array(filtered.prefix(60).enumerated()), id: \.offset) { pair in
                     HStack(spacing: V.S.gapS) {
                         Circle().fill(pair.element.alarm ? V.C.coral : V.C.rewardGreen)
@@ -262,6 +268,12 @@ struct RecordsStudioScreen: View {
                     .frame(minHeight: V.List.rowMinHeight)
                     VDivider()
                 }
+                // 2026-11-03（交互 QA）：本页的结果行**没有点击行为**（记录页同类的行会打开详情）——
+                // 在这里查到了却打不开，是死路。给一个明确出路，而不是让人去另一个页面重搜。
+                VOutlineButton(title: "到记录页打开（可选行看详情）", systemImage: "list.bullet.rectangle") {
+                    router.request(.dest(.records))
+                }
+                .padding(.top, V.S.gapXS)
             }
         }
         .padding(.horizontal, V.S.cardGutter)
