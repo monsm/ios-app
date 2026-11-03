@@ -52,7 +52,7 @@ struct ZotpScreen: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: V.S.gapXXS) {
                             // 2026-11-03（全维度整理）：标题交给系统导航栏（大标题），页内不再自绘。
-            Text("ZOTP · 6 位数字，按锁端周期自动更换")
+            Text("6 位数字 · 按锁端周期自动更换")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }
         .padding(.horizontal, V.S.pageGutter)
@@ -74,7 +74,7 @@ struct ZotpScreen: View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VCardHeader(title: "锁端开关 · 命令 19")
-                VToggleRow(title: "开通临时密码", detail: otpOn ? "锁端会接受 ZOTP 动态码" : "关闭状态下生成的码不会被锁接受", isOn: Binding(
+                VToggleRow(title: "开通临时密码", detail: otpOn ? "锁端会接受动态码" : "关闭状态下生成的码不会被锁接受", isOn: Binding(
                     get: { otpOn },
                     set: { on in writeEnable(on) }
                 ))

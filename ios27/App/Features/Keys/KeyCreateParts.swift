@@ -27,7 +27,7 @@ extension KeyCreateScreen {
 
                 // 来源：原 App/UI/CredentialOtp.swift「临时密码 (ZOTP)」独立入口。
                 // 动态密码不是一条台账凭证，而是按窗口现算的六位码 —— 单独一页，工坊这里只放入口。
-                VSectionLabel(text: "动态密码", trailing: "ZOTP")
+                VSectionLabel(text: "动态密码", trailing: "锁端周期")
                 KeysInlineNote(tone: .neutral, text: "按锁端周期自动更换的 6 位临时码，不用提前添加凭证。适合给快递、访客当场报码。")
                 Button {
                     router.request(.dest(.zotp))

@@ -167,11 +167,11 @@ struct LockSettingsScreen: View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VCardHeader(title: "临时密码 · 命令 19")
-                Text("开通后，锁端按周期接受 ZOTP 动态临时密码；关闭则所有动态码立即失效。")
+                Text("开通后，锁端按周期接受动态临时密码；关闭则所有动态码立即失效。")
                     .font(V.F.footnote)
                     .foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
-                VToggleRow(title: "开通临时密码", detail: otpOn ? "已开通 · 锁端会接受 ZOTP 动态码" : "已关闭 · 动态码不会被锁接受", isOn: Binding(
+                VToggleRow(title: "开通临时密码", detail: otpOn ? "已开通 · 锁端会接受动态码" : "已关闭 · 动态码不会被锁接受", isOn: Binding(
                     get: { otpOn },
                     set: { on in writeOtp(on) }
                 ))

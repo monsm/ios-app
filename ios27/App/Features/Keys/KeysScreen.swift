@@ -631,7 +631,7 @@ struct KeysScreen: View {
                     }
                     VListRow(
                         title: "动态密码",
-                        detail: "按锁端周期生成 6 位 ZOTP 码",
+                        detail: "按锁端周期生成 6 位动态码",
                         systemImage: "clock.badge.questionmark",
                         tint: V.C.miniBlue
                     ) { router.request(.dest(.zotp)) }

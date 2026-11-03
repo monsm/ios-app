@@ -72,7 +72,7 @@ struct AccessibilityScreen: View {
                     set: { on in bigText = on; SettingsStore.shared.axBigText = on }
                 ))
                 VRowDivider()
-                VToggleRow(title: "放大临时码", detail: "生成 ZOTP 时用大字号显示六位码，并允许双击切换。", isOn: Binding(
+                VToggleRow(title: "放大临时码", detail: "生成动态码时用大字号显示六位码，并允许双击切换。", isOn: Binding(
                     get: { bigOTP },
                     set: { on in bigOTP = on; DB.store.set("kf_ax_bigotp", on) }
                 ))
