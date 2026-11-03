@@ -23,6 +23,13 @@ on:
       - ".github/workflows/ios27.yml"
   workflow_dispatch:
 
+# 2026-11-03：**队列控制**。之前每个 push 都排一整套（gates+golden+build+shots，约 13-20 分钟），
+# 连续几次提交就把队列堆到一小时。同一个分支只保留最新一次：新 push 到达时取消还在跑的旧 run。
+# 产物（IPA/截图）由新 run 重新产出；ci-shots 是独立分支，不受取消影响。
+concurrency:
+  group: ios27-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   # Release 资产是公开直链可下载的；artifact 下载要登录，所以 IPA 必须挂 Release。
   contents: write
