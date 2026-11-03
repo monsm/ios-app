@@ -170,7 +170,6 @@ struct DefendScreen: View {
                     ], columns: 2)
                     .padding(.top, V.S.gapXS)
                 }
-                .padding(.top, V.S.gapXS)
             }
         }
         .padding(.horizontal, V.S.pageGutter)
