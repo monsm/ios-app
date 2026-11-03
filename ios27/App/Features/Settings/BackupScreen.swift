@@ -357,9 +357,12 @@ struct BackupScreen: View {
     private static func previewNote(text: String, password: String) -> String {
         guard !text.isEmpty,
               let p = try? BackupStudio.parsePreview(text: text, password: password.isEmpty ? nil : password) else { return "" }
-        var note = "这份备份含 \(p.preview.pwdCount) 条密码 / \(p.preview.fpCount) 枚指纹。\n\n"
+        // 2026-11-04（口径跟进）：`pwdCount` / `fpCount` 现在**只统计会被写入的锁**
+        // （见 `BackupStudioKit.parsePreview` 的 willSkip 过滤）。所以这里不能说「这份备份含」，
+        // 也不能说「其中 N 把会被跳过」—— 被跳过那些已经不在计数里了。
+        var note = "这份备份里能被写入的有 \(p.preview.pwdCount) 条密码 / \(p.preview.fpCount) 枚指纹。\n\n"
         if p.preview.skippedLocks > 0 {
-            note += "其中 \(p.preview.skippedLocks) 把锁的密钥格式非法，恢复时会整把跳过（这些锁的凭证不会写进本机）。\n\n"
+            note += "另有 \(p.preview.skippedLocks) 把锁的密钥格式非法，会整把跳过 —— 它们的凭证不计入上面的数字，也不会写进本机。\n\n"
         }
         return note
     }
