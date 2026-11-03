@@ -754,15 +754,16 @@ struct DoorScreen: View {
             }
             // 2026-11-03（整页截图暴露）：池子为空时这里只剩标题 + 一片空白。
             // 空态给一句话说明，别让用户对着空气猜。
-            if QuickPool.ordered().isEmpty
-                && app.currentKeychain.map({ DB.listFps($0.mac).isEmpty }) != true {
-                Text("还没有快捷操作。点右上角「编辑」挑几枚常用凭证，之后一按就能开。")
+            // 2026-11-03（截图实测）：原来判「整池为空 且 指纹非空」—— 池子空而指纹也读不到时
+            // 两个条件都不成立，于是既不显示提示也没有格子，留下一整片空白。改判实际渲染的切片。
+            if quickShown.isEmpty && !pendingFingerTileShown {
+                Text("还没有快捷操作。点「编辑」挑几枚常用凭证，之后一按就能开。")
                     .font(V.F.footnote)
                     .foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
             }
             LazyVGrid(columns: quickColumns, spacing: V.S.gapS) {
-                ForEach(Array(QuickPool.ordered().prefix(store.quickGridCount).enumerated()), id: \.element.id) { pair in
+                ForEach(Array(quickShown.enumerated()), id: \.element.id) { pair in
                     Button { runQuick(pair.element) } label: {
                         quickTile(pair.element)
                     }
@@ -774,7 +775,7 @@ struct DoorScreen: View {
                     .accessibilityLabel(quickLabel(pair.element))
                     .accessibilityHint("轻点执行，长按编辑快捷操作")
                 }
-                if app.currentKeychain.map({ DB.listFps($0.mac).isEmpty }) == true {
+                if pendingFingerTileShown {
                     Button { router.request(.dest(.keyCreate)) } label: {
                         pendingFingerTile
                     }
@@ -787,6 +788,12 @@ struct DoorScreen: View {
         .padding(.top, V.S.gapL)
     }
 
+    /// 实际会渲染的快捷格（受 quickGridCount 限制）。
+    private var quickShown: [QuickAction] { Array(QuickPool.ordered().prefix(store.quickGridCount)) }
+    /// 是否会出现「待添加指纹」那一格（指纹为空时才出现）。
+    private var pendingFingerTileShown: Bool {
+        app.currentKeychain.map { DB.listFps($0.mac).isEmpty } == true
+    }
     private var quickColumns: [GridItem] {
         let count = AXSettings.bigTile ? 2 : 3
         return Array(repeating: GridItem(.flexible(), spacing: V.S.gapS), count: count)
