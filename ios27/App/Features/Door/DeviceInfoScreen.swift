@@ -122,11 +122,11 @@ struct DeviceInfoScreen: View {
                 ], columns: 2)
                 .padding(.top, V.S.gapXS)
                 VDivider()
-                VFieldRow(label: "密码容量", value: capacityText(used: pwdUsed, cap: status?.pwdInfoCapacity ?? 0))
-                VFieldRow(label: "指纹容量", value: capacityText(used: fpUsed, cap: status?.fpInfoCapacity ?? 0))
+                VFieldRow(label: "密码容量", value: capacityText(used: pwdUsed, cap: liveStatus?.pwdInfoCapacity ?? cachedStatus?.pwdCap ?? 0))
+                VFieldRow(label: "指纹容量", value: capacityText(used: fpUsed, cap: liveStatus?.fpInfoCapacity ?? cachedStatus?.fpCap ?? 0))
                 // 2026-11-01：把「锁端存量」与「本机池」并排 —— 排障 rc=2 时第一眼看的就是这两个数：
                 // 锁端已用 64 而本机池只有 20 ⇒ 池子被恢复/迁移污染或两台 App 打架，现签必败。
-                VFieldRow(label: "PIN 容量", value: capacityText(used: pinUsed, cap: status?.pinInfoCapacity ?? 0))
+                VFieldRow(label: "PIN 容量", value: capacityText(used: pinUsed, cap: liveStatus?.pinInfoCapacity ?? cachedStatus?.pinCap ?? 0))
                 if let note = localPinNote {
                     Text(note)
                         .font(V.F.unit)
@@ -347,13 +347,27 @@ struct DeviceInfoScreen: View {
         return DF.localDate(Date(timeIntervalSince1970: meta.batteryChangedAt))
     }
 
+    // 2026-11-04（截图实测 · 两页读数打架）：本页只认**实时读到的** `status`，
+    // 而「锁设置」页读的是 `DB.readStatus` 快照。于是同一把锁、同一时刻：
+    //   本页 → 「已用 1 · 容量未读」；锁设置 → 「64 / 64」。
+    // 电量那一行早就做了 `status?.powerLevel ?? DB.readStatus(mac)?.powerLevel` 的回落，
+    // 容量三行却没有 —— 同页两套口径。这里补齐同一个回落。
+    private var liveStatus: LockStatus? { status }
+    private var cachedStatus: StatusSnapshotData? { DB.readStatus(mac) }
+
     private var pwdUsed: Int {
-        if let cap = status?.pwdInfoCapacity, cap > 0 { return max(cap - (status?.pwdStock ?? 0), 0) }
+        if let cap = liveStatus?.pwdInfoCapacity ?? cachedStatus?.pwdCap, cap > 0 {
+            let stock = liveStatus?.pwdStock ?? cachedStatus?.pwdStock ?? 0
+            return max(cap - stock, 0)
+        }
         return DB.ledger(mac).pwds.count
     }
 
     private var fpUsed: Int {
-        if let cap = status?.fpInfoCapacity, cap > 0 { return max(cap - (status?.fpStock ?? 0), 0) }
+        if let cap = liveStatus?.fpInfoCapacity ?? cachedStatus?.fpCap, cap > 0 {
+            let stock = liveStatus?.fpStock ?? cachedStatus?.fpStock ?? 0
+            return max(cap - stock, 0)
+        }
         return DB.ledger(mac).fps.count
     }
 
@@ -374,7 +388,10 @@ struct DeviceInfoScreen: View {
     }
 
     private var pinUsed: Int {
-        if let cap = status?.pinInfoCapacity, cap > 0 { return max(cap - (status?.pinStock ?? 0), 0) }
+        if let cap = liveStatus?.pinInfoCapacity ?? cachedStatus?.pinCap, cap > 0 {
+            let stock = liveStatus?.pinStock ?? cachedStatus?.pinStock ?? 0
+            return max(cap - stock, 0)
+        }
         return kc?.pins.count ?? 0
     }
 
