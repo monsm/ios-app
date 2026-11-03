@@ -14,6 +14,8 @@ struct HardwareScreen: View {
 
     @State private var scanning = false
     @State private var writingId: String?
+    /// 2026-11-03：撤销实体钥匙的待确认目标（删了要重新写一遍才能用）。
+    @State private var revokeTarget: DongleRecord?
     @State private var busyId: String?
     @State private var keysByDongle: [String: [String]] = [:]
     @State private var errorText: String?
@@ -41,6 +43,14 @@ struct HardwareScreen: View {
         .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("硬件")
         .navigationBarTitleDisplayMode(.inline)
+        .confirmationDialog("撤销这把锁的钥匙？", isPresented: Binding(
+            get: { revokeTarget != nil }, set: { if !$0 { revokeTarget = nil } }
+        ), titleVisibility: .visible, presenting: revokeTarget) { d in
+            Button("撤销", role: .destructive) { let t = d; revokeTarget = nil; revoke(t) }
+            Button("取消", role: .cancel) { revokeTarget = nil }
+        } message: { d in
+            Text("钥匙串 \(shortMAC(d.mac)) 里那把「\(app.lock?.name ?? "当前锁")」的钥匙会被删掉。以后要用它开门，必须把手机贴近钥匙串重新写一次。")
+        }
     }
 
     // MARK: 页头
@@ -107,7 +117,7 @@ struct HardwareScreen: View {
                         } else {
                             if d.holdsThisLock {
                                 VOutlineButton(title: "撤销这把锁的钥匙", systemImage: "key.slash") {
-                                    revoke(d)
+                                    revokeTarget = d
                                 }
                             } else {
                                 // 同屏只有一处 signal 填充（扫描面板那颗）。这里的写入是描边动作。
@@ -303,12 +313,19 @@ struct HardwareScreen: View {
     }
 
     private func revoke(_ d: DongleRecord) {
-        guard let kc = app.currentKeychain else { return }
+        // 2026-11-03（全功能点排查）：这一条真删的是**钥匙串里的那把实体钥匙**（cmd41 空 ekey），
+        // 而它既没有确认、也没有重入守卫，成功还**一句回执都没有** ——
+        // 用户点完看不到任何变化，只会再点一次。逐项补齐。
+        guard let kc = app.currentKeychain, writingId == nil else { return }
+        writingId = d.id
+        errorText = nil
         Task { @MainActor in
+            defer { writingId = nil }
             do {
                 // 真链路：同一条 cmd41 下发空 ekey 即删除。
                 try await HardwareService.shared.deleteDongleKey(dongleMac: d.mac, lock: kc)
                 if var rec = DB.dongle(d.mac) { rec.lastKeyLock = ""; DB.saveDongle(rec) }
+                AppToast.shared.show("已从钥匙串里删掉这把锁的钥匙", tone: .ok)
             } catch {
                 errorText = "撤销失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
             }
