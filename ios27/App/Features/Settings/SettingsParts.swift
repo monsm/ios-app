@@ -409,7 +409,11 @@ struct VerifyPasscodeSheet: View {
             error = "这个输入不能用于本操作"
             code = ""
         case .wrong(let remaining):
-            error = remaining > 0 ? "密码不对 · 冷却 \(remaining) 秒" : "密码不对 · 再试一次"
+            // 2026-11-04（拷贝漂移）：这份 verify 是 UnlockGate 的同源拷贝 —— 52 轮把那边的
+            // 「还可试 N 次」改成「再错 N 次开始冷却」，这里漏了。两处用的是**同一个**
+            // AppLock 梯度，文案应当同源。
+            error = remaining > 0 ? "密码不对 · 冷却 \(remaining) 秒"
+                                  : "密码不对 · 再错 \(max(1, 3 - AppLock.shared.failStreak)) 次开始冷却"
             code = ""
         case .cooling(let remaining):
             error = "冷却中 · \(remaining) 秒后再试"
