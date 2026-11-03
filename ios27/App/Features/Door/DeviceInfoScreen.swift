@@ -165,7 +165,8 @@ struct DeviceInfoScreen: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 VDivider()
-                VFieldRow(label: "电量读数", value: batteryText, tint: batteryTint)
+                // 2026-11-03（同页去重）：当前电量在「运行状态」卡已有（门锁电量 76%），
+                // 采样卡的职责是采样序列与换电记录，不再重复同一个读数。
                 VFieldRow(label: "采样时间", value: sampleText)
                 VFieldRow(label: "耗材提醒", value: batteryModel.isEmpty ? "未记录型号" : batteryModel)
             }
@@ -279,6 +280,8 @@ struct DeviceInfoScreen: View {
         if let f = status?.firmware, !f.isEmpty { fw = f }
         guard let since = BatteryCare.fwSince(kc.mac, fw: fw) else { return "首次读到后起算" }
         let days = max(0, Int(Date().timeIntervalSince1970 * 1000 - since.at) / 86_400_000)
+        // 2026-11-03：0 天读起来像"没服役"，实际是"今天第一次记到"。给个明确说法。
+        if days == 0 { return "今天起算" }
         return days > 365 ? "\(days) 天 · 已超一年" : "\(days) 天"
     }
 
