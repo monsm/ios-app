@@ -303,9 +303,13 @@ struct KeysScreen: View {
                 }
                 .padding(.top, V.S.gapS)
                 VDivider()
+                // 2026-11-03（整页截图实测）：这一对读数是**标签与值对不上** ——
+                // 标签写「最近使用」（过去），值却是「30 天后到期」（未来）。
+                // 而且「最早到期」在同一屏出现两次、两种格式（上面卡片「30 天后」、这里「12-03」）。
+                // 改成：左格说"最近到期"（与值一致），右格标明是日期形态。
                 VStatPair(items: [
-                    ("最近使用", nearestDays.map { "\($0) 天后到期" } ?? "永久"),
-                    ("最早到期", earliestExpiryText)
+                    ("最近到期", nearestDays.map { "\($0) 天后" } ?? "永久"),
+                    ("最早到期日", earliestExpiryText)
                 ])
                 .padding(.top, V.S.gapXXS)
                 VDivider()
