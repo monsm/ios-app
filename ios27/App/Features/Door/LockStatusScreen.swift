@@ -237,8 +237,12 @@ struct LockStatusScreen: View {
                     .foregroundStyle(V.C.text2)
                     .fixedSize(horizontal: false, vertical: true)
             } else {
-                VStateDot(tone: .neutral, word: "未改动")
-                Text("改动会立即下发到门锁，回执成功才改这一页的读数")
+                // 2026-11-04（截图实测）：这一行在**什么都没做**的时候也常驻显示
+                // 「未改动 / 改动会立即下发到门锁…」—— 它不是状态，是一段操作说明，
+                // 却占着"结果"的位置（真正有结果时这里会换成回执文案）。
+                // 空闲态只说"还没改过"，把机制说明降级为一句更短的提示。
+                VStateDot(tone: .neutral, word: "还没改过")
+                Text("开关改动会立即下发，回执成功才更新读数")
                     .font(V.F.footnote)
                     .foregroundStyle(V.C.text2)
                     .fixedSize(horizontal: false, vertical: true)
