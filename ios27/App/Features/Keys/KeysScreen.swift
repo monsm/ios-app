@@ -384,9 +384,8 @@ struct KeysScreen: View {
 
     private var filterBlock: some View {
         VStack(alignment: .leading, spacing: V.S.gapS) {
-            Text("全部凭证")
-                .font(V.F.section)
-                .foregroundStyle(V.C.text1)
+            // 2026-11-03（整页截图暴露）：这里原来有个「全部凭证」section 标题，
+            // 而下面的列表卡头**又叫「全部凭证 12 枚」** —— 同屏两遍。删这里，卡头留着（带计数）。
             HStack(spacing: V.S.gapS) {
                 Image(systemName: "magnifyingglass")
                     .font(V.F.icon15)

@@ -41,12 +41,19 @@ enum KeysFilter: String, CaseIterable, Hashable {
 enum KeysState {
     static func now() -> Int64 { Int64(Date().timeIntervalSince1970 * 1000) }
 
+    /// 协议用 2118-12-31 23:59 当"永久"哨兵（见 KeyCreateScreen 的永久档注释）。
+    /// 2026-11-03（整页截图暴露）：哨兵没被识别 —— 永久密码在列表行尾显示「33296」天。
+    /// 口径：到期年 ≥ 2100 一律视为永久（返回 nil），所有派生读数自动变「永久」。
+    static let permanentYearThreshold = 2100
+
     static func daysLeft(_ key: KeyItem, now: Int64) -> Int? {
         guard let expiresAt = key.expiresAt else { return nil }
         let cal = TimeFormat.calendar
+        let to = TimeFormat.date(expiresAt)
+        if cal.component(.year, from: to) >= permanentYearThreshold { return nil }
         let from = cal.startOfDay(for: TimeFormat.date(now))
-        let to = cal.startOfDay(for: TimeFormat.date(expiresAt))
-        return cal.dateComponents([.day], from: from, to: to).day
+        let toDay = cal.startOfDay(for: to)
+        return cal.dateComponents([.day], from: from, to: toDay).day
     }
 
     static func expired(_ key: KeyItem, now: Int64) -> Bool {
