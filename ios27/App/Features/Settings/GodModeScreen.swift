@@ -64,7 +64,10 @@ struct GodModeScreen: View {
             if app.currentKeychain != nil {
                 ScrollView(.horizontal) {
                     HStack(spacing: V.S.gapS) {
-                        ForEach(Panel.allCases) { item in
+                        // 2026-11-03（信息架构 QA）：「变更」面板只在有日志时挂载（见 body 里的 if !logs.isEmpty），
+                        // 而 chip 永远列出来 —— 无日志时点它只会高亮、页面纹丝不动（死控件）。
+                        // 只列出**当前真的存在**的面板。
+                        ForEach(Panel.allCases.filter { $0 != .changes || !logs.isEmpty }) { item in
                             GlassChip(title: item.rawValue, selected: panel == item) {
                                 panel = item
                                 withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) {
@@ -83,6 +86,10 @@ struct GodModeScreen: View {
         .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("God 模式")
         .navigationBarTitleDisplayMode(.inline)
+        // 2026-11-03（信息架构 QA · 安全）：God 模式是本仓读数最深的一页
+        // （锁端全量状态 + 凭证台账 + 成员/归属细节），原来**没有截屏遮挡**，
+        // 而同仓另外 5 个显示码值的页面都挂了。补上，与它们同一口径。
+        .captureShield("这里是锁端全量读数与凭证台账\n屏幕正在被录制或截图，已遮挡")
         .task { await refresh() }
         .confirmationDialog("重写这把锁的 PIN 表？", isPresented: $askRepair, titleVisibility: .visible) {
             Button("重写 PIN 表（保留通信密钥）", role: .destructive) { Task { await repair() } }
@@ -104,7 +111,10 @@ struct GodModeScreen: View {
                 VFieldRow(label: "配对时间", value: kc.pairedAt, mono: false)
                 VFieldRow(label: "skey 指纹", value: DiagSnapshot.fingerprint(kc.skey))
                 VFieldRow(label: "ekey 指纹", value: DiagSnapshot.fingerprint(kc.ekey))
-                VFieldRow(label: "存的 ekey 嵌的 PIN", value: DiagSnapshot.ekeyPin(kc), mono: false)
+                // 2026-11-03（信息架构 QA · 安全）：这里原来显示**明文 PIN**，而本页没有截屏遮挡 ——
+                // 同仓另外 5 个显示码值的页面都挂了 `captureShield`。改用只含指纹的版本，
+                // 并给整页加遮挡（见 body 末尾）。
+                VFieldRow(label: "存的 ekey 嵌的 PIN", value: DiagSnapshot.ekeyPinMasked(kc), mono: false)
             }
         }
         .padding(.horizontal, V.S.pageGutter)
@@ -126,9 +136,9 @@ struct GodModeScreen: View {
                     // 2026-11-03（全功能点排查 · 一致性）：本页原来写「容量/剩余」= `cap/stock`，
                     // 而「锁信息名片」页写的是「已用/容量」= `(cap-stock)/cap` —— 同一组数据两个页面
                     // **顺序和语义都相反**（64/0 vs 0/64），对排障的人极易读反。统一成「已用 / 容量」。
-                    VFieldRow(label: "PIN 已用/容量", value: Self.usedOfCap(cap: st.pinCap, stock: st.pinStock))
-                    VFieldRow(label: "密码已用/容量", value: Self.usedOfCap(cap: st.pwdCap, stock: st.pwdStock))
-                    VFieldRow(label: "指纹已用/容量", value: Self.usedOfCap(cap: st.fpCap, stock: st.fpStock))
+                    VFieldRow(label: "PIN 已用/容量", value: Self.usedOfCap(cap: st.pinCap, stock: st.pinStock, local: kc?.pins.filter { !$0.isEmpty }.count ?? 0))
+                    VFieldRow(label: "密码已用/容量", value: Self.usedOfCap(cap: st.pwdCap, stock: st.pwdStock, local: kc.map { DB.listPwds($0.mac).count } ?? 0))
+                    VFieldRow(label: "指纹已用/容量", value: Self.usedOfCap(cap: st.fpCap, stock: st.fpStock, local: kc.map { DB.listFps($0.mac).count } ?? 0))
                     VFieldRow(label: "通信密钥状态", value: sKeyStatusWord(st.sKeyStatus))
                     VFieldRow(label: "ZOTP 周期", value: st.zotpPeriod.map { "\($0) 分钟" } ?? "未上报")
                 } else {
@@ -141,13 +151,16 @@ struct GodModeScreen: View {
         .padding(.horizontal, V.S.pageGutter)
     }
 
-    /// 通信密钥状态的人类可读词。0=未设置；1/2=中间态；3=已就绪（真机实测值）。
-    /// 「已用 / 容量」的统一写法（容量未知时只报已用）。
-    static func usedOfCap(cap: Int?, stock: Int) -> String {
+    /// 「已用 / 容量」的统一写法。
+    /// 容量未上报时**报本机条数**并说明容量没读到 —— 不能写死「已用 0」，
+    /// 那是把「未知」读成「零」。2026-11-03（信息架构 QA）。
+    static func usedOfCap(cap: Int?, stock: Int, local: Int) -> String {
         guard stock >= 0 else { return "未读到" }
-        guard let c = cap, c > 0 else { return "已用 \(max(-stock, 0)) · 容量未读" }
+        guard let c = cap, c > 0 else { return "本机 \(local) 条 · 容量未读" }
         return "\(max(c - stock, 0)) / \(c)"
     }
+
+    /// 通信密钥状态的人类可读词。0=未设置；1/2=中间态；3=已就绪（真机实测值）。
 
     private func sKeyStatusWord(_ v: Int) -> String {
         switch v {
@@ -220,7 +233,9 @@ struct GodModeScreen: View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VCardHeader(title: "修复")
-                Text("开锁永远 rc=2 且本机池与锁端无法对应时，用「修池」：保 skey 只重写 PIN 表，然后自动重签开锁凭证。不用重置锁，也不用走到锁跟前。")
+                // 2026-11-03（信息架构 QA）：原文写「不用走到锁跟前」—— 而修池走的是 BLE 下发，
+                // 必须连上锁才能执行；同页上方 :98 的确认框也写着「靠近门锁再执行」。两处互相矛盾。
+                Text("开锁永远 rc=2 且本机池与锁端无法对应时，用「修池」：保 skey 只重写 PIN 表，然后自动重签开锁凭证。**不用重置锁**，但要连上锁才能下发 —— 请在门锁旁边执行。")
                     .font(V.F.footnote).foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
                 VActionButton(title: "修池（重写 PIN 表 · 保通信密钥）", systemImage: "wrench.and.screwdriver.fill") {

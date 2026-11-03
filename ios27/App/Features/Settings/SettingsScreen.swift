@@ -635,7 +635,10 @@ struct DeleteDeviceSheet: View {
                             }
                             .disabled(!canDelete)
                             .opacity(canDelete ? 1 : 0.4)
-                            VActionButton(title: "取消", systemImage: "xmark") { dismiss() }
+                            // 2026-11-03（信息架构 QA）：删除确认页里「取消」原本和「删除本机数据」
+                            // 是**两个同级实心主按钮**上下堆叠，只靠颜色区分 —— 危险的实心、安全的也实心。
+                            // 取消必须降级为次要样式（描边），让主按钮只有一个。
+                            VOutlineButton(title: "取消", systemImage: "xmark") { dismiss() }
                         }
                     }
                 }

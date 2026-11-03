@@ -147,14 +147,20 @@ struct RecordsStudioScreen: View {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VCardHeader(title: "筛选", showsChevron: false)
                 Text("时段").font(V.F.chipLabel).foregroundStyle(V.C.text4)
-                HStack(spacing: V.S.gapS) {
-                    ForEach([(value: 0, label: "全部"), (value: 1, label: "早 6-10"), (value: 2, label: "午 10-15"), (value: 3, label: "晚 15-22"), (value: 4, label: "深夜")], id: \.value) { item in
-                        Button { segment = item.value } label: {
+                // 2026-11-03（布局/交互 QA）：这一排 5 枚胶囊放进**不滚动**的 HStack，
+                // 常规字号即约 418pt 而可用宽约 373pt —— 窄屏/大字号下必然挤出卡片。
+                // 同页「成员」行早就用了横向 ScrollView，这两行补齐同一写法。
+                // 另外 GlassChip **本身就是 Button**，外面再包一层 Button 是嵌套按钮：
+                // 内层动作会被外层接管，产生双重高亮与两个无障碍 button 元素。去掉外层。
+                ScrollView(.horizontal) {
+                    HStack(spacing: V.S.gapS) {
+                        ForEach([(value: 0, label: "全部"), (value: 1, label: "早 6-10"), (value: 2, label: "午 10-15"), (value: 3, label: "晚 15-22"), (value: 4, label: "深夜")], id: \.value) { item in
                             GlassChip(title: item.label, selected: segment == item.value) { segment = item.value }
+                                .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
+                .scrollIndicators(.hidden)
                 if !members.isEmpty {
                     Text("成员").font(V.F.chipLabel).foregroundStyle(V.C.text4)
                     ScrollView(.horizontal) {
@@ -172,15 +178,16 @@ struct RecordsStudioScreen: View {
                     .scrollIndicators(.hidden)
                 }
                 Text("凭证类型").font(V.F.chipLabel).foregroundStyle(V.C.text4)
-                HStack(spacing: V.S.gapS) {
-                    ForEach(Array([(key: "", label: "全部"), (key: "pwd", label: "密码"), (key: "temp", label: "临时码"), (key: "fp", label: "指纹"), (key: "key", label: "手机钥匙")].enumerated()), id: \.offset) { pair in
-                        let item = pair.element
-                        Button { kind = item.key } label: {
+                // 同「时段」行：5 枚胶囊同样会溢出，同样去掉嵌套 Button。
+                ScrollView(.horizontal) {
+                    HStack(spacing: V.S.gapS) {
+                        ForEach([(key: "", label: "全部"), (key: "pwd", label: "密码"), (key: "temp", label: "临时码"), (key: "fp", label: "指纹"), (key: "key", label: "手机钥匙")], id: \.key) { item in
                             GlassChip(title: item.label, selected: kind == item.key) { kind = item.key }
+                                .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
+                .scrollIndicators(.hidden)
                 VRowDivider()
                 VToggleRow(title: "只看告警", isOn: $alarmOnly)
                 VToggleRow(title: "只看失败事件", isOn: $failedOnly)

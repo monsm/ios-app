@@ -482,8 +482,13 @@ enum DiagSnapshot {
             out.append("  ekey = 长度 \(kc.ekey.count) hex，指纹 \(fingerprint(kc.ekey))")
             out.append("  本机 PIN 池 = \(kc.pins.filter { !$0.isEmpty }.count) 枚（声明 \(kc.pins.count)）")
             out.append("  PIN 池指纹 = \(fingerprint(kc.pins.joined()))")
-            out.append("  **存的那枚 ekey 里嵌的 PIN = \(ekeyPin(kc))**")
-            out.append("  当前选定的 PIN = \(chosenPin(mac) ?? "（未选，回落配网 ekey）")")
+            // 2026-11-03（信息架构 QA · 安全）：这里原来是**明文 PIN**（`ekeyPin` 返回 "12345678（本机池第 3 枚）"，
+            // `chosenPin` 返回裸值），而本函数开头第 436 行明确承诺
+            // 「这个快照**不含任何密钥明文** … PIN 一律只打指纹 … 因为它是拿来贴到聊天里求助的」。
+            // 用户会把这段文字当"安全内容"贴进工单/群聊 —— 实际等于把开锁 PIN 公开。
+            // 现在只打指纹 + 位置提示：既能比对"是不是同一枚"，又不泄露可用值。
+            out.append("  **存的那枚 ekey 里嵌的 PIN = \(ekeyPinMasked(kc))**")
+            out.append("  当前选定的 PIN = \(chosenPinMasked(mac))")
             out.append("  MAC 字节序裁定 = \(ZKProtocol.macOrder(kc.mac).rawValue)")
             out.append("  trackid = \(kc.trackid)  fw = \(kc.fw)  pairedAt = \(kc.pairedAt)")
         } else {
@@ -552,6 +557,20 @@ enum DiagSnapshot {
         guard let pin = rawEmbeddedPin(kc) else { return "(解不开：skey 与 ekey 不配套)" }
         let idx = kc.pins.firstIndex(of: pin).map { "（本机池第 \($0 + 1) 枚）" } ?? "（**不在本机池里**）"
         return "\(pin)\(idx)"
+    }
+
+    /// **可安全展示**的「ekey 里嵌的 PIN」：只给指纹与池内位置，不给明文。
+    /// 比对用途（"两边的 PIN 是不是同一枚"）完全够用。
+    static func ekeyPinMasked(_ kc: Keychain) -> String {
+        guard let pin = rawEmbeddedPin(kc) else { return "(解不开：skey 与 ekey 不配套)" }
+        let idx = kc.pins.firstIndex(of: pin).map { "（本机池第 \($0 + 1) 枚）" } ?? "（**不在本机池里**）"
+        return fingerprint(pin) + idx
+    }
+
+    /// **可安全展示**的「当前选定 PIN」：只给指纹，不给明文。
+    static func chosenPinMasked(_ mac: String) -> String {
+        guard let v = chosenPin(mac) else { return "（未选，回落配网 ekey）" }
+        return fingerprint(v)
     }
 
     /// 当前选定的 PIN（`kf_chosen_pin_<mac>`）。
