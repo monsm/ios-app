@@ -38,6 +38,10 @@ enum BLEError: Int {
     case writeTimeout = 6001
     case underlying = 6004
     case writeFailed = 6005
+    /// 2026-11-03（真机日志驱动）：链路还没就绪（device / writeChar 为 nil）时**不能**报 parseFail。
+    /// 那条错误的意思是"锁回的数据解析不了、可能固件不匹配"，而实际原因是"这会儿根本没连上"，
+    /// 排查方向会被完全带偏（真机日志 18:14:59 就出现过这一行）。
+    case linkNotReady = 6006
 
     var message: String {
         switch self {
@@ -50,6 +54,7 @@ enum BLEError: Int {
         case .writeTimeout: return "超时未等到Rx写入确认"
         case .underlying: return "蓝牙底层失败"
         case .writeFailed: return "发送命令失败"
+        case .linkNotReady: return "链路还没就绪（正在连接或重连），请稍后重试"
         }
     }
 }

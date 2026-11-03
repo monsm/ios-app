@@ -116,6 +116,10 @@ extension LockService {
         //   响应比广播难伪造得多; ② 对不上就断开并**不写缓存** (identity mismatch 不落盘)。
         //   钥匙串里没登记 pid (老配对) 时只记警告不拦, 免得把正常用户挡在门外。
         try await connect(deviceId: deviceId)
+        // 2026-11-03（真机日志驱动）：这条身份复核本身要发一次 cmd03。它与随后的业务 cmd03
+        // （unlock 前读状态）会**撞在同一瞬间**，日志里表现为"03 连报两次、其中一次 rc=11"。
+        // 只在真的新建了链路时复核（缓存直连成功且之前就断着，等价于新连接）；
+        // 已经连着同一把锁时链路身份早已确认过，再读一次只是多一次往返 + 多一次撞车机会。
         do {
             let st = try await getStatus(mac: m)
             let knownPid = kc.pid
@@ -274,7 +278,18 @@ extension LockService {
                 // 忙判必须在**写之前** (2026-10-14 对抗式排查): 旧实现把判据放进挂 waiter 的 Task,
                 // 而 writeFrameHex 在 Task 外无条件执行 => 判为"忙"时帧**照样发出去**, 第二条命令的响应
                 // 被第一条的 waiter 收下 = 错帧 (cmd08 批量 13 分片最危险)。这里同步判, 忙即不发。
-                if waiter != nil { throw BLEErrorX.msg("已有命令在等待响应") }
+                // 2026-11-03（真机日志驱动）：忙判抛出后外层 for 循环会立刻重试，
+                // 而前一条命令的 waiter 往往还挂着 —— 于是同一瞬间连打三次"已有命令在等待响应"
+                // （日志 18:14:59 就是这个形状，cmd03 连报 2 次）。忙不是"命令失败"，
+                // 它压根没发出去；这里先让一拍，给前一条命令的响应一个落地的机会。
+                if waiter != nil {
+                    // 等一拍再判一次：给前一条命令的响应落地的机会（sleep 不抛错，无需 try）
+                    await Task.yield()
+                    if waiter != nil {
+                        try await Task.sleep(for: .milliseconds(120))
+                        if waiter != nil { throw BLEErrorX.msg("已有命令在等待响应") }
+                    }
+                }
                 // SEC-15：在挂 waiter 之前**声明这条连接归 lock** —— 否则 HardwareService
                 // 同时发的同 cmd 命令的回包会被本服务的 waiter 收下（错帧），反之亦然。
                 ble.setFrameOwner("lock")
@@ -297,10 +312,15 @@ extension LockService {
                     }
                 }
                 do {
+                    try await ble.writeFrameHex(hex)
+                    // 2026-11-03（真机日志驱动）：TX hex 原来在写入**之前**记录，
+                    // 写失败（链路未就绪 / 分片未确认）时日志里仍留下一条完整的 "TX hex=…"，
+                    // 排查时必然误判"帧已经发出去了"。现在写成功之后才记录 ——
+                    // TX 行等于"这条帧确实写到了蓝牙特征值"。
                     if debugRaw { log("info", "TX hex=\(hex)") }
                     else { recordFrame("TX hex=\(hex)") }
-                    try await ble.writeFrameHex(hex)
                 } catch {
+                    log("warn", "\(cmdObj.name) 未发出：\(error.localizedDescription)")
                     // 写失败: 显式续跑挂起的 waiter (防 continuation 泄漏), 交由上层重试
                     if let w = waiter, w.cmd == cmd {
                         w.timer?.cancel()

@@ -354,7 +354,9 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
 
     // ---------- 写 (20B 分片, 与 JS writeFrame 一致) ----------
     func writeFrameHex(_ hex: String) async throws {
-        guard let device, let ch = writeChar else { throw BLEErrorX.code(.parseFail) }
+        // 2026-11-03：这里原来抛 .parseFail，用户看到「门锁返回的数据无法解析（可能固件版本不匹配）」，
+        // 而真实原因是 device / writeChar 还没就绪（连接或重连进行中）。改成专门的链路错误。
+        guard let device, let ch = writeChar else { throw BLEErrorX.code(.linkNotReady) }
         let bytes = HexKit.bytes(hex)
         var i = 0
         let chunk = 20

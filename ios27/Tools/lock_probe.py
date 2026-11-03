@@ -167,6 +167,24 @@ def parse_klv(hexstr: str):
         off += 2 + ln
     return out
 
+
+# ---------- 真机日志帧回归（2026-11-03 18:11-18:15 那批）----------
+REAL_FRAMES = {
+    "01RX_1811": "87010b00010000000101020202f7ed03022d00",
+    "03RX_1811": "87015a00030000000301000101030404e0e8ac1f05021e0006011e0701050801060904f26500001101261202fa0114017f21014022014023010024014025010026010827013228010729010731030100023201043301003402c11e35053138303141",
+    "04RX_1811": "87010900040000000301000401ff050100",
+    "03RX_rc11": "870103000300000003010b",
+    "01RX_1814": "87010b000100000001010202028e8903022d00",
+    "01RX_1815": "87010b00010000000101020202c5bf03022d00",
+}
+
+def check_real_frames(g, R):
+    """真机回包必须能被 parseResponse 的三种头型兼容解析，且 KLV 自洽。"""
+    for name, h in REAL_FRAMES.items():
+        ok, note = structural_check(h)
+        R.append((f"real:{name}", ok, note, "自洽"))
+        # 回包的头是 8701（versionByte=1），长度字段同样是 KLV 字节数
+
 # ---------- 对拍 ----------
 def _norm(v):
     return v.lower() if isinstance(v, str) else v
@@ -228,6 +246,7 @@ def main():
     check_rc(g, R)
     check_capabilities(g, R)
     check_parse(g, R)
+    check_real_frames(g, R)
 
     # 汇总
     bad = [r for r in R if not r[1]]
