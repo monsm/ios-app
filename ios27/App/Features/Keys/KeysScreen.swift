@@ -25,7 +25,8 @@ struct KeysScreen: View {
         app.keys.filter { key in
             guard filter.matches(key) else { return false }
             guard !searchText.isEmpty else { return true }
-            let hay = [key.name, key.owner ?? "", key.kind.rawValue, key.code ?? ""]
+            // 2026-11-03：原来 haystack 放的是 `key.owner`（成员 id），用户按**成员名**搜不到。
+            let hay = [key.name, CredentialOrg.ownerName(key.owner), key.owner ?? "", key.kind.rawValue, key.code ?? ""]
                 .joined(separator: " ")
                 .lowercased()
             return hay.contains(searchText)

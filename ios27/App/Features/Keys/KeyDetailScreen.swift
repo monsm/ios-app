@@ -171,7 +171,9 @@ struct KeyDetailScreen: View {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
                 VSectionLabel(text: "档案")
                 VFieldRow(label: "类型", value: key.kind.rawValue, mono: false)
-                VFieldRow(label: "归属", value: key.owner ?? "未归属", mono: false)
+                // 2026-11-03（全功能点排查）：原来直接显示 `key.owner` —— 而 owner 存的是**成员 id**，
+                // 于是详情页会把一串 UUID 当成人名展示。统一走 CredentialOrg.ownerName（id/名字两口径都认）。
+                VFieldRow(label: "归属", value: CredentialOrg.ownerName(key.owner).isEmpty ? "未归属" : CredentialOrg.ownerName(key.owner), mono: false)
                 // 「已使用 N 天」：`CredentialOrg.pwdAgeDays` 早就写好且一直零调用（327 那一族），
                 // 这里接上 —— 只在拿得到创建时刻时才显示（手机钥匙 / 指纹没有这个概念）。
                 if let age = CredentialOrg.pwdAgeDays(key.createdAt) {
@@ -452,7 +454,7 @@ struct FingerprintReEnrollSheet: View {
                     VCard {
                         VStack(alignment: .leading, spacing: V.S.gapMS) {
                             VTextFieldRow(label: "指纹名称", text: $name, placeholder: key.name)
-                            VFieldRow(label: "归属", value: key.owner ?? "未归属", mono: false)
+                            VFieldRow(label: "归属", value: CredentialOrg.ownerName(key.owner).isEmpty ? "未归属" : CredentialOrg.ownerName(key.owner), mono: false)
                             if busy {
                                 VBusyRow(text: "指纹录入中 · 已按 \(fpCount)/8 — 请把手指按在指纹头上再抬起")
                             }

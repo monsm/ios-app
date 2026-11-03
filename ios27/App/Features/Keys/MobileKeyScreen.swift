@@ -155,7 +155,9 @@ struct MobileKeyScreen: View {
         return HStack(alignment: .center, spacing: V.S.gapMS) {
             VStateDot(tone: KeysState.tone(key, now: KeysState.now()), word: KeysState.word(key, now: KeysState.now()))
             VStack(alignment: .leading, spacing: V.S.gapXXS) {
-                Text(key.owner ?? key.name)
+                // 2026-11-03：原来 `key.owner ?? key.name` —— owner 是成员 id，会显示成一串 UUID。
+                // 解析不出名字时回落到钥匙自己的名字。
+                Text(CredentialOrg.ownerName(key.owner).isEmpty ? key.name : CredentialOrg.ownerName(key.owner))
                     .font(V.F.body)
                     .foregroundStyle(V.C.text1)
                 Text("手机钥匙 · \(KeysState.word(key, now: KeysState.now()))")
