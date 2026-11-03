@@ -360,7 +360,7 @@ struct LockSettingsScreen: View {
                 let r = await app.setMuted(on)
                 if case .failure(let e) = r { throw e }
                 muted = on
-                outcome = on ? "已静音" : "已恢复提示音"
+                outcome = on ? "已静音：键盘与开锁不提示音" : "已恢复提示音"
                 outcomeIsFailure = false
             } catch {
                 muted = !on
