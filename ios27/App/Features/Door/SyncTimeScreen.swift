@@ -40,8 +40,8 @@ struct SyncTimeScreen: View {
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("校时")
+        .navigationBarTitleDisplayMode(.large)
         .task { await read() }
         .sensoryFeedback(.success, trigger: result?.ok) { _, new in new == true }
     }
@@ -50,9 +50,7 @@ struct SyncTimeScreen: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: V.S.gapXS) {
-            Text("校时")
-                .font(V.F.displayHome)
-                .foregroundStyle(V.C.text1)
+                        // 2026-11-03（全维度整理）：标题交给系统导航栏（大标题），页内不再自绘。
             HStack(spacing: V.S.gapS) {
                 VStateDot(tone: headerTone, word: headerWord)
                 Text(headerText)

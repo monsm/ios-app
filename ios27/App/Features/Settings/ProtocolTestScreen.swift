@@ -35,16 +35,14 @@ struct ProtocolTestScreen: View {
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("协议测试")
+        .navigationBarTitleDisplayMode(.large)
         .task { await scan() }
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: V.S.gapXS) {
-            Text("协议测试")
-                .font(V.F.displayHome)
-                .foregroundStyle(V.C.text1)
+                        // 2026-11-03（全维度整理）：标题交给系统导航栏（大标题），页内不再自绘。
             HStack(spacing: V.S.gapS) {
                 VStateDot(tone: scanning ? .live : (devices.isEmpty ? .neutral : .ok),
                          word: scanning ? "扫描中" : "空闲")

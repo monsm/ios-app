@@ -71,8 +71,8 @@ struct AddLockScreen: View {
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("添加门锁")
+        .navigationBarTitleDisplayMode(.large)
         .task { await scan() }
         // 配网链必须随页面消失中止：`runChain` 里那两处 `Task.isCancelled` 判定
         // 此前**永远不会触发**（没有任何地方 cancel 这个任务），而配网会真的改锁端密钥槽。
@@ -94,9 +94,7 @@ struct AddLockScreen: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: V.S.gapXS) {
-            Text("添加门锁")
-                .font(V.F.displayHome)
-                .foregroundStyle(V.C.text1)
+                        // 2026-11-03（全维度整理）：标题交给系统导航栏（大标题），页内不再自绘。
             HStack(spacing: V.S.gapS) {
                 VStateDot(tone: headerTone, word: headerWord)
                 Text(headerText)

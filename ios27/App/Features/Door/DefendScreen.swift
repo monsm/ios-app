@@ -75,8 +75,8 @@ struct DefendScreen: View {
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("布防")
+        .navigationBarTitleDisplayMode(.large)
         .task { load() }
         .alert(mode == .off ? "确认撤防？" : "确认布防？", isPresented: $askConfirm) {
             Button("取消") { }
@@ -90,9 +90,7 @@ struct DefendScreen: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: V.S.gapXS) {
-            Text("布防")
-                .font(V.F.displayHome)
-                .foregroundStyle(V.C.text1)
+                        // 2026-11-03（全维度整理）：标题交给系统导航栏（大标题），页内不再自绘。
             HStack(spacing: V.S.gapS) {
                 VStateDot(tone: headerTone, word: headerWord)
                 Text(headerText)

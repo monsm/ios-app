@@ -49,8 +49,8 @@ struct ShareToAndroidScreen: View {
         .captureShield("这张二维码是开锁钥匙\n屏幕正在被录制或截图，已遮挡")
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("分享给安卓")
+        .navigationBarTitleDisplayMode(.large)
         .onAppear(perform: build)
         .onChange(of: app.lock?.id) { _, _ in build() }
     }
@@ -80,9 +80,7 @@ struct ShareToAndroidScreen: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: V.S.gapXS) {
-            Text("分享给安卓")
-                .font(V.F.displayHome)
-                .foregroundStyle(V.C.text1)
+                        // 2026-11-03（全维度整理）：标题交给系统导航栏（大标题），页内不再自绘。
                 .frame(maxWidth: .infinity, alignment: .leading)
             HStack(spacing: V.S.gapS) {
                 VStateDot(tone: qr == nil ? .attention : .ok,

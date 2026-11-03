@@ -40,8 +40,10 @@ struct LockStatusScreen: View {
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
+        // 2026-11-03（全维度整理）：全仓子页统一用**系统大标题**，这里原来是自己画一个大标题
+        // 且导航栏标题留空 —— 同一套页面两种标题语言，滚动时也没有系统的收拢/玻璃效果。
+        .navigationTitle("锁实况")
+        .navigationBarTitleDisplayMode(.large)
         .alert("放宽安全模式？", isPresented: $confirmRelax) {
             Button("取消") { }
             Button("放宽") { writeSafeMode(false) }
@@ -50,13 +52,10 @@ struct LockStatusScreen: View {
         }
     }
 
-    // MARK: 页头：大标题 + 一行状态（形状 + 颜色 + 文字三通道）
+    // MARK: 页头：一行状态（形状 + 颜色 + 文字三通道）。标题已交给系统导航栏。
 
     private var header: some View {
         VStack(alignment: .leading, spacing: V.S.gapXS) {
-            Text("锁实况")
-                .font(V.F.displayHome)
-                .foregroundStyle(V.C.text1)
             HStack(spacing: V.S.gapS) {
                 VStateDot(tone: headerTone, word: headerWord)
                 Text(headerText)

@@ -58,8 +58,8 @@ struct GatewayScreen: View {
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("网关")
+        .navigationBarTitleDisplayMode(.large)
         .task { loadRows() }
         .alert("删除这个网关？", isPresented: Binding(
             get: { confirmDelete != nil },
@@ -76,9 +76,7 @@ struct GatewayScreen: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: V.S.gapXS) {
-            Text("网关")
-                .font(V.F.displayHome)
-                .foregroundStyle(V.C.text1)
+                        // 2026-11-03（全维度整理）：标题交给系统导航栏（大标题），页内不再自绘。
             HStack(spacing: V.S.gapS) {
                 VStateDot(tone: headerTone, word: headerWord)
                 Text(headerText)
