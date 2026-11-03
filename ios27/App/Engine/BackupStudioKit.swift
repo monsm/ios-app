@@ -27,6 +27,17 @@ enum BackupStudio {
     }
     // nonisolated: makeRollbackPoint/pruneRollback 本就是 nonisolated 而引用了这两个路径,
     // 挂在 @MainActor 枚举上会直接编译不过 (纯 FileManager, 无 actor 状态)
+    /// 本地已存的备份文件**实际份数**（只数 .json）。
+    ///
+    /// 2026-11-03（信息架构 QA）：设置页「备份工作室」行的 value 原来读的是
+    /// `kf_bk_keep`（**保留上限**，默认 5），于是全新安装、一份备份都没有时也显示「5 份」。
+    /// 上限是"最多留几份"，份数是"现在有几份"，两件事不能共用一个数。
+    nonisolated static var localFileCount: Int {
+        guard let urls = try? FileManager.default.contentsOfDirectory(
+            at: dir, includingPropertiesForKeys: nil) else { return 0 }
+        return urls.filter { $0.pathExtension == "json" }.count
+    }
+
     nonisolated static var dir: URL {
         let base = documentsURL
             .appendingPathComponent("lockkeeper-backups", isDirectory: true)

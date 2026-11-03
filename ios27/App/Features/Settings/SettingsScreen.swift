@@ -455,7 +455,11 @@ struct SettingsScreen: View {
                     detail: "WebDAV / 多份保留 / 换机迁移 / 自检",
                     systemImage: "square.stack.3d.up.fill",
                     tint: V.C.miniBlue,
-                    value: "\(DB.store.getInt("kf_bk_keep", 5)) 份"
+                    // 2026-11-03（信息架构 QA）：原来这里读 kf_bk_keep（**保留上限**，默认 5），
+                    // 于是"一份备份都没有"的新装机也显示「5 份」。份数要说真的。
+                    value: BackupStudio.localFileCount == 0
+                        ? "未备份"
+                        : String(BackupStudio.localFileCount) + " 份"
                 ) { router.request(.dest(.backupStudio)) }
                 VDivider()
                 VListRow(
