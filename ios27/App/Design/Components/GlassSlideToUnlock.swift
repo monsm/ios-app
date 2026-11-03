@@ -79,7 +79,13 @@ struct GlassSlideToUnlock: View {
         .accessibilityLabel("滑动开锁")
         .accessibilityHint("向右拖动圆形按钮到底，松手即开锁")
         .accessibilityAddTraits(.isButton)
-        .accessibilityAction { onUnlock() }   // 读屏用户直接触发，不需要拖
+        // 2026-11-04（读屏旁路）：busy 时拖动路径有 `guard !busy, !fired` 拦着，
+        // 而这条 accessibilityAction 原来直接调 onUnlock() —— 读屏用户（或旁路工具）
+        // 可以在开锁链进行中再次触发。同一道防线补齐。
+        .accessibilityAction {
+            guard !busy, !fired else { return }
+            onUnlock()
+        }
     }
 
     private func slideGesture(travel: CGFloat) -> some Gesture {
