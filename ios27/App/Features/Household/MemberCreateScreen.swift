@@ -260,9 +260,15 @@ struct MemberCreateScreen: View {
             errorLine = "已经有同名成员了 —— 换个称呼，或到那位成员的 360 里合并。"
             return false
         }
-        // 真建档走 Engine：DB.addMember 落 kf_members 并分配成员色；重名由它自己拒。
+        // 真建档走 Engine：DB.addMember 落 kf_members 并分配成员色。
+        // 2026-11-04（错误归因）：它返回 nil 有两种原因 —— 名字为空，或重名（`n.isEmpty || existing.contains`）。
+        // 原来一律报"已经有同名成员"，而名字为空早已被上面 `nameOK` 拦下 —— 所以真正常见的是重名，
+        // 但若将来引擎加了新拒因（比如配额），这里会继续撒谎。分开说。
         guard let created = DB.addMember(trimmedName) else {
-            errorLine = "已经有同名成员了 —— 换个称呼，或到那位成员的 360 里合并。"
+            let trimmed = trimmedName.trimmingCharacters(in: .whitespacesAndNewlines)
+            errorLine = trimmed.isEmpty
+                ? "称呼不能为空 —— 回到第 1 步填一个再继续。"
+                : "已经有同名成员了 —— 换个称呼，或到那位成员的 360 里合并。"
             return false
         }
         app.members.append(MemberCard(id: created.id, name: created.name, role: role, keyCount: 0,
