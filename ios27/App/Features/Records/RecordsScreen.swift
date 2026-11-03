@@ -123,6 +123,7 @@ struct RecordsScreen: View {
             .modifier(UITestScrollBottom())
             .scrollEdgeEffectStyle(.soft, for: .top)
             .navigationTitle("记录")
+        .toolbar { profileToolbarItem }
             .navigationBarTitleDisplayMode(.large)
             .onAppear {
                 reload()
@@ -176,20 +177,23 @@ struct RecordsScreen: View {
                     .foregroundStyle(V.C.text3)
             }
             Spacer(minLength: 0)
+        }
+    }
+
+    /// 2026-11-03（用户："原生液态玻璃质感太少"）：头像从内容头部移到**导航栏工具位** ——
+    /// 系统会给工具项原生玻璃材质（功能层），且账号入口在任何滚动位置都在右上角（HIG 惯例）。
+    @ToolbarContentBuilder
+    private var profileToolbarItem: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
             ZStack {
-                Circle()
-                    .fill(V.C.rewardGreen.opacity(0.22))
+                Circle().fill(V.C.rewardGreen.opacity(0.22))
                 Text("我")
                     .font(V.F.rowDetailStrong)
                     .foregroundStyle(V.C.text1)
             }
-            // 2026-11-02（Dynamic Type）：同上 —— 固定直径的圆装不下放大后的「我」。
             .frame(width: V.Metric.avatar * avatarScale, height: V.Metric.avatar * avatarScale)
-            .accessibilityHidden(true)
+            .accessibilityLabel("我的档案")
         }
-        .padding(.horizontal, V.S.pageGutterC)
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isHeader)
     }
 
     private var dateLine: String {
