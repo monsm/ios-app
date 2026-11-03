@@ -196,7 +196,7 @@ struct LockProfileScreen: View {
                     ForEach(LockArchive.swatches) { item in
                         Button { colorKey = item.key } label: {
                             Circle()
-                                .fill(swatchValue(item.key))
+                                .fill(VStateSwatch.color(item.key))
                                 .frame(width: V.List.iconSize, height: V.List.iconSize)
                                 .overlay {
                                     Circle().strokeBorder(colorKey == item.key ? V.C.text1 : V.C.hairline, lineWidth: colorKey == item.key ? 2 : V.S.hair)
@@ -241,17 +241,7 @@ struct LockProfileScreen: View {
     }
 
     private var swatchColor: Color {
-        swatchValue(colorKey)
-    }
-
-    private func swatchValue(_ key: String) -> Color {
-        switch key {
-        case "ok": return V.C.rewardGreen
-        case "warn": return V.C.coral
-        case "danger": return V.C.red
-        case "neutral": return V.C.text3
-        default: return V.C.blue
-        }
+        VStateSwatch.color(colorKey)
     }
 
     private func load() {

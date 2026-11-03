@@ -744,6 +744,21 @@ struct VActionButton: View {
 
 // MARK: - 通用行（设置 / 次级入口）
 
+/// 锁档案色键（"ok"/"warn"/"danger"/"neutral"）到颜色的映射。
+/// 2026-11-04：之前在 DeviceInfoScreen / DoorScreen / LockProfileScreen（swatchValue）各有一份
+/// 逐字相同的 `private func swatch` —— 三份拷贝改一处漏两处。收进设计层一份。
+enum VStateSwatch {
+    static func color(_ key: String) -> Color {
+        switch key {
+        case "ok": return V.C.rewardGreen
+        case "warn": return V.C.coral
+        case "danger": return V.C.red
+        case "neutral": return V.C.text3
+        default: return V.C.blue
+        }
+    }
+}
+
 /// 小节标题（参考 B 卡头 / 参考 R4 区块标题两档）。
 struct VSectionLabel: View {
     let text: String

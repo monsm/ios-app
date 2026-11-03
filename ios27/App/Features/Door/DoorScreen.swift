@@ -557,7 +557,7 @@ struct DoorScreen: View {
                 HStack(alignment: .top, spacing: V.S.gapM) {
                     Image(systemName: LockArchive.symbolName(meta))
                         .font(V.F.icon22)
-                        .foregroundStyle(swatch(meta.colorKey))
+                        .foregroundStyle(VStateSwatch.color(meta.colorKey))
                         .frame(width: V.Icon.xl * 1.6, height: V.Icon.xl * 1.6)
                         .background(V.C.cardAlt, in: Circle())
                         .accessibilityHidden(true)
@@ -616,16 +616,6 @@ struct DoorScreen: View {
         if !lock.isConnected { return "未连接" }
         if lock.battery >= 0, lock.battery < 20 { return "电量偏低" }
         return "全部正常"
-    }
-
-    private func swatch(_ key: String) -> Color {
-        switch key {
-        case "ok": return V.C.rewardGreen
-        case "warn": return V.C.coral
-        case "danger": return V.C.red
-        case "neutral": return V.C.text3
-        default: return V.C.blue
-        }
     }
 
     private func heroItems(_ lock: LockSummary) -> [VReadingGrid.Item] {

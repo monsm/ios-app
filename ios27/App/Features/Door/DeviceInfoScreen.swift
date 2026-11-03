@@ -73,7 +73,7 @@ struct DeviceInfoScreen: View {
                 HStack(spacing: V.S.gapM) {
                     Image(systemName: LockArchive.symbolName(meta))
                         .font(V.F.displayD)
-                        .foregroundStyle(swatch(meta.colorKey))
+                        .foregroundStyle(VStateSwatch.color(meta.colorKey))
                         .frame(width: V.Icon.xl * 2, height: V.Icon.xl * 2)
                         .background(V.C.cardAlt, in: Circle())
                         .accessibilityHidden(true)
@@ -405,16 +405,6 @@ struct DeviceInfoScreen: View {
     /// 看成"还剩 1 个"，排障时结论正好相反。
     private func capacityText(used: Int, cap: Int) -> String {
         cap > 0 ? "\(max(used, 0)) / \(cap)" : "已用 \(max(used, 0)) · 容量未读"
-    }
-
-    private func swatch(_ key: String) -> Color {
-        switch key {
-        case "ok": return V.C.rewardGreen
-        case "warn": return V.C.coral
-        case "danger": return V.C.red
-        case "neutral": return V.C.text3
-        default: return V.C.blue
-        }
     }
 
     // MARK: 真链路
