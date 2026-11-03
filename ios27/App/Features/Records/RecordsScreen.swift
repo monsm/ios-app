@@ -123,7 +123,34 @@ struct RecordsScreen: View {
             .modifier(UITestScrollBottom())
             .scrollEdgeEffectStyle(.soft, for: .top)
             .navigationTitle("记录")
-        .toolbar { profileToolbarItem }
+        .toolbar {
+            profileToolbarItem
+            // 2026-11-03：页面动作收进 ⋯ 菜单（系统给工具项原生玻璃）。
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Button {
+                        RecordsRoute.shared.alarmKinds = alarmKinds
+                        showAlarmKinds = true
+                    } label: {
+                        Label("告警类型筛选", systemImage: "exclamationmark.triangle")
+                    }
+                    Button { router.request(.dest(.recordsStudio)) } label: {
+                        Label("记录工作室", systemImage: "magnifyingglass")
+                    }
+                    Button { router.request(.dest(.recordExport)) } label: {
+                        Label("导出记录", systemImage: "square.and.arrow.up")
+                    }
+                    Button { Task { await read() } } label: {
+                        Label("读取锁内日志", systemImage: "arrow.clockwise")
+                    }
+                    .disabled(reading)
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .font(V.F.icon18Medium)
+                }
+                .accessibilityLabel("记录页操作")
+            }
+        }
             .navigationBarTitleDisplayMode(.large)
             .onAppear {
                 reload()
@@ -439,24 +466,13 @@ struct RecordsScreen: View {
                         .font(V.F.cardTitle)
                         .foregroundStyle(V.C.text6)
                     Spacer(minLength: 0)
-                    Button("告警类型") {
-                        RecordsRoute.shared.alarmKinds = alarmKinds
-                        showAlarmKinds = true
+                    // 2026-11-03（控件逻辑）：四个文字链接从卡头移到**导航栏 ⋯ 菜单** ——
+                    // 它们是页面动作（HIG 归工具栏），留在卡里既挤又抢检索标题的注意力。
+                    if alarmKinds.isEmpty == false {
+                        Text("已筛 \(alarmKinds.count) 类告警")
+                            .font(V.F.micro)
+                            .foregroundStyle(V.C.warning)
                     }
-                        .font(V.F.footnote)
-                        .foregroundStyle(alarmKinds.isEmpty ? V.C.blue : V.C.warning)
-                        .accessibilityLabel(alarmKinds.isEmpty ? "告警类型筛选" : "告警类型已选 \(alarmKinds.count) 项")
-                    Button("工作室") { router.request(.dest(.recordsStudio)) }
-                        .font(V.F.footnote)
-                        .foregroundStyle(V.C.blue)
-                        .accessibilityLabel("记录工作室")
-                    Button("导出") { router.request(.dest(.recordExport)) }
-                        .font(V.F.footnote)
-                        .foregroundStyle(V.C.blue)
-                    Button("读取") { Task { await read() } }
-                        .font(V.F.footnote)
-                        .foregroundStyle(V.C.blue)
-                        .disabled(reading)
                 }
                 // 2026-11-01：**把"台账是手动拉的"这件事写出来。**
                 // `readAt` 一直有值（`reload()` 从 `RecordsSource.lastSync` 取），但**从未显示过** ——
@@ -576,20 +592,10 @@ struct RecordsScreen: View {
         .padding(.horizontal, V.S.cardGutter)
     }
 
+    /// 2026-11-03：筛选芯片统一走 `GlassChip`（功能层控制件用 Liquid Glass）——
+    /// 台账页所有筛选（全部/开锁/告警/失败、成员、当前锁/全部锁）一处改动全部生效。
     private func chip(title: String, selected: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(V.F.footnote)
-                .foregroundStyle(selected ? V.C.text1 : V.C.text3)
-                .padding(.horizontal, V.S.gapM)
-                .padding(.vertical, V.S.gapS)
-                .background(selected ? V.C.card : Color.clear, in: Capsule())
-                .overlay {
-                    Capsule().strokeBorder(selected ? V.C.tabEdge : V.C.hairline, lineWidth: V.S.hair)
-                }
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
+        GlassChip(title: title, selected: selected, action: action)
     }
 
     // MARK: - 时间线（按自然日分组）
