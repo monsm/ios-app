@@ -422,9 +422,11 @@ struct CredentialStudioScreen: View {
                     ("弱口令", "\(weak.count) 条"),
                     ("重复组", "\(duplicates.count) 组")
                 ])
+                // 2026-11-04（对比度审计）：coral 0xEE7258 在白卡上只有 2.92:1 —— 正文 AA 要求 4.5。
+                // 弱口令/重复组是**危险级**警告，用 critical（7.18:1）语义与对比度都对。
                 if !weak.isEmpty {
                     Text("弱口令：" + weak.map { "#\($0.alias)" }.joined(separator: "、"))
-                        .font(V.F.footnote).foregroundStyle(V.C.coral)
+                        .font(V.F.footnote).foregroundStyle(V.C.critical)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 if !duplicates.isEmpty {
