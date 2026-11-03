@@ -68,7 +68,7 @@ struct KeyCreateScreen: View {
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle(isEdit ? "改造凭证" : "新增凭证")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarTitleDisplayMode(.large)
         .onAppear {
             consumeRoute()
             readClipboardOnce()
@@ -79,10 +79,7 @@ struct KeyCreateScreen: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: V.S.gapXS) {
-            Text(isEdit ? "改造凭证" : "新增凭证")
-                .font(V.F.displayHome)
-                .foregroundStyle(V.C.text1)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            // 2026-11-03（全维度整理）：导航栏已有同名标题，页内不再重复画一遍。
             HStack(spacing: V.S.gapS) {
                 VStateDot(tone: app.lock == nil ? .neutral : .ok,
                          word: app.lock == nil ? "未添加门锁" : "门锁在场")

@@ -53,7 +53,16 @@ extension KeyCreateScreen {
                 Divider().overlay(V.C.hairline)
 
                 VSectionLabel(text: "归谁", trailing: owner ?? "必选")
-                let active = app.members.filter { !$0.archived }
+                // 2026-11-03（全维度整理）：原来直接按存储顺序列出，同一份数据每次打开可能换序，
+                // 看起来像随机。改为稳定排序：名下凭证多的在前，同数量按名字。
+                let active = app.members
+                    .filter { !$0.archived }
+                    .sorted { a, b in
+                        let ca = app.keys.filter { $0.owner == a.id || $0.owner == a.name }.count
+                        let cb = app.keys.filter { $0.owner == b.id || $0.owner == b.name }.count
+                        if ca != cb { return ca > cb }
+                        return a.name.localizedStandardCompare(b.name) == .orderedAscending
+                    }
                 if active.isEmpty {
                     KeysInlineNote(tone: .attention, text: "还没有成员。先去「家」建一位成员；也可以先用未归属把凭证建起来。")
                     Button {
