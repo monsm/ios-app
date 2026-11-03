@@ -107,7 +107,11 @@ struct BackupStudioScreen: View {
                 Text("备份含门锁密钥，等同于家门钥匙。文件只留在本机 Documents，别发给别人。")
                     .font(V.F.footnote).foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
-                VTextFieldRow(label: "备份口令（可留空 = 明文）", text: $password, placeholder: "至少 8 位", secure: true)
+                // 2026-11-04（截图实测 · 标签与实现相反）：这里写「可留空 = 明文」，
+                // 而 `makeBackup()` 里是 `guard !password.isEmpty` —— 留空会被**拒绝**并回
+                // 「已拒绝写入明文备份」。SEC-02 明确不允许明文落盘，标签却承诺可以。
+                // 标签改成实现的口径：口令必填。
+                VTextFieldRow(label: "备份口令（必填，至少 8 位）", text: $password, placeholder: "至少 8 位", secure: true)
                 VActionButton(title: busy ? "正在生成…" : "生成一份本机备份", systemImage: "externaldrive.badge.plus") {
                     Task { await makeBackup() }
                 }
