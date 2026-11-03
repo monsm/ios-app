@@ -38,7 +38,12 @@ extension RecordSearch {
                 out.append(OutWin(rec: r, window: temps[0].label))
             }
         }
-        return out.sorted { $0.rec.timeStr > $1.rec.timeStr }
+        // 同一秒内的多条日志 timeStr 相同 —— 无决胜项时顺序不定。补 mac+idxRaw。
+        return out.sorted { a, b in
+            if a.rec.timeStr != b.rec.timeStr { return a.rec.timeStr > b.rec.timeStr }
+            if a.rec.mac != b.rec.mac { return a.rec.mac < b.rec.mac }
+            return a.rec.idxRaw < b.rec.idxRaw
+        }
     }
 
     /// 574 活跃凭证 (台账推断, 展示层必须标"约"): 近 30 天开门日志按「类型 #槽位」计次,
@@ -69,7 +74,14 @@ extension RecordSearch {
         // 在数据上不可回答。诚实做法：只按**凭证种类**聚合，标题也跟着改成"开门构成"。
         let typeToKind: [Int: String] = Attribution.openKind
         for l in logs { if let k = typeToKind[l.type] { c[k, default: 0] += 1 } }
-        return c.sorted { $0.value > $1.value }.map { kind, n in
+        // 2026-11-03（同一轮第二个排序缺陷）：按次数降序**没有决胜项** ——
+        // 各类次数并列（例如都只有 1 次）时 Swift 的不稳定排序会让"开门构成"的顺序每次进页面都变。
+        // 用固定种类顺序作决胜：数字大的在前，数字相同按 key/temp/pwd/fp 的固定序。
+        let kindOrder: [String: Int] = ["key": 0, "temp": 1, "pwd": 2, "fp": 3]
+        return c.sorted { a, b in
+            if a.value != b.value { return a.value > b.value }
+            return (kindOrder[a.key] ?? 99) < (kindOrder[b.key] ?? 99)
+        }.map { kind, n in
             (kind, Attribution.words[kind] ?? kind, n)
         }
     }
