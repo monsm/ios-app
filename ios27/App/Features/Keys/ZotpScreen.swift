@@ -74,7 +74,7 @@ struct ZotpScreen: View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VCardHeader(title: "锁端开关")
-                VToggleRow(title: "开通临时密码", detail: otpOn ? "锁端会接受动态码" : "关闭状态下生成的码不会被锁接受", isOn: Binding(
+                VToggleRow(title: "开通动态密码", detail: otpOn ? "锁端会接受动态码" : "关闭状态下生成的码不会被锁接受", isOn: Binding(
                     get: { otpOn },
                     set: { on in writeEnable(on) }
                 ))
@@ -180,7 +180,10 @@ struct ZotpScreen: View {
                 VCardHeader(title: "使用须知", showsChevron: false)
                 Text("· 生成前请先校准门锁时间：偏差超过 180 秒，锁端会拒绝这个码。")
                 Text("· 换码周期由锁端决定（常见 30 分钟）；一个周期内最多取 100 枚，用完请等下一周期。")
-                Text("· 只有 A 模式（单验）下临时密码才有效；B 模式下请改用密码或指纹。")
+                // 2026-11-04（视觉复核 · 用词漂移）：本页标题是「动态密码」，这条须知却叫
+                // 「临时密码」—— 同屏两词指同一个东西。另外 B 模式的建议没说"密码"指什么
+                // （固定密码），读者可能以为也包括动态码本身（恰恰是 B 模式下无效的那个）。
+                Text("· 只有 A 模式（单验）下动态密码才有效；B 模式（双验）下请改用固定密码或指纹开门。")
             }
             .font(V.F.footnote)
             .foregroundStyle(V.C.text3)
@@ -201,7 +204,7 @@ struct ZotpScreen: View {
                 try await LockService.shared.setZotp(on)
                 DB.saveOtpStatus(mac, OtpStatus(on: on, at: Date().timeIntervalSince1970 * 1000))
                 otpOn = on
-                outcome = on ? "已开通临时密码" : "已关闭临时密码"
+                outcome = on ? "已开通动态密码" : "已关闭动态密码"
             } catch {
                 otpOn = !on
                 outcome = "设置失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
