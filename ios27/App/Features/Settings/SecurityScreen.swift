@@ -148,17 +148,28 @@ struct SecurityScreen: View {
                     SettingRule()
                     SettingToggle(
                         label: "允许面容 / 指纹解锁",
+                        // 2026-11-03（全功能点排查）：设备没有生物识别 / 未录入时，这个开关原来**照样可点** ——
+                        // 打开了也不会有任何效果（LockKeeperApp 的 bioAvailable 会是 false），
+                        // 属于"给了开关就必须有效果"的反例。现在按真实可用性禁用并说明原因。
                         note: store.hasDuressCode
                             ? "已设胁迫码时本开关自动停用 —— 刷脸会暴露「这不是伪装模式」。"
-                            : "冷启动时可用 Face ID / Touch ID 解锁；失败仍可输本机密码。",
+                            : (biometricHardwareAvailable
+                               ? "冷启动时可用 Face ID / Touch ID 解锁；失败仍可输本机密码。"
+                               : "这台设备没有可用的面容 / 指纹（未录入或硬件不支持）—— 打开本开关也不会生效。"),
                         isOn: settingsBinding(\.bioUnlock)
                     )
-                    .disabled(store.hasDuressCode)
-                    .opacity(store.hasDuressCode ? 0.45 : 1)
+                    .disabled(store.hasDuressCode || !biometricHardwareAvailable)
+                    .opacity((store.hasDuressCode || !biometricHardwareAvailable) ? 0.45 : 1)
                 }
             }
             .padding(.horizontal, V.S.pageGutter)
         }
+    }
+
+    /// 生物识别硬件是否真的可用（与 `LockKeeperApp` 里的 `canUseBiometrics()` 同判据）。
+    private var biometricHardwareAvailable: Bool {
+        var error: NSError?
+        return LAContext().canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error)
     }
 
     private var biometricName: String {
