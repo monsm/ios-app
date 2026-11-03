@@ -16,6 +16,10 @@ struct DFUScreen: View {
     @State private var fileName = ""
     @State private var error = ""
     @State private var phase: Phase = .idle
+    /// 2026-11-03（全功能点排查 · 最高风险动作）：「开始升级」原来**一点就刷**。
+    /// 而刷写失败会把锁留在 bootloader —— 那一刻门是开不了的（本页失败文案自己就这么写）。
+    /// 一个能让门开不了的动作，必须在开始前把后果说清楚再让用户确认。
+    @State private var askStart = false
     @State private var progress: Double = 0
     @State private var stateText = ""
     @State private var importing = false
@@ -163,7 +167,13 @@ struct DFUScreen: View {
                 } else {
                     VActionButton(title: phase == .done ? "再次升级" : "开始升级",
                                   systemImage: "arrow.up.circle") {
-                        confirmStart()
+                        askStart = true
+                    }
+                    .confirmationDialog("开始刷写固件？", isPresented: $askStart, titleVisibility: .visible) {
+                        Button("开始升级", role: .destructive) { confirmStart() }
+                        Button("取消", role: .cancel) {}
+                    } message: {
+                        Text("刷写过程不要离开本页、不要切后台、不要远离门锁。中途失败锁会停在升级模式 —— 那时无法开门，必须回到本页重刷到成功为止。")
                     }
                     .disabled(pkg == nil)
                     .opacity(pkg == nil ? 0.4 : 1)
@@ -222,6 +232,7 @@ struct DFUScreen: View {
     }
 
     private func confirmStart() {
+        guard phase != .running else { return }
         guard let p = pkg, app.lock != nil else { return }
         if let blocked = FirmwareKit.downgradeBlocked(current: app.lock?.firmware, pkg: p) {
             error = blocked
