@@ -11,6 +11,8 @@ struct QuickPoolEditSheet: View {
     @State private var picked: [String] = QuickPool.selected.map(\.id)
     @State private var smart: Bool = QuickPool.smartFirst
 
+    private var gridCount: Int { SettingsStore.shared.quickGridCount }
+
     private func move(_ index: Int, _ delta: Int) {
         let target = index + delta
         guard picked.indices.contains(index), picked.indices.contains(target) else { return }
@@ -23,7 +25,10 @@ struct QuickPoolEditSheet: View {
                 VStack(spacing: V.S.gap16) {
                     VCard {
                         VStack(alignment: .leading, spacing: V.S.gapS) {
-                            VSectionLabel(text: "显示哪些格子")
+                            // 2026-11-03（表现方式）：这一栏叫「显示哪些格子」，但门页只渲染
+                            // `QuickPool.ordered().prefix(store.quickGridCount)`（默认 6）。勾 10 个只会显示 6 个，
+                            // 而这里一个字都没说 —— 用户会以为剩下的 4 个也上去了。把真实上限写在标题上。
+                            VSectionLabel(text: "显示哪些格子", trailing: picked.count > gridCount ? "只显示前 \(gridCount) 个" : "\(picked.count) 个")
                             ForEach(QuickPool.all) { a in
                                 Toggle(isOn: Binding(
                                     get: { picked.contains(a.id) },
@@ -49,13 +54,17 @@ struct QuickPoolEditSheet: View {
                         }
                     }
                     .padding(.horizontal, V.S.pageGutter)
+                    if picked.count > gridCount {
+                        SettingsNote(text: "门页一次只显示前 \(gridCount) 个（多的不会出现）。要改上限：设置 → 外观 → 快捷格数量。")
+                            .padding(.horizontal, V.S.pageGutter)
+                    }
 
                     // 2026-11-03：加了「已选顺序」—— 文案一直说"按你在这里的勾选顺序"，
                     // 但一个纯开关列表根本表达不出顺序。这里给已选项一个可上下调的有序列。
                     if picked.count > 1 {
                         VCard {
                             VStack(alignment: .leading, spacing: V.S.gapS) {
-                                VSectionLabel(text: "已选顺序", trailing: "(picked.count) 个")
+                                VSectionLabel(text: "已选顺序", trailing: "\(picked.count) 个")
                                 ForEach(Array(picked.enumerated()), id: \.element) { idx, id in
                                     if let a = QuickPool.all.first(where: { $0.id == id }) {
                                         HStack(spacing: V.S.gapS) {

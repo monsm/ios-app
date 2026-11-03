@@ -44,7 +44,10 @@ struct ModuleOrderScreen: View {
 struct ModuleOrderCard: View {
     @State private var order: [DevSlot] = DevLayout.order
     @State private var hidden: Set<String> = DevModuleStore.hidden
-    @State private var quickIDs: Set<String> = Set(QuickPool.selected.map(\.id))
+    // 2026-11-03（全功能点排查）：这里也是 `Set` —— 在「模块排序与显隐」里点一下快捷格，
+    // `Array(Set)` 的哈希序会把你之前在快捷格编辑页排好的顺序整段冲掉。
+    // 顺序是用户能感知的设置（QuickPool.selected 明确保序），所以这里也必须是有序数组。
+    @State private var quickIDs: [String] = QuickPool.selected.map(\.id)
     @State private var resetConfirm = false
 
     var body: some View {
@@ -167,11 +170,11 @@ struct ModuleOrderCard: View {
         return Button {
             if selected {
                 guard quickIDs.count > 1 else { return }
-                quickIDs.remove(action.id)
-            } else {
-                quickIDs.insert(action.id)
+                quickIDs.removeAll { $0 == action.id }
+            } else if !quickIDs.contains(action.id) {
+                quickIDs.append(action.id)
             }
-            QuickPool.setSelected(Array(quickIDs))
+            QuickPool.setSelected(quickIDs)
         } label: {
             HStack(spacing: V.S.gapS) {
                 Image(systemName: selected ? "checkmark.circle.fill" : "circle")
