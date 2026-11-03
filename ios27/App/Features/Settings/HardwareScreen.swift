@@ -201,7 +201,10 @@ struct HardwareScreen: View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VCardHeader(title: "God 模式")
-                Text("锁端全量读数 · 双侧快照 · 凭证变更流水 · 修池（保通信密钥重写 PIN 表）。")
+                // 2026-11-03（全功能点排查 · 描述准确性）：原文写「双侧快照」，但快照的生成/复制按钮
+                // 在「交互流水」页（DiagStreamScreen 的「复制双侧快照」），本页并不产出它。
+                // 说明里应当只列本页真有的东西。
+                Text("锁端全量读数 · 凭证台账对账 · 变更流水 · 修池（保通信密钥重写 PIN 表）。双侧快照请到「交互流水」页复制。")
                     .font(V.F.footnote).foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
                 VOutlineButton(title: "打开 God 模式", systemImage: "crown.fill") {

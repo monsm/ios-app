@@ -203,7 +203,7 @@ struct SettingsScreen: View {
             // 两跳才到，用户实测反馈「根本就没有 god 按钮」。入口本身存在（HardwareScreen:197），
             // 只是埋得太深。这里补一条直达入口，仍放在「帮助」组末尾 —— 可发现，但不挡路。
             // 本页只读为主，唯一写动作「修池」自带二级确认。
-            .init(id: "godMode", title: "God 模式", detail: "锁端全量读数 / 双侧快照 / 修池", symbol: "crown.fill", dest: .godMode, group: .help),
+            .init(id: "godMode", title: "God 模式", detail: "锁端全量读数 / 台账对账 / 变更流水 / 修池", symbol: "crown.fill", dest: .godMode, group: .help),
             .init(id: "about", title: "关于", detail: "版本与构建", symbol: "info.circle", dest: .about, group: .help)
         ]
     }
