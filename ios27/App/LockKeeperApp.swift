@@ -77,6 +77,12 @@ struct RootView: View {
                 if args.contains("-kfSeed") {
                     SeedImporter.importIfPresent()
                 }
+                // -kfFullPage：整页滚动截屏（放大 ScrollView frame 一次成像），
+                // 产物 Documents/kf-fullpage-<N>.png 由 workflow 拷出。
+                if args.contains("-kfFullPage"), let i = args.firstIndex(of: "-kfTab"),
+                   i + 1 < args.count, let tab = Int(args[i + 1]) {
+                    FullPageCapture.capture(tab: tab)
+                }
                 // -kfDest <destRaw>：把一个子页压进当前 Tab 的导航栈（截图子页用）。
                 if let i = args.firstIndex(of: "-kfDest"), i + 1 < args.count,
                    let dest = Dest(rawValue: args[i + 1]) {
