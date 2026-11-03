@@ -28,10 +28,12 @@ on:
 # 产物（IPA/截图）由新 run 重新产出；ci-shots 是独立分支，不受取消影响。
 concurrency:
   group: ios27-${{ github.ref }}
-  # 2026-11-03：改为**不取消**。原来 cancel-in-progress: true 会在新 push 时取消
-  # 整个 run —— 而截图作业要 12~15 分钟，连续提交时它永远跑不完（实测 ci-shots
-  # 跨 8 个提交一次都没更新）。编译结论稍旧可以接受，没有截图则完全无法评审界面。
-  cancel-in-progress: false
+  # 2026-11-03 实测两种策略的代价：
+  #   · cancel: true  → 连续推送时截图被打断，ci-shots 跨 8 个提交零更新；
+  #   · cancel: false → 每个提交跑完整 run（约 25 分钟），4 个提交 = 100 分钟才轮到最新代码。
+  # 结论：**队列不能无限堆积**。恢复 cancel: true，靠"降低推送频率"解决截图被打断
+  # —— 一个轮次只推一次，让每次 run 有 25 分钟跑完。
+  cancel-in-progress: true
 
 permissions:
   # Release 资产是公开直链可下载的；artifact 下载要登录，所以 IPA 必须挂 Release。
