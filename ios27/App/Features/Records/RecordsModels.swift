@@ -272,8 +272,9 @@ enum RecordsSource {
     static var alarmTypes: Set<Int> { StatsKit.alarmTypes }
 
     /// 告警用注意色（还有下一步可做），其余告警用危险色（已失效/被锁）。
-    /// 4 静态电量 = 注意（换个电池就好）；10 多次密码失败锁定 = 危险（有人试密码）。
-    private static let criticalTypes: Set<Int> = [10]
+    /// **不在这里再写一份字面量** —— 全仓已有三处描述同一件事（AlarmMeta.urgent / serious、
+    /// StatsKit.alarmTypes）。改引 AlarmMeta：urgent=危险，serious=注意。
+    private static var criticalTypes: Set<Int> { AlarmMeta.urgent }
 
     /// 装载结果：能上时间线的条目 + 锁端没回时刻、无法定位到某一天的条数。
     /// 后者单独计数，是因为把它塞进时间线等于谎报一个 1970 年的日期。
