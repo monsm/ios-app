@@ -81,7 +81,7 @@ enum Dest: String, CaseIterable, Identifiable, Hashable {
         case .lockStatus: return "锁实况"
         case .addLock: return "添加门锁"
         case .gateway: return "网关"
-        case .syncTime: return "校时"
+        case .syncTime: return "校准门锁时间"
         case .defend: return "布防"
         case .dfu: return "固件升级"
         case .lockSettings: return "锁设置"

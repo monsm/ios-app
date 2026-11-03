@@ -40,7 +40,7 @@ struct SyncTimeScreen: View {
         }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("校时")
+        .navigationTitle("校准门锁时间")
         .navigationBarTitleDisplayMode(.large)
         .task { await read() }
         .sensoryFeedback(.success, trigger: result?.ok) { _, new in new == true }
