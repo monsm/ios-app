@@ -341,11 +341,15 @@ struct DoorScreen: View {
     }
 
     private var dialScale: CGFloat {
+        // 2026-11-03（截图）：底部常驻滑块占了 ~72pt，刻度盘按原尺寸会有一截压在滑块后面 ——
+        // 视觉上像"读数被挡住"。默认档收到 0.92 给滑块让位；用户选的档位仍在其上生效。
+        let base: CGFloat
         switch AXSettings.dialSize {
-        case "small": return 0.86
-        case "large": return 1.08
-        default: return 1
+        case "small": base = 0.86
+        case "large": base = 1.08
+        default: base = 0.92
         }
+        return base
     }
 
     private var digitFont: VFont {

@@ -32,7 +32,7 @@ struct GlassSlideToUnlock: View {
                 // 与极淡底色，让控件边界成立（HIG：控件必须有可辨的容器）。
                 Capsule()
                     .fill(.clear)
-                    .glassEffect(.regular, in: Capsule())
+                    .glassEffect(.regular.tint(V.C.card.opacity(0.55)), in: Capsule())
                     .overlay {
                         Capsule().strokeBorder(V.C.hairlineSoft, lineWidth: V.S.hair)
                     }
