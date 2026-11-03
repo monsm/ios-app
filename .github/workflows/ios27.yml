@@ -439,23 +439,19 @@ jobs:
           # 于是 full 截图左侧黑边、分组标题（text3 深灰）在黑底上不可见，
           # 而产品的默认/推荐外观是浅色（契约纸色）。截图前钉成浅色，与视觉验收基准一致。
           echo "stage=boot" >> "$DIAG"
-          xcrun simctl boot "$UDID" >> "$DIAG" 2>&1 || true
-          # 2026-11-04（第三次修正 · 上一版又卡住了）：后台 `bootstatus` + `kill -0` 轮询在
-          # macOS runner 上会让 `bootstatus` 挂住不退出（它在等模拟器进 booted，而 boot 没生效时
-          # 永远等不到），300 秒后我们 exit 1 —— 于是 diag 停在 `stage=boot`、截图 count=0。
-          # 改成**不用 bootstatus**：`simctl boot` 之后轮询 `simctl list devices` 的 Booted 标记，
-          # 有界 180 秒；仍不行就直接报错，让 diag 说清楚。
-          # 2026-11-04（第 4 次修正 · diag 终于说出真相）：
-          #   `Unable to boot device in current state: Booted`
-          # 模拟器**已经是 Booted** —— `simctl boot` 对已启动的设备报错 405，而我把它当成失败。
-          # 之前几轮我一直在"等它起来"，其实它早就起来了，是**我的检查写错了**。
-          # 正确做法：boot 报错**不判失败**，只用状态查询判定；已经 Booted 就是成功。
+          # 2026-11-04（第 5 次修正 · 消除 Booting 态歧义）：上一版 for 循环只认 `Booted`，
+          # 而模拟器在 `Booting`（启动中）状态时 grep 得到行但不匹配，36×5s 内一直 Booting
+          # 就会 exit 1 —— 这次 run 的 diag 正是停在这里。改法：
+          #   ① boot 前先 `simctl shutdown`（幂等，已关机报错无所谓）—— 消掉"已 Booted"的 405 歧义；
+          #   ② 轮询用状态**字段**判定（行尾 (Booted)），Boot/Booting 都继续等；
+          #   ③ 上限从 180s 提到 300s（冷启动慢的 runner 也装得下）。
+          xcrun simctl shutdown "$UDID" >> "$DIAG" 2>&1 || true
           xcrun simctl boot "$UDID" >> "$DIAG" 2>&1 || true
           BOOTED=0
-          for _ in $(seq 1 36); do
+          for _ in $(seq 1 60); do
             STATE=$(xcrun simctl list devices | grep "$UDID" | head -1 || true)
             case "$STATE" in
-              *Booted*) BOOTED=1; break ;;
+              *"(Booted)"*) BOOTED=1; break ;;
             esac
             sleep 5
           done
