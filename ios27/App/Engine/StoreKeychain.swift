@@ -59,6 +59,14 @@ extension DB {
     /// 补「去连字符」的理由：`BluetoothDevice.getAddress()` 在部分机型/厂商 SDK 上带连字符，
     /// 而 Android 版早就去掉了（`KfProtocol.kt:230`）—— iOS 没去，于是同一份带连字符的 MAC
     /// 从备份/二维码进来会建出**两个不同的台账键**。Android 那版是对的，这里对齐它。
+    /// MAC 的短显示：只取后 6 位，用于列表行与确认对话框。
+    /// 2026-11-04：之前在 AddLockScreen / HardwareScreen 各有一份逐字相同的 `private func shortMAC`。
+    static func shortMac(_ mac: String) -> String {
+        let h = normalizeMac(mac)
+        guard h.count == 12 else { return mac }
+        return String(h.suffix(6)).uppercased()
+    }
+
     static func normalizeMac(_ m: String) -> String {
         m.replacingOccurrences(of: ":", with: "")
             .replacingOccurrences(of: "-", with: "")

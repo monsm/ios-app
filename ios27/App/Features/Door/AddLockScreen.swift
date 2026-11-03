@@ -259,8 +259,8 @@ struct AddLockScreen: View {
                         .lineLimit(1)
                     // 2026-11-03（信息架构 QA · 无障碍）：完整 12 位 MAC 打在标题下，
                     // VoiceOver 还会逐位念完整串 —— 12 个字符对"认哪把锁"没有帮助。
-                    // 与硬件页同一做法：只显示后 6 位（同仓 shortMAC 既有口径）。
-                    Text("\(shortMAC(c.mac)) · \(c.model)")
+                    // 与硬件页同一做法：只显示后 6 位（DB.shortMac 既有口径）。
+                    Text("\(DB.shortMac(c.mac)) · \(c.model)")
                         .font(V.F.unit)
                         .foregroundStyle(V.C.text3)
                     Text(c.alreadyAdded
@@ -280,7 +280,7 @@ struct AddLockScreen: View {
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(c.name)，编号 \(shortMAC(c.mac))，\(rowWord(c))，信号 \(c.rssi) dBm")
+        .accessibilityLabel("\(c.name)，编号 \(DB.shortMac(c.mac))，\(rowWord(c))，信号 \(c.rssi) dBm")
         .contextMenu {
             Button {
                 Task { await probe(c) }
@@ -561,12 +561,6 @@ struct AddLockScreen: View {
     }
 
     /// 只保留 MAC 后 6 位 —— 与 HardwareScreen 同一口径，供界面与 VoiceOver 共用。
-    private func shortMAC(_ m: String) -> String {
-        let h = DB.normalizeMac(m)
-        guard h.count == 12 else { return m }
-        return String(h.suffix(6)).uppercased()
-    }
-
     private func commitName() {
         let name = nickname.trimmingCharacters(in: .whitespaces)
         guard !name.isEmpty else { return }

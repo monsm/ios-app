@@ -49,7 +49,7 @@ struct HardwareScreen: View {
             Button("撤销", role: .destructive) { let t = d; revokeTarget = nil; revoke(t) }
             Button("取消", role: .cancel) { revokeTarget = nil }
         } message: { d in
-            Text("钥匙串 \(shortMAC(d.mac)) 里那把「\(app.lock?.name ?? "当前锁")」的钥匙会被删掉。以后要用它开门，必须把手机贴近钥匙串重新写一次。")
+            Text("钥匙串 \(DB.shortMac(d.mac)) 里那把「\(app.lock?.name ?? "当前锁")」的钥匙会被删掉。以后要用它开门，必须把手机贴近钥匙串重新写一次。")
         }
     }
 
@@ -147,7 +147,7 @@ struct HardwareScreen: View {
                                     VStack(alignment: .leading, spacing: V.S.gapXXS) {
                                         ForEach(keys, id: \.self) { mac in
                                             HStack(spacing: V.S.gapS) {
-                                                Text(shortMAC(mac))
+                                                Text(DB.shortMac(mac))
                                                     .font(V.F.stamp)
                                                     .foregroundStyle(V.C.text1)
                                                     .monospacedDigit()
@@ -393,9 +393,4 @@ struct HardwareScreen: View {
         AppToast.shared.show("已从本机解绑（钥匙串里的钥匙不受影响）", tone: .ok)
     }
 
-    private func shortMAC(_ m: String) -> String {
-        let h = DB.normalizeMac(m)
-        guard h.count == 12 else { return m }
-        return String(h.suffix(6)).uppercased()
-    }
 }
