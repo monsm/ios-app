@@ -111,6 +111,20 @@ struct KeysScreen: View {
         .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("凭证")
         .navigationBarTitleDisplayMode(.large)
+        // 2026-11-03（用户："原生液态玻璃质感太少"）：主行动放进**系统导航栏工具位** ——
+        // 系统会给它原生玻璃材质（功能层），比内容里再画一颗实心按钮更贴 HIG，
+        // 也让"新增凭证"在任何滚动位置都可达。
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    router.request(.dest(.keyCreate))
+                } label: {
+                    Image(systemName: "plus")
+                        .font(V.F.icon18Medium)
+                }
+                .accessibilityLabel("新增凭证")
+            }
+        }
         .task { await app.reload(refreshStatus: false) }
         .onAppear {
             now = KeysState.now()
