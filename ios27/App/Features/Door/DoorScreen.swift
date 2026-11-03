@@ -655,7 +655,7 @@ struct DoorScreen: View {
         let opens = todayOpenCount
         let batteryPart = lock.battery >= 0 ? "电量 \(lock.battery)%" : "电量未知"
         let linkPart = lock.isConnected ? "蓝牙已连接" : "蓝牙未连接"
-        return "\(batteryPart)，\(linkPart)，\(lock.keyCount) 枚凭证在册。今天已开锁 \(opens) 次。按日均 3 次估算，约可用 \(estimateMonths(lock))。"
+        return "\(batteryPart)，\(linkPart)，本机 \(lock.keyCount) 枚凭证在册。今天已开锁 \(opens) 次。按日均 3 次估算，约可用 \(estimateMonths(lock))。"
     }
 
     private func estimateMonths(_ lock: LockSummary) -> String {

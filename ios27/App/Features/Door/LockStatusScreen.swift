@@ -105,7 +105,7 @@ struct LockStatusScreen: View {
                           value: lock.signal <= 0 ? "未测" : "\(lock.signal)",
                           unit: lock.signal <= 0 ? nil : "/ 4",
                           tint: lock.signal == 1 ? V.C.warning : V.C.text1),
-                    .init(label: "凭证", value: "\(lock.keyCount)", unit: "枚"),
+                    .init(label: "本机凭证", value: "\(lock.keyCount)", unit: "枚"),
                     .init(label: "固件", value: lock.firmware),
                 ], columns: 2)
                 .padding(.top, V.S.gapXS)
