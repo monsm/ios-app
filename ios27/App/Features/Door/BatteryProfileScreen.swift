@@ -80,7 +80,7 @@ struct BatteryProfileScreen: View {
                 VRowDivider()
                 VValueRow(label: "最近采样", value: sampleTimeText)
                 VRowDivider()
-                VValueRow(label: "采样点数", value: "\(samples.count) 个", note: "每次读锁状态（cmd03）自动追加一条，保留 90 天。")
+                VValueRow(label: "采样点数", value: "\(samples.count) 个", note: "每次读锁状态自动追加一条，保留 90 天。")
             }
         }
         .padding(.horizontal, V.S.cardGutter)

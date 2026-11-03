@@ -198,7 +198,7 @@ struct SettingsScreen: View {
             .init(id: "backup", title: "备份与恢复", detail: "导出 / 从文件恢复", symbol: "externaldrive", dest: .backup, group: .data),
             .init(id: "backupStudio", title: "备份工作室", detail: "WebDAV / 多份 / 迁移 / 自检", symbol: "square.stack.3d.up.fill", dest: .backupStudio, group: .data),
             .init(id: "hardware", title: "钥匙串 / 硬件", detail: "蓝牙钥匙串与固件", symbol: "key.horizontal", dest: .hardware, group: .data),
-            .init(id: "protocolTest", title: "协议测试", detail: "附近设备与 cmd12 回声", symbol: "waveform.path.ecg", dest: .protocolTest, group: .help),
+            .init(id: "protocolTest", title: "协议测试", detail: "附近设备与回声探测", symbol: "waveform.path.ecg", dest: .protocolTest, group: .help),
             // 2026-11-03（全功能点 + 表现方式）：God 模式此前只能「设置 → 钥匙串/硬件 → 页底卡片」
             // 两跳才到，用户实测反馈「根本就没有 god 按钮」。入口本身存在（HardwareScreen:197），
             // 只是埋得太深。这里补一条直达入口，仍放在「帮助」组末尾 —— 可发现，但不挡路。
@@ -479,7 +479,7 @@ struct SettingsScreen: View {
             VStack(spacing: 0) {
                 VListRow(
                     title: "协议测试",
-                    detail: "附近设备与 cmd12 回声",
+                    detail: "附近设备与回声探测",
                     systemImage: "waveform.path.ecg",
                     tint: V.C.text3,
                     value: ""

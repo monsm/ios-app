@@ -523,7 +523,7 @@ struct AddLockScreen: View {
             }
             if Task.isCancelled { rollback("已中止：配网没有跑完，锁未被改动。"); return }
             pairedKeychain = kc
-            steps.append("07 状态校验通过（cmd03）—— 这把锁已经是你的了")
+            steps.append("状态校验通过 —— 这把锁已经是你的了")
             phase = .naming
         } catch {
             if Task.isCancelled { rollback("已中止：配网没有跑完，锁未被改动。"); return }

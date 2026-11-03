@@ -112,7 +112,7 @@ extension KeyCreateScreen {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
                 if kind == .fingerprint {
                     VSectionLabel(text: "指纹没有码值")
-                    KeysInlineNote(tone: .neutral, text: "指纹录入要在门锁的指纹头上按 8 次（锁端命令 cmd13 启动、cmd14 确认）。本机这条链路还没接，下一步先把这条登记进台账。")
+                    KeysInlineNote(tone: .neutral, text: "指纹录入要在门锁的指纹头上按 8 次（由锁端启动与确认）。本机这条链路还没接，下一步先把这条登记进台账。")
                     TextField("给这枚指纹起个名字", text: $name)
                         .font(V.F.body)
                         .frame(minHeight: V.Hit.min)

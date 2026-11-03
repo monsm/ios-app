@@ -245,7 +245,7 @@ struct DeviceInfoScreen: View {
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            SettingsNote(text: "进页会自动读一次 cmd03；锁钟偏差超过 2 秒时自动校时一次（与 APK RominfoPage 同口径）。静音、安全模式、校时、防尾随与固件升级在「锁设置」里。")
+            SettingsNote(text: "进页会自动读一次锁状态；锁钟偏差超过 2 秒时自动校时一次。静音、安全模式、校时、防尾随与固件升级在「锁设置」里。")
         }
         .padding(.horizontal, V.S.pageGutter)
     }

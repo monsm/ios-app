@@ -187,7 +187,7 @@ struct KeyDetailScreen: View {
                     .init(label: "剩余", value: remaining.value, unit: remaining.unit, tint: remaining.tint),
                 ])
                 Divider().overlay(V.C.hairline)
-                KeysInlineNote(tone: .neutral, text: "改到期日走 cmd0B 真下发到锁，回执成功才改本机台账 —— 不再只是本机备注。")
+                KeysInlineNote(tone: .neutral, text: "改到期日会真下发到锁，回执成功才改本机台账 —— 不再只是本机备注。")
             }
         }
         .padding(.horizontal, V.S.pageGutter)
