@@ -105,7 +105,12 @@ final class LinkSenseModel {
             attempt += 1
             busy = false
             phase = resolvePhase()
-            lastEvent = "预热失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+            // 2026-11-03（整页截图实测）：这里原来把**裸错误串**直接甩到门页正文
+            // （真机截图上是「预热失败：此设备不支持所需的蓝牙功能」）——
+            // 而 LockServiceLink 的注释写明「预热失败不该打扰用户」。两处口径相反。
+            // 预热只是"提前把链路准备好"，失败不影响手动开锁：说清后果 + 给出下一步即可，
+            // 具体原因留在诊断页（God 模式 / 硬件页）看。
+            lastEvent = "预连接没成功 —— 不影响手动开锁。下拉刷新或点「重连」可以再试。"
         }
     }
 

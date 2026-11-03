@@ -778,6 +778,10 @@ struct DoorScreen: View {
                     }
                 }
             } else {
+            // 2026-11-03（整页截图实测）：这张 LazyVGrid 直接挂在 VStack(alignment: .leading) 下，
+            // 外层只有 `.padding(.horizontal, …)`、**没有撑满宽度** —— 全仓其它 LazyVGrid 都住在
+            // VCard 里（VCard 自带 `.frame(maxWidth: .infinity)`），只有这一处没有。
+            // 结果：网格拿到 0 宽度 ⇒ 行高还在、格子全不可见，页面上就是一大块空白。
             LazyVGrid(columns: quickColumns, spacing: V.S.gapS) {
                 ForEach(Array(quickShown.enumerated()), id: \.element.id) { pair in
                     Button { runQuick(pair.element) } label: {
@@ -792,6 +796,7 @@ struct DoorScreen: View {
                     .accessibilityHint("轻点执行，长按编辑快捷操作")
                 }
             }
+            .frame(maxWidth: .infinity)
             }
         }
         .padding(.horizontal, V.S.cardGutter)
