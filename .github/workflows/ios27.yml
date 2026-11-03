@@ -432,13 +432,30 @@ jobs:
           APP=$(find build/Sim/Build/Products -name "LockKeeper.app" -maxdepth 3 | head -1)
           echo "APP=${APP:-<not found>}" >> "$DIAG"
           echo "APP=$APP"
-          xcrun simctl boot "$UDID" || true
-          xcrun simctl bootstatus "$UDID" -b || true
+          # 2026-11-04（diag 取证）：上一轮 diag 只写到 APP 那一行就断了 —— 说明卡在 boot/bootstatus，
+          # 而这两句原本是 `|| true`，卡住时既不报错也不留痕，整个 job 被 40 分钟超时杀掉。
+          # 给 bootstatus 一个有界等待，并逐段留痕。
+          echo "stage=boot" >> "$DIAG"
+          xcrun simctl boot "$UDID" >> "$DIAG" 2>&1 || true
+          if ! timeout 300 xcrun simctl bootstatus "$UDID" -b >> "$DIAG" 2>&1; then
+            echo "bootstatus=FAILED_OR_TIMEOUT" >> "$DIAG"
+            exit 1
+          fi
+          echo "bootstatus=ok" >> "$DIAG"
           if ! xcrun simctl install "$UDID" "$APP" >> "$DIAG" 2>&1; then
             echo "install=FAILED" >> "$DIAG"
             exit 1
           fi
           echo "install=ok" >> "$DIAG"
+          echo "stage=first-shot" >> "$DIAG"
+          # 立刻验一张：装上了但截不出图 = 模拟器显示服务没起来，与"页面空白"是两回事。
+          if xcrun simctl io "$UDID" screenshot "/tmp/shots/_probe.png" >> "$DIAG" 2>&1 && [ -f "/tmp/shots/_probe.png" ]; then
+            echo "probe-shot=ok" >> "$DIAG"
+            rm -f "/tmp/shots/_probe.png"
+          else
+            echo "probe-shot=FAILED" >> "$DIAG"
+            exit 1
+          fi
           # 预授权系统弹窗 —— 否则第一次启动的通知权限对话框会挡住截图（13 号截图实测被挡）。
           xcrun simctl privacy "$UDID" grant notifications com.aapk.lockkeeper 2>/dev/null || true
           xcrun simctl privacy "$UDID" grant user_tracking com.aapk.lockkeeper 2>/dev/null || true
