@@ -75,7 +75,7 @@ struct BackupStudioScreen: View {
             Text("本机多份备份 · WebDAV · 换机迁移 · 数据自检")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }
-        .padding(.horizontal, V.S.pageGutterA)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: - 多份保留

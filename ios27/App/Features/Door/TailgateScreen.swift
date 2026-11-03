@@ -88,7 +88,7 @@ struct TailgateScreen: View {
             Text(app.lock.map { "\($0.name) · \($0.model)" } ?? "还没有门锁")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }
-        .padding(.horizontal, V.S.pageGutterA)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private func load() {

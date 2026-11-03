@@ -55,7 +55,7 @@ struct ZotpScreen: View {
             Text("ZOTP · 6 位数字，按锁端周期自动更换")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }
-        .padding(.horizontal, V.S.pageGutterA)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var noLockCard: some View {

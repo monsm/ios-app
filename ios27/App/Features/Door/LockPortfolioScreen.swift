@@ -58,7 +58,7 @@ struct LockPortfolioScreen: View {
             Text("多锁统计、分组与排序")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }
-        .padding(.horizontal, V.S.pageGutterA)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var emptyCard: some View {

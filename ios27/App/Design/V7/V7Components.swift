@@ -923,7 +923,7 @@ struct VToggleRow: View {
 
 #Preview("VStatPair") {
     VStatPair(items: [("预计可用", "4 个月"), ("建议更换", "2 月 12 日")])
-        .padding(V.S.pageGutterA)
+        .padding(V.S.pageGutter)
         .background(V.C.bg)
 }
 
@@ -960,7 +960,7 @@ struct VToggleRow: View {
 
 #Preview("VSectionLabel") {
     VSectionLabel(text: "门锁", trailing: "3 项")
-        .padding(V.S.pageGutterC)
+        .padding(V.S.pageGutter)
         .background(V.C.bg)
 }
 
@@ -992,7 +992,7 @@ private struct VToggleRowPreviewHost: View {
 
 #Preview("VActionButton") {
     VActionButton(title: "添加门锁", systemImage: "plus") {}
-        .padding(V.S.pageGutterA)
+        .padding(V.S.pageGutter)
         .background(V.C.bg)
 }
 

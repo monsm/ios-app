@@ -78,7 +78,7 @@ struct MemberOpsScreen: View {
             Text("移交 · 借用 · 家政窗 · 轮值 · 关怀 · 访客 · 长辈")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }
-        .padding(.horizontal, V.S.pageGutterA)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var emptyCard: some View {

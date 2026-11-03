@@ -120,7 +120,7 @@ struct CredentialStudioScreen: View {
             Text("批量整理 · 回收站 · 版本 · 预警 · 导出")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }
-        .padding(.horizontal, V.S.pageGutterA)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var noLockCard: some View {

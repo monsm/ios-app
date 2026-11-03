@@ -96,7 +96,7 @@ struct SafeModeScreen: View {
             Text("A / B 决定这道锁验一次还是两次")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }
-        .padding(.horizontal, V.S.pageGutterA)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var modeText: String {

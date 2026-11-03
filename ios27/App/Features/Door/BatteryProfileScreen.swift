@@ -49,7 +49,7 @@ struct BatteryProfileScreen: View {
             Text("采样只在本机，不上传；低电提醒由本机通知排程。")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }
-        .padding(.horizontal, V.S.pageGutterA)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var noLockCard: some View {

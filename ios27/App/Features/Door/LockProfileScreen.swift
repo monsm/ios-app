@@ -59,7 +59,7 @@ struct LockProfileScreen: View {
             Text("档案只存本机，不写入门锁。")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }
-        .padding(.horizontal, V.S.pageGutterA)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var noLockCard: some View {

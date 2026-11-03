@@ -315,10 +315,7 @@ enum V {
         static let chipPadH: CGFloat = 11
         static let chipIconBox: CGFloat = 25
         static let chipIconGap: CGFloat = 9
-
-        static let pageGutterA: CGFloat = 37.3
-        static let pageGutterB: CGFloat = 29.67
-        static let pageGutterC: CGFloat = 21
+        /// 页面边距（契约 §5：16）。全仓**唯一**的页面级横向边距 —— 页头、卡片、列表共用。
         static let pageGutter: CGFloat = 16
         static let cardGutter: CGFloat = 14.67
         static let cardPad: CGFloat = 16.3

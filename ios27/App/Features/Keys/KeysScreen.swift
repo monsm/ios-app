@@ -204,7 +204,7 @@ struct KeysScreen: View {
                 .lineSpacing(V.Page.bodyLineSpacing)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.horizontal, V.S.pageGutterB)
+        .padding(.horizontal, V.S.pageGutter)
         .padding(.top, V.Page.chipToTitle)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
@@ -452,21 +452,11 @@ struct KeysScreen: View {
                             filter = item
                         }
                     }
-                    Button {
+                    // 2026-11-03（材质一致）：分组切换也是控制件，与筛选芯片同用 GlassChip。
+                    GlassChip(title: groupByOwner ? "按成员分组" : "按类型分组", selected: groupByOwner) {
                         groupByOwner.toggle()
                         CredentialOrg.setGroupMode(groupByOwner ? .owner : .type)
-                    } label: {
-                        Text(groupByOwner ? "按成员分组" : "按类型分组")
-                            .font(V.F.footnote)
-                            .foregroundStyle(groupByOwner ? V.C.text1 : V.C.text3)
-                            .padding(.horizontal, V.S.gapM)
-                            .padding(.vertical, V.S.gapS)
-                            .background(groupByOwner ? V.C.card : Color.clear, in: Capsule())
-                            .overlay {
-                                Capsule().strokeBorder(groupByOwner ? V.C.tabEdge : V.C.hairline, lineWidth: V.S.hair)
-                            }
                     }
-                    .buttonStyle(.plain)
                     .accessibilityLabel("切换为\(groupByOwner ? "按类型" : "按成员")分组")
                     .accessibilityAddTraits(groupByOwner ? [.isButton, .isSelected] : .isButton)
                 }
@@ -578,7 +568,7 @@ struct KeysScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.pageGutterB)
+        .padding(.horizontal, V.S.pageGutter)
         .padding(.top, V.S.gapL)
     }
 
@@ -597,7 +587,7 @@ struct KeysScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.pageGutterB)
+        .padding(.horizontal, V.S.pageGutter)
         .padding(.top, V.S.gapL)
     }
 

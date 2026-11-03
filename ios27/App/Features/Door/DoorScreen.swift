@@ -131,7 +131,7 @@ struct DoorScreen: View {
         .safeAreaInset(edge: .bottom) {
             if app.lock != nil {
                 GlassSlideToUnlock(onUnlock: { requestUnlock() }, busy: app.dialPhase.isBusy)
-                    .padding(.horizontal, V.S.pageGutterA)
+                    .padding(.horizontal, V.S.pageGutter)
                     .padding(.bottom, V.S.gapS)
             }
         }
@@ -276,7 +276,7 @@ struct DoorScreen: View {
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, V.S.pageGutterA)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     // MARK: - 异常提醒卡（原 DeviceHomeBlocks.swift:196-247）
@@ -428,7 +428,7 @@ struct DoorScreen: View {
                     .foregroundStyle(V.C.text2)
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, V.S.pageGutterA)
+            .padding(.horizontal, V.S.pageGutter)
             .accessibilityElement(children: .combine)
         }
     }
@@ -443,7 +443,7 @@ struct DoorScreen: View {
                     .foregroundStyle(V.C.text2)
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, V.S.pageGutterA)
+            .padding(.horizontal, V.S.pageGutter)
         }
     }
 
@@ -475,7 +475,7 @@ struct DoorScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(.horizontal, V.S.pageGutterA)
+            .padding(.horizontal, V.S.pageGutter)
         }
         if app.failStreak > 0 {
             VStack(spacing: V.S.gapS) {
@@ -511,16 +511,16 @@ struct DoorScreen: View {
                             }
                         }
                     }
-                    .padding(.horizontal, V.S.pageGutterA)
+                    .padding(.horizontal, V.S.pageGutter)
                 }
             }
-            .padding(.horizontal, V.S.pageGutterA)
+            .padding(.horizontal, V.S.pageGutter)
         }
         if case .failed = app.dialPhase {
             VOutlineButton(title: "再试一次", systemImage: "arrow.clockwise") {
                 requestUnlock()
             }
-            .padding(.horizontal, V.S.pageGutterA)
+            .padding(.horizontal, V.S.pageGutter)
         }
     }
 
@@ -724,7 +724,7 @@ struct DoorScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, V.S.pageGutterA)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var todayOpenCount: Int {
@@ -1056,7 +1056,7 @@ struct DoorScreen: View {
                 }
             }
         }
-        .padding(.horizontal, V.S.pageGutterA)
+        .padding(.horizontal, V.S.pageGutter)
         .padding(.top, V.S.gapL)
     }
 

@@ -66,7 +66,7 @@ struct LockSettingsScreen: View {
                 .font(V.F.footnote)
                 .foregroundStyle(V.C.text3)
         }
-        .padding(.horizontal, V.S.pageGutterA)
+        .padding(.horizontal, V.S.pageGutter)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
     }

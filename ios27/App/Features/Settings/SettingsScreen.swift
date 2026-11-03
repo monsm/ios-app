@@ -124,7 +124,7 @@ struct SettingsScreen: View {
                 .foregroundStyle(V.C.text3)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.horizontal, V.S.pageGutterC)
+        .padding(.horizontal, V.S.pageGutter)
         .padding(.top, V.Page.chipToTitle)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
@@ -634,7 +634,7 @@ struct DeleteDeviceSheet: View {
                         }
                     }
                 }
-                .padding(V.S.pageGutterC)
+                .padding(V.S.pageGutter)
             }
             .background(V.C.bg.ignoresSafeArea())
             .navigationTitle("删除设备")

@@ -60,7 +60,7 @@ struct AccessibilityScreen: View {
             Text("所有档位即时生效、只存本机。")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }
-        .padding(.horizontal, V.S.pageGutterA)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var textCard: some View {

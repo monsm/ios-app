@@ -99,7 +99,7 @@ struct RecordsStudioScreen: View {
             Text("自然语言检索 · 完整筛选 · 统计 · 原始帧")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }
-        .padding(.horizontal, V.S.pageGutterA)
+        .padding(.horizontal, V.S.pageGutter)
     }
 
     private var searchCard: some View {
