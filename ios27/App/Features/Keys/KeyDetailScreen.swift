@@ -137,7 +137,11 @@ struct KeyDetailScreen: View {
             Text("按 4 位分段转述 · 点一段只复制那一段")
                 .font(V.F.unit)
                 .foregroundStyle(V.C.text3)
-            HStack(spacing: V.S.gapS) {
+            // 2026-11-03（布局 QA）：原来是 **HStack 横排 16 段** —— 64 位 ekey 会铺出
+            // ≈1000pt 宽，而可用宽度只有 ≈337pt，整行溢出到屏幕外，后半段永远点不到。
+            // 改成自适应网格：一行放得下几段就放几段，自动换行。
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 64), spacing: V.S.gapS)],
+                      alignment: .leading, spacing: V.S.gapS) {
                 ForEach(Array(KeysCode.segments(code).enumerated()), id: \.offset) { pair in
                     Button {
                         Clip.set(pair.element)
@@ -157,7 +161,6 @@ struct KeyDetailScreen: View {
                     .buttonStyle(.plain)
                     .accessibilityLabel("第 \(pair.offset + 1) 段 \(pair.element)，点按只复制这一段")
                 }
-                Spacer(minLength: 0)
             }
         }
     }

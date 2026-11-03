@@ -276,10 +276,13 @@ struct RecordsStudioScreen: View {
                     Text("还没有最近帧。做一次开锁或读状态，帧会出现在这里。")
                         .font(V.F.footnote).foregroundStyle(V.C.text3)
                 } else {
+                    // 2026-11-03（布局 QA）：一帧 hex 在 micro 字号下约占 2 行，lineLimit(8)
+                    // 实际只露出约 4 帧，末行还被截断 —— 而下方按钮写的是「复制全部帧」。
+                    // 这里给足行数，让「前 8 帧」真的能看全。
                     Text(frames.prefix(8).joined(separator: "\n"))
                         .font(V.F.micro.monospaced())
                         .foregroundStyle(V.C.text3)
-                        .lineLimit(8)
+                        .lineLimit(20)
                         .textSelection(.enabled)
                     VOutlineButton(title: "复制全部帧（已脱敏）", systemImage: "doc.on.doc") {
                         Clip.set(frames.joined(separator: "\n"))

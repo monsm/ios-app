@@ -217,7 +217,13 @@ struct RecordExportScreen: View {
             if let entry = selected {
                 VCard {
                     VStack(spacing: V.S.gapMS) {
-                        RecordShareCard(entry: entry, lockName: lockName)
+                        // 2026-11-03（布局 QA）：分享卡是**固定 360×640** 的设计稿尺寸，
+                        // 直接塞进卡片里时可用宽只有 ≈310pt（402pt 屏）到 ≈275pt（375pt 屏），
+                        // 于是右侧被裁掉 —— 用户看到的预览和真正分享出去的图不一样。
+                        // 这里按可用宽等比缩放（只缩不放），保证预览完整。
+                        ScaledCardPreview(designWidth: CardSize.width, designHeight: CardSize.height) {
+                            RecordShareCard(entry: entry, lockName: lockName)
+                        }
                         if let png {
                             ShareLink(
                                 item: RecordCardImage(data: png),
@@ -449,5 +455,27 @@ struct RecordExportScreen: View {
         let text = digest.lines.joined(separator: "\n") + "\n\n" + digest.csv
         Clip.set(text)
         copied = "已复制 " + String(digest.lines.count) + " 句摘要 + " + String(digest.rows) + " 行 CSV"
+    }
+}
+
+// MARK: - 等比缩放容器
+
+/// 把固定尺寸的设计稿视图等比缩到可用宽度内（只缩不放）。
+/// 用于分享卡这类"必须保持 360×640 版式"的预览 —— 直接放进窄容器会被裁掉。
+private struct ScaledCardPreview<Content: View>: View {
+    let designWidth: CGFloat
+    let designHeight: CGFloat
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        GeometryReader { geo in
+            let scale = min(1, geo.size.width / designWidth)
+            content
+                .frame(width: designWidth, height: designHeight)
+                .scaleEffect(scale, anchor: .topLeading)
+                .frame(width: designWidth * scale, height: designHeight * scale, alignment: .topLeading)
+        }
+        .aspectRatio(designWidth / designHeight, contentMode: .fit)
+        .accessibilityElement(children: .contain)
     }
 }

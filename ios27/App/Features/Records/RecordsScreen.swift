@@ -301,11 +301,10 @@ struct RecordsScreen: View {
                     Text(title)
                         .font(V.F.miniTitle)
                         .foregroundStyle(V.C.text1)
+                    // 2026-11-03（交互 QA）：这里原来画了 chevron.right —— 而这三张微卡
+                    // **整体不可点**（无 Button / 无 onTapGesture）。箭头在 iOS 上是
+                    // "点进去还有下一页"的固定语义，画在这里就是假 affordance。
                     Spacer(minLength: 0)
-                    Image(systemName: "chevron.right")
-                        .font(V.F.chipLabelStrong)
-                        .foregroundStyle(V.C.text3)
-                        .accessibilityHidden(true)
                 }
                 Text("今天")
                     .font(V.F.legendLabel)
@@ -358,10 +357,7 @@ struct RecordsScreen: View {
                         .font(V.F.miniTitle)
                         .foregroundStyle(V.C.text1)
                     Spacer(minLength: 0)
-                    Image(systemName: "chevron.right")
-                        .font(V.F.chipLabelStrong)
-                        .foregroundStyle(V.C.text3)
-                        .accessibilityHidden(true)
+                    // 2026-11-03（交互 QA）：同 miniCard —— 本卡整体不可点，箭头是假 affordance。
                 }
                 if let latest = entries.first {
                     ZStack {
@@ -407,10 +403,7 @@ struct RecordsScreen: View {
                         .font(V.F.miniTitle)
                         .foregroundStyle(V.C.text1)
                     Spacer(minLength: 0)
-                    Image(systemName: "chevron.right")
-                        .font(V.F.chipLabelStrong)
-                        .foregroundStyle(V.C.text3)
-                        .accessibilityHidden(true)
+                    // 2026-11-03（交互 QA）：同 miniCard —— 本卡整体不可点，箭头是假 affordance。
                 }
                 ZStack {
                     Circle()
