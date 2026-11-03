@@ -28,6 +28,7 @@ struct HardwareScreen: View {
                     ledgerPanel
                     scanPanel
                 }
+                godPanel
                 scopePanel
                 if let errorText {
                     VStatusLine(tone: .attention, text: errorText)
@@ -105,11 +106,7 @@ struct HardwareScreen: View {
                             VBusyRow(text: "正在与钥匙串通信 · 请贴近手机")
                         } else {
                             if d.holdsThisLock {
-                                // 2026-11-03：god 模式入口 —— 锁端全量读数 / 双侧快照 / 凭证变更流水 / 修池。
-                VOutlineButton(title: "God 模式（全量读数 · 修池）", systemImage: "crown.fill") {
-                    router.request(.dest(.godMode))
-                }
-                VOutlineButton(title: "撤销这把锁的钥匙", systemImage: "key.slash") {
+                                VOutlineButton(title: "撤销这把锁的钥匙", systemImage: "key.slash") {
                                     revoke(d)
                                 }
                             } else {
@@ -187,6 +184,29 @@ struct HardwareScreen: View {
     }
 
     // MARK: 扫描
+    /// 2026-11-03（用户实测）：god 入口原来藏在「已写这把锁」的钥匙串行里 ——
+    /// 模拟器/新恢复的机器上没有已写入的钥匙串，按钮**永远不出现**。
+    /// 现在提为常驻面板：有锁就可用，没锁禁用并说明。
+    private var godPanel: some View {
+        VCard {
+            VStack(alignment: .leading, spacing: V.S.gapS) {
+                VCardHeader(title: "God 模式")
+                Text("锁端全量读数 · 双侧快照 · 凭证变更流水 · 修池（保通信密钥重写 PIN 表）。")
+                    .font(V.F.footnote).foregroundStyle(V.C.text3)
+                    .fixedSize(horizontal: false, vertical: true)
+                VOutlineButton(title: "打开 God 模式", systemImage: "crown.fill") {
+                    router.request(.dest(.godMode))
+                }
+                .disabled(app.currentKeychain == nil)
+                if app.currentKeychain == nil {
+                    Text("还没有已配对的锁 —— 先添加或恢复一把。")
+                        .font(V.F.footnote).foregroundStyle(V.C.text3)
+                }
+            }
+        }
+        .padding(.horizontal, V.S.pageGutter)
+    }
+
     private var scanPanel: some View {
         VStack(spacing: V.S.gapS) {
             VSectionLabel(text: "扫描")
