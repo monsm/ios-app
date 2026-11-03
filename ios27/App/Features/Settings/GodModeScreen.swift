@@ -21,15 +21,29 @@ struct GodModeScreen: View {
     private var mac: String { app.currentMac }
     private var kc: Keychain? { app.currentKeychain }
 
+    /// 分段锚点：五个面板各一个 id。
+    private enum Panel: String, CaseIterable, Identifiable {
+        case identity = "身份"
+        case readout = "读数"
+        case ledger = "台账"
+        case changes = "变更"
+        case repair = "修复"
+        var id: String { rawValue }
+    }
+
+    @State private var panel: Panel = .identity
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
+        ScrollViewReader { proxy in
         ScrollView {
             VStack(alignment: .leading, spacing: V.S.gap16) {
                 if let kc {
-                    identityPanel(kc)
-                    liveStatusPanel
-                    credentialPanel(kc)
-                    if !logs.isEmpty { changeLogPanel }
-                    repairPanel(kc)
+                    identityPanel(kc).id(Panel.identity)
+                    liveStatusPanel.id(Panel.readout)
+                    credentialPanel(kc).id(Panel.ledger)
+                    if !logs.isEmpty { changeLogPanel.id(Panel.changes) }
+                    repairPanel(kc).id(Panel.repair)
                 } else {
                     VCard {
                         VStack(alignment: .leading, spacing: V.S.gapS) {
@@ -44,6 +58,27 @@ struct GodModeScreen: View {
             }
             .padding(.vertical, V.S.gap16)
         }
+        // 2026-11-03：一页五个面板，滚动很长。顶部常驻**玻璃分段导航**（功能层控制件），
+        // 点一下跳到对应面板 —— 系统材质、拇指可达，也不用长滚找「修池」。
+        .safeAreaInset(edge: .top) {
+            if app.currentKeychain != nil {
+                ScrollView(.horizontal) {
+                    HStack(spacing: V.S.gapS) {
+                        ForEach(Panel.allCases) { item in
+                            GlassChip(title: item.rawValue, selected: panel == item) {
+                                panel = item
+                                withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) {
+                                    proxy.scrollTo(item, anchor: .top)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.horizontal, V.S.pageGutter)
+                    .padding(.vertical, V.S.gapS)
+                }
+                .scrollIndicators(.hidden)
+            }
+        }
         .background(CanvasBackground())
         .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("God 模式")
@@ -54,6 +89,7 @@ struct GodModeScreen: View {
             Button("取消", role: .cancel) {}
         } message: {
             Text("把锁内 PIN 表整体重置为新的 64 枚，通信密钥 skey 不变 —— 别人手机里的钥匙不会因换钥变砖。但锁内已有的旧 PIN（含别的手机钥匙）会全部失效。靠近门锁再执行。")
+        }
         }
     }
 
