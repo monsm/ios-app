@@ -484,6 +484,36 @@ jobs:
             j=$((j+1))
           done
           ls -la /tmp/shots
+      - name: 空白页检测（整页单色 = 页面卡死/崩溃）
+        if: always()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import glob, os, sys
+          try:
+              from PIL import Image, ImageStat
+          except Exception as e:
+              print("PIL 不可用，跳过空白检测:", e); sys.exit(0)
+          bad = []
+          for f in sorted(glob.glob("/tmp/shots/*.png")):
+              try:
+                  im = Image.open(f).convert("RGB").resize((64, 128))
+                  st = ImageStat.Stat(im)
+                  spread = max(st.stddev)
+                  if spread < 6:
+                      bad.append((os.path.basename(f), round(spread, 2)))
+              except Exception as e:
+                  bad.append((os.path.basename(f), "unreadable"))
+          if bad:
+              print("::warning::疑似空白页（整页单色，页面可能卡死/崩溃）：")
+              for name, v in bad:
+                  print(f"  {name}  stddev={v}")
+              with open("/tmp/shots/blank-report.txt", "w") as fh:
+                  fh.write("\n".join(f"{n}\t{v}" for n, v in bad))
+          else:
+              print("空白检测通过：所有截图都有内容")
+          PY
+
       - name: 推到 ci-shots 分支
         if: github.event_name == 'push' && always()
         env:
