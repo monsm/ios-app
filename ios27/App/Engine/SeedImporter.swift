@@ -31,9 +31,13 @@ enum SeedImporter {
                 st.powerLevel = 76
                 st.firmware = "1.4.2"
                 st.lockTime = Int64(ZKProtocol.nowProtoSeconds())
+                // 与真机快照逐项对齐（2026-11-02 双侧快照）：
+                //   PIN  cap 64 / 剩余 0  → 已用 64
+                //   密码 cap 64 / 剩余 0  → 已用 64（原来写成 64 = "剩余 64"，截图显示 0/64，与真机不符）
+                //   指纹 cap 50 / 剩余 7  → 已用 43
                 st.pinStock = 0
-                st.pwdStock = 64
-                st.fpStock = 42
+                st.pwdStock = 0
+                st.fpStock = 7
                 st.sKeyStatus = 3
                 st.zotpPeriod = 30
                 st.pinInfoCapacity = 64
