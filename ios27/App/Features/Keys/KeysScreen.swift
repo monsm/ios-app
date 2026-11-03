@@ -313,7 +313,11 @@ struct KeysScreen: View {
                 ])
                 .padding(.top, V.S.gapXXS)
                 VDivider()
-                Text("今日已核验 \(validCount) 枚凭证，全部在本机核对。")
+                // 2026-11-03（整页截图实测 · 标签与值不符）：这里写「**今日已核验** N 枚」，
+                // 而 `validCount` 数的是「未停用且未过期」的凭证 —— 那是**当前有效数**，
+                // 与"今天核验过"没有关系（App 从不做每日核验，也没有这个记录）。
+                // 标签跟着值走：说清它是有效数、核对是本机做的。
+                Text("其中 \(validCount) 枚有效（未停用、未过期），全部在本机核对。")
                     .font(V.F.footnote)
                     .foregroundStyle(V.C.text7)
                     .fixedSize(horizontal: false, vertical: true)
