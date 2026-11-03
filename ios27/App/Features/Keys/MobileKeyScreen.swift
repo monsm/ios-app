@@ -28,6 +28,15 @@ struct MobileKeyScreen: View {
     /// 那条链路未接 —— 所以页头只说「本机签了几把」，不假装知道池里剩几个。
     private var issuedCount: Int { issued.count }
 
+    /// 这把锁的 PIN 池大小 —— 签发真正会被卡住的上限（不是固定的 16）。
+    /// 这把锁的 PIN 池**可签发**上限。
+    /// 2026-11-04：`MobileKeyService.availablePin` 从 `pins[1]` 起分配 —— 第 0 枚是
+    /// 配网 ekey 嵌的那一枚，发给手机钥匙再撤销会把它从锁里删掉（真机 rc=2 根因）。
+    /// 所以可用名额是 `池子 - 1`，不是池子本身。
+    private var kcPoolSize: Int {
+        max(0, (app.currentKeychain?.pins.filter { !$0.isEmpty }.count ?? 1) - 1)
+    }
+
     var body: some View {
         ScrollView {
             VStack(spacing: V.S.gap16) {
@@ -234,8 +243,14 @@ struct MobileKeyScreen: View {
             errorText = "先选一位成员 —— 钥匙要归到某个人名下。"
             return
         }
-        guard issuedCount < 16 else {
-            errorText = "本机已签满 16 把。先撤销一把不用的，再来签新的。"
+        // 2026-11-04（错误归因 · 上限不是 16）：这条守的是**本机记录条数**，而真正卡住
+        // 签发的是**锁端 PIN 池**（`MobileKeyService.availablePin` 返回 nil 时抛
+        // 「PIN 池已用尽」。池子大小来自 `kc.pins.count`，不是固定 16）。
+        // 而且文案说「先撤销一把不用的」—— 撤销确实会还一个名额，但用户可能根本没有
+        // 16 把（这台锁池子更小）。改成如实说明两个可能，并把真实上限报出来。
+        let hardCap = max(kcPoolSize, issuedCount)
+        guard issuedCount < hardCap else {
+            errorText = "本机已签 \(issuedCount) 把，达到这把锁的 PIN 池上限（\(kcPoolSize) 个）。先撤销一把不用的，再来签新的。"
             return
         }
         guard let kc = app.currentKeychain else {
