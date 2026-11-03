@@ -220,7 +220,7 @@ struct LinkSenseBar: View {
                 if showHistory {
                     VStack(alignment: .leading, spacing: V.S.gapXS) {
                         VRowDivider()
-                        Text("RSSI 历史（最近 \(Self.rssiHistoryCap) 个采样）")
+                        Text("RSSI 历史（最近 \(LinkSenseModel.rssiHistoryCap) 个采样）")
                             .font(V.F.chipLabel).foregroundStyle(V.C.text4)
                         if model.history.isEmpty {
                             Text("还没有采样 —— 预热或点「信号」读一次。")
