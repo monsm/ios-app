@@ -258,7 +258,11 @@ extension KeyCreateScreen {
                     .frame(minHeight: V.Hit.min)
                     .autocorrectionDisabled()
                 HStack(spacing: V.S.gapS) {
-                    ForEach(["仅白天", "勿外传", "长期有效"], id: \.self) { phrase in
+                    // 2026-11-04（读实现发现 · 自相矛盾）：短语里有「长期有效」，
+                    // 而临时码这一步正上方就是「1/3/7/30 天 + 到期日」。给一枚 7 天后失效的
+                    // 临时码追加「长期有效」备注，等于在同一个屏幕上写下两个相反事实 ——
+                    // 备注会原样进台账、进详情页、进备份。临时码不给这个短语。
+                    ForEach(notePhrases, id: \.self) { phrase in
                         Button {
                             note = note.isEmpty ? phrase : note + " · " + phrase
                         } label: {
@@ -280,12 +284,22 @@ extension KeyCreateScreen {
         .padding(.horizontal, V.S.pageGutter)
     }
 
+    /// 备注快捷短语。**按类型裁剪**：临时码不给「长期有效」—— 它跟上方选的到期日矛盾。
+    var notePhrases: [String] {
+        kind == .temp ? ["仅白天", "勿外传"] : ["仅白天", "勿外传", "长期有效"]
+    }
+
     var expiryMillis: Int64 {
         let cal = TimeFormat.calendar
         let base = cal.startOfDay(for: Date())
-        let shifted = cal.date(byAdding: .day, value: durationDays, to: base) ?? base
-        let end = cal.date(byAdding: .second, value: 86399, to: shifted) ?? shifted
-        return Int64(end.timeIntervalSince1970 * 1000)
+        // 2026-11-04（日历纪律 · WeekCal 注释里的同一条）：到期时刻 = **第 N 天结束**。
+        // 原来写 `+86399 秒` —— 那是"24 小时减 1 秒"，而夏令时切换那天只有 23 或 25 小时，
+        // 结果会落到 23:00 或次日 01:00。改成"下一个自然日的零点减 1 秒"，与日历对齐。
+        guard let nextDay = cal.date(byAdding: .day, value: durationDays + 1, to: base) else {
+            return Int64(base.timeIntervalSince1970 * 1000)
+        }
+        let endOfDay = cal.date(byAdding: .second, value: -1, to: nextDay) ?? nextDay
+        return Int64(endOfDay.timeIntervalSince1970 * 1000)
     }
 
     // MARK: 第四步：确认与二次输入
