@@ -639,11 +639,10 @@ struct DoorScreen: View {
     }
 
     private func heroItems(_ lock: LockSummary) -> [VReadingGrid.Item] {
-        var items: [VReadingGrid.Item] = [
-            .init(label: "电量", value: lock.battery >= 0 ? "\(lock.battery)%" : "--",
-                  tint: lock.battery >= 0 && lock.battery < 20 ? V.C.warning : V.C.text1),
-            .init(label: "信号", value: link.lastRSSI.map { "\($0)" } ?? "--", unit: "dBm")
-        ]
+        // 2026-11-03（全维度整理·同页去重）：这里原来又列了「电量」和「信号」——
+        // 而同一屏里刻度盘中心已有电量、顶部状态芯片已有电量+信号、连接感知条已有信号，
+        // 同一组读数说了三遍。摘要卡只保留它**独有**的读数（固件 / 锁钟 / 钥匙）。
+        var items: [VReadingGrid.Item] = []
         if HeroStats.shows("firmware") {
             items.append(.init(label: "固件", value: lock.firmware.isEmpty ? "未知" : lock.firmware))
         }
