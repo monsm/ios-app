@@ -108,7 +108,9 @@ struct GodModeScreen: View {
                 VCardHeader(title: "锁身份")
                 VFieldRow(label: "MAC", value: DB.normalizeMac(kc.mac))
                 VFieldRow(label: "名称", value: LockArchive.displayName(kc), mono: false)
-                VFieldRow(label: "配对时间", value: kc.pairedAt, mono: false)
+                // 2026-11-03（信息架构 QA）：原来直接显示裸 ISO 串（含 T 与 Z），
+                // 既是 UTC 又不像人话。与设备信息页同一口径转成本地时间。
+                VFieldRow(label: "配对时间", value: DF.localMinute(fromISO: kc.pairedAt), mono: false)
                 VFieldRow(label: "skey 指纹", value: DiagSnapshot.fingerprint(kc.skey))
                 VFieldRow(label: "ekey 指纹", value: DiagSnapshot.fingerprint(kc.ekey))
                 // 2026-11-03（信息架构 QA · 安全）：这里原来显示**明文 PIN**，而本页没有截屏遮挡 ——

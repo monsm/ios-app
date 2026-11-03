@@ -6,6 +6,17 @@
 import SwiftUI
 import UIKit
 
+/// 一次性「新增凭证时预选类型」意图。
+///
+/// 2026-11-03（信息架构 QA）：门页的「录指纹」快捷磁贴与「新增密码」磁贴都走 `.keyCreate`，
+/// 而新增页的 `kindIndex` 初值恒为 0（= 密码）—— 点「录指纹」打开的是新增密码第一步。
+/// 路由枚举 `.keyCreate` 没有关联值，加一个会牵动备份/深链的既有写法；
+/// 用一次性意图（读完即清）风险最小。
+@MainActor
+enum KeyCreateIntent {
+    static var pending: KeyItem.Kind?
+}
+
 struct KeyCreateScreen: View {
     // internal（不是 private）：四步视图住在 KeyCreateParts.swift 的 extension 里，
     // 跨文件要能读到这个环境值（private 在别的文件不可见，编译会报 inaccessible）。
@@ -71,6 +82,11 @@ struct KeyCreateScreen: View {
         .navigationBarTitleDisplayMode(.large)
         .onAppear {
             consumeRoute()
+            // 2026-11-03：门页「录指纹 / 新增密码」磁贴带来的一次性类型意图（读完即清）。
+            if let want = KeyCreateIntent.pending {
+                KeyCreateIntent.pending = nil
+                if let idx = kinds.firstIndex(of: want) { kindIndex = idx }
+            }
             readClipboardOnce()
         }
     }

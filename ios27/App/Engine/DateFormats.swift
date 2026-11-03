@@ -86,6 +86,16 @@ enum DF {
         return f.string(from: d)
     }
 
+    /// 把本仓写入的 **ISO8601（UTC）** 串转成本地时区的 `yyyy-MM-dd HH:mm`。
+    ///
+    /// 2026-11-03（信息架构 QA · 时区）：`DF.iso()` 产出的是 `…T14:22:31Z`（UTC），
+    /// 而有的展示点直接 `prefix(16)` 当本地时间用 —— 在 +08:00 下**整整早 8 小时**。
+    /// 解析失败时原样返回，不吞掉异常输入。
+    static func localMinute(fromISO s: String) -> String {
+        guard !s.isEmpty, let d = iso().date(from: s) else { return s }
+        return cached("yyyy-MM-dd HH:mm").string(from: d)
+    }
+
     /// ISO8601（不带小数秒）。`ISO8601DateFormatter` 初始化同样昂贵。
     static func iso(_ fractional: Bool = false) -> ISO8601DateFormatter {
         let key = "DFISO|" + (fractional ? "frac" : "plain")

@@ -986,10 +986,22 @@ private struct V7RecordRow: View {
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: V.S.gapM) {
-            Text(TimeDisplay.clock(entry.at))
-                .font(V.F.rowDetailStrong)
-                .foregroundStyle(V.C.text1)
-                .monospacedDigit()
+            // 2026-11-03（信息架构 QA）：外观设置里的「记录行加第二行完整日期」此前**没有任何消费者** ——
+            // `TimeDisplay.dayLine` 全仓只在「外观」页自己的样例里被调用，台账行从不读它。
+            // 开关是真的、说明写着"台账行在时刻下面补一行 MM-DD"，而台账行从来不变。
+            // 这里接上：开启时时刻下面补一行 MM-DD。
+            VStack(alignment: .leading, spacing: 0) {
+                Text(TimeDisplay.clock(entry.at))
+                    .font(V.F.rowDetailStrong)
+                    .foregroundStyle(V.C.text1)
+                    .monospacedDigit()
+                if let dayLine = TimeDisplay.dayLine(entry.at) {
+                    Text(dayLine)
+                        .font(V.F.micro)
+                        .foregroundStyle(V.C.text3)
+                        .monospacedDigit()
+                }
+            }
                 // 2026-11-01：`width: 48` → `minWidth: 48`。时间串用 `V.F.rowDetailStrong`
                 // （13pt，随 `.footnote` 缩放）—— 大字号下「23:59」会超过 48pt 被裁。
                 // `minWidth` 保住了默认档的对齐列宽，字号大时列随之变宽。

@@ -865,6 +865,10 @@ struct DoorScreen: View {
         QuickPool.recordTap(action.id)
         switch action.id {
         case "addPwd", "addFp":
+            // 2026-11-03（信息架构 QA）：两个磁贴原来都去同一个 .keyCreate，
+            // 而新增凭证页的 kindIndex 初值是 0 = .password —— 点「录指纹」打开的是
+            // 「新增密码」第一步。这里用一次性意图把类型带过去。
+            KeyCreateIntent.pending = (action.id == "addFp") ? .fingerprint : .password
             router.request(.dest(.keyCreate))
         case "studio":
             // 2026-11-01（Round 292）：原来它和 addPwd/addFp 挤在同一个 case 里，三者都去 `.keyCreate`（新增凭证）——

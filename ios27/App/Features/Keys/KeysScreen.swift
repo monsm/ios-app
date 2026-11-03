@@ -12,6 +12,9 @@ struct KeysScreen: View {
     @State private var filter: KeysFilter = .all
     @State internal var now: Int64 = KeysState.now()
     @State private var search = ""
+    // 2026-11-03（信息架构 QA）：原来从全局单例**初始化一次**就再也不读 ——
+    // 在凭证工作室切换分组方式后返回本页，chip 的文案与选中态仍停在旧值。
+    // 改成在 onAppear 时与全局同步（见 .onAppear）。
     @State private var groupByOwner = CredentialOrg.groupMode == .owner
     /// 只为"删除一条搜索历史"这种**不在视图状态里**的改动触发重绘
     /// （搜索历史存在 UserDefaults，不由任何 @State 承载 —— 与其它页的 `tick` 同一用途）。
@@ -133,6 +136,10 @@ struct KeysScreen: View {
             // 而 `filter` 仍可能是它们（在开启老人模式之前选的）—— 于是列表被一个**看不见的筛选**卡住，
             // 用户只看到几条凭证却没有任何芯片是高亮的。回落到「全部」。
             if !visibleFilters.contains(filter) { filter = .all }
+            // 2026-11-03（信息架构 QA）：分组方式是**全局设置**，凭证工作室里也能切换。
+            // 本页的 @State 只在初始化时读过一次，切回来仍是旧值 —— 每次出现时同步。
+            let wantGroupByOwner = CredentialOrg.groupMode == .owner
+            if groupByOwner != wantGroupByOwner { groupByOwner = wantGroupByOwner }
             routeFromContext()
         }
         // E-12：`now` 只在 onAppear 刷新 ⇒ 跨过零点后"还剩 N 天"的角标与颜色不更新

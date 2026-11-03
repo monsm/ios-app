@@ -286,8 +286,10 @@ struct DeviceInfoScreen: View {
     }
 
     private func boundText(_ kc: Keychain) -> String {
-        let raw = String(kc.pairedAt.prefix(16)).replacingOccurrences(of: "T", with: " ")
-        return raw.isEmpty ? "—" : raw
+        // 2026-11-03（信息架构 QA · 时区）：`pairedAt` 是 `DF.iso()` 写的 **UTC** 串，
+        // 原来 `prefix(16)` 直接当本地时间显示 —— +08:00 下早 8 小时（配对时间看着像凌晨）。
+        let s = DF.localMinute(fromISO: kc.pairedAt)
+        return s.isEmpty ? "—" : s
     }
 
     private var verifiedText: String {
