@@ -480,8 +480,14 @@ enum WeeklyDigest {
     }
 
     /// 周一为一周之始（公历 weekday 1 = 周日 … 7 = 周六）。
+    ///
+    /// 2026-11-04（周界口径 · 第三处）：本函数**硬算周一**，而 `StatsKit.lastWeekDigest`
+    /// 与 `RecordSearchParse` 的「本周 / 上周」都走 `WeekCal.calendar`（应用 `kf_week_start` 偏好）。
+    /// 一旦用户把周起始设成周日/周六（备份恢复会写这个键），**记录页的「上周小结」与「上周」搜索
+    /// 就会差一天** —— 同一个词在两个页面上指不同的一周。
+    /// 改成走 `WeekCal.calendar` 的周区间，与另外两处同源。
     static func mondayStart(_ date: Date) -> Date {
-        let calendar = TimeFormat.calendar
+        let calendar = WeekCal.calendar
         let day = calendar.startOfDay(for: date)
         let weekday = calendar.component(.weekday, from: day)
         let offset = (weekday + 5) % 7
@@ -489,7 +495,7 @@ enum WeeklyDigest {
     }
 
     static func lastWeek(entries: [LedgerEntry], lockName: String, now: Date = Date()) -> Digest {
-        let calendar = TimeFormat.calendar
+        let calendar = WeekCal.calendar
         let thisMonday = mondayStart(now)
         let start = calendar.date(byAdding: .day, value: -7, to: thisMonday) ?? thisMonday
         let from = Int64(start.timeIntervalSince1970 * 1000)
