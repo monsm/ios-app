@@ -429,9 +429,18 @@ struct HouseholdScreen: View {
     }
 
     /// 一键呼叫：清洗非数字，少于 3 位不给（不是电话号码）。没有电话字段时入口不出现。
+    /// 2026-11-04（静默失败，与成员详情页同一处缺陷）：失败时什么都不说 —— 用户点「呼叫」
+    /// 手机没反应。这里用 toast 报原因（名册是列表页，没有常驻的错误行可放）。
     private func call(_ phone: String) {
         let digits = phone.filter(\.isNumber)
-        guard digits.count >= 3, let url = URL(string: "tel://" + digits) else { return }
+        guard digits.count >= 3 else {
+            AppToast.shared.show("这个号码里没有足够数字（至少 3 位）", tone: .warn)
+            return
+        }
+        guard let url = URL(string: "tel://" + digits), UIApplication.shared.canOpenURL(url) else {
+            AppToast.shared.show("系统不接受这个号码 —— 检查一下是否含有非法字符", tone: .warn)
+            return
+        }
         UIApplication.shared.open(url)
     }
 
