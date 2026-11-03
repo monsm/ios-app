@@ -28,6 +28,7 @@ struct DoorScreen: View {
     private var store: SettingsStore { SettingsStore.shared }
 
     var body: some View {
+        ZStack(alignment: .bottom) {
         ScrollView {
             VStack(alignment: .leading, spacing: V.S.gapL) {
                 if !DevModuleStore.hidden.contains(DevModule.linkSense.rawValue) {
@@ -91,6 +92,14 @@ struct DoorScreen: View {
             }
         }
         .refreshable { await rescan() }
+        // 2026-11-03（真机截图）：滑块原来跟在刻度盘下方 —— 刻度盘占满首屏，主行动掉到折叠线以下。
+        // 提到**浮动底栏**（功能层，玻璃符合契约 §6）：进页即可见、单手拇指可达，与系统来电滑块同位。
+        if app.lock != nil {
+            GlassSlideToUnlock(onUnlock: { requestUnlock() }, busy: app.dialPhase.isBusy)
+                .padding(.horizontal, V.S.pageGutterA)
+                .padding(.bottom, V.S.gapS)
+        }
+        }
     }
 
     // MARK: - 芯片行
@@ -318,10 +327,6 @@ struct DoorScreen: View {
             }
             .frame(width: V.Gauge.outer, height: V.Gauge.outer)
 
-            // 2026-11-03：唯一的手动开锁方式 —— 原生来电滑块（替代按住/轻点/双击/环滑四套手势）。
-            GlassSlideToUnlock(onUnlock: { requestUnlock() },
-                               busy: app.dialPhase.isBusy)
-                .padding(.horizontal, V.S.pageGutterA)
             phaseBar
             autoLockLine
             retryLine
