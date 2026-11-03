@@ -407,8 +407,11 @@ struct RecordsScreen: View {
                 ZStack {
                     Circle()
                         .fill(
+                            // 2026-11-03（整页截图暴露）：环原来**写死红粉渐变** —— 连续 0 天、
+                            // 今日无异常时也一片红，读起来像告警。改成语义色：
+                            //   有异常 → 警示色；连续 ≥3 天 → 奖励绿；其余（含 0 天）→ 中性蓝。
                             AngularGradient(
-                                gradient: Gradient(colors: [V.C.red, V.C.pink, V.C.red]),
+                                gradient: Gradient(colors: medalColors),
                                 center: .center
                             )
                         )
@@ -438,6 +441,13 @@ struct RecordsScreen: View {
             .frame(minHeight: V.Metric.miniCardH - 2 * V.S.miniPad, alignment: .top)
         }
         .frame(maxWidth: .infinity)
+    }
+
+    /// 奖章环的语义色：只有真的值得注意时才用警示色。
+    private var medalColors: [Color] {
+        if todayAlarmCount > 0 { return [V.C.warning, V.C.coral, V.C.warning] }
+        if streakDays >= 3 { return [V.C.rewardGreen, V.C.blue, V.C.rewardGreen] }
+        return [V.C.blue.opacity(0.55), V.C.blue.opacity(0.25), V.C.blue.opacity(0.55)]
     }
 
     private var streakDays: Int {
