@@ -26,10 +26,22 @@ enum FullPageCapture {
             sv.frame = CGRect(origin: orig.origin,
                               size: CGSize(width: orig.width, height: content.height))
             sv.layoutIfNeeded()
+            // 2026-11-04（黑边根因 · 第三次才对）：full 截图里卡片之间的空隙是**纯黑**，
+            // 而 viewport 截图同一位置是纸色。原因不是深色模式（appearance=light 已生效、
+            // 卡片内容本来就是浅色），而是：`.background(V.C.bg)` 挂在 **ScrollView 外面**，
+            // 而 `drawHierarchy(in: sv.bounds)` 只渲染 ScrollView 自己的层级 ——
+            // 它的背景是透明，PNG 里透明落成黑。给 renderer 先铺一层 `V.C.bg`，
+            // 再把 ScrollView 的 layer 背景临时设成同色，恢复时还原。
+            let paper = UIColor(V.C.bg)
             let renderer = UIGraphicsImageRenderer(size: sv.frame.size)
-            let img = renderer.image { _ in
+            let origBg = sv.backgroundColor
+            sv.backgroundColor = paper
+            let img = renderer.image { ctx in
+                paper.setFill()
+                ctx.fill(sv.bounds)
                 sv.drawHierarchy(in: sv.bounds, afterScreenUpdates: true)
             }
+            sv.backgroundColor = origBg
             sv.frame = orig
             sv.layoutIfNeeded()
             UIView.setAnimationsEnabled(true)
