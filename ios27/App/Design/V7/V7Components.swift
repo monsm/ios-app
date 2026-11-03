@@ -479,14 +479,20 @@ struct VRingStack: View {
                 Circle()
                     .stroke(V.Ring.track(for: pair.element.1), lineWidth: lineWidth)
                     .frame(width: max(lineWidth, diameter), height: max(lineWidth, diameter))
-                Circle()
-                    .trim(from: 0, to: max(0.001, min(1, pair.element.0)))
-                    .stroke(
-                        ringGradient(pair.element.1).map { AnyShapeStyle($0) } ?? AnyShapeStyle(pair.element.1),
-                        style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
-                    )
-                    .frame(width: max(lineWidth, diameter), height: max(lineWidth, diameter))
-                    .rotationEffect(.degrees(-90))
+                // 2026-11-03（整页截图实测）：`max(0.001, …)` 想避免 0 长度路径，
+                // 但 `lineCap: .round` 会把那 0.1% 画成一个**可见的圆点** ——
+                // 今日 0/0/0 时，环的 12 点方向出现三个彩色小点（红/绿/青），
+                // 读起来像"有数据"。值为 0 就**不要画**，这才是"空"。
+                if pair.element.0 > 0 {
+                    Circle()
+                        .trim(from: 0, to: min(1, pair.element.0))
+                        .stroke(
+                            ringGradient(pair.element.1).map { AnyShapeStyle($0) } ?? AnyShapeStyle(pair.element.1),
+                            style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
+                        )
+                        .frame(width: max(lineWidth, diameter), height: max(lineWidth, diameter))
+                        .rotationEffect(.degrees(-90))
+                }
             }
 
             // 起点方向箭头（参考 C：红 →、绿 »、青 ↑），放在 12 点附近，纯装饰。
