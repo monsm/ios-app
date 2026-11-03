@@ -77,6 +77,12 @@ struct CredAlertSheet: View {
 
 // MARK: - 回收站
 
+// 2026-11-03：版本历史恢复的待确认目标（放在文件级，供 CredHistorySheet 使用）。
+private struct HistoryRestoreTarget: Identifiable {
+    let id: String
+    let snap: CredSnapshot
+}
+
 struct CredBinSheet: View {
     let mac: String
     var onChange: () -> Void = {}
@@ -192,9 +198,11 @@ struct CredHistorySheet: View {
                                         }
                                         Spacer(minLength: V.S.gapS)
                                         Button("恢复") {
-                                            CredHistoryStore.restore(mac, snap)
-                                            outcome = "已恢复这一版"
-                                            onChange()
+                                            // 2026-11-03（全功能点排查）：**这一下会整表替换台账** ——
+                                            // 快照之后新增的凭证会从本机消失（锁端仍在，但 App 里看不到了）。
+                                            // 原来是单击直达、只回一句「已恢复这一版」。现在先确认，并在替换前
+                                            // 自动把**当前**状态存成一份快照 —— 恢复本身因此变成可撤销的。
+                                            restoreTarget = snap
                                         }
                                         .font(V.F.footnote).foregroundStyle(V.C.blue)
                                     }
@@ -221,7 +229,25 @@ struct CredHistorySheet: View {
                 ToolbarItem(placement: .topBarTrailing) { Button("关闭") { dismiss() } }
             }
             .onAppear { items = CredHistoryStore.all(mac) }
+            .confirmationDialog("用这一版覆盖当前凭证列表？", isPresented: Binding(
+                get: { restoreTarget != nil }, set: { if !$0 { restoreTarget = nil } }
+            ), titleVisibility: .visible, presenting: restoreTarget) { target in
+                Button("恢复", role: .destructive) { restore(target.snap) }
+                Button("取消", role: .cancel) { restoreTarget = nil }
+            } message: { target in
+                Text("「\(target.snap.note.isEmpty ? "快照" : target.snap.note)」（\(target.snap.pwds.count) 密码 / \(target.snap.fps.count) 指纹）会**替换**当前台账：这份快照之后新增的凭证会从本机消失（锁端仍在，但 App 里看不到）。恢复前会自动把当前状态存成一份快照，随时可以再切回来。")
+            }
         }
+    }
+
+    private func restore(_ snap: CredSnapshot) {
+        // 先把「现在」存一份 —— 否则这次替换不可撤销。
+        CredHistoryStore.capture(mac, note: "恢复前自动快照")
+        CredHistoryStore.restore(mac, snap)
+        items = CredHistoryStore.all(mac)
+        restoreTarget = nil
+        outcome = "已恢复这一版（已自动备份替换前的状态）"
+        onChange()
     }
 
     private func capture() {
