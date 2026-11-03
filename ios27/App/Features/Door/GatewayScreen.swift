@@ -69,6 +69,8 @@ struct GatewayScreen: View {
             Button("取消") { confirmDelete = nil }
             Button("删除") { if let g = confirmDelete { remove(g) } }
         } message: {
+            // 2026-11-04（核对通过）：`DB.removeGateway` 只从 `kf_gateways` 字典里删这一项，
+            // 引擎侧没有别的网关键族（全仓只有 kf_gateways 一处）。文案说的"只删本机台账"成立。
             Text("只会从本机台账里移除这条记录。网关硬件里的 WiFi 与 IoT 凭据还在，要重配得先把它重置回橙灯。")
         }
         .confirmationDialog("重启这个网关？", isPresented: Binding(

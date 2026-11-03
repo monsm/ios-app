@@ -46,7 +46,10 @@ struct ProtocolTestScreen: View {
             HStack(spacing: V.S.gapS) {
                 VStateDot(tone: scanning ? .live : (devices.isEmpty ? .neutral : .ok),
                          word: scanning ? "扫描中" : "空闲")
-                Text("只做扫描与 cmd12 回声；不改锁、不写台账")
+                // 2026-11-04：这句在**普通设置页**（不是 God 模式）上，cmd12 是协议术语。
+                // 闸门 30 把 ProtocolTestScreen 列进豁免（那页的存在意义就是展示协议），
+                // 但这句是**页头说明**，读者是普通用户。改成说人话，保留它要表达的安全边界。
+                Text("只扫描与回声探测：不改锁、不写台账")
                     .font(V.F.footnote)
                     .foregroundStyle(V.C.text2)
                 Spacer(minLength: 0)
