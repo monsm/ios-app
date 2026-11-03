@@ -234,13 +234,26 @@ struct RecordsStudioScreen: View {
     }
 
     private var emptyCard: some View {
+        // 2026-11-04（截图实测 · 误导性空态）：这条文案假设"是筛选把记录筛掉了"，
+        // 而本轮截图里的真实情形是**一条记录都还没读**（`filtered` 空是因为 `recs` 空，
+        // 不是因为筛选）。此时让用户「清空条件」毫无作用 —— 他清空之后仍然是空的。
+        // 两种空必须分开说：没数据 → 去读日志；有数据但被筛掉 → 清空条件。
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapM) {
-                Text("这些条件下没有记录").font(V.F.displayB).foregroundStyle(V.C.text1)
-                Text("检索词或筛选把记录筛掉了。清空条件回到全部记录。")
+                Text(recs.isEmpty ? "还没有读到的记录" : "这些条件下没有记录")
+                    .font(V.F.displayB).foregroundStyle(V.C.text1)
+                Text(recs.isEmpty
+                     ? "这台锁的锁内日志还没读过 —— 缓存里一条都没有。到「台账」页点「读取锁内日志」。"
+                     : "检索词或筛选把记录筛掉了。清空条件回到全部记录。")
                     .font(V.F.body).foregroundStyle(V.C.text2)
-                VActionButton(title: "清空条件", systemImage: "line.3.horizontal.decrease.circle") {
-                    query = ""; segment = 0; member = ""; alarmOnly = false; failedOnly = false; kind = ""; outOfWindowOnly = false
+                if recs.isEmpty {
+                    VActionButton(title: "去台账页读取日志", systemImage: "arrow.up.right.square") {
+                        router.request(.dest(.records))
+                    }
+                } else {
+                    VActionButton(title: "清空条件", systemImage: "line.3.horizontal.decrease.circle") {
+                        query = ""; segment = 0; member = ""; alarmOnly = false; failedOnly = false; kind = ""; outOfWindowOnly = false
+                    }
                 }
             }
         }
