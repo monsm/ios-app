@@ -376,8 +376,16 @@ struct DeviceInfoScreen: View {
         return kc?.pins.count ?? 0
     }
 
+    /// 容量读数。**两个数都要读成"已用 / 容量"**：
+    ///   · 有容量：`已用 / 总容量`（与读数格里的 "12 / 64" 同序）；
+    ///   · 容量未读：只报**已用**，并说清容量确实没读到。
+    ///
+    /// 2026-11-03（全功能点排查 · 措辞）：旧写法是「容量未读 · 存量 1」——
+    /// 一是"容量"在标签和值里各出现一次，二是"存量"在中文里指**剩余**，
+    /// 而这里给的是**已用**（`cap - stock`）。方向读反了就会把"用了 1 个"
+    /// 看成"还剩 1 个"，排障时结论正好相反。
     private func capacityText(used: Int, cap: Int) -> String {
-        cap > 0 ? "\(max(used, 0)) / \(cap)" : "容量未读 · 存量 \(max(used, 0))"
+        cap > 0 ? "\(max(used, 0)) / \(cap)" : "已用 \(max(used, 0)) · 容量未读"
     }
 
     private func swatch(_ key: String) -> Color {

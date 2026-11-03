@@ -157,7 +157,9 @@ struct SettingsNote: View {
     let text: String
 
     var body: some View {
-        Text(text)
+        // 2026-11-03：改为按 LocalizedStringKey 渲染，让说明文字里的强调标记真正生效。
+        // （原来用非本地化的字符串初始化，星号会原样显示给用户。）
+        Text(LocalizedStringKey(text))
             .font(V.F.footnote)
             .foregroundStyle(V.C.text2)
             .fixedSize(horizontal: false, vertical: true)

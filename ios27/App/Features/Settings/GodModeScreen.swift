@@ -123,9 +123,12 @@ struct GodModeScreen: View {
                     VFieldRow(label: "安全模式",
                           value: "验签\(st.verifyMode == 1 ? "开" : "关") · 广播\(st.broadcastMode == 1 ? "开" : "关") · 临时码\(st.tempPwdMode == 1 ? "开" : "关")",
                           mono: false)
-                    VFieldRow(label: "PIN 容量/剩余", value: "\(st.pinCap ?? -1)/\(st.pinStock)")
-                    VFieldRow(label: "密码容量/剩余", value: "\(st.pwdCap ?? -1)/\(st.pwdStock)")
-                    VFieldRow(label: "指纹容量/剩余", value: "\(st.fpCap ?? -1)/\(st.fpStock)")
+                    // 2026-11-03（全功能点排查 · 一致性）：本页原来写「容量/剩余」= `cap/stock`，
+                    // 而「锁信息名片」页写的是「已用/容量」= `(cap-stock)/cap` —— 同一组数据两个页面
+                    // **顺序和语义都相反**（64/0 vs 0/64），对排障的人极易读反。统一成「已用 / 容量」。
+                    VFieldRow(label: "PIN 已用/容量", value: Self.usedOfCap(cap: st.pinCap, stock: st.pinStock))
+                    VFieldRow(label: "密码已用/容量", value: Self.usedOfCap(cap: st.pwdCap, stock: st.pwdStock))
+                    VFieldRow(label: "指纹已用/容量", value: Self.usedOfCap(cap: st.fpCap, stock: st.fpStock))
                     VFieldRow(label: "通信密钥状态", value: sKeyStatusWord(st.sKeyStatus))
                     VFieldRow(label: "ZOTP 周期", value: st.zotpPeriod.map { "\($0) 分钟" } ?? "未上报")
                 } else {
@@ -139,6 +142,13 @@ struct GodModeScreen: View {
     }
 
     /// 通信密钥状态的人类可读词。0=未设置；1/2=中间态；3=已就绪（真机实测值）。
+    /// 「已用 / 容量」的统一写法（容量未知时只报已用）。
+    static func usedOfCap(cap: Int?, stock: Int) -> String {
+        guard stock >= 0 else { return "未读到" }
+        guard let c = cap, c > 0 else { return "已用 \(max(-stock, 0)) · 容量未读" }
+        return "\(max(c - stock, 0)) / \(c)"
+    }
+
     private func sKeyStatusWord(_ v: Int) -> String {
         switch v {
         case 0: return "未设置"
@@ -161,9 +171,11 @@ struct GodModeScreen: View {
                     let local = kc.pins.filter { !$0.isEmpty }.count
                     VFieldRow(label: "锁端已用 vs 本机池", value: "\(used) vs \(local)", mono: false)
                     // 数量相等不能证明同批（两边都满池时恒等）—— 唯一的裁判是"开锁回 rc"。
-                    Text(used == local
+                    // 2026-11-03：三元表达式产出的是 String，直接用 Text(String) 不会解析 Markdown ⇒
+                    // 星号会原样显示。显式转成 LocalizedStringKey。
+                    Text(LocalizedStringKey(used == local
                          ? "数量一致（但两批都满池时恒等——真正的判据是开锁 rc=2 与否）"
-                         : "**数量不一致** —— 现签凭证必被拒，需要修池或重导")
+                         : "**数量不一致** —— 现签凭证必被拒，需要修池或重导"))
                         .font(V.F.footnote)
                         .foregroundStyle(used == local ? V.C.text3 : V.C.critical)
                         .fixedSize(horizontal: false, vertical: true)
