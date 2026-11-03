@@ -40,8 +40,8 @@ struct LockPortfolioScreen: View {
         }
         .background(V.C.bg.ignoresSafeArea())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("全部锁")
+        .navigationBarTitleDisplayMode(.large)
         .onAppear { reload() }
         .alert("移动到分组", isPresented: $showGroupEdit) {
             TextField("分组名（留空 = 未分组）", text: $groupDraft)
@@ -54,8 +54,7 @@ struct LockPortfolioScreen: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: V.S.gapXXS) {
-            Text("全部锁")
-                .font(V.F.displayA).foregroundStyle(V.C.text1)
+                            // 2026-11-03（全维度整理）：标题交给系统导航栏（大标题），页内不再自绘。
             Text("多锁统计、分组与排序")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }

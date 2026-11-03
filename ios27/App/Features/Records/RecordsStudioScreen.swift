@@ -88,15 +88,14 @@ struct RecordsStudioScreen: View {
         }
         .background(V.C.bg.ignoresSafeArea())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("记录工作室")
+        .navigationBarTitleDisplayMode(.large)
         .onAppear { reload() }
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: V.S.gapXXS) {
-            Text("记录工作室")
-                .font(V.F.displayA).foregroundStyle(V.C.text1)
+            // 2026-11-03（全维度整理）：标题交给系统导航栏（大标题），页内只留副标题。
             Text("自然语言检索 · 完整筛选 · 统计 · 原始帧")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }
@@ -151,7 +150,7 @@ struct RecordsStudioScreen: View {
                 HStack(spacing: V.S.gapS) {
                     ForEach([(value: 0, label: "全部"), (value: 1, label: "早 6-10"), (value: 2, label: "午 10-15"), (value: 3, label: "晚 15-22"), (value: 4, label: "深夜")], id: \.value) { item in
                         Button { segment = item.value } label: {
-                            VTag(text: item.label, tint: segment == item.value ? V.C.blue : V.C.text3, filled: segment == item.value)
+                            GlassChip(title: item.label, selected: segment == item.value) { segment = item.value }
                         }
                         .buttonStyle(.plain)
                     }
@@ -160,11 +159,11 @@ struct RecordsStudioScreen: View {
                     Text("成员").font(V.F.chipLabel).foregroundStyle(V.C.text4)
                     ScrollView(.horizontal) {
                         HStack(spacing: V.S.gapS) {
-                            Button { member = "" } label: { VTag(text: "全部", tint: member.isEmpty ? V.C.blue : V.C.text3, filled: member.isEmpty) }
+                            GlassChip(title: "全部", selected: member.isEmpty) { member = "" }
                                 .buttonStyle(.plain)
                             ForEach(members, id: \.self) { name in
                                 Button { member = name } label: {
-                                    VTag(text: name, tint: member == name ? V.C.blue : V.C.text3, filled: member == name)
+                                    GlassChip(title: name, selected: member == name) { member = name }
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -177,7 +176,7 @@ struct RecordsStudioScreen: View {
                     ForEach(Array([(key: "", label: "全部"), (key: "pwd", label: "密码"), (key: "temp", label: "临时码"), (key: "fp", label: "指纹"), (key: "key", label: "手机钥匙")].enumerated()), id: \.offset) { pair in
                         let item = pair.element
                         Button { kind = item.key } label: {
-                            VTag(text: item.label, tint: kind == item.key ? V.C.blue : V.C.text3, filled: kind == item.key)
+                            GlassChip(title: item.label, selected: kind == item.key) { kind = item.key }
                         }
                         .buttonStyle(.plain)
                     }

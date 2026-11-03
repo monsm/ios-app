@@ -48,15 +48,14 @@ struct LockProfileScreen: View {
         }
         .background(V.C.bg.ignoresSafeArea())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("锁档案")
+        .navigationBarTitleDisplayMode(.large)
         .onAppear(perform: load)
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: V.S.gapXXS) {
-            Text("锁档案")
-                .font(V.F.displayA).foregroundStyle(V.C.text1)
+                            // 2026-11-03（全维度整理）：标题交给系统导航栏（大标题），页内不再自绘。
             Text("档案只存本机，不写入门锁。")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }

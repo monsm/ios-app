@@ -79,8 +79,8 @@ struct SafeModeScreen: View {
         }
         .background(V.C.bg.ignoresSafeArea())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("安全模式")
+        .navigationBarTitleDisplayMode(.large)
         .task { await load(force: false) }
         .confirmationDialog("改回 A 模式（单验）？", isPresented: $confirmRelax, titleVisibility: .visible) {
             Button("改回 A 模式", role: .destructive) { Task { await setMode(false) } }
@@ -92,8 +92,7 @@ struct SafeModeScreen: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: V.S.gapXXS) {
-            Text("安全模式")
-                .font(V.F.displayA).foregroundStyle(V.C.text1)
+                            // 2026-11-03（全维度整理）：标题交给系统导航栏（大标题），页内不再自绘。
             Text("A / B 决定这道锁验一次还是两次")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }

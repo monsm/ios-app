@@ -38,15 +38,14 @@ struct BatteryProfileScreen: View {
         }
         .background(V.C.bg.ignoresSafeArea())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("电池档案")
+        .navigationBarTitleDisplayMode(.large)
         .onAppear(perform: load)
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: V.S.gapXXS) {
-            Text("电池档案")
-                .font(V.F.displayA).foregroundStyle(V.C.text1)
+                            // 2026-11-03（全维度整理）：标题交给系统导航栏（大标题），页内不再自绘。
             Text("采样只在本机，不上传；低电提醒由本机通知排程。")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }

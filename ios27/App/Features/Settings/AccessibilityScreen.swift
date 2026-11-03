@@ -50,14 +50,13 @@ struct AccessibilityScreen: View {
         .background(V.C.bg.ignoresSafeArea())
         .scrollEdgeEffectStyle(.soft, for: .top)
         .onAppear { syncFromStore() }   // E-13：从持久层重新同步，避免与外观页/重置动作不一致
-        .navigationTitle("无障碍")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("无障碍与操作辅助")
+        .navigationBarTitleDisplayMode(.large)
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: V.S.gapXXS) {
-            Text("无障碍与操作辅助")
-                .font(V.F.displayA).foregroundStyle(V.C.text1)
+                            // 2026-11-03（全维度整理）：标题交给系统导航栏（大标题），页内不再自绘。
             Text("所有档位即时生效、只存本机。")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }

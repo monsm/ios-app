@@ -41,8 +41,8 @@ struct ZotpScreen: View {
         }
         .background(V.C.bg.ignoresSafeArea())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("动态密码")
+        .navigationBarTitleDisplayMode(.large)
         .task {
             otpOn = DB.otpStatus(mac)?.on ?? false
             shieldOn = DB.store.getBool("kf_otp_shield", false)
@@ -51,8 +51,7 @@ struct ZotpScreen: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: V.S.gapXXS) {
-            Text("动态密码")
-                .font(V.F.displayA).foregroundStyle(V.C.text1)
+                            // 2026-11-03（全维度整理）：标题交给系统导航栏（大标题），页内不再自绘。
             Text("ZOTP · 6 位数字，按锁端周期自动更换")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }

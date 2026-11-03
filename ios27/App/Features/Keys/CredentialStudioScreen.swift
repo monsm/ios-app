@@ -94,8 +94,8 @@ struct CredentialStudioScreen: View {
         }
         .background(V.C.bg.ignoresSafeArea())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("凭证工作室")
+        .navigationBarTitleDisplayMode(.large)
         .onAppear { tick += 1 }
         .sheet(item: $alertTarget) { pwd in
             CredAlertSheet(mac: studioMac, pwd: pwd)
@@ -116,8 +116,7 @@ struct CredentialStudioScreen: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: V.S.gapXXS) {
-            Text("凭证工作室")
-                .font(V.F.displayA).foregroundStyle(V.C.text1)
+                            // 2026-11-03（全维度整理）：标题交给系统导航栏（大标题），页内不再自绘。
             Text("批量整理 · 回收站 · 版本 · 预警 · 导出")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }
