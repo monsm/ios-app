@@ -561,7 +561,12 @@ enum DiagSnapshot {
 
     /// **可安全展示**的「ekey 里嵌的 PIN」：只给指纹与池内位置，不给明文。
     /// 比对用途（"两边的 PIN 是不是同一枚"）完全够用。
+    /// 2026-11-04（错误归因 · 截图复核发现）：`rawEmbeddedPin` 返回 nil 有**三种**原因 ——
+    /// ekey 为空（没配网完成）、skey 为空（同左）、解密失败（真·不配套）。原来一律说
+    /// 「skey 与 ekey 不配套」，而 God 模式页上方两行明明写着「(空)」—— 同屏自相矛盾，
+    /// 用户会以为是密钥损坏去修池。
     static func ekeyPinMasked(_ kc: Keychain) -> String {
+        if kc.ekey.isEmpty || kc.skey.isEmpty { return "(空 —— 这把锁还没有配网密钥)" }
         guard let pin = rawEmbeddedPin(kc) else { return "(解不开：skey 与 ekey 不配套)" }
         let idx = kc.pins.firstIndex(of: pin).map { "（本机池第 \($0 + 1) 枚）" } ?? "（**不在本机池里**）"
         return fingerprint(pin) + idx
