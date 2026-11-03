@@ -35,6 +35,12 @@ final class AppLock: ObservableObject {
     private let decoyRecordKey = "kf_duress"       // 胁迫码摘要（与 kf_passcode 同结构）
     private let failStreakKey = "kf_lock_fail"
     private let cooldownKey = "kf_lock_cool"
+    /// 2026-11-03（安全 · 全功能点排查）：**冷却改用「墙钟 + 单调时钟」双记**。
+    /// 原来只存 `cooldownUntil`（墙钟绝对时刻）—— 把系统时间往前拨就能立刻绕过冷却，
+    /// 而 4 位数字码只有 1 万种，冷却正是把它从"几秒穷举"拖成"不可行"的那道闸。
+    /// systemUptime 单调递增、不受改时间影响（重启会归零，那种情况回退墙钟）。
+    private let cooldownUptimeKey = "kf_lock_cool_up"
+    private let cooldownBootKey = "kf_lock_cool_boot"
 
     /// 冷却梯度（用户拍板：3→30s，5→5min，7→30min）。
     /// 4 位数字码 10^4 次可穷举，加了冷却后脚本爆破被拖到无利可图。
@@ -58,8 +64,19 @@ final class AppLock: ObservableObject {
     var isEnabled: Bool { DB.hasPasscode() }
 
     /// 冷却剩余秒数（0 = 可用）。
+    ///
+    /// 取「墙钟剩余」与「单调时钟剩余」的**较大者**：
+    ///   · 把系统时间往前拨 → 墙钟剩余变负，但单调时钟仍然在走 ⇒ 冷却不被绕过；
+    ///   · 重启过（uptime 比记录时小）→ 单调那一档不可信，回退墙钟。
     func cooldownRemaining(now: Date = Date()) -> Int {
-        let left = cooldownUntil - now.timeIntervalSince1970
+        let wallLeft = cooldownUntil - now.timeIntervalSince1970
+        let up = ProcessInfo.processInfo.systemUptime
+        let bootMark = DB.store.getDouble(cooldownBootKey, 0)
+        let upDeadline = DB.store.getDouble(cooldownUptimeKey, 0)
+        // 同一次开机周期内才认单调时钟（记录时的 uptime 必须 ≤ 现在）
+        let sameBoot = bootMark > 0 && up >= bootMark
+        let upLeft = sameBoot ? (upDeadline - up) : 0
+        let left = max(wallLeft, upLeft)
         return left > 0 ? Int(left.rounded(.up)) : 0
     }
 
@@ -129,6 +146,8 @@ final class AppLock: ObservableObject {
         cooldownUntil = 0
         DB.store.setInt(failStreakKey, 0)
         DB.store.setDouble(cooldownKey, 0)
+        DB.store.setDouble(cooldownBootKey, 0)
+        DB.store.setDouble(cooldownUptimeKey, 0)
         unlocked = true
         decoy = false
         return true
@@ -145,6 +164,10 @@ final class AppLock: ObservableObject {
         cooldownUntil = cd > 0 ? now.timeIntervalSince1970 + cd : 0
         DB.store.setInt(failStreakKey, failStreak)
         DB.store.setDouble(cooldownKey, cooldownUntil)
+        // 单调时钟那一份（见 cooldownRemaining 的说明）
+        let up = ProcessInfo.processInfo.systemUptime
+        DB.store.setDouble(cooldownBootKey, cd > 0 ? up : 0)
+        DB.store.setDouble(cooldownUptimeKey, cd > 0 ? up + cd : 0)
         return cd > 0 ? Int(cd) : 0
     }
 
