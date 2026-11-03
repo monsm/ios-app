@@ -344,9 +344,13 @@ struct CredentialStudioScreen: View {
                 VActionButton(title: "应用批量延期", systemImage: "calendar.badge.plus") { batchExtend() }
                     .disabled(selectedPwds.isEmpty)
                 VRowDivider()
-                Text("批量停用：移入本机回收站（可整组还原）；锁端凭证不会自动删除。")
+                // 2026-11-04（用词与实现核对）：`batchDisable` 走的是 `DB.delPwd` / `DB.delFp` ——
+                // **从台账里删掉**，不是"标记为停用"。而"停用"这个词在别处（凭证详情）指的是
+                // 保留条目、只是不可用（`CredentialLocalState.isDisabled`）。同一界面两种"停用"，
+                // 用户会以为还能在列表里看到它变灰。文案把动作说准。
+                Text("批量移除：所选条目会从台账移入回收站（可整组还原）；锁端凭证不会自动删除，仍能开门。")
                     .font(V.F.footnote).foregroundStyle(V.C.text3)
-                VOutlineButton(title: "停用所选（\(selectedPwds.count + selectedFps.count) 项）", systemImage: "pause.circle") { batchDisable() }
+                VOutlineButton(title: "移除所选（\(selectedPwds.count + selectedFps.count) 项）", systemImage: "trash") { batchDisable() }
                     .disabled(selectedPwds.isEmpty && selectedFps.isEmpty)
                 VRowDivider()
                 VTextFieldRow(label: "前缀备注（加到所选凭证备注前）", text: $prefixText, placeholder: "如「2026 春节 · 」")
