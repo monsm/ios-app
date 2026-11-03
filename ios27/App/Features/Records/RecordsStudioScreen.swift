@@ -193,7 +193,11 @@ struct RecordsStudioScreen: View {
     private var statsCard: some View {
         VCard(style: .warm) {
             VStack(alignment: .leading, spacing: V.S.gapS) {
-                VCardHeader(title: "统计", showsChevron: false)
+                // 2026-11-03（全功能点排查 · 口径）：这一页的**列表是全部锁**（`buildRecs(macs: macs)`），
+                // 而下面的统计与活跃凭证**只算当前锁**（`StatsKit.build(mac: mac)`）。同一屏两个范围，
+                // 用户会拿"列表 40 条"去对"统计说 12 次"，然后以为数据错了。标题上把范围写清。
+                VCardHeader(title: mac.isEmpty ? "统计" : "统计 · \(DB.keychain(mac).map { LockArchive.displayName($0) } ?? "当前锁")",
+                            showsChevron: false)
                 if digest.isEmpty {
                     Text("还没有足够的日志做统计。先到台账页「读取锁内日志」。")
                         .font(V.F.footnote).foregroundStyle(V.C.text3)
