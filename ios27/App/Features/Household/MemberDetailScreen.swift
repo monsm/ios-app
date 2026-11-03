@@ -16,6 +16,8 @@ struct MemberDetailScreen: View {
     @State private var loadedID: String?
     @State private var confirmDelete = false
     @State private var saved = false
+    /// 呼叫失败的原因（静默失败的反面：用户点了要有回执）。
+    @State private var callNote: String?
     @State private var showMerge = false
 
     private var roster: HouseholdRoster { HouseholdRoster.shared }
