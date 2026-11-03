@@ -100,7 +100,11 @@ struct RecordsScreen: View {
                         activityCard
                         miniGrid
                         secondGrid
-                        searchCard
+                        // 2026-11-03（整页截图实测）：一条记录都没有时，这张卡里仍然摊着
+                        // 搜索框 + 4 枚类型芯片 + 2 枚范围芯片 + 换锁 + 「0 条」——
+                        // 7 个控件全都没有可作用的对象，下面紧接着又是「还没有台账记录」大空态。
+                        // 没数据就只给空态和那一个 CTA。
+                        if !entries.isEmpty { searchCard }
                         if visitorOnly { visitorCard }
                         if let day = route.dayFocus { dayFocusCard(day) }
                         if reading {
