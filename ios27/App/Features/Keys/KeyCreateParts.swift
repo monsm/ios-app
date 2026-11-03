@@ -78,9 +78,11 @@ extension KeyCreateScreen {
                             KeysOwnerRow(
                                 name: member.name,
                                 keyCount: app.keys.filter { $0.owner == member.id || $0.owner == member.name }.count,   // owner 有 id / 名字两种历史口径
-                                selected: owner == member.name
+                                // 2026-11-03：写**成员 id**（与 AppModel 写侧统一口径），
+                                // 名字只用于显示。旧数据里可能存名字，选中判据两种都认。
+                                selected: owner == member.id || owner == member.name
                             ) {
-                                owner = member.name
+                                owner = member.id
                                 errorText = nil
                             }
                         }

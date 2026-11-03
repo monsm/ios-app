@@ -204,6 +204,12 @@ extension LockService {
         guard !presses.isEmpty else {
             // 应答帧里的 rc 是唯一能解释"为什么锁没开始收指纹"的证据 (拒绝/指纹被禁/未校时…)
             let ackRc = frames.first.map { extractRc(0x13, $0) } ?? -1
+            // 2026-11-03（真机日志驱动）：19:03:29 / 19:03:33 两次 rc=25（锁正忙）都被当成
+            // "门锁拒绝了这次指纹录入"，用户看到的是"请重新开始录入" —— 而实际只是锁在收尾
+            // 上一次操作。忙是环境态，不是拒绝；这里给出**等待再试**的指引，不误导用户以为坏了。
+            if ackRc == 25 || ackRc == 17 {
+                throw BLEErrorX.msg("门锁正忙（可能还在收尾上一次操作）— 请等 3 秒再开始录入")
+            }
             if ackRc == rcBlurry {
                 throw BLEErrorX.msg("门锁没能取到清晰的指纹图像 — 手指按得太快、太湿，或反复按同一处；请换一个角度重按")
             }
@@ -220,13 +226,34 @@ extension LockService {
 
     func fpConfirm(_ batchNumber: UInt32, validFrom: String, validTo: String) async throws {
         let (m, sk) = try keys()
-        _ = try await execOk(ZKCmdBuilder.cmd14FpConfirm(m, sk, batchNumber, validFrom, validTo))
+        _ = try await execWithBusyRetry(ZKCmdBuilder.cmd14FpConfirm(m, sk, batchNumber, validFrom, validTo))
         log("info", "指纹#\(batchNumber) 已确认并设置有效期")   // 14 指纹
+    }
+
+    /// 忙码重试：锁正忙(25)/丢包(17) 是**环境性**失败，不是命令错误 —— 等一拍重发是安全的，
+    /// 因为 rc≠0 的语义就是"锁什么都没执行"（见 docs/BRICK-AUDIT.md）。
+    /// 2026-11-03（真机日志驱动）：19:04:01 删指纹一次 rc=25 就直接报错退出，
+    /// 而那时锁刚录完指纹（19:03:44 确认），本来等两秒再发就会成功。
+    private func execWithBusyRetry(_ cmdObj: ZKCmd, attempts: Int = 3) async throws -> ExecResult {
+        var last = -1
+        for i in 0..<attempts {
+            let r = try await exec(cmdObj)
+            last = r.rc
+            if r.rc == 0 { return r }
+            guard r.rc == 25 || r.rc == 17, i + 1 < attempts else {
+                if r.rc == -1 { throw BLEErrorX.msg("\(cmdObj.name) 回包缺少 rc KLV, 无法确认锁端结果 — 请重试") }
+                throw BLEErrorX.msg(StatusParser.rcMessage(r.rc))
+            }
+            // 锁忙时等 1.5s 再试（锁端在收尾上一件事，硬重发只会继续 rc=25）
+            log("warn", "\(cmdObj.name) rc=\(r.rc)（\(StatusParser.rcMessage(r.rc))）→ 等 1.5s 重试 \(i + 1)/\(attempts)")
+            try await Task.sleep(for: .milliseconds(1500))
+        }
+        throw BLEErrorX.msg(StatusParser.rcMessage(last))
     }
 
     func fpDelete(_ batchNumber: UInt32) async throws {
         let (m, sk) = try keys()
-        _ = try await execOk(ZKCmdBuilder.cmd15DeleteFp(m, sk, batchNumber))
+        _ = try await execWithBusyRetry(ZKCmdBuilder.cmd15DeleteFp(m, sk, batchNumber))
         // 2026-10-27 审核修复 (D-54)：同 pwdDelete —— 删除后重读复核。
         if DB.ledger(m).fps.contains(where: { $0.batch == batchNumber }) {
             log("warn", "删除复核失败： 指纹#\(batchNumber) 仍存在于锁端 — 可能收到伪造回包")

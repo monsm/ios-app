@@ -97,9 +97,18 @@ struct KeyCreateScreen: View {
         .accessibilityAddTraits(.isHeader)
     }
 
+    /// 归属成员 → 成员名。
+    ///
+    /// 2026-11-03（真机日志驱动）：这里原来只按 **id** 查（`$0.id == owner` 与 `DB.member(owner)`
+    /// 都按 id），而向导第 0 步写进 `owner` 的是**成员名**（`owner = member.name`）。
+    /// 于是本属性**恒为 nil** —— 录完指纹台账里 owner 就是空，列表永远显示「未归属」。
+    /// 三条历史口径（id / 名字 / 旧数据）都要认，先按 id，再按名字，最后原样回退。
     private var ownerName: String? {
-        guard let owner else { return nil }
-        return app.members.first { $0.id == owner }?.name ?? DB.member(owner)?.name
+        guard let owner, !owner.isEmpty else { return nil }
+        if let m = app.members.first(where: { $0.id == owner }) { return m.name }
+        if let m = app.members.first(where: { $0.name == owner }) { return m.name }
+        if let m = DB.member(owner) { return m.name }
+        return owner
     }
 
     private func consumeRoute() {
