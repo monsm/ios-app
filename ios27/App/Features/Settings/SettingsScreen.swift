@@ -535,7 +535,12 @@ struct SettingsScreen: View {
                     // 但 `DB.removeDevice` 会调 `BackupStudio.purgeLocalArtifacts`，把**本机备份文件与还原点
                     // 一并删掉**（备份是整库包，里面含这把锁的母钥，留着等于没删干净，SEC-19）。
                     // 用户"先备份再删锁"会连备份一起丢 —— 必须说清，并给出真正的留档办法。
-                    Text("只删本机：锁端密钥与锁内日志不变，重配即可再添加。注意：本机的备份文件与还原点也会一并删除（备份里含这把锁的母钥）；想留档请先把备份导出到别处（WebDAV 或复制文本）。")
+                    // 2026-11-04（读实现发现 · 两类文件不同）：`purgeLocalArtifacts` 清的是两类：
+                    //   · 本机备份 `backup-*.json` —— 经 `CryptoBox.encryptText` **加密**，没有口令打不开；
+                    //   · 还原点 `roll-*.json` —— `JSONEncoder` 直写，**明文**，含整库 skey/pins。
+                    // 原文案把两类混成一句「备份里含这把锁的母钥」，对加密备份不准确（也不公平：
+                    // 用户会以为"我设了口令还是没用"）。分开说清。
+                    Text("只删本机：锁端密钥与锁内日志不变，重配即可再添加。注意：本机的**备份文件**（加密的，需要你设的口令）与**还原点**（明文，含母钥）都会被一并删除；想留档请先把备份导出到别处（WebDAV 或复制文本）。")
                         .font(V.F.footnote)
                         .foregroundStyle(V.C.text3)
                         .fixedSize(horizontal: false, vertical: true)
