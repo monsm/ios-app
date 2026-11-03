@@ -368,16 +368,46 @@ struct MemberOpsScreen: View {
         .padding(.horizontal, V.S.cardGutter)
     }
 
+    /// 其它锁上属于这位成员的凭证条数。删除只处理当前锁，这些条目**会变成无归属**
+    /// （锁端仍然有效）。确认前就要说出来，别等删完才告知。
+    private func otherLocksCountHint(_ m: MemberCard) -> String? {
+        let mac = app.currentMac
+        var n = 0
+        for kc in DB.keychains() where DB.normalizeMac(kc.mac) != DB.normalizeMac(mac) {
+            func mine(_ owner: String?) -> Bool {
+                guard let owner, !owner.isEmpty else { return false }
+                return owner == m.id || (!m.name.isEmpty && owner == m.name)
+            }
+            n += DB.listPwds(kc.mac).filter { mine($0.owner) }.count
+            n += DB.listFps(kc.mac).filter { mine($0.owner) }.count
+        }
+        guard n > 0 else { return nil }
+        return "另有 \(n) 条属于 TA 的凭证在其它锁上 —— 那些锁端仍然有效，删除后只会变成「未归属」，不会进回收站。需要的话请分别到那几把锁上单独删除。"
+    }
+
     // MARK: - 删除成员（级联凭证入回收站）
 
     private func deleteCard(_ m: MemberCard) -> some View {
         let preview = CredentialOrg.memberCredentialPreview(m.id)
+        let otherLocksHint = otherLocksCountHint(m)
         return VCard {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VCardHeader(title: "删除成员", showsChevron: false)
-                Text("名下 \(preview.count) 枚凭证会先进入回收站（可整组还原），然后删除成员档案。")
+                // 2026-11-04（读实现发现 · 跨锁与单锁口径不同）：`memberCredentialPreview` 是
+                // **跨所有锁**合计，而 `cascadeDelete(mac:memberID:)` 只处理**当前这把锁**。
+                // 多锁家庭里这个数字会大于实际进回收站的数量 —— 而这句话是删除确认，
+                // 用户按它判断"会丢多少"。
+                Text("当前这把锁名下 \(preview.count) 枚凭证会先进入回收站（可整组还原），然后删除成员档案。")
                     .font(V.F.footnote).foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
+                // 2026-11-04（预告补全）：删除后的回执已经会说「另有 N 条在其它锁上，已转为无归属」——
+                // 但那是**删完之后**才说的。同一件事应当在确认前就说，否则多锁家庭用户
+                // 点下去才发现"另外两把锁上的凭证还在，只是没人归属了"。
+                if let extra = otherLocksHint {
+                    Text(extra)
+                        .font(V.F.footnote).foregroundStyle(V.C.warning)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 if !preview.isEmpty {
                     Text(preview.prefix(4).joined(separator: " · "))
                         .font(V.F.micro).foregroundStyle(V.C.text3)

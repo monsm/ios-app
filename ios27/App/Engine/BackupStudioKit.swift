@@ -253,6 +253,9 @@ enum BackupStudio {
         var source: String        // 477 来源信息: 导出时间 + 原设备
         var schema: Int
         var macs: [String]
+        /// 2026-11-04（语义变更，**注释必须跟着改**）：这两个数现在只统计**会被真正写入**的锁
+        /// （`parsePreview` 里用 `willSkip` 过滤掉了 SEC-08 会整把跳过的那些）。
+        /// 旧注释写「包里声明了多少条」—— 那是修复前的口径，留着会误导下一个读代码的人。
         var pwdCount: Int
         var fpCount: Int
         var memberCount: Int
@@ -260,9 +263,9 @@ enum BackupStudio {
         var previewTrace: [String]?
         var checksum: ChecksumState = .absent   // 453 哈希层: 解析时算一次, 预览卡直接显示
         /// 恢复时**会被跳过**的锁数（非法 skey / 非法 pin）。
-        /// 2026-11-01 补：`pwdCount` 统计的是"包里声明了多少条"，而恢复时 SEC-08 会整把锁跳过 ——
-        /// 预演若只说"包里有 8 条"，用户点确认后实际只回来 3 条，会以为备份坏了。
-        /// 预演阶段就把这个数报出来，用户可在确认前决定。
+        /// 2026-11-01 补：预演若只说"包里有 8 条"，用户点确认后实际只回来 3 条，会以为备份坏了。
+        /// 2026-11-04 修正：`pwdCount` / `fpCount` 已经**排除了**这些锁（不再重复扣减），
+        /// 所以界面文案不能说"其中 N 把会被跳过"，只能说"另有 N 把"。
         var skippedLocks: Int = 0
     }
 
