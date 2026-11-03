@@ -209,7 +209,9 @@ struct RecordsStudioScreen: View {
                 }
                 if !activeCreds.isEmpty {
                     VRowDivider()
-                    Text("近 30 天活跃凭证（约）").font(V.F.chipLabel).foregroundStyle(V.C.text4)
+                    // 2026-11-03：锁端日志不带凭证槽位，"哪一把凭证"无法回答 —— 只按种类聚合。
+                    // 标题跟着说实话（原来叫"活跃凭证"，暗示能点名到具体凭证）。
+                    Text("近 30 天开门构成（约）").font(V.F.chipLabel).foregroundStyle(V.C.text4)
                     ForEach(Array(activeCreds.prefix(5).enumerated()), id: \.offset) { pair in
                         HStack {
                             Text(pair.element.word).font(V.F.rowDetail).foregroundStyle(V.C.text1)

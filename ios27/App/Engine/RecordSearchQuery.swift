@@ -58,19 +58,19 @@ extension RecordSearch {
         // 用旧表的后果：真实开门（11/16/17/19）**一条都不计**，这个「活跃凭证」页永远是空的；
         // 而万一日志里出现 1/2/3/4 这些消息中心类型，又会被**错误归成** key/pwd/fp/temp。
         // 现在直接用权威表，不再另抄一份。
+        //
+        // 2026-11-03（全功能点排查 · 语义）：**这里原来按 `kind#idxRaw` 分组** ——
+        // 而 `idxRaw` 是**日志行号**，不是凭证编号。后果有两层：
+        //   ① 每条日志自成一组 ⇒ 列表永远是"指纹 #42 … 1 次 / 密码 #41 … 1 次"，
+        //      所有计数都是 1，"活跃"两个字没有任何意义；
+        //   ② 下面还拿这个行号去 `lg.fps.first { String($0.batch) == slot }` 查备注 ——
+        //      行号与指纹批号是两套编号，几乎必然查不到；偶尔撞上就是**张冠李戴**。
+        // 锁端日志（type 11/16/17/19）**不携带凭证槽位**，所以"哪一把凭证"这个问题
+        // 在数据上不可回答。诚实做法：只按**凭证种类**聚合，标题也跟着改成"开门构成"。
         let typeToKind: [Int: String] = Attribution.openKind
-        for l in logs { if let k = typeToKind[l.type] { c[k + "#" + String(l.idxRaw), default: 0] += 1 } }
-        let lg = DB.ledger(mac)
-        return c.sorted { $0.value > $1.value }.map { key, n in
-            let parts = key.split(separator: "#", maxSplits: 1).map(String.init)
-            let kind = parts.first ?? "", slot = parts.count > 1 ? parts[1] : ""
-            let base = Attribution.words[kind] ?? kind
-            let note = kind == "fp"
-                ? lg.fps.first { String($0.batch) == slot }?.note
-                : lg.pwds.first { String($0.alias) == slot }?.note
-            let seg = (note ?? "").split(separator: "\n").first.map(String.init) ?? ""
-            let short = seg.count > 12 ? String(seg.prefix(12)) + "…" : seg
-            return (kind, short.isEmpty ? base + " #" + slot : base + " #" + slot + " · " + short, n)
+        for l in logs { if let k = typeToKind[l.type] { c[k, default: 0] += 1 } }
+        return c.sorted { $0.value > $1.value }.map { kind, n in
+            (kind, Attribution.words[kind] ?? kind, n)
         }
     }
 
