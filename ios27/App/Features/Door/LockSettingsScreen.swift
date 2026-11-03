@@ -43,8 +43,8 @@ struct LockSettingsScreen: View {
         }
         .background(V.C.bg.ignoresSafeArea())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("锁设置")
+        .navigationBarTitleDisplayMode(.large)
         .task { await load() }
         .sheet(isPresented: $showSafeMode) { NavigationStack { SafeModeScreen() } }
         .alert("清空全部密码？", isPresented: $clearConfirm) {
@@ -61,9 +61,7 @@ struct LockSettingsScreen: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: V.S.gapXXS) {
-            Text("锁设置")
-                .font(V.F.displayA)
-                .foregroundStyle(V.C.text1)
+                            // 2026-11-03（全维度整理）：标题交给系统导航栏。
             Text(app.lock.map { "\($0.name) · \($0.model)" } ?? "还没有门锁")
                 .font(V.F.footnote)
                 .foregroundStyle(V.C.text3)
