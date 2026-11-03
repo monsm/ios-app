@@ -40,21 +40,35 @@ struct HouseholdScreen: View {
     }
 
     /// 264/466 四档排序。全部按本机可读的字段排，不假装有服务端排序。
+    ///
+    /// 2026-11-03（整页截图实测 · 稳定性）：四档都只比一个键，**没有决胜项**。
+    /// Swift 的 `sorted(by:)` **不保证稳定排序** —— 所有人都"还没用过"（`lastActiveAt` 全 nil）
+    /// 或凭证数相同时，成员顺序每次进页面都可能变。截图里同一份数据两次渲染出的顺序
+    /// （成员A/E/D… 与 成员C/D/A/E/B）就不一样。以 `id` 作决胜项，顺序从此确定。
     private func sorted(_ list: [MemberCard]) -> [MemberCard] {
+        func tie(_ a: MemberCard, _ b: MemberCard) -> Bool { a.id < b.id }
         switch sort {
         case .recent:
-            return list.sorted { ($0.lastActiveAt ?? 0) > ($1.lastActiveAt ?? 0) }
+            return list.sorted { lhs, rhs in
+                let a = lhs.lastActiveAt ?? 0, b = rhs.lastActiveAt ?? 0
+                return a == b ? tie(lhs, rhs) : a > b
+            }
         case .name:
             return list.sorted { lhs, rhs in
                 let a = HHDisplay.name(lhs, extras: roster.extras(for: lhs.id))
                 let b = HHDisplay.name(rhs, extras: roster.extras(for: rhs.id))
-                return a < b
+                return a == b ? tie(lhs, rhs) : a < b
             }
         case .keys:
-            return list.sorted { $0.keyCount > $1.keyCount }
+            return list.sorted { lhs, rhs in
+                return lhs.keyCount == rhs.keyCount ? tie(lhs, rhs) : lhs.keyCount > rhs.keyCount
+            }
         case .opens30:
             let counts = opens30Counts
-            return list.sorted { (counts[$0.name] ?? 0) > (counts[$1.name] ?? 0) }
+            return list.sorted { lhs, rhs in
+                let a = counts[lhs.name] ?? 0, b = counts[rhs.name] ?? 0
+                return a == b ? tie(lhs, rhs) : a > b
+            }
         }
     }
 
