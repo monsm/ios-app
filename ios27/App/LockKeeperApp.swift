@@ -188,6 +188,9 @@ private struct AXTextSizeModifier: ViewModifier {
 
 /// 只读试验模式常驻条。
 struct TrialGuardBanner: View {
+    /// 与 VGlassSurface 内部同一判据：系统「减少透明度」时玻璃退化。
+    @Environment(\.accessibilityReduceTransparency) private var systemReduceTransparency
+
     var body: some View {
         HStack(spacing: V.S.gapS) {
             Image(systemName: "exclamationmark.triangle.fill")
@@ -200,7 +203,22 @@ struct TrialGuardBanner: View {
         .foregroundStyle(V.C.critical)
         .padding(.horizontal, V.S.pageGutter)
         .padding(.vertical, V.S.gapXS)
-        .background(V.C.critical.opacity(0.12))
+        // 2026-11-03（Liquid Glass 审计）：这条常驻条挂在 `.safeAreaInset(edge: .top)` 上，
+        // 属于**顶栏区域** —— 那里应当交给系统材质 / scrollEdgeEffect，手涂一层
+        // 12% 的红色底会在玻璃上叠出一块脏色，也让后面的内容透不过来。
+        // 保留文字与图标（警示必须看得见），底色走**玻璃唯一入口**（glass 闸门只允许
+        // Material/glassEffect 出现在 Components/GlassSurface.swift）：
+        // safeAreaInset 的常驻条必须有底，否则滚动内容会从文字后面穿过去。
+        // 与 Tab 栏 / 提示条同一入口，因此「减少透明度 / 增强对比度」也会一并退化。
+        .background {
+            VGlassSurface(solid: systemReduceTransparency || SettingsStore.shared.reduceTransparency,
+                          cornerRadius: 0,
+                          tint: V.C.critical.opacity(0.10),
+                          stroke: nil) {
+                Color.clear
+            }
+            .ignoresSafeArea(edges: .top)
+        }
         .accessibilityElement(children: .combine)
     }
 }
