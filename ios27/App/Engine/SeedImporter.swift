@@ -29,7 +29,10 @@ enum SeedImporter {
                 var st = LockStatus()
                 st.rc = 0
                 st.powerLevel = 76
-                st.firmware = "1.4.2"
+                // 2026-11-04（种子自相矛盾）：原来写死 "1.4.2"，而 seed 的 kc.fw="1.0.2" ——
+                // 于是锁实况（快照）显示 1.4.2、锁信息名片（现场读失败回落 kc.fw）显示 1.0.2，
+                // 同一把锁两个固件号。快照合成时**用种子钥匙串的 fw**，两边永远同源。
+                st.firmware = bundle.devices.first?.kc.fw ?? "1.4.2"
                 st.lockTime = Int64(ZKProtocol.nowProtoSeconds())
                 // 与真机快照逐项对齐（2026-11-02 双侧快照）：
                 //   PIN  cap 64 / 剩余 0  → 已用 64
