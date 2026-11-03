@@ -384,9 +384,11 @@ struct RecordsScreen: View {
                         .font(V.F.footnote)
                         .foregroundStyle(V.C.text3)
                 }
-                Spacer(minLength: 0)
+                // 2026-11-03：有内容时才拉齐到奖章卡高度；空态按内容收，不留空白。
+                if entries.first != nil { Spacer(minLength: 0) }
             }
-            .frame(minHeight: V.Metric.miniCardH - 2 * V.S.miniPad, alignment: .top)
+            .frame(minHeight: entries.first == nil ? nil : V.Metric.miniCardH - 2 * V.S.miniPad,
+                   alignment: .top)
         }
         .frame(maxWidth: .infinity)
     }
