@@ -268,6 +268,14 @@ struct MemberDetailScreen: View {
                 if !phone.isEmpty {
                     VOutlineButton(title: "呼叫 \(phone)", systemImage: "phone") { call() }
                         .disabled(phone.filter(\.isNumber).count < 3)
+                    // 2026-11-04：`call()` 原来失败时**什么都不说** —— 按钮 disabled 只挡了
+                    // "数字不足 3 位"，`canOpenURL` 失败（号码含非法字符等）仍然是静默的。
+                    // 失败必须有回执。
+                    if let callNote {
+                        Text(callNote)
+                            .font(V.F.unit).foregroundStyle(V.C.warning)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
 
                 Text("emoji 代号")
@@ -363,9 +371,19 @@ struct MemberDetailScreen: View {
     }
 
     /// 一键呼叫：清洗非数字，少于 3 位不给。
+    /// 2026-11-04（静默失败）：这条 guard 失败时**什么都不做** —— 用户点「呼叫」，
+    /// 手机没反应，也没有任何提示。号码不足 3 位是**用户可修的状态**，必须说出来。
     private func call() {
         let digits = phone.filter(\.isNumber)
-        guard digits.count >= 3, let url = URL(string: "tel://" + digits) else { return }
+        guard digits.count >= 3 else {
+            callNote = "这个号码里没有足够数字（至少 3 位）—— 先在上面填完整，再点呼叫。"
+            return
+        }
+        guard let url = URL(string: "tel://" + digits), UIApplication.shared.canOpenURL(url) else {
+            callNote = "系统不接受这个号码（tel: 链接打不开）—— 检查一下是否含有非法字符。"
+            return
+        }
+        callNote = nil
         UIApplication.shared.open(url)
     }
 

@@ -274,7 +274,14 @@ struct LockProfileScreen: View {
 
     private func save() {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty, let kc else {
+        // 2026-11-04（错误归因 · 两个条件一句话）：这条 guard 同时检查「昵称非空」与「有钥匙串」。
+        // 没有钥匙串时（理论上不该发生，但页面能在无锁状态被打开）会显示「昵称不能为空」——
+        // 而用户明明填了昵称。分开说。
+        guard let kc else {
+            outcome = "还没有这把锁的钥匙串 —— 先去「门」页添加或恢复这把锁，再回来改档案。"
+            return
+        }
+        guard !trimmed.isEmpty else {
             outcome = "昵称不能为空"
             return
         }
