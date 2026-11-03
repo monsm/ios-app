@@ -433,6 +433,15 @@ jobs:
             xcrun simctl io "$UDID" screenshot "/tmp/shots/$i-$name.png" || true
             i=$((i+1))
           done
+          # 滚动到页底再拍一遍（时间线/凭证行/工具区在首屏之下）
+          i=0
+          for name in door keys records; do
+            xcrun simctl terminate "$UDID" com.aapk.lockkeeper 2>/dev/null || true
+            xcrun simctl launch "$UDID" com.aapk.lockkeeper -kfUITest -kfSeed -kfScroll -kfTab $i || true
+            sleep 5
+            xcrun simctl io "$UDID" screenshot "/tmp/shots/$i-$name-b.png" 2>/dev/null || true
+            i=$((i+1))
+          done
           # 2026-11-03：关键子页 —— 大标题模式、读数网格、凭证行、工作流都要看真机渲染。
           # ASCII 名（中文名经 locale 管道会变 mojibake）；每个目标截 2 次（竞态重试）。
           # 缺某张图 = 那个子页在空数据下崩了 —— 本身就是 god 模式要抓的缺陷。

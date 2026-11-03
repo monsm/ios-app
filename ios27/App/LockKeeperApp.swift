@@ -65,6 +65,7 @@ struct RootView: View {
             // 两个参数只由 CI 传入，用户正常启动永远不带 ⇒ 不改变任何线上行为。
             // 判据：这是**测试脚手架**，不是功能；不要在任何业务判断里引用它。
             let args = ProcessInfo.processInfo.arguments
+            if args.contains("-kfScroll") { UITestEnv.scrollBottom.withLock { $0 = true } }
             if args.contains("-kfUITest") {
                 app.unlocked = true
                 if let i = args.firstIndex(of: "-kfTab"), i + 1 < args.count,

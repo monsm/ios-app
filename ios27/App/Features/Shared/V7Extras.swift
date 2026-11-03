@@ -488,3 +488,18 @@ extension View {
             .listRowBackground(Color.clear)
     }
 }
+
+// MARK: - CI 截图的滚动锚（-kfScroll 时根页首屏即显示底部内容）
+
+/// `-kfScroll` 启动参数存在时，把 ScrollView 的默认锚点设为底部 ——
+/// 时间线/凭证行/工具区在首屏之下，正常截图只拍得到顶部。截图管线借此看到全页。
+/// 正常启动不带此参数，修饰符是透明直通。
+struct UITestScrollBottom: ViewModifier {
+    func body(content: Content) -> some View {
+        if UITestEnv.scrollBottom.withLock({ $0 }) {
+            content.defaultScrollAnchor(.bottom)
+        } else {
+            content
+        }
+    }
+}

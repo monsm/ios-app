@@ -798,6 +798,12 @@ struct MemberCard: Identifiable, Hashable {
 //
 // 引擎只声明它需要什么（见 Engine/EngineHost.swift），这里把界面状态喂给它。
 // 这是**唯一**允许 Engine 与界面接触的地方。
+/// CI 截图专用：`-kfScroll` 启动参数让根页 ScrollView 以底部为锚（首屏即看到时间线/工具区）。
+/// 正常启动永远不带此参数。只在截图管线里引用。
+enum UITestEnv {
+    static let scrollBottom = Locked(false)
+}
+
 extension AppModel: EngineHost {
     var currentKeychain: Keychain? {
         let mac = currentMac

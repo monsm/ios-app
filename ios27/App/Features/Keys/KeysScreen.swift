@@ -107,6 +107,7 @@ struct KeysScreen: View {
             .padding(.bottom, V.S.gapL)
         }
         .background(V.C.bg.ignoresSafeArea())
+        .modifier(UITestScrollBottom())
         .scrollEdgeEffectStyle(.soft, for: .top)
         .navigationTitle("凭证")
         .navigationBarTitleDisplayMode(.large)

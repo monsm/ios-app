@@ -120,6 +120,7 @@ struct RecordsScreen: View {
                 .padding(.bottom, V.S.gapL)
             }
             .background(V.C.bg.ignoresSafeArea())
+            .modifier(UITestScrollBottom())
             .scrollEdgeEffectStyle(.soft, for: .top)
             .navigationTitle("记录")
             .navigationBarTitleDisplayMode(.large)

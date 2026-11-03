@@ -66,6 +66,7 @@ struct DoorScreen: View {
             .padding(.bottom, V.S.gapL)
         }
         .background(V.C.bg.ignoresSafeArea())
+        .modifier(UITestScrollBottom())
         .scrollEdgeEffectStyle(.soft, for: .top)
         // 2026-11-02（第 325 轮）：这一页此前**没有任何页面标题** —— 导航栏被整个关掉，
         // 页内也没画标题，用户打开 App 不知道自己在控制哪把锁。
