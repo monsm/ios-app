@@ -345,9 +345,9 @@ struct DoorScreen: View {
         // 视觉上像"读数被挡住"。默认档收到 0.92 给滑块让位；用户选的档位仍在其上生效。
         let base: CGFloat
         switch AXSettings.dialSize {
-        case "small": base = 0.86
-        case "large": base = 1.08
-        default: base = 0.92
+        case "small": base = 0.72
+        case "large": base = 0.95
+        default: base = 0.78
         }
         return base
     }
