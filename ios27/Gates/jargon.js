@@ -36,7 +36,8 @@ for (const f of walk(ROOT)) {
       const body = m[0];
       // 2026-11-04：中文写法「命令 19」与英文 cmd19 是同一件事，之前漏判。
       // 2026-11-04：rc= 是协议返回码，同样不该出现在用户文案里。
-      if (/cmd[0-9A-Fa-f]{2}/.test(body) || /\bZOTP\b/.test(body) || /命令\s*[0-9]+/.test(body) || /rc\s*=\s*[0-9]/.test(body)) {
+      // 2026-11-04：`TODO(engine)` 这类开发标记同样不该出现在用户文案里。
+      if (/cmd[0-9A-Fa-f]{2}/.test(body) || /\bZOTP\b/.test(body) || /命令\s*[0-9]+/.test(body) || /rc\s*=\s*[0-9]/.test(body) || /TODO\(/i.test(body) || /FIXME/i.test(body)) {
         bad++;
         report.push(path.relative(path.join(__dirname, '..'), f) + ':' + (i + 1) + '  ' + body.slice(0, 60));
         break;

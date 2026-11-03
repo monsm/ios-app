@@ -361,7 +361,10 @@ struct RecordExportScreen: View {
                     }
                     .accessibilityLabel("分享成员名册")
                 }
-                Text("名册只带称呼与角色；电话与备注留在本机（TODO(engine) 待接成员扩展档案）。")
+                // 2026-11-04（截图/文案审计）：这一行把内部待办标记 `TODO(engine)` 直接写给了用户。
+                // 用户不知道 engine 是什么，也不该在成品界面看到开发备注。
+                // 保留它要传达的事实（电话与备注不导出），去掉标记。
+                Text("名册只带称呼与角色；电话与备注留在本机，不会进这份名册。")
                     .font(V.F.unit)
                     .foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
