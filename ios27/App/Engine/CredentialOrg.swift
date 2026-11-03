@@ -112,14 +112,17 @@ enum CredentialOrg {
     /// 成员归属的双口径判据：新数据存 **id**，旧数据存 **名字**。
     /// 2026-11-03（全功能点排查）：这两处此前只认 id，于是旧数据既不会被移入回收站、
     /// 也不出现在"名下将入回收站的凭证清单"里 —— 而弹窗对用户承诺的是全部。
-    /// `nonisolated`：这是纯字符串比较，不碰任何状态 —— 而调用它的
-    /// `cascadeBinMember` / `memberCredentialPreview` / `fpCountByOwner` 都在非隔离上下文里。
+    /// `nonisolated`：纯字符串比较，不碰任何状态。
+    /// 2026-11-03（编译事故）：这个函数被我插在了原本属于 `cascadeBinMember` 的 `@MainActor`
+    /// 与它修饰的函数**之间** —— 于是 @MainActor 落到这个纯函数上，而它自己又标了 nonisolated，
+    /// 编译器报「has multiple actor-isolation attributes」。现在把 @MainActor 移回原位。
     nonisolated static func ownerMatches(_ owner: String?, memberID: String, memberName: String) -> Bool {
         guard let owner, !owner.isEmpty else { return false }
         if owner == memberID { return true }
         return !memberName.isEmpty && owner == memberName
     }
 
+    @MainActor
     static func cascadeBinMember(_ mac: String, _ memberID: String) {
         let name = DB.member(memberID)?.name ?? ""
         for p in DB.listPwds(mac).filter({ ownerMatches($0.owner, memberID: memberID, memberName: name) }) {

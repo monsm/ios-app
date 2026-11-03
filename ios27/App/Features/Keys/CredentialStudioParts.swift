@@ -194,7 +194,13 @@ struct CredHistorySheet: View {
                                         VStack(alignment: .leading, spacing: V.S.gapXXS) {
                                             Text(snap.note.isEmpty ? "快照" : snap.note)
                                                 .font(V.F.rowTitle).foregroundStyle(V.C.text1)
-                                            Text("\(TimeFormat.dayShort(Int64(snap.at))) \(TimeDisplay.clock(Int64(snap.at))) · \(snap.pwds.count) 密码 / \(snap.fps.count) 指纹")
+                                            // 2026-11-03（编译事故）：这一行插值里套了四个调用 + 两个三元，
+                                            // 类型检查器直接放弃（"unable to type-check in reasonable time"）。
+                                            // 拆成局部常量后再拼 —— 与编译器要求的"break up the expression"一致。
+                                            let stamp = TimeFormat.dayShort(Int64(snap.at))
+                                            let clock = TimeDisplay.clock(Int64(snap.at))
+                                            let counts = "\(snap.pwds.count) 密码 / \(snap.fps.count) 指纹"
+                                            Text([stamp, clock, counts].joined(separator: " · "))
                                                 .font(V.F.rowDetail).foregroundStyle(V.C.text3)
                                         }
                                         Spacer(minLength: V.S.gapS)
