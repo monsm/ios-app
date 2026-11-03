@@ -434,22 +434,10 @@ struct KeysScreen: View {
             ScrollView(.horizontal) {
                 HStack(spacing: V.S.gapS) {
                     ForEach(visibleFilters, id: \.self) { item in
-                        let selected = item == filter
-                        Button {
+                        // 2026-11-03：筛选芯片换成功能层玻璃（HIG：控制件用 Liquid Glass）。
+                        GlassChip(title: chipTitle(item), selected: item == filter) {
                             filter = item
-                        } label: {
-                            Text(chipTitle(item))
-                                .font(V.F.footnote)
-                                .foregroundStyle(selected ? V.C.text1 : V.C.text3)
-                                .padding(.horizontal, V.S.gapM)
-                                .padding(.vertical, V.S.gapS)
-                                .background(selected ? V.C.card : Color.clear, in: Capsule())
-                                .overlay {
-                                    Capsule().strokeBorder(selected ? V.C.tabEdge : V.C.hairline, lineWidth: V.S.hair)
-                                }
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
                     }
                     Button {
                         groupByOwner.toggle()
