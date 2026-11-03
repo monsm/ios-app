@@ -227,11 +227,25 @@ struct HouseholdScreen: View {
     }
 
     // MARK: 名册
+
+    /// 该成员的副行是否为空（关系/分组/最近开门全无）。
+    private func memberSublineIsEmpty(_ m: MemberCard) -> Bool {
+        HHDisplay.subline(m, extras: roster.extras(for: m.id)).isEmpty
+    }
+
     private var rosterPanel: some View {
         let list = shown
         return VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
                 VSectionLabel(text: group.isEmpty ? "成员名册" : "成员名册 · \(group)", trailing: "\(list.count) 位 · " + sort.title)
+                // 2026-11-03（整页截图）：原来每个成员行都重复「还没有档案扩展 · 补一条关系或分组」，
+                // 名册成了噪音。改为**整段只提示一次**，行内留白。
+                if !shown.isEmpty, shown.allSatisfy({ memberSublineIsEmpty($0) }) {
+                    Text("还没有人填过关系或分组。点开任意成员补一条，名册就会按关系/分组显示。")
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text3)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 if shown.isEmpty {
                     if activeMembers.isEmpty {
                         VEmptyState(

@@ -321,7 +321,9 @@ enum HHDisplay {
         if !extras.relation.isEmpty { bits.append(extras.relation) }
         if !extras.groupTag.isEmpty { bits.append(extras.groupTag) }
         if member.lastActiveAt != nil { bits.append(HHStats.lastOpen(member)) }
-        if bits.isEmpty { return "还没有档案扩展 · 补一条关系或分组" }
+        // 2026-11-03（整页截图暴露）：全空时每行都重复同一句「还没有档案扩展 · 补一条关系或分组」，
+        // 5 个成员就是 5 遍，把名册变成一片噪音。改成**留空**，由名册卡头统一提示一次。
+        if bits.isEmpty { return "" }
         return bits.joined(separator: " · ")
     }
 }
