@@ -163,7 +163,6 @@ struct RecordExportScreen: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: V.S.gapXS) {
                         // 2026-11-03（全维度整理）：标题交给系统导航栏（大标题），页内不再自绘。
-                .frame(maxWidth: .infinity, alignment: .leading)
             HStack(spacing: V.S.gapS) {
                 VStateDot(tone: entries.isEmpty ? .neutral : .ok,
                          word: entries.isEmpty ? "无可导出" : "可导出")
