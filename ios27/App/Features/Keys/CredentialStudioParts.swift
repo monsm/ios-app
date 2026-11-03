@@ -77,12 +77,6 @@ struct CredAlertSheet: View {
 
 // MARK: - 回收站
 
-// 2026-11-03：版本历史恢复的待确认目标（放在文件级，供 CredHistorySheet 使用）。
-private struct HistoryRestoreTarget: Identifiable {
-    let id: String
-    let snap: CredSnapshot
-}
-
 struct CredBinSheet: View {
     let mac: String
     var onChange: () -> Void = {}
@@ -170,7 +164,7 @@ struct CredHistorySheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var items: [CredSnapshot] = []
     @State private var outcome: String?
-    @State private var restoreTarget: HistoryRestoreTarget?
+    @State private var restoreTarget: CredSnapshot?
 
     var body: some View {
         NavigationStack {
@@ -215,13 +209,22 @@ struct CredHistorySheet: View {
             .onAppear { items = CredHistoryStore.all(mac) }
             .confirmationDialog("用这一版覆盖当前凭证列表？", isPresented: Binding(
                 get: { restoreTarget != nil }, set: { if !$0 { restoreTarget = nil } }
-            ), titleVisibility: .visible, presenting: restoreTarget) { target in
-                Button("恢复", role: .destructive) { restore(target.snap) }
+            ), titleVisibility: .visible, presenting: restoreTarget) { snap in
+                Button("恢复", role: .destructive) { restore(snap) }
                 Button("取消", role: .cancel) { restoreTarget = nil }
-            } message: { target in
-                Text("「\(target.snap.note.isEmpty ? "快照" : target.snap.note)」（\(target.snap.pwds.count) 密码 / \(target.snap.fps.count) 指纹）会**替换**当前台账：这份快照之后新增的凭证会从本机消失（锁端仍在，但 App 里看不到）。恢复前会自动把当前状态存成一份快照，随时可以再切回来。")
+            } message: { snap in
+                Text(restoreWarning(snap))
             }
         }
+    }
+
+    /// 恢复前的后果说明。抽成独立函数而不是内联插值 ——
+    /// 2026-11-03：内联版本已经在别处触发过类型检查超时，这里不再重蹈。
+    private func restoreWarning(_ snap: CredSnapshot) -> String {
+        let name = snap.note.isEmpty ? "快照" : snap.note
+        let counts = String(snap.pwds.count) + " 密码 / " + String(snap.fps.count) + " 指纹"
+        return "「" + name + "」（" + counts + "）会**替换**当前台账：这份快照之后新增的凭证会从本机消失"
+             + "（锁端仍在，但 App 里看不到）。恢复前会自动把当前状态存成一份快照，随时可以再切回来。"
     }
 
     private func restore(_ snap: CredSnapshot) {
