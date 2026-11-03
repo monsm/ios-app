@@ -28,7 +28,6 @@ struct DoorScreen: View {
     private var store: SettingsStore { SettingsStore.shared }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
         ScrollView {
             VStack(alignment: .leading, spacing: V.S.gapL) {
                 if !DevModuleStore.hidden.contains(DevModule.linkSense.rawValue) {
@@ -92,13 +91,17 @@ struct DoorScreen: View {
             }
         }
         .refreshable { await rescan() }
-        // 2026-11-03（真机截图）：滑块原来跟在刻度盘下方 —— 刻度盘占满首屏，主行动掉到折叠线以下。
-        // 提到**浮动底栏**（功能层，玻璃符合契约 §6）：进页即可见、单手拇指可达，与系统来电滑块同位。
-        if app.lock != nil {
-            GlassSlideToUnlock(onUnlock: { requestUnlock() }, busy: app.dialPhase.isBusy)
-                .padding(.horizontal, V.S.pageGutterA)
-                .padding(.bottom, V.S.gapS)
-        }
+        // 2026-11-03（真机截图两轮迭代）：
+        //   · 第一版跟在刻度盘下方 → 刻度盘占满首屏，主行动掉到折叠线以下；
+        //   · 第二版 ZStack 浮层 → 叠在刻度盘上，"电量"读数被压住。
+        // 终版用 **safeAreaInset(edge: .bottom)**：滚动内容自动内缩让位（不遮挡），
+        // 滑块常驻底部、拇指可达，位置与系统来电滑块一致；功能层，玻璃合规。
+        .safeAreaInset(edge: .bottom) {
+            if app.lock != nil {
+                GlassSlideToUnlock(onUnlock: { requestUnlock() }, busy: app.dialPhase.isBusy)
+                    .padding(.horizontal, V.S.pageGutterA)
+                    .padding(.bottom, V.S.gapS)
+            }
         }
     }
 

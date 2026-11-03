@@ -27,10 +27,15 @@ struct GlassSlideToUnlock: View {
         GeometryReader { geo in
             let travel = geo.size.width - knobDiameter - 16
             ZStack(alignment: .leading) {
-                // 滑轨：功能层玻璃胶囊
+                // 滑轨：功能层玻璃胶囊。
+                // 2026-11-03（截图）：纯 .glassEffect 在浅色背景上几乎看不见 —— 补一层发丝描边
+                // 与极淡底色，让控件边界成立（HIG：控件必须有可辨的容器）。
                 Capsule()
                     .fill(.clear)
                     .glassEffect(.regular, in: Capsule())
+                    .overlay {
+                        Capsule().strokeBorder(V.C.hairlineSoft, lineWidth: V.S.hair)
+                    }
                     .overlay {
                         Text(offset > travel * 0.25 ? "" : "滑动来开锁")
                             .font(V.F.bodyStrong)
@@ -40,7 +45,8 @@ struct GlassSlideToUnlock: View {
                 // 把手：圆形玻璃钮
                 Circle()
                     .fill(.clear)
-                    .glassEffect(.regular.tint(V.C.blue.opacity(0.35)), in: Circle())
+                    .glassEffect(.regular.tint(V.C.blue.opacity(0.45)), in: Circle())
+                    .overlay { Circle().strokeBorder(V.C.blue.opacity(0.35), lineWidth: V.S.hair) }
                     .frame(width: knobDiameter, height: knobDiameter)
                     .overlay {
                         Image(systemName: "chevron.right.2")
