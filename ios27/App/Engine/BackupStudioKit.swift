@@ -335,8 +335,17 @@ enum BackupStudio {
         // 2026-10-26: 这里原有一个 zones 局部数组（设备/凭证/成员/记录四段摘要），
         // 它只用来填 Preview.zones —— 那个字段随分区概念一起删了，所以这里也删。
         // 凭证/指纹计数（Preview 的 pwdCount / fpCount 要用）
+        // 2026-11-04（预演数字与实际不符）：原来把所有锁的凭证都算进去，**包括那些
+        // 因密钥非法会被 SEC-08 整把跳过的锁**。于是界面显示「凭证 8 密码 · 3 指纹」
+        // 旁边又写「将被跳过 1 把」，用户点导入后只回来 3 条 —— 而预演的全部意义就是
+        // 让他在点之前知道会得到多少。现在把将被跳过的锁**排除在计数之外**，
+        // 两个数字（将写入 / 将被跳过）口径一致。
+        func willSkip(_ d: BackupBundle.Device) -> Bool {
+            !(HexKit.bytes(d.mac).count == 6 && CryptoBox.isHex(d.kc.skey, len: 32))
+                || d.kc.pins.contains { !CryptoBox.isHex($0, len: 8) }
+        }
         var p = 0, f = 0
-        for d in m.devices { p += d.ledger?.pwds.count ?? 0; f += d.ledger?.fps.count ?? 0 }
+        for d in m.devices where !willSkip(d) { p += d.ledger?.pwds.count ?? 0; f += d.ledger?.fps.count ?? 0 }
         let sample = (m.globals?.trace?.lines ?? []).shuffled().prefix(5).count
         let fallback = Keychain(mac: m.currentMac, skey: "")
         let sourceName = m.currentMac.isEmpty ? "" : LockArchive.displayName(DB.keychain(m.currentMac) ?? fallback)
@@ -348,10 +357,7 @@ enum BackupStudio {
                          sampleOk: sample,
                          previewTrace: Array((m.globals?.trace?.lines ?? []).prefix(5)),
                          checksum: ck,
-                         skippedLocks: m.devices.filter { d in
-                             !(HexKit.bytes(d.mac).count == 6 && CryptoBox.isHex(d.kc.skey, len: 32))
-                                 || d.kc.pins.contains { !CryptoBox.isHex($0, len: 8) }
-                         }.count)
+                         skippedLocks: m.devices.filter(willSkip).count)
         return (pv, m)
     }
     /// 1048: 剥掉开头连续的 // 说明行与空行 (交接包头部), 返回机器可读部分; 没有头部则原样返回。
