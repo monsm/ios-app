@@ -151,26 +151,13 @@ struct SettingsScreen: View {
         .padding(.top, V.S.gapS)
     }
 
+    /// 2026-11-03：分组芯片统一走 `GlassChip`（功能层控制件用 Liquid Glass）。
     private func groupChip(_ group: SettingsGroup?, title: String) -> some View {
-        let on = groupFilter == group
-        return Button {
+        GlassChip(title: title, selected: groupFilter == group) {
             groupFilter = group
-        } label: {
-            Text(title)
-                .font(V.F.footnote)
-                .foregroundStyle(on ? V.C.text1 : V.C.text3)
-                .padding(.horizontal, V.S.gapM)
-                .padding(.vertical, V.S.gapS)
-                .background(on ? V.C.card : Color.clear, in: Capsule())
-                .overlay {
-                    Capsule().strokeBorder(on ? V.C.tabEdge : V.C.hairline, lineWidth: V.S.hair)
-                }
         }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
 
-    /// 搜索命中项：只列真的能点进去的设置行；标题/说明/关键词三者任一命中即可。
     private struct SettingsHit: Identifiable {
         let id: String
         let title: String
@@ -412,8 +399,10 @@ struct SettingsScreen: View {
                 if notifyOff {
                     VDivider()
                     VListRow(
-                        title: "通知权限 · 到期提醒不会送达",
-                        detail: "系统里被拒绝或还没询问。点这里去系统设置打开。",
+                        // 2026-11-03（整页截图）：原标题「通知权限 · 到期提醒不会送达」在行内被省略号截断。
+                        // 标题只留名词，后果放进 detail。
+                        title: "通知权限",
+                        detail: "到期提醒不会送达：系统里被拒绝或还没询问。点这里去系统设置打开。",
                         systemImage: "bell.slash",
                         tint: V.C.warning,
                         value: NotifyAuth.label
@@ -546,18 +535,13 @@ struct SettingsScreen: View {
                 .foregroundStyle(V.C.text1)
             VCard {
                 VStack(alignment: .leading, spacing: V.S.gapM) {
-                    Button {
+                    // 2026-11-03（整页截图）：原来只有一行红色文字 —— 看着像小标题，不像可点的危险操作。
+                    // 换成带描边的 destructive 按钮，边界明确。
+                    VOutlineButton(title: "删除这台锁的本机数据",
+                                   systemImage: "trash",
+                                   tint: V.C.red) {
                         deleteRequested = true
-                    } label: {
-                        Text("删除这台锁的本机数据")
-                            .font(V.F.bodyStrong)
-                            .foregroundStyle(V.C.red)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .frame(minHeight: V.List.rowMinHeight)
-                            .contentShape(.rect)
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("删除这台锁的本机数据")
                     // 2026-11-01（Round 283）：原文案写「未做备份则无法找回」，暗示"做过备份就安全" ——
                     // 但 `DB.removeDevice` 会调 `BackupStudio.purgeLocalArtifacts`，把**本机备份文件与还原点
                     // 一并删掉**（备份是整库包，里面含这把锁的母钥，留着等于没删干净，SEC-19）。
