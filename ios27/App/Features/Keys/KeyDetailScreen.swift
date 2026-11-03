@@ -486,8 +486,15 @@ struct FingerprintReEnrollSheet: View {
     }
 
     private func start() {
-        guard !busy, let old = batch else {
-            error = "这枚凭证没有指纹批次号"
+        // 2026-11-04（错误归因 · 两个条件混成一句）：这条 guard 同时检查 `!busy` 与 `batch`，
+        // 而失败文案只说「没有指纹批次号」。`busy` 为真时（正在录入）再点一次也会看到
+        // 「没有指纹批次号」—— 一个与事实无关的诊断，用户会去查凭证编号而不是等一等。
+        // 分开说。
+        guard !busy else { return }
+        guard let old = batch else {
+            error = key.id.hasPrefix("fp:")
+                ? "这枚指纹的批次号解析失败（台账记录可能已损坏）—— 请到凭证页重新录入一次。"
+                : "这不是指纹凭证，没有批次号可替换。"
             return
         }
         busy = true
