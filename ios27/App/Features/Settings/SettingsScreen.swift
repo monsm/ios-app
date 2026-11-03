@@ -322,25 +322,15 @@ struct SettingsScreen: View {
         }
     }
 
+    /// 2026-11-03（全维度整理）：**删除重复的导航树**。
+    ///
+    /// 原来这里 8 行里有 6 行（锁实况 / 锁信息名片 / 锁设置 / 校准门锁时间 / 智能网关 / 布防）
+    /// 和「门」页的「门锁与入口」一模一样 —— 同一功能两个入口，用户不知道该走哪条，
+    /// 两处还会各自维护文案与徽标。设置页只留**真正属于设置**的两项（模块排序、固件升级），
+    /// 其余统一从门页进；再给一行明确的指路，避免用户在这里找不到。
     private var lockSection: some View {
         section("门锁") {
             VStack(spacing: 0) {
-                VListRow(
-                    title: "锁实况",
-                    detail: "电量 / 信号 / 固件",
-                    systemImage: "gauge.with.dots.needle.50percent",
-                    tint: V.C.rewardBlue,
-                    value: app.lock.map { "\($0.battery)%" } ?? "--"
-                ) { router.request(.dest(.lockStatus)) }
-                VDivider()
-                VListRow(
-                    title: "锁信息名片",
-                    detail: "固件 / 容量 / 电量采样 / 链路验证",
-                    systemImage: "info.circle",
-                    tint: V.C.miniBlue,
-                    value: ""
-                ) { router.request(.dest(.deviceInfo)) }
-                VDivider()
                 VListRow(
                     title: "模块排序与显隐",
                     detail: "设备页三槽顺序 / 模块显隐 / 快捷格",
@@ -349,39 +339,6 @@ struct SettingsScreen: View {
                     value: ""
                 ) { router.request(.dest(.moduleOrder)) }
                 VDivider()
-                // 来源：原 App/UI/LockSettingsView.swift（锁设置：防尾随/静音/清空密码/固件）。
-                VListRow(
-                    title: "锁设置",
-                    detail: "临时码开关 / 自动上锁 / 清空密码",
-                    systemImage: "slider.horizontal.3",
-                    tint: V.C.coral,
-                    value: ""
-                ) { router.request(.dest(.lockSettings)) }
-                VDivider()
-                VListRow(
-                    title: "校准门锁时间",
-                    detail: "让锁内时钟与手机一致",
-                    systemImage: "clock.arrow.circlepath",
-                    tint: V.C.rewardGreen,
-                    value: store.lockClockSyncedAt.map { TimeFormat.ago($0) } ?? "从未"
-                ) { router.request(.dest(.syncTime)) }
-                VDivider()
-                VListRow(
-                    title: "智能网关",
-                    detail: "远程访问与转发",
-                    systemImage: "antenna.radiowaves.left.and.right",
-                    tint: V.C.purple,
-                    value: DB.gateways().isEmpty ? "未绑定" : "\(DB.gateways().count) 台"
-                ) { router.request(.dest(.gateway)) }
-                VDivider()
-                VListRow(
-                    title: "布防",
-                    detail: "离家后监控门锁状态",
-                    systemImage: "shield.lefthalf.filled",
-                    tint: V.C.coral,
-                    value: DefendKit.summary(DB.defend(app.currentMac))
-                ) { router.request(.dest(.defend)) }
-                VDivider()
                 VListRow(
                     title: "固件升级",
                     detail: "本地固件包 · Nordic DFU",
@@ -389,6 +346,14 @@ struct SettingsScreen: View {
                     tint: V.C.rewardGreen,
                     value: pkgVersion
                 ) { router.request(.dest(.dfu)) }
+                VDivider()
+                VListRow(
+                    title: "锁实况 / 锁设置 / 网关 / 布防",
+                    detail: "这些在「门」页的「门锁与入口」里，点这里直接过去",
+                    systemImage: "door.left.hand.open",
+                    tint: V.C.rewardBlue,
+                    value: ""
+                ) { router.tab = .door }
             }
         }
     }

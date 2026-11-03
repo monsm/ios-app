@@ -120,13 +120,14 @@ struct GodModeScreen: View {
                     VFieldRow(label: "固件", value: st.firmware.isEmpty ? "未上报" : st.firmware)
                     VFieldRow(label: "电量", value: st.powerLevel >= 0 ? "\(st.powerLevel)%" : "未读到")
                     VFieldRow(label: "锁内时间", value: st.lockTime > 0 ? TimeFormat.clock(ZKProtocol.protoSecondsToMs(st.lockTime)) : "未读到")
-                    VFieldRow(label: "安全模式", value: "verify=\(st.verifyMode) broadcast=\(st.broadcastMode) tempPwd=\(st.tempPwdMode)", mono: false)
+                    VFieldRow(label: "安全模式",
+                          value: "验签\(st.verifyMode == 1 ? "开" : "关") · 广播\(st.broadcastMode == 1 ? "开" : "关") · 临时码\(st.tempPwdMode == 1 ? "开" : "关")",
+                          mono: false)
                     VFieldRow(label: "PIN 容量/剩余", value: "\(st.pinCap ?? -1)/\(st.pinStock)")
-                    VFieldRow(label: "→ 锁端已用 PIN", value: String(max((st.pinCap ?? 0) - st.pinStock, 0)))
                     VFieldRow(label: "密码容量/剩余", value: "\(st.pwdCap ?? -1)/\(st.pwdStock)")
                     VFieldRow(label: "指纹容量/剩余", value: "\(st.fpCap ?? -1)/\(st.fpStock)")
-                    VFieldRow(label: "sKeyStatus", value: String(st.sKeyStatus))
-                    VFieldRow(label: "ZOTP 周期", value: "\(st.zotpPeriod) 分钟")
+                    VFieldRow(label: "通信密钥状态", value: sKeyStatusWord(st.sKeyStatus))
+                    VFieldRow(label: "ZOTP 周期", value: st.zotpPeriod.map { "\($0) 分钟" } ?? "未上报")
                 } else {
                     Text(busy ? "读取中…" : "还没读到 —— 连上锁后自动读。")
                         .font(V.F.footnote).foregroundStyle(V.C.text3)
@@ -135,6 +136,15 @@ struct GodModeScreen: View {
             }
         }
         .padding(.horizontal, V.S.pageGutter)
+    }
+
+    /// 通信密钥状态的人类可读词。0=未设置；1/2=中间态；3=已就绪（真机实测值）。
+    private func sKeyStatusWord(_ v: Int) -> String {
+        switch v {
+        case 0: return "未设置"
+        case 3: return "已就绪"
+        default: return "状态 \(v)"
+        }
     }
 
     // MARK: 凭证台账（本机 vs 锁端计数）
