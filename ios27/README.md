@@ -60,7 +60,7 @@
 ```bash
 cd ios27
 
-# 1. 跑全部静态闸门（本地，不需要 Mac；当前 31 道）
+# 1. 跑全部静态闸门（本地，不需要 Mac；当前 32 道）
 npm install
 node Gates/allgates.js
 
@@ -93,7 +93,7 @@ xcodebuild build -project LockKeeper.xcodeproj -scheme LockKeeper \
 
 ---
 
-## 31 道机器闸门
+## 32 道机器闸门
 
 每道都有**正控**（故意注入缺陷确认它会红），不是"写了就算数"。
 
@@ -141,7 +141,7 @@ tests: 8 个测试文件，317 条断言
 feedback: OK — 用户动作里的 try? await 都有错误通道
 settings: OK - 30 settings all have a direct consumer
 
-allgates: 全部 31 道闸门通过
+allgates: 全部 32 道闸门通过
 ```
 
 ---

@@ -17,7 +17,7 @@ const path = require('path');
 // settings 是第 20 道：给了开关就必须有效果（HIG settings）。
 // 注意它是 **warn-only**：只追一层直接消费，间接消费（经 helper）追不到 ——
 // 所以它报的是"请人工确认"，不是"可证明已死"。宁可不判红，也不产生假红。
-const GATES = ['swiftparse', 'types', 'swiftcheck', 'tokens', 'contrast', 'glass', 'motion', 'a11y', 'dynamictype', 'reducedmotion', 'crosprivate', 'callsig2', 'lineage', 'workflow', 'destmap', 'privacy', 'tests', 'feedback', 'modal', 'settings', 'reserved', 'memberfill', 'auditindex', 'ownerdisplay', 'uisymbols', 'funccall', 'attrattach', 'presenting', 'secretext', 'jargon', 'modifier']; // 第 31 道：修饰符不得接在 if/else 块之后（编译不过）：docs/AUDIT-INDEX.md 必须与重新生成结果一致（防索引漂移）
+const GATES = ['swiftparse', 'types', 'swiftcheck', 'tokens', 'contrast', 'glass', 'motion', 'a11y', 'dynamictype', 'reducedmotion', 'crosprivate', 'callsig2', 'lineage', 'workflow', 'destmap', 'privacy', 'tests', 'feedback', 'modal', 'settings', 'reserved', 'memberfill', 'auditindex', 'ownerdisplay', 'uisymbols', 'funccall', 'attrattach', 'presenting', 'secretext', 'jargon', 'modifier', 'contradict']; // 第 32 道：同文件内不得同时断言「能力缺失」与「真的下发」：docs/AUDIT-INDEX.md 必须与重新生成结果一致（防索引漂移）
 
 let failed = 0;
 for (const g of GATES) {
