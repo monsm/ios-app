@@ -205,10 +205,18 @@ struct BackupStudioScreen: View {
                     }
                     .disabled(busy || davURL.isEmpty)
                 }
+                // 2026-11-04（读实现发现 · 能力边界要说清）：`WebDAV` 只有 `upload`（一次 PUT），
+                // **没有远端列表、没有远端删除**（`BackupStudioKit` 的注释明确记着这件事）。
+                // 而这块叫「WebDAV 同步」—— "同步"暗示双向。补一句边界说明，避免用户以为
+                // 云端有一份可管理的版本列表。
                 VOutlineButton(title: busy ? "上传中…" : "上传当前备份", systemImage: "icloud.and.arrow.up") {
                     Task { await uploadDav() }
                 }
                 .disabled(busy || davURL.isEmpty)
+                Text("只做单向上传（覆盖同一个远端文件）：不列远端备份、也不删远端文件 —— 那两项需要 PROPFIND 解析，本版没有实现。")
+                    .font(V.F.unit)
+                    .foregroundStyle(V.C.text3)
+                    .fixedSize(horizontal: false, vertical: true)
                 if let davState {
                     Text(davState).font(V.F.footnote)
                         .foregroundStyle(davState.hasPrefix("成功") || davState.hasPrefix("连接正常") ? V.C.rewardGreen : V.C.pink)
