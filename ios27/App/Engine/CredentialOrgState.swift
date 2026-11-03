@@ -222,7 +222,8 @@ extension CredentialOrg {
         await dayTier(a.d3, 3, ".d3", "")
         await dayTier(a.d1, 1, ".d1", "明天就失效了。")
         if a.h24 {
-            await addCalendar(id: id + ".h24", date: to.addingTimeInterval(-86400),
+            // 2026-11-03：提醒时刻 = 到期**前一天**的同一时刻，按日历减一天。
+            await addCalendar(id: id + ".h24", date: WeekCal.shifted(to, days: -1),
                               title: "密码临期", body: "\(name) 距到期不足 24 小时。")
         }
         if a.h2 {

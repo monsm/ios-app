@@ -676,7 +676,9 @@ struct DoorScreen: View {
     private func replaceText(_ lock: LockSummary) -> String {
         guard lock.battery >= 0 else { return "未知" }
         let days = Double(lock.battery) / 0.68
-        let date = Date().addingTimeInterval(days * 86_400)
+        // 2026-11-03（全功能点排查）：这里算的是**日历日期**（「建议更换 2 月 23 日」），
+        // 用 86_400 秒/天在有夏令时的地区会差一格。全仓纪律见 WeekCal.shifted 的注释。
+        let date = WeekCal.shifted(Date(), days: Int(days.rounded()))
         let parts = TimeFormat.calendar.dateComponents([.month, .day], from: date)
         return "\(parts.month ?? 1) 月 \(parts.day ?? 1) 日"
     }

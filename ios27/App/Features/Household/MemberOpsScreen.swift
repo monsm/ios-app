@@ -13,7 +13,8 @@ struct MemberOpsScreen: View {
     @State private var memberID = ""
     @State private var transferTo = ""
     @State private var borrowBy = ""
-    @State private var borrowDue = Date().addingTimeInterval(7 * 86400)
+    // 2026-11-03：借用到期是**日期**，按日历加 7 天（86_400×7 在有夏令时的地方会差一小时）。
+    @State private var borrowDue = WeekCal.shifted(Date(), days: 7)
     @State private var windowWeekday = 6
     @State private var windowStart = 9
     @State private var windowEnd = 12
