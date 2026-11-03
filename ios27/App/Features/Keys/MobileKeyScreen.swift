@@ -84,7 +84,7 @@ struct MobileKeyScreen: View {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
                 VSectionLabel(text: "给谁签", trailing: owner ?? "必选")
                 VStack(spacing: V.S.gapXXS) {
-                    ForEach(app.members.filter { !$0.archived }) { member in
+                    ForEach(MemberHub.sortedForPicker(app.members.filter { !$0.archived }, keys: app.keys)) { member in
                         KeysOwnerRow(
                             name: member.name,
                             keyCount: app.keys.filter { $0.owner == member.id || $0.owner == member.name }.count,   // owner 有 id / 名字两种历史口径

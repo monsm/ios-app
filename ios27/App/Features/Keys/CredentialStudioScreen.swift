@@ -350,7 +350,7 @@ struct CredentialStudioScreen: View {
                 VValueRow(label: "移交给", value: transferOwner.flatMap { DB.member($0)?.name } ?? "未选择")
                 ScrollView(.horizontal) {
                     HStack(spacing: V.S.gapS) {
-                        ForEach(app.members.filter { !$0.archived }) { member in
+                        ForEach(MemberHub.sortedForPicker(app.members.filter { !$0.archived }, keys: app.keys)) { member in
                             Button { transferOwner = member.id } label: {
                                 VTag(text: member.name, tint: transferOwner == member.id ? V.C.blue : V.C.text3, filled: transferOwner == member.id)
                             }

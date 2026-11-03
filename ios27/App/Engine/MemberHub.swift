@@ -72,6 +72,17 @@ enum MemberHub {
     // 793 访客虚拟分组: 只存在于本地展示层, 绝不写入锁端凭证表
     static let visitorId = "__visitor"
     /// 访客虚拟行判定: 临时码类记录且无可证明归属 (与 793 "不与家人混淆" 的独立分组)
+    /// 成员选择列表的统一顺序：名下凭证多的在前，同数量按名字。
+    /// 2026-11-03（全维度整理）：三处选择成员的地方原来各自按存储顺序渲染，
+    /// 同一份数据在不同页面顺序不同、重启后还可能变 —— 用户读起来像随机。
+    static func sortedForPicker(_ members: [Member], keys: [KeyItem]) -> [Member] {
+        members.sorted { a, b in
+            let ca = keys.filter { $0.owner == a.id || $0.owner == a.name }.count
+            let cb = keys.filter { $0.owner == b.id || $0.owner == b.name }.count
+            if ca != cb { return ca > cb }
+            return a.name.localizedStandardCompare(b.name) == .orderedAscending
+        }
+    }
     static func isVisitorRow(kind: String?, whoId: String?) -> Bool {
         kind == "temp" && whoId == nil
     }
