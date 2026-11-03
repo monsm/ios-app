@@ -241,9 +241,13 @@ struct RecordsScreen: View {
                 HStack(alignment: .center, spacing: V.S.gapL) {
                     VRingStack(rings: activityRings, size: V.Ring.referenceOuter)
                     VStack(alignment: .leading, spacing: V.S.gapM) {
-                        legendRow(title: "开锁", value: "\(todayOpenCount)", total: 24, unit: "次", color: V.C.red)
-                        legendRow(title: "家庭", value: "\(todayFamilyCount)", total: 12, unit: "次", color: V.C.green)
-                        legendRow(title: "临时", value: "\(todayTempCount)", total: 4, unit: "次", color: V.C.cyan)
+                        // 2026-11-03（表现方式）：原来写「0/24」「0/12」「0/4」—— 三个分母是**编的**：
+                        // 既不是锁端数据，也没有任何设置项，却长得像配额/目标。而且三类之间是**重叠**的
+                        // （家人的临时码同时计入"开锁"和"临时"），分母更没有意义。
+                        // 改成只报真实条数；三环改为**相对最大项**的比例 —— 用来横向比较今天三类活动的多少。
+                        legendRow(title: "开锁", value: "\(todayOpenCount)", unit: "次", color: V.C.red)
+                        legendRow(title: "家庭", value: "\(todayFamilyCount)", unit: "次", color: V.C.green)
+                        legendRow(title: "临时", value: "\(todayTempCount)", unit: "次", color: V.C.cyan)
                     }
                 }
                 .padding(.top, V.S.gapS)
@@ -253,10 +257,12 @@ struct RecordsScreen: View {
     }
 
     private var activityRings: [(Double, Color)] {
-        [
-            (min(1, Double(todayOpenCount) / 24), V.C.red),
-            (min(1, Double(todayFamilyCount) / 12), V.C.green),
-            (min(1, Double(todayTempCount) / 4), V.C.cyan)
+        // 环长 = 今日条数 / 今日最多的那一类。全为 0 时三环皆空（不画满，也不画假比例）。
+        let peak = max(1, max(todayOpenCount, max(todayFamilyCount, todayTempCount)))
+        return [
+            (Double(todayOpenCount) / Double(peak), V.C.red),
+            (Double(todayFamilyCount) / Double(peak), V.C.green),
+            (Double(todayTempCount) / Double(peak), V.C.cyan)
         ]
     }
 
@@ -266,7 +272,7 @@ struct RecordsScreen: View {
                 .font(V.F.legendLabel)
                 .foregroundStyle(V.C.text1)
             HStack(alignment: .firstTextBaseline, spacing: V.S.gapXS) {
-                Text("\(value)/\(String(total))")
+                Text(value)
                     .font(V.F.legendValue)
                     .foregroundStyle(color)
                     .monospacedDigit()
