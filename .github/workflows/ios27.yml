@@ -438,7 +438,6 @@ jobs:
           # 2026-11-04（外观取证）：CI 模拟器默认**深色** —— `V.C.bg` 深色档是纯黑，
           # 于是 full 截图左侧黑边、分组标题（text3 深灰）在黑底上不可见，
           # 而产品的默认/推荐外观是浅色（契约纸色）。截图前钉成浅色，与视觉验收基准一致。
-          xcrun simctl ui "$UDID" appearance light >> "$DIAG" 2>&1 || true
           echo "stage=boot" >> "$DIAG"
           xcrun simctl boot "$UDID" >> "$DIAG" 2>&1 || true
           # 2026-11-04（第三次修正 · 上一版又卡住了）：后台 `bootstatus` + `kill -0` 轮询在
@@ -466,6 +465,10 @@ jobs:
             exit 1
           fi
           echo "boot=ok (already-or-now Booted)" >> "$DIAG"
+          # 2026-11-04（第二次修正）：appearance 必须在 boot **之后** —— 关机状态下
+          # `simctl ui` 报 405 Shutdown，被我 `|| true` 吞掉，上一轮因此没生效。
+          xcrun simctl ui "$UDID" appearance light >> "$DIAG" 2>&1
+          echo "appearance=light" >> "$DIAG"
           echo "bootstatus=ok" >> "$DIAG"
           if ! xcrun simctl install "$UDID" "$APP" >> "$DIAG" 2>&1; then
             echo "install=FAILED" >> "$DIAG"
