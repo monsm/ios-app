@@ -544,3 +544,55 @@ jobs:
           git add -A
           git commit -q -m "ci shots $GITHUB_RUN_ID" || true
           git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" ci-shots || true
+
+  # ================= Android APK（与 iOS 并行构建）=================
+  # 2026-11-03：用户要求「同时构建 android」。只做构建与产物上传，
+  # 不搬旧 ios.yml 里那 18 个 Kotlin 静态闸门（它们的脚本已随旧工具链归档，
+  # 且属于旧审计体系；需要时从 _archive/ios-app-legacy/tools/ 取回再接）。
+  android:
+    name: Build (Android 13+, APK)
+    runs-on: ubuntu-latest
+    needs: gates
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # GitHub 的 ubuntu 镜像自带 Android SDK（$ANDROID_HOME 已设、licenses 已接受）
+      - name: 确认镜像自带 Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "$ANDROID_HOME/platforms" || true
+          ls "$ANDROID_HOME/build-tools" || true
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.9"
+
+      - name: 编译 APK (debug, 可直接安装)
+        working-directory: android-app
+        run: |
+          set -o pipefail
+          gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
+
+      - name: 编译失败时输出错误摘要
+        if: failure()
+        working-directory: android-app
+        run: |
+          echo "## Android 编译错误" >> $GITHUB_STEP_SUMMARY
+          grep -E "^e: |error:" build.log | head -40 >> $GITHUB_STEP_SUMMARY || true
+
+      - name: 上传 APK
+        if: success()
+        uses: actions/upload-artifact@v5
+        with:
+          name: KfKey-apk
+          path: android-app/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
