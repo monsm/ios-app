@@ -172,7 +172,7 @@ struct SyncTimeScreen: View {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
                 VSectionLabel(text: "锁钟偏了会怎样")
                 whyLine("临时码有「有效期窗口」，锁钟偏了，码在窗口外就整段打不开。")
-                whyLine("开锁命令本身带有效期，锁钟偏太多会回 rc=3「命令已过期」—— 此时只有校时能救。")
+                whyLine("开锁命令自带有效期，锁钟偏得太多会被判「命令已过期」—— 这种情况只有校时能救。")
                 whyLine("每次读状态时本机都会算一次偏差，超过 2 秒才写；所以这一页平时只是看一眼。")
             }
         }

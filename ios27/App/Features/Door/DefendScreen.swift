@@ -313,7 +313,10 @@ struct DefendScreen: View {
                 if let outcome {
                     VStatusLine(tone: outcomeOK ? .ok : .critical, text: outcome)
                 }
-                Text("rc=0 只说明锁收了命令。锁端状态帧不带布防字段，所以这里不宣称「锁已进入布防」，只记本机与回执。")
+                // 2026-11-04（截图实测 · 术语）：这一行把 rc=0 直接写进用户界面。
+                // rc 是协议返回码，普通用户不认识；但"不宣称已进入布防"这个**诚实边界**
+                // 必须保留 —— 它是本页最重要的一句。换成说人话的版本，语义一字不减。
+                Text("锁只回了「收到命令」，并没有回报当前的布防状态 —— 所以这里不会说「已进入布防」，只记录本机状态与这次回执。")
                     .font(V.F.unit)
                     .foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)

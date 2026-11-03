@@ -378,7 +378,7 @@ struct DeviceInfoScreen: View {
         let onLock = max(cap - stock, 0)
         if local == 0 { return "本机池为空" }
         if local == onLock { return "本机池 \(local) 枚 · 与锁端一致" }
-        return "本机池 \(local) 枚 · 锁端已用 \(onLock) 枚 —— 不一致，现签凭证会被拒（rc=2）"
+        return "本机池 \(local) 枚 · 锁端已用 \(onLock) 枚 —— 不一致，现签凭证会被锁拒绝（凭证不在锁的名单里）"
     }
 
     private var localPinMismatch: Bool {
