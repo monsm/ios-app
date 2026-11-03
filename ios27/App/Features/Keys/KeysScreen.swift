@@ -711,10 +711,20 @@ private struct V7KeyRow: View {
                     .lineLimit(1)
             }
             Spacer(minLength: V.S.gapS)
-            Text(read.value)
-                .font(V.F.rowDetail)
-                .foregroundStyle(read.tint)
-                .monospacedDigit()
+            // 2026-11-03（整页截图实测）：这一行原来只渲染 `read.value`，把 `unit` 丢了 ——
+            // 于是"还剩 30 天"显示成光秃秃的「30」，与旁边「永久 / 过期」并列时看不出量纲。
+            // `expiryReading` 明确返回 (value: "30", unit: "天")，单位必须跟着走。
+            HStack(alignment: .firstTextBaseline, spacing: V.S.gapXXS) {
+                Text(read.value)
+                    .font(V.F.rowDetail)
+                    .foregroundStyle(read.tint)
+                    .monospacedDigit()
+                if let unit = read.unit, !unit.isEmpty {
+                    Text(unit)
+                        .font(V.F.micro)
+                        .foregroundStyle(V.C.text3)
+                }
+            }
             Image(systemName: "chevron.right")
                 .font(V.F.chevron)
                 .foregroundStyle(V.C.text4)
