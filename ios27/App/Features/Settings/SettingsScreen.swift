@@ -605,10 +605,21 @@ struct DeleteDeviceSheet: View {
                             Text("会被删除")
                                 .font(V.F.cardTitle)
                                 .foregroundStyle(V.C.text6)
+                            // 2026-11-04（读实现发现 · 清单不全）：`removeDevice` 实际还会清掉
+                            // **回收站条目**（`CredBinStore.purgeSecretsForDevice`）、**版本快照**
+                            // （`CredHistoryStore.purgeSecretsForDevice`，最多 10 份台账副本）、
+                            // **手机钥匙**（`MobileKeyService.purgeSecretsForDevice`）—— 这三族都含
+                            // 开锁口令/ekey 的钥匙串副本。而"会被删除"清单只列了三项，
+                            // 用户可能以为回收站里还能捞回来。补齐。
                             VStatPair(items: [
                                 ("凭证", "\(app.keys.count) 枚"),
                                 ("记录缓存", "\(app.entries.count) 条"),
                                 ("本机密码", SettingsStore.shared.hasPasscode ? "已设" : "未设")
+                            ])
+                            VStatPair(items: [
+                                ("回收站", "\(CredBinStore.all(app.currentMac).count) 条 · 一并删除"),
+                                ("版本快照", "\(CredHistoryStore.all(app.currentMac).count) 份 · 一并删除"),
+                                ("手机钥匙", "\(MobileKeyService.list(app.currentMac).count) 把 · 一并删除")
                             ])
                             // 同上：备份文件会被这次删除一并清掉，不能暗示"有备份就安全"。
                             Text("删除后本机的密码台账与缓存记录无法找回；本机的备份文件与还原点也会一并删除"
