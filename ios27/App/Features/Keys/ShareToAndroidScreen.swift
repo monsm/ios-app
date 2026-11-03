@@ -112,7 +112,13 @@ struct ShareToAndroidScreen: View {
                     .init(label: "MAC", value: app.lock?.id ?? "—"),
                     .init(label: "载荷", value: "mac / pid / ekey"),
                 ])
-                Text("扫完这台安卓就能开这把锁 —— 不用再走一次配网。")
+                // 2026-11-04（读实现发现 · 载荷与文案不符）：这张码的正文是
+                // `AndroidPair.payload(kc)` = {mac, pid, **钥匙串里那枚 ekey**} ——
+                // 它既不是所选手机钥匙的 ekey，也不带那把钥匙的有效期与归属。
+                // 而页头写「让对方的安卓 App 扫这张码」、下面写「扫完这台安卓就能开这把锁」，
+                // 读起来像"把这把手机钥匙发给对方"。实际发的是**本机钥匙串里那枚开锁凭证**。
+                // 文案改成如实描述载荷，避免用户以为扫完就拿到了那把有时效的手机钥匙。
+                Text("这串是「本机钥匙串里的那枚开锁凭证」+ 锁身份，不是上面那把手机钥匙 —— 扫完能开这把锁，但有效期与本机这把相同。")
                     .font(V.F.footnote)
                     .foregroundStyle(V.C.text2)
                     .multilineTextAlignment(.center)
