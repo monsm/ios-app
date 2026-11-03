@@ -111,7 +111,7 @@ struct MemberCreateScreen: View {
             overline: "建档向导 · 四步",
             tone: atLimit ? .attention : .ok,
             status: atLimit
-                ? "已到本机成员上限 15 位 —— 先归档一位再建新人"
+                ? "已到本机成员上限 \(HHStats.memberLimit) 位 —— 先归档一位再建新人"
                 : "当前步骤：" + current.title
         )
     }
@@ -249,7 +249,7 @@ struct MemberCreateScreen: View {
         // 已经建过号（用户退回过第 1 步）就不再建第二个 —— 否则同一个人会在名册里出现两次。
         if newID != nil { return true }
         guard !atLimit else {
-            errorLine = "已到本机成员上限 15 位。先归档一位，再回来建新人。"
+            errorLine = "已到本机成员上限 \(HHStats.memberLimit) 位。先归档一位，再回来建新人。"
             return false
         }
         guard nameOK else {

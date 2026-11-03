@@ -400,7 +400,7 @@ struct HouseholdScreen: View {
             .disabled(atLimit)
             .opacity(atLimit ? 0.5 : 1)
             Text(atLimit
-                 ? "已到本机成员上限 15 位 —— 先归档一位再建新人（归档不删历史）。"
+                 ? "已到本机成员上限 \(HHStats.memberLimit) 位 —— 先归档一位再建新人（归档不删历史）。"
                  : "成员表存在本机，不占锁端槽位；建完在成员 360 里给 TA 配凭证。")
                 .font(V.F.unit)
                 .foregroundStyle(V.C.text3)

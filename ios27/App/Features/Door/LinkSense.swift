@@ -22,6 +22,9 @@ final class LinkSenseModel {
 
     var phase: Phase = .down
     var lastRSSI: Int?
+    /// RSSI 历史保留条数 —— 标题与裁剪共用这一个数。
+    static let rssiHistoryCap = 24
+
     var history: [Int] = []
     var connectMs: Int?
     var connectSource = "预热"
@@ -148,7 +151,9 @@ final class LinkSenseModel {
     func recordRSSI(_ value: Int) {
         lastRSSI = value
         history.append(value)
-        if history.count > 24 { history.removeFirst(history.count - 24) }
+        // 2026-11-04（历史遗留数字）：标题写「最近 24 个采样」，这里也是 24 —— 但两处各写一遍，
+        // 改一处另一处就漂。收到一个常量里。
+        if history.count > Self.rssiHistoryCap { history.removeFirst(history.count - Self.rssiHistoryCap) }
         DB.store.set("kf_linkrssi_" + mac, value)
         DB.store.set("kf_rssi_hist_" + mac, history)
     }
@@ -215,7 +220,7 @@ struct LinkSenseBar: View {
                 if showHistory {
                     VStack(alignment: .leading, spacing: V.S.gapXS) {
                         VRowDivider()
-                        Text("RSSI 历史（最近 24 个采样）")
+                        Text("RSSI 历史（最近 \(Self.rssiHistoryCap) 个采样）")
                             .font(V.F.chipLabel).foregroundStyle(V.C.text4)
                         if model.history.isEmpty {
                             Text("还没有采样 —— 预热或点「信号」读一次。")
