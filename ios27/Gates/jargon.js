@@ -34,7 +34,8 @@ for (const f of walk(ROOT)) {
     let m;
     while ((m = lit.exec(t))) {
       const body = m[0];
-      if (/cmd[0-9A-Fa-f]{2}/.test(body) || /\bZOTP\b/.test(body)) {
+      // 2026-11-04：中文写法「命令 19」与英文 cmd19 是同一件事，之前漏判。
+      if (/cmd[0-9A-Fa-f]{2}/.test(body) || /\bZOTP\b/.test(body) || /命令\s*[0-9]+/.test(body)) {
         bad++;
         report.push(path.relative(path.join(__dirname, '..'), f) + ':' + (i + 1) + '  ' + body.slice(0, 60));
         break;

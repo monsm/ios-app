@@ -176,7 +176,7 @@ struct LockSettingsScreen: View {
     private var tempCodeCard: some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapS) {
-                VCardHeader(title: "临时密码 · 命令 19")
+                VCardHeader(title: "临时密码")
                 Text("开通后，锁端按周期接受动态临时密码；关闭则所有动态码立即失效。")
                     .font(V.F.footnote)
                     .foregroundStyle(V.C.text3)
