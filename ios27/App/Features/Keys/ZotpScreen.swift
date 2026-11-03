@@ -73,7 +73,7 @@ struct ZotpScreen: View {
     private var enableCard: some View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapS) {
-                VCardHeader(title: "锁端开关 · 命令 19")
+                VCardHeader(title: "锁端开关")
                 VToggleRow(title: "开通临时密码", detail: otpOn ? "锁端会接受动态码" : "关闭状态下生成的码不会被锁接受", isOn: Binding(
                     get: { otpOn },
                     set: { on in writeEnable(on) }
@@ -93,25 +93,36 @@ struct ZotpScreen: View {
         VCard(style: .warm) {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VCardHeader(title: "当前动态码", showsChevron: false)
-                Text(displayCode)
-                    .font(((AXSettings.bigOTP || bigCode) ? V.F.otpBig : V.F.otpRegular).monospacedDigit())
-                    .foregroundStyle(V.C.text1)
-                    // 减弱动态下不做数字滚动（纯换字）。
-                    .contentTransition(reduceMotion ? .identity : .numericText())
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, V.S.gapM)
-                    // 2026-11-03（Liquid Glass 审计 · 同心圆角）：外层 VCard 圆角 27、内边距 16.3，
-                // 内块应约 27-16.3 ≈ 10.7；原来又用 V.R.card(27) ⇒ 内外同半径，内块像贴上去的而不是嵌进去的。
-                .background(V.C.cardAlt, in: .rect(cornerRadius: max(0, V.R.card - V.S.cardGutter), style: .continuous))
-                    .onLongPressGesture(minimumDuration: 0.2, pressing: { pressing in
-                        if shieldOn { revealed = pressing }
-                    }, perform: {})
-                    .onTapGesture(count: 2) { bigCode.toggle() }
-                    .accessibilityLabel(code.isEmpty ? "还没有生成动态密码" : (shieldOn && !revealed ? "动态密码已遮挡，长按揭开" : "动态密码 \(code)"))
-                    .accessibilityHint(shieldOn ? "长按揭开挡片，双击切换字号" : "双击切换字号")
-                    // SEC-11：码值本体在录屏/截图时被遮挡（修饰符包住的就是这枚码）。
-                    .captureShield("这是一枚可开门的动态码\n屏幕正在被录制或截图，已遮挡")
+                // 2026-11-03（整页截图实测）：没生成过时 displayCode 返回六个中点「······」——
+                // 与"防窥遮挡"的「••••••」几乎一样，用户分不清"还没生成"和"生成了但被遮住"。
+                // 未生成时改说人话；只有真的被遮挡时才用圆点。
+                if code.isEmpty {
+                    Text("还没有生成 —— 点下面的按钮取一枚")
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text3)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, V.S.gapM)
+                } else {
+                    Text(displayCode)
+                        .font(((AXSettings.bigOTP || bigCode) ? V.F.otpBig : V.F.otpRegular).monospacedDigit())
+                        .foregroundStyle(V.C.text1)
+                        // 减弱动态下不做数字滚动（纯换字）。
+                        .contentTransition(reduceMotion ? .identity : .numericText())
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, V.S.gapM)
+                        // 2026-11-03（Liquid Glass 审计 · 同心圆角）：外层 VCard 圆角 27、内边距 16.3，
+                        // 内块应约 27-16.3 ≈ 10.7；原来又用 V.R.card(27) ⇒ 内外同半径。
+                        .background(V.C.cardAlt, in: .rect(cornerRadius: max(0, V.R.card - V.S.cardGutter), style: .continuous))
+                        .onLongPressGesture(minimumDuration: 0.2, pressing: { pressing in
+                            if shieldOn { revealed = pressing }
+                        }, perform: {})
+                        .onTapGesture(count: 2) { bigCode.toggle() }
+                        .accessibilityLabel(shieldOn && !revealed ? "动态密码已遮挡，长按揭开" : "动态密码 \(code)")
+                        .accessibilityHint(shieldOn ? "长按揭开挡片，双击切换字号" : "双击切换字号")
+                        // SEC-11：码值本体在录屏/截图时被遮挡（修饰符包住的就是这枚码）。
+                        .captureShield("这是一枚可开门的动态码\n屏幕正在被录制或截图，已遮挡")
+                }
                 if shieldOn, !code.isEmpty {
                     Text(revealed ? "松开手指会重新遮住" : "长按可揭开挡片 · 双击可切换字号")
                         .font(V.F.unit)
@@ -167,8 +178,8 @@ struct ZotpScreen: View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VCardHeader(title: "使用须知", showsChevron: false)
-                Text("· 生成前请先校准门锁时间（偏差 > 180 秒会导致锁侧校验失败）。")
-                Text("· 周期取锁端上报的 zotpPeriod（缺省 30 分钟）；同一窗口最多 100 个，超出请等下一个窗口。")
+                Text("· 生成前请先校准门锁时间：偏差超过 180 秒，锁端会拒绝这个码。")
+                Text("· 换码周期由锁端决定（常见 30 分钟）；一个周期内最多取 100 枚，用完请等下一周期。")
                 Text("· 只有 A 模式（单验）下临时密码才有效；B 模式下请改用密码或指纹。")
             }
             .font(V.F.footnote)

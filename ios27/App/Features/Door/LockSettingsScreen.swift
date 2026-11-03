@@ -34,10 +34,15 @@ struct LockSettingsScreen: View {
                 if app.lock == nil {
                     noLockCard
                 } else {
-                    overviewCard
+                    // 2026-11-03（整页截图实测 · 信息架构）：原来第一张卡是**整屏只读读数**
+                    // （型号 / 固件 / Boot / 键盘 / 密码容量 / 指纹容量 / 锁钟偏差 / 电量）——
+                    // 与「锁信息名片」页几乎逐行重复，把真正的设置项（临时码 / 静音 / 安全模式）
+                    // 整整压到第二屏。用户点「锁设置」是来改设置的，不是来再看一遍读数。
+                    // 现在设置项在前，只读读数挪到最后并标为「只读」，同时给出名片页入口。
                     tempCodeCard
                     policyCard
                     entriesCard
+                    overviewCard
                     dangerCard
                 }
             }
@@ -106,7 +111,9 @@ struct LockSettingsScreen: View {
         let keyboardText = (st?.verKeyboard ?? 0) > 0 ? "\(st?.verKeyboard ?? 0)" : "该固件未上报"
         return VCard {
             VStack(alignment: .leading, spacing: V.S.gapS) {
-                VCardHeader(title: "这台锁")
+                // 同一批读数在「锁信息名片」页更全（含绑定时间 / 链路验证 / 电量采样）。
+                // 这里保留是为了"改设置时顺手能看一眼"，所以标明只读并指路。
+                VCardHeader(title: "这台锁 · 只读")
                 VValueRow(label: "型号", value: PidMap.productName(kc?.pid ?? 0), mono: false)
                 VRowDivider()
                 VValueRow(label: "固件", value: firmware)
@@ -125,6 +132,9 @@ struct LockSettingsScreen: View {
                 VRowDivider()
                 VOutlineButton(title: "重新读取锁状态", systemImage: "arrow.clockwise") {
                     Task { await load(force: true) }
+                }
+                VOutlineButton(title: "查看完整锁信息名片", systemImage: "info.circle") {
+                    router.request(.dest(.deviceInfo))
                 }
                 .disabled(busy)
                 HStack(spacing: V.S.gapS) {
