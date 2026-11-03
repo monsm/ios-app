@@ -165,6 +165,25 @@ struct ShareToAndroidScreen: View {
         .padding(.horizontal, V.S.pageGutter)
     }
 
+    /// 未就绪的真实原因。`deliverable` 的四个条件逐一排查，别把四种情况说成一种。
+    private var blockedReason: String {
+        let now = KeysState.now()
+        let mobile = app.keys.filter { $0.kind == .mobile }
+        if mobile.isEmpty {
+            return "安卓端要拿到一把本机签发的手机钥匙才能开门。现在一把都没有，所以这里不放一张开不了门的码。"
+        }
+        if mobile.allSatisfy({ $0.disabled }) {
+            return "这把锁的手机钥匙都被停用了 —— 停用的钥匙开不了门，所以这里不放码。到凭证页重新启用，或签一把新的。"
+        }
+        if mobile.allSatisfy({ KeysState.expired($0, now: now) }) {
+            return "这把锁的手机钥匙都已过期 —— 过期的钥匙开不了门，所以这里不放码。先签一把新的，再回来。"
+        }
+        if mobile.allSatisfy({ ($0.code ?? "").isEmpty }) {
+            return "手机钥匙记录里没有 ekey —— 本机没存下可交付的开锁凭证（可能是旧备份恢复的）。请在凭证页重新签一把。"
+        }
+        return "没有可交付的手机钥匙：需要一把未停用、未过期、且带 ekey 的。请到凭证页检查。"
+    }
+
     // MARK: 未就绪：说清缺什么 + 给下一步
 
     private var blockedBlock: some View {
@@ -176,8 +195,11 @@ struct ShareToAndroidScreen: View {
                     .init(label: "手机钥匙", value: "缺", tint: V.C.warning),
                 ])
                 Divider().overlay(V.C.hairline)
-                KeysInlineNote(tone: .attention, text: "安卓端要拿到一把本机签发的手机钥匙才能开门。现在一把都没有，所以这里不放一张开不了门的码。")
-                KeysInlineNote(tone: .neutral, text: "手机钥匙 = 锁里一个 PIN 签出的开锁凭证。签完回到这一页，码就出来了。")
+                // 2026-11-04（错误归因 · 四种情况混成一句）：`deliverable` 要求**四个条件同时成立** ——
+                // 签发过手机钥匙、未停用、未过期、且带 ekey。而这里一律说「现在一把都没有」，
+                // 于是"签过一把但已过期"或"签过但被停用"的用户会看到一句与事实相反的诊断，
+                // 然后去重新签一把（可能又占掉一个 PIN 名额）。按真实情况分支。
+                KeysInlineNote(tone: .attention, text: blockedReason)
                 VActionButton(title: "去签一把手机钥匙", systemImage: "iphone.gen3.badge.key") {
                     router.request(.dest(.mobileKey))
                 }
