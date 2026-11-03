@@ -149,7 +149,9 @@ struct MobileKeyScreen: View {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VSectionLabel(text: "本机签发的钥匙", trailing: "\(issued.count) 把")
                 if issued.isEmpty {
-                    KeysInlineNote(tone: .neutral, text: "还没有签发过。选一位成员、点上面的签发按钮 —— 签完这里会多一行，长按可以复制或撤销。")
+                    // 2026-11-03（交互 QA）：原文写「长按可以复制或撤销」—— 实际交互是行尾的「⋯」菜单
+                // （见 issuedRow 里的 Menu）。长按在这里什么都不会发生。
+                KeysInlineNote(tone: .neutral, text: "还没有签发过。选一位成员、点上面的签发按钮 —— 签完这里会多一行，点行尾的「⋯」可以复制或撤销。")
                         .frame(minHeight: V.Hit.min)
                 } else {
                     VStack(spacing: 0) {

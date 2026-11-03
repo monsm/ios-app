@@ -257,7 +257,10 @@ struct AddLockScreen: View {
                         .font(V.F.bodyStrong)
                         .foregroundStyle(V.C.text1)
                         .lineLimit(1)
-                    Text("\(c.mac) · \(c.model)")
+                    // 2026-11-03（信息架构 QA · 无障碍）：完整 12 位 MAC 打在标题下，
+                    // VoiceOver 还会逐位念完整串 —— 12 个字符对"认哪把锁"没有帮助。
+                    // 与硬件页同一做法：只显示后 6 位（同仓 shortMAC 既有口径）。
+                    Text("\(shortMAC(c.mac)) · \(c.model)")
                         .font(V.F.unit)
                         .foregroundStyle(V.C.text3)
                     Text(c.alreadyAdded
@@ -277,7 +280,7 @@ struct AddLockScreen: View {
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(c.name)，\(c.mac)，\(rowWord(c))，信号 \(c.rssi) dBm")
+        .accessibilityLabel("\(c.name)，编号 \(shortMAC(c.mac))，\(rowWord(c))，信号 \(c.rssi) dBm")
         .contextMenu {
             Button {
                 Task { await probe(c) }
@@ -555,6 +558,13 @@ struct AddLockScreen: View {
         guard let first = others.first else { return nil }
         let place = LockArchive.meta(first.mac).place
         return "已经有另一把锁叫「\(n)」\(place.isEmpty ? "" : "（\(place)）")了 —— 门页的切换芯片只显示昵称，两把同名会分不出来。建议在地点副标题里写清是哪一个。"
+    }
+
+    /// 只保留 MAC 后 6 位 —— 与 HardwareScreen 同一口径，供界面与 VoiceOver 共用。
+    private func shortMAC(_ m: String) -> String {
+        let h = DB.normalizeMac(m)
+        guard h.count == 12 else { return m }
+        return String(h.suffix(6)).uppercased()
     }
 
     private func commitName() {

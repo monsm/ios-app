@@ -159,10 +159,18 @@ struct BackupStudioScreen: View {
                     .font(V.F.micro).foregroundStyle(V.C.text3)
             }
             Spacer(minLength: 0)
+            // 2026-11-03（信息交互 QA · 触达）：原来「恢复 / 删除」是两个**裸文字按钮**，
+            // 命中区只有文字本身（≈13pt 高），且两键紧邻 —— 删除这种破坏性动作
+            // 与恢复只隔几像素，误触代价很高。补到 44pt 触达并拉开间距。
             Button("恢复") { restoreTarget = file }
                 .font(V.F.footnote).foregroundStyle(V.C.blue)
+                .frame(minWidth: V.Hit.min, minHeight: V.Hit.min)
+                .contentShape(.rect)
             Button("删除") { deleteTarget = file }
                 .font(V.F.footnote).foregroundStyle(V.C.pink)
+                .frame(minWidth: V.Hit.min, minHeight: V.Hit.min)
+                .contentShape(.rect)
+                .padding(.leading, V.S.gapS)
         }
         .frame(minHeight: V.List.rowMinHeight)
     }
