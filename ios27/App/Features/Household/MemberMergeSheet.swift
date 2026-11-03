@@ -88,6 +88,13 @@ struct MemberMergeSheet: View {
 
     private func merge() {
         guard let secondaryID else { return }
+        // 2026-11-04（错误归因 · 三种情况混成一句）：`merge` 返回 0 有两种原因 ——
+        //   ① 前置校验失败（副档不存在 / 与主档不同名）；
+        //   ② 校验通过但**没有任何凭证需要迁移**（副档名下本来就空）—— 这种情况下
+        //      副档**已经被删掉了**，是成功，不是失败。
+        // 旧判据 `moved > 0 || DB.member(secondaryID) == nil` 恰好靠"副档是否还在"
+        // 区分这两种，所以行为是对的；但失败分支的文案只列了①的前半段（"副档不存在或
+        // 与主档不是同名"），漏了"不同名"以外的可能。现在按真实前置条件说清。
         let moved = MemberMergeKit.merge(primaryID: primary.id, secondaryID: secondaryID)
         if moved > 0 || DB.member(secondaryID) == nil {
             // 2026-11-01（Round 274）：合并会把**凭证的 owner 改判给主档**，而原来只 `reloadMembers()` ——
@@ -96,7 +103,8 @@ struct MemberMergeSheet: View {
             app.reloadKeys()
             dismiss()
         } else {
-            error = "合并失败：副档不存在或与主档不是同名"
+            // 走到这里 = merge 的前置校验没过（副档已被别处删掉，或两档名字不同）。
+            error = "合并没有执行：副档可能已被删除，或与主档的称呼不再相同。刷新这一页后重试。"
         }
     }
 }
