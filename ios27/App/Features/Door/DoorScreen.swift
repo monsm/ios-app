@@ -22,6 +22,9 @@ struct DoorScreen: View {
     /// 连接感知（原 LinkSenseKit 的预热/回连阶梯/RSSI 历史）。
     @State private var link = LinkSenseModel()
 
+    /// 防抖：上次触发开锁的时刻（dbltapGuard 用）。
+    @State private var lastFireAt: Date?
+
     private var store: SettingsStore { SettingsStore.shared }
 
     var body: some View {
