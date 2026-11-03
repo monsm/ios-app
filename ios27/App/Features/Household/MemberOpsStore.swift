@@ -77,8 +77,15 @@ enum MemberOpsStore {
     // MARK: - 成员级联删除（凭证进回收站）
     /// 先在界面层把名下凭证原样存进回收站，再走 Engine 的 cascadeBinMember（它只删台账）。
     @MainActor static func cascadeDelete(mac: String, memberID: String) -> Int {
-        let pwds = DB.listPwds(mac).filter { $0.owner == memberID }
-        let fps = DB.listFps(mac).filter { $0.owner == memberID }
+        // 2026-11-03（全功能点排查）：旧数据的 owner 存的是**成员名**。只按 id 筛会让那些行
+        // 既进不了回收站、也不计入"名下 N 枚凭证"，而文案对用户承诺的是"全部进回收站"。
+        let legacyName = DB.member(memberID)?.name ?? ""
+        func mine(_ owner: String?) -> Bool {
+            guard let owner, !owner.isEmpty else { return false }
+            return owner == memberID || (!legacyName.isEmpty && owner == legacyName)
+        }
+        let pwds = DB.listPwds(mac).filter { mine($0.owner) }
+        let fps = DB.listFps(mac).filter { mine($0.owner) }
         let batchId = UUID().uuidString
         CredBinStore.addPwds(mac, pwds, batchId: batchId, source: "成员删除级联")
         CredBinStore.addFps(mac, fps, batchId: batchId, source: "成员删除级联")

@@ -409,9 +409,14 @@ struct MemberOpsScreen: View {
         // 先数一下"其它锁"上这家伙名下的条目 —— 级联只处理当前这把锁，
         // 而 `DB.removeMember` 会把其它锁上的 owner 一并清空（凭证/指纹仍在、锁端照旧有效）。
         // 不提示的话，用户会以为"删除成员"已经把他所有权限都处理了。
+        // 2026-11-03：同 cascadeDelete —— 旧数据按名字存 owner，只数 id 会漏。
         let otherLocks = DB.keychains().filter { $0.mac != mac }.reduce(0) { acc, kc in
-            acc + DB.listPwds(kc.mac).filter { $0.owner == m.id }.count
-                + DB.listFps(kc.mac).filter { $0.owner == m.id }.count
+            func mine(_ owner: String?) -> Bool {
+                guard let owner, !owner.isEmpty else { return false }
+                return owner == m.id || owner == m.name
+            }
+            return acc + DB.listPwds(kc.mac).filter { mine($0.owner) }.count
+                + DB.listFps(kc.mac).filter { mine($0.owner) }.count
         }
         let n = MemberOpsStore.cascadeDelete(mac: mac, memberID: m.id)
         DB.removeMember(m.id)
