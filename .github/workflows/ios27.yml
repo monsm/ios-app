@@ -437,10 +437,23 @@ jobs:
           # 给 bootstatus 一个有界等待，并逐段留痕。
           echo "stage=boot" >> "$DIAG"
           xcrun simctl boot "$UDID" >> "$DIAG" 2>&1 || true
-          if ! timeout 300 xcrun simctl bootstatus "$UDID" -b >> "$DIAG" 2>&1; then
-            echo "bootstatus=FAILED_OR_TIMEOUT" >> "$DIAG"
-            exit 1
-          fi
+          # 2026-11-04：**上一版用了 `timeout 300`，而 macOS runner 上根本没有 timeout**
+          # （coreutils 未预装，只有 gtimeout）。于是这一句立刻 "command not found" 并 exit 1，
+          # 截图从 count=8 掉回 count=0 —— 是我自己把管线弄坏的。diag 把原因原样写出来了。
+          # 改用纯 bash 的有界等待：后台跑 + 轮询，超时后 kill。
+          xcrun simctl bootstatus "$UDID" -b >> "$DIAG" 2>&1 &
+          BOOTPID=$!
+          BOOTWAIT=0
+          while kill -0 "$BOOTPID" 2>/dev/null; do
+            if [ "$BOOTWAIT" -ge 300 ]; then
+              echo "bootstatus=TIMEOUT_300s" >> "$DIAG"
+              kill "$BOOTPID" 2>/dev/null || true
+              exit 1
+            fi
+            sleep 5
+            BOOTWAIT=$((BOOTWAIT + 5))
+          done
+          wait "$BOOTPID" 2>/dev/null || true
           echo "bootstatus=ok" >> "$DIAG"
           if ! xcrun simctl install "$UDID" "$APP" >> "$DIAG" 2>&1; then
             echo "install=FAILED" >> "$DIAG"

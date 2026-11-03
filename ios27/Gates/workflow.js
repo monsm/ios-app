@@ -147,6 +147,23 @@ for (const f of FILES) {
   }
 }
 
+// ── 检查 ⑥：macOS runner 上不许调用 GNU-only 命令 ──
+// 2026-11-04 真实事故：截图步骤里写了 `timeout 300 xcrun simctl bootstatus`，
+// 而 macOS runner 没有 GNU coreutils ⇒ `timeout: command not found` ⇒ 该行 exit 1，
+// 截图从 count=8 掉回 count=0。本地是 Windows，无法复现这类错。
+(function () {
+  const wfPath = path.join(ROOT, '..', '.github', 'workflows', 'ios27.yml');
+  if (!fs.existsSync(wfPath)) return;
+  const wf = fs.readFileSync(wfPath, 'utf8');
+  const GNU_ONLY = [
+    [/^\s*[^#\n]*\btimeout\s+[0-9]+\s+\S/m, 'timeout N cmd —— macOS 没有 GNU timeout，用 gtimeout 或 bash 轮询'],
+    [/\bsed\s+-i\s+[^-]/m, 'sed -i file —— BSD sed 需要显式备份后缀'],
+    [/\bsha256sum\b/m, 'sha256sum —— macOS 用 shasum -a 256'],
+  ];
+  for (const item of GNU_ONLY) {
+    if (item[0].test(wf)) findings.push('ios27.yml: ' + item[1]);
+  }
+})();
 if (checked === 0) {
   console.log('workflow: SKIP — 没找到 .github/workflows/ios27.yml');
   process.exit(0);
