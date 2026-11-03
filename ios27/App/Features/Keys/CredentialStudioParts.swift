@@ -308,7 +308,7 @@ struct PackageImportSheet: View {
                 }
                 .padding(.vertical, V.S.gap16)
             }
-            .background(CanvasBg())
+            .background(CanvasBackground())
             .scrollEdgeEffectStyle(.soft, for: .top)
             .navigationTitle("导入凭证包")
             .navigationBarTitleDisplayMode(.inline)
