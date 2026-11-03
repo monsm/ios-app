@@ -13,11 +13,14 @@
 #     -destination 'platform=iOS Simulator,name=iPhone 17 Pro' CODE_SIGNING_ALLOWED=NO
 name: Build (iOS + Android)
 
+# 2026-11-03：**暂停自动触发**（用户要求：别占用 ios27 构建队列）。
+# 旧版 iOS + 安卓的编译仍在，需要时在 Actions 页手动 Run（workflow_dispatch）。
+# 恢复自动构建：把下面三行 push/pull_request 注释打开即可。
 on:
-  push:
-    branches: [main, master]
-  pull_request:            # PR 也跑: 编译/测试错误在合并前暴露
   workflow_dispatch:
+#  push:
+#    branches: [main, master]
+#  pull_request:            # PR 也跑: 编译/测试错误在合并前暴露
 
 # 2026-10-27: 用户口径「构建直接 ipa 不要 zip」——
 # artifact 下载必定被 GitHub 二次打成 zip, 所以真正要"直接拿到 .ipa"只有一条路:
