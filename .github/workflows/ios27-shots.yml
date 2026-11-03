@@ -19,7 +19,10 @@ on:
 
 concurrency:
   group: ios27-shots-${{ github.ref }}
-  cancel-in-progress: true
+  # 2026-11-03：**不取消进行中的截图 run**。截图要 12~15 分钟，连续提交时
+  # cancel-in-progress 会让它永远跑不完 —— 实测 ci-shots 在 8 个提交里一次都没更新。
+  # 截图是评审输入，宁可出一批"稍旧但完整"的图，也不要一张都没有。
+  cancel-in-progress: false
 
 permissions:
   contents: write
