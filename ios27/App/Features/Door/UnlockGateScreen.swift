@@ -122,7 +122,13 @@ struct UnlockGateScreen: View {
                 now = Date()
                 error = "密码不对 · 冷却 \(remaining) 秒"
             } else {
-                error = "密码不对 · 还可试 \(max(0, 3 - failures)) 次"
+                // 2026-11-04（错误归因 · 数字与引擎梯度不符）：这里写死「3 次」，而
+                // `AppLock.cooldownSeconds` 的梯度是 **3→30s、5→5min、7→30min** ——
+                // 前 2 次失败（streak 1、2）不冷却，第 3 次才开始。所以剩余次数应当是
+                // 「到下一档还差几次」，不是固定的 3。而且失败 3 次以上就会进 remaining>0 分支，
+                // 这句永远只在 streak ≤ 2 时出现 —— 说「还可试 3 次」与事实不符（最多 2 次）。
+                let untilCooldown = max(1, 3 - failures)
+                error = "密码不对 · 再错 \(untilCooldown) 次开始冷却"
             }
         case .cooling(let remaining):
             cooldownUntil = Date().addingTimeInterval(Double(remaining))
