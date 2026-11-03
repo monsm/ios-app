@@ -778,22 +778,30 @@ struct DoorScreen: View {
                     }
                 }
             } else {
-            // 2026-11-03（整页截图实测）：这张 LazyVGrid 直接挂在 VStack(alignment: .leading) 下，
-            // 外层只有 `.padding(.horizontal, …)`、**没有撑满宽度** —— 全仓其它 LazyVGrid 都住在
-            // VCard 里（VCard 自带 `.frame(maxWidth: .infinity)`），只有这一处没有。
-            // 结果：网格拿到 0 宽度 ⇒ 行高还在、格子全不可见，页面上就是一大块空白。
-            LazyVGrid(columns: quickColumns, spacing: V.S.gapS) {
-                ForEach(Array(quickShown.enumerated()), id: \.element.id) { pair in
-                    Button { runQuick(pair.element) } label: {
-                        quickTile(pair.element)
+            // 2026-11-04（第五次修正，前四次都判错了原因）：这一块在**每一张整页截图里都是空白**，
+            // 而标题与「编辑」按钮明明画出来了 —— 说明 quickBlock 被渲染、只有格子不出现。
+            // 前四次分别归因于「颜色太淡」「空态被 pending 挡住」「宽度塌陷」「上限为 0」，
+            // 加了底色、拆了空态、加了 frame(maxWidth)、给上限钉了下限 —— 截图仍然空白。
+            // 现在**不再猜 LazyVGrid 的行为**：改用显式分行的 HStack。
+            // 这样每格宽度由 .frame(maxWidth: .infinity) 直接决定，不依赖 LazyVGrid
+            // 在「VStack(alignment: .leading) + 无明确宽度」上下文里的尺寸推导。
+            VStack(spacing: V.S.gapS) {
+                ForEach(Array(quickRows.enumerated()), id: \.offset) { row in
+                    HStack(spacing: V.S.gapS) {
+                        ForEach(row.element) { action in
+                            Button { runQuick(action) } label: {
+                                quickTile(action)
+                            }
+                            .buttonStyle(.plain)
+                            .onLongPressGesture(minimumDuration: 0.5) { showQuickEdit = true }
+                            .accessibilityLabel(quickLabel(action))
+                            .accessibilityHint("轻点执行，长按编辑快捷操作")
+                        }
+                        // 末行不满时用占位补齐，保证每格宽度一致。
+                        ForEach(0 ..< max(0, quickColumnCount - row.element.count), id: \.self) { _ in
+                            Color.clear.frame(maxWidth: .infinity, maxHeight: 1)
+                        }
                     }
-                    .buttonStyle(.plain)
-                    .onLongPressGesture(minimumDuration: 0.5) { showQuickEdit = true }
-                    // 「再开一次」的真实语义是"跳到那条高频凭证"，不是"立刻再开一次门" ——
-                    // 把目标编号拼进去，VoiceOver 与视觉用户都能知道会去哪一条。
-                    // （`repeatTarget` 的 `name` 成员此前被算出来却从未使用。）
-                    .accessibilityLabel(quickLabel(pair.element))
-                    .accessibilityHint("轻点执行，长按编辑快捷操作")
                 }
             }
             .frame(maxWidth: .infinity)
@@ -817,6 +825,21 @@ struct DoorScreen: View {
     private var pendingFingerTileShown: Bool {
         app.currentKeychain.map { DB.listFps($0.mac).isEmpty } == true
     }
+    /// 每行列数（大格 2 列、常规 3 列）—— 与 `quickColumns` 同一判据。
+    private var quickColumnCount: Int { AXSettings.bigTile ? 2 : 3 }
+
+    /// 把快捷格切成若干行。改用显式行而不是 LazyVGrid：见 quickBlock 里那段说明。
+    private var quickRows: [[QuickAction]] {
+        let cols = quickColumnCount
+        var out: [[QuickAction]] = []
+        var i = 0
+        while i < quickShown.count {
+            out.append(Array(quickShown[i ..< min(i + cols, quickShown.count)]))
+            i += cols
+        }
+        return out
+    }
+
     private var quickColumns: [GridItem] {
         let count = AXSettings.bigTile ? 2 : 3
         return Array(repeating: GridItem(.flexible(), spacing: V.S.gapS), count: count)
