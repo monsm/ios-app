@@ -294,7 +294,13 @@ struct HardwareScreen: View {
     }
 
     private func write(_ d: DongleRecord) {
-        guard let kc = app.currentKeychain, writingId == nil else { return }
+        // 2026-11-04（静默失败）：kc == nil（本机没有钥匙串）时原来什么都不说。
+        // 写钥匙的语义是"把当前锁的钥匙写进钥匙串"，没有当前锁就该说清。
+        guard writingId == nil else { return }
+        guard let kc = app.currentKeychain else {
+            errorText = "还没有当前锁 —— 写进去的钥匙要对应一把锁。先在「门」页选中一把锁，再来写。"
+            return
+        }
         writingId = d.id
         errorText = nil
         Task { @MainActor in
@@ -372,7 +378,12 @@ struct HardwareScreen: View {
 
     /// 写入未知/假钥匙：随机 PIN、永久、不绑成员 —— 它开不了锁，只验证钥匙串本身能收钥。
     private func writeFault(_ d: DongleRecord) {
-        guard let kc = app.currentKeychain, busyId == nil else { return }
+        // 同上：未知钥匙也要绑定"这把锁"的身份（随机 PIN + 本锁 trackid）。
+        guard busyId == nil else { return }
+        guard let kc = app.currentKeychain else {
+            errorText = "还没有当前锁 —— 未知钥匙也要按某把锁的身份写入。先在「门」页选中一把锁。"
+            return
+        }
         busyId = d.id
         errorText = nil
         Task { @MainActor in
