@@ -298,8 +298,12 @@ extension CredentialOrg {
     // ---------- 319 重录继承 / 324 冗余横条 ----------
     /// 该成员名下可用指纹数 (0 = 最后一枚 → 删除需双签 323; 冗余横条 324 用全锁口径)
     static func fpCountByOwner(_ mac: String, _ owner: String?) -> Int {
-        guard let o = owner else { return 0 }
-        return DB.listFps(mac).filter { $0.owner == o }.count
+        guard let o = owner, !o.isEmpty else { return 0 }
+        // 2026-11-03：与其它成员归属判据统一成 id/名字双口径（旧数据存名字）。
+        let name = DB.member(o)?.name ?? ""
+        return DB.listFps(mac).filter {
+            CredentialOrg.ownerMatches($0.owner, memberID: o, memberName: name)
+        }.count
     }
 
     static func isEarlyExpired(_ mac: String, _ p: LedgerPwd, _ now: Date) -> Bool {

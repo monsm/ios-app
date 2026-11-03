@@ -109,11 +109,21 @@ enum CredentialOrg {
     /// 2026-11-01：去掉 `revokeLocks` 形参与 `-> Int` 返回值。
     /// 它们此前一直存在，但一个**什么都不做**、一个**恒为 0** —— 形状本身在承诺"撤销了锁端""返回了条数"。
     /// 现在的签名是诚实的：调用它 = 只删本机台账；锁端的事调用方必须自己说清楚（见 UI 文案）。
+    /// 成员归属的双口径判据：新数据存 **id**，旧数据存 **名字**。
+    /// 2026-11-03（全功能点排查）：这两处此前只认 id，于是旧数据既不会被移入回收站、
+    /// 也不出现在"名下将入回收站的凭证清单"里 —— 而弹窗对用户承诺的是全部。
+    static func ownerMatches(_ owner: String?, memberID: String, memberName: String) -> Bool {
+        guard let owner, !owner.isEmpty else { return false }
+        if owner == memberID { return true }
+        return !memberName.isEmpty && owner == memberName
+    }
+
     static func cascadeBinMember(_ mac: String, _ memberID: String) {
-        for p in DB.listPwds(mac).filter({ $0.owner == memberID }) {
+        let name = DB.member(memberID)?.name ?? ""
+        for p in DB.listPwds(mac).filter({ ownerMatches($0.owner, memberID: memberID, memberName: name) }) {
             DB.delPwd(mac, p.alias)
         }
-        for f in DB.listFps(mac).filter({ $0.owner == memberID }) {
+        for f in DB.listFps(mac).filter({ ownerMatches($0.owner, memberID: memberID, memberName: name) }) {
             DB.delFp(mac, f.batch)
         }
         // 锁端：**不排队**（没有队列基础设施）。见上方注释。
@@ -122,12 +132,13 @@ enum CredentialOrg {
     /// 两处「删除成员」弹窗共用这一份, 免得同一条预览各写一遍; 锁名一律走 LockArchive.displayName (769 口径)。
     static func memberCredentialPreview(_ memberID: String) -> [String] {
         var out: [String] = []
+        let name = DB.member(memberID)?.name ?? ""
         for kc in DB.keychains() {
             let lockName = LockArchive.displayName(kc)
-            for p in DB.listPwds(kc.mac).filter({ $0.owner == memberID }) {
+            for p in DB.listPwds(kc.mac).filter({ ownerMatches($0.owner, memberID: memberID, memberName: name) }) {
                 out.append("密码 #" + String(p.alias) + " · " + lockName)
             }
-            for f in DB.listFps(kc.mac).filter({ $0.owner == memberID }) {
+            for f in DB.listFps(kc.mac).filter({ ownerMatches($0.owner, memberID: memberID, memberName: name) }) {
                 out.append("指纹「" + f.name + "」· " + lockName)
             }
         }
