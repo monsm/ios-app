@@ -207,7 +207,7 @@ struct GodModeScreen: View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VCardHeader(title: "锁端凭证变更（cmd16 解码）")
-                Text("锁端自己记录的凭证操作 —— 含**别的手机/网关**做的。这是「对不上」时的第一手证据。")
+                Text("锁端自己记录的凭证操作 —— 含别的手机/网关做的。这是「对不上」时的第一手证据。")
                     .font(V.F.footnote).foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
                 ForEach(Array(logs.prefix(20).enumerated()), id: \.offset) { pair in

@@ -77,7 +77,7 @@ struct BackupStudioScreen: View {
             Button("恢复", role: .destructive) { restoreFile(file); restoreTarget = nil }
             Button("取消", role: .cancel) { restoreTarget = nil }
         } message: { file in
-            Text("「\(file.name)」里的锁与凭证会**合并进**当前台账：同名项被覆盖，不存在的项新增。当前台账里那些备份中没有的条目不会被删除。")
+            Text("「\(file.name)」里的锁与凭证会合并进当前台账：同名项被覆盖，不存在的项新增。当前台账里那些备份中没有的条目不会被删除。")
         }
         .confirmationDialog("删除这份备份文件？", isPresented: Binding(
             get: { deleteTarget != nil }, set: { if !$0 { deleteTarget = nil } }
