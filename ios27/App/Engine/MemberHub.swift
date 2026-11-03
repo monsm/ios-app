@@ -75,12 +75,15 @@ enum MemberHub {
     /// 成员选择列表的统一顺序：名下凭证多的在前，同数量按名字。
     /// 2026-11-03（全维度整理）：三处选择成员的地方原来各自按存储顺序渲染，
     /// 同一份数据在不同页面顺序不同、重启后还可能变 —— 用户读起来像随机。
+    /// 2026-11-04（截图实测 · 顺序不可预期）：上一版按「名下凭证数降序、同数按名字」排，
+    /// 于是选择列表出来是 **成员C(4) / A(3) / B(3) / E(2) / D(0)** —— 稳定，但用户
+    /// 在一个**选择器**里要的是"找到某个人"，按名字排才对。凭证数放在名字后面当副信息。
+    /// 排序键只留名字（再落 id 决胜），与名册页 `最近活跃` 的决胜口径一致。
     static func sortedForPicker(_ members: [MemberCard], keys: [KeyItem]) -> [MemberCard] {
-        members.sorted { a, b in
-            let ca = keys.filter { $0.owner == a.id || $0.owner == a.name }.count
-            let cb = keys.filter { $0.owner == b.id || $0.owner == b.name }.count
-            if ca != cb { return ca > cb }
-            return a.name.localizedStandardCompare(b.name) == .orderedAscending
+        _ = keys   // 参数保留：调用点按"成员 + 凭证"成对传，改动面小；排序不再用它。
+        return members.sorted { a, b in
+            let cmp = a.name.localizedStandardCompare(b.name)
+            return cmp == .orderedSame ? a.id < b.id : cmp == .orderedAscending
         }
     }
     static func isVisitorRow(kind: String?, whoId: String?) -> Bool {
