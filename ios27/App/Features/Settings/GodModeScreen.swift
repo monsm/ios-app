@@ -237,7 +237,10 @@ struct GodModeScreen: View {
                 VCardHeader(title: "修复")
                 // 2026-11-03（信息架构 QA）：原文写「不用走到锁跟前」—— 而修池走的是 BLE 下发，
                 // 必须连上锁才能执行；同页上方 :98 的确认框也写着「靠近门锁再执行」。两处互相矛盾。
-                Text("开锁永远 rc=2 且本机池与锁端无法对应时，用「修池」：保 skey 只重写 PIN 表，然后自动重签开锁凭证。**不用重置锁**，但要连上锁才能下发 —— 请在门锁旁边执行。")
+                // 2026-11-04：God 模式是诊断页（闸门 30 豁免它展示协议信息），但这一句是
+                // **用户决定要不要点"修池"的依据**，rc=2 对普通读者没有意义。而且 `**…**`
+                // 在 String 里不会解析（Text 收的是 String）—— 星号会原样显示。
+                Text("开锁一直被拒、且本机 PIN 池与锁端对不上时，用「修池」：保留通信密钥、只重写 PIN 表，然后自动重签开锁凭证。不用重置锁，但要连上锁才能下发 —— 请在门锁旁边执行。")
                     .font(V.F.footnote).foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
                 VActionButton(title: "修池（重写 PIN 表 · 保通信密钥）", systemImage: "wrench.and.screwdriver.fill") {

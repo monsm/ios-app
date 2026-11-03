@@ -112,7 +112,11 @@ struct CredentialStudioScreen: View {
             Button("取消", role: .cancel) {}
             Button("彻底删除", role: .destructive) { CredBinStore.clear(studioMac); tick += 1 }
         } message: {
-            Text("回收站里的记录会被永久删除，不能恢复。锁端凭证不受影响。")
+            // 2026-11-04（预告不全）：`clear` 不只是删条目 —— 它还清掉每条的
+            // Keychain 口令副本，并 `purgeDerivedState`（星标 / 停用位 / 提前量 / 拖拽顺序）。
+            // 原文案只说"记录会被永久删除"。补上"连同口令副本与派生状态"，
+            // 并给出条数（用户按数量判断要不要先看一眼）。
+            Text("回收站里的 \(CredBinStore.all(studioMac).count) 条会被永久删除：连同它们在钥匙串里的口令副本、以及星标/停用位/预警提前量等派生设置一并清掉，不能恢复。锁端凭证不受影响。")
         }
     }
 
