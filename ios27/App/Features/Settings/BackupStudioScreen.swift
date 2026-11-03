@@ -64,15 +64,14 @@ struct BackupStudioScreen: View {
         }
         .background(V.C.bg.ignoresSafeArea())
         .scrollEdgeEffectStyle(.soft, for: .top)
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("备份工作室")
+        .navigationBarTitleDisplayMode(.large)
         .onAppear { reloadFiles() }
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: V.S.gapXXS) {
-            Text("备份工作室")
-                .font(V.F.displayA).foregroundStyle(V.C.text1)
+            // 2026-11-03（全维度整理）：标题交给系统导航栏（大标题），页内只留副标题。
             Text("本机多份备份 · WebDAV · 换机迁移 · 数据自检")
                 .font(V.F.footnote).foregroundStyle(V.C.text3)
         }
@@ -174,7 +173,7 @@ struct BackupStudioScreen: View {
                     }
                     .disabled(busy || davURL.isEmpty)
                 }
-                VActionButton(title: busy ? "上传中…" : "上传当前备份", systemImage: "icloud.and.arrow.up") {
+                VOutlineButton(title: busy ? "上传中…" : "上传当前备份", systemImage: "icloud.and.arrow.up") {
                     Task { await uploadDav() }
                 }
                 .disabled(busy || davURL.isEmpty)
@@ -197,7 +196,7 @@ struct BackupStudioScreen: View {
                 Text("换机包 = 一份含全部锁与凭证的备份。旧手机生成 → 新手机粘贴导入；逐把锁可选「合并 / 保留本机 / 跳过」。")
                     .font(V.F.footnote).foregroundStyle(V.C.text3)
                     .fixedSize(horizontal: false, vertical: true)
-                VActionButton(title: "生成换机包文本", systemImage: "arrow.left.arrow.right") {
+                VOutlineButton(title: "生成换机包文本", systemImage: "arrow.left.arrow.right") {
                     Task { await makeMigration() }
                 }
                 .disabled(busy)
@@ -233,7 +232,7 @@ struct BackupStudioScreen: View {
                             }
                         }
                     }
-                    VActionButton(title: "导入换机包", systemImage: "square.and.arrow.down") {
+                    VOutlineButton(title: "导入换机包", systemImage: "square.and.arrow.down") {
                         Task { await runMigration() }
                     }
                     .disabled(busy)
