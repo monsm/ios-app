@@ -170,6 +170,7 @@ struct CredHistorySheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var items: [CredSnapshot] = []
     @State private var outcome: String?
+    @State private var restoreTarget: HistoryRestoreTarget?
 
     var body: some View {
         NavigationStack {

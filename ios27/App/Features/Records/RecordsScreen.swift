@@ -266,7 +266,7 @@ struct RecordsScreen: View {
         ]
     }
 
-    private func legendRow(title: String, value: String, total: Int, unit: String, color: Color) -> some View {
+    private func legendRow(title: String, value: String, unit: String, color: Color) -> some View {
         VStack(alignment: .leading, spacing: V.S.gapXXS) {
             Text(title)
                 .font(V.F.legendLabel)

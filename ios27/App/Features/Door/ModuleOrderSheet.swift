@@ -212,7 +212,7 @@ struct ModuleOrderCard: View {
                         DevLayout.reset()
                         order = DevLayout.order
                         hidden = DevModuleStore.hidden
-                        quickIDs = Set(QuickPool.selected.map(\.id))
+                        quickIDs = QuickPool.selected.map(\.id)
                         AppToast.shared.show("已恢复默认版面", tone: .ok)
                     }
                     Button("取消", role: .cancel) {}

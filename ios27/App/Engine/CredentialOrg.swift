@@ -112,7 +112,9 @@ enum CredentialOrg {
     /// 成员归属的双口径判据：新数据存 **id**，旧数据存 **名字**。
     /// 2026-11-03（全功能点排查）：这两处此前只认 id，于是旧数据既不会被移入回收站、
     /// 也不出现在"名下将入回收站的凭证清单"里 —— 而弹窗对用户承诺的是全部。
-    static func ownerMatches(_ owner: String?, memberID: String, memberName: String) -> Bool {
+    /// `nonisolated`：这是纯字符串比较，不碰任何状态 —— 而调用它的
+    /// `cascadeBinMember` / `memberCredentialPreview` / `fpCountByOwner` 都在非隔离上下文里。
+    nonisolated static func ownerMatches(_ owner: String?, memberID: String, memberName: String) -> Bool {
         guard let owner, !owner.isEmpty else { return false }
         if owner == memberID { return true }
         return !memberName.isEmpty && owner == memberName
