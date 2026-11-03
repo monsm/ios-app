@@ -47,3 +47,9 @@ wc.txt
 
 # tools/kotlinlocal.js 的临时输出 (本地编译通道, 每次跑都重建)
 .kotlinlocal/
+
+# 2026-11-03：Windows 工具链会在当前目录展开未定义的 %SystemDrive%，
+# 生成 ProgramData/Microsoft/Windows/Caches/*.db。它不是本仓内容，
+# 但 `git add -A` 会把它卷进提交（已发生过一次）。
+%SystemDrive%/
+**/%SystemDrive%/
