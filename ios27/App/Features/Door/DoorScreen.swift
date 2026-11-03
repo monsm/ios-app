@@ -800,7 +800,9 @@ struct DoorScreen: View {
     }
 
     private func quickTile(_ action: QuickAction) -> some View {
-        VCard(style: .mini) {
+        // 2026-11-03（截图实测）：原来用 VCard(.mini)，其 cardAlt 底色与页面背景几乎同色，
+        // 整排格子看起来就是空白。改用常规卡面（白底 + 0.5pt 描边），与其它可点卡片一致。
+        VCard(style: .regular) {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 Image(systemName: action.icon)
                     .font(V.F.icon18)
