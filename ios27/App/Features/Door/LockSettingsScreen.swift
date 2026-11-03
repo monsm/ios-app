@@ -224,13 +224,12 @@ struct LockSettingsScreen: View {
 
     private var entriesCard: some View {
         VStack(alignment: .leading, spacing: V.S.gapS) {
+            // 2026-11-03（全维度整理）：这里原来 6 项，其中 3 项（锁信息名片 / 校准门锁时间 /
+            // 固件升级）在「门」页或设置页已有入口 —— 同一目的地三个入口。只留**仅此处可达**的
+            // 3 个（电池档案 / 锁档案 / 全部锁），其余走门页。
             Text("更多").font(V.F.section).foregroundStyle(V.C.text1)
             VCard {
                 VStack(spacing: 0) {
-                    VListRow(title: "锁信息名片", detail: "固件 / 容量 / 电量采样 / 链路验证", systemImage: "info.circle", tint: V.C.miniBlue) {
-                        router.request(.dest(.deviceInfo))
-                    }
-                    VDivider()
                     VListRow(title: "电池档案", detail: "电量采样 / 五档 / 电池型号与换电日期", systemImage: "battery.75percent", tint: V.C.rewardGreen) {
                         router.request(.dest(.batteryProfile))
                     }
@@ -241,14 +240,6 @@ struct LockSettingsScreen: View {
                     VDivider()
                     VListRow(title: "全部锁", detail: "多锁统计 / 分组 / 排序", systemImage: "square.stack.3d.up", tint: V.C.miniBlue) {
                         router.request(.dest(.lockPortfolio))
-                    }
-                    VDivider()
-                    VListRow(title: "校准门锁时间", detail: "让锁内时钟与手机一致", systemImage: "clock.arrow.circlepath", tint: V.C.rewardBlue) {
-                        router.request(.dest(.syncTime))
-                    }
-                    VDivider()
-                    VListRow(title: "固件升级", detail: "本地固件包 · Nordic DFU", systemImage: "arrow.up.circle", tint: V.C.coral) {
-                        router.request(.dest(.dfu))
                     }
                 }
             }
