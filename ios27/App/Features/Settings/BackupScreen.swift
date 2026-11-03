@@ -140,7 +140,12 @@ struct BackupScreen: View {
                         .init(label: "门锁", value: "\(app.lock == nil ? 0 : 1)", unit: "把"),
                         .init(label: "凭证", value: "\(app.keys.count)", unit: "枚"),
                         .init(label: "成员", value: "\(app.members.count)", unit: "位"),
-                        .init(label: "记录缓存", value: "\(app.entries.count)", unit: "条"),
+                        // 2026-11-04（读实现发现 · 数字不在备份里）：`collectAll()` 收的是
+                        // 钥匙串 / 台账 / 成员 / 元数据 / 覆盖层 / 外观 / 组织 —— **不收 `kf_logcache_`**。
+                        // 所以「记录缓存 N 条」这个数字根本不进备份包：它只是"本机现在有多少条"，
+                        // 而同一张卡片的标题是「将要备份的内容」。把不进备份的数算进来，
+                        // 用户恢复后会以为记录也在包里。改成如实标注。
+                        .init(label: "记录缓存", value: "\(app.entries.count)", unit: "条（不进包）"),
                     ], columns: 2)
                     .padding(.top, V.S.gapXS)
                     // 2026-11-01（Round 267）：上面四个数字是**将要备份的内容**，所以「成员」数的是
