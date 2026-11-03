@@ -151,11 +151,26 @@ struct SettingsScreen: View {
         .padding(.top, V.S.gapS)
     }
 
-    /// 2026-11-03：分组芯片统一走 `GlassChip`（功能层控制件用 Liquid Glass）。
+    // 2026-11-03（回归修复）：分组芯片换 `GlassChip` 后**设置页整页白屏**（截图实测），
+    // 先回退到原实现。玻璃化留待查明原因（可能是 GlassChip 的 glassEffect 在
+    // .searchable + ScrollView 组合下的渲染问题），不在设置页冒险。
     private func groupChip(_ group: SettingsGroup?, title: String) -> some View {
-        GlassChip(title: title, selected: groupFilter == group) {
+        let on = groupFilter == group
+        return Button {
             groupFilter = group
+        } label: {
+            Text(title)
+                .font(V.F.footnote)
+                .foregroundStyle(on ? V.C.text1 : V.C.text3)
+                .padding(.horizontal, V.S.gapM)
+                .padding(.vertical, V.S.gapS)
+                .background(on ? V.C.card : Color.clear, in: Capsule())
+                .overlay {
+                    Capsule().strokeBorder(on ? V.C.tabEdge : V.C.hairline, lineWidth: V.S.hair)
+                }
         }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
 
     private struct SettingsHit: Identifiable {
