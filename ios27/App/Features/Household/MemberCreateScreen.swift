@@ -93,6 +93,11 @@ struct MemberCreateScreen: View {
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button("取消") { cancel() }
+                    // 2026-11-03（全功能点排查 · 竞态）：临时码正在下发时，取消会把刚建好的成员
+                    // 连同档案一起删掉，而下发成功回来后那条临时码就落在一个**已不存在的成员**名下
+                    // （owner 变成悬空引用，界面显示"未归属"）。这一小段窗口里不给取消。
+                    .disabled(creating)
+                    .opacity(creating ? 0.45 : 1)
                     .accessibilityLabel("取消建档")
             }
         }
@@ -324,6 +329,7 @@ struct MemberCreateScreen: View {
     }
 
     private func cancel() {
+        guard !creating else { return }
         if let id = newID {
             app.members.removeAll { $0.id == id }
             DB.removeMember(id)
