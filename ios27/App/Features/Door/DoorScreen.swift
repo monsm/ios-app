@@ -807,6 +807,12 @@ struct DoorScreen: View {
             .frame(maxWidth: .infinity)
             }
         }
+        // 2026-11-04（像素测量定位）：整块「快捷操作」在整页截图里是 **726px 的纯背景带**
+        // （标题与「编辑」画了，下面什么都没有）。像素测量比肉眼准：它证明**高度被占了、
+        // 内容没画出来** —— 那是**宽度为 0** 的典型形状（有 minHeight 撑高、宽 0 时文字被裁光）。
+        // 前面四次都在网格内部找原因，其实病根在**外层 VStack 没有撑满宽度**：
+        // 它只挂了 .padding(.horizontal)，而 padding 不会给宽度。
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, V.S.cardGutter)
         .padding(.top, V.S.gapL)
     }

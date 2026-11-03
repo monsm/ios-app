@@ -565,6 +565,38 @@ jobs:
                   fh.write("\n".join(f"{n}\t{v}" for n, v in bad))
           else:
               print("空白检测通过：所有截图都有内容")
+
+          # 2026-11-04：**空白页检测只抓「整页单色」**，抓不到"标题画了、内容没画"这种
+          # 半空白 —— 快捷操作那一块就是 726px 的纯背景带，整页 stddev 仍然正常。
+          # 这里加一条：整页截图里连续 >=400px 的行完全无墨迹 ⇒ 打印出来（不 fail，作为线索）。
+          bands_found = 0
+          for f in sorted(glob.glob("/tmp/shots/*-full.png")):
+              try:
+                  im = Image.open(f).convert("RGB")
+                  w, h = im.size
+                  bg = im.getpixel((5, h // 2))
+                  def rowink(y):
+                      n = 0
+                      for x in range(0, w, 6):
+                          px = im.getpixel((x, y))
+                          if abs(px[0]-bg[0]) + abs(px[1]-bg[1]) + abs(px[2]-bg[2]) > 30:
+                              n += 1
+                      return n
+                  start = None
+                  for y in range(0, h, 8):
+                      if rowink(y) < 2:
+                          if start is None: start = y
+                      else:
+                          if start is not None and y - start >= 400:
+                              print(f"::warning::{os.path.basename(f)} 有 {y-start}px 连续空白带 (y={start}..{y})")
+                              bands_found += 1
+                          start = None
+                  if start is not None and h - start >= 400:
+                      print(f"::warning::{os.path.basename(f)} 末尾 {h-start}px 空白 (y={start}..{h})")
+                      bands_found += 1
+              except Exception as e:
+                  print("band scan skipped", f, e)
+          print(f"空白带扫描完成：{bands_found} 处")
           PY
 
       - name: 推到 ci-shots 分支
