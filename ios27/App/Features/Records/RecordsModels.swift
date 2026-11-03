@@ -260,12 +260,20 @@ final class RecordsOverlay {
 /// 归属人按锁端凭证台账反推：type 11/16/17/19 的开门行才可能有归属，推不出来就留空 —— 不猜。
 enum RecordsSource {
     /// 锁端日志类型：11 数字钥匙 / 16 一次性密码 / 17 密码 / 19 指纹 才算「开门」。
-    static let openTypes: Set<Int> = [11, 16, 17, 19]
-    /// 需要人处置的告警级：7 撬锁 / 10 多次密码失败锁定 / 13 指纹模块告警 / 224 键盘被锁定。
-    static let alarmTypes: Set<Int> = [7, 10, 13, 224]
+    /// **单一来源**：直接引用 StatsKit，避免两处各写一份集合后漂移。
+    static var openTypes: Set<Int> { StatsKit.openTypes }
+    /// 告警级：同样引用 StatsKit。
+    ///
+    /// 2026-11-03（全功能点排查 · 口径分叉）：这里原来写死 `[7, 10, 13, 224]` ——
+    /// 而 `StatusParser.logTypes`（锁端日志类型的权威表）里**根本没有 7/13/224**：
+    /// 7 不在表内，13 是「交换秘钥」，224 不在表内。StatsKit 的注释写明它们是
+    /// **消息中心**的 mType，不是锁端日志类型。于是同一批日志在记录页被标成「告警」，
+    /// 在统计页/筛选器里却不算告警 —— 两个页面对同一件事给了相反答案。
+    static var alarmTypes: Set<Int> { StatsKit.alarmTypes }
 
     /// 告警用注意色（还有下一步可做），其余告警用危险色（已失效/被锁）。
-    private static let criticalTypes: Set<Int> = [10, 224]
+    /// 4 静态电量 = 注意（换个电池就好）；10 多次密码失败锁定 = 危险（有人试密码）。
+    private static let criticalTypes: Set<Int> = [10]
 
     /// 装载结果：能上时间线的条目 + 锁端没回时刻、无法定位到某一天的条数。
     /// 后者单独计数，是因为把它塞进时间线等于谎报一个 1970 年的日期。
