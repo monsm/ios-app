@@ -41,8 +41,16 @@ enum QuickPool {
     }
 
     static func setSelected(_ ids: [String]) {
-        let clean = all.filter { ids.contains($0.id) }.map { $0.id }
-        if clean.sorted() == defaultIds.sorted() && clean.count == defaultIds.count {
+        // 2026-11-03（全功能点排查）：这里原来用 `all.filter { ids.contains(...) }` —— 它按
+        // **all 的固定顺序**输出，调用方传进来的顺序被整段丢弃。而 `selected` 的注释承诺
+        // "保用户排的序"、设置页也写着"按你在这里的勾选顺序"。三处口径互相矛盾，实际顺序恒等于 all。
+        // 现在按传入顺序去重保序（未知 id 丢弃）。
+        var seen = Set<String>()
+        let known = Set(all.map { $0.id })
+        let clean = ids.filter { known.contains($0) && seen.insert($0).inserted }
+        // 2026-11-03：这里原来比的是**排序后相等** —— 用户把默认那 5 个重新排了序，
+        // 也会被判成"就是默认值"而把键删掉，顺序静默还原。改成**按序相等**才回退默认。
+        if clean == defaultIds {
             DB.store.remove(idsKey)
         } else {
             DB.store.set(idsKey, clean)
