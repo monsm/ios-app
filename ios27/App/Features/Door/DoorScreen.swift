@@ -25,6 +25,8 @@ struct DoorScreen: View {
     // 圆盘手势态（原 UnlockDial.swift:311-455）
     @State private var pressing = false
     @State private var holdProgress: CGFloat = 0
+    /// 滑动开锁：拖动起始角度（度，12 点为 0、顺时针）。
+    @State private var slideStartAngle: Double = 0
     @State private var armed = false
     @State private var firedThisTouch = false
     @State private var lastFireAt: Date?
@@ -380,6 +382,7 @@ struct DoorScreen: View {
         if fenceRequired && !armed { return "误触围栏开启：先从圆盘边缘拖到中心，再执行开锁手势" }
         switch effectiveGesture {
         case "tap": return "轻点开锁"
+        case "slide": return "按住游标沿圆环滑到底开锁"
         case "double": return "双击开锁"
         default: return "按住 \(String(format: "%.1f", holdDuration)) 秒确认开锁，也可上滑"
         }
@@ -561,11 +564,26 @@ struct DoorScreen: View {
                     firedThisTouch = false
                     holdProgress = 0
                     if effectiveGesture == "hold" { beginHold() }
+                    if effectiveGesture == "slide" { slideStartAngle = angle(of: value.location) }
                 }
                 if effectiveGesture == "hold", value.translation.height < -56 {
                     holdTask?.cancel()
                     holdTask = nil
                     holdProgress = 1
+                }
+                if effectiveGesture == "slide" {
+                    // 游标沿刻度环滑：从起点角度顺时针走多少度 = 进度。
+                    // 环有一个 34.6° 的缺口（gapStart 201°），可滑行程按 360-缺口 ≈ 325° 计。
+                    let a = angle(of: value.location)
+                    var delta = a - slideStartAngle
+                    while delta < -180 { delta += 360 }
+                    while delta > 180 { delta -= 360 }
+                    if delta < 0 { delta += 360 }   // 只认顺时针
+                    holdProgress = min(1, max(0, CGFloat(delta / 325.0)))
+                    if holdProgress >= 1, !firedThisTouch {
+                        firedThisTouch = true
+                        requestUnlock()
+                    }
                 }
             }
             .onEnded { value in
@@ -592,12 +610,21 @@ struct DoorScreen: View {
             }
     }
 
+    /// 本地点 → 12 点起顺时针角度（度）。数学角（x 右 y 下）转表盘角：atan2 后 +90° 再归一。
+    private func angle(of point: CGPoint) -> Double {
+        let c = Double(V.Gauge.outer / 2)
+        let dx = Double(point.x) - c, dy = Double(point.y) - c
+        var deg = (atan2(dy, dx) * 180 / .pi) + 90
+        if deg < 0 { deg += 360 }
+        return deg
+    }
+
     private var fenceRequired: Bool { DB.store.getBool("kf_fence", false) }
 
     private var effectiveGesture: String {
         if !SettingsStore.shared.holdConfirm { return "tap" }
         let mode = SettingsStore.shared.gestureMode   // 走可观察属性，改档后门页立刻重算（Round 254）
-        return ["hold", "tap", "double"].contains(mode) ? mode : "hold"
+        return ["hold", "slide", "tap", "double"].contains(mode) ? mode : "hold"
     }
 
     private var holdDuration: Double {
