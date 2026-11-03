@@ -292,7 +292,11 @@ struct PasscodeSheet: View {
         switch kind {
         case .passcode:
             // 真摘要：PBKDF2-HMAC-SHA256 落 kf_passcode（DB 内部实现，旧摘要验过即静默升级）。
-            DB.setPasscode(first)
+            // 2026-11-03：与胁迫码相同的新密码会被拒（否则胁迫码永远不触发，见 Store.setPasscode）。
+            guard DB.setPasscode(first) else {
+                error = "新密码不能与已设的胁迫码相同 —— 否则胁迫码将永远不触发；请换一个"
+                return
+            }
         case .duress:
             // 胁迫码独立键 kf_duress；空壳模式的读取判据在 AppLock/LockGate。
             // 2026-11-01（Round 258）：`setDuressCode` 返回 Bool，其中一条失败条件是

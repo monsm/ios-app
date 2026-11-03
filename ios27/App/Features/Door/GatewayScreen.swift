@@ -39,6 +39,7 @@ struct GatewayScreen: View {
     @State private var showProvision = false
     @State private var armed = false
     @State private var confirmDelete: GatewayRow?
+    @State private var rebootTarget: GatewayRow?
     @State private var banner: String?
 
     private static let stepTitles = ["连网关", "读设备名", "写 WiFi", "写 IoT", "重启上线"]
@@ -69,6 +70,15 @@ struct GatewayScreen: View {
             Button("删除") { if let g = confirmDelete { remove(g) } }
         } message: {
             Text("只会从本机台账里移除这条记录。网关硬件里的 WiFi 与 IoT 凭据还在，要重配得先把它重置回橙灯。")
+        }
+        .confirmationDialog("重启这个网关？", isPresented: Binding(
+            get: { rebootTarget != nil },
+            set: { if !$0 { rebootTarget = nil } }
+        ), titleVisibility: .visible, presenting: rebootTarget) { g in
+            Button("重启", role: .destructive) { let t = g; rebootTarget = nil; Task { await reboot(t) } }
+            Button("取消", role: .cancel) { rebootTarget = nil }
+        } message: { g in
+            Text("「\(g.name)」会重启，期间短暂离线 —— 如果你正在外面靠它远程看门，这段时间会连不上。")
         }
     }
 
@@ -179,7 +189,9 @@ struct GatewayScreen: View {
                 Label("刷新状态", systemImage: "arrow.clockwise")
             }
             Button {
-                Task { await reboot(g) }
+                // 2026-11-03（全功能点排查）：重启网关会**切断远程访问**，人在外面时一按就失联，
+                // 原来没有任何确认。改成先问一句，并说清"重启期间离线"。
+                rebootTarget = g
             } label: {
                 Label("重启网关", systemImage: "power")
             }
@@ -433,6 +445,8 @@ struct GatewayScreen: View {
     @MainActor
     private func reboot(_ g: GatewayRow) async {
         guard let index = rows.firstIndex(where: { $0.id == g.id }) else { return }
+        // 2026-11-03：原来没有重入守卫 —— 连点两下会下发两条 cmd35。
+        guard !rows[index].rebooting else { return }
         rows[index].rebooting = true
         rows[index].online = false
         do {

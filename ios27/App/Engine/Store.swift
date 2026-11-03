@@ -486,10 +486,23 @@ enum DB {
         set(passcodeRecord(pw, salt: salt), "kf_passcode")
         return true
     }
-    static func setPasscode(_ pw: String?) {
+    /// 设置/更改本机密码。返回 false = 输入不合法（当前只有一种：与已设的胁迫码相同）。
+    ///
+    /// 2026-11-03（全功能点排查 · 安全）：`setDuressCode` 一直拒绝"与正常密码相同"，
+    /// 但**反过来没有校验** —— 用户可以把自己的正常密码改成与胁迫码一样。
+    /// 而 `AppLock.verify` 是**先判正常密码**再判胁迫码，于是那一串数字永远走正常解锁，
+    /// 胁迫码静默失效：用户以为自己有一张安全网，其实没有。这条只能补在写入侧。
+    @discardableResult
+    static func setPasscode(_ pw: String?) -> Bool {
         // 2026-10-27 (D-10)：新设/改设密码一律是强摘要，清掉弱标记。
         store.remove("kf_passcode_weak")
-        if let pw { set(passcodeDigest(pw), "kf_passcode") } else { store.remove("kf_passcode") }
+        if let pw {
+            if hasDuressCode(), verifyDuress(pw) { return false }
+            set(passcodeDigest(pw), "kf_passcode")
+        } else {
+            store.remove("kf_passcode")
+        }
+        return true
     }
 
     // ── 胁迫码（伪装模式）── 2026-10-27 新增（AUDIT-D D-48）
