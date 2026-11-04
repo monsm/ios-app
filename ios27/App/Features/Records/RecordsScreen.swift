@@ -503,7 +503,11 @@ struct RecordsScreen: View {
                         .font(V.F.unit)
                         .foregroundStyle(V.C.text3)
                         .accessibilityHidden(true)
-                    Text(readAt.map { "上次读取 · " + TimeFormat.ago($0) } ?? "还没读取过锁内日志")
+                    // 2026-11-04（视觉复核发现 · 同屏自相矛盾）：这张卡下面写着「9 条」，
+                    // 而这一行说「还没读取过锁内日志」—— 用户会以为列表是空的或坏了。
+                    // 真相：9 条是**本机缓存**，`readAt` 记的是"上次从锁里同步"的时刻，两者本可不同。
+                    Text(readAt.map { "上次读取 · " + TimeFormat.ago($0) }
+                         ?? (entries.isEmpty ? "还没读取过锁内日志" : "还没从锁里读过 · 下面是本机缓存"))
                         .font(V.F.unit)
                         .foregroundStyle(V.C.text3)
                     Spacer(minLength: 0)
