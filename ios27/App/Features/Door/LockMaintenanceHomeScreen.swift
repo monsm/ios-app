@@ -153,12 +153,15 @@ struct LockMaintenanceHomeScreen: View {
         }
         .background(V8.C.bg.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
-        .task {
+        .task(id: app.currentMac) {
             loadBattery()
             infoBatteryModel = meta.batteryModel
             loadGwRows()
             await reloadInfo()
         }
+        // 2026-11-05 (adversarial review): switching the current lock cleared nothing -
+        // batteryLoaded kept the battery section showing the previous lock model and date.
+        .onChange(of: app.currentMac) { _, _ in batteryLoaded = false }
         .interactiveDismissDisabled(dfuPhase == .running)
         .navigationBarBackButtonHidden(dfuPhase == .running)
         .toolbar(dfuPhase == .running ? .hidden : .visible, for: .navigationBar)
