@@ -738,6 +738,12 @@ struct VActionButton: View {
         // 用户点下去得不到确认。本仓早就定义了 `PressStyle`（透明度 + 0.985 缩放），
         // 但只有 4 处用上 —— 这里接到设计系统的主按钮上，60 处调用一次覆盖。
         .buttonStyle(PressStyle())
+        // 2026-11-04（组件级隐患）：`busy:` 此前**只换图标、不禁用按钮** ——
+        // 传了 `busy: true` 的按钮仍然可点，等于把"防重复提交"的责任推给每个调用方。
+        // 现有 60 处调用恰好都自己加了 `.disabled(busy)`，所以现在没出问题；
+        // 但下一个只写 `busy:` 的人就会得到一个能连点两次的主按钮。
+        // 组件自己兜住：busy 即禁用（外层再 `.disabled` 也无害，SwiftUI 取并集）。
+        .disabled(busy)
         .accessibilityLabel(title)
     }
 }
