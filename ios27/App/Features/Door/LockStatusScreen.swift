@@ -264,7 +264,7 @@ struct LockStatusScreen: View {
         VCard {
             VStack(spacing: 0) {
                 // 来源：原 App/UI/LockSettingsView.swift（锁设置）。
-                entryRow("锁设置", "slider.horizontal.3", "临时码开关 / 自动上锁 / 清空密码", .lockSettings)
+                entryRow("锁设置", "slider.horizontal.3", "动态密码开关 / 自动上锁 / 清空密码", .lockSettings)
                 hairline
                 entryRow("校时", "clock.arrow.circlepath", "锁钟偏了，临时码与时间窗凭证会失效", .syncTime)
                 hairline

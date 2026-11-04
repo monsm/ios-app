@@ -1037,7 +1037,7 @@ struct DoorScreen: View {
                     VDivider()
                     VListRow(
                         title: "锁设置",
-                        detail: "临时码开关 / 自动上锁 / 清空密码",
+                        detail: "动态密码开关 / 自动上锁 / 清空密码",
                         systemImage: "slider.horizontal.3",
                         tint: V.C.coral
                     ) { router.request(.dest(.lockSettings)) }
