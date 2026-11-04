@@ -99,12 +99,10 @@ enum LedgerFilter {
 
     /// chip 只列「真有行」的成员（避免点进去空列表）。
     ///
-    /// 2026-11-04（走查发现 · 已知边界，留档）：这里依赖 `entry.owner`，而它只在**单成员家庭**
-    /// 才被填（`RecordsModels.owner` 的单成员启发式）。多人家庭里这个列表**是空的** ——
-    /// 成员筛选 chip 不出现，用户以为"没有按成员筛的功能"。
-    /// 要真修得让每条记录走 `Attribution.classify`，那是记录页热路径上的 O(日志 × 凭证)，
-    /// 与本仓 `DateFormats` 头注里记的 4000-formatter 教训同类；正确做法是**进页时算一次**
-    /// 落成 `[entryID: memberID]` 映射（与 `MemberHub.activityBundle` 同思路），属独立改动。
+    /// 2026-11-04（**已修**）：这条注释当天前半段还写着"多成员家庭里这个列表是空的"。
+    /// 根因不在本函数 —— 是 `entry.owner` 当时只有单成员启发式。修法按当时写下的方向做了：
+    /// `load` 里**进页算一次** `Attribution.classify`，落成 `idxRaw → 成员 id` 映射后填进 `owner`。
+    /// 本函数不需要改：它读的字段现在有了真值。
     static func members(in entries: [LedgerEntry]) -> [String] {
         var seen = Set<String>()
         var out: [String] = []
@@ -294,18 +292,44 @@ enum RecordsSource {
         let mac = DB.normalizeMac(rawMac)
         var timed: [LedgerEntry] = []
         var untimed = 0
-        for log in DB.readLogs(mac) {
+        let logs = DB.readLogs(mac)
+        // 2026-11-04（走查发现 · 归属映射层）：`Attribution.classify` **一次**算出「这条日志是谁的」，
+        // 与 `MemberHub.activityBundle` 同一个引擎、同一套判据。在此之前这里只有「单成员家庭就
+        // 算他」的启发式 —— 于是多成员家庭的记录页：归属列恒「未归属」、成员筛选 chip 恒空、
+        // 按成员搜索恒无结果。**不是"没实现"，是"每人头上都写着未知"。**
+        //
+        // 放在 `load` 里而不是滤镜里，是因为它随 `reload()` 走一次 — 逐条过滤时再算就是
+        // O(日志 × 凭证) 的热路径开销（见 `DateFormats` 头注那条 4000-formatter 教训）。
+        //
+        // 归属值仍然用**成员名**：`LedgerEntry.owner` 是展示模型，展示层各处（详情/时间线/导出/
+        // 搜索面）都直接把它印出来。存 id 会把一串 UUID 印给用户。
+        var nameByID: [String: String] = [:]
+        for m in members { nameByID[m.id] = m.name }
+        var proven: [String: String] = [:]   // 日志 idxRaw -> 成员 id
+        if !members.isEmpty {
+            let status = DB.readStatus(mac)
+            let rows = Attribution.classify(
+                logs: logs.map { LogEntry(type: $0.type, typeName: $0.displayTypeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,
+                                          lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") },
+                pwds: DB.listPwds(mac), fps: DB.listFps(mac),
+                status: status.map { ($0.fpStock, $0.pwdStock, $0.lockTime) })
+            for (i, r) in rows.enumerated() where i < logs.count {
+                if let who = r.who, nameByID[who] != nil { proven[String(logs[i].idxRaw)] = who }
+            }
+        }
+        for log in logs {
             // lockTime == 0 = 锁端没读到时钟（不是 2010-01-01）。没有时刻就不进时间线。
             guard log.lockTime > 0 else {
                 untimed += 1
                 continue
             }
             let at = Int64(ZKProtocol.protoSecondsToUnix(log.lockTime) * 1000)
+            let provenName = proven[String(log.idxRaw)].flatMap { nameByID[$0] }
             timed.append(LedgerEntry(
                 id: mac + "#" + String(log.idxRaw),
                 at: at,
                 event: log.displayTypeName,
-                owner: owner(log, members: members),
+                owner: provenName ?? owner(log, members: members),
                 tone: tone(log),
                 detail: [detail(log, lockName: lockName), log.diff].compactMap { $0 }.joined(separator: " · "),
                 rawType: log.type
@@ -327,8 +351,12 @@ enum RecordsSource {
     /// 与 `weekSentence` 都靠它算出多成员家庭的可证明归属。这里不用它，是因为 `LedgerEntry`
     /// 是**全仓共享的展示模型**，逐行跑 Attribution 会把记录页拖慢（见 DateFormats 头注里那条
     /// "100 条日志 × 20 条临时码 = 4000 个 formatter"的教训）。
-    /// 所以：单成员家庭可以确定是他；多成员时**如实留空**，不按名字猜；需要归属统计时走
-    /// `MemberHub.activityBundle`（成员域按需算一次，不逐行）。
+    /// 所以：单成员家庭可以确定是他；多成员时**如实留空**，不按名字猜。
+    ///
+    /// 2026-11-04（本轮）：上面那条"多成员如实留空"现在是**兜底**，不再是唯一来源 ——
+    /// `load` 已经先用 `Attribution.classify` 算出一份 `idxRaw → 成员 id` 映射（一次遍历，
+    /// 与 `MemberHub.activityBundle` 同一个引擎），命中就填成员名。这条兜底只在
+    /// 归因引擎也给不出结论时生效（例如锁端日志缺槽位信息的老固件）。
     private static func owner(_ log: CachedLog, members: [MemberCard]) -> String? {
         guard openTypes.contains(log.type) else { return nil }
         let active = members.filter { !$0.archived }
