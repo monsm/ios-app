@@ -52,7 +52,11 @@ final class HouseholdRoster {
     // MARK: 读
 
     func extras(for id: String) -> HHMemberExtras {
-        var e = table[id] ?? Self.seed[id] ?? HHMemberExtras()
+        // 2026-11-04（S6 · 02 6.2 点名的假数据）：原来是 table[id] ?? Self.seed[id] ?? HHMemberExtras()。
+        // 那份 seed 底稿会**伪装成真实成员档案**（「血压药在玄关第二格」「妈妈 · 手机号见通讯录」），
+        // 而它们并不属于任何真实成员：用户第一次打开成员页看到的是别人家的备注。
+        // 删掉底稿，缺失就是缺失 —— 空字段由界面如实显示「未填」。
+        var e = table[id] ?? HHMemberExtras()
         // 关系是成员的独立字段（Engine Member.relation），不在 MemberExt 里。
         // 优先本机覆盖层（样例成员也存得住），其次锁端成员字段，最后才是种子。
         if let relation = relationOverlay[id], !relation.isEmpty {
@@ -153,17 +157,6 @@ final class HouseholdRoster {
                        proxy: e.proxy)
     }
 
-    /// 展示底稿：只在成员还没写过任何档案时兜底，让首屏不是一片空白。
-    private static let seed: [String: HHMemberExtras] = [
-        "m1": HHMemberExtras(emoji: "🦊", remark: "", relation: "本人", groupTag: "家人",
-                             note: "周六换锁芯", emergency: "", emergencyAdmin: true),
-        "m2": HHMemberExtras(emoji: "🐻", remark: "妈", relation: "母亲", groupTag: "家人",
-                             note: "血压药在玄关第二格", emergency: "妈妈 · 手机号见通讯录", emergencyAdmin: false),
-        "m3": HHMemberExtras(emoji: "", remark: "", relation: "妹妹", groupTag: "家人",
-                             note: "", emergency: "", emergencyAdmin: false),
-        "m4": HHMemberExtras(emoji: "🧹", remark: "周三来", relation: "钟点工", groupTag: "服务人员",
-                             note: "", emergency: "", emergencyAdmin: false),
-    ]
 }
 
 // MARK: - 角色与权限矩阵（470 / 843）

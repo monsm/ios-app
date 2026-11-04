@@ -295,7 +295,23 @@ final class SettingsStore {
         }
     }
 
-    var lastScanAt: Int64? = nil
+    /// 上次扫描钥匙串的时刻（毫秒）。
+    ///
+    /// 2026-11-04（S6 · 02 第 6.1 条）：原来是个**纯内存**的 var，重启即丢，
+    /// 而硬件页把它显示成「上次扫描」并允许「从未」状态。
+    /// 用户扫完、杀掉 App、再打开看到「从未」，会以为扫描没生效。
+    /// 现在落盘到 kf_last_scan（与其它偏好同族，走 Store 的失败台账）。
+    var lastScanAt: Int64? {
+        get {
+            _ = revision
+            let v = DB.store.getDouble("kf_last_scan", 0)
+            return v > 0 ? Int64(v) : nil
+        }
+        set {
+            DB.store.set("kf_last_scan", Double(newValue ?? 0))
+            revision &+= 1
+        }
+    }
 
     // MARK: 无障碍（大字档位参与 RootView 的 dynamicTypeSize）
 
