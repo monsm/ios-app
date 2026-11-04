@@ -13,6 +13,8 @@ struct DoorHomeScreen: View {
     @State private var link = LinkSenseModel()
     @State private var showQuickEdit = false
     @State private var showUnlockGate = false
+    /// 防抖：上次触发开锁的时刻（dbltapGuard 用）。
+    @State private var lastFireAt: Date?
 
     private var lock: LockSummary? { app.lock }
 
@@ -267,6 +269,11 @@ struct DoorHomeScreen: View {
     /// 唯一开锁入口：本机密码闸（30 秒内二次开锁）+ 双击防抖 + 真命令链（与 DoorScreen 同口径）。
     private func requestUnlock() {
         guard app.dialPhase == .idle || app.dialPhase.isFailed else { return }
+        if SettingsStore.shared.dbltapGuard,
+           let last = lastFireAt, Date().timeIntervalSince(last) < 0.3 {
+            return
+        }
+        lastFireAt = Date()
         if needsGate {
             showUnlockGate = true
         } else {
@@ -276,7 +283,10 @@ struct DoorHomeScreen: View {
 
     private var needsGate: Bool {
         guard DB.hasPasscode(), let last = app.lastUnlockSuccessAt else { return false }
-        return Date().timeIntervalSince1970 * 1000 - Double(last) > 30_000
+        let now = Date().timeIntervalSince1970 * 1000
+        // 刚通过闸门的 30 秒内直接放行 —— 否则连续开门会一直弹密码（与 DoorScreen 同一修复）。
+        if let passed = app.gatePassedAt, now - Double(passed) < 30_000 { return false }
+        return now - Double(last) > 30_000
     }
 
     private func runQuick(_ id: String) {

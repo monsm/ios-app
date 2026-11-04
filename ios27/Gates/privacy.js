@@ -407,7 +407,10 @@ console.log('privacy: 扫 ' + files.length + ' 个 Swift 文件 + PrivacyInfo.xc
 // 这是安全承诺级的前置说明，不是可选文案。
 {
   const decl = 'Engine/AutoOpenKit.swift';
-  const user = 'Features/Settings/AutoOpenScreen.swift';
+  // 2026-11-04（S4 收口）：旧页 AutoOpenScreen.swift 已删除，展示点迁到 V8 的 AutoOpenHomeScreen。
+  // 这条规则盯的是「风险披露文案有没有真的出现在界面上」，不是盯某个文件名 ——
+  // 所以随页面迁移同步指向新页即可（新页 181 行有 Text(AutoOpen.riskDisclosure)）。
+  const user = 'Features/Settings/AutoOpenHomeScreen.swift';
   const d = files.find(function (x) { return x.rel === decl; });
   if (d && /static let riskDisclosure/.test(d.raw)) {
     const u = files.find(function (x) { return x.rel === user; });

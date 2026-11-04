@@ -1,7 +1,7 @@
 // SecurityHomeScreen.swift —— 安全（V8 设计语言）
 //
 // 与 SecurityScreen 的能力对齐：本机密码（设 / 改 / 关，4 位以上纯数字）、胁迫码（设 / 改 / 关）、
-// 生物识别、锁端安全入口（安全模式 / 布防）、开锁确认三项、只读试验模式。
+// 生物识别、锁端安全入口（安全模式 / 布防）、失败自动重试、只读试验模式。
 // 只改渲染层：密码仍走 DB.setPasscode / DB.setDuressCode / DB.verifyPasscode，
 // 表单仍是 SettingsParts 的 PasscodeSheet / VerifyPasscodeSheet（全仓唯一校验链，复制一份就会漂）。
 //
@@ -390,9 +390,7 @@ struct SecurityHomeScreen: View {
             VDivider2()
                 .padding(.top, V8.S.gapM)
             toggleRow("失败自动重试", detail: "一次没开成时自动重试两次（2 秒 / 5 秒退避）。超时不重试 —— 免得在门口反复广播。", isOn: settingsBinding(\.autoRetry))
-            toggleRow("误触围栏", detail: "开启后要先把手指从圆盘边缘拖到中心解锁围栏，开锁手势才响应 —— 防口袋里误触。", isOn: settingsBinding(\.fence))
-            toggleRow("双击直开", detail: "按住档下，双击圆盘绕过按住确认直接开。方便，但误触风险也更高；默认关。", isOn: settingsBinding(\.tapDirect))
-            Text("这几项只管「怎么算确认」，不改锁端策略。安全模式（A / B）是锁端的事，改它要连上锁并回读确认。")
+            Text("只改「失败后怎么处理」，不改锁端策略。安全模式（A / B）是锁端的事，改它要连上锁并回读确认。")
                 .font(V8.T.footnote)
                 .foregroundStyle(V8.C.ink3)
                 .padding(.top, V8.S.gapM)

@@ -131,8 +131,6 @@ enum V {
         /// 提亮到 #9A9A9F：同一灰阶族，5.40:1 达标。
         static let text4 = dual(0x5B6169, 0x9A9A9F)
         /// 原 #48525B 在 #000 上只有 2.63:1。提亮到 #8E98A3：保留蓝灰倾向，7.17:1 达标。
-        static let text6 = dual(0x2C3035, 0xC7C7CC)   // 卡标题
-        static let text7 = dual(0x3A3F45, 0xD2D0D0)   // 脚注
         /// 图表轴标。原 #4E4E50 在 #000 上只有 2.53:1（8.6pt 正文），换成 #8E8E93（6.44:1）。
         static let axisLabel = dual(0x61676E, 0x8E8E93)
 
@@ -181,8 +179,6 @@ enum V {
         static let green = rgb(193, 248, 100)    // #C1F864 参考 C 三环绿
         static let cyan = rgb(99, 237, 231)      // #63EDE7 参考 C 三环青
         static let purple = rgb(155, 143, 217)   // #9B8FD9 参考 C 微卡紫
-        static let miniBlue = rgb(92, 169, 232)  // #5CA9E8 参考 C 微卡蓝
-        static let lime = rgb(194, 246, 106)     // #C2F66A 参考 C 事件绿
         static let red = dual(0xC81E3C, 0xFF375F)    // #FF375F（浅色压深）
         /// 参考 C 红环渐变两端：(103,0,0) → (255,53,135)。
         static let redDeep = rgb(103, 0, 0)
@@ -219,64 +215,40 @@ enum V {
             VFont(size: size, weight: weight, design: design, relativeTo: style)
         }
 
-        static let displayA = sans(30, weight: .bold, relativeTo: .largeTitle)      // 参考 A 大标题 30/700
-        static let displayB = sans(29, weight: .bold, relativeTo: .largeTitle)      // 参考 B 大标题 29/700
         static let displayHome = sans(34, weight: .bold, relativeTo: .largeTitle)   // 设置/根页大标题 34/700
     // 2026-11-04（S4 清理）：heroGlyph56 / displayC 已删 —— 唯一消费者是旧 KeysScreen /
     // HouseholdScreen / SettingsScreen，它们整份删除了。V7 只剩"还被旧组件库引用"的档位。
-        static let displayD = sans(26, weight: .regular, relativeTo: .title)        // 门锁档案 26
-        static let displayE = sans(28, weight: .regular, relativeTo: .title)        // 电池档案 28
-        static let displayESemibold = sans(28, weight: .semibold, relativeTo: .title)
         static let display24 = sans(24, weight: .regular, relativeTo: .title2)      // 冷启动闸门 24
-        static let display22 = sans(22, weight: .regular, relativeTo: .title2)
-        static let display26 = sans(26, weight: .regular, relativeTo: .title)
         // title20 (20/700) removed 2026-11-01: zero consumers across the whole repo.
         static let body = sans(17)                         // 正文 17
         static let bodyStrong = sans(17, weight: .semibold)
         static let bodyMedium = sans(17, weight: .medium)
-        static let bodyLarge = sans(18)
-        static let bodyLargeMedium = sans(18, weight: .medium)
-        static let bodySmall = sans(14.5)
-        static let cardTitle = sans(15, weight: .semibold) // 卡标题 15/600
         static let cardBig = sans(17, weight: .semibold)   // 卡主值 17/600
-        static let cardBody = sans(15)
         static let chipLabel = sans(11)                    // 芯片标签 11
         static let chipValue = sans(13.5, weight: .semibold) // 芯片值 13.5/600
         static let statLabel = sans(12.5)                  // VStatPair 标签 12.5 #828282
         static let statValue = sans(17, weight: .semibold) // VStatPair 值 17/600
         static let small = sans(11, weight: .medium, relativeTo: .caption)       // 分组小标题 11/500（iOS 最小 11pt）
         static let micro = sans(11, relativeTo: .caption2)                        // 微标签 11
-        static let microMedium = sans(11, weight: .medium, relativeTo: .caption2)
-        static let microSmall = sans(11, relativeTo: .caption2)
         static let footnote = sans(13, relativeTo: .footnote)                     // 脚注（16.5px 的可用档）
         static let unit = sans(11, relativeTo: .caption)
-        static let section = sans(20, weight: .bold, relativeTo: .title3)         // 区块标题 20/700
-        static let sectionTitle18 = sans(18, weight: .bold, relativeTo: .title3)
         static let gaugeNumber = sans(73, weight: .bold, design: .rounded, relativeTo: .largeTitle) // 主环中心数字 73/700 · 圆体（默认档）
         static let gaugeNumberPlain = sans(73, weight: .bold, relativeTo: .largeTitle) // 主环数字 · 系统默认体（外观可切）
         static let gaugeLabel = sans(13.5, weight: .semibold, relativeTo: .footnote) // 主环标签 13.5/600
         static let ringCenter = sans(21.3, weight: .bold, relativeTo: .title2)    // 分段环中心 21.3
-        static let miniTitle = sans(14, weight: .bold, relativeTo: .subheadline)  // 微卡标题 14/700
-        static let miniBig = sans(30, weight: .semibold, relativeTo: .title)      // 微卡大数字 30/600
         static let legendLabel = sans(14, relativeTo: .subheadline)               // 图例标签 14
         static let legendLabelStrong = sans(14, weight: .semibold, relativeTo: .subheadline)
-        static let legendValue = sans(27, weight: .bold, relativeTo: .title)      // 图例数值 27/700
-        static let number11 = sans(11, weight: .medium, relativeTo: .caption)     // 读数 11
         static let number13 = sans(13, weight: .medium, relativeTo: .footnote)    // 读数 13
         static let number15 = sans(15, weight: .medium, relativeTo: .subheadline) // 读数 15
         static let number17 = sans(17, weight: .medium, relativeTo: .body)        // 读数 17
-        static let number18 = sans(18, weight: .medium, relativeTo: .body)        // 读数 18
         static let number20 = sans(20, weight: .medium, relativeTo: .title3)      // 读数 20
         static let number22 = sans(22, weight: .bold, relativeTo: .title2)        // 数字大值 22/700
-        static let number26 = sans(26, weight: .medium, relativeTo: .title)       // 读数 26
         static let tab = sans(11, weight: .semibold, relativeTo: .caption2)       // Tab 标签 11/600
         static let chevron = sans(13, weight: .semibold, relativeTo: .footnote)
         static let cardHeader = sans(11, weight: .medium, relativeTo: .caption)   // 参考 B 卡头 11/500
         static let bedValue = sans(11.5, weight: .semibold, relativeTo: .caption) // 卡内小值 11.5/600
-        static let bedLabel = sans(11.5, relativeTo: .caption)
         static let rowTitle = sans(16, relativeTo: .body)
         static let rowDetail = sans(13, relativeTo: .footnote)
-        static let rowDetailStrong = sans(13, weight: .semibold, relativeTo: .footnote)
         // cardBodyStrong (16/600) removed 2026-11-01: zero consumers.
         static let actionIcon = sans(16, weight: .semibold, relativeTo: .body)
         static let rowIcon = sans(15, weight: .medium, relativeTo: .body)
@@ -290,11 +262,6 @@ enum V {
         static let icon18Medium = sans(18, weight: .medium, relativeTo: .body)
         static let icon22 = sans(22, relativeTo: .title2)
         static let icon22Light = sans(22, weight: .light, relativeTo: .title2)
-                static let icon28Semibold = sans(28, weight: .semibold, relativeTo: .title)
-        static let otpBig = sans(44, weight: .semibold, relativeTo: .largeTitle)
-        static let otpRegular = sans(34, weight: .semibold, relativeTo: .largeTitle)
-        static let axTitleBig = sans(28, weight: .semibold, relativeTo: .title)
-        static let axTitle = sans(20, weight: .semibold, relativeTo: .title3)
     }
 
     // MARK: - 间距 / 画布（TOKENS.md 布局栅格）

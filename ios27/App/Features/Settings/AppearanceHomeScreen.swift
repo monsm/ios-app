@@ -2,7 +2,7 @@
 //
 // 与 AppearanceScreen 的能力对齐：主题 / 高对比 / 减少透明、品牌色六套 + 自定义强调色、
 // 应用图标九套、圆角 / 凭证行高 / 时间线行距、主控读数三件、记录页开场策略、
-// 长按与关怀、密度与动效、时间显示（含样例）、快捷操作 10 选 N、恢复默认外观。
+// 提示音与防抖、密度与动效、时间显示（含样例）、快捷操作 10 选 N、恢复默认外观。
 // 只改渲染层：偏好仍写 SettingsStore.shared 的同一批 kf_* 键，重置仍走 resetAppearance()。
 //
 // 与旧页的一处刻意差异：空壳模式（DB.isDecoy）下这一屏只读 —— 外观偏好本身不是档案，
@@ -452,24 +452,9 @@ struct AppearanceHomeScreen: View {
 
     private var careCard: some View {
         VCard2 {
-            VCardHead(eyebrow: "开锁与关怀", statement: "长按与提示音")
+            VCardHead(eyebrow: "开锁与关怀", statement: "提示音与防抖")
             VDivider2()
                 .padding(.top, V8.S.gapM)
-            Text("长按确认时长")
-                .font(V8.T.label)
-                .foregroundStyle(V8.C.ink4)
-                .padding(.top, V8.S.gapM)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: V8.S.gapChip) {
-                    ForEach([0.4, 0.6, 0.9, 1.2, 1.6], id: \.self) { seconds in
-                        selectChip(String(format: "%.1f", seconds), on: abs(store.holdDuration - seconds) < 0.01) {
-                            store.holdDuration = seconds
-                        }
-                    }
-                }
-            }
-            .scrollClipDisabled()
-            .padding(.top, V8.S.gapS)
             toggleRow("双击防抖（0.3 秒内忽略重复触发）", detail: "门口手抖连点两下只算一次，避免重复下发开锁。", isOn: settingsBinding(\.dbltapGuard))
             toggleRow("夜间免扰（22:00–08:00 静音提示音）", detail: "夜间低电等提醒只留横幅，不响提示音。", isOn: settingsBinding(\.quietNight))
         }

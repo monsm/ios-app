@@ -119,20 +119,21 @@ for (const f of FILES) {
 // 加新条目时：把文案里的原句、和真正实现它的那行代码，各截一个**稳定子串**。
 {
   const PAIRS = [
+    // 2026-11-04（S5/S6 收口）：V7 旧页已删，四条锚点改指承接同能力的 V8 页；LinkSense 一条不动。
     // 2026-11-02（第 324 轮回退）：防尾随页与校时页各自独立回来了 ——
     // 「六页并两页」那次合并随 List 化一起被回退（并页把两屏的内容挤进一张长列表，
     // 观感是本次用户投诉的一部分）。承诺与锚点因此各回各家。
-    { copy: 'App/Features/Door/TailgateScreen.swift', text: '2–6 秒',
-      code: 'App/Features/Door/TailgateScreen.swift', anchor: 'ForEach(2 ... 6' },
+    { copy: 'App/Features/Door/TailgateHomeScreen.swift', text: '2–6 秒',
+      code: 'App/Features/Door/TailgateHomeScreen.swift', anchor: 'ForEach(2 ... 6' },
     { copy: 'App/Features/Door/LinkSense.swift', text: '5 / 15 / 30 / 60 / 90',
       code: 'App/Features/Door/LinkSense.swift', anchor: '[5, 15, 30, 60, 90]' },
     // 校时页独立回来后，偏差文案与它的阈值常量都在同一页里。
-    { copy: 'App/Features/Door/SyncTimeScreen.swift', text: '偏差已经超过',
-      code: 'App/Features/Door/SyncTimeScreen.swift', anchor: 'private static let driftThreshold = 2' },
-    { copy: 'App/Features/Settings/AboutScreen.swift', text: '连点 10 次',
-      code: 'App/Features/Settings/AboutScreen.swift', anchor: 'versionTaps >= 10' },
+    { copy: 'App/Features/Door/SyncTimeHomeScreen.swift', text: '偏差已经超过',
+      code: 'App/Features/Door/SyncTimeHomeScreen.swift', anchor: 'private static let driftThreshold = 2' },
+    { copy: 'App/Features/Settings/AboutHomeScreen.swift', text: '连点 10 次',
+      code: 'App/Features/Settings/AboutHomeScreen.swift', anchor: 'versionTaps >= 10' },
     { copy: 'App/Features/Door/UnlockGateScreen.swift', text: '30 秒内不再重复询问',
-      code: 'App/Features/Door/DoorScreen.swift', anchor: 'app.gatePassedAt' },
+      code: 'App/Features/Door/UnlockGateScreen.swift', anchor: 'app.gatePassedAt' },
   ];
   for (const p of PAIRS) {
     for (const side of ['copy', 'code']) {

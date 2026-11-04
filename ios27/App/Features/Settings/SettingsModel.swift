@@ -247,16 +247,6 @@ final class SettingsStore {
         set { DB.store.set("kf_auto_retry", newValue); revision &+= 1 }
     }
 
-    /// 开锁手势档：`hold` / `tap` / `double`（`kf_gesture_mode`）。
-    ///
-    /// 2026-11-01（Round 254）：门页 `effectiveGesture` 原来直接读 `AXSettings.gestureMode`（**静态 DB 读**），
-    /// 而 `@Observable` 只跟踪这里 —— 于是无障碍页改档后门页**不会重算**，要等下一次别的原因刷新才生效。
-    /// 收进 `SettingsStore` 后，改档即 bump `revision`，门页立刻跟上。
-    var gestureMode: String {
-        get { _ = revision; return DB.store.getString("kf_gesture_mode", "hold") }
-        set { DB.store.set("kf_gesture_mode", newValue); revision &+= 1 }
-    }
-
     // MARK: 备份
 
     // 2026-11-04（清理 · 假开关的遗骸）：`encryptBackup` 曾经驱动「加密备份」开关，
@@ -366,24 +356,6 @@ final class SettingsStore {
         set { QueryFilters.setPolicy(newValue); revision &+= 1 }
     }
 
-    /// 开锁确认：长按时长（秒，0.4–1.6）。
-    var holdDuration: Double {
-        get { _ = revision; return min(1.6, max(0.4, DB.store.getDouble("kf_ax_hold", 0.9))) }
-        set { DB.store.set("kf_ax_hold", min(1.6, max(0.4, newValue))); revision &+= 1 }
-    }
-
-    /// 双击直开（kf_tap_direct）：按住档下双击绕过按住确认。
-    var tapDirect: Bool {
-        get { _ = revision; return DB.store.getBool("kf_tap_direct") }
-        set { DB.store.set("kf_tap_direct", newValue); revision &+= 1 }
-    }
-
-    /// 误触围栏（kf_fence）：先从边缘拖到中心解锁围栏。
-    var fence: Bool {
-        get { _ = revision; return DB.store.getBool("kf_fence") }
-        set { DB.store.set("kf_fence", newValue); revision &+= 1 }
-    }
-
     /// 双击防抖（kf_dbltap_guard，默认开）。
     var dbltapGuard: Bool {
         get { _ = revision; return DB.store.getBool("kf_dbltap_guard", true) }
@@ -443,7 +415,7 @@ final class SettingsStore {
     /// 恢复默认外观：只重置外观偏好，不动安全 / 备份 / 硬件，也不动任何门锁数据。
     ///
     /// 2026-11-04（走查发现 · 漏了最显眼的那一项）：这函数重置了 22 个偏好，**独独漏了
-    /// 无障碍页的四项**（`axBigText` 全局大字 / `kf_ax_bigotp` / `kf_bigtile` / `kf_dial_size`）。
+    /// 无障碍页的三项**（`axBigText` 全局大字 / `kf_ax_bigotp` / `kf_bigtile`）。
     /// 而 `AccessibilityScreen:24` 的注释还写着「『恢复默认外观』会整体重置 axBigText」—— 那句话是假的。
     /// 用户开了全局大字（整棵树压到 accessibility2）再点「恢复默认外观」，字号纹丝不动 ——
     /// 而字号恰恰是外观里最显眼的一项。
@@ -451,7 +423,6 @@ final class SettingsStore {
         axBigText = false
         DB.store.set("kf_ax_bigotp", false)
         DB.store.set("kf_bigtile", false)
-        DB.store.set("kf_dial_size", "standard")
         theme = .system
         density = .standard
         motion = .standard
@@ -468,9 +439,6 @@ final class SettingsStore {
         digitFont = ""
         recentCount = 5
         recordPolicy = ""
-        holdDuration = 0.9
-        tapDirect = false
-        fence = false
         dbltapGuard = true
         quietNight = true
         // 2026-11-04（第二轮漏项 · 与 117 轮的无障碍四项同类）：`quickGridCount` 也在外观页可改

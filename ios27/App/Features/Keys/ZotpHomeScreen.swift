@@ -97,7 +97,8 @@ struct ZotpHomeScreen: View {
                     .padding(.vertical, V8.S.gapL)
             } else {
                 Text(displayCode)
-                    .font(bigCode ? V8.T.hero : V8.T.heroL)
+                    // 「无障碍 · 放大临时码」的消费点：开启后默认就用 62pt 档；双击仍可临时切换。
+                    .font((bigCode || DB.store.getBool("kf_ax_bigotp")) ? V8.T.hero : V8.T.heroL)
                     .monospacedDigit()
                     .foregroundStyle(V8.C.ink1)
                     .contentTransition(reduceMotion ? .identity : .numericText())

@@ -41,7 +41,7 @@ struct SettingsHomeScreen: View {
             VDotRule()
             VNavRow(title: "靠近自动开锁", detail: "默认关；开启前先标定距离") { router.request(.dest(.autoOpen)) }
             VDotRule()
-            VNavRow(title: "无障碍", detail: "全局大字 / 大格模式 / 圆盘尺寸") { router.request(.dest(.accessibility)) }
+            VNavRow(title: "无障碍", detail: "全局大字 / 放大临时码 / 大格模式") { router.request(.dest(.accessibility)) }
         }
     }
 

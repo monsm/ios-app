@@ -173,8 +173,8 @@ checkV7('次文本 text3 / card', 'text3', 'card', 4.5);
 checkV7('芯片标签 text4 / chipTop', 'text4', 'chipTop', 4.5);
 checkV7('主环标签 text4 / bg', 'text4', 'bg', 4.5);
 checkV7('卡头 text2 / card', 'text2', 'card', 4.5);
-checkV7('卡标题 text6 / card', 'text6', 'card', 3);
-checkV7('焦点 text7 / card', 'text7', 'card', 4.5);
+// 2026-11-04（S5/S6 收口）：text6 / text7 随旧 V7 页删除（全仓零消费者），断言跟着删 ——
+// 对不存在令牌的断言会一直报「令牌缺失」，等于把真问题淹掉（同 Round 16 infoFill 先例）。
 checkV7('正文 text2 / card', 'text2', 'card', 4.5);
 checkV7('i 字形 infoGlyph / infoBG（非文本）', 'infoGlyph', 'infoBG', 3);
 checkV7('图表轴标 axisLabel / bg', 'axisLabel', 'bg', 4.5);

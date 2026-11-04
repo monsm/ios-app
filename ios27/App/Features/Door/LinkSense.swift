@@ -2,8 +2,8 @@
 //
 // 来源：原 App/Core/LinkSenseKit.swift + LinkSenseReconnect.swift + LinkSenseViews.swift
 //   （LinkSense 预热/回连节律、RSSI 四格信号条、蓝牙未开横幅）。
-// 这屏干什么：在设备页顶部常驻一条链路面板 —— 显示三态、最近 RSSI 与四格信号条、握手耗时、
-//   5/15/30/60/90 秒重连阶梯；「预热」只建立到就绪态，绝不下发开锁或凭证（96 铁律）。
+// 本文件只提供 LinkSenseModel：连接相位、最近 RSSI、握手耗时与 5/15/30/60/90 秒重连阶梯。
+//   门页 V8 的「连接」卡直接消费它；「预热」只建立到就绪态，绝不下发开锁或凭证（96 铁律）。
 // 数据从哪来：BLEService（扫描 / readLinkRSSI / isPoweredOn）+ LockService.connectedMAC。
 // 主动作：「预热」与「重连」都是只读协作，不改锁端任何东西。
 import SwiftUI
@@ -18,6 +18,7 @@ final class LinkSenseModel {
         case noKey = "密钥未绑定"
     }
 
+    /// 重连阶梯：5 / 15 / 30 / 60 / 90 秒 —— 每按一次「重连」进一档。
     static let ladder: [Double] = [5, 15, 30, 60, 90]
 
     var phase: Phase = .down
@@ -33,8 +34,8 @@ final class LinkSenseModel {
     var lastEvent = "进页会自动预热一次，只建立连接，不开锁。"
     var bluetoothOn = BLEService.shared.isPoweredOn
 
-    /// 当前链路对应的锁 MAC。`private(set)` 而不是 `private`：`LinkSenseBar` 要把这个值交给
-    /// `Reading.signal(mac)`（信号口径的唯一出口），不能让视图自己再拼 dBm。
+    /// 当前链路对应的锁 MAC。`private(set)` 而不是 `private`：`Reading.signal(mac)`
+    /// 需要它（信号口径的唯一出口），视图不能自己再拼 dBm。
     private(set) var mac = ""
 
     func update(mac newMac: String) {
@@ -165,123 +166,3 @@ final class LinkSenseModel {
     }
 }
 
-/// 设备页顶部常驻的链路条：信号条 + 三态 + 预热/重连 + RSSI 历史 + 阶梯。
-struct LinkSenseBar: View {
-    @Bindable var model: LinkSenseModel
-    @State private var showHistory = false
-
-    var body: some View {
-        VCard {
-            VStack(alignment: .leading, spacing: V.S.gapS) {
-                HStack(alignment: .center, spacing: V.S.gapS) {
-                    VStack(alignment: .leading, spacing: V.S.gapXXS) {
-                        Text("连接感知")
-                            .font(V.F.chipLabel)
-                            .foregroundStyle(V.C.text4)
-                        HStack(spacing: V.S.gapS) {
-                            stateDot
-                            Text(model.phase.rawValue)
-                                .font(V.F.cardTitle)
-                                .foregroundStyle(V.C.text1)
-                            if let ms = model.connectMs {
-                                Text("\(ms)ms · \(model.connectSource)")
-                                    .font(V.F.micro).foregroundStyle(V.C.text3)
-                            }
-                        }
-                    }
-                    Spacer(minLength: 0)
-                    VStack(alignment: .trailing, spacing: V.S.gapXXS) {
-                        // 信号柱是自绘（系统无对应控件），保留；**读数文字**走 Reading.signal ——
-                        // dBm 与「满/近/中/远/不可测」的拼法全仓只有一处，不再在这里各写一遍。
-                        RSSIBars(level: model.rssiLevel)
-                        let signal = Reading.signal(model.mac)
-                        Text(signal.spoken)
-                            .font(V.F.micro)
-                            .foregroundStyle(signal.tone.color)
-                            .monospacedDigit()
-                            .accessibilityLabel("信号 " + signal.spoken)
-                    }
-                }
-                if !model.bluetoothOn {
-                    HStack(spacing: V.S.gapS) {
-                        Image(systemName: "antenna.radiowaves.left.and.right.slash")
-                            .font(V.F.rowDetailStrong)
-                            .foregroundStyle(V.C.pink)
-                            .accessibilityHidden(true)
-                        Text("蓝牙已关闭 —— 打开系统蓝牙后门锁才能被唤醒。")
-                            .font(V.F.footnote).foregroundStyle(V.C.text1)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .padding(V.S.gapS)
-                    .background(V.C.pink.opacity(0.12), in: .rect(cornerRadius: V.R.action, style: .continuous))
-                }
-                // 2026-11-03（门页瘦身）：预热/重连/信号 三个按钮移到**导航栏工具位** ——
-                // 系统给工具项原生玻璃材质，且省下这一行 ~44pt 给刻度盘。
-                if showHistory {
-                    VStack(alignment: .leading, spacing: V.S.gapXS) {
-                        VRowDivider()
-                        Text("RSSI 历史（最近 \(LinkSenseModel.rssiHistoryCap) 个采样）")
-                            .font(V.F.chipLabel).foregroundStyle(V.C.text4)
-                        if model.history.isEmpty {
-                            Text("还没有采样 —— 预热或点「信号」读一次。")
-                                .font(V.F.footnote).foregroundStyle(V.C.text3)
-                        } else {
-                            HStack(alignment: .bottom, spacing: V.S.gapXXS) {
-                                ForEach(Array(model.history.enumerated()), id: \.offset) { pair in
-                                    let h = CGFloat(max(1, min(24, 24 - (pair.element + 100) / 2)))
-                                    RoundedRectangle(cornerRadius: V.S.hair, style: .continuous)
-                                        .fill(V.C.blue.opacity(0.7))
-                                        .frame(width: V.S.gapS, height: h)
-                                }
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            Text("每格 = 一次采样；越高越接近满格信号。")
-                                .font(V.F.micro).foregroundStyle(V.C.text3)
-                        }
-                        Text("重连阶梯：5 / 15 / 30 / 60 / 90 秒 —— 当前第 \(model.attempt + 1) 档。")
-                            .font(V.F.micro).foregroundStyle(V.C.text3)
-                    }
-                } else {
-                    Text(model.lastEvent)
-                        .font(V.F.micro).foregroundStyle(V.C.text3)
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-        }
-        .padding(.horizontal, V.S.cardGutter)
-    }
-
-    private var stateDot: some View {
-        Circle()
-            .fill(stateColor)
-            .frame(width: V.List.dotSize, height: V.List.dotSize)
-            .accessibilityHidden(true)
-    }
-
-    private var stateColor: Color {
-        switch model.phase {
-        case .ready: return V.C.rewardGreen
-        case .connecting: return V.C.coral
-        case .noKey: return V.C.coral
-        case .down: return V.C.text3
-        }
-    }
-}
-
-/// 四格信号条：形状 + 档位文字双通道（色觉障碍也能读）。
-struct RSSIBars: View {
-    let level: Int
-
-    var body: some View {
-        HStack(alignment: .bottom, spacing: V.S.gapXXS) {
-            ForEach(0 ..< 4, id: \.self) { index in
-                RoundedRectangle(cornerRadius: V.S.hair, style: .continuous)
-                    .fill(index < level ? V.C.blue : V.C.grid)
-                    .frame(width: V.S.gapS, height: V.S.gapS + CGFloat(index) * V.S.gapXS)
-            }
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("信号" + LinkSenseModel.levelWord(level))
-    }
-}

@@ -1,7 +1,7 @@
 // AccessibilityHomeScreen.swift —— 无障碍与操作辅助（V8 设计语言）
 //
 // 与 AccessibilityScreen 的能力对齐：看得清（全局大字 / 放大临时码 / 大格模式）、
-// 点得准（圆盘尺寸三档）、动效与对比（系统态只读 3 行）、样例。
+// 动效与对比（系统态只读 3 行）、样例。
 import SwiftUI
 
 struct AccessibilityHomeScreen: View {
@@ -12,7 +12,6 @@ struct AccessibilityHomeScreen: View {
     @State private var bigText = SettingsStore.shared.axBigText
     @State private var bigOTP = DB.store.getBool("kf_ax_bigotp")
     @State private var bigTile = DB.store.getBool("kf_bigtile")
-    @State private var dialSize = DB.store.getString("kf_dial_size", "standard")
 
     private var store: SettingsStore { SettingsStore.shared }
 
@@ -21,7 +20,6 @@ struct AccessibilityHomeScreen: View {
             EmptyView()
         } content: {
             textCard
-            touchCard
             motionCard
             sampleCard
         }
@@ -34,7 +32,6 @@ struct AccessibilityHomeScreen: View {
         bigText = store.axBigText
         bigOTP = DB.store.getBool("kf_ax_bigotp")
         bigTile = DB.store.getBool("kf_bigtile")
-        dialSize = DB.store.getString("kf_dial_size", "standard")
     }
 
     private var textCard: some View {
@@ -74,40 +71,6 @@ struct AccessibilityHomeScreen: View {
         }
         .frame(minHeight: V8.H.min)
         .padding(.vertical, V8.S.gapXS)
-    }
-
-    private var touchCard: some View {
-        VCard2 {
-            VCardHead(eyebrow: "点得准", statement: "圆盘尺寸")
-            VDivider2()
-                .padding(.top, V8.S.gapM)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: V8.S.gapChip) {
-                    dialChip("小", key: "small")
-                    dialChip("标准", key: "standard")
-                    dialChip("大", key: "large")
-                }
-            }
-            .padding(.top, V8.S.gapM)
-        }
-    }
-
-    private func dialChip(_ title: String, key: String) -> some View {
-        let selected = dialSize == key
-        return Button {
-            dialSize = key
-            DB.store.set("kf_dial_size", key)
-        } label: {
-            Text(title)
-                .font(V8.T.tab)
-                .foregroundStyle(selected ? V8.C.chipOn : V8.C.ink1)
-                .padding(.horizontal, V8.S.gapM)
-                .frame(minHeight: V8.H.min)
-                .background(Capsule(style: .continuous).fill(selected ? V8.C.accent : V8.C.chipOff))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("圆盘尺寸 " + title)
-        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
     }
 
     private var motionCard: some View {
