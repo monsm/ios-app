@@ -11,6 +11,8 @@ struct MemberMergeSheet: View {
     @State private var candidates: [Member] = []
     @State private var secondaryID: String?
     @State private var error: String?
+    /// 2026-11-04（破坏性操作缺确认）：合并会**永久删除副档**，原来点「执行合并」直接执行。
+    @State private var confirmMerge = false
 
     var body: some View {
         NavigationStack {
@@ -62,7 +64,7 @@ struct MemberMergeSheet: View {
                                 VStatusLine(tone: .critical, text: error)
                             }
                             VActionButton(title: "执行合并", systemImage: "arrow.triangle.merge") {
-                                merge()
+                                confirmMerge = true
                             }
                             .disabled(secondaryID == nil)
                             .opacity(secondaryID == nil ? 0.4 : 1)
@@ -73,6 +75,14 @@ struct MemberMergeSheet: View {
                 .padding(.vertical, V.S.gap16)
             }
             .background(CanvasBackground())
+            // 破坏性且**不可撤销**：副档被删除后没有恢复入口（归档才有恢复）。必须二次确认，
+            // 并把"删什么、迁什么、不能撤回"一次说清。
+            .alert("确认合并并删除副档？", isPresented: $confirmMerge) {
+                Button("取消", role: .cancel) {}
+                Button("合并并删除", role: .destructive) { merge() }
+            } message: {
+                Text("副档名下的密码与指纹归属会迁到「\(primary.name)」，认领记录一起改判，然后副档被永久删除 —— 这一步没有撤销。只动本机台账，不碰锁端。")
+            }
             .navigationTitle("重复合并")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
