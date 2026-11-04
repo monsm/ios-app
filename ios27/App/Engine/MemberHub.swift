@@ -236,9 +236,14 @@ enum MemberHub {
                                           lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") },
                 pwds: pwds, fps: fps,
                 status: status.map { ($0.fpStock, $0.pwdStock, $0.lockTime) })
+            // 2026-11-04（认领一致性）：`RecordsSource.load` 现在会让**手动认领**覆盖归因结果，
+            // 而这里若只读 `r.who`，就会出现「列表写着成员A、统计说他 0 次」——同屏两套归属。
+            // 认领是用户对"这条是谁的"的明确判断，统计必须同源。
+            let claimMap = claims(kc.mac)
             for (i, r) in rows.enumerated() {
-                if isVisitorRow(kind: r.kind, whoId: r.who) { b.visitorOpens += 1 }
-                guard let who = r.who, var a = b.table[who] else { continue }
+                let claimed = claimMap[String(logs[i].idxRaw)]
+                if isVisitorRow(kind: r.kind, whoId: claimed ?? r.who) { b.visitorOpens += 1 }
+                guard let who = claimed ?? r.who, var a = b.table[who] else { continue }
                 let unix = ZKProtocol.protoSecondsToUnix(Int64(logs[i].lockTime))
                 if unix >= now - 30 * 86400 { a.opens30 += 1 }
                 if unix >= mStart { a.month += 1 }
