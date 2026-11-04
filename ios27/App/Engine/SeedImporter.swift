@@ -78,14 +78,24 @@ enum SeedImporter {
                     var ledger = DB.ledger(d.mac)
                     ledger.pwds.append(LedgerPwd(alias: 990, from: from, to: to, temp: true,
                                                  at: now.timeIntervalSince1970 * 1000,
-                                                 pwd: nil, owner: ownerID, note: "CI 合成临时码"))
+                                                 pwd: "246810", owner: ownerID, note: "CI 合成临时码"))
                     DB.saveLedger(d.mac, ledger)
                 }
                 // 2026-11-04（取证）：日志写没写进去，截图上看不出来（记录页仍空）。
                 // 把"写了多少 / 读回多少"落一个文本文件，workflow 会 cat 进 diag —— 一次跑清。
                 let readBack = DB.readLogs(DB.normalizeMac(d.mac)).count
+                // 2026-11-04（第三轮取证）：归属仍不显示。已知 `openKind[16/17]` 是 temp/pwd、
+                // `listPwds` 不过滤，所以只剩两种可能：临时码没落库，或归因没匹配上。
+                // 把三个数写进 diag，一次跑清。
+                let members = DB.members().count
+                let temps = DB.listPwds(DB.normalizeMac(d.mac)).filter { $0.temp && !($0.owner ?? "").isEmpty }.count
+                let attributed = Attribution.classify(
+                    logs: DB.readLogs(DB.normalizeMac(d.mac)).map { LogEntry(type: $0.type, typeName: $0.displayTypeName, idx: $0.idxRaw, idxRaw: $0.idxRaw, lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") },
+                    pwds: DB.listPwds(DB.normalizeMac(d.mac)), fps: DB.listFps(DB.normalizeMac(d.mac)),
+                    status: nil).filter { $0.who != nil }.count
                 let note = "seed mac=\(d.mac) wrote=\(logs.count) readBack=\(readBack) "
                     + "keychain=\(DB.keychain(d.mac) != nil) logcacheKey=\(DB.normalizeMac(d.mac))"
+                    + " members=\(members) temps=\(temps) attributed=\(attributed)"
                 if let dd = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
                     try? note.write(to: dd.appendingPathComponent("kf-seed-diag.txt"), atomically: true, encoding: .utf8)
                 }
