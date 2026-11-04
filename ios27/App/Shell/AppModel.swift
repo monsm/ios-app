@@ -486,7 +486,10 @@ final class AppModel {
             // `RecordsScreen.read()`（那里会补一次 `markSynced`），"上次读取时间"就永远读不到，
             // 界面恒显示「还没读取过锁内日志」—— 而其实刚刚读过。
             // 现在写/读/补记三处统一为：**归一化键 + 毫秒字符串**。
-            DB.store.set("kf_logsync_" + DB.normalizeMac(mac), String(Int(Date().timeIntervalSince1970 * 1000)))
+            // 2026-11-05（对抗审查）：这里原先是**内联**写 kf_logsync_，与 `RecordsSource.markSynced`
+            // 是同一份口径的两处实现 —— 而 markSynced 因此变成零调用函数（改它的键格式不会影响这里）。
+            // 统一走 markSynced，让「上次读取时间」只有一份写法。
+            RecordsSource.markSynced(mac: mac, at: Int64(Date().timeIntervalSince1970 * 1000))
             await reload(refreshStatus: false)
             return (read: collected.count, remaining: remaining)
         } catch {

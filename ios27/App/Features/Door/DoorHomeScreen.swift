@@ -66,7 +66,11 @@ struct DoorHomeScreen: View {
 
     var body: some View {
         VPage(title: judgement, lead: lead) {
-            chipRow
+            VStack(spacing: V8.S.gapS) {
+                if !DevModuleStore.hidden.contains(DevModule.statusIcons.rawValue) { lockSwitchRow }
+                if !DevModuleStore.hidden.contains(DevModule.groupChips.rawValue) { groupSwitchRow }
+                chipRow
+            }
         } content: {
             if lock == nil {
                 VEmpty(
@@ -75,11 +79,13 @@ struct DoorHomeScreen: View {
                     actionTitle: "添加门锁"
                 ) { router.request(.dest(.addLock)) }
             } else {
-                heroCard
-                todayCard
-                quickCard
-            attentionCard
-                linkCard
+                // 2026-11-05（对抗审查）：三个可排序槽按 `DevLayout.order` 渲染 ——
+                // 在此之前门页写死了 hero/today/quick 的顺序，于是「我的锁 → 版面」里的
+                // 上移/下移只是改了一个没人读的键（kf_dev_order）。
+                ForEach(DevLayout.order) { slot in doorCard(slot) }
+                attentionCard
+                // 「连接感知区」开关的真实消费点（V7 同一判据）。
+                if !DevModuleStore.hidden.contains(DevModule.linkSense.rawValue) { linkCard }
             }
         }
         .background(V8.C.bg.ignoresSafeArea())
@@ -113,6 +119,100 @@ struct DoorHomeScreen: View {
 
     // MARK: - 芯片行
 
+
+    /// 三个可排序槽到门页卡片的映射（与 V7 的 DevSlot.note 逐条对应）：
+    ///   status = 电量主环 / 读数 / 今日面积图 → heroCard
+    ///   quick  = 10 选 N 的快捷操作格 → quickCard
+    ///   recent = 最近开门 → todayCard（今天的门）
+    @ViewBuilder
+    private func doorCard(_ slot: DevSlot) -> some View {
+        switch slot {
+        case .status: heroCard
+        case .quick: quickCard
+        case .recent: todayCard
+        }
+    }
+
+    // MARK: - 多锁切换（02 §3.1 #1 点名的「多锁切换」；V8 迁移时整段丢失）
+
+    /// 2026-11-05（对抗审查）：V7 门页有两条芯片行 ——
+    ///   · `statusIconsRow`：每把锁一颗芯片（名称 + 电量词 + 连接色），点按切换当前锁；
+    ///   · `groupChipsRow`：按分组切换（点组切到该组第一把锁）。
+    /// 二者同时是 `DevModuleStore` 里 `statusIcons` / `groupChips` 两个开关的**唯一消费点**。
+    /// 迁 V8 时两条行都没了 ⇒ 门页没有多锁切换（02 明确要求保留），
+    /// 而「版面 → 模块显隐」那两个开关写进 `kf_dev_hidden` 之后没有任何页面读它 ——
+    /// 连同「在翻页里隐藏这把锁」(`LockArchive.isHidden`) 一起成了死设置。
+    ///
+    /// 现在按 V7 原判据恢复，并让隐藏的锁不出现（当前锁永远显示 —— 否则用户会把自己藏到没入口）。
+    private var lockSwitchRow: some View {
+        let locks = DB.keychains()
+        let current = DB.normalizeMac(app.currentMac)
+        let shown = locks.filter { DB.normalizeMac($0.mac) == current || !LockArchive.isHidden($0.mac) }
+        return Group {
+            if shown.count > 1 {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: V8.S.gapChip) {
+                        ForEach(shown, id: \.mac) { kc in
+                            let on = DB.normalizeMac(kc.mac) == current
+                            Button { switchLock(kc) } label: {
+                                VChip2(icon: .ring(on ? 1 : 0.02, on ? V8.C.accent : V8.C.ink4),
+                                       label: LockArchive.displayName(kc),
+                                       value: batteryWord(kc.mac))
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("切换到 " + LockArchive.displayName(kc))
+                            .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
+                        }
+                    }
+                    .padding(.horizontal, V8.S.gutterCard)
+                }
+                .scrollClipDisabled()
+            }
+        }
+    }
+
+    private var groupSwitchRow: some View {
+        let groups = LockArchive.grouped(DB.keychains()).filter { !$0.name.isEmpty }
+        let current = DB.normalizeMac(app.currentMac)
+        return Group {
+            if groups.count > 1 {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: V8.S.gapChip) {
+                        ForEach(groups) { group in
+                            let active = group.locks.contains { DB.normalizeMac($0.mac) == current }
+                            Button {
+                                if let first = group.locks.first { switchLock(first) }
+                            } label: {
+                                VChip2(icon: .ring(active ? 1 : 0.02, active ? V8.C.accent : V8.C.ink4),
+                                       label: group.name,
+                                       value: "\(group.locks.count) 把")
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("按组切换到 " + group.name)
+                            .accessibilityAddTraits(active ? [.isButton, .isSelected] : .isButton)
+                        }
+                    }
+                    .padding(.horizontal, V8.S.gutterCard)
+                }
+                .scrollClipDisabled()
+            }
+        }
+    }
+
+    /// 门页电量读数：与其它四处同一口径（`BatteryCare.displayPct` + `faceText`）。
+    /// V7 的教训：门页曾直接读原始 powerLevel 自己拼百分比，同一块电量在两页显示两个数字。
+    private func batteryWord(_ mac: String) -> String {
+        BatteryCare.faceText(BatteryCare.displayPct(mac, snapshot: DB.readStatus(mac)?.powerLevel ?? -1))
+    }
+
+    /// 切锁：与 V7 门页同一口径 —— 先置 overrideMac 再让 AppModel 重建投影。
+    private func switchLock(_ kc: Keychain) {
+        guard DB.normalizeMac(kc.mac) != DB.normalizeMac(app.currentMac) else { return }
+        DB.currentMac = kc.mac
+        app.overrideMac = kc.mac
+        app.lock = nil
+        Task { @MainActor in await app.reload(refreshStatus: false) }
+    }
     private var chipRow: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: V8.S.gapChip) {

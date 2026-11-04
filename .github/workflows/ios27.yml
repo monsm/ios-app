@@ -46,7 +46,7 @@ defaults:
 jobs:
   # ================= 静态闸门（本地同款，先红就别浪费编译时间）=================
   gates:
-    name: 静态闸门（40 道）
+    name: 静态闸门（41 道）
     runs-on: ubuntu-latest
     # G-11：镜像抽风时不要按默认 6 小时占着跑。
     timeout-minutes: 15
