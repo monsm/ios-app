@@ -232,11 +232,26 @@ final class AppModel {
     }
 
     /// 只重建成员。
+    /// `lastActiveAt` 的归属结果缓存（见 `reloadMembers` 里的失效判据）。
+    @ObservationIgnored private var activityCache = MemberHub.ActivityBundle()
+    @ObservationIgnored private var activitySignature = ""
+
     func reloadMembers() {
         let table = MemberHub.allExt()
         // 2026-11-04（同一屏自相矛盾）：`lastActiveAt` 原来硬写 nil —— 名册每行「还没用过」，
         // 而概览写着「本周开门 N 次」。改用 `MemberHub.activityBundle` 的最近一次可证明开门。
-        let activity = MemberHub.activityBundle(DB.members().map(\.id))
+        //
+        // 2026-11-04（性能 · 自己引入的回归，就地修掉）：`activityBundle` 会对**每把锁**解一次
+        // 日志缓存（300 条 CachedLog）再跑一遍 Attribution，而 `reloadMembers` 挂在 `reload()` 上、
+        // 每次前台/切锁/写入都会走 —— 与本仓 `DB.members()` 那条「55 处热路径必须缓存」的教训同类。
+        // 这里按「锁数 + 缓存日志条数」做失效判据：日志没变就复用上次的归属结果，
+        // 只有真的来了新日志（或锁增减）才重算。
+        let signature = DB.keychains().map { $0.mac + ":" + String(DB.readLogCount($0.mac)) }.joined(separator: "|")
+        if signature != activitySignature {
+            activitySignature = signature
+            activityCache = MemberHub.activityBundle(DB.members().map(\.id))
+        }
+        let activity = activityCache
         members = DB.members().map { m in
             let ext = table[m.id] ?? MemberExt()
             let role: MemberCard.Role = ext.role == "main" ? .owner : (ext.role == "guest" ? .guest : .member)
