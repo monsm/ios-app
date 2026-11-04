@@ -154,9 +154,17 @@ struct LockSettingsHomeScreen: View {
         }
         .background(V8.C.bg.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
-        .task {
+        .task(id: app.currentMac) {
+            // 2026-11-05（对抗审查）：原 .task 无 id —— 切换当前锁后不会重跑，
+            // 而 tailgateLoaded / defendLoaded 守卫让防尾随与布防段还显示旧锁的档位。
+            // 加 id 后换锁即重载；守卫的作用变成同一次载入内不重复读锁。
             await load()
             await readClock()
+        }
+        .onChange(of: app.currentMac) { _, _ in
+            // 2026-11-05（对抗审查）：换锁清掉两个一次性守卫，让防尾随/布防段重载新锁的档位。
+            tailgateLoaded = false
+            defendLoaded = false
         }
         .v8Confirm(
             isPresented: $clearConfirm,
