@@ -245,6 +245,11 @@ enum DB {
     /// 头像与矩阵圆点的读侧照旧只认 hex 字段; 超过六人从头轮转。
     static let memberPalette = ["#818CF8", "#4ADE80", "#F59E0B", "#FB7185", "#22D3EE", "#94A3B8"]
     static func addMember(_ name: String) -> Member? {
+        // 2026-11-04（空壳污染 · 真缺陷）：这里读的是被遮的 `members()`（空壳恒空），
+        // 而写回用的是 `store.getDict("kf_members")`（**真实表**）—— 被胁迫者在空壳里
+        // 点「添加成员」，会**写进真实成员表**：真实成员被保留、新成员成为真实数据的一部分。
+        // 写路径一律拒绝空壳，与 `saveLedger`（N-01）同口径。
+        if isDecoy { return nil }
         let n = name.trimmingCharacters(in: .whitespacesAndNewlines)
         // 2026-10-30 性能：`members()` 原来在本函数里被调 4 次（contains / map / count ×2），
         // 每次都是一份数组拷贝（派生缓存只免了 fromDict，没免拷贝）。一次取。
@@ -264,12 +269,14 @@ enum DB {
         return m
     }
     static func renameMember(_ id: String, _ name: String) {
+        if isDecoy { return }
         guard store.canWriteDict("kf_members") else { return }
         var map = store.getDict("kf_members")
         if var d = map[id] as? [String: Any] { d["name"] = name; map[id] = d }
         store.set("kf_members", map)
     }
     static func setMemberInfo(_ id: String, _ info: [String: String]) {
+        if isDecoy { return }
         guard store.canWriteDict("kf_members") else { return }
         var map = store.getDict("kf_members")
         if var d = map[id] as? [String: Any] {

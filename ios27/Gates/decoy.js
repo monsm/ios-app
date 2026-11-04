@@ -23,6 +23,11 @@ const TARGETS = [
   ['Engine/RecordSearch.swift', 'static func notes(_ mac'],
   ['Engine/RecordSearch.swift', 'static func flags(_ mac'],
   ['Engine/RecordSearch.swift', 'static func dispositions(_ mac'],
+  // 写入口同理：空壳里写会污染真实数据（`addMember` 曾把新成员写进真实表）。
+  ['Engine/Store.swift', 'static func addMember(_ name'],
+  ['Engine/Store.swift', 'static func renameMember(_ id'],
+  ['Engine/Store.swift', 'static func setMemberInfo(_ id'],
+  ['Engine/StoreLedger.swift', 'static func saveLedger(_ mac'],
 ];
 
 let bad = 0;
@@ -39,7 +44,7 @@ for (const [rel, sig] of TARGETS) {
   }
 }
 if (bad === 0) {
-  console.log('decoy: OK - 9 个用户数据读入口都判空壳模式');
+  console.log('decoy: OK - ' + TARGETS.length + ' 个用户数据读/写入口都判空壳模式');
   process.exit(0);
 }
 console.log('decoy: FAIL - ' + bad + ' 个读入口缺少空壳守卫');
