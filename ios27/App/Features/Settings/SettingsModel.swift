@@ -330,32 +330,6 @@ final class SettingsStore {
         set { DB.store.set("kf_radius", newValue); revision &+= 1 }
     }
 
-    var rowHeight: String {
-        get { _ = revision; return DB.store.getString("kf_row_h") }
-        set { DB.store.set("kf_row_h", newValue); revision &+= 1 }
-    }
-
-    var timelineGap: String {
-        get { _ = revision; return DB.store.getString("kf_tl_gap") }
-        set { DB.store.set("kf_tl_gap", newValue); revision &+= 1 }
-    }
-
-    var digitFont: String {
-        get { _ = revision; return DB.store.getString("kf_digit_font") }
-        set { DB.store.set("kf_digit_font", newValue); revision &+= 1 }
-    }
-
-    var recentCount: Int {
-        get { _ = revision; return DB.store.getInt("kf_recent_count", 5) }
-        set { DB.store.set("kf_recent_count", newValue); revision &+= 1 }
-    }
-
-    /// 记录页开场策略（kf_filter_default，QueryFilters.policy 的唯一 UI 写点）。
-    var recordPolicy: String {
-        get { _ = revision; return QueryFilters.policy }
-        set { QueryFilters.setPolicy(newValue); revision &+= 1 }
-    }
-
     /// 双击防抖（kf_dbltap_guard，默认开）。
     var dbltapGuard: Bool {
         get { _ = revision; return DB.store.getBool("kf_dbltap_guard", true) }

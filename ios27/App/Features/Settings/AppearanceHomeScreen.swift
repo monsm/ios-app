@@ -51,7 +51,6 @@ struct AppearanceHomeScreen: View {
                 iconCard
                 geometryCard
                 readoutCard
-                recordCard
                 careCard
                 rhythmCard
                 timeCard
@@ -354,18 +353,6 @@ struct AppearanceHomeScreen: View {
                 current: store.radius,
                 pick: { store.radius = $0 }
             )
-            optionGroup(
-                "凭证行高",
-                [("紧凑", ""), ("舒适", "tall")],
-                current: store.rowHeight,
-                pick: { store.rowHeight = $0 }
-            )
-            optionGroup(
-                "时间线行距",
-                [("紧凑", "tight"), ("标准", ""), ("宽松", "loose")],
-                current: store.timelineGap,
-                pick: { store.timelineGap = $0 }
-            )
             Text("圆角只动卡片 / 控件 / 面板三档，胶囊不参与；行高与行距不改字号与 44pt 触达。")
                 .font(V8.T.footnote)
                 .foregroundStyle(V8.C.ink3)
@@ -381,12 +368,6 @@ struct AppearanceHomeScreen: View {
             VCardHead(eyebrow: "主控读数", statement: "门页显示哪几项")
             VDivider2()
                 .padding(.top, V8.S.gapM)
-            optionGroup(
-                "数字字体",
-                [("圆体", ""), ("系统默认体", "plain")],
-                current: store.digitFont,
-                pick: { store.digitFont = $0 }
-            )
             toggleRow("主控卡显示固件位", detail: "电量不参与隐藏 —— 它决定还能不能开锁。", isOn: Binding(
                 get: { HeroStats.shows("firmware") },
                 set: { on in
@@ -405,48 +386,9 @@ struct AppearanceHomeScreen: View {
                     HeroStats.setVisible(ids)
                 }
             ))
-            Text("最近开门条数")
-                .font(V8.T.label)
-                .foregroundStyle(V8.C.ink4)
-                .padding(.top, V8.S.gapM)
-            HStack(spacing: V8.S.gapChip) {
-                ForEach([3, 5, 10], id: \.self) { n in
-                    selectChip("\(n) 条", on: store.recentCount == n) { store.recentCount = n }
-                }
-            }
-            .padding(.top, V8.S.gapS)
         }
     }
 
-    // MARK: - 卡 6 记录页开场
-
-    private var recordOptions: [(label: String, key: String)] {
-        [("记住上次", ""), ("每次全部", "fresh"), ("每次只看告警", "alarm")]
-    }
-
-    private var recordCard: some View {
-        VCard2 {
-            VCardHead(eyebrow: "记录页", statement: "进入时的起点")
-            VDivider2()
-                .padding(.top, V8.S.gapM)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: V8.S.gapChip) {
-                    ForEach(Array(recordOptions.enumerated()), id: \.offset) { pair in
-                        selectChip(pair.element.label, on: store.recordPolicy == pair.element.key) {
-                            store.recordPolicy = pair.element.key
-                        }
-                    }
-                }
-            }
-            .scrollClipDisabled()
-            .padding(.top, V8.S.gapM)
-            Text("只改进入记录页时的起点；手动改过的过滤仍按锁保留，不会删任何记录。")
-                .font(V8.T.footnote)
-                .foregroundStyle(V8.C.ink3)
-                .padding(.top, V8.S.gapM)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
 
     // MARK: - 卡 7 开锁与关怀
 

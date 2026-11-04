@@ -11,7 +11,6 @@ struct AccessibilityHomeScreen: View {
 
     @State private var bigText = SettingsStore.shared.axBigText
     @State private var bigOTP = DB.store.getBool("kf_ax_bigotp")
-    @State private var bigTile = DB.store.getBool("kf_bigtile")
 
     private var store: SettingsStore { SettingsStore.shared }
 
@@ -31,7 +30,6 @@ struct AccessibilityHomeScreen: View {
     private func sync() {
         bigText = store.axBigText
         bigOTP = DB.store.getBool("kf_ax_bigotp")
-        bigTile = DB.store.getBool("kf_bigtile")
     }
 
     private var textCard: some View {
@@ -46,10 +44,6 @@ struct AccessibilityHomeScreen: View {
                 VDotRule()
                 rowToggle(title: "放大临时码", detail: "生成动态码时用大字号显示六位码，并允许双击切换。", isOn: $bigOTP) {
                     DB.store.set("kf_ax_bigotp", bigOTP)
-                }
-                VDotRule()
-                rowToggle(title: "大格模式", detail: "首页快捷操作与凭证行加高，减少误触。", isOn: $bigTile) {
-                    DB.store.set("kf_bigtile", bigTile)
                 }
             }
             .padding(.top, V8.S.gapS)
