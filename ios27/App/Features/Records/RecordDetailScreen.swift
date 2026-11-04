@@ -100,7 +100,10 @@ struct RecordDetailScreen: View {
         VCard {
             VStack(alignment: .leading, spacing: V.S.gapMS) {
                 VSectionLabel(text: "这条记录", trailing: "行 " + shortKey(entry))
-                VFieldRow(label: "时刻", value: TimeDisplay.clock(entry.at), unit: "HH:mm")
+                // 2026-11-04（呈现复核）：单位标签原来写死 `HH:mm`，而值是 `TimeDisplay.clock` ——
+                // 它**跟随用户在「外观 → 时间制式」里的选择**（12 小时制会渲染成 "3:29 PM"）。
+                // 那样用户会看到「3:29 PM  HH:mm」这种自相矛盾的东西。时钟不写单位。
+                VFieldRow(label: "时刻", value: TimeDisplay.clock(entry.at))
                 divider
                 VFieldRow(label: "日期", value: TimeFormat.dayKey(entry.at))
                 divider
