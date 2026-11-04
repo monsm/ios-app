@@ -189,6 +189,11 @@ enum CredentialOrg {
 
     /// async：排程必须被 await，否则外层串行队列会在 add 落地前就放行下一个动作。
     static func addCalendar(id: String, date: Date, title: String, body: String) async {
+        // 2026-11-04（空壳泄漏，与低电通知同族）：`cancelAllForDecoy()` 只清一次，
+        // 而凭证到期提醒会**继续被排**（保存凭证、改到期、批量重排都会走这里）——
+        // 文案里带凭证名，等于在空壳里把"这人有哪些密码"重新念一遍。
+        // 生产者自己停手，才是真的关掉这条面。
+        if DB.isDecoy { return }
         guard date > Date() else { return }
         let c = UNMutableNotificationContent()
         c.title = title

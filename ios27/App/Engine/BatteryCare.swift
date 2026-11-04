@@ -154,6 +154,10 @@ enum BatteryCare {
 
     // ---------- 1004 低电本地通知 (滞回: ≤20% 提醒 / ≤10% 升级, 恢复 >30% 重新武装) ----------
     private static func evaluateLowBattery(_ mac: String, pct: Int) {
+        // 2026-11-04（空壳泄漏 · 通知是个"会再生的"面）：进空壳时 `cancelAllForDecoy()` 只清一次，
+        // 而低电检查会**继续跑**并重新排一条 `「<锁名>」只剩 N%` 的通知 —— 真实锁名就当着胁迫者的面弹出来。
+        // 生产者本身必须停手，只清一次是不够的。
+        if DB.isDecoy { return }
         let key = "kf_batt_state_" + mac
         if pct > 30 {
             if DB.store.getInt(key) != 0 { DB.store.set(key, 0) }
