@@ -49,6 +49,22 @@ enum SeedImporter {
                 st.pid = 8098            // PidMap.KX
                 st.pidName = "KX"
                 DB.writeStatus(d.mac, st)
+                // 2026-11-04（视觉验证缺口）：种子**没有锁内日志**，于是记录页永远是「还没有记录」——
+                // 而记录域（归属映射、成员筛选、访客分组、统计）全靠这一页呈现，等于整块无法视觉验证。
+                // 这里合成一小组日志：三种类型（指纹 19 / 密码 17 / 一次性 16）+ 时间跨度（今天/昨天/上周），
+                // 让记录页、成员归属、周小结、24h 直方图都有东西可渲染。
+                // 归属仍由 `Attribution` 自己算（不写死 owner），所以截图能验证归因链本身。
+                var logs: [LogEntry] = []
+                let nowProto = ZKProtocol.nowProtoSeconds()
+                let kinds: [(Int, String)] = [(19, "指纹开门"), (17, "密码开门"), (16, "一次性密码开门")]
+                for i in 0..<9 {
+                    let (t, name) = kinds[i % kinds.count]
+                    // 间隔 7 小时：覆盖今天 / 昨天 / 前天，直方图与「最近事件」都分布得开。
+                    let proto = nowProto - Int64(i) * 7 * 3600
+                    logs.append(LogEntry(type: t, typeName: name, idx: UInt32(100 + i), idxRaw: UInt32(100 + i),
+                                         lockTime: proto, lockTimeStr: "", body: ""))
+                }
+                DB.writeLogs(d.mac, logs)
             }
             // 2026-11-03（整页截图实测 · 根因）：`快捷操作` 那一块在截图里永远是空白，
             // 前三次都判错了原因。真正的原因在这里：**种子从没写过 `kf_quick_ids`** ——
