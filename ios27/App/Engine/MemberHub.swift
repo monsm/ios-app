@@ -116,6 +116,10 @@ enum MemberHub {
         (table ?? allExt())[id] ?? MemberExt()
     }
     static func saveExt(_ id: String, _ e: MemberExt) {
+        // 2026-11-04（空壳污染 · 与 addMember 同族）：这里直接读写**真实**的 kf_member_ext。
+        // 当前空壳里没有成员可点开，所以不可达；但一旦空壳里出现新的成员入口（比如"快速建档"），
+        // 它会立刻把真实档案写花。和 N-01 同口径：写路径一律拒绝空壳。
+        if DB.isDecoy { return }
         var all = DB.store.get([String: MemberExt].self, extKey) ?? [:]
         all[id] = e
         DB.store.setCodable(extKey, all)
@@ -361,6 +365,9 @@ enum MemberHub {
         DB.store.get([String: String].self, "kf_mclaim_" + mac) ?? [:]
     }
     static func claim(_ mac: String, logKey: String, memberId: String) {
+        // 2026-11-04：空壳里不写认领（记录列表为空 ⇒ 当前不可达；守住是为了不留下一条
+        // "在空壳里也能改真实覆盖层"的入口）。
+        if DB.isDecoy { return }
         var all = claims(mac)
         all[logKey] = memberId
         DB.store.setCodable("kf_mclaim_" + mac, all)

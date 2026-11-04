@@ -28,6 +28,8 @@ const TARGETS = [
   ['Engine/Store.swift', 'static func renameMember(_ id'],
   ['Engine/Store.swift', 'static func setMemberInfo(_ id'],
   ['Engine/StoreLedger.swift', 'static func saveLedger(_ mac'],
+  ['Engine/MemberHub.swift', 'static func saveExt(_ id'],
+  ['Engine/MemberHub.swift', 'static func claim(_ mac'],
 ];
 
 let bad = 0;
