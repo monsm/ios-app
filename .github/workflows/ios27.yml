@@ -522,6 +522,19 @@ jobs:
             if [ -f "/tmp/shots/$i-$name.png" ]; then echo "shot $i-$name=ok size=$SZ" >> "$DIAG"; else echo "shot $i-$name=missing" >> "$DIAG"; fi
             i=$((i+1))
           done
+          # 2026-11-04（视觉盲区）：记录列表在首屏之下 —— 视口截图止于「最近事件」，
+          # 整页截图又被 LazyVStack 吞掉（没滚到的行不 materialize）。于是**列表本身
+          # 从来没被看见过**。`-kfScroll` 让根页 ScrollView 以底部为锚（App 侧
+          # `UITestScrollBottom`，记录页已挂），补一张滚到底的截图。
+          xcrun simctl terminate "$UDID" com.aapk.lockkeeper 2>/dev/null || true
+          xcrun simctl launch "$UDID" com.aapk.lockkeeper -kfUITest -kfSeed -kfScroll -kfTab 2 || true
+          sleep 5
+          xcrun simctl io "$UDID" screenshot "/tmp/shots/2-records-bottom.png" >> "$DIAG" 2>&1 || true
+          if [ -f "/tmp/shots/2-records-bottom.png" ]; then
+            echo "shot 2-records-bottom=ok size=$(stat -f%z /tmp/shots/2-records-bottom.png)" >> "$DIAG"
+          else
+            echo "shot 2-records-bottom=missing" >> "$DIAG"
+          fi
           # 第一轮启动后读种子取证文件（此时 App 已导入过一次）
           SEEDDIAG=$(xcrun simctl get_app_container "$UDID" com.aapk.lockkeeper data 2>/dev/null || true)
           if [ -n "$SEEDDIAG" ] && [ -f "$SEEDDIAG/Documents/kf-seed-diag.txt" ]; then
