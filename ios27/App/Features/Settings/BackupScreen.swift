@@ -402,6 +402,9 @@ struct BackupScreen: View {
                     restoreError = "这份备份的校验和对不上：可能是本 App 旧版本导出的包（键序不同，属正常），也可能真被截断或改动过。确认要继续请再点一次「恢复这份备份」。"
                     return
                 }
+                // 2026-11-04（走查发现 · 静默副作用）：`restore` 执行前会自动写回滚快照
+                // `roll-*.json`（明文整库，含 skey/pins，保留最近 4 份）—— 本机将多出这类文件，
+                // 用户应当知情。删除设备时它们会被一并清掉（SEC-19）。
                 importChecksumMismatch = false
                 ackedChecksumFor = nil   // 一次性：这次恢复完就作废，下次重新判断
                 let r = try BackupStudio.restore(parsed.bundle)

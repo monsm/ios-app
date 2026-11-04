@@ -272,6 +272,9 @@ struct BackupStudioScreen: View {
                             }
                         }
                     }
+                    // 2026-11-04（走查发现 · 静默副作用）：`restore` 执行前会自动写一个回滚快照
+                    // `roll-*.json`（明文整库，含 skey/pins，保留最近 4 份）。用户应当知道
+                    // 本机将多出这类文件 —— 第 85 轮审计确认它是"恢复前唯一的数据副本"（逃生舱）。
                     VOutlineButton(title: "导入换机包", systemImage: "square.and.arrow.down") {
                         Task { await runMigration() }
                     }
