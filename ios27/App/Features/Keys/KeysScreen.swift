@@ -249,9 +249,14 @@ struct KeysScreen: View {
                         Text("\(validCount) 枚")
                             .font(V.F.bedValue)
                             .foregroundStyle(V.C.text1)
-                        Text("共 \(app.keys.count) 枚")
-                            .font(V.F.micro)
-                            .foregroundStyle(V.C.text4)
+                        // 2026-11-04（呈现复核）：这一行原本无条件显示「共 N 枚」——
+                        // 而同一张卡里「总数」已经是 N、「环心」也是 N，**同一个数字出现三次**。
+                        // 全部有效时它零信息量；只有存在失效凭证时，「有效 12 / 共 13」才是有用的对比。
+                        if validCount != app.keys.count {
+                            Text("共 \(app.keys.count) 枚")
+                                .font(V.F.micro)
+                                .foregroundStyle(V.C.text4)
+                        }
                     }
                     Spacer(minLength: 0)
                     VStack(alignment: .leading, spacing: V.S.gapXXS) {
