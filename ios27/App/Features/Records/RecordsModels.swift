@@ -492,8 +492,23 @@ enum RecordCSV {
         return out.joined(separator: "\n")
     }
 
+    /// 数据行数（不含表头）。
+    /// 2026-11-04（呈现复核 · 计数口径）：原来按 `split("\n").count - 1` 数**物理行**，
+    /// 而 `field()` 会把含换行的值用引号包起来（CSV 合法）—— 一个成员名里带换行，
+    /// 这个函数就会把 1 行数成 2 行，界面上的「N 行」随之虚高。
+    /// 现在按 CSV 记录数：引号内的换行不算行尾。
     static func rowCount(_ csv: String) -> Int {
-        max(0, csv.split(separator: "\n").count - 1)
+        var rows = 0
+        var inQuotes = false
+        var sawAny = false
+        for ch in csv {
+            if ch == "\"" { inQuotes.toggle(); sawAny = true; continue }
+            if ch == "\n", !inQuotes { rows += 1; continue }
+            if !ch.isWhitespace { sawAny = true }
+        }
+        // 最后一行没有换行符收尾时补一次
+        if sawAny, !csv.hasSuffix("\n") { rows += 1 }
+        return max(0, rows - 1)
     }
 }
 
