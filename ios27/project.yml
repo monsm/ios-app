@@ -50,6 +50,12 @@ targets:
         # 构建号可被 CI 注入：XcodeGen 不做环境变量替换，所以这里写**构建设置引用**，
         # 由 xcodebuild 在打包时展开（CI 传 CURRENT_PROJECT_VERSION=github.run_number，本地回落 1）。
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        # 2026-11-04（上架流程 · 每次都卡）：缺这个键时，**每一个 build** 上传到 App Store Connect
+        # 都会被问一次出口合规（"App 是否使用非豁免加密"），TestFlight 处理会停在那里等回答。
+        # 声明 false 的依据：App 只使用 Apple 系统提供的标准算法（CommonCrypto AES-128 / Keychain），
+        # 用于与自家门锁的配对认证和本机数据保护；没有自研密码学，没有对用户内容做额外加密传输。
+        # 这属于 Apple 的"标准加密算法"豁免。**提交前请再核一遍此判断**（政策会变）。
+        ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
