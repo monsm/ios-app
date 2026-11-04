@@ -147,7 +147,10 @@ struct AutoOpenScreen: View {
                             VOutlineButton(title: "清除标定（回到默认门槛）", systemImage: "arrow.uturn.backward") {
                                 guard let mac = app.lock?.id else { return }
                                 AutoOpen.clearAutocal(mac)
-                                store.calibrationAt = nil
+                                // 2026-11-04：原来这里还写 `store.calibrationAt = nil` —— 那个字段
+                                // 上一轮作为"只写镜像"删掉了，这一行就成了编译错误（CI 报的正是它）。
+                                // 视图的 `calibrationAt` 是**计算属性**、直接读 `AutoOpen.autocal`，
+                                // 清掉引擎里的值就够了。
                                 calibrationError = nil
                             }
                         }
