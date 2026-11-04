@@ -424,11 +424,9 @@ final class SettingsStore {
         accent = ""
         customAccent = 0
         radius = ""
-        rowHeight = ""
-        timelineGap = ""
-        digitFont = ""
-        recentCount = 5
-        recordPolicy = ""
+        // 2026-11-04（S6 收尾）：rowHeight / timelineGap / digitFont / recentCount / recordPolicy
+        // 这五项已随「有开关无消费者」一并删除，这里不再重置它们 —— 留在 reset 里会编译不过
+        // （CI run d116be3 就是这么红的：金标测试报 5 个 cannot find in scope）。
         dbltapGuard = true
         quietNight = true
         // 2026-11-04（第二轮漏项 · 与 117 轮的无障碍四项同类）：`quickGridCount` 也在外观页可改
