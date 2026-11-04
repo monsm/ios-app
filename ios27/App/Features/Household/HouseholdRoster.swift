@@ -241,9 +241,15 @@ enum HHStats {
     }
 
     /// 799 周小结一句人话：近 7 天可证明归属次数 + 工作日最活跃小时段。
-    /// 与 MemberHub.weekSentence 同口径，但读的是 AppModel.entries（本域当前数据源）。
-    /// TODO(engine)：改读 MemberHub.weekSentence（锁内 cmd16 日志 + Attribution）后这段即可删除。
+    ///
+    /// 2026-11-04（走查发现 · 同一句两个引擎）：`MemberOpsScreen:291` 早就用
+    /// `MemberHub.weekSentence(id)`（锁内 cmd16 日志 + `Attribution.classify` —— 能推出
+    /// 多成员家庭里"这条日志是谁的"），而这一份还在用「台账 owner == 成员名」的本地近似。
+    /// 多成员家庭里 `LedgerEntry.owner` 恒为 nil（见 `RecordsModels.owner` 的单成员启发式），
+    /// 于是**成员 360 的周小结永远是空的，而成员操作页有数** —— 同一句、两个答案。
+    /// 现在优先读引擎；引擎读不到（无日志缓存）时才回落本地近似。
     static func weekSentence(_ member: MemberCard, entries: [LedgerEntry]) -> String? {
+        if let engine = MemberHub.weekSentence(member.id) { return engine }
         let cutoff = Int64(Date().timeIntervalSince1970 * 1000) - 7 * 86_400_000
         let mine = entries.filter { $0.owner == member.name && $0.at >= cutoff }
         guard !mine.isEmpty else { return nil }

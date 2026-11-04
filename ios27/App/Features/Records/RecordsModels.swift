@@ -314,9 +314,14 @@ enum RecordsSource {
         return openTypes.contains(log.type) ? .ok : .neutral
     }
 
-    /// TODO(engine) 归属：锁端日志只有类型与序号，没有凭证槽位，
-    /// 真要可证明归属得靠 Attribution 的「日志 × 临时码/密码台账」交叉（旧层已删，需重写）。
-    /// 单成员家庭可以确定是他；多成员时**如实留空**，不按名字猜。
+    /// 归属：锁端日志只有类型与序号，没有凭证槽位。
+    /// 2026-11-04（走查发现 · 假 TODO）：原文写「旧层已删，需重写」—— **不成立**。
+    /// `Attribution.classify`（日志 × 临时码/密码台账交叉）一直在用，`MemberHub.activityBundle`
+    /// 与 `weekSentence` 都靠它算出多成员家庭的可证明归属。这里不用它，是因为 `LedgerEntry`
+    /// 是**全仓共享的展示模型**，逐行跑 Attribution 会把记录页拖慢（见 DateFormats 头注里那条
+    /// "100 条日志 × 20 条临时码 = 4000 个 formatter"的教训）。
+    /// 所以：单成员家庭可以确定是他；多成员时**如实留空**，不按名字猜；需要归属统计时走
+    /// `MemberHub.activityBundle`（成员域按需算一次，不逐行）。
     private static func owner(_ log: CachedLog, members: [MemberCard]) -> String? {
         guard openTypes.contains(log.type) else { return nil }
         let active = members.filter { !$0.archived }
