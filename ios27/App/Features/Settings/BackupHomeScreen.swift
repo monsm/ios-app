@@ -92,7 +92,6 @@ struct BackupHomeScreen: View {
         } content: {
             if decoyed {
                 decoyCard
-                studioDecoyCard
             } else {
                 studioFilesCard
                 studioWebdavCard
@@ -182,6 +181,11 @@ struct BackupHomeScreen: View {
                 .font(V8.T.footnote)
                 .foregroundStyle(V8.C.ink4)
                 .padding(.top, V8.S.gapS)
+                .fixedSize(horizontal: false, vertical: true)
+            Text("备份工作室另有两条边界：备份文件不显示（目录绕过数据库访问器直读文件，不拦会把家门钥匙目录摊开）；生成、恢复、删除、上传与迁移全部停用。")
+                .font(V8.T.footnote)
+                .foregroundStyle(V8.C.ink4)
+                .padding(.top, V8.S.gapXS)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -633,26 +637,6 @@ struct BackupHomeScreen: View {
 
 
     // MARK: - 空壳
-
-    private var studioDecoyCard: some View {
-        VCard2(style: .well) {
-            VCardHead(eyebrow: "备份工作室", statement: "空壳模式只读（并入备份页）")
-            VDivider2()
-                .padding(.top, V8.S.gapM)
-            Text("空壳模式（胁迫码进入）下，备份文件不显示，生成、恢复、删除、上传与迁移全部停用 —— 备份目录是绕过数据库访问器直读文件的，不拦就会把整份家门钥匙目录摊开。")
-                .font(V8.T.body)
-                .foregroundStyle(V8.C.ink3)
-                .lineSpacing(V8.L.body - V8.T.body.size)
-                .padding(.top, V8.S.gapM)
-                .fixedSize(horizontal: false, vertical: true)
-            Text("退出空壳请在本机密码界面输入正常密码。")
-                .font(V8.T.footnote)
-                .foregroundStyle(V8.C.ink4)
-                .padding(.top, V8.S.gapS)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
 
     // MARK: - 卡 1 全量备份
 
