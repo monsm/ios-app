@@ -253,9 +253,14 @@ struct MemberOpsScreen: View {
             VStack(alignment: .leading, spacing: V.S.gapS) {
                 VCardHeader(title: "家庭场景")
                 VValueRow(label: "本周主责", value: MemberHub.dutyThisWeek == m.id ? "是" : "否")
-                VOutlineButton(title: "设为本周主责", systemImage: "calendar") {
-                    roster.setDuty(m.id)
-                    outcome = "已设为本周主责"
+                // 2026-11-04（同功能两页行为不一致）：成员 360（`MemberDetailScreen:59`）是**切换**
+                // （已是主责再点就取消），这一页只有「设为」—— 已经是主责时点了什么都不会变，
+                // 却回一句「已设为本周主责」，等于骗了一次点击。改成与 360 同一切换语义。
+                let isDutyNow = MemberHub.dutyThisWeek == m.id
+                VOutlineButton(title: isDutyNow ? "取消本周主责" : "设为本周主责",
+                               systemImage: isDutyNow ? "calendar.badge.minus" : "calendar") {
+                    roster.setDuty(isDutyNow ? nil : m.id)
+                    outcome = isDutyNow ? "已取消本周主责" : "已设为本周主责"
                 }
                 VRowDivider()
                 VTextFieldRow(label: "关怀便签（孩子/长辈看到的提示）", text: $careText, placeholder: "如 记得带伞", axisVertical: true)
