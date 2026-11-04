@@ -47,12 +47,16 @@ struct BatteryProfileHomeScreen: View {
         .onAppear(perform: load)
     }
 
+    // 2026-11-04（编译错 · 我自己写的）：`BatteryCare.Tier` 是 **struct**（icon/tone/label/severe），
+    // 不是 enum —— 所以 `switch tier { case .empty: … }` 既没有那些成员，也无法用 ~= 匹配。
+    // 它本来就带着一个 `tone`（ToneColor），直接映射那个字段即可，不必按标签重新发明一套判据。
     private var tierColor: Color {
-        switch tier {
-        case .empty: return V8.C.danger
-        case .low: return V8.C.warn
-        case .mid: return V8.C.ink2
-        case .high, .full: return V8.C.ok
+        switch tier.tone {
+        case .danger: return V8.C.danger
+        case .warn: return V8.C.warn
+        case .accent: return V8.C.accent
+        case .ok: return V8.C.ok
+        case .neutral: return V8.C.ink3
         }
     }
 
