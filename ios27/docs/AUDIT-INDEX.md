@@ -1,6 +1,6 @@
 # 审计总索引（AUDIT-INDEX）
 
-> 本文件由脚本从 docs/AUDIT-ROUND-*.md 的标题生成，**不含手写内容**，所以不会漂。
+> 本文件由脚本从 docs/archive/audit-rounds/AUDIT-ROUND-*.md 的标题生成，**不含手写内容**，所以不会漂。
 > 轮次号是这些文档自己的编号（跨会话连续累计），与本会话的 goal-round 计数不是同一套。
 
 **共 337 轮** 审计文档。

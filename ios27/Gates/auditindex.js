@@ -12,12 +12,15 @@ const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
 const DOCS = path.join(ROOT, 'docs');
+// 2026-11-04：AUDIT-ROUND-*.md 已移入 docs/archive/audit-rounds/（337 份，根目录无法浏览）。
+// 闸门跟着搬：索引仍从同一批文件生成，只是目录变了。
+const ROUNDS = path.join(DOCS, 'archive', 'audit-rounds');
 const OUT = path.join(DOCS, 'AUDIT-INDEX.md');
 
 const HEAD = [
   '# 审计总索引（AUDIT-INDEX）',
   '',
-  '> 本文件由脚本从 docs/AUDIT-ROUND-*.md 的标题生成，**不含手写内容**，所以不会漂。',
+  '> 本文件由脚本从 docs/archive/audit-rounds/AUDIT-ROUND-*.md 的标题生成，**不含手写内容**，所以不会漂。',
   '> 轮次号是这些文档自己的编号（跨会话连续累计），与本会话的 goal-round 计数不是同一套。',
   '',
   '**共 __N__ 轮** 审计文档。',
@@ -66,10 +69,10 @@ const FOOT = [
 ];
 
 function build() {
-  const files = fs.readdirSync(DOCS).filter(f => /^AUDIT-ROUND-\d+\.md$/.test(f));
+  const files = fs.readdirSync(fs.existsSync(ROUNDS) ? ROUNDS : DOCS).filter(f => /^AUDIT-ROUND-\d+\.md$/.test(f));
   const items = files.map(f => {
     const n = parseInt(f.match(/ROUND-(\d+)/)[1], 10);
-    const s = fs.readFileSync(path.join(DOCS, f), 'utf8').split(/\r?\n/);
+    const s = fs.readFileSync(path.join(fs.existsSync(ROUNDS) ? ROUNDS : DOCS, f), 'utf8').split(/\r?\n/);
     const t = (s.find(l => l.startsWith('# ')) || '').replace(/^# /, '').replace(/^AUDIT-ROUND-\d+ · /, '').trim();
     return { n, t };
   }).sort((a, b) => a.n - b.n);
