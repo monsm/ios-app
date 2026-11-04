@@ -75,7 +75,7 @@ extension LockService {
         // 能做的是删除后重读一次本机台账，确认那一条真的不在了。
         // 注：读的是本机台账（删除成功后调用方落盘），不是锁端 —— 锁端没有"列出密码"的命令。
         if DB.ledger(m).pwds.contains(where: { $0.alias == alias }) {
-            log("warn", "删除复核异常： 凭证#\(alias) 仍在台账里")
+            log("warn", "删除复核异常：凭证#\(alias) 仍在台账里")
         }
         log("info", "凭证#\(alias) 已删除 (0A, 已复核)")
     }
@@ -161,7 +161,7 @@ extension LockService {
             if let onPress, self.isPress(f) { onPress(p) }
         }
         defer { collector = nil; collectorCmd = 0 }
-        log("info", "TX 13 录指纹 (多响应， \(times) 次按压)")
+        log("info", "TX 13 录指纹 (多响应，\(times) 次按压)")
         var attemptsLeft = 2 // JS _execMulti retries=2: 无帧时重发一次
         var broken = false
         while frames.isEmpty && attemptsLeft > 0 {
@@ -173,7 +173,7 @@ extension LockService {
                 // 断链/取消早退: 旧写法会一直转到窗口到点才抛"未收到任何按压响应",
                 // 期间锁已被人拿走/电量耗尽也不知情, collector 也一直被占 (新会话的 cmd13 帧会被吞)
                 if Task.isCancelled || ble.connectedPeripheralId.isEmpty || connectedDeviceId.isEmpty {
-                    log("warn", "13 录指纹中链路断开或任务取消， 提前结束")
+                    log("warn", "13 录指纹中链路断开或任务取消，提前结束")
                     broken = true
                     break
                 }
@@ -183,7 +183,7 @@ extension LockService {
                 if frames.isEmpty {
                     // Java 唯一的那个计时器 (BLE_TIMEOUT=8000): 收到任何一帧即 cancel 且不重启
                     if silent > Double(firstFrameMs) / 1000.0 {
-                        log("warn", "13 录指纹首帧窗口 \(firstFrameMs)ms 内无任何回包， 提前收尾")
+                        log("warn", "13 录指纹首帧窗口 \(firstFrameMs)ms 内无任何回包，提前收尾")
                         break
                     }
                 } else if silent > Double(idleAfterPressMs) / 1000.0 {
@@ -261,7 +261,7 @@ extension LockService {
         _ = try await execWithBusyRetry(ZKCmdBuilder.cmd15DeleteFp(m, sk, batchNumber))
         // 2026-10-27 审核修复 (D-54)：同 pwdDelete —— 删除后重读复核。
         if DB.ledger(m).fps.contains(where: { $0.batch == batchNumber }) {
-            log("warn", "删除复核失败： 指纹#\(batchNumber) 仍存在于锁端 — 可能收到伪造回包")
+            log("warn", "删除复核失败：指纹#\(batchNumber) 仍存在于锁端 — 可能收到伪造回包")
             throw BLEErrorX.msg("门锁回包说已删除，但重读发现这枚指纹还在。可能有人在伪造回包。")
         }
         log("info", "指纹#\(batchNumber) 已删除 (已重读复核)")

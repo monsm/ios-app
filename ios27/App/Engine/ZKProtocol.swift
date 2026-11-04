@@ -66,7 +66,7 @@ enum ZKProtocol {
         // 一个"看着成功、实际是半截口令"的帧（例如超长 WiFi 密码 → 网关永远连不上）。
         // 返回空串：调用方的成帧收口会把它判成"构帧失败"并抛错，用户看到的是原因而不是假成功。
         if rawLen > 0xFF {
-            BleTelemetry.recordEvent("buildKLV 超长拒绝： key=\(key) \(rawLen)>255 字节", ok: false)
+            BleTelemetry.recordEvent("buildKLV 超长拒绝：key=\(key) \(rawLen)>255 字节", ok: false)
             return ""
         }
         let len = v.count / 2
@@ -159,7 +159,7 @@ enum ZKProtocol {
     /// 只读模式下放行只读命令, 其余抛错 (与 JS 同语义)
     static func assertReadOnly(_ cmd: UInt8) throws {
         guard readonlyCmds.contains(cmd) else {
-            throw BLEErrorX.msg(String(format: "护栏拦截： cmd 0x%02x 是写入/危险命令， 只读试验模式禁止发送!", cmd))
+            throw BLEErrorX.msg(String(format: "护栏拦截：cmd 0x%02x 是写入/危险命令，只读试验模式禁止发送!", cmd))
         }
     }
 
@@ -236,7 +236,7 @@ enum ZKProtocol {
         if results.count > 1 {
             let others = results.dropFirst().map { String($0.header) }.joined(separator: "/")
             BleTelemetry.recordEvent(
-                "回包帧头歧义： \(results.count) 种头型都能解析， 取 header=\(results[0].header), 其余 \(others)",
+                "回包帧头歧义：\(results.count) 种头型都能解析，取 header=\(results[0].header), 其余 \(others)",
                 ok: false)
         }
         if let first = results.first { return first }

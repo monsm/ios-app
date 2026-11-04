@@ -63,7 +63,7 @@ enum StatsKit {
                 openTypes.contains(l.type) && (dateOf(l).map { $0 >= from && $0 < end } ?? false)
             }
             guard !week.isEmpty else {
-                return ("", ["上周 (" + head + ") 没有本机读到的开门记录 — 缓存只留最近 300 条， 更早的翻不到不代表没发生。"])
+                return ("", ["上周 (" + head + ") 没有本机读到的开门记录 — 缓存只留最近 300 条，更早的翻不到不代表没发生。"])
             }
             let cls = Attribution.classify(
                 logs: week.map { LogEntry(type: $0.type, typeName: $0.displayTypeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,
@@ -93,7 +93,7 @@ enum StatsKit {
             }.count
             var lines = ["上周 (" + head + ") 共开门 \(week.count) 次。"]
             if let t = per.max(by: { $0.value < $1.value }), let n = DB.member(t.key)?.name {
-                lines.append("最活跃成员： \(n) (约 \(t.value) 次)。")
+                lines.append("最活跃成员：\(n) (约 \(t.value) 次)。")
             } else {
                 lines.append("成员归属都还证明不了 (归属需要台账与日志窗口对齐)。")
             }

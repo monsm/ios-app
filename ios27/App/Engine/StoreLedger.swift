@@ -45,7 +45,7 @@ extension DB {
             }
         }
         if !failed.isEmpty {
-            BleTelemetry.recordEvent("凭证口令未能进 Keychain，暂留本机明文： #"
+            BleTelemetry.recordEvent("凭证口令未能进 Keychain，暂留本机明文：#"
                                      + failed.map(String.init).joined(separator: "/")
                                      + " @ " + String(mac.prefix(6)), ok: false)
         }
@@ -123,7 +123,7 @@ extension DB {
             // 已判定为不可解的台账一律拒写: 宁可界面显示陈旧数据, 也不要把用户的记录抹掉
             guard !isLedgerCorrupt(mac) else {
                 // 不要静默：这条以前是直接 return，用户看到"保存成功"但什么都没落盘。
-                BleTelemetry.recordEvent("台账不可解， 本次写入被拒 @" + String(mac.prefix(6)), ok: false)
+                BleTelemetry.recordEvent("台账不可解，本次写入被拒 @" + String(mac.prefix(6)), ok: false)
                 return
             }
             let old = get(Ledger.self, "kf_ledger_" + mac)

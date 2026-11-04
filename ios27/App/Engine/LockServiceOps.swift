@@ -76,7 +76,7 @@ extension LockService {
     func unlock(mac: String? = nil, pinDec: String? = nil) async throws -> Int {
         if let mac { curMac = mac.lowercased() }
         // 空壳模式下开锁能力必须保留（设计：「门照样能开，这是保命的前提」）。
-        guard let kc = DB.keychainForUnlock(curMac), !kc.skey.isEmpty else { throw BLEErrorX.msg("无钥匙串， 无法开锁") }
+        guard let kc = DB.keychainForUnlock(curMac), !kc.skey.isEmpty else { throw BLEErrorX.msg("无钥匙串，无法开锁") }
 
         func signed(_ pin: String) -> String {
             ZKCmdBuilder.buildEkeyOpen(kc.skey.lowercased(), kc.mac.lowercased(), pin)
@@ -201,14 +201,14 @@ extension LockService {
             before = Int(lockSec - now)
             if before != 0 { log("info", "校时前锁钟比手机\(before > 0 ? "快" : "慢") \(abs(before))s") }
         } else {
-            log("warn", "读锁钟失败 (不影响下发： 0E 用手机当前时间)")
+            log("warn", "读锁钟失败 (不影响下发：0E 用手机当前时间)")
         }
         _ = try await execOk(ZKCmdBuilder.cmd0ESyncTime(m, sk, now))
         DB.saveSyncTime(m, Date().timeIntervalSince1970 * 1000)
         var after = 0
         if let lockSec = try? await readLockTime() {
             after = Int(lockSec - ZKProtocol.nowProtoSeconds())
-            log("info", "校时回读： 锁钟偏差 \(after)s")
+            log("info", "校时回读：锁钟偏差 \(after)s")
             // >60s 不可能是秒级回读误差 (即使固件把锁钟取整到分钟也只有几十秒) ⇒ 当成"压根没写进去"报错,
             // 而不是拿一句"同步成功"把用户送走。
             if abs(after) > 60 {
