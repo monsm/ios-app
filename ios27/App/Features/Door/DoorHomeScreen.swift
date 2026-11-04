@@ -78,6 +78,7 @@ struct DoorHomeScreen: View {
                 heroCard
                 todayCard
                 quickCard
+            attentionCard
                 linkCard
             }
         }
@@ -205,6 +206,69 @@ struct DoorHomeScreen: View {
     private var quickShown: [QuickAction] {
         let cap = max(1, SettingsStore.shared.quickGridCount)
         return Array(QuickPool.ordered().prefix(cap))
+    }
+
+    // MARK: - 卡 2 异常提醒（02 §3.1 #1 点名的「异常提醒」；迁 V8 时整段丢失）
+
+    /// 2026-11-05（地毯式对抗审查）：旧 DoorScreen 有一张「需要留意」卡，四条判据：
+    /// 密钥未绑定 / 超过 30 天未校时 / 电量低于阈值 / 凭证 2 小时内到期或已过期。
+    /// 43 个 Dest 迁 V8 时这张卡没有承接 —— `CredentialOrg.dueSoonPwds` 因此变成零调用；
+    /// 用户再也看不到「这把锁快没电」或「临时码马上失效」的首页提醒。这里逐条恢复，
+    /// 文案与判据原样保留（含「已过期」与「将到期」两句话分开说的那份诚实）。
+    @ViewBuilder
+    private var attentionCard: some View {
+        let items = attentionItems
+        if !items.isEmpty {
+            VCard2 {
+                VCardHead(eyebrow: "需要留意", statement: "\(items.count) 项", trailing: nil)
+                VDivider2()
+                    .padding(.top, V8.S.gapM)
+                VStack(alignment: .leading, spacing: V8.S.gapS) {
+                    ForEach(Array(items.enumerated()), id: \.offset) { pair in
+                        HStack(alignment: .top, spacing: V8.S.gapS) {
+                            Image(systemName: pair.element.icon)
+                                .font(V8.T.footnote)
+                                .foregroundStyle(V8.C.warn)
+                                .accessibilityHidden(true)
+                            Text(pair.element.text)
+                                .font(V8.T.footnote)
+                                .foregroundStyle(V8.C.ink1)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Spacer(minLength: 0)
+                        }
+                    }
+                }
+                .padding(.top, V8.S.gapM)
+            }
+        }
+    }
+
+    private var attentionItems: [(text: String, icon: String)] {
+        var out: [(String, String)] = []
+        let mac = app.currentMac
+        if (app.lastStatus?.status.sKeyStatus ?? 0) != 0 {
+            out.append(("密钥尚未绑定，这把锁可能还没完成配网", "exclamationmark.triangle.fill"))
+        }
+        let lastSync = DB.syncTime(mac)
+        let nowMs = Date().timeIntervalSince1970 * 1000
+        if lastSync <= 0 || nowMs - lastSync > 30 * 86_400_000 {
+            out.append(("超过 30 天未校时，动态密码可能失效 — 到快捷操作同步时间", "clock.badge.exclamationmark.fill"))
+        }
+        if let lock = app.lock, lock.battery >= 0, lock.battery <= CareSchedule.battThreshold {
+            out.append(("当前电量 \(lock.battery)%，已低于提醒阈值 (\(CareSchedule.battThreshold)%) — 建议备好电池", "battery.25percent"))
+        }
+        let due = CredentialOrg.dueSoonPwds(mac)
+        if !due.isEmpty {
+            // 窗口是 [now-1h, now+2h] —— 包含已过期 1 小时内的条目。
+            // 一律写「将在 2 小时内到期」对已过期的那几条是假的：它们早就不放行了。
+            let nearest = CredentialOrg.expiryDate(due[0])?.timeIntervalSince1970 ?? 0
+            let expired = nearest < Date().timeIntervalSince1970
+            let text = expired
+                ? "有 \(due.count) 条凭证已过期（最近一条 #\(due[0].alias)）— 锁端已不再放行，请到凭证页处理"
+                : "有 \(due.count) 条凭证将在 2 小时内到期（最近一条 #\(due[0].alias)）— 需要续期请到凭证页"
+            out.append((text, "clock.badge.exclamationmark.fill"))
+        }
+        return out
     }
     private var quickCard: some View {
         VCard2 {
