@@ -388,18 +388,22 @@ struct KeysScreen: View {
                 VCardHeader(title: "本机安全")
                 HStack(alignment: .center, spacing: V.S.gapM) {
                     VStack(alignment: .leading, spacing: V.S.gapXXS) {
-                        Text("已启用")
+                        // 2026-11-04（呈现复核 · 硬编码状态）：这一整块原来是**写死的**
+                        // 「已启用 / 范围 全量」—— 没有任何数据源。没设本机密码的用户也会看到
+                        // 「本机安全 已启用」，而实际上他连解锁密码都没有。
+                        Text(SettingsStore.shared.hasPasscode ? "已启用" : "未启用")
                             .font(V.F.chipValue)
                             .foregroundStyle(V.C.text1)
                         Text("范围")
                             .font(V.F.micro)
                             .foregroundStyle(V.C.text4)
-                        Text("全量")
+                        Text(SettingsStore.shared.hasPasscode ? "全量" : "无")
                             .font(V.F.bedValue)
                             .foregroundStyle(V.C.text1)
                     }
                     Spacer(minLength: 0)
-                    Image(systemName: "checkmark.shield.fill")
+                    // 未启用时不该给"安全已确认"的勾盾 —— 那是视觉上的过度断言。
+                    Image(systemName: SettingsStore.shared.hasPasscode ? "checkmark.shield.fill" : "shield.slash")
                         .font(V.F.heroGlyph56)
                         .foregroundStyle(
                             LinearGradient(
