@@ -149,15 +149,10 @@ struct DongleRecord: Identifiable, Hashable {
     /// 本机这把锁的钥匙是否已写进硬件（cmd41 回执后置真）。
     let holdsThisLock: Bool
 
-    /// 示例台账 —— TODO(engine) 真实现读 kf_keychain_dongles（按 mac 索引、空字段不覆盖旧值）。
-    static let sample: [DongleRecord] = [
-        DongleRecord(id: "d1", name: "随身钥匙串", mac: "C4:2B:1A:00:11:22",
-                     battery: 82, keys: 2, firmware: "2.0.1", holdsThisLock: true)
-    ]
-
-    /// 扫描"发现"的一台（TODO(engine) 结果应来自 BLE 扫描，只认 pid 16289 且广播带 MAC）。
-    static let discovered = DongleRecord(id: "d2", name: "新钥匙串", mac: "C4:2B:1A:00:33:44",
-                                        battery: 100, keys: 0, firmware: "2.0.1", holdsThisLock: false)
+    // 2026-11-04（清理 · 死示例数据）：这里原有 `sample` / `discovered` 两条**假钥匙串**，
+    // 注释说「TODO(engine) 真实现读 kf_keychain_dongles」—— 而 `DB.dongles()` 早就实现了。
+    // 两条**全仓零引用**，却带着假的电量 82 / 固件 2.0.1：一旦有人拿它做预览或空态示例，
+    // 用户会看到一台不存在的设备。删掉；真数据走 `SettingsStore.dongles`。
 }
 
 // MARK: - 本机偏好
