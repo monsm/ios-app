@@ -40,30 +40,28 @@ struct SettingsHomeScreen: View {
             VNavRow(title: "安全", detail: "本机密码 / 生物识别 / 只读试验 / 诱饵") { router.request(.dest(.security)) }
             VDotRule()
             VNavRow(title: "靠近自动开锁", detail: "默认关；开启前先标定距离") { router.request(.dest(.autoOpen)) }
-            VDotRule()
-            VNavRow(title: "无障碍", detail: "全局大字 / 放大临时码 / 大格模式") { router.request(.dest(.accessibility)) }
+
         }
     }
 
     private var lookCard: some View {
         card("外观", statement: "看与读") {
-            VNavRow(title: "外观", detail: "主题 / 强调色 / 圆角 / 密度 / 快捷格") { router.request(.dest(.appearance)) }
+            VNavRow(title: "外观", detail: "主题 / 强调色 / 密度 / 快捷格 / 无障碍") { router.request(.dest(.appearance)) }
         }
     }
 
     private var dataCard: some View {
         card("数据", statement: "只在本机") {
-            VNavRow(title: "备份与恢复", detail: "本机备份 / 恢复 / 上次备份") { router.request(.dest(.backup)) }
-            VDotRule()
-            VNavRow(title: "备份工作室", detail: "WebDAV / 多份 / 迁移 / 自检") { router.request(.dest(.backupStudio)) }
+            VNavRow(title: "备份与恢复", detail: "本机备份 / 恢复 / WebDAV / 多份 / 迁移 / 自检") { router.request(.dest(.backup)) }
+
         }
     }
 
     private var toolCard: some View {
         card("工具", statement: "硬件与诊断") {
-            VNavRow(title: "硬件", detail: "钥匙串 / PIN 池 / God 面板") { router.request(.dest(.hardware)) }
+            VNavRow(title: "硬件", detail: "钥匙串 / 写钥 / God 模式入口") { router.request(.dest(.hardware)) }
             VDotRule()
-            VNavRow(title: "诊断", detail: "协议测试 / God 模式 / 交互流水") { router.request(.dest(.protocolTest)) }
+            VNavRow(title: "诊断", detail: "协议测试 / God 模式（开发者项都在这一页）") { router.request(.dest(.protocolTest)) }
             VDotRule()
             VNavRow(title: "关于", detail: "版本 / 累计开锁 / 声明") { router.request(.dest(.about)) }
         }

@@ -1,4 +1,4 @@
-// RecordExportHomeScreen.swift —— 导出（V8 设计语言）
+// RecordsExportSection.swift —— 台账工作室的「导出」段（原 recordExport 页整段并入）
 //
 // 与 RecordExportScreen 的能力对齐：① 单条记录分享卡（固定 360×640 的 PNG，ImageRenderer 真出图）
 // ② 按天勾选的 CSV ③ 成员名册 vCard ④ 上周小结（三句人话 + CSV 一起进剪贴板）。
@@ -31,7 +31,7 @@ private enum RecordExportCardSize {
 
 // MARK: - 页面
 
-struct RecordExportHomeScreen: View {
+struct RecordsExportSection: View {
     @Environment(AppModel.self) private var app
     @Environment(Router.self) private var router
 
@@ -113,14 +113,10 @@ struct RecordExportHomeScreen: View {
         return "三样东西都走系统分享与剪贴板：不上传、不落盘、本机不留旧文件。这一页不连门锁，离线时导出的仍是缓存里那一份。"
     }
 
+    /// 02 §3.3 M10：recordExport 并入台账工作室成为「导出」段。
+    /// 这一段以「导出卡」的形状出现：卡头就是原来的判断句，段头脚注就是原来的因果段。
     var body: some View {
-        VPage(title: judgement, lead: lead) {
-            if decoyed || entries.isEmpty {
-                EmptyView()
-            } else {
-                chipRow
-            }
-        } content: {
+        VStack(spacing: V8.S.gapCard) {
             if decoyed {
                 decoyCard
             } else if app.lock == nil {
@@ -136,6 +132,7 @@ struct RecordExportHomeScreen: View {
                     actionTitle: "去读取台账"
                 ) { router.recordsPath = [] }
             } else {
+                chipRow
                 consentCard
                 cardBlock
                 daysBlock
@@ -146,8 +143,6 @@ struct RecordExportHomeScreen: View {
                 }
             }
         }
-        .background(V8.C.bg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             reload()
             ensureSelection()
@@ -173,20 +168,24 @@ struct RecordExportHomeScreen: View {
         }
     }
 
-    // MARK: - 芯片行
+    // MARK: - 段头（原页的判断句 + 因果段 + 芯片行，收进一张段头卡）
 
     private var chipRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: V8.S.gapChip) {
-                VChip2(icon: .ring(1, V8.C.accent), label: "可导出", value: "\(entries.count) 条")
-                VChip2(icon: .ring(0.6, V8.C.info), label: "天数", value: "\(days.count) 天")
-                VChip2(icon: .ring(0.4, V8.D.fingerprint), label: "成员", value: "\(activeMemberCount) 位")
-                VChip2(icon: .ring(0.2, V8.C.warn), label: "上周", value: "\(digest.rows) 条")
+        VStack(spacing: V8.S.gapS) {
+            VCardHead(eyebrow: "导出", statement: judgement)
+            Text(lead)
+                .font(V8.T.caption)
+                .foregroundStyle(V8.C.ink4)
+                .fixedSize(horizontal: false, vertical: true)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: V8.S.gapChip) {
+                    VChip2(icon: .ring(1, V8.C.accent), label: "可导出", value: "\(entries.count) 条")
+                    VChip2(icon: .ring(0.6, V8.C.info), label: "天数", value: "\(days.count) 天")
+                    VChip2(icon: .ring(0.4, V8.D.fingerprint), label: "成员", value: "\(activeMemberCount) 位")
+                    VChip2(icon: .ring(0.2, V8.C.warn), label: "上周", value: "\(digest.rows) 条")
+                }
             }
-            .padding(.leading, V8.S.gutterCard)
-            .padding(.trailing, V8.S.gutterCard)
         }
-        .scrollClipDisabled()
     }
 
     // MARK: - 导出确认（危险动作：出去就收不回来）
@@ -631,3 +630,5 @@ private struct RecordExportScaledCard<Content: View>: View {
         .accessibilityElement(children: .contain)
     }
 }
+
+// MARK: - 过渡别名（待 Lead 改 Destinations.swift 后删除）

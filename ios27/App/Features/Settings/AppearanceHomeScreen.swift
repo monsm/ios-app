@@ -1,6 +1,6 @@
 // AppearanceHomeScreen.swift —— 外观与时间显示（V8 设计语言）
 //
-// 与 AppearanceScreen 的能力对齐：主题 / 高对比 / 减少透明、品牌色六套 + 自定义强调色、
+// 与 AppearanceScreen 的能力对齐：主题 / 高对比 / 减少透明、品牌色六套 + 自定义强调色、无障碍段（← accessibility 整页并入：全局大字 / 放大临时码 / 系统态三行 / 样例）；
 // 应用图标九套、圆角 / 凭证行高 / 时间线行距、主控读数三件、记录页开场策略、
 // 提示音与防抖、密度与动效、时间显示（含样例）、快捷操作 10 选 N、恢复默认外观。
 // 只改渲染层：偏好仍写 SettingsStore.shared 的同一批 kf_* 键，重置仍走 resetAppearance()。
@@ -13,6 +13,8 @@ import UIKit
 struct AppearanceHomeScreen: View {
     @Environment(AppModel.self) private var app
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+    @Environment(\.accessibilityReduceTransparency) private var axReduceTransparency
+    @Environment(\.colorSchemeContrast) private var axContrast
 
     private var store: SettingsStore { SettingsStore.shared }
 
@@ -55,6 +57,7 @@ struct AppearanceHomeScreen: View {
                 rhythmCard
                 timeCard
                 quickCard
+                accessibilityCard
                 resetCard
                 if app.trialGuard { trialCard }
             }
@@ -572,7 +575,59 @@ struct AppearanceHomeScreen: View {
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
     }
 
-    // MARK: - 卡 11 恢复默认
+    // MARK: - 卡 11 无障碍（并入自 AccessibilityHomeScreen）
+
+    /// 「无障碍」段（← accessibility / AccessibilityHomeScreen）：
+    /// 看得清（全局大字 / 放大临时码）+ 系统态三行 + 样例。
+    /// 真链路原样：全局大字仍写 SettingsStore.axBigText（kf_ax_bigtext，LockKeeperApp 的
+    /// AXTextSizeModifier 是它的消费点）；放大临时码仍写 kf_ax_bigotp（ZotpHomeScreen 的码字号消费点）。
+    /// 大格模式（kf_bigtile）已随「快捷格 10 选 N」并入上面的「快捷操作」卡，这里不再重复开关。
+    @State private var axBigOTP = DB.store.getBool("kf_ax_bigotp")
+
+    private var accessibilityCard: some View {
+        VCard2 {
+            VCardHead(eyebrow: "无障碍", statement: "看得清 · 点得准")
+            VDivider2()
+                .padding(.top, V8.S.gapM)
+            VStack(spacing: 0) {
+                toggleRow("全局大字", detail: "动态字重放大到辅助功能档（Accessibility 2），所有页面跟着放大。", isOn: settingsBinding(\.axBigText))
+                VDotRule()
+                toggleRow("放大临时码", detail: "生成动态码时用大字号显示六位码，并允许双击切换。", isOn: Binding(
+                    get: { axBigOTP },
+                    set: { on in
+                        axBigOTP = on
+                        DB.store.set("kf_ax_bigotp", on)
+                    }
+                ))
+            }
+            .padding(.top, V8.S.gapS)
+            VDivider2()
+                .padding(.top, V8.S.gapM)
+            VStack(spacing: 0) {
+                VDataRow(tag: "系统", tagTint: V8.C.ink4, title: "减弱动态效果", value: systemReduceMotion ? "系统已开" : "系统未开")
+                VDotRule()
+                VDataRow(tag: "系统", tagTint: V8.C.ink4, title: "减少透明度", value: axReduceTransparency ? "系统已开" : "系统未开")
+                VDotRule()
+                VDataRow(tag: "系统", tagTint: V8.C.ink4, title: "增加对比度", value: axContrast == .increased ? "系统已开" : "系统未开")
+            }
+            .padding(.top, V8.S.gapS)
+            Text("系统「减弱动态效果 / 增加对比度 / 减少透明度」与这里的开关是并联关系：任一开启都生效。系统态只如实显示，不重复开关。")
+                .font(V8.T.footnote)
+                .foregroundStyle(V8.C.ink3)
+                .padding(.top, V8.S.gapM)
+                .fixedSize(horizontal: false, vertical: true)
+            Text("开门成功")
+                .font(store.axBigText ? V8.T.title2 : V8.T.headline)
+                .foregroundStyle(V8.C.ink1)
+                .padding(.top, V8.S.gapM)
+            Text("这一行会跟随全局大字档变化。")
+                .font(V8.T.body)
+                .foregroundStyle(V8.C.ink3)
+                .padding(.top, V8.S.gapS)
+        }
+    }
+
+    // MARK: - 卡 12 恢复默认
 
     private var resetCard: some View {
         VCard2(style: .well) {
@@ -673,3 +728,4 @@ struct AppearanceHomeScreen: View {
         .padding(.top, V8.S.gapM)
     }
 }
+

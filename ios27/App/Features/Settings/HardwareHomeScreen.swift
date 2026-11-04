@@ -314,7 +314,7 @@ struct HardwareHomeScreen: View {
             VCardHead(eyebrow: "God 模式", statement: app.currentKeychain == nil ? "先添加一把锁" : "锁端全量读数与凭证对账")
             VDivider2()
                 .padding(.top, V8.S.gapM)
-            Text("锁端全量读数 · 凭证台账对账 · 变更流水 · 修池（保通信密钥重写 PIN 表）。双侧快照请到「交互流水」页复制。")
+            Text("锁端全量读数 · 凭证台账对账 · 变更流水 · 修池（保通信密钥重写 PIN 表）。诊断项都收在「诊断」页里。")
                 .font(V8.T.footnote)
                 .foregroundStyle(V8.C.ink3)
                 .padding(.top, V8.S.gapM)

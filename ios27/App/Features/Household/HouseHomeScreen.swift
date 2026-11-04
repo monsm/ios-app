@@ -1,12 +1,20 @@
 // HouseHomeScreen.swift —— 家（Tab 4）· V8 设计语言
 //
+// 02 §3.4 #31 归并：memberArchive 降为「归档」段（showArchived 筛选 + 归档名单 + 影响面卡）。
+// 能力守恒：HHStats.archived / mirrorArchived 恢复链路、「逐位可恢复、没有全部恢复」的纪律、
+// 归档影响面五行读数、空态与只读文案全部保留。
+//
 // 与 HouseholdScreen 的功能对齐：成员概览 / 名单 / 排序入口 / 归档 / 成员流转 / 新建成员。
 // 一屏一个英雄数：在册人数只出现在「成员」芯片里，标题不重复。
 import SwiftUI
 
 struct HouseHomeScreen: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(AppModel.self) private var app
     @Environment(Router.self) private var router
+
+    /// memberArchive 并入后的「归档」筛选：false = 只看在册，true = 看归档名单。
+    @State private var showArchived = false
 
     private var activeMembers: [MemberCard] { HHStats.active(app.members) }
     private var archivedCount: Int { HHStats.archived(app.members).count }
@@ -41,12 +49,15 @@ struct HouseHomeScreen: View {
         VPage(title: judgement, lead: lead) {
             chipRow
         } content: {
-            if activeMembers.isEmpty {
+            if activeMembers.isEmpty && archivedMembers.isEmpty {
                 VEmpty(
                     title: "还没有成员",
                     reason: "成员是手机钥匙与权限的归属。先建一位，再给他签发钥匙。",
                     actionTitle: "新建成员"
                 ) { router.request(.dest(.memberCreate)) }
+            } else if showArchived {
+                archiveCard
+                archiveImpactCard
             } else {
                 memberCard
                 entryCard
@@ -121,7 +132,7 @@ struct HouseHomeScreen: View {
             .padding(.top, V8.S.gapS)
             VDivider2()
                 .padding(.top, V8.S.gapM)
-            Text("归档的成员仍保留历史记录，记录页还能筛到。")
+            Text("归档的成员仍保留历史记录，记录页还能筛到。" + (archivedCount > 0 ? " 点上面的「归档」看名单与恢复。" : ""))
                 .font(V8.T.footnote)
                 .foregroundStyle(V8.C.ink3)
                 .padding(.top, V8.S.gapFootnote)
@@ -157,8 +168,8 @@ struct HouseHomeScreen: View {
                     router.request(.dest(.memberDetail))
                 }
                 VDotRule()
-                VNavRow(title: "归档", detail: "已归档 \(archivedCount) 位", value: nil) {
-                    router.request(.dest(.memberArchive))
+                VNavRow(title: "归档", detail: "已归档 \(archivedCount) 位 · 历史仍在", value: nil) {
+                    showArchived = true
                 }
                 VDotRule()
                 VNavRow(title: "成员流转", detail: "借用 / 家政窗 / 访客 / 长辈") {
@@ -168,6 +179,118 @@ struct HouseHomeScreen: View {
             .padding(.top, V8.S.gapS)
         }
     }
+
+    // MARK: - 归档段（原 memberArchive 页整段并入）
+
+    private var archivedMembers: [MemberCard] { HHStats.archived(app.members) }
+
+    /// 归档名单 + 恢复。恢复链路原样：app.members 投影 + roster.mirrorArchived 落 kf_member_ext。
+    /// 刻意没有「全部恢复」—— 恢复必须一位一位点（原页纪律，不许退化）。
+    private var archiveCard: some View {
+        VCard2 {
+            VCardHead(eyebrow: "归档名单", statement: archivedMembers.isEmpty ? "没有归档的成员" : "\(archivedMembers.count) 位",
+                      trailing: showArchived ? "返回名册" : nil)
+            VDivider2()
+                .padding(.top, V8.S.gapM)
+            if archivedMembers.isEmpty {
+                Text("归档只是从名册与统计里收起，历史一条不删。想收起谁：在成员行进入「成员」，用「档案收尾」里的归档。")
+                    .font(V8.T.footnote)
+                    .foregroundStyle(V8.C.ink3)
+                    .padding(.top, V8.S.gapM)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(archivedMembers, id: \.id) { member in
+                        HStack(spacing: V8.S.gapS) {
+                            VDataRow(
+                                tag: member.role.rawValue,
+                                tagTint: V8.C.ink4,
+                                title: member.name,
+                                detail: "归档中 · 历史仍在",
+                                value: "\(member.keyCount)",
+                                unit: "枚"
+                            )
+                            Button {
+                                restoreArchived(member)
+                            } label: {
+                                Text("恢复")
+                                    .font(V8.T.tab)
+                                    .foregroundStyle(V8.C.ink1)
+                                    .padding(.horizontal, V8.S.gapM)
+                                    .frame(minHeight: V8.H.min)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: V8.R.capsule(V8.H.min), style: .continuous)
+                                            .strokeBorder(V8.C.line, lineWidth: V8.S.hair)
+                                    )
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("恢复 " + member.name)
+                        }
+                        if member.id != archivedMembers.last?.id { VDotRule() }
+                    }
+                }
+                .padding(.top, V8.S.gapS)
+            }
+            VDivider2()
+                .padding(.top, V8.S.gapM)
+            Text("归档后记录页仍能筛到 TA，凭证页也仍列 TA 名下凭证 —— 归档不许挡撤权入口。")
+                .font(V8.T.footnote)
+                .foregroundStyle(V8.C.ink3)
+                .padding(.top, V8.S.gapFootnote)
+                .fixedSize(horizontal: false, vertical: true)
+            Button {
+                showArchived = false
+            } label: {
+                Text("回到名册")
+                    .font(V8.T.tab)
+                    .foregroundStyle(V8.C.ink1)
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: V8.H.min)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: V8.R.capsule(V8.H.min), style: .continuous)
+                            .strokeBorder(V8.C.line, lineWidth: V8.S.hair)
+                    )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("回到名册")
+            .padding(.top, V8.S.gapM)
+        }
+    }
+
+    /// 归档影响面（原页 impactCard 五行读数，原样保留）。
+    private var archiveImpactCard: some View {
+        VCard2(style: .well) {
+            VCardHead(eyebrow: "归档影响面", statement: "逐位可恢复")
+            VDivider2()
+                .padding(.top, V8.S.gapM)
+            VStack(spacing: 0) {
+                VDataRow(tag: "仍在名册", tagTint: V8.C.ink4, title: "\(activeMembers.count)", value: "位")
+                VDotRule()
+                VDataRow(tag: "已归档", tagTint: V8.C.ink4, title: "\(archivedMembers.count)", value: "位")
+                VDotRule()
+                VDataRow(tag: "记录页", tagTint: V8.C.ok, title: "仍能按 TA 筛", value: "")
+                VDotRule()
+                VDataRow(tag: "凭证页", tagTint: V8.C.ok, title: "仍列 TA 名下凭证", value: "")
+                VDotRule()
+                VDataRow(tag: "成员统计", tagTint: V8.C.warn, title: "名册里不再出现", value: "")
+            }
+            .padding(.top, V8.S.gapS)
+            Text("恢复是逐位的，没有「全部恢复」—— 那会让人一次把不想回到名册的人也放回来。")
+                .font(V8.T.footnote)
+                .foregroundStyle(V8.C.ink3)
+                .padding(.top, V8.S.gapM)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func restoreArchived(_ member: MemberCard) {
+        guard let i = app.members.firstIndex(where: { $0.id == member.id }) else { return }
+        app.members[i] = member.hh(archived: false)
+        roster.mirrorArchived(member.id, false)
+        AppToast.shared.show("已恢复为在册成员", tone: .ok)
+    }
+
+    private var roster: HouseholdRoster { HouseholdRoster.shared }
 }
 
 // MARK: - 四个芯片（成员 / 凭证 / 访客 / 本周）

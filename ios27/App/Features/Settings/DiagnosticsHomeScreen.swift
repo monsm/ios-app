@@ -1,20 +1,258 @@
-// GodModeHomeScreen.swift —— God 模式（V8 设计语言）
+// DiagnosticsHomeScreen.swift —— 诊断（V8 设计语言 · 02 分册 IA 归并后的宿主页）
 //
-// 与 GodModeScreen 的能力对齐：锁身份（含只打指纹的密钥摘要）、锁端全量实时读数、
-// 凭证台账（本机 vs 锁端计数）、锁端凭证变更流水、修池（唯一写动作，二次确认）。
-// 只改渲染层：读状态仍走 app.lockLink.getStatus + DB.readStatus，读日志仍走 app.lockLink.getLogs，
-// 修池仍走 app.lockLink.repairPool。
+// 本页是 §3.5 P5 归并的宿主：开发者 / 诊断项沉到这一页，不出现在普通用户的浏览路径上。吸收的段与来源：
+//   ·「协议测试」段（← protocolTest / ProtocolTestHomeScreen）：附近设备扫描（8 秒窗口）、
+//     回声探测（免令牌、不改锁、不写台账）、结果单槽、边界说明。
+//   ·「God 模式」段（← godMode / GodModeHomeScreen）：锁身份（密钥只显示指纹）、锁端全量实时读数、
+//     凭证台账对账、锁端凭证变更流水、修池（唯一写动作，二次确认）、录屏遮挡。
+// 能力守恒：BLEService.scanWindow / ZKProtocol.parseAdv / lockMac / PidMap.productNames、LockService.probeEcho、
+// app.lockLink.getStatus / getLogs / repairPool、DB.readStatus / listPwds / listFps、DiagSnapshot.fingerprint /
+// ekeyPinMasked 全部逐条搬入；判定语义与文案因果原样保留。
 //
 // 与旧页的刻意差异：
-//   ① 空壳模式整页不渲染 —— app.currentKeychain 在空壳下仍返回真锁（门照样能开），
-//      但锁名 / MAC / 密钥指纹 / 台账全是真值，属于必须隐藏的档案类字段。
-//   ② 只读试验模式把「修池」标成不可用：它是写命令，会被硬护栏拦下。
-//   ③ 密钥一律只显示指纹（ekeyPinMasked），不渲染任何明文 PIN。
+//   ① 协议测试段只说人话，协议返回码不上屏（rc= 改为「回声一致 / 不匹配 / 回帧异常」）。
+//   ② God 模式段在空壳模式下不渲染任何档案字段（app.currentKeychain 在空壳下仍返回真锁）。
+//   ③ 只读试验模式：协议测试段可用（回声在放行表），修池禁用并说明。
 import SwiftUI
 
-struct GodModeHomeScreen: View {
+struct DiagnosticsHomeScreen: View {
     @Environment(AppModel.self) private var app
     @Environment(Router.self) private var router
+
+    private var decoyed: Bool { DB.isDecoy }
+    private var readOnly: Bool { app.trialGuard }
+
+    private var judgement: String {
+        if decoyed { return "空壳模式下不显示诊断读数" }
+        return "协议测试 · God 模式"
+    }
+
+    private var lead: String {
+        if decoyed { return "空壳模式只隐藏数据，不改动数据。这一页不显示锁端读数，也不提供探测与修池。" }
+        return "只读为主：附近设备扫描与回声探测不改锁内任何东西；唯一的写动作是 God 模式段里的「修池」，会二次确认。"
+    }
+
+    var body: some View {
+        VPage(title: judgement, lead: lead) {
+            EmptyView()
+        } content: {
+            if decoyed {
+                godDecoyCard
+            } else {
+                protocolSection
+                godSection
+            }
+        }
+        .background(V8.C.bg.ignoresSafeArea())
+        .navigationBarTitleDisplayMode(.inline)
+        .captureShield("这里是锁端全量读数与凭证台账\n屏幕正在被录制或截图，已遮挡")
+    }
+
+    // MARK: - 段 1 协议测试（← protocolTest）
+
+    private var protocolSection: some View {
+        VStack(alignment: .leading, spacing: V8.S.gapCard) {
+            scanCard
+            if devices.isEmpty {
+                VEmpty(
+                    title: "没有扫到设备",
+                    reason: "确认蓝牙已开、设备在广播；门锁被连上后会停止广播，先断开再扫。扫描只读广播，不连接、不发命令。",
+                    actionTitle: "重新扫描"
+                ) { Task { await scan() } }
+            } else {
+                listCard
+            }
+            noteCard
+            errorCard
+        }
+    }
+
+    private struct Candidate: Identifiable {
+        let id: String
+        let name: String
+        let pid: Int
+        let mac: String
+        let rssi: Int
+        let dfu: Bool
+    }
+
+    @State private var devices: [Candidate] = []
+    @State private var scanning = false
+    @State private var probing: String?
+    @State private var result: String?
+    @State private var resultDevice: String?
+    @State private var error: String?
+
+    // MARK: - 扫描
+
+    private var scanCard: some View {
+        VCard2 {
+            VCardHead(eyebrow: "附近设备", statement: scanning ? "正在扫描 8 秒" : "扫描窗口 8 秒", trailing: "\(devices.count) 台")
+            VDivider2()
+                .padding(.top, V8.S.gapM)
+            if scanning {
+                VBusy(text: "正在扫描 8 秒 · 把要测的设备放在手机旁")
+                    .padding(.top, V8.S.gapM)
+            } else {
+                Button { Task { await scan() } } label: {
+                    Text("重新扫描")
+                        .font(V8.T.tab)
+                        .foregroundStyle(V8.C.chipOn)
+                        .frame(maxWidth: .infinity)
+                        .frame(minHeight: V8.H.min)
+                        .background(Capsule(style: .continuous).fill(V8.C.accent))
+                }
+                .buttonStyle(.plain)
+                .padding(.top, V8.S.gapM)
+            }
+            Text("门锁被连上后会停止广播；先断开再扫。扫描只读广播，不连接、不发命令。")
+                .font(V8.T.footnote)
+                .foregroundStyle(V8.C.ink3)
+                .padding(.top, V8.S.gapM)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+    // MARK: - 扫描结果
+
+    private var listCard: some View {
+        VCard2 {
+            VCardHead(eyebrow: "扫描结果", statement: devices.isEmpty ? "还没有设备" : "\(devices.count) 台按信号排序")
+            VDivider2()
+                .padding(.top, V8.S.gapM)
+            if devices.isEmpty {
+                Text("没有扫到设备。确认蓝牙已开、设备在广播；门锁被连上后会停止广播，先断开再扫。")
+                    .font(V8.T.footnote)
+                    .foregroundStyle(V8.C.ink3)
+                    .padding(.top, V8.S.gapM)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(devices.enumerated()), id: \.element.id) { pair in
+                        if pair.offset > 0 {
+                            VDotRule()
+                                .padding(.vertical, V8.S.gapS)
+                        }
+                        deviceBlock(pair.element)
+                    }
+                }
+                .padding(.top, V8.S.gapS)
+            }
+        }
+    }
+
+    private func deviceBlock(_ d: Candidate) -> some View {
+        VStack(alignment: .leading, spacing: V8.S.gapXS) {
+            HStack(alignment: .firstTextBaseline, spacing: V8.S.gapS) {
+                Text(d.name)
+                    .font(V8.T.value)
+                    .foregroundStyle(V8.C.ink1)
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+                Text("\(d.rssi) dBm")
+                    .font(V8.T.caption)
+                    .foregroundStyle(V8.C.ink4)
+                    .monospacedDigit()
+            }
+            Text("pid \(d.pid) · \(d.mac.isEmpty ? "无 MAC" : d.mac)\(d.dfu ? " · DFU" : "")")
+                .font(V8.T.caption)
+                .foregroundStyle(V8.C.ink4)
+                .fixedSize(horizontal: false, vertical: true)
+            Button { probe(d) } label: {
+                Text(probing == d.id ? "探测中…" : "发送回声探测")
+                    .font(V8.T.tab)
+                    .foregroundStyle(V8.C.chipOn)
+                    .padding(.horizontal, V8.S.gapL)
+                    .frame(minHeight: V8.H.min)
+                    .background(Capsule(style: .continuous).fill(probing == d.id ? V8.C.chipOff : V8.C.accent))
+            }
+            .buttonStyle(.plain)
+            .disabled(probing != nil)
+            .padding(.top, V8.S.gapXS)
+            if let result, resultDevice == d.id, probing == nil {
+                Text(result)
+                    .font(V8.T.footnote)
+                    .foregroundStyle(result.hasPrefix("回声一致") ? V8.C.ok : V8.C.danger)
+                    .padding(.top, V8.S.gapXS)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(minHeight: V8.H.min)
+    }
+    // MARK: - 边界
+
+    private var noteCard: some View {
+        VCard2(style: .well) {
+            VCardHead(eyebrow: "边界", statement: "这一页只读")
+            Text("回声探测不需要令牌、不改锁内任何东西、不写本机台账 —— 对还没配对的设备也发得出去。本页不提供任何写命令（配对 / 改密 / 删指纹等都不在）。")
+                .font(V8.T.footnote)
+                .foregroundStyle(V8.C.ink3)
+                .padding(.top, V8.S.gapM)
+                .fixedSize(horizontal: false, vertical: true)
+            Text("只读试验模式下这一页仍然可用：回声探测本来就属于放行的只读操作。")
+                .font(V8.T.caption)
+                .foregroundStyle(V8.C.ink4)
+                .padding(.top, V8.S.gapS)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    // MARK: - 失败态
+    // MARK: - 失败态
+
+    @ViewBuilder
+    private var errorCard: some View {
+        if let error {
+            VFailure(
+                what: "扫描没有完成",
+                why: error,
+                next: "确认蓝牙已开、设备在广播；门锁被连上后会停止广播，先断开再扫。"
+            ) { Task { await scan() } }
+        }
+    }
+
+    @MainActor
+    private func scan() async {
+        guard !scanning else { return }
+        scanning = true
+        error = nil
+        devices = []
+        do {
+            // 扫满 8 秒窗口再取快照（旧实现 startScan 后立刻读，列表恒空）。
+            let found = try await BLEService.shared.scanWindow(allowDuplicates: true, timeoutMs: 8000)
+            var out: [Candidate] = []
+            for d in found {
+                guard let adv = ZKProtocol.parseAdv(d.advertisHex) else { continue }
+                let mac = ZKProtocol.lockMac(fromAdv: adv) ?? ""
+                out.append(Candidate(id: d.deviceId,
+                                     name: d.name.isEmpty ? (PidMap.productNames[adv.pid] ?? "未知设备") : d.name,
+                                     pid: adv.pid, mac: mac, rssi: d.rssi, dfu: adv.dfuState != 0))
+            }
+            devices = out.sorted { $0.rssi > $1.rssi }
+        } catch {
+            self.error = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
+        scanning = false
+    }
+
+    @MainActor
+    private func probe(_ d: Candidate) {
+        guard probing == nil else { return }
+        probing = d.id
+        result = nil
+        resultDevice = nil
+        Task { @MainActor in
+            do {
+                let r = try await LockService.shared.probeEcho(deviceId: d.id)
+                result = r.matched
+                    ? "回声一致 · \(r.ms) ms"
+                    : (r.ok ? "回声不匹配 · \(r.ms) ms" : "设备回帧异常 · \(r.ms) ms")
+            } catch {
+                result = "探测失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+            }
+            resultDevice = d.id
+            probing = nil
+        }
+    }
 
     @State private var status: StatusSnapshotData?
     @State private var busy = false
@@ -25,35 +263,36 @@ struct GodModeHomeScreen: View {
 
     private var mac: String { app.currentMac }
     private var kc: Keychain? { app.currentKeychain }
-    private var decoyed: Bool { DB.isDecoy }
-    private var readOnly: Bool { app.trialGuard }
 
-    private var judgement: String {
-        if decoyed { return "空壳模式下不显示锁端读数" }
-        guard kc != nil else { return "没有已配对的锁" }
-        guard let st = status else { return "锁端读数还没拿到" }
-        return "锁端读数 · 电量 " + (st.powerLevel >= 0 ? "\(st.powerLevel)%" : "未读到")
-    }
+    // MARK: - 芯片行
 
-    private var lead: String {
-        if decoyed { return "空壳模式只隐藏数据，不改动数据。锁身份、锁端读数与凭证台账都不显示，也不提供修池。" }
-        return "只读为主：这一页把锁端全量状态、凭证台账与变更流水摊开。唯一的写动作是「修池」，会二次确认。"
-    }
-
-    var body: some View {
-        VPage(title: judgement, lead: lead) {
-            if decoyed || kc == nil {
-                EmptyView()
-            } else {
-                chipRow
+    private var godChipRow: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: V8.S.gapChip) {
+                VChip2(icon: .ring(status.map { $0.powerLevel >= 0 ? Double($0.powerLevel) / 100 : 0.02 } ?? 0.02,
+                                   status == nil ? V8.C.ink4 : ((status?.powerLevel ?? -1) < 20 ? V8.C.warn : V8.C.ok)),
+                       label: "电量", value: status.map { $0.powerLevel >= 0 ? "\($0.powerLevel)%" : "未读到" } ?? "未读到")
+                VChip2(icon: .glyph("key"), label: "PIN 池",
+                       value: kc.map { "\($0.pins.filter { !$0.isEmpty }.count) 枚" } ?? "—")
+                VChip2(icon: .glyph("lock.doc"), label: "凭证变更", value: "\(logs.count) 条")
+                VChip2(icon: .glyph("shield"), label: "模式", value: readOnly ? "只读试验" : "可写")
             }
-        } content: {
-            if decoyed {
-                decoyCard
-            } else if kc == nil {
+            .padding(.leading, V8.S.gutterCard)
+            .padding(.trailing, V8.S.gutterCard)
+        }
+        .scrollClipDisabled()
+    }
+
+
+    // MARK: - 段 2 God 模式（← godMode）
+
+    private var godSection: some View {
+        VStack(alignment: .leading, spacing: V8.S.gapCard) {
+            godChipRow
+            if kc == nil {
                 VEmpty(
                     title: "没有已配对的锁",
-                    reason: "这一页读的是锁端全量状态与凭证台账。先在「门」页添加门锁，或从备份恢复。",
+                    reason: "这一段读的是锁端全量状态与凭证台账。先在「门」页添加门锁，或从备份恢复。",
                     actionTitle: "添加门锁"
                 ) { router.request(.dest(.addLock)) }
             } else if let kc {
@@ -74,9 +313,6 @@ struct GodModeHomeScreen: View {
                 outcomeCard
             }
         }
-        .background(V8.C.bg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
-        .captureShield("这里是锁端全量读数与凭证台账\n屏幕正在被录制或截图，已遮挡")
         .task { await refresh() }
         .v8Confirm(
             isPresented: $askRepair,
@@ -88,26 +324,6 @@ struct GodModeHomeScreen: View {
             Task { await repair() }
         }
     }
-
-    // MARK: - 芯片行
-
-    private var chipRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: V8.S.gapChip) {
-                VChip2(icon: .ring(status.map { $0.powerLevel >= 0 ? Double($0.powerLevel) / 100 : 0.02 } ?? 0.02,
-                                   status == nil ? V8.C.ink4 : ((status?.powerLevel ?? -1) < 20 ? V8.C.warn : V8.C.ok)),
-                       label: "电量", value: status.map { $0.powerLevel >= 0 ? "\($0.powerLevel)%" : "未读到" } ?? "未读到")
-                VChip2(icon: .glyph("key"), label: "PIN 池",
-                       value: kc.map { "\($0.pins.filter { !$0.isEmpty }.count) 枚" } ?? "—")
-                VChip2(icon: .glyph("lock.doc"), label: "凭证变更", value: "\(logs.count) 条")
-                VChip2(icon: .glyph("shield"), label: "模式", value: readOnly ? "只读试验" : "可写")
-            }
-            .padding(.leading, V8.S.gutterCard)
-            .padding(.trailing, V8.S.gutterCard)
-        }
-        .scrollClipDisabled()
-    }
-
     // MARK: - 锁身份（本机侧）
 
     private func identityCard(_ kc: Keychain) -> some View {
@@ -317,11 +533,13 @@ struct GodModeHomeScreen: View {
         }
     }
 
+    // MARK: - 动作
+
     // MARK: - 空壳
 
-    private var decoyCard: some View {
+    private var godDecoyCard: some View {
         VCard2(style: .well) {
-            VCardHead(eyebrow: "God 模式", statement: "空壳模式只读")
+            VCardHead(eyebrow: "God 模式", statement: "空壳模式不渲染")
             VDivider2()
                 .padding(.top, V8.S.gapM)
             Text("空壳模式（胁迫码进入）下，本页不显示锁身份、锁端读数与凭证台账，也不提供修池 —— 这些字段在空壳下仍是真实值，显示出来等于把锁的底牌摊开。")
@@ -376,3 +594,5 @@ struct GodModeHomeScreen: View {
         await refresh()
     }
 }
+
+

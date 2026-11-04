@@ -1,8 +1,9 @@
 // RecordsStudioHomeScreen.swift —— 记录工作室（V8 设计语言）
 //
 // 与 RecordsStudioScreen 的能力对齐：① 自然语言 + 加减号检索（RecordSearch.parse，支持「上周 / 最近 7 天 / 昨晚」等时间短语）
-// ② 时段 / 成员 / 告警 / 失败 / 越界窗口的完整筛选 ③ 上周小结、活跃凭证 ④ 原始帧（已脱敏）导出。
-// 数据仍来自 RecordSearch.buildRecs / StatsKit / LockService.recentFrames + FrameRedact。
+// ② 时段 / 成员 / 告警 / 失败 / 越界窗口的完整筛选 ③ 上周小结、活跃凭证 ④ 原始帧（已脱敏）导出
+//    ⑤「导出」段（原 recordExport 页整段并入：RecordsExportSection，同源 WeeklyDigest）。
+// 数据仍来自 RecordSearch.buildRecs / StatsKit / LockService.recentFrames + FrameRedact / RecordsSource。
 //
 // 与旧页的刻意差异：
 //   ① 空壳模式（胁迫码）整页不检索、不显示帧 —— 帧是内存里真实的协议记录，不属于「数据层返回空集」那一类。
@@ -134,6 +135,8 @@ struct RecordsStudioHomeScreen: View {
                     resultCard
                 }
                 frameCard
+                // 02 §3.3 M10：recordExport 并入为「导出」段（同源 WeeklyDigest，不再单独成路由）。
+                RecordsExportSection()
             }
         }
         .background(V8.C.bg.ignoresSafeArea())

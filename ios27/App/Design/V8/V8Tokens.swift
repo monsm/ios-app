@@ -84,7 +84,8 @@ enum V8 {
         /// 成功（绿）值档：6.02:1
         static let ok = dual(0x12684A, 0x4CC38A)
         static let okFill = dual(0x1E9663, 0x35B67E)
-        static let okTrack = dual(0xD8EDE3, 0x143A2A)
+        // 2026-11-05（S5 归并）：okTrack 已删 —— 唯一消费者是防尾随页的低电轨道，
+        // 该页已并入锁设置；合并后的锁设置页不再画那条轨道。
 
         /// 警告（琥珀）值档：5.27:1
         static let warn = dual(0x8A5A0B, 0xE0A83C)

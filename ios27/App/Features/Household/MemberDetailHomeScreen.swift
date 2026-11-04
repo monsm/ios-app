@@ -1,4 +1,4 @@
-// MemberDetailHomeScreen.swift —— 成员 360（V8 设计语言）
+// MemberDetailHomeScreen.swift —— 成员（V8 设计语言）· 02 §3.4 #29+#32 归并后的宿主页
 //
 // 与 MemberDetailScreen 的能力对齐：角色与权限矩阵 / 档案扩展 / 名下凭证 / 最近开门摘录 /
 // 家庭场景（本周主责）/ 归档与删除 / 同名合并。
@@ -9,6 +9,10 @@
 //   ① 空壳模式（胁迫码）整页不显示成员档案 —— 成员是本机真值，不是「锁端读不到就为空」那一类。
 //   ② 旧页「只移除档案」与「连本机凭证一起移除」两个删除选项，实际都走 DB.removeMember（都会解除全部归属），
 //      差别只在内存里的一份投影；这里统一成一个删除入口，并在确认里把三种真实后果一次写清。
+//   ③ memberOps 整段并入（02 §3.4 #32）：移交 / 借用 / 家政窗 / 访客临时码归属 / 长辈模式 / 活跃度摘录，
+//      全部挂在「这位成员」身上（不再单独一张「处理谁」芯片选人）。删除只保留本页这一套 ——
+//      MemberOps 的删除卡（cascadeDelete 进回收站口径）与收尾卡的删除是同一件事的两套文案，按 02 §6.3 只留一套：
+//      收尾卡的 .v8Confirm 已经写清「当前锁进回收站 + 其它锁只解除归属 + 锁端仍需线下删」，删除动作也升级为 cascadeDelete。
 import SwiftUI
 import UIKit
 
@@ -23,6 +27,21 @@ struct MemberDetailHomeScreen: View {
     @State private var saved = false
     @State private var callNote: String?
     @State private var showMerge = false
+    // —— memberOps 并入段的状态（原 MemberOpsHomeScreen）
+    @State private var transferTo = ""
+    @State private var borrowBy = ""
+    // 借用到期是**日期**，按日历加 7 天（86_400×7 在有夏令时的地方会差一小时）。
+    @State private var borrowDue = WeekCal.shifted(Date(), days: 7)
+    @State private var windowWeekday = 6
+    @State private var windowStart = 9
+    @State private var windowEnd = 12
+    @State private var careText = ""
+    @State private var welcome = ""
+    @State private var opsNote = ""
+    @State private var opsOutcome: String?
+    /// 回执是成功还是「什么都没做成」——颜色必须来自这个标志，不来自文案里有没有某个字。
+    @State private var opsOutcomeOK = true
+    @State private var opsTick = 0
 
     private var roster: HouseholdRoster { HouseholdRoster.shared }
     private var decoyed: Bool { DB.isDecoy }
@@ -74,6 +93,7 @@ struct MemberDetailHomeScreen: View {
                 keysCard(member)
                 excerptsCard(member)
                 sceneCard(member)
+                opsSection(member)
                 closingCard(member)
                 if !MemberMergeKit.candidates(primaryID: member.id).isEmpty {
                     mergeCard
@@ -94,10 +114,12 @@ struct MemberDetailHomeScreen: View {
                 roster.focusMember = id
             }
             load()
+            loadOpsFields()
         }
         .sheet(isPresented: $showMerge) {
             if let member { MemberMergeSheet(primary: member) }
         }
+        .onChange(of: roster.focusMember) { _, _ in loadOpsFields() }
     }
 
     // MARK: - 芯片行
@@ -556,6 +578,11 @@ struct MemberDetailHomeScreen: View {
             let more = owned.count > 5 ? "\n…" : ""
             parts.append("「" + member.name + "」名下 " + String(owned.count) + " 条台账凭证：\n" + preview + more)
         }
+        let currentLock = DB.listPwds(app.currentMac).filter { CredentialOrg.ownerMatches($0.owner, memberID: member.id, memberName: member.name) }.count
+            + DB.listFps(app.currentMac).filter { CredentialOrg.ownerMatches($0.owner, memberID: member.id, memberName: member.name) }.count
+        if currentLock > 0 {
+            parts.append("当前这把锁名下 " + String(currentLock) + " 枚凭证会先进入本机回收站（可整组还原）。")
+        }
         parts.append("成员档案删除后不可恢复；名下凭证的归属会一并解除（凭证本身留在台账，变成未归属）。")
         parts.append("锁端的密码与指纹不会自动删除 —— 仍需本人到锁前手动删；指纹一旦在锁端删掉就无法远程补录。")
         return parts.joined(separator: "\n\n")
@@ -661,6 +688,10 @@ struct MemberDetailHomeScreen: View {
 
     private func remove(_ member: MemberCard) {
         guard !decoyed else { return }
+        // 02 §6.3：两套删除后果统一成 cascadeDelete（先入回收站再删档案）——
+        // 与「成员流转」旧页同一条链路，这里只保留一套。回执与确认文案已经把「当前锁进回收站、
+        // 其它锁只解除归属、锁端仍需线下删」写清（见 deleteConsequence）。
+        let n = MemberOpsStore.cascadeDelete(mac: app.currentMac, memberID: member.id)
         app.members.removeAll { $0.id == member.id }
         // Engine 侧删除：DB.removeMember 会连带解除台账里这些凭证的归属（凭证本身保留）。
         DB.removeMember(member.id)
@@ -674,6 +705,469 @@ struct MemberDetailHomeScreen: View {
         roster.forget(member.id)
         if roster.dutyID() == member.id { roster.setDuty(nil) }
         roster.focusMember = nil
+        if n > 0 {
+            AppToast.shared.show("已删除成员，\(n) 枚本机凭证进入回收站（锁端仍需线下删）", tone: .ok)
+        }
         router.request(.tab(.household))
+    }
+
+    // MARK: - 流转段（原 memberOps 页整段并入 · 02 §3.4 #32）
+
+    /// 原页的「处理谁」选人卡不再需要：这一段本来就挂在当前成员身上。
+    /// 保留的能力：移交名下凭证 / 借用登记 / 家政窗 / 家庭场景便签 / 活跃度摘录 / 访客临时码归属 / 长辈模式。
+    /// 删除卡不并入 —— 删除在本页「档案收尾」里已经有一套（见上方 closingCard 与 remove）。
+    private func opsSection(_ member: MemberCard) -> some View {
+        VStack(spacing: V8.S.gapCard) {
+            transferCard(member)
+            borrowCard(member)
+            windowCard
+            careSceneCard(member)
+            activityCard(member)
+            visitorCard
+            elderCard
+            if let opsOutcome {
+                opsOutcomeCard
+            }
+        }
+    }
+
+    private var opsBorrowMap: [String: MemberBorrow] {
+        _ = opsTick
+        return MemberOpsStore.borrows(app.currentMac)
+    }
+
+    private var opsWindowList: [HouseWindow] {
+        _ = opsTick
+        return MemberOpsStore.windows(app.currentMac)
+    }
+
+    // MARK: 流转 · 移交
+
+    private func transferCard(_ m: MemberCard) -> some View {
+        VCard2 {
+            VCardHead(eyebrow: "流转 · 移交名下凭证", statement: transferToMember.map { "给「" + $0.name + "」" } ?? "先选接收人")
+            VDivider2()
+                .padding(.top, V8.S.gapM)
+            Text("把「" + m.name + "」名下的密码与指纹改归属到另一位成员；台账条目本身不动。")
+                .font(V8.T.footnote)
+                .foregroundStyle(V8.C.ink3)
+                .padding(.top, V8.S.gapM)
+                .fixedSize(horizontal: false, vertical: true)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: V8.S.gapS) {
+                    ForEach(otherMembers(m)) { target in
+                        transferChip(target)
+                    }
+                }
+            }
+            .padding(.top, V8.S.gapM)
+            Button {
+                let n = MemberOpsStore.transfer(mac: app.currentMac, from: m.id, to: transferTo)
+                // 0 枚不是成功：台账里可能一条都没有归属到 TA，也可能是归属存的是旧口径的名字。
+                if n > 0 {
+                    opsOutcome = "已移交 " + String(n) + " 枚凭证"
+                    opsOutcomeOK = true
+                } else {
+                    opsOutcome = "没有可移交的凭证 —— TA 名下这台锁上没有密码或指纹，或它们的归属还是旧口径的名字。"
+                    opsOutcomeOK = false
+                }
+                opsTick += 1
+                Task { await app.reload(refreshStatus: false) }
+            } label: {
+                Text("移交名下凭证")
+                    .font(V8.T.tab)
+                    .foregroundStyle(V8.C.chipOn)
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: V8.H.min)
+                    .background(Capsule(style: .continuous).fill(V8.C.accent))
+            }
+            .buttonStyle(.plain)
+            .disabled(transferTo.isEmpty)
+            .opacity(transferTo.isEmpty ? 0.45 : 1)
+            .accessibilityLabel("移交名下凭证")
+            .padding(.top, V8.S.gapM)
+            Text("移交只改本机台账的归属，不下发到门锁 —— 锁端凭证仍然有效。")
+                .font(V8.T.caption)
+                .foregroundStyle(V8.C.ink4)
+                .padding(.top, V8.S.gapS)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func otherMembers(_ m: MemberCard) -> [MemberCard] {
+        app.members.filter { !$0.archived && $0.id != m.id }
+    }
+
+    private var transferToMember: MemberCard? { app.members.first { $0.id == transferTo } }
+
+    private func transferChip(_ target: MemberCard) -> some View {
+        let on = transferTo == target.id
+        return Button {
+            transferTo = target.id
+        } label: {
+            Text(target.name)
+                .font(V8.T.tab)
+                .foregroundStyle(on ? V8.C.chipOn : V8.C.ink1)
+                .padding(.horizontal, V8.S.gapM)
+                .frame(minHeight: V8.H.min)
+                .background(Capsule(style: .continuous).fill(on ? V8.C.accent : V8.C.chipOff))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("移交给 " + target.name)
+        .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
+    }
+
+    // MARK: 流转 · 借用
+
+    private func borrowCard(_ m: MemberCard) -> some View {
+        let map = opsBorrowMap
+        return VCard2 {
+            VCardHead(eyebrow: "流转 · 借用登记", statement: map[m.id].map { "借给 " + $0.by } ?? "未登记", trailing: map[m.id]?.due)
+            VDivider2()
+                .padding(.top, V8.S.gapM)
+            if let b = map[m.id] {
+                VDataRow(tag: "借给", tagTint: V8.C.ink4, title: b.by, value: "")
+                    .padding(.top, V8.S.gapS)
+                VDataRow(tag: "归还日", tagTint: V8.C.ink4, title: b.due, value: "")
+                Button {
+                    MemberOpsStore.removeBorrow(app.currentMac, memberID: m.id)
+                    opsOutcome = "已结束借用"
+                    opsOutcomeOK = true
+                    opsTick += 1
+                } label: {
+                    Text("结束借用")
+                        .font(V8.T.tab)
+                        .foregroundStyle(V8.C.ink1)
+                        .frame(maxWidth: .infinity)
+                        .frame(minHeight: V8.H.min)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: V8.R.capsule(V8.H.min), style: .continuous)
+                                .strokeBorder(V8.C.line, lineWidth: V8.S.hair)
+                        )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("结束借用")
+                .padding(.top, V8.S.gapM)
+            } else {
+                VStack(alignment: .leading, spacing: V8.S.gapXS) {
+                    Text("借用人")
+                        .font(V8.T.label)
+                        .foregroundStyle(V8.C.ink4)
+                    TextField("如 楼上邻居", text: $borrowBy)
+                        .font(V8.T.body)
+                        .foregroundStyle(V8.C.ink1)
+                        .frame(minHeight: V8.H.min)
+                        .padding(.horizontal, V8.S.gapM)
+                        .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
+                }
+                .padding(.top, V8.S.gapM)
+                DatePicker("归还日", selection: $borrowDue, displayedComponents: .date)
+                    .font(V8.T.body)
+                    .foregroundStyle(V8.C.ink1)
+                    .frame(minHeight: V8.H.min)
+                    .padding(.top, V8.S.gapS)
+                Button {
+                    let df = DF.cached("yyyy-MM-dd")
+                    MemberOpsStore.setBorrow(app.currentMac, memberID: m.id, by: borrowBy.isEmpty ? m.name : borrowBy, due: df.string(from: borrowDue))
+                    opsOutcome = "已登记借用"
+                    opsOutcomeOK = true
+                    opsTick += 1
+                } label: {
+                    Text("登记借用")
+                        .font(V8.T.tab)
+                        .foregroundStyle(V8.C.ink1)
+                        .frame(maxWidth: .infinity)
+                        .frame(minHeight: V8.H.min)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: V8.R.capsule(V8.H.min), style: .continuous)
+                                .strokeBorder(V8.C.line, lineWidth: V8.S.hair)
+                        )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("登记借用")
+                .padding(.top, V8.S.gapM)
+            }
+            Text("借用只记本机，不写门锁；归还日就显示在上面。")
+                .font(V8.T.caption)
+                .foregroundStyle(V8.C.ink4)
+                .padding(.top, V8.S.gapS)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    // MARK: 流转 · 家政窗
+
+    private var windowCard: some View {
+        let list = opsWindowList
+        return VCard2 {
+            VCardHead(eyebrow: "流转 · 家政窗", statement: list.isEmpty ? "没有固定时段" : "\(list.count) 个时段", trailing: "本机排期")
+            VDivider2()
+                .padding(.top, V8.S.gapM)
+            Text("给钟点工 / 服务人员的固定进出时段。只做本机排期提示，不写锁端。")
+                .font(V8.T.footnote)
+                .foregroundStyle(V8.C.ink3)
+                .padding(.top, V8.S.gapM)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: V8.S.gapS) {
+                Picker("星期", selection: $windowWeekday) {
+                    ForEach(1 ... 7, id: \.self) { d in
+                        Text(Self.opsWeekdayNames[d]).tag(d)
+                    }
+                }
+                .pickerStyle(.menu)
+                Spacer(minLength: 0)
+            }
+            .padding(.top, V8.S.gapS)
+            Stepper("开始 \(windowStart):00", value: $windowStart, in: 0 ... 23)
+                .font(V8.T.footnote)
+                .foregroundStyle(V8.C.ink1)
+            Stepper("结束 \(windowEnd):00", value: $windowEnd, in: 1 ... 24)
+                .font(V8.T.footnote)
+                .foregroundStyle(V8.C.ink1)
+            Button {
+                // 起 == 止 是空集：加进去也筛不出任何时段，先如实拒绝。
+                if windowStart >= windowEnd {
+                    opsOutcome = "开始时间要早于结束时间 —— 现在是 " + String(windowStart) + ":00 到 " + String(windowEnd) + ":00，这个时段是空的。"
+                    opsOutcomeOK = false
+                } else {
+                    MemberOpsStore.addWindow(app.currentMac, HouseWindow(id: UUID().uuidString, weekday: windowWeekday,
+                                                                      startHour: windowStart, endHour: windowEnd, note: ""))
+                    opsOutcome = "已添加家政窗"
+                    opsOutcomeOK = true
+                    opsTick += 1
+                }
+            } label: {
+                Text("添加家政窗")
+                    .font(V8.T.tab)
+                    .foregroundStyle(V8.C.ink1)
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: V8.H.min)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: V8.R.capsule(V8.H.min), style: .continuous)
+                            .strokeBorder(V8.C.line, lineWidth: V8.S.hair)
+                    )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("添加家政窗")
+            .padding(.top, V8.S.gapS)
+            VStack(spacing: 0) {
+                ForEach(Array(list.enumerated()), id: \.element.id) { index, window in
+                    if index > 0 { VDotRule() }
+                    HStack(spacing: V8.S.gapS) {
+                        Text(window.weekdayText + " " + String(window.startHour) + ":00–" + String(window.endHour) + ":00")
+                            .font(V8.T.value)
+                            .foregroundStyle(V8.C.ink1)
+                        Spacer(minLength: 0)
+                        Button {
+                            MemberOpsStore.removeWindow(app.currentMac, id: window.id)
+                            opsTick += 1
+                        } label: {
+                            Text("删除")
+                                .font(V8.T.caption)
+                                .foregroundStyle(V8.C.danger)
+                                .frame(minHeight: V8.H.min)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("删除 " + window.weekdayText + " 的时段")
+                    }
+                    .frame(minHeight: V8.H.min)
+                }
+            }
+            .padding(.top, V8.S.gapS)
+        }
+    }
+
+    private static let opsWeekdayNames = ["", "周一", "周二", "周三", "周四", "周五", "周六", "周日"]
+
+    // MARK: 流转 · 关怀便签（孩子/长辈提示 / 访客欢迎语 / 家庭便签）
+
+    private func careSceneCard(_ m: MemberCard) -> some View {
+        VCard2(style: .well) {
+            VCardHead(eyebrow: "流转 · 家庭场景", statement: "关怀 / 欢迎语 / 便签", trailing: "本机")
+            VDivider2()
+                .padding(.top, V8.S.gapM)
+            VStack(alignment: .leading, spacing: V8.S.gapM) {
+                opsFieldBlock("关怀便签（孩子 / 长辈看到的提示）", text: $careText, placeholder: "如 记得带伞")
+                opsFieldBlock("访客欢迎语", text: $welcome, placeholder: "如 欢迎来家里做客")
+                opsFieldBlock("家庭便签", text: $opsNote, placeholder: "如 周六换锁芯")
+                Button {
+                    roster.update(m.id) { e in
+                        e.careText = careText
+                        e.welcome = welcome
+                        e.note = opsNote
+                    }
+                    opsOutcome = "已保存家庭场景"
+                    opsOutcomeOK = true
+                } label: {
+                    Text("保存家庭场景")
+                        .font(V8.T.tab)
+                        .foregroundStyle(V8.C.ink1)
+                        .frame(maxWidth: .infinity)
+                        .frame(minHeight: V8.H.min)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: V8.R.capsule(V8.H.min), style: .continuous)
+                                .strokeBorder(V8.C.line, lineWidth: V8.S.hair)
+                        )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("保存家庭场景")
+            }
+            .padding(.top, V8.S.gapM)
+        }
+    }
+
+    private func opsFieldBlock(_ label: String, text: Binding<String>, placeholder: String) -> some View {
+        VStack(alignment: .leading, spacing: V8.S.gapXS) {
+            Text(label)
+                .font(V8.T.label)
+                .foregroundStyle(V8.C.ink4)
+            TextField(placeholder, text: text)
+                .font(V8.T.body)
+                .foregroundStyle(V8.C.ink1)
+                .frame(minHeight: V8.H.min)
+                .padding(.horizontal, V8.S.gapM)
+                .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
+        }
+    }
+
+    // MARK: 流转 · 活跃度
+
+    private func activityCard(_ m: MemberCard) -> some View {
+        let bundle = MemberHub.activityBundle(app.members.filter { !$0.archived }.map(\.id))
+        let a = bundle.table[m.id] ?? MemberHub.Activity()
+        let excerpts = MemberHub.recentExcerpts(m.id, 5)
+        return VCard2 {
+            VCardHead(eyebrow: "流转 · 活跃度", statement: "近 30 天 " + String(a.opens30) + " 次", trailing: "约")
+            VDivider2()
+                .padding(.top, V8.S.gapM)
+            VStatPair2(items: [
+                .init(label: "近 30 天", value: String(a.opens30), unit: "次"),
+                .init(label: "本月", value: String(a.month), unit: "次"),
+                .init(label: "名下", value: String(a.owns), unit: "枚")
+            ])
+            .padding(.top, V8.S.gapM)
+            Text(MemberHub.weekSentence(m.id) ?? "近 7 天没有可证明归属的开门。")
+                .font(V8.T.footnote)
+                .foregroundStyle(V8.C.ink3)
+                .padding(.top, V8.S.gapM)
+                .fixedSize(horizontal: false, vertical: true)
+            if excerpts.isEmpty {
+                Text("还没有可归属的开门记录。锁端日志没有身份字段，只能按时间窗推断。")
+                    .font(V8.T.caption)
+                    .foregroundStyle(V8.C.ink4)
+                    .padding(.top, V8.S.gapS)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(excerpts.enumerated()), id: \.offset) { index, item in
+                        if index > 0 { VDotRule() }
+                        VDataRow(tag: item.time, tagTint: V8.C.ink4, title: item.text, value: "")
+                    }
+                }
+                .padding(.top, V8.S.gapS)
+            }
+        }
+    }
+
+    // MARK: 流转 · 访客临时码归属
+
+    private var visitorCard: some View {
+        let mac = app.currentMac
+        let temps = DB.listPwds(mac).filter { $0.temp && ($0.owner ?? "").isEmpty }
+        return VCard2 {
+            VCardHead(eyebrow: "流转 · 访客临时码", statement: "未归属 \(temps.count) 枚", trailing: "本机展示层")
+            VDivider2()
+                .padding(.top, V8.S.gapM)
+            if temps.isEmpty {
+                Text("没有未归属的临时码。")
+                    .font(V8.T.footnote)
+                    .foregroundStyle(V8.C.ink3)
+                    .padding(.top, V8.S.gapM)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(temps.prefix(6).enumerated()), id: \.element.alias) { index, p in
+                        if index > 0 { VDotRule() }
+                        HStack(spacing: V8.S.gapS) {
+                            Text(CredentialOrg.displayPwd(p))
+                                .font(V8.T.value)
+                                .foregroundStyle(V8.C.ink1)
+                                .lineLimit(1)
+                            Spacer(minLength: 0)
+                            Menu {
+                                ForEach(app.members.filter { !$0.archived }) { target in
+                                    Button(target.name) {
+                                        DB.setPwdOwner(mac, p.alias, target.id)
+                                        opsOutcome = "已归属给 " + target.name
+                                        opsOutcomeOK = true
+                                        opsTick += 1
+                                    }
+                                }
+                            } label: {
+                                Text("归属")
+                                    .font(V8.T.caption)
+                                    .foregroundStyle(V8.C.info)
+                                    .frame(minHeight: V8.H.min)
+                            }
+                            .accessibilityLabel("给临时码选归属")
+                        }
+                        .frame(minHeight: V8.H.min)
+                    }
+                }
+                .padding(.top, V8.S.gapS)
+            }
+            Text("访客组只存在于展示层：临时码且无可证明归属才算访客，不写入锁端凭证表。")
+                .font(V8.T.caption)
+                .foregroundStyle(V8.C.ink4)
+                .padding(.top, V8.S.gapM)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    // MARK: 流转 · 长辈模式
+
+    private var elderCard: some View {
+        VCard2 {
+            VCardHead(eyebrow: "流转 · 长辈模式", statement: MemberHub.elderMode ? "已开启" : "未开启", trailing: "只影响凭证页")
+            VDivider2()
+                .padding(.top, V8.S.gapM)
+            Toggle(isOn: Binding(
+                get: { MemberHub.elderMode },
+                set: { on in
+                    MemberHub.setElderMode(on)
+                    opsTick += 1
+                }
+            )) {
+                VStack(alignment: .leading, spacing: V8.S.gapXS) {
+                    Text("开启长辈模式")
+                        .font(V8.T.value)
+                        .foregroundStyle(V8.C.ink1)
+                    Text("凭证页只留全部 / 密码 / 指纹分段，隐藏批量与导出入口。只影响凭证页这一档；想让字更大，请到「外观」开大字档。")
+                        .font(V8.T.caption)
+                        .foregroundStyle(V8.C.ink4)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .frame(minHeight: V8.H.min)
+            .padding(.top, V8.S.gapM)
+        }
+    }
+
+    private var opsOutcomeCard: some View {
+        VCard2(style: .well) {
+            Text(opsOutcome ?? "")
+                .font(V8.T.footnote)
+                .foregroundStyle(opsOutcomeOK ? V8.C.ok : V8.C.warn)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    /// 流转段的字段随成员切换而重读（原页 onChange(of: memberID) 的等价物：focusMember 变了就重读）。
+    private func loadOpsFields() {
+        guard !decoyed, let m = member else { return }
+        let ext = roster.extras(for: m.id)
+        careText = ext.careText
+        welcome = ext.welcome
+        opsNote = ext.note
+        transferTo = app.members.first(where: { !$0.archived && $0.id != m.id })?.id ?? ""
     }
 }
