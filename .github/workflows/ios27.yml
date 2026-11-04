@@ -499,6 +499,9 @@ jobs:
             cp "$SEED_SRC" "$APPDATA/Documents/kf-seed.json"
             echo "seed placed at $APPDATA/Documents/kf-seed.json"
           fi
+          # 2026-11-04（取证）：种子日志到底写没写进去 —— App 侧会落一个 kf-seed-diag.txt，
+          # 这里在**第一次启动之后**读一次，写进 diag。缺了这行，记录页空白时无从判断是"没写"还是"没读"。
+          SEEDDIAG=$(xcrun simctl get_app_container "$UDID" com.aapk.lockkeeper data 2>/dev/null || true)
           i=0
           for name in door keys records household settings; do
             xcrun simctl terminate "$UDID" com.aapk.lockkeeper 2>/dev/null || true
@@ -519,6 +522,14 @@ jobs:
             if [ -f "/tmp/shots/$i-$name.png" ]; then echo "shot $i-$name=ok size=$SZ" >> "$DIAG"; else echo "shot $i-$name=missing" >> "$DIAG"; fi
             i=$((i+1))
           done
+          # 第一轮启动后读种子取证文件（此时 App 已导入过一次）
+          SEEDDIAG=$(xcrun simctl get_app_container "$UDID" com.aapk.lockkeeper data 2>/dev/null || true)
+          if [ -n "$SEEDDIAG" ] && [ -f "$SEEDDIAG/Documents/kf-seed-diag.txt" ]; then
+            echo "--- seed-diag ---" >> "$DIAG"
+            cat "$SEEDDIAG/Documents/kf-seed-diag.txt" >> "$DIAG"
+          else
+            echo "--- seed-diag missing ---" >> "$DIAG"
+          fi
           # 整页截屏（**算法级**，不是滚到底）：App 把 ScrollView 的 frame 临时撑到
           # contentSize 高度后一次成像，中间内容不会漏。产物落在 App 容器 Documents/，
           # 这里用 simctl get_app_container 拷出来，命名 <i>-<name>-full.png。

@@ -65,6 +65,14 @@ enum SeedImporter {
                                          lockTime: proto, lockTimeStr: "", body: ""))
                 }
                 DB.writeLogs(d.mac, logs)
+                // 2026-11-04（取证）：日志写没写进去，截图上看不出来（记录页仍空）。
+                // 把"写了多少 / 读回多少"落一个文本文件，workflow 会 cat 进 diag —— 一次跑清。
+                let readBack = DB.readLogs(DB.normalizeMac(d.mac)).count
+                let note = "seed mac=\(d.mac) wrote=\(logs.count) readBack=\(readBack) "
+                    + "keychain=\(DB.keychain(d.mac) != nil) logcacheKey=\(DB.normalizeMac(d.mac))"
+                if let dd = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+                    try? note.write(to: dd.appendingPathComponent("kf-seed-diag.txt"), atomically: true, encoding: .utf8)
+                }
             }
             // 2026-11-03（整页截图实测 · 根因）：`快捷操作` 那一块在截图里永远是空白，
             // 前三次都判错了原因。真正的原因在这里：**种子从没写过 `kf_quick_ids`** ——
