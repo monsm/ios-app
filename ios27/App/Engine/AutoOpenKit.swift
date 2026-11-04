@@ -149,11 +149,6 @@ enum AutoOpenKit {
     static func armThreshold(base: Int) -> Int { base }
     static func disarmThreshold(base: Int) -> Int { Int((Double(base) + 10 * log10(0.5)).rounded()) }
 
-    static func rssiSample(prevArmed: Bool, rssi: Int, base: Int) -> Bool {
-        if prevArmed { return rssi > disarmThreshold(base: base) }
-        return rssi >= armThreshold(base: base)
-    }
-
     /// 3 样本中值武装：抗单点尖峰，但真的走近仍 1 个样本就能过。
     static func rssiArmedByMedian(prevArmed: Bool, history: [Int], base: Int) -> Bool {
         guard let cur = history.first else { return prevArmed }

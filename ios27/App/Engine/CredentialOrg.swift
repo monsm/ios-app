@@ -452,8 +452,6 @@ enum CredentialOrg {
         }
     }
 
-    static func fpCountTotal(_ mac: String) -> Int { DB.listFps(mac).count }
-
     // ---------- 311/316/320/326/335/333 台账推断统计 (⚠ 全部标"约") ----------
     // 这一族的文案与数据源是**同一份**判据, 不各说一套; 也不许把"约"写成精确:
     // docs/CAPABILITY.md §3 写明 cmd16 日志每条只有 [type][len][idx][lockTime][body],
@@ -462,23 +460,7 @@ enum CredentialOrg {
     // 333 原只滤下界 (超窗的旧日志也会命中, 见 firstUse 的补界)、335/326 的小字原把"时间窗推断"
     // 说成"本地计次" —— 这两处已改成与数据源同一句话。
     /// 311 同码引用: 时间窗内用它"开过的门"计数 (无 alias 日志字段, 按时间窗推断, 标"约")
-    static func openCountInWindow(_ mac: String, p: LedgerPwd) -> Int {
-        guard let f = parseLocal(p.from), let to = parseLocal(p.to) else { return 0 }
-        return DB.readLogs(mac).filter { log in
-            guard log.type == 17 || log.type == 16 else { return false }
-            let t = ZKProtocol.protoSecondsToUnix(Int64(log.lockTime))
-            return f.timeIntervalSince1970 <= t && t <= to.timeIntervalSince1970
-        }.count
-    }
     /// 316 指纹档案统计: 近 30 天 type19 (指纹开门) 日志条数 — ⚠ 日志无指纹身份字段, 只能按锁整体推断, 标"约"
-    static func fpUseCount30d(_ mac: String) -> Int {
-        let cut = nowSec - 30 * 86400
-        return DB.readLogs(mac).filter { l in
-            guard l.type == 19 else { return false }
-            return ZKProtocol.protoSecondsToUnix(Int64(l.lockTime)) >= cut
-        }.count
-    }
-
     // ---------- 315/174 指纹命名建议轮播 ----------
     /// 按该成员已录数量给 "成员·手指 (N)" 式建议; 手指序 食指→中指→备用→应急 循环 (315/174)
     /// extra = 轮播额外下标 (录入页同时给出 3 个备选)

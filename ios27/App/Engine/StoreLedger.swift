@@ -247,16 +247,6 @@ extension DB {
     /// 2026-10-30（第 161 轮）：一次读改写完成 `pwd` / `note` / `owner` 三处修改。
     /// 原来调用方连调 `rePwd` / `setPwdNote` / `setPwdOwner` —— 那是**三次整表解码 + 编码 + 三条台账变更记录**，
     /// 而它们逻辑上是同一个动作（改造一条密码）。合并后只有一条 `台账变更` 审计记录。
-    static func updatePwd(_ mac: String, _ alias: Int, pwd: String, note: String, owner: String?) {
-        var l = ledger(mac)
-        for i in l.pwds.indices where l.pwds[i].alias == alias {
-            l.pwds[i].pwd = pwd
-            l.pwds[i].note = note
-            l.pwds[i].owner = owner
-        }
-        saveLedger(mac, l)
-    }
-
     static func addFp(_ mac: String, _ f: LedgerFp) {
         var l = ledger(mac)
         l.fps.removeAll { $0.batch == f.batch }
@@ -271,18 +261,6 @@ extension DB {
         // 同 `delPwd`：派生状态在**彻底删除**时清（`CredBinStore.purge`/`clear`），不在这里。
     }
 
-    static func renameFp(_ mac: String, _ batch: Int, _ name: String) {
-        var l = ledger(mac)
-        for i in l.fps.indices where l.fps[i].batch == batch { l.fps[i].name = name }
-        saveLedger(mac, l)
-    }
-
-    static func setFpNote(_ mac: String, _ batch: Int, _ note: String) {
-        var l = ledger(mac)
-        for i in l.fps.indices where l.fps[i].batch == batch { l.fps[i].note = note }
-        saveLedger(mac, l)
-    }
-
     /// 同 `setPwdOwner`：返回是否真的改到了。
     @discardableResult
     static func setFpOwner(_ mac: String, _ batch: Int, _ owner: String?) -> Bool {
@@ -293,27 +271,9 @@ extension DB {
         return hit
     }
 
-    static func setFpAlarm(_ mac: String, _ batch: Int, _ on: Bool) {
-        var l = ledger(mac)
-        for i in l.fps.indices where l.fps[i].batch == batch { l.fps[i].isAlarm = on }
-        saveLedger(mac, l)
-    }
-
     // 包6 点查辅助 (版本历史/回收站/详情路由用)
     static func getPwd(_ mac: String, _ alias: Int) -> LedgerPwd? {
         ledger(mac).pwds.first { $0.alias == alias }
-    }
-
-    static func getFp(_ mac: String, _ batch: Int) -> LedgerFp? {
-        ledger(mac).fps.first { $0.batch == batch }
-    }
-
-    static func getPwdList(_ aliases: [Int], _ mac: String) -> [LedgerPwd] {
-        ledger(mac).pwds.filter { aliases.contains($0.alias) }
-    }
-
-    static func getFpList(_ batches: [Int], _ mac: String) -> [LedgerFp] {
-        ledger(mac).fps.filter { batches.contains($0.batch) }
     }
 
 }

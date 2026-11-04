@@ -72,7 +72,6 @@ struct MemberBorrow: Codable {
 
 enum MemberHub {
     // 793 访客虚拟分组: 只存在于本地展示层, 绝不写入锁端凭证表
-    static let visitorId = "__visitor"
     /// 访客虚拟行判定: 临时码类记录且无可证明归属 (与 793 "不与家人混淆" 的独立分组)
     /// 成员选择列表的统一顺序：名下凭证多的在前，同数量按名字。
     /// 2026-11-03（全维度整理）：三处选择成员的地方原来各自按存储顺序渲染，
@@ -94,11 +93,6 @@ enum MemberHub {
     /// 468 代管: 目标成员的 id 集合 (读点三处 — 成员页那一行、482 会议摘要、
     /// 以及凭证页单条停用时往 361 便签里补的那一句「管理员代操作」)。
     /// 锁端没有"代操作"这一位, 所以这一族标注只落本机便签与本机摘要, 不发往锁。
-    static var proxyNames: Set<String> {
-        // 同上: map 出 [String] 需显式转 Set (调用方 MemberCenterView 用 .contains)
-        Set((DB.store.get([String: MemberExt].self, extKey) ?? [:]).filter { $0.value.proxy }.map(\.key))
-    }
-
     // ---------- 档案扩展 ----------
     private static let extKey = "kf_member_ext"
     /// 2026-10-29 性能：`ext(id)` 每调一次都要把**整张 kf_member_ext** 解码一遍，
@@ -131,15 +125,6 @@ enum MemberHub {
     static func isActive(_ id: String) -> Bool { !ext(id).archived }
 
     // 458 角色三档
-    static let roles = ["main", "member", "guest"]
-    static func roleLabel(_ r: String) -> String {
-        switch r {
-        case "main": return "主理人"
-        case "guest": return "访客"
-        default: return "成员"
-        }
-    }
-
     // ---------- 458/470 角色权限行 (全仓唯一定义) ----------
     /// 470 的权限矩阵此前只在成员页"画"出来给人看, 全仓没有一处按它收起过任何入口 ⇒ 那句话是说明文字。
     /// 这张表现在同时是**判据**: 成员页上真存在的两枚开关按它亮灭 (468 代管走「管凭证」, 469 紧急管理员走「成员管理」),
@@ -163,19 +148,10 @@ enum MemberHub {
         permRows(role).first { $0.name == cap }?.allowed ?? false
     }
     /// 470 能力名列表 (允许的那几项, 供示例卡与向导副标题现算)
-    static func permCan(_ role: String) -> [String] { permRows(role).filter { $0.allowed }.map { $0.name } }
-    static func permCannot(_ role: String) -> [String] { permRows(role).filter { !$0.allowed }.map { $0.name } }
-
     /// 469 紧急管理员: 档案上的点名档。
     /// 原先这个位只有成员页 Toggle 的 set、全仓零读取方, 界面却写"救援码说明与其绑定" ⇒ 空头支票。
     /// 现在的真读点: 成员页点名 (权限与应急段) + 设置-安全 救援码下的保管人声明
     /// （原 SecurityCenterView.rescueCustodyLine，该页已删） 三处各读一次。
-    static func emergencyAdmins() -> [Member] {
-        // 一次解表再筛名册: 逐成员调 ext() 会把整张表重复解 N 遍 (同 MemberCenterView 归档计数那一处教训)
-        let all = DB.store.get([String: MemberExt].self, extKey) ?? [:]
-        return DB.members().filter { all[$0.id]?.emergencyAdmin == true }
-    }
-
     // 666 成员名兜底 `display(_:)` / `unnamedLabel(_:)` + 461 双层文本 `doubleLine(_:)`：
     // **已整簇删除**（2026-11-01）。这三个构成一个封闭引用链
     // （`doubleLine` → `display` → `unnamedLabel`），而**簇外零调用** ——

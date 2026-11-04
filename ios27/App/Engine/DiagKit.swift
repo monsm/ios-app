@@ -412,21 +412,7 @@ enum NotifyAuth {
     static var isOff: Bool { status == .denied || status == .notDetermined }
 
     /// 给定状态的一句话（供 UI 读一次后缓存，避免每次 body 都走同步阻塞）。
-    static func labelFor(_ s: UNAuthorizationStatus) -> String {
-        switch s {
-        case .authorized: return "已开启"
-        case .denied: return "已拒绝"
-        case .notDetermined: return "未询问"
-        case .provisional: return "临时授权"
-        case .ephemeral: return "会话授权"
-        @unknown default: return "未知"
-        }
-    }
-
     /// 提醒送不到（给定状态版）。
-    static func isOffFor(_ s: UNAuthorizationStatus) -> Bool {
-        s == .denied || s == .notDetermined
-    }
 }
 
 // MARK: - 双侧快照（锁内数据 + App 内数据）

@@ -101,13 +101,6 @@ enum LockArchive {
         save(mac, m)
     }
     /// 258: 首次开锁成功 = 全链路 (BLE→会话→04→日志) 跑通, 打"链路已验证"标记
-    static func markVerified(_ mac: String) {
-        guard !mac.isEmpty else { return }
-        var m = meta(mac)
-        guard m.verifiedAt == 0 else { return }
-        m.verifiedAt = Date().timeIntervalSince1970
-        save(mac, m)
-    }
     static func isVerified(_ mac: String) -> Bool { meta(mac).verifiedAt > 0 }
     /// 292: 30 天未连接 → 沉睡
     ///
@@ -162,22 +155,6 @@ enum LockArchive {
     /// 与设备页的 271 兜底排序讲的是同一件事, 这里漏掉默认锁就会两页各说一套。
     /// 低电置顶 (114) 不在这里做 —— 自动置顶会把用户明确排好的顺序挪走, 与 108 隐藏 vs 292 沉睡
     /// 同一口径 (明确动作优先于推断), 低电改由 764 图标行的橙点如实标出 (1041 电量升序是另一条明确开关)。
-    static func orderedDevices(_ devices: [Keychain]) -> [Keychain] {
-        let o = orderMacs
-        guard !o.isEmpty else {
-            let def = defaultMac
-            return devices.sorted { a, b in
-                if a.mac == def { return true }
-                if b.mac == def { return false }
-                return a.pairedAt < b.pairedAt
-            }
-        }
-        let byMac = Dictionary(devices.map { ($0.mac, $0) }, uniquingKeysWith: { a, _ in a })
-        let head = o.compactMap { byMac[$0] }
-        let rest = devices.filter { !o.contains($0.mac) }.sorted { $0.pairedAt < $1.pairedAt }
-        return head + rest
-    }
-
     static func grouped(_ devices: [Keychain]) -> [LockGroup] {
         var names = [String]()
         var buckets = [String: [Keychain]]()

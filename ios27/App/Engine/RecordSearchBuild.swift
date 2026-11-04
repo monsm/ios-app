@@ -81,11 +81,6 @@ extension RecordSearch {
     static func dayKeyOf(_ d: Date) -> String { StatsKit.dayKey(d) }
 
     /// "yyyy-MM-dd" → 该日 0 点 (本地时区)
-    static func dateFromKey(_ key: String) -> Date? {
-        // 2026-10-29 性能：fillGaps 会对每一对相邻日各调两次，原来就是 2xN 个 formatter。
-        DF.day.date(from: key)
-    }
-
     /// 649 凌晨归属前一晚: 0:00-4:59 归前一天
     static func dayKeyOfNight(_ d: Date) -> String {
         let c = WeekCal.gregorian
@@ -98,12 +93,6 @@ extension RecordSearch {
     /// 564/572 深夜判定。**672 假日顺延接在这里**: 节假日当日把区间终点 +2 小时。
     /// 此前 extendedEndHour/holidayExtendOn 组成一条没人走的链 = 设置形同虚设。
     /// dayKey 传 "" (或不传) = 不做假日判定, 与旧行为一致。
-    static func isLateNight(_ hour: Int, dayKey: String = "") -> Bool {
-        let a = nightFrom
-        let b = extendedEndHour(dayKey) ?? nightTo
-        return a > b ? (hour >= a || hour < b) : (hour >= a && hour < b)
-    }
-
     /// 671 节假日名 (组头标签); 补班日不在此列
     static func holidayName(_ dayKey: String) -> String? { ensureMerged(); return mergedLock.withLock { $0.map[dayKey] } }
 
@@ -141,15 +130,4 @@ extension RecordSearch {
 /// 而 `unhandledAlarmDays` 已删（全仓 0 命中）。现在它就是**唯一**这一类扫描：
 /// 各锁缓存日志 → 按日归集 → 不看处置。
     /// "这一天出过事"与"还没人看过"是两件事, 处置过的也照留; 日的归属沿用 649 (dayKeyOfNight)。
-    static func damageDays(macs: [String]) -> Set<String> {
-        var days = Set<String>()
-        for mac in macs {
-            for l in DB.readLogs(mac) where AlarmMeta.damageTypes.contains(l.type) {
-                guard let d = dateOf(l) else { continue }
-                days.insert(dayKeyOfNight(d))
-            }
-        }
-        return days
-    }
-
 }

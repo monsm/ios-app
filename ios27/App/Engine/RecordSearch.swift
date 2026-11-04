@@ -73,12 +73,6 @@ enum RecordOverlay {
         DB.store.setCodable(noteKey(mac), m)
     }
     /// 2026-10-30：多锁旗标合并（时间线逐行渲染时一次取，别逐行解整份表）。
-    static func allFlags(macs: [String]) -> Set<String> {
-        var out = Set<String>()
-        for m in macs where !m.isEmpty { out.formUnion(flags(m)) }
-        return out
-    }
-
     static func flags(_ mac: String) -> Set<String> {
         // SEC-03 一致性：备注与处置都随空壳清空，旗标没有理由例外（它同样泄露"有记录"）。
         if DB.isDecoy { return [] }
@@ -110,9 +104,6 @@ enum RecordOverlay {
     static func dispositions(_ mac: String) -> [String: RecordSearch.Disposition] {
         if DB.isDecoy { return [:] }   // 与 notes 同口径：处置记录同样泄露"有这条记录"
         return rawDispositions(mac)
-    }
-    static func disposition(_ mac: String, _ rowKey: String) -> RecordSearch.Disposition? {
-        dispositions(mac)[oid(mac: mac, rowKey: rowKey)]
     }
     static func setDisposition(_ mac: String, _ rowKey: String, _ d: RecordSearch.Disposition?) {
         // 2026-11-04（空壳守卫 · 与 addMember/saveExt 同族）：空壳里记录列表为空 ⇒ 当前不可达。
@@ -161,22 +152,11 @@ enum AlarmMeta {
         return 1
     }
 
-    static func levelName(_ t: Int) -> String {
-        switch level(t) {
-        case 3: return "紧急"
-        case 2: return "严重"
-        default: return "提示"
-        }
-    }
 }
 
 extension RecordSearch {
     /// 告警行标题 —— 此前 RecordSearch 根本没有这个成员,
     /// 但 `AlarmCenterView:212` 与 `RecordsTimeline:83` 都在调用它 (编译期未解析符号)。
-    static func alarmTitle(_ r: Rec) -> String {
-        if !r.typeName.isEmpty { return r.typeName }
-        return RecordVerbs.line(type: r.type, who: r.whoName, kindWord: nil, typeName: "告警 #\(r.type)")
-    }
 }
 
 
@@ -390,10 +370,6 @@ enum RecordSearch {
         return DB.readLogs(mac).filter { $0.type == 10 && String($0.lockTimeStr.prefix(10)) == today }
     }
     /// 737 今日试错 (⚠ keyboardErrCount 语义不确定, 只用日志条数, 标题带"?"由 UI 层标)
-    static func trialCountToday(macs: [String]) -> Int {
-        macs.reduce(0) { $0 + trialRowsToday(mac: $1).count }
-    }
-
     static func dateOf(_ r: Rec) -> Date? {
         if !r.timeStr.isEmpty {
             let f = DF.stamp
@@ -405,13 +381,8 @@ enum RecordSearch {
     /// 写入一律夹到 0...23 —— 键位是 UserDefaults, 手改或导入可能塞进越界值, 判定函数不再做"回落合法值"的静默纠错。
     static var nightFrom: Int { clamp23(DB.store.getInt("kf_night_from", 22)) }
     static var nightTo: Int { clamp23(DB.store.getInt("kf_night_to", 6)) }
-    static func setNightFrom(_ h: Int) { DB.store.set("kf_night_from", clamp23(h)) }
-    static func setNightTo(_ h: Int) { DB.store.set("kf_night_to", clamp23(h)) }
-    static func setHolidayExtend(_ on: Bool) { DB.store.set("kf_holiday_extend", on) }
     static func clamp23(_ h: Int) -> Int { min(max(h, 0), 23) }
     /// 起==止 时区间为空集 (什么都筛不出), 界面要如实提示而不是让用户对着空列表猜
-    static var nightWindowDegenerate: Bool { nightFrom == nightTo }
-
     // ---------- 594/671/672 节假日内置表 ----------
     // 2026 段按国务院公告逐日核对 (含 `off=false` 的调休补班日)。**2027 不内置**：公告尚未发布，
     // 原先那些 2027 行是无来源的推测值 —— 节假日表猜错会让"假日顺延/色带/春节注记"整族静默失真，
@@ -485,7 +456,6 @@ enum RecordSearch {
         }
     }
     /// 671 调休补班日 (上班的日子, 不是假期) —— 色带与"假日顺延"都必须把它和放假日分开
-    static func isMakeupWorkday(_ dayKey: String) -> Bool { ensureMerged(); return mergedLock.withLock { $0.makeup.contains(dayKey) } }
     /// 672 假日顺延: 节假日当日"异常时段"判定结束时间 +2 小时 (设置可关)
     static var holidayExtendOn: Bool { DB.store.getBool("kf_holiday_extend", true) }
     static func extendedEndHour(_ dayKey: String) -> Int? {
@@ -609,12 +579,4 @@ enum RecordSearch {
 extension RecordSearch {
     /// 724 四级色标 → Engine 语义词（紧急 danger / 严重 danger ／ 提示 neutral）。
     /// 界面层把它映射成设计令牌；Engine 不 import SwiftUI，所以这里不返回 Color。
-    static func toneColor(for type: Int) -> ToneColor {
-        switch AlarmMeta.level(type) {
-        case 3: return ToneColor.danger
-        case 2: return ToneColor.danger
-        case 1: return ToneColor.neutral
-        default: return ToneColor.neutral
-        }
-    }
 }

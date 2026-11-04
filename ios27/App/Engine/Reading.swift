@@ -35,11 +35,6 @@ enum Reading {
     }
 
     /// 电量是否低到需要提醒（≤20%）。界面要「涂色/加一句提醒」时用这个，不要各自写阈值。
-    static func batteryIsLow(_ mac: String, snapshot: Int = -1) -> Bool {
-        let pct = BatteryCare.displayPct(mac, snapshot: snapshot)
-        return pct >= 0 && pct <= 20
-    }
-
     // MARK: - 连接 / 信号
 
     /// 连接状态。全仓原本有 8 处各自判断（`isConnected` / `phase` / `connectedMAC` 三种来源）。
@@ -84,18 +79,6 @@ enum Reading {
     }
 
     /// 锁内时间。0 = 从未同步过（**不要**把 0 当成 1970 年显示出来）。
-    static func lockClock(_ mac: String) -> Value {
-        let t = DB.readStatus(mac)?.lockTime ?? 0
-        guard t > 0 else { return Value(text: "未读到", tone: .neutral) }
-        // ⚠ lockTime 是**协议秒**（StatusParser KLV#04，2010-01-01 起算），不是毫秒 epoch。
-        // 直接当毫秒用会显示成 1970-01-07、偏差约 -57 年 —— 这正是 SyncTimeScreen 注释里
-        // 那条用户实测过的「531260264 秒」bug，别在这里重新引入。
-        let ms = ZKProtocol.protoSecondsToMs(t)
-        let drift = Int(Date(timeIntervalSince1970: Double(ms) / 1000).timeIntervalSinceNow)
-        let tone: Tone = abs(drift) > 60 ? .attention : .ok
-        return Value(text: TimeFormat.clock(ms), tone: tone)
-    }
-
     /// 锁钟与手机的偏差（秒）。界面要「偏差 N 秒」时用这个，不要各算一遍。
     static func clockDrift(_ mac: String) -> Value {
         let t = DB.readStatus(mac)?.lockTime ?? 0
@@ -110,12 +93,6 @@ enum Reading {
     /// 安全模式 A/B/C。文案唯一来源是 `LockMode`（本文件下方定义 —— 第 324 轮从
     /// `LockStatusScreen` 挪出来：那个页面回退到原设计后不再需要它，而读数层需要，
     /// 留在页面里会让"引擎依赖某个页面文件"这条倒挂关系留下来）。
-    static func lockMode(_ mac: String) -> Value {
-        let s = DB.readStatus(mac)
-        let text = LockMode.text(verifyMode: Int(s?.verifyMode ?? -1),
-                                 broadcastMode: Int(s?.broadcastMode ?? 0))
-        return Value(text: text, tone: .neutral)
-    }
 }
 
 /// 安全模式 A/B/C 的唯一文案源。

@@ -61,11 +61,6 @@ enum DefendKit {
     }
 
     /// 当前时刻在一天内的秒数（本地时区，与锁端 display 时间同口径）。
-    static func secondsOfDay(_ d: Date, cal: Calendar = WeekCal.gregorian) -> Int {
-        let c = cal.dateComponents([.hour, .minute, .second], from: d)
-        return (c.hour ?? 0) * 3600 + (c.minute ?? 0) * 60 + (c.second ?? 0)
-    }
-
     /// 秒 → 协议时间字段值。**唯一的换算出口**。
     /// ⚠ 2026-10-27 审核修复：原实现是 `× 2`（当成"半秒"），而 APK 原文是
     /// `getSeconHMS(t)/2`（`getSeconHMS` 返回一天内**秒数**，除以 2 才是协议值）。
