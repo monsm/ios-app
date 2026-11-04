@@ -657,9 +657,13 @@ struct DoorScreen: View {
     /// ① 原式 `max(1, …)` 让 **0% 电量也说「约可用 1 个月」** —— 现在不足 30 天就说「不足 1 个月」。
     /// ② 0.68 是**固定日耗**（%/天），公式里**没有**开门次数 —— 而文案却写「按日均 3 次估算」，
     ///    这句话把"厂商标称功耗"说成了"按你的使用量算的"，用户开门再频繁这个数也不会变。
+    /// 电量日耗（% / 天）。**一处定义**：`estimateMonths` 与 `replaceText` 都用它 ——
+    /// 2026-11-04：原先两个函数各自写了一遍 `0.68`，正是 `capacityText` 那种"两份实现慢慢漂移"的温床。
+    private static let batteryDrainPerDay: Double = 0.68
+
     private func estimateMonths(_ lock: LockSummary) -> String {
         guard lock.battery >= 0 else { return "未知" }
-        let days = Double(lock.battery) / 0.68
+        let days = Double(lock.battery) / Self.batteryDrainPerDay
         if days < 30 { return "不足 1 个月" }
         let months = max(1, Int((days / 30).rounded()))
         return "\(months) 个月"
@@ -671,7 +675,7 @@ struct DoorScreen: View {
 
     private func replaceText(_ lock: LockSummary) -> String {
         guard lock.battery >= 0 else { return "未知" }
-        let days = Double(lock.battery) / 0.68
+        let days = Double(lock.battery) / Self.batteryDrainPerDay
         // 2026-11-03（全功能点排查）：这里算的是**日历日期**（「建议更换 2 月 23 日」），
         // 用 86_400 秒/天在有夏令时的地区会差一格。全仓纪律见 WeekCal.shifted 的注释。
         let date = WeekCal.shifted(Date(), days: Int(days.rounded()))

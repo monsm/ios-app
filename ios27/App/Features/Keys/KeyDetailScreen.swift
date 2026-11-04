@@ -200,8 +200,13 @@ struct KeyDetailScreen: View {
             VStack(alignment: .leading, spacing: 0) {
                 VSectionLabel(text: "能做的事")
                     .padding(.bottom, V.S.gapS)
-                expiryMenu(key)
-                KeysDivider()
+                // 2026-11-04（呈现复核 · 提供必然失败的操作）：`setExpiry` 开头就 guard
+                // 「只有密码/临时码有到期日」，而这个菜单对**指纹**也照显示 —— 点任意一档
+                // 只会弹出那句错误。同页的「改造密码值」早就按 kind 收窄了，这里漏了。
+                if key.kind == .password || key.kind == .temp {
+                    expiryMenu(key)
+                    KeysDivider()
+                }
                 KeysActionRow(
                     title: key.disabled ? "恢复使用" : "停用这枚凭证",
                     symbol: key.disabled ? "play.circle" : "pause.circle",
