@@ -1274,6 +1274,25 @@ struct CredBinSheet2: View {
                         }
                         .padding(.top, V8.S.gapS)
                     }
+                    // 2026-11-05（对抗审查）：文案四处承诺「可整组还原」，此前只有逐条还原。
+                    // 按 batchId 分组，每批给一个入口 —— 同一次误操作进来的条目可以一把捞回。
+                    let batches = Dictionary(grouping: items, by: { $0.batchId })
+                    ForEach(batches.keys.sorted(by: { ($0) < ($1) }), id: \.self) { b in
+                        if let group = batches[b], group.count > 1 {
+                            VDivider2()
+                                .padding(.vertical, V8.S.gapS)
+                            Button { restoreBatch(b) } label: {
+                                Text("还原这一批（" + String(group.count) + " 条 · " + (group.first?.source ?? "") + "）")
+                                    .font(V8.T.tab)
+                                    .foregroundStyle(V8.C.accent)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(minHeight: V8.H.min)
+                                    .background(Capsule(style: .continuous).fill(V8.C.chipOff))
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("还原这一批" + String(group.count) + "条")
+                        }
+                    }
                 }
                 if let outcome {
                     Text(outcome)
@@ -1347,6 +1366,19 @@ struct CredBinSheet2: View {
     private func reload() {
         items = CredBinStore.all(mac)
         onChange()
+    }
+
+    private func restoreBatch(_ batchId: String) {
+        let r = CredBinStore.restoreBatch(mac, batchId: batchId)
+        reload()
+        if r.blocked == 0 {
+            outcomeBad = false
+            outcome = "已整组还原 " + String(r.ok) + " 条"
+        } else {
+            outcomeBad = true
+            // 静默跳过会让人以为整组都回来了 —— 逐项说清哪一半没回来、为什么。
+            outcome = "整组还原：成功 " + String(r.ok) + " 条，" + String(r.blocked) + " 条因编号已被其它凭证占用未还原（锁端会复用删除后的槽位），请先在锁上处理那些编号"
+        }
     }
 
     private func restore(_ item: CredBinItem) {

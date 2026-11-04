@@ -109,6 +109,24 @@ enum CredBinStore {
         return true
     }
 
+    /// 整组还原：把同一次操作（同一 `batchId`）进回收站的条目一次还原。
+    ///
+    /// 2026-11-05（对抗审查）：界面四处文案写着「可整组还原」（回收站卡 trailing / 页 lead /
+    /// 两条批量移除的确认文案），而代码只有逐条 `restore` —— 承诺了一个不存在的动作。
+    /// `batchId` 一直是按批写入的，数据模型本来就支持，缺的只有这个入口。
+    ///
+    /// 返回 (还原成功数, 因编号被占用而跳过数)。两者都要如实报给用户 ——
+    /// 静默跳过会让人以为整组都回来了。
+    @discardableResult
+    static func restoreBatch(_ mac: String, batchId: String) -> (ok: Int, blocked: Int) {
+        let group = stored(mac).filter { $0.batchId == batchId }
+        var ok = 0, blocked = 0
+        for item in group {
+            if restore(mac, item) { ok += 1 } else { blocked += 1 }
+        }
+        return (ok, blocked)
+    }
+
     static func purge(_ mac: String, _ item: CredBinItem) {
         var items = stored(mac)
         items.removeAll { $0.id == item.id }
