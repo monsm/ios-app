@@ -192,6 +192,11 @@ enum MemberHub {
         var opens30: Int = 0
         var month: Int = 0
         var last: String = ""
+        /// 最近一次可证明归属开门的 unix 秒（0 = 没有）。
+        /// 2026-11-04：`MemberCard.lastActiveAt` 此前在 `AppModel.reloadMembers` 里**硬写 nil**，
+        /// 于是名册每一行永远显示「还没用过」—— 而同一张卡上方写着「本周开门 6 次」。
+        /// 这里补上真值，让两处同源。
+        var lastUnix: Int64 = 0
         var owns: Int = 0
         /// 久未用 (262 置灰判据): 30 天无可证明归属开门
         var stale: Bool { opens30 == 0 }
@@ -238,6 +243,7 @@ enum MemberHub {
                 if unix >= now - 30 * 86400 { a.opens30 += 1 }
                 if unix >= mStart { a.month += 1 }
                 if logs[i].lockTimeStr > a.last { a.last = logs[i].lockTimeStr }
+                if unix > a.lastUnix { a.lastUnix = unix }
                 b.table[who] = a
             }
             for p in pwds {

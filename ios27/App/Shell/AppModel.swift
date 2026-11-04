@@ -234,6 +234,9 @@ final class AppModel {
     /// 只重建成员。
     func reloadMembers() {
         let table = MemberHub.allExt()
+        // 2026-11-04（同一屏自相矛盾）：`lastActiveAt` 原来硬写 nil —— 名册每行「还没用过」，
+        // 而概览写着「本周开门 N 次」。改用 `MemberHub.activityBundle` 的最近一次可证明开门。
+        let activity = MemberHub.activityBundle(DB.members().map(\.id))
         members = DB.members().map { m in
             let ext = table[m.id] ?? MemberExt()
             let role: MemberCard.Role = ext.role == "main" ? .owner : (ext.role == "guest" ? .guest : .member)
@@ -243,7 +246,7 @@ final class AppModel {
                 role: role,
                 // `owner` 历史上有 id 与名字两种口径（见 `addPassword`），计数两种都认。
             keyCount: keys.filter { CredentialOrg.ownerMatches($0.owner, memberID: m.id, memberName: m.name) }.count,
-                lastActiveAt: nil,
+                lastActiveAt: activity.table[m.id].flatMap { $0.lastUnix > 0 ? $0.lastUnix * 1000 : nil },
                 archived: ext.archived
             )
         }
