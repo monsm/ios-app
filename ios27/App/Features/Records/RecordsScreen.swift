@@ -743,7 +743,9 @@ struct RecordsScreen: View {
         VCard {
             Text(note)
                 .font(V.F.footnote)
-                .foregroundStyle(note.hasPrefix("已") ? V.C.rewardGreen : V.C.coral)
+                // 2026-11-04（对比度回访）：coral 在白卡上 2.92:1 —— readNote 是用户必读的
+                // 操作反馈（未连接/切范围/失败），与工作室的警告行同一达标口径（critical 7.18）。
+                .foregroundStyle(note.hasPrefix("已") ? V.C.rewardGreen : V.C.critical)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.horizontal, V.S.cardGutter)
