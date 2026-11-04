@@ -333,7 +333,12 @@ enum RecordsSource {
                 continue
             }
             let at = Int64(ZKProtocol.protoSecondsToUnix(log.lockTime) * 1000)
-            let provenName = proven[String(log.idxRaw)].flatMap { nameByID[$0] }
+            // 2026-11-04（第 135 轮取证抓到 · 我自己写的 bug）：`proven` 的**值已经是成员名**
+            // （下面两处赋值存的都是名字），这里却又拿它当 **id** 去 `nameByID` 里查 ——
+            // 名字永远查不到 id 键，`flatMap` 恒返回 nil。于是归属映射**从第 110 轮起就没生效过**，
+            // 而它一直表现为「未归属」，与"种子不可证明"长得一模一样，所以四轮都没看出来。
+            // 定位证据：`seed-diag` 的 `attributed=6`（引擎能证明 6 条）对上记录页的 0 条归属。
+            let provenName = proven[String(log.idxRaw)]
             timed.append(LedgerEntry(
                 id: mac + "#" + String(log.idxRaw),
                 at: at,
