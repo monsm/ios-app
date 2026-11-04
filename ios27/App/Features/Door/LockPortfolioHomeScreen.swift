@@ -102,6 +102,10 @@ struct LockPortfolioHomeScreen: View {
             reload()
             loadProfile()
         }
+        // 2026-11-05（对抗审查发现）：切换当前锁后 kc 变了，但 profileLoaded 守卫让
+        // 锁身份段还显示旧锁的表单 —— 用户点保存会把旧锁档案写到新锁上。
+        // 监听 currentMac 变化，换锁就清掉守卫重载。
+        .onChange(of: app.currentMac) { _, _ in profileLoaded = false; loadProfile() }
         .alert("移动到分组", isPresented: $showGroupEdit) {
             TextField("分组名（留空 = 未分组）", text: $groupDraft)
             Button("取消", role: .cancel) { }
