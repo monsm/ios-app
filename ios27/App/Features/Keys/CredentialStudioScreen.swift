@@ -431,7 +431,7 @@ struct CredentialStudioScreen: View {
                 }
                 if !duplicates.isEmpty {
                     Text("重复串：" + duplicates.map { $0.joined(separator: "/") }.joined(separator: " · "))
-                        .font(V.F.footnote).foregroundStyle(V.C.coral)
+                        .font(V.F.footnote).foregroundStyle(V.C.critical)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 if weak.isEmpty && duplicates.isEmpty {
