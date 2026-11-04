@@ -62,12 +62,16 @@ enum MemberOpsStore {
 
     // MARK: - 移交：把一位成员名下凭证改归属到另一位
     static func transfer(mac: String, from: String, to: String) -> Int {
+        // 2026-11-05（对抗审查）：原来用 `p.owner == from` 精确比 id —— 旧数据的 owner 存的是
+        // **成员名**（下面 cascadeDelete 的注释写着这件事），那些行既不会被移交、也不计入返回值，
+        // 而界面承诺的是「把名下凭证全部移交」。统一走 CredentialOrg.ownerMatches。
+        let fromName = DB.member(from)?.name ?? ""
         var n = 0
-        for p in DB.listPwds(mac) where p.owner == from {
+        for p in DB.listPwds(mac) where CredentialOrg.ownerMatches(p.owner, memberID: from, memberName: fromName) {
             DB.setPwdOwner(mac, p.alias, to)
             n += 1
         }
-        for f in DB.listFps(mac) where f.owner == from {
+        for f in DB.listFps(mac) where CredentialOrg.ownerMatches(f.owner, memberID: from, memberName: fromName) {
             DB.setFpOwner(mac, f.batch, to)
             n += 1
         }

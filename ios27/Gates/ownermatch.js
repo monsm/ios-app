@@ -35,6 +35,18 @@ for (const f of walk(FEATURES)) {
     if (t.includes('ownerMatches')) return;
     const hasId = /\.owner\s*==\s*[A-Za-z_]\w*\.id\b/.test(t) || /==\s*[A-Za-z_]\w*\.id\b[^\n]*\.owner/.test(t);
     const hasName = /\.owner\s*==\s*[A-Za-z_]\w*\.name\b/.test(t);
+    // 2026-11-05（对抗审查）：原判据只抓「同一行既有 .id 又有 .name」。
+    // 真正的漏洞长这样：for p in DB.listPwds(mac) where p.owner == from
+    // —— from 是裸成员 id 参数，没有 .id/.name 后缀，于是从未被这条闸门看见。
+    // 后果：旧数据（owner 存成员名）既不移交也不计数，而界面承诺「全部」。
+    // (?![.\w]) ：member.name 这种「已经是显示名」的写法不算 —— 后面跟着点就是取属性，
+    // 不是裸标识符。只抓真的直接拿一个 id 参数来比的写法。
+    const bare = /\.owner\s*==\s*([A-Za-z_][A-Za-z0-9_]*)(?![.\w])/.exec(t);
+    if (bare && ["nil", "owner", "ownerID", "ownerId"].indexOf(bare[1]) < 0) {
+      bad++;
+      report.push(path.relative(path.join(__dirname, '..'), f) + ':' + (i + 1) + '  ' + t.slice(0, 70));
+      return;
+    }
     if (hasId && hasName) {
       bad++;
       report.push(path.relative(path.join(__dirname, '..'), f) + ':' + (i + 1) + '  ' + t.slice(0, 70));

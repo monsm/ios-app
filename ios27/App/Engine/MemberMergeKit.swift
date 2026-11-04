@@ -25,12 +25,16 @@ enum MemberMergeKit {
               let secondary = DB.member(secondaryID),
               primary.name == secondary.name else { return 0 }
         var moved = 0
+        // 2026-11-05（对抗审查）：与 MemberOpsStore.transfer 同源 —— 旧数据的 owner 存的是
+        // 成员**名**。只按 id 筛会让那些行留在「已删除的副档名字」上，随后 removeMember 把它们
+        // 清成未归属：用户以为合并了，凭证却丢了归属。
+        let secondaryName = secondary.name
         for kc in DB.keychains() {
-            for p in DB.listPwds(kc.mac) where p.owner == secondaryID {
+            for p in DB.listPwds(kc.mac) where CredentialOrg.ownerMatches(p.owner, memberID: secondaryID, memberName: secondaryName) {
                 DB.setPwdOwner(kc.mac, p.alias, primaryID)
                 moved += 1
             }
-            for f in DB.listFps(kc.mac) where f.owner == secondaryID {
+            for f in DB.listFps(kc.mac) where CredentialOrg.ownerMatches(f.owner, memberID: secondaryID, memberName: secondaryName) {
                 DB.setFpOwner(kc.mac, f.batch, primaryID)
                 moved += 1
             }
