@@ -136,7 +136,11 @@ struct AboutScreen: View {
                 VStack(alignment: .leading, spacing: V.S.gapMS) {
                     SettingsNote(text: "厂商已停服的智能锁离线管理端。门锁数据、密码台账、家人档案全部保存在这台手机上，换新手机用「备份与恢复」转移 —— 门锁本身不需要重置。")
                     SettingRule()
-                    SettingsNote(text: "协议层与密码学沿用已验证实现；界面是本版重写的。App 不联网、不注册账号、不做任何上传。")
+                    // 2026-11-04（隐私声明复核 · 过度承诺）：原文写「App 不联网…不做任何上传」——
+                    // **不成立**：备份工作室支持把整份备份（**包含能开门的密钥**）通过 WebDAV
+                    // 传到用户自己的网盘，那是一次真实的上传；固件升级也要联网。
+                    // 真实边界是「不连厂商服务器、不作任何自动上传」—— 用户主动配置的 WebDAV 除外。
+                    SettingsNote(text: "协议层与密码学沿用已验证实现；界面是本版重写的。App 不连厂商服务器、不注册账号、不自动上传任何数据 —— 只有你自己在「备份工作室」里配置的 WebDAV 会联网，而且每次上传都由你手动触发。")
                 }
             }
             .padding(.horizontal, V.S.pageGutter)

@@ -119,7 +119,9 @@ struct SettingsScreen: View {
         VStack(alignment: .leading, spacing: V.Page.titleToBody) {
             // 2026-11-02：标题改由系统导航栏的大标题承担（见 body 上的 .navigationTitle）——
             // 自己再画一遍就是同一屏两个「设置」。
-            Text("这台锁的全部行为都在本机完成，不上传云端。")
+            // 2026-11-04（隐私声明复核）：原文「这台锁的全部行为都在本机完成」——配了网关后
+            // 远程访问/转发会经过网关，不是"全部在本机"。改成不依赖硬件配置的说法。
+            Text("锁数据存在这台手机上，不连厂商服务器；只有你主动配置的网关或 WebDAV 备份会联网。")
                 .font(V.F.pageLead)
                 .foregroundStyle(V.C.text3)
                 .fixedSize(horizontal: false, vertical: true)
