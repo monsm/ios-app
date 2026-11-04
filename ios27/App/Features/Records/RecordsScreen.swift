@@ -833,18 +833,21 @@ struct RecordsScreen: View {
         overlay.hydrate(macs: targets.map(\.mac))
         var merged: [LedgerEntry] = []
         var untimedTotal = 0
-        var synced: Int64?
+        // 2026-11-04（呈现复核 · 多锁模式永远"还没读过"）：`synced` 原来只在 `.current` 下赋值，
+        // 于是「全部锁」模式里「上次读取」**恒为 nil** —— 明明刚读过，卡片还说「还没从锁里读过」。
+        // 多锁时取各锁 lastSync 的**最早**值：那是"这份合并列表里最旧的那部分数据有多旧"。
+        var syncTimes: [Int64] = []
         for kc in targets {
             let load = RecordsSource.load(mac: kc.mac,
                                           lockName: LockArchive.displayName(kc),
                                           members: app.members)
             merged.append(contentsOf: load.entries)
             untimedTotal += load.untimed
-            if lockScope == .current { synced = RecordsSource.lastSync(mac: kc.mac) }
+            if let t = RecordsSource.lastSync(mac: kc.mac) { syncTimes.append(t) }
         }
         entries = merged.sorted { $0.at > $1.at }
         untimed = untimedTotal
-        readAt = synced
+        readAt = syncTimes.min()
 
     }
 
