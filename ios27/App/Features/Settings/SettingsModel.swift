@@ -37,6 +37,14 @@ enum AppearanceTheme: String, CaseIterable, Identifiable {
         case .dark, .black: return .dark
         }
     }
+
+    /// 2026-11-04（走查发现 · 假选项）：`.black` 的 `colorScheme` 与 `.dark` 完全一样，
+    /// 而**深色档的页面底本来就是纯黑**（`V.C.bg = dual(0xF2F2EF, 0x000000)`，见 V7Tokens）。
+    /// 也就是说「纯黑（AMOLED）」和「深色」是同一个外观 —— 设置里却摆成两个选项，
+    /// 用户以为换了个更省电的档，实际什么也没变。
+    /// 处置：**不再作为可选档展示**（`selectable` 不含它），但保留 case 以便旧值 `kf_theme=black`
+    /// 仍能解码成深色（删掉 case 会让旧用户回落到「跟随系统」——那是更差的行为）。
+    static var selectable: [AppearanceTheme] { [.system, .light, .dark] }
 }
 
 /// 布局密度。只缩放间距节奏，字号与 44pt 触达不动。

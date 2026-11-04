@@ -55,7 +55,7 @@ struct AppearanceScreen: View {
             VSectionLabel(text: "主题")
             VCard {
                 VStack(alignment: .leading, spacing: V.S.gapMS) {
-                    SettingChips(items: AppearanceTheme.allCases,
+                    SettingChips(items: AppearanceTheme.selectable,   // 排除 .black：与 .dark 等价（见 SettingsModel 注释）
                                  title: { $0.title },
                                  selection: settingsBinding(\.theme))
                     SettingRule()
