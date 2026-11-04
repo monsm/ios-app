@@ -50,6 +50,9 @@ enum RecordOverlay {
     }
     /// 空文本 = 删键 (不留 kf_rnote 里的空壳, 否则完整性自查会数出无意义的条目)
     static func setNote(_ mac: String, _ rowKey: String, _ text: String) {
+        // 2026-11-04（空壳守卫 · 与 addMember/saveExt 同族）：空壳里记录列表为空 ⇒ 当前不可达。
+        // 仍然守一道：写路径一律拒绝空壳，别给未来留一条「能改真实覆盖层」的入口。
+        if DB.isDecoy { return }
         var m = rawNotes(mac)
         let k = oid(mac: mac, rowKey: rowKey)
         let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -59,6 +62,9 @@ enum RecordOverlay {
     /// 2026-10-30（第 66 轮）：整表写入 —— 只供备份恢复用（逐条 setNote 会把整表解码 N 遍）。
     /// 与 setNote 同一口径：空文本删键、超长截到 60 字（不让坏备份写进一个比行下灰字更长的值）。
     static func setNotes(_ mac: String, _ table: [String: String]) {
+        // 2026-11-04（空壳守卫 · 与 addMember/saveExt 同族）：空壳里记录列表为空 ⇒ 当前不可达。
+        // 仍然守一道：写路径一律拒绝空壳，别给未来留一条「能改真实覆盖层」的入口。
+        if DB.isDecoy { return }
         var m = [String: String]()
         for (k, v) in table {
             let t = v.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -91,6 +97,9 @@ enum RecordOverlay {
     }
     /// 2026-10-30（第 66 轮）：整表写入 —— 只供备份恢复用。
     static func setFlags(_ mac: String, _ set: Set<String>) {
+        // 2026-11-04（空壳守卫 · 与 addMember/saveExt 同族）：空壳里记录列表为空 ⇒ 当前不可达。
+        // 仍然守一道：写路径一律拒绝空壳，别给未来留一条「能改真实覆盖层」的入口。
+        if DB.isDecoy { return }
         DB.store.setCodable(flagKey(mac), set.sorted())
     }
     // ---------- 2026-10-28 补：处置层 ----------
@@ -106,6 +115,9 @@ enum RecordOverlay {
         dispositions(mac)[oid(mac: mac, rowKey: rowKey)]
     }
     static func setDisposition(_ mac: String, _ rowKey: String, _ d: RecordSearch.Disposition?) {
+        // 2026-11-04（空壳守卫 · 与 addMember/saveExt 同族）：空壳里记录列表为空 ⇒ 当前不可达。
+        // 仍然守一道：写路径一律拒绝空壳，别给未来留一条「能改真实覆盖层」的入口。
+        if DB.isDecoy { return }
         var m = rawDispositions(mac)
         let k = oid(mac: mac, rowKey: rowKey)
         if let d { m[k] = d } else { m.removeValue(forKey: k) }
@@ -117,6 +129,9 @@ enum RecordOverlay {
     static let verdicts: Set<String> = ["已处理", "误报", "已处置", "测试", "已人工检查"]
 
     static func setDispositions(_ mac: String, _ table: [String: String]) {
+        // 2026-11-04（空壳守卫 · 与 addMember/saveExt 同族）：空壳里记录列表为空 ⇒ 当前不可达。
+        // 仍然守一道：写路径一律拒绝空壳，别给未来留一条「能改真实覆盖层」的入口。
+        if DB.isDecoy { return }
         var m = [String: RecordSearch.Disposition]()
         for (k, verdict) in table {
             // 与 `setNotes` 同一条纪律：整表写入来自**外部备份包**，所以要做白名单。

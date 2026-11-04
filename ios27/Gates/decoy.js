@@ -31,6 +31,11 @@ const TARGETS = [
   ['Engine/MemberHub.swift', 'static func saveExt(_ id'],
   ['Engine/MemberHub.swift', 'static func claim(_ mac'],
   ['Engine/DiagKit.swift', 'static func loadIntoCache()'],
+  ['Engine/RecordSearch.swift', 'static func setNote(_ mac'],
+  ['Engine/RecordSearch.swift', 'static func setFlags(_ mac'],
+  ['Engine/RecordSearch.swift', 'static func setDisposition(_ mac'],
+  ['Engine/RecordSearch.swift', 'static func setNotes(_ mac'],
+  ['Engine/RecordSearch.swift', 'static func setDispositions(_ mac'],
 ];
 
 let bad = 0;
