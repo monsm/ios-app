@@ -43,8 +43,8 @@ const CAPABILITIES = [
   // —— 门页异常提醒 ——
   { symbol: 'CredentialOrg.dueSoonPwds', why: '门页「需要留意」卡的凭证到期判据（2 小时内到期 / 已过期 1 小时内）。丢了 = 用户看不到临时码即将失效。' },
   // —— 快捷操作三件套 ——
-  { symbol: 'QuickPool.ordered', why: '门页快捷操作排序（智能开 = 按点击次数降序；关但满 30 天 = 最常用提首）。丢了 = 「常用操作自动排前」开关失效。' },
-  { symbol: 'QuickPool.recordTap', why: '记录一次快捷操作点击。丢了 = 上面的计数永远是空的。' },
+  { symbol: 'QuickPool.ordered', mustAppearIn: 'Features/Door/DoorHomeScreen.swift', why: '门页快捷操作排序。丢了 = 「常用操作自动排前」开关失效。' },
+  { symbol: 'QuickPool.recordTap', mustAppearIn: 'Features/Door/DoorHomeScreen.swift', why: '记录一次快捷操作点击。丢了 = 排序的计数永远是空的。' },
   // —— 手机钥匙 ——
   { symbol: 'MobileKeyService.revoke', why: '撤销一把手机钥匙（cmd08 delPins 真下发）。丢了 = 钥匙撤不掉。' },
   { symbol: 'MobileKeyService.issue', why: '签发一把手机钥匙（本地签 ekey + 落台账）。丢了 = 签不出钥匙。' },
@@ -54,36 +54,60 @@ const CAPABILITIES = [
   { symbol: 'CredBinStore.purge', why: '回收站彻底删除（含 Keychain 口令副本与派生状态）。丢了 = 彻底删除只是从列表消失。' },
   // —— 备份 ——
   { symbol: 'BackupStudio.restore', why: '恢复备份。丢了 = 备份只能生成不能还原。' },
+  // —— 界面文案承诺过的动作（文案说「可整组还原」就必须真有整组还原）——
+  { symbol: 'CredBinStore.restoreBatch', mustAppearIn: 'Features/Keys/CredentialStudioHomeScreen.swift', why: '回收站四处文案承诺「可整组还原」。丢了 = 文案又是一句空话。' },
+  { symbol: 'LockArchive.isHidden', mustAppearIn: 'Features/Door/DoorHomeScreen.swift', why: '「在翻页里隐藏这把锁」的唯一判据 —— 而且必须是门页在读（设置面板读它只够显示开关状态）。' },
+  { symbol: 'DevModuleStore.hidden', mustAppearIn: 'Features/Door/DoorHomeScreen.swift', why: '「版面 → 模块显隐」三个开关的判据，且必须由门页执行（否则面板是死开关）。' },
+  { symbol: 'DevLayout.order', mustAppearIn: 'Features/Door/DoorHomeScreen.swift', why: '「版面」三槽排序的判据，且必须由门页执行（面板自己读它只够画顺序）。' },
+
   // —— 只读护栏 ——
   { symbol: 'ZKProtocol.assertReadOnly', why: '只读试验模式对所有 BLE 下发的唯一收口。丢了 = 只读模式形同虚设。' },
   // —— 空壳 ——
   { symbol: 'DB.isDecoy', why: '空壳（胁迫码）模式的判据。丢了 = 胁迫码下把真实数据摊开。' },
 ];
 
+// 找到每个能力所属类型的定义文件 —— 类型内自引用不算「有调用点」。
+// 反例：DevLayout.order 在 DoorLayout.swift 里被 move()/setOrder() 用到，
+// 即使门页不再读它，计数依然 > 0。所以必须排除定义文件。
+function definingFile(typeName) {
+  for (const f of files) {
+    if (new RegExp('(enum|struct|final class|class|actor) ' + typeName + '\\b').test(f.src)) return f.rel;
+  }
+  return null;
+}
+
 const findings = [];
 for (const cap of CAPABILITIES) {
-  // 统计「非注释行」里的出现次数
+  const typeName = cap.symbol.split('.')[0];
+  const own = definingFile(typeName);
   let n = 0;
-  for (const { src } of files) {
+  for (const { rel, src } of files) {
+    if (own && rel === own) continue;   // 定义文件内的自引用不算
     for (const line of src.split(/\r?\n/)) {
       const t = line.trim();
       if (t.startsWith('//') || t.startsWith('///')) continue;
       if (line.includes(cap.symbol)) n++;
     }
   }
-  // 判据：带类型前缀的符号（如 DB.removeDevice）在定义处并不出现 —— 定义写的是
-  // `static func removeDevice(...)`。所以非注释出现次数 >= 1 就说明存在调用点；
-  // 0 次 = 调用点被删干净了。注释行已排除，所以不会被「注释里提过」蒙混过关。
-  if (n < 1) findings.push({ symbol: cap.symbol, n, why: cap.why });
+  if (n < 1) { findings.push({ symbol: cap.symbol, n, own, why: cap.why }); continue; }
+  if (cap.mustAppearIn) {
+    const target = files.find((f) => f.rel === cap.mustAppearIn);
+    const ok = target && target.src.split(/\r?\n/).some((line) => {
+      const t = line.trim();
+      if (t.startsWith("//") || t.startsWith("///")) return false;
+      return line.includes(cap.symbol);
+    });
+    if (!ok) findings.push({ symbol: cap.symbol, n, own, missingIn: cap.mustAppearIn, why: cap.why });
+  }
 }
-
 if (findings.length === 0) {
   console.log('capability: OK — ' + CAPABILITIES.length + ' 条必须保留的能力都有调用点');
   process.exit(0);
 }
 console.log('capability: FAIL — ' + findings.length + ' 条能力没有调用点');
 for (const f of findings) {
-  console.log('  ' + f.symbol + '（非注释出现 ' + f.n + ' 次）');
+  console.log('  ' + f.symbol + '（定义文件 ' + f.own + ' 之外的非注释引用 ' + f.n + ' 次）');
+  if (f.missingIn) console.log('     缺少执行点：' + f.missingIn);
   console.log('     ' + f.why);
 }
 process.exit(1);
