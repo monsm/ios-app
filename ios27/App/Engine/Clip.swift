@@ -12,6 +12,9 @@ enum Clip {
     /// 默认过期秒数。所有 `Clip.set` 调用共用这一个值。
     static let expireSeconds: Double = 90
 
+    /// 清空剪贴板（语义化入口）。进去空壳模式时调用 —— 别让上一刻复制的 ekey 留在系统剪贴板里。
+    static func clear() { UIPasteboard.general.string = "" }
+
     /// 写剪贴板并设过期时间。空串直接清空（不设过期，因为没有内容）。
     static func set(_ text: String) {
         guard !text.isEmpty else {

@@ -295,6 +295,10 @@ struct LockGateScreen: View {
                             app.keys = []
                             app.members = []
                             app.entries = []
+                            // 2026-11-04（空壳收尾）：**剪贴板也要清**。被胁迫者进空壳前可能刚复制过
+                            // 一枚 ekey / 动态码（`Clip.set` 有 90 秒有效期），而空壳里没有任何界面
+                            // 会去动剪贴板 —— 胁迫者只要长按粘贴就能拿到。清空是无声的，不会引起注意。
+                            Clip.clear()
                             app.unlocked = true
                             failed = false
                         case .wrong(let remaining):
