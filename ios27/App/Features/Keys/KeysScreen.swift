@@ -277,7 +277,7 @@ struct KeysScreen: View {
                         Text("最早到期")
                             .font(V.F.micro)
                             .foregroundStyle(V.C.text4)
-                        Text(nearestDays.map { "\($0) 天后" } ?? "永久")
+                        Text(nearestDays.map { KeysState.daysWord($0) } ?? "永久")
                             .font(V.F.bedValue)
                             .foregroundStyle(V.C.text1)
                     }
@@ -327,7 +327,7 @@ struct KeysScreen: View {
                 // 而且「最早到期」在同一屏出现两次、两种格式（上面卡片「30 天后」、这里「12-03」）。
                 // 改成：左格说"最近到期"（与值一致），右格标明是日期形态。
                 VStatPair(items: [
-                    ("最近到期", nearestDays.map { "\($0) 天后" } ?? "永久"),
+                    ("最近到期", nearestDays.map { KeysState.daysWord($0) } ?? "永久"),
                     ("最早到期日", earliestExpiryText)
                 ])
                 .padding(.top, V.S.gapXXS)

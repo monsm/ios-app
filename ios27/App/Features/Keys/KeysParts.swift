@@ -78,11 +78,27 @@ enum KeysState {
         return "\(days) 天后到期"
     }
 
+    /// 剩余天数的统一说法。2026-11-04（呈现复核 · 同屏两种说法）：
+    /// 列表行用 `word(_:)`（0 →「今天到期」/ 1 →「明天到期」），而汇总卡直接拼 `"\(days) 天后"` ——
+    /// 于是同一屏上「明天到期」和「1 天后」并存，临期当天还会出现「0 天后」。统一到这里。
+    static func daysWord(_ days: Int) -> String {
+        switch days {
+        case ..<0: return "已过期"
+        case 0: return "今天到期"
+        case 1: return "明天到期"
+        case 2: return "后天到期"
+        default: return "\(days) 天后到期"
+        }
+    }
+
     /// 行尾读数：永久不写数；有限期写剩余天数，单位是天。
     static func expiryReading(_ key: KeyItem, now: Int64) -> (value: String, unit: String?, tint: Color) {
         if key.disabled { return ("—", nil, V.C.text3) }
         guard let days = daysLeft(key, now: now) else { return ("永久", nil, V.C.text2) }
         if days < 0 { return ("过期", nil, V.C.critical) }
+        // 当天到期写「今天」而不是「0 天」；次日写「明天」。其余仍走数字 + 单位。
+        if days == 0 { return ("今天", nil, V.C.warning) }
+        if days == 1 { return ("明天", nil, V.C.warning) }
         if days <= 3 { return ("\(days)", "天", V.C.warning) }
         return ("\(days)", "天", V.C.text1)
     }
