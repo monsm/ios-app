@@ -557,25 +557,30 @@ struct RecordsScreen: View {
                         }
                     }
                     Spacer(minLength: 0)
-                    Menu {
-                        ForEach(DB.keychains()) { kc in
-                            Button(LockArchive.displayName(kc) + (DB.normalizeMac(kc.mac) == DB.normalizeMac(mac) ? " ✓" : "")) {
-                                switchLock(kc)
+                    // 2026-11-04（呈现复核 · 死控件）：「换锁」在「全部锁」模式下**什么都不会变** ——
+                    // 列表本来就包含所有锁，切换 currentMac 对这一屏没有任何影响，用户点完会以为坏了。
+                    // 只在「当前锁」模式下给这个入口。
+                    if lockScope == .current {
+                        Menu {
+                            ForEach(DB.keychains()) { kc in
+                                Button(LockArchive.displayName(kc) + (DB.normalizeMac(kc.mac) == DB.normalizeMac(mac) ? " ✓" : "")) {
+                                    switchLock(kc)
+                                }
                             }
+                        } label: {
+                            HStack(spacing: V.S.gapXS) {
+                                Text("换锁")
+                                    .font(V.F.footnote)
+                                Image(systemName: "chevron.up.chevron.down")
+                                    .font(V.F.chevron)
+                                    .accessibilityHidden(true)
+                            }
+                            .foregroundStyle(V.C.blue)
+                            .frame(minHeight: V.Hit.min)
+                            .contentShape(.rect)
                         }
-                    } label: {
-                        HStack(spacing: V.S.gapXS) {
-                            Text("换锁")
-                                .font(V.F.footnote)
-                            Image(systemName: "chevron.up.chevron.down")
-                                .font(V.F.chevron)
-                                .accessibilityHidden(true)
+                        .accessibilityLabel("切换当前锁")
                         }
-                        .foregroundStyle(V.C.blue)
-                        .frame(minHeight: V.Hit.min)
-                        .contentShape(.rect)
-                    }
-                    .accessibilityLabel("切换当前锁")
                 }
                 if memberOptions.count > 1 {
                     ScrollView(.horizontal) {
