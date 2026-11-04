@@ -136,7 +136,12 @@ struct MobileKeyScreen: View {
                 VActionButton(title: busy ? "签发中…" : "签发一把手机钥匙", systemImage: "iphone.gen3.badge.key") {
                     issue()
                 }
-                .disabled(busy)
+                // 2026-11-04（同一类）：`issue()` 里 guard 了"还没有添加门锁"，按钮却只按 busy 禁用。
+                .disabled(busy || app.currentKeychain == nil)
+                .opacity((busy || app.currentKeychain == nil) ? 0.45 : 1)
+                if app.currentKeychain == nil {
+                    KeysInlineNote(tone: .neutral, text: "还没有添加门锁 —— 先在「门」页添加一把锁，再回来签发手机钥匙。")
+                }
                 if let justIssued {
                     VStatusLine(tone: .ok, text: "已签发给 \(justIssued) —— 到下面的钥匙行里点「⋯ → 复制开锁凭证」交给对方。")
                 }

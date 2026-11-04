@@ -203,6 +203,13 @@ struct KeyCreateScreen: View {
     private func advance() {
         switch step {
         case 0:
+            // 2026-11-04（同一类 · 入口与动作判据不一致）：`save()` 里 guard 了"还没有添加门锁"，
+            // 而向导要走到**第 4 步**才调 `save()` —— 用户填完四步才被告知没有锁。
+            // 第 0 步就拦住，并且把下一步说清楚。
+            if app.currentKeychain == nil {
+                errorText = "还没有添加门锁 —— 先在「门」页添加一把锁，再回来创建凭证。"
+                return
+            }
             if owner == nil && !app.members.filter({ !$0.archived }).isEmpty {
                 errorText = "先选归属成员 —— 凭证必须知道归谁。"
                 return
