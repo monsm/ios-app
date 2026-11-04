@@ -310,7 +310,12 @@ enum HHDisplay {
         switch status {
         case .active: return "活跃约"
         case .stale: return "久未用"
-        case .never: return "还没用过"
+        // 2026-11-04（呈现复核 · 措辞过度断言）：原来写「还没用过」—— 而 `never` 的真值来源是
+        // `lastActiveAt == nil`，也就是**归因引擎没能证明任何一次开门是他的**。
+        // 这两件事不一样：一个新成员可能天天开门，只是日志里没有可交叉的凭证槽位，
+        // 于是被这句「还没用过」**断言成"他没用过"** —— 与本仓「不按名字猜、如实留空」的纪律相反。
+        // 同一行下面的副行写的是「还没有可归属的开门」（`HHStats.lastOpen`），两处口径也不一致。
+        case .never: return "无归属记录"
         case .archived: return "已归档"
         }
     }
