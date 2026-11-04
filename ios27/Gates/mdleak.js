@@ -31,9 +31,18 @@ for (const f of walk(ROOT)) {
     const t = line.trim();
     if (t.startsWith('//')) return;
     // Text(" 开头的字面量（不含 LocalizedStringKey / .init 包装）
-    if (!/Text\(\s*"/.test(t)) return;
-    // 本行内 Text( 之后的双引号内容里出现 **
-    const after = t.slice(t.indexOf('Text('));
+    // 2026-11-04（覆盖扩展 · 我自己踩到）：闸门原来只认 `Text("` 字面量，而我这次把
+    // `**不进备份包**` 写进了 `SettingsNote(text: "...")` —— 那同样是**普通 String**，
+    // 同样会把星号原样渲出来，闸门却放过了。现在把「接受 String 的文案组件」一并纳入：
+    // SettingsNote / KeysInlineNote / VSectionLabel / VFieldRow / VValueRow 的 text:/title:/value: 参数。
+    const STRING_COMPONENTS = /(?:SettingsNote\(text:|KeysInlineNote\([^)]*text:|VSectionLabel\(text:|VFieldRow\([^)]*value:|VValueRow\([^)]*value:)\s*"/;
+    if (!/Text\(\s*"/.test(t) && !STRING_COMPONENTS.test(t)) return;
+    // 本行内 Text( 之后的双引号内容里出现 **；
+    // 非 Text 的文案组件（SettingsNote 等）没有 Text( 锚点，就整行扫。
+    // 2026-11-04（注入验证抓到）：原来无条件 `slice(indexOf('Text('))`，而 SettingsNote 行
+    // `indexOf` 返回 -1 ⇒ `slice(-1)` 只剩最后一个字符 ⇒ **永远抓不到**。
+    const anchor = t.indexOf('Text(');
+    const after = anchor >= 0 ? t.slice(anchor) : t;
     const lits = after.match(/"([^"\\]|\\.)*"/g) || [];
     for (const lit of lits) {
       if (lit.indexOf('**') >= 0) {

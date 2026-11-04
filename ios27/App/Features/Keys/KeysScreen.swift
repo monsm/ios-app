@@ -98,7 +98,7 @@ struct KeysScreen: View {
                             Text("本机凭证台账读不出来")
                                 .font(V.F.bodyStrong)
                                 .foregroundStyle(V.C.critical)
-                            SettingsNote(text: "当前会话里对凭证的改动**不会保存**（写入会被拒绝）。" +
+                            SettingsNote(text: "当前会话里对凭证的改动不会保存（写入会被拒绝）。" +
                                          "请先到「备份工作室」从一份备份恢复，再继续操作。")
                         }
                     }

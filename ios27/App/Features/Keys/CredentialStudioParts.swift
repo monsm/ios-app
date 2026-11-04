@@ -290,7 +290,7 @@ struct PackageImportSheet: View {
                         }
                     }
                     .padding(.horizontal, V.S.pageGutter)
-                    SettingsNote(text: "导入是**合并**：同编号的凭证会被跳过（不覆盖本机已有的），导入结果会如实报出写入与跳过的条数。")
+                    SettingsNote(text: "导入是合并，不是覆盖：同编号的凭证会被跳过（不覆盖本机已有的），导入结果会如实报出写入与跳过的条数。")
                         .padding(.horizontal, V.S.pageGutter)
                 }
                 .padding(.vertical, V.S.gap16)
