@@ -34,7 +34,7 @@ extension BLEService: CBCentralManagerDelegate {
         let serviceUUIDs = (advertisementData[CBAdvertisementDataServiceUUIDsKey] as? [CBUUID])?.map { $0.uuidString.uppercased() } ?? []
         discovered[peripheral.identifier.uuidString] = BLEAdvDevice(
             deviceId: peripheral.identifier.uuidString,
-            name: peripheral.name ?? (advertisementData[CBAdvertisementDataLocalNameKey] as? String ?? "(未命名)"),
+            name: peripheral.name ?? (advertisementData[CBAdvertisementDataLocalNameKey] as? String ?? "（未命名）"),
             rssi: RSSI.intValue,
             advertisHex: mfgHex.isEmpty ? svcDataHex : mfgHex,
             serviceUUIDs: serviceUUIDs)
@@ -111,7 +111,7 @@ extension BLEService: CBPeripheralDelegate {
         guard let nc = n else {
             let cb = connectCompletion
             connectCompletion = nil
-            cb?(.failure(BLEErrorX.msg("未找到通知特征 (数据上行不可用)")))
+            cb?(.failure(BLEErrorX.msg("未找到通知特征 （数据上行不可用）")))
             return
         }
         writeChar = wc

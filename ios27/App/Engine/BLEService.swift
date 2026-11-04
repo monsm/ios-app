@@ -173,8 +173,8 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
         var label: String {
             switch self {
             case .eco: return "省电 · 每次扫 2.5 秒"
-            case .balanced: return "均衡 · 每次扫 5 秒 (默认)"
-            case .fast: return "极速 · 每次扫 10 秒 (含重复广播)"
+            case .balanced: return "均衡 · 每次扫 5 秒 （默认）"
+            case .fast: return "极速 · 每次扫 10 秒 （含重复广播）"
             }
         }
     }

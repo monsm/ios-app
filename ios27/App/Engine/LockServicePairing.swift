@@ -16,16 +16,16 @@ extension LockService {
     /// 而配网期本机还没有钥匙串, 0E 校时根本发不出去 (校时链路要 skey) —— 同一句话在配网语境里是空头支票。
     static func pairHint(_ rc: Int) -> String {
         switch rc {
-        case 3, 9: return "锁内时钟不准，而配网期无法校时 (校时要密钥); 请在门锁键盘上重置后马上重试"
+        case 3, 9: return "锁内时钟不准，而配网期无法校时 （校时要密钥）; 请在门锁键盘上重置后马上重试"
         case 7, 27: return "锁当前不在可配网状态，请在门锁键盘上做一次重置再试"
-        case 13: return "通讯过期：锁不认这份通讯会话 (会话令牌无效/已过期), 不是距离或信号问题 — 请在门锁键盘上做一次重置，3 声提示后尽快点配对 (重置后的可配网窗口有限，一旦超时锁会退回不可配网)"
+        case 13: return "通讯过期：锁不认这份通讯会话 （会话令牌无效/已过期）, 不是距离或信号问题 — 请在门锁键盘上做一次重置，3 声提示后尽快点配对 （重置后的可配网窗口有限，一旦超时锁会退回不可配网）"
         default: return "锁可能不在重置态，请在门锁键盘上重置后重试"
         }
     }
 
     func keys() throws -> (mac: String, skey: String) {
         let kc = DB.keychain(curMac)
-        guard let kc, kc.skey.count == 32 else { throw BLEErrorX.msg("钥匙串缺少有效 skey (请先配对或导入)") }
+        guard let kc, kc.skey.count == 32 else { throw BLEErrorX.msg("钥匙串缺少有效 skey （请先配对或导入）") }
         return (kc.mac.lowercased(), kc.skey.lowercased())
     }
 
@@ -71,10 +71,10 @@ extension LockService {
         // 于是锁与本机都用 "0000…" 通信 —— 抓一帧即可解密, 而 7 步流程一路绿灯。此处 fail-closed 中止。
         guard !KeyGen.isAllZeroHex(skey), !KeyGen.isAllZeroHex(bkey),
               !pins.contains(where: { KeyGen.isAllZeroHex($0) }) else {
-            throw BLEErrorX.msg("随机源异常：生成的密钥族含全零字段，已在换钥前中止 (锁未被改动，可稍后重试)")
+            throw BLEErrorX.msg("随机源异常：生成的密钥族含全零字段，已在换钥前中止 （锁未被改动，可稍后重试）")
         }
 
-        progress("步骤 3/7: cmd 05 交换密钥 (先建通讯会话)")
+        progress("步骤 3/7: cmd 05 交换密钥 （先建通讯会话）")
         // 2026-10-17 真机现象 + APK 逐字对照勘误: **05 必须带会话令牌**。
         //   APK 原文 (apk_raw/assets/www/build/main.js, 05 构造器 `Et`):
         //     l.call(this, Jn.ZKCCOMM_EXSECURITYKEY, !0, "0000")   ← 第二个实参 = needSSToken = **true**
@@ -91,7 +91,7 @@ extension LockService {
             // 13 = 通讯过期 = 会话令牌被判无效/已过期。rc≠0 ⇒ 锁**没有执行**换钥 (锁内 skey 未动),
             // 所以重开一次会话再发一帧是安全的 — 这是 rc13 唯一可安全重试的时机 (rc=0 之后再发就会
             // 二次擦写锁内密钥域)。request(needToken:true) 每轮都会重新走 01, 令牌必然是新的。
-            log("warn", "05 rc=13 (通讯过期): 重开会话令牌后重试一次 · 回包 " + Self.klvShape(r5))
+            log("warn", "05 rc=13 （通讯过期）: 重开会话令牌后重试一次 · 回包 " + Self.klvShape(r5))
             r5 = try await request(ZKCmdBuilder.cmd05Exchange(skey), cmd: 0x05, needToken: true, retries: 1)
             rc5 = extractRc(0x05, r5)
         }
@@ -119,7 +119,7 @@ extension LockService {
                 "换钥回显不匹配 (本地/回显长度 \(skey.count)/\(echo.val.count)) — 锁内密钥已是本机读不懂的一份，无法续配; 请在门锁键盘上重置后重新配网"))
         }
 
-        progress("步骤 4/7: 留存本次密钥 (配网中断可续配)")
+        progress("步骤 4/7: 留存本次密钥 （配网中断可续配）")
         // 从 05 rc=0 这一刻起, 锁内 skey 已经是新的一份。旧实现要等到尾链全部成功才落盘 ⇒ 尾链任一步
         // 失败就只剩"去门锁键盘重置"一条路 (锁内部密钥对本机不可知 = 软砖)。现在换钥后立即留存,
         // 尾链走完再提升为正式钥匙串 (saveKeychain + clearPendingPair)。
@@ -175,7 +175,7 @@ extension LockService {
         let bkey = kc.bkey
         let pins = try KeyGen.genPins(64)
         guard !pins.contains(where: { KeyGen.isAllZeroHex($0) }) else {
-            throw BLEErrorX.msg("随机源异常：生成的 PIN 池含全零，已中止 (锁未被改动)")
+            throw BLEErrorX.msg("随机源异常：生成的 PIN 池含全零，已中止 （锁未被改动）")
         }
         var fixed = kc
         fixed.pins = pins
@@ -306,7 +306,7 @@ extension LockService {
     /// 续配: 用上次中断时留存的密钥直接把尾链走完。走不通返回 nil，调用方回退完整配网链。
     private func resumePairIfPossible(m: String, deviceId: String, progress: @escaping (String) -> Void) async throws -> Keychain? {
         guard let pend = DB.pendingPair(m), !pend.skey.isEmpty, !pend.pins.isEmpty else { return nil }
-            progress("发现上次中断的配网记录 → 先试续配 (不重新换钥)")
+            progress("发现上次中断的配网记录 → 先试续配 （不重新换钥）")
             log("info", "续配尝试：用留存密钥直接走尾链 (留存于 \(pend.pairedAt))")
             do {
                 // 2026-10-17 夜: 这里原本先跑一遍只读 03 探针「裁定 MAC 字节序」——已删, 理由见 finishPairing
@@ -322,7 +322,7 @@ extension LockService {
                 return kc
             } catch {
                 log("warn", "续配不通 (\(error.localizedDescription)) → 回退完整配网链 (锁可能已被再次重置)")
-                progress("续配不通 (锁可能已再次重置) → 走完整配网")
+                progress("续配不通 （锁可能已再次重置） → 走完整配网")
             }
         return nil
     }
@@ -341,9 +341,9 @@ extension LockService {
                                pairedAt: DF.iso().string(from: Date()))
         let resumable = DB.savePendingPair(pending)
         if resumable {
-            log("info", "已留存换钥后的密钥 (尾链若中断，再点一次配网即续配，无需键盘重置)")
+            log("info", "已留存换钥后的密钥 （尾链若中断，再点一次配网即续配，无需键盘重置）")
         } else {
-            log("error", "配网中断保护未能落盘 (系统 Keychain 写失败) — 尾链若中断只能靠门锁键盘重置恢复")
+            log("error", "配网中断保护未能落盘 （系统 Keychain 写失败） — 尾链若中断只能靠门锁键盘重置恢复")
         }
         return (pending, resumable)
     }

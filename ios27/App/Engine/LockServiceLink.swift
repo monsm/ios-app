@@ -85,7 +85,7 @@ extension LockService {
 
     private func ensureConnectedInner(mac: String) async throws {
         let m = mac.lowercased()
-        guard !m.isEmpty else { throw BLEErrorX.msg("未选择门锁 (缺少 MAC)") }
+        guard !m.isEmpty else { throw BLEErrorX.msg("未选择门锁 （缺少 MAC）") }
         if connectedMAC == m, ble.connectedPeripheralId == connectedDeviceId, !connectedDeviceId.isEmpty {
             // 已在目标锁上也要绑 curMac: 否则紧随其后的无 mac 参数命令 (setZotp/readLockTime…) 会用
             // **上一次会话留下的另一把锁**的 skey 成帧 —— 第三条成功出口 (扫描解析) 一直是绑的，这两条漏了。
@@ -128,7 +128,7 @@ extension LockService {
                 log("warn", "连接后身份不符：锁端 pid=\(st.pid) 与登记的 pid=\(knownPid) 不一致 → 已断开，不写缓存")
                 throw BLEErrorX.msg("连到的设备与「\(kc.name)」不是同一把锁 (pid 不符)，已断开。附近可能有同名或伪造广播。")
             }
-            if knownPid <= 0 { log("warn", "钥匙串未登记 pid, 跳过连接后身份复核 (老配对)") }
+            if knownPid <= 0 { log("warn", "钥匙串未登记 pid, 跳过连接后身份复核 （老配对）") }
         } catch let e as BLEErrorX {
             throw e
         } catch {

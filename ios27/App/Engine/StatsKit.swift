@@ -95,7 +95,7 @@ enum StatsKit {
             if let t = per.max(by: { $0.value < $1.value }), let n = DB.member(t.key)?.name {
                 lines.append("最活跃成员：\(n) (约 \(t.value) 次)。")
             } else {
-                lines.append("成员归属都还证明不了 (归属需要台账与日志窗口对齐)。")
+                lines.append("成员归属都还证明不了 （归属需要台账与日志窗口对齐）。")
             }
             lines.append("同期告警 \(alarms) 条。")
             return (rows.joined(separator: "\n"), lines)

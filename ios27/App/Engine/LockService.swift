@@ -132,7 +132,7 @@ final class LockService: ObservableObject {
     /// 回包的 KLV 形状 —— **只报键与长度, 一个值都不带**: 真机排障时 "#02=0B" 这种事实
     /// (锁压根没回密钥) 比任何猜测都有用, 而值里可能含 skey/ekey/PIN 明文 (不得进日志)。
     nonisolated static func klvShape(_ f: ZKProtocol.ParsedFrame) -> String {
-        f.klvs.isEmpty ? "(无 KLV)" : f.klvs.map { String(format: "#%02x=%dB", $0.key, $0.vlen) }.joined(separator: " ")
+        f.klvs.isEmpty ? "（无 KLV）" : f.klvs.map { String(format: "#%02x=%dB", $0.key, $0.vlen) }.joined(separator: " ")
     }
 
     // ---------- 连通探测 (cmd12 回声) ----------

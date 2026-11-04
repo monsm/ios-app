@@ -201,7 +201,7 @@ extension LockService {
             before = Int(lockSec - now)
             if before != 0 { log("info", "校时前锁钟比手机\(before > 0 ? "快" : "慢") \(abs(before))s") }
         } else {
-            log("warn", "读锁钟失败 (不影响下发：0E 用手机当前时间)")
+            log("warn", "读锁钟失败 （不影响下发：0E 用手机当前时间）")
         }
         _ = try await execOk(ZKCmdBuilder.cmd0ESyncTime(m, sk, now))
         DB.saveSyncTime(m, Date().timeIntervalSince1970 * 1000)

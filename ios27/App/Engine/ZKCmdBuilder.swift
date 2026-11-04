@@ -182,13 +182,13 @@ enum ZKCmdBuilder {
             return protoSecOrNil(s) == nil
         }
         if suppliedButUnparsed(validFrom) {
-            throw BLEErrorX.msg("密码生效时间无法解析：\(validFrom ?? "") (支持 ISO8601/带 Z、'yyyy-MM-dd HH:mm:ss'、秒/毫秒) — 已中止下发")
+            throw BLEErrorX.msg("密码生效时间无法解析：\(validFrom ?? "") （支持 ISO8601/带 Z、'yyyy-MM-dd HH:mm:ss'、秒/毫秒） — 已中止下发")
         }
         let from = protoSecOrNil(validFrom) ?? ZKProtocol.nowProtoSeconds()
         let to: Int64
         if let v = protoSecOrNil(validTo) { to = v }
         else if validTo == nil || validTo?.isEmpty == true { to = ZKProtocol.nowProtoSeconds() }
-        else { throw BLEErrorX.msg("密码有效期无法解析：\(validTo ?? "") (支持 ISO8601/带 Z、'yyyy-MM-dd HH:mm:ss'、秒/毫秒) — 已中止下发") }
+        else { throw BLEErrorX.msg("密码有效期无法解析：\(validTo ?? "") （支持 ISO8601/带 Z、'yyyy-MM-dd HH:mm:ss'、秒/毫秒） — 已中止下发") }
         let body = u16leHex(delAlias)
             + HexKit.asciiHex(addPwd, nBytes: 8)
             + HexKit.u32leHex(UInt32(clamping: max(0, from)))

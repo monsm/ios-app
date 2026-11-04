@@ -85,9 +85,9 @@ final class HardwareService: ObservableObject {
                 ble.disconnect()
                 connectedTargetId = ""
                 log("连接后身份不符：设备 pid=\(remotePid) 与登记的 \(knownPid) 不一致 → 已断开")
-                throw BLEErrorX.msg("连到的设备与目标不是同一个 (pid 不符)，已断开。附近可能有伪造广播。")
+                throw BLEErrorX.msg("连到的设备与目标不是同一个 （pid 不符），已断开。附近可能有伪造广播。")
             }
-            if knownPid <= 0 { log("未登记 pid, 跳过连接后身份复核 (老记录)") }
+            if knownPid <= 0 { log("未登记 pid, 跳过连接后身份复核 （老记录）") }
         } catch let e as BLEErrorX {
             throw e
         } catch {
@@ -164,7 +164,7 @@ final class HardwareService: ObservableObject {
                 var rec = DB.dongle(mac) ?? Dongle(mac: mac)
                 rec.bleId = d.deviceId
                 if rec.boundAt.isEmpty { rec.boundAt = DF.iso().string(from: Date()) }
-                if d.name != "(未命名)" { rec.name = d.name }
+                if d.name != "（未命名）" { rec.name = d.name }
                 DB.saveDongle(rec)
                 log("找到钥匙串：\(a.macDisplay ?? mac) (\(d.name))")
                 return rec
@@ -234,7 +234,7 @@ final class HardwareService: ObservableObject {
         let rc = rcOf(f)
         if rc > 0 {
             if rc == 3 { throw BLEErrorX.msg("命令不在有效期，请将手机时间同步到锁内") }
-            throw BLEErrorX.msg("钥匙串返回失败码 " + StatusParser.rcMessage(rc) + "，本次读数未采纳 (上一次的好数据仍留着)")
+            throw BLEErrorX.msg("钥匙串返回失败码 " + StatusParser.rcMessage(rc) + "，本次读数未采纳 （上一次的好数据仍留着）")
         }
         let st = HardwareService.parseKCStatus(f.klvs)
         var rec = DB.dongle(mac) ?? Dongle(mac: mac)
@@ -280,13 +280,13 @@ final class HardwareService: ObservableObject {
         // 旧写法 `lock.pins.first ?? "1"`: PIN 池为空时**回落到 PIN "1"** 去签发硬件钥匙凭证 ——
         // 写进dongle 的是一条人人猜得到的凭证, 而流程显示"写入成功"。缺 PIN 必须直接拒绝。
         guard let pin = lock.pins.first, !pin.isEmpty else {
-            throw BLEErrorX.msg("该锁的钥匙串没有 PIN 池，无法为硬件钥匙签发凭证 (已拒绝，不回落默认 PIN)")
+            throw BLEErrorX.msg("该锁的钥匙串没有 PIN 池，无法为硬件钥匙签发凭证 （已拒绝，不回落默认 PIN）")
         }
         let ekey = ZKCmdBuilder.buildEkeyOpen(lock.skey.lowercased(), lock.mac.lowercased(), pin,
                                              validFromSec: vf, validToSec: vt, trackId: trackId)
         // 签发失败 (skey 非法 / PIN 不可解析) 返回空串: 空 ekey 不能发给硬件钥匙
         guard !ekey.isEmpty else {
-            throw BLEErrorX.msg("ekey 签发失败 (skey 非法或 PIN 不可解析), 已中止写入硬件钥匙")
+            throw BLEErrorX.msg("ekey 签发失败 （skey 非法或 PIN 不可解析）, 已中止写入硬件钥匙")
         }
         let f = try await send(ZKCmdBuilder.cmd41WriteEkey(lock.mac.lowercased(), lock.pid, ekey), target: dongleMac)
         let rc = rcOf(f)
@@ -341,7 +341,7 @@ final class HardwareService: ObservableObject {
         // 原先这里直接看 KLV#04：一次 rc=1(解密失败) 的回字里没有 04，于是返回空列表，
         // 界面弹的就是"没有查询到钥匙"——把一次失败说成一把钥匙都没有（与 §10.48 的 43 同一族）。
         let rc = rcOf(f)
-        if rc > 0 { throw BLEErrorX.msg("查钥匙失败：" + StatusParser.rcMessage(rc) + " (这不代表硬件狗里没有钥匙)") }
+        if rc > 0 { throw BLEErrorX.msg("查钥匙失败：" + StatusParser.rcMessage(rc) + " （这不代表硬件狗里没有钥匙）") }
         // 2026-10-26: 原先这里有一份**与 parseEkeyMacs 逐字相同**的内联解析（两份真相）。
         // 现在只保留 parseEkeyMacs 一份，这里直接调它 —— 改一处就够，不会一处改了一处没改。
         return Self.parseEkeyMacs(f.klvs)
@@ -397,7 +397,7 @@ final class HardwareService: ObservableObject {
     }
     /// 网关配网全链 (App gwreset: 扫描 → 38 → 31 写 WiFi → 35 重启)
     func provisionGateway(ssid: String, password: String, progress: @escaping (String) -> Void) async throws -> Gateway {
-        progress("步骤 1/5: 搜索网关 (请靠近网关，橙色灯闪烁中)")
+        progress("步骤 1/5: 搜索网关 （请靠近网关，橙色灯闪烁中）")
         let deviceId = try await scanForPIDs(pids: PidMap.gws, resetRequired: true, timeoutMs: 15000)
         try await ble.connect(deviceId: deviceId)
         connectedTargetId = deviceId   // 否则后续 readGatewayState→connectTarget 会自断重连,

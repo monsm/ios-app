@@ -314,7 +314,7 @@ enum BackupStudio {
         }
         guard let data = body.data(using: .utf8),
               let raw = try? JSONDecoder().decode(BackupBundle.self, from: data) else {
-            throw DFUError.msg("口令错误或内容不是备份 (口令层与文件头层都过不了)")
+            throw DFUError.msg("口令错误或内容不是备份 （口令层与文件头层都过不了）")
         }
         // 2026-10-14: 比本机新的 schema 直接拒绝 —— 否则字段可能被误读且无任何告警。
         // SEC-30：类型与规模闸 —— 只接受本 App 的备份包，且设备数有上限。

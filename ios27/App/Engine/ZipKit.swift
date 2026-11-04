@@ -60,7 +60,7 @@ enum ZipKit {
                 i -= 1
             }
         }
-        guard eocd >= 0 else { throw DFUError.zip("未找到目录结尾 (不是有效的 zip 文件)") }
+        guard eocd >= 0 else { throw DFUError.zip("未找到目录结尾 （不是有效的 zip 文件）") }
         // UInt32 累加: Int 拼接在 ≥0x80000000 时返回负数 → 上层 guard 误放行 → 数组越界崩溃
         func u16(_ off: Int) -> Int {
             guard off >= 0, off + 1 < data.count else { return 0 }
@@ -135,7 +135,7 @@ enum FirmwareKit {
         guard let manifestE = ZipKit.find(entries, "manifest.json") else { throw DFUError.zip("固件包缺少 manifest.json") }
         guard manifestE.data.count <= limits.manifest else { throw DFUError.zip("manifest.json 异常过大") }
         // 2026-10-14: bin/dat 都验了 CRC, manifest 只验了大小 —— 补齐 (篡改但仍合法 JSON 的 manifest 会漏过)
-        guard manifestE.crcOk else { throw DFUError.zip("manifest.json CRC 校验失败 (包损坏)") }
+        guard manifestE.crcOk else { throw DFUError.zip("manifest.json CRC 校验失败 （包损坏）") }
         guard let raw = String(bytes: manifestE.data, encoding: .utf8),
               let obj = try? JSONSerialization.jsonObject(with: Data(raw.utf8)) as? [String: Any],
               let manifest = obj["manifest"] as? [String: Any],
@@ -147,8 +147,8 @@ enum FirmwareKit {
         let datName = app["dat_file"] as? String ?? app["data_file"] as? String ?? ""
         guard let binE = ZipKit.find(entries, binName), !binName.isEmpty else { throw DFUError.zip("固件包缺少固件文件 (\(binName))") }
         guard let datE = ZipKit.find(entries, datName), !datName.isEmpty else { throw DFUError.zip("固件包缺少 init packet (\(datName))") }
-        guard binE.crcOk else { throw DFUError.zip("固件文件 CRC 校验失败 (包损坏)") }
-        guard datE.crcOk else { throw DFUError.zip("init packet CRC 校验失败 (包损坏)") }
+        guard binE.crcOk else { throw DFUError.zip("固件文件 CRC 校验失败 （包损坏）") }
+        guard datE.crcOk else { throw DFUError.zip("init packet CRC 校验失败 （包损坏）") }
         guard binE.data.count >= 512, binE.data.count <= limits.bin else { throw DFUError.zip("固件尺寸异常 (\(binE.data.count)B)") }
         guard datE.data.count >= 16, datE.data.count <= limits.dat else { throw DFUError.zip("init packet 尺寸异常 (\(datE.data.count)B)") }
         // 2026-10-13 对抗式排查: ⚠ **固件包没有任何签名 / 来源校验**。

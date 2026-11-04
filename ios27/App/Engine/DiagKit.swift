@@ -533,7 +533,7 @@ enum DiagSnapshot {
     /// 密钥/口令的**指纹**：前 4 + 后 4 位 + 总长。用于在两条记录之间比对「是不是同一份」，
     /// 而不泄露任何可用内容。空串返回 `(空)`。
     static func fingerprint(_ hex: String) -> String {
-        guard !hex.isEmpty else { return "(空)" }
+        guard !hex.isEmpty else { return "（空）" }
         if hex.count <= 8 { return "\(hex.prefix(2))…\(hex.suffix(2))/\(hex.count)" }
         return "\(hex.prefix(4))…\(hex.suffix(4))/\(hex.count)"
     }
@@ -561,7 +561,7 @@ enum DiagSnapshot {
 
     /// 从存的那枚 ekey 里解出它嵌的 PIN（只用于比对，不打印 skey）。
     static func ekeyPin(_ kc: Keychain) -> String {
-        guard let pin = rawEmbeddedPin(kc) else { return "(解不开：skey 与 ekey 不配套)" }
+        guard let pin = rawEmbeddedPin(kc) else { return "（解不开：skey 与 ekey 不配套）" }
         let idx = kc.pins.firstIndex(of: pin).map { "（本机池第 \($0 + 1) 枚）" } ?? "（**不在本机池里**）"
         return "\(pin)\(idx)"
     }
@@ -573,8 +573,8 @@ enum DiagSnapshot {
     /// 「skey 与 ekey 不配套」，而 God 模式页上方两行明明写着「(空)」—— 同屏自相矛盾，
     /// 用户会以为是密钥损坏去修池。
     static func ekeyPinMasked(_ kc: Keychain) -> String {
-        if kc.ekey.isEmpty || kc.skey.isEmpty { return "(空 —— 这把锁还没有配网密钥)" }
-        guard let pin = rawEmbeddedPin(kc) else { return "(解不开：skey 与 ekey 不配套)" }
+        if kc.ekey.isEmpty || kc.skey.isEmpty { return "（空 —— 这把锁还没有配网密钥）" }
+        guard let pin = rawEmbeddedPin(kc) else { return "（解不开：skey 与 ekey 不配套）" }
         let idx = kc.pins.firstIndex(of: pin).map { "（本机池第 \($0 + 1) 枚）" } ?? "（**不在本机池里**）"
         return fingerprint(pin) + idx
     }
