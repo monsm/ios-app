@@ -98,6 +98,13 @@ enum LedgerFilter {
     }
 
     /// chip 只列「真有行」的成员（避免点进去空列表）。
+    ///
+    /// 2026-11-04（走查发现 · 已知边界，留档）：这里依赖 `entry.owner`，而它只在**单成员家庭**
+    /// 才被填（`RecordsModels.owner` 的单成员启发式）。多人家庭里这个列表**是空的** ——
+    /// 成员筛选 chip 不出现，用户以为"没有按成员筛的功能"。
+    /// 要真修得让每条记录走 `Attribution.classify`，那是记录页热路径上的 O(日志 × 凭证)，
+    /// 与本仓 `DateFormats` 头注里记的 4000-formatter 教训同类；正确做法是**进页时算一次**
+    /// 落成 `[entryID: memberID]` 映射（与 `MemberHub.activityBundle` 同思路），属独立改动。
     static func members(in entries: [LedgerEntry]) -> [String] {
         var seen = Set<String>()
         var out: [String] = []
