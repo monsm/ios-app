@@ -4,6 +4,7 @@
 // 正文 17/23 #919096；卡片 #232227 r27 内边距 16.3；分段环 Ø92 环宽 20.3 段间 4–5°；
 // 三环 Ø88 按 V.Ring.lineWidth = min(14, size*0.09) 自适应环宽；卡头 11pt/500 #A2A1A6。
 // 数据绑定保持原口径：AppModel.keys / lock / members、KeysState、KeysRoute、Router 跳转不变。
+import LocalAuthentication
 import SwiftUI
 
 struct KeysScreen: View {
@@ -68,6 +69,15 @@ struct KeysScreen: View {
 
     private var tempCount: Int {
         app.keys.filter { $0.kind == .temp }.count
+    }
+
+    /// 面容 / 指纹解锁是否**真的**生效（与 `SecurityScreen.biometricHardwareAvailable`、
+    /// `LockKeeperApp` 的 `canUseBiometrics()` 同一组判据）。
+    private var biometricUnlockEnabled: Bool {
+        let store = SettingsStore.shared
+        guard store.bioUnlock, !store.hasDuressCode else { return false }
+        var error: NSError?
+        return LAContext().canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error)
     }
 
     private var mobileCount: Int {
@@ -180,7 +190,11 @@ struct KeysScreen: View {
                 )
                 VChip(
                     title: "生物识别",
-                    value: mobileCount > 0 ? "已开启" : "未开启",
+                    // 2026-11-04（呈现复核 · 过度断言）：原来按 `mobileCount > 0`（有没有手机钥匙）
+                    // 显示「已开启」—— 这与生物识别**毫无关系**。手机钥匙 1 枚 + 面容解锁关着，
+                    // 芯片仍写「已开启」；反过来开了面容但没手机钥匙，又写「未开启」。
+                    // 真值与「安全」页同一个判据：设置开着 + 硬件可用 + 没设胁迫码（设了会被强制停用）。
+                    value: biometricUnlockEnabled ? "已开启" : "未开启",
                     tint: V.C.text1,
                     style: .wide,
                     systemImage: "faceid"
