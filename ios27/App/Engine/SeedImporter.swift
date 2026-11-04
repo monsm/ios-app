@@ -65,6 +65,22 @@ enum SeedImporter {
                                          lockTime: proto, lockTimeStr: "", body: ""))
                 }
                 DB.writeLogs(d.mac, logs)
+                // 2026-11-04（种子保真度）：上一条日志写进去了（wrote=9 readBack=9），但记录页
+                // 归属列仍空 —— 查清原因是 `Attribution.classify` 三条判据都不成立：
+                // 没有临时码窗口（R1）、fpStock=7 且名下 12 枚（R2 要求 stock=1 且仅 1 枚）、
+                // 合成日志 body 为空（R3 要槽位）。**「未归属」是正确输出，但归属链就没法视觉验证。**
+                // 这里补一枚覆盖全部日志时间窗的临时码，让 R1 能证明归属 —— 与真实场景同构
+                // （临时码有起止时间，落在窗口内的开门可归给它的主人）。
+                if let ownerID = DB.members().first?.id {
+                    let now = Date()
+                    let from = DF.stampUTC.string(from: now.addingTimeInterval(-3 * 86400))
+                    let to = DF.stampUTC.string(from: now.addingTimeInterval(86400))
+                    var ledger = DB.ledger(d.mac)
+                    ledger.pwds.append(LedgerPwd(alias: 990, from: from, to: to, temp: true,
+                                                 at: now.timeIntervalSince1970 * 1000,
+                                                 pwd: nil, owner: ownerID, note: "CI 合成临时码"))
+                    DB.saveLedger(d.mac, ledger)
+                }
                 // 2026-11-04（取证）：日志写没写进去，截图上看不出来（记录页仍空）。
                 // 把"写了多少 / 读回多少"落一个文本文件，workflow 会 cat 进 diag —— 一次跑清。
                 let readBack = DB.readLogs(DB.normalizeMac(d.mac)).count
