@@ -649,13 +649,19 @@ struct DoorScreen: View {
         // 同一屏第四遍说"没连上"不提供任何新信息；这里换成**该做什么**：
         // 断开时给可执行动作，连上时干脆不提链路（标题已经说了"状态良好"）。
         let linkPart = lock.isConnected ? "" : "蓝牙未连接 —— 靠近门锁并确认系统蓝牙已打开，再下拉刷新。"
-        let head = "\(batteryPart)，本机 \(lock.keyCount) 枚凭证在册。今天已开锁 \(opens) 次。按日均 3 次估算，约可用 \(estimateMonths(lock))。"
+        let head = "\(batteryPart)，本机 \(lock.keyCount) 枚凭证在册。今天已开锁 \(opens) 次。按厂商标称功耗估算，约可用 \(estimateMonths(lock))。"
         return linkPart.isEmpty ? head : head + " " + linkPart
     }
 
+    /// 电量 → 剩余月数。2026-11-04（呈现复核）两处修正：
+    /// ① 原式 `max(1, …)` 让 **0% 电量也说「约可用 1 个月」** —— 现在不足 30 天就说「不足 1 个月」。
+    /// ② 0.68 是**固定日耗**（%/天），公式里**没有**开门次数 —— 而文案却写「按日均 3 次估算」，
+    ///    这句话把"厂商标称功耗"说成了"按你的使用量算的"，用户开门再频繁这个数也不会变。
     private func estimateMonths(_ lock: LockSummary) -> String {
         guard lock.battery >= 0 else { return "未知" }
-        let months = max(1, Int((Double(lock.battery) / 0.68 / 30).rounded()))
+        let days = Double(lock.battery) / 0.68
+        if days < 30 { return "不足 1 个月" }
+        let months = max(1, Int((days / 30).rounded()))
         return "\(months) 个月"
     }
 
