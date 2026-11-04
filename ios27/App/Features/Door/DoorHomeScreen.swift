@@ -248,7 +248,14 @@ struct DoorHomeScreen: View {
                     router.request(.dest(.lockSettings))
                 }
                 VDotRule()
-                VNavRow(title: "我的锁", detail: "全部锁 / 锁档案") {
+                // 2026-11-05（S5 归并复核）：锁维护页（网关 / 固件 / 电池 / 名片）归并后
+                // 三个来源 Dest（gateway / batteryProfile / deviceInfo）全仓零调用点 ——
+                // 1440 行的能力在 UI 上不可达。按 02 §2 的树恢复入口。
+                VNavRow(title: "锁维护", detail: "固件 / 电池 / 网关 / 锁信息名片") {
+                    router.request(.dest(.gateway))
+                }
+                VDotRule()
+                VNavRow(title: "我的锁", detail: "全部锁 / 锁档案 / 版面") {
                     router.request(.dest(.lockPortfolio))
                 }
                 VDotRule()
