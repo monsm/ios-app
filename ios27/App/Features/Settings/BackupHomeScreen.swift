@@ -52,6 +52,14 @@ struct BackupHomeScreen: View {
     private var decoyed: Bool { DB.isDecoy }
     private var trialOn: Bool { app.trialGuard }
 
+    /// 恢复备份的后果说明（合并进备份页时漏掉的属性）。
+    /// 内容与旧 BackupStudio 页的恢复确认一致：说清「只增不删」「口令可能回滚」「有回滚快照但无反向撤销」。
+    private var restoreConsequence: String {
+        "同名项会被覆盖，备份里没有的条目保持不动（只增不删）。本机密码可能被回滚成备份当时的那个；"
+        + "导入前会自动写一个回滚快照（含明文密钥，保留最近 4 份），这是本机恢复前的唯一数据副本 —— "
+        + "没有反向撤销按钮。"
+    }
+
 
 
     // MARK: - 判断句与副文
@@ -285,7 +293,7 @@ struct BackupHomeScreen: View {
                     .padding(.top, V8.S.gapM)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            if readOnly {
+            if trialOn {
                 Text("只读试验模式已开启：恢复与导入备份会被拦下（生成与导出仍可用）。到「设置 → 安全」关掉再试。")
                     .font(V8.T.caption)
                     .foregroundStyle(V8.C.warn)
@@ -532,8 +540,8 @@ struct BackupHomeScreen: View {
                         .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
                 .buttonStyle(.plain)
-                .disabled(busy || readOnly)
-                .opacity((busy || readOnly) ? 0.45 : 1)
+                .disabled(busy || trialOn)
+                .opacity((busy || trialOn) ? 0.45 : 1)
                 .padding(.top, V8.S.gapM)
                 Text("导入前会自动写一个回滚快照（含明文密钥，保留最近 4 份），这是本机恢复前的唯一数据副本。")
                     .font(V8.T.footnote)
@@ -1125,7 +1133,7 @@ struct BackupHomeScreen: View {
             outcome = "空壳模式下不恢复备份 —— 先退出空壳。"
             return
         }
-        guard !readOnly else {
+        guard !trialOn else {
             outcome = "只读试验模式已开启：导入备份会改写本机台账，已拒绝。请先到「安全」页关闭它。"
             return
         }
@@ -1279,7 +1287,7 @@ struct BackupHomeScreen: View {
             outcome = "空壳模式下不导入换机包 —— 先退出空壳。"
             return
         }
-        guard !readOnly else {
+        guard !trialOn else {
             outcome = "只读试验模式已开启：导入备份会改写本机台账，已拒绝。请先到「安全」页关闭它。"
             return
         }
