@@ -209,14 +209,12 @@ struct AutoOpenScreen: View {
                 try? await Task.sleep(for: .milliseconds(250))
             }
             if AutoOpen.saveAutocal(mac, samples: samples) != nil {
-                store.calibrationAt = Int64(Date().timeIntervalSince1970 * 1000)
                 calibrationError = nil
             } else {
                 // 2026-11-01 修复：原来只把**界面状态**置空，`kf_autocal_<mac>` 里的旧门槛仍在生效 ——
                 // 用户看到"未标定"、又看到"标定失败"，但实际用的还是上一次的值（界面与行为不符）。
                 // `clearAutocal` 一直存在且零调用（RESERVED 第 16 条），这正是它该被用的地方。
                 AutoOpen.clearAutocal(mac)
-                store.calibrationAt = nil
                 calibrationError = "这次只采到 \(samples.count)/5 个信号样本，不足以标定。旧门槛已清除，会回落到默认档；请站在门外一步的位置、保持手机朝向门锁，再试一次。"
             }
         }
@@ -252,7 +250,6 @@ struct AutoOpenScreen: View {
     private func syncAutoOpenState() {
         store.autoOpenEnabled = AutoOpen.on
         store.faceConfirm = faceTier
-        if let cal = AutoOpen.autocal(app.lock?.id ?? "") { store.calibrationAt = Int64(cal.at * 1000) }
-        store.lastSkipReason = lastSkipReason
+        // 2026-11-04：两个 `store.*` 镜像已删（全仓零读，视图直接读引擎）。
     }
 }

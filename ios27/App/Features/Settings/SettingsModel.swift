@@ -287,8 +287,11 @@ final class SettingsStore {
         set { DB.store.setInt("kf_autoopen_face", newValue == .strict ? 1 : 0); revision &+= 1 }
     }
 
-    var calibrationAt: Int64? = nil                 // TODO(engine) 距离标定要真采 RSSI 门槛
-    var lastSkipReason: String? = nil               // TODO(engine) 上次没自动开的原因由 core-auto 记账
+    // 2026-11-04（走查发现 · 过时 TODO）：这两行原本各挂一条 `TODO(engine)`，说
+    // 「距离标定要真采 RSSI 门槛」「上次没自动开的原因由 core-auto 记账」—— **两条都不成立**：
+    // `AutoOpen.saveAutocal` 已按 5 次 RSSI 采样真算门槛、`AutoOpen.lastReject` 已记拒因，
+    // `AutoOpenScreen` 的 `calibrationAt` / `lastSkipReason` 计算属性直接读引擎。
+    // 这两个字段只是 `syncAutoOpenState()` 写进去的**纯镜像，全仓零读** —— 删掉，别留"未接线"的假象。
 
     // MARK: 硬件
 
