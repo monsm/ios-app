@@ -7,6 +7,8 @@ import SwiftUI
 
 struct SettingsHomeScreen: View {
     @Environment(Router.self) private var router
+    // 2026-11-05（对抗审查）：删除锁本机数据的 V8 sheet 入口。旧 V7 页有此能力，迁 V8 时整张 sheet 丢失。
+    @State private var showDeleteLock = false
 
     var body: some View {
         VPage(title: "设置", lead: "所有偏好只存在这台手机上。门锁数据不联网。") {
@@ -21,6 +23,9 @@ struct SettingsHomeScreen: View {
         }
         .background(V8.C.bg.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
+        // 2026-11-05（对抗审查）：旧 V7 的 DeleteDeviceSheet 随 SettingsScreen 一起被删，
+        // 删除一台锁的本机数据（含 20+ 数据族清理）在 V8 里整段丢失。这里接回。
+        .sheet(isPresented: $showDeleteLock) { LockDataDeleteSheet() }
     }
 
     private var lockCard: some View {
@@ -72,12 +77,12 @@ struct SettingsHomeScreen: View {
             VCardHead(eyebrow: "不可逆", statement: "删除本机数据")
             VDivider2()
                 .padding(.top, V8.S.gapM)
-            Text("会清空本机台账、成员与凭证记录；门锁里的凭证不受影响，仍能用原密码开门。没有云端副本可恢复。")
+            Text("只删当前这把锁在本机的数据：密码台账、记录缓存、回收站、版本快照、手机钥匙、锁档案与各类采样。成员与其它锁的数据不受影响；锁端密钥与锁内日志也不变，锁不需要重置，可以再次添加。")
                 .font(V8.T.footnote)
                 .foregroundStyle(V8.C.ink3)
                 .padding(.top, V8.S.gapFootnote)
                 .fixedSize(horizontal: false, vertical: true)
-            VNavRow(title: "删除本机数据", detail: "需要二次确认") { router.request(.dest(.security)) }
+            VNavRow(title: "删除这台锁的本机数据", detail: "需要键入锁名确认") { showDeleteLock = true }
                 .padding(.top, V8.S.gapS)
         }
     }
