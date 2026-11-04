@@ -714,8 +714,17 @@ struct RecordsScreen: View {
                     .font(V.F.body)
                     .foregroundStyle(V.C.text2)
                     .fixedSize(horizontal: false, vertical: true)
-                VActionButton(title: "读取锁内日志", systemImage: "arrow.clockwise") {
-                    Task { await read() }
+                // 2026-11-04（与「换锁」同一类 · 全部锁模式下按钮等于不能做）：`read()` 在
+                // `.all` 下会直接早退并提示「先切到具体一把锁」—— 那就不该在这里给一个点不出结果的按钮。
+                if lockScope == .current {
+                    VActionButton(title: "读取锁内日志", systemImage: "arrow.clockwise") {
+                        Task { await read() }
+                    }
+                } else {
+                    Text("「全部锁」模式只展示已缓存记录 —— 切到上面「当前锁」再读取。")
+                        .font(V.F.footnote)
+                        .foregroundStyle(V.C.text3)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }
