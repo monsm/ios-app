@@ -161,6 +161,11 @@ struct RecordsScreen: View {
                 consume()
             }
             .onChange(of: router.pending) { _, _ in consume() }
+            // 2026-11-04（真缺陷 · 冷启动落在记录 Tab）：`reload()` 在 `mac` 为空时清空并早退，
+            // 而冷启动时 `app.lock` 是异步加载的 —— 原来只监听 `router.pending`，
+            // 于是「锁加载完了」这个事件没人接：记录页一直显示「还没有记录」，直到用户手动切页。
+            // 现在锁身份一变就重载。
+            .onChange(of: app.lock?.id) { _, _ in reload() }
             // 2026-11-01（Round 273）：**切锁后必须重新水合筛选。**
             // `hydrateFilters()` 用 `guard !hydrated` 只跑一次，而 TabView 会保活这个视图 ——
             // 于是 A 锁的筛选（分段/成员/告警类型/只看失败）会原样套到 B 锁上；
@@ -795,6 +800,21 @@ struct RecordsScreen: View {
         if !selectedMac.isEmpty, DB.keychain(selectedMac) == nil {
             selectedMac = ""
         }
+        // 2026-11-04（取证定位 · 真缺陷在这里）：这条 guard 在 `mac` 为空时**清空并早退** ——
+        // 而冷启动直接落到记录 Tab（`-kfTab 2` 或用户上次停在台账）时，`app.lock` 可能还没
+        // 加载完，`mac` 就是空的。于是记录页显示「还没有记录」，**而且不会自己恢复**：
+        // 下面只监听了 `router.pending`，没监听 `app.lock?.id` 的变化。
+        // 取证先落一行，保证"空"这一支也能被看见。
+        if ProcessInfo.processInfo.arguments.contains("-kfSeed"),
+           let dd = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+            let line = "records-tab mac=\(mac) scope=\(lockScope.rawValue) earlyReturn=\(lockScope != .all && mac.isEmpty)\n"
+            let url = dd.appendingPathComponent("kf-records-diag.txt")
+            if let h = try? FileHandle(forWritingTo: url) {
+                h.seekToEndOfFile(); h.write(Data(line.utf8)); try? h.close()
+            } else {
+                try? line.write(to: url, atomically: true, encoding: .utf8)
+            }
+        }
         guard lockScope == .all || !mac.isEmpty else {
             entries = []
             untimed = 0
@@ -821,20 +841,7 @@ struct RecordsScreen: View {
         entries = merged.sorted { $0.at > $1.at }
         untimed = untimedTotal
         readAt = synced
-        // 2026-11-04（取证 · 第二轮）：种子侧已证明 wrote=9 readBack=9，而这一屏仍空。
-        // 把"记录页这一屏实际读到什么"落盘，workflow 会 cat 进 diag —— 定位是数据没活到这一屏，
-        // 还是这一屏的取数路径不同。仅 -kfSeed 启动时写，正常使用不产生文件。
-        if ProcessInfo.processInfo.arguments.contains("-kfSeed"),
-           let dd = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
-            let line = "records-tab mac=\(mac) targets=\(targets.count) merged=\(merged.count) "
-                + "scope=\(lockScope.rawValue)\n"
-            let url = dd.appendingPathComponent("kf-records-diag.txt")
-            if let h = try? FileHandle(forWritingTo: url) {
-                h.seekToEndOfFile(); h.write(Data(line.utf8)); try? h.close()
-            } else {
-                try? line.write(to: url, atomically: true, encoding: .utf8)
-            }
-        }
+
     }
 
     /// 开场策略：QueryFilters.load 已按 kf_filter_default 裁决「记住上次 / 每次空白 / 每次只看告警」。
