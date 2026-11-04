@@ -153,9 +153,11 @@ struct LockSettingsScreen: View {
         .padding(.horizontal, V.S.cardGutter)
     }
 
+    /// 2026-11-04（同名双份 · 已漂移）：`DeviceInfoScreen` 里有一份同名实现，
+    /// 它对"容量未读"的写法是「已用 N · 容量未读」—— **保留了用量**；这一份只写「容量未读」，
+    /// 把一个已经读到的数字丢掉了。两处统一到信息更多的那种。
     private func capacityText(used: Int, cap: Int) -> String {
-        guard cap > 0 else { return "容量未读" }
-        return "\(max(used, 0)) / \(cap)"
+        cap > 0 ? "\(max(used, 0)) / \(cap)" : "已用 \(max(used, 0)) · 容量未读"
     }
 
     private func driftText(_ st: LockStatus?) -> String {
