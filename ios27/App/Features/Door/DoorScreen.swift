@@ -306,7 +306,7 @@ struct DoorScreen: View {
         let lastSync = DB.syncTime(mac)
         let nowMs = Date().timeIntervalSince1970 * 1000
         if lastSync <= 0 || nowMs - lastSync > 30 * 86_400_000 {
-            out.append(("超过 30 天未校时，临时密码可能失效 — 到快捷操作同步时间", "clock.badge.exclamationmark.fill", .attention))
+            out.append(("超过 30 天未校时，动态密码可能失效 — 到快捷操作同步时间", "clock.badge.exclamationmark.fill", .attention))
         }
         if let lock = app.lock, lock.battery >= 0, lock.battery <= CareSchedule.battThreshold {
             out.append(("当前电量 \(lock.battery)%，已低于提醒阈值 (\(CareSchedule.battThreshold)%) — 建议备好电池", "battery.25percent", .attention))

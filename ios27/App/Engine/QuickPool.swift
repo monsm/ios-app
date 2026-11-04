@@ -13,7 +13,7 @@ struct QuickAction: Identifiable, Hashable {
 enum QuickPool {
     static let all: [QuickAction] = [
         QuickAction(id: "addPwd",   icon: "plus.rectangle.on.rectangle", label: "添加密码"),
-        QuickAction(id: "otp",      icon: "clock.badge.questionmark",    label: "临时密码"),
+        QuickAction(id: "otp",      icon: "clock.badge.questionmark",    label: "动态密码"),
         QuickAction(id: "syncTime", icon: "clock.arrow.circlepath",      label: "校准时间"),
         QuickAction(id: "addFp",    icon: "touchid",                     label: "录指纹"),
         QuickAction(id: "studio",   icon: "wrench.and.screwdriver",      label: "凭证工坊"),

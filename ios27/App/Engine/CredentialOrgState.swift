@@ -332,7 +332,7 @@ extension CredentialOrg {
         }
         let o = ownerName(p.owner)
         if !o.isEmpty { return "\(o) 的密码 #\(p.alias)" }
-        return p.temp ? "临时密码 #\(p.alias)" : "密码 #\(p.alias)"
+        return p.temp ? "动态密码 #\(p.alias)" : "密码 #\(p.alias)"
     }
 
 }
