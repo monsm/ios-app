@@ -71,11 +71,15 @@ enum Dest: String, CaseIterable, Identifiable, Hashable {
 
     var id: String { rawValue }
 
+    /// 2026-11-04（呈现复核 · Tab 与页面各说各的）：底部 Tab 原来写「钥匙」「台账」，
+    /// 而两个页面的大标题分别是「凭证」「记录」—— 同一个屏幕，上下两个名字。
+    /// 统一到**页面标题**（那是用户在页面里看到的最大的字）。「台账」仍作为业务词
+    /// 出现在正文（凭证台账 / 本机标注），不影响。
     var title: String {
         switch self {
         case .door: return "门"
-        case .keys: return "钥匙"
-        case .records: return "台账"
+        case .keys: return "凭证"
+        case .records: return "记录"
         case .household: return "家"
         case .settings: return "设置"
         case .lockStatus: return "锁实况"
@@ -149,8 +153,8 @@ enum TabSlot: Int, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .door: return "门"
-        case .keys: return "钥匙"
-        case .records: return "台账"
+        case .keys: return "凭证"
+        case .records: return "记录"
         case .household: return "家"
         case .settings: return "设置"
         }
