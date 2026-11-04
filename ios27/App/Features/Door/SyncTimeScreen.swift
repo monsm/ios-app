@@ -226,6 +226,10 @@ struct SyncTimeScreen: View {
     @MainActor
     private func sync() async {
         guard !busy, app.lock != nil else { return }
+        // E-07（同一族 · 2026-11-04 补）：`await` 期间用户切锁时，`app.currentMac` 会变，
+        // 而下面 `saveSyncTime(app.currentMac, …)` 是在 await **之后**才取的 —— 会把这次校时
+        // 记到**另一把锁**头上，门页「超 30 天未校时」的提醒随之失真。先钉住 mac。
+        let mac = app.currentMac
         busy = true
         result = nil
         // 真链路：ensureConnected → cmd0E → 回读 cmd03 复核偏差（AppModel 已封装）。
@@ -248,7 +252,7 @@ struct SyncTimeScreen: View {
             lastSyncedAt = now
             // E-10：落盘到 kf_synctime_<mac>（与门页「超 30 天未校时」提醒卡同一真值），
             // 不再只写内存投影（重启后设置页恒显示「从未」）。
-            DB.saveSyncTime(app.currentMac, Double(now))
+            DB.saveSyncTime(mac, Double(now))
             // 符号要与上面的「偏差」读数一致：那个算的是"手机 − 锁"（正 = 手机快）。
             // 而 `pair.1` 是"锁 − 手机"，所以这里取反，页面两处才不会一个 +5 一个 −5。
             let residual = -drift
