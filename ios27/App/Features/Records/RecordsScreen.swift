@@ -821,6 +821,20 @@ struct RecordsScreen: View {
         entries = merged.sorted { $0.at > $1.at }
         untimed = untimedTotal
         readAt = synced
+        // 2026-11-04（取证 · 第二轮）：种子侧已证明 wrote=9 readBack=9，而这一屏仍空。
+        // 把"记录页这一屏实际读到什么"落盘，workflow 会 cat 进 diag —— 定位是数据没活到这一屏，
+        // 还是这一屏的取数路径不同。仅 -kfSeed 启动时写，正常使用不产生文件。
+        if ProcessInfo.processInfo.arguments.contains("-kfSeed"),
+           let dd = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+            let line = "records-tab mac=\(mac) targets=\(targets.count) merged=\(merged.count) "
+                + "scope=\(lockScope.rawValue)\n"
+            let url = dd.appendingPathComponent("kf-records-diag.txt")
+            if let h = try? FileHandle(forWritingTo: url) {
+                h.seekToEndOfFile(); h.write(Data(line.utf8)); try? h.close()
+            } else {
+                try? line.write(to: url, atomically: true, encoding: .utf8)
+            }
+        }
     }
 
     /// 开场策略：QueryFilters.load 已按 kf_filter_default 裁决「记住上次 / 每次空白 / 每次只看告警」。

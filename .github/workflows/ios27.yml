@@ -530,6 +530,13 @@ jobs:
           else
             echo "--- seed-diag missing ---" >> "$DIAG"
           fi
+          # 2026-11-04（取证 · 第二轮）：记录页那一屏实际读到几条（App 侧 append）。
+          if [ -n "$SEEDDIAG" ] && [ -f "$SEEDDIAG/Documents/kf-records-diag.txt" ]; then
+            echo "--- records-diag ---" >> "$DIAG"
+            cat "$SEEDDIAG/Documents/kf-records-diag.txt" >> "$DIAG"
+          else
+            echo "--- records-diag missing ---" >> "$DIAG"
+          fi
           # 整页截屏（**算法级**，不是滚到底）：App 把 ScrollView 的 frame 临时撑到
           # contentSize 高度后一次成像，中间内容不会漏。产物落在 App 容器 Documents/，
           # 这里用 simctl get_app_container 拷出来，命名 <i>-<name>-full.png。
