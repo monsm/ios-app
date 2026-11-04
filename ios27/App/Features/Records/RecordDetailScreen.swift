@@ -104,8 +104,35 @@ struct RecordDetailScreen: View {
                 divider
                 VFieldRow(label: "日期", value: TimeFormat.dayKey(entry.at))
                 divider
-                VFieldRow(label: "归属", value: entry.owner ?? "未归属",
-                         tint: entry.owner == nil ? V.C.text2 : V.C.text1, mono: false)
+                if entry.owner == nil, !claimableMembers.isEmpty {
+                    // 2026-11-04（补上 791 认领的入口）：引擎早就能按记录写 `kf_mclaim_`，
+                    // 但**没有任何界面能写**，于是归因给不出结论时用户无路可走。
+                    // 这里给"未归属"行一个菜单：点谁就认给谁，写覆盖层后立即重载。
+                    HStack(alignment: .firstTextBaseline, spacing: V.S.gapS) {
+                        Text("归属")
+                            .font(V.F.footnote)
+                            .foregroundStyle(V.C.text3)
+                        Spacer(minLength: 0)
+                        Menu {
+                            ForEach(claimableMembers) { m in
+                                Button(m.name) { claim(entry, to: m) }
+                            }
+                        } label: {
+                            HStack(spacing: V.S.gapXXS) {
+                                Text("未归属 · 点这里认人")
+                                    .font(V.F.footnote)
+                                    .foregroundStyle(V.C.blue)
+                                Image(systemName: "chevron.up.chevron.down")
+                                    .font(V.F.micro)
+                                    .foregroundStyle(V.C.blue)
+                            }
+                        }
+                    }
+                    .frame(minHeight: V.Hit.min)
+                } else {
+                    VFieldRow(label: "归属", value: entry.owner ?? "未归属",
+                             tint: entry.owner == nil ? V.C.text2 : V.C.text1, mono: false)
+                }
                 divider
                 VFieldRow(label: "距今", value: TimeFormat.ago(entry.at), mono: false)
                 if let detail = entry.detail, !detail.isEmpty {
@@ -334,6 +361,19 @@ struct RecordDetailScreen: View {
     }
 
     /// 从锁内日志缓存装载（与台账页同一份来源、同一条行身份）。
+    /// 可认领的成员（在册、未归档）。空则不显示认领入口 —— 没有人可指时别给一个空菜单。
+    private var claimableMembers: [MemberCard] {
+        app.members.filter { !$0.archived }
+    }
+
+    /// 把这条记录认给某位成员（写本机覆盖层 `kf_mclaim_<mac>`，不写锁、不入备份）。
+    private func claim(_ entry: LedgerEntry, to member: MemberCard) {
+        guard !mac.isEmpty else { return }
+        let key = entry.id.contains("#") ? String(entry.id.split(separator: "#").last ?? "") : entry.id
+        MemberHub.claim(mac, logKey: key, memberId: member.id)
+        reload()
+    }
+
     private func reload() {
         guard !mac.isEmpty else {
             entries = []

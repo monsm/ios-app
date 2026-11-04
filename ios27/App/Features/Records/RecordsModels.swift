@@ -338,7 +338,11 @@ enum RecordsSource {
             // 名字永远查不到 id 键，`flatMap` 恒返回 nil。于是归属映射**从第 110 轮起就没生效过**，
             // 而它一直表现为「未归属」，与"种子不可证明"长得一模一样，所以四轮都没看出来。
             // 定位证据：`seed-diag` 的 `attributed=6`（引擎能证明 6 条）对上记录页的 0 条归属。
-            let provenName = proven[String(log.idxRaw)]
+            // 2026-11-04（把 `MemberHub.claim` 接上 · 读取侧）：手动认领优先于引擎推断 ——
+            // 认领的意义正是"引擎给不出结论、或给错了"时由用户改判。此前 `claims()` 全仓零读取，
+            // 所以整张 `kf_mclaim_` 覆盖层写了也没人看。
+            let claimedName = MemberHub.claims(mac)[String(log.idxRaw)].flatMap { nameByID[$0] }
+            let provenName = claimedName ?? proven[String(log.idxRaw)]
             timed.append(LedgerEntry(
                 id: mac + "#" + String(log.idxRaw),
                 at: at,
