@@ -100,7 +100,7 @@ struct VDivider2: View {
     var body: some View {
         Rectangle()
             .fill(V8.C.line)
-            .frame(height: V8.S.hair)
+            .frame(height: V8.S.hair * (DB.store.getBool("kf_hc") ? 2 : 1))
     }
 }
 
@@ -109,7 +109,7 @@ struct VDotRule: View {
     var body: some View {
         Rectangle()
             .fill(V8.C.lineStrong)
-            .frame(height: V8.S.hair)
+            .frame(height: V8.S.hair * (DB.store.getBool("kf_hc") ? 2 : 1))
             .mask(
                 HStack(spacing: V8.S.gapXS) {
                     ForEach(0..<80, id: \.self) { _ in
