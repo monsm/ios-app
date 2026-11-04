@@ -133,11 +133,22 @@ struct ZotpScreen: View {
                         .font(V.F.footnote).foregroundStyle(V.C.text3)
                 }
 
+                // 2026-11-04（呈现复核 · 同页两处判据不一致）：`generate()` 开头有三条 guard
+                // （无锁 / 钥匙串长度不是 32 / 本窗口已用满 100 个），而按钮只按 `busy` 禁用 ——
+                // 三条都注定失败的情况，按钮照样可点，点了只弹一句错误。
+                // 现在按钮与 guard 同判据，并在按钮下说清为什么不可点。
                 HStack(spacing: V.S.gapS) {
                     VActionButton(title: busy ? "生成中…" : "生成动态密码", systemImage: "clock.badge.questionmark") {
                         generate()
                     }
-                    .disabled(busy)
+                    .disabled(busy || generateBlockedReason != nil)
+                    .opacity((busy || generateBlockedReason != nil) ? 0.45 : 1)
+                }
+                if let why = generateBlockedReason {
+                    Text(why)
+                        .font(V.F.unit)
+                        .foregroundStyle(V.C.text3)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 if !code.isEmpty {
                     VOutlineButton(title: "复制到剪贴板", systemImage: "doc.on.doc") {
@@ -210,6 +221,17 @@ struct ZotpScreen: View {
                 outcome = "设置失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
             }
         }
+    }
+
+    /// 与 `generate()` 的三条 guard 一一对应：非 nil 即"点了必然失败"。
+    private var generateBlockedReason: String? {
+        guard let kc else { return "还没有选中门锁" }
+        if kc.skey.count != 32 { return "缺少这把锁的钥匙串，无法生成" }
+        let win = ZOTP.nextWindow()
+        let current = DB.otpIdx(mac)
+        let idx = (current?.invalidTime == win) ? (current?.idx ?? -1) + 1 : 0
+        if idx > 99 { return "当前窗口已达 100 个上限，请到下一个窗口再生成" }
+        return nil
     }
 
     private func generate() {
