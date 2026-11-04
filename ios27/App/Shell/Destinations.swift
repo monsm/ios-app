@@ -28,7 +28,6 @@ enum Destinations {
         case .lockProfile: LockProfileScreen()
         case .lockPortfolio: LockPortfolioScreen()
         case .deviceInfo: DeviceInfoScreen()
-        case .unlockGate: UnlockGateScreen()
         case .moduleOrder: ModuleOrderScreen()
 
         case .keyDetail: KeyDetailScreen()
