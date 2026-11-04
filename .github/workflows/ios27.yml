@@ -615,13 +615,19 @@ jobs:
               from PIL import Image, ImageStat
           except Exception as e:
               print("PIL 不可用，跳过空白检测:", e); sys.exit(0)
+          # 2026-11-04（实测漏报）：`4-settings.png` 是纯白（mean=255,stddev=10.8，只剩状态栏），
+          # 而原阈值 `stddev < 6` 判它"有内容" —— **状态栏本身就贡献了 ~10 的 stddev**。
+          # 两处修正：① 先裁掉顶部状态栏与底部 home 条，只量内容区；② 阈值提到 8。
           bad = []
           for f in sorted(glob.glob("/tmp/shots/*.png")):
               try:
-                  im = Image.open(f).convert("RGB").resize((64, 128))
+                  raw = Image.open(f).convert("RGB")
+                  w, h = raw.size
+                  top, bottom = int(h * 0.09), int(h * 0.94)
+                  im = raw.crop((0, top, w, bottom)).resize((64, 128))
                   st = ImageStat.Stat(im)
                   spread = max(st.stddev)
-                  if spread < 6:
+                  if spread < 8:
                       bad.append((os.path.basename(f), round(spread, 2)))
               except Exception as e:
                   bad.append((os.path.basename(f), "unreadable"))
