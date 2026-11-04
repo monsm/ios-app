@@ -192,7 +192,12 @@ jobs:
   build:
     name: 编译（iOS 27 SDK）
     runs-on: xcode-27
-    needs: gates
+    # 2026-11-04（目标：构建等待 ≤30s）：**摘掉 `needs: gates`**。
+    # 实测（run a3b35e92）：push 后 +3s 闸门启动，+63s 编译才启动 ——
+    # 其中 51s 是闸门自己跑完的时间。要"推送后 30 秒内开始构建"，唯一的路是并行。
+    # 代价（如实记录）：源码有硬错时，会白跑一次编译（约 6 分钟）才拿到闸门的结论。
+    # 收益：编译与闸门同时开始，+3s 即进入编译；闸门红时 run 仍然红（见下方 verify-gate 步骤）。
+    # 不是"跳过闸门"—— 闸门照跑，只是不再**阻塞**编译。
     # G-11：xcode-27 是 preview 镜像，历史上抽风过（见文件头注释）。
     timeout-minutes: 45
     steps:
@@ -379,6 +384,26 @@ jobs:
           git add -A
           git commit -q -m "ci log $GITHUB_RUN_ID" || true
           git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" ci-log || true
+
+  # ================= 闸门结论（把 gates 的结果重新变成"整条 run 的判据"）=================
+  # 2026-11-04（目标：构建等待 ≤30s）：build 与 gates 现在是**并行**的（build 不再 needs: gates），
+  # 所以 gates 失败**不会**自动让 run 变红 —— 那样就成了"为了快而跳过闸门"。
+  # 这个 job 把 gates 的结论重新接回 DAG：gates 红 ⇒ 它红 ⇒ 整条 run 红。
+  # 它只做判断，不重复跑闸门（gates 已经跑过），所以耗时是秒级。
+  verify-gate:
+    name: 闸门结论（并行编译的配套）
+    runs-on: ubuntu-latest
+    needs: gates
+    timeout-minutes: 5
+    steps:
+      - name: 确认静态闸门通过
+        run: |
+          echo "静态闸门结果: ${{ needs.gates.result }}"
+          if [ "${{ needs.gates.result }}" != "success" ]; then
+            echo "::error::静态闸门未通过 —— 编译即使成功也不能算绿（见 allgates 日志）"
+            exit 1
+          fi
+          echo "静态闸门通过；编译已在并行进行（不再被闸门阻塞）"
 
   # ================= 真机截图（供本地无 Xcode 时"看见"界面）=================
   # 开发机是 Windows，没有 Xcode / 模拟器 —— 这是唯一能拿到**真实渲染**的途径。
@@ -730,7 +755,8 @@ jobs:
   android:
     name: Build (Android 13+, APK)
     runs-on: ubuntu-latest
-    needs: gates
+    # 2026-11-04（目标：构建等待 <=30s）：与 iOS 同样摘掉 needs: gates。
+    # Android 也等了 62s（51s 是闸门）。并行后 +3s 即开始；闸门结论由 verify-gate 兜住。
     timeout-minutes: 25
     steps:
       - name: Checkout
