@@ -73,22 +73,24 @@ struct HouseholdScreen: View {
         case .opens30:
             let counts = opens30Counts
             return list.sorted { lhs, rhs in
-                let a = counts[lhs.name] ?? 0, b = counts[rhs.name] ?? 0
+                let a = counts[lhs.id] ?? 0, b = counts[rhs.id] ?? 0
                 return a == b ? tie(lhs, rhs) : a > b
             }
         }
     }
 
-    /// 近 30 天可证明归属的开门次数（约）。归属按台账 owner 名匹配。
-    /// TODO(engine)：接 MemberHub.activityBundle（Attribution.classify）；现在只认台账已归属的行。
+    /// 近 30 天可证明归属的开门次数（约），按成员 **id** 索引。
+    ///
+    /// 2026-11-04（走查发现 · 与"周小结"同一处病）：原来数 `app.entries` 的 `owner` 字段，
+    /// 而 `LedgerEntry.owner` 只在**单成员家庭**才填（`RecordsModels.owner` 的启发式）——
+    /// 多成员家庭里所有计数恒为 0，「按最近开门排序」于是变成按默认次序（排序失效但不报错）。
+    /// 改用 `MemberHub.activityBundle`：它走 `Attribution.classify`（日志 × 凭证台账交叉），
+    /// 能给多成员家庭算出可证明归属，且一次遍历算完全员。
     private var opens30Counts: [String: Int] {
-        let cutoff = Int64(Date().timeIntervalSince1970 * 1000) - 30 * 86_400_000
-        var out: [String: Int] = [:]
-        for entry in app.entries where entry.at >= cutoff {
-            guard let owner = entry.owner, !owner.isEmpty else { continue }
-            out[owner, default: 0] += 1
-        }
-        return out
+        let ids = activeMembers.map(\.id)
+        guard !ids.isEmpty else { return [:] }
+        let bundle = MemberHub.activityBundle(ids)
+        return bundle.table.mapValues { $0.opens30 }
     }
 
     private var tags: [String] {
@@ -240,12 +242,17 @@ struct HouseholdScreen: View {
     }
 
     /// 临时码且无归属的开门条数（793 访客虚拟分组：只在展示层，不写入锁端凭证表）。
-    /// TODO(engine)：接 Attribution.classify 的 isVisitorRow 判定；现在只按台账 event 文案 + owner 为空近似。
+    ///
+    /// 2026-11-04（走查发现 · 同一族）：原来按「台账 event 文案含『临时码』+ owner 为空」近似，
+    /// 而 `entry.event` 是 `displayTypeName`（类型名），不是"这条是谁的"；`owner` 在多成员家庭恒空。
+    /// 结果：只要家庭里有两个人，**所有临时码开门都会被算成访客**。
+    /// 现在与成员域同源 —— `MemberHub.activityBundle` 的 `visitorOpens`（`isVisitorRow` 判据）。
     private var visitorOpens: Int {
-        app.entries.filter { entry in
-            entry.owner == nil && entry.event.contains("临时码")
-        }.count
+        let ids = activeMembers.map(\.id)
+        guard !ids.isEmpty else { return 0 }
+        return MemberHub.activityBundle(ids).visitorOpens
     }
+
 
     // MARK: 名册
 
