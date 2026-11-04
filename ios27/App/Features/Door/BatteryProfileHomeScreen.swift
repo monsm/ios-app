@@ -81,7 +81,7 @@ struct BatteryProfileHomeScreen: View {
 
     private var sampleTimeText: String {
         guard let last = samples.last else { return "尚未采样" }
-        return TimeFormat.ago(last.t)
+        return TimeFormat.ago(Int64(last.t))
     }
 
     private var trendCard: some View {

@@ -251,7 +251,7 @@ struct GodModeHomeScreen: View {
                                 .font(V8.T.caption)
                                 .foregroundStyle(V8.C.ink4)
                                 .monospacedDigit()
-                            Text(pair.element.displayTypeName)
+                            Text(pair.element.typeName)
                                 .font(V8.T.caption)
                                 .foregroundStyle(V8.C.ink1)
                             Spacer(minLength: 0)

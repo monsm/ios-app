@@ -34,6 +34,7 @@ struct GatewayHomeScreen: View {
         }
     }
 
+    @Environment(AppModel.self) private var app
     @State private var rows: [GatewayRowVM] = []
     @State private var phase: ProvisionPhase = .idle
     @State private var steps: [String] = []

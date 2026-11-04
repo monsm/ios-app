@@ -17,7 +17,7 @@ struct DoorHomeScreen: View {
     private var lock: LockSummary? { app.lock }
 
     private var batteryPct: Int {
-        lock.map { V8.C.accentFill(mac: $0.id, snapshot: $0.battery) } ?? -1
+        lock.map { BatteryCare.displayPct($0.id, snapshot: $0.battery) } ?? -1
     }
 
     private var batteryFraction: Double {
