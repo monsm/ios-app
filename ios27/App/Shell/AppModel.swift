@@ -242,7 +242,7 @@ final class AppModel {
                 name: m.name.isEmpty ? "未命名" : m.name,
                 role: role,
                 // `owner` 历史上有 id 与名字两种口径（见 `addPassword`），计数两种都认。
-            keyCount: keys.filter { $0.owner == m.id || $0.owner == m.name }.count,
+            keyCount: keys.filter { CredentialOrg.ownerMatches($0.owner, memberID: m.id, memberName: m.name) }.count,
                 lastActiveAt: nil,
                 archived: ext.archived
             )

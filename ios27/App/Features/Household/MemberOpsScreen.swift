@@ -376,7 +376,7 @@ struct MemberOpsScreen: View {
         for kc in DB.keychains() where DB.normalizeMac(kc.mac) != DB.normalizeMac(mac) {
             func mine(_ owner: String?) -> Bool {
                 guard let owner, !owner.isEmpty else { return false }
-                return owner == m.id || (!m.name.isEmpty && owner == m.name)
+                return CredentialOrg.ownerMatches(owner, memberID: m.id, memberName: m.name)
             }
             n += DB.listPwds(kc.mac).filter { mine($0.owner) }.count
             n += DB.listFps(kc.mac).filter { mine($0.owner) }.count
@@ -444,7 +444,7 @@ struct MemberOpsScreen: View {
         let otherLocks = DB.keychains().filter { $0.mac != mac }.reduce(0) { acc, kc in
             func mine(_ owner: String?) -> Bool {
                 guard let owner, !owner.isEmpty else { return false }
-                return owner == m.id || owner == m.name
+                return CredentialOrg.ownerMatches(owner, memberID: m.id, memberName: m.name)
             }
             return acc + DB.listPwds(kc.mac).filter { mine($0.owner) }.count
                 + DB.listFps(kc.mac).filter { mine($0.owner) }.count

@@ -109,7 +109,7 @@ struct MobileKeyScreen: View {
                     ForEach(MemberHub.sortedForPicker(app.members.filter { !$0.archived }, keys: app.keys)) { member in
                         KeysOwnerRow(
                             name: member.name,
-                            keyCount: app.keys.filter { $0.owner == member.id || $0.owner == member.name }.count,   // owner 有 id / 名字两种历史口径
+                            keyCount: app.keys.filter { CredentialOrg.ownerMatches($0.owner, memberID: member.id, memberName: member.name) }.count,   // owner 有 id / 名字两种历史口径
                             selected: owner == member.name
                         ) {
                             owner = member.name
