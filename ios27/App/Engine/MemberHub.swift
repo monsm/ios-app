@@ -243,7 +243,11 @@ enum MemberHub {
                 if unix >= now - 30 * 86400 { a.opens30 += 1 }
                 if unix >= mStart { a.month += 1 }
                 if logs[i].lockTimeStr > a.last { a.last = logs[i].lockTimeStr }
-                if unix > a.lastUnix { a.lastUnix = unix }
+                // 2026-11-04（编译事故 · 我自己造成的）：`protoSecondsToUnix` 返回 **Double**，
+                // 而 `lastUnix` 是 Int64 —— 直接比较/赋值都报「cannot apply '>' to Double and Int64」。
+                // 截断到秒：这个字段只用于"最近一次是哪天"，秒级精度足够。
+                let unixSec = Int64(unix)
+                if unixSec > a.lastUnix { a.lastUnix = unixSec }
                 b.table[who] = a
             }
             for p in pwds {
