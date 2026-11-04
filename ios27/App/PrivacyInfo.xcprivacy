@@ -47,6 +47,20 @@
 				<string>C617.1</string>
 			</array>
 		</dict>
+		<!--
+		  2026-11-04（上架阻断 · 漏申报）：`AppLock.cooldownRemaining` 用
+		  `ProcessInfo.processInfo.systemUptime` 做密码冷却的单调时钟（防用户改系统时间绕过冷却）。
+		  system boot time 是 Apple 的 Required Reason API，未申报会被 App Store 拒收。
+		  35F9.1：测量 App 内事件之间的时间间隔 —— 与这里的用途一致。
+		-->
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategorySystemBootTime</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>35F9.1</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>
