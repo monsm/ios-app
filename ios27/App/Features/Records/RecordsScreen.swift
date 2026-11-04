@@ -144,10 +144,13 @@ struct RecordsScreen: View {
                     Button { router.request(.dest(.recordExport)) } label: {
                         Label("导出记录", systemImage: "square.and.arrow.up")
                     }
-                    Button { Task { await read() } } label: {
-                        Label("读取锁内日志", systemImage: "arrow.clockwise")
+                    // 与空态卡同一判据：`.all` 模式下 `read()` 会直接早退，这一项点了只会弹提示。
+                    if lockScope == .current {
+                        Button { Task { await read() } } label: {
+                            Label("读取锁内日志", systemImage: "arrow.clockwise")
+                        }
+                        .disabled(reading)
                     }
-                    .disabled(reading)
                 } label: {
                     Image(systemName: "ellipsis.circle")
                         .font(V.F.icon18Medium)
