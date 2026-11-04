@@ -450,7 +450,17 @@ final class SettingsStore {
     var unlockTotal: Int { Milestones.unlockTotal }
 
     /// 恢复默认外观：只重置外观偏好，不动安全 / 备份 / 硬件，也不动任何门锁数据。
+    ///
+    /// 2026-11-04（走查发现 · 漏了最显眼的那一项）：这函数重置了 22 个偏好，**独独漏了
+    /// 无障碍页的四项**（`axBigText` 全局大字 / `kf_ax_bigotp` / `kf_bigtile` / `kf_dial_size`）。
+    /// 而 `AccessibilityScreen:24` 的注释还写着「『恢复默认外观』会整体重置 axBigText」—— 那句话是假的。
+    /// 用户开了全局大字（整棵树压到 accessibility2）再点「恢复默认外观」，字号纹丝不动 ——
+    /// 而字号恰恰是外观里最显眼的一项。
     func resetAppearance() {
+        axBigText = false
+        DB.store.setBool("kf_ax_bigotp", false)
+        DB.store.setBool("kf_bigtile", false)
+        DB.store.set("kf_dial_size", "standard")
         theme = .system
         density = .standard
         motion = .standard

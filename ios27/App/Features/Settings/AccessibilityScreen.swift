@@ -22,7 +22,7 @@ enum AXSettings {
 struct AccessibilityScreen: View {
     // E-13：这六个 @State 是「持久层的镜像」。@State 的初值只在视图**首次创建**时取一次，
     // 所以别的页面改了同一个键（外观页的 ColorPicker、设置页开关、以及「恢复默认外观」
-    // 会整体重置 axBigText / holdConfirm 等）时，这一页会继续显示旧值 —— 两份真相。
+    // 会重置 axBigText / holdDuration 等）时，这一页会继续显示旧值 —— 两份真相。
     // 保留 @State 是为了点一下就有反馈；每次出现时从持久层重新同步一次。
     @State private var bigText = SettingsStore.shared.axBigText
     @State private var bigOTP = AXSettings.bigOTP
