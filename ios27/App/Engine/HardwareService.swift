@@ -292,7 +292,7 @@ final class HardwareService: ObservableObject {
         let rc = rcOf(f)
         if rc != 0 {
             if rc == 3 { throw BLEErrorX.msg("命令不在有效期，请将手机时间同步到锁内") }
-            throw BLEErrorX.msg(StatusParser.rcMessage(rc))
+            throw BLEErrorX.msg(StatusParser.rcFriendly(rc))
         }
         var rec = DB.dongle(dongleMac) ?? Dongle(mac: dongleMac)
         rec.lastKeyLock = lock.mac
@@ -324,14 +324,14 @@ final class HardwareService: ObservableObject {
         let rc = rcOf(f)
         if rc != 0 {
             if rc == 3 { throw BLEErrorX.msg("命令不在有效期，请将手机时间同步到锁内") }
-            throw BLEErrorX.msg(StatusParser.rcMessage(rc))
+            throw BLEErrorX.msg(StatusParser.rcFriendly(rc))
         }
         log("已写入假钥匙（随机 PIN，不绑成员）到 \(dongleMac)")
     }
     func deleteDongleKey(dongleMac: String, lock: Keychain) async throws {
         let f = try await send(ZKCmdBuilder.cmd41WriteEkey(lock.mac.lowercased(), lock.pid, ""), target: dongleMac)
         let rc = rcOf(f)
-        if rc != 0 { throw BLEErrorX.msg(StatusParser.rcMessage(rc)) }
+        if rc != 0 { throw BLEErrorX.msg(StatusParser.rcFriendly(rc)) }
     }
     /// cmd 44 查钥匙 (nil = 全部; lockMac = 本锁)
     func dongleKeys(dongleMac: String, lockMac: String?) async throws -> [String] {

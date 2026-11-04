@@ -437,7 +437,7 @@ extension LockService {
         if r.rc == -1 {
             throw BLEErrorX.msg("\(cmdObj.name) 回包缺少 rc KLV, 无法确认锁端结果 — 请重试")
         }
-        if r.rc != 0 { throw BLEErrorX.msg(StatusParser.rcMessage(r.rc)) }
+        if r.rc != 0 { throw BLEErrorX.msg(StatusParser.rcFriendly(r.rc)) }
         return r
     }
 

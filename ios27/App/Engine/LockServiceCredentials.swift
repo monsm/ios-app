@@ -247,13 +247,13 @@ extension LockService {
             if r.rc == 0 { return r }
             guard r.rc == 25 || r.rc == 17, i + 1 < attempts else {
                 if r.rc == -1 { throw BLEErrorX.msg("\(cmdObj.name) 回包缺少 rc KLV, 无法确认锁端结果 — 请重试") }
-                throw BLEErrorX.msg(StatusParser.rcMessage(r.rc))
+                throw BLEErrorX.msg(StatusParser.rcFriendly(r.rc))
             }
             // 锁忙时等 1.5s 再试（锁端在收尾上一件事，硬重发只会继续 rc=25）
             log("warn", "\(cmdObj.name) rc=\(r.rc)（\(StatusParser.rcMessage(r.rc))）→ 等 1.5s 重试 \(i + 1)/\(attempts)")
             try await Task.sleep(for: .milliseconds(1500))
         }
-        throw BLEErrorX.msg(StatusParser.rcMessage(last))
+        throw BLEErrorX.msg(StatusParser.rcFriendly(last))
     }
 
     func fpDelete(_ batchNumber: UInt32) async throws {
@@ -270,7 +270,7 @@ extension LockService {
     func getLogs(orderType: Int = 0, startIdx: UInt32, pageSize: Int = 5) async throws -> LogPage {
         let (m, sk) = try keys()
         let r = try await exec(ZKCmdBuilder.cmd16GetLog(m, sk, orderType: orderType, startIdx: startIdx, pageSize: pageSize))
-        if r.rc != 0 && r.rc != -1 { throw BLEErrorX.msg(StatusParser.rcMessage(r.rc)) }
+        if r.rc != 0 && r.rc != -1 { throw BLEErrorX.msg(StatusParser.rcFriendly(r.rc)) }
         let surplus = r.klvs.first(where: { $0.key == 0x04 }).map { Int(StatusParser.leHexToU32($0.val)) }
         let logs = StatusParser.parseLogs(r.klvs)
         // 截断条数只在"锁回来的这一页"上有意义，所以记在拉日志的这里，不进 LogEntry 模型 (§10.46)：
