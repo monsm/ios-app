@@ -293,7 +293,10 @@ struct PasscodeSheet: View {
         // 一句指向错方向的诊断，他会去重输旧密码，而问题在新密码。
         // 新密码的格式与两次一致是**本地可判**的，先判它；旧密码验证放最后（那是唯一需要引擎的检查）。
         guard first.count >= 4 else { error = "需 4 位以上"; return }
-        guard first.allSatisfy({ $0.isNumber }) else { error = "只能输入数字"; return }
+        // 2026-11-04（会把自己锁死的输入）：`Character.isNumber` 对**全角数字**（１２３４）也返回 true。
+        // 粘贴一串全角数字能通过校验、设成密码，而数字键盘**只能打出半角** —— 之后再也输不进去，
+        // 只能删 App 重装（本机数据全丢）。只认 ASCII 0-9。
+        guard first.allSatisfy({ $0.isASCII && $0.isNumber }) else { error = "只能输入半角数字（0-9）"; return }
         guard first == second else { error = "两次输入不一致"; return }
         if isChange {
             guard DB.verifyPasscode(oldCode) else { error = "原本机密码不对"; return }

@@ -533,7 +533,9 @@ enum DB {
             store.remove(duressKey)
             return true
         }
-        guard code.count >= 4, code.allSatisfy({ $0.isNumber }) else { return false }
+        // 2026-11-04（与 UI 同一条）：`isNumber` 接受全角数字，而数字键盘只能打半角 ——
+        // 胁迫码若被粘成全角，用户在解锁界面永远打不出来，等于把自己关在门外。只认 ASCII。
+        guard code.count >= 4, code.allSatisfy({ $0.isASCII && $0.isNumber }) else { return false }
         if verifyPasscode(code) { return false }
         set(passcodeDigest(code), duressKey)
         return true
