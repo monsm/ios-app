@@ -304,7 +304,8 @@ enum RecordsSource {
         // 归属值仍然用**成员名**：`LedgerEntry.owner` 是展示模型，展示层各处（详情/时间线/导出/
         // 搜索面）都直接把它印出来。存 id 会把一串 UUID 印给用户。
         var nameByID: [String: String] = [:]
-        for m in members { nameByID[m.id] = m.name }
+        var nameSet = Set<String>()
+        for m in members { nameByID[m.id] = m.name; nameSet.insert(m.name) }
         var proven: [String: String] = [:]   // 日志 idxRaw -> 成员 id
         if !members.isEmpty {
             let status = DB.readStatus(mac)
@@ -314,7 +315,15 @@ enum RecordsSource {
                 pwds: DB.listPwds(mac), fps: DB.listFps(mac),
                 status: status.map { ($0.fpStock, $0.pwdStock, $0.lockTime) })
             for (i, r) in rows.enumerated() where i < logs.count {
-                if let who = r.who, nameByID[who] != nil { proven[String(logs[i].idxRaw)] = who }
+                guard let who = r.who else { continue }
+                // `Attribution.Row.who` 的注释写着「成员 id」，但**历史数据的 owner 存的是成员名**
+                // （本仓两套口径，见 `CredentialOrg.ownerMatches` 的说明）。两种都认：
+                // 先当 id 查，查不到再看它是不是一个已知成员名。
+                if let nm = nameByID[who] {
+                    proven[String(logs[i].idxRaw)] = nm
+                } else if nameSet.contains(who) {
+                    proven[String(logs[i].idxRaw)] = who
+                }
             }
         }
         for log in logs {
