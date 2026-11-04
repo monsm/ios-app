@@ -432,7 +432,7 @@ final class HardwareService: ObservableObject {
         progress("步骤 4/5: 重启网关使其生效 (cmd 35)")
         let rb = try await send(ZKCmdBuilder.cmd35GWReboot(), target: mac)
         let ec2 = errCodeOf(rb)
-        if ec2 != 0 { log("重启指令返回 errCode \(ec2) (网关可能已自行重启)") }
+        if ec2 != 0 { log("重启指令返回 errCode \(ec2) （网关可能已自行重启）") }
         rec.lastWifi = ssid
         rec.provisionedAt = DF.iso().string(from: Date())
         rec.ssid = st.ssid

@@ -94,7 +94,7 @@ extension LockService {
         }
         if !connectedDeviceId.isEmpty { disconnect() }
         // 开锁链路：空壳模式下也要拿得到 skey（见 `keychainForUnlock` 的说明）。
-        guard let kc = DB.keychainForUnlock(m) else { throw BLEErrorX.msg("找不到 MAC=\(m) 的钥匙串 (请先配对或导入)") }
+        guard let kc = DB.keychainForUnlock(m) else { throw BLEErrorX.msg("找不到 MAC=\(m) 的钥匙串 （请先配对或导入）") }
         if !kc.bleId.isEmpty {
             do {
                 try await connect(deviceId: kc.bleId)
@@ -105,7 +105,7 @@ extension LockService {
                 log("warn", "缓存 deviceId 直连失败 (\(error.localizedDescription)), 回退 MAC 扫描解析")
             }
         }
-        log("info", "扫描解析 MAC=\(m) (请靠近门锁)")
+        log("info", "扫描解析 MAC=\(m) （请靠近门锁）")
         let deviceId = try await scanForMAC(m, timeoutMs: 8000)
         // 2026-10-13 对抗式排查: 连接成立后再验一次**锁端自报的身份**, 而不是只认广播字段。
         // scanForMAC 只比对广播厂商段里的 macRaw —— 而广播是**任何设备都能发**的: 攻击者广播一份
@@ -126,7 +126,7 @@ extension LockService {
             if knownPid > 0, st.pid > 0, st.pid != knownPid {
                 disconnect()
                 log("warn", "连接后身份不符：锁端 pid=\(st.pid) 与登记的 pid=\(knownPid) 不一致 → 已断开，不写缓存")
-                throw BLEErrorX.msg("连到的设备与「\(kc.name)」不是同一把锁 (pid 不符)，已断开。附近可能有同名或伪造广播。")
+                throw BLEErrorX.msg("连到的设备与「\(kc.name)」不是同一把锁 （pid 不符），已断开。附近可能有同名或伪造广播。")
             }
             if knownPid <= 0 { log("warn", "钥匙串未登记 pid, 跳过连接后身份复核 （老配对）") }
         } catch let e as BLEErrorX {
@@ -264,7 +264,7 @@ extension LockService {
         if DB.store.getBool("kf_trial_guard", false) { try ZKProtocol.assertReadOnly(cmd) }
         // 空帧拦截: 密钥/参数非法导致构造失败时绝不发包 (见 ZKProtocol.wrapEnc 的 cipher.isEmpty 约定)
         guard !hex.isEmpty else {
-            throw BLEErrorX.msg("\(cmdObj.name) 帧构造失败 (密钥或参数无效), 已中止下发")
+            throw BLEErrorX.msg("\(cmdObj.name) 帧构造失败 （密钥或参数无效）, 已中止下发")
         }
         if needToken {
             try await ensureToken()
@@ -347,7 +347,7 @@ extension LockService {
                     if case BLEErrorX.code(.responseTimeout) = error { maybeExecuted = true }
                     if case BLEErrorX.code(.writeFailed) = error { maybeExecuted = true }
                     if maybeExecuted {
-                        log("warn", "\(cmdObj.name) 写命令失败(响应超时或写失败，指令可能已生效) → 不重发 (避免重复执行), 交上层判定")
+                        log("warn", "\(cmdObj.name) 写命令失败（响应超时或写失败，指令可能已生效） → 不重发 （避免重复执行）, 交上层判定")
                         break
                     }
                 }
@@ -418,7 +418,7 @@ extension LockService {
             let rc2 = resp2.map { extractRc(cmd, $0) } ?? -1
             if let r2 = resp2, rc2 == 0 {
                 DB.setMacOrder(curMac, other)
-                log("warn", "\(cmdObj.name) rc=12 (mac地址不正确) → 换一种 MAC 字节序 (\(other.rawValue)) 重发即通过; 已记住这把锁的顺序")
+                log("warn", "\(cmdObj.name) rc=12 （mac地址不正确） → 换一种 MAC 字节序 (\(other.rawValue)) 重发即通过; 已记住这把锁的顺序")
                 return ExecResult(frame: r2, rc: rc2, klvs: r2.klvs)
             }
             // 不是顺序问题 → 复原注册表 (方向错了会比默认更难查), 让上层按 mac 不符去报错

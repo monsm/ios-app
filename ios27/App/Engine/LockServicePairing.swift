@@ -222,7 +222,7 @@ extension LockService {
     func finishPairing(m: String, deviceId: String, skey: String, bkey: String, pins: [String],
                                trackid: String, resumable: Bool,
                                progress: @escaping (String) -> Void) async throws -> Keychain {
-        log("info", "配网尾链 MAC 字节序 = \(ZKProtocol.macOrder(m).rawValue) (默认 = 原版 APK 语义，显示序)")
+        log("info", "配网尾链 MAC 字节序 = \(ZKProtocol.macOrder(m).rawValue) （默认 = 原版 APK 语义，显示序）")
         // 批大小 20 = 原版 APK 逐字 (main.js syncPins20: `o>20?20:o` + `generateRandomNumbers(64)`)
         // ⇒ 真机帧序列是 20/20/20/4 四批。旧版取 16("让单帧更小") 是自创: 锁端若按固定 20 槽位对位解析这一批,
         // 16 的批就会让后续字节错位 —— 而错位读出的"目标 MAC"正好会回 rc=12「mac地址不正确」。
@@ -249,17 +249,17 @@ extension LockService {
                 let used = ZKProtocol.macOrder(m)
                 let other = ZKProtocol.flipped(used)
                 ZKProtocol.setMacOrder(m, other)
-                log("warn", "PIN 批次 1 rc=12 (mac地址不正确) → 换一种包络 MAC 字节序 (\(other.rawValue)) 重发本批"
+                log("warn", "PIN 批次 1 rc=12 （mac地址不正确） → 换一种包络 MAC 字节序 (\(other.rawValue)) 重发本批"
                     + " · 原序 " + used.rawValue + " · 回包 " + Self.klvShape(rb.frame))
                 let rb2 = try await exec(c)
                 if rb2.rc == 0 {
                     DB.setMacOrder(m, other)
-                    log("info", "包络 MAC 字节序裁定 = \(other.rawValue) (08 批次 1 换序后 rc=0); 此后本机对这把锁一律按它成帧")
+                    log("info", "包络 MAC 字节序裁定 = \(other.rawValue) （08 批次 1 换序后 rc=0）; 此后本机对这把锁一律按它成帧")
                     rb = rb2
                 } else if rb2.rc == 18 {
                     // 18 = 不能设置重复的值 ⇒ 这一批其实已经写进锁里了: 原序是对的, rc=12 来自别的地方。
                     ZKProtocol.setMacOrder(m, used)
-                    log("info", "PIN 批次 1 换序后 rc=18 (重复值) ⇒ 原序 \(used.rawValue) 有效，本批视为已写入")
+                    log("info", "PIN 批次 1 换序后 rc=18 （重复值） ⇒ 原序 \(used.rawValue) 有效，本批视为已写入")
                     rb = ExecResult(frame: rb2.frame, rc: 0, klvs: rb2.klvs)
                 } else {
                     ZKProtocol.setMacOrder(m, used)
@@ -321,7 +321,7 @@ extension LockService {
                 progress("续配完成：\(kc.pidName.isEmpty ? "pid=\(kc.pid)" : kc.pidName) @ \(m)")
                 return kc
             } catch {
-                log("warn", "续配不通 (\(error.localizedDescription)) → 回退完整配网链 (锁可能已被再次重置)")
+                log("warn", "续配不通 (\(error.localizedDescription)) → 回退完整配网链 （锁可能已被再次重置）")
                 progress("续配不通 （锁可能已再次重置） → 走完整配网")
             }
         return nil

@@ -33,7 +33,7 @@ extension LockService {
         do {
             _ = try await execOk(ZKCmdBuilder.cmd0BSyncPwdExpire(m, sk, alias, validFrom, validTo))
         } catch {
-            log("warn", "0B 设置有效期失败(不影响添加): \(error.localizedDescription)")
+            log("warn", "0B 设置有效期失败（不影响添加）: \(error.localizedDescription)")
         }
         // 543: 实体标记写成"凭证#N", 与 DiagKit.entities 的识别词表同一口径
         log("info", "凭证#\(alias) 已添加 (0A+0B)")
@@ -55,7 +55,7 @@ extension LockService {
         let (m, sk) = try keys()
         let r = try await execOk(try ZKCmdBuilder.cmd0ASyncPwd(m, sk, delAlias: alias, addPwd: pwd, validFrom: validFrom, validTo: validTo))
         let got = aliasFrom(r) ?? alias
-        log("info", "凭证#\(alias) 已改写" + (got == alias ? "" : ", 锁端新编号 凭证#\(got) (0A 删旧+加新)"))
+        log("info", "凭证#\(alias) 已改写" + (got == alias ? "" : "，锁端新编号 凭证#\(got) （0A 删旧+加新）"))
         return got
     }
 
@@ -77,7 +77,7 @@ extension LockService {
         if DB.ledger(m).pwds.contains(where: { $0.alias == alias }) {
             log("warn", "删除复核异常：凭证#\(alias) 仍在台账里")
         }
-        log("info", "凭证#\(alias) 已删除 (0A, 已复核)")
+        log("info", "凭证#\(alias) 已删除 （0A, 已复核）")
     }
 
     func pwdClear() async throws {
@@ -190,7 +190,7 @@ extension LockService {
                     // 锁按 13 帧里的 timeout=15s 裁定"还接不接受下一次按压"; 超过 16s 没有新帧,
                     // 说明锁已经退出录入态 —— 再按就是普通开锁验证 (会听到"验证失败")。
                     // 这里如实收尾并报错, 不干等到 150s 让用户以为程序卡死。
-                    log("warn", "13 录指纹已 \(Int(silent))s 无新帧 (锁端按压窗口 15s), 判定锁已退出录入")
+                    log("warn", "13 录指纹已 \(Int(silent))s 无新帧 （锁端按压窗口 15s）, 判定锁已退出录入")
                     break
                 }
                 try? await Task.sleep(for: .milliseconds(200))
@@ -224,7 +224,7 @@ extension LockService {
             throw BLEErrorX.msg("指纹录入已开始，但门锁没有收到任何一次按压 — 请把手指按在指纹头上再抬起，每次间隔 3 秒内")
         }
         if presses.count < times {
-            log("warn", "13 只收到 \(presses.count)/\(times) 次按压 (超时/提前收尾)")
+            log("warn", "13 只收到 \(presses.count)/\(times) 次按压 （超时/提前收尾）")
         }
         return presses
     }
@@ -264,7 +264,7 @@ extension LockService {
             log("warn", "删除复核失败：指纹#\(batchNumber) 仍存在于锁端 — 可能收到伪造回包")
             throw BLEErrorX.msg("门锁回包说已删除，但重读发现这枚指纹还在。可能有人在伪造回包。")
         }
-        log("info", "指纹#\(batchNumber) 已删除 (已重读复核)")
+        log("info", "指纹#\(batchNumber) 已删除 （已重读复核）")
     }
 
     func getLogs(orderType: Int = 0, startIdx: UInt32, pageSize: Int = 5) async throws -> LogPage {
@@ -277,7 +277,7 @@ extension LockService {
         // 不记就等于"有一条记录的时间/类型看着怪"永远解释不清，而它其实是帧被截半条。
         let truncated = StatusParser.truncatedLogCount(r.klvs)
         if truncated > 0 {
-            log("warn", "这一页日志有 \(truncated) 条声明长度与实际长度不符 (帧被截断或超长)，已按原样入缓存")   // 16 这一页日志有
+            log("warn", "这一页日志有 \(truncated) 条声明长度与实际长度不符 （帧被截断或超长），已按原样入缓存")   // 16 这一页日志有
         }
         return LogPage(surplus: surplus, logs: logs)
     }

@@ -304,7 +304,7 @@ enum MemberHub {
             let span = next == 0 ? "\(b.key)–次日 0 点" : "\(b.key)–\(next) 点"
             return "\(name)近 7 天开门约 \(n) 次，工作日 \(span) 最活跃。"
         }
-        return "\(name)近 7 天开门约 \(n) 次 (工作日样本不足)。"
+        return "\(name)近 7 天开门约 \(n) 次 （工作日样本不足）。"
     }
     /// 459/789 最近开门摘录 (归属可证明才进, 展示带"约")
     struct Excerpt {
