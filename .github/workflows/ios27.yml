@@ -513,12 +513,38 @@ jobs:
             # 首帧还没画出来就截了**（每次 terminate+launch，第 5 轮模拟器最慢）。
             # 判据用文件大小：正常截图 80-150KB，纯空白约 12KB。小于 40KB 就等 2 秒重截一次。
             SZ=$(stat -f%z "/tmp/shots/$i-$name.png" 2>/dev/null || echo 0)
-            if [ "$SZ" -lt 40000 ]; then
-              echo "shot $i-$name=retry (size=$SZ)" >> "$DIAG"
-              sleep 2
+            # 2026-11-04（设置页首帧空白 · 判据换了）：原来只按**文件大小**判断要不要重截，
+            # 而纯白 PNG 在 1206×2622 下也有 70KB —— 于是 `4-settings.png` 是一张只有状态栏的
+            # 白图却通过了（实测 mean=255 stddev=10.8）。文件大小不是内容指标。
+            # 现在改用**内容区标准差**：裁掉状态栏与 home 条后 stddev < 8 视为空白，重截最多 3 次。
+            for attempt in 1 2 3; do
+              BLANK=$(python3 - "$i-$name" <<'PY'
+          import sys, os
+          try:
+              from PIL import Image, ImageStat
+          except Exception:
+              print("0"); sys.exit(0)
+          f = "/tmp/shots/" + sys.argv[1] + ".png"
+          if not os.path.exists(f):
+              print("1"); sys.exit(0)
+          try:
+              raw = Image.open(f).convert("RGB")
+              w, h = raw.size
+              im = raw.crop((0, int(h*0.09), w, int(h*0.94))).resize((64, 128))
+              print("1" if max(ImageStat.Stat(im).stddev) < 8 else "0")
+          except Exception:
+              print("0")
+          PY
+              )
+              if [ "$BLANK" != "1" ] && [ "$SZ" -ge 40000 ]; then break; fi
+              echo "shot $i-$name=retry$attempt (blank=$BLANK size=$SZ)" >> "$DIAG"
+              sleep 3
+              xcrun simctl terminate "$UDID" com.aapk.lockkeeper 2>/dev/null || true
+              xcrun simctl launch "$UDID" com.aapk.lockkeeper -kfUITest -kfSeed -kfTab $i || true
+              sleep 5
               xcrun simctl io "$UDID" screenshot "/tmp/shots/$i-$name.png" >> "$DIAG" 2>&1 || true
               SZ=$(stat -f%z "/tmp/shots/$i-$name.png" 2>/dev/null || echo 0)
-            fi
+            done
             if [ -f "/tmp/shots/$i-$name.png" ]; then echo "shot $i-$name=ok size=$SZ" >> "$DIAG"; else echo "shot $i-$name=missing" >> "$DIAG"; fi
             i=$((i+1))
           done
