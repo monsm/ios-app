@@ -13,7 +13,12 @@ private struct CaptureShieldModifier: ViewModifier {
     let message: String
     @State private var isCaptured = false
     /// SEC-11：普通截图**不会**触发 isCaptured —— 只在按下快门那一刻发一个通知。
-    /// 收到就遮一小段时间，让「截图里带上敏感内容」这条路也走不通。
+    ///
+    /// 2026-11-04（安全文案复核 · 过度承诺）：原文写「收到就遮一小段时间，让『截图里
+    /// 带上敏感内容』这条路也走不通」—— **不成立**。`userDidTakeScreenshotNotification`
+    /// 在**图片已经写进相册之后**才发出，此后的遮挡不可能把明文从那张图里去掉。
+    /// 它真正的作用只有两个：① 让**紧接着**的下一次截屏/录屏前后是遮挡状态；
+    /// ② 给用户一个明确提醒。文案与注释都按这个事实改写，不假装能救回已经拍下的图。
     @State private var screenshotFlash = false
     @State private var flashTask: Task<Void, Never>?
     /// 2026-11-01（Round 309）：**退到后台时的系统快照**。
@@ -39,7 +44,8 @@ private struct CaptureShieldModifier: ViewModifier {
                         .font(V.F.icon22)
                         .foregroundStyle(V.C.text2)
                         .accessibilityHidden(true)
-                    Text(sceneOnly ? "已隐藏" : message)
+                    Text(screenshotFlash ? "刚刚的截图里可能带有明文码值 —— 请确认这张图只留在你自己的相册里。"
+                     : (sceneOnly ? "已隐藏" : message))
                         .font(V.F.body)
                         .foregroundStyle(V.C.text1)
                         .multilineTextAlignment(.center)
