@@ -127,6 +127,11 @@ extension LockService {
     //   按压全被锁当成普通开锁验证 (所以门锁提示"验证失败")。现在只认"收满 times 次干净按压"。
     func fpStart(times: Int = 8, firstFrameMs: Int = 8000, idleAfterPressMs: Int = 16000,
                  overallMs: Int = 150000, onPress: ((FpPress) -> Void)? = nil) async throws -> [FpPress] {
+        // 2026-11-04（只读试验模式的缺口 · 真缺陷）：录指纹走的是**直发** `ble.writeFrameHex`，
+        // 而 `assertReadOnly` 只挂在 `LockServiceLink`/`HardwareService` 两个出口上 ——
+        // 于是 `0x13 录入指纹`（在 writeCmdsBlocked 名单里）在**只读试验模式下照样发得出去**。
+        // 文案承诺「写凭证…全部被拦下」，这里就是一个反例。
+        try ZKProtocol.assertReadOnly(0x13)
         let (m, sk) = try keys()
         try await ensureToken()
         let hex = ZKProtocol.injectToken(ZKCmdBuilder.cmd13AddFp(m, sk, times, 15).hex,
