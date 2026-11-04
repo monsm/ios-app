@@ -645,7 +645,7 @@ struct RecordsScreen: View {
                                 Button {
                                     open(pair.element)
                                 } label: {
-                                    V7RecordRow(entry: pair.element)
+                                    V7RecordRow(entry: pair.element, showsLock: lockScope == .all)
                                         .background(flash == pair.element.id ? V.C.blue.opacity(0.12) : Color.clear)
                                 }
                                 .buttonStyle(.plain)
@@ -1005,6 +1005,16 @@ struct RecordsScreen: View {
 
 private struct V7RecordRow: View {
     let entry: LedgerEntry
+    /// 「全部锁」模式下补一行锁名。2026-11-04（视觉复核）：多锁家庭的列表里，
+    /// 两把锁的记录长得**一模一样**（时间 + 事件 + 点），用户分不清是哪扇门。
+    /// `entry.detail` 的第一段就是锁名（`RecordsSource.detail` 拼的）。
+    var showsLock: Bool = false
+
+    private var lockName: String? {
+        guard showsLock, let d = entry.detail else { return nil }
+        let first = d.split(separator: "·").first.map { String($0).trimmingCharacters(in: .whitespaces) } ?? ""
+        return first.isEmpty ? nil : first
+    }
 
     private var tint: Color {
         switch entry.tone {
@@ -1056,6 +1066,12 @@ private struct V7RecordRow: View {
                         .font(V.F.rowDetail)
                         .foregroundStyle(V.C.text3)
                 }
+                if let lockName {
+                    Text(lockName)
+                        .font(V.F.rowDetail)
+                        .foregroundStyle(V.C.text3)
+                        .lineLimit(1)
+                }
             }
             Spacer(minLength: V.S.gapS)
             Circle()
@@ -1065,7 +1081,10 @@ private struct V7RecordRow: View {
         .frame(minHeight: V.List.rowMinHeight)
         .contentShape(.rect)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(TimeDisplay.clock(entry.at)) \(entry.event)")
+        // 2026-11-04：`VLedgerRow` 的 a11y 带归属，这一份没带 —— 读屏用户听不出是谁开的。
+        .accessibilityLabel("\(TimeDisplay.clock(entry.at)) \(entry.event)"
+                            + (entry.owner.map { "，\($0)" } ?? "")
+                            + (lockName.map { "，\($0)" } ?? ""))
     }
 }
 
