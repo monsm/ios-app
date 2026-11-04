@@ -473,6 +473,10 @@ final class SettingsStore {
         fence = false
         dbltapGuard = true
         quietNight = true
+        // 2026-11-04（第二轮漏项 · 与 117 轮的无障碍四项同类）：`quickGridCount` 也在外观页可改
+        // （「快捷格 10 选 N」），却没被这里重置 —— 用户点「恢复默认外观」后，
+        // 主题/字号/密度全回去了，**首页还是只显示他上次选的 3 格**。
+        quickGridCount = 6   // 与 `quickGridCount` 的缺省值同源（kf_quick_grid 默认 6）
         HeroStats.setVisible(HeroStats.all)
     }
 }
