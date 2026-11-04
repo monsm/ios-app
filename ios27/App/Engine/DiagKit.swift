@@ -117,6 +117,11 @@ enum DiagLogs {
     private static let savePending = Locked(false)
 
     private static func loadIntoCache() -> [DiagLogEntry] {
+        // 2026-11-04（空壳泄漏 · 真缺陷）：诊断流水记的是**真实交互帧**（MAC / PIN / ekey / 命令码），
+        // 而它此前**完全不判空壳** —— 设置页的「诊断流水」在空壳模式里照样能打开，
+        // 被胁迫者只要点进去就能看到真实使用留下的全部痕迹。这恰恰是空壳要藏的东西。
+        // 空壳里一律返回空表（写入也一并停掉，见 append）。
+        if DB.isDecoy { return [] }
         if let c = entryCache.withLock({ $0 }) { return c }
         let loaded = DiagLogStore.load()
         entryCache.withLock { $0 = loaded }
@@ -165,6 +170,8 @@ enum DiagLogs {
     }
 
     static func append(_ level: String, _ msg: String, date: String, time: String) {
+        // 空壳里不写：写入会把"被胁迫者在空壳里的操作"混进真实流水，事后排查时会误导。
+        if DB.isDecoy { return }
         var list = loadIntoCache()
         list.append(DiagLogEntry(date: date, time: time, level: level, msg: msg))
         let cap = maxLines

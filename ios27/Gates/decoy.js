@@ -30,6 +30,7 @@ const TARGETS = [
   ['Engine/StoreLedger.swift', 'static func saveLedger(_ mac'],
   ['Engine/MemberHub.swift', 'static func saveExt(_ id'],
   ['Engine/MemberHub.swift', 'static func claim(_ mac'],
+  ['Engine/DiagKit.swift', 'static func loadIntoCache()'],
 ];
 
 let bad = 0;
