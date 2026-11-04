@@ -13,9 +13,7 @@ import UIKit
 /// 路由枚举 `.keyCreate` 没有关联值，加一个会牵动备份/深链的既有写法；
 /// 用一次性意图（读完即清）风险最小。
 @MainActor
-enum KeyCreateIntent {
-    static var pending: KeyItem.Kind?
-}
+// 2026-11-04（S4 前置）：KeyCreateIntent 已搬到独立文件（见 KeysIntents.swift）。留在旧页里会让旧页删不掉 —— 新页仍在引用它。
 
 struct KeyCreateScreen: View {
     // internal（不是 private）：四步视图住在 KeyCreateParts.swift 的 extension 里，

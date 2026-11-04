@@ -23,6 +23,7 @@ const APP = path.join(ROOT, 'App');
 // 白名单：相对路径 → 理由
 const EXEMPT = {
   'Design/V7/V7Tokens.swift': 'V7 令牌层：rgb()/V.F.sans(数字) 只能在这里定义',
+  'Design/V8/V8Tokens.swift': 'V8 令牌层：颜色/字号字面量只在这里定义（重构方案 03）',
   'Design/Components/Dial.swift': 'Canvas 几何计算（刻度长度/角度），不是样式令牌',
 };
 
@@ -172,10 +173,60 @@ for (const n of motionNames) {
   if (!used) deadTokens.push("M." + n);
 }
 
+// ---------- V8 死令牌检查（2026-11-04 补齐） ----------
+// 为什么现在才加：S4 之前 V8 只有 3 个根页在用，141 个令牌里必然有一大批还没落地 ——
+// 那时把 V8 纳入死令牌检查会报出一堆"暂时没人用"的假红。
+// 43 个 Dest 全部迁完之后，剩下的零消费者就是**真的没落地**（或该删），检查才有意义。
+//
+// 判据与 V7 同口径：令牌层之外没有任何文件引用它 ⇒ 死。
+// 例外：令牌层的构造辅助函数（hex/dual/capsule）与语义上"给调用方留的档位"不在此列 ——
+// 但注意：**"以后可能用得上"不是理由**。留着不用等于让人以为它有意义。
+const V8_TOKEN_FILE = 'Design/V8/V8Tokens.swift';
+const v8TokenSrc = fs.readFileSync(path.join(APP, V8_TOKEN_FILE), 'utf8');
+
+// 逐 enum 收集 static let/var 名字（只取一层：V8 的命名空间都是一层）
+function v8Groups(src) {
+  const lines = src.split(/\r?\n/);
+  const out = {};
+  let cur = null, depth = 0;
+  for (const line of lines) {
+    const em = /^    enum (\w+) \{/.exec(line);
+    if (em) { cur = em[1]; depth = 1; out[cur] = out[cur] || []; continue; }
+    if (!cur) continue;
+    for (const ch of line) { if (ch === '{') depth++; else if (ch === '}') depth--; }
+    if (depth === 0) { cur = null; continue; }
+    const dm = /^        static (?:let|var) (\w+)/.exec(line);
+    if (dm) out[cur].push(dm[1]);
+  }
+  return out;
+}
+
+// 令牌层自己的构造辅助函数：它们是**工具**，不是样式决定，不受"必须有消费者"约束。
+const V8_TOOL = new Set(['hex', 'dual', 'capsule']);
+const v8Dead = [];
+for (const [group, names] of Object.entries(v8Groups(v8TokenSrc))) {
+  for (const n of names) {
+    if (V8_TOOL.has(n)) continue;
+    const re = new RegExp('\\b' + n + '\\b');
+    let used = false;
+    for (const f of files) {
+      const rel = path.relative(APP, f).split(path.sep).join('/');
+      if (rel === V8_TOKEN_FILE) continue;
+      if (re.test(fs.readFileSync(f, 'utf8'))) { used = true; break; }
+    }
+    if (!used) v8Dead.push('V8.' + group + '.' + n);
+  }
+}
+
 // 输出
-if (findings.length === 0 && deadTokens.length === 0) {
-  console.log(`tokens: OK — ${files.length} 个 Swift 文件，0 处硬编码样式字面量（含 V7 字号/色板）`);
+if (findings.length === 0 && deadTokens.length === 0 && v8Dead.length === 0) {
+  console.log(`tokens: OK — ${files.length} 个 Swift 文件，0 处硬编码样式字面量（含 V7 字号/色板 + V8 死令牌）`);
   process.exit(0);
+}
+if (v8Dead.length > 0) {
+  console.log(`tokens: FAIL - ${v8Dead.length} 个 V8 令牌零消费者（V7 与 V8 都已全量落地，剩下的就是没落地）`);
+  for (const n of v8Dead) console.log('  ' + n);
+  console.log('  处置：要么用起来，要么删掉。\n');
 }
 if (deadTokens.length > 0) {
   console.log(`tokens: FAIL - ${deadTokens.length} token(s) with zero consumers`);

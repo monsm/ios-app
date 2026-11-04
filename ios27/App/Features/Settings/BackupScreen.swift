@@ -430,21 +430,4 @@ struct BackupScreen: View {
 // MARK: - 系统文件导出（FileDocument）
 
 /// 备份文本的 FileDocument 包装：导出的就是用户看到的那段 JSON / 加密信封。
-struct BackupDoc: FileDocument {
-    static var readableContentTypes: [UTType] { [.plainText, .json] }
-    var text: String
-
-    init(text: String) { self.text = text }
-
-    init(configuration: ReadConfiguration) throws {
-        guard let data = configuration.file.regularFileContents,
-              let text = String(data: data, encoding: .utf8) else {
-            throw CocoaError(.fileReadCorruptFile)
-        }
-        self.text = text
-    }
-
-    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
-        FileWrapper(regularFileWithContents: Data(text.utf8))
-    }
-}
+// 2026-11-04（S4 前置）：BackupDoc 已搬到独立文件（见 BackupStudioTypes.swift）。留在旧页里会让旧页删不掉 —— 新页仍在引用它。

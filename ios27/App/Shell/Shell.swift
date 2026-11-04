@@ -23,42 +23,71 @@ struct Shell: View {
     /// 并遍历全部锁的台账**（切 Tab、开 sheet、任何 @Observable 变化都会触发）。
     @State private var keysBadge: Int = 0
 
+    /// V8 浮岛标签栏开关：默认自绘（参考图形态）；置 true 回退官方全宽 TabView。
+    private var useNativeTabBar: Bool { DB.store.getBool("kf_native_tabbar") }
+
+    private var tabSelection: Binding<Int> {
+        Binding(
+            get: { router.tab.rawValue },
+            set: { newValue in
+                if let slot = TabSlot(rawValue: newValue) { router.tab = slot }
+            }
+        )
+    }
+
     var body: some View {
         @Bindable var router = router
         TabView(selection: $router.tab) {
             Tab(TabSlot.door.title, systemImage: TabSlot.door.symbol, value: TabSlot.door) {
                 NavigationStack(path: router.path(for: .door)) {
-                    DoorScreen().withDestinations()
+                    // 2026-11-04（V8 重构 S4）：门页切到 V8 设计语言。
+                    DoorHomeScreen().withDestinations()
                 }
             }
             Tab(TabSlot.keys.title, systemImage: TabSlot.keys.symbol, value: TabSlot.keys) {
                 NavigationStack(path: router.path(for: .keys)) {
-                    KeysScreen().withDestinations()
+                    // 2026-11-04（V8 重构 S4）：凭证根页切到 V8 设计语言。
+                    // 旧 KeysScreen 先保留（可供回退与对照），确认无回归后删除。
+                    KeysHomeScreen().withDestinations()
                 }
             }
             // 原生角标：由系统标签栏渲染，位置/字号/颜色都由系统决定（不再自己画红点）。
             .badge(keysBadge)
             Tab(TabSlot.records.title, systemImage: TabSlot.records.symbol, value: TabSlot.records) {
                 NavigationStack(path: router.path(for: .records)) {
-                    RecordsScreen().withDestinations()
+                    // 2026-11-04（V8 重构 S4）：记录页切到 V8 设计语言。
+                    RecordsHomeScreen().withDestinations()
                 }
             }
             Tab(TabSlot.household.title, systemImage: TabSlot.household.symbol, value: TabSlot.household) {
                 NavigationStack(path: router.path(for: .household)) {
-                    HouseholdScreen().withDestinations()
+                    // 2026-11-04（V8 重构 S4）：家页切到 V8 设计语言。
+                    HouseHomeScreen().withDestinations()
                 }
             }
             Tab(TabSlot.settings.title, systemImage: TabSlot.settings.symbol, value: TabSlot.settings) {
                 NavigationStack(path: router.path(for: .settings)) {
-                    SettingsScreen().withDestinations()
+                    // 2026-11-04（V8 重构 S4）：设置页切到 V8 索引语法。
+                    SettingsHomeScreen().withDestinations()
                 }
             }
         }
-        // 2026-11-01：官方标签栏的**液态玻璃行为**之一 —— 向下滚动时标签栏最小化、
-        // 向上滚回来时展开。这是 iOS 26 起系统标签栏的标准动作（`latest-apis.md › Tab Bar`），
-        // 自己画的栏做不出这个。
+        // 2026-11-04（V8 重构 S3）：标签栏改成参考图的**浮动胶囊**。
+        // 做法：保留官方 TabView（保住 5 条 NavigationStack 与状态），只把系统栏隐藏，
+        // 再用 safeAreaInset 叠一条 GlassTabBar —— 这样既拿到浮岛形态，又不重写导航。
+        // 回退：`kf_native_tabbar` = true 时用官方全宽栏（系统材质与 Duo 适配）。
+        .toolbar(useNativeTabBar ? .visible : .hidden, for: .tabBar)
+        .safeAreaInset(edge: .bottom) {
+            if !useNativeTabBar {
+                GlassTabBar(
+                    titles: TabSlot.allCases.map(\.title),
+                    symbols: TabSlot.allCases.map(\.symbol),
+                    selection: tabSelection
+                )
+            }
+        }
         .tabBarMinimizeBehavior(.onScrollDown)
-        .background(V.C.bg.ignoresSafeArea())
+        .background(V8.C.bg.ignoresSafeArea())
         .sensoryFeedback(.selection, trigger: router.tab)
         // E-16：只在真正可能变化时重算角标，不在每次 body 求值时读库。
         .task { refreshBadge() }

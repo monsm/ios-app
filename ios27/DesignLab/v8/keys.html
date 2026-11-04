@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><title>V8 · 凭证页</title>
+<style>
+  :root{--ink1:#0A0A0C;--ink2:#33333A;--ink3:#5E5D63;--ink4:#6E6D75;--bg:#F2F1F6;--card:#F9F9FE;
+        --well:#E9E8EF;--chipOff:#F4F3FA;--chipOn:#FFFFFF;--line:#DCDBE4;--lineStrong:#D8D7DE;
+        --accent:#0558B8;--accentFill:#2E86E8;--accentTrack:#DCE6F5;--ok:#12684A;--okFill:#1E9663;--okTrack:#D8EDE3;
+        --warn:#8A5A0B;--warnFill:#B8811A;--warnTrack:#F0E4CC;--danger:#B3261E;--dangerFill:#E5483C;--dangerTrack:#F3DAD7;
+        --info:#4A46C8;--infoFill:#6F6BE0;--infoTrack:#E1E0F5;--purple:#6A3FB8;--purpleFill:#9A78D8;--purpleTrack:#E6E0F5}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#FAFAFC;font-family:-apple-system,"SF Pro Text","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+       display:flex;gap:56px;padding:52px;align-items:flex-start}
+  .phone{width:402pt;height:874pt;border-radius:54pt;position:relative;overflow:hidden;background:var(--bg);
+         box-shadow:0 0 0 11pt #101010,0 0 0 12pt #4a4a4a;flex:none}
+  .island{position:absolute;top:14.2pt;left:50%;transform:translateX(-50%);width:125px;height:36px;background:#000;border-radius:20px;z-index:9}
+  .status{position:absolute;top:15.9pt;left:33.1pt;right:33.1pt;display:flex;justify-content:space-between;font-size:15pt;font-weight:600;color:var(--ink1)}
+  .chips{position:absolute;top:64.8pt;left:16.6pt;display:flex;gap:10.6pt}
+  .chip{height:52.6pt;border-radius:26.3pt;display:flex;align-items:center;gap:7.1pt;padding:0 16pt 0 7.1pt;
+        background:var(--chipOff);border:.4pt solid var(--lineStrong)}
+  .chip.on{background:var(--chipOn);border-color:transparent}
+  .ic{width:26.5pt;height:27.4pt;position:relative;flex:none}
+  .ic .n{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10pt;font-weight:700;color:var(--ink1)}
+  .c2{display:flex;flex-direction:column;gap:2.4pt;line-height:1}
+  .c2 .l{font-size:14.5pt;color:var(--ink4)}
+  .c2 .v{font-size:16.4pt;font-weight:600;color:var(--ink1);white-space:nowrap}
+  .h1{position:absolute;top:158.4pt;left:33.1pt;right:33.1pt;font-size:34pt;font-weight:600;letter-spacing:-.5pt;color:var(--ink1);line-height:38.5pt}
+  .lead{position:absolute;top:204pt;left:33.1pt;right:33.1pt;font-size:22pt;line-height:27.9pt;color:var(--ink3)}
+  .card{position:absolute;left:16.6pt;width:368.6pt;background:var(--card);border-radius:26pt;padding:20.6pt 16.5pt 18.7pt;
+        box-shadow:0 1.5pt 10pt rgba(40,40,70,.05)}
+  .eyebrow{font-size:14.5pt;color:var(--ink4)}
+  .stmt{font-size:21.5pt;font-weight:700;letter-spacing:-.3pt;color:var(--ink1);line-height:25.8pt;margin-top:8.5pt}
+  .hair{height:.4pt;background:var(--line);margin:13.6pt 0}
+  .dot{height:1pt;background-image:radial-gradient(circle,var(--lineStrong) .55pt,transparent .65pt);background-size:4pt 1pt;background-repeat:repeat-x}
+  .drow{height:22.1pt;display:flex;align-items:center;gap:8pt;white-space:nowrap}
+  .drow .tag{font-size:13.9pt;width:66pt;flex:none;overflow:hidden;text-overflow:ellipsis}
+  .drow .mid{font-size:17.7pt;color:var(--ink1);flex:1;overflow:hidden;text-overflow:ellipsis}
+  .drow .det{font-size:14.5pt;color:var(--ink4);flex:none}
+  .drow .val{font-size:17.7pt;font-weight:600;color:var(--ink1);margin-left:auto;flex:none;font-variant-numeric:tabular-nums}
+  .foot{font-size:15.8pt;line-height:19.9pt;color:var(--ink3);margin-top:14pt}
+  /* 选项卡 */
+  .searchrow{display:flex;align-items:center;gap:8pt;height:44pt;color:var(--ink4);font-size:15.8pt}
+  .fchips{display:flex;gap:10.6pt;margin-top:4pt;overflow:hidden}
+  .fchip{height:44pt;padding:0 12pt;border-radius:22pt;background:var(--chipOff);display:flex;align-items:center;
+         font-size:12.6pt;font-weight:600;color:var(--ink1);white-space:nowrap}
+  .fchip.on{background:var(--accent);color:#fff}
+  body.dark .fchip.on{color:#04101E}
+  .navrow{height:44pt;display:flex;align-items:center;gap:8pt}
+  .navrow .t{font-size:17.7pt;font-weight:600;color:var(--ink1)}
+  .navrow .d{font-size:13.9pt;color:var(--ink4)}
+  .chev{width:5pt;height:9pt;border-right:1.4pt solid var(--ink4);border-top:1.4pt solid var(--ink4);transform:rotate(45deg);margin-left:auto}
+</style></head><body>
+<div class="phone">
+  <div class="island"></div>
+  <div class="status"><span>9:41</span><span>▪▪▪ 5G</span></div>
+  <div class="chips">
+    <div class="chip on"><div class="ic"><svg viewBox="0 0 26 27"><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="var(--accentTrack)" stroke-width="4.4"/><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="var(--accent)" stroke-width="4.4" stroke-dasharray="40 66" stroke-linecap="round" transform="rotate(-90 13 13.5)"/></svg><div class="n">5</div></div>
+      <div class="c2"><span class="l">密码</span><span class="v">5 枚</span></div></div>
+    <div class="chip"><div class="ic"><svg viewBox="0 0 26 27"><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="var(--purpleTrack)" stroke-width="4.4"/><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="var(--purple)" stroke-width="4.4" stroke-dasharray="24 66" stroke-linecap="round" transform="rotate(-90 13 13.5)"/></svg><div class="n">3</div></div>
+      <div class="c2"><span class="l">指纹</span><span class="v">3 枚</span></div></div>
+    <div class="chip"><div class="ic"><svg viewBox="0 0 26 27"><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="var(--warnTrack)" stroke-width="4.4"/><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="var(--warn)" stroke-width="4.4" stroke-dasharray="8 66" stroke-linecap="round" transform="rotate(-90 13 13.5)"/></svg><div class="n">1</div></div>
+      <div class="c2"><span class="l">临时码</span><span class="v">1 枚</span></div></div>
+    <div class="chip"><div class="ic"><svg viewBox="0 0 26 27"><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="var(--okTrack)" stroke-width="4.4"/><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="var(--ok)" stroke-width="4.4" stroke-dasharray="16 66" stroke-linecap="round" transform="rotate(-90 13 13.5)"/></svg><div class="n">2</div></div>
+      <div class="c2"><span class="l">手机钥匙</span><span class="v">2 枚</span></div></div>
+  </div>
+  <div class="h1">凭证都在有效期内</div>
+  <div class="lead">1 枚明天到期。凭证台账只在本机，不联网、不上传。</div>
+
+  <!-- 卡1 -->
+  <div class="card" style="top:300pt">
+    <div style="display:flex;align-items:flex-start">
+      <div><div class="eyebrow">凭证台账</div><div class="stmt">按类型分组</div></div>
+      <div style="margin-left:auto;padding-top:2pt">
+        <svg width="66" height="66" viewBox="0 0 66 66">
+          <circle cx="33" cy="33" r="28" fill="none" stroke="var(--line)" stroke-width="12"/>
+          <circle cx="33" cy="33" r="28" fill="none" stroke="var(--accentFill)" stroke-width="12" stroke-dasharray="79 176" transform="rotate(168 33 33)"/>
+          <circle cx="33" cy="33" r="28" fill="none" stroke="var(--purpleFill)" stroke-width="12" stroke-dasharray="47 176" transform="rotate(312 33 33)"/>
+          <circle cx="33" cy="33" r="28" fill="none" stroke="var(--warnFill)" stroke-width="12" stroke-dasharray="12 176" transform="rotate(72 33 33)"/>
+          <text x="33" y="39" text-anchor="middle" font-size="17" font-weight="700" fill="var(--ink1)">9</text>
+        </svg>
+      </div>
+    </div>
+    <div class="hair"></div>
+    <div class="drow"><span class="tag" style="color:var(--accent)">密码</span><span class="mid">主门密码</span><span class="det">我</span><span class="val">永久</span></div>
+    <div class="dot"></div>
+    <div class="drow"><span class="tag" style="color:var(--purple)">指纹</span><span class="mid">右手拇指</span><span class="det">我</span><span class="val">永久</span></div>
+    <div class="dot"></div>
+    <div class="drow"><span class="tag" style="color:var(--warn)">临时码</span><span class="mid">保洁 周三</span><span class="det">访客</span><span class="val">明天</span></div>
+    <div class="dot"></div>
+    <div class="drow"><span class="tag" style="color:var(--ok)">手机钥匙</span><span class="mid">我的 iPhone</span><span class="det">我</span><span class="val">永久</span></div>
+    <div class="hair"></div>
+    <div class="foot">码值在详情页逐位点开。列表只显示类型与剩余天数，不显示明文。</div>
+  </div>
+
+  <!-- 卡2 -->
+  <div class="card" style="top:690pt">
+    <div class="eyebrow">到期压力</div>
+    <div class="stmt">明天到期</div>
+    <div class="hair"></div>
+    <div style="display:flex;gap:16pt">
+      <div style="flex:1"><div style="font-size:14.5pt;color:var(--ink4)">最近到期</div><div style="font-size:17.7pt;font-weight:600;color:var(--ink1);margin-top:4pt">明天到期</div></div>
+      <div style="width:.4pt;background:var(--line)"></div>
+      <div style="flex:1"><div style="font-size:14.5pt;color:var(--ink4)">已过期</div><div style="font-size:17.7pt;font-weight:600;color:var(--ink1);margin-top:4pt">0 枚</div></div>
+    </div>
+  </div>
+
+  <div style="position:absolute;top:700pt;left:0;width:402pt;height:174pt;
+       background:linear-gradient(to bottom,rgba(242,241,246,0) 0%,rgba(242,241,246,.55) 40%,rgba(242,241,246,.92) 72%,rgba(242,241,246,1) 100%)"></div>
+  <div class="tabwrap" style="position:absolute;top:811.4pt;left:6pt;width:390.5pt;height:48.2pt;border-radius:24.1pt;
+       background:rgba(255,255,255,.74);border:.4pt solid rgba(255,255,255,.92);display:flex;align-items:center;padding:0 4pt;
+       box-shadow:0 1pt 12pt rgba(40,40,70,.08)">
+    <div style="flex:1;text-align:center;font-size:12.6pt;font-weight:600;color:var(--ink1)">门</div>
+    <div style="flex:1;position:relative;text-align:center;font-size:12.6pt;font-weight:600;color:var(--accent)">
+      <span style="position:absolute;top:-10pt;left:50%;transform:translateX(-50%);width:70pt;height:41.1pt;border-radius:20.6pt;background:var(--chipOn);opacity:.92;z-index:-1"></span>凭证</div>
+    <div style="flex:1;text-align:center;font-size:12.6pt;font-weight:600;color:var(--ink1)">记录</div>
+    <div style="flex:1;text-align:center;font-size:12.6pt;font-weight:600;color:var(--ink1)">家</div>
+    <div style="flex:1;text-align:center;font-size:12.6pt;font-weight:600;color:var(--ink1)">设置</div>
+  </div>
+</div>
+
+<!-- 第二屏：卡片后续（检索 / 工具）-->
+<div class="phone">
+  <div class="island"></div>
+  <div class="status"><span>9:41</span><span>▪▪▪ 5G</span></div>
+  <div class="chips" style="top:64.8pt">
+    <div class="chip"><div class="c2"><span class="l">搜索</span><span class="v">搜名称 / 归属 / 类型</span></div></div>
+  </div>
+  <div class="card" style="top:140pt">
+    <div class="searchrow"><span>⌕</span><span>搜名称 / 归属 / 类型</span></div>
+    <div class="hair"></div>
+    <div class="fchips">
+      <div class="fchip on">全部 9</div><div class="fchip">密码 5</div><div class="fchip">指纹 3</div><div class="fchip">临时码 1</div>
+    </div>
+    <div style="margin-top:10pt;font-size:13.9pt;color:var(--ink4)">命中 9 枚</div>
+  </div>
+  <div class="card" style="top:400pt">
+    <div class="eyebrow">凭证工具</div>
+    <div class="stmt">六个入口</div>
+    <div class="hair"></div>
+    <div class="navrow"><div><div class="t">新增凭证</div><div class="d">密码 / 指纹 / 临时码</div></div><div class="chev"></div></div>
+    <div class="dot"></div>
+    <div class="navrow"><div><div class="t">凭证工作室</div><div class="d">批量 / 回收站 / 版本 / 预警 / 导出 / 检测</div></div><div class="chev"></div></div>
+    <div class="dot"></div>
+    <div class="navrow"><div><div class="t">动态密码</div><div class="d">按锁端周期生成 6 位动态码</div></div><div class="chev"></div></div>
+    <div class="dot"></div>
+    <div class="navrow"><div><div class="t">到期月历</div><div class="d">看这个月哪天有凭证到期</div></div><div class="chev"></div></div>
+    <div class="dot"></div>
+    <div class="navrow"><div><div class="t">手机钥匙</div><div class="d">给家人的手机签一把钥匙</div></div><div class="chev"></div></div>
+    <div class="dot"></div>
+    <div class="navrow"><div><div class="t">分享给安卓</div><div class="d">扫码把开锁凭证导到安卓手机</div></div><div class="chev"></div></div>
+  </div>
+</div>
+</body></html>

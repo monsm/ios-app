@@ -41,6 +41,18 @@ for (const m of v7src.matchAll(/static let (\w+)\s*=\s*dual\(\s*0x([0-9A-Fa-f]{6
   V7[m[1]] = { light: m[2].toUpperCase(), dark: m[3].toUpperCase(), lightA: m[4] === undefined ? 1 : parseFloat(m[4]), darkA: m[5] === undefined ? 1 : parseFloat(m[5]), dual: true };
 }
 
+// —— V8 令牌层（重构方案 03 §2）：同样逐模式核算。
+// V8 是「构图照抄、色值重算」的落地层：参考图正文灰只有 3.63、卡标签 3.26，
+// 直接抄会过不了 AA；这里核的就是重算后的值。
+const V8_TOKENS = path.join(ROOT, 'App', 'Design', 'V8', 'V8Tokens.swift');
+const V8 = {};
+if (fs.existsSync(V8_TOKENS)) {
+  const v8src = fs.readFileSync(V8_TOKENS, 'utf8');
+  for (const m of v8src.matchAll(/static let (\w+)\s*=\s*dual\(\s*0x([0-9A-Fa-f]{6})\s*,\s*0x([0-9A-Fa-f]{6})(?:\s*,\s*lightAlpha:\s*([0-9.]+)\s*,\s*darkAlpha:\s*([0-9.]+))?\s*\)/g)) {
+    V8[m[1]] = { light: m[2].toUpperCase(), dark: m[3].toUpperCase(), lightA: m[4] === undefined ? 1 : parseFloat(m[4]), darkA: m[5] === undefined ? 1 : parseFloat(m[5]), dual: true };
+  }
+}
+
 // V7 低对比黑名单：参考图里的视觉值，但 < 4.5:1（11pt 文本）或 < 3:1（非文本）。
 // 命中即失败，必须提供达标替代（已落地：text4=#9A9A9F / infoGlyph=#8E8E93 / axisLabel=#8E8E93）。
 const BANNED_V7 = {
@@ -171,6 +183,36 @@ checkV7('危险 critical / bg（非文本）', 'critical', 'bg', 3);
 checkV7('正常 rewardGreen / bg（非文本）', 'rewardGreen', 'bg', 3);
 checkV7('按钮白字 text1 / blue（17pt 粗体按大字号 3:1）', 'text1', 'blue', 3);
 checkV7('按钮白字 text1 / red（17pt 粗体按大字号 3:1）', 'text1', 'red', 3);
+
+// —— V8 断言（16 组 × 2 模式）
+function checkV8(name, fg, bg, min) {
+  if (!fs.existsSync(V8_TOKENS)) return;
+  for (const mode of MODES) {
+    const f = V8[fg] ? V8[fg][mode] : undefined;
+    const b = V8[bg] ? V8[bg][mode] : undefined;
+    if (!f || !b) { fails.push('V8 ' + name + ' [' + mode + ']: 令牌缺失 ' + (!f ? fg : bg)); continue; }
+    const r = ratio(f, b);
+    if (r >= min) pass++;
+    else fails.push('V8 ' + name + ' [' + mode + '] ' + fg + '#' + f + ' on ' + bg + '#' + b + ' = ' + r.toFixed(2) + ':1 < ' + min + ':1');
+  }
+}
+checkV8('正文 ink3 / bg', 'ink3', 'bg', 4.5);
+checkV8('正文 ink3 / card', 'ink3', 'card', 4.5);
+checkV8('眉标 ink4 / bg', 'ink4', 'bg', 4.5);
+checkV8('眉标 ink4 / card', 'ink4', 'card', 4.5);
+checkV8('强调 accent / bg', 'accent', 'bg', 4.5);
+checkV8('成功 ok / bg', 'ok', 'bg', 4.5);
+checkV8('警告 warn / bg', 'warn', 'bg', 4.5);
+checkV8('危险 danger / bg', 'danger', 'bg', 4.5);
+checkV8('信息 info / bg', 'info', 'bg', 4.5);
+checkV8('强调容器 accentFill / bg（非文本）', 'accentFill', 'bg', 3);
+checkV8('成功容器 okFill / bg（非文本）', 'okFill', 'bg', 3);
+checkV8('警告容器 warnFill / bg（非文本）', 'warnFill', 'bg', 3);
+checkV8('危险容器 dangerFill / bg（非文本）', 'dangerFill', 'bg', 3);
+// 2026-11-04（Round 16）：infoFill 已从令牌层删除（全仓零消费者，见 V8Tokens.swift 的处置说明）。
+// 断言跟着删 —— 留一条对不存在令牌的断言，闸门会一直报"令牌缺失"，等于把真问题淹掉。
+checkV8('英雄数 ink1 / bg（大字号）', 'ink1', 'bg', 3);
+checkV8('卡内分隔线 line / bg（装饰，仅要求可感知）', 'line', 'bg', 1.2);
 
 // —— 黑名单：V7 色板里出现旧的低对比值 → 必须换达标替代
 for (const [hex, info] of Object.entries(BANNED_V7)) {

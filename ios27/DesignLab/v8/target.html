@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8">
+<title>新设计语言 · 目标形态</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#FAFAFC;font-family:-apple-system,"SF Pro Text","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+       display:flex;gap:54px;padding:50px;align-items:flex-start}
+  .phone{width:402pt;height:874pt;border-radius:54pt;position:relative;overflow:hidden;
+         background:#F2F1F6;box-shadow:0 0 0 11pt #101010,0 0 0 12pt #4a4a4a;flex:none}
+  .abs{position:absolute}
+  .island{top:14.2pt;left:50%;transform:translateX(-50%);width:125px;height:36px;
+          background:#000;border-radius:20px;z-index:9}
+  .status{top:15.9pt;left:33.1pt;right:33.1pt;display:flex;justify-content:space-between;
+          font-size:15pt;font-weight:600;color:#0A0A0C}
+  /* 芯片行 top 64.8 h 52.6 */
+  .chips{top:64.8pt;left:16.6pt;display:flex;gap:10.6pt}
+  .chip{height:52.6pt;border-radius:26.3pt;display:flex;align-items:center;gap:9.7pt;
+        padding:0 16pt 0 8.6pt;flex:none;background:#F4F3FA;border:.4pt solid #E3E2EA}
+  .chip.on{background:#fff;border-color:transparent}
+  .chip.sq{width:55.7pt;padding:0;justify-content:center}
+  .ic{width:26.5pt;height:27.4pt;flex:none;position:relative}
+  .ic .n{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+         font-size:10pt;font-weight:700;color:#0A0A0C}
+  .c2{display:flex;flex-direction:column;line-height:1;gap:2.4pt}
+  .c2 .l{font-size:14.5pt;color:#6E6D75}
+  .c2 .v{font-size:16.4pt;font-weight:600;color:#0A0A0C;white-space:nowrap}
+  .h1{left:33.1pt;right:33.1pt;font-size:34pt;font-weight:600;letter-spacing:-.5pt;
+      color:#0A0A0C;line-height:38.5pt}
+  .lead{left:33.1pt;right:33.1pt;font-size:22pt;line-height:27.9pt;color:#5E5D63}
+  .heroC{left:50%;transform:translateX(-50%)}
+  .glow{position:absolute;left:-20pt;top:-20pt;width:calc(100% + 40pt);height:calc(100% + 40pt);
+        border-radius:50%;background:radial-gradient(circle,rgba(61,140,232,.13) 0%,rgba(61,140,232,.06) 52%,rgba(61,140,232,0) 70%)}
+  .heroNum{position:absolute;left:0;right:0;top:50%;transform:translateY(-54%);text-align:center}
+  .heroNum .big{font-size:55pt;font-weight:700;letter-spacing:-1.5pt;color:#0558B8;line-height:1}
+  .heroNum .u{display:block;font-size:10.7pt;letter-spacing:1.2pt;color:#0558B8;margin-top:6pt;font-weight:600}
+  /* 卡片：流式布局（padding 20.6 / 16.5 / 18.7）*/
+  .card{left:16.6pt;width:368.6pt;background:#F9F9FE;border-radius:26pt;
+        padding:20.6pt 16.5pt 18.7pt;box-shadow:0 1.5pt 10pt rgba(40,40,70,.05)}
+  .eyebrow{font-size:14.5pt;color:#6E6D75}
+  .stmt{font-size:21.5pt;font-weight:700;letter-spacing:-.3pt;color:#0A0A0C;
+        line-height:25.8pt;margin-top:8.5pt}
+  .sl{font-size:14.5pt;color:#6E6D75;margin-top:20pt}
+  .sv{font-size:17.7pt;font-weight:600;color:#0A0A0C;margin-top:4pt}
+  .hair{height:.4pt;background:#E7E6EC;margin:13.6pt 0}
+  .rrow{height:22.1pt;display:flex;align-items:center;gap:8pt}
+  .rrow .tag{font-size:13.9pt;width:76pt;flex:none;white-space:nowrap}
+  .rrow .val{font-size:17.7pt;font-weight:600;color:#0A0A0C;flex:none;
+             font-variant-numeric:tabular-nums;white-space:nowrap}
+  .rrow .det{font-size:14.5pt;color:#6E6D75;margin-left:auto;white-space:nowrap;text-align:right}
+  .dotline{height:1pt;background-image:radial-gradient(circle,#D8D7DE .55pt,transparent .65pt);
+           background-size:4pt 1pt;background-repeat:repeat-x}
+  .foot{font-size:15.8pt;line-height:19.9pt;color:#5E5D63;margin-top:14pt}
+  .tabwrap{top:811.4pt;left:6pt;width:390.5pt;height:48.2pt;border-radius:24.1pt;
+           background:rgba(255,255,255,.74);backdrop-filter:blur(20pt) saturate(180%);
+           border:.4pt solid rgba(255,255,255,.92);box-shadow:0 1pt 12pt rgba(40,40,70,.08);
+           display:flex;align-items:center;z-index:8}
+  .slot{flex:1;height:41.1pt;display:flex;flex-direction:column;align-items:center;
+        justify-content:center;gap:3.6pt;position:relative}
+  .slot .pill{position:absolute;top:0;left:50%;transform:translateX(-50%);
+              width:70pt;height:41.1pt;border-radius:20.6pt;
+              background:rgba(255,255,255,.92);box-shadow:inset 0 0 6pt rgba(40,40,70,.05)}
+  .slot .i2{width:18.6pt;height:19.9pt;border-radius:4.5pt;background:#0A0A0C;position:relative}
+  .slot span{font-size:12.6pt;font-weight:600;color:#0A0A0C;position:relative}
+  .slot.on .i2{background:#0558B8}
+  .slot.on span{color:#0558B8}
+  .fade{top:690pt;left:0;width:402pt;height:184pt;z-index:7;
+        background:linear-gradient(to bottom,rgba(242,241,246,0) 0%,rgba(242,241,246,.5) 38%,
+        rgba(242,241,246,.9) 70%,rgba(242,241,246,1) 100%)}
+</style></head><body>
+
+<!-- ========== 门：P2 型（芯片行 → 环 → 标题 → 段落 → 卡片）========== -->
+<div class="phone">
+  <div class="abs island"></div>
+  <div class="abs status"><span>9:41</span><span>▪▪▪ 5G</span></div>
+  <div class="abs chips">
+    <div class="chip sq on"><div class="ic"><svg viewBox="0 0 26 27"><path d="M13 21c-5.2-3.2-9-6.4-9-10.3A4.6 4.6 0 0113 7.4 4.6 4.6 0 0122 10.7c0 3.9-3.8 7.1-9 10.3z" fill="#0558B8"/></svg></div></div>
+    <div class="chip"><div class="ic"><svg viewBox="0 0 26 27"><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="#D8EDE3" stroke-width="4.4"/><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="#12684A" stroke-width="4.4" stroke-dasharray="66.6 66.6" stroke-linecap="round" transform="rotate(-90 13 13.5)"/></svg></div>
+      <div class="c2"><span class="l">连接</span><span class="v">已连接</span></div></div>
+    <div class="chip"><div class="ic"><svg viewBox="0 0 26 27"><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="#F0E4CC" stroke-width="4.4"/><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="#8A5A0B" stroke-width="4.4" stroke-dasharray="26.6 66.6" stroke-linecap="round" transform="rotate(-90 13 13.5)"/></svg></div>
+      <div class="c2"><span class="l">布防</span><span class="v">撤防</span></div></div>
+    <div class="chip"><div class="ic"><svg viewBox="0 0 26 27"><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="#E1E0F5" stroke-width="4.4"/><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="#4A46C8" stroke-width="4.4" stroke-dasharray="33.3 66.6" stroke-linecap="round" transform="rotate(-90 13 13.5)"/></svg><div class="n">9</div></div>
+      <div class="c2"><span class="l">凭证</span><span class="v">9 枚</span></div></div>
+  </div>
+
+  <!-- hero 环：top 132 / 279.3 -->
+  <div class="abs heroC" style="top:132pt;width:279.3pt;height:279.3pt">
+    <div class="glow"></div>
+    <svg style="position:absolute;inset:0" viewBox="0 0 279.3 279.3">
+      <circle cx="139.65" cy="139.65" r="121.5" fill="none" stroke="#E7EBF6" stroke-width="36.3"
+              stroke-linecap="round" stroke-dasharray="651.6 745.1" transform="rotate(163 139.65 139.65)"/>
+      <circle cx="139.65" cy="139.65" r="121.5" fill="none" stroke="url(#g1)" stroke-width="36.3"
+              stroke-linecap="round" stroke-dasharray="495.2 745.1" transform="rotate(163 139.65 139.65)"/>
+      <rect x="137.5" y="6.7" width="4.3" height="23.3" rx="2.15" fill="#9AA6C4"/>
+      <circle cx="55.8" cy="48.6" r="11.65" fill="#0558B8"/>
+      <defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#B9C6E4"/><stop offset=".45" stop-color="#3D8CE8"/>
+        <stop offset=".75" stop-color="#4FA8DC"/><stop offset="1" stop-color="#7FD3D0"/>
+      </linearGradient></defs>
+    </svg>
+    <div class="heroNum"><span class="big">76</span><span class="u">%</span></div>
+  </div>
+
+  <div class="abs h1" style="top:434pt">门已就绪</div>
+  <div class="abs lead" style="top:478pt">前门已连接，电量充足。昨天开了 4 次门，最近一次 18:42，是妈妈的指纹。</div>
+
+  <div class="abs card" style="top:576pt">
+    <div class="eyebrow">今天的门</div>
+    <div class="stmt">4 次开锁</div>
+    <div class="sl">最近一次</div>
+    <div class="sv">18:42 · 指纹</div>
+    <div class="hair"></div>
+    <div class="rrow"><span class="tag" style="color:#0558B8">指纹</span><span class="val">2 次</span></div>
+    <div class="dotline"></div>
+    <div class="rrow"><span class="tag" style="color:#6A3FB8">密码</span><span class="val">1 次</span></div>
+    <div class="dotline"></div>
+    <div class="rrow"><span class="tag" style="color:#8A5A0B">临时码</span><span class="val">1 次</span></div>
+    <div class="dotline"></div>
+    <div class="rrow"><span class="tag" style="color:#12684A">手机钥匙</span><span class="val">0 次</span></div>
+    <div class="hair"></div>
+    <div class="foot">只统计本机收到的开锁回执；失败的尝试不计数。</div>
+  </div>
+  <div class="abs card" style="top:900pt">
+    <div class="eyebrow">一按即开</div>
+    <div class="stmt">6 个快捷位</div>
+  </div>
+  <div class="abs fade"></div>
+  <div class="abs tabwrap">
+    <div class="slot on"><div class="pill"></div><div class="i2"></div><span>门</span></div>
+    <div class="slot"><div class="i2"></div><span>凭证</span></div>
+    <div class="slot"><div class="i2"></div><span>记录</span></div>
+    <div class="slot"><div class="i2"></div><span>家</span></div>
+    <div class="slot"><div class="i2"></div><span>设置</span></div>
+  </div>
+</div>
+
+<!-- ========== 凭证：P1 型（芯片行 → 标题 → 段落 → 卡1 → 卡2）========== -->
+<div class="phone">
+  <div class="abs island"></div>
+  <div class="abs status"><span>9:41</span><span>▪▪▪ 5G</span></div>
+  <div class="abs chips">
+    <div class="chip"><div class="ic"><svg viewBox="0 0 26 27"><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="#DCE6F5" stroke-width="4.4"/><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="#0558B8" stroke-width="4.4" stroke-dasharray="33.3 66.6" stroke-linecap="round" transform="rotate(-90 13 13.5)"/></svg><div class="n">5</div></div>
+      <div class="c2"><span class="l">密码</span><span class="v">5 枚</span></div></div>
+    <div class="chip"><div class="ic"><svg viewBox="0 0 26 27"><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="#E6E0F5" stroke-width="4.4"/><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="#6A3FB8" stroke-width="4.4" stroke-dasharray="20 66.6" stroke-linecap="round" transform="rotate(-90 13 13.5)"/></svg><div class="n">3</div></div>
+      <div class="c2"><span class="l">指纹</span><span class="v">3 枚</span></div></div>
+    <div class="chip"><div class="ic"><svg viewBox="0 0 26 27"><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="#F0E4CC" stroke-width="4.4"/><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="#8A5A0B" stroke-width="4.4" stroke-dasharray="6.7 66.6" stroke-linecap="round" transform="rotate(-90 13 13.5)"/></svg><div class="n">1</div></div>
+      <div class="c2"><span class="l">临时码</span><span class="v">1 枚</span></div></div>
+  </div>
+  <div class="abs h1" style="top:158.4pt">凭证都在有效期内</div>
+  <div class="abs lead" style="top:202pt">1 枚 2 天后到期，其余永久有效。凭证台账只在本机，不联网。</div>
+  <div class="abs card" style="top:300pt">
+    <div style="display:flex;align-items:flex-start">
+      <div>
+        <div class="eyebrow">凭证台账</div>
+        <div class="stmt">全部有效</div>
+      </div>
+      <div style="margin-left:auto;text-align:center;padding-top:2pt">
+        <svg width="66" height="66" viewBox="0 0 66 66">
+          <circle cx="33" cy="33" r="28" fill="none" stroke="#E1E0F5" stroke-width="9"/>
+          <circle cx="33" cy="33" r="28" fill="none" stroke="#4A46C8" stroke-width="9"
+                  stroke-dasharray="44 132" stroke-linecap="round" transform="rotate(-90 33 33)"/>
+          <text x="33" y="38" text-anchor="middle" font-size="17" font-weight="700" fill="#0A0A0C">9</text>
+        </svg>
+      </div>
+    </div>
+    <div class="hair"></div>
+    <div class="rrow"><span class="tag" style="color:#0558B8">主门密码</span><span class="det">密码 · 我</span><span class="val">永久</span></div>
+    <div class="dotline"></div>
+    <div class="rrow"><span class="tag" style="color:#6A3FB8">右手拇指</span><span class="det">指纹 · 我</span><span class="val">永久</span></div>
+    <div class="dotline"></div>
+    <div class="rrow"><span class="tag" style="color:#8A5A0B">保洁 周三</span><span class="det">临时码 · 访客</span><span class="val">2 天</span></div>
+    <div class="dotline"></div>
+    <div class="rrow"><span class="tag" style="color:#12684A">我的 iPhone</span><span class="det">手机钥匙 · 我</span><span class="val">永久</span></div>
+    <div class="dotline"></div>
+    <div class="rrow"><span class="tag" style="color:#4A46C8">访客 一次性</span><span class="det">临时码 · 未归属</span><span class="val">1 天</span></div>
+    <div class="hair"></div>
+    <div class="foot">码值在详情页逐位点开。列表只显示类型与剩余天数，不显示明文。</div>
+  </div>
+  <div class="abs card" style="top:690pt">
+    <div class="eyebrow">到期压力</div>
+    <div class="stmt">2 天后</div>
+    <div class="hair"></div>
+    <div class="rrow"><span class="tag">最近到期</span><span class="val">12-03</span></div>
+    <div class="dotline"></div>
+    <div class="rrow"><span class="tag">已过期</span><span class="val">0 枚</span></div>
+  </div>
+  <div class="abs fade"></div>
+  <div class="abs tabwrap">
+    <div class="slot"><div class="i2"></div><span>门</span></div>
+    <div class="slot on"><div class="pill"></div><div class="i2"></div><span>凭证</span></div>
+    <div class="slot"><div class="i2"></div><span>记录</span></div>
+    <div class="slot"><div class="i2"></div><span>家</span></div>
+    <div class="slot"><div class="i2"></div><span>设置</span></div>
+  </div>
+</div>
+
+<!-- ========== 记录：P3 型（芯片行 → 标题 → 段落 → 波形 → 卡1 → 卡2）========== -->
+<div class="phone">
+  <div class="abs island"></div>
+  <div class="abs status"><span>9:41</span><span>▪▪▪ 5G</span></div>
+  <div class="abs chips">
+    <div class="chip on"><div class="ic"><svg viewBox="0 0 26 27"><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="#DCE6F5" stroke-width="4.4"/><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="#0558B8" stroke-width="4.4" stroke-dasharray="44 66.6" stroke-linecap="round" transform="rotate(-90 13 13.5)"/></svg><div class="n">4</div></div>
+      <div class="c2"><span class="l">今天</span><span class="v">4 条</span></div></div>
+    <div class="chip"><div class="ic"><svg viewBox="0 0 26 27"><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="#DCE6F5" stroke-width="4.4"/><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="#0558B8" stroke-width="4.4" stroke-dasharray="22 66.6" stroke-linecap="round" transform="rotate(-90 13 13.5)"/></svg><div class="n">12</div></div>
+      <div class="c2"><span class="l">本周</span><span class="v">12 条</span></div></div>
+    <div class="chip"><div class="ic"><svg viewBox="0 0 26 27"><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="#F3DAD7" stroke-width="4.4"/><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="#B3261E" stroke-width="4.4" stroke-dasharray="2.2 66.6" stroke-linecap="round" transform="rotate(-90 13 13.5)"/></svg><div class="n">0</div></div>
+      <div class="c2"><span class="l">告警</span><span class="v">0 条</span></div></div>
+  </div>
+  <div class="abs h1" style="top:158.4pt">今天的往来都正常</div>
+  <div class="abs lead" style="top:202pt">最近一次 18:42，是妈妈的指纹。本周还没有告警。</div>
+
+  <!-- 英雄数：大数字 + 微标（P3 型） -->
+  <div class="abs" style="top:292pt;left:0;width:402pt;text-align:center">
+    <div style="position:relative;display:inline-block">
+      <div style="position:absolute;left:-70pt;top:-26pt;width:260pt;height:130pt;border-radius:50%;
+           background:radial-gradient(ellipse,rgba(61,140,232,.12) 0%,rgba(61,140,232,0) 70%)"></div>
+      <span style="position:relative;font-size:55pt;font-weight:700;letter-spacing:-1.5pt;color:#0558B8;line-height:1">4</span>
+      <span style="position:relative;display:block;font-size:10.7pt;letter-spacing:1.2pt;color:#0558B8;margin-top:4pt;font-weight:600">次 · 今天</span>
+    </div>
+  </div>
+
+  <!-- 范围标（T26） -->
+  <div class="abs" style="top:430pt;left:16.6pt;font-size:13.9pt;font-weight:600;color:#0A0A0C">0–24 时</div>
+
+  <!-- 24h 波形：固定宽 368.6，24 根 2pt 柱 -->
+  <div class="abs" style="top:452pt;left:16.6pt;width:368.6pt">
+    <div style="display:flex;align-items:flex-end;gap:6.4pt;height:74pt">
+      <i style="width:2pt;height:6pt;background:#3D8CE8;border-radius:1pt"></i>
+      <i style="width:2pt;height:11pt;background:#3D8CE8;border-radius:1pt"></i>
+      <i style="width:2pt;height:4pt;background:#3D8CE8;border-radius:1pt"></i>
+      <i style="width:2pt;height:9pt;background:#3D8CE8;border-radius:1pt"></i>
+      <i style="width:2pt;height:15pt;background:#3D8CE8;border-radius:1pt"></i>
+      <i style="width:2pt;height:7pt;background:#3D8CE8;border-radius:1pt"></i>
+      <i style="width:2pt;height:21pt;background:#3D8CE8;border-radius:1pt"></i>
+      <i style="width:2pt;height:5pt;background:#3D8CE8;border-radius:1pt"></i>
+      <i style="width:2pt;height:13pt;background:#3D8CE8;border-radius:1pt"></i>
+      <i style="width:2pt;height:4pt;background:#3D8CE8;border-radius:1pt"></i>
+      <i style="width:2pt;height:17pt;background:#3D8CE8;border-radius:1pt"></i>
+      <i style="width:2pt;height:8pt;background:#3D8CE8;border-radius:1pt"></i>
+      <i style="width:2pt;height:12pt;background:#3D8CE8;border-radius:1pt"></i>
+      <i style="width:2pt;height:3pt;background:#3D8CE8;border-radius:1pt"></i>
+      <i style="width:2pt;height:19pt;background:#3D8CE8;border-radius:1pt"></i>
+      <i style="width:2pt;height:10pt;background:#3D8CE8;border-radius:1pt"></i>
+      <i style="width:2pt;height:6pt;background:#3D8CE8;border-radius:1pt"></i>
+      <i style="width:2pt;height:26pt;background:#0558B8;border-radius:1pt;position:relative">
+        <span style="position:absolute;top:-6pt;left:-2pt;width:6pt;height:6pt;border-radius:50%;
+              border:1.5pt solid #0558B8;background:#F2F1F6"></span></i>
+      <i style="width:2pt;height:5pt;background:#3D8CE8;border-radius:1pt"></i>
+      <i style="width:2pt;height:3pt;background:#3D8CE8;border-radius:1pt"></i>
+      <i style="width:2pt;height:2pt;background:#3D8CE8;border-radius:1pt"></i>
+      <i style="width:2pt;height:2pt;background:#3D8CE8;border-radius:1pt"></i>
+      <i style="width:2pt;height:2pt;background:#3D8CE8;border-radius:1pt"></i>
+      <i style="width:2pt;height:2pt;background:#3D8CE8;border-radius:1pt"></i>
+    </div>
+    <div style="height:1pt;margin-top:2pt;background-image:radial-gradient(circle,#D8D7DE .55pt,transparent .65pt);background-size:4pt 1pt;background-repeat:repeat-x"></div>
+    <div style="display:flex;justify-content:space-between;font-size:10.7pt;color:#6E6D75;margin-top:5pt">
+      <span>0 时</span><span>12 时</span><span>24 时</span></div>
+  </div>
+
+  <div class="abs card" style="top:560pt">
+    <div class="eyebrow">台账</div>
+    <div class="stmt">今天 4 条</div>
+    <div class="hair"></div>
+    <div class="rrow"><span class="tag" style="color:#0558B8">18:42</span>
+      <span style="font-size:17.7pt;color:#0A0A0C">指纹开锁</span>
+      <span class="det">妈妈</span></div>
+    <div class="dotline"></div>
+    <div class="rrow"><span class="tag" style="color:#0558B8">17:05</span>
+      <span style="font-size:17.7pt;color:#0A0A0C">密码开锁</span>
+      <span class="det">我</span></div>
+    <div class="dotline"></div>
+    <div class="rrow"><span class="tag" style="color:#B3261E">14:23</span>
+      <span style="font-size:17.7pt;color:#0A0A0C">密码错误 ×2</span>
+      <span class="det">未识别</span></div>
+    <div class="dotline"></div>
+    <div class="rrow"><span class="tag" style="color:#8A5A0B">09:11</span>
+      <span style="font-size:17.7pt;color:#0A0A0C">临时码开锁</span>
+      <span class="det">保洁</span></div>
+    <div class="hair"></div>
+    <div class="foot">0 条锁端没回时刻，全部能定位到某一天。</div>
+  </div>
+  <div class="abs card" style="top:900pt">
+    <div class="eyebrow">检索</div>
+    <div class="stmt">命中 4 条</div>
+  </div>
+  <div class="abs fade"></div>
+  <div class="abs tabwrap">
+    <div class="slot"><div class="i2"></div><span>门</span></div>
+    <div class="slot"><div class="i2"></div><span>凭证</span></div>
+    <div class="slot on"><div class="pill"></div><div class="i2"></div><span>记录</span></div>
+    <div class="slot"><div class="i2"></div><span>家</span></div>
+    <div class="slot"><div class="i2"></div><span>设置</span></div>
+  </div>
+</div>
+
+</body></html>

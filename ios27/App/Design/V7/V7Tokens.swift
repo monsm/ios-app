@@ -222,10 +222,8 @@ enum V {
         static let displayA = sans(30, weight: .bold, relativeTo: .largeTitle)      // 参考 A 大标题 30/700
         static let displayB = sans(29, weight: .bold, relativeTo: .largeTitle)      // 参考 B 大标题 29/700
         static let displayHome = sans(34, weight: .bold, relativeTo: .largeTitle)   // 设置/根页大标题 34/700
-    /// 参考 C 的 56pt 主图标字号。2026-11-02 恢复：第 324 轮曾把它当"零消费"删掉，
-    /// 但那是因为当时的页面被 List 化、图标改走系统样式；页面回退到原设计后又需要它。
-    static let heroGlyph56 = sans(56, relativeTo: .largeTitle)
-        static let displayC = sans(19, weight: .bold, relativeTo: .title2)          // 二级页 19/700
+    // 2026-11-04（S4 清理）：heroGlyph56 / displayC 已删 —— 唯一消费者是旧 KeysScreen /
+    // HouseholdScreen / SettingsScreen，它们整份删除了。V7 只剩"还被旧组件库引用"的档位。
         static let displayD = sans(26, weight: .regular, relativeTo: .title)        // 门锁档案 26
         static let displayE = sans(28, weight: .regular, relativeTo: .title)        // 电池档案 28
         static let displayESemibold = sans(28, weight: .semibold, relativeTo: .title)
@@ -243,7 +241,6 @@ enum V {
         static let cardBig = sans(17, weight: .semibold)   // 卡主值 17/600
         static let cardBody = sans(15)
         static let chipLabel = sans(11)                    // 芯片标签 11
-    static let chipLabelStrong = sans(11, weight: .semibold)
         static let chipValue = sans(13.5, weight: .semibold) // 芯片值 13.5/600
         static let statLabel = sans(12.5)                  // VStatPair 标签 12.5 #828282
         static let statValue = sans(17, weight: .semibold) // VStatPair 值 17/600
@@ -274,7 +271,6 @@ enum V {
         static let number26 = sans(26, weight: .medium, relativeTo: .title)       // 读数 26
         static let tab = sans(11, weight: .semibold, relativeTo: .caption2)       // Tab 标签 11/600
         static let chevron = sans(13, weight: .semibold, relativeTo: .footnote)
-        static let pageLead = sans(17, relativeTo: .body)                         // 参考 B/C 页导语 17
         static let cardHeader = sans(11, weight: .medium, relativeTo: .caption)   // 参考 B 卡头 11/500
         static let bedValue = sans(11.5, weight: .semibold, relativeTo: .caption) // 卡内小值 11.5/600
         static let bedLabel = sans(11.5, relativeTo: .caption)

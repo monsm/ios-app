@@ -348,7 +348,11 @@ final class SecurityRegressionTests: XCTestCase {
         DB.setDecoy(false)
         let table = RecordOverlay.notes(mac)
         XCTAssertEqual(table[RecordOverlay.oid(mac: mac, rowKey: "1")], "旧备注", "旧备注被抹掉了（写路径误用展示层读取器）")
-        XCTAssertEqual(table[RecordOverlay.oid(mac: mac, rowKey: "2")], "空壳里写的")
+        // 2026-11-04（政策收紧 · 与代码同步）：commit 2891f6d3 之后，**写路径一律拒绝空壳**
+        // （与 addMember / saveExt / saveLedger 同族），所以空壳里的这条写不会落盘。
+        // 这条断言钉的是"拒绝"，不是"落盘"——旧版本这里期望落盘，是政策变更前写的，
+        // 没跟着改，于是 CI 一直红在这一行。防抹表的那条断言保留在上面。
+        XCTAssertNil(table[RecordOverlay.oid(mac: mac, rowKey: "2")], "空壳里的写必须被拒绝，不能污染真实覆盖层")
         // 清理，避免污染其它用例
         RecordOverlay.setNote(mac, "1", "")
         RecordOverlay.setNote(mac, "2", "")

@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8">
+<title>V8 组件库 · 状态矩阵</title>
+<style>
+  :root{
+    --ink1:#0A0A0C; --ink2:#33333A; --ink3:#5E5D63; --ink4:#6E6D75;
+    --bg:#F2F1F6; --card:#F9F9FE; --well:#E9E8EF; --chipOff:#F4F3FA; --chipOn:#FFFFFF;
+    --line:#DCDBE4; --lineStrong:#D8D7DE;
+    --accent:#0558B8; --accentFill:#2E86E8; --accentTrack:#DCE6F5;
+    --ok:#12684A; --okFill:#1E9663; --okTrack:#D8EDE3;
+    --warn:#8A5A0B; --warnFill:#B8811A; --warnTrack:#F0E4CC;
+    --danger:#B3261E; --dangerFill:#E5483C; --dangerTrack:#F3DAD7;
+    --info:#4A46C8; --infoFill:#6F6BE0; --infoTrack:#E1E0F5;
+    --purple:#6A3FB8; --purpleFill:#9A78D8;
+  }
+  body.dark{
+    --ink1:#FFFFFF; --ink2:#D8D8DE; --ink3:#A8A8B0; --ink4:#92929A;
+    --bg:#000000; --card:#1C1C1F; --well:#141416; --chipOff:#242427; --chipOn:#2E2E33;
+    --line:rgba(255,255,255,.14); --lineStrong:rgba(255,255,255,.20);
+    --accent:#5AA7F5; --accentFill:#3D8CE8; --accentTrack:#16324F;
+    --ok:#4CC38A; --okFill:#35B67E; --okTrack:#143A2A;
+    --warn:#E0A83C; --warnFill:#D79A2B; --warnTrack:#3B2C10;
+    --danger:#F06A5C; --dangerFill:#E5483C; --dangerTrack:#3F1D1A;
+    --info:#8E88F0; --infoFill:#6F6BE0; --infoTrack:#262457;
+    --purple:#B07BE0; --purpleFill:#9A78D8;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink1);
+       font-family:-apple-system,"SF Pro Text","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+       padding:40px 44px 80px;transition:background .2s}
+  h1{font-size:30px;font-weight:600;letter-spacing:-.4px;margin-bottom:6px}
+  .sub{font-size:15px;color:var(--ink3);margin-bottom:22px}
+  h2{font-size:19px;font-weight:600;margin:34px 0 12px;letter-spacing:-.2px}
+  h2 span{font-size:12px;font-weight:400;color:var(--ink4);margin-left:8px}
+  .row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+  /* 芯片 */
+  .chip{height:52.6px;border-radius:26.3px;display:flex;align-items:center;gap:7.1px;
+        padding:0 16px 0 7.1px;background:var(--chipOff);border:.4px solid var(--lineStrong)}
+  .chip.on{background:var(--chipOn);border-color:transparent}
+  .ic{width:26.5px;height:27.4px;position:relative;flex:none}
+  .ic .n{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--ink1)}
+  .c2{display:flex;flex-direction:column;gap:2.4px;line-height:1}
+  .c2 .l{font-size:14.5px;color:var(--ink4)}
+  .c2 .v{font-size:16.4px;font-weight:600;color:var(--ink1);white-space:nowrap}
+  /* 卡片 */
+  .card{background:var(--card);border-radius:26px;padding:20.6px 16.5px 18.7px;
+        box-shadow:0 1.5px 10px rgba(40,40,70,.05);width:368px}
+  body.dark .card{box-shadow:0 1.5px 10px rgba(0,0,0,.18)}
+  .eyebrow{font-size:14.5px;color:var(--ink4)}
+  .stmt{font-size:21.5px;font-weight:700;letter-spacing:-.3px;color:var(--ink1);line-height:25.8px;margin-top:8.5px}
+  .hair{height:.4px;background:var(--line);margin:13.6px 0}
+  .dot{height:1px;background-image:radial-gradient(circle,var(--lineStrong) .55px,transparent .65px);background-size:4px 1px;background-repeat:repeat-x}
+  /* 数据行 */
+  .drow{height:22.1px;display:flex;align-items:center;gap:8px;white-space:nowrap;overflow:hidden}
+  .drow .tag{font-size:13.9px;width:68px;flex:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .drow .mid{font-size:17.7px;color:var(--ink1);flex:1;overflow:hidden;text-overflow:ellipsis}
+  .drow .val{font-size:17.7px;font-weight:600;color:var(--ink1);margin-left:auto;flex:none;font-variant-numeric:tabular-nums}
+  .drow .det{font-size:14.5px;color:var(--ink4);flex:none;white-space:nowrap}
+  /* 空/错/忙 */
+  .muted{font-size:19.6px;line-height:20px;color:var(--ink3)}
+  .cap{font-size:15.8px;line-height:19.9px;color:var(--ink3)}
+  .btn{display:inline-flex;align-items:center;height:44px;padding:0 16px;border-radius:22px;
+       background:var(--accent);color:#fff;font-size:12.6px;font-weight:600}
+  body.dark .btn{color:#04101E}
+  .linkrow{display:flex;gap:16px;width:368px}
+  .linkrow .it{flex:1}
+  .linkrow .t{font-size:13.9px;color:var(--accent);display:flex;align-items:center;gap:4px}
+  .linkrow .v{font-size:17.7px;font-weight:600;color:var(--ink1);margin-top:4px;font-variant-numeric:tabular-nums}
+  .chev{width:5px;height:9px;border-right:1.4px solid var(--ink4);border-top:1.4px solid var(--ink4);transform:rotate(45deg);display:inline-block}
+  .info{width:20.7px;height:20.7px;border-radius:50%;background:var(--well);display:flex;align-items:center;justify-content:center;font-size:10.7px;color:var(--ink4);font-weight:600}
+  .heroNum{font-size:55px;font-weight:700;letter-spacing:-1.5px;color:var(--accent);line-height:1}
+  .unit{font-size:10.7px;letter-spacing:1.2px;color:var(--accent);font-weight:600;margin-top:4px}
+  .spark{display:flex;align-items:flex-end;gap:2px;height:74px}
+  .spark i{width:2px;border-radius:1px;background:var(--accentFill);opacity:.75}
+  .spark i.cur{background:var(--accent);opacity:1;position:relative}
+  .spark i.cur::after{content:"";position:absolute;top:-6px;left:-2px;width:6px;height:6px;border-radius:50%;
+        border:1.5px solid var(--accent);background:var(--bg)}
+  /* tabbar */
+  .tabwrap{width:390.5px;height:48.2px;border-radius:24.1px;background:rgba(255,255,255,.74);
+           border:.4px solid rgba(255,255,255,.92);display:flex;align-items:center;padding:0 4px;
+           box-shadow:0 1px 12px rgba(40,40,70,.08)}
+  body.dark .tabwrap{background:rgba(40,40,44,.74);border-color:rgba(255,255,255,.10)}
+  .slot{flex:1;height:41.1px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.8px;position:relative}
+  .slot .pill{position:absolute;top:0;left:50%;transform:translateX(-50%);width:70px;height:41.1px;border-radius:20.6px;background:var(--chipOn);opacity:.92}
+  .slot .i2{width:18.6px;height:19.9px;border-radius:4.5px;background:var(--ink1);position:relative}
+  .slot span{font-size:12.6px;font-weight:600;color:var(--ink1);position:relative}
+  .slot.on .i2{background:var(--accent)} .slot.on span{color:var(--accent)}
+  .note{font-size:12px;color:var(--ink4);margin-top:8px;max-width:760px;line-height:1.5}
+  .tag-title{font-size:12px;color:var(--ink4);margin-bottom:6px}
+</style></head><body>
+<h1>V8 组件库 · 状态矩阵</h1>
+<div class="sub">14 个组件 × 五态（正常 / 空 / 忙 / 失败 / 只读 / 危险）· 数值全部来自 V8Tokens.swift 与 E-ref-metrics.md</div>
+<div style="margin-bottom:18px"><button class="btn" style="background:var(--ink2)" onclick="document.body.classList.toggle('dark')">切换深色</button></div>
+
+<h2>1 · 芯片行（VChip2 / VChipRow2）<span>52.6pt 胶囊 / r26.3 / 描边 .4 / 选中 #FFFFFF</span></h2>
+<div class="row">
+  <div class="chip on"><div class="ic"><svg viewBox="0 0 26 27"><path d="M13 21c-5-3-9-6-9-10a4.6 4.6 0 018-2.6A4.6 4.6 0 0122 10c0 4-4 7-9 11z" fill="var(--accent)"/></svg></div></div>
+  <div class="chip"><div class="ic"><svg viewBox="0 0 26 27"><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="var(--accentTrack)" stroke-width="4.4"/><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="var(--accent)" stroke-width="4.4" stroke-dasharray="50 66" stroke-linecap="round" transform="rotate(-90 13 13.5)"/></svg><div class="n">76</div></div>
+    <div class="c2"><span class="l">电量</span><span class="v">76 %</span></div></div>
+  <div class="chip"><div class="ic"><svg viewBox="0 0 26 27"><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="var(--okTrack)" stroke-width="4.4"/><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="var(--ok)" stroke-width="4.4" stroke-dasharray="66 66" stroke-linecap="round" transform="rotate(-90 13 13.5)"/></svg></div>
+    <div class="c2"><span class="l">连接</span><span class="v">已连接</span></div></div>
+  <div class="chip"><div class="ic"><svg viewBox="0 0 26 27"><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="var(--dangerTrack)" stroke-width="4.4"/><circle cx="13" cy="13.5" r="10.6" fill="none" stroke="var(--danger)" stroke-width="4.4" stroke-dasharray="42 66" stroke-linecap="round" transform="rotate(-90 13 13.5)"/></svg><div class="n">3</div></div>
+    <div class="c2"><span class="l">告警</span><span class="v">3 条</span></div></div>
+</div>
+<div class="note">状态：正常 / 选中（白底无描边）/ 空值（值显示「—」）/ 只读（opacity 40%）/ 失败（值「—」+ 描边转危险色）。横向滚动时最后一项故意露出 20~40%（T27）。</div>
+
+<h2>2 · 卡头 + 卡片（VCard2 / VCardHead）<span>r26 / 无描边 / 阴影 5% / padding 20.6·16.5·18.7</span></h2>
+<div class="row">
+  <div class="card">
+    <div class="eyebrow">今天的门</div>
+    <div class="stmt">4 次开锁</div>
+    <div class="hair"></div>
+    <div class="drow"><span class="tag" style="color:var(--accent)">指纹</span><span class="val">2 次</span></div>
+    <div class="dot"></div>
+    <div class="drow"><span class="tag" style="color:var(--purple)">密码</span><span class="val">1 次</span></div>
+    <div class="dot"></div>
+    <div class="drow"><span class="tag" style="color:var(--warn)">临时码</span><span class="val">1 次</span></div>
+    <div class="hair"></div>
+    <div class="cap">只统计本机收到的开锁回执；失败的尝试不计数。</div>
+  </div>
+  <div class="card" style="background:var(--well);box-shadow:none">
+    <div class="eyebrow">凹槽卡（well）</div>
+    <div class="stmt">用于内嵌块</div>
+    <div style="margin-top:12px" class="cap">r8，无阴影。失败态 / 次要读数用它。</div>
+  </div>
+</div>
+
+<h2>3 · 数据行（VDataRow）<span>标签彩色 / 数值纯黑 / 行间点线</span></h2>
+<div class="card">
+  <div class="drow"><span class="tag" style="color:var(--accent)">主门密码</span><span class="mid">密码</span><span class="det">我</span><span class="val">永久</span></div>
+  <div class="dot"></div>
+  <div class="drow"><span class="tag" style="color:var(--purple)">右手拇指</span><span class="mid">指纹</span><span class="det">我</span><span class="val">永久</span></div>
+  <div class="dot"></div>
+  <div class="drow"><span class="tag" style="color:var(--warn)">保洁 周三</span><span class="mid">临时码</span><span class="det">访客</span><span class="val">2 天</span></div>
+  <div class="dot"></div>
+  <div class="drow"><span class="tag" style="color:var(--ok)">我的 iPhone</span><span class="mid">手机钥匙</span><span class="det">我</span><span class="val">—</span></div>
+</div>
+
+<h2>4 · 空态（VEmpty）<span>空态环 + 判断句 + 因果 + 唯一出路</span></h2>
+<div class="row">
+  <div class="card">
+    <svg width="66" height="66" viewBox="0 0 66 66"><circle cx="33" cy="33" r="30.6" fill="none" stroke="var(--line)" stroke-width="8.6"/></svg>
+    <div class="stmt" style="margin-top:12px">还没有门锁</div>
+    <div class="muted" style="margin-top:8px">凭证是挂在具体一把锁上的。先把锁恢复出厂，再回来添加。</div>
+    <div style="margin-top:12px"><span class="btn">添加门锁</span></div>
+  </div>
+  <div class="card" style="background:var(--well);box-shadow:none">
+    <div style="font-size:17.7px;font-weight:600;color:var(--danger);display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:var(--danger)"></span>读取锁内日志失败</div>
+    <div class="muted" style="margin-top:8px">门锁没有回话，可能已经休眠。</div>
+    <div class="cap" style="margin-top:6px">走近门锁，点下面的「重试」。</div>
+    <div style="margin-top:8px;font-size:10.7px;color:var(--ink4)">技术细节 ▾</div>
+  </div>
+</div>
+
+<h2>5 · 链接行 + 信息按钮（VLinkRow / VInfoDot）</h2>
+<div class="row">
+  <div class="linkrow">
+    <div class="it"><div class="t">静息心率 <span class="chev"></span></div><div class="v">55 BPM</div></div>
+    <div class="it"><div class="t">恢复 HRV <span class="chev"></span></div><div class="v">54 MS</div></div>
+  </div>
+  <div class="info">i</div>
+</div>
+
+<h2>6 · 英雄数 / 分段环 / 半环 / 波形</h2>
+<div class="row" style="align-items:center">
+  <div><div class="heroNum">76</div><div class="unit">%</div></div>
+  <svg width="92" height="92" viewBox="0 0 92 92">
+    <circle cx="46" cy="46" r="35.85" fill="none" stroke="var(--line)" stroke-width="20.3"/>
+    <circle cx="46" cy="46" r="35.85" fill="none" stroke="var(--accentFill)" stroke-width="20.3" stroke-dasharray="90 225" transform="rotate(168 46 46)"/>
+    <circle cx="46" cy="46" r="35.85" fill="none" stroke="var(--purpleFill)" stroke-width="20.3" stroke-dasharray="56 225" transform="rotate(312 46 46)"/>
+    <text x="46" y="52" text-anchor="middle" font-size="21.5" font-weight="700" fill="var(--ink1)">9</text>
+  </svg>
+  <svg width="92" height="92" viewBox="0 0 92 92">
+    <path d="M11 46 A35 35 0 0 1 81 46" fill="none" stroke="var(--line)" stroke-width="9.2" stroke-linecap="round"/>
+    <path d="M11 46 A35 35 0 0 1 55 13" fill="none" stroke="var(--accent)" stroke-width="9.2" stroke-linecap="round"/>
+    <text x="46" y="52" text-anchor="middle" font-size="21.5" font-weight="700" fill="var(--accent)">7</text>
+  </svg>
+  <div class="spark">
+    <i style="height:6px"></i><i style="height:11px"></i><i style="height:4px"></i><i style="height:9px"></i>
+    <i style="height:15px"></i><i style="height:7px"></i><i style="height:21px"></i><i style="height:5px"></i>
+    <i style="height:13px"></i><i style="height:4px"></i><i style="height:17px"></i><i style="height:8px"></i>
+    <i style="height:12px"></i><i style="height:3px"></i><i style="height:19px"></i><i style="height:10px"></i>
+    <i style="height:6px"></i><i class="cur" style="height:26px"></i><i style="height:5px"></i><i style="height:3px"></i>
+    <i style="height:2px"></i><i style="height:2px"></i><i style="height:2px"></i><i style="height:2px"></i>
+  </div>
+</div>
+
+<h2>7 · 浮动标签栏（GlassTabBar）<span>390.5×48.2 / r24.1 / 距底 14.4 / 选中胶囊 70×41.1</span></h2>
+<div class="tabwrap">
+  <div class="slot on"><div class="pill"></div><div class="i2"></div><span>门</span></div>
+  <div class="slot"><div class="i2"></div><span>凭证</span></div>
+  <div class="slot"><div class="i2"></div><span>记录</span></div>
+  <div class="slot"><div class="i2"></div><span>家</span></div>
+  <div class="slot"><div class="i2"></div><span>设置</span></div>
+</div>
+
+<div class="note" style="margin-top:26px">
+  验收口径：① 文字左沿全屏唯一（33.1pt）；② 卡片左右 16.6/385.2；③ 芯片高 52.6；④ Tab 栏高 48.2；
+  ⑤ 所有文字对比度 ≥4.5（正文）/≥3（大字号）；⑥ 卡内两处实线、表格行点线，不混用。
+</div>
+</body></html>
