@@ -395,6 +395,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: gates
     timeout-minutes: 5
+    # 本 workflow 顶层有 defaults.run.working-directory: ios27，而本 job **不 checkout**
+    # （它只读 needs 的结论），那个目录因此不存在 —— 第一次跑就报
+    # "An error occurred trying to start process /usr/bin/bash with working directory ...".
+    # 显式清空工作目录，让它在仓库根跑。
+    defaults:
+      run:
+        working-directory: .
     steps:
       - name: 确认静态闸门通过
         run: |
