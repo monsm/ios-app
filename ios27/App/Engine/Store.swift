@@ -542,7 +542,9 @@ enum DB {
         return rec["d"] == fnv1a32(salt + pw)
     }
 
-    static func clearDuressCode() { store.remove(duressKey) }
+    // 2026-11-04（清理 · 重复路径）：`clearDuressCode()` 已删 —— 它与 `setDuressCode(nil)`
+    // **逐字等价**（都是 store.remove(duressKey)），而全仓只有后者被调用（SecurityScreen:59）。
+    // 两条清法并存，未来若其中一条加上"同时清掉 decoy 会话"，另一条就会变成静默的漏洞。
 
 
     static func get<T: Decodable>(_ t: T.Type, _ k: String) -> T? {

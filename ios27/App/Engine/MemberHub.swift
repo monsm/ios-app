@@ -347,6 +347,11 @@ enum MemberHub {
     }
 
     // ---------- 791 未归属记录认领 (记录 key = idxRaw, 本机覆盖层) ----------
+    // 【保留未接】2026-11-04：`claim(_:)` 目前**全仓零调用** —— 引擎侧已经能"把这条记录
+    // 认给某位成员"（写 kf_mclaim_ 覆盖层，`MemberMergeKit` 合并时也会改判），但**记录页还没有
+    // 提供认领入口**。所以当归因引擎给不出结论时，用户没有任何办法手动补归属。
+    // 这不是死代码（合并/删除/迁移三条链路都依赖这张表），是一条**待接的功能**：
+    // 接的时候在记录详情页加"这条是谁的"，写 claim(mac, logKey, memberId)。
     static func claims(_ mac: String) -> [String: String] {
         DB.store.get([String: String].self, "kf_mclaim_" + mac) ?? [:]
     }
