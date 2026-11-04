@@ -264,10 +264,10 @@ final class SettingsStore {
 
     // MARK: 备份
 
-    var encryptBackup: Bool {
-        get { _ = revision; return DB.store.getBool("kf_encrypt_backup") }
-        set { DB.store.set("kf_encrypt_backup", newValue); revision &+= 1 }
-    }
+    // 2026-11-04（清理 · 假开关的遗骸）：`encryptBackup` 曾经驱动「加密备份」开关，
+    // 那个开关在 2026-11-03 被删除（加密是唯一路径，见 `BackupScreen.exportPanel` 的注释）——
+    // 但属性与它写的 `kf_encrypt_backup` 键留了下来，全仓零读取。
+    // 保留它比删掉更危险：下一个做备份页的人会以为"加密是可选项"，从而重新引入明文路径。
 
     /// 上次成功备份时刻（kf_backup_hist，Milestones 唯一真值）。
     var lastBackupAt: Int64? {
@@ -436,13 +436,9 @@ final class SettingsStore {
     /// 上次校准门锁时间的时刻。**唯一真值在 DB.syncTime(mac)**（持久），
     /// 这里只是给页面读的便捷投影 —— 旧实现把它做成纯内存存储属性，
     /// 重启后恒「从未」，与门页「超 30 天未校时」提醒卡的判据互相矛盾（E-10）。
-    var lockClockSyncedAt: Int64? {
-        let v = DB.syncTime(currentMacForClock)
-        return v > 0 ? Int64(v) : nil
-    }
+    // 2026-11-04（清理 · 死投影）：`lockClockSyncedAt` 全仓零读取 —— 门页的「超 30 天未校时」
+    // 判断直接读 `DB.syncTime(mac)`（见 `DoorScreen` 的 lastSync 判据）。删掉投影，别留"两份真相"的入口。
 
-    /// 时钟读点用的 MAC：与 AppModel.currentMac 同源（DB.preferredMac 已做归一化）。
-    private var currentMacForClock: String { DB.preferredMac() }
 
     // MARK: 累计
 
