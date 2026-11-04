@@ -195,6 +195,17 @@ struct DoorHomeScreen: View {
 
     // MARK: - 卡 2 快捷操作
 
+    /// 门页真正显示的快捷操作（2026-11-05 对抗审查：这段逻辑在迁 V8 时丢了）。
+    ///
+    /// 旧 DoorScreen 的 quickShown 是 Array(QuickPool.ordered().prefix(cap)) —— 它同时做两件事：
+    ///   · 按 quickGridCount 截断（设置里「快捷格 10 选 N」）；
+    ///   · 按 QuickPool.ordered() 排序（智能开 = 按点过的次数降序；关但满 30 天 = 最常用提首）。
+    /// V8 门页直接用了 QuickPool.selected —— 上限与排序双双失效：设置里选 3 枚，门页照样列出全部；
+    /// 而「常用操作自动排前」这个开关读得到、写得到，却永远不影响任何顺序。
+    private var quickShown: [QuickAction] {
+        let cap = max(1, SettingsStore.shared.quickGridCount)
+        return Array(QuickPool.ordered().prefix(cap))
+    }
     private var quickCard: some View {
         VCard2 {
             HStack(alignment: .firstTextBaseline) {
@@ -212,11 +223,11 @@ struct DoorHomeScreen: View {
             VDivider2()
                 .padding(.top, V8.S.gapM)
             VStack(spacing: 0) {
-                ForEach(Array(QuickPool.selected.enumerated()), id: \.element.id) { pair in
+                ForEach(Array(quickShown.enumerated()), id: \.element.id) { pair in
                     VNavRow(title: pair.element.label, detail: nil) {
                         runQuick(pair.element.id)
                     }
-                    if pair.offset != QuickPool.selected.count - 1 { VDotRule() }
+                    if pair.offset != quickShown.count - 1 { VDotRule() }
                 }
             }
             .padding(.top, V8.S.gapS)
@@ -297,6 +308,9 @@ struct DoorHomeScreen: View {
     }
 
     private func runQuick(_ id: String) {
+        // 2026-11-05（对抗审查）：旧 DoorScreen 在这里先记一次点击（QuickPool.recordTap），
+        // 迁 V8 时漏了 —— 于是「常用操作自动排前」的计数器永远是空的。
+        QuickPool.recordTap(id)
         switch id {
         case "addPwd", "addFp": router.request(.dest(.keyCreate))
         case "otp": router.request(.dest(.zotp))
