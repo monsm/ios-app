@@ -397,7 +397,11 @@ jobs:
     runs-on: xcode-27
     needs: build
     continue-on-error: true
-    timeout-minutes: 40
+    # 2026-11-04（实测）：40 分钟装不下。这个 job 要跑 5 个主 Tab + 5 张整页 +
+    # 10 个子页 + 10 张子页整页 = 30 次「terminate + launch + sleep + screenshot」，
+    # 而每次冷启动在 runner 上要 5–8 秒。上一轮 diag 停在 `4-settings`、count=10 ——
+    # 不是产品问题，是**这个 job 被 40 分钟上限杀在半路**。提到 70 分钟。
+    timeout-minutes: 70
     steps:
       - name: Checkout
         uses: actions/checkout@v7
