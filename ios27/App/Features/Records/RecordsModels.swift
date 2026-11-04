@@ -457,7 +457,10 @@ enum MemberVCard {
     }
 
     /// 只取成员模型真有的字段。
-    /// TODO(engine) 电话与备注在 kf_member_ext 里，接上后再补 TEL / NOTE。
+    /// 电话与备注**都已在库里**（电话在 `kf_members` 的 info 字典，备注在 `MemberExt.note`），
+    /// 2026-11-04（走查发现 · 假 TODO）：原文写「接上后再补」—— 数据从来没缺，缺的是入参：
+    /// 本函数收的是 `[MemberCard]`，而那个投影不带电话与备注。要补 TEL/NOTE 得先扩 `MemberCard`
+    /// 或改成收 `[Member] + [id: MemberExt]`，那是独立改动，不是"等引擎"。
     static func build(_ members: [MemberCard]) -> String {
         var out = ""
         for member in members where !member.archived {

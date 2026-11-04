@@ -81,7 +81,9 @@ final class HouseholdRoster {
 
     /// 角色与归档位：UI 上落 AppModel.MemberCard（那份模型不归本域改），
     /// 但真值在 Engine 的 kf_member_ext 里也有一份（role / archived）—— 写回一次，免得冷启动后两处各说一套。
-    /// TODO(engine)：成员列表改由 DB.members() + MemberHub.allExt() 驱动时，这两个写回点就是唯一入口。
+    /// 2026-11-04（走查发现 · 过时 TODO）：原文写「成员列表改由 DB.members() + MemberHub.allExt() 驱动时…」
+    /// —— 那个时点**已经来了**（`AppModel.reload` 就是 `DB.members().map { … MemberHub.allExt() }`）。
+    /// 这两个写回点现在就是唯一入口，不是"将来"。
     func mirrorRole(_ id: String, _ role: MemberCard.Role) {
         var ext = MemberHub.ext(id)
         ext.role = HHPerm.code(role)
@@ -220,7 +222,11 @@ enum HHMemberStatus: Hashable {
 
 enum HHStats {
     /// 本机成员上限（旧仓判据写 16、文案写 15；这里统一按 15 —— 文案才是用户看到的那句）。
-    /// TODO(engine)：上限来自锁端槽位表，接 Engine 后应由协议读回来，不再写死。
+    ///
+    /// 2026-11-04（走查发现 · 假 TODO）：原文写「上限来自锁端槽位表，接 Engine 后应由协议读回来」——
+    /// **锁端根本没有成员这个概念**。成员是本机增值功能（`kf_members` 表，vendor 的凭证是平铺的），
+    /// 协议里没有任何"成员槽位"可读。15 是**产品决策**，不是协议约束 —— 说成"等协议"会让人
+    /// 一直等一个永远不会来的字段。
     static let memberLimit = 15
 
     static func active(_ members: [MemberCard]) -> [MemberCard] { members.filter { !$0.archived } }
