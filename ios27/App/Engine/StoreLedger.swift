@@ -9,7 +9,8 @@ extension DB {
 
     /// 2026-10-29：清掉损坏标记。只在"用户显式选择以某份备份为准"（备份恢复）时调用 ——
     /// 否则一次解码失败会让整个会话里所有 ledger 写入（含恢复时的凭证导入）静默失败。
-    static func clearAllLedgerCorrupt() { ledgerLock.withLock { $0.removeAll() } }
+    // 2026-11-04：`clearAllLedgerCorrupt()` 已删 —— SEC-17 修复后零调用（docs/AUDIT-F-SECURITY.md 也记着
+    // "仅剩定义"）。留着它是危险的：它正是 SEC-17 那个 bug 的形态（把无关锁的损坏标记一起清掉）。
 
     /// 只清一把锁的损坏标记（备份恢复按锁清理时用，见 SEC-17）。
     static func clearLedgerCorrupt(_ mac: String) { ledgerLock.withLock { $0.remove(mac) } }

@@ -590,10 +590,9 @@ enum CredentialOrg {
     static func saveDraft(_ mac: String, _ d: StudioDraft) {
         DB.setCodable(d, "kf_cdraft_" + mac)
     }
-    static func clearDraft(_ mac: String) {
-        // 2026-10-14: set(_, Data()) 走 JSONSerialization 必抛 (Data 非 JSON) => 键从未清掉, draft() 仍返回旧草稿。
-        DB.store.remove("kf_cdraft_" + mac)
-    }
+    // 2026-11-04：`clearDraft(_:)` 已删 —— 全仓零调用（本仓纪律：无接线点 + 无【保留未接】标记 = 真死代码）。
+    // 它的修复注释（set(_, Data()) 会抛）仍有价值，留在 `saveDraft` 的读者视线里：草稿只写不清，
+    // 要清就得走 `store.remove`，别用 `set(_, Data())`。
 
     /// 到期时刻的界面读法。`2118-01-01 00:00` 是**"永不到期"的哨兵值** (写库与 363/331 那两条判据都用它),
     /// 直接印出来就是"到 2118-01-01"这种把内部哨兵当事实报给用户的话。

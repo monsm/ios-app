@@ -83,7 +83,7 @@ enum QuickPool {
         c[id, default: 0] += 1
         DB.store.set(freqKey, c)
     }
-    static func clearCounts() { DB.store.remove(freqKey) }
+    // 2026-11-04：`clearCounts()` 已删 —— 全仓零调用、也没有任何界面提供"清除使用频率"入口。
 
     /// 三档排序：智能开 = 点过的按次数降序（平次保序）；关但满 30 天 = 最常用提首；否则原序。
     static func ordered() -> [QuickAction] {
