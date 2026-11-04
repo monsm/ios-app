@@ -458,8 +458,8 @@ final class SettingsStore {
     /// 而字号恰恰是外观里最显眼的一项。
     func resetAppearance() {
         axBigText = false
-        DB.store.setBool("kf_ax_bigotp", false)
-        DB.store.setBool("kf_bigtile", false)
+        DB.store.set("kf_ax_bigotp", false)
+        DB.store.set("kf_bigtile", false)
         DB.store.set("kf_dial_size", "standard")
         theme = .system
         density = .standard
