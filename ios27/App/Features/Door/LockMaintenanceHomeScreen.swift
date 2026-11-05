@@ -539,7 +539,7 @@ struct LockMaintenanceHomeScreen: View {
                         .padding(.top, V8.S.gapS)
                 }
                 if readOnly {
-                    Text("只读试验模式已开启：配网与重启都会被拦下。到「设置 → 安全 → 只读试验模式」关掉再试。")
+                    Text(TrialCopy.blocked("配网与重启都"))
                         .font(V8.T.caption)
                         .foregroundStyle(V8.C.warn)
                         .padding(.top, V8.S.gapS)
@@ -725,7 +725,7 @@ struct LockMaintenanceHomeScreen: View {
                         .padding(.top, V8.S.gapM)
                         .fixedSize(horizontal: false, vertical: true)
                     if readOnly {
-                        Text("只读试验模式已开启：固件升级会被拦下。到「设置 → 安全 → 只读试验模式」关掉再试。")
+                        Text(TrialCopy.blocked("固件升级"))
                             .font(V8.T.caption)
                             .foregroundStyle(V8.C.warn)
                             .padding(.top, V8.S.gapS)

@@ -606,7 +606,7 @@ struct LockSettingsHomeScreen: View {
                 .fixedSize(horizontal: false, vertical: true)
             }
             if readOnly {
-                Text("只读试验模式已开启：校时下发会被拦下。到「设置 → 安全 → 只读试验模式」关掉再试。")
+                Text(TrialCopy.blocked("校时下发"))
                     .font(V8.T.caption)
                     .foregroundStyle(V8.C.warn)
                     .padding(.top, V8.S.gapS)
@@ -766,7 +766,7 @@ struct LockSettingsHomeScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             if readOnly {
-                Text("只读试验模式已开启：下发会被拦下。到「设置 → 安全 → 只读试验模式」关掉再试。")
+                Text(TrialCopy.blocked("下发"))
                     .font(V8.T.caption)
                     .foregroundStyle(V8.C.warn)
                     .padding(.top, V8.S.gapS)
@@ -889,7 +889,7 @@ struct LockSettingsHomeScreen: View {
                     .padding(.top, V8.S.gapS)
             }
             if readOnly {
-                Text("只读试验模式已开启：布防下发会被拦下。到「设置 → 安全 → 只读试验模式」关掉再试。")
+                Text(TrialCopy.blocked("布防下发"))
                     .font(V8.T.caption)
                     .foregroundStyle(V8.C.warn)
                     .padding(.top, V8.S.gapS)
