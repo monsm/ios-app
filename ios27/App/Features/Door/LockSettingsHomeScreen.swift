@@ -734,9 +734,8 @@ struct LockSettingsHomeScreen: View {
                 }
             }
             .padding(.top, V8.S.gapM)
-            VDivider2()
-                .padding(.vertical, V8.S.gapM)
-            VDataRow(tag: "当前档位", tagTint: V8.C.ink4, title: String(tailgateSeconds), value: "秒")
+            // 2026-11-05（值级重复）：档位秒数在卡头「开锁后 N 秒自动上锁」、选中芯片、
+            // 以及这一行「当前档位 N 秒」里出现三次。删掉这一行，保留卡头（语义）与芯片（可选）。
             Button {
                 Task { await saveTailgate() }
             } label: {
