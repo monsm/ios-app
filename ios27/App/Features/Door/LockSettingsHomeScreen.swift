@@ -1133,17 +1133,24 @@ struct LockSettingsHomeScreen: View {
         return v > 0 ? String(v) : "该固件未上报"
     }
 
-    /// 三枚容量环：PIN 池 / 密码 / 指纹。数据全部来自锁端快照（容量 − 余量 = 已用）。
+    /// 三枚容量环：PIN 池 / 密码 / 指纹。数据全部来自**锁端快照**（容量 − 余量 = 已用）。
+    ///
+    /// 注意：容量字段在 DB.readStatus(mac) 返回的快照上，不在本页的 status（LockStatus）上 ——
+    /// 2026-11-05 曾误写成 status?.pinCap，CI 直接报「LockStatus has no member pinCap」。
     private var capacityBlock: some View {
-        HStack(spacing: V8.S.gapL) {
-            capacityRing("PIN", used: (status?.pinCap ?? 0) - (status?.pinStock ?? 0), cap: status?.pinCap ?? 0)
-            capacityRing("密码", used: (status?.pwdCap ?? 0) - (status?.pwdStock ?? 0), cap: status?.pwdCap ?? 0)
-            capacityRing("指纹", used: (status?.fpCap ?? 0) - (status?.fpStock ?? 0), cap: status?.fpCap ?? 0)
+        let snap = DB.readStatus(mac)
+        let pinUsed = max(0, (snap?.pinCap ?? 0) - (snap?.pinStock ?? 0))
+        let pwdUsed = max(0, (snap?.pwdCap ?? 0) - (snap?.pwdStock ?? 0))
+        let fpUsed = max(0, (snap?.fpCap ?? 0) - (snap?.fpStock ?? 0))
+        return HStack(spacing: V8.S.gapL) {
+            capacityRing("PIN", used: pinUsed, cap: snap?.pinCap ?? 0)
+            capacityRing("密码", used: pwdUsed, cap: snap?.pwdCap ?? 0)
+            capacityRing("指纹", used: fpUsed, cap: snap?.fpCap ?? 0)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, V8.S.gapM)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("容量占用：PIN \(max(0, (status?.pinCap ?? 0) - (status?.pinStock ?? 0))) / \(status?.pinCap ?? 0)，密码 \(max(0, (status?.pwdCap ?? 0) - (status?.pwdStock ?? 0))) / \(status?.pwdCap ?? 0)，指纹 \(max(0, (status?.fpCap ?? 0) - (status?.fpStock ?? 0))) / \(status?.fpCap ?? 0)")
+        .accessibilityLabel("容量占用：PIN \(pinUsed) / \(snap?.pinCap ?? 0)，密码 \(pwdUsed) / \(snap?.pwdCap ?? 0)，指纹 \(fpUsed) / \(snap?.fpCap ?? 0)")
     }
 
     @ViewBuilder
