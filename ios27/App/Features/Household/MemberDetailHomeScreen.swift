@@ -192,10 +192,12 @@ struct MemberDetailHomeScreen: View {
             // 本卡特有的一句：这一页读的是本机数据、不连门锁。
             // 2026-11-05（用户指令：图形化变多）：本周每天的开锁次数画成柱图 ——
             // 与卡头那句「本周 N 次」是同一份数据，但形状比句子更快。
-            VRangeCaption(text: bars.labels)
-                .padding(.top, V8.S.gapM)
-            VSpark(values: bars.values, tint: V8.C.accentFill, cursor: 6, axis: .samples)
-                .padding(.top, V8.S.gapS)
+            // 同上：只保留星期标签，关掉 VSpark 自带的「最早 / 最近」。
+            VStack(alignment: .leading, spacing: V8.S.gapS) {
+                VRangeCaption(text: bars.labels)
+                VSpark(values: bars.values, tint: V8.C.accentFill, cursor: 6, axis: nil)
+            }
+            .padding(.top, V8.S.gapM)
             Text("这一页只读本机数据，不连门锁 —— 离线或未连接时，档案与摘录完全一样。")
                 .font(V8.T.caption)
                 .foregroundStyle(V8.C.ink4)

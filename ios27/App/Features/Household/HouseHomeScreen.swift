@@ -58,11 +58,15 @@ struct HouseHomeScreen: View {
             VCardHead(eyebrow: "近 7 天开门", statement: "\(weekOpens) 次", trailing: "本机回执")
             VDivider2()
                 .padding(.top, V8.S.gapM)
-            VRangeCaption(text: bars.labels)
-                .padding(.top, V8.S.gapM)
-            // cursor 指向今天（最后一格），与记录页 24 小时波形的处理一致。
-            VSpark(values: bars.values, tint: V8.C.accentFill, cursor: max(0, bars.values.count - 1), axis: .samples)
-                .padding(.top, V8.S.gapS)
+            // 2026-11-05（截图审查）：原来这里有两套轴说明 —— 我加的星期行 +
+            // VSpark 自带的「最早 / 最近」。同一个轴上两组标签是噪声。
+            // 保留星期（信息量更大），把 VSpark 的 axis 关掉；两者收进一个 VStack 成组。
+            VStack(alignment: .leading, spacing: V8.S.gapS) {
+                VRangeCaption(text: bars.labels)
+                VSpark(values: bars.values, tint: V8.C.accentFill,
+                       cursor: max(0, bars.values.count - 1), axis: nil)
+            }
+            .padding(.top, V8.S.gapM)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("近 7 天开门 \(weekOpens) 次")
