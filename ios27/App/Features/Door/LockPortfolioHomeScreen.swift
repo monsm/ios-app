@@ -86,7 +86,7 @@ struct LockPortfolioHomeScreen: View {
     }
 
     var body: some View {
-        VPage(title: judgement, lead: "多锁统计、分组与排序。点一行把该锁设为当前锁。锁身份与版面在下面的段里。") {
+        VPage(title: judgement, lead: "统计按锁分开算。当前锁决定其它页面看的是哪一把。") {
             EmptyView()
         } content: {
             if usage.isEmpty {
