@@ -232,7 +232,20 @@ struct VDataRow: View {
                     .font(V8.T.micro)
                     .foregroundStyle(V8.C.ink4)
             }
+            // 2026-11-05（Round 3 · 可点性）：可点行如果只有文字、没有读数、也没有 chevron，
+            // 用户看不出它能点（记录页时间线就是这样）。有读数的行末尾已经有数字，
+            // 再加箭头会挤；所以只在「纯导航行」上显示 chevron。
+            if showsDisclosure {
+                Image(systemName: "chevron.right")
+                    .font(V8.T.micro)
+                    .foregroundStyle(V8.C.ink4)
+                    .accessibilityHidden(true)
+            }
         }
+    }
+
+    private var showsDisclosure: Bool {
+        interactive && value.isEmpty && unit == nil && spark == nil
     }
 
     private var axBody: some View {

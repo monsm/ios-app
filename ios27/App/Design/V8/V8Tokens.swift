@@ -162,7 +162,7 @@ enum V8 {
         /// 22pt —— 页面 status 行（原 34pt 自绘大标题降级后的位置）。
         /// 2026-11-05（Round 3）：页面标题归系统 navigationTitle，这句话不再是标题，
         /// 而是「这一页现在怎么样」的状态句 —— 22pt semibold 足够强调，又不冒充标题。
-        static let pageStatus = VFont(size: 22, weight: .semibold, relativeTo: .title2)
+        static let pageStatus = VFont(size: 20, weight: .semibold, relativeTo: .title3)
         /// 17pt —— 页面副文（因果段 / status 行）。HIG Body = 17。
         static let bodyL = VFont(size: 17, weight: .regular, relativeTo: .body)
         /// 21.5pt —— 卡内判断句（statement）
