@@ -92,13 +92,19 @@ struct AddLockHomeScreen: View {
                 decoyCard
             } else {
                 if let banner {
+                    // 2026-11-05（截图审查 · 流程不合理）：
+                    // 「此设备不支持所需的蓝牙功能」这种**硬失败**，下面的按钮却是「重试」——
+                    // 一句话说「换一把锁」，按钮说「再来一次」，用户会一直点一个不可能成功的按钮。
+                    // 与 BLEService 的状态文案对齐：不可用类（不支持）不给重试，只说明真正的出路。
+                    let terminal = banner.contains("不支持")
                     VFailure(
                         what: "这一次没有配完",
                         why: banner,
-                        next: "锁没有被改动一半就留着。按准备步骤重来，或换一把锁。"
-                    ) {
-                        Task { await scan() }
-                    }
+                        next: terminal
+                            ? "这台设备没有可用的蓝牙（模拟器或硬件不支持）。换一台真机再来；锁没有被改动。"
+                            : "锁没有被改动一半就留着。按准备步骤重来，或换一把锁。",
+                        retry: terminal ? nil : { Task { await scan() } }
+                    )
                 }
                 switch phase {
                 case .scanning, .ready:

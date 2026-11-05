@@ -89,7 +89,12 @@ struct CredentialStudioHomeScreen: View {
     private var judgement: String {
         if decoyed { return "空壳模式下不显示凭证台账" }
         if app.lock == nil { return "还没有门锁" }
-        if totalSelected > 0 { return "已选 " + String(totalSelected) + " 项" }
+        // 2026-11-05（截图审查 · 标题与芯片同义）：
+        // 原来选中态写「已选 N 项」，而**紧贴标题上方**的芯片行里就有一枚
+        // 「已选 · N 项」—— 同一屏同一个数，还是上下紧邻。
+        // 按参考图的分工（标题叙述、卡片/芯片承载数字）改成指令，且不再重复数量。
+        // 「台账 N 项」保留：删掉「台账读数」卡之后，总数只有这一处在说。
+        if totalSelected > 0 { return "挑好了，接下来选动作" }
         return "台账 " + String(pwdRows.count + fpRows.count) + " 项"
     }
 
