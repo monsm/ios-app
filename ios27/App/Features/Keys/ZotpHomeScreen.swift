@@ -64,7 +64,10 @@ struct ZotpHomeScreen: View {
         if app.lock == nil || kc == nil {
             return "动态密码要用这把锁的钥匙串现场计算：先在「添加门锁」配对，再回来生成。"
         }
-        return "6 位数字 · 按锁端周期自动更换 · 于 \(window.isEmpty ? "下一窗口" : window) 失效。"
+        // 2026-11-05（截图审查 · 文案不通）：没有码的时候原来会渲染成「于 下一窗口 失效。」——
+        // 一句读不通的话。没码只说周期，有码才说几点失效。
+        if window.isEmpty { return "6 位数字 · 按锁端周期自动更换。" }
+        return "6 位数字 · 按锁端周期自动更换 · 于 \(window) 失效。"
     }
 
     var body: some View {
@@ -123,7 +126,8 @@ struct ZotpHomeScreen: View {
             VDivider2()
                 .padding(.top, V8.S.gapM)
             if code.isEmpty {
-                Text("还没有生成 —— 点下面的按钮取一枚")
+                // 卡头已写「还没生成」，这里只给下一步，不重复状态。
+                Text("点下面的按钮取一枚")
                     .font(V8.T.footnote)
                     .foregroundStyle(V8.C.ink3)
                     .frame(maxWidth: .infinity)
