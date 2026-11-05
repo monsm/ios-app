@@ -817,6 +817,13 @@ jobs:
               if [ ! -f "$base" ]; then cp "$f" "$base"; KEPT=$((KEPT + 1)); fi
             done
             echo "merged $KEPT previous screenshot(s) that this run did not re-shoot"
+            # 2026-11-05（截图可信度）：旧命名是「两位序号-页面名」（如 10-lockSettings.png），
+            # 序号随 scope 变化 ⇒ 同一页面会以多个文件名长期共存，看图的无法判断哪张是新的。
+            # 现在子页改用稳定名（lockSettings.png），这里把旧命名的残留清掉。
+            # Tab 整页图是「一位序号-名字-full.png」（0-door-full.png），不受影响。
+            REMOVED=$(ls [0-9][0-9]-*.png 2>/dev/null | wc -l | tr -d " ")
+            rm -f [0-9][0-9]-*.png
+            echo "removed $REMOVED stale index-prefixed screenshot(s)"
           else
             echo "no previous ci-shots to merge (first publish?)"
           fi

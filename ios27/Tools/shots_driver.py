@@ -138,9 +138,12 @@ def main() -> int:
     for idx, target in enumerate(subs):
         if out_of_budget():
             break
-        num = str(10 + idx)
         launch(["-kfUITest", "-kfSeed", "-kfDest", target], 6)
-        path = os.path.join(OUT, num + "-" + target + ".png")
+        # 2026-11-05（截图可信度修复）：原来文件名是「10+序号-页面名」，而序号取决于当轮 scope
+        # 的子页列表 —— 同一个页面在不同 run 里会变成不同文件名，merge-publish 只按文件名合并，
+        # 于是 ci-shots 上同时存在同一页面的多代图，看图的以为是新的、其实是旧的（为此误判过两次）。
+        # 改成稳定名字：只用页面名，同一页永远覆盖同一个文件。
+        path = os.path.join(OUT, target + ".png")
         if shot(path):
             produced += 1
             log("subpage ok " + target + " size=" + str(os.path.getsize(path)))
