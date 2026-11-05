@@ -465,6 +465,9 @@ struct VEmpty: View {
                         )
                 }
                 .buttonStyle(V8PressStyle())
+                // 2026-11-05（全技能审核 · VoiceOver）：空态的三段（判断 / 原因 / 出路）
+                // 原来是一组散元素，读屏要滑四次才知道该干什么。合成一组并读成一句。
+                .accessibilityElement(children: .contain)
             }
         }
     }
