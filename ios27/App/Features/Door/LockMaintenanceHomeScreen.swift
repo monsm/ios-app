@@ -394,7 +394,8 @@ struct LockMaintenanceHomeScreen: View {
             }
         } else {
             VCard2(style: .well) {
-                VCardHead(eyebrow: "我的网关", statement: "一行一台", trailing: String(gwRows.count) + " 台")
+                // 2026-11-05（值级重复）：trailing 原来是「N 台」，而顶部芯片「网关」已经给出「在线 M/N」。
+                VCardHead(eyebrow: "我的网关", statement: "一行一台")
                 VDivider2()
                     .padding(.top, V8.S.gapM)
                 VStack(spacing: 0) {
