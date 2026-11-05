@@ -111,7 +111,7 @@ jobs:
           has_runtime() { xcrun simctl list runtimes 2>/dev/null | grep -qE "iOS (2[7-9]|[3-9][0-9])\."; }
           if ! has_runtime; then
             echo "== 无 iOS 27+ 模拟器 runtime，尝试下载 =="
-            xcodebuild -downloadPlatform iOS 2>&1 | tail -25 || true
+            echo "== 无 runtime：跳过下载（下载无超时会挂死整条队列） =="
           fi
           echo "== 可用 runtime =="; xcrun simctl list runtimes || true
           if ! has_runtime; then
