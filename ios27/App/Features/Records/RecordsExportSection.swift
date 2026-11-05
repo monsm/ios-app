@@ -581,13 +581,16 @@ private struct RecordExportShareCard: View {
     }
 
     var body: some View {
+        // 2026-11-05（Round 6 · 品牌收口）：分享卡是 App 走出去的脸 —— 产品名必须与
+        // CFBundleDisplayName 一致（「锁管家」），不能再写旧文案「离线锁管家」；
+        // 事件标题从 17pt 提到 28pt（这是给人看的海报，不是屏幕内的一行）。
         VStack(alignment: .leading, spacing: V8.S.gapM) {
             Image(systemName: isAlarm ? "exclamationmark.triangle.fill" : "lock.open.fill")
-                .font(V8.T.headline)
-                .foregroundStyle(isAlarm ? V8.C.danger : V8.C.ink1)
+                .font(V8.T.title2)
+                .foregroundStyle(isAlarm ? V8.C.danger : V8.C.accent)
                 .accessibilityHidden(true)
             Text(entry.event)
-                .font(V8.T.headline)
+                .font(V8.T.title2)
                 .foregroundStyle(V8.C.ink1)
                 .fixedSize(horizontal: false, vertical: true)
             Text(thirdLine)
@@ -595,14 +598,20 @@ private struct RecordExportShareCard: View {
                 .foregroundStyle(V8.C.ink3)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
-            Text("离线锁管家 · 单条记录 · 仅含本条数据")
-                .font(V8.T.micro)
-                .foregroundStyle(V8.C.ink4)
-                .tracking(V8.G.heroLabelTracking)
+            HStack(spacing: V8.S.gapXS) {
+                Image(systemName: "lock.rotation")
+                    .font(V8.T.label)
+                    .foregroundStyle(V8.C.ink4)
+                    .accessibilityHidden(true)
+                Text("锁管家 · 单条记录 · 仅含本条数据")
+                    .font(V8.T.label)
+                    .foregroundStyle(V8.C.ink4)
+                    .tracking(V8.G.heroLabelTracking)
+            }
         }
         .padding(V8.S.gapXXL)
         .frame(width: RecordExportCardSize.width, height: RecordExportCardSize.height, alignment: .topLeading)
-        .background(V8.C.card, in: .rect(cornerRadius: V8.R.card))
+        .background(V8.C.card, in: .rect(cornerRadius: V8.R.card, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: V8.R.card, style: .continuous)
                 .strokeBorder(V8.C.line, lineWidth: V8.S.hair)

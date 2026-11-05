@@ -823,6 +823,9 @@ struct MemberCard: Identifiable, Hashable {
 /// 正常启动永远不带此参数。只在截图管线里引用。
 enum UITestEnv {
     static let scrollBottom = Locked(false)
+    /// CI 大字号档（-kfAX）：为真时整棵视图树压到 AX2 下限，验证 AX 布局不裁字。
+    /// 2026-11-05（Round 6 · AX 矩阵）。
+    static let axText = Locked(false)
 }
 
 extension AppModel: EngineHost {

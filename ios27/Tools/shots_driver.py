@@ -60,6 +60,9 @@ SCOPES = {
     # 2026-11-05（Round 5 · 深色矩阵）：4 个根 Tab + 门/钥匙/外观三张信息最密的子页。
     # 深色不是浅色的反相 —— 两套独立取值必须各自有截图证据。
     "dark": (["0", "1", "3", "4"], ["appearance", "security", "keyDetail"]),
+    # 2026-11-05（Round 6 · AX 矩阵）：大字号档。芯片行 / 表格行 / 卡头是裁字高发区，
+    # 只拍 2 个根 Tab（门 + 凭证）+ 外观/锁设置两张表单最密的子页。
+    "ax": (["0", "1"], ["appearance", "lockSettings"]),
 }
 
 TAB_NAME = {"0": "door", "1": "keys", "2": "records", "3": "household", "4": "settings"}
@@ -91,6 +94,9 @@ def main() -> int:
 
     def launch(extra, wait: float) -> None:
         terminate()
+        # 2026-11-05（Round 6 · AX 矩阵）：ax 域的每一轮都带上 -kfAX。
+        if axmode:
+            extra = extra + ["-kfAX"]
         run(["xcrun", "simctl", "launch", udid, BUNDLE] + extra, timeout=60)
         time.sleep(wait)
 
@@ -110,7 +116,8 @@ def main() -> int:
     # 2026-11-05（Round 5 · 深色矩阵）：dark 域的图带 dark- 前缀，与浅色图并存；
     # 深浅切换由驱动自己做（workflow 只设一次 light）。
     dark = scope == "dark"
-    prefix = "dark-" if dark else ""
+    axmode = scope == "ax"
+    prefix = ("dark-" if dark else "") + ("ax-" if axmode else "")
 
     def flip(appearance: str) -> None:
         run(["xcrun", "simctl", "ui", udid, "appearance", appearance], timeout=60)

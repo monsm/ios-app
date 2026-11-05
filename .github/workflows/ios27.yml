@@ -679,6 +679,8 @@ jobs:
           # 2026-11-05（Round 5 · 深色矩阵）：浅色轮跑完后补一轮深色（4 根 Tab + 3 张信息最密的子页）。
           # 深浅切换由驱动自己完成；dark- 前缀让两套图在 ci-shots 上并存。
           python3 Tools/shots_driver.py "$UDID" "dark" "$DIAG" || true
+          # 2026-11-05（Round 6 · AX 矩阵）：大字号档（AX2 下限），验证裁字高发区。
+          python3 Tools/shots_driver.py "$UDID" "ax" "$DIAG" || true
           # 2026-11-05（截图耗时优化）：这里原来还有一轮「10 个子页的整页截图」。
           # diag 里自己写着：单屏页面 content.height 不超过视口 +50 时 App 不产出整页图 ——
           # 也就是 10 次里大多数注定拿不到文件，只换来 10 次冷启动（每次 8 秒 sleep）。

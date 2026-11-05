@@ -50,7 +50,8 @@ struct RootView: View {
         .preferredColorScheme(colorScheme)
         // 关键：不开 App 内「全局大字」时**不要**写死 .large —— 那会把系统设置里的
         // 更大字号整体压回 Large，等于无视 Dynamic Type。只有 App 档开启时才强制 accessibility2。
-        .modifier(AXTextSizeModifier(enabled: settings.axBigText))
+        // 2026-11-05（Round 6 · AX 矩阵）：`-kfAX` 让 CI 截图也走 AX 档（见 AppModel.UITestEnv）。
+        .modifier(AXTextSizeModifier(enabled: settings.axBigText || UITestEnv.axText.withLock { $0 }))
         // 减弱动态：解锁闸门 → 主界面的切换改成直接出现，而不是淡入
         .animation(reduceMotion ? nil : settings.motion.resultAnimation, value: app.unlocked)
         // 装配：把路由注入 AppModel —— 这是 Engine 唯一能触达界面的出口（EngineHost）。
@@ -66,6 +67,10 @@ struct RootView: View {
             // 判据：这是**测试脚手架**，不是功能；不要在任何业务判断里引用它。
             let args = ProcessInfo.processInfo.arguments
             if args.contains("-kfScroll") { UITestEnv.scrollBottom.withLock { $0 = true } }
+            // 2026-11-05（Round 6 · AX 矩阵）：CI 大字号档。`settings.axBigText` 是用户偏好，
+            // CI 模拟器上读不到；截图要验证「AX 档下布局不裁字」，就给一个显式的启动钩子，
+            // 只影响 `-kfUITest` 轮次。正常启动永远不带此参数。
+            if args.contains("-kfAX") { UITestEnv.axText.withLock { $0 = true } }
             if args.contains("-kfUITest") {
                 app.unlocked = true
                 if let i = args.firstIndex(of: "-kfTab"), i + 1 < args.count,
