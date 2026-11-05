@@ -1408,7 +1408,7 @@ struct LockSettingsHomeScreen: View {
         let mac = self.mac
         guard !mac.isEmpty, !busy else { return }
         guard !DB.isDecoy else {
-            actionError = "空壳模式下不写入设置 —— 先退出空壳再来。"
+            actionError = DecoyCopy.blocked("写入设置")
             return
         }
         busy = true
@@ -1440,7 +1440,7 @@ struct LockSettingsHomeScreen: View {
         let mac = self.mac
         guard !mac.isEmpty, !busy, !readOnly else { return }
         guard !DB.isDecoy else {
-            actionError = "空壳模式下不写入设置 —— 先退出空壳再来。"
+            actionError = DecoyCopy.blocked("写入设置")
             return
         }
         busy = true
@@ -1473,7 +1473,7 @@ struct LockSettingsHomeScreen: View {
         guard app.lock != nil, !busy, !readOnly else { return }
         guard !DB.isDecoy else {
             outcomeIsFailure = true
-            outcome = "空壳模式下不写入锁端策略 —— 先退出空壳再来。"
+            outcome = DecoyCopy.blocked("写入锁端策略")
             return
         }
         busy = true

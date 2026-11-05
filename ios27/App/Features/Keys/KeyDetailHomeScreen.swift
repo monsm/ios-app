@@ -594,7 +594,7 @@ struct KeyDetailHomeScreen: View {
 
     private func setExpiry(_ key: KeyItem, days: Int?) {
         guard !DB.isDecoy else {
-            actionError = "空壳模式下不改台账 —— 先退出空壳再来。"
+            actionError = DecoyCopy.blocked("改台账")
             return
         }
         guard !app.trialGuard else {
@@ -630,7 +630,7 @@ struct KeyDetailHomeScreen: View {
     /// 停用 / 恢复使用：只改本机停用位（可恢复），不发任何锁端删除命令。
     private func toggleDisabled(_ key: KeyItem) {
         guard !DB.isDecoy else {
-            actionError = "空壳模式下不改本机状态 —— 先退出空壳再来。"
+            actionError = DecoyCopy.blocked("改本机状态")
             return
         }
         actionError = nil
@@ -641,7 +641,7 @@ struct KeyDetailHomeScreen: View {
 
     private func deleteKey() {
         guard !DB.isDecoy else {
-            actionError = "空壳模式下不删除凭证 —— 先退出空壳再来。"
+            actionError = DecoyCopy.blocked("删除凭证")
             return
         }
         guard !app.trialGuard else {

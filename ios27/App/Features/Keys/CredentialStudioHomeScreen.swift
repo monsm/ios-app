@@ -472,7 +472,7 @@ struct CredentialStudioHomeScreen: View {
     private func saveSnapshot() {
         guard !DB.isDecoy else {
             studioOutcomeBad = true
-            studioOutcome = "空壳模式下不写版本快照 —— 先退出空壳再来。"
+            studioOutcome = DecoyCopy.blocked("写版本快照")
             return
         }
         CredHistoryStore.capture(studioMac, note: "手动快照")
@@ -603,7 +603,7 @@ struct CredentialStudioHomeScreen: View {
     private func toggleStar(_ id: String) {
         guard !DB.isDecoy else {
             studioOutcomeBad = true
-            studioOutcome = "空壳模式下不改星标 —— 先退出空壳再来。"
+            studioOutcome = DecoyCopy.blocked("改星标")
             return
         }
         CredStarStore.toggle(studioMac, id)
@@ -1032,7 +1032,7 @@ struct CredentialStudioHomeScreen: View {
     private func batchExtend() {
         guard !DB.isDecoy else {
             studioOutcomeBad = true
-            studioOutcome = "空壳模式下不改台账 —— 先退出空壳再来。"
+            studioOutcome = DecoyCopy.blocked("改台账")
             return
         }
         guard !selectedPwds.isEmpty else { return }
@@ -1063,7 +1063,7 @@ struct CredentialStudioHomeScreen: View {
     private func batchDisable() {
         guard !DB.isDecoy else {
             studioOutcomeBad = true
-            studioOutcome = "空壳模式下不改台账 —— 先退出空壳再来。"
+            studioOutcome = DecoyCopy.blocked("改台账")
             return
         }
         let pwdList = pwdRows.filter { selectedPwds.contains($0.alias) }
@@ -1082,7 +1082,7 @@ struct CredentialStudioHomeScreen: View {
     private func applyPrefix() {
         guard !DB.isDecoy else {
             studioOutcomeBad = true
-            studioOutcome = "空壳模式下不改台账 —— 先退出空壳再来。"
+            studioOutcome = DecoyCopy.blocked("改台账")
             return
         }
         let p = prefixText.trimmingCharacters(in: .whitespaces)
@@ -1105,7 +1105,7 @@ struct CredentialStudioHomeScreen: View {
     private func applyTransfer() {
         guard !DB.isDecoy else {
             studioOutcomeBad = true
-            studioOutcome = "空壳模式下不改台账 —— 先退出空壳再来。"
+            studioOutcome = DecoyCopy.blocked("改台账")
             return
         }
         var ok = 0
@@ -1128,7 +1128,7 @@ struct CredentialStudioHomeScreen: View {
     private func exportPackage() {
         guard !DB.isDecoy else {
             studioOutcomeBad = true
-            studioOutcome = "空壳模式下不导出凭证 —— 先退出空壳再来。"
+            studioOutcome = DecoyCopy.blocked("导出凭证")
             return
         }
         guard let result = CredentialOrg.exportPackage(studioMac,

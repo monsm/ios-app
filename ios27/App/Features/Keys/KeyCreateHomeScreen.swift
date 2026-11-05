@@ -679,7 +679,7 @@ struct KeyCreateHomeScreen: View {
 
     private func submit() {
         guard !DB.isDecoy else {
-            errorText = "空壳模式下不写入凭证 —— 先退出空壳再来。"
+            errorText = DecoyCopy.blocked("写入凭证")
             return
         }
         guard !app.trialGuard else {
