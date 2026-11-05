@@ -198,22 +198,33 @@ struct RecordsHomeScreen: View {
                       trailing: readAt.map { TimeFormat.dayShort($0) })
             VDivider2()
                 .padding(.top, V8.S.gapM)
+            // 2026-11-05（截图审查 · UI/UX 真问题）：行里只显示**时刻**，没显示日期。
+            // 台账条目跨多天，于是列表读起来像乱序（03:11 → 20:11 → 13:11 → 06:11 …），
+            // 实际是按绝对时间降序、每步跨天的 −7 小时。用户第一反应会是"排序坏了"。
+            // 修法：按天分组，跨天时插一行日期（参考图与系统「健康」「照片」都是这么做的）。
             VStack(spacing: 0) {
-                ForEach(Array(filtered.prefix(8))) { entry in
+                ForEach(Array(timelineRows.enumerated()), id: \.offset) { index, row in
+                    if let day = row.day {
+                        Text(day)
+                            .font(V8.T.caption)
+                            .foregroundStyle(V8.C.ink4)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.top, index == 0 ? 0 : V8.S.gapS)
+                    }
                     Button {
                         router.request(.dest(.recordDetail))
-                        route.focusID = entry.id
+                        route.focusID = row.entry.id
                     } label: {
                         VDataRow(
-                            tag: TimeDisplay.clock(entry.at),
-                            tagTint: toneTint(entry.tone),
-                            title: entry.event,
-                            detail: CredentialOrg.ownerName(entry.owner),
+                            tag: TimeDisplay.clock(row.entry.at),
+                            tagTint: toneTint(row.entry.tone),
+                            title: row.entry.event,
+                            detail: CredentialOrg.ownerName(row.entry.owner),
                             value: ""
                         )
                     }
                     .buttonStyle(.plain)
-                    if entry.id != filtered.prefix(8).last?.id { VDotRule() }
+                    if index != timelineRows.count - 1 { VDotRule() }
                 }
             }
             .padding(.top, V8.S.gapS)
@@ -227,6 +238,20 @@ struct RecordsHomeScreen: View {
                 .padding(.top, V8.S.gapFootnote)
                 .fixedSize(horizontal: false, vertical: true)
         }
+    }
+
+    /// 时间线行：取前 8 条，**每天的第一条带上日期标签**。
+    ///
+    /// 2026-11-05（截图审查）：原来只印时刻、不印日期，跨天时列表看起来像乱序。
+    private var timelineRows: [(day: String?, entry: LedgerEntry)] {
+        var out: [(day: String?, entry: LedgerEntry)] = []
+        var lastDay: String?
+        for entry in filtered.prefix(8) {
+            let key = TimeFormat.dayKey(entry.at)
+            out.append((day: key == lastDay ? nil : TimeFormat.dayShort(entry.at), entry: entry))
+            lastDay = key
+        }
+        return out
     }
 
     /// 记录域统一走 V8.D 数据色：只编码"类别"，不编码"重要"。
@@ -272,10 +297,15 @@ struct RecordsHomeScreen: View {
                     }
                 }
             }
-            Text("命中 \(filtered.count) 条")
-                .font(V8.T.caption)
-                .foregroundStyle(V8.C.ink4)
-                .padding(.top, V8.S.gapS)
+            // 2026-11-05（截图审查 · 设计冗余）：没有搜索词时，这一行与上方「全部 N」芯片同值
+            //（芯片「全部 9」+ 这里「命中 9 条」＝同一屏同一个数）。
+            // 只有**有搜索词**时它才是新信息（此时命中数可能小于范围芯片的数）。
+            if !search.isEmpty {
+                Text("命中 \(filtered.count) 条")
+                    .font(V8.T.caption)
+                    .foregroundStyle(V8.C.ink4)
+                    .padding(.top, V8.S.gapS)
+            }
         }
     }
 
