@@ -851,11 +851,17 @@ struct LockMaintenanceHomeScreen: View {
                         }
                     }
                     .padding(.top, V8.S.gapM)
-                    Text("低于该电量时，本机发一条低电通知（每档只发一次，回电后重置）。五档口径：0–10 空 / 11–20 低 / 21–35 低 / 36–60 中 / 61–80 高 / 81–100 满。")
+                    // 2026-11-05（可折叠说明 · 第 2 处）：行为说明保留可见，口径表收进折叠 ——
+                    // 档位边界是查表用的参考数据，选档之前不需要看。
+                    Text("低于该电量时，本机发一条低电通知（每档只发一次，回电后重置）。")
                         .font(V8.T.footnote)
                         .foregroundStyle(V8.C.ink3)
                         .padding(.top, V8.S.gapM)
                         .fixedSize(horizontal: false, vertical: true)
+                    VDisclosure(title: "五档口径") {
+                        Text("0–10 空 / 11–20 低 / 21–35 低 / 36–60 中 / 61–80 高 / 81–100 满")
+                    }
+                    .padding(.top, V8.S.gapS)
                 }
                 .padding(.top, V8.S.gapM)
             }
