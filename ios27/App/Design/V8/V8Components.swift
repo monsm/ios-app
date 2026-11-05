@@ -94,23 +94,30 @@ struct VCardHead: View {
     var trailing: String? = nil
 
     var body: some View {
-        VStack(alignment: .leading, spacing: V8.S.gapEyebrow) {
-            HStack(alignment: .firstTextBaseline) {
+        // 2026-11-05（Round 3 · 专业 iOS 27）：原来「14.5pt 灰色眉标 + 21.5pt 判断句」是
+        // 每张卡固定的两层标题 —— 小字在上、大字在下，正是设计审查里点名的「eyebrow 模板感」；
+        // 26 个页面 × 每页 3–6 张卡，整屏都是同一个节奏。
+        // 原生层级反过来：卡片名（原 eyebrow）做 17pt semibold 标题，
+        // 原来那句长判断降为 15pt 次级说明；右侧 trailing 仍是 13pt 辅助值。
+        VStack(alignment: .leading, spacing: V8.S.gapHair) {
+            HStack(alignment: .firstTextBaseline, spacing: V8.S.gapS) {
                 Text(eyebrow)
-                    .font(V8.T.label)
-                    .foregroundStyle(V8.C.ink4)
+                    .font(V8.T.headline)
+                    .foregroundStyle(V8.C.ink1)
+                    .lineLimit(2)
                 Spacer(minLength: 0)
                 if let trailing {
                     Text(trailing)
                         .font(V8.T.label)
                         .foregroundStyle(V8.C.ink4)
                         .monospacedDigit()
+                        .lineLimit(1)
                 }
             }
             Text(statement)
-                .font(V8.T.headline)
-                .foregroundStyle(V8.C.ink1)
-                .lineSpacing(V8.L.headline - V8.T.headline.size)
+                .font(V8.T.footnote)
+                .foregroundStyle(V8.C.ink4)
+                .lineSpacing(1.5)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -310,42 +317,47 @@ struct VChip2: View {
     }
 
     private var chipBody: some View {
-        HStack(spacing: V8.S.gapChipMin) {
-            iconView
-            if !label.isEmpty || !value.isEmpty {
-                VStack(alignment: .leading, spacing: V8.S.gapXS) {
-                    Text(label)
-                        .font(V8.T.label)
-                        .foregroundStyle(V8.C.ink4)
-                        .lineLimit(1)
-                    Text(value)
-                        .font(V8.T.chipValue)
-                        .foregroundStyle(V8.C.ink1)
-                        .lineLimit(1)
-                }
+        // 2026-11-05（Round 3 · 专业 iOS 27）：原来每枚芯片左侧是一个 24pt 的「分段环」
+        // 微图标 + 两行文字（14.5 / 16.4），一排 4–5 枚就像一排小仪表盘；环的填充比例
+        // 与右侧数字说的是同一件事。现在收成原生筛选芯片：6pt 色点 + 单行「标签 值」，
+        // 选中用强调色填充；信息密度不变，视觉噪音少一半。
+        HStack(spacing: V8.S.gapXS) {
+            Circle()
+                .fill(chipDot)
+                .frame(width: V8.G.chipDot, height: V8.G.chipDot)
+                .accessibilityHidden(true)
+            if !label.isEmpty {
+                Text(label)
+                    .font(V8.T.label)
+                    .foregroundStyle(selected ? V8.C.onAccent.opacity(0.82) : V8.C.ink4)
+                    .lineLimit(1)
+            }
+            if !value.isEmpty {
+                Text(value)
+                    .font(V8.T.chipValue)
+                    .foregroundStyle(selected ? V8.C.onAccent : V8.C.ink1)
+                    .lineLimit(1)
             }
         }
-        .padding(.horizontal, V8.S.gapChipMin)
-        // 2026-11-05（全技能审核 · Dynamic Type）：hChip 是**默认字号下的高度**，不是上限。
-        // 芯片里两行 14.5/16.4pt 的文字会随 Dynamic Type 放大到 2–3 倍；用固定 height 会裁字，
-        // 而 a11y 闸门只查 V.Action/V.Tab 两个令牌名，查不到这里。改成下限，胶囊随内容长高。
+        .padding(.horizontal, V8.S.gapM)
         .frame(minHeight: V8.S.hChip)
         .background(
             Capsule(style: .continuous)
-                .fill(selected ? V8.C.chipOn : V8.C.chipOff)
-        )
-        .overlay(
-            // 2026-11-05（全技能审核 · 对比度）：选中原来只是白底 vs 近白底（1.10:1），
-            // 肉眼分辨不出当前筛选；改成 2pt 强调色描边（图形对比 ≥3:1），颜色之外还有粗细。
-            Capsule(style: .continuous)
-                .strokeBorder(selected ? V8.C.accent : V8.C.lineStrong,
-                              lineWidth: selected ? V8.E.selected : V8.S.hair)
+                .fill(selected ? V8.C.accent : V8.C.chipOff)
         )
         .accessibilityElement(children: .combine)
         .accessibilityLabel(label.isEmpty ? value : "\(label)，\(value)")
-        // 2026-11-05（全技能审核 · VoiceOver）：纯状态芯片没有 action，却无条件标成按钮，
-        // VoiceOver 会读「按钮」但点不动。只有真能点的芯片才是按钮。
         .accessibilityAddTraits(chipTraits)
+    }
+
+    /// 芯片左侧色点：沿用原分段环的颜色，只保留「类别」这一层含义。
+    private var chipDot: Color {
+        switch icon {
+        case .ring(_, let tint): return tint
+        case .segmented(let segments): return segments.first?.1 ?? V8.C.accent
+        case .glyph: return V8.C.ink3
+        case .none: return Color.clear
+        }
     }
 
     private var chipTraits: AccessibilityTraits {
@@ -763,45 +775,49 @@ struct VPage<Chips: View, Content: View>: View {
     var lead: String? = nil
     @ViewBuilder var chips: () -> Chips
     @ViewBuilder var content: () -> Content
+    @Environment(Router.self) private var router
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                chips()
-                    .padding(.top, V8.S.gapChip)
-                // 文字层落点 = gutterCard + padCard = gutterText：标题与卡内文字同一条竖线。
-                // 之前用 padCard，标题比卡片边缘缩进得少，两者对不齐。
+                // 2026-11-05（Round 3 · 专业 iOS 27 重构）：这一页原来把 34pt 的「判断句」
+                // 当页面大标题，导航栏里什么都没有 —— 26 个页面全部是「无标题 + 自绘大标题」
+                // 的非原生结构，也是「丑」的最大来源。现在：
+                //   · 标题 → 系统 navigationTitle（根页 large / 子页 inline，见文件末尾）
+                //   · 下面这句话 → 22pt status 行，只陈述状态，不再冒充标题
+                //   · lead → 15pt 次级说明（原 22pt）
                 Text(title)
-                    .font(V8.T.title2)
+                    .font(V8.T.pageStatus)
                     .foregroundStyle(V8.C.ink1)
-                    .tracking(V8.G.heroNumberTracking / 3)
+                    .lineSpacing(2)
+                    .lineLimit(3)
                     .padding(.horizontal, V8.S.gutterText - V8.S.gutterCard)
-                    .padding(.top, V8.S.gapSection)
+                    .padding(.top, V8.S.gapS)
                     .fixedSize(horizontal: false, vertical: true)
-                    // 2026-11-05（全技能审核 · VoiceOver）：页面判断句是整页唯一的 H1，
-                    // 却没有 header trait —— 转子只能靠卡片头跳转，找不到页面起点。
-                    .accessibilityAddTraits(.isHeader)
                 if let lead {
                     Text(lead)
-                        .font(V8.T.bodyL)
+                        .font(V8.T.footnote)
                         .foregroundStyle(V8.C.ink3)
-                        .lineSpacing(V8.L.bodyL - V8.T.bodyL.size)
+                        .lineSpacing(1.5)
                         .padding(.horizontal, V8.S.padCard)
-                        .padding(.top, V8.S.gapTitleBody)
+                        .padding(.top, V8.S.gapXS)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+                chips()
+                    .padding(.top, V8.S.gapM)
                 VStack(alignment: .leading, spacing: V8.S.gapCard) {
                     content()
                 }
-                .padding(.top, V8.S.gapBodyCard)
+                .padding(.top, V8.S.gapL)
             }
             .padding(.horizontal, V8.S.gutterCard)
-            // 2026-11-05（对抗审查 · 原生优先）：底部留白必须跟着标签栏形态走。
-            // 官方 TabView 自己会把内容让开系统栏；再补 48.2 + 14.4 就等于每页底部
-            // 平白多出 78pt 空白（用户会以为页面没加载完）。只有自绘浮岛才需要这份留白。
-            .padding(.bottom, V8.S.gapL + (TabBarMode.native ? 0 : V8.S.hTabBar + V8.S.tabBarBottom))
+            .padding(.bottom, V8.S.gapXL + (TabBarMode.native ? 0 : V8.S.hTabBar + V8.S.tabBarBottom))
         }
         .scrollIndicators(.hidden)
+        // 标题交给系统：根页 large（iOS 27 的 Liquid Glass 大标题会随滚动收起），
+        // 子页 inline（详情页不该再有一个占半屏的大标题）。
+        .navigationTitle(router.currentTitle)
+        .navigationBarTitleDisplayMode(router.currentDest == nil ? .large : .inline)
         // 2026-11-05（对抗审查 · UI/UX）：全仓 18 个含输入框的页面**没有一处**能收起键盘。
         // 数字键盘（.numberPad）没有 Return 键，用户在「新建密码 / 数量 / 端口」这类输入里
         // 一旦弹出键盘就可能挡着下面的主按钮，退不出去。VPage 是所有页面的滚动容器，
@@ -860,11 +876,25 @@ struct VNavRow: View {
     let title: String
     var detail: String? = nil
     var value: String? = nil
+    /// 设置行的前置 SF Symbol（原生 Settings 语法：30pt 圆角图标砖）。
+    var systemImage: String? = nil
+    var iconTint: Color = V8.C.accent
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: V8.S.gapS) {
+            HStack(spacing: V8.S.gapM) {
+                if let systemImage {
+                    Image(systemName: systemImage)
+                        .font(V8.T.chipValue)
+                        .foregroundStyle(V8.C.onAccent)
+                        .frame(width: V8.G.iconTile, height: V8.G.iconTile)
+                        .background(
+                            RoundedRectangle(cornerRadius: V8.G.iconTileRadius, style: .continuous)
+                                .fill(iconTint)
+                        )
+                        .accessibilityHidden(true)
+                }
                 VStack(alignment: .leading, spacing: V8.S.gapXS) {
                     Text(title)
                         .font(V8.T.value)

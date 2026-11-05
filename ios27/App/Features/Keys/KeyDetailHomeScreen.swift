@@ -73,7 +73,6 @@ struct KeyDetailHomeScreen: View {
             }
         }
         .background(V8.C.bg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             now = KeysState.now()
             consumeRoute()
@@ -772,7 +771,6 @@ struct KeyDetailReEnrollSheet: View {
                 }
             }
             .background(V8.C.bg.ignoresSafeArea())
-            .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 name = key.name
                 owner = key.owner

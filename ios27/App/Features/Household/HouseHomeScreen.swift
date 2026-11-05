@@ -111,7 +111,6 @@ struct HouseHomeScreen: View {
             }
         }
         .background(V8.C.bg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {

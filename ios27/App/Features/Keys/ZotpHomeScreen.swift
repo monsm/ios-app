@@ -94,7 +94,6 @@ struct ZotpHomeScreen: View {
             }
         }
         .background(V8.C.bg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
         .task {
             otpOn = DB.otpStatus(mac)?.on ?? false
             shieldOn = DB.store.getBool("kf_otp_shield", false)

@@ -82,7 +82,6 @@ struct AutoOpenHomeScreen: View {
             }
         }
         .background(V8.C.bg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
         .onAppear(perform: syncAutoOpenState)
         .v8Confirm(
             isPresented: $confirmEnable,

@@ -78,7 +78,6 @@ struct HardwareHomeScreen: View {
             }
         }
         .background(V8.C.bg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
         .v8Confirm(
             isPresented: Binding(
                 get: { revokeTarget != nil },

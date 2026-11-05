@@ -140,7 +140,6 @@ struct RecordsStudioHomeScreen: View {
             }
         }
         .background(V8.C.bg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
         .onAppear(perform: reload)
         .v8Confirm(
             isPresented: $confirmCopyFrames,

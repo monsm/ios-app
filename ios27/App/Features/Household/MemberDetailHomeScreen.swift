@@ -107,7 +107,6 @@ struct MemberDetailHomeScreen: View {
             }
         }
         .background(V8.C.bg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             if let ctx = router.consume(if: { if case .member = $0 { return true }; return false }),
                case .member(let id) = ctx {

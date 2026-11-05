@@ -156,7 +156,6 @@ struct CredentialStudioHomeScreen: View {
             }
         }
         .background(V8.C.bg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
         .onAppear { tick += 1 }
         .sheet(item: $alertTarget) { pwd in
             CredAlertSheet2(mac: studioMac, pwd: pwd)
@@ -1214,7 +1213,6 @@ struct CredAlertSheet2: View {
                 .accessibilityLabel("完成")
             }
             .background(V8.C.bg.ignoresSafeArea())
-            .navigationBarTitleDisplayMode(.inline)
         }
         .onAppear { alert = CredentialOrg.alert(mac, pwd) }
     }
@@ -1318,7 +1316,6 @@ struct CredBinSheet2: View {
                 .accessibilityLabel("关闭回收站")
             }
             .background(V8.C.bg.ignoresSafeArea())
-            .navigationBarTitleDisplayMode(.inline)
             .onAppear { reload() }
             .v8Confirm(
                 isPresented: Binding(
@@ -1492,7 +1489,6 @@ struct CredHistorySheet2: View {
                 .accessibilityLabel("关闭版本历史")
             }
             .background(V8.C.bg.ignoresSafeArea())
-            .navigationBarTitleDisplayMode(.inline)
             .onAppear { items = CredHistoryStore.all(mac) }
             .v8Confirm(
                 isPresented: Binding(
@@ -1669,7 +1665,6 @@ struct CredentialImportSheet: View {
                 }
             }
             .background(V8.C.bg.ignoresSafeArea())
-            .navigationBarTitleDisplayMode(.inline)
         }
     }
 

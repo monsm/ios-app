@@ -160,7 +160,6 @@ struct LockSettingsHomeScreen: View {
             }
         }
         .background(V8.C.bg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
         .task(id: app.currentMac) {
             // 2026-11-05（对抗审查）：原 .task 无 id —— 切换当前锁后不会重跑，
             // 而 tailgateLoaded / defendLoaded 守卫让防尾随与布防段还显示旧锁的档位。

@@ -44,7 +44,6 @@ struct DiagnosticsHomeScreen: View {
             }
         }
         .background(V8.C.bg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
         .captureShield("这里是锁端全量读数与凭证台账\n屏幕正在被录制或截图，已遮挡")
     }
 

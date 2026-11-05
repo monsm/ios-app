@@ -11,16 +11,12 @@ struct AboutHomeScreen: View {
     @State private var versionTaps = 0
     @State private var eggShown = false
 
-    private var status: String {
-        // 2026-11-05（全技能审核 · 品牌命名）：CFBundleDisplayName 是「锁管家」，
-        // 这里的三处「离线锁管家」是描述句不是产品名 —— 统一主名，避免同屏两个名字。
-        eggShown
-            ? "锁管家 \(SettingsFacts.version) · 构建 \(SettingsFacts.build)"
-            : "锁管家 · 全程离线，数据只在这台手机"
-    }
-
     var body: some View {
-        VPage(title: "关于", lead: status) {
+        // 2026-11-05（Round 3）：导航标题已经是「关于」，status 行不再重复页面名，
+        // 改说这一页最重要的事实（全程离线）；彩蛋后变成版本+构建号。
+        VPage(title: eggShown
+                ? "锁管家 \(SettingsFacts.version) · 构建 \(SettingsFacts.build)"
+                : "全程离线，数据只在这台手机") {
             EmptyView()
         } content: {
             counterCard
@@ -29,7 +25,6 @@ struct AboutHomeScreen: View {
             declarationCard
         }
         .background(V8.C.bg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
         .sensoryFeedback(.success, trigger: eggShown) { _, new in new }
     }
 

@@ -52,7 +52,6 @@ struct UnlockGateScreen: View {
         }
         .background(V8.C.bg.ignoresSafeArea())
         .navigationTitle("再次确认")
-        .navigationBarTitleDisplayMode(.inline)
         .onAppear { focused = true }
         .task(id: cooldownUntil) {
             guard cooldownUntil != nil else { return }

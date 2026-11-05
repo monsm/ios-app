@@ -102,7 +102,6 @@ struct MobileKeyHomeScreen: View {
             }
         }
         .background(V8.C.bg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             if owner == nil { owner = app.members.first { !$0.archived }?.name }
             buildPayload()

@@ -44,7 +44,6 @@ struct RecordDetailHomeScreen: View {
             }
         }
         .background(V8.C.bg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
         .onAppear { reload(); load() }
         .onChange(of: route.focusID) { _, _ in reload(); load() }
     }

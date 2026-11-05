@@ -69,7 +69,6 @@ struct LockDataDeleteSheet: View {
             }
             .background(V8.C.bg.ignoresSafeArea())
             .navigationTitle("删除设备")
-            .navigationBarTitleDisplayMode(.inline)
         }
     }
 

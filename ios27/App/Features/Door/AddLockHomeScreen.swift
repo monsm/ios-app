@@ -122,7 +122,6 @@ struct AddLockHomeScreen: View {
             }
         }
         .background(V8.C.bg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
         .task { await scan() }
         .onDisappear {
             guard pairTask != nil else { return }

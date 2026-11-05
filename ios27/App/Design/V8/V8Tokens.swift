@@ -61,9 +61,9 @@ enum V8 {
         /// 页面底：单色，不做页面级渐变（参考图基底恒为 #F2F1F6）
         static let bg = dual(0xF2F1F6, 0x000000)
         /// 卡片：比底亮 4~7 级
-        static let card = dual(0xF9F9FE, 0x1C1C1F)
+        static let card = dual(0xFFFFFF, 0x1C1C1E)
         /// 凹槽/内嵌块：比卡片暗
-        static let well = dual(0xE9E8EF, 0x141416)
+        static let well = dual(0xF2F2F7, 0x2C2C2E)
         /// 芯片未选中
         static let chipOff = dual(0xF4F3FA, 0x242427)
         /// 芯片选中
@@ -89,6 +89,9 @@ enum V8 {
 
         /// 强调（蓝）值档：6.04:1
         static let accent = dual(0x0558B8, 0x5AA7F5)
+        /// 强调底上的文字/图标（选中芯片、主按钮）。
+        /// 浅色档 accent 深 → 白字；深色档 accent 浅 → 近黑字（白字只有 2.3:1）。
+        static let onAccent = dual(0xFFFFFF, 0x08131F)
         /// 强调容器档（图形填充）：3.28:1
         static let accentFill = dual(0x2E86E8, 0x3D8CE8)
         /// 强调轨道档（空槽）
@@ -156,28 +159,33 @@ enum V8 {
         static let heroL = VFont(size: 55, weight: .bold, relativeTo: .largeTitle)
         /// 35pt —— 页面大标题（英文；中文见 title2）
         static let title1 = VFont(size: 35, weight: .bold, relativeTo: .largeTitle)
-        /// 34pt —— 中文大标题（苹方无真 Bold，用 semibold + 负字距）
-        static let title2 = VFont(size: 34, weight: .semibold, relativeTo: .largeTitle)
-        /// 22pt —— 页面副文（因果段）
-        static let bodyL = VFont(size: 22, weight: .regular, relativeTo: .title3)
+        /// 2026-11-05（Round 3 · 专业 iOS 27）：页面标题交给系统 navigationTitle（large title
+        /// 由 UIKit 排版，约 34pt）；这里的 title2 只剩 7 个「屏内二级标题」消费者，降到 28。
+        static let title2 = VFont(size: 28, weight: .semibold, relativeTo: .largeTitle)
+        /// 22pt —— 页面 status 行（原 34pt 自绘大标题降级后的位置）。
+        /// 2026-11-05（Round 3）：页面标题归系统 navigationTitle，这句话不再是标题，
+        /// 而是「这一页现在怎么样」的状态句 —— 22pt semibold 足够强调，又不冒充标题。
+        static let pageStatus = VFont(size: 22, weight: .semibold, relativeTo: .title2)
+        /// 17pt —— 页面副文（因果段 / status 行）。HIG Body = 17。
+        static let bodyL = VFont(size: 17, weight: .regular, relativeTo: .body)
         /// 21.5pt —— 卡内判断句（statement）
         /// 2026-11-05（全技能审核）：项目自己的字体纪律是「中文标题最高 semibold」
         /// （苹方无 Bold，.bold() 会静默回退/合成）。这里从 .bold 改成 .semibold。
-        static let headline = VFont(size: 21.5, weight: .semibold, relativeTo: .title2)
-        /// 19.6pt —— 卡内正文
-        static let body = VFont(size: 19.6, weight: .regular, relativeTo: .body)
-        /// 17.7pt —— 表格数值、读数
-        static let value = VFont(size: 17.7, weight: .semibold, relativeTo: .body)
-        /// 16.4pt —— 芯片第二行
-        static let chipValue = VFont(size: 16.4, weight: .semibold, relativeTo: .subheadline)
-        /// 15.8pt —— 卡脚注
-        static let footnote = VFont(size: 15.8, weight: .regular, relativeTo: .footnote)
-        /// 14.5pt —— 卡标签（eyebrow）、芯片第一行、副标
-        static let label = VFont(size: 14.5, weight: .regular, relativeTo: .subheadline)
-        /// 13.9pt —— 表格行标签
-        static let caption = VFont(size: 13.9, weight: .regular, relativeTo: .footnote)
-        /// 12.6pt —— Tab 栏标签、KPI 标签
-        static let tab = VFont(size: 12.6, weight: .semibold, relativeTo: .caption)
+        static let headline = VFont(size: 17, weight: .semibold, relativeTo: .headline)
+        /// 17pt —— 卡内正文（HIG Body）。原 19.6 是「大号正文」，在 iOS 里读起来像标题。
+        static let body = VFont(size: 17, weight: .regular, relativeTo: .body)
+        /// 17pt —— 表格数值、读数
+        static let value = VFont(size: 17, weight: .semibold, relativeTo: .body)
+        /// 15pt —— 芯片第二行
+        static let chipValue = VFont(size: 15, weight: .semibold, relativeTo: .subheadline)
+        /// 15pt —— 卡脚注（HIG Footnote = 13；这里保留 15 作为中文可读下限）
+        static let footnote = VFont(size: 15, weight: .regular, relativeTo: .footnote)
+        /// 13pt —— 卡标签、芯片第一行、副标
+        static let label = VFont(size: 13, weight: .regular, relativeTo: .subheadline)
+        /// 12pt —— 表格行标签 / caption
+        static let caption = VFont(size: 12, weight: .regular, relativeTo: .caption)
+        /// 15pt —— 按钮/动作文字（原 12.6 比 HIG 的 17 小两档，按钮看起来像脚注）
+        static let tab = VFont(size: 15, weight: .semibold, relativeTo: .subheadline)
         /// 11pt —— 微标（YEARS / BPM / %）、轴标（HIG 最小字号 11pt；原 10.7 低于下限）
         static let micro = VFont(size: 11.0, weight: .regular, relativeTo: .caption2)
     }
@@ -199,36 +207,35 @@ enum V8 {
         private static func d(_ base: CGFloat) -> CGFloat { base * densityScale }
 
         /// 卡片外距（屏左右到卡边）
-        static var gutterCard: CGFloat { d(16.6) }
+        static var gutterCard: CGFloat { d(16) }
         /// 卡内左右 padding
-        static var padCard: CGFloat { d(16.5) }
+        static var padCard: CGFloat { d(16) }
         /// 文字层落点（= gutterCard + padCard）—— 全屏唯一竖线
         static var gutterText: CGFloat { gutterCard + padCard }
         /// 卡内上/下 padding
-        static var padCardTop: CGFloat { d(20.6) }
-        static var padCardBottom: CGFloat { d(18.7) }
+        static var padCardTop: CGFloat { d(16) }
+        static var padCardBottom: CGFloat { d(16) }
 
         /// 卡与卡之间
-        static var gapCard: CGFloat { d(11.1) }
-        /// 芯片之间（主 / 紧）
+        static var gapCard: CGFloat { d(16) }
+        /// 芯片之间
         static var gapChip: CGFloat { d(10.6) }
-        static var gapChipMin: CGFloat { d(7.1) }
         /// 芯片行高（胶囊，圆角 = 高/2）—— 控件高度不随密度改
-        static let hChip: CGFloat = 52.6
+        static let hChip: CGFloat = 44
         /// Tab 栏 —— 控件高度不随密度改
         static let hTabBar: CGFloat = 48.2
         static let tabBarInset: CGFloat = 6
         static let tabBarBottom: CGFloat = 14.4
 
         /// 芯片行底 → 大标题 ink 顶
-        static var gapSection: CGFloat { d(41) }
+        static var gapSection: CGFloat { d(20) }
         /// 大标题 ink 底 → 副文
-        static var gapTitleBody: CGFloat { d(12.8) }
+        static var gapTitleBody: CGFloat { d(4) }
         /// 副文 → 卡 1
-        static var gapBodyCard: CGFloat { d(18.8) }
+        static var gapBodyCard: CGFloat { d(16) }
 
-        /// 卡内：eyebrow → statement
-        static var gapEyebrow: CGFloat { d(8.5) }
+        /// 卡内标题 → 说明（2pt 的细缝，避免两行贴在一起）
+        static var gapHair: CGFloat { d(2) }
         /// 分隔线 → 表首行（同时是 statement → 证据区的呼吸，41.6 与 42.4 在参考图上是同一档）
         static var gapTableFirst: CGFloat { d(42.4) }
         /// 表格行距
@@ -251,12 +258,14 @@ enum V8 {
     // MARK: - 行高（参考图：字号越大行高越松，与系统默认相反）
 
     enum L {
-        static let bodyL: CGFloat = 27.9
-        static let body: CGFloat = 20
-        static let footnote: CGFloat = 19.9
+        // 2026-11-05（Round 3）：字号回落后行高按 1.2–1.4 倍重配。
+        // 这些值仍按「lineSpacing = L − size」消费，实际行高 ≈ 字体自然行高 + 该差值。
+        static let bodyL: CGFloat = 20.5
+        static let body: CGFloat = 20.5
+        static let footnote: CGFloat = 17
         // 2026-11-05（全技能审核 · 死令牌清理）：label / caption / title1 三条行高
         // 全仓零消费者（只有字号档在用它们，行高从未被读过）—— 删掉，避免"看起来有 7 级行高"。
-        static let headline: CGFloat = 25.8
+        // L.headline 已随 VCardHead 层级反转删除（标题走 T.headline，不再单独配行高）。
     }
 
     // MARK: - 圆角（只有三档）
@@ -266,18 +275,20 @@ enum V8 {
         /// 而唯一消费者是 V7Tokens.V.R —— V8 卡片/控件全用固定 26，用户改了没反应。
         /// 这里把 kf_radius 接进 V8：标准 26 / 偏硬朗 20 / 偏柔和 32。默认值保持 26 不变。
         static var card: CGFloat {
+            // 2026-11-05（Round 3 · 专业 iOS 27）：26pt 的「胶囊卡」是模板感的主要来源。
+            // 原生分组列表圆角 10–16：标准 14 / 偏硬朗 12 / 偏柔和 18。
             switch DB.store.getString("kf_radius") {
-            case "soft": return 20
-            case "plump": return 32
-            default: return 26
+            case "soft": return 12
+            case "plump": return 18
+            default: return 14
             }
         }
         /// 内嵌块（与卡片同档缩放一半幅度）
         static var inset: CGFloat {
             switch DB.store.getString("kf_radius") {
-            case "soft": return 6
-            case "plump": return 10
-            default: return 8
+            case "soft": return 8
+            case "plump": return 12
+            default: return 10
             }
         }
         /// 胶囊：圆角 = 高度的一半
@@ -361,6 +372,12 @@ enum V8 {
         /// 微标字距
         static let heroLabelTracking: CGFloat = 1.2
 
+        /// 芯片前的类别色点（非可点区，只是类别标识）
+        static let chipDot: CGFloat = 6
+        /// 设置行前置的圆角图标砖（原生 Settings 语法）
+        static let iconTile: CGFloat = 30
+        static let iconTileRadius: CGFloat = 8
+
         /// 分段环（卡内小环）
         static let segOuter: CGFloat = 92
         static let segWidth: CGFloat = 20.3
@@ -400,7 +417,9 @@ enum V8 {
     // MARK: - 层级 / 阴影
 
     enum Z {
-        static let cardShadowRadius: CGFloat = 10
-        static let cardShadowY: CGFloat = 1.5
+        // 2026-11-05（Round 3）：原生分组卡片没有投影。原来的 10pt 阴影是「浮岛卡片」
+        // 的来源之一，也是每张卡都要合成一层 blur 的性能开销。
+        static let cardShadowRadius: CGFloat = 0
+        static let cardShadowY: CGFloat = 0
     }
 }

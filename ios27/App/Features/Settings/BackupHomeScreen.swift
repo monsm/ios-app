@@ -103,7 +103,6 @@ struct BackupHomeScreen: View {
             }
         }
         .background(V8.C.bg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
 
 
         .fileExporter(

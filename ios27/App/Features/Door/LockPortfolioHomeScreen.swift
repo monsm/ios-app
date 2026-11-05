@@ -104,7 +104,6 @@ struct LockPortfolioHomeScreen: View {
             }
         }
         .background(V8.C.bg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             reload()
             loadProfile()

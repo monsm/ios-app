@@ -91,7 +91,6 @@ struct SecurityHomeScreen: View {
             }
         }
         .background(V8.C.bg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $sheet) { route in
             switch route {
             case .passcode:

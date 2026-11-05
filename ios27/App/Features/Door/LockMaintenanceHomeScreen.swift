@@ -163,7 +163,6 @@ struct LockMaintenanceHomeScreen: View {
             }
         }
         .background(V8.C.bg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
         // 2026-11-05（全技能审核 · 合并页落点）：从设置索引点「锁信息名片 / 网关 / 固件 / 电池」
         // 时，本来都会落到这一页顶部且四段全折叠 —— 用户以为点错了。这里消费路由上下文，
         // 打开对应段。

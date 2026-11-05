@@ -61,7 +61,6 @@ struct AppearanceHomeScreen: View {
                 }
         }
         .background(V8.C.bg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
         .v8Confirm(
             isPresented: $showResetConfirm,
             title: "恢复默认外观？",

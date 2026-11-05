@@ -126,7 +126,6 @@ struct DoorHomeScreen: View {
             }
         }
         .background(V8.C.bg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
         .task {
             await app.reload(refreshStatus: true)
             link.update(mac: app.currentMac)

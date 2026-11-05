@@ -201,6 +201,31 @@ final class Router {
     /// 挂起的上下文（落到页面后消费，消费完清空）。
     var pending: RouteContext = .none
 
+    // MARK: - 当前页面（导航标题的唯一来源）
+    //
+    // 2026-11-05（Round 3 · 专业 iOS 27 重构）：V8 之前每页用 34pt 自绘标题，
+    // 导航栏里没有 title —— 26 个页面全部是「无标题 + 自绘大标题」的非原生结构。
+    // 现在标题交给系统 navigationTitle：根页用 .large，子页用 .inline。
+    // 标题文案直接取 Dest.title / TabSlot.title（已有 40 条英文式短语），
+    // 页面自己的判断句降级为标题下方的 status 行 —— 不再冒充页面标题。
+
+    /// 当前 Tab 的导航栈。
+    var currentPath: [Dest] {
+        switch tab {
+        case .door: return doorPath
+        case .keys: return keysPath
+        case .records: return recordsPath
+        case .household: return householdPath
+        case .settings: return settingsPath
+        }
+    }
+
+    /// 当前栈顶的子页（nil = 在根页）。
+    var currentDest: Dest? { currentPath.last }
+
+    /// 导航栏标题：子页用 Dest.title，根页用 Tab 名。
+    var currentTitle: String { currentDest?.title ?? tab.title }
+
     /// 唯一入口。要打开子页 → 自动切到它归属的 Tab 再 push。
     func request(_ context: RouteContext) {
         pending = context
