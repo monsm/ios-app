@@ -91,7 +91,7 @@ jobs:
     name: 金标差分测试（引擎回归）
     runs-on: xcode-27
     needs: gates
-    timeout-minutes: 60
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -136,10 +136,17 @@ jobs:
           fi
           echo "测试设备: $DEV"
           echo "test_executed=yes" >> "$GITHUB_OUTPUT"
+          # 2026-11-05（CI 死锁修复）：原来这里没有任何单测超时。
+          # 观测到两次 run 卡在「金标差分测试」20+ 分钟不动，而 job 上限是 60 分钟 ——
+          # 一个挂住的测试就能堵死整条队列（并发组串行）。
+          # -test-timeouts-enabled 让**单个测试**超过 120 秒直接失败，不再无限等待。
           xcodebuild test \
             -project LockKeeper.xcodeproj \
             -scheme LockKeeper \
             -destination "platform=iOS Simulator,name=$DEV" \
+            -test-timeouts-enabled YES \
+            -default-test-execution-time-allowance 120 \
+            -maximum-test-execution-time-allowance 300 \
             -derivedDataPath build/DerivedData \
             -configuration Debug \
             SWIFT_COMPILATION_MODE=wholemodule \
