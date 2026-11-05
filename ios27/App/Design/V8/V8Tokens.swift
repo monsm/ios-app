@@ -1,6 +1,8 @@
 // V8Tokens.swift —— V8 设计令牌（重构方案 03 的落地层）
 //
 // 这份文件是**新设计语言的唯一数值来源**。与 V7Tokens.swift 并存，互不引用。
+// 2026-11-06（V9 · 液态仪器）：本轮新增 bgTop/bgBottom、glowA/B、cardTop/Bottom、
+ // cardSheen 与五套 Tab 大气色 —— 见 docs/V9-LIQUID-INSTRUMENTS.md 的材质对账。
 // 来源：_plan/03-设计系统重构.md（值）+ _plan/raw/E-ref-metrics.md（参考图像素实测）。
 //
 // 三条纪律（与 03 §0 对应）：
