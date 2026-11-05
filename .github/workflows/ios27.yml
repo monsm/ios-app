@@ -768,7 +768,8 @@ jobs:
               try:
                   im = Image.open(f).convert("RGB")
                   w, h = im.size
-                  rows = list(range(0, h, 3))
+                  top, bottom = int(h * 0.06), int(h * 0.90)
+                  rows = list(range(top, bottom, 3))
                   dark = 0
                   for y in rows:
                       px = im.getpixel((1, y))

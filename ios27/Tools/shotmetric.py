@@ -81,8 +81,11 @@ def clip_check(path: str) -> None:
     """
     im = Image.open(path).convert("RGB")
     w, h = im.size
+    # 2026-11-05：只看中间带。整页成像的顶部有状态栏、底部有浮动 Tab 栏，
+    # 它们本来就贴到屏幕边缘，会把「左边缘深色行」的占比抬到 3%–8%，造成误报。
+    top, bottom = int(h * 0.06), int(h * 0.90)
     dark = 0
-    rows = range(0, h, 3)
+    rows = range(top, bottom, 3)
     for y in rows:
         px = im.getpixel((1, y))
         if px[0] < 120 and px[1] < 120 and px[2] < 120:
