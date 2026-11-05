@@ -224,7 +224,9 @@ struct DoorHomeScreen: View {
                 VChip2(icon: .ring(1, V8.D.fingerprint), label: "凭证", value: "\(app.keys.count) 枚")
                 VChip2(icon: .ring(lock?.safeMode == true ? 1 : 0.02, V8.C.warn),
                        label: "安全模式", value: lock?.safeMode == true ? "已开" : "关")
-                VChip2(icon: .ring(1, V8.C.accent), label: "今天", value: "\(todayOpenEntries.count) 次")
+                // 2026-11-05（对抗审查 · 设计冗余）：这一格原来写「今天 N 次」，
+                // 而「今天的门」卡标题就是「N 次开锁」—— 挨着的两个数字说的是同一件事。
+                // 门页的第一屏已经有电量环 + 三枚状态芯片，再叠一枚重复计数只是噪声。
             }
             .padding(.leading, V8.S.gutterCard)
             .padding(.trailing, V8.S.gutterCard)

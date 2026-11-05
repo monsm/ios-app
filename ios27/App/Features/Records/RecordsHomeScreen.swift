@@ -150,7 +150,9 @@ struct RecordsHomeScreen: View {
     private var chipRow: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: V8.S.gapChip) {
-                VChip2(icon: .ring(1, V8.C.accent), label: "今天", value: "\(todayEntries.count) 条")
+                // 2026-11-05（对抗审查 · 设计冗余）：这一格原来写「今天 N 条」，
+                // 而本页**已经有两处**在讲今天：英雄数（N 次·今天）与台账卡标题。
+                // 三个数字说的是同一件事，用户一眼扫到三个「今天」。删掉芯片这一格。
                 VChip2(icon: .ring(0.7, V8.C.accent), label: "本周", value: "\(weekOpenCount) 次")
                 VChip2(icon: .ring(todayAlarmCount > 0 ? 0.4 : 0.02, V8.C.danger),
                        label: "告警", value: "\(todayAlarmCount) 条")
@@ -190,7 +192,9 @@ struct RecordsHomeScreen: View {
 
     private var timelineCard: some View {
         VCard2 {
-            VCardHead(eyebrow: "台账", statement: "今天 \(todayEntries.count) 条",
+            // 标题改成「共 N 条」：与英雄数的「今天 N 次」不同口径（这里是当前范围的全部条目，
+            // 含告警/失败等非开门行），不再重复同一个数字。
+            VCardHead(eyebrow: "台账", statement: "共 \(entries.count) 条",
                       trailing: readAt.map { TimeFormat.dayShort($0) })
             VDivider2()
                 .padding(.top, V8.S.gapM)
