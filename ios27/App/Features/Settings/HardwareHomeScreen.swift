@@ -21,6 +21,7 @@ struct HardwareHomeScreen: View {
     @State private var writingId: String?
     /// 撤销实体钥匙的待确认目标（删了要重新写一遍才能用）。
     @State private var revokeTarget: DongleRecord?
+    @State private var unbindTarget: DongleRecord?
     @State private var busyId: String?
     @State private var keysByDongle: [String: [String]] = [:]
     @State private var errorText: String?
@@ -234,10 +235,23 @@ struct HardwareHomeScreen: View {
                     .padding(.top, V8.S.gapXS)
                 }
             }
-            Button { unbind(d) } label: {
+            Button { unbindTarget = d } label: {
                 actionLabel("从本机解绑", tint: V8.C.danger)
             }
             .buttonStyle(.plain)
+            // 2026-11-05（HIG · 破坏性动作要二次确认）：原来这里一点即删，
+            // 而同页的「撤销钥匙」「移除网关」都有确认 —— 只有这一处漏了。
+            .confirmationDialog("从本机解绑这把钥匙串？", isPresented: Binding(
+                get: { unbindTarget != nil },
+                set: { if !$0 { unbindTarget = nil } }
+            ), titleVisibility: .visible) {
+                Button("解绑", role: .destructive) {
+                    if let target = unbindTarget { unbind(target) }
+                }
+                Button("取消", role: .cancel) { }
+            } message: {
+                Text("只删本机这条记录，钥匙串里已写入的钥匙仍然能开对应锁。")
+            }
             .disabled(readOnly)
             .opacity(readOnly ? 0.45 : 1)
             Text("解绑只删本机记录，不删钥匙串里已写入的钥匙 —— 那把实体钥匙仍然能开对应锁。")
