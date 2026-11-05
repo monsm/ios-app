@@ -280,17 +280,17 @@ struct ZotpHomeScreen: View {
 
     private func generate() {
         guard !busy, let kc else { return }
-        guard kc.skey.count == 32 else {
-            outcome = "缺少这把锁的钥匙串，无法生成"
+        // 2026-11-05（对抗审查 · 去重复判据）：这里原来把 generateBlockedReason 的两条判据
+        // **又写了一遍**（同样的 skey 长度检查、同样的 100 上限、同样的两句文案）。
+        // 同一个规则两处各判一次 ⇒ 改一处忘另一处就会分叉（本仓已经栽过一回：开锁方式分类）。
+        // 现在按钮禁用依据就是这里的前置条件，单一来源。
+        if let blocked = generateBlockedReason {
+            outcome = blocked
             return
         }
         let win = ZOTP.nextWindow()
         let current = DB.otpIdx(mac)
         let idx = (current?.invalidTime == win) ? (current?.idx ?? -1) + 1 : 0
-        guard idx <= 99 else {
-            outcome = "当前窗口已达 100 个上限，请到下一个窗口再生成"
-            return
-        }
         let rawPeriod = DB.readStatus(mac)?.zotpPeriod ?? 0
         let period = rawPeriod > 0 ? rawPeriod : 30
         let pwd = ZOTP.generate(macHex: kc.mac, skeyHex: kc.skey, periodMin: period, idx: idx)

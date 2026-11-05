@@ -593,13 +593,12 @@ struct LockSettingsHomeScreen: View {
             VDivider2()
                 .padding(.vertical, V8.S.gapM)
             VStack(alignment: .leading, spacing: V8.S.gapS) {
-                Text("锁钟偏了会怎样 · 三条须知")
+                Text("锁钟偏了会怎样")
                     .font(V8.T.label)
                     .foregroundStyle(V8.C.ink4)
                 VStack(alignment: .leading, spacing: V8.S.gapS) {
                     Text("· 临时码有「有效期窗口」，锁钟偏了，码在窗口外就整段打不开。")
                     Text("· 开锁命令自带有效期，锁钟偏得太多会被判「命令已过期」—— 这种情况只有校时能救。")
-                    Text("· 每次读状态时本机都会算一次偏差，超过 2 秒才写；所以这一段平时只是看一眼。")
                 }
                 .font(V8.T.footnote)
                 .foregroundStyle(V8.C.ink3)
@@ -922,7 +921,7 @@ struct LockSettingsHomeScreen: View {
             VDivider2()
                 .padding(.vertical, V8.S.gapM)
             VStack(alignment: .leading, spacing: V8.S.gapS) {
-                Text("布防期间会发生什么 · 否决自动开锁，不否决手动开锁")
+                Text("布防期间会发生什么")
                     .font(V8.T.label)
                     .foregroundStyle(V8.C.ink4)
                 VStack(alignment: .leading, spacing: V8.S.gapS) {
