@@ -155,11 +155,14 @@ struct AutoOpenHomeScreen: View {
             //   页标题「关闭 · 走到门前仍需手动开锁」/ 芯片「主开关 关」/
             //   这里的卡头「走近自动开门 关闭」/ toggle 标题「走近自动开门」。
             // 卡头只报状态（开关名由 toggle 承载）。
-            VCardHead(eyebrow: "主开关", statement: on ? "已开" : "关闭")
+            // 2026-11-05（全技能审核 · 同屏三重复）：页标题「关闭 · 走到门前仍需手动开锁」、
+            // 卡头「关闭」、下面「自动开锁 关」说的是同一件事。卡头只留开关名，
+            // 状态由 Toggle 与那一行读数承载。
+            VCardHead(eyebrow: "主开关", statement: "走近自动开门")
             VDivider2()
                 .padding(.top, V8.S.gapM)
             Toggle(isOn: autoOpenBinding) {
-                Text("走近自动开门")
+                Text("开启后自动下发开锁")
                     .font(V8.T.value)
                     .foregroundStyle(V8.C.ink1)
             }
