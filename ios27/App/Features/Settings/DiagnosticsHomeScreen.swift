@@ -53,10 +53,13 @@ struct DiagnosticsHomeScreen: View {
     private var protocolSection: some View {
         VStack(alignment: .leading, spacing: V8.S.gapCard) {
             scanCard
+            // 2026-11-05（全技能审核 · 同屏三重复）：空态原话与上面扫描卡的脚注、
+            // 下面 listCard 的空文案是同一段（「门锁被连上后会停止广播…」）。
+            // 空态只留「下一步」；机制说明由扫描卡唯一承载。
             if devices.isEmpty {
                 VEmpty(
                     title: "没有扫到设备",
-                    reason: "确认蓝牙已开、设备在广播；门锁被连上后会停止广播，先断开再扫。扫描只读广播，不连接、不发命令。",
+                    reason: "确认蓝牙已开、设备正在广播，再点「重新扫描」。",
                     actionTitle: "重新扫描"
                 ) { Task { await scan() } }
             } else {
@@ -123,7 +126,7 @@ struct DiagnosticsHomeScreen: View {
             VDivider2()
                 .padding(.top, V8.S.gapM)
             if devices.isEmpty {
-                Text("没有扫到设备。确认蓝牙已开、设备在广播；门锁被连上后会停止广播，先断开再扫。")
+                Text("这一轮没有扫到设备。")
                     .font(V8.T.footnote)
                     .foregroundStyle(V8.C.ink3)
                     .padding(.top, V8.S.gapM)
