@@ -20,6 +20,39 @@ struct ZotpHomeScreen: View {
     private var mac: String { app.lock?.id ?? "" }
     private var kc: Keychain? { app.currentKeychain }
 
+    /// 距离本窗口失效还有多少秒。
+    ///
+    /// 2026-11-05（用户指令：减少文字、图形化变多）：本页是全仓最后几个「零视觉」页面之一，
+    /// 而动态码页**本该有失效倒计时**。窗口语义与 ZOTP.nextWindow 完全一致：30 分钟一档。
+    private func secondsToExpiry(at now: Date) -> Int {
+        let cal = WeekCal.gregorian
+        let m = cal.component(.minute, from: now)
+        let sec = cal.component(.second, from: now)
+        return max(0, 30 * 60 - (m % 30) * 60 - sec)
+    }
+
+    /// 倒计时环：TimelineView 每秒重绘，**不需要 @State + Timer**（纯 SwiftUI，
+    /// 没有需要手动维护的失效点）。剩余不足 2 分钟转警告色。
+    private var expiryRing: some View {
+        TimelineView(.periodic(from: .now, by: 1)) { ctx in
+            let remain = secondsToExpiry(at: ctx.date)
+            let fraction = Double(remain) / (30.0 * 60.0)
+            VStack(spacing: V8.S.gapXS) {
+                VHalfRing(
+                    fraction: fraction,
+                    center: String(remain / 60) + ":" + String(format: "%02d", remain % 60),
+                    tint: remain < 120 ? V8.C.warn : V8.C.accent,
+                    size: V8.G.segCompactOuter * 2.4
+                )
+                Text("距失效")
+                    .font(V8.T.caption)
+                    .foregroundStyle(V8.C.ink4)
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("距本窗口失效的倒计时")
+    }
+
     private var judgement: String {
         if app.lock == nil || kc == nil { return "还没有门锁" }
         if !otpOn { return "动态密码还没开通" }
@@ -120,10 +153,21 @@ struct ZotpHomeScreen: View {
                     .padding(.top, V8.S.gapS)
             }
             if !window.isEmpty {
-                Text("于 \(window) 失效，失效前仅可使用一次")
-                    .font(V8.T.footnote)
-                    .foregroundStyle(V8.C.ink3)
-                    .padding(.top, V8.S.gapS)
+                // 2026-11-05（图形化）：原来这里是一行「于 HH:MM 失效，失效前仅可使用一次」，
+                // 换成倒计时环 —— 同样的信息，形状更快，而且是动态的。
+                HStack(spacing: V8.S.gapL) {
+                    expiryRing
+                    VStack(alignment: .leading, spacing: V8.S.gapXS) {
+                        Text("于 \(window) 失效")
+                            .font(V8.T.value)
+                            .foregroundStyle(V8.C.ink1)
+                        Text("失效前仅可使用一次")
+                            .font(V8.T.caption)
+                            .foregroundStyle(V8.C.ink4)
+                    }
+                    Spacer(minLength: 0)
+                }
+                .padding(.top, V8.S.gapS)
             }
             Button {
                 generate()
