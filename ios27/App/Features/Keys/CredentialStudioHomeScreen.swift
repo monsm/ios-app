@@ -100,7 +100,12 @@ struct CredentialStudioHomeScreen: View {
         if app.lock == nil {
             return nil
         }
-        return "批量动作先在本机记账；锁端删除与延期按现有链路真下发，失败会如实回报。排序：" + sort.rawValue + " · 分组：" + (CredentialOrg.groupMode == .owner ? "按成员" : "按类型")
+        // 2026-11-05（截图审查 · 设计冗余）：这段原来尾巴上还写着
+        // 「排序：星标优先 · 分组：按类型」—— 而紧接其下的「整理方式」卡里，
+        // 排序芯片的选中态就是「星标优先」，旁边按钮就写着「分组：按类型」。
+        // 同一屏同一状态三处重复，且 lead 因此被撑到四行（HIG layout › Visual hierarchy：
+        // 最重要的内容要靠近顶部）。lead 只留**别处看不到**的那条规则：批量动作先记本机。
+        return "批量动作先在本机记账；锁端删除与延期按现有链路真下发，失败会如实回报。"
     }
 
     var body: some View {
