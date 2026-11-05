@@ -196,6 +196,9 @@ struct MemberDetailHomeScreen: View {
             VStack(alignment: .leading, spacing: V8.S.gapS) {
                 VRangeCaption(text: bars.labels)
                 VSpark(values: bars.values, tint: V8.C.accentFill, cursor: 6, axis: nil)
+                    // 2026-11-05（无障碍）：VSpark 自带的是笼统的「波形」，这里换成真实序列。
+                    // 不能给整张卡加 combine —— 卡里还有可点的「去台账看全部记录」，会被吞掉。
+                    .accessibilityLabel("近 7 天每天开门次数：" + bars.values.map { String(Int($0)) }.joined(separator: "、"))
             }
             .padding(.top, V8.S.gapM)
             Text("这一页只读本机数据，不连门锁 —— 离线或未连接时，档案与摘录完全一样。")
