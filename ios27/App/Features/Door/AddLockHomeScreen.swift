@@ -75,7 +75,7 @@ struct AddLockHomeScreen: View {
 
     private var lead: String {
         if decoyed {
-            return "空壳模式只隐藏数据，不改动数据。配网会真的改锁端密钥槽，所以这里不提供。"
+            return DecoyCopy.notProvided("配网会真的改锁端密钥槽")
         }
         return "配网会生成本机密钥并写进门锁密钥槽；中途离开这一页会按已中止处理并回滚。"
     }

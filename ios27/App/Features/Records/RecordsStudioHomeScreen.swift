@@ -94,7 +94,7 @@ struct RecordsStudioHomeScreen: View {
 
     private var lead: String {
         if decoyed {
-            return "空壳模式只隐藏数据，不改动数据。检索与原始帧都会把日志摊开，所以这里不提供。"
+            return DecoyCopy.notProvided("检索与原始帧都会把日志摊开")
         }
         return "检索是输入即算，没有按钮。列表是全部锁，统计只算当前锁 —— 两个范围分开写，不混在一起。"
     }

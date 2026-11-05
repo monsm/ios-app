@@ -79,7 +79,7 @@ struct MemberCreateHomeScreen: View {
 
     private var lead: String {
         if decoyed {
-            return "空壳模式只隐藏数据，不改动数据。建档会写真实的 kf_members，所以这里不提供。"
+            return DecoyCopy.notProvided("建档会写真实的 kf_members")
         }
         return current.hint + "这一页不连门锁；只有第 4 步的临时码要下发。"
     }

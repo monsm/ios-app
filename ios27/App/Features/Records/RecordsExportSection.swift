@@ -105,7 +105,7 @@ struct RecordsExportSection: View {
 
     private var lead: String {
         if decoyed {
-            return "空壳模式只隐藏数据，不改动数据。导出会把台账交给系统分享，所以这里不提供。"
+            return DecoyCopy.notProvided("导出会把台账交给系统分享")
         }
         if entries.isEmpty {
             return "导出的都是台账里的真记录。先到门页开一次门，或回台账读取锁内日志。"
