@@ -65,6 +65,10 @@ struct SecurityHomeScreen: View {
             if decoyed {
                 decoyCard
             } else {
+                // 2026-11-05（用户指令：减少文字、图形化变多）：本页在做完冗余清理后
+                // 只剩文字卡。这里加一枚**保护项环** —— 4 项全是真实开关
+                //（本机密码 / 胁迫码 / 生物识别 / 非只读试验），不是编出来的健康分。
+                protectionCard
                 passcodeCard
                 if !store.hasPasscode && store.hasDuressCode {
                     duressOrphanCard
@@ -152,6 +156,44 @@ struct SecurityHomeScreen: View {
                 .padding(.top, V8.S.gapS)
                 .fixedSize(horizontal: false, vertical: true)
         }
+    }
+
+    // MARK: - 卡 0 保护项环
+
+    /// 已开启的保护项数（4 项，全部是真实开关）。
+    private var protectionOn: Int {
+        var n = 0
+        if store.hasPasscode { n += 1 }
+        if store.hasDuressCode { n += 1 }
+        if store.bioUnlock && biometricHardwareAvailable && !store.hasDuressCode { n += 1 }
+        if !app.trialGuard { n += 1 }   // 只读试验是排障手段；关着才算正常保护
+        return n
+    }
+
+    private var protectionCard: some View {
+        VCard2 {
+            HStack(alignment: .center, spacing: V8.S.gapL) {
+                VHeroRing(
+                    fraction: Double(protectionOn) / 4.0,
+                    center: "\(protectionOn)",
+                    label: "/ 4 项",
+                    size: V8.G.segCompactOuter * 2.2,
+                    tint: protectionOn >= 3 ? V8.C.ok : (protectionOn >= 2 ? V8.C.warn : V8.C.danger)
+                )
+                VStack(alignment: .leading, spacing: V8.S.gapXS) {
+                    Text("保护项")
+                        .font(V8.T.label)
+                        .foregroundStyle(V8.C.ink4)
+                    Text(protectionOn >= 3 ? "该开的都开了" : "还有没开的")
+                        .font(V8.T.value)
+                        .foregroundStyle(V8.C.ink1)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("保护项 \(protectionOn) / 4 项")
     }
 
     // MARK: - 卡 1 本机数据保护
