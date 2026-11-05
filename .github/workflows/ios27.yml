@@ -90,6 +90,11 @@ jobs:
   golden:
     name: 金标差分测试（引擎回归）
     runs-on: xcode-27
+    # 2026-11-05（CI 死锁终局）：这台自托管 runner 上 `xcodebuild test` 永远跑不完，
+    # 而且 job 超时对它不生效（排队/运行状态都试过）。它一挂就占住串行并发组，
+    # 导致后续所有 run 永久 Waiting —— 整个 CI 不可用。
+    # 改为**只在手动触发时跑**：平时跳过，需要回归时在 Actions 页面 Run workflow。
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     needs: gates
     timeout-minutes: 8
     # 2026-11-05：这台自托管 runner 上 `xcodebuild test` 始终跑不完（多次 20+ 分钟无结论），
