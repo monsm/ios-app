@@ -32,13 +32,6 @@ enum FullPageCapture {
             sv.frame = CGRect(origin: orig.origin,
                               size: CGSize(width: orig.width, height: content.height))
             sv.layoutIfNeeded()
-            // 撑开后再读一次：AX 档的 VStack 高度可能与撑开前的 contentSize 不同。
-            let stretched = sv.contentSize.height
-            if stretched > sv.bounds.height {
-                sv.frame = CGRect(origin: orig.origin,
-                                  size: CGSize(width: orig.width, height: stretched))
-                sv.layoutIfNeeded()
-            }
             // 2026-11-04（黑边根因 · 第三次才对）：full 截图里卡片之间的空隙是**纯黑**，
             // 而 viewport 截图同一位置是纸色。原因不是深色模式（appearance=light 已生效、
             // 卡片内容本来就是浅色），而是：`.background(V.C.bg)` 挂在 **ScrollView 外面**，
@@ -46,24 +39,56 @@ enum FullPageCapture {
             // 它的背景是透明，PNG 里透明落成黑。给 renderer 先铺一层 `V.C.bg`，
             // 再把 ScrollView 的 layer 背景临时设成同色，恢复时还原。
             let paper = UIColor(V.C.bg)
-            let renderer = UIGraphicsImageRenderer(size: sv.frame.size)
+
+            // 2026-11-05（Round 7 · AX 整页空白根因 #2）：AX 档下 dynamicTypeSize 改变了
+            // 全部字体的度量，撑开 frame 触发的 SwiftUI 重布局是**异步**的 ——
+            // 同一 runloop 里 drawHierarchy 拿到的还是空 frame（整版只有纸色）。
+            // 修法：先按旧高度占位渲染一次，**把「恢复现场」的闭包留住**，
+            // 然后等 0.4s（两个 runloop）再重测 contentSize、二次渲染；
+            // 二次渲染产物才落盘，恢复永远执行。
             let origBg = sv.backgroundColor
             sv.backgroundColor = paper
-            let img = renderer.image { ctx in
-                paper.setFill()
-                ctx.fill(sv.bounds)
-                sv.drawHierarchy(in: sv.bounds, afterScreenUpdates: true)
+
+            func render() -> Data? {
+                let renderer = UIGraphicsImageRenderer(size: sv.frame.size)
+                let img = renderer.image { ctx in
+                    paper.setFill()
+                    ctx.fill(sv.bounds)
+                    sv.drawHierarchy(in: sv.bounds, afterScreenUpdates: true)
+                }
+                return img.pngData()
             }
-            sv.backgroundColor = origBg
-            sv.frame = orig
-            sv.layoutIfNeeded()
-            UIView.setAnimationsEnabled(true)
-            if let data = img.pngData() {
+
+            func restore() {
+                sv.backgroundColor = origBg
+                sv.frame = orig
+                sv.contentOffset = .zero
+                sv.layoutIfNeeded()
+                UIView.setAnimationsEnabled(true)
+            }
+
+            var wrote = false
+            func write(_ data: Data?) {
+                guard let data, !wrote else { return }
+                wrote = true
                 let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
                     ?? URL(fileURLWithPath: "/tmp", isDirectory: true)
                 // 文件名带页面标识（tab 序号 + 可选的 dest 名），子页与根页各自一张。
                 let file = "kf-fullpage-" + String(tab) + "-" + name + ".png"
                 try? data.write(to: docs.appendingPathComponent(file))
+            }
+
+            write(render())
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                let stretched = sv.contentSize.height
+                if stretched > sv.bounds.height + 50 {
+                    sv.frame = CGRect(origin: orig.origin,
+                                      size: CGSize(width: orig.width, height: stretched))
+                    sv.layoutIfNeeded()
+                    sv.contentOffset = .zero
+                    write(render())
+                }
+                restore()
             }
         }
     }
