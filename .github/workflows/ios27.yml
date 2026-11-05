@@ -743,6 +743,32 @@ jobs:
                       bands_found += 1
               except Exception as e:
                   print("band scan skipped", f, e)
+          # 2026-11-05（Round 67）：**横向溢出检测**。
+          # 内容比屏幕宽时整页会被左右裁切 —— 闸门不做布局计算、编译看不出、人眼要放大才看得见。
+          # 判据：最左一列（x=1）深色行占比 > 2%。
+          # 标定：锁设置页（已知溢出）8.0%；其余 14 张子页截图 0.1%。
+          clipped = []
+          for f in sorted(glob.glob("/tmp/shots/*.png")):
+              try:
+                  im = Image.open(f).convert("RGB")
+                  w, h = im.size
+                  rows = list(range(0, h, 3))
+                  dark = 0
+                  for y in rows:
+                      px = im.getpixel((1, y))
+                      if px[0] < 120 and px[1] < 120 and px[2] < 120:
+                          dark += 1
+                  ratio = dark / max(1, len(rows))
+                  if ratio > 0.02:
+                      clipped.append((os.path.basename(f), round(ratio * 100, 1)))
+              except Exception as e:
+                  print("clip scan skipped", f, e)
+          if clipped:
+              print("::warning::疑似横向溢出（左侧文字贴边，整页可能被裁）：")
+              for name, pct in clipped:
+                  print(f"  {name}  {pct}%")
+          else:
+              print("横向溢出检测通过：没有页面左侧贴边")
           print(f"空白带扫描完成：{bands_found} 处")
           PY
 
