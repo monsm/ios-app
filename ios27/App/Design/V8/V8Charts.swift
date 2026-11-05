@@ -6,6 +6,14 @@ import SwiftUI
 
 // MARK: - 主环（P2 型：279.3pt 外径 / 36.3pt 描边 / 缺口在正下方）
 
+
+/// 尺寸纪律（2026-11-05）：`size` 是固定宽度，SwiftUI 不会压缩。
+/// 多个环放进同一个 HStack 前必须手算：环数 * size + 间隙 * (环数-1) <= 卡内可用宽度。
+/// 实测可用宽度约 336pt（屏 402 - 2*gutterCard 16.6 - 2*padCard 16.5）。
+/// 反例：锁设置页曾放 3 个 segCompactOuter*1.9 = 125.4pt 的环，合计 408pt，
+/// 结果整页被撑宽、左右各裁一条，连返回按钮都缺一块。
+/// 单环加文字横排是安全的：145pt 环 + 16pt 间隙 + 175pt 文字。
+
 struct VHeroRing: View {
     @Environment(\.colorScheme) private var colorScheme
     /// 已填充比例 0…1
