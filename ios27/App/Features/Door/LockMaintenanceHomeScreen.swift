@@ -669,7 +669,10 @@ struct LockMaintenanceHomeScreen: View {
                     .padding(.top, V8.S.gapM)
                     if let p = pkg {
                         VCard2(style: .well) {
-                            VCardHead(eyebrow: "包内容", statement: p.version ?? "版本未识别", trailing: p.sourceName)
+                            // 2026-11-05（对抗审查 · 设计冗余）：包版本在本段已经出现两次 ——
+                            // 段标题「包已就绪 · <版本>」与数据行「包内版本」。这里再报一遍是第三次。
+                            // 卡头改成描述「包内有什么」，版本由上面两处唯一承载。
+                            VCardHead(eyebrow: "包内容", statement: "三类文件", trailing: p.sourceName)
                             VStack(spacing: 0) {
                                 VDataRow(tag: "主体", tagTint: V8.C.ink4, title: "固件主体", value: String(p.binSize), unit: "B")
                                 VDotRule()
