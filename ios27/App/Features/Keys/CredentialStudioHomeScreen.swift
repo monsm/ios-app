@@ -927,7 +927,8 @@ struct CredentialStudioHomeScreen: View {
 
     private var binCard: some View {
         VCard2 {
-            VCardHead(eyebrow: "回收站", statement: String(binCount) + " 项", trailing: "可整组还原")
+            // 2026-11-05（值级重复）：项数在顶部芯片「回收站 · N 项」已经有了，卡头改说含义。
+            VCardHead(eyebrow: "回收站", statement: "可整组还原")
             VDivider2()
                 .padding(.top, V8.S.gapM)
             Text("停用或批量删除的凭证在这里，可整组还原或彻底删除。")
