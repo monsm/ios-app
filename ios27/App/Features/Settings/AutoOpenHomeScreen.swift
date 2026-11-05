@@ -247,8 +247,8 @@ struct AutoOpenHomeScreen: View {
                 .foregroundStyle(V8.C.ink3)
                 .padding(.top, V8.S.gapM)
                 .fixedSize(horizontal: false, vertical: true)
-            VDataRow(tag: "当前档位", tagTint: V8.C.ink4, title: faceTier.title, value: "")
-                .padding(.top, V8.S.gapS)
+            // 2026-11-05（值级重复）：档位名在卡头 statement、选中芯片、这一行里出现了三次。
+            // 卡头 + 芯片已经说清，删掉这一行。
         }
     }
 
