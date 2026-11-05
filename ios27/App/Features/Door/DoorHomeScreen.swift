@@ -34,10 +34,14 @@ struct DoorHomeScreen: View {
         return "门已就绪"
     }
 
-    private var lead: String {
-        guard let lock else {
-            return "把锁的后面板打开，长按 RESET 直到三声嘀，然后在这里添加。换过手机的话，也可以先从备份恢复。"
-        }
+    /// 2026-11-05（对抗审查 · 设计冗余）：**没有锁时不要再返回这段话**。
+    ///
+    /// 原来是：judgement 说「还没有添加门锁」→ lead 说「把锁的后面板打开…」→
+    /// VEmpty 的标题又是「还没有添加门锁」、reason 又是同一句「把锁的后面板打开…」。
+    /// 空态是新用户看到的第一屏，却把同一件事连说两遍（标题重复、长句逐字重复）。
+    /// 现在 lead 返回 nil，由 VEmpty 独占这段说明。
+    private var lead: String? {
+        guard let lock else { return nil }
         var bits: [String] = []
         bits.append(lock.model)
         if let first = todayOpenEntries.first {

@@ -58,13 +58,13 @@ struct MemberDetailHomeScreen: View {
         return "「" + HHDisplay.name(member, extras: draft) + "」"
     }
 
-    private var lead: String {
+    /// 2026-11-05（对抗审查 · 设计冗余）：没有选中成员时不再返回这段话 ——
+    /// VEmpty 的 reason 就是同一句（逐字相同），空态里连说两遍。
+    private var lead: String? {
         if decoyed {
             return "空壳模式只隐藏数据，不改动数据。成员档案与名下凭证都不显示，也不写入。"
         }
-        guard let member else {
-            return "从「家」的成员名册里点一位成员进来，这里会显示 TA 的档案、凭证与权限。"
-        }
+        guard let member else { return nil }
         if member.archived { return "归档只收起名册与统计，历史一条不删。逐位可恢复，没有「全部恢复」。" }
         return "档案扩展只存本机，不写入门锁；角色矩阵管的是本机界面，锁端没有角色字段。"
     }
