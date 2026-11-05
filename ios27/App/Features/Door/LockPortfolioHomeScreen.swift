@@ -75,9 +75,14 @@ struct LockPortfolioHomeScreen: View {
 
     private var visibleModules: Int { DevModule.allCases.count - hiddenModules.count }
 
+    /// 2026-11-05（截图审查 · 按参考图的结构修正）：
+    /// 原来这里写「1 把锁 · 30 天开了 9 次」，而紧接其下的统计卡又报同样两个数 ——
+    /// 一屏之内同一组数字两遍。参考图（Apple Health）的做法是**标题叙述、卡片承载数字**，
+    /// 这里对齐：标题说状态，数量与次数全部交给下面的统计卡。
     private var judgement: String {
         if usage.isEmpty { return "还没有门锁" }
-        return String(usage.count) + " 把锁 · 30 天开了 " + String(usage.reduce(0) { $0 + $1.opens30d }) + " 次"
+        if usage.count == 1 { return "只有一把锁" }
+        return "多把锁分开管"
     }
 
     var body: some View {
@@ -130,7 +135,10 @@ struct LockPortfolioHomeScreen: View {
 
     private var summaryCard: some View {
         VCard2 {
-            VCardHead(eyebrow: "30 天总览", statement: String(usage.reduce(0) { $0 + $1.opens30d }) + " 次开门")
+            // 2026-11-05（截图审查 · 本页重复密度最高的一屏）：
+            // 页标题已经写着「1 把锁 · 30 天开了 9 次」，这张卡的卡头又写「9 次开门」——
+            // 同一屏第一个和第三个信息是同一个数。卡头改成说统计口径。
+            VCardHead(eyebrow: "30 天总览", statement: "全部锁合计")
             VDivider2()
                 .padding(.top, V8.S.gapM)
             VStatPair2(items: [
@@ -186,7 +194,10 @@ struct LockPortfolioHomeScreen: View {
 
     private var listCard: some View {
         VCard2 {
-            VCardHead(eyebrow: "门锁", statement: String(shown.count) + " 把")
+            // 同上：这张卡的卡头写「门锁 N 把」，而上面统计卡的第一格就是「门锁 N 把」——
+            // 默认视图下（全部）两个数完全一样。锁总数由统计卡承载；
+            // 这里说明列表当前处在哪个筛选下（筛选时才是这张卡独有的信息）。
+            VCardHead(eyebrow: "门锁", statement: groupFilter.isEmpty ? "全部" : groupFilter)
             VDivider2()
                 .padding(.top, V8.S.gapM)
             VStack(spacing: 0) {
