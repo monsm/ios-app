@@ -59,11 +59,8 @@ struct SecurityHomeScreen: View {
 
     var body: some View {
         VPage(title: judgement, lead: lead) {
-            if decoyed {
-                EmptyView()
-            } else {
-                chipRow
-            }
+            // 芯片行整排删除后，头部只留标题与导语（本页没有「别处看不到」的数字可报）。
+            EmptyView()
         } content: {
             if decoyed {
                 decoyCard
@@ -135,36 +132,6 @@ struct SecurityHomeScreen: View {
     }
 
     // MARK: - 芯片行
-
-    private var chipRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: V8.S.gapChip) {
-                VChip2(
-                    icon: .ring(store.hasPasscode ? 1 : 0.02, store.hasPasscode ? V8.C.ok : V8.C.warn),
-                    label: "本机密码",
-                    value: store.hasPasscode ? "已设" : "未设"
-                )
-                VChip2(
-                    icon: .ring(store.hasDuressCode ? 1 : 0.02, store.hasDuressCode ? V8.C.accent : V8.C.ink3),
-                    label: "胁迫码",
-                    value: store.hasDuressCode ? "已设" : "未设"
-                )
-                VChip2(
-                    icon: .ring(store.hasPasscode ? 1 : 0.02, store.hasPasscode ? V8.C.ok : V8.C.warn),
-                    label: "冷启动",
-                    value: store.hasPasscode ? "要求" : "免输"
-                )
-                VChip2(
-                    icon: .glyph(app.trialGuard ? "lock.shield.fill" : "lock.shield"),
-                    label: "只读试验",
-                    value: app.trialGuard ? "开" : "关"
-                )
-            }
-            .padding(.leading, V8.S.gutterCard)
-            .padding(.trailing, V8.S.gutterCard)
-        }
-        .scrollClipDisabled()
-    }
 
     // MARK: - 空壳
 
@@ -408,7 +375,9 @@ struct SecurityHomeScreen: View {
             VDivider2()
                 .padding(.top, V8.S.gapM)
             toggleRow("只读试验模式", detail: "开启后下发到门锁的写命令全部停用：只能读状态，不能改锁、不能下发凭证。用来在真机上排障而不会把锁改坏。", isOn: trialGuardBinding(app))
-            Text(app.trialGuard ? "已开启 · 写入类命令全部停用（本机台账仍可编辑）" : "关闭 · 写入类命令可用")
+            // 2026-11-05（截图审查）：卡头已经写着「只读试验模式已开 / 关闭」，这行又重复一遍状态。
+            // 只留卡头没有的那半句：本机台账仍然可编辑。
+            Text(app.trialGuard ? "本机台账仍可编辑 —— 只有往锁端下发的写命令被拦。" : "往锁端下发的写命令可用。")
                 .font(V8.T.footnote)
                 .foregroundStyle(app.trialGuard ? V8.C.danger : V8.C.ink4)
                 .padding(.top, V8.S.gapS)
