@@ -1,0 +1,11 @@
+commit=61c6a4ad5bbb732a49eafc225017141260d75f7f
+run=41990575956
+job=golden
+test_log=yes
+test_ok=0
+0
+test_failed=0
+0
+test_executed=yes
+tests_executed=0
+0
