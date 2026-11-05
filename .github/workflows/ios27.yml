@@ -436,6 +436,7 @@ jobs:
         working-directory: .
     outputs:
       ui: ${{ steps.scope.outputs.ui }}
+      scope: ${{ steps.scope.outputs.scope }}
     steps:
       - name: Checkout（需要历史才能 diff）
         uses: actions/checkout@v7
@@ -455,11 +456,28 @@ jobs:
           CHANGED=$(git diff --name-only "$BASE" "${{ github.sha }}" || true)
           echo "本次改动文件数: $(printf '%s\n' "$CHANGED" | grep -c . || true)"
           # 界面层的判据：页面 / 设计系统 / 外壳 / App 入口 / 截图种子
-          if printf '%s\n' "$CHANGED" | grep -qE '^ios27/(App/(Features|Design|Shell)/|App/LockKeeperApp\.swift|\.github-seed/)'; then
-            echo "ui=true" >> "$GITHUB_OUTPUT"; echo "动到界面层 → 截图"
-          else
-            echo "ui=false" >> "$GITHUB_OUTPUT"; echo "只动了非界面文件 → 跳过截图"
+          if ! printf '%s\n' "$CHANGED" | grep -qE '^ios27/(App/(Features|Design|Shell)/|App/LockKeeperApp\.swift|\.github-seed/)'; then
+            echo "ui=false" >> "$GITHUB_OUTPUT"; echo "scope=all" >> "$GITHUB_OUTPUT"
+            echo "只动了非界面文件 → 跳过截图"; exit 0
           fi
+          echo "ui=true" >> "$GITHUB_OUTPUT"
+          # 2026-11-05（用户建议 · 优化五）：**只截改动所在的域**。
+          # 设计系统/外壳/App 入口/种子动了 ⇒ 影响所有页面，截全套；
+          # 否则按 Features 下的域收敛到对应的 Tab + 子页。
+          if printf '%s\n' "$CHANGED" | grep -qE '^ios27/(App/(Design|Shell)/|App/LockKeeperApp\.swift|\.github-seed/)'; then
+            echo "scope=all" >> "$GITHUB_OUTPUT"; echo "动到设计系统/外壳/种子 → 截全套"; exit 0
+          fi
+          FEAT=$(printf '%s\n' "$CHANGED" | grep '^ios27/App/Features/' | sed -E 's#^ios27/App/Features/([^/]+)/.*#\1#' | sort -u)
+          echo "改动域: $(echo $FEAT)"
+          case "$FEAT" in
+            Door)      S=door ;;
+            Keys)      S=keys ;;
+            Records)   S=records ;;
+            Household) S=household ;;
+            Settings)  S=settings ;;
+            *)         S=all ;;   # 跨域或无法识别 → 全套
+          esac
+          echo "scope=$S" >> "$GITHUB_OUTPUT"; echo "截图范围: $S"
 
   shots:
     name: 模拟器截图（诊断用）
@@ -471,6 +489,9 @@ jobs:
     needs: changes
     if: needs.changes.outputs.ui == 'true'
     continue-on-error: true
+    env:
+      # 只有这一域动过时，只截这一域（all = 全套）。判据见 changes job。
+      SCOPE: ${{ needs.changes.outputs.scope }}
     # 2026-11-04（实测）：40 分钟装不下。这个 job 要跑 5 个主 Tab + 5 张整页 +
     # 10 个子页 + 10 张子页整页 = 30 次「terminate + launch + sleep + screenshot」，
     # 而每次冷启动在 runner 上要 5–8 秒。上一轮 diag 停在 `4-settings`、count=10 ——
@@ -612,8 +633,18 @@ jobs:
           # 整页截屏（**算法级**，不是滚到底）：App 把 ScrollView 的 frame 临时撑到
           # contentSize 高度后一次成像，中间内容不会漏。产物落在 App 容器 Documents/，
           # 这里用 simctl get_app_container 拷出来，命名 <i>-<name>-full.png。
-          i=0
-          for name in door keys records household settings; do
+          # 2026-11-05（优化五）：Tab 与子页都按 changes.scope 收敛 —— 单域改动只截那一域。
+          case "$SCOPE" in
+            door)      TABS="0"; SUBS="lockStatus deviceInfo lockSettings defend" ;;
+            keys)      TABS="1"; SUBS="keyCreate zotp" ;;
+            records)   TABS="2"; SUBS="recordsStudio" ;;
+            household) TABS="3"; SUBS="" ;;
+            settings)  TABS="4"; SUBS="backupStudio godMode hardware" ;;
+            *)         TABS="0 1 2 3 4"; SUBS="lockStatus deviceInfo lockSettings defend keyCreate zotp recordsStudio backupStudio godMode hardware" ;;
+          esac
+          echo "shots: scope=$SCOPE tabs=[$TABS] subs=[$SUBS]" >> "$DIAG"
+          for i in $TABS; do
+            name=$(case "$i" in 0) echo door ;; 1) echo keys ;; 2) echo records ;; 3) echo household ;; 4) echo settings ;; esac)
             xcrun simctl terminate "$UDID" com.aapk.lockkeeper 2>/dev/null || true
             xcrun simctl launch "$UDID" com.aapk.lockkeeper -kfUITest -kfSeed -kfFullPage -kfTab $i || true
             sleep 7
@@ -629,7 +660,7 @@ jobs:
           # ASCII 名（中文名经 locale 管道会变 mojibake）；每个目标截 2 次（竞态重试）。
           # 缺某张图 = 那个子页在空数据下崩了 —— 本身就是 god 模式要抓的缺陷。
           j=10
-          for dest in lockStatus deviceInfo lockSettings defend keyCreate zotp recordsStudio backupStudio godMode hardware; do
+          for dest in $SUBS; do
             xcrun simctl terminate "$UDID" com.aapk.lockkeeper 2>/dev/null || true
             xcrun simctl launch "$UDID" com.aapk.lockkeeper -kfUITest -kfSeed -kfDest "$dest" || true
             sleep 5
