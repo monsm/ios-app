@@ -103,6 +103,11 @@ struct KeyCreateHomeScreen: View {
         }
         .background(V8.C.bg.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
+        // 2026-11-05（对抗审查 · 安全）：本页用**明文 TextField**输入要写进锁的密码，
+        // 却没有截图/录屏遮挡 —— 而同一串值在凭证详情页是打码 + captureShield 的。
+        // 用户在新建流程里截图分享「我加了个什么密码」时，6~8 位开锁密码会整段进相册。
+        // 这里与 KeyDetail / Zotp / MobileKey 同口径挂上遮挡。
+        .captureShield("这里正在输入一枚开锁密码\n屏幕正在被录制或截图，已遮挡")
         .onAppear {
             consumeRoute()
             if let want = KeyCreateIntent.pending {
