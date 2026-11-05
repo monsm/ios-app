@@ -28,6 +28,44 @@ struct HouseHomeScreen: View {
         MemberHub.activityBundle(activeMembers.map(\.id)).visitorOpens
     }
 
+    /// 近 7 天（含今天）每天的成功开门次数 + 对应的星期标签。
+    ///
+    /// 2026-11-05（用户指令：图形化变多）：本页此前是全仓「文字多、图形 0」的典型。
+    /// 这 7 个数是真数据（本机回执），不是装饰 —— 与「不假装知道」的口径一致。
+    private var weekDaily: (values: [Double], labels: String) {
+        let cal = TimeFormat.calendar
+        let today = cal.startOfDay(for: Date())
+        let names = ["日", "一", "二", "三", "四", "五", "六"]
+        var values: [Double] = []
+        var labels: [String] = []
+        for offset in stride(from: 6, through: 0, by: -1) {
+            guard let day = cal.date(byAdding: .day, to: -offset, to: today) else { continue }
+            let start = Int64(day.timeIntervalSince1970 * 1000)
+            let end = start + 86_400_000
+            let n = app.entries.filter {
+                $0.at >= start && $0.at < end && ($0.tone == .ok || $0.tone == .live)
+            }.count
+            values.append(Double(n))
+            labels.append(names[cal.component(.weekday, from: day) - 1])
+        }
+        return (values, labels.joined(separator: "   "))
+    }
+
+    private var weekBarsCard: some View {
+        VCard2 {
+            VCardHead(eyebrow: "近 7 天开门", statement: "\(weekOpens) 次", trailing: "本机回执")
+            VDivider2()
+                .padding(.top, V8.S.gapM)
+            VRangeCaption(text: weekDaily.labels)
+                .padding(.top, V8.S.gapM)
+            // cursor 指向今天（最后一格），与记录页 24 小时波形的处理一致。
+            VSpark(values: weekDaily.values, tint: V8.C.accentFill, cursor: max(0, weekDaily.values.count - 1), axis: .samples)
+                .padding(.top, V8.S.gapS)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("近 7 天开门 \(weekOpens) 次")
+    }
+
     private var judgement: String {
         if activeMembers.isEmpty { return "家里还没有成员" }
         if archivedCount > 0 { return "有 \(archivedCount) 位成员已归档" }
@@ -39,10 +77,10 @@ struct HouseHomeScreen: View {
         if activeMembers.isEmpty {
             return "手机钥匙要签给具体某个人。先建一位成员，回来就能给他签发。"
         }
-        var bits: [String] = []
-        bits.append("本周开了 \(weekOpens) 次门")
-        bits.append("归档不影响历史记录")
-        return bits.joined(separator: "，") + "。"
+        // 2026-11-05（用户指令：减少多余文字、图形化变多）：
+        // 「本周开了 N 次门」这句改成由下面的柱图承载（图形说同一件事更省字）。
+        // lead 只留别处没有的一条规则。
+        return "开门次数只统计本机读到的回执；归档不影响历史记录。"
     }
 
     var body: some View {
@@ -59,6 +97,9 @@ struct HouseHomeScreen: View {
                 archiveCard
                 archiveImpactCard
             } else {
+                // 2026-11-05（用户指令：图形化变多）：本页原来**没有任何图形**。
+                // 7 日开锁次数是真实序列，画成柱图放在最上面（参考图也是洞察卡在上）。
+                weekBarsCard
                 memberCard
                 entryCard
             }
