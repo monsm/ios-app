@@ -495,7 +495,11 @@ struct MemberDetailHomeScreen: View {
 
     private func sceneCard(_ member: MemberCard) -> some View {
         VCard2 {
-            VCardHead(eyebrow: "家庭场景", statement: isDuty ? "本周的家里事归 TA" : "本周还没指派", trailing: "可改")
+            // 2026-11-05（对抗审查 · 设计冗余）：本页原来有**两张都叫「家庭场景」**的卡 ——
+            // 一张是本周主责开关，一张是可编辑的关怀/欢迎/便签。而且「便签」这个字段在两处都出现：
+            // 这里只读显示 draft.note，下面那张卡改的是同一个 note —— 在一处改了、另一处还是旧值。
+            // 名字与字段都收拢：这张只讲「本周主责」。
+            VCardHead(eyebrow: "本周主责", statement: isDuty ? "本周的家里事归 TA" : "本周还没指派", trailing: "可改")
             VDivider2()
                 .padding(.top, V8.S.gapM)
             Toggle(isOn: Binding(
@@ -514,12 +518,6 @@ struct MemberDetailHomeScreen: View {
             }
             .frame(minHeight: V8.H.min)
             .padding(.top, V8.S.gapM)
-            if !draft.note.isEmpty {
-                VDivider2()
-                    .padding(.top, V8.S.gapM)
-                VDataRow(tag: "便签", tagTint: V8.C.ink4, title: draft.note, value: "")
-                    .padding(.top, V8.S.gapS)
-            }
         }
     }
 
@@ -983,7 +981,7 @@ struct MemberDetailHomeScreen: View {
 
     private func careSceneCard(_ m: MemberCard) -> some View {
         VCard2(style: .well) {
-            VCardHead(eyebrow: "流转 · 家庭场景", statement: "关怀 / 欢迎语 / 便签", trailing: "本机")
+            VCardHead(eyebrow: "家庭场景", statement: "关怀 / 欢迎语 / 便签", trailing: "本机")
             VDivider2()
                 .padding(.top, V8.S.gapM)
             VStack(alignment: .leading, spacing: V8.S.gapM) {

@@ -87,7 +87,10 @@ struct DiagnosticsHomeScreen: View {
 
     private var scanCard: some View {
         VCard2 {
-            VCardHead(eyebrow: "附近设备", statement: scanning ? "正在扫描 8 秒" : "扫描窗口 8 秒", trailing: "\(devices.count) 台")
+            // 2026-11-05（对抗审查 · 设计冗余）：卡头 trailing 原来也报「N 台」，
+            // 而紧邻的「扫描结果」卡标题就是「N 台按信号排序」—— 同一个数字挨着出现两次。
+            // 数量由结果卡承载，扫描卡只说扫描本身的状态。
+            VCardHead(eyebrow: "附近设备", statement: scanning ? "正在扫描 8 秒" : "扫描窗口 8 秒")
             VDivider2()
                 .padding(.top, V8.S.gapM)
             if scanning {
@@ -196,7 +199,6 @@ struct DiagnosticsHomeScreen: View {
         }
     }
 
-    // MARK: - 失败态
     // MARK: - 失败态
 
     @ViewBuilder
