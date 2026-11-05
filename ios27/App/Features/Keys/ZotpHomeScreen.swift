@@ -40,7 +40,7 @@ struct ZotpHomeScreen: View {
         } content: {
             if app.lock == nil || kc == nil {
                 VEmpty(
-                    title: "还没有门锁",
+                    title: "添加一把门锁",
                     reason: "动态密码要用这把锁的钥匙串现场计算：先添加并配对门锁，再回来生成。",
                     actionTitle: "添加门锁"
                 ) { }

@@ -571,7 +571,7 @@ struct KeyDetailHomeScreen: View {
 
     private var missingCard: some View {
         VEmpty(
-            title: "这枚凭证已经不在了",
+            title: "回到凭证列表",
             reason: "它可能刚被删除或停用。回钥匙列表看看还剩哪些凭证，或再新增一枚。",
             actionTitle: "回钥匙列表"
         ) {

@@ -417,7 +417,7 @@ struct RecordsStudioHomeScreen: View {
 
     private var emptyResultCard: some View {
         VEmpty(
-            title: "这些条件下没有记录",
+            title: "清空筛选条件",
             reason: "检索词或筛选把记录筛掉了 —— 上面的记录本身还在。清空条件就能回到全部记录。",
             actionTitle: "清空条件"
         ) {

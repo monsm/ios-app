@@ -139,7 +139,7 @@ struct LockMaintenanceHomeScreen: View {
                 decoyCard
             } else if app.lock == nil {
                 VEmpty(
-                    title: "还没有门锁可维护",
+                    title: "添加一把门锁",
                     reason: "固件、电池、网关与名片都挂在具体一把锁上。先添加门锁，再回这一页。",
                     actionTitle: "添加门锁"
                 ) { router.request(.dest(.addLock)) }

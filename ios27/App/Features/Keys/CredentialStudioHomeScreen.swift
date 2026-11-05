@@ -109,7 +109,7 @@ struct CredentialStudioHomeScreen: View {
                 decoyCard
             } else if app.lock == nil {
                 VEmpty(
-                    title: "还没有门锁",
+                    title: "添加一把门锁",
                     reason: "凭证工作室整理的是某一把锁的凭证台账。先添加门锁，再回来。",
                     actionTitle: "添加门锁"
                 ) { router.request(.dest(.addLock)) }

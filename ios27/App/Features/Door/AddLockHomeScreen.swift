@@ -211,7 +211,7 @@ struct AddLockHomeScreen: View {
             }
         } else if candidates.isEmpty {
             VEmpty(
-                title: "附近没有可配网的锁",
+                title: "重新扫描附近",
                 reason: "先把锁做到重置态（长按 RESET 到三声嘀），手机贴到 2 米内，再点下面的重新扫描。",
                 actionTitle: "重新扫描"
             ) {

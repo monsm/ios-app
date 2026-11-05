@@ -79,7 +79,7 @@ struct MobileKeyHomeScreen: View {
                 }
                 if app.members.isEmpty {
                     VEmpty(
-                        title: "还没有成员",
+                        title: "新建一位成员",
                         reason: "手机钥匙要签给具体某个人。先去「家」建一位成员，回来就能签。",
                         actionTitle: "去新建成员"
                     ) { router.request(.dest(.memberCreate)) }

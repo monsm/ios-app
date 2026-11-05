@@ -135,8 +135,11 @@ struct LockSettingsHomeScreen: View {
             if decoyed {
                 decoyCard
             } else if app.lock == nil {
+                // 2026-11-05（对抗审查 · 设计冗余）：本页标题（judgement）已经是
+                // 「还没有门锁可设置」，空态卡又用同一个标题 ⇒ 屏幕上同一个句子出现两次。
+                // 空态标题改成动作导向，和标题分工：标题说状态，卡片说下一步。
                 VEmpty(
-                    title: "还没有门锁可设置",
+                    title: "添加一把门锁",
                     reason: "锁设置改的是具体一把锁的锁端策略：先添加并配对门锁，再回这一页。",
                     actionTitle: "添加门锁"
                 ) { router.request(.dest(.addLock)) }
@@ -278,7 +281,10 @@ struct LockSettingsHomeScreen: View {
                 .fixedSize(horizontal: false, vertical: true)
             toggleRow(
                 "开通动态密码",
-                detail: otpOn ? "已开通 · 锁端会接受动态码" : "已关闭 · 动态码不会被锁接受",
+                // 2026-11-05（对抗审查 · 设计冗余）：这里原来与卡头 statement **逐字相同**，
+                // 同一个开关状态在一张卡里说了两遍。副文改成说清机制（下发 + 回读确认），
+                // 状态仍由卡头唯一承载。
+                detail: "下发到锁端，回读确认后才算开通",
                 isOn: Binding(
                     get: { otpOn },
                     set: { on in writeOtp(on) }

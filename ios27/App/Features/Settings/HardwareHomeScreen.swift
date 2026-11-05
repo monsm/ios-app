@@ -58,7 +58,7 @@ struct HardwareHomeScreen: View {
                 decoyCard
             } else if dongles.isEmpty {
                 VEmpty(
-                    title: "还没有登记钥匙串",
+                    title: "先添加门锁",
                     reason: "下一步：把钥匙串拿到手机旁，点「扫描钥匙串」。只认厂商的钥匙串（型号 ZKBBV1），扫描 15 秒，认不到就是没电或没在广播。",
                     actionTitle: "扫描钥匙串"
                 ) { scan() }

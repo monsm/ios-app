@@ -84,7 +84,7 @@ struct LockPortfolioHomeScreen: View {
         } content: {
             if usage.isEmpty {
                 VEmpty(
-                    title: "还没有门锁",
+                    title: "添加一把门锁",
                     reason: "多锁统计要在本机至少有一把锁之后才有读数。先添加门锁。",
                     actionTitle: "添加门锁"
                 ) { router.request(.dest(.addLock)) }

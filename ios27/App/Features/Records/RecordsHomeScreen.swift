@@ -107,7 +107,7 @@ struct RecordsHomeScreen: View {
                 ) { router.request(.dest(.addLock)) }
             } else if entries.isEmpty {
                 VEmpty(
-                    title: "还没有台账记录",
+                    title: "去门页开一次门",
                     reason: "台账是锁内日志读出来的。先把门锁连上，再到门页开一次门，记录就会落在这里。",
                     actionTitle: "去门页"
                 ) { router.select(.door) }

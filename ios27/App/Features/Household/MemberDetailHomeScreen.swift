@@ -100,7 +100,7 @@ struct MemberDetailHomeScreen: View {
                 }
             } else {
                 VEmpty(
-                    title: "还没选成员",
+                    title: "从名册里选一位",
                     reason: "从「家」的成员名册里点一位成员进来，这里会显示 TA 的档案、凭证与权限。",
                     actionTitle: "回到名册"
                 ) { router.request(.tab(.household)) }

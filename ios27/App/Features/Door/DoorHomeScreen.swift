@@ -78,7 +78,7 @@ struct DoorHomeScreen: View {
         } content: {
             if lock == nil {
                 VEmpty(
-                    title: "还没有添加门锁",
+                    title: "添加一把门锁",
                     reason: "把锁的后面板打开，长按 RESET 直到三声嘀，然后在这里添加。换过手机的话，也可以先从备份恢复。",
                     actionTitle: "添加门锁"
                 ) { router.request(.dest(.addLock)) }
