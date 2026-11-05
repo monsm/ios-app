@@ -90,13 +90,15 @@ enum V8 {
         /// 对比度自检（六套 vs 白卡，全部 ≥4.5，WCAG AA 正文档）：
         /// 靛蓝 6.79 / 森林 6.02 / 琥珀 5.02 / 石墨 6.25 / 玫红 6.29 / 极光 5.36。
         private static var accentBase: UIColor {
+            // kf_accent 的六套色值直接写在令牌层（与 SettingsModel.accentColor 同源同值），
+            // 不经过 SettingsStore —— 它是 @MainActor，令牌层必须可在任何线程求值。
             switch DB.store.getString("kf_accent") {
-            case "forest":   return UIColor(SettingsStore.color(hex: 0x1D6F5F))
-            case "amber":    return UIColor(SettingsStore.color(hex: 0xB45309))
-            case "graphite": return UIColor(SettingsStore.color(hex: 0x5B6169))
-            case "rose":     return UIColor(SettingsStore.color(hex: 0xBE123C))
-            case "aurora":   return UIColor(SettingsStore.color(hex: 0x0E7490))
-            default:         return UIColor(SettingsStore.color(hex: 0x0558B8))
+            case "forest":   return UIColor(hex: 0x1D6F5F)
+            case "amber":    return UIColor(hex: 0xB45309)
+            case "graphite": return UIColor(hex: 0x5B6169)
+            case "rose":     return UIColor(hex: 0xBE123C)
+            case "aurora":   return UIColor(hex: 0x0E7490)
+            default:         return UIColor(hex: 0x0558B8)
             }
         }
         /// 强调（蓝）值档：默认 6.04:1。深色档把基色调亮到 L≈0.62 保证 ≥4.5。
@@ -465,6 +467,14 @@ enum V8 {
 // MARK: - UIColor 色彩运算（品牌色派生专用；只在令牌层内使用）
 
 extension UIColor {
+    /// 0xRRGGBB → UIColor（非隔离；令牌层专用，避免触碰 @MainActor 的 SettingsStore）。
+    fileprivate convenience init(hex: UInt32) {
+        self.init(red: CGFloat((hex >> 16) & 0xFF) / 255,
+                  green: CGFloat((hex >> 8) & 0xFF) / 255,
+                  blue: CGFloat(hex & 0xFF) / 255,
+                  alpha: 1)
+    }
+
     /// 相对亮度（WCAG）。用于确保深色档的强调色 ≥4.5 对比。
     fileprivate var luminance: CGFloat {
         var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
