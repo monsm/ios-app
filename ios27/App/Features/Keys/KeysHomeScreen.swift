@@ -345,20 +345,15 @@ struct KeysHomeScreen: View {
             .frame(minHeight: V8.H.min)
             VDivider2()
                 .padding(.vertical, V8.S.gapS)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: V8.S.gapChip) {
-                    ForEach(KeysFilter.allCases, id: \.self) { item in
-                        filterChip(item)
-                    }
-                    groupChip
-                }
+            // 2026-11-05（截图审查 · 本页最大的一处冗余）：
+            // 这里原来有**第二排筛选芯片**，与页头 chipRow 是同一个 filter 状态、同一批
+            // KeysFilter.allCases、同一串数字（全部 13 / 密码 1 / 指纹 8 / 临时码 1 / 手机钥匙 1）。
+            // 一屏两排一模一样的可点控件，用户不知道点哪一排才对 —— 两排还是联动的。
+            // 页头那排保留（门页 / 记录页 / 家页的同一惯例），这里只留**只在此处出现**的「分组」芯片。
+            HStack(spacing: V8.S.gapChip) {
+                groupChip
             }
-            if !filtered.isEmpty {
-                Text("命中 \(filtered.count) 枚")
-                    .font(V8.T.caption)
-                    .foregroundStyle(V8.C.ink4)
-                    .padding(.top, V8.S.gapS)
-            }
+            // 同理删掉「命中 N 枚」：台账卡头写着当前筛选名，圆环中心就是命中数。
             if search.isEmpty && !recentSearches.isEmpty {
                 recentSearchRow
             }
@@ -401,26 +396,6 @@ struct KeysHomeScreen: View {
             }
         }
         .padding(.top, V8.S.gapS)
-    }
-
-    private func filterChip(_ item: KeysFilter) -> some View {
-        let selected = filter == item
-        return Button {
-            filter = item
-        } label: {
-            Text(item.title + " " + "\(app.keys.filter { item.matches($0) }.count)")
-                .font(V8.T.tab)
-                .foregroundStyle(selected ? V8.C.chipOn : V8.C.ink1)
-                .padding(.horizontal, V8.S.gapM)
-                .frame(minHeight: V8.H.min)
-                .background(
-                    Capsule(style: .continuous)
-                        .fill(selected ? V8.C.accent : V8.C.chipOff)
-                )
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(item.title)
-        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
     }
 
     private var groupChip: some View {
