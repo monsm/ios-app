@@ -67,9 +67,9 @@ struct RecordsHomeScreen: View {
         return "今天的往来都正常"
     }
 
-    private var lead: String {
+    private var lead: String? {
         if entries.isEmpty {
-            return "台账是锁内日志读出来的。先把门锁连上，再到门页开一次门，记录就会落在这里。"
+            return nil
         }
         var bits: [String] = []
         if let first = todayEntries.max(by: { $0.at < $1.at }) {

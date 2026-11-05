@@ -89,12 +89,12 @@ struct CredentialStudioHomeScreen: View {
         return "台账 " + String(pwdRows.count + fpRows.count) + " 项"
     }
 
-    private var lead: String {
+    private var lead: String? {
         if decoyed {
             return "空壳模式只隐藏数据，不改动数据。退出空壳后才能整理凭证台账。"
         }
         if app.lock == nil {
-            return "凭证工作室整理的是某一把锁的凭证台账。先添加门锁，再回来。"
+            return nil
         }
         return "批量动作先在本机记账；锁端删除与延期按现有链路真下发，失败会如实回报。排序：" + sort.rawValue + " · 分组：" + (CredentialOrg.groupMode == .owner ? "按成员" : "按类型")
     }

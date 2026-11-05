@@ -56,12 +56,12 @@ struct MobileKeyHomeScreen: View {
         return "已签发 \(issuedCount) 把"
     }
 
-    private var lead: String {
+    private var lead: String? {
         if decoyed {
             return "空壳模式只隐藏数据，不改动数据。钥匙列表与配对码都不显示。"
         }
         if app.members.isEmpty {
-            return "手机钥匙要签给具体某个人。先去「家」建一位成员，回来就能签。"
+            return nil
         }
         return "本机签了 \(issuedCount) 把。锁里 PIN 池的占用要连上锁才知道 —— 这里不假装知道剩几个。"
     }

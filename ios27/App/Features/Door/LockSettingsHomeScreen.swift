@@ -118,9 +118,9 @@ struct LockSettingsHomeScreen: View {
         return lock.name + " · " + (otpOn ? "动态码已开通" : "动态码已关闭")
     }
 
-    private var lead: String {
+    private var lead: String? {
         if decoyed { return "空壳模式只隐藏、不改动：本页既不显示这把锁的策略，也不写入任何设置。退出空壳后才能改。" }
-        if app.lock == nil { return "锁设置改的是具体一把锁的锁端策略：先添加并配对门锁，再回这一页。" }
+        if app.lock == nil { return nil }
         return "这一页改的都是锁端策略：写成功后回读确认，本机只留一份镜像。读数段在第一张卡，各段可展开收起。"
     }
 

@@ -41,12 +41,12 @@ struct KeyDetailHomeScreen: View {
         return key.name
     }
 
-    private var lead: String {
+    private var lead: String? {
         if decoyed {
             return "空壳模式只隐藏数据，不改动数据。退出空壳后才能看这枚凭证。"
         }
         guard let key else {
-            return "它可能刚被删除或停用。回钥匙列表看看还剩哪些凭证，或再新增一枚。"
+            return nil
         }
         return key.kind.rawValue + " · " + KeysState.word(key, now: now) + "。码值只以圆点显示，复制时不显示在屏幕上。"
     }
