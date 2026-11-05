@@ -260,8 +260,8 @@ struct LockMaintenanceHomeScreen: View {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: V8.S.gapXS) {
                     Text(eyebrow)
-                        .font(V8.T.label)
-                        .foregroundStyle(V8.C.ink4)
+                    .font(V8.T.label)
+                    .foregroundStyle(V8.C.ink4)
                     Text(statement)
                         .font(V8.T.headline)
                         .foregroundStyle(V8.C.ink1)
@@ -270,8 +270,8 @@ struct LockMaintenanceHomeScreen: View {
                 Spacer(minLength: 0)
                 if let trailing {
                     Text(trailing)
-                        .font(V8.T.label)
-                        .foregroundStyle(V8.C.ink4)
+                    .font(V8.T.label)
+                    .foregroundStyle(V8.C.ink4)
                         .monospacedDigit()
                 }
                 Image(systemName: expandedSection == key ? "chevron.up" : "chevron.down")
@@ -332,8 +332,8 @@ struct LockMaintenanceHomeScreen: View {
                 }
                 VStack(alignment: .leading, spacing: V8.S.gapS) {
                     Text("网关能做什么 · 只收状态与告警")
-                        .font(V8.T.label)
-                        .foregroundStyle(V8.C.ink4)
+                    .font(V8.T.label)
+                    .foregroundStyle(V8.C.ink4)
                     VStack(alignment: .leading, spacing: V8.S.gapS) {
                         Text("· 建议离门锁不超过五米，中间不要有承重墙阻隔。")
                         Text("· 无需和门锁配对；配网时 IoT 凭据随 WiFi 一起写进网关。")
@@ -793,8 +793,8 @@ struct LockMaintenanceHomeScreen: View {
                     .padding(.vertical, V8.S.gapM)
                 VStack(alignment: .leading, spacing: V8.S.gapXS) {
                     Text("电池型号")
-                        .font(V8.T.label)
-                        .foregroundStyle(V8.C.ink4)
+                    .font(V8.T.label)
+                    .foregroundStyle(V8.C.ink4)
                     TextField("电池型号（如 CR123A × 2）", text: $batteryModel)
                         .font(V8.T.body)
                         .foregroundStyle(V8.C.ink1)

@@ -573,8 +573,8 @@ struct LockSettingsHomeScreen: View {
                 .padding(.vertical, V8.S.gapM)
             VStack(alignment: .leading, spacing: V8.S.gapS) {
                 Text("锁钟偏了会怎样 · 三条须知")
-                        .font(V8.T.label)
-                        .foregroundStyle(V8.C.ink4)
+                    .font(V8.T.label)
+                    .foregroundStyle(V8.C.ink4)
                 VStack(alignment: .leading, spacing: V8.S.gapS) {
                     Text("· 临时码有「有效期窗口」，锁钟偏了，码在窗口外就整段打不开。")
                     Text("· 开锁命令自带有效期，锁钟偏得太多会被判「命令已过期」—— 这种情况只有校时能救。")
@@ -626,8 +626,10 @@ struct LockSettingsHomeScreen: View {
             VCardHead(eyebrow: "安全模式", statement: safeModeText)
             VDivider2()
                 .padding(.top, V8.S.gapM)
-            VCard2(style: .well) {
-                VCardHead(eyebrow: "A 模式（单验）", statement: "日常最快")
+            VStack(alignment: .leading, spacing: V8.S.gapS) {
+                Text("A 模式（单验） · 日常最快")
+                    .font(V8.T.label)
+                    .foregroundStyle(V8.C.ink4)
                 Text("只需要一种方式验证通过就能开锁：密码、指纹或手机钥匙任一。")
                     .font(V8.T.body)
                     .foregroundStyle(V8.C.ink3)
@@ -635,8 +637,10 @@ struct LockSettingsHomeScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding(.top, V8.S.gapM)
-            VCard2(style: .well) {
-                VCardHead(eyebrow: "B 模式（双验）", statement: "更安全，多一步")
+            VStack(alignment: .leading, spacing: V8.S.gapS) {
+                Text("B 模式（双验） · 更安全，多一步")
+                    .font(V8.T.label)
+                    .foregroundStyle(V8.C.ink4)
                 Text("需要两种不同方式组合验证：指纹+密码 / 指纹+手机 / 手机+密码。")
                     .font(V8.T.body)
                     .foregroundStyle(V8.C.ink3)
@@ -752,8 +756,8 @@ struct LockSettingsHomeScreen: View {
                 .padding(.vertical, V8.S.gapM)
             VStack(alignment: .leading, spacing: V8.S.gapS) {
                 Text("为什么不是越长越好 · 等待时间就是尾随者能挤进门的那几秒")
-                        .font(V8.T.label)
-                        .foregroundStyle(V8.C.ink4)
+                    .font(V8.T.label)
+                    .foregroundStyle(V8.C.ink4)
                 Text("家里有老人小孩可以取 5–6 秒；独居或楼道常有陌生人时取 2–3 秒更稳。")
                     .font(V8.T.body)
                     .foregroundStyle(V8.C.ink3)
@@ -898,8 +902,8 @@ struct LockSettingsHomeScreen: View {
                 .padding(.vertical, V8.S.gapM)
             VStack(alignment: .leading, spacing: V8.S.gapS) {
                 Text("布防期间会发生什么 · 否决自动开锁，不否决手动开锁")
-                        .font(V8.T.label)
-                        .foregroundStyle(V8.C.ink4)
+                    .font(V8.T.label)
+                    .foregroundStyle(V8.C.ink4)
                 VStack(alignment: .leading, spacing: V8.S.gapS) {
                     Text("· 靠近自动开锁：被否决。站在门口不会自己开 —— 这正是布防的意义。")
                     Text("· 手动开锁：照常。你自己按刻度盘开门不受影响，否则人就被锁在门外了。")
