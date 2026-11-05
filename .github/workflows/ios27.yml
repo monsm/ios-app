@@ -653,62 +653,11 @@ jobs:
           # contentSize 高度后一次成像，中间内容不会漏。产物落在 App 容器 Documents/，
           # 这里用 simctl get_app_container 拷出来，命名 <i>-<name>-full.png。
           # 2026-11-05（优化五）：Tab 与子页都按 changes.scope 收敛 —— 单域改动只截那一域。
-          case "$SCOPE" in
-            door)      TABS="0"; SUBS="lockStatus deviceInfo lockSettings defend" ;;
-            keys)      TABS="1"; SUBS="keyCreate zotp" ;;
-            records)   TABS="2"; SUBS="recordsStudio" ;;
-            household) TABS="3"; SUBS="" ;;
-            settings)  TABS="4"; SUBS="backupStudio godMode hardware" ;;
-            *)         TABS="0 1 2 3 4"; SUBS="lockStatus deviceInfo lockSettings defend keyCreate zotp recordsStudio backupStudio godMode hardware" ;;
-          esac
-          echo "shots: scope=$SCOPE tabs=[$TABS] subs=[$SUBS]" >> "$DIAG"
-          for i in $TABS; do
-            # 2026-11-05（实测）：上一版用 name=$(case "$i" in 0) echo door ;; ... esac) 取名字，
-            # 在 runner 的 bash 上这一段之后循环一次都没进（diag 里只有 scope 那行、没有任何
-            # fullpage missing）。不再用「命令替换里套 case」这种写法，改成最朴素的 if 链。
-            name="unknown"
-            if [ "$i" = "0" ]; then name="door"
-            elif [ "$i" = "1" ]; then name="keys"
-            elif [ "$i" = "2" ]; then name="records"
-            elif [ "$i" = "3" ]; then name="household"
-            elif [ "$i" = "4" ]; then name="settings"
-            fi
-            echo "fullpage begin tab=$i name=$name" >> "$DIAG"
-            xcrun simctl terminate "$UDID" com.aapk.lockkeeper 2>/dev/null || true
-            xcrun simctl launch "$UDID" com.aapk.lockkeeper -kfUITest -kfSeed -kfFullPage -kfTab $i || true
-            sleep 7
-            CONTAINER=$(xcrun simctl get_app_container "$UDID" com.aapk.lockkeeper data 2>/dev/null || true)
-            if [ -n "$CONTAINER" ] && [ -f "$CONTAINER/Documents/kf-fullpage-$i-tab.png" ]; then
-              cp "$CONTAINER/Documents/kf-fullpage-$i-tab.png" "/tmp/shots/$i-$name-full.png" || true
-            else
-              # 2026-11-05（诊断）：这一行原来只写 stdout，diag 里看不到 —— 整页图缺失时
-              # 只能靠猜。写进 diag，下一轮就能直接看出是哪一 Tab 没产出。
-              echo "fullpage missing for $name (tab $i)" | tee -a "$DIAG"
-            fi
-            i=$((i+1))
-          done
-          # 2026-11-03：关键子页 —— 大标题模式、读数网格、凭证行、工作流都要看真机渲染。
-          # ASCII 名（中文名经 locale 管道会变 mojibake）；每个目标截 2 次（竞态重试）。
-          # 缺某张图 = 那个子页在空数据下崩了 —— 本身就是 god 模式要抓的缺陷。
-          j=10
-          echo "subpage loop begin: [$SUBS]" >> "$DIAG"
-          for dest in $SUBS; do
-            xcrun simctl terminate "$UDID" com.aapk.lockkeeper 2>/dev/null || true
-            xcrun simctl launch "$UDID" com.aapk.lockkeeper -kfUITest -kfSeed -kfDest "$dest" || true
-            sleep 5
-            # 2026-11-05（截图耗时优化）：这里原来连拍两张同一张图（中间 sleep 1），
-            # 第二张覆盖第一张 —— 白等 1 秒 × 10 个子页，没有任何产出差异。只拍一张，
-            # 后面那段「空白则重拍」已经覆盖了首帧没画出来的情况。
-            xcrun simctl io "$UDID" screenshot "/tmp/shots/$j-$dest.png" 2>/dev/null || true
-            # 同 Tab 截图的空白重试（子页首帧更慢）。
-            SZ=$(stat -f%z "/tmp/shots/$j-$dest.png" 2>/dev/null || echo 0)
-            if [ "$SZ" -lt 40000 ]; then
-              sleep 2
-              xcrun simctl io "$UDID" screenshot "/tmp/shots/$j-$dest.png" 2>/dev/null || true
-            fi
-            echo "subpage $j-$dest size=$(stat -f%z "/tmp/shots/$j-$dest.png" 2>/dev/null || echo 0)" >> "$DIAG"
-            j=$((j+1))
-          done
+          # 2026-11-05（实测重构）：tab/子页两轮截图交给 Tools/shots_driver.py。
+          # 内联 bash 在这套 runner 上反复「打印了 scope 行就再没有下文」（连一条
+          # fullpage 记录都没有），而 heredoc 里的 Python 会因 YAML 缩进被判 IndentationError。
+          # 独立脚本至少能本地 py_compile、能 diff、能一眼看出停在哪张图。
+          python3 Tools/shots_driver.py "$UDID" "$SCOPE" "$DIAG"
           # 2026-11-05（截图耗时优化）：这里原来还有一轮「10 个子页的整页截图」。
           # diag 里自己写着：单屏页面 content.height 不超过视口 +50 时 App 不产出整页图 ——
           # 也就是 10 次里大多数注定拿不到文件，只换来 10 次冷启动（每次 8 秒 sleep）。

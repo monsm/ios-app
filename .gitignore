@@ -53,3 +53,4 @@ wc.txt
 # 但 `git add -A` 会把它卷进提交（已发生过一次）。
 %SystemDrive%/
 **/%SystemDrive%/
+ios27/Tools/__pycache__/
