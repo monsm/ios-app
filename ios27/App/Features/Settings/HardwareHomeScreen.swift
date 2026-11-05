@@ -387,7 +387,7 @@ struct HardwareHomeScreen: View {
     private func scan() {
         guard !scanning else { return }
         guard !decoyed else {
-            errorText = "空壳模式下不扫描、不登记钥匙串 —— 先退出空壳。"
+            errorText = "空壳模式下不扫描、不登记钥匙串 —— 先退出空壳再来。"
             return
         }
         scanning = true
@@ -410,7 +410,7 @@ struct HardwareHomeScreen: View {
 
     private func write(_ d: DongleRecord) {
         guard !decoyed else {
-            errorText = "空壳模式下不写入钥匙串台账 —— 先退出空壳。"
+            errorText = "空壳模式下不写入钥匙串台账 —— 先退出空壳再来。"
             return
         }
         guard !readOnly else {
@@ -443,7 +443,7 @@ struct HardwareHomeScreen: View {
 
     private func revoke(_ d: DongleRecord) {
         guard !decoyed else {
-            errorText = "空壳模式下不改动钥匙串台账 —— 先退出空壳。"
+            errorText = "空壳模式下不改动钥匙串台账 —— 先退出空壳再来。"
             return
         }
         guard !readOnly else {
@@ -469,7 +469,7 @@ struct HardwareHomeScreen: View {
     /// 手动读状态：旧实现只在写钥后自动调一次，用户想单独看电量 / 钥匙数没有入口。
     private func readState(_ d: DongleRecord) {
         guard !decoyed else {
-            errorText = "空壳模式下不读取钥匙串 —— 先退出空壳。"
+            errorText = "空壳模式下不读取钥匙串 —— 先退出空壳再来。"
             return
         }
         guard !readOnly else {
@@ -494,7 +494,7 @@ struct HardwareHomeScreen: View {
     /// 查看这把钥匙串里存了哪些锁的钥匙。
     private func loadKeys(_ d: DongleRecord) {
         guard !decoyed else {
-            errorText = "空壳模式下不读取钥匙串台账 —— 先退出空壳。"
+            errorText = "空壳模式下不读取钥匙串台账 —— 先退出空壳再来。"
             return
         }
         guard !readOnly else {
@@ -517,7 +517,7 @@ struct HardwareHomeScreen: View {
     /// 写入未知/假钥匙：随机 PIN、永久、不绑成员 —— 它开不了锁，只验证钥匙串本身能收钥。
     private func writeFault(_ d: DongleRecord) {
         guard !decoyed else {
-            errorText = "空壳模式下不写入钥匙串 —— 先退出空壳。"
+            errorText = "空壳模式下不写入钥匙串 —— 先退出空壳再来。"
             return
         }
         guard !readOnly else {
@@ -545,7 +545,7 @@ struct HardwareHomeScreen: View {
     /// 从本机解绑：只删本机台账，不动实体钥匙里已写入的钥匙。
     private func unbind(_ d: DongleRecord) {
         guard !decoyed else {
-            errorText = "空壳模式下不改动本机台账 —— 先退出空壳。"
+            errorText = "空壳模式下不改动本机台账 —— 先退出空壳再来。"
             return
         }
         guard !readOnly else {

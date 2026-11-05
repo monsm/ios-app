@@ -1087,7 +1087,7 @@ struct BackupHomeScreen: View {
 
     private func makeBackup() async {
         guard !decoyed else {
-            outcome = "空壳模式下不生成备份 —— 先退出空壳。"
+            outcome = "空壳模式下不生成备份 —— 先退出空壳再来。"
             return
         }
         guard !busy else { return }
@@ -1120,7 +1120,7 @@ struct BackupHomeScreen: View {
 
     private func restoreFile(_ file: BackupItem) {
         guard !decoyed else {
-            outcome = "空壳模式下不恢复备份 —— 先退出空壳。"
+            outcome = "空壳模式下不恢复备份 —— 先退出空壳再来。"
             return
         }
         guard !trialOn else {
@@ -1158,7 +1158,7 @@ struct BackupHomeScreen: View {
     /// 删除失败也要如实报（旧实现 try? 吞结果，无论成功失败都报「已删除」）。
     private func deleteFile(_ file: BackupItem) {
         guard !decoyed else {
-            outcome = "空壳模式下不删除备份 —— 先退出空壳。"
+            outcome = "空壳模式下不删除备份 —— 先退出空壳再来。"
             return
         }
         do {
@@ -1197,7 +1197,7 @@ struct BackupHomeScreen: View {
 
     private func saveDav() {
         guard !decoyed else {
-            davState = "空壳模式下不保存 WebDAV 配置 —— 先退出空壳。"
+            davState = "空壳模式下不保存 WebDAV 配置 —— 先退出空壳再来。"
             return
         }
         DB.store.set("kf_bk_dav_url", davURL.trimmingCharacters(in: .whitespaces))
@@ -1244,7 +1244,7 @@ struct BackupHomeScreen: View {
 
     private func makeMigration() async {
         guard !decoyed else {
-            outcome = "空壳模式下不生成换机包 —— 先退出空壳。"
+            outcome = "空壳模式下不生成换机包 —— 先退出空壳再来。"
             return
         }
         do {
@@ -1274,7 +1274,7 @@ struct BackupHomeScreen: View {
 
     private func runMigration() async {
         guard !decoyed else {
-            outcome = "空壳模式下不导入换机包 —— 先退出空壳。"
+            outcome = "空壳模式下不导入换机包 —— 先退出空壳再来。"
             return
         }
         guard !trialOn else {

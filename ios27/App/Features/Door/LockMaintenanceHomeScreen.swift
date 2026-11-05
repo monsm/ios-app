@@ -1283,7 +1283,7 @@ struct LockMaintenanceHomeScreen: View {
     private func saveBattery() {
         guard !mac.isEmpty else { return }
         guard !DB.isDecoy else {
-            batteryOutcome = "空壳模式下不写电池档案 —— 先退出空壳再来改。"
+            batteryOutcome = "空壳模式下不写电池档案 —— 先退出空壳再来。"
             return
         }
         var m = LockArchive.meta(mac)
@@ -1297,7 +1297,7 @@ struct LockMaintenanceHomeScreen: View {
 
     private func markBatteryToday() {
         guard !DB.isDecoy else {
-            batteryNote = "空壳模式下不写电池档案 —— 先退出空壳再来改。"
+            batteryNote = "空壳模式下不写电池档案 —— 先退出空壳再来。"
             batterySaved = false
             return
         }
@@ -1312,7 +1312,7 @@ struct LockMaintenanceHomeScreen: View {
 
     private func saveInfoBatteryModel() {
         guard !DB.isDecoy else {
-            batteryNote = "空壳模式下不写电池档案 —— 先退出空壳再来改。"
+            batteryNote = "空壳模式下不写电池档案 —— 先退出空壳再来。"
             batterySaved = false
             return
         }

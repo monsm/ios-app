@@ -791,7 +791,7 @@ struct LockPortfolioHomeScreen: View {
     /// 锁身份写（← lockProfile 的 save）：落盘链逐字保留。
     private func saveProfile() {
         guard !DB.isDecoy else {
-            profileOutcome = "空壳模式下不写入档案 —— 先退出空壳再来改。"
+            profileOutcome = "空壳模式下不写入档案 —— 先退出空壳再来。"
             return
         }
         guard let kc else {
