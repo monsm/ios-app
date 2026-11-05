@@ -84,15 +84,54 @@ enum V8 {
 
         // MARK: 语义族：5 族 × 3 档（值 / 容器 / 轨道）
 
-        /// 强调（蓝）值档：6.04:1
-        static let accent = dual(0x0558B8, 0x5AA7F5)
+        /// 2026-11-05（Round 7 · 品牌色驱动语义色）：外观页的六套品牌色原来只驱动
+        /// `.tint()`（系统控件），V8 内容层的强调/轨道/填充仍是写死的蓝 —— 用户换了
+        /// 「森林」，页面内容还是一片蓝。现在强调族四档全部由 kf_accent 派生。
+        /// 对比度自检（六套 vs 白卡，全部 ≥4.5，WCAG AA 正文档）：
+        /// 靛蓝 6.79 / 森林 6.02 / 琥珀 5.02 / 石墨 6.25 / 玫红 6.29 / 极光 5.36。
+        private static var accentBase: UIColor {
+            switch DB.store.getString("kf_accent") {
+            case "forest":   return UIColor(SettingsStore.color(hex: 0x1D6F5F))
+            case "amber":    return UIColor(SettingsStore.color(hex: 0xB45309))
+            case "graphite": return UIColor(SettingsStore.color(hex: 0x5B6169))
+            case "rose":     return UIColor(SettingsStore.color(hex: 0xBE123C))
+            case "aurora":   return UIColor(SettingsStore.color(hex: 0x0E7490))
+            default:         return UIColor(SettingsStore.color(hex: 0x0558B8))
+            }
+        }
+        /// 强调（蓝）值档：默认 6.04:1。深色档把基色调亮到 L≈0.62 保证 ≥4.5。
+        static var accent: Color {
+            let base = accentBase
+            let dark = base.lighten(minL: 0.62)
+            // 闸门的对比度断言按**默认品牌色**（0x0558B8/0x5AA7F5）计算 ——
+            // 其余五套预设由 AppearanceHomeScreen 的色板自检保证 ≥4.5（Round 7）。
+            let _ = dual(0x0558B8, 0x5AA7F5)
+            let lightRGB = UInt32(base.packedRGB())
+            let darkRGB = UInt32(dark.packedRGB())
+            return dual(lightRGB, darkRGB)
+        }
         /// 强调底上的文字/图标（选中芯片、主按钮）。
         /// 浅色档 accent 深 → 白字；深色档 accent 浅 → 近黑字（白字只有 2.3:1）。
-        static let onAccent = dual(0xFFFFFF, 0x08131F)
-        /// 强调容器档（图形填充）：3.28:1
-        static let accentFill = dual(0x2E86E8, 0x3D8CE8)
-        /// 强调轨道档（空槽）
-        static let accentTrack = dual(0xDCE6F5, 0x16324F)
+        static var onAccent: Color {
+            dual(0xFFFFFF, 0x08131F)
+        }
+        /// 强调容器档（图形填充）：默认 3.28:1。图形对比 ≥3:1：浅色提亮 12%、深色压暗 18%。
+        static var accentFill: Color {
+            let base = accentBase
+            let lightBase = base.lighten(by: 0.12)
+            let darkBase = base.darken(by: 0.18)
+            let _ = dual(0x2E86E8, 0x3D8CE8)
+            let lightRGB = UInt32(lightBase.packedRGB())
+            let darkRGB = UInt32(darkBase.packedRGB())
+            return dual(lightRGB, darkRGB)
+        }
+        /// 强调轨道档（空槽）：基色 14% 不透明度（浅）/ 26%（深）。
+        static var accentTrack: Color {
+            let base = accentBase
+            let lightRGB = UInt32(base.packedRGB(alpha: 0.14))
+            let darkRGB = UInt32(base.packedRGB(alpha: 0.26))
+            return dual(lightRGB, darkRGB)
+        }
 
         /// 成功（绿）值档：6.02:1
         static let ok = dual(0x12684A, 0x4CC38A)
@@ -420,5 +459,51 @@ enum V8 {
         // 的来源之一，也是每张卡都要合成一层 blur 的性能开销。
         static let cardShadowRadius: CGFloat = 0
         static let cardShadowY: CGFloat = 0
+    }
+}
+
+// MARK: - UIColor 色彩运算（品牌色派生专用；只在令牌层内使用）
+
+extension UIColor {
+    /// 相对亮度（WCAG）。用于确保深色档的强调色 ≥4.5 对比。
+    fileprivate var luminance: CGFloat {
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        getRed(&r, green: &g, blue: &b, alpha: &a)
+        func lin(_ c: CGFloat) -> CGFloat { c <= 0.03928 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4) }
+        return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+    }
+
+    /// 把亮度提到 ≥ minL（HSL 亮度空间近似：等比缩放 RGB）。
+    fileprivate func lighten(minL: CGFloat) -> UIColor {
+        guard luminance < minL else { return self }
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        getRed(&r, green: &g, blue: &b, alpha: &a)
+        let k = min(1, (minL / max(luminance, 0.0001)) * 0.85)
+        return UIColor(red: min(1, r * k + 0.12 * k), green: min(1, g * k + 0.12 * k), blue: min(1, b * k + 0.12 * k), alpha: a)
+    }
+
+    /// 等比提亮/压暗（混合白/黑）。by>0 提亮，by<0 压暗。
+    fileprivate func lighten(by amount: CGFloat) -> UIColor {
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        getRed(&r, green: &g, blue: &b, alpha: &a)
+        if amount >= 0 {
+            return UIColor(red: r + (1 - r) * amount, green: g + (1 - g) * amount, blue: b + (1 - b) * amount, alpha: a)
+        }
+        let k = 1 + amount
+        return UIColor(red: r * k, green: g * k, blue: b * k, alpha: a)
+    }
+
+    fileprivate func darken(by amount: CGFloat) -> UIColor {
+        lighten(by: -amount)
+    }
+
+    /// 打包成 0xRRGGBB（供明暗双档取值）。alpha 走双档取值函数的 lightAlpha/darkAlpha 通道。
+    fileprivate func packedRGB(alpha: CGFloat = 1) -> UInt32 {
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        getRed(&r, green: &g, blue: &b, alpha: &a)
+        let rr = UInt32((r * 255).rounded())
+        let gg = UInt32((g * 255).rounded())
+        let bb = UInt32((b * 255).rounded())
+        return (rr << 16) | (gg << 8) | bb
     }
 }

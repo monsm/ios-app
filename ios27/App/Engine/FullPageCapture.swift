@@ -21,11 +21,24 @@ enum FullPageCapture {
             guard let sv = largestScrollView(in: window) else { return }
             let content = sv.contentSize
             guard content.height > sv.bounds.height + 50 else { return }
+            // AX 档下 contentSize 可能已远超可视区（整页高度上万）—— 不设上限，照常撑开。
             let orig = sv.frame
             UIView.setAnimationsEnabled(false)
+            // 2026-11-05（Round 7 · AX 整页空白根因）：AX 档下 contentSize 在**撑开前**，
+            // 是 AX 布局自身的高度（可能已上万），frame 撑到 content.height 后内容从
+            // contentOffset（用户/系统滚到的位置）开始排 —— 上半张全是空白。
+            // 撑开前先把 offset 归零：整版渲染要的是「从第 0 行内容开始」。
+            sv.contentOffset = .zero
             sv.frame = CGRect(origin: orig.origin,
                               size: CGSize(width: orig.width, height: content.height))
             sv.layoutIfNeeded()
+            // 撑开后再读一次：AX 档的 VStack 高度可能与撑开前的 contentSize 不同。
+            let stretched = sv.contentSize.height
+            if stretched > sv.bounds.height {
+                sv.frame = CGRect(origin: orig.origin,
+                                  size: CGSize(width: orig.width, height: stretched))
+                sv.layoutIfNeeded()
+            }
             // 2026-11-04（黑边根因 · 第三次才对）：full 截图里卡片之间的空隙是**纯黑**，
             // 而 viewport 截图同一位置是纸色。原因不是深色模式（appearance=light 已生效、
             // 卡片内容本来就是浅色），而是：`.background(V.C.bg)` 挂在 **ScrollView 外面**，
