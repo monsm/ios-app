@@ -114,7 +114,12 @@ struct CredentialStudioHomeScreen: View {
                     actionTitle: "添加门锁"
                 ) { router.request(.dest(.addLock)) }
             } else {
-                summaryCard
+                // 2026-11-05（对抗审查 · 设计冗余）：这里原来还有一张「台账读数」卡，
+                // 四个数字（密码 / 指纹 / 已选 / 回收站）**每一个都在别处已经显示**：
+                //   · 密码、指纹 —— 各自的列表卡标题就是「N 枚」；
+                //   · 回收站 —— 「回收站」卡标题「N 项」；
+                //   · 已选 —— 顶部芯片行有「已选 N 项」，判断句也写「已选 N 项」。
+                // 一张卡把四件事各说第二遍，整张删掉。
                 toolsCard
                 selectionCard
                 batchCard
@@ -383,30 +388,6 @@ struct CredentialStudioHomeScreen: View {
     private var historyCount: Int {
         let _ = tick
         return CredHistoryStore.all(studioMac).count
-    }
-
-    // MARK: - 卡 1 台账读数
-
-    private var summaryCard: some View {
-        VCard2 {
-            // 2026-11-05（对抗审查 · 设计冗余）：原来这张卡的标题把**排序方式与分组方式**
-            // 又报了一遍，而下一张「整理方式」卡的芯片与按钮本来就在显示同一件事 ——
-            // 同一页里同一组状态出现三处（这里、整理方式卡头、分组按钮文字）。
-            // 读数卡只说读数；排序/分组由「整理方式」卡唯一承载。
-            VCardHead(eyebrow: "台账读数", statement: "本机台账")
-            VDivider2()
-                .padding(.top, V8.S.gapM)
-            VStatPair2(items: [
-                .init(label: "密码", value: String(pwdRows.count), unit: "枚"),
-                .init(label: "指纹", value: String(fpRows.count), unit: "枚")
-            ])
-            .padding(.top, V8.S.gapM)
-            VStatPair2(items: [
-                .init(label: "已选", value: String(totalSelected), unit: "项"),
-                .init(label: "回收站", value: String(binCount), unit: "项")
-            ])
-            .padding(.top, V8.S.gapM)
-        }
     }
 
     // MARK: - 卡 2 整理方式
