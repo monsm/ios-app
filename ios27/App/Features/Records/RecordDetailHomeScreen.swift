@@ -73,6 +73,27 @@ struct RecordDetailHomeScreen: View {
         }
     }
 
+    /// 这条记录所在的那一天，24 个小时各自有多少条记录。
+    private func dayHours(for entry: LedgerEntry) -> [Double] {
+        let cal = WeekCal.gregorian
+        let day = cal.startOfDay(for: entry.at)
+        var buckets = [Double](repeating: 0, count: 24)
+        for e in entries where cal.startOfDay(for: e.at) == day {
+            let h = cal.component(.hour, from: e.at)
+            buckets[min(23, max(0, h))] += 1
+        }
+        return buckets
+    }
+
+    /// 「当天第 N 条 · 共 M 条」。
+    private func dayPositionText(_ entry: LedgerEntry) -> String {
+        let cal = WeekCal.gregorian
+        let day = cal.startOfDay(for: entry.at)
+        let same = entries.filter { cal.startOfDay(for: $0.at) == day }.sorted { $0.at < $1.at }
+        guard let idx = same.firstIndex(where: { $0.id == entry.id }) else { return "" }
+        return "当天第 " + String(idx + 1) + " 条 · 共 " + String(same.count) + " 条"
+    }
+
     private func momentCard(_ entry: LedgerEntry) -> some View {
         VCard2 {
             VCardHead(eyebrow: "这条记录", statement: entry.event, trailing: "行 " + shortKey(entry))
@@ -103,6 +124,17 @@ struct RecordDetailHomeScreen: View {
                 }
             }
             .padding(.top, V8.S.gapS)
+            // 2026-11-05（图形化）：这一页原来全是文字行，没有任何视觉定位。
+            // 用「当天 24 小时分布」替读者定位：这条记录在一天的哪个位置、当天共几条。
+            // 轴标签由 VSpark 自带（0 时 / 12 时 / 24 时），不再另加一行，避免两套轴说明。
+            VStack(alignment: .leading, spacing: V8.S.gapS) {
+                VSpark(values: dayHours(for: entry), tint: V8.C.accentFill,
+                       cursor: WeekCal.gregorian.component(.hour, from: entry.at), axis: .hours24)
+                Text(dayPositionText(entry))
+                    .font(V8.T.caption)
+                    .foregroundStyle(V8.C.ink4)
+            }
+            .padding(.top, V8.S.gapM)
         }
         .confirmationDialog("把这条记录认给谁？", isPresented: $showClaim, titleVisibility: .visible) {
             ForEach(claimableMembers) { m in
