@@ -205,8 +205,12 @@ struct LockSettingsHomeScreen: View {
             HStack(spacing: V8.S.gapChip) {
                 VChip2(icon: .glyph("clock.badge.questionmark"), label: "动态密码", value: otpOn ? "已开通" : "已关闭")
                 VChip2(icon: .ring(batteryFraction, batteryChipTint), label: "电量", value: batteryChipText)
-                VChip2(icon: .glyph("lock.rotation"), label: "安全模式", value: safeModeText)
-                VChip2(icon: .ring(isDefendActiveNow ? 1 : 0.02, isDefendActiveNow ? V8.C.warn : V8.C.ink4), label: "布防", value: isDefendActiveNow ? "布防中" : "未布防")
+                // 2026-11-05（对抗审查 · 设计冗余）：原来这里有一枚「安全模式」芯片，value 就是
+                // safeModeText —— 而下面「安全模式」段的卡头 statement 也是同一个 safeModeText。
+                // 同一屏、同一个表达式、同一个值出现两次。芯片行保留只在这里出现的信息
+                //（电量 / 布防是否生效 / 锁钟偏差 / 动态码开关），段的完整描述归段头。
+                // 同上：这枚芯片的 value 与「布防」段卡头的 trailing 是同一串字面量
+                //（"布防中" / "未布防"）。布防状态由段头承载（那里还有模式与时段），芯片删掉。
                 VChip2(icon: .glyph("clock"), label: "锁钟", value: chipDriftText)
             }
             .padding(.leading, V8.S.gutterCard)
