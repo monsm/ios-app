@@ -389,7 +389,11 @@ struct CredentialStudioHomeScreen: View {
 
     private var summaryCard: some View {
         VCard2 {
-            VCardHead(eyebrow: "台账读数", statement: sort.rawValue, trailing: "分组：" + (CredentialOrg.groupMode == .owner ? "按成员" : "按类型"))
+            // 2026-11-05（对抗审查 · 设计冗余）：原来这张卡的标题把**排序方式与分组方式**
+            // 又报了一遍，而下一张「整理方式」卡的芯片与按钮本来就在显示同一件事 ——
+            // 同一页里同一组状态出现三处（这里、整理方式卡头、分组按钮文字）。
+            // 读数卡只说读数；排序/分组由「整理方式」卡唯一承载。
+            VCardHead(eyebrow: "台账读数", statement: "本机台账")
             VDivider2()
                 .padding(.top, V8.S.gapM)
             VStatPair2(items: [

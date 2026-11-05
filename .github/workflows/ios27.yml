@@ -417,17 +417,59 @@ jobs:
   # 用 simctl 直接截屏，不需要 UI Test target（不改工程结构，坏了也不会拖垮编译）。
   # continue-on-error: 截图是诊断能力，不能因为它失败就把整条流水线弄红。
 
-  # 2026-11-03：截图**合并回主 workflow**，但排在 build 之后（needs: build）——
-  # 编译结论先出，截图随后跑；既拿得到图，也不阻塞编译反馈。
-  # 之前拆成独立 workflow 后 ci-shots 再没更新过（独立文件始终没被触发，原因不明）。
+  # 2026-11-03：截图**合并回主 workflow**（拆成独立文件后 ci-shots 再没更新过）。
+  # 2026-11-05 起不再排在 build 之后 —— 见下面的 changes / shots 两段说明。
+  # ================= 判断"这次推送值不值得截图" =================
+  # 2026-11-05（用户建议：跑截图的很占时间，能怎么优化下）：
+  # 截图 job 是整条流水线的长杆 —— 要单独编译一次模拟器包，再 30 次
+  # 「terminate + launch + sleep + screenshot」，一轮 20 分钟以上；
+  # 而它排在 build 之后，等于把 run 的总时长从 ~15 分钟拉到 ~35 分钟。
+  #
+  # 优化一（本 job）：**只有动到界面层才截图**。逻辑/闸门/文档类提交从源码上就不可能
+  # 改变渲染结果，为它们跑 30 张图是纯浪费。判据用路径前缀，不是"猜"。
+  changes:
+    name: 变更范围（决定要不要截图）
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: .
+    outputs:
+      ui: ${{ steps.scope.outputs.ui }}
+    steps:
+      - name: Checkout（需要历史才能 diff）
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: 判断是否动到界面层
+        id: scope
+        run: |
+          set -e
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "ui=true" >> "$GITHUB_OUTPUT"; echo "手动触发：总是截图"; exit 0
+          fi
+          BASE="${{ github.event.before }}"
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            echo "ui=true" >> "$GITHUB_OUTPUT"; echo "没有可比基线（新分支或强推）：按有改动处理"; exit 0
+          fi
+          CHANGED=$(git diff --name-only "$BASE" "${{ github.sha }}" || true)
+          echo "本次改动文件数: $(printf '%s\n' "$CHANGED" | grep -c . || true)"
+          # 界面层的判据：页面 / 设计系统 / 外壳 / App 入口 / 截图种子
+          if printf '%s\n' "$CHANGED" | grep -qE '^ios27/(App/(Features|Design|Shell)/|App/LockKeeperApp\.swift|\.github-seed/)'; then
+            echo "ui=true" >> "$GITHUB_OUTPUT"; echo "动到界面层 → 截图"
+          else
+            echo "ui=false" >> "$GITHUB_OUTPUT"; echo "只动了非界面文件 → 跳过截图"
+          fi
 
-  # 2026-11-03（第三次也是最后一次调整）：本仓库上 schedule 与 workflow_dispatch 均不触发，
-  # 唯一能出图的路径是 **push 触发的合并 workflow**。所以 shots 回到这里、排在 build 之后；
-  # 出图的办法是**推一次之后不再推**，给这一轮 25 分钟跑完（11ff148f 批次就是这么来的）。
   shots:
     name: 模拟器截图（诊断用）
     runs-on: xcode-27
-    needs: build
+    # 2026-11-05（优化二）：不再 needs: build —— 与编译**并行**开始。
+    # 之前排在 build（约 15 分钟）之后，图片要等编译完才开始产出；
+    # 并行后 wall-clock 从 build+shots 变成 max(build, shots)，图片早到约 15 分钟。
+    # 代价如实记录：会多一次模拟器架构的编译（build job 那份是 device 架构，装不进模拟器）。
+    needs: changes
+    if: needs.changes.outputs.ui == 'true'
     continue-on-error: true
     # 2026-11-04（实测）：40 分钟装不下。这个 job 要跑 5 个主 Tab + 5 张整页 +
     # 10 个子页 + 10 张子页整页 = 30 次「terminate + launch + sleep + screenshot」，
@@ -632,8 +674,9 @@ jobs:
             xcrun simctl terminate "$UDID" com.aapk.lockkeeper 2>/dev/null || true
             xcrun simctl launch "$UDID" com.aapk.lockkeeper -kfUITest -kfSeed -kfDest "$dest" || true
             sleep 5
-            xcrun simctl io "$UDID" screenshot "/tmp/shots/$j-$dest.png" 2>/dev/null || true
-            sleep 1
+            # 2026-11-05（截图耗时优化）：这里原来连拍两张同一张图（中间 sleep 1），
+            # 第二张覆盖第一张 —— 白等 1 秒 × 10 个子页，没有任何产出差异。只拍一张，
+            # 后面那段「空白则重拍」已经覆盖了首帧没画出来的情况。
             xcrun simctl io "$UDID" screenshot "/tmp/shots/$j-$dest.png" 2>/dev/null || true
             # 同 Tab 截图的空白重试（子页首帧更慢）。
             SZ=$(stat -f%z "/tmp/shots/$j-$dest.png" 2>/dev/null || echo 0)
