@@ -83,7 +83,9 @@ struct Shell: View {
         // 做法：保留官方 TabView（保住 5 条 NavigationStack 与状态），只把系统栏隐藏，
         // 再用 safeAreaInset 叠一条 GlassTabBar —— 这样既拿到浮岛形态，又不重写导航。
         // 回退：`kf_native_tabbar` = true 时用官方全宽栏（系统材质与 Duo 适配）。
-        .toolbar(useNativeTabBar ? .visible : .hidden, for: .tabBar)
+        // 2026-11-05（全技能审核 · iOS 27 API）：toolbar(_:for:) 的 visibility 重载在 iOS 27 已软弃用，
+        // 统一改用 toolbarVisibility(_:for:)。
+        .toolbarVisibility(useNativeTabBar ? .visible : .hidden, for: .tabBar)
         .safeAreaInset(edge: .bottom) {
             if !useNativeTabBar {
                 GlassTabBar(

@@ -180,7 +180,7 @@ struct LockMaintenanceHomeScreen: View {
         .onChange(of: app.currentMac) { _, _ in batteryLoaded = false }
         .interactiveDismissDisabled(dfuPhase == .running)
         .navigationBarBackButtonHidden(dfuPhase == .running)
-        .toolbar(dfuPhase == .running ? .hidden : .visible, for: .navigationBar)
+        .toolbarVisibility(dfuPhase == .running ? .hidden : .visible, for: .navigationBar)
         .fileImporter(
             isPresented: $importing,
             allowedContentTypes: [.zip, .data],
