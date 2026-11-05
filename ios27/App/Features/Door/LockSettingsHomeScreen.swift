@@ -341,11 +341,12 @@ struct LockSettingsHomeScreen: View {
                     VDataRow(tag: "Boot", tagTint: V8.C.ink4, title: bootText, value: "")
                     VDotRule()
                     VDataRow(tag: "键盘", tagTint: V8.C.ink4, title: keyboardText, value: "")
-                    VDotRule()
-                    VDataRow(tag: "密码容量", tagTint: V8.C.ink4, title: pwdCapacityText, value: "")
-                    VDotRule()
-                    VDataRow(tag: "指纹容量", tagTint: V8.C.ink4, title: fpCapacityText, value: "")
                 }
+                // 2026-11-05（用户指令：减少文字、图形化变多）：
+                // 原来这里有两行「密码容量 / 指纹容量」文字行（如「已用 2 / 容量 50」）。
+                // 换成三枚容量环 —— 同样是锁端回报的真实数字（已用 = 容量 − 余量），
+                // 但占用率一眼可见，也不必读文字。
+                capacityBlock
                 .padding(.top, V8.S.gapS)
                 Text("信号 0 表示还没测过，不代表信号差；电量未读到时不显示数字。")
                     .font(V8.T.footnote)
@@ -1132,19 +1133,47 @@ struct LockSettingsHomeScreen: View {
         return v > 0 ? String(v) : "该固件未上报"
     }
 
-    private var pwdCapacityText: String {
-        let snap = DB.readStatus(mac)
-        return capacityText(used: (snap?.pwdCap ?? 0) - (snap?.pwdStock ?? 0), cap: snap?.pwdCap ?? 0)
+    /// 三枚容量环：PIN 池 / 密码 / 指纹。数据全部来自锁端快照（容量 − 余量 = 已用）。
+    private var capacityBlock: some View {
+        HStack(spacing: V8.S.gapL) {
+            capacityRing("PIN", used: (snap?.pinCap ?? 0) - (snap?.pinStock ?? 0), cap: snap?.pinCap ?? 0)
+            capacityRing("密码", used: (snap?.pwdCap ?? 0) - (snap?.pwdStock ?? 0), cap: snap?.pwdCap ?? 0)
+            capacityRing("指纹", used: (snap?.fpCap ?? 0) - (snap?.fpStock ?? 0), cap: snap?.fpCap ?? 0)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, V8.S.gapM)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("容量占用：PIN \(max(0, (snap?.pinCap ?? 0) - (snap?.pinStock ?? 0))) / \(snap?.pinCap ?? 0)，密码 \(max(0, (snap?.pwdCap ?? 0) - (snap?.pwdStock ?? 0))) / \(snap?.pwdCap ?? 0)，指纹 \(max(0, (snap?.fpCap ?? 0) - (snap?.fpStock ?? 0))) / \(snap?.fpCap ?? 0)")
     }
 
-    private var fpCapacityText: String {
-        let snap = DB.readStatus(mac)
-        return capacityText(used: (snap?.fpCap ?? 0) - (snap?.fpStock ?? 0), cap: snap?.fpCap ?? 0)
-    }
-
-    /// 容量读数两个数都要读成「已用 / 容量」；容量未读时只报已用，并说清容量确实没读到。
-    private func capacityText(used: Int, cap: Int) -> String {
-        cap > 0 ? String(max(used, 0)) + " / " + String(cap) : "已用 " + String(max(used, 0)) + " · 容量未读"
+    @ViewBuilder
+    private func capacityRing(_ title: String, used: Int, cap: Int) -> some View {
+        let safeCap = max(0, cap)
+        let safeUsed = max(0, min(used, safeCap))
+        let fraction = safeCap > 0 ? Double(safeUsed) / Double(safeCap) : 0
+        VStack(spacing: V8.S.gapXS) {
+            if safeCap > 0 {
+                VHeroRing(
+                    fraction: fraction,
+                    center: "\(safeUsed)",
+                    label: "/ \(safeCap)",
+                    size: V8.G.segCompactOuter * 1.9,
+                    tint: fraction >= 0.9 ? V8.C.danger : (fraction >= 0.7 ? V8.C.warn : V8.C.accent),
+                    showsTick: false,
+                    showsCursor: false
+                )
+            } else {
+                // 锁端没回报容量时**不编**一个 0/0 的环，如实显示未知。
+                Text("—")
+                    .font(V8.T.value)
+                    .foregroundStyle(V8.C.ink4)
+                    .frame(width: V8.G.segCompactOuter * 1.9, height: V8.G.segCompactOuter * 1.9)
+            }
+            Text(title)
+                .font(V8.T.caption)
+                .foregroundStyle(V8.C.ink4)
+        }
+        .frame(maxWidth: .infinity)
     }
 
     private var canTailgate: Bool {
