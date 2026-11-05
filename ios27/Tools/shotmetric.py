@@ -66,9 +66,41 @@ def analyse(path: str) -> None:
         print("     最高带 y %4d-%4d  %3dpx  color=%s" % b)
 
 
+
+
+def clip_check(path: str) -> None:
+    """检测「横向溢出」：内容宽度超过屏幕时，左右两侧会被裁掉。
+
+    2026-11-05（Round 66）：锁设置页的三枚容量环合计 408pt 而可用宽度只有 ~336pt，
+    整页内容被撑宽、左右各裁一条。这种缺陷**闸门和编译都发现不了**，只有截图能看见。
+
+    判据：取最左一列像素，统计「深色行」占比。正常页面文字有安全边距（gutterCard ≈ 16.6pt），
+    左边缘应是纯背景 → 深色行 ≈ 0；一旦内容被裁，文字会直接压到 x=0。
+
+    实测标定：锁设置页（已知溢出）70/874 行；其余 14 张子页截图全部 1/874 行。
+    """
+    im = Image.open(path).convert("RGB")
+    w, h = im.size
+    dark = 0
+    rows = range(0, h, 3)
+    for y in rows:
+        px = im.getpixel((1, y))
+        if px[0] < 120 and px[1] < 120 and px[2] < 120:
+            dark += 1
+    total = len(list(rows)) or 1
+    ratio = dark / total
+    verdict = "CLIPPED? 左侧文字贴边" if ratio > 0.02 else "ok"
+    print("  %-28s %5.1f%%  %s" % (os.path.basename(path), ratio * 100, verdict))
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print(__doc__)
         sys.exit(2)
-    for p in sys.argv[1:]:
-        analyse(p)
+    args = sys.argv[1:]
+    if args and args[0] == "--clip":
+        print("左侧裁切检测（深色行占比 > 2% 即疑似横向溢出）：")
+        for p in args[1:]:
+            clip_check(p)
+    else:
+        for p in args:
+            analyse(p)
