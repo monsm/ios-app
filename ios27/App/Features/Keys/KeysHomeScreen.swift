@@ -90,7 +90,7 @@ struct KeysHomeScreen: View {
     }
 
     var body: some View {
-        VPage(title: judgement, lead: lead) {
+        VPage(title: judgement, lead: lead, atmosphere: .violet) {
             chipRow
         } content: {
             if app.ledgerCorrupt {

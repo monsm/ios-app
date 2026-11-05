@@ -21,6 +21,38 @@ enum TabBarMode {
     }
 }
 
+// 2026-11-06（V9 · 液态仪器）：页面大气身份。每个 Tab 一组「顶光 / 尾光」，
+// 内容层色彩明度 ≤10%（浅色）/ ≤16%（深色）—— HIG Materials 的纪律：
+// 内容层的丰富靠色彩与光照，且必须足够淡，玻璃栏压上来时文字依旧可读。
+// 对比度：辉光下仍是 bgTop/bgBottom 打底（≥4.5 断言不受影响）。
+enum V8Atmosphere {
+    case brand      // 门：品牌蓝 → 冷紫
+    case violet     // 钥匙：指纹紫 → 品牌蓝
+    case indigo     // 台账：信息靛 → 紫
+    case green      // 家：手机钥匙绿 → 靛
+    case graphite   // 设置：石墨 → 无尾光（最素的一页，呼应"仪器"）
+
+    var top: Color {
+        switch self {
+        case .brand: return V8.C.glowA
+        case .violet: return V8.C.glowVioletTop
+        case .indigo: return V8.C.glowIndigoTop
+        case .green: return V8.C.glowGreenTop
+        case .graphite: return V8.C.glowGraphiteTop
+        }
+    }
+
+    var bottom: Color {
+        switch self {
+        case .brand: return V8.C.glowB
+        case .violet: return V8.C.glowA
+        case .indigo: return V8.C.glowIndigoBottom
+        case .green: return V8.C.glowGreenBottom
+        case .graphite: return V8.C.glowGraphiteBottom
+        }
+    }
+}
+
 // MARK: - 1. 卡片容器
 
 enum VCardStyle2 {
@@ -36,6 +68,15 @@ enum VCardStyle2 {
         case .primary: return V8.C.card
         case .well: return V8.C.well
         case .sheet: return V8.C.card
+        }
+    }
+
+    // 2026-11-06（V9 · 液态仪器）：well 不吃材质渐变（凹槽本来就是"沉下去"的素面），
+    // primary / sheet 走「顶亮底暗」面板渐变 —— 真实仪器面板的光永远来自上方。
+    var castsMaterial: Bool {
+        switch self {
+        case .primary, .sheet: return true
+        case .well: return false
         }
     }
 
@@ -74,15 +115,43 @@ struct VCard2<Content: View>: View {
             .padding(.top, V8.S.padCardTop)
             .padding(.bottom, V8.S.padCardBottom)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: style.radius, style: .continuous)
-                    .fill(style.fill)
-                    .shadow(
-                        color: style.castsShadow ? V8.C.shadow : Color.clear,
-                        radius: style.castsShadow ? V8.Z.cardShadowRadius : 0,
-                        y: style.castsShadow ? V8.Z.cardShadowY : 0
+            .background(cardSurface(style))
+    }
+
+    // 2026-11-06（V9 · 液态仪器）：卡片材质 = 渐变面板 + 顶缘受光高光 + 双层投影。
+    //   · 渐变：cardTop → cardBottom，微斜向（纯垂直像塑料，斜向才是光）；
+    //   · 高光：顶缘 1pt cardSheen 描边（面板受光的物理暗示）；
+    //   · 投影：12pt 环境影（抬离纸面）+ 3pt 接触影（贴着桌面），同色 V8.C.shadow。
+    // well（凹槽）保持素面 + 无影 —— 沉下去的层不反光。
+    @ViewBuilder
+    private func cardSurface(_ style: VCardStyle2) -> some View {
+        let shape = RoundedRectangle(cornerRadius: style.radius, style: .continuous)
+        if style.castsMaterial {
+            shape
+                .fill(
+                    LinearGradient(
+                        colors: [V8.C.cardTop, V8.C.cardBottom],
+                        startPoint: UnitPoint(x: 0.3, y: 0),
+                        endPoint: UnitPoint(x: 0.7, y: 1)
                     )
-            )
+                )
+                .shadow(
+                    color: V8.C.shadow,
+                    radius: V8.Z.cardShadowRadius,
+                    y: V8.Z.cardShadowY
+                )
+                .shadow(
+                    color: V8.C.shadow,
+                    radius: V8.Z.cardShadowRadius2,
+                    y: V8.Z.cardShadowY2
+                )
+                .overlay {
+                    shape.strokeBorder(V8.C.cardSheen, lineWidth: V8.S.hair)
+                }
+        } else {
+            shape
+                .fill(style.fill)
+        }
     }
 }
 
@@ -357,13 +426,43 @@ struct VChip2: View {
         }
         .padding(.horizontal, V8.S.gapM)
         .frame(minHeight: V8.S.hChip)
-        .background(
-            Capsule(style: .continuous)
-                .fill(selected ? V8.C.accent : V8.C.chipOff)
-        )
+        .background(chipBackground)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(label.isEmpty ? value : "\(label)，\(value)")
         .accessibilityAddTraits(chipTraits)
+    }
+
+    // 2026-11-06（V9 · 液态仪器）：芯片从"两块平色胶囊"升级为材质两态 ——
+    //   选中 = 品牌色纵向渐变 + 顶缘受光高光（像一颗凸起的玻璃珠）；
+    //   未选 = 微妙的凸面（上亮下暗）+ 发丝描边（像嵌进面板的素键）。
+    @ViewBuilder
+    private var chipBackground: some View {
+        let shape = Capsule(style: .continuous)
+        if selected {
+            shape
+                .fill(
+                    LinearGradient(
+                        colors: [V8.C.accentFill, V8.C.accent],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .overlay {
+                    shape.strokeBorder(V8.C.cardSheen, lineWidth: V8.S.hair)
+                }
+        } else {
+            shape
+                .fill(
+                    LinearGradient(
+                        colors: [V8.C.chipOn, V8.C.chipOff],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .overlay {
+                    shape.strokeBorder(V8.C.line, lineWidth: V8.S.hair)
+                }
+        }
     }
 
     /// 芯片左侧色点：沿用原分段环的颜色，只保留「类别」这一层含义。
@@ -489,7 +588,25 @@ struct VEmpty: View {
                         .padding(.horizontal, V8.S.gapL)
                         .frame(minHeight: V8.H.min)
                         .background(
-                            Capsule(style: .continuous).fill(V8.C.accent)
+                            // 2026-11-06（V9 · 液态仪器）：主行动按钮 = 受光玻璃凸台 ——
+                            // 纵向品牌色渐变 + 顶缘高光 + 抬升投影，像系统里最想被按的那颗按钮。
+                            Capsule(style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [V8.C.accentFill, V8.C.accent],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                .overlay {
+                                    Capsule(style: .continuous)
+                                        .strokeBorder(V8.C.cardSheen, lineWidth: V8.S.hair)
+                                }
+                                .shadow(
+                                    color: V8.C.accent.opacity(0.35),
+                                    radius: V8.Z.cardShadowRadius2,
+                                    y: V8.Z.cardShadowY
+                                )
                         )
                 }
                 .buttonStyle(V8PressStyle())
@@ -530,6 +647,13 @@ struct VFailure: View {
                         .font(V8.T.value)
                         .foregroundStyle(V8.C.danger)
                 }
+                // 2026-11-06（V9 · 液态仪器）：失败态头部加一条 danger 色带 ——
+                // 4pt 圆头短杠贴在"什么失败"下面，语义与视觉同时强调（不只是文字变红）。
+                Capsule()
+                    .fill(V8.C.dangerFill)
+                    .frame(width: V8.G.chipDot * 6, height: V8.G.chipDot / 1.5)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityHidden(true)
                 Text(why)
                     .font(V8.T.body)
                     .foregroundStyle(V8.C.ink3)
@@ -789,6 +913,10 @@ struct VHScroll<Content: View>: View {
 struct VPage<Chips: View, Content: View>: View {
     let title: String
     var lead: String? = nil
+    // 2026-11-06（V9 · 液态仪器）：每页自己的"大气色"。默认品牌蓝；
+    // 五个根页各传一档（门=品牌 / 钥匙=紫 / 台账=靛 / 家=绿 / 设置=石墨），
+    // 让每个 Tab 有可辨认的光色身份，而不是同一张蓝纸。
+    var atmosphere: V8Atmosphere = .brand
     @ViewBuilder var chips: () -> Chips
     @ViewBuilder var content: () -> Content
     @Environment(Router.self) private var router
@@ -829,6 +957,39 @@ struct VPage<Chips: View, Content: View>: View {
             .padding(.horizontal, V8.S.gutterCard)
             .padding(.bottom, V8.S.gapXL + (TabBarMode.native ? 0 : V8.S.hTabBar + V8.S.tabBarBottom))
         }
+        // 2026-11-06（V9 · 液态仪器）：页面背景从"一张平纸"升级为"有大气层的面板"。
+        // bgTop → bgBottom 纵向天光 + 顶部一团品牌色辉光（玻璃栏滚过时有东西可折射）
+        // + 尾部一团冷紫辉光（页面收尾的层次）。全部属于内容层 —— HIG Materials：
+        // 内容层的丰富靠色彩与光照；玻璃质感仍只属于功能层（Tab 栏 / 滑块）。
+        .background(
+            ZStack {
+                LinearGradient(
+                    colors: [V8.C.bgTop, V8.C.bgBottom],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                GeometryReader { geo in
+                    let w = geo.size.width
+                    VStack(spacing: 0) {
+                        // 顶部辉光：偏右上，本页大气色
+                        Circle()
+                            .fill(atmosphere.top)
+                            .frame(width: w * 1.1, height: w * 1.1)
+                            .blur(radius: w * 0.28)
+                            .offset(x: w * 0.28, y: -w * 0.42)
+                        Spacer(minLength: 0)
+                        // 尾部辉光：偏左下，与本页大气色呼应的第二色
+                        Circle()
+                            .fill(atmosphere.bottom)
+                            .frame(width: w * 0.95, height: w * 0.95)
+                            .blur(radius: w * 0.30)
+                            .offset(x: -w * 0.30, y: w * 0.10)
+                    }
+                    .frame(width: w)
+                }
+            }
+            .ignoresSafeArea()
+        )
         .scrollIndicators(.hidden)
         // 标题交给系统：根页 large（iOS 27 的 Liquid Glass 大标题会随滚动收起），
         // 子页 inline（详情页不该再有一个占半屏的大标题）。
@@ -897,6 +1058,24 @@ struct VNavRow: View {
     var iconTint: Color = V8.C.accent
     let action: () -> Void
 
+    // 2026-11-06（V9 · 液态仪器）：图标砖从平色块升级为"受光的小玻璃砖" ——
+    // 顶部叠 18% 白的纵向光照 + 顶缘发丝高光。原生设置 App 的图标砖正是这种光照。
+    private var iconTile: some View {
+        let shape = RoundedRectangle(cornerRadius: V8.G.iconTileRadius, style: .continuous)
+        return shape
+            .fill(iconTint)
+            .overlay {
+                LinearGradient(
+                    colors: [.white.opacity(0.18), .clear],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            }
+            .overlay {
+                shape.strokeBorder(.white.opacity(0.24), lineWidth: V8.S.hair)
+            }
+    }
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: V8.S.gapM) {
@@ -905,10 +1084,7 @@ struct VNavRow: View {
                         .font(V8.T.chipValue)
                         .foregroundStyle(V8.C.onAccent)
                         .frame(width: V8.G.iconTile, height: V8.G.iconTile)
-                        .background(
-                            RoundedRectangle(cornerRadius: V8.G.iconTileRadius, style: .continuous)
-                                .fill(iconTint)
-                        )
+                        .background(iconTile)
                         .accessibilityHidden(true)
                 }
                 VStack(alignment: .leading, spacing: V8.S.gapXS) {
@@ -954,7 +1130,19 @@ struct VAvatar: View {
 
     var body: some View {
         ZStack {
-            Circle().fill(tint.opacity(0.14))
+            // 2026-11-06（V9 · 液态仪器）：头像从一块 14% 平色圆升级为"受光玻璃珠" ——
+            // 顶部提亮 26% 的纵向光照 + 底部 12% 品牌色沉底 + 顶缘高光描边。
+            // 原生联系人列表的头像正是这种光照。
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [tint.opacity(0.26), tint.opacity(0.10)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+            Circle()
+                .strokeBorder(tint.opacity(0.35), lineWidth: V8.S.hair)
             Text(initial)
                 .font(V8.T.chipValue)
                 .foregroundStyle(tint)

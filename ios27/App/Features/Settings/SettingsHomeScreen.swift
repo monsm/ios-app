@@ -13,7 +13,7 @@ struct SettingsHomeScreen: View {
     var body: some View {
         // 2026-11-05（Round 3）：标题已交给系统 navigationTitle（「设置」），
         // 这句话改成 status 行，不再与导航标题重复。
-        VPage(title: "只在这台手机上", lead: "门锁数据不联网；外观与无障碍设置只影响本机。") {
+        VPage(title: "只在这台手机上", lead: "门锁数据不联网；外观与无障碍设置只影响本机。", atmosphere: .graphite) {
             EmptyView()
         } content: {
             lockCard

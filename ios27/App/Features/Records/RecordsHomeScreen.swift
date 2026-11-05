@@ -96,7 +96,7 @@ struct RecordsHomeScreen: View {
     }
 
     var body: some View {
-        VPage(title: judgement, lead: lead) {
+        VPage(title: judgement, lead: lead, atmosphere: .indigo) {
             chipRow
         } content: {
             if app.lock == nil {

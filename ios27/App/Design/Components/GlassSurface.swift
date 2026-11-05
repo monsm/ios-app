@@ -48,6 +48,16 @@ struct VGlassSurface<Content: View>: View {
                 // （加了反而会被编译器判"多余的可用性检查"）。
                 .glassEffect(tint.map { Glass.regular.tint($0) } ?? .regular,
                              in: .rect(cornerRadius: cornerRadius))
+                // 2026-11-06（V9 · 液态仪器）：原生玻璃加一道顶缘镜面高光 —— 真实玻璃
+                // 受光后上缘总有一条亮线。只加"厚度感"，不改变玻璃的折射行为。
+                .overlay(alignment: .top) {
+                    LinearGradient(colors: [.white.opacity(0.34), .clear],
+                                   startPoint: .top, endPoint: .bottom)
+                        .frame(height: cornerRadius)
+                        .clipShape(.rect(topLeadingRadius: cornerRadius,
+                                         topTrailingRadius: cornerRadius))
+                        .accessibilityHidden(true)
+                }
                 .overlay { border }
         }
     }

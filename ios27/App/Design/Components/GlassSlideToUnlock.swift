@@ -59,9 +59,18 @@ struct GlassSlideToUnlock: View {
                         .frame(maxWidth: .infinity)
                 }
                 // 把手：圆形钮
+                // 2026-11-06（V9 · 液态仪器）：平色圆升级为"受光玻璃钮" ——
+                // 顶部 22% 白的光照渐变 + 顶缘高光环，像来电 UI 里那颗凸起的玻璃钮。
                 Circle()
-                    .fill(solid ? V8.C.accentFill : V8.C.accentFill.opacity(0.92))
-                    .overlay { Circle().strokeBorder(V8.C.accentTrack, lineWidth: V8.S.hair) }
+                    .fill(
+                        solid
+                            ? AnyShapeStyle(V8.C.accentFill)
+                            : AnyShapeStyle(LinearGradient(colors: [V8.C.accentFill.opacity(0.92), V8.C.accentFill],
+                                                           startPoint: .top, endPoint: .bottom))
+                    )
+                    .overlay {
+                        Circle().strokeBorder(.white.opacity(0.30), lineWidth: V8.S.hair)
+                    }
                     .frame(width: knobDiameter, height: knobDiameter)
                     .overlay {
                         Image(systemName: "chevron.right.2")

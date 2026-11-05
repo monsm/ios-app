@@ -60,8 +60,42 @@ enum V8 {
 
         /// 页面底：单色，不做页面级渐变（参考图基底恒为 #F2F1F6）
         static let bg = dual(0xF2F1F6, 0x000000)
+        // 2026-11-06（V9 · 液态仪器）：页面从"一张平纸"升级为"有大气层的面板" ——
+        // 顶部天光（页面起点的亮部）→ 底部地色，加两团品牌色环境辉光。
+        // 都属于内容层（HIG Materials：内容层的丰富靠色彩与光照，玻璃留给功能层）。
+        /// 页面渐变顶（浅色比 bg 亮半档，深色从 #000 提到 #0A0A0C 给玻璃反光面）
+        static let bgTop = dual(0xF7F6FB, 0x0A0A0C)
+        /// 页面渐变底
+        static let bgBottom = dual(0xECEBF3, 0x000000)
+        /// 环境辉光 A（页面顶部，品牌色 8% —— 玻璃栏滚过时有东西可折射）
+        static let glowA = dual(0x2E86E8, 0x3D8CE8, lightAlpha: 0.10, darkAlpha: 0.16)
+        /// 环境辉光 B（页面尾部，与 A 拉开色相距离的冷紫）
+        static let glowB = dual(0x6A3FB8, 0x8E6BD8, lightAlpha: 0.08, darkAlpha: 0.13)
+        // 2026-11-06（V9）：五个 Tab 各自的大气身份（V8Atmosphere 消费）。
+        /// 钥匙页顶光：指纹紫
+        static let glowVioletTop = dual(0x6A3FB8, 0x8E6BD8, lightAlpha: 0.10, darkAlpha: 0.16)
+        /// 台账页顶光：信息靛
+        static let glowIndigoTop = dual(0x4A46C8, 0x8E88F0, lightAlpha: 0.10, darkAlpha: 0.15)
+        /// 家页顶光：手机钥匙绿
+        static let glowGreenTop = dual(0x1E9663, 0x35B67E, lightAlpha: 0.10, darkAlpha: 0.15)
+        /// 设置页顶光：石墨（最素）
+        static let glowGraphiteTop = dual(0x5B6169, 0x8A9098, lightAlpha: 0.07, darkAlpha: 0.10)
+        /// 台账/家页尾光：紫（淡一档）
+        static let glowIndigoBottom = dual(0x6A3FB8, 0x8E6BD8, lightAlpha: 0.07, darkAlpha: 0.11)
+        /// 家页尾光：靛（淡一档）
+        static let glowGreenBottom = dual(0x4A46C8, 0x8E88F0, lightAlpha: 0.07, darkAlpha: 0.11)
+        /// 设置页尾光：石墨（最淡）
+        static let glowGraphiteBottom = dual(0x5B6169, 0x8A9098, lightAlpha: 0.04, darkAlpha: 0.06)
         /// 卡片：比底亮 4~7 级
         static let card = dual(0xFFFFFF, 0x1C1C1E)
+        // 2026-11-06（V9）：卡片从纯色升级为「顶亮底暗」的材质渐变 —— 真实面板的
+        // 光照来自上方。两档都在各自外观里与 card 基色相差 ≤3 级（保对比断言不破）。
+        /// 卡片渐变顶（浅色纯白，深色略亮于 card）
+        static let cardTop = dual(0xFFFFFF, 0x232326)
+        /// 卡片渐变底（浅色冷灰、深色略暗于 card）
+        static let cardBottom = dual(0xF7F6FA, 0x17171A)
+        /// 卡片内高光描边（卡顶缘 1pt 反光线 —— 面板受光的物理暗示）
+        static let cardSheen = dual(0xFFFFFF, 0xFFFFFF, lightAlpha: 0.9, darkAlpha: 0.10)
         /// 凹槽/内嵌块：比卡片暗
         static let well = dual(0xE9E8EF, 0x2C2C2E)
         /// 芯片未选中
@@ -457,10 +491,14 @@ enum V8 {
     // MARK: - 层级 / 阴影
 
     enum Z {
-        // 2026-11-05（Round 3）：原生分组卡片没有投影。原来的 10pt 阴影是「浮岛卡片」
-        // 的来源之一，也是每张卡都要合成一层 blur 的性能开销。
-        static let cardShadowRadius: CGFloat = 0
-        static let cardShadowY: CGFloat = 0
+        // 2026-11-06（V9 · 液态仪器）：零投影让 25 个页面全部贴在纸面上 —— 用户反馈
+        // 「设计太素」。恢复**一套**克制的抬升：卡片 12pt 环境影 + 3pt 接触影，
+        // 全 App 唯一阴影配方（VCard2 单点消费）。材质有了厚度，玻璃条才有东西可反。
+        static let cardShadowRadius: CGFloat = 12
+        static let cardShadowY: CGFloat = 4
+        /// 接触影（紧贴卡底的暗层，让"放桌上"而不是"飘着"）。
+        static let cardShadowRadius2: CGFloat = 3
+        static let cardShadowY2: CGFloat = 1
     }
 }
 

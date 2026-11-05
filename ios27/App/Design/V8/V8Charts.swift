@@ -73,20 +73,40 @@ struct VHeroRing: View {
                     view.scaleEffect(phase)
                 } animation: { _ in V8.M.ambient }
                 .accessibilityHidden(true)
-            // 内盘（Ø206.7 @ 全尺寸）：环心数字垫在它上面，参考图里这层是实心卡片色。
+            // 内盘（Ø206.7 @ 全尺寸）：环心数字垫在它上面。
+            // 2026-11-06（V9 · 液态仪器）：实心卡片色升级为"玻璃表盘" —— 顶亮底暗的
+            // 受光渐变 + 顶缘高光描边，像仪器面板上一块嵌进去的玻璃表盘。
             Circle()
-                .fill(V8.C.card)
+                .fill(
+                    LinearGradient(
+                        colors: [V8.C.cardTop, V8.C.cardBottom],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .overlay {
+                    Circle().strokeBorder(V8.C.cardSheen, lineWidth: V8.S.hair)
+                }
                 .frame(width: V8.G.heroDisc * scale, height: V8.G.heroDisc * scale)
             // 轨道：画满整段扫过角（含缺口），这样"还没填"的部分是可感知的空槽。
+            // 2026-11-06（V9）：轨道加一层内凹阴影（凹槽感），填充段改为高光渐变 ——
+            // 亮部在左上（受光面），暗部在右下，模拟抛光金属刻度。
             Circle()
                 .trim(from: 0, to: sweepFraction)
                 .stroke(V8.C.line, style: StrokeStyle(lineWidth: stroke, lineCap: .round))
                 .rotationEffect(.degrees(startRotation))
+                .shadow(color: V8.C.shadow, radius: V8.Z.cardShadowRadius2, y: V8.Z.cardShadowY2)
             Circle()
                 .trim(from: 0, to: sweepFraction * max(0, min(1, fraction)))
                 .stroke(
                     AngularGradient(
-                        gradient: Gradient(colors: [tint.opacity(0.45), tint, tint.opacity(0.75)]),
+                        gradient: Gradient(colors: [
+                            tint.opacity(0.55),
+                            tint,
+                            tint.opacity(0.85),
+                            tint,
+                            tint.opacity(0.55)
+                        ]),
                         center: .center
                     ),
                     style: StrokeStyle(lineWidth: stroke, lineCap: .round)
@@ -152,6 +172,17 @@ struct VSegmentedRing2: View {
 
     var body: some View {
         ZStack {
+            // 2026-11-06（V9）：环心加一块受光玻璃盘（顶亮底暗），数字不再直接坐在卡面上 ——
+            // 与主环的玻璃表盘同一语法，只是尺寸更小。
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [V8.C.cardTop, V8.C.cardBottom],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .frame(width: size - width * 2 - V8.S.gapS, height: size - width * 2 - V8.S.gapS)
             Circle()
                 .strokeBorder(V8.C.line, lineWidth: width)
             ForEach(Array(segments.enumerated()), id: \.offset) { index, item in
@@ -249,8 +280,17 @@ struct VSpark: View {
                     ForEach(Array(values.enumerated()), id: \.offset) { index, value in
                         let ratio = max(0.03, value / peak)
                         // 柱是圆头的：宽度 2pt 时 Capsule 的等效圆角就是 1pt（= sparkBarRadius）。
+                        // 2026-11-06（V9）：柱身改为纵向受光渐变（顶亮底暗）——
+                        // 波形从"一根根色条"变成"一排受光的刻度柱"。
                         RoundedRectangle(cornerRadius: V8.G.sparkBarRadius, style: .continuous)
-                            .fill(isCursor(index) ? tint : tint.opacity(0.55))
+                            .fill(
+                                LinearGradient(
+                                    colors: [tint, tint.opacity(0.45)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                                .opacity(isCursor(index) ? 1 : 0.72)
+                            )
                             .frame(width: V8.G.sparkBarW, height: max(V8.G.sparkBarW, geo.size.height * ratio))
                             .overlay(alignment: .top) {
                                 if isCursor(index) {

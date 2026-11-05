@@ -37,8 +37,20 @@ struct GlassTabBar: View {
                     .frame(minWidth: V8.G.tabPillW)
                     .background {
                         if selection == index {
+                            // 2026-11-06（V9 · 液态仪器）：选中胶囊从平色升级为
+                            // "受光的玻璃凸台" —— 顶部提亮的纵向光照 + 顶缘高光描边。
                             Capsule(style: .continuous)
-                                .fill(V8.C.chipOn.opacity(0.92))
+                                .fill(
+                                    LinearGradient(
+                                        colors: [V8.C.chipOn, V8.C.chipOff.opacity(0.9)],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                .overlay {
+                                    Capsule(style: .continuous)
+                                        .strokeBorder(V8.C.cardSheen, lineWidth: V8.S.hair)
+                                }
                         }
                     }
                     .contentShape(Rectangle())
