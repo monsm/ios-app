@@ -9,6 +9,7 @@
 // workflow 用 simctl get_app_container 拷出。
 import SwiftUI
 import UIKit
+import CoreGraphics
 
 enum FullPageCapture {
     @MainActor
@@ -78,18 +79,46 @@ enum FullPageCapture {
                 try? data.write(to: docs.appendingPathComponent(file))
             }
 
-            write(render())
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                let stretched = sv.contentSize.height
-                if stretched > sv.bounds.height + 50 {
-                    sv.frame = CGRect(origin: orig.origin,
-                                      size: CGSize(width: orig.width, height: stretched))
+            // 2026-11-05（Round 7 · 第三修）：drawHierarchy 对**超高 frame**（AX 档 9000+pt）
+            // 在模拟器上会拿到一版纯底色 —— 两遍渲染都救不了。放弃「撑开一次成像」，
+            // 改**滚动拼接**：保持原 frame 不动，逐屏 setContentOffset → drawHierarchy 当前屏 →
+            // 把这一屏贴进整版画布。每屏都走真实的屏幕渲染管线，AX 档也必然有内容。
+            func captureTiled() -> Data? {
+                let total = sv.contentSize.height
+                let tile = sv.bounds.height
+                let scale = UIScreen.main.scale
+                let outW = Int(sv.bounds.width * scale)
+                let outH = Int(total * scale)
+                guard outW > 0, outH > 0, outH < 400_000_000 / max(outW, 1) else { return nil }
+                guard let ctx = CGContext(data: nil, width: outW, height: outH,
+                                          bitsPerComponent: 8, bytesPerRow: outW * 4,
+                                          space: CGColorSpaceCreateDeviceRGB(),
+                                          bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue) else { return nil }
+                var offset = CGFloat(0)
+                while offset < total {
+                    sv.contentOffset = CGPoint(x: 0, y: min(offset, max(0, total - tile)))
                     sv.layoutIfNeeded()
-                    sv.contentOffset = .zero
-                    write(render())
+                    let renderer = UIGraphicsImageRenderer(bounds: CGRect(origin: .zero, size: sv.bounds.size))
+                    let img = renderer.image { c in
+                        paper.setFill()
+                        c.fill(CGRect(origin: .zero, size: sv.bounds.size))
+                        sv.drawHierarchy(in: sv.bounds, afterScreenUpdates: true)
+                    }
+                    if let cg = img.cgImage {
+                        ctx.draw(cg, in: CGRect(x: 0, y: total - min(offset + tile, total) - tile < 0
+                                                ? CGFloat(0) : (total - offset - tile),
+                                                width: sv.bounds.width, height: tile).insetBy(dx: 0, dy: 0))
+                    }
+                    offset += tile
                 }
-                restore()
+                sv.contentOffset = .zero
+                let stitched = ctx.makeImage()
+                guard let stitched else { return nil }
+                return UIImage(cgImage: stitched).pngData()
             }
+
+            write(captureTiled())
+            restore()
         }
     }
 
