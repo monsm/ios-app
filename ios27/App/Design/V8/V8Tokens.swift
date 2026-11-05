@@ -374,6 +374,8 @@ enum V8 {
         /// 设置行前置的圆角图标砖（原生 Settings 语法）
         static let iconTile: CGFloat = 30
         static let iconTileRadius: CGFloat = 8
+        /// 成员行头像（圆形首字，原生联系人语法）
+        static let avatarRow: CGFloat = 36
 
         /// 分段环（卡内小环）
         static let segOuter: CGFloat = 92

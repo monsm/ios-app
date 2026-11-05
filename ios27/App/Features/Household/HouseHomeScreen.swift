@@ -169,14 +169,14 @@ struct HouseHomeScreen: View {
                         router.request(.dest(.memberDetail))
                         router.pending = .member(id: member.id)
                     } label: {
-                        VDataRow(
-                            tag: roleName(member.role),
-                            tagTint: roleTint(member.role),
-                            title: member.name,
-                            detail: HHDisplay.statusWord(HHStats.status(member)),
-                            value: "\(member.keyCount)",
-                            unit: "枚",
-                            interactive: true
+                        // 2026-11-05（Round 3）：VDataRow 的「家人 家人 家人」彩色标签列
+                        // 换成原生联系人行语法（头像 + 姓名 + 角色·状态）。
+                        VMemberRow(
+                            name: member.name,
+                            role: roleName(member.role),
+                            roleTint: roleTint(member.role),
+                            status: HHDisplay.statusWord(HHStats.status(member)),
+                            keyCount: member.keyCount
                         )
                     }
                     .buttonStyle(V8PressStyle())

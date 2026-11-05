@@ -194,9 +194,12 @@ struct DoorHomeScreen: View {
                                 // 2026-11-05（对抗审查）：用锁身份里选的**符号**做芯片图标。
                                 // 在此之前 LockArchive.symbolName 全仓零调用 —— 「符号」那个
                                 // 九宫格选了只写进 LockMeta，没有任何界面显示它。
+                                // 2026-11-05（Round 3）：多锁芯片加 selected 状态 ——
+                                // 原来点中的锁与其它锁长得一样，只有 VoiceOver 知道谁被选中。
                                 VChip2(icon: .glyph(LockArchive.symbolName(LockArchive.meta(kc.mac))),
                                        label: LockArchive.displayName(kc),
-                                       value: batteryWord(kc.mac))
+                                       value: batteryWord(kc.mac),
+                                       selected: on)
                             }
                             .buttonStyle(V8PressStyle())
                             .accessibilityLabel("切换到 " + LockArchive.displayName(kc))
@@ -224,7 +227,8 @@ struct DoorHomeScreen: View {
                             } label: {
                                 VChip2(icon: .ring(active ? 1 : 0.02, active ? V8.C.accent : V8.C.ink4),
                                        label: group.name,
-                                       value: "\(group.locks.count) 把")
+                                       value: "\(group.locks.count) 把",
+                                       selected: active)
                             }
                             .buttonStyle(V8PressStyle())
                             .accessibilityLabel("按组切换到 " + group.name)

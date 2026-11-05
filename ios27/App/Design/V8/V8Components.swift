@@ -174,6 +174,9 @@ struct VDataRow: View {
     var unit: String? = nil
     var spark: [Double]? = nil
     var sparkTint: Color = V8.C.accentFill
+    /// 标签列宽度。默认 76pt（凭证分类词），时间线这类短时刻用窄档（51pt）。
+    /// 2026-11-05（Round 3）：记录页时刻列原来也是 76pt，名称被挤到很晚才开始。
+    var tagNarrow: Bool = false
     /// 2026-11-05（全技能审核 · 44pt 命中）：数据行作为 Button label 时视觉行高只有 22.1pt。
     /// 非交互表格保持密度（interactive=false），列表入口传 true 把命中区抬到 44pt。
     var interactive: Bool = false
@@ -199,7 +202,8 @@ struct VDataRow: View {
                 .font(V8.T.caption)
                 .foregroundStyle(tagTint)
                 .lineLimit(1)
-                .frame(width: V8.S.gapTableFirst * 1.8, alignment: .leading)
+                .monospacedDigit()
+                .frame(width: tagNarrow ? V8.S.gapTableFirst * 1.2 : V8.S.gapTableFirst * 1.8, alignment: .leading)
 
             Text(title)
                 .font(V8.T.value)
@@ -938,6 +942,73 @@ struct VNavRow: View {
         .buttonStyle(V8PressStyle())
         .accessibilityLabel([title, detail ?? "", value ?? ""].filter { !$0.isEmpty }.joined(separator: "，"))
         .accessibilityAddTraits(.isButton)
+    }
+}
+
+// MARK: - 15·补 头像（首字圆，原生联系人语法）
+
+/// 成员头像：姓名首字 + 类别色。零图片资源 —— 与 HHAvatar 同一判据，但走 V8 令牌。
+struct VAvatar: View {
+    let name: String
+    var tint: Color = V8.D.fingerprint
+
+    var body: some View {
+        ZStack {
+            Circle().fill(tint.opacity(0.14))
+            Text(initial)
+                .font(V8.T.chipValue)
+                .foregroundStyle(tint)
+        }
+        .frame(width: V8.G.avatarRow, height: V8.G.avatarRow)
+        .accessibilityHidden(true)
+    }
+
+    private var initial: String {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "成" : String(trimmed.prefix(1))
+    }
+}
+
+// MARK: - 15·补2 成员行（头像 + 名称 + 角色 + 右侧凭证数，原生联系人行语法）
+
+/// 家页成员行的 V8 版本。原来用 VDataRow 的「彩色标签 + 名称」语法，
+/// 每行开头都是「家人 家人 家人」—— 三个成员就是三遍同一类别词，是家页最模板化的一块。
+/// 原生联系人行的识别是「头像 + 姓名 + 次级状态」，角色与状态并到一行小字里。
+struct VMemberRow: View {
+    let name: String
+    let role: String
+    var roleTint: Color = V8.D.fingerprint
+    let status: String
+    let keyCount: Int
+
+    var body: some View {
+        HStack(spacing: V8.S.gapM) {
+            VAvatar(name: name, tint: roleTint)
+            VStack(alignment: .leading, spacing: V8.S.gapXS) {
+                Text(name.isEmpty ? "未命名成员" : name)
+                    .font(V8.T.value)
+                    .foregroundStyle(V8.C.ink1)
+                    .lineLimit(1)
+                Text(role + " · " + status)
+                    .font(V8.T.label)
+                    .foregroundStyle(V8.C.ink4)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: V8.S.gapS)
+            HStack(alignment: .firstTextBaseline, spacing: V8.S.gapXS) {
+                Text(String(keyCount))
+                    .font(V8.T.value)
+                    .foregroundStyle(V8.C.ink2)
+                    .monospacedDigit()
+                Text("枚")
+                    .font(V8.T.label)
+                    .foregroundStyle(V8.C.ink4)
+            }
+        }
+        .frame(minHeight: V8.H.min)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(name)，\(role)，\(status)，名下 \(keyCount) 枚凭证")
     }
 }
 

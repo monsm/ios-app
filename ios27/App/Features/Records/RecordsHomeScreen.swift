@@ -221,6 +221,7 @@ struct RecordsHomeScreen: View {
                             title: row.entry.event,
                             detail: CredentialOrg.ownerName(row.entry.owner),
                             value: "",
+                            tagNarrow: true,
                             interactive: true
                         )
                     }
