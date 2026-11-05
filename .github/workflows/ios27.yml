@@ -663,7 +663,17 @@ jobs:
           esac
           echo "shots: scope=$SCOPE tabs=[$TABS] subs=[$SUBS]" >> "$DIAG"
           for i in $TABS; do
-            name=$(case "$i" in 0) echo door ;; 1) echo keys ;; 2) echo records ;; 3) echo household ;; 4) echo settings ;; esac)
+            # 2026-11-05（实测）：上一版用 name=$(case "$i" in 0) echo door ;; ... esac) 取名字，
+            # 在 runner 的 bash 上这一段之后循环一次都没进（diag 里只有 scope 那行、没有任何
+            # fullpage missing）。不再用「命令替换里套 case」这种写法，改成最朴素的 if 链。
+            name="unknown"
+            if [ "$i" = "0" ]; then name="door"
+            elif [ "$i" = "1" ]; then name="keys"
+            elif [ "$i" = "2" ]; then name="records"
+            elif [ "$i" = "3" ]; then name="household"
+            elif [ "$i" = "4" ]; then name="settings"
+            fi
+            echo "fullpage begin tab=$i name=$name" >> "$DIAG"
             xcrun simctl terminate "$UDID" com.aapk.lockkeeper 2>/dev/null || true
             xcrun simctl launch "$UDID" com.aapk.lockkeeper -kfUITest -kfSeed -kfFullPage -kfTab $i || true
             sleep 7
@@ -681,6 +691,7 @@ jobs:
           # ASCII 名（中文名经 locale 管道会变 mojibake）；每个目标截 2 次（竞态重试）。
           # 缺某张图 = 那个子页在空数据下崩了 —— 本身就是 god 模式要抓的缺陷。
           j=10
+          echo "subpage loop begin: [$SUBS]" >> "$DIAG"
           for dest in $SUBS; do
             xcrun simctl terminate "$UDID" com.aapk.lockkeeper 2>/dev/null || true
             xcrun simctl launch "$UDID" com.aapk.lockkeeper -kfUITest -kfSeed -kfDest "$dest" || true
@@ -695,7 +706,7 @@ jobs:
               sleep 2
               xcrun simctl io "$UDID" screenshot "/tmp/shots/$j-$dest.png" 2>/dev/null || true
             fi
-            echo "shot $j-$dest size=$(stat -f%z "/tmp/shots/$j-$dest.png" 2>/dev/null || echo 0)" >> "$DIAG"
+            echo "subpage $j-$dest size=$(stat -f%z "/tmp/shots/$j-$dest.png" 2>/dev/null || echo 0)" >> "$DIAG"
             j=$((j+1))
           done
           # 2026-11-05（截图耗时优化）：这里原来还有一轮「10 个子页的整页截图」。
