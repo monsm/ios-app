@@ -200,6 +200,15 @@ struct LockPortfolioHomeScreen: View {
             VCardHead(eyebrow: "门锁", statement: groupFilter.isEmpty ? "全部" : groupFilter)
             VDivider2()
                 .padding(.top, V8.S.gapM)
+            // 2026-11-05（用户指令：减少文字、图形化变多）：本页此前无任何视觉元素。
+            // 每把锁 30 天的开门次数是真数据（LockUsage.opens30d），横向对比用柱子最直接。
+            // 只有一把锁时不画 —— 一根柱子没有对比意义，那叫装饰。
+            if shown.count >= 2 {
+                VRangeCaption(text: "每格一把锁 · 近 30 天开门次数")
+                    .padding(.top, V8.S.gapM)
+                VSpark(values: shown.map { Double($0.opens30d) }, tint: V8.C.accentFill, axis: .samples)
+                    .padding(.top, V8.S.gapS)
+            }
             VStack(spacing: 0) {
                 ForEach(Array(shown.enumerated()), id: \.offset) { pair in
                     row(pair.element)
