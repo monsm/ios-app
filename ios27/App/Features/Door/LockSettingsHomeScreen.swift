@@ -121,7 +121,11 @@ struct LockSettingsHomeScreen: View {
     private var lead: String? {
         if decoyed { return "空壳模式只隐藏、不改动：本页既不显示这把锁的策略，也不写入任何设置。退出空壳后才能改。" }
         if app.lock == nil { return nil }
-        return "这一页改的都是锁端策略：写成功后回读确认，本机只留一份镜像。读数段在第一张卡，各段可展开收起。"
+        // 2026-11-05（截图审查 + HIG）：原来这段是三行，首屏近 1/4 被说明占掉，
+        // 真正的开关被推到第二屏 —— 违反 layout.md › Visual hierarchy
+        // 「Order content by relative importance … place the most important items near the top」。
+        // 缩短成一行，只留用户决策需要的那半句（写下去要回读确认才算生效）。
+        return "改的是锁端策略：写下去并回读确认后，才算真的生效。"
     }
 
     var body: some View {
@@ -203,7 +207,13 @@ struct LockSettingsHomeScreen: View {
     private var chipRow: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: V8.S.gapChip) {
-                VChip2(icon: .glyph("clock.badge.questionmark"), label: "动态密码", value: otpOn ? "已开通" : "已关闭")
+                // 2026-11-05（截图审查 + HIG）：这枚芯片与紧邻的「动态密码」卡**同屏重复**——
+                // 卡头写「已开通 · 锁端会接受动态码」，芯片写「动态密码 已开通」，
+                // 加上页标题「…动态码已开通」，同一屏三个「已开通」。
+                // 判别规则：芯片只承载**默认折叠、要滚动才看得到**的状态。
+                // 动态密码这一段始终展开在首屏 ⇒ 不需要芯片；电量 / 锁钟对应的段默认折叠 ⇒ 保留。
+                //（settings.md › Best practices：Minimize the number of settings you offer ——
+                //  同一个可扫读面上重复的条目只会让人更难找到真正的那一项。）
                 VChip2(icon: .ring(batteryFraction, batteryChipTint), label: "电量", value: batteryChipText)
                 // 2026-11-05（对抗审查 · 设计冗余）：原来这里有一枚「安全模式」芯片，value 就是
                 // safeModeText —— 而下面「安全模式」段的卡头 statement 也是同一个 safeModeText。

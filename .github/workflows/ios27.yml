@@ -772,6 +772,22 @@ jobs:
             echo "skip publish: count=0 (keeping previous screenshots)"
             exit 0
           fi
+          # 2026-11-05（实测 · 部分产出也会缩水）：上一轮被取消时只拍了 6 张，
+          # 发布后把原来 16 张的集合换成了 6 张 —— 没重拍的页就消失了。
+          # 截图应当**只增不减**：先把旧图取回来，本轮没产出的那份补上，再发布。
+          REMOTE="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git clone -q --depth 1 --branch ci-shots "$REMOTE" /tmp/prev 2>/dev/null; then
+            KEPT=0
+            for f in /tmp/prev/*.png; do
+              [ -e "$f" ] || continue
+              base=$(basename "$f")
+              if [ ! -f "$base" ]; then cp "$f" "$base"; KEPT=$((KEPT + 1)); fi
+            done
+            echo "merged $KEPT previous screenshot(s) that this run did not re-shoot"
+          else
+            echo "no previous ci-shots to merge (first publish?)"
+          fi
+          COUNT=$(ls *.png 2>/dev/null | wc -l | tr -d ' ')
           git init -q .
           git checkout -q -b ci-shots
           git config user.name ci

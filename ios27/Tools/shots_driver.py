@@ -34,17 +34,26 @@ def budget_left() -> float:
     return BUDGET_SEC - (time.time() - _START)
 
 # scope → (要截的 Tab 序号, 要截的子页 dest)。与 workflow 里 changes job 的判据一致。
+# 2026-11-05（对抗审查 · 截图列表没跟着归并更新）：
+# 25 页归并后 .lockStatus / .lockSettings / .defend 三个 dest 渲染的是**同一页**
+#（LockSettingsHomeScreen），于是旧列表每次都在拍两张一模一样的图 ——
+# 实测 12-lockSettings.png 与 13-defend.png **字节相同**。
+# 同时旧列表漏掉了 7 个 -kfDest 可达的页面：我的锁 / 凭证工作室 / 安全 / 自动开锁 /
+# 关于 / 新建成员 / 添加门锁。
+# 现在按**宿主页去重**，并把漏掉的补齐：子页 10 个（含 2 张重复）→ 15 个各不相同的页面。
+_DOOR = ["lockSettings", "deviceInfo", "lockPortfolio", "addLock"]
+_KEYS = ["keyCreate", "zotp", "credentialStudio"]
+_RECORDS = ["recordsStudio"]
+_HOUSE = ["memberCreate"]
+_SETTINGS = ["backupStudio", "godMode", "hardware", "security", "autoOpen", "about"]
+
 SCOPES = {
-    "door": (["0"], ["lockStatus", "deviceInfo", "lockSettings", "defend"]),
-    "keys": (["1"], ["keyCreate", "zotp"]),
-    "records": (["2"], ["recordsStudio"]),
-    "household": (["3"], []),
-    "settings": (["4"], ["backupStudio", "godMode", "hardware"]),
-    "all": (
-        ["0", "1", "2", "3", "4"],
-        ["lockStatus", "deviceInfo", "lockSettings", "defend", "keyCreate", "zotp",
-         "recordsStudio", "backupStudio", "godMode", "hardware"],
-    ),
+    "door": (["0"], _DOOR),
+    "keys": (["1"], _KEYS),
+    "records": (["2"], _RECORDS),
+    "household": (["3"], _HOUSE),
+    "settings": (["4"], _SETTINGS),
+    "all": (["0", "1", "2", "3", "4"], _DOOR + _KEYS + _RECORDS + _HOUSE + _SETTINGS),
 }
 
 TAB_NAME = {"0": "door", "1": "keys", "2": "records", "3": "household", "4": "settings"}
