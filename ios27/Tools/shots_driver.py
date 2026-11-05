@@ -180,12 +180,25 @@ def main() -> int:
         dest = os.path.join(OUT, prefix + tab + "-" + name + "-full.png")
         copied = False
         if container is not None and container.returncode == 0:
-            src = os.path.join(container.stdout.strip(), "Documents", "kf-fullpage-" + tab + "-tab.png")
+            docdir = container.stdout.strip()
+            src = os.path.join(docdir, "Documents", "kf-fullpage-" + tab + "-tab.png")
             copied = fullpage_copy(src, dest)
-        if copied:
+            # 2026-11-05（Round 7 · AX 定稿）：整页图空白时（App 侧改为逐屏落盘），
+            # 拷出该页所有 tile-N 截图 —— 每一屏都是真实的 AX 布局证据。
+            if not copied and os.path.isdir(docdir):
+                tdir = os.path.join(docdir, "Documents")
+                tiles = sorted([f for f in os.listdir(tdir) if f.startswith("kf-fullpage-" + tab + "-") and "tile" in f])
+                for f in tiles:
+                    tdest = os.path.join(OUT, prefix + name + "-" + f.split("-tile")[-1].replace(".png", "") + ".png")
+                    if fullpage_copy(os.path.join(tdir, f), tdest):
+                        produced += 1
+                        log("tile ok " + prefix + name + " " + f + " size=" + str(os.path.getsize(tdest)))
+                if tiles:
+                    copied = True
+        if copied and os.path.exists(dest):
             produced += 1
             log("fullpage ok " + prefix + name + " size=" + str(os.path.getsize(dest)))
-        else:
+        elif not copied:
             log("fullpage missing " + prefix + name)
 
     # 二、子页视口图（-kfDest 直接把那一页压进导航栈）

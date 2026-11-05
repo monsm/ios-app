@@ -84,38 +84,35 @@ enum FullPageCapture {
             // 改**滚动拼接**：保持原 frame 不动，逐屏 setContentOffset → drawHierarchy 当前屏 →
             // 把这一屏贴进整版画布。每屏都走真实的屏幕渲染管线，AX 档也必然有内容。
             func captureTiled() -> Data? {
+                // 2026-11-05（Round 7 · 定稿）：组版画布在本机模拟器上拿不到正确的
+                // AX 布局位图（试过 CGContext / UIGraphicsImageRenderer 两种组版，结果都是黑）。
+                // 改**逐屏落盘**：不拼一张大图，而是把每一屏写成独立 PNG（tile-N）。
+                // 证据价值一样（AX 布局的每一屏都能看），且每屏都走真实屏幕渲染。
                 let total = sv.contentSize.height
                 let tile = sv.bounds.height
-                guard total > 0, tile > 0 else { return nil }
-                // 2026-11-05（Round 7 · 第三修定稿）：用**一个** UIGraphicsImageRenderer 组版，
-                // 循环里逐屏滚动 → drawHierarchy 当前屏 → 把这一屏的 cgImage 画进组版画布。
-                // UIKit 组版自动处理坐标朝向；默认 scale 即屏幕 scale，清晰度不受影响。
-                let composer = UIGraphicsImageRenderer(size: CGSize(width: sv.bounds.width, height: total))
-                let image = composer.image { c in
-                    paper.setFill()
-                    c.fill(CGRect(x: 0, y: 0, width: sv.bounds.width, height: total))
-                    var offset = CGFloat(0)
-                    while offset < total {
-                        sv.contentOffset = CGPoint(x: 0, y: min(offset, max(0, total - tile)))
-                        sv.layoutIfNeeded()
-                        let tileRenderer = UIGraphicsImageRenderer(bounds: CGRect(origin: .zero, size: sv.bounds.size))
-                        let tileImg = tileRenderer.image { tc in
-                            tc.fill(CGRect(origin: .zero, size: sv.bounds.size))
-                            sv.drawHierarchy(in: sv.bounds, afterScreenUpdates: true)
-                        }
-                        if let cg = tileImg.cgImage {
-                            let drawHeight = min(tile, total - offset)
-                            // cgImage 是设备像素；画到 point 空间时按 screen scale 缩回。
-                            c.draw(cg, in: CGRect(x: 0, y: offset, width: sv.bounds.width, height: drawHeight))
-                        }
-                        offset += tile
+                let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+                    ?? URL(fileURLWithPath: "/tmp", isDirectory: true)
+                var offset = CGFloat(0)
+                var index = 0
+                while offset < total {
+                    sv.contentOffset = CGPoint(x: 0, y: min(offset, max(0, total - tile)))
+                    sv.layoutIfNeeded()
+                    let renderer = UIGraphicsImageRenderer(bounds: CGRect(origin: .zero, size: sv.bounds.size))
+                    let img = renderer.image { c in
+                        paper.setFill()
+                        c.fill(CGRect(origin: .zero, size: sv.bounds.size))
+                        sv.drawHierarchy(in: sv.bounds, afterScreenUpdates: true)
                     }
-                    sv.contentOffset = .zero
+                    let file = String(format: "kf-fullpage-%d-%@-tile%02d.png", tab, name, index)
+                    try? img.pngData()?.write(to: docs.appendingPathComponent(file))
+                    offset += tile
+                    index += 1
                 }
-                return image.pngData()
+                sv.contentOffset = .zero
+                return nil // 不再产出单一大图；驱动端按 tile 文件处理
             }
 
-            write(captureTiled())
+            _ = captureTiled()
             restore()
         }
     }
