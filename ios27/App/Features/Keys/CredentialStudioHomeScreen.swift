@@ -1604,7 +1604,10 @@ struct CredentialImportSheet: View {
                         .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
                         .accessibilityLabel("凭证包文本")
                         .padding(.top, V8.S.gapM)
-                    TextField("包口令", text: $password)
+                    // 2026-11-05（对抗审查 · 安全）：导出包口令是加密凭证包的密钥，
+                    // 明文输入 + 无遮挡等于把它摊在屏幕上。改 SecureField（打码），
+                    // 与其它口令输入同口径。
+                    SecureField("包口令", text: $password)
                         .font(V8.T.body)
                         .foregroundStyle(V8.C.ink1)
                         .frame(minHeight: V8.H.min)

@@ -56,6 +56,32 @@ for (const f of walk(ROOT)) {
     }
   });
 }
+// 2026-11-05（对抗审查 · 安全）：第二条判据 —— 明文输入一个「要写进锁的密码」的页面
+// 必须挂截图遮挡。事故原型：KeyCreateHomeScreen 用 TextField(text: $code) 明文输入
+// 6~8 位开锁密码，且没有 captureShield —— 而同一串值在凭证详情页是打码 + 遮挡的。
+// 用户在新建流程里截图就会把一把能开门的密码拍进相册。
+// 判据刻意窄：只认「TextField 且绑定变量名就是 code/pwd/password/pin」这一种形状。
+const SECRET_FIELDS = ['$code', '$pwd', '$password', '$pin'];
+for (const f of walk(ROOT)) {
+  const src = fs.readFileSync(f, 'utf8');
+  if (src.indexOf('captureShield') >= 0) continue;
+  const lines = src.split('\n');
+  lines.forEach(function (line, i) {
+    const t = line.trim();
+    if (t.startsWith('//')) return;
+    // 注意：SecureField( 里含 TextField( 子串 —— 必须先排除 SecureField，否则三个
+    // 已经打码的输入框会被误报（第一版就是这么错的）。
+    const plainField = t.indexOf('TextField(') >= 0 && t.indexOf('SecureField(') < 0;
+    if (!plainField) return;
+    for (const field of SECRET_FIELDS) {
+      if (t.indexOf('text: ' + field) >= 0) {
+        bad++;
+        report.push(path.relative(path.join(__dirname, '..'), f) + ':' + (i + 1) + '  明文输入 ' + field + ' 且本文件无 captureShield');
+      }
+    }
+  });
+}
+
 if (bad === 0) {
   console.log('secretext: OK - no plaintext secret accessor is rendered');
   process.exit(0);
