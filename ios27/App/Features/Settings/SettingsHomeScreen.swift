@@ -42,16 +42,18 @@ struct SettingsHomeScreen: View {
 
     private var safetyCard: some View {
         card("安全", statement: "本机与锁端") {
-            VNavRow(title: "安全", detail: "本机密码 / 生物识别 / 只读试验 / 诱饵") { router.request(.dest(.security)) }
+            // 2026-11-05（看真机截图发现的冗余）：卡眉已经是「安全」，下面第一行又叫「安全」——
+            // 一张索引卡里同一词上下两次。行标题改成说这一页里到底有什么。
+            VNavRow(title: "本机密码与生物识别", detail: "解锁 / 只读试验 / 诱饵都在这一页") { router.request(.dest(.security)) }
             VDotRule()
             VNavRow(title: "靠近自动开锁", detail: "默认关；开启前先标定距离") { router.request(.dest(.autoOpen)) }
-
         }
     }
 
     private var lookCard: some View {
         card("外观", statement: "看与读") {
-            VNavRow(title: "外观", detail: "主题 / 强调色 / 密度 / 快捷格 / 无障碍") { router.request(.dest(.appearance)) }
+            // 同上：这张卡只有一行，行标题再叫「外观」就等于把卡眉抄了一遍。
+            VNavRow(title: "主题、图标与阅读", detail: "强调色 / 密度 / 快捷格 / 无障碍") { router.request(.dest(.appearance)) }
         }
     }
 
@@ -74,7 +76,9 @@ struct SettingsHomeScreen: View {
 
     private var dangerCard: some View {
         VCard2(style: .well) {
-            VCardHead(eyebrow: "不可逆", statement: "删除本机数据")
+            // 2026-11-05：卡头写「删除本机数据」，下面那行写「删除这台锁的本机数据」——
+            // 同一件事两遍。卡头改成限定范围，动作只留在按钮那一行。
+            VCardHead(eyebrow: "不可逆", statement: "只删当前这把锁")
             VDivider2()
                 .padding(.top, V8.S.gapM)
             Text("只删当前这把锁在本机的数据：密码台账、记录缓存、回收站、版本快照、手机钥匙、锁档案与各类采样。成员与其它锁的数据不受影响；锁端密钥与锁内日志也不变，锁不需要重置，可以再次添加。")

@@ -396,7 +396,9 @@ struct RecordsStudioHomeScreen: View {
                 VStack(spacing: 0) {
                     ForEach(Array(activeCreds.prefix(5).enumerated()), id: \.offset) { index, pair in
                         if index > 0 { VDotRule() }
-                        VDataRow(tag: pair.word, tagTint: V8.C.ink4, title: pair.word, value: "\(pair.count)", unit: "次")
+                        // 2026-11-05（截图审查带出的同类问题）：tag 与 title 传同一个词，
+                        // 每行把「密码」「指纹」写两遍。类别名归 tag，title 留空。
+                        VDataRow(tag: pair.word, tagTint: V8.C.ink4, title: "", value: "\(pair.count)", unit: "次")
                     }
                 }
                 .padding(.top, V8.S.gapS)

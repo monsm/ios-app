@@ -223,8 +223,9 @@ struct DoorHomeScreen: View {
     private var chipRow: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: V8.S.gapChip) {
-                VChip2(icon: .ring(lock?.isConnected == true ? 1 : 0.02, lock?.isConnected == true ? V8.C.ok : V8.C.danger),
-                       label: "连接", value: lock?.isConnected == true ? "已连接" : "未连接")
+                // 2026-11-05（看真机截图发现的冗余）：芯片写「连接 · 未连接」，往下第三张卡的卡头
+                // 也叫「连接」并显示同一个状态值 —— 同一屏两次。连接状态由「连接」段唯一承载
+                //（那里还有预热 / 重连阶梯 / RSSI），芯片删掉。
                 VChip2(icon: .ring(1, V8.D.fingerprint), label: "凭证", value: "\(app.keys.count) 枚")
                 VChip2(icon: .ring(lock?.safeMode == true ? 1 : 0.02, V8.C.warn),
                        label: "安全模式", value: lock?.safeMode == true ? "已开" : "关")
@@ -286,8 +287,11 @@ struct DoorHomeScreen: View {
                 .padding(.top, V8.S.gapM)
             VStack(spacing: 0) {
                 ForEach(Array(kindRows.enumerated()), id: \.offset) { pair in
+                    // 2026-11-05（截图发现）：tag 与 title 传的是同一个词，
+                    // 于是每一行把「密码」「指纹」这样的字写两遍（左小标签 + 右主文字）。
+                    // 类别名由 tag 承载，title 留空。
                     VDataRow(tag: pair.element.0, tagTint: pair.element.1,
-                             title: pair.element.0, detail: nil,
+                             title: "", detail: nil,
                              value: "\(pair.element.2)", unit: "次")
                     if pair.offset != kindRows.count - 1 { VDotRule() }
                 }
