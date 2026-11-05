@@ -151,6 +151,30 @@ struct MemberDetailHomeScreen: View {
         }
     }
 
+    /// 这位成员近 7 天每天的可证明归属开门次数（用于「这一周」卡的柱图）。
+    ///
+    /// 2026-11-05（用户指令：减少文字、图形化变多）：本页 645 字 / 图形 0。
+    /// 这 7 个数来自与 weekSentence 同一份归属判定（owner == member.name），是真实序列。
+    private func weekBars(_ member: MemberCard) -> (values: [Double], labels: String) {
+        let cal = TimeFormat.calendar
+        let today = cal.startOfDay(for: Date())
+        let names = ["日", "一", "二", "三", "四", "五", "六"]
+        var values: [Double] = []
+        var labels: [String] = []
+        for offset in stride(from: 6, through: 0, by: -1) {
+            guard let day = cal.date(byAdding: .day, value: -offset, to: today) else { continue }
+            let start = Int64(day.timeIntervalSince1970 * 1000)
+            let end = start + 86_400_000
+            let n = app.entries.filter {
+                $0.owner == member.name && $0.at >= start && $0.at < end
+                    && ($0.tone == .ok || $0.tone == .live)
+            }.count
+            values.append(Double(n))
+            labels.append(names[cal.component(.weekday, from: day) - 1])
+        }
+        return (values, labels.joined(separator: "   "))
+    }
+
     // MARK: - 卡 1 这一周
 
     private func weekCard(_ member: MemberCard) -> some View {
@@ -162,6 +186,12 @@ struct MemberDetailHomeScreen: View {
             // 才会算进来」这句在本页出现两次 —— 这里一次，「最近开门」的空态又一次（措辞几乎相同）。
             // 那句话在「最近开门」的空态里更有用（那里正是用户看不到数据的地方），这里只留
             // 本卡特有的一句：这一页读的是本机数据、不连门锁。
+            // 2026-11-05（用户指令：图形化变多）：本周每天的开锁次数画成柱图 ——
+            // 与卡头那句「本周 N 次」是同一份数据，但形状比句子更快。
+            VRangeCaption(text: weekBars(member).labels)
+                .padding(.top, V8.S.gapM)
+            VSpark(values: weekBars(member).values, tint: V8.C.accentFill, cursor: 6, axis: .samples)
+                .padding(.top, V8.S.gapS)
             Text("这一页只读本机数据，不连门锁 —— 离线或未连接时，档案与摘录完全一样。")
                 .font(V8.T.caption)
                 .foregroundStyle(V8.C.ink4)
