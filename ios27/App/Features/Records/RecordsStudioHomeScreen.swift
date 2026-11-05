@@ -176,6 +176,8 @@ struct RecordsStudioHomeScreen: View {
             VCardHead(eyebrow: "自然语言检索", statement: "输入即算", trailing: uniqueTags.isEmpty ? nil : "\(uniqueTags.count) 个条件")
             VDivider2()
                 .padding(.top, V8.S.gapM)
+            // 2026-11-05（Round 3）：检索框加 well 底（与凭证页搜索同一语法），
+            // 输入区从「漂浮文字」变成一个可识别的输入框。
             HStack(spacing: V8.S.gapS) {
                 Image(systemName: "magnifyingglass")
                     .font(V8.T.caption)
@@ -200,6 +202,9 @@ struct RecordsStudioHomeScreen: View {
                     .accessibilityLabel("清空检索词")
                 }
             }
+            .padding(.horizontal, V8.S.gapM)
+            .frame(minHeight: V8.H.min)
+            .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset, style: .continuous))
             .padding(.top, V8.S.gapM)
             if !uniqueTags.isEmpty {
                 VHScroll {

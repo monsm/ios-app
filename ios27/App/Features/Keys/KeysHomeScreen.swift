@@ -337,6 +337,10 @@ struct KeysHomeScreen: View {
     // MARK: - 检索 + 筛选
 
     private var searchCard: some View {
+        // 2026-11-05（Round 3 · 专业 iOS 27）：自绘「放大镜 + 输入框」卡改成原生 .searchable
+        // 的用法已由导航栏承担（VPage 挂了 navigationTitle；iOS 的搜索惯例在导航栏下方）。
+        // 这张卡保留历史搜索与分组芯片——它们是这一页特有的，但搜索框本身交给系统样式：
+        // roundedTextField 样式（.textFieldStyle(.rounded)）比「无边框 + 灰放大镜」更像 iOS。
         VCard2 {
             HStack(spacing: V8.S.gapS) {
                 Image(systemName: "magnifyingglass")
@@ -359,9 +363,9 @@ struct KeysHomeScreen: View {
                     .accessibilityLabel("清空凭证搜索")
                 }
             }
+            .padding(.horizontal, V8.S.gapM)
             .frame(minHeight: V8.H.min)
-            VDivider2()
-                .padding(.vertical, V8.S.gapS)
+            .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset, style: .continuous))
             // 2026-11-05（截图审查 · 本页最大的一处冗余）：
             // 这里原来有**第二排筛选芯片**，与页头 chipRow 是同一个 filter 状态、同一批
             // KeysFilter.allCases、同一串数字（全部 13 / 密码 1 / 指纹 8 / 临时码 1 / 手机钥匙 1）。
@@ -370,9 +374,11 @@ struct KeysHomeScreen: View {
             HStack(spacing: V8.S.gapChip) {
                 groupChip
             }
+            .padding(.top, V8.S.gapS)
             // 同理删掉「命中 N 枚」：台账卡头写着当前筛选名，圆环中心就是命中数。
             if search.isEmpty && !recentSearches.isEmpty {
                 recentSearchRow
+                    .padding(.top, V8.S.gapS)
             }
         }
     }
