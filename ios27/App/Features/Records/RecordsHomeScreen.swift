@@ -4,7 +4,7 @@
 // 一屏一个英雄数：今日开锁次数只出现在大数字里；芯片行只放「今天/本周/告警/失败」的条数。
 //
 // 结构（对应参考图 P3 型）：
-//   芯片行 → 判断句 → 因果段 → 英雄数（VHeroNumber）→ 范围标（VRangeCaption）→ 24h 波形（VSpark）
+//   芯片行 → 判断句 → 因果段 → 英雄数（VHeroNumber）→ 24h 波形（VSpark，轴标签自带）
 //          → 卡 1 时间线（VDataRow × N）→ 卡 2 检索 → 工具入口
 import SwiftUI
 
@@ -176,10 +176,11 @@ struct RecordsHomeScreen: View {
                 font: V8.T.heroL
             )
             .frame(maxWidth: .infinity, alignment: .center)
-            VRangeCaption(text: "0–24 时")
-                .padding(.top, V8.S.gapM)
+            // 2026-11-05（截图复核 · 双轴说明）：这里原来有一行 VRangeCaption("0–24 时")，
+            // 而下面的 VSpark 用 .hours24 轴，自带「0 时 / 12 时 / 24 时」。
+            // 同一个轴两组标签 —— 家页与成员页早先已修过同一处，记录页漏了。
             VSpark(values: hourly, tint: V8.C.accentFill, cursor: currentHour, axis: .hours24)
-                .padding(.top, V8.S.gapS)
+                .padding(.top, V8.S.gapM)
         }
     }
 
