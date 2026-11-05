@@ -1180,7 +1180,9 @@ private var capacityBlock: some View {
                 Text("—")
                     .font(V8.T.value)
                     .foregroundStyle(V8.C.ink4)
-                    .frame(width: V8.G.segCompactOuter * 1.9, height: V8.G.segCompactOuter * 1.9)
+                    // 2026-11-05（溢出修复的一致性）：这里是「锁端没回报容量」时的占位，
+                    // 三枚占位同样要按 1.42 算宽度 —— 否则一旦三把容量都未知，整页又会被撑宽。
+                    .frame(width: V8.G.segCompactOuter * 1.42, height: V8.G.segCompactOuter * 1.9)
             }
             Text(title)
                 .font(V8.T.caption)
