@@ -95,8 +95,12 @@ struct HouseHomeScreen: View {
             HStack(spacing: V8.S.gapChip) {
                 // 2026-11-05（对抗审查 · 设计冗余）：.members 这一格写「N 位」，
                 // 而「成员」卡标题写「在册 N 位」—— 同一个数字在相邻两处重复。
-                // 成员数由卡片承载，芯片行只留「凭证 / 访客 / 本周」（这三格没有重复表达）。
-                ForEach(HouseChip.allCases.filter { $0 != .members }, id: \.self) { chip in
+                // 成员数由卡片承载。
+                //
+                // 2026-11-05（截图审查 · 同类）：.week 这一格写「本周 6 次」，
+                // 而紧接着的 lead 就是「本周开了 6 次门」—— 芯片正下方一行就是同一个 6。
+                // 规则：芯片只承载**别处看不到**的数字。这里 lead 已经说了，芯片删掉。
+                ForEach(HouseChip.allCases.filter { $0 != .members && $0 != .week }, id: \.self) { chip in
                     VChip2(icon: chip.icon(app), label: chip.title, value: chip.value(app))
                 }
             }
