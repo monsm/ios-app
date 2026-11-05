@@ -1136,12 +1136,20 @@ struct LockSettingsHomeScreen: View {
     ///
     /// 注意：容量字段在 DB.readStatus(mac) 返回的快照上，不在本页的 status（LockStatus）上 ——
     /// 2026-11-05 曾误写成 status?.pinCap，CI 直接报「LockStatus has no member pinCap」。
-    private var capacityBlock: some View {
+    // MARK: - 容量三环（2026-11-05 截图审查：这里曾经把整页撑宽）
+//
+// 三个环原来是 segCompactOuter * 1.9 = 125.4pt，3x125.4 + 2xgapL(16) = 408pt，
+// 而卡内可用宽度只有约 336pt（屏 402 - 2x gutterCard - 2x padCard）。
+// 结果整页内容比屏幕宽，左右各被裁掉一条 —— 截图里「然然家」「态密码」「开通」都缺左边。
+// 现改为 * 1.42（93.7pt）+ gapM：3x93.7 + 2x12 = 305pt，留出 30pt 余量。
+//
+// 教训：HStack 里放固定尺寸元件，先把「总和 vs 可用宽度」算出来；SwiftUI 不会替你压缩。
+private var capacityBlock: some View {
         let snap = DB.readStatus(mac)
         let pinUsed = max(0, (snap?.pinCap ?? 0) - (snap?.pinStock ?? 0))
         let pwdUsed = max(0, (snap?.pwdCap ?? 0) - (snap?.pwdStock ?? 0))
         let fpUsed = max(0, (snap?.fpCap ?? 0) - (snap?.fpStock ?? 0))
-        return HStack(spacing: V8.S.gapL) {
+        return HStack(spacing: V8.S.gapM) {
             capacityRing("PIN", used: pinUsed, cap: snap?.pinCap ?? 0)
             capacityRing("密码", used: pwdUsed, cap: snap?.pwdCap ?? 0)
             capacityRing("指纹", used: fpUsed, cap: snap?.fpCap ?? 0)
@@ -1163,7 +1171,7 @@ struct LockSettingsHomeScreen: View {
                     fraction: fraction,
                     center: "\(safeUsed)",
                     label: "/ \(safeCap)",
-                    size: V8.G.segCompactOuter * 1.9,
+                    size: V8.G.segCompactOuter * 1.42,
                     tint: fraction >= 0.9 ? V8.C.danger : (fraction >= 0.7 ? V8.C.warn : V8.C.accent),
                     showsTick: false,
                     showsCursor: false
