@@ -168,30 +168,24 @@ struct MemberCreateHomeScreen: View {
         return V8.C.ink4
     }
 
-    private func stepWord(_ index: Int) -> String {
-        if index < step { return "已完成" }
-        if index == step { return "进行中" }
-        return "待"
-    }
-
     // MARK: - 当前步的输入
 
     private var stepCard: some View {
         VCard2 {
-            VCardHead(eyebrow: current.no + " · " + current.title, statement: stepWord(step), trailing: step == 3 ? "可选" : "必填")
-            VDivider2()
-                .padding(.top, V8.S.gapM)
+            // 2026-11-05（截图审查 · 设计冗余）：卡头写「01 · 称呼与代号」，而页首芯片写着
+            // 「第 1 步 / 01 · 称呼与代号」、页面大标题写着「第 1 步 · 称呼与代号」——
+            // 同一个步骤名一屏内三次。卡内输入框自带标签（称呼 / emoji 代号），卡头不再重复；
+            // 「必填 / 可选」移到字段标签上，信息不丢。
             VStack(alignment: .leading, spacing: V8.S.gapM) {
                 stepBody
             }
-            .padding(.top, V8.S.gapM)
         }
     }
 
     @ViewBuilder
     private var stepBody: some View {
         if step == 0 {
-            fieldRow("称呼", text: $name, placeholder: "汉字 / 英文 / 数字，上限 20 字")
+            fieldRow("称呼 · 必填", text: $name, placeholder: "汉字 / 英文 / 数字，上限 20 字")
             if !name.isEmpty && !nameOK {
                 Text("称呼只接受汉字、英文、数字，且不超过 20 字。")
                     .font(V8.T.caption)
