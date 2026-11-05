@@ -557,7 +557,10 @@ jobs:
           if [ "$BOOTED" != "1" ]; then
             echo "boot=NOT_BOOTED_AFTER_180s" >> "$DIAG"
             xcrun simctl list devices >> "$DIAG" 2>&1 || true
-            exit 1
+            # 2026-11-05：截图是**诊断能力**，boot 失败也只是这一轮没有图 —— 不该把整步判死。
+            # 收口成 exit 0（有 count 判据兜底：没有图会由末尾的 COUNT 检查报出来）。
+            echo "::warning::模拟器没有在 300 秒内进入 Booted —— 本轮跳过截图"
+            exit 0
           fi
           echo "boot=ok (already-or-now Booted)" >> "$DIAG"
           # 2026-11-04（第二次修正）：appearance 必须在 boot **之后** —— 关机状态下
@@ -567,17 +570,33 @@ jobs:
           echo "bootstatus=ok" >> "$DIAG"
           if ! xcrun simctl install "$UDID" "$APP" >> "$DIAG" 2>&1; then
             echo "install=FAILED" >> "$DIAG"
-            exit 1
+            echo "::warning::装不进模拟器（APP=$APP）—— 本轮跳过截图"
+            ls -la "$(dirname "$APP")" >> "$DIAG" 2>&1 || true
+            exit 0
           fi
           echo "install=ok" >> "$DIAG"
           echo "stage=first-shot" >> "$DIAG"
           # 立刻验一张：装上了但截不出图 = 模拟器显示服务没起来，与"页面空白"是两回事。
-          if xcrun simctl io "$UDID" screenshot "/tmp/shots/_probe.png" >> "$DIAG" 2>&1 && [ -f "/tmp/shots/_probe.png" ]; then
+          #
+          # 2026-11-05（实测）：连续两轮 diag 都停在 `stage=first-shot` 就断了 ——
+          # 探针截图是**第一次**调用 simctl io，模拟器显示服务常常还没就绪。
+          # 原来一次失败就 exit 1，整步判死、一张图都没有。
+          # 现在：最多试 5 次、每次间隔 3 秒；仍失败也只是**降级**（记录并继续），
+          # 让后面的循环去试 —— 后面每一张自己也有重试。
+          PROBE_OK=0
+          for attempt in 1 2 3 4 5; do
+            if xcrun simctl io "$UDID" screenshot "/tmp/shots/_probe.png" >> "$DIAG" 2>&1 && [ -f "/tmp/shots/_probe.png" ]; then
+              PROBE_OK=1; break
+            fi
+            echo "probe-shot=retry$attempt" >> "$DIAG"
+            sleep 3
+          done
+          if [ "$PROBE_OK" = "1" ]; then
             echo "probe-shot=ok" >> "$DIAG"
             rm -f "/tmp/shots/_probe.png"
           else
-            echo "probe-shot=FAILED" >> "$DIAG"
-            exit 1
+            echo "probe-shot=FAILED_ALL_5" >> "$DIAG"
+            echo "::warning::探针截图 5 次都失败 —— 继续尝试正式截图（每张自带重试）"
           fi
           # 预授权系统弹窗 —— 否则第一次启动的通知权限对话框会挡住截图（13 号截图实测被挡）。
           xcrun simctl privacy "$UDID" grant notifications com.aapk.lockkeeper 2>/dev/null || true
