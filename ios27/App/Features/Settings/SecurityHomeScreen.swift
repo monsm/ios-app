@@ -294,7 +294,9 @@ struct SecurityHomeScreen: View {
 
     private var unsetCard: some View {
         VCard2(style: .well) {
-            VCardHead(eyebrow: "未设密码", statement: "这台手机现在没有任何屏障")
+            // 2026-11-05（对抗审查 · 设计冗余）：这句「这台手机现在没有任何屏障」正是本页的
+            // 判断句（页标题），卡头又原样说了一遍。卡头改成说**这张卡要做什么**。
+            VCardHead(eyebrow: "未设密码", statement: "下一步：设一个本机密码")
             Text("下一步：设一个 4 位以上纯数字密码。之后冷启动要先输它，看密码明文与导出备份也要先输它 —— 手机丢了，锁内凭证也不会被人直接读走。")
                 .font(V8.T.footnote)
                 .foregroundStyle(V8.C.ink3)

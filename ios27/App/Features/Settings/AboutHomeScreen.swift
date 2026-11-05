@@ -63,12 +63,12 @@ struct AboutHomeScreen: View {
 
     private var buildCard: some View {
         VCard2 {
+            // 2026-11-05（对抗审查 · 设计冗余）：卡头 statement 已经是构建号，下面第一行
+            // 又列了一次「构建号 = 同一个值」。构建号由卡头唯一承载。
             VCardHead(eyebrow: "构建", statement: SettingsFacts.build)
             VDivider2()
                 .padding(.top, V8.S.gapM)
             VStack(spacing: 0) {
-                VDataRow(tag: "构建号", tagTint: V8.C.ink4, title: SettingsFacts.build, value: "")
-                VDotRule()
                 VDataRow(tag: "主题套数", tagTint: V8.C.ink4, title: "2", value: "", unit: "套")
                 VDotRule()
                 VDataRow(tag: "遥测", tagTint: V8.C.ink4, title: "无", value: "")
@@ -79,7 +79,9 @@ struct AboutHomeScreen: View {
 
     private var versionCard: some View {
         VCard2 {
-            VCardHead(eyebrow: "版本", statement: "当前 \(SettingsFacts.version)")
+            // 2026-11-05（对抗审查 · 设计冗余）：卡头写「当前 1.0.0」，下面那行又是
+            // 「当前版本 1.0.0」—— 同一串值两遍。卡头只说这张卡是什么，版本由那行唯一显示。
+            VCardHead(eyebrow: "版本", statement: "本机安装的这一份")
             VDivider2()
                 .padding(.top, V8.S.gapM)
             Button {
