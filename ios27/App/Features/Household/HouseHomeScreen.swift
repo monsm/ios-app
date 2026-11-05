@@ -55,7 +55,7 @@ struct HouseHomeScreen: View {
         // 同上：weekDaily 会按天过滤 7 次，别在 ViewBuilder 里调两回。
         let bars = weekDaily
         return VCard2 {
-            VCardHead(eyebrow: "近 7 天开门", statement: "\(weekOpens) 次", trailing: "本机回执")
+            VCardHead(eyebrow: "近 7 天开门", statement: "\(weekOpens) 次")
             VDivider2()
                 .padding(.top, V8.S.gapM)
             // 2026-11-05（截图审查）：原来这里有两套轴说明 —— 我加的星期行 +
@@ -86,7 +86,7 @@ struct HouseHomeScreen: View {
         // 2026-11-05（用户指令：减少多余文字、图形化变多）：
         // 「本周开了 N 次门」这句改成由下面的柱图承载（图形说同一件事更省字）。
         // lead 只留别处没有的一条规则。
-        return "开门次数只统计本机读到的回执；归档不影响历史记录。"
+        return "开门次数只统计本机读到的回执。"
     }
 
     var body: some View {
