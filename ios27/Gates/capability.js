@@ -64,6 +64,15 @@ const CAPABILITIES = [
   { symbol: 'ZKProtocol.assertReadOnly', why: '只读试验模式对所有 BLE 下发的唯一收口。丢了 = 只读模式形同虚设。' },
   // —— 空壳 ——
   { symbol: 'DB.isDecoy', why: '空壳（胁迫码）模式的判据。丢了 = 胁迫码下把真实数据摊开。' },
+
+  // —— 2026-11-05（全技能审核 · APK 对位 P2-7）：补上原来不在清单里的核心写链路。
+  // 背景：这五条都是「用户看得见的承诺」背后的真下发动作，任何一条被删掉都不会
+  // 让 41 道闸门变红（它们只查现有代码内部一致性）—— 而原版 APK 全都有对应入口。
+  { symbol: 'HardwareService.shared.provisionGateway', mustAppearIn: 'Features/Door/LockMaintenanceHomeScreen.swift', why: '网关配网（写 WiFi/写 IoT/重启上线）。丢了 = 网关页只剩一张空卡。' },
+  { symbol: 'FirmwareKit.parse', mustAppearIn: 'Features/Door/LockMaintenanceHomeScreen.swift', why: '固件包解析（ZIP/DFU 清单/降级闸）。丢了 = 固件页选包后无法校验。' },
+  { symbol: 'DefendService.apply', mustAppearIn: 'Features/Door/LockSettingsHomeScreen.swift', why: '布防下发（cmd25 SETDEFENCE）。丢了 = 布防段变成纯展示。' },
+  { symbol: 'LockService.shared.setAutoLock', mustAppearIn: 'Features/Door/LockSettingsHomeScreen.swift', why: '防尾随/自动上锁下发。丢了 = 防尾随段写不进锁。' },
+  { symbol: 'CredentialOrg.scheduleAlerts', mustAppearIn: 'Features/Keys/CredentialStudioHomeScreen.swift', why: '凭证到期本地提醒排程。丢了 = 到期提醒永不送达（用户只会觉得提醒坏了）。' },
 ];
 
 // 找到每个能力所属类型的定义文件 —— 类型内自引用不算「有调用点」。
