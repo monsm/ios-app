@@ -600,10 +600,8 @@ struct KeyCreateHomeScreen: View {
                 .disabled(confirmCode != code || !codeValid || busy)
                 .opacity((confirmCode != code || !codeValid || busy) ? 0.45 : 1)
                 .padding(.top, V8.S.gapS)
-                Text("写入会真下发到门锁；回执成功才记入本机台账，失败会留在这一页报原因。")
-                    .font(V8.T.footnote)
-                    .foregroundStyle(V8.C.ink3)
-                    .fixedSize(horizontal: false, vertical: true)
+                // 2026-11-05（减字 · 去重复）：这句与页面 lead **逐字相同**，
+                // 而 lead 在同一屏顶部一直可见。同一句话在同一屏出现两次，删掉脚注这一份。
             }
         }
     }
