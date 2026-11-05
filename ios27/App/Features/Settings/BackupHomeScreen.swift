@@ -235,7 +235,10 @@ struct BackupHomeScreen: View {
 
     private var studioFilesCard: some View {
         VCard2 {
-            VCardHead(eyebrow: "本机备份", statement: "备份含门锁密钥", trailing: "\(files.count) 份")
+            // 2026-11-05（对抗审查 · 设计冗余）：本页本来有两个「生成备份」入口，都叫备份、
+            // 各有一个口令框、各说一遍「忘了就废」。改成一眼能分清的两种交付形态：
+            // 这里是**留在本机的文件**（有份数上限），下面对应的是**可复制的文本**。
+            VCardHead(eyebrow: "备份文件", statement: "留在本机 · 含门锁密钥", trailing: "\(files.count) 份")
             VDivider2()
                 .padding(.top, V8.S.gapM)
             Text("备份文件只留在本机 Documents，别发给别人 —— 它等同于家门钥匙。")
@@ -642,7 +645,8 @@ struct BackupHomeScreen: View {
 
     private var exportCard: some View {
         VCard2 {
-            VCardHead(eyebrow: "全量备份", statement: "加密是唯一路径", trailing: "加密")
+            // 与上面的「备份文件」互补：这一个产出**可复制的文本**（发给自己的另一台设备用）。
+            VCardHead(eyebrow: "备份文本", statement: "可复制 · 用于换机或留档", trailing: "加密")
             VDivider2()
                 .padding(.top, V8.S.gapM)
             HStack(alignment: .top, spacing: V8.S.gapS) {
@@ -690,7 +694,9 @@ struct BackupHomeScreen: View {
                     .foregroundStyle(V8.C.warn)
                     .padding(.top, V8.S.gapS)
             }
-            Text("忘记密码 = 这份备份永久作废。请把密码记在安全的地方，或另存一份到密码管理器。")
+            // 2026-11-05（去冗余）：整句「忘记密码 = 永久作废」在上面「备份文件」卡已说过一次。
+            // 这里只留一句短提示，不再复述整段 —— 同一页两段同样的警告只是噪声。
+            Text("口令丢了就打不开这份文本；两个口令框各自独立，别混用。")
                 .font(V8.T.footnote)
                 .foregroundStyle(V8.C.ink3)
                 .padding(.top, V8.S.gapS)
