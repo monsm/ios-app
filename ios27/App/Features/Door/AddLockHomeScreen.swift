@@ -191,7 +191,7 @@ struct AddLockHomeScreen: View {
                 .padding(.top, V8.S.gapM)
                 .fixedSize(horizontal: false, vertical: true)
             if readOnly {
-                Text("只读试验模式已开启：可以扫描，但不能开始配网。到「设置 → 安全 → 只读试验模式」关掉再试。")
+                Text(TrialCopy.blocked("开始配网", note: "扫描仍然可用"))
                     .font(V8.T.footnote)
                     .foregroundStyle(V8.C.warn)
                     .padding(.top, V8.S.gapM)
@@ -525,7 +525,7 @@ struct AddLockHomeScreen: View {
             return
         }
         guard !readOnly else {
-            banner = "只读试验模式已开启：配网写入门锁的命令全部被拦下。到「设置 → 安全 → 只读试验模式」关掉再试。"
+            banner = TrialCopy.blocked("配网写入门锁的命令")
             return
         }
         picked = c
