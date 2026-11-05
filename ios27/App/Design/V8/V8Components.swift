@@ -776,3 +776,44 @@ struct VRangeCaption: View {
             .accessibilityAddTraits(.isHeader)
     }
 }
+
+// MARK: - 17. 可折叠说明（2026-11-05）
+//
+// 用途：把「原理 / 口径」类说明收起来，首屏只留一句标题。
+// 不用于安全后果说明 —— 那些必须默认可见（删数据、密钥泄露、不可撤销）。
+//
+// 判定标准：这段话删掉会不会让人做错决定？会 ⇒ 不许折叠；不会 ⇒ 可以折叠。
+struct VDisclosure<Content: View>: View {
+    let title: String
+    @ViewBuilder var content: Content
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var open = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: V8.S.gapS) {
+            Button {
+                if reduceMotion { open.toggle() } else { withAnimation(.easeInOut(duration: 0.18)) { open.toggle() } }
+            } label: {
+                HStack(spacing: V8.S.gapXS) {
+                    Text(title)
+                        .font(V8.T.caption)
+                        .foregroundStyle(V8.C.ink4)
+                    Spacer(minLength: 0)
+                    Image(systemName: open ? "chevron.up" : "chevron.down")
+                        .font(V8.T.micro)
+                        .foregroundStyle(V8.C.ink4)
+                }
+                .frame(minHeight: V8.H.min)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(title)
+            .accessibilityHint(open ? "收起说明" : "展开说明")
+            if open {
+                content
+                    .font(V8.T.footnote)
+                    .foregroundStyle(V8.C.ink3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+}

@@ -721,11 +721,12 @@ struct LockSettingsHomeScreen: View {
             VCardHead(eyebrow: "防尾随", statement: tailgateStatement)
             VDivider2()
                 .padding(.top, V8.S.gapM)
-            Text("门锁用蓝牙钥匙、密码、指纹等电控方式开锁后，等待这段时间会自动上锁。档位 2–6 秒，默认 6 秒。")
-                .font(V8.T.caption)
-                .foregroundStyle(V8.C.ink4)
-                .padding(.top, V8.S.gapM)
-                .fixedSize(horizontal: false, vertical: true)
+            // 2026-11-05（可折叠说明试点）：这段是**原理**（这一档怎么算），删掉不会让人做错事，
+            // 所以收进折叠区；同一张卡里的档位芯片与「设置」按钮仍然可见。
+            VDisclosure(title: "这一档是怎么算的") {
+                Text("门锁用蓝牙钥匙、密码、指纹等电控方式开锁后，等待这段时间会自动上锁。档位 2–6 秒，默认 6 秒。")
+            }
+            .padding(.top, V8.S.gapM)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: V8.S.gapChip) {
                     ForEach(2 ... 6, id: \.self) { value in
