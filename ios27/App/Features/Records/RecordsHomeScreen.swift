@@ -101,7 +101,7 @@ struct RecordsHomeScreen: View {
         } content: {
             if app.lock == nil {
                 VEmpty(
-                    title: "还没有添加门锁",
+                    title: "添加一把门锁",
                     reason: "开门与操作记录存在门锁内。先添加并配对门锁，再回到这里读取。",
                     actionTitle: "添加门锁"
                 ) { router.request(.dest(.addLock)) }

@@ -195,7 +195,7 @@ struct AutoOpenHomeScreen: View {
 
     private var noLockCard: some View {
         VEmpty(
-            title: "还没有门锁",
+            title: "添加一把门锁",
             reason: "自动开锁要挂在具体一把锁上；距离标定也要连上锁读信号。先添加门锁，再回来开启。",
             actionTitle: "添加门锁"
         ) { router.request(.dest(.addLock)) }

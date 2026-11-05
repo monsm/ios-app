@@ -325,7 +325,7 @@ struct MobileKeyHomeScreen: View {
         Group {
             if app.lock == nil {
                 VEmpty(
-                    title: "还没有添加门锁",
+                    title: "添加一把门锁",
                     reason: "分享是把这把锁的钥匙递给安卓。先添加门锁并走完配网，这里才有东西可分享。",
                     actionTitle: "添加门锁"
                 ) { router.request(.dest(.addLock)) }

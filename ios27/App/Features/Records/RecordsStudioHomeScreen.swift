@@ -111,7 +111,7 @@ struct RecordsStudioHomeScreen: View {
                 decoyCard
             } else if app.lock == nil && macs.isEmpty {
                 VEmpty(
-                    title: "还没有添加门锁",
+                    title: "添加一把门锁",
                     reason: "记录工作室检索的是锁内日志缓存。先添加并配对一把锁，读一次日志再回来。",
                     actionTitle: "添加门锁"
                 ) { router.request(.dest(.addLock)) }

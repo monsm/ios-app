@@ -121,7 +121,7 @@ struct RecordsExportSection: View {
                 decoyCard
             } else if app.lock == nil {
                 VEmpty(
-                    title: "还没有添加门锁",
+                    title: "添加一把门锁",
                     reason: "导出的都是门锁台账里的真记录。先添加并配对一把锁，再回来导出。",
                     actionTitle: "添加门锁"
                 ) { router.request(.dest(.addLock)) }

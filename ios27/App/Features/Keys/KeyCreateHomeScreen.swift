@@ -84,7 +84,7 @@ struct KeyCreateHomeScreen: View {
                 )
             } else if app.lock == nil {
                 VEmpty(
-                    title: "还没有添加门锁",
+                    title: "添加一把门锁",
                     reason: "凭证是挂在某一把具体的锁上的。先把锁恢复出厂（长按 RESET 到三声嘀），再回来添加。",
                     actionTitle: "添加门锁"
                 ) { router.request(.dest(.addLock)) }

@@ -51,7 +51,7 @@ struct HouseHomeScreen: View {
         } content: {
             if activeMembers.isEmpty && archivedMembers.isEmpty {
                 VEmpty(
-                    title: "还没有成员",
+                    title: "新建一位成员",
                     reason: "成员是手机钥匙与权限的归属。先建一位，再给他签发钥匙。",
                     actionTitle: "新建成员"
                 ) { router.request(.dest(.memberCreate)) }
