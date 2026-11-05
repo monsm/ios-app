@@ -128,7 +128,9 @@ struct KeyCreateHomeScreen: View {
     private var chipRow: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: V8.S.gapChip) {
-                VChip2(icon: .glyph("square.stack.3d.up.fill"), label: "类型", value: kind.rawValue)
+                // 2026-11-05（截图审查 · 值级重复）：这里原来是「类型 · 密码」芯片，
+                // 而同一屏的步骤卡（类型归属 · 密码）与分段控件（密码）已经各说了一次。
+                // 同一个值三处显示 ⇒ 删掉芯片这一份；类型仍由下面两处承载。
                 VChip2(icon: .glyph("person.fill"), label: "归属", value: ownerLabel)
                 VChip2(icon: .ring(codeFraction, codeTint), label: "码值", value: codeLabel)
                 VChip2(icon: .ring(Double(step + 1) / 4.0, V8.C.accent), label: "进度", value: "第 " + String(step + 1) + "/4 步")
