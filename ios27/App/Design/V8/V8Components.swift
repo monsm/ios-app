@@ -115,7 +115,7 @@ struct VCardHead: View {
                 }
             }
             Text(statement)
-                .font(V8.T.footnote)
+                .font(V8.T.label)
                 .foregroundStyle(V8.C.ink4)
                 .lineSpacing(1.5)
                 .fixedSize(horizontal: false, vertical: true)
@@ -142,13 +142,12 @@ struct VDivider2: View {
 /// 每个都要参与布局与合成）。改成一条**虚线描边**：同样的视觉（点 + 间隔），只有一个 Shape。
 struct VDotRule: View {
     var body: some View {
-        let width = V8.S.hair * (DB.store.getBool("kf_hc") ? 2 : 1)
-        let dot = V8.S.hair * 2
-        let gap = V8.S.gapXS - V8.S.hair
-        VDashLine()
-            .stroke(V8.C.lineStrong,
-                    style: StrokeStyle(lineWidth: width, lineCap: .butt, dash: [dot, gap]))
-            .frame(height: width)
+        // 2026-11-05（Round 3 · 专业 iOS 27）：点线是参考图的签名元素，但在真机上
+        // 它读起来像「装饰性虚线」而不是原生分隔线。原生列表统一用 0.5pt 实线，
+        // 这里直接复用结构分割线的颜色与粗细 —— 更安静，也更像系统设置。
+        Rectangle()
+            .fill(V8.C.line)
+            .frame(height: V8.S.hair * (DB.store.getBool("kf_hc") ? 2 : 1))
             .accessibilityHidden(true)
     }
 }

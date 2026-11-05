@@ -63,7 +63,7 @@ enum V8 {
         /// 卡片：比底亮 4~7 级
         static let card = dual(0xFFFFFF, 0x1C1C1E)
         /// 凹槽/内嵌块：比卡片暗
-        static let well = dual(0xF2F2F7, 0x2C2C2E)
+        static let well = dual(0xE9E8EF, 0x2C2C2E)
         /// 芯片未选中
         static let chipOff = dual(0xF4F3FA, 0x242427)
         /// 芯片选中
@@ -79,11 +79,8 @@ enum V8 {
         static let shadow = dual(0x282846, 0x000000, lightAlpha: 0.05, darkAlpha: 0.18)
         /// 玻璃面染色（仅 Tab 栏 / Toast / 只读试验条）
         static let glassTint = dual(0xFFFFFF, 0x1A1A1C, lightAlpha: 0.72, darkAlpha: 0.72)
-        /// 表格点线 / 描边
-        static var lineStrong: Color {
-            DB.store.getBool("kf_hc") ? dual(0xA9A8B4, 0xFFFFFF, lightAlpha: 1, darkAlpha: 0.34)
-                                     : dual(0xD8D7DE, 0xFFFFFF, lightAlpha: 1, darkAlpha: 0.20)
-        }
+        // 2026-11-05（Round 3）：lineStrong 唯一消费者是点线 VDotRule；点线改成实线后
+        // 与 line 合并 —— 全仓不再需要第二档分隔线。
 
         // MARK: 语义族：5 族 × 3 档（值 / 容器 / 轨道）
 

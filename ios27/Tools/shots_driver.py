@@ -119,6 +119,15 @@ def main() -> int:
         name = TAB_NAME.get(tab, "tab" + tab)
         log("fullpage begin tab=" + tab + " name=" + name + " budget_left=" + str(int(budget_left())) + "s")
         launch(["-kfUITest", "-kfSeed", "-kfFullPage", "-kfTab", tab], 8)
+        # 2026-11-05（Round 3 · 导航标题验证）：整页图是「把 ScrollView 撑开」拍的，
+        # 不含导航栏 —— 于是「navigationTitle 是否真的出现 / large 还是 inline」在整页图里
+        # 根本看不到。这里补一张根页视口图：标题、工具栏按钮、状态行都在这一张里。
+        rootShot = os.path.join(OUT, "root-" + name + ".png")
+        if shot(rootShot):
+            produced += 1
+            log("root viewport ok " + name + " size=" + str(os.path.getsize(rootShot)))
+        else:
+            log("root viewport missing " + name)
         container = run(["xcrun", "simctl", "get_app_container", udid, BUNDLE, "data"], timeout=60)
         dest = os.path.join(OUT, tab + "-" + name + "-full.png")
         copied = False
