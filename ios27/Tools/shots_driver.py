@@ -109,6 +109,30 @@ def main() -> int:
             time.sleep(2)
         return os.path.exists(path)
 
+    def fullpage_copy(src: str, dest: str) -> bool:
+        """拷出整页图并做单色检测：AX 档下 drawHierarchy 可能拿到一版纯纸色
+        （App 侧两遍渲染也没能等到重布局完成）。单色图不覆盖 ci-shots 上的旧图。"""
+        if not os.path.exists(src):
+            return False
+        try:
+            with open(src, "rb") as fh, open(dest, "wb") as out:
+                out.write(fh.read())
+        except Exception as exc:
+            log("copy failed: " + repr(exc))
+            return False
+        try:
+            from PIL import Image  # type: ignore
+            im = Image.open(dest).convert("RGB").resize((60, 456))
+            if len(set(im.getdata())) <= 2:
+                log("fullpage BLANK (single-color) " + os.path.basename(dest) + " - discarded")
+                os.remove(dest)
+                return False
+        except ImportError:
+            pass  # 无 Pillow 就跳过检测（CI 镜像自带 Pillow）
+        except Exception as exc:
+            log("blank check failed: " + repr(exc))
+        return True
+
     tabs, subs = SCOPES.get(scope, SCOPES["all"])
     log("python driver: scope=" + scope + " tabs=[" + " ".join(tabs) + "] subs=[" + " ".join(subs) + "]")
     os.makedirs(OUT, exist_ok=True)
@@ -157,18 +181,12 @@ def main() -> int:
         copied = False
         if container is not None and container.returncode == 0:
             src = os.path.join(container.stdout.strip(), "Documents", "kf-fullpage-" + tab + "-tab.png")
-            if os.path.exists(src):
-                try:
-                    with open(src, "rb") as fh, open(dest, "wb") as out:
-                        out.write(fh.read())
-                    copied = True
-                except Exception as exc:
-                    log("copy failed: " + repr(exc))
+            copied = fullpage_copy(src, dest)
         if copied:
             produced += 1
-            log("fullpage ok " + name + " size=" + str(os.path.getsize(dest)))
+            log("fullpage ok " + prefix + name + " size=" + str(os.path.getsize(dest)))
         else:
-            log("fullpage missing " + name)
+            log("fullpage missing " + prefix + name)
 
     # 二、子页视口图（-kfDest 直接把那一页压进导航栈）
     for idx, target in enumerate(subs):
