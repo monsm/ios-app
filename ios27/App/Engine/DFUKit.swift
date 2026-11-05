@@ -124,7 +124,7 @@ final class DFUSession: NSObject, @unchecked Sendable {
         // 不经过 `LockServiceLink.request` 的 `assertReadOnly` —— 试验模式下照样能把锁刷成半砖，
         // 而「刷一半断链」正是本仓 DFU 页最警告的失败态。这里是唯一执行入口，拦一处即全覆盖。
         guard !TrialGuard.isOn else {
-            throw DFUTransportError.ble("只读试验模式已开启 —— 固件升级会改写门锁固件，已拒绝。请先到「安全」页关闭它。")
+            throw DFUTransportError.ble(TrialCopy.refused("固件升级会改写门锁固件"))
         }
         emit(.connecting, "准备连接升级模式设备")
         // 2026-10-27 审核修复 (AUDIT-D D-23)：**失败路径必须断开连接**。

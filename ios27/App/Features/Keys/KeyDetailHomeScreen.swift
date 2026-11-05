@@ -598,7 +598,7 @@ struct KeyDetailHomeScreen: View {
             return
         }
         guard !app.trialGuard else {
-            actionError = "只读试验模式已开启：改到期日要往门锁写，已停用。先到「安全」页关闭它。"
+            actionError = TrialCopy.refused("改到期日要往门锁写")
             return
         }
         guard key.kind == .password || key.kind == .temp, let alias = alias(of: key) else {
@@ -645,7 +645,7 @@ struct KeyDetailHomeScreen: View {
             return
         }
         guard !app.trialGuard else {
-            actionError = "只读试验模式已开启：删除要往门锁写，已停用。先到「安全」页关闭它。"
+            actionError = TrialCopy.refused("删除要往门锁写")
             return
         }
         guard let key else { return }
@@ -794,7 +794,7 @@ struct KeyDetailReEnrollSheet: View {
     private func start() {
         guard !busy else { return }
         guard !app.trialGuard else {
-            error = "只读试验模式已开启：重录指纹要往门锁写，已停用。先到「安全」页关闭它。"
+            error = TrialCopy.refused("重录指纹要往门锁写")
             return
         }
         guard let old = batch else {

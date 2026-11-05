@@ -683,7 +683,7 @@ struct KeyCreateHomeScreen: View {
             return
         }
         guard !app.trialGuard else {
-            errorText = "只读试验模式已开启：写入要往门锁下发，已停用。先到「安全」页关闭它。"
+            errorText = TrialCopy.refused("写入要往门锁下发")
             return
         }
         guard !busy else { return }
@@ -817,7 +817,7 @@ struct KeyCreateHomeScreen: View {
             VCardHead(eyebrow: "只读试验模式", statement: "写入类命令已停用")
             VDivider2()
                 .padding(.top, V8.S.gapM)
-            Text("只读试验模式已开启：写入凭证要往门锁下发，会被护栏拦下。本机台账也不会写入。先到「安全」页关闭它再来。")
+            Text("只读试验模式已开启：写入凭证要往门锁下发，会被护栏拦下。本机台账也不会写入。先到「设置 → 安全 → 只读试验模式」关闭它再来。")
                 .font(V8.T.footnote)
                 .foregroundStyle(V8.C.ink3)
                 .padding(.top, V8.S.gapFootnote)

@@ -1124,7 +1124,7 @@ struct BackupHomeScreen: View {
             return
         }
         guard !trialOn else {
-            outcome = "只读试验模式已开启：导入备份会改写本机台账，已拒绝。请先到「安全」页关闭它。"
+            outcome = TrialCopy.refused("导入备份会改写本机台账")
             return
         }
         guard !busy else { return }
@@ -1278,7 +1278,7 @@ struct BackupHomeScreen: View {
             return
         }
         guard !trialOn else {
-            outcome = "只读试验模式已开启：导入备份会改写本机台账，已拒绝。请先到「安全」页关闭它。"
+            outcome = TrialCopy.refused("导入备份会改写本机台账")
             return
         }
         do {

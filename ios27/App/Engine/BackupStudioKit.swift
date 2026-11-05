@@ -427,7 +427,7 @@ enum BackupStudio {
         // 导入会覆盖本机数据，属于该拦的写；导出是读，仍放行（文案已同步改准）。
         // 这里是三条导入路径（旧备份页 / 工作室文本 / 换机迁移）的**唯一入口**，拦一处即可全覆盖。
         guard !TrialGuard.isOn else {
-            throw BLEErrorX.msg("只读试验模式已开启 —— 导入备份会改写本机台账，已拒绝。请先到「安全」页关闭它。")
+            throw BLEErrorX.msg(TrialCopy.refused("导入备份会改写本机台账"))
         }
         // 2026-11-01（Round 315）：**空壳模式同样必须拒绝导入。**
         // 判据与 TrialGuard 那条同源：导入是整表改写，属于「写」。
