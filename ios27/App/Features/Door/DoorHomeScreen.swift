@@ -155,7 +155,10 @@ struct DoorHomeScreen: View {
                         ForEach(shown, id: \.mac) { kc in
                             let on = DB.normalizeMac(kc.mac) == current
                             Button { switchLock(kc) } label: {
-                                VChip2(icon: .ring(on ? 1 : 0.02, on ? V8.C.accent : V8.C.ink4),
+                                // 2026-11-05（对抗审查）：用锁身份里选的**符号**做芯片图标。
+                                // 在此之前 LockArchive.symbolName 全仓零调用 —— 「符号」那个
+                                // 九宫格选了只写进 LockMeta，没有任何界面显示它。
+                                VChip2(icon: .glyph(LockArchive.symbolName(LockArchive.meta(kc.mac))),
                                        label: LockArchive.displayName(kc),
                                        value: batteryWord(kc.mac))
                             }

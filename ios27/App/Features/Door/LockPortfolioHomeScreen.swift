@@ -259,6 +259,25 @@ struct LockPortfolioHomeScreen: View {
                 VCardHead(eyebrow: "锁身份", statement: profilePlaceText)
                 VDivider2()
                     .padding(.top, V8.S.gapM)
+                // 2026-11-05（对抗审查）：符号与色标此前都是「写进 LockMeta 但没有任何界面显示」
+                // 的死控件 —— symbolName / swatchColor 全仓零调用。这里给一个实时预览：
+                // 选中的符号按选中的色标着色，用户选完立刻看得见。
+                HStack(spacing: V8.S.gapM) {
+                    Image(systemName: LockArchive.symbolName(LockArchive.meta(kc?.mac ?? "")))
+                        .font(V8.T.title2)
+                        .foregroundStyle(profileSwatchTint(colorKey))
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: V8.S.gapXS) {
+                        Text(profileName.isEmpty ? "未命名" : profileName)
+                            .font(V8.T.value)
+                            .foregroundStyle(V8.C.ink1)
+                        Text(symbolLabel + " · " + colorLabel + " · " + (group.isEmpty ? LockArchive.ungroupedLabel : group))
+                            .font(V8.T.caption)
+                            .foregroundStyle(V8.C.ink4)
+                    }
+                    Spacer(minLength: 0)
+                }
+                .padding(.top, V8.S.gapM)
                 VStack(spacing: 0) {
                     VDataRow(tag: "型号", tagTint: V8.C.ink4, title: profileModelName, value: "")
                     VDotRule()
@@ -393,14 +412,25 @@ struct LockPortfolioHomeScreen: View {
         LockArchive.symbols.first { $0.name == symbol }?.label ?? "默认"
     }
 
+    /// 色标键 → 设计令牌色。
+    ///
+    /// 2026-11-05（对抗审查）：原来这里是**第二份** key→语义词映射，与 Engine 的
+    /// `LockArchive.swatchColor` 各写一遍 —— 结果后者全仓零调用（死代码），
+    /// 改一处忘另一处就会让「色标」的语义漂。现在只在 UI 层做 ToneColor → Color 的翻译，
+    /// key→语义的唯一一份留在 Engine。
     private func profileSwatchTint(_ key: String) -> Color {
-        switch key {
-        case "ok": return V8.C.ok
-        case "warn": return V8.C.warn
-        case "danger": return V8.C.danger
-        case "neutral": return V8.C.ink3
-        default: return V8.C.accent
+        switch LockArchive.swatchColor(key) {
+        case .ok: return V8.C.ok
+        case .warn: return V8.C.warn
+        case .danger: return V8.C.danger
+        case .neutral: return V8.C.ink3
+        case .accent: return V8.C.accent
         }
+    }
+
+    /// 色标键 → 用户看得懂的名字（与 `LockArchive.swatches` 同一份表）。
+    private var colorLabel: String {
+        LockArchive.swatches.first { $0.key == colorKey }?.name ?? "主题色"
     }
 
     private var pinFraction: Double {
