@@ -33,7 +33,10 @@ struct AboutHomeScreen: View {
 
     private var counterCard: some View {
         VCard2 {
-            VCardHead(eyebrow: "累计开锁", statement: "\(store.unlockTotal) 次", trailing: "本机")
+            // 2026-11-05（原图裁切确认 · 设计冗余）：卡头 statement 写「0 次」，
+            // 下面那排机械数字格又显示「0」+「次」—— 同一个数在一张卡里出现两次。
+            // 卡头改成说这个数的**口径**（脚注讲的是「只算成功回执」，两者互补不重复）：
+            VCardHead(eyebrow: "累计开锁", statement: "自本机安装以来", trailing: "本机")
             VDivider2()
                 .padding(.top, V8.S.gapM)
             HStack(spacing: V8.S.gapXS) {
