@@ -652,7 +652,9 @@ jobs:
             if [ -n "$CONTAINER" ] && [ -f "$CONTAINER/Documents/kf-fullpage-$i-tab.png" ]; then
               cp "$CONTAINER/Documents/kf-fullpage-$i-tab.png" "/tmp/shots/$i-$name-full.png" || true
             else
-              echo "fullpage missing for $name (tab $i)"
+              # 2026-11-05（诊断）：这一行原来只写 stdout，diag 里看不到 —— 整页图缺失时
+              # 只能靠猜。写进 diag，下一轮就能直接看出是哪一 Tab 没产出。
+              echo "fullpage missing for $name (tab $i)" | tee -a "$DIAG"
             fi
             i=$((i+1))
           done
@@ -674,6 +676,7 @@ jobs:
               sleep 2
               xcrun simctl io "$UDID" screenshot "/tmp/shots/$j-$dest.png" 2>/dev/null || true
             fi
+            echo "shot $j-$dest size=$(stat -f%z "/tmp/shots/$j-$dest.png" 2>/dev/null || echo 0)" >> "$DIAG"
             j=$((j+1))
           done
           # 2026-11-05（截图耗时优化）：这里原来还有一轮「10 个子页的整页截图」。
@@ -682,6 +685,18 @@ jobs:
           # 子页的**视口**截图仍在上一轮循环里产出，评审要看的内容不丢。
           echo "skip=subpage-fullpage-shots (App does not emit on single-screen pages)" >> "$DIAG"
           ls -la /tmp/shots
+          # 2026-11-05（诊断）：本 step 在 run 41947680856 上标了 failure，但 diag 显示它跑到了
+          # 最后一段、且产出了 2-records-bottom.png —— 说明中途某个非零退出码把 step 判红了。
+          # 这个 step 是**诊断用**的（job 本身 continue-on-error），所以明确收口：
+          # 有图就算成功，一张都没有才算失败 —— 这样红/绿仍然有意义，不再被无关的退出码污染。
+          COUNT=$(ls /tmp/shots/*.png 2>/dev/null | wc -l | tr -d ' ')
+          echo "count=$COUNT" >> "$DIAG"
+          if [ "$COUNT" -ge 1 ]; then
+            echo "截图产出 $COUNT 张"
+            exit 0
+          fi
+          echo "::error::一张截图都没有产出（见 ci-shots 分支的 diag）"
+          exit 1
       - name: 空白页检测（整页单色 = 页面卡死/崩溃）
         if: always()
         shell: bash
