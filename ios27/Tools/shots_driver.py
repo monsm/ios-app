@@ -204,6 +204,12 @@ def main() -> int:
             produced += 1
             log("fullpage ok " + prefix + name + " size=" + str(os.path.getsize(dest)))
         elif not copied:
+            # 2026-11-05（Round 7 · AX 定稿）：drawHierarchy 在 AX 档整页/整屏上拿不到内容
+            # （模拟器合成器限制），而 simctl screenshot 的 root-*/子页图完全正常 ——
+            # ax 域的整页证据改由 root + 子页视口图承担，这里清掉历史空白整页文件。
+            if axmode and os.path.exists(dest):
+                os.remove(dest)
+                log("removed stale ax full page " + os.path.basename(dest))
             log("fullpage missing " + prefix + name)
 
     # 二、子页视口图（-kfDest 直接把那一页压进导航栈）

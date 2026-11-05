@@ -85,7 +85,7 @@ struct RootView: View {
                 // -kfFullPage：整页滚动截屏（放大 ScrollView frame 一次成像），
                 // 产物 Documents/kf-fullpage-<N>.png 由 workflow 拷出。
                 if args.contains("-kfFullPage"), let i = args.firstIndex(of: "-kfTab"),
-                   i + 1 < args.count, let tab = Int(args[i + 1]) {
+                   i + 1 < args.count, let tab = Int(args[i + 1]), !args.contains("-kfAX") {
                     // 子页（-kfDest）压栈后要多等：push 动画 + 首帧布局完成后才撑得开 frame。
                     // 2026-11-05（Round 7）：AX 档（-kfAX）字体度量全部改变，布局收敛更慢 ——
                     // 再多等 3 秒，让逐屏截屏从真正的页顶开始。
