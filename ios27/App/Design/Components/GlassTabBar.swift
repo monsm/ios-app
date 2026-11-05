@@ -50,8 +50,9 @@ struct GlassTabBar: View {
         }
         .padding(.horizontal, V8.S.gapXS)
         .frame(minHeight: V8.S.hTabBar)
+        // 2026-11-05：整条栏是**可点的**（每个标签都是按钮）→ 用可交互玻璃。
         .glassEffect(
-            .regular.tint(V8.C.glassTint),
+            .regular.tint(V8.C.glassTint).interactive(),
             in: .rect(cornerRadius: V8.R.capsule(V8.S.hTabBar))
         )
         .padding(.horizontal, V8.S.tabBarInset)

@@ -23,8 +23,15 @@ struct Shell: View {
     /// 并遍历全部锁的台账**（切 Tab、开 sheet、任何 @Observable 变化都会触发）。
     @State private var keysBadge: Int = 0
 
-    /// V8 浮岛标签栏开关：默认自绘（参考图形态）；置 true 回退官方全宽 TabView。
-    private var useNativeTabBar: Bool { DB.store.getBool("kf_native_tabbar") }
+    /// 标签栏形态开关。
+    ///
+    /// 2026-11-05（用户拍板：「保持原生液态玻璃控件优先」）：**默认改为官方 TabView**。
+    /// 理由（都可核对）：
+    ///   · 系统栏自带真 Liquid Glass 与选中态形变，并跟随「减少透明度 / 增强对比度」；
+    ///   · 只有系统栏才吃下面的 .tabBarMinimizeBehavior(.onScrollDown)（自绘时那行是空转）；
+    ///   · 只有系统栏才有 iPhone Duo 侧栏与滚动收起语义（自绘版本自己注明丢了这些）。
+    /// 想回到参考图的浮岛形态：把 kf_native_tabbar 显式置 false（GlassTabBar 仍在，未删）。
+    private var useNativeTabBar: Bool { TabBarMode.native }
 
     private var tabSelection: Binding<Int> {
         Binding(

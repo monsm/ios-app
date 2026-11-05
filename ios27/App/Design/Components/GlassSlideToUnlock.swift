@@ -43,7 +43,10 @@ struct GlassSlideToUnlock: View {
                         Capsule().fill(V8.C.card)
                     } else {
                         Capsule().fill(.clear)
-                            .glassEffect(.regular.tint(V8.C.glassTint), in: Capsule())
+                            // 2026-11-05（原生優先）：这是**拖拽面**，必须用可交互玻璃 ——
+                            // 原生 .interactive() 才会给触点反馈（压感高光/形变）。
+                            // 之前是静态玻璃，拖起来「像在拖一张图片」。
+                            .glassEffect(.regular.tint(V8.C.glassTint).interactive(), in: Capsule())
                     }
                 }
                 .overlay {

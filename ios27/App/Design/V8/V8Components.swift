@@ -4,6 +4,17 @@
 // 与 V7Components.swift 并存：V7 组件不动，V8 组件只被新页面引用。
 import SwiftUI
 
+// MARK: - 0. 标签栏形态（Shell 与 VPage 共用一份判据）
+
+/// 标签栏是「系统 Liquid Glass」还是「自绘浮岛」。
+///
+/// 2026-11-05（用户拍板：「保持原生液态玻璃控件优先」）：默认走系统栏。
+/// 判据只在这里读一次键 —— Shell 决定画不画 GlassTabBar，VPage 决定底部留多少白，
+/// 两处必须同一个答案（否则会出现「系统栏 + 78pt 空白」或「浮岛栏压在内容上」）。
+enum TabBarMode {
+    static var native: Bool { DB.store.getBool("kf_native_tabbar", true) }
+}
+
 // MARK: - 1. 卡片容器
 
 enum VCardStyle2 {
@@ -645,9 +656,17 @@ struct VPage<Chips: View, Content: View>: View {
                 .padding(.top, V8.S.gapBodyCard)
             }
             .padding(.horizontal, V8.S.gutterCard)
-            .padding(.bottom, V8.S.hTabBar + V8.S.tabBarBottom + V8.S.gapL)
+            // 2026-11-05（对抗审查 · 原生优先）：底部留白必须跟着标签栏形态走。
+            // 官方 TabView 自己会把内容让开系统栏；再补 48.2 + 14.4 就等于每页底部
+            // 平白多出 78pt 空白（用户会以为页面没加载完）。只有自绘浮岛才需要这份留白。
+            .padding(.bottom, V8.S.gapL + (TabBarMode.native ? 0 : V8.S.hTabBar + V8.S.tabBarBottom))
         }
         .scrollIndicators(.hidden)
+        // 2026-11-05（对抗审查 · UI/UX）：全仓 18 个含输入框的页面**没有一处**能收起键盘。
+        // 数字键盘（.numberPad）没有 Return 键，用户在「新建密码 / 数量 / 端口」这类输入里
+        // 一旦弹出键盘就可能挡着下面的主按钮，退不出去。VPage 是所有页面的滚动容器，
+        // 在这里挂一次交互式收起，25 个页面一次覆盖。
+        .scrollDismissesKeyboard(.interactively)
     }
 }
 

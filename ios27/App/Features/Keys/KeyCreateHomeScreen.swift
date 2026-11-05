@@ -31,6 +31,8 @@ struct KeyCreateHomeScreen: View {
     @State private var editingID: String?
     @State private var busy = false
     @State private var fpCount = 0
+    /// 数字键盘没有 Return 键 —— 用焦点状态给「完成」按钮一个落点（纯 SwiftUI，不引 UIKit）。
+    @FocusState private var codeFocused: Bool
 
     private let stepLabels = ["类型归属", "码值", "有效期", "确认"]
     private let kinds: [KeyItem.Kind] = [.password, .temp, .fingerprint]
@@ -326,6 +328,16 @@ struct KeyCreateHomeScreen: View {
                     .font(V8.T.body)
                     .foregroundStyle(V8.C.ink1)
                     .keyboardType(.numberPad)
+                    // 2026-11-05（对抗审查 · UI/UX）：数字键盘**没有 Return 键**，
+                    // 而本页主按钮在输入框下方 —— 键盘一弹就把「下一步」挡住，
+                    // 用户只能杀 App。给一个明确的收起键。
+                    .toolbar {
+                        ToolbarItemGroup(placement: .keyboard) {
+                            Spacer()
+                            Button("完成") { codeFocused = false }
+                        }
+                    }
+                    .focused($codeFocused)
                     .frame(minHeight: V8.H.min)
                     .padding(.horizontal, V8.S.gapM)
                     .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
