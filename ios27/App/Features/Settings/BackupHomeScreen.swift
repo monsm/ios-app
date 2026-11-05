@@ -301,7 +301,7 @@ struct BackupHomeScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             if trialOn {
-                Text("只读试验模式已开启：恢复与导入备份会被拦下（生成与导出仍可用）。到「设置 → 安全」关掉再试。")
+                Text(TrialCopy.blocked("恢复与导入备份", note: "生成与导出仍可用"))
                     .font(V8.T.caption)
                     .foregroundStyle(V8.C.warn)
                     .padding(.top, V8.S.gapS)

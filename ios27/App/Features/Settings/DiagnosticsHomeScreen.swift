@@ -514,7 +514,7 @@ struct DiagnosticsHomeScreen: View {
             .opacity((busy || mac.isEmpty || readOnly) ? 0.45 : 1)
             .padding(.top, V8.S.gapM)
             if readOnly {
-                Text("只读试验模式已开启：修池属于写操作，会被拦下。到「设置 → 安全」关掉再试。")
+                Text(TrialCopy.blocked("修池这一写操作"))
                     .font(V8.T.caption)
                     .foregroundStyle(V8.C.warn)
                     .padding(.top, V8.S.gapS)

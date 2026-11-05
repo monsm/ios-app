@@ -212,7 +212,9 @@ final class AppLock: ObservableObject {
 /// 2026-11-05（减字 · 去重复）：这句话在门页两个文件里共出现 5 次，只有「什么被拦下」不同。
 /// 收口成一处 —— 以后改「设置 → 安全」这个路径只改这里，不会漏改。
 enum TrialCopy {
-    static func blocked(_ what: String) -> String {
-        "只读试验模式已开启：" + what + "会被拦下。到「设置 → 安全 → 只读试验模式」关掉再试。"
+    /// - Parameter note: 补充说明（如「生成与导出仍可用」），会放在括号里。
+    static func blocked(_ what: String, note: String? = nil) -> String {
+        let extra = note.map { "（" + $0 + "）" } ?? ""
+        return "只读试验模式已开启：" + what + "会被拦下" + extra + "。到「设置 → 安全 → 只读试验模式」关掉再试。"
     }
 }

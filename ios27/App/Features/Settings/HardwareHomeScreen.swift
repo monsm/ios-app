@@ -298,7 +298,7 @@ struct HardwareHomeScreen: View {
                 .padding(.top, V8.S.gapM)
                 .fixedSize(horizontal: false, vertical: true)
             if readOnly {
-                Text("只读试验模式已开启：除扫描外，钥匙串的读写命令都会被拦下（读状态与查钥匙也在内）。到「设置 → 安全」关掉再试。")
+                Text(TrialCopy.blocked("除扫描外的钥匙串读写命令", note: "读状态与查钥匙也在内"))
                     .font(V8.T.caption)
                     .foregroundStyle(V8.C.warn)
                     .padding(.top, V8.S.gapS)
@@ -414,7 +414,7 @@ struct HardwareHomeScreen: View {
             return
         }
         guard !readOnly else {
-            errorText = "只读试验模式已开启 —— 写钥匙会被拦下。到「设置 → 安全」关掉再试。"
+            errorText = TrialCopy.blocked("写钥匙")
             return
         }
         guard writingId == nil else { return }
@@ -447,7 +447,7 @@ struct HardwareHomeScreen: View {
             return
         }
         guard !readOnly else {
-            errorText = "只读试验模式已开启 —— 撤销会被拦下。到「设置 → 安全」关掉再试。"
+            errorText = TrialCopy.blocked("撤销")
             return
         }
         guard let kc = app.currentKeychain, writingId == nil else { return }
@@ -473,7 +473,7 @@ struct HardwareHomeScreen: View {
             return
         }
         guard !readOnly else {
-            errorText = "只读试验模式已开启 —— 读状态命令同样会被拦下。到「设置 → 安全」关掉再试。"
+            errorText = TrialCopy.blocked("读状态命令")
             return
         }
         guard busyId == nil else { return }
@@ -498,7 +498,7 @@ struct HardwareHomeScreen: View {
             return
         }
         guard !readOnly else {
-            errorText = "只读试验模式已开启 —— 查钥匙命令同样会被拦下。到「设置 → 安全」关掉再试。"
+            errorText = TrialCopy.blocked("查钥匙命令")
             return
         }
         guard busyId == nil else { return }
@@ -521,7 +521,7 @@ struct HardwareHomeScreen: View {
             return
         }
         guard !readOnly else {
-            errorText = "只读试验模式已开启 —— 写未知钥匙会被拦下。到「设置 → 安全」关掉再试。"
+            errorText = TrialCopy.blocked("写未知钥匙")
             return
         }
         guard busyId == nil else { return }
@@ -549,7 +549,7 @@ struct HardwareHomeScreen: View {
             return
         }
         guard !readOnly else {
-            errorText = "只读试验模式已开启 —— 解绑会被拦下。到「设置 → 安全」关掉再试。"
+            errorText = TrialCopy.blocked("解绑")
             return
         }
         DB.removeDongle(d.mac)
