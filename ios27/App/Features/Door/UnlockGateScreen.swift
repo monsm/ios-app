@@ -104,7 +104,7 @@ struct UnlockGateScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.accent))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .accessibilityLabel(cooling > 0 ? "冷却中" : "解锁并开门")
             .disabled(!canSubmit)
             .opacity(canSubmit ? 1 : 0.45)
@@ -117,7 +117,7 @@ struct UnlockGateScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.chipOff))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .accessibilityLabel("取消")
             .padding(.top, V8.S.gapS)
         }

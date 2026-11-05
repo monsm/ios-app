@@ -268,7 +268,7 @@ struct AddLockHomeScreen: View {
             .frame(minHeight: V8.H.min)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(c.name + "，编号 " + DB.shortMac(c.mac) + "，" + rowWord(c) + "，信号 \(c.rssi) dBm")
         .contextMenu {
             Button {
@@ -355,7 +355,7 @@ struct AddLockHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.dangerTrack))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .accessibilityLabel("中止配网并回滚")
             .padding(.top, V8.S.gapM)
         }
@@ -406,7 +406,7 @@ struct AddLockHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.accent))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .disabled(nickname.trimmingCharacters(in: .whitespaces).isEmpty)
             .opacity(nickname.trimmingCharacters(in: .whitespaces).isEmpty ? 0.45 : 1)
             .padding(.top, V8.S.gapM)

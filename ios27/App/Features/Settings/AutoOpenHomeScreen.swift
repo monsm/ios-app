@@ -286,7 +286,7 @@ struct AutoOpenHomeScreen: View {
                         .frame(minHeight: V8.H.min)
                         .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .padding(.top, V8.S.gapM)
                 .accessibilityLabel(calibrationAt == nil ? "开始标定" : "重新标定")
                 if calibrationAt != nil {
@@ -305,7 +305,7 @@ struct AutoOpenHomeScreen: View {
                                     .strokeBorder(V8.C.line, lineWidth: V8.E.hair)
                             )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     .padding(.top, V8.S.gapS)
                     .accessibilityLabel("清除标定")
                 }
@@ -435,7 +435,7 @@ struct AutoOpenHomeScreen: View {
                 .frame(minHeight: V8.H.min)
                 .background(Capsule(style: .continuous).fill(on ? V8.C.accent : V8.C.chipOff))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(title)
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }

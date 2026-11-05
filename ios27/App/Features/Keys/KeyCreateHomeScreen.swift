@@ -237,7 +237,7 @@ struct KeyCreateHomeScreen: View {
                 .frame(minHeight: V8.H.min)
                 .background(Capsule(style: .continuous).fill(on ? V8.C.accent : V8.C.chipOff))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(item.rawValue)
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
@@ -271,7 +271,7 @@ struct KeyCreateHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.chipOff))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .accessibilityLabel("先用未归属继续")
         } else {
             VStack(spacing: 0) {
@@ -288,10 +288,11 @@ struct KeyCreateHomeScreen: View {
                             value: String(app.keys.filter {
                                 CredentialOrg.ownerMatches($0.owner, memberID: member.id, memberName: member.name)
                             }.count),
-                            unit: "枚"
+                            unit: "枚",
+                            interactive: true
                         )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     if member.id != active.last?.id { VDotRule() }
                 }
             }
@@ -373,7 +374,7 @@ struct KeyCreateHomeScreen: View {
                                 .frame(minHeight: V8.H.min)
                                 .background(Capsule(style: .continuous).fill(V8.C.chipOff))
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(V8PressStyle())
                         .accessibilityLabel("本地生成 " + String(digits) + " 位数字码")
                     }
                     Spacer(minLength: 0)
@@ -459,7 +460,7 @@ struct KeyCreateHomeScreen: View {
                                 .frame(minHeight: V8.H.min)
                                 .background(Capsule(style: .continuous).fill(durationDays == days ? V8.C.accent : V8.C.chipOff))
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(V8PressStyle())
                         .accessibilityLabel("有效期 " + String(days) + " 天")
                         .accessibilityAddTraits(durationDays == days ? [.isButton, .isSelected] : .isButton)
                     }
@@ -501,7 +502,7 @@ struct KeyCreateHomeScreen: View {
                             .frame(minHeight: V8.H.min)
                             .background(Capsule(style: .continuous).fill(V8.C.chipOff))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     .accessibilityLabel("追加短语 " + phrase)
                 }
                 Spacer(minLength: 0)
@@ -567,7 +568,7 @@ struct KeyCreateHomeScreen: View {
                         .frame(minHeight: V8.H.min)
                         .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .disabled(busy)
                 .padding(.top, V8.S.gapS)
             } else {
@@ -598,7 +599,7 @@ struct KeyCreateHomeScreen: View {
                         .frame(minHeight: V8.H.min)
                         .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .disabled(confirmCode != code || !codeValid || busy)
                 .opacity((confirmCode != code || !codeValid || busy) ? 0.45 : 1)
                 .padding(.top, V8.S.gapS)
@@ -622,7 +623,7 @@ struct KeyCreateHomeScreen: View {
                         .frame(minHeight: V8.H.min)
                         .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("上一步")
             }
             Spacer(minLength: 0)
@@ -637,7 +638,7 @@ struct KeyCreateHomeScreen: View {
                         .frame(minHeight: V8.H.min)
                         .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel(nextTitle)
             }
         }

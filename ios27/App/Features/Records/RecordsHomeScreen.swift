@@ -221,10 +221,11 @@ struct RecordsHomeScreen: View {
                             tagTint: toneTint(row.entry.tone),
                             title: row.entry.event,
                             detail: CredentialOrg.ownerName(row.entry.owner),
-                            value: ""
+                            value: "",
+                            interactive: true
                         )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     if index != timelineRows.count - 1 { VDotRule() }
                 }
             }
@@ -284,7 +285,7 @@ struct RecordsHomeScreen: View {
                             .font(V8.T.caption)
                             .foregroundStyle(V8.C.ink4)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     .accessibilityLabel("清空检索")
                 }
             }
@@ -323,7 +324,7 @@ struct RecordsHomeScreen: View {
                 .frame(minHeight: V8.H.min)
                 .background(Capsule(style: .continuous).fill(selected ? V8.C.accent : V8.C.chipOff))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(item.rawValue)
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
     }

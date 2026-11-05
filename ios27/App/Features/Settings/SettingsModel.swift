@@ -368,7 +368,10 @@ final class SettingsStore {
         case "graphite": return Self.color(hex: 0x5B6169)
         case "rose": return Self.color(hex: 0xBE123C)
         case "aurora": return Self.color(hex: 0x0E7490)
-        default: return Self.color(hex: 0x4F46E5)
+        // 2026-11-05（全技能审核 · 品牌一致性）：默认 tint 原来是靛紫 #4F46E5，
+        // 而 V8 内容层主色是蓝 #0558B8 —— 同一个屏幕系统控件与内容强调色两个色相。
+        // 默认改为 V8 蓝，六套预设仍保留（想换是用户的明确选择，不是默认漂移）。
+        default: return Self.color(hex: 0x0558B8)
         }
     }
 

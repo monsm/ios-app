@@ -108,7 +108,7 @@ struct RecordDetailHomeScreen: View {
                     } label: {
                         VDataRow(tag: "归属", tagTint: V8.C.ink4, title: "未归属 · 点这里认人", value: "")
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                 } else {
                     VDataRow(tag: "归属", tagTint: V8.C.ink4, title: entry.owner ?? "未归属", value: "")
                 }
@@ -193,7 +193,7 @@ struct RecordDetailHomeScreen: View {
                                 .strokeBorder(V8.C.line, lineWidth: V8.S.hair)
                         )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .disabled(savedNote == noteDraft.trimmingCharacters(in: .whitespacesAndNewlines))
                 .accessibilityLabel("保存备注")
                 Spacer(minLength: 0)
@@ -221,9 +221,10 @@ struct RecordDetailHomeScreen: View {
                     ForEach(neighbors) { item in
                         Button { route.focusID = item.id } label: {
                             VDataRow(tag: TimeDisplay.clock(item.at), tagTint: toneTint(item.tone),
-                                     title: item.event, detail: CredentialOrg.ownerName(item.owner), value: "")
+                                     title: item.event, detail: CredentialOrg.ownerName(item.owner), value: "",
+                                     interactive: true)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(V8PressStyle())
                         .accessibilityHint("切到这条记录")
                         if item.id != neighbors.last?.id { VDotRule() }
                     }

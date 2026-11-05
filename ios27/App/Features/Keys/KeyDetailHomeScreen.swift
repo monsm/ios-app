@@ -277,7 +277,7 @@ struct KeyDetailHomeScreen: View {
                                 in: .rect(cornerRadius: V8.R.inset)
                             )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     .accessibilityLabel("第 " + String(pair.offset + 1) + " 段，点按只复制这一段")
                 }
             }
@@ -293,7 +293,7 @@ struct KeyDetailHomeScreen: View {
                 .frame(minHeight: V8.H.min)
                 .background(Capsule(style: .continuous).fill(V8.C.chipOff))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(title)
     }
 
@@ -530,7 +530,7 @@ struct KeyDetailHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.dangerTrack))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .accessibilityLabel("彻底删除这枚凭证")
             .padding(.top, V8.S.gapM)
         }
@@ -748,7 +748,7 @@ struct KeyDetailReEnrollSheet: View {
                             .frame(minHeight: V8.H.min)
                             .background(Capsule(style: .continuous).fill(V8.C.accent))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     .disabled(busy)
                     .padding(.top, V8.S.gapM)
                     Button {
@@ -761,7 +761,7 @@ struct KeyDetailReEnrollSheet: View {
                             .frame(minHeight: V8.H.min)
                             .background(Capsule(style: .continuous).fill(V8.C.chipOff))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     .padding(.top, V8.S.gapS)
                 }
                 VCard2(style: .well) {

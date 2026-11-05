@@ -32,7 +32,7 @@ struct KeysMaskedCode: View {
                             .frame(minWidth: 0, minHeight: V.Hit.min)
                             .contentShape(.rect)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     .accessibilityLabel(on ? "第 \(index + 1) 位，\(String(char))" : "第 \(index + 1) 位，点按显示")
                 }
             }
@@ -75,7 +75,7 @@ struct KeysChips<Item: Hashable>: View {
                                 )
                             }
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
                 }
             }
@@ -112,7 +112,7 @@ struct KeysOwnerRow: View {
             .background(selected ? V.C.blue.opacity(0.16) : Color.clear, in: .rect(cornerRadius: V.R.control))
             .contentShape(.rect)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel("归属 \(name)" + (selected ? "，已选" : ""))
         .accessibilityAddTraits(selected ? [.isSelected] : [])
     }
@@ -156,7 +156,7 @@ struct KeysActionRow: View {
             .frame(minHeight: V.Hit.min)
             .contentShape(.rect)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(title)
     }
 }

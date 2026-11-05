@@ -104,7 +104,9 @@ struct GlassSlideToUnlock: View {
     private func fire() {
         fired = true
         onUnlock()
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        // 2026-11-05（全技能审核 · 动效/反馈）：这里原来在**手势刚完成**就发 success 触觉，
+        // 此时开锁链才刚发起 —— 失败时会先 success 再 error，成功时又和 DoorHomeScreen
+        // 的 .sensoryFeedback(.success) 叠成两次。结果反馈只由 dialPhase 的真实结局发。
         // 复位：稍等片刻让调用方切到 busy 态，再弹回
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
             withAnimation(reduceMotion ? nil : V8.M.move) { offset = 0 }

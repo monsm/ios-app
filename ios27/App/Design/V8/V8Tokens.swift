@@ -48,9 +48,15 @@ enum V8 {
         /// 墨 2：卡片结论、次级数值。11.15:1
         static let ink2 = dual(0x33333A, 0xD8D8DE)
         /// 墨 3：正文、副文。5.80:1（参考图 #7E7D83 只有 3.63）
-        static let ink3 = dual(0x5E5D63, 0xA8A8B0)
+        /// 2026-11-05（全技能审核 · 高对比）：kf_hc 原来只加倍线宽，文字颜色不动 ——
+        /// 设置页却承诺「加强描边与文字对比」。开启时把正文/微标各提一档。
+        static var ink3: Color {
+            DB.store.getBool("kf_hc") ? dual(0x33333A, 0xD8D8DE) : dual(0x5E5D63, 0xA8A8B0)
+        }
         /// 墨 4：眉标、微标、轴标。4.55:1（参考图 #85858B 只有 3.26）
-        static let ink4 = dual(0x6E6D75, 0x92929A)
+        static var ink4: Color {
+            DB.store.getBool("kf_hc") ? dual(0x5E5D63, 0xA8A8B0) : dual(0x6E6D75, 0x92929A)
+        }
 
         /// 页面底：单色，不做页面级渐变（参考图基底恒为 #F2F1F6）
         static let bg = dual(0xF2F1F6, 0x000000)
@@ -64,13 +70,20 @@ enum V8 {
         static let chipOn = dual(0xFFFFFF, 0x2E2E33)
 
         /// 卡内分隔线（0.4pt 实线，只做结构切分）
-        static let line = dual(0xDCDBE4, 0xFFFFFF, lightAlpha: 1, darkAlpha: 0.14)
+        /// 高对比时用更深的线色（配合 VDivider2 的线宽 ×2）。
+        static var line: Color {
+            DB.store.getBool("kf_hc") ? dual(0xB8B7C4, 0xFFFFFF, lightAlpha: 1, darkAlpha: 0.28)
+                                     : dual(0xDCDBE4, 0xFFFFFF, lightAlpha: 1, darkAlpha: 0.14)
+        }
         /// 卡片投影（浅色 5% / 深色 18%）
         static let shadow = dual(0x282846, 0x000000, lightAlpha: 0.05, darkAlpha: 0.18)
         /// 玻璃面染色（仅 Tab 栏 / Toast / 只读试验条）
         static let glassTint = dual(0xFFFFFF, 0x1A1A1C, lightAlpha: 0.72, darkAlpha: 0.72)
         /// 表格点线 / 描边
-        static let lineStrong = dual(0xD8D7DE, 0xFFFFFF, lightAlpha: 1, darkAlpha: 0.20)
+        static var lineStrong: Color {
+            DB.store.getBool("kf_hc") ? dual(0xA9A8B4, 0xFFFFFF, lightAlpha: 1, darkAlpha: 0.34)
+                                     : dual(0xD8D7DE, 0xFFFFFF, lightAlpha: 1, darkAlpha: 0.20)
+        }
 
         // MARK: 语义族：5 族 × 3 档（值 / 容器 / 轨道）
 
@@ -161,60 +174,73 @@ enum V8 {
         static let caption = VFont(size: 13.9, weight: .regular, relativeTo: .footnote)
         /// 12.6pt —— Tab 栏标签、KPI 标签
         static let tab = VFont(size: 12.6, weight: .semibold, relativeTo: .caption)
-        /// 10.7pt —— 微标（YEARS / BPM / %）、轴标
-        static let micro = VFont(size: 10.7, weight: .regular, relativeTo: .caption2)
+        /// 11pt —— 微标（YEARS / BPM / %）、轴标（HIG 最小字号 11pt；原 10.7 低于下限）
+        static let micro = VFont(size: 11.0, weight: .regular, relativeTo: .caption2)
     }
 
     // MARK: - 间距与栅格（双层：卡 16.6 / 文字 33.1）
 
     enum S {
+        /// 2026-11-05（全技能审核 · 幽灵设置）：外观页的「密度」自 V8 迁移后只写 kf_density，
+        /// 唯一消费者是 V7 的 V.S —— V8 全部页面用固定间距，用户改了没反应。
+        /// 这里给间距档位接上 kf_density：紧凑 0.9 / 标准 1.0 / 宽松 1.1。
+        /// **只缩放间距节奏**，字号、44pt 触达、芯片/Tab 高度不动（与设置页文案一致）。
+        private static var densityScale: CGFloat {
+            switch DB.store.getString("kf_density") {
+            case "compact": return 0.9
+            case "relaxed": return 1.1
+            default: return 1
+            }
+        }
+        private static func d(_ base: CGFloat) -> CGFloat { base * densityScale }
+
         /// 卡片外距（屏左右到卡边）
-        static let gutterCard: CGFloat = 16.6
+        static var gutterCard: CGFloat { d(16.6) }
         /// 卡内左右 padding
-        static let padCard: CGFloat = 16.5
+        static var padCard: CGFloat { d(16.5) }
         /// 文字层落点（= gutterCard + padCard）—— 全屏唯一竖线
-        static let gutterText: CGFloat = 33.1
+        static var gutterText: CGFloat { gutterCard + padCard }
         /// 卡内上/下 padding
-        static let padCardTop: CGFloat = 20.6
-        static let padCardBottom: CGFloat = 18.7
+        static var padCardTop: CGFloat { d(20.6) }
+        static var padCardBottom: CGFloat { d(18.7) }
 
         /// 卡与卡之间
-        static let gapCard: CGFloat = 11.1
+        static var gapCard: CGFloat { d(11.1) }
         /// 芯片之间（主 / 紧）
-        static let gapChip: CGFloat = 10.6
-        static let gapChipMin: CGFloat = 7.1
-        /// 芯片行高（胶囊，圆角 = 高/2）
+        static var gapChip: CGFloat { d(10.6) }
+        static var gapChipMin: CGFloat { d(7.1) }
+        /// 芯片行高（胶囊，圆角 = 高/2）—— 控件高度不随密度改
         static let hChip: CGFloat = 52.6
-        /// Tab 栏
+        /// Tab 栏 —— 控件高度不随密度改
         static let hTabBar: CGFloat = 48.2
         static let tabBarInset: CGFloat = 6
         static let tabBarBottom: CGFloat = 14.4
 
         /// 芯片行底 → 大标题 ink 顶
-        static let gapSection: CGFloat = 41
+        static var gapSection: CGFloat { d(41) }
         /// 大标题 ink 底 → 副文
-        static let gapTitleBody: CGFloat = 12.8
+        static var gapTitleBody: CGFloat { d(12.8) }
         /// 副文 → 卡 1
-        static let gapBodyCard: CGFloat = 18.8
+        static var gapBodyCard: CGFloat { d(18.8) }
 
         /// 卡内：eyebrow → statement
-        static let gapEyebrow: CGFloat = 8.5
+        static var gapEyebrow: CGFloat { d(8.5) }
         /// 分隔线 → 表首行（同时是 statement → 证据区的呼吸，41.6 与 42.4 在参考图上是同一档）
-        static let gapTableFirst: CGFloat = 42.4
+        static var gapTableFirst: CGFloat { d(42.4) }
         /// 表格行距
-        static let rowHeight: CGFloat = 22.1
+        static var rowHeight: CGFloat { d(22.1) }
         /// 分隔线 → 脚注
-        static let gapFootnote: CGFloat = 18.6
+        static var gapFootnote: CGFloat { d(18.6) }
 
         /// 通用间距
-        static let gapXS: CGFloat = 4
-        static let gapS: CGFloat = 8
-        static let gapM: CGFloat = 12
-        static let gapL: CGFloat = 16
-        static let gapXL: CGFloat = 20
-        static let gapXXL: CGFloat = 24
+        static var gapXS: CGFloat { d(4) }
+        static var gapS: CGFloat { d(8) }
+        static var gapM: CGFloat { d(12) }
+        static var gapL: CGFloat { d(16) }
+        static var gapXL: CGFloat { d(20) }
+        static var gapXXL: CGFloat { d(24) }
 
-        /// 全 App 唯一下划线/描边粗细（1px @2.5x）
+        /// 全 App 唯一下划线/描边粗细（1px @2.5x）—— 不随密度改
         static let hair: CGFloat = 0.4
     }
 
@@ -224,19 +250,32 @@ enum V8 {
         static let bodyL: CGFloat = 27.9
         static let body: CGFloat = 20
         static let footnote: CGFloat = 19.9
-        static let label: CGFloat = 17.4
-        static let caption: CGFloat = 16.7
-        static let title1: CGFloat = 38.5
+        // 2026-11-05（全技能审核 · 死令牌清理）：label / caption / title1 三条行高
+        // 全仓零消费者（只有字号档在用它们，行高从未被读过）—— 删掉，避免"看起来有 7 级行高"。
         static let headline: CGFloat = 25.8
     }
 
     // MARK: - 圆角（只有三档）
 
     enum R {
-        /// 卡片 / 面板 / sheet 内容块
-        static let card: CGFloat = 26
-        /// 内嵌块
-        static let inset: CGFloat = 8
+        /// 2026-11-05（全技能审核 · 幽灵设置）：外观页的「圆角」自 V8 迁移后只写 kf_radius，
+        /// 而唯一消费者是 V7Tokens.V.R —— V8 卡片/控件全用固定 26，用户改了没反应。
+        /// 这里把 kf_radius 接进 V8：标准 26 / 偏硬朗 20 / 偏柔和 32。默认值保持 26 不变。
+        static var card: CGFloat {
+            switch DB.store.getString("kf_radius") {
+            case "soft": return 20
+            case "plump": return 32
+            default: return 26
+            }
+        }
+        /// 内嵌块（与卡片同档缩放一半幅度）
+        static var inset: CGFloat {
+            switch DB.store.getString("kf_radius") {
+            case "soft": return 6
+            case "plump": return 10
+            default: return 8
+            }
+        }
         /// 胶囊：圆角 = 高度的一半
         static func capsule(_ height: CGFloat) -> CGFloat { height / 2 }
     }
@@ -246,8 +285,7 @@ enum V8 {
     enum E {
         /// 全 App 唯一下划线粗细（= S.hair）
         static let hair: CGFloat = 0.4
-        /// 焦点环
-        static let focus: CGFloat = 1.5
+        // 2026-11-05（全技能审核 · 死令牌清理）：focus 全仓零消费者 —— 没有自定义焦点环。
         /// 选中描边
         static let selected: CGFloat = 2
     }
@@ -255,10 +293,40 @@ enum V8 {
     // MARK: - 动效（4 个令牌；ambient 用 phaseAnimator 实现，禁止 repeatForever）
 
     enum M {
-        static let snap = Animation.spring(response: 0.22, dampingFraction: 0.92)
-        static let move = Animation.spring(response: 0.32, dampingFraction: 0.88)
-        static let settle = Animation.spring(response: 0.42, dampingFraction: 0.95)
-        static let ambient = Animation.easeInOut(duration: 2.4)
+        /// 2026-11-05（全技能审核 · 幽灵设置）：外观页的「动效强度」原来只有
+        /// LockKeeperApp 的一次转场消费，其余 11 处 V8.M 动效完全不理它。
+        /// 现在四档动效令牌统一读 kf_motion：克制 = 纯淡入（无弹跳）/ 标准 = 轻微弹簧 /
+        /// 活泼 = 稍快且允许一次轻回弹。系统 Reduce Motion 仍在调用点优先拦截。
+        private static var tier: String { DB.store.getString("kf_motion") }
+
+        static var snap: Animation {
+            switch tier {
+            case "calm": return .easeOut(duration: 0.12)
+            case "lively": return .spring(response: 0.18, dampingFraction: 0.78)
+            default: return .spring(response: 0.22, dampingFraction: 0.92)
+            }
+        }
+        static var move: Animation {
+            switch tier {
+            case "calm": return .easeOut(duration: 0.16)
+            case "lively": return .spring(response: 0.26, dampingFraction: 0.80)
+            default: return .spring(response: 0.32, dampingFraction: 0.88)
+            }
+        }
+        static var settle: Animation {
+            switch tier {
+            case "calm": return .easeOut(duration: 0.20)
+            case "lively": return .spring(response: 0.34, dampingFraction: 0.88)
+            default: return .spring(response: 0.42, dampingFraction: 0.95)
+            }
+        }
+        static var ambient: Animation {
+            switch tier {
+            case "calm": return .easeInOut(duration: 3.2)
+            case "lively": return .easeInOut(duration: 2.0)
+            default: return .easeInOut(duration: 2.4)
+            }
+        }
     }
 
     // MARK: - 图形（环 / 分段环 / 波形 / 发光）

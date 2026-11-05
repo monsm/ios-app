@@ -137,7 +137,7 @@ struct HHRowButton: View {
             .frame(minHeight: V.Hit.min)
             .contentShape(.rect)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(a11yLabel)
     }
 
@@ -369,7 +369,7 @@ struct HHToggleRow: View {
             .frame(minHeight: V.Hit.min)
             .contentShape(.rect)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .disabled(!enabled)
         .accessibilityLabel(title)
         .accessibilityValue(isOn ? "开" : "关")

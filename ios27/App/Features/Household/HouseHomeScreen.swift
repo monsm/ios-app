@@ -176,10 +176,11 @@ struct HouseHomeScreen: View {
                             title: member.name,
                             detail: HHDisplay.statusWord(HHStats.status(member)),
                             value: "\(member.keyCount)",
-                            unit: "枚"
+                            unit: "枚",
+                            interactive: true
                         )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     if member.id != activeMembers.last?.id { VDotRule() }
                 }
             }
@@ -277,7 +278,7 @@ struct HouseHomeScreen: View {
                                             .strokeBorder(V8.C.line, lineWidth: V8.S.hair)
                                     )
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(V8PressStyle())
                             .accessibilityLabel("恢复 " + member.name)
                         }
                         if member.id != archivedMembers.last?.id { VDotRule() }
@@ -305,7 +306,7 @@ struct HouseHomeScreen: View {
                             .strokeBorder(V8.C.line, lineWidth: V8.S.hair)
                     )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .accessibilityLabel("回到名册")
             .padding(.top, V8.S.gapM)
         }

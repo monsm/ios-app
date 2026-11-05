@@ -12,7 +12,13 @@ import SwiftUI
 /// 判据只在这里读一次键 —— Shell 决定画不画 GlassTabBar，VPage 决定底部留多少白，
 /// 两处必须同一个答案（否则会出现「系统栏 + 78pt 空白」或「浮岛栏压在内容上」）。
 enum TabBarMode {
-    static var native: Bool { DB.store.getBool("kf_native_tabbar", true) }
+    static var native: Bool {
+        // 2026-11-05（全技能审核 · 截图保真）：CI 复用的模拟器里残留了旧版本写下的
+        // kf_native_tabbar=false，于是 21 张"当前"截图全是已非默认的自绘浮岛栏 ——
+        // 按默认配置验收会看到另一套界面。CI 截图一律按默认（系统原生栏）渲染。
+        if ProcessInfo.processInfo.arguments.contains("-kfUITest") { return true }
+        return DB.store.getBool("kf_native_tabbar", true)
+    }
 }
 
 // MARK: - 1. 卡片容器
@@ -53,7 +59,15 @@ struct VCard2<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
-        content
+        // 2026-11-05（全技能审核 · 系统性缺陷）：必须先把 @ViewBuilder 的 content 收进 VStack。
+        // 直接把 .padding/.background 挂到 content（TupleView）上时，SwiftUI 会把修饰符
+        // 分别应用到**每个子视图**：VCardHead / VDivider2 / 正文 / 行表各自获得一份卡片背景，
+        // 一张卡被拆成 3–5 张白卡，页面上还夹着只剩一条分隔线的"空卡"。
+        // CI 截图里每页 27%–50% 的高度是这种空卡 — 之前的审计误判成"阴影带/背景色差异"。
+        // VStack 让 content 成为一个真正的布局容器，卡片回到一张。
+        VStack(alignment: .leading, spacing: 0) {
+            content
+        }
             // 卡内上下与左右**不对称**（参考图实测：上 20.6 / 下 18.7 / 左右 16.5）。
             // 之前四边都用 padCard，卡会显得"下边空一截"—— 因为底部的脚注行高比顶部眉标小。
             .padding(.horizontal, V8.S.padCard)
@@ -142,6 +156,9 @@ struct VDataRow: View {
     var unit: String? = nil
     var spark: [Double]? = nil
     var sparkTint: Color = V8.C.accentFill
+    /// 2026-11-05（全技能审核 · 44pt 命中）：数据行作为 Button label 时视觉行高只有 22.1pt。
+    /// 非交互表格保持密度（interactive=false），列表入口传 true 把命中区抬到 44pt。
+    var interactive: Bool = false
 
     var body: some View {
         HStack(alignment: .center, spacing: V8.S.gapS) {
@@ -183,16 +200,18 @@ struct VDataRow: View {
                     .foregroundStyle(V8.C.ink4)
             }
         }
-        .frame(minHeight: V8.S.rowHeight)
+        .frame(minHeight: interactive ? V8.H.min : V8.S.rowHeight)
+        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel(a11yText)
     }
 
     private var a11yText: String {
+        // 2026-11-05（全技能审核 · VoiceOver）：title 为空时原来会念出「密码，，1 次」。
         var parts: [String] = [tag, title]
         if let detail { parts.append(detail) }
         parts.append(value + (unit ?? ""))
-        return parts.joined(separator: "，")
+        return parts.filter { !$0.isEmpty }.joined(separator: "，")
     }
 }
 
@@ -220,7 +239,7 @@ struct VChip2: View {
         Group {
             if let action {
                 Button(action: action) { chipBody }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
             } else {
                 chipBody
             }
@@ -244,18 +263,33 @@ struct VChip2: View {
             }
         }
         .padding(.horizontal, V8.S.gapChipMin)
-        .frame(height: V8.S.hChip)
+        // 2026-11-05（全技能审核 · Dynamic Type）：hChip 是**默认字号下的高度**，不是上限。
+        // 芯片里两行 14.5/16.4pt 的文字会随 Dynamic Type 放大到 2–3 倍；用固定 height 会裁字，
+        // 而 a11y 闸门只查 V.Action/V.Tab 两个令牌名，查不到这里。改成下限，胶囊随内容长高。
+        .frame(minHeight: V8.S.hChip)
         .background(
             Capsule(style: .continuous)
                 .fill(selected ? V8.C.chipOn : V8.C.chipOff)
         )
         .overlay(
+            // 2026-11-05（全技能审核 · 对比度）：选中原来只是白底 vs 近白底（1.10:1），
+            // 肉眼分辨不出当前筛选；改成 2pt 强调色描边（图形对比 ≥3:1），颜色之外还有粗细。
             Capsule(style: .continuous)
-                .strokeBorder(selected ? Color.clear : V8.C.lineStrong, lineWidth: V8.S.hair)
+                .strokeBorder(selected ? V8.C.accent : V8.C.lineStrong,
+                              lineWidth: selected ? V8.E.selected : V8.S.hair)
         )
         .accessibilityElement(children: .combine)
         .accessibilityLabel(label.isEmpty ? value : "\(label)，\(value)")
-        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
+        // 2026-11-05（全技能审核 · VoiceOver）：纯状态芯片没有 action，却无条件标成按钮，
+        // VoiceOver 会读「按钮」但点不动。只有真能点的芯片才是按钮。
+        .accessibilityAddTraits(chipTraits)
+    }
+
+    private var chipTraits: AccessibilityTraits {
+        if action != nil {
+            return selected ? [.isButton, .isSelected] : .isButton
+        }
+        return selected ? [.isSelected] : []
     }
 
     @ViewBuilder
@@ -367,7 +401,7 @@ struct VEmpty: View {
                             Capsule(style: .continuous).fill(V8.C.accent)
                         )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
             }
         }
     }
@@ -417,7 +451,7 @@ struct VFailure: View {
                             .foregroundStyle(V8.C.accent)
                             .frame(minHeight: V8.H.min)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                 }
                 if let raw {
                     VStack(alignment: .leading, spacing: V8.S.gapXS) {
@@ -429,7 +463,7 @@ struct VFailure: View {
                                 .foregroundStyle(V8.C.ink4)
                                 .frame(minHeight: V8.H.min)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(V8PressStyle())
                         if showsRaw {
                             Text(raw)
                                 .font(V8.T.micro)
@@ -504,7 +538,7 @@ struct VLinkRow: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .frame(minHeight: V8.H.min)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel(item.title + "，" + item.value + (item.unit ?? ""))
                 .accessibilityAddTraits(.isButton)
             }
@@ -532,7 +566,7 @@ struct VInfoDot: View {
                 .frame(minWidth: V8.H.min, minHeight: V8.H.min)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel("关于" + title + "的说明")
         .sheet(isPresented: $showing) {
             VStack(alignment: .leading, spacing: V8.S.gapM) {
@@ -584,18 +618,26 @@ struct VHeroNumber: View {
 
 struct VStatPair2: View {
     struct Item: Identifiable {
-        let id = UUID()
+        // 2026-11-05（全技能审核）：id 在 body 里每次重新生成 UUID，ForEach 身份每次全变。
+        // 两列读数本来就是由 label+value 唯一确定的，用稳定派生值。
+        var id: String { label + "|" + value }
         let label: String
         let value: String
         var unit: String? = nil
     }
 
     let items: [Item]
+    /// 2026-11-05（全技能审核 · Dynamic Type）：V7 的 VStatPair 早已在 AX 档改竖排，
+    /// V8 这里却永远横排 —— AX 档每列只剩一半宽度，两个读数互相挤压。照回 V7 的 AnyLayout 分支。
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
-        HStack(alignment: .top, spacing: V8.S.gapL) {
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: V8.S.gapS))
+            : AnyLayout(HStackLayout(alignment: .top, spacing: V8.S.gapL))
+        layout {
             ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                if index > 0 {
+                if index > 0 && !typeSize.isAccessibilitySize {
                     Rectangle()
                         .fill(V8.C.line)
                         .frame(width: V8.S.hair)
@@ -646,6 +688,9 @@ struct VPage<Chips: View, Content: View>: View {
                     .padding(.horizontal, V8.S.gutterText - V8.S.gutterCard)
                     .padding(.top, V8.S.gapSection)
                     .fixedSize(horizontal: false, vertical: true)
+                    // 2026-11-05（全技能审核 · VoiceOver）：页面判断句是整页唯一的 H1，
+                    // 却没有 header trait —— 转子只能靠卡片头跳转，找不到页面起点。
+                    .accessibilityAddTraits(.isHeader)
                 if let lead {
                     Text(lead)
                         .font(V8.T.bodyL)
@@ -734,7 +779,9 @@ struct VNavRow: View {
                     Text(title)
                         .font(V8.T.value)
                         .foregroundStyle(V8.C.ink1)
-                        .lineLimit(1)
+                        // 2026-11-05（全技能审核 · Dynamic Type）：导航行标题在 AX 档会截断。
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                     if let detail {
                         Text(detail)
                             .font(V8.T.caption)
@@ -756,8 +803,8 @@ struct VNavRow: View {
             .frame(minHeight: V8.H.min)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(title + (detail ?? "") + (value ?? ""))
+        .buttonStyle(V8PressStyle())
+        .accessibilityLabel([title, detail ?? "", value ?? ""].filter { !$0.isEmpty }.joined(separator: "，"))
         .accessibilityAddTraits(.isButton)
     }
 }
@@ -792,7 +839,9 @@ struct VDisclosure<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: V8.S.gapS) {
             Button {
-                if reduceMotion { open.toggle() } else { withAnimation(.easeInOut(duration: 0.18)) { open.toggle() } }
+                // 2026-11-05（全技能审核 · 动效）：原来用裸 easeInOut(0.18)，绕过 V8.M 令牌。
+                // 改走 V8.M.move（会跟随「动效强度」分档），Reduce Motion 仍直接切换。
+                withAnimation(reduceMotion ? nil : V8.M.move) { open.toggle() }
             } label: {
                 HStack(spacing: V8.S.gapXS) {
                     Text(title)
@@ -805,7 +854,7 @@ struct VDisclosure<Content: View>: View {
                 }
                 .frame(minHeight: V8.H.min)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .accessibilityLabel(title)
             .accessibilityHint(open ? "收起说明" : "展开说明")
             if open {
@@ -814,6 +863,29 @@ struct VDisclosure<Content: View>: View {
                     .foregroundStyle(V8.C.ink3)
                     .fixedSize(horizontal: false, vertical: true)
             }
+        }
+    }
+}
+
+// MARK: - 18. 统一按压反馈（2026-11-05 全技能审核）
+//
+// V8 里曾全部用 .buttonStyle(.plain) —— iOS 上 plain 没有按压反馈，点击像没反应。
+// 这里与 V7 的 PressStyle 同语义，但动效走 V8.M.snap（并受 MotionTier 分档）。
+// 只做透明度 + 极小缩放，不改 bounds；Reduce Motion 时只保留透明度。
+struct V8PressStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        V8PressBody(configuration: configuration)
+    }
+
+    private struct V8PressBody: View {
+        let configuration: ButtonStyleConfiguration
+        @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+        var body: some View {
+            configuration.label
+                .opacity(configuration.isPressed ? 0.72 : 1)
+                .scaleEffect(reduceMotion ? 1 : (configuration.isPressed ? 0.985 : 1))
+                .animation(reduceMotion ? nil : V8.M.snap, value: configuration.isPressed)
         }
     }
 }

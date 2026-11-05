@@ -41,11 +41,14 @@ def budget_left() -> float:
 # 同时旧列表漏掉了 7 个 -kfDest 可达的页面：我的锁 / 凭证工作室 / 安全 / 自动开锁 /
 # 关于 / 新建成员 / 添加门锁。
 # 现在按**宿主页去重**，并把漏掉的补齐：子页 10 个（含 2 张重复）→ 15 个各不相同的页面。
+# 2026-11-05（全技能审核 · 视觉覆盖）：25 个唯一页里原来漏拍 5 个 ——
+# keyDetail / mobileKey / recordDetail / memberDetail / appearance。
+# 它们恰好是图表与设置控件最密的一批（覆盖率环、周柱图、24h 波形、6 张外观卡）。
 _DOOR = ["lockSettings", "deviceInfo", "lockPortfolio", "addLock"]
-_KEYS = ["keyCreate", "zotp", "credentialStudio"]
-_RECORDS = ["recordsStudio"]
-_HOUSE = ["memberCreate"]
-_SETTINGS = ["backupStudio", "godMode", "hardware", "security", "autoOpen", "about"]
+_KEYS = ["keyCreate", "zotp", "credentialStudio", "keyDetail", "mobileKey"]
+_RECORDS = ["recordsStudio", "recordDetail"]
+_HOUSE = ["memberCreate", "memberDetail"]
+_SETTINGS = ["backupStudio", "godMode", "hardware", "security", "autoOpen", "about", "appearance"]
 
 SCOPES = {
     "door": (["0"], _DOOR),

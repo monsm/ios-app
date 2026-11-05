@@ -170,10 +170,11 @@ struct MobileKeyHomeScreen: View {
                             title: member.name,
                             detail: owner == member.name ? "已选" : nil,
                             value: "\(app.keys.filter { CredentialOrg.ownerMatches($0.owner, memberID: member.id, memberName: member.name) }.count)",
-                            unit: "枚"
+                            unit: "枚",
+                            interactive: true
                         )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     if member.id != MemberHub.sortedForPicker(app.members.filter { !$0.archived }, keys: app.keys).last?.id {
                         VDotRule()
                     }
@@ -220,7 +221,7 @@ struct MobileKeyHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.accent))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .disabled(busy || app.currentKeychain == nil)
             .opacity((busy || app.currentKeychain == nil) ? 0.45 : 1)
             .padding(.top, V8.S.gapM)
@@ -250,7 +251,7 @@ struct MobileKeyHomeScreen: View {
                 .frame(minHeight: V8.H.min)
                 .background(Capsule(style: .continuous).fill(on ? V8.C.accent : V8.C.chipOff))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(title)
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
@@ -468,7 +469,7 @@ struct MobileKeyHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.chipOff))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .accessibilityLabel("复制配对串")
             .padding(.top, V8.S.gapS)
             Text("这串是安卓配对码（含 mac / pid / ekey，刻意不含 skey）。当面扫、单独发给本人，不要发群里。")

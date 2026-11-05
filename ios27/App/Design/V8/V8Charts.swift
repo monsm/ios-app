@@ -25,6 +25,10 @@ import SwiftUI
 
 struct VHeroRing: View {
     @Environment(\.colorScheme) private var colorScheme
+    /// 2026-11-05（全技能审核 · T17）：ambient glow 之前只是静态色块，V8.M.ambient
+    /// 定义了 2.4s 呼吸却零消费。这里用 phaseAnimator 让光晕在 0.94↔1.0 之间缓慢呼吸；
+    /// Reduce Motion 时单相位（不动）。不用 repeatForever（项目禁令）。
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// 已填充比例 0…1
     let fraction: Double
     /// 环心大数
@@ -65,6 +69,9 @@ struct VHeroRing: View {
                 )
                 .frame(width: size * V8.G.glowRadiusFactor, height: size * V8.G.glowRadiusFactor)
                 .blur(radius: V8.S.gapS)
+                .phaseAnimator(reduceMotion ? [1.0] : [0.94, 1.0]) { view, phase in
+                    view.scaleEffect(phase)
+                } animation: { _ in V8.M.ambient }
                 .accessibilityHidden(true)
             // 内盘（Ø206.7 @ 全尺寸）：环心数字垫在它上面，参考图里这层是实心卡片色。
             Circle()
@@ -282,8 +289,12 @@ struct VSpark: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("波形")
-        .accessibilityValue(axis == .hours24 ? "近 24 小时" : "采样走势")
+        // 2026-11-05（全技能审核 · 图表可读性）：原来只报「波形 / 近24小时」，
+        // 对读屏用户等于「有一张图」—— 数据完全不可读。补上格数/峰值/末值。
+        .accessibilityLabel(axis == .hours24 ? "近 24 小时柱状图" : "采样走势柱状图")
+        .accessibilityValue(values.isEmpty
+            ? "没有数据"
+            : "共 \(values.count) 个值，峰值 \(Int(values.max() ?? 0))，末值 \(Int(values.last ?? 0))")
     }
 
     private func isCursor(_ index: Int) -> Bool {

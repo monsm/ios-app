@@ -408,7 +408,7 @@ struct LockSettingsHomeScreen: View {
                             .foregroundStyle(V8.C.ink1)
                             .frame(minHeight: V8.H.min)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     .accessibilityLabel("重新读取锁实况")
                 }
                 .padding(.top, V8.S.gapXS)
@@ -569,7 +569,7 @@ struct LockSettingsHomeScreen: View {
                         .frame(minHeight: V8.H.min)
                         .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .disabled(readOnly)
                 .opacity(readOnly ? 0.45 : 1)
                 .padding(.top, V8.S.gapM)
@@ -699,7 +699,7 @@ struct LockSettingsHomeScreen: View {
                         .frame(minHeight: V8.H.min)
                         .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .disabled(safeBusy || readOnly)
                 .opacity((safeBusy || readOnly) ? 0.45 : 1)
                 .padding(.top, V8.S.gapM)
@@ -747,7 +747,7 @@ struct LockSettingsHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.accent))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .disabled(tailgateBusy || !canTailgate || readOnly)
             .opacity((canTailgate && !readOnly) ? 1 : 0.45)
             .padding(.top, V8.S.gapM)
@@ -804,7 +804,7 @@ struct LockSettingsHomeScreen: View {
                 .frame(minHeight: V8.H.min)
                 .background(Capsule(style: .continuous).fill(selected ? V8.C.accent : V8.C.chipOff))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(String(value) + " 秒")
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
     }
@@ -878,7 +878,7 @@ struct LockSettingsHomeScreen: View {
                         .frame(minHeight: V8.H.min)
                         .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .disabled(!defendCanApply || readOnly)
                 .opacity((defendCanApply && !readOnly) ? 1 : 0.45)
             }
@@ -969,7 +969,7 @@ struct LockSettingsHomeScreen: View {
             .frame(minHeight: V8.H.min)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(m.title + "：" + m.note)
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
@@ -1002,7 +1002,7 @@ struct LockSettingsHomeScreen: View {
                 .frame(minWidth: V8.H.min, minHeight: V8.H.min)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(label)
     }
 
@@ -1077,7 +1077,7 @@ struct LockSettingsHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.dangerTrack))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .disabled(clearTyped != "清空" || busy || !canClearPwd || app.trialGuard)
             .opacity(clearTyped == "清空" && canClearPwd && !busy && !app.trialGuard ? 1 : 0.45)
             .padding(.top, V8.S.gapM)

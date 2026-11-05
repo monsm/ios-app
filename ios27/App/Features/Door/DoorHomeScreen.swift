@@ -26,6 +26,27 @@ struct DoorHomeScreen: View {
         batteryPct < 0 ? 0 : Double(batteryPct) / 100.0
     }
 
+    // 2026-11-05（全技能审核 · motion-brand P1-1）：门页英雄环原来只显示电量，
+    // 而 DialPhase.progress（真实命令链：查钥匙 0.18 → 下发 0.46 → 等回执 0.72 → 成功 1.0）
+    // 全仓零读取。这里在开锁过程中把环切到真实进度，结束后回到电量。
+    private var heroFraction: Double {
+        app.dialPhase == .idle ? batteryFraction : app.dialPhase.progress
+    }
+    private var heroCenter: String {
+        app.dialPhase == .idle ? (batteryPct < 0 ? "—" : "\(batteryPct)") : app.dialPhase.word
+    }
+    private var heroLabel: String {
+        app.dialPhase == .idle ? "电量 %" : "开锁进度"
+    }
+    private var heroTint: Color {
+        switch app.dialPhase {
+        case .idle: return batteryPct >= 0 && batteryPct < 15 ? V8.C.danger : V8.C.accent
+        case .opened: return V8.C.ok
+        case .failed(_): return V8.C.danger
+        default: return V8.C.accent
+        }
+    }
+
     private var judgement: String {
         guard let lock else { return "还没有添加门锁" }
         if !lock.isConnected { return "门未连接" }
@@ -178,7 +199,7 @@ struct DoorHomeScreen: View {
                                        label: LockArchive.displayName(kc),
                                        value: batteryWord(kc.mac))
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(V8PressStyle())
                             .accessibilityLabel("切换到 " + LockArchive.displayName(kc))
                             .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
                         }
@@ -206,7 +227,7 @@ struct DoorHomeScreen: View {
                                        label: group.name,
                                        value: "\(group.locks.count) 把")
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(V8PressStyle())
                             .accessibilityLabel("按组切换到 " + group.name)
                             .accessibilityAddTraits(active ? [.isButton, .isSelected] : .isButton)
                         }
@@ -258,12 +279,20 @@ struct DoorHomeScreen: View {
             VStack(spacing: V8.S.gapM) {
                 ZStack {
                     VHeroRing(
-                        fraction: batteryFraction,
-                        center: batteryPct < 0 ? "—" : "\(batteryPct)",
-                        label: "%",
+                        fraction: heroFraction,
+                        center: heroCenter,
+                        // 2026-11-05（全技能审核 · 可理解性）：空闲显示「电量 %」，
+                        // 开锁过程显示「开锁进度」，不再是没有任何主语的 76。
+                        label: heroLabel,
                         size: V8.G.heroOuter * 0.62,
-                        tint: batteryPct >= 0 && batteryPct < 15 ? V8.C.danger : V8.C.accent
+                        tint: heroTint
                     )
+                    .animation(reduceMotion ? nil : V8.M.move, value: app.dialPhase)
+                    // VoiceOver 的默认实现会念「%，76」；在环上覆盖成一句人话。
+                    .accessibilityLabel(app.dialPhase == .idle ? (batteryPct < 0 ? "电量未知" : "电量") : "开锁进度")
+                    .accessibilityValue(app.dialPhase == .idle
+                        ? (batteryPct < 0 ? "未读到" : "\(batteryPct)%")
+                        : "\(Int(app.dialPhase.progress * 100))%，\(app.dialPhase.word)")
                     if app.dialPhase == .opened {
                         Image(systemName: "checkmark")
                             .font(V8.T.heroL)
@@ -406,7 +435,7 @@ struct DoorHomeScreen: View {
                         .foregroundStyle(V8.C.accent)
                         .frame(minHeight: V8.H.min)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("编辑快捷操作")
             }
             VDivider2()

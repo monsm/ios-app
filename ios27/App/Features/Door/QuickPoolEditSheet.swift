@@ -118,7 +118,7 @@ struct QuickPoolEditSheet: View {
             .frame(minHeight: V8.H.min)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(action.label)
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
@@ -175,7 +175,7 @@ struct QuickPoolEditSheet: View {
                 .frame(width: V8.H.min, height: V8.H.min)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .disabled(disabled)
         .accessibilityLabel(label + action.label)
     }
@@ -219,7 +219,7 @@ struct QuickPoolEditSheet: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.accent))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .accessibilityLabel("保存快捷操作")
             .disabled(picked.isEmpty)
             Text(picked.isEmpty

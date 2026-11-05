@@ -291,10 +291,11 @@ struct KeysHomeScreen: View {
                 title: key.name,
                 detail: CredentialOrg.ownerName(key.owner),
                 value: reading.value,
-                unit: reading.unit
+                unit: reading.unit,
+                interactive: true
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
     }
 
     // MARK: - 卡 2 到期压力
@@ -343,7 +344,7 @@ struct KeysHomeScreen: View {
                             .font(V8.T.caption)
                             .foregroundStyle(V8.C.ink4)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     .accessibilityLabel("清空凭证搜索")
                 }
             }
@@ -387,7 +388,7 @@ struct KeysHomeScreen: View {
                             .frame(minHeight: V8.H.min)
                             .background(Capsule(style: .continuous).fill(V8.C.chipOff))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     .accessibilityLabel("搜索 " + term)
                     .contextMenu {
                         Button(role: .destructive) {
@@ -418,7 +419,7 @@ struct KeysHomeScreen: View {
                         .fill(V8.C.chipOff)
                 )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(groupByOwner ? "当前按归属分组" : "当前按类型分组")
     }
 

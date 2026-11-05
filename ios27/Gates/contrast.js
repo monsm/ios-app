@@ -51,6 +51,16 @@ if (fs.existsSync(V8_TOKENS)) {
   for (const m of v8src.matchAll(/static let (\w+)\s*=\s*dual\(\s*0x([0-9A-Fa-f]{6})\s*,\s*0x([0-9A-Fa-f]{6})(?:\s*,\s*lightAlpha:\s*([0-9.]+)\s*,\s*darkAlpha:\s*([0-9.]+))?\s*\)/g)) {
     V8[m[1]] = { light: m[2].toUpperCase(), dark: m[3].toUpperCase(), lightA: m[4] === undefined ? 1 : parseFloat(m[4]), darkA: m[5] === undefined ? 1 : parseFloat(m[5]), dual: true };
   }
+  // 2026-11-05（全技能审核 · 闸门维护）：V8 里高对比令牌从 static let 改成了
+  // static var x: Color { DB.store.getBool("kf_hc") ? dual(HC) : dual(默认) }。
+  // 上面的 static let 正则扫不到 -> 报「令牌缺失」。这里补扫 computed var，取最后一个
+  // dual(...)（即默认外观值）作为闸门断言的颜色 —— 高对比档额外由视觉检查覆盖。
+  for (const m of v8src.matchAll(/static var (\w+): Color\s*\{([\s\S]*?)\n        \}/g)) {
+    const pairs = [...m[2].matchAll(/dual\(\s*0x([0-9A-Fa-f]{6})\s*,\s*0x([0-9A-Fa-f]{6})(?:\s*,\s*lightAlpha:\s*([0-9.]+)\s*,\s*darkAlpha:\s*([0-9.]+))?\s*\)/g)];
+    if (pairs.length === 0) continue;
+    const p = pairs[pairs.length - 1];
+    V8[m[1]] = { light: p[1].toUpperCase(), dark: p[2].toUpperCase(), lightA: p[3] === undefined ? 1 : parseFloat(p[3]), darkA: p[4] === undefined ? 1 : parseFloat(p[4]), dual: true };
+  }
 }
 
 // V7 低对比黑名单：参考图里的视觉值，但 < 4.5:1（11pt 文本）或 < 3:1（非文本）。

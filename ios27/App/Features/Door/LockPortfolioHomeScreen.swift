@@ -187,7 +187,7 @@ struct LockPortfolioHomeScreen: View {
                 .frame(minHeight: V8.H.min)
                 .background(Capsule(style: .continuous).fill(on ? V8.C.accent : V8.C.chipOff))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(title)
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
@@ -232,10 +232,11 @@ struct LockPortfolioHomeScreen: View {
                     title: item.name,
                     detail: item.sleeping ? "沉睡" : "固件 " + (item.fw.isEmpty ? "未知" : item.fw),
                     value: String(item.opens30d),
-                    unit: "次"
+                    unit: "次",
+                    interactive: true
                 )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             HStack(spacing: V8.S.gapL) {
                 Button("改分组") {
                     groupEditMac = item.mac
@@ -398,7 +399,7 @@ struct LockPortfolioHomeScreen: View {
                             .frame(minHeight: V8.H.min)
                             .background(Capsule(style: .continuous).fill(V8.C.accent))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     .accessibilityLabel("保存锁档案")
                     .padding(.top, V8.S.gapM)
                     if let profileOutcome {
@@ -500,7 +501,7 @@ struct LockPortfolioHomeScreen: View {
             .frame(minWidth: V8.H.min, minHeight: V8.H.min)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel("符号 " + item.label)
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
@@ -529,7 +530,7 @@ struct LockPortfolioHomeScreen: View {
             .frame(minWidth: V8.H.min, minHeight: V8.H.min)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel("色标 " + item.name)
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
@@ -553,7 +554,7 @@ struct LockPortfolioHomeScreen: View {
             .frame(minHeight: V8.H.min)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(title)
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
@@ -669,7 +670,7 @@ struct LockPortfolioHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.accentTrack))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .accessibilityLabel("恢复默认版面")
             Text("只重置版面：槽位顺序、模块显隐、快捷格勾选。门锁、凭证、记录一项都不动。")
                 .font(V8.T.footnote)
@@ -743,7 +744,7 @@ struct LockPortfolioHomeScreen: View {
             .background(V8.C.chipOff, in: .rect(cornerRadius: V8.R.inset))
             .contentShape(.rect)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(action.label)
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
     }

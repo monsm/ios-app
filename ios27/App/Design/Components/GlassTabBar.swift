@@ -43,7 +43,7 @@ struct GlassTabBar: View {
                     }
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("第 \(index + 1) 个标签，共 \(titles.count) 个：" + titles[index])
                 .accessibilityAddTraits(selection == index ? [.isButton, .isSelected] : .isButton)
             }

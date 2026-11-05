@@ -207,7 +207,11 @@ const v8Dead = [];
 for (const [group, names] of Object.entries(v8Groups(v8TokenSrc))) {
   for (const n of names) {
     if (V8_TOOL.has(n)) continue;
-    const re = new RegExp('\\b' + n + '\\b');
+    // 2026-11-05（全技能审核 · 闸门盲区）：原来用 \b名字\b 全文件搜 ——
+    // 像 label / caption / title1 / focus / ambient 这种常用词会被参数名、局部变量、
+    // 注释里的同名英文单词"命中"，于是五个真死令牌一直报绿。必须要求完整的
+    // V8.<group>.<name> 限定名（令牌层内部跨组引用也写全限定名）。
+    const re = new RegExp('V8\\.' + group + '\\.' + n + '\\b');
     let used = false;
     for (const f of files) {
       const rel = path.relative(APP, f).split(path.sep).join('/');

@@ -97,7 +97,7 @@ struct SettingRow: View {
             .frame(minHeight: V.Hit.min)
             .contentShape(.rect)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label)，\(value)\(unit.map { " \($0)" } ?? "")\(note.map { "。\($0)" } ?? "")")
         .accessibilityAddTraits(.isButton)

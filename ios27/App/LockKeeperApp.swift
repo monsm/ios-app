@@ -178,7 +178,10 @@ private struct AXTextSizeModifier: ViewModifier {
     func body(content: Content) -> some View {
         Group {
             if enabled {
-                content.dynamicTypeSize(.accessibility2)
+                // 2026-11-05（全技能审核 · 无障碍）：原来写死 .accessibility2 是"强制等于"，
+                // 系统已设 AX5 的用户打开后反而变小。改成区间：只保证**下限** AX2，
+                // 系统更大时跟随系统（AX3–AX5），更小时才补到 AX2。
+                content.dynamicTypeSize(.accessibility2 ... .accessibility5)
             } else {
                 content
             }

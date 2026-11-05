@@ -182,6 +182,9 @@ enum BatteryCare {
             content.body = body
             // 夜间免扰（kf_quiet_night）：即时通知按“现在”判。
             content.sound = CareSchedule.sound(at: Date())
+            // 2026-11-05（全技能审核 · APK 对位 P1）：低电通知原来直接 add —— 用户若从未
+            // 在凭证到期链里被问过通知权限，这条安全提醒会静默失败。与 CredentialOrgState 同口径先 ensure。
+            NotificationAuth.ensure()
             let req = UNNotificationRequest(identifier: "c6.batt.\(mac).l\(level)", content: content, trigger: nil)
             UNUserNotificationCenter.current().add(req) { err in
                 if let err { CredentialOrg.notifyLog.error("低电通知发送失败 mac=\(mac, privacy: .public) err=\(String(describing: err), privacy: .public)") }

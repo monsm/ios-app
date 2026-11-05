@@ -77,7 +77,7 @@ struct PasscodeSheet: View {
                                     .frame(minHeight: V8.H.min)
                                     .background(Capsule(style: .continuous).fill(V8.C.accent))
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(V8PressStyle())
                             .accessibilityLabel("确定")
                             .padding(.top, V8.S.gapXS)
                             Button { dismiss() } label: {
@@ -88,7 +88,7 @@ struct PasscodeSheet: View {
                                     .frame(minHeight: V8.H.min)
                                     .background(Capsule(style: .continuous).fill(V8.C.chipOff))
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(V8PressStyle())
                             .accessibilityLabel("取消")
                         }
                     }
@@ -210,7 +210,7 @@ struct VerifyPasscodeSheet: View {
                                     .frame(minHeight: V8.H.min)
                                     .background(Capsule(style: .continuous).fill(V8.C.accent))
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(V8PressStyle())
                             .accessibilityLabel("验证并继续")
                             .disabled(code.count < 4)
                             .opacity(code.count < 4 ? 0.45 : 1)
@@ -222,7 +222,7 @@ struct VerifyPasscodeSheet: View {
                                     .frame(minHeight: V8.H.min)
                                     .background(Capsule(style: .continuous).fill(V8.C.chipOff))
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(V8PressStyle())
                             .accessibilityLabel("取消")
                         }
                     }

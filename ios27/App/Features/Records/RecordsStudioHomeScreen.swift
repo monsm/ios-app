@@ -197,7 +197,7 @@ struct RecordsStudioHomeScreen: View {
                             .font(V8.T.caption)
                             .foregroundStyle(V8.C.ink4)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     .accessibilityLabel("清空检索词")
                 }
             }
@@ -301,7 +301,7 @@ struct RecordsStudioHomeScreen: View {
                             .strokeBorder(V8.C.line, lineWidth: V8.S.hair)
                     )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .accessibilityLabel("清空全部筛选条件")
             .padding(.top, V8.S.gapM)
         }
@@ -339,7 +339,7 @@ struct RecordsStudioHomeScreen: View {
                 .frame(minHeight: V8.H.min)
                 .background(Capsule(style: .continuous).fill(on ? V8.C.accent : V8.C.chipOff))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(title)
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
@@ -497,7 +497,7 @@ struct RecordsStudioHomeScreen: View {
                                 .strokeBorder(V8.C.line, lineWidth: V8.S.hair)
                         )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("复制全部已脱敏帧")
                 .padding(.top, V8.S.gapM)
             }

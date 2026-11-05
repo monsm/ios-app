@@ -52,7 +52,6 @@ struct AppearanceHomeScreen: View {
                 accentCard
                 iconCard
                 geometryCard
-                readoutCard
                 careCard
                 rhythmCard
                 timeCard
@@ -210,7 +209,7 @@ struct AppearanceHomeScreen: View {
                                 .strokeBorder(V8.C.line, lineWidth: V8.E.hair)
                         )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .padding(.top, V8.S.gapS)
                 .accessibilityLabel("取消自定义强调色")
             }
@@ -249,7 +248,7 @@ struct AppearanceHomeScreen: View {
             .frame(minHeight: V8.H.min)
             .background(on ? V8.C.chipOn : V8.C.chipOff, in: .rect(cornerRadius: V8.R.inset))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel("品牌色 " + item.title)
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
@@ -319,7 +318,7 @@ struct AppearanceHomeScreen: View {
             .frame(minHeight: V8.H.min)
             .background(on ? V8.C.chipOn : V8.C.chipOff, in: .rect(cornerRadius: V8.R.inset))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel("应用图标 " + item.title)
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
@@ -346,7 +345,7 @@ struct AppearanceHomeScreen: View {
 
     private var geometryCard: some View {
         VCard2 {
-            VCardHead(eyebrow: "几何", statement: "圆角 / 行高 / 行距")
+            VCardHead(eyebrow: "几何", statement: "圆角三档")
             VDivider2()
                 .padding(.top, V8.S.gapM)
             optionGroup(
@@ -355,7 +354,9 @@ struct AppearanceHomeScreen: View {
                 current: store.radius,
                 pick: { store.radius = $0 }
             )
-            Text("圆角只动卡片 / 控件 / 面板三档，胶囊不参与；行高与行距不改字号与 44pt 触达。")
+            // 2026-11-05（全技能审核 · 幽灵文案）：卡片头原来写「圆角 / 行高 / 行距」，
+            // 但行高、行距控制早已随「有开关无消费者」删除 —— 只剩圆角一个控制。
+            Text("圆角只动卡片与内嵌块的圆角档位；胶囊不参与，44pt 触达不变。")
                 .font(V8.T.footnote)
                 .foregroundStyle(V8.C.ink3)
                 .padding(.top, V8.S.gapM)
@@ -363,33 +364,11 @@ struct AppearanceHomeScreen: View {
         }
     }
 
-    // MARK: - 卡 5 主控读数
-
-    private var readoutCard: some View {
-        VCard2 {
-            VCardHead(eyebrow: "主控读数", statement: "门页显示哪几项")
-            VDivider2()
-                .padding(.top, V8.S.gapM)
-            toggleRow("主控卡显示固件位", detail: "电量不参与隐藏 —— 它决定还能不能开锁。", isOn: Binding(
-                get: { HeroStats.shows("firmware") },
-                set: { on in
-                    var ids = Array(HeroStats.visible)
-                    if on { if !ids.contains("firmware") { ids.append("firmware") } }
-                    else { ids.removeAll { $0 == "firmware" } }
-                    HeroStats.setVisible(ids)
-                }
-            ))
-            toggleRow("主控卡显示锁钟位", detail: "锁钟是临时码有效性的判据，可以收起。", isOn: Binding(
-                get: { HeroStats.shows("lockclock") },
-                set: { on in
-                    var ids = Array(HeroStats.visible)
-                    if on { if !ids.contains("lockclock") { ids.append("lockclock") } }
-                    else { ids.removeAll { $0 == "lockclock" } }
-                    HeroStats.setVisible(ids)
-                }
-            ))
-        }
-    }
+    // MARK: - 卡 5 主控读数（2026-11-05 全技能审核：整卡删除）
+    //
+    // 原卡的两个开关写 HeroStats（"门页显示固件位 / 锁钟位"），但 V8 门页 heroCard
+    // 从来只读 app.dialPhase/battery，全仓没有任何 UI 读 HeroStats —— 两个开关是纯幽灵。
+    // 删除 UI，保留 Engine/HeroStats 以兼容旧备份导入（BackupKit 仍读写 kf_hero_stats）。
 
 
     // MARK: - 卡 7 开锁与关怀
@@ -442,9 +421,12 @@ struct AppearanceHomeScreen: View {
             }
             .scrollClipDisabled()
             .padding(.top, V8.S.gapS)
+            // 2026-11-05（全技能审核 · 幽灵文案）：原文承诺「取消数字滚动与逐格点亮」，
+            // 但这两件事从未按 MotionTier 实现（数字 transition 只看 reduceMotion，逐格点亮根本不存在）。
+            // 现在 V8.M 的四个动效令牌已按 kf_motion 分档，文案改成描述真实行为。
             Text(systemReduceMotion
-                 ? "系统已开启「减弱动态效果」：进度弧保留（它是信息），数字滚动与逐格点亮已取消。"
-                 : "克制档取消数字滚动与逐格点亮；开锁进度弧在任何档位都保留 —— 它量的是真命令链。")
+                 ? "系统已开启「减弱动态效果」：所有位移动画取消，只保留必要的信息变化。"
+                 : "克制档把所有弹跳压成短淡入；活泼档允许一次轻微回弹。系统「减弱动态效果」始终优先。")
                 .font(V8.T.footnote)
                 .foregroundStyle(V8.C.ink3)
                 .padding(.top, V8.S.gapS)
@@ -569,7 +551,7 @@ struct AppearanceHomeScreen: View {
             .frame(minHeight: V8.H.min)
             .background(V8.C.chipOff, in: .rect(cornerRadius: V8.R.inset))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(action.label)
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
     }
@@ -646,7 +628,7 @@ struct AppearanceHomeScreen: View {
                             .strokeBorder(V8.C.line, lineWidth: V8.E.hair)
                     )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .accessibilityLabel("恢复默认外观")
             .padding(.top, V8.S.gapM)
             // 2026-11-05（对抗审查 · 设计冗余）：「只读试验模式 · 本页不受影响」原来是一整张卡，
@@ -672,7 +654,7 @@ struct AppearanceHomeScreen: View {
                 .frame(minHeight: V8.H.min)
                 .background(Capsule(style: .continuous).fill(on ? V8.C.accent : V8.C.chipOff))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(title)
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }

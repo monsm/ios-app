@@ -96,6 +96,17 @@ struct LockMaintenanceHomeScreen: View {
     @State private var batteryNote: String?
     @State private var expandedSection: String?
 
+    private func openPendingSection() {
+        guard case .dest(let dest) = router.pending else { return }
+        switch dest {
+        case .gateway: expandedSection = "gateway"
+        case .dfu: expandedSection = "dfu"
+        case .batteryProfile: expandedSection = "battery"
+        case .deviceInfo: expandedSection = "info"
+        default: break
+        }
+    }
+
     private var mac: String { app.lock?.id ?? "" }
     private var kc: Keychain? { app.currentKeychain }
     private var meta: LockMeta { LockArchive.meta(mac) }
@@ -153,6 +164,11 @@ struct LockMaintenanceHomeScreen: View {
         }
         .background(V8.C.bg.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
+        // 2026-11-05（全技能审核 · 合并页落点）：从设置索引点「锁信息名片 / 网关 / 固件 / 电池」
+        // 时，本来都会落到这一页顶部且四段全折叠 —— 用户以为点错了。这里消费路由上下文，
+        // 打开对应段。
+        .onAppear { openPendingSection() }
+        .onChange(of: router.pending) { _, _ in openPendingSection() }
         .task(id: app.currentMac) {
             loadBattery()
             infoBatteryModel = meta.batteryModel
@@ -282,7 +298,7 @@ struct LockMaintenanceHomeScreen: View {
             .frame(minHeight: V8.H.min)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(eyebrow + "：" + statement + (expandedSection == key ? "，已展开" : "，已收起"))
         .accessibilityAddTraits(.isButton)
     }
@@ -387,7 +403,7 @@ struct LockMaintenanceHomeScreen: View {
                             .frame(minHeight: V8.H.min)
                             .background(Capsule(style: .continuous).fill(V8.C.accent))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     .padding(.top, V8.S.gapM)
                 }
                 .padding(.top, V8.S.gapM)
@@ -529,7 +545,7 @@ struct LockMaintenanceHomeScreen: View {
                         .frame(minHeight: V8.H.min)
                         .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .disabled(!gwCanProvision || readOnly)
                 .opacity((gwCanProvision && !readOnly) ? 1 : 0.45)
                 .padding(.top, V8.S.gapM)
@@ -664,7 +680,7 @@ struct LockMaintenanceHomeScreen: View {
                             .frame(minHeight: V8.H.min)
                             .background(Capsule(style: .continuous).fill(V8.C.accent))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     .disabled(readOnly)
                     .opacity(readOnly ? 0.45 : 1)
                     .padding(.top, V8.S.gapM)
@@ -694,7 +710,7 @@ struct LockMaintenanceHomeScreen: View {
                                 .frame(minHeight: V8.H.min)
                                 .background(Capsule(style: .continuous).fill(V8.C.accent))
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(V8PressStyle())
                         .disabled(readOnly)
                         .opacity(readOnly ? 0.4 : 1)
                         .padding(.top, V8.S.gapM)
@@ -831,7 +847,7 @@ struct LockMaintenanceHomeScreen: View {
                         .frame(minHeight: V8.H.min)
                         .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .padding(.top, V8.S.gapM)
                 if let batteryOutcome {
                     Text(batteryOutcome)
@@ -894,7 +910,7 @@ struct LockMaintenanceHomeScreen: View {
                 .frame(minHeight: V8.H.min)
                 .background(Capsule(style: .continuous).fill(selected ? V8.C.okFill : V8.C.chipOff))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel("低电阈值 " + String(value) + "%")
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
     }
@@ -1014,7 +1030,7 @@ struct LockMaintenanceHomeScreen: View {
                         .frame(minHeight: V8.H.min)
                         .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("重新读取锁信息")
                 if let infoOutcome {
                     Text(infoOutcome)

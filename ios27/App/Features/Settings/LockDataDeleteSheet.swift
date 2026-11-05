@@ -131,7 +131,7 @@ struct LockDataDeleteSheet: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.dangerTrack))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .disabled(!canDelete)
             .opacity(canDelete ? 1 : 0.4)
             .accessibilityLabel("删除本机数据")

@@ -273,7 +273,7 @@ struct CredentialStudioHomeScreen: View {
                         .frame(width: V8.H.min, height: V8.H.min)
                         .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("上一个月")
                 Spacer(minLength: 0)
                 Text(String(format: "%04d-%02d", calendarYear, calendarMonth))
@@ -288,7 +288,7 @@ struct CredentialStudioHomeScreen: View {
                         .frame(width: V8.H.min, height: V8.H.min)
                         .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("下一个月")
             }
             .padding(.top, V8.S.gapM)
@@ -342,7 +342,7 @@ struct CredentialStudioHomeScreen: View {
                     .fill(selected ? V8.C.chipOff : Color.clear)
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel("\(calendarMonth) 月 \(day) 日" + (count > 0 ? "，\(count) 条到期" : ""))
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
     }
@@ -367,9 +367,10 @@ struct CredentialStudioHomeScreen: View {
                         } label: {
                             VDataRow(tag: key.kind.rawValue, tagTint: calendarKindTint(key.kind), title: key.name,
                                      detail: CredentialOrg.ownerName(key.owner),
-                                     value: KeysState.word(key, now: KeysState.now()))
+                                     value: KeysState.word(key, now: KeysState.now()),
+                                     interactive: true)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(V8PressStyle())
                         if key.id != pickedItems.last?.id { VDotRule() }
                     }
                 }
@@ -431,7 +432,7 @@ struct CredentialStudioHomeScreen: View {
                         .frame(minHeight: V8.H.min)
                         .background(Capsule(style: .continuous).fill(V8.C.chipOff))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("切换分组方式")
                 Button {
                     saveSnapshot()
@@ -443,7 +444,7 @@ struct CredentialStudioHomeScreen: View {
                         .frame(minHeight: V8.H.min)
                         .background(Capsule(style: .continuous).fill(V8.C.chipOff))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("保存版本快照")
                 Spacer(minLength: 0)
             }
@@ -464,7 +465,7 @@ struct CredentialStudioHomeScreen: View {
                 .frame(minHeight: V8.H.min)
                 .background(Capsule(style: .continuous).fill(on ? V8.C.accent : V8.C.chipOff))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(option.rawValue)
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
@@ -559,7 +560,7 @@ struct CredentialStudioHomeScreen: View {
                     .frame(minWidth: V8.H.min, minHeight: V8.H.min)
                     .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .accessibilityLabel(selected ? "取消选择" : "选择")
             VStack(alignment: .leading, spacing: V8.S.gapXS) {
                 HStack(spacing: V8.S.gapXS) {
@@ -589,7 +590,7 @@ struct CredentialStudioHomeScreen: View {
                     .frame(minWidth: V8.H.min, minHeight: V8.H.min)
                     .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .accessibilityLabel(starred ? "取消星标" : "设为星标")
             Button("提醒") { alertTarget = pwd }
                 .font(V8.T.caption)
@@ -622,7 +623,7 @@ struct CredentialStudioHomeScreen: View {
                     .frame(minWidth: V8.H.min, minHeight: V8.H.min)
                     .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .accessibilityLabel(selected ? "取消选择" : "选择")
             VStack(alignment: .leading, spacing: V8.S.gapXS) {
                 Text(fp.name.isEmpty ? "指纹 " + String(fp.batch) : fp.name)
@@ -636,9 +637,11 @@ struct CredentialStudioHomeScreen: View {
             }
             Spacer(minLength: V8.S.gapS)
             if fp.isAlarm == true {
-                Text("防拆")
+                // 2026-11-05（全技能审核 · APK 对位）：LedgerFp.isAlarm 是原版的
+                // 「预警指纹」标记，不是硬件防拆 —— 写「防拆」会让用户误解。
+                Text("预警")
                     .font(V8.T.micro)
-                    .foregroundStyle(V8.C.danger)
+                    .foregroundStyle(V8.C.warn)
                     .padding(.horizontal, V8.S.gapS)
                     .frame(minHeight: V8.H.min)
             }
@@ -674,7 +677,7 @@ struct CredentialStudioHomeScreen: View {
                             .frame(minHeight: V8.H.min)
                             .background(Capsule(style: .continuous).fill(extendDays == days ? V8.C.accent : V8.C.chipOff))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     .accessibilityLabel("延期 " + String(days) + " 天")
                     .accessibilityAddTraits(extendDays == days ? [.isButton, .isSelected] : .isButton)
                 }
@@ -690,7 +693,7 @@ struct CredentialStudioHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.accent))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .disabled(selectedPwds.isEmpty)
             .opacity(selectedPwds.isEmpty ? 0.45 : 1)
             .padding(.top, V8.S.gapS)
@@ -711,7 +714,7 @@ struct CredentialStudioHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.dangerTrack))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .disabled(totalSelected == 0)
             .opacity(totalSelected == 0 ? 0.45 : 1)
             .padding(.top, V8.S.gapS)
@@ -738,7 +741,7 @@ struct CredentialStudioHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.chipOff))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .disabled(prefixText.isEmpty || totalSelected == 0)
             .opacity((prefixText.isEmpty || totalSelected == 0) ? 0.45 : 1)
             .padding(.top, V8.S.gapS)
@@ -767,7 +770,7 @@ struct CredentialStudioHomeScreen: View {
                             .frame(minHeight: V8.H.min)
                             .background(Capsule(style: .continuous).fill(V8.C.chipOff))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     .accessibilityLabel("解除归属")
                 }
             }
@@ -782,7 +785,7 @@ struct CredentialStudioHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.chipOff))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .disabled(totalSelected == 0)
             .opacity(totalSelected == 0 ? 0.45 : 1)
             .padding(.top, V8.S.gapS)
@@ -810,7 +813,7 @@ struct CredentialStudioHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.chipOff))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .disabled(packagePassword.count < 8 || totalSelected == 0)
             .opacity((packagePassword.count < 8 || totalSelected == 0) ? 0.45 : 1)
             .padding(.top, V8.S.gapS)
@@ -827,7 +830,7 @@ struct CredentialStudioHomeScreen: View {
                         .frame(minHeight: V8.H.min)
                         .background(Capsule(style: .continuous).fill(V8.C.chipOff))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("复制凭证包")
                 .padding(.top, V8.S.gapS)
             }
@@ -843,7 +846,7 @@ struct CredentialStudioHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.chipOff))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .accessibilityLabel("从凭证包导入")
             .padding(.top, V8.S.gapM)
         }
@@ -866,7 +869,7 @@ struct CredentialStudioHomeScreen: View {
                 .frame(minHeight: V8.H.min)
                 .background(Capsule(style: .continuous).fill(on ? V8.C.accent : V8.C.chipOff))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel("移交给 " + member.name)
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
@@ -947,7 +950,7 @@ struct CredentialStudioHomeScreen: View {
                         .frame(minHeight: V8.H.min)
                         .background(Capsule(style: .continuous).fill(V8.C.chipOff))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("打开回收站")
                 Button {
                     confirmPurgeAll = true
@@ -959,7 +962,7 @@ struct CredentialStudioHomeScreen: View {
                         .frame(minHeight: V8.H.min)
                         .background(Capsule(style: .continuous).fill(V8.C.dangerTrack))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("清空回收站")
                 Spacer(minLength: 0)
             }
@@ -989,7 +992,7 @@ struct CredentialStudioHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.chipOff))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .accessibilityLabel("打开版本历史")
             .padding(.top, V8.S.gapS)
         }
@@ -1207,7 +1210,7 @@ struct CredAlertSheet2: View {
                         .frame(minHeight: V8.H.min)
                         .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("完成")
             }
             .background(V8.C.bg.ignoresSafeArea())
@@ -1290,7 +1293,7 @@ struct CredBinSheet2: View {
                                     .frame(minHeight: V8.H.min)
                                     .background(Capsule(style: .continuous).fill(V8.C.chipOff))
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(V8PressStyle())
                             .accessibilityLabel("还原这一批" + String(group.count) + "条")
                         }
                     }
@@ -1311,7 +1314,7 @@ struct CredBinSheet2: View {
                         .frame(minHeight: V8.H.min)
                         .background(Capsule(style: .continuous).fill(V8.C.chipOff))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("关闭回收站")
             }
             .background(V8.C.bg.ignoresSafeArea())
@@ -1439,7 +1442,7 @@ struct CredHistorySheet2: View {
                                 .frame(minHeight: V8.H.min)
                                 .background(Capsule(style: .continuous).fill(V8.C.accent))
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(V8PressStyle())
                         .accessibilityLabel("保存快照")
                         .padding(.top, V8.S.gapM)
                     }
@@ -1466,7 +1469,7 @@ struct CredHistorySheet2: View {
                             .frame(minHeight: V8.H.min)
                             .background(Capsule(style: .continuous).fill(V8.C.chipOff))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     .accessibilityLabel("保存当前为快照")
                 }
                 if let outcome {
@@ -1485,7 +1488,7 @@ struct CredHistorySheet2: View {
                         .frame(minHeight: V8.H.min)
                         .background(Capsule(style: .continuous).fill(V8.C.chipOff))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("关闭版本历史")
             }
             .background(V8.C.bg.ignoresSafeArea())
@@ -1640,7 +1643,7 @@ struct CredentialImportSheet: View {
                             .frame(minHeight: V8.H.min)
                             .background(Capsule(style: .continuous).fill(V8.C.accent))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || password.isEmpty)
                     .opacity((text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || password.isEmpty) ? 0.45 : 1)
                     .padding(.top, V8.S.gapM)
@@ -1654,7 +1657,7 @@ struct CredentialImportSheet: View {
                             .frame(minHeight: V8.H.min)
                             .background(Capsule(style: .continuous).fill(V8.C.chipOff))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     .accessibilityLabel("关闭导入")
                     .padding(.top, V8.S.gapS)
                 }

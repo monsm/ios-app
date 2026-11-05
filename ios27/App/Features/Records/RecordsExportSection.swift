@@ -218,7 +218,7 @@ struct RecordsExportSection: View {
                         .frame(minHeight: V8.H.min)
                         .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("确认开始导出")
                 .padding(.top, V8.S.gapM)
             }
@@ -310,7 +310,7 @@ struct RecordsExportSection: View {
                     .strokeBorder(on ? V8.C.accent : V8.C.line, lineWidth: V8.S.hair)
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(entry.event + "，" + TimeFormat.dayShort(entry.at) + " " + TimeDisplay.clock(entry.at))
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
@@ -398,7 +398,7 @@ struct RecordsExportSection: View {
             .frame(minHeight: V8.H.min)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(TimeFormat.dayTitle(key) + "，共 \(count) 条")
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
@@ -477,7 +477,7 @@ struct RecordsExportSection: View {
                                 .strokeBorder(V8.C.line, lineWidth: V8.S.hair)
                         )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel(copied == nil ? "复制上周小结与 CSV" : "已复制到剪贴板")
                 .padding(.top, V8.S.gapM)
             }

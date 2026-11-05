@@ -59,10 +59,10 @@ struct HardwareHomeScreen: View {
                 decoyCard
             } else if dongles.isEmpty {
                 VEmpty(
-                    title: "先添加门锁",
-                    // 2026-11-05（值级重复）：这里原来还写了「只认厂商的钥匙串（型号 ZKBBV1）」与「扫描 15 秒」，
-                // 而下面那张「扫描」卡的头就写着「只认厂商的钥匙串 / 15 秒」。空态只需说该做什么。
-                reason: "下一步：把钥匙串拿到手机旁，点「扫描钥匙串」；认不到就是没电或没在广播。",
+                    // 2026-11-05（全技能审核 · 空态语义）：已有门锁、只是还没登记钥匙串时，
+                    // 标题写「先添加门锁」与按钮「扫描钥匙串」互相矛盾。标题改成动作相符的状态。
+                    title: "还没有登记钥匙串",
+                    reason: "下一步：把钥匙串拿到手机旁，点「扫描钥匙串」；认不到就是没电或没在广播。",
                     actionTitle: "扫描钥匙串"
                 ) { scan() }
                 scanCard
@@ -178,14 +178,14 @@ struct HardwareHomeScreen: View {
                 Button { revokeTarget = d } label: {
                     actionLabel("撤销这把锁的钥匙", tint: V8.C.danger)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .disabled(readOnly)
                 .opacity(readOnly ? 0.45 : 1)
             } else {
                 Button { write(d) } label: {
                     actionLabel("把「\(app.lock?.name ?? "这把锁")」的钥匙写进去", tint: V8.C.accent)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .disabled(readOnly)
                 .opacity(readOnly ? 0.45 : 1)
             }
@@ -196,20 +196,20 @@ struct HardwareHomeScreen: View {
                         .foregroundStyle(V8.C.accent)
                         .frame(minHeight: V8.H.min)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 Button { loadKeys(d) } label: {
                     Text("查看已写入的钥匙")
                         .font(V8.T.caption)
                         .foregroundStyle(V8.C.accent)
                         .frame(minHeight: V8.H.min)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 Spacer(minLength: 0)
             }
             Button { writeFault(d) } label: {
                 actionLabel("写入一把未知钥匙（随机 PIN，永久）", tint: V8.C.ink3)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .disabled(readOnly)
             .opacity(readOnly ? 0.45 : 1)
             if let keys = keysByDongle[d.id] {
@@ -240,7 +240,7 @@ struct HardwareHomeScreen: View {
             Button { unbindTarget = d } label: {
                 actionLabel("从本机解绑", tint: V8.C.danger)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             // 2026-11-05（HIG · 破坏性动作要二次确认）：原来这里一点即删，
             // 而同页的「撤销钥匙」「移除网关」都有确认 —— 只有这一处漏了。
             .confirmationDialog("从本机解绑这把钥匙串？", isPresented: Binding(
@@ -305,7 +305,7 @@ struct HardwareHomeScreen: View {
                         .frame(minHeight: V8.H.min)
                         .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .padding(.top, V8.S.gapM)
             }
             Text("扫描只认 pid 16289 且广播里带 MAC 的设备。扫不到时先确认钥匙串有电（按一下按键看灯），再靠近手机 30 厘米内。")

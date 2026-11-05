@@ -280,7 +280,7 @@ struct MemberCreateHomeScreen: View {
                 .frame(minWidth: V8.H.min, minHeight: V8.H.min)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(e.isEmpty ? "默认首字" : "代号 " + e)
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
@@ -314,7 +314,7 @@ struct MemberCreateHomeScreen: View {
             .frame(minHeight: V8.H.min)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel("角色 " + item.rawValue + "，" + HHPerm.hint(item))
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
@@ -381,7 +381,7 @@ struct MemberCreateHomeScreen: View {
                         .frame(minHeight: V8.H.min)
                         .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .disabled(!canAdvance)
                 .opacity(canAdvance ? 1 : 0.45)
                 .accessibilityLabel("下一步")
@@ -396,7 +396,7 @@ struct MemberCreateHomeScreen: View {
                         .frame(minHeight: V8.H.min)
                         .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .disabled(!canAdvance || creating)
                 .opacity((canAdvance && !creating) ? 1 : 0.45)
                 .accessibilityLabel("完成建档")
@@ -416,7 +416,7 @@ struct MemberCreateHomeScreen: View {
                                 .strokeBorder(V8.C.line, lineWidth: V8.S.hair)
                         )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .disabled(creating)
                 .accessibilityLabel("上一步")
                 .padding(.top, V8.S.gapS)

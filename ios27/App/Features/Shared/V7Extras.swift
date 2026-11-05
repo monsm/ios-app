@@ -396,7 +396,7 @@ struct VChipRow<Item: Hashable>: View {
                                 )
                             }
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
                 }
             }

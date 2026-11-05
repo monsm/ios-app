@@ -13,6 +13,7 @@
 //      而空壳的纪律是只隐藏、不破坏；旧页在空壳里照样能一键关掉真实本机密码。
 import SwiftUI
 import LocalAuthentication
+import UIKit
 
 struct SecurityHomeScreen: View {
     @Environment(AppModel.self) private var app
@@ -35,6 +36,10 @@ struct SecurityHomeScreen: View {
     @State private var confirmDisableDuress = false
     /// 待呈现的验证框。对话框关闭后才消费 —— 避免「对话框还没退场就弹 sheet」被 SwiftUI 丢弃。
     @State private var pendingVerify: SecuritySheet?
+    /// 2026-11-05（全技能审核 · APK 对位 P1）：通知授权状态原来没有任何 UI。
+    /// 用缓存值渲染，避免每次 body 走 NotifyAuth.status 的 2 秒同步等待。
+    @State private var notifyLabel = "读取中…"
+    @State private var notifyOff = false
 
     private var decoyed: Bool { DB.isDecoy }
 
@@ -79,6 +84,7 @@ struct SecurityHomeScreen: View {
                     unsetCard
                 }
                 biometricCard
+                notificationCard
                 lockSideCard
                 unlockCard
                 trialCard
@@ -136,6 +142,35 @@ struct SecurityHomeScreen: View {
     }
 
     // MARK: - 芯片行
+
+    /// 2026-11-05（全技能审核 · APK 对位 P1）：通知授权状态卡。
+    private var notificationCard: some View {
+        VCard2 {
+            VCardHead(eyebrow: "通知", statement: notifyOff ? "提醒可能送不到" : "提醒可以送达")
+            VDivider2()
+                .padding(.top, V8.S.gapM)
+            VDataRow(tag: "权限", tagTint: notifyOff ? V8.C.warn : V8.C.ok,
+                     title: "系统通知", value: notifyLabel)
+            if notifyOff {
+                Text("凭证到期与门锁低电都靠本地通知送达；被拒或未询问时，这两类提醒不会弹出。")
+                    .font(V8.T.caption)
+                    .foregroundStyle(V8.C.ink3)
+                    .padding(.top, V8.S.gapM)
+                    .fixedSize(horizontal: false, vertical: true)
+                VNavRow(title: "去系统设置", detail: "允许通知与声音") {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                }
+                .padding(.top, V8.S.gapS)
+            }
+        }
+        .task {
+            let status = NotifyAuth.status
+            notifyLabel = NotifyAuth.label
+            notifyOff = status == .denied || status == .notDetermined
+        }
+    }
 
     // MARK: - 空壳
 
@@ -226,7 +261,7 @@ struct SecurityHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.accent))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .padding(.top, V8.S.gapM)
             .accessibilityLabel(store.hasPasscode ? "更改本机密码" : "设置本机密码")
             if store.hasPasscode {
@@ -271,7 +306,7 @@ struct SecurityHomeScreen: View {
                             .strokeBorder(V8.C.line, lineWidth: V8.E.hair)
                     )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .padding(.top, V8.S.gapM)
             .accessibilityLabel(store.hasDuressCode ? "更改胁迫码" : "设置胁迫码")
             if store.hasDuressCode {

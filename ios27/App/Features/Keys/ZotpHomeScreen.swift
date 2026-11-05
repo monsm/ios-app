@@ -6,6 +6,7 @@ import SwiftUI
 
 struct ZotpHomeScreen: View {
     @Environment(AppModel.self) private var app
+    @Environment(Router.self) private var router
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var otpOn = false
@@ -51,6 +52,12 @@ struct ZotpHomeScreen: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("距本窗口失效的倒计时")
+        // 2026-11-05（全技能审核 · VoiceOver）：原来只报「倒计时」，剩余时间对读屏用户
+        // 完全不存在 —— 而倒计时环就是这页唯一的信息图形。补 accessibilityValue。
+        .accessibilityValue({
+            let remain = secondsToExpiry(at: Date())
+            return "剩余 " + String(remain / 60) + " 分 " + String(remain % 60) + " 秒"
+        }())
     }
 
     private var judgement: String {
@@ -79,7 +86,7 @@ struct ZotpHomeScreen: View {
                     title: "添加一把门锁",
                     reason: "动态密码要用这把锁的钥匙串现场计算：先添加并配对门锁，再回来生成。",
                     actionTitle: "添加门锁"
-                ) { }
+                ) { router.request(.dest(.addLock)) }
             } else {
                 enableCard
                 if otpOn { generateCard }
@@ -148,6 +155,10 @@ struct ZotpHomeScreen: View {
                     }, perform: { })
                     .onTapGesture(count: 2) { bigCode.toggle() }
                     .accessibilityLabel(shieldOn && !revealed ? "动态密码已遮挡，长按揭开" : "动态密码 \(code)")
+                    // 2026-11-05（全技能审核 · VoiceOver）：长按/双击是手势专用路径，
+                    // 读屏用户无法执行 —— 用 accessibilityAction 暴露同样的能力。
+                    .accessibilityAction(named: "揭开动态密码") { revealed = true }
+                    .accessibilityAction(named: "切换字号") { bigCode.toggle() }
                     .captureShield("这是一枚可开门的动态码\n屏幕正在被录制或截图，已遮挡")
             }
             if shieldOn && !code.isEmpty {
@@ -183,7 +194,7 @@ struct ZotpHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.accent))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .disabled(busy || generateBlockedReason != nil)
             .opacity((busy || generateBlockedReason != nil) ? 0.45 : 1)
             .padding(.top, V8.S.gapM)

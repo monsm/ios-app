@@ -131,9 +131,11 @@ struct MemberMergeSheet: View {
                         .foregroundStyle(V8.C.chipOn)
                         .frame(maxWidth: .infinity)
                         .frame(minHeight: V8.H.min)
-                        .background(Capsule(style: .continuous).fill(V8.C.dangerFill))
+                        // 2026-11-05（全技能审核 · 对比度）：白字在 dangerFill #E5483C 上只有 3.94:1；
+                        // 破坏性按钮改用 danger 值档 #B3261E（白字 7.4:1）。
+                        .background(Capsule(style: .continuous).fill(V8.C.danger))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("执行合并并删除副档")
                 .disabled(secondaryID == nil)
                 .opacity(secondaryID == nil ? 0.4 : 1)
@@ -168,7 +170,7 @@ struct MemberMergeSheet: View {
             .frame(minHeight: V8.H.min)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(m.name)
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }

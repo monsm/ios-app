@@ -161,7 +161,7 @@ extension DB {
             guard let o = of.first(where: { $0.batch == f.batch }) else { d[tag] = ["", "新增"]; continue }
             if o.name != f.name { d[tag + "·名称"] = ["已改", "已改"] }
             if o.note != f.note { d[tag + "·备注"] = ["已改", "已改"] }
-            if o.isAlarm != f.isAlarm { d[tag + "·防拆"] = [(o.isAlarm ?? false) ? "开" : "关", (f.isAlarm ?? false) ? "开" : "关"] }
+            if o.isAlarm != f.isAlarm { d[tag + "·预警"] = [(o.isAlarm ?? false) ? "开" : "关", (f.isAlarm ?? false) ? "开" : "关"] }
         }
         for o in of where !new.fps.contains(where: { $0.batch == o.batch }) { d["指纹#\(o.batch)"] = ["删除", ""] }
         return d

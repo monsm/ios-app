@@ -262,7 +262,7 @@ struct BackupHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.accent))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .disabled(busy)
             .opacity(busy ? 0.45 : 1)
             .padding(.top, V8.S.gapM)
@@ -358,7 +358,7 @@ struct BackupHomeScreen: View {
                 .frame(minHeight: V8.H.min)
                 .background(Capsule(style: .continuous).fill(on ? V8.C.accent : V8.C.chipOff))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel("保留 \(n) 份")
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
@@ -395,14 +395,14 @@ struct BackupHomeScreen: View {
                         .foregroundStyle(V8.C.accent)
                         .frame(minHeight: V8.H.min)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 Button { Task { await testDav() } } label: {
                     Text("测试连接")
                         .font(V8.T.tab)
                         .foregroundStyle(V8.C.accent)
                         .frame(minHeight: V8.H.min)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .disabled(busy || davURL.isEmpty)
                 .opacity((busy || davURL.isEmpty) ? 0.45 : 1)
                 Spacer(minLength: 0)
@@ -415,7 +415,7 @@ struct BackupHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.accent))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .disabled(busy || davURL.isEmpty)
             .opacity((busy || davURL.isEmpty) ? 0.45 : 1)
             .padding(.top, V8.S.gapM)
@@ -482,7 +482,7 @@ struct BackupHomeScreen: View {
                     .foregroundStyle(V8.C.accent)
                     .frame(minHeight: V8.H.min)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .disabled(busy)
             .opacity(busy ? 0.45 : 1)
             .padding(.top, V8.S.gapS)
@@ -501,7 +501,7 @@ struct BackupHomeScreen: View {
                     .foregroundStyle(V8.C.accent)
                     .frame(minHeight: V8.H.min)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .disabled(migrateText.isEmpty || busy)
             .opacity((migrateText.isEmpty || busy) ? 0.45 : 1)
             .padding(.top, V8.S.gapS)
@@ -547,7 +547,7 @@ struct BackupHomeScreen: View {
                         .frame(minHeight: V8.H.min)
                         .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .disabled(busy || trialOn)
                 .opacity((busy || trialOn) ? 0.45 : 1)
                 .padding(.top, V8.S.gapM)
@@ -572,7 +572,7 @@ struct BackupHomeScreen: View {
                 .frame(minHeight: V8.H.min)
                 .background(Capsule(style: .continuous).fill(on ? V8.C.accent : V8.C.chipOff))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(title + " " + mac)
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
@@ -609,14 +609,14 @@ struct BackupHomeScreen: View {
                         .foregroundStyle(V8.C.accent)
                         .frame(minHeight: V8.H.min)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 Button { rebuildBaseline() } label: {
                     Text("以当前数据重建基线")
                         .font(V8.T.tab)
                         .foregroundStyle(V8.C.accent)
                         .frame(minHeight: V8.H.min)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 Spacer(minLength: 0)
             }
             .padding(.top, V8.S.gapS)
@@ -712,7 +712,7 @@ struct BackupHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.accent))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .disabled(exportPassword.count < 8 || exporting)
             .opacity((exportPassword.count < 8 || exporting) ? 0.45 : 1)
             .padding(.top, V8.S.gapM)
@@ -755,7 +755,7 @@ struct BackupHomeScreen: View {
                                     .strokeBorder(V8.C.line, lineWidth: V8.E.hair)
                             )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     .accessibilityLabel("复制备份文本")
                     Button {
                         exportDoc = BackupDoc(text: exportText)
@@ -771,7 +771,7 @@ struct BackupHomeScreen: View {
                                     .strokeBorder(V8.C.line, lineWidth: V8.E.hair)
                             )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(V8PressStyle())
                     .accessibilityLabel("存到文件")
                 }
                 .padding(.top, V8.S.gapS)
@@ -856,7 +856,7 @@ struct BackupHomeScreen: View {
                                 .strokeBorder(V8.C.line, lineWidth: V8.E.hair)
                         )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("从文件选择")
                 Button {
                     if let s = UIPasteboard.general.string, !s.isEmpty {
@@ -873,7 +873,7 @@ struct BackupHomeScreen: View {
                                 .strokeBorder(V8.C.line, lineWidth: V8.E.hair)
                         )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("从剪贴板粘贴")
             }
             .padding(.top, V8.S.gapS)
@@ -895,7 +895,7 @@ struct BackupHomeScreen: View {
                             .strokeBorder(V8.C.line, lineWidth: V8.E.hair)
                     )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .disabled(importText.isEmpty || importing || trialOn)
             .opacity((importText.isEmpty || importing || trialOn) ? 0.4 : 1)
             .padding(.top, V8.S.gapS)

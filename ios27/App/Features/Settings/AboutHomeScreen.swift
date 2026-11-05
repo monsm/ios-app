@@ -104,7 +104,7 @@ struct AboutHomeScreen: View {
                 .frame(minHeight: V8.H.min)
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .accessibilityLabel("当前版本 \(SettingsFacts.version)")
             .accessibilityHint("连点 10 次展开构建信息")
 

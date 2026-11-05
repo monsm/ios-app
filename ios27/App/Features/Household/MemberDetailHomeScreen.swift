@@ -292,7 +292,7 @@ struct MemberDetailHomeScreen: View {
                     .strokeBorder(on ? V8.C.accent : V8.C.line, lineWidth: V8.S.hair)
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel("角色 " + role.rawValue)
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
@@ -353,7 +353,7 @@ struct MemberDetailHomeScreen: View {
                             .strokeBorder(V8.C.line, lineWidth: V8.S.hair)
                     )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .disabled(phone.filter(\.isNumber).count < 3)
                 .opacity(phone.filter(\.isNumber).count < 3 ? 0.45 : 1)
                 .accessibilityLabel("一键呼叫 " + phone)
@@ -383,7 +383,7 @@ struct MemberDetailHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.accent))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .accessibilityLabel("保存成员档案")
             .padding(.top, V8.S.gapL)
         }
@@ -431,7 +431,7 @@ struct MemberDetailHomeScreen: View {
                 .frame(minWidth: V8.H.min, minHeight: V8.H.min)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel(e.isEmpty ? "默认首字" : "代号 " + e)
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
@@ -468,10 +468,11 @@ struct MemberDetailHomeScreen: View {
                                 tagTint: key.disabled ? V8.C.ink4 : kindTint(key.kind),
                                 title: key.name,
                                 detail: key.disabled ? "已停用" : nil,
-                                value: key.expiresAt.map { TimeFormat.dayShort($0) } ?? ""
+                                value: key.expiresAt.map { TimeFormat.dayShort($0) } ?? "",
+                                interactive: true
                             )
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(V8PressStyle())
                         .accessibilityLabel(key.kind.rawValue + " " + key.name)
                     }
                 }
@@ -579,18 +580,32 @@ struct MemberDetailHomeScreen: View {
                 .foregroundStyle(V8.C.ink4)
                 .padding(.top, V8.S.gapM)
                 .fixedSize(horizontal: false, vertical: true)
+            // 2026-11-05（全技能审核 · APK 对位 P0）：原版 Android 在删成员前要求先清空
+            // 该成员名下的手机钥匙/指纹/密码；V8 迁移后允许直接删，锁端凭证仍能开门。
+            // 这里恢复「先撤销、再删人」的硬闸：只要名下还有凭证，删除按钮禁用并说明原因。
+            let blocked = deleteBlockedReason(member)
+            if let blocked {
+                Text(blocked)
+                    .font(V8.T.caption)
+                    .foregroundStyle(V8.C.warn)
+                    .padding(.top, V8.S.gapM)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             Button {
                 confirmDelete = true
             } label: {
                 Text("删除成员")
                     .font(V8.T.tab)
-                    .foregroundStyle(V8.C.danger)
+                    .foregroundStyle(blocked == nil ? V8.C.danger : V8.C.ink4)
                     .frame(maxWidth: .infinity)
                     .frame(minHeight: V8.H.min)
-                    .background(Capsule(style: .continuous).fill(V8.C.dangerTrack))
+                    .background(Capsule(style: .continuous).fill(blocked == nil ? V8.C.dangerTrack : V8.C.well))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
+            .disabled(blocked != nil)
+            .opacity(blocked == nil ? 1 : 0.55)
             .accessibilityLabel("删除成员")
+            .accessibilityHint(blocked ?? "")
             .padding(.top, V8.S.gapM)
         }
         .v8Confirm(
@@ -602,6 +617,19 @@ struct MemberDetailHomeScreen: View {
         ) {
             remove(member)
         }
+    }
+
+    /// 删除成员前的硬闸：名下还有任何凭证时不允许删人。
+    private func deleteBlockedReason(_ member: MemberCard) -> String? {
+        let owned = memberKeys(member)
+        guard !owned.isEmpty else { return nil }
+        let pw = owned.filter { $0.kind == .password }.count
+        let fp = owned.filter { $0.kind == .fingerprint }.count
+        let temp = owned.filter { $0.kind == .temp }.count
+        let mobile = owned.filter { $0.kind == .mobile }.count
+        return "先处理 TA 名下的 " + String(owned.count) + " 枚凭证（密码 " + String(pw)
+            + " / 指纹 " + String(fp) + " / 临时码 " + String(temp) + " / 手机钥匙 " + String(mobile)
+            + "）：到凭证页逐条删除或转给其他成员。锁端凭证不撤销就删成员，TA 仍能开门。"
     }
 
     private func deleteConsequence(_ member: MemberCard) -> String {
@@ -817,7 +845,7 @@ struct MemberDetailHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.accent))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .disabled(transferTo.isEmpty)
             .opacity(transferTo.isEmpty ? 0.45 : 1)
             .accessibilityLabel("移交名下凭证")
@@ -848,7 +876,7 @@ struct MemberDetailHomeScreen: View {
                 .frame(minHeight: V8.H.min)
                 .background(Capsule(style: .continuous).fill(on ? V8.C.accent : V8.C.chipOff))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(V8PressStyle())
         .accessibilityLabel("移交给 " + target.name)
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
@@ -881,7 +909,7 @@ struct MemberDetailHomeScreen: View {
                                 .strokeBorder(V8.C.line, lineWidth: V8.S.hair)
                         )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("结束借用")
                 .padding(.top, V8.S.gapM)
             } else {
@@ -919,7 +947,7 @@ struct MemberDetailHomeScreen: View {
                                 .strokeBorder(V8.C.line, lineWidth: V8.S.hair)
                         )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("登记借用")
                 .padding(.top, V8.S.gapM)
             }
@@ -983,7 +1011,7 @@ struct MemberDetailHomeScreen: View {
                             .strokeBorder(V8.C.line, lineWidth: V8.S.hair)
                     )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .accessibilityLabel("添加家政窗")
             .padding(.top, V8.S.gapS)
             VStack(spacing: 0) {
@@ -1003,7 +1031,7 @@ struct MemberDetailHomeScreen: View {
                                 .foregroundStyle(V8.C.danger)
                                 .frame(minHeight: V8.H.min)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(V8PressStyle())
                         .accessibilityLabel("删除 " + window.weekdayText + " 的时段")
                     }
                     .frame(minHeight: V8.H.min)
@@ -1045,7 +1073,7 @@ struct MemberDetailHomeScreen: View {
                                 .strokeBorder(V8.C.line, lineWidth: V8.S.hair)
                         )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("保存家庭场景")
             }
             .padding(.top, V8.S.gapM)

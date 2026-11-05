@@ -105,7 +105,7 @@ struct DiagnosticsHomeScreen: View {
                         .frame(minHeight: V8.H.min)
                         .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(V8PressStyle())
                 .padding(.top, V8.S.gapM)
             }
             Text("门锁被连上后会停止广播；先断开再扫。扫描只读广播，不连接、不发命令。")
@@ -168,7 +168,7 @@ struct DiagnosticsHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(probing == d.id ? V8.C.chipOff : V8.C.accent))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .disabled(probing != nil)
             .padding(.top, V8.S.gapXS)
             if let result, resultDevice == d.id, probing == nil {
@@ -509,7 +509,7 @@ struct DiagnosticsHomeScreen: View {
                     .frame(minHeight: V8.H.min)
                     .background(Capsule(style: .continuous).fill(V8.C.accent))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(V8PressStyle())
             .disabled(busy || mac.isEmpty || readOnly)
             .opacity((busy || mac.isEmpty || readOnly) ? 0.45 : 1)
             .padding(.top, V8.S.gapM)

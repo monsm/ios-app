@@ -4,6 +4,7 @@
 // 用法：任意页面动作完成后调 AppToast.shared.show("已保存")；RootView 顶部常驻挂 ToastHost。
 // 边界：只提示「刚发生了什么」，不用它承载需要用户决策的信息（那些走页面内说明/弹窗）。
 import SwiftUI
+import UIKit
 
 enum ToastTone {
     case info, ok, warn
@@ -31,8 +32,14 @@ final class AppToast {
         message = text
         self.tone = tone
         hideTask?.cancel()
+        // 2026-11-05（全技能审核 · 无障碍）：Toast 2.6 秒自动消失，读屏用户来不及听。
+        // VoiceOver 开启时延长到 6 秒，并主动播报一次；普通用户仍保持原来的节奏。
+        let hold: Double = UIAccessibility.isVoiceOverRunning ? 6.0 : 2.6
+        if UIAccessibility.isVoiceOverRunning {
+            UIAccessibility.post(notification: .announcement, argument: text)
+        }
         hideTask = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .seconds(2.6))
+            try? await Task.sleep(for: .seconds(hold))
             guard !Task.isCancelled else { return }
             self?.message = nil
         }
@@ -91,6 +98,10 @@ struct ToastHost: View {
             }
             Spacer(minLength: 0)
         }
+        // 2026-11-05（全技能审核 · 动效）：Toast 的 .transition 一直没有动画驱动 ——
+        // AppToast.show 只是改 @Observable 值，没有 withAnimation，ToastHost 也没挂 .animation，
+        // 所以滑入/淡出从未播放过。这里补上值驱动，Reduce Motion 时退回无动画。
+        .animation(reduceMotion ? nil : V8.M.move, value: toast.message)
         .allowsHitTesting(false)
     }
 }
