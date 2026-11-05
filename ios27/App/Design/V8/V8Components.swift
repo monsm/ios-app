@@ -160,7 +160,22 @@ struct VDataRow: View {
     /// 非交互表格保持密度（interactive=false），列表入口传 true 把命中区抬到 44pt。
     var interactive: Bool = false
 
+    // 2026-11-05（全技能审核 · Dynamic Type）：AX 档下固定 76.3pt 标签列 + 全行 lineLimit(1)
+    // 会把「密码 / 长期·大门 / 成员C / 永久」挤成一条截断线。AX 档改两行：
+    // 第一行 = 分类 + 右侧值，第二行 = 名称/归属，全部允许换行。
+    @Environment(\.dynamicTypeSize) private var typeSize
+
     var body: some View {
+        Group {
+            if typeSize.isAccessibilitySize { axBody } else { compactBody }
+        }
+        .frame(minHeight: interactive ? V8.H.min : V8.S.rowHeight)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(a11yText)
+    }
+
+    private var compactBody: some View {
         HStack(alignment: .center, spacing: V8.S.gapS) {
             Text(tag)
                 .font(V8.T.caption)
@@ -200,10 +215,46 @@ struct VDataRow: View {
                     .foregroundStyle(V8.C.ink4)
             }
         }
-        .frame(minHeight: interactive ? V8.H.min : V8.S.rowHeight)
-        .contentShape(Rectangle())
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(a11yText)
+    }
+
+    private var axBody: some View {
+        VStack(alignment: .leading, spacing: V8.S.gapXS) {
+            HStack(alignment: .firstTextBaseline, spacing: V8.S.gapS) {
+                Text(tag)
+                    .font(V8.T.caption)
+                    .foregroundStyle(tagTint)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+                Text(value)
+                    .font(V8.T.value)
+                    .foregroundStyle(V8.C.ink1)
+                    .monospacedDigit()
+                    .fixedSize(horizontal: false, vertical: true)
+                if let unit {
+                    Text(unit)
+                        .font(V8.T.micro)
+                        .foregroundStyle(V8.C.ink4)
+                }
+            }
+            if !title.isEmpty {
+                Text(title)
+                    .font(V8.T.value)
+                    .foregroundStyle(V8.C.ink1)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if let detail {
+                Text(detail)
+                    .font(V8.T.caption)
+                    .foregroundStyle(V8.C.ink4)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if let spark {
+                VSpark(values: spark, tint: sparkTint, cursor: nil, axis: nil, height: V8.G.sparkHeightInline)
+                    .frame(height: V8.G.sparkHeightInline)
+                    .accessibilityHidden(true)
+            }
+        }
+        .padding(.vertical, V8.S.gapXS)
     }
 
     private var a11yText: String {

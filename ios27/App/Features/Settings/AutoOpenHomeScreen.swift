@@ -165,16 +165,8 @@ struct AutoOpenHomeScreen: View {
             }
             .frame(minHeight: V8.H.min)
             .padding(.top, V8.S.gapS)
-            // 2026-11-05（截图审查 · 设计冗余）：这段与页首 lead 的「默认关…所以它默认不生效」
-            // **逐字相同**，同一屏出现两次（首屏与卡内各一次）。
-            // 该说明由 lead 承载；关闭态下这里补一句 lead 没说的后果即可。
-            if !on {
-                Text("关闭时，走到门前仍需手动滑动开锁。")
-                    .font(V8.T.caption)
-                    .foregroundStyle(V8.C.ink4)
-                    .padding(.top, V8.S.gapXS)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+            // 2026-11-05（全技能审核 · 设计冗余）：页标题「关闭 · 走到门前仍需手动开锁」
+            // 已说清关闭后果，卡内再写一遍同义句是第四遍。删掉，保留分隔线与门控段。
             VDivider2()
                 .padding(.top, V8.S.gapM)
             VStack(spacing: 0) {

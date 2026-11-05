@@ -10,10 +10,12 @@ enum ToastTone {
     case info, ok, warn
 
     var color: Color {
+        // 2026-11-05（全技能审核 · V7/V8 双系统）：Toast 原来用 V7 三色；
+        // 这是全 App 浮层，必须跟 V8 语义色走。
         switch self {
-        case .info: return V.C.blue
-        case .ok: return V.C.rewardGreen
-        case .warn: return V.C.pink
+        case .info: return V8.C.accent
+        case .ok: return V8.C.ok
+        case .warn: return V8.C.warn
         }
     }
 }
@@ -59,14 +61,14 @@ struct ToastHost: View {
     var body: some View {
         VStack {
             if let message = toast.message {
-                HStack(spacing: V.S.gapS) {
+                HStack(spacing: V8.S.gapS) {
                     Circle()
                         .fill(toast.tone.color)
-                        .frame(width: V.List.dotSize, height: V.List.dotSize)
+                        .frame(width: V8.S.gapS, height: V8.S.gapS)
                         .accessibilityHidden(true)
                     Text(message)
-                        .font(V.F.footnote)
-                        .foregroundStyle(V.C.text1)
+                        .font(V8.T.footnote)
+                        .foregroundStyle(V8.C.ink1)
                         // 2026-11-01：`lineLimit(2)` → `4`。
                         // 最长的一条 toast 是 45 字（「已归档 · 历史留在记录页，可随时恢复 TA」这类），
                         // 默认字号下 2 行刚好放下；但 `V.F.footnote` 随 Dynamic Type 缩放，
@@ -76,22 +78,22 @@ struct ToastHost: View {
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
                 }
-                .padding(.horizontal, V.S.gapM)
-                .padding(.vertical, V.S.gapS)
+                .padding(.horizontal, V8.S.gapM)
+                .padding(.vertical, V8.S.gapS)
                 // 2026-11-01：改用**原生液态玻璃**（与浮动 Tab 栏同一入口 `VGlassSurface`）。
                 // 提示条是"浮在内容之上的临时层"，正是 Liquid Glass 的设计场景；
                 // 旧的 `V.C.tabGlass` 只是一层半透明色，没有折射与高光。
                 // 「减少透明度」时退化为不透明卡片（与 Tab 栏同一判据，不另写一套）。
                 .background {
                     VGlassSurface(solid: systemReduceTransparency || SettingsStore.shared.reduceTransparency,
-                                  cornerRadius: V.R.action,
-                                  tint: V.C.tabGlass,
-                                  stroke: V.C.tabEdge) {
+                                  cornerRadius: V8.R.card,
+                                  tint: V8.C.glassTint,
+                                  stroke: V8.C.line) {
                         Color.clear
                     }
                 }
-                .padding(.horizontal, V.S.cardGutter)
-                .padding(.top, V.S.gapS)
+                .padding(.horizontal, V8.S.gutterCard)
+                .padding(.top, V8.S.gapS)
                 .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel(message)

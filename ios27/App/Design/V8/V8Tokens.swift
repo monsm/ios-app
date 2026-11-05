@@ -159,7 +159,9 @@ enum V8 {
         /// 22pt —— 页面副文（因果段）
         static let bodyL = VFont(size: 22, weight: .regular, relativeTo: .title3)
         /// 21.5pt —— 卡内判断句（statement）
-        static let headline = VFont(size: 21.5, weight: .bold, relativeTo: .title2)
+        /// 2026-11-05（全技能审核）：项目自己的字体纪律是「中文标题最高 semibold」
+        /// （苹方无 Bold，.bold() 会静默回退/合成）。这里从 .bold 改成 .semibold。
+        static let headline = VFont(size: 21.5, weight: .semibold, relativeTo: .title2)
         /// 19.6pt —— 卡内正文
         static let body = VFont(size: 19.6, weight: .regular, relativeTo: .body)
         /// 17.7pt —— 表格数值、读数

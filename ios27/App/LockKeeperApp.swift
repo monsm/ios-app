@@ -195,17 +195,17 @@ struct TrialGuardBanner: View {
     @Environment(\.accessibilityReduceTransparency) private var systemReduceTransparency
 
     var body: some View {
-        HStack(spacing: V.S.gapS) {
+        HStack(spacing: V8.S.gapS) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .accessibilityHidden(true)   // 装饰性图标：语义由相邻文字承载
-                .font(V.F.icon15Medium)
+                .font(V8.T.chipValue)
             Text("只读试验模式 · 所有写入都不会下发到门锁")
-                .font(V.F.unit)
+                .font(V8.T.caption)
             Spacer(minLength: 0)
         }
-        .foregroundStyle(V.C.critical)
-        .padding(.horizontal, V.S.pageGutter)
-        .padding(.vertical, V.S.gapXS)
+        .foregroundStyle(V8.C.danger)
+        .padding(.horizontal, V8.S.gutterCard)
+        .padding(.vertical, V8.S.gapXS)
         // 2026-11-03（Liquid Glass 审计）：这条常驻条挂在 `.safeAreaInset(edge: .top)` 上，
         // 属于**顶栏区域** —— 那里应当交给系统材质 / scrollEdgeEffect，手涂一层
         // 12% 的红色底会在玻璃上叠出一块脏色，也让后面的内容透不过来。
@@ -216,7 +216,7 @@ struct TrialGuardBanner: View {
         .background {
             VGlassSurface(solid: systemReduceTransparency || SettingsStore.shared.reduceTransparency,
                           cornerRadius: 0,
-                          tint: V.C.critical.opacity(0.10),
+                          tint: V8.C.danger.opacity(0.10),
                           stroke: nil) {
                 Color.clear
             }
