@@ -118,7 +118,9 @@ struct MemberMergeSheet: View {
                 }
                 .padding(.top, V8.S.gapS)
                 if let error {
-                    VFailure(what: "合并没有执行", why: error, next: "刷新这一页后重试。")
+                    // 2026-11-05（语义审计）：原来写「刷新这一页后重试」—— 但这是个弹层，没有刷新入口。
+                // 真正的重试动作就是下面那颗「执行合并」。
+                VFailure(what: "合并没有执行", why: error, next: "再点一次下面的「执行合并」；两边档案都还没改。")
                         .padding(.top, V8.S.gapM)
                 }
                 Button {
