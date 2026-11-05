@@ -32,7 +32,11 @@ struct CredentialStudioHomeScreen: View {
 
     @State private var selectedPwds: Set<Int> = []
     @State private var selectedFps: Set<Int> = []
-    @State private var sort: Sort = .starred
+    // 2026-11-05（对抗审查 · 持久化不一致）：同一张「整理方式」卡里，
+    // **分组方式**（CredentialOrg.groupMode）是落盘的，**排序**却是纯 @State ——
+    // 用户选了「最早到期」，退出再进来又回到「星标优先」。
+    // 排序是用户刻意设的偏好，按同一条口径落盘。
+    @State private var sort: Sort = Sort(rawValue: DB.store.getString("kf_studio_sort")) ?? .starred
     @State private var extendDays = 30
     @State private var prefixText = ""
     @State private var transferOwner: String?
@@ -441,6 +445,7 @@ struct CredentialStudioHomeScreen: View {
         let on = sort == option
         return Button {
             sort = option
+            DB.store.set("kf_studio_sort", option.rawValue)
         } label: {
             Text(option.rawValue)
                 .font(V8.T.tab)

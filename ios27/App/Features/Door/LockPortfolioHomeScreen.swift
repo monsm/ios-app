@@ -23,7 +23,9 @@ struct LockPortfolioHomeScreen: View {
         var id: String { rawValue }
     }
 
-    @State private var sort: Sort = .name
+    // 2026-11-05（对抗审查 · 持久化不一致）：与凭证工作室同一处问题 —— 排序是刻意设的偏好，
+    // 却只活在 @State 里，退出再进来又回到「名称」。落盘。
+    @State private var sort: Sort = Sort(rawValue: DB.store.getString("kf_portfolio_sort")) ?? .name
     @State private var groupFilter = ""
     @State private var groupEditMac = ""
     @State private var groupDraft = ""
@@ -148,7 +150,10 @@ struct LockPortfolioHomeScreen: View {
                 }
                 Menu {
                     ForEach(Sort.allCases) { option in
-                        Button(option.rawValue) { sort = option }
+                        Button(option.rawValue) {
+                            sort = option
+                            DB.store.set("kf_portfolio_sort", option.rawValue)
+                        }
                     }
                 } label: {
                     Text("排序 · " + sort.rawValue)
