@@ -381,6 +381,11 @@ struct VFailure: View {
     let next: String
     var raw: String? = nil
     var retry: (() -> Void)? = nil
+    /// 动作文案。**默认「重试」，但并非所有出路都是重试** ——
+    /// 2026-11-05（对抗审查 · 流程不合理）：原来这里写死 Text("重试")，
+    /// 于是「本机台账读不出来，请先去备份恢复」这类错误**只能不给按钮**，
+    /// 唯一的出路只存在于一句话里。现在调用点可以写成「去备份工作室」。
+    var actionTitle: String = "重试"
     @State private var showsRaw = false
 
     var body: some View {
@@ -407,7 +412,7 @@ struct VFailure: View {
                     .fixedSize(horizontal: false, vertical: true)
                 if let retry {
                     Button(action: retry) {
-                        Text("重试")
+                        Text(actionTitle)
                             .font(V8.T.tab)
                             .foregroundStyle(V8.C.accent)
                             .frame(minHeight: V8.H.min)

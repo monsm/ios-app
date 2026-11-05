@@ -94,10 +94,15 @@ struct KeysHomeScreen: View {
             chipRow
         } content: {
             if app.ledgerCorrupt {
+                // 2026-11-05（对抗审查 · 流程不合理）：这张卡原来**没有按钮** ——
+                // 唯一的出路「去备份工作室恢复」只写在一句话里，用户得自己找路。
+                // 现在把那条出路变成可点的动作（动作与原因匹配：这不是重试能解决的）。
                 VFailure(
                     what: "本机凭证台账读不出来",
                     why: "当前会话里对凭证的改动不会保存（写入会被拒绝）。",
-                    next: "请先到「备份工作室」从一份备份恢复，再继续操作。"
+                    next: "请先到「备份工作室」从一份备份恢复，再继续操作。",
+                    retry: { router.request(.dest(.backup)) },
+                    actionTitle: "去备份工作室"
                 )
             }
             if app.lock == nil {
