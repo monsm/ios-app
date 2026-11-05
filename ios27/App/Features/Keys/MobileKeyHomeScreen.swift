@@ -34,6 +34,16 @@ struct MobileKeyHomeScreen: View {
         max(0, (app.currentKeychain?.pins.filter { !$0.isEmpty }.count ?? 1) - 1)
     }
 
+    /// 在册成员里有多少位已经拿到手机钥匙（纯本机事实，不涉及锁内占用）。
+    ///
+    /// 2026-11-05（用户指令：减少文字、图形化变多）：本页此前没有任何视觉元素。
+    /// 注意与 lead 的口径区分：lead 说的是「锁里 PIN 池的占用要连上锁才知道」，
+    /// 这里画的是**本机已经签发给了谁**，两件事不冲突。
+    private var activeMembers: [MemberCard] { app.members.filter { !$0.archived } }
+    private var coveredOwners: Int {
+        let names = Set(issued.compactMap { $0.owner }).filter { !$0.isEmpty }
+        return activeMembers.filter { names.contains($0.name) }.count
+    }
     private var foreignHint: String? {
         guard let kc = app.currentKeychain else { return nil }
         return MobileKeyService.foreignKeyHint(pinInfoBinding: app.lastStatus?.status.pinInfoBinding ?? 0, kc: kc)
@@ -84,6 +94,7 @@ struct MobileKeyHomeScreen: View {
                         actionTitle: "去新建成员"
                     ) { router.request(.dest(.memberCreate)) }
                 } else {
+                    coverageCard
                     issueCard
                 }
                 issuedCard
@@ -107,7 +118,40 @@ struct MobileKeyHomeScreen: View {
             if let key = revokeTarget { revoke(key) }
             revokeTarget = nil
         }
-    }    // MARK: - 签发表单
+    }    // MARK: - 覆盖率环
+
+    private var coverageCard: some View {
+        let total = max(1, activeMembers.count)
+        let covered = coveredOwners
+        let fraction = Double(covered) / Double(total)
+        return VCard2 {
+            HStack(alignment: .center, spacing: V8.S.gapL) {
+                VHeroRing(
+                    fraction: fraction,
+                    center: String(covered),
+                    label: "/ " + String(activeMembers.count),
+                    size: V8.G.segCompactOuter * 2.2,
+                    tint: covered >= activeMembers.count ? V8.C.ok : V8.C.accent,
+                    showsTick: false,
+                    showsCursor: false
+                )
+                VStack(alignment: .leading, spacing: V8.S.gapXS) {
+                    Text("拿到手机钥匙的成员")
+                        .font(V8.T.label)
+                        .foregroundStyle(V8.C.ink4)
+                    Text(covered >= activeMembers.count ? "每位成员都有一把" : "还有成员没签")
+                        .font(V8.T.value)
+                        .foregroundStyle(V8.C.ink1)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("拿到手机钥匙的成员 " + String(covered) + " / " + String(activeMembers.count))
+    }
+
+    // MARK: - 签发表单
 
     private var issueCard: some View {
         VCard2 {
