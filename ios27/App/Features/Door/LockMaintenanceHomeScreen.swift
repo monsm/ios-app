@@ -232,7 +232,7 @@ struct LockMaintenanceHomeScreen: View {
     // MARK: - 芯片行
 
     private var chipRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        VHScroll {
             HStack(spacing: V8.S.gapChip) {
                 VChip2(icon: .glyph("cpu"), label: "固件", value: firmwareText)
                 VChip2(icon: .ring(batteryFraction, batteryTint), label: "电池", value: batteryChipText)

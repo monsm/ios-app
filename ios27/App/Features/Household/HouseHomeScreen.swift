@@ -138,7 +138,7 @@ struct HouseHomeScreen: View {
     // MARK: - 芯片行
 
     private var chipRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        VHScroll {
             HStack(spacing: V8.S.gapChip) {
                 // 2026-11-05（对抗审查 · 设计冗余）：.members 这一格写「N 位」，
                 // 而「成员」卡标题写「在册 N 位」—— 同一个数字在相邻两处重复。

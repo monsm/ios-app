@@ -205,7 +205,7 @@ struct LockSettingsHomeScreen: View {
     // MARK: - 芯片行
 
     private var chipRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        VHScroll {
             HStack(spacing: V8.S.gapChip) {
                 // 2026-11-05（截图审查 + HIG）：这枚芯片与紧邻的「动态密码」卡**同屏重复**——
                 // 卡头写「已开通 · 锁端会接受动态码」，芯片写「动态密码 已开通」，
@@ -727,7 +727,7 @@ struct LockSettingsHomeScreen: View {
                 Text("门锁用蓝牙钥匙、密码、指纹等电控方式开锁后，等待这段时间会自动上锁。档位 2–6 秒，默认 6 秒。")
             }
             .padding(.top, V8.S.gapM)
-            ScrollView(.horizontal, showsIndicators: false) {
+            VHScroll {
                 HStack(spacing: V8.S.gapChip) {
                     ForEach(2 ... 6, id: \.self) { value in
                         tailgateChip(value)

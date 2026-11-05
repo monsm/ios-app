@@ -187,7 +187,7 @@ struct DoorHomeScreen: View {
         let shown = locks.filter { DB.normalizeMac($0.mac) == current || !LockArchive.isHidden($0.mac) }
         return Group {
             if shown.count > 1 {
-                ScrollView(.horizontal, showsIndicators: false) {
+                VHScroll {
                     HStack(spacing: V8.S.gapChip) {
                         ForEach(shown, id: \.mac) { kc in
                             let on = DB.normalizeMac(kc.mac) == current
@@ -216,7 +216,7 @@ struct DoorHomeScreen: View {
         let current = DB.normalizeMac(app.currentMac)
         return Group {
             if groups.count > 1 {
-                ScrollView(.horizontal, showsIndicators: false) {
+                VHScroll {
                     HStack(spacing: V8.S.gapChip) {
                         ForEach(groups) { group in
                             let active = group.locks.contains { DB.normalizeMac($0.mac) == current }
@@ -254,7 +254,7 @@ struct DoorHomeScreen: View {
         Task { @MainActor in await app.reload(refreshStatus: false) }
     }
     private var chipRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        VHScroll {
             HStack(spacing: V8.S.gapChip) {
                 // 2026-11-05（看真机截图发现的冗余）：芯片写「连接 · 未连接」，往下第三张卡的卡头
                 // 也叫「连接」并显示同一个状态值 —— 同一屏两次。连接状态由「连接」段唯一承载

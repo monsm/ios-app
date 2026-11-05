@@ -13,7 +13,7 @@ struct KeysMaskedCode: View {
     @Binding var revealed: Set<Int>
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        VHScroll {
             HStack(spacing: V.S.gapXS) {
                 ForEach(Array(value.enumerated()), id: \.offset) { item in
                     let index = item.offset

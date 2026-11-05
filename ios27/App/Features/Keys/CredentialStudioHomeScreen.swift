@@ -198,7 +198,7 @@ struct CredentialStudioHomeScreen: View {
     }
 
     private var chipRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        VHScroll {
             HStack(spacing: V8.S.gapChip) {
                 VChip2(icon: .ring(Double(pwdRows.count) / Double(max(1, pwdRows.count + fpRows.count)), V8.D.password), label: "密码", value: String(pwdRows.count) + " 枚")
                 VChip2(icon: .ring(Double(fpRows.count) / Double(max(1, pwdRows.count + fpRows.count)), V8.D.fingerprint), label: "指纹", value: String(fpRows.count) + " 枚")
@@ -412,7 +412,7 @@ struct CredentialStudioHomeScreen: View {
             VCardHead(eyebrow: "整理方式", statement: "排序 / 分组 / 快照")
             VDivider2()
                 .padding(.top, V8.S.gapM)
-            ScrollView(.horizontal, showsIndicators: false) {
+            VHScroll {
                 HStack(spacing: V8.S.gapChip) {
                     ForEach(Sort.allCases) { option in
                         sortChip(option)
@@ -755,7 +755,7 @@ struct CredentialStudioHomeScreen: View {
             VCardHead(eyebrow: "移交与凭证包", statement: transferOwnerName)
             VDivider2()
                 .padding(.top, V8.S.gapM)
-            ScrollView(.horizontal, showsIndicators: false) {
+            VHScroll {
                 HStack(spacing: V8.S.gapChip) {
                     ForEach(MemberHub.sortedForPicker(app.members.filter { !$0.archived }, keys: app.keys)) { member in
                         transferChip(member)

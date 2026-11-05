@@ -384,7 +384,7 @@ struct KeysHomeScreen: View {
     }
 
     private var recentSearchRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        VHScroll {
             HStack(spacing: V8.S.gapChip) {
                 Text("最近搜索")
                     .font(V8.T.caption)

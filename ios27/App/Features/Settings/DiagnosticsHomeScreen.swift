@@ -272,7 +272,7 @@ struct DiagnosticsHomeScreen: View {
     // MARK: - 芯片行
 
     private var godChipRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        VHScroll {
             HStack(spacing: V8.S.gapChip) {
                 VChip2(icon: .ring(status.map { $0.powerLevel >= 0 ? Double($0.powerLevel) / 100 : 0.02 } ?? 0.02,
                                    status == nil ? V8.C.ink4 : ((status?.powerLevel ?? -1) < 20 ? V8.C.warn : V8.C.ok)),

@@ -76,7 +76,7 @@ struct AppearanceHomeScreen: View {
     // MARK: - 芯片行（四枚状态，不重复卡内读数）
 
     private var chipRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        VHScroll {
             HStack(spacing: V8.S.gapChip) {
                 VChip2(icon: .ring(1, V8.C.accent), label: "主题", value: store.theme.title)
                 VChip2(icon: .ring(densityFraction, V8.C.ink2), label: "密度", value: store.density.title)
@@ -141,7 +141,7 @@ struct AppearanceHomeScreen: View {
             VCardHead(eyebrow: "主题", statement: themeStatement)
             VDivider2()
                 .padding(.top, V8.S.gapM)
-            ScrollView(.horizontal, showsIndicators: false) {
+            VHScroll {
                 HStack(spacing: V8.S.gapChip) {
                     ForEach(AppearanceTheme.selectable) { item in
                         selectChip(item.title, on: store.theme == item) { store.theme = item }
@@ -394,7 +394,7 @@ struct AppearanceHomeScreen: View {
                 .font(V8.T.label)
                 .foregroundStyle(V8.C.ink4)
                 .padding(.top, V8.S.gapM)
-            ScrollView(.horizontal, showsIndicators: false) {
+            VHScroll {
                 HStack(spacing: V8.S.gapChip) {
                     ForEach(LayoutDensity.allCases) { item in
                         selectChip(item.title, on: store.density == item) { store.density = item }
@@ -412,7 +412,7 @@ struct AppearanceHomeScreen: View {
                 .font(V8.T.label)
                 .foregroundStyle(V8.C.ink4)
                 .padding(.top, V8.S.gapM)
-            ScrollView(.horizontal, showsIndicators: false) {
+            VHScroll {
                 HStack(spacing: V8.S.gapChip) {
                     ForEach(MotionTier.allCases) { item in
                         selectChip(item.title, on: store.motion == item) { store.motion = item }
@@ -446,7 +446,7 @@ struct AppearanceHomeScreen: View {
             VCardHead(eyebrow: "时间显示", statement: "全 App 唯一出口", trailing: "全局")
             VDivider2()
                 .padding(.top, V8.S.gapM)
-            ScrollView(.horizontal, showsIndicators: false) {
+            VHScroll {
                 HStack(spacing: V8.S.gapChip) {
                     ForEach(TimeDisplayStyle.allCases) { item in
                         selectChip(item.title, on: store.timeStyle == item) { store.timeStyle = item }
@@ -686,7 +686,7 @@ struct AppearanceHomeScreen: View {
             Text(title)
                 .font(V8.T.label)
                 .foregroundStyle(V8.C.ink4)
-            ScrollView(.horizontal, showsIndicators: false) {
+            VHScroll {
                 HStack(spacing: V8.S.gapChip) {
                     ForEach(Array(options.enumerated()), id: \.offset) { pair in
                         selectChip(pair.element.0, on: current == pair.element.1) {

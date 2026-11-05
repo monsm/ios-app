@@ -99,7 +99,7 @@ struct HardwareHomeScreen: View {
     // MARK: - 芯片行
 
     private var chipRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        VHScroll {
             HStack(spacing: V8.S.gapChip) {
                 VChip2(icon: .glyph("key.horizontal"), label: "钥匙串", value: "\(dongles.count) 台")
                 VChip2(icon: .ring(dongles.isEmpty ? 0.02 : 1, lowCount == 0 ? V8.C.ok : V8.C.warn),

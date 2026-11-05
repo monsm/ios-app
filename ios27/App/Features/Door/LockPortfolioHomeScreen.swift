@@ -150,7 +150,7 @@ struct LockPortfolioHomeScreen: View {
     }
 
     private var filterRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        VHScroll {
             HStack(spacing: V8.S.gapChip) {
                 filterChip("全部", on: groupFilter.isEmpty) { groupFilter = "" }
                 ForEach(groups, id: \.self) { g in

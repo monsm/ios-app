@@ -148,7 +148,7 @@ struct RecordsHomeScreen: View {
     // MARK: - 芯片行
 
     private var chipRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        VHScroll {
             HStack(spacing: V8.S.gapChip) {
                 // 2026-11-05（对抗审查 · 设计冗余）：这一格原来写「今天 N 条」，
                 // 而本页**已经有两处**在讲今天：英雄数（N 次·今天）与台账卡标题。
@@ -292,7 +292,7 @@ struct RecordsHomeScreen: View {
             .frame(minHeight: V8.H.min)
             VDivider2()
                 .padding(.vertical, V8.S.gapS)
-            ScrollView(.horizontal, showsIndicators: false) {
+            VHScroll {
                 HStack(spacing: V8.S.gapChip) {
                     ForEach(LedgerScope.allCases) { item in
                         scopeChip(item)

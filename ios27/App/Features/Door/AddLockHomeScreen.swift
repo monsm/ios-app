@@ -143,7 +143,7 @@ struct AddLockHomeScreen: View {
     // MARK: - 四步芯片
 
     private var stepChips: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        VHScroll {
             HStack(spacing: V8.S.gapChip) {
                 ForEach(Array(Self.stepTitles.enumerated()), id: \.offset) { index, title in
                     VChip2(

@@ -143,7 +143,7 @@ struct BackupHomeScreen: View {
     // MARK: - 芯片行
 
     private var chipRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        VHScroll {
             HStack(spacing: V8.S.gapChip) {
                 VChip2(
                     icon: .ring(store.lastBackupAt == nil ? 0.02 : 1, store.lastBackupAt == nil ? V8.C.warn : V8.C.ok),
@@ -625,7 +625,7 @@ struct BackupHomeScreen: View {
 
 
     private var studioChipRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        VHScroll {
             HStack(spacing: V8.S.gapChip) {
                 VChip2(icon: .ring(files.isEmpty ? 0.02 : 1, files.isEmpty ? V8.C.ink4 : V8.C.ok),
                        label: "本机备份", value: "\(files.count) 份")

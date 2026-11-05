@@ -125,7 +125,7 @@ struct MemberDetailHomeScreen: View {
     // MARK: - 芯片行
 
     private var chipRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        VHScroll {
             HStack(spacing: V8.S.gapChip) {
                 VChip2(icon: .glyph(roleSymbol(member?.role ?? .member)), label: "角色", value: member?.role.rawValue ?? "未选")
                 VChip2(icon: .ring(1, V8.D.fingerprint), label: "凭证", value: "\(member?.keyCount ?? 0) 枚")
@@ -404,7 +404,7 @@ struct MemberDetailHomeScreen: View {
     }
 
     private func emojiRow(_ member: MemberCard) -> some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        VHScroll {
             HStack(spacing: V8.S.gapS) {
                 ForEach(Self.emojiOptions.indices, id: \.self) { index in
                     let e = Self.emojiOptions[index]
@@ -817,7 +817,7 @@ struct MemberDetailHomeScreen: View {
                 .foregroundStyle(V8.C.ink3)
                 .padding(.top, V8.S.gapM)
                 .fixedSize(horizontal: false, vertical: true)
-            ScrollView(.horizontal, showsIndicators: false) {
+            VHScroll {
                 HStack(spacing: V8.S.gapS) {
                     ForEach(otherMembers(m)) { target in
                         transferChip(target)

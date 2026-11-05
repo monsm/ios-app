@@ -106,7 +106,7 @@ struct KeyDetailHomeScreen: View {
     // MARK: - 芯片行
 
     private var chipRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        VHScroll {
             HStack(spacing: V8.S.gapChip) {
                 VChip2(icon: .glyph(kindSymbol), label: "类型", value: key?.kind.rawValue ?? "—")
                 VChip2(icon: .ring(statusFraction, statusTint), label: "状态", value: statusWord)

@@ -414,7 +414,7 @@ struct VChipRow2<Item: Hashable>: View {
     @Binding var selection: Item
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        VHScroll {
             HStack(spacing: V8.S.gapChip) {
                 ForEach(items, id: \.self) { item in
                     VChip2(
@@ -729,6 +729,30 @@ struct VStatPair2: View {
             }
         }
         .fixedSize(horizontal: false, vertical: true)
+    }
+}
+
+// MARK: - 12·补 横向滚动容器（iOS 27：隐藏指示器只用 .scrollIndicators）
+
+/// 横向滚动的芯片行 / 卡片行。全 App 唯一入口。
+///
+/// 2026-11-05（全技能审核 · iOS 27 API）：`ScrollView(.horizontal, showsIndicators: false)`
+/// 的初始化器参数已随 iOS 17 软弃用，正确写法是 `.scrollIndicators(.hidden)`。
+/// 全仓 43 处如果各写一遍，迟早有一处漏掉；收成一个组件后，指示器策略只有一份。
+struct VHScroll<Content: View>: View {
+    var showsIndicators: Bool = false
+    private let content: Content
+
+    init(showsIndicators: Bool = false, @ViewBuilder content: () -> Content) {
+        self.showsIndicators = showsIndicators
+        self.content = content()
+    }
+
+    var body: some View {
+        ScrollView(.horizontal) {
+            content
+        }
+        .scrollIndicators(showsIndicators ? .visible : .hidden)
     }
 }
 

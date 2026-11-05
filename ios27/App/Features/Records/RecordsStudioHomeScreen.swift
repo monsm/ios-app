@@ -156,7 +156,7 @@ struct RecordsStudioHomeScreen: View {
     // MARK: - 芯片行
 
     private var chipRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        VHScroll {
             HStack(spacing: V8.S.gapChip) {
                 VChip2(icon: .ring(1, V8.C.accent), label: "记录", value: "\(recs.count) 条")
                 VChip2(icon: .ring(recs.isEmpty ? 0.02 : Double(filtered.count) / Double(max(recs.count, 1)), V8.C.info),
@@ -203,7 +203,7 @@ struct RecordsStudioHomeScreen: View {
             }
             .padding(.top, V8.S.gapM)
             if !uniqueTags.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
+                VHScroll {
                     HStack(spacing: V8.S.gapS) {
                         ForEach(uniqueTags, id: \.self) { tag in
                             Text(tag)
@@ -248,7 +248,7 @@ struct RecordsStudioHomeScreen: View {
                 .font(V8.T.label)
                 .foregroundStyle(V8.C.ink4)
                 .padding(.top, V8.S.gapM)
-            ScrollView(.horizontal, showsIndicators: false) {
+            VHScroll {
                 HStack(spacing: V8.S.gapS) {
                     ForEach(Self.segments, id: \.value) { item in
                         choiceChip(item.label, on: segment == item.value) { segment = item.value }
@@ -261,7 +261,7 @@ struct RecordsStudioHomeScreen: View {
                     .font(V8.T.label)
                     .foregroundStyle(V8.C.ink4)
                     .padding(.top, V8.S.gapM)
-                ScrollView(.horizontal, showsIndicators: false) {
+                VHScroll {
                     HStack(spacing: V8.S.gapS) {
                         choiceChip("全部", on: member.isEmpty) { member = "" }
                         ForEach(members, id: \.self) { name in
@@ -275,7 +275,7 @@ struct RecordsStudioHomeScreen: View {
                 .font(V8.T.label)
                 .foregroundStyle(V8.C.ink4)
                 .padding(.top, V8.S.gapM)
-            ScrollView(.horizontal, showsIndicators: false) {
+            VHScroll {
                 HStack(spacing: V8.S.gapS) {
                     ForEach(Self.credKinds, id: \.key) { item in
                         choiceChip(item.label, on: kind == item.key) { kind = item.key }

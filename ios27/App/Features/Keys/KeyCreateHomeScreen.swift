@@ -126,7 +126,7 @@ struct KeyCreateHomeScreen: View {
     }
 
     private var chipRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        VHScroll {
             HStack(spacing: V8.S.gapChip) {
                 // 2026-11-05（截图审查 · 值级重复）：这里原来是「类型 · 密码」芯片，
                 // 而同一屏的步骤卡（类型归属 · 密码）与分段控件（密码）已经各说了一次。

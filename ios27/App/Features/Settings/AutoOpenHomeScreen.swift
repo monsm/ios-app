@@ -98,7 +98,7 @@ struct AutoOpenHomeScreen: View {
     // MARK: - 芯片行
 
     private var chipRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        VHScroll {
             HStack(spacing: V8.S.gapChip) {
                 // 2026-11-05（截图审查）：这枚芯片与**首屏第一张卡**的卡头同值，删掉。
                 // 下面两枚（确认档 / 标定）**保留** —— 它们对应的卡在折叠线以下，
@@ -228,7 +228,7 @@ struct AutoOpenHomeScreen: View {
             VCardHead(eyebrow: "确认档", statement: faceTier.title)
             VDivider2()
                 .padding(.top, V8.S.gapM)
-            ScrollView(.horizontal, showsIndicators: false) {
+            VHScroll {
                 HStack(spacing: V8.S.gapChip) {
                     ForEach(FaceConfirmTier.allCases) { item in
                         selectChip(item.title, on: faceTier == item) { setFaceTier(item) }

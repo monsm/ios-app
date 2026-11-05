@@ -177,7 +177,7 @@ struct RecordsExportSection: View {
                 .font(V8.T.caption)
                 .foregroundStyle(V8.C.ink4)
                 .fixedSize(horizontal: false, vertical: true)
-            ScrollView(.horizontal, showsIndicators: false) {
+            VHScroll {
                 HStack(spacing: V8.S.gapChip) {
                     VChip2(icon: .ring(1, V8.C.accent), label: "可导出", value: "\(entries.count) 条")
                     VChip2(icon: .ring(0.6, V8.C.info), label: "天数", value: "\(days.count) 天")
@@ -232,7 +232,7 @@ struct RecordsExportSection: View {
             VCardHead(eyebrow: "单条记录卡", statement: "看到的就是分享出去的", trailing: "仅含本条")
             VDivider2()
                 .padding(.top, V8.S.gapM)
-            ScrollView(.horizontal, showsIndicators: false) {
+            VHScroll {
                 HStack(spacing: V8.S.gapS) {
                     ForEach(entries.prefix(12)) { entry in
                         selectionChip(entry)

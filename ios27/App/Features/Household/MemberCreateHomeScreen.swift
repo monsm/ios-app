@@ -140,7 +140,7 @@ struct MemberCreateHomeScreen: View {
     // MARK: - 四步芯片
 
     private var stepChips: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        VHScroll {
             HStack(spacing: V8.S.gapChip) {
                 ForEach(Array(Self.steps.enumerated()), id: \.offset) { index, item in
                     VChip2(
@@ -252,7 +252,7 @@ struct MemberCreateHomeScreen: View {
             Text("emoji 代号")
                 .font(V8.T.label)
                 .foregroundStyle(V8.C.ink4)
-            ScrollView(.horizontal, showsIndicators: false) {
+            VHScroll {
                 HStack(spacing: V8.S.gapS) {
                     ForEach(Self.emojiOptions.indices, id: \.self) { index in
                         emojiCell(Self.emojiOptions[index])
