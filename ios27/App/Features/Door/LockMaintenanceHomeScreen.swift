@@ -913,7 +913,9 @@ struct LockMaintenanceHomeScreen: View {
 
     private func identityBlock(_ kc: Keychain) -> some View {
         VStack(alignment: .leading, spacing: V8.S.gapS) {
-            VCardHead(eyebrow: "身份", statement: LockArchive.displayName(kc), trailing: PidMap.productName(kc.pid))
+            // 2026-11-05（对抗审查 · 设计冗余）：卡头 trailing 原来也写型号，而下面第一行就是
+            // 「型号」—— 同一个值在卡头与首行各出现一次。型号由数据行承载，卡头只留名字。
+            VCardHead(eyebrow: "身份", statement: LockArchive.displayName(kc))
             VStack(spacing: 0) {
                 VDataRow(tag: "型号", tagTint: V8.C.ink4, title: PidMap.productName(kc.pid), value: "")
                 VDotRule()

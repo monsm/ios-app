@@ -59,8 +59,7 @@ struct AppearanceHomeScreen: View {
                 quickCard
                 accessibilityCard
                 resetCard
-                if app.trialGuard { trialCard }
-            }
+                }
         }
         .background(V8.C.bg.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
@@ -650,22 +649,13 @@ struct AppearanceHomeScreen: View {
             .buttonStyle(.plain)
             .accessibilityLabel("恢复默认外观")
             .padding(.top, V8.S.gapM)
-            Text("只重置这一屏的偏好。本机密码、备份、钥匙串与门锁数据一项都不动。")
+            // 2026-11-05（对抗审查 · 设计冗余）：「只读试验模式 · 本页不受影响」原来是一整张卡，
+            // 卡里只有一句「这里不受影响」—— 一张不承载任何操作的卡就是一个多余的边界。
+            // 那句话并入本卡脚注：信息不丢，卡片少一张。
+            Text("只重置这一屏的偏好。本机密码、备份、钥匙串与门锁数据一项都不动。"
+                 + "只读试验模式拦的是下发到门锁的写命令与导入备份；外观偏好属于本机设置，仍可修改 —— 这里如实告诉你，不假装被拦。")
                 .font(V8.T.footnote)
                 .foregroundStyle(V8.C.ink4)
-                .padding(.top, V8.S.gapM)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    // MARK: - 只读试验模式（如实说明：本页不受它影响）
-
-    private var trialCard: some View {
-        VCard2(style: .well) {
-            VCardHead(eyebrow: "只读试验模式", statement: "本页不受影响")
-            Text("只读试验模式拦的是下发到门锁的写命令与导入备份；外观偏好属于本机设置，仍可修改 —— 这里如实告诉你，不假装被拦。")
-                .font(V8.T.footnote)
-                .foregroundStyle(V8.C.ink3)
                 .padding(.top, V8.S.gapM)
                 .fixedSize(horizontal: false, vertical: true)
         }
