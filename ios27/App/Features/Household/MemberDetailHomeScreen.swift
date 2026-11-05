@@ -178,7 +178,11 @@ struct MemberDetailHomeScreen: View {
     // MARK: - 卡 1 这一周
 
     private func weekCard(_ member: MemberCard) -> some View {
-        VCard2 {
+        // 2026-11-05（性能）：weekBars 内部要按天过滤 7 次 app.entries；
+        // 在 ViewBuilder 里调用两次（labels + values）等于每帧 14 次过滤。
+        // 只算一次，交给下面两个视图共用（swiftui-expert：把计算提到视图外，视图只读结果）。
+        let bars = weekBars(member)
+        return VCard2 {
             VCardHead(eyebrow: "这一周", statement: HHStats.weekSentence(member, entries: app.entries) ?? "还没有可证明归属的开门", trailing: "约")
             VDivider2()
                 .padding(.top, V8.S.gapM)
@@ -188,9 +192,9 @@ struct MemberDetailHomeScreen: View {
             // 本卡特有的一句：这一页读的是本机数据、不连门锁。
             // 2026-11-05（用户指令：图形化变多）：本周每天的开锁次数画成柱图 ——
             // 与卡头那句「本周 N 次」是同一份数据，但形状比句子更快。
-            VRangeCaption(text: weekBars(member).labels)
+            VRangeCaption(text: bars.labels)
                 .padding(.top, V8.S.gapM)
-            VSpark(values: weekBars(member).values, tint: V8.C.accentFill, cursor: 6, axis: .samples)
+            VSpark(values: bars.values, tint: V8.C.accentFill, cursor: 6, axis: .samples)
                 .padding(.top, V8.S.gapS)
             Text("这一页只读本机数据，不连门锁 —— 离线或未连接时，档案与摘录完全一样。")
                 .font(V8.T.caption)

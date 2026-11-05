@@ -52,14 +52,16 @@ struct HouseHomeScreen: View {
     }
 
     private var weekBarsCard: some View {
-        VCard2 {
+        // 同上：weekDaily 会按天过滤 7 次，别在 ViewBuilder 里调两回。
+        let bars = weekDaily
+        return VCard2 {
             VCardHead(eyebrow: "近 7 天开门", statement: "\(weekOpens) 次", trailing: "本机回执")
             VDivider2()
                 .padding(.top, V8.S.gapM)
-            VRangeCaption(text: weekDaily.labels)
+            VRangeCaption(text: bars.labels)
                 .padding(.top, V8.S.gapM)
             // cursor 指向今天（最后一格），与记录页 24 小时波形的处理一致。
-            VSpark(values: weekDaily.values, tint: V8.C.accentFill, cursor: max(0, weekDaily.values.count - 1), axis: .samples)
+            VSpark(values: bars.values, tint: V8.C.accentFill, cursor: max(0, bars.values.count - 1), axis: .samples)
                 .padding(.top, V8.S.gapS)
         }
         .accessibilityElement(children: .combine)
