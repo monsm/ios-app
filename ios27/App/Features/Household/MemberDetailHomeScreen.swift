@@ -129,7 +129,11 @@ struct MemberDetailHomeScreen: View {
             HStack(spacing: V8.S.gapChip) {
                 VChip2(icon: .glyph(roleSymbol(member?.role ?? .member)), label: "角色", value: member?.role.rawValue ?? "未选")
                 VChip2(icon: .ring(1, V8.D.fingerprint), label: "凭证", value: "\(member?.keyCount ?? 0) 枚")
-                VChip2(icon: .ring(0.5, V8.C.info), label: "最近", value: member.map { HHStats.lastOpen($0) } ?? "—")
+                // 2026-11-05（全技能审核 · 芯片文案）：原来 value 用 HHStats.lastOpen()，
+                // 它自带「最近 」前缀 —— 与芯片 label「最近」连读成「最近 最近 5 分钟前」；
+                // 而「还没有可归属的开门」有 9 个字，把芯片撑得比屏还宽。这里只取最短事实。
+                VChip2(icon: .ring(0.5, V8.C.info), label: "最近",
+                       value: member.flatMap { m in m.lastActiveAt.map { TimeFormat.ago($0) } } ?? "暂无")
                 VChip2(icon: .ring(isDuty ? 1 : 0.02, V8.C.ok), label: "本周主责", value: isDuty ? "是" : "否")
             }
             .padding(.leading, V8.S.gutterCard)
@@ -183,7 +187,7 @@ struct MemberDetailHomeScreen: View {
         // 只算一次，交给下面两个视图共用（swiftui-expert：把计算提到视图外，视图只读结果）。
         let bars = weekBars(member)
         return VCard2 {
-            VCardHead(eyebrow: "这一周", statement: HHStats.weekSentence(member, entries: app.entries) ?? "还没有可证明归属的开门", trailing: "约")
+            VCardHead(eyebrow: "这一周", statement: HHStats.weekSentence(member, entries: app.entries) ?? "还没有可证明归属的开门", trailing: "推断")
             VDivider2()
                 .padding(.top, V8.S.gapM)
             // 2026-11-05（对抗审查 · 设计冗余）：「锁端日志没有身份字段，只有归属明确的条目
@@ -193,14 +197,26 @@ struct MemberDetailHomeScreen: View {
             // 2026-11-05（用户指令：图形化变多）：本周每天的开锁次数画成柱图 ——
             // 与卡头那句「本周 N 次」是同一份数据，但形状比句子更快。
             // 同上：只保留星期标签，关掉 VSpark 自带的「最早 / 最近」。
-            VStack(alignment: .leading, spacing: V8.S.gapS) {
-                VRangeCaption(text: bars.labels)
-                VSpark(values: bars.values, tint: V8.C.accentFill, cursor: 6, axis: nil)
-                    // 2026-11-05（无障碍）：VSpark 自带的是笼统的「波形」，这里换成真实序列。
-                    // 不能给整张卡加 combine —— 卡里还有可点的「去台账看全部记录」，会被吞掉。
-                    .accessibilityLabel("近 7 天每天开门次数：" + bars.values.map { String(Int($0)) }.joined(separator: "、"))
+            if bars.values.allSatisfy({ $0 == 0 }) {
+                // 2026-11-05（全技能审核 · 空数据图形）：全 0 时 VSpark 仍占约 120pt 高，
+                // 画出来只有一条基线与 7 个点 —— 看起来像「图坏了」。没有数据就不画图，
+                // 用一句话把「为什么是空的」说清楚（与「最近开门」空态同一口径）。
+                Text("近 7 天没有可证明归属的开门 —— 锁端日志没有身份字段，只统计归属明确的条目。")
+                    .font(V8.T.body)
+                    .foregroundStyle(V8.C.ink3)
+                    .lineSpacing(V8.L.body - V8.T.body.size)
+                    .padding(.top, V8.S.gapM)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                VStack(alignment: .leading, spacing: V8.S.gapS) {
+                    VRangeCaption(text: bars.labels)
+                    VSpark(values: bars.values, tint: V8.C.accentFill, cursor: 6, axis: nil)
+                        // 2026-11-05（无障碍）：VSpark 自带的是笼统的「波形」，这里换成真实序列。
+                        // 不能给整张卡加 combine —— 卡里还有可点的「去台账看全部记录」，会被吞掉。
+                        .accessibilityLabel("近 7 天每天开门次数：" + bars.values.map { String(Int($0)) }.joined(separator: "、"))
+                }
+                .padding(.top, V8.S.gapM)
             }
-            .padding(.top, V8.S.gapM)
             Text("这一页只读本机数据，不连门锁 —— 离线或未连接时，档案与摘录完全一样。")
                 .font(V8.T.caption)
                 .foregroundStyle(V8.C.ink4)
@@ -499,7 +515,7 @@ struct MemberDetailHomeScreen: View {
     private func excerptsCard(_ member: MemberCard) -> some View {
         let entries = Array(app.entries.filter { $0.owner == member.name }.prefix(5))
         return VCard2 {
-            VCardHead(eyebrow: "最近开门", statement: entries.isEmpty ? "没有可证明归属的开门" : "\(entries.count) 条", trailing: "约")
+            VCardHead(eyebrow: "最近开门", statement: entries.isEmpty ? "没有可证明归属的开门" : "\(entries.count) 条", trailing: "推断")
             VDivider2()
                 .padding(.top, V8.S.gapM)
             if entries.isEmpty {
@@ -1101,7 +1117,7 @@ struct MemberDetailHomeScreen: View {
         let a = bundle.table[m.id] ?? MemberHub.Activity()
         let excerpts = MemberHub.recentExcerpts(m.id, 5)
         return VCard2 {
-            VCardHead(eyebrow: "流转 · 活跃度", statement: "近 30 天 " + String(a.opens30) + " 次", trailing: "约")
+            VCardHead(eyebrow: "流转 · 活跃度", statement: "近 30 天 " + String(a.opens30) + " 次", trailing: "推断")
             VDivider2()
                 .padding(.top, V8.S.gapM)
             VStatPair2(items: [
