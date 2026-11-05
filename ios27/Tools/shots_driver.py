@@ -139,9 +139,8 @@ def main() -> int:
 
     # 2026-11-05（Round 5 · 深色矩阵）：dark 域的图带 dark- 前缀，与浅色图并存；
     # 深浅切换由驱动自己做（workflow 只设一次 light）。
-    # 2026-11-05（Round 7）：ax 域整页图改两遍渲染（见 App/Engine/FullPageCapture.swift），
-    # b9ab188a 起改为滚动拼接（tile-stitch）。本文件无逻辑变化，此注释用于让
-    # App/Engine 的捕获改动触发截图域复核。
+    # 2026-11-05（Round 7）：ax 域整页图改为滚动拼接（tile-stitch，3e47c539 单组版定稿）。
+    # 本文件无逻辑变化，此注释用于让 App/Engine 的捕获改动触发截图域复核。
     dark = scope == "dark"
     axmode = scope == "ax"
     prefix = ("dark-" if dark else "") + ("ax-" if axmode else "")
