@@ -877,6 +877,19 @@ struct VStatPair2: View {
                         }
                     }
                 }
+                // 2026-11-06（V9 · 液态仪器）：读数落在一块"沉下去的凹槽"里 ——
+                // well 底色 + 顶缘暗缘（凹陷的物理暗示）。数字从"飘在卡面上"变成
+                // "嵌在面板读数窗里"，与刻度盘的玻璃凸台形成凹凸对偶。
+                .padding(.horizontal, V8.S.gapM)
+                .padding(.vertical, V8.S.gapS)
+                .background(
+                    RoundedRectangle(cornerRadius: V8.R.inset, style: .continuous)
+                        .fill(V8.C.well)
+                )
+                .overlay {
+                    RoundedRectangle(cornerRadius: V8.R.inset, style: .continuous)
+                        .strokeBorder(V8.C.shadow, lineWidth: V8.S.hair)
+                }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }

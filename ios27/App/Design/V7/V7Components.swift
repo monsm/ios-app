@@ -79,8 +79,24 @@ enum DialPhase: Equatable {
 /// 否则刘海与 Home 指示条周围会露出一条系统底色，形成"内嵌窗口"的错觉。
 /// 内容层不忽略安全区 —— 它们都在 ScrollView / List 里，由系统自动避让。
 struct CanvasBackground: View {
+    // 2026-11-06（V9 · 液态仪器）：冷启动闸是用户见到的第一屏 —— 平涂底色升级为
+    // 带大气层的面板：底部一团品牌色辉光（比 VPage 更安静，因为这一屏只有几个元素）。
+    // 辉光颜色走 V.C.blue（品牌色），透明度 ≤10% —— 内容层纪律不变。
     var body: some View {
-        V.C.bg.ignoresSafeArea(.container, edges: .all)
+        ZStack {
+            V.C.bg.ignoresSafeArea(.container, edges: .all)
+            GeometryReader { geo in
+                let w = geo.size.width
+                Circle()
+                    .fill(V.C.blue)
+                    .frame(width: w * 1.0, height: w * 1.0)
+                    .blur(radius: w * 0.30)
+                    .opacity(0.08)
+                    .offset(x: w * 0.05, y: geo.size.height * 0.42)
+            }
+            .ignoresSafeArea()
+        }
+        .ignoresSafeArea(.container, edges: .all)
     }
 }
 
