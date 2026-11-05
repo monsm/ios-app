@@ -57,6 +57,9 @@ SCOPES = {
     "household": (["3"], _HOUSE),
     "settings": (["4"], _SETTINGS),
     "all": (["0", "1", "2", "3", "4"], _DOOR + _KEYS + _RECORDS + _HOUSE + _SETTINGS),
+    # 2026-11-05（Round 5 · 深色矩阵）：4 个根 Tab + 门/钥匙/外观三张信息最密的子页。
+    # 深色不是浅色的反相 —— 两套独立取值必须各自有截图证据。
+    "dark": (["0", "1", "3", "4"], ["appearance", "security", "keyDetail"]),
 }
 
 TAB_NAME = {"0": "door", "1": "keys", "2": "records", "3": "household", "4": "settings"}
@@ -104,6 +107,18 @@ def main() -> int:
     log("python driver: scope=" + scope + " tabs=[" + " ".join(tabs) + "] subs=[" + " ".join(subs) + "]")
     os.makedirs(OUT, exist_ok=True)
 
+    # 2026-11-05（Round 5 · 深色矩阵）：dark 域的图带 dark- 前缀，与浅色图并存；
+    # 深浅切换由驱动自己做（workflow 只设一次 light）。
+    dark = scope == "dark"
+    prefix = "dark-" if dark else ""
+
+    def flip(appearance: str) -> None:
+        run(["xcrun", "simctl", "ui", udid, "appearance", appearance], timeout=60)
+        log("appearance=" + appearance)
+
+    if dark:
+        flip("dark")
+
     produced = 0
 
     # 一、Tab 整页图（算法级整页成像，产物落在 App 容器 Documents/）
@@ -122,14 +137,14 @@ def main() -> int:
         # 2026-11-05（Round 3 · 导航标题验证）：整页图是「把 ScrollView 撑开」拍的，
         # 不含导航栏 —— 于是「navigationTitle 是否真的出现 / large 还是 inline」在整页图里
         # 根本看不到。这里补一张根页视口图：标题、工具栏按钮、状态行都在这一张里。
-        rootShot = os.path.join(OUT, "root-" + name + ".png")
+        rootShot = os.path.join(OUT, prefix + "root-" + name + ".png")
         if shot(rootShot):
             produced += 1
-            log("root viewport ok " + name + " size=" + str(os.path.getsize(rootShot)))
+            log("root viewport ok " + prefix + name + " size=" + str(os.path.getsize(rootShot)))
         else:
-            log("root viewport missing " + name)
+            log("root viewport missing " + prefix + name)
         container = run(["xcrun", "simctl", "get_app_container", udid, BUNDLE, "data"], timeout=60)
-        dest = os.path.join(OUT, tab + "-" + name + "-full.png")
+        dest = os.path.join(OUT, prefix + tab + "-" + name + "-full.png")
         copied = False
         if container is not None and container.returncode == 0:
             src = os.path.join(container.stdout.strip(), "Documents", "kf-fullpage-" + tab + "-tab.png")
@@ -155,7 +170,7 @@ def main() -> int:
         # 的子页列表 —— 同一个页面在不同 run 里会变成不同文件名，merge-publish 只按文件名合并，
         # 于是 ci-shots 上同时存在同一页面的多代图，看图的以为是新的、其实是旧的（为此误判过两次）。
         # 改成稳定名字：只用页面名，同一页永远覆盖同一个文件。
-        path = os.path.join(OUT, target + ".png")
+        path = os.path.join(OUT, prefix + target + ".png")
         if shot(path):
             produced += 1
             log("subpage ok " + target + " size=" + str(os.path.getsize(path)))
@@ -164,6 +179,8 @@ def main() -> int:
 
     # 把产出数量也写进 diag：ci-shots 的 meta 里已经有 count，但两个数字对不上时
     # （比如 publish 步骤漏了文件）这里能立刻看出来。
+    if dark:
+        flip("light")
     log("python driver done: produced=" + str(produced))
     try:
         on_disk = len([f for f in os.listdir(OUT) if f.endswith(".png")])

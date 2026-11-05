@@ -316,9 +316,40 @@ struct DoorHomeScreen: View {
                 if case .failed(let msg) = app.dialPhase {
                     VFailure(what: "开锁失败", why: msg, next: "走近门锁再试一次；连续失败请检查钥匙串是否插好。")
                 }
+                // 2026-11-05（Round 5 · 英雄卡收敛）：环下面原来什么都没有，只有一张孤零零的环 ——
+                // 而「今天开了几次 / 名下几枚凭证」要往下滚两张卡才能看到。补两个次级读数，
+                // 英雄卡自己把「这把锁现在怎么样」说完整。
+                HStack(alignment: .center, spacing: 0) {
+                    heroStat(icon: "circle.grid.2x2", tint: V8.C.accent,
+                             label: "今日开锁", value: "\(todayOpenEntries.count) 次")
+                    Rectangle().fill(V8.C.line).frame(width: V8.S.hair).frame(maxHeight: 34)
+                    heroStat(icon: "key.horizontal", tint: V8.D.fingerprint,
+                             label: "名下凭证", value: "\(app.keys.count) 枚")
+                }
+                .padding(.top, V8.S.gapS)
             }
             .frame(maxWidth: .infinity)
         }
+    }
+
+    /// 英雄卡的次级读数（图标 + 标签 + 值，居中一格）。
+    private func heroStat(icon: String, tint: Color, label: String, value: String) -> some View {
+        HStack(spacing: V8.S.gapXS) {
+            Image(systemName: icon)
+                .font(V8.T.footnote)
+                .foregroundStyle(tint)
+                .accessibilityHidden(true)
+            Text(label)
+                .font(V8.T.label)
+                .foregroundStyle(V8.C.ink4)
+            Text(value)
+                .font(V8.T.value)
+                .foregroundStyle(V8.C.ink1)
+                .monospacedDigit()
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(label) \(value)")
     }
 
     // MARK: - 卡 1 今天的门
