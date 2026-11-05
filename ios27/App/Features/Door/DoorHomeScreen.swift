@@ -58,13 +58,22 @@ struct DoorHomeScreen: View {
         return app.entries.filter { $0.at >= start && ($0.tone == .ok || $0.tone == .live) }
     }
 
+    /// 门页「今天的门」按开锁方式拆解。
+    ///
+    /// 2026-11-05（对抗审查 · 真逻辑错误）：原来按**事件文本包含**分类 ——
+    ///   密码：contains("密码")   ⇒ 「一次性密码开门」(type 16) 也含「密码」，被算进密码
+    ///   临时码：contains("临时") ⇒ 但事件文案是「一次性密码开门」，**永远含不住「临时」**
+    /// 于是临时码恒为 0、密码把一次性码一起算了，四行加起来还可能大于总次数。
+    /// 改用锁端日志类型判据（RecordsModels.detail 的同一张表）：
+    ///   17 = 密码开门 · 19 = 指纹开门 · 16 = 一次性密码开门 · 11 = 数字钥匙开门
     private var kindRows: [(String, Color, Int)] {
         let today = todayOpenEntries
+        func count(_ type: Int) -> Int { today.filter { $0.rawType == type }.count }
         return [
-            ("密码", V8.D.password, today.filter { $0.event.contains("密码") }.count),
-            ("指纹", V8.D.fingerprint, today.filter { $0.event.contains("指纹") }.count),
-            ("临时码", V8.D.temp, today.filter { $0.event.contains("临时") }.count),
-            ("手机钥匙", V8.D.mobile, today.filter { $0.event.contains("手机") }.count)
+            ("密码", V8.D.password, count(17)),
+            ("指纹", V8.D.fingerprint, count(19)),
+            ("临时码", V8.D.temp, count(16)),
+            ("手机钥匙", V8.D.mobile, count(11))
         ]
     }
 
