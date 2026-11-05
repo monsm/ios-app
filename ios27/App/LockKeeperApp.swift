@@ -92,7 +92,12 @@ struct RootView: View {
                 if let i = args.firstIndex(of: "-kfDest"), i + 1 < args.count,
                    let dest = Dest(rawValue: args[i + 1]) {
                     // 2026-11-05（全技能审核 · 页面覆盖）：详情页需要上下文，否则截图永远是
-                    // 「还没选成员/凭证」空态 —— 等于没审到这一页。CI 截图时预先挂上第一条。
+                    // 「还没选成员/凭证」空态 —— 等于没审到这一页。
+                    // 注意顺序：`Router.request(.dest)` 内部会把 pending 重置成 .dest，
+                    // 所以「先挂 pending 再 request」会被覆盖掉（第一版就这么错了，
+                    // memberDetail 截图仍是空态）。这里先在 request 之后直接写页面真正读的
+                    // 那份状态：成员页读 HouseholdRoster.focusMember，不读 router.pending。
+                    router.request(.dest(dest))
                     switch dest {
                     case .keyDetail:
                         if let first = app.keys.first { router.pending = .key(id: first.id) }
@@ -100,12 +105,14 @@ struct RootView: View {
                         if let first = app.entries.first { router.pending = .record(id: first.id) }
                     case .memberDetail, .memberOps:
                         // DB 是种子刚写入的真值；app.members 可能还没跑首次 reload。
-                        if let first = DB.members().first { router.pending = .member(id: first.id) }
-                        else if let first = app.members.first { router.pending = .member(id: first.id) }
+                        if let first = DB.members().first {
+                            HouseholdRoster.shared.focusMember = first.id
+                        } else if let first = app.members.first {
+                            HouseholdRoster.shared.focusMember = first.id
+                        }
                     default:
                         break
                     }
-                    router.request(.dest(dest))
                 }
             }
             if let mac = app.currentKeychain?.mac { AutoOpenController.shared.onForeground(mac: mac) }
