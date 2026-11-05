@@ -49,7 +49,10 @@ struct DoorHomeScreen: View {
         } else {
             bits.append("今天还没有开门")
         }
-        bits.append(lock.muted ? "静音开" : "静音关")
+        // 2026-11-05（截图审查 · 文案歧义）：「静音开 / 静音关」读不出主语 ——
+        // 是「静音这个功能被打开了」还是「声音被关掉了」？两种解释都通。
+        // 改成说结果（我的判断：writing.md 通篇主张说清结果，而不是描述开关位置）。
+        bits.append(lock.muted ? "提示音已静音" : "提示音正常")
         return bits.joined(separator: "，") + "。"
     }
 
