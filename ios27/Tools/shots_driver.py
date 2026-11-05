@@ -195,6 +195,11 @@ def main() -> int:
                         log("tile ok " + prefix + name + " " + f + " size=" + str(os.path.getsize(tdest)))
                 if tiles:
                     copied = True
+                    # 用了逐屏 tile 证据时，把**旧的整页文件**从产出里清掉 ——
+                    # 否则 publish 的 merge 会把上一轮的空白整页图继续带着走。
+                    if os.path.exists(dest):
+                        os.remove(dest)
+                        log("removed stale full page " + os.path.basename(dest))
         if copied and os.path.exists(dest):
             produced += 1
             log("fullpage ok " + prefix + name + " size=" + str(os.path.getsize(dest)))

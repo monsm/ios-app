@@ -87,8 +87,12 @@ struct RootView: View {
                 if args.contains("-kfFullPage"), let i = args.firstIndex(of: "-kfTab"),
                    i + 1 < args.count, let tab = Int(args[i + 1]) {
                     // 子页（-kfDest）压栈后要多等：push 动画 + 首帧布局完成后才撑得开 frame。
+                    // 2026-11-05（Round 7）：AX 档（-kfAX）字体度量全部改变，布局收敛更慢 ——
+                    // 再多等 3 秒，让逐屏截屏从真正的页顶开始。
+                    let axMode = args.contains("-kfAX")
+                    let baseDelay = args.contains("-kfDest") ? 5.5 : 3.5
                     FullPageCapture.capture(tab: tab,
-                                            delay: args.contains("-kfDest") ? 5.5 : 3.5,
+                                            delay: axMode ? baseDelay + 3.0 : baseDelay,
                                             name: args.firstIndex(of: "-kfDest").flatMap { k in
                                                 k + 1 < args.count ? args[k + 1] : nil
                                             } ?? "tab")
