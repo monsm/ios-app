@@ -21,6 +21,18 @@ import time
 OUT = "/tmp/shots"
 BUNDLE = "com.aapk.lockkeeper"
 
+# 2026-11-05（实测）：第一次真跑时 step 7 超过 7 分钟还没结束。
+# 根因是每个 simctl 调用的超时太宽松（launch 120s × 15 次 ≈ 30 分钟上限），
+# 一旦模拟器卡住，整轮就会一直挂到 job 的 70 分钟上限。
+# 加一个**全局预算**：超过就把剩下的截图标记为 skipped 并如实报告，
+# 让这一轮至少能带着已产出的图和清楚的 diag 结束。
+BUDGET_SEC = 15 * 60
+_START = time.time()
+
+
+def budget_left() -> float:
+    return BUDGET_SEC - (time.time() - _START)
+
 # scope → (要截的 Tab 序号, 要截的子页 dest)。与 workflow 里 changes job 的判据一致。
 SCOPES = {
     "door": (["0"], ["lockStatus", "deviceInfo", "lockSettings", "defend"]),
@@ -48,7 +60,11 @@ def main() -> int:
         with open(diag, "a", encoding="utf-8") as fh:
             fh.write(msg + "\n")
 
-    def run(args, timeout=180):
+    def run(args, timeout=90):
+        # 全局预算用尽就不再发新命令 —— 已产出的图仍然会被发布。
+        if budget_left() <= 5:
+            log("budget exhausted before: " + " ".join(args[:4]))
+            return None
         try:
             return subprocess.run(args, capture_output=True, text=True, timeout=timeout)
         except Exception as exc:  # 超时或 simctl 崩了都不该打断整轮
@@ -60,7 +76,7 @@ def main() -> int:
 
     def launch(extra, wait: float) -> None:
         terminate()
-        run(["xcrun", "simctl", "launch", udid, BUNDLE] + extra, timeout=120)
+        run(["xcrun", "simctl", "launch", udid, BUNDLE] + extra, timeout=60)
         time.sleep(wait)
 
     def shot(path: str, min_bytes: int = 40000, tries: int = 3) -> bool:
@@ -79,9 +95,17 @@ def main() -> int:
     produced = 0
 
     # 一、Tab 整页图（算法级整页成像，产物落在 App 容器 Documents/）
+    def out_of_budget() -> bool:
+        if budget_left() > 5:
+            return False
+        log("budget exhausted: remaining shots skipped")
+        return True
+
     for tab in tabs:
+        if out_of_budget():
+            break
         name = TAB_NAME.get(tab, "tab" + tab)
-        log("fullpage begin tab=" + tab + " name=" + name)
+        log("fullpage begin tab=" + tab + " name=" + name + " budget_left=" + str(int(budget_left())) + "s")
         launch(["-kfUITest", "-kfSeed", "-kfFullPage", "-kfTab", tab], 8)
         container = run(["xcrun", "simctl", "get_app_container", udid, BUNDLE, "data"], timeout=60)
         dest = os.path.join(OUT, tab + "-" + name + "-full.png")
@@ -103,6 +127,8 @@ def main() -> int:
 
     # 二、子页视口图（-kfDest 直接把那一页压进导航栈）
     for idx, target in enumerate(subs):
+        if out_of_budget():
+            break
         num = str(10 + idx)
         launch(["-kfUITest", "-kfSeed", "-kfDest", target], 6)
         path = os.path.join(OUT, num + "-" + target + ".png")
