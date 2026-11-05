@@ -100,11 +100,10 @@ struct AutoOpenHomeScreen: View {
     private var chipRow: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: V8.S.gapChip) {
-                VChip2(
-                    icon: .ring(on ? 1 : 0.02, on ? V8.C.ok : V8.C.ink3),
-                    label: "主开关",
-                    value: on ? "开" : "关"
-                )
+                // 2026-11-05（截图审查）：这枚芯片与**首屏第一张卡**的卡头同值，删掉。
+                // 下面两枚（确认档 / 标定）**保留** —— 它们对应的卡在折叠线以下，
+                // 用户不滚动看不到，这正是芯片该承载的（与安全页整排删除的判据同源：
+                // 芯片只承载「默认折叠、需要滚动才看得到」的状态）。
                 VChip2(
                     icon: .ring(faceTier == .strict ? 1 : 0.5, faceTier == .strict ? V8.C.warn : V8.C.ink3),
                     label: "确认档",
@@ -152,7 +151,11 @@ struct AutoOpenHomeScreen: View {
 
     private var mainCard: some View {
         VCard2 {
-            VCardHead(eyebrow: "主开关", statement: on ? "走近自动开门 已开" : "走近自动开门 关闭")
+            // 2026-11-05（截图审查 · 设计冗余）：本页同一状态被说了四遍 ——
+            //   页标题「关闭 · 走到门前仍需手动开锁」/ 芯片「主开关 关」/
+            //   这里的卡头「走近自动开门 关闭」/ toggle 标题「走近自动开门」。
+            // 卡头只报状态（开关名由 toggle 承载）。
+            VCardHead(eyebrow: "主开关", statement: on ? "已开" : "关闭")
             VDivider2()
                 .padding(.top, V8.S.gapM)
             Toggle(isOn: autoOpenBinding) {
@@ -162,11 +165,16 @@ struct AutoOpenHomeScreen: View {
             }
             .frame(minHeight: V8.H.min)
             .padding(.top, V8.S.gapS)
-            Text("默认关。开启后 App 在前台且靠近门时自动下发开锁 —— 这是唯一一个不需要你动手就会开门的功能，所以它默认不生效。")
-                .font(V8.T.caption)
-                .foregroundStyle(V8.C.ink4)
-                .padding(.top, V8.S.gapXS)
-                .fixedSize(horizontal: false, vertical: true)
+            // 2026-11-05（截图审查 · 设计冗余）：这段与页首 lead 的「默认关…所以它默认不生效」
+            // **逐字相同**，同一屏出现两次（首屏与卡内各一次）。
+            // 该说明由 lead 承载；关闭态下这里补一句 lead 没说的后果即可。
+            if !on {
+                Text("关闭时，走到门前仍需手动滑动开锁。")
+                    .font(V8.T.caption)
+                    .foregroundStyle(V8.C.ink4)
+                    .padding(.top, V8.S.gapXS)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             VDivider2()
                 .padding(.top, V8.S.gapM)
             VStack(spacing: 0) {
