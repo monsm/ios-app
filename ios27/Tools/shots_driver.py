@@ -183,23 +183,12 @@ def main() -> int:
             docdir = container.stdout.strip()
             src = os.path.join(docdir, "Documents", "kf-fullpage-" + tab + "-tab.png")
             copied = fullpage_copy(src, dest)
-            # 2026-11-05（Round 7 · AX 定稿）：整页图空白时（App 侧改为逐屏落盘），
-            # 拷出该页所有 tile-N 截图 —— 每一屏都是真实的 AX 布局证据。
-            if not copied and os.path.isdir(docdir):
-                tdir = os.path.join(docdir, "Documents")
-                tiles = sorted([f for f in os.listdir(tdir) if f.startswith("kf-fullpage-" + tab + "-") and "tile" in f])
-                for f in tiles:
-                    tdest = os.path.join(OUT, prefix + name + "-" + f.split("-tile")[-1].replace(".png", "") + ".png")
-                    if fullpage_copy(os.path.join(tdir, f), tdest):
-                        produced += 1
-                        log("tile ok " + prefix + name + " " + f + " size=" + str(os.path.getsize(tdest)))
-                if tiles:
-                    copied = True
-                    # 用了逐屏 tile 证据时，把**旧的整页文件**从产出里清掉 ——
-                    # 否则 publish 的 merge 会把上一轮的空白整页图继续带着走。
-                    if os.path.exists(dest):
-                        os.remove(dest)
-                        log("removed stale full page " + os.path.basename(dest))
+            # 2026-11-05（Round 7 · AX 定稿）：ax 域**不取 tile** —— Documents 里的 tile 文件
+            # 是浅色/深色轮写下的，按文件名无法区分是谁写的，误拷会把别的档位的图挂到 ax 名下。
+            # ax 的整页证据由 root-*/子页视口图承担（simctl screenshot 在 AX 档完全正常）。
+            if not copied and axmode and os.path.exists(dest):
+                os.remove(dest)
+                log("removed stale ax full page " + os.path.basename(dest))
         if copied and os.path.exists(dest):
             produced += 1
             log("fullpage ok " + prefix + name + " size=" + str(os.path.getsize(dest)))

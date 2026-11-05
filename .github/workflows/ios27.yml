@@ -839,6 +839,11 @@ jobs:
             REMOVED=$(ls [0-9][0-9]-*.png 2>/dev/null | wc -l | tr -d " ")
             rm -f [0-9][0-9]-*.png
             echo "removed $REMOVED stale index-prefixed screenshot(s)"
+            # 2026-11-05（Round 7 · AX 定稿）：drawHierarchy 在 AX 档拿不到位图（模拟器限制），
+            # ax 域的整页证据由 root-*/子页视口图承担。历史上发布过的两张空白 ax-*-full
+            # 会被 merge 一次次带回来 —— 这里把已知空白整页从产物里永久清掉。
+            rm -f ax-0-door-full.png ax-1-keys-full.png
+            echo "removed known-blank ax full-page files if present"
           else
             echo "no previous ci-shots to merge (first publish?)"
           fi
