@@ -78,11 +78,13 @@ struct RecordDetailHomeScreen: View {
     /// 把可能出错的面缩到最小。
     private func dayBuckets(_ entry: LedgerEntry) -> [Double] {
         let cal = WeekCal.gregorian
-        let day = cal.startOfDay(for: entry.at)
+        // LedgerEntry.at 是毫秒 epoch（Int64），不是 Date —— 必须走 TimeFormat.date 转换。
+        let day = cal.startOfDay(for: TimeFormat.date(entry.at))
         var out = [Double](repeating: 0, count: 24)
         for item in entries {
-            guard cal.startOfDay(for: item.at) == day else { continue }
-            let hour = cal.component(.hour, from: item.at)
+            let when = TimeFormat.date(item.at)
+            guard cal.startOfDay(for: when) == day else { continue }
+            let hour = cal.component(.hour, from: when)
             if hour >= 0, hour < 24 { out[hour] += 1 }
         }
         return out
@@ -121,7 +123,7 @@ struct RecordDetailHomeScreen: View {
             // 2026-11-05（图形化）：这一页原来全是文字行。加一条当天 24 小时分布，
             // 光标落在本条记录的小时上 —— 轴标签由 VSpark 自带，不再另写一行。
             VSpark(values: dayBuckets(entry), tint: V8.C.accentFill,
-                   cursor: WeekCal.gregorian.component(.hour, from: entry.at),
+                   cursor: WeekCal.gregorian.component(.hour, from: TimeFormat.date(entry.at)),
                    axis: .hours24)
                 .padding(.top, V8.S.gapM)
         }
