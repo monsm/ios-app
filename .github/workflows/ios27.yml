@@ -762,12 +762,22 @@ jobs:
             echo "--- diag ---" >> meta.txt
             head -40 diag.txt >> meta.txt
           fi
+          # 2026-11-05（实测）：**空产出不许覆盖已有的图**。
+          # 这一轮就撞上了：一次被取消的 run 只产出了 diag/meta，然后 force-push 把上一次
+          # 完整的 16 张图整个盖掉 —— ci-shots 变成只剩两个 txt。截图是诊断资产，
+          # 用空集覆盖好集是纯粹的倒退。
+          COUNT=$(ls *.png 2>/dev/null | wc -l | tr -d ' ')
+          if [ "${COUNT:-0}" -lt 1 ]; then
+            echo "::warning::本轮 0 张截图 —— 保留 ci-shots 上的旧图，不做 force-push"
+            echo "skip publish: count=0 (keeping previous screenshots)"
+            exit 0
+          fi
           git init -q .
           git checkout -q -b ci-shots
           git config user.name ci
           git config user.email ci@local
           git add -A
-          git commit -q -m "ci shots $GITHUB_RUN_ID" || true
+          git commit -q -m "ci shots $GITHUB_RUN_ID (${COUNT} images)" || true
           git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" ci-shots || true
 
   # ================= Android APK（与 iOS 并行构建）=================
