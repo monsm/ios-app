@@ -73,6 +73,21 @@ struct RecordDetailHomeScreen: View {
         }
     }
 
+    /// 这条记录所在那一天，0–23 点各有多少条。
+    /// 2026-11-05（图形化 · 最小切片）：只做一件事，不排序、不拼字符串，
+    /// 把可能出错的面缩到最小。
+    private func dayBuckets(_ entry: LedgerEntry) -> [Double] {
+        let cal = WeekCal.gregorian
+        let day = cal.startOfDay(for: entry.at)
+        var out = [Double](repeating: 0, count: 24)
+        for item in entries {
+            guard cal.startOfDay(for: item.at) == day else { continue }
+            let hour = cal.component(.hour, from: item.at)
+            if hour >= 0, hour < 24 { out[hour] += 1 }
+        }
+        return out
+    }
+
     private func momentCard(_ entry: LedgerEntry) -> some View {
         VCard2 {
             VCardHead(eyebrow: "这条记录", statement: entry.event, trailing: "行 " + shortKey(entry))
@@ -103,6 +118,12 @@ struct RecordDetailHomeScreen: View {
                 }
             }
             .padding(.top, V8.S.gapS)
+            // 2026-11-05（图形化）：这一页原来全是文字行。加一条当天 24 小时分布，
+            // 光标落在本条记录的小时上 —— 轴标签由 VSpark 自带，不再另写一行。
+            VSpark(values: dayBuckets(entry), tint: V8.C.accentFill,
+                   cursor: WeekCal.gregorian.component(.hour, from: entry.at),
+                   axis: .hours24)
+                .padding(.top, V8.S.gapM)
         }
         .confirmationDialog("把这条记录认给谁？", isPresented: $showClaim, titleVisibility: .visible) {
             ForEach(claimableMembers) { m in
