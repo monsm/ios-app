@@ -86,35 +86,33 @@ enum FullPageCapture {
             func captureTiled() -> Data? {
                 let total = sv.contentSize.height
                 let tile = sv.bounds.height
-                let scale = UIScreen.main.scale
-                let outW = Int(sv.bounds.width * scale)
-                let outH = Int(total * scale)
-                guard outW > 0, outH > 0, outH < 400_000_000 / max(outW, 1) else { return nil }
-                guard let ctx = CGContext(data: nil, width: outW, height: outH,
-                                          bitsPerComponent: 8, bytesPerRow: outW * 4,
-                                          space: CGColorSpaceCreateDeviceRGB(),
-                                          bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue) else { return nil }
-                var offset = CGFloat(0)
-                while offset < total {
-                    sv.contentOffset = CGPoint(x: 0, y: min(offset, max(0, total - tile)))
-                    sv.layoutIfNeeded()
-                    let renderer = UIGraphicsImageRenderer(bounds: CGRect(origin: .zero, size: sv.bounds.size))
-                    let img = renderer.image { c in
-                        paper.setFill()
-                        c.fill(CGRect(origin: .zero, size: sv.bounds.size))
-                        sv.drawHierarchy(in: sv.bounds, afterScreenUpdates: true)
+                guard total > 0, tile > 0 else { return nil }
+                // 2026-11-05（Round 7 · 第三修定稿）：用**一个** UIGraphicsImageRenderer 组版，
+                // 循环里逐屏滚动 → drawHierarchy 当前屏 → 把这一屏的 cgImage 画进组版画布。
+                // UIKit 组版自动处理坐标朝向；默认 scale 即屏幕 scale，清晰度不受影响。
+                let composer = UIGraphicsImageRenderer(size: CGSize(width: sv.bounds.width, height: total))
+                let image = composer.image { c in
+                    paper.setFill()
+                    c.fill(CGRect(x: 0, y: 0, width: sv.bounds.width, height: total))
+                    var offset = CGFloat(0)
+                    while offset < total {
+                        sv.contentOffset = CGPoint(x: 0, y: min(offset, max(0, total - tile)))
+                        sv.layoutIfNeeded()
+                        let tileRenderer = UIGraphicsImageRenderer(bounds: CGRect(origin: .zero, size: sv.bounds.size))
+                        let tileImg = tileRenderer.image { tc in
+                            tc.fill(CGRect(origin: .zero, size: sv.bounds.size))
+                            sv.drawHierarchy(in: sv.bounds, afterScreenUpdates: true)
+                        }
+                        if let cg = tileImg.cgImage {
+                            let drawHeight = min(tile, total - offset)
+                            // cgImage 是设备像素；画到 point 空间时按 screen scale 缩回。
+                            c.draw(cg, in: CGRect(x: 0, y: offset, width: sv.bounds.width, height: drawHeight))
+                        }
+                        offset += tile
                     }
-                    if let cg = img.cgImage {
-                        ctx.draw(cg, in: CGRect(x: 0, y: total - min(offset + tile, total) - tile < 0
-                                                ? CGFloat(0) : (total - offset - tile),
-                                                width: sv.bounds.width, height: tile).insetBy(dx: 0, dy: 0))
-                    }
-                    offset += tile
+                    sv.contentOffset = .zero
                 }
-                sv.contentOffset = .zero
-                let stitched = ctx.makeImage()
-                guard let stitched else { return nil }
-                return UIImage(cgImage: stitched).pngData()
+                return image.pngData()
             }
 
             write(captureTiled())
