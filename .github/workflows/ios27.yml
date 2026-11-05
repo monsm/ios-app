@@ -456,7 +456,9 @@ jobs:
           CHANGED=$(git diff --name-only "$BASE" "${{ github.sha }}" || true)
           echo "本次改动文件数: $(printf '%s\n' "$CHANGED" | grep -c . || true)"
           # 界面层的判据：页面 / 设计系统 / 外壳 / App 入口 / 截图种子
-          if ! printf '%s\n' "$CHANGED" | grep -qE '^ios27/(App/(Features|Design|Shell)/|App/LockKeeperApp\.swift|\.github-seed/)'; then
+          # 2026-11-05：把「截图驱动本身」也算进触发条件 —— 改了驱动却不跑截图，
+          # 等于永远不知道驱动还能不能用（本轮就撞上：只改 workflow/驱动 ⇒ 截图被 skip）。
+          if ! printf '%s\n' "$CHANGED" | grep -qE '^ios27/(App/(Features|Design|Shell)/|App/LockKeeperApp\.swift|\.github-seed/|Tools/shots_driver\.py)'; then
             echo "ui=false" >> "$GITHUB_OUTPUT"; echo "scope=all" >> "$GITHUB_OUTPUT"
             echo "只动了非界面文件 → 跳过截图"; exit 0
           fi
@@ -464,7 +466,7 @@ jobs:
           # 2026-11-05（用户建议 · 优化五）：**只截改动所在的域**。
           # 设计系统/外壳/App 入口/种子动了 ⇒ 影响所有页面，截全套；
           # 否则按 Features 下的域收敛到对应的 Tab + 子页。
-          if printf '%s\n' "$CHANGED" | grep -qE '^ios27/(App/(Design|Shell)/|App/LockKeeperApp\.swift|\.github-seed/)'; then
+          if printf '%s\n' "$CHANGED" | grep -qE '^ios27/(App/(Design|Shell)/|App/LockKeeperApp\.swift|\.github-seed/|Tools/shots_driver\.py)'; then
             echo "scope=all" >> "$GITHUB_OUTPUT"; echo "动到设计系统/外壳/种子 → 截全套"; exit 0
           fi
           FEAT=$(printf '%s\n' "$CHANGED" | grep '^ios27/App/Features/' | sed -E 's#^ios27/App/Features/([^/]+)/.*#\1#' | sort -u)

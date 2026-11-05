@@ -112,8 +112,15 @@ def main() -> int:
         else:
             log("subpage missing " + target)
 
+    # 把产出数量也写进 diag：ci-shots 的 meta 里已经有 count，但两个数字对不上时
+    # （比如 publish 步骤漏了文件）这里能立刻看出来。
     log("python driver done: produced=" + str(produced))
-    print("produced " + str(produced) + " screenshots")
+    try:
+        on_disk = len([f for f in os.listdir(OUT) if f.endswith(".png")])
+    except Exception:
+        on_disk = -1
+    log("python driver: png files on disk=" + str(on_disk))
+    print("produced " + str(produced) + " screenshots, on disk " + str(on_disk))
     return 0
 
 
