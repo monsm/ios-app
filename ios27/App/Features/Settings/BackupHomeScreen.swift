@@ -238,7 +238,8 @@ struct BackupHomeScreen: View {
             // 2026-11-05（对抗审查 · 设计冗余）：本页本来有两个「生成备份」入口，都叫备份、
             // 各有一个口令框、各说一遍「忘了就废」。改成一眼能分清的两种交付形态：
             // 这里是**留在本机的文件**（有份数上限），下面对应的是**可复制的文本**。
-            VCardHead(eyebrow: "备份文件", statement: "留在本机 · 含门锁密钥", trailing: "\(files.count) 份")
+            // 2026-11-05（值级重复）：trailing 原来是「N 份」，而顶部芯片「多份备份」已经显示同一个数。
+            VCardHead(eyebrow: "备份文件", statement: "留在本机 · 含门锁密钥")
             VDivider2()
                 .padding(.top, V8.S.gapM)
             Text("备份文件只留在本机 Documents，别发给别人 —— 它等同于家门钥匙。")
