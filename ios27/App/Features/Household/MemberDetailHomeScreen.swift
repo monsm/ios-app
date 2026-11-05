@@ -158,11 +158,10 @@ struct MemberDetailHomeScreen: View {
             VCardHead(eyebrow: "这一周", statement: HHStats.weekSentence(member, entries: app.entries) ?? "还没有可证明归属的开门", trailing: "约")
             VDivider2()
                 .padding(.top, V8.S.gapM)
-            Text("锁端日志没有身份字段，只有归属明确的条目才会算进来。")
-                .font(V8.T.footnote)
-                .foregroundStyle(V8.C.ink3)
-                .padding(.top, V8.S.gapM)
-                .fixedSize(horizontal: false, vertical: true)
+            // 2026-11-05（对抗审查 · 设计冗余）：「锁端日志没有身份字段，只有归属明确的条目
+            // 才会算进来」这句在本页出现两次 —— 这里一次，「最近开门」的空态又一次（措辞几乎相同）。
+            // 那句话在「最近开门」的空态里更有用（那里正是用户看不到数据的地方），这里只留
+            // 本卡特有的一句：这一页读的是本机数据、不连门锁。
             Text("这一页只读本机数据，不连门锁 —— 离线或未连接时，档案与摘录完全一样。")
                 .font(V8.T.caption)
                 .foregroundStyle(V8.C.ink4)
