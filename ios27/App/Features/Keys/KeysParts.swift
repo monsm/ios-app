@@ -93,14 +93,17 @@ enum KeysState {
 
     /// 行尾读数：永久不写数；有限期写剩余天数，单位是天。
     static func expiryReading(_ key: KeyItem, now: Int64) -> (value: String, unit: String?, tint: Color) {
-        if key.disabled { return ("—", nil, V.C.text3) }
-        guard let days = daysLeft(key, now: now) else { return ("永久", nil, V.C.text2) }
-        if days < 0 { return ("过期", nil, V.C.critical) }
+        // 2026-11-05（全技能审核 · V7/V8 双系统）：这三个返回值原来用 V7 的 Color 令牌
+        //（V.C.warning / V.C.critical / V.C.text1），而凭证列表是 V8 页面 ——
+        // 同一屏里 V7 琥珀与 V8 琥珀两个色值。改走 V8 语义色。
+        if key.disabled { return ("—", nil, V8.C.ink4) }
+        guard let days = daysLeft(key, now: now) else { return ("永久", nil, V8.C.ink2) }
+        if days < 0 { return ("过期", nil, V8.C.danger) }
         // 当天到期写「今天」而不是「0 天」；次日写「明天」。其余仍走数字 + 单位。
-        if days == 0 { return ("今天", nil, V.C.warning) }
-        if days == 1 { return ("明天", nil, V.C.warning) }
-        if days <= 3 { return ("\(days)", "天", V.C.warning) }
-        return ("\(days)", "天", V.C.text1)
+        if days == 0 { return ("今天", nil, V8.C.warn) }
+        if days == 1 { return ("明天", nil, V8.C.warn) }
+        if days <= 3 { return ("\(days)", "天", V8.C.warn) }
+        return ("\(days)", "天", V8.C.ink1)
     }
 
     /// 到期时刻拆成日期 + 时刻两个读数位；永久返回 (永久, nil)。

@@ -37,7 +37,10 @@ struct VGlassSurface<Content: View>: View {
     var body: some View {
         if opaque {
             content
-                .background(V.C.card, in: .rect(cornerRadius: cornerRadius, style: .continuous))
+                // 2026-11-05（全技能审核 · V7/V8 双系统）：这里是 App 里唯一的自绘玻璃入口，
+                // 却被 V8 的 Toast / 只读试验条调用 —— 退化底色还走 V7 的 V.C.card。
+                // 统一到 V8 卡片色与 V8 线宽，保证「减少透明度」档的颜色与页面其余部分同源。
+                .background(V8.C.card, in: .rect(cornerRadius: cornerRadius, style: .continuous))
                 .overlay { border }
         } else {
             content
@@ -53,7 +56,7 @@ struct VGlassSurface<Content: View>: View {
         if let stroke {
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 // 增强对比度时描边加粗一倍 —— 与"更强的描边"一致。
-                .strokeBorder(stroke, lineWidth: contrast == .increased ? V.S.hair * 2 : V.S.hair)
+                .strokeBorder(stroke, lineWidth: contrast == .increased ? V8.S.hair * 2 : V8.S.hair)
         }
     }
 }

@@ -142,7 +142,9 @@ enum V8 {
         /// 记录·失败
         static let failure = V8.C.warn
         /// 记录·系统
-        static let system = V8.C.ink3
+        /// 2026-11-05（全技能审核 · 高对比）：ink3 现在是 computed var（高对比档会换色），
+        /// 用 static let 捕获会把首次读到的颜色冻住 —— 必须同样是 computed。
+        static var system: Color { V8.C.ink3 }
     }
 
     // MARK: - 字号阶梯（14 级，SF Pro cap ≈ 0.70 × size 反推）

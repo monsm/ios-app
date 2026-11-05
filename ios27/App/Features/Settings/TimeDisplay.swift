@@ -9,6 +9,12 @@ import Foundation
 enum TimeDisplay {
     static var store: SettingsStore { SettingsStore.shared }
 
+    /// 系统 12/24 制：只与 locale 有关，进程内缓存一次（见 clock 的注释）。
+    private static let systemUses12Hour: Bool = {
+        let template = DateFormatter.dateFormat(fromTemplate: "j", options: 0, locale: Locale.current) ?? ""
+        return template.contains("a")
+    }()
+
     /// 时刻。跟随系统时用系统 12/24 设置；显式档位时用该档。
     static func clock(_ epochMillis: Int64) -> String {
         let date = TimeFormat.date(epochMillis)
@@ -21,8 +27,9 @@ enum TimeDisplay {
         case .h24: use12 = false
         case .h12: use12 = true
         case .system:
-            let template = DateFormatter.dateFormat(fromTemplate: "j", options: 0, locale: Locale.current) ?? ""
-            use12 = template.contains("a")
+            // 2026-11-05（全技能审核 · 性能）：这里原来**每次调用都新建一个 DateFormatter**
+            //（列表每行、每帧 body 都会走）。12/24 制只取决于 locale，缓存一次即可。
+            use12 = Self.systemUses12Hour
         }
         var h = hour
         var suffix = ""

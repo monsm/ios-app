@@ -12,9 +12,11 @@ struct AboutHomeScreen: View {
     @State private var eggShown = false
 
     private var status: String {
+        // 2026-11-05（全技能审核 · 品牌命名）：CFBundleDisplayName 是「锁管家」，
+        // 这里的三处「离线锁管家」是描述句不是产品名 —— 统一主名，避免同屏两个名字。
         eggShown
-            ? "离线锁管家 \(SettingsFacts.version) · 构建 \(SettingsFacts.build)"
-            : "离线锁管家 · 全程离线，数据只在这台手机"
+            ? "锁管家 \(SettingsFacts.version) · 构建 \(SettingsFacts.build)"
+            : "锁管家 · 全程离线，数据只在这台手机"
     }
 
     var body: some View {
@@ -72,7 +74,9 @@ struct AboutHomeScreen: View {
             VDivider2()
                 .padding(.top, V8.S.gapM)
             VStack(spacing: 0) {
-                VDataRow(tag: "主题套数", tagTint: V8.C.ink4, title: "2", value: "", unit: "套")
+                // 2026-11-05（全技能审核 · 页面级事实错误）：外观页有 3 个可选主题
+                //（跟随系统 / 浅色 / 深色），这里写死「2 套」。改为由枚举真值派生。
+                VDataRow(tag: "主题套数", tagTint: V8.C.ink4, title: String(AppearanceTheme.selectable.count), value: "", unit: "套")
                 VDotRule()
                 VDataRow(tag: "遥测", tagTint: V8.C.ink4, title: "无", value: "")
             }

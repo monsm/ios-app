@@ -308,7 +308,9 @@ enum HHDisplay {
 
     static func statusWord(_ status: HHMemberStatus) -> String {
         switch status {
-        case .active: return "活跃约"
+        // 2026-11-05（全技能审核 · 文案）：原来写「活跃约」—— 中文读不出是「约」什么的，
+        // 行里看着像错字。本义是「近期活跃（约）」：给出时间窗比留一个字更清楚。
+        case .active: return "近期活跃"
         case .stale: return "久未用"
         // 2026-11-04（呈现复核 · 措辞过度断言）：原来写「还没用过」—— 而 `never` 的真值来源是
         // `lastActiveAt == nil`，也就是**归因引擎没能证明任何一次开门是他的**。

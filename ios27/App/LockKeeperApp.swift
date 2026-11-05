@@ -91,6 +91,20 @@ struct RootView: View {
                 // -kfDest <destRaw>：把一个子页压进当前 Tab 的导航栈（截图子页用）。
                 if let i = args.firstIndex(of: "-kfDest"), i + 1 < args.count,
                    let dest = Dest(rawValue: args[i + 1]) {
+                    // 2026-11-05（全技能审核 · 页面覆盖）：详情页需要上下文，否则截图永远是
+                    // 「还没选成员/凭证」空态 —— 等于没审到这一页。CI 截图时预先挂上第一条。
+                    switch dest {
+                    case .keyDetail:
+                        if let first = app.keys.first { router.pending = .key(id: first.id) }
+                    case .recordDetail:
+                        if let first = app.entries.first { router.pending = .record(id: first.id) }
+                    case .memberDetail, .memberOps:
+                        // DB 是种子刚写入的真值；app.members 可能还没跑首次 reload。
+                        if let first = DB.members().first { router.pending = .member(id: first.id) }
+                        else if let first = app.members.first { router.pending = .member(id: first.id) }
+                    default:
+                        break
+                    }
                     router.request(.dest(dest))
                 }
             }

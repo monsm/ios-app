@@ -302,6 +302,9 @@ struct KeysHomeScreen: View {
 
     private var expiryCard: some View {
         VCard2 {
+            // 2026-11-05（全技能审核 · 值级重复）：卡头原来写「明天到期」，下面第一行
+            // 「最近到期」又是「明天到期」—— 同一张卡里同一个值两遍。
+            // 卡头改说**有多少枚**在临期窗口内（数量），行里保留**具体哪天**（时间）。
             VCardHead(eyebrow: "到期压力", statement: expiryStatement)
             VDivider2()
                 .padding(.top, V8.S.gapM)
@@ -313,9 +316,18 @@ struct KeysHomeScreen: View {
         }
     }
 
+    /// 3 天内（含已过期）的枚数。
+    private var soonCount: Int {
+        app.keys.filter {
+            guard !$0.disabled, let d = KeysState.daysLeft($0, now: now) else { return false }
+            return d <= 3
+        }.count
+    }
+
     private var expiryStatement: String {
-        guard let days = nearestDays else { return "全部永久有效" }
-        return KeysState.daysWord(days)
+        guard nearestDays != nil else { return "全部永久有效" }
+        if expiredCount > 0 { return "\(expiredCount) 枚已过期" }
+        return "\(soonCount) 枚 3 天内到期"
     }
 
     private var nearestText: String {

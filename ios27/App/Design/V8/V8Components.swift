@@ -130,18 +130,30 @@ struct VDivider2: View {
 }
 
 /// 表格行点线（数据网格，不是结构切分）
+///
+/// 2026-11-05（全技能审核 · 性能）：原来用 80 个 Circle 做 mask（全仓 147 个实例 ≈ 11,760 个 Shape，
+/// 每个都要参与布局与合成）。改成一条**虚线描边**：同样的视觉（点 + 间隔），只有一个 Shape。
 struct VDotRule: View {
     var body: some View {
-        Rectangle()
-            .fill(V8.C.lineStrong)
-            .frame(height: V8.S.hair * (DB.store.getBool("kf_hc") ? 2 : 1))
-            .mask(
-                HStack(spacing: V8.S.gapXS) {
-                    ForEach(0..<80, id: \.self) { _ in
-                        Circle().frame(width: V8.S.hair, height: V8.S.hair)
-                    }
-                }
-            )
+        let width = V8.S.hair * (DB.store.getBool("kf_hc") ? 2 : 1)
+        let dot = V8.S.hair * 2
+        let gap = V8.S.gapXS - V8.S.hair
+        VDashLine()
+            .stroke(V8.C.lineStrong,
+                    style: StrokeStyle(lineWidth: width, lineCap: .butt, dash: [dot, gap]))
+            .frame(height: width)
+            .accessibilityHidden(true)
+    }
+}
+
+/// 一条水平虚线（只有一个 Shape，用于表格行点线）。
+private struct VDashLine: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let y = rect.midY
+        path.move(to: CGPoint(x: rect.minX, y: y))
+        path.addLine(to: CGPoint(x: rect.maxX, y: y))
+        return path
     }
 }
 
