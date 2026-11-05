@@ -60,7 +60,9 @@ struct HardwareHomeScreen: View {
             } else if dongles.isEmpty {
                 VEmpty(
                     title: "先添加门锁",
-                    reason: "下一步：把钥匙串拿到手机旁，点「扫描钥匙串」。只认厂商的钥匙串（型号 ZKBBV1），扫描 15 秒，认不到就是没电或没在广播。",
+                    // 2026-11-05（值级重复）：这里原来还写了「只认厂商的钥匙串（型号 ZKBBV1）」与「扫描 15 秒」，
+                // 而下面那张「扫描」卡的头就写着「只认厂商的钥匙串 / 15 秒」。空态只需说该做什么。
+                reason: "下一步：把钥匙串拿到手机旁，点「扫描钥匙串」；认不到就是没电或没在广播。",
                     actionTitle: "扫描钥匙串"
                 ) { scan() }
                 scanCard
@@ -292,7 +294,7 @@ struct HardwareHomeScreen: View {
             ])
             .padding(.top, V8.S.gapM)
             if scanning {
-                VBusy(text: "正在扫描 · 15 秒内把钥匙串放在手机旁")
+                VBusy(text: "把钥匙串放在手机旁，别移开")
                     .padding(.top, V8.S.gapM)
             } else {
                 Button { scan() } label: {
