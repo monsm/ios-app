@@ -300,7 +300,7 @@ struct RecordsHomeScreen: View {
             // 2026-11-05（截图审查 · 设计冗余）：没有搜索词时，这一行与上方「全部 N」芯片同值
             //（芯片「全部 9」+ 这里「命中 9 条」＝同一屏同一个数）。
             // 只有**有搜索词**时它才是新信息（此时命中数可能小于范围芯片的数）。
-            if !search.isEmpty {
+            if !query.isEmpty {
                 Text("命中 \(filtered.count) 条")
                     .font(V8.T.caption)
                     .foregroundStyle(V8.C.ink4)

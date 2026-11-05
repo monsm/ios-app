@@ -1136,14 +1136,14 @@ struct LockSettingsHomeScreen: View {
     /// 三枚容量环：PIN 池 / 密码 / 指纹。数据全部来自锁端快照（容量 − 余量 = 已用）。
     private var capacityBlock: some View {
         HStack(spacing: V8.S.gapL) {
-            capacityRing("PIN", used: (snap?.pinCap ?? 0) - (snap?.pinStock ?? 0), cap: snap?.pinCap ?? 0)
-            capacityRing("密码", used: (snap?.pwdCap ?? 0) - (snap?.pwdStock ?? 0), cap: snap?.pwdCap ?? 0)
-            capacityRing("指纹", used: (snap?.fpCap ?? 0) - (snap?.fpStock ?? 0), cap: snap?.fpCap ?? 0)
+            capacityRing("PIN", used: (status?.pinCap ?? 0) - (status?.pinStock ?? 0), cap: status?.pinCap ?? 0)
+            capacityRing("密码", used: (status?.pwdCap ?? 0) - (status?.pwdStock ?? 0), cap: status?.pwdCap ?? 0)
+            capacityRing("指纹", used: (status?.fpCap ?? 0) - (status?.fpStock ?? 0), cap: status?.fpCap ?? 0)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, V8.S.gapM)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("容量占用：PIN \(max(0, (snap?.pinCap ?? 0) - (snap?.pinStock ?? 0))) / \(snap?.pinCap ?? 0)，密码 \(max(0, (snap?.pwdCap ?? 0) - (snap?.pwdStock ?? 0))) / \(snap?.pwdCap ?? 0)，指纹 \(max(0, (snap?.fpCap ?? 0) - (snap?.fpStock ?? 0))) / \(snap?.fpCap ?? 0)")
+        .accessibilityLabel("容量占用：PIN \(max(0, (status?.pinCap ?? 0) - (status?.pinStock ?? 0))) / \(status?.pinCap ?? 0)，密码 \(max(0, (status?.pwdCap ?? 0) - (status?.pwdStock ?? 0))) / \(status?.pwdCap ?? 0)，指纹 \(max(0, (status?.fpCap ?? 0) - (status?.fpStock ?? 0))) / \(status?.fpCap ?? 0)")
     }
 
     @ViewBuilder

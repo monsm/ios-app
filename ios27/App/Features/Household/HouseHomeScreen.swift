@@ -39,7 +39,7 @@ struct HouseHomeScreen: View {
         var values: [Double] = []
         var labels: [String] = []
         for offset in stride(from: 6, through: 0, by: -1) {
-            guard let day = cal.date(byAdding: .day, to: -offset, to: today) else { continue }
+            guard let day = cal.date(byAdding: .day, value: -offset, to: today) else { continue }
             let start = Int64(day.timeIntervalSince1970 * 1000)
             let end = start + 86_400_000
             let n = app.entries.filter {
