@@ -126,15 +126,22 @@ struct EventItem: Identifiable, Hashable {
     let type: Int
     let typeName: String
     let idx: UInt32
-    let time: Int64             // unix 秒
+    let time: Int64             // unix 秒；**0 = 锁端没读到时钟，这条记录没有日期**
     let whoID: String?
     let whoName: String?
     let provable: String?       // "temp" / "unique"
-    let credential: String
+    let credential: String      // 给人看的说法（"指纹" / "密码" / …）
+    /// 引擎的原始口径：fp / pwd / temp / key。
+    /// 搜索按这个字段**精确**匹配 —— `credential` 是译过的中文，
+    /// 拿中文去比对英文代号，永远 0 条（这一条踩过，见 `LogScreen.filtered`）。
+    let credKind: String?
     let alarm: Bool
     let diff: String?
     let note: String?
     let flagged: Bool
+
+    /// 锁端时钟读不到的记录没有日期，不参与按天分组，也不进「今天」。
+    var hasTime: Bool { time > 0 }
 
     var isOpen: Bool {
         switch type {

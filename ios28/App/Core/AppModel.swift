@@ -43,6 +43,9 @@ final class AppModel {
     @ObservationIgnored private weak var router: Router?
     @ObservationIgnored private var autoLockTask: Task<Void, Never>?
     @ObservationIgnored private var activitySignature = ""
+    /// 活跃度缓存的**结果**。只留签名不留结果，缓存等于没做 ——
+    /// 同一次刷新里第二次取成员卡片时拿到的是空 bundle，名册永远显示「还没开过门」。
+    @ObservationIgnored private var activityCache: MemberHub.ActivityBundle?
     /// 上一次落到数据层的空壳态。用来判断「刚刚进/出空壳」——
     /// 只有**真的变了**的那一次才做进/出的副作用（重载会被频繁调用）。
     @ObservationIgnored private var decoyApplied = false
@@ -90,9 +93,12 @@ final class AppModel {
         lastStatus = DB.get(StatusSnapshot.self, "kf_snap_" + mac)
         link.update(mac: mac)
 
-        members = reloadMemberCards()
-        reloadCredentials(mac)
+        // 顺序有讲究：
+        //   · 记录先刷 —— 成员活跃度的缓存签名取的是 `events.count`，
+        //     记录没更新就重算成员，签名是旧的，缓存会一直复用旧结果；
+        //   · 凭证再刷 —— 它内部会用刚算好的成员名做归属，并把成员卡片一起重算。
         reloadEvents(mac)
+        reloadCredentials(mac)
         readLogsAt = RecordsSource.lastSync(mac: mac)
     }
 
@@ -182,18 +188,28 @@ final class AppModel {
         let m = mac ?? currentMac
         guard !m.isEmpty, let kc = DB.keychainForUnlock(m) else { events = []; return }
         let name = kc.name.isEmpty ? (kc.pidName.isEmpty ? "我的门锁" : kc.pidName) : kc.name
-        events = RecordsSource.load(mac: m, lockName: name, members: members)
+        // 成员名直接从数据层取，不走成员卡片投影 ——
+        // 成员卡片反过来要靠记录算活跃度，两边互相依赖会绕成环。
+        var names: [String: String] = [:]
+        for member in DB.members() { names[member.id] = member.name }
+        events = RecordsSource.load(mac: m, lockName: name, memberNames: names)
     }
 
+    /// 成员卡片。活跃度（最近一次开门）来自 `MemberHub.activityBundle`，
+    /// 那是个 O(锁 × 日志) 的重活，所以按签名缓存。
+    ///
+    /// 缓存的**结果**必须留着：原实现只在签名变化时重算，却把结果丢在局部变量里，
+    /// 于是同一轮刷新里第二次调用拿到的是空 bundle ——
+    /// 名册每一行的「最近 \(When.ago(...))」永远是「还没开过门」。
     private func reloadMemberCards() -> [MemberCard] {
         let ext = MemberHub.allExt()
         let raw = DB.members()
         let signature = raw.map(\.id).joined(separator: "|") + "#" + String(events.count)
-        var activity = MemberHub.ActivityBundle()
         if signature != activitySignature {
             activitySignature = signature
-            activity = MemberHub.activityBundle(raw.map(\.id))
+            activityCache = MemberHub.activityBundle(raw.map(\.id))
         }
+        let activity = activityCache ?? MemberHub.ActivityBundle()
         return raw.map { m in
             let e = ext[m.id] ?? MemberExt()
             let role = MemberRole.parse(e.role)
@@ -330,6 +346,7 @@ final class AppModel {
             // 所以把 `.waiting` 放在 await **之前**：环停在 0.86 等待的，是真的在等锁回执；
             // 若放在之后，「等回执」只会闪一帧，而「已下发」会陪着用户等满整个超时。
             phase = .waiting
+            sampleRSSI()
             do {
                 let rc = try await LockService.shared.unlock(mac: mac, pinDec: chosenPin(mac))
                 if rc == 0 {
@@ -390,6 +407,18 @@ final class AppModel {
 
     // MARK: - 状态 / 日志
 
+    /// 连上之后读一次 RSSI。
+    ///
+    /// 「信号」那一栏此前永远显示「不可测」：`LinkSenseModel.readRSSI()` 全 App 零调用点，
+    /// `kf_linkrssi_<mac>` 从来没被写过 —— 读数只可能停在「装这个 App 之前就有的值」。
+    /// 系统 `readRSSI` 不占协议往返，代价可以忽略。
+    private func sampleRSSI() {
+        let mac = currentMac
+        guard !mac.isEmpty else { return }
+        link.update(mac: mac)
+        link.readRSSI()
+    }
+
     func refreshStatus() async {
         let mac = currentMac
         guard !mac.isEmpty else { return }
@@ -397,6 +426,7 @@ final class AppModel {
         do {
             let st = try await LockService.shared.getStatus(mac: mac)
             DB.writeStatus(mac, st)
+            sampleRSSI()
             await reload(refreshStatus: false)
         } catch {
             lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
@@ -406,12 +436,19 @@ final class AppModel {
     @discardableResult
     func readLogs() async -> (read: Int, remaining: Int?)? {
         let mac = currentMac
-        guard !mac.isEmpty, busy == nil else { return nil }
+        guard busy == nil else { return nil }
+        // 没有锁时要说清楚：这里原先直接 return nil，界面上一点动静都没有 ——
+        // 用户点了「从门锁读一次」，卡片回到原样，像是什么都没发生。
+        guard !mac.isEmpty else {
+            lastError = "还没有绑定门锁 —— 先配一把锁，再回来读记录。"
+            return nil
+        }
         busy = "正在读门锁记录…"
         defer { busy = nil }
         lastError = nil
         do {
             try await LockService.shared.ensureConnected(mac: mac)
+            sampleRSSI()
             var startIdx: UInt32 = 0xFFFF_FFFF
             var collected: [LogEntry] = []
             var surplus: Int?

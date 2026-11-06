@@ -203,8 +203,21 @@ struct HandoffSheet: View {
     @Environment(AppModel.self) private var app
 
     private var payload: String? {
+        // 空壳模式绝不给 ekey。
+        //
+        // `DB.keychainForUnlock(_:)` 是**不过滤**的读法（兄弟方法 `DB.keychain(_:)` 才过滤），
+        // 而 `AndroidPair.payload` 装的是这把锁的**配对开锁凭证** ——
+        // 在胁迫者面前扫一下这张码就能开门，那就不是伪装，是交出去了。
+        guard !DB.isDecoy else { return nil }
         guard let kc = DB.keychainForUnlock(app.currentMac) else { return nil }
         return AndroidPair.payload(kc)
+    }
+
+    private var blockedReason: String? {
+        if DB.isDecoy {
+            return "空壳模式不提供交付码 —— 先退出空壳再来。"
+        }
+        return nil
     }
 
     var body: some View {
@@ -225,6 +238,13 @@ struct HandoffSheet: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 8)
 
+            Text("注意：它不是上面那把手机钥匙，而是本机钥匙串里的配对凭证 —— 扫完能开这把锁，但有效期与本机这把相同。")
+                .type(T.F.caption)
+                .foregroundStyle(T.C.ink3)
+                .lineSpacing(3)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, 8)
+
             if let payload, let image = Self.qr(payload) {
                 Image(uiImage: image)
                     .interpolation(.none)
@@ -242,7 +262,8 @@ struct HandoffSheet: View {
                     .padding(.horizontal, 20)
                     .padding(.top, 10)
             } else {
-                EmptyNote(line: "暂时生成不了。", detail: "先确认这把锁已经配对，并且钥匙串完整。")
+                EmptyNote(line: blockedReason == nil ? "暂时生成不了。" : "这一页现在是空的。",
+                          detail: blockedReason ?? "先确认这把锁已经配对，并且钥匙串完整。")
             }
 
             Spacer()

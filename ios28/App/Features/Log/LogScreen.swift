@@ -8,6 +8,10 @@ struct LogScreen: View {
 
     @State private var query = ""
     @State private var reading = false
+    /// 「只看待查」—— 详情页里点「标记待查」写下的旗标，此前**没有任何界面显示它**，
+    /// 用户点了只会看到一句「已标记」，别处找不到。这条筛选就是给旗标一个出口。
+    @State private var onlyFlagged = false
+    @State private var errorLine: String?
 
     var body: some View {
         ScreenScroll {
@@ -36,8 +40,15 @@ struct LogScreen: View {
             FieldInput(placeholder: "搜成员、类型、或「昨天」「最近 7 天」", text: $query, symbol: "magnifyingglass")
                 .padding(.top, 18)
 
+            flaggedChip
+
             if !query.isEmpty {
                 Text("\(filtered.count) 条匹配")
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.ink3)
+                    .padding(.top, 8)
+            } else if onlyFlagged {
+                Text("\(filtered.count) 条待查")
                     .type(T.F.caption)
                     .foregroundStyle(T.C.ink3)
                     .padding(.top, 8)
@@ -45,15 +56,13 @@ struct LogScreen: View {
 
             let groups = grouped
             if groups.isEmpty {
-                EmptyNote(line: query.isEmpty ? "还没有记录。" : "没有找到。",
-                          detail: query.isEmpty
-                            ? "读一次锁内日志：谁在什么时候开过门，都会回到这里。"
-                            : "换个词试试，比如「妈妈」「指纹」「昨天」。",
-                          action: query.isEmpty ? "读取日志" : nil,
-                          run: query.isEmpty ? { Task { await read() } } : nil)
+                EmptyNote(line: emptyTitle,
+                          detail: emptyDetail,
+                          action: (query.isEmpty && !onlyFlagged) ? "读取日志" : nil,
+                          run: (query.isEmpty && !onlyFlagged) ? { Task { await read() } } : nil)
             } else {
                 ForEach(groups) { group in
-                    DayHead(time: group.time)
+                    DayHead(time: group.time, title: group.title)
                     ForEach(group.items) { event in
                         Button {
                             router.openEvent(event.id)
@@ -65,9 +74,53 @@ struct LogScreen: View {
                 }
             }
 
+            if let errorLine {
+                Text(errorLine)
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.danger)
+                    .padding(.top, 14)
+            }
+
             readCard
         }
         .toolbar(.hidden, for: .navigationBar)
+    }
+
+    private var emptyTitle: String {
+        if onlyFlagged { return "没有待查的记录。" }
+        return query.isEmpty ? "还没有记录。" : "没有找到。"
+    }
+
+    private var emptyDetail: String {
+        if onlyFlagged {
+            return "在记录详情里点「标记待查」，这条记录就会出现在这里。"
+        }
+        return query.isEmpty
+            ? "读一次锁内日志：谁在什么时候开过门，都会回到这里。"
+            : "换个词试试，比如「妈妈」「指纹」「昨天」。"
+    }
+
+    private var flaggedChip: some View {
+        let count = app.events.filter { $0.flagged }.count
+        return Button {
+            onlyFlagged.toggle()
+        } label: {
+            HStack(spacing: 7) {
+                Image(systemName: onlyFlagged ? "flag.fill" : "flag")
+                    .font(.system(size: 11, weight: .semibold))
+                Text(onlyFlagged ? "只看待查" : "待查 \(count)")
+            }
+            .type(T.F.caption)
+            .fontWeight(.medium)
+            .foregroundStyle(onlyFlagged ? .white : T.C.ink2)
+            .padding(.horizontal, 12)
+            .frame(height: 32)
+            .background(onlyFlagged ? T.C.brass : T.C.glass, in: Capsule())
+            .overlay { Capsule().strokeBorder(onlyFlagged ? .clear : T.C.glassEdge, lineWidth: 0.5) }
+        }
+        .buttonStyle(PressStyle())
+        .padding(.top, 12)
+        .opacity(count == 0 && !onlyFlagged ? 0.45 : 1)
     }
 
     private var summary: String {
@@ -104,13 +157,14 @@ struct LogScreen: View {
 
     private var todayEvents: [EventItem] {
         let cal = Calendar.current
-        return app.events.filter { cal.isDateInToday(When.unix($0.time)) }
+        return app.events.filter { $0.hasTime && cal.isDateInToday(When.unix($0.time)) }
     }
 
     private var filtered: [EventItem] {
-        guard !query.isEmpty else { return app.events }
-        let parsed = RecordSearch.parse(query)
         var list = app.events
+        if onlyFlagged { list = list.filter { $0.flagged } }
+        guard !query.isEmpty else { return list }
+        let parsed = RecordSearch.parse(query)
 
         if let member = parsed.member, !member.isEmpty {
             list = list.filter { ($0.whoName ?? "").range(of: member) != nil }
@@ -118,13 +172,19 @@ struct LogScreen: View {
         if let range = parsed.range {
             let from = Int64(range.from.timeIntervalSince1970)
             let to = Int64(range.to.timeIntervalSince1970)
-            list = list.filter { $0.time >= from && $0.time <= to }
+            // 上界是**开区间**：时间短语给的是「当天 00:00 → 次日 00:00」，
+            // 用 `<=` 会把次日零点那一秒算进前一天。
+            list = list.filter { $0.hasTime && $0.time >= from && $0.time < to }
         }
         if parsed.alarmOnly {
             list = list.filter { $0.isAlarm }
         }
         if let kind = parsed.credKind, !kind.isEmpty {
-            list = list.filter { $0.credential.range(of: kind) != nil || $0.typeName.range(of: kind) != nil }
+            // 按引擎的原始代号**精确**匹配（fp / pwd / temp / key）。
+            // 原先拿中文说法去比对英文代号（`credential` 是「指纹」，
+            // `credKind` 是「fp」），于是搜「指纹」永远 0 条 ——
+            // 而输入框的占位符恰恰写着「搜成员、类型」。
+            list = list.filter { $0.credKind == kind }
         }
         for term in parsed.must where !term.isEmpty {
             list = list.filter { face($0).range(of: term) != nil }
@@ -142,21 +202,32 @@ struct LogScreen: View {
     private struct DayGroup: Identifiable {
         let id: String
         let time: Int64
+        let title: String
         let items: [EventItem]
     }
 
     private var grouped: [DayGroup] {
         var order: [String] = []
         var map: [String: [EventItem]] = [:]
+        var undated: [EventItem] = []
         for event in filtered {
+            // 锁端没读到时钟的记录**没有日期** —— 它们单独成组，排在最后。
+            guard event.hasTime else {
+                undated.append(event)
+                continue
+            }
             let key = When.dayKey(event.time)
             if map[key] == nil { order.append(key) }
             map[key, default: []].append(event)
         }
-        return order.compactMap { key in
+        var out: [DayGroup] = order.compactMap { key in
             guard let items = map[key], let first = items.first else { return nil }
-            return DayGroup(id: key, time: first.time, items: items)
+            return DayGroup(id: key, time: first.time, title: When.dayTitle(first.time), items: items)
         }
+        if !undated.isEmpty {
+            out.append(DayGroup(id: "无日期", time: 0, title: "没有日期", items: undated))
+        }
+        return out
     }
 
     private var readCard: some View {
@@ -186,8 +257,14 @@ struct LogScreen: View {
     private func read() async {
         guard !reading else { return }
         reading = true
-        _ = await app.readLogs()
+        errorLine = nil
+        let result = await app.readLogs()
         reading = false
+        // 失败要说话：`readLogs()` 失败时只写 `app.lastError`，这一屏从不显示它 ——
+        // 于是点「从门锁读一次」失败后，卡片只是回到原样，像是什么都没发生。
+        if result == nil {
+            errorLine = app.lastError ?? "没能读到门锁记录。"
+        }
     }
 }
 

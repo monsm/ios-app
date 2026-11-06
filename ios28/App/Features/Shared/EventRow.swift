@@ -43,9 +43,15 @@ struct EventRow: View {
 
             Spacer(minLength: 8)
 
-            Text(When.clock(event.time))
+            if event.flagged {
+                Image(systemName: "flag.fill")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(T.C.danger)
+            }
+
+            Text(event.hasTime ? When.clock(event.time) : "无日期")
                 .type(T.F.mono)
-                .foregroundStyle(T.C.ink3)
+                .foregroundStyle(event.hasTime ? T.C.ink3 : T.C.ink4)
         }
         .padding(.vertical, 11)
         .contentShape(Rectangle())
@@ -69,10 +75,12 @@ struct EventRow: View {
 @MainActor
 struct DayHead: View {
     var time: Int64
+    /// 标题覆盖。锁端没有时钟的记录没有日期，分组标题是「没有日期」而不是 2010 年。
+    var title: String? = nil
 
     var body: some View {
         HStack(spacing: 10) {
-            Text(When.dayTitle(time).uppercased())
+            Text((title ?? When.dayTitle(time)).uppercased())
                 .type(T.F.kicker)
                 .foregroundStyle(T.C.ink3)
             Rectangle()

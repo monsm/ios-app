@@ -4,7 +4,10 @@
 import Foundation
 
 enum RecordsSource {
-    static func load(mac: String, lockName: String, members: [MemberCard]) -> [EventItem] {
+    /// - Parameter memberNames: 成员 id → 名字。直接给字典而不是 `[MemberCard]`：
+    ///   记录投影不再依赖成员卡片投影（成员卡片反过来又要靠记录算活跃度，
+    ///   互相依赖会绕成一个环 —— 环上一侧的刷新顺序一变，另一侧就读到旧值）。
+    static func load(mac: String, lockName: String, memberNames: [String: String]) -> [EventItem] {
         let logs = DB.readLogs(mac)
         guard !logs.isEmpty else { return [] }
 
@@ -23,8 +26,6 @@ enum RecordsSource {
             ($0.fpStock, $0.pwdStock, $0.lockTime)
         }
         let rows = Attribution.classify(logs: entries, pwds: ledger.pwds, fps: ledger.fps, status: status)
-        var names: [String: String] = [:]
-        for m in members { names[m.id] = m.name }
 
         var out: [EventItem] = []
         out.reserveCapacity(logs.count)
@@ -33,6 +34,11 @@ enum RecordsSource {
             let key = String(c.idxRaw)
             let whoID = row?.who
             let alarm = c.type == 4 || c.type == 10
+            // 锁端时钟读不到时 lockTime 是 0 —— 那条记录**没有日期**。
+            // 原先照样换算，于是时间线顶上冒出一组「2010 年 1 月 1 日」
+            // （本地 2010 纪元的零点），详情页也显示 2010 年。
+            // 这里如实标成 time = 0，由页面按「无日期」显示。
+            let time = c.lockTime == 0 ? 0 : Int64(ZKProtocol.protoSecondsToUnix(c.lockTime))
             out.append(EventItem(
                 id: mac + "#" + key,
                 mac: mac,
@@ -40,18 +46,29 @@ enum RecordsSource {
                 type: c.type,
                 typeName: c.displayTypeName,
                 idx: c.idxRaw,
-                time: Int64(ZKProtocol.protoSecondsToUnix(c.lockTime)),
+                time: time,
                 whoID: whoID,
-                whoName: whoID.flatMap { names[$0] },
+                whoName: whoID.flatMap { memberNames[$0] },
                 provable: row?.provable,
                 credential: row?.kind.flatMap { Attribution.words[$0] } ?? "",
+                credKind: row?.kind,
                 alarm: alarm,
                 diff: c.diff,
                 note: RecordOverlay.note(mac, key),
                 flagged: RecordOverlay.isFlagged(mac, key)
             ))
         }
-        return out.sorted { $0.time > $1.time }
+        // 有日期的按时间倒序在前；**没有日期的排在最后** —— 它们不知道自己在什么时候，
+        // 混进时间线里只会假装自己发生在那一天。
+        out.sort { a, b in
+            switch (a.hasTime, b.hasTime) {
+            case (true, true): return a.time > b.time
+            case (true, false): return true
+            case (false, true): return false
+            case (false, false): return a.idx > b.idx
+            }
+        }
+        return out
     }
 
     static func markSynced(mac: String, at: Int64) {

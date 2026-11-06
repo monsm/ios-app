@@ -8,7 +8,13 @@ struct EventDetailScreen: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var note = ""
-    @State private var loaded = false
+    /// 这段备注是**哪一条**记录的备注。原先只有一个 `loaded` 布尔，
+    /// 于是「同一天」里点另一条记录时，页面实例没换（路由把同一条 path 换了个 id），
+    /// 备注框里还留着上一条的字 —— 用户再动一下键盘，就把上一条的备注写到了新记录上。
+    ///
+    /// 顺带记下每条记录**当前**的备注：投影里的 `event.note` 是重载那一刻的快照，
+    /// 用户刚敲的字不在里面；切走再切回来时若照投影重载，键盘上刚敲的字就消失了。
+    @State private var notes: [String: String] = [:]
     @State private var toast: String?
 
     private var event: EventItem? {
@@ -45,10 +51,10 @@ struct EventDetailScreen: View {
                     }
                 }
                 Spacer()
-                Text(When.clock(event.time))
+                Text(event.hasTime ? When.clock(event.time) : "无日期")
                     .type(T.F.heroTime)
                     .tracking(-1)
-                    .foregroundStyle(T.C.ink)
+                    .foregroundStyle(event.hasTime ? T.C.ink : T.C.ink3)
                 Text(event.typeName)
                     .type(T.F.callout)
                     .foregroundStyle(T.C.ink2)
@@ -60,7 +66,7 @@ struct EventDetailScreen: View {
         .padding(.top, 10)
 
         ReadingRow(items: [
-            (label: "日期", value: When.dayTitle(event.time), unit: nil),
+            (label: "日期", value: event.hasTime ? When.dayTitle(event.time) : "锁端没有时钟", unit: nil),
             (label: "成员", value: event.whoName ?? "未归属", unit: nil),
             (label: "方式", value: event.credential.isEmpty ? "—" : event.credential, unit: nil),
         ])
@@ -84,28 +90,28 @@ struct EventDetailScreen: View {
         SectionHead(index: "01", title: "备注")
         FieldInput(placeholder: "只写在本机，不同步到锁", text: $note)
             .onChange(of: note) { _, newValue in
-                RecordOverlay.setNote(event.mac, String(event.id.split(separator: "#").last ?? ""), String(newValue.prefix(60)))
+                guard let event else { return }
+                notes[event.id] = newValue
+                RecordOverlay.setNote(event.mac, rowKey(event), String(newValue.prefix(60)))
             }
-            .onAppear {
-                if !loaded {
-                    note = event.note ?? ""
-                    loaded = true
-                }
-            }
+            .onAppear { loadNote() }
+            .onChange(of: event?.id) { _, _ in loadNote() }
 
         SectionHead(index: "02", title: "处置")
         HStack(spacing: 8) {
             dispositionButton(event, verdict: "已处理")
             dispositionButton(event, verdict: "误报")
             Button {
-                _ = RecordOverlay.toggleFlag(event.mac, rowKey(event))
-                toast = "已标记"
+                // `toggleFlag` 返回的是**新的**状态。原先把这个返回值扔了，
+                // toast 永远写「已标记」—— 取消标记时也这么说。
+                let now = RecordOverlay.toggleFlag(event.mac, rowKey(event))
+                toast = now ? "已标记为待查" : "已取消待查"
                 app.reloadEvents()
             } label: {
-                Text("标记待查")
+                Text(event.flagged ? "取消待查" : "标记待查")
                     .type(T.F.caption)
                     .fontWeight(.medium)
-                    .foregroundStyle(T.C.ink)
+                    .foregroundStyle(event.flagged ? T.C.danger : T.C.ink)
                     .frame(maxWidth: .infinity)
                     .frame(height: 40)
                     .background(T.C.glass, in: Capsule())
@@ -148,6 +154,18 @@ struct EventDetailScreen: View {
     }
 
     private func rowKey(_ event: EventItem) -> String { String(event.id.split(separator: "#").last ?? "") }
+
+    /// 把备注框对齐到当前这条记录。换了记录就换内容 ——
+    /// 否则上一次的字会跟着下一次输入落到新记录上。
+    private func loadNote() {
+        guard let event else { return }
+        if let cached = notes[event.id] {
+            note = cached
+            return
+        }
+        note = event.note ?? ""
+        notes[event.id] = note
+    }
 
     private func currentVerdict(_ event: EventItem) -> RecordSearch.Disposition? {
         RecordOverlay.dispositions(event.mac)[RecordOverlay.oid(mac: event.mac, rowKey: rowKey(event))]
