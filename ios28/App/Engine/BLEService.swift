@@ -335,6 +335,14 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     /// 失败/超时都给 nil 而不是编一个数: "读不到"与"读到 -80"是两件事 (与安卓同一口径)。
     func readLinkRSSI(timeoutMs: Int = 1500, completion: @escaping (Int?) -> Void) {
         guard let d = device, d.state == .connected else { completion(nil); return }
+        // 同一时刻只有一个等待位。后来者覆盖前，必须先把**旧等待者**以 nil 结束：
+        // 旧实现的超时闭包发现代次变了就直接 return，于是旧调用方的 continuation
+        // 永远不会 resume —— 自动开门轮询会卡死在那一次 `withCheckedContinuation`，
+        // 整场会话都不再采信号。后一次读数优先，前一次按“没读到”收尾。
+        if let stale = rssiCompletion {
+            rssiCompletion = nil
+            stale(nil)
+        }
         rssiCompletion = completion
         rssiGeneration += 1
         let myGen = rssiGeneration

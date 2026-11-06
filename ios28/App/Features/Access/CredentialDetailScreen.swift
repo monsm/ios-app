@@ -53,6 +53,13 @@ struct CredentialDetailScreen: View {
                     .transition(.opacity)
             }
         }
+        // 明文只该在“用户正看着这一屏”的时候出现：
+        // 上锁、离开这一页、或切换到另一枚凭证，都重新遮上。
+        .onChange(of: app.unlocked) { _, isOn in
+            if !isOn { revealed = false }
+        }
+        .onChange(of: router.pendingCredentialID) { _, _ in revealed = false }
+        .onDisappear { revealed = false }
     }
 
     @ViewBuilder
@@ -407,6 +414,8 @@ struct ExpirySheet: View {
     }
 
     private func save() async {
+        // 保存会真的下发 0B；连点两次就是两条写命令，第二次可能落在锁忙的窗口里。
+        guard !busy else { return }
         guard let alias = item.alias else {
             // 走到这里说明入口给错了（指纹 / 手机钥匙没有 alias）。
             errorLine = "这枚凭证没有有效期可改。"

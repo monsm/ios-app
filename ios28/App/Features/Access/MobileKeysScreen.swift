@@ -239,13 +239,18 @@ struct MobileKeysScreen: View {
     /// 到期读法。引擎存的是 `yyyy-MM-dd HH:mm:ss` 的机器串 ——
     /// 直接印出来是「到 2026-11-13 12:00:00 失效」，像日志而不是给人看的话。
     private func validUntilText(_ key: MobileKey) -> String {
-        guard let ms = AppModel.millis(key.validTo), ms < When.permanentCutoff else { return "永久有效" }
+        // 「永久」只认 2118 哨兵或 forever 标记。日期为空/格式坏掉是**有效期未知**，
+        // 不是永久 —— 否则一把早已失效的钥匙会被展示成永远可用。
+        if key.forever || key.validTo.hasPrefix("2118") { return "永久有效" }
+        guard let ms = AppModel.millis(key.validTo) else { return "有效期未知" }
+        if ms >= When.permanentCutoff { return "永久有效" }
         if ms <= Int64(Date().timeIntervalSince1970 * 1000) { return "已过期" }
         let date = DF.cached("M 月 d 日 HH:mm").string(from: Date(timeIntervalSince1970: Double(ms) / 1000))
         return "\(date) 失效"
     }
 
     private func issue() async {
+        guard !busy else { return }
         guard let memberID, let member = DB.member(memberID) else {
             errorLine = "先选一位成员。"
             return

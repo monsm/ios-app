@@ -31,7 +31,17 @@ extension RecordSearch {
             q.range = range
             q.parsedTags.append(rangeLabel(range))
         }
-        q.must.removeAll { t in timeHit.contains { $0.contains(t) } }
+        // 抽取时间窗后，命中短语的每个词都要从 must 里摘掉；否则它们会被当成
+        // 字面词去匹配搜索面，结果恒为 0。
+        //
+        // 不能直接拿带空格的短语去比 token：「最近7天」（无空格）是一个 token，
+        // 而短语标签是「最近 7 天」，子串判据落空。两边都去掉空白再比，
+        // 「最近」「7」「天」「最近7天」就都能被消费掉。
+        let hitKeys = timeHit.map { $0.filter { !$0.isWhitespace } }
+        q.must.removeAll { token in
+            let key = token.filter { !$0.isWhitespace }
+            return hitKeys.contains { $0.contains(key) }
+        }
         // 告警关键词
         if tokens.contains(where: { $0.contains("告警") || $0.contains("异常") }) {
             q.alarmOnly = true
@@ -110,8 +120,12 @@ extension RecordSearch {
             out.append(("本月", (m.start, now)))
         }
         if let n = intAfter(joined, "最近"), n > 0 {
-            let s = WeekCal.shifted(now, days: -n)
-            out.append(("最近 \(n) 天", (cal.startOfDay(for: s), now)))
+            // 搜索框是逐字符触发的：`最近999999999999999天` 会让 Date 跑到
+            // Int64 范围之外，后面 `Int64(timeIntervalSince1970)` 直接 trap。
+            // 100 年已经覆盖任何真实查询，超出部分夹住即可。
+            let days = min(n, 36500)
+            let s = WeekCal.shifted(now, days: -days)
+            out.append(("最近 \(days) 天", (cal.startOfDay(for: s), now)))
         }
         // "N月D日" (只认含"月"的那个词, 避免"工作日"里的"日"误命中; 当年, 已过则去年)
         if let tok = tokensFirstContaining(joined: joined, "月"),

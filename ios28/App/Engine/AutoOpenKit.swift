@@ -73,7 +73,15 @@ enum AutoOpen {
     static func audits(_ mac: String) -> [AuditEntry] {
         DB.store.get([AuditEntry].self, "kf_autoopen_audit_" + mac) ?? []
     }
-    static func lastReject(_ mac: String) -> AuditEntry? { audits(mac).first }
+    /// 最近一次**被否决**的自动开门。审计流里也写着成功与自愈，
+    /// 直接取 `audits().first` 会把“自动开锁成功”当成“上次为什么没开”显示。
+    static func lastReject(_ mac: String) -> AuditEntry? {
+        audits(mac).first {
+            $0.reason.hasPrefix("拒开") ||
+            $0.reason.hasPrefix("下发异常") ||
+            $0.reason.hasPrefix("下发前复查")
+        }
+    }
     static func recent(_ mac: String, _ n: Int) -> [AuditEntry] { Array(audits(mac).prefix(n)) }
 
     // ---------- F3 标定 ----------
@@ -283,11 +291,16 @@ final class AutoOpenController {
     private var rssiHistory: [Int] = []
     private var wasInBackground = true
     private var inFlight = false
+    /// 最近一次**手动**开锁的发起时刻。自动开锁在真正下发 04 前复查它：
+    /// 用户已经自己按了开锁，自动那条就该让路 —— 两条 04 同时走同一条 BLE 链路，
+    /// 后到的那条必然报「已有命令在等待响应」，还可能在锁端留下两条开锁记录。
+    private(set) var manualUnlockAt: Double = 0
     private var pollTask: Task<Void, Never>?
 
     init(face: FaceService = SystemFaceService()) { self.face = face }
 
     var isDispatching: Bool { inFlight }
+    func noteManualUnlock() { manualUnlockAt = Date().timeIntervalSince1970 }
 
     // ---------- 生命周期 ----------
     func start() {
@@ -335,7 +348,10 @@ final class AutoOpenController {
         // 空壳模式**不恢复**：`pollOnce` 会立刻再停一次，来回启停只是抖动；
         // 退出空壳时 `unlocked` 仍是 true，但那条路径走的是 `LockKeeperApp:119` 的 onChange。
         if !AppLock.shared.decoy { start() }
-        if AutoOpenKit.isStrict(AutoOpen.faceTier), wasInBackground {
+        // 严格档的面容确认只在**门禁已经通过之后**发起：锁屏页上先弹一次
+        // Face ID 去「确认是你，才允许靠近自动开门」，既吓人又没有任何可执行的动作，
+        // 而且那时 F0 本来就不成立。解锁后 RootView 会再调一次 onForeground。
+        if AutoOpenKit.isStrict(AutoOpen.faceTier), wasInBackground, AppLock.shared.unlocked {
             promptStartedAt = Date()
             wasInBackground = false
             face.promptFace()
@@ -424,13 +440,22 @@ final class AutoOpenController {
 
     private func dispatch(mac: String) async {
         defer { inFlight = false }
+        let startedAt = Date().timeIntervalSince1970
         eventFired.insert(mac)
-        lastDispatch[mac] = Date().timeIntervalSince1970
-        AutoOpen.setPersistedLastDispatch(mac, lastDispatch[mac]!)
+        lastDispatch[mac] = startedAt
+        AutoOpen.setPersistedLastDispatch(mac, startedAt)
         do {
             try await LockService.shared.ensureConnected(mac: mac)
-            guard AutoOpen.on, UIApplication.shared.applicationState == .active else {
-                AutoOpen.audit(mac, "下发前复查：开关已关或 App 不在前台，放弃本次自动开锁")
+            // 连接/扫描最多要 8 秒。这期间 App 可能已经上锁或进入空壳；
+            // 只复查“开关 + 前台”不够 —— 门禁还竖在眼前时把 04 发出去，
+            // 正是 SEC-04 要堵的那条绕过路径。
+            // 同一个窗口里用户也可能自己按了开锁：那条手动 04 优先，这里放弃。
+            guard AutoOpen.on,
+                  UIApplication.shared.applicationState == .active,
+                  AppLock.shared.unlocked,
+                  !AppLock.shared.decoy,
+                  AutoOpenController.shared.manualUnlockAt < startedAt else {
+                AutoOpen.audit(mac, "下发前复查：开关已关、App 不在前台、已上锁、进入空壳或用户已手动开锁，放弃本次自动开锁")
                 return
             }
             let rc = try await LockService.shared.unlock(mac: mac)

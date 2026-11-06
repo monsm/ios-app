@@ -119,6 +119,12 @@ struct PairingScreen: View {
     }
 
     private func scan() async {
+        // 空壳里不扫描：这会真的开无线电，并把附近门锁的名称 / MAC / RSSI / pid
+        // 列在屏幕上。`pair()` 的守卫发生在扫描之后，挡不住这一段。
+        guard !DB.isDecoy else {
+            errorLine = "当前无法搜索，请稍后再试。"
+            return
+        }
         scanning = true
         errorLine = nil
         devices = []
@@ -142,6 +148,9 @@ struct PairingScreen: View {
     }
 
     private func pair(device: BLEAdvDevice, mac: String) async {
+        // 双击/两指同时点会各起一个 Task；两个握手流程交错会写下两套钥匙材料。
+        // Task 体在 MainActor 上同步跑到第一个 await，这里的 check-and-set 是原子的。
+        guard pairing == nil else { return }
         // 空壳里不配对：配对会真的握手、写本机钥匙串，并让一台新锁进入这台手机的台账。
         // 界面看起来只是"连了一把锁"，退出空壳后却多出一条真实记录。
         guard !DB.isDecoy else {
@@ -589,6 +598,7 @@ struct DfuScreen: View {
     }
 
     private func flash() async {
+        guard !busy else { return }
         guard let package else { return }
         // 空壳里绝不刷固件：这是把锁变砖风险最高的一个动作，且不可撤销。
         guard !DB.isDecoy else {
@@ -625,6 +635,9 @@ struct DfuScreen: View {
             }
             try await session.run()
             stateText = "升级完成。"
+            // DFU 前主动断开了链路；不重连的话 `reload(refreshStatus: true)`
+            // 会跳过 getStatus，「当前锁内版本」继续显示升级前的旧值。
+            try? await LockService.shared.ensureConnected(mac: lock.mac)
             await app.reload(refreshStatus: true)
         } catch {
             errorLine = error.localizedDescription
@@ -678,8 +691,11 @@ struct DiagnosticsScreen: View {
                         return
                     }
                     message = "正在重连…"
+                    // busy 必须在同步段置上：两个 GhostButton 共用同一个忙守卫，
+                    // 若等 Task 里才置，双击会各起一条 reconnect，后者看到 link.busy
+                    // 立刻返回，并把“没连上”写到前一条仍在进行的连接上。
+                    busy = true
                     Task {
-                        busy = true
                         await app.link.reconnect()
                         message = app.link.phase == .ready
                             ? "已连上 · 下一次自然重试间隔 \(Int(app.link.nextLadder)) 秒"
@@ -693,15 +709,13 @@ struct DiagnosticsScreen: View {
                         message = "还没有绑定门锁。"
                         return
                     }
-                    app.link.readRSSI()
+                    busy = true
                     message = "正在读取信号…"
-                    // `readRSSI()` 是回调式的，读不到时它静默 return —— 这一页原先
-                    // 点了既没有 loading 也没有结果。等一拍再把真实结果说出来。
-                    Task {
-                        busy = true
-                        try? await Task.sleep(for: .seconds(1))
-                        message = app.link.lastRSSI.map { "当前信号 \($0) dBm。" }
-                            ?? "还没读到信号 —— 先把手机靠近门锁。"
+                    // 用这次读数的回调，而不是等 1 秒后回读 `lastRSSI`：
+                    // 读失败时后者仍是盘上的旧值，会被报成“当前信号”。
+                    app.link.readRSSI { value in
+                        message = value.map { "当前信号 \($0) dBm。" }
+                            ?? "没读到信号 —— 先把手机靠近门锁。"
                         busy = false
                     }
                 }

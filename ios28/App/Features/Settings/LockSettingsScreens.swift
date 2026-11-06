@@ -296,6 +296,10 @@ struct LockPolicyScreen: View {
                     hourPicker("结束", $endHour)
                 }
                 .padding(.top, 12)
+                // 有命令在飞时两个小时选择器不能改：`saveDefence` 的忙守卫会静默
+                // return，界面却把新选的小时留着 —— 看起来改了，锁上没改。
+                .disabled(busy)
+                .opacity(busy ? 0.55 : 1)
                 // 改小时也要真的下发：原先只有切换模式才会调 saveDefence，
                 // 两个 Picker 选完什么都不会发生 —— 一个看着能改、实际不生效的控件。
                 .onChange(of: startHour) { _, _ in
@@ -333,11 +337,16 @@ struct LockPolicyScreen: View {
 
             if busy { ProgressView().tint(T.C.brass).padding(.top, 14) }
 
-            SectionHead(index: "04", title: "开锁")
-            SwitchLine(title: "连不上时自动重试", detail: "连上门锁失败时自动再连一次。命令已经发出、没等到回执时不重试 —— 那一刻锁可能已经开了。", isOn: $autoRetry)
-                .onChange(of: autoRetry) { _, value in SettingsStore.shared.setAutoRetry(value) }
-
-            SectionHead(index: "05", title: "相关")
+            // 空壳里不摆这个本机开关：它会真实改写 `kf_auto_retry`，
+            // 退出空壳后仍影响重连行为。它不是外观类偏好，没有理由允许伪装态写入。
+            if !DB.isDecoy {
+                SectionHead(index: "04", title: "开锁")
+                SwitchLine(title: "连不上时自动重试", detail: "连上门锁失败时自动再连一次。命令已经发出、没等到回执时不重试 —— 那一刻锁可能已经开了。", isOn: $autoRetry)
+                    .onChange(of: autoRetry) { _, value in SettingsStore.shared.setAutoRetry(value) }
+                SectionHead(index: "05", title: "相关")
+            } else {
+                SectionHead(index: "04", title: "相关")
+            }
             Button {
                 router.pushSettings(.zotp)
             } label: {
@@ -525,11 +534,11 @@ struct LockInfoScreen: View {
 
             VStack(spacing: 0) {
                 infoRow("锁钟", lockClockText)
-                infoRow("产品 ID", DB.isDecoy ? "—" : String(app.lock?.pid ?? 0))
+                infoRow("产品 ID", DB.isDecoy ? "—" : (app.lock.map { String($0.pid) } ?? "—"))
                 // 验证模式与三族容量都在说"这把锁里现在有多少枚凭证"。
                 // 空壳里凭证页是空的，这里若照实印出 "12 / 100 已用"，
                 // 等于当着胁迫者的面拆穿伪装。一律显示「—」。
-                infoRow("验证模式", DB.isDecoy ? "—" : ((snap?.verifyMode ?? 0) == 0 ? "单验" : "双验"))
+                infoRow("验证模式", DB.isDecoy ? "—" : (snap.map { $0.verifyMode == 0 ? "单验" : "双验" } ?? "—"))
                 infoRow("PIN 容量", DB.isDecoy ? "—" : capacity(snap?.pinStock, snap?.pinCap))
                 infoRow("密码容量", DB.isDecoy ? "—" : capacity(snap?.pwdStock, snap?.pwdCap))
                 infoRow("指纹容量", DB.isDecoy ? "—" : capacity(snap?.fpStock, snap?.fpCap))
@@ -598,9 +607,10 @@ struct LockInfoScreen: View {
     }
 
     private var lockClockText: String {
-        let seconds = snap?.lockTime ?? 0
-        if seconds == 0 { return "没有时钟" }
-        return When.clock(Int64(ZKProtocol.protoSecondsToUnix(seconds)))
+        // 空壳里其余读数全是「—」，只剩锁钟照实显示等于自曝快照来自真实设备。
+        guard !DB.isDecoy, let snap else { return "—" }
+        if snap.lockTime == 0 { return "没有时钟" }
+        return When.clock(Int64(ZKProtocol.protoSecondsToUnix(snap.lockTime)))
     }
 
     private func capacity(_ stock: Int?, _ cap: Int?) -> String {
@@ -632,7 +642,11 @@ struct LockInfoScreen: View {
         let result = await app.syncTime()
         switch result {
         case .success(let pair):
-            message = pair.1 == 0 ? "锁钟已对齐。" : "锁钟仍有 \(pair.1) 秒偏差。"
+            if let after = pair.1 {
+                message = after == 0 ? "锁钟已对齐。" : "锁钟仍有 \(after) 秒偏差。"
+            } else {
+                message = "校时指令已下发，但没能回读确认。"
+            }
         case .failure(let error):
             message = error.localizedDescription
         }

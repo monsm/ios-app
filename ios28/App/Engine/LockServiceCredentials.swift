@@ -259,12 +259,15 @@ extension LockService {
     func fpDelete(_ batchNumber: UInt32) async throws {
         let (m, sk) = try keys()
         _ = try await execWithBusyRetry(ZKCmdBuilder.cmd15DeleteFp(m, sk, batchNumber))
-        // 2026-10-27 审核修复 (D-54)：同 pwdDelete —— 删除后重读复核。
+        // 2026-11-06 审核修复：原先这里「删除后重读复核」读的是**本机台账**（DB.ledger(m)），
+        // 而不是锁端 —— 协议里没有「列出锁端指纹」的命令。调用方要等本函数成功返回后
+        // 才把这条指纹从台账里删掉，于是复核必然命中旧值：删除明明成功，也一律抛
+        // 「指纹还在，可能有人在伪造回包」。与 pwdDelete 保持一致：读到旧台账只记警告，
+        // 真正的复核交给调用方落盘后刷新界面。
         if DB.ledger(m).fps.contains(where: { $0.batch == batchNumber }) {
-            log("warn", "删除复核失败：指纹#\(batchNumber) 仍存在于锁端 — 可能收到伪造回包")
-            throw BLEErrorX.msg("门锁回包说已删除，但重读发现这枚指纹还在。可能有人在伪造回包。")
+            log("warn", "删除复核跳过：指纹#\(batchNumber) 仍在旧台账里（调用方随后落盘）")
         }
-        log("info", "指纹#\(batchNumber) 已删除 （已重读复核）")
+        log("info", "指纹#\(batchNumber) 已删除 (15)")
     }
 
     func getLogs(orderType: Int = 0, startIdx: UInt32, pageSize: Int = 5) async throws -> LogPage {

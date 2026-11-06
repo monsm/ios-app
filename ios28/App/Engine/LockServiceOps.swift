@@ -22,9 +22,14 @@ extension LockService {
         //
         // 现在：**无论 rc 是什么都写快照**（rc 本身就是锁态的一部分）。
         // 电量采样仍只在 rc==0 时做：rc≠0 的回包里 powerLevel 不可信（锁可能没真读状态）。
-        DB.writeStatus(curMac, st) // 离线快照 (随时可读) —— 含 rc，供 F6 判据
-        if st.rc == 0 {
-            BatteryCare.sample(curMac, pct: st.powerLevel)   // 包4/45: 电量本地采样埋点 (90 天截断)
+        // 空壳里可以发这条命令（开锁链要用回包），但**不落盘**：
+        // 真实电量、rc、锁钟写进快照与电量历史，都是“主人在某时读过锁”的
+        // 持久痕迹，退出空壳后仍然在。快照与采样只在正常态写。
+        if !DB.isDecoy {
+            DB.writeStatus(curMac, st) // 离线快照 (随时可读) —— 含 rc，供 F6 判据
+            if st.rc == 0 {
+                BatteryCare.sample(curMac, pct: st.powerLevel)   // 包4/45: 电量本地采样埋点 (90 天截断)
+            }
         }
         return st
     }
@@ -193,7 +198,10 @@ extension LockService {
         return r.rc
     }
 
-    func syncTime() async throws -> (before: Int, after: Int) {
+    /// 返回值里的 `after` 是**回读确认**：nil = 校时指令已下发，但回读失败，
+    /// 无法确认锁钟真的更新了。原先用 0 表示「没偏差」，与回读失败不可区分，
+    /// 界面于是把「没读回来」也报成「锁钟已对齐」。
+    func syncTime() async throws -> (before: Int, after: Int?) {
         let (m, sk) = try keys()
         let now = ZKProtocol.nowProtoSeconds()
         var before = 0
@@ -205,18 +213,19 @@ extension LockService {
         }
         _ = try await execOk(ZKCmdBuilder.cmd0ESyncTime(m, sk, now))
         DB.saveSyncTime(m, Date().timeIntervalSince1970 * 1000)
-        var after = 0
+        var after: Int?
         if let lockSec = try? await readLockTime() {
-            after = Int(lockSec - ZKProtocol.nowProtoSeconds())
-            log("info", "校时回读：锁钟偏差 \(after)s")
+            let delta = Int(lockSec - ZKProtocol.nowProtoSeconds())
+            after = delta
+            log("info", "校时回读：锁钟偏差 \(delta)s")
             // >60s 不可能是秒级回读误差 (即使固件把锁钟取整到分钟也只有几十秒) ⇒ 当成"压根没写进去"报错,
             // 而不是拿一句"同步成功"把用户送走。
-            if abs(after) > 60 {
+            if abs(delta) > 60 {
                 // 2026-10-30（界面全维度 · 错误文案）：这句会经 `SyncTimeView` 的
                 // `result = "同步失败：\(error.localizedDescription)"` **原样显示给用户**，
                 // 而 `0E` 是命令号、`rc=0` 是协议码 —— 用户读不懂。
                 // 保留事实（偏差多少秒），换成"能做什么"的说法。
-                throw BLEErrorX.msg("门锁收到了时间，但读回来还是差 \(after) 秒 — 可能是固件忽略了校时指令；请重试一次，若仍如此请更新固件")
+                throw BLEErrorX.msg("门锁收到了时间，但读回来还是差 \(delta) 秒 — 可能是固件忽略了校时指令；请重试一次，若仍如此请更新固件")
             }
         } else {
             log("warn", "校时回读失败 — 无法确认锁钟已更新")

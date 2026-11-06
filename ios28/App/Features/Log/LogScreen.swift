@@ -143,6 +143,9 @@ struct LogScreen: View {
         if app.events.isEmpty { return "还没有\n任何记录。" }
         if todayEvents.isEmpty { return "今天\n很安静。" }
         if todayEvents.first(where: { $0.isAlarm }) != nil { return "今天有\n一声警报。" }
+        // 「有人来过」只能由**真正的开门**推出。今天只有一条校时/状态广播时，
+        // 标题说“有人来过”、正文却是“0 次开门”，自相矛盾。
+        if todayEvents.filter({ $0.isOpen }).isEmpty { return "今天\n很安静。" }
         return "今天有人\n来过。"
     }
 
@@ -174,8 +177,8 @@ struct LogScreen: View {
             list = list.filter { ($0.whoName ?? "").range(of: member) != nil }
         }
         if let range = parsed.range {
-            let from = Int64(range.from.timeIntervalSince1970)
-            let to = Int64(range.to.timeIntervalSince1970)
+            let from = When.epochSeconds(range.from)
+            let to = When.epochSeconds(range.to)
             // 上界是**开区间**：时间短语给的是「当天 00:00 → 次日 00:00」，
             // 用 `<=` 会把次日零点那一秒算进前一天。
             list = list.filter { $0.hasTime && $0.time >= from && $0.time < to }

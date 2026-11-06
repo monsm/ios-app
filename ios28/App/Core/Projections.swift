@@ -203,6 +203,15 @@ enum UnlockPhase: Equatable {
 enum When {
     static func unix(_ seconds: Int64) -> Date { Date(timeIntervalSince1970: TimeInterval(seconds)) }
 
+    /// Date → Unix 秒。`Int64(Double)` 在越界/NaN 时 trap；搜索框里的时间短语
+    /// 来自用户输入，必须在进比较前夹到可表示范围（NaN 归 0）。
+    static func epochSeconds(_ date: Date) -> Int64 {
+        let t = date.timeIntervalSince1970
+        guard t.isFinite else { return 0 }
+        let bound = Double(Int64.max / 2)
+        return Int64(min(max(t, -bound), bound))
+    }
+
     static func clock(_ seconds: Int64) -> String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "zh_Hans_CN")

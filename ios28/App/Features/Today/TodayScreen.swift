@@ -246,20 +246,19 @@ struct TodayScreen: View {
         QuickPool.recordTap(id)
         switch id {
         case "addPwd":
-            router.tab = .access
+            router.goToAccessRoot()
             router.push(.credentialCreate)
         case "addFp":
             // 「指纹」必须落到指纹那条链上：只 push 新凭证页的话，它默认停在「密码」——
             // 点「指纹」看到的是一张密码表单。
-            router.tab = .access
+            router.goToAccessRoot()
             router.pendingCreateKind = "fingerprint"
             router.push(.credentialCreate)
         case "otp":
-            router.tab = .access
+            router.goToAccessRoot()
             router.push(.zotp)
         case "studio":
-            router.tab = .access
-            router.pendingAccessSegment = 0
+            router.goToAccessRoot(segment: 0)
         case "again":
             Task { await app.unlock() }
         case "syncTime":
@@ -269,9 +268,11 @@ struct TodayScreen: View {
                 // 点了「校时」，失败了也一点动静都没有。
                 // 成功同样要说一句，否则「点了没反应」和成功长得一模一样。
                 switch await app.syncTime() {
-                case .success:
+                case .success(let pair):
                     app.lastError = nil
-                    flash("锁钟已对齐。")
+                    // `after == nil` 是「指令发了，但没读回来」，不能报成已对齐。
+                    flash(pair.1 == nil ? "校时指令已下发，但没能回读确认。"
+                                        : "锁钟已对齐。")
                 case .failure(let error):
                     app.lastError = error.localizedDescription
                 }
@@ -295,7 +296,7 @@ struct TodayScreen: View {
     private var recent: some View {
         VStack(alignment: .leading, spacing: 0) {
             SectionHead(index: "01", title: "最近", trailing: "全部") {
-                router.tab = .log
+                router.goToLogRoot()
             }
             ForEach(recentEvents) { event in
                 Button {
@@ -316,9 +317,10 @@ struct TodayScreen: View {
                               Task {
                                   if let result = await app.readLogs() {
                                       flash(result.read == 0 ? "锁里没有新的开门记录。" : "读到 \(result.read) 条记录。")
-                                  } else if app.busy != nil {
-                                      // `readLogs` 在另一条命令进行中会静默返回 nil。
-                                      flash("门锁正忙，稍后再读。")
+                                  } else if let message = app.lastError {
+                                      // `readLogs` 在另一条命令进行中会返回 nil 并写下
+                                      // 「门锁正忙」；其它失败同样落在这里，不再静默。
+                                      flash(message)
                                   }
                               }
                           })
@@ -418,11 +420,11 @@ struct EmptyHome: View {
             SectionHead(index: "01", title: "配对之后")
             // 这三行原先只是带着 chevron 的静态 ContentRow —— 箭头在，点下去却什么也不会发生。
             // 现在各去各的地方（安全落在设置栈里）。
-            Button { router.tab = .access } label: {
+            Button { router.goToAccessRoot() } label: {
                 ContentRow(symbol: "key", title: "凭证", subtitle: "密码、指纹、临时码，一处管完", chevron: true)
             }
             .buttonStyle(.plain)
-            Button { router.tab = .log } label: {
+            Button { router.goToLogRoot() } label: {
                 ContentRow(symbol: "list.bullet", tone: .cool, title: "记录", subtitle: "谁在什么时候开过门", chevron: true)
             }
             .buttonStyle(.plain)

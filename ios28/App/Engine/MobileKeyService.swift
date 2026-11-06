@@ -237,6 +237,9 @@ enum MobileKeyService {
     /// 返回 true = 已重签并落盘；false = 没有可用 PIN（需要重新配网）。
     @discardableResult
     static func repairPairingEkey(kc: Keychain) -> Bool {
+        // 空壳里的开锁失败**不做自愈**：自愈会改写真实的 ekey，并把这次用的 PIN
+        // 写进 `kf_repair_pin_<mac>`。门照样能开，但空壳会话不该留下真实钥匙材料的改动。
+        guard !DB.isDecoy else { return false }
         // 2026-11-03（真机日志驱动的修正）：上一版盲选 `pins[1]`，但真机证明**锁端只认
         // 当前存的那枚 ekey 里的 PIN**（8ad5556d = pool[1]，重签后仍 rc=2 —— 锁端把
         // pool[0] 删了，但 pool[1] 一直在锁里；坏的是"上一版自愈时选错了枚"）。

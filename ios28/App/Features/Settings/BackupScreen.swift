@@ -20,6 +20,9 @@ struct BackupScreen: View {
     @State private var message: String?
     @State private var busy = false
     @State private var errorLine: String?
+    /// 校验和不一致时的二次确认。Engine 的裁量是「不硬拒、但要用户点头」
+    /// （`BackupStudio.checksumNeedsAck`）—— 第一次点「恢复」只弹这一问，确认后才真写盘。
+    @State private var checkingChecksum = false
 
     var body: some View {
         ScreenScroll {
@@ -139,6 +142,12 @@ struct BackupScreen: View {
                                     .type(T.F.caption)
                                     .foregroundStyle(T.C.danger)
                             }
+                            if BackupStudio.checksumNeedsAck(preview.checksum) {
+                                Text("校验和对不上：内容可能与导出时不同，也可能是旧版本算法。恢复前会再确认一次。")
+                                    .type(T.F.caption)
+                                    .foregroundStyle(T.C.danger)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -160,13 +169,19 @@ struct BackupScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Text("导入是「只增不减」：本机已有的同名凭证会保留，不会被覆盖。恢复前会自动存一份快照（暂不支持在 App 内撤销）。")
+            Text("导入是「只增不减」：本机已有的凭证与成员会保留，不会被覆盖；已存在的门锁只刷新钥匙串与直连参数。恢复前会自动存一份快照（暂不支持在 App 内撤销）。")
                 .type(T.F.caption)
                 .foregroundStyle(T.C.ink3)
                 .lineSpacing(3)
                 .padding(.top, 20)
         }
         .toolbar(.hidden, for: .navigationBar)
+        .confirmationDialog("校验和不一致，仍然恢复？", isPresented: $checkingChecksum, titleVisibility: .visible) {
+            Button("仍然恢复", role: .destructive) { Task { await performRestore() } }
+            Button("取消", role: .cancel) {}
+        } message: {
+            Text("这份备份的内容与它自带的校验和不一致 —— 可能是导出后被改过，也可能是旧版本 App 的算法不同。确认来源可信再继续。")
+        }
     }
 
     /// 校验和状态是人话，不是枚举名。
@@ -248,6 +263,26 @@ struct BackupScreen: View {
             errorLine = "先点「预览」看清这份备份里有什么，再恢复。"
             return
         }
+        // 校验和不一致不硬拒（旧版本包算法不同），但必须二次确认 ——
+        // Engine 只提供判据，确认动作在界面这一层。
+        if let preview, BackupStudio.checksumNeedsAck(preview.checksum) {
+            checkingChecksum = true
+            return
+        }
+        await performRestore()
+    }
+
+    private func performRestore() async {
+        guard !busy else { return }
+        guard !DB.isDecoy else {
+            errorLine = "当前无法恢复，请稍后再试。"
+            return
+        }
+        guard preview != nil else {
+            errorLine = "先点「预览」看清这份备份里有什么，再恢复。"
+            return
+        }
+        errorLine = nil
         busy = true
         defer { busy = false }
         do {
@@ -255,7 +290,13 @@ struct BackupScreen: View {
                                                        password: importPassword.isEmpty ? nil : importPassword)
             let outcome = try BackupStudio.restore(result.bundle)
             preview = result.preview
-            message = "已恢复 \(outcome.imported) 条新增 · \(outcome.overwritten) 条覆盖 · \(outcome.skipped) 条跳过"
+            // 这里必须如实分开说：`overwritten` 统计的是**本机已有的门锁**
+            // （钥匙串被刷新），不是"覆盖了你的凭证" —— 合并模式默认只增不删。
+            var line = "已恢复：新增 \(outcome.imported) 条"
+            if outcome.overwritten > 0 { line += " · \(outcome.overwritten) 把已有门锁的钥匙串已刷新" }
+            if outcome.skipped > 0 { line += " · 跳过 \(outcome.skipped) 把锁" }
+            if outcome.unlinkedOwners > 0 { line += " · \(outcome.unlinkedOwners) 条凭证找不到归属，已置空" }
+            message = line
             await app.reload(refreshStatus: false)
         } catch {
             errorLine = error.localizedDescription

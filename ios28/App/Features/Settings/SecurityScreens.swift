@@ -64,7 +64,9 @@ struct SecurityScreen: View {
             // 这一行写着「修改胁迫码 / 输入它会进入空壳模式」，而胁迫者很可能就站在旁边。
             // 看见它 = 确认这台手机设过胁迫码 = 当场逼问"你刚才是不是输了那组数字"。
             // 空壳里这一页就当一个从没设过胁迫码的普通 App。
-            if !DB.isDecoy {
+            // 没有本机密码就没有门禁；胁迫码只可能在门禁页输入，设了也永远用不上，
+            // 还会在下次设密码时悄悄复活。
+            if DB.hasPasscode(), !DB.isDecoy {
                 Button { sheet = .duress } label: {
                     ContentRow(symbol: "eye.slash",
                                title: DB.hasDuressCode() ? "修改胁迫码" : "设置胁迫码",
@@ -101,7 +103,12 @@ struct SecurityScreen: View {
 
             // 空壳里「只读试验」整段不摆，编号要跟着连续，不能从 01 直接跳到 03。
             SectionHead(index: DB.isDecoy ? "02" : "03", title: "状态")
-            if notifyStatus == .authorized {
+            if DB.isDecoy {
+                // 空壳里不显示真实授权状态，也不给「去开启」的入口：
+                // 那会弹出系统权限框，并把“主人开过提醒”这件事写在脸上。
+                ContentRow(symbol: "bell", tone: .cool, title: "通知",
+                           subtitle: "未开启")
+            } else if notifyStatus == .authorized {
                 ContentRow(symbol: "bell", tone: .cool, title: "通知",
                            subtitle: "已授权 · 到期与低电提醒会送达")
             } else {
@@ -281,6 +288,10 @@ struct AppearanceScreen: View {
     @State private var keepAwake = SettingsStore.shared.keepScreenAwake
     @State private var grid = SettingsStore.shared.quickGridCount
 
+    /// 托盘最多只能显示用户真正选进池子的动作数。默认池是 5 个，
+    /// 而 Stepper 原先写死 3…6 —— 调到 6 时界面说“6 个”，托盘仍只有 5 个。
+    private var maxTools: Int { max(3, min(6, QuickPool.selected.count)) }
+
     var body: some View {
         ScreenScroll {
             NavRow(kicker: "设置 / 外观", back: { dismiss() })
@@ -308,7 +319,7 @@ struct AppearanceScreen: View {
                     .type(T.F.callout)
                     .foregroundStyle(T.C.ink)
                 Spacer()
-                Stepper(value: $grid, in: 3 ... 6) {
+                Stepper(value: $grid, in: 3 ... maxTools) {
                     Text("\(grid)")
                         .type(T.F.monoBig)
                         .foregroundStyle(T.C.ink)
@@ -329,6 +340,11 @@ struct AppearanceScreen: View {
                 .onChange(of: keepAwake) { _, value in SettingsStore.shared.setKeepScreenAwake(value) }
         }
         .toolbar(.hidden, for: .navigationBar)
+        .onAppear {
+            // 旧版本允许存到 6；现在池子只有 5 个时把它夹回来，界面数字与托盘一致。
+            let clamped = min(max(grid, 3), maxTools)
+            if grid != clamped { grid = clamped }
+        }
     }
 }
 

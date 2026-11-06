@@ -286,6 +286,8 @@ struct CredentialCreateScreen: View {
     // MARK: - 提交
 
     private func submit() async {
+        // 连点两次「写入密码」会下发两条 0A：锁里多出一条，台账只记一条。
+        guard !busy else { return }
         errorLine = nil
         switch kind {
         case .password:

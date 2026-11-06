@@ -64,7 +64,15 @@ struct RootView: View {
             if app.unlocked { await app.reload(refreshStatus: false) }
         }
         .onChange(of: app.unlocked) { _, isOn in
-            if isOn { Task { await app.reload(refreshStatus: false) } }
+            if isOn {
+                Task {
+                    await app.reload(refreshStatus: false)
+                    // 冷启动/超时上锁时，scenePhase 的 onForeground 发生在门禁之前，
+                    // 轮询会立刻停掉；密码盘解锁又没有新的 scenePhase。不在这里恢复，
+                    // 自动开门会一直“已开启”却整场会话都不工作。
+                    AutoOpenController.shared.onForeground(mac: app.currentMac)
+                }
+            }
         }
     }
 }

@@ -90,6 +90,41 @@ Keychain 里的 `pin`/`ekey` 副本。但**锁端那张钥匙没有被吊销** �
 `kf_autoopen_lastdispatch_<mac>`（界面层调用，不改协议），`makeContext` 取两者较大值 ——
 两条开锁路径共用同一个「上次开门」口径。
 
+## 本版对 Engine 的第八处改动：地毯式对抗审核的七处修正
+
+这一轮逐页审计又发现了几处「协议没变、行为错了」的缺陷。全部只动控制流与守卫，
+**不涉及帧格式、密码学、存储格式**：
+
+| 位置 | 改了什么 | 为什么 |
+|---|---|---|
+| `LockServiceCredentials.fpDelete` | 删除后不再因「本机台账里还有这条」抛错，改为记警告 | 见下 |
+| `LockServiceLink.ensureConnected` | 不同 mac 的在建连接改为排队等待，不再互相抢占 | 见下 |
+| `LockServiceOps.syncTime` | 回读失败返回 `after = nil`，不再伪造 0 | 见下 |
+| `LockServiceOps.getStatus` | 空壳模式不写 `writeStatus` / `BatteryCare.sample` | 空壳产生真实持久化副作用 |
+| `BLEService.readLinkRSSI` | 新请求覆盖之前，先把旧 completion 以 `nil` 唤醒 | 旧调用方会永远挂起 |
+| `AutoOpenKit` | 严格档只在 `AppLock.unlocked` 后提示面容；下发前复查加入「已上锁/空壳」；手动开锁优先；`lastReject` 只留真拒开原因 | 见下 |
+| `MobileKeyService.repairPairingEkey` | 开头加 `guard !DB.isDecoy` | 空壳里不产生真实写操作 |
+
+**指纹删除必然报错。** `fpDelete` 在锁端删除成功后读 `DB.ledger(m)` 做「复核」，
+但那只是**本机旧台账**（协议没有「列出锁端指纹」的命令），而调用方要等本函数返回后
+才把这条指纹从台账删掉 —— 复核必然命中，于是每一次成功的删除都被报成
+「指纹还在，可能有人在伪造回包」。与 `pwdDelete` 同一口径：读到旧值只记警告，
+复核交给调用方落盘后的刷新。
+
+**跨锁连接互相拆台。** `ensureConnected` 原先只有「同一个 mac 正在连」才挂起等待；
+不同 mac 会直接覆盖 `connectingMac` 并 `disconnect()` 掉前一条正在建立的链路。
+前一条失败收尾时，`settleConnecting` 又会把后来者的标记一起清空。两把锁交替刷新
+（自动开门轮询 + 用户手动切锁）时会形成互相拆台的循环。现在同一时刻只允许一个建链者，
+不同 mac 的调用者挂起，醒来后重新判断。
+
+**校时的“假 0”。** 读数回不来时旧实现把差值记成 0，界面于是显示「已对齐」。
+现在回读失败返回 `nil`，界面明确显示「已下发，但没能回读确认」。
+
+**自动开门的三个口子。** ① 严格档的面容提示在门禁页也会弹（`wasInBackground` 初值为 true），
+现在只在 `AppLock.unlocked` 后发起；② 连接/扫描最多 8 秒，这期间可能已经上锁或进入空壳，
+下发前复查补上 `AppLock.unlocked && !decoy`；③ 用户手动开锁期间，自动那条若也发 04，
+两条命令会在 BLE waiter 上相撞 —— 自动下发前复查 `manualUnlockAt`，让路给手动。
+
 ## 为编译而补的七个符号
 
 Engine 反向引用了若干上一版属于界面层的类型。这一版在 `App/Core/`（`Tone` 在 `App/Design/`）里按**同名同签名**重新实现，因此 Engine 源码一行都不用改：

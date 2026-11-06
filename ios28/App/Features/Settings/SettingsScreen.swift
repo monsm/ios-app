@@ -79,8 +79,7 @@ struct SettingsScreen: View {
                         subtitle: securitySubtitle)
             Button {
                 dismiss()
-                router.tab = .access
-                router.pendingAccessSegment = 1
+                router.goToAccessRoot(segment: 1)
             } label: {
                 ContentRow(symbol: "person.2", tone: .cool, title: "成员与分工",
                            subtitle: "\(app.members.count) 位成员 · 在「通行」里管理", chevron: true)

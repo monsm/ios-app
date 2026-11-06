@@ -52,6 +52,19 @@ extension LockService {
     func ensureConnected(mac: String) async throws {
         let m = mac.lowercased()
         let alreadyConnected = (connectedMAC == m && ble.connectedPeripheralId == connectedDeviceId && !connectedDeviceId.isEmpty)
+        // 已经有别的锁在连：**等它收尾再重来**，不能直接抢占。
+        //
+        // 原先只有 `connectingMac == m` 才挂起等待；m 不同就直接 `disconnect()` 掉
+        // 正在建的那条链路，并覆盖 `connectingMac`。等前一条失败收尾时，它的
+        // `settleConnecting` 会把**后来者**的标记一起清空、把后来者的连接暴露在
+        // “无主”状态 —— 第三条调用于是又拆一次。两把锁交替刷新（自动开门轮询 +
+        // 用户手动切锁）时会连成这种互相拆台的循环。
+        // 现在保证同一时刻只有一个建链者：不同 mac 的调用者挂起，醒来后重新判断。
+        while !connectingMac.isEmpty, connectingMac != m {
+            try? await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
+                connectWaiters.append(c)
+            }
+        }
         // 已经有人在连这把锁 → 挂上去等它，别再拆一次。
         if connectingMac == m {
             try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in

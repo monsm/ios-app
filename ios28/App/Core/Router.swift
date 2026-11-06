@@ -125,6 +125,22 @@ final class Router {
         logPath = [.event]
     }
 
+    /// 跨 Tab 跳到某个 Tab 的**根**。
+    ///
+    /// 只改 `tab` 是不够的：目标 Tab 若还停在上次的详情页，用户点「凭证」「记录」
+    /// 会落回那一条旧详情，而不是列表；`pendingAccessSegment` 也会被详情页挡住。
+    /// 所有“去另一个 Tab 的某个列表”的入口都必须走这里。
+    func goToAccessRoot(segment: Int? = nil) {
+        accessPath = []
+        tab = .access
+        if let segment { pendingAccessSegment = segment }
+    }
+
+    func goToLogRoot() {
+        logPath = []
+        tab = .log
+    }
+
     func backToRoot() {
         switch tab {
         case .today: todayPath = []

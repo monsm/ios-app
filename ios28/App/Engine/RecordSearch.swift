@@ -497,10 +497,12 @@ enum RecordSearch {
         c.day = max(1, min(31, day))
         return cal.date(from: c)
     }
-    /// "最近(\d+)" 取括号内数字
+    /// "最近(\d+)" 取括号内数字。占位符写的是「最近 7 天」—— 中间有空格，
+    /// 数字前必须先跳过一个或多个空白，否则示例文本自己就搜不到任何东西。
     static func intAfter(_ s: String, _ head: String) -> Int? {
         guard let i = s.range(of: head) else { return nil }
-        let tail = s[i.upperBound...]
+        var tail = s[i.upperBound...]
+        while let first = tail.first, first.isWhitespace { tail = tail.dropFirst() }
         var digits = ""
         for ch in tail {
             if ch.isNumber { digits.append(ch) } else { break }

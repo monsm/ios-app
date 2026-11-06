@@ -17,6 +17,7 @@ struct ZotpScreen: View {
     @State private var code = ""
     @State private var window = ""
     @State private var copied = false
+    @State private var expired = false
 
     private var kc: Keychain? { DB.keychainForUnlock(app.currentMac) }
 
@@ -28,10 +29,13 @@ struct ZotpScreen: View {
 
     /// 本窗口里下一个该用的序号。换窗口归零；一个窗口最多 100 个。
     private var nextIndex: Int? {
-        let win = ZOTP.nextWindow()
+        let win = windowLabel
         let current = DB.otpIdx(app.currentMac)
-        let idx = (current?.invalidTime == win) ? (current?.idx ?? -1) + 1 : 0
-        return idx > 99 ? nil : idx
+        guard current?.invalidTime == win else { return 0 }
+        let last = current?.idx ?? -1
+        // 恢复包里的 idx 可能是 Int.max；先比大小再 +1，避免溢出 trap。
+        guard last < 99 else { return nil }
+        return max(0, last + 1)
     }
 
     /// 生成的前置条件只有一个来源 —— 按钮的禁用与提示都看它。
@@ -44,18 +48,32 @@ struct ZotpScreen: View {
 
     /// 本窗口已经用掉几个（还没生成过时是 0）。
     private var usedInWindow: Int {
-        let win = ZOTP.nextWindow()
+        let win = windowLabel
         let current = DB.otpIdx(app.currentMac)
-        guard current?.invalidTime == win else { return 0 }
-        return (current?.idx ?? -1) + 1
+        guard current?.invalidTime == win, let last = current?.idx else { return 0 }
+        // 先判上界再 +1：恢复包里的 idx 可能是 Int.max，`last + 1` 会直接 trap。
+        if last >= 99 { return 100 }
+        return max(0, last + 1)
     }
 
-    /// 距离本窗口失效还有多少秒（30 分钟一档，与 ZOTP.nextWindow 同一口径）。
+    /// 当前周期窗口的结束时刻。窗口边界必须按锁上报的 `period` 算：
+    /// 页面写着「每 N 分钟换一次」，而原先的 `ZOTP.nextWindow` / 倒计时写死 30 分钟。
+    /// 锁报 15 或 60 分钟时，序号会在错误的边界归零，倒计时也整体错位。
+    private func windowEnd(at now: Date) -> Date {
+        let p = max(1, min(120, period))
+        let proto = ZKProtocol.protoSecondsFromMs(Int64(now.timeIntervalSince1970 * 1000))
+        let length = Int64(60 * p)
+        let end = (proto / length + 1) * length
+        return Date(timeIntervalSince1970: ZKProtocol.protoSecondsToUnix(end))
+    }
+
+    private var windowLabel: String {
+        DF.cached("HH:mm").string(from: windowEnd(at: Date()))
+    }
+
+    /// 距离本窗口失效还有多少秒（与锁端 `now / (60 * period)` 同一口径）。
     private func secondsToExpiry(at now: Date) -> Int {
-        let cal = WeekCal.gregorian
-        let minute = cal.component(.minute, from: now)
-        let second = cal.component(.second, from: now)
-        return max(0, 30 * 60 - (minute % 30) * 60 - second)
+        max(0, Int(windowEnd(at: now).timeIntervalSince(now).rounded()))
     }
 
     var body: some View {
@@ -91,7 +109,7 @@ struct ZotpScreen: View {
                 ReadingRow(items: [
                     (label: "周期", value: "\(period)", unit: "分钟"),
                     (label: "本窗口", value: "\(usedInWindow)", unit: "个"),
-                    (label: "失效", value: window.isEmpty ? ZOTP.nextWindow() : window, unit: nil),
+                    (label: "失效", value: window.isEmpty ? windowLabel : window, unit: nil),
                 ])
                 .padding(.top, 24)
 
@@ -136,6 +154,18 @@ struct ZotpScreen: View {
         .onAppear {
             enabled = DB.otpStatus(app.currentMac)?.on ?? false
         }
+        // 动态码只在它所属的窗口里有效。到点自动从屏幕上消失，
+        // 否则倒计时走到 0:00 后仍摆着一串已失效的码，还提示用户去键盘上输入。
+        .task(id: code) {
+            guard !code.isEmpty else { return }
+            let remain = secondsToExpiry(at: Date())
+            if remain > 0 { try? await Task.sleep(for: .seconds(remain)) }
+            guard !Task.isCancelled, !code.isEmpty else { return }
+            code = ""
+            window = ""
+            copied = false
+            expired = true
+        }
     }
 
     private var generateTitle: String {
@@ -164,7 +194,7 @@ struct ZotpScreen: View {
                     .minimumScaleFactor(0.6)
                     .lineLimit(1)
                 Text(code.isEmpty
-                     ? "还没有生成。点下面的按钮算一串。"
+                     ? (expired ? "上一串已过期，点下面的按钮重新生成。" : "还没有生成。点下面的按钮算一串。")
                      : "在门锁键盘上输入这串数字")
                     .type(T.F.caption)
                     .foregroundStyle(T.C.ink2)
@@ -215,7 +245,7 @@ struct ZotpScreen: View {
             return
         }
         guard let idx = nextIndex else { return }
-        let win = ZOTP.nextWindow()
+        let win = windowLabel
         let pwd = ZOTP.generate(macHex: kc.mac, skeyHex: kc.skey, periodMin: period, idx: idx)
         guard !pwd.isEmpty else {
             // MAC 不是整 6 字节十六进制 ⇒ 算出来的是一串注定开不了锁的数字。
@@ -226,6 +256,7 @@ struct ZotpScreen: View {
         DB.saveOtpIdx(app.currentMac, OtpIdx(idx: idx, invalidTime: win))
         code = pwd
         window = win
+        expired = false
         errorLine = nil
         Clip.set(pwd)
         copied = true
@@ -248,6 +279,7 @@ struct ZotpScreen: View {
             if !on {
                 code = ""
                 window = ""
+                expired = false
             }
         case .failure(let error):
             errorLine = error.localizedDescription

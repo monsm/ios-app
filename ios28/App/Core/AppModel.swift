@@ -42,6 +42,8 @@ final class AppModel {
 
     @ObservationIgnored private weak var router: Router?
     @ObservationIgnored private var autoLockTask: Task<Void, Never>?
+    /// 自动上锁倒计时的代次，防止被取消的旧任务覆写新任务的状态。
+    @ObservationIgnored private var autoLockGen = 0
     @ObservationIgnored private var activitySignature = ""
     /// 活跃度缓存的**结果**。只留签名不留结果，缓存等于没做 ——
     /// 同一次刷新里第二次取成员卡片时拿到的是空 bundle，名册永远显示「还没开过门」。
@@ -87,6 +89,10 @@ final class AppModel {
             if let st = try? await LockService.shared.getStatus(mac: mac) {
                 DB.writeStatus(mac, st)
             }
+            // await 期间用户可能已经在「我的锁」里换了一把锁 ——
+            // 这时再把旧 mac 的投影装回去，今日页会显示上一把锁的读数，
+            // 而 `currentMac` 已经指向新锁，直到下一次刷新才自愈。
+            guard mac == currentMac else { return }
         }
 
         lock = makeLock(kc)
@@ -95,7 +101,9 @@ final class AppModel {
         if DB.isDecoy {
             locks = lock.map { [$0] } ?? []
         }
-        lastStatus = DB.get(StatusSnapshot.self, "kf_snap_" + mac)
+        // 空壳里不把真实快照装进界面投影：门锁信息页的「锁钟」就是从这里读的，
+        // 而其余读数都被抹平，只剩它照实显示，等于告诉对方「这台手机真的连过锁」。
+        lastStatus = DB.isDecoy ? nil : DB.get(StatusSnapshot.self, "kf_snap_" + mac)
         link.update(mac: mac)
 
         // 顺序有讲究：
@@ -114,9 +122,16 @@ final class AppModel {
     /// 而界面仍显示「已排程」；自动开门的轮询也要恢复，否则用户以为它坏了。
     private func applyDecoyState() {
         let on = decoy
+        // **先落数据层，再判断要不要做副作用。**
+        //
+        // 原先这里先 `guard on != decoyApplied else { return }` 才写 DB —— 而
+        // `AppLock.lock()`（回前台超 30 秒）会直接把 DB 的空壳标志复位，AppModel
+        // 却把 `decoyApplied` 留在 true。此时再次输入胁迫码：on 与缓存相等 ⇒ 直接
+        // return ⇒ DB 从未重新置 true，随后的 reload 会把真实锁、凭证、成员全部读出来。
+        // 空壳在最需要它的第二次进入时失效。标志写入必须无条件、幂等。
+        DB.setDecoy(on)
         guard on != decoyApplied else { return }
         decoyApplied = on
-        DB.setDecoy(on)
         if on {
             CredentialOrg.cancelAllForDecoy()
         } else {
@@ -129,7 +144,10 @@ final class AppModel {
     func reloadCredentials(_ mac: String? = nil) {
         let m = mac ?? currentMac
         guard !m.isEmpty else { credentials = []; ledgerCorrupt = false; return }
-        ledgerCorrupt = DB.isLedgerCorrupt(m)
+        // 空壳里台账被过滤成空表，但 `isLedgerCorrupt` 读的是真实存储。
+        // 照实显示会让「通行」页冒出「台账读取异常」—— 等于告诉对方这台手机
+        // 的存储出过问题，与「空壳里什么都没有」的假象冲突。
+        ledgerCorrupt = DB.isDecoy ? false : DB.isLedgerCorrupt(m)
         let ledger = DB.ledger(m)
 
         var out: [Credential] = []
@@ -144,7 +162,7 @@ final class AppModel {
                 masked: String(repeating: "•", count: max(4, p.pwd?.count ?? 4)),
                 expiresAt: Self.expiry(p.to),
                 validFrom: Self.millis(p.from),
-                createdAt: p.at,
+                createdAt: Self.safeMillis(p.at),
                 disabled: CredentialLocalState.isDisabled(mac: m, id: "pwd:\(p.alias)"),
                 alias: p.alias,
                 batch: nil,
@@ -162,7 +180,7 @@ final class AppModel {
                 masked: nil,
                 expiresAt: nil,
                 validFrom: nil,
-                createdAt: f.at,
+                createdAt: Self.safeMillis(f.at),
                 disabled: CredentialLocalState.isDisabled(mac: m, id: "fp:\(f.batch)"),
                 alias: nil,
                 batch: f.batch,
@@ -180,7 +198,7 @@ final class AppModel {
                 masked: "•••• \(String(k.pin.suffix(2)))",
                 expiresAt: (k.forever || k.validTo.hasPrefix("2118")) ? nil : Self.millis(k.validTo),
                 validFrom: nil,
-                createdAt: k.at,
+                createdAt: Self.safeMillis(k.at),
                 disabled: false,
                 alias: nil,
                 batch: nil,
@@ -212,7 +230,11 @@ final class AppModel {
     private func reloadMemberCards() -> [MemberCard] {
         let ext = MemberHub.allExt()
         let raw = DB.members()
-        let signature = raw.map(\.id).joined(separator: "|") + "#" + String(events.count)
+        // 只按 `events.count` 做签名会漏掉「条数不变、内容/时间变了」的刷新
+        // （校时改写锁钟时间、刷新替换了同一批记录）：成员卡片会一直复用
+        // 旧的「最近 N 天前」。把首尾时间也纳入签名。
+        let signature = raw.map(\.id).joined(separator: "|")
+            + "#\(events.count)#\(events.first?.time ?? 0)#\(events.last?.time ?? 0)"
         if signature != activitySignature {
             activitySignature = signature
             activityCache = MemberHub.activityBundle(raw.map(\.id))
@@ -257,7 +279,7 @@ final class AppModel {
             signal: DB.isDecoy ? 0 : LinkSenseModel.level(LinkSenseModel.savedRSSI(kc.mac)),
             firmware: DB.isDecoy ? "" : (snap?.firmware ?? kc.fw),
             keyCount: ledger.pwds.count + ledger.fps.count + MobileKeyService.list(kc.mac).count,
-            isConnected: LockService.shared.connectedMAC == kc.mac,
+            isConnected: !DB.isDecoy && LockService.shared.connectedMAC == kc.mac,
             safeMode: !DB.isDecoy && (snap?.verifyMode ?? 0) != 0,
             muted: !DB.isDecoy && DB.store.getBool("kf_muted_" + kc.mac),
             hidden: !DB.isDecoy && LockArchive.isHidden(kc.mac),
@@ -311,6 +333,16 @@ final class AppModel {
         members = []
         events = []
         ledgerCorrupt = false
+        // `lock` 本身留着（门照样能开），但**不能留上一会话的真实投影**：
+        // 它的电量 / 固件 / 连接态来自真实锁，而把这三个字段遮平的 `makeLock`
+        // 要等异步 reload 才跑。胁迫码解锁后的第一帧足以把它们印在今日页上。
+        // 这里按同一口径先做一份空壳投影，reload 落地后再由 makeLock 覆盖。
+        lock = lock.map {
+            LockSummary(id: $0.id, name: $0.name, model: "未知型号", pid: 0,
+                        battery: -1, signal: 0, firmware: "", keyCount: 0,
+                        isConnected: false, safeMode: false, muted: false,
+                        hidden: false, group: "")
+        }
         // 上一会话的残留也要清：失败文案里可能带着锁名/MAC，`phase` 可能停在
         // 「门开了」，`lastStatus` 是上一次真实读数。这些都会在今日页立刻显示。
         lastError = nil
@@ -318,7 +350,7 @@ final class AppModel {
         phase = .idle
         lastStatus = nil
         readLogsAt = nil
-        autoLockLeft = nil
+        resetUnlock()
         lastUnlockAt = nil
         link.clearForDecoy()
         // 剪贴板也要清：进空壳前可能刚复制过一枚动态码（`Clip.set` 有 90 秒有效期），
@@ -339,6 +371,8 @@ final class AppModel {
 
     func unlock() async {
         guard !phase.isBusy else { return }
+        // 上锁/进空壳之后，进行中的任务不能再把门打开 —— 这是门禁最重要的一条。
+        guard AppLock.shared.unlocked else { phase = .idle; return }
         let mac = currentMac
         guard !mac.isEmpty else { phase = .failed("还没有添加门锁"); return }
 
@@ -346,6 +380,17 @@ final class AppModel {
         // 触感只在**结果**上给：按下一下，成功或失败各一下。
         // （早先挂在相位的 `.sensoryFeedback` 上，连上／下发／等回执会连着震四五下。）
         Haptics.impact()
+        phase = .reaching
+        // 自动开门可能正为同一把锁下发 04：告诉它「用户自己按了」，并等它收尾。
+        // 两条开锁命令同时走一条 BLE 链路时，只有一条能挂上 waiter —— 后到的
+        // 必然报「已有命令在等待响应」，而用户只是按了一下开锁。
+        AutoOpenController.shared.noteManualUnlock()
+        var waitedTicks = 0
+        while AutoOpenController.shared.isDispatching, waitedTicks < 40 {
+            try? await Task.sleep(for: .milliseconds(100))
+            waitedTicks += 1
+        }
+        guard AppLock.shared.unlocked else { phase = .idle; return }
         // 自动重试只覆盖**连不上**这一段：命令没发出去，重发是安全的。
         // 命令已经发出、只是没等到回执时**不重试** ——
         // 引擎层对开锁命令刻意不重试（锁可能已经执行了），这一层不能把它绕过去。
@@ -355,7 +400,10 @@ final class AppModel {
             do {
                 try await LockService.shared.ensureConnected(mac: mac)
             } catch {
-                let msg = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                let raw = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                // 空壳里不显示带锁名/MAC 的真实链路错误：这些字段刚被
+                // `clearProjectionsForDecoy` 刻意清掉，失败文案不能又把它们带回来。
+                let msg = DB.isDecoy ? "没能打开门锁，请再试一次。" : raw
                 guard attempt < attempts else {
                     phase = .failed("连不上门锁：\(msg)")
                     lastError = msg
@@ -366,6 +414,8 @@ final class AppModel {
                 try? await Task.sleep(for: .milliseconds(700))
                 continue
             }
+            // 连接期间可能已经退后台超时上锁；此时绝不能再把命令发出去。
+            guard AppLock.shared.unlocked else { phase = .idle; return }
             phase = .sending
             // Engine 的 `unlock` 是「写帧 + 等回执」一次调用，界面看不到中间那一步。
             // 所以把 `.waiting` 放在 await **之前**：环停在 0.86 等待的，是真的在等锁回执；
@@ -380,11 +430,16 @@ final class AppModel {
                     let now = Int64(Date().timeIntervalSince1970 * 1000)
                     lastUnlockAt = now
                     lastActionAt = now
-                    Milestones.recordUnlockSuccess()
-                    // 自动开门的冷却承诺是「距离上次**开门**超过 6 秒」——
-                    // 手动开的锁也算一次开门，否则手动开完立刻走开再靠近，
-                    // 2 秒后就能被自动开门，与设置页写的 6 秒不符。
-                    AutoOpen.setPersistedLastDispatch(mac, Date().timeIntervalSince1970)
+                    // 空壳里的开锁**只开门，不记账**：终身开锁次数与自动开门的
+                    // 上次开门时间戳都会保留到退出空壳之后，成为「这次被胁迫」
+                    // 的持久痕迹。胁迫者看不到，但数据库里多了一条真实记录。
+                    if !DB.isDecoy {
+                        Milestones.recordUnlockSuccess()
+                        // 自动开门的冷却承诺是「距离上次**开门**超过 6 秒」——
+                        // 手动开的锁也算一次开门，否则手动开完立刻走开再靠近，
+                        // 2 秒后就能被自动开门，与设置页写的 6 秒不符。
+                        AutoOpen.setPersistedLastDispatch(mac, Date().timeIntervalSince1970)
+                    }
                     startAutoLockCountdown()
                     try? await Task.sleep(for: .milliseconds(900))
                     if phase == .opened { phase = .idle }
@@ -397,7 +452,8 @@ final class AppModel {
                     Haptics.notify(.error)
                 }
             } catch {
-                let msg = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                let raw = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                let msg = DB.isDecoy ? "没能打开门锁，请再试一次。" : raw
                 phase = .failed(msg)
                 lastError = msg
                 Haptics.notify(.error)
@@ -407,6 +463,7 @@ final class AppModel {
     }
 
     func resetUnlock() {
+        autoLockGen += 1
         autoLockTask?.cancel()
         autoLockTask = nil
         autoLockLeft = nil
@@ -420,17 +477,23 @@ final class AppModel {
     }
 
     private func startAutoLockCountdown() {
+        // 代次守卫：`cancel()` 只是请求取消，旧任务可能已经睡到最后一拍，
+        // 醒来后仍会把新任务的 `autoLockLeft` 覆写成 nil（倒计时闪一下消失）。
+        autoLockGen += 1
+        let generation = autoLockGen
         autoLockTask?.cancel()
-        let interval = DB.tailgate(currentMac)?.interval ?? 6
+        // 空壳里不读真实的自动上锁档位：设置页已按默认 6 秒伪造，
+        // 今日页的「约 N 秒后自动上锁」不能把主人设过的 2/3/4/5 秒如实报出来。
+        let interval = DB.isDecoy ? 6 : (DB.tailgate(currentMac)?.interval ?? 6)
         let total = max(2, interval + 1)
         autoLockLeft = total
         autoLockTask = Task { @MainActor in
             for left in stride(from: total, through: 1, by: -1) {
-                if Task.isCancelled { return }
+                if Task.isCancelled || generation != autoLockGen { return }
                 autoLockLeft = left
                 try? await Task.sleep(for: .seconds(1))
             }
-            autoLockLeft = nil
+            if generation == autoLockGen { autoLockLeft = nil }
         }
     }
 
@@ -468,7 +531,12 @@ final class AppModel {
     @discardableResult
     func readLogs() async -> (read: Int, remaining: Int?)? {
         let mac = currentMac
-        guard busy == nil else { return nil }
+        // `busy` 由 defer 在函数返回前清掉，调用方事后检查它永远拿到 nil。
+        // 把「忙」写成一条明确的结果文案，两个入口才能区分失败与并发拒绝。
+        guard busy == nil else {
+            lastError = "门锁正忙，稍后再读。"
+            return nil
+        }
         // 没有锁时要说清楚：这里原先直接 return nil，界面上一点动静都没有 ——
         // 用户点了「从门锁读一次」，卡片回到原样，像是什么都没发生。
         guard !mac.isEmpty else {
@@ -522,12 +590,23 @@ final class AppModel {
         return DB.members().first { $0.name == owner }?.id
     }
 
+    /// 台账不可解时，凭证写操作一律在**下发前**拒绝。
+    ///
+    /// `DB.saveLedger` 在台账损坏时会静默丢弃这次写入，而锁端那一帧已经真的执行了 ——
+    /// 旧实现随后照样 `return .success`：界面说「已写入」，列表里却永远没有这一条；
+    /// 用户再操作一次，锁里就多出第二条同样口令。宁可在动手前把话说清楚。
+    private func ledgerCorruptRefusal(_ mac: String) -> Error? {
+        guard DB.isLedgerCorrupt(mac) else { return nil }
+        return BLEErrorX.msg("本机台账读取异常，为避免覆盖已有记录，这次没有写入门锁。")
+    }
+
     func addPassword(_ pwd: String, from: String, to: String,
                      owner: String?, note: String?,
                      replacing alias: Int? = nil) async -> Result<Int, Error> {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
         guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
+        if let refusal = ledgerCorruptRefusal(mac) { return .failure(refusal) }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             let newAlias = try await LockService.shared.pwdAdd(pwd: pwd, validFrom: from, validTo: to)
@@ -558,6 +637,7 @@ final class AppModel {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
         guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
+        if let refusal = ledgerCorruptRefusal(mac) { return .failure(refusal) }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             let alias = try await LockService.shared.pwdAdd(pwd: pwd, validFrom: from, validTo: to)
@@ -580,6 +660,7 @@ final class AppModel {
         // 空壳里凭证列表是空的，正常路径到不了这里；仍然守一道 ——
         // 删密码是真删锁里的条目，不能靠"界面看不见"来保证不发生。
         guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
+        if let refusal = ledgerCorruptRefusal(mac) { return .failure(refusal) }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             try await LockService.shared.pwdDelete(alias)
@@ -598,6 +679,11 @@ final class AppModel {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
         guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
+        if let refusal = ledgerCorruptRefusal(mac) { return .failure(refusal) }
+        // 0 是协议里的「不指定」：0B 带着它下发，界面像成功，锁里那条却什么都没变。
+        guard alias > 0 else {
+            return .failure(BLEErrorX.msg("这枚凭证在本机台账里没有有效的锁端编号，无法修改有效期 —— 请删除后重新添加。"))
+        }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             try await LockService.shared.pwdExpire(alias, from, to)
@@ -619,9 +705,16 @@ final class AppModel {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
         guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
+        if let refusal = ledgerCorruptRefusal(mac) { return .failure(refusal) }
         do {
+            // `batch` 来自台账/恢复包，可能是负数或超过 UInt32。
+            // `UInt32(batch)` 会直接 trap —— 删除确认就成了一个必崩的按钮。
+            guard let entry = DB.ledger(mac).fps.first(where: { $0.batch == batch }),
+                  let batchU32 = entry.batchU32 else {
+                return .failure(BLEErrorX.msg("这枚指纹的批次号无效，无法删除 —— 请重新录入。"))
+            }
             try await LockService.shared.ensureConnected(mac: mac)
-            try await LockService.shared.fpDelete(UInt32(batch))
+            try await LockService.shared.fpDelete(batchU32)
             var ledger = DB.ledger(mac)
             ledger.fps.removeAll { $0.batch == batch }
             DB.saveLedger(mac, ledger)
@@ -637,6 +730,7 @@ final class AppModel {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
         guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
+        if let refusal = ledgerCorruptRefusal(mac) { return .failure(refusal) }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             var presses = 0
@@ -676,7 +770,8 @@ final class AppModel {
 
     // MARK: - 锁策略
 
-    func syncTime() async -> Result<(Int, Int), Error> {
+    /// `after == nil` = 校时指令已下发，但没能回读确认（不是“偏差为 0”）。
+    func syncTime() async -> Result<(Int, Int?), Error> {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
         // 空壳里不改锁钟：这是对门锁的真实写入，而空壳的界面按「没有门锁」伪装。
@@ -819,6 +914,14 @@ final class AppModel {
     }
 
     // MARK: - 小工具
+
+    /// 台账里的 `at` 是 `Double` 毫秒，来自备份时没有任何范围校验。
+    /// `Int64(Double)` 在超出 Int64 或 NaN 时会**直接 trap**：一条 `"at": 1e300`
+    /// 的恢复包就能让凭证详情页每次打开都崩。展示前统一夹到可表示的范围。
+    static func safeMillis(_ value: Double) -> Double {
+        guard value.isFinite else { return 0 }
+        return min(max(value, 0), Double(When.permanentCutoff))
+    }
 
     static func millis(_ text: String) -> Int64? {
         guard !text.isEmpty else { return nil }

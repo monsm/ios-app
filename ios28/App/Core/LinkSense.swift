@@ -133,22 +133,35 @@ final class LinkSenseModel {
         }
     }
 
-    func readRSSI() {
-        guard !mac.isEmpty else { return }
+    /// 读一次信号。`onResult` 收到的是**这一次**的结果（nil = 没读到），
+    /// 不再让调用方等一拍后去猜 `lastRSSI` 是不是刚更新的 —— 失败时它会
+    /// 把盘上的旧值当成“当前信号”报出来。
+    func readRSSI(onResult: (@MainActor (Int?) -> Void)? = nil) {
+        guard !mac.isEmpty else { onResult?(nil); return }
+        let expected = mac
         BLEService.shared.readLinkRSSI { value in
-            guard let value else { return }
-            Task { @MainActor in LinkSenseModel.shared.record(value) }
+            Task { @MainActor in
+                // 迟到的回包可能落在换锁之后、或空壳已经生效之后 ——
+                // 不能再把它记到当前这把锁名下，更不能在空壳里显示真实 dBm。
+                guard LinkSenseModel.shared.mac == expected, !DB.isDecoy else {
+                    onResult?(nil)
+                    return
+                }
+                if let value { LinkSenseModel.shared.record(value) }
+                onResult?(value)
+            }
         }
     }
 
     func record(_ value: Int) {
+        // 空壳里连内存读数都不留：今日页的「信号」会如实显示它，
+        // 等于把“主人刚才离门多近”摆在被胁迫者眼前。
+        guard !DB.isDecoy else { return }
         lastRSSI = value
         history.append(value)
         if history.count > Self.rssiHistoryCap {
             history.removeFirst(history.count - Self.rssiHistoryCap)
         }
-        // 空壳里只在内存里显示，不落盘 —— 别给下一会话留下这次胁迫期间的信号记录。
-        if DB.isDecoy { return }
         DB.store.set("kf_linkrssi_" + mac, value)
         DB.store.set("kf_rssi_hist_" + mac, history)
     }
