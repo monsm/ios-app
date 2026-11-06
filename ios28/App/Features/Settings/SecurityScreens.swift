@@ -99,7 +99,8 @@ struct SecurityScreen: View {
                     }
             }
 
-            SectionHead(index: "03", title: "状态")
+            // 空壳里「只读试验」整段不摆，编号要跟着连续，不能从 01 直接跳到 03。
+            SectionHead(index: DB.isDecoy ? "02" : "03", title: "状态")
             if notifyStatus == .authorized {
                 ContentRow(symbol: "bell", tone: .cool, title: "通知",
                            subtitle: "已授权 · 到期与低电提醒会送达")

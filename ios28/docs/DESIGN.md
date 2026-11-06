@@ -141,14 +141,14 @@ Shell（3 Tab）
 
 ---
 
-## 7. 页面清单（21 个 Dest + 3 个 Tab 根）
+## 7. 页面清单（20 个 Dest + 3 个 Tab 根 + 设置首页）
 
 | 域 | 页面 |
 |---|---|
 | 今日 | Today（含未配锁空态） |
 | 通行 | Access（凭证/成员/手机钥匙三段）、CredentialDetail、CredentialCreate、MobileKeys、Zotp、MemberDetail、MemberCreate |
 | 记录 | Log、EventDetail、Insights |
-| 设置 | Settings、Locks、LockPolicy、LockInfo、Pairing、AutoOpen、Hardware、Dfu、Diagnostics、Security、Backup、Appearance、About |
+| 设置 | Locks、LockPolicy、LockInfo、Pairing、AutoOpen、Hardware、Dfu、Diagnostics、Security、Backup、Appearance、About |
 | Sheet | Gate、Passcode、Expiry、Handoff、Settings |
 
 ---
