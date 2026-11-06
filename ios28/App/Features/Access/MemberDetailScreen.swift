@@ -45,6 +45,18 @@ struct MemberDetailScreen: View {
         } message: {
             Text("名下的凭证会变成「未归属」，锁端不会被删除。")
         }
+        // 档案里的角色 / 分组 / 备注 / 归档状态要先灌进表单。
+        // 不灌的话：管理员打开自己的档案，分段控件停在「成员」；
+        // 在分组框里动一下，就会把 remark 和归档状态一起写成空。
+        .task {
+            guard !loaded else { return }
+            let ext = MemberHub.ext(id)
+            role = MemberRole.parse(ext.role)
+            groupTag = ext.groupTag
+            note = ext.note
+            archived = ext.archived
+            loaded = true
+        }
     }
 
     @ViewBuilder
@@ -165,11 +177,14 @@ struct MemberDetailScreen: View {
 
     private func save(role newRole: MemberRole) {
         guard !id.isEmpty else { return }
-        var ext = MemberHub.ext(id)
+        let old = MemberHub.ext(id)
+        var ext = old
         ext.role = newRole.fromEngine
         ext.groupTag = groupTag
         ext.note = note
         ext.archived = archived
+        // 灌入档案那一下也会触发 onChange；值没变就不写。
+        guard ext != old else { return }
         MemberHub.saveExt(id, ext)
         app.reloadCredentials()
     }
