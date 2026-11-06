@@ -52,8 +52,8 @@ enum T {
 
     enum F {
         static let display = TypeStyle(size: 44, weight: .regular, design: .serif, relativeTo: .largeTitle)
-        static let displayS = TypeStyle(size: 34, weight: .regular, design: .serif, relativeTo: .title1)
-        static let title = TypeStyle(size: 28, weight: .semibold, design: .default, relativeTo: .title1)
+        static let displayS = TypeStyle(size: 34, weight: .regular, design: .serif, relativeTo: .title)
+        static let title = TypeStyle(size: 28, weight: .semibold, design: .default, relativeTo: .title)
         static let title2 = TypeStyle(size: 22, weight: .semibold, design: .default, relativeTo: .title2)
         static let headline = TypeStyle(size: 17, weight: .semibold, design: .default, relativeTo: .headline)
         static let body = TypeStyle(size: 16, weight: .regular, design: .default, relativeTo: .body)
@@ -61,7 +61,7 @@ enum T {
         static let footnote = TypeStyle(size: 13, weight: .regular, design: .default, relativeTo: .footnote)
         static let caption = TypeStyle(size: 11.5, weight: .regular, design: .default, relativeTo: .caption2)
         static let kicker = TypeStyle(size: 10.5, weight: .semibold, design: .monospaced, relativeTo: .caption2)
-        static let mono = TypeStyle(size: 12.5, weight: .regular, design: .monospaced, relativeTo: .caption1)
+        static let mono = TypeStyle(size: 12.5, weight: .regular, design: .monospaced, relativeTo: .caption)
         static let monoBig = TypeStyle(size: 17, weight: .medium, design: .monospaced, relativeTo: .callout)
         static let wordmark = TypeStyle(size: 40, weight: .regular, design: .serif, relativeTo: .largeTitle)
         static let wordmarkHero = TypeStyle(size: 68, weight: .regular, design: .serif, relativeTo: .largeTitle)

@@ -90,7 +90,19 @@ struct CredentialDetailScreen: View {
                        subtitle: "这枚凭证还没有指定成员。")
         }
 
+        let starred = CredStarStore.isStarred(app.currentMac, id: item.id)
+
         SectionHead(index: "02", title: "更多")
+        Button {
+            _ = CredStarStore.toggle(app.currentMac, id: item.id)
+            app.reloadCredentials()
+        } label: {
+            ContentRow(symbol: starred ? "star.fill" : "star",
+                       title: starred ? "取消星标" : "加星标",
+                       subtitle: "星标只在本机，用来把常用的排在前面", chevron: true)
+        }
+        .buttonStyle(.plain)
+
         Button { editingWindow = true } label: {
             ContentRow(symbol: "calendar", title: "修改有效期", chevron: true)
         }

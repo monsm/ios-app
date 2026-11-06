@@ -41,7 +41,7 @@ struct PairingScreen: View {
                 }
                 .padding(.top, 22)
 
-                if let pairing {
+                if pairing != nil {
                     GlassSurface(radius: 20) {
                         HStack(spacing: 12) {
                             ProgressView().tint(T.C.brass)

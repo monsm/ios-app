@@ -74,7 +74,12 @@ struct CredentialsSection: View {
     }
 
     private var filtered: [Credential] {
+        let mac = app.currentMac
+        let stars = CredStarStore.all(mac)
         let base = app.credentials.sorted { lhs, rhs in
+            let ls = stars.firstIndex(of: lhs.id) != nil
+            let rs = stars.firstIndex(of: rhs.id) != nil
+            if ls != rs { return ls }
             if lhs.isExpiringSoon != rhs.isExpiringSoon { return lhs.isExpiringSoon }
             return lhs.createdAt > rhs.createdAt
         }
