@@ -54,6 +54,7 @@ body{margin:0;background:#0C0D10;font-family:"Segoe UI","Microsoft YaHei",system
 .chead span{font-size:13px;color:var(--ink4)}
 .csub{font-size:13px;color:var(--ink4);margin-top:2px}
 .rule{height:1px;background:var(--line);margin:12px 0}
+.dotrule{height:4px;margin:12px 0;background-image:radial-gradient(circle,var(--line) 0.6px,transparent 0.7px);background-size:6px 4px;background-position:center}
 .row{display:flex;align-items:center;gap:10px;min-height:24px;font-size:15px}
 .row .tag{font-size:12px;width:64px}
 .row .val{margin-left:auto;font-weight:600}

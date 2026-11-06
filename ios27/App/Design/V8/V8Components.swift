@@ -211,13 +211,25 @@ struct VDivider2: View {
 /// 每个都要参与布局与合成）。改成一条**虚线描边**：同样的视觉（点 + 间隔），只有一个 Shape。
 struct VDotRule: View {
     var body: some View {
-        // 2026-11-05（Round 3 · 专业 iOS 27）：点线是参考图的签名元素，但在真机上
-        // 它读起来像「装饰性虚线」而不是原生分隔线。原生列表统一用 0.5pt 实线，
-        // 这里直接复用结构分割线的颜色与粗细 —— 更安静，也更像系统设置。
-        Rectangle()
-            .fill(V8.C.line)
-            .frame(height: V8.S.hair * (DB.store.getBool("kf_hc") ? 2 : 1))
-            .accessibilityHidden(true)
+        // 2026-11-06（V9 · 液态仪器）：点线恢复为「数据网格」签名 —— 与结构分割线
+        // (VDivider2 实线) 区分开。实现是一条 1.2pt 高的 Canvas 点带：点距 6pt、
+        // 点径 1.2pt、颜色 line（≥1.25:1 可感知断言仍过）。单个 Shape，无性能成本。
+        // VDashLine 早已删除（dead-code 闸门确认）；这里不复活旧 Shape，直接 SwiftUI 原生画法。
+        Canvas { context, size in
+            let dot = CGSize(width: 1.2, height: 1.2)
+            var x: CGFloat = 0
+            let y = size.height / 2 - dot.height / 2
+            let line = DB.store.getBool("kf_hc") ? V8.C.ink4 : V8.C.line
+            while x < size.width {
+                context.fill(
+                    Path(ellipseIn: CGRect(origin: CGPoint(x: x, y: y), size: dot)),
+                    with: .color(line)
+                )
+                x += 6
+            }
+        }
+        .frame(height: V8.S.gapS / 2)
+        .accessibilityHidden(true)
     }
 }
 
