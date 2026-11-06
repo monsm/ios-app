@@ -8,12 +8,16 @@ import Foundation
 enum CredStarStore {
     static func key(_ mac: String) -> String { "kf_cstar_ui_" + DB.normalizeMac(mac) }
 
+    /// 读星标集合。注意取值的参数序：`DB.get` 是「类型在前、键在后」；
+    /// 而底层 `Store.get` 两个序都合法，Swift 按参数序解析重载 —— 写反了会静默拿到 nil。
     static func all(_ mac: String) -> Set<String> {
         Set(DB.get([String].self, key(mac)) ?? [])
     }
 
+    /// 写星标集合。空集合直接删键，不留一个 `[]` 的空壳。
+    /// 注意写值的参数序：`Store.set` 是「键在前、值在后」，与 `DB.set`（值在前）相反。
     static func set(_ mac: String, _ stars: Set<String>) {
-        if stars.firstIndex(of: id) != nil {
+        if stars.isEmpty {
             DB.store.remove(key(mac))
         } else {
             DB.store.set(key(mac), stars.sorted())
@@ -24,18 +28,14 @@ enum CredStarStore {
         all(mac).firstIndex(of: id) != nil
     }
 
+    /// 切换星标，返回切换之后的状态（true = 现在是星标）。
+    @discardableResult
     static func toggle(_ mac: String, id: String) -> Bool {
         var stars = all(mac)
-        let on: Bool
-        if stars.firstIndex(of: id) != nil {
-            stars.remove(id)
-            on = false
-        } else {
-            stars.insert(id)
-            on = true
-        }
+        let wasOn = stars.remove(id) != nil
+        if !wasOn { stars.insert(id) }
         set(mac, stars)
-        return on
+        return !wasOn
     }
 }
 
