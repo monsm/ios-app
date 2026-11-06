@@ -147,7 +147,7 @@ struct MobileKeysScreen: View {
                     .type(T.F.body)
                     .fontWeight(.medium)
                     .foregroundStyle(T.C.ink)
-                Text(key.forever ? "永久有效" : "到 \(key.validTo) 失效")
+                Text(key.forever ? "永久有效" : validUntilText(key))
                     .type(T.F.caption)
                     .foregroundStyle(T.C.ink3)
             }
@@ -166,6 +166,15 @@ struct MobileKeysScreen: View {
             .buttonStyle(PressStyle())
         }
         .padding(.vertical, 12)
+    }
+
+    /// 到期读法。引擎存的是 `yyyy-MM-dd HH:mm:ss` 的机器串 ——
+    /// 直接印出来是「到 2026-11-13 12:00:00 失效」，像日志而不是给人看的话。
+    private func validUntilText(_ key: MobileKey) -> String {
+        guard let ms = AppModel.millis(key.validTo), ms < When.permanentCutoff else { return "永久有效" }
+        if ms <= Int64(Date().timeIntervalSince1970 * 1000) { return "已过期" }
+        let date = DF.cached("M 月 d 日 HH:mm").string(from: Date(timeIntervalSince1970: Double(ms) / 1000))
+        return "\(date) 失效"
     }
 
     private func issue() async {
