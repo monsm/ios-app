@@ -79,6 +79,7 @@ Keychain 里的 `pin`/`ekey` 副本。但**锁端那张钥匙没有被吊销** �
 |---|---|---|
 | `AutoOpenKit.faceFresh(...)` | 严格档增加 30 秒上界 | 界面写着「刷一次，之后 30 秒内有效」 |
 | `AutoOpenKit.makeContext(...)` | 「上次开门」取内存与持久值的较大者 | 界面写着「距离上次开门超过 6 秒」 |
+| `AutoOpenKit.onForeground(...)` | 空壳里直接返回 | 刷脸提示与审计条目都是真实副作用/使用痕迹 |
 
 `faceFresh` 原先只要求 `lastFace >= strictSince`，**没有上界**：上一次前台刷的脸可以被无限期复用，
 与设置页「之后 30 秒内有效」不符。现在超过 30 秒的确认一律不算数；`pendingPrompt`（提示进行中）

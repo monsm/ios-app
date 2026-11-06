@@ -322,6 +322,9 @@ final class AutoOpenController {
     }
 
     func onForeground(mac: String) {
+        // 空壳里自动开门整体不参与：不轮询、不刷脸、也不写审计
+        // （审计条目本身就是「主人平时用自动开门」的使用痕迹）。
+        guard !AppLock.shared.decoy else { return }
         guard AutoOpen.on, !mac.isEmpty else { return }
         guard !AutoOpen.isSuspended(mac: mac) else {
             AutoOpen.audit(mac, "拒开 rc=26 防拆挂起中，面容不刷新")
