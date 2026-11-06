@@ -451,7 +451,14 @@ struct AvatarBadge: View {
             .font(.system(size: size * 0.37, weight: .semibold))
             .foregroundStyle(T.C.brass)
             .frame(width: size, height: size)
-            .liquidGlass(in: Circle(), tint: GlassMetrics.tint, interactive: true)
+            // 头像本身是 Button 的 label：按压缩放由 PressStyle 给，玻璃不再挂
+            // `.interactive()` —— 两层交互叠在一起时，玻璃的命中层可能把点击收走。
+            .liquidGlass(in: Circle(), tint: GlassMetrics.tint)
+            // 玻璃会改变命中区域：不补 contentShape 时，看起来 38pt 的圆实际
+            // 只有中间字形可点，点边缘等于没点。TabBar 的每一格也是同一处置。
+            // 顺带把触达补到设计下限 44pt（视觉仍是 38pt）。
+            .frame(width: max(44, size), height: max(44, size))
+            .contentShape(Rectangle())
             .shadow(color: T.C.shadow, radius: 8, x: 0, y: 4)
     }
 }

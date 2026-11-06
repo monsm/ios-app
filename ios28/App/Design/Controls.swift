@@ -481,6 +481,9 @@ struct SheetChrome<Content: View>: View {
                         .foregroundStyle(T.C.ink2)
                         .frame(width: 32, height: 32)
                         .liquidGlass(in: Circle(), tint: GlassMetrics.tint, interactive: true)
+                        // 与头像同一处置：玻璃改变命中区域，补 44pt 的明确触达区。
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("关闭")
