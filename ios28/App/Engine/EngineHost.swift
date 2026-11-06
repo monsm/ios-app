@@ -15,6 +15,11 @@ protocol EngineHost: AnyObject {
     var lockLink: LockService { get }
     /// 最近一次读到的锁状态（nil = 没读过）。
     var lastStatus: StatusSnapshot? { get }
+    /// 宿主是否正占用门锁链路（读日志 / 手动开锁）。
+    ///
+    /// 单条 BLE 链路只挂得下一个 waiter；自动开门在下发 04 前要看这一眼，
+    /// 否则会撞上「已有命令在等待响应」并把自动开锁解武装。
+    var linkBusy: Bool { get }
     /// 请求把界面切到「钥匙」页并定位到某条凭证。
     func requestCredentialRoute(alias: Int?)
 }

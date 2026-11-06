@@ -998,6 +998,9 @@ extension AppModel: EngineHost {
 
     var lockLink: LockService { LockService.shared }
 
+    /// 自动开门在下发前用这一眼避开读日志 / 手动开锁 —— 三者共用一条 BLE waiter。
+    var linkBusy: Bool { busy != nil || phase.isBusy }
+
     func requestCredentialRoute(alias: Int?) {
         router?.openCredential(alias.map { "pwd:\($0)" } ?? "")
     }

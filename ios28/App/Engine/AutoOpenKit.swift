@@ -396,6 +396,10 @@ final class AutoOpenController {
     func attempt(mac: String) {
         guard AutoOpen.on, !inFlight else { return }
         guard let host = EngineHostRegistry.host, host.currentKeychain?.mac == mac else { return }
+        // 读日志 / 手动开锁正占着链路：这次先不发，也不消耗本次接近事件。
+        // 两个入口都在 MainActor 上，`busy` / `inFlight` 的置位与这里没有 await ——
+        // 先到的一方一定被后到的一方看见，不会两边同时判空。
+        guard !host.linkBusy else { return }
         guard !eventFired.contains(mac) else { return }
         let ctx = makeContext(mac: mac, host: host)
         let rej = ctx.rejectReason(autoOpenOn: true,
@@ -454,8 +458,9 @@ final class AutoOpenController {
                   UIApplication.shared.applicationState == .active,
                   AppLock.shared.unlocked,
                   !AppLock.shared.decoy,
+                  EngineHostRegistry.host?.linkBusy != true,
                   AutoOpenController.shared.manualUnlockAt < startedAt else {
-                AutoOpen.audit(mac, "下发前复查：开关已关、App 不在前台、已上锁、进入空壳或用户已手动开锁，放弃本次自动开锁")
+                AutoOpen.audit(mac, "下发前复查：开关已关、App 不在前台、已上锁、进入空壳、链路正忙或用户已手动开锁，放弃本次自动开锁")
                 return
             }
             let rc = try await LockService.shared.unlock(mac: mac)

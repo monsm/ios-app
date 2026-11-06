@@ -125,6 +125,19 @@ Keychain 里的 `pin`/`ekey` 副本。但**锁端那张钥匙没有被吊销** �
 下发前复查补上 `AppLock.unlocked && !decoy`；③ 用户手动开锁期间，自动那条若也发 04，
 两条命令会在 BLE waiter 上相撞 —— 自动下发前复查 `manualUnlockAt`，让路给手动。
 
+## 本版对 Engine 的第九处改动：自动开门与读日志的单 waiter 互斥
+
+| 位置 | 改了什么 | 为什么 |
+|---|---|---|
+| `EngineHost` | 新增 `linkBusy`（`AppModel` 实现为 `busy != nil \|\| phase.isBusy`） | 让自动开门在下发前知道链路正被读日志 / 手动开锁占用 |
+| `AutoOpenKit.attempt` | 链路忙时静默跳过本次尝试（不写 `eventFired`、不解武装） | 否则 04 会撞上「已有命令在等待响应」，`catch` 里 `armed = false`，用户必须离开门口再回来才会重试 |
+| `AutoOpenKit.dispatch` | 下发前复查再查一次 `linkBusy` | 与 `attempt` 同一道闸，把判断放在真正发包的前一刻 |
+
+**为什么没有竞态。** `attempt`、`readLogs`、`unlock` 都在 MainActor 上：
+`inFlight` 与 `busy` / `phase` 的置位和对方的守卫之间没有 `await`，
+先到的一方一定能被后到的一方看见 —— 两边不会同时判空，也不会互相永久阻塞。
+读日志结束、链路空下来后，下一次 RSSI 采样会重新尝试，本次接近事件没有被消耗。
+
 ## 为编译而补的七个符号
 
 Engine 反向引用了若干上一版属于界面层的类型。这一版在 `App/Core/`（`Tone` 在 `App/Design/`）里按**同名同签名**重新实现，因此 Engine 源码一行都不用改：
