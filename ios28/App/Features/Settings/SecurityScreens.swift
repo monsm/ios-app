@@ -13,10 +13,27 @@ struct SecurityScreen: View {
     @State private var sheet: SheetKind?
     @State private var trial = TrialGuard.isOn
     @State private var errorLine: String?
+    /// 通知授权状态。
+    ///
+    /// Engine 的 `NotifyAuth.status` 是**同步**读的（内部 `DispatchSemaphore.wait` 最多 2 秒），
+    /// 直接写在 body 里会让这一屏每次求值都卡住主线程 —— `label` 还会再读一次，合计最多 4 秒。
+    /// 这里改成用系统自带的 async 接口读一次，缓存在状态里。
+    @State private var notifyStatus: UNAuthorizationStatus = .notDetermined
 
     private enum SheetKind: String, Identifiable {
         case passcode, duress
         var id: String { rawValue }
+    }
+
+    private var notifyLabel: String {
+        switch notifyStatus {
+        case .authorized: return "已开启"
+        case .denied: return "已拒绝"
+        case .notDetermined: return "未询问"
+        case .provisional: return "临时授权"
+        case .ephemeral: return "会话授权"
+        @unknown default: return "未知"
+        }
     }
 
     var body: some View {
@@ -68,9 +85,9 @@ struct SecurityScreen: View {
 
             SectionHead(index: "03", title: "状态")
             ContentRow(symbol: "bell", tone: .cool, title: "通知",
-                       subtitle: NotifyAuth.status == .authorized
+                       subtitle: notifyStatus == .authorized
                         ? "已授权 · 到期与低电提醒会送达"
-                        : "未授权（\(NotifyAuth.label)） · 提醒只在 App 内显示")
+                        : "未授权（\(notifyLabel)） · 提醒只在 App 内显示")
 
             if let errorLine {
                 Text(errorLine)
@@ -91,6 +108,10 @@ struct SecurityScreen: View {
             case .passcode: PasscodeSheet(kind: .passcode)
             case .duress: PasscodeSheet(kind: .duress)
             }
+        }
+        .task {
+            let settings = await UNUserNotificationCenter.current().notificationSettings()
+            notifyStatus = settings.authorizationStatus
         }
     }
 }

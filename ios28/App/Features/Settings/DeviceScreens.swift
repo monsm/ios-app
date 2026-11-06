@@ -552,6 +552,7 @@ struct DiagnosticsScreen: View {
     @State private var busy = false
     @State private var message: String?
     @State private var raw = false
+    @State private var confirmingRepair = false
 
     private var frames: [String] {
         raw ? LockService.shared.recentFrames.map { FrameRedact.apply($0) } : []
@@ -581,7 +582,7 @@ struct DiagnosticsScreen: View {
                     Task { await echo() }
                 }
                 GhostButton(title: "修复 PIN 池", symbol: "wrench") {
-                    Task { await repair() }
+                    confirmingRepair = true
                 }
             }
             .padding(.top, 12)
@@ -619,6 +620,17 @@ struct DiagnosticsScreen: View {
                 .padding(.top, 4)
         }
         .toolbar(.hidden, for: .navigationBar)
+        // 修复 PIN 池会让**别的设备**上那把钥匙失效 —— 不可逆，值得先问一句。
+        .confirmationDialog("重写这把锁的 PIN 池？",
+                            isPresented: $confirmingRepair,
+                            titleVisibility: .visible) {
+            Button("重写", role: .destructive) {
+                Task { await repair() }
+            }
+            Button("取消", role: .cancel) {}
+        } message: {
+            Text("只换锁里的 PIN 池，不换母钥：本机的钥匙仍然有效，但其他设备上已配的旧钥匙会失效。")
+        }
     }
 
     private func echo() async {
