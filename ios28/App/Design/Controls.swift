@@ -407,6 +407,9 @@ extension NavRow where Trailing == EmptyView {
 
 struct TabBar: View {
     @Binding var selection: Int
+    /// 第 4 个按钮：设置。它不是 Tab（不进 `TabSlot`、不参与选中态），
+    /// 点它是拉起独立的设置栈 sheet。
+    var onSettings: () -> Void
 
     private let items: [(symbol: String, title: String)] = [
         ("sun.max", "今日"),
@@ -444,6 +447,24 @@ struct TabBar: View {
                 .accessibilityLabel(items[index].title)
                 .accessibilityAddTraits(index == selection ? .isSelected : [])
             }
+
+            // 设置入口：与三个 Tab 同一排、同一尺寸。它不是「第四个目的地」，
+            // 所以没有选中态和底部圆点 —— 按下即拉起设置 sheet。
+            Button(action: onSettings) {
+                VStack(spacing: 4) {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 19, weight: .regular))
+                        .foregroundStyle(T.C.ink3)
+                    Text("设置")
+                        .type(T.F.caption)
+                        .foregroundStyle(T.C.ink3)
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 54)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("设置")
         }
         .padding(.horizontal, 8)
         // Tab 栏是浮在内容之上、每个标签都可点的功能层 —— 原生液态玻璃最合适的位置。

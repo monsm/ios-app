@@ -53,13 +53,9 @@ struct TodayScreen: View {
                     .foregroundStyle(T.C.ink2)
             }
             Spacer(minLength: 12)
-            Button {
-                router.openSettings()
-            } label: {
-                AvatarBadge(initial: initial, size: 38)
-            }
-            .buttonStyle(PressStyle())
-            .accessibilityLabel("设置")
+            // 设置入口在底栏第 4 个按钮；头像只做身份标记，不再假装可点。
+            AvatarBadge(initial: initial, size: 38)
+                .accessibilityHidden(true)
         }
         .padding(.top, 8)
         .frame(minHeight: 44)
@@ -379,8 +375,8 @@ struct EmptyHome: View {
             HStack {
                 Kicker(text: "还没有门锁", dot: true, tint: T.C.ink2)
                 Spacer()
-                Button { router.openSettings() } label: { AvatarBadge(initial: "你", size: 38) }
-                    .buttonStyle(PressStyle())
+                AvatarBadge(initial: "你", size: 38)
+                    .accessibilityHidden(true)
             }
             .padding(.top, 8)
 
@@ -451,14 +447,11 @@ struct AvatarBadge: View {
             .font(.system(size: size * 0.37, weight: .semibold))
             .foregroundStyle(T.C.brass)
             .frame(width: size, height: size)
-            // 头像本身是 Button 的 label：按压缩放由 PressStyle 给，玻璃不再挂
-            // `.interactive()` —— 两层交互叠在一起时，玻璃的命中层可能把点击收走。
+            // 头像只做身份标记，不是可点入口；玻璃由中央 modifier 画在背景层，
+            // 且不参与命中测试（见 LiquidGlass.swift）。
             .liquidGlass(in: Circle(), tint: GlassMetrics.tint)
-            // 玻璃会改变命中区域：不补 contentShape 时，看起来 38pt 的圆实际
-            // 只有中间字形可点，点边缘等于没点。TabBar 的每一格也是同一处置。
-            // 顺带把触达补到设计下限 44pt（视觉仍是 38pt）。
+            // 视觉仍是 38pt，布局上留出 44pt 的呼吸位。
             .frame(width: max(44, size), height: max(44, size))
-            .contentShape(Rectangle())
             .shadow(color: T.C.shadow, radius: 8, x: 0, y: 4)
     }
 }

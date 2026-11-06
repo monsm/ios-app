@@ -1,6 +1,6 @@
 // Router.swift —— 导航的唯一漏斗。
 //
-// 三个 Tab 各自一条 NavigationStack path；设置是独立的一棵栈，从右上角头像进入。
+// 三个 Tab 各自一条 NavigationStack path；设置是独立的一棵栈，从底栏第 4 个按钮进入。
 // 页面之间不互相引用，跨页跳转一律走这里。
 import SwiftUI
 

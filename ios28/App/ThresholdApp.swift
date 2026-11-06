@@ -91,7 +91,7 @@ struct ShellView: View {
     /// `openSettings()` 会在同一拍里改 `settingsPath` 和 `settingsOpen`，
     /// 而绑定取值发生在 SwiftUI 的观察范围之外时，弹层可能“状态已经 true、
     /// 界面却没弹”。`onChange` 会显式读取这个属性、建立观察，再到本地状态，
-    /// 路径与呈现分开两拍落地，头像点下去一定有结果。
+    /// 路径与呈现分开两拍落地，底栏的设置按钮按下去一定有结果。
     @State private var settingsShown = false
 
     var body: some View {
@@ -115,10 +115,13 @@ struct ShellView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            TabBar(selection: Binding(
-                get: { router.tab.rawValue },
-                set: { router.tab = TabSlot(rawValue: $0) ?? .today }
-            ))
+            TabBar(
+                selection: Binding(
+                    get: { router.tab.rawValue },
+                    set: { router.tab = TabSlot(rawValue: $0) ?? .today }
+                ),
+                onSettings: { router.openSettings() }
+            )
         }
         .onChange(of: router.settingsOpen, initial: true) { _, open in
             if settingsShown != open { settingsShown = open }
