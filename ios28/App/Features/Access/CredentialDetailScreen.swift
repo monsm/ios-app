@@ -349,7 +349,7 @@ struct ExpirySheet: View {
                             .type(T.F.footnote)
                             .padding(.vertical, 8)
                         DatePicker("到期", selection: $end,
-                                   in: start.addingTimeInterval(60) ...,
+                                   in: start.addingTimeInterval(60)...,
                                    displayedComponents: [.date, .hourAndMinute])
                             .type(T.F.footnote)
                             .padding(.vertical, 8)

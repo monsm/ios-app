@@ -97,9 +97,13 @@ struct TodayScreen: View {
                     HStack {
                         Kicker(text: "THRESHOLD · \(app.lock?.name ?? "门锁")", dot: true, tint: T.C.ink2)
                         Spacer()
-                        Text(When.clock(Int64(Date().timeIntervalSince1970)))
-                            .type(T.F.mono)
-                            .foregroundStyle(T.C.ink2)
+                        // 这一行是「现在几点」。原先直接读 `Date()` —— 视图不重画它就不走，
+                        // 停在打开 App 的那一刻。用时间线让它自己每分钟走一格。
+                        TimelineView(.periodic(from: .now, by: 30)) { context in
+                            Text(When.clock(Int64(context.date.timeIntervalSince1970)))
+                                .type(T.F.mono)
+                                .foregroundStyle(T.C.ink2)
+                        }
                     }
                     Spacer(minLength: 12)
                     DisplayLine(text: heroLine, size: 46)
@@ -245,7 +249,16 @@ struct TodayScreen: View {
         case "again":
             Task { await app.unlock() }
         case "syncTime":
-            Task { _ = await app.syncTime() }
+            Task {
+                // 校时失败要说话：这个快捷动作没有自己的错误出口，
+                // 结果落到页脚那一行（`app.lastError`）。原先 `_ =` 把它扔了 ——
+                // 点了「校时」，失败了也一点动静都没有。
+                if case .failure(let error) = await app.syncTime() {
+                    app.lastError = error.localizedDescription
+                } else {
+                    app.lastError = nil
+                }
+            }
         case "backup":
             router.openSettings()
             router.pushSettings(.backup)
