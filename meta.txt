@@ -1,0 +1,11 @@
+commit=587e3bb4fec45fab404b3276a440e80009d95fff
+run=42170673983
+job=build
+errors=       0
+project=yes
+swift_files=133
+build_log=yes
+archive_log=yes
+build_ok=1
+archive_ok=1
+warnings=28

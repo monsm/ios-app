@@ -1,0 +1,834 @@
+Command line invocation:
+    /Applications/Xcode_27.1.app/Contents/Developer/usr/bin/xcodebuild build -project LockKeeper.xcodeproj -scheme LockKeeper -destination generic/platform=iOS -derivedDataPath build/DerivedData -configuration Debug SWIFT_COMPILATION_MODE=wholemodule CURRENT_PROJECT_VERSION=907 CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=
+
+Build settings from command line:
+    CODE_SIGN_IDENTITY = 
+    CODE_SIGNING_ALLOWED = NO
+    CURRENT_PROJECT_VERSION = 907
+    SWIFT_COMPILATION_MODE = wholemodule
+
+note: Using codesigning identity override: 
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (1 target)
+    Target 'LockKeeper' in project 'LockKeeper' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode_27.1.app/Contents/Developer/usr/bin/actool --print-asset-tag-combinations --output-format xml1 /Users/runner/work/ios-app/ios-app/ios27/App/Assets.xcassets
+
+ExecuteExternalTool /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode_27.1.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: 58c2778770acc1769480105f9d56f1f2
+Build description path: /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/XCBuildData/58c2778770acc1769480105f9d56f1f2.xcbuilddata
+CreateBuildDirectory /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules
+    cd /Users/runner/work/ios-app/ios-app/ios27/LockKeeper.xcodeproj
+    builtin-create-build-directory /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules
+
+CreateBuildDirectory /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/ModuleCache.noindex
+    cd /Users/runner/work/ios-app/ios-app/ios27/LockKeeper.xcodeproj
+    builtin-create-build-directory /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/ModuleCache.noindex
+
+CreateBuildDirectory /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/CompilationCache.noindex
+    cd /Users/runner/work/ios-app/ios-app/ios27/LockKeeper.xcodeproj
+    builtin-create-build-directory /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/CompilationCache.noindex
+
+CreateBuildDirectory /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products
+    cd /Users/runner/work/ios-app/ios-app/ios27/LockKeeper.xcodeproj
+    builtin-create-build-directory /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products
+
+CreateBuildDirectory /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex
+    cd /Users/runner/work/ios-app/ios-app/ios27/LockKeeper.xcodeproj
+    builtin-create-build-directory /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex
+
+ClangStatCache /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKStatCaches.noindex/iphoneos27.1-24A94232-e829b21a6f8c9b70876ba0858053c0442866d66f27be705873c55a4609c58824.sdkstatcache
+    cd /Users/runner/work/ios-app/ios-app/ios27/LockKeeper.xcodeproj
+    /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk -o /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKStatCaches.noindex/iphoneos27.1-24A94232-e829b21a6f8c9b70876ba0858053c0442866d66f27be705873c55a4609c58824.sdkstatcache
+
+CreateBuildDirectory /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos
+    cd /Users/runner/work/ios-app/ios-app/ios27/LockKeeper.xcodeproj
+    builtin-create-build-directory /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos
+
+WriteAuxiliaryFile /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper-36f3bd396133ba36666510787ada72ff-VFS-iphoneos/all-product-headers.yaml
+    cd /Users/runner/work/ios-app/ios-app/ios27/LockKeeper.xcodeproj
+    write-file /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper-36f3bd396133ba36666510787ada72ff-VFS-iphoneos/all-product-headers.yaml
+
+CreateBuildDirectory /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+    cd /Users/runner/work/ios-app/ios-app/ios27/LockKeeper.xcodeproj
+    builtin-create-build-directory /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+
+CreateBuildDirectory /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/PrecompiledHeaders
+    cd /Users/runner/work/ios-app/ios-app/ios27/LockKeeper.xcodeproj
+    builtin-create-build-directory /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/PrecompiledHeaders
+
+CreateBuildDirectory /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/ExplicitPrecompiledModules
+    cd /Users/runner/work/ios-app/ios-app/ios27/LockKeeper.xcodeproj
+    builtin-create-build-directory /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/ExplicitPrecompiledModules
+
+CreateBuildDirectory /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphoneos
+    cd /Users/runner/work/ios-app/ios-app/ios27/LockKeeper.xcodeproj
+    builtin-create-build-directory /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphoneos
+
+WriteAuxiliaryFile /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper.SwiftFileList (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    write-file /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper.SwiftFileList
+
+WriteAuxiliaryFile /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper_const_extract_protocols.json (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    write-file /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper_const_extract_protocols.json
+
+WriteAuxiliaryFile /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper.SwiftConstValuesFileList (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    write-file /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper.LinkFileList (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    write-file /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper.LinkFileList
+
+WriteAuxiliaryFile /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper-OutputFileMap.json (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    write-file /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper-OutputFileMap.json
+
+WriteAuxiliaryFile /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper.hmap (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    write-file /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper.hmap
+
+WriteAuxiliaryFile /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper.DependencyStaticMetadataFileList (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    write-file /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper.DependencyMetadataFileList (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    write-file /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper.DependencyMetadataFileList
+
+WriteAuxiliaryFile /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-project-headers.hmap (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    write-file /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-project-headers.hmap
+
+WriteAuxiliaryFile /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-own-target-headers.hmap (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    write-file /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-own-target-headers.hmap
+
+WriteAuxiliaryFile /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-generated-files.hmap (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    write-file /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-generated-files.hmap
+
+WriteAuxiliaryFile /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-all-target-headers.hmap (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    write-file /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-all-target-headers.hmap
+
+WriteAuxiliaryFile /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-all-non-framework-target-headers.hmap (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    write-file /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-all-non-framework-target-headers.hmap
+
+WriteAuxiliaryFile /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-DebugDylibPath-normal-arm64.txt (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    write-file /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-DebugDylibPath-normal-arm64.txt
+
+WriteAuxiliaryFile /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-DebugDylibInstallName-normal-arm64.txt (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    write-file /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-DebugDylibInstallName-normal-arm64.txt
+
+MkDir /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    /bin/mkdir -p /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app
+
+Ld /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/__preview.dylib normal (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios27.0 -dynamiclib -isysroot /Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk -O0 -Xlinker -no_warn_duplicate_libraries -L/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos -F/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos -install_name @rpath/LockKeeper.debug.dylib -Xlinker -dead_strip -rdynamic -Xlinker -no_deduplicate -Xlinker -dependency_info -Xlinker /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper_dependency_info.dat -o /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/__preview.dylib
+
+MkDir /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/assetcatalog_output/unthinned (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    /bin/mkdir -p /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/assetcatalog_output/unthinned
+
+MkDir /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/assetcatalog_output/thinned (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    /bin/mkdir -p /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/assetcatalog_output/thinned
+
+GenerateAssetSymbols /Users/runner/work/ios-app/ios-app/ios27/App/Assets.xcassets (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    /Applications/Xcode_27.1.app/Contents/Developer/usr/bin/actool /Users/runner/work/ios-app/ios-app/ios27/App/Assets.xcassets --compile /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app --output-format human-readable-text --notices --warnings --export-dependency-info /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/assetcatalog_dependencies --output-partial-info-plist /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/assetcatalog_generated_info.plist --app-icon AppIcon --compress-pngs --enable-on-demand-resources YES --development-region zh-Hans --target-device iphone --minimum-deployment-target 27.0 --platform iphoneos --bundle-identifier com.aapk.lockkeeper --generate-swift-asset-symbol-extensions NO --generate-swift-asset-symbols /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/DerivedSources/GeneratedAssetSymbols.swift --generate-objc-asset-symbols /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/DerivedSources/GeneratedAssetSymbols.h --generate-asset-symbol-index /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/* com.apple.actool.compilation-results */
+/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/DerivedSources/GeneratedAssetSymbols.h
+/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/DerivedSources/GeneratedAssetSymbols.swift
+
+
+CpResource /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/PrivacyInfo.xcprivacy /Users/runner/work/ios-app/ios-app/ios27/App/PrivacyInfo.xcprivacy (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/runner/work/ios-app/ios-app/ios27/App/PrivacyInfo.xcprivacy /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app
+
+CompileAssetCatalogVariant thinned /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app /Users/runner/work/ios-app/ios-app/ios27/App/Assets.xcassets (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    /Applications/Xcode_27.1.app/Contents/Developer/usr/bin/actool /Users/runner/work/ios-app/ios-app/ios27/App/Assets.xcassets --compile /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/assetcatalog_output/thinned --output-format human-readable-text --notices --warnings --export-dependency-info /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/assetcatalog_dependencies_thinned --output-partial-info-plist /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/assetcatalog_generated_info.plist_thinned --app-icon AppIcon --compress-pngs --enable-on-demand-resources YES --development-region zh-Hans --target-device iphone --minimum-deployment-target 27.0 --platform iphoneos
+/* com.apple.actool.compilation-results */
+/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/assetcatalog_generated_info.plist_thinned
+/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/assetcatalog_output/thinned/AppIcon60x60@2x.png
+/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/assetcatalog_output/thinned/AppIcon76x76@2x~ipad.png
+/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/assetcatalog_output/thinned/Assets.car
+
+
+LinkAssetCatalog /Users/runner/work/ios-app/ios-app/ios27/App/Assets.xcassets (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    builtin-linkAssetCatalog --thinned /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/assetcatalog_output/thinned --thinned-dependencies /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/assetcatalog_dependencies_thinned --thinned-info-plist-content /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/assetcatalog_generated_info.plist_thinned --unthinned /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/assetcatalog_output/unthinned --unthinned-dependencies /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/assetcatalog_dependencies_unthinned --unthinned-info-plist-content /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/assetcatalog_generated_info.plist_unthinned --output /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app --plist-output /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/assetcatalog_generated_info.plist
+note: Emplaced /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/AppIcon60x60@2x.png (in target 'LockKeeper' from project 'LockKeeper')
+note: Emplaced /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/Assets.car (in target 'LockKeeper' from project 'LockKeeper')
+note: Emplaced /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/AppIcon76x76@2x~ipad.png (in target 'LockKeeper' from project 'LockKeeper')
+
+ProcessInfoPlistFile /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/Info.plist /Users/runner/work/ios-app/ios-app/ios27/App/Info.plist (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    builtin-infoPlistUtility /Users/runner/work/ios-app/ios-app/ios27/App/Info.plist -producttype com.apple.product-type.application -genpkginfo /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/PkgInfo -expandbuildsettings -format binary -platform iphoneos -additionalcontentfile /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/assetcatalog_generated_info.plist -requiredArchitecture arm64 -o /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/Info.plist
+
+SwiftDriver LockKeeper normal arm64 com.apple.xcode.tools.swift.compiler (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    builtin-SwiftDriver -- /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name LockKeeper -Onone -whole-module-optimization @/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper.SwiftFileList -DDEBUG -enable-upcoming-feature StrictConcurrency -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk -target arm64-apple-ios27.0 -g -module-cache-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos -F /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos -c -num-threads 3 -Xcc -ivfsstatcache -Xcc /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKStatCaches.noindex/iphoneos27.1-24A94232-e829b21a6f8c9b70876ba0858053c0442866d66f27be705873c55a4609c58824.sdkstatcache -output-file-map /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper-OutputFileMap.json -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules -emit-dependencies -emit-module -emit-module-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper.swiftmodule -serialize-diagnostics -dependency-scan-serialize-diagnostics-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper-dependency-scan.dia -validate-clang-modules-once -clang-build-session-file /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -fmodules-prune-interval\=86400 -Xcc -fmodules-prune-after\=345600 -emit-const-values -const-gather-protocols-list /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper_const_extract_protocols.json -Xcc -iquote -Xcc /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-generated-files.hmap -Xcc -I/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-own-target-headers.hmap -Xcc -I/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-all-target-headers.hmap -Xcc -iquote -Xcc /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-project-headers.hmap -Xcc -I/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/include -Xcc -I/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/DerivedSources-normal/arm64 -Xcc -I/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/DerivedSources/arm64 -Xcc -I/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper-Swift.h -working-directory /Users/runner/work/ios-app/ios-app/ios27 -no-emit-module-separately-wmo
+
+SwiftDriver\ Compilation LockKeeper normal arm64 com.apple.xcode.tools.swift.compiler (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    builtin-Swift-Compilation -- /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name LockKeeper -Onone -whole-module-optimization @/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper.SwiftFileList -DDEBUG -enable-upcoming-feature StrictConcurrency -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk -target arm64-apple-ios27.0 -g -module-cache-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos -F /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos -c -num-threads 3 -Xcc -ivfsstatcache -Xcc /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKStatCaches.noindex/iphoneos27.1-24A94232-e829b21a6f8c9b70876ba0858053c0442866d66f27be705873c55a4609c58824.sdkstatcache -output-file-map /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper-OutputFileMap.json -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules -emit-dependencies -emit-module -emit-module-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper.swiftmodule -serialize-diagnostics -dependency-scan-serialize-diagnostics-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper-dependency-scan.dia -validate-clang-modules-once -clang-build-session-file /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -fmodules-prune-interval\=86400 -Xcc -fmodules-prune-after\=345600 -emit-const-values -const-gather-protocols-list /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper_const_extract_protocols.json -Xcc -iquote -Xcc /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-generated-files.hmap -Xcc -I/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-own-target-headers.hmap -Xcc -I/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-all-target-headers.hmap -Xcc -iquote -Xcc /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-project-headers.hmap -Xcc -I/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/include -Xcc -I/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/DerivedSources-normal/arm64 -Xcc -I/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/DerivedSources/arm64 -Xcc -I/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper-Swift.h -working-directory /Users/runner/work/ios-app/ios-app/ios27 -no-emit-module-separately-wmo
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_Builtin_stddef-BF8JNNQG8QUV9CQ6S7CQG4R28.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_SwiftConcurrencyShims-31MLSTTGH42BH7ATCM894T802.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/SwiftShims-DT1CO1WFJ0H8T6BVQ2H8QWF11.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/ptrauth-D88RG9GLBA9UDQ2EO5IIGDTET.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_Builtin_stdarg-2FZQD96V6O091WI1828A08AMU.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_Builtin_float-2CZL5NTWLXPC7T80HUAB2DYXI.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_Builtin_stdbool-9O57ZPBBF7SPBXDVX6H75YA8P.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/DeveloperToolsSupport-5TYQC398G6XVDTA6K82XGKD6U.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/ptrcheck-70TP73872XHQBCKA92L9WBGRH.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_AvailabilityInternal-CC5JBLT65CIVYJ2X0FNKT3WPX.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_DarwinFoundation1-CCHXPI1VEN0F6JYUMBKTKQW24.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_Builtin_limits-B9EQOI5KDHQKGTFY3L7VML54E.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_DarwinFoundation2-2WOP4I9VZYKVOJ5IAMUYCGAG3.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_Builtin_stdint-EEOQ6DED3RA9EGIP2F8G7Y9NY.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/string_h-E6CGL0NY7WYXSXWVIB2L69NUZ.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_Builtin_tgmath-1G3RBP9HK5CABVHQTEP18SZWZ.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/sys_types-CBJ67AO6NB64P2LO6848FSXVC.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_Builtin_stdatomic-1UX16X7LFLUQR599ABYAZ5W3A.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_DarwinFoundation3-8RFVZ77JVPCQXVK83CGPQA9XF.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_Builtin_intrinsics-4TE4ZFZQ0YMOR5WZ8Q6OOT7MN.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CommonCrypto-EKHTYUHKWY2M9TMSUB34CKNA3.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_Builtin_inttypes-TZUYC84JD4ZR998V9NJAY2S6.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/Darwin-DAS04RED98SY9F92T0ZZRIWLI.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/simd-CDE9S06K5XTB5B8URF63KTHQW.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/Compression-8Y80CYFFI66J19Y6S3JDVVQEU.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/ObjectiveC-5RTWEVPV3VSIFTL6E0OS8V5DA.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/MachO-BRW5PSE8MHYUBPS5Z1205KQ2M.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/os_object-2HYV276B2HNEX5SJ7EWPWC540.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/os_workgroup-6JPJPDN3C23WLBAP562U9BBKP.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/Spatial-AVC2QEG8Z6VK4MUHIQOPWOVRV.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/Dispatch-3STO2AY4TIWC0OWTQRY8BIW6E.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/XPC-2DGLH8A3ZP8SYLMCOA89NTQ4T.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreFoundation-EP9PNLL19OP6O22EITP18S0B7.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/os-CE9JZH6RZRJXC9N50XC0B7Z71.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreAudioTypes-6EXP5F6770D4ONF7D8F238J7.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreGraphics-XH2YMOHSZJ608U9NKHU5XGP4.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/Security-EX8MY4XN8S1P4Q5YKHK6EBUE9.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CFNetwork-3MAVI7B24JHMAVBJHBOSAFWD1.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreAudio-2LN5KIOQ0482VLH4QNW1SY3RF.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/ImageIO-5SP1EPDA8OUHLW986O9A7L2Z8.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreText-50J8HDA3UW2BFTJHY2C8MW41O.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/Foundation-AC6FBAR3IDAISMFVUJJBC03S9.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreTransferable-1U030QWRMZ9F3TJ0FQ57LH2XX.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_LocationEssentials-DXKB2HD8KB0OJ8QAX2I2IO6FM.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/FileProvider-45R9A3H5K8ELQI119GUX2I0X2.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/IOSurface-ASW6NUHNN55XO49Y3864H13N1.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/UserNotifications-E5B5JPO5KQNN05FKO08HV77LX.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/LocalAuthentication-BLC4PFEYFNOB2DUTIL4M7B3PU.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreLocation-4FCVQ4MIGP4I7ZZQYYK4I0XYR.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/UniformTypeIdentifiers-C9T57PQE62E4CDHY409YUY6AM.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/OpenGLES-27UNANDN87DKUQYUM17TURF6E.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreHaptics-6M1LGJZON1M7MDBLDYPWB5LKP.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreData-7I3LT0Z2LEN17FB8HSOPZVLPF.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/DataDetection-6W4MQOL7LLJRGNI85CCSP6VO4.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/Accessibility-CAX423932ZWTL5A7KFGGE04GD.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/OSLog-7O2LRWZ8QXMTJVCHD65O749N5.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/Metal-CAES955X5T2V7AWYJETL8KR3J.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreBluetooth-BBNU36E6YWAMHFEA0IF7I1BFD.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/UIUtilities-A3LDC4UPGBRUKW48NFTWK6W8K.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/Symbols-K18YU2GLXUYNNXTWKYVK6ON5.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreMotion-2TWYCUDL8HBZO6ULLHSH97Y3R.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreVideo-EDUNBJWG8YQ4BGMLBPALHZFRR.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreImage-B5KKPY4PETLXBTP2NV5PQK99I.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreMedia-1KO6UXXDJU23OUDI9SSGZ1HA0.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/QuartzCore-EVJBZFZRDUYMP83W59LWUZASK.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/SwiftUICore-DVBT1D4UWLUTDO1BXYQ2FIRLB.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/UIKit-ZUKO1DGV5BZJEY1LYFYVVQ9V.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/SwiftUI-44HLX1DGWI1E81UBUUQWYAE8E.pcm
+
+SwiftCompile normal arm64 Compiling\ AESKit.swift,\ AboutHomeScreen.swift,\ AddLockHomeScreen.swift,\ AndroidPair.swift,\ AppLock.swift,\ AppModel.swift,\ AppearanceHomeScreen.swift,\ Attribution.swift,\ AuditChain.swift,\ AutoOpenHomeScreen.swift,\ AutoOpenKit.swift,\ BLEDelegates.swift,\ BLEService.swift,\ BLETypes.swift,\ BackgroundGuard.swift,\ BackupBundle.swift,\ BackupCanonical.swift,\ BackupHomeScreen.swift,\ BackupKit.swift,\ BackupStudioKit.swift,\ BackupStudioTypes.swift,\ BatteryCare.swift,\ CaptureShield.swift,\ Clip.swift,\ CredentialModels.swift,\ CredentialOrg.swift,\ CredentialOrgBatch.swift,\ CredentialOrgState.swift,\ CredentialStudioHomeScreen.swift,\ CredentialStudioStores.swift,\ DFUKit.swift,\ DateFormats.swift,\ DefendKit.swift,\ DefendService.swift,\ Destinations.swift,\ DevModules.swift,\ DiagKit.swift,\ DiagLogStore.swift,\ DiagnosticsHomeScreen.swift,\ DoorHomeScreen.swift,\ DoorLayout.swift,\ EngineHost.swift,\ FrameRedact.swift,\ FullPageCapture.swift,\ GlassSlideToUnlock.swift,\ GlassSurface.swift,\ GlassTabBar.swift,\ HardwareHomeScreen.swift,\ HardwareService.swift,\ HeroStats.swift,\ HexKit.swift,\ HouseHomeScreen.swift,\ HouseholdParts.swift,\ HouseholdRoster.swift,\ KeyCreateHomeScreen.swift,\ KeyDetailHomeScreen.swift,\ KeyGen.swift,\ KeysBits.swift,\ KeysHomeScreen.swift,\ KeysIntents.swift,\ KeysParts.swift,\ LinkSense.swift,\ LockDataDeleteSheet.swift,\ LockKeeperApp.swift,\ LockMaintenanceHomeScreen.swift,\ LockPortfolioHomeScreen.swift,\ LockService.swift,\ LockServiceCredentials.swift,\ LockServiceLink.swift,\ LockServiceOps.swift,\ LockServicePairing.swift,\ LockSettingsHomeScreen.swift,\ LockStats.swift,\ Locked.swift,\ MemberCreateHomeScreen.swift,\ MemberDetailHomeScreen.swift,\ MemberHub.swift,\ MemberMergeKit.swift,\ MemberMergeSheet.swift,\ MemberOpsStore.swift,\ Milestones.swift,\ MobileKeyHomeScreen.swift,\ MobileKeyService.swift,\ PasscodeSheets.swift,\ PidMap.swift,\ QuickActions.swift,\ QuickPool.swift,\ QuickPoolEditSheet.swift,\ Reading.swift,\ RecordDetailHomeScreen.swift,\ RecordModels.swift,\ RecordSearch.swift,\ RecordSearchBuild.swift,\ RecordSearchParse.swift,\ RecordSearchQuery.swift,\ RecordsExportSection.swift,\ RecordsHomeScreen.swift,\ RecordsModels.swift,\ RecordsStudioHomeScreen.swift,\ ReorderSupport.swift,\ Router.swift,\ ScreenAwake.swift,\ SecretStore.swift,\ SecurityHomeScreen.swift,\ SeedImporter.swift,\ SettingsHomeScreen.swift,\ SettingsModel.swift,\ SettingsParts.swift,\ Shell.swift,\ StatsKit.swift,\ StatusParser.swift,\ Store.swift,\ StoreKeychain.swift,\ StoreLedger.swift,\ StoreModels.swift,\ StoreState.swift,\ TimeDisplay.swift,\ TimeFormat.swift,\ ToastCenter.swift,\ TrialGuard.swift,\ UnlockGateScreen.swift,\ V7Components.swift,\ V7Extras.swift,\ V7Tokens.swift,\ V8Charts.swift,\ V8Components.swift,\ V8Tokens.swift,\ WeekCal.swift,\ ZKCmdBuilder.swift,\ ZKProtocol.swift,\ ZOTP.swift,\ ZipKit.swift,\ ZotpHomeScreen.swift,\ GeneratedAssetSymbols.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/AESKit.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Settings/AboutHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Door/AddLockHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/AndroidPair.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/AppLock.swift /Users/runner/work/ios-app/ios-app/ios27/App/Shell/AppModel.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Settings/AppearanceHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/Attribution.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/AuditChain.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Settings/AutoOpenHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/AutoOpenKit.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/BLEDelegates.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/BLEService.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/BLETypes.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/BackgroundGuard.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/BackupBundle.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/BackupCanonical.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Settings/BackupHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/BackupKit.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/BackupStudioKit.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Settings/BackupStudioTypes.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/BatteryCare.swift /Users/runner/work/ios-app/ios-app/ios27/App/Design/Components/CaptureShield.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/Clip.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/CredentialModels.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/CredentialOrg.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/CredentialOrgBatch.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/CredentialOrgState.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Keys/CredentialStudioHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Keys/CredentialStudioStores.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/DFUKit.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/DateFormats.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/DefendKit.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/DefendService.swift /Users/runner/work/ios-app/ios-app/ios27/App/Shell/Destinations.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/DevModules.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/DiagKit.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/DiagLogStore.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Settings/DiagnosticsHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Door/DoorHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Door/DoorLayout.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/EngineHost.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/FrameRedact.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/FullPageCapture.swift /Users/runner/work/ios-app/ios-app/ios27/App/Design/Components/GlassSlideToUnlock.swift /Users/runner/work/ios-app/ios-app/ios27/App/Design/Components/GlassSurface.swift /Users/runner/work/ios-app/ios-app/ios27/App/Design/Components/GlassTabBar.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Settings/HardwareHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/HardwareService.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/HeroStats.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/HexKit.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Household/HouseHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Household/HouseholdParts.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Household/HouseholdRoster.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Keys/KeyCreateHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Keys/KeyDetailHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/KeyGen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Keys/KeysBits.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Keys/KeysHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Keys/KeysIntents.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Keys/KeysParts.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Door/LinkSense.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Settings/LockDataDeleteSheet.swift /Users/runner/work/ios-app/ios-app/ios27/App/LockKeeperApp.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Door/LockMaintenanceHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Door/LockPortfolioHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/LockService.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/LockServiceCredentials.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/LockServiceLink.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/LockServiceOps.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/LockServicePairing.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Door/LockSettingsHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/LockStats.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/Locked.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Household/MemberCreateHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Household/MemberDetailHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/MemberHub.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/MemberMergeKit.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Household/MemberMergeSheet.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Household/MemberOpsStore.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/Milestones.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Keys/MobileKeyHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/MobileKeyService.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Settings/PasscodeSheets.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/PidMap.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/QuickActions.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/QuickPool.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Door/QuickPoolEditSheet.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/Reading.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Records/RecordDetailHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/RecordModels.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/RecordSearch.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/RecordSearchBuild.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/RecordSearchParse.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/RecordSearchQuery.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Records/RecordsExportSection.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Records/RecordsHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Records/RecordsModels.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Records/RecordsStudioHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/ReorderSupport.swift /Users/runner/work/ios-app/ios-app/ios27/App/Shell/Router.swift /Users/runner/work/ios-app/ios-app/ios27/App/Design/Components/ScreenAwake.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/SecretStore.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Settings/SecurityHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/SeedImporter.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Settings/SettingsHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Settings/SettingsModel.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Settings/SettingsParts.swift /Users/runner/work/ios-app/ios-app/ios27/App/Shell/Shell.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/StatsKit.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/StatusParser.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/Store.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/StoreKeychain.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/StoreLedger.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/StoreModels.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/StoreState.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Settings/TimeDisplay.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/TimeFormat.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Settings/ToastCenter.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/TrialGuard.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Door/UnlockGateScreen.swift /Users/runner/work/ios-app/ios-app/ios27/App/Design/V7/V7Components.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Shared/V7Extras.swift /Users/runner/work/ios-app/ios-app/ios27/App/Design/V7/V7Tokens.swift /Users/runner/work/ios-app/ios-app/ios27/App/Design/V8/V8Charts.swift /Users/runner/work/ios-app/ios-app/ios27/App/Design/V8/V8Components.swift /Users/runner/work/ios-app/ios-app/ios27/App/Design/V8/V8Tokens.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/WeekCal.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/ZKCmdBuilder.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/ZKProtocol.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/ZOTP.swift /Users/runner/work/ios-app/ios-app/ios27/App/Engine/ZipKit.swift /Users/runner/work/ios-app/ios-app/ios27/App/Features/Keys/ZotpHomeScreen.swift /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/DerivedSources/GeneratedAssetSymbols.swift /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/CoreMotion.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/SwiftUICore.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/Metal.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/_DarwinFoundation2.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/LocalAuthentication.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/DataDetection.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/Compression.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/_DarwinFoundation3.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/Accessibility.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/Foundation.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/XPC.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/OSLog.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/CoreText.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/_Builtin_float.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/ImageIO.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/UniformTypeIdentifiers.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/System.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/_StringProcessing.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/CoreVideo.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/CoreMedia.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/UIKit.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/_DarwinFoundation1.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/CoreFoundation.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/FileProvider.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/os.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/CoreAudio.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/Symbols.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/QuartzCore.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/CoreImage.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/CryptoKit.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/CoreData.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/Combine.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/Darwin.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/SwiftOnoneSupport.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/Dispatch.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/ObjectiveC.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/Spatial.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/simd.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/DeveloperToolsSupport.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/CoreGraphics.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/CoreLocation.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/SwiftUI.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/CoreTransferable.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/Swift.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/_Concurrency.swiftmodule/arm64e-apple-ios.swiftmodule /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/prebuilt-modules/27.1/Observation.swiftmodule/arm64e-apple-ios.swiftmodule /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreAudioTypes-6EXP5F6770D4ONF7D8F238J7.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_DarwinFoundation2-2WOP4I9VZYKVOJ5IAMUYCGAG3.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/IOSurface-ASW6NUHNN55XO49Y3864H13N1.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_Builtin_stdint-EEOQ6DED3RA9EGIP2F8G7Y9NY.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/ObjectiveC-5RTWEVPV3VSIFTL6E0OS8V5DA.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/SwiftUI-44HLX1DGWI1E81UBUUQWYAE8E.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreBluetooth-BBNU36E6YWAMHFEA0IF7I1BFD.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_DarwinFoundation3-8RFVZ77JVPCQXVK83CGPQA9XF.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/DeveloperToolsSupport-5TYQC398G6XVDTA6K82XGKD6U.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_SwiftConcurrencyShims-31MLSTTGH42BH7ATCM894T802.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/ptrauth-D88RG9GLBA9UDQ2EO5IIGDTET.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/UserNotifications-E5B5JPO5KQNN05FKO08HV77LX.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/os_workgroup-6JPJPDN3C23WLBAP562U9BBKP.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/UniformTypeIdentifiers-C9T57PQE62E4CDHY409YUY6AM.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_LocationEssentials-DXKB2HD8KB0OJ8QAX2I2IO6FM.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/FileProvider-45R9A3H5K8ELQI119GUX2I0X2.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/UIUtilities-A3LDC4UPGBRUKW48NFTWK6W8K.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/simd-CDE9S06K5XTB5B8URF63KTHQW.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_Builtin_tgmath-1G3RBP9HK5CABVHQTEP18SZWZ.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_Builtin_intrinsics-4TE4ZFZQ0YMOR5WZ8Q6OOT7MN.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreMotion-2TWYCUDL8HBZO6ULLHSH97Y3R.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/Symbols-K18YU2GLXUYNNXTWKYVK6ON5.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreHaptics-6M1LGJZON1M7MDBLDYPWB5LKP.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/sys_types-CBJ67AO6NB64P2LO6848FSXVC.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/MachO-BRW5PSE8MHYUBPS5Z1205KQ2M.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreData-7I3LT0Z2LEN17FB8HSOPZVLPF.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CommonCrypto-EKHTYUHKWY2M9TMSUB34CKNA3.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreLocation-4FCVQ4MIGP4I7ZZQYYK4I0XYR.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreImage-B5KKPY4PETLXBTP2NV5PQK99I.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/DataDetection-6W4MQOL7LLJRGNI85CCSP6VO4.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/os_object-2HYV276B2HNEX5SJ7EWPWC540.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/LocalAuthentication-BLC4PFEYFNOB2DUTIL4M7B3PU.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_Builtin_stdatomic-1UX16X7LFLUQR599ABYAZ5W3A.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/SwiftShims-DT1CO1WFJ0H8T6BVQ2H8QWF11.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/OSLog-7O2LRWZ8QXMTJVCHD65O749N5.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreTransferable-1U030QWRMZ9F3TJ0FQ57LH2XX.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/UIKit-ZUKO1DGV5BZJEY1LYFYVVQ9V.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/ptrcheck-70TP73872XHQBCKA92L9WBGRH.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_AvailabilityInternal-CC5JBLT65CIVYJ2X0FNKT3WPX.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_Builtin_limits-B9EQOI5KDHQKGTFY3L7VML54E.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/string_h-E6CGL0NY7WYXSXWVIB2L69NUZ.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreText-50J8HDA3UW2BFTJHY2C8MW41O.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/XPC-2DGLH8A3ZP8SYLMCOA89NTQ4T.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/ImageIO-5SP1EPDA8OUHLW986O9A7L2Z8.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_Builtin_stdbool-9O57ZPBBF7SPBXDVX6H75YA8P.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreGraphics-XH2YMOHSZJ608U9NKHU5XGP4.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/Security-EX8MY4XN8S1P4Q5YKHK6EBUE9.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreVideo-EDUNBJWG8YQ4BGMLBPALHZFRR.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/OpenGLES-27UNANDN87DKUQYUM17TURF6E.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/SwiftUICore-DVBT1D4UWLUTDO1BXYQ2FIRLB.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/Darwin-DAS04RED98SY9F92T0ZZRIWLI.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_Builtin_float-2CZL5NTWLXPC7T80HUAB2DYXI.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/Spatial-AVC2QEG8Z6VK4MUHIQOPWOVRV.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/Accessibility-CAX423932ZWTL5A7KFGGE04GD.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/QuartzCore-EVJBZFZRDUYMP83W59LWUZASK.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_DarwinFoundation1-CCHXPI1VEN0F6JYUMBKTKQW24.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CFNetwork-3MAVI7B24JHMAVBJHBOSAFWD1.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreAudio-2LN5KIOQ0482VLH4QNW1SY3RF.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/Dispatch-3STO2AY4TIWC0OWTQRY8BIW6E.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_Builtin_inttypes-TZUYC84JD4ZR998V9NJAY2S6.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreFoundation-EP9PNLL19OP6O22EITP18S0B7.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_Builtin_stddef-BF8JNNQG8QUV9CQ6S7CQG4R28.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/Metal-CAES955X5T2V7AWYJETL8KR3J.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/_Builtin_stdarg-2FZQD96V6O091WI1828A08AMU.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/Compression-8Y80CYFFI66J19Y6S3JDVVQEU.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/os-CE9JZH6RZRJXC9N50XC0B7Z71.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/CoreMedia-1KO6UXXDJU23OUDI9SSGZ1HA0.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules/Foundation-AC6FBAR3IDAISMFVUJJBC03S9.pcm /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper-dependencies-1.json (in target 'LockKeeper' from project 'LockKeeper')
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/DiagKit.swift:534:27: warning: no calls to throwing functions occur within 'try' expression [#UnnecessaryEffectMarker]
+532 |         // ekey = AES(skey)(88 00 MAC 4B + track 4B + vf 4B + vt 4B + cmd 1B + pin 4B + 0000)
+533 |         // 明文 PIN 在字节偏移 21..24（hex 字符 42..49）。
+534 |         guard let plain = try? AESKit.decryptHex(kc.ekey, keyHex: kc.skey), plain.count >= 50 else { return nil }
+    |                           `- warning: no calls to throwing functions occur within 'try' expression [#UnnecessaryEffectMarker]
+535 |         let pin = String(plain.dropFirst(42).prefix(8))
+536 |         return pin.isEmpty ? nil : pin
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/DiagKit.swift:543:27: warning: no calls to throwing functions occur within 'try' expression [#UnnecessaryEffectMarker]
+541 |     static func rawEmbeddedPin(fromEkey ekeyHex: String, skey: String) -> String? {
+542 |         guard !ekeyHex.isEmpty, !skey.isEmpty else { return nil }
+543 |         guard let plain = try? AESKit.decryptHex(ekeyHex, keyHex: skey), plain.count >= 50 else { return nil }
+    |                           `- warning: no calls to throwing functions occur within 'try' expression [#UnnecessaryEffectMarker]
+544 |         let pin = String(plain.dropFirst(42).prefix(8))
+545 |         return pin.isEmpty ? nil : pin
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/FullPageCapture.swift:54:65: warning: main actor-isolated property 'frame' can not be referenced from a nonisolated context
+ 52 | 
+ 53 |             func render() -> Data? {
+ 54 |                 let renderer = UIGraphicsImageRenderer(size: sv.frame.size)
+    |                                                                 `- warning: main actor-isolated property 'frame' can not be referenced from a nonisolated context
+ 55 |                 let img = renderer.image { ctx in
+ 56 |                     paper.setFill()
+
+/Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIView.h:194:40: note: property declared here
+192 | 
+193 | // animatable. do not use frame if view is transformed since it will not correctly reflect the actual location of the view. use bounds + center instead.
+194 | @property(nonatomic) CGRect            frame;
+    |                                        `- note: property declared here
+195 | 
+196 | // use bounds/center and not frame if non-identity transform.
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/FullPageCapture.swift:57:33: warning: main actor-isolated property 'bounds' can not be referenced from a nonisolated context
+ 55 |                 let img = renderer.image { ctx in
+ 56 |                     paper.setFill()
+ 57 |                     ctx.fill(sv.bounds)
+    |                                 `- warning: main actor-isolated property 'bounds' can not be referenced from a nonisolated context
+ 58 |                     sv.drawHierarchy(in: sv.bounds, afterScreenUpdates: true)
+ 59 |                 }
+
+/Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIView.h:197:40: note: property declared here
+195 | 
+196 | // use bounds/center and not frame if non-identity transform.
+197 | @property(nonatomic) CGRect            bounds;      // default bounds is zero origin, frame size. animatable
+    |                                        `- note: property declared here
+198 | @property(nonatomic) CGPoint           center;      // center is center of frame, relative to anchorPoint. animatable
+199 | @property(nonatomic) CGAffineTransform transform;   // default is CGAffineTransformIdentity. animatable. Please use this property instead of the affineTransform property on the layer
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/FullPageCapture.swift:58:24: warning: call to main actor-isolated instance method 'drawHierarchy(in:afterScreenUpdates:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+ 56 |                     paper.setFill()
+ 57 |                     ctx.fill(sv.bounds)
+ 58 |                     sv.drawHierarchy(in: sv.bounds, afterScreenUpdates: true)
+    |                        `- warning: call to main actor-isolated instance method 'drawHierarchy(in:afterScreenUpdates:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+ 59 |                 }
+ 60 |                 return img.pngData()
+
+/Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIView.h:667:1: note: calls to instance method 'drawHierarchy(in:afterScreenUpdates:)' from outside of its actor context are implicitly asynchronous
+665 | - (nullable UIView *)resizableSnapshotViewFromRect:(CGRect)rect afterScreenUpdates:(BOOL)afterUpdates withCapInsets:(UIEdgeInsets)capInsets API_AVAILABLE(ios(7.0));  // Resizable snapshots will default to stretching the center
+666 | // Use this method to render a snapshot of the view hierarchy into the current context. Returns NO if the snapshot is missing image data, YES if the snapshot is complete. Calling this method from layoutSubviews while the current transaction is committing will capture what is currently displayed regardless if afterUpdates is YES.
+667 | - (BOOL)drawViewHierarchyInRect:(CGRect)rect afterScreenUpdates:(BOOL)afterUpdates API_AVAILABLE(ios(7.0));
+    | `- note: calls to instance method 'drawHierarchy(in:afterScreenUpdates:)' from outside of its actor context are implicitly asynchronous
+668 | @end
+669 | 
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/FullPageCapture.swift:58:45: warning: main actor-isolated property 'bounds' can not be referenced from a nonisolated context
+ 56 |                     paper.setFill()
+ 57 |                     ctx.fill(sv.bounds)
+ 58 |                     sv.drawHierarchy(in: sv.bounds, afterScreenUpdates: true)
+    |                                             `- warning: main actor-isolated property 'bounds' can not be referenced from a nonisolated context
+ 59 |                 }
+ 60 |                 return img.pngData()
+
+/Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIView.h:197:40: note: property declared here
+195 | 
+196 | // use bounds/center and not frame if non-identity transform.
+197 | @property(nonatomic) CGRect            bounds;      // default bounds is zero origin, frame size. animatable
+    |                                        `- note: property declared here
+198 | @property(nonatomic) CGPoint           center;      // center is center of frame, relative to anchorPoint. animatable
+199 | @property(nonatomic) CGAffineTransform transform;   // default is CGAffineTransformIdentity. animatable. Please use this property instead of the affineTransform property on the layer
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/FullPageCapture.swift:64:20: warning: main actor-isolated property 'backgroundColor' can not be mutated from a nonisolated context
+ 62 | 
+ 63 |             func restore() {
+ 64 |                 sv.backgroundColor = origBg
+    |                    `- warning: main actor-isolated property 'backgroundColor' can not be mutated from a nonisolated context
+ 65 |                 sv.frame = orig
+ 66 |                 sv.contentOffset = .zero
+
+/Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIView.h:322:66: note: mutation of this property is only permitted within the actor
+320 | 
+321 | @property(nonatomic)                 BOOL              clipsToBounds;              // When YES, content and subviews are clipped to the bounds of the view. Default is NO.
+322 | @property(nullable, nonatomic,copy)            UIColor          *backgroundColor UI_APPEARANCE_SELECTOR; // default is nil. Can be useful with the appearance proxy on custom UIView subclasses.
+    |                                                                  `- note: mutation of this property is only permitted within the actor
+323 | @property(nonatomic)                 CGFloat           alpha;                      // animatable. default is 1.0
+324 | @property(nonatomic,getter=isOpaque) BOOL              opaque;                     // default is YES. opaque views must fill their entire bounds or the results are undefined. the active CGContext in drawRect: will not have been cleared and may have non-zeroed pixels
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/FullPageCapture.swift:65:20: warning: main actor-isolated property 'frame' can not be mutated from a nonisolated context
+ 63 |             func restore() {
+ 64 |                 sv.backgroundColor = origBg
+ 65 |                 sv.frame = orig
+    |                    `- warning: main actor-isolated property 'frame' can not be mutated from a nonisolated context
+ 66 |                 sv.contentOffset = .zero
+ 67 |                 sv.layoutIfNeeded()
+
+/Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIView.h:194:40: note: mutation of this property is only permitted within the actor
+192 | 
+193 | // animatable. do not use frame if view is transformed since it will not correctly reflect the actual location of the view. use bounds + center instead.
+194 | @property(nonatomic) CGRect            frame;
+    |                                        `- note: mutation of this property is only permitted within the actor
+195 | 
+196 | // use bounds/center and not frame if non-identity transform.
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/FullPageCapture.swift:66:20: warning: main actor-isolated property 'contentOffset' can not be mutated from a nonisolated context
+ 64 |                 sv.backgroundColor = origBg
+ 65 |                 sv.frame = orig
+ 66 |                 sv.contentOffset = .zero
+    |                    `- warning: main actor-isolated property 'contentOffset' can not be mutated from a nonisolated context
+ 67 |                 sv.layoutIfNeeded()
+ 68 |                 UIView.setAnimationsEnabled(true)
+
+/Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIScrollView.h:89:59: note: mutation of this property is only permitted within the actor
+ 87 | @interface UIScrollView : UIView <NSCoding, UIFocusItemScrollableContainer>
+ 88 | 
+ 89 | @property(nonatomic)         CGPoint                      contentOffset;                  // default CGPointZero
+    |                                                           `- note: mutation of this property is only permitted within the actor
+ 90 | @property(nonatomic)         CGSize                       contentSize;                    // default CGSizeZero
+ 91 | @property(nonatomic)         UIEdgeInsets                 contentInset;                   // default UIEdgeInsetsZero. add additional scroll area around content
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/FullPageCapture.swift:67:20: warning: call to main actor-isolated instance method 'layoutIfNeeded()' in a synchronous nonisolated context [#ActorIsolatedCall]
+ 65 |                 sv.frame = orig
+ 66 |                 sv.contentOffset = .zero
+ 67 |                 sv.layoutIfNeeded()
+    |                    `- warning: call to main actor-isolated instance method 'layoutIfNeeded()' in a synchronous nonisolated context [#ActorIsolatedCall]
+ 68 |                 UIView.setAnimationsEnabled(true)
+ 69 |             }
+
+/Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIView.h:268:1: note: calls to instance method 'layoutIfNeeded()' from outside of its actor context are implicitly asynchronous
+266 | // Allows you to perform layout before the drawing cycle happens. -layoutIfNeeded forces layout early
+267 | - (void)setNeedsLayout;
+268 | - (void)layoutIfNeeded;
+    | `- note: calls to instance method 'layoutIfNeeded()' from outside of its actor context are implicitly asynchronous
+269 | 
+270 | - (void)layoutSubviews;    // override point. called by layoutIfNeeded automatically. As of iOS 6.0, when constraints-based layout is used the base implementation applies the constraints-based layout, otherwise it does nothing.
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/FullPageCapture.swift:68:24: warning: call to main actor-isolated class method 'setAnimationsEnabled' in a synchronous nonisolated context [#ActorIsolatedCall]
+ 66 |                 sv.contentOffset = .zero
+ 67 |                 sv.layoutIfNeeded()
+ 68 |                 UIView.setAnimationsEnabled(true)
+    |                        `- warning: call to main actor-isolated class method 'setAnimationsEnabled' in a synchronous nonisolated context [#ActorIsolatedCall]
+ 69 |             }
+ 70 | 
+
+/Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIView.h:357:1: note: calls to class method 'setAnimationsEnabled' from outside of its actor context are implicitly asynchronous
+355 | @interface UIView(UIViewAnimation)
+356 | 
+357 | + (void)setAnimationsEnabled:(BOOL)enabled;                         // ignore any attribute changes while set.
+    | `- note: calls to class method 'setAnimationsEnabled' from outside of its actor context are implicitly asynchronous
+358 | @property(class, nonatomic, readonly) BOOL areAnimationsEnabled;
+359 | + (void)performWithoutAnimation:(void (NS_NOESCAPE ^)(void))actionsWithoutAnimation API_AVAILABLE(ios(7.0));
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/FullPageCapture.swift:91:32: warning: main actor-isolated property 'contentSize' can not be referenced from a nonisolated context
+ 89 |                 // 改**逐屏落盘**：不拼一张大图，而是把每一屏写成独立 PNG（tile-N）。
+ 90 |                 // 证据价值一样（AX 布局的每一屏都能看），且每屏都走真实屏幕渲染。
+ 91 |                 let total = sv.contentSize.height
+    |                                `- warning: main actor-isolated property 'contentSize' can not be referenced from a nonisolated context
+ 92 |                 let tile = sv.bounds.height
+ 93 |                 let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+
+/Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIScrollView.h:90:59: note: property declared here
+ 88 | 
+ 89 | @property(nonatomic)         CGPoint                      contentOffset;                  // default CGPointZero
+ 90 | @property(nonatomic)         CGSize                       contentSize;                    // default CGSizeZero
+    |                                                           `- note: property declared here
+ 91 | @property(nonatomic)         UIEdgeInsets                 contentInset;                   // default UIEdgeInsetsZero. add additional scroll area around content
+ 92 | 
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/FullPageCapture.swift:92:31: warning: main actor-isolated property 'bounds' can not be referenced from a nonisolated context
+ 90 |                 // 证据价值一样（AX 布局的每一屏都能看），且每屏都走真实屏幕渲染。
+ 91 |                 let total = sv.contentSize.height
+ 92 |                 let tile = sv.bounds.height
+    |                               `- warning: main actor-isolated property 'bounds' can not be referenced from a nonisolated context
+ 93 |                 let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+ 94 |                     ?? URL(fileURLWithPath: "/tmp", isDirectory: true)
+
+/Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIView.h:197:40: note: property declared here
+195 | 
+196 | // use bounds/center and not frame if non-identity transform.
+197 | @property(nonatomic) CGRect            bounds;      // default bounds is zero origin, frame size. animatable
+    |                                        `- note: property declared here
+198 | @property(nonatomic) CGPoint           center;      // center is center of frame, relative to anchorPoint. animatable
+199 | @property(nonatomic) CGAffineTransform transform;   // default is CGAffineTransformIdentity. animatable. Please use this property instead of the affineTransform property on the layer
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/FullPageCapture.swift:98:24: warning: main actor-isolated property 'contentOffset' can not be mutated from a nonisolated context
+ 96 |                 var index = 0
+ 97 |                 while offset < total {
+ 98 |                     sv.contentOffset = CGPoint(x: 0, y: min(offset, max(0, total - tile)))
+    |                        `- warning: main actor-isolated property 'contentOffset' can not be mutated from a nonisolated context
+ 99 |                     sv.layoutIfNeeded()
+100 |                     let renderer = UIGraphicsImageRenderer(bounds: CGRect(origin: .zero, size: sv.bounds.size))
+
+/Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIScrollView.h:89:59: note: mutation of this property is only permitted within the actor
+ 87 | @interface UIScrollView : UIView <NSCoding, UIFocusItemScrollableContainer>
+ 88 | 
+ 89 | @property(nonatomic)         CGPoint                      contentOffset;                  // default CGPointZero
+    |                                                           `- note: mutation of this property is only permitted within the actor
+ 90 | @property(nonatomic)         CGSize                       contentSize;                    // default CGSizeZero
+ 91 | @property(nonatomic)         UIEdgeInsets                 contentInset;                   // default UIEdgeInsetsZero. add additional scroll area around content
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/FullPageCapture.swift:99:24: warning: call to main actor-isolated instance method 'layoutIfNeeded()' in a synchronous nonisolated context [#ActorIsolatedCall]
+ 97 |                 while offset < total {
+ 98 |                     sv.contentOffset = CGPoint(x: 0, y: min(offset, max(0, total - tile)))
+ 99 |                     sv.layoutIfNeeded()
+    |                        `- warning: call to main actor-isolated instance method 'layoutIfNeeded()' in a synchronous nonisolated context [#ActorIsolatedCall]
+100 |                     let renderer = UIGraphicsImageRenderer(bounds: CGRect(origin: .zero, size: sv.bounds.size))
+101 |                     let img = renderer.image { c in
+
+/Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIView.h:268:1: note: calls to instance method 'layoutIfNeeded()' from outside of its actor context are implicitly asynchronous
+266 | // Allows you to perform layout before the drawing cycle happens. -layoutIfNeeded forces layout early
+267 | - (void)setNeedsLayout;
+268 | - (void)layoutIfNeeded;
+    | `- note: calls to instance method 'layoutIfNeeded()' from outside of its actor context are implicitly asynchronous
+269 | 
+270 | - (void)layoutSubviews;    // override point. called by layoutIfNeeded automatically. As of iOS 6.0, when constraints-based layout is used the base implementation applies the constraints-based layout, otherwise it does nothing.
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/FullPageCapture.swift:100:99: warning: main actor-isolated property 'bounds' can not be referenced from a nonisolated context
+ 98 |                     sv.contentOffset = CGPoint(x: 0, y: min(offset, max(0, total - tile)))
+ 99 |                     sv.layoutIfNeeded()
+100 |                     let renderer = UIGraphicsImageRenderer(bounds: CGRect(origin: .zero, size: sv.bounds.size))
+    |                                                                                                   `- warning: main actor-isolated property 'bounds' can not be referenced from a nonisolated context
+101 |                     let img = renderer.image { c in
+102 |                         paper.setFill()
+
+/Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIView.h:197:40: note: property declared here
+195 | 
+196 | // use bounds/center and not frame if non-identity transform.
+197 | @property(nonatomic) CGRect            bounds;      // default bounds is zero origin, frame size. animatable
+    |                                        `- note: property declared here
+198 | @property(nonatomic) CGPoint           center;      // center is center of frame, relative to anchorPoint. animatable
+199 | @property(nonatomic) CGAffineTransform transform;   // default is CGAffineTransformIdentity. animatable. Please use this property instead of the affineTransform property on the layer
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/FullPageCapture.swift:103:63: warning: main actor-isolated property 'bounds' can not be referenced from a nonisolated context
+101 |                     let img = renderer.image { c in
+102 |                         paper.setFill()
+103 |                         c.fill(CGRect(origin: .zero, size: sv.bounds.size))
+    |                                                               `- warning: main actor-isolated property 'bounds' can not be referenced from a nonisolated context
+104 |                         sv.drawHierarchy(in: sv.bounds, afterScreenUpdates: true)
+105 |                     }
+
+/Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIView.h:197:40: note: property declared here
+195 | 
+196 | // use bounds/center and not frame if non-identity transform.
+197 | @property(nonatomic) CGRect            bounds;      // default bounds is zero origin, frame size. animatable
+    |                                        `- note: property declared here
+198 | @property(nonatomic) CGPoint           center;      // center is center of frame, relative to anchorPoint. animatable
+199 | @property(nonatomic) CGAffineTransform transform;   // default is CGAffineTransformIdentity. animatable. Please use this property instead of the affineTransform property on the layer
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/FullPageCapture.swift:104:28: warning: call to main actor-isolated instance method 'drawHierarchy(in:afterScreenUpdates:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+102 |                         paper.setFill()
+103 |                         c.fill(CGRect(origin: .zero, size: sv.bounds.size))
+104 |                         sv.drawHierarchy(in: sv.bounds, afterScreenUpdates: true)
+    |                            `- warning: call to main actor-isolated instance method 'drawHierarchy(in:afterScreenUpdates:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+105 |                     }
+106 |                     let file = String(format: "kf-fullpage-%d-%@-tile%02d.png", tab, name, index)
+
+/Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIView.h:667:1: note: calls to instance method 'drawHierarchy(in:afterScreenUpdates:)' from outside of its actor context are implicitly asynchronous
+665 | - (nullable UIView *)resizableSnapshotViewFromRect:(CGRect)rect afterScreenUpdates:(BOOL)afterUpdates withCapInsets:(UIEdgeInsets)capInsets API_AVAILABLE(ios(7.0));  // Resizable snapshots will default to stretching the center
+666 | // Use this method to render a snapshot of the view hierarchy into the current context. Returns NO if the snapshot is missing image data, YES if the snapshot is complete. Calling this method from layoutSubviews while the current transaction is committing will capture what is currently displayed regardless if afterUpdates is YES.
+667 | - (BOOL)drawViewHierarchyInRect:(CGRect)rect afterScreenUpdates:(BOOL)afterUpdates API_AVAILABLE(ios(7.0));
+    | `- note: calls to instance method 'drawHierarchy(in:afterScreenUpdates:)' from outside of its actor context are implicitly asynchronous
+668 | @end
+669 | 
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/FullPageCapture.swift:104:49: warning: main actor-isolated property 'bounds' can not be referenced from a nonisolated context
+102 |                         paper.setFill()
+103 |                         c.fill(CGRect(origin: .zero, size: sv.bounds.size))
+104 |                         sv.drawHierarchy(in: sv.bounds, afterScreenUpdates: true)
+    |                                                 `- warning: main actor-isolated property 'bounds' can not be referenced from a nonisolated context
+105 |                     }
+106 |                     let file = String(format: "kf-fullpage-%d-%@-tile%02d.png", tab, name, index)
+
+/Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIView.h:197:40: note: property declared here
+195 | 
+196 | // use bounds/center and not frame if non-identity transform.
+197 | @property(nonatomic) CGRect            bounds;      // default bounds is zero origin, frame size. animatable
+    |                                        `- note: property declared here
+198 | @property(nonatomic) CGPoint           center;      // center is center of frame, relative to anchorPoint. animatable
+199 | @property(nonatomic) CGAffineTransform transform;   // default is CGAffineTransformIdentity. animatable. Please use this property instead of the affineTransform property on the layer
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/FullPageCapture.swift:111:20: warning: main actor-isolated property 'contentOffset' can not be mutated from a nonisolated context
+109 |                     index += 1
+110 |                 }
+111 |                 sv.contentOffset = .zero
+    |                    `- warning: main actor-isolated property 'contentOffset' can not be mutated from a nonisolated context
+112 |                 return nil // 不再产出单一大图；驱动端按 tile 文件处理
+113 |             }
+
+/Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIScrollView.h:89:59: note: mutation of this property is only permitted within the actor
+ 87 | @interface UIScrollView : UIView <NSCoding, UIFocusItemScrollableContainer>
+ 88 | 
+ 89 | @property(nonatomic)         CGPoint                      contentOffset;                  // default CGPointZero
+    |                                                           `- note: mutation of this property is only permitted within the actor
+ 90 | @property(nonatomic)         CGSize                       contentSize;                    // default CGSizeZero
+ 91 | @property(nonatomic)         UIEdgeInsets                 contentInset;                   // default UIEdgeInsetsZero. add additional scroll area around content
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/FullPageCapture.swift:124:48: warning: main actor-isolated property 'contentSize' can not be referenced from a nonisolated context
+122 |         var bestH: CGFloat = 0
+123 |         func walk(_ v: UIView) {
+124 |             if let sv = v as? UIScrollView, sv.contentSize.height > bestH, sv.bounds.height > 100 {
+    |                                                `- warning: main actor-isolated property 'contentSize' can not be referenced from a nonisolated context
+125 |                 best = sv
+126 |                 bestH = sv.contentSize.height
+
+/Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIScrollView.h:90:59: note: property declared here
+ 88 | 
+ 89 | @property(nonatomic)         CGPoint                      contentOffset;                  // default CGPointZero
+ 90 | @property(nonatomic)         CGSize                       contentSize;                    // default CGSizeZero
+    |                                                           `- note: property declared here
+ 91 | @property(nonatomic)         UIEdgeInsets                 contentInset;                   // default UIEdgeInsetsZero. add additional scroll area around content
+ 92 | 
+
+
+SwiftCompile normal arm64 (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/FullPageCapture.swift:124:79: warning: main actor-isolated property 'bounds' can not be referenced from a nonisolated context
+122 |         var bestH: CGFloat = 0
+123 |         func walk(_ v: UIView) {
+124 |             if let sv = v as? UIScrollView, sv.contentSize.height > bestH, sv.bounds.height > 100 {
+    |                                                                               `- warning: main actor-isolated property 'bounds' can not be referenced from a nonisolated context
+125 |                 best = sv
+126 |                 bestH = sv.contentSize.height
+
+/Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIView.h:197:40: note: property declared here
+195 | 
+196 | // use bounds/center and not frame if non-identity transform.
+197 | @property(nonatomic) CGRect            bounds;      // default bounds is zero origin, frame size. animatable
+    |                                        `- note: property declared here
+198 | @property(nonatomic) CGPoint           center;      // center is center of frame, relative to anchorPoint. animatable
+199 | @property(nonatomic) CGAffineTransform transform;   // default is CGAffineTransformIdentity. animatable. Please use this property instead of the affineTransform property on the layer
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/FullPageCapture.swift:126:28: warning: main actor-isolated property 'contentSize' can not be referenced from a nonisolated context
+124 |             if let sv = v as? UIScrollView, sv.contentSize.height > bestH, sv.bounds.height > 100 {
+125 |                 best = sv
+126 |                 bestH = sv.contentSize.height
+    |                            `- warning: main actor-isolated property 'contentSize' can not be referenced from a nonisolated context
+127 |             }
+128 |             for sub in v.subviews { walk(sub) }
+
+/Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIScrollView.h:90:59: note: property declared here
+ 88 | 
+ 89 | @property(nonatomic)         CGPoint                      contentOffset;                  // default CGPointZero
+ 90 | @property(nonatomic)         CGSize                       contentSize;                    // default CGSizeZero
+    |                                                           `- note: property declared here
+ 91 | @property(nonatomic)         UIEdgeInsets                 contentInset;                   // default UIEdgeInsetsZero. add additional scroll area around content
+ 92 | 
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/FullPageCapture.swift:128:26: warning: main actor-isolated property 'subviews' can not be referenced from a nonisolated context
+126 |                 bestH = sv.contentSize.height
+127 |             }
+128 |             for sub in v.subviews { walk(sub) }
+    |                          `- warning: main actor-isolated property 'subviews' can not be referenced from a nonisolated context
+129 |         }
+130 |         walk(root)
+
+/Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIView.h:231:64: note: property declared here
+229 | 
+230 | @property(nullable, nonatomic,readonly) UIView       *superview;
+231 | @property(nonatomic,readonly,copy) NSArray<__kindof UIView *> *subviews;
+    |                                                                `- note: property declared here
+232 | @property(nullable, nonatomic,readonly) UIWindow     *window;
+233 | 
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Features/Keys/KeysIntents.swift:15:16: warning: static property 'pending' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+13 | /// 「新增凭证」被打开时想预选哪一种类型。由入口页写入，由凭证工坊读走并清零。
+14 | enum KeyCreateIntent {
+15 |     static var pending: KeyItem.Kind?
+   |                |- warning: static property 'pending' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+   |                |- note: convert 'pending' to a 'let' constant to make 'Sendable' shared state immutable
+   |                |- note: add '@MainActor' to make static property 'pending' part of global actor 'MainActor'
+   |                `- note: disable concurrency-safety checks if accesses are protected by an external synchronization mechanism
+16 | }
+17 | 
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Engine/LockServicePairing.swift:175:13: warning: initialization of immutable value 'bkey' was never used; consider replacing with assignment to '_' or removing it [#NoUsage]
+173 |         curMac = m
+174 |         let skey = kc.skey
+175 |         let bkey = kc.bkey
+    |             `- warning: initialization of immutable value 'bkey' was never used; consider replacing with assignment to '_' or removing it [#NoUsage]
+176 |         let pins = try KeyGen.genPins(64)
+177 |         guard !pins.contains(where: { KeyGen.isAllZeroHex($0) }) else {
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Features/Household/MemberDetailHomeScreen.swift:733:78: warning: 'canOpenURL' was deprecated in iOS 27.0: Prefer attempting to open URLs and handling any failures [#DeprecatedDeclaration]
+ 731 |             return
+ 732 |         }
+ 733 |         guard let url = URL(string: "tel://" + digits), UIApplication.shared.canOpenURL(url) else {
+     |                                                                              `- warning: 'canOpenURL' was deprecated in iOS 27.0: Prefer attempting to open URLs and handling any failures [#DeprecatedDeclaration]
+ 734 |             callNote = "系统不接受这个号码（tel: 链接打不开）—— 检查一下是否含有非法字符。"
+ 735 |             return
+
+/Users/runner/work/ios-app/ios-app/ios27/App/Features/Household/MemberDetailHomeScreen.swift:789:20: warning: value 'opsOutcome' was defined but never used; consider replacing with boolean test [#NoUsage]
+ 787 |             visitorCard
+ 788 |             elderCard
+ 789 |             if let opsOutcome {
+     |                    `- warning: value 'opsOutcome' was defined but never used; consider replacing with boolean test [#NoUsage]
+ 790 |                 opsOutcomeCard
+ 791 |             }
+
+[#ActorIsolatedCall]: <https://docs.swift.org/compiler/documentation/diagnostics/actor-isolated-call>
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[#MutableGlobalVariable]: <https://docs.swift.org/compiler/documentation/diagnostics/mutable-global-variable>
+[#NoUsage]: <https://docs.swift.org/compiler/documentation/diagnostics/no-usage>
+[#UnnecessaryEffectMarker]: <https://docs.swift.org/compiler/documentation/diagnostics/unnecessary-effect-marker>
+SwiftDriverJobDiscovery normal arm64 Compiling AESKit.swift, AboutHomeScreen.swift, AddLockHomeScreen.swift, AndroidPair.swift, AppLock.swift, AppModel.swift, AppearanceHomeScreen.swift, Attribution.swift, AuditChain.swift, AutoOpenHomeScreen.swift, AutoOpenKit.swift, BLEDelegates.swift, BLEService.swift, BLETypes.swift, BackgroundGuard.swift, BackupBundle.swift, BackupCanonical.swift, BackupHomeScreen.swift, BackupKit.swift, BackupStudioKit.swift, BackupStudioTypes.swift, BatteryCare.swift, CaptureShield.swift, Clip.swift, CredentialModels.swift, CredentialOrg.swift, CredentialOrgBatch.swift, CredentialOrgState.swift, CredentialStudioHomeScreen.swift, CredentialStudioStores.swift, DFUKit.swift, DateFormats.swift, DefendKit.swift, DefendService.swift, Destinations.swift, DevModules.swift, DiagKit.swift, DiagLogStore.swift, DiagnosticsHomeScreen.swift, DoorHomeScreen.swift, DoorLayout.swift, EngineHost.swift, FrameRedact.swift, FullPageCapture.swift, GlassSlideToUnlock.swift, GlassSurface.swift, GlassTabBar.swift, HardwareHomeScreen.swift, HardwareService.swift, HeroStats.swift, HexKit.swift, HouseHomeScreen.swift, HouseholdParts.swift, HouseholdRoster.swift, KeyCreateHomeScreen.swift, KeyDetailHomeScreen.swift, KeyGen.swift, KeysBits.swift, KeysHomeScreen.swift, KeysIntents.swift, KeysParts.swift, LinkSense.swift, LockDataDeleteSheet.swift, LockKeeperApp.swift, LockMaintenanceHomeScreen.swift, LockPortfolioHomeScreen.swift, LockService.swift, LockServiceCredentials.swift, LockServiceLink.swift, LockServiceOps.swift, LockServicePairing.swift, LockSettingsHomeScreen.swift, LockStats.swift, Locked.swift, MemberCreateHomeScreen.swift, MemberDetailHomeScreen.swift, MemberHub.swift, MemberMergeKit.swift, MemberMergeSheet.swift, MemberOpsStore.swift, Milestones.swift, MobileKeyHomeScreen.swift, MobileKeyService.swift, PasscodeSheets.swift, PidMap.swift, QuickActions.swift, QuickPool.swift, QuickPoolEditSheet.swift, Reading.swift, RecordDetailHomeScreen.swift, RecordModels.swift, RecordSearch.swift, RecordSearchBuild.swift, RecordSearchParse.swift, RecordSearchQuery.swift, RecordsExportSection.swift, RecordsHomeScreen.swift, RecordsModels.swift, RecordsStudioHomeScreen.swift, ReorderSupport.swift, Router.swift, ScreenAwake.swift, SecretStore.swift, SecurityHomeScreen.swift, SeedImporter.swift, SettingsHomeScreen.swift, SettingsModel.swift, SettingsParts.swift, Shell.swift, StatsKit.swift, StatusParser.swift, Store.swift, StoreKeychain.swift, StoreLedger.swift, StoreModels.swift, StoreState.swift, TimeDisplay.swift, TimeFormat.swift, ToastCenter.swift, TrialGuard.swift, UnlockGateScreen.swift, V7Components.swift, V7Extras.swift, V7Tokens.swift, V8Charts.swift, V8Components.swift, V8Tokens.swift, WeekCal.swift, ZKCmdBuilder.swift, ZKProtocol.swift, ZOTP.swift, ZipKit.swift, ZotpHomeScreen.swift, GeneratedAssetSymbols.swift (in target 'LockKeeper' from project 'LockKeeper')
+
+SwiftDriver\ Compilation\ Requirements LockKeeper normal arm64 com.apple.xcode.tools.swift.compiler (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name LockKeeper -Onone -whole-module-optimization @/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper.SwiftFileList -DDEBUG -enable-upcoming-feature StrictConcurrency -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk -target arm64-apple-ios27.0 -g -module-cache-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos -F /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos -c -num-threads 3 -Xcc -ivfsstatcache -Xcc /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKStatCaches.noindex/iphoneos27.1-24A94232-e829b21a6f8c9b70876ba0858053c0442866d66f27be705873c55a4609c58824.sdkstatcache -output-file-map /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper-OutputFileMap.json -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules -emit-dependencies -emit-module -emit-module-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper.swiftmodule -serialize-diagnostics -dependency-scan-serialize-diagnostics-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper-dependency-scan.dia -validate-clang-modules-once -clang-build-session-file /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -fmodules-prune-interval\=86400 -Xcc -fmodules-prune-after\=345600 -emit-const-values -const-gather-protocols-list /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper_const_extract_protocols.json -Xcc -iquote -Xcc /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-generated-files.hmap -Xcc -I/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-own-target-headers.hmap -Xcc -I/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-all-target-headers.hmap -Xcc -iquote -Xcc /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-project-headers.hmap -Xcc -I/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/include -Xcc -I/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/DerivedSources-normal/arm64 -Xcc -I/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/DerivedSources/arm64 -Xcc -I/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper-Swift.h -working-directory /Users/runner/work/ios-app/ios-app/ios27 -no-emit-module-separately-wmo
+
+SwiftMergeGeneratedHeaders /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/DerivedSources/LockKeeper-Swift.h /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper-Swift.h (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    builtin-swiftHeaderTool -arch arm64 /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper-Swift.h -o /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/DerivedSources/LockKeeper-Swift.h
+
+Copy /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.swiftmodule/arm64-apple-ios.swiftmodule /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper.swiftmodule (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper.swiftmodule /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.swiftmodule/arm64-apple-ios.swiftmodule
+
+Copy /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.swiftmodule/arm64-apple-ios.swiftdoc /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper.swiftdoc (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper.swiftdoc /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.swiftmodule/arm64-apple-ios.swiftdoc
+
+Copy /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.swiftmodule/arm64-apple-ios.abi.json /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper.abi.json (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper.abi.json /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.swiftmodule/arm64-apple-ios.abi.json
+
+Copy /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.swiftmodule/Project/arm64-apple-ios.swiftsourceinfo /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper.swiftsourceinfo (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper.swiftsourceinfo /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.swiftmodule/Project/arm64-apple-ios.swiftsourceinfo
+
+Ld /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/LockKeeper.debug.dylib normal (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios27.0 -dynamiclib -isysroot /Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk -O0 -Xlinker -no_warn_duplicate_libraries -L/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphoneos -L/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos -F/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphoneos -F/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos -filelist /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper.LinkFileList -install_name @rpath/LockKeeper.debug.dylib -Xlinker -rpath -Xlinker @executable_path/Frameworks -Xlinker -dead_strip -Xlinker -object_path_lto -Xlinker /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper_lto.o -rdynamic -Xlinker -no_deduplicate -Xlinker -dependency_info -Xlinker /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper_dependency_info.dat -fobjc-link-runtime -L/Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper.swiftmodule -Xlinker -alias -Xlinker _main -Xlinker ___debug_main_executable_dylib_entry_point -o /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/LockKeeper.debug.dylib
+
+ConstructStubExecutorLinkFileList /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-ExecutorLinkFileList-normal-arm64.txt (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    construct-stub-executor-link-file-list /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/LockKeeper.debug.dylib /Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/libPreviewsJITStubExecutor_no_swift_entry_point.a /Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/libPreviewsJITStubExecutor.a --output /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-ExecutorLinkFileList-normal-arm64.txt
+note: Using stub executor library with Swift entry point. (in target 'LockKeeper' from project 'LockKeeper')
+
+Ld /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/LockKeeper normal (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios27.0 -isysroot /Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk -O0 -Xlinker -no_warn_duplicate_libraries -L/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos -F/Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos -Xlinker -rpath -Xlinker @executable_path -Xlinker -rpath -Xlinker @executable_path/Frameworks -rdynamic -Xlinker -no_deduplicate -e ___debug_blank_executor_main -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_dylib -Xlinker /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-DebugDylibPath-normal-arm64.txt -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_instlnm -Xlinker /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-DebugDylibInstallName-normal-arm64.txt -Xlinker -filelist -Xlinker /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper-ExecutorLinkFileList-normal-arm64.txt /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/LockKeeper.debug.dylib -o /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/LockKeeper
+
+CopySwiftLibs /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    builtin-swiftStdLibTool --copy --verbose --scan-executable /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/LockKeeper.debug.dylib --scan-folder /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/Frameworks --scan-folder /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/PlugIns --scan-folder /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/SystemExtensions --scan-folder /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/Extensions --platform iphoneos --toolchain /var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.cBVK5w/Metal.xctoolchain --toolchain /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/Frameworks --strip-bitcode --strip-bitcode-tool /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os
+Ignoring --strip-bitcode because --sign was not passed
+
+ExtractAppIntentsMetadata (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.cBVK5w/Metal.xctoolchain --module-name LockKeeper --sdk-root /Applications/Xcode_27.1.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk --xcode-version 27A9275 --platform-family iOS --deployment-target 27.0 --bundle-identifier com.aapk.lockkeeper --output /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app --target-triple arm64-apple-ios27.0 --binary-file /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/LockKeeper --dependency-file /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper_dependency_info.dat --stringsdata-file /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper.SwiftFileList --metadata-file-list /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper.DependencyMetadataFileList --static-metadata-file-list /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper.DependencyStaticMetadataFileList --swift-const-vals-list /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/Objects-normal/arm64/LockKeeper.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --no-app-shortcuts-localization
+2026-11-06 05:51:20.976 appintentsmetadataprocessor[32946:81220] Starting appintentsmetadataprocessor export
+2026-11-06 05:51:20.987 appintentsmetadataprocessor[32946:81220] warning: Metadata extraction skipped, no AppIntents.framework dependency found
+
+AppIntentsSSUTraining (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    /Applications/Xcode_27.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsnltrainingprocessor --infoplist-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/Info.plist --temp-dir-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/ssu --bundle-id com.aapk.lockkeeper --product-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app --extracted-metadata-path /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/Metadata.appintents --metadata-file-list /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/LockKeeper.build/Debug-iphoneos/LockKeeper.build/LockKeeper.DependencyMetadataFileList --source-file /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app/Info.plist --archive-ssu-assets
+2026-11-06 05:51:21.041 appintentsnltrainingprocessor[32948:81225] Parsing options for appintentsnltrainingprocessor
+2026-11-06 05:51:21.041 appintentsnltrainingprocessor[32948:81225] Starting AppIntents SSU YAML Generation
+2026-11-06 05:51:21.047 appintentsnltrainingprocessor[32948:81225] No AppShortcuts found - Skipping.
+
+RegisterExecutionPolicyException /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    builtin-RegisterExecutionPolicyException /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app
+
+Validate /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    builtin-validationUtility /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app -shallow-bundle -infoplist-subpath Info.plist
+
+Touch /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app (in target 'LockKeeper' from project 'LockKeeper')
+    cd /Users/runner/work/ios-app/ios-app/ios27
+    /usr/bin/touch -c /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Products/Debug-iphoneos/LockKeeper.app
+
+PruneExplicitPrecompiledModules /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/SDKExplicitPrecompiledModules
+
+PruneExplicitPrecompiledModules /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/ExplicitPrecompiledModules
+
+PruneExplicitPrecompiledModules /Users/runner/work/ios-app/ios-app/ios27/build/DerivedData/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+
+** BUILD SUCCEEDED **
+
