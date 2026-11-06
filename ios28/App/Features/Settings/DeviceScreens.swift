@@ -122,7 +122,9 @@ struct PairingScreen: View {
                 let found = BLEService.shared.allDiscovered().filter { adv in
                     ZKProtocol.parseAdv(adv.advertisHex)?.macDisplay != nil
                 }
-                if found.count != devices.count { devices = found }
+                // 比「数量」而不是比「内容」：扫到一台换掉另一台时数量不变，
+                // 列表却停在旧的那台上，用户点了配对会配错机器。
+                if found.map(\.deviceId) != devices.map(\.deviceId) { devices = found }
                 try? await Task.sleep(for: .milliseconds(300))
             }
             BLEService.shared.stopScan()
@@ -197,7 +199,7 @@ struct AutoOpenScreen: View {
             ReadingRow(items: [
                 (label: "触发", value: "\(base)", unit: "dBm"),
                 (label: "释放", value: "\(AutoOpenKit.disarmThreshold(base: base))", unit: "dBm"),
-                (label: "采样", value: "\(AutoOpen.autocal(app.currentMac) == nil ? 0 : 5)", unit: "次"),
+                (label: "标定", value: calText, unit: nil),
             ])
             .padding(.top, 4)
 
@@ -242,6 +244,13 @@ struct AutoOpenScreen: View {
             base = AutoOpenKit.rssiBase(mac: app.currentMac)
             lastReason = AutoOpen.lastReject(app.currentMac)?.reason
         }
+    }
+
+    /// 标定状态。采样点数 Engine 没存（只存 p95 与时间），所以这里不编一个「5 次」出来 ——
+    /// 显示的必须是真知道的东西。
+    private var calText: String {
+        guard let cal = AutoOpen.autocal(app.currentMac) else { return "未标定" }
+        return "已标定 · " + When.ago(Int64(cal.at * 1000))
     }
 
     private func calibrate() async {
@@ -507,7 +516,11 @@ struct DfuScreen: View {
     }
 
     private func flash() async {
-        guard let package, let lock = DB.keychainForUnlock(app.currentMac) else { return }
+        guard let package else { return }
+        guard let lock = DB.keychainForUnlock(app.currentMac) else {
+            errorLine = "先配对一把锁，再刷固件。"
+            return
+        }
         let current = app.lock?.firmware ?? ""
         if let blocked = FirmwareKit.downgradeBlocked(current: current.isEmpty ? nil : current, pkg: package) {
             errorLine = blocked
@@ -645,7 +658,10 @@ struct DiagnosticsScreen: View {
     }
 
     private func repair() async {
-        guard let kc = DB.keychainForUnlock(app.currentMac) else { return }
+        guard let kc = DB.keychainForUnlock(app.currentMac) else {
+            message = "先配对一把锁。"
+            return
+        }
         busy = true
         defer { busy = false }
         do {

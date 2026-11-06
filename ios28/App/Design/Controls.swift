@@ -127,7 +127,6 @@ struct UnlockLens: View {
         .buttonStyle(LensPressStyle())
         .disabled(!enabled)
         .opacity(enabled ? 1 : 0.55)
-        .hapticFeedback(.impact(weight: .medium), trigger: phase)
         .accessibilityLabel("开锁")
         .accessibilityHint("连接门锁并下发开锁命令")
         .accessibilityValue(caption)

@@ -253,6 +253,9 @@ final class AppModel {
         guard !mac.isEmpty else { phase = .failed("还没有添加门锁"); return }
 
         lastError = nil
+        // 触感只在**结果**上给：按下一下，成功或失败各一下。
+        // （早先挂在相位的 `.sensoryFeedback` 上，连上／下发／等回执会连着震四五下。）
+        Haptics.impact()
         // 传输层失败（蓝牙抖动、回执没回来）值得自动再试一次；
         // 锁端明确回了拒绝码则不重试 —— 再问一次也是同一个答案。
         let attempts = SettingsStore.shared.autoRetry ? 2 : 1
@@ -268,6 +271,7 @@ final class AppModel {
                 let rc = try await LockService.shared.unlock(mac: mac, pinDec: chosenPin(mac))
                 if rc == 0 {
                     phase = .opened
+                    Haptics.notify(.success)
                     let now = Int64(Date().timeIntervalSince1970 * 1000)
                     lastUnlockAt = now
                     lastActionAt = now
@@ -278,8 +282,10 @@ final class AppModel {
                     await reload(refreshStatus: false)
                 } else if rc == 22 {
                     phase = .failed("门锁要求第二种验证方式")
+                    Haptics.notify(.error)
                 } else {
                     phase = .failed(StatusParser.rcFriendly(rc))
+                    Haptics.notify(.error)
                 }
                 return
             } catch {
@@ -287,6 +293,7 @@ final class AppModel {
                 guard attempt < attempts else {
                     phase = .failed(msg)
                     lastError = msg
+                    Haptics.notify(.error)
                     return
                 }
                 // 刚失败就立刻重发多半还是失败：让链路缓一下再试。
@@ -537,6 +544,7 @@ final class AppModel {
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             let r = try await LockService.shared.syncTime()
+            Haptics.notify(.success)
             await reload(refreshStatus: true)
             return .success((r.before, r.after))
         } catch {
