@@ -12,7 +12,7 @@
 // 不搬它的任何设计令牌或组件名。
 import SwiftUI
 
-private struct LiquidGlassModifier<S: Shape>: ViewModifier {
+private struct LiquidGlassModifier<S: InsettableShape>: ViewModifier {
     var shape: S
     var tint: Color?
     var interactive: Bool
@@ -62,7 +62,7 @@ private struct LiquidGlassModifier<S: Shape>: ViewModifier {
 
 extension View {
     /// 真液态玻璃。`shape` 决定玻璃的形状与圆角；`tint` 让玻璃带上一点家的颜色。
-    func liquidGlass<S: Shape>(in shape: S,
+    func liquidGlass<S: InsettableShape>(in shape: S,
                                tint: Color? = nil,
                                interactive: Bool = false) -> some View {
         modifier(LiquidGlassModifier(shape: shape, tint: tint, interactive: interactive))
