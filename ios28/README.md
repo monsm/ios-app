@@ -44,7 +44,7 @@ xcodebuild build -project Threshold.xcodeproj -scheme Threshold \
 **签名**：`project.yml` 里是 `CODE_SIGN_STYLE: Automatic`，没有写死 Team。
 在 Xcode 里选一次自己的 Team 即可；CI 全程 `CODE_SIGNING_ALLOWED=NO`。
 
-**安装**：未签名 IPA 需要用自己的 Apple ID 签一次（Sideloadly / AltStore / Xcode）。
+**安装**：最新未签名 IPA 在 [Release · ios27-latest](https://github.com/monsm/ios-app/releases/tag/ios27-latest)，每次 `main` 的成功构建都会替换它；文件名带 commit 短哈希，装之前先核对。未签名包需要用自己的 Apple ID 签一次（Sideloadly / AltStore / Xcode）。
 
 ---
 
@@ -95,7 +95,7 @@ ios28/
 |---|---|
 | 静态闸门 | ✅ 全绿（6 道） |
 | 视觉验收台 | ✅ 7 屏 × 明暗两套已渲染 |
-| 真编译 | ✅ 通过（CI run 42229542268 · 提交 `3868a76`：`build_ok=1` `archive_ok=1` `errors=0` `warnings=7`，iOS 27 SDK，未签名 IPA 已打包） |
+| 真编译 | ✅ 通过（CI run 42236340048 · 提交 `2a4d6b3`：`build_ok=1` `archive_ok=1` `errors=0` `warnings=7`，iOS 27 SDK，未签名 IPA 已打包） |
 | 真机手感 | ❌ 未验（镜头按压、触觉、真实材质折射） |
 | 动态字体极端值 | ⚠️ 已按令牌缩放，AX5 仍要看真机 |
 | 横屏 / iPad | ❌ 只支持竖屏 iPhone |
