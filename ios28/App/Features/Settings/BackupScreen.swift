@@ -114,9 +114,9 @@ struct BackupScreen: View {
                             Text("\(preview.macs.count) 把锁 · \(preview.pwdCount) 个密码 · \(preview.fpCount) 个指纹 · \(preview.memberCount) 位成员")
                                 .type(T.F.callout)
                                 .foregroundStyle(T.C.ink)
-                            Text("校验和：\(preview.checksum) · schema \(preview.schema)")
+                            Text("校验和：" + checksumLabel(preview.checksum) + " · schema \(preview.schema)")
                                 .type(T.F.caption)
-                                .foregroundStyle(T.C.ink3)
+                                .foregroundStyle(checksumTint(preview.checksum))
                             if preview.skippedLocks > 0 {
                                 Text("\(preview.skippedLocks) 把锁会被跳过（钥匙不完整）")
                                     .type(T.F.caption)
@@ -150,6 +150,24 @@ struct BackupScreen: View {
                 .padding(.top, 20)
         }
         .toolbar(.hidden, for: .navigationBar)
+    }
+
+    /// 校验和状态是人话，不是枚举名。
+    /// （枚举直接插进 `Text` 会走 LocalizedStringKey 插值，SwiftUI 会警告它拿不到本地化描述。）
+    private func checksumLabel(_ state: BackupStudio.ChecksumState) -> String {
+        switch state {
+        case .ok: return "一致"
+        case .mismatch: return "不一致"
+        case .absent: return "缺失"
+        }
+    }
+
+    private func checksumTint(_ state: BackupStudio.ChecksumState) -> Color {
+        switch state {
+        case .ok: return T.C.ok
+        case .mismatch: return T.C.danger
+        case .absent: return T.C.ink3
+        }
     }
 
     private func export() {
