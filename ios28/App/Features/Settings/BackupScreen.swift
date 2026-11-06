@@ -61,6 +61,9 @@ struct BackupScreen: View {
                     }
                 }
                 .frame(width: 110)
+                // 还没生成备份时，这个按钮原先是个静默的空操作：点下去什么都不发生。
+                .disabled(exported == nil)
+                .opacity(exported == nil ? 0.45 : 1)
             }
             .padding(.top, 12)
 
@@ -115,6 +118,9 @@ struct BackupScreen: View {
                     }
                 }
                 .padding(.top, 10)
+                // 解密要跑 PBKDF2：连点两次会并发解两遍，甚至边预览边写盘。
+                .disabled(busy)
+                .opacity(busy ? 0.55 : 1)
 
                 if let preview {
                     GlassSurface(radius: 18) {
@@ -154,7 +160,7 @@ struct BackupScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Text("导入是「只增不减」：本机已有的同名凭证会保留，不会被覆盖。恢复前会自动写一个回滚点。")
+            Text("导入是「只增不减」：本机已有的同名凭证会保留，不会被覆盖。恢复前会自动存一份快照（暂不支持在 App 内撤销）。")
                 .type(T.F.caption)
                 .foregroundStyle(T.C.ink3)
                 .lineSpacing(3)
@@ -212,8 +218,11 @@ struct BackupScreen: View {
     }
 
     private func doPreview() async {
+        guard !busy else { return }
         errorLine = nil
         preview = nil
+        busy = true
+        defer { busy = false }
         do {
             let result = try BackupStudio.parsePreview(text: importText,
                                                        password: importPassword.isEmpty ? nil : importPassword)
@@ -224,6 +233,7 @@ struct BackupScreen: View {
     }
 
     private func doRestore() async {
+        guard !busy else { return }
         errorLine = nil
         // 这一页开头写着「导入先预览、再写盘」—— 那就真的**先预览**。
         // 原先「恢复」可以直接点：还没看清这份信封里是几把锁、哪几把会被跳过，

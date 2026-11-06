@@ -112,11 +112,13 @@ struct ZotpScreen: View {
                 Button {
                     Task { await toggle(false) }
                 } label: {
-                    Text("关闭动态密码")
+                    Text(busy ? "正在关闭…" : "关闭动态密码")
                         .type(T.F.caption)
                         .foregroundStyle(T.C.ink3)
                 }
                 .buttonStyle(.plain)
+                .disabled(busy)
+                .opacity(busy ? 0.45 : 1)
                 .padding(.top, 16)
             } else {
                 enableCard
@@ -234,6 +236,7 @@ struct ZotpScreen: View {
     }
 
     private func toggle(_ on: Bool) async {
+        guard !busy else { return }
         busy = true
         defer { busy = false }
         errorLine = nil

@@ -6,6 +6,7 @@ import SwiftUI
 @MainActor
 struct LocksScreen: View {
     @Environment(AppModel.self) private var app
+    @Environment(Router.self) private var router
     @Environment(\.dismiss) private var dismiss
 
     @State private var pendingDelete: LockSummary?
@@ -18,7 +19,9 @@ struct LocksScreen: View {
 
             DisplayLine(text: app.locks.isEmpty ? "还没有锁。" : "\(app.locks.count) 把锁，\n一个家。", size: 34)
                 .padding(.top, 16)
-            Text("点一行切换当前锁；右侧「设为默认」决定冷启动落点。")
+            Text(DB.isDecoy
+                 ? "当前正在用的那把锁。"
+                 : "点一行切换当前锁；右侧「设为默认」决定冷启动落点。")
                 .type(T.F.caption)
                 .foregroundStyle(T.C.ink3)
                 .padding(.top, 8)
@@ -26,6 +29,14 @@ struct LocksScreen: View {
             SectionHead(index: "01", title: "门锁", trailing: "\(app.locks.count)")
             ForEach(app.locks) { lock in
                 lockRow(lock)
+            }
+            // 空态原先只有一句「还没有锁。」，整页没有任何下一步 —— 从设置首页
+            // 「还没有门锁」点进来就是死路。给一个真的能去配对的入口。
+            if app.locks.isEmpty {
+                PrimaryButton(title: "配对新的门锁") {
+                    router.pushSettings(.pairing)
+                }
+                .padding(.top, 18)
             }
 
             if let errorLine {
@@ -35,15 +46,19 @@ struct LocksScreen: View {
                     .padding(.top, 12)
             }
 
-            SectionHead(index: "02", title: "数据")
-            Button {
-                confirmingWipe = true
-            } label: {
-                ContentRow(symbol: "trash", tone: .danger, title: "删除全部本机数据",
-                           subtitle: "锁端不受影响；本机钥匙串、台账、记录全部清掉", chevron: true)
+            // 空壳里不提供任何"删除本机数据"的入口：这是不可逆的真实删除，
+            // 而空壳的前提是胁迫者无论怎么点，都不会破坏主人的数据。
+            // 一把锁都没有时也整段不摆 —— 一个恒被禁用的按钮只会让人以为它坏了。
+            if !DB.isDecoy && !app.locks.isEmpty {
+                SectionHead(index: "02", title: "数据")
+                Button {
+                    confirmingWipe = true
+                } label: {
+                    ContentRow(symbol: "trash", tone: .danger, title: "删除全部本机数据",
+                               subtitle: "锁端不受影响；本机钥匙串、台账、记录全部清掉", chevron: true)
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
-            .disabled(app.locks.isEmpty)
         }
         .toolbar(.hidden, for: .navigationBar)
         // 一把没有确认门的「删除全部」：点错了就是全部钥匙串、台账、记录一起没。
@@ -105,33 +120,36 @@ struct LocksScreen: View {
             }
             .buttonStyle(.plain)
 
-            if LockArchive.defaultMac == lock.id {
-                Badge(text: "默认")
-            } else {
+            // 空壳里不写默认锁、不删锁：这两个动作都会留下真实、不可逆的本机后果。
+            if !DB.isDecoy {
+                if LockArchive.defaultMac == lock.id {
+                    Badge(text: "默认")
+                } else {
+                    Button {
+                        LockArchive.setDefaultMac(lock.id)
+                        Task { await app.reload() }
+                    } label: {
+                        Text("设为默认")
+                            .type(T.F.caption)
+                            .foregroundStyle(T.C.brass)
+                            .padding(.horizontal, 10)
+                            .frame(height: 30)
+                            .background(T.C.brassWash, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+
                 Button {
-                    LockArchive.setDefaultMac(lock.id)
-                    Task { await app.reload() }
+                    pendingDelete = lock
                 } label: {
-                    Text("设为默认")
-                        .type(T.F.caption)
-                        .foregroundStyle(T.C.brass)
-                        .padding(.horizontal, 10)
-                        .frame(height: 30)
-                        .background(T.C.brassWash, in: Capsule())
+                    Image(systemName: "trash")
+                        .font(.system(size: 13))
+                        .foregroundStyle(T.C.ink4)
+                        .frame(width: 30, height: 30)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("删除 \(lock.name)")
             }
-
-            Button {
-                pendingDelete = lock
-            } label: {
-                Image(systemName: "trash")
-                    .font(.system(size: 13))
-                    .foregroundStyle(T.C.ink4)
-                    .frame(width: 30, height: 30)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("删除 \(lock.name)")
         }
         .padding(.vertical, 12)
         .overlay(alignment: .bottom) {
@@ -167,8 +185,24 @@ struct LockPolicyScreen: View {
     @State private var busy = false
     @State private var errorLine: String?
     @State private var loaded = false
+    /// 关闭双验要二次确认：它是把一道安全保险拆掉，不该跟开静音一样一点就生效。
+    @State private var confirmOffSafe = false
+    /// 程序性回写开关（载入配置、失败回退）不该再触发 `.onChange` 下发一条命令。
+    /// 否则打开这一页时若锁里静音/双验是开的，会平白重发一次设置命令。
+    @State private var skipMutedChange = false
+    @State private var skipSafeChange = false
+    /// 小时 Picker 同理：载入与失败回退都会改值，不能因此再下发一条布防命令。
+    @State private var skipStartHour = false
+    @State private var skipEndHour = false
 
-    private let intervals = [6, 10, 15, 30, 60]
+    /// cmd24 的字段是 1 字节**档位**（厂商实现里就是 2–6 秒），不是任意秒数。
+    /// 原先这里是 6/10/15/30/60 —— 后四档全在协议范围外，锁要么忽略、要么按截断值执行，
+    /// 而本机仍把 30/60 记进 `TailgateCfg`，今日页还会照它倒计时。
+    private let intervals = [2, 3, 4, 5, 6]
+
+    private var canDefend: Bool {
+        app.lock.map { PidMap.canDefend($0.pid) } ?? false
+    }
 
     var body: some View {
         ScreenScroll {
@@ -176,29 +210,58 @@ struct LockPolicyScreen: View {
 
             DisplayLine(text: "把门锁\n调成你要的样子。", size: 34)
                 .padding(.top, 16)
-            Text("这里的每一项都是一条真实命令；失败会如实报出来，不会假装成功。")
+            Text("锁端设置都是真实命令；失败会如实报出来，不会假装成功。「连不上时自动重试」只改本机行为。")
                 .type(T.F.caption)
                 .foregroundStyle(T.C.ink3)
                 .padding(.top, 8)
 
             SectionHead(index: "01", title: "声音与验证")
             SwitchLine(title: "静音", detail: "门锁按键不再响；语音提示同时关闭。", isOn: $muted)
+                .disabled(busy)
                 .onChange(of: muted) { _, value in
                     guard loaded else { return }
-                    Task { await apply(await app.setMuted(value), "静音") }
+                    if skipMutedChange { skipMutedChange = false; return }
+                    // 一条设置命令还在路上时，第二次拨动直接退回原值：
+                    // 原先两个请求会并发下发，谁后回谁说了算，开关停在与锁不一致的位置。
+                    guard !busy else {
+                        let revert = app.lock?.muted ?? !value
+                        if muted != revert { skipMutedChange = true; muted = revert }
+                        return
+                    }
+                    busy = true
+                    Task {
+                        await apply(await app.setMuted(value), "静音")
+                        busy = false
+                    }
                 }
-            SwitchLine(title: "双验模式", detail: "开门需要两种方式：密码 + 指纹。", isOn: $safeMode)
+            SwitchLine(title: "双验模式", detail: "开门需要两种凭证（例如密码 + 指纹）。", isOn: safeModeBinding)
+                .disabled(busy)
                 .onChange(of: safeMode) { _, value in
                     guard loaded else { return }
-                    Task { await apply(await app.setSafeMode(value), "双验") }
+                    if skipSafeChange { skipSafeChange = false; return }
+                    guard !busy else {
+                        let revert = app.lock?.safeMode ?? !value
+                        if safeMode != revert { skipSafeChange = true; safeMode = revert }
+                        return
+                    }
+                    busy = true
+                    Task {
+                        await apply(await app.setSafeMode(value), "双验")
+                        busy = false
+                    }
                 }
 
             SectionHead(index: "02", title: "自动上锁")
             HStack(spacing: 8) {
                 ForEach(intervals, id: \.self) { value in
                     Button {
+                        guard !busy else { return }
                         interval = value
-                        Task { await apply(await app.setAutoLock(value), "自动上锁") }
+                        busy = true
+                        Task {
+                            await apply(await app.setAutoLock(value), "自动上锁")
+                            busy = false
+                        }
                     } label: {
                         Text("\(value)s")
                             .type(T.F.caption)
@@ -214,13 +277,18 @@ struct LockPolicyScreen: View {
                     .buttonStyle(PressStyle())
                 }
             }
+            .disabled(busy)
+            .opacity(busy ? 0.55 : 1)
 
             SectionHead(index: "03", title: "布防")
             SegmentedBar(items: ["关闭", "本次", "时段"], selected: Binding(
                 get: { defendMode.rawValue },
-                set: { defendMode = DefendMode(rawValue: $0) ?? .off }
-            ))
-            .onChange(of: defendMode) { _, _ in saveDefence() }
+                set: { value in
+                    let target = DefendMode(rawValue: value) ?? .off
+                    guard target != defendMode else { return }
+                    Task { await changeDefence(to: target) }
+                }
+            ), enabled: canDefend && !busy)
 
             if defendMode == .period {
                 HStack(spacing: 14) {
@@ -228,6 +296,16 @@ struct LockPolicyScreen: View {
                     hourPicker("结束", $endHour)
                 }
                 .padding(.top, 12)
+                // 改小时也要真的下发：原先只有切换模式才会调 saveDefence，
+                // 两个 Picker 选完什么都不会发生 —— 一个看着能改、实际不生效的控件。
+                .onChange(of: startHour) { _, _ in
+                    if skipStartHour { skipStartHour = false; return }
+                    saveDefence()
+                }
+                .onChange(of: endHour) { _, _ in
+                    if skipEndHour { skipEndHour = false; return }
+                    saveDefence()
+                }
                 Text("跨午夜是允许的：22:00 到次日 07:00 也是合法时段。")
                     .type(T.F.caption)
                     .foregroundStyle(T.C.ink3)
@@ -239,7 +317,7 @@ struct LockPolicyScreen: View {
                 .foregroundStyle(T.C.ink3)
                 .padding(.top, 10)
 
-            if app.lock.map({ PidMap.canDefend($0.pid) }) == false {
+            if !canDefend {
                 Text("这把锁的型号不支持布防。")
                     .type(T.F.caption)
                     .foregroundStyle(T.C.danger)
@@ -270,11 +348,32 @@ struct LockPolicyScreen: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .onAppear { load() }
+        .confirmationDialog("关闭双验？", isPresented: $confirmOffSafe, titleVisibility: .visible) {
+            Button("关闭双验", role: .destructive) { safeMode = false }
+            Button("取消", role: .cancel) {}
+        } message: {
+            Text("之后开门只需要一种凭证。这道保险拆掉后，被逼着开门的人只要拿到一项凭证就够了。")
+        }
+    }
+
+    /// 打开：照常走 `.onChange` 下发。
+    /// 关闭：先不翻转状态，等确认对话框；用户取消时开关会停在原位。
+    private var safeModeBinding: Binding<Bool> {
+        Binding(
+            get: { safeMode },
+            set: { on in
+                if on {
+                    safeMode = true
+                } else if safeMode {
+                    confirmOffSafe = true
+                }
+            }
+        )
     }
 
     private var defendHint: String {
         switch defendMode {
-        case .off: return "撤防：任何凭证都能开门。"
+        case .off: return "撤防：不再按布防时段拦截；双验模式仍然生效。"
         case .once: return "本次布防：直到你手动撤防。"
         case .period: return "时段布防：只在设定的小时内生效。"
         }
@@ -292,34 +391,78 @@ struct LockPolicyScreen: View {
             }
             .pickerStyle(.menu)
             .tint(T.C.ink)
+            .disabled(busy)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func load() {
         guard !loaded else { return }
-        muted = app.lock?.muted ?? false
-        safeMode = app.lock?.safeMode ?? false
+        // 空壳里不读真实的自动上锁/布防配置：它们会暴露主人几点回家、晚上有没有设防。
+        // 一律显示默认值，动作本身由 AppModel 的同一道闸拦下。
+        if DB.isDecoy {
+            muted = false
+            safeMode = false
+            interval = 6
+            defendMode = .off
+            startHour = 22
+            endHour = 7
+            loaded = true
+            return
+        }
+        let savedMuted = app.lock?.muted ?? false
+        if muted != savedMuted { skipMutedChange = true; muted = savedMuted }
+        let savedSafe = app.lock?.safeMode ?? false
+        if safeMode != savedSafe { skipSafeChange = true; safeMode = savedSafe }
         interval = DB.tailgate(app.currentMac)?.interval ?? 6
         if let cfg = DB.defend(app.currentMac) {
             defendMode = DefendMode(rawValue: cfg.control) ?? .off
             if defendMode == .period {
-                startHour = DefendKit.secFromProto(cfg.startSec) / 3600
-                endHour = DefendKit.secFromProto(cfg.endSec) / 3600
+                let savedStart = DefendKit.secFromProto(cfg.startSec) / 3600
+                if startHour != savedStart { skipStartHour = true; startHour = savedStart }
+                let savedEnd = DefendKit.secFromProto(cfg.endSec) / 3600
+                if endHour != savedEnd { skipEndHour = true; endHour = savedEnd }
             }
         }
         loaded = true
     }
 
+    /// 分段控件的用户动作：先乐观更新，失败再退回上一次的真实配置。
+    /// 不走 `.onChange` —— 回退本身会再触发一次 onChange，等于重发一条注定失败的命令。
+    private func changeDefence(to target: DefendMode) async {
+        guard !busy else { return }
+        let previous = defendMode
+        defendMode = target
+        busy = true
+        defer { busy = false }
+        errorLine = nil
+        let start = target == .period ? startHour * 3600 : 0
+        let end = target == .period ? endHour * 3600 : 0
+        let result = await app.applyDefence(target, startSec: start, endSec: end)
+        if case .failure(let error) = result {
+            errorLine = error.localizedDescription
+            defendMode = previous
+        }
+    }
+
+    /// 改小时：重新下发当前模式。失败时把两个 Picker 退回已保存的值。
     private func saveDefence() {
-        guard loaded else { return }
+        guard loaded, canDefend, !busy else { return }
+        let target = defendMode
+        guard target == .period else { return }
         Task {
             busy = true
             defer { busy = false }
-            let start = defendMode == .period ? startHour * 3600 : 0
-            let end = defendMode == .period ? endHour * 3600 : 0
-            let result = await app.applyDefence(defendMode, startSec: start, endSec: end)
-            if case .failure(let error) = result { errorLine = error.localizedDescription }
+            let result = await app.applyDefence(target, startSec: startHour * 3600, endSec: endHour * 3600)
+            if case .failure(let error) = result {
+                errorLine = error.localizedDescription
+                if let cfg = DB.defend(app.currentMac) {
+                    let savedStart = DefendKit.secFromProto(cfg.startSec) / 3600
+                    if startHour != savedStart { skipStartHour = true; startHour = savedStart }
+                    let savedEnd = DefendKit.secFromProto(cfg.endSec) / 3600
+                    if endHour != savedEnd { skipEndHour = true; endHour = savedEnd }
+                }
+            }
         }
     }
 
@@ -329,8 +472,20 @@ struct LockPolicyScreen: View {
             errorLine = nil
         case .failure(let error):
             errorLine = "\(name)没有保存：\(error.localizedDescription)"
-            if name == "静音" { muted = app.lock?.muted ?? muted }
-            if name == "双验" { safeMode = app.lock?.safeMode ?? safeMode }
+            // 回退也要跳过 onChange：否则「失败 → 退回旧值 → onChange 又下发旧值」
+            // 会多打一条命令，甚至让用户以为开关自己动了一下。
+            if name == "静音" {
+                let revert = app.lock?.muted ?? muted
+                if muted != revert { skipMutedChange = true; muted = revert }
+            }
+            if name == "双验" {
+                let revert = app.lock?.safeMode ?? safeMode
+                if safeMode != revert { skipSafeChange = true; safeMode = revert }
+            }
+            if name == "自动上锁" {
+                // 失败后按钮不能停在没生效的档位上。空壳里不读真实档位（见 load）。
+                interval = DB.isDecoy ? 6 : (DB.tailgate(app.currentMac)?.interval ?? interval)
+            }
         }
     }
 }
@@ -368,13 +523,17 @@ struct LockInfoScreen: View {
 
             VStack(spacing: 0) {
                 infoRow("锁钟", lockClockText)
-                infoRow("产品 ID", String(app.lock?.pid ?? 0))
-                infoRow("验证模式", (snap?.verifyMode ?? 0) == 0 ? "单验" : "双验")
-                infoRow("PIN 容量", capacity(snap?.pinStock, snap?.pinCap))
-                infoRow("密码容量", capacity(snap?.pwdStock, snap?.pwdCap))
-                infoRow("指纹容量", capacity(snap?.fpStock, snap?.fpCap))
-                infoRow("动态码周期", snap?.zotpPeriod.map { "\($0) 分钟" } ?? "—")
-                infoRow("最近读取", When.ago(Int64((app.lastStatus?.at ?? 0))))
+                infoRow("产品 ID", DB.isDecoy ? "—" : String(app.lock?.pid ?? 0))
+                // 验证模式与三族容量都在说"这把锁里现在有多少枚凭证"。
+                // 空壳里凭证页是空的，这里若照实印出 "12 / 100 已用"，
+                // 等于当着胁迫者的面拆穿伪装。一律显示「—」。
+                infoRow("验证模式", DB.isDecoy ? "—" : ((snap?.verifyMode ?? 0) == 0 ? "单验" : "双验"))
+                infoRow("PIN 容量", DB.isDecoy ? "—" : capacity(snap?.pinStock, snap?.pinCap))
+                infoRow("密码容量", DB.isDecoy ? "—" : capacity(snap?.pwdStock, snap?.pwdCap))
+                infoRow("指纹容量", DB.isDecoy ? "—" : capacity(snap?.fpStock, snap?.fpCap))
+                infoRow("动态码周期", DB.isDecoy ? "—" : (snap?.zotpPeriod.map { "\($0) 分钟" } ?? "—"))
+                // 空壳里不显示真实的「最近读取」：精确到分钟的读数时间也是使用痕迹。
+                infoRow("最近读取", DB.isDecoy ? "—" : When.ago(Int64((app.lastStatus?.at ?? 0))))
             }
             .padding(.top, 10)
 
@@ -384,14 +543,30 @@ struct LockInfoScreen: View {
                     Task { await sync() }
                 }
                 GhostButton(title: "刷新读数", symbol: "arrow.clockwise") {
+                    guard !busy else { return }
+                    // `refreshStatus()` 在没有当前锁时静默返回；不先拦住，
+                    // 下面会照样报「读数已刷新」—— 一句什么也没发生的成功。
+                    guard !app.currentMac.isEmpty else {
+                        message = "还没有绑定门锁。"
+                        return
+                    }
                     Task {
                         busy = true
-                        await app.refreshStatus()
+                        // `refreshStatus()` 失败时只写 `app.lastError`，这一页原先从不读它 ——
+                        // 点了没反应，用户不知道是没连上还是读失败。
+                        if DB.isDecoy {
+                            message = "暂时无法读取，请稍后再试。"
+                        } else {
+                            await app.refreshStatus()
+                            message = app.lastError ?? "读数已刷新。"
+                        }
                         busy = false
                     }
                 }
             }
             .padding(.top, 6)
+            .disabled(busy)
+            .opacity(busy ? 0.55 : 1)
 
             if let message {
                 Text(message)
@@ -449,6 +624,7 @@ struct LockInfoScreen: View {
     }
 
     private func sync() async {
+        guard !busy else { return }
         busy = true
         defer { busy = false }
         let result = await app.syncTime()

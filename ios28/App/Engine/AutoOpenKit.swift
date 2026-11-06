@@ -124,12 +124,18 @@ enum AutoOpenKit {
     /// 严格档「本人刚验证过」判据。
     /// 2026-10-31 安全审核修复（SEC-04）：旧实现把 `pendingPrompt`（Face ID 提示**正在等待**）
     /// 直接当作已通过 —— 提示还没成功、甚至即将失败时也能开门。现在「提示进行中」= 未认证。
+    /// 2026-11-06：界面写着「进入前台后先刷一次，之后 30 秒内有效」，但这里原先只比
+    /// `lastFace >= strictSince`，**没有上界** —— 上一次前台刷的脸可以无限期复用。
+    /// 现在补上 30 秒窗口：超过 30 秒的旧确认不算数。
     static func faceFresh(tier: Int, lastFace: Date?, now: Date, pendingPrompt: Bool,
                           strictSince: Date? = nil) -> Bool {
         if !isStrict(tier) { return true }
         if pendingPrompt { return false }
-        guard let lastFace, let strictSince else { return false }
-        return lastFace >= strictSince
+        guard let lastFace else { return false }
+        guard now.timeIntervalSince(lastFace) <= 30 else { return false }
+        // 本轮前台已经开始提示时，确认必须发生在这之后（提示失败后不能拿旧确认顶替）。
+        if let strictSince, lastFace < strictSince { return false }
+        return true
     }
 
     /// P95 线性插值（样本 <5 不标定）
@@ -230,7 +236,7 @@ struct AutoOpenGate {
         case .off: return "主开关未开"
         case .suspended: return "rc=26 防拆挂起，自动开锁 24h 内禁用"
         case .f0: return "F0 非前台/App 未解锁"
-        case .f1face: return "F1 面容未确认（严格档要求本次进前台刷过脸）"
+        case .f1face: return "F1 面容未确认（严格档要求 30 秒内刷过脸）"
         case .f4defend: return "F4 布防时段内，一票否决"
         case .f3rssi: return "F3 信号未达武装线"
         case .f5cool: return "F5 冷却中（6 秒）"
@@ -387,7 +393,9 @@ final class AutoOpenController {
 
     private func makeContext(mac: String, host: any EngineHost) -> AutoOpenGate {
         let d = DB.defend(mac)
-        let lastAt = lastDispatch[mac] ?? AutoOpen.persistedLastDispatch(mac)
+        // 手动开锁也会刷新持久化的「上次开门」时间戳（见 `AppModel.unlock`），
+        // 这里取两者较大值，保证 6 秒冷却对两条开锁路径是同一个口径。
+        let lastAt = max(lastDispatch[mac] ?? 0, AutoOpen.persistedLastDispatch(mac))
         let snap = host.lastStatus
         return AutoOpenGate(
             // 2026-10-31 安全审核修复（SEC-04）：自动开锁必须同时满足「前台 + 本机已解锁 + 非空壳」。

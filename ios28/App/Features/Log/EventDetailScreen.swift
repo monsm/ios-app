@@ -127,11 +127,13 @@ struct EventDetailScreen: View {
         }
 
         SectionHead(index: "03", title: "同一天")
-        let sameDay = app.events.filter {
-            $0.id != event.id && When.dayKey($0.time) == When.dayKey(event.time)
-        }.prefix(4)
+        // 没有日期的记录不能按 dayKey 归组：它们的 time 都是 0，
+        // 会被当成"同一天"，把互不相干的几条记录摆在一起。
+        let sameDay = event.hasTime ? app.events.filter {
+            $0.id != event.id && $0.hasTime && When.dayKey($0.time) == When.dayKey(event.time)
+        }.prefix(4) : []
         if sameDay.isEmpty {
-            Text("这一天没有别的记录。")
+            Text(event.hasTime ? "这一天没有别的记录。" : "这条记录没有日期，无法归到某一天。")
                 .type(T.F.caption)
                 .foregroundStyle(T.C.ink3)
                 .padding(.vertical, 8)
@@ -197,6 +199,7 @@ struct EventDetailScreen: View {
 @MainActor
 struct InsightsScreen: View {
     @Environment(AppModel.self) private var app
+    @Environment(Router.self) private var router
     @Environment(\.dismiss) private var dismiss
 
     private var month: [EventItem] {
@@ -239,6 +242,12 @@ struct InsightsScreen: View {
                 .lineSpacing(3)
 
             SectionHead(index: "01", title: "按方式")
+            if byKind.isEmpty {
+                Text("这三十天还没有开门记录。")
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.ink3)
+                    .padding(.vertical, 8)
+            }
             ForEach(byKind) { row in
                 HStack {
                     Text(row.id)
@@ -288,7 +297,11 @@ struct InsightsScreen: View {
                     .padding(.vertical, 8)
             } else {
                 ForEach(Array(alarms.prefix(6))) { event in
-                    EventRow(event: event, showLock: true)
+                    // 同一种行在记录页能点开详情，这里原先裸放 —— 点了没反应。
+                    Button { router.openEvent(event.id) } label: {
+                        EventRow(event: event, showLock: true)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }

@@ -133,6 +133,18 @@ struct MemberDetailScreen: View {
                 .type(T.F.caption)
                 .foregroundStyle(T.C.ink3)
                 .padding(.vertical, 8)
+            // 原先这里只有一句空话：整页没有任何把钥匙归给 TA 的入口。
+            Button {
+                router.pendingCreateOwnerID = id
+                router.push(.credentialCreate)
+            } label: {
+                Text("新建一枚归给 TA 的凭证")
+                    .type(T.F.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(T.C.brass)
+            }
+            .buttonStyle(.plain)
+            .padding(.bottom, 6)
         } else {
             ForEach(owned) { item in
                 Button { router.openCredential(item.id) } label: {
@@ -154,7 +166,10 @@ struct MemberDetailScreen: View {
                 .padding(.vertical, 8)
         } else {
             ForEach(activity) { event in
-                EventRow(event: event, showLock: true)
+                Button { router.openEvent(event.id) } label: {
+                    EventRow(event: event, showLock: true)
+                }
+                .buttonStyle(.plain)
             }
         }
 
@@ -165,7 +180,7 @@ struct MemberDetailScreen: View {
             .padding(.top, 10)
             .onChange(of: note) { _, _ in save(role: role) }
 
-        SwitchLine(title: "归档", detail: "保留历史，但从名单和统计里隐藏。", isOn: $archived)
+        SwitchLine(title: "归档", detail: "保留历史，从常用名单收起；仍可在「已归档」里找到。", isOn: $archived)
             .onChange(of: archived) { _, _ in save(role: role) }
     }
 
@@ -272,6 +287,12 @@ struct MemberCreateScreen: View {
     }
 
     private func create() {
+        // 空壳里 `DB.addMember` 会拒绝写入并返回 nil，若直接落到下面那句，
+        // 用户看到的是「这个名字已经有人用了」—— 一句与真实原因无关的假话。
+        guard !DB.isDecoy else {
+            errorLine = "当前无法保存，请稍后再试。"
+            return
+        }
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             errorLine = "先给它一个称呼。"

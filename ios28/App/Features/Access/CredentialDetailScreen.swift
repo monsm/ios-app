@@ -9,6 +9,8 @@ struct CredentialDetailScreen: View {
 
     @State private var revealed = false
     @State private var confirmingDelete = false
+    /// 删除是一条真实的锁端命令，等待期间两个删除入口都不能再点。
+    @State private var deleting = false
     @State private var editingWindow = false
     @State private var toast: String?
 
@@ -65,6 +67,7 @@ struct CredentialDetailScreen: View {
                         .foregroundStyle(T.C.ink2)
                 }
                 .buttonStyle(.plain)
+                .disabled(deleting)
                 .accessibilityLabel("删除")
             )
         }
@@ -122,11 +125,15 @@ struct CredentialDetailScreen: View {
         }
 
         Button { confirmingDelete = true } label: {
-            ContentRow(symbol: "trash", tone: .danger, title: "删除", chevron: true) {
+            ContentRow(symbol: "trash", tone: .danger,
+                       title: deleting ? "正在删除…" : "删除",
+                       chevron: !deleting) {
                 Text("不可恢复").type(T.F.caption).foregroundStyle(T.C.danger)
             }
         }
         .buttonStyle(.plain)
+        .disabled(deleting)
+        .opacity(deleting ? 0.55 : 1)
 
         if let note = item.note.isEmpty ? nil : item.note {
             Text(note)
@@ -233,7 +240,7 @@ struct CredentialDetailScreen: View {
     private func hint(_ item: Credential) -> String {
         switch item.kind {
         case .password, .temp:
-            return revealed ? "复制后 90 秒自动从剪贴板清除" : "长按或点「显示」查看"
+            return revealed ? "复制后 90 秒自动从剪贴板清除" : "点「显示」查看"
         case .fingerprint:
             return item.batch.map { "批次 #\($0) · 存在门锁里，不在手机上" } ?? "存在门锁里"
         case .mobile:
@@ -250,13 +257,21 @@ struct CredentialDetailScreen: View {
     }
 
     private func startText(_ item: Credential) -> String {
+        // 「生效」要读 validFrom，不能拿录入时间顶替：一枚设了未来生效时间的密码，
+        // 原先会在这一行显示成"今天就生效"。旧数据没有 validFrom 时才退回录入时间。
         let formatter = DF.cached("M/d")
-        let date = Date(timeIntervalSince1970: item.createdAt / 1000)
+        let ms = item.validFrom ?? Int64(item.createdAt)
+        let date = Date(timeIntervalSince1970: Double(ms) / 1000)
         return formatter.string(from: date)
     }
 
     private func copy(_ item: Credential) {
-        guard let value = plainCode(item) else { return }
+        guard let value = plainCode(item) else {
+            // 旧备份恢复的条目可能只有台账行、没有明文。原先这里静默 return ——
+            // 点「复制」什么都不发生，也没有任何解释。
+            show("这枚凭证没有存下明文，无法复制。")
+            return
+        }
         Clip.set(value)
         show("已复制 · 90 秒后自动清除")
     }
@@ -280,7 +295,10 @@ struct CredentialDetailScreen: View {
     }
 
     private func remove() async {
+        guard !deleting else { return }
         guard let item else { return }
+        deleting = true
+        defer { deleting = false }
         switch item.kind {
         case .password, .temp:
             if let alias = item.alias {

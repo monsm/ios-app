@@ -165,6 +165,9 @@ struct SectionHead: View {
     var index: String
     var title: String
     var trailing: String? = nil
+    /// 右侧文字若是入口（例如「全部」），必须真的能点。
+    /// 原先 `trailing` 只是一个 Text —— 今日页的「全部」写着却打不开完整列表。
+    var trailingAction: (() -> Void)? = nil
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
@@ -180,9 +183,18 @@ struct SectionHead: View {
                 .frame(height: 0.5)
                 .offset(y: -3)
             if let trailing {
-                Text(trailing)
-                    .type(T.F.kicker)
-                    .foregroundStyle(T.C.ink3)
+                if let trailingAction {
+                    Button(action: trailingAction) {
+                        Text(trailing)
+                            .type(T.F.kicker)
+                            .foregroundStyle(T.C.brass)
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    Text(trailing)
+                        .type(T.F.kicker)
+                        .foregroundStyle(T.C.ink3)
+                }
             }
         }
         .padding(.top, 26)

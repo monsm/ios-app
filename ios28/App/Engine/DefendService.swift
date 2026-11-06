@@ -14,8 +14,8 @@ enum DefendService {
     /// - 失败时**不写本地**：宁可让用户重试，也不要造出一个"本机以为布防了"的假状态
     ///   —— 因为 F4 否决门读的就是本地配置，写早了会让自动开锁被误否决。
     /// - ⚠ **没有回读校验**：2026-11-01 核实，本文件头与本节此前都写着「下发 + 落盘 + 回读」，
-    ///   但实现只有前两步 —— 布防状态不在 cmd03 的状态 KLV 里，要 `op=getDeviceSetting`
-    ///   （见 `SecurityScreen` 的 TODO）。所以这里写的是「锁回了 rc=0」而不是「锁真的布防了」。
+    ///   但实现只有前两步 —— 布防状态不在 cmd03 的状态 KLV 里，要 `op=getDeviceSetting`，
+    ///   而本版 Engine 没有移植这个读取口。所以这里写的是「锁回了 rc=0」而不是「锁真的布防了」。
     ///   rc=0 但固件没生效时，本机配置会与锁端分叉 —— 这是**已知未闭环**，不是已完成。
     static func apply(host: any EngineHost,
                       mode: DefendMode,
@@ -30,9 +30,9 @@ enum DefendService {
         let control = mode.rawValue
         // 2026-10-27 审核说明 (AUDIT-A F-40)：.once（不定期布防）这里发 0/0，
         // 而 APK 发的是**绝对时间**（到点自动撤防）。这不是 bug，是 UI 层没有对应输入 ——
-        // DefendView 的 once 模式只有一个「执行布防」按钮，没有起止时间选择器，
+        // `LockPolicyScreen` 的 once 模式只有一个「本次」分段，没有起止时间选择器，
         // 所以本机无从得知「到几点撤防」。
-        // 已在 DefendView:179 如实告知用户「直到你手动撤防」—— 两种姿态的差异是可见的。
+        // 该页的说明文字如实写成「本次布防：直到你手动撤防」—— 两种姿态的差异是可见的。
         // 若以后要支持定时撤防，需先加 DatePicker，再把协议秒（基准 2010-01-01）填进这两格。
         let startProto = mode == .period ? DefendKit.protoSec(startSec) : 0
         let endProto = mode == .period ? DefendKit.protoSec(endSec) : 0

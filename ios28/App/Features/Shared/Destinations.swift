@@ -14,7 +14,6 @@ enum Destinations {
         case .memberCreate: MemberCreateScreen()
         case .event: EventDetailScreen()
         case .insights: InsightsScreen()
-        case .settings: SettingsScreen()
         case .locks: LocksScreen()
         case .lockPolicy: LockPolicyScreen()
         case .lockInfo: LockInfoScreen()

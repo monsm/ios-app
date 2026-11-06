@@ -26,7 +26,6 @@ enum Dest: String, Hashable, CaseIterable, Identifiable {
     case event
     case insights
 
-    case settings
     case locks
     case lockPolicy
     case lockInfo
@@ -52,7 +51,6 @@ enum Dest: String, Hashable, CaseIterable, Identifiable {
         case .memberCreate: return "新成员"
         case .event: return "记录详情"
         case .insights: return "洞察"
-        case .settings: return "设置"
         case .locks: return "我的锁"
         case .lockPolicy: return "门锁设置"
         case .lockInfo: return "门锁信息"
@@ -85,6 +83,8 @@ final class Router {
     /// 新凭证页打开时预选哪一类：`password` / `temp` / `fingerprint`。
     /// 由来源页写入、由新凭证页取走后清空（一次性意图，不该粘在路由上）。
     var pendingCreateKind: String?
+    /// 新凭证页打开时预选归属成员（从成员详情「新建凭证」进来时用）。
+    var pendingCreateOwnerID: String?
 
     func push(_ dest: Dest) {
         switch tab {
@@ -127,5 +127,24 @@ final class Router {
         case .access: accessPath = []
         case .log: logPath = []
         }
+    }
+
+    /// 进空壳时把导航清回根。
+    ///
+    /// 页面会把加载时的数据留在 `@State` 里（表单、已解出的台账、选中的凭证）。
+    /// 如果胁迫码是在「上锁 → 解锁」之后输入的，而锁屏前正停在某个详情页，
+    /// 不清栈就会直接回到那一屏 —— 空壳已经生效，屏幕上却还是上一会话的真实内容。
+    func resetForDecoy() {
+        todayPath = []
+        accessPath = []
+        logPath = []
+        settingsPath = []
+        settingsOpen = false
+        pendingCredentialID = nil
+        pendingMemberID = nil
+        pendingEventID = nil
+        pendingCreateKind = nil
+        pendingCreateOwnerID = nil
+        tab = .today
     }
 }

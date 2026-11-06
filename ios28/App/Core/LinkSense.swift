@@ -30,8 +30,9 @@ final class LinkSenseModel {
     func update(mac newMac: String) {
         if mac != newMac {
             mac = newMac
-            history = DB.store.get([Int].self, "kf_rssi_hist_" + newMac) ?? []
-            lastRSSI = LinkSenseModel.savedRSSI(newMac)
+            // 空壳里不读历史 RSSI：那是"上次站在门口多近"的使用痕迹。
+            history = DB.isDecoy ? [] : (DB.store.get([Int].self, "kf_rssi_hist_" + newMac) ?? [])
+            lastRSSI = DB.isDecoy ? nil : LinkSenseModel.savedRSSI(newMac)
             attempt = 0
         }
         phase = resolvePhase()
@@ -66,9 +67,26 @@ final class LinkSenseModel {
 
     private func resolvePhase() -> Phase {
         guard !mac.isEmpty else { return .down }
+        // 空壳里 `DB.keychain(mac)` 恒为 nil（通用读取被过滤），照原逻辑会显示
+        // 「未绑定」—— 而今日页正显示着这把锁。空壳的读法要用开锁专用入口。
+        if DB.isDecoy {
+            if LockService.shared.connectedMAC == mac { return .ready }
+            return busy ? .connecting : .down
+        }
         if DB.keychain(mac) == nil { return .noKey }
         if LockService.shared.connectedMAC == mac { return .ready }
         return busy ? .connecting : .down
+    }
+
+    /// 进空壳时清掉上一会话的信号读数与历史：`lastRSSI` / `history` 是本机攒下的
+    /// 使用痕迹（最后一次离门多近），`connectMs` 是上一次握手耗时。
+    func clearForDecoy() {
+        lastRSSI = nil
+        history = []
+        connectMs = nil
+        attempt = 0
+        busy = false
+        phase = resolvePhase()
     }
 
     func preheat() async {
@@ -129,6 +147,8 @@ final class LinkSenseModel {
         if history.count > Self.rssiHistoryCap {
             history.removeFirst(history.count - Self.rssiHistoryCap)
         }
+        // 空壳里只在内存里显示，不落盘 —— 别给下一会话留下这次胁迫期间的信号记录。
+        if DB.isDecoy { return }
         DB.store.set("kf_linkrssi_" + mac, value)
         DB.store.set("kf_rssi_hist_" + mac, history)
     }

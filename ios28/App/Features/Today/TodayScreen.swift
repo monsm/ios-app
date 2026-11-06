@@ -11,6 +11,10 @@ struct TodayScreen: View {
     @Environment(AppModel.self) private var app
     @Environment(Router.self) private var router
 
+    /// 成功的动作也要有回声：原先只有 `app.lastError` 一条出口，
+    /// 校时成功、读完日志这类「什么都没发生」的动作在界面上等于没点。
+    @State private var notice: String?
+
     var body: some View {
         ScreenScroll {
             if app.lock == nil {
@@ -23,6 +27,9 @@ struct TodayScreen: View {
                 recent
                 if let error = app.lastError {
                     note(error)
+                }
+                if let notice {
+                    successNote(notice)
                 }
             }
         }
@@ -238,8 +245,14 @@ struct TodayScreen: View {
     private func runQuick(_ id: String) {
         QuickPool.recordTap(id)
         switch id {
-        case "addPwd", "addFp":
+        case "addPwd":
             router.tab = .access
+            router.push(.credentialCreate)
+        case "addFp":
+            // 「指纹」必须落到指纹那条链上：只 push 新凭证页的话，它默认停在「密码」——
+            // 点「指纹」看到的是一张密码表单。
+            router.tab = .access
+            router.pendingCreateKind = "fingerprint"
             router.push(.credentialCreate)
         case "otp":
             router.tab = .access
@@ -253,10 +266,13 @@ struct TodayScreen: View {
                 // 校时失败要说话：这个快捷动作没有自己的错误出口，
                 // 结果落到页脚那一行（`app.lastError`）。原先 `_ =` 把它扔了 ——
                 // 点了「校时」，失败了也一点动静都没有。
-                if case .failure(let error) = await app.syncTime() {
-                    app.lastError = error.localizedDescription
-                } else {
+                // 成功同样要说一句，否则「点了没反应」和成功长得一模一样。
+                switch await app.syncTime() {
+                case .success:
                     app.lastError = nil
+                    flash("锁钟已对齐。")
+                case .failure(let error):
+                    app.lastError = error.localizedDescription
                 }
             }
         case "backup":
@@ -277,7 +293,9 @@ struct TodayScreen: View {
 
     private var recent: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SectionHead(index: "01", title: "最近", trailing: "全部")
+            SectionHead(index: "01", title: "最近", trailing: "全部") {
+                router.tab = .log
+            }
             ForEach(recentEvents) { event in
                 Button {
                     router.openEvent(event.id)
@@ -292,9 +310,17 @@ struct TodayScreen: View {
             if recentEvents.isEmpty {
                 EmptyNote(line: "还没有记录。",
                           detail: "读一次锁内日志，这里就会出现谁在什么时候开过门。",
-                          action: "读取日志") {
-                    Task { _ = await app.readLogs() }
-                }
+                          action: DB.isDecoy ? nil : "读取日志",
+                          run: DB.isDecoy ? nil : {
+                              Task {
+                                  if let result = await app.readLogs() {
+                                      flash(result.read == 0 ? "锁里没有新的开门记录。" : "读到 \(result.read) 条记录。")
+                                  } else if app.busy != nil {
+                                      // `readLogs` 在另一条命令进行中会静默返回 nil。
+                                      flash("门锁正忙，稍后再读。")
+                                  }
+                              }
+                          })
             }
         }
     }
@@ -314,6 +340,28 @@ struct TodayScreen: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.top, 18)
+    }
+
+    private func successNote(_ text: String) -> some View {
+        HStack(alignment: .top, spacing: 9) {
+            Image(systemName: "checkmark.circle")
+                .font(.system(size: 14))
+                .foregroundStyle(T.C.ok)
+            Text(text)
+                .type(T.F.caption)
+                .foregroundStyle(T.C.ink2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.top, 18)
+    }
+
+    /// 成功提示自己会退场，不占着页脚。
+    private func flash(_ text: String) {
+        notice = text
+        Task {
+            try? await Task.sleep(for: .seconds(3))
+            if notice == text { notice = nil }
+        }
     }
 }
 
@@ -381,7 +429,7 @@ struct EmptyHome: View {
                 router.openSettings()
                 router.pushSettings(.security)
             } label: {
-                ContentRow(symbol: "shield", tone: .cool, title: "安全", subtitle: "本机密码、布防、自动开门", chevron: true)
+                ContentRow(symbol: "shield", tone: .cool, title: "安全", subtitle: "本机密码、胁迫码、通知", chevron: true)
             }
             .buttonStyle(.plain)
         }

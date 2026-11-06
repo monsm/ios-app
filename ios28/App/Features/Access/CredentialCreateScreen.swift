@@ -42,7 +42,7 @@ struct CredentialCreateScreen: View {
 
             DisplayLine(text: headline, size: 34)
                 .padding(.top, 16)
-            Text("凭证只存在这把锁里，不会上传。")
+            Text("凭证会写进这把锁；本机台账也留一份，用来显示、提醒和加密备份。")
                 .type(T.F.footnote)
                 .foregroundStyle(T.C.ink2)
                 .padding(.top, 8)
@@ -106,6 +106,12 @@ struct CredentialCreateScreen: View {
             if let raw = router.pendingCreateKind {
                 kind = Kind.allCases.first { $0.rawName == raw } ?? kind
                 router.pendingCreateKind = nil
+            }
+            // 从成员详情「新建一枚归给 TA 的凭证」进来时，归属要预选好；
+            // 否则用户建完还得自己再找一次这位成员，而本版没有改归属的界面。
+            if let owner = router.pendingCreateOwnerID {
+                ownerID = owner
+                router.pendingCreateOwnerID = nil
             }
             if value.isEmpty, kind == .password {
                 value = Self.randomCode(6)

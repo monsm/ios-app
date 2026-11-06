@@ -9,6 +9,7 @@ import UniformTypeIdentifiers
 @MainActor
 struct PairingScreen: View {
     @Environment(AppModel.self) private var app
+    @Environment(Router.self) private var router
     @Environment(\.dismiss) private var dismiss
 
     @State private var devices: [BLEAdvDevice] = []
@@ -33,8 +34,14 @@ struct PairingScreen: View {
                 .padding(.top, 8)
 
             if done {
-                PrimaryButton(title: "回到今日") { dismiss() }
-                    .padding(.top, 24)
+                // 这一页是设置栈里的 pushed 页：`dismiss()` 只弹回设置首页，
+                // 按钮却写着「回到今日」。真的切 Tab 并关掉设置 sheet。
+                PrimaryButton(title: "回到今日") {
+                    router.tab = .today
+                    router.todayPath = []
+                    router.settingsOpen = false
+                }
+                .padding(.top, 24)
             } else {
                 PrimaryButton(title: scanning ? "正在搜索…" : "开始搜索", busy: scanning) {
                     Task { await scan() }
@@ -135,6 +142,12 @@ struct PairingScreen: View {
     }
 
     private func pair(device: BLEAdvDevice, mac: String) async {
+        // 空壳里不配对：配对会真的握手、写本机钥匙串，并让一台新锁进入这台手机的台账。
+        // 界面看起来只是"连了一把锁"，退出空壳后却多出一条真实记录。
+        guard !DB.isDecoy else {
+            errorLine = "暂时无法配对，请稍后再试。"
+            return
+        }
         pairing = mac
         errorLine = nil
         progress = ""
@@ -163,6 +176,7 @@ struct AutoOpenScreen: View {
     @State private var base = -40
     @State private var lastReason: String?
     @State private var calibrating = false
+    @State private var calMessage: String?
 
     var body: some View {
         ScreenScroll {
@@ -208,11 +222,25 @@ struct AutoOpenScreen: View {
                     Task { await calibrate() }
                 }
                 GhostButton(title: "清除标定", symbol: "trash") {
-                    AutoOpen.clearAutocal(app.currentMac)
-                    base = AutoOpenKit.rssiBase(mac: app.currentMac)
+                    if AutoOpen.autocal(app.currentMac) == nil {
+                        calMessage = "还没有标定可清除。"
+                    } else {
+                        AutoOpen.clearAutocal(app.currentMac)
+                        base = AutoOpenKit.rssiBase(mac: app.currentMac)
+                        calMessage = "已清除标定。"
+                    }
                 }
             }
             .padding(.top, 12)
+            .disabled(calibrating)
+            .opacity(calibrating ? 0.55 : 1)
+
+            if let calMessage {
+                Text(calMessage)
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.ink3)
+                    .padding(.top, 8)
+            }
 
             SectionHead(index: "03", title: "上次为什么没开")
             if let lastReason, !lastReason.isEmpty {
@@ -256,10 +284,19 @@ struct AutoOpenScreen: View {
     }
 
     private func calibrate() async {
+        guard !calibrating else { return }
         calibrating = true
+        calMessage = nil
         defer { calibrating = false }
         var samples: [Int] = []
-        try? await BLEService.shared.startScan(allowDuplicates: false, timeoutMs: 6000)
+        do {
+            try await BLEService.shared.startScan(allowDuplicates: false, timeoutMs: 6000)
+        } catch {
+            // 原先 `try?` 把扫描起不来（蓝牙关着、没授权）吞成「采样不到 5 个点」——
+            // 让用户站在门口白等 6 秒，还以为是位置不对。
+            calMessage = "无法开始扫描：\(error.localizedDescription)"
+            return
+        }
         let deadline = Date().addingTimeInterval(6)
         while Date() < deadline {
             if let adv = BLEService.shared.allDiscovered().first(where: { device in
@@ -273,8 +310,9 @@ struct AutoOpenScreen: View {
         BLEService.shared.stopScan()
         if let p95 = AutoOpen.saveAutocal(app.currentMac, samples: samples) {
             base = p95
+            calMessage = "标定完成：触发线 \(p95) dBm。"
         } else {
-            lastReason = "这次采样不到 5 个点，标定没保存。请站在门口，让手机靠近门锁再试。"
+            calMessage = "这次采样不到 5 个点，标定没保存。请站在门口，让手机靠近门锁再试。"
         }
     }
 }
@@ -320,6 +358,8 @@ struct HardwareScreen: View {
                 }
             }
             .padding(.top, 10)
+            .disabled(busy)
+            .opacity(busy ? 0.55 : 1)
 
             SectionHead(index: "02", title: "网关", trailing: "\(gateways.count)")
             ForEach(gateways) { gateway in
@@ -340,6 +380,8 @@ struct HardwareScreen: View {
                 }
             }
             .padding(.top, 10)
+            .disabled(busy)
+            .opacity(busy ? 0.55 : 1)
 
             if let message {
                 Text(message)
@@ -359,6 +401,7 @@ struct HardwareScreen: View {
     }
 
     private func scanDongle() async {
+        guard !busy else { return }
         // 空壳里 `dongles()` 恒为空、`saveDongle` 也会被数据层拒绝 ——
         // 但下面那句「已登记」还是会照说。别让界面撒谎。
         //
@@ -379,6 +422,7 @@ struct HardwareScreen: View {
     }
 
     private func writeKey() async {
+        guard !busy else { return }
         // `keychainForUnlock` 是**不过滤**空壳的读法，而这一步会把锁的 ekey
         // 写进一枚可以带走的硬件 —— 与「安卓交付码」同一类泄露，守一道。
         // 提示语同样不提「空壳」（见 scanDongle）。
@@ -405,7 +449,13 @@ struct HardwareScreen: View {
     }
 
     private func provision() async {
+        guard !busy else { return }
         guard !ssid.isEmpty else { message = "先填 WiFi 名称。"; return }
+        // 空壳里不配网：网关会真的连上这里输入的 WiFi，退出空壳后它还在网上。
+        guard !DB.isDecoy else {
+            message = "暂时无法配置网关，请稍后再试。"
+            return
+        }
         busy = true
         defer { busy = false }
         do {
@@ -419,7 +469,12 @@ struct HardwareScreen: View {
     }
 
     private func reboot() async {
+        guard !busy else { return }
         guard let gateway = gateways.first else { message = "还没有网关。"; return }
+        guard !DB.isDecoy else {
+            message = "暂时无法重启网关，请稍后再试。"
+            return
+        }
         busy = true
         defer { busy = false }
         do {
@@ -535,6 +590,11 @@ struct DfuScreen: View {
 
     private func flash() async {
         guard let package else { return }
+        // 空壳里绝不刷固件：这是把锁变砖风险最高的一个动作，且不可撤销。
+        guard !DB.isDecoy else {
+            errorLine = "暂时无法升级，请稍后再试。"
+            return
+        }
         guard let lock = DB.keychainForUnlock(app.currentMac) else {
             errorLine = "先配对一把锁，再刷固件。"
             return
@@ -586,7 +646,9 @@ struct DiagnosticsScreen: View {
     @State private var confirmingRepair = false
 
     private var frames: [String] {
-        raw ? LockService.shared.recentFrames.map { FrameRedact.apply($0) } : []
+        // 空壳里不显示帧：那是本次会话（包括锁屏前）真实下发过的命令骨架。
+        if DB.isDecoy { return [] }
+        return raw ? LockService.shared.recentFrames.map { FrameRedact.apply($0) } : []
     }
 
     var body: some View {
@@ -595,7 +657,7 @@ struct DiagnosticsScreen: View {
 
             DisplayLine(text: "看清\n发生了什么。", size: 34)
                 .padding(.top, 16)
-            Text("这里只读：不会改锁里的任何设置。")
+            Text("诊断页不写入门锁设置。唯一的例外是「修复 PIN 池」—— 它会重写锁里的 PIN 池，让其他设备上的旧钥匙失效。")
                 .type(T.F.caption)
                 .foregroundStyle(T.C.ink3)
                 .padding(.top, 8)
@@ -609,23 +671,44 @@ struct DiagnosticsScreen: View {
             .padding(.top, 4)
 
             HStack(spacing: 10) {
-                GhostButton(title: "重连链路", symbol: "arrow.triangle.2.circlepath") {
+                GhostButton(title: busy ? "处理中…" : "重连链路", symbol: "arrow.triangle.2.circlepath") {
+                    guard !busy else { return }
                     guard !app.currentMac.isEmpty else {
                         message = "还没有绑定门锁。"
                         return
                     }
+                    message = "正在重连…"
                     Task {
+                        busy = true
                         await app.link.reconnect()
                         message = app.link.phase == .ready
                             ? "已连上 · 下一次自然重试间隔 \(Int(app.link.nextLadder)) 秒"
                             : "没连上 · 建议 \(Int(app.link.nextLadder)) 秒后再试"
+                        busy = false
                     }
                 }
                 GhostButton(title: "读一次 RSSI", symbol: "antenna.radiowaves.left.and.right") {
+                    guard !busy else { return }
+                    guard !app.currentMac.isEmpty else {
+                        message = "还没有绑定门锁。"
+                        return
+                    }
                     app.link.readRSSI()
+                    message = "正在读取信号…"
+                    // `readRSSI()` 是回调式的，读不到时它静默 return —— 这一页原先
+                    // 点了既没有 loading 也没有结果。等一拍再把真实结果说出来。
+                    Task {
+                        busy = true
+                        try? await Task.sleep(for: .seconds(1))
+                        message = app.link.lastRSSI.map { "当前信号 \($0) dBm。" }
+                            ?? "还没读到信号 —— 先把手机靠近门锁。"
+                        busy = false
+                    }
                 }
             }
             .padding(.top, 12)
+            .disabled(busy)
+            .opacity(busy ? 0.55 : 1)
 
             HStack(spacing: 10) {
                 GhostButton(title: "回声测试", symbol: "waveform") {
@@ -636,22 +719,27 @@ struct DiagnosticsScreen: View {
                 }
             }
             .padding(.top, 10)
+            .disabled(busy)
+            .opacity(busy ? 0.55 : 1)
 
-            SectionHead(index: "02", title: "最近帧")
-            SwitchLine(title: "显示脱敏帧", detail: "只保留帧头与 KLV 骨架，凭证值一律遮掉。", isOn: $raw)
-            if frames.isEmpty {
-                Text(raw ? "还没有帧。" : "打开上面的开关才会显示。")
-                    .type(T.F.caption)
-                    .foregroundStyle(T.C.ink3)
-                    .padding(.vertical, 6)
-            } else {
-                let recentLines = Array(frames.suffix(8))
-                ForEach(recentLines.indices, id: \.self) { index in
-                    Text(recentLines[index])
-                        .type(T.F.mono)
-                        .foregroundStyle(T.C.ink2)
-                        .lineLimit(2)
-                        .padding(.vertical, 5)
+            // 空壳里不摆「最近帧」：没有帧可看，开关就成了一个点了没反应的死控件。
+            if !DB.isDecoy {
+                SectionHead(index: "02", title: "最近帧")
+                SwitchLine(title: "显示脱敏帧", detail: "只保留帧头与 KLV 骨架，凭证值一律遮掉。", isOn: $raw)
+                if frames.isEmpty {
+                    Text(raw ? "还没有帧。" : "打开上面的开关才会显示。")
+                        .type(T.F.caption)
+                        .foregroundStyle(T.C.ink3)
+                        .padding(.vertical, 6)
+                } else {
+                    let recentLines = Array(frames.suffix(8))
+                    ForEach(recentLines.indices, id: \.self) { index in
+                        Text(recentLines[index])
+                            .type(T.F.mono)
+                            .foregroundStyle(T.C.ink2)
+                            .lineLimit(2)
+                            .padding(.vertical, 5)
+                    }
                 }
             }
 
@@ -684,6 +772,7 @@ struct DiagnosticsScreen: View {
     }
 
     private func echo() async {
+        guard !busy else { return }
         busy = true
         defer { busy = false }
         do {
@@ -695,6 +784,12 @@ struct DiagnosticsScreen: View {
     }
 
     private func repair() async {
+        guard !busy else { return }
+        // 空壳里不重写 PIN 池：这是不可逆的真实写入，而且会让别的设备上的钥匙失效。
+        guard !DB.isDecoy else {
+            message = "暂时无法修复，请稍后再试。"
+            return
+        }
         guard let kc = DB.keychainForUnlock(app.currentMac) else {
             message = "先配对一把锁。"
             return

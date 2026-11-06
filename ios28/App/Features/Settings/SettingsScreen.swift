@@ -65,7 +65,9 @@ struct SettingsScreen: View {
                 .foregroundStyle(T.C.ink2)
                 .padding(.top, 4)
 
-            if app.trial {
+            // 空壳里不显示只读试验：它读的是真实开关，而且指引「到安全里关掉」——
+            // 那个开关在空壳的安全页里恰好是隐藏的，点了找不到。
+            if app.trial && !DB.isDecoy {
                 trialNote
                     .padding(.top, 18)
             }
@@ -92,14 +94,22 @@ struct SettingsScreen: View {
             settingsRow(.lockInfo, symbol: "gauge.with.dots.needle.33percent", title: "门锁信息",
                         subtitle: app.lock.map { "电量 · 锁钟 · 容量 · 固件 \($0.firmware.isEmpty ? "—" : $0.firmware)" }
                             ?? "配一把锁之后可看读数")
-            settingsRow(.autoOpen, symbol: "figure.walk", title: "自动开门",
-                        subtitle: AutoOpen.on ? "已开启 · 靠近时自动解锁" : "关闭 · 靠近时自动解锁")
+            // 自动开门整页都在读真实偏好（开关档位、标定值、上次被否决的原因）。
+            // 空壳里不摆这个入口：它既会泄漏"主人平时开不开自动开门"，开关本身也是真写。
+            if !DB.isDecoy {
+                settingsRow(.autoOpen, symbol: "figure.walk", title: "自动开门",
+                            subtitle: AutoOpen.on ? "已开启 · 靠近时自动解锁" : "关闭 · 靠近时自动解锁")
+            }
             settingsRow(.hardware, symbol: "key", title: "钥匙串与网关",
                         subtitle: hardwareSubtitle)
             settingsRow(.dfu, symbol: "arrow.up.circle", title: "固件升级",
                         subtitle: app.lock?.firmware.isEmpty == false ? "当前 \(app.lock?.firmware ?? "")" : "支持 Nordic DFU")
-            settingsRow(.diagnostics, symbol: "stethoscope", title: "维护与诊断",
-                        subtitle: "校时 · 读日志 · 协议测试")
+            // 诊断页会显示真实链路数据（RSSI / 握手耗时）并真的发 BLE 命令。
+            // 空壳里整行不摆：这一页没有"只读展示"可以给，收起来最干净。
+            if !DB.isDecoy {
+                settingsRow(.diagnostics, symbol: "stethoscope", title: "维护与诊断",
+                            subtitle: "链路 · 回声 · PIN 池 · 脱敏帧")
+            }
             settingsRow(.pairing, symbol: "plus.circle", title: "配对新的门锁",
                         subtitle: "把锁恢复到配网状态后开始")
 

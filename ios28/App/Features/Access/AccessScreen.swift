@@ -136,10 +136,29 @@ struct CredentialsSection: View {
             }
 
             if app.ledgerCorrupt {
-                Text("本机台账读取异常：现在新增的凭证不会被保存。建议先备份，再重新配对。")
-                    .type(T.F.caption)
-                    .foregroundStyle(T.C.danger)
-                    .padding(.top, 16)
+                // 文案让用户"先备份、再重新配对"，那就把这两个去处直接给出来。
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("本机台账读取异常：现在新增的凭证不会被保存。")
+                        .type(T.F.caption)
+                        .foregroundStyle(T.C.danger)
+                    HStack(spacing: 16) {
+                        Button {
+                            router.openSettings()
+                            router.pushSettings(.backup)
+                        } label: {
+                            Text("先备份").type(T.F.caption).foregroundStyle(T.C.brass)
+                        }
+                        .buttonStyle(.plain)
+                        Button {
+                            router.openSettings()
+                            router.pushSettings(.pairing)
+                        } label: {
+                            Text("重新配对").type(T.F.caption).foregroundStyle(T.C.brass)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.top, 16)
             }
         }
         .onChange(of: wantsFocus) { _, on in
@@ -388,7 +407,7 @@ struct MobileKeysSection: View {
 
             if keys.isEmpty {
                 EmptyNote(line: "把钥匙发到家人的手机里。",
-                          detail: "签发后点钥匙行里的「复制」，把 ekey 单独发给对方 —— 全程不用联网。",
+                          detail: "点钥匙行进详情，再点「复制 ekey」，单独发给对方 —— 全程不用联网。",
                           action: "签发手机钥匙") {
                     router.push(.mobileKeys)
                 }

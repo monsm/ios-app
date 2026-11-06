@@ -190,8 +190,14 @@ struct GateScreen: View {
             if ok, AppLock.shared.unlockByBiometric() {
                 app.noteGate(outcome: .success)
             }
-        } catch {
+        } catch let error as LAError where error.code == .userCancel || error.code == .systemCancel {
+            // 用户自己点了取消：这不是失败，不必红字训人。
             message = nil
+        } catch {
+            // 原先所有失败都 `message = nil`：刷脸没过、被锁定、硬件出错，
+            // 界面都停在原地一声不吭，用户只能反复点那个按钮。
+            message = "面容/指纹没有通过，改用密码。"
+            Haptics.notify(.error)
         }
     }
 

@@ -58,8 +58,8 @@ struct LogScreen: View {
             if groups.isEmpty {
                 EmptyNote(line: emptyTitle,
                           detail: emptyDetail,
-                          action: (query.isEmpty && !onlyFlagged) ? "读取日志" : nil,
-                          run: (query.isEmpty && !onlyFlagged) ? { Task { await read() } } : nil)
+                          action: (query.isEmpty && !onlyFlagged && !DB.isDecoy) ? "读取日志" : nil,
+                          run: (query.isEmpty && !onlyFlagged && !DB.isDecoy) ? { Task { await read() } } : nil)
             } else {
                 ForEach(groups) { group in
                     DayHead(time: group.time, title: group.title)
@@ -81,7 +81,10 @@ struct LogScreen: View {
                     .padding(.top, 14)
             }
 
-            readCard
+            // 空壳里不摆读取入口：读取会被数据层拦成空表，按钮等于点了没反应。
+            if !DB.isDecoy {
+                readCard
+            }
         }
         .toolbar(.hidden, for: .navigationBar)
     }
@@ -95,6 +98,7 @@ struct LogScreen: View {
         if onlyFlagged {
             return "在记录详情里点「标记待查」，这条记录就会出现在这里。"
         }
+        if DB.isDecoy { return "锁里存着最近的开关门记录。" }
         return query.isEmpty
             ? "读一次锁内日志：谁在什么时候开过门，都会回到这里。"
             : "换个词试试，比如「妈妈」「指纹」「昨天」。"

@@ -76,6 +76,9 @@ enum RecordsSource {
     }
 
     static func lastSync(mac: String) -> Int64? {
-        Int64(DB.store.getString("kf_logsync_" + DB.normalizeMac(mac)))
+        // 空壳里「上次读取」本身也是使用痕迹：它精确到分钟地说明主人什么时候翻过记录。
+        // 与 readLogs 同口径，返回 nil（界面会说「还没读过锁」）。
+        if DB.isDecoy { return nil }
+        return Int64(DB.store.getString("kf_logsync_" + DB.normalizeMac(mac)))
     }
 }

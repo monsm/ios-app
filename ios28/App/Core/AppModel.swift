@@ -90,6 +90,11 @@ final class AppModel {
         }
 
         lock = makeLock(kc)
+        // 空壳里 `locks` 只留当前这一把：设置页的「N 把锁」要与今日页看得见的那把一致。
+        // 真实锁清单（哪怕只有一把）属于被隐藏的信息；`lock` 本身按设计保留，门照样能开。
+        if DB.isDecoy {
+            locks = lock.map { [$0] } ?? []
+        }
         lastStatus = DB.get(StatusSnapshot.self, "kf_snap_" + mac)
         link.update(mac: mac)
 
@@ -238,21 +243,25 @@ final class AppModel {
         let snap = DB.readStatus(kc.mac)
         let name = kc.name.isEmpty ? (kc.pidName.isEmpty ? "我的门锁" : kc.pidName) : kc.name
         let ledger = DB.ledger(kc.mac)
-        let meta = LockArchive.meta(kc.mac)
+        // 空壳里不读锁的档案备注：分组/隐藏/上次信号都是这台手机攒下来的使用痕迹。
+        // 锁名、型号、电量、固件留着 —— 它们描述的是"你正站在哪扇门前"，不是"你用得多勤"。
+        let meta = DB.isDecoy ? LockMeta() : LockArchive.meta(kc.mac)
         return LockSummary(
             id: kc.mac,
             name: name,
-            model: kc.pidName.isEmpty ? "未知型号" : kc.pidName,
-            pid: kc.pid,
-            battery: snap?.powerLevel ?? -1,
-            signal: LinkSenseModel.level(LinkSenseModel.savedRSSI(kc.mac)),
-            firmware: snap?.firmware ?? kc.fw,
+            // 型号 / 电量 / 固件都是"这台锁现在是什么样"的真实读数。空壳里全部抹平：
+            // 门仍然能开，但胁迫者看不到任何可以拿去做判断的硬件信息。
+            model: DB.isDecoy ? "未知型号" : (kc.pidName.isEmpty ? "未知型号" : kc.pidName),
+            pid: DB.isDecoy ? 0 : kc.pid,
+            battery: DB.isDecoy ? -1 : (snap?.powerLevel ?? -1),
+            signal: DB.isDecoy ? 0 : LinkSenseModel.level(LinkSenseModel.savedRSSI(kc.mac)),
+            firmware: DB.isDecoy ? "" : (snap?.firmware ?? kc.fw),
             keyCount: ledger.pwds.count + ledger.fps.count + MobileKeyService.list(kc.mac).count,
             isConnected: LockService.shared.connectedMAC == kc.mac,
-            safeMode: (snap?.verifyMode ?? 0) != 0,
-            muted: DB.store.getBool("kf_muted_" + kc.mac),
-            hidden: LockArchive.isHidden(kc.mac),
-            group: meta.grp
+            safeMode: !DB.isDecoy && (snap?.verifyMode ?? 0) != 0,
+            muted: !DB.isDecoy && DB.store.getBool("kf_muted_" + kc.mac),
+            hidden: !DB.isDecoy && LockArchive.isHidden(kc.mac),
+            group: DB.isDecoy ? "" : meta.grp
         )
     }
 
@@ -276,6 +285,9 @@ final class AppModel {
             // 空壳必须**立刻**生效。等 reload() 跑完的那一拍里，界面上还是真实凭证 ——
             // 胁迫者正盯着这一屏，恰好是空壳模式最不该发生的暴露。
             clearProjectionsForDecoy()
+            // 锁屏前停在哪个详情页，解锁后就还在哪一页；那些页面的 `@State` 里留着
+            // 上一会话的真实数据。回根是唯一不依赖每个页面自觉清场的做法。
+            router?.resetForDecoy()
         default:
             return
         }
@@ -299,6 +311,16 @@ final class AppModel {
         members = []
         events = []
         ledgerCorrupt = false
+        // 上一会话的残留也要清：失败文案里可能带着锁名/MAC，`phase` 可能停在
+        // 「门开了」，`lastStatus` 是上一次真实读数。这些都会在今日页立刻显示。
+        lastError = nil
+        busy = nil
+        phase = .idle
+        lastStatus = nil
+        readLogsAt = nil
+        autoLockLeft = nil
+        lastUnlockAt = nil
+        link.clearForDecoy()
         // 剪贴板也要清：进空壳前可能刚复制过一枚动态码（`Clip.set` 有 90 秒有效期），
         // 而空壳里没有任何界面会去动剪贴板 —— 胁迫者长按粘贴就能拿到。
         Clip.clear()
@@ -359,6 +381,10 @@ final class AppModel {
                     lastUnlockAt = now
                     lastActionAt = now
                     Milestones.recordUnlockSuccess()
+                    // 自动开门的冷却承诺是「距离上次**开门**超过 6 秒」——
+                    // 手动开的锁也算一次开门，否则手动开完立刻走开再靠近，
+                    // 2 秒后就能被自动开门，与设置页写的 6 秒不符。
+                    AutoOpen.setPersistedLastDispatch(mac, Date().timeIntervalSince1970)
                     startAutoLockCountdown()
                     try? await Task.sleep(for: .milliseconds(900))
                     if phase == .opened { phase = .idle }
@@ -425,6 +451,9 @@ final class AppModel {
     func refreshStatus() async {
         let mac = currentMac
         guard !mac.isEmpty else { return }
+        // 空壳里不读锁的实时状态：这是一条真实 BLE 命令，读回来的真实读数还会
+        // 经 `DB.writeStatus` 写进本机快照（设置页「维护与诊断」整页藏起来也是这个理由）。
+        guard !DB.isDecoy else { return }
         lastError = nil
         do {
             let st = try await LockService.shared.getStatus(mac: mac)
@@ -444,6 +473,12 @@ final class AppModel {
         // 用户点了「从门锁读一次」，卡片回到原样，像是什么都没发生。
         guard !mac.isEmpty else {
             lastError = "还没有绑定门锁 —— 先配一把锁，再回来读记录。"
+            return nil
+        }
+        // 空壳里不读锁内日志：读回来也只会被过滤成空表，界面上是"读了个寂寞"，
+        // 而锁端已经真的被翻了一遍。给一句与其它写入拒绝同一口径的中性话。
+        guard !DB.isDecoy else {
+            lastError = "当前无法读取，请稍后再试。"
             return nil
         }
         busy = "正在读门锁记录…"
@@ -542,6 +577,9 @@ final class AppModel {
     func deletePassword(alias: Int) async -> Result<Void, Error> {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
+        // 空壳里凭证列表是空的，正常路径到不了这里；仍然守一道 ——
+        // 删密码是真删锁里的条目，不能靠"界面看不见"来保证不发生。
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             try await LockService.shared.pwdDelete(alias)
@@ -559,6 +597,7 @@ final class AppModel {
     func setPasswordExpiry(alias: Int, from: String, to: String) async -> Result<Void, Error> {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             try await LockService.shared.pwdExpire(alias, from, to)
@@ -579,6 +618,7 @@ final class AppModel {
     func deleteFingerprint(batch: Int) async -> Result<Void, Error> {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             try await LockService.shared.fpDelete(UInt32(batch))
@@ -639,6 +679,8 @@ final class AppModel {
     func syncTime() async -> Result<(Int, Int), Error> {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
+        // 空壳里不改锁钟：这是对门锁的真实写入，而空壳的界面按「没有门锁」伪装。
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法校时，请稍后再试")) }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             let r = try await LockService.shared.syncTime()
@@ -646,6 +688,7 @@ final class AppModel {
             await reload(refreshStatus: true)
             return .success((r.before, r.after))
         } catch {
+            Haptics.notify(.error)
             return .failure(error)
         }
     }
@@ -653,6 +696,8 @@ final class AppModel {
     func setMuted(_ on: Bool) async -> Result<Void, Error> {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
+        // 空壳里不给锁下发任何设置（静音 / 双验 / 自动上锁 / 布防 / 校时同一道闸）。
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             try await LockService.shared.setSilent(on)
@@ -667,9 +712,21 @@ final class AppModel {
     func setSafeMode(_ on: Bool) async -> Result<Void, Error> {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             try await LockService.shared.setValidationMode(on)
+            // rc=0 只证明命令被接收，不证明策略变了（`LockServiceOps.setValidationMode` 的注释写明
+            // 调用方必须回读 verifyMode 才能报成功）。不回读的话，固件不认这条命令时，
+            // 界面上的开关会停在"已打开"，而锁其实还是单验 —— 一道安全开关的假成功。
+            let st = try await LockService.shared.getStatus(mac: mac)
+            DB.writeStatus(mac, st)
+            let actual = st.verifyMode != 0
+            guard actual == on else {
+                return .failure(BLEErrorX.msg(on
+                    ? "门锁回了成功，但验证模式没有变成双验。这把锁的固件可能不支持。"
+                    : "门锁回了成功，但验证模式没有变回单验。"))
+            }
             await reload(refreshStatus: false)
             return .success(())
         } catch {
@@ -680,6 +737,7 @@ final class AppModel {
     func setAutoLock(_ interval: Int) async -> Result<Void, Error> {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             try await LockService.shared.setAutoLock(interval)
@@ -709,6 +767,8 @@ final class AppModel {
     }
 
     func applyDefence(_ mode: DefendMode, startSec: Int, endSec: Int) async -> Result<Void, Error> {
+        // 空壳里不改布防：它会真的给锁下发 cmd25，还会写本地 F4 否决门读的配置。
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
         do {
             try await DefendService.apply(host: self, mode: mode, startSec: startSec, endSec: endSec)
             await reload(refreshStatus: false)

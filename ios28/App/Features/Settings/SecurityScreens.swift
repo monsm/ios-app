@@ -89,18 +89,30 @@ struct SecurityScreen: View {
                 .buttonStyle(.plain)
             }
 
-            SectionHead(index: "02", title: "只读试验")
-            SwitchLine(title: "只读试验模式", detail: "开锁、写凭证、改锁设置、刷固件、导入备份全部被拦下。", isOn: $trial)
-                .onChange(of: trial) { _, value in
-                    TrialGuard.set(value)
-                    app.trial = value
-                }
+            // 只读试验会真的改写本机的只读开关：在空壳里打开它，退出后整个 App 都不能开锁。
+            if !DB.isDecoy {
+                SectionHead(index: "02", title: "只读试验")
+                SwitchLine(title: "只读试验模式", detail: "开锁、写凭证、改锁设置、刷固件、导入备份全部被拦下。", isOn: $trial)
+                    .onChange(of: trial) { _, value in
+                        TrialGuard.set(value)
+                        app.trial = value
+                    }
+            }
 
             SectionHead(index: "03", title: "状态")
-            ContentRow(symbol: "bell", tone: .cool, title: "通知",
-                       subtitle: notifyStatus == .authorized
-                        ? "已授权 · 到期与低电提醒会送达"
-                        : "未授权（\(notifyLabel)） · 提醒只在 App 内显示")
+            if notifyStatus == .authorized {
+                ContentRow(symbol: "bell", tone: .cool, title: "通知",
+                           subtitle: "已授权 · 到期与低电提醒会送达")
+            } else {
+                // 未授权时这一行原先只是一个死状态：写着"未授权"，却没有去授权的路。
+                Button {
+                    requestNotify()
+                } label: {
+                    ContentRow(symbol: "bell", tone: .cool, title: "通知",
+                               subtitle: "未授权（\(notifyLabel)） · 点此开启", chevron: true)
+                }
+                .buttonStyle(.plain)
+            }
 
             // 同样：空壳里不解释胁迫码。这段说明本身就是"这台手机有胁迫模式"的证据。
             if !DB.isDecoy {
@@ -136,8 +148,28 @@ struct SecurityScreen: View {
                  : "冷启动不再询问。凭证仍然在手机里，拿到手机的人可以直接打开。")
         }
         .task {
-            let settings = await UNUserNotificationCenter.current().notificationSettings()
-            notifyStatus = settings.authorizationStatus
+            await refreshNotifyStatus()
+        }
+    }
+
+    private func refreshNotifyStatus() async {
+        let settings = await UNUserNotificationCenter.current().notificationSettings()
+        notifyStatus = settings.authorizationStatus
+    }
+
+    private func requestNotify() {
+        if notifyStatus == .denied {
+            // 已被拒绝时系统不会再弹窗，只能把用户送到系统设置。
+            if let url = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(url)
+            }
+            return
+        }
+        NotificationAuth.ensure()
+        Task {
+            // 系统弹窗是异步的；等一拍再回读，别让这一行停在「未询问」。
+            try? await Task.sleep(for: .seconds(1))
+            await refreshNotifyStatus()
         }
     }
 }
@@ -198,6 +230,13 @@ struct PasscodeSheet: View {
     }
 
     private func save() {
+        // 空壳里不能改密码：这一页会写真实的 `kf_passcode` / `kf_duress`。
+        // 最坏的情况不是"改了个数字" —— 而是胁迫者当场设一组他知道的密码，
+        // 锁屏后再用这组密码解锁，就绕开了空壳、直接进真实界面。
+        guard !DB.isDecoy else {
+            errorLine = "当前无法保存，请稍后再试。"
+            return
+        }
         guard first == second else {
             errorLine = "两次输入不一致。"
             return
@@ -298,8 +337,6 @@ struct AppearanceScreen: View {
 struct AboutScreen: View {
     @Environment(\.dismiss) private var dismiss
 
-    @State private var taps = 0
-
     var body: some View {
         ScreenScroll {
             NavRow(kicker: "设置 / 关于", back: { dismiss() })
@@ -336,18 +373,6 @@ struct AboutScreen: View {
                 .foregroundStyle(T.C.ink3)
                 .lineSpacing(3)
                 .padding(.top, 8)
-
-            Text("按住这里 10 次")
-                .type(T.F.caption)
-                .foregroundStyle(T.C.ink4)
-                .padding(.top, 30)
-                .onTapGesture {
-                    taps += 1
-                    if taps >= 10 {
-                        taps = 0
-                        Haptics.notify(.success)
-                    }
-                }
         }
         .toolbar(.hidden, for: .navigationBar)
     }

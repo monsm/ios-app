@@ -326,6 +326,9 @@ struct ToolTray: View {
 struct SegmentedBar: View {
     var items: [String]
     @Binding var selected: Int
+    /// 不可用的分段不该还能点：`LockPolicyScreen` 在型号不支持布防时
+    /// 只在下面写了一行提示，控件本身仍可点 —— 点了会发一条注定失败的命令。
+    var enabled: Bool = true
 
     var body: some View {
         HStack(spacing: 0) {
@@ -362,6 +365,8 @@ struct SegmentedBar: View {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .strokeBorder(T.C.glassEdge, lineWidth: 0.5)
         }
+        .disabled(!enabled)
+        .opacity(enabled ? 1 : 0.45)
     }
 }
 

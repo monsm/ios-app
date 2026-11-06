@@ -6,6 +6,7 @@ import CoreImage.CIFilterBuiltins
 @MainActor
 struct MobileKeysScreen: View {
     @Environment(AppModel.self) private var app
+    @Environment(Router.self) private var router
     @Environment(\.dismiss) private var dismiss
 
     @State private var memberID: String?
@@ -18,6 +19,8 @@ struct MobileKeysScreen: View {
     /// 待吊销的那把。非 nil 即弹确认 —— 吊销会**立刻**删掉锁端 PIN，
     /// 对方手机里的钥匙当场失效且无法撤销，不该被一次误触触发。
     @State private var revokeTarget: MobileKey?
+    /// 正在吊销的那把（按 id）。吊销是一次真实删除，等待期间不能让别的行再点。
+    @State private var revoking: String?
 
     private var keys: [MobileKey] { MobileKeyService.list(app.currentMac) }
     private var members: [MemberCard] { app.members.filter { !$0.archived } }
@@ -116,9 +119,17 @@ struct MobileKeysScreen: View {
                             .buttonStyle(PressStyle())
                         }
                         if members.isEmpty {
-                            Text("先在「通行 → 成员」里建一位成员。")
-                                .type(T.F.caption)
-                                .foregroundStyle(T.C.ink3)
+                            Button {
+                                // 没有成员时「签发」永远不可点。把提示本身做成入口：
+                                // 直接把当前栈顶换成「新成员」，建完回来就能选人。
+                                router.accessPath = [.memberCreate]
+                            } label: {
+                                Text("先在「通行 → 成员」里建一位成员。")
+                                    .type(T.F.caption)
+                                    .foregroundStyle(T.C.brass)
+                                    .underline()
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
                 }
@@ -157,10 +168,9 @@ struct MobileKeysScreen: View {
                     .buttonStyle(PressStyle())
                 }
 
-                PrimaryButton(title: "签发", busy: busy) {
+                PrimaryButton(title: "签发", busy: busy, enabled: memberID != nil) {
                     Task { await issue() }
                 }
-                .disabled(memberID == nil)
             }
         }
     }
@@ -191,11 +201,13 @@ struct MobileKeysScreen: View {
                         .background(T.C.brassWash, in: Capsule())
                 }
                 .buttonStyle(PressStyle())
+                .disabled(revoking != nil)
+                .opacity(revoking == nil ? 1 : 0.5)
 
                 Button {
                     revokeTarget = key
                 } label: {
-                    Text("吊销")
+                    Text(revoking == key.id ? "吊销中…" : "吊销")
                         .type(T.F.caption)
                         .fontWeight(.medium)
                         .foregroundStyle(T.C.danger)
@@ -204,6 +216,8 @@ struct MobileKeysScreen: View {
                         .background(T.C.dangerWash, in: Capsule())
                 }
                 .buttonStyle(PressStyle())
+                .disabled(revoking != nil)
+                .opacity(revoking == nil ? 1 : 0.5)
             }
         }
         .padding(.vertical, 12)
@@ -253,6 +267,9 @@ struct MobileKeysScreen: View {
     }
 
     private func revoke(_ key: MobileKey) async {
+        guard revoking == nil else { return }
+        revoking = key.id
+        defer { revoking = nil }
         errorLine = nil
         flash = nil
         let result = await app.revokeMobileKey(key)
