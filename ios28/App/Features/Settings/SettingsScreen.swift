@@ -36,7 +36,7 @@ struct SettingsScreen: View {
                         Text("保存")
                             .type(T.F.caption)
                             .fontWeight(.semibold)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(T.C.onAccent)
                             .padding(.horizontal, 14)
                             .frame(height: 44)
                             .background(T.C.brass, in: Capsule())

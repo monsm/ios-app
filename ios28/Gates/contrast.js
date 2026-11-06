@@ -29,6 +29,13 @@ const checks = [
   ['ok', 4.5, '成功文字'],
 ];
 
+// 实底上的前景色：PrimaryButton / ChoiceChip / 「保存」胶囊都在这两种底上写字。
+// 只查 vs canvas 会漏掉这一类 —— 深色模式的黄铜是亮色，白字压上去只有 1.9:1。
+const onFill = [
+  ['onAccent', 'brass', 4.5, '实底文字（黄铜）'],
+  ['onAccent', 'danger', 4.5, '实底文字（危险）'],
+];
+
 let bad = 0;
 for (const mode of ['light', 'dark']) {
   const c = t.colors[mode];
@@ -37,6 +44,12 @@ for (const mode of ['light', 'dark']) {
     const ok = r >= min;
     if (!ok) bad++;
     console.log(`contrast: ${mode.padEnd(5)} ${fg.padEnd(7)} ${r.toFixed(2)}:1  ${ok ? 'OK ' : 'FAIL'} (>= ${min}) ${label}`);
+  }
+  for (const [fg, bg, min, label] of onFill) {
+    const r = ratio(c[fg], c[bg]);
+    const ok = r >= min;
+    if (!ok) bad++;
+    console.log(`contrast: ${mode.padEnd(5)} ${fg.padEnd(7)} on ${bg.padEnd(6)} ${r.toFixed(2)}:1  ${ok ? 'OK ' : 'FAIL'} (>= ${min}) ${label}`);
   }
 }
 if (bad) {

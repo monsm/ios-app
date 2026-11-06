@@ -402,7 +402,7 @@ struct EmptyHome: View {
                         Text("开始配对")
                             .type(T.F.body)
                             .fontWeight(.semibold)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(T.C.onAccent)
                             .frame(maxWidth: .infinity)
                             .frame(height: 52)
                             .background(

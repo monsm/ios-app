@@ -24,6 +24,7 @@ enum T {
         static let danger = adaptive(168, 69, 46, 1, 226, 115, 92, 1)
         static let dangerWash = adaptive(168, 69, 46, 0.0941, 226, 115, 92, 0.1333)
         static let ok = adaptive(63, 114, 80, 1, 127, 176, 140, 1)
+        static let onAccent = adaptive(255, 255, 255, 1, 13, 15, 18, 1)
         static let sky = adaptive(124, 153, 173, 1, 95, 127, 148, 1)
         static let sun = adaptive(235, 203, 156, 1, 138, 107, 69, 1)
         static let glass = adaptive(255, 255, 255, 0.7216, 27, 32, 39, 0.651)

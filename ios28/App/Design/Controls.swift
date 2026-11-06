@@ -96,7 +96,9 @@ struct UnlockLens: View {
                     .overlay {
                         Image(systemName: glyph)
                             .font(.system(size: 18, weight: .medium))
-                            .foregroundStyle(Color(uiColor: .white).opacity(0.95))
+                            // 深色模式的黄铜是亮色实底：白字形只有 1.9:1，
+                            // 换自适应前景色（浅色白 / 深色近黑）才看得清。
+                            .foregroundStyle(T.C.onAccent.opacity(0.95))
                     }
 
                 if phase == .opened {
@@ -138,13 +140,15 @@ struct PrimaryButton: View {
         Button(action: action) {
             HStack(spacing: 8) {
                 if busy {
-                    ProgressView().tint(.white).controlSize(.small)
+                    ProgressView().tint(T.C.onAccent).controlSize(.small)
                 }
                 Text(title)
                     .type(T.F.body)
                     .fontWeight(.semibold)
             }
-            .foregroundStyle(.white)
+            // 实底按钮的文字必须跟着实底走：深色模式的黄铜是亮色，
+            // 白字压上去只有 1.9:1（WCAG 要 4.5:1）。
+            .foregroundStyle(T.C.onAccent)
             .frame(maxWidth: .infinity)
             .frame(height: 52)
             .background(
@@ -212,7 +216,7 @@ struct ChoiceChip: View {
                     .type(T.F.caption)
                     .fontWeight(.medium)
             }
-            .foregroundStyle(on ? .white : T.C.ink)
+            .foregroundStyle(on ? T.C.onAccent : T.C.ink)
             .padding(.horizontal, 14)
             .frame(maxWidth: fillWidth ? .infinity : nil)
             .frame(height: height)
