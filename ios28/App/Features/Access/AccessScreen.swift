@@ -24,6 +24,10 @@ struct AccessScreen: View {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 16, weight: .regular))
                             .foregroundStyle(T.C.ink2)
+                            // 只有 16pt 字形的按钮，命中区不足 HIG 的 44pt；
+                            // 补一块透明触达区，视觉不变。
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("搜索")
@@ -38,6 +42,8 @@ struct AccessScreen: View {
                         Image(systemName: "plus")
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(T.C.brass)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("新建")

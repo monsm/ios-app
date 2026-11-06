@@ -129,6 +129,8 @@ struct GateScreen: View {
                                         .frame(width: 74, height: 60)
                                         .liquidGlass(in: RoundedRectangle(cornerRadius: GlassMetrics.keyRadius, style: .continuous),
                                                      tint: GlassMetrics.tint, interactive: true)
+                                        // 74×60 的玻璃键，命中区不能只有中间那个数字。
+                                        .contentShape(Rectangle())
                                 }
                                 .buttonStyle(PressStyle())
                                 .accessibilityLabel(key == "⌫" ? "删除" : key)

@@ -21,6 +21,8 @@ struct LogScreen: View {
                         Image(systemName: "chart.bar")
                             .font(.system(size: 16))
                             .foregroundStyle(T.C.ink2)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("洞察")

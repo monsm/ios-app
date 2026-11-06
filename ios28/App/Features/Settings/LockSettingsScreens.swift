@@ -145,7 +145,8 @@ struct LocksScreen: View {
                     Image(systemName: "trash")
                         .font(.system(size: 13))
                         .foregroundStyle(T.C.ink4)
-                        .frame(width: 30, height: 30)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("删除 \(lock.name)")

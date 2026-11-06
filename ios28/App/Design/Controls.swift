@@ -186,6 +186,9 @@ struct GhostButton: View {
             .frame(height: 46)
             .liquidGlass(in: RoundedRectangle(cornerRadius: GlassMetrics.controlRadius, style: .continuous),
                          tint: GlassMetrics.tint, interactive: true)
+            // 玻璃只把「画出来的字」算进命中区：不补 contentShape 时，整宽按钮
+            // 只有中间那行字能点，点左右两边的玻璃等于没点。
+            .contentShape(Rectangle())
         }
         .buttonStyle(PressStyle())
     }
@@ -221,6 +224,9 @@ struct ChoiceChip: View {
             .frame(maxWidth: fillWidth ? .infinity : nil)
             .frame(height: height)
             .modifier(ChoiceSurface(on: on, onColor: onColor))
+            // 未选中态是玻璃：命中区默认只到文字；选中态是实底胶囊，整块可点。
+            // 补上胶囊形状，两种状态的触达范围才一致（整个胶囊都能点）。
+            .contentShape(Capsule())
         }
         .buttonStyle(PressStyle())
     }

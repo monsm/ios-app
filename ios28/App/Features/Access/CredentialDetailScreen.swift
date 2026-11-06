@@ -72,6 +72,8 @@ struct CredentialDetailScreen: View {
                     Image(systemName: "trash")
                         .font(.system(size: 15))
                         .foregroundStyle(T.C.ink2)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .disabled(deleting)
@@ -224,6 +226,8 @@ struct CredentialDetailScreen: View {
         .frame(height: 42)
         .liquidGlass(in: RoundedRectangle(cornerRadius: GlassMetrics.controlRadius, style: .continuous),
                      tint: GlassMetrics.tint, interactive: true)
+        // 整宽玻璃底：命中区补齐到整块，而不是只有中间的字。
+        .contentShape(Rectangle())
     }
 
     private func displayCode(_ item: Credential) -> String {

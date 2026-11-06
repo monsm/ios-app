@@ -67,6 +67,8 @@ struct MemberDetailScreen: View {
                     Image(systemName: "trash")
                         .font(.system(size: 15))
                         .foregroundStyle(T.C.ink2)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("删除成员")

@@ -157,6 +157,8 @@ struct CredentialCreateScreen: View {
                         .frame(width: 48, height: 48)
                         .liquidGlass(in: RoundedRectangle(cornerRadius: GlassMetrics.controlRadius, style: .continuous),
                                      tint: GlassMetrics.tint, interactive: true)
+                        // 48pt 的玻璃里只有 17pt 的图标；不补命中区，边缘一圈点不动。
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(PressStyle())
                 .accessibilityLabel("随机生成")
