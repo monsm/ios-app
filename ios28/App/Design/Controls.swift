@@ -67,18 +67,11 @@ struct UnlockLens: View {
             if enabled { action() }
         } label: {
             ZStack {
+                // 镜头是整页唯一的仪式感动作，也是浮在日光窗上的功能控件：
+                // 真玻璃让背后的窗景参与折射，比材料模糊更像"一片厚玻璃"。
                 Circle()
-                    .fill(.ultraThinMaterial)
-                    .overlay {
-                        Circle().fill(
-                            RadialGradient(colors: [T.C.glassStrong, T.C.glass, T.C.glass],
-                                           center: .init(x: 0.32, y: 0.18),
-                                           startRadius: 2, endRadius: 120)
-                        )
-                    }
-                    .overlay {
-                        Circle().strokeBorder(T.C.glassEdge, lineWidth: 0.5)
-                    }
+                    .fill(.clear)
+                    .liquidGlass(in: Circle(), tint: T.C.brassWash)
                     .shadow(color: T.C.shadow, radius: 20, x: 0, y: 14)
 
                 Circle()
@@ -411,17 +404,9 @@ struct TabBar: View {
             }
         }
         .padding(.horizontal, 8)
-        .background {
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
-                .fill(T.C.glassStrong)
-                .background {
-                    RoundedRectangle(cornerRadius: 30, style: .continuous).fill(.ultraThinMaterial)
-                }
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
-                .strokeBorder(T.C.glassEdge, lineWidth: 0.5)
-        }
+        // Tab 栏是浮在内容之上、每个标签都可点的功能层 —— 原生液态玻璃最合适的位置。
+        .liquidGlass(in: RoundedRectangle(cornerRadius: 30, style: .continuous),
+                     tint: T.C.brassWash, interactive: true)
         .shadow(color: T.C.shadow, radius: 26, x: 0, y: 14)
         .padding(.horizontal, 20)
         .padding(.bottom, 8)

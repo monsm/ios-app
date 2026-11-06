@@ -47,8 +47,8 @@ struct CredentialDetailScreen: View {
                     .foregroundStyle(T.C.ink)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 10)
-                    .background(T.C.glassStrong, in: Capsule())
-                    .overlay { Capsule().strokeBorder(T.C.glassEdge, lineWidth: 0.5) }
+                    // 临时提示是"浮在内容之上"的一层，正是液态玻璃的场景。
+                    .liquidGlass(in: Capsule(), tint: T.C.brassWash)
                     .padding(.bottom, 96)
                     .transition(.opacity)
             }

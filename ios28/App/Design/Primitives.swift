@@ -306,17 +306,9 @@ struct ToolTray: View {
         }
         .padding(.horizontal, 5)
         .padding(.vertical, 5)
-        .background {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(T.C.glass)
-                .background {
-                    RoundedRectangle(cornerRadius: 22, style: .continuous).fill(.ultraThinMaterial)
-                }
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .strokeBorder(T.C.glassEdge, lineWidth: 0.5)
-        }
+        // 托盘同样是浮层：整块可点，用可交互玻璃。
+        .liquidGlass(in: RoundedRectangle(cornerRadius: 22, style: .continuous),
+                     tint: T.C.brassWash, interactive: true)
         .shadow(color: T.C.shadow, radius: 16, x: 0, y: 10)
     }
 }
