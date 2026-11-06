@@ -96,7 +96,7 @@ struct MobileKeysScreen: View {
     }
 
     private var issueCard: some View {
-        GlassSurface(radius: 22) {
+        GlassSurface() {
             VStack(alignment: .leading, spacing: 14) {
                 Text("发给谁")
                     .type(T.F.kicker)
@@ -104,19 +104,9 @@ struct MobileKeysScreen: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
                         ForEach(members) { member in
-                            Button { memberID = member.id } label: {
-                                Text(member.name)
-                                    .type(T.F.caption)
-                                    .fontWeight(.medium)
-                                    .foregroundStyle(memberID == member.id ? .white : T.C.ink)
-                                    .padding(.horizontal, 14)
-                                    .frame(height: 38)
-                                    .background(memberID == member.id ? T.C.brass : T.C.glass, in: Capsule())
-                                    .overlay {
-                                        Capsule().strokeBorder(memberID == member.id ? .clear : T.C.glassEdge, lineWidth: 0.5)
-                                    }
+                            ChoiceChip(title: member.name, on: memberID == member.id) {
+                                memberID = member.id
                             }
-                            .buttonStyle(PressStyle())
                         }
                         if members.isEmpty {
                             Button {
@@ -139,33 +129,14 @@ struct MobileKeysScreen: View {
                     .foregroundStyle(T.C.ink3)
                 HStack(spacing: 8) {
                     ForEach([1, 7, 30], id: \.self) { d in
-                        Button { days = d; forever = false } label: {
-                            Text("\(d) 天")
-                                .type(T.F.caption)
-                                .fontWeight(.medium)
-                                .foregroundStyle(!forever && days == d ? .white : T.C.ink)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 38)
-                                .background(!forever && days == d ? T.C.brass : T.C.glass, in: Capsule())
-                                .overlay {
-                                    Capsule().strokeBorder(!forever && days == d ? .clear : T.C.glassEdge, lineWidth: 0.5)
-                                }
+                        ChoiceChip(title: "\(d) 天", on: !forever && days == d, fillWidth: true) {
+                            days = d
+                            forever = false
                         }
-                        .buttonStyle(PressStyle())
                     }
-                    Button { forever = true } label: {
-                        Text("永久")
-                            .type(T.F.caption)
-                            .fontWeight(.medium)
-                            .foregroundStyle(forever ? .white : T.C.ink)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 38)
-                            .background(forever ? T.C.brass : T.C.glass, in: Capsule())
-                            .overlay {
-                                Capsule().strokeBorder(forever ? .clear : T.C.glassEdge, lineWidth: 0.5)
-                            }
+                    ChoiceChip(title: "永久", on: forever, fillWidth: true) {
+                        forever = true
                     }
-                    .buttonStyle(PressStyle())
                 }
 
                 PrimaryButton(title: "签发", busy: busy, enabled: memberID != nil) {

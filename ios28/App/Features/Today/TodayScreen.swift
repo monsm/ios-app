@@ -451,13 +451,7 @@ struct AvatarBadge: View {
             .font(.system(size: size * 0.37, weight: .semibold))
             .foregroundStyle(T.C.brass)
             .frame(width: size, height: size)
-            .background {
-                Circle().fill(T.C.glass)
-                Circle().fill(.ultraThinMaterial)
-            }
-            .overlay {
-                Circle().strokeBorder(T.C.glassEdge, lineWidth: 0.5)
-            }
+            .liquidGlass(in: Circle(), tint: GlassMetrics.tint, interactive: true)
             .shadow(color: T.C.shadow, radius: 8, x: 0, y: 4)
     }
 }

@@ -266,7 +266,8 @@ final class AppModel {
         let name = kc.name.isEmpty ? (kc.pidName.isEmpty ? "我的门锁" : kc.pidName) : kc.name
         let ledger = DB.ledger(kc.mac)
         // 空壳里不读锁的档案备注：分组/隐藏/上次信号都是这台手机攒下来的使用痕迹。
-        // 锁名、型号、电量、固件留着 —— 它们描述的是"你正站在哪扇门前"，不是"你用得多勤"。
+        // 锁名留着（胁迫码的前提是「门照样能开」，总得有个称呼），
+        // 型号/电量/固件/连接态在下面全部抹平 —— 那些是真实硬件读数。
         let meta = DB.isDecoy ? LockMeta() : LockArchive.meta(kc.mac)
         return LockSummary(
             id: kc.mac,

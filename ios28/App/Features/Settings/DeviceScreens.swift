@@ -49,7 +49,7 @@ struct PairingScreen: View {
                 .padding(.top, 22)
 
                 if pairing != nil {
-                    GlassSurface(radius: 20) {
+                    GlassSurface() {
                         HStack(spacing: 12) {
                             ProgressView().tint(T.C.brass)
                             VStack(alignment: .leading, spacing: 3) {
@@ -522,7 +522,7 @@ struct DfuScreen: View {
                 .padding(.top, 8)
 
             if let package {
-                GlassSurface(radius: 22) {
+                GlassSurface() {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(package.sourceName)
                             .type(T.F.callout)

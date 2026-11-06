@@ -48,7 +48,7 @@ struct CredentialDetailScreen: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 10)
                     // 临时提示是"浮在内容之上"的一层，正是液态玻璃的场景。
-                    .liquidGlass(in: Capsule(), tint: T.C.brassWash)
+                    .liquidGlass(in: Capsule(), tint: GlassMetrics.tint)
                     .padding(.bottom, 96)
                     .transition(.opacity)
             }
@@ -222,14 +222,8 @@ struct CredentialDetailScreen: View {
         .foregroundStyle(T.C.ink)
         .frame(maxWidth: .infinity)
         .frame(height: 42)
-        .background {
-            RoundedRectangle(cornerRadius: 13, style: .continuous).fill(T.C.glass)
-            RoundedRectangle(cornerRadius: 13, style: .continuous).fill(.ultraThinMaterial)
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: 13, style: .continuous)
-                .strokeBorder(T.C.glassEdge, lineWidth: 0.5)
-        }
+        .liquidGlass(in: RoundedRectangle(cornerRadius: GlassMetrics.controlRadius, style: .continuous),
+                     tint: GlassMetrics.tint, interactive: true)
     }
 
     private func displayCode(_ item: Credential) -> String {

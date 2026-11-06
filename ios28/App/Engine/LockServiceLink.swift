@@ -61,7 +61,7 @@ extension LockService {
         // 用户手动切锁）时会连成这种互相拆台的循环。
         // 现在保证同一时刻只有一个建链者：不同 mac 的调用者挂起，醒来后重新判断。
         while !connectingMac.isEmpty, connectingMac != m {
-            try? await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
+            _ = try? await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
                 connectWaiters.append(c)
             }
         }

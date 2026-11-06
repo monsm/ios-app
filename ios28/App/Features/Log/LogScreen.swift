@@ -106,23 +106,12 @@ struct LogScreen: View {
 
     private var flaggedChip: some View {
         let count = app.events.filter { $0.flagged }.count
-        return Button {
+        return ChoiceChip(title: onlyFlagged ? "只看待查" : "待查 \(count)",
+                          symbol: onlyFlagged ? "flag.fill" : "flag",
+                          on: onlyFlagged,
+                          height: 32) {
             onlyFlagged.toggle()
-        } label: {
-            HStack(spacing: 7) {
-                Image(systemName: onlyFlagged ? "flag.fill" : "flag")
-                    .font(.system(size: 11, weight: .semibold))
-                Text(onlyFlagged ? "只看待查" : "待查 \(count)")
-            }
-            .type(T.F.caption)
-            .fontWeight(.medium)
-            .foregroundStyle(onlyFlagged ? .white : T.C.ink2)
-            .padding(.horizontal, 12)
-            .frame(height: 32)
-            .background(onlyFlagged ? T.C.brass : T.C.glass, in: Capsule())
-            .overlay { Capsule().strokeBorder(onlyFlagged ? .clear : T.C.glassEdge, lineWidth: 0.5) }
         }
-        .buttonStyle(PressStyle())
         .padding(.top, 12)
         .opacity(count == 0 && !onlyFlagged ? 0.45 : 1)
     }

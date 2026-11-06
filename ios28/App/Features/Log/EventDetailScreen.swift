@@ -73,7 +73,7 @@ struct EventDetailScreen: View {
         .padding(.top, 26)
 
         if let diff = event.diff, !diff.isEmpty {
-            GlassSurface(radius: 18) {
+            GlassSurface() {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("锁端明细")
                         .type(T.F.kicker)
@@ -100,23 +100,18 @@ struct EventDetailScreen: View {
         HStack(spacing: 8) {
             dispositionButton(event, verdict: "已处理")
             dispositionButton(event, verdict: "误报")
-            Button {
+            ChoiceChip(title: event.flagged ? "取消待查" : "标记待查",
+                       symbol: event.flagged ? "flag.fill" : "flag",
+                       on: event.flagged,
+                       height: 40,
+                       fillWidth: true,
+                       onColor: T.C.danger) {
                 // `toggleFlag` 返回的是**新的**状态。原先把这个返回值扔了，
                 // toast 永远写「已标记」—— 取消标记时也这么说。
                 let now = RecordOverlay.toggleFlag(event.mac, rowKey(event))
                 toast = now ? "已标记为待查" : "已取消待查"
                 app.reloadEvents()
-            } label: {
-                Text(event.flagged ? "取消待查" : "标记待查")
-                    .type(T.F.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(event.flagged ? T.C.danger : T.C.ink)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 40)
-                    .background(T.C.glass, in: Capsule())
-                    .overlay { Capsule().strokeBorder(T.C.glassEdge, lineWidth: 0.5) }
             }
-            .buttonStyle(PressStyle())
         }
 
         if let verdict = currentVerdict(event) {
@@ -173,24 +168,15 @@ struct EventDetailScreen: View {
     }
 
     private func dispositionButton(_ event: EventItem, verdict: String) -> some View {
-        Button {
+        ChoiceChip(title: verdict,
+                   on: currentVerdict(event)?.verdict == verdict,
+                   height: 40,
+                   fillWidth: true) {
             RecordOverlay.setDisposition(event.mac, rowKey(event),
                                          RecordSearch.Disposition(at: Date().timeIntervalSince1970, verdict: verdict))
             toast = "已标记为「\(verdict)」"
             app.reloadEvents()
-        } label: {
-            Text(verdict)
-                .type(T.F.caption)
-                .fontWeight(.medium)
-                .foregroundStyle(currentVerdict(event)?.verdict == verdict ? .white : T.C.ink)
-                .frame(maxWidth: .infinity)
-                .frame(height: 40)
-                .background(currentVerdict(event)?.verdict == verdict ? T.C.brass : T.C.glass, in: Capsule())
-                .overlay {
-                    Capsule().strokeBorder(currentVerdict(event)?.verdict == verdict ? .clear : T.C.glassEdge, lineWidth: 0.5)
-                }
         }
-        .buttonStyle(PressStyle())
     }
 }
 

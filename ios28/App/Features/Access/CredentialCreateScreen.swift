@@ -155,11 +155,8 @@ struct CredentialCreateScreen: View {
                         .font(.system(size: 17))
                         .foregroundStyle(T.C.brass)
                         .frame(width: 48, height: 48)
-                        .background(T.C.glass, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .strokeBorder(T.C.glassEdge, lineWidth: 0.5)
-                        }
+                        .liquidGlass(in: RoundedRectangle(cornerRadius: GlassMetrics.controlRadius, style: .continuous),
+                                     tint: GlassMetrics.tint, interactive: true)
                 }
                 .buttonStyle(PressStyle())
                 .accessibilityLabel("随机生成")
@@ -223,24 +220,11 @@ struct CredentialCreateScreen: View {
     private var durationPicker: some View {
         HStack(spacing: 8) {
             ForEach(durations.indices, id: \.self) { index in
-                Button {
+                ChoiceChip(title: durations[index].title,
+                           on: duration == index,
+                           fillWidth: true) {
                     duration = index
-                } label: {
-                    Text(durations[index].title)
-                        .type(T.F.caption)
-                        .fontWeight(.medium)
-                        .foregroundStyle(duration == index ? .white : T.C.ink)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 40)
-                        .background(
-                            duration == index ? T.C.brass : T.C.glass,
-                            in: Capsule()
-                        )
-                        .overlay {
-                            Capsule().strokeBorder(duration == index ? .clear : T.C.glassEdge, lineWidth: 0.5)
-                        }
                 }
-                .buttonStyle(PressStyle())
             }
         }
     }
@@ -250,34 +234,14 @@ struct CredentialCreateScreen: View {
     private var ownerPicker: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                Button { ownerID = nil } label: {
-                    Text("未归属")
-                        .type(T.F.caption)
-                        .fontWeight(.medium)
-                        .foregroundStyle(ownerID == nil ? .white : T.C.ink)
-                        .padding(.horizontal, 14)
-                        .frame(height: 38)
-                        .background(ownerID == nil ? T.C.brass : T.C.glass, in: Capsule())
-                        .overlay {
-                            Capsule().strokeBorder(ownerID == nil ? .clear : T.C.glassEdge, lineWidth: 0.5)
-                        }
+                ChoiceChip(title: "未归属", on: ownerID == nil) {
+                    ownerID = nil
                 }
-                .buttonStyle(PressStyle())
 
                 ForEach(app.members.filter { !$0.archived }) { member in
-                    Button { ownerID = member.id } label: {
-                        Text(member.name)
-                            .type(T.F.caption)
-                            .fontWeight(.medium)
-                            .foregroundStyle(ownerID == member.id ? .white : T.C.ink)
-                            .padding(.horizontal, 14)
-                            .frame(height: 38)
-                            .background(ownerID == member.id ? T.C.brass : T.C.glass, in: Capsule())
-                            .overlay {
-                                Capsule().strokeBorder(ownerID == member.id ? .clear : T.C.glassEdge, lineWidth: 0.5)
-                            }
+                    ChoiceChip(title: member.name, on: ownerID == member.id) {
+                        ownerID = member.id
                     }
-                    .buttonStyle(PressStyle())
                 }
             }
         }

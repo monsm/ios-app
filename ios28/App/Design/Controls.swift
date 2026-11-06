@@ -71,7 +71,7 @@ struct UnlockLens: View {
                 // 真玻璃让背后的窗景参与折射，比材料模糊更像"一片厚玻璃"。
                 Circle()
                     .fill(.clear)
-                    .liquidGlass(in: Circle(), tint: T.C.brassWash)
+                    .liquidGlass(in: Circle(), tint: GlassMetrics.tint)
                     .shadow(color: T.C.shadow, radius: 20, x: 0, y: 14)
 
                 Circle()
@@ -180,19 +180,58 @@ struct GhostButton: View {
             .foregroundStyle(T.C.ink)
             .frame(maxWidth: .infinity)
             .frame(height: 46)
-            .background {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(T.C.glass)
-                    .background {
-                        RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.ultraThinMaterial)
-                    }
-            }
-            .overlay {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .strokeBorder(T.C.glassEdge, lineWidth: 0.5)
-            }
+            .liquidGlass(in: RoundedRectangle(cornerRadius: GlassMetrics.controlRadius, style: .continuous),
+                         tint: GlassMetrics.tint, interactive: true)
         }
         .buttonStyle(PressStyle())
+    }
+}
+
+// MARK: - 选择胶囊
+
+/// 可点的选择胶囊。选中态用黄铜实底（品牌语义），未选中态是真玻璃。
+/// 所有「多选一」的胶囊都走这里 —— 圆角、描边、染色不再各写一份。
+struct ChoiceChip: View {
+    var title: String
+    var symbol: String? = nil
+    var on: Bool
+    var height: CGFloat = 38
+    var fillWidth: Bool = false
+    /// 选中态的实底颜色。默认黄铜；危险语义（如「待查」）可传 `T.C.danger`。
+    var onColor: Color = T.C.brass
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                if let symbol {
+                    Image(systemName: symbol)
+                        .font(.system(size: 12, weight: .medium))
+                }
+                Text(title)
+                    .type(T.F.caption)
+                    .fontWeight(.medium)
+            }
+            .foregroundStyle(on ? .white : T.C.ink)
+            .padding(.horizontal, 14)
+            .frame(maxWidth: fillWidth ? .infinity : nil)
+            .frame(height: height)
+            .modifier(ChoiceSurface(on: on, onColor: onColor))
+        }
+        .buttonStyle(PressStyle())
+    }
+}
+
+private struct ChoiceSurface: ViewModifier {
+    var on: Bool
+    var onColor: Color
+
+    func body(content: Content) -> some View {
+        if on {
+            content.background(onColor, in: Capsule())
+        } else {
+            content.liquidGlass(in: Capsule(), tint: GlassMetrics.tint, interactive: true)
+        }
     }
 }
 
@@ -250,17 +289,8 @@ struct FieldInput: View {
         }
         .padding(.horizontal, 15)
         .frame(height: 48)
-        .background {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(T.C.glass)
-                .background {
-                    RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.ultraThinMaterial)
-                }
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(T.C.glassEdge, lineWidth: 0.5)
-        }
+        .liquidGlass(in: RoundedRectangle(cornerRadius: GlassMetrics.controlRadius, style: .continuous),
+                     tint: GlassMetrics.tint)
     }
 
     @ViewBuilder
@@ -405,8 +435,8 @@ struct TabBar: View {
         }
         .padding(.horizontal, 8)
         // Tab 栏是浮在内容之上、每个标签都可点的功能层 —— 原生液态玻璃最合适的位置。
-        .liquidGlass(in: RoundedRectangle(cornerRadius: 30, style: .continuous),
-                     tint: T.C.brassWash, interactive: true)
+        .liquidGlass(in: RoundedRectangle(cornerRadius: GlassMetrics.barRadius, style: .continuous),
+                     tint: GlassMetrics.tint, interactive: true)
         .shadow(color: T.C.shadow, radius: 26, x: 0, y: 14)
         .padding(.horizontal, 20)
         .padding(.bottom, 8)
@@ -446,7 +476,7 @@ struct SheetChrome<Content: View>: View {
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(T.C.ink2)
                         .frame(width: 32, height: 32)
-                        .background(T.C.hair, in: Circle())
+                        .liquidGlass(in: Circle(), tint: GlassMetrics.tint, interactive: true)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("关闭")

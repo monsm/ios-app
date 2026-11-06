@@ -215,7 +215,7 @@ struct ZotpScreen: View {
     }
 
     private var enableCard: some View {
-        GlassSurface(radius: 24) {
+        GlassSurface() {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 12) {
                     GlyphTile(symbol: "clock.arrow.circlepath", kind: .brass, size: 42)

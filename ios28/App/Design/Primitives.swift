@@ -257,13 +257,8 @@ struct Chip: View {
         }
         .padding(.horizontal, 15)
         .padding(.vertical, 11)
-        .background {
-            Capsule().fill(on ? T.C.brass : T.C.glass)
-            Capsule().fill(.ultraThinMaterial)
-        }
-        .overlay {
-            Capsule().strokeBorder(on ? .clear : T.C.glassEdge, lineWidth: 0.5)
-        }
+        .background(on ? T.C.brass : .clear, in: Capsule())
+        .liquidGlass(in: Capsule(), tint: on ? nil : GlassMetrics.tint)
     }
 }
 
@@ -307,8 +302,8 @@ struct ToolTray: View {
         .padding(.horizontal, 5)
         .padding(.vertical, 5)
         // 托盘同样是浮层：整块可点，用可交互玻璃。
-        .liquidGlass(in: RoundedRectangle(cornerRadius: 22, style: .continuous),
-                     tint: T.C.brassWash, interactive: true)
+        .liquidGlass(in: RoundedRectangle(cornerRadius: GlassMetrics.trayRadius, style: .continuous),
+                     tint: GlassMetrics.tint, interactive: true)
         .shadow(color: T.C.shadow, radius: 16, x: 0, y: 10)
     }
 }
@@ -346,17 +341,9 @@ struct SegmentedBar: View {
             }
         }
         .padding(4)
-        .background {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(T.C.glass)
-                .background {
-                    RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.ultraThinMaterial)
-                }
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(T.C.glassEdge, lineWidth: 0.5)
-        }
+        // 分段控件是"一片玻璃上的几格"，玻璃只铺底层；选中格仍是黄铜浅洗。
+        .liquidGlass(in: RoundedRectangle(cornerRadius: GlassMetrics.controlRadius, style: .continuous),
+                     tint: GlassMetrics.tint, interactive: true)
         .disabled(!enabled)
         .opacity(enabled ? 1 : 0.45)
     }

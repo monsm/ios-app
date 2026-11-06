@@ -99,11 +99,8 @@ struct BackupScreen: View {
                     .frame(height: 130)
                     .scrollContentBackground(.hidden)
                     .padding(12)
-                    .background(T.C.glass, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .strokeBorder(T.C.glassEdge, lineWidth: 0.5)
-                    }
+                    .liquidGlass(in: RoundedRectangle(cornerRadius: GlassMetrics.controlRadius, style: .continuous),
+                                 tint: GlassMetrics.tint)
                     .padding(.top, 10)
                     // 内容或口令一改，刚才那份预览就不再是「这份」备份的预览了。
                     .onChange(of: importText) { _, _ in preview = nil }
@@ -126,7 +123,7 @@ struct BackupScreen: View {
                 .opacity(busy ? 0.55 : 1)
 
                 if let preview {
-                    GlassSurface(radius: 18) {
+                    GlassSurface() {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("这份备份里有")
                                 .type(T.F.kicker)

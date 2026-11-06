@@ -19,7 +19,7 @@ struct SettingsScreen: View {
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(T.C.ink2)
                             .frame(width: 32, height: 32)
-                            .background(T.C.hair, in: Circle())
+                            .liquidGlass(in: Circle(), tint: GlassMetrics.tint, interactive: true)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("关闭")

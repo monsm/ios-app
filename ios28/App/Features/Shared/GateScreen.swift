@@ -110,35 +110,29 @@ struct GateScreen: View {
     }
 
     private var keypad: some View {
-        VStack(spacing: 12) {
-            ForEach(keys.indices, id: \.self) { row in
-                HStack(spacing: 12) {
-                    ForEach(keys[row], id: \.self) { key in
-                        if key.isEmpty {
-                            Color.clear.frame(width: 74, height: 60)
-                        } else {
-                            Button {
-                                tap(key)
-                            } label: {
-                                Text(key)
-                                    .type(T.F.keypad)
-                                    .foregroundStyle(T.C.ink)
-                                    .frame(width: 74, height: 60)
-                                    .background {
-                                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                            .fill(T.C.glass)
-                                            .background {
-                                                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                                    .fill(.ultraThinMaterial)
-                                            }
-                                    }
-                                    .overlay {
-                                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                            .strokeBorder(T.C.glassEdge, lineWidth: 0.5)
-                                    }
+        // 同一组里相邻的玻璃要放进容器，系统才会把它们当成一片连续材质
+        // 计算折射与高光；否则 12 个键各折各的，接缝会花。
+        GlassEffectContainer(spacing: 12) {
+            VStack(spacing: 12) {
+                ForEach(keys.indices, id: \.self) { row in
+                    HStack(spacing: 12) {
+                        ForEach(keys[row], id: \.self) { key in
+                            if key.isEmpty {
+                                Color.clear.frame(width: 74, height: 60)
+                            } else {
+                                Button {
+                                    tap(key)
+                                } label: {
+                                    Text(key)
+                                        .type(T.F.keypad)
+                                        .foregroundStyle(T.C.ink)
+                                        .frame(width: 74, height: 60)
+                                        .liquidGlass(in: RoundedRectangle(cornerRadius: GlassMetrics.keyRadius, style: .continuous),
+                                                     tint: GlassMetrics.tint, interactive: true)
+                                }
+                                .buttonStyle(PressStyle())
+                                .accessibilityLabel(key == "⌫" ? "删除" : key)
                             }
-                            .buttonStyle(PressStyle())
-                            .accessibilityLabel(key == "⌫" ? "删除" : key)
                         }
                     }
                 }

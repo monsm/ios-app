@@ -113,26 +113,16 @@ struct DaylightPane<Content: View>: View {
 // MARK: - 玻璃面
 
 struct GlassSurface<Content: View>: View {
-    var radius: CGFloat = T.R.card
-    var strong: Bool = false
+    var radius: CGFloat = GlassMetrics.cardRadius
     var padded: Bool = true
     @ViewBuilder var content: () -> Content
 
     var body: some View {
         content()
             .padding(padded ? T.S.m : 0)
-            .background {
-                RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .fill(strong ? T.C.glassStrong : T.C.glass)
-                    .background {
-                        RoundedRectangle(cornerRadius: radius, style: .continuous)
-                            .fill(.ultraThinMaterial)
-                    }
-            }
-            .overlay {
-                RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .strokeBorder(T.C.glassEdge, lineWidth: 0.5)
-            }
+            // 内容卡片是浮在页面底层之上的第二层：用真玻璃，但不染色 ——
+            // 一页里可能同时出现好几张卡片，染色叠染色会让整页泛黄。
+            .liquidGlass(in: RoundedRectangle(cornerRadius: radius, style: .continuous))
             .shadow(color: T.C.shadow, radius: 18, x: 0, y: 10)
     }
 }

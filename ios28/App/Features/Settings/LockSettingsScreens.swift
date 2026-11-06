@@ -254,7 +254,8 @@ struct LockPolicyScreen: View {
             SectionHead(index: "02", title: "自动上锁")
             HStack(spacing: 8) {
                 ForEach(intervals, id: \.self) { value in
-                    Button {
+                    ChoiceChip(title: "\(value)s", on: interval == value,
+                               height: 40, fillWidth: true) {
                         guard !busy else { return }
                         interval = value
                         busy = true
@@ -262,19 +263,7 @@ struct LockPolicyScreen: View {
                             await apply(await app.setAutoLock(value), "自动上锁")
                             busy = false
                         }
-                    } label: {
-                        Text("\(value)s")
-                            .type(T.F.caption)
-                            .fontWeight(.medium)
-                            .foregroundStyle(interval == value ? .white : T.C.ink)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 40)
-                            .background(interval == value ? T.C.brass : T.C.glass, in: Capsule())
-                            .overlay {
-                                Capsule().strokeBorder(interval == value ? .clear : T.C.glassEdge, lineWidth: 0.5)
-                            }
                     }
-                    .buttonStyle(PressStyle())
                 }
             }
             .disabled(busy)
