@@ -28,6 +28,11 @@ struct TodayScreen: View {
         }
         .background(Color.clear)
         .toolbar(.hidden, for: .navigationBar)
+        // 「开门时保持亮屏」：这一屏就是门口那一页 —— 亮着才不至于话没说完就息屏。
+        // 开关在「外观 · 手感」里；离开这一屏就把息屏交还给系统。
+        .onAppear { ScreenAwake.want(SettingsStore.shared.keepScreenAwake) }
+        .onDisappear { ScreenAwake.want(false) }
+        .onChange(of: SettingsStore.shared.keepScreenAwake) { _, on in ScreenAwake.want(on) }
     }
 
     // MARK: - 头部

@@ -160,6 +160,7 @@ struct LockPolicyScreen: View {
     @State private var muted = false
     @State private var safeMode = false
     @State private var interval = 6
+    @State private var autoRetry = SettingsStore.shared.autoRetry
     @State private var defendMode: DefendMode = .off
     @State private var startHour = 22
     @State private var endHour = 7
@@ -254,7 +255,11 @@ struct LockPolicyScreen: View {
 
             if busy { ProgressView().tint(T.C.brass).padding(.top, 14) }
 
-            SectionHead(index: "04", title: "相关")
+            SectionHead(index: "04", title: "开锁")
+            SwitchLine(title: "失败自动重试", detail: "蓝牙链路抖动、没等到回执时，自动再发一次开锁命令。锁端明确拒绝则不重试。", isOn: $autoRetry)
+                .onChange(of: autoRetry) { _, value in SettingsStore.shared.setAutoRetry(value) }
+
+            SectionHead(index: "05", title: "相关")
             Button {
                 router.pushSettings(.zotp)
             } label: {

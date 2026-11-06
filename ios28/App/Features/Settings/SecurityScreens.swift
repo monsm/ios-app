@@ -232,7 +232,7 @@ struct AppearanceScreen: View {
                 get: { theme.isEmpty ? 0 : (theme == "light" ? 1 : 2) },
                 set: {
                     theme = $0 == 0 ? "" : ($0 == 1 ? "light" : "dark")
-                    SettingsStore.shared.theme = theme
+                    SettingsStore.shared.setTheme(theme)
                 }
             ))
 
@@ -249,7 +249,7 @@ struct AppearanceScreen: View {
                 }
                 .labelsHidden()
                 .tint(T.C.brass)
-                .onChange(of: grid) { _, value in SettingsStore.shared.quickGridCount = value }
+                .onChange(of: grid) { _, value in SettingsStore.shared.setQuickGridCount(value) }
             }
             .padding(.vertical, 6)
             Text("改动会立刻反映在「今日」的托盘上。")
@@ -258,9 +258,9 @@ struct AppearanceScreen: View {
 
             SectionHead(index: "03", title: "手感")
             SwitchLine(title: "触感反馈", detail: "开锁、校准、成功与失败都有对应震动。", isOn: $haptics)
-                .onChange(of: haptics) { _, value in SettingsStore.shared.haptics = value }
+                .onChange(of: haptics) { _, value in SettingsStore.shared.setHaptics(value) }
             SwitchLine(title: "开门时保持亮屏", detail: "站在门口时不至于中途息屏。", isOn: $keepAwake)
-                .onChange(of: keepAwake) { _, value in SettingsStore.shared.keepScreenAwake = value }
+                .onChange(of: keepAwake) { _, value in SettingsStore.shared.setKeepScreenAwake(value) }
         }
         .toolbar(.hidden, for: .navigationBar)
     }
@@ -315,7 +315,7 @@ struct AboutScreen: View {
                     taps += 1
                     if taps >= 10 {
                         taps = 0
-                        UINotificationFeedbackGenerator().notificationOccurred(.success)
+                        Haptics.notify(.success)
                     }
                 }
         }

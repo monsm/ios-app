@@ -30,7 +30,7 @@ struct SettingsScreen: View {
                 HStack(spacing: 10) {
                     FieldInput(placeholder: "这个家叫什么", text: $homeName)
                     Button {
-                        SettingsStore.shared.homeName = homeName.isEmpty ? "我的家" : homeName
+                        SettingsStore.shared.setHomeName(homeName.isEmpty ? "我的家" : homeName)
                         editingHome = false
                     } label: {
                         Text("保存")

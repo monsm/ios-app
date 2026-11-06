@@ -29,7 +29,6 @@ final class AppModel {
 
     var phase: UnlockPhase = .idle
     var lastUnlockAt: Int64?
-    var failStreak = 0
     var autoLockLeft: Int?
     var lastActionAt: Int64?
     var gatePassedAt: Int64?
@@ -254,38 +253,45 @@ final class AppModel {
         guard !mac.isEmpty else { phase = .failed("还没有添加门锁"); return }
 
         lastError = nil
-        failStreak = 0
-        phase = .reaching
-        do {
-            try await LockService.shared.ensureConnected(mac: mac)
-            phase = .sending
-            // Engine 的 `unlock` 是「写帧 + 等回执」一次调用，界面看不到中间那一步。
-            // 所以把 `.waiting` 放在 await **之前**：环停在 0.86 等待的，是真的在等锁回执；
-            // 若放在之后，「等回执」只会闪一帧，而「已下发」会陪着用户等满整个超时。
-            phase = .waiting
-            let rc = try await LockService.shared.unlock(mac: mac, pinDec: chosenPin(mac))
-            if rc == 0 {
-                phase = .opened
-                let now = Int64(Date().timeIntervalSince1970 * 1000)
-                lastUnlockAt = now
-                lastActionAt = now
-                Milestones.recordUnlockSuccess()
-                startAutoLockCountdown()
-                try? await Task.sleep(for: .milliseconds(900))
-                if phase == .opened { phase = .idle }
-                await reload(refreshStatus: false)
-            } else if rc == 22 {
-                phase = .failed("门锁要求第二种验证方式")
-                failStreak = 1
-            } else {
-                phase = .failed(StatusParser.rcFriendly(rc))
-                failStreak = 1
+        // 传输层失败（蓝牙抖动、回执没回来）值得自动再试一次；
+        // 锁端明确回了拒绝码则不重试 —— 再问一次也是同一个答案。
+        let attempts = SettingsStore.shared.autoRetry ? 2 : 1
+        for attempt in 1 ... attempts {
+            phase = .reaching
+            do {
+                try await LockService.shared.ensureConnected(mac: mac)
+                phase = .sending
+                // Engine 的 `unlock` 是「写帧 + 等回执」一次调用，界面看不到中间那一步。
+                // 所以把 `.waiting` 放在 await **之前**：环停在 0.86 等待的，是真的在等锁回执；
+                // 若放在之后，「等回执」只会闪一帧，而「已下发」会陪着用户等满整个超时。
+                phase = .waiting
+                let rc = try await LockService.shared.unlock(mac: mac, pinDec: chosenPin(mac))
+                if rc == 0 {
+                    phase = .opened
+                    let now = Int64(Date().timeIntervalSince1970 * 1000)
+                    lastUnlockAt = now
+                    lastActionAt = now
+                    Milestones.recordUnlockSuccess()
+                    startAutoLockCountdown()
+                    try? await Task.sleep(for: .milliseconds(900))
+                    if phase == .opened { phase = .idle }
+                    await reload(refreshStatus: false)
+                } else if rc == 22 {
+                    phase = .failed("门锁要求第二种验证方式")
+                } else {
+                    phase = .failed(StatusParser.rcFriendly(rc))
+                }
+                return
+            } catch {
+                let msg = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                guard attempt < attempts else {
+                    phase = .failed(msg)
+                    lastError = msg
+                    return
+                }
+                // 刚失败就立刻重发多半还是失败：让链路缓一下再试。
+                try? await Task.sleep(for: .milliseconds(700))
             }
-        } catch {
-            let msg = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            phase = .failed(msg)
-            failStreak += 1
-            lastError = msg
         }
     }
 

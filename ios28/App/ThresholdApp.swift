@@ -27,6 +27,8 @@ struct ThresholdApp: App {
                 AppLock.shared.willEnterForeground()
                 app.unlocked = AppLock.shared.unlocked
                 app.decoy = AppLock.shared.decoy
+                // 系统在进后台时会把「保持亮屏」复位，回前台补一次。
+                ScreenAwake.reapply()
                 AutoOpenController.shared.onForeground(mac: app.currentMac)
                 if app.unlocked { Task { await app.reload(refreshStatus: false) } }
             case .background:

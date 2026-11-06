@@ -168,7 +168,7 @@ struct GateScreen: View {
             input = ""
             message = remaining > 0 ? "再试一次。" : "密码不对。"
             if remaining > 0 { cooling = remaining }
-            UINotificationFeedbackGenerator().notificationOccurred(.error)
+            Haptics.notify(.error)
         case .cooling(let remaining):
             input = ""
             cooling = remaining
