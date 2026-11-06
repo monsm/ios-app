@@ -14,6 +14,16 @@ struct GateScreen: View {
     @State private var message: String?
     @State private var cooling = AppLock.shared.cooldownRemaining()
 
+    /// 本机密码是 4–8 位数字（见 PasscodeSheet）。
+    /// 所以**不能**在第 6 位自动提交 —— 4 位或 8 位的密码都会被自动提交那一刀切错，
+    /// 用户会被自己的 App 挡在门外。这里给一个明确的「解锁」按钮，长度够了才点得动。
+    private let minDigits = 4
+    private let maxDigits = 8
+
+    private var canSubmit: Bool {
+        input.count >= minDigits && cooling == 0
+    }
+
     private let keys: [[String]] = [
         ["1", "2", "3"],
         ["4", "5", "6"],
@@ -38,8 +48,8 @@ struct GateScreen: View {
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
 
-            HStack(spacing: 14) {
-                ForEach(0 ..< 6, id: \.self) { index in
+            HStack(spacing: 9) {
+                ForEach(0 ..< max(minDigits, input.count), id: \.self) { index in
                     Circle()
                         .fill(index < input.count ? T.C.brass : T.C.hairStrong)
                         .frame(width: 9, height: 9)
@@ -49,20 +59,26 @@ struct GateScreen: View {
             }
             .padding(.top, 26)
 
+            Text(input.isEmpty ? "\(minDigits)–\(maxDigits) 位数字" : "\(input.count) 位")
+                .type(T.F.caption)
+                .foregroundStyle(T.C.ink4)
+                .padding(.top, 10)
+
             if cooling > 0 {
                 Text("请等 \(cooling) 秒后再试")
                     .type(T.F.caption)
                     .foregroundStyle(T.C.danger)
-                    .padding(.top, 14)
-            } else {
-                Text(" ")
-                    .type(T.F.caption)
-                    .padding(.top, 14)
+                    .padding(.top, 6)
             }
 
             Spacer(minLength: 20)
 
             keypad
+
+            PrimaryButton(title: "解锁", enabled: canSubmit) {
+                submit()
+            }
+            .padding(.top, 16)
 
             if DB.hasPasscode() && !DB.hasDuressCode() {
                 Button {
@@ -137,12 +153,12 @@ struct GateScreen: View {
             if !input.isEmpty { input.removeLast() }
             return
         }
-        guard input.count < 12 else { return }
+        guard input.count < maxDigits else { return }
         input.append(key)
-        if input.count >= 6 { submit() }
     }
 
     private func submit() {
+        guard canSubmit else { return }
         let outcome = AppLock.shared.verify(input)
         switch outcome {
         case .success, .decoy:

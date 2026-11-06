@@ -155,7 +155,7 @@ struct PasscodeSheet: View {
             errorLine = "两次输入不一致。"
             return
         }
-        guard first.count >= 4, first.count <= 8, first.allSatisfy({ $0.isNumber }) else {
+        guard first.count >= 4, first.count <= 8, first.allSatisfy({ $0.isASCII && $0.isNumber }) else {
             errorLine = "请用 4–8 位数字。"
             return
         }
