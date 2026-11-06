@@ -94,7 +94,7 @@ xcodebuild build -project LockKeeper.xcodeproj -scheme LockKeeper \
 
 ---
 
-## 41 道机器闸门
+## 42 道机器闸门
 
 每道都有**正控**（故意注入缺陷确认它会红），不是"写了就算数"。
 
@@ -119,6 +119,7 @@ xcodebuild build -project LockKeeper.xcodeproj -scheme LockKeeper \
 | `feedback` | 用户动作里的 `try? await` 必须有错误通道（HIG feedback：命令失败要说原因） | ✅ |
 | `modal` | 对话框不许直接抢 sheet（HIG sheets：一次只呈现一个模态） | ✅ |
 | `settings` | 给了开关就必须有效果（**warn-only**：只追一层直接消费） | ✅ |
+| `argorder` | 共享组件的调用点参数必须按声明顺序传（Swift memberwise init 的硬要求；本地查不出顺序错，只能等云编译器） | ✅ |
 
 ```
 $ node Gates/allgates.js
@@ -142,7 +143,7 @@ tests: 8 个测试文件，317 条断言
 feedback: OK — 用户动作里的 try? await 都有错误通道
 settings: OK - 30 settings all have a direct consumer
 
-allgates: 全部 41 道闸门通过
+allgates: 全部 42 道闸门通过
 ```
 
 ---

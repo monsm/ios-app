@@ -174,8 +174,8 @@ struct RecordDetailHomeScreen: View {
                 .padding(.top, V8.S.gapM)
             VTextField(placeholder: "开门附言 / 备注",
                         text: $noteDraft,
-                        autocorrection: false,
-                        onSubmit: { save(entry) })
+                        onSubmit: { save(entry) },
+                        autocorrection: false)
             HStack(spacing: V8.S.gapS) {
                 Button { withAnimation(reduceMotion ? nil : V8.M.snap) { save(entry) } } label: {
                     Text("保存备注")

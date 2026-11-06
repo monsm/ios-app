@@ -58,7 +58,7 @@ V7 的令牌与组件文件仍在仓里，但已无在屏消费者（历史沉�
 
 ## 五、验证边界（如实说）
 
-- ✅ 41 道静态闸门全绿（含 contrast 62 条、tokens 死令牌、a11y 触达、dynamictype、modifier、uisymbols、secretext）。
+- ✅ 42 道静态闸门全绿（新增第 42 道 `argorder`：共享组件参数顺序）（含 contrast 62 条、tokens 死令牌、a11y 触达、dynamictype、modifier、uisymbols、secretext）。
 - ✅ CSS 镜像台 54 屏重渲染，375 / 430 宽度横向溢出审计通过。
 - ❌ **没有真机/模拟器渲染**：本机无 macOS，SwiftUI 布局无法离屏渲染。
   镜像台是 CSS 近似（仓库既有边界），**Dynamic Type 档与真实手势未被像素级验证**，
