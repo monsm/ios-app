@@ -85,6 +85,10 @@ final class Router {
     var pendingCreateKind: String?
     /// 新凭证页打开时预选归属成员（从成员详情「新建凭证」进来时用）。
     var pendingCreateOwnerID: String?
+    /// 跨 Tab 跳到「通行」时指定分段（0 凭证 / 1 成员 / 2 手机钥匙）。
+    /// 今日页的「凭证」快捷动作、设置页的「成员与分工」都要求落在对应分段，
+    /// 否则用户上次停在「成员」，点「凭证」却还是成员页。
+    var pendingAccessSegment: Int?
 
     func push(_ dest: Dest) {
         switch tab {
@@ -145,6 +149,7 @@ final class Router {
         pendingEventID = nil
         pendingCreateKind = nil
         pendingCreateOwnerID = nil
+        pendingAccessSegment = nil
         tab = .today
     }
 }

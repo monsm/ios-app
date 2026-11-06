@@ -54,6 +54,16 @@ struct AccessScreen: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
+        // 从今日页「凭证」或设置页「成员与分工」跳过来时，落在对应的分段上。
+        .onAppear { consumePendingSegment() }
+        .onChange(of: router.pendingAccessSegment) { _, _ in consumePendingSegment() }
+    }
+
+    private func consumePendingSegment() {
+        guard let target = router.pendingAccessSegment else { return }
+        router.pendingAccessSegment = nil
+        guard (0 ... 2).contains(target), segment != target else { return }
+        segment = target
     }
 
     private var summary: String {

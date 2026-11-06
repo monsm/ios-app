@@ -235,6 +235,12 @@ struct BackupScreen: View {
     private func doRestore() async {
         guard !busy else { return }
         errorLine = nil
+        // 空壳里不导入：`BackupStudio.restore` 自己也会拦，但它抛的是
+        // 「当前模式下不能导入备份」—— 这句会让人追问「什么模式」。这里先用同一句中性话挡住。
+        guard !DB.isDecoy else {
+            errorLine = "当前无法恢复，请稍后再试。"
+            return
+        }
         // 这一页开头写着「导入先预览、再写盘」—— 那就真的**先预览**。
         // 原先「恢复」可以直接点：还没看清这份信封里是几把锁、哪几把会被跳过，
         // 数据就已经写进去了。回滚点只能救「写错了」，救不了「本来就不该写」。

@@ -450,8 +450,10 @@ struct LockPolicyScreen: View {
         guard loaded, canDefend, !busy else { return }
         let target = defendMode
         guard target == .period else { return }
+        // busy 必须在同步段就置上：两个 Picker 连着改会各起一个 Task，
+        // 若等 Task 里才置，两个请求会同时发出去。
+        busy = true
         Task {
-            busy = true
             defer { busy = false }
             let result = await app.applyDefence(target, startSec: startHour * 3600, endSec: endHour * 3600)
             if case .failure(let error) = result {

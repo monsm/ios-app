@@ -259,6 +259,7 @@ struct TodayScreen: View {
             router.push(.zotp)
         case "studio":
             router.tab = .access
+            router.pendingAccessSegment = 0
         case "again":
             Task { await app.unlock() }
         case "syncTime":
