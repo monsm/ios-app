@@ -101,7 +101,7 @@ jobs:
         run: |
           grep -E "error:" build/build.log 2>/dev/null | head -60 | sed "s#^#::error file=ios28/App::#" || true
 
-      - name: 打包（未签名 IPA，挂 Release）
+      - name: 打包（未签名 IPA，进 Actions 产物）
         if: success()
         run: |
           set -o pipefail
@@ -115,7 +115,19 @@ jobs:
             CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" 2>&1 | tee build/archive.log
           mkdir -p build/Payload
           cp -R build/Threshold.xcarchive/Products/Applications/Threshold.app build/Payload/
-          cd build && zip -qry Threshold-unsigned.ipa Payload
+          # 固定文件名会让「装了修复却没生效」无从查证：安装台上两个包看起来一样。
+          # 文件名必须带构建时刻 + run 号 + commit 短哈希；包内再放一份 BUILD-INFO.txt。
+          STAMP=$(TZ=Asia/Shanghai date +%Y%m%d.%H%M%S)
+          SHORT=$(git rev-parse --short=7 HEAD)
+          NAME="Threshold-$STAMP-r${{ github.run_number }}-$SHORT-unsigned.ipa"
+          echo "IPA: $NAME"
+          cd build && zip -qry "$NAME" Payload
+          {
+            echo "commit=$(git rev-parse HEAD)"
+            echo "run=${GITHUB_RUN_ID}"
+            echo "ipa=$NAME"
+          } > BUILD-INFO.txt
+          ls -lh Threshold-*-unsigned.ipa BUILD-INFO.txt
 
       - name: 上传构建产物
         if: always()
@@ -124,7 +136,8 @@ jobs:
           name: ios28-build
           path: |
             ios28/build/build.log
-            ios28/build/Threshold-unsigned.ipa
+            ios28/build/Threshold-*-unsigned.ipa
+            ios28/build/BUILD-INFO.txt
           if-no-files-found: ignore
 
       - name: 发布编译结论到 ci28-log 分支

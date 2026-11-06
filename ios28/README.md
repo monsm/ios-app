@@ -44,7 +44,7 @@ xcodebuild build -project Threshold.xcodeproj -scheme Threshold \
 **签名**：`project.yml` 里是 `CODE_SIGN_STYLE: Automatic`，没有写死 Team。
 在 Xcode 里选一次自己的 Team 即可；CI 全程 `CODE_SIGNING_ALLOWED=NO`。
 
-**安装**：最新未签名 IPA 在 [Release · ios27-latest](https://github.com/monsm/ios-app/releases/tag/ios27-latest)，每次 `main` 的成功构建都会替换它；文件名带 commit 短哈希，装之前先核对。未签名包需要用自己的 Apple ID 签一次（Sideloadly / AltStore / Xcode）。
+**安装**：IPA 由 [`ios28` 工作流](https://github.com/monsm/ios-app/actions/workflows/ios28.yml)产出——打开最新一次成功的 `push` run（名字是 `ios28`），下载 Artifacts 里的 `ios28-build`（需登录 GitHub），里面是 `Threshold-<时刻>-r<run号>-<commit短哈希>-unsigned.ipa` 和 `BUILD-INFO.txt`（完整 commit + run + 包名）。**装之前核对短哈希**；不要从 `ios27-latest` Release 下载——那是上一版 LockKeeper 的包。未签名包需要用自己的 Apple ID 签一次（Sideloadly / AltStore / Xcode）。
 
 ---
 
