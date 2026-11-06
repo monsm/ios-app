@@ -137,7 +137,8 @@ struct SettingsScreen: View {
     }
 
     private var backupSubtitle: String {
-        if let last = Milestones.lastBackupAt {
+        // 空壳里不显示真实备份时间（同上：它会暴露这台手机的历史）。
+        if !DB.isDecoy, let last = Milestones.lastBackupAt {
             return "上次备份 \(When.ago(Int64(last.timeIntervalSince1970 * 1000))) · 已加密"
         }
         return "还没有备份过"

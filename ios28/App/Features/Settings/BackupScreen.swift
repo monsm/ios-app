@@ -33,7 +33,7 @@ struct BackupScreen: View {
                 .lineSpacing(4)
                 .padding(.top, 8)
 
-            if let last = Milestones.lastBackupAt {
+            if !DB.isDecoy, let last = Milestones.lastBackupAt {
                 Text("上次备份：\(When.ago(Int64(last.timeIntervalSince1970 * 1000)))")
                     .type(T.F.caption)
                     .foregroundStyle(T.C.ink3)
@@ -184,6 +184,16 @@ struct BackupScreen: View {
     private func export() {
         errorLine = nil
         message = nil
+        // 空壳里不生成备份。
+        //
+        // 设备/台账/成员会被数据层过滤成空，但 `collectAll` 直接从 `DB.get` 取的
+        // `kf_passcode` / `kf_duress` **不判空壳** —— 信封里会带上两者真实的 PBKDF2 摘要。
+        // 胁迫者拿走文件就能离线穷举 4–8 位数字，胁迫码当场失守。
+        // 与「导入备份」同一道闸（`BackupStudioKit` 的 `guard !DB.isDecoy`）。
+        guard !DB.isDecoy else {
+            errorLine = "当前无法导出，请稍后再试。"
+            return
+        }
         guard passphrase.count >= 8 else {
             errorLine = "口令至少 8 位。没有口令就不生成备份。"
             return

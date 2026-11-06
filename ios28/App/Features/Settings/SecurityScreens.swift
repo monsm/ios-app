@@ -317,7 +317,11 @@ struct AboutScreen: View {
             SectionHead(index: "01", title: "事实")
             infoRow("版本", "1.0")
             infoRow("构建", Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—")
-            infoRow("开锁次数", "\(Milestones.unlockTotal) 次")
+            // 空壳里不显示真实开锁次数：它是从原始存储直接读的终身计数，
+            // 而空壳承诺「记录是空的」—— 一个四位数放在这里等于自证有历史。
+            if !DB.isDecoy {
+                infoRow("开锁次数", "\(Milestones.unlockTotal) 次")
+            }
             infoRow("网络", "没有服务器")
             infoRow("账号", "没有账号")
             infoRow("数据", "全部在本机 · 密钥在 Keychain")

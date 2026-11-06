@@ -367,9 +367,23 @@ struct EmptyHome: View {
             .padding(.top, 18)
 
             SectionHead(index: "01", title: "配对之后")
-            ContentRow(symbol: "key", title: "凭证", subtitle: "密码、指纹、临时码，一处管完", chevron: true)
-            ContentRow(symbol: "list.bullet", tone: .cool, title: "记录", subtitle: "谁在什么时候开过门", chevron: true)
-            ContentRow(symbol: "shield", tone: .cool, title: "安全", subtitle: "本机密码、布防、自动开门", chevron: true)
+            // 这三行原先只是带着 chevron 的静态 ContentRow —— 箭头在，点下去却什么也不会发生。
+            // 现在各去各的地方（安全落在设置栈里）。
+            Button { router.tab = .access } label: {
+                ContentRow(symbol: "key", title: "凭证", subtitle: "密码、指纹、临时码，一处管完", chevron: true)
+            }
+            .buttonStyle(.plain)
+            Button { router.tab = .log } label: {
+                ContentRow(symbol: "list.bullet", tone: .cool, title: "记录", subtitle: "谁在什么时候开过门", chevron: true)
+            }
+            .buttonStyle(.plain)
+            Button {
+                router.openSettings()
+                router.pushSettings(.security)
+            } label: {
+                ContentRow(symbol: "shield", tone: .cool, title: "安全", subtitle: "本机密码、布防、自动开门", chevron: true)
+            }
+            .buttonStyle(.plain)
         }
     }
 }

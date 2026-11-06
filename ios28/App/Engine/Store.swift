@@ -321,24 +321,26 @@ enum DB {
         // 2026-10-14: 该表是 weekKey → memberId (MemberHub), 上一版误按 key 过滤 → 恒不命中, 值班记录成孤儿。
         duty = duty.filter { $0.value != id }
         if duty.count != dbefore { store.setCodable("kf_duty_week", duty) }
-        // 2026-11-01 补：**手机钥匙**（`kf_mkey_<mac>`）里 `memberID` 指向该成员的条目也要清。
-        // 漏了它的后果与上面几族同源：删了成员，他名下签出去的手机钥匙仍在列表里（且
-        // `pin`/`ekey` 的钥匙串副本也在），显示成一个归属不存在的孤儿。
-        // 注意：这里只清**本机记录**，锁端那张钥匙是否真的吊销要走 `MobileKeyService.revoke`
-        // （需要 BLE），而删成员是本地操作 —— 与"解除归属但保留凭证"的既有取舍一致。
-        // 遍历**存储键**而不是 `keychains()`：`kf_mkey_<mac>` 可能存在而对应钥匙串已被删
-        // （那种情况下遍历 keychains 会漏掉）。与 `removeDevice` 里"按前缀整族清"同一思路。
+        // 2026-11-01 补：**手机钥匙**（`kf_mkey_<mac>`）里 `memberID` 指向该成员的条目也要处理，
+        // 否则删了成员，他名下签出去的手机钥匙显示成一个归属不存在的孤儿。
+        //
+        // 2026-11-06 改：**只解绑，不删除**。
+        //
+        // 原先这里是 `filter` 掉整个条目，连 Keychain 里的 `pin`/`ekey` 副本一起删 ——
+        // 而锁端那张钥匙**并没有被吊销**（删成员是本机操作，不走 BLE）。
+        // 结果：一枚真能开门的手机钥匙从列表里消失了，从此既看不到、也无法吊销，
+        // 而界面上的删除确认写着「名下的凭证会变成未归属」。
+        // 这与本函数对密码/指纹的取舍（解除归属、保留凭证）正相反，也与 `MemberMergeKit`
+        // 合并成员时「改判，不删除」同一条纪律。`memberName` 原样保留 ——
+        // 它是刻意冗余的，成员被删后仍能显示这把钥匙原来是谁的。
         for key in store.keys() where key.hasPrefix("kf_mkey_") {
-            let mac = String(key.dropFirst("kf_mkey_".count))
-            let raw = store.get([MobileKey].self, key) ?? []
-            let keep = raw.filter { $0.memberID != id }
-            if keep.count != raw.count {
-                for k in raw where k.memberID == id {
-                    SecretStore.remove("mkey." + mac + ".pin." + k.id)
-                    SecretStore.remove("mkey." + mac + ".ekey." + k.id)
-                }
-                store.setCodable(key, keep)
+            var raw = store.get([MobileKey].self, key) ?? []
+            var hit = false
+            for i in raw.indices where raw[i].memberID == id {
+                raw[i].memberID = ""
+                hit = true
             }
+            if hit { store.setCodable(key, raw) }
         }
         // 2026-11-01（Round 230）：**借用登记**（`kf_mborrow_<mac>`，键 = memberID）同族 ——
         // 删了成员，条目还在 ⇒ 借用列表里出现「借用人：<已删除的 id>」，且这条锁的借用记录永远占着。

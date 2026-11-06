@@ -119,6 +119,14 @@ struct MemberDetailScreen: View {
         }
         .padding(.top, 6)
 
+        // 这张表说明厂商角色模型里「本该有几项能力」，但本机没有任何按角色鉴权的路径：
+        // 一台手机一个门禁，谁能解锁这台手机谁就能导出备份、改成员。
+        // 不写这一句，勾选表就是在暗示一种不存在的限制。
+        Text("角色只是名册上的归类：本机不会按角色拦下任何操作 —— 门锁只认钥匙，不认头衔。")
+            .type(T.F.caption)
+            .foregroundStyle(T.C.ink3)
+            .padding(.top, 8)
+
         SectionHead(index: "02", title: "名下的钥匙", trailing: "\(owned.count)")
         if owned.isEmpty {
             Text("还没有分给 TA 任何钥匙。")
@@ -170,7 +178,8 @@ struct MemberDetailScreen: View {
 
     private func detail(_ member: MemberCard) -> String {
         var parts = ["\(member.keyCount) 枚钥匙"]
-        if member.role == .guest { parts.append("访客只能开门，看不到记录") }
+        // 原先这里写「访客只能开门，看不到记录」—— 本机并不按角色拦任何操作，
+        // 那句话是在承诺一条不存在的限制。角色只用于归类。
         if member.archived { parts.append("已归档") }
         return parts.joined(separator: " · ")
     }
@@ -254,10 +263,11 @@ struct MemberCreateScreen: View {
     }
 
     private var roleHint: String {
+        // 只描述归类，不承诺能力：本机没有按角色鉴权的路径（见 MemberDetailScreen 的说明）。
         switch role {
-        case .owner: return "管理员可以管成员、管凭证、导出与备份。"
-        case .member: return "成员可以看记录、管凭证；不能导出或改成员。"
-        case .guest: return "访客只能开门，看不到任何记录。"
+        case .owner: return "管理员：名册里管事的那个人。"
+        case .member: return "成员：有钥匙的家人。"
+        case .guest: return "访客：临时进门的人。"
         }
     }
 
