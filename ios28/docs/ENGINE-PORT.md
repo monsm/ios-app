@@ -34,6 +34,14 @@ Engine 反向引用了若干上一版属于界面层的类型。这一版在 `Ap
 星标的 ID 口径与 Engine 一致：`pwd:<alias>` / `fp:<batch>`，所以 Engine 在
 `CredentialOrg.purgeDerivedState` 里删密码/指纹时会顺手摘掉同一颗星。
 
+## 本版新增的界面层基础设施（Engine 不感知）
+
+| 文件 | 作用 | 为什么需要它 |
+|---|---|---|
+| `App/Core/ScreenAwake.swift` | 「开门时保持亮屏」的总闸 | 接管 `UIApplication.isIdleTimerDisabled`；离开门口那页就交还给系统，回前台补一次（系统在进后台时复位过） |
+| `App/Core/Haptics.swift` | 触感反馈的总闸 | 用户在「外观 · 手感」里关掉后，全 App 不再震动。**触感只在结果上给**（按下 / 成功 / 失败），不在中间相位上给 —— 挂相位会连着震四五下 |
+| `App/Core/SettingsStore.swift`（改写） | 偏好改成**存储属性**镜像 | `@Observable` 只给存储属性建观察边；从 UserDefaults 现读的计算属性改了也没人知道，界面要等下一次重画才认 —— 于是「改了设置回到上一页还是旧样子」。Engine 需要的 `notifyChanged()` 形态保持不变 |
+
 ## 已知但未修的问题（保持与来源一致）
 
 - `Keychain.trackid` 生成后没有参与 ekey 签发。

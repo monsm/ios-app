@@ -305,18 +305,32 @@ final class AppModel {
         // 触感只在**结果**上给：按下一下，成功或失败各一下。
         // （早先挂在相位的 `.sensoryFeedback` 上，连上／下发／等回执会连着震四五下。）
         Haptics.impact()
-        // 传输层失败（蓝牙抖动、回执没回来）值得自动再试一次；
-        // 锁端明确回了拒绝码则不重试 —— 再问一次也是同一个答案。
+        // 自动重试只覆盖**连不上**这一段：命令没发出去，重发是安全的。
+        // 命令已经发出、只是没等到回执时**不重试** ——
+        // 引擎层对开锁命令刻意不重试（锁可能已经执行了），这一层不能把它绕过去。
         let attempts = SettingsStore.shared.autoRetry ? 2 : 1
         for attempt in 1 ... attempts {
             phase = .reaching
             do {
                 try await LockService.shared.ensureConnected(mac: mac)
-                phase = .sending
-                // Engine 的 `unlock` 是「写帧 + 等回执」一次调用，界面看不到中间那一步。
-                // 所以把 `.waiting` 放在 await **之前**：环停在 0.86 等待的，是真的在等锁回执；
-                // 若放在之后，「等回执」只会闪一帧，而「已下发」会陪着用户等满整个超时。
-                phase = .waiting
+            } catch {
+                let msg = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                guard attempt < attempts else {
+                    phase = .failed("连不上门锁：\(msg)")
+                    lastError = msg
+                    Haptics.notify(.error)
+                    return
+                }
+                // 刚失败就立刻重连多半还是失败：让链路缓一下再试。
+                try? await Task.sleep(for: .milliseconds(700))
+                continue
+            }
+            phase = .sending
+            // Engine 的 `unlock` 是「写帧 + 等回执」一次调用，界面看不到中间那一步。
+            // 所以把 `.waiting` 放在 await **之前**：环停在 0.86 等待的，是真的在等锁回执；
+            // 若放在之后，「等回执」只会闪一帧，而「已下发」会陪着用户等满整个超时。
+            phase = .waiting
+            do {
                 let rc = try await LockService.shared.unlock(mac: mac, pinDec: chosenPin(mac))
                 if rc == 0 {
                     phase = .opened
@@ -336,18 +350,13 @@ final class AppModel {
                     phase = .failed(StatusParser.rcFriendly(rc))
                     Haptics.notify(.error)
                 }
-                return
             } catch {
                 let msg = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-                guard attempt < attempts else {
-                    phase = .failed(msg)
-                    lastError = msg
-                    Haptics.notify(.error)
-                    return
-                }
-                // 刚失败就立刻重发多半还是失败：让链路缓一下再试。
-                try? await Task.sleep(for: .milliseconds(700))
+                phase = .failed(msg)
+                lastError = msg
+                Haptics.notify(.error)
             }
+            return
         }
     }
 

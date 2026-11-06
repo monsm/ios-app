@@ -256,7 +256,7 @@ struct LockPolicyScreen: View {
             if busy { ProgressView().tint(T.C.brass).padding(.top, 14) }
 
             SectionHead(index: "04", title: "开锁")
-            SwitchLine(title: "失败自动重试", detail: "蓝牙链路抖动、没等到回执时，自动再发一次开锁命令。锁端明确拒绝则不重试。", isOn: $autoRetry)
+            SwitchLine(title: "连不上时自动重试", detail: "连上门锁失败时自动再连一次。命令已经发出、没等到回执时不重试 —— 那一刻锁可能已经开了。", isOn: $autoRetry)
                 .onChange(of: autoRetry) { _, value in SettingsStore.shared.setAutoRetry(value) }
 
             SectionHead(index: "05", title: "相关")
