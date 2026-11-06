@@ -56,7 +56,8 @@ struct SettingsScreen: View {
                         DisplayLine(text: SettingsStore.shared.homeName, size: 34)
                         Image(systemName: "pencil")
                             .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(T.C.ink4)
+                            // 编辑提示是可读的控件线索，用 ink3；ink4 只留给装饰。
+                            .foregroundStyle(T.C.ink3)
                     }
                 }
                 .buttonStyle(.plain)

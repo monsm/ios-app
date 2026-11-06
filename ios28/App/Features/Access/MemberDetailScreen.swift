@@ -114,7 +114,7 @@ struct MemberDetailScreen: View {
                     Spacer()
                     Image(systemName: row.allowed ? "checkmark" : "minus")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(row.allowed ? T.C.brass : T.C.ink4)
+                        .foregroundStyle(row.allowed ? T.C.brass : T.C.ink3)
                 }
                 .padding(.vertical, 11)
             }

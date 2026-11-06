@@ -144,7 +144,8 @@ struct LocksScreen: View {
                 } label: {
                     Image(systemName: "trash")
                         .font(.system(size: 13))
-                        .foregroundStyle(T.C.ink4)
+                        // 这是可点的控件，不是装饰点：ink4 的 2.3:1 太淡。
+                        .foregroundStyle(T.C.ink3)
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
                 }

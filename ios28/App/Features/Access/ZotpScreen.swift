@@ -190,7 +190,7 @@ struct ZotpScreen: View {
                     .type(T.F.codeBig)
                     .tracking(6)
                     .monospacedDigit()
-                    .foregroundStyle(code.isEmpty ? T.C.ink4 : T.C.ink)
+                    .foregroundStyle(code.isEmpty ? T.C.ink3 : T.C.ink)
                     .minimumScaleFactor(0.6)
                     .lineLimit(1)
                 Text(code.isEmpty

@@ -61,7 +61,8 @@ struct GateScreen: View {
 
             Text(input.isEmpty ? "\(minDigits)–\(maxDigits) 位数字" : "\(input.count) 位")
                 .type(T.F.caption)
-                .foregroundStyle(T.C.ink4)
+                // ink4 是装饰点/分隔（2.3:1）；这是要读的提示，用 ink3 才到 AA。
+                .foregroundStyle(T.C.ink3)
                 .padding(.top, 10)
 
             if cooling > 0 {

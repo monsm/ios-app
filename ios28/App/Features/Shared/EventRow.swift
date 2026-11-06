@@ -51,7 +51,8 @@ struct EventRow: View {
 
             Text(event.hasTime ? When.clock(event.time) : "无日期")
                 .type(T.F.mono)
-                .foregroundStyle(event.hasTime ? T.C.ink3 : T.C.ink4)
+                // 「无日期」是信息，不是装饰：ink4 只有 2.3:1，读不出来。
+                .foregroundStyle(T.C.ink3)
         }
         .padding(.vertical, 11)
         .contentShape(Rectangle())
