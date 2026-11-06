@@ -9,7 +9,7 @@ enum CredStarStore {
     static func key(_ mac: String) -> String { "kf_cstar_ui_" + DB.normalizeMac(mac) }
 
     static func all(_ mac: String) -> Set<String> {
-        Set(DB.store.get([String].self, key(mac)) ?? [])
+        Set(DB.get([String].self, key(mac)) ?? [])
     }
 
     static func set(_ mac: String, _ stars: Set<String>) {
