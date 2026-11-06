@@ -85,7 +85,7 @@ ios28/
 | `tokens` | 页面层没有颜色 / 字号字面量 |
 | `lineage` | 与上一版 V7/V8 设计系统彻底切割（旧符号零残留） |
 | `destmap` | `Dest` 台账 ↔ 实现一一对应 |
-| `contrast` | 明暗两套文字色的 WCAG 对比度 |
+| `contrast` | 明暗两套文字色 + 实底前景色的 WCAG 对比度 |
 
 ---
 
@@ -95,7 +95,7 @@ ios28/
 |---|---|
 | 静态闸门 | ✅ 全绿（6 道） |
 | 视觉验收台 | ✅ 7 屏 × 明暗两套已渲染 |
-| 真编译 | ✅ 通过（CI run 42220676166 · 提交 `ddbeba58`：`build_ok=1` `archive_ok=1` `errors=0` `warnings=7`，iOS 27 SDK，未签名 IPA 已打包） |
+| 真编译 | ✅ 通过（CI run 42229542268 · 提交 `3868a76`：`build_ok=1` `archive_ok=1` `errors=0` `warnings=7`，iOS 27 SDK，未签名 IPA 已打包） |
 | 真机手感 | ❌ 未验（镜头按压、触觉、真实材质折射） |
 | 动态字体极端值 | ⚠️ 已按令牌缩放，AX5 仍要看真机 |
 | 横屏 / iPad | ❌ 只支持竖屏 iPhone |
