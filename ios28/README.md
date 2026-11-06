@@ -95,7 +95,7 @@ ios28/
 |---|---|
 | 静态闸门 | ✅ 全绿（6 道） |
 | 视觉验收台 | ✅ 7 屏 × 明暗两套已渲染 |
-| 真编译 | ✅ 通过（CI run 42206176982：`build_ok=1` `archive_ok=1` `errors=0` `warnings=7`，iOS 27 SDK，未签名 IPA 已打包） |
+| 真编译 | ✅ 通过（CI run 42207472260 · 提交 `97f28d8b`：`build_ok=1` `archive_ok=1` `errors=0` `warnings=7`，iOS 27 SDK，未签名 IPA 已打包） |
 | 真机手感 | ❌ 未验（镜头按压、触觉、真实材质折射） |
 | 动态字体极端值 | ⚠️ 已按令牌缩放，AX5 仍要看真机 |
 | 横屏 / iPad | ❌ 只支持竖屏 iPhone |
