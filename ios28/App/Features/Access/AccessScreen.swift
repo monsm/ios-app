@@ -144,9 +144,15 @@ struct CredentialsSection: View {
     private var detail: String {
         if let first = expiring.first {
             if first.isExpired { return "「\(first.name)」已经过期，门锁不再认它。" }
-            return "「\(first.name)」\(When.expiryLabel(first.expiresAt))到期。"
+            return "「\(first.name)」\(expirySentence(first.expiresAt))"
         }
         return "\(app.credentials.count) 枚凭证 · 没有即将到期的"
+    }
+
+    /// 「剩 7 天」+「到期」读得通；「今天到期」+「到期」就成了「今天到期到期」。
+    private func expirySentence(_ millis: Int64?) -> String {
+        let label = When.expiryLabel(millis)
+        return label == "今天到期" ? "今天到期。" : "\(label)到期。"
     }
 
     @ViewBuilder
