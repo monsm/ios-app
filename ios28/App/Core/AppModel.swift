@@ -391,6 +391,22 @@ final class AppModel {
             try? await Task.sleep(for: .milliseconds(100))
             waitedTicks += 1
         }
+        // 读门锁日志（最多 20 页）也走同一条 BLE 链路：它可能正占着 waiter。
+        // 此时直接下发 04，只会在 120ms 后撞上「已有命令在等待响应」——
+        // 用户看到的是「门没打开」，而其实锁好好的，只是 App 自己把两条命令叠在了一起。
+        // 等它读完（最多 6 秒；期间镜头停在「连接中」），再把开锁交给链路。
+        if busy != nil {
+            var busyTicks = 0
+            while busy != nil, busyTicks < 60 {
+                try? await Task.sleep(for: .milliseconds(100))
+                busyTicks += 1
+            }
+            if busy != nil {
+                phase = .failed("门锁正在读取记录，请稍后再开锁。")
+                Haptics.notify(.error)
+                return
+            }
+        }
         guard AppLock.shared.unlocked else { phase = .idle; return }
         // 自动重试只覆盖**连不上**这一段：命令没发出去，重发是安全的。
         // 命令已经发出、只是没等到回执时**不重试** ——
@@ -535,6 +551,12 @@ final class AppModel {
         // `busy` 由 defer 在函数返回前清掉，调用方事后检查它永远拿到 nil。
         // 把「忙」写成一条明确的结果文案，两个入口才能区分失败与并发拒绝。
         guard busy == nil else {
+            lastError = "门锁正忙，稍后再读。"
+            return nil
+        }
+        // 开锁命令在飞（或自动开门正在下发）时同样不能读：BLE 链路只挂得下一个 waiter，
+        // 读日志的 16 命令会撞上「已有命令在等待响应」。等门锁空下来再读，比读失败更诚实。
+        guard !phase.isBusy, !AutoOpenController.shared.isDispatching else {
             lastError = "门锁正忙，稍后再读。"
             return nil
         }
