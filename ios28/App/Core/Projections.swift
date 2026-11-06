@@ -242,6 +242,20 @@ enum When {
         return f.string(from: then)
     }
 
+    /// 距离某个**未来**时刻还有多久。`ago` 只能往回看：喂给它一个未来时间戳，
+    /// 它会算出负数、夹到 0、然后说「刚刚」——「到 刚刚 之前不会自动开门」。
+    static func until(_ millis: Int64) -> String {
+        let left = millis - Int64(Date().timeIntervalSince1970 * 1000)
+        if left <= 0 { return "已经结束" }
+        if left < 60_000 { return "不到 1 分钟" }
+        if left < 3_600_000 { return "\(left / 60_000) 分钟" }
+        if left < 86_400_000 { return "\(left / 3_600_000) 小时" }
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "zh_Hans_CN")
+        f.dateFormat = "M 月 d 日 HH:mm"
+        return f.string(from: Date(timeIntervalSince1970: Double(millis) / 1000))
+    }
+
     /// 2100-01-01（毫秒）。引擎把「永久」写成 2118-01-01 这个哨兵值；
     /// 万一某条路径没把它归一成 nil，这里再兜一道 ——
     /// 否则界面上会出现「1 月 1 日到期」，看起来像下周就过期。

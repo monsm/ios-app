@@ -227,7 +227,9 @@ struct AutoOpenScreen: View {
             }
 
             if AutoOpen.isSuspended(mac: app.currentMac) {
-                Text("因防拆事件暂停中：到 \(When.ago(AutoOpen.suspendUntil(app.currentMac))) 之前不会自动开门。")
+                // `suspendUntil` 是**未来**的时刻。原先喂给 `When.ago`，
+                // 它算出差值、夹到 0、说「刚刚」—— 整句变成「到 刚刚 之前不会自动开门」。
+                Text("因防拆事件暂停中：还要 \(When.until(AutoOpen.suspendUntil(app.currentMac))) 才会恢复自动开门。")
                     .type(T.F.caption)
                     .foregroundStyle(T.C.danger)
                     .padding(.top, 10)
