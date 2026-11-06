@@ -103,10 +103,14 @@ struct CredentialDetailScreen: View {
         }
         .buttonStyle(.plain)
 
-        Button { editingWindow = true } label: {
-            ContentRow(symbol: "calendar", title: "修改有效期", chevron: true)
+        // 「修改有效期」只对密码 / 临时码有意义：指纹与手机钥匙在锁里没有起止时间，
+        // 点进去只会改一个不存在的字段 —— 保存后什么都不变，却看起来像成功了。
+        if item.kind == .password || item.kind == .temp {
+            Button { editingWindow = true } label: {
+                ContentRow(symbol: "calendar", title: "修改有效期", chevron: true)
+            }
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
 
         if item.kind == .password || item.kind == .temp || item.kind == .fingerprint {
             Button { toggleDisabled(item) } label: {
@@ -130,13 +134,8 @@ struct CredentialDetailScreen: View {
                 .foregroundStyle(T.C.ink3)
                 .padding(.top, 14)
         }
-
-        if let toast {
-            Text(toast)
-                .type(T.F.caption)
-                .foregroundStyle(T.C.ink3)
-                .padding(.top, 12)
-        }
+        // 提示只画一处：底部那条浮动胶囊。原先这里还有一份内联的，
+        // 同一个 toast 在屏幕上出现两次。
     }
 
     private func ticket(_ item: Credential) -> some View {
@@ -185,6 +184,10 @@ struct CredentialDetailScreen: View {
                         .buttonStyle(PressStyle())
                     } else {
                         Button {
+                            // 「重新录入」要落到指纹那条链上。
+                            // 原先只是 push(.credentialCreate)，而新凭证页默认停在「密码」——
+                            // 点指纹的重新录入，打开的是一张密码表单。
+                            router.pendingCreateKind = "fingerprint"
                             router.push(.credentialCreate)
                         } label: {
                             chipLabel("重新录入", symbol: "touchid")
@@ -308,11 +311,28 @@ struct ExpirySheet: View {
 
     let item: Credential
 
-    @State private var start = Date()
-    @State private var end = Date().addingTimeInterval(7 * 86400)
-    @State private var forever = false
+    @State private var start: Date
+    @State private var end: Date
+    @State private var forever: Bool
     @State private var busy = false
     @State private var errorLine: String?
+
+    /// 起止时间必须**从这枚凭证现在的值**起步。
+    ///
+    /// 原实现固定成「现在 → 七天后」，而保存会把两个日期原样下发给锁：
+    /// 于是打开「修改有效期」什么都不改直接保存，
+    /// 一枚设成一百年的密码就被改成七天，一枚一小时的临时码被延长成七天。
+    /// 这不是「默认值」，是**把真实值覆盖掉**。
+    init(item: Credential) {
+        self.item = item
+        let now = Date()
+        let from = item.validFrom.map { Date(timeIntervalSince1970: Double($0) / 1000) } ?? now
+        let to = item.expiresAt.map { Date(timeIntervalSince1970: Double($0) / 1000) }
+            ?? now.addingTimeInterval(7 * 86400)
+        _start = State(initialValue: from)
+        _end = State(initialValue: to)
+        _forever = State(initialValue: item.expiresAt == nil)
+    }
 
     var body: some View {
         NavigationStack {
@@ -328,7 +348,9 @@ struct ExpirySheet: View {
                         DatePicker("生效", selection: $start, displayedComponents: [.date, .hourAndMinute])
                             .type(T.F.footnote)
                             .padding(.vertical, 8)
-                        DatePicker("到期", selection: $end, displayedComponents: [.date, .hourAndMinute])
+                        DatePicker("到期", selection: $end,
+                                   in: start.addingTimeInterval(60) ...,
+                                   displayedComponents: [.date, .hourAndMinute])
                             .type(T.F.footnote)
                             .padding(.vertical, 8)
                     }
@@ -358,7 +380,17 @@ struct ExpirySheet: View {
     }
 
     private func save() async {
-        guard let alias = item.alias else { dismiss(); return }
+        guard let alias = item.alias else {
+            // 走到这里说明入口给错了（指纹 / 手机钥匙没有 alias）。
+            errorLine = "这枚凭证没有有效期可改。"
+            return
+        }
+        // 结束早于开始的窗口会被原样下发给锁 —— 锁可能回 rc=0，
+        // 界面却把凭证显示成「已过期」，用户完全看不出是自己填反了。
+        guard forever || end > start else {
+            errorLine = "到期时间要在生效时间之后。"
+            return
+        }
         busy = true
         defer { busy = false }
         let from = forever ? "2010-01-01 00:00" : AppModel.stamp(start)

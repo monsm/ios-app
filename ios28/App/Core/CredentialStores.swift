@@ -11,12 +11,17 @@ enum CredStarStore {
     /// 读星标集合。注意取值的参数序：`DB.get` 是「类型在前、键在后」；
     /// 而底层 `Store.get` 两个序都合法，Swift 按参数序解析重载 —— 写反了会静默拿到 nil。
     static func all(_ mac: String) -> Set<String> {
-        Set(DB.get([String].self, key(mac)) ?? [])
+        // 空壳里没有凭证，也就不该有星标：星标集合本身会泄露「这台手机上有多少枚常用凭证」。
+        if DB.isDecoy { return [] }
+        return Set(DB.get([String].self, key(mac)) ?? [])
     }
 
     /// 写星标集合。空集合直接删键，不留一个 `[]` 的空壳。
     /// 注意写值的参数序：`Store.set` 是「键在前、值在后」，与 `DB.set`（值在前）相反。
     static func set(_ mac: String, _ stars: Set<String>) {
+        // 写路径一律拒绝空壳。界面层的两处写调用（详情页的加星 / 取消星标）
+        // 都不经过 AppModel，守卫放在这里才是唯一可靠的落点。
+        if DB.isDecoy { return }
         if stars.isEmpty {
             DB.store.remove(key(mac))
         } else {

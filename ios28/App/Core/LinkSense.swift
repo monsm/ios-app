@@ -41,6 +41,12 @@ final class LinkSenseModel {
     var rssiLevel: Int { LinkSenseModel.level(lastRSSI) }
     var rssiWord: String { LinkSenseModel.levelWord(rssiLevel) }
 
+    /// 下一次自然重试的建议间隔：每失败一次进一档（5 → 15 → 30 → 60 → 90 秒）。
+    /// 它不替用户重试 —— 只是把「现在该等多久」如实说出来。
+    var nextLadder: Double {
+        LinkSenseModel.ladder[min(max(attempt, 0), LinkSenseModel.ladder.count - 1)]
+    }
+
     static func level(_ rssi: Int?) -> Int {
         guard let r = rssi else { return 0 }
         if r >= -55 { return 4 }

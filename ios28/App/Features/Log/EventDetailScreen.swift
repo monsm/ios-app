@@ -95,7 +95,7 @@ struct EventDetailScreen: View {
                 RecordOverlay.setNote(event.mac, rowKey(event), String(newValue.prefix(60)))
             }
             .onAppear { loadNote() }
-            .onChange(of: event?.id) { _, _ in loadNote() }
+            .onChange(of: event.id) { _, _ in loadNote() }
 
         SectionHead(index: "02", title: "处置")
         HStack(spacing: 8) {

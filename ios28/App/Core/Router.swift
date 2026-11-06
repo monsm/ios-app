@@ -82,6 +82,9 @@ final class Router {
     var pendingCredentialID: String?
     var pendingMemberID: String?
     var pendingEventID: String?
+    /// 新凭证页打开时预选哪一类：`password` / `temp` / `fingerprint`。
+    /// 由来源页写入、由新凭证页取走后清空（一次性意图，不该粘在路由上）。
+    var pendingCreateKind: String?
 
     func push(_ dest: Dest) {
         switch tab {

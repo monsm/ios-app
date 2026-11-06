@@ -137,7 +137,8 @@ final class AppModel {
                 ownerID: p.owner,
                 ownerName: ownerName,
                 masked: String(repeating: "•", count: max(4, p.pwd?.count ?? 4)),
-                expiresAt: Self.millis(p.to),
+                expiresAt: Self.expiry(p.to),
+                validFrom: Self.millis(p.from),
                 createdAt: p.at,
                 disabled: CredentialLocalState.isDisabled(mac: m, id: "pwd:\(p.alias)"),
                 alias: p.alias,
@@ -155,6 +156,7 @@ final class AppModel {
                 ownerName: name(forOwner: f.owner),
                 masked: nil,
                 expiresAt: nil,
+                validFrom: nil,
                 createdAt: f.at,
                 disabled: CredentialLocalState.isDisabled(mac: m, id: "fp:\(f.batch)"),
                 alias: nil,
@@ -172,6 +174,7 @@ final class AppModel {
                 ownerName: k.memberName,
                 masked: "•••• \(String(k.pin.suffix(2)))",
                 expiresAt: (k.forever || k.validTo.hasPrefix("2118")) ? nil : Self.millis(k.validTo),
+                validFrom: nil,
                 createdAt: k.at,
                 disabled: false,
                 alias: nil,
@@ -754,6 +757,14 @@ final class AppModel {
         return nil
     }
 
+    /// 引擎的「永久」是 `2118-01-01 00:00` 这个**哨兵值**（写库与到期判据都用它）。
+    /// 界面层只认「有没有到期时间」这一种说法 —— 把哨兵归一成 nil，
+    /// 免得它被当成真实日期印成「1 月 1 日到期」。
+    static func expiry(_ text: String) -> Int64? {
+        guard !text.hasPrefix("2118"), let ms = millis(text) else { return nil }
+        return ms >= When.permanentCutoff ? nil : ms
+    }
+
     static func stamp(_ date: Date) -> String {
         DF.cached("yyyy-MM-dd HH:mm").string(from: date)
     }
@@ -798,12 +809,16 @@ enum CredentialLocalState {
     static func key(_ mac: String) -> String { "kf_disabled_" + DB.normalizeMac(mac) }
 
     static func isDisabled(mac: String, id: String) -> Bool {
+        if DB.isDecoy { return false }
         let list = DB.store.get([String].self, key(mac)) ?? []
         return list.firstIndex(of: id) != nil
     }
 
     static func setDisabled(mac: String, id: String, _ off: Bool) {
         guard !mac.isEmpty, !id.isEmpty else { return }
+        // 空壳里凭证列表为空 ⇒ 当前不可达。仍然守一道：写路径一律拒绝空壳，
+        // 别给未来留一条「能改真实停用位」的入口（与 RecordOverlay 同族守卫）。
+        if DB.isDecoy { return }
         var list = DB.store.get([String].self, key(mac)) ?? []
         if off {
             if list.firstIndex(of: id) == nil { list.append(id) }

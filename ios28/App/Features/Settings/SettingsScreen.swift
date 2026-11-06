@@ -87,6 +87,11 @@ struct SettingsScreen: View {
             SectionHead(index: "02", title: "设备与工具")
             settingsRow(.lockPolicy, symbol: "slider.horizontal.3", title: "门锁设置",
                         subtitle: "声音 · 双验 · 自动上锁 · 布防")
+            // 「门锁信息」这一页一直存在（读数 / 校准锁钟 / 刷新），但全 App 没有入口 ——
+            // 一个做完的页面没人到得了，等于没做。
+            settingsRow(.lockInfo, symbol: "gauge.with.dots.needle.33percent", title: "门锁信息",
+                        subtitle: app.lock.map { "电量 · 锁钟 · 容量 · 固件 \($0.firmware.isEmpty ? "—" : $0.firmware)" }
+                            ?? "配一把锁之后可看读数")
             settingsRow(.autoOpen, symbol: "figure.walk", title: "自动开门",
                         subtitle: AutoOpen.on ? "已开启 · 靠近时自动解锁" : "关闭 · 靠近时自动解锁")
             settingsRow(.hardware, symbol: "key", title: "钥匙串与网关",

@@ -591,6 +591,25 @@ struct DiagnosticsScreen: View {
             .padding(.top, 4)
 
             HStack(spacing: 10) {
+                GhostButton(title: "重连链路", symbol: "arrow.triangle.2.circlepath") {
+                    guard !app.currentMac.isEmpty else {
+                        message = "还没有绑定门锁。"
+                        return
+                    }
+                    Task {
+                        await app.link.reconnect()
+                        message = app.link.phase == .ready
+                            ? "已连上 · 下一次自然重试间隔 \(Int(app.link.nextLadder)) 秒"
+                            : "没连上 · 建议 \(Int(app.link.nextLadder)) 秒后再试"
+                    }
+                }
+                GhostButton(title: "读一次 RSSI", symbol: "antenna.radiowaves.left.and.right") {
+                    app.link.readRSSI()
+                }
+            }
+            .padding(.top, 12)
+
+            HStack(spacing: 10) {
                 GhostButton(title: "回声测试", symbol: "waveform") {
                     Task { await echo() }
                 }
@@ -598,7 +617,7 @@ struct DiagnosticsScreen: View {
                     confirmingRepair = true
                 }
             }
-            .padding(.top, 12)
+            .padding(.top, 10)
 
             SectionHead(index: "02", title: "最近帧")
             SwitchLine(title: "显示脱敏帧", detail: "只保留帧头与 KLV 骨架，凭证值一律遮掉。", isOn: $raw)

@@ -54,7 +54,8 @@ struct Credential: Identifiable, Hashable {
     let ownerID: String?
     let ownerName: String?
     let masked: String?
-    let expiresAt: Int64?       // ms；nil = 永久
+    let expiresAt: Int64?       // ms；nil = 永久（引擎的 2118 哨兵已归一成 nil）
+    let validFrom: Int64?       // ms；nil = 未记录
     let createdAt: Double       // ms
     let disabled: Bool
     let alias: Int?
@@ -241,8 +242,14 @@ enum When {
         return f.string(from: then)
     }
 
+    /// 2100-01-01（毫秒）。引擎把「永久」写成 2118-01-01 这个哨兵值；
+    /// 万一某条路径没把它归一成 nil，这里再兜一道 ——
+    /// 否则界面上会出现「1 月 1 日到期」，看起来像下周就过期。
+    static let permanentCutoff: Int64 = 4_102_444_800_000
+
     static func expiryLabel(_ millis: Int64?) -> String {
         guard let millis else { return "长期有效" }
+        if millis >= permanentCutoff { return "长期有效" }
         let now = Int64(Date().timeIntervalSince1970 * 1000)
         if millis <= now { return "已过期" }
         let days = Int(ceil(Double(millis - now) / 86_400_000))

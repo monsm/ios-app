@@ -143,7 +143,9 @@ struct TodayScreen: View {
         case .failed(let why): return why
         case .idle: break
         }
-        if let last = app.events.first(where: { $0.isOpen }) {
+        // 「上次开门」只在**有日期**的记录里找：锁端没读到时钟的记录不知道发生在什么时候，
+        // 拿它的 time = 0 去格式化会印出「08:00」。
+        if let last = app.events.first(where: { $0.isOpen && $0.hasTime }) {
             var parts = ["上次开门 \(When.clock(last.time))"]
             if let who = last.whoName { parts.append(who) }
             if !last.credential.isEmpty { parts.append(last.credential) }

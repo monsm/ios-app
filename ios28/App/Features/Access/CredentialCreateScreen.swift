@@ -6,9 +6,21 @@ import SwiftUI
 @MainActor
 struct CredentialCreateScreen: View {
     @Environment(AppModel.self) private var app
+    @Environment(Router.self) private var router
     @Environment(\.dismiss) private var dismiss
 
-    enum Kind: Int, CaseIterable { case password, temp, fingerprint }
+    enum Kind: Int, CaseIterable {
+        case password, temp, fingerprint
+
+        /// 跨页传递用的稳定名字（`Router.pendingCreateKind`）。
+        var rawName: String {
+            switch self {
+            case .password: return "password"
+            case .temp: return "temp"
+            case .fingerprint: return "fingerprint"
+            }
+        }
+    }
 
     @State private var kind: Kind = .password
     @State private var name = ""
@@ -75,11 +87,26 @@ struct CredentialCreateScreen: View {
             .padding(.top, 24)
         }
         .toolbar(.hidden, for: .navigationBar)
-        .onChange(of: kind) { _, newValue in
+        .onChange(of: kind) { oldValue, newValue in
             errorLine = nil
-            if newValue == .temp, value.isEmpty { value = Self.randomCode(6) }
+            guard oldValue != newValue else { return }
+            // 换类型就换一串**新**码。
+            //
+            // 原先只在「值是空的」时候补一枚 —— 而 `.onAppear` 已经把密码预填满了，
+            // 于是「临时码」会原样沿用你刚设的永久密码：两把钥匙同一个数字，
+            // 「限时」就完全没有意义了（临时码和密码在键盘上打出来一模一样）。
+            if newValue == .fingerprint {
+                value = ""
+            } else {
+                value = Self.randomCode(6)
+            }
         }
         .onAppear {
+            // 从别处跳进来时可能指定了类型（例如指纹详情的「重新录入」）。
+            if let raw = router.pendingCreateKind {
+                kind = Kind.allCases.first { $0.rawName == raw } ?? kind
+                router.pendingCreateKind = nil
+            }
             if value.isEmpty, kind == .password {
                 value = Self.randomCode(6)
             }

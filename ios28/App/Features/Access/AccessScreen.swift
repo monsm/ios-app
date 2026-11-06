@@ -137,7 +137,7 @@ struct CredentialsSection: View {
 
     private var headline: String {
         if expiring.first(where: { $0.isExpired }) != nil { return "有钥匙已经过期。" }
-        if !expiring.isEmpty { return "两枚钥匙\n这周到期。" }
+        if !expiring.isEmpty { return "\(expiring.count) 枚钥匙\n这周到期。" }
         return "一切都在\n有效期内。"
     }
 

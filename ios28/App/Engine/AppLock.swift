@@ -101,6 +101,12 @@ final class AppLock: ObservableObject {
             cooldownUntil = 0
             DB.store.setInt(failStreakKey, 0)
             DB.store.setDouble(cooldownKey, 0)
+            // 单调时钟那一份也要清 —— 与 `unlockByBiometric` 同一条收尾路径。
+            // 只清墙钟的话：先前 `recordFailure` 记下的单调窗口仍然在走，
+            // 于是「刚用正确密码解锁成功」的下一刻，`cooldownRemaining()` 还是正数，
+            // 下一次 `verify()` 直接返回 `.cooling` —— 用户会看到「刚解锁过却又要等」。
+            DB.store.setDouble(cooldownBootKey, 0)
+            DB.store.setDouble(cooldownUptimeKey, 0)
             return .success
         }
 
@@ -118,6 +124,16 @@ final class AppLock: ObservableObject {
         cooldownUntil = cd > 0 ? now.timeIntervalSince1970 + cd : 0
         DB.store.setInt(failStreakKey, failStreak)
         DB.store.setDouble(cooldownKey, cooldownUntil)
+        // 单调时钟那一份 —— 与 `recordFailure` **同一口径**。
+        //
+        // 这里原先漏写了。`cooldownRemaining()` 取「墙钟剩余」与「单调时钟剩余」的较大者，
+        // 而单调那一档此前只有 `recordFailure`（二次开锁口令）会写：
+        // 从门禁页输错密码建立的冷却只存在于墙钟里，
+        // 把系统时间往前拨就能立刻绕过 —— 而 4 位数字码只有 1 万种，
+        // 冷却正是把它从「几秒穷举」拖成「不可行」的那道闸。
+        let up = ProcessInfo.processInfo.systemUptime
+        DB.store.setDouble(cooldownBootKey, cd > 0 ? up : 0)
+        DB.store.setDouble(cooldownUptimeKey, cd > 0 ? up + cd : 0)
         return .wrong(remaining: cd > 0 ? Int(cd) : 0)
     }
 
