@@ -259,8 +259,11 @@ final class AppModel {
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             phase = .sending
-            let rc = try await LockService.shared.unlock(mac: mac, pinDec: chosenPin(mac))
+            // Engine 的 `unlock` 是「写帧 + 等回执」一次调用，界面看不到中间那一步。
+            // 所以把 `.waiting` 放在 await **之前**：环停在 0.86 等待的，是真的在等锁回执；
+            // 若放在之后，「等回执」只会闪一帧，而「已下发」会陪着用户等满整个超时。
             phase = .waiting
+            let rc = try await LockService.shared.unlock(mac: mac, pinDec: chosenPin(mac))
             if rc == 0 {
                 phase = .opened
                 let now = Int64(Date().timeIntervalSince1970 * 1000)
