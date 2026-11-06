@@ -1,0 +1,17 @@
+{
+  "name": "threshold-ios28",
+  "version": "1.0.0",
+  "private": true,
+  "description": "阈 / Threshold —— 离线门锁客户端（全新设计 + 已验证协议层）",
+  "type": "commonjs",
+  "scripts": {
+    "gates": "node Gates/allgates.js",
+    "tokens": "node Tools/gen_tokens.js",
+    "lab": "node DesignLab/run.js",
+    "check": "node Tools/gen_tokens.js --check && node Gates/allgates.js && node DesignLab/run.js"
+  },
+  "devDependencies": {
+    "tree-sitter": "^0.22.4",
+    "tree-sitter-swift": "^0.7.1"
+  }
+}

@@ -1,0 +1,60 @@
+# project.yml —— XcodeGen 工程描述（Threshold / 阈）。
+#
+# 目标：iOS 27.0 起。SwiftUI 全原生，无第三方依赖。
+# Engine 层（协议/密码学/存储/BLE）是从已通过金标差分的实现照搬的；界面层全部新写。
+name: Threshold
+options:
+  bundleIdPrefix: com.aapk
+  deploymentTarget:
+    iOS: "27.0"
+  createIntermediateGroups: true
+  developmentLanguage: zh-Hans
+
+settings:
+  base:
+    # 引擎层是 Swift 6 语法写过的代码，但界面层是新写的；沿用两步走：
+    #   Swift 5 + strict concurrency complete（并发问题是告警，不阻断编译）。
+    SWIFT_VERSION: "5.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: NO
+
+targets:
+  Threshold:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+        excludes:
+          - "**/.DS_Store"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.aapk.threshold
+        INFOPLIST_FILE: App/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1"
+        SUPPORTS_MACCATALYST: NO
+        CURRENT_PROJECT_VERSION: "1"
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: 阈
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        # 只使用 Apple 系统提供的标准算法（CommonCrypto AES / Keychain），
+        # 用于与自家门锁的配对认证和本机数据保护。
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UIUserInterfaceStyle: Automatic
+        NSBluetoothAlwaysUsageDescription: 需要蓝牙连接你的门锁。门锁通信不经过网络。
+        NSBluetoothPeripheralUsageDescription: 需要蓝牙连接你的门锁。
+        NSFaceIDUsageDescription: 用面容解锁本机数据保护，以及在自动开门前确认是你。
+        CFBundleURLTypes:
+          - CFBundleURLName: com.aapk.threshold
+            CFBundleURLSchemes:
+              - kf
+        UIBackgroundModes:
+          - bluetooth-central

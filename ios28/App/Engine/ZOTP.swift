@@ -1,0 +1,84 @@
+// ZOTP 临时密码生成器 — JS utils/zotp.js 的字符级移植 (App to.generateZOTPPwd)
+//   6 位密码 = AES-ECB(skey,ZeroPadding)( 时间计数器(8hex) + MAC反序(12hex) + idx(2B) + "00000000" )
+//            → 密文取前 24hex, 每 4hex 块 (b1^b2)%10 拼接
+//   u = floor(nowProtoSeconds / (60*period)); 前提: 锁钟已同步 (0E)
+// 差分基准: golden.zotp.*
+import Foundation
+
+enum ZOTP {
+    static func reversePairHex(_ hex: String) -> String { HexKit.reversePairs(hex) }
+    // idx → 2B BE hex (App: toSmallByteOrder→toNormalByteOrder 双反转 = 恒等)
+    static func le2be2(_ v: Int) -> String {
+        let x = UInt32(truncatingIfNeeded: v)
+        return String(format: "%04x", x & 0xffff).uppercased()
+    }
+    /// `periodMin`：单位是**分钟**，不是秒。
+    /// 计数器 = nowProtoSeconds / (60 * t)，t=30 ⇒ 窗口 30 分钟（金标 case v30_* / v60_0 就是这个换算）。
+    ///
+    /// 2026-10-26 改名：原名 `periodSec` 沿用 JS 基线（vendor/app/utils/zotp.js:23），
+    /// 但名字说的单位与代码做的换算相反 —— 读代码的人看到 `periodSec: 30` 会以为 30 秒。
+    /// **vendor 侧保持原名不改**（那是基线资产，改名会让金标 fixture 的语义漂移）；
+    /// 这里用 `periodMin`，并在调用点写清换算。两边名字不同是有意的：
+    /// 读基线的人看 JS，写 App 的人看这里，各按各自的名字理解。
+    // 2026-10-27 审核说明 (AUDIT-A F-28)：原先这里有 `assert(periodMin <= 120)`，
+    // 而 `project.yml` 的 Release 配置显式关断言 ⇒ 真机包上它等于不存在。
+    // 该 assert 已随 ZOTP 精简删除（不是"保留但无效"）。若将来要恢复入参校验，
+    // 必须写成 `guard ... else { return nil }` 而不是 assert。
+    static func generate(macHex: String, skeyHex: String, periodMin: Int, idx: Int, nowSec: Int64? = nil) -> String {
+        // SEC-25：Release 关断言，assert 在真机包上等于不存在（而 Debug 反而会崩）。
+        // 锁端异常固件可能回 0xFFFF/负值 → 生成一个注定开不了锁的码，用户会反复试。
+        // 因此按注释里写过的纪律改成 clamp（并记一条遥测），保持"看着对就一定对"。
+        let period = (1...120).contains(periodMin) ? periodMin : 30
+        if periodMin != period, periodMin > 0 {
+            BleTelemetry.recordEvent("ZOTP 周期异常 \(periodMin)，已按 30 分钟处理", ok: false)
+        }
+        let t = period
+        let now = nowSec ?? ZKProtocol.nowProtoSeconds()
+        let u = String(format: "%llx", now / Int64(60 * t)).uppercased()
+        let uPadded = String(repeating: "0", count: max(0, 8 - u.count)) + u
+        let r = macHex.replacingOccurrences(of: ":", with: "").uppercased()
+        // MAC 必须是整 6 字节。少了这道 guard，一个畸形 (奇数长度/含脏字符) 的 mac 会让
+        // `reversePairHex` 返回 ""，拼出来的明文只剩 20 hex ⇒ AESKit 补零到 16 字节 ⇒ 密文仍是 32 hex ⇒
+        // 下面 `p.count == 32` 过得去，于是**界面给出一个六位码，而它注定开不了锁**。
+        // 锁端会拒绝它 (fail-closed)，但「看着对、其实错」的输出比空值贵：用户会反复试、会以为是钟没同步。
+        // vendor 基线在这里是逐对反向、对奇数长度会悄悄丢首字符 —— 那是一条跨语言分歧 (§10.44)。
+        guard r.count == 12, r.allSatisfy({ $0.isHexDigit }) else { return "" }
+        let a = idx > 0 ? le2be2(idx) : "0000"
+        let c = uPadded + reversePairHex(r) + a + "00000000"
+        let p = AESKit.encryptHex(c, keyHex: skeyHex).uppercased()
+        guard p.count == 32 else { return "" }
+        let body = String(p.prefix(p.count - 8)) // 前 24hex = 6 个 4hex 块
+        let bytes = HexKit.bytes(body)
+        var m = ""
+        var i = 0
+        while i + 1 < bytes.count {
+            m += String((Int(bytes[i]) ^ Int(bytes[i + 1])) % 10)
+            i += 2
+        }
+        return m
+    }
+    /// 当前 30 分钟窗口的**失效时刻**（"于 HH:MM 失效" 里的那个 HH:MM）。
+    ///
+    /// 2026-10-27 截图核对修复：原实现是
+    ///     let minutePart = m > 30 ? 0 : 30
+    ///     if m > 30 { hour += 1 }
+    /// 于是 **m == 30 这一分钟**（如 06:30）返回 `06:30` —— 那是**当前窗口自己**，
+    /// 而 06:30 这一分钟已经属于 06:00–06:30 窗口的末尾，码此刻就该失效了。
+    /// 实测（node 复刻）：6:49→07:00 ✓ · 6:30→06:30 ✗（应 07:00）· 23:45→00:00 ✓。
+    ///
+    /// 正确语义：**当前分钟 < 30 ⇒ 本小时的 :30；否则 ⇒ 下一小时的 :00**。
+    /// 即判据应为 `m >= 30`。这条是 iOS 侧自造（vendor 没有 nextWindow），无跨端口径要对。
+    static func nextWindow(from now: Date = Date()) -> String {
+        let cal = WeekCal.gregorian
+        let m = cal.component(.minute, from: now)
+        var hour = cal.component(.hour, from: now)
+        let minutePart: Int
+        if m < 30 {
+            minutePart = 30
+        } else {
+            minutePart = 0
+            hour += 1
+        }
+        return String(format: "%02d:%02d", hour % 24, minutePart)
+    }
+}

@@ -1,0 +1,151 @@
+# ios28 云编译 —— Threshold（阈）的静态闸门 + 真编译
+#
+# 开发机是 Windows，没有 Xcode，所以真编译只能在这里做。
+# 镜像 `xcode-27` 带 iOS 27 SDK；若镜像不可用，把 runs-on 改回 macos-latest 并下调部署目标。
+name: ios28
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "ios28/**"
+      - ".github/workflows/ios28.yml"
+  pull_request:
+    paths:
+      - "ios28/**"
+      - ".github/workflows/ios28.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ios28-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    working-directory: ios28
+
+jobs:
+  gates:
+    name: 静态闸门（6 道）
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - name: 安装 tree-sitter
+        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+      - name: 工具脚本语法检查
+        run: for f in Gates/*.js DesignLab/*.js Tools/*.js; do node --check "$f" || exit 1; done
+      - name: 跑全部闸门
+        run: node Gates/allgates.js
+      - name: 生成视觉验收台（只生成 HTML）
+        run: node DesignLab/run.js --html-only
+      - name: 上传预览页
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios28-designlab
+          path: ios28/DesignLab/out
+          if-no-files-found: ignore
+
+  build:
+    name: 编译（iOS 27 SDK）
+    runs-on: xcode-27
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: 环境信息
+        run: |
+          xcodebuild -version
+          xcode-select -p
+
+      - name: 安装 XcodeGen
+        run: |
+          if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
+          xcodegen --version
+
+      - name: 生成工程
+        run: |
+          xcodegen generate
+          test -d Threshold.xcodeproj || { echo "::error::XcodeGen 没有生成 Threshold.xcodeproj"; exit 1; }
+          if ! grep -q "CFBundleVersion" App/Info.plist; then
+            echo "::warning::Info.plist 里没有 CFBundleVersion"
+          fi
+
+      - name: 编译（整模块单次调用，一次列出全仓 error）
+        run: |
+          mkdir -p build
+          set -o pipefail
+          xcodebuild build \
+            -project Threshold.xcodeproj \
+            -scheme Threshold \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/DerivedData \
+            -configuration Debug \
+            SWIFT_COMPILATION_MODE=wholemodule \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" 2>&1 | tee build/build.log
+          grep -E "error:" build/build.log | head -80 || true
+          if grep -qE "^.*error:" build/build.log; then
+            echo "::error::编译有 error（见 build.log）"
+            exit 1
+          fi
+
+      - name: 标注错误
+        if: failure()
+        run: |
+          grep -E "error:" build/build.log 2>/dev/null | head -60 | sed "s#^#::error file=ios28/App::#" || true
+
+      - name: 打包（未签名 IPA，挂 Release）
+        if: success()
+        run: |
+          set -o pipefail
+          xcodebuild archive \
+            -project Threshold.xcodeproj \
+            -scheme Threshold \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/Threshold.xcarchive \
+            -configuration Release \
+            SWIFT_COMPILATION_MODE=wholemodule \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" 2>&1 | tee build/archive.log
+          mkdir -p build/Payload
+          cp -R build/Threshold.xcarchive/Products/Applications/Threshold.app build/Payload/
+          cd build && zip -qry Threshold-unsigned.ipa Payload
+
+      - name: 上传构建产物
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios28-build
+          path: |
+            ios28/build/build.log
+            ios28/build/Threshold-unsigned.ipa
+          if-no-files-found: ignore
+
+      - name: 发布编译结论到 ci28-log 分支
+        if: github.event_name == 'push' && always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          mkdir -p /tmp/ci28
+          [ -f build/build.log ] && cp build/build.log /tmp/ci28/build.log
+          [ -f build/archive.log ] && cp build/archive.log /tmp/ci28/archive.log
+          echo "commit=$(git rev-parse HEAD)" > /tmp/ci28/meta.txt
+          echo "run=$GITHUB_RUN_ID" >> /tmp/ci28/meta.txt
+          echo "build_ok=$(grep -c 'BUILD SUCCEEDED' /tmp/ci28/build.log 2>/dev/null || echo 0)" >> /tmp/ci28/meta.txt
+          echo "archive_ok=$(grep -c 'ARCHIVE SUCCEEDED' /tmp/ci28/archive.log 2>/dev/null || echo 0)" >> /tmp/ci28/meta.txt
+          echo "errors=$(grep -cE 'error:' /tmp/ci28/build.log 2>/dev/null || echo 0)" >> /tmp/ci28/meta.txt
+          echo "warnings=$(grep -cE 'warning:' /tmp/ci28/build.log 2>/dev/null || echo 0)" >> /tmp/ci28/meta.txt
+          cd /tmp/ci28
+          git init -q .
+          git checkout -q -b ci28-log
+          git config user.name ci
+          git config user.email ci@local
+          git add -A && git commit -q -m "ci28 build log run=$GITHUB_RUN_ID" || true
+          git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" ci28-log || true

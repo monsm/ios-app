@@ -1,0 +1,170 @@
+// CredentialOrg · 批量操作（停用 / 延期 / 前缀 / 移交 / 导出包）
+// 2026-10-29 从 CredentialOrg.swift 拆出。
+import Foundation
+
+extension CredentialOrg {
+    // 347/348/349/357 批量操作：**全部只改本机台账**。
+    // 2026-11-01 更正：原注释写"下发部分只入队 / 到场后统一补发 / 锁端删除入队"，
+    // 但本仓**没有**任何凭证操作的发件箱（`DiagKit` 里记着旧的 WriteQueue 因零写入方已删）。
+    // 事实是：批量停用只把条目移进回收站并删本机台账行，**锁端凭证仍可开门**，
+    // 直到用户在锁上单独删除或重新配网。UI 已如实标注（"锁端凭证不会自动删除"），
+    // 但注释在承诺一个不存在的队列 —— 下一个人会照着它去找 flush 逻辑。
+    /// 348 统一延期：**只改本机台账**的起止时间；真正下发由调用方逐条 `setPasswordExpiry`（见界面层）。
+    /// 批量延期。2026-10-27 (D-58)：同 batchDisable —— 找不到的条目如实返回，不静默跳过。
+    static func batchExtend(_ mac: String, _ aliases: [Int], _ from: String, _ to: String)
+        -> (done: [Int], failed: [Int]) {
+        var out: [Int] = []
+        var failed: [Int] = []
+        // 2026-10-29 性能：原来循环里每轮都 `DB.ledger(mac)` —— 那是一整份台账解码，
+        // 选 20 条就是 20 次全量解码。别名唯一，先建一次存在集即可。
+        let existing = Set(DB.ledger(mac).pwds.map(\.alias))
+        for a in aliases {
+            guard existing.contains(a) else {
+                failed.append(a)
+                continue
+            }
+            DB.setPwdPeriod(mac, a, from, to)
+            out.append(a)
+        }
+        return (out, failed)
+    }
+
+    /// 357 前缀批量备注
+    // **已接线**：`CredentialStudioScreen.applyPrefix()`（凭证页多选后的「应用前缀」）。
+    // （原标记已过期并删掉，见 AUDIT-ROUND-97。）
+    static func batchPrefixNote(_ mac: String, pwdAliases: [Int], fpBatches: [Int], prefix: String) -> Int {
+        var n = 0
+        var l = DB.ledger(mac)
+        // 2026-10-29 性能：`数组.contains` 在逐行循环里是 O(n×m)，换成 Set 变 O(n+m)。
+        let aliasSet = Set(pwdAliases)
+        let batchSet = Set(fpBatches)
+        for i in l.pwds.indices where aliasSet.contains(l.pwds[i].alias) && !(l.pwds[i].note.hasPrefix(prefix)) {
+            l.pwds[i].note = prefix + l.pwds[i].note; n += 1
+        }
+        for i in l.fps.indices where batchSet.contains(l.fps[i].batch) && !(l.fps[i].note.hasPrefix(prefix)) {
+            l.fps[i].note = prefix + l.fps[i].note; n += 1
+        }
+        DB.saveLedger(mac, l)
+        return n
+    }
+
+    /// 353 批量停用：把所选条目移入回收站并删本机台账行。**锁端凭证不会被删除**（无发件箱；见文件头说明）。
+    /// 批量停用：把选中的密码/指纹移入回收站（同一批次，可整组还原）。
+    ///
+    /// 2026-10-27 审核修复 (AUDIT-D D-58)：原先 `guard ... else { continue }` **静默跳过**
+    /// 找不到的条目，只返回成功数 —— 用户看到「已停用 8 条」却不知道有 2 条根本没动
+    /// （可能是别处已经删了、或台账里编号对不上）。
+    /// 现在返回 (done, failed)：failed 是"选中了但没找到"的编号，UI 必须如实报出来。
+    static func batchDisable(_ mac: String, pwdAliases: [Int], fpBatches: [Int])
+        -> (done: Int, failedPwds: [Int], failedFps: [Int]) {
+        var n = 0
+        var failedPwds: [Int] = []
+        var failedFps: [Int] = []
+        // 2026-10-29 性能：同 batchExtend —— 循环里每轮整份解码台账。
+        // 353 的「同一批次可整组还原」由界面层 CredentialStudioScreen 生成 batchId 并写入 CredBinStore；
+        // Engine 这层只负责删台账，不再生成无人消费的 batchId（旧变量是死代码，编译告警）。
+        let existingAliases = Set(DB.ledger(mac).pwds.map(\.alias))
+        for a in pwdAliases {
+            guard existingAliases.contains(a) else {
+                failedPwds.append(a)   // D-58：找不到就记下来，不静默跳过
+                continue
+            }
+            DB.delPwd(mac, a)
+            n += 1
+        }
+        let existingBatches = Set(DB.ledger(mac).fps.map(\.batch))
+        for b in fpBatches {
+            guard existingBatches.contains(b) else {
+                failedFps.append(b)
+                continue
+            }
+            DB.delFp(mac, b)
+            n += 1
+        }
+        return (n, failedPwds, failedFps)
+    }
+
+    // 524/526/528「计数与三态」`typeCounts(_:)`：**已删除**（2026-11-01）。
+    //
+    // 它零调用，而**功能已经存在** —— 只是由界面自己算：
+    // `KeysScreen.chipTitle` 里 `app.keys.filter { item.matches($0) }.count`
+    // 就是分段控件的"全部 N / 密码 N / 指纹 N"徽标。
+    //
+    // 所以它不是"保留未接"，而是**未被采用的重复实现**（同 `MemberHub.display` 那一簇）。
+    //
+    // 另注：它返回的 `otp` 是 **0/1 开关态**，与其余三个（条目数）量纲不同 ——
+    // 这种"把开关混进计数元组"的形状本身也容易诱导调用方加成总数。
+
+    /// 返回 (Base64 信封文本, 口令)。UI 用 ShareLink 发文本 + 口令单列展示, 不与凭证混排。
+    static func exportPackage(_ mac: String, pwdAliases: [Int], fpBatches: [Int], password: String) -> (data: Data, size: Int)? {
+        let l = DB.ledger(mac)
+        let pwds = l.pwds.filter { pwdAliases.isEmpty || pwdAliases.contains($0.alias) }
+        let fps = l.fps.filter { fpBatches.isEmpty || fpBatches.contains($0.batch) }
+        guard !pwds.isEmpty || !fps.isEmpty else { return nil }
+        let pkg = CredPackage(v: 1, mac: mac, lockName: LockArchive.displayName(DB.keychain(mac) ?? Keychain(mac: mac, skey: "")),
+                              pwds: pwds, fps: fps, at: nowSec)
+        guard let json = try? JSONEncoder().encode(pkg),
+              let text = String(data: json, encoding: .utf8),
+              let enc = try? CryptoBox.encryptText(text, password: password) else { return nil }
+        return (Data(enc.utf8), pwds.count + fps.count)
+    }
+
+    /// 导入凭证包（`exportPackage` 的逆过程）。
+    ///
+    /// 2026-11-03（全功能点排查 · 功能闭环）：导出这条链路一直只有**出**没有**回** ——
+    /// `CredPackage` 能加密导出，但全仓没有任何地方解密/解析它，App 自己都读不回来。
+    /// 用户以为导出的是一份可恢复的备份，实际上是一份**只能看不能还原**的文本。
+    /// 这里补上导入：解密 → 解析 → 按 alias/batch **跳过冲突项**合并进当前台账。
+    ///
+    /// 冲突一律**跳过而不是覆盖**：包里的编号是旧锁分配的，覆盖会静默改掉本机同号凭证。
+    /// 返回 (写入, 跳过) 两个数，界面要如实报出来。
+    static func importPackage(_ text: String, password: String, into mac: String) throws -> (imported: Int, skipped: Int) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { throw BLEErrorX.msg("先粘贴凭证包文本") }
+        let plain = try CryptoBox.decryptEnvelope(trimmed, password: password)
+        guard let data = plain.data(using: .utf8),
+              let pkg = try? JSONDecoder().decode(CredPackage.self, from: data) else {
+            throw BLEErrorX.msg("这段文本不是有效的凭证包（或版本不兼容）")
+        }
+        var l = DB.ledger(mac)
+        var imported = 0, skipped = 0
+        for p in pkg.pwds {
+            if l.pwds.contains(where: { $0.alias == p.alias }) { skipped += 1; continue }
+            l.pwds.append(p); imported += 1
+        }
+        for f in pkg.fps {
+            if l.fps.contains(where: { $0.batch == f.batch }) { skipped += 1; continue }
+            l.fps.append(f); imported += 1
+        }
+        guard imported > 0 else { return (0, skipped) }
+        DB.saveLedger(mac, l)
+        return (imported, skipped)
+    }
+
+    // ---------- 304 全库重复拦截 ----------
+    static func duplicatePwdValues(_ mac: String, _ value: String, excluding: Int) -> [LedgerPwd] {
+        DB.listPwds(mac).filter { $0.pwd == value && $0.alias != excluding }
+    }
+
+    /// 跨锁同值 (304 "全库"): 只报**其它锁**的显示名 (去重)。
+    /// 旧版 `duplicatePwdValuesAnyLock` 返回 [LedgerPwd] 却不带 mac —— 调用方拿到条目也说不出是哪把锁,
+    /// 还把当前锁的其它别名一起算进来, 与上面的同锁检查重复计数。改成直接给一句警告需要的信息。
+    static func duplicatePwdLockNames(_ value: String, excludingMac: String) -> [String] {
+        guard !value.isEmpty else { return [] }
+        var names: [String] = []
+        for k in DB.keychains() where k.mac != excludingMac {
+            guard DB.listPwds(k.mac).contains(where: { $0.pwd == value }) else { continue }
+            let n = LockArchive.displayName(k)
+            if !names.contains(n) { names.append(n) }
+        }
+        return names
+    }
+
+    /// 314 前缀混淆: 同锁内其它密码前 4 位相同, 口头易混淆
+    static func prefixConflict(_ mac: String, _ value: String, excluding: Int) -> [LedgerPwd] {
+        guard value.count >= 4 else { return [] }
+        let pre = value.prefix(4)
+        return DB.listPwds(mac).filter { $0.alias != excluding && $0.pwd?.hasPrefix(pre) == true }
+    }
+
+}
