@@ -1,0 +1,44 @@
+commit=587e3bb4fec45fab404b3276a440e80009d95fff
+run=42170673983
+count=15
+--- diag ---
+udid=0A1B5EC5-2485-4F8E-B06B-1185D8E186C0
+APP=build/Sim/Build/Products/Debug-iphonesimulator/LockKeeper.app
+stage=boot
+An error was encountered processing the command (domain=com.apple.CoreSimulator.SimError, code=405):
+Unable to shutdown device in current state: Shutdown
+boot=ok (already-or-now Booted)
+appearance=light
+bootstatus=ok
+install=ok
+stage=first-shot
+Detected file type from extension: PNG
+Note: No display specified. Defaulting to display: 9D5EEA68-0609-4382-B66A-C387058F79B8 (screenID: 1, name: LCD)
+Wrote screenshot to: /tmp/shots/_probe.png
+probe-shot=ok
+skip=tab-viewport-shots (covered by full-page)
+Detected file type from extension: PNG
+Note: No display specified. Defaulting to display: 9D5EEA68-0609-4382-B66A-C387058F79B8 (screenID: 1, name: LCD)
+Wrote screenshot to: /tmp/shots/2-records-bottom.png
+shot 2-records-bottom=ok size=894683
+--- seed-diag ---
+seed mac=fbb993c5cc95 wrote=9 readBack=9 keychain=true logcacheKey=fbb993c5cc95 members=5 temps=1 attributed=6--- records-diag missing ---
+python driver: scope=records tabs=[2] subs=[recordsStudio recordDetail]
+fullpage begin tab=2 name=records budget_left=899s
+root viewport ok records size=1333522
+fullpage missing records
+subpage ok recordsStudio size=1151777
+subpage ok recordDetail size=930381
+python driver done: produced=3
+python driver: png files on disk=4
+python driver: scope=dark tabs=[0 1 3 4] subs=[appearance security keyDetail]
+appearance=dark
+fullpage begin tab=0 name=door budget_left=899s
+root viewport ok dark-door size=1289782
+fullpage missing dark-door
+fullpage begin tab=1 name=keys budget_left=888s
+root viewport ok dark-keys size=1464475
+fullpage missing dark-keys
+fullpage begin tab=3 name=household budget_left=866s
+root viewport ok dark-household size=1360322
+fullpage missing dark-household
