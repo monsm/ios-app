@@ -77,11 +77,11 @@ struct CredentialCreateScreen: View {
         .toolbar(.hidden, for: .navigationBar)
         .onChange(of: kind) { _, newValue in
             errorLine = nil
-            if newValue == .temp, value.isEmpty { value = String(format: "%06d", Int.random(in: 0 ... 999_999)) }
+            if newValue == .temp, value.isEmpty { value = Self.randomCode(6) }
         }
         .onAppear {
             if value.isEmpty, kind == .password {
-                value = Self.randomPassword()
+                value = Self.randomCode(6)
             }
         }
     }
@@ -107,11 +107,16 @@ struct CredentialCreateScreen: View {
     private var valueBlock: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
-                FieldInput(placeholder: kind == .password ? "最多 8 位" : "6 位数字",
+                FieldInput(placeholder: kind == .password ? "6–8 位数字" : "6 位数字",
                            text: $value,
-                           keyboard: kind == .password ? .default : .numberPad)
+                           keyboard: .numberPad)
+                .onChange(of: value) { _, newValue in
+                    let digits = newValue.filter { $0.isASCII && $0.isNumber }
+                    let capped = String(digits.prefix(kind == .temp ? 6 : 8))
+                    if capped != newValue { value = capped }
+                }
                 Button {
-                    value = kind == .password ? Self.randomPassword() : String(format: "%06d", Int.random(in: 0 ... 999_999))
+                    value = Self.randomCode(6)
                 } label: {
                     Image(systemName: "dice")
                         .font(.system(size: 17))
@@ -130,10 +135,7 @@ struct CredentialCreateScreen: View {
             if kind == .password {
                 Text(passwordHint)
                     .type(T.F.caption)
-                    .foregroundStyle(value.count > 8 ? T.C.danger : T.C.ink3)
-                    .onChange(of: value) { _, newValue in
-                        if newValue.count > 8 { value = String(newValue.prefix(8)) }
-                    }
+                    .foregroundStyle(value.count < 6 || value.count > 8 ? T.C.danger : T.C.ink3)
             } else {
                 Text("门锁键盘可以直接输入，不需要联网。")
                     .type(T.F.caption)
@@ -142,9 +144,12 @@ struct CredentialCreateScreen: View {
         }
     }
 
+    /// 门锁的键盘只有数字：密码与临时码都必须是数字串。
+    /// 位数下限 6、上限 8 —— 与上一版真机验证过的口径一致；
+    /// 锁端自己声明的上限（`pwdInfoMaxLen`）由 Engine 在下发前再拦一道。
     private var passwordHint: String {
-        if value.count > 8 { return "门锁最多接受 8 位，超出的部分会被拒绝。" }
-        if value.count < 4 { return "至少 4 位。数字越散越好记也越难猜。" }
+        if value.count < 6 { return "至少 6 位数字。" }
+        if value.count > 8 { return "这把锁最多接受 8 位。" }
         if Self.weak(value) { return "这串太顺了（重复或连号），换一个更稳。" }
         return "\(value.count) / 8 位 · 只在写入时下发一次"
     }
@@ -251,7 +256,10 @@ struct CredentialCreateScreen: View {
         errorLine = nil
         switch kind {
         case .password:
-            guard value.count >= 4 else { errorLine = "密码至少 4 位。"; return }
+            guard Self.isNumeric(value), (6 ... 8).contains(value.count) else {
+                errorLine = "密码是 6–8 位数字。"
+                return
+            }
             busy = true
             defer { busy = false }
             let now = Date()
@@ -266,7 +274,10 @@ struct CredentialCreateScreen: View {
             case .failure(let error): errorLine = error.localizedDescription
             }
         case .temp:
-            guard value.count == 6 else { errorLine = "临时码是 6 位数字。"; return }
+            guard Self.isNumeric(value), value.count == 6 else {
+                errorLine = "临时码是 6 位数字。"
+                return
+            }
             busy = true
             defer { busy = false }
             let now = Date()
@@ -303,15 +314,27 @@ struct CredentialCreateScreen: View {
 
     // MARK: - 小工具
 
-    static func randomPassword() -> String {
-        let letters = Array("23456789abcdefghjkmnpqrstuvwxyz")
-        return String((0 ..< 6).map { _ in letters.randomElement() ?? "a" })
+    /// 门锁的键盘只有数字 —— 这里只生成数字串。
+    static func randomCode(_ count: Int) -> String {
+        var generator = SystemRandomNumberGenerator()
+        var out = ""
+        for _ in 0 ..< count {
+            out += String(Int.random(in: 0 ... 9, using: &generator))
+        }
+        return out
     }
 
+    /// 半角数字串才算数（iOS 的 `isNumber` 把全角数字也算数字，而锁的键盘打不出全角）。
+    static func isNumeric(_ value: String) -> Bool {
+        !value.isEmpty && value.allSatisfy { $0.isASCII && $0.isNumber }
+    }
+
+    /// 「太顺」的判断只看数字串：全同位、或连号（1234 / 4321）。
     static func weak(_ value: String) -> Bool {
         let digits = value.compactMap { $0.wholeNumberValue }
+        if digits.count != value.count { return true }
         if Set(value).count == 1 { return true }
-        if digits.count == value.count, digits.count > 2 {
+        if digits.count > 2 {
             let steps = zip(digits, digits.dropFirst()).map { $1 - $0 }
             if steps.allSatisfy({ $0 == 1 }) || steps.allSatisfy({ $0 == -1 }) { return true }
         }
