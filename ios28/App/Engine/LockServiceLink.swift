@@ -296,12 +296,17 @@ extension LockService {
                 // （日志 18:14:59 就是这个形状，cmd03 连报 2 次）。忙不是"命令失败"，
                 // 它压根没发出去；这里先让一拍，给前一条命令的响应一个落地的机会。
                 if waiter != nil {
-                    // 等一拍再判一次：给前一条命令的响应落地的机会（sleep 不抛错，无需 try）
-                    await Task.yield()
-                    if waiter != nil {
-                        try await Task.sleep(for: .milliseconds(120))
-                        if waiter != nil { throw BLEErrorX.msg("已有命令在等待响应") }
+                    // 忙不是"命令失败"：这条帧还一个字节都没发出去，延后发送是安全的。
+                    // 旧实现只等 120ms 就抛 —— 一次保存凭证（约 200ms）与一次手动开锁
+                    // 挨在一起时，开锁会报「已有命令在等待响应」，用户看到的是门打不开。
+                    // 给前一条命令最多 1.5s 收尾（BLE 往返通常 <300ms）；读日志这类
+                    // 长命令在 App 层已与开锁互斥，不会把这里拖满。仍忙才拒绝。
+                    for _ in 0 ..< 3 {
+                        await Task.yield()
+                        if waiter == nil { break }
+                        try await Task.sleep(for: .milliseconds(500))
                     }
+                    if waiter != nil { throw BLEErrorX.msg("已有命令在等待响应") }
                 }
                 // SEC-15：在挂 waiter 之前**声明这条连接归 lock** —— 否则 HardwareService
                 // 同时发的同 cmd 命令的回包会被本服务的 waiter 收下（错帧），反之亦然。
