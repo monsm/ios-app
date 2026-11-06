@@ -99,9 +99,12 @@ struct BackupScreen: View {
                             .strokeBorder(T.C.glassEdge, lineWidth: 0.5)
                     }
                     .padding(.top, 10)
+                    // 内容或口令一改，刚才那份预览就不再是「这份」备份的预览了。
+                    .onChange(of: importText) { _, _ in preview = nil }
 
                 FieldInput(placeholder: "备份口令", text: $importPassword, secure: true)
                     .padding(.top, 10)
+                    .onChange(of: importPassword) { _, _ in preview = nil }
 
                 HStack(spacing: 10) {
                     GhostButton(title: "预览", symbol: "eye") {
@@ -212,6 +215,13 @@ struct BackupScreen: View {
 
     private func doRestore() async {
         errorLine = nil
+        // 这一页开头写着「导入先预览、再写盘」—— 那就真的**先预览**。
+        // 原先「恢复」可以直接点：还没看清这份信封里是几把锁、哪几把会被跳过，
+        // 数据就已经写进去了。回滚点只能救「写错了」，救不了「本来就不该写」。
+        guard preview != nil else {
+            errorLine = "先点「预览」看清这份备份里有什么，再恢复。"
+            return
+        }
         busy = true
         defer { busy = false }
         do {

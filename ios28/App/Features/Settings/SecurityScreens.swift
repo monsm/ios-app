@@ -12,7 +12,9 @@ struct SecurityScreen: View {
 
     @State private var sheet: SheetKind?
     @State private var trial = TrialGuard.isOn
-    @State private var errorLine: String?
+    /// 关掉本机密码要先问一句：这一步会把冷启动的门禁整个拆掉，
+    /// 拿到手机的人可以直接看到全部凭证 —— 点错了没有第二道闸。
+    @State private var confirmingDisable = false
     /// 通知授权状态。
     ///
     /// Engine 的 `NotifyAuth.status` 是**同步**读的（内部 `DispatchSemaphore.wait` 最多 2 秒），
@@ -67,8 +69,7 @@ struct SecurityScreen: View {
 
             if DB.hasPasscode() {
                 Button {
-                    DB.setPasscode(nil)
-                    app.unlocked = !DB.hasPasscode()
+                    confirmingDisable = true
                 } label: {
                     ContentRow(symbol: "lock.open", tone: .danger, title: "关闭本机密码",
                                subtitle: "关闭后冷启动不再询问", chevron: true)
@@ -89,13 +90,6 @@ struct SecurityScreen: View {
                         ? "已授权 · 到期与低电提醒会送达"
                         : "未授权（\(notifyLabel)） · 提醒只在 App 内显示")
 
-            if let errorLine {
-                Text(errorLine)
-                    .type(T.F.caption)
-                    .foregroundStyle(T.C.danger)
-                    .padding(.top, 12)
-            }
-
             Text("胁迫码：用另一组数字进入「空壳」。门照样能开，但凭证、记录、成员都会显示为空。它不会发出任何提示。")
                 .type(T.F.caption)
                 .foregroundStyle(T.C.ink3)
@@ -108,6 +102,20 @@ struct SecurityScreen: View {
             case .passcode: PasscodeSheet(kind: .passcode)
             case .duress: PasscodeSheet(kind: .duress)
             }
+        }
+        .confirmationDialog("关闭本机密码？", isPresented: $confirmingDisable, titleVisibility: .visible) {
+            Button("关闭", role: .destructive) {
+                DB.setPasscode(nil)
+                // 胁迫码的**唯一入口**就是门禁。密码一关，它就再也输不进去；
+                // 若留着，用户以后重新设密码时它会悄悄复活 —— 而那时多半已经忘了这串数字。
+                DB.setDuressCode(nil)
+                app.unlocked = !DB.hasPasscode()
+            }
+            Button("取消", role: .cancel) {}
+        } message: {
+            Text(DB.hasDuressCode()
+                 ? "冷启动不再询问。胁迫码也会一并清除 —— 没有门禁就输不进它，留着只会在你下次设密码时悄悄复活。凭证仍然在手机里，拿到手机的人可以直接打开。"
+                 : "冷启动不再询问。凭证仍然在手机里，拿到手机的人可以直接打开。")
         }
         .task {
             let settings = await UNUserNotificationCenter.current().notificationSettings()

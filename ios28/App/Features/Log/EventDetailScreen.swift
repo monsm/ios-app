@@ -90,7 +90,6 @@ struct EventDetailScreen: View {
         SectionHead(index: "01", title: "备注")
         FieldInput(placeholder: "只写在本机，不同步到锁", text: $note)
             .onChange(of: note) { _, newValue in
-                guard let event else { return }
                 notes[event.id] = newValue
                 RecordOverlay.setNote(event.mac, rowKey(event), String(newValue.prefix(60)))
             }
