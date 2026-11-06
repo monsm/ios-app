@@ -10,6 +10,7 @@ struct LocksScreen: View {
 
     @State private var pendingDelete: LockSummary?
     @State private var errorLine: String?
+    @State private var confirmingWipe = false
 
     var body: some View {
         ScreenScroll {
@@ -17,7 +18,7 @@ struct LocksScreen: View {
 
             DisplayLine(text: app.locks.isEmpty ? "还没有锁。" : "\(app.locks.count) 把锁，\n一个家。", size: 34)
                 .padding(.top, 16)
-            Text("长按不可用；点一行切换当前锁，右侧「默认」决定冷启动落点。")
+            Text("点一行切换当前锁；右侧「设为默认」决定冷启动落点。")
                 .type(T.F.caption)
                 .foregroundStyle(T.C.ink3)
                 .padding(.top, 8)
@@ -36,18 +37,30 @@ struct LocksScreen: View {
 
             SectionHead(index: "02", title: "数据")
             Button {
-                Task {
-                    for lock in app.locks { DB.removeDevice(lock.id) }
-                    app.overrideMac = nil
-                    await app.reload()
-                }
+                confirmingWipe = true
             } label: {
                 ContentRow(symbol: "trash", tone: .danger, title: "删除全部本机数据",
                            subtitle: "锁端不受影响；本机钥匙串、台账、记录全部清掉", chevron: true)
             }
             .buttonStyle(.plain)
+            .disabled(app.locks.isEmpty)
         }
         .toolbar(.hidden, for: .navigationBar)
+        // 一把没有确认门的「删除全部」：点错了就是全部钥匙串、台账、记录一起没。
+        .confirmationDialog("删除这台手机上全部门锁的数据？",
+                            isPresented: $confirmingWipe,
+                            titleVisibility: .visible) {
+            Button("全部删除", role: .destructive) {
+                Task {
+                    for lock in app.locks { DB.removeDevice(lock.id) }
+                    app.overrideMac = nil
+                    await app.reload()
+                }
+            }
+            Button("取消", role: .cancel) {}
+        } message: {
+            Text("只删本机。锁里的凭证和钥匙仍然有效，但本机再也打不开它们了。")
+        }
         .confirmationDialog("删除这把锁的本机数据？",
                             isPresented: Binding(get: { pendingDelete != nil },
                                                  set: { if !$0 { pendingDelete = nil } }),
