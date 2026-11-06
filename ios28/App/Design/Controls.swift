@@ -6,12 +6,22 @@ import UIKit
 
 // MARK: - 解锁镜头
 
+/// 镜头用真正的 `Button`，不用「手势 + 点击」两套并行。
+/// 原因：`DragGesture(minimumDistance: 0)` 会在手指落下那一刻就赢下手势仲裁，
+/// 同挂的 `.onTapGesture` 便再也不会触发 —— 而开锁正是这个 App 唯一不能失灵的动作。
+/// 按压反馈交给 `ButtonStyle`（`configuration.isPressed`），没有仲裁歧义。
+struct LensPressStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.965 : 1)
+            .animation(T.M.snap, value: configuration.isPressed)
+    }
+}
+
 struct UnlockLens: View {
     var phase: UnlockPhase
     var enabled: Bool = true
     var action: () -> Void
-
-    @GestureState private var pressed = false
 
     private var ringProgress: Double {
         switch phase {
@@ -53,78 +63,74 @@ struct UnlockLens: View {
     }
 
     var body: some View {
-        ZStack {
-            Circle()
-                .fill(.ultraThinMaterial)
-                .overlay {
-                    Circle().fill(
-                        RadialGradient(colors: [T.C.glassStrong, T.C.glass, T.C.glass],
-                                       center: .init(x: 0.32, y: 0.18),
-                                       startRadius: 2, endRadius: 120)
-                    )
-                }
-                .overlay {
-                    Circle().strokeBorder(T.C.glassEdge, lineWidth: 0.5)
-                }
-                .shadow(color: T.C.shadow, radius: 20, x: 0, y: 14)
-
-            Circle()
-                .strokeBorder(T.C.brassBright.opacity(0.28), lineWidth: 1.5)
-                .padding(5)
-
-            Circle()
-                .trim(from: 0, to: ringProgress)
-                .stroke(ringColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-                .padding(5)
-                .animation(T.M.settle, value: ringProgress)
-
-            Circle()
-                .fill(
-                    RadialGradient(colors: [T.C.brassBright, T.C.brass],
-                                   center: .init(x: 0.34, y: 0.26),
-                                   startRadius: 1, endRadius: 26)
-                )
-                .frame(width: 44, height: 44)
-                .shadow(color: T.C.brassWash, radius: 14)
-                .overlay {
-                    Image(systemName: glyph)
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundStyle(Color(uiColor: .white).opacity(0.95))
-                }
-
-            if phase == .opened {
+        Button {
+            if enabled { action() }
+        } label: {
+            ZStack {
                 Circle()
-                    .stroke(T.C.brassBright.opacity(0.35), lineWidth: 1)
-                    .scaleEffect(1.28)
-                    .opacity(0)
+                    .fill(.ultraThinMaterial)
+                    .overlay {
+                        Circle().fill(
+                            RadialGradient(colors: [T.C.glassStrong, T.C.glass, T.C.glass],
+                                           center: .init(x: 0.32, y: 0.18),
+                                           startRadius: 2, endRadius: 120)
+                        )
+                    }
+                    .overlay {
+                        Circle().strokeBorder(T.C.glassEdge, lineWidth: 0.5)
+                    }
+                    .shadow(color: T.C.shadow, radius: 20, x: 0, y: 14)
+
+                Circle()
+                    .strokeBorder(T.C.brassBright.opacity(0.28), lineWidth: 1.5)
+                    .padding(5)
+
+                Circle()
+                    .trim(from: 0, to: ringProgress)
+                    .stroke(ringColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .padding(5)
+                    .animation(T.M.settle, value: ringProgress)
+
+                Circle()
+                    .fill(
+                        RadialGradient(colors: [T.C.brassBright, T.C.brass],
+                                       center: .init(x: 0.34, y: 0.26),
+                                       startRadius: 1, endRadius: 26)
+                    )
+                    .frame(width: 44, height: 44)
+                    .shadow(color: T.C.brassWash, radius: 14)
+                    .overlay {
+                        Image(systemName: glyph)
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundStyle(Color(uiColor: .white).opacity(0.95))
+                    }
+
+                if phase == .opened {
+                    Circle()
+                        .stroke(T.C.brassBright.opacity(0.35), lineWidth: 1)
+                        .scaleEffect(1.28)
+                        .opacity(0)
+                }
+            }
+            .frame(width: 116, height: 116)
+            .overlay(alignment: .bottom) {
+                Text(caption)
+                    .type(T.F.kicker)
+                    .tracking(1.8)
+                    .foregroundStyle(T.C.ink3)
+                    .offset(y: 26)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
             }
         }
-        .frame(width: 116, height: 116)
-        .scaleEffect(pressed ? 0.965 : 1)
-        .animation(T.M.snap, value: pressed)
+        .buttonStyle(LensPressStyle())
+        .disabled(!enabled)
         .opacity(enabled ? 1 : 0.55)
-        .contentShape(Circle())
-        .gesture(
-            DragGesture(minimumDistance: 0)
-                .updating($pressed) { _, state, _ in state = true }
-        )
-        .onTapGesture { if enabled { action() } }
         .sensoryFeedback(.impact(weight: .medium), trigger: phase)
-        .accessibilityElement()
         .accessibilityLabel("开锁")
         .accessibilityHint("连接门锁并下发开锁命令")
         .accessibilityValue(caption)
-        .accessibilityAddTraits(.isButton)
-        .accessibilityAction { if enabled { action() } }
-        .overlay(alignment: .bottom) {
-            Text(caption)
-                .type(T.F.kicker)
-                .tracking(1.8)
-                .foregroundStyle(T.C.ink3)
-                .offset(y: 26)
-                .accessibilityHidden(true)
-        }
     }
 }
 
