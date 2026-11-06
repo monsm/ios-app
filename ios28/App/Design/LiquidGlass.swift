@@ -54,10 +54,21 @@ private struct LiquidGlassModifier<S: InsettableShape>: ViewModifier {
                 .background(T.C.glassStrong, in: shape)
                 .overlay {
                     shape.strokeBorder(T.C.glassEdge, lineWidth: edgeWidth)
+                        .allowsHitTesting(false)
                 }
         } else {
+            // 玻璃是"画"出来的一层，不该参与命中测试。
+            //
+            // 直接把 `.glassEffect` 挂在 content 上时，玻璃会作为独立的材质层进入
+            // 命中链：Button 的 label 只有文字/图标本身可点，玻璃圆面点下去没有
+            // 任何反应（头像就是这样"看着能点、实际点不动"）。把玻璃退到
+            // background 并显式关掉命中，Button 的 contentShape 才真正说了算。
             content
-                .glassEffect(glass, in: shape)
+                .background {
+                    Color.clear
+                        .glassEffect(glass, in: shape)
+                        .allowsHitTesting(false)
+                }
                 // 真实玻璃受光后上缘总有一条亮线。只加"厚度感"，不改变折射行为。
                 .overlay {
                     shape
@@ -73,6 +84,7 @@ private struct LiquidGlassModifier<S: InsettableShape>: ViewModifier {
                 }
                 .overlay {
                     shape.strokeBorder(T.C.glassEdge, lineWidth: edgeWidth)
+                        .allowsHitTesting(false)
                 }
         }
     }

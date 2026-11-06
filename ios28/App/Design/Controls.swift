@@ -109,6 +109,8 @@ struct UnlockLens: View {
                 }
             }
             .frame(width: 116, height: 116)
+            // 玻璃层已不参与命中；镜头整圆都该是开锁键，不能只剩中间 44pt 的盘面。
+            .contentShape(Circle())
             .overlay(alignment: .bottom) {
                 Text(caption)
                     .type(T.F.kicker)

@@ -72,6 +72,10 @@ struct RootView: View {
                     // 自动开门会一直“已开启”却整场会话都不工作。
                     AutoOpenController.shared.onForeground(mac: app.currentMac)
                 }
+            } else {
+                // 上锁时把设置弹层收起；否则下次解锁会把上一会话的面板原样弹回来。
+                router.settingsOpen = false
+                router.settingsPath = []
             }
         }
     }
@@ -81,6 +85,14 @@ struct RootView: View {
 struct ShellView: View {
     @Environment(AppModel.self) private var app
     @Environment(Router.self) private var router
+    /// sheet 的呈现状态放在本地 `@State`，由 `onChange` 从 router 同步。
+    ///
+    /// 为什么不直接把 `$bindable.settingsOpen` 交给 `.sheet(isPresented:)`：
+    /// `openSettings()` 会在同一拍里改 `settingsPath` 和 `settingsOpen`，
+    /// 而绑定取值发生在 SwiftUI 的观察范围之外时，弹层可能“状态已经 true、
+    /// 界面却没弹”。`onChange` 会显式读取这个属性、建立观察，再到本地状态，
+    /// 路径与呈现分开两拍落地，头像点下去一定有结果。
+    @State private var settingsShown = false
 
     var body: some View {
         @Bindable var bindable = router
@@ -108,7 +120,10 @@ struct ShellView: View {
                 set: { router.tab = TabSlot(rawValue: $0) ?? .today }
             ))
         }
-        .sheet(isPresented: $bindable.settingsOpen) {
+        .onChange(of: router.settingsOpen, initial: true) { _, open in
+            if settingsShown != open { settingsShown = open }
+        }
+        .sheet(isPresented: $settingsShown, onDismiss: { router.settingsOpen = false }) {
             NavigationStack(path: $bindable.settingsPath) {
                 SettingsScreen().withDestinations()
             }
