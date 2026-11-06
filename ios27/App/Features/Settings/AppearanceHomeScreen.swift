@@ -227,8 +227,20 @@ struct AppearanceHomeScreen: View {
             store.customAccent = 0
         } label: {
             HStack(spacing: V8.S.gapS) {
+                // 2026-11-06（V9 · 液态仪器）：品牌色样本从平色圆升级为受光玻璃珠 ——
+                // 顶部 22% 白的光照渐变 + 高光环，与头像/图标砖同一光照语法。
                 Circle()
                     .fill(SettingsStore.color(hex: item.hex))
+                    .overlay {
+                        LinearGradient(
+                            colors: [.white.opacity(0.22), .clear],
+                            startPoint: .top, endPoint: .bottom
+                        )
+                        .clipShape(Circle())
+                    }
+                    .overlay {
+                        Circle().strokeBorder(.white.opacity(0.30), lineWidth: V8.S.hair)
+                    }
                     .frame(width: V8.S.gapM, height: V8.S.gapM)
                     .accessibilityHidden(true)
                 Text(item.title)
@@ -245,7 +257,16 @@ struct AppearanceHomeScreen: View {
             }
             .padding(.horizontal, V8.S.gapS)
             .frame(minHeight: V8.H.min)
-            .background(on ? V8.C.chipOn : V8.C.chipOff, in: .rect(cornerRadius: V8.R.inset))
+            // 2026-11-06（V9 · 液态仪器）：选中格 = 微凸面（上亮下暗）+ 高光描边，与 VChip2 同语法。
+            .background(
+                LinearGradient(colors: [V8.C.chipOn, V8.C.chipOff],
+                               startPoint: .top, endPoint: .bottom),
+                in: .rect(cornerRadius: V8.R.inset)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: V8.R.inset, style: .continuous)
+                    .strokeBorder(on ? V8.C.cardSheen : V8.C.line, lineWidth: V8.S.hair)
+            }
         }
         .buttonStyle(V8PressStyle())
         .accessibilityLabel("品牌色 " + item.title)
@@ -315,7 +336,16 @@ struct AppearanceHomeScreen: View {
             }
             .padding(.horizontal, V8.S.gapS)
             .frame(minHeight: V8.H.min)
-            .background(on ? V8.C.chipOn : V8.C.chipOff, in: .rect(cornerRadius: V8.R.inset))
+            // 2026-11-06（V9 · 液态仪器）：图标格 = 微凸面渐变 + 高光/发丝描边（与品牌色格一致）。
+            .background(
+                LinearGradient(colors: [V8.C.chipOn, V8.C.chipOff],
+                               startPoint: .top, endPoint: .bottom),
+                in: .rect(cornerRadius: V8.R.inset)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: V8.R.inset, style: .continuous)
+                    .strokeBorder(on ? V8.C.cardSheen : V8.C.line, lineWidth: V8.S.hair)
+            }
         }
         .buttonStyle(V8PressStyle())
         .accessibilityLabel("应用图标 " + item.title)
