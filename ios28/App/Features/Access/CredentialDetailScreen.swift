@@ -237,7 +237,10 @@ struct CredentialDetailScreen: View {
         case .fingerprint:
             return item.batch.map { "批次 #\($0) · 存在门锁里，不在手机上" } ?? "存在门锁里"
         case .mobile:
-            return "ekey 已签发 · 用二维码交付给对方"
+            // 本机没有任何把手机钥匙画成二维码的入口（唯一的二维码是「交给安卓」那张
+            // **配对凭证**，不是这把钥匙）。原先写「用二维码交付给对方」，指的是一张
+            // 并不存在的码 —— 真正能用的交付方式就是下面这枚「复制 ekey」。
+            return "ekey 已签发 · 复制后单独发给对方"
         }
     }
 
@@ -261,8 +264,14 @@ struct CredentialDetailScreen: View {
     private func copyMobile(_ item: Credential) {
         guard let id = item.mobileID,
               let key = MobileKeyService.list(app.currentMac).first(where: { $0.id == id }) else { return }
+        guard !key.ekey.isEmpty else {
+            // 旧备份恢复的钥匙可能只剩台账、没有 ekey。`Clip.set("")` 只会清空剪贴板，
+            // 原先会静默"成功" —— 复制出去的是空气。
+            show("这把钥匙没有存下 ekey。先吊销，再重新签发。")
+            return
+        }
         Clip.set(key.ekey)
-        show("ekey 已复制")
+        show("ekey 已复制 · 90 秒后自动清除")
     }
 
     private func toggleDisabled(_ item: Credential) {

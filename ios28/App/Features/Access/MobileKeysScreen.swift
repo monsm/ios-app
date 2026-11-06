@@ -13,7 +13,11 @@ struct MobileKeysScreen: View {
     @State private var days = 7
     @State private var busy = false
     @State private var errorLine: String?
+    @State private var flash: String?
     @State private var sharing = false
+    /// 待吊销的那把。非 nil 即弹确认 —— 吊销会**立刻**删掉锁端 PIN，
+    /// 对方手机里的钥匙当场失效且无法撤销，不该被一次误触触发。
+    @State private var revokeTarget: MobileKey?
 
     private var keys: [MobileKey] { MobileKeyService.list(app.currentMac) }
     private var members: [MemberCard] { app.members.filter { !$0.archived } }
@@ -24,7 +28,7 @@ struct MobileKeysScreen: View {
 
             DisplayLine(text: keys.isEmpty ? "把钥匙\n发到手机里。" : "\(keys.count) 把钥匙\n已经发出。", size: 36)
                 .padding(.top, 16)
-            Text("手机钥匙是一枚带有效期的 ekey。它只能开这一把锁；吊销会把对应的 PIN 从锁里删掉。")
+            Text("手机钥匙是一枚带有效期的 ekey。它只能开这一把锁；吊销会把对应的 PIN 从锁里删掉。签发后点「复制」，把 ekey 单独发给对方。")
                 .type(T.F.footnote)
                 .foregroundStyle(T.C.ink2)
                 .lineSpacing(4)
@@ -49,6 +53,13 @@ struct MobileKeysScreen: View {
                     .padding(.top, 14)
             }
 
+            if let flash {
+                Text(flash)
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.brass)
+                    .padding(.top, 14)
+            }
+
             Button {
                 sharing = true
             } label: {
@@ -61,9 +72,24 @@ struct MobileKeysScreen: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $sharing) { HandoffSheet() }
+        .confirmationDialog("吊销这把手机钥匙？", isPresented: confirmRevoke, titleVisibility: .visible) {
+            Button("吊销", role: .destructive) {
+                guard let key = revokeTarget else { return }
+                revokeTarget = nil
+                Task { await revoke(key) }
+            }
+            Button("取消", role: .cancel) { revokeTarget = nil }
+        } message: {
+            Text("锁端会删掉这枚 PIN，对方手机里的钥匙立即失效，且无法恢复 —— 只能重新签发、重新交付。")
+        }
         .onAppear {
             if memberID == nil { memberID = members.first?.id }
         }
+    }
+
+    private var confirmRevoke: Binding<Bool> {
+        Binding(get: { revokeTarget != nil },
+                set: { if !$0 { revokeTarget = nil } })
     }
 
     private var issueCard: some View {
@@ -152,20 +178,48 @@ struct MobileKeysScreen: View {
                     .foregroundStyle(T.C.ink3)
             }
             Spacer(minLength: 8)
-            Button {
-                Task { await revoke(key) }
-            } label: {
-                Text("吊销")
-                    .type(T.F.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(T.C.danger)
-                    .padding(.horizontal, 12)
-                    .frame(height: 32)
-                    .background(T.C.dangerWash, in: Capsule())
+            HStack(spacing: 8) {
+                Button {
+                    copy(key)
+                } label: {
+                    Text("复制")
+                        .type(T.F.caption)
+                        .fontWeight(.medium)
+                        .foregroundStyle(T.C.brass)
+                        .padding(.horizontal, 12)
+                        .frame(height: 32)
+                        .background(T.C.brassWash, in: Capsule())
+                }
+                .buttonStyle(PressStyle())
+
+                Button {
+                    revokeTarget = key
+                } label: {
+                    Text("吊销")
+                        .type(T.F.caption)
+                        .fontWeight(.medium)
+                        .foregroundStyle(T.C.danger)
+                        .padding(.horizontal, 12)
+                        .frame(height: 32)
+                        .background(T.C.dangerWash, in: Capsule())
+                }
+                .buttonStyle(PressStyle())
             }
-            .buttonStyle(PressStyle())
         }
         .padding(.vertical, 12)
+    }
+
+    /// 交付入口。签发只落本机记录 —— 没有这一步，页面上写着"发到手机里"，
+    /// 却没有任何把 ekey 交给对方的途径（唯一的二维码是「交给安卓」的配对凭证，不是这把钥匙）。
+    private func copy(_ key: MobileKey) {
+        guard !key.ekey.isEmpty else {
+            errorLine = "这把钥匙没有存下 ekey（可能是旧备份恢复的）。先吊销，再重新签发。"
+            flash = nil
+            return
+        }
+        errorLine = nil
+        Clip.set(key.ekey)
+        flash = "ekey 已复制 · 90 秒后自动清除"
     }
 
     /// 到期读法。引擎存的是 `yyyy-MM-dd HH:mm:ss` 的机器串 ——
@@ -185,6 +239,7 @@ struct MobileKeysScreen: View {
         busy = true
         defer { busy = false }
         errorLine = nil
+        flash = nil
         let now = Date()
         let to = now.addingTimeInterval(Double(days) * 86400)
         let result = await app.issueMobileKey(member: member, forever: forever,
@@ -192,14 +247,19 @@ struct MobileKeysScreen: View {
                                               to: AppModel.stampSeconds(to))
         if case .failure(let error) = result {
             errorLine = error.localizedDescription
+        } else {
+            flash = "已签发。点行尾「复制」，把 ekey 单独发给对方。"
         }
     }
 
     private func revoke(_ key: MobileKey) async {
         errorLine = nil
+        flash = nil
         let result = await app.revokeMobileKey(key)
         if case .failure(let error) = result {
             errorLine = error.localizedDescription
+        } else {
+            flash = "已吊销，锁端的那枚 PIN 也删掉了。"
         }
     }
 }
@@ -222,12 +282,9 @@ struct HandoffSheet: View {
         return AndroidPair.payload(kc)
     }
 
-    private var blockedReason: String? {
-        if DB.isDecoy {
-            return "空壳模式不提供交付码 —— 先退出空壳再来。"
-        }
-        return nil
-    }
+    // 原先这里有个 `blockedReason`，空壳时返回「空壳模式不提供交付码 —— 先退出空壳再来」。
+    // 胁迫者正盯着这一屏：这句话等于当场告诉他这是假界面。已删除，失败原因只在下方
+    // EmptyNote 里给一条中性说法。
 
     var body: some View {
         VStack(spacing: 0) {
@@ -271,8 +328,10 @@ struct HandoffSheet: View {
                     .padding(.horizontal, 20)
                     .padding(.top, 10)
             } else {
-                EmptyNote(line: blockedReason == nil ? "暂时生成不了。" : "这一页现在是空的。",
-                          detail: blockedReason ?? "先确认这把锁已经配对，并且钥匙串完整。")
+                // 不解释「为什么」——原因可能是空壳，也可能是钥匙串不完整；
+                // 前者一旦说破，胁迫者就知道这是假界面。只给中性说法。
+                EmptyNote(line: "暂时生成不了。",
+                          detail: "先确认这把锁已经配对，并且钥匙串完整。")
             }
 
             Spacer()

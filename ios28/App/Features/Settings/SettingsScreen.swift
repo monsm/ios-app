@@ -123,7 +123,9 @@ struct SettingsScreen: View {
     private var securitySubtitle: String {
         var parts: [String] = []
         parts.append(DB.hasPasscode() ? "本机密码已设" : "未设本机密码")
-        if DB.hasDuressCode() { parts.append("已设胁迫码") }
+        // 空壳里不能写「已设胁迫码」：这一行就摆在设置首页，
+        // 等于告诉胁迫者"刚才那组数字可能是胁迫码，再逼一次"。
+        if !DB.isDecoy, DB.hasDuressCode() { parts.append("已设胁迫码") }
         return parts.joined(separator: " · ")
     }
 

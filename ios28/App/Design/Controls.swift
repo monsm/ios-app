@@ -227,6 +227,9 @@ struct FieldInput: View {
     var secure: Bool = false
     var keyboard: UIKeyboardType = .default
     var symbol: String? = nil
+    /// 父视图想让输入框被程序化聚焦时注入（例如页面顶部的放大镜按钮）。
+    /// 不传就是普通输入框，现有的所有调用点都不受影响。
+    var focus: FocusState<Bool>.Binding? = nil
 
     var body: some View {
         HStack(spacing: 10) {
@@ -236,16 +239,20 @@ struct FieldInput: View {
                     .foregroundStyle(T.C.ink3)
             }
             if secure {
-                SecureField(placeholder, text: $text)
-                    .type(T.F.callout)
-                    .foregroundStyle(T.C.ink)
+                focusable(
+                    SecureField(placeholder, text: $text)
+                        .type(T.F.callout)
+                        .foregroundStyle(T.C.ink)
+                )
             } else {
-                TextField(placeholder, text: $text)
-                    .type(T.F.callout)
-                    .foregroundStyle(T.C.ink)
-                    .keyboardType(keyboard)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
+                focusable(
+                    TextField(placeholder, text: $text)
+                        .type(T.F.callout)
+                        .foregroundStyle(T.C.ink)
+                        .keyboardType(keyboard)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                )
             }
         }
         .padding(.horizontal, 15)
@@ -260,6 +267,15 @@ struct FieldInput: View {
         .overlay {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .strokeBorder(T.C.glassEdge, lineWidth: 0.5)
+        }
+    }
+
+    @ViewBuilder
+    private func focusable<V: View>(_ field: V) -> some View {
+        if let focus {
+            field.focused(focus)
+        } else {
+            field
         }
     }
 }

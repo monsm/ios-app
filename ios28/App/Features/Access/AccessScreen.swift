@@ -8,6 +8,10 @@ struct AccessScreen: View {
 
     @State private var segment = 0
     @State private var query = ""
+    /// 顶部放大镜被点时置 true。`CredentialsSection` 收到后把焦点送进输入框、
+    /// 并**当场消费掉**（置回 false）—— 这样切到别的分段再回来不会又弹一次键盘。
+    /// 原先这个按钮只是 `segment = 0`：已经停在「凭证」段时点它什么也不会发生。
+    @State private var wantSearchFocus = false
 
     var body: some View {
         ScreenScroll {
@@ -15,6 +19,7 @@ struct AccessScreen: View {
                 HStack(spacing: 14) {
                     Button {
                         segment = 0
+                        wantSearchFocus = true
                     } label: {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 16, weight: .regular))
@@ -43,7 +48,7 @@ struct AccessScreen: View {
                 .padding(.top, 10)
 
             switch segment {
-            case 0: CredentialsSection(query: $query)
+            case 0: CredentialsSection(query: $query, wantsFocus: $wantSearchFocus)
             case 1: MembersSection()
             default: MobileKeysSection()
             }
@@ -67,6 +72,9 @@ struct CredentialsSection: View {
     @Environment(AppModel.self) private var app
     @Environment(Router.self) private var router
     @Binding var query: String
+    @Binding var wantsFocus: Bool
+
+    @FocusState private var searchFocused: Bool
 
     private var expiring: [Credential] {
         app.credentials.filter { $0.isExpiringSoon || $0.isExpired }
@@ -102,7 +110,8 @@ struct CredentialsSection: View {
                 .padding(.top, 8)
                 .padding(.bottom, 18)
 
-            FieldInput(placeholder: "搜名字、成员或类型", text: $query, symbol: "magnifyingglass")
+            FieldInput(placeholder: "搜名字、成员或类型", text: $query,
+                       symbol: "magnifyingglass", focus: $searchFocused)
 
             if !expiring.isEmpty {
                 SectionHead(index: "01", title: "临期", trailing: "\(expiring.count)")
@@ -132,6 +141,27 @@ struct CredentialsSection: View {
                     .foregroundStyle(T.C.danger)
                     .padding(.top, 16)
             }
+        }
+        .onChange(of: wantsFocus) { _, on in
+            if on { takeFocus() }
+        }
+        .onAppear {
+            // 从「成员 / 手机钥匙」切过来时，这个分段是新建的 —— onChange 不会为
+            // 已经为 true 的值补发一次，所以这里也要接一次。
+            if wantsFocus { takeFocus() }
+        }
+    }
+
+    /// 消费一次聚焦请求并聚焦输入框。
+    ///
+    /// 先 `wantsFocus = false` 再聚焦：这个标志是「这一次请求」，不是「这个页面想聚焦」。
+    /// 不消费的话，切走再切回来会莫名其妙弹出键盘。
+    private func takeFocus() {
+        wantsFocus = false
+        Task { @MainActor in
+            // 让这一帧的布局先落地：分段刚切过来时输入框还没进窗口，立刻聚焦会被系统丢掉。
+            try? await Task.sleep(for: .milliseconds(100))
+            searchFocused = true
         }
     }
 
@@ -358,7 +388,7 @@ struct MobileKeysSection: View {
 
             if keys.isEmpty {
                 EmptyNote(line: "把钥匙发到家人的手机里。",
-                          detail: "对方用二维码接收，不需要联网。",
+                          detail: "签发后点钥匙行里的「复制」，把 ekey 单独发给对方 —— 全程不用联网。",
                           action: "签发手机钥匙") {
                     router.push(.mobileKeys)
                 }

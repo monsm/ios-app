@@ -361,8 +361,11 @@ struct HardwareScreen: View {
     private func scanDongle() async {
         // 空壳里 `dongles()` 恒为空、`saveDongle` 也会被数据层拒绝 ——
         // 但下面那句「已登记」还是会照说。别让界面撒谎。
+        //
+        // 提示语**不能提「空壳」**：胁迫者正看着这一屏，一句「空壳模式下不……」
+        // 等于当场告诉他这是假界面，胁迫码的全部意义就没了。用与其它写入拒绝同一句中性话。
         guard !DB.isDecoy else {
-            message = DecoyCopy.blocked("登记钥匙串")
+            message = "暂时无法登记钥匙串，请稍后再试。"
             return
         }
         busy = true
@@ -378,8 +381,9 @@ struct HardwareScreen: View {
     private func writeKey() async {
         // `keychainForUnlock` 是**不过滤**空壳的读法，而这一步会把锁的 ekey
         // 写进一枚可以带走的硬件 —— 与「安卓交付码」同一类泄露，守一道。
+        // 提示语同样不提「空壳」（见 scanDongle）。
         guard !DB.isDecoy else {
-            message = DecoyCopy.blocked("把 ekey 写进钥匙串")
+            message = "暂时无法写入钥匙串，请稍后再试。"
             return
         }
         guard let lock = DB.keychainForUnlock(app.currentMac) else {

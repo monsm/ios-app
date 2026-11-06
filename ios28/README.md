@@ -54,7 +54,7 @@ xcodebuild build -project Threshold.xcodeproj -scheme Threshold \
 |---|---|
 | [docs/BACKEND.md](docs/BACKEND.md) | **后台实际功能点**：协议事实、43 项能力、数据存在哪、安全边界 |
 | [docs/DESIGN.md](docs/DESIGN.md) | DAYLIGHT 设计语言：概念、令牌、组件、信息架构、页面清单 |
-| [docs/ENGINE-PORT.md](docs/ENGINE-PORT.md) | Engine 移植记录：照搬了什么、改了哪两处、为什么 |
+| [docs/ENGINE-PORT.md](docs/ENGINE-PORT.md) | Engine 移植记录：照搬了什么、改了哪几处、为什么 |
 
 ---
 

@@ -96,7 +96,16 @@ extension DB {
     // `autoOpen` / `autoOpenFaceTier` 是同一对键的第二处读写入口且全仓零调用
     // (grep `DB.autoOpen\b`、`DB.autoOpenFaceTier` 皆空)，第一百七十一批按同一条理由一并删掉。
     // 留着就是"看着像另一条读法"的假入口：改档位语义时只会改到其中一处，两份默认值也就各自漂 (§10.43)。
-    static func otpStatus(_ mac: String) -> OtpStatus? { get(OtpStatus.self, "otpStatus_" + mac) }
+    /// SEC-03：空壳里一律当作「没开通」。
+    ///
+    /// 这个读法原先不判空壳 —— 于是锁上真的开过动态密码时，空壳里的「动态密码」页会
+    /// **完整可用**：周期、序号、失效时刻都是从真实数据读的，点一下就能算出一串
+    /// 此刻真能开门、还会推进真实 `otpIdx_` 的数字。凭证页在空壳里是空的，
+    /// 这一页却把同一把锁的开锁凭证摆出来，等于在空壳里开了一扇后门。
+    static func otpStatus(_ mac: String) -> OtpStatus? {
+        if DB.isDecoy { return nil }
+        return get(OtpStatus.self, "otpStatus_" + mac)
+    }
 
     static func saveOtpStatus(_ mac: String, _ s: OtpStatus) { set(s, "otpStatus_" + mac) }
 

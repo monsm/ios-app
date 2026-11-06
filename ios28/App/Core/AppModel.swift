@@ -694,6 +694,10 @@ final class AppModel {
     func setZotp(_ on: Bool) async -> Result<Void, Error> {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
+        // 空壳里读到的永远是「没开通」，这时点「开启」会**真的**给锁下发 cmd19 ——
+        // 一次胁迫会话就地改掉门锁的安全设置，而界面看起来只是"开了个开关"。
+        // 与签发手机钥匙同一道闸：空壳不产生任何真实副作用。
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             try await LockService.shared.setZotp(on)
@@ -718,6 +722,14 @@ final class AppModel {
 
     func issueMobileKey(member: Member, forever: Bool,
                         from: String, to: String) async -> Result<MobileKey, Error> {
+        // 空壳里必须拒绝签发。
+        //
+        // `MobileKeyService.issue` 的读写都走 `rawList` / `save`（刻意绕开空壳过滤，
+        // 否则写路径会把整批钥匙覆盖成一条），所以它**真的会**从锁的 PIN 池里占一枚、
+        // 签出一枚开锁 ekey 落进 Keychain；而界面用 `list()` 显示，空壳里永远是空表 ——
+        // 用户点一下「签发」什么也看不到，锁端却少了一枚 PIN，退出空壳后还会凭空多一把钥匙。
+        // 与 addPassword / addTempCode / enrollFingerprint 同一道闸。
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
         guard let kc = DB.keychainForUnlock(currentMac) else {
             return .failure(BLEErrorX.msg("还没有添加门锁"))
         }
@@ -732,6 +744,8 @@ final class AppModel {
     }
 
     func revokeMobileKey(_ key: MobileKey) async -> Result<Void, Error> {
+        // 与签发同一道闸：吊销会真删锁端 PIN，空壳里不该发生任何真实副作用的写。
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
         guard let kc = DB.keychainForUnlock(currentMac) else {
             return .failure(BLEErrorX.msg("还没有添加门锁"))
         }

@@ -59,15 +59,27 @@ struct SecurityScreen: View {
             }
             .buttonStyle(.plain)
 
-            Button { sheet = .duress } label: {
-                ContentRow(symbol: "eye.slash",
-                           title: DB.hasDuressCode() ? "修改胁迫码" : "设置胁迫码",
-                           subtitle: DB.hasDuressCode() ? "输入它会进入空壳模式" : "被胁迫时用的另一组密码",
-                           chevron: true)
+            // 空壳里整行都不出现。
+            //
+            // 这一行写着「修改胁迫码 / 输入它会进入空壳模式」，而胁迫者很可能就站在旁边。
+            // 看见它 = 确认这台手机设过胁迫码 = 当场逼问"你刚才是不是输了那组数字"。
+            // 空壳里这一页就当一个从没设过胁迫码的普通 App。
+            if !DB.isDecoy {
+                Button { sheet = .duress } label: {
+                    ContentRow(symbol: "eye.slash",
+                               title: DB.hasDuressCode() ? "修改胁迫码" : "设置胁迫码",
+                               subtitle: DB.hasDuressCode() ? "输入它会进入空壳模式" : "被胁迫时用的另一组密码",
+                               chevron: true)
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
 
-            if DB.hasPasscode() {
+            // 空壳里不给「关闭本机密码」。
+            //
+            // 这个动作会真的清掉 `DB.setPasscode(nil)` 与 `DB.setDuressCode(nil)` ——
+            // 胁迫者点两下就能拆掉冷启动门禁，并**抹掉胁迫码本身**。空壳是只读的伪装，
+            // 不能成为拆掉伪装的入口。
+            if DB.hasPasscode() && !DB.isDecoy {
                 Button {
                     confirmingDisable = true
                 } label: {
@@ -90,11 +102,14 @@ struct SecurityScreen: View {
                         ? "已授权 · 到期与低电提醒会送达"
                         : "未授权（\(notifyLabel)） · 提醒只在 App 内显示")
 
-            Text("胁迫码：用另一组数字进入「空壳」。门照样能开，但凭证、记录、成员都会显示为空。它不会发出任何提示。")
-                .type(T.F.caption)
-                .foregroundStyle(T.C.ink3)
-                .lineSpacing(3)
-                .padding(.top, 20)
+            // 同样：空壳里不解释胁迫码。这段说明本身就是"这台手机有胁迫模式"的证据。
+            if !DB.isDecoy {
+                Text("胁迫码：用另一组数字进入「空壳」。门照样能开，但凭证、记录、成员都会显示为空。它不会发出任何提示。")
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.ink3)
+                    .lineSpacing(3)
+                    .padding(.top, 20)
+            }
         }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(item: $sheet) { kind in
@@ -105,6 +120,9 @@ struct SecurityScreen: View {
         }
         .confirmationDialog("关闭本机密码？", isPresented: $confirmingDisable, titleVisibility: .visible) {
             Button("关闭", role: .destructive) {
+                // 双保险：入口在空壳里已经隐藏，这里再守一道 —— 这条路径删的是真实的
+                // 冷启动密码与胁迫码，是空壳最不该拥有的能力。
+                guard !DB.isDecoy else { return }
                 DB.setPasscode(nil)
                 // 胁迫码的**唯一入口**就是门禁。密码一关，它就再也输不进去；
                 // 若留着，用户以后重新设密码时它会悄悄复活 —— 而那时多半已经忘了这串数字。
