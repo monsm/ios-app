@@ -43,6 +43,9 @@ final class AppModel {
     @ObservationIgnored private weak var router: Router?
     @ObservationIgnored private var autoLockTask: Task<Void, Never>?
     @ObservationIgnored private var activitySignature = ""
+    /// 上一次落到数据层的空壳态。用来判断「刚刚进/出空壳」——
+    /// 只有**真的变了**的那一次才做进/出的副作用（重载会被频繁调用）。
+    @ObservationIgnored private var decoyApplied = false
 
     let link = LinkSenseModel.shared
 
@@ -62,6 +65,10 @@ final class AppModel {
 
     func reload(refreshStatus: Bool = false) async {
         let mac = currentMac
+        // 空壳标志必须**先**立起来，再去读任何数据 ——
+        // 引擎层的 keychains()/ledger()/readLogs() 都靠这个标志返回空集；
+        // 晚一步设置，锁名就已经先漏出去了。
+        applyDecoyState()
         locks = DB.keychains().map(makeLock)
 
         guard !mac.isEmpty, let kc = DB.keychainForUnlock(mac) else {
@@ -83,15 +90,29 @@ final class AppModel {
         lastStatus = DB.get(StatusSnapshot.self, "kf_snap_" + mac)
         link.update(mac: mac)
 
-        DB.setDecoy(decoy)
-        if decoy {
-            CredentialOrg.cancelAllForDecoy()
-        }
-
         members = reloadMemberCards()
         reloadCredentials(mac)
         reloadEvents(mac)
         readLogsAt = RecordsSource.lastSync(mac: mac)
+    }
+
+    /// 空壳（胁迫码）开关的**唯一**入口。进/出空壳的副作用都收在这里。
+    ///
+    /// 进空壳：数据层整体返回空集、已排的到期提醒整族清掉、剪贴板清空。
+    /// 出空壳：到期提醒**必须重建** —— 进空壳时清掉了，不重建的话提醒永久消失，
+    /// 而界面仍显示「已排程」；自动开门的轮询也要恢复，否则用户以为它坏了。
+    private func applyDecoyState() {
+        let on = decoy
+        guard on != decoyApplied else { return }
+        decoyApplied = on
+        DB.setDecoy(on)
+        if on {
+            CredentialOrg.cancelAllForDecoy()
+        } else {
+            CredentialOrg.resetDecoyNotificationGuard()
+            CredentialOrg.rescheduleAllAlerts()
+            AutoOpenController.shared.onForeground(mac: currentMac)
+        }
     }
 
     func reloadCredentials(_ mac: String? = nil) {
@@ -227,20 +248,48 @@ final class AppModel {
 
     func noteGate(outcome: AppLock.Outcome) {
         switch outcome {
-        case .success: unlocked = true; decoy = false
-        case .decoy: unlocked = true; decoy = true
-        default: return
+        case .success:
+            unlocked = true
+            decoy = false
+        case .decoy:
+            unlocked = true
+            decoy = true
+            // 空壳必须**立刻**生效。等 reload() 跑完的那一拍里，界面上还是真实凭证 ——
+            // 胁迫者正盯着这一屏，恰好是空壳模式最不该发生的暴露。
+            clearProjectionsForDecoy()
+        default:
+            return
         }
-        DB.setDecoy(decoy)
+        applyDecoyState()
         gatePassedAt = Int64(Date().timeIntervalSince1970 * 1000)
         Task { await reload(refreshStatus: false) }
+    }
+
+    /// 进空壳那一刻先把界面投影里的**用户数据**全部清空。
+    ///
+    /// 数据层由 `applyDecoyState()` 一并关上；这里先清界面投影，
+    /// 是因为两者之间隔着一次 `Task` —— 那一拍里胁迫者正盯着这一屏。
+    ///
+    /// `lock`（当前这把锁）**留着**：胁迫码的前提就是「门照样能开」，
+    /// 清掉它就等于把唯一的目标（开锁）也藏起来了。
+    /// 锁名不算敏感数据 —— 引擎层藏的是「有几把锁」这个清单，不是你正站在哪扇门前。
+    /// `keyCount` 在空壳里本来就是 0（台账与手机钥匙都被过滤成空）。
+    private func clearProjectionsForDecoy() {
+        locks = []
+        credentials = []
+        members = []
+        events = []
+        ledgerCorrupt = false
+        // 剪贴板也要清：进空壳前可能刚复制过一枚动态码（`Clip.set` 有 90 秒有效期），
+        // 而空壳里没有任何界面会去动剪贴板 —— 胁迫者长按粘贴就能拿到。
+        Clip.clear()
     }
 
     func lockApp() {
         AppLock.shared.lock()
         unlocked = false
         decoy = false
-        DB.setDecoy(false)
+        applyDecoyState()
         DB.dropKeychainCache()
         LockService.shared.disconnect()
     }

@@ -42,6 +42,14 @@ struct BackupScreen: View {
 
             SectionHead(index: "01", title: "导出")
             FieldInput(placeholder: "设置一个备份口令（至少 8 位）", text: $passphrase, secure: true)
+                // 口令一改，之前那封信就不再对应当前口令了 ——
+                // 不清掉的话，用户会拿新口令去解旧信封，或者把旧信封当成新口令的结果发出去。
+                .onChange(of: passphrase) { _, _ in
+                    if exported != nil {
+                        exported = nil
+                        message = "口令改了，备份需要重新生成。"
+                    }
+                }
             HStack(spacing: 10) {
                 PrimaryButton(title: busy ? "正在生成…" : "生成加密备份", busy: busy) {
                     Task { export() }
