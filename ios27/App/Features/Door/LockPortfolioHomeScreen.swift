@@ -332,7 +332,7 @@ struct LockPortfolioHomeScreen: View {
                     }
                 }
                 .padding(.top, V8.S.gapM)
-                HStack(spacing: V8.S.gapL) {
+                VButtonRow(spacing: V8.S.gapL) {
                     ForEach(LockArchive.swatches) { item in
                         swatchCell(item)
                     }
@@ -388,17 +388,9 @@ struct LockPortfolioHomeScreen: View {
                 toggleRow("设为启动默认锁", detail: "冷启动直接落在这把锁；关掉则维持上次停留。", isOn: $isDefault)
                 VCard2(style: .well) {
                     VCardHead(eyebrow: "保存", statement: profileSaveStatement)
-                    Button {
+                    V8ActionButton(title: "保存档案", style: .primary) {
                         saveProfile()
-                    } label: {
-                        Text("保存档案")
-                            .font(V8.T.tab)
-                            .foregroundStyle(V8.C.chipOn)
-                            .frame(maxWidth: .infinity)
-                            .frame(minHeight: V8.H.min)
-                            .background(Capsule(style: .continuous).fill(V8.C.accent))
                     }
-                    .buttonStyle(V8PressStyle())
                     .accessibilityLabel("保存锁档案")
                     .padding(.top, V8.S.gapM)
                     if let profileOutcome {

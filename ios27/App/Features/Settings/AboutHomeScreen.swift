@@ -42,7 +42,9 @@ struct AboutHomeScreen: View {
                         .font(V8.T.headline)
                         .foregroundStyle(V8.C.ink1)
                         .monospacedDigit()
-                        .frame(width: V8.S.gapXXL, height: V8.S.gapXXL)
+                        // 2026-11-06（V10 · 大字号验收）：数字格用 min 尺寸 ——
+                        // 固定 24×24 在大字号下会把字裁掉。
+                        .frame(minWidth: V8.S.gapXXL, minHeight: V8.S.gapXXL)
                         .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
                 }
                 Spacer(minLength: 0)

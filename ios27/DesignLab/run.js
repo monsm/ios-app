@@ -23,7 +23,7 @@ function page(screen, mode) {
   const tabbar = '<nav class="tabbar">' + TABS.map((t, i) =>
     '<div class="t ' + (i === screen.tab ? 'on' : '') + '"><b>' + GLYPH[i] + '</b>' + t + '</div>').join('') + '</nav>';
   return '<!doctype html><html lang="zh"><head><meta charset="utf-8"><title>' + screen.name + '</title>' +
-    '<style>:root{' + lab.rootVars(mode) + '}' + lab.cssBody + '</style></head><body>' +
+    '<style>:root{--phone-w:' + PHONE_W + 'px;' + lab.rootVars(mode) + '}' + lab.cssBody + '</style></head><body>' +
     '<div class="phone" data-mode="' + mode + '">' +
     '<div class="statusbar"><span>9:41</span><span>&#9679;&#9679;&#9679; &#9650;</span></div>' +
     '<div class="scroll">' +
@@ -38,7 +38,7 @@ function index(screens, modes) {
   const blocks = [];
   for (const s of screens) for (const m of modes) {
     blocks.push('<div class="frame"><h2>' + s.name + ' <span>' + s.id + ' · ' + m + '</span></h2>' +
-      '<iframe src="' + s.id + '.' + m + '.html" width="430" height="932" style="border:0;border-radius:44px"></iframe></div>');
+      '<iframe src="' + s.id + '.' + m + '.html" width="' + PHONE_W + '" height="932" style="border:0;border-radius:44px"></iframe></div>');
   }
   return '<!doctype html><html lang="zh"><head><meta charset="utf-8"><title>DesignLab</title><style>' + lab.cssBody +
     '.wrap{padding:24px}.grid{display:flex;flex-wrap:wrap;gap:28px}</style></head><body><div class="wrap"><div class="grid">' +
@@ -47,6 +47,10 @@ function index(screens, modes) {
 
 const args = process.argv.slice(2);
 const htmlOnly = args.includes('--html-only');
+// 2026-11-06（V10 · 宽度验收）：--width=375 按 iPhone SE 的宽度渲染一整套，
+// 用来检查窄屏下有没有横向溢出 / 错位（默认 430）。
+const widthArg = args.find((a) => a.startsWith('--width='));
+const PHONE_W = widthArg ? parseInt(widthArg.split('=')[1], 10) : 430;
 const filter = args.find((a) => !a.startsWith('--'));
 const targets = filter ? SCREENS.filter((s) => s.id.includes(filter)) : SCREENS;
 const modes = ['light', 'dark'];
@@ -68,7 +72,7 @@ if (htmlOnly) {
 for (const h of htmls) {
   try {
     execFileSync(EDGE, ['--headless=new', '--disable-gpu', '--hide-scrollbars',
-      '--window-size=430,932', '--screenshot=' + h.shot, 'file:///' + h.file.replace(/\\/g, '/')],
+      '--window-size=' + PHONE_W + ',932', '--screenshot=' + h.shot, 'file:///' + h.file.replace(/\\/g, '/')],
       { stdio: 'ignore', timeout: 30000 });
     ok++;
   } catch (e) {

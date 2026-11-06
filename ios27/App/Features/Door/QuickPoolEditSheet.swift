@@ -207,19 +207,11 @@ struct QuickPoolEditSheet: View {
 
     private var saveCard: some View {
         VCard2(style: .well) {
-            Button {
+            V8ActionButton(title: "保存", style: .primary) {
                 QuickPool.setSelected(picked)
                 QuickPool.setSmartFirst(smart)
                 dismiss()
-            } label: {
-                Text("保存")
-                    .font(V8.T.tab)
-                    .foregroundStyle(V8.C.chipOn)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: V8.H.min)
-                    .background(Capsule(style: .continuous).fill(V8.C.accent))
             }
-            .buttonStyle(V8PressStyle())
             .accessibilityLabel("保存快捷操作")
             .disabled(picked.isEmpty)
             Text(picked.isEmpty

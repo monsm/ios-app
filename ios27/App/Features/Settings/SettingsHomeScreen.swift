@@ -13,7 +13,7 @@ struct SettingsHomeScreen: View {
     var body: some View {
         // 2026-11-05（Round 3）：标题已交给系统 navigationTitle（「设置」），
         // 这句话改成 status 行，不再与导航标题重复。
-        VPage(title: "只在这台手机上", lead: "门锁数据不联网；外观与无障碍设置只影响本机。", atmosphere: .graphite) {
+        VPage(title: "只在这台手机上", lead: "门锁数据不联网；外观与无障碍设置只影响本机。") {
             EmptyView()
         } content: {
             lockCard
@@ -26,7 +26,7 @@ struct SettingsHomeScreen: View {
         .background(V8.C.bg.ignoresSafeArea())
         // 2026-11-05（对抗审查）：旧 V7 的 DeleteDeviceSheet 随 SettingsScreen 一起被删，
         // 删除一台锁的本机数据（含 20+ 数据族清理）在 V8 里整段丢失。这里接回。
-        .sheet(isPresented: $showDeleteLock) { LockDataDeleteSheet() }
+        .sheet(isPresented: $showDeleteLock) { LockDataDeleteSheet().v8Sheet() }
     }
 
     private var lockCard: some View {

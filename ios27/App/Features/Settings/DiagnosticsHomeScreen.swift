@@ -99,15 +99,9 @@ struct DiagnosticsHomeScreen: View {
                 VBusy(text: "正在扫描 8 秒 · 把要测的设备放在手机旁")
                     .padding(.top, V8.S.gapM)
             } else {
-                Button { Task { await scan() } } label: {
-                    Text("重新扫描")
-                        .font(V8.T.tab)
-                        .foregroundStyle(V8.C.chipOn)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: V8.H.min)
-                        .background(Capsule(style: .continuous).fill(V8.C.accent))
+                V8ActionButton(title: "重新扫描", style: .primary) {
+                    Task { await scan() }
                 }
-                .buttonStyle(V8PressStyle())
                 .padding(.top, V8.S.gapM)
             }
             Text("门锁被连上后会停止广播；先断开再扫。扫描只读广播，不连接、不发命令。")
@@ -503,17 +497,10 @@ struct DiagnosticsHomeScreen: View {
                 .foregroundStyle(V8.C.ink3)
                 .padding(.top, V8.S.gapM)
                 .fixedSize(horizontal: false, vertical: true)
-            Button { askRepair = true } label: {
-                Text("修池（重写 PIN 表 · 保通信密钥）")
-                    .font(V8.T.tab)
-                    .foregroundStyle(V8.C.chipOn)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: V8.H.min)
-                    .background(Capsule(style: .continuous).fill(V8.C.accent))
+            V8ActionButton(title: "修池（重写 PIN 表 · 保通信密钥）", style: .primary) {
+                askRepair = true
             }
-            .buttonStyle(V8PressStyle())
             .disabled(busy || mac.isEmpty || readOnly)
-            .opacity((busy || mac.isEmpty || readOnly) ? 0.45 : 1)
             .padding(.top, V8.S.gapM)
             if readOnly {
                 Text(TrialCopy.blocked("修池这一写操作"))

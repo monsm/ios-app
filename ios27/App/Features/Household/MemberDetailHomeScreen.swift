@@ -116,7 +116,7 @@ struct MemberDetailHomeScreen: View {
             loadOpsFields()
         }
         .sheet(isPresented: $showMerge) {
-            if let member { MemberMergeSheet(primary: member) }
+            if let member { MemberMergeSheet(primary: member).v8Sheet() }
         }
         .onChange(of: roster.focusMember) { _, _ in loadOpsFields() }
     }
@@ -235,7 +235,7 @@ struct MemberDetailHomeScreen: View {
             VCardHead(eyebrow: "角色与权限", statement: "本机判据", trailing: "三档")
             VDivider2()
                 .padding(.top, V8.S.gapM)
-            HStack(spacing: V8.S.gapS) {
+            VButtonRow {
                 ForEach(MemberCard.Role.allCases, id: \.self) { role in
                     roleChip(role, current: member.role)
                 }
@@ -370,7 +370,7 @@ struct MemberDetailHomeScreen: View {
                 }
                 .buttonStyle(V8PressStyle())
                 .disabled(phone.filter(\.isNumber).count < 3)
-                .opacity(phone.filter(\.isNumber).count < 3 ? 0.45 : 1)
+                .opacity(phone.filter(\.isNumber).count < 3 ? V8.O.disabled : 1)
                 .accessibilityLabel("一键呼叫 " + phone)
                 .padding(.top, V8.S.gapM)
             }
@@ -388,17 +388,9 @@ struct MemberDetailHomeScreen: View {
                     .padding(.top, V8.S.gapM)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Button {
+            V8ActionButton(title: saved ? "档案已保存" : "保存档案", style: .primary) {
                 save(member)
-            } label: {
-                Text(saved ? "档案已保存" : "保存档案")
-                    .font(V8.T.tab)
-                    .foregroundStyle(V8.C.chipOn)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: V8.H.min)
-                    .background(Capsule(style: .continuous).fill(V8.C.accent))
             }
-            .buttonStyle(V8PressStyle())
             .accessibilityLabel("保存成员档案")
             .padding(.top, V8.S.gapL)
         }
@@ -409,12 +401,7 @@ struct MemberDetailHomeScreen: View {
             Text(label)
                 .font(V8.T.label)
                 .foregroundStyle(V8.C.ink4)
-            TextField(placeholder, text: text)
-                .font(V8.T.body)
-                .foregroundStyle(V8.C.ink1)
-                .frame(minHeight: V8.H.min)
-                .padding(.horizontal, V8.S.gapM)
-                .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
+            VTextField(placeholder: placeholder, text: text)
         }
     }
 
@@ -438,7 +425,8 @@ struct MemberDetailHomeScreen: View {
             Text(e.isEmpty ? "首字" : e)
                 .font(e.isEmpty ? V8.T.caption : V8.T.body)
                 .foregroundStyle(on ? V8.C.ink1 : V8.C.ink3)
-                .frame(width: V8.S.gapXXL, height: V8.S.gapXXL)
+                // 大字号下格子跟着字长，不裁字。
+                .frame(minWidth: V8.S.gapXXL, minHeight: V8.S.gapXXL)
                 .background(on ? V8.C.accentTrack : V8.C.chipOff, in: Circle())
                 .overlay(
                     Circle().strokeBorder(on ? V8.C.accent : V8.C.line, lineWidth: V8.S.hair)
@@ -462,11 +450,8 @@ struct MemberDetailHomeScreen: View {
             VDivider2()
                 .padding(.top, V8.S.gapM)
             if keys.isEmpty {
-                Text("TA 名下还没有凭证。到「钥匙」页新建一枚，归属选 \(member.name)。")
-                    .font(V8.T.footnote)
-                    .foregroundStyle(V8.C.ink3)
+                VEmptyHint(text: "TA 名下还没有凭证。到「钥匙」页新建一枚，归属选 \(member.name)。")
                     .padding(.top, V8.S.gapM)
-                    .fixedSize(horizontal: false, vertical: true)
                 VNavRow(title: "去新建凭证", detail: "归属自动带这位成员") {
                     router.request(.dest(.keyCreate))
                 }
@@ -518,11 +503,8 @@ struct MemberDetailHomeScreen: View {
             VDivider2()
                 .padding(.top, V8.S.gapM)
             if entries.isEmpty {
-                Text("台账里还没有可证明归属到 TA 的开门。锁端日志没有身份字段，只有归属明确的条目才会出现在这里。")
-                    .font(V8.T.footnote)
-                    .foregroundStyle(V8.C.ink3)
+                VEmptyHint(text: "台账里还没有可证明归属到 TA 的开门。锁端日志没有身份字段，只有归属明确的条目才会出现在这里。")
                     .padding(.top, V8.S.gapM)
-                    .fixedSize(horizontal: false, vertical: true)
                 VNavRow(title: "去台账按 TA 筛", detail: "记录页的成员筛选") {
                     router.request(.dest(.records))
                 }
@@ -840,7 +822,7 @@ struct MemberDetailHomeScreen: View {
                 }
             }
             .padding(.top, V8.S.gapM)
-            Button {
+            V8ActionButton(title: "移交名下凭证", style: .primary) {
                 let n = MemberOpsStore.transfer(mac: app.currentMac, from: m.id, to: transferTo)
                 // 0 枚不是成功：台账里可能一条都没有归属到 TA，也可能是归属存的是旧口径的名字。
                 if n > 0 {
@@ -852,17 +834,8 @@ struct MemberDetailHomeScreen: View {
                 }
                 opsTick += 1
                 Task { await app.reload(refreshStatus: false) }
-            } label: {
-                Text("移交名下凭证")
-                    .font(V8.T.tab)
-                    .foregroundStyle(V8.C.chipOn)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: V8.H.min)
-                    .background(Capsule(style: .continuous).fill(V8.C.accent))
             }
-            .buttonStyle(V8PressStyle())
             .disabled(transferTo.isEmpty)
-            .opacity(transferTo.isEmpty ? 0.45 : 1)
             .accessibilityLabel("移交名下凭证")
             .padding(.top, V8.S.gapM)
             Text("移交只改本机台账的归属，不下发到门锁 —— 锁端凭证仍然有效。")
@@ -932,12 +905,7 @@ struct MemberDetailHomeScreen: View {
                     Text("借用人")
                         .font(V8.T.label)
                         .foregroundStyle(V8.C.ink4)
-                    TextField("如 楼上邻居", text: $borrowBy)
-                        .font(V8.T.body)
-                        .foregroundStyle(V8.C.ink1)
-                        .frame(minHeight: V8.H.min)
-                        .padding(.horizontal, V8.S.gapM)
-                        .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
+                    VTextField(placeholder: "如 楼上邻居", text: $borrowBy)
                 }
                 .padding(.top, V8.S.gapM)
                 DatePicker("归还日", selection: $borrowDue, displayedComponents: .date)
@@ -1131,11 +1099,8 @@ struct MemberDetailHomeScreen: View {
                 .padding(.top, V8.S.gapM)
                 .fixedSize(horizontal: false, vertical: true)
             if excerpts.isEmpty {
-                Text("还没有可归属的开门记录。锁端日志没有身份字段，只能按时间窗推断。")
-                    .font(V8.T.caption)
-                    .foregroundStyle(V8.C.ink4)
+                VEmptyHint(text: "还没有可归属的开门记录。锁端日志没有身份字段，只能按时间窗推断。")
                     .padding(.top, V8.S.gapS)
-                    .fixedSize(horizontal: false, vertical: true)
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(excerpts.enumerated()), id: \.offset) { index, item in

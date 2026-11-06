@@ -246,24 +246,12 @@ struct BackupHomeScreen: View {
                 .foregroundStyle(V8.C.ink3)
                 .padding(.top, V8.S.gapM)
                 .fixedSize(horizontal: false, vertical: true)
-            SecureField("备份口令（必填，至少 8 位）", text: $password)
-                .font(V8.T.body)
-                .foregroundStyle(V8.C.ink1)
-                .frame(minHeight: V8.H.min)
-                .padding(.horizontal, V8.S.gapM)
-                .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
+            VTextField(placeholder: "备份口令（必填，至少 8 位）", text: $password, secure: true)
                 .padding(.top, V8.S.gapM)
-            Button { Task { await makeBackup() } } label: {
-                Text(busy ? "正在生成…" : "生成一份本机备份")
-                    .font(V8.T.tab)
-                    .foregroundStyle(V8.C.chipOn)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: V8.H.min)
-                    .background(Capsule(style: .continuous).fill(V8.C.accent))
+            V8ActionButton(title: busy ? "正在生成…" : "生成一份本机备份", style: .primary, busy: busy) {
+                Task { await makeBackup() }
             }
-            .buttonStyle(V8PressStyle())
             .disabled(busy)
-            .opacity(busy ? 0.45 : 1)
             .padding(.top, V8.S.gapM)
             VDivider2()
                 .padding(.vertical, V8.S.gapM)
@@ -403,20 +391,13 @@ struct BackupHomeScreen: View {
                 }
                 .buttonStyle(V8PressStyle())
                 .disabled(busy || davURL.isEmpty)
-                .opacity((busy || davURL.isEmpty) ? 0.45 : 1)
+                .opacity((busy || davURL.isEmpty) ? V8.O.disabled : 1)
                 Spacer(minLength: 0)
             }
-            Button { Task { await uploadDav() } } label: {
-                Text(busy ? "上传中…" : "上传当前备份")
-                    .font(V8.T.tab)
-                    .foregroundStyle(V8.C.chipOn)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: V8.H.min)
-                    .background(Capsule(style: .continuous).fill(V8.C.accent))
+            V8ActionButton(title: busy ? "上传中…" : "上传当前备份", style: .primary, busy: busy) {
+                Task { await uploadDav() }
             }
-            .buttonStyle(V8PressStyle())
             .disabled(busy || davURL.isEmpty)
-            .opacity((busy || davURL.isEmpty) ? 0.45 : 1)
             .padding(.top, V8.S.gapM)
             Text("只做单向上传（覆盖同一个远端文件）：不列远端备份、也不删远端文件 —— 那两项需要 PROPFIND 解析，本版没有实现。")
                 .font(V8.T.footnote)
@@ -438,14 +419,10 @@ struct BackupHomeScreen: View {
             Text(label)
                 .font(V8.T.label)
                 .foregroundStyle(V8.C.ink4)
-            TextField(placeholder, text: text)
-                .font(V8.T.body)
-                .foregroundStyle(V8.C.ink1)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .frame(minHeight: V8.H.min)
-                .padding(.horizontal, V8.S.gapM)
-                .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
+            VTextField(placeholder: placeholder,
+                        text: text,
+                        autocorrection: false,
+                        capitalization: .never)
         }
     }
 
@@ -454,12 +431,7 @@ struct BackupHomeScreen: View {
             Text(label)
                 .font(V8.T.label)
                 .foregroundStyle(V8.C.ink4)
-            SecureField(placeholder, text: text)
-                .font(V8.T.body)
-                .foregroundStyle(V8.C.ink1)
-                .frame(minHeight: V8.H.min)
-                .padding(.horizontal, V8.S.gapM)
-                .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
+            VTextField(placeholder: placeholder, text: text, secure: true)
         }
     }
 
@@ -483,16 +455,14 @@ struct BackupHomeScreen: View {
             }
             .buttonStyle(V8PressStyle())
             .disabled(busy)
-            .opacity(busy ? 0.45 : 1)
+            .opacity(busy ? V8.O.disabled : 1)
             .padding(.top, V8.S.gapS)
+            // 多行输入：仍是 TextField，只是表面换成共享的那一套。
             TextField("从旧手机复制过来的备份文本", text: $migrateText, axis: .vertical)
                 .font(V8.T.body)
                 .foregroundStyle(V8.C.ink1)
                 .lineLimit(2...6)
-                .frame(minHeight: V8.H.min)
-                .padding(.horizontal, V8.S.gapM)
-                .padding(.vertical, V8.S.gapS)
-                .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
+                .v8Field()
                 .padding(.top, V8.S.gapM)
             Button { Task { await previewMigration() } } label: {
                 Text("预览换机包")
@@ -502,7 +472,7 @@ struct BackupHomeScreen: View {
             }
             .buttonStyle(V8PressStyle())
             .disabled(migrateText.isEmpty || busy)
-            .opacity((migrateText.isEmpty || busy) ? 0.45 : 1)
+            .opacity((migrateText.isEmpty || busy) ? V8.O.disabled : 1)
             .padding(.top, V8.S.gapS)
             if let p = migratePreview {
                 VDivider2()
@@ -538,17 +508,10 @@ struct BackupHomeScreen: View {
                     }
                 }
                 .padding(.top, V8.S.gapM)
-                Button { Task { await runMigration() } } label: {
-                    Text("导入换机包")
-                        .font(V8.T.tab)
-                        .foregroundStyle(V8.C.chipOn)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: V8.H.min)
-                        .background(Capsule(style: .continuous).fill(V8.C.accent))
+                V8ActionButton(title: "导入换机包", style: .primary) {
+                    Task { await runMigration() }
                 }
-                .buttonStyle(V8PressStyle())
                 .disabled(busy || trialOn)
-                .opacity((busy || trialOn) ? 0.45 : 1)
                 .padding(.top, V8.S.gapM)
                 Text("导入前会自动写一个回滚快照（含明文密钥，保留最近 4 份），这是本机恢复前的唯一数据副本。")
                     .font(V8.T.footnote)
@@ -679,14 +642,10 @@ struct BackupHomeScreen: View {
                 .fixedSize(horizontal: false, vertical: true)
             VDivider2()
                 .padding(.top, V8.S.gapM)
-            SecureField("备份密码（至少 8 位）", text: $exportPassword)
-                .font(V8.T.body)
-                .foregroundStyle(V8.C.ink1)
-                .textContentType(.newPassword)
-                .frame(minHeight: V8.H.min)
-                .padding(.horizontal, V8.S.gapM)
-                .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
-                .accessibilityLabel("备份密码")
+            VTextField(placeholder: "备份密码（至少 8 位）",
+                        text: $exportPassword,
+                        secure: true,
+                        contentType: .newPassword)
                 .padding(.top, V8.S.gapM)
             if !exportPassword.isEmpty, exportPassword.count < 8 {
                 Text("至少 8 位 —— 否则加密形同虚设")
@@ -701,19 +660,10 @@ struct BackupHomeScreen: View {
                 .foregroundStyle(V8.C.ink3)
                 .padding(.top, V8.S.gapS)
                 .fixedSize(horizontal: false, vertical: true)
-            Button {
+            V8ActionButton(title: exporting ? "正在生成…" : "生成备份", style: .primary, busy: exporting) {
                 generate()
-            } label: {
-                Text(exporting ? "正在生成…" : "生成备份")
-                    .font(V8.T.tab)
-                    .foregroundStyle(V8.C.chipOn)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: V8.H.min)
-                    .background(Capsule(style: .continuous).fill(V8.C.accent))
             }
-            .buttonStyle(V8PressStyle())
             .disabled(exportPassword.count < 8 || exporting)
-            .opacity((exportPassword.count < 8 || exporting) ? 0.45 : 1)
             .padding(.top, V8.S.gapM)
             .accessibilityLabel("生成备份")
             if let exportError {
@@ -811,34 +761,25 @@ struct BackupHomeScreen: View {
                 .foregroundStyle(V8.C.ink3)
                 .padding(.top, V8.S.gapM)
                 .fixedSize(horizontal: false, vertical: true)
+            // 多行输入：仍是 TextField，只是表面换成共享的那一套。
             TextField("粘贴备份文本", text: $importText, axis: .vertical)
                 .font(V8.T.footnote.monospaced())
                 .foregroundStyle(V8.C.ink1)
                 .lineLimit(3 ... 6)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
-                .frame(minHeight: V8.H.min)
-                .padding(.horizontal, V8.S.gapM)
-                .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
+                .v8Field()
                 .accessibilityLabel("备份文本")
                 .padding(.top, V8.S.gapS)
-            SecureField("备份密码（导出时设过密码的才需要填）", text: $importPassword)
-                .font(V8.T.body)
-                .foregroundStyle(V8.C.ink1)
-                .frame(minHeight: V8.H.min)
-                .padding(.horizontal, V8.S.gapM)
-                .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
-                .accessibilityLabel("备份密码")
+            VTextField(placeholder: "备份密码（导出时设过密码的才需要填）",
+                        text: $importPassword,
+                        secure: true)
                 .padding(.top, V8.S.gapS)
             if DB.hasPasscode() {
-                SecureField("当前本机密码（导入会改写它，需先验证）", text: $currentPasscode)
-                    .font(V8.T.body)
-                    .foregroundStyle(V8.C.ink1)
-                    .keyboardType(.numberPad)
-                    .frame(minHeight: V8.H.min)
-                    .padding(.horizontal, V8.S.gapM)
-                    .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
-                    .accessibilityLabel("当前本机密码")
+                VTextField(placeholder: "当前本机密码（导入会改写它，需先验证）",
+                            text: $currentPasscode,
+                            secure: true,
+                            keyboard: .numberPad)
                     .padding(.top, V8.S.gapS)
             }
             HStack(spacing: V8.S.gapS) {

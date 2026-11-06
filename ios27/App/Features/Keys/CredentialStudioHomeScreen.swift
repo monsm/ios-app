@@ -159,6 +159,7 @@ struct CredentialStudioHomeScreen: View {
         .onAppear { tick += 1 }
         .sheet(item: $alertTarget) { pwd in
             CredAlertSheet2(mac: studioMac, pwd: pwd)
+                .v8Sheet()
         }
         .sheet(isPresented: $showPackageImport) {
             CredentialImportSheet(mac: studioMac) {
@@ -166,12 +167,15 @@ struct CredentialStudioHomeScreen: View {
                 studioOutcomeBad = false
                 studioOutcome = "凭证包已导入（冲突项已跳过）"
             }
+            .v8Sheet()
         }
         .sheet(isPresented: $binOpen) {
             CredBinSheet2(mac: studioMac) { tick += 1 }
+                .v8Sheet()
         }
         .sheet(isPresented: $historyOpen) {
             CredHistorySheet2(mac: studioMac) { tick += 1 }
+                .v8Sheet()
         }
         .v8Confirm(
             isPresented: $confirmPurgeAll,
@@ -499,11 +503,8 @@ struct CredentialStudioHomeScreen: View {
             VDivider2()
                 .padding(.top, V8.S.gapM)
             if pwdRows.isEmpty {
-                Text("还没有密码凭证。去「新增凭证」加一枚。")
-                    .font(V8.T.footnote)
-                    .foregroundStyle(V8.C.ink3)
+                VEmptyHint(text: "还没有密码凭证。去「新增凭证」加一枚。")
                     .padding(.top, V8.S.gapM)
-                    .fixedSize(horizontal: false, vertical: true)
             } else {
                 VStack(spacing: 0) {
                     ForEach(pwdRows) { pwd in
@@ -528,11 +529,8 @@ struct CredentialStudioHomeScreen: View {
             }
             .padding(.top, V8.S.gapL)
             if fpRows.isEmpty {
-                Text("还没有指纹。指纹要在门锁上按 8 次录入。")
-                    .font(V8.T.footnote)
-                    .foregroundStyle(V8.C.ink3)
+                VEmptyHint(text: "还没有指纹。指纹要在门锁上按 8 次录入。")
                     .padding(.top, V8.S.gapM)
-                    .fixedSize(horizontal: false, vertical: true)
             } else {
                 VStack(spacing: 0) {
                     ForEach(fpRows) { fp in
@@ -664,7 +662,7 @@ struct CredentialStudioHomeScreen: View {
                 .font(V8.T.label)
                 .foregroundStyle(V8.C.ink4)
                 .padding(.top, V8.S.gapM)
-            HStack(spacing: V8.S.gapChip) {
+            VButtonRow(spacing: V8.S.gapChip) {
                 ForEach([7, 30, 90, 180], id: \.self) { days in
                     Button {
                         extendDays = days
@@ -680,21 +678,11 @@ struct CredentialStudioHomeScreen: View {
                     .accessibilityLabel("延期 " + String(days) + " 天")
                     .accessibilityAddTraits(extendDays == days ? [.isButton, .isSelected] : .isButton)
                 }
-                Spacer(minLength: 0)
             }
-            Button {
+            V8ActionButton(title: "应用批量延期", style: .primary) {
                 batchExtend()
-            } label: {
-                Text("应用批量延期")
-                    .font(V8.T.tab)
-                    .foregroundStyle(V8.C.chipOn)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: V8.H.min)
-                    .background(Capsule(style: .continuous).fill(V8.C.accent))
             }
-            .buttonStyle(V8PressStyle())
             .disabled(selectedPwds.isEmpty)
-            .opacity(selectedPwds.isEmpty ? 0.45 : 1)
             .padding(.top, V8.S.gapS)
             VDivider2()
                 .padding(.top, V8.S.gapL)
@@ -715,7 +703,7 @@ struct CredentialStudioHomeScreen: View {
             }
             .buttonStyle(V8PressStyle())
             .disabled(totalSelected == 0)
-            .opacity(totalSelected == 0 ? 0.45 : 1)
+            .opacity(totalSelected == 0 ? V8.O.disabled : 1)
             .padding(.top, V8.S.gapS)
             VDivider2()
                 .padding(.top, V8.S.gapL)
@@ -723,26 +711,12 @@ struct CredentialStudioHomeScreen: View {
                 .font(V8.T.label)
                 .foregroundStyle(V8.C.ink4)
                 .padding(.top, V8.S.gapM)
-            TextField("如「2026 春节 · 」", text: $prefixText)
-                .font(V8.T.body)
-                .foregroundStyle(V8.C.ink1)
-                .frame(minHeight: V8.H.min)
-                .padding(.horizontal, V8.S.gapM)
-                .background(V8.C.card, in: .rect(cornerRadius: V8.R.inset))
+            VTextField(placeholder: "如「2026 春节 · 」", text: $prefixText)
                 .padding(.top, V8.S.gapS)
-            Button {
+            V8ActionButton(title: "应用前缀备注", style: .secondary) {
                 applyPrefix()
-            } label: {
-                Text("应用前缀备注")
-                    .font(V8.T.tab)
-                    .foregroundStyle(V8.C.ink1)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: V8.H.min)
-                    .background(Capsule(style: .continuous).fill(V8.C.chipOff))
             }
-            .buttonStyle(V8PressStyle())
             .disabled(prefixText.isEmpty || totalSelected == 0)
-            .opacity((prefixText.isEmpty || totalSelected == 0) ? 0.45 : 1)
             .padding(.top, V8.S.gapS)
         }
     }
@@ -774,19 +748,10 @@ struct CredentialStudioHomeScreen: View {
                 }
             }
             .padding(.top, V8.S.gapM)
-            Button {
+            V8ActionButton(title: "应用移交", style: .secondary) {
                 applyTransfer()
-            } label: {
-                Text("应用移交")
-                    .font(V8.T.tab)
-                    .foregroundStyle(V8.C.ink1)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: V8.H.min)
-                    .background(Capsule(style: .continuous).fill(V8.C.chipOff))
             }
-            .buttonStyle(V8PressStyle())
             .disabled(totalSelected == 0)
-            .opacity(totalSelected == 0 ? 0.45 : 1)
             .padding(.top, V8.S.gapS)
             VDivider2()
                 .padding(.top, V8.S.gapL)
@@ -802,50 +767,25 @@ struct CredentialStudioHomeScreen: View {
                 .background(V8.C.card, in: .rect(cornerRadius: V8.R.inset))
                 .autocorrectionDisabled()
                 .padding(.top, V8.S.gapS)
-            Button {
+            V8ActionButton(title: "导出所选凭证包", style: .secondary) {
                 exportPackage()
-            } label: {
-                Text("导出所选凭证包")
-                    .font(V8.T.tab)
-                    .foregroundStyle(V8.C.ink1)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: V8.H.min)
-                    .background(Capsule(style: .continuous).fill(V8.C.chipOff))
             }
-            .buttonStyle(V8PressStyle())
             .disabled(packagePassword.count < 8 || totalSelected == 0)
-            .opacity((packagePassword.count < 8 || totalSelected == 0) ? 0.45 : 1)
             .padding(.top, V8.S.gapS)
             if !packageText.isEmpty {
                 VDataRow(tag: "凭证包", tagTint: V8.C.ink4, title: String(packageText.count) + " 字符", value: "")
                     .padding(.top, V8.S.gapS)
-                Button {
+                V8ActionButton(title: "复制凭证包", style: .secondary) {
                     Clip.set(packageText)
-                } label: {
-                    Text("复制凭证包")
-                        .font(V8.T.tab)
-                        .foregroundStyle(V8.C.ink1)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: V8.H.min)
-                        .background(Capsule(style: .continuous).fill(V8.C.chipOff))
                 }
-                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("复制凭证包")
                 .padding(.top, V8.S.gapS)
             }
             VDivider2()
                 .padding(.top, V8.S.gapL)
-            Button {
+            V8ActionButton(title: "从凭证包导入…", style: .secondary) {
                 showPackageImport = true
-            } label: {
-                Text("从凭证包导入…")
-                    .font(V8.T.tab)
-                    .foregroundStyle(V8.C.ink1)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: V8.H.min)
-                    .background(Capsule(style: .continuous).fill(V8.C.chipOff))
             }
-            .buttonStyle(V8PressStyle())
             .accessibilityLabel("从凭证包导入")
             .padding(.top, V8.S.gapM)
         }
@@ -981,17 +921,9 @@ struct CredentialStudioHomeScreen: View {
                 .foregroundStyle(V8.C.ink3)
                 .padding(.top, V8.S.gapFootnote)
                 .fixedSize(horizontal: false, vertical: true)
-            Button {
+            V8ActionButton(title: "打开版本历史", style: .secondary) {
                 historyOpen = true
-            } label: {
-                Text("打开版本历史")
-                    .font(V8.T.tab)
-                    .foregroundStyle(V8.C.ink1)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: V8.H.min)
-                    .background(Capsule(style: .continuous).fill(V8.C.chipOff))
             }
-            .buttonStyle(V8PressStyle())
             .accessibilityLabel("打开版本历史")
             .padding(.top, V8.S.gapS)
         }
@@ -1199,17 +1131,9 @@ struct CredAlertSheet2: View {
                         .padding(.top, V8.S.gapFootnote)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                Button {
+                V8ActionButton(title: "完成", style: .primary) {
                     dismiss()
-                } label: {
-                    Text("完成")
-                        .font(V8.T.tab)
-                        .foregroundStyle(V8.C.chipOn)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: V8.H.min)
-                        .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("完成")
             }
             .background(V8.C.bg.ignoresSafeArea())
@@ -1283,15 +1207,9 @@ struct CredBinSheet2: View {
                         if let group = batches[b], group.count > 1 {
                             VDivider2()
                                 .padding(.vertical, V8.S.gapS)
-                            Button { restoreBatch(b) } label: {
-                                Text("还原这一批（" + String(group.count) + " 条 · " + (group.first?.source ?? "") + "）")
-                                    .font(V8.T.tab)
-                                    .foregroundStyle(V8.C.accent)
-                                    .frame(maxWidth: .infinity)
-                                    .frame(minHeight: V8.H.min)
-                                    .background(Capsule(style: .continuous).fill(V8.C.chipOff))
+                            V8ActionButton(title: "还原这一批（" + String(group.count) + " 条 · " + (group.first?.source ?? "") + "）", style: .secondary) {
+                                restoreBatch(b)
                             }
-                            .buttonStyle(V8PressStyle())
                             .accessibilityLabel("还原这一批" + String(group.count) + "条")
                         }
                     }
@@ -1302,17 +1220,9 @@ struct CredBinSheet2: View {
                         .foregroundStyle(outcomeBad ? V8.C.danger : V8.C.ok)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                Button {
+                V8ActionButton(title: "关闭", style: .secondary) {
                     dismiss()
-                } label: {
-                    Text("关闭")
-                        .font(V8.T.tab)
-                        .foregroundStyle(V8.C.ink1)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: V8.H.min)
-                        .background(Capsule(style: .continuous).fill(V8.C.chipOff))
                 }
-                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("关闭回收站")
             }
             .background(V8.C.bg.ignoresSafeArea())
@@ -1429,17 +1339,9 @@ struct CredHistorySheet2: View {
                             .foregroundStyle(V8.C.ink3)
                             .padding(.top, V8.S.gapM)
                             .fixedSize(horizontal: false, vertical: true)
-                        Button {
+                        V8ActionButton(title: "保存快照", style: .primary) {
                             capture()
-                        } label: {
-                            Text("保存快照")
-                                .font(V8.T.tab)
-                                .foregroundStyle(V8.C.chipOn)
-                                .frame(maxWidth: .infinity)
-                                .frame(minHeight: V8.H.min)
-                                .background(Capsule(style: .continuous).fill(V8.C.accent))
                         }
-                        .buttonStyle(V8PressStyle())
                         .accessibilityLabel("保存快照")
                         .padding(.top, V8.S.gapM)
                     }
@@ -1456,17 +1358,9 @@ struct CredHistorySheet2: View {
                         }
                         .padding(.top, V8.S.gapS)
                     }
-                    Button {
+                    V8ActionButton(title: "保存当前为快照", style: .secondary) {
                         capture()
-                    } label: {
-                        Text("保存当前为快照")
-                            .font(V8.T.tab)
-                            .foregroundStyle(V8.C.ink1)
-                            .frame(maxWidth: .infinity)
-                            .frame(minHeight: V8.H.min)
-                            .background(Capsule(style: .continuous).fill(V8.C.chipOff))
                     }
-                    .buttonStyle(V8PressStyle())
                     .accessibilityLabel("保存当前为快照")
                 }
                 if let outcome {
@@ -1475,17 +1369,9 @@ struct CredHistorySheet2: View {
                         .foregroundStyle(outcomeBad ? V8.C.danger : V8.C.ok)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                Button {
+                V8ActionButton(title: "关闭", style: .secondary) {
                     dismiss()
-                } label: {
-                    Text("关闭")
-                        .font(V8.T.tab)
-                        .foregroundStyle(V8.C.ink1)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: V8.H.min)
-                        .background(Capsule(style: .continuous).fill(V8.C.chipOff))
                 }
-                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("关闭版本历史")
             }
             .background(V8.C.bg.ignoresSafeArea())
@@ -1607,13 +1493,7 @@ struct CredentialImportSheet: View {
                     // 2026-11-05（对抗审查 · 安全）：导出包口令是加密凭证包的密钥，
                     // 明文输入 + 无遮挡等于把它摊在屏幕上。改 SecureField（打码），
                     // 与其它口令输入同口径。
-                    SecureField("包口令", text: $password)
-                        .font(V8.T.body)
-                        .foregroundStyle(V8.C.ink1)
-                        .frame(minHeight: V8.H.min)
-                        .padding(.horizontal, V8.S.gapM)
-                        .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
-                        .autocorrectionDisabled()
+                    VTextField(placeholder: "包口令", text: $password, secure: true, autocorrection: false)
                         .padding(.top, V8.S.gapS)
                     if let error {
                         Text(error)
@@ -1629,31 +1509,14 @@ struct CredentialImportSheet: View {
                             .padding(.top, V8.S.gapS)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    Button {
+                    V8ActionButton(title: "导入", style: .primary) {
                         run()
-                    } label: {
-                        Text("导入")
-                            .font(V8.T.tab)
-                            .foregroundStyle(V8.C.chipOn)
-                            .frame(maxWidth: .infinity)
-                            .frame(minHeight: V8.H.min)
-                            .background(Capsule(style: .continuous).fill(V8.C.accent))
                     }
-                    .buttonStyle(V8PressStyle())
                     .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || password.isEmpty)
-                    .opacity((text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || password.isEmpty) ? 0.45 : 1)
                     .padding(.top, V8.S.gapM)
-                    Button {
+                    V8ActionButton(title: "关闭", style: .secondary) {
                         dismiss()
-                    } label: {
-                        Text("关闭")
-                            .font(V8.T.tab)
-                            .foregroundStyle(V8.C.ink1)
-                            .frame(maxWidth: .infinity)
-                            .frame(minHeight: V8.H.min)
-                            .background(Capsule(style: .continuous).fill(V8.C.chipOff))
                     }
-                    .buttonStyle(V8PressStyle())
                     .accessibilityLabel("关闭导入")
                     .padding(.top, V8.S.gapS)
                 }

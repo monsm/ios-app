@@ -90,8 +90,8 @@ enum MotionTier: String, CaseIterable, Identifiable {
     var resultAnimation: Animation? {
         switch self {
         case .calm: return nil
-        case .standard: return V.M.move
-        case .lively: return V.M.settle
+        case .standard: return V8.M.move
+        case .lively: return V8.M.settle
         }
     }
 }

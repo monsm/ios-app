@@ -21,38 +21,6 @@ enum TabBarMode {
     }
 }
 
-// 2026-11-06（V9 · 液态仪器）：页面大气身份。每个 Tab 一组「顶光 / 尾光」，
-// 内容层色彩明度 ≤10%（浅色）/ ≤16%（深色）—— HIG Materials 的纪律：
-// 内容层的丰富靠色彩与光照，且必须足够淡，玻璃栏压上来时文字依旧可读。
-// 对比度：辉光下仍是 bgTop/bgBottom 打底（≥4.5 断言不受影响）。
-enum V8Atmosphere {
-    case brand      // 门：品牌蓝 → 冷紫
-    case violet     // 钥匙：指纹紫 → 品牌蓝
-    case indigo     // 台账：信息靛 → 紫
-    case green      // 家：手机钥匙绿 → 靛
-    case graphite   // 设置：石墨 → 无尾光（最素的一页，呼应"仪器"）
-
-    var top: Color {
-        switch self {
-        case .brand: return V8.C.glowA
-        case .violet: return V8.C.glowVioletTop
-        case .indigo: return V8.C.glowIndigoTop
-        case .green: return V8.C.glowGreenTop
-        case .graphite: return V8.C.glowGraphiteTop
-        }
-    }
-
-    var bottom: Color {
-        switch self {
-        case .brand: return V8.C.glowB
-        case .violet: return V8.C.glowA
-        case .indigo: return V8.C.glowIndigoBottom
-        case .green: return V8.C.glowGreenBottom
-        case .graphite: return V8.C.glowGraphiteBottom
-        }
-    }
-}
-
 // MARK: - 1. 卡片容器
 
 enum VCardStyle2 {
@@ -118,11 +86,9 @@ struct VCard2<Content: View>: View {
             .background(cardSurface(style))
     }
 
-    // 2026-11-06（V9 · 液态仪器）：卡片材质 = 渐变面板 + 顶缘受光高光 + 双层投影。
-    //   · 渐变：cardTop → cardBottom，微斜向（纯垂直像塑料，斜向才是光）；
-    //   · 高光：顶缘 1pt cardSheen 描边（面板受光的物理暗示）；
-    //   · 投影：12pt 环境影（抬离纸面）+ 3pt 接触影（贴着桌面），同色 V8.C.shadow。
-    // well（凹槽）保持素面 + 无影 —— 沉下去的层不反光。
+    // 2026-11-06（V10 · Quiet Instrument）：卡片材质收敛为「近白面板 + 0.4pt 描边 +
+    // 一级柔和投影」。渐变只保留 1–2 级明度差，顶缘高光降到"近看才有"。
+    // 层次主要由间距、字阶与描边承担，不再用彩色辉光/厚玻璃堆叠。
     @ViewBuilder
     private func cardSurface(_ style: VCardStyle2) -> some View {
         let shape = RoundedRectangle(cornerRadius: style.radius, style: .continuous)
@@ -131,8 +97,8 @@ struct VCard2<Content: View>: View {
                 .fill(
                     LinearGradient(
                         colors: [V8.C.cardTop, V8.C.cardBottom],
-                        startPoint: UnitPoint(x: 0.3, y: 0),
-                        endPoint: UnitPoint(x: 0.7, y: 1)
+                        startPoint: .top,
+                        endPoint: .bottom
                     )
                 )
                 .shadow(
@@ -146,11 +112,24 @@ struct VCard2<Content: View>: View {
                     y: V8.Z.cardShadowY2
                 )
                 .overlay {
-                    shape.strokeBorder(V8.C.cardSheen, lineWidth: V8.S.hair)
+                    shape.strokeBorder(V8.C.line, lineWidth: V8.S.hair)
+                }
+                .overlay(alignment: .top) {
+                    LinearGradient(
+                        colors: [V8.C.cardSheen, V8.C.cardSheen.opacity(0)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: max(1, V8.R.card / 2))
+                    .clipShape(shape)
+                    .allowsHitTesting(false)
                 }
         } else {
             shape
                 .fill(style.fill)
+                .overlay {
+                    shape.strokeBorder(V8.C.line, lineWidth: V8.S.hair)
+                }
         }
     }
 }
@@ -255,8 +234,8 @@ struct VDataRow: View {
     var unit: String? = nil
     var spark: [Double]? = nil
     var sparkTint: Color = V8.C.accentFill
-    /// 标签列宽度。默认 76pt（凭证分类词），时间线这类短时刻用窄档（51pt）。
-    /// 2026-11-05（Round 3）：记录页时刻列原来也是 76pt，名称被挤到很晚才开始。
+    /// 标签列宽度。默认 72pt（凭证分类词），时间线这类短时刻用窄档（48pt）。
+    /// 2026-11-06（V10）：宽度改用专用令牌，不再从卡头间距推导 —— 调间距时不会顺带挤坏表格。
     var tagNarrow: Bool = false
     /// 2026-11-05（全技能审核 · 44pt 命中）：数据行作为 Button label 时视觉行高只有 22.1pt。
     /// 非交互表格保持密度（interactive=false），列表入口传 true 把命中区抬到 44pt。
@@ -283,17 +262,18 @@ struct VDataRow: View {
                 .font(V8.T.caption)
                 .foregroundStyle(tagTint)
                 .lineLimit(1)
+                .minimumScaleFactor(0.8)
                 .monospacedDigit()
-                .frame(width: tagNarrow ? V8.S.gapTableFirst * 1.2 : V8.S.gapTableFirst * 1.8, alignment: .leading)
+                .frame(width: tagNarrow ? V8.S.tagColumnNarrow : V8.S.tagColumn, alignment: .leading)
 
             Text(title)
-                .font(V8.T.value)
+                .font(V8.T.body)
                 .foregroundStyle(V8.C.ink1)
                 .lineLimit(1)
 
             if let detail {
                 Text(detail)
-                    .font(V8.T.caption)
+                    .font(V8.T.label)
                     .foregroundStyle(V8.C.ink4)
                     .lineLimit(1)
             }
@@ -302,7 +282,7 @@ struct VDataRow: View {
 
             if let spark {
                 VSpark(values: spark, tint: sparkTint, cursor: nil, axis: nil, height: V8.G.sparkHeightInline)
-                    .frame(width: V8.S.gapTableFirst * 2.2)
+                    .frame(width: V8.S.sparkInlineWidth)
                     .accessibilityHidden(true)
             }
 
@@ -354,13 +334,13 @@ struct VDataRow: View {
             }
             if !title.isEmpty {
                 Text(title)
-                    .font(V8.T.value)
+                    .font(V8.T.body)
                     .foregroundStyle(V8.C.ink1)
                     .fixedSize(horizontal: false, vertical: true)
             }
             if let detail {
                 Text(detail)
-                    .font(V8.T.caption)
+                    .font(V8.T.label)
                     .foregroundStyle(V8.C.ink4)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -444,33 +424,18 @@ struct VChip2: View {
         .accessibilityAddTraits(chipTraits)
     }
 
-    // 2026-11-06（V9 · 液态仪器）：芯片从"两块平色胶囊"升级为材质两态 ——
-    //   选中 = 品牌色纵向渐变 + 顶缘受光高光（像一颗凸起的玻璃珠）；
-    //   未选 = 微妙的凸面（上亮下暗）+ 发丝描边（像嵌进面板的素键）。
+    // 2026-11-06（V10 · Quiet Instrument）：芯片只保留两态 ——
+    //   选中 = 强调色实心胶囊；未选 = 纸面浅灰胶囊 + 发丝描边。
+    // 不再用渐变或高光制造"凸起玻璃珠"：一排芯片各带一层光，整屏就花了。
     @ViewBuilder
     private var chipBackground: some View {
         let shape = Capsule(style: .continuous)
         if selected {
             shape
-                .fill(
-                    LinearGradient(
-                        colors: [V8.C.accentFill, V8.C.accent],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-                .overlay {
-                    shape.strokeBorder(V8.C.cardSheen, lineWidth: V8.S.hair)
-                }
+                .fill(V8.C.accent)
         } else {
             shape
-                .fill(
-                    LinearGradient(
-                        colors: [V8.C.chipOn, V8.C.chipOff],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
+                .fill(V8.C.chipOff)
                 .overlay {
                     shape.strokeBorder(V8.C.line, lineWidth: V8.S.hair)
                 }
@@ -572,7 +537,7 @@ struct VChipRow2<Item: Hashable>: View {
     }
 }
 
-// MARK: - 6. 空态（参考图没给的答案：空态环 + 判断句 + 因果 + 唯一出路）
+// MARK: - 6. 空态（图标 + 判断句 + 因果 + 唯一出路）
 
 struct VEmpty: View {
     let title: String
@@ -583,49 +548,29 @@ struct VEmpty: View {
     var body: some View {
         VCard2 {
             VStack(alignment: .leading, spacing: V8.S.gapM) {
-                VHeroRing(fraction: 0, center: "—", label: "", size: V8.G.segCompactOuter, tint: V8.C.ink4)
+                // 空态不画"归零的仪表"——那会读成"有个读数坏了"。
+                // 一个中性图标 + 一句判断 + 一句原因 + 唯一出路，全 App 同一语法。
+                Image(systemName: "tray")
+                    .font(V8.T.title2)
+                    .foregroundStyle(V8.C.ink4)
+                    .frame(width: V8.H.comfortable, height: V8.H.comfortable)
+                    .background(V8.C.well, in: Circle())
                     .accessibilityHidden(true)
                 Text(title)
                     .font(V8.T.headline)
                     .foregroundStyle(V8.C.ink1)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text(reason)
                     .font(V8.T.body)
                     .foregroundStyle(V8.C.ink3)
                     .lineSpacing(V8.L.body - V8.T.body.size)
                     .fixedSize(horizontal: false, vertical: true)
-                Button(action: action) {
-                    Text(actionTitle)
-                        .font(V8.T.tab)
-                        .foregroundStyle(V8.C.chipOn)
-                        .padding(.horizontal, V8.S.gapL)
-                        .frame(minHeight: V8.H.min)
-                        .background(
-                            // 2026-11-06（V9 · 液态仪器）：主行动按钮 = 受光玻璃凸台 ——
-                            // 纵向品牌色渐变 + 顶缘高光 + 抬升投影，像系统里最想被按的那颗按钮。
-                            Capsule(style: .continuous)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [V8.C.accentFill, V8.C.accent],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    )
-                                )
-                                .overlay {
-                                    Capsule(style: .continuous)
-                                        .strokeBorder(V8.C.cardSheen, lineWidth: V8.S.hair)
-                                }
-                                .shadow(
-                                    color: V8.C.accent.opacity(0.35),
-                                    radius: V8.Z.cardShadowRadius2,
-                                    y: V8.Z.cardShadowY
-                                )
-                        )
-                }
-                .buttonStyle(V8PressStyle())
-                // 2026-11-05（全技能审核 · VoiceOver）：空态的三段（判断 / 原因 / 出路）
-                // 原来是一组散元素，读屏要滑四次才知道该干什么。合成一组并读成一句。
-                .accessibilityElement(children: .contain)
+                V8ActionButton(title: actionTitle, style: .primary, fullWidth: false, action: action)
+                    .padding(.top, V8.S.gapXS)
             }
+            // 2026-11-05（全技能审核 · VoiceOver）：空态的三段（判断 / 原因 / 出路）
+            // 原来是一组散元素，读屏要滑四次才知道该干什么。合成一组并读成一句。
+            .accessibilityElement(children: .contain)
         }
     }
 }
@@ -649,23 +594,17 @@ struct VFailure: View {
         VCard2(style: .well) {
             VStack(alignment: .leading, spacing: V8.S.gapS) {
                 HStack(spacing: V8.S.gapS) {
-                    // 点用**容器档**（饱和度更高的"信号灯"），文字用**值档**（过 AA 的深色）。
-                    // 同一个红族两档各司其职：点要跳出来，字要读得清。
-                    Circle()
-                        .fill(V8.C.dangerFill)
-                        .frame(width: V8.S.gapS, height: V8.S.gapS)
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(V8.T.chipValue)
+                        .foregroundStyle(V8.C.danger)
+                        .frame(width: V8.H.min, height: V8.H.min)
+                        .background(V8.C.dangerFill.opacity(0.14), in: Circle())
                         .accessibilityHidden(true)
                     Text(what)
-                        .font(V8.T.value)
+                        .font(V8.T.headline)
                         .foregroundStyle(V8.C.danger)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                // 2026-11-06（V9 · 液态仪器）：失败态头部加一条 danger 色带 ——
-                // 4pt 圆头短杠贴在"什么失败"下面，语义与视觉同时强调（不只是文字变红）。
-                Capsule()
-                    .fill(V8.C.dangerFill)
-                    .frame(width: V8.G.chipDot * 6, height: V8.G.chipDot / 1.5)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .accessibilityHidden(true)
                 Text(why)
                     .font(V8.T.body)
                     .foregroundStyle(V8.C.ink3)
@@ -675,13 +614,8 @@ struct VFailure: View {
                     .foregroundStyle(V8.C.ink3)
                     .fixedSize(horizontal: false, vertical: true)
                 if let retry {
-                    Button(action: retry) {
-                        Text(actionTitle)
-                            .font(V8.T.tab)
-                            .foregroundStyle(V8.C.accent)
-                            .frame(minHeight: V8.H.min)
-                    }
-                    .buttonStyle(V8PressStyle())
+                    V8ActionButton(title: actionTitle, style: .secondary, fullWidth: false, action: retry)
+                        .padding(.top, V8.S.gapXS)
                 }
                 if let raw {
                     VStack(alignment: .leading, spacing: V8.S.gapXS) {
@@ -707,7 +641,7 @@ struct VFailure: View {
     }
 }
 
-// MARK: - 8. 忙态
+// MARK: - 8. 忙态（加载中：转子 + 一句话，全 App 同一语法）
 
 struct VBusy: View {
     let text: String
@@ -716,9 +650,11 @@ struct VBusy: View {
         HStack(spacing: V8.S.gapS) {
             ProgressView()
                 .controlSize(.small)
+                .tint(V8.C.accent)
             Text(text)
                 .font(V8.T.footnote)
                 .foregroundStyle(V8.C.ink3)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .frame(minHeight: V8.H.min)
         .accessibilityElement(children: .combine)
@@ -938,10 +874,9 @@ struct VHScroll<Content: View>: View {
 struct VPage<Chips: View, Content: View>: View {
     let title: String
     var lead: String? = nil
-    // 2026-11-06（V9 · 液态仪器）：每页自己的"大气色"。默认品牌蓝；
-    // 五个根页各传一档（门=品牌 / 钥匙=紫 / 台账=靛 / 家=绿 / 设置=石墨），
-    // 让每个 Tab 有可辨认的光色身份，而不是同一张蓝纸。
-    var atmosphere: V8Atmosphere = .brand
+    // 2026-11-06（V10 · Quiet Instrument）：页面不再有"大气色" ——
+    // 五个 Tab 原本各带一团辉光，同一套控件在不同页上颜色不同，页面之间对不齐。
+    // 现在所有页面共用同一张纸面，层次只由字阶、间距与描边产生。
     @ViewBuilder var chips: () -> Chips
     @ViewBuilder var content: () -> Content
     @Environment(Router.self) private var router
@@ -965,7 +900,7 @@ struct VPage<Chips: View, Content: View>: View {
                     .fixedSize(horizontal: false, vertical: true)
                 if let lead {
                     Text(lead)
-                        .font(V8.T.footnote)
+                        .font(V8.T.body)
                         .foregroundStyle(V8.C.ink3)
                         .lineSpacing(1.5)
                         .padding(.horizontal, V8.S.padCard)
@@ -982,37 +917,15 @@ struct VPage<Chips: View, Content: View>: View {
             .padding(.horizontal, V8.S.gutterCard)
             .padding(.bottom, V8.S.gapXL + (TabBarMode.native ? 0 : V8.S.hTabBar + V8.S.tabBarBottom))
         }
-        // 2026-11-06（V9 · 液态仪器）：页面背景从"一张平纸"升级为"有大气层的面板"。
-        // bgTop → bgBottom 纵向天光 + 顶部一团品牌色辉光（玻璃栏滚过时有东西可折射）
-        // + 尾部一团冷紫辉光（页面收尾的层次）。全部属于内容层 —— HIG Materials：
-        // 内容层的丰富靠色彩与光照；玻璃质感仍只属于功能层（Tab 栏 / 滑块）。
+        // 2026-11-06（V10 · Quiet Instrument）：页面底改成一条极浅的冷灰渐变 ——
+        // 只有 1–2 级明度差，作用是"纸面上方有光"，不是装饰。
+        // 彩色环境辉光已删除：同一套卡片在不同页面被染成不同底色，是"页面之间对不齐"的主因。
         .background(
-            ZStack {
-                LinearGradient(
-                    colors: [V8.C.bgTop, V8.C.bgBottom],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                GeometryReader { geo in
-                    let w = geo.size.width
-                    VStack(spacing: 0) {
-                        // 顶部辉光：偏右上，本页大气色
-                        Circle()
-                            .fill(atmosphere.top)
-                            .frame(width: w * 1.1, height: w * 1.1)
-                            .blur(radius: w * 0.28)
-                            .offset(x: w * 0.28, y: -w * 0.42)
-                        Spacer(minLength: 0)
-                        // 尾部辉光：偏左下，与本页大气色呼应的第二色
-                        Circle()
-                            .fill(atmosphere.bottom)
-                            .frame(width: w * 0.95, height: w * 0.95)
-                            .blur(radius: w * 0.30)
-                            .offset(x: -w * 0.30, y: w * 0.10)
-                    }
-                    .frame(width: w)
-                }
-            }
+            LinearGradient(
+                colors: [V8.C.bgTop, V8.C.bgBottom],
+                startPoint: .top,
+                endPoint: .bottom
+            )
             .ignoresSafeArea()
         )
         .scrollIndicators(.hidden)
@@ -1083,22 +996,12 @@ struct VNavRow: View {
     var iconTint: Color = V8.C.accent
     let action: () -> Void
 
-    // 2026-11-06（V9 · 液态仪器）：图标砖从平色块升级为"受光的小玻璃砖" ——
-    // 顶部叠 18% 白的纵向光照 + 顶缘发丝高光。原生设置 App 的图标砖正是这种光照。
+    // 2026-11-06（V10 · Quiet Instrument）：图标砖回到平色块 ——
+    // 一排图标砖各带一层高光渐变时，整页看起来像贴满贴纸。原生设置页的图标砖
+    // 就是一块纯色圆角方块，靠颜色分组，不靠光照。
     private var iconTile: some View {
-        let shape = RoundedRectangle(cornerRadius: V8.G.iconTileRadius, style: .continuous)
-        return shape
+        RoundedRectangle(cornerRadius: V8.G.iconTileRadius, style: .continuous)
             .fill(iconTint)
-            .overlay {
-                LinearGradient(
-                    colors: [.white.opacity(0.18), .clear],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            }
-            .overlay {
-                shape.strokeBorder(.white.opacity(0.24), lineWidth: V8.S.hair)
-            }
     }
 
     var body: some View {
@@ -1121,7 +1024,7 @@ struct VNavRow: View {
                         .fixedSize(horizontal: false, vertical: true)
                     if let detail {
                         Text(detail)
-                            .font(V8.T.caption)
+                            .font(V8.T.label)
                             .foregroundStyle(V8.C.ink4)
                             .lineLimit(2)
                     }
@@ -1129,7 +1032,7 @@ struct VNavRow: View {
                 Spacer(minLength: 0)
                 if let value {
                     Text(value)
-                        .font(V8.T.caption)
+                        .font(V8.T.label)
                         .foregroundStyle(V8.C.ink4)
                         .monospacedDigit()
                 }
@@ -1155,17 +1058,10 @@ struct VAvatar: View {
 
     var body: some View {
         ZStack {
-            // 2026-11-06（V9 · 液态仪器）：头像从一块 14% 平色圆升级为"受光玻璃珠" ——
-            // 顶部提亮 26% 的纵向光照 + 底部 12% 品牌色沉底 + 顶缘高光描边。
-            // 原生联系人列表的头像正是这种光照。
+            // 2026-11-06（V10）：头像回到平色圆 + 发丝描边 ——
+            // 一列头像各带光照渐变时，整列像一串玻璃珠，而不是一组联系人。
             Circle()
-                .fill(
-                    LinearGradient(
-                        colors: [tint.opacity(0.26), tint.opacity(0.10)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
+                .fill(tint.opacity(0.14))
             Circle()
                 .strokeBorder(tint.opacity(0.35), lineWidth: V8.S.hair)
             Text(initial)
@@ -1283,11 +1179,12 @@ struct VDisclosure<Content: View>: View {
     }
 }
 
-// MARK: - 18. 统一按压反馈（2026-11-05 全技能审核）
+// MARK: - 18. 统一按压反馈（2026-11-05 全技能审核 / 2026-11-06 V10 补状态）
 //
 // V8 里曾全部用 .buttonStyle(.plain) —— iOS 上 plain 没有按压反馈，点击像没反应。
-// 这里与 V7 的 PressStyle 同语义，但动效走 V8.M.snap（并受 MotionTier 分档）。
-// 只做透明度 + 极小缩放，不改 bounds；Reduce Motion 时只保留透明度。
+// 2026-11-06（V10）：这里补齐**悬停 / 按下 / 禁用**三态，透明度全部走 V8.O.* 令牌，
+// 不再每个按钮各写一个 0.45。只做透明度 + 极小缩放，不改 bounds；
+// Reduce Motion 时只保留透明度。
 struct V8PressStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         V8PressBody(configuration: configuration)
@@ -1296,12 +1193,261 @@ struct V8PressStyle: ButtonStyle {
     private struct V8PressBody: View {
         let configuration: ButtonStyleConfiguration
         @Environment(\.accessibilityReduceMotion) private var reduceMotion
+        @Environment(\.isEnabled) private var isEnabled
+        /// 指针悬停（iPad / 妙控笔 / 外接键盘下的指针设备）。
+        @State private var hovering = false
 
         var body: some View {
             configuration.label
-                .opacity(configuration.isPressed ? 0.72 : 1)
+                .opacity(opacity)
                 .scaleEffect(reduceMotion ? 1 : (configuration.isPressed ? 0.985 : 1))
+                .onHover { hovering = $0 }
                 .animation(reduceMotion ? nil : V8.M.snap, value: configuration.isPressed)
+                .animation(reduceMotion ? nil : V8.M.snap, value: hovering)
         }
+
+        /// 禁用 → 明显不可点；按下 → 最深；悬停 → 只淡一点，不跳动。
+        private var opacity: Double {
+            if !isEnabled { return V8.O.disabled }
+            if configuration.isPressed { return V8.O.pressed }
+            if hovering { return V8.O.hover }
+            return 1
+        }
+    }
+}
+
+// MARK: - 19. 动作按钮（主 / 次 / 危险 / 轻量；含悬停、焦点、禁用、加载四态）
+//
+// 2026-11-06（V10）：此前每个页面各写一遍「胶囊 + 强调色 + 0.45 透明度」，
+// 于是同一种按钮在 20 多个页面有 20 多种写法（圆角、禁用透明度、加载表现都不一致）。
+// 收进组件后：一屏只有一颗主动作（primary），其余走 secondary / quiet。
+enum V8ButtonStyle {
+    /// 主动作：强调色实心。一屏只应有一颗。
+    case primary
+    /// 次动作：纸面 + 描边。
+    case secondary
+    /// 危险动作：只用于真正不可逆的删除。
+    case destructive
+    /// 轻量动作：只有文字，不占一整行。
+    case quiet
+}
+
+struct V8ActionButton: View {
+    let title: String
+    var style: V8ButtonStyle = .primary
+    var systemImage: String? = nil
+    /// 加载中：出转子、按钮不再接受第二次动作。
+    var busy: Bool = false
+    /// 是否撑满卡片宽度。卡内主/次动作默认撑满，卡内的小动作不撑满。
+    var fullWidth: Bool = true
+    let action: () -> Void
+
+    /// 键盘焦点环（外接键盘 / 辅助功能开关）。
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        Button {
+            // 加载中直接吞掉第二次点击：按钮看上去还在，但不会再触发一次写入。
+            if !busy { action() }
+        } label: {
+            HStack(spacing: V8.S.gapS) {
+                if busy {
+                    ProgressView()
+                        .controlSize(.small)
+                        .tint(foreground)
+                } else if let systemImage {
+                    Image(systemName: systemImage)
+                        .font(V8.T.chipValue)
+                        .accessibilityHidden(true)
+                }
+                Text(title)
+                    .font(V8.T.tab)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .foregroundStyle(foreground)
+            .padding(.horizontal, fullWidth ? V8.S.gapM : V8.S.gapL)
+            .padding(.vertical, V8.S.gapS)
+            .frame(maxWidth: fullWidth ? .infinity : nil, alignment: fullWidth ? .center : .leading)
+            .frame(minHeight: V8.H.comfortable)
+            .background(background, in: RoundedRectangle(cornerRadius: V8.R.control, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: V8.R.control, style: .continuous)
+                    .strokeBorder(border, lineWidth: focused ? V8.E.focus : V8.S.hair)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(V8PressStyle())
+        .focused($focused)
+        .accessibilityLabel(title)
+        .accessibilityHint(busy ? "正在处理" : "")
+    }
+
+    private var background: Color {
+        switch style {
+        case .primary: return V8.C.accent
+        case .secondary: return V8.C.chipOff
+        case .destructive: return V8.C.danger
+        case .quiet: return Color.clear
+        }
+    }
+
+    private var foreground: Color {
+        switch style {
+        case .primary, .destructive: return V8.C.onAccent
+        case .secondary: return V8.C.ink1
+        case .quiet: return V8.C.accent
+        }
+    }
+
+    private var border: Color {
+        switch style {
+        case .primary, .destructive, .quiet: return Color.clear
+        case .secondary: return V8.C.line
+        }
+    }
+}
+
+// MARK: - 20·补 动作行（放得下横排，放不下竖排）
+//
+// 2026-11-06（V10 · 375pt 宽度验收）：一排动作按钮在 375pt 或大字号下会挤成一团 ——
+// SwiftUI 不会压缩固定尺寸控件，也不会自动换行，于是文字互相压住、甚至把卡撑出屏幕。
+// ViewThatFits 先量横排；放不下就改竖排。文案、顺序、点击行为都不变。
+struct VButtonRow<Content: View>: View {
+    var spacing: CGFloat = V8.S.gapS
+    @ViewBuilder var content: () -> Content
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: spacing) { content() }
+            VStack(alignment: .leading, spacing: spacing) { content() }
+        }
+    }
+}
+
+// MARK: - 20. 输入框表面（聚焦 / 错误 / 禁用三态）
+//
+// 2026-11-06（V10）：全 App 的输入框此前各写一遍「凹槽底 + 圆角 + 描边」，
+// 而且**没有一处**在聚焦时给出反馈 —— 用户不知道键盘是不是已经落在这一栏。
+// 这里把底色、圆角、聚焦环、错误色、禁用透明度收成一处，页面只负责传入聚焦/错误状态。
+struct VFieldSurface: ViewModifier {
+    var isFocused: Bool = false
+    var hasError: Bool = false
+    var isDisabled: Bool = false
+
+    func body(content: Content) -> some View {
+        content
+            .padding(.horizontal, V8.S.gapM)
+            .frame(minHeight: V8.H.comfortable)
+            .background(
+                V8.C.well,
+                in: RoundedRectangle(cornerRadius: V8.R.control, style: .continuous)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: V8.R.control, style: .continuous)
+                    .strokeBorder(border, lineWidth: isFocused ? V8.E.focus : V8.S.hair)
+            }
+            .opacity(isDisabled ? V8.O.disabled : 1)
+    }
+
+    private var border: Color {
+        if hasError { return V8.C.danger }
+        if isFocused { return V8.C.accent }
+        return V8.C.line
+    }
+}
+
+extension View {
+    /// 输入框表面。焦点由调用方的 `@FocusState` 传入。
+    func v8Field(isFocused: Bool = false, hasError: Bool = false, isDisabled: Bool = false) -> some View {
+        modifier(VFieldSurface(isFocused: isFocused, hasError: hasError, isDisabled: isDisabled))
+    }
+
+    /// 弹窗的统一外观：纸面底 + 圆角顶 + 可见拖拽指示。
+    /// 2026-11-06（V10）：此前 11 处 sheet 各自决定底色与圆角，
+    /// 同一件事在 App 里有十几种弹窗皮肤。
+    func v8Sheet() -> some View {
+        self
+            .presentationBackground(V8.C.bg)
+            .presentationCornerRadius(V8.R.sheet)
+            .presentationDragIndicator(.visible)
+    }
+}
+
+// MARK: - 21·补 卡内空提示（图标 + 一句话，可带唯一出路）
+//
+// 2026-11-06（V10）：卡内"这里还是空的"此前各写一行灰字，
+// 有的一句、有的三句、有的带一个没样子的箭头。现在统一成：图标 + 一句话 +（可选）一个出路。
+struct VEmptyHint: View {
+    let text: String
+    var systemImage: String = "tray"
+    var actionTitle: String? = nil
+    var action: (() -> Void)? = nil
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: V8.S.gapS) {
+            HStack(spacing: V8.S.gapS) {
+                Image(systemName: systemImage)
+                    .font(V8.T.caption)
+                    .foregroundStyle(V8.C.ink4)
+                    .accessibilityHidden(true)
+                Text(text)
+                    .font(V8.T.footnote)
+                    .foregroundStyle(V8.C.ink3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if let actionTitle, let action {
+                V8ActionButton(title: actionTitle, style: .secondary, fullWidth: false, action: action)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+// MARK: - 21. 输入框（普通 / 密码）：聚焦、错误、禁用三态自带
+//
+// 2026-11-06（V10）：此前 20 多个输入框各写一遍「凹槽底 + 圆角 + 描边」，
+// 而且**没有一处**在聚焦时给出反馈 —— 用户按下去不知道键盘落在哪一栏。
+// 这里把外观与三态收成一处：页面只负责传值与文案。
+struct VTextField: View {
+    let placeholder: String
+    @Binding var text: String
+    /// 密码档（圆点输入）。
+    var secure: Bool = false
+    var keyboard: UIKeyboardType = .default
+    var contentType: UITextContentType? = nil
+    var submitLabel: SubmitLabel = .done
+    var onSubmit: (() -> Void)? = nil
+    var autocorrection: Bool = true
+    var capitalization: TextInputAutocapitalization = .sentences
+    /// 错误态：描边变红（文案由页面在旁边给出）。
+    var hasError: Bool = false
+    var isDisabled: Bool = false
+    /// 出现即聚焦（密码闸这类"打开就要输"的场景）。
+    var autofocus: Bool = false
+
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        Group {
+            if secure {
+                SecureField(placeholder, text: $text)
+            } else {
+                TextField(placeholder, text: $text)
+            }
+        }
+        .font(V8.T.body)
+        .monospacedDigit()
+        .foregroundStyle(V8.C.ink1)
+        .keyboardType(keyboard)
+        .textContentType(contentType)
+        .submitLabel(submitLabel)
+        .autocorrectionDisabled(!autocorrection)
+        .textInputAutocapitalization(capitalization)
+        .focused($focused)
+        .v8Field(isFocused: focused, hasError: hasError, isDisabled: isDisabled)
+        .onSubmit { onSubmit?() }
+        .onAppear { if autofocus { focused = true } }
+        .accessibilityLabel(placeholder)
     }
 }

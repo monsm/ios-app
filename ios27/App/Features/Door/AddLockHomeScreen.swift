@@ -367,21 +367,9 @@ struct AddLockHomeScreen: View {
             VCardHead(eyebrow: "给锁起个名字", statement: "必填", trailing: "最后一步")
             VDivider2()
                 .padding(.top, V8.S.gapM)
-            TextField("昵称（如 婆婆家·入户门）", text: $nickname)
-                .font(V8.T.body)
-                .foregroundStyle(V8.C.ink1)
-                .submitLabel(.next)
-                .frame(minHeight: V8.H.min)
-                .padding(.horizontal, V8.S.gapM)
-                .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
+            VTextField(placeholder: "昵称（如 婆婆家·入户门）", text: $nickname, submitLabel: .next)
                 .padding(.top, V8.S.gapM)
-            TextField("场所副标题（如 玄关 / 车库，可留空）", text: $place)
-                .font(V8.T.body)
-                .foregroundStyle(V8.C.ink1)
-                .submitLabel(.done)
-                .frame(minHeight: V8.H.min)
-                .padding(.horizontal, V8.S.gapM)
-                .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
+            VTextField(placeholder: "场所副标题（如 玄关 / 车库，可留空）", text: $place)
                 .padding(.top, V8.S.gapM)
             if let duplicateNameHint {
                 Text(duplicateNameHint)
@@ -395,19 +383,10 @@ struct AddLockHomeScreen: View {
                 .foregroundStyle(V8.C.ink4)
                 .padding(.top, V8.S.gapM)
                 .fixedSize(horizontal: false, vertical: true)
-            Button {
+            V8ActionButton(title: "完成添加", style: .primary) {
                 commitName()
-            } label: {
-                Text("完成添加")
-                    .font(V8.T.tab)
-                    .foregroundStyle(V8.C.chipOn)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: V8.H.min)
-                    .background(Capsule(style: .continuous).fill(V8.C.accent))
             }
-            .buttonStyle(V8PressStyle())
             .disabled(nickname.trimmingCharacters(in: .whitespaces).isEmpty)
-            .opacity(nickname.trimmingCharacters(in: .whitespaces).isEmpty ? 0.45 : 1)
             .padding(.top, V8.S.gapM)
         }
     }

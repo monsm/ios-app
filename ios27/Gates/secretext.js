@@ -71,7 +71,11 @@ for (const f of walk(ROOT)) {
     if (t.startsWith('//')) return;
     // 注意：SecureField( 里含 TextField( 子串 —— 必须先排除 SecureField，否则三个
     // 已经打码的输入框会被误报（第一版就是这么错的）。
-    const plainField = t.indexOf('TextField(') >= 0 && t.indexOf('SecureField(') < 0;
+    // 2026-11-06（V10）：共享输入框 VTextField(… secure: true) 同样是打码的，
+    // 判据要认它 —— 否则改用共享组件的密码框会被误判成「明文输入」。
+    const masked = t.indexOf('SecureField(') >= 0
+      || /VTextField\([^)]*secure:\s*true/.test(t);
+    const plainField = t.indexOf('TextField(') >= 0 && !masked;
     if (!plainField) return;
     for (const field of SECRET_FIELDS) {
       if (t.indexOf('text: ' + field) >= 0) {

@@ -16,6 +16,8 @@ struct RecordsHomeScreen: View {
     private let route = RecordsRoute.shared
 
     @State private var query = ""
+    /// 检索框聚焦（描边变实）。
+    @FocusState private var queryFocused: Bool
     @State private var scope: LedgerScope = .all
     @State private var member = ""
     @State private var lockScope: RecordLockScope = .current
@@ -96,7 +98,7 @@ struct RecordsHomeScreen: View {
     }
 
     var body: some View {
-        VPage(title: judgement, lead: lead, atmosphere: .indigo) {
+        VPage(title: judgement, lead: lead) {
             chipRow
         } content: {
             if app.lock == nil {
@@ -279,6 +281,7 @@ struct RecordsHomeScreen: View {
                 TextField("搜事件 / 归属 / +必须 -排除", text: $query)
                     .font(V8.T.body)
                     .textFieldStyle(.plain)
+                    .focused($queryFocused)
                 if !query.isEmpty {
                     Button { query = "" } label: {
                         Image(systemName: "xmark.circle.fill")
@@ -289,7 +292,7 @@ struct RecordsHomeScreen: View {
                     .accessibilityLabel("清空检索")
                 }
             }
-            .frame(minHeight: V8.H.min)
+            .v8Field(isFocused: queryFocused)
             VDivider2()
                 .padding(.vertical, V8.S.gapS)
             VHScroll {

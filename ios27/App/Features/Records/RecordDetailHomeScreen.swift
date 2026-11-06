@@ -172,14 +172,10 @@ struct RecordDetailHomeScreen: View {
             VCardHead(eyebrow: "备注", statement: overlay.isFlagged(entry.id) ? "已标异常" : "本机附言")
             VDivider2()
                 .padding(.top, V8.S.gapM)
-            TextField("开门附言 / 备注", text: $noteDraft)
-                .font(V8.T.body)
-                .foregroundStyle(V8.C.ink1)
-                .autocorrectionDisabled()
-                .frame(minHeight: V8.H.min)
-                .padding(.horizontal, V8.S.gapM)
-                .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
-                .onSubmit { save(entry) }
+            VTextField(placeholder: "开门附言 / 备注",
+                        text: $noteDraft,
+                        autocorrection: false,
+                        onSubmit: { save(entry) })
             HStack(spacing: V8.S.gapS) {
                 Button { withAnimation(reduceMotion ? nil : V8.M.snap) { save(entry) } } label: {
                     Text("保存备注")

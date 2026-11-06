@@ -92,22 +92,26 @@ struct SecurityHomeScreen: View {
         }
         .background(V8.C.bg.ignoresSafeArea())
         .sheet(item: $sheet) { route in
-            switch route {
-            case .passcode:
-                PasscodeSheet(kind: .passcode)
-            case .duress:
-                PasscodeSheet(kind: .duress)
-            case .verifyPass:
-                VerifyPasscodeSheet(
-                    title: "关闭本机密码",
-                    note: "关闭前先验证当前本机密码。"
-                ) { DB.setPasscode(nil) }
-            case .verifyDuress:
-                VerifyPasscodeSheet(
-                    title: "关闭胁迫码",
-                    note: "关闭前先验证当前本机密码。"
-                ) { _ = DB.setDuressCode(nil) }
+            // Group 包一层：switch 是控制流，不能直接挂修饰符（modifier 闸门）。
+            Group {
+                switch route {
+                case .passcode:
+                    PasscodeSheet(kind: .passcode)
+                case .duress:
+                    PasscodeSheet(kind: .duress)
+                case .verifyPass:
+                    VerifyPasscodeSheet(
+                        title: "关闭本机密码",
+                        note: "关闭前先验证当前本机密码。"
+                    ) { DB.setPasscode(nil) }
+                case .verifyDuress:
+                    VerifyPasscodeSheet(
+                        title: "关闭胁迫码",
+                        note: "关闭前先验证当前本机密码。"
+                    ) { _ = DB.setDuressCode(nil) }
+                }
             }
+            .v8Sheet()
         }
         .v8Confirm(
             isPresented: $confirmDisablePass,
@@ -211,7 +215,7 @@ struct SecurityHomeScreen: View {
                     fraction: Double(protectionOn) / 4.0,
                     center: "\(protectionOn)",
                     label: "/ 4 项",
-                    size: V8.G.segCompactOuter * 2.2,
+                    size: V8.G.heroRingInline,
                     tint: protectionOn >= 3 ? V8.C.ok : (protectionOn >= 2 ? V8.C.warn : V8.C.danger)
                 )
                 VStack(alignment: .leading, spacing: V8.S.gapXS) {
@@ -250,17 +254,9 @@ struct SecurityHomeScreen: View {
                 .foregroundStyle(V8.C.ink3)
                 .padding(.top, V8.S.gapM)
                 .fixedSize(horizontal: false, vertical: true)
-            Button {
+            V8ActionButton(title: store.hasPasscode ? "更改本机密码" : "设置本机密码", style: .primary) {
                 sheet = .passcode
-            } label: {
-                Text(store.hasPasscode ? "更改本机密码" : "设置本机密码")
-                    .font(V8.T.tab)
-                    .foregroundStyle(V8.C.chipOn)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: V8.H.min)
-                    .background(Capsule(style: .continuous).fill(V8.C.accent))
             }
-            .buttonStyle(V8PressStyle())
             .padding(.top, V8.S.gapM)
             .accessibilityLabel(store.hasPasscode ? "更改本机密码" : "设置本机密码")
             if store.hasPasscode {
@@ -389,7 +385,7 @@ struct SecurityHomeScreen: View {
                 }
                 .frame(minHeight: V8.H.min)
                 .disabled(store.hasDuressCode || !biometricHardwareAvailable)
-                .opacity((store.hasDuressCode || !biometricHardwareAvailable) ? 0.45 : 1)
+                .opacity((store.hasDuressCode || !biometricHardwareAvailable) ? V8.O.disabled : 1)
                 Text(store.hasDuressCode
                      ? "已设胁迫码时本开关自动停用 —— 刷脸会暴露「这不是伪装模式」。"
                      : (biometricHardwareAvailable

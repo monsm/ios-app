@@ -304,7 +304,7 @@ struct LockSettingsHomeScreen: View {
                 )
             )
             .disabled(app.trialGuard)
-            .opacity(app.trialGuard ? 0.45 : 1)
+            .opacity(app.trialGuard ? V8.O.disabled : 1)
             if otpOn {
                 VNavRow(title: "生成动态密码", detail: "按锁端周期变化的临时码") {
                     router.request(.dest(.zotp))
@@ -560,17 +560,10 @@ struct LockSettingsHomeScreen: View {
                 VBusy(text: "正在把手机时间写进锁…")
                     .padding(.top, V8.S.gapM)
             } else {
-                Button { Task { await syncClock() } } label: {
-                    Text("同步到锁内")
-                        .font(V8.T.tab)
-                        .foregroundStyle(V8.C.chipOn)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: V8.H.min)
-                        .background(Capsule(style: .continuous).fill(V8.C.accent))
+                V8ActionButton(title: "同步到锁内", style: .primary) {
+                    Task { await syncClock() }
                 }
-                .buttonStyle(V8PressStyle())
                 .disabled(readOnly)
-                .opacity(readOnly ? 0.45 : 1)
                 .padding(.top, V8.S.gapM)
             }
             if let syncResult {
@@ -690,17 +683,10 @@ struct LockSettingsHomeScreen: View {
                 }
                 .padding(.top, V8.S.gapM)
             } else {
-                Button { Task { await setSafeMode(true) } } label: {
-                    Text(safeBusy ? "切换中…" : "切换到 B 模式（双验，更严）")
-                        .font(V8.T.tab)
-                        .foregroundStyle(V8.C.chipOn)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: V8.H.min)
-                        .background(Capsule(style: .continuous).fill(V8.C.accent))
+                V8ActionButton(title: safeBusy ? "切换中…" : "切换到 B 模式（双验，更严）", style: .primary, busy: safeBusy) {
+                    Task { await setSafeMode(true) }
                 }
-                .buttonStyle(V8PressStyle())
                 .disabled(safeBusy || readOnly)
-                .opacity((safeBusy || readOnly) ? 0.45 : 1)
                 .padding(.top, V8.S.gapM)
             }
             if let safeOutcome {
@@ -736,19 +722,10 @@ struct LockSettingsHomeScreen: View {
             .padding(.top, V8.S.gapM)
             // 2026-11-05（值级重复）：档位秒数在卡头「开锁后 N 秒自动上锁」、选中芯片、
             // 以及这一行「当前档位 N 秒」里出现三次。删掉这一行，保留卡头（语义）与芯片（可选）。
-            Button {
+            V8ActionButton(title: tailgateBusy ? "正在下发…" : "设置", style: .primary, busy: tailgateBusy) {
                 Task { await saveTailgate() }
-            } label: {
-                Text(tailgateBusy ? "正在下发…" : "设置")
-                    .font(V8.T.tab)
-                    .foregroundStyle(V8.C.chipOn)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: V8.H.min)
-                    .background(Capsule(style: .continuous).fill(V8.C.accent))
             }
-            .buttonStyle(V8PressStyle())
             .disabled(tailgateBusy || !canTailgate || readOnly)
-            .opacity((canTailgate && !readOnly) ? 1 : 0.45)
             .padding(.top, V8.S.gapM)
             if let tailgateOutcome {
                 Text(tailgateOutcome)
@@ -867,19 +844,10 @@ struct LockSettingsHomeScreen: View {
             if defendBusy {
                 VBusy(text: defendMode == .off ? "正在撤防…" : "正在布防…")
             } else {
-                Button {
+                V8ActionButton(title: defendActionTitle, style: .primary) {
                     askDefendConfirm = true
-                } label: {
-                    Text(defendActionTitle)
-                        .font(V8.T.tab)
-                        .foregroundStyle(V8.C.chipOn)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: V8.H.min)
-                        .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(V8PressStyle())
                 .disabled(!defendCanApply || readOnly)
-                .opacity((defendCanApply && !readOnly) ? 1 : 0.45)
             }
             if !defendCanApply {
                 Text("先把时段设成两个不同的时刻，再执行。")
@@ -1170,7 +1138,7 @@ private var capacityBlock: some View {
                     fraction: fraction,
                     center: "\(safeUsed)",
                     label: "/ \(safeCap)",
-                    size: V8.G.segCompactOuter * 1.42,
+                    size: V8.G.capacityRing,
                     tint: fraction >= 0.9 ? V8.C.danger : (fraction >= 0.7 ? V8.C.warn : V8.C.accent),
                     showsTick: false,
                     showsCursor: false
@@ -1182,7 +1150,7 @@ private var capacityBlock: some View {
                     .foregroundStyle(V8.C.ink4)
                     // 2026-11-05（溢出修复的一致性）：这里是「锁端没回报容量」时的占位，
                     // 三枚占位同样要按 1.42 算宽度 —— 否则一旦三把容量都未知，整页又会被撑宽。
-                    .frame(width: V8.G.segCompactOuter * 1.42, height: V8.G.segCompactOuter * 1.9)
+                    .frame(width: V8.G.capacityRing, height: V8.G.capacityRingBlock)
             }
             Text(title)
                 .font(V8.T.caption)

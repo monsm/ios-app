@@ -19,6 +19,8 @@ struct KeysHomeScreen: View {
     @State private var filter: KeysFilter = .all
     @State internal var now: Int64 = KeysState.now()
     @State private var search = ""
+    /// 搜索框聚焦：输入框描边跟着变实（与全 App 输入框同一套）。
+    @FocusState private var searchFocused: Bool
     @State private var groupByOwner = CredentialOrg.groupMode == .owner
     /// 只为"删除一条搜索历史"这种不在视图状态里的改动触发重绘（历史存在 UserDefaults）。
     @State private var historyTick = 0
@@ -90,7 +92,7 @@ struct KeysHomeScreen: View {
     }
 
     var body: some View {
-        VPage(title: judgement, lead: lead, atmosphere: .violet) {
+        VPage(title: judgement, lead: lead) {
             chipRow
         } content: {
             if app.ledgerCorrupt {
@@ -349,6 +351,7 @@ struct KeysHomeScreen: View {
                 TextField("搜名称 / 归属 / 类型", text: $search)
                     .font(V8.T.body)
                     .textFieldStyle(.plain)
+                    .focused($searchFocused)
                     .submitLabel(.search)
                     .onSubmit { CredentialOrg.pushSearchHistory(search) }
                 if !search.isEmpty {
@@ -363,9 +366,7 @@ struct KeysHomeScreen: View {
                     .accessibilityLabel("清空凭证搜索")
                 }
             }
-            .padding(.horizontal, V8.S.gapM)
-            .frame(minHeight: V8.H.min)
-            .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset, style: .continuous))
+            .v8Field(isFocused: searchFocused)
             // 2026-11-05（截图审查 · 本页最大的一处冗余）：
             // 这里原来有**第二排筛选芯片**，与页头 chipRow 是同一个 filter 状态、同一批
             // KeysFilter.allCases、同一串数字（全部 13 / 密码 1 / 指纹 8 / 临时码 1 / 手机钥匙 1）。

@@ -22,7 +22,6 @@ struct UnlockGateScreen: View {
     @State private var failures = 0
     @State private var cooldownUntil: Date?
     @State private var now = Date()
-    @FocusState private var focused: Bool
 
     private var cooling: Int {
         guard let until = cooldownUntil else { return 0 }
@@ -52,7 +51,6 @@ struct UnlockGateScreen: View {
         }
         .background(V8.C.bg.ignoresSafeArea())
         .navigationTitle("再次确认")
-        .onAppear { focused = true }
         .task(id: cooldownUntil) {
             guard cooldownUntil != nil else { return }
             while !Task.isCancelled {
@@ -72,21 +70,14 @@ struct UnlockGateScreen: View {
             )
             VDivider2()
                 .padding(.top, V8.S.gapM)
-            SecureField("本机密码", text: $code)
-                .font(V8.T.value)
-                .foregroundStyle(V8.C.ink1)
-                .keyboardType(.numberPad)
-                .textContentType(.password)
-                .textFieldStyle(.plain)
-                .focused($focused)
-                .frame(minHeight: V8.H.comfortable)
-                .padding(.horizontal, V8.S.gapM)
-                .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
-                .overlay {
-                    RoundedRectangle(cornerRadius: V8.R.inset, style: .continuous)
-                        .strokeBorder(error == nil ? V8.C.line : V8.C.danger, lineWidth: V8.S.hair)
-                }
-                .accessibilityLabel("本机密码")
+            // 共享输入框：聚焦时描边变实，出错时描边变红。
+            VTextField(placeholder: "本机密码",
+                        text: $code,
+                        secure: true,
+                        keyboard: .numberPad,
+                        contentType: .password,
+                        hasError: error != nil,
+                        autofocus: true)
                 .padding(.top, V8.S.gapM)
             if let error {
                 Text(error)
@@ -95,28 +86,15 @@ struct UnlockGateScreen: View {
                     .padding(.top, V8.S.gapS)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Button { verify() } label: {
-                Text(cooling > 0 ? "冷却中…" : "解锁并开门")
-                    .font(V8.T.tab)
-                    .foregroundStyle(V8.C.chipOn)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: V8.H.min)
-                    .background(Capsule(style: .continuous).fill(V8.C.accent))
+            V8ActionButton(title: cooling > 0 ? "冷却中…" : "解锁并开门", style: .primary) {
+                verify()
             }
-            .buttonStyle(V8PressStyle())
             .accessibilityLabel(cooling > 0 ? "冷却中" : "解锁并开门")
             .disabled(!canSubmit)
-            .opacity(canSubmit ? 1 : 0.45)
             .padding(.top, V8.S.gapM)
-            Button { dismiss() } label: {
-                Text("取消")
-                    .font(V8.T.tab)
-                    .foregroundStyle(V8.C.ink1)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: V8.H.min)
-                    .background(Capsule(style: .continuous).fill(V8.C.chipOff))
+            V8ActionButton(title: "取消", style: .secondary) {
+                dismiss()
             }
-            .buttonStyle(V8PressStyle())
             .accessibilityLabel("取消")
             .padding(.top, V8.S.gapS)
         }

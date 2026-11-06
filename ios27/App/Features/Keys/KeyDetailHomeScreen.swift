@@ -81,6 +81,7 @@ struct KeyDetailHomeScreen: View {
         .sheet(isPresented: $showReEnroll) {
             if let key, key.kind == .fingerprint {
                 KeyDetailReEnrollSheet(key: key)
+                    .v8Sheet()
             }
         }
         .v8Confirm(
@@ -717,12 +718,7 @@ struct KeyDetailReEnrollSheet: View {
                     VCardHead(eyebrow: "指纹名称", statement: name.isEmpty ? key.name : name)
                     VDivider2()
                         .padding(.top, V8.S.gapM)
-                    TextField(key.name, text: $name)
-                        .font(V8.T.body)
-                        .foregroundStyle(V8.C.ink1)
-                        .frame(minHeight: V8.H.min)
-                        .padding(.horizontal, V8.S.gapM)
-                        .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
+                    VTextField(placeholder: key.name, text: $name)
                         .padding(.top, V8.S.gapM)
                     Text("归属：" + ownerText)
                         .font(V8.T.footnote)
@@ -737,30 +733,14 @@ struct KeyDetailReEnrollSheet: View {
                         VFailure(what: "重录没有完成", why: error, next: "旧指纹原样保留；按提示处理后重试。")
                             .padding(.top, V8.S.gapS)
                     }
-                    Button {
+                    V8ActionButton(title: busy ? "录入中…" : "开始重录", style: .primary, busy: busy) {
                         start()
-                    } label: {
-                        Text(busy ? "录入中…" : "开始重录")
-                            .font(V8.T.tab)
-                            .foregroundStyle(V8.C.chipOn)
-                            .frame(maxWidth: .infinity)
-                            .frame(minHeight: V8.H.min)
-                            .background(Capsule(style: .continuous).fill(V8.C.accent))
                     }
-                    .buttonStyle(V8PressStyle())
                     .disabled(busy)
                     .padding(.top, V8.S.gapM)
-                    Button {
+                    V8ActionButton(title: "取消", style: .secondary) {
                         dismiss()
-                    } label: {
-                        Text("取消")
-                            .font(V8.T.tab)
-                            .foregroundStyle(V8.C.ink1)
-                            .frame(maxWidth: .infinity)
-                            .frame(minHeight: V8.H.min)
-                            .background(Capsule(style: .continuous).fill(V8.C.chipOff))
                     }
-                    .buttonStyle(V8PressStyle())
                     .padding(.top, V8.S.gapS)
                 }
                 VCard2(style: .well) {

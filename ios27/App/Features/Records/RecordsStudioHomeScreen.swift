@@ -16,6 +16,8 @@ struct RecordsStudioHomeScreen: View {
     @Environment(Router.self) private var router
 
     @State private var query = ""
+    /// 检索框聚焦（描边变实）。
+    @FocusState private var queryFocused: Bool
     @State private var segment = 0
     @State private var member = ""
     @State private var alarmOnly = false
@@ -189,7 +191,7 @@ struct RecordsStudioHomeScreen: View {
                     .textFieldStyle(.plain)
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
-                    .frame(minHeight: V8.H.min)
+                    .focused($queryFocused)
                 if !query.isEmpty {
                     Button {
                         query = ""
@@ -202,9 +204,7 @@ struct RecordsStudioHomeScreen: View {
                     .accessibilityLabel("清空检索词")
                 }
             }
-            .padding(.horizontal, V8.S.gapM)
-            .frame(minHeight: V8.H.min)
-            .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset, style: .continuous))
+            .v8Field(isFocused: queryFocused)
             .padding(.top, V8.S.gapM)
             if !uniqueTags.isEmpty {
                 VHScroll {

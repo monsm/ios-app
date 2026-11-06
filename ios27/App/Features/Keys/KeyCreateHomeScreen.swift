@@ -258,19 +258,11 @@ struct KeyCreateHomeScreen: View {
                 .font(V8.T.footnote)
                 .foregroundStyle(V8.C.warn)
                 .fixedSize(horizontal: false, vertical: true)
-            Button {
+            V8ActionButton(title: "先用未归属继续", style: .secondary) {
                 owner = nil
                 errorText = nil
                 withAnimation(reduceMotion ? nil : V8.M.move) { step = 1 }
-            } label: {
-                Text("先用未归属继续")
-                    .font(V8.T.tab)
-                    .foregroundStyle(V8.C.ink1)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: V8.H.min)
-                    .background(Capsule(style: .continuous).fill(V8.C.chipOff))
             }
-            .buttonStyle(V8PressStyle())
             .accessibilityLabel("先用未归属继续")
         } else {
             VStack(spacing: 0) {
@@ -312,13 +304,7 @@ struct KeyCreateHomeScreen: View {
                     .font(V8.T.footnote)
                     .foregroundStyle(V8.C.ink3)
                     .fixedSize(horizontal: false, vertical: true)
-                TextField("给这枚指纹起个名字", text: $name)
-                    .font(V8.T.body)
-                    .foregroundStyle(V8.C.ink1)
-                    .frame(minHeight: V8.H.min)
-                    .padding(.horizontal, V8.S.gapM)
-                    .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
-                    .autocorrectionDisabled()
+                VTextField(placeholder: "给这枚指纹起个名字", text: $name, autocorrection: false)
             } else {
                 Text("码值 · " + (codeValid ? "位数合规" : "6~8 位数字"))
                     .font(V8.T.label)
@@ -557,17 +543,9 @@ struct KeyCreateHomeScreen: View {
                     .font(V8.T.footnote)
                     .foregroundStyle(V8.C.warn)
                     .fixedSize(horizontal: false, vertical: true)
-                Button {
+                V8ActionButton(title: busy ? "录入中… 已按 " + String(fpCount) + "/8" : (isEdit ? "保存改造" : "开始录入指纹"), style: .primary, busy: busy) {
                     submit()
-                } label: {
-                    Text(busy ? "录入中… 已按 " + String(fpCount) + "/8" : (isEdit ? "保存改造" : "开始录入指纹"))
-                        .font(V8.T.tab)
-                        .foregroundStyle(V8.C.chipOn)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: V8.H.min)
-                        .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(V8PressStyle())
                 .disabled(busy)
                 .padding(.top, V8.S.gapS)
             } else {
@@ -588,19 +566,10 @@ struct KeyCreateHomeScreen: View {
                         .foregroundStyle(V8.C.danger)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                Button {
+                V8ActionButton(title: isEdit ? "保存改造" : "写入台账", style: .primary) {
                     submit()
-                } label: {
-                    Text(isEdit ? "保存改造" : "写入台账")
-                        .font(V8.T.tab)
-                        .foregroundStyle(V8.C.chipOn)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: V8.H.min)
-                        .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(V8PressStyle())
                 .disabled(confirmCode != code || !codeValid || busy)
-                .opacity((confirmCode != code || !codeValid || busy) ? 0.45 : 1)
                 .padding(.top, V8.S.gapS)
                 // 2026-11-05（减字 · 去重复）：这句与页面 lead **逐字相同**，
                 // 而 lead 在同一屏顶部一直可见。同一句话在同一屏出现两次，删掉脚注这一份。
@@ -627,17 +596,9 @@ struct KeyCreateHomeScreen: View {
             }
             Spacer(minLength: 0)
             if step < 3 {
-                Button {
+                V8ActionButton(title: nextTitle, style: .primary) {
                     advance()
-                } label: {
-                    Text(nextTitle)
-                        .font(V8.T.tab)
-                        .foregroundStyle(V8.C.chipOn)
-                        .padding(.horizontal, V8.S.gapL)
-                        .frame(minHeight: V8.H.min)
-                        .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(V8PressStyle())
                 .accessibilityLabel(nextTitle)
             }
         }

@@ -121,7 +121,7 @@ struct MemberCreateHomeScreen: View {
             ToolbarItem(placement: .topBarLeading) {
                 Button("取消") { askCancel() }
                     .disabled(creating)
-                    .opacity(creating ? 0.45 : 1)
+                    .opacity(creating ? V8.O.disabled : 1)
                     .accessibilityLabel("取消建档")
             }
         }
@@ -237,12 +237,7 @@ struct MemberCreateHomeScreen: View {
             Text(label)
                 .font(V8.T.label)
                 .foregroundStyle(V8.C.ink4)
-            TextField(placeholder, text: text)
-                .font(V8.T.body)
-                .foregroundStyle(V8.C.ink1)
-                .frame(minHeight: V8.H.min)
-                .padding(.horizontal, V8.S.gapM)
-                .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
+            VTextField(placeholder: placeholder, text: text)
         }
     }
 
@@ -271,7 +266,8 @@ struct MemberCreateHomeScreen: View {
             Text(e.isEmpty ? "首字" : e)
                 .font(e.isEmpty ? V8.T.caption : V8.T.body)
                 .foregroundStyle(on ? V8.C.ink1 : V8.C.ink3)
-                .frame(width: V8.S.gapXXL, height: V8.S.gapXXL)
+                // 大字号下格子跟着字长，不裁字。
+                .frame(minWidth: V8.S.gapXXL, minHeight: V8.S.gapXXL)
                 .background(on ? V8.C.accentTrack : V8.C.chipOff, in: Circle())
                 .overlay(
                     Circle().strokeBorder(on ? V8.C.accent : V8.C.line, lineWidth: V8.S.hair)
@@ -370,34 +366,16 @@ struct MemberCreateHomeScreen: View {
     private var actionCard: some View {
         VCard2(style: .well) {
             if step < 3 {
-                Button {
+                V8ActionButton(title: "下一步", style: .primary) {
                     advance()
-                } label: {
-                    Text("下一步")
-                        .font(V8.T.tab)
-                        .foregroundStyle(V8.C.chipOn)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: V8.H.min)
-                        .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(V8PressStyle())
                 .disabled(!canAdvance)
-                .opacity(canAdvance ? 1 : 0.45)
                 .accessibilityLabel("下一步")
             } else {
-                Button {
+                V8ActionButton(title: creating ? "正在建档…" : "完成建档", style: .primary, busy: creating) {
                     finish()
-                } label: {
-                    Text(creating ? "正在建档…" : "完成建档")
-                        .font(V8.T.tab)
-                        .foregroundStyle(V8.C.chipOn)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: V8.H.min)
-                        .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(V8PressStyle())
                 .disabled(!canAdvance || creating)
-                .opacity((canAdvance && !creating) ? 1 : 0.45)
                 .accessibilityLabel("完成建档")
             }
             if step > 0 {

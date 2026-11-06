@@ -69,26 +69,14 @@ struct PasscodeSheet: View {
                             }
                             secureField(kind.fieldPlaceholder, text: $first, contentType: .newPassword)
                             secureField("再次输入", text: $second, contentType: nil)
-                            Button { commit() } label: {
-                                Text("确定")
-                                    .font(V8.T.tab)
-                                    .foregroundStyle(V8.C.chipOn)
-                                    .frame(maxWidth: .infinity)
-                                    .frame(minHeight: V8.H.min)
-                                    .background(Capsule(style: .continuous).fill(V8.C.accent))
+                            V8ActionButton(title: "确定", style: .primary) {
+                                commit()
                             }
-                            .buttonStyle(V8PressStyle())
                             .accessibilityLabel("确定")
                             .padding(.top, V8.S.gapXS)
-                            Button { dismiss() } label: {
-                                Text("取消")
-                                    .font(V8.T.tab)
-                                    .foregroundStyle(V8.C.ink1)
-                                    .frame(maxWidth: .infinity)
-                                    .frame(minHeight: V8.H.min)
-                                    .background(Capsule(style: .continuous).fill(V8.C.chipOff))
+                            V8ActionButton(title: "取消", style: .secondary) {
+                                dismiss()
                             }
-                            .buttonStyle(V8PressStyle())
                             .accessibilityLabel("取消")
                         }
                     }
@@ -115,16 +103,8 @@ struct PasscodeSheet: View {
     }
 
     private func secureField(_ label: String, text: Binding<String>, contentType: UITextContentType?) -> some View {
-        SecureField(label, text: text)
-            .font(V8.T.body)
-            .foregroundStyle(V8.C.ink1)
-            .keyboardType(.numberPad)
-            .textContentType(contentType)
-            // 三个密码框统一 minHeight：HIG 可点下限，也让它们与下面两颗按钮对齐。
-            .frame(minHeight: V8.H.min)
-            .padding(.horizontal, V8.S.gapM)
-            .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
-            .accessibilityLabel(label)
+        // 共享输入框：聚焦描边、错误描边、禁用态全部由组件给。
+        VTextField(placeholder: label, text: text, secure: true, keyboard: .numberPad, contentType: contentType)
     }
 
     private func commit() {
@@ -193,36 +173,20 @@ struct VerifyPasscodeSheet: View {
                         .fixedSize(horizontal: false, vertical: true)
                     VCard2 {
                         VStack(alignment: .leading, spacing: V8.S.gapM) {
-                            SecureField("当前本机密码", text: $code)
-                                .font(V8.T.body)
-                                .foregroundStyle(V8.C.ink1)
-                                .keyboardType(.numberPad)
-                                .textContentType(.password)
-                                .frame(minHeight: V8.H.min)
-                                .padding(.horizontal, V8.S.gapM)
-                                .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
-                                .accessibilityLabel("当前本机密码")
-                            Button { verify() } label: {
-                                Text("验证并继续")
-                                    .font(V8.T.tab)
-                                    .foregroundStyle(V8.C.chipOn)
-                                    .frame(maxWidth: .infinity)
-                                    .frame(minHeight: V8.H.min)
-                                    .background(Capsule(style: .continuous).fill(V8.C.accent))
+                            VTextField(placeholder: "当前本机密码",
+                                        text: $code,
+                                        secure: true,
+                                        keyboard: .numberPad,
+                                        contentType: .password,
+                                        hasError: error != nil)
+                            V8ActionButton(title: "验证并继续", style: .primary) {
+                                verify()
                             }
-                            .buttonStyle(V8PressStyle())
                             .accessibilityLabel("验证并继续")
                             .disabled(code.count < 4)
-                            .opacity(code.count < 4 ? 0.45 : 1)
-                            Button { dismiss() } label: {
-                                Text("取消")
-                                    .font(V8.T.tab)
-                                    .foregroundStyle(V8.C.ink1)
-                                    .frame(maxWidth: .infinity)
-                                    .frame(minHeight: V8.H.min)
-                                    .background(Capsule(style: .continuous).fill(V8.C.chipOff))
+                            V8ActionButton(title: "取消", style: .secondary) {
+                                dismiss()
                             }
-                            .buttonStyle(V8PressStyle())
                             .accessibilityLabel("取消")
                         }
                     }

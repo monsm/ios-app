@@ -24,11 +24,6 @@ import SwiftUI
 /// 单环加文字横排是安全的：145pt 环 + 16pt 间隙 + 175pt 文字。
 
 struct VHeroRing: View {
-    @Environment(\.colorScheme) private var colorScheme
-    /// 2026-11-05（全技能审核 · T17）：ambient glow 之前只是静态色块，V8.M.ambient
-    /// 定义了 2.4s 呼吸却零消费。这里用 phaseAnimator 让光晕在 0.94↔1.0 之间缓慢呼吸；
-    /// Reduce Motion 时单相位（不动）。不用 repeatForever（项目禁令）。
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// 已填充比例 0…1
     let fraction: Double
     /// 环心大数
@@ -51,64 +46,26 @@ struct VHeroRing: View {
     /// 12 点 = 0°、顺时针；SwiftUI 的 trim 起点在 3 点 ⇒ 差 90°。
     private var startRotation: Double { V8.G.heroGapStart - 90 }
 
-    private var glowAlpha: Double {
-        colorScheme == .dark ? V8.G.glowAlphaDark : V8.G.glowAlphaLight
-    }
-
     var body: some View {
         ZStack {
-            // T17 ambient glow：贴形状的一层呼吸，10pt 内从 100% 衰减到 0 —— 不是页面级渐变。
-            Circle()
-                .fill(
-                    RadialGradient(
-                        gradient: Gradient(colors: [tint.opacity(glowAlpha), tint.opacity(0)]),
-                        center: .center,
-                        startRadius: size * 0.34,
-                        endRadius: size * 0.62
-                    )
-                )
-                .frame(width: size * V8.G.glowRadiusFactor, height: size * V8.G.glowRadiusFactor)
-                .blur(radius: V8.S.gapS)
-                .phaseAnimator(reduceMotion ? [1.0] : [0.94, 1.0]) { view, phase in
-                    view.scaleEffect(phase)
-                } animation: { _ in V8.M.ambient }
-                .accessibilityHidden(true)
+            // 2026-11-06（V10 · Quiet Instrument）：表盘去掉呼吸光晕与金属渐变 ——
+            // 一枚安静的刻度环：底轨是浅灰槽，已填充段是实心强调色，环心是读数。
             // 内盘（Ø206.7 @ 全尺寸）：环心数字垫在它上面。
-            // 2026-11-06（V9 · 液态仪器）：实心卡片色升级为"玻璃表盘" —— 顶亮底暗的
-            // 受光渐变 + 顶缘高光描边，像仪器面板上一块嵌进去的玻璃表盘。
             Circle()
-                .fill(
-                    LinearGradient(
-                        colors: [V8.C.cardTop, V8.C.cardBottom],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
+                .fill(V8.C.card)
                 .overlay {
-                    Circle().strokeBorder(V8.C.cardSheen, lineWidth: V8.S.hair)
+                    Circle().strokeBorder(V8.C.line, lineWidth: V8.S.hair)
                 }
                 .frame(width: V8.G.heroDisc * scale, height: V8.G.heroDisc * scale)
             // 轨道：画满整段扫过角（含缺口），这样"还没填"的部分是可感知的空槽。
-            // 2026-11-06（V9）：轨道加一层内凹阴影（凹槽感），填充段改为高光渐变 ——
-            // 亮部在左上（受光面），暗部在右下，模拟抛光金属刻度。
             Circle()
                 .trim(from: 0, to: sweepFraction)
                 .stroke(V8.C.line, style: StrokeStyle(lineWidth: stroke, lineCap: .round))
                 .rotationEffect(.degrees(startRotation))
-                .shadow(color: V8.C.shadow, radius: V8.Z.cardShadowRadius2, y: V8.Z.cardShadowY2)
             Circle()
                 .trim(from: 0, to: sweepFraction * max(0, min(1, fraction)))
                 .stroke(
-                    AngularGradient(
-                        gradient: Gradient(colors: [
-                            tint.opacity(0.55),
-                            tint,
-                            tint.opacity(0.85),
-                            tint,
-                            tint.opacity(0.55)
-                        ]),
-                        center: .center
-                    ),
+                    tint,
                     style: StrokeStyle(lineWidth: stroke, lineCap: .round)
                 )
                 .rotationEffect(.degrees(startRotation))
@@ -140,9 +97,10 @@ struct VHeroRing: View {
                     .minimumScaleFactor(0.5)
                     .lineLimit(1)
                 if !label.isEmpty {
+                    // 单位小字走墨 4，不跟读数抢颜色 —— 一屏只有一个强调色。
                     Text(label)
                         .font(V8.T.micro)
-                        .foregroundStyle(tint)
+                        .foregroundStyle(V8.C.ink4)
                         .tracking(V8.G.heroLabelTracking)
                 }
             }
@@ -172,16 +130,9 @@ struct VSegmentedRing2: View {
 
     var body: some View {
         ZStack {
-            // 2026-11-06（V9）：环心加一块受光玻璃盘（顶亮底暗），数字不再直接坐在卡面上 ——
-            // 与主环的玻璃表盘同一语法，只是尺寸更小。
+            // 2026-11-06（V10）：环心是一块安静的表盘 —— 纯色 + 发丝描边，不做玻璃渐变。
             Circle()
-                .fill(
-                    LinearGradient(
-                        colors: [V8.C.cardTop, V8.C.cardBottom],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
+                .fill(V8.C.card)
                 .frame(width: size - width * 2 - V8.S.gapS, height: size - width * 2 - V8.S.gapS)
             Circle()
                 .strokeBorder(V8.C.line, lineWidth: width)
@@ -280,17 +231,11 @@ struct VSpark: View {
                     ForEach(Array(values.enumerated()), id: \.offset) { index, value in
                         let ratio = max(0.03, value / peak)
                         // 柱是圆头的：宽度 2pt 时 Capsule 的等效圆角就是 1pt（= sparkBarRadius）。
-                        // 2026-11-06（V9）：柱身改为纵向受光渐变（顶亮底暗）——
-                        // 波形从"一根根色条"变成"一排受光的刻度柱"。
+                        // 2026-11-06（V10）：柱身改回实心 —— 24 根渐变柱在一屏里是噪声，
+                        // 实心色柱反而更像一把刻度尺。
                         RoundedRectangle(cornerRadius: V8.G.sparkBarRadius, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [tint, tint.opacity(0.45)],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                                .opacity(isCursor(index) ? 1 : 0.72)
-                            )
+                            .fill(tint)
+                            .opacity(isCursor(index) ? 1 : 0.7)
                             .frame(width: V8.G.sparkBarW, height: max(V8.G.sparkBarW, geo.size.height * ratio))
                             .overlay(alignment: .top) {
                                 if isCursor(index) {

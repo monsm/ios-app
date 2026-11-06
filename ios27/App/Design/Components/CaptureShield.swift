@@ -39,20 +39,20 @@ private struct CaptureShieldModifier: ViewModifier {
             content
                 .opacity(hidden ? 0 : 1)
             if hidden {
-                VStack(spacing: V.S.gapS) {
+                VStack(spacing: V8.S.gapS) {
                     Image(systemName: sceneOnly ? "lock.fill" : "eye.slash.fill")
-                        .font(V.F.icon22)
-                        .foregroundStyle(V.C.text2)
+                        .font(V8.T.title2)
+                        .foregroundStyle(V8.C.ink4)
                         .accessibilityHidden(true)
                     Text(screenshotFlash ? "刚刚的截图里可能带有明文码值 —— 请确认这张图只留在你自己的相册里。"
                      : (sceneOnly ? "已隐藏" : message))
-                        .font(V.F.body)
-                        .foregroundStyle(V.C.text1)
+                        .font(V8.T.body)
+                        .foregroundStyle(V8.C.ink1)
                         .multilineTextAlignment(.center)
                 }
-                .padding(V.S.gap16)
+                .padding(V8.S.gapL)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(V.C.card)
+                .background(V8.C.card)
                 .accessibilityElement(children: .combine)
             }
         }

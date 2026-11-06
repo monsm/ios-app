@@ -43,7 +43,7 @@ struct ZotpHomeScreen: View {
                     fraction: fraction,
                     center: String(remain / 60) + ":" + String(format: "%02d", remain % 60),
                     tint: remain < 120 ? V8.C.warn : V8.C.accent,
-                    size: V8.G.segCompactOuter * 2.4
+                    size: V8.G.heroRingInline
                 )
                 Text("距失效")
                     .font(V8.T.caption)
@@ -133,10 +133,7 @@ struct ZotpHomeScreen: View {
                 .padding(.top, V8.S.gapM)
             if code.isEmpty {
                 // 卡头已写「还没生成」，这里只给下一步，不重复状态。
-                Text("点下面的按钮取一枚")
-                    .font(V8.T.footnote)
-                    .foregroundStyle(V8.C.ink3)
-                    .frame(maxWidth: .infinity)
+                VEmptyHint(text: "点下面的按钮取一枚")
                     .padding(.vertical, V8.S.gapL)
             } else {
                 Text(displayCode)
@@ -183,19 +180,10 @@ struct ZotpHomeScreen: View {
                 }
                 .padding(.top, V8.S.gapS)
             }
-            Button {
+            V8ActionButton(title: busy ? "生成中…" : "生成动态密码", style: .primary, busy: busy) {
                 generate()
-            } label: {
-                Text(busy ? "生成中…" : "生成动态密码")
-                    .font(V8.T.tab)
-                    .foregroundStyle(V8.C.chipOn)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: V8.H.min)
-                    .background(Capsule(style: .continuous).fill(V8.C.accent))
             }
-            .buttonStyle(V8PressStyle())
             .disabled(busy || generateBlockedReason != nil)
-            .opacity((busy || generateBlockedReason != nil) ? 0.45 : 1)
             .padding(.top, V8.S.gapM)
             if let why = generateBlockedReason {
                 Text(why)

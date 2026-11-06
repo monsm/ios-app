@@ -179,16 +179,16 @@ struct HardwareHomeScreen: View {
                 }
                 .buttonStyle(V8PressStyle())
                 .disabled(readOnly)
-                .opacity(readOnly ? 0.45 : 1)
+                .opacity(readOnly ? V8.O.disabled : 1)
             } else {
                 Button { write(d) } label: {
                     actionLabel("把「\(app.lock?.name ?? "这把锁")」的钥匙写进去", tint: V8.C.accent)
                 }
                 .buttonStyle(V8PressStyle())
                 .disabled(readOnly)
-                .opacity(readOnly ? 0.45 : 1)
+                .opacity(readOnly ? V8.O.disabled : 1)
             }
-            HStack(spacing: V8.S.gapL) {
+            VButtonRow(spacing: V8.S.gapL) {
                 Button { readState(d) } label: {
                     Text("读取状态")
                         .font(V8.T.caption)
@@ -203,21 +203,17 @@ struct HardwareHomeScreen: View {
                         .frame(minHeight: V8.H.min)
                 }
                 .buttonStyle(V8PressStyle())
-                Spacer(minLength: 0)
             }
             Button { writeFault(d) } label: {
                 actionLabel("写入一把未知钥匙（随机 PIN，永久）", tint: V8.C.ink3)
             }
             .buttonStyle(V8PressStyle())
             .disabled(readOnly)
-            .opacity(readOnly ? 0.45 : 1)
+            .opacity(readOnly ? V8.O.disabled : 1)
             if let keys = keysByDongle[d.id] {
                 if keys.isEmpty {
-                    Text("这把钥匙串里还没有写入任何锁的钥匙。")
-                        .font(V8.T.footnote)
-                        .foregroundStyle(V8.C.ink3)
+                    VEmptyHint(text: "这把钥匙串里还没有写入任何锁的钥匙。")
                         .padding(.top, V8.S.gapXS)
-                        .fixedSize(horizontal: false, vertical: true)
                 } else {
                     VStack(alignment: .leading, spacing: V8.S.gapXS) {
                         ForEach(keys, id: \.self) { mac in
@@ -254,7 +250,7 @@ struct HardwareHomeScreen: View {
                 Text("只删本机这条记录，钥匙串里已写入的钥匙仍然能开对应锁。")
             }
             .disabled(readOnly)
-            .opacity(readOnly ? 0.45 : 1)
+            .opacity(readOnly ? V8.O.disabled : 1)
             Text("解绑只删本机记录，不删钥匙串里已写入的钥匙 —— 那把实体钥匙仍然能开对应锁。")
                 .font(V8.T.footnote)
                 .foregroundStyle(V8.C.ink3)
@@ -296,15 +292,9 @@ struct HardwareHomeScreen: View {
                 VBusy(text: "把钥匙串放在手机旁，别移开")
                     .padding(.top, V8.S.gapM)
             } else {
-                Button { scan() } label: {
-                    Text("扫描钥匙串")
-                        .font(V8.T.tab)
-                        .foregroundStyle(V8.C.chipOn)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: V8.H.min)
-                        .background(Capsule(style: .continuous).fill(V8.C.accent))
+                V8ActionButton(title: "扫描钥匙串", style: .primary) {
+                    scan()
                 }
-                .buttonStyle(V8PressStyle())
                 .padding(.top, V8.S.gapM)
             }
             Text("扫描只认 pid 16289 且广播里带 MAC 的设备。扫不到时先确认钥匙串有电（按一下按键看灯），再靠近手机 30 厘米内。")
@@ -339,7 +329,7 @@ struct HardwareHomeScreen: View {
                 router.request(.dest(.godMode))
             }
             .disabled(app.currentKeychain == nil)
-            .opacity(app.currentKeychain == nil ? 0.45 : 1)
+            .opacity(app.currentKeychain == nil ? V8.O.disabled : 1)
             .padding(.top, V8.S.gapS)
         }
     }

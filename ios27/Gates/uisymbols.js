@@ -19,7 +19,10 @@ const PREFIXES = ['V', 'Canvas', 'HH', 'Settings', 'Keys', 'Cred', 'Lock', 'Memb
                   'Backup', 'Unlock', 'DFU', 'Gateway', 'Defend', 'Module', 'Quick',
                   'Package', 'Import', 'Studio'];
 // 这些 SDK/框架名字恰好前缀相同，显式排除
-const ALLOW = new Set(['VStack', 'HStack', 'ZStack', 'VStackLayout', 'HStackLayout', 'VM', 'VC']);
+// 2026-11-06（V10）：ViewThatFits 是 SwiftUI 自带的容器（iOS 16+），
+// 前缀恰好撞上「V」—— 加进白名单，与 VStack/HStack 同理。
+const ALLOW = new Set(['VStack', 'HStack', 'ZStack', 'VStackLayout', 'HStackLayout', 'VM', 'VC',
+                       'ViewThatFits']);
 
 function walk(d, out = []) {
   for (const e of fs.readdirSync(d, { withFileTypes: true })) {

@@ -39,7 +39,7 @@ enum FullPageCapture {
             // 而 `drawHierarchy(in: sv.bounds)` 只渲染 ScrollView 自己的层级 ——
             // 它的背景是透明，PNG 里透明落成黑。给 renderer 先铺一层 `V.C.bg`，
             // 再把 ScrollView 的 layer 背景临时设成同色，恢复时还原。
-            let paper = UIColor(V.C.bg)
+            let paper = UIColor(V8.C.bg)
 
             // 2026-11-05（Round 7 · AX 整页空白根因 #2）：AX 档下 dynamicTypeSize 改变了
             // 全部字体的度量，撑开 frame 触发的 SwiftUI 重布局是**异步**的 ——

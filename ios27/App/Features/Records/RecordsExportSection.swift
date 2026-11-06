@@ -208,17 +208,9 @@ struct RecordsExportSection: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             if !shareUnlocked {
-                Button {
+                V8ActionButton(title: "我明白，开始导出", style: .primary) {
                     confirmExport = true
-                } label: {
-                    Text("我明白，开始导出")
-                        .font(V8.T.tab)
-                        .foregroundStyle(V8.C.chipOn)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: V8.H.min)
-                        .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("确认开始导出")
                 .padding(.top, V8.S.gapM)
             }

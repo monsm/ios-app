@@ -136,13 +136,14 @@ struct DoorHomeScreen: View {
         }
         .sensoryFeedback(.success, trigger: app.dialPhase == .opened) { _, new in new }
         .sensoryFeedback(.error, trigger: app.dialPhase.isFailed) { _, new in new }
-        .sheet(isPresented: $showQuickEdit) { QuickPoolEditSheet() }
+        .sheet(isPresented: $showQuickEdit) { QuickPoolEditSheet().v8Sheet() }
         .sheet(isPresented: $showUnlockGate) {
             NavigationStack {
                 UnlockGateScreen {
                     Task { await app.runUnlockChain() }
                 }
             }
+            .v8Sheet()
         }
         .safeAreaInset(edge: .bottom) {
             if app.lock != nil {
@@ -322,7 +323,7 @@ struct DoorHomeScreen: View {
                 HStack(alignment: .center, spacing: 0) {
                     heroStat(icon: "circle.grid.2x2", tint: V8.C.accent,
                              label: "今日开锁", value: "\(todayOpenEntries.count) 次")
-                    Rectangle().fill(V8.C.line).frame(width: V8.S.hair).frame(maxHeight: 34)
+                    Rectangle().fill(V8.C.line).frame(width: V8.S.hair).frame(maxHeight: V8.S.statDivider)
                     heroStat(icon: "key.horizontal", tint: V8.D.fingerprint,
                              label: "名下凭证", value: "\(app.keys.count) 枚")
                 }

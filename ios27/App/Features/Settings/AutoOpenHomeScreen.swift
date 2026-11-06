@@ -270,17 +270,9 @@ struct AutoOpenHomeScreen: View {
                 VBusy(text: "正在采集信号 · 请保持站在门外")
                     .padding(.top, V8.S.gapM)
             } else {
-                Button {
+                V8ActionButton(title: calibrationAt == nil ? "开始标定" : "重新标定", style: .primary) {
                     calibrate()
-                } label: {
-                    Text(calibrationAt == nil ? "开始标定" : "重新标定")
-                        .font(V8.T.tab)
-                        .foregroundStyle(V8.C.chipOn)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: V8.H.min)
-                        .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(V8PressStyle())
                 .padding(.top, V8.S.gapM)
                 .accessibilityLabel(calibrationAt == nil ? "开始标定" : "重新标定")
                 if calibrationAt != nil {

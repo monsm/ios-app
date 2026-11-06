@@ -392,17 +392,9 @@ struct LockMaintenanceHomeScreen: View {
                         .foregroundStyle(V8.C.ink3)
                         .padding(.top, V8.S.gapM)
                         .fixedSize(horizontal: false, vertical: true)
-                    Button {
+                    V8ActionButton(title: "配网网关", style: .primary) {
                         gwOpenProvision()
-                    } label: {
-                        Text("配网网关")
-                            .font(V8.T.tab)
-                            .foregroundStyle(V8.C.chipOn)
-                            .frame(maxWidth: .infinity)
-                            .frame(minHeight: V8.H.min)
-                            .background(Capsule(style: .continuous).fill(V8.C.accent))
                     }
-                    .buttonStyle(V8PressStyle())
                     .padding(.top, V8.S.gapM)
                 }
                 .padding(.top, V8.S.gapM)
@@ -445,7 +437,7 @@ struct LockMaintenanceHomeScreen: View {
                 VDataRow(tag: "核对", tagTint: V8.C.ink4, title: "上次核对", value: g.lastCheckedAt.map { TimeDisplay.clock($0) } ?? "—")
             }
             .padding(.top, V8.S.gapXS)
-            HStack(spacing: V8.S.gapL) {
+            VButtonRow(spacing: V8.S.gapL) {
                 Button("刷新状态") { Task { await gwRefresh(g) } }
                     .font(V8.T.caption)
                     .foregroundStyle(V8.C.accent)
@@ -456,7 +448,6 @@ struct LockMaintenanceHomeScreen: View {
                 Button("删除记录") { gwConfirmDelete = g }
                     .font(V8.T.caption)
                     .foregroundStyle(V8.C.danger)
-                Spacer(minLength: 0)
             }
             .frame(minHeight: V8.H.min)
         }
@@ -534,19 +525,10 @@ struct LockMaintenanceHomeScreen: View {
                 VBusy(text: "正在写入，请勿断电")
                     .padding(.top, V8.S.gapM)
             } else {
-                Button {
+                V8ActionButton(title: "开始配网", style: .primary) {
                     Task { await gwProvision() }
-                } label: {
-                    Text("开始配网")
-                        .font(V8.T.tab)
-                        .foregroundStyle(V8.C.chipOn)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: V8.H.min)
-                        .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(V8PressStyle())
                 .disabled(!gwCanProvision || readOnly)
-                .opacity((gwCanProvision && !readOnly) ? 1 : 0.45)
                 .padding(.top, V8.S.gapM)
                 if !gwCanProvision {
                     Text("要先勾上「橙灯闪烁中」，并填好 WiFi 名称与密码。")
@@ -669,19 +651,10 @@ struct LockMaintenanceHomeScreen: View {
                         .accessibilityValue(String(Int(dfuProgress * 100)) + "%，" + stateText)
                         .padding(.top, V8.S.gapS)
                 } else {
-                    Button {
+                    V8ActionButton(title: pkg == nil ? "选择固件包 (.zip)" : "重新选择固件包", style: .primary) {
                         importing = true
-                    } label: {
-                        Text(pkg == nil ? "选择固件包 (.zip)" : "重新选择固件包")
-                            .font(V8.T.tab)
-                            .foregroundStyle(V8.C.chipOn)
-                            .frame(maxWidth: .infinity)
-                            .frame(minHeight: V8.H.min)
-                            .background(Capsule(style: .continuous).fill(V8.C.accent))
                     }
-                    .buttonStyle(V8PressStyle())
                     .disabled(readOnly)
-                    .opacity(readOnly ? 0.45 : 1)
                     .padding(.top, V8.S.gapM)
                     if let p = pkg {
                         VCard2(style: .well) {
@@ -699,19 +672,10 @@ struct LockMaintenanceHomeScreen: View {
                             .padding(.top, V8.S.gapS)
                         }
                         .padding(.top, V8.S.gapM)
-                        Button {
+                        V8ActionButton(title: dfuPhase == .done ? "再次升级" : "开始升级", style: .primary) {
                             askStart = true
-                        } label: {
-                            Text(dfuPhase == .done ? "再次升级" : "开始升级")
-                                .font(V8.T.tab)
-                                .foregroundStyle(V8.C.chipOn)
-                                .frame(maxWidth: .infinity)
-                                .frame(minHeight: V8.H.min)
-                                .background(Capsule(style: .continuous).fill(V8.C.accent))
                         }
-                        .buttonStyle(V8PressStyle())
                         .disabled(readOnly)
-                        .opacity(readOnly ? 0.4 : 1)
                         .padding(.top, V8.S.gapM)
                     }
                     if dfuPhase == .done {
@@ -814,12 +778,7 @@ struct LockMaintenanceHomeScreen: View {
                     Text("电池型号")
                     .font(V8.T.label)
                     .foregroundStyle(V8.C.ink4)
-                    TextField("电池型号（如 CR123A × 2）", text: $batteryModel)
-                        .font(V8.T.body)
-                        .foregroundStyle(V8.C.ink1)
-                        .frame(minHeight: V8.H.min)
-                        .padding(.horizontal, V8.S.gapM)
-                        .background(V8.C.well, in: .rect(cornerRadius: V8.R.inset))
+                    VTextField(placeholder: "电池型号（如 CR123A × 2）", text: $batteryModel)
                 }
                 Toggle(isOn: $hasChangedAt) {
                     VStack(alignment: .leading, spacing: V8.S.gapXS) {
@@ -838,15 +797,9 @@ struct LockMaintenanceHomeScreen: View {
                         .font(V8.T.body)
                         .frame(minHeight: V8.H.min)
                 }
-                Button { saveBattery() } label: {
-                    Text("保存电池档案")
-                        .font(V8.T.tab)
-                        .foregroundStyle(V8.C.chipOn)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: V8.H.min)
-                        .background(Capsule(style: .continuous).fill(V8.C.accent))
+                V8ActionButton(title: "保存电池档案", style: .primary) {
+                    saveBattery()
                 }
-                .buttonStyle(V8PressStyle())
                 .padding(.top, V8.S.gapM)
                 if let batteryOutcome {
                     Text(batteryOutcome)
@@ -1019,17 +972,9 @@ struct LockMaintenanceHomeScreen: View {
                     retry: { Task { await reloadInfo() } }
                 )
             } else {
-                Button {
+                V8ActionButton(title: "重新读取", style: .primary) {
                     Task { await reloadInfo() }
-                } label: {
-                    Text("重新读取")
-                        .font(V8.T.tab)
-                        .foregroundStyle(V8.C.chipOn)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: V8.H.min)
-                        .background(Capsule(style: .continuous).fill(V8.C.accent))
                 }
-                .buttonStyle(V8PressStyle())
                 .accessibilityLabel("重新读取锁信息")
                 if let infoOutcome {
                     Text(infoOutcome)

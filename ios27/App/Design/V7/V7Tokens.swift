@@ -218,7 +218,6 @@ enum V {
         static let displayHome = sans(34, weight: .bold, relativeTo: .largeTitle)   // 设置/根页大标题 34/700
     // 2026-11-04（S4 清理）：heroGlyph56 / displayC 已删 —— 唯一消费者是旧 KeysScreen /
     // HouseholdScreen / SettingsScreen，它们整份删除了。V7 只剩"还被旧组件库引用"的档位。
-        static let display24 = sans(24, weight: .regular, relativeTo: .title2)      // 冷启动闸门 24
         // title20 (20/700) removed 2026-11-01: zero consumers across the whole repo.
         static let body = sans(17)                         // 正文 17
         static let bodyStrong = sans(17, weight: .semibold)
@@ -241,7 +240,6 @@ enum V {
         static let number13 = sans(13, weight: .medium, relativeTo: .footnote)    // 读数 13
         static let number15 = sans(15, weight: .medium, relativeTo: .subheadline) // 读数 15
         static let number17 = sans(17, weight: .medium, relativeTo: .body)        // 读数 17
-        static let number20 = sans(20, weight: .medium, relativeTo: .title3)      // 读数 20
         static let number22 = sans(22, weight: .bold, relativeTo: .title2)        // 数字大值 22/700
         static let tab = sans(11, weight: .semibold, relativeTo: .caption2)       // Tab 标签 11/600
         static let chevron = sans(13, weight: .semibold, relativeTo: .footnote)
@@ -260,10 +258,10 @@ enum V {
         static let icon15Semibold = sans(15, weight: .semibold, relativeTo: .body)
         static let icon18 = sans(18, relativeTo: .body)
         static let icon18Medium = sans(18, weight: .medium, relativeTo: .body)
-        static let icon22 = sans(22, relativeTo: .title2)
-        static let icon22Light = sans(22, weight: .light, relativeTo: .title2)
     }
 
+    // 2026-11-06（V10）：V7 字阶里 display24 / number20 / icon22 / icon22Light 已删 ——
+    // 冷启动闸门与截图遮罩迁到 V8 之后，这四档在全仓零消费者。
     // MARK: - 间距 / 画布（TOKENS.md 布局栅格）
     enum S {
         static let screenW: CGFloat = 402

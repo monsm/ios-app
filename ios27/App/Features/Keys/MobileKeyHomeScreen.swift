@@ -129,7 +129,7 @@ struct MobileKeyHomeScreen: View {
                     fraction: fraction,
                     center: String(covered),
                     label: "/ " + String(activeMembers.count),
-                    size: V8.G.segCompactOuter * 2.2,
+                    size: V8.G.heroRingInline,
                     tint: covered >= activeMembers.count ? V8.C.ok : V8.C.accent,
                     showsTick: false,
                     showsCursor: false
@@ -210,19 +210,10 @@ struct MobileKeyHomeScreen: View {
                     .padding(.top, V8.S.gapM)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Button {
+            V8ActionButton(title: busy ? "签发中…" : "签发一把手机钥匙", style: .primary, busy: busy) {
                 issue()
-            } label: {
-                Text(busy ? "签发中…" : "签发一把手机钥匙")
-                    .font(V8.T.tab)
-                    .foregroundStyle(V8.C.chipOn)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: V8.H.min)
-                    .background(Capsule(style: .continuous).fill(V8.C.accent))
             }
-            .buttonStyle(V8PressStyle())
             .disabled(busy || app.currentKeychain == nil)
-            .opacity((busy || app.currentKeychain == nil) ? 0.45 : 1)
             .padding(.top, V8.S.gapM)
             if app.currentKeychain == nil {
                 Text("还没有添加门锁 —— 先在「门」页添加一把锁，再回来签发手机钥匙。")
@@ -457,18 +448,10 @@ struct MobileKeyHomeScreen: View {
             }
             .accessibilityLabel("分享配对串")
             .padding(.top, V8.S.gapM)
-            Button {
+            V8ActionButton(title: copied ? "已复制" : "复制配对串", style: .secondary) {
                 Clip.set(payloadText)
                 copied = true
-            } label: {
-                Text(copied ? "已复制" : "复制配对串")
-                    .font(V8.T.tab)
-                    .foregroundStyle(V8.C.ink1)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: V8.H.min)
-                    .background(Capsule(style: .continuous).fill(V8.C.chipOff))
             }
-            .buttonStyle(V8PressStyle())
             .accessibilityLabel("复制配对串")
             .padding(.top, V8.S.gapS)
             Text("这串是安卓配对码（含 mac / pid / ekey，刻意不含 skey）。当面扫、单独发给本人，不要发群里。")

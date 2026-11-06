@@ -90,7 +90,7 @@ struct HouseHomeScreen: View {
     }
 
     var body: some View {
-        VPage(title: judgement, lead: lead, atmosphere: .green) {
+        VPage(title: judgement, lead: lead) {
             chipRow
         } content: {
             if activeMembers.isEmpty && archivedMembers.isEmpty {

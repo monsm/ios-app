@@ -232,14 +232,7 @@ struct AppearanceHomeScreen: View {
                 Circle()
                     .fill(SettingsStore.color(hex: item.hex))
                     .overlay {
-                        LinearGradient(
-                            colors: [.white.opacity(0.22), .clear],
-                            startPoint: .top, endPoint: .bottom
-                        )
-                        .clipShape(Circle())
-                    }
-                    .overlay {
-                        Circle().strokeBorder(.white.opacity(0.30), lineWidth: V8.S.hair)
+                        Circle().strokeBorder(V8.C.tileSheen, lineWidth: V8.S.hair)
                     }
                     .frame(width: V8.S.gapM, height: V8.S.gapM)
                     .accessibilityHidden(true)
