@@ -661,10 +661,11 @@ final class AppModel {
         lastError = nil
         // 进度（F42/F45）：显示「第 N/20 页、已读 M 条」——
         // 没有它，一次 20 页的读取在界面上就是「卡住了十几秒」。
+        // 全量读取没有「总共几页」—— 页数取决于锁里存了多少。
+        // 所以进度条只给「已读多少」，不给一个假的百分比。
         logProgress = TaskProgress(title: "正在读门锁记录",
-                                   detail: "第 1 / \(LogSync.maxPages) 页",
-                                   fraction: 0,
-                                   total: LogSync.maxPages)
+                                   detail: "从最新一页往回翻，直到读完",
+                                   fraction: nil)
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             sampleRSSI()
