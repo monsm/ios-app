@@ -109,6 +109,7 @@ struct LocksScreen: View {
                             .type(T.F.body)
                             .fontWeight(.medium)
                             .foregroundStyle(T.C.ink)
+                            .lineLimit(1)   // 极端锁名不许把副标题与行高挤坏
                         Text(lockSubtitle(lock))
                             .type(T.F.caption)
                             .foregroundStyle(T.C.ink3)

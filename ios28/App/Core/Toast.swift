@@ -43,6 +43,10 @@ struct ToastHost: View {
                 Text(text)
                     .type(T.F.caption)
                     .foregroundStyle(T.C.ink)
+                    .multilineTextAlignment(.center)
+                    // 极端数据审查：提示内容里可能拼进文件名（「已读入 <超长文件名>」），
+                    // 不限行会撑出一个盖住半个屏幕的胶囊；三行后截断，语义仍可读。
+                    .lineLimit(3)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 10)
                     // 临时提示是"浮在内容之上"的一层，正是液态玻璃的场景。

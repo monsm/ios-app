@@ -87,6 +87,7 @@ struct GateScreen: View {
                 } label: {
                     HStack(spacing: 7) {
                         Image(systemName: "faceid")
+                            .accessibilityHidden(true)   // 语义由旁边的「用面容解锁」文字承担
                         Text("用面容解锁")
                     }
                     .type(T.F.footnote)

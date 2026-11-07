@@ -253,6 +253,7 @@ extension DB {
     // | 手机钥匙 | `kf_mkey_<mac>` | `mkey.<mac>.pin.<id>` / `.ekey.<id>` | `MobileKeyService.purgeSecretsForDevice` |
     // | 锁母钥/蓝牙钥/PIN | `kf_keychain_<mac>` | `kc.<mac>.skey` / `.bkey` / `.ekey` / `.pins` | `removeKeychain` |
     // | 未完成配网 | `kf_pending_pair_<mac>` | `pair.<mac>.skey` / `.bkey` / `.ekey` / `.pins` | `clearPendingPair` |
+    // | 断点续读锚点 | `kf_logscan_<mac>` | —（纯进度游标） | 下方前缀列表 `kf_logscan_` |
     // | 通知排程 | `kf_calert_<mac>_*` | —（在系统通知中心） | 循环 `cancelAlerts` |
     // | 其余每锁键族 | 见下方前缀列表 + 兜底 `k.contains(m)` | — | — |
     //
@@ -274,7 +275,7 @@ extension DB {
         CredBinStore.purgeSecretsForDevice(m)
         CredHistoryStore.purgeSecretsForDevice(m)
         MobileKeyService.purgeSecretsForDevice(m)   // 手机钥匙的 pin/ekey 副本（第四族）
-        for p in ["kf_ledger_", "kf_snap_", "kf_logcache_", "kf_defend_", "kf_tailgate_", "kf_synctime_", "otpStatus_", "otpIdx_", "kf_fevents_", "kf_lockmeta_", "kf_migok_",
+        for p in ["kf_ledger_", "kf_snap_", "kf_logcache_", "kf_logscan_", "kf_defend_", "kf_tailgate_", "kf_synctime_", "otpStatus_", "otpIdx_", "kf_fevents_", "kf_lockmeta_", "kf_migok_",
                   "kf_batt_", "kf_batt_state_", "kf_mevents_", "kf_maint_", "kf_fwsince_", "kf_clock_notify_", "kf_damp_last_", "kf_fp_last_", "kf_care_notify_",
                   "kf_cbin_", "kf_calert_", "kf_clists_", "kf_cseq_",
                   "kf_linkrssi_", "kf_link_auto_", "kf_macorder_"] {

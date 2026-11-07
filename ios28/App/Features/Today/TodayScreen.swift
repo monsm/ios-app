@@ -333,6 +333,7 @@ struct TodayScreen: View {
             Image(systemName: "exclamationmark.circle")
                 .font(.system(size: 14))
                 .foregroundStyle(T.C.danger)
+                .accessibilityHidden(true)   // 语义由旁边文字承担，图标只做视觉提示
             Text(text)
                 .type(T.F.caption)
                 .foregroundStyle(T.C.ink2)
@@ -346,6 +347,7 @@ struct TodayScreen: View {
             Image(systemName: "checkmark.circle")
                 .font(.system(size: 14))
                 .foregroundStyle(T.C.ok)
+                .accessibilityHidden(true)   // 同上
             Text(text)
                 .type(T.F.caption)
                 .foregroundStyle(T.C.ink2)

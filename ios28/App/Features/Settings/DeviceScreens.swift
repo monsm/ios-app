@@ -44,6 +44,11 @@ struct PairingScreen: View {
 
                 SectionHead(index: "01", title: "称呼")
                 FieldInput(placeholder: "例如：玄关·入户门", text: $nickname)
+                    // 锁名会出现在页头 Kicker/记录行/切换器里（那些都 lineLimit(1)），
+                    // 但输入侧也该有界：与成员建档（12 字）同一口径，取 16。
+                    .onChange(of: nickname) { _, newValue in
+                        if newValue.count > 16 { nickname = String(newValue.prefix(16)) }
+                    }
                 SectionHead(index: "02", title: "地点（可选）")
                 FieldInput(placeholder: "玄关 / 车库 / 后门", text: $place)
                 if let hint = duplicateNameHint {
@@ -652,6 +657,7 @@ struct HardwareScreen: View {
                     Text(d.name.isEmpty ? "钥匙串" : d.name)
                         .type(T.F.callout)
                         .foregroundStyle(T.C.ink)
+                        .lineLimit(1)
                     Text(d.mac)
                         .type(T.F.caption)
                         .foregroundStyle(T.C.ink3)
@@ -1394,7 +1400,9 @@ struct DiagnosticsScreen: View {
         logBusy = true
         defer { logBusy = false }
         if let r = await app.readLogs() {
-            message = "读到 \(r.read) 条" + (r.remaining.map { " · 锁端还有 \($0) 条" } ?? "")
+            // 断链部分成功时 readLogs 会**带着结果返回**并把原因写进 lastError ——
+            // 直接只报「读到 N 条」会把「已留断点、再点继续」这句关键提示吞掉。
+            message = app.lastError ?? ("读到 \(r.read) 条" + (r.remaining.map { " · 锁端还有 \($0) 条" } ?? ""))
         } else {
             message = app.lastError ?? "读取失败，请稍后重试。"
         }

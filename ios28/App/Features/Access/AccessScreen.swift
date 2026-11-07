@@ -327,6 +327,7 @@ struct MemberRow: View {
                         .type(T.F.body)
                         .fontWeight(.medium)
                         .foregroundStyle(T.C.ink)
+                        .lineLimit(1)   // 超长成员名不许把角色徽章与右箭头挤出屏幕
                     Text(member.role.title)
                         .type(T.F.kicker)
                         .foregroundStyle(T.C.ink3)
@@ -343,6 +344,7 @@ struct MemberRow: View {
             Image(systemName: "chevron.right")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(T.C.ink4)
+                .accessibilityHidden(true)
         }
         .padding(.vertical, 13)
         .frame(minHeight: 62)
