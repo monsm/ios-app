@@ -80,6 +80,7 @@ enum CrashLog {
 enum DiagnosticBundle {
     /// 打一份纯文本诊断包。**不含任何凭据**：
     /// 帧只有帧头与 KLV 骨架（FrameRedact 的口径），台账只有条数。
+    @MainActor
     static func build(mac: String?) -> String {
         var lines: [String] = []
         func add(_ s: String) { lines.append(s) }
@@ -87,7 +88,7 @@ enum DiagnosticBundle {
         add("阈值 · 诊断包")
         add("生成时间：\(DiagTime.full())")
         add("App 版本：\(appVersion())")
-        add("系统：\(await systemInfo())")
+        add("系统：\(systemInfo())")
         add("")
 
         add("—— 门锁 ——")
@@ -154,6 +155,8 @@ enum DiagnosticBundle {
     }
 
     /// 存成文件（分享面板用）。
+    /// 主 actor：`build` 要读 `UIDevice.current`（主 actor 隔离）。
+    @MainActor
     static func writeFile(mac: String?) -> URL? {
         let text = build(mac: mac)
         let name = "threshold-diag-\(DiagTime.mmddHHmm().replacingOccurrences(of: ":", with: "")).txt"
