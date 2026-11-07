@@ -153,11 +153,19 @@ enum ZKProtocol {
     // ---------- 试验模式硬护栏 (JS kernel/protocol.js:19-27 READONLY_CMDS / WRITE_CMDS_BLOCKED / assertReadOnly) ----------
     // Swift 侧此前整块缺失: 小程序用它在真机上做只读试验, 保证任何写入/危险命令 (05 换钥会擦 flash 域 7+8 作废旧钥匙、
     // 04 开门、08 同步 PIN、31 写网关 WiFi 口令等) 一律发不出去。缺了它 = 缺一道防误操作保险。
-    static let readonlyCmds: Set<UInt8> = [0x01, 0x02, 0x03, 0x12, 0x16, 0x23, 0x30, 0x38]
+    // 0x43/0x44 是**钥匙串的读命令**（查状态/列已写入的锁）—— 试验模式不该拦它们。
+    static let readonlyCmds: Set<UInt8> = [0x01, 0x02, 0x03, 0x12, 0x16, 0x23, 0x30, 0x38,
+                                            0x43, 0x44]
     static let writeCmdsBlocked: [UInt8] = [0x04, 0x05, 0x08, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x13, 0x14, 0x15,
                                             0x18, 0x19, 0x20, 0x21, 0x22, 0x24, 0x25, 0x31, 0x32, 0x35, 0x41, 0x43, 0x44]
-    /// 只读模式下放行只读命令, 其余抛错 (与 JS 同语义)
+    /// 只读试验模式的硬护栏。
+    ///
+    /// **判据在这里，不在调用点。** 2026-11-07 修的真缺陷：本方法此前对写命令
+    /// **无条件**抛错，而 `fpStart` 又无条件调用它 —— 于是**正常模式下录指纹永远被拦**
+    /// （界面上表现为「护栏拦截：cmd 0x13…」）。
+    /// 现在「是否处于试验模式」由这里统一判断：调用方怎么调都不会误伤正常流程。
     static func assertReadOnly(_ cmd: UInt8) throws {
+        guard TrialGuard.isOn else { return }
         guard readonlyCmds.contains(cmd) else {
             throw BLEErrorX.msg(String(format: "护栏拦截：cmd 0x%02x 是写入/危险命令，只读试验模式禁止发送!", cmd))
         }

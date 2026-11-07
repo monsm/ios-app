@@ -793,11 +793,7 @@ struct HardwareScreen: View {
             .opacity(busy ? 0.55 : 1)
 
             if let message {
-                Text(message)
-                    .type(T.F.caption)
-                    .foregroundStyle(T.C.ink2)
-                    .padding(.top, 14)
-                    .fixedSize(horizontal: false, vertical: true)
+                    NoticeLine(text: message, tone: .info)
             }
 
             Text("网关只把你家 WiFi 的账号密码直接交给它，不经过云端；本机只保留 SSID 与 IP。")
@@ -1210,11 +1206,7 @@ struct DfuScreen: View {
             }
 
             if let errorLine {
-                Text(errorLine)
-                    .type(T.F.caption)
-                    .foregroundStyle(T.C.danger)
-                    .padding(.top, 14)
-                    .fixedSize(horizontal: false, vertical: true)
+                    NoticeLine(text: errorLine)
             }
 
             Text("重要：固件包没有签名校验。只使用厂商官方渠道下载的包；升级中断可能让锁停在 bootloader。")
@@ -1469,11 +1461,7 @@ struct DiagnosticsScreen: View {
             }
 
             if let message {
-                Text(message)
-                    .type(T.F.caption)
-                    .foregroundStyle(T.C.ink2)
-                    .padding(.top, 14)
-                    .fixedSize(horizontal: false, vertical: true)
+                    NoticeLine(text: message, tone: .info)
             }
 
             // F1：God 档。空壳里整段不渲染（身份指纹与台账本身就是档案泄露）。

@@ -180,17 +180,10 @@ struct BackupScreen: View {
             }
 
             if let message {
-                Text(message)
-                    .type(T.F.caption)
-                    .foregroundStyle(T.C.ink2)
-                    .padding(.top, 14)
+                    NoticeLine(text: message, tone: .info)
             }
             if let errorLine {
-                Text(errorLine)
-                    .type(T.F.caption)
-                    .foregroundStyle(T.C.danger)
-                    .padding(.top, 10)
-                    .fixedSize(horizontal: false, vertical: true)
+                    NoticeLine(text: errorLine)
             }
 
             Text("导入是「只增不减」：本机已有的凭证与成员会保留，不会被覆盖；已存在的门锁只刷新钥匙串与直连参数。恢复前会自动存一份快照（暂不支持在 App 内撤销）。")

@@ -400,10 +400,7 @@ struct ExpirySheet: View {
                     }
 
                     if let errorLine {
-                        Text(errorLine)
-                            .type(T.F.caption)
-                            .foregroundStyle(T.C.danger)
-                            .padding(.top, 8)
+                            NoticeLine(text: errorLine)
                     }
 
                     PrimaryButton(title: "保存并下发", busy: busy) {

@@ -83,10 +83,7 @@ struct CredentialCreateScreen: View {
                     .padding(.top, 14)
             }
             if let errorLine {
-                Text(errorLine)
-                    .type(T.F.caption)
-                    .foregroundStyle(T.C.danger)
-                    .padding(.top, 14)
+                    NoticeLine(text: errorLine)
             }
 
             PrimaryButton(title: submitTitle, busy: busy) {

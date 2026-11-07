@@ -37,12 +37,22 @@ enum LinkQuality {
     }
 
     /// 落盘是**数组**（`DiagLogStore.writeJSON` 只收数组；字典得自己包一层）。
-    private static let store = Locked([Snapshot]())
+    private static let store = Locked<[Snapshot]?>(nil)
     private static let fileName = "kf_link_quality.json"
+
+    /// 读回填：**必须先有这一步**。
+    /// 否则进程刚起来、缓存还是空表时，一次 `noteConnect` 就会把「只有这一条」的数组
+    /// 整份写回磁盘 —— 其它锁的历史统计被静默抹掉。
+    private static func loaded() -> [Snapshot] {
+        if let c = store.withLock({ $0 }) { return c }
+        let disk = DiagLogStore.readJSON([Snapshot].self, name: fileName)
+        store.withLock { $0 = disk }
+        return disk
+    }
 
     private static func mutate(_ mac: String, _ body: (inout Snapshot) -> Void) {
         guard !mac.isEmpty else { return }
-        var list = store.withLock { $0 }
+        var list = loaded()
         if let idx = list.firstIndex(where: { $0.mac == mac }) {
             body(&list[idx])
         } else {
@@ -76,10 +86,7 @@ enum LinkQuality {
     }
 
     static func snapshot(_ mac: String) -> Snapshot {
-        let list = store.withLock { $0 }
-        if let hit = list.first(where: { $0.mac == mac }) { return hit }
-        let disk = DiagLogStore.readJSON([Snapshot].self, name: fileName)
-        return disk.first(where: { $0.mac == mac }) ?? Snapshot()
+        loaded().first(where: { $0.mac == mac }) ?? Snapshot()
     }
 
     /// 人话摘要（诊断页用）。

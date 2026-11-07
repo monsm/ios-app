@@ -273,8 +273,9 @@ extension LockService {
 
     func request(_ cmdObj: ZKCmd, cmd: UInt8, needToken: Bool, retries: Int, timeoutMs: Int = 8000) async throws -> ZKProtocol.ParsedFrame {
         var hex = cmdObj.hex
-        // 只读试验模式 (kf_trial_guard): 放行只读命令, 拦死写入/危险命令 — 忠实移植 JS assertReadOnly
-        if DB.store.getBool("kf_trial_guard", false) { try ZKProtocol.assertReadOnly(cmd) }
+        // 只读试验模式：护栏自己会判开关（见 ZKProtocol.assertReadOnly），这里不再前置判断 ——
+        // 两处各判一次时，漏判一处就会像 fpStart 那样把正常流程拦死。
+        try ZKProtocol.assertReadOnly(cmd)
         // 空帧拦截: 密钥/参数非法导致构造失败时绝不发包 (见 ZKProtocol.wrapEnc 的 cipher.isEmpty 约定)
         guard !hex.isEmpty else {
             throw BLEErrorX.msg("\(cmdObj.name) 帧构造失败 （密钥或参数无效）, 已中止下发")

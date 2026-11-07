@@ -72,7 +72,7 @@ struct LogScreen: View {
             StateSection(state: groups.isEmpty ? .empty : .data(groups),
                          empty: EmptyNote(line: emptyTitle,
                                           detail: emptyDetail,
-                                          action: (query.isEmpty && !onlyFlagged && !DB.isDecoy) ? "读取日志" : nil,
+                                          action: (query.isEmpty && !onlyFlagged && !DB.isDecoy) ? "读全量日志" : nil,
                                           run: (query.isEmpty && !onlyFlagged && !DB.isDecoy) ? { Task { await read() } } : nil)) { groups in
                 // B40：LazyVStack —— 时间线可能有几百行，一次性摆完会掉帧。
                 // LazyVStack 只渲染屏幕内与附近的行；数据本身全在缓存里。
@@ -163,10 +163,7 @@ struct LogScreen: View {
             }
 
             if let errorLine {
-                Text(errorLine)
-                    .type(T.F.caption)
-                    .foregroundStyle(T.C.danger)
-                    .padding(.top, 14)
+                    NoticeLine(text: errorLine)
             }
 
             // 空壳里不摆读取入口：读取会被数据层拦成空表，按钮等于点了没反应。
@@ -178,10 +175,12 @@ struct LogScreen: View {
         // F22：备注弹层。
         // iOS 27：基于数据的弹窗（一个可选值就是全部状态）。
         // iOS 26：同一套语义用 isPresented + presenting 复刻（见 itemAlert）。
-        .itemAlert("加备注", item: $noteTarget) { _ in
+        // iOS 27 的 item 弹窗在关闭时会把绑定清回 nil —— 所以「保存」必须用
+        // 闭包传进来的那条记录，不能回读 noteTarget（那时它已经是 nil）。
+        .itemAlert("加备注", item: $noteTarget) { event in
             TextField("备注（最多 60 字）", text: $noteDraft)
             Button("取消", role: .cancel) { noteTarget = nil }
-            Button("保存") { saveNote() }
+            Button("保存") { saveNote(event) }
         } message: { _ in
             Text("只写在本机，不改门锁里的记录。")
         }
@@ -205,8 +204,7 @@ struct LogScreen: View {
         app.reloadEvents()
     }
 
-    private func saveNote() {
-        guard let event = noteTarget else { return }
+    private func saveNote(_ event: EventItem) {
         RecordOverlay.setNote(event.mac, rowKey(event), String(noteDraft.prefix(60)))
         noteTarget = nil
         noteDraft = ""
@@ -359,7 +357,7 @@ struct LogScreen: View {
             HStack(spacing: 12) {
                 GlyphTile(symbol: "arrow.down.circle", kind: .cool, size: 38)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(reading ? "正在读门锁记录…" : "从门锁读一次")
+                    Text(reading ? "正在读门锁记录…" : "从门锁读全量")
                         .type(T.F.callout)
                         .fontWeight(.medium)
                         .foregroundStyle(T.C.ink)

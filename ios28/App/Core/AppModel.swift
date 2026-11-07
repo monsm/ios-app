@@ -45,8 +45,8 @@ final class AppModel {
     var isLoading: Bool = false
     /// 当前读日志的任务句柄 —— 取消长任务用（F42）。
     @ObservationIgnored private var logTask: Task<LogSync.Result, Never>?
-    /// 正在飞的状态读取（B20 的请求合并）。
-    @ObservationIgnored private var statusReadTask: Task<LockStatus, Error>?
+    /// 正在飞的状态读取（B20 的请求合并）—— 句柄带上 mac，复用前先比对。
+    @ObservationIgnored private var statusReadTask: (mac: String, task: Task<LockStatus, Error>)?
     /// 上一次开锁失败的**结构化**描述（F15 诊断卡用）。nil = 没失败过。
     var lastUnlockFailure: ScreenFailure?
     /// 上一次开锁用的是哪一类凭证（F16 回执卡用）。
@@ -609,15 +609,18 @@ final class AppModel {
             // 用**带类型**的任务句柄做合并：后来的调用复用同一个 Task，
             // 拿到的是同一份读数 —— 不用 `Any` 擦除类型（Swift 6 下那是错误）。
             let task: Task<LockStatus, Error>
-            if let existing = statusReadTask {
-                task = existing
+            if let existing = statusReadTask, existing.mac == mac {
+                // 只复用**同一把锁**的在飞读取 —— A 锁的读数不能写进 B 锁的快照。
+                task = existing.task
             } else {
                 let created = Task { try await LockService.shared.getStatus(mac: mac) }
-                statusReadTask = created
+                statusReadTask = (mac, created)
                 task = created
             }
             let st = try await task.value
             statusReadTask = nil
+            // 读取期间换了锁：这份读数是别人的，不能写进当前锁的快照。
+            guard mac == currentMac else { return }
             DB.writeStatus(mac, st)
             sampleRSSI()
             // B74：每次读到锁钟都记一次偏差 —— 漂移是趋势，要靠多次采样才看得出来。
@@ -659,8 +662,8 @@ final class AppModel {
         busy = "正在读门锁记录…"
         defer { busy = nil }
         lastError = nil
-        // 进度（F42/F45）：显示「第 N/20 页、已读 M 条」——
-        // 没有它，一次 20 页的读取在界面上就是「卡住了十几秒」。
+        // 进度（F42/F45）：显示「第 N 页 · 已读 M 条 · 锁端还剩 K 条」——
+        // 没有它，一次几分钟的全量读取在界面上就是「卡住了」。
         // 全量读取没有「总共几页」—— 页数取决于锁里存了多少。
         // 所以进度条只给「已读多少」，不给一个假的百分比。
         logProgress = TaskProgress(title: "正在读门锁记录",
@@ -694,7 +697,10 @@ final class AppModel {
                 done: result.done,
                 at: Int64(Date().timeIntervalSince1970 * 1000))
             await reload(refreshStatus: false)
-            readLogsAt = RecordsSource.lastSync(mac: mac)
+            // 读取期间换了锁：这轮读数属于**旧锁**，不能盖到当前锁的「上次读取」上。
+            if mac == currentMac {
+                readLogsAt = RecordsSource.lastSync(mac: mac)
+            }
 
             if result.cancelled {
                 lastError = "已取消读取。已读到的 \(result.read) 条保留（它们是最新的一段）。"
@@ -714,11 +720,13 @@ final class AppModel {
     }
 
     /// 取消正在进行的读日志。已读到的部分仍然落盘（最新的一段）。
+    ///
+    /// **不在这里清 busy/logTask**：取消只是请求，旧任务还在飞（BLE 一轮最多 8 秒），
+    /// 立刻允许再点「读全量」会变成两个 LogSync 同时清/写同一份缓存。
+    /// 任务收尾时（readLogs 的 await 之后）自己会把状态清干净。
     func cancelLogRead() {
         logTask?.cancel()
-        logTask = nil
         logProgress = nil
-        busy = nil
         lastError = "已取消读取。已读到的部分保留。"
     }
 

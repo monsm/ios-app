@@ -50,17 +50,11 @@ struct MobileKeysScreen: View {
             }
 
             if let errorLine {
-                Text(errorLine)
-                    .type(T.F.caption)
-                    .foregroundStyle(T.C.danger)
-                    .padding(.top, 14)
+                    NoticeLine(text: errorLine)
             }
 
             if let flash {
-                Text(flash)
-                    .type(T.F.caption)
-                    .foregroundStyle(T.C.brass)
-                    .padding(.top, 14)
+                    NoticeLine(text: flash, tone: .ok)
             }
 
             Button {

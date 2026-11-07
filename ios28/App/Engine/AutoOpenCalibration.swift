@@ -27,7 +27,10 @@ enum AutoOpenCalibration {
     }
 
     struct Sample: Codable, Equatable, Identifiable {
-        var id: String { "\(Int(at * 1000))-\(rssi)" }
+        var id: String {
+            let ms = at.isFinite ? min(max(at * 1000, 0), 4_102_444_800_000) : 0
+            return "\(Int(ms))-\(rssi)"
+        }
         var at: Double
         var rssi: Int
         var phase: Phase

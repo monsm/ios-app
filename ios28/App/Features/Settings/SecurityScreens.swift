@@ -279,10 +279,7 @@ struct PasscodeSheet: View {
                 .padding(.top, 10)
 
             if let errorLine {
-                Text(errorLine)
-                    .type(T.F.caption)
-                    .foregroundStyle(T.C.danger)
-                    .padding(.top, 10)
+                    NoticeLine(text: errorLine)
             }
 
             PrimaryButton(title: "保存") { save() }

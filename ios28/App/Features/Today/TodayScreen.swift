@@ -403,14 +403,18 @@ struct TodayScreen: View {
             if recentEvents.isEmpty {
                 EmptyNote(line: "还没有记录。",
                           detail: "读一次锁内日志，这里就会出现谁在什么时候开过门。",
-                          action: DB.isDecoy ? nil : "读取日志",
+                          action: DB.isDecoy ? nil : "读全量日志",
                           run: DB.isDecoy ? nil : {
                               Task {
+                                  // 取消/中断时 readLogs 会把原因写进 lastError 并带结果返回 ——
+                                  // 「没读到」和「没读成」必须分开说。
                                   if let result = await app.readLogs() {
-                                      flash(result.read == 0 ? "锁里没有新的开门记录。" : "读到 \(result.read) 条记录。")
+                                      if let message = app.lastError {
+                                          flash(message)
+                                      } else {
+                                          flash(result.read == 0 ? "锁里没有开门记录。" : "读完全量：\(result.read) 条。")
+                                      }
                                   } else if let message = app.lastError {
-                                      // `readLogs` 在另一条命令进行中会返回 nil 并写下
-                                      // 「门锁正忙」；其它失败同样落在这里，不再静默。
                                       flash(message)
                                   }
                               }

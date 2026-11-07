@@ -40,10 +40,7 @@ struct LocksScreen: View {
             }
 
             if let errorLine {
-                Text(errorLine)
-                    .type(T.F.caption)
-                    .foregroundStyle(T.C.danger)
-                    .padding(.top, 12)
+                    NoticeLine(text: errorLine)
             }
 
             // F23：被关在门外时的入口。它不该藏在「数据」那一段里 ——
@@ -400,10 +397,7 @@ struct LockPolicyScreen: View {
             }
 
             if let errorLine {
-                Text(errorLine)
-                    .type(T.F.caption)
-                    .foregroundStyle(T.C.danger)
-                    .padding(.top, 14)
+                    NoticeLine(text: errorLine)
             }
 
             if busy { ProgressView().tint(T.C.brass).padding(.top, 14) }
@@ -721,10 +715,7 @@ struct LockInfoScreen: View {
             .opacity(busy ? 0.55 : 1)
 
             if let message {
-                Text(message)
-                    .type(T.F.caption)
-                    .foregroundStyle(T.C.ink2)
-                    .padding(.top, 12)
+                    NoticeLine(text: message, tone: .info)
             }
         }
         .toolbar(.hidden, for: .navigationBar)

@@ -270,10 +270,7 @@ struct MemberCreateScreen: View {
             FieldInput(placeholder: "家人 / 访客 / 服务人员", text: $groupTag)
 
             if let errorLine {
-                Text(errorLine)
-                    .type(T.F.caption)
-                    .foregroundStyle(T.C.danger)
-                    .padding(.top, 14)
+                    NoticeLine(text: errorLine)
             }
 
             PrimaryButton(title: "建档") { create() }

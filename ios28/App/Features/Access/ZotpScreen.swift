@@ -144,10 +144,7 @@ struct ZotpScreen: View {
             }
 
             if let errorLine {
-                Text(errorLine)
-                    .type(T.F.caption)
-                    .foregroundStyle(T.C.danger)
-                    .padding(.top, 14)
+                    NoticeLine(text: errorLine)
             }
         }
         .toolbar(.hidden, for: .navigationBar)

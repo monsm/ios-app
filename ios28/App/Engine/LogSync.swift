@@ -81,9 +81,10 @@ enum LogSync {
         let t0 = Date()
         var result = Result()
 
-        // 1) 先清空本机那一份 —— 从这一刻起，界面上看到的就是「这一轮读到的」，
-        //    而不是上一轮留下的旧副本。
-        DB.clearLogs(mac)
+        // 1) 清空本机旧副本的时机：**第一页成功之后**，不是开头。
+        //    开头就清的话，第一页就断链/取消会让整本记录凭空消失 —— 那是丢数据，
+        //    不是"用最新版本"。第一页成功后，本机副本开始重建，旧副本按定义作废。
+        var mirrorRebuilt = false
 
         var startIdx: UInt32 = 0xFFFF_FFFF
         var collected: [LogEntry] = []
@@ -99,17 +100,38 @@ enum LogSync {
                 }
                 if result.pages >= pageCap { break }
 
+                // 读取期间换了锁：后续页会是**另一把锁**的日志 —— 立刻中止本轮，
+                // 绝不把 B 锁的记录写进 A 锁的缓存。
+                let curMac = await LockService.shared.curMac
+                guard curMac == mac else {
+                    result.interrupted = true
+                    result.message = "读取期间切换了门锁，本轮中止（已读到的部分已保存）"
+                    break
+                }
+
                 let page = try await LockService.shared.getLogs(startIdx: startIdx, pageSize: size)
                 result.pages += 1
                 if let s = page.surplus { surplus = s }
+
+                // 第一页成功 ⇒ 清掉本机旧副本，镜像重建开始。
+                if !mirrorRebuilt {
+                    DB.clearLogs(mac)
+                    mirrorRebuilt = true
+                }
 
                 if page.logs.isEmpty { reachedEnd = true; break }
                 collected.append(contentsOf: page.logs)
                 result.read = collected.count
                 onProgress?(Progress(page: result.pages, read: result.read, remaining: surplus))
 
-                if let s = page.surplus, s <= 0 { reachedEnd = true; break }
-                if page.logs.count < size { reachedEnd = true; break }
+                // 结束判据：**锁端自报的 surplus 优先**。锁说还有 ⇒ 继续翻，
+                // 哪怕本页比请求的短（页边界/固件分页口径都可能造成短页）。
+                // 锁没报 surplus 时才退回「短页 = 到头」的旧判据。
+                if let s = page.surplus {
+                    if s <= 0 { reachedEnd = true; break }
+                } else if page.logs.count < size {
+                    reachedEnd = true; break
+                }
                 guard let low = page.logs.map(\.idxRaw).min(), low > 0 else { reachedEnd = true; break }
                 startIdx = low - 1
             }
@@ -121,13 +143,13 @@ enum LogSync {
             result.message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
 
-        // 2) 一次写入（缓存刚被清空，这里写进去的就是本轮读到的全量）。
-        if !collected.isEmpty {
+        // 2) 一次写入（缓存已在第一页后清空，这里写进去的就是本轮读到的全量）。
+        if mirrorRebuilt, !collected.isEmpty {
             DB.writeLogs(mac, collected)
             RecordsSource.markSynced(mac: mac, at: Int64(Date().timeIntervalSince1970 * 1000))
         }
 
-        // 3) `done` 的判据只有一个：翻到了尽头（不是「够 20 页」）。
+        // 3) `done` 的判据只有一个：翻到了尽头。
         result.done = reachedEnd && !result.interrupted && !result.cancelled
         result.durationMs = Int(Date().timeIntervalSince(t0) * 1000)
 

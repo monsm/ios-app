@@ -27,6 +27,17 @@ final class Store: @unchecked Sendable {
             valueCache.withLock { $0[k, default: [:]][variant] = v }
             return v
         } catch {
+            // 关键键：主份解不出来时**自动**回落备份位（B3）——
+            // 不依赖每个调用方记得走 getCritical。
+            if isCriticalKey(k),
+               let bak = defaults.data(forKey: key(k + Store.backupSuffix)),
+               let v = try? JSONDecoder().decode(T.self, from: bak) {
+                recordFailure(k, "主份解码失败，已从备份恢复")
+                defaults.set(bak, forKey: key(k))
+                invalidateCache(k)
+                valueCache.withLock { $0[k, default: [:]][variant] = v }
+                return v
+            }
             // **有数据但解不出来**是比写失败更难查的一种失效: 读侧拿到 nil ⇒ 一路回落默认值，
             // 界面上什么都看不出来，而用户确实设置过 (与 §104 那批"恒为默认值"是同一类症状的另一种成因)。
             recordFailure(k, "解码失败 \(type): \((error as NSError).localizedDescription)")
@@ -90,12 +101,18 @@ final class Store: @unchecked Sendable {
         // 读侧只能拿到默认值 (设置页所有开关/主题/救援码/免验窗口全部失效)。
         do {
             let d = try JSONSerialization.data(withJSONObject: v, options: [.fragmentsAllowed])
+            // 关键键：先把旧值挪到备份位再写主份（B3）—— 路由在这里，
+            // 调用方不需要记得走 setCritical。
+            if isCriticalKey(k), let old = defaults.data(forKey: key(k)) {
+                defaults.set(old, forKey: key(k + Store.backupSuffix))
+            }
             defaults.set(d, forKey: key(k))
             invalidateCache(k)
             // 2026-10-29 修复：写成功说明这份数据已经是合法 JSON —— 必须把「曾经解不出」的标记清掉。
             // 原实现从不清除：一次解码失败之后，saveKeychain 会在整个会话里拒绝再写钥匙串，
             // 用户配新锁时静默不落盘（下次启动锁就没了），而界面上一切正常。
             corruptKeys.withLock { $0.remove(k) }
+            if isCriticalKey(k) { setSchemaVersion(k, SchemaVersion.current) }
         } catch {
             recordFailure(k, "JSONSerialization: \((error as NSError).localizedDescription)")
         }
@@ -104,10 +121,14 @@ final class Store: @unchecked Sendable {
     /// 故 swiftlint 第四项按"首参不是键、次参像键"报红线。新增键位时先看清自己在哪一层。
     func setCodable<T: Encodable>(_ k: String, _ v: T) {
         do {
-            defaults.set(try JSONEncoder().encode(v), forKey: key(k))
+            let d = try JSONEncoder().encode(v)
+            if isCriticalKey(k), let old = defaults.data(forKey: key(k)) {
+                defaults.set(old, forKey: key(k + Store.backupSuffix))
+            }
+            defaults.set(d, forKey: key(k))
             invalidateCache(k)
-            // 同上：写成功即视为该键已恢复健康。
             corruptKeys.withLock { $0.remove(k) }
+            if isCriticalKey(k) { setSchemaVersion(k, SchemaVersion.current) }
         } catch {
             recordFailure(k, "JSONEncoder: \((error as NSError).localizedDescription)")
         }
@@ -158,7 +179,8 @@ final class Store: @unchecked Sendable {
     /// 备份位存的是**上一次成功写入的内容**，所以它永远是一份能解的完整数据。
     static let criticalPrefixes = ["kf_ledger_", "kf_members", "kf_member_ext",
                                     "kf_keychains", "kf_logcache_", "kf_mkey_",
-                                    "kf_keychain_dongles", "kf_gateways", "kf_claims_"]
+                                    "kf_keychain_dongles", "kf_gateways", "kf_claims_",
+                                    "kf_handoff_records"]
     /// 备份键的后缀。
     static let backupSuffix = ".bak"
     /// 逐键版本表（键 → 写入时的 schema 版本）。
@@ -168,20 +190,9 @@ final class Store: @unchecked Sendable {
         Store.criticalPrefixes.contains { k.hasPrefix($0) }
     }
 
-    /// 写关键键：主份 + 备份（旧的）+ 版本号。
+    /// 写关键键（与 `set` 的关键键路由同一条路；保留名字给台账等显式调用点）。
     func setCritical<T: Encodable>(_ k: String, _ v: T) {
-        guard let data = try? JSONEncoder().encode(v) else {
-            recordFailure(k, "关键键编码失败")
-            return
-        }
-        // 先把旧值挪到备份位 —— 万一这次写进去的是坏的，备份还在。
-        if let old = defaults.data(forKey: key(k)) {
-            defaults.set(old, forKey: key(k + Store.backupSuffix))
-        }
-        defaults.set(data, forKey: key(k))
-        invalidateCache(k)
-        corruptKeys.withLock { $0.remove(k) }
-        setSchemaVersion(k, SchemaVersion.current)
+        setCodable(k, v)
     }
 
     /// 读关键键：主份 → 备份 → nil。
