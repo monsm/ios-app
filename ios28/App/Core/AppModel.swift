@@ -656,7 +656,7 @@ final class AppModel {
         // 空壳里不读锁内日志：读回来也只会被过滤成空表，界面上是"读了个寂寞"，
         // 而锁端已经真的被翻了一遍。给一句与其它写入拒绝同一口径的中性话。
         guard !DB.isDecoy else {
-            lastError = "当前无法读取，请稍后再试。"
+            lastError = Copy.decoyRead
             return nil
         }
         busy = "正在读门锁记录…"
@@ -753,7 +753,7 @@ final class AppModel {
                      replacing alias: Int? = nil) async -> Result<Int, Error> {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
-        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg(Copy.decoyWrite)) }
         if let refusal = ledgerCorruptRefusal(mac) { return .failure(refusal) }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
@@ -789,7 +789,7 @@ final class AppModel {
                      owner: String?, note: String) async -> Result<Int, Error> {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
-        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg(Copy.decoyWrite)) }
         if let refusal = ledgerCorruptRefusal(mac) { return .failure(refusal) }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
@@ -812,7 +812,7 @@ final class AppModel {
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
         // 空壳里凭证列表是空的，正常路径到不了这里；仍然守一道 ——
         // 删密码是真删锁里的条目，不能靠"界面看不见"来保证不发生。
-        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg(Copy.decoyWrite)) }
         if let refusal = ledgerCorruptRefusal(mac) { return .failure(refusal) }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
@@ -831,7 +831,7 @@ final class AppModel {
     func setPasswordExpiry(alias: Int, from: String, to: String) async -> Result<Void, Error> {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
-        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg(Copy.decoyWrite)) }
         if let refusal = ledgerCorruptRefusal(mac) { return .failure(refusal) }
         // 0 是协议里的「不指定」：0B 带着它下发，界面像成功，锁里那条却什么都没变。
         guard alias > 0 else {
@@ -857,7 +857,7 @@ final class AppModel {
     func deleteFingerprint(batch: Int) async -> Result<Void, Error> {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
-        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg(Copy.decoyWrite)) }
         if let refusal = ledgerCorruptRefusal(mac) { return .failure(refusal) }
         do {
             // `batch` 来自台账/恢复包，可能是负数或超过 UInt32。
@@ -882,7 +882,7 @@ final class AppModel {
                            onProgress: @escaping @MainActor (Int) -> Void) async -> Result<Int, Error> {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
-        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg(Copy.decoyWrite)) }
         if let refusal = ledgerCorruptRefusal(mac) { return .failure(refusal) }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
@@ -945,7 +945,7 @@ final class AppModel {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
         // 空壳里不给锁下发任何设置（静音 / 双验 / 自动上锁 / 布防 / 校时同一道闸）。
-        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg(Copy.decoyWrite)) }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             try await LockService.shared.setSilent(on)
@@ -960,7 +960,7 @@ final class AppModel {
     func setSafeMode(_ on: Bool) async -> Result<Void, Error> {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
-        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg(Copy.decoyWrite)) }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             try await LockService.shared.setValidationMode(on)
@@ -985,7 +985,7 @@ final class AppModel {
     func setAutoLock(_ interval: Int) async -> Result<Void, Error> {
         let mac = currentMac
         guard !mac.isEmpty else { return .failure(BLEErrorX.msg("还没有添加门锁")) }
-        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg(Copy.decoyWrite)) }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             try await LockService.shared.setAutoLock(interval)
@@ -1003,7 +1003,7 @@ final class AppModel {
         // 空壳里读到的永远是「没开通」，这时点「开启」会**真的**给锁下发 cmd19 ——
         // 一次胁迫会话就地改掉门锁的安全设置，而界面看起来只是"开了个开关"。
         // 与签发手机钥匙同一道闸：空壳不产生任何真实副作用。
-        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg(Copy.decoyWrite)) }
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             try await LockService.shared.setZotp(on)
@@ -1027,7 +1027,7 @@ final class AppModel {
 
     func applyDefence(_ mode: DefendMode, startSec: Int, endSec: Int) async -> Result<Void, Error> {
         // 空壳里不改布防：它会真的给锁下发 cmd25，还会写本地 F4 否决门读的配置。
-        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg(Copy.decoyWrite)) }
         do {
             try await DefendService.apply(host: self, mode: mode, startSec: startSec, endSec: endSec)
             await reload(refreshStatus: false)
@@ -1048,7 +1048,7 @@ final class AppModel {
         // 签出一枚开锁 ekey 落进 Keychain；而界面用 `list()` 显示，空壳里永远是空表 ——
         // 用户点一下「签发」什么也看不到，锁端却少了一枚 PIN，退出空壳后还会凭空多一把钥匙。
         // 与 addPassword / addTempCode / enrollFingerprint 同一道闸。
-        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg(Copy.decoyWrite)) }
         guard let kc = DB.keychainForUnlock(currentMac) else {
             return .failure(BLEErrorX.msg("还没有添加门锁"))
         }
@@ -1064,7 +1064,7 @@ final class AppModel {
 
     func revokeMobileKey(_ key: MobileKey) async -> Result<Void, Error> {
         // 与签发同一道闸：吊销会真删锁端 PIN，空壳里不该发生任何真实副作用的写。
-        guard !DB.isDecoy else { return .failure(BLEErrorX.msg("当前无法保存，请稍后再试")) }
+        guard !DB.isDecoy else { return .failure(BLEErrorX.msg(Copy.decoyWrite)) }
         guard let kc = DB.keychainForUnlock(currentMac) else {
             return .failure(BLEErrorX.msg("还没有添加门锁"))
         }
