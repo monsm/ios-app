@@ -269,7 +269,9 @@ struct PairingScreen: View {
 
     /// E7：连通探测 —— 对着一台还没配对的锁发回声命令，验证链路但不写任何东西。
     private func probe(_ device: BLEAdvDevice, mac: String) async {
-        guard probing == nil else { return }
+        // probeEcho 内部会 connect + 用完即 disconnect —— 配对进行中调用会把配对链路掐断。
+        // 行按钮有 .disabled，但 contextMenu 在部分系统版本不吃 .disabled，这里再守一道。
+        guard probing == nil, pairing == nil, !naming else { return }
         probing = mac
         defer { probing = nil }
         do {
@@ -1142,6 +1144,12 @@ struct DiagnosticsScreen: View {
     @State private var probing: String?
     @State private var probeResult: String?
     @State private var probeResultDevice: String?
+    // 回声探测的**原始读数**（ok/matched/echoHex/rc/ms）—— 真机实测 cmd12 不带 rc KLV，
+    // ok 恒 false 属引擎语义；原始值摆出来供现场核对。
+    @State private var probeRaw: String?
+    // 读日志读数节 + 写面命令台。
+    @State private var logBusy = false
+    @State private var consoleOpen = false
 
     // F1：God 档 —— 锁身份 / 全量读数 / 台账对账 / 变更流水。
     @State private var status: StatusSnapshotData?
@@ -1162,7 +1170,7 @@ struct DiagnosticsScreen: View {
 
             DisplayLine(text: "看清\n发生了什么。", size: 34)
                 .padding(.top, 16)
-            Text("诊断页不写入门锁设置。唯一的例外是「修复 PIN 池」—— 它会重写锁里的 PIN 池，让其他设备上的旧钥匙失效。")
+            Text("诊断页不主动写入门锁设置。两个例外都要你手动触发并二次确认：「修复 PIN 池」（会重写锁里的 PIN 池，让其他设备上的旧钥匙失效）和「写面命令台」（05/08/0A/… 逐条手发，后果自负）。")
                 .type(T.F.caption)
                 .foregroundStyle(T.C.ink3)
                 .padding(.top, 8)
@@ -1293,6 +1301,50 @@ struct DiagnosticsScreen: View {
                 .type(T.F.caption)
                 .foregroundStyle(T.C.ink3)
                 .padding(.top, 4)
+
+            // 09 读日志读数（只读展示）：真机锁日志约 2000 条滚存，readLogs 的 20 页上限
+            // 一次只取最近 ~200 条 —— 把「读了多少 / 还剩多少 / 是否撞上限」摆成读数。
+            if !DB.isDecoy {
+                SectionHead(index: "09", title: "读日志读数")
+                GhostButton(title: logBusy ? "正在读…" : "读一次日志", symbol: "list.bullet.rectangle") {
+                    Task { await readLogsOnce() }
+                }
+                .disabled(logBusy)
+                .opacity(logBusy ? 0.55 : 1)
+                .padding(.top, 6)
+                if let s = app.lastLogRead {
+                    godRow("已读页数", "\(s.pages) / 20 页上限")
+                    godRow("已读条数", "\(s.read) 条")
+                    godRow("锁端剩余", s.remaining.map { "\($0) 条" } ?? "—")
+                    godRow("上次读取", When.ago(s.at))
+                    if s.capped {
+                        Text("20 页上限已触发 —— 一次只取最近约 200 条；锁端更多记录要再点一次（从最新重新覆盖）。")
+                            .type(T.F.caption)
+                            .foregroundStyle(T.C.danger)
+                            .lineSpacing(3)
+                            .padding(.top, 6)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                } else {
+                    Text("还没有读过 —— 点上面的按钮从门锁读一次。")
+                        .type(T.F.caption)
+                        .foregroundStyle(T.C.ink3)
+                        .padding(.top, 6)
+                }
+
+                // 10 写面命令台：05/08/0A/0B/13-15/18-25/22、钥匙串 41-44、网关 —— 逐条手动触发。
+                SectionHead(index: "10", title: "写面命令台")
+                GhostButton(title: "打开命令台", symbol: "terminal") {
+                    consoleOpen = true
+                }
+                .padding(.top, 6)
+                Text("05 / 08 / 0A / 0B / 13–15 / 18–21 / 22 / 24 / 25 · 钥匙串 41 / 43 / 44 · 网关 30–38 —— 每条都要二次确认，由你决定何时发。")
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.ink3)
+                    .lineSpacing(3)
+                    .padding(.top, 6)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .toolbar(.hidden, for: .navigationBar)
         // 修复 PIN 池会让**别的设备**上那把钥匙失效 —— 不可逆，值得先问一句。
@@ -1320,6 +1372,20 @@ struct DiagnosticsScreen: View {
         .task {
             // 进页先给盘上的缓存快照；要最新读数点「重新读取」。
             if let kc { status = DB.readStatus(kc.mac) }
+        }
+        .sheet(isPresented: $consoleOpen) { WriteConsoleSheet() }
+    }
+
+    /// 诊断页的「读一次日志」：走既有的 AppModel.readLogs（逻辑零改动），
+    /// 结果落在 lastLogRead（只读读数）与 message 上。
+    private func readLogsOnce() async {
+        guard !logBusy else { return }
+        logBusy = true
+        defer { logBusy = false }
+        if let r = await app.readLogs() {
+            message = "读到 \(r.read) 条" + (r.remaining.map { " · 锁端还有 \($0) 条" } ?? "")
+        } else {
+            message = app.lastError ?? "读取失败，请稍后重试。"
         }
     }
 
@@ -1369,17 +1435,35 @@ struct DiagnosticsScreen: View {
         godRow("本机 PIN 池", "\(localPinCount(kc)) 枚（声明 \(kc.pins.count)）")
         godRow("本机密码", "\(DB.listPwds(kc.mac).count) 条")
         godRow("本机指纹", "\(DB.listFps(kc.mac).count) 枚")
+        // 指纹明细：本机台账批次 vs 锁端已用。真机审计案例（2026-11-07）：本机 8 枚（批次 65545–65555）、
+        // 锁端 fpStock=7 —— 差异 1 枚；锁不提供指纹枚列表（只读面无命令），具体批次需 13/15 或厂商 App 核对。
+        let localFps = DB.listFps(kc.mac)
+        godRow("本机指纹批次", localFps.isEmpty ? "空" : localFps.map { String($0.batch) }.joined(separator: " "))
         if let st = status {
-            let used = max((st.pinCap ?? 0) - st.pinStock, 0)
+            // KLV#22/25/28 = 已用（见 usedOfCap 注释）；旧写法 cap−stock 是反的。
+            let used = st.pinStock
             let local = localPinCount(kc)
             godRow("锁端已用 vs 本机", "\(used) vs \(local)")
+            let fpUsed = st.fpStock
+            let fpDiff = localFps.count - fpUsed
+            godRow("锁端指纹已用 vs 本机", "\(fpUsed) vs \(localFps.count)")
+            Text(fpDiff == 0
+                 ? "指纹数量一致（批次号仍需锁端日志的增删事件才能逐枚对齐）。"
+                 : (fpDiff > 0
+                    ? "本机台账比锁端多记 \(fpDiff) 枚 —— 锁上可能删过指纹而本机没同步；在锁上重录/删除（13/15）或用厂商 App 的指纹列表核对批次。"
+                    : "锁端比本机多 \(abs(fpDiff)) 枚 —— 别处（网关/另一台手机）加过指纹；在本机重新添加一次即可入账。"))
+                .type(T.F.caption)
+                .foregroundStyle(fpDiff == 0 ? T.C.ink3 : T.C.danger)
+                .lineSpacing(3)
+                .padding(.top, 8)
+                .fixedSize(horizontal: false, vertical: true)
             Text(used == local
-                 ? "数量一致（但两批都满池时数量恒等，不能证明是同一批 —— 真正的判据是开锁时锁端是否拒收这枚 PIN）。"
-                 : "数量不一致 —— 现在签发的凭证必被锁端拒绝，需要修池或重新导入。")
+                 ? "PIN 数量一致（但两批都满池时数量恒等，不能证明是同一批 —— 真正的判据是开锁时锁端是否拒收这枚 PIN）。"
+                 : "PIN 数量不一致 —— 现在签发的凭证必被锁端拒绝，需要修池或重新导入。")
                 .type(T.F.caption)
                 .foregroundStyle(used == local ? T.C.ink3 : T.C.danger)
                 .lineSpacing(3)
-                .padding(.top, 8)
+                .padding(.top, 6)
                 .fixedSize(horizontal: false, vertical: true)
         }
 
@@ -1438,7 +1522,10 @@ struct DiagnosticsScreen: View {
     private func usedOfCap(cap: Int?, stock: Int, local: Int) -> String {
         guard stock >= 0 else { return "未读到" }
         guard let c = cap, c > 0 else { return "本机 \(local) 条 · 容量未读" }
-        return "\(max(c - stock, 0)) / \(c)"
+        // 2026-11-07 真机审计（对抗式复核）：KLV#22/25/28 是**已用**不是剩余 —— 三池互证：
+        // 密码 stock=0（本机 0 条）、指纹 stock=7（本机 8 条，时间线见对账节）、PIN stock=64/64（本机 64 枚）。
+        // 旧写法 `cap - stock` 把三个读数全部反了（PIN 会显示 0/64）。
+        return "\(stock) / \(c)"
     }
 
     private func sKeyStatusWord(_ v: Int) -> String {
@@ -1487,6 +1574,12 @@ struct DiagnosticsScreen: View {
                     .type(T.F.caption)
                     .foregroundStyle(probeResult.hasPrefix("回声一致") ? T.C.ok : T.C.danger)
                     .fixedSize(horizontal: false, vertical: true)
+                if let probeRaw {
+                    Text(probeRaw)
+                        .type(T.F.mono)
+                        .foregroundStyle(T.C.ink3)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
         .padding(.vertical, 10)
@@ -1521,11 +1614,17 @@ struct DiagnosticsScreen: View {
         probeResultDevice = nil
         do {
             let r = try await LockService.shared.probeEcho(deviceId: d.id)
+            // 2026-11-07 真机审计：cmd12 的回包**不带 rc KLV**（extractRc 恒 -1 → EchoProbe.ok 恒 false），
+            // 「ok」不能作为"没回帧"的判据 —— 真机无论回什么，ok 都是 false。
+            // 区分"回帧但值不一致"与"根本没回帧"要看 echoHex 是否非空。
             probeResult = r.matched
                 ? "回声一致 · \(r.ms) ms"
-                : (r.ok ? "回声不匹配 · \(r.ms) ms" : "设备回帧异常 · \(r.ms) ms")
+                : (r.echoHex.isEmpty ? "设备回帧异常 · \(r.ms) ms" : "回声不匹配 · \(r.ms) ms")
+            // 原始读数：ok/matched/echoHex/rc 一并在屏上摆开，现场核对不做二次解释。
+            probeRaw = "ok=\(r.ok) · matched=\(r.matched) · echo=\(r.echoHex.isEmpty ? "—" : r.echoHex) · rc=\(r.rc) · \(r.ms)ms"
         } catch {
             probeResult = "探测失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+            probeRaw = nil
         }
         probeResultDevice = d.id
         probing = nil

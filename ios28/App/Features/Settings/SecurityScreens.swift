@@ -441,6 +441,9 @@ struct AppearanceScreen: View {
         return Button {
             accent = p.id
             SettingsStore.shared.setAccent(p.id)
+            // setAccent 引擎侧会清掉自定义色；本地 @State 必须同步清零 ——
+            // 不然芯片的选中判定（accentCustom == 0 && accent == p.id）永远为假，色板不显示选中。
+            accentCustom = 0
             // 换色要立即重画整棵树：令牌色在视图重渲染时才重新解析。
             Task { await app.reload() }
         } label: {

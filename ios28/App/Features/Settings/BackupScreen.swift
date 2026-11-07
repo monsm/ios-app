@@ -232,10 +232,13 @@ struct BackupScreen: View {
     }
 
     /// 导出文件名：锁名 + 日期，避免「文件」里出现一叠同名 backup.txt。
+    /// 锁名是用户自由输入 —— `/ \ :` 这类字符会让 fileExporter 存盘失败，先消毒。
     private var backupFileName: String {
         let name = app.lock?.name ?? "阈值"
+        let bad = CharacterSet(charactersIn: "/\\:?%*|\"<>")
+        let clean = name.components(separatedBy: bad).joined(separator: "-")
         let day = When.dayKey(Int64(Date().timeIntervalSince1970))
-        return "threshold-" + name + "-" + day
+        return "threshold-" + clean + "-" + day
     }
 
     /// A5：从系统文件选择器读回一段备份文本（安全作用域 URL 必须成对开关）。

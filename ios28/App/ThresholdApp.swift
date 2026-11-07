@@ -178,6 +178,9 @@ struct ShellView: View {
                 }
             }
         }
+        // 双形态共用：胶囊分支原先丢了这行（I6 重构时只在原生分支保留），默认形态下
+        // Toggle/Stepper/confirmationDialog 等系统控件全部回退系统蓝 —— 现在提到外层。
+        .tint(T.C.brass)
         // 形态切开关都要把「设置」落回合法位置：胶囊模式没有设置 Tab。
         .onChange(of: settings.nativeTabBar) { _, native in
             if !native && router.tab == .settings {

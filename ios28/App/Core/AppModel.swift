@@ -40,6 +40,19 @@ final class AppModel {
     var overrideMac: String?
     var readLogsAt: Int64?
 
+    /// 最近一次「从门锁读日志」的分页读数 —— **只读展示**，不参与任何逻辑（诊断页用）。
+    /// 真机审计（2026-11-07）：锁端日志约 2000 条滚存，`readLogs()` 的 20 页上限
+    /// 一次只取最近 ~200 条；这些读数就是让用户自己看清"取了多少、还剩多少"。
+    struct LogReadStats {
+        var pages = 0          // 实际翻了几页
+        var read = 0           // 实际写入缓存的条数
+        var remaining: Int?    // 锁端剩余的条数（未触上限且锁有上报时）
+        var capped = false     // 是否撞上 20 页上限
+        var at: Int64 = 0      // 读取时刻（epoch 毫秒）
+    }
+    /// 只读读数：最近一次 readLogs 的分页统计。
+    private(set) var lastLogRead: LogReadStats?
+
     @ObservationIgnored private weak var router: Router?
     @ObservationIgnored private var autoLockTask: Task<Void, Never>?
     /// 自动上锁倒计时的代次，防止被取消的旧任务覆写新任务的状态。
@@ -594,6 +607,13 @@ final class AppModel {
                 startIdx = low - 1
             }
             let remaining = pages >= 20 ? surplus : nil
+            // 只读读数（诊断页展示用）：分页统计在这里落一笔，不参与上面的任何判停逻辑。
+            lastLogRead = LogReadStats(
+                pages: pages,
+                read: collected.count,
+                remaining: remaining,
+                capped: pages >= 20,
+                at: Int64(Date().timeIntervalSince1970 * 1000))
             DB.writeLogs(mac, collected)
             RecordsSource.markSynced(mac: mac, at: Int64(Date().timeIntervalSince1970 * 1000))
             readLogsAt = RecordsSource.lastSync(mac: mac)
