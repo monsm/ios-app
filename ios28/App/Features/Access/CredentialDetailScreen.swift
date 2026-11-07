@@ -261,8 +261,7 @@ struct CredentialDetailScreen: View {
             lines.append("用途：" + item.name)
         }
         lines.append("在门锁键盘上直接输入，不需要联网。")
-        return lines.joined(separator: "
-")
+        return lines.joined(separator: "\n")
     }
 
     private func plainCode(_ item: Credential) -> String? {

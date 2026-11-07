@@ -13,6 +13,7 @@ const gates = [
   ['destmap', 'Dest ↔ View 一一对应'],
   ['contrast', 'WCAG 对比度'],
   ['l10n', '文案 key 完整性'],
+  ['stringlit', '字符串字面量闭合'],
 ];
 
 let failed = 0;

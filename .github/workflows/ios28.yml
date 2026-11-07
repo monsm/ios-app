@@ -29,7 +29,7 @@ defaults:
 
 jobs:
   gates:
-    name: 静态闸门（6 道）
+    name: 静态闸门（8 道）
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
