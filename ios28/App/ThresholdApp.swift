@@ -58,6 +58,12 @@ struct RootView: View {
             }
         }
         .animation(T.M.settle, value: app.unlocked)
+        // 只读试验模式必须常驻：用户第二天会忘了自己开过它，然后以为 App 坏了。
+        .safeAreaInset(edge: .top, spacing: 0) {
+            if app.trial { TrialBanner() }
+        }
+        // 全局提示条（AppToast）：任何页面的动作回执都走这一个浮层。
+        .overlay(alignment: .bottom) { ToastHost() }
         .task {
             app.attach(router: router)
             EngineHostRegistry.register(app)
@@ -85,6 +91,8 @@ struct RootView: View {
 struct ShellView: View {
     @Environment(AppModel.self) private var app
     @Environment(Router.self) private var router
+    /// I6：底栏形态。读的是 @Observable 单例的存储属性 —— 改了这里会重渲染。
+    private var settings = SettingsStore.shared
     /// sheet 的呈现状态放在本地 `@State`，由 `onChange` 从 router 同步。
     ///
     /// 为什么不直接把 `$bindable.settingsOpen` 交给 `.sheet(isPresented:)`：
@@ -96,43 +104,92 @@ struct ShellView: View {
 
     var body: some View {
         @Bindable var bindable = router
-        ZStack(alignment: .bottom) {
-            Group {
-                switch router.tab {
-                case .today:
-                    NavigationStack(path: $bindable.todayPath) {
-                        TodayScreen().withDestinations()
+        Group {
+            if settings.nativeTabBar {
+                // I6：原生系统标签栏 —— 真 Liquid Glass 材质、滚动时自动收起
+                //（.tabBarMinimizeBehavior 只对系统栏生效，自绘胶囊吃不到）、
+                // VoiceOver 的「第 N 个标签」语义。设置在这里是真 Tab（第 4 个）。
+                TabView(selection: $bindable.tab) {
+                    Tab(TabSlot.today.title, systemImage: "sun.max", value: .today) {
+                        NavigationStack(path: $bindable.todayPath) {
+                            TodayScreen().withDestinations()
+                        }
                     }
-                case .access:
-                    NavigationStack(path: $bindable.accessPath) {
-                        AccessScreen().withDestinations()
+                    Tab(TabSlot.access.title, systemImage: "key", value: .access) {
+                        NavigationStack(path: $bindable.accessPath) {
+                            AccessScreen().withDestinations()
+                        }
                     }
-                case .log:
-                    NavigationStack(path: $bindable.logPath) {
-                        LogScreen().withDestinations()
+                    Tab(TabSlot.log.title, systemImage: "list.bullet", value: .log) {
+                        NavigationStack(path: $bindable.logPath) {
+                            LogScreen().withDestinations()
+                        }
+                    }
+                    Tab(TabSlot.settings.title, systemImage: "gearshape", value: .settings) {
+                        NavigationStack(path: $bindable.settingsPath) {
+                            SettingsScreen().withDestinations()
+                        }
                     }
                 }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .tabBarMinimizeBehavior(.onScrollDown)
+                .tint(T.C.brass)
+            } else {
+                // 浮岛玻璃胶囊（默认）：内容滚到栏底下，第 4 个按钮拉起设置 sheet。
+                ZStack(alignment: .bottom) {
+                    Group {
+                        switch router.tab {
+                        case .today:
+                            NavigationStack(path: $bindable.todayPath) {
+                                TodayScreen().withDestinations()
+                            }
+                        case .access:
+                            NavigationStack(path: $bindable.accessPath) {
+                                AccessScreen().withDestinations()
+                            }
+                        case .log:
+                            NavigationStack(path: $bindable.logPath) {
+                                LogScreen().withDestinations()
+                            }
+                        case .settings:
+                            // 形态切回来时正好停在设置 Tab：落回今日，别渲染空壳。
+                            NavigationStack(path: $bindable.todayPath) {
+                                TodayScreen().withDestinations()
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            TabBar(
-                selection: Binding(
-                    get: { router.tab.rawValue },
-                    set: { router.tab = TabSlot(rawValue: $0) ?? .today }
-                ),
-                onSettings: { router.openSettings() }
-            )
-        }
-        .onChange(of: router.settingsOpen, initial: true) { _, open in
-            if settingsShown != open { settingsShown = open }
-        }
-        .sheet(isPresented: $settingsShown, onDismiss: { router.settingsOpen = false }) {
-            NavigationStack(path: $bindable.settingsPath) {
-                SettingsScreen().withDestinations()
+                    TabBar(
+                        selection: Binding(
+                            get: { router.tab.rawValue },
+                            set: { router.tab = TabSlot(rawValue: $0) ?? .today }
+                        ),
+                        onSettings: { router.openSettings() }
+                    )
+                }
+                .onChange(of: router.settingsOpen, initial: true) { _, open in
+                    if settingsShown != open { settingsShown = open }
+                }
+                .sheet(isPresented: $settingsShown, onDismiss: { router.settingsOpen = false }) {
+                    NavigationStack(path: $bindable.settingsPath) {
+                        SettingsScreen().withDestinations()
+                    }
+                    .presentationDragIndicator(.hidden)
+                }
             }
-            .presentationDragIndicator(.hidden)
         }
-        .tint(T.C.brass)
+        // 形态切开关都要把「设置」落回合法位置：胶囊模式没有设置 Tab。
+        .onChange(of: settings.nativeTabBar) { _, native in
+            if !native && router.tab == .settings {
+                router.tab = .today
+                router.settingsPath = []
+            }
+            if native && router.settingsOpen {
+                // 从胶囊切到原生时若设置 sheet 正开着，关掉 —— 内容已并入第 4 个 Tab。
+                router.settingsOpen = false
+                router.settingsPath = []
+            }
+        }
     }
 }
 

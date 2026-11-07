@@ -6,12 +6,16 @@ import SwiftUI
 
 enum TabSlot: Int, Hashable, CaseIterable {
     case today, access, log
+    /// I6：原生系统栏模式下「设置」是真 Tab（第 4 个）。
+    /// 浮岛胶囊模式下它仍是胶囊上的第 4 个按钮（非 Tab）—— 两种形态共用这一个 case。
+    case settings
 
     var title: String {
         switch self {
         case .today: return "今日"
         case .access: return "通行"
         case .log: return "记录"
+        case .settings: return "设置"
         }
     }
 }
@@ -95,6 +99,7 @@ final class Router {
         case .today: todayPath.append(dest)
         case .access: accessPath.append(dest)
         case .log: logPath.append(dest)
+        case .settings: settingsPath.append(dest)
         }
     }
 
@@ -104,7 +109,13 @@ final class Router {
 
     func openSettings() {
         settingsPath = []
-        settingsOpen = true
+        // I6：原生系统栏模式下设置是真 Tab；浮岛胶囊模式下拉起 sheet。
+        // 从别处（快捷动作、空态按钮）跳设置都走这里，两种形态只有这一个漏斗。
+        if SettingsStore.shared.nativeTabBar {
+            tab = .settings
+        } else {
+            settingsOpen = true
+        }
     }
 
     func openCredential(_ id: String) {
@@ -146,6 +157,7 @@ final class Router {
         case .today: todayPath = []
         case .access: accessPath = []
         case .log: logPath = []
+        case .settings: settingsPath = []
         }
     }
 

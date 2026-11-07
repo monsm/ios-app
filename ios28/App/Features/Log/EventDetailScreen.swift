@@ -15,7 +15,12 @@ struct EventDetailScreen: View {
     /// 顺带记下每条记录**当前**的备注：投影里的 `event.note` 是重载那一刻的快照，
     /// 用户刚敲的字不在里面；切走再切回来时若照投影重载，键盘上刚敲的字就消失了。
     @State private var notes: [String: String] = [:]
-    @State private var toast: String?
+    @State private var claiming = false
+
+    /// 可被认领的成员：归档的不算（人已不在名单里，认给 TA 等于把归属挂到空处）。
+    private var claimableMembers: [MemberCard] {
+        app.members.filter { !$0.archived }
+    }
 
     private var event: EventItem? {
         guard let id = router.pendingEventID else { return nil }
@@ -31,6 +36,14 @@ struct EventDetailScreen: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
+        .confirmationDialog("把这条记录认给谁？", isPresented: $claiming, titleVisibility: .visible) {
+            ForEach(claimableMembers) { m in
+                Button(m.name) {
+                    if let event { claim(event, to: m) }
+                }
+            }
+            Button("取消", role: .cancel) {}
+        }
     }
 
     @ViewBuilder
@@ -72,6 +85,18 @@ struct EventDetailScreen: View {
         ])
         .padding(.top, 26)
 
+        // C8：引擎给不出归属时，让用户亲手认人。认领落本机覆盖层（kf_mclaim_*），
+        // 优先于引擎推断；已有归属的记录不摆这个入口（与 ios27 同口径 ——
+        // 引擎"证明了的归属"不该被随手一条就覆盖）。
+        if event.whoID == nil, !claimableMembers.isEmpty, !DB.isDecoy {
+            Button { claiming = true } label: {
+                ContentRow(symbol: "person.badge.plus",
+                           title: "这条是谁开的？",
+                           subtitle: "认给一位成员 —— 认领只落本机，不改锁端日志", chevron: true)
+            }
+            .buttonStyle(.plain)
+        }
+
         if let diff = event.diff, !diff.isEmpty {
             GlassSurface() {
                 VStack(alignment: .leading, spacing: 6) {
@@ -109,7 +134,7 @@ struct EventDetailScreen: View {
                 // `toggleFlag` 返回的是**新的**状态。原先把这个返回值扔了，
                 // toast 永远写「已标记」—— 取消标记时也这么说。
                 let now = RecordOverlay.toggleFlag(event.mac, rowKey(event))
-                toast = now ? "已标记为待查" : "已取消待查"
+                AppToast.shared.show(now ? "已标记为待查" : "已取消待查")
                 app.reloadEvents()
             }
         }
@@ -140,16 +165,15 @@ struct EventDetailScreen: View {
                 .buttonStyle(.plain)
             }
         }
-
-        if let toast {
-            Text(toast)
-                .type(T.F.caption)
-                .foregroundStyle(T.C.ink3)
-                .padding(.top, 10)
-        }
     }
 
     private func rowKey(_ event: EventItem) -> String { String(event.id.split(separator: "#").last ?? "") }
+
+    private func claim(_ event: EventItem, to member: MemberCard) {
+        MemberHub.claim(event.mac, logKey: rowKey(event), memberId: member.id)
+        AppToast.shared.show("已认给 \(member.name)")
+        app.reloadEvents()
+    }
 
     /// 把备注框对齐到当前这条记录。换了记录就换内容 ——
     /// 否则上一次的字会跟着下一次输入落到新记录上。
@@ -174,7 +198,7 @@ struct EventDetailScreen: View {
                    fillWidth: true) {
             RecordOverlay.setDisposition(event.mac, rowKey(event),
                                          RecordSearch.Disposition(at: Date().timeIntervalSince1970, verdict: verdict))
-            toast = "已标记为「\(verdict)」"
+            AppToast.shared.show("已标记为「\(verdict)」")
             app.reloadEvents()
         }
     }
@@ -227,7 +251,14 @@ struct InsightsScreen: View {
                 .padding(.top, 8)
                 .lineSpacing(3)
 
-            SectionHead(index: "01", title: "按方式")
+            SectionHead(index: "01", title: "近 7 天")
+            WeekBars(days: WeekBars.build(events: app.events))
+            Text("只数真正的开门（校时、状态广播不算），按本机已读回的记录统计。")
+                .type(T.F.caption)
+                .foregroundStyle(T.C.ink3)
+                .padding(.top, 8)
+
+            SectionHead(index: "02", title: "按方式")
             if byKind.isEmpty {
                 Text("这三十天还没有开门记录。")
                     .type(T.F.caption)
@@ -250,7 +281,7 @@ struct InsightsScreen: View {
                 .padding(.vertical, 11)
             }
 
-            SectionHead(index: "02", title: "按成员")
+            SectionHead(index: "03", title: "按成员")
             if people.isEmpty {
                 Text("还没有可证明归属的开门。")
                     .type(T.F.caption)
@@ -274,7 +305,7 @@ struct InsightsScreen: View {
                 }
             }
 
-            SectionHead(index: "03", title: "异常")
+            SectionHead(index: "04", title: "异常")
             let alarms = month.filter { $0.isAlarm }
             if alarms.isEmpty {
                 Text("这三十天没有异常记录。")

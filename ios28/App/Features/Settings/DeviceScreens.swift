@@ -18,22 +18,46 @@ struct PairingScreen: View {
     @State private var progress = ""
     @State private var errorLine: String?
     @State private var done = false
+    // E7：配对流程防护 —— 可中止的任务句柄、命名步骤、连通探测。
+    @State private var pairTask: Task<Void, Never>?
+    @State private var naming = false
+    @State private var pairedMac = ""
+    @State private var nickname = ""
+    @State private var place = ""
+    @State private var probing: String?
+    @State private var probeText: [String: String] = [:]
 
     var body: some View {
         ScreenScroll {
             NavRow(kicker: "设置 / 配对门锁", back: { dismiss() })
 
-            DisplayLine(text: done ? "配好了。" : "把锁\n叫醒。", size: 36)
-                .padding(.top, 16)
-            Text(done
-                 ? "钥匙串已经写进本机。现在可以去「今日」开第一扇门。"
-                 : "先把门锁恢复到配网状态（通常是长按设置键或拆开电池仓），再点开始搜索。整个过程不需要网络。")
-                .type(T.F.footnote)
-                .foregroundStyle(T.C.ink2)
-                .lineSpacing(4)
-                .padding(.top, 8)
+            if naming {
+                // E7 命名步骤：配对链已跑完，握手成功后才轮到起名。
+                // 直接把锁顶进「当前锁」而不给名字，多锁用户会在门页看到两把「未命名门锁」。
+                DisplayLine(text: "给它\n起个名字。", size: 36)
+                    .padding(.top, 16)
+                Text("配对已经完成，锁里已有你那把母钥。名字只是本机的标签。")
+                    .type(T.F.footnote)
+                    .foregroundStyle(T.C.ink2)
+                    .lineSpacing(4)
+                    .padding(.top, 8)
 
-            if done {
+                SectionHead(index: "01", title: "称呼")
+                FieldInput(placeholder: "例如：玄关·入户门", text: $nickname)
+                SectionHead(index: "02", title: "地点（可选）")
+                FieldInput(placeholder: "玄关 / 车库 / 后门", text: $place)
+                if let hint = duplicateNameHint {
+                    Text(hint)
+                        .type(T.F.caption)
+                        .foregroundStyle(T.C.danger)
+                        .lineSpacing(3)
+                        .padding(.top, 8)
+                }
+                PrimaryButton(title: "完成", enabled: !nickname.trimmingCharacters(in: .whitespaces).isEmpty) {
+                    commitName()
+                }
+                .padding(.top, 22)
+            } else if done {
                 // 这一页是设置栈里的 pushed 页：`dismiss()` 只弹回设置首页，
                 // 按钮却写着「回到今日」。真的切 Tab 并关掉设置 sheet。
                 PrimaryButton(title: "回到今日") {
@@ -66,6 +90,13 @@ struct PairingScreen: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .padding(.top, 16)
+                    // E7：中止并回滚 —— 配网不是非跑完不可。cancel 之后锁侧要么没写、
+                    // 要么停在可重来的重置态；本机则断开链路、退回发现列表。
+                    GhostButton(title: "中止并回滚", symbol: "xmark.circle") {
+                        pairTask?.cancel()
+                        rollback("已中止：链路已断开，锁没有被改一半就留着。")
+                    }
+                    .padding(.top, 10)
                 }
 
                 if let errorLine {
@@ -87,6 +118,11 @@ struct PairingScreen: View {
                         deviceRow(device)
                     }
                 }
+                Text("长按一台锁可以做连通探测：只发一条回声命令，不写入任何东西。")
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.ink3)
+                    .lineSpacing(3)
+                    .padding(.top, 6)
 
                 Text("安全说明：配对会把一把 128 位母钥写进这把锁。此后所有开锁都在本地完成，不经过服务器。")
                     .type(T.F.caption)
@@ -96,26 +132,54 @@ struct PairingScreen: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
+        // 中途离开这一页 = 已中止。cancel + 断链路，别留半条配网连接挂着。
+        .onDisappear {
+            if pairTask != nil {
+                pairTask?.cancel()
+                LockService.shared.disconnect()
+                pairTask = nil
+                pairing = nil
+                progress = ""
+            }
+        }
     }
 
     private func deviceRow(_ device: BLEAdvDevice) -> some View {
         let adv = ZKProtocol.parseAdv(device.advertisHex)
         let mac = adv?.macDisplay ?? ""
-        return Button {
-            guard !mac.isEmpty else { return }
-            Task { await pair(device: device, mac: mac) }
-        } label: {
-            ContentRow(symbol: "lock", title: device.name.isEmpty ? "未命名门锁" : device.name,
-                       subtitle: "\(mac) · \(device.rssi) dBm" + (adv.map { " · pid \($0.pid)" } ?? ""),
-                       chevron: true) {
-                Text("配对")
+        return VStack(alignment: .leading, spacing: 0) {
+            Button {
+                guard !mac.isEmpty else { return }
+                pair(device: device, mac: mac)
+            } label: {
+                ContentRow(symbol: "lock", title: device.name.isEmpty ? "未命名门锁" : device.name,
+                           subtitle: "\(mac) · \(device.rssi) dBm" + (adv.map { " · pid \($0.pid)" } ?? ""),
+                           chevron: true) {
+                    Text("配对")
+                        .type(T.F.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(T.C.brass)
+                }
+            }
+            .buttonStyle(.plain)
+            .disabled(pairing != nil || naming)
+            // E7：长按 = 连通探测。写之前先知道这条链路能不能说话。
+            .contextMenu {
+                Button {
+                    Task { await probe(device, mac: mac) }
+                } label: {
+                    Label("连通探测", systemImage: "dot.radiowaves.left.and.right")
+                }
+            }
+            if let line = probeText[mac] {
+                Text((probing == mac ? "探测中… " : "") + line)
                     .type(T.F.caption)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(T.C.brass)
+                    .foregroundStyle(T.C.ink2)
+                    .lineSpacing(2)
+                    .padding(.top, 4)
+                    .padding(.bottom, 4)
             }
         }
-        .buttonStyle(.plain)
-        .disabled(pairing != nil)
     }
 
     private func scan() async {
@@ -147,10 +211,10 @@ struct PairingScreen: View {
         scanning = false
     }
 
-    private func pair(device: BLEAdvDevice, mac: String) async {
+    private func pair(device: BLEAdvDevice, mac: String) {
         // 双击/两指同时点会各起一个 Task；两个握手流程交错会写下两套钥匙材料。
-        // Task 体在 MainActor 上同步跑到第一个 await，这里的 check-and-set 是原子的。
-        guard pairing == nil else { return }
+        // check-and-set 在 MainActor 上同步跑到第一个 await 前是原子的。
+        guard pairing == nil, pairTask == nil else { return }
         // 空壳里不配对：配对会真的握手、写本机钥匙串，并让一台新锁进入这台手机的台账。
         // 界面看起来只是"连了一把锁"，退出空壳后却多出一条真实记录。
         guard !DB.isDecoy else {
@@ -160,16 +224,100 @@ struct PairingScreen: View {
         pairing = mac
         errorLine = nil
         progress = ""
-        do {
-            _ = try await LockService.shared.pair(deviceId: device.deviceId, mac: mac) { line in
-                Task { @MainActor in progress = line }
+        // E7：把链路握在手里 —— 中止按钮与 onDisappear 都靠这个句柄 cancel。
+        pairTask = Task {
+            do {
+                let kc = try await LockService.shared.pair(deviceId: device.deviceId, mac: mac) { line in
+                    Task { @MainActor in progress = cleanStep(line) }
+                }
+                if Task.isCancelled { rollback("已中止：配网没有跑完，锁未被改动。"); return }
+                pairing = nil
+                pairedMac = mac
+                // 命名预填型号：pidName 缺省时退到产品名。
+                nickname = kc.pidName.isEmpty ? PidMap.productName(kc.pid) : kc.pidName
+                place = ""
+                naming = true
+            } catch {
+                if Task.isCancelled { rollback("已中止：配网没有跑完，锁未被改动。"); return }
+                rollback((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
             }
-            done = true
-            await app.reload(refreshStatus: true)
-        } catch {
-            errorLine = error.localizedDescription
         }
+    }
+
+    /// E7：中止/失败后的回滚。文案说「链路已断开」就必须真的断开 ——
+    /// 否则再点一次配对会撞上「已有连接」。
+    @MainActor
+    private func rollback(_ reason: String) {
+        pairTask = nil
+        LockService.shared.disconnect()
         pairing = nil
+        progress = ""
+        naming = false
+        pairedMac = ""
+        errorLine = reason
+    }
+
+    /// 进度文案来自引擎，里面带协议命令号；用户界面不显示命令号。
+    private func cleanStep(_ text: String) -> String {
+        var s = text
+        if let range = s.range(of: " \\(cmd [0-9A-Fa-f]+\\)", options: .regularExpression) {
+            s.removeSubrange(range)
+        }
+        s = s.replacingOccurrences(of: "cmd [0-9A-Fa-f]+ ", with: "", options: .regularExpression)
+        return s
+    }
+
+    /// E7：连通探测 —— 对着一台还没配对的锁发回声命令，验证链路但不写任何东西。
+    private func probe(_ device: BLEAdvDevice, mac: String) async {
+        guard probing == nil else { return }
+        probing = mac
+        defer { probing = nil }
+        do {
+            let r = try await LockService.shared.probeEcho(deviceId: device.deviceId)
+            probeText[mac] = r.matched
+                ? "回声一致 · 往返 \(r.ms) ms —— 链路是通的，可以配对"
+                : "回声不匹配 · 回执码 \(r.rc) —— 能连上，但握手存疑"
+        } catch {
+            probeText[mac] = "探测失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+        }
+    }
+
+    /// 已有同名锁时的提醒（不拦）。比对的是显示名。
+    private var duplicateNameHint: String? {
+        let n = nickname.trimmingCharacters(in: .whitespaces)
+        guard !n.isEmpty else { return nil }
+        let selfMac = DB.normalizeMac(pairedMac)
+        guard let first = DB.keychains().first(where: {
+            DB.normalizeMac($0.mac) != selfMac && LockArchive.displayName($0) == n
+        }) else { return nil }
+        let m = LockArchive.meta(first.mac)
+        return "已经有另一把锁叫「\(n)」\(m.place.isEmpty ? "" : "（\(m.place)）")了 —— 两把同名在门页里分不出来。建议换个称呼，或把地点写清楚。"
+    }
+
+    /// E7：命名落库 —— 改钥匙串名、（可选）写地点副标题，设为当前锁，再整体重载。
+    private func commitName() {
+        let name = nickname.trimmingCharacters(in: .whitespaces)
+        guard !name.isEmpty else { return }
+        let mac = pairedMac
+        guard !mac.isEmpty else {
+            naming = false
+            done = true
+            return
+        }
+        if var kc = DB.keychain(mac) {
+            kc.name = name
+            DB.saveKeychain(kc)
+        }
+        let p = place.trimmingCharacters(in: .whitespaces)
+        if !p.isEmpty {
+            var m = LockArchive.meta(mac)
+            m.place = p
+            LockArchive.save(mac, m)
+        }
+        DB.currentMac = mac
+        naming = false
+        done = true
+        Task { await app.reload(refreshStatus: true) }
     }
 }
 
@@ -337,9 +485,63 @@ struct HardwareScreen: View {
     @State private var message: String?
     @State private var ssid = ""
     @State private var password = ""
+    // E5：钥匙串台账管理 —— 每台钥匙串一整组动作。
+    @State private var busyId: String?
+    /// 危险动作的待确认目标。三种确认共用一个枚举，一次只会有一个。
+    @State private var ask: DongleAsk?
+    /// 「查看已写入的钥匙」的读回结果（nil = 还没查过，[] = 查过、为空）。
+    @State private var keysByDongle: [String: [String]] = [:]
+
+    /// E5：危险动作确认。撤销 / 写未知钥匙 / 解绑都要先问一句。
+    private enum DongleAsk: Identifiable {
+        case revoke(Dongle)
+        case fault(Dongle)
+        case unbind(Dongle)
+        var destructive: Bool {
+            switch self {
+            case .fault: return false   // 写假钥匙不是破坏 —— 它只是占一格
+            default: return true
+            }
+        }
+        var id: String {
+            switch self {
+            case .revoke(let d): return "revoke-" + d.mac
+            case .fault(let d): return "fault-" + d.mac
+            case .unbind(let d): return "unbind-" + d.mac
+            }
+        }
+        var title: String {
+            switch self {
+            case .revoke: return "撤销这把锁的钥匙？"
+            case .fault: return "写入一把未知钥匙？"
+            case .unbind: return "从本机解绑这把钥匙串？"
+            }
+        }
+        var confirm: String {
+            switch self {
+            case .revoke: return "撤销"
+            case .fault: return "写入"
+            case .unbind: return "解绑"
+            }
+        }
+        var message: String {
+            switch self {
+            case .revoke:
+                return "钥匙串里这把锁的钥匙会被删掉。以后要用它开门，必须把手机贴近钥匙串重新写一次 —— 这个动作不能撤销。"
+            case .fault:
+                return "写进去的是一把随机 PIN 的假钥匙：开不了任何锁、不绑成员、也不能远程收回。它只用来验证这枚钥匙串本身能收钥。"
+            case .unbind:
+                return "只删本机这条记录，钥匙串里已写入的钥匙仍然能开对应锁。"
+            }
+        }
+    }
 
     private var dongles: [Dongle] { DB.dongles() }
     private var gateways: [Gateway] { DB.gateways() }
+
+    /// 只读试验模式：写类动作（写钥 / 撤销 / 假钥匙 / 解绑）一律停。
+    /// 读取类（状态 / 查钥匙）引擎会拦，但界面上先说明白。
+    private var writesBlocked: Bool { DB.isDecoy || app.trial }
 
     var body: some View {
         ScreenScroll {
@@ -354,21 +556,35 @@ struct HardwareScreen: View {
                 .padding(.top, 8)
 
             SectionHead(index: "01", title: "钥匙串", trailing: "\(dongles.count)")
+            if dongles.isEmpty {
+                Text("还没有登记钥匙串。把钥匙串拿到手机旁，点下面的「搜索钥匙串」。")
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.ink3)
+                    .padding(.vertical, 8)
+            }
             ForEach(dongles) { dongle in
-                ContentRow(symbol: "key", tone: .brass, title: dongle.name.isEmpty ? "钥匙串" : dongle.name,
-                           subtitle: dongle.mac + (dongle.stat.map { " · \($0.power)% · \($0.ekeyCount) 把钥" } ?? ""))
+                dongleCard(dongle)
             }
             HStack(spacing: 10) {
                 GhostButton(title: busy ? "请稍等…" : "搜索钥匙串", symbol: "dot.radiowaves.left.and.right") {
                     Task { await scanDongle() }
                 }
-                GhostButton(title: "写入当前锁", symbol: "square.and.arrow.down") {
-                    Task { await writeKey() }
-                }
             }
             .padding(.top, 10)
             .disabled(busy)
             .opacity(busy ? 0.55 : 1)
+            Text("搜索只认厂商的钥匙串（pid 16289、广播带 MAC）。扫不到时先确认它有电，再靠近手机 30 厘米内。")
+                .type(T.F.caption)
+                .foregroundStyle(T.C.ink3)
+                .lineSpacing(3)
+                .padding(.top, 6)
+            if app.trial {
+                Text("只读试验模式：钥匙串的写类动作（写钥、撤销、假钥匙、解绑）不会执行。")
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.danger)
+                    .lineSpacing(3)
+                    .padding(.top, 6)
+            }
 
             SectionHead(index: "02", title: "网关", trailing: "\(gateways.count)")
             ForEach(gateways) { gateway in
@@ -407,6 +623,22 @@ struct HardwareScreen: View {
                 .padding(.top, 18)
         }
         .toolbar(.hidden, for: .navigationBar)
+        .confirmationDialog(ask?.title ?? "", isPresented: Binding(
+            get: { ask != nil },
+            set: { if !$0 { ask = nil } }
+        ), titleVisibility: .visible) {
+            Button(ask?.confirm ?? "确认", role: ask?.destructive == true ? .destructive : nil) {
+                switch ask {
+                case .revoke(let d): ask = nil; Task { await revoke(d) }
+                case .fault(let d): ask = nil; Task { await writeFault(d) }
+                case .unbind(let d): ask = nil; unbind(d)
+                case nil: break
+                }
+            }
+            Button("取消", role: .cancel) {}
+        } message: {
+            Text(ask?.message ?? "")
+        }
     }
 
     private func scanDongle() async {
@@ -430,31 +662,135 @@ struct HardwareScreen: View {
         }
     }
 
-    private func writeKey() async {
-        guard !busy else { return }
+    private func writeKey(_ d: Dongle) async {
+        guard busyId == nil else { return }
         // `keychainForUnlock` 是**不过滤**空壳的读法，而这一步会把锁的 ekey
         // 写进一枚可以带走的硬件 —— 与「安卓交付码」同一类泄露，守一道。
-        // 提示语同样不提「空壳」（见 scanDongle）。
+        // 提示语不提「空壳」（见 scanDongle）。
         guard !DB.isDecoy else {
             message = "暂时无法写入钥匙串，请稍后再试。"
+            return
+        }
+        guard !app.trial else {
+            message = "只读试验模式：写入不执行。"
             return
         }
         guard let lock = DB.keychainForUnlock(app.currentMac) else {
             message = "先配对一把锁。"
             return
         }
-        guard let dongle = dongles.first else {
-            message = "先搜到一枚钥匙串。"
+        busyId = d.mac
+        defer { busyId = nil }
+        do {
+            try await HardwareService.shared.writeDongleKey(dongleMac: d.mac, lock: lock, trackId: UInt32.random(in: 1 ... 0x7fff_ffff))
+            // 写完回读一次状态，台账的电量 / 钥匙数 / lastKeyLock 就地刷新。
+            if let stat = try? await HardwareService.shared.readDongleState(mac: d.mac) {
+                var rec = DB.dongle(d.mac) ?? d
+                rec.stat = stat
+                rec.lastKeyLock = lock.mac
+                rec.lastKeyAt = DF.iso().string(from: Date())
+                DB.saveDongle(rec)
+            }
+            AppToast.shared.show("钥匙已写入钥匙串")
+        } catch {
+            message = "写入失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+        }
+    }
+
+    /// E5：撤销 —— 同一条写钥命令下发空 ekey 即删除。删了要重新写一遍才能用。
+    private func revoke(_ d: Dongle) async {
+        guard busyId == nil else { return }
+        guard !DB.isDecoy else {
+            message = "暂时无法撤销钥匙，请稍后再试。"
             return
         }
-        busy = true
-        defer { busy = false }
-        do {
-            try await HardwareService.shared.writeDongleKey(dongleMac: dongle.mac, lock: lock, trackId: UInt32.random(in: 1 ... 0x7fff_ffff))
-            message = "已把这把锁的 ekey 写进钥匙串。"
-        } catch {
-            message = error.localizedDescription
+        guard !app.trial else {
+            message = "只读试验模式：撤销不执行。"
+            return
         }
+        guard let lock = DB.keychainForUnlock(app.currentMac) else {
+            message = "先配对一把锁。"
+            return
+        }
+        busyId = d.mac
+        defer { busyId = nil }
+        do {
+            try await HardwareService.shared.deleteDongleKey(dongleMac: d.mac, lock: lock)
+            var rec = DB.dongle(d.mac) ?? d
+            rec.lastKeyLock = ""
+            DB.saveDongle(rec)
+            AppToast.shared.show("已从钥匙串里删掉这把锁的钥匙")
+        } catch {
+            message = "撤销失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+        }
+    }
+
+    /// E5：手动读状态 —— 不再只在写钥后顺带刷一次，单独给个入口。
+    private func readState(_ d: Dongle) async {
+        guard busyId == nil else { return }
+        busyId = d.mac
+        defer { busyId = nil }
+        do {
+            let stat = try await HardwareService.shared.readDongleState(mac: d.mac)
+            var rec = DB.dongle(d.mac) ?? d
+            rec.stat = stat
+            DB.saveDongle(rec)
+            AppToast.shared.show("状态已更新")
+        } catch {
+            message = "读状态失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+        }
+    }
+
+    /// E5：查看这枚钥匙串里存了哪些锁的钥匙（逐把对回本机档案）。
+    private func loadKeys(_ d: Dongle) async {
+        guard busyId == nil else { return }
+        busyId = d.mac
+        defer { busyId = nil }
+        do {
+            keysByDongle[d.mac] = try await HardwareService.shared.dongleKeys(dongleMac: d.mac, lockMac: nil)
+        } catch {
+            message = "查钥匙失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+        }
+    }
+
+    /// E5：写入未知/假钥匙 —— 随机 PIN、永久、不绑成员；开不了锁，只验证钥匙串本身能收钥。
+    private func writeFault(_ d: Dongle) async {
+        guard busyId == nil else { return }
+        guard !DB.isDecoy else {
+            message = "暂时无法写入钥匙串，请稍后再试。"
+            return
+        }
+        guard !app.trial else {
+            message = "只读试验模式：写入不执行。"
+            return
+        }
+        guard let lock = DB.keychainForUnlock(app.currentMac) else {
+            message = "未知钥匙也要按某把锁的身份写入 —— 先配对一把锁。"
+            return
+        }
+        busyId = d.mac
+        defer { busyId = nil }
+        do {
+            try await HardwareService.shared.writeFaultDongleKey(dongleMac: d.mac, lock: lock)
+            AppToast.shared.show("未知钥匙已写入（随机 PIN，开不了锁）")
+        } catch {
+            message = "写假钥匙失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+        }
+    }
+
+    /// E5：从本机解绑 —— 只删本机台账，不动实体钥匙里已写入的钥匙。
+    private func unbind(_ d: Dongle) {
+        guard !DB.isDecoy else {
+            message = "暂时无法解绑，请稍后再试。"
+            return
+        }
+        guard !app.trial else {
+            message = "只读试验模式：解绑不执行。"
+            return
+        }
+        DB.removeDongle(d.mac)
+        keysByDongle[d.mac] = nil
+        AppToast.shared.show("已从本机解绑（钥匙串里的钥匙不受影响）")
     }
 
     private func provision() async {
@@ -657,6 +993,31 @@ struct DiagnosticsScreen: View {
     @State private var message: String?
     @State private var raw = false
     @State private var confirmingRepair = false
+    // C7：帧骨架一旦贴出去就收不回来，复制前先确认一次。
+    @State private var confirmingFrameCopy = false
+
+    // F2：附近设备 —— 扫描广播 + 对任意候选设备发回声探测。
+    private struct Candidate: Identifiable {
+        let id: String
+        let name: String
+        let pid: Int
+        let mac: String
+        let rssi: Int
+        let dfu: Bool
+    }
+
+    @State private var devices: [Candidate] = []
+    @State private var scanning = false
+    @State private var probing: String?
+    @State private var probeResult: String?
+    @State private var probeResultDevice: String?
+
+    // F1：God 档 —— 锁身份 / 全量读数 / 台账对账 / 变更流水。
+    @State private var status: StatusSnapshotData?
+    @State private var changeLogs: [LogEntry] = []
+    @State private var godBusy = false
+
+    private var kc: Keychain? { DB.keychainForUnlock(app.currentMac) }
 
     private var frames: [String] {
         // 空壳里不显示帧：那是本次会话（包括锁屏前）真实下发过的命令骨架。
@@ -736,9 +1097,30 @@ struct DiagnosticsScreen: View {
             .disabled(busy)
             .opacity(busy ? 0.55 : 1)
 
+            // 附近设备与下面的 God 档都会说出周围/本机的真实锁档案 —— 空壳里整段不摆。
+            if !DB.isDecoy {
+                SectionHead(index: "02", title: "附近设备")
+                GhostButton(title: scanning ? "正在扫描 8 秒…" : "扫描附近设备",
+                            symbol: "dot.radiowaves.left.and.right") {
+                    Task { await scan() }
+                }
+                .disabled(scanning)
+                .opacity(scanning ? 0.55 : 1)
+                Text("门锁被连上后会停止广播；先断开再扫。扫描只读广播，不连接、不发命令；对扫到的任意设备可再发一条回声探测。")
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.ink3)
+                    .lineSpacing(3)
+                    .padding(.top, 8)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                ForEach(devices) { d in
+                    deviceRow(d)
+                }
+            }
+
             // 空壳里不摆「最近帧」：没有帧可看，开关就成了一个点了没反应的死控件。
             if !DB.isDecoy {
-                SectionHead(index: "02", title: "最近帧")
+                SectionHead(index: "03", title: "最近帧")
                 SwitchLine(title: "显示脱敏帧", detail: "只保留帧头与 KLV 骨架，凭证值一律遮掉。", isOn: $raw)
                 if frames.isEmpty {
                     Text(raw ? "还没有帧。" : "打开上面的开关才会显示。")
@@ -754,6 +1136,11 @@ struct DiagnosticsScreen: View {
                             .lineLimit(2)
                             .padding(.vertical, 5)
                     }
+                    // C7：帧只留在屏幕上等于没法交给人排障；复制走脱敏骨架 + 二次确认。
+                    GhostButton(title: "复制脱敏帧", symbol: "doc.on.doc") {
+                        confirmingFrameCopy = true
+                    }
+                    .padding(.top, 8)
                 }
             }
 
@@ -765,7 +1152,12 @@ struct DiagnosticsScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            SectionHead(index: "03", title: "本机")
+            // F1：God 档。空壳里整段不渲染（身份指纹与台账本身就是档案泄露）。
+            if !DB.isDecoy, let kc {
+                godSections(kc)
+            }
+
+            SectionHead(index: DB.isDecoy ? "03" : "08", title: "本机")
             Text("App 版本 1.0 · 协议层 \(app.lock?.model ?? "—") · 数据全部在本机")
                 .type(T.F.caption)
                 .foregroundStyle(T.C.ink3)
@@ -782,6 +1174,252 @@ struct DiagnosticsScreen: View {
             Button("取消", role: .cancel) {}
         } message: {
             Text("只换锁里的 PIN 池，不换母钥：本机的钥匙仍然有效，但其他设备上已配的旧钥匙会失效。")
+        }
+        .confirmationDialog("复制这些帧骨架？",
+                            isPresented: $confirmingFrameCopy,
+                            titleVisibility: .visible) {
+            Button("复制") {
+                Clip.set(Array(frames.suffix(8)).joined(separator: "\n"))
+                AppToast.shared.show("已复制 \(min(frames.count, 8)) 条脱敏帧")
+            }
+            Button("取消", role: .cancel) {}
+        } message: {
+            Text("帧骨架已脱敏，但仍含命令类型与 MAC。贴出去就收不回来 —— 确认接收方可信再复制。")
+        }
+        .task {
+            // 进页先给盘上的缓存快照；要最新读数点「重新读取」。
+            if let kc { status = DB.readStatus(kc.mac) }
+        }
+    }
+
+    // MARK: - God 档
+
+    @ViewBuilder
+    private func godSections(_ kc: Keychain) -> some View {
+        SectionHead(index: "04", title: "锁身份")
+        godRow("锁名", LockArchive.displayName(kc))
+        godRow("MAC", DB.normalizeMac(kc.mac))
+        godRow("配对", kc.pairedAt.isEmpty ? "—" : DF.localMinute(fromISO: kc.pairedAt))
+        godRow("skey 指纹", DiagSnapshot.fingerprint(kc.skey))
+        godRow("ekey 指纹", DiagSnapshot.fingerprint(kc.ekey))
+        godRow("ekey 内 PIN", DiagSnapshot.ekeyPinMasked(kc))
+        Text("密钥只显示指纹（前 4 + 后 4 位）；贴给别人排障也不会出现明文。")
+            .type(T.F.caption)
+            .foregroundStyle(T.C.ink3)
+            .lineSpacing(3)
+            .padding(.top, 8)
+            .fixedSize(horizontal: false, vertical: true)
+
+        SectionHead(index: "05", title: "锁端读数")
+        GhostButton(title: godBusy ? "读取中…" : "重新读取",
+                    symbol: "arrow.clockwise") {
+            Task { await refreshGod() }
+        }
+        .disabled(godBusy)
+        .opacity(godBusy ? 0.55 : 1)
+        if let st = status {
+            godRow("固件", st.firmware.isEmpty ? "未上报" : st.firmware)
+            godRow("电量", st.powerLevel >= 0 ? "\(st.powerLevel)%" : "未读到")
+            godRow("锁钟", st.lockTime > 0 ? When.clock(ZKProtocol.protoSecondsToMs(st.lockTime) / 1000) : "未读到")
+            godRow("安全", "验签\(st.verifyMode == 1 ? "开" : "关") · 广播\(st.broadcastMode == 1 ? "开" : "关") · 临时码\(st.tempPwdMode == 1 ? "开" : "关")")
+            godRow("PIN 池", usedOfCap(cap: st.pinCap, stock: st.pinStock, local: localPinCount(kc)))
+            godRow("密码", usedOfCap(cap: st.pwdCap, stock: st.pwdStock, local: DB.listPwds(kc.mac).count))
+            godRow("指纹", usedOfCap(cap: st.fpCap, stock: st.fpStock, local: DB.listFps(kc.mac).count))
+            godRow("通信密钥", sKeyStatusWord(st.sKeyStatus))
+            godRow("动态码周期", st.zotpPeriod.map { "\($0) 分钟" } ?? "未上报")
+        } else {
+            Text("还没有快照 —— 点上面的「重新读取」连一次锁。")
+                .type(T.F.caption)
+                .foregroundStyle(T.C.ink3)
+                .padding(.top, 6)
+        }
+
+        SectionHead(index: "06", title: "台账对账")
+        godRow("本机 PIN 池", "\(localPinCount(kc)) 枚（声明 \(kc.pins.count)）")
+        godRow("本机密码", "\(DB.listPwds(kc.mac).count) 条")
+        godRow("本机指纹", "\(DB.listFps(kc.mac).count) 枚")
+        if let st = status {
+            let used = max((st.pinCap ?? 0) - st.pinStock, 0)
+            let local = localPinCount(kc)
+            godRow("锁端已用 vs 本机", "\(used) vs \(local)")
+            Text(used == local
+                 ? "数量一致（但两批都满池时数量恒等，不能证明是同一批 —— 真正的判据是开锁时锁端是否拒收这枚 PIN）。"
+                 : "数量不一致 —— 现在签发的凭证必被锁端拒绝，需要修池或重新导入。")
+                .type(T.F.caption)
+                .foregroundStyle(used == local ? T.C.ink3 : T.C.danger)
+                .lineSpacing(3)
+                .padding(.top, 8)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+
+        SectionHead(index: "07", title: "凭证变更流水")
+        Text("锁端自己记录的凭证操作 —— 别的手机或网关做的也算，是「对不上」时的第一手证据。")
+            .type(T.F.caption)
+            .foregroundStyle(T.C.ink3)
+            .lineSpacing(3)
+            .fixedSize(horizontal: false, vertical: true)
+        if changeLogs.isEmpty {
+            Text("还没有读到变更流水 —— 「重新读取」会带最近一页（最多 20 条）。")
+                .type(T.F.caption)
+                .foregroundStyle(T.C.ink3)
+                .padding(.top, 6)
+        } else {
+            ForEach(Array(changeLogs.prefix(20).enumerated()), id: \.offset) { pair in
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 10) {
+                        Text(pair.element.lockTimeStr)
+                            .type(T.F.caption)
+                            .foregroundStyle(T.C.ink3)
+                            .monospacedDigit()
+                        Text(pair.element.typeName)
+                            .type(T.F.caption)
+                            .foregroundStyle(T.C.ink)
+                        Spacer(minLength: 0)
+                    }
+                    if let diff = pair.element.diffDescription {
+                        Text(diff)
+                            .type(T.F.mono)
+                            .foregroundStyle(T.C.ink2)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .padding(.vertical, 5)
+            }
+        }
+    }
+
+    private func godRow(_ label: String, _ value: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Text(label)
+                .type(T.F.caption)
+                .foregroundStyle(T.C.ink3)
+            Spacer(minLength: 8)
+            Text(value)
+                .type(T.F.mono)
+                .foregroundStyle(T.C.ink)
+                .multilineTextAlignment(.trailing)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.vertical, 7)
+    }
+
+    /// 「已用 / 容量」的统一写法。容量未上报时报本机条数并说明容量没读到 —— 不能写死「已用 0」。
+    private func usedOfCap(cap: Int?, stock: Int, local: Int) -> String {
+        guard stock >= 0 else { return "未读到" }
+        guard let c = cap, c > 0 else { return "本机 \(local) 条 · 容量未读" }
+        return "\(max(c - stock, 0)) / \(c)"
+    }
+
+    private func sKeyStatusWord(_ v: Int) -> String {
+        switch v {
+        case 0: return "未设置"
+        case 3: return "已就绪"
+        default: return "状态 \(v)"
+        }
+    }
+
+    private func localPinCount(_ kc: Keychain) -> Int {
+        kc.pins.filter { !$0.isEmpty }.count
+    }
+
+    // MARK: - 附近设备
+
+    private func deviceRow(_ d: Candidate) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(d.name)
+                    .type(T.F.callout)
+                    .fontWeight(.medium)
+                    .foregroundStyle(T.C.ink)
+                    .lineLimit(1)
+                Spacer(minLength: 8)
+                Text("\(d.rssi) dBm")
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.ink3)
+                    .monospacedDigit()
+            }
+            Text("pid \(d.pid) · \(d.mac.isEmpty ? "无 MAC" : d.mac)\(d.dfu ? " · DFU" : "")")
+                .type(T.F.mono)
+                .foregroundStyle(T.C.ink3)
+            Button {
+                Task { await probe(d) }
+            } label: {
+                Text(probing == d.id ? "探测中…" : "发送回声探测")
+                    .type(T.F.footnote)
+                    .fontWeight(.medium)
+                    .foregroundStyle(T.C.brass)
+            }
+            .buttonStyle(.plain)
+            .disabled(probing != nil)
+            if probing == nil, probeResultDevice == d.id, let probeResult {
+                Text(probeResult)
+                    .type(T.F.caption)
+                    .foregroundStyle(probeResult.hasPrefix("回声一致") ? T.C.ok : T.C.danger)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.vertical, 10)
+    }
+
+    private func scan() async {
+        guard !scanning else { return }
+        scanning = true
+        devices = []
+        do {
+            // 扫满 8 秒窗口再取快照 —— startScan 后立刻读，列表恒空。
+            let found = try await BLEService.shared.scanWindow(allowDuplicates: true, timeoutMs: 8000)
+            var out: [Candidate] = []
+            for d in found {
+                guard let adv = ZKProtocol.parseAdv(d.advertisHex) else { continue }
+                let mac = ZKProtocol.lockMac(fromAdv: adv) ?? ""
+                out.append(Candidate(id: d.deviceId,
+                                     name: d.name.isEmpty ? (PidMap.productNames[adv.pid] ?? "未知设备") : d.name,
+                                     pid: adv.pid, mac: mac, rssi: d.rssi, dfu: adv.dfuState != 0))
+            }
+            devices = out.sorted { $0.rssi > $1.rssi }
+        } catch {
+            message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
+        scanning = false
+    }
+
+    private func probe(_ d: Candidate) async {
+        guard probing == nil else { return }
+        probing = d.id
+        probeResult = nil
+        probeResultDevice = nil
+        do {
+            let r = try await LockService.shared.probeEcho(deviceId: d.id)
+            probeResult = r.matched
+                ? "回声一致 · \(r.ms) ms"
+                : (r.ok ? "回声不匹配 · \(r.ms) ms" : "设备回帧异常 · \(r.ms) ms")
+        } catch {
+            probeResult = "探测失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+        }
+        probeResultDevice = d.id
+        probing = nil
+    }
+
+    private func refreshGod() async {
+        guard !godBusy else { return }
+        guard let kc else {
+            message = "先配对一把锁。"
+            return
+        }
+        godBusy = true
+        defer { godBusy = false }
+        do {
+            _ = try await LockService.shared.getStatus(mac: kc.mac)
+        } catch {
+            message = "读状态失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+        }
+        status = DB.readStatus(kc.mac)
+        do {
+            let page = try await LockService.shared.getLogs(startIdx: 0, pageSize: 20)
+            // 14/15 = 密码/指纹变更，20/21 = 增删流水（口径与 ios27 God 档一致）。
+            changeLogs = page.logs.filter { $0.type == 14 || $0.type == 15 || $0.type == 20 || $0.type == 21 }
+        } catch {
+            message = "读日志失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
         }
     }
 

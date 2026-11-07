@@ -5,6 +5,7 @@
 //   2. 导入先预览、再写盘；校验和不匹配只警告，不硬拒（老版本导出的包仍然要能回来）。
 import SwiftUI
 import UIKit
+import UniformTypeIdentifiers
 
 @MainActor
 struct BackupScreen: View {
@@ -23,6 +24,10 @@ struct BackupScreen: View {
     /// 校验和不一致时的二次确认。Engine 的裁量是「不硬拒、但要用户点头」
     /// （`BackupStudio.checksumNeedsAck`）—— 第一次点「恢复」只弹这一问，确认后才真写盘。
     @State private var checkingChecksum = false
+    // A5：系统文件选择器 —— 导出存到「文件」，导入从文件读回。
+    @State private var showExporter = false
+    @State private var showImporter = false
+    @State private var exportDoc: EnvelopeDocument?
 
     var body: some View {
         ScreenScroll {
@@ -75,10 +80,22 @@ struct BackupScreen: View {
                     .type(T.F.caption)
                     .foregroundStyle(T.C.ok)
                     .padding(.top, 8)
-                ShareLink(item: exported) {
-                    Text("分享备份文件")
-                        .type(T.F.caption)
-                        .foregroundStyle(T.C.brass)
+                // A5：除了分享面板，还可以直接落到「文件」/iCloud 云盘。
+                HStack(spacing: 16) {
+                    ShareLink(item: exported) {
+                        Text("分享备份文件")
+                            .type(T.F.caption)
+                            .foregroundStyle(T.C.brass)
+                    }
+                    Button {
+                        exportDoc = EnvelopeDocument(text: exported)
+                        showExporter = true
+                    } label: {
+                        Text("存到文件")
+                            .type(T.F.caption)
+                            .foregroundStyle(T.C.brass)
+                    }
+                    .buttonStyle(.plain)
                 }
                 .padding(.top, 4)
             }
@@ -92,6 +109,16 @@ struct BackupScreen: View {
                            subtitle: "粘贴备份信封与口令，先预览再写入", chevron: true)
             }
             .buttonStyle(.plain)
+            // A5：备份文件也可以不经过剪贴板 —— 直接从「文件」里选。
+            Button {
+                showImporter = true
+            } label: {
+                ContentRow(symbol: "folder", tone: .cool,
+                           title: "从文件选择",
+                           subtitle: "在「文件」里找到备份文件，读回来还是要先预览", chevron: true)
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 8)
 
             if importing {
                 TextEditor(text: $importText)
@@ -173,11 +200,69 @@ struct BackupScreen: View {
                 .padding(.top, 20)
         }
         .toolbar(.hidden, for: .navigationBar)
+        // A5：导出走 FileDocument 落盘，导入走安全作用域 URL 读回。
+        .fileExporter(
+            isPresented: $showExporter,
+            document: exportDoc,
+            contentType: .plainText,
+            defaultFilename: backupFileName
+        ) { result in
+            switch result {
+            case .success(let url):
+                AppToast.shared.show("已存到 " + url.lastPathComponent)
+            case .failure(let e):
+                errorLine = "存文件失败：" + e.localizedDescription
+            }
+        }
+        .fileImporter(
+            isPresented: $showImporter,
+            allowedContentTypes: [.plainText, .json]
+        ) { result in
+            switch result {
+            case .success(let url): readBackupFile(url)
+            case .failure(let e): errorLine = "选文件失败：" + e.localizedDescription
+            }
+        }
         .confirmationDialog("校验和不一致，仍然恢复？", isPresented: $checkingChecksum, titleVisibility: .visible) {
             Button("仍然恢复", role: .destructive) { Task { await performRestore() } }
             Button("取消", role: .cancel) {}
         } message: {
             Text("这份备份的内容与它自带的校验和不一致 —— 可能是导出后被改过，也可能是旧版本 App 的算法不同。确认来源可信再继续。")
+        }
+    }
+
+    /// 导出文件名：锁名 + 日期，避免「文件」里出现一叠同名 backup.txt。
+    private var backupFileName: String {
+        let name = app.lock?.name ?? "阈值"
+        let day = When.dayKey(Int64(Date().timeIntervalSince1970))
+        return "threshold-" + name + "-" + day
+    }
+
+    /// A5：从系统文件选择器读回一段备份文本（安全作用域 URL 必须成对开关）。
+    private func readBackupFile(_ url: URL) {
+        let access = url.startAccessingSecurityScopedResource()
+        defer { if access { url.stopAccessingSecurityScopedResource() } }
+        // 先查大小再读内容。String(contentsOf:) 会整份读进内存，
+        // 而 parsePreview 的 32MB 闸发生在读完之后 —— 选了个超大文件就已经把内存吃满了。
+        let size = ((try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize) ?? 0
+        guard size <= BackupStudio.maxImportBytes else {
+            errorLine = "这个文件 \(size / 1_048_576) MB，超过 \(BackupStudio.maxImportBytes / 1_048_576) MB 上限 —— 正常备份远小于此，请确认选对了文件。"
+            return
+        }
+        do {
+            let text = try String(contentsOf: url, encoding: .utf8)
+            guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                errorLine = "这个文件是空的 —— 可能不是备份文件。"
+                return
+            }
+            importText = text
+            importPassword = ""
+            preview = nil
+            importing = true
+            errorLine = nil
+            AppToast.shared.show("已读入 " + url.lastPathComponent)
+        } catch {
+            errorLine = "读文件失败：" + error.localizedDescription
         }
     }
 
@@ -298,5 +383,26 @@ struct BackupScreen: View {
         } catch {
             errorLine = error.localizedDescription
         }
+    }
+}
+
+// A5：备份信封的 FileDocument —— fileExporter 落盘 / 文件 App 直接打开都要它。
+// 与 ios27 的 BackupDoc 同一份实现：纯文本 UTF-8，无额外元数据。
+struct EnvelopeDocument: FileDocument {
+    static var readableContentTypes: [UTType] { [.plainText, .json] }
+    var text: String
+
+    init(text: String) { self.text = text }
+
+    init(configuration: ReadConfiguration) throws {
+        guard let data = configuration.file.regularFileContents,
+              let text = String(data: data, encoding: .utf8) else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
+        self.text = text
+    }
+
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        FileWrapper(regularFileWithContents: Data(text.utf8))
     }
 }

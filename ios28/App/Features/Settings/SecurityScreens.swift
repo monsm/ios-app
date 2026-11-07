@@ -12,6 +12,7 @@ struct SecurityScreen: View {
 
     @State private var sheet: SheetKind?
     @State private var trial = TrialGuard.isOn
+    @State private var biometric = SettingsStore.shared.biometric
     /// 关掉本机密码要先问一句：这一步会把冷启动的门禁整个拆掉，
     /// 拿到手机的人可以直接看到全部凭证 —— 点错了没有第二道闸。
     @State private var confirmingDisable = false
@@ -89,6 +90,17 @@ struct SecurityScreen: View {
                                subtitle: "关闭后冷启动不再询问", chevron: true)
                 }
                 .buttonStyle(.plain)
+
+                // 门禁页的「用面容解锁」按钮由这一条偏好控制（G5）。
+                // 设了胁迫码时偏好说了不算 —— 那是安全判据，按钮自动隐藏。
+                SwitchLine(title: "面容/指纹解锁",
+                           detail: DB.hasDuressCode()
+                               ? "设了胁迫码，门禁页不提供此按钮。"
+                               : "门禁页出现「用面容解锁」；关掉后只能输密码。",
+                           isOn: $biometric)
+                    .onChange(of: biometric) { _, value in
+                        SettingsStore.shared.setBiometric(value)
+                    }
             }
 
             // 只读试验会真的改写本机的只读开关：在空壳里打开它，退出后整个 App 都不能开锁。
@@ -287,6 +299,26 @@ struct AppearanceScreen: View {
     @State private var haptics = SettingsStore.shared.haptics
     @State private var keepAwake = SettingsStore.shared.keepScreenAwake
     @State private var grid = SettingsStore.shared.quickGridCount
+    // E4：快捷池编辑器。
+    @State private var editingPool = false
+    // H1：品牌色 —— 六套预设 + 自定义（自定义盖过预设，与 ios27 同口径）。
+    @State private var accent = SettingsStore.shared.accent
+    @State private var accentCustom = SettingsStore.shared.accentCustom
+    @State private var customColor = T.C.rgb(0x7C5A31)
+    // I6：底栏形态。
+    @State private var nativeBar = SettingsStore.shared.nativeTabBar
+
+    /// 六套预设 + 默认黄铜。rgb 是**浅色档**展示色；深色档由令牌层自动抬亮。
+    /// 色值与令牌层的 accentBase() 同源同值（ios27 同一组，白字对比 ≥4.5 自检过）。
+    private static let presets: [(id: String, label: String, rgb: UInt32)] = [
+        ("", "黄铜", 0x7C5A31),
+        ("indigo", "靛蓝", 0x0558B8),
+        ("forest", "森林", 0x1D6F5F),
+        ("amber", "琥珀", 0xB45309),
+        ("graphite", "石墨", 0x5B6169),
+        ("rose", "玫红", 0xBE123C),
+        ("aurora", "极光", 0x0E7490),
+    ]
 
     /// 托盘最多只能显示用户真正选进池子的动作数。默认池是 5 个，
     /// 而 Stepper 原先写死 3…6 —— 调到 6 时界面说“6 个”，托盘仍只有 5 个。
@@ -313,7 +345,41 @@ struct AppearanceScreen: View {
                 }
             ))
 
-            SectionHead(index: "02", title: "今日的托盘")
+            SectionHead(index: "02", title: "品牌色")
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 78), spacing: 8)], spacing: 8) {
+                ForEach(Self.presets, id: \.id) { preset in
+                    accentChip(preset)
+                }
+            }
+            HStack {
+                ColorPicker("自定义强调色（会盖过六套预设）", selection: $customColor)
+                    .font(.system(size: 15))
+                    .foregroundStyle(T.C.ink)
+                if accentCustom != 0 {
+                    GhostButton(title: "取消自定义", symbol: "xmark") {
+                        SettingsStore.shared.setAccentCustom(0)
+                        accentCustom = 0
+                        Task { await app.reload() }
+                    }
+                    .frame(width: 110)
+                }
+            }
+            .padding(.top, 10)
+            .onChange(of: customColor) { _, color in
+                let v = hexOf(color)
+                guard v != accentCustom else { return }
+                accentCustom = v
+                SettingsStore.shared.setAccentCustom(v)
+                // 换色要立即重画整棵树：令牌色在视图重渲染时才重新解析。
+                Task { await app.reload() }
+            }
+            Text("六套预设都过了 WCAG AA（≥4.5）。自定义色过浅时，浅色模式下的实底白字可能发虚；深色模式会自动抬亮保住可读性。")
+                .type(T.F.caption)
+                .foregroundStyle(T.C.ink3)
+                .lineSpacing(3)
+                .padding(.top, 6)
+
+            SectionHead(index: "03", title: "今日的托盘")
             HStack {
                 Text("工具数量")
                     .type(T.F.callout)
@@ -332,19 +398,80 @@ struct AppearanceScreen: View {
             Text("改动会立刻反映在「今日」的托盘上。")
                 .type(T.F.caption)
                 .foregroundStyle(T.C.ink3)
+            // E4：托盘里的动作从哪来 —— 10 选 N 的池子在这里排。
+            Button { editingPool = true } label: {
+                ContentRow(symbol: "slider.horizontal.3", tone: .cool,
+                           title: "编辑快捷池",
+                           subtitle: "勾出要放进托盘的动作，排出先后", chevron: true)
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 10)
 
-            SectionHead(index: "03", title: "手感")
+            SectionHead(index: "04", title: "手感")
             SwitchLine(title: "触感反馈", detail: "开锁、校准、成功与失败都有对应震动。", isOn: $haptics)
                 .onChange(of: haptics) { _, value in SettingsStore.shared.setHaptics(value) }
             SwitchLine(title: "开门时保持亮屏", detail: "站在门口时不至于中途息屏。", isOn: $keepAwake)
                 .onChange(of: keepAwake) { _, value in SettingsStore.shared.setKeepScreenAwake(value) }
+
+            SectionHead(index: "05", title: "底栏")
+            // I6：两种形态。默认浮岛胶囊（像素与旧版一致）；原生系统栏自带
+            // 滚动收起与系统材质，吃「减少透明度」等无障碍设置。
+            SwitchLine(title: "原生系统标签栏",
+                       detail: "关 = 浮岛玻璃胶囊（默认）。开 = 系统标签栏：滚动时自动收起，材质跟随系统无障碍设置。",
+                       isOn: $nativeBar)
+                .onChange(of: nativeBar) { _, value in
+                    SettingsStore.shared.setNativeTabBar(value)
+                }
         }
         .toolbar(.hidden, for: .navigationBar)
+        .sheet(isPresented: $editingPool) { QuickPoolEditSheet() }
         .onAppear {
             // 旧版本允许存到 6；现在池子只有 5 个时把它夹回来，界面数字与托盘一致。
             let clamped = min(max(grid, 3), maxTools)
             if grid != clamped { grid = clamped }
+            // 自定义色在读盘值上回填取色器（@State 初始化器里拿不到另一个状态）。
+            if accentCustom > 0, let c = colorFromHex(accentCustom) { customColor = c }
         }
+    }
+
+    // MARK: H1 品牌色
+
+    private func accentChip(_ p: (id: String, label: String, rgb: UInt32)) -> some View {
+        let on = accentCustom == 0 && accent == p.id
+        return Button {
+            accent = p.id
+            SettingsStore.shared.setAccent(p.id)
+            // 换色要立即重画整棵树：令牌色在视图重渲染时才重新解析。
+            Task { await app.reload() }
+        } label: {
+            VStack(spacing: 6) {
+                Circle()
+                    .fill(T.C.rgb(p.rgb))
+                    .frame(width: 28, height: 28)
+                    .overlay(Circle().strokeBorder(on ? T.C.ink : T.C.hairStrong, lineWidth: on ? 2 : 1))
+                Text(p.label)
+                    .type(T.F.caption)
+                    .foregroundStyle(on ? T.C.ink : T.C.ink3)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .liquidGlass(in: RoundedRectangle(cornerRadius: GlassMetrics.controlRadius, style: .continuous),
+                         tint: GlassMetrics.tint)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("品牌色：" + p.label + (on ? "，当前" : ""))
+    }
+
+    /// Color → 0xRRGGBB（取色器给的是扩展 sRGB，getRed 拿到的就是组件值）。
+    private func hexOf(_ color: Color) -> Int {
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        UIColor(color).getRed(&r, green: &g, blue: &b, alpha: &a)
+        return (Int(round(r * 255)) << 16) | (Int(round(g * 255)) << 8) | Int(round(b * 255))
+    }
+
+    private func colorFromHex(_ v: Int) -> Color? {
+        guard v > 0 else { return nil }
+        return T.C.rgb(UInt32(v))
     }
 }
 

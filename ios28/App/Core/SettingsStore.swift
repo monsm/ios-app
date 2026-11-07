@@ -21,6 +21,18 @@ final class SettingsStore {
     private(set) var keepScreenAwake = true
     private(set) var quickGridCount = 4
     private(set) var autoRetry = true
+    /// 门禁页是否提供面容/指纹解锁按钮（G5）。默认开；设了胁迫码时门禁页
+    /// 仍会强制隐藏 —— 那一条是安全判据，不是偏好，偏好只管"要不要"。
+    private(set) var biometric = true
+    /// 品牌色（H1）：六套预设 id（kf_accent）。"" = 默认黄铜。
+    /// 令牌层（T.C.brass 族）直接读 DB.store 解析；这里的存储属性只供外观页
+    /// 建观察边、以及备份恢复后界面重读。
+    private(set) var accent = ""
+    /// 自定义强调色（kf_accent_custom，0xRRGGBB；0 = 未启用）。优先于六套预设 —— 与 ios27 同口径。
+    private(set) var accentCustom = 0
+    /// 底栏形态（I6）：false = 浮岛玻璃胶囊（默认，像素与旧版一致）；
+    /// true = 原生系统标签栏（真系统材质、滚动收起、VoiceOver 标签语义）。
+    private(set) var nativeTabBar = false
 
     private init() { load() }
 
@@ -32,6 +44,10 @@ final class SettingsStore {
         keepScreenAwake = DB.store.getBool("kf_keep_awake", true)
         quickGridCount = max(3, min(6, DB.store.getInt("kf_quick_grid", 4)))
         autoRetry = DB.store.getBool("kf_auto_retry", true)
+        biometric = DB.store.getBool("kf_biometric", true)
+        accent = DB.store.getString("kf_accent")
+        accentCustom = DB.store.getInt("kf_accent_custom", 0)
+        nativeTabBar = DB.store.getBool("kf_native_tabbar", false)
     }
 
     /// Engine（BackupKit）恢复完外观偏好后调这个：界面据此重读。
@@ -71,6 +87,30 @@ final class SettingsStore {
     func setAutoRetry(_ value: Bool) {
         DB.store.set("kf_auto_retry", value)
         autoRetry = value
+    }
+
+    func setBiometric(_ value: Bool) {
+        DB.store.set("kf_biometric", value)
+        biometric = value
+    }
+
+    /// H1：选六套预设之一（"" = 回默认黄铜）。选预设时清掉自定义 —— 与 ios27 同口径。
+    func setAccent(_ value: String) {
+        DB.store.set("kf_accent", value)
+        accent = value
+        if accentCustom != 0 { setAccentCustom(0) }
+    }
+
+    /// H1：自定义强调色（0xRRGGBB；0 = 取消自定义）。会盖过六套预设。
+    func setAccentCustom(_ value: Int) {
+        DB.store.set("kf_accent_custom", value)
+        accentCustom = value
+    }
+
+    /// I6：底栏形态开关。
+    func setNativeTabBar(_ value: Bool) {
+        DB.store.set("kf_native_tabbar", value)
+        nativeTabBar = value
     }
 
     /// 主题是否深色（供根视图覆盖系统外观）。

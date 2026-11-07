@@ -407,8 +407,8 @@ extension NavRow where Trailing == EmptyView {
 
 struct TabBar: View {
     @Binding var selection: Int
-    /// 第 4 个按钮：设置。它不是 Tab（不进 `TabSlot`、不参与选中态），
-    /// 点它是拉起独立的设置栈 sheet。
+    /// 第 4 个按钮：设置。浮岛胶囊形态下它不是 Tab（不参与选中态），
+    /// 点它是拉起独立的设置栈 sheet；原生系统栏形态（I6）下它才是真 Tab。
     var onSettings: () -> Void
 
     private let items: [(symbol: String, title: String)] = [

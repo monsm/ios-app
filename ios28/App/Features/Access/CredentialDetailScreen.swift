@@ -12,7 +12,6 @@ struct CredentialDetailScreen: View {
     /// 删除是一条真实的锁端命令，等待期间两个删除入口都不能再点。
     @State private var deleting = false
     @State private var editingWindow = false
-    @State private var toast: String?
 
     private var item: Credential? {
         app.credentials.first { $0.id == router.pendingCredentialID }
@@ -39,19 +38,6 @@ struct CredentialDetailScreen: View {
             Button("取消", role: .cancel) {}
         } message: {
             Text("锁端会同步删除，无法恢复。")
-        }
-        .overlay(alignment: .bottom) {
-            if let toast {
-                Text(toast)
-                    .type(T.F.caption)
-                    .foregroundStyle(T.C.ink)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    // 临时提示是"浮在内容之上"的一层，正是液态玻璃的场景。
-                    .liquidGlass(in: Capsule(), tint: GlassMetrics.tint)
-                    .padding(.bottom, 96)
-                    .transition(.opacity)
-            }
         }
         // 明文只该在“用户正看着这一屏”的时候出现：
         // 上锁、离开这一页、或切换到另一枚凭证，都重新遮上。
@@ -326,11 +312,7 @@ struct CredentialDetailScreen: View {
     }
 
     private func show(_ text: String) {
-        withAnimation(T.M.snap) { toast = text }
-        Task {
-            try? await Task.sleep(for: .seconds(2))
-            withAnimation(T.M.snap) { if toast == text { toast = nil } }
-        }
+        AppToast.shared.show(text)
     }
 }
 

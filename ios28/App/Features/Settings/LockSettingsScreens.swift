@@ -196,6 +196,9 @@ struct LockPolicyScreen: View {
     /// 小时 Picker 同理：载入与失败回退都会改值，不能因此再下发一条布防命令。
     @State private var skipStartHour = false
     @State private var skipEndHour = false
+    // E6：清空全部密码的键入确认与确认框。
+    @State private var clearTyped = ""
+    @State private var confirmingClear = false
 
     /// cmd24 的字段是 1 字节**档位**（厂商实现里就是 2–6 秒），不是任意秒数。
     /// 原先这里是 6/10/15/30/60 —— 后四档全在协议范围外，锁要么忽略、要么按截断值执行，
@@ -345,6 +348,34 @@ struct LockPolicyScreen: View {
                            subtitle: "锁端按周期生成的一串数字", chevron: true)
             }
             .buttonStyle(.plain)
+
+            // E6：清空全部密码 —— 双闸危险动作。键入「清空」+ 二次确认，
+            // 与 ios27 同口径：锁端所有密码作废（指纹保留），本机密码台账同步清空。
+            if !DB.isDecoy {
+                SectionHead(index: "06", title: "危险操作")
+                Text("清空全部密码会把锁里所有密码作废（指纹保留），同时清空本机密码台账。清空后需要逐条重新添加，不能撤销。")
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.ink3)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+                FieldInput(placeholder: "键入「清空」确认", text: $clearTyped)
+                    .padding(.top, 8)
+                if canClearPwd {
+                    Button { confirmingClear = true } label: {
+                        ContentRow(symbol: "eraser.fill", tone: .danger,
+                                   title: "清空全部密码",
+                                   subtitle: "先键入「清空」，点下去还会再问一次")
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(clearTyped != "清空" || busy || app.trial)
+                    .opacity(clearTyped == "清空" && !busy && !app.trial ? 1 : 0.45)
+                } else {
+                    Text("这把锁的型号不支持清空密码。")
+                        .type(T.F.caption)
+                        .foregroundStyle(T.C.ink3)
+                        .padding(.top, 6)
+                }
+            }
         }
         .toolbar(.hidden, for: .navigationBar)
         .onAppear { load() }
@@ -353,6 +384,38 @@ struct LockPolicyScreen: View {
             Button("取消", role: .cancel) {}
         } message: {
             Text("之后开门只需要一种凭证。这道保险拆掉后，被逼着开门的人只要拿到一项凭证就够了。")
+        }
+        .confirmationDialog("清空全部密码？", isPresented: $confirmingClear, titleVisibility: .visible) {
+            Button("清空密码", role: .destructive) {
+                Task { await runClearPwd() }
+            }
+            Button("取消", role: .cancel) {}
+        } message: {
+            Text("会把锁里所有密码作废（指纹保留），本机密码台账同时清空。这一步不可撤销：清空后只能逐条重新添加。")
+        }
+    }
+
+    private var canClearPwd: Bool {
+        app.lock.map { PidMap.canClearPwd($0.pid) } ?? false
+    }
+
+    private func runClearPwd() async {
+        // E-07：await 期间换锁不能把清空动作落到另一把锁的台账 —— 先把 mac 钉住。
+        guard let mac = app.lock?.id, !mac.isEmpty, !busy else { return }
+        guard !DB.isDecoy, canClearPwd else { return }
+        busy = true
+        defer { busy = false }
+        do {
+            try await LockService.shared.ensureConnected(mac: mac)
+            try await LockService.shared.pwdClear()
+            var l = DB.ledger(mac)
+            l.pwds = []
+            DB.saveLedger(mac, l)
+            clearTyped = ""
+            AppToast.shared.show("已清空全部密码（指纹保留）")
+            await app.reload()
+        } catch {
+            errorLine = "清空失败：" + ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
         }
     }
 

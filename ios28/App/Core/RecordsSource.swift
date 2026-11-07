@@ -27,12 +27,17 @@ enum RecordsSource {
         }
         let rows = Attribution.classify(logs: entries, pwds: ledger.pwds, fps: ledger.fps, status: status)
 
+        // 手动认领（C8）优先于引擎推断 —— 认领的意义正是"引擎给不出结论、或给错了"
+        // 时由用户改判。覆盖层在 `kf_mclaim_<mac>`，与 ios27 同一份，备份互通。
+        // 读取侧不做空壳判断：空壳里记录列表整个为空，这里自然读不到。
+        let manualClaims = MemberHub.claims(mac)
+
         var out: [EventItem] = []
         out.reserveCapacity(logs.count)
         for (i, c) in logs.enumerated() {
             let row = i < rows.count ? rows[i] : nil
             let key = String(c.idxRaw)
-            let whoID = row?.who
+            let whoID = manualClaims[key] ?? row?.who
             let alarm = c.type == 4 || c.type == 10
             // 锁端时钟读不到时 lockTime 是 0 —— 那条记录**没有日期**。
             // 原先照样换算，于是时间线顶上冒出一组「2010 年 1 月 1 日」

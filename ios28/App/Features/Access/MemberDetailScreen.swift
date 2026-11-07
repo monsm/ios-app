@@ -161,6 +161,9 @@ struct MemberDetailScreen: View {
         }
 
         SectionHead(index: "03", title: "最近")
+        // D7：TA 这一周的开门柱状图 —— 名下钥匙再多，真正的活跃度看这里。
+        WeekBars(days: WeekBars.build(events: app.events, memberID: id))
+            .padding(.bottom, 6)
         if activity.isEmpty {
             Text("没有可证明是 TA 的开门记录。")
                 .type(T.F.caption)

@@ -81,7 +81,7 @@ struct GateScreen: View {
             }
             .padding(.top, 16)
 
-            if DB.hasPasscode() && !DB.hasDuressCode() {
+            if DB.hasPasscode() && !DB.hasDuressCode() && SettingsStore.shared.biometric {
                 Button {
                     Task { await biometric() }
                 } label: {
