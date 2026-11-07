@@ -325,28 +325,7 @@ struct SegmentedBar: View {
     var body: some View {
         HStack(spacing: 0) {
             ForEach(items.indices, id: \.self) { index in
-                Button {
-                    withAnimation(T.M.snap) { selected = index }
-                } label: {
-                    Text(items[index])
-                        .type(T.F.footnote)
-                        .fontWeight(.medium)
-                        .foregroundStyle(index == selected ? T.C.brass : T.C.ink3)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 9)
-                        .background {
-                            if index == selected {
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .fill(T.C.brassWash)
-                            }
-                        }
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                // 语音语义：这几格是**标签页**（不是几个按钮）——
-                // 读屏用户听到的是「今日，标签，已选中」，而不是三个孤零零的按钮。
-                .accessibilityRole(.tab)
-                .accessibilityAddTraits(index == selected ? [.isSelected] : [])
+                segment(index)
             }
         }
         .padding(4)
@@ -356,6 +335,34 @@ struct SegmentedBar: View {
         .disabled(!enabled)
         .opacity(enabled ? 1 : 0.45)
     }
+
+    /// 单独抽出来：整个分段控件写在一个表达式里时，
+    /// 编译器会在类型检查上超时（"unable to type-check this expression in reasonable time"）。
+    private func segment(_ index: Int) -> some View {
+        Button {
+            withAnimation(T.M.snap) { selected = index }
+        } label: {
+            Text(items[index])
+                .type(T.F.footnote)
+                .fontWeight(.medium)
+                .foregroundStyle(index == selected ? T.C.brass : T.C.ink3)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 9)
+                .background {
+                    if index == selected {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(T.C.brassWash)
+                    }
+                }
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        // 语音语义：这几格是**标签页**（不是几个按钮）——
+        // 读屏用户听到的是「今日，标签，已选中」，而不是三个孤零零的按钮。
+        .accessibilityRole(.tab)
+        .accessibilityAddTraits(index == selected ? [.isSelected] : [])
+    }
+
 }
 
 // MARK: - 空态

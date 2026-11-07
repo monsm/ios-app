@@ -654,8 +654,8 @@ final class AppModel {
         // 没有它，一次 20 页的读取在界面上就是「卡住了十几秒」。
         logProgress = TaskProgress(title: "正在读门锁记录",
                                    detail: "第 1 / \(LogSync.maxPages) 页",
-                                   total: LogSync.maxPages,
-                                   fraction: 0)
+                                   fraction: 0,
+                                   total: LogSync.maxPages)
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             sampleRSSI()
@@ -663,9 +663,9 @@ final class AppModel {
             // 放进子 Task：这样「取消」能真的打断它，而不是只把进度条藏起来。
             let task = Task { await LogSync.sync(mac: mac) { p in
                 Task { @MainActor in
-                    self.logProgress?.step("第 \(p.page) / \(p.pages) 页 · 已读 \(p.read) 条",
-                                           step: p.page,
-                                           fraction: Double(p.page) / Double(max(p.pages, 1)))
+                    self.logProgress?.update("第 \(p.page) / \(p.pages) 页 · 已读 \(p.read) 条",
+                                            step: p.page,
+                                            fraction: Double(p.page) / Double(max(p.pages, 1)))
                 }
             } }
             logTask = task

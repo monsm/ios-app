@@ -11,6 +11,7 @@
 //   如果直接按集合顺序插，多选拖动时顺序会反。
 import SwiftUI
 
+@available(iOS 27.0, *)
 extension ReorderDifference where CollectionID == ReorderableSingleCollectionIdentifier {
     func apply<Items>(to items: inout Items)
     where Items: RangeReplaceableCollection,

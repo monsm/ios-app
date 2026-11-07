@@ -13,6 +13,8 @@ import Foundation
 
 enum LinkQuality {
     struct Snapshot: Codable, Equatable {
+        /// 属于哪把锁（落盘是数组，要自己带身份）。
+        var mac: String = ""
         var connects = 0
         var disconnects = 0
         var failures = 0
@@ -34,17 +36,23 @@ enum LinkQuality {
         }
     }
 
-    private static let store = Locked([String: Snapshot]())
+    /// 落盘是**数组**（`DiagLogStore.writeJSON` 只收数组；字典得自己包一层）。
+    private static let store = Locked([Snapshot]())
     private static let fileName = "kf_link_quality.json"
 
     private static func mutate(_ mac: String, _ body: (inout Snapshot) -> Void) {
         guard !mac.isEmpty else { return }
-        var table = store.withLock { $0 }
-        var s = table[mac] ?? Snapshot()
-        body(&s)
-        table[mac] = s
-        store.withLock { $0 = table }
-        DiagLogStore.writeJSON(table, name: fileName)
+        var list = store.withLock { $0 }
+        if let idx = list.firstIndex(where: { $0.mac == mac }) {
+            body(&list[idx])
+        } else {
+            var s = Snapshot()
+            s.mac = mac
+            body(&s)
+            list.append(s)
+        }
+        store.withLock { $0 = list }
+        DiagLogStore.writeJSON(list, name: fileName)
     }
 
     static func noteConnect(_ mac: String) {
@@ -68,9 +76,10 @@ enum LinkQuality {
     }
 
     static func snapshot(_ mac: String) -> Snapshot {
-        let table = store.withLock { $0 }
-        if let hit = table[mac] { return hit }
-        return DiagLogStore.readJSON([String: Snapshot].self, name: fileName)[mac] ?? Snapshot()
+        let list = store.withLock { $0 }
+        if let hit = list.first(where: { $0.mac == mac }) { return hit }
+        let disk = DiagLogStore.readJSON([Snapshot].self, name: fileName)
+        return disk.first(where: { $0.mac == mac }) ?? Snapshot()
     }
 
     /// 人话摘要（诊断页用）。
@@ -96,9 +105,11 @@ enum ClockDrift {
 
     /// 锁钟 − 手机钟（秒）。没有锁钟读数时 nil。
     static func driftSeconds(mac: String) -> Int? {
-        guard let snap = DB.readStatus(mac), let lockTime = snap.lockTime, lockTime > 0 else { return nil }
+        // `snap.lockTime` 是非可选的 Int64 —— 在 guard 的条件列表里写 `let lockTime = snap.lockTime`
+        // 会被判成「对非可选值做条件绑定」而编译失败。
+        guard let snap = DB.readStatus(mac), snap.lockTime > 0 else { return nil }
         let now = ZKProtocol.nowProtoSeconds()
-        return Int(lockTime - now)
+        return Int(snap.lockTime - now)
     }
 
     /// 人话摘要。

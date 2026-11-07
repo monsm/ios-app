@@ -47,6 +47,16 @@ enum NotificationStatus {
         case authorized = 1
         case denied = 2
         case failed = 3
+
+        /// 人话标签（属于**状态**，不是外层枚举）。
+        var label: String {
+            switch self {
+            case .unknown: return "未询问"
+            case .authorized: return "已授权"
+            case .denied: return "已拒绝"
+            case .failed: return "询问失败"
+            }
+        }
     }
     private static let key = "kf_notify_status"
 
@@ -58,14 +68,8 @@ enum NotificationStatus {
         State(rawValue: DB.store.getInt(key, 0)) ?? .unknown
     }
 
-    var label: String {
-        switch self {
-        case .unknown: return "未询问"
-        case .authorized: return "已授权"
-        case .denied: return "已拒绝"
-        case .failed: return "询问失败"
-        }
-    }
+    /// 当前状态的人话标签。
+    static var label: String { current.label }
 }
 
 enum NotificationAuth {

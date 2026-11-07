@@ -351,10 +351,10 @@ struct PairingScreen: View {
         let total = nums.count > 1 ? (nums[1] == 0 ? 7 : nums[1]) : 7
         return TaskProgress(title: "第 \(step) 步 / 共 \(total) 步",
                             detail: detail,
+                            fraction: total > 0 ? Double(step) / Double(total) : nil,
                             step: step,
                             total: total,
-                            cancellable: true,
-                            fraction: total > 0 ? Double(step) / Double(total) : nil)
+                            cancellable: true)
     }
 
     /// E7：中止/失败后的回滚。文案说「链路已断开」就必须真的断开 ——
@@ -1653,7 +1653,7 @@ struct DiagnosticsScreen: View {
         .itemConfirmationDialog("重写这把锁的 PIN 池？",
                                 item: $confirmingRepair,
                             titleVisibility: .visible) {
-            Button("重写", role: .destructive) { _ in
+            Button("重写", role: .destructive) {
                 Task { await repair() }
             }
             Button("取消", role: .cancel) {}
@@ -1663,7 +1663,7 @@ struct DiagnosticsScreen: View {
         .itemConfirmationDialog("复制这些帧骨架？",
                                 item: $confirmingFrameCopy,
                             titleVisibility: .visible) {
-            Button("复制") { _ in
+            Button("复制") {
                 Clip.set(Array(frames.suffix(8)).joined(separator: "\n"))
                 AppToast.shared.show("已复制 \(min(frames.count, 8)) 条脱敏帧")
             }

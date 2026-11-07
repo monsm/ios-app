@@ -23,7 +23,7 @@ enum PerfBudget {
 
     /// 超预算的记录。
     struct Overrun: Codable, Identifiable, Equatable {
-        var id: String { at + name }
+        var id: String { "\(at)-\(name)" }
         var at: Double
         var name: String
         var took: Double

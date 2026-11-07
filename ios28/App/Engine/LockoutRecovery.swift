@@ -110,7 +110,7 @@ enum LockoutRecovery {
 
     /// 流程的总说明（界面顶部一句话）。
     static func intro(mac: String?) -> String {
-        guard !mac.isEmpty else {
+        guard let mac, !mac.isEmpty else {
             return "你还没有绑定门锁。先到门锁上把它恢复到配网状态，然后在这里重新配对。"
         }
         return "按顺序走完下面这几步。每一步都会先说清风险 —— 有一半的步骤会改动门锁本身。"

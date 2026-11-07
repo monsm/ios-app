@@ -19,7 +19,7 @@ enum CrashLog {
     private static let crashKey = "kf_crash_records"
 
     struct Record: Codable, Identifiable, Equatable {
-        var id: String { at }
+        var id: String { "\(at)-\(stage)" }
         /// epoch 毫秒
         var at: Double
         /// 上次退出前记录的「正在做什么」。
@@ -113,7 +113,7 @@ enum DiagnosticBundle {
 
         add("—— 蓝牙与权限 ——")
         add("蓝牙状态：\(BLEService.shared.isPoweredOn ? "已开启" : "未开启")")
-        add("通知授权：\(NotificationStatus.current.label)")
+        add("通知授权：" + NotificationStatus.current.label)
         add("本机密码：\(DB.hasPasscode() ? "已设置" : "未设置")")
         add("胁迫码：\(DB.hasDuressCode() ? "已设置" : "未设置")")
         add("只读试验：\(DB.store.getBool("kf_trial_guard", false) ? "开启" : "关闭")")

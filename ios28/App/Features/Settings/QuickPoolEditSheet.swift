@@ -112,13 +112,18 @@ struct QuickPoolEditSheet: View {
                     .visibilityPriority(.high)
                 } else {
                     // iOS 26：次要动作放在工具栏末尾的下拉菜单里（内容与 iOS 27 相同）。
-                    ToolbarContent.overflowMenuFallback {
-                        Button("恢复默认顺序") {
-                            picked = QuickPool.all.map(\.id)
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Menu {
+                            Button("恢复默认顺序") {
+                                picked = QuickPool.all.map(\.id)
+                            }
+                            Button("清空选择", role: .destructive) {
+                                picked = []
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
                         }
-                        Button("清空选择", role: .destructive) {
-                            picked = []
-                        }
+                        .accessibilityLabel("更多操作")
                     }
                 }
             }

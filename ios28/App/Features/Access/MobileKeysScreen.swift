@@ -21,8 +21,6 @@ struct MobileKeysScreen: View {
     @State private var revokeTarget: MobileKey?
     /// 正在吊销的那把（按 id）。吊销是一次真实删除，等待期间不能让别的行再点。
     @State private var revoking: String?
-    /// iOS 26：交付弹层的过渡身份（它从「交给安卓」那个按钮身上长出来）。
-    @Namespace private var handoffNS
 
     private var keys: [MobileKey] { MobileKeyService.list(app.currentMac) }
     private var members: [MemberCard] { app.members.filter { !$0.archived } }
@@ -73,15 +71,10 @@ struct MobileKeysScreen: View {
                            subtitle: "生成一张只含 ekey 的二维码，不含母钥", chevron: true)
             }
             .buttonStyle(.plain)
-            // iOS 26：交付弹层从这一行「长」出来，而不是凭空出现。
-            .zoomTransitionSource(id: "handoff", namespace: handoffNS)
             .padding(.top, 10)
         }
         .toolbar(.hidden, for: .navigationBar)
-        .sheet(isPresented: $sharing) {
-            HandoffSheet()
-                .zoomTransitionDestination(id: "handoff", namespace: handoffNS)
-        }
+        .sheet(isPresented: $sharing) { HandoffSheet() }
         // iOS 27：直接以「要吊销的那把钥匙」为状态 —— 不再另配一个 Bool。
         .itemConfirmationDialog("吊销这把手机钥匙？", item: $revokeTarget, titleVisibility: .visible) { key in
             Button("吊销", role: .destructive) {

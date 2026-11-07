@@ -141,8 +141,10 @@ extension DB {
 
     /// 快照有多旧（毫秒）；没有快照时 nil。
     static func statusAge(_ mac: String) -> Double? {
-        guard let snap = readStatus(mac) else { return nil }
-        let age = Date().timeIntervalSince1970 * 1000 - snap.at
+        // `readStatus` 给的是**读数本体**（没有时间戳）；时间戳在 `statusTime` 里。
+        let at = statusTime(mac)
+        guard at > 0 else { return nil }
+        let age = Date().timeIntervalSince1970 * 1000 - at
         return age < 0 ? 0 : age
     }
 

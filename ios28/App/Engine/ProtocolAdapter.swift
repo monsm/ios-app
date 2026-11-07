@@ -43,7 +43,7 @@ enum TransportKind: String {
     case dfuLegacy
 
     /// 服务 UUID（引用 BLEUUID —— UUID 只有那一份，不在这里复写字符串）。
-    var serviceUUID: String {
+    var serviceUUID: CBUUID {
         switch self {
         case .lockNUS: return BLEUUID.svcMain
         case .gatewayFE90: return BLEUUID.svcGW
@@ -52,7 +52,7 @@ enum TransportKind: String {
         }
     }
 
-    var writeUUID: String {
+    var writeUUID: CBUUID {
         switch self {
         case .lockNUS: return BLEUUID.chrWrite
         case .gatewayFE90: return BLEUUID.chrGWWrite
@@ -61,7 +61,7 @@ enum TransportKind: String {
         }
     }
 
-    var notifyUUID: String {
+    var notifyUUID: CBUUID {
         switch self {
         case .lockNUS: return BLEUUID.chrNotify
         case .gatewayFE90: return BLEUUID.chrGWNotify
@@ -80,7 +80,7 @@ enum TransportKind: String {
     }
 
     /// 按服务 UUID 反查传输类型。
-    static func of(serviceUUID: String) -> TransportKind? {
+    static func of(serviceUUID: CBUUID) -> TransportKind? {
         switch serviceUUID {
         case BLEUUID.svcMain: return .lockNUS
         case BLEUUID.svcGW: return .gatewayFE90
@@ -113,7 +113,7 @@ struct FrameAdapter {
 
 enum ProtocolRegistry {
     /// 命令 → 帧变体。默认 8B；个别命令历史上用 10B 的在这里登记。
-    private static let variants: [UInt8: FrameVariant] = [:]
+    private static var variants: [UInt8: FrameVariant] = [:]
 
     /// 某条命令用哪种帧变体。
     static func variant(for cmd: UInt8) -> FrameVariant {

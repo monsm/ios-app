@@ -108,23 +108,6 @@ extension View {
     }
 }
 
-// MARK: - 导航过渡（iOS 26）
-
-extension View {
-    /// iOS 26+：把这块标记为导航过渡的**源** ——
-    /// 弹层不再「凭空出现」，而是从这个按钮身上放大出来。
-    ///
-    /// 更早系统：普通视图（弹层照旧淡入）。
-    func zoomTransitionSource(id: String, namespace: Namespace.ID) -> some View {
-        self.navigationTransitionSource(id: id, namespace: namespace)
-    }
-
-    /// iOS 26+：把这块标记为导航过渡的**落点**（与源配对）。
-    func zoomTransitionDestination(id: String, namespace: Namespace.ID) -> some View {
-        self.navigationTransitionDestination(id: id, namespace: namespace)
-    }
-}
-
 // MARK: - 工具栏（iOS 26 / iOS 27）
 
 extension View {
@@ -132,7 +115,7 @@ extension View {
     ///
     /// 系统把这些动作放进导航栏的溢出菜单 —— 无论工具栏处于什么形态、
     /// 平台或可定制程度，它们**永远**待在溢出里，不会与主行动抢位置。
-    /// 更早系统：内容由调用方放进工具栏末尾的下拉菜单（见 `overflowMenuFallback`）。
+    /// 更早系统：内容由调用方放进工具栏末尾的下拉菜单。
     @ViewBuilder
     func toolbarOverflowCompat(@ViewBuilder content: @escaping () -> some View) -> some View {
         if #available(iOS 27.0, *) {
@@ -140,31 +123,6 @@ extension View {
         } else {
             self
         }
-    }
-}
-
-extension ToolbarContent {
-    /// iOS 26 的降级：工具栏末尾的下拉菜单（内容与 iOS 27 的溢出菜单一致）。
-    static func overflowMenuFallback(@ViewBuilder content: @escaping () -> some View) -> AnyToolbarContent {
-        AnyToolbarContent(ToolbarItem(placement: .topBarTrailing) {
-            Menu {
-                content()
-            } label: {
-                Image(systemName: "ellipsis.circle")
-            }
-            .accessibilityLabel("更多操作")
-        })
-    }
-}
-
-extension ToolbarItemPlacement {
-    /// iOS 27+：钉在后缘的放置位（空间再紧也留在原处）。
-    /// 更早系统：普通的后缘放置位。
-    static var thresholdPinnedTrailing: ToolbarItemPlacement {
-        if #available(iOS 27.0, *) {
-            return .topBarPinnedTrailing
-        }
-        return .topBarTrailing
     }
 }
 
@@ -231,7 +189,8 @@ extension View {
                                        @ViewBuilder actions: @escaping (T) -> A,
                                        @ViewBuilder message: @escaping (T) -> M) -> some View {
         if #available(iOS 27.0, *) {
-            self.alert(Text(title), item: item, actions: actions, message: message)
+            // iOS 27 的 item 版提醒，标题要 **StringProtocol**（不是 Text）。
+            self.alert(title, item: item, actions: actions, message: message)
         } else {
             self.alert(Text(title),
                        isPresented: Binding(
@@ -252,15 +211,15 @@ extension View {
                                             titleVisibility: Visibility = .automatic,
                                             @ViewBuilder actions: @escaping (T) -> A) -> some View {
         if #available(iOS 27.0, *) {
-            self.confirmationDialog(Text(title), item: item, titleVisibility: titleVisibility,
+            self.confirmationDialog(title, item: item, titleVisibility: titleVisibility,
                                     actions: actions)
         } else {
             self.confirmationDialog(Text(title),
                                     isPresented: Binding(
                                         get: { item.wrappedValue != nil },
                                         set: { if !$0 { item.wrappedValue = nil } }),
-                                    presenting: item.wrappedValue,
-                                    titleVisibility: titleVisibility) { value in
+                                    titleVisibility: titleVisibility,
+                                    presenting: item.wrappedValue) { value in
                 actions(value)
             }
         }
@@ -274,15 +233,15 @@ extension View {
                                                     @ViewBuilder actions: @escaping (T) -> A,
                                                     @ViewBuilder message: @escaping (T) -> M) -> some View {
         if #available(iOS 27.0, *) {
-            self.confirmationDialog(Text(title), item: item, titleVisibility: titleVisibility,
+            self.confirmationDialog(title, item: item, titleVisibility: titleVisibility,
                                     actions: actions, message: message)
         } else {
             self.confirmationDialog(Text(title),
                                     isPresented: Binding(
                                         get: { item.wrappedValue != nil },
                                         set: { if !$0 { item.wrappedValue = nil } }),
-                                    presenting: item.wrappedValue,
-                                    titleVisibility: titleVisibility) { value in
+                                    titleVisibility: titleVisibility,
+                                    presenting: item.wrappedValue) { value in
                 actions(value)
             } message: { value in
                 message(value)

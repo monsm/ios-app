@@ -107,8 +107,10 @@ struct UnlockLens: View {
                             // 深色模式的黄铜是亮色实底：白字形只有 1.9:1，
                             // 换自适应前景色（浅色白 / 深色近黑）才看得清。
                             .foregroundStyle(T.C.onAccent.opacity(0.95))
-                            // 图标随相位自己换形（锁 → 对勾 → 叉），不是硬切。
-                            .symbolEffect(.replace, value: glyph)
+                            // 图标随相位换形（锁 → 对勾 → 叉），不是硬切。
+                            // 注：iOS 17 的 `.symbolEffect(.replace, value:)` 在 iOS 27 SDK 上
+                            // 已不是 Discrete 效果（编译器会拒），所以用 transition 做同一件事。
+                            .transition(.scale.combined(with: .opacity))
                     }
 
             }

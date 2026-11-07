@@ -75,13 +75,12 @@ enum CapabilityResolver {
             c.canFingerprint = false
             c.canUpgrade = false
             c.unknownModel = true
-            c.caveat = nil
             return c
         }
 
         c.unknownModel = PidMap.names[pid] == nil
         c.canDefend = PidMap.canDefend(pid)
-        c.canTailgate = PidMap.canTailgate(pid, firmware: firmware.isEmpty ? nil : firmware)
+        c.canTailgate = PidMap.canTailgate(pid, fw: firmware.isEmpty ? nil : firmware)
         c.canClearPasswords = PidMap.canClearPwd(pid)
         c.canUpgrade = PidMap.canDeviceUpgrade(pid)
         // 其余能力目前所有已收录型号都支持；未收录型号按宽松档（与 canDefend 的口径一致）。

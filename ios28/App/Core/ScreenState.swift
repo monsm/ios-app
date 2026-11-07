@@ -118,6 +118,14 @@ struct TaskProgress: Equatable {
     var total: Int = 0
     var cancellable: Bool = true
 
+    /// 更新进度。**不能叫 `step`** —— 结构体里已经有一个 `step: Int` 属性，
+    /// 同名会让 `progress.step(...)` 被解析成「对 Int 调用」→ 编译错。
+    mutating func update(_ detail: String, step: Int, fraction: Double? = nil) {
+        self.detail = detail
+        self.step = step
+        if let fraction { self.fraction = fraction }
+    }
+
     var stepText: String? {
         guard total > 0 else { return nil }
         return "第 \(min(step, total)) / \(total) 步"

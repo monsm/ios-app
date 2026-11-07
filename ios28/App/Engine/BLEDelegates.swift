@@ -102,7 +102,7 @@ extension BLEService: CBPeripheralDelegate {
         }
         // 写/通知特征由传输类型决定 (B16): 不再是「是主服务就用这个, 否则用那个」的二元判断 ——
         // DFU 的两条通道将来接进来时, 这里不需要再改。
-        let transport = TransportKind.of(serviceUUID: service.uuidString) ?? .lockNUS
+        let transport = TransportKind.of(serviceUUID: service.uuid) ?? .lockNUS
         let wTarget = transport.writeUUID
         let nTarget = transport.notifyUUID
         let w = chars.first { $0.uuid == wTarget }
