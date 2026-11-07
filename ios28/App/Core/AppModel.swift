@@ -48,7 +48,7 @@ final class AppModel {
         var read = 0           // 实际写入缓存的条数
         var remaining: Int?    // 锁端剩余的条数（未触上限且锁有上报时）
         var capped = false     // 是否撞上 20 页上限（= 下次点击会继续往更早读）
-        var lowest: Int?       // 本轮后已覆盖的最低序号（nil = 还没读过）
+        var lowest: UInt32?     // 本轮后已覆盖的最低序号（nil = 还没读过）
         var done = false       // 是否已把锁端历史读完（锚点已收）
         var at: Int64 = 0      // 读取时刻（epoch 毫秒）
     }
