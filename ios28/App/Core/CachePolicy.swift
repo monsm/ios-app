@@ -81,6 +81,9 @@ enum CachePolicy {
     }
 
     /// 照表清。`mac` 是当前锁（换锁事件里指**新**锁；旧锁的缓存自己会失配）。
+    ///
+    /// 主 actor 隔离：它要动 `LinkSenseModel`（@MainActor）与界面投影。
+    @MainActor
     static func apply(_ event: CacheEvent, mac: String) {
         let kinds = invalidates(event)
         // 状态快照**不删**：它是按锁存的（kf_snap_<mac>），每把锁各有自己的一份，

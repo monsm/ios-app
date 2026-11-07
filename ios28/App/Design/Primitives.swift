@@ -357,9 +357,9 @@ struct SegmentedBar: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        // 语音语义：这几格是**标签页**（不是几个按钮）——
-        // 读屏用户听到的是「今日，标签，已选中」，而不是三个孤零零的按钮。
-        .accessibilityRole(.tab)
+        // 语音语义：这几格是**一组选项**（不是三个孤零零的按钮）——
+        // 读屏用户听到的是「密码，已选中」。
+        .accessibilityLabel(items[index])
         .accessibilityAddTraits(index == selected ? [.isSelected] : [])
     }
 

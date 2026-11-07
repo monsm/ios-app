@@ -44,7 +44,7 @@ final class AppModel {
     /// 首屏还在读（骨架屏用，F32）。
     var isLoading: Bool = false
     /// 当前读日志的任务句柄 —— 取消长任务用（F42）。
-    @ObservationIgnored private var logTask: Task<Void, Never>?
+    @ObservationIgnored private var logTask: Task<LogSync.Result, Never>?
     /// 上一次开锁失败的**结构化**描述（F15 诊断卡用）。nil = 没失败过。
     var lastUnlockFailure: ScreenFailure?
     /// 上一次开锁用的是哪一类凭证（F16 回执卡用）。

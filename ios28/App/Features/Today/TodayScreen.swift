@@ -48,13 +48,13 @@ struct TodayScreen: View {
                                      openSettings: openBluetoothSettings)
                 }
                 // F12/B64：宽版（iPad / 横屏）左右两栏，紧凑版仍是一条竖轴。
-                twoColumns(wide) {
+                twoColumns(wide, leading: {
                     VStack(alignment: .leading, spacing: 0) {
                         header
                         hero
                         if receipt { receiptCard }
                     }
-                } trailing: {
+                }, trailing: {
                     VStack(alignment: .leading, spacing: 0) {
                         if settings.homeSections.contains("readings") { readings }
                         if settings.homeSections.contains("tray") { tray }
@@ -69,7 +69,7 @@ struct TodayScreen: View {
                             successNote(notice)
                         }
                     }
-                }
+                })
             }
         }
         .background(Color.clear)
@@ -249,8 +249,8 @@ struct TodayScreen: View {
         VStack(alignment: .leading, spacing: 0) {
             // F38：陈旧徽标。读数是「上次读到的」，不能冒充实时 ——
             // 这里用**状态快照**的时间戳，不是日志同步时间（那是另一件事）。
-            if let snap = DB.readStatus(app.currentMac), DB.isStatusStale(app.currentMac) {
-                StaleBadge(at: Int64(snap.at)) {
+            if DB.isStatusStale(app.currentMac) {
+                StaleBadge(at: Int64(DB.statusTime(app.currentMac))) {
                     Task { await app.refreshStatus() }
                 }
                 .padding(.bottom, T.S.s)

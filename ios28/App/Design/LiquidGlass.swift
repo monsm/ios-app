@@ -33,6 +33,14 @@ enum GlassMetrics {
     static let tint: Color = T.C.brassWash
 }
 
+/// 玻璃参数的唯一构造口（`Glass` 是 iOS 26 的类型，单独放在一处便于审计）。
+private func makeGlass(tint: Color?, interactive: Bool) -> Glass {
+    var value = Glass.regular
+    if let tint { value = value.tint(tint) }
+    if interactive { value = value.interactive() }
+    return value
+}
+
 private struct LiquidGlassModifier<S: InsettableShape>: ViewModifier {
     var shape: S
     var tint: Color?
@@ -57,11 +65,10 @@ private struct LiquidGlassModifier<S: InsettableShape>: ViewModifier {
                         .allowsHitTesting(false)
                 }
         } else {
-            // 玻璃参数在这里就地构造 —— `Glass` 这个类型本身就是 iOS 26+ 的，
-            // 写在属性/函数签名里会让整个修饰符都变成 26+ 专用。
-            var value = Glass.regular
-            if let tint { value = value.tint(tint) }
-            if interactive { value = value.interactive() }
+            // 玻璃参数在**函数里**构造 —— `Glass` 是 iOS 26 的类型，
+            // 而 ViewBuilder 的 body 里只允许「产出 View 的表达式」，
+            // `if let tint { value = ... }` 这种赋值语句会被当成 View 报错。
+            let value = makeGlass(tint: tint, interactive: interactive)
             content
                 .background {
                     Color.clear

@@ -126,6 +126,17 @@ extension View {
     }
 }
 
+extension ToolbarItemPlacement {
+    /// iOS 27+：钉在后缘的放置位（空间再紧也留在原处）。
+    /// 更早系统：普通的后缘放置位。
+    static var thresholdPinnedTrailing: ToolbarItemPlacement {
+        if #available(iOS 27.0, *) {
+            return .topBarPinnedTrailing
+        }
+        return .topBarTrailing
+    }
+}
+
 // MARK: - 轻扫容器（iOS 27）
 
 extension View {

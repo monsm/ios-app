@@ -28,8 +28,8 @@ extension View {
     /// 判据由调用方给（尺寸类），不在这里猜 —— 猜宽度会在分屏拖动时抖。
     @ViewBuilder
     func twoColumns(_ wide: Bool,
-                    @ViewBuilder _ leading: () -> some View,
-                    @ViewBuilder _ trailing: () -> some View) -> some View {
+                    @ViewBuilder leading: () -> some View,
+                    @ViewBuilder trailing: () -> some View) -> some View {
         if wide {
             HStack(alignment: .top, spacing: T.S.l) {
                 leading()

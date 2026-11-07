@@ -9,6 +9,7 @@
 //   · **传输**只在 `TransportKind` 里登记，BLE 委托问它要服务/写/通知三个 UUID。
 // 上层代码不再出现字面量帧头，也不再出现 UUID 三元判断。
 import Foundation
+import CoreBluetooth
 
 // MARK: - 帧变体
 

@@ -534,7 +534,7 @@ struct AutoOpenScreen: View {
                         VStack(spacing: 2) {
                             Rectangle()
                                 .fill(s.phase == .near ? T.C.brass : T.C.ink4)
-                                .frame(height: CGFloat(max(6, min(48, (s.rssi + 100) * 0.7))))
+                                .frame(height: CGFloat(max(6.0, min(48.0, (Double(s.rssi) + 100) * 0.7))))
                             Text(s.phase == .near ? "近" : "远")
                                 .type(T.F.caption)
                                 .foregroundStyle(T.C.ink3)
@@ -1652,7 +1652,7 @@ struct DiagnosticsScreen: View {
         // 修复 PIN 池会让**别的设备**上那把钥匙失效 —— 不可逆，值得先问一句。
         .itemConfirmationDialog("重写这把锁的 PIN 池？",
                                 item: $confirmingRepair,
-                            titleVisibility: .visible) {
+                            titleVisibility: .visible) { _ in
             Button("重写", role: .destructive) {
                 Task { await repair() }
             }
@@ -1662,7 +1662,7 @@ struct DiagnosticsScreen: View {
         }
         .itemConfirmationDialog("复制这些帧骨架？",
                                 item: $confirmingFrameCopy,
-                            titleVisibility: .visible) {
+                            titleVisibility: .visible) { _ in
             Button("复制") {
                 Clip.set(Array(frames.suffix(8)).joined(separator: "\n"))
                 AppToast.shared.show("已复制 \(min(frames.count, 8)) 条脱敏帧")
