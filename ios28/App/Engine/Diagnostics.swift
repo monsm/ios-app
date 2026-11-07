@@ -87,7 +87,7 @@ enum DiagnosticBundle {
         add("阈值 · 诊断包")
         add("生成时间：\(DiagTime.full())")
         add("App 版本：\(appVersion())")
-        add("系统：\(systemInfo())")
+        add("系统：\(await systemInfo())")
         add("")
 
         add("—— 门锁 ——")
@@ -173,6 +173,8 @@ enum DiagnosticBundle {
         return "\(version) (\(build))"
     }
 
+    /// 设备信息要主 actor（`UIDevice.current` 是主 actor 隔离的）。
+    @MainActor
     static func systemInfo() -> String {
         let device = UIDevice.current
         return "\(device.systemName) \(device.systemVersion) · \(device.model)"

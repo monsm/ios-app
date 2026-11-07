@@ -136,7 +136,9 @@ enum LogSync {
     // MARK: - 后台补读（B39）
 
     private static let pending = Locked(Set<String>())
-    private static var running = false
+    /// 同一时刻只跑一轮补读。用锁而不是 `static var` ——
+    /// 后者在 Swift 6 语言模式下是错误（全局可变状态不并发安全）。
+    private static let running = Locked(false)
 
     /// 排一轮后台补读（同一把锁只排一次）。
     static func scheduleBackground(_ mac: String) {
@@ -151,9 +153,9 @@ enum LogSync {
     /// 跑排队中的补读。**一次一把锁** —— BLE 链路只挂得下一个 waiter。
     @MainActor
     static func runPending() async {
-        guard !running else { return }
-        running = true
-        defer { running = false }
+        guard !running.withLock({ $0 }) else { return }
+        running.withLock { $0 = true }
+        defer { running.withLock { $0 = false } }
         while let mac = pendingMacs.first {
             pending.withLock { $0.remove(mac) }
             guard !DB.isDecoy else { continue }

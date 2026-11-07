@@ -45,6 +45,8 @@ final class AppModel {
     var isLoading: Bool = false
     /// 当前读日志的任务句柄 —— 取消长任务用（F42）。
     @ObservationIgnored private var logTask: Task<LogSync.Result, Never>?
+    /// 正在飞的状态读取（B20 的请求合并）。
+    @ObservationIgnored private var statusReadTask: Task<LockStatus, Error>?
     /// 上一次开锁失败的**结构化**描述（F15 诊断卡用）。nil = 没失败过。
     var lastUnlockFailure: ScreenFailure?
     /// 上一次开锁用的是哪一类凭证（F16 回执卡用）。
@@ -603,19 +605,26 @@ final class AppModel {
         do {
             // B20：同一把锁的并发状态读取**合并成一次** —— BLE 链路一次只挂得下一个
             // waiter，两次并发读必然有一个超时（用户连点两次「刷新」就是这种情况）。
-            let stOpt: LockStatus? = await RequestCoalescer.shared.run("status:" + mac) {
-                try? await LockService.shared.getStatus(mac: mac)
+            //
+            // 用**带类型**的任务句柄做合并：后来的调用复用同一个 Task，
+            // 拿到的是同一份读数 —— 不用 `Any` 擦除类型（Swift 6 下那是错误）。
+            let task: Task<LockStatus, Error>
+            if let existing = statusReadTask {
+                task = existing
+            } else {
+                let created = Task { try await LockService.shared.getStatus(mac: mac) }
+                statusReadTask = created
+                task = created
             }
-            guard let st = stOpt else {
-                // 合并器里读失败 = 真的读失败（错误在合并前就抛了）。
-                throw BLEErrorX.msg("没读到门锁状态")
-            }
+            let st = try await task.value
+            statusReadTask = nil
             DB.writeStatus(mac, st)
             sampleRSSI()
             // B74：每次读到锁钟都记一次偏差 —— 漂移是趋势，要靠多次采样才看得出来。
             ClockDrift.note(mac: mac)
             await reload(refreshStatus: false)
         } catch {
+            statusReadTask = nil
             lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
     }

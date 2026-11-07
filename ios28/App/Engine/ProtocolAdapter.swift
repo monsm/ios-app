@@ -114,11 +114,14 @@ struct FrameAdapter {
 
 enum ProtocolRegistry {
     /// 命令 → 帧变体。默认 8B；个别命令历史上用 10B 的在这里登记。
-    private static var variants: [UInt8: FrameVariant] = [:]
+    ///
+    /// 用 `Locked` 而不是 `static var`：后者在 Swift 6 语言模式下是错误
+    /// （全局可变状态不并发安全）。
+    private static let variants = Locked([UInt8: FrameVariant]())
 
     /// 某条命令用哪种帧变体。
     static func variant(for cmd: UInt8) -> FrameVariant {
-        variants[cmd] ?? .standard8
+        variants.withLock { $0[cmd] } ?? .standard8
     }
 
     /// 某条命令的帧头长度（字节）。
@@ -128,11 +131,11 @@ enum ProtocolRegistry {
 
     /// 注册一条命令的帧变体。新变体只在这里加一行。
     static func register(cmd: UInt8, variant: FrameVariant) {
-        variants[cmd] = variant
+        variants.withLock { $0[cmd] = variant }
     }
 
     /// 已登记的命令（诊断页用；空表是正常的 —— 默认 8B 不必登记）。
-    static func registeredVariants() -> [UInt8: FrameVariant] { variants }
+    static func registeredVariants() -> [UInt8: FrameVariant] { variants.withLock { $0 } }
 
     /// 某条命令走哪条传输。锁与网关的命令走各自的服务，其余（DFU、钥匙串）走 NUS。
     static func transport(for cmd: UInt8) -> TransportKind {

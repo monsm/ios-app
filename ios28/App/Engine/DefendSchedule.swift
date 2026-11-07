@@ -56,7 +56,6 @@ enum DefendSchedule {
     /// 当前应该生效的那一段（考虑跨午夜）。
     static func activeWindow(mac: String, now: Date = Date()) -> DefendWindow? {
         let cal = WeekCal.gregorian
-        let weekday = cal.component(.weekday, from: now)
         let sec = cal.component(.hour, from: now) * 3600
             + cal.component(.minute, from: now) * 60
             + cal.component(.second, from: now)

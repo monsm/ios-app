@@ -71,31 +71,3 @@ enum GatewayService {
     }
 }
 
-// MARK: - 请求合并
-
-/// 同键请求合并：同一时刻的同键请求**共用一次**真实动作。
-///
-/// 用在「读状态」「读日志」这类纯读命令上 —— 用户在两个页面各点一次，
-/// 不该产生两次 BLE 往返。
-actor RequestCoalescer {
-    static let shared = RequestCoalescer()
-
-    /// 键 → 进行中的任务。
-    private var inFlight: [String: Task<Any, Never>] = [:]
-
-    /// 合并执行。同一键的并发调用拿到**同一个结果**。
-    func run<T: Sendable>(_ key: String, _ body: @escaping @Sendable () async -> T) async -> T {
-        if let existing = inFlight[key] {
-            guard let value = await existing.value as? T else {
-                // 类型对不上（不该发生）—— 退回自己跑一次。
-                return await body()
-            }
-            return value
-        }
-        let task = Task<T, Never> { await body() }
-        inFlight[key] = Task<Any, Never> { await task.value }
-        let value = await task.value
-        inFlight[key] = nil
-        return value
-    }
-}
