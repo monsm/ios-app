@@ -641,6 +641,137 @@ struct HardwareScreen: View {
         }
     }
 
+    /// E5：一台钥匙串的完整台账卡 —— 读数、动作、查回的钥匙列表。
+    @ViewBuilder
+    private func dongleCard(_ d: Dongle) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(d.name.isEmpty ? "钥匙串" : d.name)
+                        .type(T.F.callout)
+                        .foregroundStyle(T.C.ink)
+                    Text(d.mac)
+                        .type(T.F.caption)
+                        .foregroundStyle(T.C.ink3)
+                        .monospacedDigit()
+                }
+                Spacer()
+                // 「已写这把锁」按台账里 lastKeyLock 对当前锁判断。
+                if d.lastKeyLock == app.currentMac, !app.currentMac.isEmpty {
+                    Text("已写这把锁")
+                        .type(T.F.caption)
+                        .foregroundStyle(T.C.ok)
+                } else {
+                    Text("未写这把锁")
+                        .type(T.F.caption)
+                        .foregroundStyle(T.C.ink3)
+                }
+            }
+            .padding(.vertical, 8)
+
+            HStack(spacing: 22) {
+                statCol("电量", d.stat.map { $0.power >= 0 ? "\($0.power)%" : "—" } ?? "—")
+                statCol("钥匙", d.stat.map { $0.ekeyCount >= 0 ? "\($0.ekeyCount)" : "—" } ?? "—")
+                statCol("固件", d.stat?.firmware.isEmpty == false ? d.stat!.firmware : "—")
+            }
+            .padding(.bottom, 8)
+
+            if busyId == d.mac {
+                HStack(spacing: 8) {
+                    ProgressView().controlSize(.small).tint(T.C.brass)
+                    Text("正在与钥匙串通信 · 请贴近手机")
+                        .type(T.F.caption)
+                        .foregroundStyle(T.C.ink3)
+                }
+                .padding(.vertical, 8)
+            }
+
+            // 主动作：已写就给撤销，没写就给写入。
+            if d.lastKeyLock == app.currentMac, !app.currentMac.isEmpty {
+                GhostButton(title: "撤销这把锁的钥匙", symbol: "key.slash") {
+                    ask = .revoke(d)
+                }
+                .padding(.top, 8)
+                .disabled(busyId != nil || writesBlocked)
+                .opacity(busyId != nil || writesBlocked ? 0.45 : 1)
+            } else {
+                GhostButton(title: "写入当前锁的钥匙", symbol: "key.fill") {
+                    Task { await writeKey(d) }
+                }
+                .padding(.top, 8)
+                .disabled(busyId != nil || writesBlocked)
+                .opacity(busyId != nil || writesBlocked ? 0.45 : 1)
+            }
+
+            HStack(spacing: 8) {
+                GhostButton(title: "读取状态", symbol: "gauge") {
+                    Task { await readState(d) }
+                }
+                GhostButton(title: "已写入的钥匙", symbol: "list.bullet.rectangle") {
+                    Task { await loadKeys(d) }
+                }
+            }
+            .padding(.top, 8)
+            .disabled(busyId != nil)
+
+            GhostButton(title: "写入一把未知钥匙", symbol: "questionmark.key.fill") {
+                ask = .fault(d)
+            }
+            .padding(.top, 8)
+            .disabled(busyId != nil || writesBlocked)
+            .opacity(busyId != nil || writesBlocked ? 0.45 : 1)
+
+            GhostButton(title: "从本机解绑", symbol: "link.badge.plus") {
+                ask = .unbind(d)
+            }
+            .padding(.top, 8)
+            .disabled(busyId != nil || writesBlocked)
+            .opacity(busyId != nil || writesBlocked ? 0.45 : 1)
+
+            if let keys = keysByDongle[d.mac] {
+                if keys.isEmpty {
+                    Text("这枚钥匙串里还没有写入任何锁的钥匙。")
+                        .type(T.F.caption)
+                        .foregroundStyle(T.C.ink3)
+                        .padding(.top, 10)
+                } else {
+                    VStack(alignment: .leading, spacing: 0) {
+                        ForEach(keys, id: \.self) { mac in
+                            HStack {
+                                Text(DB.shortMac(mac))
+                                    .type(T.F.caption)
+                                    .foregroundStyle(T.C.ink)
+                                    .monospacedDigit()
+                                Spacer()
+                                Text(DB.keychain(mac).map { LockArchive.displayName($0) } ?? "本机无这把锁的档案")
+                                    .type(T.F.caption)
+                                    .foregroundStyle(DB.keychain(mac) == nil ? T.C.danger : T.C.ink3)
+                            }
+                            .padding(.vertical, 6)
+                        }
+                    }
+                    .padding(.top, 10)
+                }
+            }
+
+            Rectangle().fill(T.C.hair).frame(height: 0.5)
+                .padding(.top, 14)
+        }
+    }
+
+    private func statCol(_ label: String, _ value: String) -> some View {
+        HStack(spacing: 5) {
+            Text(label)
+                .type(T.F.caption)
+                .foregroundStyle(T.C.ink3)
+            Text(value)
+                .type(T.F.caption)
+                .fontWeight(.medium)
+                .foregroundStyle(T.C.ink)
+                .monospacedDigit()
+        }
+    }
+
     private func scanDongle() async {
         guard !busy else { return }
         // 空壳里 `dongles()` 恒为空、`saveDongle` 也会被数据层拒绝 ——

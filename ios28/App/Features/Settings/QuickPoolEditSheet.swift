@@ -27,7 +27,7 @@ struct QuickPoolEditSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     Text(judgement)
-                        .type(T.F.title3)
+                        .type(T.F.title2)
                         .foregroundStyle(T.C.ink)
                         .lineSpacing(3)
                         .padding(.top, 18)
