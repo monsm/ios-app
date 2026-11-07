@@ -43,11 +43,12 @@
 | `glass` | `#FFFFFFB8` | `#1B2027A6` | 玻璃面 |
 | `atmoWarm/Cool` | 暖 / 冷光 | 暗暖 / 暗冷 | 只有日光场用 |
 
-**可用性**：这套材质是 **iOS 26+** 的原生 Liquid Glass（`glassEffect`）。
-本 App 最低支持 iOS 25 —— 那里用系统材质顶替玻璃（`ultraThinMaterial`）：
-**层级、命中区、功能完全一致**，只是没有折射与高光。
-所有分支都收在 `App/Design/LiquidGlass.swift` 与 `App/Design/Modern.swift` 两处，
-页面里不写 availability 判断。逐项对照见 [IOS26-27-UPGRADE.md](IOS26-27-UPGRADE.md)。
+**可用性**：这套材质是 **iOS 26** 的原生 Liquid Glass（`glassEffect`）——
+本 App 的**基线**就是 iOS 26（CI 的 Xcode 27.1 工具链不接受更低的部署目标）。
+iOS 26 的能力直接用，不写分支；需要分支的只有 **iOS 27** 的新能力
+（轻扫容器、基于数据的弹窗、工具栏溢出菜单），它们在 iOS 26 上有等价降级。
+分支全部收在 `App/Design/Modern.swift` 一处，页面里不写 availability 判断。
+逐项对照见 [IOS26-27-UPGRADE.md](IOS26-27-UPGRADE.md)。
 
 **纪律**：
 1. 同屏只有一个强调色（黄铜）。状态色只在真实状态出现。
@@ -61,7 +62,7 @@
 **一套玻璃，三种角色**：
 
 - 材质参数只有一份：`LiquidGlass.swift` 的 `GlassMetrics`（圆角、描边、顶缘高光、黄铜染色）。
-  页面与组件里不再出现 `.ultraThinMaterial` 手工叠层（唯一的例外是 iOS 25 的降级路径，在 `LiquidGlass.swift` 收口）或材质圆角字面量。
+  页面与组件里不再出现 `.ultraThinMaterial` 手工叠层（材质统一由 `LiquidGlass.swift` 收口）或材质圆角字面量。
 - 浮层（Tab 栏、工具托盘、解锁镜头、临时提示、圆形浮钮）与控件（次要按钮、输入框、
   分段控件、选项胶囊、键盘键）都用 iOS 26+ 的原生 `.glassEffect`，带黄铜染色；
   可点的加 `.interactive()`，相邻成组的（键盘）套 `GlassEffectContainer`。

@@ -9,12 +9,11 @@
 //   · `glassEffectTransition(.matchedGeometry)` —— 视图层级换掉时，它从旧形状**变形**过去。
 // 两者必须配合 `GlassEffectContainer` 与 `@Namespace`。
 //
-// 更早系统（iOS 25）走 `LensGlassLegacy`：静态玻璃 + 一圈描边表示同一件事，
-// 观感不同，语义与命中区完全一致。
+// iOS 26 是本 App 的基线（工具链下限），所以这一层没有降级分支：
+// 需要降级的只有 iOS 27 的新能力，它们收在 `Modern.swift`。
 import SwiftUI
 
-/// iOS 26+：可变形的镜头玻璃。
-@available(iOS 26.0, *)
+/// 可变形的镜头玻璃（iOS 26 基线能力）。
 struct LensGlass26: View {
     var opened: Bool
     var namespace: Namespace.ID
@@ -71,22 +70,4 @@ struct LensGlass26: View {
     }
 }
 
-/// iOS 25 的降级：静态玻璃 + 成功时的一圈描边。
-struct LensGlassLegacy: View {
-    var opened: Bool
 
-    var body: some View {
-        ZStack {
-            Circle()
-                .fill(.clear)
-                .liquidGlass(in: Circle(), tint: GlassMetrics.tint)
-            if opened {
-                Circle()
-                    .strokeBorder(T.C.brassBright.opacity(0.45), lineWidth: 1.5)
-                    .scaleEffect(1.34)
-                    .allowsHitTesting(false)
-                    .accessibilityHidden(true)
-            }
-        }
-    }
-}

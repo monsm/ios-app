@@ -56,7 +56,7 @@ private struct LiquidGlassModifier<S: InsettableShape>: ViewModifier {
                     shape.strokeBorder(T.C.glassEdge, lineWidth: edgeWidth)
                         .allowsHitTesting(false)
                 }
-        } else if #available(iOS 26.0, *) {
+        } else {
             // 玻璃参数在这里就地构造 —— `Glass` 这个类型本身就是 iOS 26+ 的，
             // 写在属性/函数签名里会让整个修饰符都变成 26+ 专用。
             var value = Glass.regular
@@ -69,29 +69,6 @@ private struct LiquidGlassModifier<S: InsettableShape>: ViewModifier {
                         .allowsHitTesting(false)
                 }
                 // 真实玻璃受光后上缘总有一条亮线。只加"厚度感"，不改变折射行为。
-                .overlay {
-                    shape
-                        .fill(
-                            LinearGradient(colors: [.white.opacity(highlightOpacity), .clear],
-                                           startPoint: .top, endPoint: .bottom)
-                        )
-                        .mask(alignment: .top) {
-                            Rectangle().frame(height: T.S.l)
-                        }
-                        .allowsHitTesting(false)
-                        .accessibilityHidden(true)
-                }
-                .overlay {
-                    shape.strokeBorder(T.C.glassEdge, lineWidth: edgeWidth)
-                        .allowsHitTesting(false)
-                }
-        } else {
-            // iOS 25 的降级路径：系统材质。
-            //
-            // 它不是玻璃（没有折射与高光），但**仍然是浮在内容之上的一层**，
-            // 观感与层级一致，功能与命中区完全相同。把部署目标调回 25 就能走到这里。
-            content
-                .background(.ultraThinMaterial, in: shape)
                 .overlay {
                     shape
                         .fill(

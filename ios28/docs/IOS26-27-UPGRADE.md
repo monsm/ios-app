@@ -16,14 +16,19 @@
 
 | 项 | 之前 | 现在 | 理由 |
 |---|---|---|---|
-| `deploymentTarget.iOS` | 27.0 | **25.0** | 材质体系（Liquid Glass）是 iOS 26 的能力。把目标降到 25，iOS 26 与 iOS 27 的新 API 才**真的需要** availability 分支，也才有「旧系统不崩溃」这句话可兑现。 |
+| `deploymentTarget.iOS` | 27.0 | **26.0** | 实测：CI 的 Xcode 27.1 **不接受** `arm64-apple-ios25.0`（`invalid version number in '-target arm64-apple-ios25.0'`，链接 `__preview.dylib` 那一步就红）。工具链下限就是 iOS 26，所以「更旧系统」= **iOS 26**（相对 iOS 27 而言），降级路径也正是为它准备的。 |
 | `TARGETED_DEVICE_FAMILY` | 1,2 | 1,2 | 宽屏（iPad）走系统的侧边栏形态。 |
 | 新增闸门 | — | `Gates/l10n.js` | 文案 key 完整性（与本轮无关，是上一轮的产物，一并保留）。 |
 
-**为什么不是 25 以下**：DAYLIGHT 的整套材质语言就是 iOS 26 的 Liquid Glass。
-再往下的降级不是「换个材质」，而是**另做一个 App**（没有折射、没有高光、没有变形），
-与设计文档冲突。因此 iOS 25 是**材质等价降级**的下界：
-iOS 25 上 `.ultraThinMaterial` 顶替玻璃，层级、命中区、功能完全一致。
+**分工**（这决定了代码里哪里写分支、哪里不写）：
+
+| 能力 | 处理 |
+|---|---|
+| iOS 26（Liquid Glass、系统玻璃按钮、滚动边缘、背景延展、导航过渡、侧边栏） | **基线**，直接用，不写分支 —— 写了只会得到 `unnecessary check` 告警 |
+| iOS 27（轻扫容器、基于数据的弹窗、工具栏溢出菜单与钉位） | `#available(iOS 27, *)` + **可用的** iOS 26 降级路径 |
+
+> 之前试过把目标降到 25 以便给材质也留一条降级路径 —— **工具链直接拒绝**（见上表）。
+> 这不是坏事：材质体系本来就是 iOS 26 的能力，为它写降级是在给一个编译不过的目标写代码。
 
 ---
 
@@ -33,25 +38,25 @@ iOS 25 上 `.ultraThinMaterial` 顶替玻璃，层级、命中区、功能完全
 
 | 能力 | 落点 | 新系统上的表现 | 降级路径 |
 |---|---|---|---|
-| `glassEffect(_:in:)` | `App/Design/LiquidGlass.swift`（唯一入口） | 真玻璃：折射背后内容、顶缘高光、交互反馈 | iOS 25 → `.ultraThinMaterial`；「减少透明度 / 增强对比度」→ 不透明面板 + 加倍描边 |
-| `GlassEffectContainer(spacing:)` | `App/Design/Modern.swift` 的 `GlassGroup`；`GateScreen` 的键盘、`LensGlass26` | 同一组玻璃合成**一次**渲染，采样一致、可互相变形 | iOS 25 → 不加容器（各自独立，仍可用） |
-| `glassEffectID(_:in:)` | `App/Design/LensGlass.swift`（`LensGlass26`） | 镜片玻璃在「镜头 → 光圈」之间**真的变形** | iOS 25 → `LensGlassLegacy`（静态玻璃 + 描边环） |
-| `glassEffectTransition(_:)` | 同上（`.matchedGeometry`） | 变形走几何匹配，不是淡入淡出 | iOS 25 → 无变形（静态） |
-| `Glass.regular / .clear / .identity`、`.tint(_:)`、`.interactive()` | `LiquidGlass.swift` | 黄铜染色 + 可交互玻璃 | iOS 25 → 材质 + 同样的染色 |
-| `.buttonStyle(.glass)` / `.glassProminent` / `.glass(_:)` | `App/Design/Controls.swift`（`ChoiceChip`） | 选项胶囊用**系统**玻璃按钮：自带按压反馈、焦点环、无障碍选中态 | iOS 25 → 自绘表面（选中 = 黄铜实底） |
+| `glassEffect(_:in:)` | `App/Design/LiquidGlass.swift`（唯一入口） | 真玻璃：折射背后内容、顶缘高光、交互反馈 | 「减少透明度 / 增强对比度」→ 不透明面板 + 加倍描边 |
+| `GlassEffectContainer(spacing:)` | `App/Design/Modern.swift` 的 `GlassGroup`；`GateScreen` 的键盘、`LensGlass26` | 同一组玻璃合成**一次**渲染，采样一致、可互相变形 | —（iOS 26 基线） |
+| `glassEffectID(_:in:)` | `App/Design/LensGlass.swift`（`LensGlass26`） | 镜片玻璃在「镜头 → 光圈」之间**真的变形** | —（iOS 26 基线） |
+| `glassEffectTransition(_:)` | 同上（`.matchedGeometry`） | 变形走几何匹配，不是淡入淡出 | —（iOS 26 基线） |
+| `Glass.regular / .clear / .identity`、`.tint(_:)`、`.interactive()` | `LiquidGlass.swift` | 黄铜染色 + 可交互玻璃 | —（iOS 26 基线） |
+| `.buttonStyle(.glass)` / `.glassProminent` / `.glass(_:)` | `App/Design/Controls.swift`（`ChoiceChip`） | 选项胶囊用**系统**玻璃按钮：自带按压反馈、焦点环、无障碍选中态 | —（iOS 26 基线） |
 
 ### 1.2 iOS 26 —— 滚动与背景
 
 | 能力 | 落点 | 表现 | 降级 |
 |---|---|---|---|
-| `scrollEdgeEffectStyle(_:for:)` | `App/Design/Modern.swift` 的 `softScrollEdge` → `App/Design/Controls.swift` 的 `ScreenScroll` | 浮岛 Tab 栏形态下，内容从栏下滑过时底边**柔化** | iOS 25 → 无柔化（内容直接穿过） |
-| `backgroundExtensionEffect()` | `App/Design/Modern.swift` 的 `extendBackground` → `App/Design/Atmosphere.swift`（日光场） | iPad 分屏 / 侧边栏时，日光背景在安全区外**延展**，不被裁断 | iOS 25 → 背景只铺到安全区内 |
+| `scrollEdgeEffectStyle(_:for:)` | `App/Design/Modern.swift` 的 `softScrollEdge` → `App/Design/Controls.swift` 的 `ScreenScroll` | 浮岛 Tab 栏形态下，内容从栏下滑过时底边**柔化** | —（iOS 26 基线） |
+| `backgroundExtensionEffect()` | `App/Design/Modern.swift` 的 `extendBackground` → `App/Design/Atmosphere.swift`（日光场） | iPad 分屏 / 侧边栏时，日光背景在安全区外**延展**，不被裁断 | —（iOS 26 基线） |
 
 ### 1.3 iOS 26 —— 导航过渡
 
 | 能力 | 落点 | 表现 | 降级 |
 |---|---|---|---|
-| `navigationTransitionSource(id:namespace:)` / `navigationTransitionDestination(id:namespace:)` | `App/Design/Modern.swift`（`zoomTransitionSource/Destination`）→ `MobileKeysScreen` 的交付弹层 | 交付弹层从「交给安卓」那一行**长**出来 | iOS 25 → 弹层照旧淡入 |
+| `navigationTransitionSource(id:namespace:)` / `navigationTransitionDestination(id:namespace:)` | `App/Design/Modern.swift`（`zoomTransitionSource/Destination`）→ `MobileKeysScreen` 的交付弹层 | 交付弹层从「交给安卓」那一行**长**出来 | —（iOS 26 基线） |
 
 ### 1.4 iOS 26 —— 标签栏与侧边栏
 
@@ -60,7 +65,7 @@ iOS 25 上 `.ultraThinMaterial` 顶替玻璃，层级、命中区、功能完全
 | `TabView` + `Tab(_:systemImage:value:)` | `App/ThresholdApp.swift` | 已是 iOS 18+ 的新 Tab API | — |
 | `.tabViewStyle(.sidebarAdaptable)` | 同上 | **iPad 上自动变成侧边栏**（iPhone 仍是标签栏） | iOS 18+ 即可用，本 App 最低 25 ✓ |
 | `.tabViewSidebarHeader(content:)` | 同上（`SidebarHeader`） | 宽屏侧边栏顶部显示「家名 + 当前锁」 | iOS 18+ 即可用 ✓ |
-| `.tabBarMinimizeBehavior(.onScrollDown)` | 同上（`minimizeTabBarOnScrollDown`） | 向下滚动收起标签栏 | iOS 25 → 标签栏常驻 |
+| `.tabBarMinimizeBehavior(.onScrollDown)` | 同上（`minimizeTabBarOnScrollDown`） | 向下滚动收起标签栏 | —（iOS 26 基线） |
 
 ### 1.5 iOS 27 —— 容器里的轻扫操作
 
@@ -100,10 +105,10 @@ iOS 25 上 `.ultraThinMaterial` 顶替玻璃，层级、命中区、功能完全
 | 能力 | 原因 |
 |---|---|
 | `reorderable()` + `reorderContainer(for:isEnabled:move:)`（iOS 27 拖拽重排） | **缺口在数据，不在 API**：`ReorderDifference` 只公开了 `sources`（被移动项的 id）与 `destination`（落点），而 `destination` 的**取值方式**在可核对的公开资料里没有确定答案（它是 `Destination` 结构体，公开成员未列明）。用猜的 API 实现「拖到哪」只会把顺序排错 —— **拖错比不能拖更糟**。快捷池编辑器现在仍是「上移 / 下移」按钮（对读屏与键盘同样可用）。等 SDK 文档给出 `destination` 的读取方式即可接上，改动面只有 `QuickPoolEditSheet` 一处。 |
-| `ArrangementView` / `.arrangementViewStyle(.split/.overlay)`（iOS 27.1） | 这批 API 属于 **iOS 27.1**（iPhone Duo 折叠屏一代），而 CI 用的 SDK 版本未确认包含它们 —— 引用不存在的符号会**直接编译失败**，整个 App 停在红上。等 CI 换到 Xcode 27.1+ 再接；本 App 的两栏版式已经用 `AdaptiveLayout`（`twoColumns`）实现了，宽窄两种形态都可用。 |
-| `reservedRegions(kind:options:layoutDirectionBehavior:)`（iOS 27.1） | 同上（27.1）。而且本 App 的内容都在系统容器（ScrollView / NavigationStack）里，系统已经为折叠与摄像头留好了边 —— Apple 明确说「标准容器已经适配，手动避让反而会让过渡不自然」。 |
-| `onHingeChange(isEnabled:_:)`（iOS 27.1） | 同上（27.1），且需要 iPhone Duo 硬件才能验证；本 App 没有需要随折叠角变化的画面。 |
-| `toolbarVerticalEdge` / `axisBehavior(_:)` / `toolbarVerticalBehavior(_:)`（iOS 27.1） | 同上（27.1），且这些是给**竖向工具栏**用的（折叠屏 / iPad 侧边栏）。本 App 隐藏了系统导航栏，用的是自绘的 NavRow + 浮岛 Tab 栏，没有竖向栏可适配。 |
+| `ArrangementView` / `.arrangementViewStyle(.split/.overlay)`（iOS 27.1） | CI 的 SDK **确实是 27.1**（`iPhoneOS27.1.sdk` / `Xcode_27.1.app`），符号是有的 —— 但 Apple 明确说：**不要把 ArrangementView 放进 ScrollView / List / NavigationSplitView**（「an arrangement view lays out content but doesn't do navigation… navigation containers should wrap it rather than live inside it」）。本 App 每一页都是滚动页（`ScreenScroll`），因此它用不上；两栏版式由 `AdaptiveLayout`（`twoColumns`）自己排。 |
+| `reservedRegions(kind:options:layoutDirectionBehavior:)`（iOS 27.1） | 符号在 27.1 SDK 里是有的，但 Apple 明确说：**标准容器已经为折叠与摄像头留好了边**，手动避让反而会让过渡不自然。本 App 的内容全在系统容器里（ScrollView / NavigationStack），所以不接。 |
+| `onHingeChange(isEnabled:_:)`（iOS 27.1） | 符号在 27.1 SDK 里是有的，但需要 iPhone Duo 硬件才能验证，而本 App **没有需要随折叠角变化的画面**（日光场是纯装饰，不该跟着折角漂）。不为「用上 API」而做无意义的联动。 |
+| `toolbarVerticalEdge` / `axisBehavior(_:)` / `toolbarVerticalBehavior(_:)`（iOS 27.1） | 符号在 27.1 SDK 里是有的，但这些是给**竖向工具栏**用的（折叠屏 / iPad 侧边栏）。本 App 隐藏了系统导航栏，用的是自绘的 NavRow + 浮岛 Tab 栏，没有竖向栏可适配。 |
 | `Document` 协议族（`ReadableDocument` / `WritableDocument` / `DocumentCreationSource` / `NewDocumentButton`）（iOS 27） | **没有文档型界面**。备份是**加密后的不透明文件**（用户不该编辑它），诊断包是纯文本快照 —— 都不是「用户编辑并保存的文档」。硬套 Document API 只会多一层无用的抽象。 |
 | `AsyncImage` 缓存 / `asyncImageURLSession(_:)`（iOS 27） | 本 App **不加载任何远程图片**（全部矢量自绘，零位图）—— 没有可缓存的对象。 |
 | `contentTransition` 之外的 `@State` 宏（Xcode 27） | 这是**编译器侧**的行为（用 Xcode 27 编译即生效），不是代码里能写的东西。本 App 的 `@State` 已经是「每视图生命周期只初始化一次」的用法（`AppModel` / `Router` 都放在 `App` 层的 `@State`），语义与新宏一致。 |
@@ -154,4 +159,4 @@ iOS 25 上 `.ultraThinMaterial` 顶替玻璃，层级、命中区、功能完全
 | 轻扫操作的手感 | 跟手的程度、压暗的时机 |
 | 侧边栏形态的排版 | iPad 上真实宽度下的换行与留白 |
 | 滚动边缘柔化 | 内容穿过浮岛栏时的过渡观感 |
-| iOS 25 的材质降级 | 需要一台 iOS 25 设备（或模拟器） |
+| iOS 26 的完整玻璃观感 | 需要真机（DesignLab 是 HTML 镜像，验不了折射） |

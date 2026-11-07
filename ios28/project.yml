@@ -6,9 +6,10 @@ name: Threshold
 options:
   bundleIdPrefix: com.aapk
   deploymentTarget:
-    # iOS 25 起：iOS 26 的 Liquid Glass 与 iOS 27 的新容器/弹窗能力各走各的
-    # availability 分支，iOS 25 走等价的材质降级（功能完全一致，见 Design/Modern.swift）。
-    iOS: "25.0"
+    # iOS 26 起：iOS 26 的 Liquid Glass 是**基线**（工具链 Xcode 27.1 的下限就是 26，
+    # 更低的部署目标会被 clang 拒绝：invalid version number in '-target arm64-apple-ios25.0'）。
+    # iOS 27 的新容器/弹窗/工具栏能力走 availability 分支，iOS 26 有等价降级。
+    iOS: "26.0"
   createIntermediateGroups: true
   developmentLanguage: zh-Hans
 

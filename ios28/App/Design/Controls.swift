@@ -76,14 +76,9 @@ struct UnlockLens: View {
                 // 镜头是整页唯一的仪式感动作，也是浮在日光窗上的功能控件：
                 // 真玻璃让背后的窗景参与折射，比材料模糊更像"一片厚玻璃"。
                 //
-                // iOS 26+：这一片玻璃是**可变形**的 —— 开锁成功时它会真的推开成一圈光。
-                if #available(iOS 26.0, *) {
-                    LensGlass26(opened: phase == .opened, namespace: morphNS)
-                        .shadow(color: T.C.shadow, radius: 20, x: 0, y: 14)
-                } else {
-                    LensGlassLegacy(opened: phase == .opened)
-                        .shadow(color: T.C.shadow, radius: 20, x: 0, y: 14)
-                }
+                // 这一片玻璃是**可变形**的 —— 开锁成功时它会真的推开成一圈光。
+                LensGlass26(opened: phase == .opened, namespace: morphNS)
+                    .shadow(color: T.C.shadow, radius: 20, x: 0, y: 14)
 
                 Circle()
                     .strokeBorder(T.C.brassBright.opacity(0.28), lineWidth: 1.5)
@@ -236,14 +231,10 @@ struct ChoiceChip: View {
     var action: () -> Void
 
     var body: some View {
-        if #available(iOS 26.0, *) {
-            systemChip
-        } else {
-            legacyChip
-        }
+        systemChip
     }
 
-    /// iOS 26+：系统玻璃按钮样式。
+    /// 系统玻璃按钮样式。
     @ViewBuilder
     private var systemChip: some View {
         let button = Button(action: action) {
@@ -264,43 +255,6 @@ struct ChoiceChip: View {
             .systemGlassButton(prominent: on, tint: on ? onColor : nil)
     }
 
-    /// iOS 25：自绘表面（选中 = 黄铜实底，未选中 = 液态玻璃）。
-    private var legacyChip: some View {
-        Button(action: action) {
-            HStack(spacing: 6) {
-                if let symbol {
-                    Image(systemName: symbol)
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(on ? .white : T.C.brass)
-                }
-                Text(title)
-                    .type(T.F.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(on ? .white : T.C.ink)
-            }
-            .padding(.horizontal, 14)
-            .frame(maxWidth: fillWidth ? .infinity : nil)
-            .frame(height: height)
-            .modifier(ChoiceSurface(on: on, onColor: onColor))
-            // 未选中态是玻璃：命中区默认只到文字；选中态是实底胶囊，整块可点。
-            // 补上胶囊形状，两种状态的触达范围才一致（整个胶囊都能点）。
-            .contentShape(Capsule())
-        }
-        .buttonStyle(PressStyle())
-    }
-}
-
-private struct ChoiceSurface: ViewModifier {
-    var on: Bool
-    var onColor: Color
-
-    func body(content: Content) -> some View {
-        if on {
-            content.background(onColor, in: Capsule())
-        } else {
-            content.liquidGlass(in: Capsule(), tint: GlassMetrics.tint, interactive: true)
-        }
-    }
 }
 
 struct TextAction: View {

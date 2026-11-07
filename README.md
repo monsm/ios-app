@@ -1,7 +1,7 @@
 # 离线锁管家 for iOS (全原生 SwiftUI)
 
 智能锁离线管理端 — 对厂商原版 APK 的协议级 iOS 全原生移植。
-针对最新 iOS 27 SDK 编译，**最低部署版本 iOS 25.0**（iOS 26+ 启用原生液态玻璃与 iOS 27 的新能力），通过 GitHub Actions 云编译，本地无需 Mac。
+针对最新 iOS 27 SDK 编译，**最低部署版本 iOS 26.0**（iOS 26 是原生液态玻璃基线，iOS 27 追加容器/弹窗/工具栏能力并对 iOS 26 保留降级路径），通过 GitHub Actions 云编译，本地无需 Mac。
 
 界面按 iOS 26 平台原生设计语言实现：液态玻璃（Liquid Glass）、声明式 `Tab` 导航、
 系统 `ContentUnavailableView` 空态、系统触觉反馈与符号动效。设计令牌集中在

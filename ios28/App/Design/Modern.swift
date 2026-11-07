@@ -5,9 +5,11 @@
 //   · 每条分支都要有**能用的**降级路径 —— 不是「不崩」，是「照样能用」；
 //   · 新系统上必须**真的生效**（不是写一句兼容判断就算数）。
 //
-// 本 App 的最低部署版本是 **iOS 25**：DAYLIGHT 的材质体系在 iOS 26+ 是完整的
-// （Liquid Glass），iOS 25 走等价的材质降级，**功能完全一致**。
-// 比这更早的降级实现也留着（`LiquidGlass.swift` 的材质分支），改回部署目标即可启用。
+// 本 App 的最低部署版本是 **iOS 26**：DAYLIGHT 的材质体系（Liquid Glass）就是 iOS 26 的
+// 能力，工具链（Xcode 27.1）也不再接受更低的部署目标。
+// 因此**分工**是：
+//   · iOS 26 的能力 = 基线，直接用，不写分支（写分支只会得到「unnecessary check」告警）；
+//   · iOS 27 的能力 = 分支 + **可用的**降级路径。
 import SwiftUI
 
 // MARK: - 玻璃组（iOS 26）
@@ -22,11 +24,7 @@ struct GlassGroup<Content: View>: View {
     @ViewBuilder var content: () -> Content
 
     var body: some View {
-        if #available(iOS 26.0, *) {
-            GlassEffectContainer(spacing: spacing) { content() }
-        } else {
-            content()
-        }
+        GlassEffectContainer(spacing: spacing) { content() }
     }
 }
 
@@ -37,7 +35,6 @@ extension View {
     ///
     /// 必须和 `GlassEffectContainer` + `@Namespace` 一起用；
     /// 变形过渡挂在**被插入/移除的那一片**上（`glassMorphTransition`），不是常驻容器上。
-    @available(iOS 26.0, *)
     func glassMorphID(_ id: some Hashable & Sendable, in namespace: Namespace.ID) -> some View {
         self.glassEffectID(id, in: namespace)
     }
@@ -46,7 +43,6 @@ extension View {
     ///
     /// `.matchedGeometry` 用于**近处**的两片玻璃（相邻、间距在容器内）；
     /// `.materialize` 用于远处插入/移除（淡入淡出 + 材质动画，不做几何匹配）。
-    @available(iOS 26.0, *)
     func glassMorphTransition(_ transition: GlassEffectTransition) -> some View {
         self.glassEffectTransition(transition)
     }
@@ -65,19 +61,14 @@ extension View {
     /// - Parameter tint: 需要指定染色时用可配置样式（`Glass.regular.tint(_:)`）。
     @ViewBuilder
     func systemGlassButton(prominent: Bool = false, tint: Color? = nil) -> some View {
-        if #available(iOS 26.0, *) {
-            if prominent {
-                self
-                    .buttonStyle(.glassProminent)
-                    .tint(tint ?? T.C.brass)
-            } else if let tint {
-                self.buttonStyle(.glass(.regular.tint(tint)))
-            } else {
-                self.buttonStyle(.glass)
-            }
-        } else {
-            // 更早系统：沿用本仓自绘的液态玻璃修饰（材质降级，见 LiquidGlass.swift）。
+        if prominent {
             self
+                .buttonStyle(.glassProminent)
+                .tint(tint ?? T.C.brass)
+        } else if let tint {
+            self.buttonStyle(.glass(.regular.tint(tint)))
+        } else {
+            self.buttonStyle(.glass)
         }
     }
 }
@@ -88,13 +79,8 @@ extension View {
     /// iOS 26+：背景在安全区边缘外**延展**（分屏 / 侧边栏时背景不被裁成一块）。
     ///
     /// 更早系统：背景照旧只铺到安全区内 —— 不延展，但也不裁内容。
-    @ViewBuilder
     func extendBackground() -> some View {
-        if #available(iOS 26.0, *) {
-            self.backgroundExtensionEffect()
-        } else {
-            self
-        }
+        self.backgroundExtensionEffect()
     }
 }
 
@@ -106,13 +92,8 @@ extension View {
     /// 本 App 的浮岛 Tab 栏是**浮在内容之上**的：内容从它底下滚过时，
     /// 系统会自动在底边加一层柔化 —— 这正是浮动栏该有的样子。
     /// 更早系统没有这个效果，内容直接穿过栏（栏本身是玻璃，仍然可读）。
-    @ViewBuilder
     func softScrollEdge(_ edges: Edge.Set) -> some View {
-        if #available(iOS 26.0, *) {
-            self.scrollEdgeEffectStyle(.soft, for: edges)
-        } else {
-            self
-        }
+        self.scrollEdgeEffectStyle(.soft, for: edges)
     }
 }
 
@@ -122,13 +103,8 @@ extension View {
     /// iOS 26+：向下滚动时收起标签栏。
     ///
     /// 更早系统：标签栏常驻 —— 少一个动效，不少功能。
-    @ViewBuilder
     func minimizeTabBarOnScrollDown() -> some View {
-        if #available(iOS 26.0, *) {
-            self.tabBarMinimizeBehavior(.onScrollDown)
-        } else {
-            self
-        }
+        self.tabBarMinimizeBehavior(.onScrollDown)
     }
 }
 
@@ -139,23 +115,13 @@ extension View {
     /// 弹层不再「凭空出现」，而是从这个按钮身上放大出来。
     ///
     /// 更早系统：普通视图（弹层照旧淡入）。
-    @ViewBuilder
     func zoomTransitionSource(id: String, namespace: Namespace.ID) -> some View {
-        if #available(iOS 26.0, *) {
-            self.navigationTransitionSource(id: id, namespace: namespace)
-        } else {
-            self
-        }
+        self.navigationTransitionSource(id: id, namespace: namespace)
     }
 
     /// iOS 26+：把这块标记为导航过渡的**落点**（与源配对）。
-    @ViewBuilder
     func zoomTransitionDestination(id: String, namespace: Namespace.ID) -> some View {
-        if #available(iOS 26.0, *) {
-            self.navigationTransitionDestination(id: id, namespace: namespace)
-        } else {
-            self
-        }
+        self.navigationTransitionDestination(id: id, namespace: namespace)
     }
 }
 
